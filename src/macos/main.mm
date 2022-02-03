@@ -264,6 +264,7 @@ int main(int argc, const char * argv[])
     [ViewDelegate configureMetal];
     
     z_constants_init();
+    renderer_init();
     
     return NSApplicationMain(argc, argv);
 }

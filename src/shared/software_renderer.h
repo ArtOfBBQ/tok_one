@@ -5,6 +5,10 @@
 #include "vertex_types.h"
 #include "box.h"
 
+zPolygon * box;
+
+void renderer_init();
+
 void software_render(
     ColoredVertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size);

@@ -33,6 +33,8 @@ typedef struct zPolygon {
     float z;
 } zPolygon;
 
+zPolygon * get_box();
+
 void ztriangle_to_2d(
     ColoredVertex recipient[3],
     zPolygonVertex * input,
@@ -40,6 +42,10 @@ void ztriangle_to_2d(
     float y_offset,
     float z_offset,
     simd_float4 color);
+
+void x_rotate_zpolygon(
+    zPolygon * to_rotate,
+    const float angle);
 
 void free_zpolygon(
     zPolygon * to_free);
