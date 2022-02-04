@@ -1,5 +1,6 @@
 #include "software_renderer.h"
 #include "stdio.h"
+#include "window_size.h"
 
 void renderer_init() {
     box = get_box();
@@ -9,20 +10,22 @@ void software_render(
     ColoredVertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size)
 {
-    box->x += 0.05f;
-    box->y -= 0.05f;
+    // box->x -= 0.00001f;
+    // box->y += 0.00001f;
+    box->z += 0.001f;
     
-    x_rotate_zpolygon(box, 0.000001f);
+    x_rotate_zpolygon(box, 0.001f);
     
     simd_float2 position = { box->x, box->y };
     
+    // for (int i = 0; i < 6; i += 3) {
     for (int i = 0; i < box->vertices_size; i += 3) {
         ColoredVertex triangle_to_draw[3];
         
         simd_float4 triangle_color = {
-            1.0f,
             (i / 3) * (1.0f / box->vertices_size),
-            1.0f / i,
+            (i / 3) * (1.0f / box->vertices_size),
+            1.0f - i / 3,
             1.0f};
         
         ztriangle_to_2d(
@@ -32,6 +35,7 @@ void software_render(
             /* y_offset: */ box->y,
             /* z_offset: */ box->z,
             /* color: */ triangle_color);
+        
         printf("after transforming:\n");
         printf(
             "<%f, %f>,",
@@ -65,16 +69,22 @@ void draw_triangle(
     vertices_recipient[vertex_i] = input[0];
     vertices_recipient[vertex_i].XY[0] += position[0];
     vertices_recipient[vertex_i].XY[1] += position[1];
+    vertices_recipient[vertex_i].XY[0] *= WINDOW_WIDTH;
+    vertices_recipient[vertex_i].XY[1] *= WINDOW_HEIGHT;
     vertex_i++;
     
     vertices_recipient[vertex_i] = input[1];
     vertices_recipient[vertex_i].XY[0] += position[0];
     vertices_recipient[vertex_i].XY[1] += position[1];
+    vertices_recipient[vertex_i].XY[0] *= WINDOW_WIDTH;
+    vertices_recipient[vertex_i].XY[1] *= WINDOW_HEIGHT;
     vertex_i++;
     
     vertices_recipient[vertex_i] = input[2];
     vertices_recipient[vertex_i].XY[0] += position[0];
     vertices_recipient[vertex_i].XY[1] += position[1];
+    vertices_recipient[vertex_i].XY[0] *= WINDOW_WIDTH;
+    vertices_recipient[vertex_i].XY[1] *= WINDOW_HEIGHT;
     vertex_i++;
     
     *vertex_count_recipient += 3;
