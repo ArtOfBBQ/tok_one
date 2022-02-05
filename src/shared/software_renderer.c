@@ -1,5 +1,6 @@
 #include "software_renderer.h"
 #include "stdio.h"
+#include "assert.h"
 #include "window_size.h"
 
 void renderer_init() {
@@ -9,12 +10,13 @@ void renderer_init() {
 void software_render(
     ColoredVertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size)
-{
-    // box->x -= 0.00001f;
-    // box->y += 0.00001f;
-    box->z += 0.001f;
+{ 
+    box->x -= 0.00001f;
+    box->y += 0.00001f;
+    box->z += 0.005f;
     
-    x_rotate_zpolygon(box, 0.001f);
+    x_rotate_zpolygon(box, 0.02f);
+    // y_rotate_zpolygon(box, 0.0005f);
     
     simd_float2 position = { box->x, box->y };
     
@@ -23,10 +25,18 @@ void software_render(
     for (int i = 0; i < box->vertices_size; i += 3) {
         ColoredVertex triangle_to_draw[3];
         
+        float avg_z = get_avg_z(box, i);
+        float dist_modifier = ((far - box->z) / far);
+        float brightness = (avg_z * 3.0f + dist_modifier) / 4.0f;
+        
+        assert(box->z > 1.0f);
+        assert(far > 500.0f); 
+        assert(far - box->z > 500.0f);
+        assert(((far - box->z) / far) > 0.8f);
         simd_float4 triangle_color = {
-            (i / 3) * (1.0f / box->vertices_size),
-            (i / 3) * (1.0f / box->vertices_size),
-            1.0f - i / 3,
+            brightness / 1.5f,
+            brightness / 1.2f,
+            brightness,
             1.0f};
         
         ztriangle_to_2d(
@@ -57,6 +67,7 @@ void software_render(
             /* input: */ triangle_to_draw,
             /* position: */ position);
     }
+
 }
 
 void draw_triangle(

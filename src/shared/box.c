@@ -4,7 +4,7 @@
 
 void z_constants_init() {
     near = 0.1f;
-    far = 100.0f;
+    far = 100000.0f;
     z_normalisation = far / (far - near);
     field_of_view = 90.0f;
     field_of_view_angle = field_of_view * 0.5f;
@@ -25,7 +25,7 @@ zPolygon * get_box() {
     
     box->x = 0.2f;
     box->y = 0.4f;
-    box->z = 2.0f;
+    box->z = 5.0f;
     
     // north face
     // (exactly the same values as south,
@@ -193,6 +193,25 @@ void x_rotate_zpolygon(
     }
 }
 
+void y_rotate_zpolygon(
+    zPolygon * to_rotate,
+    const float angle)
+{
+    for (
+        uint32_t i = 0;
+        i < to_rotate->vertices_size;
+        i += 1)
+    {
+        to_rotate->triangle_vertices[i].x =
+            (to_rotate->triangle_vertices[i].x * cos(angle))
+            - (to_rotate->triangle_vertices[i].z * sin(angle));
+        to_rotate->triangle_vertices[i].z =
+            (to_rotate->triangle_vertices[i].z * cos(angle))
+            + (to_rotate->triangle_vertices[i].x * sin(angle));
+    }
+}
+
+
 float get_avg_z(
     zPolygon * of_zpolygon,
     uint32_t at_i)
@@ -214,6 +233,20 @@ void z_sort(
     // vertices
 
 
+    // TODO: this function should leave all x's and y's and
+    // z's as is,
+    // but just in a different order
+    // delete this checksum (and again at the end) if it doesnt
+    // bug for a while
+    uint32_t x_checksum = 0;
+    uint32_t y_checksum = 0;
+    uint32_t z_checksum = 0;
+    for (int i = 0; i < to_sort->vertices_size; i++) {
+        x_checksum += to_sort->triangle_vertices[i].x;
+        y_checksum += to_sort->triangle_vertices[i].y;
+        z_checksum += to_sort->triangle_vertices[i].z;
+    }
+    
     /*
     */
     zPolygonVertex swap[3];
@@ -291,5 +324,19 @@ void z_sort(
             get_avg_z(to_sort, i) <=
             get_avg_z(to_sort, i + 3));
     }
+    
+    // TODO: delete this checksum (and also at the beginning of
+    // the function)
+    uint32_t after_x_checksum = 0;
+    uint32_t after_y_checksum = 0;
+    uint32_t after_z_checksum = 0;
+    for (int i = 0; i < to_sort->vertices_size; i++) {
+        after_x_checksum += to_sort->triangle_vertices[i].x;
+        after_y_checksum += to_sort->triangle_vertices[i].y;
+        after_z_checksum += to_sort->triangle_vertices[i].z;
+    }
+    assert(x_checksum == after_x_checksum);
+    assert(y_checksum == after_y_checksum);
+    assert(z_checksum == after_z_checksum);
 }
 

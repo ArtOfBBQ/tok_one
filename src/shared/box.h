@@ -6,14 +6,14 @@
 #include "window_size.h"
 
 // projection matrix constants
-static float near;
-static float far;
-static float z_normalisation;
-static float field_of_view;
-static float field_of_view_angle;
-static float field_of_view_rad;
-static float field_of_view_modifier;
-static float aspect_ratio;
+float near;
+float far;
+float z_normalisation;
+float field_of_view;
+float field_of_view_angle;
+float field_of_view_rad;
+float field_of_view_modifier;
+float aspect_ratio;
 
 void z_constants_init();
 
@@ -47,8 +47,16 @@ void x_rotate_zpolygon(
     zPolygon * to_rotate,
     const float angle);
 
+void y_rotate_zpolygon(
+    zPolygon * to_rotate,
+    const float angle);
+
 void free_zpolygon(
     zPolygon * to_free);
+
+float get_avg_z(
+    zPolygon * of_zpolygon,
+    uint32_t at_i);
 
 void z_sort(
     zPolygon * to_sort);
