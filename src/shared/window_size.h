@@ -1,3 +1,3 @@
 #define WINDOW_HEIGHT 512.0f
-#define WINDOW_WIDTH 1024.0f
+#define WINDOW_WIDTH 512.0f
 

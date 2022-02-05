@@ -23,9 +23,9 @@ zPolygon * get_box() {
     box->triangle_vertices = malloc(
         sizeof(zPolygonVertex) * box->vertices_size);
     
-    box->x = 0.3f;
-    box->y = 0.6f;
-    box->z = 1.5f;
+    box->x = 0.2f;
+    box->y = 0.4f;
+    box->z = 2.0f;
     
     // north face
     // (exactly the same values as south,
@@ -190,6 +190,106 @@ void x_rotate_zpolygon(
         to_rotate->triangle_vertices[i].z =
             (to_rotate->triangle_vertices[i].z * cos(angle))
             + (to_rotate->triangle_vertices[i].y * sin(angle));
+    }
+}
+
+float get_avg_z(
+    zPolygon * of_zpolygon,
+    uint32_t at_i)
+{
+    return (of_zpolygon->triangle_vertices[at_i].z +
+        of_zpolygon->triangle_vertices[at_i+1].z +
+        of_zpolygon->triangle_vertices[at_i+2].z) / 3.0f;
+}
+
+
+void z_sort(
+    zPolygon * to_sort)
+{
+    // we want the triangles with the highest z
+    // to be drawn first, so they need to have the
+    // lowest index
+    //
+    // as a hack, let's just use the average z of 3
+    // vertices
+
+
+    /*
+    */
+    zPolygonVertex swap[3];
+    uint32_t i = 0;
+    while (i < (to_sort->vertices_size - 3))
+    {
+        i += 3;
+        printf("i : %u\n", i);
+        
+        for (uint32_t j = 0; j < i; j += 3)
+        {
+            printf("j : %u\n", j);
+            if (get_avg_z(to_sort, i)
+                >= get_avg_z(to_sort, j))
+            {
+                printf(
+                    "get_avg_z(to_sort, %u) is %f, bigger than get_avg_z(to_sort, %u) of %f, next j...\n",
+                    i,
+                    get_avg_z(to_sort, i),
+                    j,
+                    get_avg_z(to_sort, j));
+            } else {
+                printf(
+                    "i is smaller z than j, insert to %u...\n",
+                    j);
+                swap[0] = to_sort->triangle_vertices[i];
+                swap[1] = to_sort->triangle_vertices[i+1];
+                swap[2] = to_sort->triangle_vertices[i+2];
+                
+                assert(i > j);
+                for (uint32_t k = i; k > j; k -= 3) {
+                    to_sort->triangle_vertices[k] =
+                        to_sort->triangle_vertices[k-3];
+                    to_sort->triangle_vertices[k+1] =
+                        to_sort->triangle_vertices[k-2];
+                    to_sort->triangle_vertices[k+2] =
+                        to_sort->triangle_vertices[k-1];
+                }
+                to_sort->triangle_vertices[j] = swap[0];
+                to_sort->triangle_vertices[j+1] = swap[1];
+                to_sort->triangle_vertices[j+2] = swap[2];
+                
+                for (
+                    uint32_t check_i = 0;
+                    check_i < i - 3;
+                    check_i += 3)
+                {
+                    printf(
+                        "triangle_vertices[%u]'s avg z:%f\n",
+                        check_i,
+                        get_avg_z(to_sort, check_i));
+                    printf(
+                        "triangle_vertices[%u]'s avg z:%f\n",
+                        check_i + 3,
+                        get_avg_z(to_sort, check_i + 3));
+                    assert(
+                        get_avg_z(to_sort, check_i)
+                        <= get_avg_z(to_sort, check_i + 3));
+                }
+                
+                assert(
+                    get_avg_z(to_sort, i)
+                    > get_avg_z(to_sort, j));
+                break;
+            }
+        }    
+    }
+    
+    for (
+        uint32_t i = 0;
+        i < to_sort->vertices_size - 3;
+        i += 3)
+    {
+        assert(
+            get_avg_z(to_sort, i) <=
+            get_avg_z(to_sort, i + 3));
     }
 }
 

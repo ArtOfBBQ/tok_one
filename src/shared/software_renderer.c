@@ -18,7 +18,8 @@ void software_render(
     
     simd_float2 position = { box->x, box->y };
     
-    // for (int i = 0; i < 6; i += 3) {
+    z_sort(box);
+    
     for (int i = 0; i < box->vertices_size; i += 3) {
         ColoredVertex triangle_to_draw[3];
         

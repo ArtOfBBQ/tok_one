@@ -50,5 +50,8 @@ void x_rotate_zpolygon(
 void free_zpolygon(
     zPolygon * to_free);
 
+void z_sort(
+    zPolygon * to_sort);
+
 #endif
 
