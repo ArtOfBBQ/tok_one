@@ -6,6 +6,7 @@
 #include "box.h"
 
 zPolygon * box;
+zPolygon * rotated_box;
 
 void renderer_init();
 

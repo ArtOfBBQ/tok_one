@@ -1,65 +1,86 @@
 #include "software_renderer.h"
-#include "stdio.h"
 #include "assert.h"
 #include "window_size.h"
 
 void renderer_init() {
     box = get_box();
+    rotated_box = get_box();
 }
 
 void software_render(
     ColoredVertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size)
-{ 
-    box->x -= 0.00001f;
-    box->y += 0.00001f;
-    box->z += 0.005f;
+{
+    box->x += 0.0001f;
+    box->y -= 0.0001f;
+    box->z += 0.03f;
+    box->x_angle += 0.02f;
+    if (box->x_angle > 6.28) { box->x_angle = 0.0f; }
+    box->y_angle += 0.01f;
+    if (box->y_angle > 6.28) { box->y_angle = 0.0f; }
+    box->z_angle += 0.03f;
+    if (box->z_angle > 6.28) { box->z_angle = 0.0f; }
     
-    x_rotate_zpolygon(box, 0.02f);
-    // y_rotate_zpolygon(box, 0.0005f);
+    // x-rotate all triangles
+    zTriangle x_rotated_triangles[box->triangles_size];
+    for (uint32_t i = 0; i < box->triangles_size; i++) {
+        x_rotated_triangles[i] =
+            x_rotate_triangle(
+                box->triangles + i,
+                box->x_angle); 
+    }
+
+    // z-rotate all triangles
+    zTriangle z_rotated_triangles[box->triangles_size];
+    for (uint32_t i = 0; i < box->triangles_size; i++) {
+        z_rotated_triangles[i] =
+            z_rotate_triangle(
+                &x_rotated_triangles[i],
+                box->z_angle); 
+    }
+    
+    // y-rotate all triangles
+    zTriangle triangles_to_draw[box->triangles_size];
+    for (uint32_t i = 0; i < box->triangles_size; i++) {
+        triangles_to_draw[i] =
+            y_rotate_triangle(
+                &z_rotated_triangles[i],
+                box->y_angle); 
+    }
+   
+    // sort all triangles so the most distant ones can be
+    // drawn first 
+    z_sort(&triangles_to_draw[0], box->triangles_size);
     
     simd_float2 position = { box->x, box->y };
     
-    z_sort(box);
-    
-    for (int i = 0; i < box->vertices_size; i += 3) {
+    for (
+        uint32_t i = 0;
+        i < box->triangles_size;
+        i++)
+    {
         ColoredVertex triangle_to_draw[3];
         
-        float avg_z = get_avg_z(box, i);
+        float avg_z = get_avg_z(triangles_to_draw + i);
         float dist_modifier = ((far - box->z) / far);
-        float brightness = (avg_z * 3.0f + dist_modifier) / 4.0f;
+        assert(dist_modifier > 0.0f);
+        assert(dist_modifier < 1.0f);
+        float brightness =
+            (avg_z + (dist_modifier * 5.0f)) / 6.0f;
         
-        assert(box->z > 1.0f);
-        assert(far > 500.0f); 
-        assert(far - box->z > 500.0f);
-        assert(((far - box->z) / far) > 0.8f);
         simd_float4 triangle_color = {
-            brightness / 1.5f,
+            brightness + 0.6f - (i * 0.04f),
             brightness / 1.2f,
-            brightness,
+            brightness / 1.5f,
             1.0f};
         
         ztriangle_to_2d(
             /* recipient: */ triangle_to_draw,
-            /* input: */ box->triangle_vertices + i,
+            /* input: */ triangles_to_draw + i,
             /* x_offset: */ box->x,
             /* y_offset: */ box->y,
             /* z_offset: */ box->z,
             /* color: */ triangle_color);
-        
-        printf("after transforming:\n");
-        printf(
-            "<%f, %f>,",
-            triangle_to_draw[0].XY[0],
-            triangle_to_draw[0].XY[1]);
-        printf(
-            "<%f, %f>,",
-            triangle_to_draw[1].XY[0],
-            triangle_to_draw[1].XY[1]);
-        printf(
-            "<%f, %f>\n",
-            triangle_to_draw[2].XY[0],
-            triangle_to_draw[2].XY[1]);
         
         draw_triangle(
             /* vertices_recipient: */ next_gpu_workload,
@@ -67,7 +88,6 @@ void software_render(
             /* input: */ triangle_to_draw,
             /* position: */ position);
     }
-
 }
 
 void draw_triangle(

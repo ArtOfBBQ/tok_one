@@ -38,8 +38,6 @@ MetalKitViewDelegate: NSObject<MTKViewDelegate>
 
 - (void)drawInMTKView:(MTKView *)view
 {
-    // NSLog(@"Draw in rect...");
-    
     // TODO: this only works on retina
     // because on retina screens, the MTLViewport is 2x
     // the size of the window
@@ -115,7 +113,7 @@ MetalKitViewDelegate: NSObject<MTKViewDelegate>
         }
         
         _currentFrameIndex = NextIndex;
-       
+        
         /* 
         [CommandBuffer
             addCompletedHandler:
