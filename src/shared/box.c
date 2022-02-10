@@ -2,11 +2,17 @@
 #include "stdio.h"
 #include "assert.h"
 
+float near = 0.1f;
+float far = 100.f;
+float z_normalisation;
+float field_of_view = 90.0f;
+float field_of_view_angle;
+float field_of_view_rad;
+float field_of_view_modifier;
+float aspect_ratio;
+
 void z_constants_init() {
-    near = 0.1f;
-    far = 100.0f;
     z_normalisation = far / (far - near);
-    field_of_view = 90.0f;
     field_of_view_angle = field_of_view * 0.5f;
     field_of_view_rad =
         (field_of_view_angle / 180.0f) * 3.14159f;
@@ -23,8 +29,8 @@ zPolygon * get_box() {
     box->triangles = malloc(
         sizeof(zTriangle) * box->triangles_size);
     
-    box->x = 0.2f;
-    box->y = 0.4f;
+    box->x = 0.1f;
+    box->y = 0.1f;
     box->z = 5.0f;
     box->x_angle = 0.0f;
     box->y_angle = 0.0f;
@@ -278,7 +284,7 @@ void z_sort(
     const uint32_t triangles_size)
 {
     zTriangle swap;
-   
+    
     for (uint32_t i = 0; i < triangles_size; i++) { 
         
         for (uint32_t j = 0; j < i; j ++)
@@ -294,7 +300,11 @@ void z_sort(
                     triangles[i].vertices[2];
                 
                 assert(i > j);
-                for (uint32_t k = i; k > j; k--) {
+                for (
+                    uint32_t k = i;
+                    k > j;
+                    k--)
+                {
                     triangles[k].vertices[0] =
                         triangles[k-1].vertices[0];
                     triangles[k].vertices[1] =

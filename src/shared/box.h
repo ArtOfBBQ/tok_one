@@ -1,21 +1,23 @@
 #ifndef BOX_H
 #define BOX_H
 
+#include "stdlib.h"
+
 #include "vertex_types.h"
 #include "bool_types.h"
 #include "window_size.h"
 
-// projection matrix constants
-float near;
-float far;
-float z_normalisation;
-float field_of_view;
-float field_of_view_angle;
-float field_of_view_rad;
-float field_of_view_modifier;
-float aspect_ratio;
+// projection constants
+extern float near;
+extern float far;
+extern float z_normalisation;
+extern float field_of_view;
+extern float field_of_view_angle;
+extern float field_of_view_rad;
+extern float field_of_view_modifier;
+extern float aspect_ratio;
 
-void z_constants_init();
+void z_constants_init(void);
 
 typedef struct zPolygonVertex {
     float x;
@@ -38,7 +40,7 @@ typedef struct zPolygon {
     float z_angle;
 } zPolygon;
 
-zPolygon * get_box();
+zPolygon * get_box(void);
 
 void ztriangle_to_2d(
     ColoredVertex recipient[3],
