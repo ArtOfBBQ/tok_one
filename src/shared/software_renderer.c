@@ -12,6 +12,11 @@ void software_render(
     ColoredVertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size)
 {
+    if (next_gpu_workload == NULL) {
+        printf("error - software_renderer received empty gpu_workload\n");
+        return;
+    }
+    
     box->x += 0.0001f;
     box->y -= 0.0001f;
     if (box->z < 5.0f) {

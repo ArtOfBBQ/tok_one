@@ -12,7 +12,6 @@
 
 - (void)drawInMTKView:(MTKView *)view
 {
-    printf("drawInMTKView...\n");
     // TODO: this only works on retina
     // because on retina screens, the MTLViewport is 2x
     // the size of the window
