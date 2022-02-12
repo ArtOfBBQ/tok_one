@@ -19,11 +19,9 @@ struct metal_vertex
 vertex RasterizerData
 vertexShader(
     uint vertexID [[ vertex_id ]],
-    constant metal_vertex *vertexArray [[ buffer(0) ]])
+    constant metal_vertex * input_array [[ buffer(0) ]])
 {
     RasterizerData out;
-    float2 pixelSpacePosition =
-        vertexArray[vertexID].position.xy;
     
     // To convert from positions in pixel space to positions in
     // clip-space, divide the pixel coordinates by half the size
@@ -31,12 +29,12 @@ vertexShader(
     // Z is set to 0.0 and w to 1.0 because this is 2D sample.
     out.position =
         vector_float4(
-            pixelSpacePosition.x,
-            pixelSpacePosition.y,
+            input_array[vertexID].position[0],
+            input_array[vertexID].position[1],
             0.0,
             1.0);
     
-    out.color = vertexArray[vertexID].color;
+    out.color = input_array[vertexID].color;
     
     return out;
 }

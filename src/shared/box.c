@@ -31,74 +31,72 @@ zPolygon * get_box() {
     
     box->x = 0.1f;
     box->y = 0.1f;
-    box->z = 5.0f;
+    box->z = 1.5f;
     box->x_angle = 0.0f;
     box->y_angle = 0.0f;
     box->z_angle = 0.0f;
     
-    // north face
-    // (exactly the same values as south,
-    // except z is always distant instead of close
+    // SOUTH face
     box->triangles[0].vertices[0] =
-        (zPolygonVertex){ 0.0f, 0.0f, 1.0f };
+        (zPolygonVertex){ 0.0f, 0.0f, 0.0f };
     box->triangles[0].vertices[1] =
-        (zPolygonVertex){ 0.0f, 1.0f, 1.0f };
+        (zPolygonVertex){ 0.0f, 1.0f, 0.0f };
     box->triangles[0].vertices[2] =
-        (zPolygonVertex){ 1.0f, 1.0f, 1.0f };
+        (zPolygonVertex){ 1.0f, 1.0f, 0.0f };
     
     box->triangles[1].vertices[0] =
-        (zPolygonVertex){ 0.0f, 0.0f, 1.0f };
-    box->triangles[1].vertices[1] =
-        (zPolygonVertex){ 1.0f, 1.0f, 1.0f };
-    box->triangles[1].vertices[2] =
-        (zPolygonVertex){ 1.0f, 0.0f, 1.0f };
-    
-    // bottom face
-    box->triangles[2].vertices[0] =
-        (zPolygonVertex){ 1.0f, 0.0f, 1.0f };
-    box->triangles[2].vertices[1] =
-        (zPolygonVertex){ 0.0f, 0.0f, 1.0f };
-    box->triangles[2].vertices[2] =
         (zPolygonVertex){ 0.0f, 0.0f, 0.0f };
+    box->triangles[1].vertices[1] =
+        (zPolygonVertex){ 1.0f, 1.0f, 0.0f };
+    box->triangles[1].vertices[2] =
+        (zPolygonVertex){ 1.0f, 0.0f, 0.0f };
+
+    // EAST face
+    box->triangles[2].vertices[0] =
+        (zPolygonVertex){ 1.0f, 0.0f, 0.0f };
+    box->triangles[2].vertices[1] =
+        (zPolygonVertex){ 1.0f, 1.0f, 0.0f };
+    box->triangles[2].vertices[2] =
+        (zPolygonVertex){ 1.0f, 1.0f, 1.0f };
     
     box->triangles[3].vertices[0] =
-        (zPolygonVertex){ 1.0f, 0.0f, 1.0f };
-    box->triangles[3].vertices[1] =
-        (zPolygonVertex){ 0.0f, 0.0f, 0.0f };
-    box->triangles[3].vertices[2] =
         (zPolygonVertex){ 1.0f, 0.0f, 0.0f };
-    
-    // west face (like east, but x is always 0 instead of 1)
+    box->triangles[3].vertices[1] =
+        (zPolygonVertex){ 1.0f, 1.0f, 1.0f };
+    box->triangles[3].vertices[2] =
+        (zPolygonVertex){ 1.0f, 0.0f, 1.0f };
+
+    // NORTH face
     box->triangles[4].vertices[0] =
-        (zPolygonVertex){ 0.0f, 0.0f, 0.0f };
+        (zPolygonVertex){ 1.0f, 0.0f, 1.0f };
     box->triangles[4].vertices[1] =
-        (zPolygonVertex){ 0.0f, 1.0f, 0.0f };
+        (zPolygonVertex){ 1.0f, 1.0f, 1.0f };
     box->triangles[4].vertices[2] =
         (zPolygonVertex){ 0.0f, 1.0f, 1.0f };
     
     box->triangles[5].vertices[0] =
-        (zPolygonVertex){ 0.0f, 0.0f, 0.0f };
+        (zPolygonVertex){ 1.0f, 0.0f, 1.0f };
     box->triangles[5].vertices[1] =
         (zPolygonVertex){ 0.0f, 1.0f, 1.0f };
     box->triangles[5].vertices[2] =
         (zPolygonVertex){ 0.0f, 0.0f, 1.0f };
-    
-    // east face
+
+    // WEST face
     box->triangles[6].vertices[0] =
-        (zPolygonVertex){ 1.0f, 0.0f, 0.0f };
+        (zPolygonVertex){ 0.0f, 0.0f, 1.0f };
     box->triangles[6].vertices[1] =
-        (zPolygonVertex){ 1.0f, 1.0f, 0.0f };
+        (zPolygonVertex){ 0.0f, 1.0f, 1.0f };
     box->triangles[6].vertices[2] =
-        (zPolygonVertex){ 1.0f, 1.0f, 1.0f };
+        (zPolygonVertex){ 0.0f, 1.0f, 0.0f };
     
     box->triangles[7].vertices[0] =
-        (zPolygonVertex){ 1.0f, 0.0f, 0.0f };
+        (zPolygonVertex){ 0.0f, 0.0f, 1.0f };
     box->triangles[7].vertices[1] =
-        (zPolygonVertex){ 1.0f, 1.0f, 1.0f };
+        (zPolygonVertex){ 0.0f, 1.0f, 0.0f };
     box->triangles[7].vertices[2] =
-        (zPolygonVertex){ 1.0f, 0.0f, 1.0f };
-    
-    // top face
+        (zPolygonVertex){ 0.0f, 0.0f, 0.0f };
+
+    // TOP face
     box->triangles[8].vertices[0] =
         (zPolygonVertex){ 0.0f, 1.0f, 0.0f };
     box->triangles[8].vertices[1] =
@@ -112,20 +110,19 @@ zPolygon * get_box() {
         (zPolygonVertex){ 1.0f, 1.0f, 1.0f };
     box->triangles[9].vertices[2] =
         (zPolygonVertex){ 1.0f, 1.0f, 0.0f };
-    
-    // box's south face (2 triangles)
-    //                      x     y     z
+
+    // BOTTOM face
     box->triangles[10].vertices[0] =
-        (zPolygonVertex){ 0.0f, 0.0f, 0.0f };
+        (zPolygonVertex){ 1.0f, 0.0f, 1.0f };
     box->triangles[10].vertices[1] =
-        (zPolygonVertex){ 0.0f, 1.0f, 0.0f };
+        (zPolygonVertex){ 0.0f, 0.0f, 1.0f };
     box->triangles[10].vertices[2] =
-        (zPolygonVertex){ 1.0f, 1.0f, 0.0f };
+        (zPolygonVertex){ 0.0f, 0.0f, 0.0f };
     
     box->triangles[11].vertices[0] =
-        (zPolygonVertex){ 0.0f, 0.0f, 0.0f };
+        (zPolygonVertex){ 1.0f, 0.0f, 1.0f };
     box->triangles[11].vertices[1] =
-        (zPolygonVertex){ 1.0f, 1.0f, 0.0f };
+        (zPolygonVertex){ 0.0f, 0.0f, 0.0f };
     box->triangles[11].vertices[2] =
         (zPolygonVertex){ 1.0f, 0.0f, 0.0f };
     
@@ -259,12 +256,12 @@ zTriangle y_rotate_triangle(
         return_value.vertices[i].x =
             (input->vertices[i].x
                 * cos(angle))
-            - (input->vertices[i].z
+            + (input->vertices[i].z
                 * sin(angle));
         return_value.vertices[i].z =
             (input->vertices[i].z
                 * cos(angle))
-            + (input->vertices[i].y
+            - (input->vertices[i].x
                 * sin(angle));
     }
     
