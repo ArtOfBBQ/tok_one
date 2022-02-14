@@ -1,0 +1,16 @@
+.gitattributes
+
+# sometimes created by Mac Os X's finder
+.DS_Store
+
+# swap files used by vim
+*.swp
+
+# xcode files
+*.xcuserstate
+*.plist
+src/ios/hello3dgfx/hello3dgfx/Assets.xcassets/*
+src/ios/hello3dgfx/hello3dgfx.xcodeproj/xcshareddata/*
+src/ios/hello3dgfx/hello3dgfx.xcodeproj/xcuserdata/*
+
+build/**
