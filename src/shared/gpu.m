@@ -44,7 +44,7 @@
             MTLLoadActionClear;
         
         MTLClearColor MetalClearColor =
-            MTLClearColorMake(0.3f, 0.3f, 0.0f, 1.0f);
+            MTLClearColorMake(0.2f, 0.2f, 0.1f, 1.0f);
         RenderPassDescriptor.colorAttachments[0].clearColor =
             MetalClearColor;
         

@@ -6,7 +6,7 @@
 #include "box.h"
 
 static zPolygon * box;
-static zPolygon * rotated_box;
+static zVertex camera = {0.0f, 0.0f, 0.0f};
 
 void renderer_init(void);
 

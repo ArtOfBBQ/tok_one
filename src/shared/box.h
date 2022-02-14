@@ -19,14 +19,14 @@ extern float aspect_ratio;
 
 void z_constants_init(void);
 
-typedef struct zPolygonVertex {
+typedef struct zVertex {
     float x;
     float y;
     float z;
-} zPolygonVertex;
+} zVertex;
 
 typedef struct zTriangle {
-    zPolygonVertex vertices[3];
+    zVertex vertices[3];
 } zTriangle;
 
 typedef struct zPolygon {
@@ -56,6 +56,8 @@ zTriangle y_rotate_triangle(
     const zTriangle * input, const float angle);
 zTriangle z_rotate_triangle(
     const zTriangle * input, const float angle);
+
+zPolygon * load_from_obj_file(char * filename);
 
 void free_zpolygon(
     zPolygon * to_free);
