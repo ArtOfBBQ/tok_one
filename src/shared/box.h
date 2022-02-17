@@ -45,9 +45,6 @@ zPolygon * get_box(void);
 void ztriangle_to_2d(
     ColoredVertex recipient[3],
     zTriangle * input,
-    float x_offset,
-    float y_offset,
-    float z_offset,
     simd_float4 color);
 
 zTriangle x_rotate_triangle(
@@ -56,6 +53,12 @@ zTriangle y_rotate_triangle(
     const zTriangle * input, const float angle);
 zTriangle z_rotate_triangle(
     const zTriangle * input, const float angle);
+
+zTriangle translate_ztriangle(
+    const zTriangle * input,
+    const float by_x,
+    const float by_y,
+    const float by_z);
 
 zPolygon * load_from_obj_file(char * filename);
 

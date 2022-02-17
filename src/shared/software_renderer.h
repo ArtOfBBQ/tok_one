@@ -17,12 +17,17 @@ void software_render(
 void draw_triangle(
     ColoredVertex * vertices_recipient,
     uint32_t * vertex_count_recipient,
-    ColoredVertex input[3],
-    simd_float2 position);
+    ColoredVertex input[3]);
 
 void rotate_triangle(
     ColoredVertex to_rotate[3],
     const float angle);
+
+void translate_triangle(
+    ColoredVertex to_translate[3],
+    const float x,
+    const float y,
+    const float z);
 
 #endif
 

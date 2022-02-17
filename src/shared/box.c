@@ -4,7 +4,7 @@
 #include "platform_layer.h"
 
 float near = 0.1f;
-float far = 1000.0f;
+float far = 60.0f;
 float z_normalisation;
 float field_of_view = 90.0f;
 float field_of_view_angle;
@@ -62,9 +62,9 @@ zPolygon * load_from_obj_file(char * filename) {
     zPolygon * return_value = malloc(sizeof(zPolygon));
     return_value->x = 0.0f;
     return_value->y = 0.0f;
-    return_value->z = 50.0f;
+    return_value->z = 40.0f;
     return_value->triangles_size = 0;
-        
+    
     FileBuffer * buffer = platform_read_file(filename);
     
     // pass through buffer once to read all vertices 
@@ -368,9 +368,6 @@ zPolygon * get_box() {
 void ztriangle_to_2d(
     ColoredVertex recipient[3],
     zTriangle * input,
-    float x_offset,
-    float y_offset,
-    float z_offset,
     simd_float4 color)
 {
     for (uint32_t i = 0; i < 3; i++) {
@@ -381,13 +378,13 @@ void ztriangle_to_2d(
         // y = (aspect_ratio * field_of_view_modifier * x) / z;
         // z = (z * z_normalisation) - (z * near);
         float z_modifier =
-            (input->vertices[i].z + z_offset)
+            input->vertices[i].z
             * ((far / far - near) - (far * near / far - near));
         
         recipient[i].XY[0] =
             (aspect_ratio
             * field_of_view_modifier
-            * (input->vertices[i].x + x_offset)); 
+            * input->vertices[i].x); 
         
         if (recipient[i].XY[0] != 0.0f
             && z_modifier != 0.0f)
@@ -399,7 +396,7 @@ void ztriangle_to_2d(
         // ratio
         recipient[i].XY[1] =
             field_of_view_modifier
-            * (input->vertices[i].y + y_offset);
+            * input->vertices[i].y;
         if (recipient[i].XY[1] != 0.0f
             && z_modifier != 0.0f)
         {
@@ -428,15 +425,6 @@ zTriangle x_rotate_triangle(
         i < 3;
         i++)
     {
-        assert(input->vertices[i].x >= -40.0f);
-        assert(input->vertices[i].x < 40.0f);
-
-        assert(input->vertices[i].y >= -40.0f);
-        assert(input->vertices[i].y < 40.0f);
-
-        assert(input->vertices[i].z >= -40.0f);
-        assert(input->vertices[i].z < 40.0f);
-        
         // X = x
         return_value.vertices[i].x =
             input->vertices[i].x;
@@ -470,15 +458,6 @@ zTriangle z_rotate_triangle(
         i < 3;
         i++)
     {
-        assert(input->vertices[i].x >= -40.0f);
-        assert(input->vertices[i].x < 40.0f);
-
-        assert(input->vertices[i].y >= -40.0f);
-        assert(input->vertices[i].y < 40.0f);
-
-        assert(input->vertices[i].z >= -40.0f);
-        assert(input->vertices[i].z < 40.0f);
-
         // Z = z; 
         return_value.vertices[i].z =
             input->vertices[i].z;
@@ -512,15 +491,6 @@ zTriangle y_rotate_triangle(
         i < 3;
         i++)
     {
-        assert(input->vertices[i].x >= -40.0f);
-        assert(input->vertices[i].x < 40.0f);
-
-        assert(input->vertices[i].y >= -40.0f);
-        assert(input->vertices[i].y < 40.0f);
-
-        assert(input->vertices[i].z >= -40.0f);
-        assert(input->vertices[i].z < 40.0f);
-        
         // Y = y;
         return_value.vertices[i].y =
             input->vertices[i].y;
@@ -538,6 +508,26 @@ zTriangle y_rotate_triangle(
                 * cosf(angle))
             - (input->vertices[i].x
                 * sinf(angle));
+    }
+    
+    return return_value;
+}
+
+zTriangle translate_ztriangle(
+    const zTriangle * input,
+    const float by_x,
+    const float by_y,
+    const float by_z)
+{
+    zTriangle return_value;
+    
+    for (uint32_t i = 0; i < 3; i++) {
+        return_value.vertices[i].x =
+            input->vertices[i].x + by_x;
+        return_value.vertices[i].y =
+            input->vertices[i].y + by_y;
+        return_value.vertices[i].z =
+            input->vertices[i].z + by_z;
     }
     
     return return_value;
