@@ -4,9 +4,9 @@
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 
-#include "vertex_types.h"
-#include "window_size.h"
-#include "software_renderer.h"
+#include "../shared/vertex_types.h"
+#include "../shared/window_size.h"
+#include "../shared/software_renderer.h"
 
 
 @interface
@@ -21,3 +21,4 @@ MetalKitViewDelegate: NSObject<MTKViewDelegate>
 @end
 
 #endif
+

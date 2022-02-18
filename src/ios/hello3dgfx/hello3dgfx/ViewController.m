@@ -108,7 +108,7 @@ MTKView * _my_mtk_view;
           frame_i < 3;
           frame_i++)
     {
-        BufferedVertex buffered_vertex = {};
+        BufferedVertexCollection buffered_vertex = {};
         ColoredVertex * new_vertex =
             (ColoredVertex *)mmap(
                 0,

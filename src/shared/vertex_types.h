@@ -1,24 +1,22 @@
 #ifndef VERTEX_TYPES_H
 #define VERTEX_TYPES_H
 
-#include <simd/simd.h>
-
-typedef struct ColoredVertex
-{
-    simd_float2 XY;
-    simd_float4 RGBA;
+typedef struct ColoredVertex {
+    float x;
+    float y;
+    float RGBA[4];
 } ColoredVertex;
 
-typedef struct BufferedVertex
+typedef struct BufferedVertexCollection
 {
     ColoredVertex * vertices;
     uint32_t size;
-} BufferedVertex;
+} BufferedVertexCollection;
 
 typedef struct VertexBuffer
 {
     uint32_t frame_i;
-    BufferedVertex vertex_buffers[3];
+    BufferedVertexCollection vertex_buffers[3];
 } VertexBuffer;
 
 #endif

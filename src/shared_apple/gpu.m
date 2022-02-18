@@ -1,4 +1,6 @@
 #import "gpu.h"
+#import "../shared/vertex_types.h"
+
 
 @implementation MetalKitViewDelegate
 {

@@ -21,6 +21,7 @@
 		603EDA8E27B4976C00C80F7E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 603EDA8D27B4976C00C80F7E /* Main.storyboard */; };
 		603EDA9527B6529900C80F7E /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 603EDA9427B6529900C80F7E /* MetalKit.framework */; };
 		603EDA9727B652A400C80F7E /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 603EDA9627B652A400C80F7E /* Metal.framework */; };
+		6065890227BF6F7500BE0F81 /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = 6065890127BF6F7500BE0F81 /* teapot.obj */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,21 +34,22 @@
 		6019855527B32B8D00A96EAA /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		6019855727B32B8D00A96EAA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		6019855827B32B8D00A96EAA /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		6019855F27B3307B00A96EAA /* shaders.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = shaders.metal; path = ../../../macos/shaders.metal; sourceTree = "<group>"; };
+		6019855F27B3307B00A96EAA /* shaders.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = shaders.metal; path = ../../../shared_apple/shaders.metal; sourceTree = "<group>"; };
 		602EA53D27B9D99900744AA9 /* platform_layer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = platform_layer.h; path = ../../../shared/platform_layer.h; sourceTree = "<group>"; };
 		602EA54227B9F32900744AA9 /* teddybear.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = teddybear.obj; path = ../../../resources/teddybear.obj; sourceTree = "<group>"; };
 		603EDA8127B389A200C80F7E /* vertex_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = vertex_types.h; path = ../../../shared/vertex_types.h; sourceTree = "<group>"; };
 		603EDA8227B389A200C80F7E /* software_renderer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = software_renderer.c; path = ../../../shared/software_renderer.c; sourceTree = "<group>"; };
 		603EDA8327B389A200C80F7E /* bool_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bool_types.h; path = ../../../shared/bool_types.h; sourceTree = "<group>"; };
 		603EDA8427B389A200C80F7E /* window_size.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = window_size.h; path = ../../../shared/window_size.h; sourceTree = "<group>"; };
-		603EDA8527B389A200C80F7E /* gpu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gpu.h; path = ../../../shared/gpu.h; sourceTree = "<group>"; };
+		603EDA8527B389A200C80F7E /* gpu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gpu.h; path = ../../../shared_apple/gpu.h; sourceTree = "<group>"; };
 		603EDA8627B389A200C80F7E /* software_renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = software_renderer.h; path = ../../../shared/software_renderer.h; sourceTree = "<group>"; };
 		603EDA8727B389A200C80F7E /* box.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = box.c; path = ../../../shared/box.c; sourceTree = "<group>"; };
 		603EDA8827B389A200C80F7E /* box.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = box.h; path = ../../../shared/box.h; sourceTree = "<group>"; };
-		603EDA8B27B3A67C00C80F7E /* gpu.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = gpu.m; path = ../../../shared/gpu.m; sourceTree = "<group>"; };
+		603EDA8B27B3A67C00C80F7E /* gpu.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = gpu.m; path = ../../../shared_apple/gpu.m; sourceTree = "<group>"; };
 		603EDA8D27B4976C00C80F7E /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
 		603EDA9427B6529900C80F7E /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		603EDA9627B652A400C80F7E /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		6065890127BF6F7500BE0F81 /* teapot.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = teapot.obj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -67,6 +69,7 @@
 			isa = PBXGroup;
 			children = (
 				602EA54227B9F32900744AA9 /* teddybear.obj */,
+				6065890127BF6F7500BE0F81 /* teapot.obj */,
 				6019854527B32B6600A96EAA /* hello3dgfx */,
 				6019854427B32B6600A96EAA /* Products */,
 				603EDA9327B6529900C80F7E /* Frameworks */,
@@ -183,6 +186,7 @@
 				603EDA8E27B4976C00C80F7E /* Main.storyboard in Resources */,
 				6019855627B32B8D00A96EAA /* LaunchScreen.storyboard in Resources */,
 				6019855327B32B8D00A96EAA /* Assets.xcassets in Resources */,
+				6065890227BF6F7500BE0F81 /* teapot.obj in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

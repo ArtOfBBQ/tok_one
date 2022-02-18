@@ -1,5 +1,4 @@
 #include "box.h"
-#include "stdio.h"
 #include "assert.h"
 #include "platform_layer.h"
 
@@ -21,16 +20,6 @@ void z_constants_init() {
         1.0f / tanf(field_of_view_rad);
     aspect_ratio =
         (float)WINDOW_HEIGHT / (float)WINDOW_WIDTH;
-}
-
-void print_line(char * multi_line_input) {
-
-    uint32_t i = 0;
-    while (multi_line_input[i] != '\n') {
-        printf("%c", multi_line_input[i]);
-        i++;
-    }
-    printf("\n");
 }
 
 uint32_t chars_till_next_space(
@@ -62,7 +51,7 @@ zPolygon * load_from_obj_file(char * filename) {
     zPolygon * return_value = malloc(sizeof(zPolygon));
     return_value->x = 0.0f;
     return_value->y = 0.0f;
-    return_value->z = 40.0f;
+    return_value->z = 10.0f;
     return_value->triangles_size = 0;
     
     FileBuffer * buffer = platform_read_file(filename);
@@ -113,9 +102,9 @@ zPolygon * load_from_obj_file(char * filename) {
             i++;
             
             new_vertices[new_vertex_i] = new_vertex;
-            assert(new_vertices[new_vertex_i].x = new_vertex.x);
-            assert(new_vertices[new_vertex_i].y = new_vertex.y);
-            assert(new_vertices[new_vertex_i].z = new_vertex.z);
+            assert(new_vertices[new_vertex_i].x == new_vertex.x);
+            assert(new_vertices[new_vertex_i].y == new_vertex.y);
+            assert(new_vertices[new_vertex_i].z == new_vertex.z);
             new_vertex_i++;
         } else {
             if (buffer->contents[i] == 'f') {
@@ -139,7 +128,6 @@ zPolygon * load_from_obj_file(char * filename) {
     uint32_t new_triangle_i = 0;
     while (i < buffer->size) {
         if (buffer->contents[i] == 'f') {
-            print_line(buffer->contents + i);
             
             // discard the 'f'
             i++;
@@ -154,7 +142,6 @@ zPolygon * load_from_obj_file(char * filename) {
             
             // read 1st vertex index
             uint32_t vertex_i_0 = atoi(buffer->contents + i);
-            printf("vertex_i_0: %u\n", vertex_i_0);
             i += chars_till_next_space(buffer->contents + i);
             assert(buffer->contents[i] == ' ');
             i += chars_till_next_nonspace(buffer->contents + i);
@@ -162,7 +149,6 @@ zPolygon * load_from_obj_file(char * filename) {
             
             // read 2nd vertex index
             uint32_t vertex_i_1 = atoi(buffer->contents + i);
-            printf("vertex_i_1: %u\n", vertex_i_1);
             i += chars_till_next_space(buffer->contents + i);
             assert(buffer->contents[i] == ' ');
             i += chars_till_next_nonspace(buffer->contents + i);
@@ -170,7 +156,6 @@ zPolygon * load_from_obj_file(char * filename) {
             
             // read 3rd vertex index
             uint32_t vertex_i_2 = atoi(buffer->contents + i);
-            printf("vertex_i_2: %u\n", vertex_i_2);
             i += chars_till_next_space(buffer->contents + i);
             assert(buffer->contents[i] == '\n');
             i++;
@@ -204,56 +189,6 @@ zPolygon * load_from_obj_file(char * filename) {
     
     free(buffer->contents);
     free(buffer);
-    
-    printf("triangles size: %u\n", return_value->triangles_size); 
-    for (uint32_t i = 0; i < return_value->triangles_size; i++)
-    {
-        if (
-            return_value->triangles[i].vertices[0].x ==
-                return_value->triangles[i].vertices[1].x
-            && return_value->triangles[i].vertices[0].y ==
-                return_value->triangles[i].vertices[1].y
-            && return_value->triangles[i].vertices[0].z ==
-                return_value->triangles[i].vertices[1].z)
-        {
-            printf(
-                "tri i: %u, {%f,%f,%f},{%f,%f,%f},{%f,%f,%f}\n",
-                i,
-                return_value->triangles[i].vertices[0].x,
-                return_value->triangles[i].vertices[0].y,
-                return_value->triangles[i].vertices[0].z,
-                return_value->triangles[i].vertices[1].x,
-                return_value->triangles[i].vertices[1].y,
-                return_value->triangles[i].vertices[1].z,
-                return_value->triangles[i].vertices[2].x,
-                return_value->triangles[i].vertices[2].y,
-                return_value->triangles[i].vertices[2].z);
-            assert(0);
-        }
-        
-        if (
-            return_value->triangles[i].vertices[0].x ==
-                return_value->triangles[i].vertices[2].x
-            && return_value->triangles[i].vertices[0].y ==
-                return_value->triangles[i].vertices[2].y
-            && return_value->triangles[i].vertices[0].z ==
-                return_value->triangles[i].vertices[2].z)
-        {
-            printf(
-                "triangle i: %u, {%f,%f,%f},{%f,%f,%f},{%f,%f,%f}\n",
-                i,
-                return_value->triangles[i].vertices[0].x,
-                return_value->triangles[i].vertices[0].y,
-                return_value->triangles[i].vertices[0].z,
-                return_value->triangles[i].vertices[1].x,
-                return_value->triangles[i].vertices[1].y,
-                return_value->triangles[i].vertices[1].z,
-                return_value->triangles[i].vertices[2].x,
-                return_value->triangles[i].vertices[2].y,
-                return_value->triangles[i].vertices[2].z);
-            assert(0);
-        }
-    }
     
     return return_value;
 }
@@ -368,7 +303,7 @@ zPolygon * get_box() {
 void ztriangle_to_2d(
     ColoredVertex recipient[3],
     zTriangle * input,
-    simd_float4 color)
+    float color[4])
 {
     for (uint32_t i = 0; i < 3; i++) {
         // final formula to project something {x, y, z} to
@@ -381,29 +316,31 @@ void ztriangle_to_2d(
             input->vertices[i].z
             * ((far / far - near) - (far * near / far - near));
         
-        recipient[i].XY[0] =
+        recipient[i].x =
             (aspect_ratio
             * field_of_view_modifier
             * input->vertices[i].x); 
         
-        if (recipient[i].XY[0] != 0.0f
+        if (recipient[i].x != 0.0f
             && z_modifier != 0.0f)
         {
-            recipient[i].XY[0] /= z_modifier;
+            recipient[i].x /= z_modifier;
         }
         
         // note to self: y transformation doesn't use aspect
         // ratio
-        recipient[i].XY[1] =
+        recipient[i].y =
             field_of_view_modifier
             * input->vertices[i].y;
-        if (recipient[i].XY[1] != 0.0f
+        if (recipient[i].y != 0.0f
             && z_modifier != 0.0f)
         {
-            recipient[i].XY[1] /= z_modifier;
+            recipient[i].y /= z_modifier;
         }
-        
-        recipient[i].RGBA = color / ((i * 0.25f) + 1);
+       
+        for (uint32_t j = 0; j < 4; j++) {
+            recipient[i].RGBA[j] = color[j];
+        }
     }
 }
 

@@ -7,19 +7,18 @@ typedef struct
 {
     float4 position [[position]];
     float4 color;
-
 } RasterizerData;
 
-struct metal_vertex
-{
-    float4 position;
-    float4 color;
-};
+typedef struct MTLColoredVertex {
+    float x;
+    float y;
+    float RGBA[4];
+} MTLColoredVertex;
 
 vertex RasterizerData
 vertexShader(
     uint vertexID [[ vertex_id ]],
-    constant metal_vertex * input_array [[ buffer(0) ]])
+    constant MTLColoredVertex * input_array [[ buffer(0) ]])
 {
     RasterizerData out;
     
@@ -29,12 +28,17 @@ vertexShader(
     // Z is set to 0.0 and w to 1.0 because this is 2D sample.
     out.position =
         vector_float4(
-            input_array[vertexID].position[0],
-            input_array[vertexID].position[1],
+            input_array[vertexID].x,
+            input_array[vertexID].y,
             0.0,
             1.0);
     
-    out.color = input_array[vertexID].color;
+    out.color =
+        vector_float4(
+            input_array[vertexID].RGBA[0],
+            input_array[vertexID].RGBA[1],
+            input_array[vertexID].RGBA[2],
+            input_array[vertexID].RGBA[3]);
     
     return out;
 }

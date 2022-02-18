@@ -1,6 +1,8 @@
 #ifndef SOFTWARE_RENDERER_H
 #define SOFTWARE_RENDERER_H
 
+#include "inttypes.h"
+
 #include "window_size.h"
 #include "vertex_types.h"
 #include "box.h"

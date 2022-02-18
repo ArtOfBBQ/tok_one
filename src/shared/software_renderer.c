@@ -4,7 +4,7 @@
 void renderer_init() {
     // box = get_box();
     
-    box = load_from_obj_file("teddybear.obj");
+    box = load_from_obj_file("teapot.obj");
 }
 
 void software_render(
@@ -145,7 +145,7 @@ void software_render(
             float brightness =
                 0.85f - dist_modifier;
             
-            simd_float4 triangle_color = {
+            float triangle_color[4] = {
                 0.35 + brightness,
                 0.20 + brightness,
                 0.15 + brightness,
@@ -191,12 +191,12 @@ void rotate_triangle(
     const float angle)
 {
     for (uint32_t i = 0; i < 3; i++) {
-        to_rotate[i].XY[0] = 
-            (cosf(angle) * to_rotate[i].XY[0])
-                + (sinf(angle) * to_rotate[i].XY[1]);
-        to_rotate[i].XY[1] =
-            (-sinf(angle) * to_rotate[i].XY[0])
-                + (cosf(angle) * to_rotate[i].XY[1]);
+        to_rotate[i].x = 
+            (cosf(angle) * to_rotate[i].x)
+                + (sinf(angle) * to_rotate[i].y);
+        to_rotate[i].y =
+            (-sinf(angle) * to_rotate[i].x)
+                + (cosf(angle) * to_rotate[i].y);
     }
 }
 

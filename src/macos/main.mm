@@ -1,3 +1,5 @@
+#include <simd/simd.h>
+
 // functions we must implement
 #include "../shared/platform_layer.h" 
 
@@ -6,7 +8,7 @@
 #include "../shared/vertex_types.h"
 #include "../shared/box.h"
 #include "../shared/software_renderer.h"
-#include "../shared/gpu.h"
+#include "../shared_apple/gpu.h"
 
 @interface
 GameWindowDelegate: NSObject<NSWindowDelegate>
@@ -25,7 +27,7 @@ of iOS, where reading your own app's files is a security
 ordeal
 */
 FileBuffer * platform_read_file(char * filename) {
-
+    
     FileBuffer * return_value = malloc(sizeof(FileBuffer));
     
     FILE * modelfile = fopen(
@@ -53,7 +55,7 @@ FileBuffer * platform_read_file(char * filename) {
         printf("Error - expected bytes read equal to fsize\n");
         return NULL;
     }
-
+    
     return_value->contents = buffer;
     return_value->size = bytes_read;
     
@@ -145,7 +147,7 @@ int main(int argc, const char * argv[])
     }
     
     uint32_t PageSize = getpagesize();
-    uint32_t BufferedVertexSize = PageSize*1000;
+    uint32_t BufferedVertexSize = PageSize * 1000;
     
     VertexBuffer RenderCommands = {};
 
@@ -156,7 +158,7 @@ int main(int argc, const char * argv[])
          frame_i < 3;
          frame_i++)
     {
-        BufferedVertex buffered_vertex = {};
+        BufferedVertexCollection buffered_vertex = {};
         buffered_vertex.vertices =
             (ColoredVertex *)mmap(
                 0,
@@ -165,6 +167,7 @@ int main(int argc, const char * argv[])
                 MAP_PRIVATE | MAP_ANON,
                 -1,
                 0);
+        
         RenderCommands.vertex_buffers[frame_i] =
             buffered_vertex;
         
@@ -172,9 +175,13 @@ int main(int argc, const char * argv[])
             [MetalDevice
                 newBufferWithBytesNoCopy:
                     buffered_vertex.vertices
-                length: BufferedVertexSize 
-                options: MTLResourceStorageModeShared
-                deallocator: nil];
+                length:
+                    BufferedVertexSize
+                options:
+                    MTLResourceStorageModeShared
+                deallocator:
+                    nil];
+        
         [mac_vertex_buffers addObject: MetalBufferedVertex];
     }
     

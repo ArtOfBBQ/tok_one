@@ -2,6 +2,7 @@
 #define BOX_H
 
 #include "stdlib.h"
+#include "math.h"
 
 #include "vertex_types.h"
 #include "bool_types.h"
@@ -45,7 +46,7 @@ zPolygon * get_box(void);
 void ztriangle_to_2d(
     ColoredVertex recipient[3],
     zTriangle * input,
-    simd_float4 color);
+    float color[4]);
 
 zTriangle x_rotate_triangle(
     const zTriangle * input, const float angle);
