@@ -1,6 +1,4 @@
 #include "box.h"
-#include "assert.h"
-#include "platform_layer.h"
 
 float near = 0.1f;
 float far = 60.0f;

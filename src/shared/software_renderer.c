@@ -2,9 +2,9 @@
 #include "assert.h"
 
 void renderer_init() {
-    // box = get_box();
+    box = get_box();
     
-    box = load_from_obj_file("teapot.obj");
+    // box = load_from_obj_file("teddybear.obj");
 }
 
 void software_render(

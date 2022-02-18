@@ -4,10 +4,12 @@
 #include "stdlib.h"
 #include "math.h"
 #include "inttypes.h"
+#include "assert.h"
 
 #include "vertex_types.h"
 #include "bool_types.h"
 #include "window_size.h"
+#include "platform_layer.h"
 
 // projection constants
 extern float near;
