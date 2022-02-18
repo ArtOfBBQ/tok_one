@@ -3,6 +3,7 @@
 
 #include "stdlib.h"
 #include "math.h"
+#include "inttypes.h"
 
 #include "vertex_types.h"
 #include "bool_types.h"
