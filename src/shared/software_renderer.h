@@ -10,7 +10,8 @@
 static zPolygon * box;
 static zVertex camera = {0.0f, 0.0f, 0.0f};
 
-void renderer_init(void);
+void init_renderer(void);
+void free_renderer(void);
 
 void software_render(
     ColoredVertex * next_gpu_workload,

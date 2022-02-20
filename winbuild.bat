@@ -11,7 +11,7 @@ copy resources\teapot.obj build\windows\teapot.obj
 copy resources\teddybear.obj build\windows\teddybear.obj
 
 echo compile program...
-gcc src\windows\main.c src\shared\window_size.c src\shared\box.c src\shared\software_renderer.c -o build\windows\hello3dgfx.exe
+gcc -g -Wall src\windows\main.c src\shared\window_size.c src\shared\box.c src\shared\software_renderer.c -o build\windows\hello3dgfx.exe
 
 echo running program...
 pushd build\windows\

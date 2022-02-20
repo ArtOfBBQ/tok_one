@@ -1,10 +1,14 @@
 #include "software_renderer.h"
 #include "assert.h"
 
-void renderer_init() {
+void init_renderer() {
     box = get_box();
     
     // box = load_from_obj_file("teddybear.obj");
+}
+
+void free_renderer() {
+    free_zpolygon(box);
 }
 
 void software_render(
