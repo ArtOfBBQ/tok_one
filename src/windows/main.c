@@ -1,14 +1,16 @@
-// functions we must implement
 #include "../shared/platform_layer.h"
 
 // functions for us to use
 #include "../shared/software_renderer.h"
 #include "../shared/box.h"
 
-#include "windows.h"
-#include "stdio.h"
-#include "stdlib.h"
-#include "assert.h"
+#include <windows.h>
+#include <gl/gl.h>
+
+// TODO: remove these
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 
 /*
 This functionality must be provided by the platform because
@@ -51,6 +53,8 @@ FileBuffer * platform_read_file(char * filename) {
     return return_value;
 }
 
+// Windows will send us messages when something
+// happens to our window
 LRESULT CALLBACK
 MainWindowCallback(
     HWND window_handle,
@@ -82,6 +86,40 @@ MainWindowCallback(
             printf("got a WM_ACTIVEATEAPP message...\n");
             break;
         }
+        case WM_PAINT:
+        {
+            // test if we can draw anything with opengl
+            glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+            glClearColor(1.0f, 0.0f, 1.0f, 0.0f);
+            glClear(GL_COLOR_BUFFER_BIT);
+            // HDC device_context = CreateCompatibleDC(0);
+            PAINTSTRUCT paint;
+            HDC device_context = BeginPaint(
+                /* HWND handle: */ window_handle,
+                /* [out] LPPAINTSTRUCT lpPaint: */ &paint);
+            SwapBuffers(device_context);
+            
+            #if 0
+            PAINTSTRUCT paint;
+            HDC device_context = BeginPaint(
+                /* HWND handle: */ window_handle,
+                /* [out] LPPAINTSTRUCT lpPaint: */ &paint);
+            int x = paint.rcPaint.left;
+            int y = paint.rcPaint.top;
+            int height =
+                paint.rcPaint.bottom - paint.rcPaint.top;
+            int width =
+                paint.rcPaint.right - paint.rcPaint.left;
+            
+            
+            EndPaint(
+                /* HWND hWnd: */ window_handle,
+                /* const PAINTSTRUCT *lpPaint: */ &paint);
+            #endif
+            
+            break;
+                
+        }
         default:
         {
             printf("got an unhandled message...\n");
@@ -98,6 +136,53 @@ MainWindowCallback(
     return return_value;
 }
 
+// this magical cruft is necessary and I think
+// you should carefully read the documentation
+// and memorize the meaning if you really want to learn
+// openGL // windows programming. I'm just going to type
+// it out and get it working for now, don't actually
+// understand the initialization options
+// if you try to wglCreateContext() without the
+// weird pixel option settings first, it will fail
+void Win32InitOpenGL(HWND window) {
+    HDC window_dc = GetDC(window);
+    
+    PIXELFORMATDESCRIPTOR desired = {};
+    desired.nSize = sizeof(desired);
+    desired.nVersion = 1;
+    desired.dwFlags =
+        PFD_SUPPORT_OPENGL |
+        PFD_DRAW_TO_WINDOW |
+        PFD_DOUBLEBUFFER;
+    desired.cColorBits = 24;
+    desired.cAlphaBits = 8;
+    desired.iLayerType = PFD_MAIN_PLANE;
+    
+    int suggest_pixel_format_i = ChoosePixelFormat(
+        window_dc,
+        &desired);
+    PIXELFORMATDESCRIPTOR suggested;
+    DescribePixelFormat(
+        window_dc,
+        suggest_pixel_format_i,
+        sizeof(suggested),
+        &suggested);
+    SetPixelFormat(
+        window_dc,
+        suggest_pixel_format_i,
+        &suggested);
+    
+    HGLRC openglrc = wglCreateContext(window_dc);
+    if (wglMakeCurrent(window_dc, openglrc)) {
+        printf("wglMakeCurrent() succeeded\n");
+    } else {
+        printf("failed wglmakecurrent\n");
+        assert(false);
+    }
+}
+
+// This is basically "int main()" for windows
+// applications only
 int CALLBACK WinMain(
     HINSTANCE hInstance,
     HINSTANCE hPrevInstance,
@@ -105,19 +190,21 @@ int CALLBACK WinMain(
     int nCmdShow)
 {
     WNDCLASS window_params = {};
-    window_params.style = CS_OWNDC | CS_HREDRAW | CS_HREDRAW;
+    window_params.style =
+        CS_OWNDC | CS_HREDRAW | CS_HREDRAW;
     window_params.lpfnWndProc = MainWindowCallback;
     window_params.hInstance = hInstance;
     // window_params.hIcon = ? // TODO: set icon here
     window_params.lpszClassName = "hello3dgfxwindowclass";
     
     if (RegisterClass(&window_params)) {
-
+        
         printf("RegisterClass was succesful\n");
         HWND window_handle =
             CreateWindowEx(
                 /* DWORD dwExStyle:     */ 0,
-                /* LPCTSTR lpClassName: */ window_params.lpszClassName,
+                /* LPCTSTR lpClassName: */
+                    window_params.lpszClassName,
                 /* LPCTSTR lpWindowName:*/ "hello3dgfx",
                 /* DWORD dwStyle:       */
                     WS_OVERLAPPEDWINDOW | WS_VISIBLE,
@@ -131,11 +218,22 @@ int CALLBACK WinMain(
                 /* LPVOID lpParam:      */ 0);
         
         if (window_handle) {
-            printf("window_handle was created succesfully.\n");
+            printf(
+                "window_handle was created succesfully.\n");
+           
+            Win32InitOpenGL(window_handle);
+            
+            
+            Sleep(2);
+            
             for (;;)
             {
                 MSG message;
-                BOOL message_result = GetMessage(&message, 0, 0, 0);
+                BOOL message_result = GetMessage(
+                    &message,
+                    0,
+                    0,
+                    0);
                 if (message_result) {
                     printf("got a message..\n");
                     TranslateMessage(&message);
