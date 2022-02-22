@@ -92,13 +92,21 @@ MainWindowCallback(
             glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
             glClearColor(1.0f, 0.0f, 1.0f, 0.0f);
             glClear(GL_COLOR_BUFFER_BIT);
-            // HDC device_context = CreateCompatibleDC(0);
+            
+            glBegin(GL_TRIANGLES);
+            glVertex2f(0.5f, 0.5f);
+            glVertex2f(-0.9f, 0.5f);
+            glVertex2f(-0.9f, -0.9f);
+            glEnd();
+            
             PAINTSTRUCT paint;
             HDC device_context = BeginPaint(
                 /* HWND handle: */ window_handle,
                 /* [out] LPPAINTSTRUCT lpPaint: */ &paint);
             SwapBuffers(device_context);
             
+            // this is how to draw with the ancient
+            // windows API
             #if 0
             PAINTSTRUCT paint;
             HDC device_context = BeginPaint(
