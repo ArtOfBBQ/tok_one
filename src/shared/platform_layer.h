@@ -5,6 +5,9 @@ These functions must be provided by the platform layer!
 #ifndef PLATFORM_LAYER_H
 #define PLATFORM_LAYER_H
 
+#include <stdlib.h>
+#include <stdio.h>
+
 #include "inttypes.h"
 
 typedef struct FileBuffer {
