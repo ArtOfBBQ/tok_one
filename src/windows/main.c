@@ -4,6 +4,7 @@
 #include "../shared/software_renderer.h"
 #include "../shared/box.h"
 #include "../shared/bool_types.h"
+#include "../shared_windows_macos/platform_read_file.c"
 
 #include <windows.h>
 #include <gl/gl.h>
@@ -19,47 +20,6 @@
 global_variable bool32_t application_running = true;
 global_variable ColoredVertex * next_gpu_workload;
 global_variable uint32_t next_gpu_workload_size;
-
-/*
-This functionality must be provided by the platform because
-of iOS, where reading your own app's files is a security
-ordeal
-*/
-FileBuffer * platform_read_file(char * filename) {
-    
-    FileBuffer * return_value = malloc(sizeof(FileBuffer));
-    
-    FILE * textfile = fopen(
-        filename,
-        "rb");
-    
-    fseek(textfile, 0, SEEK_END);
-    unsigned long fsize = (unsigned long)ftell(textfile);
-    fseek(textfile, 0, SEEK_SET);
-    
-    char * buffer = malloc(fsize);
-    
-    size_t bytes_read = fread(
-        /* ptr: */
-            buffer,
-        /* size of each element to be read: */
-            1,
-        /* nmemb (no of members) to read: */
-            fsize,
-        /* stream: */
-            textfile);
-    
-    fclose(textfile);
-    if (bytes_read != fsize) {
-        printf("Error - expected bytes read equal to fsize\n");
-        return NULL;
-    }
-    
-    return_value->contents = buffer;
-    return_value->size = bytes_read;
-    
-    return return_value;
-}
 
 // Ask windows to paint our window with opengl
 void opengl_update_window(HWND window) {
