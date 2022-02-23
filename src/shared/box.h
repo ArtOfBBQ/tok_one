@@ -1,10 +1,10 @@
 #ifndef BOX_H
 #define BOX_H
 
-#include "stdlib.h"
-#include "math.h"
-#include "inttypes.h"
-#include "assert.h"
+#include <stdlib.h>
+#include <math.h>
+#include <inttypes.h>
+#include <assert.h>
 
 #include "vertex_types.h"
 #include "bool_types.h"
@@ -21,7 +21,7 @@ extern float field_of_view_rad;
 extern float field_of_view_modifier;
 extern float aspect_ratio;
 
-void z_constants_init(void);
+void init_z_constants(void);
 
 typedef struct zVertex {
     float x;

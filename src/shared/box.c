@@ -9,7 +9,7 @@ float field_of_view_rad;
 float field_of_view_modifier;
 float aspect_ratio;
 
-void z_constants_init() {
+void init_z_constants() {
     z_normalisation = far / (far - near);
     field_of_view_angle = field_of_view * 0.5f;
     field_of_view_rad =
@@ -49,7 +49,7 @@ zPolygon * load_from_obj_file(char * filename) {
     zPolygon * return_value = malloc(sizeof(zPolygon));
     return_value->x = 0.0f;
     return_value->y = 0.0f;
-    return_value->z = 10.0f;
+    return_value->z = 50.0f;
     return_value->triangles_size = 0;
     
     FileBuffer * buffer = platform_read_file(filename);
@@ -100,9 +100,14 @@ zPolygon * load_from_obj_file(char * filename) {
             i++;
             
             new_vertices[new_vertex_i] = new_vertex;
-            assert(new_vertices[new_vertex_i].x == new_vertex.x);
-            assert(new_vertices[new_vertex_i].y == new_vertex.y);
-            assert(new_vertices[new_vertex_i].z == new_vertex.z);
+            assert(
+                new_vertices[new_vertex_i].x == new_vertex.x);
+            assert(
+                new_vertices[new_vertex_i].y
+                    == new_vertex.y);
+            assert(
+                new_vertices[new_vertex_i].z
+                    == new_vertex.z);
             new_vertex_i++;
         } else {
             if (buffer->contents[i] == 'f') {
@@ -200,7 +205,7 @@ zPolygon * get_box() {
     
     box->x = 0.0;
     box->y = 0.0;
-    box->z = 8.0f;
+    box->z = 20.0f;
     box->x_angle = 0.5f;
     box->y_angle = 0.5f;
     box->z_angle = 0.5f;
@@ -306,9 +311,8 @@ void ztriangle_to_2d(
     for (uint32_t i = 0; i < 3; i++) {
         // final formula to project something {x, y, z} to
         // 2D screen:
-        // *z part is not necessary yet but will be coming up
-        // x = (aspect_ratio * field_of_view_modifier * x) / z;
-        // y = (aspect_ratio * field_of_view_modifier * x) / z;
+        // x = (aspect_ratio * field_of_view_mod * x) / z;
+        // y = (aspect_ratio * field_of_view_mod * x) / z;
         // z = (z * z_normalisation) - (z * near);
         float z_modifier =
             input->vertices[i].z
@@ -325,8 +329,8 @@ void ztriangle_to_2d(
             recipient[i].x /= z_modifier;
         }
         
-        // note to self: y transformation doesn't use aspect
-        // ratio
+        // note to self: y transformation
+        // doesn't use aspect ratio
         recipient[i].y =
             field_of_view_modifier
             * input->vertices[i].y;

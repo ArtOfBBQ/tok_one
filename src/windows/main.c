@@ -3,6 +3,7 @@
 // functions for us to use
 #include "../shared/software_renderer.h"
 #include "../shared/box.h"
+#include "../shared/bool_types.h"
 
 #include <windows.h>
 #include <gl/gl.h>
@@ -11,6 +12,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+
+#define global_variable static
+
+// TODO: clean up globals
+global_variable bool32_t application_running = true;
+global_variable ColoredVertex * next_gpu_workload;
+global_variable uint32_t next_gpu_workload_size;
 
 /*
 This functionality must be provided by the platform because
@@ -53,6 +61,46 @@ FileBuffer * platform_read_file(char * filename) {
     return return_value;
 }
 
+// Ask windows to paint our window with opengl
+void opengl_update_window(HWND window) {
+    next_gpu_workload_size = 0;
+    software_render(
+        next_gpu_workload,
+        &next_gpu_workload_size);
+    
+    glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    
+    glBegin(GL_TRIANGLES);
+    
+    for (
+        uint32_t i = 0;
+        i < next_gpu_workload_size;
+        i++)
+    {
+        glColor3f(
+            next_gpu_workload[i].RGBA[0],
+            next_gpu_workload[i].RGBA[1],
+            next_gpu_workload[i].RGBA[2]);
+        glVertex2f(
+            next_gpu_workload[i].x,
+            next_gpu_workload[i].y);
+    }
+    glEnd();
+    
+    // We don't need this paint struct,
+    // we just want to get the device_context
+    // so this seems wrong but I don't know how
+    // else to get it
+    // PAINTSTRUCT paint;
+    // HDC device_context = BeginPaint(
+    //     /* HWND handle: */ window_handle,
+    //     /* [out] LPPAINTSTRUCT lpPaint: */ &paint);
+    HDC device_context = GetDC(window);
+    SwapBuffers(device_context);
+}
+
 // Windows will send us messages when something
 // happens to our window
 LRESULT CALLBACK
@@ -73,12 +121,12 @@ MainWindowCallback(
         }
         case WM_DESTROY:
         {
-            printf("got a WM_DESTROY message...\n");
+            application_running = false;
             break;
         }
         case WM_CLOSE:
         {
-            printf("got a WM_CLOSE message...\n");
+            application_running = false;
             break;
         }
         case WM_ACTIVATEAPP:
@@ -88,49 +136,12 @@ MainWindowCallback(
         }
         case WM_PAINT:
         {
-            // test if we can draw anything with opengl
-            glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-            glClearColor(1.0f, 0.0f, 1.0f, 0.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-            
-            glBegin(GL_TRIANGLES);
-            glVertex2f(0.5f, 0.5f);
-            glVertex2f(-0.9f, 0.5f);
-            glVertex2f(-0.9f, -0.9f);
-            glEnd();
-            
-            PAINTSTRUCT paint;
-            HDC device_context = BeginPaint(
-                /* HWND handle: */ window_handle,
-                /* [out] LPPAINTSTRUCT lpPaint: */ &paint);
-            SwapBuffers(device_context);
-            
-            // this is how to draw with the ancient
-            // windows API
-            #if 0
-            PAINTSTRUCT paint;
-            HDC device_context = BeginPaint(
-                /* HWND handle: */ window_handle,
-                /* [out] LPPAINTSTRUCT lpPaint: */ &paint);
-            int x = paint.rcPaint.left;
-            int y = paint.rcPaint.top;
-            int height =
-                paint.rcPaint.bottom - paint.rcPaint.top;
-            int width =
-                paint.rcPaint.right - paint.rcPaint.left;
-            
-            
-            EndPaint(
-                /* HWND hWnd: */ window_handle,
-                /* const PAINTSTRUCT *lpPaint: */ &paint);
-            #endif
-            
+            opengl_update_window(window_handle);
             break;
-                
         }
         default:
         {
-            printf("got an unhandled message...\n");
+            // printf("got an unhandled message...\n");
             // use the default handler
             return_value = DefWindowProc(
                 window_handle,
@@ -228,13 +239,14 @@ int CALLBACK WinMain(
         if (window_handle) {
             printf(
                 "window_handle was created succesfully.\n");
-           
-            Win32InitOpenGL(window_handle);
+          
+            init_z_constants();
+            init_renderer();
+            Win32InitOpenGL(window_handle); 
+            next_gpu_workload =
+                malloc(sizeof(ColoredVertex) * 10000);
             
-            
-            Sleep(2);
-            
-            for (;;)
+            while (application_running)
             {
                 MSG message;
                 BOOL message_result = GetMessage(
@@ -243,7 +255,6 @@ int CALLBACK WinMain(
                     0,
                     0);
                 if (message_result) {
-                    printf("got a message..\n");
                     TranslateMessage(&message);
                     DispatchMessage(&message);
                 } else {
@@ -263,29 +274,3 @@ int CALLBACK WinMain(
     return 0;
 }
 
-/*
-int main() {
-    assert(box == NULL);
-    
-    z_constants_init();
-    free_renderer();
-    
-    printf("hello, windows!\n");
-    printf("WINDOW_WIDTH: %f\n", WINDOW_WIDTH);
-    printf("WINDOW_HEIGHT: %f\n", WINDOW_HEIGHT);
-    
-    ColoredVertex * next_workload = 
-        malloc(sizeof(ColoredVertex) * 5);
-    uint32_t next_workload_size = 0;
-    software_render(next_workload, &next_workload_size);
-    
-    printf(
-        "vertices obtained in 1st frame: %u\n",
-        next_workload_size);
-    
-    free(next_workload);
-    free_renderer();
-    
-    return 0;
-}
-*/

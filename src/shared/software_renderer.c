@@ -1,10 +1,9 @@
 #include "software_renderer.h"
-#include "assert.h"
 
 void init_renderer() {
-    box = get_box();
+    // box = get_box();
     
-    // box = load_from_obj_file("teddybear.obj");
+    box = load_from_obj_file("teddybear.obj");
 }
 
 void free_renderer() {
@@ -34,7 +33,9 @@ void software_render(
         box->z_angle = 0.0f;
     }
     
-    if (box->triangles_size == 0) { return; }
+    if (box->triangles_size == 0) {
+        return;
+    }
     
     // x-rotate all triangles
     zTriangle x_rotated_triangles[box->triangles_size];
@@ -45,7 +46,6 @@ void software_render(
                 box->x_angle); 
     }
     
-    // z-rotate all triangles
     zTriangle z_rotated_triangles[box->triangles_size];
     for (uint32_t i = 0; i < box->triangles_size; i++) {
         z_rotated_triangles[i] =
@@ -54,7 +54,6 @@ void software_render(
                 box->z_angle); 
     }
     
-    // y-rotate all triangles
     zTriangle y_rotated_triangles[box->triangles_size];
     for (uint32_t i = 0; i < box->triangles_size; i++) {
         y_rotated_triangles[i] =
@@ -63,7 +62,6 @@ void software_render(
                 box->y_angle);
     }
    
-    // translate all triangles to their parent's xyz position
     zTriangle triangles_to_draw[box->triangles_size];
     for (uint32_t i = 0; i < box->triangles_size; i++) {
         triangles_to_draw[i] = 
@@ -114,9 +112,12 @@ void software_render(
                 - triangles_to_draw[i].vertices[0].z;
         
         // note to self: this is copied exactly from OLC vid
-        normal.x = (line1.y * line2.z) - (line1.z * line2.y);
-        normal.y = (line1.z * line2.x) - (line1.x * line2.z);
-        normal.z = (line1.x * line2.y) - (line1.y * line2.x);
+        normal.x =
+            (line1.y * line2.z) - (line1.z * line2.y);
+        normal.y =
+            (line1.z * line2.x) - (line1.x * line2.z);
+        normal.z =
+            (line1.x * line2.y) - (line1.y * line2.x);
         
         // note: this is copied exactly from the OLC vid
         float sum_squares =
@@ -142,7 +143,8 @@ void software_render(
         if (perspective_dot_product < 0.0f) {
             ColoredVertex triangle_to_draw[3];
             
-            float avg_z = get_avg_z(triangles_to_draw + i);
+            float avg_z =
+                get_avg_z(triangles_to_draw + i);
             float dist_modifier = avg_z / far;
             // assert(dist_modifier > 0.0f);
             // assert(dist_modifier < 1.0f);
@@ -150,9 +152,9 @@ void software_render(
                 0.85f - dist_modifier;
             
             float triangle_color[4] = {
-                0.35 + brightness,
-                0.20 + brightness,
-                0.15 + brightness,
+                fmin(0.35 + brightness, 1.0f),
+                fmin(0.20 + brightness, 1.0f),
+                fmin(0.15 + brightness, 1.0f),
                 1.0f};
             
             ztriangle_to_2d(
@@ -176,6 +178,8 @@ void draw_triangle(
     uint32_t * vertex_count_recipient,
     ColoredVertex input[3])
 {
+    assert(vertices_recipient != NULL);
+    
     uint32_t vertex_i = *vertex_count_recipient;
     
     vertices_recipient[vertex_i] = input[0];
