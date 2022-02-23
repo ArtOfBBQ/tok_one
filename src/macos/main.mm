@@ -64,7 +64,7 @@ FileBuffer * platform_read_file(char * filename) {
 
 int main(int argc, const char * argv[]) 
 {
-    z_constants_init();
+    init_z_constants();
     
     NSRect WindowRectangle = NSMakeRect(
         0.0f,
@@ -196,7 +196,7 @@ int main(int argc, const char * argv[])
     [ViewDelegate setCommand_queue: CommandQueue];
     [ViewDelegate configureMetal];
     
-    renderer_init();
+    init_renderer();
     
     return NSApplicationMain(argc, argv);
 }
