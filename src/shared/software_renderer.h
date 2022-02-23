@@ -5,10 +5,12 @@
 
 #include "window_size.h"
 #include "vertex_types.h"
-#include "box.h"
+#include "zpolygon.h"
+#include "static_redefinitions.h"
 
-static zPolygon * box;
-static zVertex camera = {0.0f, 0.0f, 0.0f};
+global_variable zPolygon * zpolygons_to_render[1000];
+global_variable uint32_t zpolygons_to_render_size;
+global_variable zVertex camera = {0.0f, 0.0f, 0.0f};
 
 void init_renderer(void);
 void free_renderer(void);

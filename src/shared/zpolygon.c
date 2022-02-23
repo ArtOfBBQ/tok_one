@@ -1,22 +1,24 @@
-#include "box.h"
+#include "zpolygon.h"
 
-float near = 0.1f;
-float far = 60.0f;
-float z_normalisation;
-float field_of_view = 90.0f;
-float field_of_view_angle;
-float field_of_view_rad;
-float field_of_view_modifier;
-float aspect_ratio;
+void init_projection_constants() {
 
-void init_z_constants() {
-    z_normalisation = far / (far - near);
-    field_of_view_angle = field_of_view * 0.5f;
-    field_of_view_rad =
-        (field_of_view_angle / 180.0f) * 3.14159f;
-    field_of_view_modifier =
-        1.0f / tanf(field_of_view_rad);
-    aspect_ratio =
+    ProjectionConstants * pjc = &projection_constants;
+    
+    pjc->near = 0.5f;
+    pjc->far = 60.0f;
+    pjc->field_of_view = 90.0f;
+    pjc->z_normalisation =
+        pjc->far /
+            (pjc->far -
+                pjc->near);
+    pjc->field_of_view_angle =
+        pjc->field_of_view * 0.5f;
+    pjc->field_of_view_rad =
+        (pjc->field_of_view_angle / 180.0f)
+            * 3.14159f;
+    pjc->field_of_view_modifier =
+        1.0f / tanf(pjc->field_of_view_rad);
+    pjc->aspect_ratio =
         (float)WINDOW_HEIGHT / (float)WINDOW_WIDTH;
 }
 
@@ -308,6 +310,8 @@ void ztriangle_to_2d(
     zTriangle * input,
     float color[4])
 {
+    ProjectionConstants * pjc = &projection_constants;
+    
     for (uint32_t i = 0; i < 3; i++) {
         // final formula to project something {x, y, z} to
         // 2D screen:
@@ -316,11 +320,12 @@ void ztriangle_to_2d(
         // z = (z * z_normalisation) - (z * near);
         float z_modifier =
             input->vertices[i].z
-            * ((far / far - near) - (far * near / far - near));
+                * ((pjc->far / pjc->far - pjc->near)
+                - (pjc->far * pjc->near / pjc->far - pjc->near));
         
         recipient[i].x =
-            (aspect_ratio
-            * field_of_view_modifier
+            (pjc->aspect_ratio
+            * pjc->field_of_view_modifier
             * input->vertices[i].x); 
         
         if (recipient[i].x != 0.0f
@@ -332,7 +337,7 @@ void ztriangle_to_2d(
         // note to self: y transformation
         // doesn't use aspect ratio
         recipient[i].y =
-            field_of_view_modifier
+            pjc->field_of_view_modifier
             * input->vertices[i].y;
         if (recipient[i].y != 0.0f
             && z_modifier != 0.0f)

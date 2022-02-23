@@ -1,13 +1,25 @@
 #include "software_renderer.h"
 
 void init_renderer() {
-    // box = get_box();
+    zpolygons_to_render_size = 0;
     
-    box = load_from_obj_file("teddybear.obj");
+    for (uint32_t i = 0; i < 2; i++) {
+        zpolygons_to_render[i] =
+            1 ?
+                load_from_obj_file("teddybear.obj")
+                : get_box();
+        zpolygons_to_render_size += 1;
+
+        zpolygons_to_render[i]->x = -15.5f + (i * 7.0f);
+        zpolygons_to_render[i]->y = -15.5f + (i * 7.0f);
+        zpolygons_to_render[i]->z = (30.0f + i * 30.0f);
+    }
 }
 
 void free_renderer() {
-    free_zpolygon(box);
+    for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
+        free_zpolygon(zpolygons_to_render[i]);
+    }
 }
 
 void software_render(
@@ -18,68 +30,70 @@ void software_render(
         return;
     }
     
-    box->x_angle += 0.08f;
-    if (box->x_angle > 6.28) { 
-        box->x_angle = 0.0f;
-    }
-    
-    box->y_angle += 0.003f;
-    if (box->y_angle > 6.28) { 
-        box->y_angle = 0.0f;
-    }
-    
-    box->z_angle += 0.005f;
-    if (box->z_angle > 6.28) {
-        box->z_angle = 0.0f;
-    }
-    
-    if (box->triangles_size == 0) {
+    if (zpolygons_to_render_size == 0) {
         return;
     }
-    
-    // x-rotate all triangles
-    zTriangle x_rotated_triangles[box->triangles_size];
-    for (uint32_t i = 0; i < box->triangles_size; i++) {
-        x_rotated_triangles[i] =
-            x_rotate_triangle(
-                box->triangles + i,
-                box->x_angle); 
+
+    for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
+        zpolygons_to_render[i]->x += 0.05;
+        zpolygons_to_render[i]->y += 0.05;
+        zpolygons_to_render[i]->z += 0.05;
+        zpolygons_to_render[i]->x_angle += 0.04f;
+        zpolygons_to_render[i]->y_angle += 0.04f;
     }
     
-    zTriangle z_rotated_triangles[box->triangles_size];
-    for (uint32_t i = 0; i < box->triangles_size; i++) {
-        z_rotated_triangles[i] =
-            z_rotate_triangle(
-                &x_rotated_triangles[i],
-                box->z_angle); 
+    uint32_t triangles_to_render = 0;
+    for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
+        for (
+            uint32_t j = 0;
+            j < zpolygons_to_render[i]->triangles_size;
+            j++)
+        {
+            triangles_to_render++;
+        }
     }
     
-    zTriangle y_rotated_triangles[box->triangles_size];
-    for (uint32_t i = 0; i < box->triangles_size; i++) {
-        y_rotated_triangles[i] =
-            y_rotate_triangle(
-                &z_rotated_triangles[i],
-                box->y_angle);
-    }
-   
-    zTriangle triangles_to_draw[box->triangles_size];
-    for (uint32_t i = 0; i < box->triangles_size; i++) {
-        triangles_to_draw[i] = 
-            translate_ztriangle(
-                &y_rotated_triangles[i],
-                /* x: */ box->x,
-                /* y: */ box->y,
-                /* z: */ box->z);
+    // rotate all triangles
+    zTriangle triangles_to_draw[triangles_to_render];
+    zTriangle x_rotated;
+    zTriangle y_rotated;
+    zTriangle z_rotated;
+    zTriangle translated;
+    uint32_t t = 0;
+    for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
+        for (
+            uint32_t j = 0;
+            j < zpolygons_to_render[i]->triangles_size;
+            j++)
+        {
+            assert(t < triangles_to_render);
+            x_rotated = x_rotate_triangle(
+                zpolygons_to_render[i]->triangles + j,
+                zpolygons_to_render[i]->x_angle);
+            y_rotated = y_rotate_triangle(
+                &x_rotated,
+                zpolygons_to_render[i]->y_angle);
+            z_rotated = z_rotate_triangle(
+                &y_rotated,
+                zpolygons_to_render[i]->z_angle);
+            
+            triangles_to_draw[t++] =
+                translate_ztriangle(
+                    &z_rotated,
+                    /* x: */ zpolygons_to_render[i]->x,
+                    /* y: */ zpolygons_to_render[i]->y,
+                    /* z: */ zpolygons_to_render[i]->z);
+        }
     }
     
     // sort all triangles so the most distant ones can be
     // drawn first 
     z_sort(
         &triangles_to_draw[0],
-        box->triangles_size);
+        triangles_to_render);
      
     for (
-        int32_t i = box->triangles_size - 1;
+        int32_t i = triangles_to_render - 1;
         i >= 0;
         i -= 1)
     {
@@ -90,7 +104,6 @@ void software_render(
         zVertex line1;
         zVertex line2;
         
-        // note to self: copied exactly from OLC vid
         line1.x =
             triangles_to_draw[i].vertices[1].x
                 - triangles_to_draw[i].vertices[0].x;
@@ -111,7 +124,6 @@ void software_render(
             triangles_to_draw[i].vertices[2].z
                 - triangles_to_draw[i].vertices[0].z;
         
-        // note to self: this is copied exactly from OLC vid
         normal.x =
             (line1.y * line2.z) - (line1.z * line2.y);
         normal.y =
@@ -119,7 +131,6 @@ void software_render(
         normal.z =
             (line1.x * line2.y) - (line1.y * line2.x);
         
-        // note: this is copied exactly from the OLC vid
         float sum_squares =
             (normal.x * normal.x) +
             (normal.y * normal.y) +
@@ -145,11 +156,10 @@ void software_render(
             
             float avg_z =
                 get_avg_z(triangles_to_draw + i);
-            float dist_modifier = avg_z / far;
-            // assert(dist_modifier > 0.0f);
-            // assert(dist_modifier < 1.0f);
+            float dist_modifier =
+                avg_z / projection_constants.far;
             float brightness =
-                0.85f - dist_modifier;
+                fmax(0.85f - dist_modifier, 0.0f);
             
             float triangle_color[4] = {
                 fmin(0.35 + brightness, 1.0f),

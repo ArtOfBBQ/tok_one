@@ -6,9 +6,10 @@
 // shared functionality we can use
 #include "../shared/window_size.h"
 #include "../shared/vertex_types.h"
-#include "../shared/box.h"
+#include "../shared/zpolygon.h"
 #include "../shared/software_renderer.h"
 #include "../shared_apple/gpu.h"
+#include "../shared/static_redefinitions.h"
 
 @interface
 GameWindowDelegate: NSObject<NSWindowDelegate>
@@ -21,10 +22,10 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 }
 @end
 
-
 int main(int argc, const char * argv[]) 
 {
-    init_z_constants();
+    init_projection_constants();
+    assert(projection_constants.far == 60.0f);
     
     NSRect WindowRectangle = NSMakeRect(
         0.0f,

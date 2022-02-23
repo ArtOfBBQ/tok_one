@@ -1,5 +1,5 @@
-#ifndef BOX_H
-#define BOX_H
+#ifndef ZPOLYGON_H
+#define ZPOLYGON_H
 
 #include <stdlib.h>
 #include <math.h>
@@ -10,18 +10,22 @@
 #include "bool_types.h"
 #include "window_size.h"
 #include "platform_layer.h"
+#include "static_redefinitions.h"
 
 // projection constants
-extern float near;
-extern float far;
-extern float z_normalisation;
-extern float field_of_view;
-extern float field_of_view_angle;
-extern float field_of_view_rad;
-extern float field_of_view_modifier;
-extern float aspect_ratio;
+typedef struct ProjectionConstants {
+    float near;
+    float far;
+    float z_normalisation;
+    float field_of_view;
+    float field_of_view_angle;
+    float field_of_view_rad;
+    float field_of_view_modifier;
+    float aspect_ratio;
+} ProjectionConstants;
+ProjectionConstants projection_constants;
 
-void init_z_constants(void);
+void init_projection_constants(void);
 
 typedef struct zVertex {
     float x;

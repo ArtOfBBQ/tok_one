@@ -1,5 +1,7 @@
 /*
-These functions must be provided by the platform layer!
+These functions are not defined in the 'shared' folder
+they must be provided by the platform layer,
+or by a folder that's shared by multiple (but not all!) platforms
 */
 
 #ifndef PLATFORM_LAYER_H
