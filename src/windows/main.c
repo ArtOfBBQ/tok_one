@@ -2,9 +2,10 @@
 
 // functions for us to use
 #include "../shared/software_renderer.h"
-#include "../shared/box.h"
+#include "../shared/zpolygon.h"
 #include "../shared/bool_types.h"
 #include "../shared_windows_macos/platform_read_file.c"
+#include "../shared/static_redefinitions.h")
 
 #include <windows.h>
 #include <gl/gl.h>
@@ -14,12 +15,9 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#define global_variable static
-
-// TODO: clean up globals
-global_variable bool32_t application_running = true;
-global_variable ColoredVertex * next_gpu_workload;
-global_variable uint32_t next_gpu_workload_size;
+bool32_t application_running = true;
+ColoredVertex * next_gpu_workload;
+uint32_t next_gpu_workload_size;
 
 // Ask windows to paint our window with opengl
 void opengl_update_window(HWND window) {
@@ -28,7 +26,7 @@ void opengl_update_window(HWND window) {
         next_gpu_workload,
         &next_gpu_workload_size);
     
-    glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+    glViewport(0, 0, window_width, window_height);
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     
@@ -186,7 +184,7 @@ int CALLBACK WinMain(
                     window_params.lpszClassName,
                 /* LPCTSTR lpWindowName:*/ "hello3dgfx",
                 /* DWORD dwStyle:       */
-                    WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                    WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_MAXIMIZE,
                 /* int x:               */ CW_USEDEFAULT,
                 /* int y:               */ CW_USEDEFAULT,
                 /* int nWidth:          */ CW_USEDEFAULT,
@@ -199,12 +197,25 @@ int CALLBACK WinMain(
         if (window_handle) {
             printf(
                 "window_handle was created succesfully.\n");
-          
-            init_z_constants();
+            
+            RECT window_rect;
+            if (GetWindowRect(
+                window_handle,
+                &window_rect))
+            {
+                window_width =
+                    window_rect.right - window_rect.left;
+                window_height =
+                    window_rect.bottom - window_rect.top;
+            } else {
+                printf("ERROR - can't deduce window size\n");
+                assert(0);
+            }
+            init_projection_constants();
             init_renderer();
             Win32InitOpenGL(window_handle); 
             next_gpu_workload =
-                malloc(sizeof(ColoredVertex) * 10000);
+                malloc(sizeof(ColoredVertex) * 50000);
             
             while (application_running)
             {
@@ -217,9 +228,7 @@ int CALLBACK WinMain(
                 if (message_result) {
                     TranslateMessage(&message);
                     DispatchMessage(&message);
-                } else {
-                    break;
-                }
+                }                
             }
         } else {
             printf("window_handle creation failed!\n");
