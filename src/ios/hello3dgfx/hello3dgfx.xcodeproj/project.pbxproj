@@ -16,12 +16,12 @@
 		602EA53E27B9EDF200744AA9 /* platform_layer.h in Sources */ = {isa = PBXBuildFile; fileRef = 602EA53D27B9D99900744AA9 /* platform_layer.h */; };
 		602EA54327B9F32900744AA9 /* teddybear.obj in Resources */ = {isa = PBXBuildFile; fileRef = 602EA54227B9F32900744AA9 /* teddybear.obj */; };
 		603EDA8927B389A200C80F7E /* software_renderer.c in Sources */ = {isa = PBXBuildFile; fileRef = 603EDA8227B389A200C80F7E /* software_renderer.c */; };
-		603EDA8A27B389A200C80F7E /* box.c in Sources */ = {isa = PBXBuildFile; fileRef = 603EDA8727B389A200C80F7E /* box.c */; };
 		603EDA8C27B3A67C00C80F7E /* gpu.m in Sources */ = {isa = PBXBuildFile; fileRef = 603EDA8B27B3A67C00C80F7E /* gpu.m */; };
 		603EDA8E27B4976C00C80F7E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 603EDA8D27B4976C00C80F7E /* Main.storyboard */; };
 		603EDA9527B6529900C80F7E /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 603EDA9427B6529900C80F7E /* MetalKit.framework */; };
 		603EDA9727B652A400C80F7E /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 603EDA9627B652A400C80F7E /* Metal.framework */; };
 		6065890227BF6F7500BE0F81 /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = 6065890127BF6F7500BE0F81 /* teapot.obj */; };
+		60B0D2C127C77615009F77E4 /* zpolygon.c in Sources */ = {isa = PBXBuildFile; fileRef = 60B0D2C027C77615009F77E4 /* zpolygon.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,13 +43,13 @@
 		603EDA8427B389A200C80F7E /* window_size.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = window_size.h; path = ../../../shared/window_size.h; sourceTree = "<group>"; };
 		603EDA8527B389A200C80F7E /* gpu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gpu.h; path = ../../../shared_apple/gpu.h; sourceTree = "<group>"; };
 		603EDA8627B389A200C80F7E /* software_renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = software_renderer.h; path = ../../../shared/software_renderer.h; sourceTree = "<group>"; };
-		603EDA8727B389A200C80F7E /* box.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = box.c; path = ../../../shared/box.c; sourceTree = "<group>"; };
-		603EDA8827B389A200C80F7E /* box.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = box.h; path = ../../../shared/box.h; sourceTree = "<group>"; };
 		603EDA8B27B3A67C00C80F7E /* gpu.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = gpu.m; path = ../../../shared_apple/gpu.m; sourceTree = "<group>"; };
 		603EDA8D27B4976C00C80F7E /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
 		603EDA9427B6529900C80F7E /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		603EDA9627B652A400C80F7E /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		6065890127BF6F7500BE0F81 /* teapot.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = teapot.obj; sourceTree = "<group>"; };
+		60B0D2BF27C7760D009F77E4 /* zpolygon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zpolygon.h; path = ../../../shared/zpolygon.h; sourceTree = "<group>"; };
+		60B0D2C027C77615009F77E4 /* zpolygon.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zpolygon.c; path = ../../../shared/zpolygon.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -87,26 +87,26 @@
 		6019854527B32B6600A96EAA /* hello3dgfx */ = {
 			isa = PBXGroup;
 			children = (
-				603EDA8727B389A200C80F7E /* box.c */,
-				603EDA8227B389A200C80F7E /* software_renderer.c */,
 				6019854627B32B6600A96EAA /* AppDelegate.h */,
+				6019854727B32B6600A96EAA /* AppDelegate.m */,
+				6019855227B32B8D00A96EAA /* Assets.xcassets */,
 				603EDA8327B389A200C80F7E /* bool_types.h */,
-				603EDA8827B389A200C80F7E /* box.h */,
 				603EDA8527B389A200C80F7E /* gpu.h */,
+				603EDA8B27B3A67C00C80F7E /* gpu.m */,
+				6019855727B32B8D00A96EAA /* Info.plist */,
+				6019855427B32B8D00A96EAA /* LaunchScreen.storyboard */,
+				6019855827B32B8D00A96EAA /* main.m */,
+				603EDA8D27B4976C00C80F7E /* Main.storyboard */,
 				602EA53D27B9D99900744AA9 /* platform_layer.h */,
+				6019855F27B3307B00A96EAA /* shaders.metal */,
+				603EDA8227B389A200C80F7E /* software_renderer.c */,
 				603EDA8627B389A200C80F7E /* software_renderer.h */,
 				603EDA8127B389A200C80F7E /* vertex_types.h */,
 				6019854C27B32B6600A96EAA /* ViewController.h */,
-				603EDA8427B389A200C80F7E /* window_size.h */,
-				6019854727B32B6600A96EAA /* AppDelegate.m */,
-				603EDA8B27B3A67C00C80F7E /* gpu.m */,
-				6019855827B32B8D00A96EAA /* main.m */,
 				6019854D27B32B6600A96EAA /* ViewController.m */,
-				6019855F27B3307B00A96EAA /* shaders.metal */,
-				6019855727B32B8D00A96EAA /* Info.plist */,
-				603EDA8D27B4976C00C80F7E /* Main.storyboard */,
-				6019855227B32B8D00A96EAA /* Assets.xcassets */,
-				6019855427B32B8D00A96EAA /* LaunchScreen.storyboard */,
+				603EDA8427B389A200C80F7E /* window_size.h */,
+				60B0D2C027C77615009F77E4 /* zpolygon.c */,
+				60B0D2BF27C7760D009F77E4 /* zpolygon.h */,
 			);
 			path = hello3dgfx;
 			sourceTree = "<group>";
@@ -202,9 +202,9 @@
 				6019856027B3307B00A96EAA /* shaders.metal in Sources */,
 				6019854827B32B6600A96EAA /* AppDelegate.m in Sources */,
 				6019855927B32B8D00A96EAA /* main.m in Sources */,
+				60B0D2C127C77615009F77E4 /* zpolygon.c in Sources */,
 				603EDA8C27B3A67C00C80F7E /* gpu.m in Sources */,
 				603EDA8927B389A200C80F7E /* software_renderer.c in Sources */,
-				603EDA8A27B389A200C80F7E /* box.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

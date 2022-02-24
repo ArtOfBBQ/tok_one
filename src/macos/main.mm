@@ -25,7 +25,6 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 int main(int argc, const char * argv[]) 
 {
     init_projection_constants();
-    assert(projection_constants.far == 60.0f);
     
     NSRect WindowRectangle = NSMakeRect(
         0.0f,

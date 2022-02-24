@@ -147,8 +147,8 @@ MTKView * _my_mtk_view;
     
     [_mtk_view_delegate configureMetal];
     
-    z_constants_init();
-    renderer_init();
+    init_projection_constants();
+    init_renderer();
 }
 
 @end

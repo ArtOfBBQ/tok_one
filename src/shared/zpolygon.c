@@ -1,11 +1,13 @@
 #include "zpolygon.h"
 
-void init_projection_constants() {
+ProjectionConstants projection_constants = {};
 
+void init_projection_constants() {
+    
     ProjectionConstants * pjc = &projection_constants;
     
     pjc->near = 0.5f;
-    pjc->far = 60.0f;
+    pjc->far = 150.0f;
     pjc->field_of_view = 90.0f;
     pjc->z_normalisation =
         pjc->far /
@@ -55,7 +57,8 @@ zPolygon * load_from_obj_file(char * filename) {
     return_value->triangles_size = 0;
     
     FileBuffer * buffer = platform_read_file(filename);
-    
+   
+    // TODO: think about buffer size 
     // pass through buffer once to read all vertices 
     zVertex new_vertices[5000];
     
@@ -485,47 +488,7 @@ float get_avg_z(
         of_triangle->vertices[2].z) / 3.0f;
 }
 
-void z_sort(
-    zTriangle * triangles,
-    const uint32_t triangles_size)
-{
-    zTriangle swap;
-    
-    for (uint32_t i = 0; i < triangles_size; i++) { 
-        
-        for (uint32_t j = 0; j < i; j ++)
-        {
-            if (get_avg_z(triangles + i)
-                < get_avg_z(triangles + j))
-            {
-                swap.vertices[0] =
-                    triangles[i].vertices[0];
-                swap.vertices[1] =
-                    triangles[i].vertices[1];
-                swap.vertices[2] =
-                    triangles[i].vertices[2];
-                
-                assert(i > j);
-                for (
-                    uint32_t k = i;
-                    k > j;
-                    k--)
-                {
-                    triangles[k].vertices[0] =
-                        triangles[k-1].vertices[0];
-                    triangles[k].vertices[1] =
-                        triangles[k-1].vertices[1];
-                    triangles[k].vertices[2] =
-                        triangles[k-1].vertices[2];
-                }
-                
-                triangles[j].vertices[0] = swap.vertices[0];
-                triangles[j].vertices[1] = swap.vertices[1];
-                triangles[j].vertices[2] = swap.vertices[2];
-                
-                break;
-            }
-        }
-    }
+int sorter_cmpr_lowest_z(const void * a, const void * b) {
+    return get_avg_z(a) < get_avg_z(b) ? -1 : 1;
 }
 

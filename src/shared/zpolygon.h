@@ -23,7 +23,8 @@ typedef struct ProjectionConstants {
     float field_of_view_modifier;
     float aspect_ratio;
 } ProjectionConstants;
-ProjectionConstants projection_constants;
+
+extern ProjectionConstants projection_constants;
 
 void init_projection_constants(void);
 
@@ -74,6 +75,7 @@ void free_zpolygon(
     zPolygon * to_free);
 
 float get_avg_z(const zTriangle * of_triangle);
+int sorter_cmpr_lowest_z(const void * a, const void * b);
 
 void z_sort(
     zTriangle * triangles,

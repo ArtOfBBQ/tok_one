@@ -10,7 +10,7 @@
 #include "vertex_types.h"
 #include "software_renderer.h"
 #include "gpu.h"
-#include "box.h"
+#include "zpolygon.h"
 
 /*
 This functionality must be provided by the platform because
