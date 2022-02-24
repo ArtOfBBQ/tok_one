@@ -20,8 +20,8 @@
     MTLViewport viewport = {
         0,
         0,
-        WINDOW_WIDTH,
-        WINDOW_HEIGHT };
+        window_width * 2.0f,
+        window_height * 2.0f };
     
     uint32_t frame_i = _currentFrameIndex;
     

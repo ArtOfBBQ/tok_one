@@ -1,7 +1,4 @@
-#include <sys/mman.h>
-
 #import "ViewController.h"
-#import "gpu.h"
 
 @implementation ViewController
 MTKView * _my_mtk_view;
@@ -41,11 +38,7 @@ MTKView * _my_mtk_view;
         [[NSBundle mainBundle]
             pathForResource: @"default"
             ofType: @"metallib"];
-    
-    printf(
-        "shader_lib_filepath: %s\n",
-        shader_lib_filepath);
-    
+        
     if (shader_lib_filepath == nil) {
         printf("error - no shader library found\n");
         return;
@@ -146,6 +139,9 @@ MTKView * _my_mtk_view;
     _mtk_view_delegate.command_queue = command_queue;
     
     [_mtk_view_delegate configureMetal];
+    
+    window_height = [UIScreen mainScreen].bounds.size.height; 
+    window_width = [UIScreen mainScreen].bounds.size.width;
     
     init_projection_constants();
     init_renderer();

@@ -22,10 +22,6 @@ vertexShader(
 {
     RasterizerData out;
     
-    // To convert from positions in pixel space to positions in
-    // clip-space, divide the pixel coordinates by half the size
-    // of the viewport.
-    // Z is set to 0.0 and w to 1.0 because this is 2D sample.
     out.position =
         vector_float4(
             input_array[vertexID].x,

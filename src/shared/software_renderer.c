@@ -3,15 +3,15 @@
 void init_renderer() {
     zpolygons_to_render_size = 0;
     
-    for (uint32_t i = 0; i < 20; i++) {
+    for (uint32_t i = 0; i < 4; i++) {
         zpolygons_to_render[i] =
             1 ?
                 load_from_obj_file("teddybear.obj")
                 : get_box();
         zpolygons_to_render_size += 1;
         
-        float base_x = i % 3 == 1 ? -15.5f : -40.0f; 
-        float base_y = i % 2 == 1 ? -20.0f : -5.0f;
+        float base_x = i % 3 == 1 ? 0.0f : -40.0f; 
+        float base_y = i % 2 == 1 ? 0.0f : -5.0f;
         zpolygons_to_render[i]->x = base_x + (i * 7.0f);
         zpolygons_to_render[i]->y = base_y + (i * 7.0f);
         zpolygons_to_render[i]->z = (30.0f + ((i/2) * 10.0f));
@@ -55,6 +55,8 @@ void software_render(
         }
     }
     
+    if (triangles_to_render == 0) { return; }
+    
     // rotate all triangles
     zTriangle triangles_to_draw[triangles_to_render];
     zTriangle x_rotated;
@@ -96,6 +98,7 @@ void software_render(
         &sorter_cmpr_lowest_z);
     
     // TODO: remove this doublecheck 
+    /*
     for (
         uint32_t i = 0;
         i < triangles_to_render - 1;
@@ -110,6 +113,7 @@ void software_render(
             assert(0);
         }
     }
+    */
     
     for (
         int32_t i = triangles_to_render - 1;

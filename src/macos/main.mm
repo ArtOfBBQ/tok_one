@@ -11,6 +11,7 @@
 #include "../shared_apple/gpu.h"
 #include "../shared/static_redefinitions.h"
 
+
 @interface
 GameWindowDelegate: NSObject<NSWindowDelegate>
 @end
@@ -24,19 +25,20 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 
 int main(int argc, const char * argv[]) 
 {
-    init_projection_constants();
+    NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
+    NSRect full_screen_rect = [screen frame]; 
     
-    NSRect WindowRectangle = NSMakeRect(
-        0.0f,
-        0.0f,
-        WINDOW_WIDTH,
-        WINDOW_HEIGHT);
+    window_height = NSHeight(full_screen_rect);
+    window_width = NSWidth(full_screen_rect);
+
+    init_projection_constants();
     
     NSWindow *Window =
         [[NSWindow alloc]
-            initWithContentRect: WindowRectangle 
+            initWithContentRect: full_screen_rect 
             styleMask: (NSWindowStyleMaskTitled
-                        | NSWindowStyleMaskClosable)
+                        | NSWindowStyleMaskClosable
+                        | NSWindowStyleMaskFullScreen)
             backing: NSBackingStoreBuffered 
             defer: NO];
     
@@ -54,7 +56,7 @@ int main(int argc, const char * argv[])
     
     MTKView *MetalKitView =
         [[MTKView alloc]
-            initWithFrame: WindowRectangle
+            initWithFrame: full_screen_rect
             device: MetalDevice];
     Window.contentView = MetalKitView;
     

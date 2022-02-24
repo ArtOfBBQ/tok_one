@@ -3,6 +3,13 @@
 ProjectionConstants projection_constants = {};
 
 void init_projection_constants() {
+
+    if (window_height < 50.0f || window_width < 50.0f) {
+        printf("ERROR: unexpected window size [%f,%f]\n",
+            window_height,
+            window_width);
+        assert(0);
+    }
     
     ProjectionConstants * pjc = &projection_constants;
     
@@ -13,15 +20,17 @@ void init_projection_constants() {
         pjc->far /
             (pjc->far -
                 pjc->near);
+    
     pjc->field_of_view_angle =
         pjc->field_of_view * 0.5f;
     pjc->field_of_view_rad =
         (pjc->field_of_view_angle / 180.0f)
             * 3.14159f;
+    
     pjc->field_of_view_modifier =
         1.0f / tanf(pjc->field_of_view_rad);
     pjc->aspect_ratio =
-        (float)WINDOW_HEIGHT / (float)WINDOW_WIDTH;
+        window_height / window_width; 
 }
 
 uint32_t chars_till_next_space(

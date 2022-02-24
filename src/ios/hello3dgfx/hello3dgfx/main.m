@@ -21,30 +21,14 @@ FileBuffer * platform_read_file(char * filename) {
     
     NSString * ns_filename =
         [NSString stringWithUTF8String:filename];
-    printf(
-        "ns_filename: %s\n",
-        [ns_filename cStringUsingEncoding:NSUTF8StringEncoding]);
     
     NSString * file_part = [[ns_filename lastPathComponent] stringByDeletingPathExtension];
     NSString * extension_part = [ns_filename pathExtension];
-    printf("filepath split: %s /// %s\n",
-        [file_part cStringUsingEncoding:NSUTF8StringEncoding],
-        [extension_part cStringUsingEncoding:NSUTF8StringEncoding]);
+    
     NSString * filepath =
         [[NSBundle mainBundle]
             pathForResource:file_part
             ofType:extension_part];
-    
-    printf(
-        "hardcoded filepath: %s\n",
-        [[[NSBundle mainBundle]
-            pathForResource:@"teddybear"
-            ofType: @"obj"]
-                cStringUsingEncoding: NSUTF8StringEncoding]);
-    
-    printf(
-        "filepath: %s\n",
-        [filepath cStringUsingEncoding:NSUTF8StringEncoding]);
     
     FileBuffer * return_value =
         malloc(sizeof(FileBuffer));
@@ -84,7 +68,6 @@ FileBuffer * platform_read_file(char * filename) {
 }
 
 int main(int argc, char * argv[]) {
-    printf("running int main()...\n");
     
     NSString * appDelegateClassName;
     @autoreleasepool {

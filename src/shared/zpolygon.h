@@ -74,8 +74,11 @@ zPolygon * load_from_obj_file(char * filename);
 void free_zpolygon(
     zPolygon * to_free);
 
-float get_avg_z(const zTriangle * of_triangle);
-int sorter_cmpr_lowest_z(const void * a, const void * b);
+float get_avg_z(
+    const zTriangle * of_triangle);
+int sorter_cmpr_lowest_z(
+    const void * a,
+    const void * b);
 
 void z_sort(
     zTriangle * triangles,
