@@ -15,8 +15,12 @@ local_only zVertex camera = {0.0f, 0.0f, 0.0f};
 void init_renderer(void);
 void free_renderer(void);
 
-void software_render(
+void software_render_colored_vertices(
     ColoredVertex * next_gpu_workload,
+    uint32_t * next_gpu_workload_size);
+
+void software_render_textured_vertices(
+    TexturedVertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size);
 
 void draw_triangle(

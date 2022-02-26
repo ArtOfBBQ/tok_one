@@ -24,7 +24,26 @@ void free_renderer() {
     }
 }
 
-void software_render(
+void software_render_textured_vertices(
+    TexturedVertex * next_gpu_workload,
+    uint32_t * next_gpu_workload_size)
+{
+    next_gpu_workload[0].x = 0.25f;
+    next_gpu_workload[0].y = 0.25f;
+    next_gpu_workload[0].texture_coordinates[0] = 0.0f;
+    next_gpu_workload[0].texture_coordinates[0] = 0.0f;
+    next_gpu_workload[1].x = 0.5f;
+    next_gpu_workload[1].y = 0.5f;
+    next_gpu_workload[1].texture_coordinates[0] = 0.0f;
+    next_gpu_workload[1].texture_coordinates[0] = 0.0f;
+    next_gpu_workload[2].x = 0.5f;
+    next_gpu_workload[2].y = 0.25;
+    next_gpu_workload[2].texture_coordinates[0] = 0.0f;
+    next_gpu_workload[2].texture_coordinates[0] = 0.0f;
+    *next_gpu_workload_size = 3;
+}
+
+void software_render_colored_vertices(
     ColoredVertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size)
 {

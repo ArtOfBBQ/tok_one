@@ -7,17 +7,11 @@ typedef struct ColoredVertex {
     float RGBA[4];
 } ColoredVertex;
 
-typedef struct BufferedVertexCollection
-{
-    ColoredVertex * vertices;
-    uint32_t size;
-} BufferedVertexCollection;
-
-typedef struct VertexBuffer
-{
-    uint32_t frame_i;
-    BufferedVertexCollection vertex_buffers[3];
-} VertexBuffer;
+typedef struct TexturedVertex {
+    float x;
+    float y;
+    float texture_coordinates[2];
+} TexturedVertex;
 
 #endif
 

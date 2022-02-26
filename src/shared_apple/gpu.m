@@ -1,6 +1,4 @@
 #import "gpu.h"
-#import "../shared/vertex_types.h"
-
 
 @implementation MetalKitViewDelegate
 {
@@ -25,19 +23,31 @@
     
     uint32_t frame_i = _currentFrameIndex;
     
-    ColoredVertex * vertices_for_gpu =
-        _render_commands.vertex_buffers[frame_i].vertices;
-    uint32_t vertices_for_gpu_size = 0;
+    ColoredVertex * colored_vertices_for_gpu =
+        _render_commands.vertex_buffers[frame_i].colored_vertices;
+    uint32_t colored_vertices_for_gpu_size = 0;
+
+    TexturedVertex * textured_vertices_for_gpu =
+        _render_commands.vertex_buffers[frame_i].textured_vertices;
+    uint32_t textured_vertices_for_gpu_size = 0;
     
-    software_render(
+    software_render_colored_vertices(
         /* next_gpu_workload: */
-            vertices_for_gpu,
+            colored_vertices_for_gpu,
         /* next_gpu_workload_size: */
-            &vertices_for_gpu_size);
+            &colored_vertices_for_gpu_size);
+    assert(colored_vertices_for_gpu_size > 0);
+    
+    software_render_textured_vertices(
+        /* next_gpu_workload: */
+            textured_vertices_for_gpu,
+        /* next_gpu_workload_size: */
+            &textured_vertices_for_gpu_size);
+    assert(textured_vertices_for_gpu_size > 0);
     
     @autoreleasepool 
     {
-        id<MTLCommandBuffer> CommandBuffer =
+        id<MTLCommandBuffer> command_buffer =
             [[self command_queue] commandBuffer];
         
         MTLRenderPassDescriptor *RenderPassDescriptor =
@@ -45,60 +55,71 @@
         RenderPassDescriptor.colorAttachments[0].loadAction =
             MTLLoadActionClear;
         
-        MTLClearColor MetalClearColor =
+        MTLClearColor clear_color =
             MTLClearColorMake(0.2f, 0.2f, 0.1f, 1.0f);
         RenderPassDescriptor.colorAttachments[0].clearColor =
-            MetalClearColor;
+            clear_color;
         
-        id<MTLRenderCommandEncoder> RenderEncoder =
-            [CommandBuffer
+        id<MTLRenderCommandEncoder> render_encoder =
+            [command_buffer
                 renderCommandEncoderWithDescriptor:
                     RenderPassDescriptor];
-        [RenderEncoder setViewport: viewport];
-        [RenderEncoder
-            setRenderPipelineState:
-                [self solid_color_pipeline_state]];
-        
-        id<MTLBuffer> MacBufferedVertex =
-            [[self mac_vertex_buffers]
+        [render_encoder setViewport: viewport];
+       
+        // encode the drawing of all colored triangles 
+        id<MTLBuffer> current_colored_buffered_vertices =
+            [[self colored_vertex_buffers]
                 objectAtIndex: _currentFrameIndex];
-        
-        [RenderEncoder
-            setVertexBuffer: MacBufferedVertex  
+        [render_encoder
+            setVertexBuffer: current_colored_buffered_vertices  
             offset: 0 
             atIndex: 0];
-        
-        [RenderEncoder
+        [render_encoder
+            setRenderPipelineState:
+                [self solid_color_pipeline_state]];
+        [render_encoder
             drawPrimitives: MTLPrimitiveTypeTriangle
             vertexStart: 0 
-            vertexCount: vertices_for_gpu_size];
+            vertexCount: colored_vertices_for_gpu_size];
         
-        [RenderEncoder endEncoding];
+        // encode the drawing of all textured triangles 
+        id<MTLBuffer> current_texture_buffered_vertices =
+            [[self textured_vertex_buffers]
+                objectAtIndex: _currentFrameIndex];
+        [render_encoder
+            setVertexBuffer: current_texture_buffered_vertices  
+            offset: 0 
+            atIndex: 0];
+        [render_encoder
+            setRenderPipelineState:
+                [self texture_pipeline_state]];
+        [render_encoder
+            drawPrimitives: MTLPrimitiveTypeTriangle
+            vertexStart: 0 
+            vertexCount: textured_vertices_for_gpu_size];
+        
+        [render_encoder endEncoding];
         
         // Schedule a present once the framebuffer is complete
         // using the current drawable
-        id<CAMetalDrawable> NextDrawable =
+        id<CAMetalDrawable> current_drawable =
             [view currentDrawable];
-        [CommandBuffer presentDrawable: NextDrawable];
+        [command_buffer presentDrawable: current_drawable];
         
-        uint32_t NextIndex = _currentFrameIndex + 1;
+        uint32_t next_index = _currentFrameIndex + 1;
+        if (next_index > 2) { next_index = 0; }
         
-        if (NextIndex > 2)
-        {
-            NextIndex = 0;
-        }
-        
-        _currentFrameIndex = NextIndex;
+        _currentFrameIndex = next_index;
         
         /* 
-        [CommandBuffer
+        [command_buffer
             addCompletedHandler:
                 ^(id<MTLCommandBuffer> commandBuffer)
             {
             }];
         */
         
-        [CommandBuffer commit];
+        [command_buffer commit];
     }
 }
 
