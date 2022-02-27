@@ -32,6 +32,7 @@ int main(int argc, const char * argv[])
     window_width = NSWidth(full_screen_rect);
 
     init_projection_constants();
+    init_renderer();
     
     NSWindow *window =
         [[NSWindow alloc]
@@ -145,9 +146,9 @@ int main(int argc, const char * argv[])
     
     VertexBuffer render_commands = {};
     
-    NSMutableArray *colored_vertex_buffers =
+    NSMutableArray * colored_vertex_buffers =
         [[NSMutableArray alloc] init];
-    NSMutableArray *textured_vertex_buffers =
+    NSMutableArray * textured_vertex_buffers =
         [[NSMutableArray alloc] init];
     
     for (uint32_t frame_i = 0;
@@ -163,7 +164,7 @@ int main(int argc, const char * argv[])
                 MAP_PRIVATE | MAP_ANON,
                 -1,
                 0);
-
+        
         buffered_vertex.textured_vertices =
             (TexturedVertex *)mmap(
                 0,
@@ -221,9 +222,34 @@ int main(int argc, const char * argv[])
             texture_pipeline_state];
     [ViewDelegate setCommand_queue: command_queue];
     [ViewDelegate configureMetal];
-    
-    init_renderer();
-    
+
+    ViewDelegate.metal_textures = [[NSMutableArray alloc] init];
+    assert(texture_count > 0);
+    for (uint32_t i = 0; i < texture_count; i++) {
+        MTLTextureDescriptor * texture_descriptor =
+            [[MTLTextureDescriptor alloc] init]; 
+        texture_descriptor.pixelFormat =
+            MTLPixelFormatRGBA8Unorm;
+        texture_descriptor.width =
+            textures[i]->width;
+        texture_descriptor.height =
+            textures[i]->height;
+        id<MTLTexture> texture =
+            [metal_device
+                newTextureWithDescriptor:texture_descriptor];
+        MTLRegion region = {
+            { 0, 0, 0 },                   // MTLOrigin
+            {textures[i]->width, textures[i]->height, 1} 
+        };
+        [texture
+            replaceRegion:region
+            mipmapLevel: 0
+            withBytes: textures[i]->rgba_values
+            bytesPerRow: 4 * textures[i]->width];
+        [[ViewDelegate metal_textures] addObject: texture];
+    }
+    assert([[ViewDelegate metal_textures] count] > 0);
+     
     return NSApplicationMain(argc, argv);
 }
 

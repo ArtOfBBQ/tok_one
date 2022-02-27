@@ -1,5 +1,10 @@
 #include "software_renderer.h"
 
+// TODO: clean up global variables
+char * texture_filenames[20];
+DecodedImage * textures[20];
+uint32_t texture_count = 0;
+
 void init_renderer() {
     zpolygons_to_render_size = 0;
     
@@ -16,6 +21,24 @@ void init_renderer() {
         zpolygons_to_render[i]->y = base_y + (i * 7.0f);
         zpolygons_to_render[i]->z = (30.0f + ((i/2) * 10.0f));
     }
+    
+    texture_count = 2;
+    texture_filenames[0] = "fs_angrymob.png";
+    texture_filenames[1] = "structuredart.png";
+    
+    FileBuffer * file_buffer;
+    for (uint32_t i = 0; i < texture_count; i++) {
+        file_buffer = platform_read_file(texture_filenames[i]);
+        textures[i] = decode_PNG(
+            (uint8_t *)file_buffer->contents,
+            file_buffer->size);
+        free(file_buffer->contents);
+        free(file_buffer);
+        printf(
+            "read texture %s with width %u\n",
+            texture_filenames[i],
+            textures[i]->width);
+    }
 }
 
 void free_renderer() {
@@ -30,12 +53,12 @@ void software_render_textured_vertices(
 {
     next_gpu_workload[0].x = 0.25f;
     next_gpu_workload[0].y = 0.25f;
-    next_gpu_workload[0].texture_coordinates[0] = 0.0f;
-    next_gpu_workload[0].texture_coordinates[0] = 0.0f;
+    next_gpu_workload[0].texture_coordinates[0] = 1.0f;
+    next_gpu_workload[0].texture_coordinates[0] = 1.0f;
     next_gpu_workload[1].x = 0.5f;
     next_gpu_workload[1].y = 0.5f;
     next_gpu_workload[1].texture_coordinates[0] = 0.0f;
-    next_gpu_workload[1].texture_coordinates[0] = 0.0f;
+    next_gpu_workload[1].texture_coordinates[0] = 1.0f;
     next_gpu_workload[2].x = 0.5f;
     next_gpu_workload[2].y = 0.25;
     next_gpu_workload[2].texture_coordinates[0] = 0.0f;

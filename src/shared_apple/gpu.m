@@ -8,6 +8,7 @@
 - (void)configureMetal
 {
     _currentFrameIndex = 0;
+   
 }
 
 - (void)drawInMTKView:(MTKView *)view
@@ -43,6 +44,7 @@
             textured_vertices_for_gpu,
         /* next_gpu_workload_size: */
             &textured_vertices_for_gpu_size);
+    
     assert(textured_vertices_for_gpu_size > 0);
     
     @autoreleasepool 
@@ -93,6 +95,9 @@
         [render_encoder
             setRenderPipelineState:
                 [self texture_pipeline_state]];
+        [render_encoder
+            setFragmentTexture:_metal_textures[1]
+            atIndex:0];
         [render_encoder
             drawPrimitives: MTLPrimitiveTypeTriangle
             vertexStart: 0 

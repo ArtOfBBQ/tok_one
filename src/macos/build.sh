@@ -25,9 +25,11 @@ rm -r Shaders.air
 echo "copy resources..."
 cp resources/teddybear.obj build/$PLATFORM/$APP_NAME.app/teddybear.obj
 cp resources/teapot.obj build/$PLATFORM/$APP_NAME.app/teapot.obj
+cp resources/structuredart.png build/$PLATFORM/$APP_NAME.app/structuredart.png
+cp resources/fs_angrymob.png build/$PLATFORM/$APP_NAME.app/fs_angrymob.png
 
 echo "Compiling & linking $APP_NAME..."
-clang -x objective-c -g -pedantic $MAC_FRAMEWORKS -objC src/$PLATFORM/main.mm src/shared_windows_macos/platform_read_file.c src/shared_apple/gpu.m src/shared/zpolygon.c src/shared/software_renderer.c src/shared/window_size.c -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
+clang -x objective-c -g -pedantic $MAC_FRAMEWORKS -objC src/$PLATFORM/main.mm src/shared_windows_macos/platform_read_file.c src/shared_apple/gpu.m src/shared/zpolygon.c src/shared/software_renderer.c src/shared/window_size.c src/shared/decode_png.c src/shared/inflate.c -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
 
 echo "Booting $APP_NAME"
 (cd build/$PLATFORM/$APP_NAME.app && ./$APP_NAME)

@@ -7,10 +7,15 @@
 #include "vertex_types.h"
 #include "zpolygon.h"
 #include "static_redefinitions.h"
+#include "decode_png.h"
 
 local_only zPolygon * zpolygons_to_render[1000];
 local_only uint32_t zpolygons_to_render_size;
 local_only zVertex camera = {0.0f, 0.0f, 0.0f};
+
+extern char * texture_filenames[20];
+extern DecodedImage * textures[20];
+extern uint32_t texture_count;
 
 void init_renderer(void);
 void free_renderer(void);

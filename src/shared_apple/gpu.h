@@ -19,7 +19,7 @@ MetalKitViewDelegate: NSObject<MTKViewDelegate>
     solid_color_pipeline_state;
 @property (retain) id<MTLRenderPipelineState>
     texture_pipeline_state;
-
+@property (retain) NSMutableArray * metal_textures;
 - (void)configureMetal;
 @end
 
