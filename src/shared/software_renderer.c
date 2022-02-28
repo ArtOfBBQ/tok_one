@@ -6,22 +6,7 @@ DecodedImage * textures[20];
 uint32_t texture_count = 0;
 
 void init_renderer() {
-    zpolygons_to_render_size = 0;
-    
-    for (uint32_t i = 0; i < 4; i++) {
-        zpolygons_to_render[i] =
-            1 ?
-                load_from_obj_file("teddybear.obj")
-                : get_box();
-        zpolygons_to_render_size += 1;
-        
-        float base_x = i % 3 == 1 ? 0.0f : -40.0f; 
-        float base_y = i % 2 == 1 ? 0.0f : -5.0f;
-        zpolygons_to_render[i]->x = base_x + (i * 7.0f);
-        zpolygons_to_render[i]->y = base_y + (i * 7.0f);
-        zpolygons_to_render[i]->z = (30.0f + ((i/2) * 10.0f));
-    }
-    
+    // initialize global textures for texture mapping 
     texture_count = 2;
     texture_filenames[0] = "fs_angrymob.png";
     texture_filenames[1] = "structuredart.png";
@@ -39,6 +24,32 @@ void init_renderer() {
             texture_filenames[i],
             textures[i]->width);
     }
+    
+    // initialize zPolygon objects, the 3-D objects we're
+    // planning to render
+    zpolygons_to_render_size = 0;
+  
+    // load some teddybears from the object file 
+    for (uint32_t i = 0; i < 2; i++) {
+        zpolygons_to_render[i] =
+            load_from_obj_file("teddybear.obj");
+        zpolygons_to_render_size += 1;
+        
+        float base_x = i % 3 == 1 ? 0.0f : -40.0f; 
+        float base_y = i % 2 == 1 ? 0.0f : -5.0f;
+        zpolygons_to_render[i]->x = base_x + (i * 7.0f);
+        zpolygons_to_render[i]->y = base_y + (i * 7.0f);
+        zpolygons_to_render[i]->z = (90.0f + ((i/2) * 10.0f));
+    }
+
+    // load some hard-coded cubes
+    for (uint32_t i = 2; i < 3; i++) {
+        zpolygons_to_render[i] = get_box();
+        zpolygons_to_render_size += 1;
+        
+        float base_x = i % 3 == 1 ? 0.0f : -40.0f; 
+        float base_y = i % 2 == 1 ? 0.0f : -5.0f;
+    }
 }
 
 void free_renderer() {
@@ -47,41 +58,26 @@ void free_renderer() {
     }
 }
 
-void software_render_textured_vertices(
-    TexturedVertex * next_gpu_workload,
-    uint32_t * next_gpu_workload_size)
+void software_render(
+    Vertex * next_gpu_workload,
+    uint32_t * next_workload_size)
 {
-    next_gpu_workload[0].x = 0.25f;
-    next_gpu_workload[0].y = 0.25f;
-    next_gpu_workload[0].texture_coordinates[0] = 1.0f;
-    next_gpu_workload[0].texture_coordinates[0] = 1.0f;
-    next_gpu_workload[1].x = 0.5f;
-    next_gpu_workload[1].y = 0.5f;
-    next_gpu_workload[1].texture_coordinates[0] = 0.0f;
-    next_gpu_workload[1].texture_coordinates[0] = 1.0f;
-    next_gpu_workload[2].x = 0.5f;
-    next_gpu_workload[2].y = 0.25;
-    next_gpu_workload[2].texture_coordinates[0] = 0.0f;
-    next_gpu_workload[2].texture_coordinates[0] = 0.0f;
-    *next_gpu_workload_size = 3;
-}
-
-void software_render_colored_vertices(
-    ColoredVertex * next_gpu_workload,
-    uint32_t * next_gpu_workload_size)
-{
-    if (next_gpu_workload == NULL) {
+    if (
+        next_gpu_workload == NULL
+        || next_workload_size == NULL)
+    {
+        printf("ERROR: platform layer didnt pass recipients\n");
         return;
     }
     
     if (zpolygons_to_render_size == 0) {
         return;
     }
-
+    
     for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
-        zpolygons_to_render[i]->x += 0.05;
-        zpolygons_to_render[i]->y += 0.05;
-        zpolygons_to_render[i]->z += 0.05;
+        zpolygons_to_render[i]->x += 0.001;
+        zpolygons_to_render[i]->y += 0.001;
+        zpolygons_to_render[i]->z += 0.01;
         zpolygons_to_render[i]->x_angle += 0.04f;
         zpolygons_to_render[i]->y_angle += 0.04f;
     }
@@ -138,24 +134,6 @@ void software_render_colored_vertices(
         triangles_to_render,
         sizeof(zTriangle),
         &sorter_cmpr_lowest_z);
-    
-    // TODO: remove this doublecheck 
-    /*
-    for (
-        uint32_t i = 0;
-        i < triangles_to_render - 1;
-        i++)
-    {
-        if (get_avg_z(triangles_to_draw + i) >
-            get_avg_z(triangles_to_draw + i + 1))
-        {
-            printf(
-                "failed at i: %u\n",
-                i);
-            assert(0);
-        }
-    }
-    */
     
     for (
         int32_t i = triangles_to_render - 1;
@@ -217,8 +195,9 @@ void software_render_colored_vertices(
             dot_x + dot_y + dot_z;
         
         if (perspective_dot_product < 0.0f) {
-            ColoredVertex triangle_to_draw[3];
-            
+            // colored triangle
+            Vertex triangle_to_draw[3];
+           
             float avg_z =
                 get_avg_z(triangles_to_draw + i);
             float dist_modifier =
@@ -227,21 +206,38 @@ void software_render_colored_vertices(
                 fmax(0.85f - dist_modifier, 0.0f);
             
             float triangle_color[4] = {
-                fmin(0.35 + brightness, 1.0f),
+                fmin(0.25 + brightness, 1.0f),
                 fmin(0.20 + brightness, 1.0f),
                 fmin(0.15 + brightness, 1.0f),
                 1.0f};
             
+            triangles_to_draw[i].color[0] =
+                triangle_color[0];
+            triangles_to_draw[i].color[1] =
+                triangle_color[1];
+            triangles_to_draw[i].color[2] =
+                triangle_color[2];
+            triangles_to_draw[i].color[3] =
+                triangle_color[3];
+
+            triangle_to_draw[0].uv[0] = 0.0f;
+            triangle_to_draw[0].uv[1] = 1.0f;
+            triangle_to_draw[1].uv[0] = 0.0f;
+            triangle_to_draw[1].uv[1] = 0.0f;
+            triangle_to_draw[2].uv[0] = 1.0f;
+            triangle_to_draw[2].uv[1] = 1.0f;
+            
             ztriangle_to_2d(
-                /* recipient: */ triangle_to_draw,
-                /* input: */ triangles_to_draw + i,
-                /* color: */ triangle_color);
+                /* recipient: */
+                    triangle_to_draw,
+                /* input: */
+                    triangles_to_draw + i);
             
             draw_triangle(
                 /* vertices_recipient: */
                     next_gpu_workload,
                 /* vertex_count_recipient: */
-                    next_gpu_workload_size,
+                    next_workload_size,
                 /* input: */
                     triangle_to_draw);
         }
@@ -249,28 +245,40 @@ void software_render_colored_vertices(
 }
 
 void draw_triangle(
-    ColoredVertex * vertices_recipient,
+    Vertex * vertices_recipient,
     uint32_t * vertex_count_recipient,
-    ColoredVertex input[3])
+    Vertex input[3])
 {
     assert(vertices_recipient != NULL);
     
     uint32_t vertex_i = *vertex_count_recipient;
     
     vertices_recipient[vertex_i] = input[0];
+    for (uint32_t i = 0; i < 4; i++) {
+        vertices_recipient[vertex_i].RGBA[i] = 
+            input->RGBA[i];
+    }
     vertex_i++;
     
     vertices_recipient[vertex_i] = input[1];
+    for (uint32_t i = 0; i < 4; i++) {
+        vertices_recipient[vertex_i].RGBA[i] = 
+            input->RGBA[i];
+    }
     vertex_i++;
     
     vertices_recipient[vertex_i] = input[2];
+    for (uint32_t i = 0; i < 4; i++) {
+        vertices_recipient[vertex_i].RGBA[i] = 
+            input->RGBA[i];
+    }
     vertex_i++;
     
     *vertex_count_recipient += 3;
 }
 
 void rotate_triangle(
-    ColoredVertex to_rotate[3],
+    Vertex to_rotate[3],
     const float angle)
 {
     for (uint32_t i = 0; i < 3; i++) {

@@ -91,47 +91,23 @@ int main(int argc, const char * argv[])
             format: @"Unable to shader libraries"];
     }
     
-    // Setup Render Pipeline States
-    // for colored triangles
-    MTLRenderPipelineDescriptor *solid_color_pipeline_descriptor =
+    // Setup combo pipeline that handles
+    // both colored & textured triangles
+    MTLRenderPipelineDescriptor *combo_pipeline_descriptor =
         [[MTLRenderPipelineDescriptor alloc] init];
-    [solid_color_pipeline_descriptor
+    [combo_pipeline_descriptor
         setVertexFunction: vertex_shader];
-    [solid_color_pipeline_descriptor
+    [combo_pipeline_descriptor
         setFragmentFunction: fragment_shader];
-    solid_color_pipeline_descriptor
+    combo_pipeline_descriptor
         .colorAttachments[0]
         .pixelFormat = 
             mtk_view.colorPixelFormat;
     
-    // for textured triangles
-    MTLRenderPipelineDescriptor *texture_pipeline_descriptor =
-        [[MTLRenderPipelineDescriptor alloc] init];
-    [texture_pipeline_descriptor
-        setVertexFunction: texture_vertex_shader];
-    [texture_pipeline_descriptor
-        setFragmentFunction: texture_fragment_shader];
-    texture_pipeline_descriptor
-        .colorAttachments[0]
-        .pixelFormat = 
-            mtk_view.colorPixelFormat;
-    
-    id<MTLRenderPipelineState> solid_color_pipeline_state =
+    id<MTLRenderPipelineState> combo_pipeline_state =
         [metal_device
             newRenderPipelineStateWithDescriptor:
-                solid_color_pipeline_descriptor 
-            error:
-                &Error];
-    if (Error != NULL)
-    {
-        [NSException
-            raise: @"Can't Setup Metal" 
-            format: @"Unable to setup rendering pipeline state"];
-    }
-    id<MTLRenderPipelineState> texture_pipeline_state =
-        [metal_device
-            newRenderPipelineStateWithDescriptor:
-                texture_pipeline_descriptor 
+                combo_pipeline_descriptor 
             error:
                 &Error];
     if (Error != NULL)
@@ -146,9 +122,7 @@ int main(int argc, const char * argv[])
     
     VertexBuffer render_commands = {};
     
-    NSMutableArray * colored_vertex_buffers =
-        [[NSMutableArray alloc] init];
-    NSMutableArray * textured_vertex_buffers =
+    NSMutableArray * vertex_buffers =
         [[NSMutableArray alloc] init];
     
     for (uint32_t frame_i = 0;
@@ -156,17 +130,8 @@ int main(int argc, const char * argv[])
          frame_i++)
     {
         BufferedVertexCollection buffered_vertex = {};
-        buffered_vertex.colored_vertices =
-            (ColoredVertex *)mmap(
-                0,
-                BufferedVertexSize,
-                PROT_READ | PROT_WRITE,
-                MAP_PRIVATE | MAP_ANON,
-                -1,
-                0);
-        
-        buffered_vertex.textured_vertices =
-            (TexturedVertex *)mmap(
+        buffered_vertex.vertices =
+            (Vertex *)mmap(
                 0,
                 BufferedVertexSize,
                 PROT_READ | PROT_WRITE,
@@ -180,28 +145,15 @@ int main(int argc, const char * argv[])
         id<MTLBuffer> MetalBufferedVertex =
             [metal_device
                 newBufferWithBytesNoCopy:
-                    buffered_vertex.colored_vertices
+                    buffered_vertex.vertices
                 length:
                     BufferedVertexSize
                 options:
                     MTLResourceStorageModeShared
                 deallocator:
                     nil];
-        [colored_vertex_buffers
+        [vertex_buffers
             addObject: MetalBufferedVertex];
-        
-        id<MTLBuffer> MetalBufferedTexturedVertices =
-            [metal_device
-                newBufferWithBytesNoCopy:
-                    buffered_vertex.textured_vertices
-                length:
-                    BufferedVertexSize
-                options:
-                    MTLResourceStorageModeShared
-                deallocator:
-                    nil];
-        [textured_vertex_buffers
-            addObject: MetalBufferedTexturedVertices];
     }
     
     MetalKitViewDelegate *ViewDelegate =
@@ -209,20 +161,15 @@ int main(int argc, const char * argv[])
     [mtk_view setDelegate: ViewDelegate];
     
     [ViewDelegate
-        setColored_vertex_buffers: colored_vertex_buffers];
-    [ViewDelegate
-        setTextured_vertex_buffers: textured_vertex_buffers];
+        setVertex_buffers: vertex_buffers];
     [ViewDelegate
         setRender_commands: render_commands];
     [ViewDelegate
-        setSolid_color_pipeline_state:
-            solid_color_pipeline_state];
-    [ViewDelegate
-        setTexture_pipeline_state:
-            texture_pipeline_state];
+        setCombo_pipeline_state:
+            combo_pipeline_state];
     [ViewDelegate setCommand_queue: command_queue];
     [ViewDelegate configureMetal];
-
+    
     ViewDelegate.metal_textures = [[NSMutableArray alloc] init];
     assert(texture_count > 0);
     for (uint32_t i = 0; i < texture_count; i++) {
@@ -239,14 +186,18 @@ int main(int argc, const char * argv[])
                 newTextureWithDescriptor:texture_descriptor];
         MTLRegion region = {
             { 0, 0, 0 },                   // MTLOrigin
-            {textures[i]->width, textures[i]->height, 1} 
+            { textures[i]->width, textures[i]->height, 1 }
         };
+        
+        assert(textures[i]->width >= 10);
+        assert(4 * textures[i]->width >= 40);
         [texture
             replaceRegion:region
             mipmapLevel: 0
             withBytes: textures[i]->rgba_values
             bytesPerRow: 4 * textures[i]->width];
-        [[ViewDelegate metal_textures] addObject: texture];
+        [[ViewDelegate metal_textures]
+            addObject: texture];
     }
     assert([[ViewDelegate metal_textures] count] > 0);
      

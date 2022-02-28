@@ -24,28 +24,15 @@
     
     uint32_t frame_i = _currentFrameIndex;
     
-    ColoredVertex * colored_vertices_for_gpu =
-        _render_commands.vertex_buffers[frame_i].colored_vertices;
-    uint32_t colored_vertices_for_gpu_size = 0;
-
-    TexturedVertex * textured_vertices_for_gpu =
-        _render_commands.vertex_buffers[frame_i].textured_vertices;
-    uint32_t textured_vertices_for_gpu_size = 0;
+    Vertex * vertices_for_gpu =
+        _render_commands.vertex_buffers[frame_i].vertices;
+    uint32_t vertices_for_gpu_size = 0;
     
-    software_render_colored_vertices(
+    software_render(
         /* next_gpu_workload: */
-            colored_vertices_for_gpu,
+            vertices_for_gpu,
         /* next_gpu_workload_size: */
-            &colored_vertices_for_gpu_size);
-    assert(colored_vertices_for_gpu_size > 0);
-    
-    software_render_textured_vertices(
-        /* next_gpu_workload: */
-            textured_vertices_for_gpu,
-        /* next_gpu_workload_size: */
-            &textured_vertices_for_gpu_size);
-    
-    assert(textured_vertices_for_gpu_size > 0);
+            &vertices_for_gpu_size);
     
     @autoreleasepool 
     {
@@ -68,40 +55,24 @@
                     RenderPassDescriptor];
         [render_encoder setViewport: viewport];
        
-        // encode the drawing of all colored triangles 
-        id<MTLBuffer> current_colored_buffered_vertices =
-            [[self colored_vertex_buffers]
+        // encode the drawing of all triangles 
+        id<MTLBuffer> current_buffered_vertices =
+            [[self vertex_buffers]
                 objectAtIndex: _currentFrameIndex];
         [render_encoder
-            setVertexBuffer: current_colored_buffered_vertices  
+            setVertexBuffer: current_buffered_vertices  
             offset: 0 
             atIndex: 0];
         [render_encoder
             setRenderPipelineState:
-                [self solid_color_pipeline_state]];
+                [self combo_pipeline_state]];
         [render_encoder
-            drawPrimitives: MTLPrimitiveTypeTriangle
-            vertexStart: 0 
-            vertexCount: colored_vertices_for_gpu_size];
-        
-        // encode the drawing of all textured triangles 
-        id<MTLBuffer> current_texture_buffered_vertices =
-            [[self textured_vertex_buffers]
-                objectAtIndex: _currentFrameIndex];
-        [render_encoder
-            setVertexBuffer: current_texture_buffered_vertices  
-            offset: 0 
-            atIndex: 0];
-        [render_encoder
-            setRenderPipelineState:
-                [self texture_pipeline_state]];
-        [render_encoder
-            setFragmentTexture:_metal_textures[1]
+            setFragmentTexture:_metal_textures[0]
             atIndex:0];
         [render_encoder
             drawPrimitives: MTLPrimitiveTypeTriangle
             vertexStart: 0 
-            vertexCount: textured_vertices_for_gpu_size];
+            vertexCount: vertices_for_gpu_size];
         
         [render_encoder endEncoding];
         

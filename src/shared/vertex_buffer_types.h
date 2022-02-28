@@ -5,10 +5,8 @@
 
 typedef struct BufferedVertexCollection
 {
-    ColoredVertex * colored_vertices;
-    uint32_t colored_vertices_size;
-    TexturedVertex * textured_vertices;
-    uint32_t textured_vertices_size;
+    Vertex * vertices;
+    uint32_t vertices_size;
 } BufferedVertexCollection;
 
 typedef struct VertexBuffer

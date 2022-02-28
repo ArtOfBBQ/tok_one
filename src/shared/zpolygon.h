@@ -32,10 +32,17 @@ typedef struct zVertex {
     float x;
     float y;
     float z;
+    float uv[2];         // texture coords, ignored if untextured
 } zVertex;
 
 typedef struct zTriangle {
     zVertex vertices[3];
+    float color[4];      // RGBA, ignored if textured
+    int32_t texture_i;   /* the index in the global var 'textures'
+                            of the texture to texturemap onto
+                            this.
+                            -1 for "untextured, use color instead"
+                         */
 } zTriangle;
 
 typedef struct zPolygon {
@@ -52,9 +59,8 @@ typedef struct zPolygon {
 zPolygon * get_box(void);
 
 void ztriangle_to_2d(
-    ColoredVertex recipient[3],
-    zTriangle * input,
-    float color[4]);
+    Vertex recipient[3],
+    zTriangle * input);
 
 zTriangle x_rotate_triangle(
     const zTriangle * input, const float angle);
@@ -76,6 +82,7 @@ void free_zpolygon(
 
 float get_avg_z(
     const zTriangle * of_triangle);
+
 int sorter_cmpr_lowest_z(
     const void * a,
     const void * b);

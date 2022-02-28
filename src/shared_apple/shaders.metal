@@ -9,18 +9,13 @@ typedef struct
 {
     float4 position [[position]];
     float4 color;
-} RasterizerPixel;
-
-typedef struct
-{
-    float4 position [[position]];
     float2 texture_coordinate;
-} RasterizerTexturedPixel;
+} RasterizerPixel;
 
 vertex RasterizerPixel
 vertex_shader(
     uint vertexID [[ vertex_id ]],
-    constant ColoredVertex * input_array [[ buffer(0) ]])
+    constant Vertex * input_array [[ buffer(0) ]])
 {
     RasterizerPixel out;
     
@@ -37,45 +32,34 @@ vertex_shader(
             input_array[vertexID].RGBA[1],
             input_array[vertexID].RGBA[2],
             input_array[vertexID].RGBA[3]);
+
+    if (input_array[vertexID].texture_i < 0)
+    {
+        out.texture_coordinate =
+            vector_float2(-1.0f, -1.0f);
+    } else
+    {
+        out.texture_coordinate =
+            vector_float2(
+                input_array[vertexID].uv[0],
+                input_array[vertexID].uv[1]);
+    }
     
     return out;
 }
 
 fragment float4
 fragment_shader(
-    RasterizerPixel in [[stage_in]])
+    RasterizerPixel in [[stage_in]],
+    texture2d<half> color_texture [[texture(0)]])
 {
-    // Return the interpolated color.
-    return in.color;
-}
-
-vertex RasterizerTexturedPixel
-texture_vertex_shader(
-    uint vertexID [[ vertex_id ]],
-    constant TexturedVertex * input_array [[ buffer(0) ]])
-{
-    RasterizerTexturedPixel out;
+    if (
+        in.texture_coordinate[0] < 0.0f
+        || in.texture_coordinate[1] < 0.0f)
+    {
+        return in.color;
+    }
     
-    out.position =
-        vector_float4(
-            input_array[vertexID].x,
-            input_array[vertexID].y,
-            0.0,
-            1.0);
-    
-    out.texture_coordinate =
-        vector_float2(
-            input_array[vertexID].texture_coordinates[0],
-            input_array[vertexID].texture_coordinates[1]);
-    
-    return out;
-}
-
-fragment float4
-texture_fragment_shader(
-    RasterizerTexturedPixel in [[stage_in]],
-    texture2d<half> color_texture [[]])
-{
     constexpr sampler textureSampler(
         mag_filter::linear,
         min_filter::linear);

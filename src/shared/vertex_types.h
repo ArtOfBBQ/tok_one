@@ -1,17 +1,13 @@
 #ifndef VERTEX_TYPES_H
 #define VERTEX_TYPES_H
 
-typedef struct ColoredVertex {
+typedef struct Vertex {
     float x;
     float y;
+    float uv[2];
     float RGBA[4];
-} ColoredVertex;
-
-typedef struct TexturedVertex {
-    float x;
-    float y;
-    float texture_coordinates[2];
-} TexturedVertex;
+    int32_t texture_i; // -1 for no texture
+}  Vertex;
 
 #endif
 

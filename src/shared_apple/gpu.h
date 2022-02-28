@@ -12,13 +12,10 @@
 @interface
 MetalKitViewDelegate: NSObject<MTKViewDelegate>
 @property (retain) id<MTLCommandQueue> command_queue;
-@property (retain) NSMutableArray * colored_vertex_buffers;
-@property (retain) NSMutableArray * textured_vertex_buffers;
+@property (retain) NSMutableArray * vertex_buffers;
 @property VertexBuffer render_commands;
 @property (retain) id<MTLRenderPipelineState>
-    solid_color_pipeline_state;
-@property (retain) id<MTLRenderPipelineState>
-    texture_pipeline_state;
+    combo_pipeline_state;
 @property (retain) NSMutableArray * metal_textures;
 - (void)configureMetal;
 @end

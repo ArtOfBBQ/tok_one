@@ -20,25 +20,21 @@ extern uint32_t texture_count;
 void init_renderer(void);
 void free_renderer(void);
 
-void software_render_colored_vertices(
-    ColoredVertex * next_gpu_workload,
-    uint32_t * next_gpu_workload_size);
-
-void software_render_textured_vertices(
-    TexturedVertex * next_gpu_workload,
+void software_render(
+    Vertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size);
 
 void draw_triangle(
-    ColoredVertex * vertices_recipient,
+    Vertex * vertices_recipient,
     uint32_t * vertex_count_recipient,
-    ColoredVertex input[3]);
+    Vertex input[3]);
 
 void rotate_triangle(
-    ColoredVertex to_rotate[3],
+    Vertex to_rotate[3],
     const float angle);
 
 void translate_triangle(
-    ColoredVertex to_translate[3],
+    Vertex to_translate[3],
     const float x,
     const float y,
     const float z);
