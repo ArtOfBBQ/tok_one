@@ -11,6 +11,8 @@
 
 local_only zPolygon * zpolygons_to_render[1000];
 local_only uint32_t zpolygons_to_render_size;
+local_only zLightSource zlights_to_apply[50];
+local_only uint32_t zlights_to_apply_size;
 local_only zVertex camera = {0.0f, 0.0f, 0.0f};
 
 extern char * texture_filenames[20];

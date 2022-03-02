@@ -28,6 +28,15 @@ extern ProjectionConstants projection_constants;
 
 void init_projection_constants(void);
 
+typedef struct zLightSource {
+    float x;
+    float y;
+    float z;
+    float reach;   // max distance before light intensity 0
+    float ambient; // how much ambient light does this radiate?
+    float diffuse; // how much diffuse light does this radiate?
+} zLightSource;
+
 typedef struct zVertex {
     float x;
     float y;
@@ -90,6 +99,25 @@ int sorter_cmpr_lowest_z(
 void z_sort(
     zTriangle * triangles,
     const uint32_t triangles_size);
+
+void normalize_zvertex(
+    zVertex * to_normalize);
+
+float get_distance(
+    const zVertex p1,
+    const zVertex p2);
+
+float get_distance_to_ztriangle(
+    const zVertex p1,
+    const zTriangle p2);
+
+float get_visibility_rating(
+    const zVertex observer,
+    const zTriangle * observed);
+
+float dot_of_vertices(
+    const zVertex vertex_1,
+    const zVertex vertex_2);
 
 #endif
 

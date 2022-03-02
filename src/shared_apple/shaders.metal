@@ -10,6 +10,7 @@ typedef struct
     float4 position [[position]];
     float4 color;
     float2 texture_coordinate;
+    float lighting;
 } RasterizerPixel;
 
 vertex RasterizerPixel
@@ -33,6 +34,8 @@ vertex_shader(
             input_array[vertexID].RGBA[2],
             input_array[vertexID].RGBA[3]);
 
+    out.lighting = input_array[vertexID].lighting;
+    
     if (input_array[vertexID].texture_i < 0)
     {
         out.texture_coordinate =
@@ -57,7 +60,7 @@ fragment_shader(
         in.texture_coordinate[0] < 0.0f
         || in.texture_coordinate[1] < 0.0f)
     {
-        return in.color;
+        return in.color * in.lighting;
     }
     
     constexpr sampler textureSampler(
@@ -70,6 +73,6 @@ fragment_shader(
         in.texture_coordinate);
     
     // return the color of the texture
-    return float4(colorSample);
+    return float4(colorSample) * in.lighting;
 }
 

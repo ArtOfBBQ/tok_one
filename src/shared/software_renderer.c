@@ -28,27 +28,57 @@ void init_renderer() {
     // initialize zPolygon objects, the 3-D objects we're
     // planning to render
     zpolygons_to_render_size = 0;
-  
-    // load some teddybears from the object file 
+    
+    // objects part 1: load some teddybears from object file 
     for (uint32_t i = 0; i < 2; i++) {
         zpolygons_to_render[i] =
             load_from_obj_file("teddybear.obj");
         zpolygons_to_render_size += 1;
         
-        float base_x = i % 3 == 1 ? 0.0f : -40.0f; 
+        float base_x = i % 3 == 1 ? 0.0f : -20.0f; 
         float base_y = i % 2 == 1 ? 0.0f : -5.0f;
         zpolygons_to_render[i]->x = base_x + (i * 7.0f);
         zpolygons_to_render[i]->y = base_y + (i * 7.0f);
-        zpolygons_to_render[i]->z = (90.0f + ((i/2) * 10.0f));
+        zpolygons_to_render[i]->z = (45.0f + ((i/2) * 45.0f));
     }
 
-    // load some hard-coded cubes
+    // objects 2: load some hard-coded cubes
     for (uint32_t i = 2; i < 3; i++) {
         zpolygons_to_render[i] = get_box();
         zpolygons_to_render_size += 1;
         
         float base_x = i % 3 == 1 ? 0.0f : -40.0f; 
         float base_y = i % 2 == 1 ? 0.0f : -5.0f;
+    }
+    
+    // initialize global zLightSource objects, to set up
+    // our lighting for the scene
+    zlights_to_apply[0].x = -5.0f;
+    zlights_to_apply[0].y = -5.0f;
+    zlights_to_apply[0].z = 50.0f;
+    zlights_to_apply[0].reach = 50.0f;
+    zlights_to_apply[0].ambient = 0.75f;
+    zlights_to_apply[0].diffuse = 1.75f;
+    zlights_to_apply_size = 1;
+    
+    // add a white cube to represent the light source
+    zpolygons_to_render_size += 1;
+    uint32_t i = zpolygons_to_render_size - 1;
+    zpolygons_to_render[i] = get_box();
+    zpolygons_to_render[i]->x = zlights_to_apply[0].x;
+    zpolygons_to_render[i]->y = zlights_to_apply[0].y;
+    zpolygons_to_render[i]->z = zlights_to_apply[0].z;
+    for (
+        uint32_t j = 0;
+        j < zpolygons_to_render[i]->triangles_size;
+        j++)
+    {
+        // bright white
+        zpolygons_to_render[i]->triangles[j].color[0] = 1.0f;
+        zpolygons_to_render[i]->triangles[j].color[1] = 1.0f;
+        zpolygons_to_render[i]->triangles[j].color[2] = 1.0f;
+        zpolygons_to_render[i]->triangles[j].color[3] = 1.0f;
+        zpolygons_to_render[i]->triangles[j].texture_i = -1;
     }
 }
 
@@ -62,6 +92,10 @@ void software_render(
     Vertex * next_gpu_workload,
     uint32_t * next_workload_size)
 {
+    // camera.x += 0.01f;
+    // camera.y += 0.01f;
+    // camera.z += 0.02f;
+    
     if (
         next_gpu_workload == NULL
         || next_workload_size == NULL)
@@ -74,13 +108,28 @@ void software_render(
         return;
     }
     
-    for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
-        zpolygons_to_render[i]->x += 0.001;
-        zpolygons_to_render[i]->y += 0.001;
-        zpolygons_to_render[i]->z += 0.01;
-        zpolygons_to_render[i]->x_angle += 0.04f;
-        zpolygons_to_render[i]->y_angle += 0.04f;
+    for (
+        uint32_t i = 0;
+        i < (zpolygons_to_render_size - 1);
+        i++)
+    {
+        // zpolygons_to_render[i]->x += 0.001;
+        // zpolygons_to_render[i]->y += 0.001;
+        // zpolygons_to_render[i]->z += 0.01;
+        // zpolygons_to_render[i]->x_angle += 0.04f;
+        // zpolygons_to_render[i]->y_angle += 0.04f;
     }
+
+    // move our light source
+    uint32_t i = zpolygons_to_render_size - 1;
+    zpolygons_to_render[i]->x -= 0.001;
+    zpolygons_to_render[i]->y -= 0.001;
+    if (zpolygons_to_render[i]->z > 5.0f) {
+        zpolygons_to_render[i]->z -= 0.02;
+    }
+    zlights_to_apply[0].x = zpolygons_to_render[i]->x;
+    zlights_to_apply[0].y = zpolygons_to_render[i]->y;
+    zlights_to_apply[0].z = zpolygons_to_render[i]->z;
     
     uint32_t triangles_to_render = 0;
     for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
@@ -140,86 +189,54 @@ void software_render(
         i >= 0;
         i -= 1)
     {
-        // calculate the normal, needed to determine if
-        // triangle is visible
-        // uses vector 'cross product'
-        zVertex normal;
-        zVertex line1;
-        zVertex line2;
-        
-        line1.x =
-            triangles_to_draw[i].vertices[1].x
-                - triangles_to_draw[i].vertices[0].x;
-        line1.y =
-            triangles_to_draw[i].vertices[1].y
-                - triangles_to_draw[i].vertices[0].y;
-        line1.z =
-            triangles_to_draw[i].vertices[1].z
-                - triangles_to_draw[i].vertices[0].z;
-        
-        line2.x =
-            triangles_to_draw[i].vertices[2].x
-                - triangles_to_draw[i].vertices[0].x;
-        line2.y =
-            triangles_to_draw[i].vertices[2].y
-                - triangles_to_draw[i].vertices[0].y;
-        line2.z =
-            triangles_to_draw[i].vertices[2].z
-                - triangles_to_draw[i].vertices[0].z;
-        
-        normal.x =
-            (line1.y * line2.z) - (line1.z * line2.y);
-        normal.y =
-            (line1.z * line2.x) - (line1.x * line2.z);
-        normal.z =
-            (line1.x * line2.y) - (line1.y * line2.x);
-        
-        float sum_squares =
-            (normal.x * normal.x) +
-            (normal.y * normal.y) +
-            (normal.z * normal.z);
-        float length = sqrtf(sum_squares);
-        normal.x /= length;
-        normal.y /= length;
-        normal.z /= length;
-        
-        // compare normal's similarity a point between
-        // camera & triangle location 
-        float dot_x = (normal.x *
-            (triangles_to_draw[i].vertices[0].x - camera.x));
-        float dot_y = (normal.y * 
-            (triangles_to_draw[i].vertices[0].y - camera.y));
-        float dot_z = (normal.z *
-            (triangles_to_draw[i].vertices[0].z - camera.z));
         float perspective_dot_product =
-            dot_x + dot_y + dot_z;
+            get_visibility_rating(
+                camera,
+                triangles_to_draw + i);
         
         if (perspective_dot_product < 0.0f) {
             // colored triangle
             Vertex triangle_to_draw[3];
-           
-            float avg_z =
-                get_avg_z(triangles_to_draw + i);
-            float dist_modifier =
-                avg_z / projection_constants.far;
-            float brightness =
-                fmax(0.85f - dist_modifier, 0.0f);
             
-            float triangle_color[4] = {
-                fmin(0.25 + brightness, 1.0f),
-                fmin(0.20 + brightness, 1.0f),
-                fmin(0.15 + brightness, 1.0f),
-                1.0f};
+            for (uint32_t l = 0; l < zlights_to_apply_size; l++)
+            {
+                // add diffuse lighting to the 3 vertices
+                for (uint32_t m = 0; m < 4; m++) {
+                    triangle_to_draw[m].lighting = 1.0f;
+                    
+                    zVertex light_source;
+                    light_source.x = zlights_to_apply[l].x;
+                    light_source.y = zlights_to_apply[l].y;
+                    light_source.z = zlights_to_apply[l].z;
+                    
+                    float distance = get_distance_to_ztriangle(
+                        light_source,
+                        triangles_to_draw[i]);
+                    float distance_mod = 1.0f -
+                        (distance / zlights_to_apply[l].reach);
+                    if (distance_mod < 0.0f) {
+                        distance_mod = 0.0f;
+                    }
+                    
+                    triangle_to_draw[m].lighting *=
+                        zlights_to_apply[l].ambient
+                            * distance_mod;
+                    
+                    /*
+                    float diffuse_dot = get_visibility_rating(
+                        light_source,
+                        triangles_to_draw + i);
+                    
+                    if (diffuse_dot > 0.0f) {
+                       //  triangle_to_draw[m].lighting *=
+                       //      (diffuse_dot
+                       //          * zlights_to_apply[l].diffuse
+                       //          * distance_mod);
+                    }
+                    */
+                }
+            }
             
-            triangles_to_draw[i].color[0] =
-                triangle_color[0];
-            triangles_to_draw[i].color[1] =
-                triangle_color[1];
-            triangles_to_draw[i].color[2] =
-                triangle_color[2];
-            triangles_to_draw[i].color[3] =
-                triangle_color[3];
-
             triangle_to_draw[0].uv[0] = 0.0f;
             triangle_to_draw[0].uv[1] = 1.0f;
             triangle_to_draw[1].uv[0] = 0.0f;

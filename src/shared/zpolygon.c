@@ -226,7 +226,7 @@ zPolygon * get_box() {
     
     box->x = -1.5f;
     box->y = -3.5f;
-    box->z = 4.0f;
+    box->z = 10.0f;
     box->x_angle = 0.5f;
     box->y_angle = 0.5f;
     box->z_angle = 0.5f;
@@ -539,5 +539,105 @@ float get_avg_z(const zTriangle * of_triangle)
 
 int sorter_cmpr_lowest_z(const void * a, const void * b) {
     return get_avg_z(a) < get_avg_z(b) ? -1 : 1;
+}
+
+void normalize_zvertex(
+    zVertex * to_normalize)
+{
+    float sum_squares =
+        (to_normalize->x * to_normalize->x) +
+        (to_normalize->y * to_normalize->y) +
+        (to_normalize->z * to_normalize->z);
+    float length = sqrtf(sum_squares);
+    to_normalize->x /= length;
+    to_normalize->y /= length;
+    to_normalize->z /= length;
+}
+
+float dot_of_vertices(
+    const zVertex vertex_1,
+    const zVertex vertex_2)
+{
+    float dot_x = (vertex_1.x * vertex_2.x);
+    float dot_y = (vertex_1.y * vertex_2.y);
+    float dot_z = (vertex_1.z * vertex_2.z);
+    
+    return dot_x + dot_y + dot_z;
+}
+
+
+float get_distance(
+    const zVertex p1,
+    const zVertex p2)
+{
+    return sqrtf(
+        ((p1.x - p2.x) * (p1.x - p2.x))
+        + ((p1.y - p2.y) * (p1.y - p2.y))
+        + ((p1.z - p2.z) * (p1.z - p2.z)));
+}
+
+float get_distance_to_ztriangle(
+    const zVertex p1,
+    const zTriangle p2)
+{
+    return (
+        get_distance(p1, p2.vertices[0]) +
+        get_distance(p1, p2.vertices[1]) +
+        get_distance(p1, p2.vertices[2])) / 3.0f;
+}
+
+float get_visibility_rating(
+    const zVertex observer,
+    const zTriangle * observed)
+{
+        zVertex normal;
+        zVertex line1;
+        zVertex line2;
+        
+        line1.x =
+            observed->vertices[1].x
+                - observed->vertices[0].x;
+        line1.y =
+            observed->vertices[1].y
+                - observed->vertices[0].y;
+        line1.z =
+            observed->vertices[1].z
+                - observed->vertices[0].z;
+        normalize_zvertex(&line1);
+        
+        line2.x =
+            observed->vertices[2].x
+                - observed->vertices[0].x;
+        line2.y =
+            observed->vertices[2].y
+                - observed->vertices[0].y;
+        line2.z =
+            observed->vertices[2].z
+                - observed->vertices[0].z;
+        normalize_zvertex(&line2);
+        
+        normal.x =
+            (line1.y * line2.z) - (line1.z * line2.y);
+        normal.y =
+            (line1.z * line2.x) - (line1.x * line2.z);
+        normal.z =
+            (line1.x * line2.y) - (line1.y * line2.x);
+        
+        normalize_zvertex(&normal); 
+        
+        // compare normal's similarity to a point between
+        // observer & triangle location 
+        zVertex triangle_minus_observer;
+        triangle_minus_observer.x =
+            observed->vertices[0].x - observer.x;
+        triangle_minus_observer.y =
+            observed->vertices[0].y - observer.y;
+        triangle_minus_observer.z =
+            observed->vertices[0].z - observer.z;
+        normalize_zvertex(&triangle_minus_observer);
+        
+        return dot_of_vertices(
+            normal,
+            triangle_minus_observer);
 }
 

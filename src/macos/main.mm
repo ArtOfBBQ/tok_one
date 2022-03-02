@@ -34,12 +34,12 @@ int main(int argc, const char * argv[])
     init_projection_constants();
     init_renderer();
     
+    // | NSWindowStyleMaskFullScreen)
     NSWindow *window =
         [[NSWindow alloc]
             initWithContentRect: full_screen_rect 
             styleMask: (NSWindowStyleMaskTitled
-                        | NSWindowStyleMaskClosable
-                        | NSWindowStyleMaskFullScreen)
+                        | NSWindowStyleMaskClosable)
             backing: NSBackingStoreBuffered 
             defer: NO];
     
