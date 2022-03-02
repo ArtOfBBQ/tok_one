@@ -226,10 +226,10 @@ zPolygon * get_box() {
     
     box->x = -1.5f;
     box->y = -3.5f;
-    box->z = 10.0f;
-    box->x_angle = 0.5f;
-    box->y_angle = 0.5f;
-    box->z_angle = 0.5f;
+    box->z = 7.0f;
+    box->x_angle = 0.0f;
+    box->y_angle = 0.0f;
+    box->z_angle = 0.0f;
     
     // SOUTH face
     box->triangles[0].vertices[0] =
@@ -541,17 +541,21 @@ int sorter_cmpr_lowest_z(const void * a, const void * b) {
     return get_avg_z(a) < get_avg_z(b) ? -1 : 1;
 }
 
+float get_magnitude(zVertex input) {
+    float sum_squares =
+        (input.x * input.x) +
+        (input.y * input.y) +
+        (input.z * input.z);
+    return sqrtf(sum_squares);
+}
+
 void normalize_zvertex(
     zVertex * to_normalize)
 {
-    float sum_squares =
-        (to_normalize->x * to_normalize->x) +
-        (to_normalize->y * to_normalize->y) +
-        (to_normalize->z * to_normalize->z);
-    float length = sqrtf(sum_squares);
-    to_normalize->x /= length;
-    to_normalize->y /= length;
-    to_normalize->z /= length;
+    float magnitude = get_magnitude(*to_normalize);
+    to_normalize->x /= magnitude;
+    to_normalize->y /= magnitude;
+    to_normalize->z /= magnitude;
 }
 
 float dot_of_vertices(
@@ -590,54 +594,95 @@ float get_visibility_rating(
     const zVertex observer,
     const zTriangle * observed)
 {
-        zVertex normal;
-        zVertex line1;
-        zVertex line2;
-        
-        line1.x =
-            observed->vertices[1].x
-                - observed->vertices[0].x;
-        line1.y =
-            observed->vertices[1].y
-                - observed->vertices[0].y;
-        line1.z =
-            observed->vertices[1].z
-                - observed->vertices[0].z;
-        normalize_zvertex(&line1);
-        
-        line2.x =
-            observed->vertices[2].x
-                - observed->vertices[0].x;
-        line2.y =
-            observed->vertices[2].y
-                - observed->vertices[0].y;
-        line2.z =
-            observed->vertices[2].z
-                - observed->vertices[0].z;
-        normalize_zvertex(&line2);
-        
-        normal.x =
-            (line1.y * line2.z) - (line1.z * line2.y);
-        normal.y =
-            (line1.z * line2.x) - (line1.x * line2.z);
-        normal.z =
-            (line1.x * line2.y) - (line1.y * line2.x);
-        
-        normalize_zvertex(&normal); 
-        
-        // compare normal's similarity to a point between
-        // observer & triangle location 
-        zVertex triangle_minus_observer;
-        triangle_minus_observer.x =
-            observed->vertices[0].x - observer.x;
-        triangle_minus_observer.y =
-            observed->vertices[0].y - observer.y;
-        triangle_minus_observer.z =
-            observed->vertices[0].z - observer.z;
-        normalize_zvertex(&triangle_minus_observer);
-        
-        return dot_of_vertices(
-            normal,
-            triangle_minus_observer);
+    // let's move everything so that observer is at {0,0,0}
+    zTriangle observed_adj = *observed;
+    for (uint32_t i = 0; i < 4; i++) {
+        observed_adj.vertices[i].x =
+            observed->vertices[i].x - observer.x;
+        observed_adj.vertices[i].y =
+            observed->vertices[i].y - observer.y;
+        observed_adj.vertices[i].z =
+            observed->vertices[i].z - observer.z;
+    }
+
+    // TODO: this isnt actually necessary, just asserting
+    assert(observer.x - observer.x == 0.0f);
+    assert(observer.y - observer.y == 0.0f);
+    assert(observer.z - observer.z == 0.0f);
+
+    zVertex normal;
+    zVertex line1;
+    zVertex line2;
+    
+    line1.x =
+        observed_adj.vertices[1].x
+            - observed_adj.vertices[0].x;
+    line1.y =
+        observed_adj.vertices[1].y
+            - observed_adj.vertices[0].y;
+    line1.z =
+        observed_adj.vertices[1].z
+            - observed_adj.vertices[0].z;
+    normalize_zvertex(&line1);
+    
+    if (get_magnitude(line1) > 1.01f) {
+        printf(
+            "ERROR: normalized line1 still has magnitude of %f\n",
+            get_magnitude(line1));
+        printf(
+            "line1 vertex coords were: {%f, %f, %f}\n",
+            line1.x,
+            line1.y,
+            line1.z);
+        assert(0);
+    }
+    
+    line2.x =
+        observed_adj.vertices[2].x
+            - observed_adj.vertices[0].x;
+    line2.y =
+        observed_adj.vertices[2].y
+            - observed_adj.vertices[0].y;
+    line2.z =
+        observed_adj.vertices[2].z
+            - observed_adj.vertices[0].z;
+    normalize_zvertex(&line2);
+    assert(get_magnitude(line2) < 1.01f);
+    
+    normal.x =
+        (line1.y * line2.z) - (line1.z * line2.y);
+    normal.y =
+        (line1.z * line2.x) - (line1.x * line2.z);
+    normal.z =
+        (line1.x * line2.y) - (line1.y * line2.x);
+    
+    normalize_zvertex(&normal); 
+    assert(get_magnitude(normal) < 1.01f);
+    
+    // compare normal's similarity to a point between
+    // observer & triangle location 
+    zVertex triangle_minus_observer;
+    triangle_minus_observer.x =
+        observed_adj.vertices[0].x;
+    triangle_minus_observer.y =
+        observed_adj.vertices[0].y;
+    triangle_minus_observer.z =
+        observed_adj.vertices[0].z;
+    normalize_zvertex(&triangle_minus_observer);
+    if (get_magnitude(triangle_minus_observer) > 1.01f) {
+        printf(
+            "ERROR: normalized triangle_minus_observer still has magnitude of %f\n",
+            get_magnitude(triangle_minus_observer));
+        printf(
+            "triangle_minus_observer vertex coords were: {%f, %f, %f}\n",
+            triangle_minus_observer.x,
+            triangle_minus_observer.y,
+            triangle_minus_observer.z);
+        assert(0);
+    }
+    
+    return dot_of_vertices(
+        normal,
+        triangle_minus_observer);
 }
 

@@ -35,30 +35,27 @@ void init_renderer() {
             load_from_obj_file("teddybear.obj");
         zpolygons_to_render_size += 1;
         
-        float base_x = i % 3 == 1 ? 0.0f : -20.0f; 
+        float base_x = i % 3 == 1 ? 0.0f : -30.0f; 
         float base_y = i % 2 == 1 ? 0.0f : -5.0f;
         zpolygons_to_render[i]->x = base_x + (i * 7.0f);
         zpolygons_to_render[i]->y = base_y + (i * 7.0f);
-        zpolygons_to_render[i]->z = (45.0f + ((i/2) * 45.0f));
+        zpolygons_to_render[i]->z = (25.0f + (i * 35.0f));
     }
 
     // objects 2: load some hard-coded cubes
     for (uint32_t i = 2; i < 3; i++) {
         zpolygons_to_render[i] = get_box();
         zpolygons_to_render_size += 1;
-        
-        float base_x = i % 3 == 1 ? 0.0f : -40.0f; 
-        float base_y = i % 2 == 1 ? 0.0f : -5.0f;
     }
     
     // initialize global zLightSource objects, to set up
     // our lighting for the scene
-    zlights_to_apply[0].x = -5.0f;
-    zlights_to_apply[0].y = -5.0f;
-    zlights_to_apply[0].z = 50.0f;
-    zlights_to_apply[0].reach = 50.0f;
-    zlights_to_apply[0].ambient = 0.75f;
-    zlights_to_apply[0].diffuse = 1.75f;
+    zlights_to_apply[0].x = 45.0f;
+    zlights_to_apply[0].y = 2.5f;
+    zlights_to_apply[0].z = 80.0f;
+    zlights_to_apply[0].reach = 73.0f;
+    zlights_to_apply[0].ambient = 0.9f;
+    zlights_to_apply[0].diffuse = 1.25;
     zlights_to_apply_size = 1;
     
     // add a white cube to represent the light source
@@ -113,19 +110,21 @@ void software_render(
         i < (zpolygons_to_render_size - 1);
         i++)
     {
-        // zpolygons_to_render[i]->x += 0.001;
-        // zpolygons_to_render[i]->y += 0.001;
-        // zpolygons_to_render[i]->z += 0.01;
-        // zpolygons_to_render[i]->x_angle += 0.04f;
-        // zpolygons_to_render[i]->y_angle += 0.04f;
+        zpolygons_to_render[i]->x -= 0.001;
+        zpolygons_to_render[i]->y += 0.001;
+        zpolygons_to_render[i]->z += 0.01;
+        zpolygons_to_render[i]->x_angle += 0.04f;
+        zpolygons_to_render[i]->y_angle += 0.04f;
     }
-
+    
     // move our light source
     uint32_t i = zpolygons_to_render_size - 1;
-    zpolygons_to_render[i]->x -= 0.001;
     zpolygons_to_render[i]->y -= 0.001;
-    if (zpolygons_to_render[i]->z > 5.0f) {
-        zpolygons_to_render[i]->z -= 0.02;
+    if (zpolygons_to_render[i]->z > 6.0f) {
+        zpolygons_to_render[i]->z -= 0.15;
+        zpolygons_to_render[i]->x -= 0.07;
+    } else if (zpolygons_to_render[i]->x > -6.0f) {
+        zpolygons_to_render[i]->x -= 0.15;
     }
     zlights_to_apply[0].x = zpolygons_to_render[i]->x;
     zlights_to_apply[0].y = zpolygons_to_render[i]->y;
@@ -217,23 +216,29 @@ void software_render(
                     if (distance_mod < 0.0f) {
                         distance_mod = 0.0f;
                     }
+                    assert(distance_mod < 1.01f);
                     
                     triangle_to_draw[m].lighting *=
                         zlights_to_apply[l].ambient
                             * distance_mod;
                     
-                    /*
                     float diffuse_dot = get_visibility_rating(
                         light_source,
                         triangles_to_draw + i);
-                    
-                    if (diffuse_dot > 0.0f) {
-                       //  triangle_to_draw[m].lighting *=
-                       //      (diffuse_dot
-                       //          * zlights_to_apply[l].diffuse
-                       //          * distance_mod);
+                    // TODO assert again
+                    if (diffuse_dot > 1.02f) {
+                        printf("ERROR: diffuse dot was: %f\n",
+                            diffuse_dot);
+                        assert(0);
                     }
-                    */
+                    
+                    if (diffuse_dot > 0.0f)
+                    {
+                        triangle_to_draw[m].lighting *=
+                            (diffuse_dot
+                                * zlights_to_apply[l].diffuse
+                                * distance_mod);
+                    }
                 }
             }
             

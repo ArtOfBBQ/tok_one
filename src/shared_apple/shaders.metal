@@ -73,6 +73,6 @@ fragment_shader(
         in.texture_coordinate);
     
     // return the color of the texture
-    return float4(colorSample) * in.lighting;
+    return float4(colorSample) * (0.2 + in.lighting);
 }
 

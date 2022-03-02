@@ -28,14 +28,7 @@ extern ProjectionConstants projection_constants;
 
 void init_projection_constants(void);
 
-typedef struct zLightSource {
-    float x;
-    float y;
-    float z;
-    float reach;   // max distance before light intensity 0
-    float ambient; // how much ambient light does this radiate?
-    float diffuse; // how much diffuse light does this radiate?
-} zLightSource;
+Booting hello3dgfx
 
 typedef struct zVertex {
     float x;
