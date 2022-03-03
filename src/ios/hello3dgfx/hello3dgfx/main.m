@@ -64,11 +64,15 @@ FileBuffer * platform_read_file(char * filename) {
         return_value->contents = buffer;
         return_value->size = bytes_read;
         
+        printf(
+            "read file %s (%u bytes) ¥n¥n",
+            filename,
+            bytes_read);
+        
         return return_value;
 }
 
 int main(int argc, char * argv[]) {
-    
     NSString * appDelegateClassName;
     @autoreleasepool {
         // Setup code that might create autoreleased objects goes here.

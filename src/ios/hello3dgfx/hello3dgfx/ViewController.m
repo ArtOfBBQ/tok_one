@@ -56,32 +56,32 @@ MTKView * _my_mtk_view;
     }
     
     id<MTLFunction> vertex_shader =
-        [ShaderLibrary newFunctionWithName: @"vertexShader"];
+        [ShaderLibrary newFunctionWithName: @"vertex_shader"];
     id<MTLFunction> fragment_shader =
-        [ShaderLibrary newFunctionWithName: @"fragmentShader"];
+        [ShaderLibrary newFunctionWithName: @"fragment_shader"];
     
     // Setup Render Pipeline States
-    MTLRenderPipelineDescriptor *SolidColorPipelineDescriptor =
+    MTLRenderPipelineDescriptor *ComboPipelineDescriptor =
         [[MTLRenderPipelineDescriptor alloc] init];
-    [SolidColorPipelineDescriptor
+    [ComboPipelineDescriptor
         setVertexFunction: vertex_shader];
-    [SolidColorPipelineDescriptor
+    [ComboPipelineDescriptor
         setFragmentFunction: fragment_shader];
-    SolidColorPipelineDescriptor
+    ComboPipelineDescriptor
         .colorAttachments[0]
         .pixelFormat =
             _my_mtk_view.colorPixelFormat;
     
-    id<MTLRenderPipelineState> solid_color_pipeline_state =
+    id<MTLRenderPipelineState> combo_pipeline_state =
     [_metal_device
               newRenderPipelineStateWithDescriptor:
-                  SolidColorPipelineDescriptor
+                  ComboPipelineDescriptor
               error:
                   &Error];
     
     if (Error != NULL)
     {
-        printf("error - can't initialize solid_color_pipeline_state\n");
+        printf("error - can't initialize combo_pipeline_state\n");
         return;
     }
     
@@ -102,8 +102,8 @@ MTKView * _my_mtk_view;
           frame_i++)
     {
         BufferedVertexCollection buffered_vertex = {};
-        ColoredVertex * new_vertex =
-            (ColoredVertex *)mmap(
+        Vertex * new_vertex =
+            (Vertex *)mmap(
                 0,
                 buffered_vertex_size,
                 PROT_READ | PROT_WRITE,
@@ -133,18 +133,51 @@ MTKView * _my_mtk_view;
         [[MetalKitViewDelegate alloc] init];
     _my_mtk_view.delegate = _mtk_view_delegate;
     
-    _mtk_view_delegate.mac_vertex_buffers = mac_vertex_buffers;
+    _mtk_view_delegate.vertex_buffers = mac_vertex_buffers;
     _mtk_view_delegate.render_commands = render_commands;
-    _mtk_view_delegate.solid_color_pipeline_state = solid_color_pipeline_state;
+    _mtk_view_delegate.combo_pipeline_state = combo_pipeline_state;
     _mtk_view_delegate.command_queue = command_queue;
     
     [_mtk_view_delegate configureMetal];
     
     window_height = [UIScreen mainScreen].bounds.size.height; 
-    window_width = [UIScreen mainScreen].bounds.size.width;
+    window_width = [UIScreen mainScreen].bounds.size.width;    
     
+    printf("setting up projection constants...¥n");
     init_projection_constants();
+    printf("setting up renderer...¥n");
     init_renderer();
+    
+    printf("setting up textures...¥n");
+    _mtk_view_delegate.metal_textures = [[NSMutableArray alloc] init];
+    assert(texture_count > 0);
+    for (uint32_t i = 0; i < texture_count; i++) {
+        MTLTextureDescriptor * texture_descriptor =
+            [[MTLTextureDescriptor alloc] init];
+        texture_descriptor.pixelFormat =
+            MTLPixelFormatRGBA8Unorm;
+        texture_descriptor.width =
+            textures[i]->width;
+        texture_descriptor.height =
+            textures[i]->height;
+        id<MTLTexture> texture =
+            [_metal_device
+                newTextureWithDescriptor:texture_descriptor];
+        MTLRegion region = {
+            { 0, 0, 0 },
+            { textures[i]->width, textures[i]->height, 1}
+        };
+        
+        assert(textures[i]->width >= 10);
+        [texture
+            replaceRegion:region
+            mipmapLevel:0
+            withBytes:textures[i]->rgba_values
+            bytesPerRow:4 * textures[i]->width];
+        [[_mtk_view_delegate metal_textures] addObject: texture];
+        
+    }
+    printf("succesfully set up textures...¥n");
 }
 
 @end

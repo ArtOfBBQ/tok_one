@@ -22,6 +22,10 @@
 		603EDA9727B652A400C80F7E /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 603EDA9627B652A400C80F7E /* Metal.framework */; };
 		6065890227BF6F7500BE0F81 /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = 6065890127BF6F7500BE0F81 /* teapot.obj */; };
 		60B0D2C127C77615009F77E4 /* zpolygon.c in Sources */ = {isa = PBXBuildFile; fileRef = 60B0D2C027C77615009F77E4 /* zpolygon.c */; };
+		60B2DE8127D0AA3000C6668B /* decode_png.c in Sources */ = {isa = PBXBuildFile; fileRef = 60B2DE8027D0AA2F00C6668B /* decode_png.c */; };
+		60B2DE8327D0AA3700C6668B /* inflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 60B2DE8227D0AA3700C6668B /* inflate.c */; };
+		60B2DE8627D0B0AD00C6668B /* structuredart.png in Resources */ = {isa = PBXBuildFile; fileRef = 60B2DE8427D0B0AC00C6668B /* structuredart.png */; };
+		60B2DE8727D0B0AD00C6668B /* fs_angrymob.png in Resources */ = {isa = PBXBuildFile; fileRef = 60B2DE8527D0B0AC00C6668B /* fs_angrymob.png */; };
 		60C1C71927C81F4200877396 /* window_size.c in Sources */ = {isa = PBXBuildFile; fileRef = 603EDA8427B389A200C80F7E /* window_size.c */; };
 /* End PBXBuildFile section */
 
@@ -51,6 +55,12 @@
 		6065890127BF6F7500BE0F81 /* teapot.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = teapot.obj; sourceTree = "<group>"; };
 		60B0D2BF27C7760D009F77E4 /* zpolygon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zpolygon.h; path = ../../../shared/zpolygon.h; sourceTree = "<group>"; };
 		60B0D2C027C77615009F77E4 /* zpolygon.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zpolygon.c; path = ../../../shared/zpolygon.c; sourceTree = "<group>"; };
+		60B2DE7E27D0A9A900C6668B /* inflate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = inflate.h; path = ../../../shared/inflate.h; sourceTree = "<group>"; };
+		60B2DE7F27D0A9B800C6668B /* decode_png.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = decode_png.h; path = ../../../shared/decode_png.h; sourceTree = "<group>"; };
+		60B2DE8027D0AA2F00C6668B /* decode_png.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = decode_png.c; path = ../../../shared/decode_png.c; sourceTree = "<group>"; };
+		60B2DE8227D0AA3700C6668B /* inflate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = inflate.c; path = ../../../shared/inflate.c; sourceTree = "<group>"; };
+		60B2DE8427D0B0AC00C6668B /* structuredart.png */ = {isa = PBXFileReference; explicitFileType = compiled; path = structuredart.png; sourceTree = "<group>"; };
+		60B2DE8527D0B0AC00C6668B /* fs_angrymob.png */ = {isa = PBXFileReference; explicitFileType = compiled; path = fs_angrymob.png; sourceTree = "<group>"; };
 		60C1C71A27C81FC100877396 /* window_size.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = window_size.h; path = ../../../shared/window_size.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -72,6 +82,8 @@
 			children = (
 				602EA54227B9F32900744AA9 /* teddybear.obj */,
 				6065890127BF6F7500BE0F81 /* teapot.obj */,
+				60B2DE8527D0B0AC00C6668B /* fs_angrymob.png */,
+				60B2DE8427D0B0AC00C6668B /* structuredart.png */,
 				6019854527B32B6600A96EAA /* hello3dgfx */,
 				6019854427B32B6600A96EAA /* Products */,
 				603EDA9327B6529900C80F7E /* Frameworks */,
@@ -101,7 +113,11 @@
 				603EDA8D27B4976C00C80F7E /* Main.storyboard */,
 				602EA53D27B9D99900744AA9 /* platform_layer.h */,
 				6019855F27B3307B00A96EAA /* shaders.metal */,
+				60B2DE7E27D0A9A900C6668B /* inflate.h */,
 				603EDA8227B389A200C80F7E /* software_renderer.c */,
+				60B2DE7F27D0A9B800C6668B /* decode_png.h */,
+				60B2DE8027D0AA2F00C6668B /* decode_png.c */,
+				60B2DE8227D0AA3700C6668B /* inflate.c */,
 				603EDA8627B389A200C80F7E /* software_renderer.h */,
 				603EDA8127B389A200C80F7E /* vertex_types.h */,
 				6019854C27B32B6600A96EAA /* ViewController.h */,
@@ -185,7 +201,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				60B2DE8627D0B0AD00C6668B /* structuredart.png in Resources */,
 				602EA54327B9F32900744AA9 /* teddybear.obj in Resources */,
+				60B2DE8727D0B0AD00C6668B /* fs_angrymob.png in Resources */,
 				603EDA8E27B4976C00C80F7E /* Main.storyboard in Resources */,
 				6019855627B32B8D00A96EAA /* LaunchScreen.storyboard in Resources */,
 				6019855327B32B8D00A96EAA /* Assets.xcassets in Resources */,
@@ -203,8 +221,10 @@
 				602EA53E27B9EDF200744AA9 /* platform_layer.h in Sources */,
 				6019854E27B32B6600A96EAA /* ViewController.m in Sources */,
 				6019856027B3307B00A96EAA /* shaders.metal in Sources */,
+				60B2DE8127D0AA3000C6668B /* decode_png.c in Sources */,
 				6019854827B32B6600A96EAA /* AppDelegate.m in Sources */,
 				6019855927B32B8D00A96EAA /* main.m in Sources */,
+				60B2DE8327D0AA3700C6668B /* inflate.c in Sources */,
 				60B0D2C127C77615009F77E4 /* zpolygon.c in Sources */,
 				603EDA8C27B3A67C00C80F7E /* gpu.m in Sources */,
 				603EDA8927B389A200C80F7E /* software_renderer.c in Sources */,

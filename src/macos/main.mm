@@ -77,12 +77,6 @@ int main(int argc, const char * argv[])
     id<MTLFunction> fragment_shader =
         [shader_library newFunctionWithName:
             @"fragment_shader"];
-    id<MTLFunction> texture_vertex_shader =
-        [shader_library newFunctionWithName:
-            @"texture_vertex_shader"];
-    id<MTLFunction> texture_fragment_shader =
-        [shader_library newFunctionWithName:
-            @"texture_fragment_shader"];
     
     if (Error != NULL)
     {
