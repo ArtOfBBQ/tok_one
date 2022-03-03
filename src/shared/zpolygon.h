@@ -91,6 +91,10 @@ zTriangle translate_ztriangle(
 
 zPolygon * load_from_obj_file(char * filename);
 
+void scale_zpolygon(
+    zPolygon * to_scale,
+    const float new_height);
+
 void free_zpolygon(
     zPolygon * to_free);
 

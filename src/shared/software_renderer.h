@@ -9,6 +9,7 @@
 #include "static_redefinitions.h"
 #include "decode_png.h"
 
+local_only uint32_t renderer_initialized = false;
 local_only zPolygon * zpolygons_to_render[1000];
 local_only uint32_t zpolygons_to_render_size;
 local_only zLightSource zlights_to_apply[50];

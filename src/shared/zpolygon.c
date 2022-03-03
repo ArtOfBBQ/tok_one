@@ -217,6 +217,37 @@ zPolygon * load_from_obj_file(char * filename) {
     return return_value;
 }
 
+void scale_zpolygon(
+    zPolygon * to_scale,
+    const float new_height)
+{
+    assert(to_scale != NULL);
+    
+    float largest_height = 0.0f;
+    for (uint32_t i = 0; i < to_scale->triangles_size; i++) {
+        for (uint32_t j = 0; j < 3; j++) {
+            float height =
+                fabs(to_scale->triangles[i].vertices[j].y);
+            if (height > largest_height)
+            {
+                largest_height = height;
+            }
+        }
+    }
+    assert(largest_height > 0.0f);
+    
+    float scale_factor = new_height / largest_height;
+    
+    for (uint32_t i = 0; i < to_scale->triangles_size; i++) {
+        for (uint32_t j = 0; j < 3; j++)
+        {
+            to_scale->triangles[i].vertices[j].x *= scale_factor;
+            to_scale->triangles[i].vertices[j].y *= scale_factor;
+            to_scale->triangles[i].vertices[j].z *= scale_factor;
+        }
+    }
+}
+
 zPolygon * get_box() {
     zPolygon * box = malloc(sizeof(zPolygon));
     box->triangles_size = 6 * 2; // 6 faces, 2 per face
@@ -379,7 +410,7 @@ void ztriangle_apply_lighting(
             m);
         
         // TODO remove assert
-        if (diffuse_dot > 1.02f) {
+        if (diffuse_dot > 1.05f) {
             printf("ERROR: diffuse dot was: %f\n",
                 diffuse_dot);
             assert(0);
@@ -719,7 +750,7 @@ float get_visibility_rating(
         observed_adj.vertices[vertex_2].z
             - observed_adj.vertices[vertex_0].z;
     normalize_zvertex(&line2);
-    assert(get_magnitude(line2) < 1.02f);
+    assert(get_magnitude(line2) < 1.05f);
     
     normal.x =
         (line1.y * line2.z) - (line1.z * line2.y);
@@ -729,7 +760,7 @@ float get_visibility_rating(
         (line1.x * line2.y) - (line1.y * line2.x);
     
     normalize_zvertex(&normal); 
-    assert(get_magnitude(normal) < 1.02f);
+    assert(get_magnitude(normal) < 1.05f);
     
     // compare normal's similarity to a point between
     // observer & triangle location 

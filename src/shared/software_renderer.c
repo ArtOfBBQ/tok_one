@@ -35,17 +35,25 @@ void init_renderer() {
             load_from_obj_file("teddybear.obj");
         zpolygons_to_render_size += 1;
         
-        float base_x = i % 3 == 1 ? 0.0f : -30.0f; 
-        float base_y = i % 2 == 1 ? 0.0f : -5.0f;
-        zpolygons_to_render[i]->x = base_x + (i * 7.0f);
+        // float base_x = i % 3 == 1 ? 0.0f : -15.0f; 
+        float base_y = i % 2 == 0 ? 0.0f : -5.0f;
+        zpolygons_to_render[i]->x = 0.0f;
         zpolygons_to_render[i]->y = base_y + (i * 7.0f);
         zpolygons_to_render[i]->z = (25.0f + (i * 35.0f));
+        
+        scale_zpolygon(
+            /* to_scale   : */ zpolygons_to_render[i],
+            /* new_height : */
+                1.0f * (i == 1 ? 20.0f : 1.0f));
     }
-
+    
     // objects 2: load some hard-coded cubes
     for (uint32_t i = 2; i < 3; i++) {
         zpolygons_to_render[i] = get_box();
         zpolygons_to_render_size += 1;
+        scale_zpolygon(
+            /* to_scale   : */ zpolygons_to_render[i],
+            /* new_height : */ 5.0f);
     }
     
     // initialize global zLightSource objects, to set up
@@ -60,23 +68,33 @@ void init_renderer() {
     
     // add a white cube to represent the light source
     zpolygons_to_render_size += 1;
-    uint32_t i = zpolygons_to_render_size - 1;
-    zpolygons_to_render[i] = get_box();
-    zpolygons_to_render[i]->x = zlights_to_apply[0].x;
-    zpolygons_to_render[i]->y = zlights_to_apply[0].y;
-    zpolygons_to_render[i]->z = zlights_to_apply[0].z;
+    uint32_t light_i = zpolygons_to_render_size - 1;
+    zpolygons_to_render[light_i] = get_box();
+    zpolygons_to_render[light_i]->x = zlights_to_apply[0].x;
+    zpolygons_to_render[light_i]->y = zlights_to_apply[0].y;
+    zpolygons_to_render[light_i]->z = zlights_to_apply[0].z;
     for (
         uint32_t j = 0;
-        j < zpolygons_to_render[i]->triangles_size;
+        j < zpolygons_to_render[light_i]->triangles_size;
         j++)
     {
         // bright white
-        zpolygons_to_render[i]->triangles[j].color[0] = 50.0f;
-        zpolygons_to_render[i]->triangles[j].color[1] = 50.0f;
-        zpolygons_to_render[i]->triangles[j].color[2] = 50.0f;
-        zpolygons_to_render[i]->triangles[j].color[3] = 50.0f;
-        zpolygons_to_render[i]->triangles[j].texture_i = -1;
+        zpolygons_to_render[light_i]->triangles[j].color[0] =
+            500.0f;
+        zpolygons_to_render[light_i]->triangles[j].color[1] =
+            500.0f;
+        zpolygons_to_render[light_i]->triangles[j].color[2] =
+            500.0f;
+        zpolygons_to_render[light_i]->triangles[j].color[3] =
+            500.0f;
+        zpolygons_to_render[light_i]->triangles[j].texture_i =
+            -1;
     }
+    scale_zpolygon(
+        /* to_scale  : */ zpolygons_to_render[light_i],
+        /* new_height: */ 0.5f);
+    
+    renderer_initialized = true;
 }
 
 void free_renderer() {
@@ -89,6 +107,10 @@ void software_render(
     Vertex * next_gpu_workload,
     uint32_t * next_workload_size)
 {
+    if (renderer_initialized != true) {
+        return;
+    }
+    
     // camera.x += 0.01f;
     // camera.y += 0.01f;
     // camera.z += 0.02f;
