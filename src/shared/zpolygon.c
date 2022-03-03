@@ -238,7 +238,6 @@ zPolygon * get_box() {
         (zVertex){ 0.0f, 5.0f, 0.0f };
     box->triangles[0].vertices[2] =
         (zVertex){ 5.0f, 5.0f, 0.0f };
-    box->triangles[0].texture_i = 0;
     
     box->triangles[1].vertices[0] =
         (zVertex){ 0.0f, 0.0f, 0.0f };
@@ -246,7 +245,6 @@ zPolygon * get_box() {
         (zVertex){ 5.0f, 5.0f, 0.0f };
     box->triangles[1].vertices[2] =
         (zVertex){ 5.0f, 0.0f, 0.0f };
-    box->triangles[1].texture_i = 0;
     
     // EAST face
     box->triangles[2].vertices[0] =
@@ -255,7 +253,6 @@ zPolygon * get_box() {
         (zVertex){ 5.0f, 5.0f, 0.0f };
     box->triangles[2].vertices[2] =
         (zVertex){ 5.0f, 5.0f, 5.0f };
-    box->triangles[2].texture_i = 1;
     
     box->triangles[3].vertices[0] =
         (zVertex){ 5.0f, 0.0f, 0.0f };
@@ -263,7 +260,6 @@ zPolygon * get_box() {
         (zVertex){ 5.0f, 5.0f, 5.0f };
     box->triangles[3].vertices[2] =
         (zVertex){ 5.0f, 0.0f, 5.0f };
-    box->triangles[3].texture_i = 1;
     
     // NORTH face
     box->triangles[4].vertices[0] =
@@ -272,7 +268,6 @@ zPolygon * get_box() {
         (zVertex){ 5.0f, 5.0f, 5.0f };
     box->triangles[4].vertices[2] =
         (zVertex){ 0.0f, 5.0f, 5.0f };
-    box->triangles[4].texture_i = 0;
     
     box->triangles[5].vertices[0] =
         (zVertex){ 5.0f, 0.0f, 5.0f };
@@ -280,7 +275,6 @@ zPolygon * get_box() {
         (zVertex){ 0.0f, 5.0f, 5.0f };
     box->triangles[5].vertices[2] =
         (zVertex){ 0.0f, 0.0f, 5.0f };
-    box->triangles[5].texture_i = 0;
     
     // WEST face
     box->triangles[6].vertices[0] =
@@ -289,7 +283,6 @@ zPolygon * get_box() {
         (zVertex){ 0.0f, 5.0f, 5.0f };
     box->triangles[6].vertices[2] =
         (zVertex){ 0.0f, 5.0f, 0.0f };
-    box->triangles[6].texture_i = 1;
     
     box->triangles[7].vertices[0] =
         (zVertex){ 0.0f, 0.0f, 5.0f };
@@ -297,7 +290,6 @@ zPolygon * get_box() {
         (zVertex){ 0.0f, 5.0f, 0.0f };
     box->triangles[7].vertices[2] =
         (zVertex){ 0.0f, 0.0f, 0.0f };
-    box->triangles[7].texture_i = 1;
     
     // TOP face
     box->triangles[8].vertices[0] =
@@ -306,7 +298,6 @@ zPolygon * get_box() {
         (zVertex){ 0.0f, 5.0f, 5.0f };
     box->triangles[8].vertices[2] =
         (zVertex){ 5.0f, 5.0f, 5.0f };
-    box->triangles[8].texture_i = 0;
     
     box->triangles[9].vertices[0] =
         (zVertex){ 0.0f, 5.0f, 0.0f };
@@ -314,7 +305,6 @@ zPolygon * get_box() {
         (zVertex){ 5.0f, 5.0f, 5.0f };
     box->triangles[9].vertices[2] =
         (zVertex){ 5.0f, 5.0f, 0.0f };
-    box->triangles[9].texture_i = 0;
     
     // BOTTOM face
     box->triangles[10].vertices[0] =
@@ -323,7 +313,6 @@ zPolygon * get_box() {
         (zVertex){ 0.0f, 0.0f, 5.0f };
     box->triangles[10].vertices[2] =
         (zVertex){ 0.0f, 0.0f, 0.0f };
-    box->triangles[10].texture_i = 1;
     
     box->triangles[11].vertices[0] =
         (zVertex){ 5.0f, 0.0f, 5.0f };
@@ -331,9 +320,79 @@ zPolygon * get_box() {
         (zVertex){ 0.0f, 0.0f, 0.0f };
     box->triangles[11].vertices[2] =
         (zVertex){ 5.0f, 0.0f, 0.0f };
-    box->triangles[11].texture_i = 1;
+
+    for (uint32_t i = 0; i < 12; i += 2) {
+        box->triangles[i].texture_i = 0;
+        box->triangles[i].vertices[0].uv[0] = 0.0f; 
+        box->triangles[i].vertices[0].uv[1] = 1.0f;
+        box->triangles[i].vertices[1].uv[0] = 0.0f; 
+        box->triangles[i].vertices[1].uv[1] = 0.0f;
+        box->triangles[i].vertices[2].uv[0] = 1.0f; 
+        box->triangles[i].vertices[2].uv[1] = 0.0f;
+        box->triangles[i+1].texture_i = 0;
+        box->triangles[i+1].vertices[0].uv[0] = 0.0f; 
+        box->triangles[i+1].vertices[0].uv[1] = 1.0f;
+        box->triangles[i+1].vertices[1].uv[0] = 1.0f; 
+        box->triangles[i+1].vertices[1].uv[1] = 0.0f;
+        box->triangles[i+1].vertices[2].uv[0] = 1.0f; 
+        box->triangles[i+1].vertices[2].uv[1] = 1.0f;
+    }
     
     return box;
+}
+
+void ztriangle_apply_lighting(
+    Vertex recipient[3],
+    zTriangle * input,
+    zLightSource * zlight_source)
+{
+    assert(zlight_source != NULL);
+    
+    // add lighting to the 3 vertices
+    for (uint32_t m = 0; m < 3; m++) {
+        recipient[m].lighting = 0.0f;
+        
+        zVertex light_source_pos;
+        light_source_pos.x = zlight_source->x;
+        light_source_pos.y = zlight_source->y;
+        light_source_pos.z = zlight_source->z;
+        
+        float distance = get_distance_to_ztriangle(
+            light_source_pos,
+            *input);
+        float distance_mod = 1.0f -
+            (distance / zlight_source->reach);
+        if (distance_mod < 0.0f) {
+            distance_mod = 0.0f;
+        }
+        assert(distance_mod < 1.01f);
+        
+        // add ambient lighting 
+        recipient[m].lighting +=
+            zlight_source->ambient
+                * distance_mod;
+        
+        // add diffuse lighting
+        float diffuse_dot = get_visibility_rating(
+            light_source_pos,
+            input,
+            m);
+        
+        // TODO remove assert
+        if (diffuse_dot > 1.02f) {
+            printf("ERROR: diffuse dot was: %f\n",
+                diffuse_dot);
+            assert(0);
+        }
+        
+        if (diffuse_dot < 0.0f)
+        {
+            recipient[m].lighting +=
+                (diffuse_dot
+                    * -1
+                    * zlight_source->diffuse);
+        }
+    }
 }
 
 void ztriangle_to_2d(
@@ -375,6 +434,9 @@ void ztriangle_to_2d(
         {
             recipient[i].y /= z_modifier;
         }
+
+        recipient[i].uv[0] = input->vertices[i].uv[0];
+        recipient[i].uv[1] = input->vertices[i].uv[1];
         
         for (uint32_t j = 0; j < 4; j++) {
             recipient[i].RGBA[j] = input->color[j];
@@ -419,6 +481,11 @@ zTriangle x_rotate_triangle(
                 * sinf(angle)) +
             (input->vertices[i].z
                 * cosf(angle));
+
+        return_value.vertices[i].uv[0] =
+            input->vertices[i].uv[0];
+        return_value.vertices[i].uv[1] =
+            input->vertices[i].uv[1];
     }
 
     return_value.texture_i = input->texture_i;
@@ -457,6 +524,11 @@ zTriangle z_rotate_triangle(
                 * cosf(angle))
             + (input->vertices[i].x
                 * sinf(angle));
+
+        return_value.vertices[i].uv[0] =
+            input->vertices[i].uv[0];
+        return_value.vertices[i].uv[1] =
+            input->vertices[i].uv[1];
     }
     
     return_value.texture_i = input->texture_i;
@@ -495,6 +567,11 @@ zTriangle y_rotate_triangle(
                 * cosf(angle))
             - (input->vertices[i].x
                 * sinf(angle));
+
+        return_value.vertices[i].uv[0] =
+            input->vertices[i].uv[0];
+        return_value.vertices[i].uv[1] =
+            input->vertices[i].uv[1];
     }
     
     return_value.texture_i = input->texture_i;
@@ -520,6 +597,11 @@ zTriangle translate_ztriangle(
             input->vertices[i].y + by_y;
         return_value.vertices[i].z =
             input->vertices[i].z + by_z;
+        
+        return_value.vertices[i].uv[0] =
+            input->vertices[i].uv[0];
+        return_value.vertices[i].uv[1] =
+            input->vertices[i].uv[1];
     }
     
     return_value.texture_i = input->texture_i;

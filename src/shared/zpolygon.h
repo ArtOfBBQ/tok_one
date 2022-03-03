@@ -67,6 +67,11 @@ typedef struct zPolygon {
 
 zPolygon * get_box(void);
 
+void ztriangle_apply_lighting(
+    Vertex recipient[3],
+    zTriangle * input,
+    zLightSource * zlight_source);
+
 void ztriangle_to_2d(
     Vertex recipient[3],
     zTriangle * input);

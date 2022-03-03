@@ -195,67 +195,18 @@ void software_render(
                 0);
         
         if (perspective_dot_product < 0.0f) {
-            // colored triangle
+            
             Vertex triangle_to_draw[3];
-            
-            for (uint32_t l = 0; l < zlights_to_apply_size; l++)
-            {
-                // add lighting to the 3 vertices
-                for (uint32_t m = 0; m < 3; m++) {
-                    triangle_to_draw[m].lighting = 0.0f;
-                    
-                    zVertex light_source;
-                    light_source.x = zlights_to_apply[l].x;
-                    light_source.y = zlights_to_apply[l].y;
-                    light_source.z = zlights_to_apply[l].z;
-                   
-                    float distance = get_distance_to_ztriangle(
-                        light_source,
-                        triangles_to_draw[i]);
-                    float distance_mod = 1.0f -
-                        (distance / zlights_to_apply[l].reach);
-                    if (distance_mod < 0.0f) {
-                        distance_mod = 0.0f;
-                    }
-                    assert(distance_mod < 1.01f);
-                    
-                    // add ambient lighting 
-                    triangle_to_draw[m].lighting +=
-                        zlights_to_apply[l].ambient
-                            * distance_mod;
-                    
-                    // add diffuse lighting
-                    float diffuse_dot = get_visibility_rating(
-                        light_source,
+
+            for (uint32_t l = 0; l < zlights_to_apply_size; l++) {
+                ztriangle_apply_lighting(
+                    /* recipient: */
+                        triangle_to_draw,
+                    /* input: */
                         triangles_to_draw + i,
-                        m);
-                    
-                    // TODO remove assert
-                    if (diffuse_dot > 1.02f) {
-                        printf("ERROR: diffuse dot was: %f\n",
-                            diffuse_dot);
-                        assert(0);
-                    }
-                    
-                    if (diffuse_dot < 0.0f)
-                    {
-                        triangle_to_draw[m].lighting +=
-                            (diffuse_dot
-                                * -1
-                                * zlights_to_apply[l].diffuse);
-                    }
-                }
+                    /* zlight_source: */
+                        &zlights_to_apply[l]);
             }
-            
-            // TODO: set uv coordinates for texture mapping
-            // properly
-            // this is just a hack for testing
-            triangle_to_draw[0].uv[0] = 0.0f;
-            triangle_to_draw[0].uv[1] = 1.0f;
-            triangle_to_draw[1].uv[0] = 0.0f;
-            triangle_to_draw[1].uv[1] = 0.0f;
-            triangle_to_draw[2].uv[0] = 1.0f;
-            triangle_to_draw[2].uv[1] = 1.0f;
             
             ztriangle_to_2d(
                 /* recipient: */

@@ -13,4 +13,7 @@ src/ios/hello3dgfx/hello3dgfx/Assets.xcassets/*
 src/ios/hello3dgfx/hello3dgfx.xcodeproj/xcshareddata/*
 src/ios/hello3dgfx/hello3dgfx.xcodeproj/xcuserdata/*
 
+# metal libraries
+Shaders.air
+
 build/**
