@@ -28,7 +28,14 @@ extern ProjectionConstants projection_constants;
 
 void init_projection_constants(void);
 
-Booting hello3dgfx
+typedef struct zLightSource {
+    float x;
+    float y;
+    float z;
+    float reach;   // max distance before light intensity 0
+    float ambient; // how much ambient light does this radiate?
+    float diffuse; // how much diffuse light does this radiate?
+} zLightSource;
 
 typedef struct zVertex {
     float x;
@@ -106,7 +113,8 @@ float get_distance_to_ztriangle(
 
 float get_visibility_rating(
     const zVertex observer,
-    const zTriangle * observed);
+    const zTriangle * observed,
+    const uint32_t observed_vertex_i);
 
 float dot_of_vertices(
     const zVertex vertex_1,

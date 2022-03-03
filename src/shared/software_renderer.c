@@ -53,9 +53,9 @@ void init_renderer() {
     zlights_to_apply[0].x = 45.0f;
     zlights_to_apply[0].y = 2.5f;
     zlights_to_apply[0].z = 80.0f;
-    zlights_to_apply[0].reach = 73.0f;
-    zlights_to_apply[0].ambient = 0.9f;
-    zlights_to_apply[0].diffuse = 1.25;
+    zlights_to_apply[0].reach = 150.0f;
+    zlights_to_apply[0].ambient = 0.1f;
+    zlights_to_apply[0].diffuse = 2.0f;
     zlights_to_apply_size = 1;
     
     // add a white cube to represent the light source
@@ -71,10 +71,10 @@ void init_renderer() {
         j++)
     {
         // bright white
-        zpolygons_to_render[i]->triangles[j].color[0] = 1.0f;
-        zpolygons_to_render[i]->triangles[j].color[1] = 1.0f;
-        zpolygons_to_render[i]->triangles[j].color[2] = 1.0f;
-        zpolygons_to_render[i]->triangles[j].color[3] = 1.0f;
+        zpolygons_to_render[i]->triangles[j].color[0] = 50.0f;
+        zpolygons_to_render[i]->triangles[j].color[1] = 50.0f;
+        zpolygons_to_render[i]->triangles[j].color[2] = 50.0f;
+        zpolygons_to_render[i]->triangles[j].color[3] = 50.0f;
         zpolygons_to_render[i]->triangles[j].texture_i = -1;
     }
 }
@@ -191,7 +191,8 @@ void software_render(
         float perspective_dot_product =
             get_visibility_rating(
                 camera,
-                triangles_to_draw + i);
+                triangles_to_draw + i,
+                0);
         
         if (perspective_dot_product < 0.0f) {
             // colored triangle
@@ -199,15 +200,15 @@ void software_render(
             
             for (uint32_t l = 0; l < zlights_to_apply_size; l++)
             {
-                // add diffuse lighting to the 3 vertices
-                for (uint32_t m = 0; m < 4; m++) {
-                    triangle_to_draw[m].lighting = 1.0f;
+                // add lighting to the 3 vertices
+                for (uint32_t m = 0; m < 3; m++) {
+                    triangle_to_draw[m].lighting = 0.0f;
                     
                     zVertex light_source;
                     light_source.x = zlights_to_apply[l].x;
                     light_source.y = zlights_to_apply[l].y;
                     light_source.z = zlights_to_apply[l].z;
-                    
+                   
                     float distance = get_distance_to_ztriangle(
                         light_source,
                         triangles_to_draw[i]);
@@ -218,30 +219,37 @@ void software_render(
                     }
                     assert(distance_mod < 1.01f);
                     
-                    triangle_to_draw[m].lighting *=
+                    // add ambient lighting 
+                    triangle_to_draw[m].lighting +=
                         zlights_to_apply[l].ambient
                             * distance_mod;
                     
+                    // add diffuse lighting
                     float diffuse_dot = get_visibility_rating(
                         light_source,
-                        triangles_to_draw + i);
-                    // TODO assert again
+                        triangles_to_draw + i,
+                        m);
+                    
+                    // TODO remove assert
                     if (diffuse_dot > 1.02f) {
                         printf("ERROR: diffuse dot was: %f\n",
                             diffuse_dot);
                         assert(0);
                     }
                     
-                    if (diffuse_dot > 0.0f)
+                    if (diffuse_dot < 0.0f)
                     {
-                        triangle_to_draw[m].lighting *=
+                        triangle_to_draw[m].lighting +=
                             (diffuse_dot
-                                * zlights_to_apply[l].diffuse
-                                * distance_mod);
+                                * -1
+                                * zlights_to_apply[l].diffuse);
                     }
                 }
             }
             
+            // TODO: set uv coordinates for texture mapping
+            // properly
+            // this is just a hack for testing
             triangle_to_draw[0].uv[0] = 0.0f;
             triangle_to_draw[0].uv[1] = 1.0f;
             triangle_to_draw[1].uv[0] = 0.0f;

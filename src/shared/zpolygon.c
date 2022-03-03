@@ -229,108 +229,108 @@ zPolygon * get_box() {
     box->z = 7.0f;
     box->x_angle = 0.0f;
     box->y_angle = 0.0f;
-    box->z_angle = 0.0f;
+    box->z_angle = 0.1f;
     
     // SOUTH face
     box->triangles[0].vertices[0] =
         (zVertex){ 0.0f, 0.0f, 0.0f };
     box->triangles[0].vertices[1] =
-        (zVertex){ 0.0f, 1.0f, 0.0f };
+        (zVertex){ 0.0f, 5.0f, 0.0f };
     box->triangles[0].vertices[2] =
-        (zVertex){ 1.0f, 1.0f, 0.0f };
+        (zVertex){ 5.0f, 5.0f, 0.0f };
     box->triangles[0].texture_i = 0;
     
     box->triangles[1].vertices[0] =
         (zVertex){ 0.0f, 0.0f, 0.0f };
     box->triangles[1].vertices[1] =
-        (zVertex){ 1.0f, 1.0f, 0.0f };
+        (zVertex){ 5.0f, 5.0f, 0.0f };
     box->triangles[1].vertices[2] =
-        (zVertex){ 1.0f, 0.0f, 0.0f };
+        (zVertex){ 5.0f, 0.0f, 0.0f };
     box->triangles[1].texture_i = 0;
     
     // EAST face
     box->triangles[2].vertices[0] =
-        (zVertex){ 1.0f, 0.0f, 0.0f };
+        (zVertex){ 5.0f, 0.0f, 0.0f };
     box->triangles[2].vertices[1] =
-        (zVertex){ 1.0f, 1.0f, 0.0f };
+        (zVertex){ 5.0f, 5.0f, 0.0f };
     box->triangles[2].vertices[2] =
-        (zVertex){ 1.0f, 1.0f, 1.0f };
+        (zVertex){ 5.0f, 5.0f, 5.0f };
     box->triangles[2].texture_i = 1;
     
     box->triangles[3].vertices[0] =
-        (zVertex){ 1.0f, 0.0f, 0.0f };
+        (zVertex){ 5.0f, 0.0f, 0.0f };
     box->triangles[3].vertices[1] =
-        (zVertex){ 1.0f, 1.0f, 1.0f };
+        (zVertex){ 5.0f, 5.0f, 5.0f };
     box->triangles[3].vertices[2] =
-        (zVertex){ 1.0f, 0.0f, 1.0f };
+        (zVertex){ 5.0f, 0.0f, 5.0f };
     box->triangles[3].texture_i = 1;
     
     // NORTH face
     box->triangles[4].vertices[0] =
-        (zVertex){ 1.0f, 0.0f, 1.0f };
+        (zVertex){ 5.0f, 0.0f, 5.0f };
     box->triangles[4].vertices[1] =
-        (zVertex){ 1.0f, 1.0f, 1.0f };
+        (zVertex){ 5.0f, 5.0f, 5.0f };
     box->triangles[4].vertices[2] =
-        (zVertex){ 0.0f, 1.0f, 1.0f };
+        (zVertex){ 0.0f, 5.0f, 5.0f };
     box->triangles[4].texture_i = 0;
     
     box->triangles[5].vertices[0] =
-        (zVertex){ 1.0f, 0.0f, 1.0f };
+        (zVertex){ 5.0f, 0.0f, 5.0f };
     box->triangles[5].vertices[1] =
-        (zVertex){ 0.0f, 1.0f, 1.0f };
+        (zVertex){ 0.0f, 5.0f, 5.0f };
     box->triangles[5].vertices[2] =
-        (zVertex){ 0.0f, 0.0f, 1.0f };
+        (zVertex){ 0.0f, 0.0f, 5.0f };
     box->triangles[5].texture_i = 0;
     
     // WEST face
     box->triangles[6].vertices[0] =
-        (zVertex){ 0.0f, 0.0f, 1.0f };
+        (zVertex){ 0.0f, 0.0f, 5.0f };
     box->triangles[6].vertices[1] =
-        (zVertex){ 0.0f, 1.0f, 1.0f };
+        (zVertex){ 0.0f, 5.0f, 5.0f };
     box->triangles[6].vertices[2] =
-        (zVertex){ 0.0f, 1.0f, 0.0f };
+        (zVertex){ 0.0f, 5.0f, 0.0f };
     box->triangles[6].texture_i = 1;
     
     box->triangles[7].vertices[0] =
-        (zVertex){ 0.0f, 0.0f, 1.0f };
+        (zVertex){ 0.0f, 0.0f, 5.0f };
     box->triangles[7].vertices[1] =
-        (zVertex){ 0.0f, 1.0f, 0.0f };
+        (zVertex){ 0.0f, 5.0f, 0.0f };
     box->triangles[7].vertices[2] =
         (zVertex){ 0.0f, 0.0f, 0.0f };
     box->triangles[7].texture_i = 1;
     
     // TOP face
     box->triangles[8].vertices[0] =
-        (zVertex){ 0.0f, 1.0f, 0.0f };
+        (zVertex){ 0.0f, 5.0f, 0.0f };
     box->triangles[8].vertices[1] =
-        (zVertex){ 0.0f, 1.0f, 1.0f };
+        (zVertex){ 0.0f, 5.0f, 5.0f };
     box->triangles[8].vertices[2] =
-        (zVertex){ 1.0f, 1.0f, 1.0f };
+        (zVertex){ 5.0f, 5.0f, 5.0f };
     box->triangles[8].texture_i = 0;
     
     box->triangles[9].vertices[0] =
-        (zVertex){ 0.0f, 1.0f, 0.0f };
+        (zVertex){ 0.0f, 5.0f, 0.0f };
     box->triangles[9].vertices[1] =
-        (zVertex){ 1.0f, 1.0f, 1.0f };
+        (zVertex){ 5.0f, 5.0f, 5.0f };
     box->triangles[9].vertices[2] =
-        (zVertex){ 1.0f, 1.0f, 0.0f };
+        (zVertex){ 5.0f, 5.0f, 0.0f };
     box->triangles[9].texture_i = 0;
     
     // BOTTOM face
     box->triangles[10].vertices[0] =
-        (zVertex){ 1.0f, 0.0f, 1.0f };
+        (zVertex){ 5.0f, 0.0f, 5.0f };
     box->triangles[10].vertices[1] =
-        (zVertex){ 0.0f, 0.0f, 1.0f };
+        (zVertex){ 0.0f, 0.0f, 5.0f };
     box->triangles[10].vertices[2] =
         (zVertex){ 0.0f, 0.0f, 0.0f };
     box->triangles[10].texture_i = 1;
     
     box->triangles[11].vertices[0] =
-        (zVertex){ 1.0f, 0.0f, 1.0f };
+        (zVertex){ 5.0f, 0.0f, 5.0f };
     box->triangles[11].vertices[1] =
         (zVertex){ 0.0f, 0.0f, 0.0f };
     box->triangles[11].vertices[2] =
-        (zVertex){ 1.0f, 0.0f, 0.0f };
+        (zVertex){ 5.0f, 0.0f, 0.0f };
     box->triangles[11].texture_i = 1;
     
     return box;
@@ -592,11 +592,18 @@ float get_distance_to_ztriangle(
 
 float get_visibility_rating(
     const zVertex observer,
-    const zTriangle * observed)
+    const zTriangle * observed,
+    const uint32_t observed_vertex_i)
 {
+    uint32_t vertex_0 = observed_vertex_i % 3;
+    uint32_t vertex_1 = (observed_vertex_i + 1) % 3;
+    uint32_t vertex_2 = (observed_vertex_i + 2) % 3;
+    
     // let's move everything so that observer is at {0,0,0}
+    // we'll leave the observer as is and just use {0,0,0} where
+    // we would have used it
     zTriangle observed_adj = *observed;
-    for (uint32_t i = 0; i < 4; i++) {
+    for (uint32_t i = 0; i < 3; i++) {
         observed_adj.vertices[i].x =
             observed->vertices[i].x - observer.x;
         observed_adj.vertices[i].y =
@@ -604,50 +611,33 @@ float get_visibility_rating(
         observed_adj.vertices[i].z =
             observed->vertices[i].z - observer.z;
     }
-
-    // TODO: this isnt actually necessary, just asserting
-    assert(observer.x - observer.x == 0.0f);
-    assert(observer.y - observer.y == 0.0f);
-    assert(observer.z - observer.z == 0.0f);
-
+    
     zVertex normal;
     zVertex line1;
     zVertex line2;
     
     line1.x =
-        observed_adj.vertices[1].x
-            - observed_adj.vertices[0].x;
+        observed_adj.vertices[vertex_1].x
+            - observed_adj.vertices[vertex_0].x;
     line1.y =
-        observed_adj.vertices[1].y
-            - observed_adj.vertices[0].y;
+        observed_adj.vertices[vertex_1].y
+            - observed_adj.vertices[vertex_0].y;
     line1.z =
-        observed_adj.vertices[1].z
-            - observed_adj.vertices[0].z;
+        observed_adj.vertices[vertex_1].z
+            - observed_adj.vertices[vertex_0].z;
     normalize_zvertex(&line1);
     
-    if (get_magnitude(line1) > 1.01f) {
-        printf(
-            "ERROR: normalized line1 still has magnitude of %f\n",
-            get_magnitude(line1));
-        printf(
-            "line1 vertex coords were: {%f, %f, %f}\n",
-            line1.x,
-            line1.y,
-            line1.z);
-        assert(0);
-    }
-    
     line2.x =
-        observed_adj.vertices[2].x
-            - observed_adj.vertices[0].x;
+        observed_adj.vertices[vertex_2].x
+            - observed_adj.vertices[vertex_0].x;
     line2.y =
-        observed_adj.vertices[2].y
-            - observed_adj.vertices[0].y;
+        observed_adj.vertices[vertex_2].y
+            - observed_adj.vertices[vertex_0].y;
     line2.z =
-        observed_adj.vertices[2].z
-            - observed_adj.vertices[0].z;
+        observed_adj.vertices[vertex_2].z
+            - observed_adj.vertices[vertex_0].z;
     normalize_zvertex(&line2);
-    assert(get_magnitude(line2) < 1.01f);
+    assert(get_magnitude(line2) < 1.02f);
     
     normal.x =
         (line1.y * line2.z) - (line1.z * line2.y);
@@ -657,17 +647,17 @@ float get_visibility_rating(
         (line1.x * line2.y) - (line1.y * line2.x);
     
     normalize_zvertex(&normal); 
-    assert(get_magnitude(normal) < 1.01f);
+    assert(get_magnitude(normal) < 1.02f);
     
     // compare normal's similarity to a point between
     // observer & triangle location 
     zVertex triangle_minus_observer;
     triangle_minus_observer.x =
-        observed_adj.vertices[0].x;
+        observed_adj.vertices[vertex_0].x;
     triangle_minus_observer.y =
-        observed_adj.vertices[0].y;
+        observed_adj.vertices[vertex_0].y;
     triangle_minus_observer.z =
-        observed_adj.vertices[0].z;
+        observed_adj.vertices[vertex_0].z;
     normalize_zvertex(&triangle_minus_observer);
     if (get_magnitude(triangle_minus_observer) > 1.01f) {
         printf(
