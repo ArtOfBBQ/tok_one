@@ -111,9 +111,9 @@ void software_render(
         return;
     }
     
-    // camera.x += 0.01f;
+    // camera.x += 0.05f;
     // camera.y += 0.01f;
-    // camera.z += 0.02f;
+    camera.z -= 0.05f;
     
     if (
         next_gpu_workload == NULL
@@ -191,9 +191,15 @@ void software_render(
             triangles_to_draw[t++] =
                 translate_ztriangle(
                     &z_rotated,
-                    /* x: */ zpolygons_to_render[i]->x,
-                    /* y: */ zpolygons_to_render[i]->y,
-                    /* z: */ zpolygons_to_render[i]->z);
+                    /* x: */
+                        zpolygons_to_render[i]->x -
+                            camera.x,
+                    /* y: */
+                        zpolygons_to_render[i]->y -
+                            camera.y,
+                    /* z: */
+                        zpolygons_to_render[i]->z -
+                            camera.z);
         }
     }
     
