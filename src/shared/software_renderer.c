@@ -31,20 +31,23 @@ void init_renderer() {
     
     // objects part 1: load some teddybears from object file 
     for (uint32_t i = 0; i < 2; i++) {
-        zpolygons_to_render[i] =
-            load_from_obj_file("teddybear.obj");
+        uint32_t last_i = zpolygons_to_render_size;
         zpolygons_to_render_size += 1;
+        zpolygons_to_render[last_i] =
+            load_from_obj_file("teddybear.obj");
         
         // float base_x = i % 3 == 1 ? 0.0f : -15.0f; 
         float base_y = i % 2 == 0 ? 0.0f : -5.0f;
-        zpolygons_to_render[i]->x = 0.0f;
-        zpolygons_to_render[i]->y = base_y + (i * 7.0f);
-        zpolygons_to_render[i]->z = (70.0f + (i * 35.0f));
+        zpolygons_to_render[last_i]->x = 0.0f;
+        zpolygons_to_render[last_i]->y =
+            base_y + (last_i * 7.0f);
+        zpolygons_to_render[last_i]->z =
+            (70.0f + (last_i * 140.0f));
         
         scale_zpolygon(
-            /* to_scale   : */ zpolygons_to_render[i],
+            /* to_scale   : */ zpolygons_to_render[last_i],
             /* new_height : */
-                1.0f * (i == 1 ? 20.0f : 10.0f));
+                1.0f * (last_i == 1 ? 30.0f : 2.5f));
     }
     
     // objects 2: load some hard-coded cubes
@@ -53,9 +56,7 @@ void init_renderer() {
         zpolygons_to_render[last_i] = get_box();
         scale_zpolygon(
             /* to_scale   : */ zpolygons_to_render[last_i],
-            /* new_height : */ 5.0f);
-        zpolygons_to_render[last_i]->triangles[10].draw_normals = 1;
-        zpolygons_to_render[last_i]->triangles[10].visible = 1;
+            /* new_height : */ 40.0f);
         zpolygons_to_render_size += 1;
     }
     
@@ -63,10 +64,10 @@ void init_renderer() {
     // our lighting for the scene
     zlights_to_apply[0].x = 50.0f;
     zlights_to_apply[0].y = 2.5f;
-    zlights_to_apply[0].z = 80.0f;
-    zlights_to_apply[0].reach = 100.0f;
-    zlights_to_apply[0].ambient = 0.1f;
-    zlights_to_apply[0].diffuse = 0.08f;
+    zlights_to_apply[0].z = 200.0f;
+    zlights_to_apply[0].reach = 70.0f;
+    zlights_to_apply[0].ambient = 0.7f;
+    zlights_to_apply[0].diffuse = 0.8f;
     zlights_to_apply_size = 1;
     
     // add a white cube to represent the light source
@@ -115,14 +116,14 @@ void software_render(
     }
     
     // move the camera
-    if (camera.x < 7.5f) {
-        camera.x += 0.15;
+    if (camera.x < 10.0f) {
+        camera.x += 0.1;
     }
     if (camera.y < 0.5f) {
         camera.y += 0.05f;
     }
-    if (camera.z > -100.0f) {
-        camera.z -= 0.08;
+    if (camera.z > -85.0f) {
+        camera.z -= 0.07;
     }
     
     if (
@@ -165,7 +166,7 @@ void software_render(
     uint32_t light_i = zpolygons_to_render_size - 1;
     zpolygons_to_render[light_i]->y -= 0.001;
     if (zpolygons_to_render[light_i]->z > 6.0f) {
-        zpolygons_to_render[light_i]->z -= 0.3;
+        zpolygons_to_render[light_i]->z -= 1.0;
         zpolygons_to_render[light_i]->x -= 0.14;
     } else if (zpolygons_to_render[light_i]->x > -17.5f) {
         zpolygons_to_render[light_i]->x -= 0.3;
@@ -257,9 +258,14 @@ void software_render(
             
             Vertex triangle_to_draw[3];
             
-            for (uint32_t l = 0; l < zlights_to_apply_size; l++) {
-
-                zLightSource translated_light = zlights_to_apply[l];
+            for (
+                uint32_t l = 0;
+                l < zlights_to_apply_size;
+                l++)
+            {
+                zLightSource translated_light =
+                    zlights_to_apply[l];
+                
                 translated_light.x -= camera.x;
                 translated_light.y -= camera.y;
                 translated_light.z -= camera.z;
@@ -285,7 +291,6 @@ void software_render(
                     next_workload_size,
                 /* input: */
                     triangle_to_draw);
-            
         }
     }
 

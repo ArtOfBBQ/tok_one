@@ -261,7 +261,7 @@ zPolygon * get_box() {
     
     box->x = -1.5f;
     box->y = -3.5f;
-    box->z = 28.0f;
+    box->z = 38.0f;
     box->x_angle = 0.0f;
     box->y_angle = 0.0f;
     box->z_angle = 2.1f;
@@ -397,21 +397,18 @@ void ztriangle_apply_lighting(
         light_source_pos.y = zlight_source->y;
         light_source_pos.z = zlight_source->z;
         
-        float distance = get_distance_to_ztriangle(
-            light_source_pos,
-            *input);
-        float distance_mod = 1.0f -
-            (distance / zlight_source->reach);
-        if (distance_mod < 0.0f) {
-            distance_mod = 0.0f;
-        }
-        assert(distance_mod < 1.01f);
+        float distance =
+            distance_to_zvertex(
+                light_source_pos,
+                input->vertices[m]);
+        float distance_mod = zlight_source->reach / distance;
+        assert(distance_mod > 0.0f);
         
         // add ambient lighting 
         recipient[m].lighting +=
-            zlight_source->ambient
-                * distance_mod;
+            zlight_source->ambient * distance_mod;
         
+        // *******************************************
         // add diffuse lighting
         float diffuse_dot = get_visibility_rating(
             light_source_pos,
@@ -423,8 +420,10 @@ void ztriangle_apply_lighting(
             recipient[m].lighting +=
                 (diffuse_dot
                     * -1
+                    * distance_mod
                     * zlight_source->diffuse);
         }
+        // *******************************************
     }
 }
 
@@ -665,7 +664,7 @@ float get_distance(
         + ((p1.z - p2.z) * (p1.z - p2.z)));
 }
 
-float get_distance_to_ztriangle(
+float distance_to_ztriangle(
     const zVertex p1,
     const zTriangle p2)
 {
@@ -673,6 +672,16 @@ float get_distance_to_ztriangle(
         get_distance(p1, p2.vertices[0]) +
         get_distance(p1, p2.vertices[1]) +
         get_distance(p1, p2.vertices[2])) / 3.0f;
+}
+
+float distance_to_zvertex(
+    const zVertex p1,
+    const zVertex p2)
+{
+    return (
+        get_distance(p1, p2) +
+        get_distance(p1, p2) +
+        get_distance(p1, p2)) / 3.0f;
 }
 
 zVertex get_ztriangle_normal(
@@ -741,9 +750,10 @@ float get_visibility_rating(
     zVertex normal = get_ztriangle_normal(
         observed,
         observed_vertex_i);
+    normalize_zvertex(&normal);
     
-    // compare normal's similarity to a point between
-    // observer & triangle location 
+    // compare normal's similarity to a vector straight
+    // from observer to triangle location 
     zVertex triangle_minus_observer;
     triangle_minus_observer.x =
         observed_adj.vertices[observed_vertex_i].x;
@@ -752,6 +762,7 @@ float get_visibility_rating(
     triangle_minus_observer.z =
         observed_adj.vertices[observed_vertex_i].z;
     normalize_zvertex(&triangle_minus_observer);
+    
     if (get_magnitude(triangle_minus_observer) > 1.01f) {
         printf(
             "ERROR: normalized triangle_minus_observer still has magnitude of %f\n",
