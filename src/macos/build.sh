@@ -17,10 +17,10 @@ mkdir build/$PLATFORM
 mkdir build/$PLATFORM/$APP_NAME.app
 
 echo "Creating metal library..."
-xcrun -sdk macosx metal -gline-tables-only -MO -g -c "src/shared_apple/Shaders.metal" -o Shaders.air
+# echo "METAL LIBRARY NOT COMPILED - JUST COPYING TO SAVE TIME"
+xcrun -sdk macosx metal -gline-tables-only -MO -g -c "src/shared_apple/Shaders.metal" -o resources/Shaders.air
 xcrun -sdk macosx metal -c "src/shared_apple/shaders.metal" -o Shaders.air
-xcrun -sdk macosx metallib Shaders.air -o build/$PLATFORM/$APP_NAME.app/Shaders.metallib
-rm -r Shaders.air
+xcrun -sdk macosx metallib resources/Shaders.air -o build/$PLATFORM/$APP_NAME.app/Shaders.metallib
 
 echo "copy resources..."
 cp resources/teddybear.obj build/$PLATFORM/$APP_NAME.app/teddybear.obj

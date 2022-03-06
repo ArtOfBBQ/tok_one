@@ -52,6 +52,8 @@ typedef struct zTriangle {
                             this.
                             -1 for "untextured, use color instead"
                          */
+    uint32_t draw_normals; // TODO: remove debugging flag(s)
+    uint32_t visible;
 } zTriangle;
 
 typedef struct zPolygon {
@@ -63,6 +65,7 @@ typedef struct zPolygon {
     float x_angle;
     float y_angle;
     float z_angle;
+    uint32_t draw_normals; // TODO: remove debugging flag
 } zPolygon;
 
 zPolygon * get_box(void);
@@ -88,6 +91,10 @@ zTriangle translate_ztriangle(
     const float by_x,
     const float by_y,
     const float by_z);
+
+zVertex get_ztriangle_normal(
+    const zTriangle * input,
+    const uint32_t at_vertex_i);
 
 zPolygon * load_from_obj_file(char * filename);
 

@@ -139,7 +139,8 @@ zPolygon * load_from_obj_file(char * filename) {
     
     // pass through buffer->contents again to read all triangles 
     return_value->triangles =
-        malloc(sizeof(zTriangle) * return_value->triangles_size);
+        malloc(
+            sizeof(zTriangle) * return_value->triangles_size);
     
     i = 0;
     uint32_t new_triangle_i = 0;
@@ -156,6 +157,8 @@ zPolygon * load_from_obj_file(char * filename) {
             
             // read triangle data
             zTriangle new_triangle;
+            new_triangle.draw_normals = 0;
+            new_triangle.visible = 1;
             
             // read 1st vertex index
             uint32_t vertex_i_0 = atoi(buffer->contents + i);
@@ -225,7 +228,8 @@ void scale_zpolygon(
     
     float largest_height = 0.0f;
     for (uint32_t i = 0; i < to_scale->triangles_size; i++) {
-        for (uint32_t j = 0; j < 3; j++) {
+        for (uint32_t j = 0; j < 3; j++)
+        {
             float height =
                 fabs(to_scale->triangles[i].vertices[j].y);
             if (height > largest_height)
@@ -257,10 +261,10 @@ zPolygon * get_box() {
     
     box->x = -1.5f;
     box->y = -3.5f;
-    box->z = 7.0f;
+    box->z = 28.0f;
     box->x_angle = 0.0f;
     box->y_angle = 0.0f;
-    box->z_angle = 0.1f;
+    box->z_angle = 2.1f;
     
     // SOUTH face
     box->triangles[0].vertices[0] =
@@ -353,6 +357,11 @@ zPolygon * get_box() {
         (zVertex){ 5.0f, 0.0f, 0.0f };
 
     for (uint32_t i = 0; i < 12; i += 2) {
+        box->triangles[i].draw_normals = 0;
+        box->triangles[i].visible = 1;
+        box->triangles[i+1].draw_normals = 0;
+        box->triangles[i+1].visible = 1;
+        
         box->triangles[i].texture_i = 0;
         box->triangles[i].vertices[0].uv[0] = 0.0f; 
         box->triangles[i].vertices[0].uv[1] = 1.0f;
@@ -409,13 +418,6 @@ void ztriangle_apply_lighting(
             input,
             m);
         
-        // TODO remove assert
-        if (diffuse_dot > 1.05f) {
-            printf("ERROR: diffuse dot was: %f\n",
-                diffuse_dot);
-            assert(0);
-        }
-        
         if (diffuse_dot < 0.0f)
         {
             recipient[m].lighting +=
@@ -469,7 +471,7 @@ void ztriangle_to_2d(
         recipient[i].uv[0] = input->vertices[i].uv[0];
         recipient[i].uv[1] = input->vertices[i].uv[1];
         
-        for (uint32_t j = 0; j < 4; j++) {
+        for (uint32_t j = 0; j < 3; j++) {
             recipient[i].RGBA[j] = input->color[j];
         }
         
@@ -488,7 +490,7 @@ zTriangle x_rotate_triangle(
     const zTriangle * input,
     const float angle)
 {
-    zTriangle return_value;
+    zTriangle return_value = *input;
     
     for (
         uint32_t i = 0;
@@ -512,16 +514,6 @@ zTriangle x_rotate_triangle(
                 * sinf(angle)) +
             (input->vertices[i].z
                 * cosf(angle));
-
-        return_value.vertices[i].uv[0] =
-            input->vertices[i].uv[0];
-        return_value.vertices[i].uv[1] =
-            input->vertices[i].uv[1];
-    }
-
-    return_value.texture_i = input->texture_i;
-    for (uint32_t i = 0; i < 4; i++) {
-        return_value.color[i] = input->color[i];
     }
 
     return return_value;
@@ -531,7 +523,7 @@ zTriangle z_rotate_triangle(
     const zTriangle * input,
     const float angle)
 {
-    zTriangle return_value;
+    zTriangle return_value = *input;
     
     for(
         uint32_t i = 0;
@@ -555,16 +547,6 @@ zTriangle z_rotate_triangle(
                 * cosf(angle))
             + (input->vertices[i].x
                 * sinf(angle));
-
-        return_value.vertices[i].uv[0] =
-            input->vertices[i].uv[0];
-        return_value.vertices[i].uv[1] =
-            input->vertices[i].uv[1];
-    }
-    
-    return_value.texture_i = input->texture_i;
-    for (uint32_t i = 0; i < 4; i++) {
-        return_value.color[i] = input->color[i];
     }
     
     return return_value;
@@ -574,7 +556,7 @@ zTriangle y_rotate_triangle(
     const zTriangle * input,
     const float angle)
 {
-    zTriangle return_value;
+    zTriangle return_value = *input;
     
     for (
         uint32_t i = 0;
@@ -605,11 +587,6 @@ zTriangle y_rotate_triangle(
             input->vertices[i].uv[1];
     }
     
-    return_value.texture_i = input->texture_i;
-    for (uint32_t i = 0; i < 4; i++) {
-        return_value.color[i] = input->color[i];
-    }
-    
     return return_value;
 }
 
@@ -619,7 +596,7 @@ zTriangle translate_ztriangle(
     const float by_y,
     const float by_z)
 {
-    zTriangle return_value;
+    zTriangle return_value = *input;
     
     for (uint32_t i = 0; i < 3; i++) {
         return_value.vertices[i].x =
@@ -628,29 +605,24 @@ zTriangle translate_ztriangle(
             input->vertices[i].y + by_y;
         return_value.vertices[i].z =
             input->vertices[i].z + by_z;
-        
-        return_value.vertices[i].uv[0] =
-            input->vertices[i].uv[0];
-        return_value.vertices[i].uv[1] =
-            input->vertices[i].uv[1];
-    }
-    
-    return_value.texture_i = input->texture_i;
-    for (uint32_t i = 0; i < 4; i++) {
-        return_value.color[i] = input->color[i];
     }
     
     return return_value;
 }
 
-float get_avg_z(const zTriangle * of_triangle)
+float get_avg_z(
+    const zTriangle * of_triangle)
 {
-    return (of_triangle->vertices[0].z +
+    return (
+        of_triangle->vertices[0].z +
         of_triangle->vertices[1].z +
         of_triangle->vertices[2].z) / 3.0f;
 }
 
-int sorter_cmpr_lowest_z(const void * a, const void * b) {
+int sorter_cmpr_lowest_z(
+    const void * a,
+    const void * b)
+{
     return get_avg_z(a) < get_avg_z(b) ? -1 : 1;
 }
 
@@ -703,15 +675,56 @@ float get_distance_to_ztriangle(
         get_distance(p1, p2.vertices[2])) / 3.0f;
 }
 
+zVertex get_ztriangle_normal(
+    const zTriangle * input,
+    const uint32_t at_vertex_i)
+{
+    uint32_t vertex_0 = at_vertex_i % 3;
+    assert(vertex_0 == at_vertex_i);
+    uint32_t vertex_1 = (at_vertex_i + 1) % 3;
+    uint32_t vertex_2 = (at_vertex_i + 2) % 3;
+    
+    zVertex normal; 
+    zVertex vector1;
+    zVertex vector2;
+    
+    vector1.x =
+        input->vertices[vertex_1].x
+            - input->vertices[vertex_0].x;
+    vector1.y =
+        input->vertices[vertex_1].y
+            - input->vertices[vertex_0].y;
+    vector1.z =
+        input->vertices[vertex_1].z
+            - input->vertices[vertex_0].z;
+    // normalize_zvertex(&vector1);
+    
+    vector2.x =
+        input->vertices[vertex_2].x
+            - input->vertices[vertex_0].x;
+    vector2.y =
+        input->vertices[vertex_2].y
+            - input->vertices[vertex_0].y;
+    vector2.z =
+        input->vertices[vertex_2].z
+            - input->vertices[vertex_0].z;
+    // normalize_zvertex(&vector2);
+    
+    normal.x =
+        (vector1.y * vector2.z) - (vector1.z * vector2.y);
+    normal.y =
+        (vector1.z * vector2.x) - (vector1.x * vector2.z);
+    normal.z =
+        (vector1.x * vector2.y) - (vector1.y * vector2.x);
+    
+    return normal;
+}
+
 float get_visibility_rating(
     const zVertex observer,
     const zTriangle * observed,
     const uint32_t observed_vertex_i)
 {
-    uint32_t vertex_0 = observed_vertex_i % 3;
-    uint32_t vertex_1 = (observed_vertex_i + 1) % 3;
-    uint32_t vertex_2 = (observed_vertex_i + 2) % 3;
-    
     // let's move everything so that observer is at {0,0,0}
     // we'll leave the observer as is and just use {0,0,0} where
     // we would have used it
@@ -725,59 +738,26 @@ float get_visibility_rating(
             observed->vertices[i].z - observer.z;
     }
     
-    zVertex normal;
-    zVertex line1;
-    zVertex line2;
-    
-    line1.x =
-        observed_adj.vertices[vertex_1].x
-            - observed_adj.vertices[vertex_0].x;
-    line1.y =
-        observed_adj.vertices[vertex_1].y
-            - observed_adj.vertices[vertex_0].y;
-    line1.z =
-        observed_adj.vertices[vertex_1].z
-            - observed_adj.vertices[vertex_0].z;
-    normalize_zvertex(&line1);
-    
-    line2.x =
-        observed_adj.vertices[vertex_2].x
-            - observed_adj.vertices[vertex_0].x;
-    line2.y =
-        observed_adj.vertices[vertex_2].y
-            - observed_adj.vertices[vertex_0].y;
-    line2.z =
-        observed_adj.vertices[vertex_2].z
-            - observed_adj.vertices[vertex_0].z;
-    normalize_zvertex(&line2);
-    assert(get_magnitude(line2) < 1.05f);
-    
-    normal.x =
-        (line1.y * line2.z) - (line1.z * line2.y);
-    normal.y =
-        (line1.z * line2.x) - (line1.x * line2.z);
-    normal.z =
-        (line1.x * line2.y) - (line1.y * line2.x);
-    
-    normalize_zvertex(&normal); 
-    assert(get_magnitude(normal) < 1.05f);
+    zVertex normal = get_ztriangle_normal(
+        observed,
+        observed_vertex_i);
     
     // compare normal's similarity to a point between
     // observer & triangle location 
     zVertex triangle_minus_observer;
     triangle_minus_observer.x =
-        observed_adj.vertices[vertex_0].x;
+        observed_adj.vertices[observed_vertex_i].x;
     triangle_minus_observer.y =
-        observed_adj.vertices[vertex_0].y;
+        observed_adj.vertices[observed_vertex_i].y;
     triangle_minus_observer.z =
-        observed_adj.vertices[vertex_0].z;
+        observed_adj.vertices[observed_vertex_i].z;
     normalize_zvertex(&triangle_minus_observer);
     if (get_magnitude(triangle_minus_observer) > 1.01f) {
         printf(
             "ERROR: normalized triangle_minus_observer still has magnitude of %f\n",
             get_magnitude(triangle_minus_observer));
         printf(
-            "triangle_minus_observer vertex coords were: {%f, %f, %f}\n",
+            "triangle_minus_observer coords were: {%f, %f, %f}\n",
             triangle_minus_observer.x,
             triangle_minus_observer.y,
             triangle_minus_observer.z);

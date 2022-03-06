@@ -39,31 +39,34 @@ void init_renderer() {
         float base_y = i % 2 == 0 ? 0.0f : -5.0f;
         zpolygons_to_render[i]->x = 0.0f;
         zpolygons_to_render[i]->y = base_y + (i * 7.0f);
-        zpolygons_to_render[i]->z = (25.0f + (i * 35.0f));
+        zpolygons_to_render[i]->z = (70.0f + (i * 35.0f));
         
         scale_zpolygon(
             /* to_scale   : */ zpolygons_to_render[i],
             /* new_height : */
-                1.0f * (i == 1 ? 20.0f : 1.0f));
+                1.0f * (i == 1 ? 20.0f : 10.0f));
     }
     
     // objects 2: load some hard-coded cubes
     for (uint32_t i = 2; i < 3; i++) {
-        zpolygons_to_render[i] = get_box();
-        zpolygons_to_render_size += 1;
+        uint32_t last_i = zpolygons_to_render_size;
+        zpolygons_to_render[last_i] = get_box();
         scale_zpolygon(
-            /* to_scale   : */ zpolygons_to_render[i],
+            /* to_scale   : */ zpolygons_to_render[last_i],
             /* new_height : */ 5.0f);
+        zpolygons_to_render[last_i]->triangles[10].draw_normals = 1;
+        zpolygons_to_render[last_i]->triangles[10].visible = 1;
+        zpolygons_to_render_size += 1;
     }
     
     // initialize global zLightSource objects, to set up
     // our lighting for the scene
-    zlights_to_apply[0].x = 45.0f;
+    zlights_to_apply[0].x = 50.0f;
     zlights_to_apply[0].y = 2.5f;
     zlights_to_apply[0].z = 80.0f;
-    zlights_to_apply[0].reach = 150.0f;
+    zlights_to_apply[0].reach = 100.0f;
     zlights_to_apply[0].ambient = 0.1f;
-    zlights_to_apply[0].diffuse = 2.0f;
+    zlights_to_apply[0].diffuse = 0.08f;
     zlights_to_apply_size = 1;
     
     // add a white cube to represent the light source
@@ -111,9 +114,16 @@ void software_render(
         return;
     }
     
-    // camera.x += 0.05f;
-    // camera.y += 0.01f;
-    camera.z -= 0.05f;
+    // move the camera
+    if (camera.x < 7.5f) {
+        camera.x += 0.15;
+    }
+    if (camera.y < 0.5f) {
+        camera.y += 0.05f;
+    }
+    if (camera.z > -100.0f) {
+        camera.z -= 0.08;
+    }
     
     if (
         next_gpu_workload == NULL
@@ -127,30 +137,42 @@ void software_render(
         return;
     }
     
+    // animate our objects
     for (
         uint32_t i = 0;
         i < (zpolygons_to_render_size - 1);
         i++)
     {
-        zpolygons_to_render[i]->x -= 0.001;
-        zpolygons_to_render[i]->y += 0.001;
-        zpolygons_to_render[i]->z += 0.01;
-        zpolygons_to_render[i]->x_angle += 0.04f;
-        zpolygons_to_render[i]->y_angle += 0.04f;
+        if (i == 1) { 
+            zpolygons_to_render[i]->z_angle += 0.001f;
+            continue;
+        }
+        // zpolygons_to_render[i]->x -= 0.001;
+        // zpolygons_to_render[i]->y += 0.001;
+        // zpolygons_to_render[i]->z += 0.01;
+        if (i % 2 == 0) {
+            zpolygons_to_render[i]->x_angle += 0.001f;
+        }
+        
+        if (i % 3 == 0) {
+            zpolygons_to_render[i]->y_angle += 0.02f;
+        }
+        
+        zpolygons_to_render[i]->z_angle += 0.04f;
     }
     
     // move our light source
-    uint32_t i = zpolygons_to_render_size - 1;
-    zpolygons_to_render[i]->y -= 0.001;
-    if (zpolygons_to_render[i]->z > 6.0f) {
-        zpolygons_to_render[i]->z -= 0.15;
-        zpolygons_to_render[i]->x -= 0.07;
-    } else if (zpolygons_to_render[i]->x > -6.0f) {
-        zpolygons_to_render[i]->x -= 0.15;
+    uint32_t light_i = zpolygons_to_render_size - 1;
+    zpolygons_to_render[light_i]->y -= 0.001;
+    if (zpolygons_to_render[light_i]->z > 6.0f) {
+        zpolygons_to_render[light_i]->z -= 0.3;
+        zpolygons_to_render[light_i]->x -= 0.14;
+    } else if (zpolygons_to_render[light_i]->x > -17.5f) {
+        zpolygons_to_render[light_i]->x -= 0.3;
     }
-    zlights_to_apply[0].x = zpolygons_to_render[i]->x;
-    zlights_to_apply[0].y = zpolygons_to_render[i]->y;
-    zlights_to_apply[0].z = zpolygons_to_render[i]->z;
+    zlights_to_apply[0].x = zpolygons_to_render[light_i]->x;
+    zlights_to_apply[0].y = zpolygons_to_render[light_i]->y;
+    zlights_to_apply[0].z = zpolygons_to_render[light_i]->z;
     
     uint32_t triangles_to_render = 0;
     for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
@@ -167,17 +189,20 @@ void software_render(
     
     // rotate all triangles
     zTriangle triangles_to_draw[triangles_to_render];
+    // zTriangle camera_translated;
     zTriangle x_rotated;
     zTriangle y_rotated;
     zTriangle z_rotated;
     uint32_t t = 0;
-    for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
+    for (uint32_t i = 0; i < zpolygons_to_render_size; i++)
+    {
         for (
             uint32_t j = 0;
             j < zpolygons_to_render[i]->triangles_size;
             j++)
         {
             assert(t < triangles_to_render);
+            
             x_rotated = x_rotate_triangle(
                 zpolygons_to_render[i]->triangles + j,
                 zpolygons_to_render[i]->x_angle);
@@ -192,14 +217,14 @@ void software_render(
                 translate_ztriangle(
                     &z_rotated,
                     /* x: */
-                        zpolygons_to_render[i]->x -
-                            camera.x,
+                        zpolygons_to_render[i]->x
+                            - camera.x,
                     /* y: */
-                        zpolygons_to_render[i]->y -
-                            camera.y,
+                        zpolygons_to_render[i]->y
+                            - camera.y,
                     /* z: */
-                        zpolygons_to_render[i]->z -
-                            camera.z);
+                        zpolygons_to_render[i]->z
+                            - camera.z);
         }
     }
     
@@ -216,24 +241,35 @@ void software_render(
         i >= 0;
         i -= 1)
     {
+        // we're not using the camera because the entire world
+        // was translated to have the camera be at 0,0,0 
+        zVertex origin;
+        origin.x = 0.0f;
+        origin.y = 0.0f;
+        origin.z = 0.0f; 
         float perspective_dot_product =
             get_visibility_rating(
-                camera,
+                origin,
                 triangles_to_draw + i,
                 0);
         
         if (perspective_dot_product < 0.0f) {
             
             Vertex triangle_to_draw[3];
-
+            
             for (uint32_t l = 0; l < zlights_to_apply_size; l++) {
+
+                zLightSource translated_light = zlights_to_apply[l];
+                translated_light.x -= camera.x;
+                translated_light.y -= camera.y;
+                translated_light.z -= camera.z;
                 ztriangle_apply_lighting(
                     /* recipient: */
                         triangle_to_draw,
                     /* input: */
                         triangles_to_draw + i,
                     /* zlight_source: */
-                        &zlights_to_apply[l]);
+                        &translated_light);
             }
             
             ztriangle_to_2d(
@@ -249,8 +285,87 @@ void software_render(
                     next_workload_size,
                 /* input: */
                     triangle_to_draw);
+            
         }
     }
+
+    // TODO: remove this debugging code to draw normals
+    // for (
+    //     int32_t i = triangles_to_render - 1;
+    //     i >= 0;
+    //     i -= 1)
+    // {
+    //     if (
+    //         triangles_to_draw[i].visible
+    //         && triangles_to_draw[i].draw_normals)
+    //     {
+    //         zVertex normal_to_triangle =
+    //             get_ztriangle_normal(
+    //                 triangles_to_draw + i,
+    //                 0);
+
+    //         /*            
+    //         printf(
+    //             "triangles_to_draw[%u].vertices[0]: {%f,%f,%f}, vertices[1]: {%f,%f,%f}, vertices[2]: {%f,%f,%f}\n",
+    //             i,
+    //             triangles_to_draw[i].vertices[0].x,
+    //             triangles_to_draw[i].vertices[0].y,
+    //             triangles_to_draw[i].vertices[0].z,
+    //             triangles_to_draw[i].vertices[1].x,
+    //             triangles_to_draw[i].vertices[1].y,
+    //             triangles_to_draw[i].vertices[1].z,
+    //             triangles_to_draw[i].vertices[2].x,
+    //             triangles_to_draw[i].vertices[2].y,
+    //             triangles_to_draw[i].vertices[2].z);
+    //         */
+    //         
+    //         if (normal_to_triangle.z < 0.0f) {
+    //             normal_to_triangle.z = 0.0f;
+    //         }
+    //         
+    //         float perspective_dot_product =
+    //             get_visibility_rating(
+    //                 camera,
+    //                 triangles_to_draw + i,
+    //                 0);
+    //         
+    //         Vertex normal_to_draw[3];
+    //         zTriangle normal_as_triangle;
+    //     
+    //         normal_as_triangle.vertices[0] =
+    //             normal_to_triangle;
+    //         normal_as_triangle.vertices[1] =
+    //             triangles_to_draw[i].vertices[0];
+    //         normal_as_triangle.vertices[2] =
+    //             triangles_to_draw[i].vertices[0];
+    //         normal_as_triangle.vertices[2].z += 0.05;
+    //         normal_as_triangle.vertices[2].x += 0.05;
+    //         
+    //         ztriangle_to_2d(
+    //             /* recipient: */
+    //                 normal_to_draw,
+    //             /* input: */
+    //                 &normal_as_triangle);
+    //         
+    //         for (uint32_t i = 0; i < 3; i++) {
+    //             normal_to_draw[i].RGBA[0] = perspective_dot_product < 0.0f ? 1.0f : 0.0f;
+    //             normal_to_draw[i].RGBA[1] = 0.2f;
+    //             normal_to_draw[i].RGBA[2] = 1.0f;
+    //             normal_to_draw[i].RGBA[3] = 1.0f;
+    //             normal_to_draw[i].texture_i = -1;
+    //             normal_to_draw[i].lighting = 1.0f;
+    //         }
+    //         
+    //         
+    //         draw_triangle(
+    //             /* vertices_recipient: */
+    //                 next_gpu_workload,
+    //             /* vertex_count_recipient: */
+    //                 next_workload_size,
+    //             /* input: */
+    //                 normal_to_draw);
+    //     }
+    // }
 }
 
 void draw_triangle(
