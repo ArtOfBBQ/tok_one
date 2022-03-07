@@ -8,12 +8,17 @@ uint32_t texture_count = 0;
 void init_renderer() {
     // initialize global textures for texture mapping 
     texture_count = TEXTURE_BUFFER_SIZE;
+    assert(texture_count > 0);
     texture_filenames[0] = "fs_angrymob.png";
     texture_filenames[1] = "structuredart.png";
     
     FileBuffer * file_buffer;
     for (uint32_t i = 0; i < texture_count; i++) {
+        printf(
+            "trying to read file: %s\n",
+            texture_filenames[i]);
         file_buffer = platform_read_file(texture_filenames[i]);
+        assert(file_buffer != NULL);
         textures[i] = decode_PNG(
             (uint8_t *)file_buffer->contents,
             file_buffer->size);

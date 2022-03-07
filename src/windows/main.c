@@ -15,8 +15,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
-bool32_t application_running = true;
-ColoredVertex * next_gpu_workload;
+uint32_t application_running = true;
+Vertex * next_gpu_workload;
 uint32_t next_gpu_workload_size;
 
 // Ask windows to paint our window with opengl
@@ -211,12 +211,17 @@ int CALLBACK WinMain(
                 printf("ERROR - can't deduce window size\n");
                 assert(0);
             }
+            printf("init_projection_constants()..\n");
             init_projection_constants();
+            printf("init_renderer()..\n");
             init_renderer();
+            printf("Win32InitOpenGL()..\n");
             Win32InitOpenGL(window_handle); 
+            printf("malloc Vertex buffer...\n");
             next_gpu_workload =
-                malloc(sizeof(ColoredVertex) * 50000);
+                malloc(sizeof(Vertex) * 50000);
             
+            printf("start game loop...\n");
             while (application_running)
             {
                 MSG message;
