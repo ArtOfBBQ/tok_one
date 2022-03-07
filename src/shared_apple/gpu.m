@@ -54,7 +54,7 @@
                 renderCommandEncoderWithDescriptor:
                     RenderPassDescriptor];
         [render_encoder setViewport: viewport];
-       
+        
         // encode the drawing of all triangles 
         id<MTLBuffer> current_buffered_vertices =
             [[self vertex_buffers]
@@ -66,9 +66,11 @@
         [render_encoder
             setRenderPipelineState:
                 [self combo_pipeline_state]];
-        [render_encoder
-            setFragmentTexture:_metal_textures[0]
-            atIndex:0];
+        for (uint32_t i = 0; i < texture_count; i++) {
+            [render_encoder
+                setFragmentTexture:_metal_textures[i]
+                atIndex:i];
+        }
         [render_encoder
             drawPrimitives: MTLPrimitiveTypeTriangle
             vertexStart: 0 

@@ -1,6 +1,8 @@
 #ifndef VERTEX_TYPES_H
 #define VERTEX_TYPES_H
 
+#define TEXTURE_BUFFER_SIZE 2
+
 typedef struct Vertex {
     float x;
     float y;

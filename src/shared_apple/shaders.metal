@@ -11,6 +11,7 @@ typedef struct
     float4 color;
     float2 texture_coordinate;
     float lighting;
+    uint32_t texture_i;
 } RasterizerPixel;
 
 vertex RasterizerPixel
@@ -42,6 +43,7 @@ vertex_shader(
             vector_float2(-1.0f, -1.0f);
     } else
     {
+        out.texture_i = input_array[vertexID].texture_i;
         out.texture_coordinate =
             vector_float2(
                 input_array[vertexID].uv[0],
@@ -54,7 +56,7 @@ vertex_shader(
 fragment float4
 fragment_shader(
     RasterizerPixel in [[stage_in]],
-    texture2d<half> color_texture [[texture(0)]])
+    array<texture2d<half>, TEXTURE_BUFFER_SIZE> color_textures [[texture(0)]])
 {
     if (
         in.texture_coordinate[0] < 0.0f
@@ -68,7 +70,7 @@ fragment_shader(
         min_filter::linear);
     
     // Sample the texture to obtain a color
-    const half4 colorSample = color_texture.sample(
+    const half4 colorSample = color_textures[in.texture_i].sample(
         textureSampler,
         in.texture_coordinate);
     

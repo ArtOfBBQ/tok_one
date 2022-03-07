@@ -7,7 +7,7 @@ uint32_t texture_count = 0;
 
 void init_renderer() {
     // initialize global textures for texture mapping 
-    texture_count = 2;
+    texture_count = TEXTURE_BUFFER_SIZE;
     texture_filenames[0] = "fs_angrymob.png";
     texture_filenames[1] = "structuredart.png";
     
@@ -56,7 +56,7 @@ void init_renderer() {
         zpolygons_to_render[last_i] = get_box();
         scale_zpolygon(
             /* to_scale   : */ zpolygons_to_render[last_i],
-            /* new_height : */ 40.0f);
+            /* new_height : */ 30.0f);
         zpolygons_to_render_size += 1;
     }
     
@@ -123,7 +123,7 @@ void software_render(
         camera.y += 0.05f;
     }
     if (camera.z > -85.0f) {
-        camera.z -= 0.07;
+        camera.z -= 0.2;
     }
     
     if (
@@ -156,17 +156,18 @@ void software_render(
         }
         
         if (i % 3 == 0) {
-            zpolygons_to_render[i]->y_angle += 0.02f;
+            zpolygons_to_render[i]->y_angle += 0.04f;
         }
         
-        zpolygons_to_render[i]->z_angle += 0.04f;
+        zpolygons_to_render[i]->y_angle += 0.02f;
+        zpolygons_to_render[i]->z_angle += 0.02f;
     }
     
     // move our light source
     uint32_t light_i = zpolygons_to_render_size - 1;
     zpolygons_to_render[light_i]->y -= 0.001;
-    if (zpolygons_to_render[light_i]->z > 6.0f) {
-        zpolygons_to_render[light_i]->z -= 1.0;
+    if (zpolygons_to_render[light_i]->z > -40.0f) {
+        zpolygons_to_render[light_i]->z -= 1.2;
         zpolygons_to_render[light_i]->x -= 0.14;
     } else if (zpolygons_to_render[light_i]->x > -17.5f) {
         zpolygons_to_render[light_i]->x -= 0.3;
