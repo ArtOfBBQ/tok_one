@@ -1,7 +1,10 @@
 /*
 These functions are not defined in the 'shared' folder
-they must be provided by the platform layer,
-or by a folder that's shared by multiple (but not all!) platforms
+they must be provided by the platform layer in a .c file
+
+For example, 'platform_read_file' is currently defined
+in /shared_windows_macos/platform_read_file.c for windows
+and mac os X, but it's defined elsewhere for iOS
 */
 
 #ifndef PLATFORM_LAYER_H

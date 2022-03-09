@@ -6,12 +6,19 @@ Read some text from a file given a filename.
 This function is here because it can't be used on iOS.
 */
 FileBuffer * platform_read_file(char * filename) {
+    printf("reading file: %s\n", filename);
     
-    FileBuffer * return_value = malloc(sizeof(FileBuffer));
-  
+    
     FILE * file_handle = fopen(
         filename,
         "rb");
+
+    if (!file_handle) {
+        printf("file read unsuccesful!\n");
+        return NULL;
+    }
+
+    FileBuffer * return_value = malloc(sizeof(FileBuffer));
     
     fseek(file_handle, 0, SEEK_END);
     unsigned long fsize = (unsigned long)ftell(file_handle);
@@ -39,3 +46,4 @@ FileBuffer * platform_read_file(char * filename) {
     
     return return_value;
 }
+

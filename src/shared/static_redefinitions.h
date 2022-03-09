@@ -1,6 +1,8 @@
 #ifndef STATIC_REDEFS_H
 #define STATIC_REDEFS_H
 
+#include <inttypes.h>
+
 #define local_only static
 
 #define bool32_t uint32_t
