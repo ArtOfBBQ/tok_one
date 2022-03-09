@@ -1608,7 +1608,3 @@ uint32_t inflate(
     return 0;
 }
 
-#undef true
-#undef false
-#undef bool32_t
-

@@ -5,7 +5,7 @@
 #include "../shared/zpolygon.h"
 #include "../shared/bool_types.h"
 #include "../shared_windows_macos/platform_read_file.c"
-#include "../shared/static_redefinitions.h")
+#include "../shared/static_redefinitions.h"
 
 #include <windows.h>
 #include <gl/gl.h>
@@ -19,8 +19,99 @@ uint32_t application_running = true;
 Vertex * next_gpu_workload;
 uint32_t next_gpu_workload_size;
 
+typedef BOOL WINAPI manual_wgl_swap_interval_ext(int interval);
+
+typedef struct OpenGLInfo
+{
+    // TODO: some of these string fields (like extensions)
+    // are parsed into bool fields and then not used
+    // anymore. They might be useful
+    // for debugging right now but should be deleted
+    char * vendor;
+    char * renderer;
+    char * version;
+    char * shading_language_version;
+    char * extensions; 
+    
+    bool32_t EXT_texture_sRGB_decode;
+    bool32_t GL_ARB_framebuffer_sRGB;
+} OpenGLInfo;
+
+// TODO: seems out of place here
+// should be moved to a string manipulation header
+// or something?
+static bool32_t are_equal_strings(
+    char * str1,
+    char * str2,
+    size_t len)
+{
+    for (size_t i = 0; i < len; i++) {
+        if (str1[i] != str2[i]) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+// TODO: move openGL related stuff to a different file
+// maybe think about it when we start an android platform
+// layer and find out what can be re-used
+OpenGLInfo get_opengl_info() {
+    OpenGLInfo return_value = {};
+    
+    return_value.vendor = (char *)glGetString(GL_VENDOR);
+    return_value.renderer =
+        (char *)glGetString(GL_RENDERER);
+    // return_value.version = (char *)glGetString();
+    return_value.shading_language_version =
+        (char *)glGetString(GL_VENDOR);
+    return_value.vendor = (char *)glGetString(GL_VENDOR);
+    return_value.extensions =
+        (char *)glGetString(GL_EXTENSIONS);
+    
+    char * at = return_value.extensions; 
+    char * end = at;
+    while (*end) {
+        while (*at == ' ') {
+            at++;
+        }
+        end = at;
+        while (*end && *end != ' ') { end++; }
+        
+        if (
+            are_equal_strings(
+                at,
+                "EXT_texture_sRGB_decode",
+                end - at))
+        {
+            return_value.EXT_texture_sRGB_decode = true;
+        } else if (
+            are_equal_strings(
+                at,
+                "GL_ARB_framebuffer_sRGB;",
+                end - at))
+        {
+            return_value.GL_ARB_framebuffer_sRGB = true;
+        } else if (
+            are_equal_strings(
+                at,
+                "put your expected extension string here",
+                end - at))
+        {
+            // reserved
+        }
+        
+        at = end;
+    }
+    
+    return return_value;
+}
+
+
 // Ask windows to paint our window with opengl
 void opengl_update_window(HWND window) {
+    
     next_gpu_workload_size = 0;
     software_render(
         next_gpu_workload,
@@ -37,10 +128,17 @@ void opengl_update_window(HWND window) {
         i < next_gpu_workload_size;
         i++)
     {
-        glColor3f(
-            next_gpu_workload[i].RGBA[0],
-            next_gpu_workload[i].RGBA[1],
-            next_gpu_workload[i].RGBA[2]);
+        if (next_gpu_workload[i].texture_i >= 0) {
+            glColor3f(
+                0.25f,
+                0.5f,
+                1.0f);
+        } else {
+            glColor3f(
+                next_gpu_workload[i].RGBA[0],
+                next_gpu_workload[i].RGBA[1],
+                next_gpu_workload[i].RGBA[2]);
+        }
         glVertex2f(
             next_gpu_workload[i].x,
             next_gpu_workload[i].y);
@@ -113,6 +211,7 @@ MainWindowCallback(
     return return_value;
 }
 
+// TODO: move opengl stuff elsewhere
 // this magical cruft is necessary and I think
 // you should carefully read the documentation
 // and memorize the meaning if you really want to learn
@@ -151,7 +250,24 @@ void Win32InitOpenGL(HWND window) {
     
     HGLRC openglrc = wglCreateContext(window_dc);
     if (wglMakeCurrent(window_dc, openglrc)) {
+
+        // this is how you can load an extension function
+        // manually - it seems quite convoluted to me
+        // you need typedefs (search for wgl_swap at the
+        // at the top of the file) in addition to this
+        manual_wgl_swap_interval_ext
+            * loaded_wgl_swap_interval_ext =
+                wglGetProcAddress("wglSwapIntervalEXT");
+        if (loaded_wgl_swap_interval_ext) {
+            printf("wgl swap interval function pointer (extension) was manually loaded!\n");
+            loaded_wgl_swap_interval_ext(1);
+        } else {
+            printf("ERROR - wgl_swap_interval_ext wasn't avaialble on this platform\n");
+        }
+        
         printf("wglMakeCurrent() succeeded\n");
+        OpenGLInfo opengl_info = get_opengl_info();
+        printf("got opengl_info\n");
     } else {
         printf("failed wglmakecurrent\n");
         assert(false);
@@ -184,7 +300,10 @@ int CALLBACK WinMain(
                     window_params.lpszClassName,
                 /* LPCTSTR lpWindowName:*/ "hello3dgfx",
                 /* DWORD dwStyle:       */
-                    WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_MAXIMIZE,
+                    WS_OVERLAPPEDWINDOW |
+                    WS_VISIBLE |
+                    CS_OWNDC |
+                    WS_MAXIMIZE,
                 /* int x:               */ CW_USEDEFAULT,
                 /* int y:               */ CW_USEDEFAULT,
                 /* int nWidth:          */ CW_USEDEFAULT,
@@ -215,11 +334,11 @@ int CALLBACK WinMain(
             init_projection_constants();
             printf("init_renderer()..\n");
             init_renderer();
-            printf("Win32InitOpenGL()..\n");
-            Win32InitOpenGL(window_handle); 
             printf("malloc Vertex buffer...\n");
             next_gpu_workload =
                 malloc(sizeof(Vertex) * 50000);
+            printf("Win32InitOpenGL()..\n");
+            Win32InitOpenGL(window_handle); 
             
             printf("start game loop...\n");
             while (application_running)

@@ -1129,7 +1129,5 @@ DecodedImage * decode_PNG(
     return return_value;
 }
 
-#undef true
-#undef false
 #undef DECODE_PNG_IGNORE_ASSERTS
 

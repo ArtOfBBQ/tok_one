@@ -168,7 +168,5 @@ static DecodedImage * resize_image_to_width(
     return return_value;
 }
 
-#undef bool32_t
-
 #endif
 
