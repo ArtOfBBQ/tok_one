@@ -19,8 +19,40 @@ uint32_t application_running = true;
 Vertex * next_gpu_workload;
 uint32_t next_gpu_workload_size;
 
+// openGL nonsense
+// if you use a "loader library" like GLU it saves you
+// this trouble amongst other things
+#define GL_VERTEX_SHADER 0x8B31
+#define GL_FRAGMENT_SHADER 0x8B30
+typedef char GLchar;
+
+// These typedefs are function pointers
+// they weren't in OpenGL v1.0, but were added as
+// extensions
+// you need query for their availability and set the
+// pointers during runtime with wglGetProcAddress()
+// to make it work without a library
 typedef BOOL WINAPI manual_wgl_swap_interval_ext(int interval);
 
+typedef void WINAPI ptr_gl_attach_shader(GLuint program, GLuint shader);
+typedef void ptr_gl_compile_shader(GLuint shader_id);
+typedef GLuint ptr_gl_create_shader(GLenum type);
+typedef GLuint ptr_gl_create_program(void);
+typedef void ptr_gl_link_program(GLuint program_id);
+typedef void ptr_gl_shader_source(GLuint shader_id, GLsizei count, GLchar **string, GLint * length);
+typedef void ptr_gl_use_program(GLuint program_id);
+
+static ptr_gl_compile_shader *glCompileShader;
+static ptr_gl_create_shader *glCreateShader;
+static ptr_gl_create_program *glCreateProgram;
+static ptr_gl_link_program *glLinkProgram;
+static ptr_gl_shader_source *glShaderSource;
+static ptr_gl_attach_shader *glAttachShader;
+static ptr_gl_use_program *glUseProgram;
+
+
+// info about what OpenGL functionality
+// is/isnt available on platform
 typedef struct OpenGLInfo
 {
     // TODO: some of these string fields (like extensions)
@@ -63,12 +95,14 @@ OpenGLInfo get_opengl_info() {
     return_value.vendor = (char *)glGetString(GL_VENDOR);
     return_value.renderer =
         (char *)glGetString(GL_RENDERER);
-    // return_value.version = (char *)glGetString();
+    return_value.version = (char *)glGetString(GL_VERSION);
     return_value.shading_language_version =
         (char *)glGetString(GL_VENDOR);
     return_value.vendor = (char *)glGetString(GL_VENDOR);
     return_value.extensions =
         (char *)glGetString(GL_EXTENSIONS);
+
+    printf("opengl version: %s\n", return_value.version);
     
     char * at = return_value.extensions; 
     char * end = at;
@@ -250,6 +284,10 @@ void Win32InitOpenGL(HWND window) {
     
     HGLRC openglrc = wglCreateContext(window_dc);
     if (wglMakeCurrent(window_dc, openglrc)) {
+ 
+        printf("wglMakeCurrent() succeeded\n");
+        OpenGLInfo opengl_info = get_opengl_info();
+        printf("got opengl_info\n");
 
         // this is how you can load an extension function
         // manually - it seems quite convoluted to me
@@ -265,13 +303,64 @@ void Win32InitOpenGL(HWND window) {
             printf("ERROR - wgl_swap_interval_ext wasn't avaialble on this platform\n");
         }
         
-        printf("wglMakeCurrent() succeeded\n");
-        OpenGLInfo opengl_info = get_opengl_info();
-        printf("got opengl_info\n");
+        glCompileShader =
+            (ptr_gl_compile_shader *)
+            wglGetProcAddress("glCompileShader");
+        assert(glCompileShader != NULL);
+        glCreateShader =
+            (ptr_gl_create_shader *)
+            wglGetProcAddress("glCreateShader");
+        assert(glCreateShader != NULL);
+        glCreateProgram =
+            (ptr_gl_create_program *)
+            wglGetProcAddress("glCreateProgram");
+        assert(glCreateProgram != NULL);
+        glLinkProgram =
+            (ptr_gl_link_program *)
+            wglGetProcAddress("glLinkProgram");
+        assert(glLinkProgram != NULL);
+        glShaderSource =
+            (ptr_gl_shader_source *)
+            wglGetProcAddress("glShaderSource");
+        assert(glShaderSource != NULL);
+        glUseProgram =
+            (ptr_gl_use_program *)
+            wglGetProcAddress("glUseProgram");
+        assert(glUseProgram != NULL);
+        glAttachShader =
+            (ptr_gl_attach_shader *)
+            wglGetProcAddress("glAttachShader");
+        assert(glAttachShader != NULL);
+        
     } else {
         printf("failed wglmakecurrent\n");
         assert(false);
     }
+}
+
+void opengl_compile_shaders() {
+    GLuint vertex_shader_id = glCreateShader(
+        GL_VERTEX_SHADER);
+    glShaderSource(
+        /* shader handle: */ vertex_shader_id,
+        /* shader count : */ 1,
+        /* shader source: */ "int main()",
+        /* source length: */ 5);
+    glCompileShader(vertex_shader_id);
+    
+    GLuint fragment_shader_id = glCreateShader(
+        GL_FRAGMENT_SHADER);
+    glShaderSource(
+        /* shader handle: */ fragment_shader_id,
+        /* shader count : */ 1,
+        /* shader source: */ "int main()",
+        /* source length: */ 5);
+    glCompileShader(fragment_shader_id);
+    
+    GLuint program_id = glCreateProgram();
+    glAttachShader(program_id, vertex_shader_id);
+    
+    glLinkProgram(program_id);
 }
 
 // This is basically "int main()" for windows
@@ -337,8 +426,11 @@ int CALLBACK WinMain(
             printf("malloc Vertex buffer...\n");
             next_gpu_workload =
                 malloc(sizeof(Vertex) * 50000);
+            
             printf("Win32InitOpenGL()..\n");
             Win32InitOpenGL(window_handle); 
+
+            // opengl_compile_shaders();
             
             printf("start game loop...\n");
             while (application_running)
