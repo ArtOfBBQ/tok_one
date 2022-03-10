@@ -12,6 +12,7 @@
 #define GL_VERTEX_SHADER 0x8B31
 #define GL_FRAGMENT_SHADER 0x8B30
 #define GL_ARRAY_BUFFER 0x8892
+#define GL_COMPILE_STATUS 0x8B81
 #define GL_STATIC_DRAW 0x88E4
 
 typedef char GLchar;
@@ -28,6 +29,8 @@ typedef BOOL WINAPI manual_wgl_swap_interval_ext(int interval);
 
 typedef void WINAPI ptr_gl_attach_shader(GLuint program, GLuint shader);
 typedef void ptr_gl_compile_shader(GLuint shader_id);
+typedef ptr_gl_get_shader_iv(GLuint shader, GLenum pname, GLint * params);
+typedef ptr_gl_get_shader_info_log(GLuint shader_id, GLsizei maxLength, GLsizei *length, GLchar *infolog);
 typedef GLuint ptr_gl_create_shader(GLenum type);
 typedef GLuint ptr_gl_create_program(void);
 typedef void ptr_gl_link_program(GLuint program_id);
@@ -46,6 +49,8 @@ extern GLuint program_id;
 extern unsigned int VAO;
 
 extern ptr_gl_compile_shader * glCompileShader;
+extern ptr_gl_get_shader_iv * glGetShaderiv;
+extern ptr_gl_get_shader_info_log * glGetShaderInfoLog;
 extern ptr_gl_create_shader * glCreateShader;
 extern ptr_gl_create_program * glCreateProgram;
 extern ptr_gl_link_program * glLinkProgram;

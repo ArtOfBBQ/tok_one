@@ -83,6 +83,13 @@ void win32_init_opengl(HWND window) {
             (ptr_gl_compile_shader *)
             wglGetProcAddress("glCompileShader");
         assert(glCompileShader != NULL);
+        glGetShaderiv =
+            (ptr_gl_get_shader_iv *)
+            wglGetProcAddress("glGetShaderiv");
+        assert(glGetShaderiv != NULL);
+        glGetShaderInfoLog =
+            (ptr_gl_get_shader_info_log *)
+            wglGetProcAddress("glGetShaderInfoLog");
         glCreateShader =
             (ptr_gl_create_shader *)
             wglGetProcAddress("glCreateShader");

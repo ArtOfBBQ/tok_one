@@ -12,6 +12,8 @@ unsigned int VAO;
 
 
 ptr_gl_compile_shader * glCompileShader;
+ptr_gl_get_shader_iv * glGetShaderiv;
+ptr_gl_get_shader_info_log * glGetShaderInfoLog;
 ptr_gl_create_shader * glCreateShader;
 ptr_gl_create_program * glCreateProgram;
 ptr_gl_link_program * glLinkProgram;
@@ -110,10 +112,20 @@ void opengl_compile_shaders() {
             &vertex_source_file->contents,
         /* source length: */
             NULL);
-    printf("vertex shader source was loaded ,compiling\n");
+    printf("vertex shader source was loaded, compiling\n");
     glCompileShader(vertex_shader_id);
-    printf("vertex shader source was compiled\n");
-
+    unsigned int success;
+    char info_log[512];
+    glGetShaderiv(vertex_shader_id, GL_COMPILE_STATUS, &success);
+    if (success) {
+        printf("vertex shader source was compiled\n");
+    } else {
+        printf("failed to compile vertex shader\n");
+        glGetShaderInfoLog(vertex_shader_id, 512, NULL, info_log);
+        printf("%s\n", info_log);
+        assert(0);
+    }
+    
     // TODO: consider adding this extension so we can check
     // for success
     // int success = 0;
@@ -133,9 +145,20 @@ void opengl_compile_shaders() {
             &fragment_source_file->contents,
         /* source length: */
             NULL);
-    printf("fragment shader src was loaded ,compiling\n");
+    printf("fragment shader src was loaded, compiling\n");
     glCompileShader(fragment_shader_id);
-    printf("fragment shader source was compiled\n");
+    glGetShaderiv(
+        fragment_shader_id,
+        GL_COMPILE_STATUS,
+        &success);
+    if (success) {
+        printf("fragment shader source was compiled\n");
+    } else {
+        printf("failed to compile fragment shader\n");
+        glGetShaderInfoLog(fragment_shader_id, 512, NULL, info_log);
+        printf("%s\n", info_log);
+        assert(0);
+    }
     
     program_id = glCreateProgram();
     printf("created GL program with id: %u\n", program_id);
