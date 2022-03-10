@@ -30,7 +30,7 @@ uint32_t application_running = true;
 // understand the initialization options
 // if you try to wglCreateContext() without the
 // weird pixel option settings first, it will fail
-void Win32InitOpenGL(HWND window) {
+void win32_init_opengl(HWND window) {
     HDC window_dc = GetDC(window);
     
     PIXELFORMATDESCRIPTOR desired = {};
@@ -103,10 +103,36 @@ void Win32InitOpenGL(HWND window) {
             (ptr_gl_use_program *)
             wglGetProcAddress("glUseProgram");
         assert(glUseProgram != NULL);
+        glGenBuffers =
+            (ptr_gl_gen_buffers *)
+            wglGetProcAddress("glGenBuffers");
+        assert(glGenBuffers != NULL);
         glAttachShader =
             (ptr_gl_attach_shader *)
             wglGetProcAddress("glAttachShader");
         assert(glAttachShader != NULL);
+        glBindBuffer =
+            wglGetProcAddress("glBindBuffer");
+        assert(glBindBuffer != NULL);
+        glBufferData =
+            wglGetProcAddress("glBufferData");
+        assert(glBufferData != NULL);
+        glGenVertexArrays =
+            (ptr_gl_gen_vertex_arrays *)
+            wglGetProcAddress("glGenVertexArrays");
+        assert(glGenVertexArrays != NULL);
+        glBindVertexArray =
+            (ptr_gl_bind_vertex_array *)
+            wglGetProcAddress("glBindVertexArray");
+        assert(glBindVertexArray != NULL);
+        glVertexAttribPointer =
+            (ptr_gl_vertex_attrib_pointer *)
+            wglGetProcAddress("glVertexAttribPointer");
+        assert(glVertexAttribPointer != NULL);
+        glEnableVertexAttribArray =
+            (ptr_gl_enable_vertex_attrib_array *)
+            wglGetProcAddress("glEnableVertexAttribArray");
+        assert(glEnableVertexAttribArray != NULL);
         
     } else {
         printf("failed wglmakecurrent\n");
@@ -117,47 +143,14 @@ void Win32InitOpenGL(HWND window) {
 // Ask windows to paint our window with opengl
 void opengl_update_window(HWND window) {
     
-    next_gpu_workload_size = 0;
-    software_render(
-        next_gpu_workload,
-        &next_gpu_workload_size);
-    
     glViewport(0, 0, window_width, window_height);
-    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     
-    glBegin(GL_TRIANGLES);
+    glUseProgram(program_id);
+    glBindVertexArray(VAO);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
     
-    for (
-        uint32_t i = 0;
-        i < next_gpu_workload_size;
-        i++)
-    {
-        if (next_gpu_workload[i].texture_i >= 0) {
-            glColor3f(
-                0.25f,
-                0.5f,
-                1.0f);
-        } else {
-            glColor3f(
-                next_gpu_workload[i].RGBA[0],
-                next_gpu_workload[i].RGBA[1],
-                next_gpu_workload[i].RGBA[2]);
-        }
-        glVertex2f(
-            next_gpu_workload[i].x,
-            next_gpu_workload[i].y);
-    }
-    glEnd();
-    
-    // We don't need this paint struct,
-    // we just want to get the device_context
-    // so this seems wrong but I don't know how
-    // else to get it
-    // PAINTSTRUCT paint;
-    // HDC device_context = BeginPaint(
-    //     /* HWND handle: */ window_handle,
-    //     /* [out] LPPAINTSTRUCT lpPaint: */ &paint);
     HDC device_context = GetDC(window);
     SwapBuffers(device_context);
 }
@@ -282,8 +275,8 @@ int CALLBACK WinMain(
                 malloc(sizeof(Vertex) * 50000);
             
             printf("Win32InitOpenGL()..\n");
-            Win32InitOpenGL(window_handle); 
-
+            win32_init_opengl(window_handle); 
+            
             opengl_compile_shaders();
             
             printf("start game loop...\n");
