@@ -121,16 +121,11 @@ void opengl_compile_shaders() {
         printf("vertex shader source was compiled\n");
     } else {
         printf("failed to compile vertex shader\n");
+        printf("source was: \n%s\n", vertex_source_file->contents);
         glGetShaderInfoLog(vertex_shader_id, 512, NULL, info_log);
         printf("%s\n", info_log);
         assert(0);
     }
-    
-    // TODO: consider adding this extension so we can check
-    // for success
-    // int success = 0;
-    // glGetShaderiv(vertex_shader_id, GL_COMPILE_STATUS, &success);
-    // assert(success);
     
     GLuint fragment_shader_id =
         glCreateShader(GL_FRAGMENT_SHADER);
@@ -155,7 +150,12 @@ void opengl_compile_shaders() {
         printf("fragment shader source was compiled\n");
     } else {
         printf("failed to compile fragment shader\n");
-        glGetShaderInfoLog(fragment_shader_id, 512, NULL, info_log);
+        printf("source was: \n%s\n", fragment_source_file->contents);
+        glGetShaderInfoLog(
+            fragment_shader_id,
+            512,
+            NULL,
+            info_log);
         printf("%s\n", info_log);
         assert(0);
     }
