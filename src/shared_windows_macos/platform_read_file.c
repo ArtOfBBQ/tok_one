@@ -8,23 +8,22 @@ This function is here because it can't be used on iOS.
 FileBuffer * platform_read_file(char * filename) {
     printf("reading file: %s\n", filename);
     
-    
     FILE * file_handle = fopen(
         filename,
-        "rb");
-
+        "rb+");
+    
     if (!file_handle) {
         printf("file read unsuccesful!\n");
         return NULL;
     }
-
+    
     FileBuffer * return_value = malloc(sizeof(FileBuffer));
     
-    fseek(file_handle, 0, SEEK_END);
-    unsigned long fsize = (unsigned long)ftell(file_handle);
-    fseek(file_handle, 0, SEEK_SET);
+    fseek(file_handle, 0L, SEEK_END);
+    long int fsize = ftell(file_handle);
+    fseek(file_handle, 0L, SEEK_SET);
     
-    char * buffer = malloc(fsize);
+    char * buffer = malloc(fsize + 1);
     
     size_t bytes_read = fread(
         /* ptr: */
@@ -42,6 +41,7 @@ FileBuffer * platform_read_file(char * filename) {
     }
     
     return_value->contents = buffer;
+    return_value->contents[fsize] = 0; // for windows
     return_value->size = bytes_read;
     
     return return_value;
