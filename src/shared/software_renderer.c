@@ -117,6 +117,7 @@ void software_render(
     uint32_t * next_workload_size)
 {
     if (renderer_initialized != true) {
+        printf("renderer not initialized, aborting...\n");
         return;
     }
     
@@ -140,6 +141,7 @@ void software_render(
     }
     
     if (zpolygons_to_render_size == 0) {
+        printf("there's nothing to render - returning...\n");
         return;
     }
     
@@ -242,7 +244,7 @@ void software_render(
         triangles_to_render,
         sizeof(zTriangle),
         &sorter_cmpr_lowest_z);
-    
+
     for (
         int32_t i = triangles_to_render - 1;
         i >= 0;

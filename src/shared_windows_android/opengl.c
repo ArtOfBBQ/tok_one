@@ -1,14 +1,10 @@
 #include "opengl.h"
 
-float example_vertices[] = {
-    -0.5f, -0.5f, 0.0f,
-    0.5f, -0.5f, 0.0f,
-    0.0f, 0.5, 0.0f
-};
-
 // We'll need these 2 identifiers while drawing
 GLuint program_id;
 unsigned int VAO;
+
+Vertex gpu_workload_buffer[VERTEX_BUFFER_SIZE];
 
 
 ptr_gl_compile_shader * glCompileShader;
@@ -96,6 +92,108 @@ OpenGLInfo get_opengl_info() {
 }
 
 void opengl_compile_shaders() {
+    printf("opengl_compile_shaders()...\n");
+    
+    printf("allocate buffer memory...\n");
+    gpu_workload_buffer[0].x = -0.5f;
+    gpu_workload_buffer[0].y = -5.5f;
+    gpu_workload_buffer[0].uv[0] = 0.5f;
+    gpu_workload_buffer[0].uv[1] = 1.0f;
+    gpu_workload_buffer[0].RGBA[0] = 1.0f;
+    gpu_workload_buffer[0].RGBA[1] = 0.0f;
+    gpu_workload_buffer[0].RGBA[2] = 0.0f;
+    gpu_workload_buffer[0].RGBA[3] = 1.0f;
+    gpu_workload_buffer[0].lighting = 0.5f;
+    gpu_workload_buffer[0].texture_i = 1;
+    
+    gpu_workload_buffer[1].x = 0.5f;
+    gpu_workload_buffer[1].y = -2.5f;
+    gpu_workload_buffer[1].uv[0] = 0.5f;
+    gpu_workload_buffer[1].uv[1] = 1.0f;
+    gpu_workload_buffer[1].RGBA[0] = 1.0f;
+    gpu_workload_buffer[1].RGBA[1] = 0.2f;
+    gpu_workload_buffer[1].RGBA[2] = 0.2f;
+    gpu_workload_buffer[1].RGBA[3] = 1.0f;
+    gpu_workload_buffer[1].lighting = 1.5f;
+    gpu_workload_buffer[1].texture_i = 1;
+    
+    gpu_workload_buffer[2].x = 2.0;
+    gpu_workload_buffer[2].y = 0.5f;
+    gpu_workload_buffer[2].uv[0] = 0.5f;
+    gpu_workload_buffer[2].uv[1] = 1.0f;
+    gpu_workload_buffer[2].RGBA[0] = 1.0f;
+    gpu_workload_buffer[2].RGBA[1] = 0.0f;
+    gpu_workload_buffer[2].RGBA[2] = 0.3f;
+    gpu_workload_buffer[2].RGBA[3] = 1.0f;
+    gpu_workload_buffer[2].lighting = 0.5f;
+    gpu_workload_buffer[2].texture_i = 1;
+    
+    gpu_workload_buffer[3].x = 1.0f;
+    gpu_workload_buffer[3].y = 1.0f;
+    gpu_workload_buffer[3].uv[0] = 0.5f;
+    gpu_workload_buffer[3].uv[1] = 1.0f;
+    gpu_workload_buffer[3].RGBA[0] = 1.0f;
+    gpu_workload_buffer[3].RGBA[1] = 0.5f;
+    gpu_workload_buffer[3].RGBA[2] = 0.5f;
+    gpu_workload_buffer[3].RGBA[3] = 1.0f;
+    gpu_workload_buffer[3].lighting = 0.5f;
+    gpu_workload_buffer[3].texture_i = -1;
+    
+    gpu_workload_buffer[4].x = 10.0f;
+    gpu_workload_buffer[4].y = 1.0f;
+    gpu_workload_buffer[4].uv[0] = 0.5f;
+    gpu_workload_buffer[4].uv[1] = 1.0f;
+    gpu_workload_buffer[4].RGBA[0] = 0.0f;
+    gpu_workload_buffer[4].RGBA[1] = 1.0f;
+    gpu_workload_buffer[4].RGBA[2] = 0.5f;
+    gpu_workload_buffer[4].RGBA[3] = 1.0f;
+    gpu_workload_buffer[4].lighting = 0.5f;
+    gpu_workload_buffer[4].texture_i = 1;
+    
+    gpu_workload_buffer[5].x = 5.0;
+    gpu_workload_buffer[5].y = 10.0f;
+    gpu_workload_buffer[5].uv[0] = 0.5f;
+    gpu_workload_buffer[5].uv[1] = 1.0f;
+    gpu_workload_buffer[5].RGBA[0] = 0.0f;
+    gpu_workload_buffer[5].RGBA[1] = 1.0f;
+    gpu_workload_buffer[5].RGBA[2] = 0.5f;
+    gpu_workload_buffer[5].RGBA[3] = 1.0f;
+    gpu_workload_buffer[5].lighting = 0.5f;
+    gpu_workload_buffer[5].texture_i = 1.0f;
+
+    gpu_workload_buffer[6].x = 0.2;
+    gpu_workload_buffer[6].y = -0.2f;
+    gpu_workload_buffer[6].uv[0] = 0.5f;
+    gpu_workload_buffer[6].uv[1] = 1.0f;
+    gpu_workload_buffer[6].RGBA[0] = 0.0f;
+    gpu_workload_buffer[6].RGBA[1] = 0.5f;
+    gpu_workload_buffer[6].RGBA[2] = 0.5f;
+    gpu_workload_buffer[6].RGBA[3] = 1.0f;
+    gpu_workload_buffer[6].lighting = 0.5f;
+    gpu_workload_buffer[6].texture_i = -1;
+    
+    gpu_workload_buffer[7].x = 0.6f;
+    gpu_workload_buffer[7].y = -0.2f;
+    gpu_workload_buffer[7].uv[0] = 0.5f;
+    gpu_workload_buffer[7].uv[1] = 1.0f;
+    gpu_workload_buffer[7].RGBA[0] = 0.0f;
+    gpu_workload_buffer[7].RGBA[1] = 0.2f;
+    gpu_workload_buffer[7].RGBA[2] = 0.5f;
+    gpu_workload_buffer[7].RGBA[3] = 1.0f;
+    gpu_workload_buffer[7].lighting = 0.5f;
+    gpu_workload_buffer[7].texture_i = -1;
+    
+    gpu_workload_buffer[8].x = 0.4;
+    gpu_workload_buffer[8].y = 0.2f;
+    gpu_workload_buffer[8].uv[0] = 0.5f;
+    gpu_workload_buffer[8].uv[1] = 1.0f;
+    gpu_workload_buffer[8].RGBA[0] = 0.0f;
+    gpu_workload_buffer[8].RGBA[1] = 0.0f;
+    gpu_workload_buffer[8].RGBA[2] = 1.0f;
+    gpu_workload_buffer[8].RGBA[3] = 1.0f;
+    gpu_workload_buffer[8].lighting = 0.5f;
+    gpu_workload_buffer[8].texture_i = -1;
+    
     GLuint vertex_shader_id = glCreateShader(
         GL_VERTEX_SHADER);
     printf(
@@ -116,7 +214,10 @@ void opengl_compile_shaders() {
     glCompileShader(vertex_shader_id);
     unsigned int success;
     char info_log[512];
-    glGetShaderiv(vertex_shader_id, GL_COMPILE_STATUS, &success);
+    glGetShaderiv(
+        vertex_shader_id,
+        GL_COMPILE_STATUS,
+        &success);
     if (success) {
         printf("vertex shader source was compiled\n");
     } else {
@@ -141,7 +242,8 @@ void opengl_compile_shaders() {
         /* source length: */
             NULL);
     printf("fragment shader src was loaded, compiling\n");
-    glCompileShader(fragment_shader_id);
+    glCompileShader(
+        fragment_shader_id);
     glGetShaderiv(
         fragment_shader_id,
         GL_COMPILE_STATUS,
@@ -161,10 +263,14 @@ void opengl_compile_shaders() {
     }
     
     program_id = glCreateProgram();
-    printf("created GL program with id: %u\n", program_id);
+    printf(
+        "created GL program with id: %u\n",
+        program_id);
     glAttachShader(program_id, vertex_shader_id);
     printf("attached vertex shader to program\n");
-    glAttachShader(program_id, fragment_shader_id);
+    glAttachShader(
+        program_id,
+        fragment_shader_id);
     printf("attached fragment shader to program\n");
     
     glLinkProgram(program_id);
@@ -186,19 +292,82 @@ void opengl_compile_shaders() {
     unsigned int VBO;
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    assert(sizeof(float) == 4); // x,y,uv,rgba,lighting
+    assert(sizeof(uint32_t) == 4); // texture_i
+    assert(sizeof(Vertex) == 40);
+    assert(sizeof(gpu_workload_buffer) == 40 * VERTEX_BUFFER_SIZE);
+    assert(offsetof(Vertex, x) == 0);
+    assert(offsetof(Vertex, y) == 4);
+    assert(offsetof(Vertex, uv) == 8);
+    assert(offsetof(Vertex, RGBA) == 16);
+    assert(offsetof(Vertex, lighting) == 32);
+    assert(offsetof(Vertex, texture_i) == 36);
     glBufferData(
         GL_ARRAY_BUFFER,
-        sizeof(example_vertices),
-        example_vertices,
-        GL_STATIC_DRAW);
+        VERTEX_BUFFER_SIZE * sizeof(Vertex),
+        gpu_workload_buffer,
+        GL_DYNAMIC_DRAW);
+    /*
+    Attribute pointers describe the fields of our data
+    sructure (the Vertex struct in shared/vertex_types.h)
+    */
+    
+    // struct field: float x;
     glVertexAttribPointer(
-        /* location (in shader source code): */ 0,
-        /* number of vals in Vertex: */ 3,
+        /* location (in shader source): */ 0,
+        /* array/vector element count: */ 1,
         /* type of data: */ GL_FLOAT,
         /* normalize data: */ GL_FALSE,
-        /* stride (size in bytes): */ 3 * sizeof(float),
-        /* offset : */ (void*)0);
+        /* stride to next 'x': */ sizeof(Vertex),
+        /* offset : */ (void*)(offsetof(Vertex, x)));
+    // struct field; float y;
+    glVertexAttribPointer(
+        /* location (in shader source): */ 1,
+        /* array/vector size: */ 1,
+        /* type of data: */ GL_FLOAT,
+        /* normalize data: */ GL_FALSE,
+        /* sizeof parent struct: */ sizeof(Vertex),
+        /* offset : */ (void*)(offsetof(Vertex, y)));
+    // struct field; float uv[2];
+    glVertexAttribPointer(
+        /* location (in shader source): */ 2,
+        /* array/vector size: */ 2,
+        /* type of data: */ GL_FLOAT,
+        /* normalize data: */ GL_FALSE,
+        /* sizeof parent struct: */ sizeof(Vertex),
+        /* offset : */ (void*)(offsetof(Vertex, uv)));
+    // struct field: float RGBA[4];
+    glVertexAttribPointer(
+        /* location (in shader source): */ 3,
+        /* array/vector size: */ 4,
+        /* type of data: */ GL_FLOAT,
+        /* normalize data: */ GL_FALSE,
+        /* sizeof parent struct: */ sizeof(Vertex),
+        /* offset : */ (void*)(offsetof(Vertex, RGBA)));
+    // struct field: float lightning:
+    glVertexAttribPointer(
+        /* location (in shader source): */ 4,
+        /* array/vector size: */ 1,
+        /* type of data: */ GL_FLOAT,
+        /* normalize data: */ GL_FALSE,
+        /* sizeof parent struct: */ sizeof(Vertex),
+        /* offset : */ (void*)(offsetof(Vertex, lighting)));
+    // struct field: int32_t texture_i;
+    glVertexAttribPointer(
+        /* location (in shader source): */ 5,
+        /* array/vector size: */ 1,
+        /* type of data: */ GL_INT,
+        /* normalize data: */ GL_FALSE,
+        /* sizeof parent struct: */ sizeof(Vertex),
+        /* offset : */ (void*)(offsetof(Vertex, texture_i)));
+    
     glEnableVertexAttribArray(0);
-    printf("finished glVertexAttribPointer()\n", VAO);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(3);
+    glEnableVertexAttribArray(4);
+    glEnableVertexAttribArray(5);
+    
+    printf("finished opengl_compile_shaders()...\n");
 }
 

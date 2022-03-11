@@ -8,12 +8,15 @@
 #ifndef OPENGL_H
 #define OPENGL_H
 
+#define VERTEX_BUFFER_SIZE 9
 
 #define GL_VERTEX_SHADER 0x8B31
 #define GL_FRAGMENT_SHADER 0x8B30
 #define GL_ARRAY_BUFFER 0x8892
 #define GL_COMPILE_STATUS 0x8B81
 #define GL_STATIC_DRAW 0x88E4
+#define GL_DYNAMIC_DRAW 0x88E8
+#define GL_UNIFORM_BUFFER 0x8A11
 
 typedef char GLchar;
 typedef int GLsizeiptr;
@@ -43,6 +46,8 @@ typedef void ptr_gl_gen_vertex_arrays(GLsizei n, GLuint * arrays);
 typedef void ptr_gl_bind_vertex_array(GLuint array_id);
 typedef void ptr_gl_vertex_attrib_pointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer);
 typedef void ptr_gl_enable_vertex_attrib_array(GLuint id);
+
+extern Vertex gpu_workload_buffer[VERTEX_BUFFER_SIZE];
 
 // We'll need these 2 identifiers while drawing
 extern GLuint program_id;

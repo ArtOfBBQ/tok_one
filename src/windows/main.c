@@ -17,8 +17,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
-Vertex * next_gpu_workload;
-uint32_t next_gpu_workload_size;
+// Vertex * next_gpu_workload;
+// uint32_t next_gpu_workload_size;
 
 uint32_t application_running = true;
 
@@ -60,7 +60,7 @@ void win32_init_opengl(HWND window) {
     
     HGLRC openglrc = wglCreateContext(window_dc);
     if (wglMakeCurrent(window_dc, openglrc)) {
- 
+        
         printf("wglMakeCurrent() succeeded\n");
         OpenGLInfo opengl_info = get_opengl_info();
         printf("got opengl_info\n");
@@ -78,7 +78,8 @@ void win32_init_opengl(HWND window) {
         } else {
             printf("ERROR - wgl_swap_interval_ext wasn't avaialble on this platform\n");
         }
-        
+       
+        printf("dynamically load OpenGL extension functions...\n"); 
         glCompileShader =
             (ptr_gl_compile_shader *)
             wglGetProcAddress("glCompileShader");
@@ -140,6 +141,7 @@ void win32_init_opengl(HWND window) {
             (ptr_gl_enable_vertex_attrib_array *)
             wglGetProcAddress("glEnableVertexAttribArray");
         assert(glEnableVertexAttribArray != NULL);
+        printf("finished dynamically loading OpenGL extension functions...\n"); 
         
     } else {
         printf("failed wglmakecurrent\n");
@@ -154,8 +156,18 @@ void opengl_update_window(HWND window) {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     
+    // software_render(
+    //     gpu_workload_buffer[0],
+    //     &current_workload_size);
+    // printf("software_render() succeeded\n");
+    
     glUseProgram(program_id);
     glBindVertexArray(VAO);
+    // glDrawElements(
+    //     GL_TRIANGLES,
+    //     VERTEX_BUFFER_SIZE,
+    //     GL_UNSIGNED_SHORT,
+    //     (void*)0);
     glDrawArrays(GL_TRIANGLES, 0, 3);
     
     HDC device_context = GetDC(window);
@@ -277,9 +289,9 @@ int CALLBACK WinMain(
             init_projection_constants();
             printf("init_renderer()..\n");
             init_renderer();
-            printf("malloc Vertex buffer...\n");
-            next_gpu_workload =
-                malloc(sizeof(Vertex) * 50000);
+            // printf("malloc Vertex buffer...\n");
+            // next_gpu_workload =
+            //     malloc(sizeof(Vertex) * 500000);
             
             printf("Win32InitOpenGL()..\n");
             win32_init_opengl(window_handle); 

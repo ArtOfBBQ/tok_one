@@ -3,6 +3,7 @@
 
 #define TEXTURE_BUFFER_SIZE 2
 
+#pragma pack(push, 0)
 typedef struct Vertex {
     float x;
     float y;
@@ -12,6 +13,7 @@ typedef struct Vertex {
                        // color/texture
     int32_t texture_i; // -1 for no texture
 }  Vertex;
+#pragma pack(pop)
 
 #endif
 
