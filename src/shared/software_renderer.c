@@ -1,19 +1,17 @@
 #include "software_renderer.h"
 
 // TODO: clean up global variables
-char * texture_filenames[20];
-DecodedImage * textures[20];
-uint32_t texture_count = 0;
+char * texture_filenames[TEXTURES_SIZE];
+DecodedImage * textures[TEXTURES_SIZE];
 
 void init_renderer() {
     // initialize global textures for texture mapping 
-    texture_count = TEXTURE_BUFFER_SIZE;
-    assert(texture_count > 0);
+    assert(TEXTURES_SIZE > 0);
     texture_filenames[0] = "fs_angrymob.png";
     texture_filenames[1] = "structuredart.png";
     
     FileBuffer * file_buffer;
-    for (uint32_t i = 0; i < texture_count; i++) {
+    for (uint32_t i = 0; i < TEXTURES_SIZE; i++) {
         printf(
             "trying to read file: %s\n",
             texture_filenames[i]);

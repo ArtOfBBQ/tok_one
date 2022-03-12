@@ -16,9 +16,9 @@ local_only zLightSource zlights_to_apply[50];
 local_only uint32_t zlights_to_apply_size;
 local_only zVertex camera = {0.0f, 0.0f, 0.0f};
 
-extern char * texture_filenames[20];
-extern DecodedImage * textures[20];
-extern uint32_t texture_count;
+#define TEXTURES_SIZE 2
+extern char * texture_filenames[TEXTURES_SIZE];
+extern DecodedImage * textures[TEXTURES_SIZE];
 
 void init_renderer(void);
 void free_renderer(void);

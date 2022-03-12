@@ -145,6 +145,17 @@ void win32_init_opengl(HWND window) {
             (ptr_gl_generate_mipmap *)
             wglGetProcAddress("glGenerateMipmap");
         assert(glGenerateMipmap != NULL);
+        glActiveTexture =
+            (ptr_gl_active_texture *)
+            wglGetProcAddress("glActiveTexture");
+        assert(glGenerateMipmap != NULL);
+        glUniform1i =
+            (ptr_gl_uniform_1i *)
+            wglGetProcAddress("glUniform1i");
+        glGetUniformLocation =
+            (ptr_gl_get_uniform_location *)
+            wglGetProcAddress("glGetUniformLocation");
+        assert(glGetUniformLocation != NULL);
         printf("finished dynamically loading OpenGL extension functions...\n"); 
         
     } else {
@@ -172,9 +183,13 @@ void opengl_update_window(HWND window) {
         VERTEX_BUFFER_SIZE * sizeof(Vertex),
         gpu_workload_buffer,
         GL_DYNAMIC_DRAW);
-    glBindTexture(
-        GL_TEXTURE_2D,
-        texture_id);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture_ids[0]);
+    glActiveTexture(GL_TEXTURE0 + 1);
+    glBindTexture(GL_TEXTURE_2D, texture_ids[1]);
+    
+    // glGenerateMipmap(GL_TEXTURE_2D);
     glDrawArrays(
         GL_TRIANGLES,
         0,

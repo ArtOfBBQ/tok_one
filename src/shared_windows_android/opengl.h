@@ -18,6 +18,7 @@
 #define GL_STATIC_DRAW 0x88E4
 #define GL_DYNAMIC_DRAW 0x88E8
 #define GL_UNIFORM_BUFFER 0x8A11
+#define GL_TEXTURE0 0x84C0
 
 typedef char GLchar;
 typedef int GLsizeiptr;
@@ -48,13 +49,18 @@ typedef void ptr_gl_bind_vertex_array(GLuint array_id);
 typedef void ptr_gl_vertex_attrib_pointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer);
 typedef void ptr_gl_enable_vertex_attrib_array(GLuint id);
 typedef void ptr_gl_generate_mipmap(GLenum target);
+typedef void ptr_gl_active_texture(GLenum unit);
+typedef void ptr_gl_uniform_1i(GLint location, GLint x);
+typedef GLint ptr_gl_get_uniform_location(
+    GLuint program,
+    const GLchar * name);
 
 extern Vertex gpu_workload_buffer[VERTEX_BUFFER_SIZE];
 
 // We'll need these 2 identifiers while drawing
 extern GLuint program_id;
 extern unsigned int VAO;
-extern unsigned int texture_id;
+extern unsigned int texture_ids[TEXTURES_SIZE];
 
 extern ptr_gl_compile_shader * glCompileShader;
 extern ptr_gl_get_shader_iv * glGetShaderiv;
@@ -73,6 +79,9 @@ extern ptr_gl_bind_vertex_array * glBindVertexArray;
 extern ptr_gl_vertex_attrib_pointer * glVertexAttribPointer;
 extern ptr_gl_enable_vertex_attrib_array * glEnableVertexAttribArray;
 extern ptr_gl_generate_mipmap * glGenerateMipmap;
+extern ptr_gl_active_texture * glActiveTexture;
+extern ptr_gl_uniform_1i * glUniform1i;
+extern ptr_gl_get_uniform_location * glGetUniformLocation;
 
 // info about what OpenGL functionality
 // is/isnt available on platform

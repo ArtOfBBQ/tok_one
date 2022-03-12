@@ -3,7 +3,7 @@
 // We'll need these 2 identifiers while drawing
 GLuint program_id;
 unsigned int VAO;
-unsigned int texture_id;
+unsigned int texture_ids[TEXTURES_SIZE];
 
 Vertex gpu_workload_buffer[VERTEX_BUFFER_SIZE];
 
@@ -24,6 +24,9 @@ ptr_gl_bind_vertex_array * glBindVertexArray;
 ptr_gl_vertex_attrib_pointer * glVertexAttribPointer;
 ptr_gl_enable_vertex_attrib_array * glEnableVertexAttribArray;
 ptr_gl_generate_mipmap * glGenerateMipmap;
+ptr_gl_active_texture * glActiveTexture;
+ptr_gl_uniform_1i * glUniform1i;
+ptr_gl_get_uniform_location * glGetUniformLocation;
 
 static bool32_t are_equal_strings(
     char * str1,
@@ -124,10 +127,19 @@ void opengl_compile_shaders() {
     if (success) {
         printf("vertex shader source was compiled\n");
     } else {
-        printf("failed to compile vertex shader\n");
-        printf("source was: \n%s\n", vertex_source_file->contents);
-        glGetShaderInfoLog(vertex_shader_id, 512, NULL, info_log);
-        printf("%s\n", info_log);
+        printf(
+            "failed to compile vertex shader\n");
+        printf(
+            "source was: \n%s\n",
+            vertex_source_file->contents);
+        glGetShaderInfoLog(
+            vertex_shader_id,
+            512,
+            NULL,
+            info_log);
+        printf(
+            "%s\n",
+            info_log);
         assert(0);
     }
     
@@ -187,39 +199,70 @@ void opengl_compile_shaders() {
     printf("vertex array bound (active)\n");
     
     printf("initialize textures on OpenGL...\n"); 
-    assert(texture_count > 0);
-    uint32_t t = 0;
-    assert(textures[t]->width > 0);
-    assert(textures[t]->height > 0);
-    glGenTextures(1, &texture_id);
-    glBindTexture(GL_TEXTURE_2D, texture_id);
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_WRAP_S,
-        GL_REPEAT);
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_WRAP_T,
-        GL_REPEAT);
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_MIN_FILTER,
-        GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(
-        GL_TEXTURE_2D,
-        GL_TEXTURE_MAG_FILTER,
-        GL_LINEAR);
-    glTexImage2D(
-        GL_TEXTURE_2D,
-        /* mipmap level: */ 0,
-        /* format: */ GL_RGBA,
-        textures[t]->width,
-        textures[t]->height,
-        0,
-        GL_RGBA,
-        GL_UNSIGNED_BYTE,
-        textures[t]->rgba_values);
-    glGenerateMipmap(GL_TEXTURE_2D);
+    assert(TEXTURES_SIZE > 0);
+    for (uint32_t t = 0; t < TEXTURES_SIZE; t++) {
+        printf("t: %u\n", t); 
+        assert(textures[t]->width > 0);
+        assert(textures[t]->height > 0);
+        printf("set active texture\n");
+        // glActiveTexture(GL_TEXTURE0 + t);
+        glGenTextures(
+            1,
+            &(texture_ids[t]));
+        printf(
+            "bind texture %u\n",
+            texture_ids[t]);
+        glBindTexture(
+            GL_TEXTURE_2D,
+            texture_ids[t]);
+        printf("texture_ids[%u] is now: %u\n", t, texture_ids[t]);
+        printf("set texture parameters...\n");
+        glTexParameteri(
+            GL_TEXTURE_2D,
+            GL_TEXTURE_WRAP_S,
+            GL_REPEAT);
+        glTexParameteri(
+            GL_TEXTURE_2D,
+            GL_TEXTURE_WRAP_T,
+            GL_REPEAT);
+        glTexParameteri(
+            GL_TEXTURE_2D,
+            GL_TEXTURE_MIN_FILTER,
+            GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(
+            GL_TEXTURE_2D,
+            GL_TEXTURE_MAG_FILTER,
+            GL_LINEAR);
+        printf("loading buffer data for texture %u [%ux%u]\n", t, textures[t]->width, textures[t]->height);
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            /* mipmap level: */ 0,
+            /* format: */ GL_RGBA,
+            textures[t]->width,
+            textures[t]->height,
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            textures[t]->rgba_values);
+        printf("generate mipmap...\n");
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+   
+    
+    glUseProgram(program_id);
+    for (uint32_t t = 0; t < TEXTURES_SIZE; t++) {
+        char texture_name[9] = "texture0";
+        texture_name[7] = t + '0';
+        printf(
+            "register uniform variable: %s\n",
+            texture_name);
+        glUniform1i(
+            glGetUniformLocation(
+                program_id,
+                texture_name),
+            t); 
+        printf("registered!\n");
+    }
     
     unsigned int VBO;
     glGenBuffers(1, &VBO);
