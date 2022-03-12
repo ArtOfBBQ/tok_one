@@ -1,6 +1,7 @@
 #include "../shared/static_redefinitions.h"
 #include "../shared/vertex_types.h"
 #include "../shared/platform_layer.h"
+#include "../shared/software_renderer.h"
 
 #include <gl/gl.h>
 #include <assert.h>
@@ -46,12 +47,14 @@ typedef void ptr_gl_gen_vertex_arrays(GLsizei n, GLuint * arrays);
 typedef void ptr_gl_bind_vertex_array(GLuint array_id);
 typedef void ptr_gl_vertex_attrib_pointer(GLuint index, GLint size, GLenum type, GLboolean normalized, GLsizei stride, const GLvoid * pointer);
 typedef void ptr_gl_enable_vertex_attrib_array(GLuint id);
+typedef void ptr_gl_generate_mipmap(GLenum target);
 
 extern Vertex gpu_workload_buffer[VERTEX_BUFFER_SIZE];
 
 // We'll need these 2 identifiers while drawing
 extern GLuint program_id;
 extern unsigned int VAO;
+extern unsigned int texture_id;
 
 extern ptr_gl_compile_shader * glCompileShader;
 extern ptr_gl_get_shader_iv * glGetShaderiv;
@@ -69,6 +72,7 @@ extern ptr_gl_gen_vertex_arrays * glGenVertexArrays;
 extern ptr_gl_bind_vertex_array * glBindVertexArray;
 extern ptr_gl_vertex_attrib_pointer * glVertexAttribPointer;
 extern ptr_gl_enable_vertex_attrib_array * glEnableVertexAttribArray;
+extern ptr_gl_generate_mipmap * glGenerateMipmap;
 
 // info about what OpenGL functionality
 // is/isnt available on platform

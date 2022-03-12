@@ -3,9 +3,9 @@
 // We'll need these 2 identifiers while drawing
 GLuint program_id;
 unsigned int VAO;
+unsigned int texture_id;
 
 Vertex gpu_workload_buffer[VERTEX_BUFFER_SIZE];
-
 
 ptr_gl_compile_shader * glCompileShader;
 ptr_gl_get_shader_iv * glGetShaderiv;
@@ -23,6 +23,7 @@ ptr_gl_gen_vertex_arrays * glGenVertexArrays;
 ptr_gl_bind_vertex_array * glBindVertexArray;
 ptr_gl_vertex_attrib_pointer * glVertexAttribPointer;
 ptr_gl_enable_vertex_attrib_array * glEnableVertexAttribArray;
+ptr_gl_generate_mipmap * glGenerateMipmap;
 
 static bool32_t are_equal_strings(
     char * str1,
@@ -95,108 +96,6 @@ void opengl_compile_shaders() {
     printf("opengl_compile_shaders()...\n");
     
     printf("allocate buffer memory...\n");
-    
-    /* blue triangle */
-    gpu_workload_buffer[0].x = -2.0f;
-    gpu_workload_buffer[0].y = 0.5f;
-    gpu_workload_buffer[0].uv[0] = 0.5f;
-    gpu_workload_buffer[0].uv[1] = 1.0f;
-    gpu_workload_buffer[0].RGBA[0] = 0.2f;
-    gpu_workload_buffer[0].RGBA[1] = 0.3f;
-    gpu_workload_buffer[0].RGBA[2] = 1.0f;
-    gpu_workload_buffer[0].RGBA[3] = 1.0f;
-    gpu_workload_buffer[0].lighting = 0.5f;
-    gpu_workload_buffer[0].texture_i = 1;
-    
-    gpu_workload_buffer[1].x = -1.0f;
-    gpu_workload_buffer[1].y = 0.5f;
-    gpu_workload_buffer[1].uv[0] = 0.5f;
-    gpu_workload_buffer[1].uv[1] = 1.0f;
-    gpu_workload_buffer[1].RGBA[0] = 0.2f;
-    gpu_workload_buffer[1].RGBA[1] = 0.2f;
-    gpu_workload_buffer[1].RGBA[2] = 1.0f;
-    gpu_workload_buffer[1].RGBA[3] = 1.0f;
-    gpu_workload_buffer[1].lighting = 0.5f;
-    gpu_workload_buffer[1].texture_i = 1;
-    
-    gpu_workload_buffer[2].x = -0.5;
-    gpu_workload_buffer[2].y = 2.0f;
-    gpu_workload_buffer[2].uv[0] = 0.5f;
-    gpu_workload_buffer[2].uv[1] = 1.0f;
-    gpu_workload_buffer[2].RGBA[0] = 0.3f;
-    gpu_workload_buffer[2].RGBA[1] = 0.3f;
-    gpu_workload_buffer[2].RGBA[2] = 0.7f;
-    gpu_workload_buffer[2].RGBA[3] = 1.0f;
-    gpu_workload_buffer[2].lighting = 0.5f;
-    gpu_workload_buffer[2].texture_i = 1;
-    
-    /* red triangle */
-    gpu_workload_buffer[3].x = -0.5f;
-    gpu_workload_buffer[3].y = -5.5f;
-    gpu_workload_buffer[3].uv[0] = 0.5f;
-    gpu_workload_buffer[3].uv[1] = 1.0f;
-    gpu_workload_buffer[3].RGBA[0] = 1.0f;
-    gpu_workload_buffer[3].RGBA[1] = 0.0f;
-    gpu_workload_buffer[3].RGBA[2] = 0.0f;
-    gpu_workload_buffer[3].RGBA[3] = 1.0f;
-    gpu_workload_buffer[3].lighting = 0.5f;
-    gpu_workload_buffer[3].texture_i = 1;
-    
-    gpu_workload_buffer[4].x = 0.5f;
-    gpu_workload_buffer[4].y = -2.5f;
-    gpu_workload_buffer[4].uv[0] = 0.5f;
-    gpu_workload_buffer[4].uv[1] = 1.0f;
-    gpu_workload_buffer[4].RGBA[0] = 1.0f;
-    gpu_workload_buffer[4].RGBA[1] = 0.2f;
-    gpu_workload_buffer[4].RGBA[2] = 0.2f;
-    gpu_workload_buffer[4].RGBA[3] = 1.0f;
-    gpu_workload_buffer[4].lighting = 1.5f;
-    gpu_workload_buffer[4].texture_i = 1;
-    
-    gpu_workload_buffer[5].x = 2.0;
-    gpu_workload_buffer[5].y = 0.5f;
-    gpu_workload_buffer[5].uv[0] = 0.5f;
-    gpu_workload_buffer[5].uv[1] = 1.0f;
-    gpu_workload_buffer[5].RGBA[0] = 1.0f;
-    gpu_workload_buffer[5].RGBA[1] = 0.0f;
-    gpu_workload_buffer[5].RGBA[2] = 0.3f;
-    gpu_workload_buffer[5].RGBA[3] = 1.0f;
-    gpu_workload_buffer[5].lighting = 0.5f;
-    gpu_workload_buffer[5].texture_i = 1;
-
-    /* green triangle: */
-    gpu_workload_buffer[6].x = 0.2;
-    gpu_workload_buffer[6].y = -0.2f;
-    gpu_workload_buffer[6].uv[0] = 0.5f;
-    gpu_workload_buffer[6].uv[1] = 1.0f;
-    gpu_workload_buffer[6].RGBA[0] = 0.0f;
-    gpu_workload_buffer[6].RGBA[1] = 1.0f;
-    gpu_workload_buffer[6].RGBA[2] = 0.0f;
-    gpu_workload_buffer[6].RGBA[3] = 1.0f;
-    gpu_workload_buffer[6].lighting = 0.5f;
-    gpu_workload_buffer[6].texture_i = -1;
-    
-    gpu_workload_buffer[7].x = 0.6f;
-    gpu_workload_buffer[7].y = -0.2f;
-    gpu_workload_buffer[7].uv[0] = 0.5f;
-    gpu_workload_buffer[7].uv[1] = 1.0f;
-    gpu_workload_buffer[7].RGBA[0] = 0.0f;
-    gpu_workload_buffer[7].RGBA[1] = 0.8f;
-    gpu_workload_buffer[7].RGBA[2] = 0.2f;
-    gpu_workload_buffer[7].RGBA[3] = 1.0f;
-    gpu_workload_buffer[7].lighting = 0.5f;
-    gpu_workload_buffer[7].texture_i = -1;
-    
-    gpu_workload_buffer[8].x = 0.4;
-    gpu_workload_buffer[8].y = 0.2f;
-    gpu_workload_buffer[8].uv[0] = 0.5f;
-    gpu_workload_buffer[8].uv[1] = 1.0f;
-    gpu_workload_buffer[8].RGBA[0] = 0.1f;
-    gpu_workload_buffer[8].RGBA[1] = 0.9f;
-    gpu_workload_buffer[8].RGBA[2] = 0.1f;
-    gpu_workload_buffer[8].RGBA[3] = 1.0f;
-    gpu_workload_buffer[8].lighting = 0.5f;
-    gpu_workload_buffer[8].texture_i = -1;
     
     GLuint vertex_shader_id = glCreateShader(
         GL_VERTEX_SHADER);
@@ -281,18 +180,47 @@ void opengl_compile_shaders() {
     printf(
         "linked program with program_id: %u\n",
         program_id);
-    
-    // TODO: this should be stored in bound vertex array
-    // and happen after glBindBuffer & glBufferData
-    // so maybe we have to do it every frame
-    // we also MUST use a VAO (vertex array obj) or
-    // openGL will most likely draw nothing
-    // glBindBuffer(stuff);
-    // glBufferData(stuff);
+
     glGenVertexArrays(1, &VAO);
     printf("created vertex array with id: %u\n", VAO);
     glBindVertexArray(VAO);
     printf("vertex array bound (active)\n");
+    
+    printf("initialize textures on OpenGL...\n"); 
+    assert(texture_count > 0);
+    uint32_t t = 0;
+    assert(textures[t]->width > 0);
+    assert(textures[t]->height > 0);
+    glGenTextures(1, &texture_id);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_S,
+        GL_REPEAT);
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_WRAP_T,
+        GL_REPEAT);
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MIN_FILTER,
+        GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MAG_FILTER,
+        GL_LINEAR);
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        /* mipmap level: */ 0,
+        /* format: */ GL_RGBA,
+        textures[t]->width,
+        textures[t]->height,
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        textures[t]->rgba_values);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    
     unsigned int VBO;
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);

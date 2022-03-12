@@ -141,6 +141,10 @@ void win32_init_opengl(HWND window) {
             (ptr_gl_enable_vertex_attrib_array *)
             wglGetProcAddress("glEnableVertexAttribArray");
         assert(glEnableVertexAttribArray != NULL);
+        glGenerateMipmap =
+            (ptr_gl_generate_mipmap *)
+            wglGetProcAddress("glGenerateMipmap");
+        assert(glGenerateMipmap != NULL);
         printf("finished dynamically loading OpenGL extension functions...\n"); 
         
     } else {
@@ -168,6 +172,9 @@ void opengl_update_window(HWND window) {
         VERTEX_BUFFER_SIZE * sizeof(Vertex),
         gpu_workload_buffer,
         GL_DYNAMIC_DRAW);
+    glBindTexture(
+        GL_TEXTURE_2D,
+        texture_id);
     glDrawArrays(
         GL_TRIANGLES,
         0,

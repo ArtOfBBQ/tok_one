@@ -2,13 +2,21 @@
 
 in vec4 vertex_color;
 in float fragment_lighting;
-// in int fragment_texture_i;
-// in vec2 fragment_uv;
+in float fragment_texture_i;
+in vec2 fragment_uv;
 
 out vec4 FragColor;
 
+uniform sampler2D texture_sampler;
+
 void main()
 {
-    FragColor = vertex_color * fragment_lighting;
+    if (fragment_texture_i < 0) {
+        FragColor = vertex_color;
+    } else {
+        FragColor = texture(texture_sampler, fragment_uv);
+    }
+    
+    FragColor = FragColor * fragment_lighting;
 }
 
