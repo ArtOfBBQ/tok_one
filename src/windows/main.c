@@ -156,19 +156,22 @@ void opengl_update_window(HWND window) {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     
-    // software_render(
-    //     gpu_workload_buffer[0],
-    //     &current_workload_size);
-    // printf("software_render() succeeded\n");
+    uint32_t current_workload_size = 0;
+    software_render(
+        gpu_workload_buffer,
+        &current_workload_size);
     
     glUseProgram(program_id);
     glBindVertexArray(VAO);
-    // glDrawElements(
-    //     GL_TRIANGLES,
-    //     VERTEX_BUFFER_SIZE,
-    //     GL_UNSIGNED_SHORT,
-    //     (void*)0);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        VERTEX_BUFFER_SIZE * sizeof(Vertex),
+        gpu_workload_buffer,
+        GL_DYNAMIC_DRAW);
+    glDrawArrays(
+        GL_TRIANGLES,
+        0,
+        current_workload_size);
     
     HDC device_context = GetDC(window);
     SwapBuffers(device_context);

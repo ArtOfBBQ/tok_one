@@ -19,10 +19,6 @@ void main()
     fragment_texture_i = texture_i;
     fragment_uv = uv;
     
-    if (texture_i < 0) {
-        gl_Position = vec4(x, y, 1.0, 1.0);
-    } else {
-        gl_Position = vec4(x / 5.0, y / 5, 1.0, 1.0);
-    }
+    gl_Position = vec4(x, y, 1.0, 1.0);
 }
 

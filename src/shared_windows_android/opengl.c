@@ -95,79 +95,83 @@ void opengl_compile_shaders() {
     printf("opengl_compile_shaders()...\n");
     
     printf("allocate buffer memory...\n");
-    gpu_workload_buffer[0].x = -0.5f;
-    gpu_workload_buffer[0].y = -5.5f;
+    
+    /* blue triangle */
+    gpu_workload_buffer[0].x = -2.0f;
+    gpu_workload_buffer[0].y = 0.5f;
     gpu_workload_buffer[0].uv[0] = 0.5f;
     gpu_workload_buffer[0].uv[1] = 1.0f;
-    gpu_workload_buffer[0].RGBA[0] = 1.0f;
-    gpu_workload_buffer[0].RGBA[1] = 0.0f;
-    gpu_workload_buffer[0].RGBA[2] = 0.0f;
+    gpu_workload_buffer[0].RGBA[0] = 0.2f;
+    gpu_workload_buffer[0].RGBA[1] = 0.3f;
+    gpu_workload_buffer[0].RGBA[2] = 1.0f;
     gpu_workload_buffer[0].RGBA[3] = 1.0f;
     gpu_workload_buffer[0].lighting = 0.5f;
     gpu_workload_buffer[0].texture_i = 1;
     
-    gpu_workload_buffer[1].x = 0.5f;
-    gpu_workload_buffer[1].y = -2.5f;
+    gpu_workload_buffer[1].x = -1.0f;
+    gpu_workload_buffer[1].y = 0.5f;
     gpu_workload_buffer[1].uv[0] = 0.5f;
     gpu_workload_buffer[1].uv[1] = 1.0f;
-    gpu_workload_buffer[1].RGBA[0] = 1.0f;
+    gpu_workload_buffer[1].RGBA[0] = 0.2f;
     gpu_workload_buffer[1].RGBA[1] = 0.2f;
-    gpu_workload_buffer[1].RGBA[2] = 0.2f;
+    gpu_workload_buffer[1].RGBA[2] = 1.0f;
     gpu_workload_buffer[1].RGBA[3] = 1.0f;
-    gpu_workload_buffer[1].lighting = 1.5f;
+    gpu_workload_buffer[1].lighting = 0.5f;
     gpu_workload_buffer[1].texture_i = 1;
     
-    gpu_workload_buffer[2].x = 2.0;
-    gpu_workload_buffer[2].y = 0.5f;
+    gpu_workload_buffer[2].x = -0.5;
+    gpu_workload_buffer[2].y = 2.0f;
     gpu_workload_buffer[2].uv[0] = 0.5f;
     gpu_workload_buffer[2].uv[1] = 1.0f;
-    gpu_workload_buffer[2].RGBA[0] = 1.0f;
-    gpu_workload_buffer[2].RGBA[1] = 0.0f;
-    gpu_workload_buffer[2].RGBA[2] = 0.3f;
+    gpu_workload_buffer[2].RGBA[0] = 0.3f;
+    gpu_workload_buffer[2].RGBA[1] = 0.3f;
+    gpu_workload_buffer[2].RGBA[2] = 0.7f;
     gpu_workload_buffer[2].RGBA[3] = 1.0f;
     gpu_workload_buffer[2].lighting = 0.5f;
     gpu_workload_buffer[2].texture_i = 1;
     
-    gpu_workload_buffer[3].x = 1.0f;
-    gpu_workload_buffer[3].y = 1.0f;
+    /* red triangle */
+    gpu_workload_buffer[3].x = -0.5f;
+    gpu_workload_buffer[3].y = -5.5f;
     gpu_workload_buffer[3].uv[0] = 0.5f;
     gpu_workload_buffer[3].uv[1] = 1.0f;
     gpu_workload_buffer[3].RGBA[0] = 1.0f;
-    gpu_workload_buffer[3].RGBA[1] = 0.5f;
-    gpu_workload_buffer[3].RGBA[2] = 0.5f;
+    gpu_workload_buffer[3].RGBA[1] = 0.0f;
+    gpu_workload_buffer[3].RGBA[2] = 0.0f;
     gpu_workload_buffer[3].RGBA[3] = 1.0f;
     gpu_workload_buffer[3].lighting = 0.5f;
-    gpu_workload_buffer[3].texture_i = -1;
+    gpu_workload_buffer[3].texture_i = 1;
     
-    gpu_workload_buffer[4].x = 10.0f;
-    gpu_workload_buffer[4].y = 1.0f;
+    gpu_workload_buffer[4].x = 0.5f;
+    gpu_workload_buffer[4].y = -2.5f;
     gpu_workload_buffer[4].uv[0] = 0.5f;
     gpu_workload_buffer[4].uv[1] = 1.0f;
-    gpu_workload_buffer[4].RGBA[0] = 0.0f;
-    gpu_workload_buffer[4].RGBA[1] = 1.0f;
-    gpu_workload_buffer[4].RGBA[2] = 0.5f;
+    gpu_workload_buffer[4].RGBA[0] = 1.0f;
+    gpu_workload_buffer[4].RGBA[1] = 0.2f;
+    gpu_workload_buffer[4].RGBA[2] = 0.2f;
     gpu_workload_buffer[4].RGBA[3] = 1.0f;
-    gpu_workload_buffer[4].lighting = 0.5f;
+    gpu_workload_buffer[4].lighting = 1.5f;
     gpu_workload_buffer[4].texture_i = 1;
     
-    gpu_workload_buffer[5].x = 5.0;
-    gpu_workload_buffer[5].y = 10.0f;
+    gpu_workload_buffer[5].x = 2.0;
+    gpu_workload_buffer[5].y = 0.5f;
     gpu_workload_buffer[5].uv[0] = 0.5f;
     gpu_workload_buffer[5].uv[1] = 1.0f;
-    gpu_workload_buffer[5].RGBA[0] = 0.0f;
-    gpu_workload_buffer[5].RGBA[1] = 1.0f;
-    gpu_workload_buffer[5].RGBA[2] = 0.5f;
+    gpu_workload_buffer[5].RGBA[0] = 1.0f;
+    gpu_workload_buffer[5].RGBA[1] = 0.0f;
+    gpu_workload_buffer[5].RGBA[2] = 0.3f;
     gpu_workload_buffer[5].RGBA[3] = 1.0f;
     gpu_workload_buffer[5].lighting = 0.5f;
-    gpu_workload_buffer[5].texture_i = 1.0f;
+    gpu_workload_buffer[5].texture_i = 1;
 
+    /* green triangle: */
     gpu_workload_buffer[6].x = 0.2;
     gpu_workload_buffer[6].y = -0.2f;
     gpu_workload_buffer[6].uv[0] = 0.5f;
     gpu_workload_buffer[6].uv[1] = 1.0f;
     gpu_workload_buffer[6].RGBA[0] = 0.0f;
-    gpu_workload_buffer[6].RGBA[1] = 0.5f;
-    gpu_workload_buffer[6].RGBA[2] = 0.5f;
+    gpu_workload_buffer[6].RGBA[1] = 1.0f;
+    gpu_workload_buffer[6].RGBA[2] = 0.0f;
     gpu_workload_buffer[6].RGBA[3] = 1.0f;
     gpu_workload_buffer[6].lighting = 0.5f;
     gpu_workload_buffer[6].texture_i = -1;
@@ -177,8 +181,8 @@ void opengl_compile_shaders() {
     gpu_workload_buffer[7].uv[0] = 0.5f;
     gpu_workload_buffer[7].uv[1] = 1.0f;
     gpu_workload_buffer[7].RGBA[0] = 0.0f;
-    gpu_workload_buffer[7].RGBA[1] = 0.2f;
-    gpu_workload_buffer[7].RGBA[2] = 0.5f;
+    gpu_workload_buffer[7].RGBA[1] = 0.8f;
+    gpu_workload_buffer[7].RGBA[2] = 0.2f;
     gpu_workload_buffer[7].RGBA[3] = 1.0f;
     gpu_workload_buffer[7].lighting = 0.5f;
     gpu_workload_buffer[7].texture_i = -1;
@@ -187,9 +191,9 @@ void opengl_compile_shaders() {
     gpu_workload_buffer[8].y = 0.2f;
     gpu_workload_buffer[8].uv[0] = 0.5f;
     gpu_workload_buffer[8].uv[1] = 1.0f;
-    gpu_workload_buffer[8].RGBA[0] = 0.0f;
-    gpu_workload_buffer[8].RGBA[1] = 0.0f;
-    gpu_workload_buffer[8].RGBA[2] = 1.0f;
+    gpu_workload_buffer[8].RGBA[0] = 0.1f;
+    gpu_workload_buffer[8].RGBA[1] = 0.9f;
+    gpu_workload_buffer[8].RGBA[2] = 0.1f;
     gpu_workload_buffer[8].RGBA[3] = 1.0f;
     gpu_workload_buffer[8].lighting = 0.5f;
     gpu_workload_buffer[8].texture_i = -1;
