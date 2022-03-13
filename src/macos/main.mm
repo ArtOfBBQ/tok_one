@@ -165,8 +165,8 @@ int main(int argc, const char * argv[])
     [ViewDelegate configureMetal];
     
     ViewDelegate.metal_textures = [[NSMutableArray alloc] init];
-    assert(texture_count > 0);
-    for (uint32_t i = 0; i < texture_count; i++) {
+    assert(TEXTURES_SIZE > 0);
+    for (uint32_t i = 0; i < TEXTURES_SIZE; i++) {
         MTLTextureDescriptor * texture_descriptor =
             [[MTLTextureDescriptor alloc] init]; 
         texture_descriptor.pixelFormat =

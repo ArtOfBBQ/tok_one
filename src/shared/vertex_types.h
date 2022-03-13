@@ -1,6 +1,8 @@
 #ifndef VERTEX_TYPES_H
 #define VERTEX_TYPES_H
 
+#define TEXTURES_SIZE 2
+
 #pragma pack(push, 0)
 typedef struct Vertex {
     float x;

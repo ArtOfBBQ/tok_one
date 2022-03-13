@@ -56,7 +56,7 @@ vertex_shader(
 fragment float4
 fragment_shader(
     RasterizerPixel in [[stage_in]],
-    array<texture2d<half>, TEXTURE_BUFFER_SIZE> color_textures [[texture(0)]])
+    array<texture2d<half>, TEXTURES_SIZE> color_textures [[texture(0)]])
 {
     if (
         in.texture_coordinate[0] < 0.0f

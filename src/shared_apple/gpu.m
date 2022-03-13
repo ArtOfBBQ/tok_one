@@ -66,7 +66,7 @@
         [render_encoder
             setRenderPipelineState:
                 [self combo_pipeline_state]];
-        for (uint32_t i = 0; i < texture_count; i++) {
+        for (uint32_t i = 0; i < TEXTURES_SIZE; i++) {
             [render_encoder
                 setFragmentTexture:_metal_textures[i]
                 atIndex:i];
