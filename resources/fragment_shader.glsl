@@ -7,20 +7,17 @@ in vec2 fragment_uv;
 
 out vec4 FragColor;
 
-uniform sampler2D texture0;
-uniform sampler2D texture1;
+uniform sampler2DArray textures;
 
 void main()
 {
     if (fragment_texture_i < 0) {
         FragColor = vertex_color;
     } else {
-        
         FragColor =
-            mix(
-                texture(texture0, fragment_uv),
-                texture(texture1, fragment_uv),
-            0.5);
+            texture(
+                textures,
+                vec3(fragment_uv, fragment_texture_i));
     }
     
     FragColor = FragColor * fragment_lighting;

@@ -7,8 +7,7 @@ DecodedImage * textures[TEXTURES_SIZE];
 void init_renderer() {
     // initialize global textures for texture mapping 
     assert(TEXTURES_SIZE > 0);
-    texture_filenames[0] = "fs_angrymob.png";
-    texture_filenames[1] = "structuredart.png";
+    texture_filenames[0] = "phoebus.png";
     
     FileBuffer * file_buffer;
     for (uint32_t i = 0; i < TEXTURES_SIZE; i++) {

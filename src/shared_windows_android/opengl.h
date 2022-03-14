@@ -19,6 +19,13 @@
 #define GL_DYNAMIC_DRAW 0x88E8
 #define GL_UNIFORM_BUFFER 0x8A11
 #define GL_TEXTURE0 0x84C0
+#define GL_CLAMP_TO_EDGE 0x812F
+#define GL_TEXTURE_2D_ARRAY 0x8C1A
+// #define GL_TEXTURE_MAG_FILTER 0x2800
+#define GL_TEXTURE_MAX_LEVEL 0x813D
+#define GL_TEXTURE_BASE_LEVEL 0x813C
+#define GL_UNPACK_IMAGE_HEIGHT 0x806E
+
 
 typedef char GLchar;
 typedef int GLsizeiptr;
@@ -54,13 +61,45 @@ typedef void ptr_gl_uniform_1i(GLint location, GLint x);
 typedef GLint ptr_gl_get_uniform_location(
     GLuint program,
     const GLchar * name);
+typedef void ptr_gl_tex_image_3d(
+    GLenum target,
+    GLint level,
+    GLint internalformat,
+    GLsizei width,
+    GLsizei height,
+    GLsizei depth,
+    GLint border,
+    GLenum format,
+    GLenum type,
+    const void * data);
+typedef void ptr_gl_tex_sub_image_3d(
+    GLenum target,
+    GLint level,
+    GLint xoffset,
+    GLint yoffset,
+    GLint zoffset,
+    GLsizei width,
+    GLsizei height,
+    GLsizei depth,
+    GLenum format,
+    GLenum type,
+    const void * pixels);
+typedef void ptr_gl_tex_storage_3d(
+    GLenum target,
+    GLsizei levels,
+    GLenum internalformat,
+    GLsizei width,
+    GLsizei height,
+    GLsizei depth);
+
 
 extern Vertex gpu_workload_buffer[VERTEX_BUFFER_SIZE];
 
 // We'll need these 2 identifiers while drawing
 extern GLuint program_id;
 extern unsigned int VAO;
-extern unsigned int texture_ids[TEXTURES_SIZE];
+// extern unsigned int texture_ids[TEXTURES_SIZE];
+extern unsigned int texture_array_id;
 
 extern ptr_gl_compile_shader * glCompileShader;
 extern ptr_gl_get_shader_iv * glGetShaderiv;
@@ -82,6 +121,10 @@ extern ptr_gl_generate_mipmap * glGenerateMipmap;
 extern ptr_gl_active_texture * glActiveTexture;
 extern ptr_gl_uniform_1i * glUniform1i;
 extern ptr_gl_get_uniform_location * glGetUniformLocation;
+extern ptr_gl_tex_image_3d * glTexImage3D;
+extern ptr_gl_tex_sub_image_3d * glTexSubImage3D;
+extern ptr_gl_tex_storage_3d * glTexStorage3D;
+
 
 // info about what OpenGL functionality
 // is/isnt available on platform
