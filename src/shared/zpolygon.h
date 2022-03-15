@@ -47,11 +47,13 @@ typedef struct zVertex {
 typedef struct zTriangle {
     zVertex vertices[3];
     float color[4];      // RGBA, ignored if textured
-    int32_t texture_i;   /* the index in the global var 'textures'
-                            of the texture to texturemap onto
-                            this.
-                            -1 for "untextured, use color instead"
-                         */
+    int32_t texturearray_i; /*
+                            the index in the global var
+                            'texture_arrays' of the texturearray
+                             -1 for "untextured, use color
+                            instead"
+                            */
+    int32_t texture_i;     // index in texturearray
     uint32_t draw_normals; // TODO: remove debugging flag(s)
     uint32_t visible;
 } zTriangle;

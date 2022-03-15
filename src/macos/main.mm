@@ -4,6 +4,7 @@
 #include "../shared/platform_layer.h" 
 
 // shared functionality we can use
+#include "texture_array.h"
 #include "../shared/window_size.h"
 #include "../shared/vertex_types.h"
 #include "../shared/zpolygon.h"
@@ -165,34 +166,100 @@ int main(int argc, const char * argv[])
     [ViewDelegate configureMetal];
     
     ViewDelegate.metal_textures = [[NSMutableArray alloc] init];
-    assert(TEXTURES_SIZE > 0);
-    for (uint32_t i = 0; i < TEXTURES_SIZE; i++) {
+    assert(TEXTUREARRAYS_SIZE > 0);
+    for (uint32_t i = 0; i < TEXTUREARRAYS_SIZE; i++) {
+        
+        uint32_t slice_count =
+            texture_arrays[i].sprite_rows *
+                texture_arrays[i].sprite_columns;
+        uint32_t slice_size =
+            texture_arrays[i].image->rgba_values_size /
+                slice_count;
+        printf(
+            "setting up texture %u with slice count: %u\n",
+            i,
+            slice_count);
+        
         MTLTextureDescriptor * texture_descriptor =
             [[MTLTextureDescriptor alloc] init]; 
+        texture_descriptor.textureType = MTLTextureType2DArray;
+        texture_descriptor.arrayLength = slice_count;
         texture_descriptor.pixelFormat =
             MTLPixelFormatRGBA8Unorm;
         texture_descriptor.width =
-            textures[i]->width;
+            texture_arrays[i].image->width / texture_arrays[i].sprite_columns;
         texture_descriptor.height =
-            textures[i]->height;
+            texture_arrays[i].image->height / texture_arrays[i].sprite_rows;
         id<MTLTexture> texture =
             [metal_device
                 newTextureWithDescriptor:texture_descriptor];
-        MTLRegion region = {
-            { 0, 0, 0 },                   // MTLOrigin
-            { textures[i]->width, textures[i]->height, 1 }
-        };
         
-        assert(textures[i]->width >= 10);
-        assert(4 * textures[i]->width >= 40);
-        [texture
-            replaceRegion:region
-            mipmapLevel: 0
-            withBytes: textures[i]->rgba_values
-            bytesPerRow: 4 * textures[i]->width];
+        assert(texture_arrays[i].image->width >= 10);
+        assert(4 * texture_arrays[i].image->width >= 40);
+        uint32_t slice_i = 0;
+        for (
+            uint32_t row_i = 1;
+            row_i <= texture_arrays[i].sprite_rows;
+            row_i++)
+        {
+            for (
+                uint32_t col_i = 1;
+                col_i <= texture_arrays[i].sprite_columns;
+                col_i++)
+            {
+                printf(
+                    "slice_i: %u, x/y: [%u,%u]\n",
+                    slice_i,
+                    row_i,
+                    col_i);
+                
+
+                DecodedImage * new_slice =
+                    extract_image(
+                        /* texture_array: */ &texture_arrays[i],
+                        /* x            : */ col_i,
+                        /* y            : */ row_i);
+
+                MTLRegion region = {
+                    {
+                        0,
+                        0,
+                        0
+                    },
+                    {
+                        new_slice->width,
+                        new_slice->height,
+                        1
+                    }
+                };
+                
+                [texture
+                    replaceRegion:
+                        region
+                    mipmapLevel:
+                        0
+                    slice:
+                        slice_i
+                    withBytes:
+                        new_slice->rgba_values
+                    bytesPerRow:
+                        new_slice->width * 4
+                    bytesPerImage:
+                        /* docs: use 0 for anything other than
+                           MTLTextureType3D textures */
+                        0];
+
+                // TODO: free heap memory
+                // free(new_slice->rgba_values);
+                // free(new_slice);
+                slice_i++;
+            }
+        }
+        
         [[ViewDelegate metal_textures]
             addObject: texture];
     }
+    printf("finished setting up metal textures...\n");
     assert([[ViewDelegate metal_textures] count] > 0);
      
     return NSApplicationMain(argc, argv);

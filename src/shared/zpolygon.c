@@ -198,6 +198,7 @@ zPolygon * load_from_obj_file(char * filename) {
             new_triangle.color[2] = 0.20f;
             new_triangle.color[3] = 1.0f;
             
+            new_triangle.texturearray_i = -1;
             new_triangle.texture_i = -1;
             
             return_value->triangles[new_triangle_i] =
@@ -273,7 +274,8 @@ zPolygon * get_box() {
         (zVertex){ 0.0f, 5.0f, 0.0f };
     box->triangles[0].vertices[2] =
         (zVertex){ 5.0f, 5.0f, 0.0f };
-    box->triangles[0].texture_i = 0;
+    box->triangles[0].texturearray_i = 1;
+    box->triangles[0].texture_i = 3;
     
     box->triangles[1].vertices[0] =
         (zVertex){ 0.0f, 0.0f, 0.0f };
@@ -281,7 +283,8 @@ zPolygon * get_box() {
         (zVertex){ 5.0f, 5.0f, 0.0f };
     box->triangles[1].vertices[2] =
         (zVertex){ 5.0f, 0.0f, 0.0f };
-    box->triangles[1].texture_i = 0;
+    box->triangles[1].texturearray_i = 1;
+    box->triangles[1].texture_i = 3;
     
     // EAST face
     box->triangles[2].vertices[0] =
@@ -290,6 +293,7 @@ zPolygon * get_box() {
         (zVertex){ 5.0f, 5.0f, 0.0f };
     box->triangles[2].vertices[2] =
         (zVertex){ 5.0f, 5.0f, 5.0f };
+    box->triangles[2].texturearray_i = 1;
     box->triangles[2].texture_i = 1;
     
     box->triangles[3].vertices[0] =
@@ -298,8 +302,9 @@ zPolygon * get_box() {
         (zVertex){ 5.0f, 5.0f, 5.0f };
     box->triangles[3].vertices[2] =
         (zVertex){ 5.0f, 0.0f, 5.0f };
+    box->triangles[3].texturearray_i = 1;
     box->triangles[3].texture_i = 1;
-    
+   
     // NORTH face
     box->triangles[4].vertices[0] =
         (zVertex){ 5.0f, 0.0f, 5.0f };
@@ -307,6 +312,7 @@ zPolygon * get_box() {
         (zVertex){ 5.0f, 5.0f, 5.0f };
     box->triangles[4].vertices[2] =
         (zVertex){ 0.0f, 5.0f, 5.0f };
+    box->triangles[4].texturearray_i = -1;
     box->triangles[4].texture_i = -1;
     float red[4] = { 1.0f, 0.2f, 0.2, 1.0f };
     for (uint32_t i = 0; i < 4; i++) {
@@ -321,6 +327,7 @@ zPolygon * get_box() {
         (zVertex){ 0.0f, 5.0f, 5.0f };
     box->triangles[5].vertices[2] =
         (zVertex){ 0.0f, 0.0f, 5.0f };
+    box->triangles[5].texturearray_i = -1;
     box->triangles[5].texture_i = -1;
     for (uint32_t i = 0; i < 4; i++) {
         box->triangles[5].color[i] = red[i]; 
@@ -335,6 +342,7 @@ zPolygon * get_box() {
         (zVertex){ 0.0f, 5.0f, 5.0f };
     box->triangles[6].vertices[2] =
         (zVertex){ 0.0f, 5.0f, 0.0f };
+    box->triangles[6].texturearray_i = 0;
     box->triangles[6].texture_i = 18;
     
     box->triangles[7].vertices[0] =
@@ -343,6 +351,7 @@ zPolygon * get_box() {
         (zVertex){ 0.0f, 5.0f, 0.0f };
     box->triangles[7].vertices[2] =
         (zVertex){ 0.0f, 0.0f, 0.0f };
+    box->triangles[7].texturearray_i = 0;
     box->triangles[7].texture_i = 18;
     
     // TOP face
@@ -352,6 +361,7 @@ zPolygon * get_box() {
         (zVertex){ 0.0f, 5.0f, 5.0f };
     box->triangles[8].vertices[2] =
         (zVertex){ 5.0f, 5.0f, 5.0f };
+    box->triangles[8].texturearray_i = 0;
     box->triangles[8].texture_i = 17;
     
     box->triangles[9].vertices[0] =
@@ -360,6 +370,7 @@ zPolygon * get_box() {
         (zVertex){ 5.0f, 5.0f, 5.0f };
     box->triangles[9].vertices[2] =
         (zVertex){ 5.0f, 5.0f, 0.0f };
+    box->triangles[9].texturearray_i = 0;
     box->triangles[9].texture_i = 17;
     
     // BOTTOM face
@@ -369,6 +380,7 @@ zPolygon * get_box() {
         (zVertex){ 0.0f, 0.0f, 5.0f };
     box->triangles[10].vertices[2] =
         (zVertex){ 0.0f, 0.0f, 0.0f };
+    box->triangles[10].texturearray_i = 0;
     box->triangles[10].texture_i = 16;
     
     box->triangles[11].vertices[0] =
@@ -377,6 +389,7 @@ zPolygon * get_box() {
         (zVertex){ 0.0f, 0.0f, 0.0f };
     box->triangles[11].vertices[2] =
         (zVertex){ 5.0f, 0.0f, 0.0f };
+    box->triangles[11].texturearray_i = 0;
     box->triangles[11].texture_i = 16;
     
     for (uint32_t i = 0; i < 12; i += 2) {
@@ -487,7 +500,7 @@ void ztriangle_to_2d(
         {
             recipient[i].y /= z_modifier;
         }
-
+        
         recipient[i].uv[0] = input->vertices[i].uv[0];
         recipient[i].uv[1] = input->vertices[i].uv[1];
         
@@ -495,6 +508,7 @@ void ztriangle_to_2d(
             recipient[i].RGBA[j] = input->color[j];
         }
         
+        recipient[i].texturearray_i = input->texturearray_i;
         recipient[i].texture_i = input->texture_i;
     }
 }
@@ -535,7 +549,7 @@ zTriangle x_rotate_triangle(
             (input->vertices[i].z
                 * cosf(angle));
     }
-
+    
     return return_value;
 }
 

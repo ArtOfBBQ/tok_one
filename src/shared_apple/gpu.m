@@ -66,14 +66,20 @@
         [render_encoder
             setRenderPipelineState:
                 [self combo_pipeline_state]];
-        for (uint32_t i = 0; i < TEXTURES_SIZE; i++) {
+        
+        for (
+            uint32_t i = 0;
+            i < TEXTUREARRAYS_SIZE;
+            i++)
+        {
             [render_encoder
-                setFragmentTexture:_metal_textures[i]
-                atIndex:i];
+                setFragmentTexture: _metal_textures[i]
+                atIndex: i];
         }
+        
         [render_encoder
             drawPrimitives: MTLPrimitiveTypeTriangle
-            vertexStart: 0 
+            vertexStart: 0
             vertexCount: vertices_for_gpu_size];
         
         [render_encoder endEncoding];

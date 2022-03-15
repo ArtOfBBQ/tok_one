@@ -1,7 +1,7 @@
 #ifndef VERTEX_TYPES_H
 #define VERTEX_TYPES_H
 
-#define TEXTURES_SIZE 1
+#define TEXTUREARRAYS_SIZE 2
 
 #pragma pack(push, 0)
 typedef struct Vertex {
@@ -11,7 +11,8 @@ typedef struct Vertex {
     float RGBA[4];
     float lighting;    // multiply by this lighting after
                        // color/texture
-    int32_t texture_i; // -1 for no texture
+    int8_t texturearray_i; // -1 for no texture
+    int8_t texture_i; // -1 for no texture
 }  Vertex;
 #pragma pack(pop)
 

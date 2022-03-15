@@ -1,30 +1,43 @@
 #include "software_renderer.h"
 
-// TODO: clean up global variables
-char * texture_filenames[TEXTURES_SIZE];
-DecodedImage * textures[TEXTURES_SIZE];
+TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
 
 void init_renderer() {
-    // initialize global textures for texture mapping 
-    assert(TEXTURES_SIZE > 0);
-    texture_filenames[0] = "phoebus.png";
+    // initialize global texture_arrays for texture mapping 
+    assert(TEXTUREARRAYS_SIZE > 0);
+    texture_arrays[0].filename = "phoebus.png";
+    texture_arrays[0].sprite_columns = 16;
+    texture_arrays[0].sprite_rows = 16;
+    texture_arrays[1].filename = "sampletexture.png";
+    texture_arrays[1].sprite_columns = 2;
+    texture_arrays[1].sprite_rows = 2;
     
     FileBuffer * file_buffer;
-    for (uint32_t i = 0; i < TEXTURES_SIZE; i++) {
+    for (
+        uint32_t i = 0;
+        i < TEXTUREARRAYS_SIZE;
+        i++)
+    {
         printf(
             "trying to read file: %s\n",
-            texture_filenames[i]);
-        file_buffer = platform_read_file(texture_filenames[i]);
-        assert(file_buffer != NULL);
-        textures[i] = decode_PNG(
+            texture_arrays[i].filename);
+        file_buffer = platform_read_file(
+            texture_arrays[i].filename);
+        if (file_buffer == NULL) {
+            printf(
+                "ERROR: failed to read file from disk: %s\n",
+                texture_arrays[i].filename);
+            assert(false);
+        }
+        texture_arrays[i].image = decode_PNG(
             (uint8_t *)file_buffer->contents,
             file_buffer->size);
         free(file_buffer->contents);
         free(file_buffer);
         printf(
             "read texture %s with width %u\n",
-            texture_filenames[i],
-            textures[i]->width);
+            texture_arrays[i].filename,
+            texture_arrays[i].image->width);
     }
     
     // initialize zPolygon objects, the 3-D objects we're
@@ -93,8 +106,10 @@ void init_renderer() {
             500.0f;
         zpolygons_to_render[light_i]->triangles[j].color[3] =
             500.0f;
-        zpolygons_to_render[light_i]->triangles[j].texture_i =
-            -1;
+        zpolygons_to_render[light_i]
+            ->triangles[j].texturearray_i = -1;
+        zpolygons_to_render[light_i]
+            ->triangles[j].texture_i = -1;
     }
     scale_zpolygon(
         /* to_scale  : */ zpolygons_to_render[light_i],
@@ -218,7 +233,7 @@ void software_render(
             z_rotated = z_rotate_triangle(
                 &y_rotated,
                 zpolygons_to_render[i]->z_angle);
-            
+
             triangles_to_draw[t++] =
                 translate_ztriangle(
                     &z_rotated,
@@ -298,84 +313,6 @@ void software_render(
                     triangle_to_draw);
         }
     }
-
-    // TODO: remove this debugging code to draw normals
-    // for (
-    //     int32_t i = triangles_to_render - 1;
-    //     i >= 0;
-    //     i -= 1)
-    // {
-    //     if (
-    //         triangles_to_draw[i].visible
-    //         && triangles_to_draw[i].draw_normals)
-    //     {
-    //         zVertex normal_to_triangle =
-    //             get_ztriangle_normal(
-    //                 triangles_to_draw + i,
-    //                 0);
-
-    //         /*            
-    //         printf(
-    //             "triangles_to_draw[%u].vertices[0]: {%f,%f,%f}, vertices[1]: {%f,%f,%f}, vertices[2]: {%f,%f,%f}\n",
-    //             i,
-    //             triangles_to_draw[i].vertices[0].x,
-    //             triangles_to_draw[i].vertices[0].y,
-    //             triangles_to_draw[i].vertices[0].z,
-    //             triangles_to_draw[i].vertices[1].x,
-    //             triangles_to_draw[i].vertices[1].y,
-    //             triangles_to_draw[i].vertices[1].z,
-    //             triangles_to_draw[i].vertices[2].x,
-    //             triangles_to_draw[i].vertices[2].y,
-    //             triangles_to_draw[i].vertices[2].z);
-    //         */
-    //         
-    //         if (normal_to_triangle.z < 0.0f) {
-    //             normal_to_triangle.z = 0.0f;
-    //         }
-    //         
-    //         float perspective_dot_product =
-    //             get_visibility_rating(
-    //                 camera,
-    //                 triangles_to_draw + i,
-    //                 0);
-    //         
-    //         Vertex normal_to_draw[3];
-    //         zTriangle normal_as_triangle;
-    //     
-    //         normal_as_triangle.vertices[0] =
-    //             normal_to_triangle;
-    //         normal_as_triangle.vertices[1] =
-    //             triangles_to_draw[i].vertices[0];
-    //         normal_as_triangle.vertices[2] =
-    //             triangles_to_draw[i].vertices[0];
-    //         normal_as_triangle.vertices[2].z += 0.05;
-    //         normal_as_triangle.vertices[2].x += 0.05;
-    //         
-    //         ztriangle_to_2d(
-    //             /* recipient: */
-    //                 normal_to_draw,
-    //             /* input: */
-    //                 &normal_as_triangle);
-    //         
-    //         for (uint32_t i = 0; i < 3; i++) {
-    //             normal_to_draw[i].RGBA[0] = perspective_dot_product < 0.0f ? 1.0f : 0.0f;
-    //             normal_to_draw[i].RGBA[1] = 0.2f;
-    //             normal_to_draw[i].RGBA[2] = 1.0f;
-    //             normal_to_draw[i].RGBA[3] = 1.0f;
-    //             normal_to_draw[i].texture_i = -1;
-    //             normal_to_draw[i].lighting = 1.0f;
-    //         }
-    //         
-    //         
-    //         draw_triangle(
-    //             /* vertices_recipient: */
-    //                 next_gpu_workload,
-    //             /* vertex_count_recipient: */
-    //                 next_workload_size,
-    //             /* input: */
-    //                 normal_to_draw);
-    //     }
-    // }
 }
 
 void draw_triangle(
