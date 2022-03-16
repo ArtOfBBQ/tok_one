@@ -1,6 +1,5 @@
 #import <UIKit/UIKit.h>
 #import <MetalKit/MetalKit.h>
-#import <sys/mman.h>
 
 #import "gpu.h"
 #import "software_renderer.h"

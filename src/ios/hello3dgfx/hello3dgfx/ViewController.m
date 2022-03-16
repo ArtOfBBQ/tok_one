@@ -7,6 +7,14 @@ MTKView * _my_mtk_view;
     printf("running viewcontroller viewDidLoad...\n");
     [super viewDidLoad];
     
+    window_height = [UIScreen mainScreen].bounds.size.height; 
+    window_width = [UIScreen mainScreen].bounds.size.width;    
+    
+    printf("setting up projection constants...¥n");
+    init_projection_constants();
+    printf("setting up renderer...¥n");
+    init_renderer();
+    
     _my_mtk_view = (MTKView *)self.view;
     
     _my_mtk_view.paused = NO;
@@ -23,21 +31,32 @@ MTKView * _my_mtk_view;
             "_metal_device address: %p\n",
             _metal_device);
     }
-    
-    id<MTLCommandQueue> command_queue =
-        [_metal_device newCommandQueue];
-    
-    // TODO: this triggers the error on device
-    // when the debugger is not attached
     [_my_mtk_view setDevice: _metal_device];
     
-    
     NSError *Error = NULL;
-    
     NSString * shader_lib_filepath =
         [[NSBundle mainBundle]
             pathForResource: @"default"
             ofType: @"metallib"];
+    
+    _mtk_view_delegate =
+        [[MetalKitViewDelegate alloc] init];
+    _my_mtk_view.delegate = _mtk_view_delegate;
+    [_mtk_view_delegate
+        configureMetalWithDevice: _metal_device
+        andPixelFormat: _my_mtk_view.colorPixelFormat
+        fromFolder: shader_lib_filepath];
+    
+    
+        /*
+    id<MTLCommandQueue> command_queue =
+        [_metal_device newCommandQueue];
+    
+    // when the debugger is not attached
+    
+    
+    
+    
         
     if (shader_lib_filepath == nil) {
         printf("error - no shader library found\n");
@@ -74,10 +93,10 @@ MTKView * _my_mtk_view;
     
     id<MTLRenderPipelineState> combo_pipeline_state =
     [_metal_device
-              newRenderPipelineStateWithDescriptor:
-                  ComboPipelineDescriptor
-              error:
-                  &Error];
+        newRenderPipelineStateWithDescriptor:
+            ComboPipelineDescriptor
+        error:
+            &Error];
     
     if (Error != NULL)
     {
@@ -129,25 +148,13 @@ MTKView * _my_mtk_view;
         [mac_vertex_buffers addObject: MetalBufferedVertex];
     }
     
-    _mtk_view_delegate =
-        [[MetalKitViewDelegate alloc] init];
-    _my_mtk_view.delegate = _mtk_view_delegate;
-    
     _mtk_view_delegate.vertex_buffers = mac_vertex_buffers;
     _mtk_view_delegate.render_commands = render_commands;
     _mtk_view_delegate.combo_pipeline_state = combo_pipeline_state;
     _mtk_view_delegate.command_queue = command_queue;
     
-    [_mtk_view_delegate configureMetal];
     
-    window_height = [UIScreen mainScreen].bounds.size.height; 
-    window_width = [UIScreen mainScreen].bounds.size.width;    
-    
-    printf("setting up projection constants...¥n");
-    init_projection_constants();
-    printf("setting up renderer...¥n");
-    init_renderer();
-    
+        
     printf("setting up textures...¥n");
     _mtk_view_delegate.metal_textures = [[NSMutableArray alloc] init];
     assert(texture_count > 0);
@@ -178,6 +185,7 @@ MTKView * _my_mtk_view;
         
     }
     printf("succesfully set up textures...¥n");
+    */
 }
 
 @end

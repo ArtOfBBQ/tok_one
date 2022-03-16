@@ -3,6 +3,9 @@
 
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
+#import <sys/mman.h>
+
+#include "texture_array.h"
 
 #include "../shared/vertex_types.h"
 #include "../shared/vertex_buffer_types.h"
@@ -17,7 +20,10 @@ MetalKitViewDelegate: NSObject<MTKViewDelegate>
 @property (retain) id<MTLRenderPipelineState>
     combo_pipeline_state;
 @property (retain) NSMutableArray * metal_textures;
-- (void)configureMetal;
+- (void)
+    configureMetalWithDevice: (id<MTLDevice>)metal_device
+    andPixelFormat: (MTLPixelFormat)pixel_format
+    fromFolder: (NSString *)shader_lib_filepath;
 @end
 
 #endif
