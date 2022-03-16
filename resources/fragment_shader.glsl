@@ -2,12 +2,14 @@
 
 in vec4 vertex_color;
 in float fragment_lighting;
+in float fragment_texturearray_i;
 in float fragment_texture_i;
 in vec2 fragment_uv;
 
 out vec4 FragColor;
 
-uniform sampler2DArray textures;
+uniform sampler2DArray texturemap0;
+uniform sampler2DArray texturemap1;
 
 void main()
 {
@@ -16,7 +18,7 @@ void main()
     } else {
         FragColor =
             texture(
-                textures,
+                texturemap1,
                 vec3(fragment_uv, fragment_texture_i));
     }
     

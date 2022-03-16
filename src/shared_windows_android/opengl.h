@@ -98,8 +98,7 @@ extern Vertex gpu_workload_buffer[VERTEX_BUFFER_SIZE];
 // We'll need these 2 identifiers while drawing
 extern GLuint program_id;
 extern unsigned int VAO;
-// extern unsigned int texture_ids[TEXTURES_SIZE];
-extern unsigned int texture_array_id;
+extern unsigned int texture_array_ids[TEXTUREARRAYS_SIZE];
 
 extern ptr_gl_compile_shader * glCompileShader;
 extern ptr_gl_get_shader_iv * glGetShaderiv;

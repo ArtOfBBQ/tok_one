@@ -3,8 +3,7 @@
 // We'll need these 2 identifiers while drawing
 GLuint program_id;
 unsigned int VAO;
-// unsigned int texture_ids[TEXTURES_SIZE];
-unsigned int texture_array_id;
+unsigned int texture_array_ids[TEXTUREARRAYS_SIZE];
 
 Vertex gpu_workload_buffer[VERTEX_BUFFER_SIZE];
 
@@ -203,75 +202,60 @@ void opengl_compile_shaders() {
     printf("vertex array bound (active)\n");
     
     printf("initialize textures on OpenGL...\n"); 
-    assert(TEXTURES_SIZE > 0);
-    printf("set active texture\n");
-    glActiveTexture(GL_TEXTURE0);
-    
-    glGenTextures(
-        1,
-        &texture_array_id);
-    
-    printf(
-        "bind texture %u\n",
-        texture_array_id);
-    glBindTexture(
-        GL_TEXTURE_2D_ARRAY,
-        texture_array_id);
-    
-    printf("set texture parameters...\n");
-    glTexParameteri(
-        GL_TEXTURE_2D_ARRAY,
-        GL_TEXTURE_BASE_LEVEL,
-        0); // single image
-    glTexParameteri(
-        GL_TEXTURE_2D_ARRAY,
-        GL_TEXTURE_MAX_LEVEL,
-        1); // single image
-    glTexParameteri(
-        GL_TEXTURE_2D_ARRAY,
-        GL_TEXTURE_MAG_FILTER,
-        GL_LINEAR);
-    glTexParameteri(
-        GL_TEXTURE_2D_ARRAY,
-        GL_TEXTURE_MIN_FILTER,
-        GL_LINEAR);
-    glTexParameteri(
-        GL_TEXTURE_2D_ARRAY,
-        GL_TEXTURE_WRAP_S,
-        GL_CLAMP_TO_EDGE);
-    glTexParameteri(
-        GL_TEXTURE_2D_ARRAY,
-        GL_TEXTURE_WRAP_T,
-        GL_CLAMP_TO_EDGE);
+    assert(TEXTUREARRAYS_SIZE > 0);
+    for (uint32_t i = 0; i < TEXTUREARRAYS_SIZE; i++) {
+        printf("set active texture\n");
+        glActiveTexture(GL_TEXTURE0 + i);
+        
+        glGenTextures(
+            1,
+            &texture_array_ids[i]);
+        printf(
+            "bind texture %u\n",
+            texture_array_ids[i]);
+        glBindTexture(
+            GL_TEXTURE_2D_ARRAY,
+            texture_array_ids[i]);
+        
+        printf("set texture parameters...\n");
+        glTexParameteri(
+            GL_TEXTURE_2D_ARRAY,
+            GL_TEXTURE_BASE_LEVEL,
+            0); // single image
+        glTexParameteri(
+            GL_TEXTURE_2D_ARRAY,
+            GL_TEXTURE_MAX_LEVEL,
+            1); // single image
+        glTexParameteri(
+            GL_TEXTURE_2D_ARRAY,
+            GL_TEXTURE_MAG_FILTER,
+            GL_LINEAR);
+        glTexParameteri(
+            GL_TEXTURE_2D_ARRAY,
+            GL_TEXTURE_MIN_FILTER,
+            GL_LINEAR);
+        glTexParameteri(
+            GL_TEXTURE_2D_ARRAY,
+            GL_TEXTURE_WRAP_S,
+            GL_CLAMP_TO_EDGE);
+        glTexParameteri(
+            GL_TEXTURE_2D_ARRAY,
+            GL_TEXTURE_WRAP_T,
+            GL_CLAMP_TO_EDGE);
+        
+        assert(texture_arrays[i].image->width > 0);
+        assert(texture_arrays[i].image->height > 0);
 
-    printf("loop over texture arrays...\n");    
-    for (
-        uint32_t t = 0;
-        t < TEXTURES_SIZE;
-        t++)
-    {
-        
-        printf("t: %u\n", t); 
-        assert(textures[t]->width > 0);
-        assert(textures[t]->height > 0);
-        printf(
-            "texture_ids[%u] is now: %u\n",
-            t,
-            texture_array_id);
-        printf(
-            "loading buffer data for texture %u [%ux%u]\n",
-            t,
-            textures[t]->width,
-            textures[t]->height);
-        
-        uint32_t tiles_x = 16;
-        uint32_t tiles_y = 16;
+        uint32_t tiles_x =
+            texture_arrays[i].sprite_columns;
+        uint32_t tiles_y = texture_arrays[i].sprite_rows;
         uint32_t pixels_x =
-            textures[t]->width / tiles_x;
+            texture_arrays[i].image->width / tiles_x;
         uint32_t pixels_y =
-            textures[t]->height / tiles_y;
+            texture_arrays[i].image->height / tiles_y;
         uint32_t tile_count = tiles_x * tiles_y;
         
+        printf("glTexStorage3D...\n");
         glTexStorage3D(
             GL_TEXTURE_2D_ARRAY,
             1,
@@ -279,24 +263,18 @@ void opengl_compile_shaders() {
             pixels_x,
             pixels_y,
             tile_count);
-        
+       
+        printf("glPixelStorei..\n"); 
         glPixelStorei(
             GL_UNPACK_ROW_LENGTH,
-            textures[t]->width);
+            texture_arrays[i].image->width);
         glPixelStorei(
             GL_UNPACK_IMAGE_HEIGHT,
-            textures[t]->height);
-        
+            texture_arrays[i].image->height);
+
+        printf("glTexSubImage3D loop..\n"); 
         for (GLsizei x = 0; x < tiles_x; x++) {
             for (GLsizei y = 0; y < tiles_y; y++) {
-                // uint64_t texture_offset =
-                //     textures[t]->pixel_count
-                //             + (x *
-                //                 pixels_y *
-                //                 textures[t]->width +
-                //                 y *
-                //                 pixels_x)
-                //             * 4)
                 glTexSubImage3D(
                     GL_TEXTURE_2D_ARRAY,
                     0,
@@ -308,45 +286,48 @@ void opengl_compile_shaders() {
                     1,
                     GL_RGBA,
                     GL_UNSIGNED_BYTE,
-                    textures[t]->rgba_values
+                    texture_arrays[i].image->rgba_values
                         + (
-                            (x * pixels_y
-                            * textures[t]->width
-                            + y * pixels_x)
-                        * 4));
+                        (x * pixels_y
+                        * texture_arrays[i].image->width
+                        + y * pixels_x)
+                            * 4));
             }
         }
+        
+        printf("glUseProgram..\n"); 
+        glUseProgram(program_id);
+        
+        printf("figure texture name...\n"); 
+        char texture_name[11] = "texturemapX";
+        printf("combining: %s - ", texture_name);
+        printf("with new character: %c\n", '0' + i);
+        texture_name[10] = '0' + i;
+        printf(
+            "register uniform variable: %s\n",
+            texture_name);
+        glUniform1i(
+            glGetUniformLocation(
+                program_id,
+                texture_name),
+            0);
+        printf("registered!\n");
     }
-    
-    // glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
-    
-    glUseProgram(program_id);
-    
-    // for (uint32_t t = 0; t < TEXTURES_SIZE; t++) {
-    char * texture_name = "textures";
-    printf(
-        "register uniform variable: %s\n",
-        texture_name);
-    glUniform1i(
-        glGetUniformLocation(
-            program_id,
-            texture_name),
-        0);
-    printf("registered!\n");
     
     unsigned int VBO;
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     assert(sizeof(float) == 4); // x,y,uv,rgba,lighting
     assert(sizeof(uint32_t) == 4); // texture_i
-    assert(sizeof(Vertex) == 40);
-    assert(sizeof(gpu_workload_buffer) == 40 * VERTEX_BUFFER_SIZE);
+    assert(sizeof(Vertex) == 44);
+    assert(sizeof(gpu_workload_buffer) == 44 * VERTEX_BUFFER_SIZE);
     assert(offsetof(Vertex, x) == 0);
     assert(offsetof(Vertex, y) == 4);
     assert(offsetof(Vertex, uv) == 8);
     assert(offsetof(Vertex, RGBA) == 16);
     assert(offsetof(Vertex, lighting) == 32);
-    assert(offsetof(Vertex, texture_i) == 36);
+    assert(offsetof(Vertex, texturearray_i) == 36);
+    assert(offsetof(Vertex, texture_i) == 40);
     glBufferData(
         GL_ARRAY_BUFFER,
         VERTEX_BUFFER_SIZE * sizeof(Vertex),
@@ -441,6 +422,20 @@ void opengl_compile_shaders() {
         /* sizeof parent struct: */
             sizeof(Vertex),
         /* offset : */
+            (void*)(offsetof(Vertex, texturearray_i)));
+    
+    glVertexAttribPointer(
+        /* location (in shader source): */
+            6,
+        /* array/vector size: */
+            1,
+        /* type of data: */
+            GL_INT,
+        /* normalize data: */
+            GL_FALSE,
+        /* sizeof parent struct: */
+            sizeof(Vertex),
+        /* offset : */
             (void*)(offsetof(Vertex, texture_i)));
     
     glEnableVertexAttribArray(0);
@@ -449,6 +444,7 @@ void opengl_compile_shaders() {
     glEnableVertexAttribArray(3);
     glEnableVertexAttribArray(4);
     glEnableVertexAttribArray(5);
+    glEnableVertexAttribArray(6);
     
     printf("finished opengl_compile_shaders()...\n");
 }

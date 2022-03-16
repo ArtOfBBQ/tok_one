@@ -196,9 +196,10 @@ void opengl_update_window(HWND window) {
         VERTEX_BUFFER_SIZE * sizeof(Vertex),
         gpu_workload_buffer,
         GL_DYNAMIC_DRAW);
-    
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture_array_id);
+  
+    // TODO: find out how to use multiple texture arrays
+    glActiveTexture(GL_TEXTURE0 + 1);
+    glBindTexture(GL_TEXTURE_2D, texture_array_ids[1]);
     
     // glGenerateMipmap(GL_TEXTURE_2D);
     glDrawArrays(

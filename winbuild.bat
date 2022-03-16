@@ -9,10 +9,8 @@ mkdir build\windows
 echo copying resource files...
 copy resources\teapot.obj build\windows\teapot.obj
 copy resources\teddybear.obj build\windows\teddybear.obj
-REM copy resources\fs_angrymob.png build\windows\fs_angrymob.png
-copy resources\structuredart.png build\windows\structuredart.png
-copy resources\structuredart.png build\windows\structuredart2.png
 copy resources\phoebus.png build\windows\phoebus.png
+copy resources\phoebus.png build\windows\sampletexture.png
 copy resources\vertex_shader.glsl build\windows\vertex_shader.glsl
 copy resources\fragment_shader.glsl build\windows\fragment_shader.glsl
 
