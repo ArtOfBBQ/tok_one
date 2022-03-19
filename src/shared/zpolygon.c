@@ -3,7 +3,7 @@
 ProjectionConstants projection_constants = {};
 
 void init_projection_constants() {
-
+    
     if (window_height < 50.0f || window_width < 50.0f) {
         printf("ERROR: unexpected window size [%f,%f]\n",
             window_height,
@@ -33,12 +33,16 @@ void init_projection_constants() {
         window_height / window_width; 
 }
 
-uint32_t chars_till_next_space(
+uint32_t chars_till_next_space_or_slash(
     char * buffer)
 {
     uint32_t i = 0;
-
-    while (buffer[i] != '\n' && buffer[i] != ' ') {
+    
+    while (
+        buffer[i] != '\n'
+        && buffer[i] != ' '
+        && buffer[i] != '/')
+    {
         i++;
     }
 
@@ -63,6 +67,9 @@ zPolygon * load_from_obj_file(char * filename) {
     return_value->x = 0.0f;
     return_value->y = 0.0f;
     return_value->z = 50.0f;
+    return_value->z_angle = 2.80f; // 3.14 to face camera
+    return_value->y_angle = 3.14f; // 3.14 to face camera
+    return_value->x_angle = 3.14f / 2.0f;
     return_value->triangles_size = 0;
     
     FileBuffer * buffer = platform_read_file(filename);
@@ -70,6 +77,9 @@ zPolygon * load_from_obj_file(char * filename) {
     // TODO: think about buffer size 
     // pass through buffer once to read all vertices 
     zVertex new_vertices[5000];
+    float uv_u[2500];
+    float uv_v[2500];
+    uint32_t new_uv_i = 0;
     
     uint32_t i = 0;
     uint32_t new_vertex_i = 0;
@@ -77,7 +87,8 @@ zPolygon * load_from_obj_file(char * filename) {
         
         // read the 1st character, which denominates the type
         // of information
-        if (buffer->contents[i] == 'v') {
+        if (buffer->contents[i] == 'v'
+            && buffer->contents[i+1] == ' ') {
             // discard the 'v'
             i++;
             
@@ -91,25 +102,28 @@ zPolygon * load_from_obj_file(char * filename) {
             
             // read vertex x
             new_vertex.x = atof(buffer->contents + i);
-
+            
             // discard vertex x
-            i += chars_till_next_space(buffer->contents + i);
+            i += chars_till_next_space_or_slash(
+                buffer->contents + i);
             assert(buffer->contents[i] == ' ');
-
+            
             // discard the spaces after vertex x
             i += chars_till_next_nonspace(buffer->contents + i);
             assert(buffer->contents[i] != ' ');
             
             // read vertex y
             new_vertex.y = atof(buffer->contents + i);
-            i += chars_till_next_space(buffer->contents + i);
+            i += chars_till_next_space_or_slash(
+                buffer->contents + i);
             assert(buffer->contents[i] == ' ');
             i += chars_till_next_nonspace(buffer->contents + i);
             assert(buffer->contents[i] != ' ');
             
             // read vertex z
             new_vertex.z = atof(buffer->contents + i);
-            i += chars_till_next_space(buffer->contents + i);
+            i += chars_till_next_space_or_slash(
+                buffer->contents + i);
             assert(buffer->contents[i] == '\n');
             i++;
             
@@ -123,6 +137,41 @@ zPolygon * load_from_obj_file(char * filename) {
                 new_vertices[new_vertex_i].z
                     == new_vertex.z);
             new_vertex_i++;
+        } else if (
+            buffer->contents[i] == 'v'
+            && buffer->contents[i+1] == 't')
+        {
+            // discard the 'vt'
+            i += 2;
+            
+            // skip the space(s) after the 'vt'
+            assert(buffer->contents[i] == ' ');
+            i += chars_till_next_nonspace(buffer->contents + i);
+            assert(buffer->contents[i] != ' ');
+            
+            // read the u coordinate
+            uv_u[new_uv_i] = atof(buffer->contents + i);
+            
+            // discard the u coordinate
+            i += chars_till_next_space_or_slash(
+                buffer->contents + i);
+            assert(buffer->contents[i] == ' ');
+            
+            // skip the space(s) after the u coord
+            assert(buffer->contents[i] == ' ');
+            i += chars_till_next_nonspace(buffer->contents + i);
+            assert(buffer->contents[i] != ' ');
+            
+            // read the v coordinate
+            uv_v[new_uv_i] = atof(buffer->contents + i);
+            
+            // discard the v coordinate
+            i += chars_till_next_space_or_slash(
+                buffer->contents + i);
+            assert(buffer->contents[i] == '\n');
+            
+            new_uv_i += 1;
+            
         } else {
             if (buffer->contents[i] == 'f') {
                 return_value->triangles_size += 1;
@@ -144,9 +193,71 @@ zPolygon * load_from_obj_file(char * filename) {
     
     i = 0;
     uint32_t new_triangle_i = 0;
+    int32_t using_texturearray_i = -1;
+    int32_t using_texture_i = -1;
+    float using_color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    
     while (i < buffer->size) {
-        if (buffer->contents[i] == 'f') {
+        if (buffer->contents[i] == 'u') {
+            uint32_t j = i + 1;
+            while (buffer->contents[j] != '\n') {
+                j++;
+            }
+            uint32_t line_size = j - i;
             
+            char * usemtl_hint =
+                malloc(sizeof(line_size));
+            
+            for (j = 0; j < (line_size); j++) {
+                usemtl_hint[j] = buffer->contents[i + j];
+            }
+            
+            if (are_equal_strings(
+                    "usemtl Face",
+                    usemtl_hint,
+                    line_size))
+            {
+                using_texturearray_i = 1;
+                using_texture_i = 2;
+            }
+            
+            if (are_equal_strings(
+                    "usemtl Back",
+                    usemtl_hint,
+                    line_size))
+            {
+                using_texturearray_i = 1;
+                using_texture_i = 5;
+            }
+            
+            if (are_equal_strings(
+                    "usemtl Side",
+                    usemtl_hint,
+                    line_size))
+            {
+                using_texturearray_i = -1;
+                using_texture_i = -1;
+                using_color[0] = 0.3;
+                using_color[1] = 0.3;
+                using_color[2] = 0.3;
+                using_color[3] = 1.0;
+            }
+            
+            printf(
+                "got usemtl hint from blender: %s\nbailing out\n",
+                usemtl_hint);
+            
+            free(usemtl_hint);
+            
+            // skip until the next line break character 
+            while (buffer->contents[i] != '\n') {
+                i++;
+            }
+            // skip the line break character
+            i++;
+            
+        } else if (buffer->contents[i] == 'f') {
+
             // discard the 'f'
             i++;
             assert(buffer->contents[i] == ' ');
@@ -162,21 +273,58 @@ zPolygon * load_from_obj_file(char * filename) {
             
             // read 1st vertex index
             uint32_t vertex_i_0 = atoi(buffer->contents + i);
-            i += chars_till_next_space(buffer->contents + i);
+            i += chars_till_next_space_or_slash(
+                buffer->contents + i);
+            
+            uint32_t uv_coord_i_0;
+            if (buffer->contents[i] == '/')
+            {
+                // skip the slash
+                i++;
+                uv_coord_i_0 =
+                    atoi(buffer->contents + i);
+                i += chars_till_next_space_or_slash(
+                    buffer->contents + i);
+            }
+            
             assert(buffer->contents[i] == ' ');
             i += chars_till_next_nonspace(buffer->contents + i);
             assert(buffer->contents[i] != ' ');
             
             // read 2nd vertex index
             uint32_t vertex_i_1 = atoi(buffer->contents + i);
-            i += chars_till_next_space(buffer->contents + i);
+            i += chars_till_next_space_or_slash(
+                buffer->contents + i);
+            
+            uint32_t uv_coord_i_1;
+            if (buffer->contents[i] == '/')
+            {
+                // skip the slash
+                i++;
+                uv_coord_i_1 =
+                    atoi(buffer->contents + i);
+                i += chars_till_next_space_or_slash(
+                    buffer->contents + i);
+            }
+            
             assert(buffer->contents[i] == ' ');
             i += chars_till_next_nonspace(buffer->contents + i);
             assert(buffer->contents[i] != ' ');
             
             // read 3rd vertex index
             uint32_t vertex_i_2 = atoi(buffer->contents + i);
-            i += chars_till_next_space(buffer->contents + i);
+            i += chars_till_next_space_or_slash(
+                buffer->contents + i);
+            uint32_t uv_coord_i_2;
+            if (buffer->contents[i] == '/')
+            {
+                // skip the slash
+                i++;
+                uv_coord_i_2 =
+                    atoi(buffer->contents + i);
+                i += chars_till_next_space_or_slash(
+                    buffer->contents + i);
+            }
             assert(buffer->contents[i] == '\n');
             i++;
             
@@ -185,6 +333,9 @@ zPolygon * load_from_obj_file(char * filename) {
             assert(vertex_i_0 > 0);
             assert(vertex_i_1 > 0);
             assert(vertex_i_2 > 0);
+            assert(uv_coord_i_0 > 0);
+            assert(uv_coord_i_1 > 0);
+            assert(uv_coord_i_2 > 0);
             
             new_triangle.vertices[0] =
                 new_vertices[vertex_i_0 - 1];
@@ -192,14 +343,27 @@ zPolygon * load_from_obj_file(char * filename) {
                 new_vertices[vertex_i_1 - 1];
             new_triangle.vertices[2] =
                 new_vertices[vertex_i_2 - 1];
-
-            new_triangle.color[0] = 0.75f;
-            new_triangle.color[1] = 0.30f;
-            new_triangle.color[2] = 0.20f;
-            new_triangle.color[3] = 1.0f;
             
-            new_triangle.texturearray_i = -1;
-            new_triangle.texture_i = -1;
+            new_triangle.vertices[0].uv[0] =
+                uv_u[uv_coord_i_0 - 1];
+            new_triangle.vertices[0].uv[1] =
+                uv_v[uv_coord_i_0 - 1];
+            new_triangle.vertices[1].uv[0] =
+                uv_u[uv_coord_i_1 - 1];
+            new_triangle.vertices[1].uv[1] =
+                uv_v[uv_coord_i_1 - 1];
+            new_triangle.vertices[2].uv[0] =
+                uv_u[uv_coord_i_2 - 1];
+            new_triangle.vertices[2].uv[1] =
+                uv_v[uv_coord_i_2 - 1];
+            
+            new_triangle.color[0] = using_color[0];
+            new_triangle.color[1] = using_color[1];
+            new_triangle.color[2] = using_color[2];
+            new_triangle.color[3] = using_color[3];
+            
+            new_triangle.texturearray_i = using_texturearray_i;
+            new_triangle.texture_i = using_texture_i;
             
             return_value->triangles[new_triangle_i] =
                 new_triangle;
@@ -294,7 +458,7 @@ zPolygon * get_box() {
     box->triangles[2].vertices[2] =
         (zVertex){ 5.0f, 5.0f, 5.0f };
     box->triangles[2].texturearray_i = 1;
-    box->triangles[2].texture_i = 1;
+    box->triangles[2].texture_i = 22;
     
     box->triangles[3].vertices[0] =
         (zVertex){ 5.0f, 0.0f, 0.0f };
@@ -303,8 +467,8 @@ zPolygon * get_box() {
     box->triangles[3].vertices[2] =
         (zVertex){ 5.0f, 0.0f, 5.0f };
     box->triangles[3].texturearray_i = 1;
-    box->triangles[3].texture_i = 1;
-   
+    box->triangles[3].texture_i = 22;
+    
     // NORTH face
     box->triangles[4].vertices[0] =
         (zVertex){ 5.0f, 0.0f, 5.0f };
@@ -614,11 +778,6 @@ zTriangle y_rotate_triangle(
                 * cosf(angle))
             - (input->vertices[i].x
                 * sinf(angle));
-
-        return_value.vertices[i].uv[0] =
-            input->vertices[i].uv[0];
-        return_value.vertices[i].uv[1] =
-            input->vertices[i].uv[1];
     }
     
     return return_value;
@@ -687,7 +846,6 @@ float dot_of_vertices(
     
     return dot_x + dot_y + dot_z;
 }
-
 
 float get_distance(
     const zVertex p1,

@@ -6,11 +6,10 @@
 #include <inttypes.h>
 #include <assert.h>
 
+#include "common.h"
 #include "vertex_types.h"
-#include "bool_types.h"
 #include "window_size.h"
 #include "platform_layer.h"
-#include "static_redefinitions.h"
 
 // projection constants
 typedef struct ProjectionConstants {

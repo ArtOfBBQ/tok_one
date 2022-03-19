@@ -3,10 +3,10 @@
 
 #include "inttypes.h"
 
+#include "common.h"
 #include "window_size.h"
 #include "vertex_types.h"
 #include "zpolygon.h"
-#include "static_redefinitions.h"
 #include "decode_png.h"
 
 local_only uint32_t renderer_initialized = false;

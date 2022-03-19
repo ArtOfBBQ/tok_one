@@ -4,12 +4,12 @@
 #include "../shared/platform_layer.h" 
 
 // shared functionality we can use
+#include "../shared/common.h"
 #include "../shared_apple/gpu.h"
 #include "../shared/window_size.h"
 #include "../shared/vertex_types.h"
 #include "../shared/zpolygon.h"
 #include "../shared/software_renderer.h"
-#include "../shared/static_redefinitions.h"
 
 
 @interface
@@ -63,7 +63,7 @@ int main(int argc, const char * argv[])
     MetalKitViewDelegate *ViewDelegate =
         [[MetalKitViewDelegate alloc] init];
     [mtk_view setDelegate: ViewDelegate];
-
+    
     NSString * shader_lib_path = @"Shaders.metallib";
     [ViewDelegate
         configureMetalWithDevice: metal_device

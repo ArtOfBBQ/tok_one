@@ -2,12 +2,7 @@
 
 #define PNG_SILENCE
 // #define IGNORE_CRC_CHECKS
-// #define DECODE_PNG_IGNORE_ASSERTS
-// true/false/ignoreasserts are undef'd at EOF
-
-#define true 1
-#define false 0
-#define bool32_t uint32_t
+#define DECODE_PNG_IGNORE_ASSERTS
 
 #ifndef PNG_SILENCE
 #include "stdio.h"
@@ -391,20 +386,6 @@ static void flip_endian(uint32_t * to_flip) {
         byte_4 << 0;
     
     *to_flip = flipping;
-}
-
-static bool32_t are_equal_strings(
-    char * str1,
-    char * str2,
-    size_t len)
-{
-    for (size_t i = 0; i < len; i++) {
-        if (str1[i] != str2[i]) {
-            return false;
-        }
-    }
-    
-    return true;
 }
 
 /*
@@ -1128,6 +1109,4 @@ DecodedImage * decode_PNG(
     
     return return_value;
 }
-
-#undef DECODE_PNG_IGNORE_ASSERTS
 

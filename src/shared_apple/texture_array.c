@@ -5,7 +5,6 @@ DecodedImage * extract_image(
     uint32_t x,
     uint32_t y)
 {
-    printf("extracting image from [%u,%u]\n", x, y);
     assert(x > 0);
     assert(y > 0);
     assert(x <= texture_array->sprite_columns);
@@ -55,11 +54,6 @@ DecodedImage * extract_image(
         }
     }
 
-    printf(
-        "returning new image of [%u,%u]\n",
-        new_image->width,
-        new_image->height);
-    
     return new_image;
 }
 
