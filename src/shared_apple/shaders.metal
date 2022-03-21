@@ -26,7 +26,7 @@ vertex_shader(
         vector_float4(
             input_array[vertexID].x,
             input_array[vertexID].y,
-            0.0,
+            input_array[vertexID].z,
             1.0);
     
     out.color =
@@ -35,7 +35,7 @@ vertex_shader(
             input_array[vertexID].RGBA[1],
             input_array[vertexID].RGBA[2],
             input_array[vertexID].RGBA[3]);
-
+    
     out.lighting = input_array[vertexID].lighting;
     
     if (input_array[vertexID].texturearray_i < 0)
@@ -70,8 +70,8 @@ fragment_shader(
     }
     
     constexpr sampler textureSampler(
-        mag_filter::linear,
-        min_filter::linear);
+        mag_filter::nearest,
+        min_filter::nearest);
     
     // Sample the texture to obtain a color
     const half4 colorSample =
@@ -79,8 +79,11 @@ fragment_shader(
             textureSampler,
             in.texture_coordinate,
             in.texture_i);
+
+    in.lighting = max(in.lighting, 0.05);
+    in.lighting = min(in.lighting, 1.0);
     
     // return the color of the texture
-    return float4(colorSample) * (0.2 + in.lighting);
+    return float4(colorSample) * in.lighting;
 }
 

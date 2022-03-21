@@ -76,6 +76,10 @@ void ztriangle_apply_lighting(
     zTriangle * input,
     zLightSource * zlight_source);
 
+void ztriangle_to_3d(
+    Vertex recipient[3],
+    zTriangle * input);
+
 void ztriangle_to_2d(
     Vertex recipient[3],
     zTriangle * input);

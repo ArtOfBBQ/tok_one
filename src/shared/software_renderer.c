@@ -45,17 +45,27 @@ void init_renderer() {
     zpolygons_to_render_size = 0;
     
     // objects part 1: load some cards from object file 
-    for (uint32_t i = 0; i < 1; i++) {
+    for (uint32_t i = 0; i < 2; i++) {
         uint32_t last_i = zpolygons_to_render_size;
         zpolygons_to_render_size += 1;
         zpolygons_to_render[last_i] =
             load_from_obj_file("cardwithuvcoords.obj");
         
         float base_y = i % 2 == 0 ? 0.0f : -5.0f;
-        zpolygons_to_render[last_i]->x = 0.0f;
+        zpolygons_to_render[last_i]->x = -2.0f + (4.0f * i);
         zpolygons_to_render[last_i]->y =
             base_y + (last_i * 7.0f);
-        zpolygons_to_render[last_i]->z = 7.5f;
+        zpolygons_to_render[last_i]->z = 9.0f;
+
+        // change face texture but not the back texture
+        for (uint32_t t = 0; t < zpolygons_to_render[last_i]->triangles_size; t++)
+        {
+            if (zpolygons_to_render[last_i]->triangles[t].texture_i == 2) 
+            {
+                zpolygons_to_render[last_i]->triangles[t].texture_i
+                    = i;
+            }
+        }
         
         // scale_zpolygon(
         //     /* to_scale   : */
@@ -79,9 +89,9 @@ void init_renderer() {
     zlights_to_apply[0].x = 50.0f;
     zlights_to_apply[0].y = 2.5f;
     zlights_to_apply[0].z = 200.0f;
-    zlights_to_apply[0].reach = 25.0f;
-    zlights_to_apply[0].ambient = 0.7f;
-    zlights_to_apply[0].diffuse = 0.8f;
+    zlights_to_apply[0].reach = 1.0f;
+    zlights_to_apply[0].ambient = 8.0;
+    zlights_to_apply[0].diffuse = 8.0;
     zlights_to_apply_size = 1;
     
     // add a white cube to represent the light source
@@ -99,17 +109,17 @@ void init_renderer() {
     {
         // bright white
         zpolygons_to_render[light_i]->triangles[j].color[0] =
-            90000.0f;
+            10.0f;
         zpolygons_to_render[light_i]->triangles[j].color[1] =
-            90000.0f;
+            10.0f;
         zpolygons_to_render[light_i]->triangles[j].color[2] =
-            90000.0f;
+            10.0f;
         zpolygons_to_render[light_i]->triangles[j].color[3] =
             1.0f;
         zpolygons_to_render[light_i]
-            ->triangles[j].texturearray_i = -1;
+            ->triangles[j].texturearray_i = -1.0f;
         zpolygons_to_render[light_i]
-            ->triangles[j].texture_i = -1;
+            ->triangles[j].texture_i = -1.0f;
     }
     // scale_zpolygon(
     //     /* to_scale  : */ zpolygons_to_render[light_i],
@@ -162,16 +172,16 @@ void software_render(
         i < (zpolygons_to_render_size - 1);
         i++)
     {
-        // zpolygons_to_render[i]->z_angle += 0.001f;
-        // zpolygons_to_render[i]->x_angle += 0.001f;
-        zpolygons_to_render[i]->y_angle += 0.04f;
+        zpolygons_to_render[i]->z_angle += (0.02f + (i * 0.02f));
+        zpolygons_to_render[i]->x_angle += (0.005f + (i * 0.001f));
+        zpolygons_to_render[i]->y_angle += 0.00015f;
     }
     
     // move our light source
     uint32_t light_i = zpolygons_to_render_size - 1;
     zpolygons_to_render[light_i]->y -= 0.001;
     if (
-        zpolygons_to_render[light_i]->z > -40.0f)
+        zpolygons_to_render[light_i]->z > 5.0f)
     {
         zpolygons_to_render[light_i]->z -= 1.2;
         zpolygons_to_render[light_i]->x -= 0.14;
@@ -183,6 +193,12 @@ void software_render(
     zlights_to_apply[0].x = zpolygons_to_render[light_i]->x;
     zlights_to_apply[0].y = zpolygons_to_render[light_i]->y;
     zlights_to_apply[0].z = zpolygons_to_render[light_i]->z;
+    assert(
+        zpolygons_to_render[light_i]->triangles[0].color[0]
+            == 10.0f);
+    assert(
+        zpolygons_to_render[light_i]->triangles[11].color[0]
+            == 10.0f);
     
     uint32_t triangles_to_render = 0;
     for (
@@ -306,6 +322,39 @@ void software_render(
                     triangle_to_draw);
         }
     }
+    
+    // Vertex extra_triangle[3];
+    // extra_triangle[0].x = 0.25f;
+    // extra_triangle[0].y = 0.50f;
+    // extra_triangle[0].z = 0.0f;
+    // extra_triangle[1].x = 0.25f;
+    // extra_triangle[1].y = 0.75f;
+    // extra_triangle[1].z = 0.0f;
+    // extra_triangle[2].x = 0.50f;
+    // extra_triangle[2].y = 0.75f;
+    // extra_triangle[2].z = 0.0f;
+    // extra_triangle[0].texturearray_i = 1;
+    // extra_triangle[0].texture_i = 1;
+    // extra_triangle[0].uv[0] = 0.0f;
+    // extra_triangle[0].uv[1] = 1.0f;
+    // extra_triangle[1].texturearray_i = 1;
+    // extra_triangle[1].texture_i = 1;
+    // extra_triangle[1].uv[0] = 0.0f;
+    // extra_triangle[1].uv[1] = 0.0f;
+    // extra_triangle[1].lighting = 0.75f;
+    // extra_triangle[2].texturearray_i = 1;
+    // extra_triangle[2].texture_i = 1;
+    // extra_triangle[2].uv[0] = 1.0f;
+    // extra_triangle[2].uv[1] = 1.0f;
+    // extra_triangle[2].lighting = 0.1f;
+    // 
+    // draw_triangle(
+    //     /* vertices_recipient: */
+    //         next_gpu_workload,
+    //     /* vertex_count_recipient: */
+    //         next_workload_size,
+    //     /* input: */
+    //         extra_triangle);
 }
 
 void draw_triangle(

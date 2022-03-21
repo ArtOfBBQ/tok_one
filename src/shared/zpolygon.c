@@ -66,8 +66,8 @@ zPolygon * load_from_obj_file(char * filename) {
     zPolygon * return_value = malloc(sizeof(zPolygon));
     return_value->x = 0.0f;
     return_value->y = 0.0f;
-    return_value->z = 50.0f;
-    return_value->z_angle = 2.80f; // 3.14 to face camera
+    return_value->z = 1.0f;
+    return_value->z_angle = 3.14f; // 3.14 to face camera
     return_value->y_angle = 3.14f; // 3.14 to face camera
     return_value->x_angle = 3.14f / 2.0f;
     return_value->triangles_size = 0;
@@ -237,9 +237,9 @@ zPolygon * load_from_obj_file(char * filename) {
             {
                 using_texturearray_i = -1;
                 using_texture_i = -1;
-                using_color[0] = 0.3;
-                using_color[1] = 0.3;
-                using_color[2] = 0.3;
+                using_color[0] = 0.5;
+                using_color[1] = 0.5;
+                using_color[2] = 0.5;
                 using_color[3] = 1.0;
             }
             
@@ -602,6 +602,7 @@ void ztriangle_apply_lighting(
         float distance_mod = zlight_source->reach / distance;
         assert(distance_mod > 0.0f);
         
+        // *******************************************
         // add ambient lighting 
         recipient[m].lighting +=
             zlight_source->ambient * distance_mod;
@@ -622,6 +623,32 @@ void ztriangle_apply_lighting(
                     * zlight_source->diffuse);
         }
         // *******************************************
+    }
+}
+
+void ztriangle_to_3d(
+    Vertex recipient[3],
+    zTriangle * input)
+{
+    ProjectionConstants * pjc = &projection_constants;
+    
+    for (uint32_t i = 0; i < 3; i++) {
+        recipient[i].x =
+            (pjc->aspect_ratio
+            * pjc->field_of_view_modifier
+            * input->vertices[i].x); 
+        recipient[i].y = input->vertices[i].y;
+        recipient[i].z = 0.0f;
+        
+        recipient[i].uv[0] = input->vertices[i].uv[0];
+        recipient[i].uv[1] = input->vertices[i].uv[1];
+        
+        for (uint32_t j = 0; j < 3; j++) {
+            recipient[i].RGBA[j] = input->color[j];
+        }
+        
+        recipient[i].texturearray_i = input->texturearray_i;
+        recipient[i].texture_i = input->texture_i;
     }
 }
 
@@ -664,6 +691,8 @@ void ztriangle_to_2d(
         {
             recipient[i].y /= z_modifier;
         }
+        
+        recipient[i].z = 0.0f;
         
         recipient[i].uv[0] = input->vertices[i].uv[0];
         recipient[i].uv[1] = input->vertices[i].uv[1];
@@ -713,6 +742,12 @@ zTriangle x_rotate_triangle(
             (input->vertices[i].z
                 * cosf(angle));
     }
+
+    assert(return_value.color[0] == input->color[0]);
+    assert(return_value.color[1] == input->color[1]);
+    assert(return_value.color[2] == input->color[2]);
+    assert(return_value.color[3] == input->color[3]);
+    assert(return_value.texturearray_i == input->texturearray_i);
     
     return return_value;
 }
