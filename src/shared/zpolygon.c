@@ -827,12 +827,9 @@ zTriangle translate_ztriangle(
     zTriangle return_value = *input;
     
     for (uint32_t i = 0; i < 3; i++) {
-        return_value.vertices[i].x =
-            input->vertices[i].x + by_x;
-        return_value.vertices[i].y =
-            input->vertices[i].y + by_y;
-        return_value.vertices[i].z =
-            input->vertices[i].z + by_z;
+        return_value.vertices[i].x -= by_x;
+        return_value.vertices[i].y -= by_y;
+        return_value.vertices[i].z -= by_z;
     }
     
     return return_value;

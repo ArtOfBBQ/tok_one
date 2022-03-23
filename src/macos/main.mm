@@ -21,6 +21,48 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 {
     [NSApp terminate: nil];
 }
+
+@end
+
+@interface
+NSWindowWithCustomResponder: NSWindow
+@end
+
+@implementation NSWindowWithCustomResponder
+- (BOOL)acceptsFirstResponder
+{
+    return YES;
+}
+
+- (void)keyDown:(NSEvent *)event
+{
+    switch (event.keyCode) {
+        case 123:
+            // left arrow key
+            camera.x -= 2.5f;
+            printf("new camera.x: %f\n", camera.x);
+            break;
+        case 124:
+            // right arrow key
+            camera.x += 2.5f;
+            printf("new camera.x: %f\n", camera.x);
+            break;
+        case 125:
+            // down arrow key
+            camera.z -= 2.5f;
+            printf("new camera.z: %f\n", camera.z);
+            break;
+        case 126:
+            // up arrow kez
+            camera.z += 2.5f;
+            printf("new camera.z: %f\n", camera.z);
+            break;
+        default:
+            NSLog(@"%hu",event.keyCode); 
+            printf("unrecognized code\n");
+            break;
+    }
+}
 @end
 
 int main(int argc, const char * argv[]) 
@@ -34,12 +76,12 @@ int main(int argc, const char * argv[])
     init_projection_constants();
     init_renderer();
     
-    NSWindow *window =
-        [[NSWindow alloc]
+    NSWindowWithCustomResponder *window =
+        [[NSWindowWithCustomResponder alloc]
             initWithContentRect: full_screen_rect 
             styleMask: (NSWindowStyleMaskTitled
                         | NSWindowStyleMaskClosable
-                        | NSWindowStyleMaskFullScreen)
+                         | NSWindowStyleMaskFullScreen)
             backing: NSBackingStoreBuffered 
             defer: NO];
     
@@ -69,6 +111,18 @@ int main(int argc, const char * argv[])
         configureMetalWithDevice: metal_device
         andPixelFormat: mtk_view.colorPixelFormat
         fromFolder: shader_lib_path];
+    
+   
+    // this cruft makes the app a "foreground application"
+    // capable of accepting key events 
+    ProcessSerialNumber psn = {0, kCurrentProcess};
+    OSStatus status =
+        TransformProcessType(
+            &psn,
+            kProcessTransformToForegroundApplication);
+
+    // find the first responder class like so: 
+    // NSLog(@"window first responder: %@", window.firstResponder);
     
     return NSApplicationMain(argc, argv);
 }

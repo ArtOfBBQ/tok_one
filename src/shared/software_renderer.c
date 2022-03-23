@@ -1,6 +1,7 @@
 #include "software_renderer.h"
 
 TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
+zVertex camera = {0.0f, 0.0f, 0.0f};
 
 void init_renderer() {
     // initialize global texture_arrays for texture mapping 
@@ -143,16 +144,6 @@ void software_render(
         return;
     }
     
-    // move the camera
-    // if (camera.x < 10.0f) { camera.x += 0.1;
-    // }
-    // if (camera.y < 0.5f) {
-    //     camera.y += 0.05f;
-    // }
-    // if (camera.z > -85.0f) {
-    //     camera.z -= 0.2;
-    // }
-    
     if (
         next_gpu_workload == NULL
         || next_workload_size == NULL)
@@ -172,6 +163,7 @@ void software_render(
         i < (zpolygons_to_render_size - 1);
         i++)
     {
+        zpolygons_to_render[i]->x -= 0.005f;
         zpolygons_to_render[i]->z_angle += (0.02f + (i * 0.02f));
         zpolygons_to_render[i]->x_angle += (0.005f + (i * 0.001f));
         zpolygons_to_render[i]->y_angle += 0.00015f;
@@ -181,24 +173,14 @@ void software_render(
     uint32_t light_i = zpolygons_to_render_size - 1;
     zpolygons_to_render[light_i]->y -= 0.001;
     if (
-        zpolygons_to_render[light_i]->z > 5.0f)
+        zpolygons_to_render[light_i]->z > 20.0f)
     {
         zpolygons_to_render[light_i]->z -= 1.2;
         zpolygons_to_render[light_i]->x -= 0.14;
-    } else if (
-        zpolygons_to_render[light_i]->x > -17.5f)
-    {
-        zpolygons_to_render[light_i]->x -= 0.3;
     }
     zlights_to_apply[0].x = zpolygons_to_render[light_i]->x;
     zlights_to_apply[0].y = zpolygons_to_render[light_i]->y;
     zlights_to_apply[0].z = zpolygons_to_render[light_i]->z;
-    assert(
-        zpolygons_to_render[light_i]->triangles[0].color[0]
-            == 10.0f);
-    assert(
-        zpolygons_to_render[light_i]->triangles[11].color[0]
-            == 10.0f);
     
     uint32_t triangles_to_render = 0;
     for (
@@ -217,9 +199,8 @@ void software_render(
     
     if (triangles_to_render == 0) { return; }
     
-    // rotate all triangles
+    // transform all triangles
     zTriangle triangles_to_draw[triangles_to_render];
-    // zTriangle camera_translated;
     zTriangle x_rotated;
     zTriangle y_rotated;
     zTriangle z_rotated;
@@ -242,8 +223,8 @@ void software_render(
             z_rotated = z_rotate_triangle(
                 &y_rotated,
                 zpolygons_to_render[i]->z_angle);
-
-            triangles_to_draw[t++] =
+            
+            triangles_to_draw[t] =
                 translate_ztriangle(
                     &z_rotated,
                     /* x: */
@@ -255,6 +236,7 @@ void software_render(
                     /* z: */
                         zpolygons_to_render[i]->z
                             - camera.z);
+            t++;
         }
     }
     
@@ -265,7 +247,7 @@ void software_render(
         triangles_to_render,
         sizeof(zTriangle),
         &sorter_cmpr_lowest_z);
-
+    
     for (
         int32_t i = triangles_to_render - 1;
         i >= 0;
@@ -322,39 +304,6 @@ void software_render(
                     triangle_to_draw);
         }
     }
-    
-    // Vertex extra_triangle[3];
-    // extra_triangle[0].x = 0.25f;
-    // extra_triangle[0].y = 0.50f;
-    // extra_triangle[0].z = 0.0f;
-    // extra_triangle[1].x = 0.25f;
-    // extra_triangle[1].y = 0.75f;
-    // extra_triangle[1].z = 0.0f;
-    // extra_triangle[2].x = 0.50f;
-    // extra_triangle[2].y = 0.75f;
-    // extra_triangle[2].z = 0.0f;
-    // extra_triangle[0].texturearray_i = 1;
-    // extra_triangle[0].texture_i = 1;
-    // extra_triangle[0].uv[0] = 0.0f;
-    // extra_triangle[0].uv[1] = 1.0f;
-    // extra_triangle[1].texturearray_i = 1;
-    // extra_triangle[1].texture_i = 1;
-    // extra_triangle[1].uv[0] = 0.0f;
-    // extra_triangle[1].uv[1] = 0.0f;
-    // extra_triangle[1].lighting = 0.75f;
-    // extra_triangle[2].texturearray_i = 1;
-    // extra_triangle[2].texture_i = 1;
-    // extra_triangle[2].uv[0] = 1.0f;
-    // extra_triangle[2].uv[1] = 1.0f;
-    // extra_triangle[2].lighting = 0.1f;
-    // 
-    // draw_triangle(
-    //     /* vertices_recipient: */
-    //         next_gpu_workload,
-    //     /* vertex_count_recipient: */
-    //         next_workload_size,
-    //     /* input: */
-    //         extra_triangle);
 }
 
 void draw_triangle(
