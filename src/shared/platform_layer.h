@@ -10,10 +10,16 @@ and mac os X, but it's defined elsewhere for iOS
 #ifndef PLATFORM_LAYER_H
 #define PLATFORM_LAYER_H
 
+#ifdef SHARED_APPLE_PLATFORM
+#include "../shared_apple/gpu.h"
+extern MetalKitViewDelegate * apple_gpu_delegate;
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "inttypes.h"
+#include "common.h"
+#include "decodedimage.h"
 
 typedef struct FileBuffer {
     uint32_t size;
@@ -23,6 +29,11 @@ typedef struct FileBuffer {
 // Read a file (without path, only filename)
 // and return its contents as a buffer of bytes
 FileBuffer * platform_read_file(char * filename);
+
+void platform_update_gpu_texture(
+    int32_t texturearray_i,
+    int32_t texture_i,
+    DecodedImage * with_img);
 
 #endif
 

@@ -67,9 +67,9 @@ zPolygon * load_from_obj_file(char * filename) {
     return_value->x = 0.0f;
     return_value->y = 0.0f;
     return_value->z = 1.0f;
-    return_value->z_angle = 3.14f; // 3.14 to face camera
-    return_value->y_angle = 3.14f; // 3.14 to face camera
-    return_value->x_angle = 3.14f / 2.0f;
+    return_value->z_angle = 0.0f;
+    return_value->y_angle = 0.0f; // 3.14 to face camera
+    return_value->x_angle = 0.0f;
     return_value->triangles_size = 0;
     
     FileBuffer * buffer = platform_read_file(filename);
@@ -424,9 +424,9 @@ zPolygon * get_box() {
     box->triangles = malloc(
         sizeof(zTriangle) * box->triangles_size);
     
-    box->x = -1.5f;
-    box->y = -3.5f;
-    box->z = 38.0f;
+    box->x = -120.0f;
+    box->y = 0.0f;
+    box->z = 0.0f;
     box->x_angle = 0.0f;
     box->y_angle = 0.0f;
     box->z_angle = 2.1f;
@@ -599,8 +599,11 @@ void ztriangle_apply_lighting(
             distance_to_zvertex(
                 light_source_pos,
                 input->vertices[m]);
+        
         float distance_mod = zlight_source->reach / distance;
-        assert(distance_mod > 0.0f);
+        if (distance_mod < 0.0f) {
+            distance_mod = 0.0f;
+        }
         
         // *******************************************
         // add ambient lighting 
@@ -715,9 +718,16 @@ void free_zpolygon(
 
 zTriangle x_rotate_triangle(
     const zTriangle * input,
-    const float angle)
+    const float angle,
+    const zVertex temporary_offset)
 {
     zTriangle return_value = *input;
+    
+    for (uint32_t v = 0; v < 3; v++) {
+        return_value.vertices[v].x -= temporary_offset.x;
+        return_value.vertices[v].y -= temporary_offset.y;
+        return_value.vertices[v].z -= temporary_offset.z;
+    }
     
     for (
         uint32_t i = 0;
@@ -725,61 +735,66 @@ zTriangle x_rotate_triangle(
         i++)
     {
         // X = x
-        return_value.vertices[i].x =
-            input->vertices[i].x;
         
         // Y = y*cos(theta) - z*sin(theta); 
         return_value.vertices[i].y =
-            (input->vertices[i].y
+            (return_value.vertices[i].y
                 * cosf(angle))
-            - (input->vertices[i].z
+            - (return_value.vertices[i].z
                 * sinf(angle));
         
         // Z = y*sin(theta) + z*cos(theta);
         return_value.vertices[i].z =
-            (input->vertices[i].y
+            (return_value.vertices[i].y
                 * sinf(angle)) +
-            (input->vertices[i].z
+            (return_value.vertices[i].z
                 * cosf(angle));
     }
-
-    assert(return_value.color[0] == input->color[0]);
-    assert(return_value.color[1] == input->color[1]);
-    assert(return_value.color[2] == input->color[2]);
-    assert(return_value.color[3] == input->color[3]);
-    assert(return_value.texturearray_i == input->texturearray_i);
+    
+    for (uint32_t v = 0; v < 3; v++) {
+        return_value.vertices[v].x += temporary_offset.x;
+        return_value.vertices[v].y += temporary_offset.y;
+        return_value.vertices[v].z += temporary_offset.z;
+    }
     
     return return_value;
 }
 
 zTriangle z_rotate_triangle(
     const zTriangle * input,
-    const float angle)
+    const float angle,
+    const zVertex temporary_offset)
 {
     zTriangle return_value = *input;
     
-    for(
-        uint32_t i = 0;
-        i < 3;
-        i++)
-    {
-        // Z = z; 
-        return_value.vertices[i].z =
-            input->vertices[i].z;
+    for (uint32_t v = 0; v < 3; v++) {
+        return_value.vertices[v].x -= temporary_offset.x;
+        return_value.vertices[v].y -= temporary_offset.y;
+        return_value.vertices[v].z -= temporary_offset.z;
+    }
+    
+    for (uint32_t i = 0; i < 3; i++) {
+        // Z = z;
         
         // X = x*cos(theta) - y*sin(theta);
         return_value.vertices[i].x =
-            (input->vertices[i].x
+            (return_value.vertices[i].x
                 * cosf(angle))
-            - (input->vertices[i].y
+            - (return_value.vertices[i].y
                 * sinf(angle));
         
         // Y = x*sin(theta) + y*cos(theta);
         return_value.vertices[i].y =
-            (input->vertices[i].y
+            (return_value.vertices[i].y
                 * cosf(angle))
-            + (input->vertices[i].x
+            + (return_value.vertices[i].x
                 * sinf(angle));
+    }
+    
+    for (uint32_t v = 0; v < 3; v++) {
+        return_value.vertices[v].x += temporary_offset.x;
+        return_value.vertices[v].y += temporary_offset.y;
+        return_value.vertices[v].z += temporary_offset.z;
     }
     
     return return_value;
@@ -787,32 +802,41 @@ zTriangle z_rotate_triangle(
 
 zTriangle y_rotate_triangle(
     const zTriangle * input,
-    const float angle)
+    const float angle,
+    const zVertex temporary_offset)
 {
     zTriangle return_value = *input;
+    
+    for (uint32_t v = 0; v < 3; v++) {
+        return_value.vertices[v].x += temporary_offset.x;
+        return_value.vertices[v].y += temporary_offset.y;
+        return_value.vertices[v].z += temporary_offset.z;
+    }
     
     for (
         uint32_t i = 0;
         i < 3;
         i++)
     {
-        // Y = y;
-        return_value.vertices[i].y =
-            input->vertices[i].y;
-        
         // X = x*cos(theta) + z*sin(theta);
         return_value.vertices[i].x =
-            (input->vertices[i].x
+            (return_value.vertices[i].x
                 * cosf(angle))
-            + (input->vertices[i].z
+            + (return_value.vertices[i].z
                 * sinf(angle));
         
         // Z = z*cos(theta) - x*sin(theta);
         return_value.vertices[i].z =
-            (input->vertices[i].z
+            (return_value.vertices[i].z
                 * cosf(angle))
-            - (input->vertices[i].x
+            - (return_value.vertices[i].x
                 * sinf(angle));
+    }
+    
+    for (uint32_t v = 0; v < 3; v++) {
+        return_value.vertices[v].x -= temporary_offset.x;
+        return_value.vertices[v].y -= temporary_offset.y;
+        return_value.vertices[v].z -= temporary_offset.z;
     }
     
     return return_value;
@@ -827,9 +851,9 @@ zTriangle translate_ztriangle(
     zTriangle return_value = *input;
     
     for (uint32_t i = 0; i < 3; i++) {
-        return_value.vertices[i].x -= by_x;
-        return_value.vertices[i].y -= by_y;
-        return_value.vertices[i].z -= by_z;
+        return_value.vertices[i].x += by_x;
+        return_value.vertices[i].y += by_y;
+        return_value.vertices[i].z += by_z;
     }
     
     return return_value;

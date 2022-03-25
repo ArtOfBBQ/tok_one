@@ -1,7 +1,7 @@
 #include "software_renderer.h"
 
-TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
-zVertex camera = {0.0f, 0.0f, 0.0f};
+TextureArray texture_arrays[TEXTUREARRAYS_SIZE + 1];
+zCamera camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
 void init_renderer() {
     // initialize global texture_arrays for texture mapping 
@@ -12,6 +12,9 @@ void init_renderer() {
     texture_arrays[1].filename = "sampletexture.png";
     texture_arrays[1].sprite_columns = 3;
     texture_arrays[1].sprite_rows = 2;
+    texture_arrays[BITMAP_TEXTUREARRAY_I].filename = "";
+    texture_arrays[BITMAP_TEXTUREARRAY_I].sprite_columns = 1;
+    texture_arrays[BITMAP_TEXTUREARRAY_I].sprite_rows = 1;
     
     FileBuffer * file_buffer;
     for (
@@ -19,6 +22,7 @@ void init_renderer() {
         i < TEXTUREARRAYS_SIZE;
         i++)
     {
+        if (i == BITMAP_TEXTUREARRAY_I) { continue; }
         printf(
             "trying to read file: %s\n",
             texture_arrays[i].filename);
@@ -41,30 +45,41 @@ void init_renderer() {
             texture_arrays[i].image->width);
     }
     
+    texture_arrays[BITMAP_TEXTUREARRAY_I].image = &bitmap;
+    
     // initialize zPolygon objects, the 3-D objects we're
     // planning to render
     zpolygons_to_render_size = 0;
     
     // objects part 1: load some cards from object file 
-    for (uint32_t i = 0; i < 2; i++) {
+    for (uint32_t i = 0; i < 3; i++) {
         uint32_t last_i = zpolygons_to_render_size;
         zpolygons_to_render_size += 1;
         zpolygons_to_render[last_i] =
-            load_from_obj_file("cardwithuvcoords.obj");
+            i == 2 ?
+            load_from_obj_file("teapot.obj")
+            : load_from_obj_file("cardwithuvcoords.obj");
         
         float base_y = i % 2 == 0 ? 0.0f : -5.0f;
         zpolygons_to_render[last_i]->x = -2.0f + (4.0f * i);
         zpolygons_to_render[last_i]->y =
-            base_y + (last_i * 7.0f);
-        zpolygons_to_render[last_i]->z = 9.0f;
-
+            i == 2 ?
+            0.0f
+            : base_y + (last_i * 7.0f);
+        zpolygons_to_render[last_i]->z = i == 2 ? -25.0f : 28.0f;
+        
         // change face texture but not the back texture
-        for (uint32_t t = 0; t < zpolygons_to_render[last_i]->triangles_size; t++)
+        for (
+            uint32_t t = 0;
+            t < zpolygons_to_render[last_i]->triangles_size;
+            t++)
         {
-            if (zpolygons_to_render[last_i]->triangles[t].texture_i == 2) 
+            if (
+                zpolygons_to_render[last_i]
+                    ->triangles[t].texture_i == 2) 
             {
-                zpolygons_to_render[last_i]->triangles[t].texture_i
-                    = i;
+                zpolygons_to_render[last_i]->triangles[t]
+                    .texture_i = i;
             }
         }
         
@@ -75,15 +90,17 @@ void init_renderer() {
         //         2.0f);
     }
     
-    // // objects 2: load some hard-coded cubes
-    // for (uint32_t i = 2; i < 3; i++) {
-    //     uint32_t last_i = zpolygons_to_render_size;
-    //     zpolygons_to_render[last_i] = get_box();
-    //     scale_zpolygon(
-    //         /* to_scale   : */ zpolygons_to_render[last_i],
-    //         /* new_height : */ 30.0f);
-    //     zpolygons_to_render_size += 1;
-    // }
+    // objects 2: load some hard-coded cubes
+    for (uint32_t i = 3; i < 4; i++) {
+        uint32_t last_i = zpolygons_to_render_size;
+        zpolygons_to_render[last_i] = get_box();
+        scale_zpolygon(
+            /* to_scale   : */
+                zpolygons_to_render[last_i],
+            /* new_height : */
+                30.0f);
+        zpolygons_to_render_size += 1;
+    }
     
     // initialize global zLightSource objects, to set up
     // our lighting for the scene
@@ -163,10 +180,10 @@ void software_render(
         i < (zpolygons_to_render_size - 1);
         i++)
     {
-        zpolygons_to_render[i]->x -= 0.005f;
-        zpolygons_to_render[i]->z_angle += (0.02f + (i * 0.02f));
-        zpolygons_to_render[i]->x_angle += (0.005f + (i * 0.001f));
-        zpolygons_to_render[i]->y_angle += 0.00015f;
+        // zpolygons_to_render[i]->x -= 0.005f;
+        // zpolygons_to_render[i]->z_angle += 0.03f;
+        zpolygons_to_render[i]->x_angle += 0.021f;
+        // zpolygons_to_render[i]->y_angle += 0.015f;
     }
     
     // move our light source
@@ -201,6 +218,10 @@ void software_render(
     
     // transform all triangles
     zTriangle triangles_to_draw[triangles_to_render];
+    zTriangle camera_y_rotated;
+    zTriangle camera_x_rotated;
+    zTriangle camera_z_rotated;
+    zTriangle camera_translated;
     zTriangle x_rotated;
     zTriangle y_rotated;
     zTriangle z_rotated;
@@ -214,28 +235,48 @@ void software_render(
         {
             assert(t < triangles_to_render);
             
+            zVertex no_offset = {0.0f, 0.0f, 0.0f};
+            assert(no_offset.x == 0.0f);
+            assert(no_offset.y == 0.0f);
+            assert(no_offset.z == 0.0f);
             x_rotated = x_rotate_triangle(
                 zpolygons_to_render[i]->triangles + j,
-                zpolygons_to_render[i]->x_angle);
+                zpolygons_to_render[i]->x_angle,
+                no_offset);
             y_rotated = y_rotate_triangle(
                 &x_rotated,
-                zpolygons_to_render[i]->y_angle);
+                zpolygons_to_render[i]->y_angle,
+                no_offset);
             z_rotated = z_rotate_triangle(
                 &y_rotated,
-                zpolygons_to_render[i]->z_angle);
+                zpolygons_to_render[i]->z_angle,
+                no_offset);
             
-            triangles_to_draw[t] =
+            camera_translated =
                 translate_ztriangle(
-                    &z_rotated,
+                    /* input: */
+                        &z_rotated,
                     /* x: */
-                        zpolygons_to_render[i]->x
-                            - camera.x,
+                        zpolygons_to_render[i]->x - camera.x,
                     /* y: */
-                        zpolygons_to_render[i]->y
-                            - camera.y,
+                        zpolygons_to_render[i]->y - camera.y,
                     /* z: */
-                        zpolygons_to_render[i]->z
-                            - camera.z);
+                        zpolygons_to_render[i]->z - camera.z);
+            
+            camera_y_rotated = y_rotate_triangle(
+                &camera_translated,
+                camera.y_angle,
+                no_offset);
+            camera_x_rotated = x_rotate_triangle(
+                &camera_y_rotated,
+                camera.x_angle,
+                no_offset);
+            camera_z_rotated = z_rotate_triangle(
+                &camera_x_rotated,
+                camera.z_angle,
+                no_offset);
+            
+            triangles_to_draw[t] = camera_z_rotated;
             t++;
         }
     }
@@ -254,7 +295,7 @@ void software_render(
         i -= 1)
     {
         // we're not using the camera because the entire world
-        // was translated to have the camera be at 0,0,0 
+        // was translated to have the camera be at 0,0,0
         zVertex origin;
         origin.x = 0.0f;
         origin.y = 0.0f;
@@ -265,8 +306,14 @@ void software_render(
                 triangles_to_draw + i,
                 0);
         
-        if (perspective_dot_product < 0.0f) {
-            
+        if (perspective_dot_product < 0.0f
+            && triangles_to_draw[i].vertices[0].z
+                > projection_constants.near
+            && triangles_to_draw[i].vertices[1].z
+                > projection_constants.near
+            && triangles_to_draw[i].vertices[2].z
+                > projection_constants.near)
+        {
             Vertex triangle_to_draw[3];
             
             for (
@@ -304,27 +351,6 @@ void software_render(
                     triangle_to_draw);
         }
     }
-}
-
-void draw_triangle(
-    Vertex * vertices_recipient,
-    uint32_t * vertex_count_recipient,
-    Vertex input[3])
-{
-    assert(vertices_recipient != NULL);
-    
-    uint32_t vertex_i = *vertex_count_recipient;
-    
-    vertices_recipient[vertex_i] = input[0];
-    vertex_i++;
-    
-    vertices_recipient[vertex_i] = input[1];
-    vertex_i++;
-    
-    vertices_recipient[vertex_i] = input[2];
-    vertex_i++;
-    
-    *vertex_count_recipient += 3;
 }
 
 void rotate_triangle(

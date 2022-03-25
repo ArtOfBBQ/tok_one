@@ -32,7 +32,6 @@ DecodedImage * extract_image(
     uint32_t start_x = 1 + ((x - 1) * slice_width);
     uint32_t start_y = 1 + ((y - 1) * slice_height);
     uint32_t end_y = start_y + slice_height;
-    uint32_t end_x = start_x + slice_width;
     
     uint32_t i = 0;
     for (uint32_t cur_y = start_y; cur_y < end_y; cur_y++)

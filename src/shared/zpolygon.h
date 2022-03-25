@@ -85,11 +85,17 @@ void ztriangle_to_2d(
     zTriangle * input);
 
 zTriangle x_rotate_triangle(
-    const zTriangle * input, const float angle);
+    const zTriangle * input,
+    const float angle,
+    const zVertex temporary_offset);
 zTriangle y_rotate_triangle(
-    const zTriangle * input, const float angle);
+    const zTriangle * input,
+    const float angle,
+    const zVertex temporary_offset);
 zTriangle z_rotate_triangle(
-    const zTriangle * input, const float angle);
+    const zTriangle * input,
+    const float angle,
+    const zVertex temporary_offset);
 
 zTriangle translate_ztriangle(
     const zTriangle * input,

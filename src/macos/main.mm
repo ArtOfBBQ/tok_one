@@ -4,13 +4,18 @@
 #include "../shared/platform_layer.h" 
 
 // shared functionality we can use
-#include "../shared/common.h"
 #include "../shared_apple/gpu.h"
+#include "../shared/common.h"
+#include "../shared/userinput.h"
 #include "../shared/window_size.h"
 #include "../shared/vertex_types.h"
 #include "../shared/zpolygon.h"
 #include "../shared/software_renderer.h"
+#include "../shared/bitmap_renderer.h"
 
+#define SHARED_APPLE_PLATFORM
+
+MetalKitViewDelegate * apple_gpu_delegate;
 
 @interface
 GameWindowDelegate: NSObject<NSWindowDelegate>
@@ -36,32 +41,7 @@ NSWindowWithCustomResponder: NSWindow
 
 - (void)keyDown:(NSEvent *)event
 {
-    switch (event.keyCode) {
-        case 123:
-            // left arrow key
-            camera.x -= 2.5f;
-            printf("new camera.x: %f\n", camera.x);
-            break;
-        case 124:
-            // right arrow key
-            camera.x += 2.5f;
-            printf("new camera.x: %f\n", camera.x);
-            break;
-        case 125:
-            // down arrow key
-            camera.z -= 2.5f;
-            printf("new camera.z: %f\n", camera.z);
-            break;
-        case 126:
-            // up arrow kez
-            camera.z += 2.5f;
-            printf("new camera.z: %f\n", camera.z);
-            break;
-        default:
-            NSLog(@"%hu",event.keyCode); 
-            printf("unrecognized code\n");
-            break;
-    }
+    register_keydown(event.keyCode);
 }
 @end
 
@@ -74,6 +54,7 @@ int main(int argc, const char * argv[])
     window_width = NSWidth(full_screen_rect);
     
     init_projection_constants();
+    bitmap_renderer_init();
     init_renderer();
     
     NSWindowWithCustomResponder *window =
@@ -102,25 +83,24 @@ int main(int argc, const char * argv[])
     
     window.contentView = mtk_view;
     
-    MetalKitViewDelegate *ViewDelegate =
+    MetalKitViewDelegate * apple_gpu_delegate =
         [[MetalKitViewDelegate alloc] init];
-    [mtk_view setDelegate: ViewDelegate];
+    [mtk_view setDelegate: apple_gpu_delegate];
     
     NSString * shader_lib_path = @"Shaders.metallib";
-    [ViewDelegate
+    [apple_gpu_delegate
         configureMetalWithDevice: metal_device
         andPixelFormat: mtk_view.colorPixelFormat
         fromFolder: shader_lib_path];
     
-   
     // this cruft makes the app a "foreground application"
     // capable of accepting key events 
     ProcessSerialNumber psn = {0, kCurrentProcess};
-    OSStatus status =
-        TransformProcessType(
-            &psn,
-            kProcessTransformToForegroundApplication);
-
+    // OSStatus status =
+    TransformProcessType(
+        &psn,
+        kProcessTransformToForegroundApplication);
+    
     // find the first responder class like so: 
     // NSLog(@"window first responder: %@", window.firstResponder);
     

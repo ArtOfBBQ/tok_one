@@ -99,7 +99,22 @@
     }
     
     _metal_textures = [[NSMutableArray alloc] init];
+
+    // initialize a single texture array for
+    // the global variable "bitmap"
+    // MTLTextureDescriptor * bitmap_descriptor =
+    //     [[MTLTextureDescriptor alloc] init];
+    // bitmap_descriptor.textureType = MTLTexture2D;
+    // bitmap_descriptor.pixelFormat =
+    //     MTLPixelFormatRGBA8Unorm;
+    // bitmap_descriptor.width = bitmap->image->width;
+    // bitmap_descriptor.height = bitmap->image->height;
+    // id<MTLTexture> bitmap_texture =
+    //     [metal_device
+    //         newTextureWithDescriptor:bitmap_descriptor];
     
+    // initialize a texture array for each object
+    // in the global var "texturearrays" 
     assert(TEXTUREARRAYS_SIZE > 0);
     for (uint32_t i = 0; i < TEXTUREARRAYS_SIZE; i++) {
         
@@ -107,9 +122,11 @@
             texture_arrays[i].sprite_rows *
                 texture_arrays[i].sprite_columns;
         printf(
-            "setting up texture %u with slice count: %u\n",
+            "setting up texture %u with slice cnt: %u [%u,%u]\n",
             i,
-            slice_count);
+            slice_count,
+            texture_arrays[i].image->width,
+            texture_arrays[i].image->height);
         
         MTLTextureDescriptor * texture_descriptor =
             [[MTLTextureDescriptor alloc] init]; 
@@ -146,7 +163,7 @@
                         /* texture_array: */ &texture_arrays[i],
                         /* x            : */ col_i,
                         /* y            : */ row_i);
-
+                
                 MTLRegion region = {
                     {
                         0,
@@ -189,6 +206,31 @@
     assert([_metal_textures count] > 0);
 }
 
+- (void)updateTextureArray: (int32_t)texturearray_i
+    atSlice: (int32_t)texture_i
+    withImg: (DecodedImage *)withImg
+{
+    MTLRegion region = {
+        { 0, 0, 0 },
+        { 1, 1, 1}};
+    
+    [_metal_textures[texturearray_i]
+        replaceRegion:
+            region
+        mipmapLevel:
+            0
+        slice:
+            texture_i
+        withBytes:
+            withImg->rgba_values
+        bytesPerRow:
+            withImg->width * 4
+        bytesPerImage:
+            /* docs: use 0 for anything other than
+               MTLTextureType3D textures */
+            0];
+}
+
 - (void)drawInMTKView:(MTKView *)view
 {
     // TODO: this only works on retina
@@ -207,6 +249,12 @@
     uint32_t vertices_for_gpu_size = 0;
     
     software_render(
+        /* next_gpu_workload: */
+            vertices_for_gpu,
+        /* next_gpu_workload_size: */
+            &vertices_for_gpu_size);
+
+    bitmap_render(
         /* next_gpu_workload: */
             vertices_for_gpu,
         /* next_gpu_workload_size: */
