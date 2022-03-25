@@ -31,5 +31,7 @@ MetalKitViewDelegate: NSObject<MTKViewDelegate>
     fromFolder: (NSString *)shader_lib_filepath;
 @end
 
+extern MetalKitViewDelegate * apple_gpu_delegate;
+
 #endif
 

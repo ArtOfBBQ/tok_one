@@ -15,8 +15,6 @@
 
 #define SHARED_APPLE_PLATFORM
 
-MetalKitViewDelegate * apple_gpu_delegate;
-
 @interface
 GameWindowDelegate: NSObject<NSWindowDelegate>
 @end
@@ -83,7 +81,7 @@ int main(int argc, const char * argv[])
     
     window.contentView = mtk_view;
     
-    MetalKitViewDelegate * apple_gpu_delegate =
+    apple_gpu_delegate =
         [[MetalKitViewDelegate alloc] init];
     [mtk_view setDelegate: apple_gpu_delegate];
     

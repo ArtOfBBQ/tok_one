@@ -1,5 +1,7 @@
 #import "gpu.h"
 
+MetalKitViewDelegate * apple_gpu_delegate = NULL;
+
 @implementation MetalKitViewDelegate
 {
     NSUInteger _currentFrameIndex;
@@ -212,7 +214,7 @@
 {
     MTLRegion region = {
         { 0, 0, 0 },
-        { 1, 1, 1}};
+        { withImg->width, withImg->height, 1}};
     
     [_metal_textures[texturearray_i]
         replaceRegion:
@@ -253,7 +255,7 @@
             vertices_for_gpu,
         /* next_gpu_workload_size: */
             &vertices_for_gpu_size);
-
+    
     bitmap_render(
         /* next_gpu_workload: */
             vertices_for_gpu,
