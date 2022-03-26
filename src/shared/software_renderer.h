@@ -12,19 +12,11 @@
 #include "bitmap_renderer.h"
 
 local_only uint32_t renderer_initialized = false;
-local_only zPolygon * zpolygons_to_render[1000];
-local_only uint32_t zpolygons_to_render_size;
+extern zPolygon * zpolygons_to_render[1000];
+extern uint32_t zpolygons_to_render_size;
 local_only zLightSource zlights_to_apply[50];
 local_only uint32_t zlights_to_apply_size;
 
-typedef struct zCamera {
-    float x;
-    float y;
-    float z;
-    float x_angle;
-    float y_angle;
-    float z_angle;
-} zCamera;
 extern zCamera camera;
 
 typedef struct TextureArray {

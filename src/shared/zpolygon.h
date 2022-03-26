@@ -27,6 +27,15 @@ extern ProjectionConstants projection_constants;
 
 void init_projection_constants(void);
 
+typedef struct zCamera {
+    float x;
+    float y;
+    float z;
+    float x_angle;
+    float y_angle;
+    float z_angle;
+} zCamera;
+
 typedef struct zLightSource {
     float x;
     float y;

@@ -256,7 +256,7 @@ MetalKitViewDelegate * apple_gpu_delegate = NULL;
         /* next_gpu_workload_size: */
             &vertices_for_gpu_size);
     
-    bitmap_render(
+    bitmap_blit(
         /* next_gpu_workload: */
             vertices_for_gpu,
         /* next_gpu_workload_size: */

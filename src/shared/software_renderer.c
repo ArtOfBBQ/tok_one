@@ -3,6 +3,9 @@
 TextureArray texture_arrays[TEXTUREARRAYS_SIZE + 1];
 zCamera camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
+zPolygon * zpolygons_to_render[1000];
+uint32_t zpolygons_to_render_size = 0;
+
 void init_renderer() {
     // initialize global texture_arrays for texture mapping 
     assert(TEXTUREARRAYS_SIZE > 0);
@@ -225,9 +228,15 @@ void software_render(
     zTriangle x_rotated;
     zTriangle y_rotated;
     zTriangle z_rotated;
+    minimap_clear();
     uint32_t t = 0;
-    for (uint32_t i = 0; i < zpolygons_to_render_size; i++)
+    for (
+        uint32_t i = 0;
+        i < zpolygons_to_render_size;
+        i++)
     {
+        minimap_add_zpolygon(zpolygons_to_render[i]);
+        
         for (
             uint32_t j = 0;
             j < zpolygons_to_render[i]->triangles_size;
@@ -275,11 +284,12 @@ void software_render(
                 &camera_x_rotated,
                 camera.z_angle,
                 no_offset);
-            
+             
             triangles_to_draw[t] = camera_z_rotated;
             t++;
         }
     }
+    minimap_add_camera(&camera);
     
     // sort all triangles so the most distant ones can be
     // drawn first 
