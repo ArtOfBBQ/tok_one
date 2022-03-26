@@ -2,6 +2,7 @@
 #define ZPOLYGON_H
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <math.h>
 #include <inttypes.h>
 #include <assert.h>
@@ -9,7 +10,6 @@
 #include "common.h"
 #include "vertex_types.h"
 #include "window_size.h"
-#include "platform_layer.h"
 
 // projection constants
 typedef struct ProjectionConstants {
@@ -116,7 +116,9 @@ zVertex get_ztriangle_normal(
     const zTriangle * input,
     const uint32_t at_vertex_i);
 
-zPolygon * load_from_obj_file(char * filename);
+zPolygon * load_from_obj(
+    char * rawdata,
+    uint64_t rawdata_size);
 
 void scale_zpolygon(
     zPolygon * to_scale,

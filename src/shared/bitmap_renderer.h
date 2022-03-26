@@ -23,23 +23,27 @@ exist.
 #include "draw_triangle.h"
 
 #define BITMAP_PIXELS_WIDTH 100
-extern DecodedImage bitmap;
+extern DecodedImage minimap;
+extern DecodedImage minimap2;
 
 void bitmap_renderer_init();
 
-void minimap_clear();
+void minimaps_clear();
 
-void minimap_add_zpolygon(
+void decodedimg_add_zpolygon(
+    DecodedImage * to_modify,
     zPolygon * to_add);
 
-void minimap_add_triangle(
+void decodedimg_add_triangle(
+    DecodedImage * to_modify,
     zTriangle * to_add);
 
-void minimap_add_camera(
+void decodedimg_add_camera(
+    DecodedImage * to_modify,
     zCamera * to_add);
 
 /* Draw bitmap(s) of pixels and add them to the gpu's workload */
-void bitmap_blit(
+void minimaps_blit(
     Vertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size);
 

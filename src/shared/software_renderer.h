@@ -45,5 +45,7 @@ void translate_triangle(
     const float y,
     const float z);
 
+zPolygon * load_from_obj_file(char * filename);
+
 #endif
 

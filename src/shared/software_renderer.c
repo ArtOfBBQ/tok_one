@@ -18,6 +18,9 @@ void init_renderer() {
     texture_arrays[BITMAP_TEXTUREARRAY_I].filename = "";
     texture_arrays[BITMAP_TEXTUREARRAY_I].sprite_columns = 1;
     texture_arrays[BITMAP_TEXTUREARRAY_I].sprite_rows = 1;
+    texture_arrays[MINIMAP2_TEXTUREARRAY_I].filename = "";
+    texture_arrays[MINIMAP2_TEXTUREARRAY_I].sprite_columns = 1;
+    texture_arrays[MINIMAP2_TEXTUREARRAY_I].sprite_rows = 1;
     
     FileBuffer * file_buffer;
     for (
@@ -25,7 +28,10 @@ void init_renderer() {
         i < TEXTUREARRAYS_SIZE;
         i++)
     {
+        // these 2 are updated manually, no image file to load
         if (i == BITMAP_TEXTUREARRAY_I) { continue; }
+        if (i == MINIMAP2_TEXTUREARRAY_I) { continue; }
+        
         printf(
             "trying to read file: %s\n",
             texture_arrays[i].filename);
@@ -48,7 +54,8 @@ void init_renderer() {
             texture_arrays[i].image->width);
     }
     
-    texture_arrays[BITMAP_TEXTUREARRAY_I].image = &bitmap;
+    texture_arrays[BITMAP_TEXTUREARRAY_I].image = &minimap;
+    texture_arrays[MINIMAP2_TEXTUREARRAY_I].image = &minimap2;
     
     // initialize zPolygon objects, the 3-D objects we're
     // planning to render
@@ -180,13 +187,17 @@ void software_render(
     // animate our objects
     for (
         uint32_t i = 0;
-        i < (zpolygons_to_render_size - 1);
+        i < (zpolygons_to_render_size);
         i++)
     {
         // zpolygons_to_render[i]->x -= 0.005f;
         // zpolygons_to_render[i]->z_angle += 0.03f;
-        zpolygons_to_render[i]->x_angle += 0.021f;
+        zpolygons_to_render[i]->z_angle = 0.0f;
+        // zpolygons_to_render[i]->x_angle += 0.021f;
+        zpolygons_to_render[i]->x_angle = 0.0f;
         // zpolygons_to_render[i]->y_angle += 0.015f;
+        zpolygons_to_render[i]->y_angle = 0.0f;
+        zpolygons_to_render[i]->y = 0.0f;
     }
     
     // move our light source
@@ -221,6 +232,7 @@ void software_render(
     
     // transform all triangles
     zTriangle triangles_to_draw[triangles_to_render];
+    zTriangle position_translated;
     zTriangle camera_y_rotated;
     zTriangle camera_x_rotated;
     zTriangle camera_z_rotated;
@@ -228,14 +240,16 @@ void software_render(
     zTriangle x_rotated;
     zTriangle y_rotated;
     zTriangle z_rotated;
-    minimap_clear();
+    minimaps_clear();
     uint32_t t = 0;
     for (
         uint32_t i = 0;
         i < zpolygons_to_render_size;
         i++)
     {
-        minimap_add_zpolygon(zpolygons_to_render[i]);
+        decodedimg_add_zpolygon(
+            &minimap2,
+            zpolygons_to_render[i]);
         
         for (
             uint32_t j = 0;
@@ -248,6 +262,7 @@ void software_render(
             assert(no_offset.x == 0.0f);
             assert(no_offset.y == 0.0f);
             assert(no_offset.z == 0.0f);
+            
             x_rotated = x_rotate_triangle(
                 zpolygons_to_render[i]->triangles + j,
                 zpolygons_to_render[i]->x_angle,
@@ -261,35 +276,45 @@ void software_render(
                 zpolygons_to_render[i]->z_angle,
                 no_offset);
             
-            camera_translated =
-                translate_ztriangle(
-                    /* input: */
-                        &z_rotated,
-                    /* x: */
-                        zpolygons_to_render[i]->x - camera.x,
-                    /* y: */
-                        zpolygons_to_render[i]->y - camera.y,
-                    /* z: */
-                        zpolygons_to_render[i]->z - camera.z);
+            
+            position_translated = translate_ztriangle(
+                /* input: */
+                    &z_rotated,
+                /* x: */
+                    zpolygons_to_render[i]->x - camera.x,
+                /* y: */
+                    zpolygons_to_render[i]->y - camera.y,
+                /* z: */
+                    zpolygons_to_render[i]->z - camera.z);
             
             camera_y_rotated = y_rotate_triangle(
-                &camera_translated,
+                &position_translated,
                 camera.y_angle,
                 no_offset);
+            assert(camera.x_angle == 0.0f);
             camera_x_rotated = x_rotate_triangle(
                 &camera_y_rotated,
                 camera.x_angle,
                 no_offset);
+            assert(camera.z_angle == 0.0f);
             camera_z_rotated = z_rotate_triangle(
                 &camera_x_rotated,
                 camera.z_angle,
                 no_offset);
-             
+            
+            decodedimg_add_triangle(&minimap, &camera_z_rotated);
             triangles_to_draw[t] = camera_z_rotated;
             t++;
         }
     }
-    minimap_add_camera(&camera);
+    
+    // minimap_add_camera(&camera);
+    zCamera imaginary_camera_at_origin;
+    imaginary_camera_at_origin.x = 0.0f;
+    imaginary_camera_at_origin.y = 0.0f;
+    imaginary_camera_at_origin.z = 0.0f;
+    decodedimg_add_camera(&minimap, &imaginary_camera_at_origin);
+    decodedimg_add_camera(&minimap2, &camera);
     
     // sort all triangles so the most distant ones can be
     // drawn first 
@@ -375,5 +400,19 @@ void rotate_triangle(
             (-sinf(angle) * to_rotate[i].x)
                 + (cosf(angle) * to_rotate[i].y);
     }
+}
+
+zPolygon * load_from_obj_file(char * filename)
+{
+    FileBuffer * buffer = platform_read_file(filename);
+    
+    zPolygon * return_value = load_from_obj(
+        /* rawdata     : */ buffer->contents,
+        /* rawdata_size: */ buffer->size);
+
+    free(buffer->contents);
+    free(buffer);
+    
+    return return_value;
 }
 

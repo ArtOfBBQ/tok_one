@@ -102,19 +102,6 @@ MetalKitViewDelegate * apple_gpu_delegate = NULL;
     
     _metal_textures = [[NSMutableArray alloc] init];
 
-    // initialize a single texture array for
-    // the global variable "bitmap"
-    // MTLTextureDescriptor * bitmap_descriptor =
-    //     [[MTLTextureDescriptor alloc] init];
-    // bitmap_descriptor.textureType = MTLTexture2D;
-    // bitmap_descriptor.pixelFormat =
-    //     MTLPixelFormatRGBA8Unorm;
-    // bitmap_descriptor.width = bitmap->image->width;
-    // bitmap_descriptor.height = bitmap->image->height;
-    // id<MTLTexture> bitmap_texture =
-    //     [metal_device
-    //         newTextureWithDescriptor:bitmap_descriptor];
-    
     // initialize a texture array for each object
     // in the global var "texturearrays" 
     assert(TEXTUREARRAYS_SIZE > 0);
@@ -123,6 +110,7 @@ MetalKitViewDelegate * apple_gpu_delegate = NULL;
         uint32_t slice_count =
             texture_arrays[i].sprite_rows *
                 texture_arrays[i].sprite_columns;
+        
         printf(
             "setting up texture %u with slice cnt: %u [%u,%u]\n",
             i,
@@ -256,7 +244,7 @@ MetalKitViewDelegate * apple_gpu_delegate = NULL;
         /* next_gpu_workload_size: */
             &vertices_for_gpu_size);
     
-    bitmap_blit(
+    minimaps_blit(
         /* next_gpu_workload: */
             vertices_for_gpu,
         /* next_gpu_workload_size: */

@@ -1,52 +1,75 @@
 #include "bitmap_renderer.h"
 
-DecodedImage bitmap;
+DecodedImage minimap;
+DecodedImage minimap2;
 
 void bitmap_renderer_init() {
-    printf("bitmap_renderer_init()...\n");
-    bitmap.width = BITMAP_PIXELS_WIDTH;
-    bitmap.height = BITMAP_PIXELS_WIDTH;
-    bitmap.rgba_values_size = bitmap.height * bitmap.width * 4;
-    bitmap.rgba_values = malloc(bitmap.rgba_values_size);
+    minimap.width = BITMAP_PIXELS_WIDTH;
+    minimap.height = BITMAP_PIXELS_WIDTH;
+    minimap.rgba_values_size =
+        minimap.height * minimap.width * 4;
+    minimap.rgba_values = malloc(minimap.rgba_values_size);
+    
+    minimap2.width = BITMAP_PIXELS_WIDTH;
+    minimap2.height = BITMAP_PIXELS_WIDTH;
+    minimap2.rgba_values_size =
+        minimap2.height * minimap2.width * 4;
+    minimap2.rgba_values =
+        malloc(minimap2.rgba_values_size);
     
     for (
         uint32_t i = 0;
-        i < bitmap.rgba_values_size;
+        i < minimap.rgba_values_size;
         i += 4)
     {
-        bitmap.rgba_values[i] = i % 50;
-        bitmap.rgba_values[i+1] = 25;
-        bitmap.rgba_values[i+2] = (i + 125) % 75;
-        bitmap.rgba_values[i+3] = 255;
+        minimap.rgba_values[i+0] = i % 50;
+        minimap.rgba_values[i+1] = 25;
+        minimap.rgba_values[i+2] = (i + 125) % 75;
+        minimap.rgba_values[i+3] = 255;
+        
+        minimap2.rgba_values[i+0] = i % 50;
+        minimap2.rgba_values[i+1] = 25;
+        minimap2.rgba_values[i+2] = (i + 125) % 75;
+        minimap2.rgba_values[i+3] = 255;
     }
 }
 
-void minimap_clear() {
+void minimaps_clear() {
     for (
         uint32_t i = 0;
-        i < bitmap.rgba_values_size;
+        i < minimap.rgba_values_size;
         i += 4)
     {
         if
         (
-            i % (bitmap.width * 4) == 0
+            i % (minimap.width * 4) == 0
             ||
-            (i % (bitmap.width * 4)) == ((bitmap.width * 4) - 4)
+            (i % (minimap.width * 4)) == ((minimap.width * 4) - 4)
             ||
-            i / (bitmap.width * 4) == 0
+            i / (minimap.width * 4) == 0
             ||
-            (i / (bitmap.width * 4) == (bitmap.height - 1))
+            (i / (minimap.width * 4) == (minimap.height - 1))
         )
         {
-            bitmap.rgba_values[i] = 220;
-            bitmap.rgba_values[i+1] = 220;
-            bitmap.rgba_values[i+2] = 220;
-            bitmap.rgba_values[i+3] = 255;
+            minimap.rgba_values[i] = 220;
+            minimap.rgba_values[i+1] = 220;
+            minimap.rgba_values[i+2] = 220;
+            minimap.rgba_values[i+3] = 255;
+            
+            minimap2.rgba_values[i] = 220;
+            minimap2.rgba_values[i+1] = 220;
+            minimap2.rgba_values[i+2] = 220;
+            minimap2.rgba_values[i+3] = 255;
         } else {
-            bitmap.rgba_values[i] = 30;
-            bitmap.rgba_values[i+1] = 30;
-            bitmap.rgba_values[i+2] = 30;
-            bitmap.rgba_values[i+3] = 255;
+            minimap.rgba_values[i] = 30;
+            minimap.rgba_values[i+1] = 30;
+            minimap.rgba_values[i+2] = 30;
+            minimap.rgba_values[i+3] = 255;
+            
+            minimap2.rgba_values[i] = 30;
+            minimap2.rgba_values[i+1] = 30;
+            minimap2.rgba_values[i+2] = 30;
+            minimap2.rgba_values[i+3] = 255;
         }
     }
 }
@@ -72,14 +95,14 @@ uint32_t img_xy_to_pixel(
     return return_value;
 }
 
-void minimap_add_object(
+void decodedimg_add_object(
+    DecodedImage * to_modify,
     const float x,
     const float y,
     const uint8_t red,
     const uint8_t green,
     const uint8_t blue)
 {
-    printf("minimap_add_object()\n");
     uint32_t cam_reach = BITMAP_PIXELS_WIDTH / 2;
     
     int32_t i_x = (uint32_t)(x + cam_reach);
@@ -92,49 +115,22 @@ void minimap_add_object(
     uint32_t ui_x = (uint32_t)i_x;
     uint32_t ui_y = (uint32_t)i_y;
     
-    /*
-    printf(
-        "converted floats [%f,%f] to ints [%i,%i] then uints [%u,%u]\n",
-        x,
-        y,
-        i_x,
-        i_y,
-        ui_x,
-        ui_y);
-    */
-
-    if (ui_x < 1 || ui_x >= bitmap.width) { return; }
-    if (ui_y < 1 || ui_y >= bitmap.height) { return; }
+    if (ui_x < 1 || ui_x >= to_modify->width) { return; }
+    if (ui_y < 1 || ui_y >= to_modify->height) { return; }
     
     uint32_t location = img_xy_to_pixel(
         /* x: */ ui_x,
         /* y: */ ui_y,
-        /* img: */ &bitmap);
+        /* img: */ to_modify);
     
-    bitmap.rgba_values[location] = 255;
-    bitmap.rgba_values[location + 1] = red;
-    bitmap.rgba_values[location + 2] = green;
-    bitmap.rgba_values[location + 3] = blue;
-    printf("end of minimap_add_object\n");
+    to_modify->rgba_values[location] = 255;
+    to_modify->rgba_values[location + 1] = red;
+    to_modify->rgba_values[location + 2] = green;
+    to_modify->rgba_values[location + 3] = blue;
 }
 
-void minimap_add_zpolygon(
-    zPolygon * to_add)
-{
-    if (to_add == NULL) { return; }
-    printf("adding zpolygon at [%f,%f]\n",
-        to_add->x,
-        to_add->z);
-    
-    minimap_add_object(
-        to_add->x,
-        to_add->z,
-        255,
-        255,
-        255);
-}
-
-void minimap_add_triangle(
+void decodedimg_add_triangle(
+    DecodedImage * to_modify,
     zTriangle * to_add)
 {
     if (to_add == NULL) { return; }
@@ -148,7 +144,8 @@ void minimap_add_triangle(
         to_add->vertices[1].z +
         to_add->vertices[2].z) / 3.0f;
     
-    minimap_add_object(
+    decodedimg_add_object(
+        to_modify,
         avg_x,
         avg_z,
         255,
@@ -156,10 +153,27 @@ void minimap_add_triangle(
         255);
 }
 
-void minimap_add_camera(
+void decodedimg_add_zpolygon(
+    DecodedImage * to_modify,
+    zPolygon * to_add)
+{
+    if (to_add == NULL) { return; }
+    
+    decodedimg_add_object(
+        to_modify,
+        to_add->x,
+        to_add->z,
+        255,
+        255,
+        255);
+}
+
+void decodedimg_add_camera(
+    DecodedImage * to_modify,
     zCamera * to_add)
 {
-    minimap_add_object(
+    decodedimg_add_object(
+        to_modify,
         to_add->x,
         to_add->z,
         255,
@@ -167,8 +181,8 @@ void minimap_add_camera(
         255);
 }
 
-/* Draw bitmap(s) of pixels and add them to the gpu's workload */
-void bitmap_blit(
+/* Draw 2 minimaps and add them to the gpu's workload */
+void minimaps_blit(
     Vertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size)
 {
@@ -209,10 +223,6 @@ void bitmap_blit(
     topleft[1].z = 0.0f;
     topleft[1].texturearray_i = BITMAP_TEXTUREARRAY_I;
     topleft[1].texture_i = 0;
-    topleft[1].RGBA[0] = 0.5f;
-    topleft[1].RGBA[1] = 0.5f;
-    topleft[1].RGBA[2] = 0.2f;
-    topleft[1].RGBA[3] = 1.0f;
     topleft[1].uv[0] = 1.0f;
     topleft[1].uv[1] = 0.0f;
     topleft[1].lighting = 0.5f;
@@ -222,10 +232,6 @@ void bitmap_blit(
     topleft[2].z = 0.0f;
     topleft[2].texturearray_i = BITMAP_TEXTUREARRAY_I;
     topleft[2].texture_i = 0;
-    topleft[2].RGBA[0] = 1.0f;
-    topleft[2].RGBA[1] = 0.2f;
-    topleft[2].RGBA[2] = 0.2f;
-    topleft[2].RGBA[3] = 1.0f;
     topleft[2].uv[0] = 0.0f;
     topleft[2].uv[1] = 1.0f;
     topleft[2].lighting = 0.5f;
@@ -236,10 +242,6 @@ void bitmap_blit(
     bottomright[0].z = 0.0f;
     bottomright[0].texturearray_i = BITMAP_TEXTUREARRAY_I;
     bottomright[0].texture_i = 0;
-    bottomright[0].RGBA[0] = 1.0f;
-    bottomright[0].RGBA[1] = 0.0f;
-    bottomright[0].RGBA[2] = 0.0f;
-    bottomright[0].RGBA[3] = 1.0f;
     bottomright[0].uv[0] = 1.0f;
     bottomright[0].uv[1] = 0.0f;
     bottomright[0].lighting = 0.5f;
@@ -249,10 +251,6 @@ void bitmap_blit(
     bottomright[1].z = 0.0f;
     bottomright[1].texturearray_i = BITMAP_TEXTUREARRAY_I;
     bottomright[1].texture_i = 0;
-    bottomright[1].RGBA[0] = 1.0f;
-    bottomright[1].RGBA[1] = 0.0f;
-    bottomright[1].RGBA[2] = 0.0f;
-    bottomright[1].RGBA[3] = 1.0f;
     bottomright[1].uv[0] = 0.0f;
     bottomright[1].uv[1] = 1.0f;
     bottomright[1].lighting = 0.5f;
@@ -262,18 +260,48 @@ void bitmap_blit(
     bottomright[2].z = 0.0f;
     bottomright[2].texturearray_i = BITMAP_TEXTUREARRAY_I;
     bottomright[2].texture_i = 0;
-    bottomright[2].RGBA[0] = 1.0f;
-    bottomright[2].RGBA[1] = 0.0f;
-    bottomright[2].RGBA[2] = 0.0f;
-    bottomright[2].RGBA[3] = 1.0f;
     bottomright[2].uv[0] = 1.0f;
     bottomright[2].uv[1] = 1.0f;
     bottomright[2].lighting = 0.5f;
+
+    Vertex minimap2_topleft[3];
+    Vertex minimap2_bottomright[3];
+    for (uint32_t i = 0; i < 3; i++) {
+
+        minimap2_topleft[i].lighting = 0.5f;
+        minimap2_bottomright[i].lighting = 0.5f;
+        minimap2_topleft[i].x = topleft[i].x;
+        minimap2_topleft[i].y = topleft[i].y;
+        minimap2_topleft[i].z = topleft[i].z;
+        minimap2_bottomright[i].x = bottomright[i].x;
+        minimap2_bottomright[i].y = bottomright[i].y;
+        minimap2_bottomright[i].z = bottomright[i].z;
+        
+        minimap2_topleft[i].uv[0] = topleft[i].uv[0];
+        minimap2_topleft[i].uv[1] = topleft[i].uv[1];
+        minimap2_bottomright[i].uv[0] = bottomright[i].uv[0];
+        minimap2_bottomright[i].uv[1] = bottomright[i].uv[1];
+        
+        minimap2_topleft[i].texturearray_i =
+            MINIMAP2_TEXTUREARRAY_I;
+        minimap2_bottomright[i].texturearray_i =
+            MINIMAP2_TEXTUREARRAY_I;
+        minimap2_topleft[i].texture_i = 0;
+        minimap2_bottomright[i].texture_i = 0;
+        minimap2_topleft[i].y +=
+            minimap_offset + minimap_height;
+        minimap2_bottomright[i].y +=
+            minimap_offset + minimap_height;
+    }
     
     platform_update_gpu_texture(
         /* texturearray_i: */ BITMAP_TEXTUREARRAY_I,
         /* texture_i: */ 0,
-        /* with_img: */ &bitmap);
+        /* with_img: */ &minimap);
+    platform_update_gpu_texture(
+        /* texturearray_i: */ MINIMAP2_TEXTUREARRAY_I,
+        /* texture_i: */ 0,
+        /* with_img: */ &minimap2);
     
     draw_triangle(
         /* vertices_recipient: */
@@ -290,5 +318,21 @@ void bitmap_blit(
             next_gpu_workload_size,
         /* input: */
             bottomright);
+
+    draw_triangle(
+        /* vertices_recipient: */
+            next_gpu_workload,
+        /* vertex_count_recipient: */
+            next_gpu_workload_size,
+        /* input: */
+            minimap2_topleft);
+
+    draw_triangle(
+        /* vertices_recipient: */
+            next_gpu_workload,
+        /* vertex_count_recipient: */
+            next_gpu_workload_size,
+        /* input: */
+            minimap2_bottomright);
 }
 
