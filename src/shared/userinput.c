@@ -1,5 +1,4 @@
 #include "userinput.h"
-#include "software_renderer.h"
 
 void register_keydown(uint32_t key_id)
 {
@@ -40,22 +39,10 @@ void register_keydown(uint32_t key_id)
         case 126:
             // up arrow key
             
-            // TODO: movement that incorporates x and z angled
-            // camera
+            zcamera_move_forward(
+                &camera,
+                cam_speed);
             
-            // - we know the y angle and the hypotenuse,
-            //   we want the adjacent to find out how much +z
-            // CAH -> cosine(angle) = adjacent / hypotenuse
-            // therefore, cosine(angle) * hypotenuse = adjacent
-            camera.z += cosf(camera.y_angle) * cam_speed;
-            
-            // for the x movement, we want the opposite instead
-            // of the adjacent
-            // SOH -> sine(angle) = opposite / hypotenuse
-            // therefore, sine(angle) * hypotenuse = opposite
-            camera.x += sinf(camera.y_angle) * cam_speed;
-            
-            // for the z movement, 
             break;
         default:
             printf("unrecognized code\n");

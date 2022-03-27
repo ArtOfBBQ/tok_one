@@ -197,7 +197,7 @@ void decodedimg_add_camera(
     // if S = O/H then O = S * H
     for (
         float hypotenuse = 5.0f;
-        hypotenuse < 21.0f;
+        hypotenuse < 41.0f;
         hypotenuse += 5.0f)
     {
         float angle_right =

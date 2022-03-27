@@ -1,7 +1,6 @@
 #include "software_renderer.h"
 
 TextureArray texture_arrays[TEXTUREARRAYS_SIZE + 1];
-zCamera camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
 zPolygon * zpolygons_to_render[1000];
 uint32_t zpolygons_to_render_size = 0;
@@ -190,14 +189,10 @@ void software_render(
         i < (zpolygons_to_render_size);
         i++)
     {
-        // zpolygons_to_render[i]->x -= 0.005f;
-        // zpolygons_to_render[i]->z_angle += 0.03f;
-        zpolygons_to_render[i]->z_angle = 0.0f;
-        // zpolygons_to_render[i]->x_angle += 0.021f;
-        zpolygons_to_render[i]->x_angle = 0.0f;
-        // zpolygons_to_render[i]->y_angle += 0.015f;
-        zpolygons_to_render[i]->y_angle = 0.0f;
-        zpolygons_to_render[i]->y = 0.0f;
+        zpolygons_to_render[i]->x -= 0.005f;
+        zpolygons_to_render[i]->z_angle += 0.03f;
+        zpolygons_to_render[i]->x_angle += 0.021f;
+        zpolygons_to_render[i]->y_angle += 0.015f;
     }
     
     // move our light source
@@ -286,15 +281,15 @@ void software_render(
             
             camera_y_rotated = y_rotate_triangle(
                 &position_translated,
-                camera.y_angle,
+                -camera.y_angle,
                 no_offset);
             camera_x_rotated = x_rotate_triangle(
                 &camera_y_rotated,
-                camera.x_angle,
+                -camera.x_angle,
                 no_offset);
             camera_z_rotated = z_rotate_triangle(
                 &camera_x_rotated,
-                camera.z_angle,
+                -camera.z_angle,
                 no_offset);
             
             decodedimg_add_triangle(&minimap, &camera_z_rotated);

@@ -17,8 +17,6 @@ extern uint32_t zpolygons_to_render_size;
 local_only zLightSource zlights_to_apply[50];
 local_only uint32_t zlights_to_apply_size;
 
-extern zCamera camera;
-
 typedef struct TextureArray {
     char * filename;
     DecodedImage * image;

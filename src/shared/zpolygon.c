@@ -2,6 +2,8 @@
 
 ProjectionConstants projection_constants = {};
 
+zCamera camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+
 void init_projection_constants() {
     
     if (window_height < 50.0f || window_width < 50.0f) {
@@ -1033,5 +1035,45 @@ float get_visibility_rating(
     return dot_of_vertices(
         normal,
         triangle_minus_observer);
+}
+
+void zcamera_move_forward(
+    zCamera * to_move,
+    const float distance)
+{
+    // pick a point that would be in front of the camera
+    // if it was not angled in any way
+    float new_x = 0.0f;
+    float new_y = 0.0f;
+    float new_z = distance;
+   
+    // rotate around the origin 
+    // TODO: refactor rotation to accept vertices
+    zTriangle temp;
+    temp.vertices[0].x = new_x;
+    temp.vertices[0].y = new_y;
+    temp.vertices[0].z = new_z;
+    
+    zVertex no_offset;
+    no_offset.x = 0.0f;
+    no_offset.y = 0.0f;
+    no_offset.z = 0.0f;
+    zTriangle x_rotated = x_rotate_triangle(
+        &temp,
+        camera.x_angle,
+        no_offset);
+    zTriangle y_rotated = y_rotate_triangle(
+        &x_rotated,
+        camera.y_angle,
+        no_offset);
+    zTriangle final = z_rotate_triangle(
+        &y_rotated,
+        camera.z_angle,
+        no_offset);
+    
+    // add to the camera's current position
+    to_move->x += final.vertices[0].x;
+    to_move->y += final.vertices[0].y;
+    to_move->z += final.vertices[0].z;
 }
 

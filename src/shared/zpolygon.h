@@ -35,6 +35,7 @@ typedef struct zCamera {
     float y_angle;
     float z_angle;
 } zCamera;
+extern zCamera camera;
 
 typedef struct zLightSource {
     float x;
@@ -161,6 +162,10 @@ float get_visibility_rating(
 float dot_of_vertices(
     const zVertex vertex_1,
     const zVertex vertex_2);
+
+void zcamera_move_forward(
+    zCamera * to_move,
+    const float distance);
 
 #endif
 
