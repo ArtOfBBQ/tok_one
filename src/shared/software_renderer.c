@@ -259,9 +259,6 @@ void software_render(
             assert(t < triangles_to_render);
             
             zVertex no_offset = {0.0f, 0.0f, 0.0f};
-            assert(no_offset.x == 0.0f);
-            assert(no_offset.y == 0.0f);
-            assert(no_offset.z == 0.0f);
             
             x_rotated = x_rotate_triangle(
                 zpolygons_to_render[i]->triangles + j,
@@ -291,12 +288,10 @@ void software_render(
                 &position_translated,
                 camera.y_angle,
                 no_offset);
-            assert(camera.x_angle == 0.0f);
             camera_x_rotated = x_rotate_triangle(
                 &camera_y_rotated,
                 camera.x_angle,
                 no_offset);
-            assert(camera.z_angle == 0.0f);
             camera_z_rotated = z_rotate_triangle(
                 &camera_x_rotated,
                 camera.z_angle,
@@ -313,6 +308,9 @@ void software_render(
     imaginary_camera_at_origin.x = 0.0f;
     imaginary_camera_at_origin.y = 0.0f;
     imaginary_camera_at_origin.z = 0.0f;
+    imaginary_camera_at_origin.x_angle = 0.0f;
+    imaginary_camera_at_origin.y_angle = 0.0f;
+    imaginary_camera_at_origin.z_angle = 0.0f;
     decodedimg_add_camera(&minimap, &imaginary_camera_at_origin);
     decodedimg_add_camera(&minimap2, &camera);
     

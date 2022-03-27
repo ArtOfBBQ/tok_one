@@ -723,42 +723,38 @@ zTriangle x_rotate_triangle(
     
     if (angle == 0.0f) {
         return return_value;
-    } 
-    
-    assert(0);
-    
-    for (uint32_t v = 0; v < 3; v++) {
-        return_value.vertices[v].x -= temporary_offset.x;
-        return_value.vertices[v].y -= temporary_offset.y;
-        return_value.vertices[v].z -= temporary_offset.z;
     }
+    
+    float cosangle = cosf(angle);
+    float sinangle = sinf(angle);
     
     for (
         uint32_t i = 0;
         i < 3;
         i++)
     {
+        return_value.vertices[i].x -= temporary_offset.x;
+        return_value.vertices[i].y -= temporary_offset.y;
+        return_value.vertices[i].z -= temporary_offset.z;
+        
         // X = x
         
         // Y = y*cos(theta) - z*sin(theta); 
-        return_value.vertices[i].y =
-            (return_value.vertices[i].y
-                * cosf(angle))
-            - (return_value.vertices[i].z
-                * sinf(angle));
+        float new_y =
+            (return_value.vertices[i].y * cosangle)
+            - (return_value.vertices[i].z * sinangle);
         
         // Z = y*sin(theta) + z*cos(theta);
-        return_value.vertices[i].z =
-            (return_value.vertices[i].y
-                * sinf(angle)) +
-            (return_value.vertices[i].z
-                * cosf(angle));
-    }
-    
-    for (uint32_t v = 0; v < 3; v++) {
-        return_value.vertices[v].x += temporary_offset.x;
-        return_value.vertices[v].y += temporary_offset.y;
-        return_value.vertices[v].z += temporary_offset.z;
+        float new_z =
+            (return_value.vertices[i].y * sinangle) +
+            (return_value.vertices[i].z * cosangle);
+        
+        return_value.vertices[i].y = new_y;
+        return_value.vertices[i].z = new_z;
+        
+        return_value.vertices[i].x += temporary_offset.x;
+        return_value.vertices[i].y += temporary_offset.y;
+        return_value.vertices[i].z += temporary_offset.z;
     }
     
     return return_value;
@@ -775,36 +771,32 @@ zTriangle z_rotate_triangle(
         return return_value;
     }
     
-    assert(0);
-    
-    for (uint32_t v = 0; v < 3; v++) {
-        return_value.vertices[v].x -= temporary_offset.x;
-        return_value.vertices[v].y -= temporary_offset.y;
-        return_value.vertices[v].z -= temporary_offset.z;
-    }
+    float cosangle = cosf(angle);
+    float sinangle = sinf(angle);
     
     for (uint32_t i = 0; i < 3; i++) {
+        return_value.vertices[i].x -= temporary_offset.x;
+        return_value.vertices[i].y -= temporary_offset.y;
+        return_value.vertices[i].z -= temporary_offset.z;
+        
         // Z = z;
         
         // X = x*cos(theta) - y*sin(theta);
-        return_value.vertices[i].x =
-            (return_value.vertices[i].x
-                * cosf(angle))
-            - (return_value.vertices[i].y
-                * sinf(angle));
+        float new_x =
+            (return_value.vertices[i].x * cosangle)
+            - (return_value.vertices[i].y * sinangle);
         
         // Y = x*sin(theta) + y*cos(theta);
-        return_value.vertices[i].y =
-            (return_value.vertices[i].y
-                * cosf(angle))
-            + (return_value.vertices[i].x
-                * sinf(angle));
-    }
-    
-    for (uint32_t v = 0; v < 3; v++) {
-        return_value.vertices[v].x += temporary_offset.x;
-        return_value.vertices[v].y += temporary_offset.y;
-        return_value.vertices[v].z += temporary_offset.z;
+        float new_y =
+            (return_value.vertices[i].y * cosangle)
+            + (return_value.vertices[i].x * sinangle);
+        
+        return_value.vertices[i].x = new_x;
+        return_value.vertices[i].y = new_y;
+        
+        return_value.vertices[i].x += temporary_offset.x;
+        return_value.vertices[i].y += temporary_offset.y;
+        return_value.vertices[i].z += temporary_offset.z;
     }
     
     return return_value;
@@ -818,7 +810,7 @@ zTriangle y_rotate_triangle(
     zTriangle return_value = *input;
     
     if (angle == 0.0f) { return return_value; }
-
+    
     float cosangle = cosf(angle);
     float sinangle = sinf(angle);
     
@@ -832,19 +824,22 @@ zTriangle y_rotate_triangle(
         return_value.vertices[i].z += temporary_offset.z;
         
         // X = x*cos(theta) + z*sin(theta);
-        return_value.vertices[i].x =
+        float new_x =
             (return_value.vertices[i].x
                 * cosangle)
             + (return_value.vertices[i].z
                 * sinangle);
         
         // Z = z*cos(theta) - x*sin(theta);
-        return_value.vertices[i].z =
+        float new_z =
             (return_value.vertices[i].z
                 * cosangle)
             - (return_value.vertices[i].x
                 * sinangle);
-
+        
+        return_value.vertices[i].x = new_x;
+        return_value.vertices[i].z = new_z;
+        
         return_value.vertices[i].x += temporary_offset.x;
         return_value.vertices[i].y += temporary_offset.y;
         return_value.vertices[i].z += temporary_offset.z;

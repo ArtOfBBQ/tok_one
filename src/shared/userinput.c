@@ -1,12 +1,13 @@
 #include "userinput.h"
 #include "software_renderer.h"
 
-void register_keydown(uint32_t key_id) {
-    printf("register_keydown: %u\n", key_id);
+void register_keydown(uint32_t key_id)
+{
     float cam_speed = 1.0f;
-    float cam_rotation_speed = 0.04f;
+    float cam_rotation_speed = 0.15f;
     
-    switch (key_id) {
+    switch (key_id)
+    {
         case 0:
             // 'A' key
             camera.x_angle += cam_rotation_speed;

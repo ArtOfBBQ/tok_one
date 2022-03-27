@@ -95,7 +95,7 @@ uint32_t img_xy_to_pixel(
     return return_value;
 }
 
-void decodedimg_add_object(
+void decodedimg_add_pixel(
     DecodedImage * to_modify,
     const float x,
     const float y,
@@ -144,7 +144,7 @@ void decodedimg_add_triangle(
         to_add->vertices[1].z +
         to_add->vertices[2].z) / 3.0f;
     
-    decodedimg_add_object(
+    decodedimg_add_pixel(
         to_modify,
         avg_x,
         avg_z,
@@ -159,7 +159,7 @@ void decodedimg_add_zpolygon(
 {
     if (to_add == NULL) { return; }
     
-    decodedimg_add_object(
+    decodedimg_add_pixel(
         to_modify,
         to_add->x,
         to_add->z,
@@ -172,13 +172,69 @@ void decodedimg_add_camera(
     DecodedImage * to_modify,
     zCamera * to_add)
 {
-    decodedimg_add_object(
+    decodedimg_add_pixel(
         to_modify,
         to_add->x,
         to_add->z,
         255,
         0,
         255);
+    
+    // draw field of view somehow
+    //
+    //       cam looking striaght down (Y angle is 0)
+    //        *
+    //       **
+    //      * *
+    //     P***   P2
+    //
+    // angle_right is just cam's y angle + (3.14 / 4)
+    // we know the angle and the distance (the hypotenuse)
+    // we want to know the opposite and the adjacent
+    // we can get adjacent with CAH and opposite with SOH
+    //
+    // if C = A/H then A = C * H
+    // if S = O/H then O = S * H
+    for (
+        float hypotenuse = 5.0f;
+        hypotenuse < 21.0f;
+        hypotenuse += 5.0f)
+    {
+        float angle_right =
+            to_add->y_angle + (
+                projection_constants.field_of_view_rad / 2);
+        float angle_left =
+            to_add->y_angle + (
+                projection_constants.field_of_view_rad / 2);
+        
+        float adjacent = cosf(angle_right) * hypotenuse;
+        float opposite = sinf(angle_right) * hypotenuse;
+        
+        decodedimg_add_pixel(
+            to_modify,
+            to_add->x + opposite,
+            to_add->z + adjacent,
+            20,
+            20,
+            250);
+        
+        angle_right =
+            to_add->y_angle - (
+                projection_constants.field_of_view_rad / 2);
+        angle_left =
+            to_add->y_angle - (
+                projection_constants.field_of_view_rad / 2);
+        
+        adjacent = cosf(angle_right) * hypotenuse;
+        opposite = sinf(angle_right) * hypotenuse;
+        decodedimg_add_pixel(
+            to_modify,
+            to_add->x + opposite,
+            to_add->z + adjacent,
+            20,
+            20,
+            250);
+    }
 }
 
 /* Draw 2 minimaps and add them to the gpu's workload */
@@ -266,8 +322,11 @@ void minimaps_blit(
 
     Vertex minimap2_topleft[3];
     Vertex minimap2_bottomright[3];
-    for (uint32_t i = 0; i < 3; i++) {
-
+    for (
+        uint32_t i = 0;
+        i < 3;
+        i++)
+    {
         minimap2_topleft[i].lighting = 0.5f;
         minimap2_bottomright[i].lighting = 0.5f;
         minimap2_topleft[i].x = topleft[i].x;
@@ -318,7 +377,7 @@ void minimaps_blit(
             next_gpu_workload_size,
         /* input: */
             bottomright);
-
+    
     draw_triangle(
         /* vertices_recipient: */
             next_gpu_workload,
@@ -326,7 +385,7 @@ void minimaps_blit(
             next_gpu_workload_size,
         /* input: */
             minimap2_topleft);
-
+    
     draw_triangle(
         /* vertices_recipient: */
             next_gpu_workload,
