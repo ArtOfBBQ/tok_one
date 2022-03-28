@@ -40,6 +40,11 @@ NSWindowWithCustomResponder: NSWindow
 {
     register_keydown(event.keyCode);
 }
+
+- (void)keyUp:(NSEvent *)event
+{
+    register_keyup(event.keyCode);
+}
 @end
 
 int main(int argc, const char * argv[]) 

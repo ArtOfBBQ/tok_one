@@ -16,15 +16,12 @@ exist.
 */
 
 #include "software_renderer.h"
+#include "clientlogic.h"
 #include "zpolygon.h"
 #include "platform_layer.h"
 #include "decodedimage.h"
 #include "vertex_types.h"
 #include "draw_triangle.h"
-
-#define BITMAP_PIXELS_WIDTH 100
-extern DecodedImage minimap;
-extern DecodedImage minimap2;
 
 void bitmap_renderer_init();
 

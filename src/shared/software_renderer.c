@@ -1,158 +1,7 @@
 #include "software_renderer.h"
 
-TextureArray texture_arrays[TEXTUREARRAYS_SIZE + 1];
-
-zPolygon * zpolygons_to_render[1000];
-uint32_t zpolygons_to_render_size = 0;
-
 void init_renderer() {
-    // initialize global texture_arrays for texture mapping 
-    assert(TEXTUREARRAYS_SIZE > 0);
-    texture_arrays[0].filename = "phoebus.png";
-    texture_arrays[0].sprite_columns = 16;
-    texture_arrays[0].sprite_rows = 16;
-    texture_arrays[1].filename = "sampletexture.png";
-    texture_arrays[1].sprite_columns = 3;
-    texture_arrays[1].sprite_rows = 2;
-    texture_arrays[BITMAP_TEXTUREARRAY_I].filename = "";
-    texture_arrays[BITMAP_TEXTUREARRAY_I].sprite_columns = 1;
-    texture_arrays[BITMAP_TEXTUREARRAY_I].sprite_rows = 1;
-    texture_arrays[MINIMAP2_TEXTUREARRAY_I].filename = "";
-    texture_arrays[MINIMAP2_TEXTUREARRAY_I].sprite_columns = 1;
-    texture_arrays[MINIMAP2_TEXTUREARRAY_I].sprite_rows = 1;
-    
-    FileBuffer * file_buffer;
-    for (
-        uint32_t i = 0;
-        i < TEXTUREARRAYS_SIZE;
-        i++)
-    {
-        // these 2 are updated manually, no image file to load
-        if (i == BITMAP_TEXTUREARRAY_I) { continue; }
-        if (i == MINIMAP2_TEXTUREARRAY_I) { continue; }
-        
-        printf(
-            "trying to read file: %s\n",
-            texture_arrays[i].filename);
-        file_buffer = platform_read_file(
-            texture_arrays[i].filename);
-        if (file_buffer == NULL) {
-            printf(
-                "ERROR: failed to read file from disk: %s\n",
-                texture_arrays[i].filename);
-            assert(false);
-        }
-        texture_arrays[i].image = decode_PNG(
-            (uint8_t *)file_buffer->contents,
-            file_buffer->size);
-        free(file_buffer->contents);
-        free(file_buffer);
-        printf(
-            "read texture %s with width %u\n",
-            texture_arrays[i].filename,
-            texture_arrays[i].image->width);
-    }
-    
-    texture_arrays[BITMAP_TEXTUREARRAY_I].image = &minimap;
-    texture_arrays[MINIMAP2_TEXTUREARRAY_I].image = &minimap2;
-    
-    // initialize zPolygon objects, the 3-D objects we're
-    // planning to render
-    zpolygons_to_render_size = 0;
-    
-    // objects part 1: load some cards from object file 
-    for (uint32_t i = 0; i < 3; i++) {
-        uint32_t last_i = zpolygons_to_render_size;
-        zpolygons_to_render_size += 1;
-        zpolygons_to_render[last_i] =
-            i == 2 ?
-            load_from_obj_file("teapot.obj")
-            : load_from_obj_file("cardwithuvcoords.obj");
-        
-        float base_y = i % 2 == 0 ? 0.0f : -5.0f;
-        zpolygons_to_render[last_i]->x = -2.0f + (4.0f * i);
-        zpolygons_to_render[last_i]->y =
-            i == 2 ?
-            0.0f
-            : base_y + (last_i * 7.0f);
-        zpolygons_to_render[last_i]->z = i == 2 ? -25.0f : 28.0f;
-        
-        // change face texture but not the back texture
-        for (
-            uint32_t t = 0;
-            t < zpolygons_to_render[last_i]->triangles_size;
-            t++)
-        {
-            if (
-                zpolygons_to_render[last_i]
-                    ->triangles[t].texture_i == 2) 
-            {
-                zpolygons_to_render[last_i]->triangles[t]
-                    .texture_i = i;
-            }
-        }
-        
-        // scale_zpolygon(
-        //     /* to_scale   : */
-        //         zpolygons_to_render[last_i],
-        //     /* new_height : */
-        //         2.0f);
-    }
-    
-    // objects 2: load some hard-coded cubes
-    for (uint32_t i = 3; i < 4; i++) {
-        uint32_t last_i = zpolygons_to_render_size;
-        zpolygons_to_render[last_i] = get_box();
-        scale_zpolygon(
-            /* to_scale   : */
-                zpolygons_to_render[last_i],
-            /* new_height : */
-                30.0f);
-        zpolygons_to_render_size += 1;
-    }
-    
-    // initialize global zLightSource objects, to set up
-    // our lighting for the scene
-    zlights_to_apply[0].x = 50.0f;
-    zlights_to_apply[0].y = 2.5f;
-    zlights_to_apply[0].z = 200.0f;
-    zlights_to_apply[0].reach = 1.0f;
-    zlights_to_apply[0].ambient = 8.0;
-    zlights_to_apply[0].diffuse = 8.0;
-    zlights_to_apply_size = 1;
-    
-    // add a white cube to represent the light source
-    zpolygons_to_render_size += 1;
-    uint32_t light_i = zpolygons_to_render_size - 1;
-    zpolygons_to_render[light_i] = get_box();
-    zpolygons_to_render[light_i]->x = zlights_to_apply[0].x;
-    zpolygons_to_render[light_i]->y = zlights_to_apply[0].y;
-    zpolygons_to_render[light_i]->z = zlights_to_apply[0].z;
-    for (
-        uint32_t j = 0;
-        j < zpolygons_to_render[light_i]->triangles_size;
-        j++)
-    {
-        for (uint32_t v = 0; v < 3; v++) {
-            // bright white
-            zpolygons_to_render[light_i]->triangles[j].color[0] =
-                500.0f;
-            zpolygons_to_render[light_i]->triangles[j].color[1] =
-                500.0f;
-            zpolygons_to_render[light_i]->triangles[j].color[2] =
-                500.0f;
-            zpolygons_to_render[light_i]->triangles[j].color[3] =
-                1.0f;
-            zpolygons_to_render[light_i]
-                ->triangles[j].texturearray_i = -1;
-            zpolygons_to_render[light_i]
-                ->triangles[j].texture_i = -1;
-        }
-    }
-    // scale_zpolygon(
-    //     /* to_scale  : */ zpolygons_to_render[light_i],
-    //     /* new_height: */ 0.5f);
-    
+    client_logic_startup();
     renderer_initialized = true;
 }
 
@@ -175,6 +24,8 @@ void software_render(
         return;
     }
 
+    client_logic_update();
+    
     uint64_t elapsed_since_previous_frame =
         platform_end_timer_get_nanosecs();
     platform_start_timer();
@@ -415,19 +266,5 @@ void rotate_triangle(
             (-sinf(angle) * to_rotate[i].x)
                 + (cosf(angle) * to_rotate[i].y);
     }
-}
-
-zPolygon * load_from_obj_file(char * filename)
-{
-    FileBuffer * buffer = platform_read_file(filename);
-    
-    zPolygon * return_value = load_from_obj(
-        /* rawdata     : */ buffer->contents,
-        /* rawdata_size: */ buffer->size);
-
-    free(buffer->contents);
-    free(buffer);
-    
-    return return_value;
 }
 

@@ -1,8 +1,5 @@
 #include "bitmap_renderer.h"
 
-DecodedImage minimap;
-DecodedImage minimap2;
-
 void bitmap_renderer_init() {
     minimap.width = BITMAP_PIXELS_WIDTH;
     minimap.height = BITMAP_PIXELS_WIDTH;
@@ -264,7 +261,7 @@ void minimaps_blit(
     topleft[0].x = 1 - minimap_width - minimap_offset;
     topleft[0].y = -1.0 + minimap_height + minimap_offset;
     topleft[0].z = 0.0f;
-    topleft[0].texturearray_i = BITMAP_TEXTUREARRAY_I;
+    topleft[0].texturearray_i = 2;
     topleft[0].texture_i = 0;
     topleft[0].RGBA[0] = 0.0f;
     topleft[0].RGBA[1] = 0.2f;
@@ -277,7 +274,7 @@ void minimaps_blit(
     topleft[1].x = 1.0f - minimap_offset;
     topleft[1].y = -1.0f + minimap_height + minimap_offset;
     topleft[1].z = 0.0f;
-    topleft[1].texturearray_i = BITMAP_TEXTUREARRAY_I;
+    topleft[1].texturearray_i = 2;
     topleft[1].texture_i = 0;
     topleft[1].uv[0] = 1.0f;
     topleft[1].uv[1] = 0.0f;
@@ -286,7 +283,7 @@ void minimaps_blit(
     topleft[2].x = 1.0f - minimap_width - minimap_offset;
     topleft[2].y = -1.0f + minimap_offset;
     topleft[2].z = 0.0f;
-    topleft[2].texturearray_i = BITMAP_TEXTUREARRAY_I;
+    topleft[2].texturearray_i = 2;
     topleft[2].texture_i = 0;
     topleft[2].uv[0] = 0.0f;
     topleft[2].uv[1] = 1.0f;
@@ -296,7 +293,7 @@ void minimaps_blit(
     bottomright[0].x = 1.0f - minimap_offset;
     bottomright[0].y = -1.0f + minimap_height + minimap_offset;
     bottomright[0].z = 0.0f;
-    bottomright[0].texturearray_i = BITMAP_TEXTUREARRAY_I;
+    bottomright[0].texturearray_i = 2;
     bottomright[0].texture_i = 0;
     bottomright[0].uv[0] = 1.0f;
     bottomright[0].uv[1] = 0.0f;
@@ -305,7 +302,7 @@ void minimaps_blit(
     bottomright[1].x = 1.0f - minimap_width - minimap_offset;
     bottomright[1].y = -1.0f + minimap_offset;
     bottomright[1].z = 0.0f;
-    bottomright[1].texturearray_i = BITMAP_TEXTUREARRAY_I;
+    bottomright[1].texturearray_i = 2;
     bottomright[1].texture_i = 0;
     bottomright[1].uv[0] = 0.0f;
     bottomright[1].uv[1] = 1.0f;
@@ -314,7 +311,7 @@ void minimaps_blit(
     bottomright[2].x = 1.0f - minimap_offset;
     bottomright[2].y = -1.0f + minimap_offset;
     bottomright[2].z = 0.0f;
-    bottomright[2].texturearray_i = BITMAP_TEXTUREARRAY_I;
+    bottomright[2].texturearray_i = 2;
     bottomright[2].texture_i = 0;
     bottomright[2].uv[0] = 1.0f;
     bottomright[2].uv[1] = 1.0f;
@@ -342,9 +339,9 @@ void minimaps_blit(
         minimap2_bottomright[i].uv[1] = bottomright[i].uv[1];
         
         minimap2_topleft[i].texturearray_i =
-            MINIMAP2_TEXTUREARRAY_I;
+            3;
         minimap2_bottomright[i].texturearray_i =
-            MINIMAP2_TEXTUREARRAY_I;
+            3;
         minimap2_topleft[i].texture_i = 0;
         minimap2_bottomright[i].texture_i = 0;
         minimap2_topleft[i].y +=
@@ -354,11 +351,11 @@ void minimaps_blit(
     }
     
     platform_update_gpu_texture(
-        /* texturearray_i: */ BITMAP_TEXTUREARRAY_I,
+        /* texturearray_i: */ 2,
         /* texture_i: */ 0,
         /* with_img: */ &minimap);
     platform_update_gpu_texture(
-        /* texturearray_i: */ MINIMAP2_TEXTUREARRAY_I,
+        /* texturearray_i: */ 3,
         /* texture_i: */ 0,
         /* with_img: */ &minimap2);
     

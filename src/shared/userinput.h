@@ -6,7 +6,11 @@
 #include "common.h"
 #include "zpolygon.h"
 
+#define KEYPRESS_MAP_SIZE 1000
 
+extern bool32_t keypress_map[KEYPRESS_MAP_SIZE];
+
+void register_keyup(uint32_t key_id);
 void register_keydown(uint32_t key_id);
 
 #endif
