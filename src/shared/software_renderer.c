@@ -128,25 +128,26 @@ void init_renderer() {
     zpolygons_to_render[light_i]->x = zlights_to_apply[0].x;
     zpolygons_to_render[light_i]->y = zlights_to_apply[0].y;
     zpolygons_to_render[light_i]->z = zlights_to_apply[0].z;
-    
     for (
         uint32_t j = 0;
         j < zpolygons_to_render[light_i]->triangles_size;
         j++)
     {
-        // bright white
-        zpolygons_to_render[light_i]->triangles[j].color[0] =
-            10.0f;
-        zpolygons_to_render[light_i]->triangles[j].color[1] =
-            10.0f;
-        zpolygons_to_render[light_i]->triangles[j].color[2] =
-            10.0f;
-        zpolygons_to_render[light_i]->triangles[j].color[3] =
-            1.0f;
-        zpolygons_to_render[light_i]
-            ->triangles[j].texturearray_i = -1.0f;
-        zpolygons_to_render[light_i]
-            ->triangles[j].texture_i = -1.0f;
+        for (uint32_t v = 0; v < 3; v++) {
+            // bright white
+            zpolygons_to_render[light_i]->triangles[j].color[0] =
+                500.0f;
+            zpolygons_to_render[light_i]->triangles[j].color[1] =
+                500.0f;
+            zpolygons_to_render[light_i]->triangles[j].color[2] =
+                500.0f;
+            zpolygons_to_render[light_i]->triangles[j].color[3] =
+                1.0f;
+            zpolygons_to_render[light_i]
+                ->triangles[j].texturearray_i = -1;
+            zpolygons_to_render[light_i]
+                ->triangles[j].texture_i = -1;
+        }
     }
     // scale_zpolygon(
     //     /* to_scale  : */ zpolygons_to_render[light_i],

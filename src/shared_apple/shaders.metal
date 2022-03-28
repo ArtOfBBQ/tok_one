@@ -10,7 +10,7 @@ typedef struct
     float4 position [[position]];
     float4 color;
     float2 texture_coordinate;
-    float lighting;
+    float4 lighting;
     uint8_t texturearray_i;
     uint8_t texture_i;
 } RasterizerPixel;
@@ -62,6 +62,9 @@ fragment_shader(
     RasterizerPixel in [[stage_in]],
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE> color_textures [[texture(0)]])
 {
+    in.lighting = max(in.lighting, 0.05);
+    in.lighting = min(in.lighting, 1.0);
+    
     if (
         in.texture_coordinate[0] < 0.0f
         || in.texture_coordinate[1] < 0.0f)
@@ -79,9 +82,6 @@ fragment_shader(
             textureSampler,
             in.texture_coordinate,
             in.texture_i);
-
-    in.lighting = max(in.lighting, 0.05);
-    in.lighting = min(in.lighting, 1.0);
     
     // return the color of the texture
     return float4(colorSample) * in.lighting;
