@@ -716,6 +716,23 @@ void free_zpolygon(
     free(to_free);
 }
 
+zVertex x_rotate_zvertex(
+    const zVertex * input,
+    const float angle)
+{
+    zVertex return_value = *input;
+    
+    return_value.y =
+        (input->y * cosf(angle))
+        - (input->z * sinf(angle));
+    
+    return_value.z =
+        (input->y * sinf(angle)) +
+        (input->z * cosf(angle));
+    
+    return return_value;
+}
+
 zTriangle x_rotate_triangle(
     const zTriangle * input,
     const float angle)
@@ -726,29 +743,32 @@ zTriangle x_rotate_triangle(
         return return_value;
     }
     
-    float cosangle = cosf(angle);
-    float sinangle = sinf(angle);
-    
     for (
         uint32_t i = 0;
         i < 3;
         i++)
     {
-        // X = x
-        
-        // Y = y*cos(theta) - z*sin(theta); 
-        float new_y =
-            (return_value.vertices[i].y * cosangle)
-            - (return_value.vertices[i].z * sinangle);
-        
-        // Z = y*sin(theta) + z*cos(theta);
-        float new_z =
-            (return_value.vertices[i].y * sinangle) +
-            (return_value.vertices[i].z * cosangle);
-        
-        return_value.vertices[i].y = new_y;
-        return_value.vertices[i].z = new_z;
+        return_value.vertices[i] = x_rotate_zvertex(
+            &return_value.vertices[i],
+            angle);
     }
+    
+    return return_value;
+}
+
+zVertex z_rotate_zvertex(
+    const zVertex * input,
+    const float angle)
+{
+    zVertex return_value = *input;
+    
+    return_value.x =
+        (input->x * cosf(angle))
+        - (input->y * sinf(angle));
+    
+    return_value.y =
+        (input->y * cosf(angle)) +
+        (input->x * sinf(angle));
     
     return return_value;
 }
@@ -763,26 +783,32 @@ zTriangle z_rotate_triangle(
         return return_value;
     }
     
-    float cosangle = cosf(angle);
-    float sinangle = sinf(angle);
-    
-    for (uint32_t i = 0; i < 3; i++) {
-        
-        // Z = z;
-        
-        // X = x*cos(theta) - y*sin(theta);
-        float new_x =
-            (return_value.vertices[i].x * cosangle)
-            - (return_value.vertices[i].y * sinangle);
-        
-        // Y = x*sin(theta) + y*cos(theta);
-        float new_y =
-            (return_value.vertices[i].y * cosangle)
-            + (return_value.vertices[i].x * sinangle);
-        
-        return_value.vertices[i].x = new_x;
-        return_value.vertices[i].y = new_y;
+    for (
+        uint32_t i = 0;
+        i < 3;
+        i++)
+    {
+        return_value.vertices[i] = z_rotate_zvertex(
+            &return_value.vertices[i],
+            angle);
     }
+    
+    return return_value;
+}
+
+zVertex y_rotate_zvertex(
+    const zVertex * input,
+    const float angle)
+{
+    zVertex return_value = *input;
+    
+    return_value.x =
+        (input->x * cosf(angle))
+        + (input->z * sinf(angle));
+    
+    return_value.z =
+        (input->z * cosf(angle)) -
+        (input->x * sinf(angle));
     
     return return_value;
 }
@@ -793,32 +819,18 @@ zTriangle y_rotate_triangle(
 {
     zTriangle return_value = *input;
     
-    if (angle == 0.0f) { return return_value; }
-    
-    float cosangle = cosf(angle);
-    float sinangle = sinf(angle);
+    if (angle == 0.0f) {
+        return return_value;
+    }
     
     for (
         uint32_t i = 0;
         i < 3;
         i++)
     {
-        // X = x*cos(theta) + z*sin(theta);
-        float new_x =
-            (return_value.vertices[i].x
-                * cosangle)
-            + (return_value.vertices[i].z
-                * sinangle);
-        
-        // Z = z*cos(theta) - x*sin(theta);
-        float new_z =
-            (return_value.vertices[i].z
-                * cosangle)
-            - (return_value.vertices[i].x
-                * sinangle);
-        
-        return_value.vertices[i].x = new_x;
-        return_value.vertices[i].z = new_z;
+        return_value.vertices[i] = y_rotate_zvertex(
+            &return_value.vertices[i],
+            angle);
     }
     
     return return_value;
@@ -1016,31 +1028,26 @@ void zcamera_move_forward(
     const float distance)
 {
     // pick a point that would be in front of the camera
-    // if it was not angled in any way
-    float new_x = 0.0f;
-    float new_y = 0.0f;
-    float new_z = distance;
-   
-    // rotate around the origin 
-    // TODO: refactor rotation to accept vertices
-    zTriangle temp;
-    temp.vertices[0].x = new_x;
-    temp.vertices[0].y = new_y;
-    temp.vertices[0].z = new_z;
+    // if it was not angled in any way, and if it was at
+    // the origin
+    zVertex forward_if_camera_was_unrotated_at_origin;
+    forward_if_camera_was_unrotated_at_origin.x = 0.0f;
+    forward_if_camera_was_unrotated_at_origin.y = 0.0f;
+    forward_if_camera_was_unrotated_at_origin.z = distance;
     
-    zTriangle x_rotated = x_rotate_triangle(
-        &temp,
+    zVertex x_rotated = x_rotate_zvertex(
+        &forward_if_camera_was_unrotated_at_origin,
         camera.x_angle);
-    zTriangle y_rotated = y_rotate_triangle(
+    zVertex y_rotated = y_rotate_zvertex(
         &x_rotated,
         camera.y_angle);
-    zTriangle final = z_rotate_triangle(
+    zVertex final = z_rotate_zvertex(
         &y_rotated,
         camera.z_angle);
     
     // add to the camera's current position
-    to_move->x += final.vertices[0].x;
-    to_move->y += final.vertices[0].y;
-    to_move->z += final.vertices[0].z;
+    to_move->x += final.x;
+    to_move->y += final.y;
+    to_move->z += final.z;
 }
 

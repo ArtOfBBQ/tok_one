@@ -344,18 +344,38 @@ void software_render(
                 > projection_constants.near)
         {
             Vertex triangle_to_draw[3];
-            
+           
+            // TODO: translate all lights in advance,
+            // instead of repeating the work for every triangle
+            // drawn
             for (
                 uint32_t l = 0;
                 l < zlights_to_apply_size;
                 l++)
             {
+                zVertex translated_light_pos;
+                translated_light_pos.x =
+                    zlights_to_apply[l].x - camera.x;
+                translated_light_pos.y =
+                    zlights_to_apply[l].y - camera.y;
+                translated_light_pos.z =
+                    zlights_to_apply[l].z - camera.z;
+                translated_light_pos = x_rotate_zvertex(
+                    &translated_light_pos,
+                    -1 * camera.x_angle);
+                translated_light_pos = y_rotate_zvertex(
+                    &translated_light_pos,
+                    -1 * camera.y_angle);
+                translated_light_pos = z_rotate_zvertex(
+                    &translated_light_pos,
+                    -1 * camera.z_angle);
+                
                 zLightSource translated_light =
                     zlights_to_apply[l];
+                translated_light.x = translated_light_pos.x;
+                translated_light.y = translated_light_pos.y;
+                translated_light.z = translated_light_pos.z;
                 
-                translated_light.x -= camera.x;
-                translated_light.y -= camera.y;
-                translated_light.z -= camera.z;
                 ztriangle_apply_lighting(
                     /* recipient: */
                         triangle_to_draw,
