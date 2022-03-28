@@ -263,20 +263,15 @@ void software_render(
         {
             assert(t < triangles_to_render);
             
-            zVertex no_offset = {0.0f, 0.0f, 0.0f};
-            
             x_rotated = x_rotate_triangle(
                 zpolygons_to_render[i]->triangles + j,
-                zpolygons_to_render[i]->x_angle,
-                no_offset);
+                zpolygons_to_render[i]->x_angle);
             y_rotated = y_rotate_triangle(
                 &x_rotated,
-                zpolygons_to_render[i]->y_angle,
-                no_offset);
+                zpolygons_to_render[i]->y_angle);
             z_rotated = z_rotate_triangle(
                 &y_rotated,
-                zpolygons_to_render[i]->z_angle,
-                no_offset);
+                zpolygons_to_render[i]->z_angle);
             
             position_translated = translate_ztriangle(
                 /* input: */
@@ -290,16 +285,13 @@ void software_render(
             
             camera_y_rotated = y_rotate_triangle(
                 &position_translated,
-                -camera.y_angle,
-                no_offset);
+                -camera.y_angle);
             camera_x_rotated = x_rotate_triangle(
                 &camera_y_rotated,
-                -camera.x_angle,
-                no_offset);
+                -camera.x_angle);
             camera_z_rotated = z_rotate_triangle(
                 &camera_x_rotated,
-                -camera.z_angle,
-                no_offset);
+                -camera.z_angle);
             
             decodedimg_add_triangle(&minimap, &camera_z_rotated);
             triangles_to_draw[t] = camera_z_rotated;

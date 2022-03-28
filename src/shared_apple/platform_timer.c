@@ -5,8 +5,6 @@
 uint64_t start_time = 0;
 
 void platform_start_timer() {
-    printf("%s\n", "start timer");
-    
     start_time = mach_absolute_time();
 }
 
