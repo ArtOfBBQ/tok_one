@@ -11,6 +11,7 @@ and mac os X, but it's defined elsewhere for iOS
 #define PLATFORM_LAYER_H
 
 #ifdef SHARED_APPLE_PLATFORM
+#include <mach/mach_time.h>
 #include "../shared_apple/gpu.h"
 extern MetalKitViewDelegate * apple_gpu_delegate;
 #endif
@@ -34,6 +35,9 @@ void platform_update_gpu_texture(
     int32_t texturearray_i,
     int32_t texture_i,
     DecodedImage * with_img);
+
+void platform_start_timer();
+uint64_t platform_end_timer_get_nanosecs();
 
 #endif
 

@@ -156,7 +156,11 @@ void init_renderer() {
 }
 
 void free_renderer() {
-    for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
+    for (
+        uint32_t i = 0;
+        i < zpolygons_to_render_size;
+        i++)
+    {
         free_zpolygon(zpolygons_to_render[i]);
     }
 }
@@ -169,6 +173,12 @@ void software_render(
         printf("renderer not initialized, aborting...\n");
         return;
     }
+
+    uint64_t elapsed_since_previous_frame =
+        platform_end_timer_get_nanosecs();
+    platform_start_timer();
+    uint64_t fps = 1000000000 / elapsed_since_previous_frame;
+    // printf("fps: %llu\n", fps);
     
     if (
         next_gpu_workload == NULL
@@ -267,7 +277,6 @@ void software_render(
                 &y_rotated,
                 zpolygons_to_render[i]->z_angle,
                 no_offset);
-            
             
             position_translated = translate_ztriangle(
                 /* input: */

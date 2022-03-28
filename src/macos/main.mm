@@ -24,7 +24,6 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 {
     [NSApp terminate: nil];
 }
-
 @end
 
 @interface
@@ -78,6 +77,7 @@ int main(int argc, const char * argv[])
         [[MTKView alloc]
             initWithFrame: full_screen_rect
             device: metal_device];
+    // mtk_view.preferredFramesPerSecond = 60;
     
     window.contentView = mtk_view;
     
