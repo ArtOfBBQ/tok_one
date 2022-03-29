@@ -22,19 +22,17 @@ vertex_shader(
 {
     RasterizerPixel out;
     
-    out.position =
-        vector_float4(
-            input_array[vertexID].x,
-            input_array[vertexID].y,
-            input_array[vertexID].z,
-            1.0);
+    out.position = vector_float4(
+        input_array[vertexID].x,
+        input_array[vertexID].y,
+        input_array[vertexID].z,
+        input_array[vertexID].w);
     
-    out.color =
-        vector_float4(
-            input_array[vertexID].RGBA[0],
-            input_array[vertexID].RGBA[1],
-            input_array[vertexID].RGBA[2],
-            input_array[vertexID].RGBA[3]);
+    out.color = vector_float4(
+        input_array[vertexID].RGBA[0],
+        input_array[vertexID].RGBA[1],
+        input_array[vertexID].RGBA[2],
+        input_array[vertexID].RGBA[3]);
     
     out.lighting = input_array[vertexID].lighting + 0.2;
     
@@ -42,8 +40,7 @@ vertex_shader(
     {
         out.texture_coordinate =
             vector_float2(-1.0f, -1.0f);
-    } else
-    {
+    } else {
         out.texturearray_i =
             input_array[vertexID].texturearray_i;
         out.texture_i =

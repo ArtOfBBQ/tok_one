@@ -207,15 +207,15 @@ void client_logic_update()
     if (keypress_map[123] == true)
     {
         // left arrow key
-        // camera.y_angle -= cam_rotation_speed;
-        camera.x -= cam_speed;
+        camera.y_angle -= cam_rotation_speed;
+        // camera.x -= cam_speed;
     }
     
     if (keypress_map[124] == true)
     {
         // right arrow key
-        // camera.y_angle += cam_rotation_speed;
-        camera.x += cam_speed;
+        camera.y_angle += cam_rotation_speed;
+        // camera.x += cam_speed;
     }
     
     if (keypress_map[125] == true)

@@ -45,6 +45,17 @@ void software_render(
         return;
     }
     
+    for (
+        uint32_t i = 0;
+        i < zpolygons_to_render_size;
+        i++)
+    {
+        zpolygons_to_render[i]->x -= 0.005f;
+        zpolygons_to_render[i]->z_angle += 0.03f;
+        zpolygons_to_render[i]->x_angle += 0.021f;
+        zpolygons_to_render[i]->y_angle += 0.015f;
+    }
+    
     // move our light source
     uint32_t light_i = zpolygons_to_render_size - 1;
     zpolygons_to_render[light_i]->y -= 0.001;

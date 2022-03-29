@@ -8,6 +8,7 @@ typedef struct Vertex {
     float x;
     float y;
     float z;
+    float w;
     float uv[2];
     float RGBA[4];
     float lighting;    // multiply by this lighting after

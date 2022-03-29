@@ -19,10 +19,8 @@ void init_projection_constants() {
     pjc->far = 1000.0f;
     
     float field_of_view = 90.0f;
-    float field_of_view_angle =
-        field_of_view * 0.5f;
     pjc->field_of_view_rad =
-        (field_of_view_angle / 180.0f) * 3.14159f;
+        ((field_of_view * 0.5) / 180.0f) * 3.14159f;
     pjc->field_of_view_modifier =
         1.0f / tanf(pjc->field_of_view_rad);
     
@@ -419,7 +417,7 @@ zPolygon * get_box() {
     box->triangles = malloc(
         sizeof(zTriangle) * box->triangles_size);
     
-    box->x = 0.0f;
+    box->x = -30.0f;
     box->y = 0.0f;
     box->z = 20.0f;
     box->x_angle = 0.0f;
@@ -659,32 +657,29 @@ void ztriangle_to_2d(
     for (uint32_t i = 0; i < 3; i++) {
         
         recipient[i].x =
-            (pjc->aspect_ratio *
-            pjc->field_of_view_modifier *
-            input->vertices[i].x); 
+            input->vertices[i].x *
+            pjc->aspect_ratio *
+            pjc->field_of_view_modifier; 
         
         // note to self: y transformation
         // doesn't use aspect ratio
         recipient[i].y =
-            pjc->field_of_view_modifier *
-            input->vertices[i].y;
+            input->vertices[i].y *
+            pjc->field_of_view_modifier;
         
         recipient[i].z =
             input->vertices[i].z *
                 pjc->far / (pjc->far - pjc->near) +
-                (-pjc->far * pjc->near) / (pjc->far - pjc->near);
-       
-        float z_divisor = input->vertices[i].z == 0.0f ?
+            1.0f * (-pjc->far * pjc->near) /
+                (pjc->far - pjc->near);
+        
+        recipient[i].w = input->vertices[i].z == 0.0f ?
            0.0001f
            : input->vertices[i].z;
-        /* 
-        float z_divisor = recipient[i].z == 0.0f ?
-           0.001f
-           : recipient[i].z;
-        */
-        recipient[i].x /= z_divisor;
-        recipient[i].y /= z_divisor;
-        recipient[i].z /= z_divisor; 
+        
+        // recipient[i].x /= recipient[i].w;
+        // recipient[i].y /= recipient[i].w;
+        // recipient[i].z /= recipient[i].w;
         
         recipient[i].uv[0] = input->vertices[i].uv[0];
         recipient[i].uv[1] = input->vertices[i].uv[1];
