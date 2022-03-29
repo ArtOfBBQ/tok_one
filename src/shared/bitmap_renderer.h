@@ -23,6 +23,8 @@ exist.
 #include "vertex_types.h"
 #include "draw_triangle.h"
 
+extern bool32_t minimaps_visible;
+
 void bitmap_renderer_init();
 
 void minimaps_clear();

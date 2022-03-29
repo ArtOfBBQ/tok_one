@@ -239,6 +239,10 @@ void minimaps_blit(
     Vertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size)
 {
+    if (minimaps_visible == false) {
+        return;
+    }
+    
     if (
         next_gpu_workload == NULL
         || next_gpu_workload_size == NULL)
@@ -260,7 +264,7 @@ void minimaps_blit(
     // top left vertex
     topleft[0].x = 1 - minimap_width - minimap_offset;
     topleft[0].y = -1.0 + minimap_height + minimap_offset;
-    topleft[0].z = 0.0f;
+    topleft[0].z = 1.0f;
     topleft[0].texturearray_i = 2;
     topleft[0].texture_i = 0;
     topleft[0].RGBA[0] = 0.0f;
@@ -273,7 +277,7 @@ void minimaps_blit(
     // top right vertex
     topleft[1].x = 1.0f - minimap_offset;
     topleft[1].y = -1.0f + minimap_height + minimap_offset;
-    topleft[1].z = 0.0f;
+    topleft[1].z = 1.0f;
     topleft[1].texturearray_i = 2;
     topleft[1].texture_i = 0;
     topleft[1].uv[0] = 1.0f;
@@ -282,7 +286,7 @@ void minimaps_blit(
     // bottom left vertex
     topleft[2].x = 1.0f - minimap_width - minimap_offset;
     topleft[2].y = -1.0f + minimap_offset;
-    topleft[2].z = 0.0f;
+    topleft[2].z = 1.0f;
     topleft[2].texturearray_i = 2;
     topleft[2].texture_i = 0;
     topleft[2].uv[0] = 0.0f;
@@ -292,7 +296,7 @@ void minimaps_blit(
     // top right vertex
     bottomright[0].x = 1.0f - minimap_offset;
     bottomright[0].y = -1.0f + minimap_height + minimap_offset;
-    bottomright[0].z = 0.0f;
+    bottomright[0].z = 1.0f;
     bottomright[0].texturearray_i = 2;
     bottomright[0].texture_i = 0;
     bottomright[0].uv[0] = 1.0f;
@@ -301,7 +305,7 @@ void minimaps_blit(
     // bottom left vertex
     bottomright[1].x = 1.0f - minimap_width - minimap_offset;
     bottomright[1].y = -1.0f + minimap_offset;
-    bottomright[1].z = 0.0f;
+    bottomright[1].z = 1.0f;
     bottomright[1].texturearray_i = 2;
     bottomright[1].texture_i = 0;
     bottomright[1].uv[0] = 0.0f;
@@ -310,7 +314,7 @@ void minimaps_blit(
     // bottom right vertex
     bottomright[2].x = 1.0f - minimap_offset;
     bottomright[2].y = -1.0f + minimap_offset;
-    bottomright[2].z = 0.0f;
+    bottomright[2].z = 1.0f;
     bottomright[2].texturearray_i = 2;
     bottomright[2].texture_i = 0;
     bottomright[2].uv[0] = 1.0f;

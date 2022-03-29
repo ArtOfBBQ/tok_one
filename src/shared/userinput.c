@@ -26,7 +26,8 @@ void register_keydown(uint32_t key_id)
             KEYPRESS_MAP_SIZE);
         assert(0);
     }
-
+    
+    printf("keydown: %u\n", key_id);
     keypress_map[key_id] = true;
 }
 

@@ -23,7 +23,7 @@ void software_render(
         printf("renderer not initialized, aborting...\n");
         return;
     }
-
+    
     client_logic_update();
     
     uint64_t elapsed_since_previous_frame =
@@ -45,18 +45,6 @@ void software_render(
         return;
     }
     
-    // animate our objects
-    for (
-        uint32_t i = 0;
-        i < (zpolygons_to_render_size);
-        i++)
-    {
-        // zpolygons_to_render[i]->x -= 0.005f;
-        // zpolygons_to_render[i]->z_angle += 0.03f;
-        // zpolygons_to_render[i]->x_angle += 0.021f;
-        // zpolygons_to_render[i]->y_angle += 0.015f;
-    }
-    
     // move our light source
     uint32_t light_i = zpolygons_to_render_size - 1;
     zpolygons_to_render[light_i]->y -= 0.001;
@@ -70,7 +58,7 @@ void software_render(
     zlights_to_apply[0].y = zpolygons_to_render[light_i]->y;
     zlights_to_apply[0].z = zpolygons_to_render[light_i]->z;
     
-    uint32_t triangles_to_render = 0;
+    uint32_t triangles_to_draw_size = 0;
     for (
         uint32_t i = 0;
         i < zpolygons_to_render_size;
@@ -81,14 +69,14 @@ void software_render(
             j < zpolygons_to_render[i]->triangles_size;
             j++)
         {
-            triangles_to_render++;
+            triangles_to_draw_size++;
         }
     }
     
-    if (triangles_to_render == 0) { return; }
+    if (triangles_to_draw_size == 0) { return; }
     
     // transform all triangles
-    zTriangle triangles_to_draw[triangles_to_render];
+    zTriangle triangles_to_draw[triangles_to_draw_size];
     zTriangle position_translated;
     zTriangle camera_y_rotated;
     zTriangle camera_x_rotated;
@@ -113,7 +101,7 @@ void software_render(
             j < zpolygons_to_render[i]->triangles_size;
             j++)
         {
-            assert(t < triangles_to_render);
+            assert(t < triangles_to_draw_size);
             
             x_rotated = x_rotate_triangle(
                 zpolygons_to_render[i]->triangles + j,
@@ -128,11 +116,11 @@ void software_render(
             position_translated = translate_ztriangle(
                 /* input: */
                     &z_rotated,
-                /* x: */
+                /* by_x: */
                     zpolygons_to_render[i]->x - camera.x,
-                /* y: */
+                /* by_y: */
                     zpolygons_to_render[i]->y - camera.y,
-                /* z: */
+                /* by_z: */
                     zpolygons_to_render[i]->z - camera.z);
             
             camera_y_rotated = y_rotate_triangle(
@@ -168,21 +156,21 @@ void software_render(
     // drawn first 
     qsort(
         triangles_to_draw,
-        triangles_to_render,
+        triangles_to_draw_size,
         sizeof(zTriangle),
         &sorter_cmpr_lowest_z);
     
+    // we're not using the camera because the entire world
+    // was translated to have the camera be at 0,0,0
+    zVertex origin;
+    origin.x = 0.0f;
+    origin.y = 0.0f;
+    origin.z = 0.0f; 
     for (
-        int32_t i = triangles_to_render - 1;
+        int32_t i = triangles_to_draw_size - 1;
         i >= 0;
         i -= 1)
     {
-        // we're not using the camera because the entire world
-        // was translated to have the camera be at 0,0,0
-        zVertex origin;
-        origin.x = 0.0f;
-        origin.y = 0.0f;
-        origin.z = 0.0f; 
         float perspective_dot_product =
             get_visibility_rating(
                 origin,

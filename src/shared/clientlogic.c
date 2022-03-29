@@ -9,6 +9,8 @@ uint32_t zlights_to_apply_size;
 
 DecodedImage minimap;
 DecodedImage minimap2;
+bool32_t handled_minimap_toggle = false;
+bool32_t minimaps_visible = true;
 
 zPolygon * load_from_obj_file(char * filename)
 {
@@ -205,13 +207,15 @@ void client_logic_update()
     if (keypress_map[123] == true)
     {
         // left arrow key
-        camera.y_angle -= cam_rotation_speed;
+        // camera.y_angle -= cam_rotation_speed;
+        camera.x -= cam_speed;
     }
     
     if (keypress_map[124] == true)
     {
         // right arrow key
-        camera.y_angle += cam_rotation_speed;
+        // camera.y_angle += cam_rotation_speed;
+        camera.x += cam_speed;
     }
     
     if (keypress_map[125] == true)
@@ -228,5 +232,18 @@ void client_logic_update()
             &camera,
             cam_speed);
     }
+    
+    if (keypress_map[46] == true)
+    {
+        // m key is pressed
+
+        if (handled_minimap_toggle == false) {
+            minimaps_visible = minimaps_visible ? false : true;
+            handled_minimap_toggle = true;
+        }
+    } else {
+        handled_minimap_toggle = false;
+    }
+    
 }
 

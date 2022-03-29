@@ -36,7 +36,7 @@ vertex_shader(
             input_array[vertexID].RGBA[2],
             input_array[vertexID].RGBA[3]);
     
-    out.lighting = input_array[vertexID].lighting;
+    out.lighting = input_array[vertexID].lighting + 0.2;
     
     if (input_array[vertexID].texturearray_i < 0)
     {
@@ -80,7 +80,7 @@ fragment_shader(
     const half4 colorSample =
         color_textures[in.texturearray_i].sample(
             textureSampler,
-            in.texture_coordinate,
+            in.texture_coordinate, 
             in.texture_i);
     
     // return the color of the texture
