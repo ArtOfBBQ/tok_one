@@ -15,9 +15,6 @@
 typedef struct ProjectionConstants {
     float near;
     float far;
-    float z_normalisation;
-    float field_of_view;
-    float field_of_view_angle;
     float field_of_view_rad;
     float field_of_view_modifier;
     float aspect_ratio;

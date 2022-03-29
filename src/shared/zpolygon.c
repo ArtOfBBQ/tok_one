@@ -15,22 +15,18 @@ void init_projection_constants() {
     
     ProjectionConstants * pjc = &projection_constants;
     
-    pjc->near = 0.5f;
-    pjc->far = 150.0f;
-    pjc->field_of_view = 90.0f;
-    pjc->z_normalisation =
-        pjc->far /
-            (pjc->far -
-                pjc->near);
+    pjc->near = 0.1f;
+    pjc->far = 1000.0f;
     
-    pjc->field_of_view_angle =
-        pjc->field_of_view * 0.5f;
+    float field_of_view = 90.0f;
+    float field_of_view_angle =
+        field_of_view * 0.5f;
     pjc->field_of_view_rad =
-        (pjc->field_of_view_angle / 180.0f)
+        (field_of_view_angle / 180.0f)
             * 3.14159f;
-    
     pjc->field_of_view_modifier =
         1.0f / tanf(pjc->field_of_view_rad);
+    
     pjc->aspect_ratio =
         window_height / window_width; 
 }
@@ -662,40 +658,31 @@ void ztriangle_to_2d(
     ProjectionConstants * pjc = &projection_constants;
     
     for (uint32_t i = 0; i < 3; i++) {
-        // final formula to project something {x, y, z} to
-        // 2D screen:
-        // x = (aspect_ratio * field_of_view_mod * x) / z;
-        // y = (aspect_ratio * field_of_view_mod * x) / z;
-        // z = (z * z_normalisation) - (z * near);
-        float z_modifier =
-            input->vertices[i].z
-                * ((pjc->far / pjc->far - pjc->near)
-                - (pjc->far * pjc->near / pjc->far - pjc->near));
         
         recipient[i].x =
             (pjc->aspect_ratio
             * pjc->field_of_view_modifier
             * input->vertices[i].x); 
         
-        if (recipient[i].x != 0.0f
-            && z_modifier != 0.0f)
-        {
-            recipient[i].x /= z_modifier;
-        }
-        
         // note to self: y transformation
         // doesn't use aspect ratio
         recipient[i].y =
             pjc->field_of_view_modifier
             * input->vertices[i].y;
+
+        float q = pjc->far / (pjc->far - pjc->near); 
         
-        if (recipient[i].y != 0.0f
-            && z_modifier != 0.0f)
+        recipient[i].z =
+            input->vertices[i].z *
+                pjc->far / (pjc->far - pjc->near) +
+                (-pjc->far * pjc->near) / (pjc->far - pjc->near);
+        
+        if (input->vertices[i].z != 0.0f)
         {
-            recipient[i].y /= z_modifier;
+            recipient[i].x /= input->vertices[i].z;
+            recipient[i].y /= input->vertices[i].z;
+            recipient[i].z /= input->vertices[i].z;
         }
-        
-        recipient[i].z = 0.0f;
         
         recipient[i].uv[0] = input->vertices[i].uv[0];
         recipient[i].uv[1] = input->vertices[i].uv[1];
