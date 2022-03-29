@@ -125,7 +125,7 @@ void client_logic_startup() {
             /* to_scale   : */
                 zpolygons_to_render[last_i],
             /* new_height : */
-                30.0f);
+                10.0f);
         zpolygons_to_render_size += 1;
     }
     
@@ -133,7 +133,7 @@ void client_logic_startup() {
     // our lighting for the scene
     zlights_to_apply[0].x = 50.0f;
     zlights_to_apply[0].y = 2.5f;
-    zlights_to_apply[0].z = 200.0f;
+    zlights_to_apply[0].z = 50.0f;
     zlights_to_apply[0].reach = 1.0f;
     zlights_to_apply[0].ambient = 8.0;
     zlights_to_apply[0].diffuse = 8.0;

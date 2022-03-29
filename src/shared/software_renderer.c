@@ -51,7 +51,7 @@ void software_render(
         i < (zpolygons_to_render_size);
         i++)
     {
-        zpolygons_to_render[i]->x -= 0.005f;
+        // zpolygons_to_render[i]->x -= 0.005f;
         // zpolygons_to_render[i]->z_angle += 0.03f;
         // zpolygons_to_render[i]->x_angle += 0.021f;
         // zpolygons_to_render[i]->y_angle += 0.015f;
@@ -145,7 +145,9 @@ void software_render(
                 &camera_x_rotated,
                 -camera.z_angle);
             
-            decodedimg_add_triangle(&minimap, &camera_z_rotated);
+            decodedimg_add_triangle(
+                &minimap,
+                &camera_z_rotated);
             triangles_to_draw[t] = camera_z_rotated;
             t++;
         }
@@ -196,7 +198,7 @@ void software_render(
                 > projection_constants.near)
         {
             Vertex triangle_to_draw[3];
-           
+            
             // TODO: translate all lights in advance,
             // instead of repeating the work for every triangle
             // drawn
