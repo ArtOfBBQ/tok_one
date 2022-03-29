@@ -76,7 +76,6 @@ typedef struct zPolygon {
     float x_angle;
     float y_angle;
     float z_angle;
-    uint32_t draw_normals; // TODO: remove debugging flag
 } zPolygon;
 
 zPolygon * get_box(void);

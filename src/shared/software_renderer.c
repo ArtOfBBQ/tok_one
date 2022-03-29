@@ -254,17 +254,3 @@ void software_render(
     }
 }
 
-void rotate_triangle(
-    Vertex to_rotate[3],
-    const float angle)
-{
-    for (uint32_t i = 0; i < 3; i++) {
-        to_rotate[i].x = 
-            (cosf(angle) * to_rotate[i].x)
-                + (sinf(angle) * to_rotate[i].y);
-        to_rotate[i].y =
-            (-sinf(angle) * to_rotate[i].x)
-                + (cosf(angle) * to_rotate[i].y);
-    }
-}
-

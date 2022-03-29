@@ -13,7 +13,7 @@ typedef struct Vertex {
     float lighting;    // multiply by this lighting after
                        // color/texture
     int32_t texturearray_i; // -1 for no texture
-    int32_t texture_i; // -1 for no texture
+    int32_t texture_i;      // -1 for no texture
 }  Vertex;
 #pragma pack(pop)
 
