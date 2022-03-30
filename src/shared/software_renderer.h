@@ -9,7 +9,6 @@
 #include "vertex_types.h"
 #include "draw_triangle.h"
 #include "zpolygon.h"
-#include "bitmap_renderer.h"
 #include "clientlogic.h"
 
 local_only uint32_t renderer_initialized = false;

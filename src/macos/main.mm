@@ -56,7 +56,6 @@ int main(int argc, const char * argv[])
     window_width = NSWidth(full_screen_rect);
     
     init_projection_constants();
-    bitmap_renderer_init();
     init_renderer();
     
     NSWindowWithCustomResponder *window =

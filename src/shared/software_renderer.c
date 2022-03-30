@@ -26,12 +26,6 @@ void software_render(
     
     client_logic_update();
     
-    uint64_t elapsed_since_previous_frame =
-        platform_end_timer_get_nanosecs();
-    platform_start_timer();
-    uint64_t fps = 1000000000 / elapsed_since_previous_frame;
-    // printf("fps: %llu\n", fps);
-    
     if (
         next_gpu_workload == NULL
         || next_workload_size == NULL)
@@ -44,30 +38,6 @@ void software_render(
         printf("there's nothing to render - returning...\n");
         return;
     }
-    
-    for (
-        uint32_t i = 0;
-        i < zpolygons_to_render_size;
-        i++)
-    {
-        zpolygons_to_render[i]->x -= 0.005f;
-        zpolygons_to_render[i]->z_angle += 0.03f;
-        zpolygons_to_render[i]->x_angle += 0.021f;
-        zpolygons_to_render[i]->y_angle += 0.015f;
-    }
-    
-    // move our light source
-    uint32_t light_i = zpolygons_to_render_size - 1;
-    zpolygons_to_render[light_i]->y -= 0.001;
-    if (
-        zpolygons_to_render[light_i]->z > 20.0f)
-    {
-        zpolygons_to_render[light_i]->z -= 1.2;
-        zpolygons_to_render[light_i]->x -= 0.14;
-    }
-    zlights_to_apply[0].x = zpolygons_to_render[light_i]->x;
-    zlights_to_apply[0].y = zpolygons_to_render[light_i]->y;
-    zlights_to_apply[0].z = zpolygons_to_render[light_i]->z;
     
     uint32_t triangles_to_draw_size = 0;
     for (
@@ -96,16 +66,15 @@ void software_render(
     zTriangle x_rotated;
     zTriangle y_rotated;
     zTriangle z_rotated;
-    minimaps_clear();
     uint32_t t = 0;
     for (
         uint32_t i = 0;
         i < zpolygons_to_render_size;
         i++)
     {
-        decodedimg_add_zpolygon(
-            &minimap2,
-            zpolygons_to_render[i]);
+        // decodedimg_add_zpolygon(
+        //     &minimap2,
+        //     zpolygons_to_render[i]);
         
         for (
             uint32_t j = 0;
@@ -144,24 +113,24 @@ void software_render(
                 &camera_x_rotated,
                 -camera.z_angle);
             
-            decodedimg_add_triangle(
-                &minimap,
-                &camera_z_rotated);
+            // decodedimg_add_triangle(
+            //     &minimap,
+            //     &camera_z_rotated);
             triangles_to_draw[t] = camera_z_rotated;
             t++;
         }
     }
     
     // minimap_add_camera(&camera);
-    zCamera imaginary_camera_at_origin;
-    imaginary_camera_at_origin.x = 0.0f;
-    imaginary_camera_at_origin.y = 0.0f;
-    imaginary_camera_at_origin.z = 0.0f;
-    imaginary_camera_at_origin.x_angle = 0.0f;
-    imaginary_camera_at_origin.y_angle = 0.0f;
-    imaginary_camera_at_origin.z_angle = 0.0f;
-    decodedimg_add_camera(&minimap, &imaginary_camera_at_origin);
-    decodedimg_add_camera(&minimap2, &camera);
+    // zCamera imaginary_camera_at_origin;
+    // imaginary_camera_at_origin.x = 0.0f;
+    // imaginary_camera_at_origin.y = 0.0f;
+    // imaginary_camera_at_origin.z = 0.0f;
+    // imaginary_camera_at_origin.x_angle = 0.0f;
+    // imaginary_camera_at_origin.y_angle = 0.0f;
+    // imaginary_camera_at_origin.z_angle = 0.0f;
+    // decodedimg_add_camera(&minimap, &imaginary_camera_at_origin);
+    // decodedimg_add_camera(&minimap2, &camera);
     
     // sort all triangles so the most distant ones can be
     // drawn first 

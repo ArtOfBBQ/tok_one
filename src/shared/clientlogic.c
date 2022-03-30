@@ -8,9 +8,8 @@ zLightSource zlights_to_apply[50];
 uint32_t zlights_to_apply_size;
 
 DecodedImage minimap;
-DecodedImage minimap2;
+
 bool32_t handled_minimap_toggle = false;
-bool32_t minimaps_visible = true;
 
 zPolygon * load_from_obj_file(char * filename)
 {
@@ -26,6 +25,199 @@ zPolygon * load_from_obj_file(char * filename)
     return return_value;
 }
 
+uint32_t img_xy_to_pixel(
+    const uint32_t x,
+    const uint32_t y,
+    DecodedImage * img)
+{
+    uint32_t return_value = 0;
+    
+    assert(x > 0);
+    assert(x < img->width);
+    assert(y > 0);
+    assert(y < img->height);
+    
+    return_value += ((x - 1) * 4);
+    return_value += ((y - 1) * 4 * img->width);
+    
+    assert(return_value >= 0);
+    assert(return_value < img->rgba_values_size);
+    
+    return return_value;
+}
+
+void decodedimg_add_pixel(
+    DecodedImage * to_modify,
+    const float x,
+    const float y,
+    const uint8_t red,
+    const uint8_t green,
+    const uint8_t blue)
+{
+    uint32_t cam_reach = MINIMAP_PIXELS_WIDTH / 2;
+    
+    int32_t i_x = (uint32_t)(x + cam_reach);
+    int32_t i_y = (uint32_t)(y + cam_reach);
+    
+    if (i_x < 0 || i_y < 0) {
+        return;
+    }
+    
+    uint32_t ui_x = (uint32_t)i_x;
+    uint32_t ui_y = (uint32_t)i_y;
+    
+    if (ui_x < 1 || ui_x >= to_modify->width) { return; }
+    if (ui_y < 1 || ui_y >= to_modify->height) { return; }
+    
+    uint32_t location = img_xy_to_pixel(
+        /* x: */ ui_x,
+        /* y: */ ui_y,
+        /* img: */ to_modify);
+    
+    to_modify->rgba_values[location] = 255;
+    to_modify->rgba_values[location + 1] = red;
+    to_modify->rgba_values[location + 2] = green;
+    to_modify->rgba_values[location + 3] = blue;
+}
+
+void decodedimg_add_triangle(
+    DecodedImage * to_modify,
+    zTriangle * to_add)
+{
+    if (to_add == NULL) { return; }
+    
+    float avg_x =
+        (to_add->vertices[0].x +
+        to_add->vertices[1].x +
+        to_add->vertices[2].x) / 3.0f;
+    float avg_z =
+        (to_add->vertices[0].z +
+        to_add->vertices[1].z +
+        to_add->vertices[2].z) / 3.0f;
+    
+    decodedimg_add_pixel(
+        to_modify,
+        avg_x,
+        avg_z,
+        255,
+        255,
+        255);
+}
+
+void decodedimg_add_zpolygon(
+    DecodedImage * to_modify,
+    zPolygon * to_add)
+{
+    if (to_add == NULL) { return; }
+    
+    decodedimg_add_pixel(
+        to_modify,
+        to_add->x,
+        to_add->z,
+        255,
+        255,
+        255);
+}
+
+void decodedimg_add_camera(
+    DecodedImage * to_modify,
+    zCamera * to_add)
+{
+    decodedimg_add_pixel(
+        to_modify,
+        to_add->x,
+        to_add->z,
+        255,
+        0,
+        255);
+    
+    // draw field of view somehow
+    //
+    //       cam looking striaght down (Y angle is 0)
+    //        *
+    //       **
+    //      * *
+    //     P***   P2
+    //
+    // angle_right is just cam's y angle + (3.14 / 4)
+    // we know the angle and the distance (the hypotenuse)
+    // we want to know the opposite and the adjacent
+    // we can get adjacent with CAH and opposite with SOH
+    //
+    // if C = A/H then A = C * H
+    // if S = O/H then O = S * H
+    for (
+        float hypotenuse = 5.0f;
+        hypotenuse < 41.0f;
+        hypotenuse += 5.0f)
+    {
+        float angle_right =
+            to_add->y_angle + (
+                projection_constants.field_of_view_rad / 2);
+        float angle_left =
+            to_add->y_angle + (
+                projection_constants.field_of_view_rad / 2);
+        
+        float adjacent = cosf(angle_right) * hypotenuse;
+        float opposite = sinf(angle_right) * hypotenuse;
+        
+        decodedimg_add_pixel(
+            to_modify,
+            to_add->x + opposite,
+            to_add->z + adjacent,
+            20,
+            20,
+            250);
+        
+        angle_right =
+            to_add->y_angle - (
+                projection_constants.field_of_view_rad / 2);
+        angle_left =
+            to_add->y_angle - (
+                projection_constants.field_of_view_rad / 2);
+        
+        adjacent = cosf(angle_right) * hypotenuse;
+        opposite = sinf(angle_right) * hypotenuse;
+        decodedimg_add_pixel(
+            to_modify,
+            to_add->x + opposite,
+            to_add->z + adjacent,
+            20,
+            20,
+            250);
+    }
+}
+
+void minimaps_clear() {
+    for (
+        uint32_t i = 0;
+        i < minimap.rgba_values_size;
+        i += 4)
+    {
+        if
+        (
+            i % (minimap.width * 4) == 0
+            ||
+            (i % (minimap.width * 4)) == ((minimap.width * 4) - 4)
+            ||
+            i / (minimap.width * 4) == 0
+            ||
+            (i / (minimap.width * 4) == (minimap.height - 1))
+        )
+        {
+            minimap.rgba_values[i] = 220;
+            minimap.rgba_values[i+1] = 220;
+            minimap.rgba_values[i+2] = 220;
+            minimap.rgba_values[i+3] = 255;
+        } else {
+            minimap.rgba_values[i] = 30;
+            minimap.rgba_values[i+1] = 30;
+            minimap.rgba_values[i+2] = 30;
+            minimap.rgba_values[i+3] = 255;
+        }
+    }
+}
+
 void client_logic_startup() {
     
     // These are some example texture atlases we're using for
@@ -37,8 +229,6 @@ void client_logic_startup() {
     texture_arrays[1].sprite_rows = 2;
     texture_arrays[2].sprite_columns = 1;
     texture_arrays[2].sprite_rows = 1;
-    texture_arrays[3].sprite_columns = 1;
-    texture_arrays[3].sprite_rows = 1;
     
     FileBuffer * file_buffer;
     
@@ -74,7 +264,6 @@ void client_logic_startup() {
     }
     
     texture_arrays[2].image = &minimap;
-    texture_arrays[3].image = &minimap2;
     
     // initialize zPolygon objects, the 3-D objects we're
     // planning to render
@@ -172,10 +361,52 @@ void client_logic_startup() {
     // scale_zpolygon(
     //     /* to_scale  : */ zpolygons_to_render[light_i],
     //     /* new_height: */ 0.5f);
+
+    
+    // add 2 2D bitmaps representing minimaps
+    minimap.width = MINIMAP_PIXELS_WIDTH;
+    minimap.height = MINIMAP_PIXELS_WIDTH;
+    minimap.rgba_values_size =
+        minimap.height * minimap.width * 4;
+    minimap.rgba_values = malloc(minimap.rgba_values_size);
+    
+    for (
+        uint32_t i = 0;
+        i < minimap.rgba_values_size;
+        i += 4)
+    {
+        minimap.rgba_values[i+0] = i % 50;
+        minimap.rgba_values[i+1] = 25;
+        minimap.rgba_values[i+2] = (i + 125) % 75;
+        minimap.rgba_values[i+3] = 255;
+    }
+
+    float minimap_height = 0.5f;
+    float minimap_width =
+        projection_constants.aspect_ratio * minimap_height;
+    float minimap_offset = 0.05f;
+    float minimap_left = 1.0f - minimap_offset - minimap_width;
+    float minimap_top = -1.0f + minimap_offset + minimap_height;
+    
+    texquads_to_render_size += 1;
+    texquads_to_render[0].texturearray_i = 2;
+    texquads_to_render[0].texture_i = 0;
+    texquads_to_render[0].left = minimap_left;
+    texquads_to_render[0].width = minimap_width;
+    texquads_to_render[0].top = minimap_top;
+    texquads_to_render[0].height = minimap_height;
+    texquads_to_render[0].visible = true;
 }
 
 void client_logic_update()
 {
+    uint64_t elapsed_since_previous_frame =
+        platform_end_timer_get_nanosecs();
+    
+    platform_start_timer();
+    
+    uint64_t fps = 1000000000 / elapsed_since_previous_frame;
+    // printf("fps: %llu\n", fps);
     float cam_speed = 0.25f;
     float cam_rotation_speed = 0.05f;
     
@@ -238,12 +469,54 @@ void client_logic_update()
         // m key is pressed
 
         if (handled_minimap_toggle == false) {
-            minimaps_visible = minimaps_visible ? false : true;
+            texquads_to_render[0].visible =
+                texquads_to_render[0].visible ? false : true;
             handled_minimap_toggle = true;
         }
     } else {
         handled_minimap_toggle = false;
     }
     
+    // animate objects
+    for (
+        uint32_t i = 0;
+        i < zpolygons_to_render_size;
+        i++)
+    {
+        zpolygons_to_render[i]->x -= 0.005f;
+        zpolygons_to_render[i]->z_angle += 0.03f;
+        zpolygons_to_render[i]->x_angle += 0.021f;
+        zpolygons_to_render[i]->y_angle += 0.015f;
+    }
+    
+    // move our light source
+    uint32_t light_i = zpolygons_to_render_size - 1;
+    zpolygons_to_render[light_i]->y -= 0.001;
+    if (
+        zpolygons_to_render[light_i]->z > 20.0f)
+    {
+        zpolygons_to_render[light_i]->z -= 1.2;
+        zpolygons_to_render[light_i]->x -= 0.14;
+    }
+    zlights_to_apply[0].x = zpolygons_to_render[light_i]->x;
+    zlights_to_apply[0].y = zpolygons_to_render[light_i]->y;
+    zlights_to_apply[0].z = zpolygons_to_render[light_i]->z;
+
+    // update minimaps
+    minimaps_clear();
+
+    decodedimg_add_camera(
+        &minimap,
+        &camera);
+    for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
+        decodedimg_add_zpolygon(
+            &minimap,
+            zpolygons_to_render[i]);
+    }
+    
+    platform_update_gpu_texture(
+        2,
+        0,
+        &minimap);
 }
 

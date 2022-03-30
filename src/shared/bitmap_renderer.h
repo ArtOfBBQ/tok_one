@@ -15,7 +15,6 @@ so you can enjoy retro game programming from when gpu's didn't
 exist.
 */
 
-#include "software_renderer.h"
 #include "clientlogic.h"
 #include "zpolygon.h"
 #include "platform_layer.h"
@@ -23,26 +22,9 @@ exist.
 #include "vertex_types.h"
 #include "draw_triangle.h"
 
-extern bool32_t minimaps_visible;
-
-void bitmap_renderer_init();
-
-void minimaps_clear();
-
-void decodedimg_add_zpolygon(
-    DecodedImage * to_modify,
-    zPolygon * to_add);
-
-void decodedimg_add_triangle(
-    DecodedImage * to_modify,
-    zTriangle * to_add);
-
-void decodedimg_add_camera(
-    DecodedImage * to_modify,
-    zCamera * to_add);
 
 /* Draw bitmap(s) of pixels and add them to the gpu's workload */
-void minimaps_blit(
+void render_bitmaps(
     Vertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size);
 
