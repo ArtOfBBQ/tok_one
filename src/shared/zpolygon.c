@@ -223,7 +223,7 @@ zPolygon * load_from_obj(
                     line_size))
             {
                 using_texturearray_i = 1;
-                using_texture_i = 5;
+                using_texture_i = 4;
             }
             
             if (are_equal_strings(
@@ -417,9 +417,9 @@ zPolygon * get_box() {
     box->triangles = malloc(
         sizeof(zTriangle) * box->triangles_size);
     
-    box->x = -30.0f;
-    box->y = 0.0f;
-    box->z = 20.0f;
+    box->x = -40.0f;
+    box->y = 40.0f;
+    box->z = 40.0f;
     box->x_angle = 0.0f;
     box->y_angle = 0.0f;
     box->z_angle = 0.0f;
@@ -581,7 +581,6 @@ void ztriangle_apply_lighting(
     
     // add lighting to the 3 vertices
     for (uint32_t m = 0; m < 3; m++) {
-        recipient[m].lighting = 0.0f;
         
         zVertex light_source_pos;
         light_source_pos.x = zlight_source->x;
@@ -600,8 +599,12 @@ void ztriangle_apply_lighting(
         
         // *******************************************
         // add ambient lighting 
-        recipient[m].lighting +=
-            zlight_source->ambient * distance_mod;
+        for (uint32_t l = 0; l < 3; l++) {
+            recipient[m].lighting[l] +=
+                zlight_source->RGBA[l] *
+                zlight_source->ambient *
+                distance_mod;
+        }
         
         // *******************************************
         // add diffuse lighting
@@ -612,11 +615,14 @@ void ztriangle_apply_lighting(
         
         if (diffuse_dot < 0.0f)
         {
-            recipient[m].lighting +=
-                (diffuse_dot
-                    * -1
-                    * distance_mod
-                    * zlight_source->diffuse);
+            for (uint32_t l = 0; l < 3; l++) {
+                recipient[m].lighting[l] +=
+                    (diffuse_dot
+                        * -1
+                        * zlight_source->RGBA[l]
+                        * distance_mod
+                        * zlight_source->diffuse);
+            }
         }
         // *******************************************
     }

@@ -34,7 +34,11 @@ vertex_shader(
         input_array[vertexID].RGBA[2],
         input_array[vertexID].RGBA[3]);
     
-    out.lighting = input_array[vertexID].lighting + 0.2;
+    out.lighting = vector_float4(
+        input_array[vertexID].lighting[0],
+        input_array[vertexID].lighting[1],
+        input_array[vertexID].lighting[2],
+        input_array[vertexID].lighting[3]);
     
     if (input_array[vertexID].texturearray_i < 0)
     {

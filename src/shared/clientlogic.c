@@ -4,7 +4,8 @@ TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
 zPolygon * zpolygons_to_render[1000];
 uint32_t zpolygons_to_render_size = 0;
 
-zLightSource zlights_to_apply[50];
+#define ZLIGHTS_TO_APPLY_ARRAYSIZE 50
+zLightSource zlights_to_apply[ZLIGHTS_TO_APPLY_ARRAYSIZE];
 uint32_t zlights_to_apply_size;
 
 DecodedImage minimap;
@@ -300,12 +301,6 @@ void client_logic_startup() {
                     .texture_i = i;
             }
         }
-        
-        // scale_zpolygon(
-        //     /* to_scale   : */
-        //         zpolygons_to_render[last_i],
-        //     /* new_height : */
-        //         2.0f);
     }
     
     // objects 2: load some hard-coded cubes
@@ -323,33 +318,50 @@ void client_logic_startup() {
     // initialize global zLightSource objects, to set up
     // our lighting for the scene
     zlights_to_apply[0].x = 50.0f;
-    zlights_to_apply[0].y = 2.5f;
-    zlights_to_apply[0].z = 50.0f;
-    zlights_to_apply[0].reach = 1.0f;
-    zlights_to_apply[0].ambient = 8.0;
-    zlights_to_apply[0].diffuse = 8.0;
-    zlights_to_apply_size = 1;
+    zlights_to_apply[0].y = -10.0f;
+    zlights_to_apply[0].z = 200.0f;
+    zlights_to_apply[0].RGBA[0] = 1.0f;
+    zlights_to_apply[0].RGBA[1] = 0.05;
+    zlights_to_apply[0].RGBA[2] = 1.0f;
+    zlights_to_apply[0].RGBA[3] = 1.0f;
+    zlights_to_apply[0].reach = 15.0f;
+    zlights_to_apply[0].ambient = 0.05;
+    zlights_to_apply[0].diffuse = 4.0;
+    zlights_to_apply_size += 1;
     
-    // add a white cube to represent the light source
-    zpolygons_to_render_size += 1;
-    uint32_t light_i = zpolygons_to_render_size - 1;
-    zpolygons_to_render[light_i] = get_box();
-    zpolygons_to_render[light_i]->x = zlights_to_apply[0].x;
-    zpolygons_to_render[light_i]->y = zlights_to_apply[0].y;
-    zpolygons_to_render[light_i]->z = zlights_to_apply[0].z;
-    for (
-        uint32_t j = 0;
-        j < zpolygons_to_render[light_i]->triangles_size;
-        j++)
-    {
-        for (uint32_t v = 0; v < 3; v++) {
-            // bright white
+    zlights_to_apply[1].x = -100.0f;
+    zlights_to_apply[1].y = -10.0f;
+    zlights_to_apply[1].z = 200.0f;
+    zlights_to_apply[1].RGBA[0] = 0.05;
+    zlights_to_apply[1].RGBA[1] = 1.0f;
+    zlights_to_apply[1].RGBA[2] = 0.05;
+    zlights_to_apply[1].RGBA[3] = 1.0f;
+    zlights_to_apply[1].reach = 15.0f;
+    zlights_to_apply[1].ambient = 0.05;
+    zlights_to_apply[1].diffuse = 4.0;
+    zlights_to_apply_size += 1;
+    
+    for (uint32_t l = 0; l < 2; l++) {
+        zpolygons_to_render_size += 1;
+        uint32_t light_i = zpolygons_to_render_size - 1;
+        zpolygons_to_render[light_i] = get_box();
+        zpolygons_to_render[light_i]->x = zlights_to_apply[0].x;
+        zpolygons_to_render[light_i]->y = zlights_to_apply[0].y;
+        zpolygons_to_render[light_i]->z = zlights_to_apply[0].z;
+        
+        // add a cubes to represent the light sources
+        for (
+            uint32_t j = 0;
+            j < zpolygons_to_render[light_i]->triangles_size;
+            j++)
+        {
+            // mimic the color of the associated light source
             zpolygons_to_render[light_i]->triangles[j].color[0] =
-                500.0f;
+                zlights_to_apply[l].RGBA[0] * 7.5f;
             zpolygons_to_render[light_i]->triangles[j].color[1] =
-                500.0f;
+                zlights_to_apply[l].RGBA[1] * 7.5f;
             zpolygons_to_render[light_i]->triangles[j].color[2] =
-                500.0f;
+                zlights_to_apply[l].RGBA[2] * 7.5f;
             zpolygons_to_render[light_i]->triangles[j].color[3] =
                 1.0f;
             zpolygons_to_render[light_i]
@@ -358,10 +370,7 @@ void client_logic_startup() {
                 ->triangles[j].texture_i = -1;
         }
     }
-    // scale_zpolygon(
-    //     /* to_scale  : */ zpolygons_to_render[light_i],
-    //     /* new_height: */ 0.5f);
-
+    
     
     // add 2 2D bitmaps representing minimaps
     minimap.width = MINIMAP_PIXELS_WIDTH;
@@ -489,26 +498,36 @@ void client_logic_update()
         zpolygons_to_render[i]->y_angle += 0.015f;
     }
     
-    // move our light source
-    uint32_t light_i = zpolygons_to_render_size - 1;
-    zpolygons_to_render[light_i]->y -= 0.001;
-    if (
-        zpolygons_to_render[light_i]->z > 20.0f)
-    {
-        zpolygons_to_render[light_i]->z -= 1.2;
-        zpolygons_to_render[light_i]->x -= 0.14;
+    // move our light sources
+    for (uint32_t i = 0; i < 2; i++) {
+        uint32_t assoc_light_i = zpolygons_to_render_size - 2 + i;
+        
+        assert(assoc_light_i < zpolygons_to_render_size);
+        if (
+            zlights_to_apply[i].z > -10.0f)
+        {
+            zlights_to_apply[i].z -= 0.25f;
+        }
+        
+        zpolygons_to_render[assoc_light_i]->x =
+            zlights_to_apply[i].x;
+        zpolygons_to_render[assoc_light_i]->y =
+            zlights_to_apply[i].y;
+        zpolygons_to_render[assoc_light_i]->z =
+            zlights_to_apply[i].z;
     }
-    zlights_to_apply[0].x = zpolygons_to_render[light_i]->x;
-    zlights_to_apply[0].y = zpolygons_to_render[light_i]->y;
-    zlights_to_apply[0].z = zpolygons_to_render[light_i]->z;
-
+    
     // update minimaps
     minimaps_clear();
-
+    
     decodedimg_add_camera(
         &minimap,
         &camera);
-    for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
+    for (
+        uint32_t i = 0;
+        i < zpolygons_to_render_size;
+        i++)
+    {
         decodedimg_add_zpolygon(
             &minimap,
             zpolygons_to_render[i]);

@@ -42,7 +42,9 @@ void render_bitmaps(
             texquads_to_render[i].texture_i;
         topleft[0].uv[0] = 0.0f;
         topleft[0].uv[1] = 0.0f;
-        topleft[0].lighting = 0.5f;
+        for (uint32_t i = 0; i < 4; i++) {
+            topleft[0].lighting[i] = 0.5f;
+        }
         // top right vertex
         topleft[1].x =
             texquads_to_render[i].left +
@@ -56,7 +58,9 @@ void render_bitmaps(
             texquads_to_render[i].texture_i;
         topleft[1].uv[0] = 1.0f;
         topleft[1].uv[1] = 0.0f;
-        topleft[1].lighting = 0.5f;
+        for (uint32_t i = 0; i < 4; i++) {
+            topleft[1].lighting[i] = 0.5f;
+        }
         // bottom left vertex
         topleft[2].x = texquads_to_render[i].left;
         topleft[2].y =
@@ -70,7 +74,9 @@ void render_bitmaps(
             texquads_to_render[i].texture_i;
         topleft[2].uv[0] = 0.0f;
         topleft[2].uv[1] = 1.0f;
-        topleft[2].lighting = 0.5f;
+        for (uint32_t i = 0; i < 4; i++) {
+            topleft[2].lighting[i] = 0.5f;
+        }
         
         // top right vertex
         bottomright[0].x =
@@ -85,7 +91,10 @@ void render_bitmaps(
             texquads_to_render[i].texture_i;
         bottomright[0].uv[0] = 1.0f;
         bottomright[0].uv[1] = 0.0f;
-        bottomright[0].lighting = 0.5f;
+        for (uint32_t i = 0; i < 4; i++) {
+            bottomright[0].lighting[i] = 0.5f;
+        }
+        
         // bottom left vertex
         bottomright[1].x = texquads_to_render[i].left;
         bottomright[1].y = texquads_to_render[i].top -
@@ -98,7 +107,10 @@ void render_bitmaps(
             texquads_to_render[i].texture_i;
         bottomright[1].uv[0] = 0.0f;
         bottomright[1].uv[1] = 1.0f;
-        bottomright[1].lighting = 0.5f;
+        for (uint32_t i = 0; i < 4; i++) {
+            bottomright[1].lighting[i] = 0.5f;
+        }
+        
         // bottom right vertex
         bottomright[2].x =
             texquads_to_render[i].left +
@@ -113,7 +125,9 @@ void render_bitmaps(
             texquads_to_render[i].texture_i;
         bottomright[2].uv[0] = 1.0f;
         bottomright[2].uv[1] = 1.0f;
-        bottomright[2].lighting = 0.5f;
+        for (uint32_t i = 0; i < 4; i++) {
+            bottomright[2].lighting[i] = 0.5f;
+        }
         
         draw_triangle(
             /* vertices_recipient: */

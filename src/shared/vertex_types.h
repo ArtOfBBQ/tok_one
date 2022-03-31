@@ -11,8 +11,8 @@ typedef struct Vertex {
     float w;
     float uv[2];
     float RGBA[4];
-    float lighting;    // multiply by this lighting after
-                       // color/texture
+    float lighting[4];    // multiply by this lighting after
+                          // color/texture
     int32_t texturearray_i; // -1 for no texture
     int32_t texture_i;      // -1 for no texture
 }  Vertex;

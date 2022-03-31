@@ -38,6 +38,7 @@ typedef struct zLightSource {
     float x;
     float y;
     float z;
+    float RGBA[4];
     float reach;   // max distance before light intensity 0
     float ambient; // how much ambient light does this radiate?
     float diffuse; // how much diffuse light does this radiate?
