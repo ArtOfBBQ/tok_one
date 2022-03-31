@@ -14,8 +14,7 @@
 #include "../shared/bitmap_renderer.h"
 
 
-@interface
-MetalKitViewDelegate: NSObject<MTKViewDelegate>
+@interface MetalKitViewDelegate: NSObject<MTKViewDelegate>
 @property (retain) id<MTLCommandQueue> command_queue;
 @property (retain) NSMutableArray * vertex_buffers;
 @property VertexBuffer render_commands;
@@ -34,4 +33,3 @@ MetalKitViewDelegate: NSObject<MTKViewDelegate>
 extern MetalKitViewDelegate * apple_gpu_delegate;
 
 #endif
-

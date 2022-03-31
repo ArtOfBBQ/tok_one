@@ -18,6 +18,7 @@ of iOS, where reading your own app's files is a security
 ordeal
 */
 FileBuffer * platform_read_file(char * filename) {
+    printf("platform_read of filename: %s¥n", filename);
     
     NSString * ns_filename =
         [NSString stringWithUTF8String:filename];
@@ -33,15 +34,15 @@ FileBuffer * platform_read_file(char * filename) {
     FileBuffer * return_value =
         malloc(sizeof(FileBuffer));
     
-    FILE * modelfile = fopen(
+    FILE * rawfile = fopen(
         [filepath cStringUsingEncoding:NSUTF8StringEncoding],
         "rb");
     
-    assert(modelfile != NULL);
+    assert(rawfile != NULL);
     
-    fseek(modelfile, 0, SEEK_END);
-    unsigned long fsize = (unsigned long)ftell(modelfile);              
-    fseek(modelfile, 0, SEEK_SET);
+    fseek(rawfile, 0, SEEK_END);
+    unsigned long fsize = (unsigned long)ftell(rawfile);              
+    fseek(rawfile, 0, SEEK_SET);
     
     char * buffer = malloc(fsize);
     
@@ -53,23 +54,23 @@ FileBuffer * platform_read_file(char * filename) {
        /* nmemb (no of members) to read: */
            fsize,
         /* stream: */
-           modelfile);
-   
-    fclose(modelfile);
-        if (bytes_read != fsize) {
-            printf("Error - expected bytes read equal to fsize\n");
-            return NULL;
-        }
-        
-        return_value->contents = buffer;
-        return_value->size = bytes_read;
-        
-        printf(
-            "read file %s (%u bytes) ¥n¥n",
-            filename,
-            bytes_read);
-        
-        return return_value;
+           rawfile);
+    
+    fclose(rawfile);
+    if (bytes_read != fsize) {
+        printf("Error - expected bytes read equal to fsize\n");
+        return NULL;
+    }
+    
+    return_value->contents = buffer;
+    return_value->size = (uint32_t)bytes_read;
+    
+    printf(
+        "read file %s (%u bytes) ¥n¥n",
+        filename,
+        bytes_read);
+    
+    return return_value;
 }
 
 int main(int argc, char * argv[]) {

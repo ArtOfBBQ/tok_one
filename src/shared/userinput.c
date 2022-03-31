@@ -30,4 +30,3 @@ void register_keydown(uint32_t key_id)
     printf("keydown: %u\n", key_id);
     keypress_map[key_id] = true;
 }
-

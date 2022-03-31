@@ -19,7 +19,7 @@ zPolygon * load_from_obj_file(char * filename)
     zPolygon * return_value = load_from_obj(
         /* rawdata     : */ buffer->contents,
         /* rawdata_size: */ buffer->size);
-
+    
     free(buffer->contents);
     free(buffer);
     
@@ -189,7 +189,8 @@ void decodedimg_add_camera(
     }
 }
 
-void minimaps_clear() {
+void minimaps_clear(void)
+{
     for (
         uint32_t i = 0;
         i < minimap.rgba_values_size;
@@ -226,10 +227,13 @@ void client_logic_startup() {
     assert(TEXTUREARRAYS_SIZE > 0);
     texture_arrays[0].sprite_columns = 16;
     texture_arrays[0].sprite_rows = 16;
+    texture_arrays[0].request_update = false;
     texture_arrays[1].sprite_columns = 3;
     texture_arrays[1].sprite_rows = 2;
+    texture_arrays[1].request_update = false;
     texture_arrays[2].sprite_columns = 1;
     texture_arrays[2].sprite_rows = 1;
+    texture_arrays[2].request_update = false;
     
     FileBuffer * file_buffer;
     
@@ -276,7 +280,7 @@ void client_logic_startup() {
         zpolygons_to_render_size += 1;
         zpolygons_to_render[last_i] =
             i == 2 ?
-            load_from_obj_file("teapot.obj")
+            load_from_obj_file("cardwithuvcoords.obj")
             : load_from_obj_file("cardwithuvcoords.obj");
         
         float base_y = i % 2 == 0 ? 0.0f : -5.0f;
@@ -410,11 +414,11 @@ void client_logic_startup() {
 void client_logic_update()
 {
     uint64_t elapsed_since_previous_frame =
-        platform_end_timer_get_nanosecs();
+    platform_end_timer_get_nanosecs();
     
     platform_start_timer();
     
-    uint64_t fps = 1000000000 / elapsed_since_previous_frame;
+    // uint64_t fps = 1000000000 / elapsed_since_previous_frame;
     // printf("fps: %llu\n", fps);
     float cam_speed = 0.25f;
     float cam_rotation_speed = 0.05f;
@@ -533,9 +537,6 @@ void client_logic_update()
             zpolygons_to_render[i]);
     }
     
-    platform_update_gpu_texture(
-        2,
-        0,
-        &minimap);
+    texture_arrays[2].request_update = true;
 }
 

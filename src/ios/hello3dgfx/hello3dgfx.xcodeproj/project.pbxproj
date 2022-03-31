@@ -28,6 +28,13 @@
 		60C2105827E8DBA600A2A192 /* cardwithuvcoords.obj in Resources */ = {isa = PBXBuildFile; fileRef = 60C2105727E8DBA600A2A192 /* cardwithuvcoords.obj */; };
 		60C2105E27E8DCEE00A2A192 /* common.c in Sources */ = {isa = PBXBuildFile; fileRef = 60C2105D27E8DCEE00A2A192 /* common.c */; };
 		60C2106027E8DDA600A2A192 /* sampletexture.png in Resources */ = {isa = PBXBuildFile; fileRef = 60C2105F27E8DDA500A2A192 /* sampletexture.png */; };
+		60DE014227F5BA2400056A8A /* bitmap_renderer.c in Sources */ = {isa = PBXBuildFile; fileRef = 60DE013C27F5BA2400056A8A /* bitmap_renderer.c */; };
+		60DE014327F5BA2400056A8A /* draw_triangle.c in Sources */ = {isa = PBXBuildFile; fileRef = 60DE013D27F5BA2400056A8A /* draw_triangle.c */; };
+		60DE014427F5BA2400056A8A /* clientlogic.c in Sources */ = {isa = PBXBuildFile; fileRef = 60DE013E27F5BA2400056A8A /* clientlogic.c */; };
+		60DE014527F5BA2400056A8A /* userinput.c in Sources */ = {isa = PBXBuildFile; fileRef = 60DE013F27F5BA2400056A8A /* userinput.c */; };
+		60DE014827F5BA9400056A8A /* platform_timer.c in Sources */ = {isa = PBXBuildFile; fileRef = 60DE014627F5BA9400056A8A /* platform_timer.c */; };
+		60DE014927F5BA9400056A8A /* platform_update_gpu_texture.c in Sources */ = {isa = PBXBuildFile; fileRef = 60DE014727F5BA9400056A8A /* platform_update_gpu_texture.c */; };
+		60DE014D27F5CCDB00056A8A /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = 60DE014C27F5CCDB00056A8A /* teapot.obj */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,7 +52,6 @@
 		603EDA8127B389A200C80F7E /* vertex_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = vertex_types.h; path = ../../../shared/vertex_types.h; sourceTree = "<group>"; };
 		603EDA8227B389A200C80F7E /* software_renderer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = software_renderer.c; path = ../../../shared/software_renderer.c; sourceTree = "<group>"; };
 		603EDA8427B389A200C80F7E /* window_size.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = window_size.c; path = ../../../shared/window_size.c; sourceTree = "<group>"; };
-		603EDA8527B389A200C80F7E /* gpu.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = gpu.h; path = ../../../shared_apple/gpu.h; sourceTree = "<group>"; };
 		603EDA8627B389A200C80F7E /* software_renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = software_renderer.h; path = ../../../shared/software_renderer.h; sourceTree = "<group>"; };
 		603EDA8B27B3A67C00C80F7E /* gpu.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = gpu.m; path = ../../../shared_apple/gpu.m; sourceTree = "<group>"; };
 		603EDA8D27B4976C00C80F7E /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
@@ -65,6 +71,18 @@
 		60C2105C27E8DCE000A2A192 /* common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = common.h; path = ../../../shared/common.h; sourceTree = "<group>"; };
 		60C2105D27E8DCEE00A2A192 /* common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = common.c; path = ../../../shared/common.c; sourceTree = "<group>"; };
 		60C2105F27E8DDA500A2A192 /* sampletexture.png */ = {isa = PBXFileReference; explicitFileType = compiled; path = sampletexture.png; sourceTree = "<group>"; };
+		60DE013A27F5BA2400056A8A /* bitmap_renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = bitmap_renderer.h; path = ../../../shared/bitmap_renderer.h; sourceTree = "<group>"; };
+		60DE013B27F5BA2400056A8A /* draw_triangle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = draw_triangle.h; path = ../../../shared/draw_triangle.h; sourceTree = "<group>"; };
+		60DE013C27F5BA2400056A8A /* bitmap_renderer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bitmap_renderer.c; path = ../../../shared/bitmap_renderer.c; sourceTree = "<group>"; };
+		60DE013D27F5BA2400056A8A /* draw_triangle.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = draw_triangle.c; path = ../../../shared/draw_triangle.c; sourceTree = "<group>"; };
+		60DE013E27F5BA2400056A8A /* clientlogic.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = clientlogic.c; path = ../../../shared/clientlogic.c; sourceTree = "<group>"; };
+		60DE013F27F5BA2400056A8A /* userinput.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = userinput.c; path = ../../../shared/userinput.c; sourceTree = "<group>"; };
+		60DE014027F5BA2400056A8A /* clientlogic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = clientlogic.h; path = ../../../shared/clientlogic.h; sourceTree = "<group>"; };
+		60DE014127F5BA2400056A8A /* userinput.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = userinput.h; path = ../../../shared/userinput.h; sourceTree = "<group>"; };
+		60DE014627F5BA9400056A8A /* platform_timer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = platform_timer.c; path = ../../../shared_apple/platform_timer.c; sourceTree = "<group>"; };
+		60DE014727F5BA9400056A8A /* platform_update_gpu_texture.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = platform_update_gpu_texture.c; path = ../../../shared_apple/platform_update_gpu_texture.c; sourceTree = "<group>"; };
+		60DE014B27F5CAD700056A8A /* gpu.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = gpu.h; path = ../../../shared_apple/gpu.h; sourceTree = "<group>"; };
+		60DE014C27F5CCDB00056A8A /* teapot.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = teapot.obj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -86,6 +104,7 @@
 				60A6A9EB27E1466200AA5C03 /* phoebus.png */,
 				60C2105727E8DBA600A2A192 /* cardwithuvcoords.obj */,
 				60C2105F27E8DDA500A2A192 /* sampletexture.png */,
+				60DE014C27F5CCDB00056A8A /* teapot.obj */,
 				6019854527B32B6600A96EAA /* hello3dgfx */,
 				6019854427B32B6600A96EAA /* Products */,
 				603EDA9327B6529900C80F7E /* Frameworks */,
@@ -106,11 +125,17 @@
 				6019854627B32B6600A96EAA /* AppDelegate.h */,
 				6019854727B32B6600A96EAA /* AppDelegate.m */,
 				6019855227B32B8D00A96EAA /* Assets.xcassets */,
+				60DE013C27F5BA2400056A8A /* bitmap_renderer.c */,
+				60DE013A27F5BA2400056A8A /* bitmap_renderer.h */,
+				60DE013E27F5BA2400056A8A /* clientlogic.c */,
+				60DE014027F5BA2400056A8A /* clientlogic.h */,
 				60C2105D27E8DCEE00A2A192 /* common.c */,
 				60C2105C27E8DCE000A2A192 /* common.h */,
 				60B2DE8027D0AA2F00C6668B /* decode_png.c */,
 				60B2DE7F27D0A9B800C6668B /* decode_png.h */,
-				603EDA8527B389A200C80F7E /* gpu.h */,
+				60DE013D27F5BA2400056A8A /* draw_triangle.c */,
+				60DE013B27F5BA2400056A8A /* draw_triangle.h */,
+				60DE014B27F5CAD700056A8A /* gpu.h */,
 				603EDA8B27B3A67C00C80F7E /* gpu.m */,
 				60B2DE8227D0AA3700C6668B /* inflate.c */,
 				60B2DE7E27D0A9A900C6668B /* inflate.h */,
@@ -119,11 +144,15 @@
 				6019855827B32B8D00A96EAA /* main.m */,
 				603EDA8D27B4976C00C80F7E /* Main.storyboard */,
 				602EA53D27B9D99900744AA9 /* platform_layer.h */,
+				60DE014627F5BA9400056A8A /* platform_timer.c */,
+				60DE014727F5BA9400056A8A /* platform_update_gpu_texture.c */,
 				6019855F27B3307B00A96EAA /* shaders.metal */,
 				603EDA8227B389A200C80F7E /* software_renderer.c */,
 				603EDA8627B389A200C80F7E /* software_renderer.h */,
 				60A6A9ED27E14BEC00AA5C03 /* texture_array.c */,
 				60A6A9EE27E14BEC00AA5C03 /* texture_array.h */,
+				60DE013F27F5BA2400056A8A /* userinput.c */,
+				60DE014127F5BA2400056A8A /* userinput.h */,
 				603EDA8127B389A200C80F7E /* vertex_types.h */,
 				6019854C27B32B6600A96EAA /* ViewController.h */,
 				6019854D27B32B6600A96EAA /* ViewController.m */,
@@ -210,6 +239,7 @@
 				60C2106027E8DDA600A2A192 /* sampletexture.png in Resources */,
 				603EDA8E27B4976C00C80F7E /* Main.storyboard in Resources */,
 				6019855627B32B8D00A96EAA /* LaunchScreen.storyboard in Resources */,
+				60DE014D27F5CCDB00056A8A /* teapot.obj in Resources */,
 				60C2105827E8DBA600A2A192 /* cardwithuvcoords.obj in Resources */,
 				6019855327B32B8D00A96EAA /* Assets.xcassets in Resources */,
 			);
@@ -229,11 +259,17 @@
 				60B2DE8127D0AA3000C6668B /* decode_png.c in Sources */,
 				6019854827B32B6600A96EAA /* AppDelegate.m in Sources */,
 				6019855927B32B8D00A96EAA /* main.m in Sources */,
+				60DE014227F5BA2400056A8A /* bitmap_renderer.c in Sources */,
+				60DE014827F5BA9400056A8A /* platform_timer.c in Sources */,
+				60DE014527F5BA2400056A8A /* userinput.c in Sources */,
 				60C2105E27E8DCEE00A2A192 /* common.c in Sources */,
 				60B2DE8327D0AA3700C6668B /* inflate.c in Sources */,
 				60B0D2C127C77615009F77E4 /* zpolygon.c in Sources */,
+				60DE014427F5BA2400056A8A /* clientlogic.c in Sources */,
 				603EDA8C27B3A67C00C80F7E /* gpu.m in Sources */,
 				603EDA8927B389A200C80F7E /* software_renderer.c in Sources */,
+				60DE014927F5BA9400056A8A /* platform_update_gpu_texture.c in Sources */,
+				60DE014327F5BA2400056A8A /* draw_triangle.c in Sources */,
 				60C1C71927C81F4200877396 /* window_size.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

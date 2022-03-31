@@ -66,16 +66,17 @@ typedef struct TextureArray {
     DecodedImage * image;
     uint32_t sprite_columns;
     uint32_t sprite_rows;
+    bool32_t request_update;
 } TextureArray;
 extern TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
 
 // will be called once at startup, before rendering frame 1
 // add your app's code here
-void client_logic_startup();
+void client_logic_startup(void);
 
 // will be called once per frame, before rendering that frame
 // add your app's code here
-void client_logic_update();
+void client_logic_update(void);
 
 #endif
 

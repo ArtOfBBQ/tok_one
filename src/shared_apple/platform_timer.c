@@ -5,7 +5,7 @@
 uint64_t start_time = 0;
 
 void platform_start_timer() {
-    start_time = mach_absolute_time();
+    start_time = 0; //mach_absolute_time();
 }
 
 uint64_t platform_end_timer_get_nanosecs()
@@ -25,4 +25,3 @@ uint64_t platform_end_timer_get_nanosecs()
     return (uint64_t)((double)elapsed_time *
         ((double)info.numer / (double)info.denom));
 }
-

@@ -12,8 +12,6 @@ and mac os X, but it's defined elsewhere for iOS
 
 #ifdef SHARED_APPLE_PLATFORM
 #include <mach/mach_time.h>
-#include "../shared_apple/gpu.h"
-extern MetalKitViewDelegate * apple_gpu_delegate;
 #endif
 
 #include <stdlib.h>
@@ -23,21 +21,17 @@ extern MetalKitViewDelegate * apple_gpu_delegate;
 #include "decodedimage.h"
 
 typedef struct FileBuffer {
-    uint32_t size;
+    uint64_t size;
     char * contents;
 } FileBuffer;
 
 // Read a file (without path, only filename)
 // and return its contents as a buffer of bytes
-FileBuffer * platform_read_file(char * filename);
+FileBuffer * platform_read_file(
+    char * filename);
 
-void platform_update_gpu_texture(
-    int32_t texturearray_i,
-    int32_t texture_i,
-    DecodedImage * with_img);
-
-void platform_start_timer();
-uint64_t platform_end_timer_get_nanosecs();
+void platform_start_timer(void);
+uint64_t platform_end_timer_get_nanosecs(void);
 
 #endif
 

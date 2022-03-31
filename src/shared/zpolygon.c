@@ -60,6 +60,8 @@ zPolygon * load_from_obj(
     char * rawdata,
     uint64_t rawdata_size)
 {
+    printf("reading obj file of %llu bytes\n", rawdata_size);
+    
     zPolygon * return_value = malloc(sizeof(zPolygon));
     return_value->x = 0.0f;
     return_value->y = 0.0f;
@@ -73,10 +75,10 @@ zPolygon * load_from_obj(
     // TODO: think about buffer size 
     // pass through buffer once to read all vertices 
     zVertex new_vertices[5000];
-    float uv_u[2500];
-    float uv_v[2500];
+    float uv_u[5000];
+    float uv_v[5000];
     uint32_t new_uv_i = 0;
-    
+   
     uint32_t i = 0;
     uint32_t new_vertex_i = 0;
     while (i < rawdata_size) {
@@ -182,6 +184,9 @@ zPolygon * load_from_obj(
         }
     }
     
+    printf(
+        "allocating memory for %u triangles\n",
+        return_value->triangles_size);
     // pass through rawdata again to read all triangles 
     return_value->triangles =
         malloc(
@@ -209,18 +214,18 @@ zPolygon * load_from_obj(
             }
             
             if (are_equal_strings(
-                    "usemtl Face",
-                    usemtl_hint,
-                    line_size))
+                "usemtl Face",
+                usemtl_hint,
+                line_size))
             {
                 using_texturearray_i = 1;
                 using_texture_i = 2;
             }
             
             if (are_equal_strings(
-                    "usemtl Back",
-                    usemtl_hint,
-                    line_size))
+                "usemtl Back",
+                usemtl_hint,
+                line_size))
             {
                 using_texturearray_i = 1;
                 using_texture_i = 4;
@@ -240,7 +245,7 @@ zPolygon * load_from_obj(
             }
             
             printf(
-                "got usemtl hint from blender: %s\nbailing out\n",
+                "got usemtl hint from .obj: %s\n",
                 usemtl_hint);
             
             free(usemtl_hint);
@@ -253,7 +258,6 @@ zPolygon * load_from_obj(
             i++;
             
         } else if (rawdata[i] == 'f') {
-
             // discard the 'f'
             i++;
             assert(rawdata[i] == ' ');
@@ -272,7 +276,7 @@ zPolygon * load_from_obj(
             i += chars_till_next_space_or_slash(
                 rawdata + i);
             
-            uint32_t uv_coord_i_0;
+            uint32_t uv_coord_i_0 = 0;
             if (rawdata[i] == '/')
             {
                 // skip the slash
@@ -292,7 +296,7 @@ zPolygon * load_from_obj(
             i += chars_till_next_space_or_slash(
                 rawdata + i);
             
-            uint32_t uv_coord_i_1;
+            uint32_t uv_coord_i_1 = 0;
             if (rawdata[i] == '/')
             {
                 // skip the slash
@@ -311,7 +315,7 @@ zPolygon * load_from_obj(
             uint32_t vertex_i_2 = atoi(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
-            uint32_t uv_coord_i_2;
+            uint32_t uv_coord_i_2 = 0;
             if (rawdata[i] == '/')
             {
                 // skip the slash
@@ -329,9 +333,9 @@ zPolygon * load_from_obj(
             assert(vertex_i_0 > 0);
             assert(vertex_i_1 > 0);
             assert(vertex_i_2 > 0);
-            assert(uv_coord_i_0 > 0);
-            assert(uv_coord_i_1 > 0);
-            assert(uv_coord_i_2 > 0);
+            assert(uv_coord_i_0 >= 0);
+            assert(uv_coord_i_1 >= 0);
+            assert(uv_coord_i_2 >= 0);
             
             new_triangle.vertices[0] =
                 new_vertices[vertex_i_0 - 1];
@@ -375,6 +379,9 @@ zPolygon * load_from_obj(
         }
     }
     
+    printf(
+        "read %u triangles from  obj file\n",
+        return_value->triangles_size);
     return return_value;
 }
 

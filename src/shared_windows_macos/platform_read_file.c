@@ -43,6 +43,8 @@ FileBuffer * platform_read_file(char * filename) {
     return_value->contents = buffer;
     return_value->contents[fsize] = 0; // for windows
     return_value->size = bytes_read;
+
+    printf("read file of %lu bytes\n", bytes_read);
     
     return return_value;
 }

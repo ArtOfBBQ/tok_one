@@ -33,7 +33,7 @@ MTKView * _my_mtk_view;
     }
     [_my_mtk_view setDevice: _metal_device];
     
-    NSError *Error = NULL;
+    NSError * Error = NULL;
     NSString * shader_lib_filepath =
         [[NSBundle mainBundle]
             pathForResource: @"default"

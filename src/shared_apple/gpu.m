@@ -1,5 +1,4 @@
 #import "gpu.h"
-
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
 
 @implementation MetalKitViewDelegate
@@ -101,7 +100,7 @@ MetalKitViewDelegate * apple_gpu_delegate = NULL;
     }
     
     _metal_textures = [[NSMutableArray alloc] init];
-
+    
     // initialize a texture array for each object
     // in the global var "texturearrays" 
     assert(TEXTUREARRAYS_SIZE > 0);
@@ -223,6 +222,17 @@ MetalKitViewDelegate * apple_gpu_delegate = NULL;
 
 - (void)drawInMTKView:(MTKView *)view
 {
+    for (uint32_t i = 0; i < TEXTUREARRAYS_SIZE; i++) {
+        if (texture_arrays[i].request_update) {
+            [self
+                updateTextureArray: i
+                atSlice: 0
+                withImg: texture_arrays[i].image];
+            
+            texture_arrays[i].request_update = false;
+        }
+    }
+
     // TODO: this only works on retina
     // because on retina screens, the MTLViewport is 2x
     // the size of the window
@@ -232,7 +242,7 @@ MetalKitViewDelegate * apple_gpu_delegate = NULL;
         window_width * 2.0f,
         window_height * 2.0f };
     
-    uint32_t frame_i = _currentFrameIndex;
+    uint32_t frame_i = (uint32_t)_currentFrameIndex;
     
     Vertex * vertices_for_gpu =
         _render_commands.vertex_buffers[frame_i].vertices;
@@ -311,7 +321,7 @@ MetalKitViewDelegate * apple_gpu_delegate = NULL;
             [view currentDrawable];
         [command_buffer presentDrawable: current_drawable];
         
-        uint32_t next_index = _currentFrameIndex + 1;
+        uint32_t next_index = (int32_t)_currentFrameIndex + 1;
         if (next_index > 2) { next_index = 0; }
         
         _currentFrameIndex = next_index;

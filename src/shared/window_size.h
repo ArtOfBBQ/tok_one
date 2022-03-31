@@ -8,4 +8,3 @@ extern float window_height;
 extern float window_width;
 
 #endif
-

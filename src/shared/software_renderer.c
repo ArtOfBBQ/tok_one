@@ -62,7 +62,6 @@ void software_render(
     zTriangle camera_y_rotated;
     zTriangle camera_x_rotated;
     zTriangle camera_z_rotated;
-    zTriangle camera_translated;
     zTriangle x_rotated;
     zTriangle y_rotated;
     zTriangle z_rotated;
