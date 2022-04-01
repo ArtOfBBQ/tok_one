@@ -411,62 +411,58 @@ void client_logic_startup() {
     texquads_to_render[0].visible = true;
 }
 
-void client_logic_update()
-{
-    uint64_t elapsed_since_previous_frame =
-    platform_end_timer_get_nanosecs();
-    
-    platform_start_timer();
-    
-    // uint64_t fps = 1000000000 / elapsed_since_previous_frame;
+void client_logic_update(uint64_t nanoseconds_elapsed)
+{    
+    // uint64_t fps = 1000000000 / nanoseconds_elapsed;
     // printf("fps: %llu\n", fps);
-    float cam_speed = 0.25f;
-    float cam_rotation_speed = 0.05f;
+    
+    float cam_speed = 0.25f / 16666666;
+    float cam_rotation_speed = 0.05f / 16666666;
     
     if (keypress_map[0] == true)
     {
         // 'A' key is pressed
-        camera.x_angle += cam_rotation_speed;
+        camera.x_angle += (cam_rotation_speed * nanoseconds_elapsed);
     }
     
     if (keypress_map[6] == true)
     {
         // 'Z' key is pressed
-        camera.z_angle -= cam_rotation_speed;
+        camera.z_angle -= (cam_rotation_speed * nanoseconds_elapsed);
     }
 
     if (keypress_map[7] == true)
     {
        // 'X' key
-       camera.z_angle += cam_rotation_speed;
+       camera.z_angle += (cam_rotation_speed * nanoseconds_elapsed);
     }
     
     if (keypress_map[12] == true)
     {
         // 'Q' key is pressed
-        camera.x_angle -= cam_rotation_speed;
+        camera.x_angle -= (cam_rotation_speed * nanoseconds_elapsed);
     }
     
     
     if (keypress_map[123] == true)
     {
         // left arrow key
-        camera.y_angle -= cam_rotation_speed;
+        camera.y_angle -= (cam_rotation_speed * nanoseconds_elapsed);
         // camera.x -= cam_speed;
     }
     
     if (keypress_map[124] == true)
     {
         // right arrow key
-        camera.y_angle += cam_rotation_speed;
+        camera.y_angle += (cam_rotation_speed * nanoseconds_elapsed);
         // camera.x += cam_speed;
     }
     
     if (keypress_map[125] == true)
     {
         // down arrow key
-        camera.z -= cosf(camera.y_angle) * cam_speed;
-        camera.x -= sinf(camera.y_angle) * cam_speed;
+        camera.z -= cosf(camera.y_angle) * (cam_speed * nanoseconds_elapsed);
+        camera.x -= sinf(camera.y_angle) * (cam_speed * nanoseconds_elapsed);
     }
     
     if (keypress_map[126] == true)
@@ -474,13 +470,13 @@ void client_logic_update()
         // up arrow key is pressed
         zcamera_move_forward(
             &camera,
-            cam_speed);
+            (cam_speed * nanoseconds_elapsed));
     }
     
     if (keypress_map[46] == true)
     {
         // m key is pressed
-
+        
         if (handled_minimap_toggle == false) {
             texquads_to_render[0].visible =
                 texquads_to_render[0].visible ? false : true;
@@ -490,16 +486,39 @@ void client_logic_update()
         handled_minimap_toggle = false;
     }
     
+    // handle tablet & phone touches
+    if (!current_touch.handled) {
+        if (current_touch.finished) {
+            // an unhandled, finished touch
+            if ((current_touch.finished_at - current_touch.started_at) < 7500000) {
+                if (current_touch.current_y > (window_height * 0.5)) {
+                    camera.z -= 3.0f;
+                } else {
+                    camera.z += 3.0f;
+                }
+                current_touch.handled = true;
+            } else {
+                float delta_x = current_touch.current_x - current_touch.start_x;
+                float delta_y = current_touch.current_y - current_touch.start_y;
+                
+                if (delta_x < -50.0 || delta_x > 50.0) {
+                    camera.y_angle -= (delta_x * 0.001f);
+                }
+                current_touch.handled = true;
+            }
+        }
+    }
+    
     // animate objects
     for (
         uint32_t i = 0;
         i < zpolygons_to_render_size;
         i++)
     {
-        zpolygons_to_render[i]->x -= 0.005f;
-        zpolygons_to_render[i]->z_angle += 0.03f;
-        zpolygons_to_render[i]->x_angle += 0.021f;
-        zpolygons_to_render[i]->y_angle += 0.015f;
+        zpolygons_to_render[i]->x -= (0.005f / 16666666 * nanoseconds_elapsed);
+        zpolygons_to_render[i]->z_angle += (0.03f / 16666666 * nanoseconds_elapsed);
+        zpolygons_to_render[i]->x_angle += (0.021f / 16666666 * nanoseconds_elapsed);
+        zpolygons_to_render[i]->y_angle += (0.015f / 16666666 * nanoseconds_elapsed);
     }
     
     // move our light sources
@@ -508,9 +527,9 @@ void client_logic_update()
         
         assert(assoc_light_i < zpolygons_to_render_size);
         if (
-            zlights_to_apply[i].z > -10.0f)
+            zlights_to_apply[i].z > (-10.0f / 16666666 * nanoseconds_elapsed))
         {
-            zlights_to_apply[i].z -= 0.25f;
+            zlights_to_apply[i].z -= (0.25f / 16666666 * nanoseconds_elapsed);
         }
         
         zpolygons_to_render[assoc_light_i]->x =
@@ -539,4 +558,3 @@ void client_logic_update()
     
     texture_arrays[2].request_update = true;
 }
-

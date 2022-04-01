@@ -1,6 +1,10 @@
 #include "software_renderer.h"
 
+uint64_t previous_time;
+
 void init_renderer() {
+    previous_time = platform_get_current_time_nanosecs();
+    current_touch.handled = true;
     client_logic_startup();
     renderer_initialized = true;
 }
@@ -32,7 +36,9 @@ void software_render(
         return;
     }
     
-    client_logic_update();
+    uint64_t time = platform_get_current_time_nanosecs();
+    client_logic_update(time - previous_time);
+    previous_time = time;
     
     if (zpolygons_to_render_size == 0) {
         printf("there's nothing to render - returning...\n");

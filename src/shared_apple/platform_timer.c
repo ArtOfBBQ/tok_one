@@ -4,24 +4,7 @@
 
 uint64_t start_time = 0;
 
-void platform_start_timer() {
-    start_time = 0; //mach_absolute_time();
-}
-
-uint64_t platform_end_timer_get_nanosecs()
+uint64_t platform_get_current_time_nanosecs()
 {
-    uint64_t end_time = mach_absolute_time();
-    
-    // time elapsed in "mach time units".
-    const uint64_t elapsed_time = end_time - start_time;
-    
-    // get information for converting from MTU to nanoseconds
-    mach_timebase_info_data_t info;
-    if (mach_timebase_info(&info)) {
-        printf("unhandled error - machtime.h\n");
-        assert(0);
-    }
-    
-    return (uint64_t)((double)elapsed_time *
-        ((double)info.numer / (double)info.denom));
+    return mach_absolute_time();
 }
