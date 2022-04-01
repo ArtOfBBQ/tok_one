@@ -280,7 +280,7 @@ void client_logic_startup() {
         zpolygons_to_render_size += 1;
         zpolygons_to_render[last_i] =
             i == 2 ?
-            load_from_obj_file("cardwithuvcoords.obj")
+            load_from_obj_file("teapot.obj")
             : load_from_obj_file("cardwithuvcoords.obj");
         
         float base_y = i % 2 == 0 ? 0.0f : -5.0f;

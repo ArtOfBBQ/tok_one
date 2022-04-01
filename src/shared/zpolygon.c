@@ -71,14 +71,15 @@ zPolygon * load_from_obj(
     return_value->x_angle = 0.0f;
     return_value->triangles_size = 0;
     
-   
+    
     // TODO: think about buffer size 
     // pass through buffer once to read all vertices 
-    zVertex new_vertices[5000];
-    float uv_u[5000];
-    float uv_v[5000];
+    #define LOADING_OBJ_BUF_SIZE 5000
+    zVertex new_vertices[LOADING_OBJ_BUF_SIZE];
+    float uv_u[LOADING_OBJ_BUF_SIZE];
+    float uv_v[LOADING_OBJ_BUF_SIZE];
     uint32_t new_uv_i = 0;
-   
+    
     uint32_t i = 0;
     uint32_t new_vertex_i = 0;
     while (i < rawdata_size) {
@@ -200,6 +201,7 @@ zPolygon * load_from_obj(
     
     while (i < rawdata_size) {
         if (rawdata[i] == 'u') {
+            
             uint32_t j = i + 1;
             while (rawdata[j] != '\n') {
                 j++;
@@ -222,10 +224,11 @@ zPolygon * load_from_obj(
                 using_texture_i = 2;
             }
             
-            if (are_equal_strings(
-                "usemtl Back",
-                usemtl_hint,
-                line_size))
+            if (
+                are_equal_strings(
+                    "usemtl Back",
+                    usemtl_hint,
+                    line_size))
             {
                 using_texturearray_i = 1;
                 using_texture_i = 4;
@@ -258,43 +261,56 @@ zPolygon * load_from_obj(
             i++;
             
         } else if (rawdata[i] == 'f') {
+            printf("f\n");
             // discard the 'f'
             i++;
             assert(rawdata[i] == ' ');
+            printf("f discarded\n");
             
             // skip the space(s) after the 'f'
             i += chars_till_next_nonspace(rawdata + i);
             assert(rawdata[i] != ' ');
+            printf("skipped till next nonspace\n");
             
             // read triangle data
             zTriangle new_triangle;
             new_triangle.draw_normals = 0;
             new_triangle.visible = 1;
+            printf("new triangle created\n");
             
             // read 1st vertex index
             uint32_t vertex_i_0 = atoi(rawdata + i);
+            printf("1st vertex: %u\n", vertex_i_0);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
+            printf("skipped to next space/slash\n");
             
             uint32_t uv_coord_i_0 = 0;
             if (rawdata[i] == '/')
             {
+                printf("was slash, reading uv coordinate...");
                 // skip the slash
                 i++;
                 uv_coord_i_0 =
                     atoi(rawdata + i);
                 i += chars_till_next_space_or_slash(
                     rawdata + i);
+            } else {
+                printf(
+                    "wasn't a slash (it was [%c])\n",
+                    rawdata[i]);
             }
             
             assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
             assert(rawdata[i] != ' ');
+            printf("skipped till a nonspace...\n");
             
             // read 2nd vertex index
             uint32_t vertex_i_1 = atoi(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
+            printf("vertex_i_1: %u\n", vertex_i_1);
             
             uint32_t uv_coord_i_1 = 0;
             if (rawdata[i] == '/')
@@ -305,6 +321,8 @@ zPolygon * load_from_obj(
                     atoi(rawdata + i);
                 i += chars_till_next_space_or_slash(
                     rawdata + i);
+            } else {
+                printf("there was no slash\n");
             }
             
             assert(rawdata[i] == ' ');
@@ -315,6 +333,7 @@ zPolygon * load_from_obj(
             uint32_t vertex_i_2 = atoi(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
+            printf("vertex_i_2: %u\n", vertex_i_2);
             uint32_t uv_coord_i_2 = 0;
             if (rawdata[i] == '/')
             {
@@ -324,19 +343,23 @@ zPolygon * load_from_obj(
                     atoi(rawdata + i);
                 i += chars_till_next_space_or_slash(
                     rawdata + i);
+            } else {
+                printf("no slash\n");
             }
             assert(rawdata[i] == '\n');
             i++;
             
+            printf("run assertions\n");
             assert(vertex_i_0 != vertex_i_1);
             assert(vertex_i_0 != vertex_i_2);
             assert(vertex_i_0 > 0);
             assert(vertex_i_1 > 0);
             assert(vertex_i_2 > 0);
-            assert(uv_coord_i_0 >= 0);
-            assert(uv_coord_i_1 >= 0);
-            assert(uv_coord_i_2 >= 0);
+            assert(uv_coord_i_0 < LOADING_OBJ_BUF_SIZE);
+            assert(uv_coord_i_1 < LOADING_OBJ_BUF_SIZE);
+            assert(uv_coord_i_2 < LOADING_OBJ_BUF_SIZE);
             
+            printf("set new triangle vertices\n");
             new_triangle.vertices[0] =
                 new_vertices[vertex_i_0 - 1];
             new_triangle.vertices[1] =
@@ -344,27 +367,38 @@ zPolygon * load_from_obj(
             new_triangle.vertices[2] =
                 new_vertices[vertex_i_2 - 1];
             
-            new_triangle.vertices[0].uv[0] =
-                uv_u[uv_coord_i_0 - 1];
-            new_triangle.vertices[0].uv[1] =
-                uv_v[uv_coord_i_0 - 1];
-            new_triangle.vertices[1].uv[0] =
-                uv_u[uv_coord_i_1 - 1];
-            new_triangle.vertices[1].uv[1] =
-                uv_v[uv_coord_i_1 - 1];
-            new_triangle.vertices[2].uv[0] =
-                uv_u[uv_coord_i_2 - 1];
-            new_triangle.vertices[2].uv[1] =
-                uv_v[uv_coord_i_2 - 1];
+            printf("set new triangle uv coordinates\n");
+            if (
+                uv_coord_i_0 > 0
+                && uv_coord_i_1 > 0
+                && uv_coord_i_2 > 0)
+            {
+                new_triangle.vertices[0].uv[0] =
+                    uv_u[uv_coord_i_0 - 1];
+                new_triangle.vertices[0].uv[1] =
+                    uv_v[uv_coord_i_0 - 1];
+                new_triangle.vertices[1].uv[0] =
+                    uv_u[uv_coord_i_1 - 1];
+                new_triangle.vertices[1].uv[1] =
+                    uv_v[uv_coord_i_1 - 1];
+                new_triangle.vertices[2].uv[0] =
+                    uv_u[uv_coord_i_2 - 1];
+                new_triangle.vertices[2].uv[1] =
+                    uv_v[uv_coord_i_2 - 1];
+            }
             
+            
+            printf("set new triangle color\n");
             new_triangle.color[0] = using_color[0];
             new_triangle.color[1] = using_color[1];
             new_triangle.color[2] = using_color[2];
             new_triangle.color[3] = using_color[3];
-            
+
+            printf("set new texturearray_i\n");
             new_triangle.texturearray_i = using_texturearray_i;
             new_triangle.texture_i = using_texture_i;
             
+            printf("copy new triangle\n");
             return_value->triangles[new_triangle_i] =
                 new_triangle;
             new_triangle_i++;

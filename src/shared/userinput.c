@@ -30,3 +30,19 @@ void register_keydown(uint32_t key_id)
     printf("keydown: %u\n", key_id);
     keypress_map[key_id] = true;
 }
+
+void register_touchstart(float x, float y)
+{
+    printf(
+        "register_touchstart at [x,y]: [%f,%f]¥n",
+        x,
+        y);
+}
+
+void register_touchend(float x, float y)
+{
+    printf(
+        "register_touchend at [x,y]: [%f,%f]¥n",
+        x,
+        y);
+}
