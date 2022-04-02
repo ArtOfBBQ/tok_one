@@ -1,6 +1,8 @@
 #import "gpu.h"
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
 
+uint64_t previous_time;
+
 @implementation MetalKitViewDelegate
 {
     NSUInteger _currentFrameIndex;
@@ -11,6 +13,8 @@ MetalKitViewDelegate * apple_gpu_delegate = NULL;
     andPixelFormat: (MTLPixelFormat)pixel_format
     fromFolder: (NSString *)shader_lib_filepath
 {
+    previous_time = platform_get_current_time_microsecs();
+    
     _currentFrameIndex = 0;
     
     _command_queue = [metal_device newCommandQueue];
@@ -222,6 +226,10 @@ MetalKitViewDelegate * apple_gpu_delegate = NULL;
 
 - (void)drawInMTKView:(MTKView *)view
 {
+    uint64_t time = platform_get_current_time_microsecs();
+    uint64_t elapsed = time - previous_time;
+    previous_time = time;
+    
     for (uint32_t i = 0; i < TEXTUREARRAYS_SIZE; i++) {
         if (texture_arrays[i].request_update) {
             [self
@@ -232,7 +240,7 @@ MetalKitViewDelegate * apple_gpu_delegate = NULL;
             texture_arrays[i].request_update = false;
         }
     }
-
+    
     // TODO: this only works on retina
     // because on retina screens, the MTLViewport is 2x
     // the size of the window
@@ -252,7 +260,9 @@ MetalKitViewDelegate * apple_gpu_delegate = NULL;
         /* next_gpu_workload: */
             vertices_for_gpu,
         /* next_gpu_workload_size: */
-            &vertices_for_gpu_size);
+            &vertices_for_gpu_size,
+        /* elapsed_microseconds: */
+            elapsed);
     
     render_bitmaps(
         /* next_gpu_workload: */
@@ -326,7 +336,7 @@ MetalKitViewDelegate * apple_gpu_delegate = NULL;
         
         _currentFrameIndex = next_index;
         
-        /* 
+        /*
         [command_buffer
             addCompletedHandler:
                 ^(id<MTLCommandBuffer> commandBuffer)

@@ -76,6 +76,6 @@ void client_logic_startup(void);
 
 // will be called once per frame, before rendering that frame
 // add your app's code here
-void client_logic_update(uint64_t nanoseconds_elapsed);
+void client_logic_update(uint64_t microseconds_elapsed);
 
 #endif

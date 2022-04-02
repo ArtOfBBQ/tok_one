@@ -17,10 +17,11 @@ TouchableMTKView * _my_mtk_view;
     
     //_my_mtk_view = (TouchableMTKView *)self.view;
     _my_mtk_view = [[TouchableMTKView alloc] init];
+    _my_mtk_view.preferredFramesPerSecond = 60;
+    
     self.view = _my_mtk_view;
     
     _my_mtk_view.paused = NO;
-    
     _my_mtk_view.enableSetNeedsDisplay = NO;
     
     _metal_device = MTLCreateSystemDefaultDevice();

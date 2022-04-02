@@ -39,7 +39,7 @@ void register_touchstart(float x, float y)
         current_touch.start_x = x;
         current_touch.start_y = y;
         current_touch.started_at =
-            platform_get_current_time_nanosecs();
+            platform_get_current_time_microsecs();
         current_touch.current_x = x;
         current_touch.current_y = y;
         current_touch.finished = false;
@@ -52,6 +52,6 @@ void register_touchend(float x, float y)
     current_touch.current_y = y;
     current_touch.finished = true;
     current_touch.finished_at =
-        platform_get_current_time_nanosecs();
+        platform_get_current_time_microsecs();
     current_touch.handled = false;
 }

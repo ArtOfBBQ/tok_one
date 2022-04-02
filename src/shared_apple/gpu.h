@@ -4,6 +4,7 @@
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 #import <sys/mman.h>
+#import <mach/mach_time.h>
 
 #include "texture_array.h"
 
@@ -31,5 +32,6 @@
 @end
 
 extern MetalKitViewDelegate * apple_gpu_delegate;
+extern uint64_t previous_time;
 
 #endif

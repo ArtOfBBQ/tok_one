@@ -1,9 +1,6 @@
 #include "software_renderer.h"
 
-uint64_t previous_time;
-
 void init_renderer() {
-    previous_time = platform_get_current_time_nanosecs();
     current_touch.handled = true;
     client_logic_startup();
     renderer_initialized = true;
@@ -21,7 +18,8 @@ void free_renderer() {
 
 void software_render(
     Vertex * next_gpu_workload,
-    uint32_t * next_workload_size)
+    uint32_t * next_workload_size,
+    uint64_t elapsed_nanoseconds)
 {
     if (renderer_initialized != true) {
         printf("renderer not initialized, aborting...\n");
@@ -36,9 +34,7 @@ void software_render(
         return;
     }
     
-    uint64_t time = platform_get_current_time_nanosecs();
-    client_logic_update(time - previous_time);
-    previous_time = time;
+    client_logic_update(elapsed_nanoseconds);
     
     if (zpolygons_to_render_size == 0) {
         printf("there's nothing to render - returning...\n");

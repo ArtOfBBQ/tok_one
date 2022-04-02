@@ -2,9 +2,10 @@
 
 #include "../shared/platform_layer.h"
 
-uint64_t start_time = 0;
-
-uint64_t platform_get_current_time_nanosecs()
+uint64_t platform_get_current_time_microsecs()
 {
-    return mach_absolute_time();
+    uint64_t result = mach_absolute_time() / 1000;
+    
+    return result;
 }
+

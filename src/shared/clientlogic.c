@@ -411,58 +411,64 @@ void client_logic_startup() {
     texquads_to_render[0].visible = true;
 }
 
-void client_logic_update(uint64_t nanoseconds_elapsed)
-{    
-    // uint64_t fps = 1000000000 / nanoseconds_elapsed;
-    // printf("fps: %llu\n", fps);
+void client_logic_update(uint64_t microseconds_elapsed)
+{
+    // TODO: microseconds_elapsed is overridden here because
+    // TODO: our timer is weirdly broken on iOS. Fix it!
+    microseconds_elapsed = 16666;
+    uint64_t fps = 1000000 / microseconds_elapsed;
+    float elapsed_mod = (float)((double)microseconds_elapsed / (double)16666);
+    printf("microseconds_elapsed: %llu¥n", microseconds_elapsed);
+    printf("elapsed_mod: %f¥n", elapsed_mod);
+    printf("fps: %llu\n", fps);
     
-    float cam_speed = 0.25f / 16666666;
-    float cam_rotation_speed = 0.05f / 16666666;
+    float cam_speed = 0.25f * elapsed_mod;
+    float cam_rotation_speed = 0.05f * elapsed_mod;
     
     if (keypress_map[0] == true)
     {
         // 'A' key is pressed
-        camera.x_angle += (cam_rotation_speed * nanoseconds_elapsed);
+        camera.x_angle += cam_rotation_speed;
     }
     
     if (keypress_map[6] == true)
     {
         // 'Z' key is pressed
-        camera.z_angle -= (cam_rotation_speed * nanoseconds_elapsed);
+        camera.z_angle -= cam_rotation_speed;
     }
 
     if (keypress_map[7] == true)
     {
        // 'X' key
-       camera.z_angle += (cam_rotation_speed * nanoseconds_elapsed);
+       camera.z_angle += cam_rotation_speed;
     }
     
     if (keypress_map[12] == true)
     {
         // 'Q' key is pressed
-        camera.x_angle -= (cam_rotation_speed * nanoseconds_elapsed);
+        camera.x_angle -= cam_rotation_speed;
     }
     
     
     if (keypress_map[123] == true)
     {
         // left arrow key
-        camera.y_angle -= (cam_rotation_speed * nanoseconds_elapsed);
+        camera.y_angle -= cam_rotation_speed;
         // camera.x -= cam_speed;
     }
     
     if (keypress_map[124] == true)
     {
         // right arrow key
-        camera.y_angle += (cam_rotation_speed * nanoseconds_elapsed);
+        camera.y_angle += cam_rotation_speed;
         // camera.x += cam_speed;
     }
     
     if (keypress_map[125] == true)
     {
         // down arrow key
-        camera.z -= cosf(camera.y_angle) * (cam_speed * nanoseconds_elapsed);
-        camera.x -= sinf(camera.y_angle) * (cam_speed * nanoseconds_elapsed);
+        camera.z -= cosf(camera.y_angle) * cam_speed;
+        camera.x -= sinf(camera.y_angle) * cam_speed;
     }
     
     if (keypress_map[126] == true)
@@ -470,7 +476,7 @@ void client_logic_update(uint64_t nanoseconds_elapsed)
         // up arrow key is pressed
         zcamera_move_forward(
             &camera,
-            (cam_speed * nanoseconds_elapsed));
+            cam_speed);
     }
     
     if (keypress_map[46] == true)
@@ -490,7 +496,7 @@ void client_logic_update(uint64_t nanoseconds_elapsed)
     if (!current_touch.handled) {
         if (current_touch.finished) {
             // an unhandled, finished touch
-            if ((current_touch.finished_at - current_touch.started_at) < 7500000) {
+            if ((current_touch.finished_at - current_touch.started_at) < 7500) {
                 if (current_touch.current_y > (window_height * 0.5)) {
                     camera.z -= 3.0f;
                 } else {
@@ -499,7 +505,6 @@ void client_logic_update(uint64_t nanoseconds_elapsed)
                 current_touch.handled = true;
             } else {
                 float delta_x = current_touch.current_x - current_touch.start_x;
-                float delta_y = current_touch.current_y - current_touch.start_y;
                 
                 if (delta_x < -50.0 || delta_x > 50.0) {
                     camera.y_angle -= (delta_x * 0.001f);
@@ -515,21 +520,25 @@ void client_logic_update(uint64_t nanoseconds_elapsed)
         i < zpolygons_to_render_size;
         i++)
     {
-        zpolygons_to_render[i]->x -= (0.005f / 16666666 * nanoseconds_elapsed);
-        zpolygons_to_render[i]->z_angle += (0.03f / 16666666 * nanoseconds_elapsed);
-        zpolygons_to_render[i]->x_angle += (0.021f / 16666666 * nanoseconds_elapsed);
-        zpolygons_to_render[i]->y_angle += (0.015f / 16666666 * nanoseconds_elapsed);
+        zpolygons_to_render[i]->x -= 0.005f * elapsed_mod;
+        zpolygons_to_render[i]->z_angle += 0.03f * elapsed_mod;
+        zpolygons_to_render[i]->x_angle += 0.021f * elapsed_mod;
+        zpolygons_to_render[i]->y_angle += 0.015f * elapsed_mod;
     }
     
     // move our light sources
-    for (uint32_t i = 0; i < 2; i++) {
+    for (
+        uint32_t i = 0;
+        i < 2;
+        i++)
+    {
         uint32_t assoc_light_i = zpolygons_to_render_size - 2 + i;
         
         assert(assoc_light_i < zpolygons_to_render_size);
         if (
-            zlights_to_apply[i].z > (-10.0f / 16666666 * nanoseconds_elapsed))
+            zlights_to_apply[i].z > -10.0f)
         {
-            zlights_to_apply[i].z -= (0.25f / 16666666 * nanoseconds_elapsed);
+            zlights_to_apply[i].z -= 0.25f * elapsed_mod;
         }
         
         zpolygons_to_render[assoc_light_i]->x =
@@ -546,6 +555,7 @@ void client_logic_update(uint64_t nanoseconds_elapsed)
     decodedimg_add_camera(
         &minimap,
         &camera);
+    
     for (
         uint32_t i = 0;
         i < zpolygons_to_render_size;
