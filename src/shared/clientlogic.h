@@ -2,6 +2,7 @@
 #define CLIENTLOGIC_H
 
 #include "common.h"
+#include "texture_array.h"
 #include "zpolygon.h"
 #include "vertex_types.h"
 #include "decodedimage.h"
@@ -62,12 +63,6 @@ extern DecodedImage minimap2;
 // Set the zTriangle's texture_i to select which texture inside
 // the texture atlas to use
 // REMINDER: You must define TEXTUREARRAYS_SIZE in vertex_types.h
-typedef struct TextureArray {
-    DecodedImage * image;
-    uint32_t sprite_columns;
-    uint32_t sprite_rows;
-    bool32_t request_update;
-} TextureArray;
 extern TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
 
 // will be called once at startup, before rendering frame 1

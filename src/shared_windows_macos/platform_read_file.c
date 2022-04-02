@@ -17,13 +17,14 @@ FileBuffer * platform_read_file(char * filename) {
         return NULL;
     }
     
-    FileBuffer * return_value = malloc(sizeof(FileBuffer));
+    FileBuffer * return_value =
+        (FileBuffer *)malloc(sizeof(FileBuffer));
     
     fseek(file_handle, 0L, SEEK_END);
     long int fsize = ftell(file_handle);
     fseek(file_handle, 0L, SEEK_SET);
     
-    char * buffer = malloc(fsize + 1);
+    char * buffer = (char *)malloc(fsize + 1);
     
     size_t bytes_read = fread(
         /* ptr: */

@@ -62,7 +62,8 @@ zPolygon * load_from_obj(
 {
     printf("reading obj file of %llu bytes\n", rawdata_size);
     
-    zPolygon * return_value = malloc(sizeof(zPolygon));
+    zPolygon * return_value =
+        (zPolygon *)malloc(sizeof(zPolygon));
     return_value->x = 0.0f;
     return_value->y = 0.0f;
     return_value->z = 1.0f;
@@ -190,7 +191,7 @@ zPolygon * load_from_obj(
         return_value->triangles_size);
     // pass through rawdata again to read all triangles 
     return_value->triangles =
-        malloc(
+        (zTriangle *)malloc(
             sizeof(zTriangle) * return_value->triangles_size);
     
     i = 0;
@@ -209,7 +210,7 @@ zPolygon * load_from_obj(
             uint32_t line_size = j - i;
             
             char * usemtl_hint =
-                malloc(sizeof(line_size));
+                (char *)malloc(sizeof(line_size));
             
             for (j = 0; j < (line_size); j++) {
                 usemtl_hint[j] = rawdata[i + j];
@@ -452,10 +453,10 @@ void scale_zpolygon(
 }
 
 zPolygon * get_box() {
-    zPolygon * box = malloc(sizeof(zPolygon));
+    zPolygon * box = (zPolygon *)malloc(sizeof(zPolygon));
     box->triangles_size = 6 * 2; // 6 faces, 2 per face
     
-    box->triangles = malloc(
+    box->triangles = (zTriangle * )malloc(
         sizeof(zTriangle) * box->triangles_size);
     
     box->x = -40.0f;
@@ -897,7 +898,7 @@ int sorter_cmpr_lowest_z(
     const void * a,
     const void * b)
 {
-    return get_avg_z(a) < get_avg_z(b) ? -1 : 1;
+    return get_avg_z((zTriangle *)a) < get_avg_z((zTriangle *)b) ? -1 : 1;
 }
 
 float get_magnitude(zVertex input) {

@@ -3,8 +3,11 @@
 
 #include <inttypes.h>
 
+#ifndef __cplusplus
 #define true 1
 #define false 0
+#endif
+
 #define bool32_t uint32_t
 
 #define local_only static

@@ -325,7 +325,7 @@ void client_logic_startup() {
     zlights_to_apply[0].y = -10.0f;
     zlights_to_apply[0].z = 200.0f;
     zlights_to_apply[0].RGBA[0] = 1.0f;
-    zlights_to_apply[0].RGBA[1] = 0.05;
+    zlights_to_apply[0].RGBA[1] = 0.40;
     zlights_to_apply[0].RGBA[2] = 1.0f;
     zlights_to_apply[0].RGBA[3] = 1.0f;
     zlights_to_apply[0].reach = 15.0f;
@@ -336,9 +336,9 @@ void client_logic_startup() {
     zlights_to_apply[1].x = -100.0f;
     zlights_to_apply[1].y = -10.0f;
     zlights_to_apply[1].z = 200.0f;
-    zlights_to_apply[1].RGBA[0] = 0.05;
+    zlights_to_apply[1].RGBA[0] = 0.40;
     zlights_to_apply[1].RGBA[1] = 1.0f;
-    zlights_to_apply[1].RGBA[2] = 0.05;
+    zlights_to_apply[1].RGBA[2] = 0.40;
     zlights_to_apply[1].RGBA[3] = 1.0f;
     zlights_to_apply[1].reach = 15.0f;
     zlights_to_apply[1].ambient = 0.05;
@@ -381,7 +381,7 @@ void client_logic_startup() {
     minimap.height = MINIMAP_PIXELS_WIDTH;
     minimap.rgba_values_size =
         minimap.height * minimap.width * 4;
-    minimap.rgba_values = malloc(minimap.rgba_values_size);
+    minimap.rgba_values = (uint8_t *)malloc(minimap.rgba_values_size);
     
     for (
         uint32_t i = 0;
@@ -418,9 +418,9 @@ void client_logic_update(uint64_t microseconds_elapsed)
     microseconds_elapsed = 16666;
     uint64_t fps = 1000000 / microseconds_elapsed;
     float elapsed_mod = (float)((double)microseconds_elapsed / (double)16666);
-    printf("microseconds_elapsed: %llu¥n", microseconds_elapsed);
-    printf("elapsed_mod: %f¥n", elapsed_mod);
-    printf("fps: %llu\n", fps);
+    // printf("microseconds_elapsed: %llu¥n", microseconds_elapsed);
+    // printf("elapsed_mod: %f¥n", elapsed_mod);
+    // printf("fps: %llu\n", fps);
     
     float cam_speed = 0.25f * elapsed_mod;
     float cam_rotation_speed = 0.05f * elapsed_mod;
@@ -436,7 +436,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
         // 'Z' key is pressed
         camera.z_angle -= cam_rotation_speed;
     }
-
+    
     if (keypress_map[7] == true)
     {
        // 'X' key
@@ -448,7 +448,6 @@ void client_logic_update(uint64_t microseconds_elapsed)
         // 'Q' key is pressed
         camera.x_angle -= cam_rotation_speed;
     }
-    
     
     if (keypress_map[123] == true)
     {
@@ -479,6 +478,22 @@ void client_logic_update(uint64_t microseconds_elapsed)
             cam_speed);
     }
     
+    if (keypress_map[30] == true)
+    {
+        // ] is pressed
+        if (zlights_to_apply[1].RGBA[0] <= 0.97f) {
+            zlights_to_apply[1].RGBA[0] += 0.02f;
+        }
+    }
+    
+    if (keypress_map[42] == true)
+    {
+        // [ is pressed
+        if (zlights_to_apply[1].RGBA[0] >= 0.03f) {
+            zlights_to_apply[1].RGBA[0] -= 0.02f;
+        }
+    }
+    
     if (keypress_map[46] == true)
     {
         // m key is pressed
@@ -496,15 +511,21 @@ void client_logic_update(uint64_t microseconds_elapsed)
     if (!current_touch.handled) {
         if (current_touch.finished) {
             // an unhandled, finished touch
-            if ((current_touch.finished_at - current_touch.started_at) < 7500) {
-                if (current_touch.current_y > (window_height * 0.5)) {
+            if (
+                (current_touch.finished_at
+                    - current_touch.started_at) < 7500)
+            {
+                if (current_touch.current_y >
+                    (window_height * 0.5))
+                {
                     camera.z -= 3.0f;
                 } else {
                     camera.z += 3.0f;
                 }
                 current_touch.handled = true;
             } else {
-                float delta_x = current_touch.current_x - current_touch.start_x;
+                float delta_x = current_touch.current_x -
+                    current_touch.start_x;
                 
                 if (delta_x < -50.0 || delta_x > 50.0) {
                     camera.y_angle -= (delta_x * 0.001f);
@@ -568,3 +589,4 @@ void client_logic_update(uint64_t microseconds_elapsed)
     
     texture_arrays[2].request_update = true;
 }
+

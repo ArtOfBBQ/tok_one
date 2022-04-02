@@ -10,8 +10,9 @@ DecodedImage * extract_image(
     assert(x <= texture_array->sprite_columns);
     assert(y <= texture_array->sprite_rows);
     
-    DecodedImage * new_image = malloc(sizeof(DecodedImage));
-
+    DecodedImage * new_image =
+        (DecodedImage *)malloc(sizeof(DecodedImage));
+    
     uint32_t slice_size =
         texture_array->image->rgba_values_size
             / texture_array->sprite_columns
@@ -23,7 +24,8 @@ DecodedImage * extract_image(
         texture_array->image->height
             / texture_array->sprite_rows;
     
-    new_image->rgba_values = malloc(sizeof(char) * slice_size);
+    new_image->rgba_values =
+        (uint8_t *)malloc(sizeof(char) * slice_size);
     
     new_image->rgba_values_size = slice_size;
     new_image->width = slice_width;

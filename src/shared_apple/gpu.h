@@ -6,8 +6,7 @@
 #import <sys/mman.h>
 #import <mach/mach_time.h>
 
-#include "texture_array.h"
-
+#include "../shared/texture_array.h"
 #include "../shared/vertex_types.h"
 #include "../shared/vertex_buffer_types.h"
 #include "../shared/window_size.h"
@@ -35,3 +34,4 @@ extern MetalKitViewDelegate * apple_gpu_delegate;
 extern uint64_t previous_time;
 
 #endif
+
