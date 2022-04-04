@@ -22,13 +22,15 @@ zPolygon * load_from_obj_file(char * filename);
 // in your application
 // index 0 to zpolygons_to_render_size will be rendered,
 // the rest of the array will be ignored
-extern zPolygon * zpolygons_to_render[1000];
+#define ZPOLYGONS_TO_RENDER_ARRAYSIZE 2
+extern zPolygon * zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
 extern uint32_t zpolygons_to_render_size;
 
 // A buffer of zLightSources to light up your scene(s)
 // index 0 to zlights_to_apply_size will be rendered,
 // the rest of the array will be ignored
-extern zLightSource zlights_to_apply[50];
+#define ZLIGHTS_TO_APPLY_ARRAYSIZE 50
+extern zLightSource zlights_to_apply[ZLIGHTS_TO_APPLY_ARRAYSIZE];
 extern uint32_t zlights_to_apply_size;
 
 // texquads_to_render is an array of flat 2D textures to
@@ -39,11 +41,13 @@ extern uint32_t zlights_to_apply_size;
 typedef struct TexQuad {
     uint32_t texturearray_i;
     uint32_t texture_i;
+    float RGBA[4];
     float left;
     float top;
     float height;
     float width;
     bool32_t visible;
+    bool32_t deleted; // overwrite me if true
 } TexQuad;
 #define TEXQUADS_TO_RENDER_ARRAYSIZE 2
 extern TexQuad texquads_to_render[TEXQUADS_TO_RENDER_ARRAYSIZE];
@@ -74,3 +78,4 @@ void client_logic_startup(void);
 void client_logic_update(uint64_t microseconds_elapsed);
 
 #endif
+

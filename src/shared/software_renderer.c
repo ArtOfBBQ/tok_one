@@ -37,7 +37,6 @@ void software_render(
     client_logic_update(elapsed_nanoseconds);
     
     if (zpolygons_to_render_size == 0) {
-        printf("there's nothing to render - returning...\n");
         return;
     }
     

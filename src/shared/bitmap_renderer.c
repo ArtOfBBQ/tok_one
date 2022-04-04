@@ -1,9 +1,5 @@
 #include "bitmap_renderer.h"
 
-TexQuad texquads_to_render[TEXQUADS_TO_RENDER_ARRAYSIZE];
-uint32_t texquads_to_render_size;
-
-
 void render_bitmaps(
     Vertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size)
@@ -17,6 +13,7 @@ void render_bitmaps(
     }
     
     if (texquads_to_render_size == 0) {
+        printf("texquads_to_render_size 0, returning\n");
         return;
     }
     
@@ -42,8 +39,9 @@ void render_bitmaps(
             texquads_to_render[i].texture_i;
         topleft[0].uv[0] = 0.0f;
         topleft[0].uv[1] = 0.0f;
-        for (uint32_t i = 0; i < 4; i++) {
-            topleft[0].lighting[i] = 0.5f;
+        for (uint32_t j = 0; j < 4; j++) {
+            topleft[0].RGBA[j] = texquads_to_render[i].RGBA[j];
+            topleft[0].lighting[j] = 1.0f;
         }
         // top right vertex
         topleft[1].x =
@@ -58,8 +56,9 @@ void render_bitmaps(
             texquads_to_render[i].texture_i;
         topleft[1].uv[0] = 1.0f;
         topleft[1].uv[1] = 0.0f;
-        for (uint32_t i = 0; i < 4; i++) {
-            topleft[1].lighting[i] = 0.5f;
+        for (uint32_t j = 0; j < 4; j++) {
+            topleft[1].RGBA[j] = texquads_to_render[i].RGBA[j];
+            topleft[1].lighting[j] = 1.0f;
         }
         // bottom left vertex
         topleft[2].x = texquads_to_render[i].left;
@@ -74,8 +73,9 @@ void render_bitmaps(
             texquads_to_render[i].texture_i;
         topleft[2].uv[0] = 0.0f;
         topleft[2].uv[1] = 1.0f;
-        for (uint32_t i = 0; i < 4; i++) {
-            topleft[2].lighting[i] = 0.5f;
+        for (uint32_t j = 0; j < 4; j++) {
+            topleft[2].RGBA[j] = texquads_to_render[i].RGBA[j];
+            topleft[2].lighting[j] = 1.0f;
         }
         
         // top right vertex
@@ -91,8 +91,9 @@ void render_bitmaps(
             texquads_to_render[i].texture_i;
         bottomright[0].uv[0] = 1.0f;
         bottomright[0].uv[1] = 0.0f;
-        for (uint32_t i = 0; i < 4; i++) {
-            bottomright[0].lighting[i] = 0.5f;
+        for (uint32_t j = 0; j < 4; j++) {
+            bottomright[0].RGBA[j] = texquads_to_render[i].RGBA[j];
+            bottomright[0].lighting[j] = 1.0f;
         }
         
         // bottom left vertex
@@ -107,8 +108,9 @@ void render_bitmaps(
             texquads_to_render[i].texture_i;
         bottomright[1].uv[0] = 0.0f;
         bottomright[1].uv[1] = 1.0f;
-        for (uint32_t i = 0; i < 4; i++) {
-            bottomright[1].lighting[i] = 0.5f;
+        for (uint32_t j = 0; j < 4; j++) {
+            bottomright[1].RGBA[j] = texquads_to_render[i].RGBA[j];
+            bottomright[1].lighting[j] = 1.0f;
         }
         
         // bottom right vertex
@@ -125,8 +127,9 @@ void render_bitmaps(
             texquads_to_render[i].texture_i;
         bottomright[2].uv[0] = 1.0f;
         bottomright[2].uv[1] = 1.0f;
-        for (uint32_t i = 0; i < 4; i++) {
-            bottomright[2].lighting[i] = 0.5f;
+        for (uint32_t j = 0; j < 4; j++) {
+            bottomright[2].RGBA[j] = texquads_to_render[i].RGBA[j];
+            bottomright[2].lighting[j] = 1.0f;
         }
         
         draw_triangle(
@@ -144,6 +147,6 @@ void render_bitmaps(
                 next_gpu_workload_size,
             /* input: */
                 bottomright);
-    }    
+    }
 }
 

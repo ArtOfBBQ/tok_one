@@ -51,6 +51,16 @@ uint64_t previous_time;
     combo_pipeline_descriptor
         .colorAttachments[0]
         .pixelFormat = pixel_format;
+    // Mix colors according to alpha channel
+    [combo_pipeline_descriptor
+        .colorAttachments[0]
+        setBlendingEnabled: YES];
+    combo_pipeline_descriptor
+        .colorAttachments[0].sourceRGBBlendFactor =
+            MTLBlendFactorSourceAlpha;
+    combo_pipeline_descriptor
+        .colorAttachments[0].destinationRGBBlendFactor =
+            MTLBlendFactorOneMinusSourceAlpha;
     
     _combo_pipeline_state =
         [metal_device
@@ -109,17 +119,21 @@ uint64_t previous_time;
     // in the global var "texturearrays" 
     assert(TEXTUREARRAYS_SIZE > 0);
     for (uint32_t i = 0; i < TEXTUREARRAYS_SIZE; i++) {
-        
+
         uint32_t slice_count =
             texture_arrays[i].sprite_rows *
                 texture_arrays[i].sprite_columns;
-        
-        printf(
-            "setting up texture %u with slice cnt: %u [%u,%u]\n",
-            i,
-            slice_count,
-            texture_arrays[i].image->width,
-            texture_arrays[i].image->height);
+
+        if (
+            texture_arrays[i].sprite_rows == 0
+            || texture_arrays[i].sprite_columns == 0)
+        {
+            printf(
+                "texture_arrays[%u]'s sprite rows/cols was 0, did you forget to set it in clientlogic.c? TEXTUREARRAYS_SIZE (in vertex_types.h) was %u\n",
+                i,
+                TEXTUREARRAYS_SIZE);
+            assert(0);
+        }
         
         MTLTextureDescriptor * texture_descriptor =
             [[MTLTextureDescriptor alloc] init]; 
@@ -185,7 +199,7 @@ uint64_t previous_time;
                         /* docs: use 0 for anything other than
                            MTLTextureType3D textures */
                         0];
-                
+
                 // TODO: free heap memory
                 // free(new_slice->rgba_values);
                 // free(new_slice);
@@ -286,7 +300,7 @@ uint64_t previous_time;
             MTLLoadActionClear;
         
         MTLClearColor clear_color =
-            MTLClearColorMake(0.2f, 0.2f, 0.1f, 1.0f);
+            MTLClearColorMake(0.0f, 0.0f, 0.5f, 0.0f);
         RenderPassDescriptor.colorAttachments[0].clearColor =
             clear_color;
         

@@ -120,7 +120,7 @@ zVertex get_ztriangle_normal(
     const zTriangle * input,
     const uint32_t at_vertex_i);
 
-zPolygon * load_from_obj(
+zPolygon * parse_obj(
     char * rawdata,
     uint64_t rawdata_size);
 

@@ -81,6 +81,11 @@ int main(int argc, const char * argv[])
         [[MTKView alloc]
             initWithFrame: full_screen_rect
             device: metal_device];
+
+    // printf("mtk_view.isopaque: %u\n", mtk_view.isOpaque);
+    [mtk_view setOpaque: NO];
+    // mtk_view.opaque = false;
+    // printf("mtk_view.isopaque: %u\n", mtk_view.isOpaque);
     // mtk_view.preferredFramesPerSecond = 60;
     
     window.contentView = mtk_view;
