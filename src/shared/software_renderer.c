@@ -176,11 +176,12 @@ void software_render(
                 > projection_constants.near)
         {
             Vertex triangle_to_draw[3];
-           
+            
             for (uint32_t v = 0; v < 3; v++) {
                 triangle_to_draw[v].lighting[0] = 0.0f;
                 triangle_to_draw[v].lighting[1] = 0.0f;
                 triangle_to_draw[v].lighting[2] = 0.0f;
+                triangle_to_draw[v].lighting[3] = 1.0f;
             }
             for (
                 uint32_t l = 0;

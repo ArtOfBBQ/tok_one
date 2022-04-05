@@ -363,7 +363,7 @@ zPolygon * parse_obj(
             new_triangle.color[1] = using_color[1];
             new_triangle.color[2] = using_color[2];
             new_triangle.color[3] = using_color[3];
-
+            
             new_triangle.texturearray_i = using_texturearray_i;
             new_triangle.texture_i = using_texture_i;
             
@@ -696,7 +696,7 @@ void ztriangle_to_2d(
         recipient[i].uv[0] = input->vertices[i].uv[0];
         recipient[i].uv[1] = input->vertices[i].uv[1];
         
-        for (uint32_t j = 0; j < 3; j++) {
+        for (uint32_t j = 0; j < 4; j++) {
             recipient[i].RGBA[j] = input->color[j];
         }
         

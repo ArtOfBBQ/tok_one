@@ -1,12 +1,19 @@
 #include "clientlogic.h"
 
+// If you want to texture polygons or just draw bitmaps
+// to the screen you need to store your images in this array
 TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
+
+// If you want to draw 3D objects to the screen, you need
+// to set them up here
 zPolygon * zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
 uint32_t zpolygons_to_render_size = 0;
 
+// If you want to draw 2D bitmaps, you need to set up here
 TexQuad texquads_to_render[TEXQUADS_TO_RENDER_ARRAYSIZE];
-uint32_t texquads_to_render_size = 0;
+uint32_t texquads_to_render_size = 1;
 
+// You need lights to make your objects visible
 zLightSource zlights_to_apply[ZLIGHTS_TO_APPLY_ARRAYSIZE];
 uint32_t zlights_to_apply_size = 0;
 
@@ -38,18 +45,13 @@ void client_logic_startup() {
     texture_arrays[1].sprite_rows = 2;
     texture_arrays[1].request_update = false;
     
-    texture_arrays[2].sprite_columns = 1;
-    texture_arrays[2].sprite_rows = 1;
-    texture_arrays[2].request_update = false;
-    
     FileBuffer * file_buffer;
     
-    #define TEXTURE_FILENAMES_SIZE 3
+    #define TEXTURE_FILENAMES_SIZE 2
     assert(TEXTURE_FILENAMES_SIZE <= TEXTUREARRAYS_SIZE);
     char * texture_filenames[TEXTURE_FILENAMES_SIZE] = {
         "phoebus.png",
-        "sampletexture.png",
-        "town.png"};
+        "sampletexture.png"};
     for (
         uint32_t i = 0;
         i < TEXTURE_FILENAMES_SIZE;
@@ -78,19 +80,60 @@ void client_logic_startup() {
             texture_arrays[i].image->width);
     }
     
+    // get a zpolygon object
+    zpolygons_to_render_size += 1;
+    zpolygons_to_render[0] = load_from_obj_file("teapot.obj");
+    zpolygons_to_render[0]->x = 0.0f;
+    zpolygons_to_render[0]->y = 0.0f;
+    zpolygons_to_render[0]->z = 250.0f;
+    zpolygons_to_render[0]->x_angle = 0.0f;
+    zpolygons_to_render[0]->y_angle = 0.0f;
+    zpolygons_to_render[0]->z_angle = 0.0f;
+    assert(zpolygons_to_render[0]->triangles_size > 0);
+    scale_zpolygon(
+        /* to_scale   : */
+            zpolygons_to_render[0],
+        /* new_height : */
+            50.0f); 
+
+    for (
+        uint32_t t = 0;
+        t < zpolygons_to_render[0]->triangles_size;
+        t++)
+    {
+        zpolygons_to_render[0]->triangles[t].color[0] = 1.0f;
+        zpolygons_to_render[0]->triangles[t].color[1] = 1.0f;
+        zpolygons_to_render[0]->triangles[t].color[2] = 1.0f;
+        zpolygons_to_render[0]->triangles[t].color[3] = 1.0f;
+    }
+    
     // initialize global zLightSource objects, to set up
     // our lighting for the scene
     zlights_to_apply[0].x = 50.0f;
-    zlights_to_apply[0].y = -10.0f;
-    zlights_to_apply[0].z = 200.0f;
+    zlights_to_apply[0].y = 10.0f;
+    zlights_to_apply[0].z = 40.0f;
     zlights_to_apply[0].RGBA[0] = 1.0f;
-    zlights_to_apply[0].RGBA[1] = 1.0f;
+    zlights_to_apply[0].RGBA[1] = 0.0f;
     zlights_to_apply[0].RGBA[2] = 1.0f;
     zlights_to_apply[0].RGBA[3] = 1.0f;
     zlights_to_apply[0].reach = 15.0f;
-    zlights_to_apply[0].ambient = 0.05;
-    zlights_to_apply[0].diffuse = 4.0;
+    zlights_to_apply[0].ambient = 0.0;
+    zlights_to_apply[0].diffuse = 8.0;
     zlights_to_apply_size += 1;
+    assert(zlights_to_apply_size <= ZLIGHTS_TO_APPLY_ARRAYSIZE);
+    
+    zlights_to_apply[1].x = -50.0f;
+    zlights_to_apply[1].y = -10.0f;
+    zlights_to_apply[1].z = 40.0f;
+    zlights_to_apply[1].RGBA[0] = 0.0f;
+    zlights_to_apply[1].RGBA[1] = 1.0f;
+    zlights_to_apply[1].RGBA[2] = 0.0f;
+    zlights_to_apply[1].RGBA[3] = 1.0f;
+    zlights_to_apply[1].reach = 15.0f;
+    zlights_to_apply[1].ambient = 0.0;
+    zlights_to_apply[1].diffuse = 8.0;
+    zlights_to_apply_size += 1;
+    assert(zlights_to_apply_size <= ZLIGHTS_TO_APPLY_ARRAYSIZE);
     
     texquads_to_render_size += 1;
     texquads_to_render[0].texturearray_i = -1;
@@ -99,10 +142,10 @@ void client_logic_startup() {
     texquads_to_render[0].RGBA[1] = 0.0f;
     texquads_to_render[0].RGBA[2] = 0.0f;
     texquads_to_render[0].RGBA[3] = 1.0f;
-    texquads_to_render[0].left = -0.5f;
-    texquads_to_render[0].width = 1.0f;
-    texquads_to_render[0].top = 0.5f;
-    texquads_to_render[0].height = 1.0f;
+    texquads_to_render[0].left = -0.9f;
+    texquads_to_render[0].width = 0.1f;
+    texquads_to_render[0].top = 0.9f;
+    texquads_to_render[0].height = 0.1f;
     texquads_to_render[0].visible = true;
     
     printf("finished client_logic_startup()\n");    
@@ -228,21 +271,24 @@ void client_logic_update(
 { 
     // TODO: microseconds_elapsed is overridden here because
     // TODO: our timer is weirdly broken on iOS. Fix it!
-    microseconds_elapsed = 16666;
+    // microseconds_elapsed = 16666;
     uint64_t fps = 1000000 / microseconds_elapsed;
+    // printf("fps: %u\n", fps);
     float elapsed_mod =
         (float)((double)microseconds_elapsed / (double)16666);
     
     client_handle_keypresses(microseconds_elapsed);
     client_handle_touches(microseconds_elapsed);
-
-    if (texquads_to_render[0].RGBA[3] > 0.95f) {
-        printf("fading out..\n");
+    
+    zpolygons_to_render[0]->x += 0.01f;
+    
+    if (texquads_to_render[0].RGBA[3] > 2.0f) {
         fading_out = true;
     }
     
+    zpolygons_to_render[0]->x_angle += 0.01f;
+    
     if (texquads_to_render[0].RGBA[3] < 0.05f) {
-        printf("fading in..\n");
         fading_out = false;
     }
     
@@ -250,6 +296,15 @@ void client_logic_update(
         texquads_to_render[0].RGBA[3] -= 0.01f;
     } else {
         texquads_to_render[0].RGBA[3] += 0.01f;
+    }
+    
+    for (
+        uint32_t t = 0;
+        t < zpolygons_to_render[0]->triangles_size;
+        t++)
+    {
+        zpolygons_to_render[0]->triangles[t].color[3]
+            = texquads_to_render[0].RGBA[3];
     }
 }
 

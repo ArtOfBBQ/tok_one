@@ -29,7 +29,6 @@ cp resources/cardwithuvcoords.obj build/$PLATFORM/$APP_NAME.app/cardwithuvcoords
 cp resources/teapot.obj build/$PLATFORM/$APP_NAME.app/teapot.obj
 cp resources/phoebus.png build/$PLATFORM/$APP_NAME.app/phoebus.png
 cp resources/sampletexture.png build/$PLATFORM/$APP_NAME.app/sampletexture.png
-cp resources/town.png build/$PLATFORM/$APP_NAME.app/town.png
 
 echo "Compiling & linking $APP_NAME..."
 clang++ -x objective-c -Wall -g -pedantic $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME

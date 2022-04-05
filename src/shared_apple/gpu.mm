@@ -300,7 +300,7 @@ uint64_t previous_time;
             MTLLoadActionClear;
         
         MTLClearColor clear_color =
-            MTLClearColorMake(0.0f, 0.0f, 0.5f, 0.0f);
+            MTLClearColorMake(0.0f, 0.0f, 0.0f, 0.0f);
         RenderPassDescriptor.colorAttachments[0].clearColor =
             clear_color;
         

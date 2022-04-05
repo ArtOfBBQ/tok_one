@@ -53,7 +53,7 @@ typedef struct zVertex {
 
 typedef struct zTriangle {
     zVertex vertices[3];
-    float color[4];      // RGBA, ignored if textured
+    float color[4];         // RGBA, ignored if textured
     int32_t texturearray_i; /*
                             the index in the global var
                             'texture_arrays' of the texturearray

@@ -13,7 +13,6 @@ void render_bitmaps(
     }
     
     if (texquads_to_render_size == 0) {
-        printf("texquads_to_render_size 0, returning\n");
         return;
     }
     
