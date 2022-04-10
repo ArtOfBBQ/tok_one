@@ -118,12 +118,15 @@ uint64_t previous_time;
     // initialize a texture array for each object
     // in the global var "texturearrays" 
     assert(TEXTUREARRAYS_SIZE > 0);
-    for (uint32_t i = 0; i < TEXTUREARRAYS_SIZE; i++) {
-
+    for (
+        uint32_t i = 0;
+        i < TEXTUREARRAYS_SIZE;
+        i++)
+    {
         uint32_t slice_count =
             texture_arrays[i].sprite_rows *
                 texture_arrays[i].sprite_columns;
-
+        
         if (
             texture_arrays[i].sprite_rows == 0
             || texture_arrays[i].sprite_columns == 0)
@@ -136,7 +139,7 @@ uint64_t previous_time;
         }
         
         MTLTextureDescriptor * texture_descriptor =
-            [[MTLTextureDescriptor alloc] init]; 
+            [[MTLTextureDescriptor alloc] init];
         texture_descriptor.textureType = MTLTextureType2DArray;
         texture_descriptor.arrayLength = slice_count;
         texture_descriptor.pixelFormat =
@@ -199,7 +202,7 @@ uint64_t previous_time;
                         /* docs: use 0 for anything other than
                            MTLTextureType3D textures */
                         0];
-
+                
                 // TODO: free heap memory
                 // free(new_slice->rgba_values);
                 // free(new_slice);
@@ -278,7 +281,7 @@ uint64_t previous_time;
         /* elapsed_microseconds: */
             elapsed);
     
-    render_bitmaps(
+    draw_texquads_to_render(
         /* next_gpu_workload: */
             vertices_for_gpu,
         /* next_gpu_workload_size: */
@@ -300,7 +303,7 @@ uint64_t previous_time;
             MTLLoadActionClear;
         
         MTLClearColor clear_color =
-            MTLClearColorMake(0.0f, 0.0f, 0.0f, 0.0f);
+            MTLClearColorMake(0.2f, 0.2f, 0.2f, 0.0f);
         RenderPassDescriptor.colorAttachments[0].clearColor =
             clear_color;
         

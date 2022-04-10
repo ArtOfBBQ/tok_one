@@ -9,10 +9,6 @@ TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
 zPolygon * zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
 uint32_t zpolygons_to_render_size = 0;
 
-// If you want to draw 2D bitmaps, you need to set up here
-TexQuad texquads_to_render[TEXQUADS_TO_RENDER_ARRAYSIZE];
-uint32_t texquads_to_render_size = 1;
-
 // You need lights to make your objects visible
 zLightSource zlights_to_apply[ZLIGHTS_TO_APPLY_ARRAYSIZE];
 uint32_t zlights_to_apply_size = 0;
@@ -37,21 +33,31 @@ void client_logic_startup() {
     // texture mapping on cards and cubes
     assert(TEXTUREARRAYS_SIZE > 0);
     
+    // 16x16 sample sprites in phoebus.png
     texture_arrays[0].sprite_columns = 16;
     texture_arrays[0].sprite_rows = 16;
     texture_arrays[0].request_update = false;
     
-    texture_arrays[1].sprite_columns = 3;
-    texture_arrays[1].sprite_rows = 2;
+    // an example of a font texture in font.png
+    texture_arrays[1].sprite_columns = 9;
+    texture_arrays[1].sprite_rows = 9;
     texture_arrays[1].request_update = false;
+    
+    // 5 lore seeker cards and a debug texture 
+    // in sampletexture.png
+    texture_arrays[2].sprite_columns = 3;
+    texture_arrays[2].sprite_rows = 2;
+    texture_arrays[2].request_update = false;
     
     FileBuffer * file_buffer;
     
-    #define TEXTURE_FILENAMES_SIZE 2
+    #define TEXTURE_FILENAMES_SIZE 3
     assert(TEXTURE_FILENAMES_SIZE <= TEXTUREARRAYS_SIZE);
     char * texture_filenames[TEXTURE_FILENAMES_SIZE] = {
         "phoebus.png",
+        "font.png",
         "sampletexture.png"};
+    
     for (
         uint32_t i = 0;
         i < TEXTURE_FILENAMES_SIZE;
@@ -72,10 +78,13 @@ void client_logic_startup() {
         texture_arrays[i].image = decode_PNG(
             (uint8_t *)file_buffer->contents,
             file_buffer->size);
+        assert(texture_arrays[i].image->good);
+        assert(texture_arrays[i].image->rgba_values_size > 0);
+        
         free(file_buffer->contents);
         free(file_buffer);
         printf(
-            "read texture %s with width %u\n",
+            "loaded texture %s with width %u from disk\n",
             texture_filenames[i],
             texture_arrays[i].image->width);
     }
@@ -135,18 +144,28 @@ void client_logic_startup() {
     zlights_to_apply_size += 1;
     assert(zlights_to_apply_size <= ZLIGHTS_TO_APPLY_ARRAYSIZE);
     
-    texquads_to_render_size += 1;
-    texquads_to_render[0].texturearray_i = -1;
-    texquads_to_render[0].texture_i = -1;
-    texquads_to_render[0].RGBA[0] = 1.0f;
-    texquads_to_render[0].RGBA[1] = 0.0f;
-    texquads_to_render[0].RGBA[2] = 0.0f;
-    texquads_to_render[0].RGBA[3] = 1.0f;
-    texquads_to_render[0].left = -0.9f;
-    texquads_to_render[0].width = 0.1f;
-    texquads_to_render[0].top = 0.9f;
-    texquads_to_render[0].height = 0.1f;
-    texquads_to_render[0].visible = true;
+    request_label_renderable(
+        /* font_texturearray_i  : */ 1,
+        /* float font_height    : */ 0.03,
+        /* char * text_to_draw  : */ "hello 3dgfx",
+        /* text_to_draw_size    : */ 11,
+        /* float left           : */ -0.95f,
+        /* float top            : */ 0.85,
+        /* float max_width      : */ 0.5f,
+        /* float max_height     : */ 0.5f);
+    
+    TexQuad sample_pic;
+    sample_pic.texturearray_i = 2;
+    sample_pic.texture_i = 0;
+    sample_pic.left = 0.75;
+    sample_pic.top = 0.5f;
+    sample_pic.width = 0.5f;
+    sample_pic.height = 0.5f;
+    for (uint32_t c = 0; c < 4; c++) {
+        sample_pic.RGBA[c] = 1.0f;
+    }
+    sample_pic.visible = true;
+    request_texquad_renderable(&sample_pic);
     
     printf("finished client_logic_startup()\n");    
 }
@@ -262,13 +281,13 @@ void client_handle_touches(
                 current_touch.handled = true;
             }
         }
-    }
+    }    
 }
 
 bool32_t fading_out = true;
 void client_logic_update(
     uint64_t microseconds_elapsed)
-{ 
+{
     // TODO: microseconds_elapsed is overridden here because
     // TODO: our timer is weirdly broken on iOS. Fix it!
     // microseconds_elapsed = 16666;
@@ -277,34 +296,9 @@ void client_logic_update(
     float elapsed_mod =
         (float)((double)microseconds_elapsed / (double)16666);
     
-    client_handle_keypresses(microseconds_elapsed);
-    client_handle_touches(microseconds_elapsed);
-    
-    zpolygons_to_render[0]->x += 0.01f;
-    
-    if (texquads_to_render[0].RGBA[3] > 2.0f) {
-        fading_out = true;
-    }
-    
-    zpolygons_to_render[0]->x_angle += 0.01f;
-    
-    if (texquads_to_render[0].RGBA[3] < 0.05f) {
-        fading_out = false;
-    }
-    
-    if (fading_out) {
-        texquads_to_render[0].RGBA[3] -= 0.01f;
-    } else {
-        texquads_to_render[0].RGBA[3] += 0.01f;
-    }
-    
-    for (
-        uint32_t t = 0;
-        t < zpolygons_to_render[0]->triangles_size;
-        t++)
-    {
-        zpolygons_to_render[0]->triangles[t].color[3]
-            = texquads_to_render[0].RGBA[3];
-    }
+    client_handle_keypresses(
+        microseconds_elapsed);
+    client_handle_touches(
+        microseconds_elapsed);
 }
 

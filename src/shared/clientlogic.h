@@ -2,6 +2,7 @@
 #define CLIENTLOGIC_H
 
 #include "common.h"
+#include "texquad_type.h"
 #include "texture_array.h"
 #include "zpolygon.h"
 #include "vertex_types.h"
@@ -9,6 +10,7 @@
 #include "platform_layer.h"
 #include "decode_png.h"
 #include "userinput.h"
+#include "text.h"
 
 /*
 Prepare your objects for 3D rendering
@@ -32,32 +34,6 @@ extern uint32_t zpolygons_to_render_size;
 #define ZLIGHTS_TO_APPLY_ARRAYSIZE 50
 extern zLightSource zlights_to_apply[ZLIGHTS_TO_APPLY_ARRAYSIZE];
 extern uint32_t zlights_to_apply_size;
-
-// texquads_to_render is an array of flat 2D textures to
-// display on the screen without applying any 3D transformations.
-// You can update a texture's contents and push it to the gpu
-// with the function platform_update_gpu_texture() in
-// combination with this to achieve 2D animation
-typedef struct TexQuad {
-    uint32_t texturearray_i;
-    uint32_t texture_i;
-    float RGBA[4];
-    float left;
-    float top;
-    float height;
-    float width;
-    bool32_t visible;
-    bool32_t deleted; // overwrite me if true
-} TexQuad;
-#define TEXQUADS_TO_RENDER_ARRAYSIZE 2
-extern TexQuad texquads_to_render[TEXQUADS_TO_RENDER_ARRAYSIZE];
-extern uint32_t texquads_to_render_size;
-
-// These are 2 images that we're not going to read from disk,
-// but just write to ourselves by setting the pixels
-#define MINIMAP_PIXELS_WIDTH 100
-extern DecodedImage minimap;
-extern DecodedImage minimap2;
 
 // A buffer of texture arrays (AKA texture atlases) your
 // objects can use

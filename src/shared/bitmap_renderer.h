@@ -15,16 +15,18 @@ so you can enjoy retro game programming from when gpu's didn't
 exist.
 */
 
-#include "clientlogic.h"
-#include "zpolygon.h"
-#include "platform_layer.h"
+#include "common.h"
+#include "texquad_type.h"
 #include "decodedimage.h"
 #include "vertex_types.h"
 #include "draw_triangle.h"
 
+#define TEXQUADS_TO_RENDER_ARRAYSIZE 500
+
+void request_texquad_renderable(TexQuad * to_add);
 
 /* Draw bitmap(s) of pixels and add them to the gpu's workload */
-void render_bitmaps(
+void draw_texquads_to_render(
     Vertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size);
 

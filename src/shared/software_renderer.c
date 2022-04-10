@@ -121,7 +121,7 @@ void software_render(
         triangles_to_draw_size,
         sizeof(zTriangle),
         &sorter_cmpr_lowest_z);
-
+    
     // translate all lights
     zLightSource zlights_transformed[zlights_to_apply_size];
     for (uint32_t i = 0; i < zlights_to_apply_size; i++)
