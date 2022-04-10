@@ -3,9 +3,6 @@
 // functions we must implement
 #include "../shared/platform_layer.h" 
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "../shared/stb_image_write.h"
-
 // shared functionality we can use
 #include "../shared_apple/gpu.h"
 #include "../shared/common.h"

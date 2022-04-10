@@ -5,12 +5,52 @@ uint32_t texquads_to_render_size = 0;
 
 void request_texquad_renderable(TexQuad * to_add)
 {
-    printf("adding new texquad renderable...\n");
+    for (uint32_t i = 0; i < texquads_to_render_size; i++) {
+        if (texquads_to_render[i].deleted) {
+            texquads_to_render[texquads_to_render_size] = *to_add;
+            return;
+        }
+    }
+    
     texquads_to_render[texquads_to_render_size] = *to_add;
     texquads_to_render_size += 1;
-    printf(
-        "now there are %u renderables...\n",
-        texquads_to_render_size);
+}
+
+void move_texquad_object(
+    uint32_t with_object_id,
+    float delta_x,
+    float delta_y)
+{
+    for (
+        uint32_t i = 0;
+        i < texquads_to_render_size;
+        i++)
+    {
+        if (texquads_to_render[i].object_id == with_object_id)
+        {
+            texquads_to_render[i].left += delta_x;
+            texquads_to_render[i].top += delta_y;
+        }
+    }
+}
+
+void delete_texquad_object(uint32_t with_object_id)
+{
+    for (
+        int32_t i = texquads_to_render_size - 1;
+        i >= 0;
+        i--)
+    {
+        if (texquads_to_render[i].object_id == with_object_id)
+        {
+            texquads_to_render[i].visible = false;
+            texquads_to_render[i].deleted = true;
+
+            if (i == texquads_to_render_size - 1) {
+                texquads_to_render_size -= 1;
+            }
+        }
+    }
 }
 
 void add_quad_to_gpu_workload(

@@ -27,20 +27,27 @@ zPolygon * load_from_obj_file(char * filename)
     return return_value;
 }
 
+uint64_t label_object_id = 0;
+
 void client_logic_startup() {
     printf("client_logic_startup()\n");    
     // These are some example texture atlases we're using for
     // texture mapping on cards and cubes
     assert(TEXTUREARRAYS_SIZE > 0);
     
-    // 16x16 sample sprites in phoebus.png
-    texture_arrays[0].sprite_columns = 16;
-    texture_arrays[0].sprite_rows = 16;
+    // an example of a font texture in font.png
+    // Note: I generally keep my font in slot 0 and only
+    // use 1 font
+    // if you want to change the texturearray slot used
+    // as the font, you need to change font_texturearray_i
+    // variable in text.c
+    texture_arrays[0].sprite_columns = 9;
+    texture_arrays[0].sprite_rows = 9;
     texture_arrays[0].request_update = false;
     
-    // an example of a font texture in font.png
-    texture_arrays[1].sprite_columns = 9;
-    texture_arrays[1].sprite_rows = 9;
+    // 16x16 sample sprites in phoebus.png
+    texture_arrays[1].sprite_columns = 16;
+    texture_arrays[1].sprite_rows = 16;
     texture_arrays[1].request_update = false;
     
     // 5 lore seeker cards and a debug texture 
@@ -54,8 +61,8 @@ void client_logic_startup() {
     #define TEXTURE_FILENAMES_SIZE 3
     assert(TEXTURE_FILENAMES_SIZE <= TEXTUREARRAYS_SIZE);
     char * texture_filenames[TEXTURE_FILENAMES_SIZE] = {
-        "phoebus.png",
         "font.png",
+        "phoebus.png",
         "sampletexture.png"};
     
     for (
@@ -143,16 +150,8 @@ void client_logic_startup() {
     zlights_to_apply[1].diffuse = 8.0;
     zlights_to_apply_size += 1;
     assert(zlights_to_apply_size <= ZLIGHTS_TO_APPLY_ARRAYSIZE);
-    
-    request_label_renderable(
-        /* font_texturearray_i  : */ 1,
-        /* float font_height    : */ 0.03,
-        /* char * text_to_draw  : */ "hello 3dgfx",
-        /* text_to_draw_size    : */ 11,
-        /* float left           : */ -0.95f,
-        /* float top            : */ 0.85,
-        /* float max_width      : */ 0.5f,
-        /* float max_height     : */ 0.5f);
+   
+    font_height = 0.025f;
     
     TexQuad sample_pic;
     sample_pic.texturearray_i = 2;
@@ -285,6 +284,7 @@ void client_handle_touches(
 }
 
 bool32_t fading_out = true;
+char fps_string[7] = "fps: xx";
 void client_logic_update(
     uint64_t microseconds_elapsed)
 {
@@ -295,6 +295,27 @@ void client_logic_update(
     // printf("fps: %u\n", fps);
     float elapsed_mod =
         (float)((double)microseconds_elapsed / (double)16666);
+   
+    // move_texquad_object(
+    //     /* with_object_id : */ label_object_id,
+    //     /* float delta_x  : */ 0.003f * elapsed_mod,
+    //     /* float delta_y  : */ 0.0f * elapsed_mod);
+    delete_texquad_object(label_object_id);
+
+    if (fps < 100) {
+        fps_string[5] = '0' + ((fps / 10) % 10);
+        fps_string[6] = '0' + (fps % 10);
+    } else {
+        fps_string[5] = '9' + ((fps / 10) % 10);
+        fps_string[6] = '9' + (fps % 10);
+    }
+    request_label_renderable(
+        /* with_id              : */ label_object_id,
+        /* char * text_to_draw  : */ &fps_string,
+        /* text_to_draw_size    : */ 7,
+        /* float left           : */ -0.95f,
+        /* float top            : */ -0.85,
+        /* float max_width      : */ 0.5f);
     
     client_handle_keypresses(
         microseconds_elapsed);
