@@ -272,6 +272,8 @@ uint64_t previous_time;
     Vertex * vertices_for_gpu =
         _render_commands.vertex_buffers[frame_i].vertices;
     uint32_t vertices_for_gpu_size = 0;
+
+    resolve_animation_effects(elapsed);
     
     software_render(
         /* next_gpu_workload: */

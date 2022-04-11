@@ -14,8 +14,13 @@ void request_label_renderable(
     float cur_left = left;
     float cur_top = top;
     
-    for (uint32_t i = 0; i < text_to_draw_size; i++) {
-        if (text_to_draw[i] == ' ') {
+    for (
+        uint32_t i = 0;
+        i < text_to_draw_size;
+        i++)
+    {
+        if (text_to_draw[i] == ' ')
+        {
             cur_left += font_height;
             continue;
         }
@@ -24,7 +29,11 @@ void request_label_renderable(
         letter.object_id = with_id;
         letter.texturearray_i = font_texturearray_i;
         letter.texture_i = text_to_draw[i] - '0';
-        for (uint32_t rgba_i = 0; rgba_i < 4; rgba_i++) {
+        for (
+            uint32_t rgba_i = 0;
+            rgba_i < 4;
+            rgba_i++)
+        {
             letter.RGBA[rgba_i] = 1.0f;
         }
         

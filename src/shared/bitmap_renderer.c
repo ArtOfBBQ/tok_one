@@ -5,8 +5,13 @@ uint32_t texquads_to_render_size = 0;
 
 void request_texquad_renderable(TexQuad * to_add)
 {
-    for (uint32_t i = 0; i < texquads_to_render_size; i++) {
-        if (texquads_to_render[i].deleted) {
+    for (
+        uint32_t i = 0;
+        i < texquads_to_render_size;
+        i++)
+    {
+        if (texquads_to_render[i].deleted)
+        {
             texquads_to_render[texquads_to_render_size] = *to_add;
             return;
         }

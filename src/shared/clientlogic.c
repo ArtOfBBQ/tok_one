@@ -4,20 +4,11 @@
 // to the screen you need to store your images in this array
 TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
 
-// If you want to draw 3D objects to the screen, you need
-// to set them up here
-zPolygon * zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
-uint32_t zpolygons_to_render_size = 0;
-
-// You need lights to make your objects visible
-zLightSource zlights_to_apply[ZLIGHTS_TO_APPLY_ARRAYSIZE];
-uint32_t zlights_to_apply_size = 0;
-
-zPolygon * load_from_obj_file(char * filename)
+zPolygon load_from_obj_file(char * filename)
 {
     FileBuffer * buffer = platform_read_file(filename);
     
-    zPolygon * return_value = parse_obj(
+    zPolygon return_value = parse_obj(
         /* rawdata     : */ buffer->contents,
         /* rawdata_size: */ buffer->size);
     
@@ -27,7 +18,8 @@ zPolygon * load_from_obj_file(char * filename)
     return return_value;
 }
 
-uint64_t label_object_id = 0;
+uint32_t label_object_id = 0;
+uint32_t teapot_object_id = 1;
 
 void client_logic_startup() {
     printf("client_logic_startup()\n");    
@@ -99,28 +91,28 @@ void client_logic_startup() {
     // get a zpolygon object
     zpolygons_to_render_size += 1;
     zpolygons_to_render[0] = load_from_obj_file("teapot.obj");
-    zpolygons_to_render[0]->x = 0.0f;
-    zpolygons_to_render[0]->y = 0.0f;
-    zpolygons_to_render[0]->z = 250.0f;
-    zpolygons_to_render[0]->x_angle = 0.0f;
-    zpolygons_to_render[0]->y_angle = 0.0f;
-    zpolygons_to_render[0]->z_angle = 0.0f;
-    assert(zpolygons_to_render[0]->triangles_size > 0);
+    zpolygons_to_render[0].x = 0.0f;
+    zpolygons_to_render[0].y = 0.0f;
+    zpolygons_to_render[0].z = 250.0f;
+    zpolygons_to_render[0].x_angle = 0.0f;
+    zpolygons_to_render[0].y_angle = 0.0f;
+    zpolygons_to_render[0].z_angle = 0.0f;
+    assert(zpolygons_to_render[0].triangles_size > 0);
     scale_zpolygon(
         /* to_scale   : */
-            zpolygons_to_render[0],
+            &zpolygons_to_render[0],
         /* new_height : */
             50.0f); 
-
+    
     for (
         uint32_t t = 0;
-        t < zpolygons_to_render[0]->triangles_size;
+        t < zpolygons_to_render[0].triangles_size;
         t++)
     {
-        zpolygons_to_render[0]->triangles[t].color[0] = 1.0f;
-        zpolygons_to_render[0]->triangles[t].color[1] = 1.0f;
-        zpolygons_to_render[0]->triangles[t].color[2] = 1.0f;
-        zpolygons_to_render[0]->triangles[t].color[3] = 1.0f;
+        zpolygons_to_render[0].triangles[t].color[0] = 1.0f;
+        zpolygons_to_render[0].triangles[t].color[1] = 1.0f;
+        zpolygons_to_render[0].triangles[t].color[2] = 1.0f;
+        zpolygons_to_render[0].triangles[t].color[3] = 1.0f;
     }
     
     // initialize global zLightSource objects, to set up
@@ -150,7 +142,7 @@ void client_logic_startup() {
     zlights_to_apply[1].diffuse = 8.0;
     zlights_to_apply_size += 1;
     assert(zlights_to_apply_size <= ZLIGHTS_TO_APPLY_ARRAYSIZE);
-   
+    
     font_height = 0.025f;
     
     TexQuad sample_pic;
@@ -164,7 +156,23 @@ void client_logic_startup() {
         sample_pic.RGBA[c] = 1.0f;
     }
     sample_pic.visible = true;
+    sample_pic.deleted = false;
     request_texquad_renderable(&sample_pic);
+
+    request_label_renderable(
+        /* with_id              : */ label_object_id,
+        /* char * text_to_draw  : */ "im a moving string",
+        /* text_to_draw_size    : */ 17,
+        /* float left           : */ -0.95f,
+        /* float top            : */ -0.55,
+        /* float max_width      : */ 0.5f);
+
+    ScheduledAnimation move_fps_right;
+    move_fps_right.affected_object_id = label_object_id;
+    move_fps_right.delta_x_per_second = 0.2f;
+    move_fps_right.remaining_microseconds = 5000000;
+    move_fps_right.deleted = false;
+    request_scheduled_animation(&move_fps_right);
     
     printf("finished client_logic_startup()\n");    
 }
@@ -288,20 +296,13 @@ char fps_string[7] = "fps: xx";
 void client_logic_update(
     uint64_t microseconds_elapsed)
 {
-    // TODO: microseconds_elapsed is overridden here because
     // TODO: our timer is weirdly broken on iOS. Fix it!
-    // microseconds_elapsed = 16666;
     uint64_t fps = 1000000 / microseconds_elapsed;
     // printf("fps: %u\n", fps);
     float elapsed_mod =
         (float)((double)microseconds_elapsed / (double)16666);
    
-    // move_texquad_object(
-    //     /* with_object_id : */ label_object_id,
-    //     /* float delta_x  : */ 0.003f * elapsed_mod,
-    //     /* float delta_y  : */ 0.0f * elapsed_mod);
-    delete_texquad_object(label_object_id);
-
+ 
     if (fps < 100) {
         fps_string[5] = '0' + ((fps / 10) % 10);
         fps_string[6] = '0' + (fps % 10);
@@ -309,13 +310,8 @@ void client_logic_update(
         fps_string[5] = '9' + ((fps / 10) % 10);
         fps_string[6] = '9' + (fps % 10);
     }
-    request_label_renderable(
-        /* with_id              : */ label_object_id,
-        /* char * text_to_draw  : */ &fps_string,
-        /* text_to_draw_size    : */ 7,
-        /* float left           : */ -0.95f,
-        /* float top            : */ -0.85,
-        /* float max_width      : */ 0.5f);
+    
+    // delete_texquad_object(label_object_id);
     
     client_handle_keypresses(
         microseconds_elapsed);

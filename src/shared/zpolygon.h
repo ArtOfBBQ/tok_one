@@ -44,6 +44,13 @@ typedef struct zLightSource {
     float diffuse; // how much diffuse light does this radiate?
 } zLightSource;
 
+// A buffer of zLightSources to light up your scene(s)
+// index 0 to zlights_to_apply_size will be rendered,
+// the rest of the array will be ignored
+#define ZLIGHTS_TO_APPLY_ARRAYSIZE 50
+extern zLightSource zlights_to_apply[ZLIGHTS_TO_APPLY_ARRAYSIZE];
+extern uint32_t zlights_to_apply_size;
+
 typedef struct zVertex {
     float x;
     float y;
@@ -66,6 +73,7 @@ typedef struct zTriangle {
 } zTriangle;
 
 typedef struct zPolygon {
+    uint32_t object_id;
     zTriangle * triangles;
     uint32_t triangles_size;
     float x;
@@ -76,7 +84,13 @@ typedef struct zPolygon {
     float z_angle;
 } zPolygon;
 
-zPolygon * get_box(void);
+// A buffer of zPolygon objects that should be rendered
+// in your application
+// index 0 to zpolygons_to_render_size will be rendered,
+// the rest of the array will be ignored
+#define ZPOLYGONS_TO_RENDER_ARRAYSIZE 2
+extern zPolygon zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
+extern uint32_t zpolygons_to_render_size;
 
 void ztriangle_apply_lighting(
     Vertex recipient[3],
@@ -120,16 +134,13 @@ zVertex get_ztriangle_normal(
     const zTriangle * input,
     const uint32_t at_vertex_i);
 
-zPolygon * parse_obj(
+zPolygon parse_obj(
     char * rawdata,
     uint64_t rawdata_size);
 
 void scale_zpolygon(
     zPolygon * to_scale,
     const float new_height);
-
-void free_zpolygon(
-    zPolygon * to_free);
 
 float get_avg_z(
     const zTriangle * of_triangle);

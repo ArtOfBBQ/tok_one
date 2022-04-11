@@ -2,7 +2,19 @@
 
 ProjectionConstants projection_constants = {};
 
+// The global camera
+// In a 2D game, move the x to the left to move all of your
+// sprites to the right
 zCamera camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+
+// If you want to draw 3D objects to the screen, you need
+// to set them up here
+zPolygon zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
+uint32_t zpolygons_to_render_size = 0;
+
+// You need at least 1 light to make your objects visible
+zLightSource zlights_to_apply[ZLIGHTS_TO_APPLY_ARRAYSIZE];
+uint32_t zlights_to_apply_size = 0;
 
 void init_projection_constants() {
     
@@ -56,20 +68,18 @@ uint32_t chars_till_next_nonspace(
     return i;
 }
 
-zPolygon * parse_obj(
+zPolygon parse_obj(
     char * rawdata,
     uint64_t rawdata_size)
 {
-    zPolygon * return_value =
-        (zPolygon *)malloc(sizeof(zPolygon));
-    return_value->x = 0.0f;
-    return_value->y = 0.0f;
-    return_value->z = 1.0f;
-    return_value->z_angle = 0.0f;
-    return_value->y_angle = 0.0f; // 3.14 to face camera
-    return_value->x_angle = 0.0f;
-    return_value->triangles_size = 0;
-    
+    zPolygon return_value;
+    return_value.x = 0.0f;
+    return_value.y = 0.0f;
+    return_value.z = 1.0f;
+    return_value.z_angle = 0.0f;
+    return_value.y_angle = 0.0f; // 3.14 to face camera
+    return_value.x_angle = 0.0f;
+    return_value.triangles_size = 0;
     
     // TODO: think about buffer size 
     // pass through buffer once to read all vertices 
@@ -172,7 +182,7 @@ zPolygon * parse_obj(
             
         } else {
             if (rawdata[i] == 'f') {
-                return_value->triangles_size += 1;
+                return_value.triangles_size += 1;
             }
             // skip until the next line break character 
             while (rawdata[i] != '\n') {
@@ -185,9 +195,9 @@ zPolygon * parse_obj(
     }
     
     // pass through rawdata again to read all triangles 
-    return_value->triangles =
+    return_value.triangles =
         (zTriangle *)malloc(
-            sizeof(zTriangle) * return_value->triangles_size);
+            sizeof(zTriangle) * return_value.triangles_size);
     
     i = 0;
     uint32_t new_triangle_i = 0;
@@ -367,7 +377,7 @@ zPolygon * parse_obj(
             new_triangle.texturearray_i = using_texturearray_i;
             new_triangle.texture_i = using_texture_i;
             
-            return_value->triangles[new_triangle_i] =
+            return_value.triangles[new_triangle_i] =
                 new_triangle;
             new_triangle_i++;
         } else {
@@ -703,13 +713,6 @@ void ztriangle_to_2d(
         recipient[i].texturearray_i = input->texturearray_i;
         recipient[i].texture_i = input->texture_i;
     }
-}
-
-void free_zpolygon(
-    zPolygon * to_free)
-{
-    free(to_free->triangles);
-    free(to_free);
 }
 
 zVertex x_rotate_zvertex(

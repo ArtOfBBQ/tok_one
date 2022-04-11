@@ -6,16 +6,6 @@ void init_renderer() {
     renderer_initialized = true;
 }
 
-void free_renderer() {
-    for (
-        uint32_t i = 0;
-        i < zpolygons_to_render_size;
-        i++)
-    {
-        free_zpolygon(zpolygons_to_render[i]);
-    }
-}
-
 void software_render(
     Vertex * next_gpu_workload,
     uint32_t * next_workload_size,
@@ -48,7 +38,7 @@ void software_render(
     {
         for (
             uint32_t j = 0;
-            j < zpolygons_to_render[i]->triangles_size;
+            j < zpolygons_to_render[i].triangles_size;
             j++)
         {
             triangles_to_draw_size++;
@@ -74,30 +64,30 @@ void software_render(
     {
         for (
             uint32_t j = 0;
-            j < zpolygons_to_render[i]->triangles_size;
+            j < zpolygons_to_render[i].triangles_size;
             j++)
         {
             assert(t < triangles_to_draw_size);
             
             x_rotated = x_rotate_triangle(
-                zpolygons_to_render[i]->triangles + j,
-                zpolygons_to_render[i]->x_angle);
+                zpolygons_to_render[i].triangles + j,
+                zpolygons_to_render[i].x_angle);
             y_rotated = y_rotate_triangle(
                 &x_rotated,
-                zpolygons_to_render[i]->y_angle);
+                zpolygons_to_render[i].y_angle);
             z_rotated = z_rotate_triangle(
                 &y_rotated,
-                zpolygons_to_render[i]->z_angle);
+                zpolygons_to_render[i].z_angle);
             
             position_translated = translate_ztriangle(
                 /* input: */
                     &z_rotated,
                 /* by_x: */
-                    zpolygons_to_render[i]->x - camera.x,
+                    zpolygons_to_render[i].x - camera.x,
                 /* by_y: */
-                    zpolygons_to_render[i]->y - camera.y,
+                    zpolygons_to_render[i].y - camera.y,
                 /* by_z: */
-                    zpolygons_to_render[i]->z - camera.z);
+                    zpolygons_to_render[i].z - camera.z);
             
             camera_y_rotated = y_rotate_triangle(
                 &position_translated,

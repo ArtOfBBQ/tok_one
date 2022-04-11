@@ -11,6 +11,7 @@
 #include "decode_png.h"
 #include "userinput.h"
 #include "text.h"
+#include "scheduled_animations.h"
 
 /*
 Prepare your objects for 3D rendering
@@ -18,22 +19,7 @@ Prepare your objects for 3D rendering
 Write code to update your game or app's state
 */
 
-zPolygon * load_from_obj_file(char * filename);
-
-// A buffer of zPolygon objects that should be rendered
-// in your application
-// index 0 to zpolygons_to_render_size will be rendered,
-// the rest of the array will be ignored
-#define ZPOLYGONS_TO_RENDER_ARRAYSIZE 2
-extern zPolygon * zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
-extern uint32_t zpolygons_to_render_size;
-
-// A buffer of zLightSources to light up your scene(s)
-// index 0 to zlights_to_apply_size will be rendered,
-// the rest of the array will be ignored
-#define ZLIGHTS_TO_APPLY_ARRAYSIZE 50
-extern zLightSource zlights_to_apply[ZLIGHTS_TO_APPLY_ARRAYSIZE];
-extern uint32_t zlights_to_apply_size;
+zPolygon load_from_obj_file(char * filename);
 
 // A buffer of texture arrays (AKA texture atlases) your
 // objects can use
