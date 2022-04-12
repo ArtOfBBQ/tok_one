@@ -69,13 +69,13 @@ void software_render(
         {
             assert(t < triangles_to_draw_size);
             
-            x_rotated = x_rotate_triangle(
+            x_rotated = x_rotate_ztriangle(
                 zpolygons_to_render[i].triangles + j,
                 zpolygons_to_render[i].x_angle);
-            y_rotated = y_rotate_triangle(
+            y_rotated = y_rotate_ztriangle(
                 &x_rotated,
                 zpolygons_to_render[i].y_angle);
-            z_rotated = z_rotate_triangle(
+            z_rotated = z_rotate_ztriangle(
                 &y_rotated,
                 zpolygons_to_render[i].z_angle);
             
@@ -89,13 +89,13 @@ void software_render(
                 /* by_z: */
                     zpolygons_to_render[i].z - camera.z);
             
-            camera_y_rotated = y_rotate_triangle(
+            camera_y_rotated = y_rotate_ztriangle(
                 &position_translated,
                 -camera.y_angle);
-            camera_x_rotated = x_rotate_triangle(
+            camera_x_rotated = x_rotate_ztriangle(
                 &camera_y_rotated,
                 -camera.x_angle);
-            camera_z_rotated = z_rotate_triangle(
+            camera_z_rotated = z_rotate_ztriangle(
                 &camera_x_rotated,
                 -camera.z_angle);
             

@@ -41,6 +41,7 @@ void request_label_renderable(
         letter.top = cur_top;
         letter.height = font_height;
         letter.width = font_height;
+        letter.z_angle = 0.0f;
         letter.visible = true;
         letter.deleted = false;
         

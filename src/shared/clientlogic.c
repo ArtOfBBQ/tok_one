@@ -102,7 +102,7 @@ void client_logic_startup() {
         /* to_scale   : */
             &zpolygons_to_render[0],
         /* new_height : */
-            50.0f); 
+            50.0f);
     
     for (
         uint32_t t = 0;
@@ -146,33 +146,38 @@ void client_logic_startup() {
     font_height = 0.025f;
     
     TexQuad sample_pic;
+    sample_pic.object_id = 4;
     sample_pic.texturearray_i = 2;
     sample_pic.texture_i = 0;
-    sample_pic.left = 0.75;
-    sample_pic.top = 0.5f;
-    sample_pic.width = 0.5f;
-    sample_pic.height = 0.5f;
+    sample_pic.left = 0.4;
+    sample_pic.top = 0.0f;
+    float sample_pic_width_pixels = 713.0f;
+    float sample_pic_height_pixels = 1040.0f;
+    sample_pic.width = sample_pic_width_pixels / window_width / 4;
+    sample_pic.height = sample_pic_height_pixels / window_height / 4;
+    sample_pic.z_angle = 0.0f;
     for (uint32_t c = 0; c < 4; c++) {
         sample_pic.RGBA[c] = 1.0f;
     }
     sample_pic.visible = true;
     sample_pic.deleted = false;
     request_texquad_renderable(&sample_pic);
-
-    request_label_renderable(
-        /* with_id              : */ label_object_id,
-        /* char * text_to_draw  : */ "im a moving string",
-        /* text_to_draw_size    : */ 17,
-        /* float left           : */ -0.95f,
-        /* float top            : */ -0.55,
-        /* float max_width      : */ 0.5f);
-
-    ScheduledAnimation move_fps_right;
-    move_fps_right.affected_object_id = label_object_id;
-    move_fps_right.delta_x_per_second = 0.2f;
-    move_fps_right.remaining_microseconds = 5000000;
-    move_fps_right.deleted = false;
-    request_scheduled_animation(&move_fps_right);
+    
+    ScheduledAnimation move_sprite_left;
+    move_sprite_left.affected_object_id = 4;
+    move_sprite_left.delta_x_per_second = 0.0f; // -0.2f;
+    move_sprite_left.delta_y_per_second = 0.0f;
+    move_sprite_left.delta_z_per_second = 0.0f;
+    move_sprite_left.delta_z_per_second = 0.0f;
+    move_sprite_left.x_rotation_per_second = 0.0f;
+    move_sprite_left.y_rotation_per_second = 0.0f;
+    move_sprite_left.z_rotation_per_second = 1.0f;
+    move_sprite_left.remaining_microseconds = 90000000;
+    for (uint32_t c = 0; c < 4; c++) {
+        move_sprite_left.rgba_delta_per_second[c] = 0.0f;
+    }
+    move_sprite_left.deleted = false;
+    request_scheduled_animation(&move_sprite_left);
     
     printf("finished client_logic_startup()\n");    
 }
@@ -311,7 +316,14 @@ void client_logic_update(
         fps_string[6] = '9' + (fps % 10);
     }
     
-    // delete_texquad_object(label_object_id);
+    delete_texquad_object(label_object_id);
+    request_label_renderable(
+        /* with_id              : */ label_object_id,
+        /* char * text_to_draw  : */ fps_string,
+        /* text_to_draw_size    : */ 7,
+        /* float left           : */ -0.95f,
+        /* float top            : */ -0.95,
+        /* float max_width      : */ 0.5f);
     
     client_handle_keypresses(
         microseconds_elapsed);

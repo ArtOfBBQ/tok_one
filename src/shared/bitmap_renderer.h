@@ -15,6 +15,8 @@ so you can enjoy retro game programming from when gpu's didn't
 exist.
 */
 
+#include <math.h>
+
 #include "common.h"
 #include "texquad_type.h"
 #include "decodedimage.h"

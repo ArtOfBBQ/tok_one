@@ -65,34 +65,21 @@ void resolve_animation_effects(uint64_t microseconds_elapsed)
                 texquads_to_render[tq_i].object_id ==
                     anim->affected_object_id)
             {
-                if (tq_i == 5) {
-                    printf(
-                        "delta_x_per_second: %f\n",
-                        anim->delta_x_per_second);
-                    printf(
-                        "actual_elapsed: %u\n",
-                        actual_elapsed);
-                }
-                float current_delta =
-                    anim->delta_x_per_second * actual_elapsed;
-
-                if (tq_i == 5) {
-                    printf("current delta: %f\n", current_delta);
-                }
-                current_delta /= 1000000;
-
-                if (tq_i == 5) {
-                    printf("current delta divided: %f\n", current_delta);
-                    printf("texquads_to_render[%u].x before: %f,",
-                        tq_i,
-                        texquads_to_render[tq_i].left);
-                }
                 texquads_to_render[tq_i].left +=
-                    current_delta;
+                    (anim->delta_x_per_second * actual_elapsed)
+                        / 1000000;
+                texquads_to_render[tq_i].top +=
+                    (anim->delta_y_per_second * actual_elapsed)
+                        / 1000000;
+                texquads_to_render[tq_i].z_angle +=
+                    (anim->z_rotation_per_second * actual_elapsed)
+                        / 1000000;
                 
-                if (tq_i == 5) {
-                    printf("after: %f\n",
-                        texquads_to_render[tq_i].left);
+                for (uint32_t c = 0; c < 4; c++) {
+                    texquads_to_render[tq_i].RGBA[c] +=
+                        (anim->rgba_delta_per_second[c]
+                            * actual_elapsed)
+                                / 1000000;
                 }
             }
         }

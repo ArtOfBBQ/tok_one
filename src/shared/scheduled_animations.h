@@ -17,6 +17,7 @@ typedef struct ScheduledAnimation {
     float x_rotation_per_second;
     float y_rotation_per_second;
     float z_rotation_per_second;
+    float rgba_delta_per_second[4];
     uint64_t remaining_microseconds;
     bool32_t deleted;
 } ScheduledAnimation;

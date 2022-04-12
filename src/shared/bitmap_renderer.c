@@ -39,6 +39,34 @@ void move_texquad_object(
     }
 }
 
+void z_rotate_triangle(
+    Vertex input[3],
+    float around_x,
+    float around_y,
+    float by_angle,
+    Vertex recipient[3])
+{
+    for (uint32_t i = 0; i < 3; i++) {
+        recipient[i] = input[i];
+    }
+    
+    for (uint32_t i = 0; i < 3; i++) {
+        
+        float cur_x = input[i].x - around_x;
+        float cur_y = input[i].y - around_y;
+        
+        float new_x =
+            (cur_x * cosf(by_angle)) - 
+            (cur_y * sinf(by_angle));
+        float new_y =
+            (cur_y * cosf(by_angle)) +
+            (cur_x * sinf(by_angle));
+        
+        recipient[i].x = new_x + around_x;
+        recipient[i].y = new_y + around_y;
+    }
+}
+
 void delete_texquad_object(uint32_t with_object_id)
 {
     for (
@@ -169,6 +197,22 @@ void add_quad_to_gpu_workload(
         bottomright[2].RGBA[j] = to_add->RGBA[j];
         bottomright[2].lighting[j] = 1.0f;
     }
+
+    Vertex topleft_rotated[3];
+    Vertex bottomright_rotated[3];
+    
+    z_rotate_triangle(
+        /* input: */ topleft,
+        /* around_x : */ to_add->left + (to_add->width * 0.5f),
+        /* around_y : */ to_add->top - (to_add->height * 0.5f),
+        /* by_angle: */ to_add->z_angle,
+        /* recipient: */ topleft_rotated);
+    z_rotate_triangle(
+        /* input: */ bottomright,
+        /* around_x : */ to_add->left + (to_add->width * 0.5f),
+        /* around_y : */ to_add->top - (to_add->height * 0.5f),
+        /* by_angle: */ to_add->z_angle,
+        /* recipient: */ bottomright_rotated);
     
     draw_triangle(
         /* vertices_recipient: */
@@ -176,7 +220,7 @@ void add_quad_to_gpu_workload(
         /* vertex_count_recipient: */
             next_gpu_workload_size,
         /* input: */
-            topleft);
+            topleft_rotated);
     
     draw_triangle(
         /* vertices_recipient: */
@@ -184,7 +228,7 @@ void add_quad_to_gpu_workload(
         /* vertex_count_recipient: */
             next_gpu_workload_size,
         /* input: */
-            bottomright);
+            bottomright_rotated);
 }
 
 void draw_texquads_to_render(

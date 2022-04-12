@@ -732,7 +732,7 @@ zVertex x_rotate_zvertex(
     return return_value;
 }
 
-zTriangle x_rotate_triangle(
+zTriangle x_rotate_ztriangle(
     const zTriangle * input,
     const float angle)
 {
@@ -772,7 +772,7 @@ zVertex z_rotate_zvertex(
     return return_value;
 }
 
-zTriangle z_rotate_triangle(
+zTriangle z_rotate_ztriangle(
     const zTriangle * input,
     const float angle)
 {
@@ -812,7 +812,7 @@ zVertex y_rotate_zvertex(
     return return_value;
 }
 
-zTriangle y_rotate_triangle(
+zTriangle y_rotate_ztriangle(
     const zTriangle * input,
     const float angle)
 {
