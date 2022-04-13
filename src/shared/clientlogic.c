@@ -295,7 +295,7 @@ void client_handle_touches(
 }
 
 bool32_t fading_out = true;
-char fps_string[7] = "fps: xx";
+char fps_string[8] = "fps: xx";
 void client_logic_update(
     uint64_t microseconds_elapsed)
 {

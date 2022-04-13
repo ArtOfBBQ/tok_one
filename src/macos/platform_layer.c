@@ -14,7 +14,7 @@ char * platform_get_cwd()
     NSString * cwd = [file_manager currentDirectoryPath];
     NSLog(@"%@", cwd);
     
-    char * return_value = [cwd UTF8String];
+    char * return_value = (char *)[cwd UTF8String];
     
     return return_value;
 }
