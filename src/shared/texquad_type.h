@@ -27,10 +27,10 @@ typedef struct TexQuad {
     // will be mixed with this color
     float RGBA[4];
     
-    float left;
-    float top;
-    float height;
-    float width;
+    float left_pixels;
+    float top_pixels;
+    float height_pixels;
+    float width_pixels;
     float z_angle;
     bool32_t visible; // skip rendering me but keep me in memory
     bool32_t deleted; // overwrite me if true

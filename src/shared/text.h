@@ -10,8 +10,8 @@ void request_label_renderable(
     uint32_t with_object_id,
     char * text_to_draw,
     uint32_t text_to_draw_size,
-    float left,
-    float top,
+    float left_pixelspace,
+    float top_pixelspace,
     float max_width);
 
 #endif

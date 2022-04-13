@@ -18,6 +18,7 @@ exist.
 #include <math.h>
 
 #include "common.h"
+#include "window_size.h"
 #include "texquad_type.h"
 #include "decodedimage.h"
 #include "vertex_types.h"

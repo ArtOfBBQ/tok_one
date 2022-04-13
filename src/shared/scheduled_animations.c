@@ -65,10 +65,10 @@ void resolve_animation_effects(uint64_t microseconds_elapsed)
                 texquads_to_render[tq_i].object_id ==
                     anim->affected_object_id)
             {
-                texquads_to_render[tq_i].left +=
+                texquads_to_render[tq_i].left_pixels +=
                     (anim->delta_x_per_second * actual_elapsed)
                         / 1000000;
-                texquads_to_render[tq_i].top +=
+                texquads_to_render[tq_i].top_pixels +=
                     (anim->delta_y_per_second * actual_elapsed)
                         / 1000000;
                 texquads_to_render[tq_i].z_angle +=

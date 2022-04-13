@@ -143,18 +143,16 @@ void client_logic_startup() {
     zlights_to_apply_size += 1;
     assert(zlights_to_apply_size <= ZLIGHTS_TO_APPLY_ARRAYSIZE);
     
-    font_height = 0.025f;
-    
+    font_height = 40.0f;
+   
     TexQuad sample_pic;
     sample_pic.object_id = 4;
     sample_pic.texturearray_i = 2;
     sample_pic.texture_i = 0;
-    sample_pic.left = 0.4;
-    sample_pic.top = 0.0f;
-    float sample_pic_width_pixels = 713.0f;
-    float sample_pic_height_pixels = 1040.0f;
-    sample_pic.width = sample_pic_width_pixels / window_width / 4;
-    sample_pic.height = sample_pic_height_pixels / window_height / 4;
+    sample_pic.left_pixels = window_width * 0.75f;
+    sample_pic.top_pixels = window_height * 0.25f;
+    sample_pic.width_pixels = 713.0f;
+    sample_pic.height_pixels = 1040.0f;
     sample_pic.z_angle = 0.0f;
     for (uint32_t c = 0; c < 4; c++) {
         sample_pic.RGBA[c] = 1.0f;
@@ -318,12 +316,12 @@ void client_logic_update(
     
     delete_texquad_object(label_object_id);
     request_label_renderable(
-        /* with_id              : */ label_object_id,
-        /* char * text_to_draw  : */ fps_string,
-        /* text_to_draw_size    : */ 7,
-        /* float left           : */ -0.95f,
-        /* float top            : */ -0.95,
-        /* float max_width      : */ 0.5f);
+        /* with_id               : */ label_object_id,
+        /* char * text_to_draw   : */ fps_string,
+        /* text_to_draw_size     : */ 7,
+        /* float left_pixelspace : */ -0.95f * window_width,
+        /* float top_pixelspace  : */ -0.95f * window_height + 40,
+        /* float max_width       : */ window_width);
     
     client_handle_keypresses(
         microseconds_elapsed);

@@ -1,18 +1,18 @@
 #include "text.h"
 
 uint32_t font_texturearray_i = 0;
-float font_height = 0.03f;
+float font_height = 40.0f;
 
 void request_label_renderable(
     uint32_t with_id,
     char * text_to_draw,
     uint32_t text_to_draw_size,
-    float left,
-    float top,
+    float left_pixelspace,
+    float top_pixelspace,
     float max_width)
 {
-    float cur_left = left;
-    float cur_top = top;
+    float cur_left = left_pixelspace;
+    float cur_top = top_pixelspace;
     
     for (
         uint32_t i = 0;
@@ -37,10 +37,10 @@ void request_label_renderable(
             letter.RGBA[rgba_i] = 1.0f;
         }
         
-        letter.left = cur_left;
-        letter.top = cur_top;
-        letter.height = font_height;
-        letter.width = font_height;
+        letter.left_pixels = cur_left;
+        letter.top_pixels = cur_top;
+        letter.height_pixels = font_height;
+        letter.width_pixels = font_height;
         letter.z_angle = 0.0f;
         letter.visible = true;
         letter.deleted = false;
