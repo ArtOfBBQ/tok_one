@@ -129,7 +129,6 @@ uint64_t previous_time;
     printf(
         "finished setting up metal textures, [_metal_textures count] %lu\n",
         [_metal_textures count]);
-    assert([_metal_textures count] > 0);
 }
 
 - (void)updateTextureArray: (int32_t)texturearray_i

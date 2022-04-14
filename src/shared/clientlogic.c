@@ -3,6 +3,7 @@
 // If you want to texture polygons or just draw bitmaps
 // to the screen you need to store your images in this array
 TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
+uint32_t texture_arrays_size = 0;
 
 zPolygon load_from_obj_file(char * filename)
 {
@@ -36,17 +37,20 @@ void client_logic_startup() {
     texture_arrays[0].sprite_columns = 9;
     texture_arrays[0].sprite_rows = 9;
     texture_arrays[0].request_update = false;
+    texture_arrays_size++;
     
     // 16x16 sample sprites in phoebus.png
     texture_arrays[1].sprite_columns = 16;
     texture_arrays[1].sprite_rows = 16;
     texture_arrays[1].request_update = false;
+    texture_arrays_size++;
     
     // 5 lore seeker cards and a debug texture 
     // in sampletexture.png
     texture_arrays[2].sprite_columns = 3;
     texture_arrays[2].sprite_rows = 2;
     texture_arrays[2].request_update = false;
+    texture_arrays_size++;
     
     FileBuffer * file_buffer;
     

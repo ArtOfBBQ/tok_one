@@ -13,7 +13,6 @@
 #include "text.h"
 #include "scheduled_animations.h"
 
-#define LORESEEKER
 #ifdef LORESEEKER
 #include "../../../src/animationtracker.hpp"
 #include "../../../src/mainmenu.hpp"
