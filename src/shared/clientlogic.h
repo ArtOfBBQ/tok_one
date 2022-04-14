@@ -12,6 +12,8 @@
 #include "userinput.h"
 #include "text.h"
 #include "scheduled_animations.h"
+#include "../../../src/mainmenu.hpp"
+#include "../../../src/animationtracker.hpp"
 
 /*
 Prepare your objects for 3D rendering
@@ -30,6 +32,7 @@ zPolygon load_from_obj_file(char * filename);
 // the texture atlas to use
 // REMINDER: You must define TEXTUREARRAYS_SIZE in vertex_types.h
 extern TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
+extern uint32_t texture_arrays_size;
 
 // will be called once at startup, before rendering frame 1
 // add your app's code here

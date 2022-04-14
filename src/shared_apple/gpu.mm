@@ -1,4 +1,5 @@
 #import "gpu.h"
+
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
 
 uint64_t previous_time;
@@ -17,6 +18,7 @@ uint64_t previous_time;
     
     _currentFrameIndex = 0;
     
+    _metal_device = metal_device;
     _command_queue = [metal_device newCommandQueue];
     
     NSError *Error = NULL;
@@ -78,8 +80,6 @@ uint64_t previous_time;
     uint32_t PageSize = getpagesize();
     uint32_t BufferedVertexSize = PageSize * 1000;
     
-    // _render_commands = {};
-    
     _vertex_buffers = [[NSMutableArray alloc] init];
     
     for (uint32_t frame_i = 0;
@@ -119,126 +119,118 @@ uint64_t previous_time;
     // in the global var "texturearrays" 
     assert(TEXTUREARRAYS_SIZE > 0);
     for (
-        uint32_t i = 0;
-        i < TEXTUREARRAYS_SIZE;
+        int32_t i = 0;
+        i < texture_arrays_size;
         i++)
     {
-        uint32_t slice_count =
-            texture_arrays[i].sprite_rows *
-                texture_arrays[i].sprite_columns;
-        
-        if (
-            texture_arrays[i].sprite_rows == 0
-            || texture_arrays[i].sprite_columns == 0)
-        {
-            printf(
-                "texture_arrays[%u]'s sprite rows/cols was 0, did you forget to set it in clientlogic.c? TEXTUREARRAYS_SIZE (in vertex_types.h) was %u\n",
-                i,
-                TEXTUREARRAYS_SIZE);
-            assert(0);
-        }
-        
-        MTLTextureDescriptor * texture_descriptor =
-            [[MTLTextureDescriptor alloc] init];
-        texture_descriptor.textureType = MTLTextureType2DArray;
-        texture_descriptor.arrayLength = slice_count;
-        texture_descriptor.pixelFormat =
-            MTLPixelFormatRGBA8Unorm;
-        texture_descriptor.width =
-            texture_arrays[i].image->width
-                / texture_arrays[i].sprite_columns;
-        texture_descriptor.height =
-            texture_arrays[i].image->height
-                / texture_arrays[i].sprite_rows;
-        
-        id<MTLTexture> texture =
-            [metal_device
-                newTextureWithDescriptor:texture_descriptor];
-        
-        assert(texture_arrays[i].image->width >= 10);
-        assert(4 * texture_arrays[i].image->width >= 40);
-        uint32_t slice_i = 0;
-        for (
-            uint32_t row_i = 1;
-            row_i <= texture_arrays[i].sprite_rows;
-            row_i++)
-        {
-            for (
-                uint32_t col_i = 1;
-                col_i <= texture_arrays[i].sprite_columns;
-                col_i++)
-            {
-                DecodedImage * new_slice =
-                    extract_image(
-                        /* texture_array: */ &texture_arrays[i],
-                        /* x            : */ col_i,
-                        /* y            : */ row_i);
-                
-                MTLRegion region = {
-                    {
-                        0,
-                        0,
-                        0
-                    },
-                    {
-                        new_slice->width,
-                        new_slice->height,
-                        1
-                    }
-                };
-                
-                [texture
-                    replaceRegion:
-                        region
-                    mipmapLevel:
-                        0
-                    slice:
-                        slice_i
-                    withBytes:
-                        new_slice->rgba_values
-                    bytesPerRow:
-                        new_slice->width * 4
-                    bytesPerImage:
-                        /* docs: use 0 for anything other than
-                           MTLTextureType3D textures */
-                        0];
-                
-                // TODO: free heap memory
-                // free(new_slice->rgba_values);
-                // free(new_slice);
-                slice_i++;
-            }
-        }
-        
-        [_metal_textures addObject: texture];
+        assert(texture_arrays_size < TEXTUREARRAYS_SIZE);
+        [self updateTextureArray: i];
     }
-    printf("finished setting up metal textures...\n");
+    printf(
+        "finished setting up metal textures, [_metal_textures count] %lu\n",
+        [_metal_textures count]);
     assert([_metal_textures count] > 0);
 }
 
 - (void)updateTextureArray: (int32_t)texturearray_i
-    atSlice: (int32_t)texture_i
-    withImg: (DecodedImage *)withImg
 {
-    MTLRegion region = {
-        { 0, 0, 0 },
-        { withImg->width, withImg->height, 1}};
+    printf("updateTextureArray: %i\n", texturearray_i);
+    int32_t i = texturearray_i;
     
-    [_metal_textures[texturearray_i]
-        replaceRegion:
-            region
-        mipmapLevel:
-            0
-        slice:
-            texture_i
-        withBytes:
-            withImg->rgba_values
-        bytesPerRow:
-            withImg->width * 4
-        bytesPerImage:
-            /* docs: use 0 for anything other than
-               MTLTextureType3D textures */
-            0];
+    texture_arrays[i].request_update = false;
+    
+    uint32_t slice_count =
+        texture_arrays[i].sprite_rows *
+            texture_arrays[i].sprite_columns;
+    
+    if (
+        texture_arrays[i].sprite_rows == 0
+        || texture_arrays[i].sprite_columns == 0)
+    {
+        printf(
+            "texture_arrays[%u]'s sprite rows/cols was 0, did you forget to set it in clientlogic.c? TEXTUREARRAYS_SIZE (in vertex_types.h) was %u\n",
+            i,
+            TEXTUREARRAYS_SIZE);
+        assert(0);
+    }
+    
+    MTLTextureDescriptor * texture_descriptor =
+        [[MTLTextureDescriptor alloc] init];
+    texture_descriptor.textureType = MTLTextureType2DArray;
+    texture_descriptor.arrayLength = slice_count;
+    texture_descriptor.pixelFormat =
+        MTLPixelFormatRGBA8Unorm;
+    texture_descriptor.width =
+        texture_arrays[i].image->width
+            / texture_arrays[i].sprite_columns;
+    texture_descriptor.height =
+        texture_arrays[i].image->height
+            / texture_arrays[i].sprite_rows;
+    
+    id<MTLTexture> texture =
+        [_metal_device
+            newTextureWithDescriptor:texture_descriptor];
+    
+    assert(texture_arrays[i].image->width >= 10);
+    assert(4 * texture_arrays[i].image->width >= 40);
+    uint32_t slice_i = 0;
+    for (
+        uint32_t row_i = 1;
+        row_i <= texture_arrays[i].sprite_rows;
+        row_i++)
+    {
+        for (
+            uint32_t col_i = 1;
+            col_i <= texture_arrays[i].sprite_columns;
+            col_i++)
+        {
+            DecodedImage * new_slice =
+                extract_image(
+                    /* texture_array: */ &texture_arrays[i],
+                    /* x            : */ col_i,
+                    /* y            : */ row_i);
+            
+            MTLRegion region = {
+                {
+                    0,
+                    0,
+                    0
+                },
+                {
+                    new_slice->width,
+                    new_slice->height,
+                    1
+                }
+            };
+            
+            [texture
+                replaceRegion:
+                    region
+                mipmapLevel:
+                    0
+                slice:
+                    slice_i
+                withBytes:
+                    new_slice->rgba_values
+                bytesPerRow:
+                    new_slice->width * 4
+                bytesPerImage:
+                    /* docs: use 0 for anything other than
+                       MTLTextureType3D textures */
+                    0];
+            
+            // TODO: free heap memory
+            // free(new_slice->rgba_values);
+            // free(new_slice);
+            slice_i++;
+        }
+    }
+    
+    [_metal_textures addObject: texture];
+    printf(
+        "finished updateTextureArray: %i _metal_textures count is now: %u\n",
+        texturearray_i,
+        [_metal_textures count]);
 }
 
 - (void)drawInMTKView:(MTKView *)view
@@ -247,14 +239,10 @@ uint64_t previous_time;
     uint64_t elapsed = time - previous_time;
     previous_time = time;
     
-    for (uint32_t i = 0; i < TEXTUREARRAYS_SIZE; i++) {
+    for (uint32_t i = 0; i < texture_arrays_size; i++) {
         if (texture_arrays[i].request_update) {
-            [self
-                updateTextureArray: i
-                atSlice: 0
-                withImg: texture_arrays[i].image];
-            
-            texture_arrays[i].request_update = false;
+            printf("found request_update... at %i\n", i);
+            [self updateTextureArray: i];    
         }
     }
     
@@ -329,9 +317,17 @@ uint64_t previous_time;
         
         for (
             uint32_t i = 0;
-            i < TEXTUREARRAYS_SIZE;
+            i < texture_arrays_size;
             i++)
         {
+            if (i >= [_metal_textures count]) {
+                printf(
+                    "ERR: trying to setFragmentTexture %u when [_metal_textures count] is only %lu\n",
+                    i,
+                    [_metal_textures count]);
+                continue;
+                // assert(0);
+            }
             [render_encoder
                 setFragmentTexture: _metal_textures[i]
                 atIndex: i];
@@ -370,7 +366,8 @@ uint64_t previous_time;
 - (void)mtkView:(MTKView *)view
     drawableSizeWillChange:(CGSize)size
 {
-
+    window_height = size.height;
+    window_width = size.width;
 }
 
 @end

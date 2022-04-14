@@ -16,15 +16,15 @@
 
 
 @interface MetalKitViewDelegate: NSObject<MTKViewDelegate>
+@property (retain) id<MTLDevice> metal_device;
 @property (retain) id<MTLCommandQueue> command_queue;
 @property (retain) NSMutableArray * vertex_buffers;
 @property VertexBuffer render_commands;
 @property (retain) id<MTLRenderPipelineState>
     combo_pipeline_state;
 @property (retain) NSMutableArray * metal_textures;
-- (void)updateTextureArray: (int32_t)texturearray_i
-    atSlice: (int32_t)texture_i
-    withImg: (DecodedImage *)withImg;
+- (void)
+    updateTextureArray: (int32_t)texturearray_i;
 - (void)
     configureMetalWithDevice: (id<MTLDevice>)metal_device
     andPixelFormat: (MTLPixelFormat)pixel_format

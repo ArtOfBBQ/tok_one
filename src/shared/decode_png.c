@@ -546,6 +546,7 @@ DecodedImage * decode_PNG(
     #ifndef DECODE_PNG_IGNORE_ASSERTS
     assert(entire_file->bits_left == 0);
     #endif
+
     free(png_signature);
     
     // these pointers are initted below
@@ -618,7 +619,6 @@ DecodedImage * decode_PNG(
                 return return_value;
             }
 	    
-            free(compressed_data_begin);
             free(compressed_data_stream);
         }
         
@@ -1005,7 +1005,7 @@ DecodedImage * decode_PNG(
             #endif
         }
         #endif
-	
+
 	free(chunk_header);	
 	free(block_footer);
     }
@@ -1020,7 +1020,7 @@ DecodedImage * decode_PNG(
     // in the uncompressed datastream
     // "filters" could have been called "transforms",
     // not sure how it's a filter
-    
+   
     free(entire_file);
     #ifndef PNG_SILENCE
     printf(

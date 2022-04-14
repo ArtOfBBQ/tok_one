@@ -37,7 +37,7 @@ char * platform_get_cwd();
 // Read a file (without path, only filename)
 // and return its contents as a buffer of bytes
 FileBuffer * platform_read_file(
-    char * filename);
+    const char * filename);
 
 void platform_start_timer(void);
 uint64_t platform_get_current_time_microsecs(void);
