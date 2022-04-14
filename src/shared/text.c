@@ -6,6 +6,7 @@ float font_height = 40.0f;
 void request_label_renderable(
     uint32_t with_id,
     char * text_to_draw,
+    float text_color[4],
     uint32_t text_to_draw_size,
     float left_pixelspace,
     float top_pixelspace,
@@ -34,7 +35,7 @@ void request_label_renderable(
             rgba_i < 4;
             rgba_i++)
         {
-            letter.RGBA[rgba_i] = 1.0f;
+            letter.RGBA[rgba_i] = text_color[rgba_i];
         }
         
         letter.left_pixels = cur_left;

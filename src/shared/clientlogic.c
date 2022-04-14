@@ -318,10 +318,16 @@ void client_logic_update(
         fps_string[6] = '9' + (fps % 10);
     }
     
+    float fps_color[4];
+    fps_color[0] = 1.0f;
+    fps_color[1] = 0.0f;
+    fps_color[2] = 0.0f;
+    fps_color[3] = 1.0f;
     delete_texquad_object(label_object_id);
     request_label_renderable(
         /* with_id               : */ label_object_id,
         /* char * text_to_draw   : */ fps_string,
+        /* float text_color[4]   : */ fps_color,
         /* text_to_draw_size     : */ 7,
         /* float left_pixelspace : */ -0.95f * window_width,
         /* float top_pixelspace  : */ -0.95f * window_height + 40,
