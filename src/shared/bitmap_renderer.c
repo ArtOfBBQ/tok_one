@@ -5,6 +5,10 @@ uint32_t texquads_to_render_size = 0;
 
 void request_texquad_renderable(TexQuad * to_add)
 {
+    assert(to_add->visible);
+    assert(to_add->deleted == 0);
+    assert(to_add->RGBA[3] > 0.05f);
+    
     for (
         uint32_t i = 0;
         i < texquads_to_render_size;
@@ -12,7 +16,7 @@ void request_texquad_renderable(TexQuad * to_add)
     {
         if (texquads_to_render[i].deleted)
         {
-            texquads_to_render[texquads_to_render_size] = *to_add;
+            texquads_to_render[i] = *to_add;
             return;
         }
     }
@@ -78,7 +82,7 @@ void delete_texquad_object(uint32_t with_object_id)
         {
             texquads_to_render[i].visible = false;
             texquads_to_render[i].deleted = true;
-
+            
             if (i == texquads_to_render_size - 1) {
                 texquads_to_render_size -= 1;
             }

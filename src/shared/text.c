@@ -15,6 +15,8 @@ void request_label_renderable(
     float cur_left = left_pixelspace;
     float cur_top = top_pixelspace;
     
+    assert(text_color[3] > 0.1f);
+    
     for (
         uint32_t i = 0;
         i < text_to_draw_size;
