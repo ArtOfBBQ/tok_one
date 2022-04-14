@@ -12,8 +12,12 @@
 #include "userinput.h"
 #include "text.h"
 #include "scheduled_animations.h"
-#include "../../../src/mainmenu.hpp"
+
+#define LORESEEKER
+#ifdef LORESEEKER
 #include "../../../src/animationtracker.hpp"
+#include "../../../src/mainmenu.hpp"
+#endif
 
 /*
 Prepare your objects for 3D rendering
