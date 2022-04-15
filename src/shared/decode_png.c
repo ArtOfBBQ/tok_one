@@ -727,7 +727,7 @@ DecodedImage * decode_PNG(
             #ifndef PNG_SILENCE
             if (ihdr_body->color_type != 6) {
                 printf("error - only color type 6 is supported");
-            } else {
+            } elsde {
                 printf("\t\t(Truecolor with alpha)\n");
             }
             

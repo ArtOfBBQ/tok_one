@@ -31,6 +31,7 @@ typedef struct TexQuad {
     float top_pixels;
     float height_pixels;
     float width_pixels;
+    float z;
     float z_angle;
     bool32_t visible; // skip rendering me but keep me in memory
     bool32_t deleted; // overwrite me if true

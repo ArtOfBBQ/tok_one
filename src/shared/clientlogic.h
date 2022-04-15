@@ -14,6 +14,7 @@
 #include "scheduled_animations.h"
 
 #ifdef LORESEEKER
+#include "dirent.h"
 #include "../../../src/animationtracker.hpp"
 #include "../../../src/mainmenu.hpp"
 #endif

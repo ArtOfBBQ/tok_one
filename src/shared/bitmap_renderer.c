@@ -5,9 +5,19 @@ uint32_t texquads_to_render_size = 0;
 
 void request_texquad_renderable(TexQuad * to_add)
 {
+    if (to_add->texturearray_i != 0) {
+        printf(
+            "request_texquad_renderable at [%f,%f] with width %f height %f visible %u deleted %u\n",
+            to_add->left_pixels,
+            to_add->top_pixels,
+            to_add->width_pixels,
+            to_add->height_pixels,
+            to_add->visible,
+            to_add->deleted);
+    }
     assert(to_add->visible);
     assert(to_add->deleted == 0);
-    assert(to_add->RGBA[3] > 0.05f);
+    assert(to_add->RGBA[3] > 0.10f);
     
     for (
         uint32_t i = 0;
@@ -98,11 +108,18 @@ void add_quad_to_gpu_workload(
     Vertex topleft[3];
     Vertex bottomright[3];
     
-    float z_value = 1.0f;
+    float z_value = 0.3f + (to_add->z * 0.001f);
+    
+    float left = to_add->left_pixels;
+    float right = to_add->left_pixels + to_add->width_pixels;
+    float mid_x = (left + right) * 0.5;
+    float top = to_add->top_pixels;
+    float bottom = to_add->top_pixels - to_add->height_pixels;
+    float mid_y = (top + bottom) * 0.5;
     
     // top left vertex
-    topleft[0].x = to_add->left_pixels;
-    topleft[0].y = to_add->top_pixels;
+    topleft[0].x = left;
+    topleft[0].y = top;
     topleft[0].z = z_value;
     topleft[0].w = 1.0f;
     topleft[0].texturearray_i =
@@ -116,10 +133,8 @@ void add_quad_to_gpu_workload(
         topleft[0].lighting[j] = 1.0f;
     }
     // top right vertex
-    topleft[1].x =
-        to_add->left_pixels +
-        to_add->width_pixels;
-    topleft[1].y = to_add->top_pixels;
+    topleft[1].x = right;
+    topleft[1].y = top;
     topleft[1].z = z_value;
     topleft[1].w = 1.0f;
     topleft[1].texturearray_i =
@@ -133,10 +148,8 @@ void add_quad_to_gpu_workload(
         topleft[1].lighting[j] = 1.0f;
     }
     // bottom left vertex
-    topleft[2].x = to_add->left_pixels;
-    topleft[2].y =
-        to_add->top_pixels -
-        to_add->height_pixels;
+    topleft[2].x = left;
+    topleft[2].y = bottom;
     topleft[2].z = z_value;
     topleft[2].w = 1.0f;
     topleft[2].texturearray_i =
@@ -151,10 +164,8 @@ void add_quad_to_gpu_workload(
     }
     
     // top right vertex
-    bottomright[0].x =
-        to_add->left_pixels +
-        to_add->width_pixels;
-    bottomright[0].y = to_add->top_pixels;
+    bottomright[0].x = right;
+    bottomright[0].y = top;
     bottomright[0].z = z_value;
     bottomright[0].w = 1.0f;
     bottomright[0].texturearray_i =
@@ -169,9 +180,8 @@ void add_quad_to_gpu_workload(
     }
     
     // bottom left vertex
-    bottomright[1].x = to_add->left_pixels;
-    bottomright[1].y = to_add->top_pixels -
-        to_add->height_pixels;
+    bottomright[1].x = left;
+    bottomright[1].y = bottom;
     bottomright[1].z = z_value;
     bottomright[1].w = 1.0f;
     bottomright[1].texturearray_i =
@@ -186,11 +196,8 @@ void add_quad_to_gpu_workload(
     }
     
     // bottom right vertex
-    bottomright[2].x =
-        to_add->left_pixels +
-        to_add->width_pixels;
-    bottomright[2].y = to_add->top_pixels -
-        to_add->height_pixels;
+    bottomright[2].x = right;
+    bottomright[2].y = bottom;
     bottomright[2].z = z_value;
     bottomright[2].w = 1.0f;
     bottomright[2].texturearray_i =
@@ -208,23 +215,38 @@ void add_quad_to_gpu_workload(
     Vertex bottomright_rotated[3];
     
     z_rotate_triangle(
-        /* input: */ topleft,
-        /* around_x : */ to_add->left_pixels + (to_add->width_pixels * 0.5f),
-        /* around_y : */ to_add->top_pixels - (to_add->height_pixels * 0.5f),
-        /* by_angle: */ to_add->z_angle,
-        /* recipient: */ topleft_rotated);
+        /* input: */
+            topleft,
+        /* around_x : */
+            (left + right) * 0.5f,
+        /* around_y : */
+            (top + bottom) * 0.5,
+        /* by_angle: */
+            to_add->z_angle,
+        /* recipient: */
+            topleft_rotated);
+    
     z_rotate_triangle(
-        /* input: */ bottomright,
-        /* around_x : */ to_add->left_pixels + (to_add->width_pixels * 0.5f),
-        /* around_y : */ to_add->top_pixels - (to_add->height_pixels * 0.5f),
-        /* by_angle: */ to_add->z_angle,
-        /* recipient: */ bottomright_rotated);
-
+        /* input: */
+            bottomright,
+        /* around_x : */
+            (left + right) * 0.5f,
+        /* around_y : */
+            (top + bottom) * 0.5,
+        /* by_angle: */
+            to_add->z_angle,
+        /* recipient: */
+            bottomright_rotated);
+    
     for (uint32_t i = 0; i < 3; i++) {
-        topleft_rotated[i].x /= window_width;
-        topleft_rotated[i].y /= window_height;
-        bottomright_rotated[i].x /= window_width;
-        bottomright_rotated[i].y /= window_height;
+        topleft_rotated[i].x /= (window_width * 0.5f);
+        topleft_rotated[i].x -= 1.0f;
+        topleft_rotated[i].y /= (window_height * 0.5f);
+        topleft_rotated[i].y -= 1.0f;
+        bottomright_rotated[i].x /= (window_width * 0.5f);
+        bottomright_rotated[i].x -= 1.0f;
+        bottomright_rotated[i].y /= (window_height * 0.5f);
+        bottomright_rotated[i].y -= 1.0f;
     }
     
     draw_triangle(

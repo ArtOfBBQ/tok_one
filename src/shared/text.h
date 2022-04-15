@@ -13,6 +13,7 @@ void request_label_renderable(
     uint32_t text_to_draw_size,
     float left_pixelspace,
     float top_pixelspace,
+    float z,
     float max_width);
 
 #endif
