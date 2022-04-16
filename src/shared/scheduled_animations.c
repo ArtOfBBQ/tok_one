@@ -4,14 +4,36 @@
 ScheduledAnimation scheduled_animations[SCHEDULED_ANIMATIONS_ARRAYSIZE];
 uint32_t scheduled_animations_size = 0;
 
+void construct(ScheduledAnimation * to_construct) {
+    to_construct->affected_object_id = 0;
+    to_construct->affects_camera_not_object = false;
+    to_construct->delta_x_per_second = 0.0f;
+    to_construct->delta_y_per_second = 0.0f;
+    to_construct->delta_z_per_second = 0.0f;
+    to_construct->delta_z_per_second = 0.0f;
+    to_construct->x_rotation_per_second = 0.0f;
+    to_construct->y_rotation_per_second = 0.0f;
+    to_construct->z_rotation_per_second = 0.0f;
+    for (uint32_t i = 0; i < 4; i++) {
+        to_construct->rgba_delta_per_second[i] = 0.0f;
+    }
+    to_construct->remaining_microseconds = 1000000.0f;
+    to_construct->deleted = false;
+}
+
 void request_scheduled_animation(ScheduledAnimation * to_add)
 {
-    printf("request_scheduled_animation()\n");
     assert(to_add != NULL);
     
+    if (to_add->remaining_microseconds == 0) {
+        printf(
+            "ERROR: You can't schedule an animation with a duration of 0 microseconds - please just apply the effect directly instead\n");
+        assert(to_add->remaining_microseconds > 0);
+    }
     assert(
         scheduled_animations_size
             < SCHEDULED_ANIMATIONS_ARRAYSIZE);
+    
     for (
         int32_t i = 0;
         i < scheduled_animations_size;
@@ -19,9 +41,6 @@ void request_scheduled_animation(ScheduledAnimation * to_add)
     {
         if (scheduled_animations[i].deleted)
         {
-            printf(
-                "overwriting previously deleted anim at %u\n",
-                i);
             scheduled_animations[i] = *to_add;
             scheduled_animations[i].deleted = false;
             return;
@@ -33,7 +52,6 @@ void request_scheduled_animation(ScheduledAnimation * to_add)
             > scheduled_animations_size);
     scheduled_animations[scheduled_animations_size] = *to_add;
     scheduled_animations_size += 1;
-    printf("end of request_scheduled_animation()\n");
 }
 
 void request_fade_to(
@@ -41,12 +59,6 @@ void request_fade_to(
     uint64_t duration_microseconds,
     float target_alpha)
 {
-    printf(
-        "request_fade_to() obj_id: %u duration: %u alpha: %f\n",
-        object_id,
-        duration_microseconds,
-        target_alpha);
-    
     // get current alpha
     // we'll go with the biggest diff found in case of
     // multiple objs
@@ -72,10 +84,8 @@ void request_fade_to(
             }
         }
     }
-    printf("current alpha is probably: %f\n", current_alpha);
-
+    
     if (current_alpha == target_alpha) {
-        printf("aborting because already at target alpha\n");
         return;
     }
     
@@ -84,31 +94,14 @@ void request_fade_to(
     float change_per_second =
         (target_alpha - current_alpha) /
             ((float)duration_microseconds / 1000000);
-    printf(
-        "change_per_second should be: %f\n",
-        change_per_second);
     
     // register scheduled animation
     ScheduledAnimation modify_alpha;
+    construct(&modify_alpha);
     modify_alpha.affected_object_id = object_id;
-    modify_alpha.delta_x_per_second = 0.0f;
-    modify_alpha.delta_y_per_second = 0.0f;
-    modify_alpha.delta_z_per_second = 0.0f;
-    modify_alpha.delta_z_per_second = 0.0f;
-    modify_alpha.x_rotation_per_second = 0.0f;
-    modify_alpha.y_rotation_per_second = 0.0f;
-    modify_alpha.z_rotation_per_second = 0.0f;
     modify_alpha.remaining_microseconds = duration_microseconds;
-    for (uint32_t c = 0; c < 3; c++) {
-        modify_alpha.rgba_delta_per_second[c] = 0.0f;
-    }
     modify_alpha.rgba_delta_per_second[3] = change_per_second;
-    modify_alpha.deleted = false;
     request_scheduled_animation(&modify_alpha);
-    
-    printf(
-        "finished request_fade_to(), scheduled_anims_size: %u\n",
-        scheduled_animations_size);
 }
 
 void resolve_animation_effects(uint64_t microseconds_elapsed)
@@ -123,7 +116,6 @@ void resolve_animation_effects(uint64_t microseconds_elapsed)
         anim = &scheduled_animations[animation_i];
         
         if (anim->deleted) {
-            printf("removing a deleted animation...\n");
             scheduled_animations_size -= 1;
             continue;
         }

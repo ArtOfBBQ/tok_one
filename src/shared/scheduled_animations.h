@@ -11,6 +11,7 @@ void resolve_animation_effects(uint64_t microseconds_elapsed);
 
 typedef struct ScheduledAnimation {
     uint32_t affected_object_id;
+    bool32_t affects_camera_not_object;
     float delta_x_per_second;
     float delta_y_per_second;
     float delta_z_per_second;
@@ -21,6 +22,7 @@ typedef struct ScheduledAnimation {
     uint64_t remaining_microseconds;
     bool32_t deleted;
 } ScheduledAnimation;
+void construct(ScheduledAnimation * to_construct);
 
 void request_scheduled_animation(ScheduledAnimation * to_add);
 

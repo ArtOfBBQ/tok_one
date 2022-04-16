@@ -36,6 +36,31 @@ NSWindowWithCustomResponder: NSWindow
     return YES;
 }
 
+- (void)mouseDown:(NSEvent *)event
+{
+    printf("mouse down!\n");
+}
+
+- (void)mouseUp:(NSEvent *)event
+{
+    printf("mouse up!\n");
+}
+
+- (void)rightMouseDown:(NSEvent *)event
+{
+    printf("right mouse down!\n");
+}
+
+- (void)rightMouseUp:(NSEvent *)event
+{
+    printf("right mouse up!\n");
+}
+
+- (void)mouseMoved:(NSEvent *)event
+{
+    printf("mouse moved!\n");
+}
+
 - (void)keyDown:(NSEvent *)event
 {
     register_keydown(event.keyCode);
@@ -73,6 +98,7 @@ int main(int argc, const char * argv[])
     [window setDelegate: window_delegate];
     [window setTitle: @"Hello, 3dgfx!"];
     [window makeKeyAndOrderFront: nil];
+    [window setAcceptsMouseMovedEvents:YES];
     
     id<MTLDevice> metal_device =
         MTLCreateSystemDefaultDevice();
@@ -82,10 +108,8 @@ int main(int argc, const char * argv[])
             initWithFrame: full_screen_rect
             device: metal_device];
 
-    // printf("mtk_view.isopaque: %u\n", mtk_view.isOpaque);
     [mtk_view setOpaque: NO];
     // mtk_view.opaque = false;
-    // printf("mtk_view.isopaque: %u\n", mtk_view.isOpaque);
     // mtk_view.preferredFramesPerSecond = 60;
     
     window.contentView = mtk_view;

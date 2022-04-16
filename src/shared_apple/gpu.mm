@@ -126,14 +126,10 @@ uint64_t previous_time;
         assert(texture_arrays_size < TEXTUREARRAYS_SIZE);
         [self updateTextureArray: i];
     }
-    printf(
-        "finished setting up metal textures, [_metal_textures count] %lu\n",
-        [_metal_textures count]);
 }
 
 - (void)updateTextureArray: (int32_t)texturearray_i
 {
-    printf("updateTextureArray: %i\n", texturearray_i);
     int32_t i = texturearray_i;
     
     texture_arrays[i].request_update = false;
@@ -226,10 +222,6 @@ uint64_t previous_time;
     }
     
     [_metal_textures addObject: texture];
-    printf(
-        "finished updateTextureArray: %i _metal_textures count is now: %u\n",
-        texturearray_i,
-        [_metal_textures count]);
 }
 
 - (void)drawInMTKView:(MTKView *)view
@@ -240,7 +232,6 @@ uint64_t previous_time;
     
     for (uint32_t i = 0; i < texture_arrays_size; i++) {
         if (texture_arrays[i].request_update) {
-            printf("found request_update... at %i\n", i);
             [self updateTextureArray: i];    
         }
     }
