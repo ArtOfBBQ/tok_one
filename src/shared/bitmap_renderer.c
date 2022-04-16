@@ -7,17 +7,20 @@ void request_texquad_renderable(TexQuad * to_add)
 {
     if (to_add->texturearray_i != 0) {
         printf(
-            "request_texquad_renderable at [%f,%f] with width %f height %f visible %u deleted %u\n",
+            "request_texquad_renderable at [%f,%f] with width %f height %f visible %u deleted %u RGBA [%f,%f,%f,%f]\n",
             to_add->left_pixels,
             to_add->top_pixels,
             to_add->width_pixels,
             to_add->height_pixels,
             to_add->visible,
-            to_add->deleted);
+            to_add->deleted,
+            to_add->RGBA[0],
+            to_add->RGBA[1],
+            to_add->RGBA[2],
+            to_add->RGBA[3]);
     }
     assert(to_add->visible);
     assert(to_add->deleted == 0);
-    assert(to_add->RGBA[3] > 0.10f);
     
     for (
         uint32_t i = 0;

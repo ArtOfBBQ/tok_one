@@ -24,5 +24,10 @@ typedef struct ScheduledAnimation {
 
 void request_scheduled_animation(ScheduledAnimation * to_add);
 
+void request_fade_to(
+    uint32_t object_id,
+    uint64_t duration_microseconds,
+    float target_alpha);
+
 #endif
 

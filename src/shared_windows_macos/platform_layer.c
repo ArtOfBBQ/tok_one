@@ -6,8 +6,6 @@ Read some text from a file given a filename.
 This function is here because it can't be used on iOS.
 */
 FileBuffer * platform_read_file(const char * filename) {
-    printf("reading file: %s\n", filename);
-    
     FILE * file_handle = fopen(
         filename,
         "rb+");
@@ -44,8 +42,6 @@ FileBuffer * platform_read_file(const char * filename) {
     return_value->contents = buffer;
     return_value->contents[fsize] = 0; // for windows
     return_value->size = bytes_read;
-    
-    printf("read file of %lu bytes\n", bytes_read);
     
     return return_value;
 }
