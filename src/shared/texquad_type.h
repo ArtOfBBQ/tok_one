@@ -1,6 +1,8 @@
 #ifndef TEXQUAD_TYPE_H
 #define TEXQUAD_TYPE_H
 
+#include "common.h"
+
 typedef struct TexQuad {
     // the object_id this texquad is
     // associated with. You can send a
@@ -8,6 +10,9 @@ typedef struct TexQuad {
     // this object_id, or fade them all out
     // etc.
     uint32_t object_id; 
+   
+    // -1 if you don't care when this is clicked or touched
+    int32_t touchable_id;
     
     // the index of the texturearray,
     // aka texture atlas, to
@@ -36,6 +41,8 @@ typedef struct TexQuad {
     bool32_t visible; // skip rendering me but keep me in memory
     bool32_t deleted; // overwrite me if true
 } TexQuad;
+
+void construct_texquad(TexQuad * to_construct);
 
 #endif
 

@@ -12,6 +12,7 @@
 #include "../shared/zpolygon.h"
 #include "../shared/software_renderer.h"
 #include "../shared/bitmap_renderer.h"
+#include "../shared/clientlogic.h"
 
 #define SHARED_APPLE_PLATFORM
 
@@ -43,7 +44,25 @@ NSWindowWithCustomResponder: NSWindow
 
 - (void)mouseUp:(NSEvent *)event
 {
-    printf("mouse up!\n");
+    NSPoint screenspace_location = [NSEvent mouseLocation];
+
+    // note: this returns -1 when no touchable is there
+    // which is what we want
+    int32_t colliding_touchable = find_touchable_at(
+        /* normalized_x : */
+            ((screenspace_location.x * 2)
+                / window_width) - 1.0f,
+        /* normalized_y : */
+            ((screenspace_location.y * 2)
+                / window_height) - 1.0f);
+    
+    client_logic_mouseup(
+        /* screenspace_x : */
+            screenspace_location.x,
+        /* screenspace_y : */
+            screenspace_location.y,
+        /* touchable_id : */
+            colliding_touchable);
 }
 
 - (void)rightMouseDown:(NSEvent *)event
@@ -58,7 +77,7 @@ NSWindowWithCustomResponder: NSWindow
 
 - (void)mouseMoved:(NSEvent *)event
 {
-    printf("mouse moved!\n");
+    // printf("mouse moved!\n");
 }
 
 - (void)keyDown:(NSEvent *)event

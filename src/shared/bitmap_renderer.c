@@ -3,7 +3,23 @@
 TexQuad texquads_to_render[TEXQUADS_TO_RENDER_ARRAYSIZE];
 uint32_t texquads_to_render_size = 0;
 
-void request_texquad_renderable(TexQuad * to_add)
+// returns false if none found
+bool32_t touchable_id_to_texquad_object_id(
+    const int32_t touchable_id,
+    uint32_t * object_id_out)
+{
+    for (uint32_t i = 0; i < texquads_to_render_size; i++) {
+        if (texquads_to_render[i].touchable_id == touchable_id) {
+            *object_id_out = texquads_to_render[i].object_id;
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+void request_texquad_renderable(
+    TexQuad * to_add)
 {
     if (to_add->texturearray_i != 0) {
         printf(
@@ -267,6 +283,20 @@ void add_quad_to_gpu_workload(
             next_gpu_workload_size,
         /* input: */
             bottomright_rotated);
+    
+    if (to_add->touchable_id >= 0) {
+        register_touchable_triangle(
+            /* const int32_t touchable_id: */
+                to_add->touchable_id,
+            /* Vertex triangle_area[3]: */
+                topleft_rotated);
+        
+        register_touchable_triangle(
+            /* const int32_t touchable_id: */
+                to_add->touchable_id,
+            /* Vertex triangle_area[3]: */
+                bottomright_rotated);
+    }
 }
 
 void draw_texquads_to_render(

@@ -150,7 +150,9 @@ void client_logic_startup() {
     font_height = 40.0f;
    
     TexQuad sample_pic;
+    construct_texquad(&sample_pic);
     sample_pic.object_id = 4;
+    sample_pic.touchable_id = 88;
     sample_pic.texturearray_i = 2;
     sample_pic.texture_i = 0;
     sample_pic.width_pixels = (713.0f * 0.5f);
@@ -161,31 +163,64 @@ void client_logic_startup() {
     sample_pic.top_pixels =
         (window_height * 0.5f)
             + (sample_pic.height_pixels * 0.5f);
-    sample_pic.z_angle = 0.0f;
-    for (uint32_t c = 0; c < 4; c++) {
-        sample_pic.RGBA[c] = 1.0f;
-    }
-    sample_pic.visible = true;
-    sample_pic.deleted = false;
     request_texquad_renderable(&sample_pic);
     
     ScheduledAnimation move_sprite_left;
+    construct_scheduled_animation(&move_sprite_left);
     move_sprite_left.affected_object_id = 4;
-    move_sprite_left.delta_x_per_second = 0.0f;
-    move_sprite_left.delta_y_per_second = 0.0f;
-    move_sprite_left.delta_z_per_second = 0.0f;
-    move_sprite_left.delta_z_per_second = 0.0f;
-    move_sprite_left.x_rotation_per_second = 0.0f;
-    move_sprite_left.y_rotation_per_second = 0.0f;
-    move_sprite_left.z_rotation_per_second = 0.0f;
+    move_sprite_left.delta_x_per_second = -5.0f;
     move_sprite_left.remaining_microseconds = 90000000;
-    for (uint32_t c = 0; c < 4; c++) {
-        move_sprite_left.rgba_delta_per_second[c] = 0.0f;
-    }
-    move_sprite_left.deleted = false;
     request_scheduled_animation(&move_sprite_left);
     
     printf("finished client_logic_startup()\n");    
+}
+
+void client_logic_mouseup(
+    float screenspace_x,
+    float screenspace_y,
+    int32_t touchable_id)
+{
+    printf(
+        "running client_logic_mouseup() [%f,%f] touchable %i\n",
+        screenspace_x,
+        screenspace_y,
+        touchable_id);
+    
+    uint32_t touched_object_id = 999999;
+
+    if (touchable_id_to_texquad_object_id(
+            /* const int32_t touchable_id : */ touchable_id,
+            /* uint32_t * object_id_out : */ &touched_object_id))
+    {
+        assert(touched_object_id != 999999);
+        printf(
+            "tapped object with object_id: %u\n",
+            touched_object_id);
+        
+        ScheduledAnimation brighten;
+        construct_scheduled_animation(&brighten);
+        ScheduledAnimation dim;
+        construct_scheduled_animation(&dim);
+        
+        brighten.affected_object_id = touched_object_id;
+        dim.affected_object_id = touched_object_id;
+        
+        brighten.remaining_microseconds = 450000;
+        dim.wait_first_microseconds =
+            brighten.remaining_microseconds;
+        dim.remaining_microseconds =
+            brighten.remaining_microseconds;
+        
+        for (uint32_t i = 0; i < 3; i++) {
+            brighten.rgba_delta_per_second[i] = 0.4;
+            dim.rgba_delta_per_second[i] = -0.4;
+        }
+        brighten.z_rotation_per_second = 0.25;
+        dim.z_rotation_per_second = -0.25;
+        
+        request_scheduled_animation(&brighten);
+        request_scheduled_animation(&dim);
+    }
 }
 
 void client_handle_keypresses(
@@ -299,7 +334,7 @@ void client_handle_touches(
                 current_touch.handled = true;
             }
         }
-    }    
+    }
 }
 
 bool32_t fading_out = true;

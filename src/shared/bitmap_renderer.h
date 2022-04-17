@@ -28,6 +28,10 @@ exist.
 extern TexQuad texquads_to_render[TEXQUADS_TO_RENDER_ARRAYSIZE];
 extern uint32_t texquads_to_render_size;
 
+bool32_t touchable_id_to_texquad_object_id(
+    const int32_t touchable_id,
+    uint32_t * object_id_out);
+
 void request_texquad_renderable(
     TexQuad * to_add);
 

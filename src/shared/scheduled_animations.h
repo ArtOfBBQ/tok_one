@@ -19,10 +19,13 @@ typedef struct ScheduledAnimation {
     float y_rotation_per_second;
     float z_rotation_per_second;
     float rgba_delta_per_second[4];
+    uint64_t wait_first_microseconds;
     uint64_t remaining_microseconds;
     bool32_t deleted;
 } ScheduledAnimation;
-void construct(ScheduledAnimation * to_construct);
+
+void construct_scheduled_animation(
+    ScheduledAnimation * to_construct);
 
 void request_scheduled_animation(ScheduledAnimation * to_add);
 

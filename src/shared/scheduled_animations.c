@@ -1,10 +1,13 @@
 #include "scheduled_animations.h"
 
 #define SCHEDULED_ANIMATIONS_ARRAYSIZE 500
-ScheduledAnimation scheduled_animations[SCHEDULED_ANIMATIONS_ARRAYSIZE];
+ScheduledAnimation scheduled_animations[
+    SCHEDULED_ANIMATIONS_ARRAYSIZE];
 uint32_t scheduled_animations_size = 0;
 
-void construct(ScheduledAnimation * to_construct) {
+void construct_scheduled_animation(
+    ScheduledAnimation * to_construct)
+{
     to_construct->affected_object_id = 0;
     to_construct->affects_camera_not_object = false;
     to_construct->delta_x_per_second = 0.0f;
@@ -17,13 +20,20 @@ void construct(ScheduledAnimation * to_construct) {
     for (uint32_t i = 0; i < 4; i++) {
         to_construct->rgba_delta_per_second[i] = 0.0f;
     }
-    to_construct->remaining_microseconds = 1000000.0f;
+    to_construct->wait_first_microseconds = 0;
+    to_construct->remaining_microseconds = 1000000;
     to_construct->deleted = false;
 }
 
 void request_scheduled_animation(ScheduledAnimation * to_add)
 {
     assert(to_add != NULL);
+
+    if (to_add->rgba_delta_per_second[0] < -0.5f) {
+        printf("scheduled_animations_size got dim: %u duration %u\n",
+            scheduled_animations_size,
+            to_add->remaining_microseconds);
+    }
     
     if (to_add->remaining_microseconds == 0) {
         printf(
@@ -41,8 +51,8 @@ void request_scheduled_animation(ScheduledAnimation * to_add)
     {
         if (scheduled_animations[i].deleted)
         {
+            printf("overwriting deleted slot\n");
             scheduled_animations[i] = *to_add;
-            scheduled_animations[i].deleted = false;
             return;
         }
     }
@@ -50,8 +60,12 @@ void request_scheduled_animation(ScheduledAnimation * to_add)
     assert(
         SCHEDULED_ANIMATIONS_ARRAYSIZE
             > scheduled_animations_size);
+    
     scheduled_animations[scheduled_animations_size] = *to_add;
     scheduled_animations_size += 1;
+    printf(
+        "adding slot, now %u anims\n",
+        scheduled_animations_size);
 }
 
 void request_fade_to(
@@ -97,14 +111,15 @@ void request_fade_to(
     
     // register scheduled animation
     ScheduledAnimation modify_alpha;
-    construct(&modify_alpha);
+    construct_scheduled_animation(&modify_alpha);
     modify_alpha.affected_object_id = object_id;
     modify_alpha.remaining_microseconds = duration_microseconds;
     modify_alpha.rgba_delta_per_second[3] = change_per_second;
     request_scheduled_animation(&modify_alpha);
 }
 
-void resolve_animation_effects(uint64_t microseconds_elapsed)
+void resolve_animation_effects(
+    uint64_t microseconds_elapsed)
 {
     ScheduledAnimation * anim;
     for (
@@ -116,21 +131,46 @@ void resolve_animation_effects(uint64_t microseconds_elapsed)
         anim = &scheduled_animations[animation_i];
         
         if (anim->deleted) {
-            scheduled_animations_size -= 1;
+            if (animation_i == scheduled_animations_size - 1) {
+                scheduled_animations_size -= 1;
+            }
             continue;
         }
-       
-        uint64_t actual_elapsed =
-            anim->remaining_microseconds > microseconds_elapsed ?
-                microseconds_elapsed :
+        
+        uint64_t actual_elapsed = microseconds_elapsed;
+        
+        if (anim->wait_first_microseconds > 0)
+        {
+            if (actual_elapsed >
+                anim->wait_first_microseconds)
+            {
+                actual_elapsed -=
+                    anim->wait_first_microseconds;
+                anim->wait_first_microseconds = 0;
+            } else {
+                
+                anim->wait_first_microseconds -=
+                    actual_elapsed;
+                continue;
+            }
+        }
+        
+        assert(anim->wait_first_microseconds == 0);
+        
+        actual_elapsed =
+            anim->remaining_microseconds > actual_elapsed ?
+                actual_elapsed :
                     anim->remaining_microseconds;
-
+        
         // delete if duration expired
         assert(actual_elapsed <= anim->remaining_microseconds);
         anim->remaining_microseconds -= actual_elapsed;
-        if (anim->remaining_microseconds == 0) {
+        
+        if (anim->remaining_microseconds == 0)
+        {
             anim->deleted = true;
-            if (animation_i == scheduled_animations_size) {
+            if (animation_i == scheduled_animations_size)
+            {
                 scheduled_animations_size -= 1;
             }
         }

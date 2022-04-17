@@ -31,6 +31,7 @@ void request_label_renderable(
         }
         
         TexQuad letter;
+        construct_texquad(&letter);
         letter.object_id = with_id;
         letter.texturearray_i = font_texturearray_i;
         letter.texture_i = text_to_draw[i] - '0';
@@ -46,9 +47,6 @@ void request_label_renderable(
         letter.top_pixels = cur_top;
         letter.height_pixels = font_height;
         letter.width_pixels = font_height;
-        letter.z_angle = 0.0f;
-        letter.visible = true;
-        letter.deleted = false;
         
         request_texquad_renderable(&letter);
         
