@@ -8,13 +8,28 @@ bool32_t touchable_id_to_texquad_object_id(
     const int32_t touchable_id,
     uint32_t * object_id_out)
 {
-    for (uint32_t i = 0; i < texquads_to_render_size; i++) {
-        if (texquads_to_render[i].touchable_id == touchable_id) {
+    printf(
+        "touchable_id_to_texquad_object_id for touchable_id: %i\n",
+        touchable_id);
+
+    if (touchable_id < 0) { return false; }
+    
+    for (
+        uint32_t i = 0;
+        i < texquads_to_render_size;
+        i++)
+    {
+        if (
+            texquads_to_render[i].touchable_id ==
+                touchable_id)
+        {
+            printf("found to be object_id %u\n", texquads_to_render[i].object_id);
             *object_id_out = texquads_to_render[i].object_id;
             return true;
         }
     }
     
+    printf("no such touchable_id\n");
     return false;
 }
 

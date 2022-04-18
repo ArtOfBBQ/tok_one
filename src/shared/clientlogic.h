@@ -46,15 +46,9 @@ void client_logic_startup(void);
 // add your app's code here
 void client_logic_update(uint64_t microseconds_elapsed);
 
-// will be called to notify of a user releasing the left mouse
-// button. x and y are always passed
-// touchable_id of -1 means no touchable was found at that spot
-// touchable_id of 5 means the texquad or polygon with that
-// touchable_id was clicked
-// add your app's code here
-void client_logic_mouseup(
-    float screenspace_x,
-    float screenspace_y,
-    int32_t touchable_id);
+// void client_logic_mouseup(
+//     float screenspace_x,
+//     float screenspace_y,
+//     int32_t touchable_id);
 #endif
 

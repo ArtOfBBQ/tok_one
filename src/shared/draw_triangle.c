@@ -99,21 +99,18 @@ bool32_t point_collides_triangle_area(
         /* x3: */ normalized_x,
         /* y3: */ normalized_y);
     
-    return (inner_triangle1_area +
+    bool32_t result = fabs((inner_triangle1_area +
         inner_triangle2_area +
         inner_triangle3_area)
-            == original_triangle_area;
+            - original_triangle_area) < 0.0001f;
+    
+    return result;
 }
 
 int32_t find_touchable_at(
     const float normalized_x,
     const float normalized_y)
 {
-    printf(
-        "finding touchable at [%f,%f]\n",
-        normalized_x,
-        normalized_y);
-    
     for (
         uint32_t i = 0;
         i < touchable_triangles_size;
@@ -127,7 +124,7 @@ int32_t find_touchable_at(
             return touchable_triangles[i].touchable_id;
         }
     }
-
+    
     return -1;
 }
 

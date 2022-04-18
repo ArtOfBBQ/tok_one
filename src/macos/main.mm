@@ -39,35 +39,25 @@ NSWindowWithCustomResponder: NSWindow
 
 - (void)mouseDown:(NSEvent *)event
 {
-    printf("mouse down!\n");
+    NSPoint screenspace_location = [NSEvent mouseLocation];
+    
+    buffer_mousedown(
+        /* screenspace_x: */
+            screenspace_location.x,
+        /* screenspace_y: */
+            screenspace_location.y);
 }
 
 - (void)mouseUp:(NSEvent *)event
 {
     NSPoint screenspace_location = [NSEvent mouseLocation];
-
-    // note: this returns -1 when no touchable is there
-    // which is what we want
-    int32_t colliding_touchable = find_touchable_at(
-        /* normalized_x : */
-            ((screenspace_location.x * 2)
-                / window_width) - 1.0f,
-        /* normalized_y : */
-            ((screenspace_location.y * 2)
-                / window_height) - 1.0f);
-    
-    client_logic_mouseup(
-        /* screenspace_x : */
-            screenspace_location.x,
-        /* screenspace_y : */
-            screenspace_location.y,
-        /* touchable_id : */
-            colliding_touchable);
 }
 
 - (void)rightMouseDown:(NSEvent *)event
 {
     printf("right mouse down!\n");
+    
+    NSPoint screenspace_location = [NSEvent mouseLocation];
 }
 
 - (void)rightMouseUp:(NSEvent *)event

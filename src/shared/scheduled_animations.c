@@ -28,12 +28,6 @@ void construct_scheduled_animation(
 void request_scheduled_animation(ScheduledAnimation * to_add)
 {
     assert(to_add != NULL);
-
-    if (to_add->rgba_delta_per_second[0] < -0.5f) {
-        printf("scheduled_animations_size got dim: %u duration %u\n",
-            scheduled_animations_size,
-            to_add->remaining_microseconds);
-    }
     
     if (to_add->remaining_microseconds == 0) {
         printf(
@@ -51,7 +45,6 @@ void request_scheduled_animation(ScheduledAnimation * to_add)
     {
         if (scheduled_animations[i].deleted)
         {
-            printf("overwriting deleted slot\n");
             scheduled_animations[i] = *to_add;
             return;
         }
@@ -63,9 +56,6 @@ void request_scheduled_animation(ScheduledAnimation * to_add)
     
     scheduled_animations[scheduled_animations_size] = *to_add;
     scheduled_animations_size += 1;
-    printf(
-        "adding slot, now %u anims\n",
-        scheduled_animations_size);
 }
 
 void request_fade_to(

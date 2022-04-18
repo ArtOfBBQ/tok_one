@@ -175,51 +175,46 @@ void client_logic_startup() {
     printf("finished client_logic_startup()\n");    
 }
 
-void client_logic_mouseup(
-    float screenspace_x,
-    float screenspace_y,
-    int32_t touchable_id)
+void client_handle_mouseevents(
+    uint64_t microseconds_elapsed)
 {
-    printf(
-        "running client_logic_mouseup() [%f,%f] touchable %i\n",
-        screenspace_x,
-        screenspace_y,
-        touchable_id);
-    
     uint32_t touched_object_id = 999999;
-
-    if (touchable_id_to_texquad_object_id(
-            /* const int32_t touchable_id : */ touchable_id,
-            /* uint32_t * object_id_out : */ &touched_object_id))
-    {
-        assert(touched_object_id != 999999);
-        printf(
-            "tapped object with object_id: %u\n",
-            touched_object_id);
-        
-        ScheduledAnimation brighten;
-        construct_scheduled_animation(&brighten);
-        ScheduledAnimation dim;
-        construct_scheduled_animation(&dim);
-        
-        brighten.affected_object_id = touched_object_id;
-        dim.affected_object_id = touched_object_id;
-        
-        brighten.remaining_microseconds = 450000;
-        dim.wait_first_microseconds =
-            brighten.remaining_microseconds;
-        dim.remaining_microseconds =
-            brighten.remaining_microseconds;
-        
-        for (uint32_t i = 0; i < 3; i++) {
-            brighten.rgba_delta_per_second[i] = 0.4;
-            dim.rgba_delta_per_second[i] = -0.4;
+    
+    if (!last_mouse_down.handled) {
+        last_mouse_down.handled = true;
+        if (
+            touchable_id_to_texquad_object_id(
+                /* const int32_t touchable_id : */
+                    last_mouse_down.touchable_id,
+                /* uint32_t * object_id_out : */
+                    &touched_object_id))
+        {
+            assert(touched_object_id != 999999);
+            
+            ScheduledAnimation brighten;
+            construct_scheduled_animation(&brighten);
+            ScheduledAnimation dim;
+            construct_scheduled_animation(&dim);
+            
+            brighten.affected_object_id = touched_object_id;
+            dim.affected_object_id = touched_object_id;
+            
+            brighten.remaining_microseconds = 150000;
+            dim.wait_first_microseconds =
+                brighten.remaining_microseconds;
+            dim.remaining_microseconds =
+                brighten.remaining_microseconds;
+            
+            for (uint32_t i = 0; i < 3; i++) {
+                brighten.rgba_delta_per_second[i] = 0.9;
+                dim.rgba_delta_per_second[i] = -0.9;
+            }
+            brighten.z_rotation_per_second = -0.13;
+            dim.z_rotation_per_second = 0.13;
+            
+            request_scheduled_animation(&brighten);
+            request_scheduled_animation(&dim);
         }
-        brighten.z_rotation_per_second = 0.25;
-        dim.z_rotation_per_second = -0.25;
-        
-        request_scheduled_animation(&brighten);
-        request_scheduled_animation(&dim);
     }
 }
 
@@ -344,7 +339,6 @@ void client_logic_update(
 {
     // TODO: our timer is weirdly broken on iOS. Fix it!
     uint64_t fps = 1000000 / microseconds_elapsed;
-    // printf("fps: %u\n", fps);
     float elapsed_mod =
         (float)((double)microseconds_elapsed / (double)16666);
     
@@ -372,6 +366,8 @@ void client_logic_update(
         /* z                     : */ 0.5f,
         /* float max_width       : */ window_width);
     
+    client_handle_mouseevents(
+        microseconds_elapsed);
     client_handle_keypresses(
         microseconds_elapsed);
     client_handle_touches(
