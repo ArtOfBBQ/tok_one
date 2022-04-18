@@ -26,7 +26,7 @@ extern Touch current_touch;
 typedef struct MouseEvent {
     float screenspace_x;
     float screenspace_y;
-    uint32_t touchable_id;
+    int32_t touchable_id;
     uint64_t happened_at;
     bool32_t handled;
 } MouseEvent;

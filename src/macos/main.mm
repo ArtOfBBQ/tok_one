@@ -51,6 +51,12 @@ NSWindowWithCustomResponder: NSWindow
 - (void)mouseUp:(NSEvent *)event
 {
     NSPoint screenspace_location = [NSEvent mouseLocation];
+
+    buffer_mouseup(
+        /* screenspace_x: */
+            screenspace_location.x,
+        /* screenspace_y: */
+            screenspace_location.y);
 }
 
 - (void)rightMouseDown:(NSEvent *)event
@@ -67,7 +73,13 @@ NSWindowWithCustomResponder: NSWindow
 
 - (void)mouseMoved:(NSEvent *)event
 {
-    // printf("mouse moved!\n");
+    NSPoint screenspace_location = [NSEvent mouseLocation];
+    
+    buffer_mousemove(
+        /* screenspace_x: */
+            screenspace_location.x,
+        /* screenspace_y: */
+            screenspace_location.y);
 }
 
 - (void)keyDown:(NSEvent *)event

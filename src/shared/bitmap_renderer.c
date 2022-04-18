@@ -9,10 +9,12 @@ bool32_t touchable_id_to_texquad_object_id(
     uint32_t * object_id_out)
 {
     printf(
-        "touchable_id_to_texquad_object_id for touchable_id: %i\n",
+        "touchable_id_to_texquad_object_id 4 touchable_id: %i\n",
         touchable_id);
-
-    if (touchable_id < 0) { return false; }
+    
+    if (touchable_id < 0) {
+        return false;
+    }
     
     for (
         uint32_t i = 0;
@@ -23,7 +25,6 @@ bool32_t touchable_id_to_texquad_object_id(
             texquads_to_render[i].touchable_id ==
                 touchable_id)
         {
-            printf("found to be object_id %u\n", texquads_to_render[i].object_id);
             *object_id_out = texquads_to_render[i].object_id;
             return true;
         }
@@ -314,6 +315,13 @@ void add_quad_to_gpu_workload(
     }
 }
 
+int sorter_cmpr_texquad_lowest_z(
+    const void * a,
+    const void * b)
+{
+    return ((TexQuad *)a)->z < ((TexQuad *)b)->z ? -1 : 1;
+}
+
 void draw_texquads_to_render(
     Vertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size)
@@ -330,15 +338,33 @@ void draw_texquads_to_render(
         return;
     }
     
+    TexQuad sorted_texquads[texquads_to_render_size];
+    uint32_t sorted_texquads_size = 0;
+    for (uint32_t i = 0; i < texquads_to_render_size; i++) {
+        if (
+            texquads_to_render[i].visible
+            && !texquads_to_render[i].deleted)
+        {
+            sorted_texquads[sorted_texquads_size++] =
+                texquads_to_render[i];
+        }
+    }
+    
+    qsort(
+        sorted_texquads,
+        sorted_texquads_size,
+        sizeof(TexQuad),
+        &sorter_cmpr_texquad_lowest_z);
+    
     for (
         uint32_t i = 0;
-        i < texquads_to_render_size;
+        i < sorted_texquads_size;
         i++)
     {
         assert(i < TEXQUADS_TO_RENDER_ARRAYSIZE);
-        if (!texquads_to_render[i].visible) { continue; }
+        
         add_quad_to_gpu_workload(
-            &texquads_to_render[i],
+            &sorted_texquads[i],
             next_gpu_workload,
             next_gpu_workload_size);
     }

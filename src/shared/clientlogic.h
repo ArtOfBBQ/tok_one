@@ -16,6 +16,8 @@
 #ifdef LORESEEKER
 #include "dirent.h"
 #include "../../../src/animationtracker.hpp"
+#include "../../../src/frontendtouch.hpp"
+#include "../../../src/frontendcommand.hpp"
 #include "../../../src/mainmenu.hpp"
 #endif
 

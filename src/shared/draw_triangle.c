@@ -112,9 +112,9 @@ int32_t find_touchable_at(
     const float normalized_y)
 {
     for (
-        uint32_t i = 0;
-        i < touchable_triangles_size;
-        i++)
+        int32_t i = (touchable_triangles_size - 1);
+        i >= 0;
+        i--)
     {
         if (point_collides_triangle_area(
             /* normalized_x : */ normalized_x,
