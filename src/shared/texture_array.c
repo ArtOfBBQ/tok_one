@@ -1,5 +1,62 @@
 #include "texture_array.h"
 
+TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
+uint32_t texture_arrays_size = 0;
+
+
+// returns new_texture_array_i (index in texture_arrays)
+int32_t register_new_texturearray_from_file(
+    const char * filename)
+{
+    FileBuffer * file_buffer =
+        platform_read_file(filename);
+    
+    if (file_buffer == NULL) {
+        printf(
+            "ERR - failed to add texarray - unfound file %s\n",
+            filename);
+        return -1;
+    }
+    
+    DecodedImage * new_image =
+        decode_PNG(
+            (uint8_t *)file_buffer->contents,
+            file_buffer->size);
+    
+    assert(new_image != NULL);
+    assert(new_image->good);
+    assert(new_image->rgba_values_size > 0);
+    
+    int32_t return_value = register_new_texturearray(new_image);
+
+    free(file_buffer->contents);
+    free(file_buffer);
+    
+    return return_value;
+}
+
+// returns new_texture_array_i (index in texture_arrays)
+int32_t register_new_texturearray(
+    DecodedImage * new_image)
+{
+    assert(new_image != NULL);
+    assert(new_image->good);
+    assert(new_image->rgba_values_size > 0);
+    
+    int32_t new_i = texture_arrays_size;
+    assert(new_i != 0);
+    texture_arrays_size += 1;
+    texture_arrays[new_i].sprite_columns = 1;
+    texture_arrays[new_i].sprite_rows = 1;
+    
+    texture_arrays[new_i].image = new_image;
+    
+    texture_arrays[new_i].request_update =
+        true;
+    
+    return new_i;
+}
+
 DecodedImage * extract_image(
     TextureArray * texture_array,
     uint32_t x,

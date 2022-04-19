@@ -22,6 +22,7 @@ void construct_scheduled_animation(
     }
     to_construct->wait_first_microseconds = 0;
     to_construct->remaining_microseconds = 1000000;
+    to_construct->delete_object_when_finished = false;
     to_construct->deleted = false;
 }
 
@@ -31,7 +32,14 @@ void request_scheduled_animation(ScheduledAnimation * to_add)
     
     if (to_add->remaining_microseconds == 0) {
         printf(
-            "ERROR: You can't schedule an animation with a duration of 0 microseconds - please just apply the effect directly instead\n");
+            "ERROR: You can't schedule an animation with a duration of 0 microseconds - please just apply the effect directly instead. Animation xy[%f,%f] rgba[%f,%f,%f,%f] zrot [%f]\n",
+            to_add->delta_x_per_second,
+            to_add->delta_y_per_second,
+            to_add->rgba_delta_per_second[0],
+            to_add->rgba_delta_per_second[1],
+            to_add->rgba_delta_per_second[2],
+            to_add->rgba_delta_per_second[3],
+            to_add->z_rotation_per_second);
         assert(to_add->remaining_microseconds > 0);
     }
     assert(
@@ -56,6 +64,59 @@ void request_scheduled_animation(ScheduledAnimation * to_add)
     
     scheduled_animations[scheduled_animations_size] = *to_add;
     scheduled_animations_size += 1;
+}
+
+void request_fade_and_destroy(
+    uint32_t object_id,
+    uint64_t duration_microseconds)
+{
+    // get current alpha
+    // we'll go with the biggest diff found in case of
+    // multiple objs
+    float target_alpha = 0.0f;
+    float current_alpha = target_alpha;
+    
+    for (
+        uint32_t tq_i = 0;
+        tq_i < texquads_to_render_size;
+        tq_i++)
+    {
+        if (texquads_to_render[tq_i].object_id == object_id)
+        {
+            float cur_dist =
+                (current_alpha - target_alpha) *
+                (current_alpha - target_alpha);
+            float new_dist =
+                (texquads_to_render[tq_i].RGBA[3]
+                    - target_alpha) *
+                (texquads_to_render[tq_i].RGBA[3]
+                    - target_alpha);
+            
+            if (new_dist > cur_dist)
+            {
+                current_alpha = texquads_to_render[tq_i].RGBA[3];
+            }
+        }
+    }
+    
+    if (current_alpha == target_alpha) {
+        return;
+    }
+    
+    // Find out how fast the alpha needs to change to reach
+    // the target alpha exactly when the duration runs out
+    float change_per_second =
+        (target_alpha - current_alpha) /
+            ((float)duration_microseconds / 1000000);
+    
+    // register scheduled animation
+    ScheduledAnimation modify_alpha;
+    construct_scheduled_animation(&modify_alpha);
+    modify_alpha.affected_object_id = object_id;
+    modify_alpha.remaining_microseconds = duration_microseconds;
+    modify_alpha.rgba_delta_per_second[3] = change_per_second;
+    modify_alpha.delete_object_when_finished = true;
+    request_scheduled_animation(&modify_alpha);
 }
 
 void request_fade_to(
@@ -153,9 +214,6 @@ void resolve_animation_effects(
                     anim->remaining_microseconds;
         
         // delete if duration expired
-        assert(actual_elapsed <= anim->remaining_microseconds);
-        anim->remaining_microseconds -= actual_elapsed;
-        
         if (anim->remaining_microseconds == 0)
         {
             anim->deleted = true;
@@ -163,7 +221,42 @@ void resolve_animation_effects(
             {
                 scheduled_animations_size -= 1;
             }
+            
+            if (anim->delete_object_when_finished) {
+                for (
+                    int32_t tq_i = texquads_to_render_size - 1;
+                    tq_i >= 0;
+                    tq_i--)
+                {
+                    if (
+                        texquads_to_render[tq_i].object_id ==
+                            anim->affected_object_id)
+                    {
+                        printf(
+                            "deleting object at tq_i %i of %u\n",
+                            tq_i,
+                            texquads_to_render_size);
+                        
+                        texquads_to_render[tq_i].deleted = true;
+                        texquads_to_render[tq_i].visible = false;
+                        texquads_to_render[tq_i]
+                            .texturearray_i = -1;
+                        texquads_to_render[tq_i].texture_i = -1;
+                        
+                        if (tq_i == texquads_to_render_size - 1)
+                        {
+                            printf(
+                                "tq_to_rndr_size reduced to %u\n",
+                                texquads_to_render_size);
+                            texquads_to_render_size--;
+                        }
+                    }
+                }
+            }
         }
+        
+        assert(actual_elapsed <= anim->remaining_microseconds);
+        anim->remaining_microseconds -= actual_elapsed;
         
         // apply effects
         for (
@@ -173,7 +266,8 @@ void resolve_animation_effects(
         {
             if (
                 texquads_to_render[tq_i].object_id ==
-                    anim->affected_object_id)
+                    anim->affected_object_id &&
+                !texquads_to_render[tq_i].deleted)
             {
                 texquads_to_render[tq_i].left_pixels +=
                     (anim->delta_x_per_second * actual_elapsed)
@@ -185,7 +279,11 @@ void resolve_animation_effects(
                     (anim->z_rotation_per_second * actual_elapsed)
                         / 1000000;
                 
-                for (uint32_t c = 0; c < 4; c++) {
+                for (
+                    uint32_t c = 0;
+                    c < 4;
+                    c++)
+                {
                     texquads_to_render[tq_i].RGBA[c] +=
                         (anim->rgba_delta_per_second[c]
                             * actual_elapsed)
@@ -193,6 +291,8 @@ void resolve_animation_effects(
                 }
             }
         }
+        
+        // stuff
     }
 }
 

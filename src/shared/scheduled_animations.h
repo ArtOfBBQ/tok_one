@@ -21,6 +21,7 @@ typedef struct ScheduledAnimation {
     float rgba_delta_per_second[4];
     uint64_t wait_first_microseconds;
     uint64_t remaining_microseconds;
+    bool32_t delete_object_when_finished;
     bool32_t deleted;
 } ScheduledAnimation;
 
@@ -28,6 +29,10 @@ void construct_scheduled_animation(
     ScheduledAnimation * to_construct);
 
 void request_scheduled_animation(ScheduledAnimation * to_add);
+
+void request_fade_and_destroy(
+    uint32_t object_id,
+    uint64_t duration_microseconds);
 
 void request_fade_to(
     uint32_t object_id,

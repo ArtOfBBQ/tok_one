@@ -29,17 +29,6 @@ Write code to update your game or app's state
 
 zPolygon load_from_obj_file(char * filename);
 
-// A buffer of texture arrays (AKA texture atlases) your
-// objects can use
-// Each texture atlas must have images of the exact same size
-// You can set a zTriangle's texturearray_i to 2 to use
-// texture_arrays[2] as its texture during texture mapping
-// Set the zTriangle's texture_i to select which texture inside
-// the texture atlas to use
-// REMINDER: You must define TEXTUREARRAYS_SIZE in vertex_types.h
-extern TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
-extern uint32_t texture_arrays_size;
-
 // will be called once at startup, before rendering frame 1
 // add your app's code here
 void client_logic_startup(void);

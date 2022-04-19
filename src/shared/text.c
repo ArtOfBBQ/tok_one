@@ -47,6 +47,7 @@ void request_label_renderable(
         letter.top_pixels = cur_top;
         letter.height_pixels = font_height;
         letter.width_pixels = font_height;
+        letter.z = z;
         
         request_texquad_renderable(&letter);
         

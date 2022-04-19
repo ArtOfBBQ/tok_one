@@ -1,10 +1,5 @@
 #include "clientlogic.h"
 
-// If you want to texture polygons or just draw bitmaps
-// to the screen you need to store your images in this array
-TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
-uint32_t texture_arrays_size = 0;
-
 zPolygon load_from_obj_file(char * filename)
 {
     FileBuffer * buffer = platform_read_file(filename);
