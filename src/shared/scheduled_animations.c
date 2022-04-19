@@ -67,8 +67,8 @@ void request_scheduled_animation(ScheduledAnimation * to_add)
 }
 
 void request_fade_and_destroy(
-    uint32_t object_id,
-    uint64_t duration_microseconds)
+    const uint32_t object_id,
+    const uint64_t duration_microseconds)
 {
     // get current alpha
     // we'll go with the biggest diff found in case of
@@ -120,9 +120,9 @@ void request_fade_and_destroy(
 }
 
 void request_fade_to(
-    uint32_t object_id,
-    uint64_t duration_microseconds,
-    float target_alpha)
+    const uint32_t object_id,
+    const uint64_t duration_microseconds,
+    const float target_alpha)
 {
     // get current alpha
     // we'll go with the biggest diff found in case of
@@ -294,5 +294,69 @@ void resolve_animation_effects(
         
         // stuff
     }
+}
+
+void request_move_to(
+    const uint32_t object_id,
+    const uint64_t duration_microseconds,
+    const bool32_t ignore_target_mid_x,
+    const float target_mid_x,
+    const bool32_t ignore_target_mid_y,
+    const float target_mid_y)
+{
+    assert(duration_microseconds > 0);
+    
+    float left_change_per_second;
+    float top_change_per_second;
+    
+    for (
+        uint32_t tq_i = 0;
+        tq_i < texquads_to_render_size;
+        tq_i++)
+    {
+        if (texquads_to_render[tq_i].object_id == object_id)
+        {
+            float current_mid_x =
+                texquads_to_render[tq_i].left_pixels
+                    + (texquads_to_render[tq_i].width_pixels
+                        * 0.5f);
+            float current_mid_y =
+                texquads_to_render[tq_i].top_pixels
+                    - (texquads_to_render[tq_i].height_pixels
+                        * 0.5f);
+            
+            float cur_x_dist =
+                (current_mid_x - target_mid_x) *
+                (current_mid_x - target_mid_x);
+            float cur_y_dist =
+                (current_mid_y - target_mid_y) *
+                (current_mid_y - target_mid_y);
+            
+            // Find out how fast the left needs to change to reach
+            // the target left exactly when the duration runs out
+            left_change_per_second =
+                ignore_target_mid_x ?
+                    0.0f :
+                (target_mid_x - current_mid_x) /
+                    ((float)duration_microseconds / 1000000);
+            top_change_per_second =
+                ignore_target_mid_y ?
+                    0.0f :
+                    (target_mid_y - current_mid_y) /
+                        ((float)duration_microseconds / 1000000);
+            break;
+        }
+    }
+    
+    ScheduledAnimation move_request;
+    construct_scheduled_animation(&move_request);
+    move_request.affected_object_id = object_id;
+    move_request.remaining_microseconds =
+        duration_microseconds;
+    move_request.delta_x_per_second =
+        left_change_per_second;
+    move_request.delta_y_per_second =
+        top_change_per_second;
+    request_scheduled_animation(&move_request);
 }
 

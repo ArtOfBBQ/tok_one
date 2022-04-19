@@ -31,13 +31,21 @@ void construct_scheduled_animation(
 void request_scheduled_animation(ScheduledAnimation * to_add);
 
 void request_fade_and_destroy(
-    uint32_t object_id,
-    uint64_t duration_microseconds);
+    const uint32_t object_id,
+    const uint64_t duration_microseconds);
 
 void request_fade_to(
-    uint32_t object_id,
-    uint64_t duration_microseconds,
-    float target_alpha);
+    const uint32_t object_id,
+    const uint64_t duration_microseconds,
+    const float target_alpha);
+
+void request_move_to(
+    const uint32_t object_id,
+    const uint64_t duration_microseconds,
+    const bool32_t ignore_target_mid_x,
+    const float target_mid_x,
+    const bool32_t ignore_target_mid_y,
+    const float target_mid_y);
 
 #endif
 
