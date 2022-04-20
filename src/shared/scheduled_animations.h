@@ -18,14 +18,7 @@ typedef struct ScheduledAnimation {
     float x_rotation_per_second;
     float y_rotation_per_second;
     float z_rotation_per_second;
-    bool32_t center_while_scaling; // keep the center while
-                                   // shrinking/enlarging.
-                                   // false to hold the left
-                                   // & top instead
-    float width_factor_per_second; // 1.0f to leave width as is
-    float height_factor_per_second; // 1.03f to increase by 3%
-                                    // of original height per
-                                    // second
+    float scalefactor_delta_per_second;
     float rgba_delta_per_second[4];
     uint64_t wait_first_microseconds;
     uint64_t remaining_microseconds;

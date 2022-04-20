@@ -13,6 +13,7 @@ void construct_texquad(TexQuad * to_construct)
     to_construct->top_pixels = 0.0f;
     to_construct->height_pixels = 75.0f;
     to_construct->width_pixels = 75.0f;
+    to_construct->scale_factor = 1.0f;
     to_construct->z = 0.5f;
     to_construct->z_angle = 0.0f;
     to_construct->visible = true;

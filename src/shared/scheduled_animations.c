@@ -17,9 +17,7 @@ void construct_scheduled_animation(
     to_construct->x_rotation_per_second = 0.0f;
     to_construct->y_rotation_per_second = 0.0f;
     to_construct->z_rotation_per_second = 0.0f;
-    to_construct->center_while_scaling = true;
-    to_construct->width_factor_per_second = 1.0f;
-    to_construct->height_factor_per_second = 1.0f;
+    to_construct->scalefactor_delta_per_second = 0.0f;
     for (uint32_t i = 0; i < 4; i++) {
         to_construct->rgba_delta_per_second[i] = 0.0f;
     }
@@ -281,6 +279,16 @@ void resolve_animation_effects(
                 texquads_to_render[tq_i].z_angle +=
                     (anim->z_rotation_per_second * actual_elapsed)
                         / 1000000;
+
+                texquads_to_render[tq_i].scale_factor +=
+                    (anim->scalefactor_delta_per_second *
+                        actual_elapsed) / 1000000;
+                if (anim->scalefactor_delta_per_second != 0.0f) {
+                    printf(
+                        "texquads_to_render[%u].scale_factor now: %f\n",
+                        tq_i,
+                        texquads_to_render[tq_i].scale_factor);
+                }
                 
                 for (
                     uint32_t c = 0;
@@ -292,21 +300,6 @@ void resolve_animation_effects(
                             * actual_elapsed)
                                 / 1000000;
                 }
-
-                if (anim->center_while_scaling) {
-
-                }
-
-                texquads_to_render[tq_i].width_pixels +=
-                    texquads_to_render[tq_i].width_pixels *
-                    (((anim->width_factor_per_second - 1.0f) *
-                        actual_elapsed)
-                            / 1000000);
-                texquads_to_render[tq_i].height_pixels +=
-                    texquads_to_render[tq_i].height_pixels *
-                    (((anim->height_factor_per_second - 1.0f) *
-                        actual_elapsed)
-                            / 1000000);
             }
         }
         
@@ -412,9 +405,7 @@ void request_bump_animation(const uint32_t object_id)
     construct_scheduled_animation(&embiggen_request);
     embiggen_request.affected_object_id = object_id;
     embiggen_request.remaining_microseconds = duration * 0.5f;
-    embiggen_request.center_while_scaling = true;
-    embiggen_request.width_factor_per_second = 2.0f;
-    embiggen_request.height_factor_per_second = 2.0f;
+    embiggen_request.scalefactor_delta_per_second = 1.5f;
     request_scheduled_animation(
         &embiggen_request);
     
@@ -423,9 +414,7 @@ void request_bump_animation(const uint32_t object_id)
     revert_request.affected_object_id = object_id;
     revert_request.wait_first_microseconds = duration * 0.5f;
     revert_request.remaining_microseconds = duration * 0.5f;
-    revert_request.center_while_scaling = true;
-    revert_request.width_factor_per_second = 0.5f;
-    revert_request.height_factor_per_second = 0.5f;
+    revert_request.scalefactor_delta_per_second = -1.5f;
     request_scheduled_animation(
         &revert_request);
 }

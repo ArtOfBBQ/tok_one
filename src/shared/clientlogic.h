@@ -37,9 +37,5 @@ void client_logic_startup(void);
 // add your app's code here
 void client_logic_update(uint64_t microseconds_elapsed);
 
-// void client_logic_mouseup(
-//     float screenspace_x,
-//     float screenspace_y,
-//     int32_t touchable_id);
 #endif
 
