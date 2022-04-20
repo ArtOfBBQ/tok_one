@@ -47,5 +47,8 @@ void request_move_to(
     const bool32_t ignore_target_mid_y,
     const float target_mid_y);
 
+void request_dud_dance(
+    const uint32_t object_id);
+
 #endif
 

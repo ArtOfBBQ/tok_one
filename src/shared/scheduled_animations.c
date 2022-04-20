@@ -360,3 +360,29 @@ void request_move_to(
     request_scheduled_animation(&move_request);
 }
 
+void request_dud_dance(const uint32_t object_id)
+{
+    uint64_t step_size = 60000;
+    for (
+        uint64_t wait_first = 0;
+        wait_first < step_size * 8;
+        wait_first += step_size)
+    {
+        ScheduledAnimation move_request;
+        construct_scheduled_animation(&move_request);
+        move_request.affected_object_id = object_id;
+        move_request.wait_first_microseconds = wait_first;
+        move_request.remaining_microseconds = step_size;
+        move_request.delta_x_per_second =
+            wait_first % (step_size * 2) == 0 ?
+                window_width * 0.07f
+                : window_width * -0.07f;
+        move_request.delta_y_per_second =
+            wait_first % (step_size * 2) == 0 ?
+                window_height * 0.07f
+                : window_height * -0.07f;
+        request_scheduled_animation(
+            &move_request);
+    }
+}
+
