@@ -3,6 +3,117 @@
 uint32_t font_texturearray_i = 0;
 float font_height = 40.0f;
 
+float get_char_width(char * input)
+{
+    return font_height;
+}
+
+uint32_t find_next_linebreak(
+    char * input,
+    uint32_t input_size,
+    uint32_t after_i)
+{
+    assert(input_size > 1);
+    assert(after_i < input_size - 1);
+    
+    uint32_t i = after_i + 1;
+    
+    assert(after_i < input_size);
+    
+    for (; i < input_size; i++) {
+        if (input[i] == '\n')
+        {
+            return i;
+        }
+    }
+    
+    return i;
+}
+
+void request_label_around(
+    uint32_t with_id,
+    char * text_to_draw,
+    float text_color[4],
+    uint32_t text_to_draw_size,
+    float mid_x_pixelspace,
+    float top_y_pixelspace,
+    float z,
+    float max_width)
+{
+    printf("request centered label\n");
+    
+    uint32_t line_start_i = 0;
+    uint32_t line_end_i = 0;
+    float line_width = 0.0f;
+    
+    float cur_left = 0.0f;
+    float cur_top = top_y_pixelspace;
+    
+    while (line_start_i < (text_to_draw_size - 2))
+    {
+        line_end_i = find_next_linebreak(
+            /* input      : */ text_to_draw,
+            /* input_size : */ text_to_draw_size,
+            /* after_i    : */ line_start_i);
+        
+        if (line_end_i <= line_start_i)
+        {
+            printf(
+                "br line_end_i %u is <= to line_start_i of %u\n",
+                line_end_i,
+                line_start_i);
+            break;
+        }
+        
+        // enforce maximum line width 
+        line_width = 0.0f;
+        uint32_t previous_space_i = line_start_i;
+        for (uint32_t i = line_start_i; i <= line_end_i; i++) {
+            if (text_to_draw[i] == ' ') {
+                previous_space_i = i;
+            }
+            
+            line_width += get_char_width(&text_to_draw[i]);
+            if (line_width > max_width) {
+                line_end_i = previous_space_i == line_start_i ?
+                    i - 1 : previous_space_i;
+            }
+        }
+        
+        cur_left = mid_x_pixelspace - (0.5f * line_width);
+        for (
+            uint32_t i = line_start_i;
+            i <= line_end_i;
+            i++)
+        {
+            TexQuad letter;
+            construct_texquad(&letter);
+            letter.object_id = with_id;
+            letter.texturearray_i = font_texturearray_i;
+            letter.texture_i = text_to_draw[i] - '0';
+            for (
+                uint32_t rgba_i = 0;
+                rgba_i < 4;
+                rgba_i++)
+            {
+                letter.RGBA[rgba_i] = text_color[rgba_i];
+            }
+            
+            letter.left_pixels = cur_left;
+            letter.top_pixels = cur_top;
+            letter.height_pixels = font_height;
+            letter.width_pixels = font_height;
+            letter.z = z;
+            
+            request_texquad_renderable(&letter);
+            cur_left += get_char_width(&text_to_draw[i]);
+        }
+        
+        cur_top -= font_height;
+        line_start_i = line_end_i;
+    }
+}
+
 void request_label_renderable(
     uint32_t with_id,
     char * text_to_draw,
@@ -51,7 +162,7 @@ void request_label_renderable(
         
         request_texquad_renderable(&letter);
         
-        cur_left += font_height;
+        cur_left += get_char_width(&text_to_draw[i]);
     }
 }
 

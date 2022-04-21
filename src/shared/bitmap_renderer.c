@@ -370,7 +370,13 @@ void draw_texquads_to_render(
         i < sorted_texquads_size;
         i++)
     {
-        assert(i < TEXQUADS_TO_RENDER_ARRAYSIZE);
+        if (i < TEXQUADS_TO_RENDER_ARRAYSIZE)
+        {
+            printf(
+                "i of %u is < TEQAUDS_TO_RENDER_ARRAYSIZE (%u)\n",
+                i,
+                TEXQUADS_TO_RENDER_ARRAYSIZE);
+        }
         
         add_quad_to_gpu_workload(
             &sorted_texquads[i],

@@ -24,7 +24,7 @@ exist.
 #include "vertex_types.h"
 #include "draw_triangle.h"
 
-#define TEXQUADS_TO_RENDER_ARRAYSIZE 500
+#define TEXQUADS_TO_RENDER_ARRAYSIZE 2000
 extern TexQuad texquads_to_render[TEXQUADS_TO_RENDER_ARRAYSIZE];
 extern uint32_t texquads_to_render_size;
 

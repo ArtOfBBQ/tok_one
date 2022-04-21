@@ -167,6 +167,26 @@ void client_logic_startup() {
     move_sprite_left.remaining_microseconds = 90000000;
     request_scheduled_animation(&move_sprite_left);
     
+    char centered_text[145] =
+        "I'm a text\nMy purpose is to test centered text, possibly long sentences that don't necessarily make any sense like this.\nOr small sentences.";
+    
+    float centered_text_color[4];
+    centered_text_color[0] = 0.8f;
+    centered_text_color[1] = 0.2f;
+    centered_text_color[2] = 0.8f;
+    centered_text_color[3] = 1.0f;
+   
+    font_height = 14.0f; 
+    request_label_around(
+        /* with_id:              : */ 50,
+        /* text                  : */ centered_text,
+        /* text_color[4]         : */ centered_text_color,
+        /* text_to_draw_size     : */ 140,
+        /* mid_x_pixelspace      : */ window_width * 0.5,
+        /* mid_y_pixelspace      : */ window_height * 0.5,
+        /* z                     : */ 0.6f,
+        /* max_width             : */ window_width * 0.25);
+    
     printf("finished client_logic_startup()\n");    
 }
 
@@ -329,6 +349,7 @@ void client_handle_touches(
 
 bool32_t fading_out = true;
 char fps_string[8] = "fps: xx";
+
 void client_logic_update(
     uint64_t microseconds_elapsed)
 {
@@ -351,6 +372,7 @@ void client_logic_update(
     fps_color[2] = 0.8f;
     fps_color[3] = 1.0f;
     delete_texquad_object(label_object_id);
+    
     request_label_renderable(
         /* with_id               : */ label_object_id,
         /* char * text_to_draw   : */ fps_string,
@@ -360,6 +382,7 @@ void client_logic_update(
         /* float top_pixelspace  : */ 60.0f,
         /* z                     : */ 0.5f,
         /* float max_width       : */ window_width);
+
     
     client_handle_mouseevents(
         microseconds_elapsed);
