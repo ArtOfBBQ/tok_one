@@ -28,7 +28,6 @@ All other code in the .c file is implementation detail.
 #ifndef DECODE_PNG_H
 #define DECODE_PNG_H
 
-#include "common.h"
 #include "decodedimage.h"
 #include "inflate.h"
 #include "inttypes.h"

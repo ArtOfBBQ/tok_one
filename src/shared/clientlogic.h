@@ -14,6 +14,11 @@
 #include "scheduled_animations.h"
 
 #ifdef LORESEEKER
+typedef struct NamedTextureArray {
+    int32_t texturearray_i;
+    int32_t texture_i;
+} NamedTextureArray;
+
 #include "dirent.h"
 #include "../../../src/animationtracker.hpp"
 #include "../../../src/frontendtouch.hpp"

@@ -1,7 +1,7 @@
 #ifndef VERTEX_TYPES_H
 #define VERTEX_TYPES_H
 
-#define TEXTUREARRAYS_SIZE 100
+#define TEXTUREARRAYS_SIZE 120
 
 #pragma pack(push, 1)
 typedef struct Vertex {

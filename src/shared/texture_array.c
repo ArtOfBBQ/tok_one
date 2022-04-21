@@ -28,11 +28,8 @@ int32_t register_new_texturearray_from_file(
             (uint8_t *)file_buffer->contents,
             file_buffer->size);
     
-    assert(new_image != NULL);
-    assert(new_image->good);
-    assert(new_image->rgba_values_size > 0);
-    
-    int32_t return_value = register_new_texturearray(new_image);
+    int32_t return_value =
+        register_new_texturearray(new_image);
     
     free(file_buffer->contents);
     free(file_buffer);
@@ -44,6 +41,10 @@ int32_t register_new_texturearray_from_file(
 int32_t register_new_texturearray(
     DecodedImage * new_image)
 {
+    if (!new_image->good) {
+        return -1;
+    }
+    
     printf(
         "register_new_texturearray() texture_arrays_size: %u\n",
         texture_arrays_size);
@@ -53,7 +54,6 @@ int32_t register_new_texturearray(
     
     int32_t new_i = (int32_t)texture_arrays_size;
     printf("new_i: %i\n", new_i);
-    assert(new_i != 0);
     assert(new_i < TEXTUREARRAYS_SIZE);
     texture_arrays_size += 1;
     printf(
