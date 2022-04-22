@@ -6,7 +6,7 @@ MAC_FRAMEWORKS="
     -framework MetalKit 
     -framework Metal"
 
-TOK_ONE_SOURCEFILES="src/$PLATFORM/main.mm src/$PLATFORM/platform_layer.c src/shared/draw_triangle.c src/shared/bitmap_renderer.c src/shared_apple/platform_layer.c src/shared_windows_macos/platform_layer.c src/shared_apple/gpu.mm src/shared/texture_array.c src/shared/userinput.c src/shared/zpolygon.c src/shared/software_renderer.c src/shared/window_size.c src/shared/decode_png.c src/shared/inflate.c src/shared/clientlogic.c src/shared/common.c src/shared/text.c src/shared/scheduled_animations.c src/shared/texquad_type.c"
+TOK_ONE_SOURCEFILES="src/$PLATFORM/main.mm src/$PLATFORM/platform_layer.c src/shared/draw_triangle.c src/shared/bitmap_renderer.c src/shared_apple/platform_layer.c src/shared_windows_macos/platform_layer.c src/shared_apple/gpu.mm src/shared/texture_array.c src/shared/userinput.c src/shared/zpolygon.c src/shared/software_renderer.c src/shared/window_size.c src/shared/debigulator/src/decode_png.c src/shared/debigulator/src/inflate.c src/shared/clientlogic.c src/shared/common.c src/shared/text.c src/shared/scheduled_animations.c src/shared/texquad_type.c"
 
 echo "Building $APP_NAME for $PLATFORM..."
 

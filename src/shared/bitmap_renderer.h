@@ -20,7 +20,7 @@ exist.
 #include "common.h"
 #include "window_size.h"
 #include "texquad_type.h"
-#include "decodedimage.h"
+#include "debigulator/src/decodedimage.h"
 #include "vertex_types.h"
 #include "draw_triangle.h"
 

@@ -24,7 +24,7 @@ extern NSFileManager * file_manager;
 #include <stdio.h>
 
 #include "common.h"
-#include "decodedimage.h"
+#include "debigulator/src/decodedimage.h"
 
 typedef struct FileBuffer {
     uint64_t size;

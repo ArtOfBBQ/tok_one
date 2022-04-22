@@ -1,10 +1,10 @@
 #ifndef TEXTURE_ARRAY_H
 #define TEXTURE_ARRAY_H
 
-#include "../shared/platform_layer.h"
-#include "../shared/decodedimage.h"
-#include "../shared/decode_png.h"
-#include "../shared/vertex_types.h"
+#include "platform_layer.h"
+#include "debigulator/src/decodedimage.h"
+#include "debigulator/src/decode_png.h"
+#include "vertex_types.h"
 
 typedef struct TextureArray {
     DecodedImage * image;
