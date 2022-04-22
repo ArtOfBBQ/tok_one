@@ -233,11 +233,6 @@ void resolve_animation_effects(
                         texquads_to_render[tq_i].object_id ==
                             anim->affected_object_id)
                     {
-                        printf(
-                            "deleting object at tq_i %i of %u\n",
-                            tq_i,
-                            texquads_to_render_size);
-                        
                         texquads_to_render[tq_i].deleted = true;
                         texquads_to_render[tq_i].visible = false;
                         texquads_to_render[tq_i]
@@ -246,9 +241,6 @@ void resolve_animation_effects(
                         
                         if (tq_i == texquads_to_render_size - 1)
                         {
-                            printf(
-                                "tq_to_rndr_size reduced to %u\n",
-                                texquads_to_render_size);
                             texquads_to_render_size--;
                         }
                     }
@@ -283,12 +275,6 @@ void resolve_animation_effects(
                 texquads_to_render[tq_i].scale_factor +=
                     (anim->scalefactor_delta_per_second *
                         actual_elapsed) / 1000000;
-                if (anim->scalefactor_delta_per_second != 0.0f) {
-                    printf(
-                        "texquads_to_render[%u].scale_factor now: %f\n",
-                        tq_i,
-                        texquads_to_render[tq_i].scale_factor);
-                }
                 
                 for (
                     uint32_t c = 0;

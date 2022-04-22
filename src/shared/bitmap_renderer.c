@@ -112,7 +112,7 @@ void z_rotate_triangle(
     }
 }
 
-void delete_texquad_object(uint32_t with_object_id)
+void delete_texquad_object(const uint32_t with_object_id)
 {
     for (
         int32_t i = texquads_to_render_size - 1;
@@ -141,7 +141,7 @@ void add_quad_to_gpu_workload(
     Vertex topleft[3];
     Vertex bottomright[3];
     
-    float z_value = 0.3f + (to_add->z * 0.001f);
+    float z_value = 0.3f + (to_add->z * 0.0001f);
     float extra_scale = (to_add->scale_factor - 1.0f);
     
     float left = to_add->left_pixels -
@@ -324,7 +324,7 @@ int sorter_cmpr_texquad_lowest_z(
     const void * a,
     const void * b)
 {
-    return ((TexQuad *)a)->z < ((TexQuad *)b)->z ? -1 : 1;
+    return ((TexQuad *)a)->z <= ((TexQuad *)b)->z ? -1 : 1;
 }
 
 void draw_texquads_to_render(

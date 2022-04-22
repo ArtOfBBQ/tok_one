@@ -3,15 +3,15 @@
 uint32_t font_texturearray_i = 0;
 float font_height = 40.0f;
 
-float get_char_width(char * input)
+float get_char_width(const char * input)
 {
     return font_height;
 }
 
 uint32_t find_next_linebreak(
-    char * input,
-    uint32_t input_size,
-    uint32_t after_i)
+    const char * input,
+    const uint32_t input_size,
+    const uint32_t after_i)
 {
     assert(input_size > 1);
     assert(after_i < input_size - 1);
@@ -31,14 +31,14 @@ uint32_t find_next_linebreak(
 }
 
 void request_label_around(
-    uint32_t with_id,
-    char * text_to_draw,
-    float text_color[4],
-    uint32_t text_to_draw_size,
-    float mid_x_pixelspace,
-    float top_y_pixelspace,
-    float z,
-    float max_width)
+    const uint32_t with_id,
+    const char * text_to_draw,
+    const float text_color[4],
+    const uint32_t text_to_draw_size,
+    const float mid_x_pixelspace,
+    const float top_y_pixelspace,
+    const float z,
+    const float max_width)
 {
     assert(max_width > 0.0f);
     
@@ -113,14 +113,14 @@ void request_label_around(
 }
 
 void request_label_renderable(
-    uint32_t with_id,
-    char * text_to_draw,
-    float text_color[4],
-    uint32_t text_to_draw_size,
-    float left_pixelspace,
-    float top_pixelspace,
-    float z,
-    float max_width)
+    const uint32_t with_id,
+    const char * text_to_draw,
+    const float text_color[4],
+    const uint32_t text_to_draw_size,
+    const float left_pixelspace,
+    const float top_pixelspace,
+    const float z,
+    const float max_width)
 {
     float cur_left = left_pixelspace;
     float cur_top = top_pixelspace;
