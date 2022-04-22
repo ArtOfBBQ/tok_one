@@ -8,10 +8,6 @@ bool32_t touchable_id_to_texquad_object_id(
     const int32_t touchable_id,
     uint32_t * object_id_out)
 {
-    printf(
-        "touchable_id_to_texquad_object_id 4 touchable_id: %i\n",
-        touchable_id);
-    
     if (touchable_id < 0) {
         return false;
     }
@@ -30,7 +26,6 @@ bool32_t touchable_id_to_texquad_object_id(
         }
     }
     
-    printf("no such touchable_id\n");
     return false;
 }
 
@@ -39,9 +34,10 @@ void request_texquad_renderable(
 {
     if (to_add->texturearray_i != 0) {
         printf(
-            "request_texquad_renderable at [%f,%f] with width %f height %f visible %u deleted %u RGBA [%f,%f,%f,%f]\n",
+            "request_texquad_renderable at [%f,%f,%f] with width %f height %f visible %u deleted %u RGBA [%f,%f,%f,%f]\n",
             to_add->left_pixels,
             to_add->top_pixels,
+            to_add->z,
             to_add->width_pixels,
             to_add->height_pixels,
             to_add->visible,
@@ -370,12 +366,13 @@ void draw_texquads_to_render(
         i < sorted_texquads_size;
         i++)
     {
-        if (i < TEXQUADS_TO_RENDER_ARRAYSIZE)
+        if (i >= TEXQUADS_TO_RENDER_ARRAYSIZE)
         {
             printf(
                 "i of %u is < TEQAUDS_TO_RENDER_ARRAYSIZE (%u)\n",
                 i,
                 TEXQUADS_TO_RENDER_ARRAYSIZE);
+            assert(0);
         }
         
         add_quad_to_gpu_workload(

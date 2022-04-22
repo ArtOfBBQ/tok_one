@@ -53,7 +53,6 @@ int32_t register_new_texturearray(
     assert(new_image->rgba_values_size > 0);
     
     int32_t new_i = (int32_t)texture_arrays_size;
-    printf("new_i: %i\n", new_i);
     assert(new_i < TEXTUREARRAYS_SIZE);
     texture_arrays_size += 1;
     printf(

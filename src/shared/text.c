@@ -40,6 +40,8 @@ void request_label_around(
     float z,
     float max_width)
 {
+    assert(max_width > 0.0f);
+    
     printf("request centered label\n");
     
     uint32_t line_start_i = 0;
@@ -58,10 +60,6 @@ void request_label_around(
         
         if (line_end_i <= line_start_i)
         {
-            printf(
-                "br line_end_i %u is <= to line_start_i of %u\n",
-                line_end_i,
-                line_start_i);
             break;
         }
         
