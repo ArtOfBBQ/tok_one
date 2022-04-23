@@ -23,6 +23,7 @@ exist.
 #include "debigulator/src/decodedimage.h"
 #include "vertex_types.h"
 #include "draw_triangle.h"
+#include "zpolygon.h"
 
 #define TEXQUADS_TO_RENDER_ARRAYSIZE 2000
 extern TexQuad texquads_to_render[TEXQUADS_TO_RENDER_ARRAYSIZE];

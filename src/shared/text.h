@@ -14,7 +14,8 @@ void request_label_around(
     const float mid_x_pixelspace,
     const float mid_y_pixelspace,
     const float z,
-    const float max_width);
+    const float max_width,
+    const bool32_t ignore_camera);
 
 void request_label_renderable(
     const uint32_t with_object_id,

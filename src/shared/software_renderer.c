@@ -9,6 +9,8 @@ void init_renderer() {
     last_mouse_down.handled = true;
     last_mouse_move.handled = true;
     last_mouse_up.handled = true;
+    camera.x = 0.0f;
+    camera.y = 0.0f;
 }
 
 void software_render(

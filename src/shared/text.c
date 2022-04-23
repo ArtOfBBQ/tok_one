@@ -38,7 +38,8 @@ void request_label_around(
     const float mid_x_pixelspace,
     const float top_y_pixelspace,
     const float z,
-    const float max_width)
+    const float max_width,
+    const bool32_t ignore_camera)
 {
     assert(max_width > 0.0f);
     
@@ -86,6 +87,7 @@ void request_label_around(
         {
             TexQuad letter;
             construct_texquad(&letter);
+            letter.ignore_camera = ignore_camera;
             letter.object_id = with_id;
             letter.texturearray_i = font_texturearray_i;
             letter.texture_i = text_to_draw[i] - '0';

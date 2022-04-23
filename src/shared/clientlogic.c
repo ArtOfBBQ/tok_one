@@ -153,10 +153,10 @@ void client_logic_startup() {
     sample_pic.width_pixels = (713.0f * 0.5f);
     sample_pic.height_pixels = (1040.0f * 0.5f);
     sample_pic.left_pixels =
-        (window_width * 0.5f)
+        0.0f
             - (sample_pic.width_pixels * 0.5f);
     sample_pic.top_pixels =
-        (window_height * 0.5f)
+        (window_height * 0.25f)
             + (sample_pic.height_pixels * 0.5f);
     request_texquad_renderable(&sample_pic);
     
@@ -185,7 +185,8 @@ void client_logic_startup() {
         /* mid_x_pixelspace      : */ window_width * 0.5,
         /* mid_y_pixelspace      : */ window_height * 0.5,
         /* z                     : */ 0.6f,
-        /* max_width             : */ window_width * 0.25);
+        /* max_width             : */ window_width * 0.25,
+        /* ignore_camera         : */ false);
     
     printf("finished client_logic_startup()\n");    
 }

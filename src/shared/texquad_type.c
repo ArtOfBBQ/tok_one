@@ -16,6 +16,7 @@ void construct_texquad(TexQuad * to_construct)
     to_construct->scale_factor = 1.0f;
     to_construct->z = 0.5f;
     to_construct->z_angle = 0.0f;
+    to_construct->ignore_camera = false;
     to_construct->visible = true;
     to_construct->deleted = false;
 }
