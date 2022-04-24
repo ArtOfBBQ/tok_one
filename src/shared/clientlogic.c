@@ -160,12 +160,12 @@ void client_logic_startup() {
             + (sample_pic.height_pixels * 0.5f);
     request_texquad_renderable(&sample_pic);
     
-    ScheduledAnimation move_sprite_left;
-    construct_scheduled_animation(&move_sprite_left);
-    move_sprite_left.affected_object_id = 4;
-    move_sprite_left.delta_x_per_second = -5.0f;
-    move_sprite_left.remaining_microseconds = 90000000;
-    request_scheduled_animation(&move_sprite_left);
+    // ScheduledAnimation move_sprite_left;
+    // construct_scheduled_animation(&move_sprite_left);
+    // move_sprite_left.affected_object_id = 4;
+    // move_sprite_left.delta_x_per_second = -5.0f;
+    // move_sprite_left.remaining_microseconds = 90000000;
+    // request_scheduled_animation(&move_sprite_left);
     
     char centered_text[145] =
         "I'm a text\nMy purpose is to test centered text, possibly long sentences that don't necessarily make any sense like this.\nOr small sentences.";
@@ -230,6 +230,31 @@ void client_handle_mouseevents(
             
             request_scheduled_animation(&brighten);
             request_scheduled_animation(&dim);
+        } else {
+            printf("touched screen at: [%f,%f]\n",
+                last_mouse_down.screenspace_x,
+                last_mouse_down.screenspace_y);
+            TexQuad touch_highlight;
+            construct_texquad(&touch_highlight);
+            touch_highlight.object_id = 72;
+            touch_highlight.left_pixels = last_mouse_down.screenspace_x;
+            touch_highlight.top_pixels = last_mouse_down.screenspace_y;
+            touch_highlight.z = 50;
+            touch_highlight.height_pixels = 20.0f;
+            touch_highlight.width_pixels = 20.0f;
+            touch_highlight.RGBA[0] = 1.0f;
+            touch_highlight.RGBA[0] = 0.0f;
+            touch_highlight.RGBA[0] = 1.0f;
+            touch_highlight.RGBA[0] = 1.0f;
+            request_texquad_renderable(&touch_highlight);
+            
+            ScheduledAnimation vanish;
+            construct_scheduled_animation(&vanish);
+            vanish.affected_object_id = touch_highlight.object_id;
+            vanish.remaining_microseconds = 400000;
+            vanish.delete_object_when_finished = true;
+            vanish.rgba_delta_per_second[3] = -2.5f;
+            request_scheduled_animation(&vanish);
         }
     }
 }

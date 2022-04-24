@@ -156,7 +156,7 @@ void add_quad_to_gpu_workload(
         to_add->height_pixels -
         (extra_scale * 0.5f * to_add->height_pixels);
     float mid_y = (top + bottom) * 0.5f;
-
+    
     if (!to_add->ignore_camera) {
         left -= camera.x;
         right -= camera.x;
@@ -289,13 +289,13 @@ void add_quad_to_gpu_workload(
     
     for (uint32_t i = 0; i < 3; i++) {
         topleft_rotated[i].x /= (window_width * 0.5f);
-        // topleft_rotated[i].x -= 1.0f;
+        topleft_rotated[i].x -= 1.0f;
         topleft_rotated[i].y /= (window_height * 0.5f);
-        // topleft_rotated[i].y -= 1.0f;
+        topleft_rotated[i].y -= 1.0f;
         bottomright_rotated[i].x /= (window_width * 0.5f);
-        // bottomright_rotated[i].x -= 1.0f;
+        bottomright_rotated[i].x -= 1.0f;
         bottomright_rotated[i].y /= (window_height * 0.5f);
-        // bottomright_rotated[i].y -= 1.0f;
+        bottomright_rotated[i].y -= 1.0f;
     }
     
     draw_triangle(

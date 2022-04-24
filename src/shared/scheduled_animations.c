@@ -250,6 +250,7 @@ void resolve_animation_effects(
         
         assert(actual_elapsed <= anim->remaining_microseconds);
         anim->remaining_microseconds -= actual_elapsed;
+        printf("anim->remaining_microseconds: %u\n", anim->remaining_microseconds);
         
         // apply effects
         for (
@@ -288,8 +289,6 @@ void resolve_animation_effects(
                 }
             }
         }
-        
-        // stuff
     }
 }
 
