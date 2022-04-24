@@ -18,7 +18,8 @@ typedef struct ScheduledAnimation {
     float x_rotation_per_second;
     float y_rotation_per_second;
     float z_rotation_per_second;
-    float scalefactor_delta_per_second;
+    float scalefactor_x_delta_per_second;
+    float scalefactor_y_delta_per_second;
     float rgba_delta_per_second[4];
     uint64_t wait_first_microseconds;
     uint64_t remaining_microseconds;
@@ -33,15 +34,18 @@ void request_scheduled_animation(ScheduledAnimation * to_add);
 
 void request_fade_and_destroy(
     const uint32_t object_id,
+    const uint64_t wait_first_microseconds,
     const uint64_t duration_microseconds);
 
 void request_fade_to(
     const uint32_t object_id,
+    const uint64_t wait_first_microseconds,
     const uint64_t duration_microseconds,
     const float target_alpha);
 
 void request_move_to(
     const uint32_t object_id,
+    const uint64_t wait_first_microseconds,
     const uint64_t duration_microseconds,
     const bool32_t ignore_target_mid_x,
     const float target_mid_x,

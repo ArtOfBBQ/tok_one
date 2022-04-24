@@ -136,25 +136,27 @@ void add_quad_to_gpu_workload(
     Vertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size)
 {
-    assert(to_add->scale_factor > 0.0f);
+    assert(to_add->scale_factor_x > 0.0f);
+    assert(to_add->scale_factor_y > 0.0f);
     
     Vertex topleft[3];
     Vertex bottomright[3];
     
     float z_value = 0.3f + (to_add->z * 0.0001f);
-    float extra_scale = (to_add->scale_factor - 1.0f);
+    float extra_scale_x = (to_add->scale_factor_x - 1.0f);
+    float extra_scale_y = (to_add->scale_factor_y - 1.0f);
     
     float left = to_add->left_pixels -
-        (extra_scale * 0.5f * to_add->width_pixels);
+        (extra_scale_x * 0.5f * to_add->width_pixels);
     float right = to_add->left_pixels +
         to_add->width_pixels +
-        (extra_scale * 0.5f * to_add->width_pixels);
+        (extra_scale_x * 0.5f * to_add->width_pixels);
     float mid_x = (left + right) * 0.5f;
     float top = to_add->top_pixels +
-        (extra_scale * 0.5f * to_add->height_pixels);
+        (extra_scale_y * 0.5f * to_add->height_pixels);
     float bottom = to_add->top_pixels -
         to_add->height_pixels -
-        (extra_scale * 0.5f * to_add->height_pixels);
+        (extra_scale_y * 0.5f * to_add->height_pixels);
     float mid_y = (top + bottom) * 0.5f;
     
     if (!to_add->ignore_camera) {

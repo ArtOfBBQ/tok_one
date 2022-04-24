@@ -36,7 +36,8 @@ typedef struct TexQuad {
     float top_pixels;
     float height_pixels;
     float width_pixels;
-    float scale_factor;
+    float scale_factor_x;
+    float scale_factor_y;
     float z;
     float z_angle;
     bool32_t ignore_camera;

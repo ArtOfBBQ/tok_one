@@ -1,6 +1,6 @@
 #include "scheduled_animations.h"
 
-#define SCHEDULED_ANIMATIONS_ARRAYSIZE 500
+#define SCHEDULED_ANIMATIONS_ARRAYSIZE 2000
 ScheduledAnimation scheduled_animations[
     SCHEDULED_ANIMATIONS_ARRAYSIZE];
 uint32_t scheduled_animations_size = 0;
@@ -17,7 +17,8 @@ void construct_scheduled_animation(
     to_construct->x_rotation_per_second = 0.0f;
     to_construct->y_rotation_per_second = 0.0f;
     to_construct->z_rotation_per_second = 0.0f;
-    to_construct->scalefactor_delta_per_second = 0.0f;
+    to_construct->scalefactor_x_delta_per_second = 0.0f;
+    to_construct->scalefactor_y_delta_per_second = 0.0f;
     for (uint32_t i = 0; i < 4; i++) {
         to_construct->rgba_delta_per_second[i] = 0.0f;
     }
@@ -43,9 +44,6 @@ void request_scheduled_animation(ScheduledAnimation * to_add)
             to_add->z_rotation_per_second);
         assert(to_add->remaining_microseconds > 0);
     }
-    assert(
-        scheduled_animations_size
-            < SCHEDULED_ANIMATIONS_ARRAYSIZE);
     
     for (
         int32_t i = 0;
@@ -69,6 +67,7 @@ void request_scheduled_animation(ScheduledAnimation * to_add)
 
 void request_fade_and_destroy(
     const uint32_t object_id,
+    const uint64_t wait_first_microseconds,
     const uint64_t duration_microseconds)
 {
     // get current alpha
@@ -114,6 +113,8 @@ void request_fade_and_destroy(
     ScheduledAnimation modify_alpha;
     construct_scheduled_animation(&modify_alpha);
     modify_alpha.affected_object_id = object_id;
+    modify_alpha.wait_first_microseconds =
+        wait_first_microseconds;
     modify_alpha.remaining_microseconds = duration_microseconds;
     modify_alpha.rgba_delta_per_second[3] = change_per_second;
     modify_alpha.delete_object_when_finished = true;
@@ -122,6 +123,7 @@ void request_fade_and_destroy(
 
 void request_fade_to(
     const uint32_t object_id,
+    const uint64_t wait_first_microseconds,
     const uint64_t duration_microseconds,
     const float target_alpha)
 {
@@ -165,6 +167,8 @@ void request_fade_to(
     ScheduledAnimation modify_alpha;
     construct_scheduled_animation(&modify_alpha);
     modify_alpha.affected_object_id = object_id;
+    modify_alpha.wait_first_microseconds =
+        wait_first_microseconds;
     modify_alpha.remaining_microseconds = duration_microseconds;
     modify_alpha.rgba_delta_per_second[3] = change_per_second;
     request_scheduled_animation(&modify_alpha);
@@ -250,7 +254,6 @@ void resolve_animation_effects(
         
         assert(actual_elapsed <= anim->remaining_microseconds);
         anim->remaining_microseconds -= actual_elapsed;
-        printf("anim->remaining_microseconds: %u\n", anim->remaining_microseconds);
         
         // apply effects
         for (
@@ -273,8 +276,11 @@ void resolve_animation_effects(
                     (anim->z_rotation_per_second * actual_elapsed)
                         / 1000000;
 
-                texquads_to_render[tq_i].scale_factor +=
-                    (anim->scalefactor_delta_per_second *
+                texquads_to_render[tq_i].scale_factor_x +=
+                    (anim->scalefactor_x_delta_per_second *
+                        actual_elapsed) / 1000000;
+                texquads_to_render[tq_i].scale_factor_y +=
+                    (anim->scalefactor_y_delta_per_second *
                         actual_elapsed) / 1000000;
                 
                 for (
@@ -294,6 +300,7 @@ void resolve_animation_effects(
 
 void request_move_to(
     const uint32_t object_id,
+    const uint64_t wait_first_microseconds,
     const uint64_t duration_microseconds,
     const bool32_t ignore_target_mid_x,
     const float target_mid_x,
@@ -347,6 +354,8 @@ void request_move_to(
     ScheduledAnimation move_request;
     construct_scheduled_animation(&move_request);
     move_request.affected_object_id = object_id;
+    move_request.wait_first_microseconds =
+        wait_first_microseconds;
     move_request.remaining_microseconds =
         duration_microseconds;
     move_request.delta_x_per_second =
@@ -390,7 +399,8 @@ void request_bump_animation(const uint32_t object_id)
     construct_scheduled_animation(&embiggen_request);
     embiggen_request.affected_object_id = object_id;
     embiggen_request.remaining_microseconds = duration * 0.5f;
-    embiggen_request.scalefactor_delta_per_second = 1.5f;
+    embiggen_request.scalefactor_x_delta_per_second = 1.5f;
+    embiggen_request.scalefactor_y_delta_per_second = 1.5f;
     request_scheduled_animation(
         &embiggen_request);
     
@@ -399,7 +409,8 @@ void request_bump_animation(const uint32_t object_id)
     revert_request.affected_object_id = object_id;
     revert_request.wait_first_microseconds = duration * 0.5f;
     revert_request.remaining_microseconds = duration * 0.5f;
-    revert_request.scalefactor_delta_per_second = -1.5f;
+    revert_request.scalefactor_x_delta_per_second = -1.5f;
+    revert_request.scalefactor_y_delta_per_second = -1.5f;
     request_scheduled_animation(
         &revert_request);
 }
