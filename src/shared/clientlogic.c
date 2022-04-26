@@ -191,6 +191,13 @@ void client_logic_startup() {
     printf("finished client_logic_startup()\n");    
 }
 
+void client_logic_animation_callback(int32_t callback_id)
+{
+    printf(
+        "client_logic_animation_callback(%i)\n",
+        callback_id);
+}
+
 void client_handle_mouseevents(
     uint64_t microseconds_elapsed)
 {

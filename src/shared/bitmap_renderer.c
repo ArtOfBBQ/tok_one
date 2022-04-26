@@ -136,8 +136,12 @@ void add_quad_to_gpu_workload(
     Vertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size)
 {
-    assert(to_add->scale_factor_x > 0.0f);
-    assert(to_add->scale_factor_y > 0.0f);
+    if (to_add->scale_factor_x < 0.01f
+        || to_add->scale_factor_y < 0.01f)
+    {
+        printf("skipping add_quad_to_gpu_workload() because scale factor is below 0.01\n");
+        return;
+    }
     
     Vertex topleft[3];
     Vertex bottomright[3];

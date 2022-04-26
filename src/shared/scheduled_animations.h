@@ -4,6 +4,7 @@
 #define SCHEDULED_ANIMATION_H
 
 #include "common.h"
+#include "clientlogic.h"
 #include "bitmap_renderer.h" // for texquads_to_render
 #include "zpolygon.h"
 
@@ -25,6 +26,10 @@ typedef struct ScheduledAnimation {
     uint64_t remaining_microseconds;
     bool32_t delete_object_when_finished;
     bool32_t deleted;
+    // set to -1 to not callback at all
+    // if 0 or higher, client_logic_animation_callback()
+    // will be called with this id as its callback
+    int32_t clientlogic_callback_when_finished_id;
 } ScheduledAnimation;
 
 void construct_scheduled_animation(

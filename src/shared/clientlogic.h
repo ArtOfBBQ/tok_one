@@ -38,6 +38,10 @@ zPolygon load_from_obj_file(char * filename);
 // add your app's code here
 void client_logic_startup(void);
 
+// will be called when a ScheduledAmimation
+// (see scheduled_animations.h) runs out
+void client_logic_animation_callback(int32_t callback_id);
+
 // will be called once per frame, before rendering that frame
 // add your app's code here
 void client_logic_update(uint64_t microseconds_elapsed);

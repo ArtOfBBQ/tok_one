@@ -26,6 +26,7 @@ void construct_scheduled_animation(
     to_construct->remaining_microseconds = 1000000;
     to_construct->delete_object_when_finished = false;
     to_construct->deleted = false;
+    to_construct->clientlogic_callback_when_finished_id = -1;
 }
 
 void request_scheduled_animation(ScheduledAnimation * to_add)
@@ -225,6 +226,12 @@ void resolve_animation_effects(
             if (animation_i == scheduled_animations_size)
             {
                 scheduled_animations_size -= 1;
+            }
+            
+            if (anim->clientlogic_callback_when_finished_id >= 0) 
+            {
+                client_logic_animation_callback(
+                    anim->clientlogic_callback_when_finished_id);
             }
             
             if (anim->delete_object_when_finished) {
