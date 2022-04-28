@@ -155,17 +155,19 @@ void client_logic_startup() {
     sample_pic.left_pixels =
         0.0f
             - (sample_pic.width_pixels * 0.5f);
-    sample_pic.top_pixels =
-        (window_height * 0.25f)
-            + (sample_pic.height_pixels * 0.5f);
+    sample_pic.top_pixels = (window_height * 0.9f);
     request_texquad_renderable(&sample_pic);
     
-    // ScheduledAnimation move_sprite_left;
-    // construct_scheduled_animation(&move_sprite_left);
-    // move_sprite_left.affected_object_id = 4;
-    // move_sprite_left.delta_x_per_second = -5.0f;
-    // move_sprite_left.remaining_microseconds = 90000000;
-    // request_scheduled_animation(&move_sprite_left);
+    ScheduledAnimation move_sprite_left;
+    construct_scheduled_animation(&move_sprite_left);
+    move_sprite_left.affected_object_id = 4;
+    move_sprite_left.final_position_known = true;
+    move_sprite_left.final_mid_x = (window_width * 0.5f);
+    move_sprite_left.final_mid_y = (window_height * 0.5f);
+    move_sprite_left.final_mid_z = sample_pic.z;
+    move_sprite_left.wait_first_microseconds = 1750000;
+    move_sprite_left.remaining_microseconds = 3000000;
+    request_scheduled_animation(&move_sprite_left);
     
     char centered_text[145] =
         "I'm a text\nMy purpose is to test centered text, possibly long sentences that don't necessarily make any sense like this.\nOr small sentences.";

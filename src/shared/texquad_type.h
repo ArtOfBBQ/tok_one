@@ -33,7 +33,8 @@ typedef struct TexQuad {
     float RGBA[4];
     
     float left_pixels;
-    float top_pixels;
+    float top_pixels; // y = window_height for top of screen
+                      // y = 0 for right below the screen
     float height_pixels;
     float width_pixels;
     float scale_factor_x;

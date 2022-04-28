@@ -10,6 +10,7 @@ void construct_scheduled_animation(
 {
     to_construct->affected_object_id = 0;
     to_construct->affects_camera_not_object = false;
+    to_construct->final_position_known = false;
     to_construct->delta_x_per_second = 0.0f;
     to_construct->delta_y_per_second = 0.0f;
     to_construct->delta_z_per_second = 0.0f;
@@ -234,7 +235,8 @@ void resolve_animation_effects(
                     anim->clientlogic_callback_when_finished_id);
             }
             
-            if (anim->delete_object_when_finished) {
+            if (anim->delete_object_when_finished)
+            {
                 for (
                     int32_t tq_i = texquads_to_render_size - 1;
                     tq_i >= 0;
@@ -259,6 +261,8 @@ void resolve_animation_effects(
             }
         }
         
+        if (actual_elapsed < 1) { return; }
+        
         assert(actual_elapsed <= anim->remaining_microseconds);
         anim->remaining_microseconds -= actual_elapsed;
         
@@ -273,16 +277,51 @@ void resolve_animation_effects(
                     anim->affected_object_id &&
                 !texquads_to_render[tq_i].deleted)
             {
-                texquads_to_render[tq_i].left_pixels +=
-                    (anim->delta_x_per_second * actual_elapsed)
-                        / 1000000;
-                texquads_to_render[tq_i].top_pixels +=
-                    (anim->delta_y_per_second * actual_elapsed)
-                        / 1000000;
-                texquads_to_render[tq_i].z_angle +=
-                    (anim->z_rotation_per_second * actual_elapsed)
-                        / 1000000;
+                if (!anim->final_position_known) {
+                    texquads_to_render[tq_i].left_pixels +=
+                        (anim->delta_x_per_second
+                            * actual_elapsed)
+                                / 1000000;
+                    texquads_to_render[tq_i].top_pixels +=
+                        (anim->delta_y_per_second
+                            * actual_elapsed)
+                                / 1000000;
+                    texquads_to_render[tq_i].z_angle +=
+                        (anim->z_rotation_per_second
+                            * actual_elapsed)
+                                / 1000000;
+                } else {
+                    float cur_mid_x =
+                      texquads_to_render[tq_i].left_pixels +
+                        (texquads_to_render[tq_i].width_pixels
+                            * 0.5f);
+                    float cur_mid_y =
+                      texquads_to_render[tq_i].top_pixels -
+                        (texquads_to_render[tq_i].height_pixels
+                            * 0.5f);
+                    
+                    float diff_x = anim->final_mid_x - cur_mid_x;
+                    float diff_y = anim->final_mid_y - cur_mid_y;
 
+                    printf(
+                        "diff_x: %f, diff_y: %f, anim->remain: %u, actual_elapsed: %u\n",
+                        diff_x,
+                        diff_y,
+                        anim->remaining_microseconds,
+                        actual_elapsed);
+                    
+                    texquads_to_render[tq_i].top_pixels +=
+                        (diff_y
+                            / (anim->remaining_microseconds
+                                + actual_elapsed)
+                            * actual_elapsed);
+                    texquads_to_render[tq_i].left_pixels +=
+                        (diff_x
+                            / (anim->remaining_microseconds
+                                + actual_elapsed)
+                            * actual_elapsed);
+                }
+                
                 texquads_to_render[tq_i].scale_factor_x +=
                     (anim->scalefactor_x_delta_per_second *
                         actual_elapsed) / 1000000;
