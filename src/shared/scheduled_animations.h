@@ -15,22 +15,23 @@ typedef struct ScheduledAnimation {
     bool32_t affects_camera_not_object;
     // ******
     // For TRANSLATION animations:
-    // if you know the final position at the end
-    // of the animation, set final_position_known = true
-    // and set final_mid_x, final_mid_y, final_mid_z
+    // if you know the final x position at the end
+    // of the animation, set final_x_known = true
+    // and set final_mid_x to where you want to end up
     //
-    // if not, set final_position_known = false
-    // and set delta_x_per_second, delta_y_per_second,
-    // and delta_z_per_second
-    bool32_t final_position_known;
+    // if not, set final_x_known = false
+    // and set delta_x_per_second to move over a duration
+    bool32_t final_x_known;
     union {
         float delta_x_per_second;
         float final_mid_x;
     };
+    bool32_t final_y_known;
     union {
         float delta_y_per_second;
         float final_mid_y;
     };
+    bool32_t final_z_known;
     union {
         float delta_z_per_second;
         float final_mid_z;
@@ -69,15 +70,6 @@ void request_fade_to(
     const uint64_t wait_first_microseconds,
     const uint64_t duration_microseconds,
     const float target_alpha);
-
-void request_move_to(
-    const uint32_t object_id,
-    const uint64_t wait_first_microseconds,
-    const uint64_t duration_microseconds,
-    const bool32_t ignore_target_mid_x,
-    const float target_mid_x,
-    const bool32_t ignore_target_mid_y,
-    const float target_mid_y);
 
 void request_dud_dance(
     const uint32_t object_id);

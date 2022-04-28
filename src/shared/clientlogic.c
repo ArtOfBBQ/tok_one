@@ -161,10 +161,10 @@ void client_logic_startup() {
     ScheduledAnimation move_sprite_left;
     construct_scheduled_animation(&move_sprite_left);
     move_sprite_left.affected_object_id = 4;
-    move_sprite_left.final_position_known = true;
+    move_sprite_left.final_x_known = true;
     move_sprite_left.final_mid_x = (window_width * 0.5f);
+    move_sprite_left.final_y_known = true;
     move_sprite_left.final_mid_y = (window_height * 0.5f);
-    move_sprite_left.final_mid_z = sample_pic.z;
     move_sprite_left.wait_first_microseconds = 1750000;
     move_sprite_left.remaining_microseconds = 3000000;
     request_scheduled_animation(&move_sprite_left);

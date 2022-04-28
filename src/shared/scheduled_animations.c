@@ -10,7 +10,9 @@ void construct_scheduled_animation(
 {
     to_construct->affected_object_id = 0;
     to_construct->affects_camera_not_object = false;
-    to_construct->final_position_known = false;
+    to_construct->final_x_known = false;
+    to_construct->final_y_known = false;
+    to_construct->final_z_known = false;
     to_construct->delta_x_per_second = 0.0f;
     to_construct->delta_y_per_second = 0.0f;
     to_construct->delta_z_per_second = 0.0f;
@@ -277,17 +279,9 @@ void resolve_animation_effects(
                     anim->affected_object_id &&
                 !texquads_to_render[tq_i].deleted)
             {
-                if (!anim->final_position_known) {
+                if (!anim->final_x_known) {
                     texquads_to_render[tq_i].left_pixels +=
                         (anim->delta_x_per_second
-                            * actual_elapsed)
-                                / 1000000;
-                    texquads_to_render[tq_i].top_pixels +=
-                        (anim->delta_y_per_second
-                            * actual_elapsed)
-                                / 1000000;
-                    texquads_to_render[tq_i].z_angle +=
-                        (anim->z_rotation_per_second
                             * actual_elapsed)
                                 / 1000000;
                 } else {
@@ -295,32 +289,37 @@ void resolve_animation_effects(
                       texquads_to_render[tq_i].left_pixels +
                         (texquads_to_render[tq_i].width_pixels
                             * 0.5f);
-                    float cur_mid_y =
-                      texquads_to_render[tq_i].top_pixels -
-                        (texquads_to_render[tq_i].height_pixels
-                            * 0.5f);
-                    
                     float diff_x = anim->final_mid_x - cur_mid_x;
-                    float diff_y = anim->final_mid_y - cur_mid_y;
-
-                    printf(
-                        "diff_x: %f, diff_y: %f, anim->remain: %u, actual_elapsed: %u\n",
-                        diff_x,
-                        diff_y,
-                        anim->remaining_microseconds,
-                        actual_elapsed);
-                    
-                    texquads_to_render[tq_i].top_pixels +=
-                        (diff_y
-                            / (anim->remaining_microseconds
-                                + actual_elapsed)
-                            * actual_elapsed);
                     texquads_to_render[tq_i].left_pixels +=
                         (diff_x
                             / (anim->remaining_microseconds
                                 + actual_elapsed)
                             * actual_elapsed);
                 }
+
+                if (!anim->final_y_known) {
+                    texquads_to_render[tq_i].top_pixels +=
+                        (anim->delta_y_per_second
+                            * actual_elapsed)
+                                / 1000000;
+                } else {
+                    float cur_mid_y =
+                      texquads_to_render[tq_i].top_pixels -
+                        (texquads_to_render[tq_i].height_pixels
+                            * 0.5f);
+                    float diff_y =
+                        anim->final_mid_y - cur_mid_y;
+                    texquads_to_render[tq_i].top_pixels +=
+                        (diff_y
+                            / (anim->remaining_microseconds
+                                + actual_elapsed)
+                            * actual_elapsed);
+                }
+
+                texquads_to_render[tq_i].z_angle +=
+                    (anim->z_rotation_per_second
+                        * actual_elapsed)
+                            / 1000000;
                 
                 texquads_to_render[tq_i].scale_factor_x +=
                     (anim->scalefactor_x_delta_per_second *
@@ -342,73 +341,6 @@ void resolve_animation_effects(
             }
         }
     }
-}
-
-void request_move_to(
-    const uint32_t object_id,
-    const uint64_t wait_first_microseconds,
-    const uint64_t duration_microseconds,
-    const bool32_t ignore_target_mid_x,
-    const float target_mid_x,
-    const bool32_t ignore_target_mid_y,
-    const float target_mid_y)
-{
-    assert(duration_microseconds > 0);
-    
-    float left_change_per_second;
-    float top_change_per_second;
-    
-    for (
-        uint32_t tq_i = 0;
-        tq_i < texquads_to_render_size;
-        tq_i++)
-    {
-        if (texquads_to_render[tq_i].object_id == object_id)
-        {
-            float current_mid_x =
-                texquads_to_render[tq_i].left_pixels
-                    + (texquads_to_render[tq_i].width_pixels
-                        * 0.5f);
-            float current_mid_y =
-                texquads_to_render[tq_i].top_pixels
-                    - (texquads_to_render[tq_i].height_pixels
-                        * 0.5f);
-            
-            float cur_x_dist =
-                (current_mid_x - target_mid_x) *
-                (current_mid_x - target_mid_x);
-            float cur_y_dist =
-                (current_mid_y - target_mid_y) *
-                (current_mid_y - target_mid_y);
-            
-            // Find out how fast the left needs to change to reach
-            // the target left exactly when the duration runs out
-            left_change_per_second =
-                ignore_target_mid_x ?
-                    0.0f :
-                (target_mid_x - current_mid_x) /
-                    ((float)duration_microseconds / 1000000);
-            top_change_per_second =
-                ignore_target_mid_y ?
-                    0.0f :
-                    (target_mid_y - current_mid_y) /
-                        ((float)duration_microseconds / 1000000);
-            break;
-        }
-    }
-    
-    ScheduledAnimation move_request;
-    construct_scheduled_animation(&move_request);
-    move_request.affected_object_id = object_id;
-    move_request.wait_first_microseconds =
-        wait_first_microseconds;
-    move_request.remaining_microseconds =
-        duration_microseconds;
-    move_request.delta_x_per_second =
-        left_change_per_second;
-    move_request.delta_y_per_second =
-        top_change_per_second;
-    request_scheduled_animation(&move_request);
 }
 
 void request_dud_dance(const uint32_t object_id)
