@@ -416,8 +416,8 @@ void client_logic_update(
         /* float left_pixelspace : */ 20.0f,
         /* float top_pixelspace  : */ 60.0f,
         /* z                     : */ 0.5f,
-        /* float max_width       : */ window_width);
-
+        /* float max_width       : */ window_width,
+        /* bool32_t ignore_camera: */ true);
     
     client_handle_mouseevents(
         microseconds_elapsed);

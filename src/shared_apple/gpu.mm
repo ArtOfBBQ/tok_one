@@ -70,6 +70,7 @@ uint64_t previous_time;
                 combo_pipeline_descriptor 
             error:
                 &Error];
+    
     if (Error != NULL)
     {
         [NSException

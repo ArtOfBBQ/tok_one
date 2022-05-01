@@ -32,6 +32,7 @@ typedef struct FileBuffer {
 } FileBuffer;
 
 // get current working directory
+char * platform_get_application_path();
 char * platform_get_cwd();
 
 // Read a file (without path, only filename)

@@ -122,7 +122,8 @@ void request_label_renderable(
     const float left_pixelspace,
     const float top_pixelspace,
     const float z,
-    const float max_width)
+    const float max_width,
+    const bool32_t ignore_camera)
 {
     float cur_left = left_pixelspace;
     float cur_top = top_pixelspace;
@@ -158,6 +159,7 @@ void request_label_renderable(
         letter.top_pixels = cur_top;
         letter.height_pixels = font_height;
         letter.width_pixels = font_height;
+        letter.ignore_camera = ignore_camera;
         letter.z = z;
         
         request_texquad_renderable(&letter);

@@ -32,6 +32,14 @@ NSWindowWithCustomResponder: NSWindow
 @end
 
 @implementation NSWindowWithCustomResponder
+- (BOOL)canBecomeKeyWindow {
+    return YES;
+}
+
+- (BOOL)canBecomeMainWindow {
+    return YES;
+}
+
 - (BOOL)acceptsFirstResponder
 {
     return YES;
@@ -107,9 +115,9 @@ int main(int argc, const char * argv[])
     NSWindowWithCustomResponder *window =
         [[NSWindowWithCustomResponder alloc]
             initWithContentRect: full_screen_rect 
-            styleMask: (NSWindowStyleMaskTitled
-                        | NSWindowStyleMaskClosable
-                         | NSWindowStyleMaskFullScreen)
+            styleMask: /*(NSWindowStyleMaskTitled
+                         | NSWindowStyleMaskClosable
+                         | */NSWindowStyleMaskFullScreen
             backing: NSBackingStoreBuffered 
             defer: NO];
     
@@ -118,8 +126,10 @@ int main(int argc, const char * argv[])
     
     [window setDelegate: window_delegate];
     [window setTitle: @"Hello, 3dgfx!"];
-    [window makeKeyAndOrderFront: nil];
+    [window makeMainWindow];
     [window setAcceptsMouseMovedEvents:YES];
+    [window setOrderedIndex:0];
+    [window makeKeyAndOrderFront: nil];
     
     id<MTLDevice> metal_device =
         MTLCreateSystemDefaultDevice();
@@ -138,8 +148,16 @@ int main(int argc, const char * argv[])
     apple_gpu_delegate =
         [[MetalKitViewDelegate alloc] init];
     [mtk_view setDelegate: apple_gpu_delegate];
-    
-    NSString * shader_lib_path = @"Shaders.metallib";
+
+    printf("loading shader lib\n");
+    char * shader_lib_path_cstr =
+        concat_strings(
+            platform_get_application_path(),
+            "/Shaders.metallib");
+    NSString * shader_lib_path =
+        [NSString
+            stringWithCString:shader_lib_path_cstr
+            encoding:NSASCIIStringEncoding];
     [apple_gpu_delegate
         configureMetalWithDevice: metal_device
         andPixelFormat: mtk_view.colorPixelFormat

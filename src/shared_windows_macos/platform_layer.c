@@ -5,11 +5,19 @@ Read some text from a file given a filename.
 
 This function is here because it can't be used on iOS.
 */
-FileBuffer * platform_read_file(const char * filename) {
-
-    printf("platform_read_file(%s)\n", filename);
+FileBuffer * platform_read_file(
+    const char * filename)
+{
+    char * filename_with_slash =
+        concat_strings("/", filename);
+    char * path_and_filename =
+        concat_strings(
+            platform_get_application_path(),
+            filename_with_slash);
+    
+    printf("platform_read_file(%s)\n", path_and_filename);
     FILE * file_handle = fopen(
-        filename,
+        path_and_filename,
         "rb+");
     
     if (!file_handle) {
@@ -57,7 +65,7 @@ FileBuffer * platform_read_file(const char * filename) {
     
     printf(
         "finished platform_read_file(%s) - %u bytes\n",
-        filename,
+        path_and_filename,
         return_value->size);
     
     return return_value;

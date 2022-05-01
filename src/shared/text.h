@@ -25,7 +25,8 @@ void request_label_renderable(
     const float left_pixelspace,
     const float top_pixelspace,
     const float z,
-    const float max_width);
+    const float max_width,
+    const bool32_t ignore_camera);
 
 #endif
 
