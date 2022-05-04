@@ -13,6 +13,8 @@ typedef struct TextureArray {
     bool32_t request_update;
 } TextureArray;
 
+// #define MAX_TEXTURE_FILENAME_SIZE 30
+
 // A buffer of texture arrays (AKA texture atlases) your
 // objects can use
 // Each texture atlas must have images of the exact same size
@@ -29,13 +31,24 @@ DecodedImage * extract_image(
     uint32_t x,
     uint32_t y);
 
-// returns new_texture_array_i (index in texture_arrays)
-int32_t register_new_texturearray_from_file(
-    const char * filename);
+/*
+Next are functions to register new image(s) or imgfile(s0
+into texture_arrays
 
-// returns new_texture_array_i (index in texture_arrays)
-int32_t register_new_texturearray(
-    DecodedImage * new_image);
+Q: Why wouldn't I just modify texture_arrays directly?
+A:
+- The gpu needs to be informed that they need to copy the data
+- The images prefer to be organized same dimensions together
+*/
+// returns storage location
+void register_new_texturearray_from_files(
+    const char ** filenames,
+    const uint32_t filenames_size);
+
+// returns storage location
+void register_new_texturearray_from_images(
+    const DecodedImage ** new_images,
+    const uint32_t new_images_size);
 
 #endif
 

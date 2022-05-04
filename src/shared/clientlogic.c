@@ -1,5 +1,7 @@
 #include "clientlogic.h"
 
+DecodedImage concatenated;
+
 zPolygon load_from_obj_file(char * filename)
 {
     FileBuffer * buffer = platform_read_file(filename);
@@ -22,39 +24,19 @@ void client_logic_startup() {
     // These are some example texture atlases we're using for
     // texture mapping on cards and cubes
     assert(TEXTUREARRAYS_SIZE > 0);
-    
-    // an example of a font texture in font.png
-    // Note: I generally keep my font in slot 0 and only
-    // use 1 font
-    // if you want to change the texturearray slot used
-    // as the font, you need to change font_texturearray_i
-    // variable in text.c
-    texture_arrays[0].sprite_columns = 9;
-    texture_arrays[0].sprite_rows = 9;
-    texture_arrays[0].request_update = false;
-    texture_arrays_size++;
-    
-    // 16x16 sample sprites in phoebus.png
-    texture_arrays[1].sprite_columns = 16;
-    texture_arrays[1].sprite_rows = 16;
-    texture_arrays[1].request_update = false;
-    texture_arrays_size++;
-    
-    // 5 lore seeker cards and a debug texture 
-    // in sampletexture.png
-    texture_arrays[2].sprite_columns = 3;
-    texture_arrays[2].sprite_rows = 2;
-    texture_arrays[2].request_update = false;
-    texture_arrays_size++;
-    
+
     FileBuffer * file_buffer;
     
-    #define TEXTURE_FILENAMES_SIZE 3
+    #define TEXTURE_FILENAMES_SIZE 6
     assert(TEXTURE_FILENAMES_SIZE <= TEXTUREARRAYS_SIZE);
     char * texture_filenames[TEXTURE_FILENAMES_SIZE] = {
         "font.png",
         "phoebus.png",
-        "sampletexture.png"};
+        "sampletexture.png",
+        "structuredart1.png",
+        "structuredart2.png",
+        "structuredart3.png"};
+    DecodedImage * decoded_pngs[TEXTURE_FILENAMES_SIZE];
     
     for (
         uint32_t i = 0;
@@ -73,19 +55,59 @@ void client_logic_startup() {
                 texture_filenames[i]);
             assert(false);
         }
-        texture_arrays[i].image = decode_PNG(
+        decoded_pngs[i] = decode_PNG(
             (uint8_t *)file_buffer->contents,
             file_buffer->size);
-        assert(texture_arrays[i].image->good);
-        assert(texture_arrays[i].image->rgba_values_size > 0);
+        assert(decoded_pngs[i]->good);
+        assert(decoded_pngs[i]->rgba_values_size > 0);
         
         free(file_buffer->contents);
         free(file_buffer);
         printf(
             "loaded texture %s with width %u from disk\n",
             texture_filenames[i],
-            texture_arrays[i].image->width);
+            decoded_pngs[i]->width);
     }
+    
+    // an example of a font texture in font.png
+    // Note: I generally keep my font in slot 0 and only
+    // use 1 font
+    // if you want to change the texturearray slot used
+    // as the font, you need to change font_texturearray_i
+    // variable in text.c
+    texture_arrays[0].sprite_columns = 9;
+    texture_arrays[0].sprite_rows = 9;
+    texture_arrays[0].request_update = false;
+    texture_arrays[0].image = decoded_pngs[0];
+    texture_arrays_size++;
+    
+    // 16x16 sample sprites in phoebus.png
+    texture_arrays[1].sprite_columns = 16;
+    texture_arrays[1].sprite_rows = 16;
+    texture_arrays[1].request_update = false;
+    texture_arrays[1].image = decoded_pngs[1];
+    texture_arrays_size++;
+    
+    // 5 lore seeker cards and a debug texture 
+    // in sampletexture.png
+    texture_arrays[2].sprite_columns = 3;
+    texture_arrays[2].sprite_rows = 2;
+    texture_arrays[2].image = decoded_pngs[2];
+    texture_arrays_size++;
+
+    // 3 images with the same heigth/width
+    // (structuredart1.png, structuredart2.png,
+    // structuredart3.png)
+    concatenated = concatenate_images(
+        /* DecodedImage ** to_concat: */ &decoded_pngs[3],
+        /* to_concat_size: */ 3);
+    assert(concatenated.width == 20);
+    assert(concatenated.height == 20);
+    texture_arrays[3].sprite_columns = 2;
+    texture_arrays[3].sprite_rows = 2;
+    texture_arrays[3].request_update = false;
+    texture_arrays[3].image = &concatenated;
+    texture_arrays_size++;
     
     // get a zpolygon object
     zpolygons_to_render_size += 1;
@@ -157,6 +179,21 @@ void client_logic_startup() {
             - (sample_pic.width_pixels * 0.5f);
     sample_pic.top_pixels = (window_height * 0.9f);
     request_texquad_renderable(&sample_pic);
+
+    // test our home-concatenated image
+    // (we concatenated structuredart1.png, structedart2.png,
+    // structuredart3.png)
+    TexQuad sample_pic_2;
+    construct_texquad(&sample_pic_2);
+    sample_pic_2.object_id = 5;
+    sample_pic_2.touchable_id = 89;
+    sample_pic_2.texturearray_i = 3;  // from concatenated
+    sample_pic_2.texture_i = 2; // 2nd in concatenated
+    sample_pic_2.width_pixels = 200.0f;
+    sample_pic_2.height_pixels = 200.0f;
+    sample_pic_2.left_pixels = 20.0f;
+    sample_pic_2.top_pixels = (window_height * 0.95f);
+    request_texquad_renderable(&sample_pic_2);
     
     ScheduledAnimation move_sprite_left;
     construct_scheduled_animation(&move_sprite_left);
@@ -177,7 +214,7 @@ void client_logic_startup() {
     centered_text_color[1] = 0.2f;
     centered_text_color[2] = 0.8f;
     centered_text_color[3] = 1.0f;
-   
+    
     font_height = 14.0f; 
     request_label_around(
         /* with_id:              : */ 50,

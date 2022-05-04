@@ -5,57 +5,95 @@ uint32_t texture_arrays_size = 0;
 
 
 // returns new_texture_array_i (index in texture_arrays)
-int32_t register_new_texturearray_from_file(
-    const char * filename)
+void register_new_texturearray_from_files(
+    const char ** filenames,
+    const uint32_t filenames_size)
 {
-    FileBuffer * file_buffer =
-        platform_read_file(filename);
+    uint32_t decoded_images_size = filenames_size;
+    DecodedImage * decoded_images[decoded_images_size];   
     
-    if (file_buffer == NULL) {
-        printf(
-            "ERR - failed to add texarray - unfound file %s\n",
-            filename);
-        return -1;
+    for (
+        uint32_t i = 0;
+        i < filenames_size;
+        i++)
+    {
+        const char * filename = filenames[i];
+        
+        FileBuffer * file_buffer =
+            platform_read_file(filename);
+        
+        if (file_buffer == NULL) {
+            printf(
+                "ERR - fail to add texarray - unfound file %s\n",
+                filename);
+            assert(0);
+        }
+        
+        decoded_images[i] =
+            decode_PNG(
+                (uint8_t *)file_buffer->contents,
+                file_buffer->size);
+        
+        free(file_buffer->contents);
+        free(file_buffer);
     }
     
-    DecodedImage * new_image =
-        decode_PNG(
-            (uint8_t *)file_buffer->contents,
-            file_buffer->size);
-    
-    int32_t return_value =
-        register_new_texturearray(new_image);
-    
-    free(file_buffer->contents);
-    free(file_buffer);
-    
-    return return_value;
+    register_new_texturearray_from_images(
+        /* DecodedImage ** new_iamges : */ &decoded_images,
+        /* new_images_size: */ decoded_images_size);
 }
 
 // returns new_texture_array_i (index in texture_arrays)
-int32_t register_new_texturearray(
-    DecodedImage * new_image)
+void register_new_texturearray_from_images(
+    const DecodedImage ** new_images,
+    const uint32_t new_images_size)
 {
-    if (!new_image->good) {
-        return -1;
+    for (uint32_t i = 0; i < new_images_size; i++) {
+        assert(new_images[i] != NULL);
+        assert(new_images[i]->good);
+        assert(new_images[i]->rgba_values_size > 0);
+        
+        const uint32_t current_width = new_images[i]->width;
+        const uint32_t current_height = new_images[i]->height;
+        
+        // find out how many images of this width/height we have 
+        uint32_t current_texturearray_images = 0; 
+        for (uint32_t j = i; j < new_images_size; j++) {
+            if (new_images[j]->width != current_width ||
+                new_images[j]->height != current_height)
+            {
+                continue;
+            }
+            
+            current_texturearray_images += 1;
+        }
+        
+        // set up a new texturearray that's big enough to hold
+        // x images
+        printf(
+            "set up a new texturearray big enough to hold %u images...\n",
+            current_texturearray_images);
+        int32_t new_i = (int32_t)texture_arrays_size;
+        assert(new_i < TEXTUREARRAYS_SIZE);
+        texture_arrays_size += 1;
+        texture_arrays[new_i].sprite_columns = 1;
+        texture_arrays[new_i].sprite_rows = 1;
+        
+        // fill in the images in a new texturearray
+        for (uint32_t j = i; j < new_images_size; j++) {
+            if (new_images[j]->width != current_width ||
+                new_images[j]->height != current_height)
+            {
+                continue;
+            }
+        }
+        
+        // assign the new image and request an update so that
+        // it gets copied to gpu memory by the platform layer
+        // texture_arrays[new_i].image = new_image;
+        // texture_arrays[new_i].request_update =
+        //     true;
     }
-    
-    assert(new_image != NULL);
-    assert(new_image->good);
-    assert(new_image->rgba_values_size > 0);
-    
-    int32_t new_i = (int32_t)texture_arrays_size;
-    assert(new_i < TEXTUREARRAYS_SIZE);
-    texture_arrays_size += 1;
-    texture_arrays[new_i].sprite_columns = 1;
-    texture_arrays[new_i].sprite_rows = 1;
-    
-    texture_arrays[new_i].image = new_image;
-    
-    texture_arrays[new_i].request_update =
-        true;
-    
-    return new_i;
 }
 
 DecodedImage * extract_image(
