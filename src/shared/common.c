@@ -1,41 +1,33 @@
 #include "common.h"
 
-char * concat_strings(char * str1, char * str2)
+void concat_strings(
+    const char * string_1,
+    const char * string_2,
+    char * output,
+    const uint64_t output_size)
 {
-    char buffer[5000];
-
-    uint32_t buffer_i = 0;
-    while (str1[0] != '\0') {
-        buffer[buffer_i] = str1[0];
-        buffer_i += 1;
-        str1++;
-        assert(buffer_i < 5000);
+    char * str1_at = (char *)string_1;
+    char * str2_at = (char *)string_2;
+    char * output_at = output;
+    
+    while (str1_at[0] != '\0') {
+        *output_at++ = *str1_at++;
+        assert(output_at - output < output_size);
     }
     
-    while (str2[0] != '\0') {
-        buffer[buffer_i] = str2[0];
-        buffer_i += 1;
-        str2++;
-        assert(buffer_i < 5000);
+    while (str2_at[0] != '\0') {
+        *output_at++ = *str2_at++;
+        assert(output_at - output < output_size);
     }
     
-    char return_value[buffer_i + 1];
-    for (
-        uint32_t i = 0;
-        i < buffer_i;
-        i++)
-    {
-        return_value[i] = buffer[i];
-    }
-    return_value[buffer_i] = '\0';
-    
-    return &return_value;
+    *output_at = '\0';
+    assert(output_at - output < output_size);
 }
 
 bool32_t are_equal_strings(
-    char * str1,
-    char * str2,
-    uint64_t len)
+    const char * str1,
+    const char * str2,
+    const uint64_t len)
 {
     for (uint64_t i = 0; i < len; i++) {
         if (str1[i] != str2[i]) {

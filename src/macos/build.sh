@@ -35,7 +35,8 @@ cp resources/structuredart2.png build/$PLATFORM/$APP_NAME.app/structuredart2.png
 cp resources/structuredart3.png build/$PLATFORM/$APP_NAME.app/structuredart3.png
 
 echo "Compiling & linking $APP_NAME..."
-clang++ -x objective-c -Wall -g -pedantic $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
+clang++ -Wno-everything -x objective-c++ -std="c++17" -g $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
+# clang++ -x objective-c -Wall -g -pedantic $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
 # clang -x objective-c -Wall -g -pedantic $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
 
 echo "Booting $APP_NAME"

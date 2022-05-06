@@ -99,9 +99,11 @@ void client_logic_startup() {
     // 3 images with the same heigth/width
     // (structuredart1.png, structuredart2.png,
     // structuredart3.png)
-    DecodedImage * concatenated = malloc(sizeof(DecodedImage));
+    DecodedImage * concatenated =
+        (DecodedImage *)malloc(sizeof(DecodedImage));
     *concatenated = concatenate_images(
-        /* DecodedImage ** to_concat: */ &decoded_pngs[3],
+        /* const DecodedImage ** to_concat: */
+            (const DecodedImage **)&(decoded_pngs[3]),
         /* to_concat_size: */ 3);
     assert(concatenated->width == 20);
     assert(concatenated->height == 20);

@@ -39,11 +39,12 @@ void register_new_texturearray_from_files(
     }
     
     register_new_texturearray_from_images(
-        /* DecodedImage ** new_iamges : */ &decoded_images,
-        /* new_images_size: */ decoded_images_size);
+        /* DecodedImage ** new_images : */
+            (const DecodedImage **)&decoded_images[0],
+        /* new_images_size: */
+            decoded_images_size);
 }
 
-// returns new_texture_array_i (index in texture_arrays)
 void register_new_texturearray_from_images(
     const DecodedImage ** new_images,
     const uint32_t new_images_size)
@@ -94,6 +95,13 @@ void register_new_texturearray_from_images(
         // texture_arrays[new_i].request_update =
         //     true;
     }
+}
+
+void register_new_texturearray(
+    const DecodedImage * new_image)
+{
+    const DecodedImage * images[1];
+    register_new_texturearray_from_images(images, 1);
 }
 
 DecodedImage * extract_image(

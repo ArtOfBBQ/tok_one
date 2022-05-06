@@ -40,15 +40,16 @@ A:
 - The gpu needs to be informed that they need to copy the data
 - The images prefer to be organized same dimensions together
 */
-// returns storage location
 void register_new_texturearray_from_files(
     const char ** filenames,
     const uint32_t filenames_size);
 
-// returns storage location
 void register_new_texturearray_from_images(
     const DecodedImage ** new_images,
     const uint32_t new_images_size);
+
+void register_new_texturearray(
+    const DecodedImage * new_image);
 
 #endif
 

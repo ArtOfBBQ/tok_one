@@ -150,10 +150,12 @@ int main(int argc, const char * argv[])
     [mtk_view setDelegate: apple_gpu_delegate];
 
     printf("loading shader lib\n");
-    char * shader_lib_path_cstr =
-        concat_strings(
-            platform_get_application_path(),
-            "/Shaders.metallib");
+    char shader_lib_path_cstr[5000];
+    concat_strings(
+        /* string_1: */ platform_get_application_path(),
+        /* string_2: */ "/Shaders.metallib",
+        /* output: */ shader_lib_path_cstr,
+        /* output_size: */ 5000);
     NSString * shader_lib_path =
         [NSString
             stringWithCString:shader_lib_path_cstr

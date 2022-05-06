@@ -8,12 +8,19 @@ This function is here because it can't be used on iOS.
 FileBuffer * platform_read_file(
     const char * filename)
 {
-    char * filename_with_slash =
-        concat_strings("/", filename);
-    char * path_and_filename =
-        concat_strings(
-            platform_get_application_path(),
-            filename_with_slash);
+    char filename_with_slash[5000];
+    char path_and_filename[5000];
+    
+    concat_strings(
+        /* string_1: */ "/",
+        /* string_2: */ filename,
+        /* output: */ filename_with_slash,
+        /* output_size: */ 5000);
+    concat_strings(
+        /* string_1: */ platform_get_application_path(),
+        /* string_2: */ filename_with_slash,
+        /* output: */ path_and_filename,
+        /* output_size: */ 5000);
     
     printf("platform_read_file(%s)\n", path_and_filename);
     FILE * file_handle = fopen(

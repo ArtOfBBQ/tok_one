@@ -11,6 +11,7 @@ uint64_t platform_get_current_time_microsecs()
 }
 
 char * platform_get_application_path() {
-   return [[[NSBundle mainBundle] resourcePath] UTF8String];
+    return (char *)[
+        [[NSBundle mainBundle] resourcePath] UTF8String];
 }
 

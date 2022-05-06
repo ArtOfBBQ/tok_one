@@ -13,14 +13,16 @@
 
 #define local_only static
 
-char * concat_strings(
-    char * str1,
-    char * str2);
+void concat_strings(
+    const char * string_1,
+    const char * string_2,
+    char * output,
+    const uint64_t output_size);
 
 bool32_t are_equal_strings(
-    char * str1,
-    char * str2,
-    uint64_t len);
+    const char * str1,
+    const char * str2,
+    const uint64_t length);
 
 #endif
 
