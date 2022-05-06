@@ -49,59 +49,77 @@ void register_new_texturearray_from_images(
     const DecodedImage ** new_images,
     const uint32_t new_images_size)
 {
-    for (uint32_t i = 0; i < new_images_size; i++) {
+    assert(new_images_size > 0);
+    
+    uint32_t current_width = new_images[0]->width;
+    uint32_t current_height = new_images[0]->height;
+    if (
+        current_width == 0
+        || current_height == 0)
+    {
+        printf("ERR - register images with width/height 0\n");
+        assert(0);
+    }
+
+    if (current_width > 100000 || current_height > 100000) {
+        printf("ERR - register images with big width/height\n");
+        assert(0);
+    }
+    
+    for (
+        uint32_t i = 0;
+        i < new_images_size;
+        i++)
+    {
+        printf("checking new_iamges[%u]\n", i);
         assert(new_images[i] != NULL);
         assert(new_images[i]->good);
         assert(new_images[i]->rgba_values_size > 0);
-        
-        const uint32_t current_width = new_images[i]->width;
-        const uint32_t current_height = new_images[i]->height;
-        
-        // find out how many images of this width/height we have 
-        uint32_t current_texturearray_images = 0; 
-        for (uint32_t j = i; j < new_images_size; j++) {
-            if (new_images[j]->width != current_width ||
-                new_images[j]->height != current_height)
-            {
-                continue;
-            }
-            
-            current_texturearray_images += 1;
-        }
-        
-        // set up a new texturearray that's big enough to hold
-        // x images
-        printf(
-            "set up a new texturearray big enough to hold %u images...\n",
-            current_texturearray_images);
-        int32_t new_i = (int32_t)texture_arrays_size;
-        assert(new_i < TEXTUREARRAYS_SIZE);
-        texture_arrays_size += 1;
-        texture_arrays[new_i].sprite_columns = 1;
-        texture_arrays[new_i].sprite_rows = 1;
-        
-        // fill in the images in a new texturearray
-        for (uint32_t j = i; j < new_images_size; j++) {
-            if (new_images[j]->width != current_width ||
-                new_images[j]->height != current_height)
-            {
-                continue;
-            }
-        }
-        
-        // assign the new image and request an update so that
-        // it gets copied to gpu memory by the platform layer
-        // texture_arrays[new_i].image = new_image;
-        // texture_arrays[new_i].request_update =
-        //     true;
+        assert(new_images[i]->width == current_width);
+        assert(new_images[i]->height == current_height);
     }
+    
+    // set up a new texturearray that's big enough to hold
+    // x images
+    int32_t new_i = (int32_t)texture_arrays_size;
+    assert(new_i < TEXTUREARRAYS_SIZE);
+    texture_arrays_size += 1;
+    
+    // fill in the images in a new texturearray
+    if (texture_arrays[new_i].image != NULL) {
+        printf(
+            "texture_arrays[%u] was in use, free memory...\n",
+            new_i);
+        free(texture_arrays[new_i].image);
+    }
+    texture_arrays[new_i].image =
+        (DecodedImage *)malloc(sizeof(DecodedImage));
+    *(texture_arrays[new_i].image) =
+        concatenate_images(
+            /* const DecodedImage ** images_to_concat: */
+                (const DecodedImage **)new_images,
+            /* images_to_concat_size: */
+                new_images_size,
+            /* out_sprite_rows: */
+                &texture_arrays[new_i].sprite_rows,
+            /* out_sprite_columns: */
+                &texture_arrays[new_i].sprite_columns);
+    assert(texture_arrays[new_i].image->width > 0);
+    assert(texture_arrays[new_i].image->height > 0);
+    texture_arrays[new_i].request_update = true;
 }
 
 void register_new_texturearray(
     const DecodedImage * new_image)
 {
+    assert(new_image != NULL);
+    assert(new_image->width > 0);
+    assert(new_image->height > 0);
     const DecodedImage * images[1];
-    register_new_texturearray_from_images(images, 1);
+    images[0] = new_image;
+    register_new_texturearray_from_images(
+        (const DecodedImage **)&images[0],
+        1);
 }
 
 DecodedImage * extract_image(

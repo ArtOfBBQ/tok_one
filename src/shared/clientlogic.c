@@ -104,11 +104,14 @@ void client_logic_startup() {
     *concatenated = concatenate_images(
         /* const DecodedImage ** to_concat: */
             (const DecodedImage **)&(decoded_pngs[3]),
-        /* to_concat_size: */ 3);
+        /* to_concat_size: */
+            3,
+        /* out_sprite_rows: */
+            &texture_arrays[3].sprite_rows,
+        /* out_sprite_columns: */
+            &texture_arrays[3].sprite_columns);
     assert(concatenated->width == 20);
     assert(concatenated->height == 20);
-    texture_arrays[3].sprite_columns = 2;
-    texture_arrays[3].sprite_rows = 2;
     texture_arrays[3].request_update = false;
     texture_arrays[3].image = concatenated;
     texture_arrays_size++;
