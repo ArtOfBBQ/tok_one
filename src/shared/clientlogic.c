@@ -1,6 +1,5 @@
 #include "clientlogic.h"
 
-DecodedImage concatenated;
 
 zPolygon load_from_obj_file(char * filename)
 {
@@ -36,6 +35,7 @@ void client_logic_startup() {
         "structuredart1.png",
         "structuredart2.png",
         "structuredart3.png"};
+
     DecodedImage * decoded_pngs[TEXTURE_FILENAMES_SIZE];
     
     for (
@@ -49,7 +49,8 @@ void client_logic_startup() {
             texture_filenames[i]);
         file_buffer = platform_read_file(
             texture_filenames[i]);
-        if (file_buffer == NULL) {
+        if (file_buffer == NULL)
+        {
             printf(
                 "ERROR: failed to read file from disk: %s\n",
                 texture_filenames[i]);
@@ -94,19 +95,20 @@ void client_logic_startup() {
     texture_arrays[2].sprite_rows = 2;
     texture_arrays[2].image = decoded_pngs[2];
     texture_arrays_size++;
-
+    
     // 3 images with the same heigth/width
     // (structuredart1.png, structuredart2.png,
     // structuredart3.png)
-    concatenated = concatenate_images(
+    DecodedImage * concatenated = malloc(sizeof(DecodedImage));
+    *concatenated = concatenate_images(
         /* DecodedImage ** to_concat: */ &decoded_pngs[3],
         /* to_concat_size: */ 3);
-    assert(concatenated.width == 20);
-    assert(concatenated.height == 20);
+    assert(concatenated->width == 20);
+    assert(concatenated->height == 20);
     texture_arrays[3].sprite_columns = 2;
     texture_arrays[3].sprite_rows = 2;
     texture_arrays[3].request_update = false;
-    texture_arrays[3].image = &concatenated;
+    texture_arrays[3].image = concatenated;
     texture_arrays_size++;
     
     // get a zpolygon object
