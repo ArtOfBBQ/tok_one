@@ -22,7 +22,6 @@ FileBuffer * platform_read_file(
         /* output: */ path_and_filename,
         /* output_size: */ 5000);
     
-    printf("platform_read_file(%s)\n", path_and_filename);
     FILE * file_handle = fopen(
         path_and_filename,
         "rb+");
@@ -53,27 +52,15 @@ FileBuffer * platform_read_file(
     
     fclose(file_handle);
     if (bytes_read != fsize) {
-        printf("bytes read mismatched fsize, freeing...\n");
         free(file_handle);
         free(return_value);
         free(buffer);
-        printf("done freeing memory, returning nullptr\n");
         return NULL;
     }
     
     return_value->contents = buffer;
     return_value->contents[fsize] = 0; // for windows
     return_value->size = bytes_read;
-    
-    // if (file_handle) { 
-    //     printf("freeing file handle\n"); 
-    //     free(file_handle);
-    // }
-    
-    printf(
-        "finished platform_read_file(%s) - %u bytes\n",
-        path_and_filename,
-        return_value->size);
     
     return return_value;
 }

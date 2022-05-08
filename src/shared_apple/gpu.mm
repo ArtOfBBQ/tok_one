@@ -128,19 +128,13 @@ uint64_t previous_time;
         i < texture_arrays_size;
         i++)
     {
-        printf("updateTextureArray: %u\n", i);
         assert(texture_arrays_size < TEXTUREARRAYS_SIZE);
         [self updateTextureArray: i];
-    }
-    
-    printf(
-        "finished configureMetalWithDevice() from path: %s\n",
-        shader_lib_filepath);
+    }    
 }
 
 - (void)updateTextureArray: (int32_t)texturearray_i
 {
-    printf("updateTextureArray: %i\n", texturearray_i);
     int32_t i = texturearray_i;
 
     if (texture_arrays[i].image == NULL) {
@@ -153,7 +147,6 @@ uint64_t previous_time;
     uint32_t slice_count =
         texture_arrays[i].sprite_rows *
             texture_arrays[i].sprite_columns;
-    printf("slice count: %u\n", slice_count);
     
     if (
         texture_arrays[i].sprite_rows == 0
@@ -166,11 +159,6 @@ uint64_t previous_time;
         assert(0);
     }
    
-    printf("create texture descriptor\n"); 
-    printf(
-        "image width/height: [%u,%u]\n",
-        texture_arrays[i].image->width,
-        texture_arrays[i].image->height);
     MTLTextureDescriptor * texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
     texture_descriptor.textureType = MTLTextureType2DArray;
@@ -184,7 +172,6 @@ uint64_t previous_time;
         texture_arrays[i].image->height
             / texture_arrays[i].sprite_rows;
     
-    printf("create texture\n"); 
     id<MTLTexture> texture =
         [_metal_device
             newTextureWithDescriptor:texture_descriptor];
@@ -197,19 +184,16 @@ uint64_t previous_time;
         row_i <= texture_arrays[i].sprite_rows;
         row_i++)
     {
-        printf("row_i: %u\n", row_i);
         for (
             uint32_t col_i = 1;
             col_i <= texture_arrays[i].sprite_columns;
             col_i++)
         {
-            printf("col_i: %u\n", col_i);
             DecodedImage * new_slice =
                 extract_image(
                     /* texture_array: */ &texture_arrays[i],
                     /* x            : */ col_i,
                     /* y            : */ row_i);
-            printf("extracted slice\n");
             
             MTLRegion region = {
                 {
@@ -224,7 +208,6 @@ uint64_t previous_time;
                 }
             };
             
-            printf("replacing region\n");
             [texture
                 replaceRegion:
                     region
@@ -240,7 +223,6 @@ uint64_t previous_time;
                     /* docs: use 0 for anything other than
                        MTLTextureType3D textures */
                     0];
-            printf("replaced region\n");
             
             // TODO: free heap memory
             // free(new_slice->rgba_values);

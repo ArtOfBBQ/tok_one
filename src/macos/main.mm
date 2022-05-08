@@ -149,14 +149,12 @@ int main(int argc, const char * argv[])
         [[MetalKitViewDelegate alloc] init];
     [mtk_view setDelegate: apple_gpu_delegate];
 
-    printf("loading shader lib\n");
     char shader_lib_path_cstr[5000];
     concat_strings(
         /* string_1: */ platform_get_application_path(),
         /* string_2: */ "/Shaders.metallib",
         /* output: */ shader_lib_path_cstr,
         /* output_size: */ 5000);
-    printf("from path: %s\n", shader_lib_path_cstr);
     
     NSString * shader_lib_path =
         [NSString
@@ -166,7 +164,6 @@ int main(int argc, const char * argv[])
         configureMetalWithDevice: metal_device
         andPixelFormat: mtk_view.colorPixelFormat
         fromFolder: shader_lib_path];
-    printf("loaded shader lib\n");
     
     // this cruft makes the app a "foreground application"
     // capable of accepting key events 
@@ -179,7 +176,6 @@ int main(int argc, const char * argv[])
     // find the first responder class like so: 
     // NSLog(@"window first responder: %@", window.firstResponder);
     
-    printf("starting app loop\n");
     return NSApplicationMain(argc, argv);
 }
 

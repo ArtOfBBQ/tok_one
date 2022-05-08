@@ -71,7 +71,6 @@ void register_new_texturearray_from_images(
         i < new_images_size;
         i++)
     {
-        printf("checking new_iamges[%u]\n", i);
         assert(new_images[i] != NULL);
         assert(new_images[i]->good);
         assert(new_images[i]->rgba_values_size > 0);
