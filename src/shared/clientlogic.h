@@ -19,6 +19,8 @@ typedef struct NamedTextureArray {
     int32_t texture_i;
 } NamedTextureArray;
 
+#include <string>
+#include <unordered_map>
 #include "dirent.h"
 #include "../../../src/animationtracker.hpp"
 #include "../../../src/frontendtouch.hpp"
