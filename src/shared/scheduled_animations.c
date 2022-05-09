@@ -20,8 +20,10 @@ void construct_scheduled_animation(
     to_construct->x_rotation_per_second = 0.0f;
     to_construct->y_rotation_per_second = 0.0f;
     to_construct->z_rotation_per_second = 0.0f;
-    to_construct->scalefactor_x_delta_per_second = 0.0f;
-    to_construct->scalefactor_y_delta_per_second = 0.0f;
+    to_construct->final_xscale_known = false;
+    to_construct->final_yscale_known = false;
+    to_construct->delta_xscale_per_second = 0.0f;
+    to_construct->delta_yscale_per_second = 0.0f;
     for (uint32_t i = 0; i < 4; i++) {
         to_construct->rgba_delta_per_second[i] = 0.0f;
     }
@@ -315,18 +317,43 @@ void resolve_animation_effects(
                                 + actual_elapsed)
                             * actual_elapsed);
                 }
-
+                
                 texquads_to_render[tq_i].z_angle +=
                     (anim->z_rotation_per_second
                         * actual_elapsed)
                             / 1000000;
                 
-                texquads_to_render[tq_i].scale_factor_x +=
-                    (anim->scalefactor_x_delta_per_second *
-                        actual_elapsed) / 1000000;
-                texquads_to_render[tq_i].scale_factor_y +=
-                    (anim->scalefactor_y_delta_per_second *
-                        actual_elapsed) / 1000000;
+                if (anim->final_xscale_known) {
+                    float diff_x =
+                        anim->final_xscale -
+                            texquads_to_render[tq_i].
+                                scale_factor_x;
+                    texquads_to_render[tq_i].scale_factor_x +=
+                        (diff_x
+                            / (anim->remaining_microseconds
+                                + actual_elapsed)
+                            * actual_elapsed);
+                } else {
+                    texquads_to_render[tq_i].scale_factor_x +=
+                        (anim->delta_xscale_per_second *
+                            actual_elapsed) / 1000000;
+                }
+                
+                if (anim->final_yscale_known) {
+                    float diff_y =
+                        anim->final_yscale -
+                            texquads_to_render[tq_i]
+                                .scale_factor_y;
+                    texquads_to_render[tq_i].scale_factor_y +=
+                        (diff_y
+                            / (anim->remaining_microseconds
+                                + actual_elapsed)
+                            * actual_elapsed);
+                } else {
+                    texquads_to_render[tq_i].scale_factor_y +=
+                        (anim->delta_yscale_per_second *
+                            actual_elapsed) / 1000000;
+                }
                 
                 for (
                     uint32_t c = 0;
@@ -377,8 +404,8 @@ void request_bump_animation(const uint32_t object_id)
     construct_scheduled_animation(&embiggen_request);
     embiggen_request.affected_object_id = object_id;
     embiggen_request.remaining_microseconds = duration * 0.5f;
-    embiggen_request.scalefactor_x_delta_per_second = 1.5f;
-    embiggen_request.scalefactor_y_delta_per_second = 1.5f;
+    embiggen_request.delta_xscale_per_second = 1.5f;
+    embiggen_request.delta_yscale_per_second = 1.5f;
     request_scheduled_animation(
         &embiggen_request);
     
@@ -387,8 +414,8 @@ void request_bump_animation(const uint32_t object_id)
     revert_request.affected_object_id = object_id;
     revert_request.wait_first_microseconds = duration * 0.5f;
     revert_request.remaining_microseconds = duration * 0.5f;
-    revert_request.scalefactor_x_delta_per_second = -1.5f;
-    revert_request.scalefactor_y_delta_per_second = -1.5f;
+    revert_request.delta_xscale_per_second = -1.5f;
+    revert_request.delta_yscale_per_second = -1.5f;
     request_scheduled_animation(
         &revert_request);
 }

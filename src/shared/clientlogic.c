@@ -186,7 +186,7 @@ void client_logic_startup() {
             - (sample_pic.width_pixels * 0.5f);
     sample_pic.top_pixels = (window_height * 0.9f);
     request_texquad_renderable(&sample_pic);
-
+    
     // test our home-concatenated image
     // (we concatenated structuredart1.png, structedart2.png,
     // structuredart3.png)
@@ -212,6 +212,17 @@ void client_logic_startup() {
     move_sprite_left.wait_first_microseconds = 1750000;
     move_sprite_left.remaining_microseconds = 3000000;
     request_scheduled_animation(&move_sprite_left);
+
+    ScheduledAnimation downsize_concatenated_img;
+    construct_scheduled_animation(&downsize_concatenated_img);
+    downsize_concatenated_img.affected_object_id = 5;
+    downsize_concatenated_img.final_xscale_known = true;
+    downsize_concatenated_img.final_xscale = 0.5f;
+    downsize_concatenated_img.final_yscale_known = true;
+    downsize_concatenated_img.final_yscale = 0.5f;
+    downsize_concatenated_img.wait_first_microseconds = 500000;
+    downsize_concatenated_img.remaining_microseconds = 5000000;
+    request_scheduled_animation(&downsize_concatenated_img);
     
     char centered_text[145] =
         "I'm a text\nMy purpose is to test centered text, possibly long sentences that don't necessarily make any sense like this.\nOr small sentences.";
