@@ -333,6 +333,11 @@ void resolve_animation_effects(
                             / (anim->remaining_microseconds
                                 + actual_elapsed)
                             * actual_elapsed);
+                    printf(
+                        "applied xscale diff: %f new xscale: %f anim->remaining: %u\n",
+                        diff_x,
+                        texquads_to_render[tq_i].scale_factor_x,
+                        anim->remaining_microseconds);
                 } else {
                     texquads_to_render[tq_i].scale_factor_x +=
                         (anim->delta_xscale_per_second *
@@ -349,6 +354,11 @@ void resolve_animation_effects(
                             / (anim->remaining_microseconds
                                 + actual_elapsed)
                             * actual_elapsed);
+                    printf(
+                        "applied yscale diff: %f new yscale: %f anim->remaining: %u\n",
+                        diff_y,
+                        texquads_to_render[tq_i].scale_factor_y,
+                        anim->remaining_microseconds);
                 } else {
                     texquads_to_render[tq_i].scale_factor_y +=
                         (anim->delta_yscale_per_second *
@@ -404,8 +414,10 @@ void request_bump_animation(const uint32_t object_id)
     construct_scheduled_animation(&embiggen_request);
     embiggen_request.affected_object_id = object_id;
     embiggen_request.remaining_microseconds = duration * 0.5f;
-    embiggen_request.delta_xscale_per_second = 1.5f;
-    embiggen_request.delta_yscale_per_second = 1.5f;
+    embiggen_request.final_xscale_known = true;
+    embiggen_request.final_xscale = 1.35f;
+    embiggen_request.final_yscale_known = true;
+    embiggen_request.final_yscale = 1.35f;
     request_scheduled_animation(
         &embiggen_request);
     
@@ -414,8 +426,10 @@ void request_bump_animation(const uint32_t object_id)
     revert_request.affected_object_id = object_id;
     revert_request.wait_first_microseconds = duration * 0.5f;
     revert_request.remaining_microseconds = duration * 0.5f;
-    revert_request.delta_xscale_per_second = -1.5f;
-    revert_request.delta_yscale_per_second = -1.5f;
+    revert_request.final_xscale_known = true;
+    revert_request.final_xscale = 1.0f;
+    revert_request.final_yscale_known = true;
+    revert_request.final_yscale = 1.0f;
     request_scheduled_animation(
         &revert_request);
 }
