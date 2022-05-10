@@ -24,6 +24,7 @@ extern NSFileManager * file_manager;
 #include <stdio.h>
 
 #include "common.h"
+#include "clientlogic.h"
 #include "debigulator/src/decodedimage.h"
 
 typedef struct FileBuffer {
@@ -40,7 +41,15 @@ char * platform_get_cwd();
 FileBuffer * platform_read_file(
     const char * filename);
 
-void platform_start_timer(void);
+// Run a task in the background
+// This will trigger clientlogic.c's client_logic_threadmain()
+// passing the threadmain_id to it
+// you have to implement client_logic_threadmain() to do
+// what you want it to do when it gets that id
+void platform_start_thread(int32_t threadmain_id);
+
+// TODO: is platform_start_timer still needed?
+// void platform_start_timer(void);
 uint64_t platform_get_current_time_microsecs(void);
 
 #endif

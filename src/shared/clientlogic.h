@@ -1,6 +1,8 @@
 #ifndef CLIENTLOGIC_H
 #define CLIENTLOGIC_H
 
+#import <Foundation/Foundation.h>
+
 #include "common.h"
 #include "texquad_type.h"
 #include "texture_array.h"
@@ -39,6 +41,10 @@ zPolygon load_from_obj_file(char * filename);
 // will be called once at startup, before rendering frame 1
 // add your app's code here
 void client_logic_startup(void);
+
+// will be called by the platform layer when you start a thread
+// (see platform_layer.h -> start_thread(int32_t threadmain_id);
+void client_logic_threadmain(int32_t threadmain_id);
 
 // will be called when a ScheduledAmimation
 // (see scheduled_animations.h) runs out

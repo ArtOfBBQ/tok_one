@@ -15,3 +15,13 @@ char * platform_get_application_path() {
         [[NSBundle mainBundle] resourcePath] UTF8String];
 }
 
+void platform_start_thread(int32_t threadmain_id) {
+    dispatch_async(
+        dispatch_get_global_queue(
+            DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0),
+        ^{
+            // Your code
+            client_logic_threadmain(threadmain_id);
+        });
+}
+

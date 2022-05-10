@@ -333,11 +333,6 @@ void resolve_animation_effects(
                             / (anim->remaining_microseconds
                                 + actual_elapsed)
                             * actual_elapsed);
-                    printf(
-                        "applied xscale diff: %f new xscale: %f anim->remaining: %u\n",
-                        diff_x,
-                        texquads_to_render[tq_i].scale_factor_x,
-                        anim->remaining_microseconds);
                 } else {
                     texquads_to_render[tq_i].scale_factor_x +=
                         (anim->delta_xscale_per_second *
@@ -354,11 +349,6 @@ void resolve_animation_effects(
                             / (anim->remaining_microseconds
                                 + actual_elapsed)
                             * actual_elapsed);
-                    printf(
-                        "applied yscale diff: %f new yscale: %f anim->remaining: %u\n",
-                        diff_y,
-                        texquads_to_render[tq_i].scale_factor_y,
-                        anim->remaining_microseconds);
                 } else {
                     texquads_to_render[tq_i].scale_factor_y +=
                         (anim->delta_yscale_per_second *

@@ -323,11 +323,6 @@ uint64_t previous_time;
             i++)
         {
             if (i >= [_metal_textures count]) {
-                printf(
-                    "ERR: trying to setFragmentTexture %u when [_metal_textures count] is only %lu (texture_arrays_size: %u)\n",
-                    i,
-                    [_metal_textures count],
-                    texture_arrays_size);
                 // TODO: remove debugging assert
                 assert(texture_arrays_size < 750);
                 continue;

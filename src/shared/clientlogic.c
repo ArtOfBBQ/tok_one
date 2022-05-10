@@ -1,5 +1,7 @@
 #include "clientlogic.h"
 
+#define TEXTURE_FILENAMES_SIZE 6
+DecodedImage * decoded_pngs[TEXTURE_FILENAMES_SIZE];
 
 zPolygon load_from_obj_file(char * filename)
 {
@@ -23,10 +25,61 @@ void client_logic_startup() {
     // These are some example texture atlases we're using for
     // texture mapping on cards and cubes
     assert(TEXTUREARRAYS_SIZE > 0);
+    
+    printf("let's try dispatch_async\n");
+    platform_start_thread(/* threadmain_id: */ 0);
+    
+    printf("finished client_logic_startup()\n");    
+}
 
+// reminder: this will be run in the background, a
+// thread is called in client_logic_startup
+void load_assets() {
+
+    // an example of a font texture in font.png
+    // Note: I generally keep my font in slot 0 and only
+    // use 1 font
+    // if you want to change the texturearray slot used
+    // as the font, you need to change font_texturearray_i
+    // variable in text.c
+    texture_arrays[0].sprite_columns = 9;
+    texture_arrays[0].sprite_rows = 9;
+    texture_arrays_size++;
+
+    char centered_text[145] =
+        "I'm a text\nMy purpose is to test centered text, possibly long sentences that don't necessarily make any sense like this.\nOr small sentences.";
+    
+    float centered_text_color[4];
+    centered_text_color[0] = 0.8f;
+    centered_text_color[1] = 0.2f;
+    centered_text_color[2] = 0.8f;
+    centered_text_color[3] = 1.0f;
+    
+    font_height = 14.0f; 
+    request_label_around(
+        /* with_id:              : */ 50,
+        /* text                  : */ centered_text,
+        /* text_color[4]         : */ centered_text_color,
+        /* text_to_draw_size     : */ 140,
+        /* mid_x_pixelspace      : */ window_width * 0.5,
+        /* mid_y_pixelspace      : */ window_height * 0.5,
+        /* z                     : */ 0.6f,
+        /* max_width             : */ window_width * 0.25,
+        /* ignore_camera         : */ false);
+    
+    // 16x16 sample sprites in phoebus.png
+    texture_arrays[1].sprite_columns = 16;
+    texture_arrays[1].sprite_rows = 16;
+    texture_arrays_size++;
+    
+    // 5 lore seeker cards and a debug texture 
+    // in sampletexture.png
+    texture_arrays[2].sprite_columns = 3;
+    texture_arrays[2].sprite_rows = 2;
+    texture_arrays_size++;
+    
     FileBuffer * file_buffer;
     
-    #define TEXTURE_FILENAMES_SIZE 6
     assert(TEXTURE_FILENAMES_SIZE <= TEXTUREARRAYS_SIZE);
     char * texture_filenames[TEXTURE_FILENAMES_SIZE] = {
         "font.png",
@@ -35,8 +88,6 @@ void client_logic_startup() {
         "structuredart1.png",
         "structuredart2.png",
         "structuredart3.png"};
-
-    DecodedImage * decoded_pngs[TEXTURE_FILENAMES_SIZE];
     
     for (
         uint32_t i = 0;
@@ -61,6 +112,11 @@ void client_logic_startup() {
             file_buffer->size);
         assert(decoded_pngs[i]->good);
         assert(decoded_pngs[i]->rgba_values_size > 0);
+
+        if (i < 3) {
+            texture_arrays[i].image = decoded_pngs[i];
+            texture_arrays[i].request_update = true;
+        }
         
         free(file_buffer->contents);
         free(file_buffer);
@@ -69,32 +125,6 @@ void client_logic_startup() {
             texture_filenames[i],
             decoded_pngs[i]->width);
     }
-    
-    // an example of a font texture in font.png
-    // Note: I generally keep my font in slot 0 and only
-    // use 1 font
-    // if you want to change the texturearray slot used
-    // as the font, you need to change font_texturearray_i
-    // variable in text.c
-    texture_arrays[0].sprite_columns = 9;
-    texture_arrays[0].sprite_rows = 9;
-    texture_arrays[0].request_update = false;
-    texture_arrays[0].image = decoded_pngs[0];
-    texture_arrays_size++;
-    
-    // 16x16 sample sprites in phoebus.png
-    texture_arrays[1].sprite_columns = 16;
-    texture_arrays[1].sprite_rows = 16;
-    texture_arrays[1].request_update = false;
-    texture_arrays[1].image = decoded_pngs[1];
-    texture_arrays_size++;
-    
-    // 5 lore seeker cards and a debug texture 
-    // in sampletexture.png
-    texture_arrays[2].sprite_columns = 3;
-    texture_arrays[2].sprite_rows = 2;
-    texture_arrays[2].image = decoded_pngs[2];
-    texture_arrays_size++;
     
     // 3 images with the same heigth/width
     // (structuredart1.png, structuredart2.png,
@@ -112,7 +142,7 @@ void client_logic_startup() {
             &texture_arrays[3].sprite_columns);
     assert(concatenated->width == 20);
     assert(concatenated->height == 20);
-    texture_arrays[3].request_update = false;
+    texture_arrays[3].request_update = true;
     texture_arrays[3].image = concatenated;
     texture_arrays_size++;
     
@@ -223,29 +253,20 @@ void client_logic_startup() {
     downsize_concatenated_img.wait_first_microseconds = 500000;
     downsize_concatenated_img.remaining_microseconds = 5000000;
     request_scheduled_animation(&downsize_concatenated_img);
-    
-    char centered_text[145] =
-        "I'm a text\nMy purpose is to test centered text, possibly long sentences that don't necessarily make any sense like this.\nOr small sentences.";
-    
-    float centered_text_color[4];
-    centered_text_color[0] = 0.8f;
-    centered_text_color[1] = 0.2f;
-    centered_text_color[2] = 0.8f;
-    centered_text_color[3] = 1.0f;
-    
-    font_height = 14.0f; 
-    request_label_around(
-        /* with_id:              : */ 50,
-        /* text                  : */ centered_text,
-        /* text_color[4]         : */ centered_text_color,
-        /* text_to_draw_size     : */ 140,
-        /* mid_x_pixelspace      : */ window_width * 0.5,
-        /* mid_y_pixelspace      : */ window_height * 0.5,
-        /* z                     : */ 0.6f,
-        /* max_width             : */ window_width * 0.25,
-        /* ignore_camera         : */ false);
-    
-    printf("finished client_logic_startup()\n");    
+}
+
+void client_logic_threadmain(int32_t threadmain_id) {
+    printf("client_logic_threadmain(%i)\n", threadmain_id);
+
+    switch (threadmain_id) {
+        case (0):
+            load_assets();
+            break;
+        default:
+            printf(
+                "unhandled threadmain_id: %i\n",
+                threadmain_id);
+    }
 }
 
 void client_logic_animation_callback(int32_t callback_id)
