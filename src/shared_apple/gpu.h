@@ -13,7 +13,6 @@
 #include "../shared/software_renderer.h"
 #include "../shared/bitmap_renderer.h"
 
-
 @interface MetalKitViewDelegate: NSObject<MTKViewDelegate>
 @property (retain) id<MTLDevice> metal_device;
 @property (retain) id<MTLCommandQueue> command_queue;

@@ -28,14 +28,40 @@ void client_logic_startup() {
     
     printf("let's try dispatch_async\n");
     platform_start_thread(/* threadmain_id: */ 0);
+
+    platform_start_thread(/* threadmain_id: */ 1);
     
     printf("finished client_logic_startup()\n");    
+}
+
+void change_assets() {
+    sleep(10);
+    
+    FileBuffer * file_buffer =
+        platform_read_file("replacement.png");
+    
+    if (file_buffer == NULL) {
+        printf(
+            "ERR - fail to mod unfound file replacement.png\n");
+        assert(0);
+    }
+    
+    DecodedImage * replacement_img =
+        decode_PNG(
+            (uint8_t *)file_buffer->contents,
+            file_buffer->size);
+    
+    printf("updating texture_arrays[1]\n");
+    texture_arrays[1].sprite_columns = 1;
+    texture_arrays[1].sprite_rows = 1;
+    texture_arrays[1].image = replacement_img;
+    texture_arrays[1].request_update = true;
 }
 
 // reminder: this will be run in the background, a
 // thread is called in client_logic_startup
 void load_assets() {
-
+    
     // an example of a font texture in font.png
     // Note: I generally keep my font in slot 0 and only
     // use 1 font
@@ -45,7 +71,7 @@ void load_assets() {
     texture_arrays[0].sprite_columns = 9;
     texture_arrays[0].sprite_rows = 9;
     texture_arrays_size++;
-
+    
     char centered_text[145] =
         "I'm a text\nMy purpose is to test centered text, possibly long sentences that don't necessarily make any sense like this.\nOr small sentences.";
     
@@ -55,24 +81,24 @@ void load_assets() {
     centered_text_color[2] = 0.8f;
     centered_text_color[3] = 1.0f;
     
-    font_height = 14.0f; 
+    font_height = 14.0f;
     request_label_around(
-        /* with_id:              : */ 50,
-        /* text                  : */ centered_text,
-        /* text_color[4]         : */ centered_text_color,
-        /* text_to_draw_size     : */ 140,
-        /* mid_x_pixelspace      : */ window_width * 0.5,
-        /* mid_y_pixelspace      : */ window_height * 0.5,
-        /* z                     : */ 0.6f,
-        /* max_width             : */ window_width * 0.25,
-        /* ignore_camera         : */ false);
+        /* with_id:          : */ 50,
+        /* text              : */ centered_text,
+        /* text_color[4]     : */ centered_text_color,
+        /* text_to_draw_size : */ 140,
+        /* mid_x_pixelspace  : */ window_width * 0.5,
+        /* mid_y_pixelspace  : */ window_height * 0.5,
+        /* z                 : */ 0.6f,
+        /* max_width         : */ window_width * 0.25,
+        /* ignore_camera     : */ false);
     
     // 16x16 sample sprites in phoebus.png
     texture_arrays[1].sprite_columns = 16;
     texture_arrays[1].sprite_rows = 16;
     texture_arrays_size++;
     
-    // 5 lore seeker cards and a debug texture 
+    // 5 lore seeker cards and a debug texture
     // in sampletexture.png
     texture_arrays[2].sprite_columns = 3;
     texture_arrays[2].sprite_rows = 2;
@@ -95,11 +121,10 @@ void load_assets() {
         i++)
     {
         assert(i < TEXTUREARRAYS_SIZE);
-        printf(
-            "trying to read file: %s\n",
-            texture_filenames[i]);
+        
         file_buffer = platform_read_file(
             texture_filenames[i]);
+        
         if (file_buffer == NULL)
         {
             printf(
@@ -112,7 +137,7 @@ void load_assets() {
             file_buffer->size);
         assert(decoded_pngs[i]->good);
         assert(decoded_pngs[i]->rgba_values_size > 0);
-
+        
         if (i < 3) {
             texture_arrays[i].image = decoded_pngs[i];
             texture_arrays[i].request_update = true;
@@ -202,7 +227,7 @@ void load_assets() {
     assert(zlights_to_apply_size <= ZLIGHTS_TO_APPLY_ARRAYSIZE);
     
     font_height = 40.0f;
-   
+ 
     TexQuad sample_pic;
     construct_texquad(&sample_pic);
     sample_pic.object_id = 4;
@@ -232,6 +257,20 @@ void load_assets() {
     sample_pic_2.top_pixels = (window_height * 0.95f);
     request_texquad_renderable(&sample_pic_2);
     
+    TexQuad replacable_pic;
+    construct_texquad(&replacable_pic);
+    replacable_pic.object_id = 6;
+    replacable_pic.touchable_id = 1;
+    replacable_pic.texturearray_i = 1;
+    replacable_pic.texture_i = 0;
+    replacable_pic.width_pixels = 200.0f;
+    replacable_pic.height_pixels = 200.0f;
+    replacable_pic.left_pixels =
+        (window_width * 0.9)
+            - (replacable_pic.width_pixels * 0.5f);
+    replacable_pic.top_pixels = (window_height * 0.8f);
+    request_texquad_renderable(&replacable_pic);
+    
     ScheduledAnimation move_sprite_left;
     construct_scheduled_animation(&move_sprite_left);
     move_sprite_left.affected_object_id = 4;
@@ -242,7 +281,7 @@ void load_assets() {
     move_sprite_left.wait_first_microseconds = 1750000;
     move_sprite_left.remaining_microseconds = 3000000;
     request_scheduled_animation(&move_sprite_left);
-
+    
     ScheduledAnimation downsize_concatenated_img;
     construct_scheduled_animation(&downsize_concatenated_img);
     downsize_concatenated_img.affected_object_id = 5;
@@ -261,6 +300,9 @@ void client_logic_threadmain(int32_t threadmain_id) {
     switch (threadmain_id) {
         case (0):
             load_assets();
+            break;
+        case (1):
+            change_assets();
             break;
         default:
             printf(

@@ -118,7 +118,9 @@ uint64_t previous_time;
             addObject: MetalBufferedVertex];
     }
     
-    _metal_textures = [[NSMutableArray alloc] init];
+    _metal_textures = [
+        [NSMutableArray alloc]
+            initWithCapacity: TEXTUREARRAYS_SIZE];
     
     // initialize a texture array for each object
     // in the global var "texturearrays" 
@@ -135,8 +137,28 @@ uint64_t previous_time;
 
 - (void)updateTextureArray: (int32_t)texturearray_i
 {
+    assert(texturearray_i < TEXTUREARRAYS_SIZE);
+    assert(texturearray_i < texture_arrays_size);
     int32_t i = texturearray_i;
-
+    
+    // pad objects to match
+    while ([_metal_textures count] <= i) {
+        MTLTextureDescriptor * texture_descriptor =
+            [[MTLTextureDescriptor alloc] init];
+        texture_descriptor.textureType = MTLTextureType2DArray;
+        texture_descriptor.arrayLength = 1;
+        texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
+        texture_descriptor.width = 10;
+        texture_descriptor.height = 10;
+        id<MTLTexture> texture =
+            [_metal_device
+                newTextureWithDescriptor:texture_descriptor];
+        [_metal_textures addObject: texture];
+        printf(
+            "adding a padding texture, [_metal_textures count] is now: %u\n",
+            [_metal_textures count]);
+    }
+    
     if (texture_arrays[i].image == NULL) {
         printf("aborted update because image was NULL\n");
         return;
@@ -158,26 +180,24 @@ uint64_t previous_time;
             TEXTUREARRAYS_SIZE);
         assert(0);
     }
-   
+    
     MTLTextureDescriptor * texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
     texture_descriptor.textureType = MTLTextureType2DArray;
     texture_descriptor.arrayLength = slice_count;
-    texture_descriptor.pixelFormat =
-        MTLPixelFormatRGBA8Unorm;
+    texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
     texture_descriptor.width =
         texture_arrays[i].image->width
             / texture_arrays[i].sprite_columns;
     texture_descriptor.height =
         texture_arrays[i].image->height
             / texture_arrays[i].sprite_rows;
-    
     id<MTLTexture> texture =
         [_metal_device
             newTextureWithDescriptor:texture_descriptor];
     
     assert(texture_arrays[i].image->width >= 10);
-    assert(4 * texture_arrays[i].image->width >= 40);
+    assert(texture_arrays[i].image->height >= 10);
     uint32_t slice_i = 0;
     for (
         uint32_t row_i = 1;
@@ -231,7 +251,8 @@ uint64_t previous_time;
         }
     }
     
-    [_metal_textures addObject: texture];
+    printf("replacing object at index: %i\n", i);
+    [_metal_textures replaceObjectAtIndex:i withObject: texture];
 }
 
 - (void)drawInMTKView:(MTKView *)view

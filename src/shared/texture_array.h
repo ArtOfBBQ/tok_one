@@ -13,8 +13,6 @@ typedef struct TextureArray {
     bool32_t request_update;
 } TextureArray;
 
-// #define MAX_TEXTURE_FILENAME_SIZE 30
-
 // A buffer of texture arrays (AKA texture atlases) your
 // objects can use
 // Each texture atlas must have images of the exact same size
