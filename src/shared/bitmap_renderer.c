@@ -16,8 +16,12 @@ void triangle_apply_lighting(
         m++)
     {
         float distance =
-            fabs(zlight_source->x - out_input[m].x) +
-            fabs(zlight_source->y - out_input[m].y);
+            sqrtf(
+                (zlight_source->x - out_input[m].x) *
+                (zlight_source->x - out_input[m].x)) +
+            sqrtf(
+                (zlight_source->y - out_input[m].y) *
+                (zlight_source->y - out_input[m].y));
         
         float distance_mod = zlight_source->reach / distance;
         if (distance_mod < 0.0f) {
@@ -310,17 +314,6 @@ void add_quad_to_gpu_workload(
         /* recipient: */
             bottomright_rotated);
     
-    for (uint32_t i = 0; i < 3; i++) {
-        topleft_rotated[i].x /= (window_width * 0.5f);
-        topleft_rotated[i].x -= 1.0f;
-        topleft_rotated[i].y /= (window_height * 0.5f);
-        topleft_rotated[i].y -= 1.0f;
-        bottomright_rotated[i].x /= (window_width * 0.5f);
-        bottomright_rotated[i].x -= 1.0f;
-        bottomright_rotated[i].y /= (window_height * 0.5f);
-        bottomright_rotated[i].y -= 1.0f;
-    }
-    
     for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
         triangle_apply_lighting(
             /* Vertex[3] out_input: */
@@ -332,6 +325,17 @@ void add_quad_to_gpu_workload(
                 bottomright_rotated,
             /* ZlightSource zlight_source: */
                 &zlights_transformed[i]);
+    }
+    
+    for (uint32_t i = 0; i < 3; i++) {
+        topleft_rotated[i].x /= (window_width * 0.5f);
+        topleft_rotated[i].x -= 1.0f;
+        topleft_rotated[i].y /= (window_height * 0.5f);
+        topleft_rotated[i].y -= 1.0f;
+        bottomright_rotated[i].x /= (window_width * 0.5f);
+        bottomright_rotated[i].x -= 1.0f;
+        bottomright_rotated[i].y /= (window_height * 0.5f);
+        bottomright_rotated[i].y -= 1.0f;
     }
     
     draw_triangle(
