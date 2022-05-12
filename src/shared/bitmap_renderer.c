@@ -16,11 +16,8 @@ void triangle_apply_lighting(
         m++)
     {
         float distance =
-            sqrtf(
-                ((zlight_source->x - out_input[m].x)
-                    * (zlight_source->x - out_input[m].x)) +
-                ((zlight_source->y - out_input[m].y)
-                    * (zlight_source->y - out_input[m].y)));
+            fabs(zlight_source->x - out_input[m].x) +
+            fabs(zlight_source->y - out_input[m].y);
         
         float distance_mod = zlight_source->reach / distance;
         if (distance_mod < 0.0f) {
@@ -205,7 +202,7 @@ void add_quad_to_gpu_workload(
     topleft[0].uv[1] = 0.0f;
     for (uint32_t j = 0; j < 4; j++) {
         topleft[0].RGBA[j] = to_add->RGBA[j];
-        topleft[0].lighting[j] = 0.0f;
+        topleft[0].lighting[j] = j == 3 ? 1.0f : 0.0f;
     }
     // top right vertex
     topleft[1].x = right;
@@ -220,7 +217,7 @@ void add_quad_to_gpu_workload(
     topleft[1].uv[1] = 0.0f;
     for (uint32_t j = 0; j < 4; j++) {
         topleft[1].RGBA[j] = to_add->RGBA[j];
-        topleft[1].lighting[j] = 1.0f;
+        topleft[1].lighting[j] = j == 3 ? 1.0f : 0.0f;
     }
     // bottom left vertex
     topleft[2].x = left;
@@ -235,7 +232,7 @@ void add_quad_to_gpu_workload(
     topleft[2].uv[1] = 1.0f;
     for (uint32_t j = 0; j < 4; j++) {
         topleft[2].RGBA[j] = to_add->RGBA[j];
-        topleft[2].lighting[j] = 1.0f;
+        topleft[2].lighting[j] = j == 3 ? 1.0f : 0.0f;
     }
     
     // top right vertex
@@ -251,7 +248,7 @@ void add_quad_to_gpu_workload(
     bottomright[0].uv[1] = 0.0f;
     for (uint32_t j = 0; j < 4; j++) {
         bottomright[0].RGBA[j] = to_add->RGBA[j];
-        bottomright[0].lighting[j] = 1.0f;
+        bottomright[0].lighting[j] = j == 3 ? 1.0f : 0.0f;
     }
     
     // bottom left vertex
@@ -267,7 +264,7 @@ void add_quad_to_gpu_workload(
     bottomright[1].uv[1] = 1.0f;
     for (uint32_t j = 0; j < 4; j++) {
         bottomright[1].RGBA[j] = to_add->RGBA[j];
-        bottomright[1].lighting[j] = 1.0f;
+        bottomright[1].lighting[j] = j == 3 ? 1.0f : 0.0f;
     }
     
     // bottom right vertex
@@ -283,7 +280,7 @@ void add_quad_to_gpu_workload(
     bottomright[2].uv[1] = 1.0f;
     for (uint32_t j = 0; j < 4; j++) {
         bottomright[2].RGBA[j] = to_add->RGBA[j];
-        bottomright[2].lighting[j] = 0.0f;
+        bottomright[2].lighting[j] = j == 3 ? 1.0f : 0.0f;
     }
     
     Vertex topleft_rotated[3];
@@ -323,22 +320,16 @@ void add_quad_to_gpu_workload(
         bottomright_rotated[i].y /= (window_height * 0.5f);
         bottomright_rotated[i].y -= 1.0f;
     }
-
-    Vertex topleft_lit[3];
-    Vertex bottomright_lit[3];
-    for (uint32_t i = 0; i < 3; i++) {
-        topleft_lit[i] = topleft_rotated[i];
-        bottomright_lit[i] = bottomright_rotated[i];
-    }
+    
     for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
         triangle_apply_lighting(
             /* Vertex[3] out_input: */
-                topleft_lit,
+                topleft_rotated,
             /* ZlightSource zlight_source: */
                 &zlights_transformed[i]);
         triangle_apply_lighting(
             /* Vertex[3] out_input: */
-                bottomright_lit,
+                bottomright_rotated,
             /* ZlightSource zlight_source: */
                 &zlights_transformed[i]);
     }

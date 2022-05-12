@@ -200,29 +200,29 @@ void load_assets() {
     
     // initialize global zLightSource objects, to set up
     // our lighting for the scene
-    zlights_to_apply[0].x = 50.0f;
-    zlights_to_apply[0].y = 10.0f;
-    zlights_to_apply[0].z = 40.0f;
+    zlights_to_apply[0].x = window_width;
+    zlights_to_apply[0].y = window_height * 0.5f;
+    zlights_to_apply[0].z = -0.5f;
     zlights_to_apply[0].RGBA[0] = 1.0f;
     zlights_to_apply[0].RGBA[1] = 0.0f;
     zlights_to_apply[0].RGBA[2] = 1.0f;
     zlights_to_apply[0].RGBA[3] = 1.0f;
-    zlights_to_apply[0].reach = 15.0f;
-    zlights_to_apply[0].ambient = 0.0;
-    zlights_to_apply[0].diffuse = 8.0;
+    zlights_to_apply[0].reach = 150.0f;
+    zlights_to_apply[0].ambient = 8.0f;
+    zlights_to_apply[0].diffuse = 20.0f;
     zlights_to_apply_size += 1;
     assert(zlights_to_apply_size <= ZLIGHTS_TO_APPLY_ARRAYSIZE);
     
-    zlights_to_apply[1].x = -50.0f;
-    zlights_to_apply[1].y = -10.0f;
-    zlights_to_apply[1].z = 40.0f;
+    zlights_to_apply[1].x = 0.0f;
+    zlights_to_apply[1].y = window_height * 0.5f;
+    zlights_to_apply[1].z = -0.5f;
     zlights_to_apply[1].RGBA[0] = 0.0f;
     zlights_to_apply[1].RGBA[1] = 1.0f;
     zlights_to_apply[1].RGBA[2] = 0.0f;
     zlights_to_apply[1].RGBA[3] = 1.0f;
-    zlights_to_apply[1].reach = 15.0f;
-    zlights_to_apply[1].ambient = 0.0;
-    zlights_to_apply[1].diffuse = 8.0;
+    zlights_to_apply[1].reach = 20.0f;
+    zlights_to_apply[1].ambient = 8.0f;
+    zlights_to_apply[1].diffuse = 20.0f;
     zlights_to_apply_size += 1;
     assert(zlights_to_apply_size <= ZLIGHTS_TO_APPLY_ARRAYSIZE);
     
