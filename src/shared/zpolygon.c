@@ -2,19 +2,10 @@
 
 ProjectionConstants projection_constants = {};
 
-// The global camera
-// In a 2D game, move the x to the left to move all of your
-// sprites to the right
-zCamera camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-
 // If you want to draw 3D objects to the screen, you need
 // to set them up here
 zPolygon zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
 uint32_t zpolygons_to_render_size = 0;
-
-// You need at least 1 light to make your objects visible
-zLightSource zlights_to_apply[ZLIGHTS_TO_APPLY_ARRAYSIZE];
-uint32_t zlights_to_apply_size = 0;
 
 void init_projection_constants() {
     
@@ -596,8 +587,11 @@ void ztriangle_apply_lighting(
     assert(zlight_source != NULL);
     
     // add lighting to the 3 vertices
-    for (uint32_t m = 0; m < 3; m++) {
-        
+    for (
+        uint32_t m = 0;
+        m < 3;
+        m++)
+    {
         zVertex light_source_pos;
         light_source_pos.x = zlight_source->x;
         light_source_pos.y = zlight_source->y;
@@ -715,23 +709,6 @@ void ztriangle_to_2d(
     }
 }
 
-zVertex x_rotate_zvertex(
-    const zVertex * input,
-    const float angle)
-{
-    zVertex return_value = *input;
-    
-    return_value.y =
-        (input->y * cosf(angle))
-        - (input->z * sinf(angle));
-    
-    return_value.z =
-        (input->y * sinf(angle)) +
-        (input->z * cosf(angle));
-    
-    return return_value;
-}
-
 zTriangle x_rotate_ztriangle(
     const zTriangle * input,
     const float angle)
@@ -755,22 +732,6 @@ zTriangle x_rotate_ztriangle(
     return return_value;
 }
 
-zVertex z_rotate_zvertex(
-    const zVertex * input,
-    const float angle)
-{
-    zVertex return_value = *input;
-    
-    return_value.x =
-        (input->x * cosf(angle))
-        - (input->y * sinf(angle));
-    
-    return_value.y =
-        (input->y * cosf(angle)) +
-        (input->x * sinf(angle));
-    
-    return return_value;
-}
 
 zTriangle z_rotate_ztriangle(
     const zTriangle * input,
@@ -791,23 +752,6 @@ zTriangle z_rotate_ztriangle(
             &return_value.vertices[i],
             angle);
     }
-    
-    return return_value;
-}
-
-zVertex y_rotate_zvertex(
-    const zVertex * input,
-    const float angle)
-{
-    zVertex return_value = *input;
-    
-    return_value.x =
-        (input->x * cosf(angle))
-        + (input->z * sinf(angle));
-    
-    return_value.z =
-        (input->z * cosf(angle)) -
-        (input->x * sinf(angle));
     
     return return_value;
 }

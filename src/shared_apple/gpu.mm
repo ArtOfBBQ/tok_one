@@ -137,6 +137,7 @@ uint64_t previous_time;
 
 - (void)updateTextureArray: (int32_t)texturearray_i
 {
+    printf("updateTextureArray: %i\n", texturearray_i);
     assert(texturearray_i < TEXTUREARRAYS_SIZE);
     assert(texturearray_i < texture_arrays_size);
     int32_t i = texturearray_i;
@@ -253,6 +254,7 @@ uint64_t previous_time;
     
     printf("replacing object at index: %i\n", i);
     [_metal_textures replaceObjectAtIndex:i withObject: texture];
+    printf("replaced\n");
 }
 
 - (void)drawInMTKView:(MTKView *)view
@@ -286,11 +288,20 @@ uint64_t previous_time;
     
     touchable_triangles_size = 0;
     
+    // translate all lights
+    zLightSource zlights_transformed[zlights_to_apply_size];
+    translate_lights(
+        /* originals: */ &zlights_to_apply[0],
+        /* out_translated: */ &zlights_transformed[0],
+        /* lights_count: */ zlights_to_apply_size);
+    
     software_render(
         /* next_gpu_workload: */
             vertices_for_gpu,
         /* next_gpu_workload_size: */
             &vertices_for_gpu_size,
+        /* zlights_transformed: */
+            zlights_transformed,
         /* elapsed_microseconds: */
             elapsed);
     
@@ -298,7 +309,9 @@ uint64_t previous_time;
         /* next_gpu_workload: */
             vertices_for_gpu,
         /* next_gpu_workload_size: */
-            &vertices_for_gpu_size);
+            &vertices_for_gpu_size,
+        /* zlights_transformed: */
+            zlights_transformed);
     
     @autoreleasepool 
     {

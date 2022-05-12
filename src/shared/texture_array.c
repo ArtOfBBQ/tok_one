@@ -4,6 +4,7 @@ TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
 uint32_t texture_arrays_size = 0;
 
 
+
 // returns new_texture_array_i (index in texture_arrays)
 void register_new_texturearray_from_files(
     const char ** filenames,

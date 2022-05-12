@@ -16,6 +16,7 @@ void init_renderer() {
 void software_render(
     Vertex * next_gpu_workload,
     uint32_t * next_workload_size,
+    zLightSource * zlights_transformed,
     uint64_t elapsed_nanoseconds)
 {
     if (renderer_initialized != true) {
@@ -118,34 +119,6 @@ void software_render(
         triangles_to_draw_size,
         sizeof(zTriangle),
         &sorter_cmpr_lowest_z);
-    
-    // translate all lights
-    zLightSource zlights_transformed[zlights_to_apply_size];
-    for (uint32_t i = 0; i < zlights_to_apply_size; i++)
-    {
-        zVertex translated_light_pos;
-        translated_light_pos.x =
-            zlights_to_apply[i].x - camera.x;
-        translated_light_pos.y =
-            zlights_to_apply[i].y - camera.y;
-        translated_light_pos.z =
-            zlights_to_apply[i].z - camera.z;
-        translated_light_pos = x_rotate_zvertex(
-            &translated_light_pos,
-            -1 * camera.x_angle);
-        translated_light_pos = y_rotate_zvertex(
-            &translated_light_pos,
-            -1 * camera.y_angle);
-        translated_light_pos = z_rotate_zvertex(
-            &translated_light_pos,
-            -1 * camera.z_angle);
-        
-        zlights_transformed[i] = zlights_to_apply[i];
-        zlights_transformed[i].x = translated_light_pos.x;
-        zlights_transformed[i].y = translated_light_pos.y;
-        zlights_transformed[i].z = translated_light_pos.z;
-    }
-    
     
     // we're not using the camera because the entire world
     // was translated to have the camera be at 0,0,0

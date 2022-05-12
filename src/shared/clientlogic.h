@@ -7,6 +7,7 @@
 #include "texquad_type.h"
 #include "texture_array.h"
 #include "zpolygon.h"
+#include "lightsource.h"
 #include "vertex_types.h"
 #include "debigulator/src/decodedimage.h"
 #include "platform_layer.h"

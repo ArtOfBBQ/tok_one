@@ -23,7 +23,7 @@ exist.
 #include "debigulator/src/decodedimage.h"
 #include "vertex_types.h"
 #include "draw_triangle.h"
-#include "zpolygon.h"
+#include "lightsource.h"
 
 #define TEXQUADS_TO_RENDER_ARRAYSIZE 2000
 extern TexQuad texquads_to_render[TEXQUADS_TO_RENDER_ARRAYSIZE];
@@ -47,7 +47,8 @@ void delete_texquad_object(
 /* Draw bitmap(s) of pixels and add them to the gpu's workload */
 void draw_texquads_to_render(
     Vertex * next_gpu_workload,
-    uint32_t * next_gpu_workload_size);
+    uint32_t * next_gpu_workload_size,
+    const zLightSource * zlights_transformed);
 
 #endif
 

@@ -9,6 +9,7 @@
 
 #include "common.h"
 #include "vertex_types.h"
+#include "lightsource.h"
 #include "window_size.h"
 
 // projection constants
@@ -24,39 +25,9 @@ extern ProjectionConstants projection_constants;
 
 void init_projection_constants(void);
 
-typedef struct zCamera {
-    float x;
-    float y;
-    float z;
-    float x_angle;
-    float y_angle;
-    float z_angle;
-} zCamera;
-extern zCamera camera;
-
-typedef struct zLightSource {
-    float x;
-    float y;
-    float z;
-    float RGBA[4];
-    float reach;   // max distance before light intensity 0
-    float ambient; // how much ambient light does this radiate?
-    float diffuse; // how much diffuse light does this radiate?
-} zLightSource;
-
-// A buffer of zLightSources to light up your scene(s)
-// index 0 to zlights_to_apply_size will be rendered,
-// the rest of the array will be ignored
-#define ZLIGHTS_TO_APPLY_ARRAYSIZE 50
-extern zLightSource zlights_to_apply[ZLIGHTS_TO_APPLY_ARRAYSIZE];
-extern uint32_t zlights_to_apply_size;
-
-typedef struct zVertex {
-    float x;
-    float y;
-    float z;
-    float uv[2];         // texture coords, ignored if untextured
-} zVertex;
+void zcamera_move_forward(
+    zCamera * to_move,
+    const float distance);
 
 typedef struct zTriangle {
     zVertex vertices[3];
@@ -105,20 +76,11 @@ void ztriangle_to_2d(
     Vertex recipient[3],
     zTriangle * input);
 
-zVertex x_rotate_zvertex(
-    const zVertex * input,
-    const float angle);
 zTriangle x_rotate_ztriangle(
     const zTriangle * input,
     const float angle);
-zVertex y_rotate_zvertex(
-    const zVertex * input,
-    const float angle);
 zTriangle y_rotate_ztriangle(
     const zTriangle * input,
-    const float angle);
-zVertex z_rotate_zvertex(
-    const zVertex * input,
     const float angle);
 zTriangle z_rotate_ztriangle(
     const zTriangle * input,
@@ -176,10 +138,6 @@ float get_visibility_rating(
 float dot_of_vertices(
     const zVertex vertex_1,
     const zVertex vertex_2);
-
-void zcamera_move_forward(
-    zCamera * to_move,
-    const float distance);
 
 #endif
 
