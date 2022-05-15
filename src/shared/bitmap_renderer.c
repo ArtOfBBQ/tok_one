@@ -32,7 +32,7 @@ void triangle_apply_lighting(
         for (uint32_t l = 0; l < 3; l++) {
             out_input[m].lighting[l] +=
                 zlight_source->RGBA[l] *
-                (zlight_source->ambient) *
+                zlight_source->ambient *
                 distance_mod;
         }
     }

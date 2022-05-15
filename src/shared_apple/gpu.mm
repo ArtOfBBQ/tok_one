@@ -265,7 +265,8 @@ uint64_t previous_time;
     
     for (uint32_t i = 0; i < texture_arrays_size; i++) {
         if (texture_arrays[i].request_update) {
-            [self updateTextureArray: i];    
+            [self updateTextureArray: i];
+            break;
         }
     }
     
