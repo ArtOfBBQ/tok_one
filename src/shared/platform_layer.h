@@ -36,10 +36,27 @@ typedef struct FileBuffer {
 char * platform_get_application_path();
 char * platform_get_cwd();
 
-// Read a file (without path, only filename)
-// and return its contents as a buffer of bytes
-FileBuffer * platform_read_file(
-    const char * filename);
+/*
+Get a file's size. Returns -1 if no such file
+*/
+int64_t platform_get_filesize(const char * filename);
+
+/*
+Read a file (without path, only filename)
+and return its contents as a buffer of bytes
+
+out_allocatedbuffer should have memory allocated
+already and size set to its maximum capacity
+
+the file contents will stop copying when the filebuffer
+is full, so you can set the filbuffer's size to a small amount
+to quickly read the first (x-1) bytes of a large file
+it's x-1 and not x because a 0 will be appended at the end
+to make windows happy
+*/
+void platform_read_file(
+    const char * filename,
+    FileBuffer * out_preallocatedbuffer);
 
 // Run a task in the background
 // This will trigger clientlogic.c's client_logic_threadmain()

@@ -20,25 +20,27 @@ void register_new_texturearray_from_files(
     {
         const char * filename = filenames[i];
         
-        FileBuffer * file_buffer =
-            platform_read_file(filename);
-        
-        if (file_buffer == NULL) {
-            printf(
-                "ERR - fail to add texarray - unfound file %s\n",
-                filename);
-            assert(0);
-        }
-        
+        FileBuffer file_buffer;
+        file_buffer.size = platform_get_filesize(filename) + 1;
+        char filebuffer_contents[file_buffer.size];
+        assert(file_buffer.size > 1);
+        file_buffer.contents =
+            (char *)&filebuffer_contents;
+        platform_read_file(
+            filename,
+            &file_buffer);
+       
+        printf("decode_png for decoded_images[%u]...\n", i); 
         decoded_images[i] =
             decode_PNG(
-                (uint8_t *)file_buffer->contents,
-                file_buffer->size);
-        
-        free(file_buffer->contents);
-        free(file_buffer);
+                (uint8_t *)file_buffer.contents,
+                file_buffer.size - 1);
+        printf(
+            "finished decode_png, decoded_images[%u]->good: %u\n",
+            i); 
     }
-    
+   
+    printf("starting register_new_texarray_from_images...\n"); 
     register_new_texturearray_from_images(
         /* DecodedImage ** new_images : */
             (const DecodedImage **)&decoded_images[0],
