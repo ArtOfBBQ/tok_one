@@ -6,6 +6,10 @@
 #include "debigulator/src/decode_png.h"
 #include "vertex_types.h"
 
+#define MAX_ASSET_FILENAME_SIZE 30
+#define MAX_FILES_IN_SINGLE_TEXARRAY 200
+#define MAX_ASSET_FILES 1500
+
 typedef struct TextureArray {
     DecodedImage * image;
     uint32_t sprite_columns;
@@ -28,6 +32,12 @@ DecodedImage * extract_image(
     TextureArray * texture_array,
     uint32_t x,
     uint32_t y);
+
+void update_texturearray_from_0terminated_files(
+    const int32_t texturearray_i,
+    const char filenames
+        [MAX_FILES_IN_SINGLE_TEXARRAY]
+        [MAX_ASSET_FILENAME_SIZE]);
 
 /*
 Next are functions to register new image(s) or imgfile(s0

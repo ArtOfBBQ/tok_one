@@ -33,15 +33,11 @@ int64_t platform_get_filesize(const char * filename)
         "rb+");
     
     if (!file_handle) {
-        printf("file read unsuccesful!\n");
         return -1;
     }
     
     fseek(file_handle, 0L, SEEK_END);
     int64_t fsize = ftell(file_handle);
-    printf(
-        "finished platform_get_filesize(), fsize: %i\n",
-        fsize);
     
     fclose(file_handle);
     
@@ -57,21 +53,12 @@ void platform_read_file(
     const char * filename,
     FileBuffer * out_preallocatedbuffer)
 {
-    printf(
-        "platform_read_file: %s of size: %u\n",
-        filename,
-        out_preallocatedbuffer->size);
     assert(out_preallocatedbuffer != NULL);
     assert(out_preallocatedbuffer->size > 0);
     assert(out_preallocatedbuffer->contents != NULL);
-    printf(
-        "platform_read_file: %s into buffer sized: %lu\n",
-        filename,
-        out_preallocatedbuffer->size);
     char filename_with_slash[1000];
     char path_and_filename[1000];
     
-    printf("concat_strings...\n"); 
     concat_strings(
         /* string_1: */
             "/",
@@ -81,7 +68,6 @@ void platform_read_file(
             filename_with_slash,
         /* output_size: */
             1000);
-    printf("filename_with_slash: %s\n", filename_with_slash);
     concat_strings(
         /* string_1: */
             platform_get_application_path(),
@@ -91,7 +77,6 @@ void platform_read_file(
             path_and_filename,
         /* output_size: */
             1000);
-    printf("path_and_filename: %s\n", path_and_filename);
    
     sleep(0.25f); 
     FILE * file_handle = fopen(
@@ -99,7 +84,6 @@ void platform_read_file(
         "rb+");
     
     if (!file_handle) {
-        printf("file read unsuccesful!\n");
         return NULL;
     }
     
@@ -115,11 +99,7 @@ void platform_read_file(
         (fsize + 1) < out_preallocatedbuffer->size ?
             (fsize + 1)
             : out_preallocatedbuffer->size;
-    printf(
-        "changed out_preallocatedbuffer->size to: %u\n",
-        out_preallocatedbuffer->size);
     
-    printf("fread:\n");
     size_t bytes_read = fread(
         /* ptr: */
             out_preallocatedbuffer->contents,
@@ -129,21 +109,12 @@ void platform_read_file(
             out_preallocatedbuffer->size - 1,
         /* stream: */
             file_handle);
-    printf("fread succesful:\n");
    
-    printf("fclose\n"); 
     fclose(file_handle);
-    printf("fclose succesful\n"); 
 
-    printf("append a 0 at the end\n"); 
     out_preallocatedbuffer->contents[
         out_preallocatedbuffer->size - 1]
             = 0; // for windows
-    
-    printf(
-        "finished platform_read_file: %s into buffer sized: %u\n",
-        filename,
-        out_preallocatedbuffer->size);
     
     return out_preallocatedbuffer;
 }
