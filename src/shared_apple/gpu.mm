@@ -143,6 +143,7 @@ uint64_t previous_time;
 
 - (void)updateTextureArray: (int32_t)texturearray_i
 {
+    texture_arrays[texturearray_i].request_update = false;
     printf("updateTextureArray: %i\n", texturearray_i);
     assert(texturearray_i < TEXTUREARRAYS_SIZE);
     assert(texturearray_i < texture_arrays_size);
@@ -171,8 +172,6 @@ uint64_t previous_time;
         return;
     }
     
-    texture_arrays[i].request_update = false;
-    
     uint32_t slice_count =
         texture_arrays[i].sprite_rows *
             texture_arrays[i].sprite_columns;
@@ -187,21 +186,18 @@ uint64_t previous_time;
             TEXTUREARRAYS_SIZE);
         assert(0);
     }
-   
-    printf("create texture descriptor\n"); 
+    
     MTLTextureDescriptor * texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
     texture_descriptor.textureType = MTLTextureType2DArray;
     texture_descriptor.arrayLength = slice_count;
     texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
-    printf("set width/height\n"); 
     texture_descriptor.width =
         texture_arrays[i].image->width
             / texture_arrays[i].sprite_columns;
     texture_descriptor.height =
         texture_arrays[i].image->height
             / texture_arrays[i].sprite_rows;
-    printf("create MTLTexture\n"); 
     id<MTLTexture> texture =
         [_metal_device
             newTextureWithDescriptor:texture_descriptor];
@@ -214,13 +210,11 @@ uint64_t previous_time;
         row_i <= texture_arrays[i].sprite_rows;
         row_i++)
     {
-        printf("row_i: %u\n", row_i);
         for (
             uint32_t col_i = 1;
             col_i <= texture_arrays[i].sprite_columns;
             col_i++)
         {
-            printf("col_i: %u\n", row_i);
             DecodedImage * new_slice =
                 extract_image(
                     /* texture_array: */ &texture_arrays[i],
@@ -240,7 +234,6 @@ uint64_t previous_time;
                 }
             };
             
-            printf("replace region\n");
             [texture
                 replaceRegion:
                     region

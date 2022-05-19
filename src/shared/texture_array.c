@@ -29,9 +29,7 @@ void update_texturearray_from_0terminated_files(
         t_i < MAX_FILES_IN_SINGLE_TEXARRAY
         && filenames[t_i][0] != '\0')
     {
-        printf("t_i: %u\n", t_i);
         const char * filename = filenames[t_i];
-        printf("filename: %s\n", filename);
         
         FileBuffer file_buffer;
         file_buffer.size = platform_get_filesize(filename) + 1;
