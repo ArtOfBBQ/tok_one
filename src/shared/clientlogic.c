@@ -5,14 +5,16 @@ DecodedImage * decoded_pngs[TEXTURE_FILENAMES_SIZE];
 
 zPolygon load_from_obj_file(char * filename)
 {
-    FileBuffer * buffer = platform_read_file(filename);
+    FileBuffer buffer;
+    buffer.size = platform_get_filesize(filename) + 1;
+    char buffer_contents[buffer.size];
+    buffer.contents = (char *)&buffer_contents;
+    platform_read_file(filename, &buffer);
     
-    zPolygon return_value = parse_obj(
-        /* rawdata     : */ buffer->contents,
-        /* rawdata_size: */ buffer->size);
-    
-    free(buffer->contents);
-    free(buffer);
+    zPolygon return_value =
+        parse_obj(
+            /* rawdata     : */ buffer.contents,
+            /* rawdata_size: */ buffer.size);
     
     return return_value;
 }
@@ -20,47 +22,10 @@ zPolygon load_from_obj_file(char * filename)
 uint32_t label_object_id = 0;
 uint32_t teapot_object_id = 1;
 
-void client_logic_startup() {
-    printf("client_logic_startup()\n");    
-    // These are some example texture atlases we're using for
-    // texture mapping on cards and cubes
-    assert(TEXTUREARRAYS_SIZE > 0);
-    
-    printf("let's try dispatch_async\n");
-    platform_start_thread(/* threadmain_id: */ 0);
-
-    platform_start_thread(/* threadmain_id: */ 1);
-    
-    printf("finished client_logic_startup()\n");    
-}
-
-void change_assets() {
-    sleep(10);
-    
-    FileBuffer * file_buffer =
-        platform_read_file("replacement.png");
-    
-    if (file_buffer == NULL) {
-        printf(
-            "ERR - fail to mod unfound file replacement.png\n");
-        assert(0);
-    }
-    
-    DecodedImage * replacement_img =
-        decode_PNG(
-            (uint8_t *)file_buffer->contents,
-            file_buffer->size);
-    
-    printf("updating texture_arrays[1]\n");
-    texture_arrays[1].sprite_columns = 1;
-    texture_arrays[1].sprite_rows = 1;
-    texture_arrays[1].image = replacement_img;
-    texture_arrays[1].request_update = true;
-}
-
 // reminder: this will be run in the background, a
 // thread is called in client_logic_startup
 void load_assets() {
+    printf("load_assets()\n");
     
     // an example of a font texture in font.png
     // Note: I generally keep my font in slot 0 and only
@@ -103,8 +68,8 @@ void load_assets() {
     texture_arrays[2].sprite_columns = 3;
     texture_arrays[2].sprite_rows = 2;
     texture_arrays_size++;
-    
-    FileBuffer * file_buffer;
+     
+    FileBuffer file_buffer;
     
     assert(TEXTURE_FILENAMES_SIZE <= TEXTUREARRAYS_SIZE);
     char * texture_filenames[TEXTURE_FILENAMES_SIZE] = {
@@ -120,31 +85,82 @@ void load_assets() {
         i < TEXTURE_FILENAMES_SIZE;
         i++)
     {
+        printf("texture_arrays update at i: %u\n", i);
         assert(i < TEXTUREARRAYS_SIZE);
         
-        file_buffer = platform_read_file(
-            texture_filenames[i]);
+        file_buffer.size =
+            platform_get_filesize(texture_filenames[i]) + 1;
+        file_buffer.contents =
+            (char *)malloc(file_buffer.size);
+        printf(
+            "loaded file_buffer with size: %u\n",
+            file_buffer.size);
         
-        if (file_buffer == NULL)
+        if (file_buffer.size < 1)
         {
             printf(
                 "ERROR: failed to read file from disk: %s\n",
                 texture_filenames[i]);
-            assert(false);
-        }
-        decoded_pngs[i] = decode_PNG(
-            (uint8_t *)file_buffer->contents,
-            file_buffer->size);
-        assert(decoded_pngs[i]->good);
-        assert(decoded_pngs[i]->rgba_values_size > 0);
-        
-        if (i < 3) {
-            texture_arrays[i].image = decoded_pngs[i];
-            texture_arrays[i].request_update = true;
+            assert(0);
         }
         
-        free(file_buffer->contents);
-        free(file_buffer);
+        platform_read_file(
+            texture_filenames[i], &file_buffer);
+        printf(
+            "read file %s into file buffer\n",
+            texture_filenames[i]);
+        
+        DecodedImage * new_image =
+            (DecodedImage *)malloc(sizeof(DecodedImage));
+        new_image->good = false;
+        
+        printf("get width & height...\n"); 
+        
+        get_PNG_width_height(
+            /* uint8_t * compressed_bytes: */
+                (uint8_t *)file_buffer.contents,
+            /* uint32_t compressed_bytes_size: */
+                50,
+            /* uint32_t * width_out: */
+                &new_image->width,
+            /* uint32_t * height_out: */
+                &new_image->height);
+        
+        printf(
+            "loaded PNG with width/height: [%u,%u]\n",
+            new_image->width,
+            new_image->height);
+        
+        assert(new_image->width > 0);
+        assert(new_image->height > 0);
+        
+        new_image->rgba_values_size =
+            new_image->width * new_image->height * 4;
+        new_image->rgba_values =
+            (uint8_t *)malloc(new_image->rgba_values_size);
+        printf(
+            "allocated new_iamge with size: %u bytes\n",
+            new_image->rgba_values_size);
+        
+        decode_PNG(
+            /* compressed_bytes: */
+                (uint8_t *)file_buffer.contents,
+            /* compressed_bytes_size: */
+                file_buffer.size - 1,
+            /* DecodedImage * out_preallocated_png: */
+                new_image);
+        printf(
+            "decoded_png with size: [%u,%u]\n",
+            new_image->width,
+            new_image->height);
+        
+        decoded_pngs[i] = new_image;
+        
+        texture_arrays[i].image = decoded_pngs[i];
+        texture_arrays[i].request_update = true;
+        
+        free(file_buffer.contents);
+        
         printf(
             "loaded texture %s with width %u from disk\n",
             texture_filenames[i],
@@ -227,7 +243,7 @@ void load_assets() {
     assert(zlights_to_apply_size <= ZLIGHTS_TO_APPLY_ARRAYSIZE);
     
     font_height = 40.0f;
- 
+    
     TexQuad sample_pic;
     construct_texquad(&sample_pic);
     sample_pic.object_id = 4;
@@ -294,15 +310,24 @@ void load_assets() {
     request_scheduled_animation(&downsize_concatenated_img);
 }
 
+void client_logic_startup() {
+    printf("client_logic_startup()\n");    
+    // These are some example texture atlases we're using for
+    // texture mapping on cards and cubes
+    assert(TEXTUREARRAYS_SIZE > 0);
+   
+    // reminder: threadmain_id 0 calls load_assets() 
+    platform_start_thread(/* threadmain_id: */ 0);
+    
+    printf("finished client_logic_startup()\n");    
+}
+
 void client_logic_threadmain(int32_t threadmain_id) {
     printf("client_logic_threadmain(%i)\n", threadmain_id);
 
     switch (threadmain_id) {
         case (0):
             load_assets();
-            break;
-        case (1):
-            change_assets();
             break;
         default:
             printf(

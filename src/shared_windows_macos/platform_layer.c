@@ -33,6 +33,9 @@ int64_t platform_get_filesize(const char * filename)
         "rb+");
     
     if (!file_handle) {
+        printf(
+            "Warning: failed to read path_and_file %s\n",
+            path_and_filename);
         return -1;
     }
     

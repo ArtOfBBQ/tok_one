@@ -42,11 +42,36 @@ void update_texturearray_from_0terminated_files(
             filename,
             &file_buffer);
         
-        decoded_images[t_i] =
-            decode_PNG(
-                (uint8_t *)file_buffer.contents,
-                file_buffer.size - 1);
+        DecodedImage * new_image;
+        new_image->good = false;
         
+        get_PNG_width_height(
+            /* uint8_t * compressed_bytes: */
+                (uint8_t *)file_buffer.contents,
+            /* uint32_t compressed_bytes_size: */
+                50,
+            /* uint32_t * width_out: */
+                &new_image->width,
+            /* uint32_t * height_out: */
+                &new_image->height);
+
+        assert(new_image->width > 0);
+        assert(new_image->height > 0);
+        
+        new_image->rgba_values = (uint8_t *)malloc(
+            new_image->width * new_image->height * 4);
+        
+        decode_PNG(
+            /* compressed_bytes: */
+                (uint8_t *)file_buffer.contents,
+            /* compressed_bytes_size: */
+                file_buffer.size - 1,
+            /* DecodedImage * out_preallocated_png: */
+                new_image);
+        
+        assert(new_image->good);
+        
+        decoded_images[t_i] = new_image;
         free(filebuffer_contents);
         
         t_i++;
@@ -75,6 +100,9 @@ void register_new_texturearray_from_files(
     const char ** filenames,
     const uint32_t filenames_size)
 {
+    printf(
+        "register_new_texturearray_from_files (%u files)\n",
+        filenames_size);
     uint32_t decoded_images_size = filenames_size;
     DecodedImage * decoded_images[decoded_images_size];   
     
@@ -94,24 +122,54 @@ void register_new_texturearray_from_files(
         platform_read_file(
             filename,
             &file_buffer);
-       
-        decoded_images[i] =
-            decode_PNG(
+        
+        DecodedImage * new_image;
+        new_image->good = false;
+        
+        get_PNG_width_height(
+            /* uint8_t * compressed_bytes: */
                 (uint8_t *)file_buffer.contents,
-                file_buffer.size - 1);
+            /* uint32_t compressed_bytes_size: */
+                50,
+            /* uint32_t * width_out: */
+                &new_image->width,
+            /* uint32_t * height_out: */
+                &new_image->height);
+
+        assert(new_image->width > 0);
+        assert(new_image->height > 0);
+        
+        new_image->rgba_values = (uint8_t *)malloc(
+            new_image->width * new_image->height * 4);
+        
+        decode_PNG(
+            /* compressed_bytes: */
+                (uint8_t *)file_buffer.contents,
+            /* compressed_bytes_size: */
+                file_buffer.size - 1,
+            /* DecodedImage * out_preallocated_png: */
+                new_image);
     }
-   
+    
     register_new_texturearray_from_images(
         /* DecodedImage ** new_images : */
             (const DecodedImage **)&decoded_images[0],
         /* new_images_size: */
             decoded_images_size);
+
+    printf(
+        "finished register_new_texturearray_from_files (%u files)\n",
+        filenames_size);
 }
 
 void register_new_texturearray_from_images(
     const DecodedImage ** new_images,
     const uint32_t new_images_size)
 {
+    printf(
+        "register_new_texturearray_from_images (%u images)\n",
+        new_images_size);
+    
     assert(new_images_size > 0);
     
     uint32_t current_width = new_images[0]->width;
@@ -170,11 +228,17 @@ void register_new_texturearray_from_images(
     assert(texture_arrays[new_i].image->width > 0);
     assert(texture_arrays[new_i].image->height > 0);
     texture_arrays[new_i].request_update = true;
+    
+    printf(
+        "finished register_new_texturearray_from_images (%u images)\n",
+        new_images_size);
 }
 
 void register_new_texturearray(
     const DecodedImage * new_image)
 {
+    printf("register_new_texturearray\n");
+    
     assert(new_image != NULL);
     assert(new_image->width > 0);
     assert(new_image->height > 0);
@@ -183,6 +247,8 @@ void register_new_texturearray(
     register_new_texturearray_from_images(
         (const DecodedImage **)&images[0],
         1);
+
+    printf("finished register_new_texturearray\n");
 }
 
 DecodedImage * extract_image(
@@ -190,6 +256,7 @@ DecodedImage * extract_image(
     uint32_t x,
     uint32_t y)
 {
+    printf("extract_image at position [%u,%u]\n", x, y); 
     assert(x > 0);
     assert(y > 0);
     assert(x <= texture_array->sprite_columns);
@@ -209,10 +276,29 @@ DecodedImage * extract_image(
         texture_array->image->height
             / texture_array->sprite_rows;
     
-    new_image->rgba_values =
-        (uint8_t *)malloc(sizeof(char) * slice_size);
-    
     new_image->rgba_values_size = slice_size;
+    printf(
+        "new_image->rgba_values_size: %u\n",
+        slice_size); 
+    printf(
+        "because texture_array->sprite_columns was: %u\n",
+        texture_array->sprite_columns);
+    printf(
+        "because texture_array->sprite_rows was: %u\n",
+        texture_array->sprite_rows);
+    printf(
+        "because texture_array->image->width was %u\n",
+        texture_array->image->width);
+    printf(
+        "because texture_array->image->height was %u\n",
+        texture_array->image->height);
+    printf(
+        "because texture_array->rgba_values_size was: %u\n",
+        texture_array->image->rgba_values_size);
+    
+    new_image->rgba_values =
+        (uint8_t *)malloc(slice_size);
+    
     new_image->width = slice_width;
     new_image->height = slice_height;
     
@@ -221,7 +307,10 @@ DecodedImage * extract_image(
     uint32_t end_y = start_y + slice_height;
     
     uint32_t i = 0;
-    for (uint32_t cur_y = start_y; cur_y < end_y; cur_y++)
+    for (
+        uint32_t cur_y = start_y;
+        cur_y < end_y;
+        cur_y++)
     {
         // get the pixel that's at [start_x, cur_y]
         // copcur_y slice_width pixels
@@ -229,8 +318,11 @@ DecodedImage * extract_image(
             ((start_x - 1) * 4)
                 + ((cur_y - 1) * texture_array->image->width * 4);
         assert(i < new_image->rgba_values_size);
-        for (uint32_t _ = 0; _ < (slice_width * 4); _++) {
-
+        for (
+            uint32_t _ = 0;
+            _ < (slice_width * 4);
+            _++)
+        {
             assert(
                 (pixel_i + _)
                     < texture_array->image->rgba_values_size);
@@ -239,7 +331,12 @@ DecodedImage * extract_image(
             i++;
         }
     }
-
+    
+    printf(
+        "finished extract_image, new image has dims[%u,%u] and rgba_values_size of %u\n",
+        new_image->width,
+        new_image->height,
+        new_image->rgba_values_size); 
     return new_image;
 }
 

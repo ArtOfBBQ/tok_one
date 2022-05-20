@@ -138,7 +138,9 @@ uint64_t previous_time;
             assert(0);
         }
         [self updateTextureArray: i];
-    }    
+    }
+
+    printf("finished configureMetalWithDevice\n");
 }
 
 - (void)updateTextureArray: (int32_t)texturearray_i

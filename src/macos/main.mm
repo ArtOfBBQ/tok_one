@@ -148,7 +148,7 @@ int main(int argc, const char * argv[])
     apple_gpu_delegate =
         [[MetalKitViewDelegate alloc] init];
     [mtk_view setDelegate: apple_gpu_delegate];
-
+    
     char shader_lib_path_cstr[5000];
     concat_strings(
         /* string_1: */ platform_get_application_path(),

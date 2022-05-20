@@ -1,6 +1,10 @@
 APP_NAME="hello3dgfx"
 PLATFORM="macos"
 
+# echo "Booting without building..."
+# cd build/$PLATFORM/$APP_NAME.app && lldb ./$APP_NAME
+# exit 0
+
 MAC_FRAMEWORKS="
     -framework AppKit 
     -framework MetalKit 
@@ -11,12 +15,11 @@ TOK_ONE_SOURCEFILES="src/$PLATFORM/main.mm src/$PLATFORM/platform_layer.c src/sh
 echo "Building $APP_NAME for $PLATFORM..."
 
 echo "deleting previous build(s)..."
-rm -r -f build
+rm -r -f build/$PLATFORM/$APP_NAME.app/$APP_NAME
+rm -r -f build/$PLATFORM/$APP_NAME.app/$APP_NAME.dsym
 
 echo "Creating build folder..."
-mkdir build
-mkdir build/$PLATFORM
-mkdir build/$PLATFORM/$APP_NAME.app
+mkdir -r build/$PLATFORM/$APP_NAME.app
 
 ############
 echo "Creating metal library..."
@@ -26,24 +29,25 @@ xcrun -sdk macosx metal -c "src/shared_apple/shaders.metal" -o Shaders.air
 xcrun -sdk macosx metallib resources/Shaders.air -o build/$PLATFORM/$APP_NAME.app/Shaders.metallib
 ############
 
+echo "skipping resource copy..."
 echo "copy resources..."
-cp resources/cardwithuvcoords.obj build/$PLATFORM/$APP_NAME.app/cardwithuvcoords.obj
-cp resources/teapot.obj build/$PLATFORM/$APP_NAME.app/teapot.obj
-cp resources/phoebus.png build/$PLATFORM/$APP_NAME.app/phoebus.png
-cp resources/sampletexture.png build/$PLATFORM/$APP_NAME.app/sampletexture.png
-cp resources/font.png build/$PLATFORM/$APP_NAME.app/font.png
-cp resources/structuredart1.png build/$PLATFORM/$APP_NAME.app/structuredart1.png
-cp resources/structuredart2.png build/$PLATFORM/$APP_NAME.app/structuredart2.png
-cp resources/structuredart3.png build/$PLATFORM/$APP_NAME.app/structuredart3.png
-cp resources/replacement.png build/$PLATFORM/$APP_NAME.app/replacement.png
+# cp resources/cardwithuvcoords.obj build/$PLATFORM/$APP_NAME.app/cardwithuvcoords.obj
+# cp resources/teapot.obj build/$PLATFORM/$APP_NAME.app/teapot.obj
+# cp resources/phoebus.png build/$PLATFORM/$APP_NAME.app/phoebus.png
+# cp resources/sampletexture.png build/$PLATFORM/$APP_NAME.app/sampletexture.png
+# cp resources/font.png build/$PLATFORM/$APP_NAME.app/font.png
+# cp resources/structuredart1.png build/$PLATFORM/$APP_NAME.app/structuredart1.png
+# cp resources/structuredart2.png build/$PLATFORM/$APP_NAME.app/structuredart2.png
+# cp resources/structuredart3.png build/$PLATFORM/$APP_NAME.app/structuredart3.png
+# cp resources/replacement.png build/$PLATFORM/$APP_NAME.app/replacement.png
 
 echo "Compiling & linking $APP_NAME..."
-clang++ -Wno-everything -x objective-c++ -std="c++17" -g $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
+clang++ -Wno-everything -x objective-c++ -std="c++17" -g -o0 $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
 # clang++ -x objective-c -Wall -g -pedantic $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
 # clang -x objective-c -Wall -g -pedantic $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
 
 echo "Booting $APP_NAME"
 # (cd build/$PLATFORM/$APP_NAME.app && ./$APP_NAME)
-build/$PLATFORM/$APP_NAME.app/$APP_NAME
+(cd build/$PLATFORM/$APP_NAME.app && ./$APP_NAME)
 # (cd build/$PLATFORM/$APP_NAME.app && gdb ./$APP_NAME)
 

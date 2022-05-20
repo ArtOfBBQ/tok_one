@@ -43,7 +43,7 @@ int64_t platform_get_filesize(const char * filename);
 
 /*
 Read a file (without path, only filename)
-and return its contents as a buffer of bytes
+and fill its contents into a buffer of bytes
 
 out_allocatedbuffer should have memory allocated
 already and size set to its maximum capacity
