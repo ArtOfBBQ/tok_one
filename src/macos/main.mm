@@ -71,7 +71,7 @@ NSWindowWithCustomResponder: NSWindow
 {
     printf("right mouse down!\n");
     
-    NSPoint screenspace_location = [NSEvent mouseLocation];
+    // NSPoint screenspace_location = [NSEvent mouseLocation];
 }
 
 - (void)rightMouseUp:(NSEvent *)event
@@ -138,8 +138,8 @@ int main(int argc, const char * argv[])
         [[MTKView alloc]
             initWithFrame: full_screen_rect
             device: metal_device];
-
-    [mtk_view setOpaque: NO];
+    
+    // [mtk_view setOpaque: NO];
     // mtk_view.opaque = false;
     // mtk_view.preferredFramesPerSecond = 60;
     
@@ -149,17 +149,18 @@ int main(int argc, const char * argv[])
         [[MetalKitViewDelegate alloc] init];
     [mtk_view setDelegate: apple_gpu_delegate];
     
-    char shader_lib_path_cstr[5000];
+    char shader_lib_path_cstr[2000];
     concat_strings(
         /* string_1: */ platform_get_application_path(),
         /* string_2: */ "/Shaders.metallib",
         /* output: */ shader_lib_path_cstr,
-        /* output_size: */ 5000);
+        /* output_size: */ 2000);
     
     NSString * shader_lib_path =
         [NSString
             stringWithCString:shader_lib_path_cstr
             encoding:NSASCIIStringEncoding];
+    
     [apple_gpu_delegate
         configureMetalWithDevice: metal_device
         andPixelFormat: mtk_view.colorPixelFormat

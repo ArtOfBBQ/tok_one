@@ -29,20 +29,27 @@ void update_texturearray_from_0terminated_files(
         t_i < MAX_FILES_IN_SINGLE_TEXARRAY
         && filenames[t_i][0] != '\0')
     {
+        printf("t_i: %i\n", t_i);
+        printf("the filename is %s\n", filenames[t_i]);
         const char * filename = filenames[t_i];
         
         FileBuffer file_buffer;
         file_buffer.size = platform_get_filesize(filename) + 1;
-        char * filebuffer_contents =
-            (char *)malloc(file_buffer.size);
+        printf("expecting file size: %llu\n", file_buffer.size);
         
         assert(file_buffer.size > 1);
-        file_buffer.contents = filebuffer_contents;
+        file_buffer.contents = 
+            (char *)malloc(file_buffer.size);
+        printf("malloc of file buffer contents succesful\n");
+        
         platform_read_file(
             filename,
             &file_buffer);
         
-        DecodedImage * new_image;
+        printf("file read succesful\n");
+        
+        DecodedImage * new_image =
+            (DecodedImage *)malloc(sizeof(DecodedImage));
         new_image->good = false;
         
         get_PNG_width_height(
@@ -54,36 +61,77 @@ void update_texturearray_from_0terminated_files(
                 &new_image->width,
             /* uint32_t * height_out: */
                 &new_image->height);
-
+        
         assert(new_image->width > 0);
         assert(new_image->height > 0);
+        printf(
+            "new_image has dimensions: [%u,%u]\n",
+            new_image->width,
+            new_image->height);
         
+        new_image->rgba_values_size =
+            new_image->width * new_image->height * 4;
         new_image->rgba_values = (uint8_t *)malloc(
-            new_image->width * new_image->height * 4);
-        
+            new_image->rgba_values_size);
+        new_image->good = false;
         decode_PNG(
             /* compressed_bytes: */
                 (uint8_t *)file_buffer.contents,
             /* compressed_bytes_size: */
-                file_buffer.size - 1,
+                (uint32_t)(file_buffer.size - 1),
             /* DecodedImage * out_preallocated_png: */
                 new_image);
         
+        printf(
+            "decode_PNG returned with good: %u\n",
+            new_image->good);
+        
         assert(new_image->good);
+        if (new_image->pixel_count * 4 !=
+            new_image->rgba_values_size)
+        {
+            printf(
+                "ERR: we loaded an image with with pixel_count of %u (so *4 = %u rgba values), and rgba_values_size of %u. Image dimensions were [%u,%u], so width*height*4 would have been %u\n",
+                new_image->pixel_count,
+                new_image->pixel_count * 4,
+                new_image->rgba_values_size,
+                new_image->width,
+                new_image->height,
+                new_image->width * new_image->height * 4);
+            assert(0);
+        }
         
         decoded_images[t_i] = new_image;
-        free(filebuffer_contents);
+        printf("free file_buffer.conents..\n");
+        free(file_buffer.contents);
+        printf(
+            "free succesful, new_img dimensions now; [%u,%u]\n",
+            new_image->width,
+            new_image->height);
         
         t_i++;
     }
     
+    printf("finished decoding png's, allocate img mem...\n"); 
+    fflush(stdout);
     texture_arrays[texturearray_i].image =
         (DecodedImage *)malloc(sizeof(DecodedImage));
     
+    printf("concatenate %u images...\n", t_i); 
+    fflush(stdout);
+    for (uint32_t print_i = 0; print_i < t_i; print_i++) {
+        printf(
+            "[%u,%u],",
+            decoded_images[print_i]->width,
+            decoded_images[print_i]->height);
+        fflush(stdout);
+    }
+    printf("\n");
+    fflush(stdout);
     *(texture_arrays[texturearray_i].image) =
         concatenate_images(
             /* const DecodedImage ** images_to_concat: */
-                (const DecodedImage **)decoded_images,
+                (DecodedImage **)decoded_images,
             /* images_to_concat_size: */
                 t_i,
             /* out_sprite_rows: */
@@ -123,7 +171,8 @@ void register_new_texturearray_from_files(
             filename,
             &file_buffer);
         
-        DecodedImage * new_image;
+        DecodedImage * new_image =
+            (DecodedImage *)malloc(sizeof(DecodedImage *));
         new_image->good = false;
         
         get_PNG_width_height(
@@ -146,7 +195,7 @@ void register_new_texturearray_from_files(
             /* compressed_bytes: */
                 (uint8_t *)file_buffer.contents,
             /* compressed_bytes_size: */
-                file_buffer.size - 1,
+                (uint32_t)(file_buffer.size - 1),
             /* DecodedImage * out_preallocated_png: */
                 new_image);
     }
@@ -218,7 +267,7 @@ void register_new_texturearray_from_images(
     *(texture_arrays[new_i].image) =
         concatenate_images(
             /* const DecodedImage ** images_to_concat: */
-                (const DecodedImage **)new_images,
+                (DecodedImage **)new_images,
             /* images_to_concat_size: */
                 new_images_size,
             /* out_sprite_rows: */
@@ -256,7 +305,10 @@ DecodedImage * extract_image(
     uint32_t x,
     uint32_t y)
 {
-    printf("extract_image at position [%u,%u]\n", x, y); 
+    printf(
+        "extract_image at position [%u,%u]\n",
+        x,
+        y); 
     assert(x > 0);
     assert(y > 0);
     assert(x <= texture_array->sprite_columns);

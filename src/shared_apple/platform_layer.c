@@ -11,8 +11,8 @@ uint64_t platform_get_current_time_microsecs()
 }
 
 char * platform_get_application_path() {
-    return (char *)[
-        [[NSBundle mainBundle] resourcePath] UTF8String];
+    return (char *)
+        [[[NSBundle mainBundle] resourcePath] UTF8String];
 }
 
 void platform_start_thread(int32_t threadmain_id) {
@@ -24,4 +24,3 @@ void platform_start_thread(int32_t threadmain_id) {
             client_logic_threadmain(threadmain_id);
         });
 }
-

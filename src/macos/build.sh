@@ -42,7 +42,7 @@ echo "copy resources..."
 # cp resources/replacement.png build/$PLATFORM/$APP_NAME.app/replacement.png
 
 echo "Compiling & linking $APP_NAME..."
-clang++ -Wno-everything -x objective-c++ -std="c++17" -g -o0 $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
+clang++ -Wall -x objective-c++ -std="c++17" -g -o0 $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
 # clang++ -x objective-c -Wall -g -pedantic $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
 # clang -x objective-c -Wall -g -pedantic $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
 

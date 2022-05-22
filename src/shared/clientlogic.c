@@ -24,7 +24,7 @@ uint32_t teapot_object_id = 1;
 
 // reminder: this will be run in the background, a
 // thread is called in client_logic_startup
-void load_assets() {
+void load_assets(void) {
     printf("load_assets()\n");
     
     // an example of a font texture in font.png
@@ -85,7 +85,7 @@ void load_assets() {
         i < TEXTURE_FILENAMES_SIZE;
         i++)
     {
-        printf("texture_arrays update at i: %u\n", i);
+        printf("*** texture_arrays update at i: %u \n", i);
         assert(i < TEXTUREARRAYS_SIZE);
         
         file_buffer.size =
@@ -93,7 +93,7 @@ void load_assets() {
         file_buffer.contents =
             (char *)malloc(file_buffer.size);
         printf(
-            "loaded file_buffer with size: %u\n",
+            "loaded file_buffer with size: %llu\n",
             file_buffer.size);
         
         if (file_buffer.size < 1)
@@ -114,20 +114,22 @@ void load_assets() {
             (DecodedImage *)malloc(sizeof(DecodedImage));
         new_image->good = false;
         
-        printf("get width & height...\n"); 
+        printf("get width & height...\n");
+        
+        const uint8_t * start_of_filebuf = (const uint8_t *)file_buffer.contents;
         
         get_PNG_width_height(
             /* uint8_t * compressed_bytes: */
-                (uint8_t *)file_buffer.contents,
+                start_of_filebuf,
             /* uint32_t compressed_bytes_size: */
-                50,
+                29,
             /* uint32_t * width_out: */
                 &new_image->width,
             /* uint32_t * height_out: */
                 &new_image->height);
         
         printf(
-            "loaded PNG with width/height: [%u,%u]\n",
+            "will alloc PNG with width/height: [%u,%u]\n",
             new_image->width,
             new_image->height);
         
@@ -139,20 +141,21 @@ void load_assets() {
         new_image->rgba_values =
             (uint8_t *)malloc(new_image->rgba_values_size);
         printf(
-            "allocated new_iamge with size: %u bytes\n",
+            "allocated new_image with size: %u bytes\n",
             new_image->rgba_values_size);
         
         decode_PNG(
             /* compressed_bytes: */
-                (uint8_t *)file_buffer.contents,
+                start_of_filebuf,
             /* compressed_bytes_size: */
                 file_buffer.size - 1,
             /* DecodedImage * out_preallocated_png: */
                 new_image);
         printf(
-            "decoded_png with size: [%u,%u]\n",
+            "decoded_png with size: [%u,%u] (%u bytes)\n",
             new_image->width,
-            new_image->height);
+            new_image->height,
+            new_image->rgba_values_size);
         
         decoded_pngs[i] = new_image;
         
@@ -160,11 +163,6 @@ void load_assets() {
         texture_arrays[i].request_update = true;
         
         free(file_buffer.contents);
-        
-        printf(
-            "loaded texture %s with width %u from disk\n",
-            texture_filenames[i],
-            decoded_pngs[i]->width);
     }
     
     // 3 images with the same heigth/width
@@ -172,9 +170,15 @@ void load_assets() {
     // structuredart3.png)
     DecodedImage * concatenated =
         (DecodedImage *)malloc(sizeof(DecodedImage));
+    assert(decoded_pngs[3]->width == 10);
+    assert(decoded_pngs[3]->height == 10);
+    assert(decoded_pngs[4]->width == 10);
+    assert(decoded_pngs[4]->height == 10);
+    assert(decoded_pngs[5]->width == 10);
+    assert(decoded_pngs[5]->height == 10);
     *concatenated = concatenate_images(
         /* const DecodedImage ** to_concat: */
-            (const DecodedImage **)&(decoded_pngs[3]),
+            (DecodedImage **)&(decoded_pngs[3]),
         /* to_concat_size: */
             3,
         /* out_sprite_rows: */
@@ -183,8 +187,8 @@ void load_assets() {
             &texture_arrays[3].sprite_columns);
     assert(concatenated->width == 20);
     assert(concatenated->height == 20);
-    texture_arrays[3].request_update = true;
     texture_arrays[3].image = concatenated;
+    texture_arrays[3].request_update = true;
     texture_arrays_size++;
     
     // get a zpolygon object
@@ -250,8 +254,10 @@ void load_assets() {
     sample_pic.touchable_id = 88;
     sample_pic.texturearray_i = 2;
     sample_pic.texture_i = 0;
-    sample_pic.width_pixels = (713.0f * 0.5f);
-    sample_pic.height_pixels = (1040.0f * 0.5f);
+    sample_pic.width_pixels =
+        texture_arrays[2].image->width * 0.1f;
+    sample_pic.height_pixels =
+        texture_arrays[2].image->height * 0.1f;
     sample_pic.left_pixels =
         0.0f
             - (sample_pic.width_pixels * 0.5f);
@@ -323,8 +329,10 @@ void client_logic_startup() {
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
-    printf("client_logic_threadmain(%i)\n", threadmain_id);
-
+    printf(
+        "client_logic_threadmain(%i)\n",
+        threadmain_id);
+    
     switch (threadmain_id) {
         case (0):
             load_assets();
@@ -491,10 +499,8 @@ void client_handle_keypresses(
 void client_handle_touches(
     uint64_t microseconds_elapsed)
 {
-    float elapsed_mod =
-        (float)((double)microseconds_elapsed / (double)16666);
-    float cam_speed = 0.25f * elapsed_mod;
-    float cam_rotation_speed = 0.05f * elapsed_mod;
+    //float elapsed_mod =
+    //    (float)((double)microseconds_elapsed / (double)16666);
     
     // handle tablet & phone touches
     if (!current_touch.handled) {
@@ -533,8 +539,10 @@ void client_logic_update(
 {
     // TODO: our timer is weirdly broken on iOS. Fix it!
     uint64_t fps = 1000000 / microseconds_elapsed;
+    /*
     float elapsed_mod =
         (float)((double)microseconds_elapsed / (double)16666);
+    */
     
     if (fps < 100) {
         fps_string[5] = '0' + ((fps / 10) % 10);

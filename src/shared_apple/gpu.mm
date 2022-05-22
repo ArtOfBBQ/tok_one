@@ -40,9 +40,10 @@ uint64_t previous_time;
     
     if (Error != NULL)
     {
+        NSLog(@" error => %@ ", [Error userInfo]);
         [NSException
             raise: @"Can't Setup Metal" 
-            format: @"Unable to shader libraries"];
+            format: @"Unable to load shader libraries"];
     }
     
     // Setup combo pipeline that handles
@@ -77,6 +78,7 @@ uint64_t previous_time;
     
     if (Error != NULL)
     {
+        NSLog(@" error => %@ ", [Error userInfo]);
         [NSException
             raise: @"Can't Setup Metal" 
             format: @"Unable to setup rendering pipeline state"];
@@ -166,7 +168,7 @@ uint64_t previous_time;
         [_metal_textures addObject: texture];
         printf(
             "adding a padding texture, [_metal_textures count] is now: %u\n",
-            [_metal_textures count]);
+            (uint32_t)[_metal_textures count]);
     }
     
     if (texture_arrays[i].image == NULL) {

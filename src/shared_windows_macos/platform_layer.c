@@ -5,6 +5,8 @@ Get a file's size. Returns -1 if no such file
 */
 int64_t platform_get_filesize(const char * filename)
 {
+    printf("platform_get_filesize: %s\n", filename);
+    
     char filename_with_slash[1000];
     char path_and_filename[1000];
     
@@ -28,6 +30,7 @@ int64_t platform_get_filesize(const char * filename)
         /* output_size: */
             1000);
     
+    printf("path_and_filename: %s\n", path_and_filename);
     FILE * file_handle = fopen(
         path_and_filename,
         "rb+");
@@ -43,6 +46,10 @@ int64_t platform_get_filesize(const char * filename)
     int64_t fsize = ftell(file_handle);
     
     fclose(file_handle);
+    
+    printf(
+        "finished platform_get_filename (answer was: %lli)\n",
+        fsize);
     
     return fsize;
 }
@@ -80,14 +87,13 @@ void platform_read_file(
             path_and_filename,
         /* output_size: */
             1000);
-   
-    sleep(0.25f); 
+    
     FILE * file_handle = fopen(
         path_and_filename,
         "rb+");
     
     if (!file_handle) {
-        return NULL;
+        return;
     }
     
     fseek(file_handle, 0L, SEEK_END);
@@ -103,7 +109,7 @@ void platform_read_file(
             (fsize + 1)
             : out_preallocatedbuffer->size;
     
-    size_t bytes_read = fread(
+    fread(
         /* ptr: */
             out_preallocatedbuffer->contents,
         /* size of each element to be read: */
@@ -118,7 +124,5 @@ void platform_read_file(
     out_preallocatedbuffer->contents[
         out_preallocatedbuffer->size - 1]
             = 0; // for windows
-    
-    return out_preallocatedbuffer;
 }
 

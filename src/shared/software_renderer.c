@@ -183,4 +183,3 @@ void software_render(
         }
     }
 }
-

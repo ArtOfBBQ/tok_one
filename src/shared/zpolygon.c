@@ -417,7 +417,7 @@ void scale_zpolygon(
     }
 }
 
-zPolygon * get_box() {
+zPolygon * get_box(void) {
     zPolygon * box = (zPolygon *)malloc(sizeof(zPolygon));
     box->triangles_size = 6 * 2; // 6 faces, 2 per face
     

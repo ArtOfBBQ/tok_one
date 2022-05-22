@@ -33,8 +33,8 @@ typedef struct FileBuffer {
 } FileBuffer;
 
 // get current working directory
-char * platform_get_application_path();
-char * platform_get_cwd();
+char * platform_get_application_path(void);
+char * platform_get_cwd(void);
 
 /*
 Get a file's size. Returns -1 if no such file

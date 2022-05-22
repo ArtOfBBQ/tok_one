@@ -1,7 +1,7 @@
 #ifndef CLIENTLOGIC_H
 #define CLIENTLOGIC_H
 
-#import <Foundation/Foundation.h>
+// #import <Foundation/Foundation.h>
 
 #include "common.h"
 #include "texquad_type.h"

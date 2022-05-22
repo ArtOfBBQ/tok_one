@@ -33,4 +33,3 @@ extern MetalKitViewDelegate * apple_gpu_delegate;
 extern uint64_t previous_time;
 
 #endif
-

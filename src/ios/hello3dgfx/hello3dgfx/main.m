@@ -17,8 +17,60 @@ This functionality must be provided by the platform because
 of iOS, where reading your own app's files is a security
 ordeal
 */
-FileBuffer * platform_read_file(char * filename) {
-    printf("platform_read of filename: %s¥n", filename);
+void platform_read_file(
+    const char * filename,
+    FileBuffer * out_preallocatedbuffer)
+{
+    printf("platform_read of filename: %s\n", filename);
+    
+    NSString * ns_filename =
+        [NSString stringWithUTF8String:filename];
+    
+    NSString * file_part = [[ns_filename lastPathComponent] stringByDeletingPathExtension];
+    NSString * extension_part = [ns_filename pathExtension];
+    
+    NSString * filepath =
+        [[NSBundle mainBundle]
+            pathForResource:file_part
+            ofType:extension_part];
+        
+    FILE * rawfile = fopen(
+        [filepath cStringUsingEncoding:NSUTF8StringEncoding],
+        "rb");
+    
+    assert(rawfile != NULL);
+    
+    fseek(rawfile, 0, SEEK_END);
+    unsigned long fsize = (unsigned long)ftell(rawfile);              
+    fseek(rawfile, 0, SEEK_SET);
+        
+    size_t bytes_read = fread(
+        /* ptr: */
+            out_preallocatedbuffer->contents,
+       /* size of each element to be read: */
+            1,
+       /* nmemb (no of members) to read: */
+           fsize,
+        /* stream: */
+           rawfile);
+    
+    fclose(rawfile);
+    if (bytes_read != fsize) {
+        printf("Error - expected bytes read equal to fsize\n");
+        return;
+    }
+    
+    out_preallocatedbuffer->size = (uint32_t)bytes_read;
+    
+    printf(
+        "read file %s (%zu bytes)\n",
+        filename,
+        bytes_read);
+}
+
+int64_t platform_get_filesize(const char * filename)
+{
+    printf("platform_read of filename: %s\n", filename);
     
     NSString * ns_filename =
         [NSString stringWithUTF8String:filename];
@@ -31,9 +83,6 @@ FileBuffer * platform_read_file(char * filename) {
             pathForResource:file_part
             ofType:extension_part];
     
-    FileBuffer * return_value =
-        malloc(sizeof(FileBuffer));
-    
     FILE * rawfile = fopen(
         [filepath cStringUsingEncoding:NSUTF8StringEncoding],
         "rb");
@@ -41,36 +90,9 @@ FileBuffer * platform_read_file(char * filename) {
     assert(rawfile != NULL);
     
     fseek(rawfile, 0, SEEK_END);
-    unsigned long fsize = (unsigned long)ftell(rawfile);              
-    fseek(rawfile, 0, SEEK_SET);
+    unsigned long fsize = (unsigned long)ftell(rawfile);
     
-    char * buffer = malloc(fsize);
-    
-    size_t bytes_read = fread(
-        /* ptr: */
-            buffer,
-       /* size of each element to be read: */
-            1,
-       /* nmemb (no of members) to read: */
-           fsize,
-        /* stream: */
-           rawfile);
-    
-    fclose(rawfile);
-    if (bytes_read != fsize) {
-        printf("Error - expected bytes read equal to fsize\n");
-        return NULL;
-    }
-    
-    return_value->contents = buffer;
-    return_value->size = (uint32_t)bytes_read;
-    
-    printf(
-        "read file %s (%u bytes) ¥n¥n",
-        filename,
-        bytes_read);
-    
-    return return_value;
+    return fsize;
 }
 
 int main(int argc, char * argv[]) {
@@ -82,3 +104,4 @@ int main(int argc, char * argv[]) {
         return UIApplicationMain(argc, argv, nil, appDelegateClassName);
     }
 }
+
