@@ -4,7 +4,7 @@ void init_renderer() {
     current_touch.handled = true;
     client_logic_startup();
     renderer_initialized = true;
-
+    
     last_mouse_up.handled = true;
     last_mouse_down.handled = true;
     last_mouse_move.handled = true;
