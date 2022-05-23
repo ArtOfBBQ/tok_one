@@ -46,9 +46,9 @@ int64_t platform_get_filesize(const char * filename)
     int64_t fsize = ftell(file_handle);
     
     fclose(file_handle);
-    
+   
     printf(
-        "finished platform_get_filename (answer was: %li)\n",
+        "finished platform_get_filename (answer was: " FUINT64 ")\n",
         fsize);
     
     return fsize;

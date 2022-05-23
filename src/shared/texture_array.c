@@ -35,10 +35,12 @@ void update_texturearray_from_0terminated_files(
         
         FileBuffer file_buffer;
         file_buffer.size = platform_get_filesize(filename) + 1;
-        printf("expecting file size: %lu\n", file_buffer.size);
+        printf(
+            "expecting file size: " FUINT64 "\n",
+            file_buffer.size);
         
         assert(file_buffer.size > 1);
-        file_buffer.contents = 
+        file_buffer.contents =
             (char *)malloc(file_buffer.size);
         printf("malloc of file buffer contents succesful\n");
         

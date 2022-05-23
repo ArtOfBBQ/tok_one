@@ -30,6 +30,6 @@ echo "Compiling & linking $APP_NAME..."
 sudo gcc -Wall -std="c99" -g -o0 $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME -lm
 
 echo "Booting $APP_NAME"
-(cd build/$PLATFORM/$APP_NAME.app && valgrind --leak-check=full ./$APP_NAME)
+# (cd build/$PLATFORM/$APP_NAME.app && valgrind --leak-check=full ./$APP_NAME)
 # (cd build/$PLATFORM/$APP_NAME.app && gdb ./$APP_NAME)
 

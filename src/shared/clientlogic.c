@@ -27,6 +27,12 @@ uint32_t teapot_object_id = 1;
 void load_assets(void) {
     printf("load_assets()\n");
     
+    // char filenames_for_texturearrays
+    //     [TEXTUREARRAYS_SIZE]
+    //     [MAX_FILES_IN_SINGLE_TEXARRAY]
+    //     [MAX_ASSET_FILENAME_SIZE];
+    // uint32_t filenames_for_texturearrays_size = 0;
+    
     // an example of a font texture in font.png
     // Note: I generally keep my font in slot 0 and only
     // use 1 font
@@ -73,12 +79,12 @@ void load_assets(void) {
     
     assert(TEXTURE_FILENAMES_SIZE <= TEXTUREARRAYS_SIZE);
     char * texture_filenames[TEXTURE_FILENAMES_SIZE] = {
-        "font.png",
-        "phoebus.png",
-        "sampletexture.png",
-        "structuredart1.png",
-        "structuredart2.png",
-        "structuredart3.png"};
+        (char *)"font.png",
+        (char *)"phoebus.png",
+        (char *)"sampletexture.png",
+        (char *)"structuredart1.png",
+        (char *)"structuredart2.png",
+        (char *)"structuredart3.png"};
     
     for (
         uint32_t i = 0;
@@ -93,7 +99,7 @@ void load_assets(void) {
         file_buffer.contents =
             (char *)malloc(file_buffer.size);
         printf(
-            "loaded file_buffer with size: %lu\n",
+            "loaded file_buffer with size: " FUINT64 "\n",
             file_buffer.size);
         
         if (file_buffer.size < 1)
@@ -193,7 +199,8 @@ void load_assets(void) {
     
     // get a zpolygon object
     zpolygons_to_render_size += 1;
-    zpolygons_to_render[0] = load_from_obj_file("teapot.obj");
+    zpolygons_to_render[0] = load_from_obj_file(
+        (char *)"teapot.obj");
     zpolygons_to_render[0].x = 0.0f;
     zpolygons_to_render[0].y = 0.0f;
     zpolygons_to_render[0].z = 250.0f;
