@@ -48,7 +48,7 @@ int64_t platform_get_filesize(const char * filename)
     fclose(file_handle);
     
     printf(
-        "finished platform_get_filename (answer was: %lli)\n",
+        "finished platform_get_filename (answer was: %li)\n",
         fsize);
     
     return fsize;

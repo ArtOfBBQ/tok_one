@@ -70,6 +70,8 @@ int main(int argc, const char * argv[])
         
         gameloop--;
     }
+
+    free(vertices_for_gpu);
     
     printf("end of 5000 gameloops\n");
 }

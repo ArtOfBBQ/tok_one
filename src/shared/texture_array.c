@@ -35,7 +35,7 @@ void update_texturearray_from_0terminated_files(
         
         FileBuffer file_buffer;
         file_buffer.size = platform_get_filesize(filename) + 1;
-        printf("expecting file size: %llu\n", file_buffer.size);
+        printf("expecting file size: %lu\n", file_buffer.size);
         
         assert(file_buffer.size > 1);
         file_buffer.contents = 

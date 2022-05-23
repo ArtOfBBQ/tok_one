@@ -93,7 +93,7 @@ void load_assets(void) {
         file_buffer.contents =
             (char *)malloc(file_buffer.size);
         printf(
-            "loaded file_buffer with size: %llu\n",
+            "loaded file_buffer with size: %lu\n",
             file_buffer.size);
         
         if (file_buffer.size < 1)
