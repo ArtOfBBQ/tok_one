@@ -23,6 +23,11 @@ strings for printf depending on the platform
 #define FINT64 "%lli"
 #endif
 
+#ifdef LONGINT64
+#define FUINT64 "%lu"
+#define FINT64 "%li"
+#endif
+
 #ifdef PLATFORM_NS_FILEMANAGER
 #import <Foundation/Foundation.h>
 extern NSFileManager * file_manager;
