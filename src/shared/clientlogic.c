@@ -148,11 +148,12 @@ void preregister_assets() {
                     {
                         new_texture_i =
                             registered_assets[i].texture_i;
+                        assert(new_texture_i < MAX_FILES_IN_SINGLE_TEXARRAY);
                     }
                 }
             }
             new_texture_i++;
-
+            
             if (
                 fe->d_name[0] == 'f'
                 && fe->d_name[1] == 'o'
@@ -178,10 +179,16 @@ void preregister_assets() {
             registered_assets[registered_assets_size]
                 .texture_i = new_texture_i;
             
-            strcpy(
-                registered_assets[registered_assets_size]
-                    .filename,
-                fe->d_name);
+            copy_strings(
+                /* char * recipient: */
+                    registered_assets[registered_assets_size]
+                        .filename,
+                /* recipient_size: */
+                    MAX_ASSET_FILENAME_SIZE,
+                /* origin: */
+                    fe->d_name,
+                /* origin_size: */
+                    fe->d_namlen);
             registered_assets_size += 1;
             
             TextureArrayLocation new_loc;

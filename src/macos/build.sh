@@ -15,11 +15,11 @@ TOK_ONE_SOURCEFILES="src/$PLATFORM/main.mm src/$PLATFORM/platform_layer.c src/sh
 echo "Building $APP_NAME for $PLATFORM..."
 
 echo "deleting previous build(s)..."
-rm -r -f build/$PLATFORM/$APP_NAME.app/$APP_NAME
-rm -r -f build/$PLATFORM/$APP_NAME.app/$APP_NAME.dsym
+sudo rm -r -f build/$PLATFORM/$APP_NAME.app/$APP_NAME
+sudo rm -r -f build/$PLATFORM/$APP_NAME.app/$APP_NAME.dsym
 
 echo "Creating build folder..."
-mkdir -r build/$PLATFORM/$APP_NAME.app/debugout
+sudo mkdir -r build/$PLATFORM/$APP_NAME.app/debugout
 
 ############
 echo "Creating metal library..."

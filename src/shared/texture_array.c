@@ -15,7 +15,7 @@ void debug_dump_texturearrays_to_disk() {
             continue;
         }
         
-        char filename[50];
+        char filename[100];
         char suffix[10] = "?.png\0";
         suffix[0] = '0' + i;
         concat_strings(
@@ -26,10 +26,7 @@ void debug_dump_texturearrays_to_disk() {
             /* output: */
                 filename,
             /* output_size: */
-                50);
-        printf(
-            "writing texture array image: %s\n",
-            filename);
+                100);
         
         stbi_write_png( 
             /* char const * filename : */
@@ -65,16 +62,8 @@ void update_texturearray_from_0terminated_files(
     while (filenames[t_i][0] != '\0')
     {
         filenames_size += 1;
-        printf(
-            "filenames[%u]; %s%u,",
-            t_i,
-            filenames[t_i],
-            filenames_size);
         t_i++;
     }
-    printf(
-        "\n filenames_size: %u\n",
-        filenames_size);
     
     if (filenames_size == 0) {
         printf(
@@ -88,35 +77,17 @@ void update_texturearray_from_0terminated_files(
     
     for (t_i = 0; t_i < filenames_size; t_i++)
     {
-        printf(
-            "t_i: %i\n",
-            t_i);
-        printf(
-            "the filename is %s\n",
-            filenames[t_i]);
         const char * filename = filenames[t_i];
         
-        DecodedImage * new_image = read_img_from_filename(filename);
+        DecodedImage * new_image = read_img_from_filename(
+            filename);
         
         decoded_images[t_i] = new_image;
     }
     
-    printf("finished decoding png's, allocate img mem...\n"); 
-    fflush(stdout);
     texture_arrays[texturearray_i].image =
         (DecodedImage *)malloc(sizeof(DecodedImage));
     
-    printf("concatenate %u images...\n", t_i); 
-    fflush(stdout);
-    for (uint32_t print_i = 0; print_i < t_i; print_i++) {
-        printf(
-            "[%u,%u],",
-            decoded_images[print_i]->width,
-            decoded_images[print_i]->height);
-        fflush(stdout);
-    }
-    printf("\n");
-    fflush(stdout);
     *(texture_arrays[texturearray_i].image) =
         concatenate_images(
             /* const DecodedImage ** images_to_concat: */
@@ -137,9 +108,6 @@ void register_new_texturearray_from_files(
     const char ** filenames,
     const uint32_t filenames_size)
 {
-    printf(
-        "register_new_texturearray_from_files (%u files)\n",
-        filenames_size);
     uint32_t decoded_images_size = filenames_size;
     const DecodedImage * decoded_images[decoded_images_size];   
     
@@ -163,20 +131,12 @@ void register_new_texturearray_from_files(
             decoded_images_dblptr,
         /* new_images_size: */
             decoded_images_size);
-    
-    printf(
-        "finished register_new_texturearray_from_files (%u files)\n",
-        filenames_size);
 }
 
 void register_new_texturearray_from_images(
     const DecodedImage ** new_images,
     const uint32_t new_images_size)
 {
-    printf(
-        "register_new_texturearray_from_images (%u images)\n",
-        new_images_size);
-    
     assert(new_images_size > 0);
     for (uint32_t i = 0; i < new_images_size; i++) {
         assert(new_images[i] != NULL);
@@ -277,10 +237,6 @@ DecodedImage * extract_image(
     uint32_t x,
     uint32_t y)
 {
-    printf(
-        "extract_image at position [%u,%u]\n",
-        x,
-        y); 
     assert(x > 0);
     assert(y > 0);
     assert(x <= texture_array->sprite_columns);
@@ -301,25 +257,6 @@ DecodedImage * extract_image(
             / texture_array->sprite_rows;
     
     new_image->rgba_values_size = slice_size;
-    printf(
-        "new_image->rgba_values_size: %u\n",
-        slice_size); 
-    printf(
-        "because texture_array->sprite_columns was: %u\n",
-        texture_array->sprite_columns);
-    printf(
-        "because texture_array->sprite_rows was: %u\n",
-        texture_array->sprite_rows);
-    printf(
-        "because texture_array->image->width was %u\n",
-        texture_array->image->width);
-    printf(
-        "because texture_array->image->height was %u\n",
-        texture_array->image->height);
-    printf(
-        "because texture_array->rgba_values_size was: %u\n",
-        texture_array->image->rgba_values_size);
-    
     new_image->rgba_values =
         (uint8_t *)malloc(slice_size);
     
@@ -356,33 +293,23 @@ DecodedImage * extract_image(
         }
     }
     
-    printf(
-        "finished extract_image, new image has dims[%u,%u] and rgba_values_size of %u\n",
-        new_image->width,
-        new_image->height,
-        new_image->rgba_values_size); 
     return new_image;
 }
 
 DecodedImage * read_img_from_filename(
     const char * filename)
 {
+    printf("read_img_from_filename: %s\n", filename);
     FileBuffer file_buffer;
     file_buffer.size = platform_get_filesize(filename) + 1;
-    printf(
-        "expecting file size: " FUINT64 "\n",
-        file_buffer.size);
     
     assert(file_buffer.size > 1);
     file_buffer.contents =
         (char *)malloc(file_buffer.size);
-    printf("malloc of file buffer contents succesful\n");
     
     platform_read_file(
         filename,
         &file_buffer);
-    
-    printf("file read succesful\n");
     
     DecodedImage * new_image =
         (DecodedImage *)malloc(sizeof(DecodedImage));
@@ -400,10 +327,6 @@ DecodedImage * read_img_from_filename(
     
     assert(new_image->width > 0);
     assert(new_image->height > 0);
-    printf(
-        "new_image has dimensions: [%u,%u]\n",
-        new_image->width,
-        new_image->height);
     
     new_image->rgba_values_size =
         new_image->width * new_image->height * 4;
@@ -413,14 +336,11 @@ DecodedImage * read_img_from_filename(
     decode_PNG(
         /* compressed_bytes: */
             (uint8_t *)file_buffer.contents,
+
         /* compressed_bytes_size: */
             (uint32_t)(file_buffer.size - 1),
         /* DecodedImage * out_preallocated_png: */
             new_image);
-    
-    printf(
-        "decode_PNG returned with good: %u\n",
-        new_image->good);
     
     assert(new_image->good);
     if (new_image->pixel_count * 4 !=

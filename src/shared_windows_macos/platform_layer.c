@@ -5,8 +5,6 @@ Get a file's size. Returns -1 if no such file
 */
 int64_t platform_get_filesize(const char * filename)
 {
-    printf("platform_get_filesize: %s\n", filename);
-    
     char filename_with_slash[1000];
     char path_and_filename[1000];
     
@@ -30,15 +28,11 @@ int64_t platform_get_filesize(const char * filename)
         /* output_size: */
             1000);
     
-    printf("path_and_filename: %s\n", path_and_filename);
     FILE * file_handle = fopen(
         path_and_filename,
         "rb+");
     
     if (!file_handle) {
-        printf(
-            "Warning: failed to read path_and_file %s\n",
-            path_and_filename);
         return -1;
     }
     
@@ -46,12 +40,6 @@ int64_t platform_get_filesize(const char * filename)
     int64_t fsize = ftell(file_handle);
     
     fclose(file_handle);
-   
-    printf(
-        "finished platform_get_filesize (answer was: "
-        FUINT64
-        " bytes)\n",
-        fsize);
     
     return fsize;
 }
