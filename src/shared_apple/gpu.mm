@@ -15,7 +15,7 @@ uint64_t previous_time;
     fromFolder: (NSString *)shader_lib_filepath
 {
     printf(
-        "configureMetalWithDevice() from path: %s\n",
+        "macos X platform configureMetalWithDevice() from path: %s\n",
         [shader_lib_filepath
             cStringUsingEncoding:NSUTF8StringEncoding]);
     previous_time = platform_get_current_time_microsecs();
@@ -148,7 +148,7 @@ uint64_t previous_time;
 - (void)updateTextureArray: (int32_t)texturearray_i
 {
     texture_arrays[texturearray_i].request_update = false;
-    printf("updateTextureArray: %i\n", texturearray_i);
+    printf("macos X updateTextureArray: %i\n", texturearray_i);
     assert(texturearray_i < TEXTUREARRAYS_SIZE);
     assert(texturearray_i < texture_arrays_size);
     int32_t i = texturearray_i;

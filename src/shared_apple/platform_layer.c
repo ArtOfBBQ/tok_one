@@ -24,3 +24,4 @@ void platform_start_thread(int32_t threadmain_id) {
             client_logic_threadmain(threadmain_id);
         });
 }
+

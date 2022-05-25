@@ -16,6 +16,9 @@
 #include "text.h"
 #include "scheduled_animations.h"
 
+#include "dirent.h"
+#include "string.h"
+
 #ifdef LORESEEKER
 typedef struct NamedTextureArray {
     int32_t texturearray_i;
@@ -24,7 +27,6 @@ typedef struct NamedTextureArray {
 
 #include <string>
 #include <unordered_map>
-#include "dirent.h"
 #include "../../../src/animationtracker.hpp"
 #include "../../../src/frontendtouch.hpp"
 #include "../../../src/frontendcommand.hpp"

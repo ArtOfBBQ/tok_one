@@ -1,7 +1,52 @@
 #include "texture_array.h"
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "debigulator/src/stb_write.h"
+
 TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
 uint32_t texture_arrays_size = 0;
+
+void debug_dump_texturearrays_to_disk() {
+    assert(texture_arrays_size > 0);
+    for (uint32_t i = 0; i < texture_arrays_size; i++) {
+        
+        if (texture_arrays[i].image == NULL) {
+            printf("no image to dump at texture_arrays[%u]\n", i);
+            continue;
+        }
+        
+        char filename[50];
+        char suffix[10] = "?.png\0";
+        suffix[0] = '0' + i;
+        concat_strings(
+            /* string_1: */
+                "debugout/texture_array_",
+            /* string_2: */
+                suffix,
+            /* output: */
+                filename,
+            /* output_size: */
+                50);
+        printf(
+            "writing texture array image: %s\n",
+            filename);
+        
+        stbi_write_png( 
+            /* char const * filename : */
+                filename,
+            /* int w : */
+                texture_arrays[i].image->width,
+            /* int h : */
+                texture_arrays[i].image->height,
+            /* int comp : */
+                4,
+            /* const void *data : */
+                texture_arrays[i].image->rgba_values,
+            /* int stride_in_bytes : */
+                texture_arrays[i].image->rgba_values_size /
+                        texture_arrays[i].image->height);
+    }
+}
 
 void update_texturearray_from_0terminated_files(
     const int32_t texturearray_i,
@@ -12,106 +57,48 @@ void update_texturearray_from_0terminated_files(
     printf(
         "update_texarray_from_0terminated_files for ta_i %i\n",
         texturearray_i);
-    assert(texturearray_i < texture_arrays_size);
+    assert(
+        texturearray_i < TEXTUREARRAYS_SIZE);
     
     uint32_t filenames_size = 0;
     uint32_t t_i = 0;
     while (filenames[t_i][0] != '\0')
     {
         filenames_size += 1;
+        printf(
+            "filenames[%u]; %s%u,",
+            t_i,
+            filenames[t_i],
+            filenames_size);
         t_i++;
+    }
+    printf(
+        "\n filenames_size: %u\n",
+        filenames_size);
+    
+    if (filenames_size == 0) {
+        printf(
+            "WARNING: requested a texture update at %u but 0 textures were passed!!!\n",
+            texturearray_i);
+        assert(0);
+        return;
     }
     
     DecodedImage * decoded_images[filenames_size];
     
-    t_i = 0;
-    while (
-        t_i < MAX_FILES_IN_SINGLE_TEXARRAY
-        && filenames[t_i][0] != '\0')
+    for (t_i = 0; t_i < filenames_size; t_i++)
     {
-        printf("t_i: %i\n", t_i);
-        printf("the filename is %s\n", filenames[t_i]);
+        printf(
+            "t_i: %i\n",
+            t_i);
+        printf(
+            "the filename is %s\n",
+            filenames[t_i]);
         const char * filename = filenames[t_i];
         
-        FileBuffer file_buffer;
-        file_buffer.size = platform_get_filesize(filename) + 1;
-        printf(
-            "expecting file size: " FUINT64 "\n",
-            file_buffer.size);
-        
-        assert(file_buffer.size > 1);
-        file_buffer.contents =
-            (char *)malloc(file_buffer.size);
-        printf("malloc of file buffer contents succesful\n");
-        
-        platform_read_file(
-            filename,
-            &file_buffer);
-        
-        printf("file read succesful\n");
-        
-        DecodedImage * new_image =
-            (DecodedImage *)malloc(sizeof(DecodedImage));
-        new_image->good = false;
-        
-        get_PNG_width_height(
-            /* uint8_t * compressed_bytes: */
-                (uint8_t *)file_buffer.contents,
-            /* uint32_t compressed_bytes_size: */
-                50,
-            /* uint32_t * width_out: */
-                &new_image->width,
-            /* uint32_t * height_out: */
-                &new_image->height);
-        
-        assert(new_image->width > 0);
-        assert(new_image->height > 0);
-        printf(
-            "new_image has dimensions: [%u,%u]\n",
-            new_image->width,
-            new_image->height);
-        
-        new_image->rgba_values_size =
-            new_image->width * new_image->height * 4;
-        new_image->rgba_values = (uint8_t *)malloc(
-            new_image->rgba_values_size);
-        new_image->good = false;
-        decode_PNG(
-            /* compressed_bytes: */
-                (uint8_t *)file_buffer.contents,
-            /* compressed_bytes_size: */
-                (uint32_t)(file_buffer.size - 1),
-            /* DecodedImage * out_preallocated_png: */
-                new_image);
-        
-        printf(
-            "decode_PNG returned with good: %u\n",
-            new_image->good);
-        
-        assert(new_image->good);
-        if (new_image->pixel_count * 4 !=
-            new_image->rgba_values_size)
-        {
-            printf(
-                "ERR: we loaded an image with with pixel_count of %u (so *4 = %u rgba values), and rgba_values_size of %u. Image dimensions were [%u,%u], so width*height*4 would have been %u\n",
-                new_image->pixel_count,
-                new_image->pixel_count * 4,
-                new_image->rgba_values_size,
-                new_image->width,
-                new_image->height,
-                new_image->width * new_image->height * 4);
-            assert(0);
-        }
+        DecodedImage * new_image = read_img_from_filename(filename);
         
         decoded_images[t_i] = new_image;
-        printf("free file_buffer.conents..\n");
-        free(file_buffer.contents);
-        printf(
-            "free succesful, new_img dimensions now; [%u,%u]\n",
-            new_image->width,
-            new_image->height);
-        
-        t_i++;
     }
     
     printf("finished decoding png's, allocate img mem...\n"); 
@@ -154,7 +141,7 @@ void register_new_texturearray_from_files(
         "register_new_texturearray_from_files (%u files)\n",
         filenames_size);
     uint32_t decoded_images_size = filenames_size;
-    DecodedImage * decoded_images[decoded_images_size];   
+    const DecodedImage * decoded_images[decoded_images_size];   
     
     for (
         uint32_t i = 0;
@@ -163,51 +150,20 @@ void register_new_texturearray_from_files(
     {
         const char * filename = filenames[i];
         
-        FileBuffer file_buffer;
-        file_buffer.size = platform_get_filesize(filename) + 1;
-        char filebuffer_contents[file_buffer.size];
-        assert(file_buffer.size > 1);
-        file_buffer.contents =
-            (char *)&filebuffer_contents;
-        platform_read_file(
-            filename,
-            &file_buffer);
+        const DecodedImage * new_image =
+            read_img_from_filename(filename);
         
-        DecodedImage * new_image =
-            (DecodedImage *)malloc(sizeof(DecodedImage *));
-        new_image->good = false;
-        
-        get_PNG_width_height(
-            /* uint8_t * compressed_bytes: */
-                (uint8_t *)file_buffer.contents,
-            /* uint32_t compressed_bytes_size: */
-                50,
-            /* uint32_t * width_out: */
-                &new_image->width,
-            /* uint32_t * height_out: */
-                &new_image->height);
-
-        assert(new_image->width > 0);
-        assert(new_image->height > 0);
-        
-        new_image->rgba_values = (uint8_t *)malloc(
-            new_image->width * new_image->height * 4);
-        
-        decode_PNG(
-            /* compressed_bytes: */
-                (uint8_t *)file_buffer.contents,
-            /* compressed_bytes_size: */
-                (uint32_t)(file_buffer.size - 1),
-            /* DecodedImage * out_preallocated_png: */
-                new_image);
+        decoded_images[i] = new_image;
     }
     
+    const DecodedImage ** decoded_images_dblptr =
+        decoded_images;
     register_new_texturearray_from_images(
         /* DecodedImage ** new_images : */
-            (const DecodedImage **)&decoded_images[0],
+            decoded_images_dblptr,
         /* new_images_size: */
             decoded_images_size);
-
+    
     printf(
         "finished register_new_texturearray_from_files (%u files)\n",
         filenames_size);
@@ -222,6 +178,13 @@ void register_new_texturearray_from_images(
         new_images_size);
     
     assert(new_images_size > 0);
+    for (uint32_t i = 0; i < new_images_size; i++) {
+        assert(new_images[i] != NULL);
+        assert(new_images[i]->width > 0);
+        assert(new_images[i]->height > 0);
+        assert(new_images[i]->rgba_values_size > 0);
+        assert(new_images[i]->rgba_values != NULL);
+    }
     
     uint32_t current_width = new_images[0]->width;
     uint32_t current_height = new_images[0]->height;
@@ -293,12 +256,19 @@ void register_new_texturearray(
     assert(new_image != NULL);
     assert(new_image->width > 0);
     assert(new_image->height > 0);
+    assert(new_image->rgba_values_size > 0);
     const DecodedImage * images[1];
     images[0] = new_image;
+    const DecodedImage ** images_dblptr = images;
+    assert(images[0] != NULL);
+    assert(images[0]->width > 0);
+    assert(images[0]->height > 0);
+    assert(images[0]->rgba_values_size > 0);
+    assert(images[0]->rgba_values != NULL);
     register_new_texturearray_from_images(
-        (const DecodedImage **)&images[0],
+        images_dblptr,
         1);
-
+    
     printf("finished register_new_texturearray\n");
 }
 
@@ -391,6 +361,84 @@ DecodedImage * extract_image(
         new_image->width,
         new_image->height,
         new_image->rgba_values_size); 
+    return new_image;
+}
+
+DecodedImage * read_img_from_filename(
+    const char * filename)
+{
+    FileBuffer file_buffer;
+    file_buffer.size = platform_get_filesize(filename) + 1;
+    printf(
+        "expecting file size: " FUINT64 "\n",
+        file_buffer.size);
+    
+    assert(file_buffer.size > 1);
+    file_buffer.contents =
+        (char *)malloc(file_buffer.size);
+    printf("malloc of file buffer contents succesful\n");
+    
+    platform_read_file(
+        filename,
+        &file_buffer);
+    
+    printf("file read succesful\n");
+    
+    DecodedImage * new_image =
+        (DecodedImage *)malloc(sizeof(DecodedImage));
+    new_image->good = false;
+    
+    get_PNG_width_height(
+        /* uint8_t * compressed_bytes: */
+            (uint8_t *)file_buffer.contents,
+        /* uint32_t compressed_bytes_size: */
+            50,
+        /* uint32_t * width_out: */
+            &new_image->width,
+        /* uint32_t * height_out: */
+            &new_image->height);
+    
+    assert(new_image->width > 0);
+    assert(new_image->height > 0);
+    printf(
+        "new_image has dimensions: [%u,%u]\n",
+        new_image->width,
+        new_image->height);
+    
+    new_image->rgba_values_size =
+        new_image->width * new_image->height * 4;
+    new_image->rgba_values = (uint8_t *)malloc(
+        new_image->rgba_values_size);
+    new_image->good = false;
+    decode_PNG(
+        /* compressed_bytes: */
+            (uint8_t *)file_buffer.contents,
+        /* compressed_bytes_size: */
+            (uint32_t)(file_buffer.size - 1),
+        /* DecodedImage * out_preallocated_png: */
+            new_image);
+    
+    printf(
+        "decode_PNG returned with good: %u\n",
+        new_image->good);
+    
+    assert(new_image->good);
+    if (new_image->pixel_count * 4 !=
+        new_image->rgba_values_size)
+    {
+        printf(
+            "ERR: we loaded an image with with pixel_count of %u (so *4 = %u rgba values), and rgba_values_size of %u. Image dimensions were [%u,%u], so width*height*4 would have been %u\n",
+            new_image->pixel_count,
+            new_image->pixel_count * 4,
+            new_image->rgba_values_size,
+            new_image->width,
+            new_image->height,
+            new_image->width * new_image->height * 4);
+        assert(0);
+    }
+    
+    free(file_buffer.contents);
+    
     return new_image;
 }
 

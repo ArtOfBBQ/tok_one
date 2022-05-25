@@ -33,6 +33,11 @@ DecodedImage * extract_image(
     uint32_t x,
     uint32_t y);
 
+DecodedImage * read_img_from_filename(
+    const char * filename);
+
+void debug_dump_texturearrays_to_disk();
+
 void update_texturearray_from_0terminated_files(
     const int32_t texturearray_i,
     const char filenames

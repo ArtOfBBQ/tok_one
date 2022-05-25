@@ -24,6 +24,24 @@ void concat_strings(
     assert(output_at - output < output_size);
 }
 
+void copy_strings(
+    char * recipient,
+    const uint32_t recipient_size,
+    const char * origin,
+    const uint32_t origin_size)
+{
+    uint32_t i = 0;
+    for (; i < origin_size; i++) {
+        assert(recipient_size > i);
+
+        recipient[i] = origin[i];
+    }
+    
+    for (; i < recipient_size; i++) {
+        recipient[i] = '\0';
+    }
+}
+
 bool32_t are_equal_strings(
     const char * str1,
     const char * str2,

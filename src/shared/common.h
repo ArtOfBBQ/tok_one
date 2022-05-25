@@ -19,6 +19,12 @@ void concat_strings(
     char * output,
     const uint64_t output_size);
 
+void copy_strings(
+    char * recipient,
+    const uint32_t recipient_size,
+    const char * origin,
+    const uint32_t origin_size);
+
 bool32_t are_equal_strings(
     const char * str1,
     const char * str2,

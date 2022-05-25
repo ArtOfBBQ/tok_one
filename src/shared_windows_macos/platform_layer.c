@@ -48,7 +48,9 @@ int64_t platform_get_filesize(const char * filename)
     fclose(file_handle);
    
     printf(
-        "finished platform_get_filename (answer was: " FUINT64 ")\n",
+        "finished platform_get_filesize (answer was: "
+        FUINT64
+        " bytes)\n",
         fsize);
     
     return fsize;
