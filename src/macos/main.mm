@@ -1,18 +1,9 @@
 #include <simd/simd.h>
 
-// functions we must implement
-#include "../shared/platform_layer.h" 
-
-// shared functionality we can use
 #include "../shared_apple/gpu.h"
 #include "../shared/common.h"
 #include "../shared/userinput.h"
 #include "../shared/window_size.h"
-#include "../shared/vertex_types.h"
-#include "../shared/zpolygon.h"
-#include "../shared/software_renderer.h"
-#include "../shared/bitmap_renderer.h"
-#include "../shared/clientlogic.h"
 
 #define SHARED_APPLE_PLATFORM
 

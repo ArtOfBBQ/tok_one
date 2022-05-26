@@ -17,7 +17,6 @@ exist.
 
 #include <math.h>
 
-#include "common.h"
 #include "window_size.h"
 #include "texquad_type.h"
 #include "debigulator/src/decodedimage.h"
