@@ -7,20 +7,23 @@ TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
 uint32_t texture_arrays_size = 0;
 
 void debug_dump_texturearrays_to_disk() {
+    printf("debug_dump_texturearrays_to_disk()\n");
     assert(texture_arrays_size > 0);
+    
     for (uint32_t i = 0; i < texture_arrays_size; i++) {
+        printf("dump texture_arrays[%u]\n", i);
         
         if (texture_arrays[i].image == NULL) {
             printf("no image to dump at texture_arrays[%u]\n", i);
             continue;
         }
         
-        char filename[100];
+        char filename[200];
         char suffix[10] = "?.png\0";
         suffix[0] = '0' + i;
         concat_strings(
             /* string_1: */
-                "debugout/texture_array_",
+                "/debugout/texture_array_",
             /* string_2: */
                 suffix,
             /* output: */
@@ -28,9 +31,28 @@ void debug_dump_texturearrays_to_disk() {
             /* output_size: */
                 100);
         
+        char path_and_filename[1000];
+        
+        concat_strings(
+            /* string_1: */
+                platform_get_application_path(),
+            /* string_2: */
+                filename,
+            /* output: */
+                path_and_filename,
+            /* output_size: */
+                1000);
+        
+        printf(
+            "writing texture_arrays[%u] image of dimensions [%u,%u] to %s\n",
+            i,
+            texture_arrays[i].image->width,
+            texture_arrays[i].image->height,
+            path_and_filename);
+        
         stbi_write_png( 
             /* char const * filename : */
-                filename,
+                path_and_filename,
             /* int w : */
                 texture_arrays[i].image->width,
             /* int h : */
