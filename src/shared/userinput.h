@@ -16,9 +16,9 @@ typedef struct Touch {
     uint64_t started_at;
     float current_x;
     float current_y;
-    float finished;
+    bool32_t finished;
     uint64_t finished_at;
-    float handled;
+    bool32_t handled;
 } Touch;
 
 extern Touch current_touch;

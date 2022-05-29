@@ -1,14 +1,14 @@
 #include "text.h"
 
-uint32_t font_texturearray_i = 0;
+int32_t font_texturearray_i = 0;
 float font_height = 40.0f;
 
-float get_char_width(const char * input)
+static float get_char_width(const char * input)
 {
     return font_height;
 }
 
-uint32_t find_next_linebreak(
+static uint32_t find_next_linebreak(
     const char * input,
     const uint32_t input_size,
     const uint32_t after_i)

@@ -39,6 +39,8 @@ extern NSFileManager * file_manager;
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h> // for fopen() error
+#include <errno.h>  // for fopen() error
 
 #include "common.h"
 #include "clientlogic.h"
@@ -51,6 +53,7 @@ typedef struct FileBuffer {
 
 // get current working directory
 char * platform_get_application_path(void);
+char * platform_get_resources_path(void);
 char * platform_get_cwd(void);
 
 /*

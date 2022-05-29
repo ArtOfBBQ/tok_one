@@ -42,9 +42,9 @@ NSWindowWithCustomResponder: NSWindow
     
     buffer_mousedown(
         /* screenspace_x: */
-            screenspace_location.x,
+            (float)screenspace_location.x,
         /* screenspace_y: */
-            screenspace_location.y);
+            (float)screenspace_location.y);
 }
 
 - (void)mouseUp:(NSEvent *)event
@@ -53,9 +53,9 @@ NSWindowWithCustomResponder: NSWindow
 
     buffer_mouseup(
         /* screenspace_x: */
-            screenspace_location.x,
+            (float)screenspace_location.x,
         /* screenspace_y: */
-            screenspace_location.y);
+            (float)screenspace_location.y);
 }
 
 - (void)rightMouseDown:(NSEvent *)event
@@ -76,9 +76,9 @@ NSWindowWithCustomResponder: NSWindow
     
     buffer_mousemove(
         /* screenspace_x: */
-            screenspace_location.x,
+            (float)screenspace_location.x,
         /* screenspace_y: */
-            screenspace_location.y);
+            (float)screenspace_location.y);
 }
 
 - (void)keyDown:(NSEvent *)event
@@ -97,8 +97,8 @@ int main(int argc, const char * argv[])
     NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     NSRect full_screen_rect = [screen frame]; 
     
-    window_height = NSHeight(full_screen_rect);
-    window_width = NSWidth(full_screen_rect);
+    window_height = (float)NSHeight(full_screen_rect);
+    window_width = (float)NSWidth(full_screen_rect);
     
     init_projection_constants();
     init_renderer();
@@ -142,7 +142,7 @@ int main(int argc, const char * argv[])
     
     char shader_lib_path_cstr[2000];
     concat_strings(
-        /* string_1: */ platform_get_application_path(),
+        /* string_1: */ platform_get_resources_path(),
         /* string_2: */ "/Shaders.metallib",
         /* output: */ shader_lib_path_cstr,
         /* output_size: */ 2000);

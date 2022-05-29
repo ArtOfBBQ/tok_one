@@ -17,10 +17,12 @@ typedef struct TextureArrayLocation {
 zPolygon load_from_obj_file(char * filename)
 {
     FileBuffer buffer;
-    buffer.size = platform_get_filesize(filename) + 1;
+    buffer.size = (uint64_t)platform_get_filesize(filename) + 1;
     char buffer_contents[buffer.size];
     buffer.contents = (char *)&buffer_contents;
-    platform_read_file(filename, &buffer);
+    platform_read_file(
+        filename,
+        &buffer);
     
     zPolygon return_value =
         parse_obj(
@@ -33,13 +35,19 @@ zPolygon load_from_obj_file(char * filename)
 uint32_t label_object_id = 0;
 uint32_t teapot_object_id = 1;
 
-void preregister_assets() {
-
+static void preregister_assets() {
+    
     const char * fontfile[1];
     fontfile[0] = "font.png";
     register_new_texturearray_from_files(
         fontfile,
         1);
+    if (get_avg_rgba(texture_arrays[0].image) < 5) {
+        printf(
+            "average rgba for texture_arrays[0] was only: %u\n",
+            get_avg_rgba(texture_arrays[0].image));
+        assert(0);
+    }
     texture_arrays[0].sprite_columns = 9;
     texture_arrays[0].sprite_rows = 9;
     texture_arrays[0].request_update = false;
@@ -93,7 +101,8 @@ void preregister_assets() {
             fe->d_name[fe->d_namlen - 2] == 'n' &&
             fe->d_name[fe->d_namlen - 1] == 'g')
         {
-            if (fe->d_namlen >= MAX_ASSET_FILENAME_SIZE) {
+            if (fe->d_namlen >= MAX_ASSET_FILENAME_SIZE)
+            {
                 printf(
                     "asset file %s filename exceeds MAX_ASSET_FILENAME_SIZE [%u] characters\n",
                     fe->d_name,
@@ -102,12 +111,14 @@ void preregister_assets() {
             }
             
             FileBuffer png_file;
-            png_file.size = 40; // read first 40 bytes only
-            char png_file_contents[40];
+            png_file.size = 50; // read first 40 bytes only
+            char png_file_contents[50];
             png_file.contents = (char *)&png_file_contents;
             platform_read_file(
                 /* filename: */ fe->d_name,
                 /* out_preallocatedbuffer: */ &png_file);
+            
+            assert(png_file.size > 0);
             
             uint32_t width;
             uint32_t height;
@@ -121,8 +132,15 @@ void preregister_assets() {
                 /* height_out: */
                     &height);
             
-            assert(width > 0);
-            assert(height > 0);
+            if (width == 0 || height == 0) {
+                printf(
+                    "skipping file %s because unable to parse dimensions...\n",
+                    fe->d_name);
+                printf(
+                    "was reading from this buffer: %s\n",
+                    png_file.contents);
+                continue;
+            }
             
             int32_t new_texturearray_i = -1;
             int32_t new_texture_i = -1;
@@ -165,7 +183,7 @@ void preregister_assets() {
             
             if (new_texturearray_i < 0) {
                 new_texturearray_i =
-                    texture_arrays_size;
+                    (int32_t)texture_arrays_size;
                 filenames_for_texturearrays_size++;
                 texture_arrays_size++;
             }
@@ -209,15 +227,18 @@ void preregister_assets() {
     }
 }
 
-void load_assets(uint32_t start_i, uint32_t last_i) {
+static void load_assets(
+    uint32_t start_i,
+    uint32_t last_i)
+{
     printf(
         "load_assets from %u to and including %u\n",
         start_i,
         last_i);
-        
+    
     for (
-        int32_t dimension_i = start_i;
-        dimension_i <= last_i;
+        int32_t dimension_i = (int32_t)start_i;
+        dimension_i <= (int32_t)last_i;
         dimension_i++)
     {
         printf(
@@ -239,31 +260,32 @@ void client_logic_startup() {
     assert(TEXTUREARRAYS_SIZE > 0);
     
     preregister_assets();
+   
+    assert(texture_arrays_size > 2); 
+    load_assets(1, texture_arrays_size - 1);
     
-    load_assets(1, 3);
-
     // debug_dump_texturearrays_to_disk();
     // assert(0);
     
     // reminder: threadmain_id 0 calls load_assets() 
     // platform_start_thread(/* threadmain_id: */ 0);
-
+    
     zlights_to_apply[0].x = 1;
     zlights_to_apply[0].y = 1;
     zlights_to_apply[0].z = 1;
-    zlights_to_apply[0].RGBA[0] = 1.0f;
-    zlights_to_apply[0].RGBA[1] = 1.0f;
-    zlights_to_apply[0].RGBA[2] = 1.0f;
-    zlights_to_apply[0].RGBA[3] = 1.0f;
-    zlights_to_apply[0].ambient = 5.0f;
-    zlights_to_apply[0].reach = 50.0f;
+    zlights_to_apply[0].RGBA[0] = 9.0f;
+    zlights_to_apply[0].RGBA[1] = 9.0f;
+    zlights_to_apply[0].RGBA[2] = 9.0f;
+    zlights_to_apply[0].RGBA[3] = 9.0f;
+    zlights_to_apply[0].ambient = 15.0f;
+    zlights_to_apply[0].reach = 500.0f;
     zlights_to_apply_size++;
     
     TexQuad sample_quad;
     construct_texquad(&sample_quad);
     sample_quad.object_id = 5;
-    sample_quad.texturearray_i = 3;
-    sample_quad.texture_i = 1;
+    sample_quad.texturearray_i = 2;
+    sample_quad.texture_i = 0;
     sample_quad.left_pixels = 100;
     sample_quad.top_pixels = 400;
     sample_quad.width_pixels = 100;
@@ -296,7 +318,7 @@ void client_logic_animation_callback(int32_t callback_id)
         callback_id);
 }
 
-void client_handle_mouseevents(
+static void client_handle_mouseevents(
     uint64_t microseconds_elapsed)
 {
     uint32_t touched_object_id = 999999;
@@ -327,11 +349,11 @@ void client_handle_mouseevents(
                 brighten.remaining_microseconds;
             
             for (uint32_t i = 0; i < 3; i++) {
-                brighten.rgba_delta_per_second[i] = 0.9;
-                dim.rgba_delta_per_second[i] = -0.9;
+                brighten.rgba_delta_per_second[i] = 0.9f;
+                dim.rgba_delta_per_second[i] = -0.9f;
             }
-            brighten.z_rotation_per_second = -0.13;
-            dim.z_rotation_per_second = 0.13;
+            brighten.z_rotation_per_second = -0.13f;
+            dim.z_rotation_per_second = 0.13f;
             
             request_scheduled_animation(&brighten);
             request_scheduled_animation(&dim);
@@ -364,7 +386,7 @@ void client_handle_mouseevents(
     }
 }
 
-void client_handle_keypresses(
+static void client_handle_keypresses(
     uint64_t microseconds_elapsed)
 {
     float elapsed_mod =
@@ -441,7 +463,7 @@ void client_handle_keypresses(
     }
 }
 
-void client_handle_touches(
+static void client_handle_touches(
     uint64_t microseconds_elapsed)
 {
     //float elapsed_mod =

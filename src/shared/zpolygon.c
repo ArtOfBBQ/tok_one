@@ -23,7 +23,7 @@ void init_projection_constants() {
     
     float field_of_view = 90.0f;
     pjc->field_of_view_rad =
-        ((field_of_view * 0.5) / 180.0f) * 3.14159f;
+        ((field_of_view * 0.5f) / 180.0f) * 3.14159f;
     pjc->field_of_view_modifier =
         1.0f / tanf(pjc->field_of_view_rad);
     
@@ -31,7 +31,7 @@ void init_projection_constants() {
         window_height / window_width; 
 }
 
-uint32_t chars_till_next_space_or_slash(
+static uint32_t chars_till_next_space_or_slash(
     char * buffer)
 {
     uint32_t i = 0;
@@ -47,7 +47,7 @@ uint32_t chars_till_next_space_or_slash(
     return i;
 }
 
-uint32_t chars_till_next_nonspace(
+static uint32_t chars_till_next_nonspace(
     char * buffer)
 {
     uint32_t i = 0;
@@ -100,7 +100,7 @@ zPolygon parse_obj(
             assert(rawdata[i] != ' ');
             
             // read vertex x
-            new_vertex.x = atof(rawdata + i);
+            new_vertex.x = (float)atof(rawdata + i);
             
             // discard vertex x
             i += chars_till_next_space_or_slash(
@@ -112,7 +112,7 @@ zPolygon parse_obj(
             assert(rawdata[i] != ' ');
             
             // read vertex y
-            new_vertex.y = atof(rawdata + i);
+            new_vertex.y = (float)atof(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
             assert(rawdata[i] == ' ');
@@ -120,7 +120,7 @@ zPolygon parse_obj(
             assert(rawdata[i] != ' ');
             
             // read vertex z
-            new_vertex.z = atof(rawdata + i);
+            new_vertex.z = (float)atof(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
             assert(rawdata[i] == '\n');
@@ -149,7 +149,7 @@ zPolygon parse_obj(
             assert(rawdata[i] != ' ');
             
             // read the u coordinate
-            uv_u[new_uv_i] = atof(rawdata + i);
+            uv_u[new_uv_i] = (float)atof(rawdata + i);
             
             // discard the u coordinate
             i += chars_till_next_space_or_slash(
@@ -162,7 +162,7 @@ zPolygon parse_obj(
             assert(rawdata[i] != ' ');
             
             // read the v coordinate
-            uv_v[new_uv_i] = atof(rawdata + i);
+            uv_v[new_uv_i] = (float)atof(rawdata + i);
             
             // discard the v coordinate
             i += chars_till_next_space_or_slash(
@@ -205,8 +205,7 @@ zPolygon parse_obj(
             }
             uint32_t line_size = j - i;
             
-            char * usemtl_hint =
-                (char *)malloc(sizeof(line_size));
+            char usemtl_hint[line_size];
             
             for (j = 0; j < (line_size); j++) {
                 usemtl_hint[j] = rawdata[i + j];
@@ -244,8 +243,6 @@ zPolygon parse_obj(
                 using_color[3] = 1.0;
             }
             
-            free(usemtl_hint);
-            
             // skip until the next line break character 
             while (rawdata[i] != '\n') {
                 i++;
@@ -268,11 +265,11 @@ zPolygon parse_obj(
             new_triangle.visible = 1;
             
             // read 1st vertex index
-            uint32_t vertex_i_0 = atoi(rawdata + i);
+            int32_t vertex_i_0 = atoi(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
             
-            uint32_t uv_coord_i_0 = 0;
+            int32_t uv_coord_i_0 = 0;
             if (rawdata[i] == '/')
             {
                 // skip the slash
@@ -288,11 +285,11 @@ zPolygon parse_obj(
             assert(rawdata[i] != ' ');
             
             // read 2nd vertex index
-            uint32_t vertex_i_1 = atoi(rawdata + i);
+            int32_t vertex_i_1 = atoi(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
             
-            uint32_t uv_coord_i_1 = 0;
+            int32_t uv_coord_i_1 = 0;
             if (rawdata[i] == '/')
             {
                 // skip the slash
@@ -308,10 +305,10 @@ zPolygon parse_obj(
             assert(rawdata[i] != ' ');
             
             // read 3rd vertex index
-            uint32_t vertex_i_2 = atoi(rawdata + i);
+            int32_t vertex_i_2 = atoi(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
-            uint32_t uv_coord_i_2 = 0;
+            int32_t uv_coord_i_2 = 0;
             if (rawdata[i] == '/')
             {
                 // skip the slash
@@ -415,168 +412,6 @@ void scale_zpolygon(
             to_scale->triangles[i].vertices[j].z *= scale_factor;
         }
     }
-}
-
-zPolygon * get_box(void) {
-    zPolygon * box = (zPolygon *)malloc(sizeof(zPolygon));
-    box->triangles_size = 6 * 2; // 6 faces, 2 per face
-    
-    box->triangles = (zTriangle * )malloc(
-        sizeof(zTriangle) * box->triangles_size);
-    
-    box->x = -40.0f;
-    box->y = 40.0f;
-    box->z = 40.0f;
-    box->x_angle = 0.0f;
-    box->y_angle = 0.0f;
-    box->z_angle = 0.0f;
-    
-    // SOUTH face
-    box->triangles[0].vertices[0] =
-        (zVertex){ -2.5f, -2.5f, -2.5f };
-    box->triangles[0].vertices[1] =
-        (zVertex){ -2.5f, 2.5f, -2.5f };
-    box->triangles[0].vertices[2] =
-        (zVertex){ 2.5f, 2.5f, -2.5f };
-    box->triangles[0].texturearray_i = 1;
-    box->triangles[0].texture_i = 6;
-    
-    box->triangles[1].vertices[0] =
-        (zVertex){ -2.5f, -2.5f, -2.5f };
-    box->triangles[1].vertices[1] =
-        (zVertex){ 2.5f, 2.5f, -2.5f };
-    box->triangles[1].vertices[2] =
-        (zVertex){ 2.5f, -2.5f, -2.5f };
-    box->triangles[1].texturearray_i = 1;
-    box->triangles[1].texture_i = 6;
-    
-    // EAST face
-    box->triangles[2].vertices[0] =
-        (zVertex){ 2.5f, -2.5f, -2.5f };
-    box->triangles[2].vertices[1] =
-        (zVertex){ 2.5f, 2.5f, -2.5f };
-    box->triangles[2].vertices[2] =
-        (zVertex){ 2.5f, 2.5f, 2.5f };
-    box->triangles[2].texturearray_i = 1;
-    box->triangles[2].texture_i = 6;
-    
-    box->triangles[3].vertices[0] =
-        (zVertex){ 2.5f, -2.5f, -2.5f };
-    box->triangles[3].vertices[1] =
-        (zVertex){ 2.5f, 2.5f, 2.5f };
-    box->triangles[3].vertices[2] =
-        (zVertex){ 2.5f, -2.5f, 2.5f };
-    box->triangles[3].texturearray_i = 1;
-    box->triangles[3].texture_i = 6;
-    
-    // NORTH face
-    box->triangles[4].vertices[0] =
-        (zVertex){ 2.5f, -2.5f, 2.5f };
-    box->triangles[4].vertices[1] =
-        (zVertex){ 2.5f, 2.5f, 2.5f };
-    box->triangles[4].vertices[2] =
-        (zVertex){ -2.5f, 2.5f, 2.5f };
-    box->triangles[4].texturearray_i = 1;
-    box->triangles[4].texture_i = 6;
-    float red[4] = { 1.0f, 0.2f, 0.2, 1.0f };
-    for (uint32_t i = 0; i < 4; i++) {
-        box->triangles[4].color[i] = red[i]; 
-        box->triangles[4].color[i] = red[i];
-        box->triangles[4].color[i] = red[i];
-    }
-    
-    box->triangles[5].vertices[0] =
-        (zVertex){ 2.5f, -2.5f, 2.5f };
-    box->triangles[5].vertices[1] =
-        (zVertex){ -2.5f, 2.5f, 2.5f };
-    box->triangles[5].vertices[2] =
-        (zVertex){ -2.5f, -2.5f, 2.5f };
-    box->triangles[5].texturearray_i = 1;
-    box->triangles[5].texture_i = 6;
-    for (uint32_t i = 0; i < 4; i++) {
-        box->triangles[5].color[i] = red[i]; 
-        box->triangles[5].color[i] = red[i];
-        box->triangles[5].color[i] = red[i];
-    }
-    
-    // WEST face
-    box->triangles[6].vertices[0] =
-        (zVertex){ -2.5f, -2.5f, 2.5f };
-    box->triangles[6].vertices[1] =
-        (zVertex){ -2.5f, 2.5f, 2.5f };
-    box->triangles[6].vertices[2] =
-        (zVertex){ -2.5f, 2.5f, -2.5f };
-    box->triangles[6].texturearray_i = 1;
-    box->triangles[6].texture_i = 6;
-    
-    box->triangles[7].vertices[0] =
-        (zVertex){ -2.5f, -2.5f, 2.5f };
-    box->triangles[7].vertices[1] =
-        (zVertex){ -2.5f, 2.5f, -2.5f };
-    box->triangles[7].vertices[2] =
-        (zVertex){ -2.5f, -2.5f, -2.5f };
-    box->triangles[7].texturearray_i = 1;
-    box->triangles[7].texture_i = 6;
-    
-    // TOP face
-    box->triangles[8].vertices[0] =
-        (zVertex){ -2.5f, 2.5f, -2.5f };
-    box->triangles[8].vertices[1] =
-        (zVertex){ -2.5f, 2.5f, 2.5f };
-    box->triangles[8].vertices[2] =
-        (zVertex){ 2.5f, 2.5f, 2.5f };
-    box->triangles[8].texturearray_i = 1;
-    box->triangles[8].texture_i = 6;
-    
-    box->triangles[9].vertices[0] =
-        (zVertex){ -2.5f, 2.5f, -2.5f };
-    box->triangles[9].vertices[1] =
-        (zVertex){ 2.5f, 2.5f, 2.5f };
-    box->triangles[9].vertices[2] =
-        (zVertex){ 2.5f, 2.5f, -2.5f };
-    box->triangles[9].texturearray_i = 1;
-    box->triangles[9].texture_i = 6;
-    
-    // BOTTOM face
-    box->triangles[10].vertices[0] =
-        (zVertex){ 2.5f, -2.5f, 2.5f };
-    box->triangles[10].vertices[1] =
-        (zVertex){ -2.5f, -2.5f, 2.5f };
-    box->triangles[10].vertices[2] =
-        (zVertex){ -2.5f, -2.5f, -2.5f };
-    box->triangles[10].texturearray_i = 1;
-    box->triangles[10].texture_i = 6;
-    
-    box->triangles[11].vertices[0] =
-        (zVertex){ 2.5f, -2.5f, 2.5f };
-    box->triangles[11].vertices[1] =
-        (zVertex){ -2.5f, -2.5f, -2.5f };
-    box->triangles[11].vertices[2] =
-        (zVertex){ 2.5f, -2.5f, -2.5f };
-    box->triangles[11].texturearray_i = 1;
-    box->triangles[11].texture_i = 6;
-    
-    for (uint32_t i = 0; i < 12; i += 2) {
-        box->triangles[i].draw_normals = 0;
-        box->triangles[i].visible = 1;
-        box->triangles[i+1].draw_normals = 0;
-        box->triangles[i+1].visible = 1;
-        
-        box->triangles[i].vertices[0].uv[0] = 0.0f; 
-        box->triangles[i].vertices[0].uv[1] = 1.0f;
-        box->triangles[i].vertices[1].uv[0] = 0.0f; 
-        box->triangles[i].vertices[1].uv[1] = 0.0f;
-        box->triangles[i].vertices[2].uv[0] = 1.0f; 
-        box->triangles[i].vertices[2].uv[1] = 0.0f;
-        box->triangles[i+1].vertices[0].uv[0] = 0.0f; 
-        box->triangles[i+1].vertices[0].uv[1] = 1.0f;
-        box->triangles[i+1].vertices[1].uv[0] = 1.0f; 
-        box->triangles[i+1].vertices[1].uv[1] = 0.0f;
-        box->triangles[i+1].vertices[2].uv[0] = 1.0f; 
-        box->triangles[i+1].vertices[2].uv[1] = 1.0f;
-    }
-    
-    return box;
 }
 
 void ztriangle_apply_lighting(
@@ -812,7 +647,7 @@ int sorter_cmpr_lowest_z(
     return get_avg_z((zTriangle *)a) < get_avg_z((zTriangle *)b) ? -1 : 1;
 }
 
-float get_magnitude(zVertex input) {
+static float get_magnitude(zVertex input) {
     float sum_squares =
         (input.x * input.x) +
         (input.y * input.y) +

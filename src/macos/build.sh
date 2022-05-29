@@ -31,6 +31,8 @@ xcrun -sdk macosx metallib resources/Shaders.air -o build/$PLATFORM/$APP_NAME.ap
 
 echo "skipping resource copy..."
 echo "copy resources..."
+rm build/$PLATFORM/$APP_NAME.app/*.png
+rm build/$PLATFORM/$APP_NAME.app/*.obj
 cp resources/cardwithuvcoords.obj build/$PLATFORM/$APP_NAME.app/cardwithuvcoords.obj
 cp resources/teapot.obj build/$PLATFORM/$APP_NAME.app/teapot.obj
 cp resources/*.png build/$PLATFORM/$APP_NAME.app

@@ -127,7 +127,7 @@ void software_render(
     origin.y = 0.0f;
     origin.z = 0.0f; 
     for (
-        int32_t i = triangles_to_draw_size - 1;
+        int32_t i = (int32_t)triangles_to_draw_size - 1;
         i >= 0;
         i -= 1)
     {

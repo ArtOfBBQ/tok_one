@@ -69,11 +69,11 @@ void translate_lights(
     for (uint32_t i = 0; i < lights_count; i++)
     {
         translated_light_pos.x =
-            zlights_to_apply[i].x - camera.x;
+            originals[i].x - camera.x;
         translated_light_pos.y =
-            zlights_to_apply[i].y - camera.y;
+            originals[i].y - camera.y;
         translated_light_pos.z =
-            zlights_to_apply[i].z - camera.z;
+            originals[i].z - camera.z;
         translated_light_pos = x_rotate_zvertex(
             &translated_light_pos,
             -1 * camera.x_angle);
@@ -84,7 +84,7 @@ void translate_lights(
             &translated_light_pos,
             -1 * camera.z_angle);
         
-        out_translated[i] = zlights_to_apply[i];
+        out_translated[i] = originals[i];
         out_translated[i].x = translated_light_pos.x;
         out_translated[i].y = translated_light_pos.y;
         out_translated[i].z = translated_light_pos.z;

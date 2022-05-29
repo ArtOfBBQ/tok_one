@@ -10,18 +10,23 @@ void concat_strings(
     char * str2_at = (char *)string_2;
     char * output_at = output;
     
+    uint32_t chars_used = 0;
+    
     while (str1_at[0] != '\0') {
         *output_at++ = *str1_at++;
-        assert(output_at - output < output_size);
+        chars_used++;
+        assert(chars_used < output_size);
     }
     
     while (str2_at[0] != '\0') {
         *output_at++ = *str2_at++;
-        assert(output_at - output < output_size);
+        chars_used++;
+        assert(chars_used < output_size);
     }
     
     *output_at = '\0';
-    assert(output_at - output < output_size);
+    chars_used++;
+    assert(chars_used < output_size);
 }
 
 void copy_strings(

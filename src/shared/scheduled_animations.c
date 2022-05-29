@@ -53,7 +53,7 @@ void request_scheduled_animation(ScheduledAnimation * to_add)
     
     for (
         int32_t i = 0;
-        i < scheduled_animations_size;
+        i < (int32_t)scheduled_animations_size;
         i++)
     {
         if (scheduled_animations[i].deleted)
@@ -185,7 +185,7 @@ void resolve_animation_effects(
 {
     ScheduledAnimation * anim;
     for (
-        int32_t animation_i = (scheduled_animations_size - 1);
+        int32_t animation_i = (int32_t)(scheduled_animations_size - 1);
         animation_i >= 0;
         animation_i--)
     {
@@ -193,7 +193,7 @@ void resolve_animation_effects(
         anim = &scheduled_animations[animation_i];
         
         if (anim->deleted) {
-            if (animation_i == scheduled_animations_size - 1) {
+            if (animation_i == (int32_t)scheduled_animations_size - 1) {
                 scheduled_animations_size -= 1;
             }
             continue;
@@ -228,7 +228,7 @@ void resolve_animation_effects(
         if (anim->remaining_microseconds == 0)
         {
             anim->deleted = true;
-            if (animation_i == scheduled_animations_size)
+            if (animation_i == (int32_t)scheduled_animations_size)
             {
                 scheduled_animations_size -= 1;
             }
@@ -242,7 +242,7 @@ void resolve_animation_effects(
             if (anim->delete_object_when_finished)
             {
                 for (
-                    int32_t tq_i = texquads_to_render_size - 1;
+                    int32_t tq_i = (int32_t)texquads_to_render_size - 1;
                     tq_i >= 0;
                     tq_i--)
                 {
@@ -256,7 +256,7 @@ void resolve_animation_effects(
                             .texturearray_i = -1;
                         texquads_to_render[tq_i].texture_i = -1;
                         
-                        if (tq_i == texquads_to_render_size - 1)
+                        if (tq_i == (int32_t)texquads_to_render_size - 1)
                         {
                             texquads_to_render_size--;
                         }
@@ -403,7 +403,7 @@ void request_bump_animation(const uint32_t object_id)
     ScheduledAnimation embiggen_request;
     construct_scheduled_animation(&embiggen_request);
     embiggen_request.affected_object_id = object_id;
-    embiggen_request.remaining_microseconds = duration * 0.5f;
+    embiggen_request.remaining_microseconds = (uint64_t)(duration / 0.5f);
     embiggen_request.final_xscale_known = true;
     embiggen_request.final_xscale = 1.35f;
     embiggen_request.final_yscale_known = true;
@@ -414,8 +414,8 @@ void request_bump_animation(const uint32_t object_id)
     ScheduledAnimation revert_request;
     construct_scheduled_animation(&revert_request);
     revert_request.affected_object_id = object_id;
-    revert_request.wait_first_microseconds = duration * 0.5f;
-    revert_request.remaining_microseconds = duration * 0.5f;
+    revert_request.wait_first_microseconds = (uint64_t)(duration * 0.5f);
+    revert_request.remaining_microseconds = (uint64_t)(duration * 0.5f);
     revert_request.final_xscale_known = true;
     revert_request.final_xscale = 1.0f;
     revert_request.final_yscale_known = true;

@@ -3,7 +3,7 @@
 
 #include "bitmap_renderer.h"
 
-extern uint32_t font_texturearray_i;
+extern int32_t font_texturearray_i;
 extern float font_height;
 
 void request_label_around(

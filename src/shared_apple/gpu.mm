@@ -26,25 +26,37 @@ uint64_t previous_time;
     _command_queue = [metal_device newCommandQueue];
     
     NSError *Error = NULL;
-    
     id<MTLLibrary> shader_library =
-        [metal_device
-            newLibraryWithFile: shader_lib_filepath 
-            error: &Error];
+        [metal_device newDefaultLibrary];
+
+    if (shader_library == NULL)
+    {
+        NSLog(
+            @"failed to load default shader library, trying to load from %@ instead...",
+            shader_lib_filepath);
+        
+        shader_library =
+            [metal_device
+                newLibraryWithFile: shader_lib_filepath 
+                error: &Error];
+
+        if (shader_library == NULL) {
+            NSLog(@"Failed to find the shader library again");
+            if (Error != NULL) {
+                NSLog(@" error => %@ ", [Error userInfo]);
+            }
+            assert(0);
+        } else {
+            NSLog(@"Found the shader library on 2nd try!");
+        }
+    }
+    
     id<MTLFunction> vertex_shader =
         [shader_library newFunctionWithName:
             @"vertex_shader"];
     id<MTLFunction> fragment_shader =
         [shader_library newFunctionWithName:
             @"fragment_shader"];
-    
-    if (Error != NULL)
-    {
-        NSLog(@" error => %@ ", [Error userInfo]);
-        [NSException
-            raise: @"Can't Setup Metal" 
-            format: @"Unable to load shader libraries"];
-    }
     
     // Setup combo pipeline that handles
     // both colored & textured triangles
@@ -84,8 +96,8 @@ uint64_t previous_time;
             format: @"Unable to setup rendering pipeline state"];
     }
     
-    uint32_t PageSize = getpagesize();
-    uint32_t BufferedVertexSize = PageSize * 1000;
+    int32_t page_size = getpagesize();
+    uint32_t buffered_vertex_size = (uint32_t)page_size * 1000;
     
     _vertex_buffers = [[NSMutableArray alloc] init];
     
@@ -97,7 +109,7 @@ uint64_t previous_time;
         buffered_vertex.vertices =
             (Vertex *)mmap(
                 0,
-                BufferedVertexSize,
+                buffered_vertex_size,
                 PROT_READ | PROT_WRITE,
                 MAP_PRIVATE | MAP_ANON,
                 -1,
@@ -111,7 +123,7 @@ uint64_t previous_time;
                 newBufferWithBytesNoCopy:
                     buffered_vertex.vertices
                 length:
-                    BufferedVertexSize
+                    buffered_vertex_size
                 options:
                     MTLResourceStorageModeShared
                 deallocator:
@@ -129,7 +141,7 @@ uint64_t previous_time;
     assert(TEXTUREARRAYS_SIZE > 0);
     for (
         int32_t i = 0;
-        i < texture_arrays_size;
+        i < (int32_t)texture_arrays_size;
         i++)
     {
         if (texture_arrays_size >= TEXTUREARRAYS_SIZE) {
@@ -150,11 +162,11 @@ uint64_t previous_time;
     texture_arrays[texturearray_i].request_update = false;
     printf("macos X updateTextureArray: %i\n", texturearray_i);
     assert(texturearray_i < TEXTUREARRAYS_SIZE);
-    assert(texturearray_i < texture_arrays_size);
+    assert(texturearray_i < (int32_t)texture_arrays_size);
     int32_t i = texturearray_i;
     
     // pad objects to match
-    while ([_metal_textures count] <= i) {
+    while ((int32_t)[_metal_textures count] <= i) {
         MTLTextureDescriptor * texture_descriptor =
             [[MTLTextureDescriptor alloc] init];
         texture_descriptor.textureType = MTLTextureType2DArray;
@@ -206,8 +218,8 @@ uint64_t previous_time;
         [_metal_device
             newTextureWithDescriptor:texture_descriptor];
     
-    assert(texture_arrays[i].image->width >= 10);
-    assert(texture_arrays[i].image->height >= 10);
+    assert(texture_arrays[i].image->width >= 2);
+    assert(texture_arrays[i].image->height >= 2);
     uint32_t slice_i = 0;
     for (
         uint32_t row_i = 1;
@@ -262,7 +274,9 @@ uint64_t previous_time;
     }
     
     printf("replacing object at index: %i\n", i);
-    [_metal_textures replaceObjectAtIndex:i withObject: texture];
+    [_metal_textures
+        replaceObjectAtIndex:(uint32_t)i
+        withObject: texture];
     printf("replaced\n");
 }
 
@@ -274,7 +288,7 @@ uint64_t previous_time;
     
     for (uint32_t i = 0; i < texture_arrays_size; i++) {
         if (texture_arrays[i].request_update) {
-            [self updateTextureArray: i];
+            [self updateTextureArray: (int32_t)i];
             break;
         }
     }
@@ -286,7 +300,8 @@ uint64_t previous_time;
         0,
         0,
         window_width * 2.0f,
-        window_height * 2.0f };
+        window_height * 2.0f
+    };
     
     uint32_t frame_i = (uint32_t)_currentFrameIndex;
     
@@ -339,7 +354,7 @@ uint64_t previous_time;
             MTLLoadActionClear;
         
         MTLClearColor clear_color =
-            MTLClearColorMake(0.2f, 0.2f, 0.2f, 0.0f);
+            MTLClearColorMake(0.0f, 0.0f, 0.0f, 0.0f);
         RenderPassDescriptor.colorAttachments[0].clearColor =
             clear_color;
         
@@ -389,7 +404,7 @@ uint64_t previous_time;
             [view currentDrawable];
         [command_buffer presentDrawable: current_drawable];
         
-        uint32_t next_index = (int32_t)_currentFrameIndex + 1;
+        uint32_t next_index = (uint32_t)_currentFrameIndex + 1;
         if (next_index > 2) { next_index = 0; }
         
         _currentFrameIndex = next_index;
@@ -409,8 +424,8 @@ uint64_t previous_time;
 - (void)mtkView:(MTKView *)view
     drawableSizeWillChange:(CGSize)size
 {
-    window_height = size.height;
-    window_width = size.width;
+    window_height = (float)size.height;
+    window_width = (float)size.width;
 }
 
 @end

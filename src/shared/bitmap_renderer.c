@@ -3,7 +3,7 @@
 TexQuad texquads_to_render[TEXQUADS_TO_RENDER_ARRAYSIZE];
 uint32_t texquads_to_render_size = 0;
 
-void triangle_apply_lighting(
+static void triangle_apply_lighting(
     Vertex out_input[3],
     const zLightSource * zlight_source)
 {
@@ -104,7 +104,7 @@ void move_texquad_object(
     }
 }
 
-void z_rotate_triangle(
+static void z_rotate_triangle(
     Vertex input[3],
     float around_x,
     float around_y,
@@ -135,7 +135,7 @@ void z_rotate_triangle(
 void delete_texquad_object(const uint32_t with_object_id)
 {
     for (
-        int32_t i = texquads_to_render_size - 1;
+        int32_t i = (int32_t)texquads_to_render_size - 1;
         i >= 0;
         i--)
     {
@@ -144,14 +144,14 @@ void delete_texquad_object(const uint32_t with_object_id)
             texquads_to_render[i].visible = false;
             texquads_to_render[i].deleted = true;
             
-            if (i == texquads_to_render_size - 1) {
+            if (i == (int32_t)texquads_to_render_size - 1) {
                 texquads_to_render_size -= 1;
             }
         }
     }
 }
 
-void add_quad_to_gpu_workload(
+static void add_quad_to_gpu_workload(
     TexQuad * to_add,
     Vertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size,
@@ -176,21 +176,21 @@ void add_quad_to_gpu_workload(
     float right = to_add->left_pixels +
         to_add->width_pixels +
         (extra_scale_x * 0.5f * to_add->width_pixels);
-    float mid_x = (left + right) * 0.5f;
+    // float mid_x = (left + right) * 0.5f;
     float top = to_add->top_pixels +
         (extra_scale_y * 0.5f * to_add->height_pixels);
     float bottom = to_add->top_pixels -
         to_add->height_pixels -
         (extra_scale_y * 0.5f * to_add->height_pixels);
-    float mid_y = (top + bottom) * 0.5f;
+    // float mid_y = (top + bottom) * 0.5f;
     
     if (!to_add->ignore_camera) {
         left -= camera.x;
         right -= camera.x;
-        mid_x -= camera.x;
+        // mid_x -= camera.x;
         top -= camera.y;
         bottom -= camera.y;
-        mid_y -= camera.y;
+        // mid_y -= camera.y;
     }
     
     // top left vertex
@@ -296,7 +296,7 @@ void add_quad_to_gpu_workload(
         /* around_x : */
             (left + right) * 0.5f,
         /* around_y : */
-            (top + bottom) * 0.5,
+            (top + bottom) * 0.5f,
         /* by_angle: */
             to_add->z_angle,
         /* recipient: */
@@ -308,7 +308,7 @@ void add_quad_to_gpu_workload(
         /* around_x : */
             (left + right) * 0.5f,
         /* around_y : */
-            (top + bottom) * 0.5,
+            (top + bottom) * 0.5f,
         /* by_angle: */
             to_add->z_angle,
         /* recipient: */
@@ -369,7 +369,7 @@ void add_quad_to_gpu_workload(
     }
 }
 
-int sorter_cmpr_texquad_lowest_z(
+static int sorter_cmpr_texquad_lowest_z(
     const void * a,
     const void * b)
 {

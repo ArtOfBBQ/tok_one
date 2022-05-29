@@ -51,7 +51,7 @@ void register_touchable_triangle(
     touchable_triangles_size++;
 }
 
-float get_triangle_area(
+static float get_triangle_area(
     const float x1,
     const float y1,
     const float x2,
@@ -62,7 +62,7 @@ float get_triangle_area(
     return fabs( (x2-x1)*(y3-y1) - (x3-x1)*(y2-y1) );
 }
 
-bool32_t point_collides_triangle_area(
+static bool32_t point_collides_triangle_area(
     const float normalized_x,
     const float normalized_y,
     const TriangleArea * area)
@@ -112,7 +112,7 @@ int32_t find_touchable_at(
     const float normalized_y)
 {
     for (
-        int32_t i = (touchable_triangles_size - 1);
+        int32_t i = (int32_t)(touchable_triangles_size - 1);
         i >= 0;
         i--)
     {
