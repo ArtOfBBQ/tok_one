@@ -84,23 +84,21 @@ void platform_read_file(
     }
     
     if (out_preallocatedbuffer->size >
-        [file_data length])
+        [file_data length] + 1)
     {
         printf(
             "adjusting buffer size to:"
             FUINT64
             "\n",
             (uint64_t)[file_data length]);
-        out_preallocatedbuffer->size = [file_data length];
+        out_preallocatedbuffer->size = [file_data length] + 1;
     }
     
     [file_data
         getBytes:out_preallocatedbuffer->contents
-        range:NSMakeRange(0, out_preallocatedbuffer->size-1)];
-        // length:out_preallocatedbuffer->size];
+        length:out_preallocatedbuffer->size - 1];
     
-    out_preallocatedbuffer->contents[
-    out_preallocatedbuffer->size - 1] = '\0';
+    out_preallocatedbuffer->contents[out_preallocatedbuffer->size - 1] = '\0';
     
     for (uint32_t i = 0; i < out_preallocatedbuffer->size - 1; i++) {
         if (
