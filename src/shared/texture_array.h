@@ -33,7 +33,7 @@ DecodedImage * extract_image(
     uint32_t x,
     uint32_t y);
 
-DecodedImage * read_img_from_filename(
+DecodedImage * malloc_img_from_filename(
     const char * filename);
 
 void debug_dump_texturearrays_to_disk();
@@ -58,11 +58,11 @@ void register_new_texturearray_from_files(
     const uint32_t filenames_size);
 
 void register_new_texturearray_from_images(
-    const DecodedImage ** new_images,
+    DecodedImage ** new_images,
     const uint32_t new_images_size);
 
 void register_new_texturearray(
-    const DecodedImage * new_image);
+    DecodedImage * new_image);
 
 #endif
 

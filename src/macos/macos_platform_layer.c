@@ -35,6 +35,9 @@ int64_t platform_get_filesize(const char * filename)
         return -1;
     }
     
+    // let's not use 20MB+ files in development
+    assert(file_size.intValue < 20000000);
+    
     return file_size.intValue;
 }
 
@@ -57,70 +60,38 @@ void platform_read_file(
         withExtension: [nsfilename pathExtension]];
     
     if (file_url == nil) {
-        printf("file_url nil!\n");
-        assert(0);
-    }
-    
-    NSError * error = NULL; 
-    NSData * file_data =
-        [NSData
-            dataWithContentsOfURL:file_url
-            options:NSDataReadingUncached
-            error:&error];
-    
-    NSString * debug_string = [
-        [NSString alloc]
-            initWithData:file_data
-            encoding:NSASCIIStringEncoding];
-    NSLog(@"read NSData: %@", debug_string);
-    
-    if (file_data == nil) {
-        NSLog(
-            @"error => %@ ",
-            [error userInfo]);
-        assert(0);
-    } else {
-        NSLog(@"Succesfully read data");
-    }
-    
-    if (out_preallocatedbuffer->size >
-        [file_data length] + 1)
-    {
         printf(
-            "adjusting buffer size to:"
-            FUINT64
-            "\n",
-            (uint64_t)[file_data length]);
-        out_preallocatedbuffer->size = [file_data length] + 1;
+            "couldn't find file: %s\n",
+            filename);
+        out_preallocatedbuffer->size = 0;
+        out_preallocatedbuffer->good = false;
+        return;
     }
     
-    [file_data
-        getBytes:out_preallocatedbuffer->contents
-        length:out_preallocatedbuffer->size - 1];
+    NSInputStream * input_stream = [NSInputStream
+        inputStreamWithURL:file_url];
+    [input_stream open];
     
-    out_preallocatedbuffer->contents[out_preallocatedbuffer->size - 1] = '\0';
+    NSInteger result = [input_stream
+        read: (uint8_t *)out_preallocatedbuffer->contents
+        maxLength: out_preallocatedbuffer->size - 1];
     
-    for (uint32_t i = 0; i < out_preallocatedbuffer->size - 1; i++) {
-        if (
-            out_preallocatedbuffer->contents[i] !=
-                ((char *)[file_data bytes])[i])
-        {
-            printf(
-                "out_preallocatedbuffer->contents[%u]: %c\n",
-                i,
-                out_preallocatedbuffer->contents[i]);
-            printf(
-                "(char *)[file_data bytes])[%u]: %c\n",
-                i,
-                ((char *)[file_data bytes])[i]);
-            assert(0);
+    if (result < 1) {
+        NSError * stream_error = input_stream.streamError;
+        if (stream_error != NULL) {
+            NSLog(@" error => %@ ", [stream_error userInfo]);
         }
+        out_preallocatedbuffer->size = 0;
+        out_preallocatedbuffer->good = false;
+        [input_stream close];
+        return;
     }
     
-    printf(
-        "out_preallocatedbuffer->contents:\n%s\n",
-        out_preallocatedbuffer->contents);
-    printf("\n");
+    out_preallocatedbuffer->size = (uint64_t)result + 1;
+    out_preallocatedbuffer->
+        contents[out_preallocatedbuffer->size - 1] = '\0';
+    out_preallocatedbuffer->good = true;
+    [input_stream close];
 }
 
 char * platform_get_cwd()

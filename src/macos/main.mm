@@ -116,7 +116,7 @@ int main(int argc, const char * argv[])
         [[GameWindowDelegate alloc] init];
     
     [window setDelegate: window_delegate];
-    [window setTitle: @"Hello, 3dgfx!"];
+    [window setTitle: @"Lore Seeker"];
     [window makeMainWindow];
     [window setAcceptsMouseMovedEvents:YES];
     [window setOrderedIndex:0];
@@ -170,4 +170,3 @@ int main(int argc, const char * argv[])
     
     return NSApplicationMain(argc, argv);
 }
-

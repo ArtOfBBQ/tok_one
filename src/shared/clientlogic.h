@@ -18,6 +18,7 @@
 #include "dirent.h"
 #include "string.h"
 
+#define LORESEEKER
 #ifdef LORESEEKER
 typedef struct NamedTextureArray {
     int32_t texturearray_i;

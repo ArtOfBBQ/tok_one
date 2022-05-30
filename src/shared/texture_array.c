@@ -101,12 +101,12 @@ void update_texturearray_from_0terminated_files(
     {
         const char * filename = filenames[t_i];
         
-        DecodedImage * new_image = read_img_from_filename(
+        DecodedImage * new_image = malloc_img_from_filename(
             filename);
         
         decoded_images[t_i] = new_image;
     }
-   
+    
     texture_arrays[texturearray_i].image =
         (DecodedImage *)malloc(sizeof(DecodedImage));
     
@@ -120,7 +120,7 @@ void update_texturearray_from_0terminated_files(
                 &texture_arrays[texturearray_i].sprite_rows,
             /* out_sprite_columns: */
                 &texture_arrays[texturearray_i].sprite_columns);
-
+    
     if (texture_arrays[texturearray_i].image->pixel_count < 5) {
         texture_arrays[texturearray_i].sprite_rows = 1;
         texture_arrays[texturearray_i].sprite_columns = 1;
@@ -137,7 +137,7 @@ void register_new_texturearray_from_files(
     const uint32_t filenames_size)
 {
     uint32_t decoded_images_size = filenames_size;
-    const DecodedImage * decoded_images[decoded_images_size];   
+    DecodedImage * decoded_images[decoded_images_size];   
     
     for (
         uint32_t i = 0;
@@ -146,13 +146,13 @@ void register_new_texturearray_from_files(
     {
         const char * filename = filenames[i];
         
-        const DecodedImage * new_image =
-            read_img_from_filename(filename);
+        DecodedImage * new_image =
+            malloc_img_from_filename(filename);
         
         decoded_images[i] = new_image;
     }
     
-    const DecodedImage ** decoded_images_dblptr =
+    DecodedImage ** decoded_images_dblptr =
         decoded_images;
     register_new_texturearray_from_images(
         /* DecodedImage ** new_images : */
@@ -162,7 +162,7 @@ void register_new_texturearray_from_files(
 }
 
 void register_new_texturearray_from_images(
-    const DecodedImage ** new_images,
+    DecodedImage ** new_images,
     const uint32_t new_images_size)
 {
     assert(new_images_size > 0);
@@ -237,7 +237,7 @@ void register_new_texturearray_from_images(
 }
 
 void register_new_texturearray(
-    const DecodedImage * new_image)
+    DecodedImage * new_image)
 {
     printf("register_new_texturearray\n");
     
@@ -245,9 +245,9 @@ void register_new_texturearray(
     assert(new_image->width > 0);
     assert(new_image->height > 0);
     assert(new_image->rgba_values_size > 0);
-    const DecodedImage * images[1];
+    DecodedImage * images[1];
     images[0] = new_image;
-    const DecodedImage ** images_dblptr = images;
+    DecodedImage ** images_dblptr = images;
     assert(images[0] != NULL);
     assert(images[0]->width > 0);
     assert(images[0]->height > 0);
@@ -384,7 +384,7 @@ static void set_unalloated_to_error_image(
     set_allocated_to_error_image(to_replace);
 }
 
-DecodedImage * read_img_from_filename(
+DecodedImage * malloc_img_from_filename(
     const char * filename)
 {
     printf("read_img_from_filename: %s\n", filename);
@@ -398,6 +398,13 @@ DecodedImage * read_img_from_filename(
     platform_read_file(
         filename,
         &file_buffer);
+    
+    if (!file_buffer.good) {
+        printf(
+            "platform failed to read file: %s\n",
+            filename);
+        assert(0);
+    }
     
     DecodedImage * new_image =
         (DecodedImage *)malloc(sizeof(DecodedImage));

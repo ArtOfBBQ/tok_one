@@ -262,13 +262,15 @@ void client_logic_startup() {
     preregister_assets();
    
     assert(texture_arrays_size > 2); 
-    load_assets(1, texture_arrays_size - 1);
+    // load_assets(1, texture_arrays_size - 1);
     
     // debug_dump_texturearrays_to_disk();
     // assert(0);
     
     // reminder: threadmain_id 0 calls load_assets() 
-    // platform_start_thread(/* threadmain_id: */ 0);
+    platform_start_thread(
+        client_logic_threadmain,
+        /* threadmain_id: */ 0);
     
     zlights_to_apply[0].x = 1;
     zlights_to_apply[0].y = 1;
@@ -292,7 +294,7 @@ void client_logic_startup() {
     sample_quad.height_pixels = 100;
     request_texquad_renderable(&sample_quad);
     
-    printf("finished client_logic_startup()\n");    
+    printf("finished client_logic_startup()\n");
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -302,7 +304,7 @@ void client_logic_threadmain(int32_t threadmain_id) {
     
     switch (threadmain_id) {
         case (0):
-            // load_assets();
+            load_assets(1, texture_arrays_size - 1);
             break;
         default:
             printf(

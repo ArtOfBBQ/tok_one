@@ -203,6 +203,8 @@ uint64_t previous_time;
         assert(0);
     }
     
+    assert(texture_arrays[i].image->width >= 2);
+    assert(texture_arrays[i].image->height >= 2);
     MTLTextureDescriptor * texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
     texture_descriptor.textureType = MTLTextureType2DArray;
@@ -218,8 +220,6 @@ uint64_t previous_time;
         [_metal_device
             newTextureWithDescriptor:texture_descriptor];
     
-    assert(texture_arrays[i].image->width >= 2);
-    assert(texture_arrays[i].image->height >= 2);
     uint32_t slice_i = 0;
     for (
         uint32_t row_i = 1;
