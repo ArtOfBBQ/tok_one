@@ -255,6 +255,7 @@ static void load_assets(
 
 void client_logic_startup() {
     printf("client_logic_startup()\n");    
+    
     // These are some example texture atlases we're using for
     // texture mapping on cards and cubes
     assert(TEXTUREARRAYS_SIZE > 0);
