@@ -183,7 +183,9 @@ uint64_t previous_time;
             (uint32_t)[_metal_textures count]);
     }
     
-    if (texture_arrays[i].image == NULL) {
+    if (texture_arrays[i].image == NULL
+        || !texture_arrays[i].image->good)
+    {
         printf("aborted update because image was NULL\n");
         return;
     }

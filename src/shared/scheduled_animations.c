@@ -423,4 +423,3 @@ void request_bump_animation(const uint32_t object_id)
     request_scheduled_animation(
         &revert_request);
 }
-
