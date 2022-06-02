@@ -1,4 +1,4 @@
-#include <simd/simd.h>
+// #include <simd/simd.h>
 
 #include "../shared_apple/gpu.h"
 #include "../shared/common.h"
@@ -116,8 +116,8 @@ int main(int argc, const char * argv[])
         [[GameWindowDelegate alloc] init];
     
     [window setDelegate: window_delegate];
-    [window setTitle: @"Lore Seeker"];
-    [window makeMainWindow];
+    [window setTitle: NSLocalizedString(@"Lore Seeker", @"")];
+    [window makeMainWindow]; 
     [window setAcceptsMouseMovedEvents:YES];
     [window setOrderedIndex:0];
     [window makeKeyAndOrderFront: nil];
@@ -170,3 +170,4 @@ int main(int argc, const char * argv[])
     
     return NSApplicationMain(argc, argv);
 }
+

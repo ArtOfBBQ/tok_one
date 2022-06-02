@@ -26,7 +26,7 @@ void concat_strings(
     
     *output_at = '\0';
     chars_used++;
-    assert(chars_used < output_size);
+    assert(chars_used <= output_size);
 }
 
 void copy_strings(
@@ -47,6 +47,21 @@ void copy_strings(
     }
 }
 
+uint32_t get_string_length(   
+    const char * null_terminated_string)
+{
+    uint32_t return_value = 0;
+    while (
+        null_terminated_string[return_value] != '\0'
+)
+    {
+        assert(return_value < 2000000000);
+        return_value++;
+    }
+    
+    return return_value;
+}
+
 bool32_t are_equal_strings(
     const char * str1,
     const char * str2,
@@ -60,4 +75,3 @@ bool32_t are_equal_strings(
     
     return true;
 }
-

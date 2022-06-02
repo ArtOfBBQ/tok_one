@@ -54,9 +54,6 @@ static void preregister_assets() {
     
     font_height = 40.0f; 
     
-    DIR *            FD;
-    struct dirent *  fe;
-    
     typedef struct {
         char filename[MAX_ASSET_FILENAME_SIZE];
         int32_t texturearray_i;
@@ -82,30 +79,39 @@ static void preregister_assets() {
             t_i++;
         }
     }
+
+    char * files_in_app_path[400];
+    uint32_t files_in_app_path_size = 0;
+    platform_get_filenames_in(
+        /* const char * directory: */
+            platform_get_resources_path(),
+        /* char ** filenames: */
+            files_in_app_path,
+        /* const uint32_t recipient_capacity: */
+            400,
+        /* const uint32_t * recipient_size: */
+            &files_in_app_path_size);
     
-    /* Scanning the in directory */
-    if (NULL ==
-        (FD = opendir(platform_get_application_path())))
+    for (
+        uint32_t i = 0;
+        i < files_in_app_path_size;
+        i++)
     {
-        printf(
-            "Error : Failed to open app home dir\n");
-        assert(0);
-    }
-    
-    while ((fe = readdir(FD)))
-    {
+        uint32_t cur_str_size = get_string_length(
+            files_in_app_path[i]);
+        
         // associate the names with texture arrays first 
-        if (fe->d_namlen >= 4 &&
-            fe->d_name[fe->d_namlen - 4] == '.' &&
-            fe->d_name[fe->d_namlen - 3] == 'p' &&
-            fe->d_name[fe->d_namlen - 2] == 'n' &&
-            fe->d_name[fe->d_namlen - 1] == 'g')
+        if (cur_str_size >= 4 &&
+            files_in_app_path[i][cur_str_size - 4] == '.' &&
+            files_in_app_path[i][cur_str_size - 3] == 'p' &&
+            files_in_app_path[i][cur_str_size - 2] == 'n' &&
+            files_in_app_path[i][cur_str_size - 1] == 'g')
         {
-            if (fe->d_namlen >= MAX_ASSET_FILENAME_SIZE)
+            if (cur_str_size >= MAX_ASSET_FILENAME_SIZE)
             {
                 printf(
                     "asset file %s filename exceeds MAX_ASSET_FILENAME_SIZE [%u] characters\n",
-                    fe->d_name,
+                    files_in_app_path[i],
                     MAX_ASSET_FILENAME_SIZE);
                 assert(0);
             }
@@ -115,7 +121,7 @@ static void preregister_assets() {
             char png_file_contents[50];
             png_file.contents = (char *)&png_file_contents;
             platform_read_file(
-                /* filename: */ fe->d_name,
+                /* filename: */ files_in_app_path[i],
                 /* out_preallocatedbuffer: */ &png_file);
             
             assert(png_file.size > 0);
@@ -135,7 +141,7 @@ static void preregister_assets() {
             if (width == 0 || height == 0) {
                 printf(
                     "skipping file %s because unable to parse dimensions...\n",
-                    fe->d_name);
+                    files_in_app_path[i]);
                 printf(
                     "was reading from this buffer: %s\n",
                     png_file.contents);
@@ -173,10 +179,10 @@ static void preregister_assets() {
             new_texture_i++;
             
             if (
-                fe->d_name[0] == 'f'
-                && fe->d_name[1] == 'o'
-                && fe->d_name[2] == 'n'
-                && fe->d_name[3] == 't')
+                files_in_app_path[i][0] == 'f'
+                && files_in_app_path[i][1] == 'o'
+                && files_in_app_path[i][2] == 'n'
+                && files_in_app_path[i][3] == 't')
             {
                 continue;
             }
@@ -204,9 +210,9 @@ static void preregister_assets() {
                 /* recipient_size: */
                     MAX_ASSET_FILENAME_SIZE,
                 /* origin: */
-                    fe->d_name,
+                    files_in_app_path[i],
                 /* origin_size: */
-                    fe->d_namlen);
+                    cur_str_size);
             registered_assets_size += 1;
             
             TextureArrayLocation new_loc;
@@ -220,9 +226,9 @@ static void preregister_assets() {
                 /* recipient_size: */
                     MAX_ASSET_FILENAME_SIZE,
                 /* origin: */
-                    fe->d_name,
+                    files_in_app_path[i],
                 /* origin_size: */
-                    fe->d_namlen);
+                    cur_str_size);
         }
     }
 }

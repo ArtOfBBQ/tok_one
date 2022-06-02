@@ -9,6 +9,10 @@
 #define false 0
 #endif
 
+#ifndef FUINT64
+#define FUINT64 "%llu"
+#endif
+
 #define bool32_t uint32_t
 
 #define local_only static
@@ -25,10 +29,12 @@ void copy_strings(
     const char * origin,
     const uint32_t origin_size);
 
+uint32_t get_string_length(   
+    const char * null_terminated_string);
+
 bool32_t are_equal_strings(
     const char * str1,
     const char * str2,
     const uint64_t length);
 
 #endif
-

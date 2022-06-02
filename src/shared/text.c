@@ -3,7 +3,8 @@
 int32_t font_texturearray_i = 0;
 float font_height = 40.0f;
 
-static float get_char_width(const char * input)
+static float get_char_width(
+    const char * input)
 {
     return font_height;
 }

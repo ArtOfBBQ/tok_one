@@ -350,7 +350,7 @@ uint64_t previous_time;
             return;
         }
         
-        MTLRenderPassDescriptor *RenderPassDescriptor =
+        MTLRenderPassDescriptor * RenderPassDescriptor =
             [view currentRenderPassDescriptor];
         RenderPassDescriptor.colorAttachments[0].loadAction =
             MTLLoadActionClear;

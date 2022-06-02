@@ -15,9 +15,6 @@
 #include "text.h"
 #include "scheduled_animations.h"
 
-#include "dirent.h"
-#include "string.h"
-
 #define LORESEEKER
 #ifdef LORESEEKER
 typedef struct NamedTextureArray {

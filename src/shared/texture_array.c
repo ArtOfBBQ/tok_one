@@ -389,13 +389,13 @@ DecodedImage * malloc_img_from_filename(
 {
     printf("read_img_from_filename: %s\n", filename);
     FileBuffer file_buffer;
-    file_buffer.size = (uint64_t)platform_get_filesize(filename) + 1;
+    file_buffer.size = platform_get_resource_size(filename) + 1;
     
     assert(file_buffer.size > 1);
     file_buffer.contents =
         (char *)malloc(sizeof(char) * file_buffer.size);
     
-    platform_read_file(
+    platform_read_resource_file(
         filename,
         &file_buffer);
     

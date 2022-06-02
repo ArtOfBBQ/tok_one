@@ -32,17 +32,14 @@ clang++ -D LONGLONGINT64 on the mac os platform
 
 #ifdef PLATFORM_NS_FILEMANAGER
 #import <Foundation/Foundation.h>
-extern NSFileManager * file_manager;
 #endif
 
 #ifdef SHARED_APPLE_PLATFORM
 #include <mach/mach_time.h>
 #endif
 
-#include <stdlib.h>
+// #include <stdlib.h>
 #include <stdio.h>
-#include <string.h> // for fopen() error
-#include <errno.h>  // for fopen() error
 
 #include "common.h"
 #include "debigulator/src/decodedimage.h"
@@ -53,15 +50,23 @@ typedef struct FileBuffer {
     bool32_t good;
 } FileBuffer;
 
+uint32_t platform_get_directory_separator_size();
+void platform_get_directory_separator(
+    char * recipient);
+void resource_filename_to_pathfile(
+    const char * filename,
+    char * recipient,
+    const uint32_t recipient_capacity);
+
 // get current working directory
 char * platform_get_application_path(void);
 char * platform_get_resources_path(void);
 char * platform_get_cwd(void);
 
 bool32_t platform_file_exists(
-    const char * filename);
+    const char * filepath);
 void platform_delete_file(
-    const char * filename);
+    const char * filepath);
 void platform_write_file(
     const char * filepath_destination,
     const char * output);
@@ -77,9 +82,12 @@ void platform_get_filenames_in(
     uint32_t * recipient_size);
 
 /*
-Get a file's size. Returns -1 if no such file
+Get a file's size. Returns 0 if no such file
 */
-int64_t platform_get_filesize(const char * filename);
+uint64_t platform_get_resource_size(
+    const char * filename);
+uint64_t platform_get_filesize(
+    const char * filepath);
 
 /*
 Read a file (without path, only filename)
@@ -97,8 +105,11 @@ to make windows happy
 If there's an error reading the file, the buffer's
 'good' field will be set to 0, else to 1
 */
-void platform_read_file(
+void platform_read_resource_file(
     const char * filename,
+    FileBuffer * out_preallocatedbuffer);
+void platform_read_file(
+    const char * filepath,
     FileBuffer * out_preallocatedbuffer);
 
 // Run a task in the background
