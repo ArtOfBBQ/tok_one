@@ -42,11 +42,10 @@ static void preregister_assets() {
     register_new_texturearray_from_files(
         fontfile,
         1);
-    if (get_avg_rgba(texture_arrays[0].image) < 5) {
-        printf(
-            "average rgba for texture_arrays[0] was only: %u\n",
-            get_avg_rgba(texture_arrays[0].image));
-        assert(0);
+    if (get_avg_rgba(texture_arrays[0].image) < 1) {
+        log_append(
+            "average rgba for texture_arrays[0] was 0\n");
+        log_dump_and_crash();
     }
     texture_arrays[0].sprite_columns = 9;
     texture_arrays[0].sprite_rows = 9;
@@ -109,11 +108,11 @@ static void preregister_assets() {
         {
             if (cur_str_size >= MAX_ASSET_FILENAME_SIZE)
             {
-                printf(
-                    "asset file %s filename exceeds MAX_ASSET_FILENAME_SIZE [%u] characters\n",
-                    files_in_app_path[i],
-                    MAX_ASSET_FILENAME_SIZE);
-                assert(0);
+                log_append("asset file: ");
+                log_append(files_in_app_path[i]);
+                log_append(" exceeds MAX_ASSET_FILENAME_SIZE: ");
+                log_append_uint(MAX_ASSET_FILENAME_SIZE);
+                log_dump_and_crash();
             }
             
             FileBuffer png_file;
@@ -139,12 +138,9 @@ static void preregister_assets() {
                     &height);
             
             if (width == 0 || height == 0) {
-                printf(
-                    "skipping file %s because unable to parse dimensions...\n",
-                    files_in_app_path[i]);
-                printf(
-                    "was reading from this buffer: %s\n",
-                    png_file.contents);
+                log_append("skipping file ");
+                log_append(files_in_app_path[i]);
+                log_append("because unable to parse dimensions...\n");
                 continue;
             }
             
@@ -251,7 +247,6 @@ static void load_assets(
 }
 
 void client_logic_startup() {
-    printf("client_logic_startup()\n");    
     
     // These are some example texture atlases we're using for
     // texture mapping on cards and cubes
@@ -261,9 +256,6 @@ void client_logic_startup() {
    
     assert(texture_arrays_size > 2); 
     // load_assets(1, texture_arrays_size - 1);
-    
-    // debug_dump_texturearrays_to_disk();
-    // assert(0);
     
     // reminder: threadmain_id 0 calls load_assets() 
     platform_start_thread(
@@ -292,47 +284,11 @@ void client_logic_startup() {
     sample_quad.height_pixels = 100;
     request_texquad_renderable(&sample_quad);
 
-    printf("application path: %s\n", platform_get_application_path());
-
-    char tryout_file[1000];
-    concat_strings(
-        platform_get_application_path(),
-        "/imafile.txt",
-        tryout_file,
-        1000);
+    log_append("application path: ");
+    log_append(platform_get_application_path());
+    log_append("\n");
     
-    printf("concatednated string: %s\n", tryout_file);
-   
-    bool32_t tryout_existed =
-        platform_file_exists(tryout_file);
-    printf(
-        "platform_file_exists(%s):%s\n",
-        tryout_file,
-        (tryout_existed ? "TRUE" : "FALSE"));
-   
-    if (!tryout_existed) { 
-        char * message = 
-            (char *)"hello im a test file from TOK ONE!\nI like turtles.\n";
-        printf("write something to that filename...\n");
-        
-        platform_write_file(
-            /* filepath: */
-                tryout_file,
-            /* output: */
-                message,
-            /* output_size: */
-                get_string_length(message));
-    } else {
-        printf(
-            "test file already existed, copying it to imacopy.txt\n");
-        platform_copy_file(
-            /* const char * filepath_source: */
-                tryout_file,
-            /* const char * filepath_destination: */
-                "imacopy.txt");
-    }
-    
-    printf("finished client_logic_startup()\n");
+    log_append("finished client_logic_startup()\n");
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -341,17 +297,18 @@ void client_logic_threadmain(int32_t threadmain_id) {
             load_assets(1, texture_arrays_size - 1);
             break;
         default:
-            printf(
-                "unhandled threadmain_id: %i\n",
-                threadmain_id);
+            log_append("unhandled threadmain_id: ");
+            log_append_int(threadmain_id);
+            log_append("\n");
     }
 }
 
 void client_logic_animation_callback(int32_t callback_id)
 {
-    printf(
-        "client_logic_animation_callback(%i)\n",
-        callback_id);
+    log_append(
+        "unhandled client_logic_animation_callback(: ");
+    log_append_int(callback_id);
+    log_append("\n");
 }
 
 static void client_handle_mouseevents(
@@ -394,9 +351,12 @@ static void client_handle_mouseevents(
             request_scheduled_animation(&brighten);
             request_scheduled_animation(&dim);
         } else {
-            printf("touched screen at: [%f,%f]\n",
-                last_mouse_down.screenspace_x,
-                last_mouse_down.screenspace_y);
+            log_append("touched screen at: [");
+            log_append_float(last_mouse_down.screenspace_x);
+            log_append(",");
+            log_append_float(last_mouse_down.screenspace_y);
+            log_append("]\n");
+            
             TexQuad touch_highlight;
             construct_texquad(&touch_highlight);
             touch_highlight.object_id = 72;

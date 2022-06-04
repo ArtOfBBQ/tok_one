@@ -2,6 +2,7 @@
 #define TEXTURE_ARRAY_H
 
 #include "platform_layer.h"
+#include "logger.h"
 #include "debigulator/src/decodedimage.h"
 #include "debigulator/src/decode_png.h"
 #include "vertex_types.h"

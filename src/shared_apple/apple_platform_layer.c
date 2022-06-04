@@ -14,8 +14,7 @@ void platform_get_directory_separator(
     recipient[1] = '\0';
 }
 
-uint64_t platform_get_current_time_microsecs()
-{
+uint64_t platform_get_current_time_microsecs() {
     uint64_t result = mach_absolute_time() / 1000;
     
     return result;
@@ -49,7 +48,6 @@ uint64_t platform_get_filesize(
         stringWithCString:filepath
         encoding:NSASCIIStringEncoding];
     
-    
     NSError * error_value = nil;
     
     uint64_t file_size = (uint64_t)[
@@ -57,8 +55,7 @@ uint64_t platform_get_filesize(
         attributesOfItemAtPath:nsfilepath
         error:&error_value] fileSize];
     
-    if (error_value != nil)
-    {
+    if (error_value != nil) {
         NSLog(
             @" error => %@ ",
             [error_value userInfo]);
@@ -66,10 +63,10 @@ uint64_t platform_get_filesize(
     }
     
     if (file_size < 1) {
-        printf(
-            "ERROR - failed to get file %s size for unknown reasons\n",
-            filepath);
-        assert(0);
+        log_append("ERROR - failed to get file ");
+        log_append(filepath);
+        log_append(" size for unknown reasons\n");
+        log_dump_and_crash();
     }
     
     // let's not use 20MB+ files in development
@@ -106,9 +103,9 @@ void platform_read_file(
     NSURL * file_url = [NSURL fileURLWithPath: nsfilepath];
     
     if (file_url == nil) {
-        printf(
-            "couldn't find file: %s\n",
-            filepath);
+        log_append("couldn't find file: ");
+        log_append(filepath);
+        log_append("\n");
         out_preallocatedbuffer->size = 0;
         out_preallocatedbuffer->good = false;
         return;
@@ -119,10 +116,9 @@ void platform_read_file(
     [input_stream open];
     
     if (input_stream == nil) {
-        printf("Error - failed to create NSInputStream from viable file NSURL\n");
+        log_append("Error - failed to create NSInputStream from viable file NSURL\n");
         out_preallocatedbuffer->size = 0;
         out_preallocatedbuffer->good = false;
-        assert(0); // TODO: remove this assert
         return;
     }
     
@@ -137,7 +133,11 @@ void platform_read_file(
         NSError * stream_error = input_stream.streamError;
         
         if (stream_error != NULL) {
-            NSLog(@" error => %@ ", [stream_error userInfo]);
+            log_append("ERROR: ");
+            log_append(
+                [[[stream_error userInfo] description]
+                    cStringUsingEncoding: NSASCIIStringEncoding]);
+            log_dump_and_crash();
         }
         
         out_preallocatedbuffer->size = 0;
@@ -173,9 +173,10 @@ bool32_t platform_file_exists(
 void platform_mkdir_if_not_exist(
     const char * dirname)
 {
-    printf(
-        "\n\n platform_mkdir_if_not_exist: %s\n",
-        dirname);
+    log_append(
+        "attempt to create directory: ");
+    log_append(dirname);
+    log_append("\n");
     
     NSString * directory_path = [NSString
         stringWithCString:dirname
@@ -188,7 +189,7 @@ void platform_mkdir_if_not_exist(
     if (![[NSFileManager defaultManager]
         fileExistsAtPath:directory_path])
     {
-        printf("no directory there, creating it...\n");
+        log_append("no directory there, creating it...\n");
         NSError * error = NULL;
         
         //        bool success = [[NSFileManager defaultManager]
@@ -203,7 +204,7 @@ void platform_mkdir_if_not_exist(
             error:&error];
         
         if (!success) {
-            printf("ERROR - tried to create a directory and failed\n");
+            log_append("ERROR - tried to create a directory and failed\n");
             if (error != NULL) {
                 NSLog(@" error => %@ ", [error userInfo]);
             }
@@ -213,7 +214,7 @@ void platform_mkdir_if_not_exist(
                 fileExistsAtPath:directory_path]);
         }
     } else {
-        printf("that directory seems to already exist, ignoring request...\n");
+        log_append("that directory seems to already exist, ignoring request...\n");
     }
     
     return;

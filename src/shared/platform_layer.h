@@ -38,10 +38,8 @@ clang++ -D LONGLONGINT64 on the mac os platform
 #include <mach/mach_time.h>
 #endif
 
-// #include <stdlib.h>
-#include <stdio.h>
-
 #include "common.h"
+#include "logger.h"
 #include "debigulator/src/decodedimage.h"
 
 typedef struct FileBuffer {

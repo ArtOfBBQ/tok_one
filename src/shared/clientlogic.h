@@ -14,6 +14,7 @@
 #include "userinput.h"
 #include "text.h"
 #include "scheduled_animations.h"
+#include "logger.h"
 
 #ifdef LORESEEKER
 typedef struct NamedTextureArray {

@@ -34,7 +34,12 @@ uint32_t get_string_length(
 
 bool32_t are_equal_strings(
     const char * str1,
+    const char * str2);
+
+bool32_t are_equal_strings(
+    const char * str1,
     const char * str2,
     const uint64_t length);
 
 #endif
+

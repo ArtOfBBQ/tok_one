@@ -1,12 +1,12 @@
 #ifndef ZPOLYGON_H
 #define ZPOLYGON_H
 
+// TODO: remove std lib
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <inttypes.h>
-#include <assert.h>
 
+#include "logger.h"
 #include "common.h"
 #include "vertex_types.h"
 #include "lightsource.h"

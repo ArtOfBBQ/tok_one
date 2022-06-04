@@ -64,6 +64,28 @@ uint32_t get_string_length(
 
 bool32_t are_equal_strings(
     const char * str1,
+    const char * str2)
+{
+    if (
+        str1[0] == '\0'
+        && str2[0] != '\0')
+    {
+        return false;
+    }
+    
+    uint32_t i = 0;
+    while (str1[i] != '\0') {
+        if (str1[i] != str2[i]) {
+            return false;
+        }
+        i++;
+    }
+
+    return true;
+}
+
+bool32_t are_equal_strings(
+    const char * str1,
     const char * str2,
     const uint64_t len)
 {
@@ -75,3 +97,4 @@ bool32_t are_equal_strings(
     
     return true;
 }
+

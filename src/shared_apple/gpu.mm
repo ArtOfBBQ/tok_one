@@ -27,9 +27,11 @@ uint64_t previous_time;
 
     if (shader_library == NULL)
     {
-        NSLog(
-            @"failed to load default shader library, trying to load from %@ instead...",
-            shader_lib_filepath);
+        log_append("failed to load default shader lib, trying ");
+        log_append(
+            [shader_lib_filepath
+                cStringUsingEncoding: NSASCIIStringEncoding]);
+        log_append("\n");
         
         shader_library =
             [metal_device
@@ -37,13 +39,13 @@ uint64_t previous_time;
                 error: &Error];
 
         if (shader_library == NULL) {
-            NSLog(@"Failed to find the shader library again");
+            log_append("Failed to find the shader library again\n");
             if (Error != NULL) {
                 NSLog(@" error => %@ ", [Error userInfo]);
             }
-            assert(0);
+            log_dump_and_crash();
         } else {
-            NSLog(@"Found the shader library on 2nd try!");
+            log_append("Success! Found the shader lib on 2nd try.\n");
         }
     }
     
@@ -145,8 +147,8 @@ uint64_t previous_time;
         }
         [self updateTextureArray: i];
     }
-
-    printf("finished configureMetalWithDevice\n");
+    
+    log_append("finished configureMetalWithDevice\n");
 }
 
 - (void)updateTextureArray: (int32_t)texturearray_i
@@ -185,11 +187,12 @@ uint64_t previous_time;
         texture_arrays[i].sprite_rows == 0
         || texture_arrays[i].sprite_columns == 0)
     {
-        printf(
-            "texture_arrays[%u]'s sprite rows/cols was 0, did you forget to set it in clientlogic.c? TEXTUREARRAYS_SIZE (in vertex_types.h) was %u\n",
-            i,
-            TEXTUREARRAYS_SIZE);
-        assert(0);
+        log_append("texture_arrays[");
+        log_append_uint(i);
+        log_append("'s sprite rows/cols was 0, did you forget to set it in clientlogic.c? TEXTUREARRAYS_SIZE (in vertex_types.h) was");
+        log_append_uint(TEXTUREARRAYS_SIZE);
+        log_append("\n");
+        log_dump_and_crash();
     }
     
     assert(texture_arrays[i].image->width >= 2);
@@ -331,7 +334,8 @@ uint64_t previous_time;
             [[self command_queue] commandBuffer];
         
         if (command_buffer == nil) {
-            printf("error - failed to get command buffer¥n");
+            log_append("error - failed to get metal command buffer\n");
+            log_dump_and_crash();
             return;
         }
         

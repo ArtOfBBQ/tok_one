@@ -10,10 +10,12 @@ uint32_t zpolygons_to_render_size = 0;
 void init_projection_constants() {
     
     if (window_height < 50.0f || window_width < 50.0f) {
-        printf("ERROR: unexpected window size [%f,%f]\n",
-            window_height,
-            window_width);
-        assert(0);
+        log_append("ERROR: unexpected window size [");
+        log_append_float(window_height);
+        log_append(",");
+        log_append_float(window_width);
+        log_append("]\n"),
+        log_dump_and_crash();
     }
     
     ProjectionConstants * pjc = &projection_constants;
@@ -785,15 +787,18 @@ float get_visibility_rating(
     normalize_zvertex(&triangle_minus_observer);
     
     if (get_magnitude(triangle_minus_observer) > 1.01f) {
-        printf(
-            "ERROR: normalized triangle_minus_observer still has magnitude of %f\n",
-            get_magnitude(triangle_minus_observer));
-        printf(
-            "triangle_minus_observer coords were: {%f, %f, %f}\n",
-            triangle_minus_observer.x,
-            triangle_minus_observer.y,
-            triangle_minus_observer.z);
-        assert(0);
+        log_append(
+            "ERROR: normalized triangle_minus_observer still has magnitude of ");
+        log_append_float(get_magnitude(triangle_minus_observer));
+        log_append("\n");
+        log_append("triangle_minus_observer coords were: {");
+        log_append_float(triangle_minus_observer.x);
+        log_append(",");
+        log_append_float(triangle_minus_observer.y);
+        log_append(",");
+        log_append_float(triangle_minus_observer.z);
+        log_append("}\n");
+        log_dump_and_crash();
     }
     
     return dot_of_vertices(

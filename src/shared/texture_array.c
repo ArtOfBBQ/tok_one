@@ -3,71 +3,6 @@
 TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
 uint32_t texture_arrays_size = 0;
 
-#ifndef FUINT64
-#define FUINT64 "%llu"
-#endif
-
-//void debug_dump_texturearrays_to_disk() {
-//    printf("debug_dump_texturearrays_to_disk()\n");
-//    assert(texture_arrays_size > 0);
-//    
-//    for (uint32_t i = 0; i < texture_arrays_size; i++) {
-//        printf("dump texture_arrays[%u]\n", i);
-//        
-//        if (texture_arrays[i].image == NULL) {
-//            printf("no image to dump at texture_arrays[%u]\n", i);
-//            continue;
-//        }
-//        
-//        char filename[200];
-//        char suffix[10] = "?.png\0";
-//        suffix[0] = (char)('0' + i);
-//        concat_strings(
-//            /* string_1: */
-//                "/debugout/texture_array_",
-//            /* string_2: */
-//                suffix,
-//            /* output: */
-//                filename,
-//            /* output_size: */
-//                100);
-//        
-//        char path_and_filename[1000];
-//        
-//        concat_strings(
-//            /* string_1: */
-//                platform_get_application_path(),
-//            /* string_2: */
-//                filename,
-//            /* output: */
-//                path_and_filename,
-//            /* output_size: */
-//                1000);
-//        
-//        printf(
-//            "writing texture_arrays[%u] image of dimensions [%u,%u] to %s\n",
-//            i,
-//            texture_arrays[i].image->width,
-//            texture_arrays[i].image->height,
-//            path_and_filename);
-//        
-//        stbi_write_png( 
-//            /* char const * filename : */
-//                path_and_filename,
-//            /* int w : */
-//                (int32_t)texture_arrays[i].image->width,
-//            /* int h : */
-//                (int32_t)texture_arrays[i].image->height,
-//            /* int comp : */
-//                4,
-//            /* const void *data : */
-//                texture_arrays[i].image->rgba_values,
-//            /* int stride_in_bytes : */
-//                (int32_t)(texture_arrays[i].image->rgba_values_size /
-//                    texture_arrays[i].image->height));
-//    }
-//}
-
 void update_texturearray_from_0terminated_files(
     const int32_t texturearray_i,
     const char filenames
@@ -86,9 +21,9 @@ void update_texturearray_from_0terminated_files(
     }
     
     if (filenames_size == 0) {
-        printf(
-            "WARNING: requested a texture update at %u but 0 textures were passed!!!\n",
-            texturearray_i);
+        log_append("WARNING: requested a texture update at ");
+        log_append_uint(texturearray_i);
+        log_append(" but 0 textures were passed!\n");
         return;
     }
     
@@ -177,13 +112,17 @@ void register_new_texturearray_from_images(
         current_width == 0
         || current_height == 0)
     {
-        printf("ERR - register images with width/height 0\n");
-        assert(0);
+        log_append("ERROR - register images with width/height 0\n");
+        log_dump_and_crash();
     }
-
+    
     if (current_width > 100000 || current_height > 100000) {
-        printf("ERR - register images with big width/height\n");
-        assert(0);
+        log_append("ERROR - tried register images with excessive width/height: ");
+        log_append_uint(current_width);
+        log_append("x");
+        log_append_uint(current_height);
+        log_append("\n");
+        log_dump_and_crash();
     }
     
     for (
@@ -379,9 +318,9 @@ DecodedImage * malloc_img_from_filename(
         &file_buffer);
     
     if (!file_buffer.good) {
-        printf(
-            "platform failed to read file: %s\n",
-            filename);
+        log_append("platform failed to read file: ");
+        log_append(filename);
+        log_append("\n");
         assert(0);
     }
     
@@ -428,24 +367,28 @@ DecodedImage * malloc_img_from_filename(
     if (new_image->pixel_count * 4 !=
         new_image->rgba_values_size)
     {
-        printf(
-            "ERR: we loaded an image with with pixel_count of %u (so *4 = %u rgba values), and rgba_values_size of %u. Image dimensions were [%u,%u], so width*height*4 would have been %u\n",
-            new_image->pixel_count,
-            new_image->pixel_count * 4,
-            new_image->rgba_values_size,
-            new_image->width,
-            new_image->height,
-            new_image->width * new_image->height * 4);
-        assert(0);
+        log_append(
+            "ERROR: loaded an image with with pixel_count of ");
+        log_append_uint(new_image->pixel_count);
+        log_append(", which should be *4 = ");
+        log_append_uint(new_image->pixel_count * 4);
+        log_append(", and rgba_values_size of ");
+        log_append_uint(new_image->rgba_values_size);
+        log_append(". Image dimensions were [");
+        log_append_uint(new_image->width);
+        log_append(",");
+        log_append_uint(new_image->height);
+        log_append(", so width*height*4 would have been: ");
+        log_append_uint(new_image->width * new_image->height * 4);
+        log_append("\n");
+        log_dump_and_crash();
     }
     
     if (get_sum_rgba(new_image) < 1) {
-        printf(
-            "new_image's summed rgba value was only: "
-            FUINT64
-            "\n",
-            get_sum_rgba(new_image));
-        assert(0);
+        log_append("new_image's summed rgba value was only: ");
+        log_append_uint(get_sum_rgba(new_image));
+        log_append("\n");
+        log_dump_and_crash();
     }
     
     free(file_buffer.contents);

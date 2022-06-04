@@ -60,14 +60,14 @@ NSWindowWithCustomResponder: NSWindow
 
 - (void)rightMouseDown:(NSEvent *)event
 {
-    printf("right mouse down!\n");
+    log_append("unhandled mouse event\n");
     
     // NSPoint screenspace_location = [NSEvent mouseLocation];
 }
 
 - (void)rightMouseUp:(NSEvent *)event
 {
-    printf("right mouse up!\n");
+    log_append("unhandled mouse event\n");
 }
 
 - (void)mouseMoved:(NSEvent *)event
@@ -164,9 +164,6 @@ int main(int argc, const char * argv[])
     TransformProcessType(
         &psn,
         kProcessTransformToForegroundApplication);
-    
-    // find the first responder class like so: 
-    // NSLog(@"window first responder: %@", window.firstResponder);
     
     return NSApplicationMain(argc, argv);
 }
