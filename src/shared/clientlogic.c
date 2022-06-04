@@ -237,20 +237,11 @@ static void load_assets(
     uint32_t start_i,
     uint32_t last_i)
 {
-    printf(
-        "load_assets from %u to and including %u\n",
-        start_i,
-        last_i);
-    
     for (
         int32_t dimension_i = (int32_t)start_i;
         dimension_i <= (int32_t)last_i;
         dimension_i++)
     {
-        printf(
-            "loading filenames_for_texturearrays[%u]\n",
-            dimension_i);
-        
         update_texturearray_from_0terminated_files(
             /* const int32_t texturearray_i: */
                 dimension_i,
@@ -300,15 +291,51 @@ void client_logic_startup() {
     sample_quad.width_pixels = 100;
     sample_quad.height_pixels = 100;
     request_texquad_renderable(&sample_quad);
+
+    printf("application path: %s\n", platform_get_application_path());
+
+    char tryout_file[1000];
+    concat_strings(
+        platform_get_application_path(),
+        "/imafile.txt",
+        tryout_file,
+        1000);
+    
+    printf("concatednated string: %s\n", tryout_file);
+   
+    bool32_t tryout_existed =
+        platform_file_exists(tryout_file);
+    printf(
+        "platform_file_exists(%s):%s\n",
+        tryout_file,
+        (tryout_existed ? "TRUE" : "FALSE"));
+   
+    if (!tryout_existed) { 
+        char * message = 
+            (char *)"hello im a test file from TOK ONE!\nI like turtles.\n";
+        printf("write something to that filename...\n");
+        
+        platform_write_file(
+            /* filepath: */
+                tryout_file,
+            /* output: */
+                message,
+            /* output_size: */
+                get_string_length(message));
+    } else {
+        printf(
+            "test file already existed, copying it to imacopy.txt\n");
+        platform_copy_file(
+            /* const char * filepath_source: */
+                tryout_file,
+            /* const char * filepath_destination: */
+                "imacopy.txt");
+    }
     
     printf("finished client_logic_startup()\n");
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
-    printf(
-        "client_logic_threadmain(%i)\n",
-        threadmain_id);
-    
     switch (threadmain_id) {
         case (0):
             load_assets(1, texture_arrays_size - 1);

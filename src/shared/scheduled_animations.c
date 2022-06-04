@@ -34,7 +34,8 @@ void construct_scheduled_animation(
     to_construct->clientlogic_callback_when_finished_id = -1;
 }
 
-void request_scheduled_animation(ScheduledAnimation * to_add)
+void request_scheduled_animation(
+    ScheduledAnimation * to_add)
 {
     assert(to_add != NULL);
     

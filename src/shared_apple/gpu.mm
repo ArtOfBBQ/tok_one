@@ -14,10 +14,6 @@ uint64_t previous_time;
     andPixelFormat: (MTLPixelFormat)pixel_format
     fromFolder: (NSString *)shader_lib_filepath
 {
-    printf(
-        "macos X platform configureMetalWithDevice() from path: %s\n",
-        [shader_lib_filepath
-            cStringUsingEncoding:NSUTF8StringEncoding]);
     previous_time = platform_get_current_time_microsecs();
     
     _currentFrameIndex = 0;
@@ -145,10 +141,6 @@ uint64_t previous_time;
         i++)
     {
         if (texture_arrays_size >= TEXTUREARRAYS_SIZE) {
-            printf(
-                "ERR - texture_arrays_size: %u with TEXTUREARRAYS_SIZE of %u\n",
-                texture_arrays_size,
-                TEXTUREARRAYS_SIZE);
             assert(0);
         }
         [self updateTextureArray: i];
@@ -160,7 +152,6 @@ uint64_t previous_time;
 - (void)updateTextureArray: (int32_t)texturearray_i
 {
     texture_arrays[texturearray_i].request_update = false;
-    printf("macos X updateTextureArray: %i\n", texturearray_i);
     assert(texturearray_i < TEXTUREARRAYS_SIZE);
     assert(texturearray_i < (int32_t)texture_arrays_size);
     int32_t i = texturearray_i;
@@ -178,15 +169,11 @@ uint64_t previous_time;
             [_metal_device
                 newTextureWithDescriptor:texture_descriptor];
         [_metal_textures addObject: texture];
-        printf(
-            "adding a padding texture, [_metal_textures count] is now: %u\n",
-            (uint32_t)[_metal_textures count]);
     }
     
     if (texture_arrays[i].image == NULL
         || !texture_arrays[i].image->good)
     {
-        printf("aborted update because image was NULL\n");
         return;
     }
     
@@ -275,11 +262,9 @@ uint64_t previous_time;
         }
     }
     
-    printf("replacing object at index: %i\n", i);
     [_metal_textures
         replaceObjectAtIndex:(uint32_t)i
         withObject: texture];
-    printf("replaced\n");
 }
 
 - (void)drawInMTKView:(MTKView *)view

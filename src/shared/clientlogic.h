@@ -1,7 +1,7 @@
 #ifndef CLIENTLOGIC_H
 #define CLIENTLOGIC_H
 
-// #import <Foundation/Foundation.h>
+#import <Foundation/Foundation.h>
 
 #include "texquad_type.h"
 #include "texture_array.h"
@@ -15,13 +15,11 @@
 #include "text.h"
 #include "scheduled_animations.h"
 
-#define LORESEEKER
 #ifdef LORESEEKER
 typedef struct NamedTextureArray {
     int32_t texturearray_i;
     int32_t texture_i;
 } NamedTextureArray;
-
 #include <string>
 #include <unordered_map>
 #include "../../../src/animationtracker.hpp"

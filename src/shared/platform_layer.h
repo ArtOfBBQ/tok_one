@@ -69,7 +69,8 @@ void platform_delete_file(
     const char * filepath);
 void platform_write_file(
     const char * filepath_destination,
-    const char * output);
+    const char * output,
+    const uint32_t output_size);
 void platform_copy_file(
     const char * filepath_source,
     const char * filepath_destination);

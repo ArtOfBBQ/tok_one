@@ -74,9 +74,6 @@ void update_texturearray_from_0terminated_files(
         [MAX_FILES_IN_SINGLE_TEXARRAY]
         [MAX_ASSET_FILENAME_SIZE])
 {
-    printf(
-        "update_texarray_from_0terminated_files for ta_i %i\n",
-        texturearray_i);
     assert(
         texturearray_i < TEXTUREARRAYS_SIZE);
     
@@ -209,9 +206,6 @@ void register_new_texturearray_from_images(
     
     // fill in the images in a new texturearray
     if (texture_arrays[new_i].image != NULL) {
-        printf(
-            "texture_arrays[%u] was in use, free memory...\n",
-            new_i);
         free(texture_arrays[new_i].image);
     }
     
@@ -230,17 +224,11 @@ void register_new_texturearray_from_images(
     assert(texture_arrays[new_i].image->width > 0);
     assert(texture_arrays[new_i].image->height > 0);
     texture_arrays[new_i].request_update = true;
-    
-    printf(
-        "finished register_new_texturearray_from_images (%u images)\n",
-        new_images_size);
 }
 
 void register_new_texturearray(
     DecodedImage * new_image)
 {
-    printf("register_new_texturearray\n");
-    
     assert(new_image != NULL);
     assert(new_image->width > 0);
     assert(new_image->height > 0);
@@ -256,8 +244,6 @@ void register_new_texturearray(
     register_new_texturearray_from_images(
         images_dblptr,
         1);
-    
-    printf("finished register_new_texturearray\n");
 }
 
 DecodedImage * extract_image(
@@ -332,10 +318,6 @@ rather than crashing the application
 static void set_allocated_to_error_image(
     DecodedImage * to_replace)
 {
-    printf(
-        "set_allocated_to_error_image() replacing img [%u,%u]\n",
-        to_replace->width,
-        to_replace->height);
     to_replace->good = true;
     
     assert(
@@ -371,8 +353,6 @@ rather than crashing the application
 static void set_unalloated_to_error_image(
     DecodedImage * to_replace)
 {
-    printf("set_unallocated_to_error_image()...\n");
-    
     to_replace->pixel_count = 4;
     to_replace->rgba_values_size = 16;
     to_replace->width = 2;
@@ -387,7 +367,6 @@ static void set_unalloated_to_error_image(
 DecodedImage * malloc_img_from_filename(
     const char * filename)
 {
-    printf("read_img_from_filename: %s\n", filename);
     FileBuffer file_buffer;
     file_buffer.size = platform_get_resource_size(filename) + 1;
     
@@ -408,10 +387,6 @@ DecodedImage * malloc_img_from_filename(
     
     DecodedImage * new_image =
         (DecodedImage *)malloc(sizeof(DecodedImage));
-    
-    printf(
-        "file_buffer.contents: %s\n",
-        file_buffer.contents);
     
     get_PNG_width_height(
         /* uint8_t * compressed_bytes: */

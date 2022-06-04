@@ -46,3 +46,4 @@ void resource_filename_to_pathfile(
         /* const uint64_t output_size : */
             output_size);
 };
+

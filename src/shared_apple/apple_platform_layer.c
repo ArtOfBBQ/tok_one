@@ -99,13 +99,6 @@ void platform_read_file(
     const char * filepath,
     FileBuffer * out_preallocatedbuffer)
 {
-    printf(
-        "platform_read_file: %s into buffer of size: " 
-        FUINT64
-        "\n",
-        filepath,
-        out_preallocatedbuffer->size);
-    
     NSString * nsfilepath = [NSString
         stringWithCString:filepath
         encoding:NSASCIIStringEncoding];
@@ -167,9 +160,10 @@ bool32_t platform_file_exists(
     NSString * nsfilepath = [NSString
         stringWithCString:filepath
         encoding:NSASCIIStringEncoding];
-    NSURL * url = [NSURL URLWithString: nsfilepath];
     
-    if (url != nil) {
+    if ([[NSFileManager defaultManager]
+            fileExistsAtPath:nsfilepath])
+    {
         return true;
     }
     
@@ -179,6 +173,49 @@ bool32_t platform_file_exists(
 void platform_mkdir_if_not_exist(
     const char * dirname)
 {
+    printf(
+        "\n\n platform_mkdir_if_not_exist: %s\n",
+        dirname);
+    
+    NSString * directory_path = [NSString
+        stringWithCString:dirname
+        encoding:NSASCIIStringEncoding];
+    NSURL * directory_url = [NSURL
+        fileURLWithPath: directory_path
+        isDirectory: true];
+    assert(directory_url != NULL);
+    
+    if (![[NSFileManager defaultManager]
+        fileExistsAtPath:directory_path])
+    {
+        printf("no directory there, creating it...\n");
+        NSError * error = NULL;
+        
+        //        bool success = [[NSFileManager defaultManager]
+        //            createDirectoryAtURL:directory_url
+        //            withIntermediateDirectories:true
+        //            attributes:NULL 
+        //            error:&error];
+        bool success = [[NSFileManager defaultManager]
+            createDirectoryAtPath:directory_path
+            withIntermediateDirectories:true
+            attributes:NULL 
+            error:&error];
+        
+        if (!success) {
+            printf("ERROR - tried to create a directory and failed\n");
+            if (error != NULL) {
+                NSLog(@" error => %@ ", [error userInfo]);
+            }
+            assert(0);
+        } else {
+            assert([[NSFileManager defaultManager]
+                fileExistsAtPath:directory_path]);
+        }
+    } else {
+        printf("that directory seems to already exist, ignoring request...\n");
+    }
+    
     return;
 }
 
@@ -199,18 +236,50 @@ void platform_delete_file(
     }
 }
 
-void platform_write_file(
-    const char * filepath,
-    const char * output)
-{
-    
-}
-
 void platform_copy_file(
     const char * filepath_source,
     const char * filepath_destination)
 {
+    NSString * nsfilepath_source = [NSString
+        stringWithCString:filepath_source
+        encoding:NSASCIIStringEncoding];
+    NSString * nsfilepath_destination = [NSString
+        stringWithCString:filepath_destination
+        encoding:NSASCIIStringEncoding];
+
+    NSError * error = NULL;
     
+    [[NSFileManager defaultManager]
+        copyItemAtPath: nsfilepath_source
+        toPath: nsfilepath_destination
+        error: &error];
+
+    if (error != NULL) {
+        NSLog(@" error => %@ ", [error userInfo]);
+        assert(0);
+    }
+}
+
+void platform_write_file(
+    const char * filepath,
+    const char * output,
+    const uint32_t output_size)
+{
+    NSString * nsfilepath = [NSString
+        stringWithCString:filepath
+        encoding:NSASCIIStringEncoding];
+
+    NSData * nsdata = [NSData
+        dataWithBytes:output
+        length:output_size];
+    
+    [[NSFileManager defaultManager]
+        createFileAtPath: 
+            nsfilepath
+        contents:
+            nsdata
+        attributes:
+            nil];
 }
 
 void platform_get_filenames_in(
@@ -219,7 +288,6 @@ void platform_get_filenames_in(
     const uint32_t recipient_capacity,
     uint32_t * recipient_size)
 {
-    printf("platform_get_filenames_in(): %s\n", directory);
     *recipient_size = 0;
     
     NSString * path = [NSString
@@ -261,12 +329,12 @@ void platform_get_filenames_in(
 
 char * platform_get_application_path() {
     return (char *)
-        [[[NSBundle mainBundle] bundlePath] UTF8String];
+        [[[NSBundle mainBundle] bundlePath] cStringUsingEncoding: NSASCIIStringEncoding];
 }
 
 char * platform_get_resources_path() {
     return (char *)
-        [[[NSBundle mainBundle] resourcePath] UTF8String];
+        [[[NSBundle mainBundle] resourcePath] cStringUsingEncoding: NSASCIIStringEncoding];
 }
 
 void platform_start_thread(
