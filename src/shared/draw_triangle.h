@@ -14,6 +14,7 @@ the architecture is decided
 #include <math.h>
 
 #include "common.h"
+#include "logger.h"
 #include "vertex_types.h"
 
 typedef struct TriangleArea {

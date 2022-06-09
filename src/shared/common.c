@@ -84,7 +84,7 @@ bool32_t are_equal_strings(
     return true;
 }
 
-bool32_t are_equal_strings(
+bool32_t are_equal_strings_of_length(
     const char * str1,
     const char * str2,
     const uint64_t len)
@@ -96,5 +96,70 @@ bool32_t are_equal_strings(
     }
     
     return true;
+}
+
+void int_to_string(
+    const int32_t input,
+    char * recipient,
+    const uint32_t recipient_size)
+{
+    if (input < 0) {
+        recipient[0] = '-';
+        int32_t positive_to_append = input * -1;
+        uint_to_string(
+            /* input: */ (uint32_t)positive_to_append,
+            /* recipient: */ recipient + 1,
+            /* recipient_size: */ recipient_size - 1); 
+    } else {
+        uint_to_string(
+            /* input: */ (uint32_t)input,
+            /* recipient: */ recipient,
+            /* recipient_size: */ recipient_size);
+    }
+}
+
+void __attribute__((no_instrument_function))
+uint_to_string(
+    const uint32_t input,
+    char * recipient,
+    const uint32_t recipient_size)
+{
+    if (input == 0) {
+        recipient[0] = '0';
+        recipient[1] = '\0';
+        return;
+    }
+    
+    uint32_t i = 0;
+    uint32_t start_i = 0;
+    uint32_t end_i;
+    
+    uint32_t decimal = 1;
+    while (
+        (input / decimal) > 0)
+    {
+        uint32_t isolated_num =
+            input % (decimal * 10);
+        isolated_num /= decimal;
+        recipient[i] = (char)('0' + isolated_num);
+        i += 1;
+        assert(i < recipient_size);
+        
+        decimal *= 10;
+    }
+    end_i = i - 1;
+    
+    recipient[end_i + 1] = '\0';
+    
+    // if we started with an input of -32, we should now have
+    // the resut '-' '2' '3', with start_i at '2' and end_i at '3'
+    // we want to swap from start_i to end_i
+    while (start_i < end_i) {
+        char swap = recipient[start_i];
+        recipient[start_i] = recipient[end_i];
+        recipient[end_i] = swap;
+        end_i -= 1;
+        start_i += 1; 
+    }
 }
 

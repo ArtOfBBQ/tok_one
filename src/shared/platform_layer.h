@@ -120,6 +120,7 @@ void platform_start_thread(
     void (*function_to_run)(int32_t),
     int32_t argument);
 
-uint64_t platform_get_current_time_microsecs(void);
+uint64_t __attribute__((no_instrument_function))
+platform_get_current_time_microsecs(void);
 
 #endif

@@ -276,6 +276,7 @@ void client_logic_startup() {
     TexQuad sample_quad;
     construct_texquad(&sample_quad);
     sample_quad.object_id = 5;
+    sample_quad.touchable_id = 4;
     sample_quad.texturearray_i = 2;
     sample_quad.texture_i = 0;
     sample_quad.left_pixels = 100;
@@ -314,26 +315,31 @@ void client_logic_animation_callback(int32_t callback_id)
 static void client_handle_mouseevents(
     uint64_t microseconds_elapsed)
 {
-    uint32_t touched_object_id = 999999;
-    
     if (!last_mouse_down.handled) {
+        log_append("mouse down at touchable_id: ");
+        log_append_int(last_mouse_down.touchable_id);
+        log_append("\n");
+        
+        uint32_t touched_texquad_id;
         last_mouse_down.handled = true;
-        if (
-            touchable_id_to_texquad_object_id(
+        if (touchable_id_to_texquad_object_id(
                 /* const int32_t touchable_id : */
                     last_mouse_down.touchable_id,
                 /* uint32_t * object_id_out : */
-                    &touched_object_id))
+                    &touched_texquad_id))
         {
-            assert(touched_object_id != 999999);
+            log_append("found at texquad_id: ");
+            log_append_uint(touched_texquad_id);
+            log_append(")\n");
+            assert(touched_texquad_id != 999999);
             
             ScheduledAnimation brighten;
             construct_scheduled_animation(&brighten);
             ScheduledAnimation dim;
             construct_scheduled_animation(&dim);
             
-            brighten.affected_object_id = touched_object_id;
-            dim.affected_object_id = touched_object_id;
+            brighten.affected_object_id = touched_texquad_id;
+            dim.affected_object_id = touched_texquad_id;
             
             brighten.remaining_microseconds = 150000;
             dim.wait_first_microseconds =

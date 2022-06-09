@@ -14,7 +14,9 @@ void platform_get_directory_separator(
     recipient[1] = '\0';
 }
 
-uint64_t platform_get_current_time_microsecs() {
+uint64_t __attribute__((no_instrument_function))
+platform_get_current_time_microsecs(void)
+{
     uint64_t result = mach_absolute_time() / 1000;
     
     return result;
@@ -96,77 +98,64 @@ void platform_read_file(
     const char * filepath,
     FileBuffer * out_preallocatedbuffer)
 {
-    NSString * nsfilepath = [NSString
-        stringWithCString:filepath
-        encoding:NSASCIIStringEncoding];
+    log_append("trying to read file at path: ");
+    log_append(filepath);
+    log_append("\n");
     
-    NSURL * file_url = [NSURL fileURLWithPath: nsfilepath];
+    NSString * nsfilepath =
+        [NSString
+            stringWithCString:filepath
+            encoding:NSASCIIStringEncoding];
     
-    if (file_url == nil) {
-        log_append("couldn't find file: ");
-        log_append(filepath);
-        log_append("\n");
+    NSError * error = NULL;
+    NSData * file_data =
+        [NSData
+            dataWithContentsOfFile: nsfilepath
+            options: NSDataReadingUncached
+            error: &error];
+    
+    if (error) {
+        log_append(
+            "Error - failed [NSData initWithContentsOfFile:]\n");
         out_preallocatedbuffer->size = 0;
         out_preallocatedbuffer->good = false;
         return;
     }
     
-    NSInputStream * input_stream = [NSInputStream
-        inputStreamWithURL:file_url];
-    [input_stream open];
+    [file_data
+        getBytes: out_preallocatedbuffer->contents
+        length: out_preallocatedbuffer->size];
     
-    if (input_stream == nil) {
-        log_append("Error - failed to create NSInputStream from viable file NSURL\n");
-        out_preallocatedbuffer->size = 0;
-        out_preallocatedbuffer->good = false;
-        return;
-    }
-    
-    NSInteger result =
-        [input_stream
-            read:
-                (uint8_t *)out_preallocatedbuffer->contents
-            maxLength:
-                out_preallocatedbuffer->size - 1];
-    
-    if (result < 1) {
-        NSError * stream_error = input_stream.streamError;
-        
-        if (stream_error != NULL) {
-            log_append("ERROR: ");
-            log_append(
-                [[[stream_error userInfo] description]
-                    cStringUsingEncoding: NSASCIIStringEncoding]);
-            log_dump_and_crash();
-        }
-        
-        out_preallocatedbuffer->size = 0;
-        out_preallocatedbuffer->good = false;
-        [input_stream close];
-        
-        return;
-    }
-    
-    out_preallocatedbuffer->size = (uint64_t)result + 1;
-    out_preallocatedbuffer->
-        contents[out_preallocatedbuffer->size - 1] = '\0';
+    log_append("file read was succesful\n");
     out_preallocatedbuffer->good = true;
-    [input_stream close];
 }
 
 bool32_t platform_file_exists(
     const char * filepath)
 {
+    log_append("checking if file exists: ");
+    log_append(filepath);
+    log_append("\n");
+    
     NSString * nsfilepath = [NSString
         stringWithCString:filepath
         encoding:NSASCIIStringEncoding];
     
+    BOOL is_directory = false;
     if ([[NSFileManager defaultManager]
-            fileExistsAtPath:nsfilepath])
+        fileExistsAtPath: nsfilepath
+        isDirectory: &is_directory])
     {
+        if (is_directory) {
+            log_append("A folder existed there, returning false...\n");
+            return false;
+        }
+        
+        log_append("A file existed there, returning true...\n");
         return true;
     }
     
+    log_append("There's nothing there, returning false...\n");
     return false;
 }
 
@@ -192,11 +181,6 @@ void platform_mkdir_if_not_exist(
         log_append("no directory there, creating it...\n");
         NSError * error = NULL;
         
-        //        bool success = [[NSFileManager defaultManager]
-        //            createDirectoryAtURL:directory_url
-        //            withIntermediateDirectories:true
-        //            attributes:NULL 
-        //            error:&error];
         bool success = [[NSFileManager defaultManager]
             createDirectoryAtPath:directory_path
             withIntermediateDirectories:true
@@ -208,7 +192,7 @@ void platform_mkdir_if_not_exist(
             if (error != NULL) {
                 NSLog(@" error => %@ ", [error userInfo]);
             }
-            assert(0);
+            // assert(0);
         } else {
             assert([[NSFileManager defaultManager]
                 fileExistsAtPath:directory_path]);
@@ -274,13 +258,19 @@ void platform_write_file(
         dataWithBytes:output
         length:output_size];
     
-    [[NSFileManager defaultManager]
+    if (![[NSFileManager defaultManager]
         createFileAtPath: 
             nsfilepath
         contents:
             nsdata
         attributes:
-            nil];
+            nil])
+    {
+        log_append("Failed to write to file: ");
+        log_append(filepath);
+        log_append("\nPerhaps the operating system doesn't allow this app to write there?\n");
+        assert(0);
+    }
 }
 
 void platform_get_filenames_in(

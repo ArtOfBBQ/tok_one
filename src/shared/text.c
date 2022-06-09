@@ -44,8 +44,6 @@ void request_label_around(
 {
     assert(max_width > 0.0f);
     
-    printf("request_label_around()\n");
-    
     uint32_t line_start_i = 0;
     uint32_t line_end_i = 0;
     float line_width = 0.0f;
@@ -113,7 +111,6 @@ void request_label_around(
         cur_top -= font_height;
         line_start_i = line_end_i;
     }
-    printf("finished request_label_around()\n");
 }
 
 void request_label_renderable(

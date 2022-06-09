@@ -14,7 +14,7 @@ void init_projection_constants() {
         log_append_float(window_height);
         log_append(",");
         log_append_float(window_width);
-        log_append("]\n"),
+        log_append("]\n");
         log_dump_and_crash();
     }
     
@@ -213,7 +213,7 @@ zPolygon parse_obj(
                 usemtl_hint[j] = rawdata[i + j];
             }
             
-            if (are_equal_strings(
+            if (are_equal_strings_of_length(
                 "usemtl Face",
                 usemtl_hint,
                 line_size))
@@ -223,7 +223,7 @@ zPolygon parse_obj(
             }
             
             if (
-                are_equal_strings(
+                are_equal_strings_of_length(
                     "usemtl Back",
                     usemtl_hint,
                     line_size))
@@ -232,7 +232,7 @@ zPolygon parse_obj(
                 using_texture_i = 4;
             }
             
-            if (are_equal_strings(
+            if (are_equal_strings_of_length(
                     "usemtl Side",
                     usemtl_hint,
                     line_size))

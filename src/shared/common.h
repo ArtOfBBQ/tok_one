@@ -9,6 +9,10 @@
 #define false 0
 #endif
 
+#ifndef NULL
+#define NULL 0
+#endif
+
 #ifndef FUINT64
 #define FUINT64 "%llu"
 #endif
@@ -36,10 +40,21 @@ bool32_t are_equal_strings(
     const char * str1,
     const char * str2);
 
-bool32_t are_equal_strings(
+bool32_t are_equal_strings_of_length(
     const char * str1,
     const char * str2,
     const uint64_t length);
+
+void int_to_string(
+    const int32_t input,
+    char * recipient,
+    const uint32_t recipient_size);
+
+void __attribute__((no_instrument_function))
+uint_to_string(
+    const uint32_t input,
+    char * recipient,
+    const uint32_t recipient_size);
 
 #endif
 

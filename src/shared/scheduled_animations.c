@@ -299,7 +299,7 @@ void resolve_animation_effects(
                                 + actual_elapsed)
                             * actual_elapsed);
                 }
-
+                
                 if (!anim->final_y_known) {
                     texquads_to_render[tq_i].top_pixels +=
                         (anim->delta_y_per_second
@@ -399,12 +399,12 @@ void request_dud_dance(const uint32_t object_id)
 
 void request_bump_animation(const uint32_t object_id)
 {
-    float duration = 200000;
+    uint64_t duration = 200000;
     
     ScheduledAnimation embiggen_request;
     construct_scheduled_animation(&embiggen_request);
     embiggen_request.affected_object_id = object_id;
-    embiggen_request.remaining_microseconds = (uint64_t)(duration / 0.5f);
+    embiggen_request.remaining_microseconds = duration / 2;
     embiggen_request.final_xscale_known = true;
     embiggen_request.final_xscale = 1.35f;
     embiggen_request.final_yscale_known = true;
@@ -415,8 +415,8 @@ void request_bump_animation(const uint32_t object_id)
     ScheduledAnimation revert_request;
     construct_scheduled_animation(&revert_request);
     revert_request.affected_object_id = object_id;
-    revert_request.wait_first_microseconds = (uint64_t)(duration * 0.5f);
-    revert_request.remaining_microseconds = (uint64_t)(duration * 0.5f);
+    revert_request.wait_first_microseconds = duration / 2;
+    revert_request.remaining_microseconds = duration / 2;
     revert_request.final_xscale_known = true;
     revert_request.final_xscale = 1.0f;
     revert_request.final_yscale_known = true;

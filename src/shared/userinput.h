@@ -1,8 +1,6 @@
 #ifndef USERINPUT_H
 #define USERINPUT_H
 
-#include "stdio.h"
-
 #include "common.h"
 #include "zpolygon.h"
 #include "platform_layer.h"

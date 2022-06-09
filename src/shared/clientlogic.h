@@ -29,6 +29,8 @@ typedef struct NamedTextureArray {
 #include "../../../src/mainmenu.hpp"
 #endif
 
+extern bool32_t application_running;
+
 /*
 Prepare your objects for 3D rendering
 
