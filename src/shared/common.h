@@ -27,6 +27,12 @@ void concat_strings(
     char * output,
     const uint64_t output_size);
 
+void __attribute__((no_instrument_function))
+copy_strings(
+    char * recipient,
+    const uint32_t recipient_size,
+    const char * origin);
+
 void copy_strings(
     char * recipient,
     const uint32_t recipient_size,

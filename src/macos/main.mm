@@ -105,27 +105,6 @@ NSWindowWithCustomResponder: NSWindow
 int main(int argc, const char * argv[]) 
 {
     setup_log();
-    register_function_name(
-        (uint64_t)draw_triangle,
-        (char *)"draw triangle");
-    register_function_name(
-        (uint64_t)software_render,
-        (char *)"software_render");
-    register_function_name(
-        (uint64_t)draw_texquads_to_render,
-        (char *)"draw_texquads_to_render");
-    register_function_name(
-        (uint64_t)tok_rand,
-        (char *)"tok_rand");
-    register_function_name(
-        (uint64_t)ztriangle_apply_lighting,
-        (char *)"ztriangle_apply_lighting");
-    register_function_name(
-        (uint64_t)qsort,
-        (char *)"qsort");
-    register_function_name(
-        (uint64_t)resolve_animation_effects,
-        (char *)"resolve_animation_effects");
     
     log_append("starting application...\n");
     log_append(

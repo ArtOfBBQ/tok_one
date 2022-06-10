@@ -20,6 +20,7 @@ extern "C" {
 // #define LOGGER_SILENCE
 #ifndef LOGGER_SILENCE
 #include "stdio.h"
+#include <dlfcn.h>
 #endif
 
 #include <stdlib.h>

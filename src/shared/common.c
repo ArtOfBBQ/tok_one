@@ -29,6 +29,21 @@ void concat_strings(
     assert(chars_used <= output_size);
 }
 
+void __attribute__((no_instrument_function))
+copy_strings(
+    char * recipient,
+    const uint32_t recipient_size,
+    const char * origin)
+{
+    uint32_t i = 0;
+    while (origin[i] != '\0') {
+        recipient[i] = origin[i];
+        i++;
+        assert((i + 1) < recipient_size);
+    }
+    recipient[i] = '\0';
+}
+
 void copy_strings(
     char * recipient,
     const uint32_t recipient_size,
@@ -134,11 +149,11 @@ uint_to_string(
     uint32_t start_i = 0;
     uint32_t end_i;
     
-    uint32_t decimal = 1;
-    while (
-        (input / decimal) > 0)
+    uint64_t decimal = 1;
+    uint32_t input_div_dec = input / decimal;
+    while (input_div_dec > 0)
     {
-        uint32_t isolated_num =
+        uint64_t isolated_num =
             input % (decimal * 10);
         isolated_num /= decimal;
         recipient[i] = (char)('0' + isolated_num);
@@ -146,6 +161,7 @@ uint_to_string(
         assert(i < recipient_size);
         
         decimal *= 10;
+        input_div_dec = input / decimal;
     }
     end_i = i - 1;
     

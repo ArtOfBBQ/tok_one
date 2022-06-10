@@ -3,23 +3,42 @@
 static char * log;
 static uint32_t log_i = 0;
 
-#define MAX_TIMED_FUNCTION_NAME 40
-#define MAX_SIMULTANEOUS_FUNCTION_RUNS 4000
+#define MAX_TIMED_FUNCTION_NAME 80
 typedef struct TimedFunction {
     uint64_t function_address;
     char function_name[MAX_TIMED_FUNCTION_NAME];
     uint32_t times_ran;
     uint64_t time_tally;
-    uint64_t started_at[MAX_SIMULTANEOUS_FUNCTION_RUNS];
+    uint64_t current_first_start_at;
+    uint32_t currently_running;
 } TimedFunction;
 
-#define TIMED_FUNCTION_LINK_SIZE 10
+#define TIMED_FUNCTION_LINK_SIZE 5
 typedef struct TimedFunctionLink {
     TimedFunction linked_list[TIMED_FUNCTION_LINK_SIZE];
 } TimedFunctionLink;
 
 #define TIMED_FUNCTION_MAP_SIZE 4096
 TimedFunctionLink * timed_function_map = NULL;
+
+/*
+Let's make a backtrace circle
+
+By 'backtrace circle' I mean a conceptually circular array
+where the element at position 0 follows the final element etc.
+
+So we store each function name wheenver it runs, and when
+we get to the end of the array, we start storing at the front
+again. If you request the last 5 functions when backtrace_i
+is at 3, it would be elements 50,0,1,2,3
+*/
+typedef struct BacktraceEntry {
+    char function_name[MAX_TIMED_FUNCTION_NAME];
+} BacktrackeEntry;
+#define BACKTRACE_CIRCLE_SIZE 50
+BacktraceEntry * backtrace_circle = NULL;
+uint32_t backtrace_i = 0;
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,9 +49,9 @@ extern "C" {
         void *call_site)
     {
         if (timed_function_map == NULL) { return; }
+        
         uint32_t entry_i =
             (uint64_t)this_fn & (TIMED_FUNCTION_MAP_SIZE - 1);
-        assert(entry_i < TIMED_FUNCTION_MAP_SIZE);
         
         uint32_t link_i = 0;
         while (
@@ -56,7 +75,19 @@ extern "C" {
                 assert(0);
             }
         }
-       
+
+        // add this function name to the backtrace circle
+        copy_strings(
+            /* recipient: */
+                backtrace_circle[backtrace_i]
+                    .function_name,
+            /* recipient_size: */
+                MAX_TIMED_FUNCTION_NAME,
+            /* origin: */
+                timed_function_map[entry_i]
+                    .linked_list[link_i]
+                    .function_name);
+        
         // record +1 run for this function address
         timed_function_map[entry_i]
             .linked_list[link_i]
@@ -66,31 +97,42 @@ extern "C" {
             .linked_list[link_i]
             .times_ran += 1;
         
-        // record when this function started running 
-        uint32_t start_i = 0;
-        while (
-            timed_function_map[entry_i]
+        // record function name if necessary
+        if (timed_function_map[entry_i]
                 .linked_list[link_i]
-                .started_at[start_i] != 0)
+                .function_name[0] == '\0')
         {
-            if (
-                start_i >= MAX_SIMULTANEOUS_FUNCTION_RUNS)
-            {
-                #ifndef LOGGER_SILENCE 
-                printf(
-                    "too many simultaneous runs of the same timed function. You can probably just add some memory for the linked list by increasing MAX_SIMULTANEOUS_FUNCTION_RUNS (currently %u) in logger.c\n",
-                    MAX_SIMULTANEOUS_FUNCTION_RUNS);
-                #endif
-                application_running = false;
-                assert(0);
+            Dl_info info;
+            
+            if (dladdr(this_fn, &info)) {
+                // info.dli_fname;
+
+                copy_strings(
+                    /* recipient: */
+                        timed_function_map[entry_i]
+                            .linked_list[link_i]
+                            .function_name,
+                    /* recipient_size: */
+                        MAX_TIMED_FUNCTION_NAME,
+                    /* origin: */
+                        info.dli_sname);
             }
-            start_i += 1;
         }
         
+        // record when this function started running 
         timed_function_map[entry_i]
             .linked_list[link_i]
-            .started_at[start_i] =
-                platform_get_current_time_microsecs();
+            .currently_running += 1;
+        if (
+            timed_function_map[entry_i]
+                .linked_list[link_i]
+                .currently_running == 1)
+        {
+            timed_function_map[entry_i]
+                .linked_list[link_i]
+                .current_first_start_at =
+                    platform_get_current_time_microsecs();
+        }
     }
     
     void __attribute__((no_instrument_function))
@@ -101,8 +143,7 @@ extern "C" {
         if (timed_function_map == NULL) { return; }
         uint32_t entry_i =
             (uint64_t)this_fn & (TIMED_FUNCTION_MAP_SIZE - 1);
-        assert(entry_i < TIMED_FUNCTION_MAP_SIZE);
-       
+        
         bool32_t found_link = false; 
         uint32_t link_i = 0;
         for (
@@ -122,173 +163,44 @@ extern "C" {
         }
 
         if (!found_link) { return; }
-        assert(found_link);
         
         // find out when this func started running 
-        uint32_t start_i = MAX_SIMULTANEOUS_FUNCTION_RUNS;
-        while (
+        if (
+            timed_function_map[entry_i]
+            .linked_list[link_i]
+            .currently_running == 1)
+        {
             timed_function_map[entry_i]
                 .linked_list[link_i]
-                .started_at[start_i] == 0)
-        {
-            if (start_i == 0) {
-                #ifndef LOGGER_SILENCE 
-                printf(
-                    "function exited with no rec of it start\n");
-                #endif
-                application_running = false;
-                assert(0);
-            }
-            start_i -= 1;
+                .time_tally +=
+                    (platform_get_current_time_microsecs() -
+                        timed_function_map[entry_i]
+                            .linked_list[link_i]
+                            .current_first_start_at);
+            
+            timed_function_map[entry_i]
+                .linked_list[link_i]
+                .current_first_start_at = 0;
         }
         
-        assert(
-            timed_function_map[entry_i]
-            .linked_list[link_i]
-            .started_at[start_i] > 0);
-        
         timed_function_map[entry_i]
             .linked_list[link_i]
-            .time_tally +=
-                (platform_get_current_time_microsecs() -
-                    timed_function_map[entry_i]
-                        .linked_list[link_i]
-                        .started_at[start_i]);
-        
-        timed_function_map[entry_i]
-            .linked_list[link_i]
-            .started_at[start_i] = 0;
+            .currently_running -= 1;
     }
 #ifdef __cplusplus
 }
 #endif
 
 void __attribute__((no_instrument_function))
-register_function_name(
-    uint64_t address,
-    char * name)
-{
-    #ifndef LOGGER_SILENCE
-    printf(
-        "register function: %s at address %llu\n",
-        name,
-        address);
-    #endif
-    assert(timed_function_map != NULL);
-    
-    uint32_t entry_i =
-        address & (TIMED_FUNCTION_MAP_SIZE - 1);
-    assert(entry_i < TIMED_FUNCTION_MAP_SIZE);
-    
-    #ifndef LOGGER_SILENCE
-    printf("check if already registered\n");
-    #endif
-    for (
-        uint32_t link_i = 0;
-        link_i < TIMED_FUNCTION_LINK_SIZE;
-        link_i++)
-    {
-        #ifndef LOGGER_SILENCE
-        printf("checking link: %u\n", link_i);
-        #endif
-        
-        if (
-            timed_function_map[entry_i]
-                .linked_list[link_i]
-                .function_address == address)
-        {
-            uint32_t i = 0;
-            while (name[i] != '\0') {
-                timed_function_map[entry_i]
-                    .linked_list[link_i]
-                    .function_name[i] =
-                        name[i];
-                assert(i < MAX_TIMED_FUNCTION_NAME);
-            }
-            
-            timed_function_map[entry_i]
-                .linked_list[link_i]
-                .function_name[i] =
-                    name[i + 1] = '\0';
-            
-            
-            #ifndef LOGGER_SILENCE
-            printf("address was registered, added name\n");
-            #endif
-            return;
-        }
-    }
-    
-    #ifndef LOGGER_SILENCE
-    printf("was unregistered, add entry...\n");
-    #endif
-    for (
-        uint32_t link_i = 0;
-        link_i < TIMED_FUNCTION_LINK_SIZE;
-        link_i++)
-    {
-        #ifndef LOGGER_SILENCE
-        printf("checking link: %u\n", link_i);
-        #endif
-        
-        if (
-            timed_function_map[entry_i]
-                .linked_list[link_i]
-                .function_address
-            == 0)
-        {
-            #ifndef LOGGER_SILENCE
-            printf("found open spot..\n");
-            #endif
-            
-            timed_function_map[entry_i]
-                .linked_list[link_i]
-                .function_address = address;
-            
-            #ifndef LOGGER_SILENCE
-            printf("copying name string..\n");
-            #endif
-            uint32_t i = 0;
-            while (name[i] != '\0') {
-                timed_function_map[entry_i]
-                    .linked_list[link_i]
-                    .function_name[i] = name[i];
-                if (i >= (MAX_TIMED_FUNCTION_NAME - 1)) {
-                    printf(
-                        "name %s is exceeding MAX_TIMED_FUNCTION_NAME: %u\n",
-                        name,
-                        MAX_TIMED_FUNCTION_NAME);
-                    assert(0);
-                }
-                i++;
-            }
-            
-            #ifndef LOGGER_SILENCE
-            printf(
-                "registered at %llu, link %u\n",
-                timed_function_map[entry_i]
-                    .linked_list[link_i]
-                    .function_address,
-                link_i);
-            #endif
-            return;
-        }
-    }
-    
-    
-    #ifndef LOGGER_SILENCE
-    printf(
-        "failed to find spot for %s at address %llu\n",
-        name,
-        address);
-    #endif
-    assert(0);
-}
-
-void __attribute__((no_instrument_function))
 setup_log() {
     // create a log for debug text
     log = (char *)malloc(LOG_SIZE);
+    
+    backtrace_circle = (BacktraceEntry *)
+        malloc(sizeof(BacktraceEntry) * BACKTRACE_CIRCLE_SIZE);
+    for (uint32_t i = 0; i < BACKTRACE_CIRCLE_SIZE; i++) {
+        backtrace_circle[i].function_name[0] = '\0';
+    }
     
     // create a hashmap for the functions in our app 
     // this is used for backtrace and profiling
@@ -315,16 +227,12 @@ setup_log() {
             timed_function_map[i]
                 .linked_list[j]
                 .times_ran = 0;
-            
-            for (
-                uint32_t k = 0;
-                k < MAX_SIMULTANEOUS_FUNCTION_RUNS;
-                k++)
-            {
-                timed_function_map[i]
-                    .linked_list[j]
-                    .started_at[k] = 0;
-            }
+            timed_function_map[i]
+                .linked_list[j]
+                .current_first_start_at = 0;
+            timed_function_map[i]
+                .linked_list[j]
+                .currently_running = 0;
         }
     }
 }
@@ -422,13 +330,13 @@ internal_log_append(
     #endif
     
     uint32_t i = 0;
-    while (to_append[i] != '\0') {
-        
-        log[log_i] = to_append[i];
-        log_i += 1;
-        assert(log_i < LOG_SIZE);
-        i += 1;
-    }
+    copy_strings(
+        /* recipient: */
+            log,
+        /* recipient_size: */
+            LOG_SIZE,
+        /* origin: */
+            to_append);
     
     #ifndef LOGGER_SILENCE 
     printf(
@@ -489,7 +397,7 @@ add_profiling_stats_to_log()
         log_append_uint(top30_timedfuncs[j].times_ran);
         log_append(", time spent: ");
         log_append_uint((uint32_t)top30_timedfuncs[j].time_tally);
-        log_append("\n");
+        log_append("\n\n");
     }
 }
 

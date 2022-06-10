@@ -40,16 +40,23 @@ void request_scheduled_animation(
     assert(to_add != NULL);
     
     if (to_add->remaining_microseconds == 0) {
-        printf(
-            "ERROR: You can't schedule an animation with a duration of 0 microseconds - please just apply the effect directly instead. Animation xy[%f,%f] rgba[%f,%f,%f,%f] zrot [%f]\n",
-            to_add->delta_x_per_second,
-            to_add->delta_y_per_second,
-            to_add->rgba_delta_per_second[0],
-            to_add->rgba_delta_per_second[1],
-            to_add->rgba_delta_per_second[2],
-            to_add->rgba_delta_per_second[3],
-            to_add->z_rotation_per_second);
-        assert(to_add->remaining_microseconds > 0);
+        log_append(
+            "ERROR: You can't schedule an animation with a duration of 0 microseconds - please just apply the effect directly instead. Animation deltaxy[");
+        log_append_float(to_add->delta_x_per_second);
+        log_append(",");
+        log_append_float(to_add->delta_y_per_second);
+        log_append("] rgba[");
+        log_append_float(to_add->rgba_delta_per_second[0]);
+        log_append(",");
+        log_append_float(to_add->rgba_delta_per_second[1]);
+        log_append(",");
+        log_append_float(to_add->rgba_delta_per_second[2]);
+        log_append(",");
+        log_append_float(to_add->rgba_delta_per_second[3]);
+        log_append("] zrot [");
+        log_append_float(to_add->z_rotation_per_second);
+        log_append("]\n");
+        log_dump_and_crash();
     }
     
     for (
