@@ -22,6 +22,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     application_running = false;
     
     log_append("window will close, terminating app..\n");
+    add_profiling_stats_to_log();
     log_dump();
     
     [NSApp terminate: nil];
@@ -104,8 +105,10 @@ NSWindowWithCustomResponder: NSWindow
 
 int main(int argc, const char * argv[]) 
 {
+    
     setup_log();
     
+    @autoreleasepool {
     log_append("starting application...\n");
     log_append(
         "confirming we can save debug info to log.txt...\n");
@@ -183,6 +186,7 @@ int main(int argc, const char * argv[])
     TransformProcessType(
         &psn,
         kProcessTransformToForegroundApplication);
+    }
     
     return NSApplicationMain(argc, argv);
 }

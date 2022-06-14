@@ -1,6 +1,8 @@
 #include "common.h"
+#include "stdio.h"
 
-void concat_strings(
+void __attribute__((no_instrument_function))
+concat_strings(
     const char * string_1,
     const char * string_2,
     char * output,
@@ -34,9 +36,12 @@ copy_strings(
     char * recipient,
     const uint32_t recipient_size,
     const char * origin)
-{
+{    
     uint32_t i = 0;
-    while (origin[i] != '\0') {
+    while (
+        origin[i] != '\0'
+        && i + 2 < recipient_size)
+    {
         recipient[i] = origin[i];
         i++;
         assert((i + 1) < recipient_size);
@@ -44,7 +49,8 @@ copy_strings(
     recipient[i] = '\0';
 }
 
-void copy_strings(
+void __attribute__((no_instrument_function))
+copy_strings(
     char * recipient,
     const uint32_t recipient_size,
     const char * origin,
@@ -53,7 +59,7 @@ void copy_strings(
     uint32_t i = 0;
     for (; i < origin_size; i++) {
         assert(recipient_size > i);
-
+        
         recipient[i] = origin[i];
     }
     
@@ -62,22 +68,25 @@ void copy_strings(
     }
 }
 
-uint32_t get_string_length(   
+uint32_t __attribute__((no_instrument_function))
+get_string_length(   
     const char * null_terminated_string)
 {
+    printf("getting length of: %s\n", null_terminated_string);
     uint32_t return_value = 0;
     while (
-        null_terminated_string[return_value] != '\0'
-)
+        null_terminated_string[return_value] != '\0')
     {
         assert(return_value < 2000000000);
         return_value++;
     }
     
+    printf("returning length: %u\n", return_value);
     return return_value;
 }
 
-bool32_t are_equal_strings(
+bool32_t
+are_equal_strings(
     const char * str1,
     const char * str2)
 {
@@ -99,7 +108,8 @@ bool32_t are_equal_strings(
     return true;
 }
 
-bool32_t are_equal_strings_of_length(
+bool32_t
+are_equal_strings_of_length(
     const char * str1,
     const char * str2,
     const uint64_t len)
@@ -111,6 +121,42 @@ bool32_t are_equal_strings_of_length(
     }
     
     return true;
+}
+
+void float_to_string(
+    const float input,
+    char * recipient,
+    const uint32_t recipient_size)
+{
+    float temp_above_decimal =
+        (float)(int32_t)input;
+    int32_t below_decimal =
+        (uint32_t)((input - temp_above_decimal) * 10000);
+    int32_t above_decimal = (int32_t)temp_above_decimal;
+    
+    int_to_string(
+        /* const int32_t input: */
+            above_decimal,
+        /* char * recipient: */
+            recipient,
+        /* const uint32_t recipient_size: */
+            1000);
+    
+    uint32_t count = 0;
+    while (recipient[count] != '\0') {
+        count++;
+    }
+    
+    recipient[count] = '.';
+    count++;
+    
+    int_to_string(
+        /* const int32_t input: */
+            below_decimal,
+        /* char * recipient: */
+            recipient + count,
+        /* const uint32_t recipient_size: */
+            1000);
 }
 
 void int_to_string(

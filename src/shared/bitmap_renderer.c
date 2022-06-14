@@ -313,18 +313,31 @@ static void add_quad_to_gpu_workload(
             to_add->z_angle,
         /* recipient: */
             bottomright_rotated);
-    
-    for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
-        triangle_apply_lighting(
-            /* Vertex[3] out_input: */
-                topleft_rotated,
-            /* ZlightSource zlight_source: */
-                &zlights_transformed[i]);
-        triangle_apply_lighting(
-            /* Vertex[3] out_input: */
-                bottomright_rotated,
-            /* ZlightSource zlight_source: */
-                &zlights_transformed[i]);
+  
+    if (!to_add->ignore_lighting) { 
+        for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
+            triangle_apply_lighting(
+                /* Vertex[3] out_input: */
+                    topleft_rotated,
+                /* ZlightSource zlight_source: */
+                    &zlights_transformed[i]);
+            triangle_apply_lighting(
+                /* Vertex[3] out_input: */
+                    bottomright_rotated,
+                /* ZlightSource zlight_source: */
+                    &zlights_transformed[i]);
+        }
+    } else {
+        for (uint32_t i = 0; i < 3; i++) {
+            topleft_rotated[i].lighting[0] = 1.0f;
+            topleft_rotated[i].lighting[1] = 1.0f;
+            topleft_rotated[i].lighting[2] = 1.0f;
+            topleft_rotated[i].lighting[3] = 1.0f;
+            bottomright_rotated[i].lighting[0] = 1.0f;
+            bottomright_rotated[i].lighting[1] = 1.0f;
+            bottomright_rotated[i].lighting[2] = 1.0f;
+            bottomright_rotated[i].lighting[3] = 1.0f;
+        }
     }
     
     for (uint32_t i = 0; i < 3; i++) {

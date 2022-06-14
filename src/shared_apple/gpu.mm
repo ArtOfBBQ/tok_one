@@ -272,6 +272,9 @@ uint64_t previous_time;
 
 - (void)drawInMTKView:(MTKView *)view
 {
+    @autoreleasepool 
+    {
+    
     uint64_t time = platform_get_current_time_microsecs();
     uint64_t elapsed = time - previous_time;
     previous_time = time;
@@ -327,9 +330,7 @@ uint64_t previous_time;
             &vertices_for_gpu_size,
         /* zlights_transformed: */
             zlights_transformed);
-    
-    @autoreleasepool 
-    {
+        
         id<MTLCommandBuffer> command_buffer =
             [[self command_queue] commandBuffer];
         

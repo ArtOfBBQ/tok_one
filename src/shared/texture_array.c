@@ -76,6 +76,10 @@ void register_new_texturearray_from_files(
         i < filenames_size;
         i++)
     {
+        printf(
+            "file %u, filename: %s\n",
+            i,
+            filenames[i]);
         const char * filename = filenames[i];
         
         DecodedImage * new_image =
@@ -83,6 +87,8 @@ void register_new_texturearray_from_files(
         
         decoded_images[i] = new_image;
     }
+    
+    printf("finished allocating images from filenames, register new texturearray...\n");
     
     DecodedImage ** decoded_images_dblptr =
         decoded_images;

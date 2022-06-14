@@ -21,7 +21,8 @@
 
 #define local_only static
 
-void concat_strings(
+void __attribute__((no_instrument_function))
+concat_strings(
     const char * string_1,
     const char * string_2,
     char * output,
@@ -33,13 +34,15 @@ copy_strings(
     const uint32_t recipient_size,
     const char * origin);
 
-void copy_strings(
+void __attribute__((no_instrument_function))
+copy_strings(
     char * recipient,
     const uint32_t recipient_size,
     const char * origin,
     const uint32_t origin_size);
 
-uint32_t get_string_length(   
+uint32_t __attribute__((no_instrument_function))
+get_string_length(   
     const char * null_terminated_string);
 
 bool32_t are_equal_strings(
@@ -51,7 +54,8 @@ bool32_t are_equal_strings_of_length(
     const char * str2,
     const uint64_t length);
 
-void int_to_string(
+void __attribute__((no_instrument_function))
+int_to_string(
     const int32_t input,
     char * recipient,
     const uint32_t recipient_size);
@@ -59,6 +63,12 @@ void int_to_string(
 void __attribute__((no_instrument_function))
 uint_to_string(
     const uint32_t input,
+    char * recipient,
+    const uint32_t recipient_size);
+
+void __attribute__((no_instrument_function))
+float_to_string(
+    const float input,
     char * recipient,
     const uint32_t recipient_size);
 

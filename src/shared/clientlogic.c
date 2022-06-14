@@ -72,13 +72,16 @@ static void preregister_assets() {
     {
         uint32_t t_i = 0;
         while (
-            t_i < MAX_FILES_IN_SINGLE_TEXARRAY)
+            t_i < MAX_FILES_IN_SINGLE_TEXARRAY
+            && application_running)
         {
             filenames_for_texturearrays[ta_i][t_i][0] = '\0';
             t_i++;
         }
     }
-
+    
+    if (!application_running) { return; }
+    
     char * files_in_app_path[400];
     uint32_t files_in_app_path_size = 0;
     platform_get_filenames_in(
@@ -238,6 +241,8 @@ static void load_assets(
         dimension_i <= (int32_t)last_i;
         dimension_i++)
     {
+        if (!application_running) { return; }
+        
         update_texturearray_from_0terminated_files(
             /* const int32_t texturearray_i: */
                 dimension_i,
@@ -272,7 +277,8 @@ void client_logic_startup() {
     zlights_to_apply[0].ambient = 15.0f;
     zlights_to_apply[0].reach = 500.0f;
     zlights_to_apply_size++;
-    
+   
+    /* 
     TexQuad sample_quad;
     construct_texquad(&sample_quad);
     sample_quad.object_id = 5;
@@ -284,7 +290,20 @@ void client_logic_startup() {
     sample_quad.width_pixels = 100;
     sample_quad.height_pixels = 100;
     request_texquad_renderable(&sample_quad);
+    */
 
+    char * sample_text =
+        (char *)"This could totally be a backtrace\nBut first we need to render text in a somewhat presentable way.\nLet's work on that...\n";
+    font_height = 10.0f;
+    request_label_renderable(
+        /* with_id               : */ 100,
+        /* char * text_to_draw   : */ sample_text,
+        /* float left_pixelspace : */ 20.0f,
+        /* float top_pixelspace  : */ window_height - 50.0f,
+        /* z                     : */ 0.5f,
+        /* float max_width       : */ window_width / 2,
+        /* bool32_t ignore_camera: */ false);
+    
     log_append("application path: ");
     log_append(platform_get_application_path());
     log_append("\n");
@@ -521,18 +540,10 @@ void client_logic_update(
         fps_string[6] = '9' + (fps % 10);
     }
     
-    float fps_color[4];
-    fps_color[0] = 0.8f;
-    fps_color[1] = 0.2f;
-    fps_color[2] = 0.8f;
-    fps_color[3] = 1.0f;
     delete_texquad_object(label_object_id);
-    
     request_label_renderable(
         /* with_id               : */ label_object_id,
         /* char * text_to_draw   : */ fps_string,
-        /* float text_color[4]   : */ fps_color,
-        /* text_to_draw_size     : */ 7,
         /* float left_pixelspace : */ 20.0f,
         /* float top_pixelspace  : */ 60.0f,
         /* z                     : */ 0.5f,

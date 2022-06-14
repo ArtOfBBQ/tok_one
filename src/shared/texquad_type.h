@@ -42,6 +42,7 @@ typedef struct TexQuad {
     float z;
     float z_angle;
     bool32_t ignore_camera;
+    bool32_t ignore_lighting;
     bool32_t visible; // skip rendering me but keep me in memory
     bool32_t deleted; // overwrite me if true
 } TexQuad;

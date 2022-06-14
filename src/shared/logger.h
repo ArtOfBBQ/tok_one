@@ -31,11 +31,13 @@ extern "C" {
 
 #define LOG_SIZE 5000000
 
+#define log_assert(condition) internal_log_assert(condition, (char *)" - Assertion failed: "#condition, __func__)
 #define log_append(string) internal_log_append(string, __func__)
 #define log_append_float(num) internal_log_append_float(num, __func__)
 #define log_append_int(num) internal_log_append_int(num, __func__)
 #define log_append_uint(num) internal_log_append_uint(num, __func__)
 
+extern char * assert_failed_message;
 extern bool32_t application_running;
 
 /*
@@ -85,6 +87,15 @@ internal_log_append_float(
     const float to_append,
     const char * caller_function_name);
 
+
+void __attribute__((no_instrument_function))
+get_log_backtrace(
+    char * return_value,
+    uint32_t return_value_capacity);
+
+void __attribute__((no_instrument_function))
+add_profiling_stats_to_log();
+
 /*
 dump the entire debug log to debuglog.txt
 */
@@ -92,16 +103,22 @@ void __attribute__((no_instrument_function))
 log_dump();
 
 /*
-dump the entire debug log to debuglog.txt,
-then crash the application
+Dump the entire debug log to debuglog.txt,
+then crash the application.
+I use this instead of assert(0).
 */
 void __attribute__((no_instrument_function))
 log_dump_and_crash();
 
+/*
+Assert something, but use the GUI to report on failure
+instead of crashing the app
+*/
 void __attribute__((no_instrument_function))
-register_function_name(
-    uint64_t address,
-    char * name);
+internal_log_assert(
+    bool32_t condition,
+    const char * str_condition,
+    const char * func_name);
 
 #endif
 

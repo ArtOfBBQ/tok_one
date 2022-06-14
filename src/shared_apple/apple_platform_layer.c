@@ -106,7 +106,8 @@ void platform_read_file(
         [NSString
             stringWithCString:filepath
             encoding:NSASCIIStringEncoding];
-    
+   
+    printf("creating NSData *\n"); 
     NSError * error = NULL;
     NSData * file_data =
         [NSData
@@ -114,6 +115,7 @@ void platform_read_file(
             options: NSDataReadingUncached
             error: &error];
     
+    printf("checking for NSError\n"); 
     if (error) {
         log_append(
             "Error - failed [NSData initWithContentsOfFile:]\n");
@@ -122,6 +124,7 @@ void platform_read_file(
         return;
     }
     
+    printf("running NSData's getBytes method\n"); 
     [file_data
         getBytes: out_preallocatedbuffer->contents
         length: out_preallocatedbuffer->size];
@@ -245,11 +248,14 @@ void platform_copy_file(
     }
 }
 
-void platform_write_file(
+void __attribute__((no_instrument_function))
+platform_write_file(
     const char * filepath,
     const char * output,
     const uint32_t output_size)
 {
+    printf("skipping write because AAPL doesn't want writes inside bundles...\n");
+    return;
     NSString * nsfilepath = [NSString
         stringWithCString:filepath
         encoding:NSASCIIStringEncoding];
@@ -318,9 +324,11 @@ void platform_get_filenames_in(
     }
 }
 
-char * platform_get_application_path() {
+char * __attribute__((no_instrument_function))
+platform_get_application_path() {
     return (char *)
-        [[[NSBundle mainBundle] bundlePath] cStringUsingEncoding: NSASCIIStringEncoding];
+        [[[NSBundle mainBundle] bundlePath]
+            cStringUsingEncoding: NSASCIIStringEncoding];
 }
 
 char * platform_get_resources_path() {

@@ -57,7 +57,8 @@ void resource_filename_to_pathfile(
     const uint32_t recipient_capacity);
 
 // get current working directory
-char * platform_get_application_path(void);
+char * __attribute__((no_instrument_function))
+platform_get_application_path(void);
 char * platform_get_resources_path(void);
 char * platform_get_cwd(void);
 
@@ -65,7 +66,8 @@ bool32_t platform_file_exists(
     const char * filepath);
 void platform_delete_file(
     const char * filepath);
-void platform_write_file(
+void __attribute__((no_instrument_function))
+platform_write_file(
     const char * filepath_destination,
     const char * output,
     const uint32_t output_size);

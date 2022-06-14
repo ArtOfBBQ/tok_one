@@ -1,6 +1,7 @@
 #include "software_renderer.h"
 
 void init_renderer() {
+    log_append("init_renderer...\n");
     current_touch.handled = true;
     client_logic_startup();
     renderer_initialized = true;

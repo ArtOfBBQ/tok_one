@@ -9,9 +9,10 @@ uint32_t tok_rand() {
     
     if (current_random_i == RANDOM_SEQUENCE_SIZE + 1) {
         // rng wasn't initialized yet
-        current_random_i =
-            (uint32_t)(platform_get_current_time_microsecs() %
-                RANDOM_SEQUENCE_SIZE);
+        // current_random_i =
+        //     (uint32_t)(platform_get_current_time_microsecs() %
+        //         RANDOM_SEQUENCE_SIZE);
+        current_random_i = 0;
     }
     
     current_random_i++;

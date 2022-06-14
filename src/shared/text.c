@@ -2,6 +2,7 @@
 
 int32_t font_texturearray_i = 0;
 float font_height = 40.0f;
+float font_color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 
 static float get_char_width(
     const char * input)
@@ -34,7 +35,6 @@ static uint32_t find_next_linebreak(
 void request_label_around(
     const uint32_t with_id,
     const char * text_to_draw,
-    const float text_color[4],
     const uint32_t text_to_draw_size,
     const float mid_x_pixelspace,
     const float top_y_pixelspace,
@@ -86,6 +86,7 @@ void request_label_around(
         {
             TexQuad letter;
             construct_texquad(&letter);
+            letter.ignore_lighting = true;
             letter.ignore_camera = ignore_camera;
             letter.object_id = with_id;
             letter.texturearray_i = font_texturearray_i;
@@ -95,7 +96,7 @@ void request_label_around(
                 rgba_i < 4;
                 rgba_i++)
             {
-                letter.RGBA[rgba_i] = text_color[rgba_i];
+                letter.RGBA[rgba_i] = font_color[rgba_i];
             }
             
             letter.left_pixels = cur_left;
@@ -116,8 +117,6 @@ void request_label_around(
 void request_label_renderable(
     const uint32_t with_id,
     const char * text_to_draw,
-    const float text_color[4],
-    const uint32_t text_to_draw_size,
     const float left_pixelspace,
     const float top_pixelspace,
     const float z,
@@ -127,18 +126,27 @@ void request_label_renderable(
     float cur_left = left_pixelspace;
     float cur_top = top_pixelspace;
     
-    assert(text_color[3] >= 0.0f);
-    assert(text_color[3] <= 1.0f);
-    
-    for (
-        uint32_t i = 0;
-        i < text_to_draw_size;
-        i++)
+    uint32_t i = 0;
+    while (text_to_draw[i] != '\0')
     {
         if (text_to_draw[i] == ' ')
         {
             cur_left += font_height;
+            i++;
             continue;
+        }
+        
+        if (text_to_draw[i] == '\n')
+        {
+            cur_left = left_pixelspace;
+            cur_top -= font_height;
+            i++;
+            continue;
+        }
+
+        if ((cur_left - left_pixelspace) > max_width) {
+            cur_left = left_pixelspace;
+            cur_top -= font_height;
         }
         
         TexQuad letter;
@@ -151,19 +159,22 @@ void request_label_renderable(
             rgba_i < 4;
             rgba_i++)
         {
-            letter.RGBA[rgba_i] = text_color[rgba_i];
+            letter.RGBA[rgba_i] = font_color[rgba_i];
         }
         
         letter.left_pixels = cur_left;
         letter.top_pixels = cur_top;
         letter.height_pixels = font_height;
         letter.width_pixels = font_height;
+        letter.ignore_lighting = true;
         letter.ignore_camera = ignore_camera;
         letter.z = z;
         
         request_texquad_renderable(&letter);
         
         cur_left += get_char_width(&text_to_draw[i]);
+        
+        i++;
     }
 }
 
