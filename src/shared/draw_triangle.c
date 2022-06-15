@@ -9,7 +9,9 @@ void draw_triangle(
     uint32_t * vertex_count_recipient,
     Vertex input[3])
 {
-    assert(vertices_recipient != NULL);
+    if (vertices_recipient == NULL) {
+        return;
+    }
     
     uint32_t vertex_i = *vertex_count_recipient;
     
@@ -29,7 +31,7 @@ void register_touchable_triangle(
     const int32_t touchable_id,
     Vertex triangle_area[3])
 {
-    assert(touchable_triangles_size
+    log_assert(touchable_triangles_size
         < TOUCHABLE_TRIANGLES_ARRAYSIZE);
     
     for (

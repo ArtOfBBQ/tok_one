@@ -7,7 +7,7 @@ static void triangle_apply_lighting(
     Vertex out_input[3],
     const zLightSource * zlight_source)
 {
-    assert(zlight_source != NULL);
+    log_assert(zlight_source != NULL);
     
     // add lighting to the 3 vertices
     for (

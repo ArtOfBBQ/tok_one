@@ -37,7 +37,7 @@ void construct_scheduled_animation(
 void request_scheduled_animation(
     ScheduledAnimation * to_add)
 {
-    assert(to_add != NULL);
+    log_assert(to_add != NULL);
     
     if (to_add->remaining_microseconds == 0) {
         log_append(
@@ -71,7 +71,7 @@ void request_scheduled_animation(
         }
     }
     
-    assert(
+    log_assert(
         SCHEDULED_ANIMATIONS_ARRAYSIZE
             > scheduled_animations_size);
     
@@ -225,7 +225,7 @@ void resolve_animation_effects(
             }
         }
         
-        assert(anim->wait_first_microseconds == 0);
+        log_assert(anim->wait_first_microseconds == 0);
         
         actual_elapsed =
             anim->remaining_microseconds > actual_elapsed ?
@@ -275,7 +275,7 @@ void resolve_animation_effects(
         
         if (actual_elapsed < 1) { return; }
         
-        assert(actual_elapsed <= anim->remaining_microseconds);
+        log_assert(actual_elapsed <= anim->remaining_microseconds);
         anim->remaining_microseconds -= actual_elapsed;
         
         // apply effects

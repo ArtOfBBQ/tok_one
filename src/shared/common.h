@@ -2,7 +2,6 @@
 #define COMMON_H
 
 #include <inttypes.h>
-#include "assert.h"
 
 #ifndef __cplusplus
 #define true 1
@@ -26,7 +25,7 @@ concat_strings(
     const char * string_1,
     const char * string_2,
     char * output,
-    const uint64_t output_size);
+    const uint32_t output_size);
 
 void __attribute__((no_instrument_function))
 copy_strings(

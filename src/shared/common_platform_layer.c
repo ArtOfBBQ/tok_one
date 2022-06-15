@@ -30,11 +30,22 @@ void resource_filename_to_pathfile(
     uint32_t resource_path_length =
         get_string_length(resource_path);
     
-    uint64_t output_size =
-        filename_length
+    uint32_t full_filename_size =
+        (filename_length
             + resource_path_length
-            + 2; // +1 for \0, +1 to add a '/'
-    assert(assert_capacity >= output_size);
+            + 2); // +1 for \0, +1 to add a '/'
+    log_append("filename_length: ");
+    log_append_uint(filename_length);
+    log_append(", full_filename_size: ");
+    log_append_uint(full_filename_size);
+    log_append(", assert_capacity: ");
+    log_append_uint(assert_capacity);
+    log_append("\n");
+    log_assert(assert_capacity >= full_filename_size);
+    if (!application_running) {
+        recipient[0] = '\0';
+        return;
+    }
     
     concat_strings(
         /* char * string_1            : */
@@ -43,7 +54,7 @@ void resource_filename_to_pathfile(
             separator_and_filename,
         /* char * output              : */
             recipient,
-        /* const uint64_t output_size : */
-            output_size);
+        /* const uint32_t output_size : */
+            full_filename_size);
 };
 

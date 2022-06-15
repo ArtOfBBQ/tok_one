@@ -25,13 +25,12 @@ extern "C" {
 
 #include <stdlib.h>
 
-#include "assert.h"
 #include "common.h"
 #include "platform_layer.h"
 
 #define LOG_SIZE 5000000
 
-#define log_assert(condition) internal_log_assert(condition, (char *)" - Assertion failed: "#condition, __func__)
+#define log_assert(condition) internal_log_assert(condition, #condition, __FILE__, __LINE__, __func__)
 #define log_append(string) internal_log_append(string, __func__)
 #define log_append_float(num) internal_log_append_float(num, __func__)
 #define log_append_int(num) internal_log_append_int(num, __func__)
@@ -118,6 +117,8 @@ void __attribute__((no_instrument_function))
 internal_log_assert(
     bool32_t condition,
     const char * str_condition,
+    const char * file_name,
+    const int line_number,
     const char * func_name);
 
 #endif

@@ -76,7 +76,7 @@ void software_render(
             j < zpolygons_to_render[i].triangles_size;
             j++)
         {
-            assert(t < triangles_to_draw_size);
+            log_assert(t < triangles_to_draw_size);
             
             x_rotated = x_rotate_ztriangle(
                 zpolygons_to_render[i].triangles + j,
@@ -181,6 +181,7 @@ void software_render(
                     next_workload_size,
                 /* input: */
                     triangle_to_draw);
+            if (!application_running) { return; }
         }
     }
 }

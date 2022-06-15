@@ -17,7 +17,7 @@ void platform_get_directory_separator(
 uint64_t __attribute__((no_instrument_function))
 platform_get_current_time_microsecs(void)
 {
-    uint64_t result = mach_absolute_time() / 1000;
+    uint64_t result = mach_absolute_time() / 500;
     
     return result;
 }
@@ -31,6 +31,10 @@ the resources directory
 uint64_t platform_get_resource_size(
     const char * filename)
 {
+    log_append("finding size of file: ");
+    log_append(filename);
+    log_append("\n");
+    
     char pathfile[500];
     resource_filename_to_pathfile(
         filename,

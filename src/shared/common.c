@@ -1,12 +1,11 @@
 #include "common.h"
-#include "stdio.h"
 
 void __attribute__((no_instrument_function))
 concat_strings(
     const char * string_1,
     const char * string_2,
     char * output,
-    const uint64_t output_size)
+    const uint32_t output_size)
 {
     char * str1_at = (char *)string_1;
     char * str2_at = (char *)string_2;
@@ -17,18 +16,15 @@ concat_strings(
     while (str1_at[0] != '\0') {
         *output_at++ = *str1_at++;
         chars_used++;
-        assert(chars_used < output_size);
     }
     
     while (str2_at[0] != '\0') {
         *output_at++ = *str2_at++;
         chars_used++;
-        assert(chars_used < output_size);
     }
     
     *output_at = '\0';
     chars_used++;
-    assert(chars_used <= output_size);
 }
 
 void __attribute__((no_instrument_function))
@@ -44,7 +40,6 @@ copy_strings(
     {
         recipient[i] = origin[i];
         i++;
-        assert((i + 1) < recipient_size);
     }
     recipient[i] = '\0';
 }
@@ -58,8 +53,6 @@ copy_strings(
 {
     uint32_t i = 0;
     for (; i < origin_size; i++) {
-        assert(recipient_size > i);
-        
         recipient[i] = origin[i];
     }
     
@@ -72,16 +65,13 @@ uint32_t __attribute__((no_instrument_function))
 get_string_length(   
     const char * null_terminated_string)
 {
-    printf("getting length of: %s\n", null_terminated_string);
     uint32_t return_value = 0;
     while (
         null_terminated_string[return_value] != '\0')
     {
-        assert(return_value < 2000000000);
         return_value++;
     }
     
-    printf("returning length: %u\n", return_value);
     return return_value;
 }
 
@@ -204,7 +194,6 @@ uint_to_string(
         isolated_num /= decimal;
         recipient[i] = (char)('0' + isolated_num);
         i += 1;
-        assert(i < recipient_size);
         
         decimal *= 10;
         input_div_dec = input / decimal;

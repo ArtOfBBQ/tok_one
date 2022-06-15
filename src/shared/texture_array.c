@@ -9,7 +9,7 @@ void update_texturearray_from_0terminated_files(
         [MAX_FILES_IN_SINGLE_TEXARRAY]
         [MAX_ASSET_FILENAME_SIZE])
 {
-    assert(
+    log_assert(
         texturearray_i < TEXTUREARRAYS_SIZE);
     
     uint32_t filenames_size = 0;
@@ -58,8 +58,8 @@ void update_texturearray_from_0terminated_files(
         texture_arrays[texturearray_i].sprite_columns = 1;
     }
     
-    assert(texture_arrays[texturearray_i].image->width > 0);
-    assert(texture_arrays[texturearray_i].image->height > 0);
+    log_assert(texture_arrays[texturearray_i].image->width > 0);
+    log_assert(texture_arrays[texturearray_i].image->height > 0);
     texture_arrays[texturearray_i].request_update = true;
 }
 
@@ -103,13 +103,13 @@ void register_new_texturearray_from_images(
     DecodedImage ** new_images,
     const uint32_t new_images_size)
 {
-    assert(new_images_size > 0);
+    log_assert(new_images_size > 0);
     for (uint32_t i = 0; i < new_images_size; i++) {
-        assert(new_images[i] != NULL);
-        assert(new_images[i]->width > 0);
-        assert(new_images[i]->height > 0);
-        assert(new_images[i]->rgba_values_size > 0);
-        assert(new_images[i]->rgba_values != NULL);
+        log_assert(new_images[i] != NULL);
+        log_assert(new_images[i]->width > 0);
+        log_assert(new_images[i]->height > 0);
+        log_assert(new_images[i]->rgba_values_size > 0);
+        log_assert(new_images[i]->rgba_values != NULL);
     }
     
     uint32_t current_width = new_images[0]->width;
@@ -136,17 +136,17 @@ void register_new_texturearray_from_images(
         i < new_images_size;
         i++)
     {
-        assert(new_images[i] != NULL);
-        assert(new_images[i]->good);
-        assert(new_images[i]->rgba_values_size > 0);
-        assert(new_images[i]->width == current_width);
-        assert(new_images[i]->height == current_height);
+        log_assert(new_images[i] != NULL);
+        log_assert(new_images[i]->good);
+        log_assert(new_images[i]->rgba_values_size > 0);
+        log_assert(new_images[i]->width == current_width);
+        log_assert(new_images[i]->height == current_height);
     }
     
     // set up a new texturearray that's big enough to hold
     // x images
     int32_t new_i = (int32_t)texture_arrays_size;
-    assert(new_i < TEXTUREARRAYS_SIZE);
+    log_assert(new_i < TEXTUREARRAYS_SIZE);
     texture_arrays_size += 1;
     
     // fill in the images in a new texturearray
@@ -166,26 +166,26 @@ void register_new_texturearray_from_images(
                 &texture_arrays[new_i].sprite_rows,
             /* out_sprite_columns: */
                 &texture_arrays[new_i].sprite_columns);
-    assert(texture_arrays[new_i].image->width > 0);
-    assert(texture_arrays[new_i].image->height > 0);
+    log_assert(texture_arrays[new_i].image->width > 0);
+    log_assert(texture_arrays[new_i].image->height > 0);
     texture_arrays[new_i].request_update = true;
 }
 
 void register_new_texturearray(
     DecodedImage * new_image)
 {
-    assert(new_image != NULL);
-    assert(new_image->width > 0);
-    assert(new_image->height > 0);
-    assert(new_image->rgba_values_size > 0);
+    log_assert(new_image != NULL);
+    log_assert(new_image->width > 0);
+    log_assert(new_image->height > 0);
+    log_assert(new_image->rgba_values_size > 0);
     DecodedImage * images[1];
     images[0] = new_image;
     DecodedImage ** images_dblptr = images;
-    assert(images[0] != NULL);
-    assert(images[0]->width > 0);
-    assert(images[0]->height > 0);
-    assert(images[0]->rgba_values_size > 0);
-    assert(images[0]->rgba_values != NULL);
+    log_assert(images[0] != NULL);
+    log_assert(images[0]->width > 0);
+    log_assert(images[0]->height > 0);
+    log_assert(images[0]->rgba_values_size > 0);
+    log_assert(images[0]->rgba_values != NULL);
     register_new_texturearray_from_images(
         images_dblptr,
         1);
@@ -196,10 +196,10 @@ DecodedImage * extract_image(
     uint32_t x,
     uint32_t y)
 {
-    assert(x > 0);
-    assert(y > 0);
-    assert(x <= texture_array->sprite_columns);
-    assert(y <= texture_array->sprite_rows);
+    log_assert(x > 0);
+    log_assert(y > 0);
+    log_assert(x <= texture_array->sprite_columns);
+    log_assert(y <= texture_array->sprite_rows);
     
     DecodedImage * new_image =
         (DecodedImage *)malloc(sizeof(DecodedImage));
@@ -237,13 +237,17 @@ DecodedImage * extract_image(
         uint32_t pixel_i =
             ((start_x - 1) * 4)
                 + ((cur_y - 1) * texture_array->image->width * 4);
-        assert(i < new_image->rgba_values_size);
+        log_assert(i < new_image->rgba_values_size);
+        if (!application_running) {
+            new_image->good = false;
+            break;
+        }
         for (
             uint32_t _ = 0;
             _ < (slice_width * 4);
             _++)
         {
-            assert(
+            log_assert(
                 (pixel_i + _)
                     < texture_array->image->rgba_values_size);
             new_image->rgba_values[i] =
@@ -265,10 +269,10 @@ static void set_allocated_to_error_image(
 {
     to_replace->good = true;
     
-    assert(
+    log_assert(
         (to_replace->width * to_replace->height) ==
             to_replace->pixel_count);
-    assert(
+    log_assert(
         to_replace->pixel_count * 4 ==
             to_replace->rgba_values_size);
     
@@ -278,7 +282,7 @@ static void set_allocated_to_error_image(
         pixel_i < to_replace->pixel_count;
         pixel_i++)
     {
-        assert(
+        log_assert(
             ((pixel_i * 4) + 3) < to_replace->rgba_values_size);
         
         to_replace->rgba_values[(pixel_i * 4) + 0] =
@@ -315,7 +319,7 @@ DecodedImage * malloc_img_from_filename(
     FileBuffer file_buffer;
     file_buffer.size = platform_get_resource_size(filename) + 1;
     
-    assert(file_buffer.size > 1);
+    log_assert(file_buffer.size > 1);
     file_buffer.contents =
         (char *)malloc(sizeof(char) * file_buffer.size);
     
@@ -327,8 +331,8 @@ DecodedImage * malloc_img_from_filename(
         log_append("platform failed to read file: ");
         log_append(filename);
         log_append("\n");
-        assert(0);
     }
+    log_assert(file_buffer.good);
     
     DecodedImage * new_image =
         (DecodedImage *)malloc(sizeof(DecodedImage));
@@ -344,7 +348,6 @@ DecodedImage * malloc_img_from_filename(
             &new_image->height);
     
     if (new_image->width == 0 || new_image->height == 0) {
-        assert(0);
         set_unalloated_to_error_image(new_image);
         free(file_buffer.contents);
         return new_image;
@@ -399,9 +402,9 @@ DecodedImage * malloc_img_from_filename(
     
     free(file_buffer.contents);
     
-    assert(new_image->pixel_count ==
+    log_assert(new_image->pixel_count ==
         new_image->width * new_image->height);
-    assert(new_image->rgba_values_size ==
+    log_assert(new_image->rgba_values_size ==
         new_image->pixel_count * 4);
     
     return new_image;

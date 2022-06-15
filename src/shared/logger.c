@@ -53,7 +53,21 @@ extern "C" {
     {
         logger_activated = true;
         
-        if (timed_function_map == NULL) { return; }
+        if (
+            timed_function_map == NULL
+            || !application_running)
+        {
+            return;
+        }
+        
+        #ifndef LOGGER_SILENCE 
+        Dl_info info;
+        
+        if (dladdr(this_fn, &info)) {
+            // info.dli_fname;
+            printf("*** %s ***\n", info.dli_sname);
+        }
+        #endif
         
         uint32_t entry_i =
             (uint64_t)this_fn & (TIMED_FUNCTION_MAP_SIZE - 1);
@@ -153,7 +167,10 @@ extern "C" {
         void *this_fn,
         void *call_site)
     {
-        if (timed_function_map == NULL) {
+        if (
+            timed_function_map == NULL
+            || !application_running)
+        {
             return;
         }
         
@@ -357,14 +374,15 @@ get_log_backtrace(
     assert(backtrace_circle != NULL);
     
     uint32_t return_value_i = 0;
-    while (funcs_to_display > 0) {
+    uint32_t displaying_func_i = 0;
+    while (displaying_func_i < funcs_to_display) {
         // if backtrace_i is at 2 and we want to go 5
         // steps back, we want to show an index from the end
         // of the circle
         uint32_t backtrace_to_show_i =
             (BACKTRACE_CIRCLE_SIZE +
                 backtrace_i -
-                funcs_to_display)
+                displaying_func_i)
                     % BACKTRACE_CIRCLE_SIZE;
         
         uint32_t char_i = 0;
@@ -382,7 +400,7 @@ get_log_backtrace(
         
         assert(return_value_i < return_value_capacity);
         
-        funcs_to_display -= 1;
+        displaying_func_i += 1;
     }
     return_value[return_value_i++] = '\0';
     
@@ -491,21 +509,27 @@ void __attribute__((no_instrument_function))
 internal_log_assert(
     bool32_t condition,
     const char * str_condition,
+    const char * file_name,
+    const int line_number,
     const char * func_name)
 {
+    if (condition) { return; }
+    
     log_dump_and_crash();
     
-    uint32_t error_msg_len = get_string_length(str_condition);
+    uint32_t str_condition_len = get_string_length(str_condition);
+    uint32_t file_name_len = get_string_length(file_name);
     uint32_t func_name_len = get_string_length(func_name);
     
     uint32_t screen_dump_size =
         func_name_len +
-        error_msg_len +
+        str_condition_len +
         (10 * MAX_TIMED_FUNCTION_NAME) +
         MAX_TIMED_FUNCTION_NAME +
         25;
     assert_failed_message = (char *)malloc(
         sizeof(char) * screen_dump_size);
+    
     for (
         uint32_t i = 0;
         i < screen_dump_size;
@@ -514,42 +538,99 @@ internal_log_assert(
         assert_failed_message[i] = ' ';
     }
     
-    assert(func_name_len > 0);
+    uint32_t recipient_at = 0;
+
     copy_strings(
         /* recipient: */
-            assert_failed_message,
+            assert_failed_message + recipient_at,
         /* recipient_size: */
-            screen_dump_size,
+            screen_dump_size - recipient_at,
+        /* origin: */
+            file_name);
+    recipient_at += file_name_len;
+    
+    char * connector = " - ";
+    uint32_t connector_length = get_string_length(connector);
+    copy_strings(
+        /* recipient: */
+            assert_failed_message + recipient_at,
+        /* recipient_size: */
+            screen_dump_size - recipient_at,
+        /* origin: */
+            connector);
+    recipient_at += connector_length;
+     
+    copy_strings(
+        /* recipient: */
+            assert_failed_message + recipient_at,
+        /* recipient_size: */
+            screen_dump_size - recipient_at,
         /* origin: */
             func_name);
-    assert(
-        assert_failed_message[func_name_len] == '\0');
-    assert_failed_message[func_name_len] = '\n';
+    recipient_at += func_name_len;
     
+    char * connector2 = " (line ";
+    uint32_t connector2_length = get_string_length(connector2);
     copy_strings(
         /* recipient: */
-            assert_failed_message + func_name_len,
+            assert_failed_message + recipient_at,
         /* recipient_size: */
-            screen_dump_size - func_name_len,
+            screen_dump_size - recipient_at,
+        /* origin: */
+            connector2);
+    recipient_at += connector2_length;
+    
+    char str_line[100];
+    int_to_string(
+        line_number,
+        str_line,
+        100);
+    uint32_t str_line_len = get_string_length(str_line);
+    copy_strings(
+        /* recipient: */
+            assert_failed_message + recipient_at,
+        /* recipient_size: */
+            screen_dump_size - recipient_at,
+        /* origin: */
+            str_line);
+    recipient_at += str_line_len;
+    
+    char * connector3 = "):\nAssertion failed: ";
+    uint32_t connector3_length = get_string_length(connector3);
+    copy_strings(
+        /* recipient: */
+            assert_failed_message + recipient_at,
+        /* recipient_size: */
+            screen_dump_size - recipient_at,
+        /* origin: */
+            connector3);
+    recipient_at += connector3_length;
+
+    copy_strings(
+        /* recipient: */
+            assert_failed_message + recipient_at,
+        /* recipient_size: */
+            screen_dump_size - recipient_at,
         /* origin: */
             str_condition);
+    recipient_at += str_condition_len;
     
-    assert(
-        assert_failed_message[
-            func_name_len + error_msg_len] == '\0');
-    assert_failed_message[
-        func_name_len + error_msg_len] = '\n';
+    char * connector4 = "\nBacktrace:\n";
+    uint32_t connector4_length = get_string_length(connector4);
+    copy_strings(
+        /* recipient: */
+            assert_failed_message + recipient_at,
+        /* recipient_size: */
+            screen_dump_size - recipient_at,
+        /* origin: */
+            connector4);
+    recipient_at += connector4_length;
     
     get_log_backtrace(
         /* return_value: */
-            assert_failed_message +
-                func_name_len +
-                error_msg_len + 1,
+            assert_failed_message + recipient_at,
         /* return_value_capacity: */
-            screen_dump_size -
-                func_name_len -
-                error_msg_len -
-                1);
+            screen_dump_size - recipient_at);
     
     printf(
         "assert_failed_message changed to: %s\n",

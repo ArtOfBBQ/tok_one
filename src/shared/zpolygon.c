@@ -97,9 +97,9 @@ zPolygon parse_obj(
             zVertex new_vertex;
             
             // skip the space(s) after the 'v'
-            assert(rawdata[i] == ' ');
+            log_assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
-            assert(rawdata[i] != ' ');
+            log_assert(rawdata[i] != ' ');
             
             // read vertex x
             new_vertex.x = (float)atof(rawdata + i);
@@ -107,34 +107,34 @@ zPolygon parse_obj(
             // discard vertex x
             i += chars_till_next_space_or_slash(
                 rawdata + i);
-            assert(rawdata[i] == ' ');
+            log_assert(rawdata[i] == ' ');
             
             // discard the spaces after vertex x
             i += chars_till_next_nonspace(rawdata + i);
-            assert(rawdata[i] != ' ');
+            log_assert(rawdata[i] != ' ');
             
             // read vertex y
             new_vertex.y = (float)atof(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
-            assert(rawdata[i] == ' ');
+            log_assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
-            assert(rawdata[i] != ' ');
+            log_assert(rawdata[i] != ' ');
             
             // read vertex z
             new_vertex.z = (float)atof(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
-            assert(rawdata[i] == '\n');
+            log_assert(rawdata[i] == '\n');
             i++;
             
             new_vertices[new_vertex_i] = new_vertex;
-            assert(
+            log_assert(
                 new_vertices[new_vertex_i].x == new_vertex.x);
-            assert(
+            log_assert(
                 new_vertices[new_vertex_i].y
                     == new_vertex.y);
-            assert(
+            log_assert(
                 new_vertices[new_vertex_i].z
                     == new_vertex.z);
             new_vertex_i++;
@@ -146,9 +146,9 @@ zPolygon parse_obj(
             i += 2;
             
             // skip the space(s) after the 'vt'
-            assert(rawdata[i] == ' ');
+            log_assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
-            assert(rawdata[i] != ' ');
+            log_assert(rawdata[i] != ' ');
             
             // read the u coordinate
             uv_u[new_uv_i] = (float)atof(rawdata + i);
@@ -156,12 +156,12 @@ zPolygon parse_obj(
             // discard the u coordinate
             i += chars_till_next_space_or_slash(
                 rawdata + i);
-            assert(rawdata[i] == ' ');
+            log_assert(rawdata[i] == ' ');
             
             // skip the space(s) after the u coord
-            assert(rawdata[i] == ' ');
+            log_assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
-            assert(rawdata[i] != ' ');
+            log_assert(rawdata[i] != ' ');
             
             // read the v coordinate
             uv_v[new_uv_i] = (float)atof(rawdata + i);
@@ -169,7 +169,7 @@ zPolygon parse_obj(
             // discard the v coordinate
             i += chars_till_next_space_or_slash(
                 rawdata + i);
-            assert(rawdata[i] == '\n');
+            log_assert(rawdata[i] == '\n');
             
             new_uv_i += 1;
             
@@ -255,11 +255,11 @@ zPolygon parse_obj(
         } else if (rawdata[i] == 'f') {
             // discard the 'f'
             i++;
-            assert(rawdata[i] == ' ');
+            log_assert(rawdata[i] == ' ');
             
             // skip the space(s) after the 'f'
             i += chars_till_next_nonspace(rawdata + i);
-            assert(rawdata[i] != ' ');
+            log_assert(rawdata[i] != ' ');
             
             // read triangle data
             zTriangle new_triangle;
@@ -282,9 +282,9 @@ zPolygon parse_obj(
                     rawdata + i);
             }
             
-            assert(rawdata[i] == ' ');
+            log_assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
-            assert(rawdata[i] != ' ');
+            log_assert(rawdata[i] != ' ');
             
             // read 2nd vertex index
             int32_t vertex_i_1 = atoi(rawdata + i);
@@ -302,9 +302,9 @@ zPolygon parse_obj(
                     rawdata + i);
             }
             
-            assert(rawdata[i] == ' ');
+            log_assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
-            assert(rawdata[i] != ' ');
+            log_assert(rawdata[i] != ' ');
             
             // read 3rd vertex index
             int32_t vertex_i_2 = atoi(rawdata + i);
@@ -320,17 +320,17 @@ zPolygon parse_obj(
                 i += chars_till_next_space_or_slash(
                     rawdata + i);
             }
-            assert(rawdata[i] == '\n');
+            log_assert(rawdata[i] == '\n');
             i++;
             
-            assert(vertex_i_0 != vertex_i_1);
-            assert(vertex_i_0 != vertex_i_2);
-            assert(vertex_i_0 > 0);
-            assert(vertex_i_1 > 0);
-            assert(vertex_i_2 > 0);
-            assert(uv_coord_i_0 < LOADING_OBJ_BUF_SIZE);
-            assert(uv_coord_i_1 < LOADING_OBJ_BUF_SIZE);
-            assert(uv_coord_i_2 < LOADING_OBJ_BUF_SIZE);
+            log_assert(vertex_i_0 != vertex_i_1);
+            log_assert(vertex_i_0 != vertex_i_2);
+            log_assert(vertex_i_0 > 0);
+            log_assert(vertex_i_1 > 0);
+            log_assert(vertex_i_2 > 0);
+            log_assert(uv_coord_i_0 < LOADING_OBJ_BUF_SIZE);
+            log_assert(uv_coord_i_1 < LOADING_OBJ_BUF_SIZE);
+            log_assert(uv_coord_i_2 < LOADING_OBJ_BUF_SIZE);
             
             new_triangle.vertices[0] =
                 new_vertices[vertex_i_0 - 1];
@@ -388,7 +388,7 @@ void scale_zpolygon(
     zPolygon * to_scale,
     const float new_height)
 {
-    assert(to_scale != NULL);
+    log_assert(to_scale != NULL);
     
     float largest_height = 0.0f;
     for (uint32_t i = 0; i < to_scale->triangles_size; i++) {
@@ -402,7 +402,7 @@ void scale_zpolygon(
             }
         }
     }
-    assert(largest_height > 0.0f);
+    log_assert(largest_height > 0.0f);
     
     float scale_factor = new_height / largest_height;
     
@@ -421,7 +421,7 @@ void ztriangle_apply_lighting(
     zTriangle * input,
     zLightSource * zlight_source)
 {
-    assert(zlight_source != NULL);
+    log_assert(zlight_source != NULL);
     
     // add lighting to the 3 vertices
     for (
@@ -712,7 +712,7 @@ zVertex get_ztriangle_normal(
     const uint32_t at_vertex_i)
 {
     uint32_t vertex_0 = at_vertex_i % 3;
-    assert(vertex_0 == at_vertex_i);
+    log_assert(vertex_0 == at_vertex_i);
     uint32_t vertex_1 = (at_vertex_i + 1) % 3;
     uint32_t vertex_2 = (at_vertex_i + 2) % 3;
     

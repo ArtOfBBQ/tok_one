@@ -10,7 +10,6 @@ TODO: consider filename / organizational changes when
 the architecture is decided
 */
 
-#include <assert.h>
 #include <math.h>
 
 #include "common.h"

@@ -126,7 +126,7 @@ static void preregister_assets() {
                 /* filename: */ files_in_app_path[i],
                 /* out_preallocatedbuffer: */ &png_file);
             
-            assert(png_file.size > 0);
+            log_assert(png_file.size > 0);
             
             uint32_t width;
             uint32_t height;
@@ -158,7 +158,7 @@ static void preregister_assets() {
                 if (registered_assets[i].width == width
                     && registered_assets[i].height == height)
                 {
-                    assert(
+                    log_assert(
                         new_texturearray_i < 0 ||
                         new_texturearray_i ==
                             registered_assets[i].
@@ -171,7 +171,7 @@ static void preregister_assets() {
                     {
                         new_texture_i =
                             registered_assets[i].texture_i;
-                        assert(new_texture_i < MAX_FILES_IN_SINGLE_TEXARRAY);
+                        log_assert(new_texture_i < MAX_FILES_IN_SINGLE_TEXARRAY);
                     }
                 }
             }
@@ -255,11 +255,11 @@ void client_logic_startup() {
     
     // These are some example texture atlases we're using for
     // texture mapping on cards and cubes
-    assert(TEXTUREARRAYS_SIZE > 0);
+    log_assert(TEXTUREARRAYS_SIZE > 0);
     
     preregister_assets();
    
-    assert(texture_arrays_size > 2); 
+    log_assert(texture_arrays_size > 2); 
     // load_assets(1, texture_arrays_size - 1);
     
     // reminder: threadmain_id 0 calls load_assets() 
@@ -350,7 +350,7 @@ static void client_handle_mouseevents(
             log_append("found at texquad_id: ");
             log_append_uint(touched_texquad_id);
             log_append(")\n");
-            assert(touched_texquad_id != 999999);
+            log_assert(touched_texquad_id != 999999);
             
             ScheduledAnimation brighten;
             construct_scheduled_animation(&brighten);
