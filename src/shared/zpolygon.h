@@ -63,7 +63,8 @@ typedef struct zPolygon {
 extern zPolygon zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
 extern uint32_t zpolygons_to_render_size;
 
-void ztriangle_apply_lighting(
+void __attribute__((no_instrument_function))
+ztriangle_apply_lighting(
     Vertex recipient[3],
     zTriangle * input,
     zLightSource * zlight_source);
@@ -76,13 +77,16 @@ void ztriangle_to_2d(
     Vertex recipient[3],
     zTriangle * input);
 
-zTriangle x_rotate_ztriangle(
+zTriangle __attribute__((no_instrument_function))
+x_rotate_ztriangle(
     const zTriangle * input,
     const float angle);
-zTriangle y_rotate_ztriangle(
+zTriangle __attribute__((no_instrument_function))
+y_rotate_ztriangle(
     const zTriangle * input,
     const float angle);
-zTriangle z_rotate_ztriangle(
+zTriangle __attribute__((no_instrument_function))
+z_rotate_ztriangle(
     const zTriangle * input,
     const float angle);
 

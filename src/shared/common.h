@@ -12,8 +12,14 @@
 #define NULL 0
 #endif
 
-#ifndef FUINT64
-#define FUINT64 "%llu"
+// #define COMMON_SILENCE
+#ifndef COMMON_SILENCE
+#include <stdio.h>
+#endif
+
+// #define COMMON_IGNORE_ASSERTS
+#ifndef COMMON_IGNORE_ASSERTS
+#include <assert.h>
 #endif
 
 #define bool32_t uint32_t
@@ -64,6 +70,26 @@ uint_to_string(
     const uint32_t input,
     char * recipient,
     const uint32_t recipient_size);
+
+int32_t
+string_to_int32(
+    const char * input,
+    const uint32_t input_size,
+    bool32_t * good);
+int32_t
+string_to_int32(
+    const char * input,
+    const uint32_t input_size);
+
+uint32_t
+string_to_uint32(
+    const char * input,
+    const uint32_t input_size,
+    bool32_t * good);
+uint32_t
+string_to_uint32(
+    const char * input,
+    const uint32_t input_size);
 
 void __attribute__((no_instrument_function))
 float_to_string(

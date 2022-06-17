@@ -17,7 +17,8 @@ void platform_get_directory_separator(
 uint64_t __attribute__((no_instrument_function))
 platform_get_current_time_microsecs(void)
 {
-    uint64_t result = mach_absolute_time() / 500;
+    uint64_t result = mach_absolute_time();
+    result /= 500;
     
     return result;
 }
@@ -111,7 +112,6 @@ void platform_read_file(
             stringWithCString:filepath
             encoding:NSASCIIStringEncoding];
    
-    printf("creating NSData *\n"); 
     NSError * error = NULL;
     NSData * file_data =
         [NSData
@@ -119,7 +119,6 @@ void platform_read_file(
             options: NSDataReadingUncached
             error: &error];
     
-    printf("checking for NSError\n"); 
     if (error) {
         log_append(
             "Error - failed [NSData initWithContentsOfFile:]\n");
@@ -128,7 +127,6 @@ void platform_read_file(
         return;
     }
     
-    printf("running NSData's getBytes method\n"); 
     [file_data
         getBytes: out_preallocatedbuffer->contents
         length: out_preallocatedbuffer->size];
@@ -258,12 +256,12 @@ platform_write_file(
     const char * output,
     const uint32_t output_size)
 {
-    printf("skipping write because AAPL doesn't want writes inside bundles...\n");
+    log_append("skipping write for now (AAPL write security)\n");
     return;
     NSString * nsfilepath = [NSString
         stringWithCString:filepath
         encoding:NSASCIIStringEncoding];
-
+    
     NSData * nsdata = [NSData
         dataWithBytes:output
         length:output_size];
@@ -346,7 +344,8 @@ void platform_start_thread(
 {
     dispatch_async(
         dispatch_get_global_queue(
-            DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0),
+            DISPATCH_QUEUE_PRIORITY_BACKGROUND,
+            0),
         ^{
             function_to_run(argument);
         });

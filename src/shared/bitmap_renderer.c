@@ -8,6 +8,7 @@ static void triangle_apply_lighting(
     const zLightSource * zlight_source)
 {
     log_assert(zlight_source != NULL);
+    if (zlight_source == NULL) { return; }
     
     // add lighting to the 3 vertices
     for (
@@ -160,7 +161,7 @@ static void add_quad_to_gpu_workload(
     if (to_add->scale_factor_x < 0.01f
         || to_add->scale_factor_y < 0.01f)
     {
-        printf("skipping add_quad_to_gpu_workload() because scale factor is below 0.01\n");
+        log_append("skipping add_quad_to_gpu_workload() because scale factor is below 0.01\n");
         return;
     }
     
@@ -382,7 +383,8 @@ static void add_quad_to_gpu_workload(
     }
 }
 
-static int sorter_cmpr_texquad_lowest_z(
+static int __attribute__((no_instrument_function))
+sorter_cmpr_texquad_lowest_z(
     const void * a,
     const void * b)
 {
@@ -398,11 +400,12 @@ void draw_texquads_to_render(
         next_gpu_workload == NULL
         || next_gpu_workload_size == NULL)
     {
-        printf("ERROR: platform layer didnt pass recipients\n");
+        log_append(
+            "ERROR: platform layer didnt pass recipients\n");
         return;
     }
     
-    if (texquads_to_render_size == 0) {
+    if (texquads_to_render_size < 1) {
         return;
     }
     
@@ -417,6 +420,11 @@ void draw_texquads_to_render(
                 texquads_to_render[i];
         }
     }
+    assert(sorted_texquads_size <= texquads_to_render_size);
+    
+    if (sorted_texquads_size < 1) {
+        return;
+    }
     
     qsort(
         sorted_texquads,
@@ -429,14 +437,7 @@ void draw_texquads_to_render(
         i < sorted_texquads_size;
         i++)
     {
-        if (i >= TEXQUADS_TO_RENDER_ARRAYSIZE)
-        {
-            printf(
-                "i of %u is < TEQAUDS_TO_RENDER_ARRAYSIZE (%u)\n",
-                i,
-                TEXQUADS_TO_RENDER_ARRAYSIZE);
-            assert(0);
-        }
+        log_assert(i < TEXQUADS_TO_RENDER_ARRAYSIZE);
         
         add_quad_to_gpu_workload(
             &sorted_texquads[i],

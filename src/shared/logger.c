@@ -16,7 +16,7 @@ typedef struct TimedFunction {
     uint32_t currently_running;
 } TimedFunction;
 
-#define TIMED_FUNCTION_LINK_SIZE 20
+#define TIMED_FUNCTION_LINK_SIZE 30
 typedef struct TimedFunctionLink {
     TimedFunction linked_list[TIMED_FUNCTION_LINK_SIZE];
 } TimedFunctionLink;
@@ -41,6 +41,7 @@ typedef struct BacktraceEntry {
 #define BACKTRACE_CIRCLE_SIZE 50
 BacktraceEntry * backtrace_circle = NULL;
 uint32_t backtrace_i = 0;
+#define BACKTRACE_FUNCTIONS_TO_DISPLAY 20
 
 
 #ifdef __cplusplus
@@ -62,9 +63,7 @@ extern "C" {
         
         #ifndef LOGGER_SILENCE 
         Dl_info info;
-        
         if (dladdr(this_fn, &info)) {
-            // info.dli_fname;
             printf("*** %s ***\n", info.dli_sname);
         }
         #endif
@@ -91,7 +90,7 @@ extern "C" {
                     TIMED_FUNCTION_LINK_SIZE);
                 #endif
                 application_running = false;
-                assert(0);
+                return;
             }
         }
         
@@ -356,8 +355,6 @@ get_log_backtrace(
     char * return_value,
     uint32_t return_value_capacity)
 {
-    uint32_t funcs_to_display = 10;
-    
     if (!logger_activated) {
         char * errmsg =
             (char *)"Logger wasn't enabled - no backtrace";
@@ -371,11 +368,9 @@ get_log_backtrace(
         return;
     }
     
-    assert(backtrace_circle != NULL);
-    
     uint32_t return_value_i = 0;
     uint32_t displaying_func_i = 0;
-    while (displaying_func_i < funcs_to_display) {
+    while (displaying_func_i < BACKTRACE_FUNCTIONS_TO_DISPLAY) {
         // if backtrace_i is at 2 and we want to go 5
         // steps back, we want to show an index from the end
         // of the circle
@@ -397,8 +392,6 @@ get_log_backtrace(
         }
 
         return_value[return_value_i++] = '\n';
-        
-        assert(return_value_i < return_value_capacity);
         
         displaying_func_i += 1;
     }
@@ -477,7 +470,6 @@ void __attribute__((no_instrument_function))
 log_dump() {
      
     log[log_i + 1] = '\0';
-    assert(log_i < LOG_SIZE);
     
     char full_filepath[1000];
     concat_strings(
@@ -513,18 +505,22 @@ internal_log_assert(
     const int line_number,
     const char * func_name)
 {
-    if (condition) { return; }
+    if (condition || !application_running) { return; }
     
     log_dump_and_crash();
     
-    uint32_t str_condition_len = get_string_length(str_condition);
-    uint32_t file_name_len = get_string_length(file_name);
-    uint32_t func_name_len = get_string_length(func_name);
+    uint32_t str_condition_len =
+        get_string_length(str_condition);
+    uint32_t file_name_len =
+        get_string_length(file_name);
+    uint32_t func_name_len =
+        get_string_length(func_name);
     
     uint32_t screen_dump_size =
         func_name_len +
         str_condition_len +
-        (10 * MAX_TIMED_FUNCTION_NAME) +
+        (BACKTRACE_FUNCTIONS_TO_DISPLAY
+            * MAX_TIMED_FUNCTION_NAME) +
         MAX_TIMED_FUNCTION_NAME +
         25;
     assert_failed_message = (char *)malloc(
@@ -539,7 +535,7 @@ internal_log_assert(
     }
     
     uint32_t recipient_at = 0;
-
+    
     copy_strings(
         /* recipient: */
             assert_failed_message + recipient_at,
@@ -549,7 +545,7 @@ internal_log_assert(
             file_name);
     recipient_at += file_name_len;
     
-    char * connector = " - ";
+    char * connector = (char *)" - ";
     uint32_t connector_length = get_string_length(connector);
     copy_strings(
         /* recipient: */
@@ -569,7 +565,7 @@ internal_log_assert(
             func_name);
     recipient_at += func_name_len;
     
-    char * connector2 = " (line ";
+    char * connector2 = (char *)" (line ";
     uint32_t connector2_length = get_string_length(connector2);
     copy_strings(
         /* recipient: */
@@ -595,7 +591,7 @@ internal_log_assert(
             str_line);
     recipient_at += str_line_len;
     
-    char * connector3 = "):\nAssertion failed: ";
+    char * connector3 = (char *)"):\nAssertion failed: ";
     uint32_t connector3_length = get_string_length(connector3);
     copy_strings(
         /* recipient: */
@@ -605,7 +601,7 @@ internal_log_assert(
         /* origin: */
             connector3);
     recipient_at += connector3_length;
-
+    
     copy_strings(
         /* recipient: */
             assert_failed_message + recipient_at,
@@ -615,7 +611,7 @@ internal_log_assert(
             str_condition);
     recipient_at += str_condition_len;
     
-    char * connector4 = "\nBacktrace:\n";
+    char * connector4 = (char *)"\nBacktrace:\n";
     uint32_t connector4_length = get_string_length(connector4);
     copy_strings(
         /* recipient: */
@@ -632,8 +628,10 @@ internal_log_assert(
         /* return_value_capacity: */
             screen_dump_size - recipient_at);
     
+    #ifndef LOGGER_H 
     printf(
         "assert_failed_message changed to: %s\n",
         assert_failed_message);
+    #endif
 }
 

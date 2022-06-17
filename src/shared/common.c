@@ -32,7 +32,7 @@ copy_strings(
     char * recipient,
     const uint32_t recipient_size,
     const char * origin)
-{    
+{
     uint32_t i = 0;
     while (
         origin[i] != '\0'
@@ -214,3 +214,161 @@ uint_to_string(
     }
 }
 
+int32_t
+string_to_int32(
+    const char * input,
+    const uint32_t input_size,
+    bool32_t * good)
+{
+    if (input_size < 1) {
+        #ifndef COMMON_SILENCE
+        printf("ERROR : string_to_int32 with input_size < 1\n");
+        #endif
+        *good = false;
+        return 0;
+    }
+    
+    // the maximum int32_t is 2147483647
+    
+    if (input[0] == '-') {
+        uint32_t temp = string_to_uint32(
+            /* input: */
+                input + 1,
+            /* input_size: */
+                input_size - 1);
+        
+        if (temp > 2147483646) {
+            #ifndef COMMON_SILENCE
+            printf(
+                "ERROR : string_to_int32 below than INT_MIN\n");
+            #endif
+            *good = false;
+            return 0;
+        }
+        
+        *good = true;
+        return (int32_t)temp * -1;
+    }
+    
+    uint32_t unsigned_return =
+        string_to_uint32(
+            /* input: */
+                input,
+            /* input_size: */
+                input_size);
+    
+    if (unsigned_return > 2147483647) {
+        #ifndef COMMON_SILENCE
+        printf("ERROR : string_to_int32 exceeded INT_MAX\n");
+        #endif
+        *good = false;
+        return 0;
+    }
+    
+    *good = true; 
+    return (int32_t)unsigned_return;
+}
+
+int32_t
+string_to_int32(
+    const char * input,
+    const uint32_t input_size)
+{
+    bool32_t result_good = false;
+    int32_t result = string_to_int32(
+        input,
+        input_size,
+        &result_good);
+    assert(result_good);
+    return result;
+}
+
+uint32_t
+string_to_uint32(
+    const char * input,
+    const uint32_t input_size,
+    bool32_t * good)
+{
+    if (input_size < 1) {
+        #ifndef COMMON_SILENCE
+        printf("ERROR : string_to_uint32 with input_size < 1\n");
+        #endif
+        *good = false;
+        return 0;
+    }
+    
+    if (input[0] == '\0') {
+        #ifndef COMMON_SILENCE
+        printf(
+            "ERROR : string_to_uint32 with input[0] == '\0'\n");
+        #endif
+        *good = false;
+        return 0;
+    }
+    
+    if (input_size >= 2147483647) {
+        #ifndef COMMON_SILENCE
+        printf(
+            "ERROR: string_to_uint32 has input > signed int max");
+        #endif
+        *good = false;
+        return 0;
+    }
+    
+    uint32_t return_value = 0;
+    
+    // the maximum uint32_t is 4294967295
+    // so the decimal should   1000000000
+    
+    uint32_t decimal = 1; 
+    for (
+        int32_t i = (int32_t)input_size - 1;
+        i >= 0;
+        i--)
+    {
+        #ifndef COMMON_SILENCE
+        if (input[i] < '0') {
+            printf(
+                "input[%u] (%c) is < '0'\n",
+                i,
+                input[i]);
+        }
+        if (input[i] > '9') {
+            printf(
+                "input[%u] (%c) is > '9'\n",
+                i,
+                input[i]);
+        }
+        #endif
+        
+        #ifndef COMMON_IGNORE_ASSERTS
+        assert(input[i] >= '0');
+        assert(input[i] <= '9');
+        #endif
+        
+        uint32_t current_digit = input[i] - '0';
+        return_value += decimal * current_digit;
+        decimal *= 10;
+        
+        #ifndef COMMON_IGNORE_ASSERTS
+        assert(decimal <= 1000000000);
+        #endif
+    }
+    
+    *good = true;
+    return return_value;
+}
+
+uint32_t
+string_to_uint32(
+    const char * input,
+    const uint32_t input_size)
+{
+    bool32_t result_good = false;
+    uint32_t result = string_to_uint32(
+        input,
+        input_size,
+        &result_good);
+    assert(result_good);
+    return result;
+}

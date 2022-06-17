@@ -93,30 +93,22 @@ void buffer_mousemove(
 
 void register_keyup(uint32_t key_id)
 {
-    printf("register key up: %u\n", key_id);
-    if (key_id > KEYPRESS_MAP_SIZE) {
-        printf(
-            "error: got key_id: %u whic his bigger than our keymap size %u\n",
-            key_id,
-            KEYPRESS_MAP_SIZE);
-        assert(0);
-    }
+    log_append("register key up: ");
+    log_append_uint(key_id);
+    log_append("\n");
+    
+    log_assert(key_id < KEYPRESS_MAP_SIZE);
     
     keypress_map[key_id] = false;
 }
 
 void register_keydown(uint32_t key_id)
 { 
-    printf("register key down: %u\n", key_id);
-    if (key_id > KEYPRESS_MAP_SIZE) {
-        printf(
-            "error: got key_id: %u whic his bigger than our keymap size %u\n",
-            key_id,
-            KEYPRESS_MAP_SIZE);
-        assert(0);
-    }
+    log_append("register key down: ");
+    log_append_uint(key_id);
+    log_append("\n");
+    log_assert(key_id < KEYPRESS_MAP_SIZE);
     
-    printf("keydown: %u\n", key_id);
     keypress_map[key_id] = true;
 }
 

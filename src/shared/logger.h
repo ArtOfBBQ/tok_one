@@ -17,13 +17,13 @@ extern "C" {
 }
 #endif
 
-// #define LOGGER_SILENCE
+#define LOGGER_SILENCE
 #ifndef LOGGER_SILENCE
 #include "stdio.h"
-#include <dlfcn.h>
 #endif
 
 #include <stdlib.h>
+#include <dlfcn.h>
 
 #include "common.h"
 #include "platform_layer.h"

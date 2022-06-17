@@ -4,7 +4,8 @@ TriangleArea touchable_triangles[
     TOUCHABLE_TRIANGLES_ARRAYSIZE];
 uint32_t touchable_triangles_size;
 
-void draw_triangle(
+void __attribute__((no_instrument_function))
+draw_triangle(
     Vertex * vertices_recipient,
     uint32_t * vertex_count_recipient,
     Vertex input[3])

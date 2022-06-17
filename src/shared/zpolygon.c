@@ -389,6 +389,7 @@ void scale_zpolygon(
     const float new_height)
 {
     log_assert(to_scale != NULL);
+    if (to_scale == NULL) { return; }
     
     float largest_height = 0.0f;
     for (uint32_t i = 0; i < to_scale->triangles_size; i++) {
@@ -416,7 +417,8 @@ void scale_zpolygon(
     }
 }
 
-void ztriangle_apply_lighting(
+void __attribute__((no_instrument_function))
+ztriangle_apply_lighting(
     Vertex recipient[3],
     zTriangle * input,
     zLightSource * zlight_source)
@@ -546,7 +548,8 @@ void ztriangle_to_2d(
     }
 }
 
-zTriangle x_rotate_ztriangle(
+zTriangle __attribute__((no_instrument_function))
+x_rotate_ztriangle(
     const zTriangle * input,
     const float angle)
 {
@@ -570,7 +573,8 @@ zTriangle x_rotate_ztriangle(
 }
 
 
-zTriangle z_rotate_ztriangle(
+zTriangle __attribute__((no_instrument_function))
+z_rotate_ztriangle(
     const zTriangle * input,
     const float angle)
 {
@@ -593,7 +597,8 @@ zTriangle z_rotate_ztriangle(
     return return_value;
 }
 
-zTriangle y_rotate_ztriangle(
+zTriangle __attribute__((no_instrument_function))
+y_rotate_ztriangle(
     const zTriangle * input,
     const float angle)
 {

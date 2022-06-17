@@ -342,8 +342,9 @@ uint64_t previous_time;
         
         MTLRenderPassDescriptor * RenderPassDescriptor =
             [view currentRenderPassDescriptor];
-        RenderPassDescriptor.colorAttachments[0].loadAction =
-            MTLLoadActionClear;
+        RenderPassDescriptor
+            .colorAttachments[0]
+            .loadAction = MTLLoadActionClear;
         
         MTLClearColor clear_color =
             MTLClearColorMake(0.0f, 0.0f, 0.0f, 0.0f);
@@ -374,10 +375,10 @@ uint64_t previous_time;
             i++)
         {
             if (i >= [_metal_textures count]) {
-                // TODO: remove debugging assert
                 assert(texture_arrays_size < 750);
                 continue;
             }
+            
             [render_encoder
                 setFragmentTexture: _metal_textures[i]
                 atIndex: i];

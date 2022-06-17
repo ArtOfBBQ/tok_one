@@ -6,29 +6,10 @@ platform_layer.c file
 For example, 'platform_read_file' is currently defined
 in /shared_windows_macos/platform_layer.c for windows
 and mac os X, but it's defined elsewhere for iOS
-
-you also need to
-#DEFINE INT64TFORMATSTR
-and
-#DEFINE UINT64TFORMATSTR
-because uint64_t and int64_t demand different formatting
-strings for printf depending on the platform
-I like to do this with a compiler command, e.g.
-clang++ -D LONGLONGINT64 on the mac os platform
 */
 
 #ifndef PLATFORM_LAYER_H
 #define PLATFORM_LAYER_H
-
-#ifdef LONGLONGINT64
-#define FUINT64 "%llu"
-#define FINT64 "%lli"
-#endif
-
-#ifdef LONGINT64
-#define FUINT64 "%lu"
-#define FINT64 "%li"
-#endif
 
 #ifdef PLATFORM_NS_FILEMANAGER
 #import <Foundation/Foundation.h>
