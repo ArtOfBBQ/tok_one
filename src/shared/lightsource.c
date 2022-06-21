@@ -65,6 +65,8 @@ void translate_lights(
     zLightSource * out_translated,
     const uint32_t lights_count)
 {
+    assert(lights_count < ZLIGHTS_TO_APPLY_ARRAYSIZE);
+    
     zVertex translated_light_pos;
     for (uint32_t i = 0; i < lights_count; i++)
     {

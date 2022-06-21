@@ -40,7 +40,7 @@ cp resources/*.png build/$PLATFORM/$APP_NAME.app
 
 echo "Compiling & linking $APP_NAME..."
 if
-clang++ -finstrument-functions -Wall -x objective-c++ -std="c++17" -g -o0 $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
+clang++ -fsanitize=address -finstrument-functions -Wall -x objective-c++ -std="c++17" -g -o0 $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
 # clang -finstrument-functions -Wall -x objective-c -g -o0 $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
 then
 echo "compilation succesful"

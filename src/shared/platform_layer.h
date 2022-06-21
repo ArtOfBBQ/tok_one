@@ -16,7 +16,8 @@ and mac os X, but it's defined elsewhere for iOS
 #endif
 
 #ifdef SHARED_APPLE_PLATFORM
-#include <mach/mach_time.h>
+// #include <mach/mach_time.h>
+#include <sys/time.h>
 #endif
 
 #include "common.h"
@@ -43,6 +44,8 @@ platform_get_application_path(void);
 char * platform_get_resources_path(void);
 char * platform_get_cwd(void);
 
+bool32_t platform_resource_exists(
+    const char * resource_name);
 bool32_t platform_file_exists(
     const char * filepath);
 void platform_delete_file(

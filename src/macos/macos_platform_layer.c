@@ -10,4 +10,3 @@ char * platform_get_cwd()
     
     return return_value;
 }
-

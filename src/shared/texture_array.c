@@ -3,6 +3,61 @@
 TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
 uint32_t texture_arrays_size = 0;
 
+/*
+Error handling function: when we fail to load an image,
+use this hardcoded image as a replacement rather than
+crashing the application
+*/
+static void set_allocated_to_error_image(
+    DecodedImage * to_replace)
+{
+    to_replace->good = true;
+    
+    log_assert(
+        (to_replace->width * to_replace->height) ==
+            to_replace->pixel_count);
+    log_assert(
+        to_replace->pixel_count * 4 ==
+            to_replace->rgba_values_size);
+    
+    bool32_t black = true;
+    for (
+        uint32_t pixel_i = 0;
+        pixel_i < to_replace->pixel_count;
+        pixel_i++)
+    {
+        log_assert(
+            ((pixel_i * 4) + 3) < to_replace->rgba_values_size);
+        
+        to_replace->rgba_values[(pixel_i * 4) + 0] =
+            black ? 0 : 255;
+        to_replace->rgba_values[(pixel_i * 4) + 1] = 0;
+        to_replace->rgba_values[(pixel_i * 4) + 2] = 0;
+        to_replace->rgba_values[(pixel_i * 4) + 3] = 255;
+        black = !black;
+    }
+}
+
+/*
+Error handling function: when we fail to load an image,
+use this hardcoded 4-pixel image image as a replacement
+rather than crashing the application
+*/
+static void set_unallocated_to_error_image(
+    DecodedImage * to_replace)
+{
+    to_replace->width = 30;
+    to_replace->height = 30;
+    to_replace->pixel_count =
+        to_replace->width * to_replace->height;
+    to_replace->rgba_values_size = to_replace->pixel_count * 4;
+    
+    to_replace->rgba_values =
+        (uint8_t *)malloc(to_replace->rgba_values_size * sizeof(uint8_t));
+    
+    set_allocated_to_error_image(to_replace);
+}
+
 void update_texturearray_from_0terminated_files(
     const int32_t texturearray_i,
     const char filenames
@@ -76,11 +131,17 @@ void register_new_texturearray_from_files(
         i < filenames_size;
         i++)
     {
-        const char * filename = filenames[i];
+        DecodedImage * new_image;
+        if (platform_resource_exists(filenames[i])) {
+            new_image =
+                malloc_img_from_filename(filenames[i]);
+        } else {
+            new_image = (DecodedImage *)malloc(sizeof(DecodedImage));
+            new_image->good = false;
+            set_unallocated_to_error_image(new_image);
+        }
         
-        DecodedImage * new_image =
-            malloc_img_from_filename(filename);
-        
+        log_assert(new_image->good);
         decoded_images[i] = new_image;
     }
     
@@ -169,6 +230,7 @@ void register_new_texturearray(
     DecodedImage * new_image)
 {
     log_assert(new_image != NULL);
+    if (new_image == NULL) { return; }
     log_assert(new_image->width > 0);
     log_assert(new_image->height > 0);
     log_assert(new_image->rgba_values_size > 0);
@@ -253,60 +315,6 @@ DecodedImage * extract_image(
     return new_image;
 }
 
-/*
-Error handling function: when we fail to load an image,
-use this hardcoded 4-pixel image image as a replacement
-rather than crashing the application
-*/
-static void set_allocated_to_error_image(
-    DecodedImage * to_replace)
-{
-    to_replace->good = true;
-    
-    log_assert(
-        (to_replace->width * to_replace->height) ==
-            to_replace->pixel_count);
-    log_assert(
-        to_replace->pixel_count * 4 ==
-            to_replace->rgba_values_size);
-    
-    bool32_t black = true;
-    for (
-        uint32_t pixel_i = 0;
-        pixel_i < to_replace->pixel_count;
-        pixel_i++)
-    {
-        log_assert(
-            ((pixel_i * 4) + 3) < to_replace->rgba_values_size);
-        
-        to_replace->rgba_values[(pixel_i * 4) + 0] =
-            black ? 0 : 255;
-        to_replace->rgba_values[(pixel_i * 4) + 1] = 0;
-        to_replace->rgba_values[(pixel_i * 4) + 2] = 0;
-        to_replace->rgba_values[(pixel_i * 4) + 3] = 255;
-        black = !black;
-    }
-}
-
-/*
-Error handling function: when we fail to load an image,
-use this hardcoded 4-pixel image image as a replacement
-rather than crashing the application
-*/
-static void set_unalloated_to_error_image(
-    DecodedImage * to_replace)
-{
-    to_replace->pixel_count = 4;
-    to_replace->rgba_values_size = 16;
-    to_replace->width = 2;
-    to_replace->height = 2;
-    
-    to_replace->rgba_values =
-        (uint8_t *)malloc(16 * sizeof(uint8_t));
-    
-    set_allocated_to_error_image(to_replace);
-}
-
 DecodedImage * malloc_img_from_filename(
     const char * filename)
 {
@@ -332,17 +340,19 @@ DecodedImage * malloc_img_from_filename(
         (DecodedImage *)malloc(sizeof(DecodedImage));
     
     get_PNG_width_height(
-        /* uint8_t * compressed_bytes: */
+        /* uint8_t * compressed_input: */
             (uint8_t *)file_buffer.contents,
-        /* uint32_t compressed_bytes_size: */
+        /* uint64_t compressed_input_size: */
             50,
-        /* uint32_t * width_out: */
+        /* uint32_t * out_width: */
             &new_image->width,
-        /* uint32_t * height_out: */
-            &new_image->height);
+        /* uint32_t * out_height: */
+            &new_image->height,
+        /* out_good: */
+            &new_image->good);
     
-    if (new_image->width == 0 || new_image->height == 0) {
-        set_unalloated_to_error_image(new_image);
+    if (!new_image->good) {
+        set_unallocated_to_error_image(new_image);
         free(file_buffer.contents);
         return new_image;
     }
@@ -353,13 +363,22 @@ DecodedImage * malloc_img_from_filename(
     new_image->rgba_values = (uint8_t *)malloc(
         new_image->rgba_values_size);
     new_image->good = false;
+        
     decode_PNG(
-        /* compressed_bytes: */
+        /* const uint8_t * compressed_input: */
             (uint8_t *)file_buffer.contents,
-        /* compressed_bytes_size: */
-            (uint32_t)(file_buffer.size - 1),
-        /* DecodedImage * out_preallocated_png: */
-            new_image);
+        /* const uint64_t compressed_input_size: */
+            file_buffer.size - 1,
+        /* uint8_t * out_rgba_values: */
+            new_image->rgba_values,
+        /* uint64_t rgba_values_size: */
+            new_image->rgba_values_size,
+        /* uint32_t * out_width: */
+            &new_image->width,
+        /* uint32_t * out_height: */
+            &new_image->height,
+        /* uint32_t * out_good: */
+            &new_image->good);
     
     if (!new_image->good) {
         set_allocated_to_error_image(new_image);

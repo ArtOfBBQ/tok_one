@@ -19,8 +19,6 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 @implementation GameWindowDelegate
 - (void)windowWillClose:(NSNotification *)notification 
 {
-    application_running = false;
-    
     log_append("window will close, terminating app..\n");
     add_profiling_stats_to_log();
     log_dump();
@@ -105,7 +103,6 @@ NSWindowWithCustomResponder: NSWindow
 
 int main(int argc, const char * argv[]) 
 {
-    
     setup_log();
     
     @autoreleasepool {

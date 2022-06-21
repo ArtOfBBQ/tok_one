@@ -39,6 +39,8 @@ void software_render(
         return;
     }
     
+    assert(zpolygons_to_render_size < ZPOLYGONS_TO_RENDER_ARRAYSIZE);
+    
     uint32_t triangles_to_draw_size = 0;
     for (
         uint32_t i = 0;

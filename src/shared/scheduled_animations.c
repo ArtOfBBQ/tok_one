@@ -1,6 +1,8 @@
 #include "scheduled_animations.h"
 
-#define SCHEDULED_ANIMATIONS_ARRAYSIZE 2000
+bool32_t ignore_animation_effects = false;
+
+#define SCHEDULED_ANIMATIONS_ARRAYSIZE 1000
 ScheduledAnimation scheduled_animations[
     SCHEDULED_ANIMATIONS_ARRAYSIZE];
 uint32_t scheduled_animations_size = 0;
@@ -40,6 +42,7 @@ void request_scheduled_animation(
     log_assert(to_add != NULL);
     log_assert(to_add->remaining_microseconds > 0);
     
+    log_assert(scheduled_animations_size < SCHEDULED_ANIMATIONS_ARRAYSIZE);
     for (
         int32_t i = 0;
         i < (int32_t)scheduled_animations_size;
@@ -58,6 +61,9 @@ void request_scheduled_animation(
     
     scheduled_animations[scheduled_animations_size] = *to_add;
     scheduled_animations_size += 1;
+    log_assert(
+        SCHEDULED_ANIMATIONS_ARRAYSIZE
+            > scheduled_animations_size);
 }
 
 void request_fade_and_destroy(

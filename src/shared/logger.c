@@ -40,7 +40,7 @@ typedef struct BacktraceEntry {
 } BacktrackeEntry;
 #define BACKTRACE_CIRCLE_SIZE 50
 BacktraceEntry * backtrace_circle = NULL;
-uint32_t backtrace_i = 0;
+static uint32_t backtrace_i = 0;
 #define BACKTRACE_FUNCTIONS_TO_DISPLAY 20
 
 
@@ -61,13 +61,6 @@ extern "C" {
             return;
         }
         
-        #ifndef LOGGER_SILENCE 
-        Dl_info info;
-        if (dladdr(this_fn, &info)) {
-            printf("*** %s ***\n", info.dli_sname);
-        }
-        #endif
-        
         uint32_t entry_i =
             (uint64_t)this_fn & (TIMED_FUNCTION_MAP_SIZE - 1);
         
@@ -82,16 +75,7 @@ extern "C" {
                 .function_address != 0)
         {
             link_i += 1;
-            if (link_i >= TIMED_FUNCTION_LINK_SIZE)
-            {
-                #ifndef LOGGER_SILENCE 
-                printf(
-                    "too many timed function hashmap conflicts. You can probably just add some memory for the linked list by increasing TIMED_FUNCTION_LINK_SIZE (currently %u) in logger.c\n",
-                    TIMED_FUNCTION_LINK_SIZE);
-                #endif
-                application_running = false;
-                return;
-            }
+            log_assert(link_i < TIMED_FUNCTION_LINK_SIZE);
         }
         
         // record +1 run for this function address
@@ -128,6 +112,13 @@ extern "C" {
         
         // add this function name to the backtrace circle
         if (backtrace_circle != NULL) {
+            if (backtrace_i >= BACKTRACE_CIRCLE_SIZE) {
+                printf(
+                    "error: backtrace_i is %u but BACKTRACE_CIRCLE_SIZE is only %u (at start of loop)\n",
+                    backtrace_i,
+                    BACKTRACE_CIRCLE_SIZE);
+                assert(0);
+            }
             copy_strings(
                 /* recipient: */
                     backtrace_circle[backtrace_i]
@@ -139,9 +130,24 @@ extern "C" {
                         .linked_list[link_i]
                         .function_name);
             
+            if (backtrace_i >= BACKTRACE_CIRCLE_SIZE) {
+                printf(
+                    "error: backtrace_i is %u but BACKTRACE_CIRCLE_SIZE is only %u (right before incrementing)\n",
+                    backtrace_i,
+                    BACKTRACE_CIRCLE_SIZE);
+                assert(0);
+            }
+            
             backtrace_i++;
             if (backtrace_i >= BACKTRACE_CIRCLE_SIZE) {
                 backtrace_i = 0;
+            }
+            if (backtrace_i >= BACKTRACE_CIRCLE_SIZE) {
+                printf(
+                    "error: backtrace_i is %u but BACKTRACE_CIRCLE_SIZE is only %u (right after setting to 0)\n",
+                    backtrace_i,
+                    BACKTRACE_CIRCLE_SIZE);
+                assert(0);
             }
         }
         
@@ -289,6 +295,19 @@ internal_log_append_uint(
 }
 
 void __attribute__((no_instrument_function))
+internal_log_append_char(
+    const char to_append,
+    const char * caller_function_name)
+{
+    char to_append_array[1];
+    to_append_array[0] = to_append;
+    
+    internal_log_append(
+        to_append_array,
+        caller_function_name);
+}
+
+void __attribute__((no_instrument_function))
 internal_log_append_int(
     const int32_t to_append,
     const char * caller_function_name)
@@ -335,18 +354,24 @@ internal_log_append(
     uint32_t initial_log_i = log_i;
     #endif
     
+    uint32_t append_length = get_string_length(to_append);
+    assert(log_i + append_length < LOG_SIZE);
     copy_strings(
         /* recipient: */
-            log,
+            log + log_i,
         /* recipient_size: */
             LOG_SIZE,
         /* origin: */
             to_append);
+    log_i += append_length;
+    assert(log_i < LOG_SIZE);
     
     #ifndef LOGGER_SILENCE 
-    printf(
-        "%s",
-        log + initial_log_i);
+    if (application_running) {
+        printf(
+            "%s",
+            log + initial_log_i);
+    }
     #endif
 }
 
@@ -494,6 +519,7 @@ log_dump() {
 void __attribute__((no_instrument_function))
 log_dump_and_crash() {
     log_dump();
+    assert(0);
     application_running = false;
 }
 
@@ -506,6 +532,15 @@ internal_log_assert(
     const char * func_name)
 {
     if (condition || !application_running) { return; }
+   
+    #ifndef LOGGER_SILENCE 
+    printf(
+        "\n*****\nfailed condition: %s\n*****\n",
+        str_condition);
+    #endif
+    assert(str_condition != NULL);
+    assert(str_condition[0] != '\0');
+    assert(0);
     
     log_dump_and_crash();
     

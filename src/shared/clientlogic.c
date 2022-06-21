@@ -122,7 +122,7 @@ static void preregister_assets() {
             png_file.size = 50; // read first 40 bytes only
             char png_file_contents[50];
             png_file.contents = (char *)&png_file_contents;
-            platform_read_file(
+            platform_read_resource_file(
                 /* filename: */ files_in_app_path[i],
                 /* out_preallocatedbuffer: */ &png_file);
             
@@ -138,7 +138,9 @@ static void preregister_assets() {
                 /* width_out: */
                     &width,
                 /* height_out: */
-                    &height);
+                    &height,
+                /* out_good: */
+                    &png_file.good);
             
             if (width == 0 || height == 0) {
                 log_append("skipping file ");
@@ -258,9 +260,9 @@ void client_logic_startup() {
     log_assert(TEXTUREARRAYS_SIZE > 0);
     
     preregister_assets();
-   
-    log_assert(texture_arrays_size > 2); 
-    // load_assets(1, texture_arrays_size - 1);
+    
+    log_assert(texture_arrays_size > 0); 
+    load_assets(1, texture_arrays_size - 1);
     
     // reminder: threadmain_id 0 calls load_assets() 
     platform_start_thread(
@@ -278,7 +280,6 @@ void client_logic_startup() {
     zlights_to_apply[0].reach = 500.0f;
     zlights_to_apply_size++;
    
-    /* 
     TexQuad sample_quad;
     construct_texquad(&sample_quad);
     sample_quad.object_id = 5;
@@ -290,8 +291,7 @@ void client_logic_startup() {
     sample_quad.width_pixels = 100;
     sample_quad.height_pixels = 100;
     request_texquad_renderable(&sample_quad);
-    */
-
+    
     char * sample_text =
         (char *)"This could totally be a backtrace\nBut first we need to render text in a somewhat presentable way.\nLet's work on that...\n";
     font_height = 10.0f;

@@ -8,6 +8,7 @@
 #include "bitmap_renderer.h" // for texquads_to_render
 #include "zpolygon.h"
 
+extern bool32_t ignore_animation_effects;
 void resolve_animation_effects(uint64_t microseconds_elapsed);
 
 typedef struct ScheduledAnimation {

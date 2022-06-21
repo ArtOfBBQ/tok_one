@@ -36,11 +36,13 @@ copy_strings(
     uint32_t i = 0;
     while (
         origin[i] != '\0'
-        && i + 2 < recipient_size)
+        && i < recipient_size - 1)
     {
+        assert(i < recipient_size - 1);
         recipient[i] = origin[i];
         i++;
     }
+    assert(i < recipient_size);
     recipient[i] = '\0';
 }
 
@@ -300,7 +302,7 @@ string_to_uint32(
     if (input[0] == '\0') {
         #ifndef COMMON_SILENCE
         printf(
-            "ERROR : string_to_uint32 with input[0] == '\0'\n");
+            "ERR: string_to_uint32 but input[0] is nullterminator\n");
         #endif
         *good = false;
         return 0;
@@ -326,33 +328,26 @@ string_to_uint32(
         i >= 0;
         i--)
     {
-        #ifndef COMMON_SILENCE
-        if (input[i] < '0') {
-            printf(
-                "input[%u] (%c) is < '0'\n",
-                i,
-                input[i]);
+        if (
+            input[i] < '0'
+            || input[i] > '9')
+        {
+            *good = false;
+            return return_value;
         }
-        if (input[i] > '9') {
-            printf(
-                "input[%u] (%c) is > '9'\n",
-                i,
-                input[i]);
-        }
-        #endif
-        
-        #ifndef COMMON_IGNORE_ASSERTS
-        assert(input[i] >= '0');
-        assert(input[i] <= '9');
-        #endif
         
         uint32_t current_digit = input[i] - '0';
         return_value += decimal * current_digit;
         decimal *= 10;
         
-        #ifndef COMMON_IGNORE_ASSERTS
-        assert(decimal <= 1000000000);
-        #endif
+        if (decimal > 1000000000) {
+            #ifndef COMMON_SILENCE
+            printf(
+                "ERROR: overflowing uint32\n");
+            #endif
+            *good = false;
+            return return_value;
+        }
     }
     
     *good = true;

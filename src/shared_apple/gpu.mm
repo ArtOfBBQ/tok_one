@@ -272,9 +272,6 @@ uint64_t previous_time;
 
 - (void)drawInMTKView:(MTKView *)view
 {
-    @autoreleasepool 
-    {
-    
     uint64_t time = platform_get_current_time_microsecs();
     uint64_t elapsed = time - previous_time;
     previous_time = time;
@@ -330,88 +327,85 @@ uint64_t previous_time;
             &vertices_for_gpu_size,
         /* zlights_transformed: */
             zlights_transformed);
-        
-        id<MTLCommandBuffer> command_buffer =
-            [[self command_queue] commandBuffer];
-        
-        if (command_buffer == nil) {
-            log_append("error - failed to get metal command buffer\n");
-            log_dump_and_crash();
-            return;
-        }
-        
-        MTLRenderPassDescriptor * RenderPassDescriptor =
-            [view currentRenderPassDescriptor];
-        RenderPassDescriptor
-            .colorAttachments[0]
-            .loadAction = MTLLoadActionClear;
-        
-        MTLClearColor clear_color =
-            MTLClearColorMake(0.0f, 0.0f, 0.0f, 0.0f);
-        RenderPassDescriptor.colorAttachments[0].clearColor =
-            clear_color;
-        
-        id<MTLRenderCommandEncoder> render_encoder =
-            [command_buffer
-                renderCommandEncoderWithDescriptor:
-                    RenderPassDescriptor];
-        [render_encoder setViewport: viewport];
-        
-        // encode the drawing of all triangles 
-        id<MTLBuffer> current_buffered_vertices =
-            [[self vertex_buffers]
-                objectAtIndex: _currentFrameIndex];
-        [render_encoder
-            setVertexBuffer: current_buffered_vertices  
-            offset: 0 
-            atIndex: 0];
-        [render_encoder
-            setRenderPipelineState:
-                [self combo_pipeline_state]];
-        
-        for (
-            uint32_t i = 0;
-            i < texture_arrays_size;
-            i++)
-        {
-            if (i >= [_metal_textures count]) {
-                assert(texture_arrays_size < 750);
-                continue;
-            }
-            
-            [render_encoder
-                setFragmentTexture: _metal_textures[i]
-                atIndex: i];
-        }
-        
-        [render_encoder
-            drawPrimitives: MTLPrimitiveTypeTriangle
-            vertexStart: 0
-            vertexCount: vertices_for_gpu_size];
-        
-        [render_encoder endEncoding];
-        
-        // Schedule a present once the framebuffer is complete
-        // using the current drawable
-        id<CAMetalDrawable> current_drawable =
-            [view currentDrawable];
-        [command_buffer presentDrawable: current_drawable];
-        
-        uint32_t next_index = (uint32_t)_currentFrameIndex + 1;
-        if (next_index > 2) { next_index = 0; }
-        
-        _currentFrameIndex = next_index;
-        
-        /*
-        [command_buffer
-            addCompletedHandler:
-                ^(id<MTLCommandBuffer> commandBuffer)
-            {
-            }];
-        */
-        
-        [command_buffer commit];
+    
+    id<MTLCommandBuffer> command_buffer =
+        [[self command_queue] commandBuffer];
+    
+    if (command_buffer == nil) {
+        log_append("error - failed to get metal command buffer\n");
+        log_dump_and_crash();
+        return;
     }
+        
+    MTLRenderPassDescriptor * RenderPassDescriptor =
+        [view currentRenderPassDescriptor];
+    RenderPassDescriptor
+        .colorAttachments[0]
+        .loadAction = MTLLoadActionClear;
+    
+    MTLClearColor clear_color =
+        MTLClearColorMake(0.0f, 0.0f, 0.0f, 0.0f);
+    RenderPassDescriptor.colorAttachments[0].clearColor =
+        clear_color;
+    
+    id<MTLRenderCommandEncoder> render_encoder =
+        [command_buffer
+            renderCommandEncoderWithDescriptor:
+                RenderPassDescriptor];
+    [render_encoder setViewport: viewport];
+    
+    // encode the drawing of all triangles 
+    id<MTLBuffer> current_buffered_vertices =
+        [[self vertex_buffers]
+            objectAtIndex: _currentFrameIndex];
+    [render_encoder
+        setVertexBuffer: current_buffered_vertices  
+        offset: 0 
+        atIndex: 0];
+    [render_encoder
+        setRenderPipelineState:
+            [self combo_pipeline_state]];
+    
+    for (
+        uint32_t i = 0;
+        i < texture_arrays_size;
+        i++)
+    {
+        if (i >= [_metal_textures count]) {
+            assert(texture_arrays_size < 750);
+            continue;
+        }
+        
+        [render_encoder
+            setFragmentTexture: _metal_textures[i]
+            atIndex: i];
+    }
+    
+    [render_encoder
+        drawPrimitives: MTLPrimitiveTypeTriangle
+        vertexStart: 0
+        vertexCount: vertices_for_gpu_size];
+    
+    [render_encoder endEncoding];
+    
+    // Schedule a present once the framebuffer is complete
+    // using the current drawable
+    id<CAMetalDrawable> current_drawable =
+        [view currentDrawable];
+    [command_buffer presentDrawable: current_drawable];
+    
+    uint32_t next_index = (uint32_t)_currentFrameIndex + 1;
+    if (next_index > 2) { next_index = 0; }
+    
+    _currentFrameIndex = next_index;
+    
+    [command_buffer
+        addCompletedHandler:
+            ^(id<MTLCommandBuffer> commandBuffer)
+        {
+        }];
+    
+    [command_buffer commit];
 }
 
 - (void)mtkView:(MTKView *)view

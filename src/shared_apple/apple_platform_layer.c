@@ -17,8 +17,9 @@ void platform_get_directory_separator(
 uint64_t __attribute__((no_instrument_function))
 platform_get_current_time_microsecs(void)
 {
-    uint64_t result = mach_absolute_time();
-    result /= 500;
+    struct timeval tv;
+    gettimeofday(&tv,NULL);
+    uint64_t result = 1000000 * tv.tv_sec + tv.tv_usec;
     
     return result;
 }
@@ -133,6 +134,19 @@ void platform_read_file(
     
     log_append("file read was succesful\n");
     out_preallocatedbuffer->good = true;
+}
+
+bool32_t platform_resource_exists(
+    const char * resource_name)
+{
+    char pathfile[500];
+    resource_filename_to_pathfile(
+        resource_name,
+        /* recipient: */ pathfile,
+        /* capacity: */ 500);
+    
+    return platform_file_exists(
+        /* filepath: */ pathfile);
 }
 
 bool32_t platform_file_exists(

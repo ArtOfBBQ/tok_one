@@ -48,6 +48,8 @@ bool32_t touchable_id_to_texquad_object_id(
         return false;
     }
     
+    assert(texquads_to_render_size <= TEXQUADS_TO_RENDER_ARRAYSIZE);
+    
     for (
         uint32_t i = 0;
         i < texquads_to_render_size;
@@ -85,6 +87,7 @@ void request_texquad_renderable(
     
     texquads_to_render[texquads_to_render_size] = *to_add;
     texquads_to_render_size += 1;
+    assert(texquads_to_render_size < TEXQUADS_TO_RENDER_ARRAYSIZE);
 }
 
 void move_texquad_object(
@@ -409,15 +412,31 @@ void draw_texquads_to_render(
         return;
     }
     
-    TexQuad sorted_texquads[texquads_to_render_size];
+//    TexQuad * sorted_texquads = (TexQuad *)malloc(
+//        sizeof(TexQuad) * texquads_to_render_size);
+    uint32_t original_texquads_to_render_size =
+        texquads_to_render_size;
+    TexQuad sorted_texquads[original_texquads_to_render_size];
+    
     uint32_t sorted_texquads_size = 0;
-    for (uint32_t i = 0; i < texquads_to_render_size; i++) {
+    for (
+        uint32_t i = 0;
+        i < original_texquads_to_render_size
+            && i < texquads_to_render_size;
+        i++)
+    {
         if (
             texquads_to_render[i].visible
             && !texquads_to_render[i].deleted)
         {
-            sorted_texquads[sorted_texquads_size++] =
+            // printf("i: %u\n", i);
+            // if (i >= texquads_to_render_size) { return; }
+            assert(i < sizeof(sorted_texquads)/sizeof(*sorted_texquads));
+            assert(i <= texquads_to_render_size);
+            sorted_texquads[sorted_texquads_size] =
                 texquads_to_render[i];
+            sorted_texquads_size += 1;
+            assert(sorted_texquads_size <= texquads_to_render_size);
         }
     }
     assert(sorted_texquads_size <= texquads_to_render_size);

@@ -17,7 +17,7 @@ extern "C" {
 }
 #endif
 
-#define LOGGER_SILENCE
+// #define LOGGER_SILENCE
 #ifndef LOGGER_SILENCE
 #include "stdio.h"
 #endif
@@ -32,6 +32,7 @@ extern "C" {
 
 #define log_assert(condition) internal_log_assert(condition, #condition, __FILE__, __LINE__, __func__)
 #define log_append(string) internal_log_append(string, __func__)
+#define log_append_char(num) internal_log_append_char(num, __func__)
 #define log_append_float(num) internal_log_append_float(num, __func__)
 #define log_append_int(num) internal_log_append_int(num, __func__)
 #define log_append_uint(num) internal_log_append_uint(num, __func__)
@@ -76,6 +77,14 @@ don't use the internal_ functions, use the macros that call them.
 void __attribute__((no_instrument_function))
 internal_log_append_uint(
     const uint32_t to_append,
+    const char * caller_function_name);
+
+/*
+don't use the internal_ functions, use the macros that call them.
+*/
+void __attribute__((no_instrument_function))
+internal_log_append_char(
+    const char to_append,
     const char * caller_function_name);
 
 /*

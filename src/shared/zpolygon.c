@@ -424,6 +424,7 @@ ztriangle_apply_lighting(
     zLightSource * zlight_source)
 {
     log_assert(zlight_source != NULL);
+    if (zlight_source == NULL) { return; }
     
     // add lighting to the 3 vertices
     for (
