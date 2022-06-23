@@ -1,5 +1,7 @@
 APP_NAME="hello3dgfx"
 PLATFORM="macos"
+# COMPILER_ARGS="-fsanitize=address -finstrument-functions -Wall -x objective-c++ -std="c++17" -g -o0 -objC"
+COMPILER_ARGS="-fsanitize=address -Wall -x objective-c++ -std="c++17" -g -o0 -objC"
 
 # echo "Booting without building..."
 # cd build/$PLATFORM/$APP_NAME.app && lldb ./$APP_NAME
@@ -40,7 +42,7 @@ cp resources/*.png build/$PLATFORM/$APP_NAME.app
 
 echo "Compiling & linking $APP_NAME..."
 if
-clang++ -fsanitize=address -finstrument-functions -Wall -x objective-c++ -std="c++17" -g -o0 $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
+clang++ $COMPILER_ARGS $MAC_FRAMEWORKS $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
 # clang -finstrument-functions -Wall -x objective-c -g -o0 $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
 then
 echo "compilation succesful"
@@ -48,9 +50,6 @@ else
 echo "compilation failed"
 exit 0
 fi
-
-# clang++ -x objective-c -Wall -g -pedantic $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
-# clang -x objective-c -Wall -g -pedantic $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
 
 echo "Booting $APP_NAME"
 (cd build/$PLATFORM/$APP_NAME.app && ./$APP_NAME)

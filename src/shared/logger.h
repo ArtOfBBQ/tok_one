@@ -17,7 +17,7 @@ extern "C" {
 }
 #endif
 
-// #define LOGGER_SILENCE
+#define LOGGER_SILENCE
 #ifndef LOGGER_SILENCE
 #include "stdio.h"
 #endif

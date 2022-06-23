@@ -123,7 +123,7 @@ void float_to_string(
     float temp_above_decimal =
         (float)(int32_t)input;
     int32_t below_decimal =
-        (uint32_t)((input - temp_above_decimal) * 10000);
+        (int32_t)((input - temp_above_decimal) * 10000);
     int32_t above_decimal = (int32_t)temp_above_decimal;
     
     int_to_string(
@@ -336,7 +336,7 @@ string_to_uint32(
             return return_value;
         }
         
-        uint32_t current_digit = input[i] - '0';
+        uint32_t current_digit = (uint32_t)(input[i] - '0');
         return_value += decimal * current_digit;
         decimal *= 10;
         

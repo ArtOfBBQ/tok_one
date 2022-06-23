@@ -363,7 +363,7 @@ DecodedImage * malloc_img_from_filename(
     new_image->rgba_values = (uint8_t *)malloc(
         new_image->rgba_values_size);
     new_image->good = false;
-        
+    
     decode_PNG(
         /* const uint8_t * compressed_input: */
             (uint8_t *)file_buffer.contents,
@@ -373,12 +373,11 @@ DecodedImage * malloc_img_from_filename(
             new_image->rgba_values,
         /* uint64_t rgba_values_size: */
             new_image->rgba_values_size,
-        /* uint32_t * out_width: */
-            &new_image->width,
-        /* uint32_t * out_height: */
-            &new_image->height,
         /* uint32_t * out_good: */
             &new_image->good);
+    log_assert(
+        new_image->rgba_values_size ==
+            new_image->width * new_image->height * 4);
     
     if (!new_image->good) {
         set_allocated_to_error_image(new_image);
@@ -406,12 +405,8 @@ DecodedImage * malloc_img_from_filename(
         log_dump_and_crash();
     }
     
-    if (get_sum_rgba(new_image) < 1) {
-        log_append("new_image's summed rgba value was only: ");
-        log_append_uint(get_sum_rgba(new_image));
-        log_append("\n");
-        log_dump_and_crash();
-    }
+    // TODO: re-enable this assert
+    // log_assert(get_sum_rgba(new_image) > 0);
     
     free(file_buffer.contents);
     
