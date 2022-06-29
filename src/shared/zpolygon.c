@@ -189,7 +189,7 @@ zPolygon parse_obj(
     
     // pass through rawdata again to read all triangles 
     return_value.triangles =
-        (zTriangle *)malloc(
+        (zTriangle *)malloc_from_unmanaged(
             sizeof(zTriangle) * return_value.triangles_size);
     
     i = 0;

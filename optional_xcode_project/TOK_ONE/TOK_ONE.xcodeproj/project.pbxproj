@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6009B4F428679E7D00F1F279 /* memorystore.h in Sources */ = {isa = PBXBuildFile; fileRef = 6009B4F228679E7D00F1F279 /* memorystore.h */; };
+		6009B4F528679E7D00F1F279 /* memorystore.c in Sources */ = {isa = PBXBuildFile; fileRef = 6009B4F328679E7D00F1F279 /* memorystore.c */; };
 		6011283F286122FE00F92967 /* inflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 60112839286122FE00F92967 /* inflate.c */; };
 		60112840286122FE00F92967 /* decodedimage.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011283A286122FE00F92967 /* decodedimage.c */; };
 		60112842286122FE00F92967 /* decode_png.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011283D286122FE00F92967 /* decode_png.c */; };
@@ -42,6 +44,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		6009B4F228679E7D00F1F279 /* memorystore.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = memorystore.h; path = ../../src/shared/memorystore.h; sourceTree = "<group>"; };
+		6009B4F328679E7D00F1F279 /* memorystore.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = memorystore.c; path = ../../src/shared/memorystore.c; sourceTree = "<group>"; };
 		6011281928611F5100F92967 /* engine.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = engine.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6011282928611F7900F92967 /* engine.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = engine.entitlements; sourceTree = "<group>"; };
 		60112838286122FE00F92967 /* decodedimage.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = decodedimage.h; path = ../../src/shared/debigulator/src/decodedimage.h; sourceTree = "<group>"; };
@@ -155,6 +159,8 @@
 		601128A42862540400F92967 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				6009B4F328679E7D00F1F279 /* memorystore.c */,
+				6009B4F228679E7D00F1F279 /* memorystore.h */,
 				6011287C2862511700F92967 /* bitmap_renderer.c */,
 				601128702862511600F92967 /* clientlogic.c */,
 				601128722862511600F92967 /* common_platform_layer.c */,
@@ -286,6 +292,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6009B4F428679E7D00F1F279 /* memorystore.h in Sources */,
+				6009B4F528679E7D00F1F279 /* memorystore.c in Sources */,
 				60112842286122FE00F92967 /* decode_png.c in Sources */,
 				6011289A286253C100F92967 /* apple_platform_layer.c in Sources */,
 				60112840286122FE00F92967 /* decodedimage.c in Sources */,

@@ -1,6 +1,7 @@
 #ifndef TEXTURE_ARRAY_H
 #define TEXTURE_ARRAY_H
 
+#include "memorystore.h"
 #include "platform_layer.h"
 #include "logger.h"
 #include "debigulator/src/decodedimage.h"
@@ -44,6 +45,14 @@ void update_texturearray_from_0terminated_files(
     const char filenames
         [MAX_FILES_IN_SINGLE_TEXARRAY]
         [MAX_ASSET_FILENAME_SIZE]);
+
+void update_texturearray_from_0terminated_files_with_memory(
+    const int32_t texturearray_i,
+    const char filenames
+        [MAX_FILES_IN_SINGLE_TEXARRAY]
+        [MAX_ASSET_FILENAME_SIZE],
+    const uint8_t * inflate_working_memory,
+    const uint64_t inflate_working_memory_size);
 
 /*
 Next are functions to register new image(s) or imgfile(s0

@@ -46,6 +46,8 @@ rather than crashing the application
 static void set_unallocated_to_error_image(
     DecodedImage * to_replace)
 {
+    log_assert(to_replace->rgba_values == NULL);
+    
     to_replace->width = 30;
     to_replace->height = 30;
     to_replace->pixel_count =
@@ -53,9 +55,113 @@ static void set_unallocated_to_error_image(
     to_replace->rgba_values_size = to_replace->pixel_count * 4;
     
     to_replace->rgba_values =
-        (uint8_t *)malloc(to_replace->rgba_values_size * sizeof(uint8_t));
+        malloc_from_unmanaged(to_replace->rgba_values_size);
     
     set_allocated_to_error_image(to_replace);
+}
+
+static DecodedImage *
+malloc_img_from_filename_with_working_memory(
+    const char * filename,
+    const uint8_t * dpng_working_memory,
+    const uint64_t dpng_working_memory_size)
+{
+    FileBuffer file_buffer;
+    file_buffer.size = platform_get_resource_size(filename) + 1;
+    
+    log_assert(file_buffer.size > 1);
+    file_buffer.contents =
+        (char *)malloc_from_managed(sizeof(char) * file_buffer.size);
+    
+    platform_read_resource_file(
+        filename,
+        &file_buffer);
+    
+    if (!file_buffer.good) {
+        log_append("platform failed to read file: ");
+        log_append(filename);
+        log_append("\n");
+        free_from_managed((uint8_t *)file_buffer.contents);
+    }
+    log_assert(file_buffer.good);
+    
+    DecodedImage * new_image = malloc_struct_from_unmanaged(DecodedImage);
+    
+    get_PNG_width_height(
+        /* const uint8_t * compressed_input: */
+            (uint8_t *)file_buffer.contents,
+        /* const uint64_t compressed_input_size: */
+            file_buffer.size - 1,
+        /* uint32_t * out_width: */
+            &new_image->width,
+        /* uint32_t * out_height: */
+            &new_image->height,
+        /* uint32_t * out_good: */
+            &new_image->good);
+    
+    if (!new_image->good) {
+        set_unallocated_to_error_image(new_image);
+        free_from_managed((uint8_t *)file_buffer.contents);
+        return new_image;
+    }
+    
+    new_image->good = false;
+    new_image->pixel_count = new_image->width * new_image->height;
+    new_image->rgba_values_size = new_image->pixel_count * 4;
+    new_image->rgba_values = malloc_from_unmanaged(new_image->rgba_values_size);
+    
+    decode_PNG(
+        /* const uint8_t * compressed_input: */
+            (uint8_t *)file_buffer.contents,
+        /* const uint64_t compressed_input_size: */
+            file_buffer.size - 1,
+        /* out_rgba_values: */
+            new_image->rgba_values,
+        /* rgba_values_size: */
+            new_image->rgba_values_size,
+        /* dpng_working_memory: */
+            dpng_working_memory,
+        /* dpng_working_memory_size: */
+            dpng_working_memory_size,
+        /* uint32_t * out_good: */
+            &new_image->good);
+    
+    free_from_managed((uint8_t *)file_buffer.contents);
+    
+    if (!new_image->good) {
+        set_allocated_to_error_image(new_image);
+        return new_image;
+    }
+    
+    log_append("after decoding PNG - memory_store_size: ");
+    log_append_uint((uint32_t)unmanaged_memory_size);
+    log_append("\n");
+    
+    log_assert(new_image->pixel_count * 4 == new_image->rgba_values_size);
+    log_assert(get_sum_rgba(new_image) > 0);
+    
+    log_assert(new_image->pixel_count == new_image->width * new_image->height);
+    
+    return new_image;
+}
+
+DecodedImage * malloc_img_from_filename(
+    const char * filename)
+{
+    uint64_t dpng_working_memory_size = 10000000;
+    uint8_t * dpng_working_memory =
+        malloc_from_managed(dpng_working_memory_size);
+    
+    DecodedImage * return_value =
+        malloc_img_from_filename_with_working_memory(
+            filename,
+            dpng_working_memory,
+            dpng_working_memory_size);
+    
+    free_from_managed(dpng_working_memory);
+    log_assert(return_value->good);
+    
+    return return_value;
 }
 
 void update_texturearray_from_0terminated_files(
@@ -63,6 +169,27 @@ void update_texturearray_from_0terminated_files(
     const char filenames
         [MAX_FILES_IN_SINGLE_TEXARRAY]
         [MAX_ASSET_FILENAME_SIZE])
+{
+    uint64_t dpng_working_memory_size = 10000000;
+    uint8_t * dpng_working_memory =
+        malloc_from_managed(dpng_working_memory_size);
+    
+    update_texturearray_from_0terminated_files_with_memory(
+        texturearray_i,
+        filenames,
+        dpng_working_memory,
+        dpng_working_memory_size);
+    
+    free_from_managed(dpng_working_memory);
+}
+
+void update_texturearray_from_0terminated_files_with_memory(
+    const int32_t texturearray_i,
+    const char filenames
+        [MAX_FILES_IN_SINGLE_TEXARRAY]
+        [MAX_ASSET_FILENAME_SIZE],
+    const uint8_t * dpng_working_memory,
+    const uint64_t dpng_working_memory_size)
 {
     log_assert(
         texturearray_i < TEXTUREARRAYS_SIZE);
@@ -88,14 +215,17 @@ void update_texturearray_from_0terminated_files(
     {
         const char * filename = filenames[t_i];
         
-        DecodedImage * new_image = malloc_img_from_filename(
-            filename);
-        
+        DecodedImage * new_image =
+            malloc_img_from_filename_with_working_memory(
+                filename,
+                dpng_working_memory,
+                dpng_working_memory_size);
+        log_assert(new_image->good);
         decoded_images[t_i] = new_image;
     }
     
     texture_arrays[texturearray_i].image =
-        (DecodedImage *)malloc(sizeof(DecodedImage));
+        (DecodedImage *)malloc_from_unmanaged(sizeof(DecodedImage));
     
     *(texture_arrays[texturearray_i].image) =
         concatenate_images(
@@ -136,7 +266,7 @@ void register_new_texturearray_from_files(
             new_image =
                 malloc_img_from_filename(filenames[i]);
         } else {
-            new_image = (DecodedImage *)malloc(sizeof(DecodedImage));
+            new_image = (DecodedImage *)malloc_from_unmanaged(sizeof(DecodedImage));
             new_image->good = false;
             set_unallocated_to_error_image(new_image);
         }
@@ -177,14 +307,8 @@ void register_new_texturearray_from_images(
         log_dump_and_crash();
     }
     
-    if (current_width > 100000 || current_height > 100000) {
-        log_append("ERROR - tried register images with excessive width/height: ");
-        log_append_uint(current_width);
-        log_append("x");
-        log_append_uint(current_height);
-        log_append("\n");
-        log_dump_and_crash();
-    }
+    log_assert(current_width < 100000);
+    log_assert(current_height < 100000);
     
     for (
         uint32_t i = 0;
@@ -204,13 +328,9 @@ void register_new_texturearray_from_images(
     log_assert(new_i < TEXTUREARRAYS_SIZE);
     texture_arrays_size += 1;
     
-    // fill in the images in a new texturearray
-    if (texture_arrays[new_i].image != NULL) {
-        free(texture_arrays[new_i].image);
-    }
-    
+    texture_arrays[new_i].request_update = false;
     texture_arrays[new_i].image =
-        (DecodedImage *)malloc(sizeof(DecodedImage));
+        (DecodedImage *)malloc_from_unmanaged(sizeof(DecodedImage));
     *(texture_arrays[new_i].image) =
         concatenate_images(
             /* const DecodedImage ** images_to_concat: */
@@ -254,11 +374,16 @@ DecodedImage * extract_image(
 {
     log_assert(x > 0);
     log_assert(y > 0);
+    log_assert(texture_array != NULL);
+    if (!application_running) { return NULL; }
+    log_assert(texture_array->sprite_columns > 0);
+    log_assert(texture_array->sprite_rows > 0);
     log_assert(x <= texture_array->sprite_columns);
     log_assert(y <= texture_array->sprite_rows);
+    if (!application_running) { return NULL; }
     
-    DecodedImage * new_image =
-        (DecodedImage *)malloc(sizeof(DecodedImage));
+    DecodedImage * new_image = malloc_struct_from_unmanaged(DecodedImage);
+    log_assert(new_image != NULL);
     
     uint32_t slice_size =
         texture_array->image->rgba_values_size
@@ -270,10 +395,14 @@ DecodedImage * extract_image(
     uint32_t slice_height =
         texture_array->image->height
             / texture_array->sprite_rows;
+    log_assert(slice_size > 0);
+    log_assert(slice_width > 0);
+    log_assert(slice_height > 0);
+    log_assert(slice_size == slice_width * slice_height * 4);
     
     new_image->rgba_values_size = slice_size;
-    new_image->rgba_values =
-        (uint8_t *)malloc(slice_size);
+    new_image->rgba_values = malloc_from_unmanaged(slice_size);
+    log_assert(new_image->rgba_values != NULL);
     
     new_image->width = slice_width;
     new_image->height = slice_height;
@@ -294,10 +423,12 @@ DecodedImage * extract_image(
             ((start_x - 1) * 4)
                 + ((cur_y - 1) * texture_array->image->width * 4);
         log_assert(i < new_image->rgba_values_size);
+        
         if (!application_running) {
             new_image->good = false;
             break;
         }
+        
         for (
             uint32_t _ = 0;
             _ < (slice_width * 4);
@@ -311,109 +442,6 @@ DecodedImage * extract_image(
             i++;
         }
     }
-    
-    return new_image;
-}
-
-DecodedImage * malloc_img_from_filename(
-    const char * filename)
-{
-    FileBuffer file_buffer;
-    file_buffer.size = platform_get_resource_size(filename) + 1;
-    
-    log_assert(file_buffer.size > 1);
-    file_buffer.contents =
-        (char *)malloc(sizeof(char) * file_buffer.size);
-    
-    platform_read_resource_file(
-        filename,
-        &file_buffer);
-    
-    if (!file_buffer.good) {
-        log_append("platform failed to read file: ");
-        log_append(filename);
-        log_append("\n");
-    }
-    log_assert(file_buffer.good);
-    
-    DecodedImage * new_image =
-        (DecodedImage *)malloc(sizeof(DecodedImage));
-    
-    get_PNG_width_height(
-        /* uint8_t * compressed_input: */
-            (uint8_t *)file_buffer.contents,
-        /* uint64_t compressed_input_size: */
-            50,
-        /* uint32_t * out_width: */
-            &new_image->width,
-        /* uint32_t * out_height: */
-            &new_image->height,
-        /* out_good: */
-            &new_image->good);
-    
-    if (!new_image->good) {
-        set_unallocated_to_error_image(new_image);
-        free(file_buffer.contents);
-        return new_image;
-    }
-    
-    new_image->pixel_count =
-        new_image->width * new_image->height;
-    new_image->rgba_values_size = new_image->pixel_count * 4;
-    new_image->rgba_values = (uint8_t *)malloc(
-        new_image->rgba_values_size);
-    new_image->good = false;
-    
-    decode_PNG(
-        /* const uint8_t * compressed_input: */
-            (uint8_t *)file_buffer.contents,
-        /* const uint64_t compressed_input_size: */
-            file_buffer.size - 1,
-        /* uint8_t * out_rgba_values: */
-            new_image->rgba_values,
-        /* uint64_t rgba_values_size: */
-            new_image->rgba_values_size,
-        /* uint32_t * out_good: */
-            &new_image->good);
-    log_assert(
-        new_image->rgba_values_size ==
-            new_image->width * new_image->height * 4);
-    
-    if (!new_image->good) {
-        set_allocated_to_error_image(new_image);
-        free(file_buffer.contents);
-        return new_image;
-    }
-    
-    if (new_image->pixel_count * 4 !=
-        new_image->rgba_values_size)
-    {
-        log_append(
-            "ERROR: loaded an image with with pixel_count of ");
-        log_append_uint(new_image->pixel_count);
-        log_append(", which should be *4 = ");
-        log_append_uint(new_image->pixel_count * 4);
-        log_append(", and rgba_values_size of ");
-        log_append_uint(new_image->rgba_values_size);
-        log_append(". Image dimensions were [");
-        log_append_uint(new_image->width);
-        log_append(",");
-        log_append_uint(new_image->height);
-        log_append(", so width*height*4 would have been: ");
-        log_append_uint(new_image->width * new_image->height * 4);
-        log_append("\n");
-        log_dump_and_crash();
-    }
-    
-    // TODO: re-enable this assert
-    // log_assert(get_sum_rgba(new_image) > 0);
-    
-    free(file_buffer.contents);
-    
-    log_assert(new_image->pixel_count ==
-        new_image->width * new_image->height);
-    log_assert(new_image->rgba_values_size ==
-        new_image->pixel_count * 4);
     
     return new_image;
 }

@@ -40,9 +40,8 @@ typedef struct BacktraceEntry {
 } BacktrackeEntry;
 #define BACKTRACE_CIRCLE_SIZE 50
 BacktraceEntry * backtrace_circle = NULL;
-static uint32_t backtrace_i = 0;
+uint32_t backtrace_i = 0;
 #define BACKTRACE_FUNCTIONS_TO_DISPLAY 20
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -114,7 +113,8 @@ extern "C" {
         if (backtrace_circle != NULL) {
             if (backtrace_i >= BACKTRACE_CIRCLE_SIZE) {
                 printf(
-                    "error: backtrace_i is %u but BACKTRACE_CIRCLE_SIZE is only %u (at start of loop)\n",
+                    "error: backtrace_i is %u but BACKTRACE_CIRCLE_SIZE is "
+                    "only %u (at start of loop)\n",
                     backtrace_i,
                     BACKTRACE_CIRCLE_SIZE);
                 assert(0);
@@ -132,7 +132,8 @@ extern "C" {
             
             if (backtrace_i >= BACKTRACE_CIRCLE_SIZE) {
                 printf(
-                    "error: backtrace_i is %u but BACKTRACE_CIRCLE_SIZE is only %u (right before incrementing)\n",
+                    "error: backtrace_i is %u but BACKTRACE_CIRCLE_SIZE is "
+                    "only %u (right before incrementing)\n",
                     backtrace_i,
                     BACKTRACE_CIRCLE_SIZE);
                 assert(0);
@@ -144,7 +145,8 @@ extern "C" {
             }
             if (backtrace_i >= BACKTRACE_CIRCLE_SIZE) {
                 printf(
-                    "error: backtrace_i is %u but BACKTRACE_CIRCLE_SIZE is only %u (right after setting to 0)\n",
+                    "error: backtrace_i is %u but BACKTRACE_CIRCLE_SIZE is "
+                    "only %u (right after setting to 0)\n",
                     backtrace_i,
                     BACKTRACE_CIRCLE_SIZE);
                 assert(0);
@@ -232,10 +234,10 @@ extern "C" {
 void __attribute__((no_instrument_function))
 setup_log() {
     // create a log for debug text
-    log = (char *)malloc(LOG_SIZE);
+    log = (char *)malloc_from_unmanaged(LOG_SIZE);
     
     backtrace_circle = (BacktraceEntry *)
-        malloc(sizeof(BacktraceEntry) * BACKTRACE_CIRCLE_SIZE);
+        malloc_from_unmanaged(sizeof(BacktraceEntry) * BACKTRACE_CIRCLE_SIZE);
     for (uint32_t i = 0; i < BACKTRACE_CIRCLE_SIZE; i++) {
         backtrace_circle[i].function_name[0] = '\0';
     }
@@ -243,7 +245,7 @@ setup_log() {
     // create a hashmap for the functions in our app 
     // this is used for backtrace and profiling
     timed_function_map =
-        (TimedFunctionLink *)malloc(
+        (TimedFunctionLink *)malloc_from_unmanaged(
             TIMED_FUNCTION_MAP_SIZE * sizeof(TimedFunctionLink)); 
     // initialize values
     for (
@@ -415,7 +417,7 @@ get_log_backtrace(
                     .function_name[char_i];
             char_i++;
         }
-
+        
         return_value[return_value_i++] = '\n';
         
         displaying_func_i += 1;
@@ -519,7 +521,6 @@ log_dump() {
 void __attribute__((no_instrument_function))
 log_dump_and_crash() {
     log_dump();
-    assert(0);
     application_running = false;
 }
 
@@ -532,11 +533,14 @@ internal_log_assert(
     const char * func_name)
 {
     if (condition || !application_running) { return; }
-   
+    
     #ifndef LOGGER_SILENCE 
     printf(
-        "\n*****\nfailed condition: %s\n*****\n",
-        str_condition);
+        "\n*****\nfailed condition (%s::%s::%i: %s\n*****\n",
+        file_name != NULL ? file_name : "NULL",
+        func_name != NULL ? func_name : "NULL",
+        line_number,
+        str_condition != NULL ? str_condition : "NULL");
     #endif
     assert(str_condition != NULL);
     assert(str_condition[0] != '\0');
@@ -558,8 +562,7 @@ internal_log_assert(
             * MAX_TIMED_FUNCTION_NAME) +
         MAX_TIMED_FUNCTION_NAME +
         25;
-    assert_failed_message = (char *)malloc(
-        sizeof(char) * screen_dump_size);
+    assert_failed_message = (char *)malloc_from_unmanaged(screen_dump_size);
     
     for (
         uint32_t i = 0;

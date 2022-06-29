@@ -17,15 +17,15 @@ extern "C" {
 }
 #endif
 
-#define LOGGER_SILENCE
+// #define LOGGER_SILENCE
 #ifndef LOGGER_SILENCE
 #include "stdio.h"
 #endif
 
-#include <stdlib.h>
 #include <dlfcn.h>
 
 #include "common.h"
+#include "memorystore.h"
 #include "platform_layer.h"
 
 #define LOG_SIZE 5000000

@@ -112,7 +112,7 @@ void platform_read_file(
         [NSString
             stringWithCString:filepath
             encoding:NSASCIIStringEncoding];
-   
+    
     NSError * error = NULL;
     NSData * file_data =
         [NSData

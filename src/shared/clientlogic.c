@@ -284,7 +284,7 @@ void client_logic_startup() {
     construct_texquad(&sample_quad);
     sample_quad.object_id = 5;
     sample_quad.touchable_id = 4;
-    sample_quad.texturearray_i = 2;
+    sample_quad.texturearray_i = 1;
     sample_quad.texture_i = 0;
     sample_quad.left_pixels = 100;
     sample_quad.top_pixels = 400;

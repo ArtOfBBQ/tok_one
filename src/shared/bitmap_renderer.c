@@ -412,8 +412,6 @@ void draw_texquads_to_render(
         return;
     }
     
-//    TexQuad * sorted_texquads = (TexQuad *)malloc(
-//        sizeof(TexQuad) * texquads_to_render_size);
     uint32_t original_texquads_to_render_size =
         texquads_to_render_size;
     TexQuad sorted_texquads[original_texquads_to_render_size];

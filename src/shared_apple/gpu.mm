@@ -154,8 +154,9 @@ uint64_t previous_time;
 - (void)updateTextureArray: (int32_t)texturearray_i
 {
     texture_arrays[texturearray_i].request_update = false;
-    assert(texturearray_i < TEXTUREARRAYS_SIZE);
-    assert(texturearray_i < (int32_t)texture_arrays_size);
+
+    if (texturearray_i >= TEXTUREARRAYS_SIZE) { return; }
+    if (texturearray_i >= (int32_t)texture_arrays_size) { return; }
     int32_t i = texturearray_i;
     
     // pad objects to match
@@ -195,6 +196,16 @@ uint64_t previous_time;
         log_dump_and_crash();
     }
     
+    if (
+        texture_arrays[i].sprite_columns * 4 > texture_arrays[i].image->width
+        ||
+        texture_arrays[i].sprite_rows * 4 >= texture_arrays[i].image->height)
+    {
+        log_append(
+            "aborted texture write because many columns/rows, few pixels\n");
+        return;
+    }
+    
     assert(texture_arrays[i].image->width >= 2);
     assert(texture_arrays[i].image->height >= 2);
     MTLTextureDescriptor * texture_descriptor =
@@ -229,6 +240,8 @@ uint64_t previous_time;
                     /* x            : */ col_i,
                     /* y            : */ row_i);
             
+            if (new_slice == NULL) { continue; }
+            
             MTLRegion region = {
                 {
                     0,
@@ -258,9 +271,6 @@ uint64_t previous_time;
                        MTLTextureType3D textures */
                     0];
             
-            // TODO: free heap memory
-            free(new_slice->rgba_values);
-            free(new_slice);
             slice_i++;
         }
     }
