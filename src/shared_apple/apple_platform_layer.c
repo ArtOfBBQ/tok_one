@@ -32,11 +32,7 @@ the resources directory
 */
 uint64_t platform_get_resource_size(
     const char * filename)
-{
-    log_append("finding size of file: ");
-    log_append(filename);
-    log_append("\n");
-    
+{    
     char pathfile[500];
     resource_filename_to_pathfile(
         filename,
@@ -103,11 +99,7 @@ void platform_read_resource_file(
 void platform_read_file(
     const char * filepath,
     FileBuffer * out_preallocatedbuffer)
-{
-    log_append("trying to read file at path: ");
-    log_append(filepath);
-    log_append("\n");
-    
+{    
     NSString * nsfilepath =
         [NSString
             stringWithCString:filepath
@@ -132,7 +124,6 @@ void platform_read_file(
         getBytes: out_preallocatedbuffer->contents
         length: out_preallocatedbuffer->size];
     
-    log_append("file read was succesful\n");
     out_preallocatedbuffer->good = true;
 }
 
@@ -152,10 +143,6 @@ bool32_t platform_resource_exists(
 bool32_t platform_file_exists(
     const char * filepath)
 {
-    log_append("checking if file exists: ");
-    log_append(filepath);
-    log_append("\n");
-    
     NSString * nsfilepath = [NSString
         stringWithCString:filepath
         encoding:NSASCIIStringEncoding];
@@ -166,26 +153,18 @@ bool32_t platform_file_exists(
         isDirectory: &is_directory])
     {
         if (is_directory) {
-            log_append("A folder existed there, returning false...\n");
             return false;
         }
         
-        log_append("A file existed there, returning true...\n");
         return true;
     }
     
-    log_append("There's nothing there, returning false...\n");
     return false;
 }
 
 void platform_mkdir_if_not_exist(
     const char * dirname)
-{
-    log_append(
-        "attempt to create directory: ");
-    log_append(dirname);
-    log_append("\n");
-    
+{    
     NSString * directory_path = [NSString
         stringWithCString:dirname
         encoding:NSASCIIStringEncoding];
@@ -197,7 +176,6 @@ void platform_mkdir_if_not_exist(
     if (![[NSFileManager defaultManager]
         fileExistsAtPath:directory_path])
     {
-        log_append("no directory there, creating it...\n");
         NSError * error = NULL;
         
         bool success = [[NSFileManager defaultManager]
@@ -211,13 +189,10 @@ void platform_mkdir_if_not_exist(
             if (error != NULL) {
                 NSLog(@" error => %@ ", [error userInfo]);
             }
-            // assert(0);
         } else {
             assert([[NSFileManager defaultManager]
                 fileExistsAtPath:directory_path]);
         }
-    } else {
-        log_append("that directory seems to already exist, ignoring request...\n");
     }
     
     return;

@@ -3,6 +3,8 @@
 #define TEXTURE_FILENAMES_SIZE 6
 DecodedImage * decoded_pngs[TEXTURE_FILENAMES_SIZE];
 
+int32_t latest_object_id = 72;
+
 char filenames_for_texturearrays
     [TEXTUREARRAYS_SIZE]
     [MAX_FILES_IN_SINGLE_TEXARRAY]
@@ -269,17 +271,6 @@ void client_logic_startup() {
         client_logic_threadmain,
         /* threadmain_id: */ 0);
     
-    zlights_to_apply[0].x = 1;
-    zlights_to_apply[0].y = 1;
-    zlights_to_apply[0].z = 1;
-    zlights_to_apply[0].RGBA[0] = 9.0f;
-    zlights_to_apply[0].RGBA[1] = 9.0f;
-    zlights_to_apply[0].RGBA[2] = 9.0f;
-    zlights_to_apply[0].RGBA[3] = 9.0f;
-    zlights_to_apply[0].ambient = 15.0f;
-    zlights_to_apply[0].reach = 500.0f;
-    zlights_to_apply_size++;
-   
     TexQuad sample_quad;
     construct_texquad(&sample_quad);
     sample_quad.object_id = 5;
@@ -339,12 +330,12 @@ static void client_handle_mouseevents(
         log_append_int(last_mouse_down.touchable_id);
         log_append("\n");
         
-        uint32_t touched_texquad_id;
+        int32_t touched_texquad_id;
         last_mouse_down.handled = true;
         if (touchable_id_to_texquad_object_id(
                 /* const int32_t touchable_id : */
                     last_mouse_down.touchable_id,
-                /* uint32_t * object_id_out : */
+                /* int32_t * object_id_out : */
                     &touched_texquad_id))
         {
             log_append("found at texquad_id: ");
@@ -384,7 +375,7 @@ static void client_handle_mouseevents(
             
             TexQuad touch_highlight;
             construct_texquad(&touch_highlight);
-            touch_highlight.object_id = 72;
+            touch_highlight.object_id = latest_object_id++;
             touch_highlight.left_pixels = last_mouse_down.screenspace_x;
             touch_highlight.top_pixels = last_mouse_down.screenspace_y;
             touch_highlight.z = 50;
@@ -396,12 +387,53 @@ static void client_handle_mouseevents(
             touch_highlight.RGBA[0] = 1.0f;
             request_texquad_renderable(&touch_highlight);
             
+            uint32_t new_zlight_i;
+            for (
+                new_zlight_i = 0;
+                new_zlight_i <= zlights_to_apply_size;
+                new_zlight_i++)
+            {
+                if (zlights_to_apply[new_zlight_i].deleted
+                    || new_zlight_i == zlights_to_apply_size)
+                {
+                    break;
+                }
+            }
+            
+            zlights_to_apply[new_zlight_i].deleted = false;
+            zlights_to_apply[new_zlight_i].object_id =
+                touch_highlight.object_id;
+            zlights_to_apply[new_zlight_i].x = last_mouse_down.screenspace_x;
+            zlights_to_apply[new_zlight_i].y = last_mouse_down.screenspace_y;
+            zlights_to_apply[new_zlight_i].z = 50;
+            zlights_to_apply[new_zlight_i].RGBA[0] = 0.1f * (float)(tok_rand() % 10);
+            zlights_to_apply[new_zlight_i].RGBA[1] = 0.1f * (float)(tok_rand() % 10);
+            zlights_to_apply[new_zlight_i].RGBA[2] = 0.1f * (float)(tok_rand() % 10);
+            zlights_to_apply[new_zlight_i].RGBA[3] = 1.0f;
+            zlights_to_apply[new_zlight_i].ambient = 1.0f;
+            zlights_to_apply[new_zlight_i].diffuse = 0.0f;
+            zlights_to_apply[new_zlight_i].reach = 20.0f;
+            if (new_zlight_i == zlights_to_apply_size) {
+                 zlights_to_apply_size += 1;
+            }
+            
+            ScheduledAnimation moveupandright;
+            construct_scheduled_animation(&moveupandright);
+            moveupandright.affected_object_id = touch_highlight.object_id;
+            moveupandright.remaining_microseconds = 3000000;
+            moveupandright.delta_x_per_second = 150;
+            moveupandright.delta_y_per_second = 150;
+            request_scheduled_animation(&moveupandright);
+            
             ScheduledAnimation vanish;
             construct_scheduled_animation(&vanish);
             vanish.affected_object_id = touch_highlight.object_id;
-            vanish.remaining_microseconds = 400000;
+            vanish.wait_first_microseconds = 600000;
+            vanish.remaining_microseconds = 2000000;
             vanish.delete_object_when_finished = true;
-            vanish.rgba_delta_per_second[3] = -2.5f;
+            vanish.rgba_delta_per_second[1] = -0.5f;
+            vanish.rgba_delta_per_second[2] = -0.5f;
+            vanish.rgba_delta_per_second[3] = -0.5f;
             request_scheduled_animation(&vanish);
         }
     }
@@ -412,7 +444,7 @@ static void client_handle_keypresses(
 {
     float elapsed_mod =
         (float)((double)microseconds_elapsed / (double)16666);
-    float cam_speed = 0.25f * elapsed_mod;
+    float cam_speed = 2.0f * elapsed_mod;
     float cam_rotation_speed = 0.05f * elapsed_mod;
     
     if (keypress_map[0] == true)
@@ -442,30 +474,25 @@ static void client_handle_keypresses(
     if (keypress_map[123] == true)
     {
         // left arrow key
-        camera.y_angle -= cam_rotation_speed;
-        // camera.x -= cam_speed;
+        camera.x -= cam_speed;
     }
     
     if (keypress_map[124] == true)
     {
         // right arrow key
-        camera.y_angle += cam_rotation_speed;
-        // camera.x += cam_speed;
+        camera.x += cam_speed;
     }
     
     if (keypress_map[125] == true)
     {
         // down arrow key
-        camera.z -= cosf(camera.y_angle) * cam_speed;
-        camera.x -= sinf(camera.y_angle) * cam_speed;
+        camera.y -= cam_speed;
     }
     
     if (keypress_map[126] == true)
     {
         // up arrow key is pressed
-        zcamera_move_forward(
-            &camera,
-            cam_speed);
+        camera.y += cam_speed;
     }
     
     if (keypress_map[30] == true)

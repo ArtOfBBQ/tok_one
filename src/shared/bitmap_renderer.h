@@ -26,23 +26,18 @@ exist.
 #include "lightsource.h"
 
 #define TEXQUADS_TO_RENDER_ARRAYSIZE 2000
-extern TexQuad texquads_to_render[TEXQUADS_TO_RENDER_ARRAYSIZE];
+extern TexQuad * texquads_to_render;
 extern uint32_t texquads_to_render_size;
 
 bool32_t touchable_id_to_texquad_object_id(
     const int32_t touchable_id,
-    uint32_t * object_id_out);
+    int32_t * object_id_out);
 
 void request_texquad_renderable(
     TexQuad * to_add);
 
-void move_texquad_object(
-    uint32_t with_object_id,
-    float delta_x,
-    float delta_y);
-
 void delete_texquad_object(
-    uint32_t with_object_id);
+    const int32_t with_object_id);
 
 /* Draw bitmap(s) of pixels and add them to the gpu's workload */
 void draw_texquads_to_render(

@@ -259,15 +259,116 @@ void resolve_animation_effects(
                         }
                     }
                 }
+                
+                for (
+                    int32_t l_i = (int32_t)zlights_to_apply_size - 1;
+                    l_i >= 0;
+                    l_i--)
+                {
+                    if (
+                        zlights_to_apply[l_i].object_id ==
+                            anim->affected_object_id)
+                    {
+                        zlights_to_apply[l_i].deleted = true;
+                        
+                        if (l_i == (int32_t)zlights_to_apply_size - 1)
+                        {
+                            zlights_to_apply_size--;
+                        }
+                    }
+                }
             }
         }
         
-        if (actual_elapsed < 1) { return; }
+        if (actual_elapsed < 1) { continue; }
         
         log_assert(actual_elapsed <= anim->remaining_microseconds);
         anim->remaining_microseconds -= actual_elapsed;
         
+        if (anim->affects_camera_not_object) {
+            if (!anim->final_x_known) {
+                camera.x +=
+                    (anim->delta_x_per_second
+                        * actual_elapsed)
+                            / 1000000;
+            } else {
+                float diff_x = anim->final_mid_x - camera.x;
+                camera.x +=
+                    (diff_x
+                        / (anim->remaining_microseconds
+                            + actual_elapsed)
+                        * actual_elapsed);
+            }
+            
+            if (!anim->final_y_known) {
+                camera.y +=
+                    (anim->delta_y_per_second
+                        * actual_elapsed)
+                            / 1000000;
+            } else {
+                float diff_y = anim->final_mid_y - camera.y;
+                camera.y +=
+                    (diff_y
+                        / (anim->remaining_microseconds
+                            + actual_elapsed)
+                        * actual_elapsed);
+            }
+            
+            continue;
+        }
+        
         // apply effects
+        for (
+            int32_t l_i = (int32_t)zlights_to_apply_size - 1;
+            l_i >= 0;
+            l_i--)
+        {
+            if (
+                zlights_to_apply[l_i].object_id ==
+                    anim->affected_object_id &&
+                !zlights_to_apply[l_i].deleted)
+            {
+                if (!anim->final_x_known) {
+                    zlights_to_apply[l_i].x +=
+                        (anim->delta_x_per_second
+                        * actual_elapsed)
+                            / 1000000;
+                } else {
+                    float diff_x = anim->final_mid_x - zlights_to_apply[l_i].x;
+                    zlights_to_apply[l_i].x +=
+                        (diff_x
+                            / (anim->remaining_microseconds
+                                + actual_elapsed)
+                            * actual_elapsed);
+                }
+                
+                if (!anim->final_y_known) {
+                    zlights_to_apply[l_i].y +=
+                        ((anim->delta_y_per_second
+                            * actual_elapsed)
+                                / 1000000);
+                } else {
+                    float diff_y = anim->final_mid_y - zlights_to_apply[l_i].y;
+                    zlights_to_apply[l_i].y +=
+                        diff_y
+                            / (anim->remaining_microseconds
+                                + actual_elapsed)
+                                    * actual_elapsed;
+                }
+                
+                for (
+                    uint32_t c = 0;
+                    c < 4;
+                    c++)
+                {
+                    zlights_to_apply[l_i].RGBA[c] +=
+                        (anim->rgba_delta_per_second[c]
+                            * actual_elapsed)
+                                / 1000000;
+                }
+            }
+        }
+        
         for (
             uint32_t tq_i = 0;
             tq_i < texquads_to_render_size;
@@ -281,13 +382,13 @@ void resolve_animation_effects(
                 if (!anim->final_x_known) {
                     texquads_to_render[tq_i].left_pixels +=
                         (anim->delta_x_per_second
-                            * actual_elapsed)
-                                / 1000000;
+                        * actual_elapsed)
+                            / 1000000;
                 } else {
                     float cur_mid_x =
-                      texquads_to_render[tq_i].left_pixels +
-                        (texquads_to_render[tq_i].width_pixels
-                            * 0.5f);
+                        texquads_to_render[tq_i].left_pixels +
+                            (texquads_to_render[tq_i].width_pixels
+                                / 2);
                     float diff_x = anim->final_mid_x - cur_mid_x;
                     texquads_to_render[tq_i].left_pixels +=
                         (diff_x
@@ -298,21 +399,21 @@ void resolve_animation_effects(
                 
                 if (!anim->final_y_known) {
                     texquads_to_render[tq_i].top_pixels +=
-                        (anim->delta_y_per_second
+                        ((anim->delta_y_per_second
                             * actual_elapsed)
-                                / 1000000;
+                                / 1000000);
                 } else {
                     float cur_mid_y =
                       texquads_to_render[tq_i].top_pixels -
                         (texquads_to_render[tq_i].height_pixels
-                            * 0.5f);
+                            / 2);
                     float diff_y =
                         anim->final_mid_y - cur_mid_y;
                     texquads_to_render[tq_i].top_pixels +=
-                        (diff_y
+                        diff_y
                             / (anim->remaining_microseconds
                                 + actual_elapsed)
-                            * actual_elapsed);
+                                    * actual_elapsed;
                 }
                 
                 texquads_to_render[tq_i].z_angle +=

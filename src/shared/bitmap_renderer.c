@@ -1,6 +1,7 @@
 #include "bitmap_renderer.h"
 
-TexQuad texquads_to_render[TEXQUADS_TO_RENDER_ARRAYSIZE];
+TexQuad * texquads_to_render = (TexQuad *)malloc_from_unmanaged(
+    sizeof(TexQuad) * TEXQUADS_TO_RENDER_ARRAYSIZE);
 uint32_t texquads_to_render_size = 0;
 
 static void triangle_apply_lighting(
@@ -8,7 +9,12 @@ static void triangle_apply_lighting(
     const zLightSource * zlight_source)
 {
     log_assert(zlight_source != NULL);
-    if (zlight_source == NULL) { return; }
+    if (
+        zlight_source == NULL
+        || zlight_source->deleted)
+    {
+        return;
+    }
     
     // add lighting to the 3 vertices
     for (
@@ -42,7 +48,7 @@ static void triangle_apply_lighting(
 // returns false if none found
 bool32_t touchable_id_to_texquad_object_id(
     const int32_t touchable_id,
-    uint32_t * object_id_out)
+    int32_t * object_id_out)
 {
     if (touchable_id < 0) {
         return false;
@@ -90,24 +96,6 @@ void request_texquad_renderable(
     assert(texquads_to_render_size < TEXQUADS_TO_RENDER_ARRAYSIZE);
 }
 
-void move_texquad_object(
-    uint32_t with_object_id,
-    float delta_x,
-    float delta_y)
-{
-    for (
-        uint32_t i = 0;
-        i < texquads_to_render_size;
-        i++)
-    {
-        if (texquads_to_render[i].object_id == with_object_id)
-        {
-            texquads_to_render[i].left_pixels += delta_x;
-            texquads_to_render[i].top_pixels += delta_y;
-        }
-    }
-}
-
 static void z_rotate_triangle(
     Vertex input[3],
     float around_x,
@@ -136,7 +124,7 @@ static void z_rotate_triangle(
     }
 }
 
-void delete_texquad_object(const uint32_t with_object_id)
+void delete_texquad_object(const int32_t with_object_id)
 {
     for (
         int32_t i = (int32_t)texquads_to_render_size - 1;
@@ -160,7 +148,7 @@ static void add_quad_to_gpu_workload(
     Vertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size,
     const zLightSource * zlights_transformed)
-{
+{    
     if (to_add->scale_factor_x < 0.01f
         || to_add->scale_factor_y < 0.01f)
     {
@@ -317,19 +305,20 @@ static void add_quad_to_gpu_workload(
             to_add->z_angle,
         /* recipient: */
             bottomright_rotated);
-  
+    
     if (!to_add->ignore_lighting) { 
         for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
             triangle_apply_lighting(
                 /* Vertex[3] out_input: */
                     topleft_rotated,
                 /* ZlightSource zlight_source: */
-                    &zlights_transformed[i]);
+                    zlights_transformed + i);
+            
             triangle_apply_lighting(
                 /* Vertex[3] out_input: */
                     bottomright_rotated,
                 /* ZlightSource zlight_source: */
-                    &zlights_transformed[i]);
+                    zlights_transformed + i);
         }
     } else {
         for (uint32_t i = 0; i < 3; i++) {
@@ -460,7 +449,7 @@ void draw_texquads_to_render(
             &sorted_texquads[i],
             next_gpu_workload,
             next_gpu_workload_size,
-            &zlights_transformed[0]);
+            zlights_transformed);
     }
 }
 

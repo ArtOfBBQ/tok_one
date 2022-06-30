@@ -3,6 +3,7 @@
 
 #import <Foundation/Foundation.h>
 
+#include "tok_random.h"
 #include "texquad_type.h"
 #include "texture_array.h"
 #include "zpolygon.h"

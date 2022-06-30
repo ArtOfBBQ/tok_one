@@ -12,7 +12,16 @@ extern bool32_t ignore_animation_effects;
 void resolve_animation_effects(uint64_t microseconds_elapsed);
 
 typedef struct ScheduledAnimation {
-    uint32_t affected_object_id;
+    /*
+    Any texquads (2d) or zlights with this object_id will be affected by the
+    animation. If you request changes to the Z (depth) attribute of an object,
+    including 2D members, the 2D members will ignore those instructions and
+    perform what they can.
+    
+    note: affected_object_id below 0 will have no effect and is useless
+    */
+    int32_t affected_object_id;
+    
     bool32_t affects_camera_not_object;
     
     // ******

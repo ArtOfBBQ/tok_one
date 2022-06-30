@@ -37,7 +37,7 @@ uint64_t previous_time;
             [metal_device
                 newLibraryWithFile: shader_lib_filepath 
                 error: &Error];
-
+        
         if (shader_library == NULL) {
             log_append("Failed to find the shader library again\n");
             if (Error != NULL) {
@@ -314,10 +314,9 @@ uint64_t previous_time;
     touchable_triangles_size = 0;
     
     // translate all lights
-    zLightSource zlights_transformed[zlights_to_apply_size];
     translate_lights(
-        /* originals: */ &zlights_to_apply[0],
-        /* out_translated: */ &zlights_transformed[0],
+        /* originals: */ zlights_to_apply,
+        /* out_translated: */ zlights_transformed,
         /* lights_count: */ zlights_to_apply_size);
     
     software_render(
@@ -346,7 +345,7 @@ uint64_t previous_time;
         log_dump_and_crash();
         return;
     }
-        
+    
     MTLRenderPassDescriptor * RenderPassDescriptor =
         [view currentRenderPassDescriptor];
     RenderPassDescriptor

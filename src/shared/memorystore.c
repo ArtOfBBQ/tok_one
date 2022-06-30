@@ -52,4 +52,3 @@ void free_from_managed(uint8_t * to_free) {
     // TODO: free up memory from the managed store
     return;
 };
-

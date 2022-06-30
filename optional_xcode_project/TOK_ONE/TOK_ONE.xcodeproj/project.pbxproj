@@ -41,6 +41,7 @@
 		601128AE28625BAF00F92967 /* structuredart2.png in Resources */ = {isa = PBXBuildFile; fileRef = 601128AA28625BAE00F92967 /* structuredart2.png */; };
 		601128AF28625BAF00F92967 /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = 601128AB28625BAE00F92967 /* teapot.obj */; };
 		601128B028625BAF00F92967 /* font.png in Resources */ = {isa = PBXBuildFile; fileRef = 601128AC28625BAF00F92967 /* font.png */; };
+		608802F2286DCBE700B81255 /* clientlogic.h in Sources */ = {isa = PBXBuildFile; fileRef = 608802F1286DCBE700B81255 /* clientlogic.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -101,6 +102,7 @@
 		601128AA28625BAE00F92967 /* structuredart2.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = structuredart2.png; path = ../../resources/structuredart2.png; sourceTree = "<group>"; };
 		601128AB28625BAE00F92967 /* teapot.obj */ = {isa = PBXFileReference; explicitFileType = compiled; fileEncoding = 4; name = teapot.obj; path = ../../resources/teapot.obj; sourceTree = "<group>"; };
 		601128AC28625BAF00F92967 /* font.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = font.png; path = ../../resources/font.png; sourceTree = "<group>"; };
+		608802F1286DCBE700B81255 /* clientlogic.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = clientlogic.h; path = ../../src/shared/clientlogic.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -159,29 +161,36 @@
 		601128A42862540400F92967 /* src */ = {
 			isa = PBXGroup;
 			children = (
-				6009B4F328679E7D00F1F279 /* memorystore.c */,
-				6009B4F228679E7D00F1F279 /* memorystore.h */,
+				60112896286253C100F92967 /* apple_platform_layer.c */,
 				6011287C2862511700F92967 /* bitmap_renderer.c */,
+				601128A52862555700F92967 /* bitmap_renderer.h */,
 				601128702862511600F92967 /* clientlogic.c */,
+				608802F1286DCBE700B81255 /* clientlogic.h */,
 				601128722862511600F92967 /* common_platform_layer.c */,
 				6011286F2862511600F92967 /* common.c */,
-				601128732862511600F92967 /* draw_triangle.c */,
-				6011289C286253DD00F92967 /* macos_platform_layer.c */,
-				601128A52862555700F92967 /* bitmap_renderer.h */,
 				601128A62862555700F92967 /* common.h */,
-				6011289D286253DD00F92967 /* main.mm */,
+				6011283D286122FE00F92967 /* decode_png.c */,
+				6011283C286122FE00F92967 /* decode_png.h */,
+				6011283A286122FE00F92967 /* decodedimage.c */,
+				60112838286122FE00F92967 /* decodedimage.h */,
+				601128732862511600F92967 /* draw_triangle.c */,
 				6011286D2862511500F92967 /* draw_triangle.h */,
+				60112898286253C100F92967 /* gpu.h */,
+				60112897286253C100F92967 /* gpu.mm */,
+				60112839286122FE00F92967 /* inflate.c */,
+				6011283E286122FE00F92967 /* inflate.h */,
 				601128782862511600F92967 /* lightsource.c */,
 				601128712862511600F92967 /* lightsource.h */,
 				6011287F2862511700F92967 /* logger.c */,
-				60112896286253C100F92967 /* apple_platform_layer.c */,
-				60112898286253C100F92967 /* gpu.h */,
-				60112897286253C100F92967 /* gpu.mm */,
-				60112895286253C100F92967 /* shaders.metal */,
 				601128752862511600F92967 /* logger.h */,
+				6011289C286253DD00F92967 /* macos_platform_layer.c */,
+				6011289D286253DD00F92967 /* main.mm */,
+				6009B4F328679E7D00F1F279 /* memorystore.c */,
+				6009B4F228679E7D00F1F279 /* memorystore.h */,
 				601128832862511700F92967 /* platform_layer.h */,
 				6011287D2862511700F92967 /* scheduled_animations.c */,
 				6011286A2862511500F92967 /* scheduled_animations.h */,
+				60112895286253C100F92967 /* shaders.metal */,
 				6011286C2862511500F92967 /* software_renderer.c */,
 				6011287B2862511700F92967 /* software_renderer.h */,
 				601128792862511600F92967 /* texquad_type.c */,
@@ -200,12 +209,6 @@
 				601128822862511700F92967 /* window_size.h */,
 				6011287E2862511700F92967 /* zpolygon.c */,
 				601128842862511700F92967 /* zpolygon.h */,
-				6011283D286122FE00F92967 /* decode_png.c */,
-				6011283C286122FE00F92967 /* decode_png.h */,
-				6011283A286122FE00F92967 /* decodedimage.c */,
-				60112838286122FE00F92967 /* decodedimage.h */,
-				60112839286122FE00F92967 /* inflate.c */,
-				6011283E286122FE00F92967 /* inflate.h */,
 			);
 			name = src;
 			sourceTree = "<group>";
@@ -292,6 +295,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				608802F2286DCBE700B81255 /* clientlogic.h in Sources */,
 				6009B4F428679E7D00F1F279 /* memorystore.h in Sources */,
 				6009B4F528679E7D00F1F279 /* memorystore.c in Sources */,
 				60112842286122FE00F92967 /* decode_png.c in Sources */,

@@ -7,6 +7,8 @@ static char * log;
 static uint32_t log_i = 0;
 
 #define MAX_TIMED_FUNCTION_NAME 80
+char last_log_func[MAX_TIMED_FUNCTION_NAME];
+
 typedef struct TimedFunction {
     uint64_t function_address;
     char function_name[MAX_TIMED_FUNCTION_NAME];
@@ -356,8 +358,62 @@ internal_log_append(
     uint32_t initial_log_i = log_i;
     #endif
     
-    uint32_t append_length = get_string_length(to_append);
-    assert(log_i + append_length < LOG_SIZE);
+    if (
+        !are_equal_strings(
+            caller_function_name,
+            last_log_func))
+    {
+        copy_strings(
+            /* recipient: */
+                last_log_func,
+            /* recipient_size: */
+                MAX_TIMED_FUNCTION_NAME,
+            /* origin: */
+                caller_function_name);
+        
+        char * prefix = "[";
+        uint32_t prefix_length = get_string_length(prefix);
+        assert(log_i + prefix_length < LOG_SIZE);
+        copy_strings(
+            /* recipient: */
+                log + log_i,
+            /* recipient_size: */
+                LOG_SIZE,
+            /* origin: */
+                prefix);
+        log_i += prefix_length;
+        assert(log_i < LOG_SIZE);
+        
+        uint32_t func_length = get_string_length(
+        caller_function_name);
+        assert(log_i + func_length < LOG_SIZE);
+        
+        copy_strings(
+            /* recipient: */
+                log + log_i,
+            /* recipient_size: */
+                LOG_SIZE,
+            /* origin: */
+                caller_function_name);
+        log_i += func_length;
+        assert(log_i < LOG_SIZE);
+        
+        char * glue = "]: ";
+        uint32_t glue_length = get_string_length(glue);
+        assert(log_i + glue_length < LOG_SIZE);
+        copy_strings(
+            /* recipient: */
+                log + log_i,
+            /* recipient_size: */
+                LOG_SIZE,
+            /* origin: */
+                glue);
+        log_i += glue_length;
+        assert(log_i < LOG_SIZE);
+    }
+    
+    uint32_t to_append_length = get_string_length(to_append);
+    assert(log_i + to_append_length < LOG_SIZE);
     copy_strings(
         /* recipient: */
             log + log_i,
@@ -365,7 +421,7 @@ internal_log_append(
             LOG_SIZE,
         /* origin: */
             to_append);
-    log_i += append_length;
+    log_i += to_append_length;
     assert(log_i < LOG_SIZE);
     
     #ifndef LOGGER_SILENCE 

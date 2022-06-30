@@ -7,6 +7,7 @@
 #include <math.h>
 
 #include "common.h"
+#include "memorystore.h"
 
 typedef struct zVertex {
     float x;
@@ -36,6 +37,11 @@ typedef struct zCamera {
 extern zCamera camera;
 
 typedef struct zLightSource {
+    int32_t object_id; // you can make a group of lights and/or texquads by
+                       // giving them the same positive object_id, then make
+                       // ScheduledAnimations that affect the entire group
+                       // set to -1 to not be a party of any group
+    bool32_t deleted;
     float x;
     float y;
     float z;
@@ -48,8 +54,9 @@ typedef struct zLightSource {
 // A buffer of zLightSources to light up your scene(s)
 // index 0 to zlights_to_apply_size will be rendered,
 // the rest of the array will be ignored
-#define ZLIGHTS_TO_APPLY_ARRAYSIZE 50
-extern zLightSource zlights_to_apply[ZLIGHTS_TO_APPLY_ARRAYSIZE];
+#define ZLIGHTS_TO_APPLY_ARRAYSIZE 100
+extern zLightSource * zlights_to_apply;
+extern zLightSource * zlights_transformed;
 extern uint32_t zlights_to_apply_size;
 
 // move each light around the camera (e.g. when the camera moves
@@ -62,4 +69,3 @@ void translate_lights(
     const uint32_t lights_count);
 
 #endif
-

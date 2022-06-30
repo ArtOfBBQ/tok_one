@@ -22,4 +22,3 @@ void construct_texquad(TexQuad * to_construct)
     to_construct->visible = true;
     to_construct->deleted = false;
 }
-

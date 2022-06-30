@@ -5,7 +5,10 @@
 // sprites to the right
 zCamera camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
-zLightSource zlights_to_apply[ZLIGHTS_TO_APPLY_ARRAYSIZE];
+zLightSource * zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
+    sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
+zLightSource * zlights_transformed = (zLightSource *)malloc_from_unmanaged(
+    sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
 uint32_t zlights_to_apply_size = 0;
 
 zVertex x_rotate_zvertex(

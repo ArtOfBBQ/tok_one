@@ -34,13 +34,6 @@ void resource_filename_to_pathfile(
         (filename_length
             + resource_path_length
             + 2); // +1 for \0, +1 to add a '/'
-    log_append("filename_length: ");
-    log_append_uint(filename_length);
-    log_append(", full_filename_size: ");
-    log_append_uint(full_filename_size);
-    log_append(", assert_capacity: ");
-    log_append_uint(assert_capacity);
-    log_append("\n");
     log_assert(assert_capacity >= full_filename_size);
     if (!application_running) {
         recipient[0] = '\0';
