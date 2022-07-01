@@ -62,23 +62,27 @@ zVertex y_rotate_zvertex(
     return return_value;
 }
 
-// move each light so the camera becomes position 0,0,0
-void translate_lights(
-    const zLightSource * originals,
-    zLightSource * out_translated,
-    const uint32_t lights_count)
+void clean_deleted_lights()
 {
-    assert(lights_count < ZLIGHTS_TO_APPLY_ARRAYSIZE);
+    while (
+        zlights_to_apply_size > 0
+        && zlights_to_apply[zlights_to_apply_size - 1].deleted)
+    {
+        zlights_to_apply_size--;
+    }
+}
+
+// move each light so the camera becomes position 0,0,0
+void translate_lights()
+{
+    assert(zlights_to_apply_size < ZLIGHTS_TO_APPLY_ARRAYSIZE);
     
     zVertex translated_light_pos;
-    for (uint32_t i = 0; i < lights_count; i++)
+    for (uint32_t i = 0; i < zlights_to_apply_size; i++)
     {
-        translated_light_pos.x =
-            originals[i].x - camera.x;
-        translated_light_pos.y =
-            originals[i].y - camera.y;
-        translated_light_pos.z =
-            originals[i].z - camera.z;
+        translated_light_pos.x = zlights_to_apply[i].x - camera.x;
+        translated_light_pos.y = zlights_to_apply[i].y - camera.y;
+        translated_light_pos.z = zlights_to_apply[i].z - camera.z;
         translated_light_pos = x_rotate_zvertex(
             &translated_light_pos,
             -1 * camera.x_angle);
@@ -89,10 +93,9 @@ void translate_lights(
             &translated_light_pos,
             -1 * camera.z_angle);
         
-        out_translated[i] = originals[i];
-        out_translated[i].x = translated_light_pos.x;
-        out_translated[i].y = translated_light_pos.y;
-        out_translated[i].z = translated_light_pos.z;
+        zlights_transformed[i]   = zlights_to_apply[i];
+        zlights_transformed[i].x = translated_light_pos.x;
+        zlights_transformed[i].y = translated_light_pos.y;
+        zlights_transformed[i].z = translated_light_pos.z;
     }
 }
-

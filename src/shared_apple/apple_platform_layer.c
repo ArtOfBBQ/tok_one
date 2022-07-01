@@ -292,7 +292,7 @@ void platform_get_filenames_in(
     
     if (error != NULL) {
         NSLog(@" error => %@ ", [error userInfo]);
-        assert(0);
+        return;
     }
     
     uint32_t storable_results =

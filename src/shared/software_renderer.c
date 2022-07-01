@@ -33,8 +33,6 @@ void software_render(
         return;
     }
     
-    client_logic_update(elapsed_nanoseconds);
-    
     if (zpolygons_to_render_size == 0) {
         return;
     }

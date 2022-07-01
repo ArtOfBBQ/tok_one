@@ -59,13 +59,12 @@ extern zLightSource * zlights_to_apply;
 extern zLightSource * zlights_transformed;
 extern uint32_t zlights_to_apply_size;
 
+void clean_deleted_lights();
+
 // move each light around the camera (e.g. when the camera moves
 // right, we move all lights etc. to the left instead)
 // reminder: this is calculated once before 2d and 3d renderer
 // and then used in both
-void translate_lights(
-    const zLightSource * originals,
-    zLightSource * out_translated,
-    const uint32_t lights_count);
+void translate_lights();
 
 #endif

@@ -3,6 +3,7 @@
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
 
 uint64_t previous_time;
+static uint32_t already_drawing = false;
 
 @implementation MetalKitViewDelegate
 {
@@ -282,6 +283,8 @@ uint64_t previous_time;
 
 - (void)drawInMTKView:(MTKView *)view
 {
+    log_assert(!already_drawing);
+    already_drawing = true;
     uint64_t time = platform_get_current_time_microsecs();
     uint64_t elapsed = time - previous_time;
     previous_time = time;
@@ -313,11 +316,12 @@ uint64_t previous_time;
     
     touchable_triangles_size = 0;
     
+    clean_deleted_lights();
+    
     // translate all lights
-    translate_lights(
-        /* originals: */ zlights_to_apply,
-        /* out_translated: */ zlights_transformed,
-        /* lights_count: */ zlights_to_apply_size);
+    translate_lights();
+    
+    client_logic_update(elapsed);
     
     software_render(
         /* next_gpu_workload: */
@@ -343,6 +347,7 @@ uint64_t previous_time;
     if (command_buffer == nil) {
         log_append("error - failed to get metal command buffer\n");
         log_dump_and_crash();
+        already_drawing = false;
         return;
     }
     
@@ -415,6 +420,8 @@ uint64_t previous_time;
         }];
     
     [command_buffer commit];
+    
+    already_drawing = false;
 }
 
 - (void)mtkView:(MTKView *)view

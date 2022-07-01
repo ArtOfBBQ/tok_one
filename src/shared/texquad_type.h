@@ -10,7 +10,13 @@ typedef struct TexQuad {
     // members in a group the same way. For example, a animation to move all
     // texquads and zlights with object_id of 2 500 pixels to the left over the
     // next 0.2 seconds.
-    int32_t object_id; 
+    int32_t object_id;
+    
+    // This allows you to control how many triangles are used to draw your quad
+    // - Set to 1: draw with 1 quad of 2 triangles (top left and bottom right)
+    // - Set to 2: draw 2 subquads wide/high = 2x2=4 quads = 8 triangles
+    // - Set to 3: draw 3 subquads wide/high = 3x3=9 quads = 18 triangles 
+    uint32_t subquads_per_row;
     
     // -1 if you don't care when this is clicked or touched
     int32_t touchable_id;
@@ -19,7 +25,7 @@ typedef struct TexQuad {
     // aka texture atlas, to
     // texture-map to this quad
     // use '-1' for 'no texture'
-    int32_t texturearray_i; 
+    int32_t texturearray_i;
     
     /*
     the index of the texture inside the texturearray to texture-map to this
@@ -33,10 +39,6 @@ typedef struct TexQuad {
     // will be mixed with this color
     float RGBA[4];
     
-    /*
-    use 'adjust_texquad_left_pixels' and 'adjust_texquad_top_pixels' so that
-    the attached zlights move along
-    */
     float left_pixels;
     float top_pixels; // y = window_height for top of screen
                       // y = 0 for right below the screen

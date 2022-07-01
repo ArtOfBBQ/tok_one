@@ -252,11 +252,6 @@ void resolve_animation_effects(
                         texquads_to_render[tq_i]
                             .texturearray_i = -1;
                         texquads_to_render[tq_i].texture_i = -1;
-                        
-                        if (tq_i == (int32_t)texquads_to_render_size - 1)
-                        {
-                            texquads_to_render_size--;
-                        }
                     }
                 }
                 

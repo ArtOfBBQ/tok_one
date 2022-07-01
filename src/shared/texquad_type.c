@@ -3,6 +3,7 @@
 void construct_texquad(TexQuad * to_construct)
 {
     to_construct->object_id = 0;
+    to_construct->subquads_per_row = 1;
     to_construct->touchable_id = -1;
     to_construct->texturearray_i = -1;
     to_construct->texture_i = -1;
