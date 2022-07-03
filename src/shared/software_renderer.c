@@ -156,7 +156,7 @@ void software_render(
             }
             for (
                 uint32_t l = 0;
-                l < zlights_to_apply_size;
+                l < zlights_transformed_size;
                 l++)
             {
                 ztriangle_apply_lighting(

@@ -7,6 +7,7 @@
 #include <math.h>
 
 #include "common.h"
+#include "window_size.h"
 #include "memorystore.h"
 
 typedef struct zVertex {
@@ -30,6 +31,9 @@ typedef struct zCamera {
     float x;
     float y;
     float z;
+    float next_frame_x_delta;
+    float next_frame_y_delta;
+    float next_frame_z_delta;
     float x_angle;
     float y_angle;
     float z_angle;
@@ -54,10 +58,11 @@ typedef struct zLightSource {
 // A buffer of zLightSources to light up your scene(s)
 // index 0 to zlights_to_apply_size will be rendered,
 // the rest of the array will be ignored
-#define ZLIGHTS_TO_APPLY_ARRAYSIZE 100
+#define ZLIGHTS_TO_APPLY_ARRAYSIZE 500
 extern zLightSource * zlights_to_apply;
 extern zLightSource * zlights_transformed;
 extern uint32_t zlights_to_apply_size;
+extern uint32_t zlights_transformed_size;
 
 void clean_deleted_lights();
 
@@ -66,5 +71,7 @@ void clean_deleted_lights();
 // reminder: this is calculated once before 2d and 3d renderer
 // and then used in both
 void translate_lights();
+
+void update_camera_position();
 
 #endif

@@ -41,6 +41,9 @@
 		601128AE28625BAF00F92967 /* structuredart2.png in Resources */ = {isa = PBXBuildFile; fileRef = 601128AA28625BAE00F92967 /* structuredart2.png */; };
 		601128AF28625BAF00F92967 /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = 601128AB28625BAE00F92967 /* teapot.obj */; };
 		601128B028625BAF00F92967 /* font.png in Resources */ = {isa = PBXBuildFile; fileRef = 601128AC28625BAF00F92967 /* font.png */; };
+		6080CC46286FFD1E00444118 /* phoebus.png in Resources */ = {isa = PBXBuildFile; fileRef = 6080CC45286FFD1D00444118 /* phoebus.png */; };
+		6080CC492870182700444118 /* common.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC472870182700444118 /* common.h */; };
+		6080CC4A2870182700444118 /* bitmap_renderer.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC482870182700444118 /* bitmap_renderer.h */; };
 		608802F2286DCBE700B81255 /* clientlogic.h in Sources */ = {isa = PBXBuildFile; fileRef = 608802F1286DCBE700B81255 /* clientlogic.h */; };
 /* End PBXBuildFile section */
 
@@ -95,13 +98,14 @@
 		6011289D286253DD00F92967 /* main.mm */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = main.mm; path = ../../src/macos/main.mm; sourceTree = "<group>"; };
 		601128A0286253FA00F92967 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		601128A1286253FA00F92967 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
-		601128A52862555700F92967 /* bitmap_renderer.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = bitmap_renderer.h; path = ../../../../tok_one/src/shared/bitmap_renderer.h; sourceTree = "<group>"; };
-		601128A62862555700F92967 /* common.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = common.h; path = ../../../../tok_one/src/shared/common.h; sourceTree = "<group>"; };
 		601128A72862588900F92967 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		601128A928625BAE00F92967 /* structuredart1.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = structuredart1.png; path = ../../resources/structuredart1.png; sourceTree = "<group>"; };
 		601128AA28625BAE00F92967 /* structuredart2.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = structuredart2.png; path = ../../resources/structuredart2.png; sourceTree = "<group>"; };
 		601128AB28625BAE00F92967 /* teapot.obj */ = {isa = PBXFileReference; explicitFileType = compiled; fileEncoding = 4; name = teapot.obj; path = ../../resources/teapot.obj; sourceTree = "<group>"; };
 		601128AC28625BAF00F92967 /* font.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = font.png; path = ../../resources/font.png; sourceTree = "<group>"; };
+		6080CC45286FFD1D00444118 /* phoebus.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = phoebus.png; path = ../../resources/phoebus.png; sourceTree = "<group>"; };
+		6080CC472870182700444118 /* common.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = common.h; path = ../../src/shared/common.h; sourceTree = "<group>"; };
+		6080CC482870182700444118 /* bitmap_renderer.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = bitmap_renderer.h; path = ../../src/shared/bitmap_renderer.h; sourceTree = "<group>"; };
 		608802F1286DCBE700B81255 /* clientlogic.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = clientlogic.h; path = ../../src/shared/clientlogic.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -163,12 +167,12 @@
 			children = (
 				60112896286253C100F92967 /* apple_platform_layer.c */,
 				6011287C2862511700F92967 /* bitmap_renderer.c */,
-				601128A52862555700F92967 /* bitmap_renderer.h */,
+				6080CC482870182700444118 /* bitmap_renderer.h */,
 				601128702862511600F92967 /* clientlogic.c */,
 				608802F1286DCBE700B81255 /* clientlogic.h */,
 				601128722862511600F92967 /* common_platform_layer.c */,
 				6011286F2862511600F92967 /* common.c */,
-				601128A62862555700F92967 /* common.h */,
+				6080CC472870182700444118 /* common.h */,
 				6011283D286122FE00F92967 /* decode_png.c */,
 				6011283C286122FE00F92967 /* decode_png.h */,
 				6011283A286122FE00F92967 /* decodedimage.c */,
@@ -217,6 +221,7 @@
 			isa = PBXGroup;
 			children = (
 				601128AC28625BAF00F92967 /* font.png */,
+				6080CC45286FFD1D00444118 /* phoebus.png */,
 				601128A928625BAE00F92967 /* structuredart1.png */,
 				601128AA28625BAE00F92967 /* structuredart2.png */,
 				601128AB28625BAE00F92967 /* teapot.obj */,
@@ -281,6 +286,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6080CC46286FFD1E00444118 /* phoebus.png in Resources */,
 				601128AD28625BAF00F92967 /* structuredart1.png in Resources */,
 				601128AE28625BAF00F92967 /* structuredart2.png in Resources */,
 				601128B028625BAF00F92967 /* font.png in Resources */,
@@ -295,6 +301,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6080CC492870182700444118 /* common.h in Sources */,
+				6080CC4A2870182700444118 /* bitmap_renderer.h in Sources */,
 				608802F2286DCBE700B81255 /* clientlogic.h in Sources */,
 				6009B4F428679E7D00F1F279 /* memorystore.h in Sources */,
 				6009B4F528679E7D00F1F279 /* memorystore.c in Sources */,

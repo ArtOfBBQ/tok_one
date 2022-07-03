@@ -64,7 +64,7 @@ fragment_shader(
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE> color_textures [[texture(0)]])
 {
     in.lighting = max(in.lighting, 0.05);
-    in.lighting = min(in.lighting, 1.0);
+    in.lighting = min(in.lighting, 2.5);
     
     if (
         in.texture_coordinate[0] < 0.0f

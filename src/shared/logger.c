@@ -590,7 +590,7 @@ internal_log_assert(
 {
     if (condition || !application_running) { return; }
     
-    #ifndef LOGGER_SILENCE 
+    #ifndef LOGGER_SILENCE
     printf(
         "\n*****\nfailed condition (%s::%s::%i: %s\n*****\n",
         file_name != NULL ? file_name : "NULL",

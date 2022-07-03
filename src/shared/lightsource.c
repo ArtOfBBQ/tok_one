@@ -3,13 +3,14 @@
 // The global camera
 // In a 2D game, move the x to the left to move all of your
 // sprites to the right
-zCamera camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+zCamera camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
 zLightSource * zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
     sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
 zLightSource * zlights_transformed = (zLightSource *)malloc_from_unmanaged(
     sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
 uint32_t zlights_to_apply_size = 0;
+uint32_t zlights_transformed_size = 0;
 
 zVertex x_rotate_zvertex(
     const zVertex * input,
@@ -77,12 +78,23 @@ void translate_lights()
 {
     assert(zlights_to_apply_size < ZLIGHTS_TO_APPLY_ARRAYSIZE);
     
+    zlights_transformed_size = 0;
     zVertex translated_light_pos;
     for (uint32_t i = 0; i < zlights_to_apply_size; i++)
     {
         translated_light_pos.x = zlights_to_apply[i].x - camera.x;
         translated_light_pos.y = zlights_to_apply[i].y - camera.y;
         translated_light_pos.z = zlights_to_apply[i].z - camera.z;
+        
+        if (
+            translated_light_pos.x - zlights_to_apply[i].reach >= window_width
+            || translated_light_pos.x + zlights_to_apply[i].reach <= 0
+            || translated_light_pos.y - zlights_to_apply[i].reach >= window_height
+            || translated_light_pos.y + zlights_to_apply[i].reach <= 0)
+        {
+            continue;
+        }
+        
         translated_light_pos = x_rotate_zvertex(
             &translated_light_pos,
             -1 * camera.x_angle);
@@ -93,9 +105,20 @@ void translate_lights()
             &translated_light_pos,
             -1 * camera.z_angle);
         
-        zlights_transformed[i]   = zlights_to_apply[i];
-        zlights_transformed[i].x = translated_light_pos.x;
-        zlights_transformed[i].y = translated_light_pos.y;
-        zlights_transformed[i].z = translated_light_pos.z;
+        zlights_transformed[zlights_transformed_size]   = zlights_to_apply[i];
+        zlights_transformed[zlights_transformed_size].x = translated_light_pos.x;
+        zlights_transformed[zlights_transformed_size].y = translated_light_pos.y;
+        zlights_transformed[zlights_transformed_size].z = translated_light_pos.z;
+        zlights_transformed_size++;
     }
+}
+
+void update_camera_position() {
+    camera.x += camera.next_frame_x_delta;
+    camera.y += camera.next_frame_y_delta;
+    camera.z += camera.next_frame_z_delta;
+    
+    camera.next_frame_x_delta = 0.0f;
+    camera.next_frame_y_delta = 0.0f;
+    camera.next_frame_z_delta = 0.0f;
 }

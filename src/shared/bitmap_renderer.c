@@ -9,6 +9,7 @@ static void triangle_apply_lighting(
     const zLightSource * zlight_source)
 {
     log_assert(zlight_source != NULL);
+    
     if (
         zlight_source == NULL
         || zlight_source->deleted
@@ -25,28 +26,30 @@ static void triangle_apply_lighting(
     {
         float distance =
             sqrtf(
-                (zlight_source->x - out_input[m].x) *
-                (zlight_source->x - out_input[m].x)) +
-            sqrtf(
-                (zlight_source->y - out_input[m].y) *
-                (zlight_source->y - out_input[m].y));
+                (
+                    (zlight_source->x - out_input[m].x) *
+                    (zlight_source->x - out_input[m].x)
+                ) +
+                (
+                    (zlight_source->y - out_input[m].y) *
+                    (zlight_source->y - out_input[m].y)
+                )
+            );
         
-        if (distance < 2.5f) { distance = 2.5f; }
+        if (distance > zlight_source->reach) { continue; }
+        
+        if (distance < 5.0f) { distance = 5.0f; }
         
         float distance_mod =
             (zlight_source->reach - distance) / zlight_source->reach;
         
-        if (distance_mod < 0.03f) { continue; }
-        
         for (uint32_t l = 0; l < 3; l++) {
-            if (zlight_source->RGBA[l] < 0.1f) {
-                continue;
-            }
-            
-            out_input[m].lighting[l] +=
-                zlight_source->RGBA[l] *
+            float modifier = zlight_source->RGBA[l] *
                 zlight_source->ambient *
                 distance_mod;
+            if (modifier > 0.0f) {
+                out_input[m].lighting[l] += modifier;
+            }
         }
     }
 }
@@ -80,13 +83,11 @@ bool32_t touchable_id_to_texquad_object_id(
 }
 
 static bool32_t already_requesting = false;
-static uint32_t previous_request_tq_size = 0;
 void request_texquad_renderable(
     TexQuad * to_add)
 {
     log_assert(!already_requesting);
     already_requesting = true;
-    log_assert(previous_request_tq_size == texquads_to_render_size);
     log_assert(to_add->visible);
     log_assert(to_add->deleted == 0);
     log_assert(to_add->width_pixels > 0);
@@ -107,7 +108,6 @@ void request_texquad_renderable(
     
     texquads_to_render[texquads_to_render_size] = *to_add;
     texquads_to_render_size += 1;
-    previous_request_tq_size = texquads_to_render_size;
     assert(texquads_to_render_size < TEXQUADS_TO_RENDER_ARRAYSIZE);
     already_requesting = false;
 }
@@ -170,7 +170,7 @@ static void add_quad_to_gpu_workload(
         return;
     }
     
-    log_assert(to_add->subquads_per_row < 30);
+    log_assert(to_add->subquads_per_row < 50);
     if (!application_running) { return; }
     
     for (
@@ -356,7 +356,7 @@ static void add_quad_to_gpu_workload(
                     bottomright_rotated);
             
             if (!to_add->ignore_lighting) {
-                for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
+                for (uint32_t i = 0; i < zlights_transformed_size; i++) {
                     triangle_apply_lighting(
                         /* Vertex[3] out_input: */
                             topleft_rotated,
@@ -464,7 +464,20 @@ void draw_texquads_to_render(
     {
         if (
             texquads_to_render[i].visible
-            && !texquads_to_render[i].deleted)
+            && !texquads_to_render[i].deleted
+            && texquads_to_render[i].left_pixels -
+                (texquads_to_render[i].ignore_camera ? 0 : camera.x)
+                    <= window_width
+            && texquads_to_render[i].left_pixels +
+                texquads_to_render[i].width_pixels -
+                    (texquads_to_render[i].ignore_camera ? 0 : camera.x) >= 0
+            && texquads_to_render[i].top_pixels -
+                texquads_to_render[i].height_pixels - 
+                    (texquads_to_render[i].ignore_camera ? 0 : camera.y)
+                        <= window_height
+            && texquads_to_render[i].top_pixels -
+                (texquads_to_render[i].ignore_camera ? 0 : camera.y)
+                    >= 0)
         {
             log_assert(i < sizeof(sorted_texquads)/sizeof(*sorted_texquads));
             log_assert(i <= texquads_to_render_size);
@@ -502,3 +515,37 @@ void draw_texquads_to_render(
     }
 }
 
+void clean_deleted_texquads() {
+    
+    if (texquads_to_render_size < 2) { return; }
+    
+    uint32_t i = 0;
+    uint32_t j = texquads_to_render_size - 1;
+    
+    if (i == j) { return; }
+    
+    while (true) {
+        // seek the first non-deleted texquad from the right
+        while (texquads_to_render[j].deleted && j > i) {
+            log_assert(texquads_to_render_size > 0);
+            texquads_to_render_size--;
+            j--;
+        }
+        
+        // seek the first deleted texquad from the left
+        while (!texquads_to_render[i].deleted && i < j) {
+            i++;
+        }
+        
+        if (j > i) {
+            // now i is deleted and j is live, swap them
+            texquads_to_render[i] = texquads_to_render[j];
+            texquads_to_render[j].deleted = true;
+            j--;
+            log_assert(texquads_to_render_size > 0);
+            texquads_to_render_size--;
+        } else {
+            break;
+        }
+    }
+}

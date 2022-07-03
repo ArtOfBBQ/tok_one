@@ -274,14 +274,14 @@ void client_logic_startup() {
     TexQuad sample_quad;
     construct_texquad(&sample_quad);
     sample_quad.object_id = 5;
-    sample_quad.subquads_per_row = 5;
+    sample_quad.subquads_per_row = 40;
     sample_quad.touchable_id = -1;
-    sample_quad.texturearray_i = 1;
+    sample_quad.texturearray_i = 2;
     sample_quad.texture_i = 0;
-    sample_quad.left_pixels = (window_width / 2) - 250;
-    sample_quad.top_pixels = (window_height / 2) + 250;
-    sample_quad.width_pixels = 500;
-    sample_quad.height_pixels = 500;
+    sample_quad.left_pixels = 0;
+    sample_quad.top_pixels = window_height;
+    sample_quad.width_pixels = window_width * 0.25f;
+    sample_quad.height_pixels = window_height * 0.25f;
     request_texquad_renderable(&sample_quad);
     
     char * sample_text =
@@ -323,6 +323,7 @@ void client_logic_animation_callback(int32_t callback_id)
     log_append("\n");
 }
 
+uint32_t cur_color_i = 0;
 static void client_handle_mouseevents(
     uint64_t microseconds_elapsed)
 {
@@ -405,13 +406,34 @@ static void client_handle_mouseevents(
         zlights_to_apply[new_zlight_i].x = location_x;
         zlights_to_apply[new_zlight_i].y = location_y;
         zlights_to_apply[new_zlight_i].z = 50;
-        zlights_to_apply[new_zlight_i].RGBA[0] =
-            0.1f * (float)(tok_rand() % 10);
-        zlights_to_apply[new_zlight_i].RGBA[1] =
-            0.1f * (float)(tok_rand() % 10);
-        zlights_to_apply[new_zlight_i].RGBA[2] =
-            0.1f * (float)(tok_rand() % 10);
-        zlights_to_apply[new_zlight_i].RGBA[3] = 1.0f;
+        
+        if (cur_color_i == 0) {
+            zlights_to_apply[new_zlight_i].RGBA[0] = 1.0f;
+            zlights_to_apply[new_zlight_i].RGBA[1] = 0.0f;
+            zlights_to_apply[new_zlight_i].RGBA[2] = 0.0f;
+            zlights_to_apply[new_zlight_i].RGBA[3] = 1.0f;
+        } else if (cur_color_i == 1) {
+            zlights_to_apply[new_zlight_i].RGBA[0] = 0.0f;
+            zlights_to_apply[new_zlight_i].RGBA[1] = 1.0f;
+            zlights_to_apply[new_zlight_i].RGBA[2] = 0.0f;
+            zlights_to_apply[new_zlight_i].RGBA[3] = 1.0f;
+        } else if (cur_color_i == 2) {
+            zlights_to_apply[new_zlight_i].RGBA[0] = 0.0f;
+            zlights_to_apply[new_zlight_i].RGBA[1] = 0.0f;
+            zlights_to_apply[new_zlight_i].RGBA[2] = 1.0f;
+            zlights_to_apply[new_zlight_i].RGBA[3] = 1.0f;
+        } else {
+            zlights_to_apply[new_zlight_i].RGBA[0] =
+                0.1f * (float)(tok_rand() % 10);
+            zlights_to_apply[new_zlight_i].RGBA[1] =
+                0.1f * (float)(tok_rand() % 10);
+            zlights_to_apply[new_zlight_i].RGBA[2] =
+                0.1f * (float)(tok_rand() % 10);
+            zlights_to_apply[new_zlight_i].RGBA[3] = 1.0f;
+        }
+        cur_color_i += 1;
+        if (cur_color_i > 2) { cur_color_i = 0; }
+        
         zlights_to_apply[new_zlight_i].ambient = 1.0f;
         zlights_to_apply[new_zlight_i].diffuse = 0.0f;
         zlights_to_apply[new_zlight_i].reach = 200.0f;
@@ -419,6 +441,7 @@ static void client_handle_mouseevents(
              zlights_to_apply_size += 1;
         }
         
+        /*
         ScheduledAnimation moveupandright;
         construct_scheduled_animation(&moveupandright);
         moveupandright.affected_object_id = touch_highlight.object_id;
@@ -426,11 +449,12 @@ static void client_handle_mouseevents(
         moveupandright.delta_x_per_second = 150;
         moveupandright.delta_y_per_second = 150;
         request_scheduled_animation(&moveupandright);
+        */
         
         ScheduledAnimation vanish;
         construct_scheduled_animation(&vanish);
         vanish.affected_object_id = touch_highlight.object_id;
-        vanish.wait_first_microseconds = 2000000;
+        vanish.wait_first_microseconds = 4000000;
         vanish.remaining_microseconds = 3000000;
         vanish.delete_object_when_finished = true;
         vanish.rgba_delta_per_second[0] = -0.5f;

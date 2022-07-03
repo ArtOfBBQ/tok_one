@@ -45,5 +45,6 @@ void draw_texquads_to_render(
     uint32_t * next_gpu_workload_size,
     const zLightSource * zlights_transformed);
 
-#endif
+void clean_deleted_texquads();
 
+#endif

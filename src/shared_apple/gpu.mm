@@ -25,7 +25,7 @@ static uint32_t already_drawing = false;
     NSError *Error = NULL;
     id<MTLLibrary> shader_library =
         [metal_device newDefaultLibrary];
-
+    
     if (shader_library == NULL)
     {
         log_append("failed to load default shader lib, trying ");
@@ -96,13 +96,14 @@ static uint32_t already_drawing = false;
     }
     
     int32_t page_size = getpagesize();
-    uint32_t buffered_vertex_size = (uint32_t)page_size * 1000;
+    uint32_t buffered_vertex_size = (uint32_t)page_size * 5000;
     
     _vertex_buffers = [[NSMutableArray alloc] init];
     
-    for (uint32_t frame_i = 0;
-         frame_i < 3;
-         frame_i++)
+    for (
+        uint32_t frame_i = 0;
+        frame_i < 3;
+        frame_i++)
     {
         BufferedVertexCollection buffered_vertex = {};
         buffered_vertex.vertices =
@@ -316,7 +317,10 @@ static uint32_t already_drawing = false;
     
     touchable_triangles_size = 0;
     
+    update_camera_position();
+    
     clean_deleted_lights();
+    clean_deleted_texquads();
     
     // translate all lights
     translate_lights();
