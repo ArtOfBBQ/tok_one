@@ -276,7 +276,7 @@ void client_logic_startup() {
     sample_quad.object_id = 5;
     sample_quad.subquads_per_row = 40;
     sample_quad.touchable_id = -1;
-    sample_quad.texturearray_i = 2;
+    sample_quad.texturearray_i = 1;
     sample_quad.texture_i = 0;
     sample_quad.left_pixels = 0;
     sample_quad.top_pixels = window_height;
@@ -441,7 +441,6 @@ static void client_handle_mouseevents(
              zlights_to_apply_size += 1;
         }
         
-        /*
         ScheduledAnimation moveupandright;
         construct_scheduled_animation(&moveupandright);
         moveupandright.affected_object_id = touch_highlight.object_id;
@@ -449,7 +448,6 @@ static void client_handle_mouseevents(
         moveupandright.delta_x_per_second = 150;
         moveupandright.delta_y_per_second = 150;
         request_scheduled_animation(&moveupandright);
-        */
         
         ScheduledAnimation vanish;
         construct_scheduled_animation(&vanish);

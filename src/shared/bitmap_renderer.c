@@ -1,7 +1,6 @@
 #include "bitmap_renderer.h"
 
-TexQuad * texquads_to_render = (TexQuad *)malloc_from_unmanaged(
-    sizeof(TexQuad) * TEXQUADS_TO_RENDER_ARRAYSIZE);
+TexQuad * texquads_to_render = NULL;
 uint32_t texquads_to_render_size = 0;
 
 static void triangle_apply_lighting(

@@ -371,7 +371,7 @@ internal_log_append(
             /* origin: */
                 caller_function_name);
         
-        char * prefix = "[";
+        char * prefix = (char *)"[";
         uint32_t prefix_length = get_string_length(prefix);
         assert(log_i + prefix_length < LOG_SIZE);
         copy_strings(
@@ -398,7 +398,7 @@ internal_log_append(
         log_i += func_length;
         assert(log_i < LOG_SIZE);
         
-        char * glue = "]: ";
+        char * glue = (char *)"]: ";
         uint32_t glue_length = get_string_length(glue);
         assert(log_i + glue_length < LOG_SIZE);
         copy_strings(

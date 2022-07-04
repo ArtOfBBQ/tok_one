@@ -3,6 +3,7 @@
 #include "../shared/logger.h"
 #include "../shared/common.h"
 #include "../shared/tok_random.h"
+#include "../shared/lightsource.h"
 #include "../shared_apple/gpu.h"
 #include "../shared/userinput.h"
 #include "../shared/window_size.h"
@@ -103,7 +104,17 @@ NSWindowWithCustomResponder: NSWindow
 
 int main(int argc, const char * argv[]) 
 {
+    unmanaged_memory = (uint8_t *)malloc(UNMANAGED_MEMORY_SIZE);
+    managed_memory = (uint8_t *)malloc(MANAGED_MEMORY_SIZE);
+    
     setup_log();
+    
+    zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
+        sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
+    zlights_transformed = (zLightSource *)malloc_from_unmanaged(
+        sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
+    texquads_to_render = (TexQuad *)malloc_from_unmanaged(
+        sizeof(TexQuad) * TEXQUADS_TO_RENDER_ARRAYSIZE);
     
     @autoreleasepool {
     log_append("starting application...\n");

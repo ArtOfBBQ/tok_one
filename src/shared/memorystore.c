@@ -1,10 +1,10 @@
 #include "memorystore.h"
 
-#define MEM_ALIGNMENT_BYTES 8
+#define MEM_ALIGNMENT_BYTES 16
 
-uint8_t * unmanaged_memory = (uint8_t *)malloc(UNMANAGED_MEMORY_SIZE);
+uint8_t * unmanaged_memory = NULL;
 uint64_t unmanaged_memory_size = UNMANAGED_MEMORY_SIZE;
-uint8_t * managed_memory = (uint8_t *)malloc(MANAGED_MEMORY_SIZE);
+uint8_t * managed_memory = NULL;
 uint64_t managed_memory_size = MANAGED_MEMORY_SIZE;
 
 uint8_t * malloc_from_unmanaged(uint64_t size) {

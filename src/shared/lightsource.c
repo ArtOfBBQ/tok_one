@@ -5,10 +5,8 @@
 // sprites to the right
 zCamera camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
-zLightSource * zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
-    sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
-zLightSource * zlights_transformed = (zLightSource *)malloc_from_unmanaged(
-    sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
+zLightSource * zlights_to_apply = NULL;
+zLightSource * zlights_transformed = NULL;
 uint32_t zlights_to_apply_size = 0;
 uint32_t zlights_transformed_size = 0;
 
@@ -122,3 +120,4 @@ void update_camera_position() {
     camera.next_frame_y_delta = 0.0f;
     camera.next_frame_z_delta = 0.0f;
 }
+
