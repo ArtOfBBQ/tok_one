@@ -120,7 +120,7 @@ void request_fade_and_destroy(
     modify_alpha.affected_object_id = object_id;
     modify_alpha.wait_first_microseconds =
         wait_first_microseconds;
-    modify_alpha.remaining_microseconds = duration_microseconds;
+    modify_alpha.duration_microseconds = duration_microseconds;
     modify_alpha.rgba_delta_per_second[3] = change_per_second;
     modify_alpha.delete_object_when_finished = true;
     request_scheduled_animation(&modify_alpha);
@@ -174,7 +174,7 @@ void request_fade_to(
     modify_alpha.affected_object_id = object_id;
     modify_alpha.wait_first_microseconds =
         wait_first_microseconds;
-    modify_alpha.remaining_microseconds = duration_microseconds;
+    modify_alpha.duration_microseconds = duration_microseconds;
     modify_alpha.rgba_delta_per_second[3] = change_per_second;
     request_scheduled_animation(&modify_alpha);
 }
@@ -218,10 +218,8 @@ void resolve_animation_effects(
         
         log_assert(anim->wait_first_microseconds == 0);
         
-        actual_elapsed =
-            anim->remaining_microseconds > actual_elapsed ?
-                actual_elapsed :
-                    anim->remaining_microseconds;
+        actual_elapsed = anim->remaining_microseconds > actual_elapsed ?
+            actual_elapsed : anim->remaining_microseconds;
         
         // delete if duration expired
         if (anim->remaining_microseconds == 0)
@@ -487,7 +485,7 @@ void request_dud_dance(const uint32_t object_id)
         construct_scheduled_animation(&move_request);
         move_request.affected_object_id = object_id;
         move_request.wait_first_microseconds = wait_first;
-        move_request.remaining_microseconds = step_size;
+        move_request.duration_microseconds = step_size;
         move_request.delta_x_per_second =
             wait_first % (step_size * 2) == 0 ?
                 window_width * 0.07f
@@ -513,8 +511,7 @@ void request_bump_animation(const uint32_t object_id)
     embiggen_request.final_xscale = 1.35f;
     embiggen_request.final_yscale_known = true;
     embiggen_request.final_yscale = 1.35f;
-    request_scheduled_animation(
-        &embiggen_request);
+    request_scheduled_animation(&embiggen_request);
     
     ScheduledAnimation revert_request;
     construct_scheduled_animation(&revert_request);
@@ -525,6 +522,5 @@ void request_bump_animation(const uint32_t object_id)
     revert_request.final_xscale = 1.0f;
     revert_request.final_yscale_known = true;
     revert_request.final_yscale = 1.0f;
-    request_scheduled_animation(
-        &revert_request);
+    request_scheduled_animation(&revert_request);
 }
