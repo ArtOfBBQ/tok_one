@@ -30,7 +30,8 @@ void construct_scheduled_animation(
         to_construct->rgba_delta_per_second[i] = 0.0f;
     }
     to_construct->wait_first_microseconds = 0;
-    to_construct->remaining_microseconds = 1000000;
+    to_construct->duration_microseconds = 1000000;
+    to_construct->runs = 1;
     to_construct->delete_object_when_finished = false;
     to_construct->deleted = false;
     to_construct->clientlogic_callback_when_finished_id = -1;
@@ -40,7 +41,8 @@ void request_scheduled_animation(
     ScheduledAnimation * to_add)
 {
     log_assert(to_add != NULL);
-    log_assert(to_add->remaining_microseconds > 0);
+    log_assert(to_add->duration_microseconds > 0);
+    to_add->remaining_microseconds = to_add->duration_microseconds;
     
     log_assert(scheduled_animations_size < SCHEDULED_ANIMATIONS_ARRAYSIZE);
     for (
@@ -224,6 +226,16 @@ void resolve_animation_effects(
         // delete if duration expired
         if (anim->remaining_microseconds == 0)
         {
+            if (anim->runs > 1 || anim->runs == 0) {
+                if (anim->runs > 1) {
+                    anim->runs -= 1; }
+                else {
+                    log_assert(anim->runs == 0);
+                }
+                anim->remaining_microseconds = anim->duration_microseconds;
+                return;
+            }
+            
             anim->deleted = true;
             if (animation_i == (int32_t)scheduled_animations_size)
             {
@@ -496,7 +508,7 @@ void request_bump_animation(const uint32_t object_id)
     ScheduledAnimation embiggen_request;
     construct_scheduled_animation(&embiggen_request);
     embiggen_request.affected_object_id = object_id;
-    embiggen_request.remaining_microseconds = duration / 2;
+    embiggen_request.duration_microseconds = duration / 2;
     embiggen_request.final_xscale_known = true;
     embiggen_request.final_xscale = 1.35f;
     embiggen_request.final_yscale_known = true;
@@ -508,7 +520,7 @@ void request_bump_animation(const uint32_t object_id)
     construct_scheduled_animation(&revert_request);
     revert_request.affected_object_id = object_id;
     revert_request.wait_first_microseconds = duration / 2;
-    revert_request.remaining_microseconds = duration / 2;
+    revert_request.duration_microseconds = duration / 2;
     revert_request.final_xscale_known = true;
     revert_request.final_xscale = 1.0f;
     revert_request.final_yscale_known = true;

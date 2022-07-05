@@ -278,11 +278,19 @@ void client_logic_startup() {
     sample_quad.touchable_id = -1;
     sample_quad.texturearray_i = 1;
     sample_quad.texture_i = 0;
-    sample_quad.left_pixels = 0;
-    sample_quad.top_pixels = window_height;
-    sample_quad.width_pixels = window_width * 0.25f;
-    sample_quad.height_pixels = window_height * 0.25f;
+    sample_quad.left_pixels = 25;
+    sample_quad.top_pixels = window_height - 25;
+    sample_quad.width_pixels = window_width * 0.5f;
+    sample_quad.height_pixels = window_height * 0.5f;
     request_texquad_renderable(&sample_quad);
+    
+    ScheduledAnimation rotate_forever;
+    construct_scheduled_animation(&rotate_forever);
+    rotate_forever.affected_object_id = 5;
+    rotate_forever.z_rotation_per_second = 1.8f;
+    rotate_forever.remaining_microseconds = 6000000;
+    rotate_forever.runs = 0;
+    request_scheduled_animation(&rotate_forever);
     
     char * sample_text =
         (char *)"This could totally be a backtrace\nBut first we need to render text in a somewhat presentable way.\nLet's work on that...\n";

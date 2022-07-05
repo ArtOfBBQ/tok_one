@@ -45,7 +45,7 @@ static void triangle_apply_lighting(
         for (uint32_t l = 0; l < 3; l++) {
             float modifier = zlight_source->RGBA[l] *
                 zlight_source->ambient *
-                distance_mod;
+                    distance_mod;
             if (modifier > 0.0f) {
                 out_input[m].lighting[l] += modifier;
             }
@@ -171,6 +171,11 @@ static void add_quad_to_gpu_workload(
     
     log_assert(to_add->subquads_per_row < 50);
     if (!application_running) { return; }
+    
+    float parent_quad_middle_x =
+        to_add->left_pixels + (to_add->width_pixels / 2) - camera.x;
+    float parent_quad_middle_y =
+        to_add->top_pixels - (to_add->height_pixels / 2) - camera.y;
     
     for (
         uint32_t sq_row_i = 0;
@@ -334,9 +339,9 @@ static void add_quad_to_gpu_workload(
                 /* input: */
                     topleft,
                 /* around_x : */
-                    (left + right) * 0.5f,
+                    parent_quad_middle_x,
                 /* around_y : */
-                    (top + bottom) * 0.5f,
+                    parent_quad_middle_y,
                 /* by_angle: */
                     to_add->z_angle,
                 /* recipient: */
@@ -346,9 +351,9 @@ static void add_quad_to_gpu_workload(
                 /* input: */
                     bottomright,
                 /* around_x : */
-                    (left + right) * 0.5f,
+                    parent_quad_middle_x,
                 /* around_y : */
-                    (top + bottom) * 0.5f,
+                    parent_quad_middle_y,
                 /* by_angle: */
                     to_add->z_angle,
                 /* recipient: */

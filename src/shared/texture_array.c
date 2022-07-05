@@ -419,7 +419,7 @@ DecodedImage * extract_image(
     {
         // get the pixel that's at [start_x, cur_y]
         // copcur_y slice_width pixels
-        uint32_t pixel_i =
+        uint64_t pixel_i =
             ((start_x - 1) * 4)
                 + ((cur_y - 1) * texture_array->image->width * 4);
         log_assert(i < new_image->rgba_values_size);

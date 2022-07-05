@@ -68,7 +68,9 @@ typedef struct ScheduledAnimation {
     
     float rgba_delta_per_second[4];
     uint64_t wait_first_microseconds; // wait, then run animation
-    uint64_t remaining_microseconds;  // animation duration
+    uint64_t duration_microseconds;   // duration at the start of each run
+    uint64_t remaining_microseconds;  // remaining duration (this run)
+    uint32_t runs; // 0 to repeat forever, 1 to run once, 2 to run & repeat 1x 
     bool32_t delete_object_when_finished;
     bool32_t deleted;
     // ****
