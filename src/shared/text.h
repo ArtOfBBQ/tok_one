@@ -1,11 +1,16 @@
 #ifndef TEXT_H
 #define TEXT_H
 
+#include "platform_layer.h"
 #include "bitmap_renderer.h"
 
 extern int32_t font_texturearray_i;
 extern float font_height;
 extern float font_color[4];
+
+void init_font(
+    const char * raw_fontmetrics_file_contents,
+    const uint32_t raw_fontmetrics_file_size);
 
 void request_label_around(
     const uint32_t with_object_id,

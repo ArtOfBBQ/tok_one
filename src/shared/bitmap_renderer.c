@@ -175,7 +175,9 @@ static void add_quad_to_gpu_workload(
     float parent_quad_middle_x =
         to_add->left_pixels + (to_add->width_pixels / 2) - camera.x;
     float parent_quad_middle_y =
-        to_add->top_pixels - (to_add->height_pixels / 2) - camera.y;
+        to_add->top_pixels -
+            (to_add->height_pixels / 2) -
+                camera.y;
     
     for (
         uint32_t sq_row_i = 0;

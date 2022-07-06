@@ -45,6 +45,7 @@
 		6080CC492870182700444118 /* common.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC472870182700444118 /* common.h */; };
 		6080CC4A2870182700444118 /* bitmap_renderer.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC482870182700444118 /* bitmap_renderer.h */; };
 		608802F2286DCBE700B81255 /* clientlogic.h in Sources */ = {isa = PBXBuildFile; fileRef = 608802F1286DCBE700B81255 /* clientlogic.h */; };
+		60DA6A0D287635FF00B39521 /* fontprep.dat in Resources */ = {isa = PBXBuildFile; fileRef = 60DA6A0C287635FF00B39521 /* fontprep.dat */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -107,6 +108,7 @@
 		6080CC472870182700444118 /* common.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = common.h; path = ../../src/shared/common.h; sourceTree = "<group>"; };
 		6080CC482870182700444118 /* bitmap_renderer.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = bitmap_renderer.h; path = ../../src/shared/bitmap_renderer.h; sourceTree = "<group>"; };
 		608802F1286DCBE700B81255 /* clientlogic.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = clientlogic.h; path = ../../src/shared/clientlogic.h; sourceTree = "<group>"; };
+		60DA6A0C287635FF00B39521 /* fontprep.dat */ = {isa = PBXFileReference; lastKnownFileType = file; name = fontprep.dat; path = ../../resources/fontprep.dat; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -221,6 +223,7 @@
 			isa = PBXGroup;
 			children = (
 				601128AC28625BAF00F92967 /* font.png */,
+				60DA6A0C287635FF00B39521 /* fontprep.dat */,
 				6080CC45286FFD1D00444118 /* phoebus.png */,
 				601128A928625BAE00F92967 /* structuredart1.png */,
 				601128AA28625BAE00F92967 /* structuredart2.png */,
@@ -286,6 +289,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				60DA6A0D287635FF00B39521 /* fontprep.dat in Resources */,
 				6080CC46286FFD1E00444118 /* phoebus.png in Resources */,
 				601128AD28625BAF00F92967 /* structuredart1.png in Resources */,
 				601128AE28625BAF00F92967 /* structuredart2.png in Resources */,

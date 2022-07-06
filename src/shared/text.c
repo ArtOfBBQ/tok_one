@@ -1,13 +1,41 @@
 #include "text.h"
 
+#pragma pack(push, 1)
+typedef struct FontCodepointOffset {
+    char character;
+    int advance_width;
+    int left_side_bearing;
+    float scale_factor;
+} FontCodepointOffset;
+#pragma pack(pop)
+
 int32_t font_texturearray_i = 0;
 float font_height = 40.0f;
 float font_color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 
+uint32_t font_codepoint_offsets_size = 0;
+FontCodepointOffset * font_codepoint_offsets = NULL;
+
+void init_font(
+    const char * raw_fontmetrics_file_contents,
+    const uint32_t raw_fontmetrics_file_size)
+{
+    log_assert(raw_fontmetrics_file_size % sizeof(FontCodepointOffset) == 0);
+    font_codepoint_offsets_size =
+        raw_fontmetrics_file_size / sizeof(FontCodepointOffset);
+    
+    font_codepoint_offsets =
+        (FontCodepointOffset *)raw_fontmetrics_file_contents;
+}
+
 static float get_char_width(
     const char * input)
 {
-    return font_height;
+    uint32_t i = (uint32_t)(*input - '!');
+    log_assert(font_codepoint_offsets[i].character == *input);
+    
+    return (font_codepoint_offsets[i].advance_width *
+        font_codepoint_offsets[i].scale_factor * font_height) / 64.0f;
 }
 
 static uint32_t find_next_linebreak(
@@ -90,7 +118,7 @@ void request_label_around(
             letter.ignore_camera = ignore_camera;
             letter.object_id = with_id;
             letter.texturearray_i = font_texturearray_i;
-            letter.texture_i = text_to_draw[i] - '0';
+            letter.texture_i = text_to_draw[i] - '!';
             for (
                 uint32_t rgba_i = 0;
                 rgba_i < 4;
@@ -143,7 +171,7 @@ void request_label_renderable(
             i++;
             continue;
         }
-
+        
         if ((cur_left - left_pixelspace) > max_width) {
             cur_left = left_pixelspace;
             cur_top -= font_height;
@@ -153,7 +181,12 @@ void request_label_renderable(
         construct_texquad(&letter);
         letter.object_id = with_id;
         letter.texturearray_i = font_texturearray_i;
-        letter.texture_i = text_to_draw[i] - '0';
+        letter.texture_i = (int32_t)(text_to_draw[i] - '!');
+        printf(
+            "assigning texture_i: %i for char: %c\n",
+            letter.texture_i,
+            text_to_draw[i]);
+        
         for (
             uint32_t rgba_i = 0;
             rgba_i < 4;

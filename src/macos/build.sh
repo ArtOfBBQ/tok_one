@@ -1,8 +1,8 @@
 APP_NAME="hello3dgfx"
 PLATFORM="macos"
 # COMPILER_ARGS="-fsanitize=address -finstrument-functions -Wall -x objective-c++ -std="c++17" -g -o0 -objC"
-COMPILER_ARGS="-fsanitize=address -Wall -x objective-c++ -std="c++17" -g -o0 -objC"
-# COMPILER_ARGS="-Wall -x objective-c++ -std="c++17" -g -o0 -objC"
+# COMPILER_ARGS="-fsanitize=address -Wall -x objective-c++ -std="c++17" -g -o0 -objC"
+COMPILER_ARGS="-Wall -x objective-c++ -std="c++17" -g -o0 -objC"
 
 # echo "Booting without building..."
 # cd build/$PLATFORM/$APP_NAME.app && lldb ./$APP_NAME
@@ -37,8 +37,7 @@ echo "skipping resource copy..."
 echo "copy resources..."
 rm build/$PLATFORM/$APP_NAME.app/*.png
 rm build/$PLATFORM/$APP_NAME.app/*.obj
-cp resources/cardwithuvcoords.obj build/$PLATFORM/$APP_NAME.app/cardwithuvcoords.obj
-cp resources/teapot.obj build/$PLATFORM/$APP_NAME.app/teapot.obj
+cp resources/fontmetrics.dat build/$PLATFORM/$APP_NAME.app/fontmetrics.dat
 cp resources/*.png build/$PLATFORM/$APP_NAME.app
 
 echo "Compiling & linking $APP_NAME..."

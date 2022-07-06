@@ -49,8 +49,8 @@ static void preregister_assets() {
             "average rgba for texture_arrays[0] was 0\n");
         log_dump_and_crash();
     }
-    texture_arrays[0].sprite_columns = 9;
-    texture_arrays[0].sprite_rows = 9;
+    texture_arrays[0].sprite_columns = 10;
+    texture_arrays[0].sprite_rows = 10;
     texture_arrays[0].request_update = false;
     
     font_height = 40.0f; 
@@ -276,8 +276,8 @@ void client_logic_startup() {
     sample_quad.object_id = 5;
     sample_quad.subquads_per_row = 40;
     sample_quad.touchable_id = -1;
-    sample_quad.texturearray_i = 1;
-    sample_quad.texture_i = 0;
+    sample_quad.texturearray_i = 0;
+    sample_quad.texture_i = 25;
     sample_quad.left_pixels = 25;
     sample_quad.top_pixels = window_height - 25;
     sample_quad.width_pixels = window_width * 0.5f;
@@ -578,14 +578,13 @@ static void client_handle_touches(
 }
 
 bool32_t fading_out = true;
-char fps_string[8] = "zlt: xx";
+char fps_string[8] = "fps: xx";
 
 void client_logic_update(
     uint64_t microseconds_elapsed)
 {
     // TODO: our timer is weirdly broken on iOS. Fix it!
-    // uint64_t fps = 1000000 / microseconds_elapsed;
-    uint64_t fps = (uint64_t)zlights_to_apply_size;
+    uint64_t fps = 1000000 / microseconds_elapsed;
     /*
     float elapsed_mod =
         (float)((double)microseconds_elapsed / (double)16666);
