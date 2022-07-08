@@ -5,37 +5,89 @@ typedef struct FontCodepointOffset {
     char character;
     int advance_width;
     int left_side_bearing;
-    float scale_factor;
+    int y_offset;
 } FontCodepointOffset;
+
+typedef struct FontMetrics {
+    // a global multiplier for all font metrics
+    float scale_factor;
+    // the font size that was used when generating the bitmaps
+    float font_size_at_generation;
+    // lineGap is the spacing between one row's descent and the next row's
+    // ascent... so you should advance the vertical position by
+    // "ascent - descent + lineGap"
+    int linegap;
+    int codepoints_in_font;
+} FontMetrics;
 #pragma pack(pop)
 
 int32_t font_texturearray_i = 0;
-float font_height = 40.0f;
+float font_height = 40.0;
 float font_color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 
 uint32_t font_codepoint_offsets_size = 0;
+FontMetrics * font_metrics = NULL;
 FontCodepointOffset * font_codepoint_offsets = NULL;
 
 void init_font(
     const char * raw_fontmetrics_file_contents,
-    const uint32_t raw_fontmetrics_file_size)
+    const uint64_t raw_fontmetrics_file_size)
 {
-    log_assert(raw_fontmetrics_file_size % sizeof(FontCodepointOffset) == 0);
-    font_codepoint_offsets_size =
-        raw_fontmetrics_file_size / sizeof(FontCodepointOffset);
+    char * buffer_at = (char *)raw_fontmetrics_file_contents;
+    log_assert(sizeof(FontMetrics) < raw_fontmetrics_file_size);
+    font_metrics = (FontMetrics *)buffer_at;
+    buffer_at += sizeof(FontMetrics);
+    uint64_t filesize_remaining =
+        raw_fontmetrics_file_size - sizeof(FontMetrics);
     
+    font_codepoint_offsets_size = (uint32_t)font_metrics->codepoints_in_font;
+    log_assert(
+        filesize_remaining % sizeof(FontCodepointOffset) == 0);
+    log_assert(
+        filesize_remaining ==
+            font_codepoint_offsets_size * sizeof(FontCodepointOffset));
     font_codepoint_offsets =
-        (FontCodepointOffset *)raw_fontmetrics_file_contents;
+        (FontCodepointOffset *)buffer_at;
 }
 
-static float get_char_width(
-    const char * input)
+static float get_advance_width(
+    const char input)
 {
-    uint32_t i = (uint32_t)(*input - '!');
-    log_assert(font_codepoint_offsets[i].character == *input);
+    if (input == ' ' || input == '\0' || input == '\n') { return 0.0f; }
     
-    return (font_codepoint_offsets[i].advance_width *
-        font_codepoint_offsets[i].scale_factor * font_height) / 64.0f;
+    uint32_t i = (uint32_t)(input - '!');
+    log_assert(font_codepoint_offsets[i].character == input);
+    
+    return
+        (font_codepoint_offsets[i].advance_width *
+            font_metrics->scale_factor *
+                font_height) / 40.0f;
+}
+
+static float get_left_side_bearing(const char input)
+{
+    if (input == ' ' || input == '\0' || input == '\n') { return 0.0f; }
+    
+    uint32_t i = (uint32_t)(input - '!');
+    log_assert(font_codepoint_offsets[i].character == input);
+    
+    return
+        (font_codepoint_offsets[i].left_side_bearing *
+            font_metrics->scale_factor *
+                font_height) / 40.0f;
+}
+
+static float get_y_offset(const char input)
+{
+    if (input == ' ' || input == '\0' || input == '\n') { return 0.0f; }
+    
+    uint32_t i = (uint32_t)(input - '!');
+    log_assert(font_codepoint_offsets[i].character == input);
+    
+    return ((float)font_codepoint_offsets[i].y_offset
+        * 0.5f
+        * font_height)
+            / 40.0f;
 }
 
 static uint32_t find_next_linebreak(
@@ -99,7 +151,7 @@ void request_label_around(
                 previous_space_i = i;
             }
             
-            line_width += get_char_width(&text_to_draw[i]);
+            line_width += get_advance_width(text_to_draw[i]);
             if (line_width > max_width) {
                 line_end_i = previous_space_i == line_start_i ?
                     i - 1 : previous_space_i;
@@ -112,6 +164,11 @@ void request_label_around(
             i <= line_end_i;
             i++)
         {
+            if (text_to_draw[i] == ' ') {
+                cur_left += (font_height / 2);
+                continue;
+            }
+            
             TexQuad letter;
             construct_texquad(&letter);
             letter.ignore_lighting = true;
@@ -127,14 +184,14 @@ void request_label_around(
                 letter.RGBA[rgba_i] = font_color[rgba_i];
             }
             
-            letter.left_pixels = cur_left;
-            letter.top_pixels = cur_top;
+            letter.left_pixels = cur_left + get_left_side_bearing(text_to_draw[i]);
+            letter.top_pixels = cur_top - get_y_offset(text_to_draw[i]);
             letter.height_pixels = font_height;
             letter.width_pixels = font_height;
             letter.z = z;
             
             request_texquad_renderable(&letter);
-            cur_left += get_char_width(&text_to_draw[i]);
+            cur_left += get_advance_width(text_to_draw[i]);
         }
         
         cur_top -= font_height;
@@ -159,7 +216,7 @@ void request_label_renderable(
     {
         if (text_to_draw[i] == ' ')
         {
-            cur_left += font_height;
+            cur_left += (font_height / 2);
             i++;
             continue;
         }
@@ -195,8 +252,8 @@ void request_label_renderable(
             letter.RGBA[rgba_i] = font_color[rgba_i];
         }
         
-        letter.left_pixels = cur_left;
-        letter.top_pixels = cur_top;
+        letter.left_pixels = cur_left + get_left_side_bearing(text_to_draw[i]);
+        letter.top_pixels = cur_top - get_y_offset(text_to_draw[i]);
         letter.height_pixels = font_height;
         letter.width_pixels = font_height;
         letter.ignore_lighting = true;
@@ -205,9 +262,8 @@ void request_label_renderable(
         
         request_texquad_renderable(&letter);
         
-        cur_left += get_char_width(&text_to_draw[i]);
+        cur_left += get_advance_width(text_to_draw[i]);
         
         i++;
     }
 }
-

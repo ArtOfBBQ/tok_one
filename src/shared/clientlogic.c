@@ -53,8 +53,6 @@ static void preregister_assets() {
     texture_arrays[0].sprite_rows = 10;
     texture_arrays[0].request_update = false;
     
-    font_height = 40.0f; 
-    
     typedef struct {
         char filename[MAX_ASSET_FILENAME_SIZE];
         int32_t texturearray_i;
@@ -292,14 +290,22 @@ void client_logic_startup() {
     rotate_forever.runs = 0;
     request_scheduled_animation(&rotate_forever);
     
-    char * sample_text =
-        (char *)"This could totally be a backtrace\nBut first we need to render text in a somewhat presentable way.\nLet's work on that...\n";
-    font_height = 10.0f;
+    char * sample_text = (char *)"This is an example text...\n";
     request_label_renderable(
         /* with_id               : */ 100,
         /* char * text_to_draw   : */ sample_text,
         /* float left_pixelspace : */ 20.0f,
         /* float top_pixelspace  : */ window_height - 50.0f,
+        /* z                     : */ 0.5f,
+        /* float max_width       : */ window_width / 2,
+        /* bool32_t ignore_camera: */ false);
+    
+    font_height = 14.0f;
+    request_label_renderable(
+        /* with_id               : */ 100,
+        /* char * text_to_draw   : */ sample_text,
+        /* float left_pixelspace : */ 20.0f,
+        /* float top_pixelspace  : */ window_height - 350.0f,
         /* z                     : */ 0.5f,
         /* float max_width       : */ window_width / 2,
         /* bool32_t ignore_camera: */ false);

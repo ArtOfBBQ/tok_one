@@ -375,6 +375,8 @@ DecodedImage * extract_image(
     log_assert(x > 0);
     log_assert(y > 0);
     log_assert(texture_array != NULL);
+    log_assert(texture_array->image != NULL);
+    log_assert(texture_array->image->rgba_values != NULL);
     if (!application_running) { return NULL; }
     log_assert(texture_array->sprite_columns > 0);
     log_assert(texture_array->sprite_rows > 0);
@@ -422,7 +424,6 @@ DecodedImage * extract_image(
         uint64_t pixel_i =
             ((start_x - 1) * 4)
                 + ((cur_y - 1) * texture_array->image->width * 4);
-        log_assert(i < new_image->rgba_values_size);
         
         if (!application_running) {
             new_image->good = false;
@@ -437,6 +438,7 @@ DecodedImage * extract_image(
             log_assert(
                 (pixel_i + _)
                     < texture_array->image->rgba_values_size);
+            log_assert(i < new_image->rgba_values_size);
             new_image->rgba_values[i] =
                 texture_array->image->rgba_values[pixel_i + _];
             i++;

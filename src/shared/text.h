@@ -10,7 +10,7 @@ extern float font_color[4];
 
 void init_font(
     const char * raw_fontmetrics_file_contents,
-    const uint32_t raw_fontmetrics_file_size);
+    const uint64_t raw_fontmetrics_file_size);
 
 void request_label_around(
     const uint32_t with_object_id,

@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		6009B4F428679E7D00F1F279 /* memorystore.h in Sources */ = {isa = PBXBuildFile; fileRef = 6009B4F228679E7D00F1F279 /* memorystore.h */; };
 		6009B4F528679E7D00F1F279 /* memorystore.c in Sources */ = {isa = PBXBuildFile; fileRef = 6009B4F328679E7D00F1F279 /* memorystore.c */; };
+		6009FB642876A47100FC5A60 /* fontmetrics.dat in Resources */ = {isa = PBXBuildFile; fileRef = 6009FB632876A47100FC5A60 /* fontmetrics.dat */; };
 		6011283F286122FE00F92967 /* inflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 60112839286122FE00F92967 /* inflate.c */; };
 		60112840286122FE00F92967 /* decodedimage.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011283A286122FE00F92967 /* decodedimage.c */; };
 		60112842286122FE00F92967 /* decode_png.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011283D286122FE00F92967 /* decode_png.c */; };
@@ -45,12 +46,12 @@
 		6080CC492870182700444118 /* common.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC472870182700444118 /* common.h */; };
 		6080CC4A2870182700444118 /* bitmap_renderer.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC482870182700444118 /* bitmap_renderer.h */; };
 		608802F2286DCBE700B81255 /* clientlogic.h in Sources */ = {isa = PBXBuildFile; fileRef = 608802F1286DCBE700B81255 /* clientlogic.h */; };
-		60DA6A0D287635FF00B39521 /* fontprep.dat in Resources */ = {isa = PBXBuildFile; fileRef = 60DA6A0C287635FF00B39521 /* fontprep.dat */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		6009B4F228679E7D00F1F279 /* memorystore.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = memorystore.h; path = ../../src/shared/memorystore.h; sourceTree = "<group>"; };
 		6009B4F328679E7D00F1F279 /* memorystore.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = memorystore.c; path = ../../src/shared/memorystore.c; sourceTree = "<group>"; };
+		6009FB632876A47100FC5A60 /* fontmetrics.dat */ = {isa = PBXFileReference; lastKnownFileType = file; name = fontmetrics.dat; path = ../../resources/fontmetrics.dat; sourceTree = "<group>"; };
 		6011281928611F5100F92967 /* engine.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = engine.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6011282928611F7900F92967 /* engine.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = engine.entitlements; sourceTree = "<group>"; };
 		60112838286122FE00F92967 /* decodedimage.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = decodedimage.h; path = ../../src/shared/debigulator/src/decodedimage.h; sourceTree = "<group>"; };
@@ -108,7 +109,6 @@
 		6080CC472870182700444118 /* common.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = common.h; path = ../../src/shared/common.h; sourceTree = "<group>"; };
 		6080CC482870182700444118 /* bitmap_renderer.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = bitmap_renderer.h; path = ../../src/shared/bitmap_renderer.h; sourceTree = "<group>"; };
 		608802F1286DCBE700B81255 /* clientlogic.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = clientlogic.h; path = ../../src/shared/clientlogic.h; sourceTree = "<group>"; };
-		60DA6A0C287635FF00B39521 /* fontprep.dat */ = {isa = PBXFileReference; lastKnownFileType = file; name = fontprep.dat; path = ../../resources/fontprep.dat; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -222,8 +222,8 @@
 		601128B128625BC100F92967 /* resources */ = {
 			isa = PBXGroup;
 			children = (
+				6009FB632876A47100FC5A60 /* fontmetrics.dat */,
 				601128AC28625BAF00F92967 /* font.png */,
-				60DA6A0C287635FF00B39521 /* fontprep.dat */,
 				6080CC45286FFD1D00444118 /* phoebus.png */,
 				601128A928625BAE00F92967 /* structuredart1.png */,
 				601128AA28625BAE00F92967 /* structuredart2.png */,
@@ -289,7 +289,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				60DA6A0D287635FF00B39521 /* fontprep.dat in Resources */,
+				6009FB642876A47100FC5A60 /* fontmetrics.dat in Resources */,
 				6080CC46286FFD1E00444118 /* phoebus.png in Resources */,
 				601128AD28625BAF00F92967 /* structuredart1.png in Resources */,
 				601128AE28625BAF00F92967 /* structuredart2.png in Resources */,
