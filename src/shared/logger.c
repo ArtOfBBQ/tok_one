@@ -303,8 +303,9 @@ internal_log_append_char(
     const char to_append,
     const char * caller_function_name)
 {
-    char to_append_array[1];
+    char to_append_array[2];
     to_append_array[0] = to_append;
+    to_append_array[1] = '\0';
     
     internal_log_append(
         to_append_array,

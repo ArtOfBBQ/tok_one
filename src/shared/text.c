@@ -53,7 +53,11 @@ void init_font(
 static float get_advance_width(
     const char input)
 {
-    if (input == ' ' || input == '\0' || input == '\n') { return 0.0f; }
+    if (input == ' ') {
+        return font_height * 0.5f;
+    }
+    
+    if (input == '\0' || input == '\n') { return 0.0f; }
     
     uint32_t i = (uint32_t)(input - '!');
     log_assert(font_codepoint_offsets[i].character == input);
@@ -112,6 +116,24 @@ static uint32_t find_next_linebreak(
     return i;
 }
 
+static float get_next_word_width(const char * text) {
+    float return_value = 0.0f;
+    
+    uint32_t i = 0;
+    
+    while(text[i] == ' ') {
+        return_value += get_advance_width(text[i]);
+        i++;
+    }
+    
+    while (text[i] != ' ' && text[i] != '\0' && text[i] != '\n') {
+        return_value += get_advance_width(text[i]);
+        i++;
+    }
+    
+    return return_value;
+}
+
 void request_label_around(
     const uint32_t with_id,
     const char * text_to_draw,
@@ -143,18 +165,29 @@ void request_label_around(
             break;
         }
         
-        // enforce maximum line width 
+        // calculate width of current line
         line_width = 0.0f;
-        uint32_t previous_space_i = line_start_i;
-        for (uint32_t i = line_start_i; i <= line_end_i; i++) {
-            if (text_to_draw[i] == ' ') {
-                previous_space_i = i;
+        uint32_t i = line_start_i;
+        while (true) {
+            line_width += get_advance_width(text_to_draw[i]);
+            
+            log_assert(line_width <= max_width);
+            
+            i++;
+            if (text_to_draw[i] == '\0') {
+                break;
             }
             
-            line_width += get_advance_width(text_to_draw[i]);
-            if (line_width > max_width) {
-                line_end_i = previous_space_i == line_start_i ?
-                    i - 1 : previous_space_i;
+            if (text_to_draw[i] == ' ') {
+                log_assert(get_next_word_width(text_to_draw + i) > 0.0f);
+                
+                if (
+                    line_width
+                    + get_next_word_width(text_to_draw + i) > max_width)
+                {
+                    line_end_i = i;
+                    break;
+                }
             }
         }
         
@@ -208,16 +241,33 @@ void request_label_renderable(
     const float max_width,
     const bool32_t ignore_camera)
 {
+    log_assert(text_to_draw[0] != '\0');
     float cur_left = left_pixelspace;
     float cur_top = top_pixelspace;
     
     uint32_t i = 0;
+    // ignore leading ' '
+    while (text_to_draw[i] == ' ') {
+        i++;
+    }
+    
     while (text_to_draw[i] != '\0')
     {
         if (text_to_draw[i] == ' ')
         {
             cur_left += (font_height / 2);
             i++;
+
+            // TODO: check if next word fits inside max_width
+            if (
+                ((cur_left +
+                    get_next_word_width(
+                        /* const char * text: */ text_to_draw + i) -
+                            left_pixelspace) > max_width))
+            {
+                cur_left = left_pixelspace;
+                cur_top -= font_height;
+            }
             continue;
         }
         
@@ -229,20 +279,11 @@ void request_label_renderable(
             continue;
         }
         
-        if ((cur_left - left_pixelspace) > max_width) {
-            cur_left = left_pixelspace;
-            cur_top -= font_height;
-        }
-        
         TexQuad letter;
         construct_texquad(&letter);
         letter.object_id = with_id;
         letter.texturearray_i = font_texturearray_i;
         letter.texture_i = (int32_t)(text_to_draw[i] - '!');
-        printf(
-            "assigning texture_i: %i for char: %c\n",
-            letter.texture_i,
-            text_to_draw[i]);
         
         for (
             uint32_t rgba_i = 0;

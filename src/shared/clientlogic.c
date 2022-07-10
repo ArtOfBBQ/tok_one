@@ -290,14 +290,16 @@ void client_logic_startup() {
     rotate_forever.runs = 0;
     request_scheduled_animation(&rotate_forever);
     
-    char * sample_text = (char *)"This is an example text...\n";
-    request_label_renderable(
+    char * sample_text = (char *)"This is an example text, which should be big enough that it wraps the entire screen and therefore allows us to test the functionality where lines are broken up to appear on the next line automatically. By the way, it's been absolutely incredible working on this project. I'm so happy that we've come this far and can't wait to keep pushing forward to finish text. If we can just finish text and include sound functionality, we'll be able to push an actual update to lore seeker's existing apps while using the new engine in production, something I never could have dreamed when I started this.\n";
+    uint32_t sample_text_size = get_string_length(sample_text);
+    request_label_around(
         /* with_id               : */ 100,
         /* char * text_to_draw   : */ sample_text,
-        /* float left_pixelspace : */ 20.0f,
+        /* text_to_draw_size     : */ sample_text_size,
+        /* mid_x_pixelspace      : */ window_width * 0.5f,
         /* float top_pixelspace  : */ window_height - 50.0f,
         /* z                     : */ 0.5f,
-        /* float max_width       : */ window_width / 2,
+        /* float max_width       : */ window_width,
         /* bool32_t ignore_camera: */ false);
     
     font_height = 14.0f;
@@ -305,7 +307,7 @@ void client_logic_startup() {
         /* with_id               : */ 100,
         /* char * text_to_draw   : */ sample_text,
         /* float left_pixelspace : */ 20.0f,
-        /* float top_pixelspace  : */ window_height - 350.0f,
+        /* float top_pixelspace  : */ window_height - 550.0f,
         /* z                     : */ 0.5f,
         /* float max_width       : */ window_width / 2,
         /* bool32_t ignore_camera: */ false);
