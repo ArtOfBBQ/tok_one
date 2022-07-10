@@ -24,6 +24,7 @@ typedef struct FontMetrics {
 int32_t font_texturearray_i = 0;
 float font_height = 40.0;
 float font_color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+bool32_t font_ignore_lighting = true;
 
 uint32_t font_codepoint_offsets_size = 0;
 FontMetrics * font_metrics = NULL;
@@ -204,7 +205,7 @@ void request_label_around(
             
             TexQuad letter;
             construct_texquad(&letter);
-            letter.ignore_lighting = true;
+            letter.ignore_lighting = font_ignore_lighting;
             letter.ignore_camera = ignore_camera;
             letter.object_id = with_id;
             letter.texturearray_i = font_texturearray_i;
@@ -297,7 +298,7 @@ void request_label_renderable(
         letter.top_pixels = cur_top - get_y_offset(text_to_draw[i]);
         letter.height_pixels = font_height;
         letter.width_pixels = font_height;
-        letter.ignore_lighting = true;
+        letter.ignore_lighting = font_ignore_lighting;
         letter.ignore_camera = ignore_camera;
         letter.z = z;
         

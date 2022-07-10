@@ -26,10 +26,9 @@ zPolygon load_from_obj_file(char * filename)
         filename,
         &buffer);
     
-    zPolygon return_value =
-        parse_obj(
-            /* rawdata     : */ buffer.contents,
-            /* rawdata_size: */ buffer.size);
+    zPolygon return_value = parse_obj(
+        /* rawdata     : */ buffer.contents,
+        /* rawdata_size: */ buffer.size);
     
     return return_value;
 }
@@ -281,16 +280,9 @@ void client_logic_startup() {
     sample_quad.width_pixels = window_width * 0.5f;
     sample_quad.height_pixels = window_height * 0.5f;
     request_texquad_renderable(&sample_quad);
-    
-    ScheduledAnimation rotate_forever;
-    construct_scheduled_animation(&rotate_forever);
-    rotate_forever.affected_object_id = 5;
-    rotate_forever.z_rotation_per_second = 1.8f;
-    rotate_forever.remaining_microseconds = 6000000;
-    rotate_forever.runs = 0;
-    request_scheduled_animation(&rotate_forever);
-    
+        
     char * sample_text = (char *)"This is an example text, which should be big enough that it wraps the entire screen and therefore allows us to test the functionality where lines are broken up to appear on the next line automatically. By the way, it's been absolutely incredible working on this project. I'm so happy that we've come this far and can't wait to keep pushing forward to finish text. If we can just finish text and include sound functionality, we'll be able to push an actual update to lore seeker's existing apps while using the new engine in production, something I never could have dreamed when I started this.\n";
+    font_ignore_lighting = false;
     uint32_t sample_text_size = get_string_length(sample_text);
     request_label_around(
         /* with_id               : */ 100,
@@ -302,9 +294,19 @@ void client_logic_startup() {
         /* float max_width       : */ window_width,
         /* bool32_t ignore_camera: */ false);
     
+    ScheduledAnimation letter_rotation;
+    construct_scheduled_animation(&letter_rotation);
+    letter_rotation.affected_object_id = 100;
+    letter_rotation.z_rotation_per_second = 6.28f;
+    letter_rotation.wait_first_microseconds = 5000000;
+    letter_rotation.wait_before_each_run_microseconds = 2000000;
+    letter_rotation.duration_microseconds = 1000000;
+    letter_rotation.runs = 0;
+    request_scheduled_animation(&letter_rotation);
+    
     font_height = 14.0f;
     request_label_renderable(
-        /* with_id               : */ 100,
+        /* with_id               : */ 101,
         /* char * text_to_draw   : */ sample_text,
         /* float left_pixelspace : */ 20.0f,
         /* float top_pixelspace  : */ window_height - 550.0f,

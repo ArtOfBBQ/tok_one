@@ -67,7 +67,9 @@ typedef struct ScheduledAnimation {
     // *** end of scaling animations
     
     float rgba_delta_per_second[4];
-    uint64_t wait_first_microseconds; // wait, then run animation
+    uint64_t wait_first_microseconds; // wait, then perform all animation runs
+    uint64_t wait_before_each_run_microseconds; // resets each run
+    uint64_t remaining_wait_before_next_run;
     uint64_t duration_microseconds;   // duration at the start of each run
     uint64_t remaining_microseconds;  // remaining duration (this run)
     uint32_t runs; // 0 to repeat forever, 1 to run once, 2 to run & repeat 1x 

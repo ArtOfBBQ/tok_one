@@ -30,6 +30,8 @@ void construct_scheduled_animation(
         to_construct->rgba_delta_per_second[i] = 0.0f;
     }
     to_construct->wait_first_microseconds = 0;
+    to_construct->wait_before_each_run_microseconds = 0;
+    to_construct->remaining_wait_before_next_run = 0;
     to_construct->duration_microseconds = 1000000;
     to_construct->runs = 1;
     to_construct->delete_object_when_finished = false;
@@ -57,9 +59,7 @@ void request_scheduled_animation(
         }
     }
     
-    log_assert(
-        SCHEDULED_ANIMATIONS_ARRAYSIZE
-            > scheduled_animations_size);
+    log_assert(SCHEDULED_ANIMATIONS_ARRAYSIZE > scheduled_animations_size);
     
     scheduled_animations[scheduled_animations_size] = *to_add;
     scheduled_animations_size += 1;
@@ -202,21 +202,30 @@ void resolve_animation_effects(
         
         if (anim->wait_first_microseconds > 0)
         {
-            if (actual_elapsed >
-                anim->wait_first_microseconds)
+            if (actual_elapsed > anim->wait_first_microseconds)
             {
-                actual_elapsed -=
-                    anim->wait_first_microseconds;
+                actual_elapsed -= anim->wait_first_microseconds;
                 anim->wait_first_microseconds = 0;
             } else {
-                
-                anim->wait_first_microseconds -=
-                    actual_elapsed;
+                anim->wait_first_microseconds -= actual_elapsed;
+                continue;
+            }
+        }
+        
+        if (anim->remaining_wait_before_next_run > 0)
+        {
+            if (actual_elapsed > anim->remaining_wait_before_next_run)
+            {
+                actual_elapsed -= anim->remaining_wait_before_next_run;
+                anim->remaining_wait_before_next_run = 0;
+            } else {
+                anim->remaining_wait_before_next_run -= actual_elapsed;
                 continue;
             }
         }
         
         log_assert(anim->wait_first_microseconds == 0);
+        log_assert(anim->remaining_wait_before_next_run == 0);
         
         actual_elapsed = anim->remaining_microseconds > actual_elapsed ?
             actual_elapsed : anim->remaining_microseconds;
@@ -226,12 +235,15 @@ void resolve_animation_effects(
         {
             if (anim->runs > 1 || anim->runs == 0) {
                 if (anim->runs > 1) {
-                    anim->runs -= 1; }
+                    anim->runs -= 1;
+                }
                 else {
                     log_assert(anim->runs == 0);
                 }
                 anim->remaining_microseconds = anim->duration_microseconds;
-                return;
+                anim->remaining_wait_before_next_run =
+                    anim->wait_before_each_run_microseconds;
+                continue;
             }
             
             anim->deleted = true;
@@ -292,31 +304,22 @@ void resolve_animation_effects(
         
         if (anim->affects_camera_not_object) {
             if (!anim->final_x_known) {
-                camera.x +=
-                    (anim->delta_x_per_second
-                        * actual_elapsed)
-                            / 1000000;
+                camera.x += (anim->delta_x_per_second * actual_elapsed)
+                    / 1000000;
             } else {
                 float diff_x = anim->final_mid_x - camera.x;
                 camera.x +=
-                    (diff_x
-                        / (anim->remaining_microseconds
-                            + actual_elapsed)
+                    (diff_x / (anim->remaining_microseconds + actual_elapsed)
                         * actual_elapsed);
             }
             
             if (!anim->final_y_known) {
-                camera.y +=
-                    (anim->delta_y_per_second
-                        * actual_elapsed)
-                            / 1000000;
+                camera.y += (anim->delta_y_per_second * actual_elapsed)
+                    / 1000000;
             } else {
                 float diff_y = anim->final_mid_y - camera.y;
-                camera.y +=
-                    (diff_y
-                        / (anim->remaining_microseconds
-                            + actual_elapsed)
-                        * actual_elapsed);
+                camera.y += (diff_y / (anim->remaining_microseconds
+                    + actual_elapsed) * actual_elapsed);
             }
             
             continue;
@@ -335,9 +338,7 @@ void resolve_animation_effects(
             {
                 if (!anim->final_x_known) {
                     zlights_to_apply[l_i].x +=
-                        (anim->delta_x_per_second
-                        * actual_elapsed)
-                            / 1000000;
+                        (anim->delta_x_per_second * actual_elapsed) / 1000000;
                 } else {
                     float diff_x = anim->final_mid_x - zlights_to_apply[l_i].x;
                     zlights_to_apply[l_i].x +=

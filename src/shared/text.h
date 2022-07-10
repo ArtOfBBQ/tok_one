@@ -7,6 +7,7 @@
 extern int32_t font_texturearray_i;
 extern float font_height;
 extern float font_color[4];
+extern bool32_t font_ignore_lighting;
 
 void init_font(
     const char * raw_fontmetrics_file_contents,
