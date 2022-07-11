@@ -22,7 +22,7 @@ and mac os X, but it's defined elsewhere for iOS
 
 #include "common.h"
 #include "logger.h"
-#include "debigulator/src/decodedimage.h"
+#include "decodedimage.h"
 
 typedef struct FileBuffer {
     uint64_t size;

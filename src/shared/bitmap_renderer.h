@@ -20,7 +20,7 @@ exist.
 
 #include "window_size.h"
 #include "texquad_type.h"
-#include "debigulator/src/decodedimage.h"
+#include "decodedimage.h"
 #include "vertex_types.h"
 #include "draw_triangle.h"
 #include "lightsource.h"
@@ -48,3 +48,4 @@ void draw_texquads_to_render(
 void clean_deleted_texquads();
 
 #endif
+
