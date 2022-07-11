@@ -1,7 +1,5 @@
-// #include <simd/simd.h>
-
-#include "../shared/logger.h"
 #include "../shared/common.h"
+#include "../shared/logger.h"
 #include "../shared/tok_random.h"
 #include "../shared/lightsource.h"
 #include "../shared_apple/gpu.h"
@@ -12,6 +10,7 @@
 #define SHARED_APPLE_PLATFORM
 
 bool32_t application_running = true;
+bool32_t has_retina_screen = true;
 
 @interface
 GameWindowDelegate: NSObject<NSWindowDelegate>
@@ -60,7 +59,7 @@ NSWindowWithCustomResponder: NSWindow
 - (void)mouseUp:(NSEvent *)event
 {
     NSPoint screenspace_location = [NSEvent mouseLocation];
-
+    
     buffer_mouseup(
         /* screenspace_x: */
             (float)screenspace_location.x,
@@ -102,8 +101,8 @@ NSWindowWithCustomResponder: NSWindow
 }
 @end
 
-int main(int argc, const char * argv[]) 
-{ 
+int main(int argc, const char * argv[])
+{
     unmanaged_memory = (uint8_t *)malloc(UNMANAGED_MEMORY_SIZE);
     managed_memory = (uint8_t *)malloc(MANAGED_MEMORY_SIZE);
     
@@ -140,13 +139,11 @@ int main(int argc, const char * argv[])
         "confirming we can save debug info to log.txt...\n");
     log_dump();
     
-    log_append(
-        "starting up a window (mac os X)\n");
     NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     NSRect full_screen_rect = [screen frame]; 
     
-    window_height = (float)NSHeight(full_screen_rect);
-    window_width = (float)NSWidth(full_screen_rect);
+    window_height = platform_get_current_window_height();
+    window_width = platform_get_current_window_width();
     
     init_projection_constants();
     init_renderer();

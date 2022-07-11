@@ -28,7 +28,7 @@ concat_strings(
 }
 
 void __attribute__((no_instrument_function))
-copy_strings(
+copy_0term_string_to(
     char * recipient,
     const uint32_t recipient_size,
     const char * origin)
@@ -38,11 +38,15 @@ copy_strings(
         origin[i] != '\0'
         && i < recipient_size - 1)
     {
+        #ifndef COMMON_IGNORE_ASSERTS
         assert(i < recipient_size - 1);
+        #endif
         recipient[i] = origin[i];
         i++;
     }
+    #ifndef COMMON_IGNORE_ASSERTS
     assert(i < recipient_size);
+    #endif
     recipient[i] = '\0';
 }
 
@@ -217,7 +221,7 @@ uint_to_string(
 }
 
 int32_t
-string_to_int32(
+string_to_int32_validate(
     const char * input,
     const uint32_t input_size,
     bool32_t * good)
@@ -277,16 +281,18 @@ string_to_int32(
     const uint32_t input_size)
 {
     bool32_t result_good = false;
-    int32_t result = string_to_int32(
+    int32_t result = string_to_int32_validate(
         input,
         input_size,
         &result_good);
+    #ifndef COMMON_IGNORE_ASSERTS
     assert(result_good);
+    #endif
     return result;
 }
 
 uint32_t
-string_to_uint32(
+string_to_uint32_validate(
     const char * input,
     const uint32_t input_size,
     bool32_t * good)
@@ -360,10 +366,12 @@ string_to_uint32(
     const uint32_t input_size)
 {
     bool32_t result_good = false;
-    uint32_t result = string_to_uint32(
+    uint32_t result = string_to_uint32_validate(
         input,
         input_size,
         &result_good);
+    #ifndef COMMON_IGNORE_ASSERTS
     assert(result_good);
+    #endif
     return result;
 }

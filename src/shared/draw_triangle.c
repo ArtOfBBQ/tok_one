@@ -16,15 +16,10 @@ draw_triangle(
     
     uint32_t vertex_i = *vertex_count_recipient;
     
-    vertices_recipient[vertex_i] = input[0];
-    vertex_i++;
-    
-    vertices_recipient[vertex_i] = input[1];
-    vertex_i++;
-    
-    vertices_recipient[vertex_i] = input[2];
-    vertex_i++;
-    
+    for (uint32_t i = 0; i < 3; i++) {
+        vertices_recipient[vertex_i] = input[i];
+        vertex_i++;
+    }
     *vertex_count_recipient += 3;
 }
 

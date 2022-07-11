@@ -12,12 +12,12 @@
 #define NULL 0
 #endif
 
-// #define COMMON_SILENCE
+#define COMMON_SILENCE
 #ifndef COMMON_SILENCE
 #include <stdio.h>
 #endif
 
-// #define COMMON_IGNORE_ASSERTS
+#define COMMON_IGNORE_ASSERTS
 #ifndef COMMON_IGNORE_ASSERTS
 #include <assert.h>
 #endif
@@ -34,7 +34,7 @@ concat_strings(
     const uint32_t output_size);
 
 void __attribute__((no_instrument_function))
-copy_strings(
+copy_0term_string_to(
     char * recipient,
     const uint32_t recipient_size,
     const char * origin);
@@ -72,20 +72,22 @@ uint_to_string(
     const uint32_t recipient_size);
 
 int32_t
-string_to_int32(
+string_to_int32_validate(
     const char * input,
     const uint32_t input_size,
     bool32_t * good);
+
 int32_t
 string_to_int32(
     const char * input,
     const uint32_t input_size);
 
 uint32_t
-string_to_uint32(
+string_to_uint32_validate(
     const char * input,
     const uint32_t input_size,
     bool32_t * good);
+
 uint32_t
 string_to_uint32(
     const char * input,

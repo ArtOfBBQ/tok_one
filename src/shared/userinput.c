@@ -14,6 +14,7 @@ void buffer_mousedown(
     float screenspace_x,
     float screenspace_y)
 {
+    printf("buffer_mousedown at: [%f,%f]\n", screenspace_x, screenspace_y);
     if (last_mouse_down.handled == false) {
         return;
     }
@@ -112,9 +113,10 @@ void register_keydown(uint32_t key_id)
     keypress_map[key_id] = true;
 }
 
-void register_touchstart(float x, float y)
-{
+void register_touchstart(const float x, const float y) {
+    printf("register_touchstart at: [%f,%f]\n", x, y);
     if (current_touch.handled) {
+        current_touch.touchable_id = -1;
         current_touch.start_x = x;
         current_touch.start_y = y;
         current_touch.started_at =
@@ -125,8 +127,9 @@ void register_touchstart(float x, float y)
     }
 }
 
-void register_touchend(float x, float y)
+void register_touchend(const float x, const float y)
 {
+    current_touch.touchable_id = -1;
     current_touch.current_x = x;
     current_touch.current_y = y;
     current_touch.finished = true;

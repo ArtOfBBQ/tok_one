@@ -11,7 +11,6 @@
 		6009B4F528679E7D00F1F279 /* memorystore.c in Sources */ = {isa = PBXBuildFile; fileRef = 6009B4F328679E7D00F1F279 /* memorystore.c */; };
 		6009FB642876A47100FC5A60 /* fontmetrics.dat in Resources */ = {isa = PBXBuildFile; fileRef = 6009FB632876A47100FC5A60 /* fontmetrics.dat */; };
 		6011283F286122FE00F92967 /* inflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 60112839286122FE00F92967 /* inflate.c */; };
-		60112840286122FE00F92967 /* decodedimage.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011283A286122FE00F92967 /* decodedimage.c */; };
 		60112842286122FE00F92967 /* decode_png.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011283D286122FE00F92967 /* decode_png.c */; };
 		601128452861239600F92967 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 601128442861239600F92967 /* Foundation.framework */; };
 		601128852862511700F92967 /* texture_array.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128662862511500F92967 /* texture_array.c */; };
@@ -46,17 +45,95 @@
 		6080CC492870182700444118 /* common.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC472870182700444118 /* common.h */; };
 		6080CC4A2870182700444118 /* bitmap_renderer.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC482870182700444118 /* bitmap_renderer.h */; };
 		608802F2286DCBE700B81255 /* clientlogic.h in Sources */ = {isa = PBXBuildFile; fileRef = 608802F1286DCBE700B81255 /* clientlogic.h */; };
+		60A998D4287BD159003F7159 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 60A998CD287BD159003F7159 /* ViewController.m */; };
+		60A998D5287BD15A003F7159 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 60A998CF287BD159003F7159 /* main.m */; };
+		60A998D7287BD15A003F7159 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 60A998D1287BD159003F7159 /* Main.storyboard */; };
+		60A998D8287BD15A003F7159 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 60A998D3287BD159003F7159 /* AppDelegate.m */; };
+		60A998DB287BD333003F7159 /* decodedimage.c in Sources */ = {isa = PBXBuildFile; fileRef = 60A998D9287BD332003F7159 /* decodedimage.c */; };
+		60A998DC287BD333003F7159 /* decodedimage.h in Sources */ = {isa = PBXBuildFile; fileRef = 60A998DA287BD333003F7159 /* decodedimage.h */; };
+		60A998DF287BD494003F7159 /* inflate.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011283E286122FE00F92967 /* inflate.h */; };
+		60A998E0287BD494003F7159 /* draw_triangle.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011286D2862511500F92967 /* draw_triangle.h */; };
+		60A998E1287BD494003F7159 /* decode_png.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011283C286122FE00F92967 /* decode_png.h */; };
+		60A998E2287BD494003F7159 /* lightsource.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128712862511600F92967 /* lightsource.h */; };
+		60A998E3287BD494003F7159 /* logger.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128752862511600F92967 /* logger.h */; };
+		60A998E4287BD494003F7159 /* gpu.h in Sources */ = {isa = PBXBuildFile; fileRef = 60112898286253C100F92967 /* gpu.h */; };
+		60A998E5287BD4AA003F7159 /* platform_layer.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128832862511700F92967 /* platform_layer.h */; };
+		60A998E6287BD4AA003F7159 /* scheduled_animations.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011286A2862511500F92967 /* scheduled_animations.h */; };
+		60A998E7287BD4B7003F7159 /* texquad_type.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128812862511700F92967 /* texquad_type.h */; };
+		60A998E8287BD4B7003F7159 /* userinput.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011286B2862511500F92967 /* userinput.h */; };
+		60A998E9287BD4B7003F7159 /* texture_array.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128682862511500F92967 /* texture_array.h */; };
+		60A998EA287BD4B7003F7159 /* text.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128672862511500F92967 /* text.h */; };
+		60A998EB287BD4B7003F7159 /* vertex_types.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287A2862511600F92967 /* vertex_types.h */; };
+		60A998EC287BD4B7003F7159 /* window_size.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128822862511700F92967 /* window_size.h */; };
+		60A998ED287BD4B7003F7159 /* zpolygon.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128842862511700F92967 /* zpolygon.h */; };
+		60A998EE287BD4B7003F7159 /* tok_random.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128802862511700F92967 /* tok_random.h */; };
+		60A998EF287BD4B7003F7159 /* software_renderer.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287B2862511700F92967 /* software_renderer.h */; };
+		60A998F0287BD4B7003F7159 /* vertex_buffer_types.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128762862511600F92967 /* vertex_buffer_types.h */; };
+		60A998F1287BD4C3003F7159 /* logger.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128752862511600F92967 /* logger.h */; };
+		60A998F2287BD4C3003F7159 /* software_renderer.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287B2862511700F92967 /* software_renderer.h */; };
+		60A998F3287BD4C3003F7159 /* draw_triangle.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128732862511600F92967 /* draw_triangle.c */; };
+		60A998F4287BD4C3003F7159 /* apple_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = 60112896286253C100F92967 /* apple_platform_layer.c */; };
+		60A998F5287BD4C3003F7159 /* texture_array.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128682862511500F92967 /* texture_array.h */; };
+		60A998F6287BD4C3003F7159 /* common_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128722862511600F92967 /* common_platform_layer.c */; };
+		60A998F7287BD4C3003F7159 /* logger.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287F2862511700F92967 /* logger.c */; };
+		60A998F8287BD4C3003F7159 /* common.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC472870182700444118 /* common.h */; };
+		60A998F9287BD4C3003F7159 /* gpu.mm in Sources */ = {isa = PBXBuildFile; fileRef = 60112897286253C100F92967 /* gpu.mm */; };
+		60A998FA287BD4C3003F7159 /* software_renderer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286C2862511500F92967 /* software_renderer.c */; };
+		60A998FB287BD4C3003F7159 /* lightsource.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128712862511600F92967 /* lightsource.h */; };
+		60A998FC287BD4C3003F7159 /* texquad_type.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128792862511600F92967 /* texquad_type.c */; };
+		60A998FD287BD4C3003F7159 /* decodedimage.c in Sources */ = {isa = PBXBuildFile; fileRef = 60A998D9287BD332003F7159 /* decodedimage.c */; };
+		60A998FE287BD4C3003F7159 /* memorystore.c in Sources */ = {isa = PBXBuildFile; fileRef = 6009B4F328679E7D00F1F279 /* memorystore.c */; };
+		60A998FF287BD4C3003F7159 /* bitmap_renderer.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC482870182700444118 /* bitmap_renderer.h */; };
+		60A99900287BD4C3003F7159 /* vertex_buffer_types.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128762862511600F92967 /* vertex_buffer_types.h */; };
+		60A99901287BD4C3003F7159 /* text.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128672862511500F92967 /* text.h */; };
+		60A99902287BD4C3003F7159 /* decode_png.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011283C286122FE00F92967 /* decode_png.h */; };
+		60A99903287BD4C3003F7159 /* userinput.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128692862511500F92967 /* userinput.c */; };
+		60A99904287BD4C3003F7159 /* tok_random.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128772862511600F92967 /* tok_random.c */; };
+		60A99905287BD4C3003F7159 /* window_size.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128822862511700F92967 /* window_size.h */; };
+		60A99906287BD4C3003F7159 /* bitmap_renderer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287C2862511700F92967 /* bitmap_renderer.c */; };
+		60A99907287BD4C3003F7159 /* clientlogic.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128702862511600F92967 /* clientlogic.c */; };
+		60A99908287BD4C3003F7159 /* tok_random.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128802862511700F92967 /* tok_random.h */; };
+		60A99909287BD4C3003F7159 /* platform_layer.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128832862511700F92967 /* platform_layer.h */; };
+		60A9990A287BD4C3003F7159 /* zpolygon.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128842862511700F92967 /* zpolygon.h */; };
+		60A9990B287BD4C3003F7159 /* decodedimage.h in Sources */ = {isa = PBXBuildFile; fileRef = 60A998DA287BD333003F7159 /* decodedimage.h */; };
+		60A9990C287BD4C3003F7159 /* decode_png.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011283D286122FE00F92967 /* decode_png.c */; };
+		60A9990D287BD4C3003F7159 /* gpu.h in Sources */ = {isa = PBXBuildFile; fileRef = 60112898286253C100F92967 /* gpu.h */; };
+		60A9990E287BD4C3003F7159 /* scheduled_animations.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011286A2862511500F92967 /* scheduled_animations.h */; };
+		60A9990F287BD4C4003F7159 /* text.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128742862511600F92967 /* text.c */; };
+		60A99910287BD4C4003F7159 /* texture_array.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128662862511500F92967 /* texture_array.c */; };
+		60A99911287BD4C4003F7159 /* zpolygon.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287E2862511700F92967 /* zpolygon.c */; };
+		60A99912287BD4C4003F7159 /* userinput.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011286B2862511500F92967 /* userinput.h */; };
+		60A99913287BD4C4003F7159 /* inflate.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011283E286122FE00F92967 /* inflate.h */; };
+		60A99914287BD4C4003F7159 /* texquad_type.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128812862511700F92967 /* texquad_type.h */; };
+		60A99915287BD4C4003F7159 /* vertex_types.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287A2862511600F92967 /* vertex_types.h */; };
+		60A99916287BD4C4003F7159 /* scheduled_animations.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287D2862511700F92967 /* scheduled_animations.c */; };
+		60A99917287BD4C4003F7159 /* lightsource.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128782862511600F92967 /* lightsource.c */; };
+		60A99918287BD4C4003F7159 /* clientlogic.h in Sources */ = {isa = PBXBuildFile; fileRef = 608802F1286DCBE700B81255 /* clientlogic.h */; };
+		60A99919287BD4C4003F7159 /* memorystore.h in Sources */ = {isa = PBXBuildFile; fileRef = 6009B4F228679E7D00F1F279 /* memorystore.h */; };
+		60A9991A287BD4C4003F7159 /* window_size.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286E2862511600F92967 /* window_size.c */; };
+		60A9991B287BD4C4003F7159 /* draw_triangle.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011286D2862511500F92967 /* draw_triangle.h */; };
+		60A9991C287BD4C4003F7159 /* inflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 60112839286122FE00F92967 /* inflate.c */; };
+		60A9991D287BD4C4003F7159 /* common.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286F2862511600F92967 /* common.c */; };
+		60A9991E287BD4D6003F7159 /* shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 60112895286253C100F92967 /* shaders.metal */; };
+		60A9991F287BDF31003F7159 /* font.png in Resources */ = {isa = PBXBuildFile; fileRef = 601128AC28625BAF00F92967 /* font.png */; };
+		60A99920287BDF31003F7159 /* structuredart1.png in Resources */ = {isa = PBXBuildFile; fileRef = 601128A928625BAE00F92967 /* structuredart1.png */; };
+		60A99921287BDF31003F7159 /* fontmetrics.dat in Resources */ = {isa = PBXBuildFile; fileRef = 6009FB632876A47100FC5A60 /* fontmetrics.dat */; };
+		60A99922287BDF31003F7159 /* structuredart2.png in Resources */ = {isa = PBXBuildFile; fileRef = 601128AA28625BAE00F92967 /* structuredart2.png */; };
+		60A99923287BDF31003F7159 /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = 601128AB28625BAE00F92967 /* teapot.obj */; };
+		60A99924287BDF31003F7159 /* phoebus.png in Resources */ = {isa = PBXBuildFile; fileRef = 6080CC45286FFD1D00444118 /* phoebus.png */; };
+		60A99929287BDFF3003F7159 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60A99928287BDFF3003F7159 /* UIKit.framework */; };
+		60A9992F287C12BA003F7159 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60A9992E287C12BA003F7159 /* MetalKit.framework */; };
+		60A99931287C12C1003F7159 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60A99930287C12C1003F7159 /* Metal.framework */; };
+		60A99935287C49E0003F7159 /* ios_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = 60A99934287C49DF003F7159 /* ios_platform_layer.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		6009B4F228679E7D00F1F279 /* memorystore.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = memorystore.h; path = ../../src/shared/memorystore.h; sourceTree = "<group>"; };
 		6009B4F328679E7D00F1F279 /* memorystore.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = memorystore.c; path = ../../src/shared/memorystore.c; sourceTree = "<group>"; };
 		6009FB632876A47100FC5A60 /* fontmetrics.dat */ = {isa = PBXFileReference; lastKnownFileType = file; name = fontmetrics.dat; path = ../../resources/fontmetrics.dat; sourceTree = "<group>"; };
-		6011281928611F5100F92967 /* engine.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = engine.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		6011282928611F7900F92967 /* engine.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = engine.entitlements; sourceTree = "<group>"; };
-		60112838286122FE00F92967 /* decodedimage.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = decodedimage.h; path = ../../src/shared/debigulator/src/decodedimage.h; sourceTree = "<group>"; };
+		6011281928611F5100F92967 /* TOKONE_macos.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TOKONE_macos.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6011282928611F7900F92967 /* TOKONE_macos.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TOKONE_macos.entitlements; sourceTree = "<group>"; };
 		60112839286122FE00F92967 /* inflate.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = inflate.c; path = ../../src/shared/debigulator/src/inflate.c; sourceTree = "<group>"; };
-		6011283A286122FE00F92967 /* decodedimage.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = decodedimage.c; path = ../../src/shared/debigulator/src/decodedimage.c; sourceTree = "<group>"; };
 		6011283C286122FE00F92967 /* decode_png.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = decode_png.h; path = ../../src/shared/debigulator/src/decode_png.h; sourceTree = "<group>"; };
 		6011283D286122FE00F92967 /* decode_png.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = decode_png.c; path = ../../src/shared/debigulator/src/decode_png.c; sourceTree = "<group>"; };
 		6011283E286122FE00F92967 /* inflate.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = inflate.h; path = ../../src/shared/debigulator/src/inflate.h; sourceTree = "<group>"; };
@@ -109,6 +186,19 @@
 		6080CC472870182700444118 /* common.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = common.h; path = ../../src/shared/common.h; sourceTree = "<group>"; };
 		6080CC482870182700444118 /* bitmap_renderer.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = bitmap_renderer.h; path = ../../src/shared/bitmap_renderer.h; sourceTree = "<group>"; };
 		608802F1286DCBE700B81255 /* clientlogic.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = clientlogic.h; path = ../../src/shared/clientlogic.h; sourceTree = "<group>"; };
+		60A998B4287BCF52003F7159 /* TOKONE_iphone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TOKONE_iphone.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		60A998CD287BD159003F7159 /* ViewController.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = ViewController.m; path = ../../../src/ios/ViewController.m; sourceTree = "<group>"; };
+		60A998CE287BD159003F7159 /* ViewController.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = ViewController.h; path = ../../../src/ios/ViewController.h; sourceTree = "<group>"; };
+		60A998CF287BD159003F7159 /* main.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = main.m; path = ../../../src/ios/main.m; sourceTree = "<group>"; };
+		60A998D1287BD159003F7159 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main.storyboard; path = ../../../src/ios/Main.storyboard; sourceTree = "<group>"; };
+		60A998D2287BD159003F7159 /* AppDelegate.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = AppDelegate.h; path = ../../../src/ios/AppDelegate.h; sourceTree = "<group>"; };
+		60A998D3287BD159003F7159 /* AppDelegate.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = AppDelegate.m; path = ../../../src/ios/AppDelegate.m; sourceTree = "<group>"; };
+		60A998D9287BD332003F7159 /* decodedimage.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = decodedimage.c; path = ../../src/shared/decodedimage.c; sourceTree = "<group>"; };
+		60A998DA287BD333003F7159 /* decodedimage.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = decodedimage.h; path = ../../src/shared/decodedimage.h; sourceTree = "<group>"; };
+		60A99928287BDFF3003F7159 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS15.2.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
+		60A9992E287C12BA003F7159 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS15.2.sdk/System/Library/Frameworks/MetalKit.framework; sourceTree = DEVELOPER_DIR; };
+		60A99930287C12C1003F7159 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS15.2.sdk/System/Library/Frameworks/Metal.framework; sourceTree = DEVELOPER_DIR; };
+		60A99934287C49DF003F7159 /* ios_platform_layer.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = ios_platform_layer.c; path = ../../../src/ios/ios_platform_layer.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -123,6 +213,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		60A998B1287BCF52003F7159 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				60A99931287C12C1003F7159 /* Metal.framework in Frameworks */,
+				60A9992F287C12BA003F7159 /* MetalKit.framework in Frameworks */,
+				60A99929287BDFF3003F7159 /* UIKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -131,7 +231,8 @@
 			children = (
 				601128B128625BC100F92967 /* resources */,
 				601128A42862540400F92967 /* src */,
-				6011281B28611F5100F92967 /* engine */,
+				6011281B28611F5100F92967 /* TOKONE_macos */,
+				60A998B5287BCF52003F7159 /* TOKONE_iphone */,
 				6011281A28611F5100F92967 /* Products */,
 				601128432861239600F92967 /* Frameworks */,
 			);
@@ -140,22 +241,26 @@
 		6011281A28611F5100F92967 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6011281928611F5100F92967 /* engine.app */,
+				6011281928611F5100F92967 /* TOKONE_macos.app */,
+				60A998B4287BCF52003F7159 /* TOKONE_iphone.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		6011281B28611F5100F92967 /* engine */ = {
+		6011281B28611F5100F92967 /* TOKONE_macos */ = {
 			isa = PBXGroup;
 			children = (
-				6011282928611F7900F92967 /* engine.entitlements */,
+				6011282928611F7900F92967 /* TOKONE_macos.entitlements */,
 			);
-			path = engine;
+			path = TOKONE_macos;
 			sourceTree = "<group>";
 		};
 		601128432861239600F92967 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				60A99930287C12C1003F7159 /* Metal.framework */,
+				60A9992E287C12BA003F7159 /* MetalKit.framework */,
+				60A99928287BDFF3003F7159 /* UIKit.framework */,
 				601128A72862588900F92967 /* AppKit.framework */,
 				601128A1286253FA00F92967 /* Metal.framework */,
 				601128A0286253FA00F92967 /* MetalKit.framework */,
@@ -167,6 +272,54 @@
 		601128A42862540400F92967 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				60A998DE287BD468003F7159 /* shared_macos_iphone */,
+				60A998DD287BD459003F7159 /* macos_only */,
+				60112895286253C100F92967 /* shaders.metal */,
+			);
+			name = src;
+			sourceTree = "<group>";
+		};
+		601128B128625BC100F92967 /* resources */ = {
+			isa = PBXGroup;
+			children = (
+				6009FB632876A47100FC5A60 /* fontmetrics.dat */,
+				601128AC28625BAF00F92967 /* font.png */,
+				6080CC45286FFD1D00444118 /* phoebus.png */,
+				601128A928625BAE00F92967 /* structuredart1.png */,
+				601128AA28625BAE00F92967 /* structuredart2.png */,
+				601128AB28625BAE00F92967 /* teapot.obj */,
+			);
+			name = resources;
+			sourceTree = "<group>";
+		};
+		60A998B5287BCF52003F7159 /* TOKONE_iphone */ = {
+			isa = PBXGroup;
+			children = (
+				60A99934287C49DF003F7159 /* ios_platform_layer.c */,
+				60A998D2287BD159003F7159 /* AppDelegate.h */,
+				60A998D3287BD159003F7159 /* AppDelegate.m */,
+				60A998CF287BD159003F7159 /* main.m */,
+				60A998D1287BD159003F7159 /* Main.storyboard */,
+				60A998CE287BD159003F7159 /* ViewController.h */,
+				60A998CD287BD159003F7159 /* ViewController.m */,
+			);
+			path = TOKONE_iphone;
+			sourceTree = "<group>";
+		};
+		60A998DD287BD459003F7159 /* macos_only */ = {
+			isa = PBXGroup;
+			children = (
+				6011289C286253DD00F92967 /* macos_platform_layer.c */,
+				6011289D286253DD00F92967 /* main.mm */,
+			);
+			name = macos_only;
+			sourceTree = "<group>";
+		};
+		60A998DE287BD468003F7159 /* shared_macos_iphone */ = {
+			isa = PBXGroup;
+			children = (
+				60A998D9287BD332003F7159 /* decodedimage.c */,
+				60A998DA287BD333003F7159 /* decodedimage.h */,
 				60112896286253C100F92967 /* apple_platform_layer.c */,
 				6011287C2862511700F92967 /* bitmap_renderer.c */,
 				6080CC482870182700444118 /* bitmap_renderer.h */,
@@ -177,8 +330,6 @@
 				6080CC472870182700444118 /* common.h */,
 				6011283D286122FE00F92967 /* decode_png.c */,
 				6011283C286122FE00F92967 /* decode_png.h */,
-				6011283A286122FE00F92967 /* decodedimage.c */,
-				60112838286122FE00F92967 /* decodedimage.h */,
 				601128732862511600F92967 /* draw_triangle.c */,
 				6011286D2862511500F92967 /* draw_triangle.h */,
 				60112898286253C100F92967 /* gpu.h */,
@@ -189,14 +340,11 @@
 				601128712862511600F92967 /* lightsource.h */,
 				6011287F2862511700F92967 /* logger.c */,
 				601128752862511600F92967 /* logger.h */,
-				6011289C286253DD00F92967 /* macos_platform_layer.c */,
-				6011289D286253DD00F92967 /* main.mm */,
 				6009B4F328679E7D00F1F279 /* memorystore.c */,
 				6009B4F228679E7D00F1F279 /* memorystore.h */,
 				601128832862511700F92967 /* platform_layer.h */,
 				6011287D2862511700F92967 /* scheduled_animations.c */,
 				6011286A2862511500F92967 /* scheduled_animations.h */,
-				60112895286253C100F92967 /* shaders.metal */,
 				6011286C2862511500F92967 /* software_renderer.c */,
 				6011287B2862511700F92967 /* software_renderer.h */,
 				601128792862511600F92967 /* texquad_type.c */,
@@ -216,28 +364,15 @@
 				6011287E2862511700F92967 /* zpolygon.c */,
 				601128842862511700F92967 /* zpolygon.h */,
 			);
-			name = src;
-			sourceTree = "<group>";
-		};
-		601128B128625BC100F92967 /* resources */ = {
-			isa = PBXGroup;
-			children = (
-				6009FB632876A47100FC5A60 /* fontmetrics.dat */,
-				601128AC28625BAF00F92967 /* font.png */,
-				6080CC45286FFD1D00444118 /* phoebus.png */,
-				601128A928625BAE00F92967 /* structuredart1.png */,
-				601128AA28625BAE00F92967 /* structuredart2.png */,
-				601128AB28625BAE00F92967 /* teapot.obj */,
-			);
-			name = resources;
+			name = shared_macos_iphone;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		6011281828611F5100F92967 /* engine */ = {
+		6011281828611F5100F92967 /* TOKONE_macos */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 6011282A28611F7900F92967 /* Build configuration list for PBXNativeTarget "engine" */;
+			buildConfigurationList = 6011282A28611F7900F92967 /* Build configuration list for PBXNativeTarget "TOKONE_macos" */;
 			buildPhases = (
 				6011281528611F5100F92967 /* Sources */,
 				6011281628611F5100F92967 /* Frameworks */,
@@ -247,9 +382,26 @@
 			);
 			dependencies = (
 			);
-			name = engine;
+			name = TOKONE_macos;
 			productName = engine;
-			productReference = 6011281928611F5100F92967 /* engine.app */;
+			productReference = 6011281928611F5100F92967 /* TOKONE_macos.app */;
+			productType = "com.apple.product-type.application";
+		};
+		60A998B3287BCF52003F7159 /* TOKONE_iphone */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 60A998CA287BCF55003F7159 /* Build configuration list for PBXNativeTarget "TOKONE_iphone" */;
+			buildPhases = (
+				60A998B0287BCF52003F7159 /* Sources */,
+				60A998B1287BCF52003F7159 /* Frameworks */,
+				60A998B2287BCF52003F7159 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TOKONE_iphone;
+			productName = TOKONE_iphone;
+			productReference = 60A998B4287BCF52003F7159 /* TOKONE_iphone.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -262,6 +414,9 @@
 				LastUpgradeCheck = 1320;
 				TargetAttributes = {
 					6011281828611F5100F92967 = {
+						CreatedOnToolsVersion = 13.2.1;
+					};
+					60A998B3287BCF52003F7159 = {
 						CreatedOnToolsVersion = 13.2.1;
 					};
 				};
@@ -279,7 +434,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				6011281828611F5100F92967 /* engine */,
+				6011281828611F5100F92967 /* TOKONE_macos */,
+				60A998B3287BCF52003F7159 /* TOKONE_iphone */,
 			);
 		};
 /* End PBXProject section */
@@ -298,6 +454,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		60A998B2287BCF52003F7159 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				60A99921287BDF31003F7159 /* fontmetrics.dat in Resources */,
+				60A99924287BDF31003F7159 /* phoebus.png in Resources */,
+				60A9991F287BDF31003F7159 /* font.png in Resources */,
+				60A99923287BDF31003F7159 /* teapot.obj in Resources */,
+				60A99920287BDF31003F7159 /* structuredart1.png in Resources */,
+				60A998D7287BD15A003F7159 /* Main.storyboard in Resources */,
+				60A99922287BDF31003F7159 /* structuredart2.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -305,20 +475,35 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				601128892862511800F92967 /* common.c in Sources */,
+				60A998E7287BD4B7003F7159 /* texquad_type.h in Sources */,
+				60A998E5287BD4AA003F7159 /* platform_layer.h in Sources */,
+				60A998DB287BD333003F7159 /* decodedimage.c in Sources */,
+				60A998E9287BD4B7003F7159 /* texture_array.h in Sources */,
+				60A998DC287BD333003F7159 /* decodedimage.h in Sources */,
 				6080CC492870182700444118 /* common.h in Sources */,
+				60A998DF287BD494003F7159 /* inflate.h in Sources */,
 				6080CC4A2870182700444118 /* bitmap_renderer.h in Sources */,
 				608802F2286DCBE700B81255 /* clientlogic.h in Sources */,
+				60A998EC287BD4B7003F7159 /* window_size.h in Sources */,
+				60A998E8287BD4B7003F7159 /* userinput.h in Sources */,
+				60A998EB287BD4B7003F7159 /* vertex_types.h in Sources */,
 				6009B4F428679E7D00F1F279 /* memorystore.h in Sources */,
 				6009B4F528679E7D00F1F279 /* memorystore.c in Sources */,
+				60A998E0287BD494003F7159 /* draw_triangle.h in Sources */,
 				60112842286122FE00F92967 /* decode_png.c in Sources */,
 				6011289A286253C100F92967 /* apple_platform_layer.c in Sources */,
-				60112840286122FE00F92967 /* decodedimage.c in Sources */,
+				60A998EA287BD4B7003F7159 /* text.h in Sources */,
 				601128922862511800F92967 /* scheduled_animations.c in Sources */,
+				60A998E6287BD4AA003F7159 /* scheduled_animations.h in Sources */,
 				6011288E2862511800F92967 /* tok_random.c in Sources */,
 				6011289E286253DD00F92967 /* macos_platform_layer.c in Sources */,
-				601128892862511800F92967 /* common.c in Sources */,
+				60A998F0287BD4B7003F7159 /* vertex_buffer_types.h in Sources */,
+				60A998E1287BD494003F7159 /* decode_png.h in Sources */,
+				60A998E4287BD494003F7159 /* gpu.h in Sources */,
 				6011288A2862511800F92967 /* clientlogic.c in Sources */,
 				601128942862511800F92967 /* logger.c in Sources */,
+				60A998E3287BD494003F7159 /* logger.h in Sources */,
 				601128912862511800F92967 /* bitmap_renderer.c in Sources */,
 				601128902862511800F92967 /* texquad_type.c in Sources */,
 				6011283F286122FE00F92967 /* inflate.c in Sources */,
@@ -329,11 +514,72 @@
 				6011288C2862511800F92967 /* draw_triangle.c in Sources */,
 				6011288D2862511800F92967 /* text.c in Sources */,
 				601128852862511700F92967 /* texture_array.c in Sources */,
+				60A998E2287BD494003F7159 /* lightsource.h in Sources */,
 				60112899286253C100F92967 /* shaders.metal in Sources */,
 				6011289B286253C100F92967 /* gpu.mm in Sources */,
 				601128872862511700F92967 /* software_renderer.c in Sources */,
+				60A998ED287BD4B7003F7159 /* zpolygon.h in Sources */,
+				60A998EF287BD4B7003F7159 /* software_renderer.h in Sources */,
 				6011288B2862511800F92967 /* common_platform_layer.c in Sources */,
+				60A998EE287BD4B7003F7159 /* tok_random.h in Sources */,
 				6011288F2862511800F92967 /* lightsource.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		60A998B0287BCF52003F7159 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				60A99914287BD4C4003F7159 /* texquad_type.h in Sources */,
+				60A99919287BD4C4003F7159 /* memorystore.h in Sources */,
+				60A998FE287BD4C3003F7159 /* memorystore.c in Sources */,
+				60A99900287BD4C3003F7159 /* vertex_buffer_types.h in Sources */,
+				60A998FB287BD4C3003F7159 /* lightsource.h in Sources */,
+				60A99916287BD4C4003F7159 /* scheduled_animations.c in Sources */,
+				60A99908287BD4C3003F7159 /* tok_random.h in Sources */,
+				60A9990F287BD4C4003F7159 /* text.c in Sources */,
+				60A9991A287BD4C4003F7159 /* window_size.c in Sources */,
+				60A9990A287BD4C3003F7159 /* zpolygon.h in Sources */,
+				60A998F8287BD4C3003F7159 /* common.h in Sources */,
+				60A998D5287BD15A003F7159 /* main.m in Sources */,
+				60A9990D287BD4C3003F7159 /* gpu.h in Sources */,
+				60A99906287BD4C3003F7159 /* bitmap_renderer.c in Sources */,
+				60A99905287BD4C3003F7159 /* window_size.h in Sources */,
+				60A99917287BD4C4003F7159 /* lightsource.c in Sources */,
+				60A99901287BD4C3003F7159 /* text.h in Sources */,
+				60A9991C287BD4C4003F7159 /* inflate.c in Sources */,
+				60A9991D287BD4C4003F7159 /* common.c in Sources */,
+				60A99904287BD4C3003F7159 /* tok_random.c in Sources */,
+				60A99915287BD4C4003F7159 /* vertex_types.h in Sources */,
+				60A99918287BD4C4003F7159 /* clientlogic.h in Sources */,
+				60A998F9287BD4C3003F7159 /* gpu.mm in Sources */,
+				60A99909287BD4C3003F7159 /* platform_layer.h in Sources */,
+				60A998F4287BD4C3003F7159 /* apple_platform_layer.c in Sources */,
+				60A998FC287BD4C3003F7159 /* texquad_type.c in Sources */,
+				60A99903287BD4C3003F7159 /* userinput.c in Sources */,
+				60A998F3287BD4C3003F7159 /* draw_triangle.c in Sources */,
+				60A9990B287BD4C3003F7159 /* decodedimage.h in Sources */,
+				60A99910287BD4C4003F7159 /* texture_array.c in Sources */,
+				60A9991E287BD4D6003F7159 /* shaders.metal in Sources */,
+				60A998FF287BD4C3003F7159 /* bitmap_renderer.h in Sources */,
+				60A99907287BD4C3003F7159 /* clientlogic.c in Sources */,
+				60A99902287BD4C3003F7159 /* decode_png.h in Sources */,
+				60A99935287C49E0003F7159 /* ios_platform_layer.c in Sources */,
+				60A998F7287BD4C3003F7159 /* logger.c in Sources */,
+				60A998D4287BD159003F7159 /* ViewController.m in Sources */,
+				60A998F6287BD4C3003F7159 /* common_platform_layer.c in Sources */,
+				60A99912287BD4C4003F7159 /* userinput.h in Sources */,
+				60A998FD287BD4C3003F7159 /* decodedimage.c in Sources */,
+				60A998F5287BD4C3003F7159 /* texture_array.h in Sources */,
+				60A99911287BD4C4003F7159 /* zpolygon.c in Sources */,
+				60A9990C287BD4C3003F7159 /* decode_png.c in Sources */,
+				60A99913287BD4C4003F7159 /* inflate.h in Sources */,
+				60A9990E287BD4C3003F7159 /* scheduled_animations.h in Sources */,
+				60A998FA287BD4C3003F7159 /* software_renderer.c in Sources */,
+				60A9991B287BD4C4003F7159 /* draw_triangle.h in Sources */,
+				60A998F1287BD4C3003F7159 /* logger.h in Sources */,
+				60A998F2287BD4C3003F7159 /* software_renderer.h in Sources */,
+				60A998D8287BD15A003F7159 /* AppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -387,7 +633,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_ENTITLEMENTS = engine/engine.entitlements;
+				CODE_SIGN_ENTITLEMENTS = TOKONE_macos/TOKONE_macos.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
@@ -466,7 +712,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				CODE_SIGN_ENTITLEMENTS = engine/engine.entitlements;
+				CODE_SIGN_ENTITLEMENTS = TOKONE_macos/TOKONE_macos.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
@@ -503,6 +749,160 @@
 			};
 			name = Release;
 		};
+		60A998CB287BCF55003F7159 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 69FRAQZ2YR;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TOKONE_iphone/Info.plist;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.TOK.TOKONE-iphone";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		60A998CC287BCF55003F7159 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 69FRAQZ2YR;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = TOKONE_iphone/Info.plist;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UIMainStoryboardFile = Main;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.TOK.TOKONE-iphone";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -515,11 +915,20 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		6011282A28611F7900F92967 /* Build configuration list for PBXNativeTarget "engine" */ = {
+		6011282A28611F7900F92967 /* Build configuration list for PBXNativeTarget "TOKONE_macos" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				6011282B28611F7900F92967 /* Debug */,
 				6011282C28611F7900F92967 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		60A998CA287BCF55003F7159 /* Build configuration list for PBXNativeTarget "TOKONE_iphone" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				60A998CB287BCF55003F7159 /* Debug */,
+				60A998CC287BCF55003F7159 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

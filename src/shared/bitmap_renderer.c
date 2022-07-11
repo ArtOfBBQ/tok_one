@@ -82,8 +82,7 @@ bool32_t touchable_id_to_texquad_object_id(
 }
 
 static bool32_t already_requesting = false;
-void request_texquad_renderable(
-    TexQuad * to_add)
+void request_texquad_renderable(TexQuad * to_add)
 {
     log_assert(!already_requesting);
     already_requesting = true;

@@ -8,6 +8,7 @@
 
 # xcode files
 *xcuserdata*
+optional_xcode_project/TOK_ONE/TOK_ONE.xcodeproj/xcshareddata/
 *.xcuserstate
 *.plist
 src/ios/hello3dgfx/hello3dgfx/Assets.xcassets/*

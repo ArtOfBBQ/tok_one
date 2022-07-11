@@ -9,6 +9,7 @@
 #include "../shared/software_renderer.h"
 #include "../shared/lightsource.h"
 #include "../shared/bitmap_renderer.h"
+#include "../shared/platform_layer.h"
 
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
@@ -34,5 +35,6 @@
 
 extern MetalKitViewDelegate * apple_gpu_delegate;
 extern uint64_t previous_time;
+extern bool32_t has_retina_screen;
 
 #endif

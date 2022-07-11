@@ -9,6 +9,7 @@
 #define KEYPRESS_MAP_SIZE 1000
 
 typedef struct Touch {
+    int32_t touchable_id;
     float start_x;
     float start_y;
     uint64_t started_at;
@@ -49,8 +50,8 @@ void buffer_mousemove(
 
 void register_keyup(uint32_t key_id);
 void register_keydown(uint32_t key_id);
-void register_touchstart(float x, float y);
-void register_touchend(float x, float y);
+void register_touchstart(const float x, const float y);
+void register_touchend(const float x, const float y);
 
 #endif
 

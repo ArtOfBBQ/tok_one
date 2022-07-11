@@ -303,8 +303,8 @@ static uint32_t already_drawing = false;
     MTLViewport viewport = {
         0,
         0,
-        window_width * 2.0f,
-        window_height * 2.0f
+        window_width * (has_retina_screen ? 2.0f : 1.0f),
+        window_height * (has_retina_screen ? 2.0f : 1.0f)
     };
     
     uint32_t frame_i = (uint32_t)_currentFrameIndex;
@@ -431,8 +431,8 @@ static uint32_t already_drawing = false;
 - (void)mtkView:(MTKView *)view
     drawableSizeWillChange:(CGSize)size
 {
-    window_height = (float)size.height;
-    window_width = (float)size.width;
+    window_height = platform_get_current_window_height(); 
+    window_width = platform_get_current_window_width();
 }
 
 @end

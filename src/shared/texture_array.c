@@ -387,43 +387,47 @@ DecodedImage * extract_image(
     DecodedImage * new_image = malloc_struct_from_unmanaged(DecodedImage);
     log_assert(new_image != NULL);
     
-    uint32_t slice_size =
+    uint32_t slice_size_bytes =
         texture_array->image->rgba_values_size
             / texture_array->sprite_columns
             / texture_array->sprite_rows;
-    uint32_t slice_width =
-        texture_array->image->width
-            / texture_array->sprite_columns;
-    uint32_t slice_height =
-        texture_array->image->height
-            / texture_array->sprite_rows;
-    log_assert(slice_size > 0);
-    log_assert(slice_width > 0);
-    log_assert(slice_height > 0);
-    log_assert(slice_size == slice_width * slice_height * 4);
+    uint32_t slice_width_pixels =
+        texture_array->image->width / texture_array->sprite_columns;
+    uint32_t slice_height_pixels =
+        texture_array->image->height / texture_array->sprite_rows;
+    log_assert(slice_size_bytes > 0);
+    log_assert(slice_width_pixels > 0);
+    log_assert(slice_height_pixels > 0);
+    log_assert(
+        slice_size_bytes == slice_width_pixels * slice_height_pixels * 4);
+    log_assert(
+        slice_size_bytes *
+            texture_array->sprite_columns *
+            texture_array->sprite_rows ==
+                texture_array->image->rgba_values_size);
     
-    new_image->rgba_values_size = slice_size;
-    new_image->rgba_values = malloc_from_unmanaged(slice_size);
+    new_image->rgba_values_size = slice_size_bytes;
+    new_image->rgba_values = malloc_from_unmanaged(slice_size_bytes);
     log_assert(new_image->rgba_values != NULL);
     
-    new_image->width = slice_width;
-    new_image->height = slice_height;
+    new_image->width = slice_width_pixels;
+    new_image->height = slice_height_pixels;
     
-    uint32_t start_x = 1 + ((x - 1) * slice_width);
-    uint32_t start_y = 1 + ((y - 1) * slice_height);
-    uint32_t end_y = start_y + slice_height;
+    uint32_t start_x_pixels = 1 + ((x - 1) * slice_width_pixels);
+    uint32_t start_y_pixels = 1 + ((y - 1) * slice_height_pixels);
+    uint32_t end_y_pixels = start_y_pixels + slice_height_pixels - 1;
     
     uint32_t i = 0;
     for (
-        uint32_t cur_y = start_y;
-        cur_y < end_y;
-        cur_y++)
+        uint32_t cur_y_pixels = start_y_pixels;
+        cur_y_pixels < end_y_pixels;
+        cur_y_pixels++)
     {
-        // get the pixel that's at [start_x, cur_y]
+        // get the pixel that's at [start_x_pixels, cur_y_pixels]
         // copcur_y slice_width pixels
-        uint64_t pixel_i =
-            ((start_x - 1) * 4)
-                + ((cur_y - 1) * texture_array->image->width * 4);
+        uint64_t rgba_value_i =
+            ((start_x_pixels - 1) * 4)
+                + ((cur_y_pixels - 1) * texture_array->image->width * 4);
         
         if (!application_running) {
             new_image->good = false;
@@ -432,15 +436,15 @@ DecodedImage * extract_image(
         
         for (
             uint32_t _ = 0;
-            _ < (slice_width * 4);
+            _ < (slice_width_pixels * 4);
             _++)
         {
             log_assert(
-                (pixel_i + _)
+                (rgba_value_i + _)
                     < texture_array->image->rgba_values_size);
             log_assert(i < new_image->rgba_values_size);
             new_image->rgba_values[i] =
-                texture_array->image->rgba_values[pixel_i + _];
+                texture_array->image->rgba_values[rgba_value_i + _];
             i++;
         }
     }

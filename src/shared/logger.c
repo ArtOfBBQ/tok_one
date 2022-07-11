@@ -99,7 +99,7 @@ extern "C" {
                 // info.dli_fname;
                 
                 assert(timed_function_map != NULL);
-                copy_strings(
+                copy_0term_string_to(
                     /* recipient: */
                         timed_function_map[entry_i]
                             .linked_list[link_i]
@@ -121,7 +121,7 @@ extern "C" {
                     BACKTRACE_CIRCLE_SIZE);
                 assert(0);
             }
-            copy_strings(
+            copy_0term_string_to(
                 /* recipient: */
                     backtrace_circle[backtrace_i]
                         .function_name,
@@ -364,7 +364,7 @@ internal_log_append(
             caller_function_name,
             last_log_func))
     {
-        copy_strings(
+        copy_0term_string_to(
             /* recipient: */
                 last_log_func,
             /* recipient_size: */
@@ -375,7 +375,7 @@ internal_log_append(
         char * prefix = (char *)"[";
         uint32_t prefix_length = get_string_length(prefix);
         assert(log_i + prefix_length < LOG_SIZE);
-        copy_strings(
+        copy_0term_string_to(
             /* recipient: */
                 log + log_i,
             /* recipient_size: */
@@ -389,7 +389,7 @@ internal_log_append(
         caller_function_name);
         assert(log_i + func_length < LOG_SIZE);
         
-        copy_strings(
+        copy_0term_string_to(
             /* recipient: */
                 log + log_i,
             /* recipient_size: */
@@ -402,7 +402,7 @@ internal_log_append(
         char * glue = (char *)"]: ";
         uint32_t glue_length = get_string_length(glue);
         assert(log_i + glue_length < LOG_SIZE);
-        copy_strings(
+        copy_0term_string_to(
             /* recipient: */
                 log + log_i,
             /* recipient_size: */
@@ -415,7 +415,7 @@ internal_log_append(
     
     uint32_t to_append_length = get_string_length(to_append);
     assert(log_i + to_append_length < LOG_SIZE);
-    copy_strings(
+    copy_0term_string_to(
         /* recipient: */
             log + log_i,
         /* recipient_size: */
@@ -442,7 +442,7 @@ get_log_backtrace(
     if (!logger_activated) {
         char * errmsg =
             (char *)"Logger wasn't enabled - no backtrace";
-        copy_strings(
+        copy_0term_string_to(
             /* recipient: */
                 return_value,
             /* recipient_size: */
@@ -490,7 +490,7 @@ add_profiling_stats_to_log()
     TimedFunction top30_timedfuncs[30];
     for (uint32_t i = 0; i < 30; i++) {
         char emptyslotstr[] = "empty slot";
-        copy_strings(
+        copy_0term_string_to(
             /* recipient: */
                 top30_timedfuncs[i].function_name,
             /* recipient_size: */
@@ -631,7 +631,7 @@ internal_log_assert(
     
     uint32_t recipient_at = 0;
     
-    copy_strings(
+    copy_0term_string_to(
         /* recipient: */
             assert_failed_message + recipient_at,
         /* recipient_size: */
@@ -642,7 +642,7 @@ internal_log_assert(
     
     char * connector = (char *)" - ";
     uint32_t connector_length = get_string_length(connector);
-    copy_strings(
+    copy_0term_string_to(
         /* recipient: */
             assert_failed_message + recipient_at,
         /* recipient_size: */
@@ -651,7 +651,7 @@ internal_log_assert(
             connector);
     recipient_at += connector_length;
      
-    copy_strings(
+    copy_0term_string_to(
         /* recipient: */
             assert_failed_message + recipient_at,
         /* recipient_size: */
@@ -662,7 +662,7 @@ internal_log_assert(
     
     char * connector2 = (char *)" (line ";
     uint32_t connector2_length = get_string_length(connector2);
-    copy_strings(
+    copy_0term_string_to(
         /* recipient: */
             assert_failed_message + recipient_at,
         /* recipient_size: */
@@ -677,7 +677,7 @@ internal_log_assert(
         str_line,
         100);
     uint32_t str_line_len = get_string_length(str_line);
-    copy_strings(
+    copy_0term_string_to(
         /* recipient: */
             assert_failed_message + recipient_at,
         /* recipient_size: */
@@ -688,7 +688,7 @@ internal_log_assert(
     
     char * connector3 = (char *)"):\nAssertion failed: ";
     uint32_t connector3_length = get_string_length(connector3);
-    copy_strings(
+    copy_0term_string_to(
         /* recipient: */
             assert_failed_message + recipient_at,
         /* recipient_size: */
@@ -697,7 +697,7 @@ internal_log_assert(
             connector3);
     recipient_at += connector3_length;
     
-    copy_strings(
+    copy_0term_string_to(
         /* recipient: */
             assert_failed_message + recipient_at,
         /* recipient_size: */
@@ -708,7 +708,7 @@ internal_log_assert(
     
     char * connector4 = (char *)"\nBacktrace:\n";
     uint32_t connector4_length = get_string_length(connector4);
-    copy_strings(
+    copy_0term_string_to(
         /* recipient: */
             assert_failed_message + recipient_at,
         /* recipient_size: */

@@ -1,7 +1,8 @@
-#include "vertex_types.h"
-
 #ifndef VERTEX_BUFFER_TYPES_H
 #define VERTEX_BUFFER_TYPES_H
+
+#include "vertex_types.h"
+#include "common.h"
 
 typedef struct BufferedVertexCollection
 {
