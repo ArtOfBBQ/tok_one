@@ -105,6 +105,8 @@ int main(int argc, const char * argv[])
 {
     unmanaged_memory = (uint8_t *)malloc(UNMANAGED_MEMORY_SIZE);
     managed_memory = (uint8_t *)malloc(MANAGED_MEMORY_SIZE);
+
+    application_name = client_logic_get_application_name();
     
     setup_log();
     
@@ -134,9 +136,13 @@ int main(int argc, const char * argv[])
         sizeof(TexQuad) * TEXQUADS_TO_RENDER_ARRAYSIZE);
     
     @autoreleasepool {
-    log_append("starting application...\n");
-    log_append(
-        "confirming we can save debug info to log.txt...\n");
+    log_append("started application: ");
+    log_append(application_name);
+    log_append("\nallocated unmanaged memory: ");
+    log_append_uint(UNMANAGED_MEMORY_SIZE);
+    log_append("\nallocated managed memory: ");
+    log_append_uint(MANAGED_MEMORY_SIZE);
+    log_append("\nconfirming we can save debug info - writing log.txt...\n");
     log_dump();
     
     NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
@@ -144,6 +150,11 @@ int main(int argc, const char * argv[])
     
     window_height = platform_get_current_window_height();
     window_width = platform_get_current_window_width();
+    log_append("window height set to: ");
+    log_append_float(window_height);
+    log_append("window width set to: ");
+    log_append_float(window_width);
+    log_append("\n");
     
     init_projection_constants();
     init_renderer();

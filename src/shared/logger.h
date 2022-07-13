@@ -1,6 +1,8 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
+extern char * application_name;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

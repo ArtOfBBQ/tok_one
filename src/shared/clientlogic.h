@@ -40,6 +40,8 @@ Write code to update your game or app's state
 
 zPolygon load_from_obj_file(char * filename);
 
+char * client_logic_get_application_name();
+
 // will be called once at startup, before rendering frame 1
 // add your app's code here
 void client_logic_startup(void);

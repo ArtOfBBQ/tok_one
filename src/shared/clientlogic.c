@@ -252,6 +252,10 @@ static void load_assets(
     }
 }
 
+char * client_logic_get_application_name() {
+    return (char *)"TOK ONE";
+}
+
 void client_logic_startup() {
     
     // These are some example texture atlases we're using for

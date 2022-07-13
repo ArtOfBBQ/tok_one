@@ -3,26 +3,55 @@
 
 #include "../shared/platform_layer.h"
 
+char * writables_path = NULL;
+
 char * platform_get_writables_path(void) {
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(
-        NSLibraryDirectory,
-        NSUserDomainMask,
-        YES);
-    NSString *libraryDirectory = [paths objectAtIndex:0];
     
-    const char * return_value =
-        [libraryDirectory cStringUsingEncoding:NSUTF8StringEncoding];
+    if (writables_path == NULL) {
+        
+        NSArray * paths = NSSearchPathForDirectoriesInDomains(
+            NSApplicationSupportDirectory,
+            NSUserDomainMask,
+            YES);
+
+        NSString * libraryDirectory = [paths objectAtIndex:0];
+
+        char * library_dir =
+            (char *)[libraryDirectory
+                cStringUsingEncoding: NSUTF8StringEncoding];
+
+        // +2 because 1 for null terminator, 1 for an '/' in between
+        writables_path = (char *)malloc_from_unmanaged(
+            get_string_length(library_dir) + get_string_length(application_name) + 2);
+        
+        uint32_t i = 0;
+        while (library_dir[i] != '\0') {
+            writables_path[i] = library_dir[i];
+            i++;
+        }
+        writables_path[i++] = '/';
+        uint32_t j = 0;
+        while (application_name[j] != '\0') {
+            writables_path[i++] = application_name[j++];
+        }
+        writables_path[i] = '\0';
+        
+        platform_mkdir_if_not_exist(writables_path);
+    }
     
-    return (char *)return_value;
+    log_assert(writables_path != NULL);
+    log_append("writables_path is: ");
+    log_append(writables_path);
+    log_append("\n");
+    
+    return writables_path;
 }
 
 uint32_t platform_get_directory_separator_size() {
     return 1;
 }
 
-void platform_get_directory_separator(
-    char * recipient)
-{
+void platform_get_directory_separator(char * recipient) {
     recipient[0] = '/';
     recipient[1] = '\0';
 }
@@ -43,8 +72,7 @@ Get a file's size. Returns -1 if no such file
 same as platform_get_filesize() except it assumes
 the resources directory
 */
-uint64_t platform_get_resource_size(const char * filename)
-{
+uint64_t platform_get_resource_size(const char * filename) {
     char pathfile[500];
     resource_filename_to_pathfile(
         filename,
@@ -57,9 +85,8 @@ uint64_t platform_get_resource_size(const char * filename)
 /*
 Get a file's size. Returns 0 if no such file
 */
-uint64_t platform_get_filesize(
-    const char * filepath)
-{
+uint64_t platform_get_filesize(const char * filepath) {
+    
     NSString * nsfilepath = [NSString
         stringWithCString:filepath
         encoding:NSASCIIStringEncoding];
@@ -111,7 +138,7 @@ void platform_read_resource_file(
 void platform_read_file(
     const char * filepath,
     FileBuffer * out_preallocatedbuffer)
-{    
+{
     NSString * nsfilepath =
         [NSString
             stringWithCString:filepath
@@ -125,8 +152,7 @@ void platform_read_file(
             error: &error];
     
     if (error) {
-        log_append(
-            "Error - failed [NSData initWithContentsOfFile:]\n");
+        log_append("Error - failed [NSData initWithContentsOfFile:]\n");
         out_preallocatedbuffer->size = 0;
         out_preallocatedbuffer->good = false;
         return;
@@ -139,9 +165,7 @@ void platform_read_file(
     out_preallocatedbuffer->good = true;
 }
 
-bool32_t platform_resource_exists(
-    const char * resource_name)
-{
+bool32_t platform_resource_exists(const char * resource_name) {
     char pathfile[500];
     resource_filename_to_pathfile(
         resource_name,
@@ -174,9 +198,8 @@ bool32_t platform_file_exists(
     return false;
 }
 
-void platform_mkdir_if_not_exist(
-    const char * dirname)
-{    
+void platform_mkdir_if_not_exist(const char * dirname) {    
+    
     NSString * directory_path = [NSString
         stringWithCString:dirname
         encoding:NSASCIIStringEncoding];
@@ -185,8 +208,7 @@ void platform_mkdir_if_not_exist(
         isDirectory: true];
     assert(directory_url != NULL);
     
-    if (![[NSFileManager defaultManager]
-        fileExistsAtPath:directory_path])
+    if (![[NSFileManager defaultManager] fileExistsAtPath:directory_path])
     {
         NSError * error = NULL;
         
@@ -210,9 +232,8 @@ void platform_mkdir_if_not_exist(
     return;
 }
 
-void platform_delete_file(
-    const char * filepath)
-{
+void platform_delete_file(const char * filepath) {
+    
     NSString * nsfilepath = [NSString
         stringWithCString:filepath
         encoding:NSASCIIStringEncoding];
@@ -307,6 +328,7 @@ void platform_write_file_to_writables(
     while (j < filepath_inside_writables_size) {
         full_filepath[i++] = filepath_inside_writables[j++];
     }
+    full_filepath[i] = '\0';
     
     platform_write_file(
         /* const char * filepath: */
