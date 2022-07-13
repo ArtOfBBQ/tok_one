@@ -4,9 +4,8 @@
 TouchableMTKView * _my_mtk_view;
 
 - (void)viewDidLoad {
-    printf("running viewcontroller viewDidLoad...\n");
     [super viewDidLoad];
-    
+        
     //_my_mtk_view = (TouchableMTKView *)self.view;
     _my_mtk_view = [[TouchableMTKView alloc] init];
     _my_mtk_view.preferredFramesPerSecond = 60;
@@ -20,27 +19,16 @@ TouchableMTKView * _my_mtk_view;
     log_assert(window_height == 0.0f);
     window_height = platform_get_current_window_height(); 
     window_width = platform_get_current_window_width();
-    
-    printf(
-        "window height/width set to: [%f,%f]\n",
-        window_height,
-        window_width);
-    
-    printf("setting up projection constants...¥n");
+        
     init_projection_constants();
-    printf("setting up renderer...¥n");
     init_renderer();
     
     _metal_device = MTLCreateSystemDefaultDevice();
     
     if (_metal_device == nil) {
-        printf("error - _metal_device was nil after MTLCreateSystemDefaultDevice()\n");
         return;
-    } else {
-        printf(
-            "_metal_device address: %p\n",
-            _metal_device);
     }
+    
     [_my_mtk_view setDevice: _metal_device];
     
     NSString * shader_lib_filepath =

@@ -3,6 +3,19 @@
 
 #include "../shared/platform_layer.h"
 
+char * platform_get_writables_path(void) {
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(
+        NSLibraryDirectory,
+        NSUserDomainMask,
+        YES);
+    NSString *libraryDirectory = [paths objectAtIndex:0];
+    
+    const char * return_value =
+        [libraryDirectory cStringUsingEncoding:NSUTF8StringEncoding];
+    
+    return (char *)return_value;
+}
+
 uint32_t platform_get_directory_separator_size() {
     return 1;
 }
@@ -30,9 +43,8 @@ Get a file's size. Returns -1 if no such file
 same as platform_get_filesize() except it assumes
 the resources directory
 */
-uint64_t platform_get_resource_size(
-    const char * filename)
-{    
+uint64_t platform_get_resource_size(const char * filename)
+{
     char pathfile[500];
     resource_filename_to_pathfile(
         filename,
@@ -245,8 +257,6 @@ platform_write_file(
     const char * output,
     const uint32_t output_size)
 {
-    log_append("skipping write for now (AAPL write security)\n");
-    return;
     NSString * nsfilepath = [NSString
         stringWithCString:filepath
         encoding:NSASCIIStringEncoding];
@@ -268,6 +278,43 @@ platform_write_file(
         log_append("\nPerhaps the operating system doesn't allow this app to write there?\n");
         assert(0);
     }
+}
+
+void platform_write_file_to_writables(
+    const char * filepath_inside_writables,
+    const char * output,
+    const uint32_t output_size)
+{
+    char * writables_path = platform_get_writables_path();
+    uint32_t writables_path_size = get_string_length(writables_path);
+    uint32_t filepath_inside_writables_size =
+        get_string_length(filepath_inside_writables);
+    log_assert(
+        writables_path_size
+            + filepath_inside_writables_size
+            + 1
+                < 1000);
+    
+    char full_filepath[1000];
+    
+    uint32_t i = 0;
+    while (i < writables_path_size) {
+        full_filepath[i] = writables_path[i];
+        i++;
+    }
+    full_filepath[i++] = '/';
+    uint32_t j = 0;
+    while (j < filepath_inside_writables_size) {
+        full_filepath[i++] = filepath_inside_writables[j++];
+    }
+    
+    platform_write_file(
+        /* const char * filepath: */
+            full_filepath,
+        /* const char * output: */
+            output,
+        /* const uint32_t output_size: */
+            output_size);
 }
 
 void platform_get_filenames_in(

@@ -24,6 +24,7 @@ int main(int argc, char * argv[]) {
     managed_memory = (uint8_t *)malloc(MANAGED_MEMORY_SIZE);
     
     setup_log();
+    log_append("Lore seeker for iOS started running\n");
     
     // initialize font with fontmetrics.dat
     FileBuffer font_metrics_file;
@@ -49,7 +50,7 @@ int main(int argc, char * argv[]) {
         sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
     texquads_to_render = (TexQuad *)malloc_from_unmanaged(
         sizeof(TexQuad) * TEXQUADS_TO_RENDER_ARRAYSIZE);
-        
+    
     NSString * appDelegateClassName;
     @autoreleasepool {
         // Setup code that might create autoreleased objects goes here.

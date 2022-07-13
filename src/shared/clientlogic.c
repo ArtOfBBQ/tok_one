@@ -299,8 +299,8 @@ void client_logic_startup() {
         /* float max_width       : */ window_width / 2,
         /* bool32_t ignore_camera: */ false);
     
-    log_append("application path: ");
-    log_append(platform_get_application_path());
+    log_append("writable path: ");
+    log_append(platform_get_writables_path());
     log_append("\n");
     
     log_append("finished client_logic_startup()\n");

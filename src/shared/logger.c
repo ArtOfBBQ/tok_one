@@ -555,20 +555,9 @@ log_dump() {
      
     log[log_i + 1] = '\0';
     
-    char full_filepath[1000];
-    concat_strings(
-        /* string_1             : */
-            platform_get_application_path(),
-        /* string_2             : */
-            (char *)"/log.txt",
-        /* output               : */
-            full_filepath,
-        /* output_size          : */
-            1000);
-    
-    platform_write_file(
+    platform_write_file_to_writables(
         /* filepath_destination : */
-            full_filepath,
+            (char *)"log.txt",
         /* const char * output  : */
             log,
         /* output_size          : */

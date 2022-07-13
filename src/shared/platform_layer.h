@@ -16,7 +16,6 @@ and mac os X, but it's defined elsewhere for iOS
 #endif
 
 #ifdef SHARED_APPLE_PLATFORM
-// #include <mach/mach_time.h>
 #include <sys/time.h>
 #endif
 
@@ -44,16 +43,21 @@ char * __attribute__((no_instrument_function))
 platform_get_application_path(void);
 char * platform_get_resources_path(void);
 char * platform_get_cwd(void);
+// a root directory where we're allowed to write
+char * platform_get_writables_path(void);
 
-bool32_t platform_resource_exists(
-    const char * resource_name);
-bool32_t platform_file_exists(
-    const char * filepath);
-void platform_delete_file(
-    const char * filepath);
+bool32_t platform_resource_exists(const char * resource_name);
+bool32_t platform_file_exists(const char * filepath);
+void platform_delete_file(const char * filepath);
+
 void __attribute__((no_instrument_function))
 platform_write_file(
     const char * filepath_destination,
+    const char * output,
+    const uint32_t output_size);
+void __attribute__((no_instrument_function))
+platform_write_file_to_writables(
+    const char * filepath_inside_writables,
     const char * output,
     const uint32_t output_size);
 void platform_copy_file(

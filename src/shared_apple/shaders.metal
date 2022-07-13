@@ -63,7 +63,7 @@ fragment_shader(
     RasterizerPixel in [[stage_in]],
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE> color_textures [[texture(0)]])
 {
-    in.lighting = max(in.lighting, 0.05);
+    in.lighting = max(in.lighting, 0.03);
     in.lighting = min(in.lighting, 2.5);
     
     if (
