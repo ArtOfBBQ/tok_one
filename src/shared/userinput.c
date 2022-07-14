@@ -114,26 +114,41 @@ void register_keydown(uint32_t key_id)
 }
 
 void register_touchstart(const float x, const float y) {
-    printf("register_touchstart at: [%f,%f]\n", x, y);
-    if (current_touch.handled) {
-        current_touch.touchable_id = -1;
-        current_touch.start_x = x;
-        current_touch.start_y = y;
-        current_touch.started_at =
-            platform_get_current_time_microsecs();
-        current_touch.current_x = x;
-        current_touch.current_y = y;
-        current_touch.finished = false;
+    if (!current_touch.handled) {
+        return;
     }
+    
+    // note: this returns -1 when no touchable is there
+    // which is what we want
+    current_touch.touchable_id =
+        find_touchable_at(
+            /* normalized_x : */
+                ((x * 2) / window_width) - 1.0f,
+            /* normalized_y : */
+                ((y * 2) / window_height) - 1.0f);
+    current_touch.start_x = x;
+    current_touch.start_y = y;
+    current_touch.started_at =
+        platform_get_current_time_microsecs();
+    current_touch.current_x = x;
+    current_touch.current_y = y;
+    current_touch.handled = false;
+    current_touch.finished = false;
 }
 
 void register_touchend(const float x, const float y)
 {
-    current_touch.touchable_id = -1;
+    // note: this returns -1 when no touchable is there
+    // which is what we want
+    current_touch.touchable_id =
+        find_touchable_at(
+            /* normalized_x : */
+                ((x * 2) / window_width) - 1.0f,
+            /* normalized_y : */
+                ((y * 2) / window_height) - 1.0f);
     current_touch.current_x = x;
     current_touch.current_y = y;
     current_touch.finished = true;
-    current_touch.finished_at =
-        platform_get_current_time_microsecs();
+    current_touch.finished_at = platform_get_current_time_microsecs();
     current_touch.handled = false;
 }

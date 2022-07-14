@@ -23,6 +23,8 @@ int main(int argc, char * argv[]) {
     unmanaged_memory = (uint8_t *)malloc(UNMANAGED_MEMORY_SIZE);
     managed_memory = (uint8_t *)malloc(MANAGED_MEMORY_SIZE);
     
+    application_name = client_logic_get_application_name();
+    
     setup_log();
     log_append("Lore seeker for iOS started running\n");
     
