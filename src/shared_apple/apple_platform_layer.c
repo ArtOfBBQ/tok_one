@@ -99,17 +99,10 @@ uint64_t platform_get_filesize(const char * filepath) {
         error:&error_value] fileSize];
     
     if (error_value != nil) {
-        NSLog(
-            @" error => %@ ",
-            [error_value userInfo]);
-        return 0;
-    }
-    
-    if (file_size < 1) {
-        log_append("ERROR - failed to get file ");
+        log_append("ERROR - failed to get size of file: ");
         log_append(filepath);
-        log_append(" size for unknown reasons\n");
-        log_dump_and_crash();
+        log_append("\n");
+        return 0;
     }
     
     // let's not use 20MB+ files in development
