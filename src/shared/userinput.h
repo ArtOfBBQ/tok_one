@@ -13,11 +13,12 @@ typedef struct Touch {
     float start_x;
     float start_y;
     uint64_t started_at;
+    bool32_t handled_start;
     float current_x;
     float current_y;
     bool32_t finished;
     uint64_t finished_at;
-    bool32_t handled;
+    bool32_t handled_finish;
 } Touch;
 
 extern Touch current_touch;

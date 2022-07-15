@@ -114,7 +114,7 @@ void register_keydown(uint32_t key_id)
 }
 
 void register_touchstart(const float x, const float y) {
-    if (!current_touch.handled) {
+    if (!current_touch.handled_finish) {
         return;
     }
     
@@ -132,12 +132,12 @@ void register_touchstart(const float x, const float y) {
         platform_get_current_time_microsecs();
     current_touch.current_x = x;
     current_touch.current_y = y;
-    current_touch.handled = false;
+    current_touch.handled_start = false;
+    current_touch.handled_finish = false;
     current_touch.finished = false;
 }
 
-void register_touchend(const float x, const float y)
-{
+void register_touchend(const float x, const float y) {
     // note: this returns -1 when no touchable is there
     // which is what we want
     current_touch.touchable_id =
@@ -150,5 +150,5 @@ void register_touchend(const float x, const float y)
     current_touch.current_y = y;
     current_touch.finished = true;
     current_touch.finished_at = platform_get_current_time_microsecs();
-    current_touch.handled = false;
+    current_touch.handled_finish = false;
 }

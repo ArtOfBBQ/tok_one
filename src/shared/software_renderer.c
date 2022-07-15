@@ -2,7 +2,8 @@
 
 void init_renderer() {
     log_append("init_renderer...\n");
-    current_touch.handled = true;
+    current_touch.handled_start = true;
+    current_touch.handled_finish = true;
     client_logic_startup();
     renderer_initialized = true;
     
