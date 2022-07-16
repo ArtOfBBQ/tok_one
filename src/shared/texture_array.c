@@ -133,10 +133,6 @@ malloc_img_from_filename_with_working_memory(
         return new_image;
     }
     
-    log_append("after decoding PNG - memory_store_size: ");
-    log_append_uint((uint32_t)unmanaged_memory_size);
-    log_append("\n");
-    
     log_assert(new_image->pixel_count * 4 == new_image->rgba_values_size);
     log_assert(get_sum_rgba(new_image) > 0);
     
@@ -168,7 +164,8 @@ void update_texturearray_from_0terminated_files(
     const int32_t texturearray_i,
     const char filenames
         [MAX_FILES_IN_SINGLE_TEXARRAY]
-        [MAX_ASSET_FILENAME_SIZE])
+        [MAX_ASSET_FILENAME_SIZE],
+    const uint32_t filenames_size)
 {
     uint64_t dpng_working_memory_size = 10000000;
     uint8_t * dpng_working_memory =
@@ -177,6 +174,7 @@ void update_texturearray_from_0terminated_files(
     update_texturearray_from_0terminated_files_with_memory(
         texturearray_i,
         filenames,
+        filenames_size,
         dpng_working_memory,
         dpng_working_memory_size);
     
@@ -188,29 +186,22 @@ void update_texturearray_from_0terminated_files_with_memory(
     const char filenames
         [MAX_FILES_IN_SINGLE_TEXARRAY]
         [MAX_ASSET_FILENAME_SIZE],
+    const uint32_t filenames_size,
     const uint8_t * dpng_working_memory,
     const uint64_t dpng_working_memory_size)
 {
-    log_assert(
-        texturearray_i < TEXTUREARRAYS_SIZE);
-    
-    uint32_t filenames_size = 0;
-    uint32_t t_i = 0;
-    while (filenames[t_i][0] != '\0')
-    {
-        filenames_size += 1;
-        t_i++;
-    }
+    log_assert(texturearray_i < TEXTUREARRAYS_SIZE);
     
     if (filenames_size == 0) {
         log_append("WARNING: requested a texture update at ");
-        log_append_uint(texturearray_i);
+        log_append_int(texturearray_i);
         log_append(" but 0 textures were passed!\n");
         return;
     }
     
     DecodedImage * decoded_images[filenames_size];
     
+    uint32_t t_i;
     for (t_i = 0; t_i < filenames_size; t_i++)
     {
         const char * filename = filenames[t_i];
@@ -420,7 +411,7 @@ DecodedImage * extract_image(
     uint32_t i = 0;
     for (
         uint32_t cur_y_pixels = start_y_pixels;
-        cur_y_pixels < end_y_pixels;
+        cur_y_pixels <= end_y_pixels;
         cur_y_pixels++)
     {
         // get the pixel that's at [start_x_pixels, cur_y_pixels]

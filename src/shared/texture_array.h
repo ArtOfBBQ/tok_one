@@ -44,13 +44,15 @@ void update_texturearray_from_0terminated_files(
     const int32_t texturearray_i,
     const char filenames
         [MAX_FILES_IN_SINGLE_TEXARRAY]
-        [MAX_ASSET_FILENAME_SIZE]);
+        [MAX_ASSET_FILENAME_SIZE],
+    const uint32_t filenames_size);
 
 void update_texturearray_from_0terminated_files_with_memory(
     const int32_t texturearray_i,
     const char filenames
         [MAX_FILES_IN_SINGLE_TEXARRAY]
         [MAX_ASSET_FILENAME_SIZE],
+    const uint32_t filenames_size,
     const uint8_t * inflate_working_memory,
     const uint64_t inflate_working_memory_size);
 
