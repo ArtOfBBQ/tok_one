@@ -110,6 +110,18 @@ int main(int argc, const char * argv[])
     
     setup_log();
     
+    // initialize texture arrays
+    texture_arrays = (TextureArray *)malloc_from_unmanaged(
+        sizeof(TextureArray) * TEXTUREARRAYS_SIZE);
+    uint64_t mem_checksum = get_remaining_memory_checksum();
+    for (uint32_t i = 0; i < TEXTUREARRAYS_SIZE; i++) {
+        texture_arrays[i].images_size = 0;
+        texture_arrays[i].single_img_width = 0;
+        texture_arrays[i].single_img_height = 0;
+        texture_arrays[i].request_init = false;
+    }
+    log_assert(mem_checksum == get_remaining_memory_checksum());
+    
     // initialize font with fontmetrics.dat
     FileBuffer font_metrics_file;
     font_metrics_file.size = platform_get_resource_size(
@@ -145,6 +157,7 @@ int main(int argc, const char * argv[])
     log_append("\nconfirming we can save debug info - writing log.txt...\n");
     log_dump();
     
+    mem_checksum = get_remaining_memory_checksum();
     NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     NSRect full_screen_rect = [screen frame]; 
     
@@ -152,12 +165,13 @@ int main(int argc, const char * argv[])
     window_width = platform_get_current_window_width();
     log_append("window height set to: ");
     log_append_float(window_height);
-    log_append("window width set to: ");
+    log_append(" - window width set to: ");
     log_append_float(window_width);
     log_append("\n");
+    log_assert(mem_checksum == get_remaining_memory_checksum());
     
     init_projection_constants();
-    init_renderer();
+    init_renderer(); // also runs client_logic_startup()
     
     NSWindowWithCustomResponder *window =
         [[NSWindowWithCustomResponder alloc]

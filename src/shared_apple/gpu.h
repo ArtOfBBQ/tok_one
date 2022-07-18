@@ -26,7 +26,14 @@
     combo_pipeline_state;
 @property (retain) NSMutableArray * metal_textures;
 - (void)
-    updateTextureArray: (int32_t)texturearray_i;
+    initializeTextureArray:(int32_t)texturearray_i
+    spritesWide:(uint32_t)sprites_wide
+    spritesHigh:(uint32_t)sprites_high
+    singleImgWidth: (uint32_t)single_img_width
+    singleImgHeight: (uint32_t)single_img_height;
+- (void)
+    updateTextureArray: (int32_t)texturearray_i
+    atTexture: (int32_t)texture_i;
 - (void)
     configureMetalWithDevice: (id<MTLDevice>)metal_device
     andPixelFormat: (MTLPixelFormat)pixel_format
@@ -38,3 +45,4 @@ extern uint64_t previous_time;
 extern bool32_t has_retina_screen;
 
 #endif
+

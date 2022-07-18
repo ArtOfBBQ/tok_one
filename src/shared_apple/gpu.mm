@@ -135,33 +135,27 @@ static uint32_t already_drawing = false;
     _metal_textures = [
         [NSMutableArray alloc]
             initWithCapacity: TEXTUREARRAYS_SIZE];
-    
-    // initialize a texture array for each object
-    // in the global var "texturearrays" 
-    assert(TEXTUREARRAYS_SIZE > 0);
-    for (
-        int32_t i = 0;
-        i < (int32_t)texture_arrays_size;
-        i++)
-    {
-        if (texture_arrays_size >= TEXTUREARRAYS_SIZE) {
-            assert(0);
-        }
-        [self updateTextureArray: i];
-    }
-    
+        
     log_append("finished configureMetalWithDevice\n");
 }
 
-- (void)updateTextureArray: (int32_t)texturearray_i
+- (void)
+    initializeTextureArray:(int32_t)texturearray_i
+    spritesWide:(uint32_t)sprites_wide
+    spritesHigh:(uint32_t)sprites_high
+    singleImgWidth: (uint32_t)single_img_width
+    singleImgHeight: (uint32_t)single_img_height;
 {
-    texture_arrays[texturearray_i].request_update = false;
-
+    log_assert(single_img_width > 0);
+    log_assert(single_img_height > 0);
+    
+    texture_arrays[texturearray_i].request_init = false;
+    
     if (texturearray_i >= TEXTUREARRAYS_SIZE) { return; }
     if (texturearray_i >= (int32_t)texture_arrays_size) { return; }
     int32_t i = texturearray_i;
     
-    // pad objects to match
+    // we always overwrite textures, so pad them to match first
     while ((int32_t)[_metal_textures count] <= i) {
         MTLTextureDescriptor * texture_descriptor =
             [[MTLTextureDescriptor alloc] init];
@@ -176,110 +170,109 @@ static uint32_t already_drawing = false;
         [_metal_textures addObject: texture];
     }
     
-    if (texture_arrays[i].image == NULL
-        || !texture_arrays[i].image->good)
-    {
-        return;
-    }
-    
-    uint32_t slice_count =
-        texture_arrays[i].sprite_rows *
-            texture_arrays[i].sprite_columns;
-    
-    if (
-        texture_arrays[i].sprite_rows == 0
-        || texture_arrays[i].sprite_columns == 0)
-    {
-        log_append("texture_arrays[");
-        log_append_uint(i);
-        log_append("'s sprite rows/cols was 0, did you forget to set it in clientlogic.c? TEXTUREARRAYS_SIZE (in vertex_types.h) was");
-        log_append_uint(TEXTUREARRAYS_SIZE);
-        log_append("\n");
-        log_dump_and_crash();
-    }
-    
-    if (
-        texture_arrays[i].sprite_columns * 4 > texture_arrays[i].image->width
-        ||
-        texture_arrays[i].sprite_rows * 4 >= texture_arrays[i].image->height)
-    {
-        log_append(
-            "aborted texture write because many columns/rows, few pixels\n");
-        return;
-    }
-    
-    assert(texture_arrays[i].image->width >= 2);
-    assert(texture_arrays[i].image->height >= 2);
     MTLTextureDescriptor * texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
     texture_descriptor.textureType = MTLTextureType2DArray;
-    texture_descriptor.arrayLength = slice_count;
+    texture_descriptor.arrayLength = sprites_wide * sprites_high;
     texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
-    texture_descriptor.width =
-        texture_arrays[i].image->width
-            / texture_arrays[i].sprite_columns;
-    texture_descriptor.height =
-        texture_arrays[i].image->height
-            / texture_arrays[i].sprite_rows;
+    texture_descriptor.width = single_img_width;
+    texture_descriptor.height = single_img_height;
+    
     id<MTLTexture> texture =
         [_metal_device
             newTextureWithDescriptor:texture_descriptor];
     
-    uint32_t slice_i = 0;
-    for (
-        uint32_t row_i = 1;
-        row_i <= texture_arrays[i].sprite_rows;
-        row_i++)
-    {
-        for (
-            uint32_t col_i = 1;
-            col_i <= texture_arrays[i].sprite_columns;
-            col_i++)
-        {
-            DecodedImage * new_slice =
-                extract_image(
-                    /* texture_array: */ &texture_arrays[i],
-                    /* x            : */ col_i,
-                    /* y            : */ row_i);
-            
-            if (new_slice == NULL) { continue; }
-            
-            MTLRegion region = {
-                {
-                    0,
-                    0,
-                    0
-                },
-                {
-                    new_slice->width,
-                    new_slice->height,
-                    1
-                }
-            };
-            
-            [texture
-                replaceRegion:
-                    region
-                mipmapLevel:
-                    0
-                slice:
-                    slice_i
-                withBytes:
-                    new_slice->rgba_values
-                bytesPerRow:
-                    new_slice->width * 4
-                bytesPerImage:
-                    /* docs: use 0 for anything other than
-                       MTLTextureType3D textures */
-                    0];
-            
-            slice_i++;
-        }
-    }
-    
     [_metal_textures
         replaceObjectAtIndex:(uint32_t)i
         withObject: texture];
+}
+
+- (void)
+    updateTextureArray: (int32_t)texturearray_i
+    atTexture: (int32_t)texture_i;
+{    
+    log_assert(texturearray_i < TEXTUREARRAYS_SIZE);
+    log_assert(texturearray_i < (int32_t)texture_arrays_size);
+    log_assert(texture_i >= 0);
+    log_assert(texture_i < texture_arrays[texturearray_i].images_size);
+    log_assert(texture_arrays[texturearray_i].single_img_width > 0);
+    log_assert(texture_arrays[texturearray_i].single_img_height > 0);
+    
+    if (texture_arrays[texturearray_i].request_init
+        || texture_arrays[texturearray_i].images == NULL
+        || texture_arrays[texturearray_i].images_size == 0
+        || texture_arrays[texturearray_i].images[texture_i].image == NULL
+        || texture_arrays[texturearray_i].images[texture_i].image
+            ->rgba_values == NULL)
+    {
+        return;
+    }
+    
+    if (!texture_arrays[texturearray_i].images[texture_i].image->good)
+    {
+        return;
+    }
+    
+    if (texturearray_i >= [_metal_textures count]) {
+        log_append("Warning: tried to update uninitialized texturearray ");
+        log_append_int(texturearray_i);
+        log_append(" at texture_i: ");
+        log_append_int(texture_i);
+        log_append("\n");
+        return;
+    }
+    
+    texture_arrays[texturearray_i].images[texture_i].request_update = false;
+    
+    MTLTextureDescriptor * texture_descriptor =
+        [[MTLTextureDescriptor alloc] init];
+    texture_descriptor.textureType = MTLTextureType2DArray;
+    texture_descriptor.arrayLength = texture_arrays[texturearray_i].images_size;
+    texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
+    texture_descriptor.width =
+        texture_arrays[texturearray_i].images[texture_i].image->width;
+    texture_descriptor.height =
+        texture_arrays[texturearray_i].images[texture_i].image->height;
+    
+    DecodedImage * new_slice =
+        texture_arrays[texturearray_i].images[texture_i].image;
+    
+    MTLRegion region = {
+        {
+            0,
+            0,
+            0
+        },
+        {
+            new_slice->width,
+            new_slice->height,
+            1
+        }
+    };
+    
+    log_append("\npassed all checks, writing to GPU for texturearray_i: ");
+    log_append_int(texturearray_i);
+    log_append(", texture_i: ");
+    log_append_int(texture_i);
+    log_append(", [_metal_textures count] was: ");
+    log_append_uint([_metal_textures count]);
+    log_append("...\n");
+    
+    [[_metal_textures objectAtIndex:texturearray_i]
+        replaceRegion:
+            region
+        mipmapLevel:
+            0
+        slice:
+            texture_i
+        withBytes:
+            new_slice->rgba_values
+        bytesPerRow:
+            new_slice->width * 4
+        bytesPerImage:
+            /* docs: use 0 for anything other than
+               MTLTextureType3D textures */
+            0];    
 }
 
 - (void)drawInMTKView:(MTKView *)view
@@ -291,9 +284,26 @@ static uint32_t already_drawing = false;
     previous_time = time;
     
     for (uint32_t i = 0; i < texture_arrays_size; i++) {
-        if (texture_arrays[i].request_update) {
-            [self updateTextureArray: (int32_t)i];
+        if (texture_arrays[i].request_init) {
+            uint32_t width = sqrt(texture_arrays[i].images_size);
+            uint32_t height = texture_arrays[i].images_size / width;
+            log_assert(width * height == texture_arrays[i].images_size);
+            [self
+                initializeTextureArray: (int32_t)i
+                spritesWide: width
+                spritesHigh: height
+                singleImgWidth: texture_arrays[i].single_img_width
+                singleImgHeight: texture_arrays[i].single_img_height];
             break;
+        } else {
+            for (uint32_t j = 0; j < texture_arrays[i].images_size; j++) {
+                if (texture_arrays[i].images[j].request_update) {
+                    [self
+                        updateTextureArray: i
+                        atTexture: j];
+                    break;
+                }
+            }
         }
     }
     

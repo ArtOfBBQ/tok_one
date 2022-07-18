@@ -12,11 +12,18 @@
 #define MAX_FILES_IN_SINGLE_TEXARRAY 200
 #define MAX_ASSET_FILES 1500
 
-typedef struct TextureArray {
+typedef struct TextureArrayImage {
     DecodedImage * image;
-    uint32_t sprite_columns;
-    uint32_t sprite_rows;
     bool32_t request_update;
+} TextureArrayImage;
+
+#define MAX_IMAGES_IN_TEXARRAY 300
+typedef struct TextureArray {
+    TextureArrayImage images[MAX_IMAGES_IN_TEXARRAY];
+    uint32_t images_size;
+    uint32_t single_img_width;
+    uint32_t single_img_height;
+    bool32_t request_init;
 } TextureArray;
 
 // A buffer of texture arrays (AKA texture atlases) your
@@ -27,13 +34,15 @@ typedef struct TextureArray {
 // Set the zTriangle's texture_i to select which texture inside
 // the texture atlas to use
 // REMINDER: You must define TEXTUREARRAYS_SIZE in vertex_types.h
-extern TextureArray texture_arrays[TEXTUREARRAYS_SIZE];
+extern TextureArray * texture_arrays;
 extern uint32_t texture_arrays_size;
 
 DecodedImage * extract_image(
-    TextureArray * texture_array,
-    uint32_t x,
-    uint32_t y);
+    const DecodedImage * original,
+    const uint32_t sprite_columns,
+    const uint32_t sprite_rows,
+    const uint32_t x,
+    const uint32_t y);
 
 DecodedImage * malloc_img_from_filename(
     const char * filename);
@@ -45,6 +54,8 @@ void update_texturearray_from_0terminated_files(
     const char filenames
         [MAX_FILES_IN_SINGLE_TEXARRAY]
         [MAX_ASSET_FILENAME_SIZE],
+    const uint32_t expected_width,
+    const uint32_t expected_height,
     const uint32_t filenames_size);
 
 void update_texturearray_from_0terminated_files_with_memory(
@@ -52,9 +63,11 @@ void update_texturearray_from_0terminated_files_with_memory(
     const char filenames
         [MAX_FILES_IN_SINGLE_TEXARRAY]
         [MAX_ASSET_FILENAME_SIZE],
+    const uint32_t expected_width,
+    const uint32_t expected_height,
     const uint32_t filenames_size,
-    const uint8_t * inflate_working_memory,
-    const uint64_t inflate_working_memory_size);
+    uint8_t * dpng_working_memory,
+    uint64_t dpng_working_memory_size);
 
 /*
 Next are functions to register new image(s) or imgfile(s0
@@ -75,6 +88,16 @@ void register_new_texturearray_from_images(
 
 void register_new_texturearray(
     DecodedImage * new_image);
+
+void register_new_texturearray_by_splitting_file(
+    const char * filename,
+    const uint32_t rows,
+    const uint32_t columns);
+
+void register_new_texturearray_by_splitting_image(
+    DecodedImage * new_image,
+    const uint32_t rows,
+    const uint32_t columns);
 
 #endif
 

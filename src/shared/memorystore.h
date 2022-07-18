@@ -21,4 +21,6 @@ uint8_t * malloc_from_unmanaged(uint64_t size);
 uint8_t * malloc_from_managed(uint64_t size);
 void free_from_managed(uint8_t * to_free);
 
+uint64_t get_remaining_memory_checksum();
+
 #endif

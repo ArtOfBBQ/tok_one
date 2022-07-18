@@ -38,19 +38,27 @@ uint32_t teapot_object_id = 1;
 
 static void preregister_assets() {
     
-    const char * fontfile[1];
-    fontfile[0] = "font.png";
-    register_new_texturearray_from_files(
-        fontfile,
-        1);
-    if (get_avg_rgba(texture_arrays[0].image) < 1) {
-        log_append(
-            "average rgba for texture_arrays[0] was 0\n");
-        log_dump_and_crash();
+    const char * fontfile;
+    fontfile = "font.png";
+    register_new_texturearray_by_splitting_file(
+        /* filename : */ fontfile,
+        /* rows     : */ 10,
+        /* columns  : */ 10);
+    texture_arrays[0].images_size = 100;
+    texture_arrays[0].single_img_width =
+        texture_arrays[0].images[0].image->width;
+    texture_arrays[0].single_img_height =
+        texture_arrays[0].images[0].image->height;
+    texture_arrays[0].request_init = true;
+    for (uint32_t i = 0; i < texture_arrays[0].images_size; i++) {
+        texture_arrays[0].images[i].request_update = true;
+        log_assert(
+            texture_arrays[0].images[i].image->width ==
+                texture_arrays[0].single_img_width);
+        log_assert(
+            texture_arrays[0].images[i].image->height ==
+                texture_arrays[0].single_img_height);
     }
-    texture_arrays[0].sprite_columns = 10;
-    texture_arrays[0].sprite_rows = 10;
-    texture_arrays[0].request_update = false;
     
     typedef struct {
         char filename[MAX_ASSET_FILENAME_SIZE];
@@ -219,6 +227,9 @@ static void preregister_assets() {
             new_loc.texturearray_i = new_texturearray_i;
             new_loc.texture_i = new_texture_i;
             
+            texture_arrays[new_loc.texturearray_i].single_img_width = width;
+            texture_arrays[new_loc.texturearray_i].single_img_height = height;
+            
             copy_strings(
                 /* recipient: */
                     filenames_for_texturearrays
@@ -244,11 +255,32 @@ static void load_assets(
     {
         if (!application_running) { return; }
         
+        log_assert(texture_arrays[0].images[52].image->width == 39);
+        uint32_t filenames_count = 0;
+        while (
+            filenames_for_texturearrays[dimension_i][filenames_count][0]
+                != '\0')
+        {
+            log_assert(texture_arrays[0].images[52].image->width == 39);
+            filenames_count++;
+        }
+        
+        log_append("update_texturearray_from_0terminated_files (count: ");
+        log_append_uint(filenames_count);
+        log_append("...\n");
+        log_assert(texture_arrays[0].images[52].image->width == 39);
         update_texturearray_from_0terminated_files(
             /* const int32_t texturearray_i: */
                 dimension_i,
             /* const char *** filenames: */
-                filenames_for_texturearrays[dimension_i]);
+                filenames_for_texturearrays[dimension_i],
+            /* const uint32_t expected_width: */
+                texture_arrays[dimension_i].single_img_width,
+            /* const uint32_t expected_height: */
+                texture_arrays[dimension_i].single_img_height,
+            /* const uint32_t filenames_size: */
+                filenames_count);
+        log_assert(texture_arrays[0].images[52].image->width == 39);
     }
 }
 
@@ -258,55 +290,51 @@ char * client_logic_get_application_name() {
 
 void client_logic_startup() {
     
-    // These are some example texture atlases we're using for
-    // texture mapping on cards and cubes
-    log_assert(TEXTUREARRAYS_SIZE > 0);
-    
     preregister_assets();
     
+    log_assert(texture_arrays[0].images[52].image->width == 39);
     log_assert(texture_arrays_size > 0); 
     load_assets(1, texture_arrays_size - 1);
+    log_assert(texture_arrays[0].images[52].image->width == 39);
+    
+    TexQuad sample_pic;
+    construct_texquad(&sample_pic);
+    sample_pic.object_id = 99999;
+    sample_pic.texturearray_i = 1;
+    sample_pic.texture_i = 1;
+    sample_pic.width_pixels = 300;
+    sample_pic.height_pixels = 300;
+    sample_pic.left_pixels = 200;
+    sample_pic.top_pixels = window_height / 2;
+    sample_pic.RGBA[0] = 1.0f;
+    sample_pic.RGBA[0] = 0.0f;
+    sample_pic.RGBA[0] = 1.0f;
+    sample_pic.RGBA[0] = 1.0f;
+    request_texquad_renderable(&sample_pic);
+    log_assert(texture_arrays[0].images[52].image->width == 39);
+    
+    request_label_renderable(
+        /* const uint32_t with_id: */
+            99,
+        /* const char * text_to_draw: */
+            "I know dragons with feet like rabbits! 't is true, I swear!",
+        /* const float left_pixelspace: */
+            100,
+        /* const float top_pixelspace: */
+            window_height - 100,
+        /* const float z: */
+            1.0f,
+        /* const float max_width: */
+            450,
+        /* const bool32_t ignore_camera: */
+            false);
+    log_assert(texture_arrays[0].images[52].image->width == 39);
     
     // reminder: threadmain_id 0 calls load_assets() 
+    log_append("starting asset-loading thread...\n");
     platform_start_thread(client_logic_threadmain, /* threadmain_id: */ 0);
     
-    char * sample_text = (char *)"This is an example text, which should be big enough that it wraps the entire screen and therefore allows us to test the functionality where lines are broken up to appear on the next line automatically. By the way, it's been absolutely incredible working on this project. I'm so happy that we've come this far and can't wait to keep pushing forward to finish text. If we can just finish text and include sound functionality, we'll be able to push an actual update to lore seeker's existing apps while using the new engine in production, something I never could have dreamed when I started this.\n";
-    font_ignore_lighting = false;
-    uint32_t sample_text_size = get_string_length(sample_text);
-    request_label_around(
-        /* with_id               : */ 100,
-        /* char * text_to_draw   : */ sample_text,
-        /* text_to_draw_size     : */ sample_text_size,
-        /* mid_x_pixelspace      : */ window_width * 0.5f,
-        /* float top_pixelspace  : */ window_height - 50.0f,
-        /* z                     : */ 0.5f,
-        /* float max_width       : */ window_width,
-        /* bool32_t ignore_camera: */ false);
-    
-    ScheduledAnimation letter_rotation;
-    construct_scheduled_animation(&letter_rotation);
-    letter_rotation.affected_object_id = 100;
-    letter_rotation.z_rotation_per_second = 6.28f;
-    letter_rotation.wait_first_microseconds = 15000000;
-    letter_rotation.wait_before_each_run_microseconds = 2000000;
-    letter_rotation.duration_microseconds = 1000000;
-    letter_rotation.runs = 0;
-    request_scheduled_animation(&letter_rotation);
-    
-    font_height = 14.0f;
-    request_label_renderable(
-        /* with_id               : */ 101,
-        /* char * text_to_draw   : */ sample_text,
-        /* float left_pixelspace : */ 20.0f,
-        /* float top_pixelspace  : */ window_height - 350.0f,
-        /* z                     : */ 0.5f,
-        /* float max_width       : */ window_width / 2,
-        /* bool32_t ignore_camera: */ false);
-    
-    log_append("writable path: ");
-    log_append(platform_get_writables_path());
-    log_append("\n");
-    
+    log_assert(texture_arrays[0].images[52].image->width == 39);
     log_append("finished client_logic_startup()\n");
 }
 
@@ -545,14 +573,14 @@ static void client_handle_touches(
     uint64_t microseconds_elapsed)
 {
     // handle tablet & phone touches
-    if (!current_touch.handled) {
+    if (!current_touch.handled_start) {
         if (current_touch.finished) {
             // an unhandled, finished touch
             if (
                 (current_touch.finished_at
                     - current_touch.started_at) < 500000)
             {                
-                current_touch.handled = true;
+                current_touch.handled_start = true;
                 
                 float location_x = (float)current_touch.current_x + camera.x;
                 float location_y = (float)current_touch.current_y + camera.y;
