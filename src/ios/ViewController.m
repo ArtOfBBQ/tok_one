@@ -15,14 +15,6 @@ TouchableMTKView * _my_mtk_view;
     _my_mtk_view.paused = NO;
     _my_mtk_view.enableSetNeedsDisplay = NO;
     
-    log_assert(window_width == 0.0f);
-    log_assert(window_height == 0.0f);
-    window_height = platform_get_current_window_height(); 
-    window_width = platform_get_current_window_width();
-        
-    init_projection_constants();
-    init_renderer();
-    
     _metal_device = MTLCreateSystemDefaultDevice();
     
     if (_metal_device == nil) {

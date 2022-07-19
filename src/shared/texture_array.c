@@ -295,7 +295,7 @@ void register_new_texturearray_from_images(
     texture_arrays[new_i].images_size = new_images_size;
     texture_arrays[new_i].request_init = true;
     texture_arrays_size += 1;
-        
+    
     for (
         uint32_t i = 0;
         i < new_images_size;

@@ -199,7 +199,6 @@ static uint32_t already_drawing = false;
     log_assert(texture_arrays[texturearray_i].single_img_height > 0);
     
     if (texture_arrays[texturearray_i].request_init
-        || texture_arrays[texturearray_i].images == NULL
         || texture_arrays[texturearray_i].images_size == 0
         || texture_arrays[texturearray_i].images[texture_i].image == NULL
         || texture_arrays[texturearray_i].images[texture_i].image
