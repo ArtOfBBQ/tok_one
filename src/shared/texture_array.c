@@ -292,6 +292,8 @@ void register_new_texturearray_from_images(
     // x images
     int32_t new_i = (int32_t)texture_arrays_size;
     log_assert(new_i < TEXTUREARRAYS_SIZE);
+    texture_arrays[new_i].single_img_width = current_width;
+    texture_arrays[new_i].single_img_height = current_height;
     texture_arrays[new_i].images_size = new_images_size;
     texture_arrays[new_i].request_init = true;
     texture_arrays_size += 1;

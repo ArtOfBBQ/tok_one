@@ -178,9 +178,9 @@ static void preregister_assets() {
                         new_texture_i < registered_assets[i]
                             .texture_i)
                     {
-                        new_texture_i =
-                            registered_assets[i].texture_i;
-                        log_assert(new_texture_i < MAX_FILES_IN_SINGLE_TEXARRAY);
+                        new_texture_i = registered_assets[i].texture_i;
+                        log_assert(
+                            new_texture_i < MAX_FILES_IN_SINGLE_TEXARRAY);
                     }
                 }
             }
@@ -202,10 +202,8 @@ static void preregister_assets() {
                 texture_arrays_size++;
             }
             
-            registered_assets[registered_assets_size].width =
-                width;
-            registered_assets[registered_assets_size].height =
-                height;
+            registered_assets[registered_assets_size].width = width;
+            registered_assets[registered_assets_size].height = height;
             registered_assets[registered_assets_size]
                 .texturearray_i = new_texturearray_i;
             registered_assets[registered_assets_size]

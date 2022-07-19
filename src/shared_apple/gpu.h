@@ -27,8 +27,7 @@
 @property (retain) NSMutableArray * metal_textures;
 - (void)
     initializeTextureArray:(int32_t)texturearray_i
-    spritesWide:(uint32_t)sprites_wide
-    spritesHigh:(uint32_t)sprites_high
+    textureCount:(uint32_t)texture_count
     singleImgWidth: (uint32_t)single_img_width
     singleImgHeight: (uint32_t)single_img_height;
 - (void)

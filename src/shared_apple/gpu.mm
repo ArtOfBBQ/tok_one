@@ -141,8 +141,7 @@ static uint32_t already_drawing = false;
 
 - (void)
     initializeTextureArray:(int32_t)texturearray_i
-    spritesWide:(uint32_t)sprites_wide
-    spritesHigh:(uint32_t)sprites_high
+    textureCount:(uint32_t)texture_count
     singleImgWidth: (uint32_t)single_img_width
     singleImgHeight: (uint32_t)single_img_height;
 {
@@ -173,7 +172,7 @@ static uint32_t already_drawing = false;
     MTLTextureDescriptor * texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
     texture_descriptor.textureType = MTLTextureType2DArray;
-    texture_descriptor.arrayLength = sprites_wide * sprites_high;
+    texture_descriptor.arrayLength = texture_count;
     texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
     texture_descriptor.width = single_img_width;
     texture_descriptor.height = single_img_height;
@@ -284,13 +283,9 @@ static uint32_t already_drawing = false;
     
     for (uint32_t i = 0; i < texture_arrays_size; i++) {
         if (texture_arrays[i].request_init) {
-            uint32_t width = sqrt(texture_arrays[i].images_size);
-            uint32_t height = texture_arrays[i].images_size / width;
-            log_assert(width * height == texture_arrays[i].images_size);
             [self
                 initializeTextureArray: (int32_t)i
-                spritesWide: width
-                spritesHigh: height
+                textureCount: texture_arrays[i].images_size
                 singleImgWidth: texture_arrays[i].single_img_width
                 singleImgHeight: texture_arrays[i].single_img_height];
             break;
@@ -306,9 +301,6 @@ static uint32_t already_drawing = false;
         }
     }
     
-    // TODO: this only works on retina
-    // because on retina screens, the MTLViewport is 2x
-    // the size of the window
     MTLViewport viewport = {
         0,
         0,
