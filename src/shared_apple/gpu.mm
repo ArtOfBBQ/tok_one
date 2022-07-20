@@ -248,14 +248,6 @@ static uint32_t already_drawing = false;
         }
     };
     
-    log_append("\npassed all checks, writing to GPU for texturearray_i: ");
-    log_append_int(texturearray_i);
-    log_append(", texture_i: ");
-    log_append_int(texture_i);
-    log_append(", [_metal_textures count] was: ");
-    log_append_uint([_metal_textures count]);
-    log_append("...\n");
-    
     [[_metal_textures objectAtIndex:texturearray_i]
         replaceRegion:
             region

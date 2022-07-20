@@ -134,7 +134,6 @@ malloc_img_from_filename_with_working_memory(
     }
     
     log_assert(new_image->pixel_count * 4 == new_image->rgba_values_size);
-    log_assert(get_sum_rgba(new_image) > 0);
     
     log_assert(new_image->pixel_count == new_image->width * new_image->height);
     

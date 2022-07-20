@@ -11,14 +11,12 @@ void init_application() {
     // initialize texture arrays
     texture_arrays = (TextureArray *)malloc_from_unmanaged(
         sizeof(TextureArray) * TEXTUREARRAYS_SIZE);
-    uint64_t mem_checksum = get_remaining_memory_checksum();
     for (uint32_t i = 0; i < TEXTUREARRAYS_SIZE; i++) {
         texture_arrays[i].images_size = 0;
         texture_arrays[i].single_img_width = 0;
         texture_arrays[i].single_img_height = 0;
         texture_arrays[i].request_init = false;
     }
-    log_assert(mem_checksum == get_remaining_memory_checksum());
     
     // initialize font with fontmetrics.dat
     FileBuffer font_metrics_file;
@@ -56,4 +54,3 @@ void init_application() {
     init_projection_constants();
     init_renderer(); // also runs client_logic_startup()
 }
-

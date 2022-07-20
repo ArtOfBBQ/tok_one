@@ -116,12 +116,9 @@ int main(int argc, const char * argv[])
     log_append("\nconfirming we can save debug info - writing log.txt...\n");
     log_dump();
     
-    int64_t mem_checksum = get_remaining_memory_checksum();
     NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     NSRect full_screen_rect = [screen frame]; 
-    
-    log_assert(mem_checksum == get_remaining_memory_checksum());
-    
+        
     NSWindowWithCustomResponder *window =
         [[NSWindowWithCustomResponder alloc]
             initWithContentRect: full_screen_rect 
@@ -187,4 +184,3 @@ int main(int argc, const char * argv[])
     
     return NSApplicationMain(argc, argv);
 }
-
