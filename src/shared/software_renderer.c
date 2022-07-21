@@ -1,16 +1,8 @@
 #include "software_renderer.h"
 
 void init_renderer() {
-    log_append("init_renderer...\n");
-    current_touch.handled_start = true;
-    current_touch.handled_finish = true;
-    client_logic_startup();
     renderer_initialized = true;
     
-    last_mouse_up.handled = true;
-    last_mouse_down.handled = true;
-    last_mouse_move.handled = true;
-    last_mouse_up.handled = true;
     camera.x = 0.0f;
     camera.y = 0.0f;
 }

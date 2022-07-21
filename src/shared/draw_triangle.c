@@ -1,8 +1,7 @@
 #include "draw_triangle.h"
 
-TriangleArea touchable_triangles[
-    TOUCHABLE_TRIANGLES_ARRAYSIZE];
-uint32_t touchable_triangles_size;
+TriangleArea * touchable_triangles;
+uint32_t touchable_triangles_size = 0;
 
 void __attribute__((no_instrument_function))
 draw_triangle(
@@ -27,8 +26,7 @@ void register_touchable_triangle(
     const int32_t touchable_id,
     Vertex triangle_area[3])
 {
-    log_assert(touchable_triangles_size
-        < TOUCHABLE_TRIANGLES_ARRAYSIZE);
+    log_assert(touchable_triangles_size < TOUCHABLE_TRIANGLES_ARRAYSIZE);
     
     for (
         uint32_t v = 0;

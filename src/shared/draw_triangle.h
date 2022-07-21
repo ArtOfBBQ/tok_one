@@ -27,9 +27,8 @@ typedef struct TriangleArea {
     int32_t touchable_id;
 } TriangleArea;
 
-#define TOUCHABLE_TRIANGLES_ARRAYSIZE 1500
-extern TriangleArea touchable_triangles[
-    TOUCHABLE_TRIANGLES_ARRAYSIZE];
+#define TOUCHABLE_TRIANGLES_ARRAYSIZE 10000
+extern TriangleArea * touchable_triangles;
 extern uint32_t touchable_triangles_size;
 
 void __attribute__((no_instrument_function))

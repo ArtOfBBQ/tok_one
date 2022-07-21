@@ -50,7 +50,17 @@ NSWindowWithCustomResponder: NSWindow
 {
     NSPoint screenspace_location = [NSEvent mouseLocation];
     
-    buffer_mousedown(
+    register_interaction(
+        /* interaction : */
+            &previous_leftclick_start,
+        /* screenspace_x: */
+            (float)screenspace_location.x,
+        /* screenspace_y: */
+            (float)screenspace_location.y);
+    
+    register_interaction(
+        /* interaction : */
+            &previous_touch_or_leftclick_start,
         /* screenspace_x: */
             (float)screenspace_location.x,
         /* screenspace_y: */
@@ -61,7 +71,17 @@ NSWindowWithCustomResponder: NSWindow
 {
     NSPoint screenspace_location = [NSEvent mouseLocation];
     
-    buffer_mouseup(
+    register_interaction(
+        /* interaction : */
+            &previous_leftclick_end,
+        /* screenspace_x: */
+            (float)screenspace_location.x,
+        /* screenspace_y: */
+            (float)screenspace_location.y);
+    
+    register_interaction(
+        /* interaction : */
+            &previous_touch_or_leftclick_end,
         /* screenspace_x: */
             (float)screenspace_location.x,
         /* screenspace_y: */
@@ -84,26 +104,25 @@ NSWindowWithCustomResponder: NSWindow
 {
     NSPoint screenspace_location = [NSEvent mouseLocation];
     
-    buffer_mousemove(
+    register_interaction(
+        /* interaction : */
+            &previous_mouse_move,
         /* screenspace_x: */
             (float)screenspace_location.x,
         /* screenspace_y: */
             (float)screenspace_location.y);
 }
 
-- (void)keyDown:(NSEvent *)event
-{
+- (void)keyDown:(NSEvent *)event {
     register_keydown(event.keyCode);
 }
 
-- (void)keyUp:(NSEvent *)event
-{
+- (void)keyUp:(NSEvent *)event {
     register_keyup(event.keyCode);
 }
 @end
 
-int main(int argc, const char * argv[])
-{
+int main(int argc, const char * argv[]) {
     init_application();
     
     @autoreleasepool {

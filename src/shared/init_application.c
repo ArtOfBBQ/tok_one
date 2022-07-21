@@ -42,7 +42,9 @@ void init_application() {
         sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
     texquads_to_render = (TexQuad *)malloc_from_unmanaged(
         sizeof(TexQuad) * TEXQUADS_TO_RENDER_ARRAYSIZE);
-
+    touchable_triangles = (TriangleArea *)malloc_from_unmanaged(
+        sizeof(TriangleArea) * TOUCHABLE_TRIANGLES_ARRAYSIZE);
+    
     window_height = platform_get_current_window_height();
     window_width = platform_get_current_window_width();
     log_append("window height set to: ");
@@ -52,5 +54,18 @@ void init_application() {
     log_append("\n");
     
     init_projection_constants();
-    init_renderer(); // also runs client_logic_startup()
+    
+    client_logic_startup();
+    
+    construct_interaction(&previous_touch_start);
+    construct_interaction(&previous_touch_end);
+    construct_interaction(&previous_leftclick_start);
+    construct_interaction(&previous_leftclick_end);
+    construct_interaction(&previous_touch_or_leftclick_start);
+    construct_interaction(&previous_touch_or_leftclick_end);
+    construct_interaction(&previous_rightclick_start);
+    construct_interaction(&previous_rightclick_end);
+    construct_interaction(&previous_mouse_move);
+    
+    init_renderer();
 }
