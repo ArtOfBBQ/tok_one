@@ -13,13 +13,13 @@ char * platform_get_writables_path(void) {
             NSApplicationSupportDirectory,
             NSUserDomainMask,
             YES);
-
+        
         NSString * libraryDirectory = [paths objectAtIndex:0];
-
+        
         char * library_dir =
             (char *)[libraryDirectory
                 cStringUsingEncoding: NSUTF8StringEncoding];
-
+        
         // +2 because 1 for null terminator, 1 for an '/' in between
         writables_path = (char *)malloc_from_unmanaged(
             get_string_length(library_dir) + get_string_length(application_name) + 2);

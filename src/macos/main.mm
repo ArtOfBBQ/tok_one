@@ -10,8 +10,14 @@
 
 #define SHARED_APPLE_PLATFORM
 
-bool32_t application_running = true;
-bool32_t has_retina_screen = true;
+/*
+these variables may not exist on platforms where window resizing is
+impossible
+*/
+float current_window_height = 600;
+float current_window_width = 300;
+
+MTKView * mtk_view = NULL; 
 
 @interface
 GameWindowDelegate: NSObject<NSWindowDelegate>
@@ -25,6 +31,30 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     log_dump();
     
     [NSApp terminate: nil];
+}
+
+- (NSSize)
+    windowWillResize:(NSWindow *)sender 
+    toSize:(NSSize)frameSize
+{
+    float title_bar_height =
+        [sender contentRectForFrameRect: sender.frame].size.height
+            - sender.frame.size.height;
+    
+    current_window_height = frameSize.height + title_bar_height;
+    current_window_width = frameSize.width;
+    
+    NSSize new_size = frameSize;
+    new_size.height += title_bar_height;
+    new_size.height *= 2;
+    new_size.width *= 2;
+    mtk_view.drawableSize = new_size;
+    
+    client_logic_window_resize(
+        (uint32_t)current_window_height,
+        (uint32_t)current_window_width);
+    
+    return frameSize;
 }
 @end
 
@@ -49,22 +79,31 @@ NSWindowWithCustomResponder: NSWindow
 - (void)mouseDown:(NSEvent *)event
 {
     NSPoint screenspace_location = [NSEvent mouseLocation];
+
+    printf(
+        "mouse down at screenspace: %f, %f\n",
+        (float)screenspace_location.x,
+        (float)screenspace_location.y);
     
     register_interaction(
         /* interaction : */
             &previous_leftclick_start,
         /* screenspace_x: */
-            (float)screenspace_location.x,
+            (float)screenspace_location.x
+                - platform_get_current_window_left(),
         /* screenspace_y: */
-            (float)screenspace_location.y);
+            (float)screenspace_location.y
+                - platform_get_current_window_bottom());
     
     register_interaction(
         /* interaction : */
             &previous_touch_or_leftclick_start,
         /* screenspace_x: */
-            (float)screenspace_location.x,
+            (float)screenspace_location.x
+                - platform_get_current_window_left(),
         /* screenspace_y: */
-            (float)screenspace_location.y);
+            (float)screenspace_location.y
+                - platform_get_current_window_bottom());
 }
 
 - (void)mouseUp:(NSEvent *)event
@@ -75,17 +114,20 @@ NSWindowWithCustomResponder: NSWindow
         /* interaction : */
             &previous_leftclick_end,
         /* screenspace_x: */
-            (float)screenspace_location.x,
+            (float)screenspace_location.x - platform_get_current_window_left(),
         /* screenspace_y: */
-            (float)screenspace_location.y);
+            (float)screenspace_location.y
+                - platform_get_current_window_bottom());
     
     register_interaction(
         /* interaction : */
             &previous_touch_or_leftclick_end,
         /* screenspace_x: */
-            (float)screenspace_location.x,
+            (float)screenspace_location.x
+                - platform_get_current_window_left(),
         /* screenspace_y: */
-            (float)screenspace_location.y);
+            (float)screenspace_location.y
+                - platform_get_current_window_bottom());
 }
 
 - (void)rightMouseDown:(NSEvent *)event
@@ -108,9 +150,11 @@ NSWindowWithCustomResponder: NSWindow
         /* interaction : */
             &previous_mouse_move,
         /* screenspace_x: */
-            (float)screenspace_location.x,
+            (float)screenspace_location.x
+                - platform_get_current_window_left(),
         /* screenspace_y: */
-            (float)screenspace_location.y);
+            (float)screenspace_location.y
+                - platform_get_current_window_bottom());
 }
 
 - (void)keyDown:(NSEvent *)event {
@@ -121,6 +165,19 @@ NSWindowWithCustomResponder: NSWindow
     register_keyup(event.keyCode);
 }
 @end
+
+bool32_t application_running = true;
+bool32_t has_retina_screen = true;
+
+NSWindowWithCustomResponder * window = NULL;
+
+float platform_get_current_window_left() {
+    return window.frame.origin.x;
+}
+
+float platform_get_current_window_bottom() {
+    return window.frame.origin.y;
+}
 
 int main(int argc, const char * argv[]) {
     init_application();
@@ -135,15 +192,19 @@ int main(int argc, const char * argv[]) {
     log_append("\nconfirming we can save debug info - writing log.txt...\n");
     log_dump();
     
-    NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
-    NSRect full_screen_rect = [screen frame]; 
-        
-    NSWindowWithCustomResponder *window =
+    // NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
+    NSRect window_rect = NSMakeRect(
+        /* x: */ 200,
+        /* y: */ 250,
+        /* width: */ platform_get_current_window_width(),
+        /* height: */ platform_get_current_window_height());
+    
+    window =
         [[NSWindowWithCustomResponder alloc]
-            initWithContentRect: full_screen_rect 
-            styleMask: /*(NSWindowStyleMaskTitled
+            initWithContentRect: window_rect 
+            styleMask: NSWindowStyleMaskTitled
                          | NSWindowStyleMaskClosable
-                         | */NSWindowStyleMaskFullScreen
+                         | NSWindowStyleMaskResizable
             backing: NSBackingStoreBuffered 
             defer: NO];
     
@@ -160,10 +221,12 @@ int main(int argc, const char * argv[]) {
     id<MTLDevice> metal_device =
         MTLCreateSystemDefaultDevice();
     
-    MTKView * mtk_view =
+    mtk_view =
         [[MTKView alloc]
-            initWithFrame: full_screen_rect
+            initWithFrame: window_rect
             device: metal_device];
+    
+    mtk_view.autoResizeDrawable = false;
     
     // [mtk_view setOpaque: NO];
     // mtk_view.opaque = false;
@@ -203,3 +266,4 @@ int main(int argc, const char * argv[]) {
     
     return NSApplicationMain(argc, argv);
 }
+

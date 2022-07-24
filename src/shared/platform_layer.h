@@ -1,11 +1,10 @@
 /*
-These functions are not defined in the 'shared' folder
-they must be provided by the platform layer in a
-platform_layer.c file
+These functions are not defined in the 'shared' folder they must be provided
+by the platform layer in a platform_layer.c file
 
-For example, 'platform_read_file' is currently defined
-in /shared_windows_macos/platform_layer.c for windows
-and mac os X, but it's defined elsewhere for iOS
+For example, 'platform_read_file' is currently defined in
+/shared_windows_macos/platform_layer.c for windows and mac os X, but it's
+defined elsewhere for iOS
 */
 
 #ifndef PLATFORM_LAYER_H
@@ -80,20 +79,19 @@ uint64_t platform_get_filesize(
     const char * filepath);
 
 /*
-Read a file (without path, only filename)
-and fill its contents into a buffer of bytes
+Read a file (without path, only filename) and fill its contents into a buffer
+of bytes
 
-out_allocatedbuffer should have memory allocated
-already and size set to its maximum capacity
+out_allocatedbuffer should have memory allocated already and size set to its
+maximum capacity
 
-the file contents will stop copying when the filebuffer
-is full, so you can set the filbuffer's size to a small amount
-to quickly read the first (x-1) bytes of a large file
-it's x-1 and not x because a 0 will be appended at the end
-to make windows happy
+the file contents will stop copying when the filebuffer is full, so you can
+set the filbuffer's size to a small amount to quickly read the first (x-1)
+bytes of a large file it's x-1 and not x because a 0 will be appended at the
+end to make windows happy
 
-If there's an error reading the file, the buffer's
-'good' field will be set to 0, else to 1
+If there's an error reading the file, the buffer's 'good' field will be set to
+0, else to 1
 */
 void platform_read_resource_file(
     const char * filename,
@@ -102,11 +100,12 @@ void platform_read_file(
     const char * filepath,
     FileBuffer * out_preallocatedbuffer);
 
-// Run a task in the background
-// I only use this to pass clientlogic.c's
-// client_logic_threadmain() passing the threadmain_id to it
-// you have to implement client_logic_threadmain() to do
-// what you want it to do when it gets that id
+/*
+Run a task in the background I only use this to pass clientlogic.c's
+client_logic_threadmain() passing the threadmain_id to it you have to
+implement client_logic_threadmain() to do what you want it to do when it gets
+that id
+*/
 void platform_start_thread(
     void (*function_to_run)(int32_t),
     int32_t argument);
@@ -114,6 +113,8 @@ void platform_start_thread(
 uint64_t __attribute__((no_instrument_function))
 platform_get_current_time_microsecs(void);
 
+float platform_get_current_window_left();
+float platform_get_current_window_bottom();
 float platform_get_current_window_height();
 float platform_get_current_window_width();
 
@@ -121,3 +122,4 @@ float platform_x_to_x(const float x);
 float platform_y_to_y(const float y);
 
 #endif
+
