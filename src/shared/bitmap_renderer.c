@@ -12,7 +12,7 @@ static void triangle_apply_lighting(
     if (
         zlight_source == NULL
         || zlight_source->deleted
-        || zlight_source->reach < 1)
+        || zlight_source->reach == 0)
     {
         return;
     }
@@ -35,20 +35,18 @@ static void triangle_apply_lighting(
                 )
             );
         
-        if (distance > zlight_source->reach) { continue; }
-        
         if (distance < 5.0f) { distance = 5.0f; }
         
         float distance_mod =
             (zlight_source->reach - distance) / zlight_source->reach;
+        distance_mod *= (distance <= zlight_source->reach);
         
         for (uint32_t l = 0; l < 3; l++) {
-            float modifier = zlight_source->RGBA[l] *
-                zlight_source->ambient *
-                    distance_mod;
-            if (modifier > 0.0f) {
-                out_input[m].lighting[l] += modifier;
-            }
+            out_input[m].lighting[l] +=
+                zlight_source->RGBA[l] * zlight_source->diffuse
+                    * distance_mod;
+            out_input[m].lighting[l] +=
+                zlight_source->RGBA[l] * zlight_source->ambient;
         }
     }
 }

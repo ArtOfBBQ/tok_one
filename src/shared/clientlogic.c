@@ -242,9 +242,7 @@ static void preregister_assets() {
     }
 }
 
-static void load_assets(
-    uint32_t start_i,
-    uint32_t last_i)
+static void load_assets(uint32_t start_i, uint32_t last_i)
 {
     for (
         int32_t dimension_i = (int32_t)start_i;
@@ -295,6 +293,22 @@ void client_logic_startup() {
     load_assets(1, texture_arrays_size - 1);
     log_assert(texture_arrays[0].images[52].image->width == 39);
     
+    zlights_to_apply[0].deleted = false;
+    zlights_to_apply[0].object_id = -1;
+    zlights_to_apply[0].x = 0;
+    zlights_to_apply[0].y = 0;
+    zlights_to_apply[0].z = 0;
+    zlights_to_apply[0].RGBA[0] = 1.0f;
+    zlights_to_apply[0].RGBA[1] = 0.7f;
+    zlights_to_apply[0].RGBA[2] = 0.7f;
+    zlights_to_apply[0].RGBA[3] = 1.0f;
+    zlights_to_apply[0].reach = 4294967295;
+    zlights_to_apply[0].ambient = 1.0;
+    zlights_to_apply[0].diffuse = 0.0;
+    zlights_to_apply[0].deleted = false;
+    zlights_to_apply_size++;
+    log_assert(zlights_to_apply_size == 1);
+    
     TexQuad sample_pic;
     construct_texquad(&sample_pic);
     sample_pic.object_id = 99999;
@@ -311,6 +325,7 @@ void client_logic_startup() {
     request_texquad_renderable(&sample_pic);
     log_assert(texture_arrays[0].images[52].image->width == 39);
     
+    font_ignore_lighting = false;
     request_label_renderable(
         /* const uint32_t with_id: */
             99,
@@ -422,8 +437,8 @@ static void request_fading_lightsquare(
     cur_color_i += 1;
     if (cur_color_i > 2) { cur_color_i = 0; }
     
-    zlights_to_apply[new_zlight_i].ambient = 1.0f;
-    zlights_to_apply[new_zlight_i].diffuse = 0.0f;
+    zlights_to_apply[new_zlight_i].ambient = 0.0f;
+    zlights_to_apply[new_zlight_i].diffuse = 1.0f;
     zlights_to_apply[new_zlight_i].reach = 200.0f;
     if (new_zlight_i == zlights_to_apply_size) {
          zlights_to_apply_size += 1;
@@ -449,49 +464,15 @@ static void request_fading_lightsquare(
     request_scheduled_animation(&vanish);
 }
 
-static void client_handle_mouseevents(
+static void  client_handle_touches_and_leftclicks(
     uint64_t microseconds_elapsed)
 {
-    if (!last_mouse_down.handled) {
-        int32_t touched_texquad_id;
-        last_mouse_down.handled = true;
-        if (touchable_id_to_texquad_object_id(
-                /* const int32_t touchable_id : */
-                    last_mouse_down.touchable_id,
-                /* int32_t * object_id_out : */
-                    &touched_texquad_id))
-        {
-            log_append("found at texquad_id: ");
-            log_append_uint(touched_texquad_id);
-            log_append(")\n");
-            log_assert(touched_texquad_id != 999999);
-            
-            ScheduledAnimation brighten;
-            construct_scheduled_animation(&brighten);
-            ScheduledAnimation dim;
-            construct_scheduled_animation(&dim);
-            
-            brighten.affected_object_id = touched_texquad_id;
-            dim.affected_object_id = touched_texquad_id;
-            
-            brighten.remaining_microseconds = 150000;
-            dim.wait_first_microseconds = brighten.remaining_microseconds;
-            dim.remaining_microseconds = brighten.remaining_microseconds;
-            
-            for (uint32_t i = 0; i < 3; i++) {
-                brighten.rgba_delta_per_second[i] = 0.9f;
-                dim.rgba_delta_per_second[i] = -0.9f;
-            }
-            brighten.z_rotation_per_second = -0.13f;
-            dim.z_rotation_per_second = 0.13f;
-            
-            request_scheduled_animation(&brighten);
-            request_scheduled_animation(&dim);
-        }
+    if (!previous_touch_or_leftclick_end.handled) {
+        request_fading_lightsquare(
+            previous_touch_or_leftclick_end.screen_x,
+            previous_touch_or_leftclick_end.screen_y);
         
-        float location_x = (float)last_mouse_down.screenspace_x + camera.x;
-        float location_y = (float)last_mouse_down.screenspace_y + camera.y;
-        request_fading_lightsquare(location_x, location_y);
+        previous_touch_or_leftclick_end.handled = true;
     }
 }
 
@@ -567,32 +548,10 @@ static void client_handle_keypresses(
     }
 }
 
-static void client_handle_touches(
-    uint64_t microseconds_elapsed)
-{
-    // handle tablet & phone touches
-    if (!current_touch.handled_start) {
-        if (current_touch.finished) {
-            // an unhandled, finished touch
-            if (
-                (current_touch.finished_at
-                    - current_touch.started_at) < 500000)
-            {                
-                current_touch.handled_start = true;
-                
-                float location_x = (float)current_touch.current_x + camera.x;
-                float location_y = (float)current_touch.current_y + camera.y;
-                request_fading_lightsquare(location_x, location_y);
-            }
-        }
-    }
-}
-
 bool32_t fading_out = true;
 char fps_string[8] = "fps: xx";
 
-void client_logic_update(
-    uint64_t microseconds_elapsed)
+void client_logic_update(uint64_t microseconds_elapsed)
 {
     // TODO: our timer is weirdly broken on iOS. Fix it!
     uint64_t fps = 1000000 / microseconds_elapsed;
@@ -619,11 +578,14 @@ void client_logic_update(
         /* float max_width       : */ window_width,
         /* bool32_t ignore_camera: */ true);
     
-    client_handle_mouseevents(
-        microseconds_elapsed);
-    client_handle_keypresses(
-        microseconds_elapsed);
-    client_handle_touches(
-        microseconds_elapsed);
+    client_handle_touches_and_leftclicks(microseconds_elapsed);
+    client_handle_keypresses(microseconds_elapsed);
+}
+
+void client_logic_window_resize(
+    const uint32_t new_height,
+    const uint32_t new_width)
+{
+    return;
 }
 

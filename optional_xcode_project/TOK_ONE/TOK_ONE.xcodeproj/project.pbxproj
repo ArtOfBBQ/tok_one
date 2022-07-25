@@ -324,10 +324,6 @@
 		60A998DE287BD468003F7159 /* shared_macos_iphone */ = {
 			isa = PBXGroup;
 			children = (
-				6028DD2F2886EE35000E1E98 /* init_application.c */,
-				6028DD302886EE36000E1E98 /* init_application.h */,
-				60A998D9287BD332003F7159 /* decodedimage.c */,
-				60A998DA287BD333003F7159 /* decodedimage.h */,
 				60112896286253C100F92967 /* apple_platform_layer.c */,
 				6011287C2862511700F92967 /* bitmap_renderer.c */,
 				6080CC482870182700444118 /* bitmap_renderer.h */,
@@ -338,12 +334,16 @@
 				6080CC472870182700444118 /* common.h */,
 				6011283D286122FE00F92967 /* decode_png.c */,
 				6011283C286122FE00F92967 /* decode_png.h */,
+				60A998D9287BD332003F7159 /* decodedimage.c */,
+				60A998DA287BD333003F7159 /* decodedimage.h */,
 				601128732862511600F92967 /* draw_triangle.c */,
 				6011286D2862511500F92967 /* draw_triangle.h */,
 				60112898286253C100F92967 /* gpu.h */,
 				60112897286253C100F92967 /* gpu.mm */,
 				60112839286122FE00F92967 /* inflate.c */,
 				6011283E286122FE00F92967 /* inflate.h */,
+				6028DD2F2886EE35000E1E98 /* init_application.c */,
+				6028DD302886EE36000E1E98 /* init_application.h */,
 				601128782862511600F92967 /* lightsource.c */,
 				601128712862511600F92967 /* lightsource.h */,
 				6011287F2862511700F92967 /* logger.c */,

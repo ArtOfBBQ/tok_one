@@ -50,9 +50,9 @@ typedef struct zLightSource {
     float y;
     float z;
     float RGBA[4];
-    float reach;   // max distance before light intensity 0
-    float ambient; // how much ambient light does this radiate?
-    float diffuse; // how much diffuse light does this radiate?
+    float reach;       // max distance before light intensity 0
+    float ambient;     // how much ambient light does this radiate?
+    float diffuse;     // how much diffuse light does this radiate?
 } zLightSource;
 
 // A buffer of zLightSources to light up your scene(s)
