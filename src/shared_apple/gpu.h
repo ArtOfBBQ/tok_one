@@ -16,6 +16,7 @@
 #import <sys/mman.h>
 #import <mach/mach_time.h>
 
+extern uint64_t last_resize_request_at;
 
 @interface MetalKitViewDelegate: NSObject<MTKViewDelegate>
 @property (retain) id<MTLDevice> metal_device;

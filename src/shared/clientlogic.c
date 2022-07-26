@@ -106,8 +106,7 @@ static void preregister_assets() {
         i < files_in_app_path_size;
         i++)
     {
-        uint32_t cur_str_size = get_string_length(
-            files_in_app_path[i]);
+        uint32_t cur_str_size = get_string_length(files_in_app_path[i]);
         
         // associate the names with texture arrays first 
         if (cur_str_size >= 4 &&

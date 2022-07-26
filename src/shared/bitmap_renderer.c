@@ -143,8 +143,7 @@ void delete_texquad_object(const int32_t with_object_id)
         i >= 0;
         i--)
     {
-        if (texquads_to_render[i].object_id == with_object_id)
-        {
+        if (texquads_to_render[i].object_id == with_object_id) {
             texquads_to_render[i].visible = false;
             texquads_to_render[i].deleted = true;
         }

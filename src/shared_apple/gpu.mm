@@ -268,10 +268,25 @@ static uint32_t already_drawing = false;
 - (void)drawInMTKView:(MTKView *)view
 {
     log_assert(!already_drawing);
-    already_drawing = true;
     uint64_t time = platform_get_current_time_microsecs();
     uint64_t elapsed = time - previous_time;
     previous_time = time;
+    
+    if (
+        time - last_resize_request_at < 1500000
+        && !request_post_resize_clearscreen)
+    {
+        if (time - last_resize_request_at < 300000) {
+            return;
+        }
+        
+        client_logic_window_resize(
+            window_height,
+            window_width);
+        last_resize_request_at = 999999999;
+    }
+    
+    already_drawing = true;
     
     for (uint32_t i = 0; i < texture_arrays_size; i++) {
         if (texture_arrays[i].request_init) {
@@ -418,6 +433,7 @@ static uint32_t already_drawing = false;
     
     [command_buffer commit];
     
+    request_post_resize_clearscreen = false;
     already_drawing = false;
 }
 

@@ -61,6 +61,14 @@ zVertex y_rotate_zvertex(
     return return_value;
 }
 
+// void delete_lights_with_object_id(uint32_t object_id) {
+//     for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
+//         if (zlights_to_apply[i].object_id == object_id) {
+//             zlights_to_apply[i].deleted = true;
+//         }
+//     }
+// }
+
 void clean_deleted_lights()
 {
     while (

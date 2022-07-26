@@ -37,6 +37,10 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     windowWillResize:(NSWindow *)sender 
     toSize:(NSSize)frameSize
 {
+    texquads_to_render_size = 0;
+    zpolygons_to_render_size = 0;
+    zlights_to_apply_size = 0;
+    
     float title_bar_height =
         [sender contentRectForFrameRect: sender.frame].size.height
             - sender.frame.size.height;
@@ -50,12 +54,12 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     new_size.width *= 2;
     mtk_view.drawableSize = new_size;
     
-    client_logic_window_resize(
-        (uint32_t)current_window_height,
-        (uint32_t)current_window_width);
+    request_post_resize_clearscreen = true;
+    last_resize_request_at = platform_get_current_time_microsecs();
     
     return frameSize;
 }
+
 @end
 
 @interface

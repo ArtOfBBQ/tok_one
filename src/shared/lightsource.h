@@ -64,6 +64,8 @@ extern zLightSource * zlights_transformed;
 extern uint32_t zlights_to_apply_size;
 extern uint32_t zlights_transformed_size;
 
+// void delete_lights_with_object_id(uint32_t object_id);
+
 void clean_deleted_lights();
 
 // move each light around the camera (e.g. when the camera moves
