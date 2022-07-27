@@ -8,6 +8,8 @@ uint8_t * managed_memory = NULL;
 uint64_t managed_memory_size = MANAGED_MEMORY_SIZE;
 
 uint8_t * malloc_from_unmanaged(uint64_t size) {
+
+    log_assert(unmanaged_memory != NULL);
     
     uint32_t padding = 0;
     log_assert(unmanaged_memory_size >= MEM_ALIGNMENT_BYTES);
@@ -30,8 +32,9 @@ uint8_t * malloc_from_unmanaged(uint64_t size) {
 };
 
 uint8_t * malloc_from_managed(uint64_t size) {
+
+    log_assert(managed_memory != NULL);
     
-    log_assert(managed_memory_size >= MEM_ALIGNMENT_BYTES);
     uint32_t padding = 0; 
     while ((uintptr_t)(void *)managed_memory % MEM_ALIGNMENT_BYTES != 0) {
         managed_memory += 1;

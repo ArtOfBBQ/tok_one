@@ -37,10 +37,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     windowWillResize:(NSWindow *)sender 
     toSize:(NSSize)frameSize
 {
-    texquads_to_render_size = 0;
-    zpolygons_to_render_size = 0;
-    zlights_to_apply_size = 0;
-    
+    last_resize_request_at = platform_get_current_time_microsecs();
     float title_bar_height =
         [sender contentRectForFrameRect: sender.frame].size.height
             - sender.frame.size.height;
@@ -54,8 +51,10 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     new_size.width *= 2;
     mtk_view.drawableSize = new_size;
     
-    request_post_resize_clearscreen = true;
-    last_resize_request_at = platform_get_current_time_microsecs();
+    texquads_to_render_size = 0;
+    zpolygons_to_render_size = 0; 
+    zlights_to_apply_size = 0;
+    [apple_gpu_delegate drawClearScreen: mtk_view];
     
     return frameSize;
 }
@@ -211,6 +210,7 @@ int main(int argc, const char * argv[]) {
                          | NSWindowStyleMaskResizable
             backing: NSBackingStoreBuffered 
             defer: NO];
+    window.animationBehavior = NSWindowAnimationBehaviorNone;
     
     GameWindowDelegate *window_delegate =
         [[GameWindowDelegate alloc] init];

@@ -35,6 +35,8 @@ extern uint64_t last_resize_request_at;
     updateTextureArray: (int32_t)texturearray_i
     atTexture: (int32_t)texture_i;
 - (void)
+    drawClearScreen: (MTKView *)view;
+- (void)
     configureMetalWithDevice: (id<MTLDevice>)metal_device
     andPixelFormat: (MTLPixelFormat)pixel_format
     fromFolder: (NSString *)shader_lib_filepath;

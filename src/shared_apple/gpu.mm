@@ -265,6 +265,32 @@ static uint32_t already_drawing = false;
             0];    
 }
 
+- (void)drawClearScreen:(MTKView *)view
+{
+    id<MTLCommandBuffer> command_buffer =
+        [[self command_queue] commandBuffer];
+    
+    MTLRenderPassDescriptor * RenderPassDescriptor =
+        [view currentRenderPassDescriptor];
+    RenderPassDescriptor
+        .colorAttachments[0]
+        .loadAction = MTLLoadActionClear;
+    
+    MTLClearColor clear_color = MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);
+    RenderPassDescriptor.colorAttachments[0].clearColor = clear_color;
+    
+    id<MTLRenderCommandEncoder> render_encoder =
+        [command_buffer
+            renderCommandEncoderWithDescriptor:
+                RenderPassDescriptor];
+    [render_encoder endEncoding];
+    
+    id<CAMetalDrawable> current_drawable = [view currentDrawable];
+    [command_buffer presentDrawable: current_drawable];
+    [command_buffer commit];
+    [command_buffer waitUntilScheduled];
+}
+
 - (void)drawInMTKView:(MTKView *)view
 {
     log_assert(!already_drawing);
