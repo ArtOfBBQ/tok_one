@@ -347,7 +347,7 @@ static uint32_t already_drawing = false;
         .loadAction = MTLLoadActionClear;
     
     MTLClearColor clear_color =
-        MTLClearColorMake(0.1f, 0.1f, 0.1f, 1.0f);
+        MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);
     RenderPassDescriptor.colorAttachments[0].clearColor =
         clear_color;
     
