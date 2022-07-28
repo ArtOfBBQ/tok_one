@@ -9,6 +9,14 @@ float platform_get_current_window_width() {
     return [UIScreen mainScreen].bounds.size.width;
 }
 
+float platform_get_current_window_left() {
+    return 0.0f;
+}
+
+float platform_get_current_window_bottom() {
+    return 0.0f;
+}
+
 float platform_x_to_x(const float x) {
     return x;
 }

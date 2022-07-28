@@ -15,9 +15,25 @@
     UITouch * touch = [[event allTouches] anyObject];
     CGPoint touchLocation = [touch locationInView:self];
     
-    register_touchstart(
-        /* x: */ platform_x_to_x((float)touchLocation.x),
-        /* y: */ platform_y_to_y((float)touchLocation.y));
+    register_interaction(
+        /* interaction : */
+            &previous_touch_start,
+        /* screenspace_x: */
+            platform_x_to_x((float)touchLocation.x
+                - platform_get_current_window_left()),
+        /* screenspace_y: */
+            platform_y_to_y((float)touchLocation.y
+                - platform_get_current_window_bottom()));
+    
+    register_interaction(
+        /* interaction : */
+            &previous_touch_or_leftclick_start,
+        /* screenspace_x: */
+            platform_x_to_x((float)touchLocation.x
+                - platform_get_current_window_left()),
+        /* screenspace_y: */
+            platform_y_to_y((float)touchLocation.y
+                - platform_get_current_window_bottom()));
 }
 
 - (void)
@@ -27,9 +43,25 @@
     UITouch * touch = [[event allTouches] anyObject];
     CGPoint touchLocation = [touch locationInView:self];
     
-    register_touchend(
-        /* x: */ platform_x_to_x((float)touchLocation.x),
-        /* y: */ platform_y_to_y((float)touchLocation.y));
+    register_interaction(
+        /* interaction : */
+            &previous_touch_end,
+        /* screenspace_x: */
+            platform_x_to_x((float)touchLocation.x
+                - platform_get_current_window_left()),
+        /* screenspace_y: */
+            platform_y_to_y((float)touchLocation.y
+                - platform_get_current_window_bottom()));
+    
+    register_interaction(
+        /* interaction : */
+            &previous_touch_or_leftclick_end,
+        /* screenspace_x: */
+            platform_x_to_x((float)touchLocation.x
+                - platform_get_current_window_left()),
+        /* screenspace_y: */
+            platform_y_to_y((float)touchLocation.y
+                - platform_get_current_window_bottom()));
 }
 @end
 

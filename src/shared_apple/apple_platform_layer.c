@@ -251,7 +251,7 @@ void platform_copy_file(
     NSString * nsfilepath_destination = [NSString
         stringWithCString:filepath_destination
         encoding:NSASCIIStringEncoding];
-
+    
     NSError * error = NULL;
     
     [[NSFileManager defaultManager]
