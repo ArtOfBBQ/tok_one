@@ -166,7 +166,6 @@ static void add_quad_to_gpu_workload(
     }
     
     log_assert(to_add->subquads_per_row < 50);
-    if (!application_running) { return; }
     
     float parent_quad_middle_x =
         to_add->left_pixels + (to_add->width_pixels / 2) - camera.x;

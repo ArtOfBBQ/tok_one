@@ -500,6 +500,12 @@ static void client_handle_keypresses(
        // 'X' key
        camera.z_angle += cam_rotation_speed;
     }
+
+    if (keypress_map[8] == true) {
+        // c key is pressed
+        log_append("pressed C key, crashing...\n");
+        log_assert(0);
+    }
     
     if (keypress_map[12] == true)
     {

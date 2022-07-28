@@ -2,7 +2,6 @@
 
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
 
-uint64_t previous_time;
 static uint32_t already_drawing = false;
 
 @implementation MetalKitViewDelegate
@@ -15,8 +14,6 @@ static uint32_t already_drawing = false;
     andPixelFormat: (MTLPixelFormat)pixel_format
     fromFolder: (NSString *)shader_lib_filepath
 {
-    previous_time = platform_get_current_time_microsecs();
-    
     _currentFrameIndex = 0;
     
     _metal_device = metal_device;
@@ -294,24 +291,6 @@ static uint32_t already_drawing = false;
 - (void)drawInMTKView:(MTKView *)view
 {
     log_assert(!already_drawing);
-    uint64_t time = platform_get_current_time_microsecs();
-    uint64_t elapsed = time - previous_time;
-    previous_time = time;
-    
-    if (
-        time - last_resize_request_at < 1500000
-        && !request_post_resize_clearscreen)
-    {
-        if (time - last_resize_request_at < 300000) {
-            return;
-        }
-        
-        client_logic_window_resize(
-            window_height,
-            window_width);
-        last_resize_request_at = 999999999;
-    }
-    
     already_drawing = true;
     
     for (uint32_t i = 0; i < texture_arrays_size; i++) {
@@ -347,37 +326,9 @@ static uint32_t already_drawing = false;
         _render_commands.vertex_buffers[frame_i].vertices;
     uint32_t vertices_for_gpu_size = 0;
     
-    resolve_animation_effects(elapsed);
-    
-    touchable_triangles_size = 0;
-    
-    update_camera_position();
-    
-    clean_deleted_lights();
-    clean_deleted_texquads();
-    
-    // translate all lights
-    translate_lights();
-    
-    client_logic_update(elapsed);
-    
-    software_render(
-        /* next_gpu_workload: */
-            vertices_for_gpu,
-        /* next_gpu_workload_size: */
-            &vertices_for_gpu_size,
-        /* zlights_transformed: */
-            zlights_transformed,
-        /* elapsed_microseconds: */
-            elapsed);
-    
-    draw_texquads_to_render(
-        /* next_gpu_workload: */
-            vertices_for_gpu,
-        /* next_gpu_workload_size: */
-            &vertices_for_gpu_size,
-        /* zlights_transformed: */
-            zlights_transformed);
+    shared_gameloop_update(
+        vertices_for_gpu,
+        &vertices_for_gpu_size);
     
     id<MTLCommandBuffer> command_buffer =
         [[self command_queue] commandBuffer];
@@ -396,7 +347,7 @@ static uint32_t already_drawing = false;
         .loadAction = MTLLoadActionClear;
     
     MTLClearColor clear_color =
-        MTLClearColorMake(0.0f, 0.0f, 0.0f, 0.0f);
+        MTLClearColorMake(0.1f, 0.1f, 0.1f, 1.0f);
     RenderPassDescriptor.colorAttachments[0].clearColor =
         clear_color;
     

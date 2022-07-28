@@ -15,7 +15,7 @@ these variables may not exist on platforms where window resizing is
 impossible
 */
 float current_window_height = 600;
-float current_window_width = 300;
+float current_window_width = 600;
 
 MTKView * mtk_view = NULL; 
 

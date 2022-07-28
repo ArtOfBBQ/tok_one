@@ -28,8 +28,6 @@ typedef struct TimedFunctionLink {
 TimedFunctionLink * timed_function_map = NULL;
 
 /*
-Let's make a backtrace circle
-
 By 'backtrace circle' I mean a conceptually circular array
 where the element at position 0 follows the final element etc.
 
@@ -38,13 +36,16 @@ we get to the end of the array, we start storing at the front
 again. If you request the last 5 functions when backtrace_i
 is at 3, it would be elements 50,0,1,2,3
 */
-typedef struct BacktraceEntry {
-    char function_name[MAX_TIMED_FUNCTION_NAME];
-} BacktrackeEntry;
 #define BACKTRACE_CIRCLE_SIZE 50
-BacktraceEntry * backtrace_circle = NULL;
+typedef struct BacktraceCircle {
+    char function_names[MAX_TIMED_FUNCTION_NAME][BACKTRACE_CIRCLE_SIZE];
+    
+    uint32_t thread_id;
+} BacktraceCircle;
+
+BacktraceCircle * backtrace_circles = NULL;
 uint32_t backtrace_i = 0;
-#define BACKTRACE_FUNCTIONS_TO_DISPLAY 20
+#define BACKTRACE_FUNCTIONS_TO_DISPLAY 5
 
 #ifdef __cplusplus
 extern "C" {
@@ -109,50 +110,6 @@ extern "C" {
                         MAX_TIMED_FUNCTION_NAME,
                     /* origin: */
                         info.dli_sname);
-            }
-        }
-        
-        // add this function name to the backtrace circle
-        if (backtrace_circle != NULL) {
-            if (backtrace_i >= BACKTRACE_CIRCLE_SIZE) {
-                printf(
-                    "error: backtrace_i is %u but BACKTRACE_CIRCLE_SIZE is "
-                    "only %u (at start of loop)\n",
-                    backtrace_i,
-                    BACKTRACE_CIRCLE_SIZE);
-                assert(0);
-            }
-            copy_0term_string_to(
-                /* recipient: */
-                    backtrace_circle[backtrace_i]
-                        .function_name,
-                /* recipient_size: */
-                    MAX_TIMED_FUNCTION_NAME,
-                /* origin: */
-                    timed_function_map[entry_i]
-                        .linked_list[link_i]
-                        .function_name);
-            
-            if (backtrace_i >= BACKTRACE_CIRCLE_SIZE) {
-                printf(
-                    "error: backtrace_i is %u but BACKTRACE_CIRCLE_SIZE is "
-                    "only %u (right before incrementing)\n",
-                    backtrace_i,
-                    BACKTRACE_CIRCLE_SIZE);
-                assert(0);
-            }
-            
-            backtrace_i++;
-            if (backtrace_i >= BACKTRACE_CIRCLE_SIZE) {
-                backtrace_i = 0;
-            }
-            if (backtrace_i >= BACKTRACE_CIRCLE_SIZE) {
-                printf(
-                    "error: backtrace_i is %u but BACKTRACE_CIRCLE_SIZE is "
-                    "only %u (right after setting to 0)\n",
-                    backtrace_i,
-                    BACKTRACE_CIRCLE_SIZE);
-                assert(0);
             }
         }
         
@@ -240,12 +197,6 @@ setup_log() {
     
     // create a log for debug text
     log = (char *)malloc_from_unmanaged(LOG_SIZE);
-    
-    backtrace_circle = (BacktraceEntry *)
-        malloc_from_unmanaged(sizeof(BacktraceEntry) * BACKTRACE_CIRCLE_SIZE);
-    for (uint32_t i = 0; i < BACKTRACE_CIRCLE_SIZE; i++) {
-        backtrace_circle[i].function_name[0] = '\0';
-    }
     
     // create a hashmap for the functions in our app 
     // this is used for backtrace and profiling
@@ -438,56 +389,6 @@ internal_log_append(
 }
 
 void __attribute__((no_instrument_function))
-get_log_backtrace(
-    char * return_value,
-    uint32_t return_value_capacity)
-{
-    if (!logger_activated) {
-        char * errmsg =
-            (char *)"Logger wasn't enabled - no backtrace";
-        copy_0term_string_to(
-            /* recipient: */
-                return_value,
-            /* recipient_size: */
-                return_value_capacity,
-            /* origin: */
-                errmsg);
-        return;
-    }
-    
-    uint32_t return_value_i = 0;
-    uint32_t displaying_func_i = 0;
-    while (displaying_func_i < BACKTRACE_FUNCTIONS_TO_DISPLAY) {
-        // if backtrace_i is at 2 and we want to go 5
-        // steps back, we want to show an index from the end
-        // of the circle
-        uint32_t backtrace_to_show_i =
-            (BACKTRACE_CIRCLE_SIZE +
-                backtrace_i -
-                displaying_func_i)
-                    % BACKTRACE_CIRCLE_SIZE;
-        
-        uint32_t char_i = 0;
-        while (
-            backtrace_circle[backtrace_to_show_i]
-                .function_name[char_i] != '\0')
-        {
-            return_value[return_value_i++] =
-                backtrace_circle[backtrace_to_show_i]
-                    .function_name[char_i];
-            char_i++;
-        }
-        
-        return_value[return_value_i++] = '\n';
-        
-        displaying_func_i += 1;
-    }
-    return_value[return_value_i++] = '\0';
-    
-    return;
-}
-
-void __attribute__((no_instrument_function))
 add_profiling_stats_to_log()
 {
     TimedFunction top30_timedfuncs[30];
@@ -553,8 +454,7 @@ add_profiling_stats_to_log()
     }
 }
 
-void __attribute__((no_instrument_function))
-log_dump() {
+void __attribute__((no_instrument_function)) log_dump() {
      
     log[log_i + 1] = '\0';
     
@@ -593,7 +493,6 @@ internal_log_assert(
     #endif
     assert(str_condition != NULL);
     assert(str_condition[0] != '\0');
-    assert(0);
     
     log_dump_and_crash();
     
@@ -708,17 +607,5 @@ internal_log_assert(
         /* origin: */
             connector4);
     recipient_at += connector4_length;
-    
-    get_log_backtrace(
-        /* return_value: */
-            assert_failed_message + recipient_at,
-        /* return_value_capacity: */
-            screen_dump_size - recipient_at);
-    
-    #ifndef LOGGER_H 
-    printf(
-        "assert_failed_message changed to: %s\n",
-        assert_failed_message);
-    #endif
 }
 
