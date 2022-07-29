@@ -433,6 +433,8 @@ void resolve_animation_effects(
                         * actual_elapsed)
                             / 1000000;
 
+                // ***
+                // absolute scaling
                 if (!anim->final_width_known) {
                     texquads_to_render[tq_i].width_pixels +=
                         ((anim->delta_width_per_second
@@ -446,7 +448,23 @@ void resolve_animation_effects(
                             / (anim->remaining_microseconds + actual_elapsed)
                                 * actual_elapsed;
                 }
+                if (!anim->final_height_known) {
+                    texquads_to_render[tq_i].height_pixels +=
+                        ((anim->delta_height_per_second
+                            * actual_elapsed)
+                                / 1000000);
+                } else {
+                    float cur_height = texquads_to_render[tq_i].height_pixels;
+                    float diff_height = anim->final_height - cur_height;
+                    texquads_to_render[tq_i].height_pixels +=
+                        diff_height
+                            / (anim->remaining_microseconds + actual_elapsed)
+                                * actual_elapsed;
+                }
+                // ***
                 
+                // ***
+                // relative scaling
                 if (anim->final_xscale_known) {
                     float diff_x =
                         anim->final_xscale -
@@ -478,6 +496,7 @@ void resolve_animation_effects(
                         (anim->delta_yscale_per_second *
                             actual_elapsed) / 1000000;
                 }
+                // ***
                 
                 for (
                     uint32_t c = 0;
