@@ -36,6 +36,10 @@ void resource_filename_to_pathfile(
     const char * filename,
     char * recipient,
     const uint32_t recipient_capacity);
+void writable_filename_to_pathfile(
+    const char * filename,
+    char * recipient,
+    const uint32_t recipient_capacity);
 
 // get current working directory
 char * __attribute__((no_instrument_function))
@@ -48,6 +52,7 @@ char * platform_get_writables_path(void);
 bool32_t platform_resource_exists(const char * resource_name);
 bool32_t platform_file_exists(const char * filepath);
 void platform_delete_file(const char * filepath);
+void platform_delete_writable(const char * writable_filename);
 
 void __attribute__((no_instrument_function))
 platform_write_file(
@@ -59,6 +64,7 @@ platform_write_file_to_writables(
     const char * filepath_inside_writables,
     const char * output,
     const uint32_t output_size);
+
 void platform_copy_file(
     const char * filepath_source,
     const char * filepath_destination);

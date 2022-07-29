@@ -52,8 +52,20 @@ typedef struct ScheduledAnimation {
     float x_rotation_per_second;
     float y_rotation_per_second;
     float z_rotation_per_second;
+
+    // *** absolute scaling (change width/height)
+    bool32_t final_width_known;
+    union {
+        float delta_width_per_second;
+        float final_width;
+    };
+    bool32_t final_height_known;
+    union {
+        float delta_height_per_second;
+        float final_height;
+    };
     
-    // *** scaling animations
+    // *** relative scaling animations
     bool32_t final_xscale_known;
     union {
         float delta_xscale_per_second;

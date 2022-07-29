@@ -1,6 +1,6 @@
 #include "platform_layer.h"
 
-void writables_filename_to_pathfile(
+void writable_filename_to_pathfile(
     const char * filename,
     char * recipient,
     const uint32_t assert_capacity)
@@ -21,12 +21,12 @@ void writables_filename_to_pathfile(
         /* const uint64_t output_size : */
             filename_length + separator_size + 1);
     
-    char * resource_path = platform_get_resources_path();
-    uint32_t resource_path_length = get_string_length(resource_path);
+    char * writables_path = platform_get_writables_path();
+    uint32_t writables_path_length = get_string_length(writables_path);
     
     uint32_t full_filename_size =
         (filename_length
-            + resource_path_length
+            + writables_path_length
             + 2); // +1 for \0, +1 to add a '/'
     log_assert(assert_capacity >= full_filename_size);
     if (!application_running) {
@@ -36,7 +36,7 @@ void writables_filename_to_pathfile(
     
     concat_strings(
         /* char * string_1            : */
-            resource_path,
+            writables_path,
         /* char * string_2            : */
             separator_and_filename,
         /* char * output              : */
@@ -90,3 +90,18 @@ void resource_filename_to_pathfile(
         /* const uint32_t output_size : */
             full_filename_size);
 };
+
+void platform_delete_writable(const char * writable_filename) {
+    char filepath[500];
+    
+    writable_filename_to_pathfile(
+        /* const char * filename: */
+            writable_filename,
+        /* char * recipient: */
+            filepath,
+        /* const uint32_t assert_capacity: */
+            500);
+    
+    platform_delete_file(writable_filename);
+}
+

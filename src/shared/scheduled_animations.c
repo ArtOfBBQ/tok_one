@@ -22,6 +22,12 @@ void construct_scheduled_animation(
     to_construct->x_rotation_per_second = 0.0f;
     to_construct->y_rotation_per_second = 0.0f;
     to_construct->z_rotation_per_second = 0.0f;
+
+    to_construct->final_width_known = false;
+    to_construct->final_height_known = false;
+    to_construct->delta_width_per_second = 0.0f;
+    to_construct->delta_height_per_second = 0.0f;
+    
     to_construct->final_xscale_known = false;
     to_construct->final_yscale_known = false;
     to_construct->delta_xscale_per_second = 0.0f;
@@ -426,6 +432,20 @@ void resolve_animation_effects(
                     (anim->z_rotation_per_second
                         * actual_elapsed)
                             / 1000000;
+
+                if (!anim->final_width_known) {
+                    texquads_to_render[tq_i].width_pixels +=
+                        ((anim->delta_width_per_second
+                            * actual_elapsed)
+                                / 1000000);
+                } else {
+                    float cur_width = texquads_to_render[tq_i].width_pixels;
+                    float diff_width = anim->final_width - cur_width;
+                    texquads_to_render[tq_i].width_pixels +=
+                        diff_width
+                            / (anim->remaining_microseconds + actual_elapsed)
+                                * actual_elapsed;
+                }
                 
                 if (anim->final_xscale_known) {
                     float diff_x =

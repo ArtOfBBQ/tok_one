@@ -227,18 +227,16 @@ void platform_mkdir_if_not_exist(const char * dirname) {
 
 void platform_delete_file(const char * filepath) {
     
+    log_append("trying to delete a file with NSFileManager: ");
+    log_append(filepath);
+    log_append("\n");
     NSString * nsfilepath = [NSString
         stringWithCString:filepath
         encoding:NSASCIIStringEncoding];
-    NSURL * file_url = [NSURL URLWithString: nsfilepath];
     
-    NSError * error = NULL;
-    if (file_url != nil) {
-        [
-            [NSFileManager defaultManager]
-            removeItemAtURL:file_url
-            error:&error];
-    }
+    [[NSFileManager defaultManager]
+        removeItemAtPath: nsfilepath
+        error: nil];
 }
 
 void platform_copy_file(
@@ -299,33 +297,18 @@ void platform_write_file_to_writables(
     const char * output,
     const uint32_t output_size)
 {
-    char * writables_path = platform_get_writables_path();
-    uint32_t writables_path_size = get_string_length(writables_path);
-    uint32_t filepath_inside_writables_size =
-        get_string_length(filepath_inside_writables);
-    log_assert(
-        writables_path_size
-            + filepath_inside_writables_size
-            + 1
-                < 1000);
-    
-    char full_filepath[1000];
-    
-    uint32_t i = 0;
-    while (i < writables_path_size) {
-        full_filepath[i] = writables_path[i];
-        i++;
-    }
-    full_filepath[i++] = '/';
-    uint32_t j = 0;
-    while (j < filepath_inside_writables_size) {
-        full_filepath[i++] = filepath_inside_writables[j++];
-    }
-    full_filepath[i] = '\0';
+    char recipient[500];
+    writable_filename_to_pathfile(
+        /* filename: */
+            filepath_inside_writables,
+        /* recipient: */
+            recipient,
+        /* recipient_capacity: */
+            100);
     
     platform_write_file(
         /* const char * filepath: */
-            full_filepath,
+            recipient,
         /* const char * output: */
             output,
         /* const uint32_t output_size: */
