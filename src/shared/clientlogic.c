@@ -329,7 +329,7 @@ void client_logic_startup() {
         /* const uint32_t with_id: */
             99,
         /* const char * text_to_draw: */
-            "I know dragons with feet like rabbits! 't is true, I swear!",
+            "dragonslongestwordcantpossiblyfitonthescreenasdas;dlfkjas;dlfkajs;dflaksjdf;lsakjdf;alskdfjas;ldkfjas;dlfkjas;dlfkajsdgkjsdfhgsdlgkjhslgrkjflksjdfalsdkjfstuff with feet like rabbits! 't is true, I swear!",
         /* const float left_pixelspace: */
             100,
         /* const float top_pixelspace: */

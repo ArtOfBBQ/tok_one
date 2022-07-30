@@ -252,28 +252,27 @@ void request_label_renderable(
         i++;
     }
     
-    while (text_to_draw[i] != '\0')
-    {
-        if (text_to_draw[i] == ' ')
-        {
-            cur_left += (font_height / 2);
+    while (text_to_draw[i] != '\0') {
+        
+        if (text_to_draw[i] == ' ') {
+            cur_left += font_height / 2;
             i++;
-
+            
             // TODO: check if next word fits inside max_width
+            float next_word_width = get_next_word_width(
+                /* const char * text: */ text_to_draw + i);
+            
             if (
-                ((cur_left +
-                    get_next_word_width(
-                        /* const char * text: */ text_to_draw + i) -
-                            left_pixelspace) > max_width))
+                (cur_left + next_word_width - left_pixelspace) > max_width
+                && (next_word_width < max_width))
             {
                 cur_left = left_pixelspace;
-                cur_top -= font_height;
+                cur_top  -= font_height;
             }
             continue;
         }
         
-        if (text_to_draw[i] == '\n')
-        {
+        if (text_to_draw[i] == '\n') {
             cur_left = left_pixelspace;
             cur_top -= font_height;
             i++;
@@ -294,8 +293,10 @@ void request_label_renderable(
             letter.RGBA[rgba_i] = font_color[rgba_i];
         }
         
-        letter.left_pixels = cur_left + get_left_side_bearing(text_to_draw[i]);
-        letter.top_pixels = cur_top - get_y_offset(text_to_draw[i]);
+        letter.left_pixels =
+            cur_left + get_left_side_bearing(text_to_draw[i]);
+        letter.top_pixels =
+            cur_top - get_y_offset(text_to_draw[i]);
         letter.height_pixels = font_height;
         letter.width_pixels = font_height;
         letter.ignore_lighting = font_ignore_lighting;
@@ -305,6 +306,11 @@ void request_label_renderable(
         request_texquad_renderable(&letter);
         
         cur_left += get_advance_width(text_to_draw[i]);
+        if (cur_left + get_advance_width('w') - left_pixelspace >= max_width)
+        {
+            cur_left = left_pixelspace;
+            cur_top  -= font_height;
+        }
         
         i++;
     }
