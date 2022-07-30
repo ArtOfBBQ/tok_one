@@ -263,11 +263,12 @@ void platform_copy_file(
     }
 }
 
-void __attribute__((no_instrument_function))
+void
 platform_write_file(
     const char * filepath,
     const char * output,
-    const uint32_t output_size)
+    const uint32_t output_size,
+    bool32_t * good)
 {
     NSString * nsfilepath = [NSString
         stringWithCString:filepath
@@ -287,15 +288,18 @@ platform_write_file(
     {
         log_append("Failed to write to file: ");
         log_append(filepath);
-        log_append("\nPerhaps the operating system doesn't allow this app to write there?\n");
-        assert(0);
+        *good = false;
+        return;
     }
+    
+    *good = true;
 }
 
 void platform_write_file_to_writables(
     const char * filepath_inside_writables,
     const char * output,
-    const uint32_t output_size)
+    const uint32_t output_size,
+    bool32_t * good)
 {
     char recipient[500];
     writable_filename_to_pathfile(
@@ -312,7 +316,9 @@ void platform_write_file_to_writables(
         /* const char * output: */
             output,
         /* const uint32_t output_size: */
-            output_size);
+            output_size,
+        /* bool32_t * good: */
+            good);
 }
 
 void platform_get_filenames_in(

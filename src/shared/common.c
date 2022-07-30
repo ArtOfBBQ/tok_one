@@ -328,16 +328,17 @@ string_to_uint32_validate(
     // the maximum uint32_t is 4294967295
     // so the decimal should   1000000000
     
-    uint32_t decimal = 1; 
+    uint32_t decimal = 1;
     for (
         int32_t i = (int32_t)input_size - 1;
         i >= 0;
         i--)
     {
-        if (
-            input[i] < '0'
-            || input[i] > '9')
-        {
+        if (input[i] == '\n' || input[i] == '\0') {
+            continue;
+        }
+        
+        if (input[i] < '0' || input[i] > '9') {
             *good = false;
             return return_value;
         }

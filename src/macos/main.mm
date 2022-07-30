@@ -28,7 +28,9 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 {
     log_append("window will close, terminating app..\n");
     add_profiling_stats_to_log();
-    log_dump();
+    bool32_t write_succesful = false;
+    log_dump(&write_succesful);
+    log_append("ERROR - failed to store the log file on app termination..\n");
     
     [NSApp terminate: nil];
 }
@@ -82,11 +84,6 @@ NSWindowWithCustomResponder: NSWindow
 - (void)mouseDown:(NSEvent *)event
 {
     NSPoint screenspace_location = [NSEvent mouseLocation];
-
-    printf(
-        "mouse down at screenspace: %f, %f\n",
-        (float)screenspace_location.x,
-        (float)screenspace_location.y);
     
     register_interaction(
         /* interaction : */
@@ -193,7 +190,13 @@ int main(int argc, const char * argv[]) {
     log_append("\nallocated managed memory: ");
     log_append_uint(MANAGED_MEMORY_SIZE);
     log_append("\nconfirming we can save debug info - writing log.txt...\n");
-    log_dump();
+    bool32_t initial_log_dump_succesful = false;
+    log_dump(&initial_log_dump_succesful);
+    if (!initial_log_dump_succesful) {
+        log_append(
+            "Error - can't write to log.txt on boot, terminating app...\n");
+        return 1;
+    }
     
     // NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     NSRect window_rect = NSMakeRect(

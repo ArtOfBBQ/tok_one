@@ -454,7 +454,7 @@ add_profiling_stats_to_log()
     }
 }
 
-void __attribute__((no_instrument_function)) log_dump() {
+void __attribute__((no_instrument_function)) log_dump(bool32_t * good) {
      
     log[log_i + 1] = '\0';
     
@@ -464,12 +464,15 @@ void __attribute__((no_instrument_function)) log_dump() {
         /* const char * output  : */
             log,
         /* output_size          : */
-            log_i + 1);
+            log_i + 1,
+        /* good                 : */
+            good);
 }
 
 void __attribute__((no_instrument_function))
 log_dump_and_crash() {
-    log_dump();
+    bool32_t log_dump_succesful = false;
+    log_dump(&log_dump_succesful);
     application_running = false;
 }
 

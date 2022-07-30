@@ -54,16 +54,18 @@ bool32_t platform_file_exists(const char * filepath);
 void platform_delete_file(const char * filepath);
 void platform_delete_writable(const char * writable_filename);
 
-void __attribute__((no_instrument_function))
+void
 platform_write_file(
     const char * filepath_destination,
     const char * output,
-    const uint32_t output_size);
-void __attribute__((no_instrument_function))
+    const uint32_t output_size,
+    bool32_t * good);
+void
 platform_write_file_to_writables(
     const char * filepath_inside_writables,
     const char * output,
-    const uint32_t output_size);
+    const uint32_t output_size,
+    bool32_t * good);
 
 void platform_copy_file(
     const char * filepath_source,

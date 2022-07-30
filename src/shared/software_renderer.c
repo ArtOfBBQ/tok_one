@@ -14,7 +14,7 @@ void software_render(
     uint64_t elapsed_nanoseconds)
 {
     if (renderer_initialized != true) {
-        printf("renderer not initialized, aborting...\n");
+        log_append("renderer not initialized, aborting...\n");
         return;
     }
     
@@ -22,7 +22,7 @@ void software_render(
         next_gpu_workload == NULL
         || next_workload_size == NULL)
     {
-        printf("ERROR: platform layer didnt pass recipients\n");
+        log_append("ERROR: platform layer didnt pass recipients\n");
         return;
     }
     
