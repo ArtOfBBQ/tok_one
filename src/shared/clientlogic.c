@@ -195,8 +195,20 @@ static void preregister_assets() {
             }
             
             if (new_texturearray_i < 0) {
-                new_texturearray_i =
-                    (int32_t)texture_arrays_size;
+                new_texturearray_i = (int32_t)texture_arrays_size;
+                for (
+                    uint32_t tx_i = 0;
+                    tx_i < MAX_FILES_IN_SINGLE_TEXARRAY;
+                    tx_i++)
+                {
+                    texture_arrays[new_texturearray_i]
+                        .images[tx_i].image = NULL;
+                    texture_arrays[new_texturearray_i]
+                        .images[tx_i].request_update = false;
+                    texture_arrays[new_texturearray_i]
+                        .images[tx_i].prioritize_asset_load = false;
+                }
+                texture_arrays[new_texturearray_i].images_size = 0;
                 filenames_for_texturearrays_size++;
                 texture_arrays_size++;
             }

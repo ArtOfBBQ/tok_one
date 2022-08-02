@@ -100,6 +100,9 @@ static uint32_t find_next_linebreak(
     const uint32_t input_size,
     const uint32_t after_i)
 {
+    if (input_size == 1) {
+        return after_i + 1;
+    }
     log_assert(input_size > 1);
     log_assert(after_i < input_size - 1);
     
@@ -154,7 +157,7 @@ void request_label_around(
     float cur_left = 0.0f;
     float cur_top = top_y_pixelspace;
     
-    while (line_start_i < (text_to_draw_size - 2))
+    while (line_start_i < text_to_draw_size)
     {
         line_end_i = find_next_linebreak(
             /* input      : */ text_to_draw,
@@ -172,7 +175,7 @@ void request_label_around(
         while (true) {
             line_width += get_advance_width(text_to_draw[i]);
             
-            log_assert(line_width <= max_width);
+            // log_assert(line_width <= max_width);
             
             i++;
             if (text_to_draw[i] == '\0') {

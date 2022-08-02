@@ -499,12 +499,9 @@ internal_log_assert(
     
     log_dump_and_crash();
     
-    uint32_t str_condition_len =
-        get_string_length(str_condition);
-    uint32_t file_name_len =
-        get_string_length(file_name);
-    uint32_t func_name_len =
-        get_string_length(func_name);
+    uint32_t str_condition_len = get_string_length(str_condition);
+    uint32_t file_name_len = get_string_length(file_name);
+    uint32_t func_name_len = get_string_length(func_name);
     
     uint32_t screen_dump_size =
         func_name_len +

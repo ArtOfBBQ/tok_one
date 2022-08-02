@@ -23,6 +23,7 @@ exist.
 #include "decodedimage.h"
 #include "vertex_types.h"
 #include "draw_triangle.h"
+#include "texture_array.h"
 #include "lightsource.h"
 
 #define TEXQUADS_TO_RENDER_ARRAYSIZE 2000

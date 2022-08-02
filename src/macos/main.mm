@@ -24,8 +24,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 @end
 
 @implementation GameWindowDelegate
-- (void)windowWillClose:(NSNotification *)notification 
-{
+- (void)windowWillClose:(NSNotification *)notification {
     log_append("window will close, terminating app..\n");
     add_profiling_stats_to_log();
     bool32_t write_succesful = false;
@@ -60,7 +59,6 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     
     return frameSize;
 }
-
 @end
 
 @interface
@@ -142,8 +140,7 @@ NSWindowWithCustomResponder: NSWindow
     log_append("unhandled mouse event\n");
 }
 
-- (void)mouseMoved:(NSEvent *)event
-{
+- (void)mouseMoved:(NSEvent *)event {
     NSPoint screenspace_location = [NSEvent mouseLocation];
     
     register_interaction(
@@ -155,7 +152,42 @@ NSWindowWithCustomResponder: NSWindow
         /* screenspace_y: */
             (float)screenspace_location.y
                 - platform_get_current_window_bottom());
+    
+    register_interaction(
+        /* interaction : */
+            &previous_mouse_or_touch_move,
+        /* screenspace_x: */
+            (float)screenspace_location.x
+                - platform_get_current_window_left(),
+        /* screenspace_y: */
+            (float)screenspace_location.y
+                - platform_get_current_window_bottom());
 }
+
+- (void)mouseDragged:(NSEvent *)event {
+    NSPoint screenspace_location = [NSEvent mouseLocation];
+    
+    register_interaction(
+        /* interaction : */
+            &previous_mouse_move,
+        /* screenspace_x: */
+            (float)screenspace_location.x
+                - platform_get_current_window_left(),
+        /* screenspace_y: */
+            (float)screenspace_location.y
+                - platform_get_current_window_bottom());
+    
+    register_interaction(
+        /* interaction : */
+            &previous_mouse_or_touch_move,
+        /* screenspace_x: */
+            (float)screenspace_location.x
+                - platform_get_current_window_left(),
+        /* screenspace_y: */
+            (float)screenspace_location.y
+                - platform_get_current_window_bottom());
+}
+
 
 - (void)keyDown:(NSEvent *)event {
     register_keydown(event.keyCode);
@@ -273,4 +305,3 @@ int main(int argc, const char * argv[]) {
     
     return NSApplicationMain(argc, argv);
 }
-

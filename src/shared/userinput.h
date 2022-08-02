@@ -26,6 +26,7 @@ extern Interaction previous_touch_or_leftclick_end;
 extern Interaction previous_rightclick_start;
 extern Interaction previous_rightclick_end;
 extern Interaction previous_mouse_move;
+extern Interaction previous_mouse_or_touch_move;
 
 void register_interaction(
     Interaction * touch_record,

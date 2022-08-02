@@ -16,6 +16,11 @@ void init_application() {
         texture_arrays[i].single_img_width = 0;
         texture_arrays[i].single_img_height = 0;
         texture_arrays[i].request_init = false;
+        for (uint32_t j = 0; j < MAX_FILES_IN_SINGLE_TEXARRAY; j++) {
+            texture_arrays[i].images[j].request_update = false;
+            texture_arrays[i].images[j].prioritize_asset_load = false;
+            texture_arrays[i].images[j].image = NULL;
+        }
     }
     
     // initialize font with fontmetrics.dat
@@ -69,3 +74,4 @@ void init_application() {
     
     init_renderer();
 }
+

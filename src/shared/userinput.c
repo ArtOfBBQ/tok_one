@@ -11,6 +11,7 @@ Interaction previous_touch_or_leftclick_end;
 Interaction previous_rightclick_start;
 Interaction previous_rightclick_end;
 Interaction previous_mouse_move;
+Interaction previous_mouse_or_touch_move;
 
 void construct_interaction(Interaction * to_construct) {
     to_construct->touchable_id = -1;

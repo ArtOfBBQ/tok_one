@@ -15,6 +15,7 @@
 typedef struct TextureArrayImage {
     DecodedImage * image;
     bool32_t request_update;
+    bool32_t prioritize_asset_load;
 } TextureArrayImage;
 
 #define MAX_IMAGES_IN_TEXARRAY 300
@@ -37,15 +38,15 @@ typedef struct TextureArray {
 extern TextureArray * texture_arrays;
 extern uint32_t texture_arrays_size;
 
-DecodedImage * extract_image(
-    const DecodedImage * original,
-    const uint32_t sprite_columns,
-    const uint32_t sprite_rows,
-    const uint32_t x,
-    const uint32_t y);
-
-DecodedImage * malloc_img_from_filename(
-    const char * filename);
+// DecodedImage * extract_image(
+//     const DecodedImage * original,
+//     const uint32_t sprite_columns,
+//     const uint32_t sprite_rows,
+//     const uint32_t x,
+//     const uint32_t y);
+// 
+// DecodedImage * malloc_img_from_filename(
+//     const char * filename);
 
 void debug_dump_texturearrays_to_disk();
 
@@ -82,12 +83,29 @@ void register_new_texturearray_from_files(
     const char ** filenames,
     const uint32_t filenames_size);
 
+void register_to_texturearray_from_images(
+    const int32_t target_texture_array_i,
+    DecodedImage ** new_images,
+    const uint32_t new_images_size);
+
 void register_new_texturearray_from_images(
     DecodedImage ** new_images,
     const uint32_t new_images_size);
 
 void register_new_texturearray(
     DecodedImage * new_image);
+
+void register_to_texturearray_by_splitting_file(
+    const char * filename,
+    const int32_t texture_array_i,
+    const uint32_t rows,
+    const uint32_t columns);
+
+void register_to_texturearray_by_splitting_image(
+    DecodedImage * new_image,
+    const int32_t texture_array_i,
+    const uint32_t rows,
+    const uint32_t columns);
 
 void register_new_texturearray_by_splitting_file(
     const char * filename,
@@ -98,6 +116,18 @@ void register_new_texturearray_by_splitting_image(
     DecodedImage * new_image,
     const uint32_t rows,
     const uint32_t columns);
+
+void update_texture_slice_from_file_with_memory(
+    const char * filename,
+    const int32_t at_texture_array_i,
+    const int32_t at_texture_i,
+    uint8_t * dpng_working_memory,
+    uint64_t dpng_working_memory_size);
+
+void update_texture_slice(
+    DecodedImage * new_image,
+    const int32_t at_texture_array_i,
+    const int32_t at_texture_i);
 
 #endif
 

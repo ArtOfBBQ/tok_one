@@ -142,13 +142,17 @@ static uint32_t already_drawing = false;
     singleImgWidth: (uint32_t)single_img_width
     singleImgHeight: (uint32_t)single_img_height;
 {
-    log_assert(single_img_width > 0);
-    log_assert(single_img_height > 0);
+    if (single_img_width < 1
+        || single_img_height < 1
+        || texturearray_i >= TEXTUREARRAYS_SIZE
+        || texturearray_i >= (int32_t)texture_arrays_size
+        || texture_count < 1)
+    {
+        return;
+    }
     
     texture_arrays[texturearray_i].request_init = false;
     
-    if (texturearray_i >= TEXTUREARRAYS_SIZE) { return; }
-    if (texturearray_i >= (int32_t)texture_arrays_size) { return; }
     int32_t i = texturearray_i;
     
     // we always overwrite textures, so pad them to match first
@@ -346,10 +350,8 @@ static uint32_t already_drawing = false;
         .colorAttachments[0]
         .loadAction = MTLLoadActionClear;
     
-    MTLClearColor clear_color =
-        MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);
-    RenderPassDescriptor.colorAttachments[0].clearColor =
-        clear_color;
+    MTLClearColor clear_color = MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);
+    RenderPassDescriptor.colorAttachments[0].clearColor = clear_color;
     
     id<MTLRenderCommandEncoder> render_encoder =
         [command_buffer

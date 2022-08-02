@@ -270,6 +270,9 @@ platform_write_file(
     const uint32_t output_size,
     bool32_t * good)
 {
+    log_append("write file data to: ");
+    log_append(filepath);
+    log_append("\n");
     NSString * nsfilepath = [NSString
         stringWithCString:filepath
         encoding:NSASCIIStringEncoding];
