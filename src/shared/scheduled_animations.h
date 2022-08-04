@@ -21,8 +21,11 @@ typedef struct ScheduledAnimation {
     note: affected_object_id below 0 will have no effect and is useless
     */
     int32_t affected_object_id;
-    
-    bool32_t affects_camera_not_object;
+
+    bool32_t set_texture_array_i;
+    int32_t new_texture_array_i;
+    bool32_t set_texture_i;
+    int32_t new_texture_i;
     
     // ******
     // TRANSLATION animations:
@@ -79,12 +82,14 @@ typedef struct ScheduledAnimation {
     // *** end of scaling animations
     
     float rgba_delta_per_second[4];
-    uint64_t wait_first_microseconds; // wait, then perform all animation runs
-    uint64_t wait_before_each_run_microseconds; // resets each run
-    uint64_t remaining_wait_before_next_run;
+    uint64_t wait_before_first_run; // wait microseconds, then do all runs
+    uint64_t wait_before_each_run;  // resets each run
+    uint64_t remaining_wait_before_next_run; // gets reset by above each run
+                                             // can be used as wait before 1st
+                                             // run only
     uint64_t duration_microseconds;   // duration at the start of each run
     uint64_t remaining_microseconds;  // remaining duration (this run)
-    uint32_t runs; // 0 to repeat forever, 1 to run once, 2 to run & repeat 1x 
+    uint32_t runs; // 0 to repeat forever, 1 to run 1x, 2 to run 2x etc
     bool32_t delete_object_when_finished;
     bool32_t deleted;
     // ****

@@ -11,7 +11,12 @@ void construct_scheduled_animation(
     ScheduledAnimation * to_construct)
 {
     to_construct->affected_object_id = 0;
-    to_construct->affects_camera_not_object = false;
+
+    to_construct->set_texture_array_i = false;
+    to_construct->new_texture_array_i = -1;
+    to_construct->set_texture_i = false;
+    to_construct->new_texture_i = -1;
+    
     to_construct->final_x_known = false;
     to_construct->final_y_known = false;
     to_construct->final_z_known = false;
@@ -35,8 +40,7 @@ void construct_scheduled_animation(
     for (uint32_t i = 0; i < 4; i++) {
         to_construct->rgba_delta_per_second[i] = 0.0f;
     }
-    to_construct->wait_first_microseconds = 0;
-    to_construct->wait_before_each_run_microseconds = 0;
+    to_construct->wait_before_each_run = 0;
     to_construct->remaining_wait_before_next_run = 0;
     to_construct->duration_microseconds = 1000000;
     to_construct->runs = 1;
@@ -76,7 +80,7 @@ void request_scheduled_animation(
 
 void request_fade_and_destroy(
     const uint32_t object_id,
-    const uint64_t wait_first_microseconds,
+    const uint64_t wait_before_first_run,
     const uint64_t duration_microseconds)
 {
     log_assert(duration_microseconds > 0);
@@ -124,8 +128,7 @@ void request_fade_and_destroy(
     ScheduledAnimation modify_alpha;
     construct_scheduled_animation(&modify_alpha);
     modify_alpha.affected_object_id = object_id;
-    modify_alpha.wait_first_microseconds =
-        wait_first_microseconds;
+    modify_alpha.remaining_wait_before_next_run = wait_before_first_run;
     modify_alpha.duration_microseconds = duration_microseconds;
     modify_alpha.rgba_delta_per_second[3] = change_per_second;
     modify_alpha.delete_object_when_finished = true;
@@ -134,7 +137,7 @@ void request_fade_and_destroy(
 
 void request_fade_to(
     const uint32_t object_id,
-    const uint64_t wait_first_microseconds,
+    const uint64_t wait_before_first_run,
     const uint64_t duration_microseconds,
     const float target_alpha)
 {
@@ -178,8 +181,7 @@ void request_fade_to(
     ScheduledAnimation modify_alpha;
     construct_scheduled_animation(&modify_alpha);
     modify_alpha.affected_object_id = object_id;
-    modify_alpha.wait_first_microseconds =
-        wait_first_microseconds;
+    modify_alpha.remaining_wait_before_next_run = wait_before_first_run;
     modify_alpha.duration_microseconds = duration_microseconds;
     modify_alpha.rgba_delta_per_second[3] = change_per_second;
     request_scheduled_animation(&modify_alpha);
@@ -206,22 +208,8 @@ void resolve_animation_effects(
         
         uint64_t actual_elapsed = microseconds_elapsed;
         
-        if (anim->wait_first_microseconds > 0)
-        {
-            if (actual_elapsed > anim->wait_first_microseconds)
-            {
-                actual_elapsed -= anim->wait_first_microseconds;
-                anim->wait_first_microseconds = 0;
-            } else {
-                anim->wait_first_microseconds -= actual_elapsed;
-                continue;
-            }
-        }
-        
-        if (anim->remaining_wait_before_next_run > 0)
-        {
-            if (actual_elapsed > anim->remaining_wait_before_next_run)
-            {
+        if (anim->remaining_wait_before_next_run > 0) {
+            if (actual_elapsed > anim->remaining_wait_before_next_run) {
                 actual_elapsed -= anim->remaining_wait_before_next_run;
                 anim->remaining_wait_before_next_run = 0;
             } else {
@@ -230,42 +218,36 @@ void resolve_animation_effects(
             }
         }
         
-        log_assert(anim->wait_first_microseconds == 0);
         log_assert(anim->remaining_wait_before_next_run == 0);
         
         actual_elapsed = anim->remaining_microseconds > actual_elapsed ?
             actual_elapsed : anim->remaining_microseconds;
         
         // delete if duration expired
-        if (anim->remaining_microseconds == 0)
-        {
+        if (anim->remaining_microseconds == 0) {
             if (anim->runs > 1 || anim->runs == 0) {
                 if (anim->runs > 1) {
                     anim->runs -= 1;
-                }
-                else {
+                } else {
                     log_assert(anim->runs == 0);
                 }
                 anim->remaining_microseconds = anim->duration_microseconds;
                 anim->remaining_wait_before_next_run =
-                    anim->wait_before_each_run_microseconds;
+                    anim->wait_before_each_run - actual_elapsed;
                 continue;
             }
             
             anim->deleted = true;
-            if (animation_i == (int32_t)scheduled_animations_size)
-            {
+            if (animation_i == (int32_t)scheduled_animations_size) {
                 scheduled_animations_size -= 1;
             }
             
-            if (anim->clientlogic_callback_when_finished_id >= 0) 
-            {
+            if (anim->clientlogic_callback_when_finished_id >= 0)  {
                 client_logic_animation_callback(
                     anim->clientlogic_callback_when_finished_id);
             }
             
-            if (anim->delete_object_when_finished)
-            {
+            if (anim->delete_object_when_finished) {
                 for (
                     int32_t tq_i = (int32_t)texquads_to_render_size - 1;
                     tq_i >= 0;
@@ -277,8 +259,7 @@ void resolve_animation_effects(
                     {
                         texquads_to_render[tq_i].deleted = true;
                         texquads_to_render[tq_i].visible = false;
-                        texquads_to_render[tq_i]
-                            .texturearray_i = -1;
+                        texquads_to_render[tq_i].texturearray_i = -1;
                         texquads_to_render[tq_i].texture_i = -1;
                     }
                 }
@@ -307,29 +288,6 @@ void resolve_animation_effects(
         
         log_assert(actual_elapsed <= anim->remaining_microseconds);
         anim->remaining_microseconds -= actual_elapsed;
-        
-        if (anim->affects_camera_not_object) {
-            if (!anim->final_x_known) {
-                camera.x += (anim->delta_x_per_second * actual_elapsed)
-                    / 1000000;
-            } else {
-                float diff_x = anim->final_mid_x - camera.x;
-                camera.x +=
-                    (diff_x / (anim->remaining_microseconds + actual_elapsed)
-                        * actual_elapsed);
-            }
-            
-            if (!anim->final_y_known) {
-                camera.y += (anim->delta_y_per_second * actual_elapsed)
-                    / 1000000;
-            } else {
-                float diff_y = anim->final_mid_y - camera.y;
-                camera.y += (diff_y / (anim->remaining_microseconds
-                    + actual_elapsed) * actual_elapsed);
-            }
-            
-            continue;
-        }
         
         // apply effects
         for (
@@ -385,12 +343,19 @@ void resolve_animation_effects(
             uint32_t tq_i = 0;
             tq_i < texquads_to_render_size;
             tq_i++)
-        {
+        { 
             if (
                 texquads_to_render[tq_i].object_id ==
                     anim->affected_object_id &&
                 !texquads_to_render[tq_i].deleted)
             {
+                if (anim->set_texture_array_i) {
+                    texquads_to_render[tq_i].texturearray_i =
+                        anim->new_texture_array_i;
+                    texquads_to_render[tq_i].texture_i =
+                        anim->new_texture_i;
+                }
+                
                 if (!anim->final_x_known) {
                     texquads_to_render[tq_i].left_pixels +=
                         (anim->delta_x_per_second
@@ -524,7 +489,7 @@ void request_dud_dance(const uint32_t object_id)
         ScheduledAnimation move_request;
         construct_scheduled_animation(&move_request);
         move_request.affected_object_id = object_id;
-        move_request.wait_first_microseconds = wait_first;
+        move_request.remaining_wait_before_next_run = wait_first;
         move_request.duration_microseconds = step_size;
         move_request.delta_x_per_second =
             wait_first % (step_size * 2) == 0 ?
@@ -556,7 +521,7 @@ void request_bump_animation(const uint32_t object_id)
     ScheduledAnimation revert_request;
     construct_scheduled_animation(&revert_request);
     revert_request.affected_object_id = object_id;
-    revert_request.wait_first_microseconds = duration / 2;
+    revert_request.remaining_wait_before_next_run = duration / 2;
     revert_request.duration_microseconds = duration / 2;
     revert_request.final_xscale_known = true;
     revert_request.final_xscale = 1.0f;
@@ -564,3 +529,4 @@ void request_bump_animation(const uint32_t object_id)
     revert_request.final_yscale = 1.0f;
     request_scheduled_animation(&revert_request);
 }
+
