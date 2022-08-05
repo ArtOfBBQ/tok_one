@@ -3,7 +3,7 @@
 // The global camera
 // In a 2D game, move the x to the left to move all of your
 // sprites to the right
-zCamera camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+zCamera camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
 zLightSource * zlights_to_apply = NULL;
 zLightSource * zlights_transformed = NULL;
@@ -117,15 +117,5 @@ void translate_lights()
         zlights_transformed[zlights_transformed_size].z = translated_light_pos.z;
         zlights_transformed_size++;
     }
-}
-
-void update_camera_position() {
-    camera.x += camera.next_frame_x_delta;
-    camera.y += camera.next_frame_y_delta;
-    camera.z += camera.next_frame_z_delta;
-    
-    camera.next_frame_x_delta = 0.0f;
-    camera.next_frame_y_delta = 0.0f;
-    camera.next_frame_z_delta = 0.0f;
 }
 

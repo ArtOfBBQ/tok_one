@@ -53,7 +53,6 @@ void request_scheduled_animation(
     ScheduledAnimation * to_add)
 {
     log_assert(to_add != NULL);
-    log_assert(to_add->duration_microseconds > 0);
     to_add->remaining_microseconds = to_add->duration_microseconds;
     
     log_assert(scheduled_animations_size < SCHEDULED_ANIMATIONS_ARRAYSIZE);
@@ -187,9 +186,10 @@ void request_fade_to(
     request_scheduled_animation(&modify_alpha);
 }
 
-void resolve_animation_effects(
-    uint64_t microseconds_elapsed)
+void resolve_animation_effects(uint64_t microseconds_elapsed)
 {
+    log_assert(microseconds_elapsed < 500000);
+    
     ScheduledAnimation * anim;
     for (
         int32_t animation_i = (int32_t)(scheduled_animations_size - 1);
@@ -352,8 +352,9 @@ void resolve_animation_effects(
                 if (anim->set_texture_array_i) {
                     texquads_to_render[tq_i].texturearray_i =
                         anim->new_texture_array_i;
-                    texquads_to_render[tq_i].texture_i =
-                        anim->new_texture_i;
+                }
+                if (anim->set_texture_i) {
+                    texquads_to_render[tq_i].texture_i = anim->new_texture_i;
                 }
                 
                 if (!anim->final_x_known) {

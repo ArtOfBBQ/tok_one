@@ -60,8 +60,7 @@ static void set_unallocated_to_error_image(
     set_allocated_to_error_image(to_replace);
 }
 
-static DecodedImage *
-malloc_img_from_filename_with_working_memory(
+static DecodedImage * malloc_img_from_filename_with_working_memory(
     const char * filename,
     const uint8_t * dpng_working_memory,
     const uint64_t dpng_working_memory_size)
@@ -108,7 +107,8 @@ malloc_img_from_filename_with_working_memory(
     new_image->good = false;
     new_image->pixel_count = new_image->width * new_image->height;
     new_image->rgba_values_size = new_image->pixel_count * 4;
-    new_image->rgba_values = malloc_from_unmanaged(new_image->rgba_values_size);
+    new_image->rgba_values = malloc_from_unmanaged(
+        new_image->rgba_values_size);
     
     decode_PNG(
         /* const uint8_t * compressed_input: */
@@ -134,7 +134,6 @@ malloc_img_from_filename_with_working_memory(
     }
     
     log_assert(new_image->pixel_count * 4 == new_image->rgba_values_size);
-    
     log_assert(new_image->pixel_count == new_image->width * new_image->height);
     
     free_from_managed((uint8_t *)file_buffer.contents);
@@ -541,14 +540,6 @@ void update_texture_slice_from_file_with_memory(
     uint8_t * dpng_working_memory,
     uint64_t dpng_working_memory_size)
 {
-    log_append("sending image file ");
-    log_append(filename);
-    log_append(" to texture array ");
-    log_append_int(at_texture_array_i);
-    log_append("/");
-    log_append_int(at_texture_i);
-    log_append("\n");
-    
     DecodedImage * img =
         malloc_img_from_filename_with_working_memory(
             filename,
@@ -575,8 +566,7 @@ void update_texture_slice(
     log_assert(
         at_texture_i < texture_arrays[at_texture_array_i].images_size);
     
-    texture_arrays[at_texture_array_i]
-        .images[at_texture_i].image = new_image;
+    texture_arrays[at_texture_array_i].images[at_texture_i].image = new_image;
     texture_arrays[at_texture_array_i]
         .images[at_texture_i].request_update = true;
     texture_arrays[at_texture_array_i]

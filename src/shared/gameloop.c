@@ -1,15 +1,29 @@
 #include "gameloop.h"
 
-static uint64_t previous_time;
+static uint64_t previous_time = 0;
+static uint64_t frame_no = 0;
 
 void shared_gameloop_update(
     Vertex * vertices_for_gpu,
     uint32_t * vertices_for_gpu_size)
 {
-    
+    frame_no++;
     uint64_t time = platform_get_current_time_microsecs();
     uint64_t elapsed = time - previous_time;
+    if (previous_time < 1) {
+        previous_time = time;
+        return;
+    }
     previous_time = time;
+    
+    if (elapsed > 175000) {
+        log_append("Error: elapsed time was: ");
+        log_append_uint(elapsed);
+        log_append(" microseconds at frame: ");
+        log_append_uint(frame_no);
+        log_append("\n");
+        log_assert(elapsed < 175000);
+    }
     
     if (
         time - last_resize_request_at < 1500000
@@ -25,12 +39,9 @@ void shared_gameloop_update(
         last_resize_request_at = 999999999;
     }
     
-    resolve_animation_effects(elapsed);
-
     touchable_triangles_size = 0;
     
-    update_camera_position();
-    
+    resolve_animation_effects(elapsed);
     clean_deleted_lights();
     clean_deleted_texquads();
     
@@ -40,7 +51,7 @@ void shared_gameloop_update(
     if (!application_running) {
         texquads_to_render_size = 0;
         zpolygons_to_render_size = 0;
-        camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+        camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
         
         font_height = 28.0f;
         font_ignore_lighting = true;

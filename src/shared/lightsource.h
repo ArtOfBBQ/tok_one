@@ -31,9 +31,6 @@ typedef struct zCamera {
     float x;
     float y;
     float z;
-    float next_frame_x_delta;
-    float next_frame_y_delta;
-    float next_frame_z_delta;
     float x_angle;
     float y_angle;
     float z_angle;
@@ -74,6 +71,5 @@ void clean_deleted_lights();
 // and then used in both
 void translate_lights();
 
-void update_camera_position();
-
 #endif
+

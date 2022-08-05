@@ -260,10 +260,9 @@ int main(int argc, const char * argv[]) {
     id<MTLDevice> metal_device =
         MTLCreateSystemDefaultDevice();
     
-    mtk_view =
-        [[MTKView alloc]
-            initWithFrame: window_rect
-            device: metal_device];
+    mtk_view = [[MTKView alloc]
+        initWithFrame: window_rect
+        device: metal_device];
     
     mtk_view.autoResizeDrawable = false;
     

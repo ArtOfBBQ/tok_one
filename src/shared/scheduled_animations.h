@@ -55,7 +55,7 @@ typedef struct ScheduledAnimation {
     float x_rotation_per_second;
     float y_rotation_per_second;
     float z_rotation_per_second;
-
+    
     // *** absolute scaling (change width/height)
     bool32_t final_width_known;
     union {
@@ -82,11 +82,10 @@ typedef struct ScheduledAnimation {
     // *** end of scaling animations
     
     float rgba_delta_per_second[4];
-    uint64_t wait_before_first_run; // wait microseconds, then do all runs
-    uint64_t wait_before_each_run;  // resets each run
+    uint64_t wait_before_each_run;           // resets each run
     uint64_t remaining_wait_before_next_run; // gets reset by above each run
                                              // can be used as wait before 1st
-                                             // run only
+                                             // run
     uint64_t duration_microseconds;   // duration at the start of each run
     uint64_t remaining_microseconds;  // remaining duration (this run)
     uint32_t runs; // 0 to repeat forever, 1 to run 1x, 2 to run 2x etc

@@ -42,8 +42,7 @@ void writable_filename_to_pathfile(
     const uint32_t recipient_capacity);
 
 // get current working directory
-char * __attribute__((no_instrument_function))
-    platform_get_application_path(void);
+char * platform_get_application_path(void);
 char * platform_get_resources_path(void);
 char * platform_get_cwd(void);
 // a root directory where we're allowed to write

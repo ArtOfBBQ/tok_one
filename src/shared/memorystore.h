@@ -3,7 +3,7 @@
 
 // 500mb ->                   500...000
 #define UNMANAGED_MEMORY_SIZE 500000000
-// 500mb ->                   250...000
+// 500mb ->                   500...000
 #define   MANAGED_MEMORY_SIZE 500000000
 
 #include "common.h"
@@ -24,3 +24,4 @@ void free_from_managed(uint8_t * to_free);
 uint64_t get_remaining_memory_checksum();
 
 #endif
+
