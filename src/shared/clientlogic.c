@@ -33,9 +33,6 @@ zPolygon load_from_obj_file(char * filename)
     return return_value;
 }
 
-uint32_t label_object_id = 0;
-uint32_t teapot_object_id = 1;
-
 static void preregister_assets() {
     
     const char * fontfile;
@@ -264,9 +261,10 @@ void client_logic_animation_callback(int32_t callback_id)
         "unhandled client_logic_animation_callback(: ");
     log_append_int(callback_id);
     log_append("\n");
+    log_dump_and_crash();
 }
 
-uint32_t cur_color_i = 0;
+static uint32_t cur_color_i = 0;
 static void request_fading_lightsquare(
     const float location_x,
     const float location_y)
@@ -379,36 +377,6 @@ static void client_handle_keypresses(
     float cam_speed = 2.0f * elapsed_mod;
     float cam_rotation_speed = 0.05f * elapsed_mod;
     
-    if (keypress_map[0] == true)
-    {
-        // 'A' key is pressed
-        camera.x_angle += cam_rotation_speed;
-    }
-    
-    if (keypress_map[6] == true)
-    {
-        // 'Z' key is pressed
-        camera.z_angle -= cam_rotation_speed;
-    }
-    
-    if (keypress_map[7] == true)
-    {
-       // 'X' key
-       camera.z_angle += cam_rotation_speed;
-    }
-
-    if (keypress_map[8] == true) {
-        // c key is pressed
-        log_append("pressed C key, crashing...\n");
-        log_assert(0);
-    }
-    
-    if (keypress_map[12] == true)
-    {
-        // 'Q' key is pressed
-        camera.x_angle -= cam_rotation_speed;
-    }
-    
     if (keypress_map[123] == true)
     {
         // left arrow key
@@ -432,52 +400,14 @@ static void client_handle_keypresses(
         // up arrow key is pressed
         camera.y += cam_speed;
     }
-    
-    if (keypress_map[30] == true)
-    {
-        // ] is pressed
-    }
-    
-    if (keypress_map[42] == true)
-    {
-        // [ is pressed
-    }
-    
-    if (keypress_map[46] == true)
-    {
-        // m key is pressed
-    }
 }
 
 bool32_t fading_out = true;
-char fps_string[8] = "fps: xx";
 
 void client_logic_update(uint64_t microseconds_elapsed)
 {
     // TODO: our timer is weirdly broken on iOS. Fix it!
-    uint64_t fps = 1000000 / microseconds_elapsed;
-    /*
-    float elapsed_mod =
-        (float)((double)microseconds_elapsed / (double)16666);
-    */
-    
-    if (fps < 100) {
-        fps_string[5] = '0' + ((fps / 10) % 10);
-        fps_string[6] = '0' + (fps % 10);
-    } else {
-        fps_string[5] = '9' + ((fps / 10) % 10);
-        fps_string[6] = '9' + (fps % 10);
-    }
-    
-    delete_texquad_object(label_object_id);
-    request_label_renderable(
-        /* with_id               : */ label_object_id,
-        /* char * text_to_draw   : */ fps_string,
-        /* float left_pixelspace : */ 20.0f,
-        /* float top_pixelspace  : */ 60.0f,
-        /* z                     : */ 0.5f,
-        /* float max_width       : */ window_width,
-        /* bool32_t ignore_camera: */ true);
+    request_fps_counter(microseconds_elapsed);
     
     client_handle_touches_and_leftclicks(microseconds_elapsed);
     client_handle_keypresses(microseconds_elapsed);
@@ -487,6 +417,20 @@ void client_logic_window_resize(
     const uint32_t new_height,
     const uint32_t new_width)
 {
-    return;
+    log_append(
+        "unhandled client_logic_window_resize()\n");
+    log_dump_and_crash();
+}
+
+void client_logic_get_application_name(
+    char * recipient,
+    const uint32_t recipient_size)
+{
+    char * app_name = "TOK ONE";
+    
+    copy_0term_string_to(
+        /* recipient: */ recipient,
+        /* recipient_size: */ recipient_size,
+        /* origin: */ app_name);
 }
 

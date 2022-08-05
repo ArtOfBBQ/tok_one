@@ -311,7 +311,7 @@ void platform_write_file_to_writables(
         /* recipient: */
             recipient,
         /* recipient_capacity: */
-            100);
+            500);
     
     platform_write_file(
         /* const char * filepath: */
@@ -393,3 +393,4 @@ void platform_start_thread(
             function_to_run(argument);
         });
 }
+

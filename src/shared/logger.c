@@ -1,7 +1,7 @@
 #include "logger.h"
 
+char application_name[100];
 char * assert_failed_message;
-char * application_name = NULL;
 
 static bool32_t logger_activated = false;
 static char * log;
@@ -193,7 +193,8 @@ extern "C" {
 
 void __attribute__((no_instrument_function))
 setup_log() {
-    assert(application_name != NULL);
+
+    log_assert(application_name != NULL);
     
     // create a log for debug text
     log = (char *)malloc_from_unmanaged(LOG_SIZE);

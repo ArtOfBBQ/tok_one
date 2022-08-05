@@ -318,3 +318,35 @@ void request_label_renderable(
         i++;
     }
 }
+
+void request_fps_counter(uint64_t microseconds_elapsed) {
+    
+    // TODO: our timer is weirdly broken on iOS. Fix it!
+    char fps_string[8] = "fps: xx";
+    uint32_t label_object_id = 0;
+    uint64_t fps = 1000000 / microseconds_elapsed;
+    /*
+    float elapsed_mod =
+        (float)((double)microseconds_elapsed / (double)16666);
+    */
+    if (fps < 100) {
+        fps_string[5] = '0' + ((fps / 10) % 10);
+        fps_string[6] = '0' + (fps % 10);
+    } else {
+        fps_string[5] = '9' + ((fps / 10) % 10);
+        fps_string[6] = '9' + (fps % 10);
+    }
+    delete_texquad_object(label_object_id);
+    
+    font_height = 12.0f;
+    font_ignore_lighting = true;
+    request_label_renderable(
+        /* with_id               : */ label_object_id,
+        /* char * text_to_draw   : */ fps_string,
+        /* float left_pixelspace : */ 20.0f,
+        /* float top_pixelspace  : */ 60.0f,
+        /* z                     : */ 0.5f,
+        /* float max_width       : */ window_width,
+        /* bool32_t ignore_camera: */ true);
+}
+

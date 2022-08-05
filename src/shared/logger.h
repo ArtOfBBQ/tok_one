@@ -1,7 +1,7 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-extern char * application_name;
+extern char application_name[100];
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,14 +45,12 @@ extern bool32_t application_running;
 /*
 Allocates memory. This is only necessary in C99
 */
-void __attribute__((no_instrument_function))
-setup_log();
+void setup_log();
 
 /*
 don't use the internal_ functions, use the macros that call them.
 */
-void __attribute__((no_instrument_function))
-internal_log_append(
+void internal_log_append(
     const char * to_append,
     const char * caller_function_name);
 

@@ -32,5 +32,7 @@ void request_label_renderable(
     const float max_width,
     const bool32_t ignore_camera);
 
+void request_fps_counter(uint64_t microseconds_elapsed);
+
 #endif
 

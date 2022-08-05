@@ -30,8 +30,8 @@ typedef struct FileBuffer {
 } FileBuffer;
 
 uint32_t platform_get_directory_separator_size();
-void platform_get_directory_separator(
-    char * recipient);
+void platform_get_directory_separator(char * recipient);
+
 void resource_filename_to_pathfile(
     const char * filename,
     char * recipient,
@@ -80,10 +80,8 @@ void platform_get_filenames_in(
 /*
 Get a file's size. Returns 0 if no such file
 */
-uint64_t platform_get_resource_size(
-    const char * filename);
-uint64_t platform_get_filesize(
-    const char * filepath);
+uint64_t platform_get_resource_size(const char * filename);
+uint64_t platform_get_filesize(const char * filepath);
 
 /*
 Read a file (without path, only filename) and fill its contents into a buffer

@@ -73,5 +73,10 @@ void client_logic_window_resize(
     const uint32_t new_height,
     const uint32_t new_width);
 
+
+void client_logic_get_application_name(
+    char * recipient,
+    const uint32_t recipient_size);
+
 #endif
 

@@ -214,6 +214,10 @@ float platform_get_current_window_bottom() {
 int main(int argc, const char * argv[]) {
     init_application();
     
+    client_logic_get_application_name(
+        /* recipient: */ application_name,
+        /* recipient_size: */ 100);
+    
     @autoreleasepool {
     log_append("started application: ");
     log_append(application_name);
@@ -249,9 +253,14 @@ int main(int argc, const char * argv[]) {
     
     GameWindowDelegate *window_delegate =
         [[GameWindowDelegate alloc] init];
-    
+   
+    char app_name[100];
+    client_logic_get_application_name(
+        app_name,
+        100);
+    NSString * nsstring_app_name = [NSString stringWithUTF8String:app_name];  
     [window setDelegate: window_delegate];
-    [window setTitle: NSLocalizedString(@"Lore Seeker", @"")];
+    [window setTitle: nsstring_app_name];
     [window makeMainWindow]; 
     [window setAcceptsMouseMovedEvents:YES];
     [window setOrderedIndex:0];

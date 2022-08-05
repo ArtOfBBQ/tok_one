@@ -16,13 +16,13 @@ void shared_gameloop_update(
     }
     previous_time = time;
     
-    if (elapsed > 175000) {
+    if (elapsed > 750000) {
         log_append("Error: elapsed time was: ");
         log_append_uint(elapsed);
         log_append(" microseconds at frame: ");
         log_append_uint(frame_no);
         log_append("\n");
-        log_assert(elapsed < 175000);
+        log_assert(elapsed < 750000);
     }
     
     if (
