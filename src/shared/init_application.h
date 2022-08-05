@@ -9,6 +9,7 @@
 #include "../shared/userinput.h"
 #include "../shared/window_size.h"
 #include "../shared/clientlogic.h"
+#include "../shared/scheduled_animations.h"
 
 void init_application();
 

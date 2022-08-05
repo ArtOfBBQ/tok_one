@@ -3,12 +3,15 @@
 #ifndef SCHEDULED_ANIMATION_H
 #define SCHEDULED_ANIMATION_H
 
+#define SCHEDULED_ANIMATIONS_ARRAYSIZE 1000
+
 #include "common.h"
 #include "clientlogic.h"
 #include "bitmap_renderer.h" // for texquads_to_render
 #include "zpolygon.h"
 
 extern bool32_t ignore_animation_effects;
+
 void resolve_animation_effects(uint64_t microseconds_elapsed);
 
 typedef struct ScheduledAnimation {
@@ -98,9 +101,10 @@ typedef struct ScheduledAnimation {
     int32_t clientlogic_callback_when_finished_id;
     // ****
 } ScheduledAnimation;
+extern ScheduledAnimation * scheduled_animations;
+extern uint32_t scheduled_animations_size;
 
-void construct_scheduled_animation(
-    ScheduledAnimation * to_construct);
+void construct_scheduled_animation(ScheduledAnimation * to_construct);
 
 void request_scheduled_animation(ScheduledAnimation * to_add);
 
@@ -115,11 +119,9 @@ void request_fade_to(
     const uint64_t duration_microseconds,
     const float target_alpha);
 
-void request_dud_dance(
-    const uint32_t object_id);
+void request_dud_dance(const uint32_t object_id);
 
-void request_bump_animation(
-    const uint32_t object_id);
+void request_bump_animation(const uint32_t object_id);
 
 #endif
 

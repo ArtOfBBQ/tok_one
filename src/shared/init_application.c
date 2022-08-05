@@ -21,6 +21,9 @@ void init_application() {
         }
     }
     
+    scheduled_animations = (ScheduledAnimation *)malloc_from_unmanaged(
+        sizeof(ScheduledAnimation) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
+    
     // initialize font with fontmetrics.dat
     FileBuffer font_metrics_file;
     font_metrics_file.size = platform_get_resource_size(

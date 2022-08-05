@@ -2,9 +2,7 @@
 
 bool32_t ignore_animation_effects = false;
 
-#define SCHEDULED_ANIMATIONS_ARRAYSIZE 1000
-ScheduledAnimation scheduled_animations[
-    SCHEDULED_ANIMATIONS_ARRAYSIZE];
+ScheduledAnimation * scheduled_animations;
 uint32_t scheduled_animations_size = 0;
 
 void construct_scheduled_animation(
