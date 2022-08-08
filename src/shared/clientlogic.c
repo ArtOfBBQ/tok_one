@@ -16,8 +16,7 @@ typedef struct TextureArrayLocation {
     int32_t texture_i;
 } TextureArrayLocation;
 
-zPolygon load_from_obj_file(char * filename)
-{
+zPolygon load_from_obj_file(char * filename) {
     FileBuffer buffer;
     buffer.size = (uint64_t)platform_get_filesize(filename) + 1;
     char buffer_contents[buffer.size];
@@ -33,7 +32,19 @@ zPolygon load_from_obj_file(char * filename)
     return return_value;
 }
 
-static void preregister_assets() {
+void client_logic_get_application_name(
+    char * recipient,
+    const uint32_t recipient_size)
+{
+    char * app_name = (char *)"TOK ONE";
+    
+    copy_0term_string_to(
+        /* recipient: */ recipient,
+        /* recipient_size: */ recipient_size,
+        /* origin: */ app_name);
+}
+
+void client_logic_startup() {
     
     const char * fontfile;
     fontfile = "font.png";
@@ -41,109 +52,14 @@ static void preregister_assets() {
         /* filename : */ fontfile,
         /* rows     : */ 10,
         /* columns  : */ 10);
-    texture_arrays[0].images_size = 100;
-    texture_arrays[0].single_img_width =
-        texture_arrays[0].images[0].image->width;
-    texture_arrays[0].single_img_height =
-        texture_arrays[0].images[0].image->height;
-    texture_arrays[0].request_init = true;
-    for (uint32_t i = 0; i < texture_arrays[0].images_size; i++) {
-        texture_arrays[0].images[i].request_update = true;
-        log_assert(
-            texture_arrays[0].images[i].image->width ==
-                texture_arrays[0].single_img_width);
-        log_assert(
-            texture_arrays[0].images[i].image->height ==
-                texture_arrays[0].single_img_height);
-    }
-
-    FileBuffer imgfileheader;
-    imgfileheader.size = 50;
-    imgfileheader.contents = (char *)malloc_from_managed(imgfileheader.size);
-    platform_read_resource_file(
+    
+    char * filenames[2] = {
         "structuredart1.png",
-        &imgfileheader);
-    
-    bool32_t header_parsed_succesfully = false;
-    get_PNG_width_height(
-        (uint8_t *)imgfileheader.contents,
-        imgfileheader.size,
-        &texture_arrays[1].single_img_width,
-        &texture_arrays[1].single_img_height,
-        &header_parsed_succesfully);
-    log_assert(header_parsed_succesfully);
-    
-    // 5mb                              5...000
-    uint64_t dpng_working_memory_size = 5000000;
-    uint8_t * dpng_working_memory =
-        malloc_from_managed(dpng_working_memory_size);
-    texture_arrays[1].images_size = 2;
-    log_assert(texture_arrays[1].single_img_width > 0);
-    log_assert(texture_arrays[1].single_img_height > 0);
-    texture_arrays[1].request_init = true;
-    
-    update_texture_slice_from_file_with_memory(
-        /* const char * filename: */
-            "structuredart1.png",
-        /* const int32_t at_texture_array_i: */
-            1,
-        /* const int32_t at_texture_i: */
-            0,
-        /* uint8_t * dpng_working_memory: */
-            dpng_working_memory,
-        /* uint64_t dpng_working_memory_size: */
-            dpng_working_memory_size);
-    texture_arrays_size++;
-    
-    update_texture_slice_from_file_with_memory(
-        /* const char * filename: */
-            "structuredart2.png",
-        /* const int32_t at_texture_array_i: */
-            1,
-        /* const int32_t at_texture_i: */
-            1,
-        /* uint8_t * dpng_working_memory: */
-            dpng_working_memory,
-        /* uint64_t dpng_working_memory_size: */
-            dpng_working_memory_size);
-    
-    free_from_managed(dpng_working_memory);
-}
-
-static void load_assets(uint32_t start_i, uint32_t last_i)
-{
-    for (
-        int32_t dimension_i = (int32_t)start_i;
-        dimension_i <= (int32_t)last_i;
-        dimension_i++)
-    {
-        if (!application_running) { return; }
-        
-        log_assert(texture_arrays[0].images[52].image->width == 39);
-        uint32_t filenames_count = 0;
-        while (
-            filenames_for_texturearrays[dimension_i][filenames_count][0]
-                != '\0')
-        {
-            log_assert(texture_arrays[0].images[52].image->width == 39);
-            filenames_count++;
-        }
-        log_assert(texture_arrays[0].images[52].image->width == 39);
-    }
-}
-
-char * client_logic_get_application_name() {
-    return (char *)"TOK ONE";
-}
-
-void client_logic_startup() {
-    
-    preregister_assets();
-    
-    log_assert(texture_arrays[0].images[52].image->width == 39);
-    log_assert(texture_arrays_size > 0); 
-    load_assets(1, texture_arrays_size - 1);
-    log_assert(texture_arrays[0].images[52].image->width == 39);
+        "structuredart2.png"
+    };
+    register_new_texturearray_from_files(
+        (const char **)filenames,
+        2);
     
     zlights_to_apply[0].deleted = false;
     zlights_to_apply[0].object_id = -1;
@@ -175,7 +91,6 @@ void client_logic_startup() {
     sample_pic.RGBA[0] = 0.5f;
     sample_pic.RGBA[0] = 1.0f;
     request_texquad_renderable(&sample_pic);
-    log_assert(texture_arrays[0].images[52].image->width == 39);
     
     ScheduledAnimation linked_rotate_right;
     construct_scheduled_animation(&linked_rotate_right);
@@ -195,7 +110,7 @@ void client_logic_startup() {
     linked_rotate_left.remaining_wait_before_next_run = 400000;
     linked_rotate_left.wait_before_each_run = 400000;
     request_scheduled_animation(&linked_rotate_left);
-
+    
     ScheduledAnimation linked_change_texarray;
     construct_scheduled_animation(&linked_change_texarray);
     linked_change_texarray.affected_object_id = 99999;
@@ -233,20 +148,20 @@ void client_logic_startup() {
             450,
         /* const bool32_t ignore_camera: */
             false);
-    log_assert(texture_arrays[0].images[52].image->width == 39);
     
     // reminder: threadmain_id 0 calls load_assets() 
     log_append("starting asset-loading thread...\n");
-    platform_start_thread(client_logic_threadmain, /* threadmain_id: */ 0);
+    platform_start_thread(
+        client_logic_threadmain,
+        /* threadmain_id: */ 0);
     
-    log_assert(texture_arrays[0].images[52].image->width == 39);
     log_append("finished client_logic_startup()\n");
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
     switch (threadmain_id) {
         case (0):
-            load_assets(1, texture_arrays_size - 1);
+            // load_assets(1, texture_arrays_size - 1);
             break;
         default:
             log_append("unhandled threadmain_id: ");
@@ -369,9 +284,7 @@ static void  client_handle_touches_and_leftclicks(
     }
 }
 
-static void client_handle_keypresses(
-    uint64_t microseconds_elapsed)
-{
+static void client_handle_keypresses(uint64_t microseconds_elapsed) {
     float elapsed_mod =
         (float)((double)microseconds_elapsed / (double)16666);
     float cam_speed = 2.0f * elapsed_mod;
@@ -417,20 +330,7 @@ void client_logic_window_resize(
     const uint32_t new_height,
     const uint32_t new_width)
 {
-    log_append(
-        "unhandled client_logic_window_resize()\n");
+    log_append("unhandled client_logic_window_resize()\n");
     log_dump_and_crash();
-}
-
-void client_logic_get_application_name(
-    char * recipient,
-    const uint32_t recipient_size)
-{
-    char * app_name = "TOK ONE";
-    
-    copy_0term_string_to(
-        /* recipient: */ recipient,
-        /* recipient_size: */ recipient_size,
-        /* origin: */ app_name);
 }
 

@@ -1,5 +1,3 @@
-/* Schedule "Set and forget" animations */
-
 #ifndef SCHEDULED_ANIMATION_H
 #define SCHEDULED_ANIMATION_H
 
@@ -10,7 +8,7 @@
 #include "bitmap_renderer.h" // for texquads_to_render
 #include "zpolygon.h"
 
-extern bool32_t ignore_animation_effects;
+void init_scheduled_animations();
 
 void resolve_animation_effects(uint64_t microseconds_elapsed);
 
@@ -24,7 +22,7 @@ typedef struct ScheduledAnimation {
     note: affected_object_id below 0 will have no effect and is useless
     */
     int32_t affected_object_id;
-
+    
     bool32_t set_texture_array_i;
     int32_t new_texture_array_i;
     bool32_t set_texture_i;
@@ -101,8 +99,6 @@ typedef struct ScheduledAnimation {
     int32_t clientlogic_callback_when_finished_id;
     // ****
 } ScheduledAnimation;
-extern ScheduledAnimation * scheduled_animations;
-extern uint32_t scheduled_animations_size;
 
 void construct_scheduled_animation(ScheduledAnimation * to_construct);
 

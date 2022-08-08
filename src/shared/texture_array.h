@@ -12,8 +12,12 @@
 #define MAX_FILES_IN_SINGLE_TEXARRAY 200
 #define MAX_ASSET_FILES 1500
 
+void init_texture_arrays();
+void init_or_push_one_gpu_texture_array_if_needed();
+
 typedef struct TextureArrayImage {
     DecodedImage * image;
+    char * filename;
     bool32_t request_update;
     bool32_t prioritize_asset_load;
 } TextureArrayImage;
@@ -35,40 +39,10 @@ typedef struct TextureArray {
 // Set the zTriangle's texture_i to select which texture inside
 // the texture atlas to use
 // REMINDER: You must define TEXTUREARRAYS_SIZE in vertex_types.h
-extern TextureArray * texture_arrays;
-extern uint32_t texture_arrays_size;
-
-// DecodedImage * extract_image(
-//     const DecodedImage * original,
-//     const uint32_t sprite_columns,
-//     const uint32_t sprite_rows,
-//     const uint32_t x,
-//     const uint32_t y);
-// 
-// DecodedImage * malloc_img_from_filename(
-//     const char * filename);
+// extern TextureArray * texture_arrays;
+// extern uint32_t texture_arrays_size;
 
 void debug_dump_texturearrays_to_disk();
-
-void update_texturearray_from_0terminated_files(
-    const int32_t texturearray_i,
-    const char filenames
-        [MAX_FILES_IN_SINGLE_TEXARRAY]
-        [MAX_ASSET_FILENAME_SIZE],
-    const uint32_t expected_width,
-    const uint32_t expected_height,
-    const uint32_t filenames_size);
-
-void update_texturearray_from_0terminated_files_with_memory(
-    const int32_t texturearray_i,
-    const char filenames
-        [MAX_FILES_IN_SINGLE_TEXARRAY]
-        [MAX_ASSET_FILENAME_SIZE],
-    const uint32_t expected_width,
-    const uint32_t expected_height,
-    const uint32_t filenames_size,
-    uint8_t * dpng_working_memory,
-    uint64_t dpng_working_memory_size);
 
 /*
 Next are functions to register new image(s) or imgfile(s0
@@ -128,6 +102,25 @@ void update_texture_slice(
     DecodedImage * new_image,
     const int32_t at_texture_array_i,
     const int32_t at_texture_i);
+
+void preregister_null_image(
+    char * filename,
+    const uint32_t height,
+    const uint32_t width);
+void preregister_file_as_null_image(char * filename);
+
+void register_high_priority_if_unloaded(
+    const int32_t texture_array_i,
+    const int32_t texture_i);
+
+void get_texture_location(
+    char * for_filename,
+    int32_t * texture_array_i_recipient,
+    int32_t * texture_i_recipient);
+
+void load_all_null_images_with_memory(
+    uint8_t * dpng_working_memory,
+    uint64_t dpng_working_memory_size);
 
 #endif
 

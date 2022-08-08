@@ -89,24 +89,9 @@ void request_texquad_renderable(TexQuad * to_add)
     log_assert(to_add->width_pixels > 0);
     log_assert(to_add->height_pixels > 0);
     
-    if (
-        to_add->texturearray_i >= 0
-        && to_add->texture_i >= 0
-        && texture_arrays[to_add->texturearray_i]
-            .images[to_add->texture_i].image == NULL
-        && texture_arrays[to_add->texturearray_i]
-            .images[to_add->texture_i].prioritize_asset_load == false)
-    {
-        // asset is needed to go onscreen already but not available,
-        // mark as high priority
-        texture_arrays[to_add->texturearray_i]
-            .images[to_add->texture_i].prioritize_asset_load = true;
-        log_append("high priority found at texture array: ");
-        log_append_uint(to_add->texturearray_i);
-        log_append(", texture_i: ");
-        log_append_uint(to_add->texture_i);
-        log_append("\n");
-    }
+    register_high_priority_if_unloaded(
+        to_add->texturearray_i,
+        to_add->texture_i);
     
     for (
         uint32_t i = 0;

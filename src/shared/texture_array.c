@@ -3,6 +3,60 @@
 TextureArray * texture_arrays = NULL;
 uint32_t texture_arrays_size = 0;
 
+void init_texture_arrays() {
+    
+    // initialize texture arrays
+    texture_arrays = (TextureArray *)malloc_from_unmanaged(
+        sizeof(TextureArray) * TEXTUREARRAYS_SIZE);
+    for (uint32_t i = 0; i < TEXTUREARRAYS_SIZE; i++) {
+        texture_arrays[i].images_size = 0;
+        texture_arrays[i].single_img_width = 0;
+        texture_arrays[i].single_img_height = 0;
+        texture_arrays[i].request_init = false;
+        for (uint32_t j = 0; j < MAX_FILES_IN_SINGLE_TEXARRAY; j++) {
+            texture_arrays[i].images[j].request_update = false;
+            texture_arrays[i].images[j].prioritize_asset_load = false;
+            texture_arrays[i].images[j].image = NULL;
+        }
+    }
+}
+
+void init_or_push_one_gpu_texture_array_if_needed() {
+    for (uint32_t i = 0; i < texture_arrays_size; i++) {
+        if (texture_arrays[i].request_init) {
+            texture_arrays[i].request_init = false;
+            platform_gpu_init_texture_array(
+                i,
+                texture_arrays[i].images_size,
+                texture_arrays[i].single_img_width,
+                texture_arrays[i].single_img_height);
+            break;
+        } else {
+            for (
+                uint32_t j = 0;
+                j < texture_arrays[i].images_size;
+                j++)
+            {
+                if (texture_arrays[i].images[j].request_update) {
+                    texture_arrays[i].images[j].request_update = false;
+                    platform_gpu_push_texture_slice(
+                        i,
+                        j,
+                        /* parent_texture_array_images_size: */
+                            texture_arrays[i].images_size,
+                        /* image_width: */
+                            texture_arrays[i].single_img_width,
+                        /* image_height: */
+                            texture_arrays[i].single_img_height,
+                        /* rgba_values: */
+                            texture_arrays[i].images[j].image->rgba_values);
+                    break;
+                }
+            }
+        }
+    }
+}
+
 /*
 Error handling function: when we fail to load an image,
 use this hardcoded image as a replacement rather than
@@ -161,75 +215,6 @@ DecodedImage * malloc_img_from_filename(
     return return_value;
 }
 
-void update_texturearray_from_0terminated_files(
-    const int32_t texturearray_i,
-    const char filenames
-        [MAX_FILES_IN_SINGLE_TEXARRAY]
-        [MAX_ASSET_FILENAME_SIZE],
-    const uint32_t expected_width,
-    const uint32_t expected_height,
-    const uint32_t filenames_size)
-{
-    uint64_t dpng_working_memory_size = 10000000;
-    uint8_t * dpng_working_memory =
-        malloc_from_managed(dpng_working_memory_size);
-    
-    update_texturearray_from_0terminated_files_with_memory(
-        texturearray_i,
-        filenames,
-        expected_width,
-        expected_height,
-        filenames_size,
-        dpng_working_memory,
-        dpng_working_memory_size);
-    
-    free_from_managed(dpng_working_memory);
-}
-
-void update_texturearray_from_0terminated_files_with_memory(
-    const int32_t texturearray_i,
-    const char filenames
-        [MAX_FILES_IN_SINGLE_TEXARRAY]
-        [MAX_ASSET_FILENAME_SIZE],
-    const uint32_t expected_width,
-    const uint32_t expected_height,
-    const uint32_t filenames_size,
-    uint8_t * dpng_working_memory,
-    uint64_t dpng_working_memory_size)
-{
-    log_assert(texturearray_i < TEXTUREARRAYS_SIZE);
-    log_assert(filenames_size > 0);
-    log_assert(expected_width > 0);
-    log_assert(expected_height > 0);
-    
-    texture_arrays[texturearray_i].single_img_width = expected_width;
-    texture_arrays[texturearray_i].single_img_height = expected_height;
-    
-    texture_arrays[texturearray_i].images_size = filenames_size;
-    texture_arrays[texturearray_i].request_init = true;
-    log_assert(texture_arrays[texturearray_i].images != NULL);
-    
-    for (uint32_t t_i = 0; t_i < filenames_size; t_i++)
-    {
-        log_assert(t_i < MAX_IMAGES_IN_TEXARRAY);
-        const char * filename = filenames[t_i];
-        
-        DecodedImage * new_image =
-            malloc_img_from_filename_with_working_memory(
-                filename,
-                dpng_working_memory,
-                dpng_working_memory_size);
-        
-        log_assert(new_image->good);
-        log_assert(new_image->width ==
-            texture_arrays[texturearray_i].single_img_width);
-        log_assert(new_image->height ==
-            texture_arrays[texturearray_i].single_img_height);
-        texture_arrays[texturearray_i].images[t_i].image = new_image;
-        texture_arrays[texturearray_i].images[t_i].request_update = true;
-    }
-}
-
 // returns new_texture_array_i (index in texture_arrays)
 void register_new_texturearray_from_files(
     const char ** filenames,
@@ -248,7 +233,8 @@ void register_new_texturearray_from_files(
             new_image =
                 malloc_img_from_filename(filenames[i]);
         } else {
-            new_image = (DecodedImage *)malloc_from_unmanaged(sizeof(DecodedImage));
+            new_image = (DecodedImage *)
+                malloc_from_unmanaged(sizeof(DecodedImage));
             new_image->good = false;
             set_unallocated_to_error_image(new_image);
         }
@@ -257,8 +243,7 @@ void register_new_texturearray_from_files(
         decoded_images[i] = new_image;
     }
     
-    DecodedImage ** decoded_images_dblptr =
-        decoded_images;
+    DecodedImage ** decoded_images_dblptr = decoded_images;
     register_new_texturearray_from_images(
         /* DecodedImage ** new_images : */
             decoded_images_dblptr,
@@ -293,7 +278,6 @@ void register_to_texturearray_from_images(
     texture_arrays[target_texture_array_i].single_img_height = current_height;
     texture_arrays[target_texture_array_i].images_size = new_images_size;
     texture_arrays[target_texture_array_i].request_init = true;
-    texture_arrays_size += 1;
     
     for (
         uint32_t i = 0;
@@ -317,6 +301,8 @@ void register_new_texturearray_from_images(
     int32_t new_i = (int32_t)texture_arrays_size;
     log_assert(new_i < TEXTUREARRAYS_SIZE);
 
+    texture_arrays_size++;
+    
     register_to_texturearray_from_images(
         new_i,
         new_images,
@@ -487,7 +473,7 @@ void register_to_texturearray_by_splitting_image(
                 log_assert(new_img->width == expected_width);
                 log_assert(new_img->height == expected_height);
             }
-            subimages[(row_i * columns) + col_i] = new_img; 
+            subimages[(row_i * columns) + col_i] = new_img;
         }
     }
     
@@ -566,10 +552,280 @@ void update_texture_slice(
     log_assert(
         at_texture_i < texture_arrays[at_texture_array_i].images_size);
     
-    texture_arrays[at_texture_array_i].images[at_texture_i].image = new_image;
+    texture_arrays[at_texture_array_i].images[at_texture_i].image =
+        new_image;
     texture_arrays[at_texture_array_i]
         .images[at_texture_i].request_update = true;
     texture_arrays[at_texture_array_i]
         .images[at_texture_i].prioritize_asset_load = false;
+}
+
+void register_high_priority_if_unloaded(
+    const int32_t texture_array_i,
+    const int32_t texture_i)
+{
+    if (
+        texture_array_i >= 0
+        && texture_i >= 0
+        && texture_arrays[texture_array_i].images[texture_i].image == NULL
+        && texture_arrays[texture_array_i]
+            .images[texture_i].prioritize_asset_load == false)
+    {
+        // asset is needed to go onscreen already but not available,
+        // mark as high priority
+        texture_arrays[texture_array_i].images[texture_i]
+            .prioritize_asset_load = true;
+        log_append("high priority found at texture array: ");
+        log_append_uint(texture_array_i);
+        log_append(", texture_i: ");
+        log_append_uint(texture_i);
+        log_append("\n");
+    }
+}
+
+void preregister_null_image(
+    char * filename,
+    const uint32_t height,
+    const uint32_t width)
+{
+    int32_t new_texturearray_i = -1;
+    int32_t new_texture_i = -1;
+
+    int32_t texture_arrays_size_at_start = (int32_t)texture_arrays_size;
+    
+    // *****************
+    // find out if same width/height was already used
+    // set new_texturearray_i and new_texture_i if so
+    for (
+        uint32_t i = 0;
+        i < texture_arrays_size;
+        i++)
+    {
+        if (
+            texture_arrays[i].single_img_width == width
+            && texture_arrays[i].single_img_height == height)
+        {
+            new_texturearray_i = i;
+            new_texture_i = (int32_t)texture_arrays[i].images_size;
+            texture_arrays[i].images_size++;
+            log_assert(new_texture_i >= 1);
+            log_assert(new_texture_i < MAX_FILES_IN_SINGLE_TEXARRAY);
+            break;
+        }
+    }
+    
+    // if this is a new texturearray (we never saw
+    // these image dimensions before)
+    if (new_texturearray_i < 0) {
+        new_texturearray_i = (int32_t)texture_arrays_size;
+        texture_arrays_size++;
+        new_texture_i = 0;
+        
+        texture_arrays[new_texturearray_i].images_size = 1;
+        texture_arrays[new_texturearray_i].single_img_width = width;
+        texture_arrays[new_texturearray_i].single_img_height = height;
+    }
+    
+    texture_arrays[new_texturearray_i].images[new_texture_i].filename =
+        filename;
+    
+    for (
+        uint32_t i = texture_arrays_size_at_start;
+        i < texture_arrays_size;
+        i++)
+    {
+        texture_arrays[i].request_init = true;
+    }
+}
+
+void preregister_file_as_null_image(char * filename) {
+    FileBuffer png_file;
+    png_file.size = 40; // read first 40 bytes only
+    char png_file_contents[40];
+    png_file.contents = (char *)&png_file_contents;
+    platform_read_resource_file(
+        /* filename: */ filename,
+        /* out_preallocatedbuffer: */ &png_file);
+    
+    uint32_t width;
+    uint32_t height;
+    uint32_t png_width_height_success = false;
+    get_PNG_width_height(
+        /* compressed_bytes: */
+            (uint8_t *)png_file.contents,
+        /* compressed_bytes_size: */
+            40,
+        /* out_width: */
+            &width,
+        /* out_height: */
+            &height,
+        /* out_good: */
+            &png_width_height_success);
+    
+    log_assert(png_width_height_success);
+    log_assert(width > 0);
+    log_assert(height > 0);
+    
+    preregister_null_image(filename, height, width);
+}
+
+void get_texture_location(
+    char * for_filename,
+    int32_t * texture_array_i_recipient,
+    int32_t * texture_i_recipient)
+{
+    *texture_array_i_recipient = -1;
+    *texture_i_recipient = -1;
+    
+    for (uint32_t i = 0; i < texture_arrays_size; i++) {
+        for (uint32_t j = 0; j < texture_arrays[i].images_size; j++) {
+            if (are_equal_strings(
+                texture_arrays[i].images[j].filename,
+                for_filename))
+            {
+                *texture_array_i_recipient = i;
+                *texture_i_recipient = j;
+                return;
+            }
+        }
+    }
+}
+
+void load_all_null_images_with_memory(
+    uint8_t * dpng_working_memory,
+    uint64_t dpng_working_memory_size)
+{
+    while (true) {
+        // check for a high priority load
+        bool32_t found = false;
+        for (uint32_t i = 0; i < texture_arrays_size; i++) {
+            for (uint32_t j = 0; j < texture_arrays_size; j++) {
+                if (
+                    texture_arrays[i].images[j].image == NULL
+                    && texture_arrays[i].images[j].filename != NULL
+                    && texture_arrays[i].images[j].prioritize_asset_load)
+                {
+                    found = true;
+                    FileBuffer file_buffer;
+                    file_buffer.size = platform_get_resource_size(
+                        texture_arrays[i].images[j].filename)
+                            + 1;
+                    
+                    file_buffer.contents =
+                        (char *)malloc_from_unmanaged(sizeof(char)
+                            * file_buffer.size);
+                    platform_read_resource_file(
+                        texture_arrays[i].images[j].filename,
+                        &file_buffer);
+                    
+                    log_assert(file_buffer.good);
+                    
+                    DecodedImage * new_image =
+                        malloc_struct_from_unmanaged(DecodedImage);
+                    decode_PNG(
+                        /* const uint8_t * compressed_input: */
+                            (uint8_t *)file_buffer.contents,
+                        /* const uint64_t compressed_input_size: */
+                            file_buffer.size - 1,
+                        /* out_rgba_values: */
+                            new_image->rgba_values,
+                        /* rgba_values_size: */
+                            new_image->rgba_values_size,
+                        /* dpng_working_memory: */
+                            dpng_working_memory,
+                        /* dpng_working_memory_size: */
+                            dpng_working_memory_size,
+                        /* uint32_t * out_good: */
+                            &new_image->good);
+                    log_assert(new_image->good);
+                    log_assert(
+                        new_image->height ==
+                            texture_arrays[i].single_img_height);
+                    log_assert(
+                        new_image->width ==
+                            texture_arrays[i].single_img_width);
+
+                    log_append("decoded image: ");
+                    log_append(texture_arrays[i].images[j].filename);
+                    log_append("\n");
+                    
+                    texture_arrays[i].images[j].image = new_image;
+                    texture_arrays[i].images[j].request_update = true;
+                    texture_arrays[i].images[j].prioritize_asset_load = false;
+                }
+            }
+        }
+        
+        if (found) { continue; }
+        
+        // check for a low priority load
+        for (uint32_t i = 0; i < texture_arrays_size; i++) {
+            for (uint32_t j = 0; j < texture_arrays_size; j++) {
+                if (
+                    texture_arrays[i].images[j].image == NULL
+                    && texture_arrays[i].images[j].filename != NULL)
+                {
+                    found = true;
+                    FileBuffer file_buffer;
+                    file_buffer.size = platform_get_resource_size(
+                        texture_arrays[i].images[j].filename)
+                            + 1;
+                    
+                    file_buffer.contents =
+                        (char *)malloc_from_unmanaged(sizeof(char)
+                            * file_buffer.size);
+                    platform_read_resource_file(
+                        texture_arrays[i].images[j].filename,
+                        &file_buffer);
+                    
+                    log_assert(file_buffer.good);
+                    
+                    DecodedImage * new_image =
+                        malloc_struct_from_unmanaged(DecodedImage);
+                    new_image->height = texture_arrays[i].single_img_height;
+                    new_image->width = texture_arrays[i].single_img_width;
+                    new_image->rgba_values_size =
+                        new_image->height * new_image->width * 4;
+                    new_image->rgba_values = (uint8_t *)
+                        malloc_from_unmanaged(new_image->rgba_values_size);
+                    
+                    decode_PNG(
+                        /* const uint8_t * compressed_input: */
+                            (uint8_t *)file_buffer.contents,
+                        /* const uint64_t compressed_input_size: */
+                            file_buffer.size - 1,
+                        /* out_rgba_values: */
+                            new_image->rgba_values,
+                        /* rgba_values_size: */
+                            new_image->rgba_values_size,
+                        /* dpng_working_memory: */
+                            dpng_working_memory,
+                        /* dpng_working_memory_size: */
+                            dpng_working_memory_size,
+                        /* uint32_t * out_good: */
+                            &new_image->good);
+                    log_assert(new_image->good);
+                    
+                    log_append("decoded image: ");
+                    log_append(texture_arrays[i].images[j].filename);
+                    log_append(", it had width/height: [");
+                    log_append_uint(new_image->height);
+                    log_append(",");
+                    log_append_uint(new_image->width);
+                    log_append("]\n");
+                    
+                    texture_arrays[i].images[j].image = new_image;
+                    texture_arrays[i].images[j].request_update = true;
+                    texture_arrays[i].images[j].prioritize_asset_load = false;
+                }
+            }
+        }
+        
+        // nothing found anywhere, exit loading function
+        if (!found) {
+            log_append("no work remaining, stop decoding PNG's...\n");
+            break;
+        }
+    }
 }
 

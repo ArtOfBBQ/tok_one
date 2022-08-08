@@ -6,23 +6,8 @@ void init_application() {
     
     setup_log();
     
-    // initialize texture arrays
-    texture_arrays = (TextureArray *)malloc_from_unmanaged(
-        sizeof(TextureArray) * TEXTUREARRAYS_SIZE);
-    for (uint32_t i = 0; i < TEXTUREARRAYS_SIZE; i++) {
-        texture_arrays[i].images_size = 0;
-        texture_arrays[i].single_img_width = 0;
-        texture_arrays[i].single_img_height = 0;
-        texture_arrays[i].request_init = false;
-        for (uint32_t j = 0; j < MAX_FILES_IN_SINGLE_TEXARRAY; j++) {
-            texture_arrays[i].images[j].request_update = false;
-            texture_arrays[i].images[j].prioritize_asset_load = false;
-            texture_arrays[i].images[j].image = NULL;
-        }
-    }
-    
-    scheduled_animations = (ScheduledAnimation *)malloc_from_unmanaged(
-        sizeof(ScheduledAnimation) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
+    init_scheduled_animations();
+    init_texture_arrays();
     
     // initialize font with fontmetrics.dat
     FileBuffer font_metrics_file;

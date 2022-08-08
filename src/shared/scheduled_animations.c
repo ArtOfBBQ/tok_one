@@ -1,9 +1,12 @@
 #include "scheduled_animations.h"
 
-bool32_t ignore_animation_effects = false;
-
 ScheduledAnimation * scheduled_animations;
 uint32_t scheduled_animations_size = 0;
+
+void init_scheduled_animations() {
+    scheduled_animations = (ScheduledAnimation *)malloc_from_unmanaged(
+        sizeof(ScheduledAnimation) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
+}
 
 void construct_scheduled_animation(
     ScheduledAnimation * to_construct)
@@ -186,8 +189,6 @@ void request_fade_to(
 
 void resolve_animation_effects(uint64_t microseconds_elapsed)
 {
-    log_assert(microseconds_elapsed < 500000);
-    
     ScheduledAnimation * anim;
     for (
         int32_t animation_i = (int32_t)(scheduled_animations_size - 1);

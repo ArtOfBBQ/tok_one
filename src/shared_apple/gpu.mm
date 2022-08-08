@@ -137,26 +137,13 @@ static uint32_t already_drawing = false;
 }
 
 - (void)
-    initializeTextureArray:(int32_t)texturearray_i
-    textureCount:(uint32_t)texture_count
-    singleImgWidth: (uint32_t)single_img_width
-    singleImgHeight: (uint32_t)single_img_height;
+    initializeTextureArray  : (int32_t)texturearray_i
+    textureCount            : (uint32_t)texture_count
+    singleImgWidth          : (uint32_t)single_img_width
+    singleImgHeight         : (uint32_t)single_img_height
 {
-    if (single_img_width < 1
-        || single_img_height < 1
-        || texturearray_i >= TEXTUREARRAYS_SIZE
-        || texturearray_i >= (int32_t)texture_arrays_size
-        || texture_count < 1)
-    {
-        return;
-    }
-    
-    texture_arrays[texturearray_i].request_init = false;
-    
-    int32_t i = texturearray_i;
-    
     // we always overwrite textures, so pad them to match first
-    while ((int32_t)[_metal_textures count] <= i) {
+    while ((int32_t)[_metal_textures count] <= texturearray_i) {
         MTLTextureDescriptor * texture_descriptor =
             [[MTLTextureDescriptor alloc] init];
         texture_descriptor.textureType = MTLTextureType2DArray;
@@ -165,8 +152,7 @@ static uint32_t already_drawing = false;
         texture_descriptor.width = 10;
         texture_descriptor.height = 10;
         id<MTLTexture> texture =
-            [_metal_device
-                newTextureWithDescriptor:texture_descriptor];
+            [_metal_device newTextureWithDescriptor:texture_descriptor];
         [_metal_textures addObject: texture];
     }
     
@@ -183,37 +169,22 @@ static uint32_t already_drawing = false;
             newTextureWithDescriptor:texture_descriptor];
     
     [_metal_textures
-        replaceObjectAtIndex:(uint32_t)i
+        replaceObjectAtIndex:(uint32_t)texturearray_i
         withObject: texture];
 }
-
 - (void)
-    updateTextureArray: (int32_t)texturearray_i
-    atTexture: (int32_t)texture_i;
-{    
-    log_assert(texturearray_i < TEXTUREARRAYS_SIZE);
-    log_assert(texturearray_i < (int32_t)texture_arrays_size);
+    updateTextureArray : (int32_t)texturearray_i
+    atTexture          : (int32_t)texture_i
+    ofTextureArraySize : (uint32_t)texture_array_images_size
+    withImageOfWidth   : (uint32_t)image_width
+    andHeight          : (uint32_t)image_height
+    pixelValues        : (uint8_t *)rgba_values
+{
     log_assert(texture_i >= 0);
-    log_assert(texture_i < texture_arrays[texturearray_i].images_size);
-    log_assert(texture_arrays[texturearray_i].single_img_width > 0);
-    log_assert(texture_arrays[texturearray_i].single_img_height > 0);
-    
-    if (texture_arrays[texturearray_i].request_init
-        || texture_arrays[texturearray_i].images_size == 0
-        || texture_arrays[texturearray_i].images[texture_i].image == NULL
-        || texture_arrays[texturearray_i].images[texture_i].image
-            ->rgba_values == NULL)
-    {
-        return;
-    }
-    
-    if (!texture_arrays[texturearray_i].images[texture_i].image->good)
-    {
-        return;
-    }
     
     if (texturearray_i >= [_metal_textures count]) {
-        log_append("Warning: tried to update uninitialized texturearray ");
+        log_append(
+            "Warning: tried to update uninitialized texturearray ");
         log_append_int(texturearray_i);
         log_append(" at texture_i: ");
         log_append_int(texture_i);
@@ -221,32 +192,20 @@ static uint32_t already_drawing = false;
         return;
     }
     
-    texture_arrays[texturearray_i].images[texture_i].request_update = false;
+    // TODO: this used to be handled here, make sure the caller does it instead
+    // texture_arrays[texturearray_i].images[texture_i].request_update = false;
     
     MTLTextureDescriptor * texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
     texture_descriptor.textureType = MTLTextureType2DArray;
-    texture_descriptor.arrayLength = texture_arrays[texturearray_i].images_size;
+    texture_descriptor.arrayLength = texture_array_images_size;
     texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
-    texture_descriptor.width =
-        texture_arrays[texturearray_i].images[texture_i].image->width;
-    texture_descriptor.height =
-        texture_arrays[texturearray_i].images[texture_i].image->height;
-    
-    DecodedImage * new_slice =
-        texture_arrays[texturearray_i].images[texture_i].image;
+    texture_descriptor.width = image_width;
+    texture_descriptor.height = image_height;
     
     MTLRegion region = {
-        {
-            0,
-            0,
-            0
-        },
-        {
-            new_slice->width,
-            new_slice->height,
-            1
-        }
+        { 0,0,0 },
+        { image_width, image_height, 1 }
     };
     
     [[_metal_textures objectAtIndex:texturearray_i]
@@ -257,13 +216,13 @@ static uint32_t already_drawing = false;
         slice:
             texture_i
         withBytes:
-            new_slice->rgba_values
+            rgba_values
         bytesPerRow:
-            new_slice->width * 4
+            image_width * 4
         bytesPerImage:
             /* docs: use 0 for anything other than
                MTLTextureType3D textures */
-            0];    
+            0];
 }
 
 - (void)drawClearScreen:(MTKView *)view
@@ -296,27 +255,7 @@ static uint32_t already_drawing = false;
 {
     log_assert(!already_drawing);
     already_drawing = true;
-    
-    for (uint32_t i = 0; i < texture_arrays_size; i++) {
-        if (texture_arrays[i].request_init) {
-            [self
-                initializeTextureArray: (int32_t)i
-                textureCount: texture_arrays[i].images_size
-                singleImgWidth: texture_arrays[i].single_img_width
-                singleImgHeight: texture_arrays[i].single_img_height];
-            break;
-        } else {
-            for (uint32_t j = 0; j < texture_arrays[i].images_size; j++) {
-                if (texture_arrays[i].images[j].request_update) {
-                    [self
-                        updateTextureArray: i
-                        atTexture: j];
-                    break;
-                }
-            }
-        }
-    }
-    
+     
     MTLViewport viewport = {
         0,
         0,
@@ -373,14 +312,9 @@ static uint32_t already_drawing = false;
     
     for (
         uint32_t i = 0;
-        i < texture_arrays_size;
+        i < [_metal_textures count];
         i++)
     {
-        if (i >= [_metal_textures count]) {
-            assert(texture_arrays_size < 750);
-            continue;
-        }
-        
         [render_encoder
             setFragmentTexture: _metal_textures[i]
             atIndex: i];
@@ -422,5 +356,44 @@ static uint32_t already_drawing = false;
     window_height = platform_get_current_window_height(); 
     window_width = platform_get_current_window_width();
 }
-
 @end
+
+void platform_gpu_init_texture_array(
+    const int32_t texture_array_i,
+    const uint32_t num_images,
+    const uint32_t single_image_width,
+    const uint32_t single_image_height)
+{
+    log_append("platform_gpu_init_texture_array texture_array_i: ");
+    log_append_int(texture_array_i);
+    log_append(", num_images: ");
+    log_append_uint(num_images);
+    log_append(", single_image_width: ");
+    log_append_uint(single_image_width);
+    log_append(", single_image_height: ");
+    
+    log_assert(apple_gpu_delegate != NULL);
+    [apple_gpu_delegate
+        initializeTextureArray : texture_array_i
+        textureCount           : num_images
+        singleImgWidth         : single_image_width
+        singleImgHeight        : single_image_height];    
+}
+
+void platform_gpu_push_texture_slice(
+    const int32_t texture_array_i,
+    const int32_t texture_i,
+    const uint32_t parent_texture_array_images_size,
+    const uint32_t image_width,
+    const uint32_t image_height,
+    const uint8_t * rgba_values)
+{
+    [apple_gpu_delegate
+        updateTextureArray : (int32_t)texture_array_i
+        atTexture          : (int32_t)texture_i
+        ofTextureArraySize : (uint32_t)parent_texture_array_images_size
+        withImageOfWidth   : (uint32_t)image_width
+        andHeight          : (uint32_t)image_height
+        pixelValues        : (uint8_t *)rgba_values];
+}
+

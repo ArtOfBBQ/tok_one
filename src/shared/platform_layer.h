@@ -115,8 +115,7 @@ void platform_start_thread(
     void (*function_to_run)(int32_t),
     int32_t argument);
 
-uint64_t __attribute__((no_instrument_function))
-platform_get_current_time_microsecs(void);
+uint64_t platform_get_current_time_microsecs(void);
 
 float platform_get_current_window_left();
 float platform_get_current_window_bottom();
@@ -125,6 +124,20 @@ float platform_get_current_window_width();
 
 float platform_x_to_x(const float x);
 float platform_y_to_y(const float y);
+
+void platform_gpu_init_texture_array(
+    const int32_t texture_array_i,
+    const uint32_t num_images,
+    const uint32_t single_image_width,
+    const uint32_t single_image_height);
+
+void platform_gpu_push_texture_slice(
+    const int32_t texture_array_i,
+    const int32_t texture_i,
+    const uint32_t parent_texture_array_images_size,
+    const uint32_t image_width,
+    const uint32_t image_height,
+    const uint8_t * rgba_values);
 
 #endif
 

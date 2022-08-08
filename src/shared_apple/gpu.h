@@ -34,7 +34,11 @@ extern uint64_t last_resize_request_at;
     singleImgHeight: (uint32_t)single_img_height;
 - (void)
     updateTextureArray: (int32_t)texturearray_i
-    atTexture: (int32_t)texture_i;
+    atTexture: (int32_t)texture_i
+    ofTextureArraySize: (uint32_t)texture_array_images_size
+    withImageOfWidth: (uint32_t)image_width
+    andHeight: (uint32_t)image_height
+    pixelValues: (uint8_t *)rgba_values;
 - (void)
     drawClearScreen: (MTKView *)view;
 - (void)
@@ -46,6 +50,7 @@ extern uint64_t last_resize_request_at;
 extern MetalKitViewDelegate * apple_gpu_delegate;
 extern uint64_t previous_time;
 extern bool32_t has_retina_screen;
+
 
 #endif
 

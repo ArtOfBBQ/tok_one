@@ -86,6 +86,10 @@ are_equal_strings(
     const char * str1,
     const char * str2)
 {
+    if (str1 == NULL || str2 == NULL) {
+        return false;
+    }
+    
     if (
         str1[0] == '\0'
         && str2[0] != '\0')

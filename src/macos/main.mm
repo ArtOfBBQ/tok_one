@@ -266,8 +266,7 @@ int main(int argc, const char * argv[]) {
     [window setOrderedIndex:0];
     [window makeKeyAndOrderFront: nil];
     
-    id<MTLDevice> metal_device =
-        MTLCreateSystemDefaultDevice();
+    id<MTLDevice> metal_device = MTLCreateSystemDefaultDevice();
     
     mtk_view = [[MTKView alloc]
         initWithFrame: window_rect
@@ -281,8 +280,7 @@ int main(int argc, const char * argv[]) {
     
     window.contentView = mtk_view;
     
-    apple_gpu_delegate =
-        [[MetalKitViewDelegate alloc] init];
+    apple_gpu_delegate = [[MetalKitViewDelegate alloc] init];
     [mtk_view setDelegate: apple_gpu_delegate];
     
     char shader_lib_path_cstr[2000];
@@ -313,3 +311,4 @@ int main(int argc, const char * argv[]) {
     
     return NSApplicationMain(argc, argv);
 }
+
