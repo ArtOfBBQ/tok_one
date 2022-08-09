@@ -17,6 +17,5 @@
 @end
 
 @interface ViewController : UIViewController
-@property (retain, strong, nonatomic) MetalKitViewDelegate * mtk_view_delegate;
 @property (retain, strong, nonatomic) id<MTLDevice> metal_device;
 @end
