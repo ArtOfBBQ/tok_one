@@ -186,8 +186,6 @@ static uint32_t already_drawing = false;
         log_append(
             "Warning: tried to update uninitialized texturearray ");
         log_append_int(texturearray_i);
-        log_append(" at texture_i: ");
-        log_append_int(texture_i);
         log_append("\n");
         return;
     }
@@ -371,6 +369,8 @@ void platform_gpu_init_texture_array(
     log_append(", single_image_width: ");
     log_append_uint(single_image_width);
     log_append(", single_image_height: ");
+    log_append_uint(single_image_height);
+    log_append("\n");
     
     log_assert(apple_gpu_delegate != NULL);
     [apple_gpu_delegate

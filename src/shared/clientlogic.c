@@ -5,12 +5,6 @@ DecodedImage * decoded_pngs[TEXTURE_FILENAMES_SIZE];
 
 int32_t latest_object_id = 72;
 
-char filenames_for_texturearrays
-    [TEXTUREARRAYS_SIZE]
-    [MAX_FILES_IN_SINGLE_TEXARRAY]
-    [MAX_ASSET_FILENAME_SIZE];
-uint32_t filenames_for_texturearrays_size = 0;
-
 typedef struct TextureArrayLocation {
     int32_t texturearray_i;
     int32_t texture_i;
