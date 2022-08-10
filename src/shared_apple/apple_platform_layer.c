@@ -4,6 +4,7 @@
 #include "../shared/platform_layer.h"
 
 char * writables_path = NULL;
+AVAudioPlayer * active_music_player = NULL;
 
 char * platform_get_writables_path(void) {
     
@@ -192,6 +193,10 @@ bool32_t platform_file_exists(
 }
 
 void platform_mkdir_if_not_exist(const char * dirname) {    
+
+    log_append("make directory if it doesn't exist: ");
+    log_append(dirname);
+    log_append("\n");
     
     NSString * directory_path = [NSString
         stringWithCString:dirname
@@ -246,6 +251,7 @@ void platform_copy_file(
     NSString * nsfilepath_source = [NSString
         stringWithCString:filepath_source
         encoding:NSASCIIStringEncoding];
+    
     NSString * nsfilepath_destination = [NSString
         stringWithCString:filepath_destination
         encoding:NSASCIIStringEncoding];
@@ -392,5 +398,63 @@ void platform_start_thread(
         ^{
             function_to_run(argument);
         });
+}
+
+void platform_play_sound_resource(char * resource_filename) { 
+    
+    char sound_pathfile[100];
+    resource_filename_to_pathfile(
+        /* filename: */
+            resource_filename,
+        /* recipient: */
+            sound_pathfile,
+        /* recipient_capacity: */
+            100);
+    
+    NSString * soundPathFile = [NSString
+        stringWithUTF8String: sound_pathfile];
+    NSURL * soundFileURL = [NSURL
+        fileURLWithPath: soundPathFile];
+    
+    AVAudioPlayer * player = [
+        [AVAudioPlayer alloc]
+            initWithContentsOfURL:soundFileURL
+            error:nil];
+    player.numberOfLoops = 0;
+    
+    [player play];
+}
+
+void platform_play_music_resource(char * resource_filename) { 
+
+    if (active_music_player != NULL) {
+        [active_music_player setVolume: 0.0f fadeDuration: 1];
+    }
+
+    char sound_pathfile[100];
+    resource_filename_to_pathfile(
+        /* filename: */
+            resource_filename,
+        /* recipient: */
+            sound_pathfile,
+        /* recipient_capacity: */
+            100);
+    
+    NSString * soundPathFile = [NSString
+        stringWithUTF8String: sound_pathfile];
+    NSURL * soundFileURL = [NSURL
+        fileURLWithPath: soundPathFile];
+    
+    AVAudioPlayer * player = [
+        [AVAudioPlayer alloc]
+            initWithContentsOfURL:soundFileURL
+            error:nil];
+    player.numberOfLoops = 0;
+    
+    [player setVolume: 0.0f fadeDuration: 0];
+    [player setVolume: 1.0f fadeDuration: 5];
+    [player play];
+    
+    active_music_player = player;
 }
 

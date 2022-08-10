@@ -16,6 +16,7 @@ defined elsewhere for iOS
 
 #ifdef SHARED_APPLE_PLATFORM
 #include <sys/time.h>
+#import <AVFoundation/AVFoundation.h>
 #endif
 
 #include "common.h"
@@ -138,6 +139,9 @@ void platform_gpu_push_texture_slice(
     const uint32_t image_width,
     const uint32_t image_height,
     const uint8_t * rgba_values);
+
+void platform_play_sound_resource(char * resource_filename);
+void platform_play_music_resource(char * resource_filename);
 
 #endif
 
