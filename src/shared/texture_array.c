@@ -375,6 +375,7 @@ void init_texture_arrays() {
         for (uint32_t j = 0; j < MAX_FILES_IN_SINGLE_TEXARRAY; j++) {
             texture_arrays[i].images[j].request_update = false;
             texture_arrays[i].images[j].prioritize_asset_load = false;
+            texture_arrays[i].images[j].filename = NULL;
             texture_arrays[i].images[j].image = NULL;
         }
     }

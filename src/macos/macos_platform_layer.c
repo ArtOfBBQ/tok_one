@@ -39,4 +39,3 @@ float platform_x_to_x(const float x) {
 float platform_y_to_y(const float y) {
     return y;
 }
-

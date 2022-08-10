@@ -1,10 +1,10 @@
 #ifndef MEMORY_STORE_H
 #define MEMORY_STORE_H
 
-// 500mb ->                   500...000
-#define UNMANAGED_MEMORY_SIZE 500000000
-// 500mb ->                   500...000
-#define   MANAGED_MEMORY_SIZE 500000000
+// 250mb ->                   250...000
+#define UNMANAGED_MEMORY_SIZE 250000000
+// 150mb ->                   150...000
+#define   MANAGED_MEMORY_SIZE 150000000
 
 #include "common.h"
 #include "logger.h"

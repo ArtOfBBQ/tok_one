@@ -5,6 +5,7 @@
 
 char * writables_path = NULL;
 AVAudioPlayer * active_music_player = NULL;
+static float sound_volume = 0.15f;
 
 char * platform_get_writables_path(void) {
     
@@ -401,15 +402,14 @@ void platform_start_thread(
 }
 
 void platform_play_sound_resource(char * resource_filename) { 
-    
-    char sound_pathfile[100];
+    char sound_pathfile[500];
     resource_filename_to_pathfile(
         /* filename: */
             resource_filename,
         /* recipient: */
             sound_pathfile,
         /* recipient_capacity: */
-            100);
+            500);
     
     NSString * soundPathFile = [NSString
         stringWithUTF8String: sound_pathfile];
@@ -420,25 +420,25 @@ void platform_play_sound_resource(char * resource_filename) {
         [AVAudioPlayer alloc]
             initWithContentsOfURL:soundFileURL
             error:nil];
+    [player setVolume: sound_volume];
     player.numberOfLoops = 0;
     
     [player play];
 }
 
 void platform_play_music_resource(char * resource_filename) { 
-
     if (active_music_player != NULL) {
         [active_music_player setVolume: 0.0f fadeDuration: 1];
     }
 
-    char sound_pathfile[100];
+    char sound_pathfile[500];
     resource_filename_to_pathfile(
         /* filename: */
             resource_filename,
         /* recipient: */
             sound_pathfile,
         /* recipient_capacity: */
-            100);
+            500);
     
     NSString * soundPathFile = [NSString
         stringWithUTF8String: sound_pathfile];
@@ -451,8 +451,8 @@ void platform_play_music_resource(char * resource_filename) {
             error:nil];
     player.numberOfLoops = 0;
     
-    [player setVolume: 0.0f fadeDuration: 0];
-    [player setVolume: 1.0f fadeDuration: 5];
+    [player setVolume: 0.0f];
+    [player setVolume: sound_volume fadeDuration: 5];
     [player play];
     
     active_music_player = player;

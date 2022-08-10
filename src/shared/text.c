@@ -100,9 +100,15 @@ static uint32_t find_next_linebreak(
     const uint32_t input_size,
     const uint32_t after_i)
 {
-    if (input_size == 1) {
-        return after_i + 1;
-    }
+    log_append("find next linebreak - input size: ");
+    log_append_uint(input_size);
+    log_append(", input: ");
+    log_append(input);
+    log_append("\nafter_i: ");
+    log_append_uint(after_i);
+    log_append("\n");
+    
+    if (input_size == 1) { return after_i + 1; }
     log_assert(input_size > 1);
     log_assert(after_i < input_size - 1);
     
@@ -111,12 +117,14 @@ static uint32_t find_next_linebreak(
     log_assert(after_i < input_size);
     
     for (; i < input_size; i++) {
-        if (input[i] == '\n')
-        {
+        if (input[i] == '\n') {
             return i;
         }
     }
     
+    log_append("returning i: ");
+    log_append_uint(after_i);
+    log_append("\n");
     return i;
 }
 
@@ -148,6 +156,10 @@ void request_label_around(
     const float max_width,
     const bool32_t ignore_camera)
 {
+    log_append("request_label_around is drawing: ");
+    log_append(text_to_draw);
+    log_append("\n");
+    
     log_assert(max_width > 0.0f);
     
     uint32_t line_start_i = 0;
@@ -234,6 +246,8 @@ void request_label_around(
         cur_top -= font_height;
         line_start_i = line_end_i;
     }
+    
+    log_append("finished request_label_around()\n");
 }
 
 void request_label_renderable(

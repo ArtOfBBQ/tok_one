@@ -498,6 +498,7 @@ internal_log_assert(
     assert(str_condition != NULL);
     assert(str_condition[0] != '\0');
     
+    assert(0);
     log_dump_and_crash();
     
     uint32_t str_condition_len = get_string_length(str_condition);
