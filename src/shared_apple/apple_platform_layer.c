@@ -4,6 +4,7 @@
 #include "../shared/platform_layer.h"
 
 char * writables_path = NULL;
+
 AVAudioPlayer * active_music_player = NULL;
 static float sound_volume = 0.15f;
 
@@ -59,8 +60,7 @@ void platform_get_directory_separator(char * recipient) {
 }
 
 uint64_t __attribute__((no_instrument_function))
-platform_get_current_time_microsecs(void)
-{
+platform_get_current_time_microsecs(void) {
     struct timeval tv;
     gettimeofday(&tv,NULL);
     uint64_t result = 1000000 * tv.tv_sec + tv.tv_usec;
@@ -194,7 +194,7 @@ bool32_t platform_file_exists(
 }
 
 void platform_mkdir_if_not_exist(const char * dirname) {    
-
+    
     log_append("make directory if it doesn't exist: ");
     log_append(dirname);
     log_append("\n");
@@ -337,18 +337,20 @@ void platform_get_filenames_in(
     const uint32_t recipient_capacity,
     uint32_t * recipient_size)
 {
+    log_assert(recipient_capacity > 0);
     *recipient_size = 0;
     
     NSString * path = [NSString
         stringWithCString:directory
         encoding:NSASCIIStringEncoding];
-    NSURL * url = [NSURL URLWithString: path];
+    // NSURL * url = [NSURL URLWithString: path];
+    
+    // log_assert(url != NULL);
+    // NSLog(@" url => %@ ", url);
     NSError * error = NULL;
     
     NSArray * results = [[NSFileManager defaultManager]
-        contentsOfDirectoryAtURL:url
-        includingPropertiesForKeys: nil
-        options: NSDirectoryEnumerationSkipsHiddenFiles
+        contentsOfDirectoryAtPath:path
         error: &error];
     
     if (error != NULL) {
@@ -366,12 +368,10 @@ void platform_get_filenames_in(
         i < storable_results;
         i++)
     {
-        NSString * current_result =
-            [results[i] lastPathComponent];
+        NSString * current_result = [results[i] lastPathComponent];
         
-        filenames[i] =
-            (char *)[current_result
-                cStringUsingEncoding:NSASCIIStringEncoding];
+        filenames[i] = (char *)[current_result
+            cStringUsingEncoding:NSASCIIStringEncoding];
         *recipient_size += 1;
     }
 }
@@ -392,6 +392,18 @@ void platform_start_thread(
     void (*function_to_run)(int32_t),
     int32_t argument)
 {
+    // TODO: maybe we should just use pthread for threads instead of
+    // dispatch_async, since we need pthreads for mutex locks anyway
+    // Let's revisit this when we port to other platforms
+    
+    // pthread_t thread;
+    // uint32_t result = pthread_create(
+    //     &thread,
+    //     NULL,
+    //     function_to_run,
+    //     argument);
+    // log_assert(result == 0);
+    
     dispatch_async(
         dispatch_get_global_queue(
             DISPATCH_QUEUE_PRIORITY_BACKGROUND,
@@ -416,21 +428,21 @@ void platform_play_sound_resource(char * resource_filename) {
     NSURL * soundFileURL = [NSURL
         fileURLWithPath: soundPathFile];
     
-    AVAudioPlayer * player = [
+    AVAudioPlayer * sound_player = [
         [AVAudioPlayer alloc]
             initWithContentsOfURL:soundFileURL
             error:nil];
-    [player setVolume: sound_volume];
-    player.numberOfLoops = 0;
+    [sound_player setVolume: sound_volume];
+    sound_player.numberOfLoops = 0;
     
-    [player play];
+    [sound_player play];
 }
 
 void platform_play_music_resource(char * resource_filename) { 
     if (active_music_player != NULL) {
         [active_music_player setVolume: 0.0f fadeDuration: 1];
     }
-
+    
     char sound_pathfile[500];
     resource_filename_to_pathfile(
         /* filename: */
@@ -458,3 +470,29 @@ void platform_play_music_resource(char * resource_filename) {
     active_music_player = player;
 }
 
+#define MUTEXES_SIZE 500
+static pthread_mutex_t mutexes[MUTEXES_SIZE];
+static uint32_t next_mutex_id = 0;
+/*
+creates a mutex and return the ID of said mutex for you to store
+*/
+uint32_t platform_init_mutex_and_return_id() {
+    pthread_mutex_init(&(mutexes[next_mutex_id]), NULL);
+    uint32_t return_value = next_mutex_id;
+    next_mutex_id++;
+    return return_value;
+}
+
+/*
+returns whether or not a mutex was locked, and locks the mutex if it
+was unlocked
+*/
+void platform_mutex_lock(const uint32_t mutex_id) {
+    pthread_mutex_lock(&(mutexes[mutex_id]));
+    return;
+}
+
+void platform_mutex_unlock(const uint32_t mutex_id) {
+    pthread_mutex_unlock(&(mutexes[mutex_id]));
+    return;
+}

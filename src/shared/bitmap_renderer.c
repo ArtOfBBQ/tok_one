@@ -80,8 +80,7 @@ bool32_t touchable_id_to_texquad_object_id(
 }
 
 static bool32_t already_requesting = false;
-void request_texquad_renderable(TexQuad * to_add)
-{
+void request_texquad_renderable(TexQuad * to_add) {
     log_assert(!already_requesting);
     already_requesting = true;
     log_assert(to_add->visible);
@@ -164,8 +163,8 @@ static void add_quad_to_gpu_workload(
         || to_add->scale_factor_y < 0.01f)
     {
         log_append(
-            "skipping add_quad_to_gpu_workload() because scale factor is below "
-            "0.01\n");
+            "skipping add_quad_to_gpu_workload() because scale factor is"
+            " below 0.01\n");
         return;
     }
     
@@ -210,17 +209,21 @@ static void add_quad_to_gpu_workload(
             
             float left = parent_left +
                 ((float)sq_col_i *
-                    ((parent_right - parent_left) / (float)to_add->subquads_per_row));
+                    ((parent_right - parent_left) /
+                        (float)to_add->subquads_per_row));
             float right = parent_left +
                 ((float)(sq_col_i + 1) *
-                    ((parent_right - parent_left) / (float)to_add->subquads_per_row));
+                    ((parent_right - parent_left) /
+                        (float)to_add->subquads_per_row));
             log_assert(left < right);
             float bottom = parent_bottom +
                 ((float)sq_row_i *
-                    ((parent_top - parent_bottom) / (float)to_add->subquads_per_row));
+                    ((parent_top - parent_bottom) /
+                        (float)to_add->subquads_per_row));
             float top = parent_bottom +
                 ((float)(sq_row_i + 1) *
-                    ((parent_top - parent_bottom) / (float)to_add->subquads_per_row));
+                    ((parent_top - parent_bottom) /
+                        (float)to_add->subquads_per_row));
             log_assert(bottom < top);
             
             float left_uv_coord =
@@ -230,7 +233,8 @@ static void add_quad_to_gpu_workload(
             float bottom_uv_coord =
                 1.0f - (float)sq_row_i / (float)to_add->subquads_per_row;
             float top_uv_coord =
-                1.0f - (float)(sq_row_i + 1.0f) / (float)to_add->subquads_per_row;
+                1.0f - (float)(sq_row_i + 1.0f) /
+                    (float)to_add->subquads_per_row;
             
             if (!to_add->ignore_camera) {
                 left -= camera.x;
@@ -487,8 +491,10 @@ void draw_texquads_to_render(
             log_assert(i < sizeof(sorted_texquads)/sizeof(*sorted_texquads));
             log_assert(i <= texquads_to_render_size);
             sorted_texquads[sorted_texquads_size] = texquads_to_render[i];
-            log_assert(sorted_texquads[sorted_texquads_size].width_pixels > 0.0f);
-            log_assert(sorted_texquads[sorted_texquads_size].height_pixels > 0.0f);
+            log_assert(
+                sorted_texquads[sorted_texquads_size].width_pixels > 0.0f);
+            log_assert(
+                sorted_texquads[sorted_texquads_size].height_pixels > 0.0f);
             sorted_texquads_size += 1;
             assert(sorted_texquads_size <= texquads_to_render_size);
         }

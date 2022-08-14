@@ -2,11 +2,11 @@
 #import <UIKit/UIKit.h>
 
 float platform_get_current_window_height() {
-    return [UIScreen mainScreen].bounds.size.height;
+    return (float)[UIScreen mainScreen].bounds.size.height;
 }
 
 float platform_get_current_window_width() {
-    return [UIScreen mainScreen].bounds.size.width;
+    return (float)[UIScreen mainScreen].bounds.size.width;
 }
 
 float platform_get_current_window_left() {

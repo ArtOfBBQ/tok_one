@@ -109,21 +109,21 @@ void client_logic_startup() {
     construct_scheduled_animation(&linked_change_texarray);
     linked_change_texarray.affected_object_id = 99999;
     linked_change_texarray.duration_microseconds = 1;
-    linked_change_texarray.runs = 0;
+    linked_change_texarray.runs = 99999;
     linked_change_texarray.set_texture_i = true;
     linked_change_texarray.new_texture_i = 1;
-    linked_change_texarray.wait_before_each_run = 800000;
+    linked_change_texarray.wait_before_each_run = 300000;
     request_scheduled_animation(&linked_change_texarray);
     
     ScheduledAnimation linked_revert_texarray;
     construct_scheduled_animation(&linked_revert_texarray);
     linked_revert_texarray.affected_object_id = 99999;
     linked_revert_texarray.duration_microseconds = 1;
-    linked_revert_texarray.runs = 0;
+    linked_revert_texarray.runs = 99999;
     linked_revert_texarray.set_texture_i = true;
     linked_revert_texarray.new_texture_i = 0;
-    linked_revert_texarray.remaining_wait_before_next_run = 400000;
-    linked_revert_texarray.wait_before_each_run = 800000;
+    linked_revert_texarray.remaining_wait_before_next_run = 150000;
+    linked_revert_texarray.wait_before_each_run = 300000;
     request_scheduled_animation(&linked_revert_texarray);
     
     font_ignore_lighting = false;

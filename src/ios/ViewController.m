@@ -123,4 +123,19 @@ TouchableMTKView * _my_mtk_view;
         fromFolder: shader_lib_filepath];
 }
 
+- (void)
+    viewWillTransitionToSize:
+        (CGSize)size 
+    withTransitionCoordinator:
+        (id<UIViewControllerTransitionCoordinator>)coordinator
+{
+    last_resize_request_at = platform_get_current_time_microsecs();
+    
+    // _my_mtk_view.drawableSize = size;
+    
+    texquads_to_render_size = 0;
+    zpolygons_to_render_size = 0; 
+    zlights_to_apply_size = 0;
+}
+
 @end

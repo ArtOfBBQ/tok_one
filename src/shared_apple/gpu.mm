@@ -396,4 +396,3 @@ void platform_gpu_push_texture_slice(
         andHeight          : (uint32_t)image_height
         pixelValues        : (uint8_t *)rgba_values];
 }
-

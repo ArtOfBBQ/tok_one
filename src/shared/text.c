@@ -51,9 +51,7 @@ void init_font(
         (FontCodepointOffset *)buffer_at;
 }
 
-static float get_advance_width(
-    const char input)
-{
+static float get_advance_width(const char input) {
     if (input == ' ') {
         return font_height * 0.5f;
     }
@@ -69,8 +67,7 @@ static float get_advance_width(
                 font_height) / 40.0f;
 }
 
-static float get_left_side_bearing(const char input)
-{
+static float get_left_side_bearing(const char input) {
     if (input == ' ' || input == '\0' || input == '\n') { return 0.0f; }
     
     uint32_t i = (uint32_t)(input - '!');
@@ -82,8 +79,7 @@ static float get_left_side_bearing(const char input)
                 font_height) / 40.0f;
 }
 
-static float get_y_offset(const char input)
-{
+static float get_y_offset(const char input) {
     if (input == ' ' || input == '\0' || input == '\n') { return 0.0f; }
     
     uint32_t i = (uint32_t)(input - '!');
@@ -359,7 +355,7 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
         /* char * text_to_draw   : */ fps_string,
         /* float left_pixelspace : */ 20.0f,
         /* float top_pixelspace  : */ 60.0f,
-        /* z                     : */ 0.5f,
+        /* z                     : */ 5.0f,
         /* float max_width       : */ window_width,
         /* bool32_t ignore_camera: */ true);
 }

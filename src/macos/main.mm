@@ -55,7 +55,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     texquads_to_render_size = 0;
     zpolygons_to_render_size = 0; 
     zlights_to_apply_size = 0;
-    [apple_gpu_delegate drawClearScreen: mtk_view];
+    // [apple_gpu_delegate drawClearScreen: mtk_view];
     
     return frameSize;
 }
@@ -212,13 +212,13 @@ float platform_get_current_window_bottom() {
 }
 
 int main(int argc, const char * argv[]) {
+    
     init_application();
     
     client_logic_get_application_name(
         /* recipient: */ application_name,
         /* recipient_size: */ 100);
     
-    @autoreleasepool {
     log_append("started application: ");
     log_append(application_name);
     log_append("\nallocated unmanaged memory: ");
@@ -251,7 +251,7 @@ int main(int argc, const char * argv[]) {
             defer: NO];
     window.animationBehavior = NSWindowAnimationBehaviorNone;
     
-    GameWindowDelegate *window_delegate =
+    GameWindowDelegate * window_delegate =
         [[GameWindowDelegate alloc] init];
    
     char app_name[100];
@@ -299,15 +299,6 @@ int main(int argc, const char * argv[]) {
         configureMetalWithDevice: metal_device
         andPixelFormat: mtk_view.colorPixelFormat
         fromFolder: shader_lib_path];
-    
-    // this cruft makes the app a "foreground application"
-    // capable of accepting key events 
-    ProcessSerialNumber psn = {0, kCurrentProcess};
-    // OSStatus status =
-    TransformProcessType(
-        &psn,
-        kProcessTransformToForegroundApplication);
-    }
-    
+        
     return NSApplicationMain(argc, argv);
 }

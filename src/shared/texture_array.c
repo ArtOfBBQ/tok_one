@@ -814,17 +814,3 @@ void flag_all_texture_arrays_to_request_gpu_init() {
     }
 }
 
-// void flag_filename_as_high_priority_load(const char * filename) {
-//     for (uint32_t i = 0; i < texture_arrays_size; i++) {
-//         for (uint32_t j = 0; j < texture_arrays[i].images_size; j++) {
-//             if (
-//                 are_equal_strings(
-//                     texture_arrays[i].images[j].filename,
-//                     filename))
-//             {
-//                 texture_arrays[i].images[j].prioritize_asset_load = true;
-//             }
-//         }
-//     }
-// }
-

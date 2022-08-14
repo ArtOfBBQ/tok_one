@@ -2,9 +2,7 @@
 #define TOK_RANDOM_H
 
 #include "common.h"
-#include "platform_layer.h"
-
-#define RANDOM_SEQUENCE_SIZE 2000
+// #include "platform_layer.h"
 
 uint32_t tok_rand();
 

@@ -5,6 +5,22 @@ by the platform layer in a platform_layer.c file
 For example, 'platform_read_file' is currently defined in
 /shared_windows_macos/platform_layer.c for windows and mac os X, but it's
 defined elsewhere for iOS
+
+Therefore, the implementations of the function signatures in this header are
+actually scattered across multiple source files, since the combination of
+source files will be different on every platform
+
+The implementation folders are organized like this:
+1. src/shared_apple -> code that work on iOS and MacOS but not elsewhere
+2. src/macos -> code that works on MacOs esclusively
+3. src/linux -> code that works on Linux exclusively
+4. src/ios -> code that works on iOS
+5. src/shared_windows_macos -> code that works on windows and macos, but not elsewhere
+etc.
+
+Finally, there is 'common_platform_layer.c' which contains functions that
+are called only by other platform layer functions, but have identical code
+on each platform
 */
 
 #ifndef PLATFORM_LAYER_H
@@ -16,6 +32,7 @@ defined elsewhere for iOS
 
 #ifdef SHARED_APPLE_PLATFORM
 #include <sys/time.h>
+#include <pthread.h>
 #import <AVFoundation/AVFoundation.h>
 #endif
 
@@ -80,6 +97,11 @@ void platform_get_filenames_in(
 
 /*
 Get a file's size. Returns 0 if no such file
+
+A 'resource' is a file that's available in the typical folder for our platform
+, so you can pass "warrior.png" or whatever, the filename only without a path
+
+A 'filepath' is a full explicit path to and including the filename
 */
 uint64_t platform_get_resource_size(const char * filename);
 uint64_t platform_get_filesize(const char * filepath);
@@ -142,6 +164,17 @@ void platform_gpu_push_texture_slice(
 
 void platform_play_sound_resource(char * resource_filename);
 void platform_play_music_resource(char * resource_filename);
+
+/*
+creates a mutex and return the ID of said mutex for you to store
+*/
+uint32_t platform_init_mutex_and_return_id();
+/*
+returns whether or not a mutex was locked, and locks the mutex if it
+was unlocked
+*/
+void platform_mutex_lock(const uint32_t mutex_id);
+void platform_mutex_unlock(const uint32_t mutex_id);
 
 #endif
 

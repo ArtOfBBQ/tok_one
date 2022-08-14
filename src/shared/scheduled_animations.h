@@ -1,7 +1,7 @@
 #ifndef SCHEDULED_ANIMATION_H
 #define SCHEDULED_ANIMATION_H
 
-#define SCHEDULED_ANIMATIONS_ARRAYSIZE 1000
+#define SCHEDULED_ANIMATIONS_ARRAYSIZE 2000
 
 #include "common.h"
 #include "clientlogic.h"
@@ -10,7 +10,7 @@
 
 void init_scheduled_animations();
 
-void resolve_animation_effects(uint64_t microseconds_elapsed);
+void resolve_animation_effects(const uint64_t microseconds_elapsed);
 
 typedef struct ScheduledAnimation {
     /*

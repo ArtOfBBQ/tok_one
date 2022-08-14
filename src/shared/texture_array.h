@@ -65,7 +65,5 @@ void decode_all_null_images_with_memory(
 
 void flag_all_texture_arrays_to_request_gpu_init();
 
-// void flag_filename_as_high_priority_load(const char * filename);
-
 #endif
 
