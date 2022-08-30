@@ -14,6 +14,9 @@ TOK_ONE_SOURCEFILES="src/$PLATFORM/main.mm src/$PLATFORM/macos_platform_layer.c 
 
 echo "Building $APP_NAME for $PLATFORM..."
 
+echo "create build folder..>"
+sudo mkdir -p build/$PLATFORM/$APP_NAME.app
+
 echo "deleting previous build..."
 sudo rm -r -f build/$PLATFORM/$APP_NAME.app/*.txt
 sudo rm -r -f build/$PLATFORM/$APP_NAME.app/$APP_NAME
@@ -25,22 +28,23 @@ sudo mkdir -r build/$PLATFORM/$APP_NAME.app/debugout
 ############
 echo "skipping metal library compilation..."
 # echo "Creating metal library..."
-# xcrun -sdk macosx metal -gline-tables-only -MO -g -c "src/shared_apple/Shaders.metal" -o resources/Shaders.air
-# xcrun -sdk macosx metal -c "src/shared_apple/shaders.metal" -o Shaders.air
-# xcrun -sdk macosx metallib resources/Shaders.air -o build/$PLATFORM/$APP_NAME.app/Shaders.metallib
+# sudo xcrun -sdk macosx metal -gline-tables-only -MO -g -c "src/shared_apple/Shaders.metal" -o resources/Shaders.air
+# sudo xcrun -sdk macosx metal -c "src/shared_apple/shaders.metal" -o Shaders.air
+# sudo xcrun -sdk macosx metallib resources/Shaders.air -o build/$PLATFORM/$APP_NAME.app/Shaders.metallib
 ############
 
+############
 echo "skipping resource copy..."
 # echo "copy resources..."
-# rm build/$PLATFORM/$APP_NAME.app/*.png
-# rm build/$PLATFORM/$APP_NAME.app/*.obj
-# cp resources/fontmetrics.dat build/$PLATFORM/$APP_NAME.app/fontmetrics.dat
-# cp resources/*.png build/$PLATFORM/$APP_NAME.app
+# sudo rm build/$PLATFORM/$APP_NAME.app/*.png
+# sudo rm build/$PLATFORM/$APP_NAME.app/*.obj
+# sudo cp resources/fontmetrics.dat build/$PLATFORM/$APP_NAME.app/fontmetrics.dat
+# sudo cp resources/*.png build/$PLATFORM/$APP_NAME.app/
+############
 
 echo "Compiling & linking $APP_NAME..."
 if
-g++ $COMPILER_ARGS $MAC_FRAMEWORKS $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
-# clang -finstrument-functions -Wall -x objective-c -g -o0 $MAC_FRAMEWORKS -objC $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
+sudo g++ $COMPILER_ARGS $MAC_FRAMEWORKS $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
 then
 echo "compilation succesful"
 else
@@ -49,6 +53,6 @@ exit 0
 fi
 
 echo "Booting $APP_NAME"
+# (cd build/$PLATFORM/$APP_NAME.app && ./$APP_NAME)
 (cd build/$PLATFORM/$APP_NAME.app && ./$APP_NAME)
-# (cd build/$PLATFORM/$APP_NAME.app && gdb ./$APP_NAME)
 

@@ -131,7 +131,7 @@ void client_logic_startup() {
         /* const uint32_t with_id: */
             99,
         /* const char * text_to_draw: */
-            "dragonslongestwordcantpossiblyfitonthescreenasdas;dlfkjas;dlfkajs;dflaksjdf;lsakjdf;alskdfjas;ldkfjas;dlfkjas;dlfkajsdgkjsdfhgsdlgkjhslgrkjflksjdfalsdkjfstuff with feet like rabbits! 't is true, I swear!",
+            "i know dragons\nI KNOW DRAGONS\nwith feet like rabbits",
         /* const float left_pixelspace: */
             100,
         /* const float top_pixelspace: */
@@ -174,6 +174,7 @@ void client_logic_animation_callback(int32_t callback_id)
 }
 
 static uint32_t cur_color_i = 0;
+static int32_t cur_texture_i = 0;
 static void request_fading_lightsquare(
     const float location_x,
     const float location_y)
@@ -184,12 +185,15 @@ static void request_fading_lightsquare(
     touch_highlight.left_pixels = location_x;
     touch_highlight.top_pixels = location_y;
     touch_highlight.z = 50;
-    touch_highlight.height_pixels = 20.0f;
-    touch_highlight.width_pixels = 20.0f;
+    touch_highlight.height_pixels = 75.0f;
+    touch_highlight.width_pixels = 75.0f;
     touch_highlight.RGBA[0] = 1.0f;
     touch_highlight.RGBA[0] = 0.0f;
     touch_highlight.RGBA[0] = 1.0f;
     touch_highlight.RGBA[0] = 1.0f;
+    touch_highlight.texturearray_i = 0;
+    touch_highlight.texture_i = cur_texture_i++;
+    if (cur_texture_i > 92) { cur_texture_i = 0; }
     request_texquad_renderable(&touch_highlight);
     
     uint32_t new_zlight_i;

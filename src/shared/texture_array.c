@@ -288,6 +288,12 @@ static void register_to_texturearray_from_images(
     log_assert(current_height > 0);
     log_assert(current_width < 100000);
     log_assert(current_height < 100000);
+
+    log_append("register to texturearray ");
+    log_append_int(target_texture_array_i);
+    log_append("by from ");
+    log_append_uint(new_images_size);
+    log_append(" images\n");
     
     // set up a new texturearray that's big enough to hold
     // x images
