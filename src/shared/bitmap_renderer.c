@@ -200,12 +200,17 @@ static void add_quad_to_gpu_workload(
             float parent_right = to_add->left_pixels +
                 to_add->width_pixels +
                 (extra_scale_x * 0.5f * to_add->width_pixels);
-            log_assert(parent_left < parent_right);
+            if (parent_left >= parent_right) {
+                parent_right = parent_left + 0.001f;
+            }
             float parent_top = to_add->top_pixels +
                 (extra_scale_y * 0.5f * to_add->height_pixels);
             float parent_bottom = to_add->top_pixels -
                 to_add->height_pixels -
                 (extra_scale_y * 0.5f * to_add->height_pixels);
+            if (parent_top <= parent_bottom) {
+                parent_top = parent_bottom + 0.01f;
+            }
             log_assert(parent_bottom < parent_top);
             
             float left = parent_left +

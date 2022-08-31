@@ -28,7 +28,7 @@ void construct_scheduled_animation(
     to_construct->x_rotation_per_second = 0.0f;
     to_construct->y_rotation_per_second = 0.0f;
     to_construct->z_rotation_per_second = 0.0f;
-
+    
     to_construct->final_width_known = false;
     to_construct->final_height_known = false;
     to_construct->delta_width_per_second = 0.0f;
@@ -38,9 +38,11 @@ void construct_scheduled_animation(
     to_construct->final_yscale_known = false;
     to_construct->delta_xscale_per_second = 0.0f;
     to_construct->delta_yscale_per_second = 0.0f;
+    to_construct->final_rgba_known = false;
     for (uint32_t i = 0; i < 4; i++) {
         to_construct->rgba_delta_per_second[i] = 0.0f;
     }
+    
     to_construct->wait_before_each_run = 0;
     to_construct->remaining_wait_before_next_run = 0;
     to_construct->duration_microseconds = 1000000;
@@ -231,15 +233,34 @@ static void resolve_single_animation_effects(
                                 * elapsed_this_run;
             }
             
-            for (
-                uint32_t c = 0;
-                c < 4;
-                c++)
-            {
-                zlights_to_apply[l_i].RGBA[c] +=
-                    (anim->rgba_delta_per_second[c]
-                        * elapsed_this_run)
-                            / 1000000;
+            if (!anim->final_rgba_known) {
+                for (
+                    uint32_t c = 0;
+                    c < 4;
+                    c++)
+                {
+                    zlights_to_apply[l_i].RGBA[c] +=
+                        (anim->rgba_delta_per_second[c]
+                            * elapsed_this_run)
+                                / 1000000;
+                }
+            } else {
+                for (
+                    uint32_t c = 0;
+                    c < 4;
+                    c++)
+                {
+                    float cur_val =
+                        zlights_to_apply[l_i].RGBA[c];
+                    float delta_val =
+                        anim->final_rgba[c] - cur_val;
+                    
+                    zlights_to_apply[l_i].RGBA[c] +=
+                        delta_val
+                            / (anim->remaining_microseconds
+                                + elapsed_this_run)
+                                    * elapsed_this_run;
+                }
             }
         }
     }
@@ -364,6 +385,32 @@ static void resolve_single_animation_effects(
                         elapsed_this_run) / 1000000;
             }
             // ***
+            if (!anim->final_rgba_known) {
+                for (
+                    uint32_t c = 0;
+                    c < 4;
+                    c++)
+                {
+                    texquads_to_render[tq_i].RGBA[c] +=
+                        (anim->rgba_delta_per_second[c]
+                            * elapsed_this_run)
+                                / 1000000;
+                }
+            } else {
+                for (
+                    uint32_t c = 0;
+                    c < 4;
+                    c++)
+                {
+                    float cur_val = texquads_to_render[tq_i].RGBA[c];
+                    float delta_val = anim->final_rgba[c] - cur_val;
+                    
+                    texquads_to_render[tq_i].RGBA[c] +=
+                        delta_val
+                            / (anim->remaining_microseconds + elapsed_this_run)
+                                * elapsed_this_run;
+                }
+            }
             
             for (
                 uint32_t c = 0;
@@ -451,8 +498,11 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                     anim->remaining_microseconds =
                         anim->duration_microseconds;
                     
-                    if (anim->remaining_microseconds >= excess_from_last_run_mcrs) {
-                        anim->remaining_microseconds -= excess_from_last_run_mcrs;
+                    if (anim->remaining_microseconds >=
+                        excess_from_last_run_mcrs)
+                    {
+                        anim->remaining_microseconds -=
+                            excess_from_last_run_mcrs;
                         excess_from_last_run_mcrs = 0;
                     } else {
                         excess_from_last_run_mcrs -=
