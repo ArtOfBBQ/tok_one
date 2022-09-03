@@ -194,6 +194,8 @@ static void add_quad_to_gpu_workload(
             float z_value = 0.3f + (to_add->z * 0.0001f);
             float extra_scale_x = (to_add->scale_factor_x - 1.0f);
             float extra_scale_y = (to_add->scale_factor_y - 1.0f);
+            if (extra_scale_x != extra_scale_x) { return; } // not a number NaN
+            if (extra_scale_y != extra_scale_y) { return; } // not a number NaN
             
             float parent_left = to_add->left_pixels -
                 (extra_scale_x * 0.5f * to_add->width_pixels);

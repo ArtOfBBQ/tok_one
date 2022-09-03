@@ -143,6 +143,23 @@ void client_logic_startup() {
         /* const bool32_t ignore_camera: */
             false);
     
+    font_height = 80.0f;
+    request_label_renderable(
+        /* const uint32_t with_id: */
+            99,
+        /* const char * text_to_draw: */
+            "I'm a bigger font text\n",
+        /* const float left_pixelspace: */
+            400,
+        /* const float top_pixelspace: */
+            window_height - 250,
+        /* const float z: */
+            1.0f,
+        /* const float max_width: */
+            450,
+        /* const bool32_t ignore_camera: */
+            false);
+    
     // reminder: threadmain_id 0 calls load_assets() 
     log_append("starting asset-loading thread...\n");
     platform_start_thread(

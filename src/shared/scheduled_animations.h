@@ -122,7 +122,9 @@ void request_fade_to(
 
 void request_dud_dance(const uint32_t object_id);
 
-void request_bump_animation(const uint32_t object_id);
+void request_bump_animation(
+    const uint32_t object_id,
+    const uint32_t wait);
 
 #endif
 

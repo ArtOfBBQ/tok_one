@@ -592,13 +592,16 @@ void request_dud_dance(const uint32_t object_id)
     }
 }
 
-void request_bump_animation(const uint32_t object_id)
+void request_bump_animation(
+    const uint32_t object_id,
+    const uint32_t wait)
 {
     uint64_t duration = 200000;
     
     ScheduledAnimation embiggen_request;
     construct_scheduled_animation(&embiggen_request);
     embiggen_request.affected_object_id = object_id;
+    embiggen_request.remaining_wait_before_next_run = wait;
     embiggen_request.duration_microseconds = duration / 2;
     embiggen_request.final_xscale_known = true;
     embiggen_request.final_xscale = 1.35f;
@@ -609,7 +612,7 @@ void request_bump_animation(const uint32_t object_id)
     ScheduledAnimation revert_request;
     construct_scheduled_animation(&revert_request);
     revert_request.affected_object_id = object_id;
-    revert_request.remaining_wait_before_next_run = duration / 2;
+    revert_request.remaining_wait_before_next_run = wait + duration / 2;
     revert_request.duration_microseconds = duration / 2;
     revert_request.final_xscale_known = true;
     revert_request.final_xscale = 1.0f;
