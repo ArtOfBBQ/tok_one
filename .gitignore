@@ -18,4 +18,8 @@ src/ios/hello3dgfx/hello3dgfx.xcodeproj/xcuserdata/*
 # metal libraries
 Shaders.air
 
-build/**
+# my 'run only, dont build' script
+run.sh
+
+build/*
+assetprep/build/*
