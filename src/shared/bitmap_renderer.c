@@ -104,10 +104,11 @@ void request_texquad_renderable(TexQuad * to_add) {
             return;
         }
     }
-    
+
+    assert(texquads_to_render_size + 1 < TEXQUADS_TO_RENDER_ARRAYSIZE);
     texquads_to_render[texquads_to_render_size] = *to_add;
     texquads_to_render_size += 1;
-    assert(texquads_to_render_size < TEXQUADS_TO_RENDER_ARRAYSIZE);
+    
     already_requesting = false;
 }
 

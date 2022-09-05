@@ -8,6 +8,8 @@
     UITouch * touch       = [touches anyObject];
     CGPoint touchLocation = [touch locationInView:self];
     
+    printf("touchBegan at %f,%f\n", (float)touchLocation.x, (float)touchLocation.y);
+    
     register_interaction(
         /* interaction : */
             &previous_touch_start,
@@ -27,6 +29,28 @@
         /* screenspace_y: */
             platform_y_to_y((float)touchLocation.y
                 - platform_get_current_window_bottom()));
+    
+    // TODO: remove if this doesn't work out
+    // TODO: was trying out move as well to combat some weird UI touch bug that only happens on ios
+    register_interaction(
+        /* interaction : */
+            &previous_touch_move,
+        /* screenspace_x: */
+            platform_x_to_x((float)touchLocation.x
+                - platform_get_current_window_left()),
+        /* screenspace_y: */
+            platform_y_to_y((float)touchLocation.y
+                - platform_get_current_window_bottom()));
+    
+    register_interaction(
+        /* interaction : */
+            &previous_mouse_or_touch_move,
+        /* screenspace_x: */
+            platform_x_to_x((float)touchLocation.x
+                - platform_get_current_window_left()),
+        /* screenspace_y: */
+            platform_y_to_y((float)touchLocation.y
+                - platform_get_current_window_bottom()));
 }
 
 - (void)
@@ -35,6 +59,8 @@
 {
     UITouch * touch       = [touches anyObject];
     CGPoint touchLocation = [touch locationInView:self];
+    
+    printf("touchmoved at %f,%f\n", (float)touchLocation.x, (float)touchLocation.y);
     
     register_interaction(
         /* interaction : */
@@ -63,6 +89,8 @@
 {
     UITouch * touch       = [touches anyObject];
     CGPoint touchLocation = [touch locationInView:self];
+    
+    printf("touchEnded at %f,%f\n", (float)touchLocation.x, (float)touchLocation.y);
     
     register_interaction(
         /* interaction : */

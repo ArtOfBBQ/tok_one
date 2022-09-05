@@ -317,12 +317,25 @@ static void resolve_single_animation_effects(
                         / (float)remaining_microseconds_at_start_of_run)
                     * (float)elapsed_this_run;
             }
+
+            if (!anim->final_z_known) {
+                texquads_to_render[tq_i].z +=
+                    ((anim->delta_z_per_second
+                        * elapsed_this_run)
+                            / 1000000);
+            } else {
+                float diff_z = anim->final_mid_z - texquads_to_render[tq_i].z;
+                texquads_to_render[tq_i].z +=
+                    (diff_z
+                        / (float)remaining_microseconds_at_start_of_run)
+                    * (float)elapsed_this_run;
+            }
             
             texquads_to_render[tq_i].z_angle +=
                 (anim->z_rotation_per_second
                     * elapsed_this_run)
                         / 1000000;
-
+            
             // ***
             // absolute scaling
             if (!anim->final_width_known) {
