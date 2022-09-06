@@ -12,7 +12,7 @@ void construct_scheduled_animation(
     ScheduledAnimation * to_construct)
 {
     to_construct->affected_object_id = 0;
-
+    
     to_construct->set_texture_array_i = false;
     to_construct->new_texture_array_i = -1;
     to_construct->set_texture_i = false;
@@ -38,8 +38,8 @@ void construct_scheduled_animation(
     to_construct->final_yscale_known = false;
     to_construct->delta_xscale_per_second = 0.0f;
     to_construct->delta_yscale_per_second = 0.0f;
-    to_construct->final_rgba_known = false;
     for (uint32_t i = 0; i < 4; i++) {
+        to_construct->final_rgba_known[i] = false;
         to_construct->rgba_delta_per_second[i] = 0.0f;
     }
     
@@ -87,52 +87,14 @@ void request_fade_and_destroy(
 {
     log_assert(duration_microseconds > 0);
     
-    // get current alpha
-    // we'll go with the biggest diff found in case of
-    // multiple objs
-    float target_alpha = 0.0f;
-    float current_alpha = target_alpha;
-    
-    for (
-        uint32_t tq_i = 0;
-        tq_i < texquads_to_render_size;
-        tq_i++)
-    {
-        if (texquads_to_render[tq_i].object_id == object_id)
-        {
-            float cur_dist =
-                (current_alpha - target_alpha) *
-                (current_alpha - target_alpha);
-            float new_dist =
-                (texquads_to_render[tq_i].RGBA[3]
-                    - target_alpha) *
-                (texquads_to_render[tq_i].RGBA[3]
-                    - target_alpha);
-            
-            if (new_dist > cur_dist)
-            {
-                current_alpha = texquads_to_render[tq_i].RGBA[3];
-            }
-        }
-    }
-    
-    if (current_alpha == target_alpha) {
-        return;
-    }
-    
-    // Find out how fast the alpha needs to change to reach
-    // the target alpha exactly when the duration runs out
-    float change_per_second =
-        (target_alpha - current_alpha) /
-            ((float)duration_microseconds / 1000000);
-    
     // register scheduled animation
     ScheduledAnimation modify_alpha;
     construct_scheduled_animation(&modify_alpha);
     modify_alpha.affected_object_id = object_id;
     modify_alpha.remaining_wait_before_next_run = wait_before_first_run;
     modify_alpha.duration_microseconds = duration_microseconds;
-    modify_alpha.rgba_delta_per_second[3] = change_per_second;
+    modify_alpha.final_rgba_known[3] = true;
+    modify_alpha.final_rgba[3] = 0.0f;
     modify_alpha.delete_object_when_finished = true;
     request_scheduled_animation(&modify_alpha);
 }
@@ -143,41 +105,15 @@ void request_fade_to(
     const uint64_t duration_microseconds,
     const float target_alpha)
 {
-    // get current alpha
-    // we'll go with the biggest diff found in case of
-    // multiple objs
-    float current_alpha = target_alpha;
-    
-    for (
-        uint32_t tq_i = 0;
-        tq_i < texquads_to_render_size;
-        tq_i++)
-    {
-        if (texquads_to_render[tq_i].object_id == object_id)
-        {
-            float cur_dist =
-                (current_alpha - target_alpha) *
-                (current_alpha - target_alpha);
-            float new_dist =
-                (texquads_to_render[tq_i].RGBA[3]
-                    - target_alpha) *
-                (texquads_to_render[tq_i].RGBA[3]
-                    - target_alpha);
-            if (new_dist > cur_dist) {
-                current_alpha = texquads_to_render[tq_i].RGBA[3];
-            }
-        }
-    }
-    
-    if (current_alpha == target_alpha) {
-        return;
-    }
-    
-    // Find out how fast the alpha needs to change to reach
-    // the target alpha exactly when the duration runs out
-    float change_per_second =
-        (target_alpha - current_alpha) /
-            ((float)duration_microseconds / 1000000);
+    log_append("fading object_id: ");
+    log_append_uint(object_id);
+    log_append(" to alpha: ");
+    log_append_float(target_alpha);
+    log_append(" pause/duration: ");
+    log_append_uint(wait_before_first_run);
+    log_append_char(',');
+    log_append_uint(duration_microseconds);
+    log_append_char('\n');
     
     // register scheduled animation
     ScheduledAnimation modify_alpha;
@@ -185,7 +121,8 @@ void request_fade_to(
     modify_alpha.affected_object_id = object_id;
     modify_alpha.remaining_wait_before_next_run = wait_before_first_run;
     modify_alpha.duration_microseconds = duration_microseconds;
-    modify_alpha.rgba_delta_per_second[3] = change_per_second;
+    modify_alpha.final_rgba_known[3] = true;
+    modify_alpha.final_rgba[3] = target_alpha;
     request_scheduled_animation(&modify_alpha);
 }
 
@@ -233,23 +170,17 @@ static void resolve_single_animation_effects(
                                 * elapsed_this_run;
             }
             
-            if (!anim->final_rgba_known) {
-                for (
-                    uint32_t c = 0;
-                    c < 4;
-                    c++)
-                {
+            for (
+                uint32_t c = 0;
+                c < 4;
+                c++)
+            {
+                if (!anim->final_rgba_known[c]) {
                     zlights_to_apply[l_i].RGBA[c] +=
                         (anim->rgba_delta_per_second[c]
                             * elapsed_this_run)
                                 / 1000000;
-                }
-            } else {
-                for (
-                    uint32_t c = 0;
-                    c < 4;
-                    c++)
-                {
+                } else {
                     float cur_val =
                         zlights_to_apply[l_i].RGBA[c];
                     float delta_val =
@@ -397,24 +328,19 @@ static void resolve_single_animation_effects(
                     (anim->delta_yscale_per_second *
                         elapsed_this_run) / 1000000;
             }
+            
             // ***
-            if (!anim->final_rgba_known) {
-                for (
-                    uint32_t c = 0;
-                    c < 4;
-                    c++)
-                {
+            for (
+                uint32_t c = 0;
+                c < 4;
+                c++)
+            {
+                if (!anim->final_rgba_known[c]) {
                     texquads_to_render[tq_i].RGBA[c] +=
                         (anim->rgba_delta_per_second[c]
                             * elapsed_this_run)
                                 / 1000000;
-                }
-            } else {
-                for (
-                    uint32_t c = 0;
-                    c < 4;
-                    c++)
-                {
+                } else {
                     float cur_val = texquads_to_render[tq_i].RGBA[c];
                     float delta_val = anim->final_rgba[c] - cur_val;
                     
@@ -423,17 +349,6 @@ static void resolve_single_animation_effects(
                             / (anim->remaining_microseconds + elapsed_this_run)
                                 * elapsed_this_run;
                 }
-            }
-            
-            for (
-                uint32_t c = 0;
-                c < 4;
-                c++)
-            {
-                texquads_to_render[tq_i].RGBA[c] +=
-                    (anim->rgba_delta_per_second[c]
-                        * elapsed_this_run)
-                            / 1000000;
             }
         }
     }
@@ -632,5 +547,20 @@ void request_bump_animation(
     revert_request.final_yscale_known = true;
     revert_request.final_yscale = 1.0f;
     request_scheduled_animation(&revert_request);
+}
+
+void delete_all_rgba_animations_targeting(
+    const uint32_t object_id)
+{
+    for (uint32_t i = 0; i < scheduled_animations_size; i++) {
+        if (scheduled_animations[i].affected_object_id == object_id &&
+            (scheduled_animations[i].final_rgba_known[0] ||
+             scheduled_animations[i].final_rgba_known[1] ||
+             scheduled_animations[i].final_rgba_known[2] ||
+             scheduled_animations[i].final_rgba_known[3]))
+        {
+            scheduled_animations[i].deleted = true;
+        }
+    }
 }
 

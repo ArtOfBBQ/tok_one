@@ -82,7 +82,7 @@ typedef struct ScheduledAnimation {
     };
     // *** end of scaling animations
     
-    bool32_t final_rgba_known;
+    bool32_t final_rgba_known[4];
     union {
         float rgba_delta_per_second[4];
         float final_rgba[4];
@@ -125,6 +125,8 @@ void request_dud_dance(const uint32_t object_id);
 void request_bump_animation(
     const uint32_t object_id,
     const uint32_t wait);
+
+void delete_all_rgba_animations_targeting(const uint32_t object_id);
 
 #endif
 
