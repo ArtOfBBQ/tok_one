@@ -2,8 +2,8 @@
 #define TOK_RANDOM_H
 
 #include "common.h"
-// #include "platform_layer.h"
 
+void init_rand_with_seed(const uint64_t seed);
 uint32_t tok_rand();
 
 #endif
