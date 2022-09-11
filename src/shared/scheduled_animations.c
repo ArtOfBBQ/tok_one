@@ -105,16 +105,6 @@ void request_fade_to(
     const uint64_t duration_microseconds,
     const float target_alpha)
 {
-    log_append("fading object_id: ");
-    log_append_uint(object_id);
-    log_append(" to alpha: ");
-    log_append_float(target_alpha);
-    log_append(" pause/duration: ");
-    log_append_uint(wait_before_first_run);
-    log_append_char(',');
-    log_append_uint(duration_microseconds);
-    log_append_char('\n');
-    
     // register scheduled animation
     ScheduledAnimation modify_alpha;
     construct_scheduled_animation(&modify_alpha);

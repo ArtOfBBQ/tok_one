@@ -89,6 +89,8 @@ Get a file's size. Returns 0 if no such file
 */
 uint64_t platform_get_filesize(const char * filepath) {
     
+    uint64_t return_value;
+    @autoreleasepool {
     NSString * nsfilepath = [NSString
         stringWithCString:filepath
         encoding:NSASCIIStringEncoding];
@@ -109,8 +111,11 @@ uint64_t platform_get_filesize(const char * filepath) {
     
     // let's not use 20MB+ files in development
     assert(file_size < 20000000);
+
+    return_value = file_size;
+    }
     
-    return file_size;
+    return return_value;
 }
 
 void platform_read_resource_file(
@@ -134,6 +139,7 @@ void platform_read_file(
     const char * filepath,
     FileBuffer * out_preallocatedbuffer)
 {
+    @autoreleasepool {
     NSString * nsfilepath =
         [NSString
             stringWithCString:filepath
@@ -158,6 +164,7 @@ void platform_read_file(
         length: out_preallocatedbuffer->size];
     
     out_preallocatedbuffer->good = true;
+    }
 }
 
 bool32_t platform_resource_exists(const char * resource_name) {
@@ -249,6 +256,12 @@ void platform_copy_file(
     const char * filepath_source,
     const char * filepath_destination)
 {
+    log_append("trying to copy from: ");
+    log_append(filepath_source);
+    log_append(", to: ");
+    log_append(filepath_destination);
+    log_append_char('\n');
+    
     NSString * nsfilepath_source = [NSString
         stringWithCString:filepath_source
         encoding:NSASCIIStringEncoding];
@@ -263,7 +276,7 @@ void platform_copy_file(
         copyItemAtPath: nsfilepath_source
         toPath: nsfilepath_destination
         error: &error];
-
+    
     if (error != NULL) {
         NSLog(@" error => %@ ", [error userInfo]);
         assert(0);

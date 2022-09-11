@@ -1,8 +1,8 @@
 #ifndef MEMORY_STORE_H
 #define MEMORY_STORE_H
 
-// 250mb ->                   250...000
-#define UNMANAGED_MEMORY_SIZE 250000000
+// 350mb ->                   350...000
+#define UNMANAGED_MEMORY_SIZE 350000000
 // 150mb ->                   150...000
 #define   MANAGED_MEMORY_SIZE 150000000
 

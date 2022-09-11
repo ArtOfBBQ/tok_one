@@ -6,6 +6,7 @@
 #include "logger.h"
 #include "decodedimage.h"
 #include "debigulator/src/decode_png.h"
+#include "debigulator/src/decode_bmp.h"
 #include "vertex_types.h"
 
 void init_texture_arrays();

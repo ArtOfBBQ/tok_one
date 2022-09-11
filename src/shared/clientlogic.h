@@ -17,6 +17,7 @@ application.
 #include "decodedimage.h"
 #include "platform_layer.h"
 #include "debigulator/src/decode_png.h"
+#include "debigulator/src/decode_bmp.h"
 #include "userinput.h"
 #include "text.h"
 #include "scheduled_animations.h"

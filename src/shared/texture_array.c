@@ -596,16 +596,13 @@ void preregister_null_image(
 {
     int32_t new_texturearray_i = -1;
     int32_t new_texture_i = -1;
-
+    
     int32_t texture_arrays_size_at_start = (int32_t)texture_arrays_size;
     
     // *****************
     // find out if same width/height was already used
     // set new_texturearray_i and new_texture_i if so
-    for (
-        uint32_t i = 0;
-        i < texture_arrays_size;
-        i++)
+    for (uint32_t i = 0; i < texture_arrays_size; i++)
     {
         if (
             texture_arrays[i].single_img_width == width
@@ -728,31 +725,47 @@ void decode_null_image_with_memory(
     log_assert(new_image->rgba_values_size > 0);
     new_image->rgba_values = (uint8_t *)
         malloc_from_unmanaged(new_image->rgba_values_size);
-    
-    decode_PNG(
-        /* const uint8_t * compressed_input: */
-            (uint8_t *)file_buffer.contents,
-        /* const uint64_t compressed_input_size: */
-            file_buffer.size - 1,
-        /* out_rgba_values: */
-            new_image->rgba_values,
-        /* rgba_values_size: */
-            new_image->rgba_values_size,
-        /* dpng_working_memory: */
-            dpng_working_memory,
-        /* dpng_working_memory_size: */
-            dpng_working_memory_size,
-        /* uint32_t * out_good: */
-            &new_image->good);
+
+    if (file_buffer.contents[1] == 'P' &&
+        file_buffer.contents[2] == 'N')
+    {
+        decode_PNG(
+            /* const uint8_t * compressed_input: */
+                (uint8_t *)file_buffer.contents,
+            /* const uint64_t compressed_input_size: */
+                file_buffer.size - 1,
+            /* out_rgba_values: */
+                new_image->rgba_values,
+            /* rgba_values_size: */
+                new_image->rgba_values_size,
+            /* dpng_working_memory: */
+                dpng_working_memory,
+            /* dpng_working_memory_size: */
+                dpng_working_memory_size,
+            /* uint32_t * out_good: */
+                &new_image->good);
+    } else {
+        assert(
+            file_buffer.contents[0] == 'B' &&
+            file_buffer.contents[1] == 'M');
+        
+        decode_BMP(
+            /* const uint8_t * raw_input: */
+                (uint8_t *)file_buffer.contents,
+            /* const uint64_t raw_input_size: */
+                file_buffer.size - 1,
+            /* out_rgba_values: */
+                new_image->rgba_values,
+            /* out_rgba_values_size: */
+                new_image->rgba_values_size,
+            /* uint32_t * out_good: */
+                &new_image->good);
+    }
     
     log_assert(new_image->good);
-    log_assert(
-        new_image->height ==
-            texture_arrays[i].single_img_height);
-    log_assert(
-        new_image->width ==
-            texture_arrays[i].single_img_width);
-     
+    log_assert(new_image->height == texture_arrays[i].single_img_height);
+    log_assert(new_image->width == texture_arrays[i].single_img_width);
+    
     texture_arrays[i].images[j].image = new_image;
     texture_arrays[i].images[j].request_update = true;
     texture_arrays[i].images[j].prioritize_asset_load = false;
