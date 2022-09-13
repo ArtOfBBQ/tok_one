@@ -365,6 +365,18 @@ string_to_uint32_validate(
     return return_value;
 }
 
+static float powf(float input, uint32_t power) {
+    if (power == 0) { return 1.0f; }
+    
+    float return_value = input;
+    
+    for (uint32_t _ = 0; _ < (power - 1); _++) {
+        return_value *= return_value;
+    }
+    
+    return return_value;
+}
+
 uint32_t
 string_to_uint32(
     const char * input,
@@ -372,6 +384,111 @@ string_to_uint32(
 {
     bool32_t result_good = false;
     uint32_t result = string_to_uint32_validate(
+        input,
+        input_size,
+        &result_good);
+    #ifndef COMMON_IGNORE_ASSERTS
+    assert(result_good);
+    #endif
+    return result;
+}
+
+float
+string_to_float_validate(
+    const char * input,
+    const uint32_t input_size,
+    bool32_t * good)
+{
+    if (input_size < 1) {
+        #ifndef COMMON_SILENCE
+        printf("ERROR : string_to_float with input_size < 1\n");
+        #endif
+        *good = false;
+        return 0;
+    }
+    
+    if (input[0] == '\0') {
+        #ifndef COMMON_SILENCE
+        printf("ERR: string_to_float but input[0] is nullterminator\n");
+        #endif
+        *good = false;
+        return 0;
+    }
+    
+    if (input_size >= 2147483647) {
+        #ifndef COMMON_SILENCE
+        printf(
+            "ERROR: string_to_float has input > signed int max");
+         #endif
+        *good = false;
+        return 0;
+    }
+    
+    float return_value = 0;
+    
+    uint32_t i = 0;
+    bool32_t found_num = false;
+    bool32_t used_dot = false;
+    char first_part[20];
+    uint32_t first_part_i = 0;
+    char second_part[20];
+    uint32_t second_part_i = 0;
+    
+    if (input[0] == '-') {
+        i++;
+    }
+    
+    while (i < input_size) {
+        if (!used_dot && found_num && input[i] == '.') {
+            i++;
+            used_dot = true;
+            continue;
+        }
+        
+        if (input[i] >= '0' && input[i] <= '9') {
+            found_num = true;
+            if (!used_dot) {
+                first_part[first_part_i++] = input[i];
+            } else {
+                second_part[second_part_i++] = input[i];
+            }
+        } else {
+            *good = false;
+            return return_value;
+        }
+        
+        i++;
+    }
+    
+    first_part[first_part_i] = '\0';
+    second_part[second_part_i] = '\0';
+    
+    int first_part_int = string_to_int32(
+        /* const char input: */ first_part,
+        /* const uint32_t input_size: */ first_part_i);
+    int second_part_int = string_to_int32(
+        /* const char input: */ second_part,
+        /* const uint32_t input_size: */ first_part_i);
+    
+    return_value += (float)first_part_int;
+    return_value += (float)second_part_int /
+        powf(10, second_part_i);
+    
+    // 12200
+    // needs to become
+    // 0.12200
+    // so we want to divide by: 100000
+    *good = true;
+    return return_value;
+}
+
+float
+string_to_float(
+    const char * input,
+    const uint32_t input_size)
+{
+    bool32_t result_good = false;
+    float result = string_to_float_validate(
         input,
         input_size,
         &result_good);

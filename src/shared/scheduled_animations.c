@@ -93,6 +93,12 @@ void request_fade_and_destroy(
     modify_alpha.affected_object_id = object_id;
     modify_alpha.remaining_wait_before_next_run = wait_before_first_run;
     modify_alpha.duration_microseconds = duration_microseconds;
+    modify_alpha.final_rgba_known[0] = true;
+    modify_alpha.final_rgba[3] = 0.0f;
+    modify_alpha.final_rgba_known[1] = true;
+    modify_alpha.final_rgba[3] = 0.0f;
+    modify_alpha.final_rgba_known[2] = true;
+    modify_alpha.final_rgba[3] = 0.0f;
     modify_alpha.final_rgba_known[3] = true;
     modify_alpha.final_rgba[3] = 0.0f;
     modify_alpha.delete_object_when_finished = true;
@@ -155,6 +161,22 @@ static void resolve_single_animation_effects(
                 float diff_y = anim->final_mid_y - zlights_to_apply[l_i].y;
                 zlights_to_apply[l_i].y +=
                     diff_y
+                        / (anim->remaining_microseconds
+                            + elapsed_this_run)
+                                * elapsed_this_run;
+            }
+
+            if (!anim->final_reach_known) {
+                zlights_to_apply[l_i].reach +=
+                    ((anim->delta_reach_per_second
+                        * elapsed_this_run)
+                            / 1000000);
+            } else {
+                float diff_reach = anim->final_reach -
+                    zlights_to_apply[l_i].reach;
+                
+                zlights_to_apply[l_i].reach +=
+                    diff_reach
                         / (anim->remaining_microseconds
                             + elapsed_this_run)
                                 * elapsed_this_run;

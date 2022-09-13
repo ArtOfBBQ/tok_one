@@ -93,6 +93,17 @@ string_to_uint32(
     const char * input,
     const uint32_t input_size);
 
+float
+string_to_float_validate(
+    const char * input,
+    const uint32_t input_size,
+    bool32_t * good);
+
+float
+string_to_float(
+    const char * input,
+    const uint32_t input_size);
+
 void __attribute__((no_instrument_function))
 float_to_string(
     const float input,
