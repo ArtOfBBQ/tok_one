@@ -104,21 +104,17 @@ static float get_y_offset(const char input) {
 
 static uint32_t find_next_linebreak(
     const char * input,
-    const uint32_t input_size,
     const uint32_t after_i)
 {
-    if (input_size == 1) { return after_i + 1; }
-    log_assert(input_size > 1);
-    // log_assert(after_i < input_size - 1);
+    if (input[after_i] == '\0') { return after_i + 1; }
     
     uint32_t i = after_i + 1;
     
-    log_assert(after_i < input_size);
-    
-    for (; i < input_size; i++) {
+    while (input[i] != '\0') {
         if (input[i] == '\n') {
             return i;
         }
+        i++;
     }
     
     return i;
@@ -145,7 +141,6 @@ static float get_next_word_width(const char * text) {
 void request_label_around(
     const uint32_t with_id,
     const char * text_to_draw,
-    const uint32_t text_to_draw_size,
     const float mid_x_pixelspace,
     const float top_y_pixelspace,
     const float z,
@@ -165,11 +160,10 @@ void request_label_around(
     float cur_left = 0.0f;
     float cur_top = top_y_pixelspace;
     
-    while (line_start_i < text_to_draw_size)
-    {
+    while (text_to_draw[line_start_i] != '\0') {
+        
         line_end_i = find_next_linebreak(
             /* input      : */ text_to_draw,
-            /* input_size : */ text_to_draw_size,
             /* after_i    : */ line_start_i);
         
         if (line_end_i <= line_start_i)
@@ -183,15 +177,12 @@ void request_label_around(
         while (true) {
             line_width += get_advance_width(text_to_draw[i]);
             
-            // log_assert(line_width <= max_width);
-            
             i++;
-            if (text_to_draw[i] == '\0') {
+            if (text_to_draw[i] == '\0' || text_to_draw[i] == '\n') {
                 break;
             }
             
             if (text_to_draw[i] == ' ') {
-                // log_assert(get_next_word_width(text_to_draw + i) > 0.0f);
                 
                 if (
                     line_width
@@ -221,6 +212,7 @@ void request_label_around(
             letter.object_id = with_id;
             letter.texturearray_i = font_texturearray_i;
             letter.texture_i = text_to_draw[i] - '!';
+            
             for (
                 uint32_t rgba_i = 0;
                 rgba_i < 4;

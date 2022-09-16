@@ -63,7 +63,7 @@ uint64_t __attribute__((no_instrument_function))
 platform_get_current_time_microsecs(void) {
     struct timeval tv;
     gettimeofday(&tv,NULL);
-    uint64_t result = 1000000 * tv.tv_sec + tv.tv_usec;
+    uint64_t result = 1000000 * (uint64_t)tv.tv_sec + (uint64_t)tv.tv_usec;
     
     return result;
 }

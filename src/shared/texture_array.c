@@ -388,7 +388,7 @@ void init_texture_arrays() {
 }
 
 void init_or_push_one_gpu_texture_array_if_needed() {
-    for (uint32_t i = 0; i < texture_arrays_size; i++) {
+    for (int32_t i = 0; (uint32_t)i < texture_arrays_size; i++) {
         if (texture_arrays[i].request_init) {
             texture_arrays[i].request_init = false;
             platform_gpu_init_texture_array(
@@ -399,8 +399,8 @@ void init_or_push_one_gpu_texture_array_if_needed() {
             break;
         } else {
             for (
-                uint32_t j = 0;
-                j < texture_arrays[i].images_size;
+                int32_t j = 0;
+                (uint32_t)j < texture_arrays[i].images_size;
                 j++)
             {
                 if (texture_arrays[i].images[j].request_update) {
@@ -415,7 +415,9 @@ void init_or_push_one_gpu_texture_array_if_needed() {
                         /* image_height: */
                             texture_arrays[i].single_img_height,
                         /* rgba_values: */
-                            texture_arrays[i].images[j].image->rgba_values);
+                            texture_arrays[i]
+                                .images[j]
+                                .image->rgba_values);
                     break;
                 }
             }
@@ -690,6 +692,8 @@ void get_texture_location(
             }
         }
     }
+    
+    log_assert(0);
 }
 
 void decode_null_image_with_memory(
@@ -781,16 +785,20 @@ void decode_all_null_images_with_memory(
         int32_t nonpriority_texturearray_i = -1;
         int32_t nonpriority_texture_i = -1;
         
-        for (uint32_t i = 0; i < texture_arrays_size; i++) {
-            for (uint32_t j = 0; j < texture_arrays[i].images_size; j++) {
-                
+        for (int32_t i = 0; (uint32_t)i < texture_arrays_size; i++) {
+            for (
+                int32_t j = 0;
+                (uint32_t)j < texture_arrays[i].images_size;
+                j++)
+            {
                 if (
                     texture_arrays[i].images[j].image == NULL
                     && texture_arrays[i].images[j].filename != NULL)
                 {
-                    if (!texture_arrays[i].images[j].prioritize_asset_load) {
-                        nonpriority_texturearray_i = i;
-                        nonpriority_texture_i = j;
+                    if (!texture_arrays[i].images[j].prioritize_asset_load)
+                    {
+                        nonpriority_texturearray_i = (int32_t)i;
+                        nonpriority_texture_i = (int32_t)j;
                         continue;
                     }
                     found = true;

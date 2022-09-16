@@ -144,14 +144,14 @@ void client_logic_startup() {
             false);
     
     font_height = 80.0f;
-    request_label_renderable(
+    request_label_around(
         /* const uint32_t with_id: */
             99,
         /* const char * text_to_draw: */
-            "I'm a bigger font text\n",
-        /* const float left_pixelspace: */
+            "I'm a label\naround\nwith lb's\nyoyoyo yo yo ",
+        /* const float mid_x_pixelspace: */
             400,
-        /* const float top_pixelspace: */
+        /* const float top_y_pixelspace: */
             window_height - 250,
         /* const float z: */
             1.0f,

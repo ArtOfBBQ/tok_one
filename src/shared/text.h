@@ -16,7 +16,6 @@ void init_font(
 void request_label_around(
     const uint32_t with_object_id,
     const char * text_to_draw,
-    const uint32_t text_to_draw_size,
     const float mid_x_pixelspace,
     const float mid_y_pixelspace,
     const float z,
