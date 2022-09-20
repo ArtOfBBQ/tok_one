@@ -1,34 +1,31 @@
 #include "common.h"
 
-void __attribute__((no_instrument_function))
-concat_strings(
-    const char * string_1,
-    const char * string_2,
-    char * output,
-    const uint32_t output_size)
+void
+strcat_capped(
+    char * recipient,
+    const uint32_t recipient_size,
+    const char * to_append)
 {
-    char * str1_at = (char *)string_1;
-    char * str2_at = (char *)string_2;
-    char * output_at = output;
-    
-    uint32_t chars_used = 0;
-    
-    while (str1_at[0] != '\0') {
-        *output_at++ = *str1_at++;
-        chars_used++;
+    uint32_t i = 0;
+    while (recipient[i] != '\0') {
+        #ifndef COMMON_IGNORE_ASSERTS
+        assert(i < recipient_size);
+        #endif
+        i++;
     }
     
-    while (str2_at[0] != '\0') {
-        *output_at++ = *str2_at++;
-        chars_used++;
+    uint32_t j = 0;
+    while (to_append[j] != '\0') {
+        #ifndef COMMON_IGNORE_ASSERTS
+        assert(i < recipient_size - 1);
+        #endif
+        recipient[i++] = to_append[j++];
     }
     
-    *output_at = '\0';
-    chars_used++;
+    recipient[i] = '\0';
 }
 
-void __attribute__((no_instrument_function))
-copy_0term_string_to(
+void strcpy_capped(
     char * recipient,
     const uint32_t recipient_size,
     const char * origin)
@@ -44,6 +41,7 @@ copy_0term_string_to(
         recipient[i] = origin[i];
         i++;
     }
+    
     #ifndef COMMON_IGNORE_ASSERTS
     assert(i < recipient_size);
     #endif
@@ -179,7 +177,7 @@ void int_to_string(
     }
 }
 
-void __attribute__((no_instrument_function))
+void
 uint_to_string(
     const uint32_t input,
     char * recipient,
@@ -195,12 +193,10 @@ uint_to_string(
     uint32_t start_i = 0;
     uint32_t end_i;
     
-    uint64_t decimal = 1;
-    uint32_t input_div_dec = input / decimal;
-    while (input_div_dec > 0)
-    {
-        uint64_t isolated_num =
-            input % (decimal * 10);
+    uint32_t decimal = 1;
+    uint32_t input_div_dec = input;
+    while (input_div_dec > 0) {
+        uint32_t isolated_num = input % (decimal * 10);
         isolated_num /= decimal;
         recipient[i] = (char)('0' + isolated_num);
         i += 1;

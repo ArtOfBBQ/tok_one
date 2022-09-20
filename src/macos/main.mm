@@ -40,11 +40,11 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 {
     last_resize_request_at = platform_get_current_time_microsecs();
     float title_bar_height =
-        [sender contentRectForFrameRect: sender.frame].size.height
-            - sender.frame.size.height;
+        (float)([sender contentRectForFrameRect: sender.frame].size.height
+            - sender.frame.size.height);
     
-    current_window_height = frameSize.height + title_bar_height;
-    current_window_width = frameSize.width;
+    current_window_height = (float)(frameSize.height + title_bar_height);
+    current_window_width = (float)frameSize.width;
     
     NSSize new_size = frameSize;
     new_size.height += title_bar_height;
@@ -204,11 +204,11 @@ bool32_t has_retina_screen = true;
 NSWindowWithCustomResponder * window = NULL;
 
 float platform_get_current_window_left() {
-    return window.frame.origin.x;
+    return (float)window.frame.origin.x;
 }
 
 float platform_get_current_window_bottom() {
-    return window.frame.origin.y;
+    return (float)window.frame.origin.y;
 }
 
 int main(int argc, const char * argv[]) {
@@ -283,12 +283,15 @@ int main(int argc, const char * argv[]) {
     apple_gpu_delegate = [[MetalKitViewDelegate alloc] init];
     [mtk_view setDelegate: apple_gpu_delegate];
     
-    char shader_lib_path_cstr[2000];
-    concat_strings(
-        /* string_1: */ platform_get_resources_path(),
-        /* string_2: */ "/Shaders.metallib",
-        /* output: */ shader_lib_path_cstr,
-        /* output_size: */ 2000);
+    char shader_lib_path_cstr[1000];
+    strcpy_capped(
+        platform_get_resources_path(),
+        1000,
+        "/Shaders.metallib");
+    strcat_capped(
+        shader_lib_path_cstr,
+        1000,
+        "/Shaders.metallib");
     
     NSString * shader_lib_path =
         [NSString
