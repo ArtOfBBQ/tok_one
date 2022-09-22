@@ -32,7 +32,7 @@ void client_logic_get_application_name(
 {
     char * app_name = (char *)"TOK ONE";
     
-    copy_0term_string_to(
+    strcpy_capped(
         /* recipient: */ recipient,
         /* recipient_size: */ recipient_size,
         /* origin: */ app_name);
@@ -48,8 +48,8 @@ void client_logic_startup() {
         /* columns  : */ 10);
     
     char * filenames[2] = {
-        "structuredart1.png",
-        "structuredart2.png"
+        (char *)"structuredart1.png",
+        (char *)"structuredart2.png"
     };
     register_new_texturearray_from_files(
         (const char **)filenames,
@@ -303,7 +303,7 @@ static void client_handle_keypresses(uint64_t microseconds_elapsed) {
     float elapsed_mod =
         (float)((double)microseconds_elapsed / (double)16666);
     float cam_speed = 2.0f * elapsed_mod;
-    float cam_rotation_speed = 0.05f * elapsed_mod;
+    // float cam_rotation_speed = 0.05f * elapsed_mod;
     
     if (keypress_map[123] == true)
     {

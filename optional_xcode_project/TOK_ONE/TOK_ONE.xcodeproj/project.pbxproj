@@ -52,10 +52,6 @@
 		6080CC492870182700444118 /* common.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC472870182700444118 /* common.h */; };
 		6080CC4A2870182700444118 /* bitmap_renderer.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC482870182700444118 /* bitmap_renderer.h */; };
 		608802F2286DCBE700B81255 /* clientlogic.h in Sources */ = {isa = PBXBuildFile; fileRef = 608802F1286DCBE700B81255 /* clientlogic.h */; };
-		60A998D4287BD159003F7159 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 60A998CD287BD159003F7159 /* ViewController.m */; };
-		60A998D5287BD15A003F7159 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 60A998CF287BD159003F7159 /* main.m */; };
-		60A998D7287BD15A003F7159 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 60A998D1287BD159003F7159 /* Main.storyboard */; };
-		60A998D8287BD15A003F7159 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 60A998D3287BD159003F7159 /* AppDelegate.m */; };
 		60A998DB287BD333003F7159 /* decodedimage.c in Sources */ = {isa = PBXBuildFile; fileRef = 60A998D9287BD332003F7159 /* decodedimage.c */; };
 		60A998DC287BD333003F7159 /* decodedimage.h in Sources */ = {isa = PBXBuildFile; fileRef = 60A998DA287BD333003F7159 /* decodedimage.h */; };
 		60A998DF287BD494003F7159 /* inflate.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011283E286122FE00F92967 /* inflate.h */; };
@@ -131,7 +127,10 @@
 		60A99929287BDFF3003F7159 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60A99928287BDFF3003F7159 /* UIKit.framework */; };
 		60A9992F287C12BA003F7159 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60A9992E287C12BA003F7159 /* MetalKit.framework */; };
 		60A99931287C12C1003F7159 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60A99930287C12C1003F7159 /* Metal.framework */; };
-		60A99935287C49E0003F7159 /* ios_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = 60A99934287C49DF003F7159 /* ios_platform_layer.c */; };
+		ECCB089F28DB6BB00038BBAC /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = ECCB089D28DB6BB00038BBAC /* decode_bmp.c */; };
+		ECCB08A028DB6BB00038BBAC /* decode_bmp.h in Sources */ = {isa = PBXBuildFile; fileRef = ECCB089E28DB6BB00038BBAC /* decode_bmp.h */; };
+		ECCB08A328DB6C120038BBAC /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = ECCB089D28DB6BB00038BBAC /* decode_bmp.c */; };
+		ECCB08A528DB6FD00038BBAC /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECCB08A428DB6FD00038BBAC /* AVFoundation.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -198,18 +197,14 @@
 		6080CC482870182700444118 /* bitmap_renderer.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = bitmap_renderer.h; path = ../../src/shared/bitmap_renderer.h; sourceTree = "<group>"; };
 		608802F1286DCBE700B81255 /* clientlogic.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = clientlogic.h; path = ../../src/shared/clientlogic.h; sourceTree = "<group>"; };
 		60A998B4287BCF52003F7159 /* TOKONE_iphone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TOKONE_iphone.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		60A998CD287BD159003F7159 /* ViewController.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = ViewController.m; path = ../../../src/ios/ViewController.m; sourceTree = "<group>"; };
-		60A998CE287BD159003F7159 /* ViewController.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = ViewController.h; path = ../../../src/ios/ViewController.h; sourceTree = "<group>"; };
-		60A998CF287BD159003F7159 /* main.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = main.m; path = ../../../src/ios/main.m; sourceTree = "<group>"; };
-		60A998D1287BD159003F7159 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = Main.storyboard; path = ../../../src/ios/Main.storyboard; sourceTree = "<group>"; };
-		60A998D2287BD159003F7159 /* AppDelegate.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = AppDelegate.h; path = ../../../src/ios/AppDelegate.h; sourceTree = "<group>"; };
-		60A998D3287BD159003F7159 /* AppDelegate.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = AppDelegate.m; path = ../../../src/ios/AppDelegate.m; sourceTree = "<group>"; };
 		60A998D9287BD332003F7159 /* decodedimage.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = decodedimage.c; path = ../../src/shared/decodedimage.c; sourceTree = "<group>"; };
 		60A998DA287BD333003F7159 /* decodedimage.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = decodedimage.h; path = ../../src/shared/decodedimage.h; sourceTree = "<group>"; };
 		60A99928287BDFF3003F7159 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS15.2.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		60A9992E287C12BA003F7159 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS15.2.sdk/System/Library/Frameworks/MetalKit.framework; sourceTree = DEVELOPER_DIR; };
 		60A99930287C12C1003F7159 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS15.2.sdk/System/Library/Frameworks/Metal.framework; sourceTree = DEVELOPER_DIR; };
-		60A99934287C49DF003F7159 /* ios_platform_layer.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; fileEncoding = 4; name = ios_platform_layer.c; path = ../../../src/ios/ios_platform_layer.c; sourceTree = "<group>"; };
+		ECCB089D28DB6BB00038BBAC /* decode_bmp.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = decode_bmp.c; path = ../../src/shared/debigulator/src/decode_bmp.c; sourceTree = "<group>"; };
+		ECCB089E28DB6BB00038BBAC /* decode_bmp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = decode_bmp.h; path = ../../src/shared/debigulator/src/decode_bmp.h; sourceTree = "<group>"; };
+		ECCB08A428DB6FD00038BBAC /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -217,6 +212,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ECCB08A528DB6FD00038BBAC /* AVFoundation.framework in Frameworks */,
 				601128A82862588900F92967 /* AppKit.framework in Frameworks */,
 				601128A2286253FA00F92967 /* MetalKit.framework in Frameworks */,
 				601128A3286253FA00F92967 /* Metal.framework in Frameworks */,
@@ -240,10 +236,11 @@
 		601127DF28611D6500F92967 = {
 			isa = PBXGroup;
 			children = (
+				ECCB089D28DB6BB00038BBAC /* decode_bmp.c */,
+				ECCB089E28DB6BB00038BBAC /* decode_bmp.h */,
 				601128B128625BC100F92967 /* resources */,
 				601128A42862540400F92967 /* src */,
 				6011281B28611F5100F92967 /* TOKONE_macos */,
-				60A998B5287BCF52003F7159 /* TOKONE_iphone */,
 				6011281A28611F5100F92967 /* Products */,
 				601128432861239600F92967 /* Frameworks */,
 			);
@@ -269,6 +266,7 @@
 		601128432861239600F92967 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				ECCB08A428DB6FD00038BBAC /* AVFoundation.framework */,
 				60A99930287C12C1003F7159 /* Metal.framework */,
 				60A9992E287C12BA003F7159 /* MetalKit.framework */,
 				60A99928287BDFF3003F7159 /* UIKit.framework */,
@@ -301,20 +299,6 @@
 				601128AB28625BAE00F92967 /* teapot.obj */,
 			);
 			name = resources;
-			sourceTree = "<group>";
-		};
-		60A998B5287BCF52003F7159 /* TOKONE_iphone */ = {
-			isa = PBXGroup;
-			children = (
-				60A99934287C49DF003F7159 /* ios_platform_layer.c */,
-				60A998D2287BD159003F7159 /* AppDelegate.h */,
-				60A998D3287BD159003F7159 /* AppDelegate.m */,
-				60A998CF287BD159003F7159 /* main.m */,
-				60A998D1287BD159003F7159 /* Main.storyboard */,
-				60A998CE287BD159003F7159 /* ViewController.h */,
-				60A998CD287BD159003F7159 /* ViewController.m */,
-			);
-			path = TOKONE_iphone;
 			sourceTree = "<group>";
 		};
 		60A998DD287BD459003F7159 /* macos_only */ = {
@@ -426,7 +410,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastUpgradeCheck = 1320;
+				LastUpgradeCheck = 1400;
 				TargetAttributes = {
 					6011281828611F5100F92967 = {
 						CreatedOnToolsVersion = 13.2.1;
@@ -478,7 +462,6 @@
 				60A9991F287BDF31003F7159 /* font.png in Resources */,
 				60A99923287BDF31003F7159 /* teapot.obj in Resources */,
 				60A99920287BDF31003F7159 /* structuredart1.png in Resources */,
-				60A998D7287BD15A003F7159 /* Main.storyboard in Resources */,
 				60A99922287BDF31003F7159 /* structuredart2.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -490,6 +473,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ECCB089F28DB6BB00038BBAC /* decode_bmp.c in Sources */,
+				ECCB08A028DB6BB00038BBAC /* decode_bmp.h in Sources */,
 				6064C0C02892504A00E8B3AD /* gameloop.h in Sources */,
 				6064C0C12892504A00E8B3AD /* gameloop.c in Sources */,
 				6028DD312886EE36000E1E98 /* init_application.c in Sources */,
@@ -560,7 +545,6 @@
 				60A9991A287BD4C4003F7159 /* window_size.c in Sources */,
 				60A9990A287BD4C3003F7159 /* zpolygon.h in Sources */,
 				60A998F8287BD4C3003F7159 /* common.h in Sources */,
-				60A998D5287BD15A003F7159 /* main.m in Sources */,
 				60A9990D287BD4C3003F7159 /* gpu.h in Sources */,
 				60A99906287BD4C3003F7159 /* bitmap_renderer.c in Sources */,
 				60A99905287BD4C3003F7159 /* window_size.h in Sources */,
@@ -579,15 +563,14 @@
 				60A99903287BD4C3003F7159 /* userinput.c in Sources */,
 				60A998F3287BD4C3003F7159 /* draw_triangle.c in Sources */,
 				60A9990B287BD4C3003F7159 /* decodedimage.h in Sources */,
+				ECCB08A328DB6C120038BBAC /* decode_bmp.c in Sources */,
 				60A99910287BD4C4003F7159 /* texture_array.c in Sources */,
 				6064C0C22892505000E8B3AD /* gameloop.c in Sources */,
 				60A9991E287BD4D6003F7159 /* shaders.metal in Sources */,
 				60A998FF287BD4C3003F7159 /* bitmap_renderer.h in Sources */,
 				60A99907287BD4C3003F7159 /* clientlogic.c in Sources */,
 				60A99902287BD4C3003F7159 /* decode_png.h in Sources */,
-				60A99935287C49E0003F7159 /* ios_platform_layer.c in Sources */,
 				60A998F7287BD4C3003F7159 /* logger.c in Sources */,
-				60A998D4287BD159003F7159 /* ViewController.m in Sources */,
 				60A998F6287BD4C3003F7159 /* common_platform_layer.c in Sources */,
 				60A99912287BD4C4003F7159 /* userinput.h in Sources */,
 				60A998FD287BD4C3003F7159 /* decodedimage.c in Sources */,
@@ -601,7 +584,6 @@
 				60A9991B287BD4C4003F7159 /* draw_triangle.h in Sources */,
 				60A998F1287BD4C3003F7159 /* logger.h in Sources */,
 				60A998F2287BD4C3003F7159 /* software_renderer.h in Sources */,
-				60A998D8287BD15A003F7159 /* AppDelegate.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -611,12 +593,68 @@
 		601127E428611D6500F92967 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
 			};
 			name = Debug;
 		};
 		601127E528611D6500F92967 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				DEAD_CODE_STRIPPING = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
 			};
 			name = Release;
 		};
@@ -656,10 +694,12 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = TOKONE_macos/TOKONE_macos.entitlements;
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 69FRAQZ2YR;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -735,10 +775,12 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_ENTITLEMENTS = TOKONE_macos/TOKONE_macos.entitlements;
+				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 69FRAQZ2YR;
 				ENABLE_HARDENED_RUNTIME = YES;

@@ -146,11 +146,7 @@ void request_label_around(
     const float z,
     const float max_width,
     const bool32_t ignore_camera)
-{
-    log_append("request_label_around is drawing: ");
-    log_append(text_to_draw);
-    log_append("\n");
-    
+{    
     log_assert(max_width > 0.0f);
     
     uint32_t line_start_i = 0;
@@ -237,8 +233,6 @@ void request_label_around(
         cur_top -= font_height;
         line_start_i = line_end_i;
     }
-    
-    log_append("finished request_label_around()\n");
 }
 
 void request_label_renderable(

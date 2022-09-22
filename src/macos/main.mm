@@ -212,7 +212,7 @@ float platform_get_current_window_bottom() {
 }
 
 int main(int argc, const char * argv[]) {
-    
+
     init_application();
     
     client_logic_get_application_name(
@@ -285,9 +285,9 @@ int main(int argc, const char * argv[]) {
     
     char shader_lib_path_cstr[1000];
     strcpy_capped(
-        platform_get_resources_path(),
+        shader_lib_path_cstr,
         1000,
-        "/Shaders.metallib");
+        platform_get_resources_path());
     strcat_capped(
         shader_lib_path_cstr,
         1000,

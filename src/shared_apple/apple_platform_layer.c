@@ -90,7 +90,7 @@ Get a file's size. Returns 0 if no such file
 uint64_t platform_get_filesize(const char * filepath) {
     
     uint64_t return_value;
-    @autoreleasepool {
+    
     NSString * nsfilepath = [NSString
         stringWithCString:filepath
         encoding:NSASCIIStringEncoding];
@@ -113,7 +113,6 @@ uint64_t platform_get_filesize(const char * filepath) {
     assert(file_size < 20000000);
 
     return_value = file_size;
-    }
     
     return return_value;
 }

@@ -21,3 +21,36 @@ uint32_t tok_rand() {
     return random_sequence[current_random_i];
 }
 
+typedef struct Thing {
+    uint32_t id;
+    char letter;
+} Thing;
+
+void shuffle_array(
+    void * array,
+    const uint32_t array_size,
+    const uint32_t element_size)
+{
+    char * char_array = (char *)array;
+    
+    uint32_t start_i = 0;
+    for (
+        uint32_t size_left = array_size;
+        size_left > 1;
+        size_left--)
+    {
+        uint32_t swap_i = start_i + (tok_rand() % size_left) * element_size;
+        
+        // swap element_size bytes starting at start_i with
+        // element_size bytes starting at swap_i;
+        char swap;
+        for (uint32_t _ = 0; _ < element_size; _++) {
+            swap = *(char_array + start_i + _);
+            *(char_array + start_i + _) = *(char_array + swap_i + _);
+            *(char_array + swap_i + _) = swap;
+        }
+        
+        start_i += element_size; 
+    }
+}
+

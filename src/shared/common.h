@@ -22,6 +22,7 @@
 #include <assert.h>
 #endif
 
+#define bool8_t uint8_t
 #define bool32_t uint32_t
 
 #define local_only static
