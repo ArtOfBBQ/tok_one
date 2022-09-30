@@ -80,4 +80,3 @@ void client_logic_get_application_name(
     const uint32_t recipient_size);
 
 #endif
-

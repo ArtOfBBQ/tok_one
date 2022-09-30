@@ -8,7 +8,7 @@ uint8_t * managed_memory = NULL;
 uint64_t managed_memory_size = MANAGED_MEMORY_SIZE;
 
 uint8_t * malloc_from_unmanaged(uint64_t size) {
-
+    
     log_assert(unmanaged_memory != NULL);
     log_assert(size > 0);
     

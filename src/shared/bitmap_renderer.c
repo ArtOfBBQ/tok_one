@@ -160,8 +160,8 @@ static void add_quad_to_gpu_workload(
     uint32_t * next_gpu_workload_size,
     const zLightSource * zlights_transformed)
 {
-    if (to_add->scale_factor_x < 0.01f
-        || to_add->scale_factor_y < 0.01f)
+    if (to_add->scale_factor_x < 0.01f ||
+        to_add->scale_factor_y < 0.01f)
     {
         log_append(
             "skipping add_quad_to_gpu_workload() because scale factor is"

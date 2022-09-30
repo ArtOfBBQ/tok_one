@@ -118,4 +118,3 @@ void translate_lights()
         zlights_transformed_size++;
     }
 }
-

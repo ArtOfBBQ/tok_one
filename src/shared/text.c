@@ -69,6 +69,11 @@ static float get_advance_width(const char input) {
     uint32_t i = (uint32_t)(input - '!');
     // log_assert(codepoint_metrics[i].character == input);
     
+    if (i >= codepoint_metrics_size) {
+        i = (uint32_t)('m' - '!');
+        log_assert(i < codepoint_metrics_size);
+    }
+    
     return
         (codepoint_metrics[i].advance_width *
             global_font_metrics->scale_factor *
@@ -82,6 +87,11 @@ static float get_left_side_bearing(const char input) {
     uint32_t i = (uint32_t)(input - '!');
     // log_assert(codepoint_metrics[i].character == input);
     
+    if (i >= codepoint_metrics_size) {
+        i = (uint32_t)('m' - '!');
+        log_assert(i < codepoint_metrics_size);
+    }
+    
     return
         (codepoint_metrics[i].left_side_bearing *
             global_font_metrics->scale_factor *
@@ -93,7 +103,14 @@ static float get_y_offset(const char input) {
     if (input == ' ' || input == '\0' || input == '\n') { return 0.0f; }
     
     uint32_t i = (uint32_t)(input - '!');
+    if (i >= codepoint_metrics_size) { return 0.0f; }
+    
     log_assert(codepoint_metrics[i].character == input);
+    
+    if (i >= codepoint_metrics_size) {
+        i = (uint32_t)('m' - '!');
+        log_assert(i < codepoint_metrics_size);
+    }
     
     return
         (-codepoint_metrics[i].y1 *

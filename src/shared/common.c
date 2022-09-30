@@ -1,5 +1,20 @@
 #include "common.h"
 
+float tok_fminf(const float x, const float y)
+{
+    return ((x <= y) * x) + ((y < x) * y);
+}
+
+int tok_imini(const int x, const int y)
+{
+    return ((x <= y) * x) + ((y < x) * y);
+}
+
+int tok_imaxi(const int x, const int y)
+{
+    return ((x <= y) * y) + ((y < x) * x);
+}
+
 void
 strcat_capped(
     char * recipient,
@@ -23,6 +38,40 @@ strcat_capped(
     }
     
     recipient[i] = '\0';
+}
+
+void
+strcat_int_capped(
+    char * recipient,
+    const uint32_t recipient_size,
+    const int32_t to_append)
+{
+    uint32_t i = 0;
+    while (recipient[i] != '\0') {
+        #ifndef COMMON_IGNORE_ASSERTS
+        assert(i < recipient_size);
+        #endif
+        i++;
+    }
+    
+    int_to_string(to_append, recipient + i, recipient_size - i);
+}
+
+void
+strcat_uint_capped(
+    char * recipient,
+    const uint32_t recipient_size,
+    const uint32_t to_append)
+{
+    uint32_t i = 0;
+    while (recipient[i] != '\0') {
+        #ifndef COMMON_IGNORE_ASSERTS
+        assert(i < recipient_size);
+        #endif
+        i++;
+    }
+    
+    uint_to_string(to_append, recipient + i, recipient_size - i);
 }
 
 void strcpy_capped(
@@ -102,6 +151,10 @@ are_equal_strings(
         }
         i++;
     }
+    
+    if (str1[i] != '\0' || str2[i] != '\0') {
+        return false;
+    }
 
     return true;
 }
@@ -126,8 +179,7 @@ void float_to_string(
     char * recipient,
     const uint32_t recipient_size)
 {
-    float temp_above_decimal =
-        (float)(int32_t)input;
+    float temp_above_decimal = (float)(int32_t)input;
     int32_t below_decimal =
         (int32_t)((input - temp_above_decimal) * 10000);
     int32_t above_decimal = (int32_t)temp_above_decimal;
@@ -254,6 +306,16 @@ string_to_int32_validate(
         
         *good = true;
         return (int32_t)temp * -1;
+    } else if (input[0] < '0' || input[0] > '9') {
+        *good = false;
+        return 0;
+    }
+    
+    for (uint32_t i = 1; i < input_size; i++) {
+        if (input[i] < '0' || input[i] > '9') {
+            *good = false;
+            return 0;
+        }
     }
     
     uint32_t unsigned_return =
@@ -459,12 +521,24 @@ string_to_float_validate(
     first_part[first_part_i] = '\0';
     second_part[second_part_i] = '\0';
     
-    int first_part_int = string_to_int32(
+    bool32_t first_part_valid = false;
+    int first_part_int = string_to_int32_validate(
         /* const char input: */ first_part,
-        /* const uint32_t input_size: */ first_part_i);
-    int second_part_int = string_to_int32(
+        /* const uint32_t input_size: */ first_part_i,
+        &first_part_valid);
+    if (!first_part_valid) {
+        *good = false;
+        return return_value;
+    }
+    bool32_t second_part_valid = false;
+    int second_part_int = string_to_int32_validate(
         /* const char input: */ second_part,
-        /* const uint32_t input_size: */ first_part_i);
+        /* const uint32_t input_size: */ first_part_i,
+        &second_part_valid);
+    if (!second_part_valid) {
+        *good = false;
+        return return_value;
+    }
     
     return_value += (float)first_part_int;
     return_value += (float)second_part_int /

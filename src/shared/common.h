@@ -27,11 +27,27 @@
 
 #define local_only static
 
+int tok_imini(const int x, const int y);
+int tok_imaxi(const int x, const int y);
+float tok_fminf(const float x, const float y);
+
 void
 strcat_capped(
     char * recipient,
     const uint32_t recipient_size,
     const char * to_append);
+    
+void
+strcat_int_capped(
+    char * recipient,
+    const uint32_t recipient_size,
+    const int32_t to_append);
+
+void
+strcat_uint_capped(
+    char * recipient,
+    const uint32_t recipient_size,
+    const uint32_t to_append);
 
 void strcpy_capped(
     char * recipient,
@@ -75,7 +91,6 @@ float_to_string(
     const float input,
     char * recipient,
     const uint32_t recipient_size);
-
 
 int32_t
 string_to_int32_validate(

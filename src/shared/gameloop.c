@@ -16,15 +16,6 @@ void shared_gameloop_update(
     }
     previous_time = time;
     
-    // if (elapsed > 750000) {
-    //     log_append("Error: elapsed time was: ");
-    //     log_append_uint(elapsed);
-    //     log_append(" microseconds at frame: ");
-    //     log_append_uint(frame_no);
-    //     log_append("\n");
-    //     log_assert(elapsed < 750000);
-    // }
-    
     if (
         time - last_resize_request_at < 1500000
         && !request_post_resize_clearscreen)
@@ -34,8 +25,8 @@ void shared_gameloop_update(
         }
         
         client_logic_window_resize(
-            window_height,
-            window_width);
+            (uint32_t)window_height,
+            (uint32_t)window_width);
         last_resize_request_at = 999999999;
     } else {
         init_or_push_one_gpu_texture_array_if_needed();

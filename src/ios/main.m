@@ -22,6 +22,10 @@ bool32_t has_retina_screen =
 
 int main(int argc, char * argv[]) {
     
+    client_logic_get_application_name(
+        /* recipient: */ application_name,
+        /* recipient_size: */ 100);
+    
     init_application();
     
     NSString * appDelegateClassName;

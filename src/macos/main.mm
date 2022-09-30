@@ -212,15 +212,15 @@ float platform_get_current_window_bottom() {
 }
 
 int main(int argc, const char * argv[]) {
-
-    init_application();
     
     client_logic_get_application_name(
         /* recipient: */ application_name,
         /* recipient_size: */ 100);
     
-    log_append("started application: ");
+    init_application();
+    log_append("initialized application: ");
     log_append(application_name);
+    
     log_append("\nallocated unmanaged memory: ");
     log_append_uint(UNMANAGED_MEMORY_SIZE);
     log_append("\nallocated managed memory: ");
@@ -253,12 +253,8 @@ int main(int argc, const char * argv[]) {
     
     GameWindowDelegate * window_delegate =
         [[GameWindowDelegate alloc] init];
-   
-    char app_name[100];
-    client_logic_get_application_name(
-        app_name,
-        100);
-    NSString * nsstring_app_name = [NSString stringWithUTF8String:app_name];  
+    
+    NSString * nsstring_app_name = [NSString stringWithUTF8String:application_name];  
     [window setDelegate: window_delegate];
     [window setTitle: nsstring_app_name];
     [window makeMainWindow]; 

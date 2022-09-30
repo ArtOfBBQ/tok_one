@@ -312,14 +312,9 @@ internal_log_append(
 {
     #ifndef LOGGER_SILENCE
     if (application_running) {
-        printf(
-            "%s\n",
-            to_append);
+        printf("%s", to_append);
     }
-    #endif
     
-    return;
-    #ifndef LOGGER_SILENCE 
     uint32_t initial_log_i = log_i;
     #endif
     

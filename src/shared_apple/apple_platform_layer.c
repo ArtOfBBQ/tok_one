@@ -12,6 +12,7 @@ char * platform_get_writables_path(void) {
     
     if (writables_path == NULL) {
         
+        log_assert(application_name != NULL && application_name[0] != '\0');
         NSArray * paths = NSSearchPathForDirectoriesInDomains(
             NSApplicationSupportDirectory,
             NSUserDomainMask,
@@ -27,17 +28,9 @@ char * platform_get_writables_path(void) {
         writables_path = (char *)malloc_from_unmanaged(
             get_string_length(library_dir) + get_string_length(application_name) + 2);
         
-        uint32_t i = 0;
-        while (library_dir[i] != '\0') {
-            writables_path[i] = library_dir[i];
-            i++;
-        }
-        writables_path[i++] = '/';
-        uint32_t j = 0;
-        while (application_name[j] != '\0') {
-            writables_path[i++] = application_name[j++];
-        }
-        writables_path[i] = '\0';
+        strcpy_capped(writables_path, FILENAME_MAX, library_dir);
+        strcat_capped(writables_path, FILENAME_MAX, "/");
+        strcat_capped(writables_path, FILENAME_MAX, application_name);
         
         platform_mkdir_if_not_exist(writables_path);
     }
@@ -396,8 +389,13 @@ platform_get_application_path() {
 }
 
 char * platform_get_resources_path() {
-    return (char *)
-        [[[NSBundle mainBundle] resourcePath] cStringUsingEncoding: NSASCIIStringEncoding];
+    char * return_value = (char *)malloc_from_unmanaged(FILENAME_MAX);
+    strcpy_capped(
+        return_value,
+        FILENAME_MAX,
+        (char *)[[[NSBundle mainBundle] resourcePath] cStringUsingEncoding: NSASCIIStringEncoding]);
+    
+    return return_value;
 }
 
 void platform_start_thread(
