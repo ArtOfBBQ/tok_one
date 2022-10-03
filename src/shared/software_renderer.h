@@ -11,8 +11,6 @@
 #include "zpolygon.h"
 #include "clientlogic.h"
 
-local_only uint32_t renderer_initialized = false;
-
 void init_renderer(void);
 void free_renderer(void);
 

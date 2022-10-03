@@ -25,8 +25,6 @@
 #define bool8_t uint8_t
 #define bool32_t uint32_t
 
-#define local_only static
-
 int tok_imini(const int x, const int y);
 int tok_imaxi(const int x, const int y);
 float tok_fminf(const float x, const float y);

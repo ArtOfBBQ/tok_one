@@ -209,11 +209,11 @@ void request_label_around(
         
         cur_left = mid_x_pixelspace - (0.5f * line_width);
         for (
-            uint32_t i = line_start_i;
-            i <= line_end_i;
-            i++)
+            uint32_t j = line_start_i;
+            j <= line_end_i;
+            j++)
         {
-            if (text_to_draw[i] == ' ') {
+            if (text_to_draw[j] == ' ') {
                 cur_left += (font_height / 2);
                 continue;
             }
@@ -222,9 +222,9 @@ void request_label_around(
             construct_texquad(&letter);
             letter.ignore_lighting = font_ignore_lighting;
             letter.ignore_camera = ignore_camera;
-            letter.object_id = with_id;
+            letter.object_id = (int32_t)with_id;
             letter.texturearray_i = font_texturearray_i;
-            letter.texture_i = text_to_draw[i] - '!';
+            letter.texture_i = text_to_draw[j] - '!';
             
             for (
                 uint32_t rgba_i = 0;
@@ -235,16 +235,16 @@ void request_label_around(
             }
             
             letter.left_pixels =
-                cur_left + get_left_side_bearing(text_to_draw[i]);
+                cur_left + get_left_side_bearing(text_to_draw[j]);
             letter.top_pixels =
                 cur_top -
-                get_y_offset(text_to_draw[i]);
+                get_y_offset(text_to_draw[j]);
             letter.height_pixels = font_height;
             letter.width_pixels = letter.height_pixels;
             letter.z = z;
             
             request_texquad_renderable(&letter);
-            cur_left += get_advance_width(text_to_draw[i]);
+            cur_left += get_advance_width(text_to_draw[j]);
         }
         
         cur_top -= font_height;
@@ -300,7 +300,7 @@ void request_label_renderable(
         
         TexQuad letter;
         construct_texquad(&letter);
-        letter.object_id = with_id;
+        letter.object_id = (int32_t)with_id;
         letter.texturearray_i = font_texturearray_i;
         letter.texture_i = (int32_t)(text_to_draw[i] - '!');
         
@@ -339,7 +339,7 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
     
     // TODO: our timer is weirdly broken on iOS. Fix it!
     char fps_string[8] = "fps: xx";
-    uint32_t label_object_id = 0;
+    int32_t label_object_id = 0;
     uint64_t fps = 1000000 / microseconds_elapsed;
     /*
     float elapsed_mod =
@@ -357,7 +357,7 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
     font_height = 12.0f;
     font_ignore_lighting = true;
     request_label_renderable(
-        /* with_id               : */ label_object_id,
+        /* with_id               : */ (uint32_t)label_object_id,
         /* char * text_to_draw   : */ fps_string,
         /* float left_pixelspace : */ 20.0f,
         /* float top_pixelspace  : */ 60.0f,
@@ -365,4 +365,3 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
         /* float max_width       : */ window_width,
         /* bool32_t ignore_camera: */ true);
 }
-

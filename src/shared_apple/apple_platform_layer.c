@@ -487,6 +487,7 @@ static uint32_t next_mutex_id = 0;
 creates a mutex and return the ID of said mutex for you to store
 */
 uint32_t platform_init_mutex_and_return_id() {
+    log_assert(next_mutex_id + 1 < MUTEXES_SIZE);
     pthread_mutex_init(&(mutexes[next_mutex_id]), NULL);
     uint32_t return_value = next_mutex_id;
     next_mutex_id++;

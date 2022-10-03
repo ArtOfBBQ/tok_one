@@ -53,7 +53,7 @@ extern "C" {
     void __attribute__((no_instrument_function))
     __cyg_profile_func_enter(
         void *this_fn,
-        void *call_site)
+        void * call_site)
     {
         logger_activated = true;
         
@@ -314,6 +314,8 @@ internal_log_append(
     if (application_running) {
         printf("%s", to_append);
     }
+    
+    return;
     
     uint32_t initial_log_i = log_i;
     #endif

@@ -1,8 +1,7 @@
 #include "init_application.h"
 
 void init_application() {
-    unmanaged_memory = (uint8_t *)malloc(UNMANAGED_MEMORY_SIZE);
-    managed_memory = (uint8_t *)malloc(MANAGED_MEMORY_SIZE);
+    init_memory_store();
     
     setup_log();
     
@@ -45,9 +44,7 @@ void init_application() {
     log_append("\n");
     
     init_projection_constants();
-    
-    client_logic_startup();
-    
+        
     construct_interaction(&previous_touch_start);
     construct_interaction(&previous_touch_end);
     construct_interaction(&previous_leftclick_start);
@@ -59,5 +56,6 @@ void init_application() {
     construct_interaction(&previous_mouse_move);
     
     init_renderer();
+    
+    client_logic_startup();
 }
-

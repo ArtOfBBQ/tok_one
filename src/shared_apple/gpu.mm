@@ -182,17 +182,14 @@ static uint32_t already_drawing = false;
 {
     log_assert(texture_i >= 0);
     
-    if (texturearray_i >= [_metal_textures count]) {
+    if (texturearray_i >= (int32_t)[_metal_textures count]) {
         log_append(
             "Warning: tried to update uninitialized texturearray ");
         log_append_int(texturearray_i);
         log_append("\n");
         return;
     }
-    
-    // TODO: this used to be handled here, make sure the caller does it instead
-    // texture_arrays[texturearray_i].images[texture_i].request_update = false;
-    
+        
     MTLTextureDescriptor * texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
     texture_descriptor.textureType = MTLTextureType2DArray;
@@ -206,13 +203,13 @@ static uint32_t already_drawing = false;
         { image_width, image_height, 1 }
     };
     
-    [[_metal_textures objectAtIndex:texturearray_i]
+    [[_metal_textures objectAtIndex: (NSUInteger)texturearray_i]
         replaceRegion:
             region
         mipmapLevel:
             0
         slice:
-            texture_i
+            (NSUInteger)texture_i
         withBytes:
             rgba_values
         bytesPerRow:
@@ -253,12 +250,14 @@ static uint32_t already_drawing = false;
 {
     log_assert(!already_drawing);
     already_drawing = true;
-     
+    
     MTLViewport viewport = {
         0,
         0,
         window_width * (has_retina_screen ? 2.0f : 1.0f),
-        window_height * (has_retina_screen ? 2.0f : 1.0f)
+        window_height * (has_retina_screen ? 2.0f : 1.0f),
+        /* TODO: should be projection_constants.near? */ 0.0f,
+        /* TODO: should be projection_constants.far?  */ 0.0f,
     };
     
     uint32_t frame_i = (uint32_t)_currentFrameIndex;
@@ -373,6 +372,7 @@ void platform_gpu_init_texture_array(
     log_append("\n");
     
     log_assert(apple_gpu_delegate != NULL);
+    
     [apple_gpu_delegate
         initializeTextureArray : texture_array_i
         textureCount           : num_images
@@ -388,6 +388,8 @@ void platform_gpu_push_texture_slice(
     const uint32_t image_height,
     const uint8_t * rgba_values)
 {
+    log_append("platform_gpu_push_texture_slice");
+    
     [apple_gpu_delegate
         updateTextureArray : (int32_t)texture_array_i
         atTexture          : (int32_t)texture_i

@@ -348,4 +348,3 @@ void client_logic_window_resize(
     log_append("unhandled client_logic_window_resize()\n");
     log_dump_and_crash();
 }
-

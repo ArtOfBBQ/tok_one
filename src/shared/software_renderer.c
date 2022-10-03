@@ -1,5 +1,7 @@
 #include "software_renderer.h"
 
+static uint32_t renderer_initialized = false;
+
 void init_renderer() {
     renderer_initialized = true;
     

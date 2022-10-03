@@ -1,11 +1,13 @@
 #include "scheduled_animations.h"
 
 ScheduledAnimation * scheduled_animations;
-uint32_t scheduled_animations_size = 0;
+static uint32_t scheduled_animations_size = 0;
+static uint32_t scheduled_animations_mutex_id;
 
 void init_scheduled_animations() {
     scheduled_animations = (ScheduledAnimation *)malloc_from_unmanaged(
         sizeof(ScheduledAnimation) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
+    scheduled_animations_mutex_id = platform_init_mutex_and_return_id();
 }
 
 void construct_scheduled_animation(
@@ -56,6 +58,9 @@ void construct_scheduled_animation(
 void request_scheduled_animation(
     ScheduledAnimation * to_add)
 {
+    // TODO: mutex
+    // platform_mutex_lock(scheduled_animations_mutex_id);
+    
     log_assert(to_add != NULL);
     to_add->remaining_microseconds = to_add->duration_microseconds;
     
@@ -79,6 +84,9 @@ void request_scheduled_animation(
     log_assert(
         SCHEDULED_ANIMATIONS_ARRAYSIZE
             > scheduled_animations_size);
+    
+    // TODO: mutex
+    // platform_mutex_unlock(scheduled_animations_mutex_id);
 }
 
 void request_fade_and_destroy(
@@ -91,7 +99,7 @@ void request_fade_and_destroy(
     // register scheduled animation
     ScheduledAnimation modify_alpha;
     construct_scheduled_animation(&modify_alpha);
-    modify_alpha.affected_object_id = object_id;
+    modify_alpha.affected_object_id = (int32_t)object_id;
     modify_alpha.remaining_wait_before_next_run = wait_before_first_run;
     modify_alpha.duration_microseconds = duration_microseconds;
     modify_alpha.final_rgba_known[0] = true;
@@ -364,6 +372,9 @@ static void resolve_single_animation_effects(
 }
 
 void resolve_animation_effects(const uint64_t microseconds_elapsed) {
+   
+    // TODO: use mutex 
+    // platform_mutex_lock(scheduled_animations_mutex_id);
     
     ScheduledAnimation * anim;
     for (
@@ -503,6 +514,9 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                 remaining_microseconds_at_start_of_run);
         }
     }
+   
+    // TODO: mutex 
+    // platform_mutex_unlock(scheduled_animations_mutex_id);
 }
 
 void request_dud_dance(const uint32_t object_id)
@@ -515,7 +529,7 @@ void request_dud_dance(const uint32_t object_id)
     {
         ScheduledAnimation move_request;
         construct_scheduled_animation(&move_request);
-        move_request.affected_object_id = object_id;
+        move_request.affected_object_id = (int32_t)object_id;
         move_request.remaining_wait_before_next_run = wait_first;
         move_request.duration_microseconds = step_size;
         move_request.delta_x_per_second =
@@ -539,7 +553,7 @@ void request_bump_animation(
     
     ScheduledAnimation embiggen_request;
     construct_scheduled_animation(&embiggen_request);
-    embiggen_request.affected_object_id = object_id;
+    embiggen_request.affected_object_id = (int32_t)object_id;
     embiggen_request.remaining_wait_before_next_run = wait;
     embiggen_request.duration_microseconds = duration / 2;
     embiggen_request.final_xscale_known = true;
@@ -550,7 +564,7 @@ void request_bump_animation(
     
     ScheduledAnimation revert_request;
     construct_scheduled_animation(&revert_request);
-    revert_request.affected_object_id = object_id;
+    revert_request.affected_object_id = (int32_t)object_id;
     revert_request.remaining_wait_before_next_run = wait + duration / 2;
     revert_request.duration_microseconds = duration / 2;
     revert_request.final_xscale_known = true;
@@ -564,7 +578,7 @@ void delete_all_rgba_animations_targeting(
     const uint32_t object_id)
 {
     for (uint32_t i = 0; i < scheduled_animations_size; i++) {
-        if (scheduled_animations[i].affected_object_id == object_id &&
+        if (scheduled_animations[i].affected_object_id == (int32_t)object_id &&
             (scheduled_animations[i].final_rgba_known[0] ||
              scheduled_animations[i].final_rgba_known[1] ||
              scheduled_animations[i].final_rgba_known[2] ||

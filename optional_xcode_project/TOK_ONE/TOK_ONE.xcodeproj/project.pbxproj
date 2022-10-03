@@ -202,8 +202,8 @@
 		60A99928287BDFF3003F7159 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS15.2.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		60A9992E287C12BA003F7159 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS15.2.sdk/System/Library/Frameworks/MetalKit.framework; sourceTree = DEVELOPER_DIR; };
 		60A99930287C12C1003F7159 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS15.2.sdk/System/Library/Frameworks/Metal.framework; sourceTree = DEVELOPER_DIR; };
-		ECCB089D28DB6BB00038BBAC /* decode_bmp.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = decode_bmp.c; path = ../../src/shared/debigulator/src/decode_bmp.c; sourceTree = "<group>"; };
-		ECCB089E28DB6BB00038BBAC /* decode_bmp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = decode_bmp.h; path = ../../src/shared/debigulator/src/decode_bmp.h; sourceTree = "<group>"; };
+		ECCB089D28DB6BB00038BBAC /* decode_bmp.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = decode_bmp.c; path = ../../src/shared/debigulator/src/decode_bmp.c; sourceTree = "<group>"; };
+		ECCB089E28DB6BB00038BBAC /* decode_bmp.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; name = decode_bmp.h; path = ../../src/shared/debigulator/src/decode_bmp.h; sourceTree = "<group>"; };
 		ECCB08A428DB6FD00038BBAC /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 

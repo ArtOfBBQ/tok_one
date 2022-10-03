@@ -88,7 +88,7 @@ void strcpy_capped(
         assert(i < recipient_size - 1);
         #endif
         recipient[i] = origin[i];
-        i++;
+        i += 1;
     }
     
     #ifndef COMMON_IGNORE_ASSERTS
