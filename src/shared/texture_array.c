@@ -4,8 +4,6 @@
 #define MAX_FILES_IN_SINGLE_TEXARRAY 200
 #define MAX_ASSET_FILES 1500
 
-static uint32_t texture_arrays_mutex_id;
-
 typedef struct TextureArrayImage {
     DecodedImage * image;
     char * filename;
@@ -387,14 +385,9 @@ void init_texture_arrays() {
             texture_arrays[i].images[j].image = NULL;
         }
     }
-    
-    texture_arrays_mutex_id = platform_init_mutex_and_return_id();
 }
 
 void init_or_push_one_gpu_texture_array_if_needed() {
-   
-    // TODO: mutex 
-    // platform_mutex_lock(texture_arrays_mutex_id);
     
     for (int32_t i = 0; (uint32_t)i < texture_arrays_size; i++) {
         if (texture_arrays[i].request_init) {
@@ -431,9 +424,6 @@ void init_or_push_one_gpu_texture_array_if_needed() {
             }
         }
     }
-   
-    // TODO: mutex 
-    // platform_mutex_unlock(texture_arrays_mutex_id);
 }
 
 static void register_to_texturearray_by_splitting_image(

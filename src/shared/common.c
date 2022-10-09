@@ -12,7 +12,7 @@ int tok_imini(const int x, const int y)
 
 int tok_imaxi(const int x, const int y)
 {
-    return ((x <= y) * y) + ((y < x) * x);
+    return ((x <= y) * y) + ((x > y) * x);
 }
 
 void

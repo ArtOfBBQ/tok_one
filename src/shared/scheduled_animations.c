@@ -2,12 +2,10 @@
 
 ScheduledAnimation * scheduled_animations;
 static uint32_t scheduled_animations_size = 0;
-static uint32_t scheduled_animations_mutex_id;
 
 void init_scheduled_animations() {
     scheduled_animations = (ScheduledAnimation *)malloc_from_unmanaged(
         sizeof(ScheduledAnimation) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
-    scheduled_animations_mutex_id = platform_init_mutex_and_return_id();
 }
 
 void construct_scheduled_animation(
@@ -58,9 +56,6 @@ void construct_scheduled_animation(
 void request_scheduled_animation(
     ScheduledAnimation * to_add)
 {
-    // TODO: mutex
-    // platform_mutex_lock(scheduled_animations_mutex_id);
-    
     log_assert(to_add != NULL);
     to_add->remaining_microseconds = to_add->duration_microseconds;
     
@@ -84,9 +79,6 @@ void request_scheduled_animation(
     log_assert(
         SCHEDULED_ANIMATIONS_ARRAYSIZE
             > scheduled_animations_size);
-    
-    // TODO: mutex
-    // platform_mutex_unlock(scheduled_animations_mutex_id);
 }
 
 void request_fade_and_destroy(
@@ -373,9 +365,6 @@ static void resolve_single_animation_effects(
 
 void resolve_animation_effects(const uint64_t microseconds_elapsed) {
    
-    // TODO: use mutex 
-    // platform_mutex_lock(scheduled_animations_mutex_id);
-    
     ScheduledAnimation * anim;
     for (
         int32_t animation_i = (int32_t)(scheduled_animations_size - 1);
@@ -514,9 +503,6 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                 remaining_microseconds_at_start_of_run);
         }
     }
-   
-    // TODO: mutex 
-    // platform_mutex_unlock(scheduled_animations_mutex_id);
 }
 
 void request_dud_dance(const uint32_t object_id)

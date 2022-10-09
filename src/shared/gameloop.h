@@ -16,4 +16,3 @@ void shared_gameloop_update(
     uint32_t * vertices_for_gpu_size);
 
 #endif
-

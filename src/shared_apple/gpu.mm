@@ -388,8 +388,6 @@ void platform_gpu_push_texture_slice(
     const uint32_t image_height,
     const uint8_t * rgba_values)
 {
-    log_append("platform_gpu_push_texture_slice");
-    
     [apple_gpu_delegate
         updateTextureArray : (int32_t)texture_array_i
         atTexture          : (int32_t)texture_i

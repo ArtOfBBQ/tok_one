@@ -7,7 +7,6 @@ void shared_gameloop_update(
     Vertex * vertices_for_gpu,
     uint32_t * vertices_for_gpu_size)
 {
-    log_append(".");
     frame_no++;
     uint64_t time = platform_get_current_time_microsecs();
     uint64_t elapsed = time - previous_time;

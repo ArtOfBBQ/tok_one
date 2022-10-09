@@ -20,7 +20,7 @@ void init_memory_store() {
 }
 
 uint8_t * malloc_from_unmanaged(uint64_t size) {
-
+    
     platform_mutex_lock(malloc_mutex_id);
     
     log_assert(unmanaged_memory != NULL);
