@@ -3,47 +3,31 @@
 
 #include "../shared/platform_layer.h"
 
-char * writables_path = NULL;
-
 AVAudioPlayer * active_music_player = NULL;
 static float sound_volume = 0.15f;
 
-char * platform_get_writables_path(void) {
+void platform_get_writables_path(char * recipient, const uint32_t recipient_size) {
     
-    if (writables_path == NULL) {
-        
-        log_assert(application_name != NULL && application_name[0] != '\0');
-        NSArray * paths = NSSearchPathForDirectoriesInDomains(
-            NSApplicationSupportDirectory,
-            NSUserDomainMask,
-            YES);
-        
-        NSString * libraryDirectory = [paths objectAtIndex:0];
-        
-        char * library_dir =
-            (char *)[libraryDirectory
-                cStringUsingEncoding: NSUTF8StringEncoding];
-        
-        // +2 because 1 for null terminator, 1 for an '/' in between
-        writables_path = (char *)malloc_from_unmanaged(
-            get_string_length(library_dir) + get_string_length(application_name) + 2);
-        
-        strcpy_capped(writables_path, FILENAME_MAX, library_dir);
-        strcat_capped(writables_path, FILENAME_MAX, "/");
-        strcat_capped(writables_path, FILENAME_MAX, application_name);
-        
-        platform_mkdir_if_not_exist(writables_path);
-    }
+    log_assert(application_name != NULL && application_name[0] != '\0');
+    NSArray * paths = NSSearchPathForDirectoriesInDomains(
+        NSApplicationSupportDirectory,
+        NSUserDomainMask,
+        YES);
     
-    log_assert(writables_path != NULL);
-    log_append("writables_path is: ");
-    log_append(writables_path);
-    log_append("\n");
+    NSString * libraryDirectory = [paths objectAtIndex:0];
     
-    return writables_path;
+    char * library_dir =
+        (char *)[libraryDirectory
+            cStringUsingEncoding: NSUTF8StringEncoding];
+    
+    strcpy_capped(recipient, recipient_size, library_dir);
+    strcat_capped(recipient, recipient_size, "/");
+    strcat_capped(recipient, recipient_size, application_name);
+    
+    platform_mkdir_if_not_exist(recipient);
 }
 
-uint32_t platform_get_directory_separator_size() {
+uint32_t platform_get_directory_separator_size(void) {
     return 1;
 }
 
@@ -381,21 +365,20 @@ void platform_get_filenames_in(
     }
 }
 
-char * __attribute__((no_instrument_function))
-platform_get_application_path() {
-    return (char *)
-        [[[NSBundle mainBundle] bundlePath]
-            cStringUsingEncoding: NSASCIIStringEncoding];
+void
+platform_get_application_path(char * recipient, const uint32_t recipient_size) {
+    strcpy_capped(
+        recipient,
+        recipient_size,
+        (char *)[[[NSBundle mainBundle] bundlePath]
+            cStringUsingEncoding: NSASCIIStringEncoding]);
 }
 
-char * platform_get_resources_path() {
-    char * return_value = (char *)malloc_from_unmanaged(FILENAME_MAX);
+void platform_get_resources_path(char * recipient, const uint32_t recipient_size) {
     strcpy_capped(
-        return_value,
-        FILENAME_MAX,
+        recipient,
+        recipient_size,
         (char *)[[[NSBundle mainBundle] resourcePath] cStringUsingEncoding: NSASCIIStringEncoding]);
-    
-    return return_value;
 }
 
 void platform_start_thread(
@@ -486,7 +469,7 @@ static uint32_t next_mutex_id = 0;
 /*
 creates a mutex and return the ID of said mutex for you to store
 */
-uint32_t platform_init_mutex_and_return_id() {
+uint32_t platform_init_mutex_and_return_id(void) {
     log_assert(next_mutex_id + 1 < MUTEXES_SIZE);
     int success = pthread_mutex_init(&(mutexes[next_mutex_id]), NULL);
     log_assert(success == 0);

@@ -3,7 +3,7 @@
 ScheduledAnimation * scheduled_animations;
 static uint32_t scheduled_animations_size = 0;
 
-void init_scheduled_animations() {
+void init_scheduled_animations(void) {
     scheduled_animations = (ScheduledAnimation *)malloc_from_unmanaged(
         sizeof(ScheduledAnimation) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
 }

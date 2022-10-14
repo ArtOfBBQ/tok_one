@@ -97,7 +97,7 @@ void strcpy_capped(
     recipient[i] = '\0';
 }
 
-void __attribute__((no_instrument_function))
+void
 copy_strings(
     char * recipient,
     const uint32_t recipient_size,
@@ -114,7 +114,7 @@ copy_strings(
     }
 }
 
-uint32_t __attribute__((no_instrument_function))
+uint32_t
 get_string_length(   
     const char * null_terminated_string)
 {

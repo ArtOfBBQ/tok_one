@@ -69,7 +69,7 @@ zVertex y_rotate_zvertex(
 //     }
 // }
 
-void clean_deleted_lights()
+void clean_deleted_lights(void)
 {
     while (
         zlights_to_apply_size > 0
@@ -80,7 +80,7 @@ void clean_deleted_lights()
 }
 
 // move each light so the camera becomes position 0,0,0
-void translate_lights()
+void translate_lights(void)
 {
     assert(zlights_to_apply_size < ZLIGHTS_TO_APPLY_ARRAYSIZE);
     

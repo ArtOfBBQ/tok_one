@@ -5,13 +5,21 @@
 #include "../shared/logger.h"
 #include "../shared/tok_random.h"
 #include "../shared/lightsource.h"
-#include "../shared_apple/gpu.h"
+#include "../shared/text.h"
 #include "../shared/userinput.h"
 #include "../shared/window_size.h"
-#include "../shared/clientlogic.h"
 #include "../shared/scheduled_animations.h"
+#include "../shared/software_renderer.h"
+#include "../shared/clientlogic.h"
 
-void init_application();
-
+#ifdef __cplusplus
+extern "C" {
 #endif
 
+void init_application(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // INIT_APPLICATION_H

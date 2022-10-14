@@ -16,6 +16,10 @@ the architecture is decided
 #include "logger.h"
 #include "vertex_types.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct TriangleArea {
     // by normalized i mean this coordinate system:
     //   * -1.0f is the left of the screen
@@ -45,5 +49,8 @@ int32_t find_touchable_at(
     const float normalized_x,
     const float normalized_y);
 
+#ifdef __cplusplus
+}
 #endif
 
+#endif // DRAW_TRIANGLE_H

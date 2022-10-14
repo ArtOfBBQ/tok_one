@@ -192,7 +192,7 @@ extern "C" {
 #endif
 
 void __attribute__((no_instrument_function))
-setup_log() {
+setup_log(void) {
 
     log_assert(application_name != NULL);
     
@@ -388,7 +388,7 @@ internal_log_append(
 }
 
 void __attribute__((no_instrument_function))
-add_profiling_stats_to_log()
+add_profiling_stats_to_log(void)
 {
     TimedFunction top30_timedfuncs[30];
     for (uint32_t i = 0; i < 30; i++) {
@@ -444,7 +444,7 @@ add_profiling_stats_to_log()
         log_append("] - ");
         log_append(top30_timedfuncs[j].function_name);
         log_append(" @");
-        log_append_uint(top30_timedfuncs[j].function_address);
+        log_append_uint((uint32_t)top30_timedfuncs[j].function_address);
         log_append(" * times ran: ");
         log_append_uint(top30_timedfuncs[j].times_ran);
         log_append(", time spent: ");
@@ -454,7 +454,7 @@ add_profiling_stats_to_log()
 }
 
 void __attribute__((no_instrument_function)) log_dump(bool32_t * good) {
-     
+    
     log[log_i + 1] = '\0';
     
     platform_write_file_to_writables(
@@ -469,7 +469,7 @@ void __attribute__((no_instrument_function)) log_dump(bool32_t * good) {
 }
 
 void __attribute__((no_instrument_function))
-log_dump_and_crash() {
+log_dump_and_crash(void) {
     bool32_t log_dump_succesful = false;
     log_dump(&log_dump_succesful);
     application_running = false;
@@ -500,8 +500,8 @@ internal_log_assert(
     log_dump_and_crash();
     
     uint32_t str_condition_len = get_string_length(str_condition);
-    uint32_t file_name_len = get_string_length(file_name);
-    uint32_t func_name_len = get_string_length(func_name);
+    uint32_t file_name_len     = get_string_length(file_name);
+    uint32_t func_name_len     = get_string_length(func_name);
     
     uint32_t screen_dump_size =
         func_name_len +

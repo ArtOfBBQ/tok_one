@@ -9,8 +9,12 @@
 #include "debigulator/src/decode_bmp.h"
 #include "vertex_types.h"
 
-void init_texture_arrays();
-void init_or_push_one_gpu_texture_array_if_needed();
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void init_texture_arrays(void);
+void init_or_push_one_gpu_texture_array_if_needed(void);
 
 void register_new_texturearray_from_files(
     const char ** filenames,
@@ -66,5 +70,8 @@ void decode_all_null_images_with_memory(
 
 void flag_all_texture_arrays_to_request_gpu_init();
 
+#ifdef __cplusplus
+}
 #endif
 
+#endif // TEXTURE_ARRAY_H

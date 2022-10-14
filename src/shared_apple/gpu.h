@@ -7,10 +7,6 @@
 #include "../shared/vertex_buffer_types.h"
 #include "../shared/window_size.h"
 #include "../shared/gameloop.h"
-// #include "../shared/software_renderer.h"
-// #include "../shared/lightsource.h"
-// #include "../shared/bitmap_renderer.h"
-// #include "../shared/platform_layer.h"
 
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>

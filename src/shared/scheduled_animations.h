@@ -4,11 +4,15 @@
 #define SCHEDULED_ANIMATIONS_ARRAYSIZE 2000
 
 #include "common.h"
-#include "clientlogic.h"
 #include "bitmap_renderer.h" // for texquads_to_render
 #include "zpolygon.h"
+#include "clientlogic.h"
 
-void init_scheduled_animations();
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void init_scheduled_animations(void);
 
 void resolve_animation_effects(const uint64_t microseconds_elapsed);
 
@@ -134,5 +138,8 @@ void request_bump_animation(
 
 void delete_all_rgba_animations_targeting(const uint32_t object_id);
 
+#ifdef __cplusplus
+}
 #endif
 
+#endif

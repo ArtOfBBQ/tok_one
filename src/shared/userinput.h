@@ -8,6 +8,10 @@
 
 #define KEYPRESS_MAP_SIZE 1000
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct Interaction {
     int32_t touchable_id;
     float screen_x;
@@ -39,4 +43,8 @@ extern bool32_t keypress_map[KEYPRESS_MAP_SIZE];
 void register_keyup(uint32_t key_id);
 void register_keydown(uint32_t key_id);
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif // USERINPUT_H

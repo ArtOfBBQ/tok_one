@@ -3,6 +3,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct TexQuad {
     // You can assign an object_id to -1 (not part of any group) or give
     // multiple texquads, zlights, and zvertexes the same object_id to make
@@ -57,4 +61,8 @@ typedef struct TexQuad {
 
 void construct_texquad(TexQuad * to_construct);
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif // TEXQUAD_TYPE_H

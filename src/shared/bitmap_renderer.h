@@ -26,6 +26,10 @@ exist.
 #include "texture_array.h"
 #include "lightsource.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define TEXQUADS_TO_RENDER_ARRAYSIZE 2000
 extern TexQuad * texquads_to_render;
 extern uint32_t texquads_to_render_size;
@@ -46,7 +50,10 @@ void draw_texquads_to_render(
     uint32_t * next_gpu_workload_size,
     const zLightSource * zlights_transformed);
 
-void clean_deleted_texquads();
+void clean_deleted_texquads(void);
 
+#ifdef __cplusplus
+}
 #endif
 
+#endif // BITMAP_RENDERER_H

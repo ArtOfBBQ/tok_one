@@ -1,24 +1,6 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-extern char application_name[100];
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-    void __attribute__((no_instrument_function))
-    __cyg_profile_func_enter(
-        void *this_fn,
-        void *call_site);
-
-    void __attribute__((no_instrument_function))
-    __cyg_profile_func_exit(
-        void *this_fn,
-        void *call_site);
-#ifdef __cplusplus
-}
-#endif
-
 // #define LOGGER_SILENCE
 #ifndef LOGGER_SILENCE
 #include "stdio.h"
@@ -28,7 +10,6 @@ extern "C" {
 
 #include "common.h"
 #include "memorystore.h"
-#include "platform_layer.h"
 
 #define LOG_SIZE 5000000
 
@@ -39,13 +20,29 @@ extern "C" {
 #define log_append_int(num) internal_log_append_int(num, __func__)
 #define log_append_uint(num) internal_log_append_uint(num, __func__)
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern char application_name[100];
+
+void __attribute__((no_instrument_function))
+__cyg_profile_func_enter(
+    void *this_fn,
+    void *call_site);
+
+void __attribute__((no_instrument_function))
+__cyg_profile_func_exit(
+    void *this_fn,
+    void *call_site);
+
 extern char * assert_failed_message;
 extern bool32_t application_running;
 
 /*
 Allocates memory. This is only necessary in C99
 */
-void setup_log();
+void setup_log(void);
 
 /*
 don't use the internal_ functions, use the macros that call them.
@@ -102,7 +99,7 @@ get_log_backtrace(
     uint32_t return_value_capacity);
 
 void __attribute__((no_instrument_function))
-add_profiling_stats_to_log();
+add_profiling_stats_to_log(void);
 
 /*
 dump the entire debug log to debuglog.txt
@@ -116,7 +113,7 @@ then crash the application.
 I use this instead of assert(0).
 */
 void __attribute__((no_instrument_function))
-log_dump_and_crash();
+log_dump_and_crash(void);
 
 /*
 Assert something, but use the GUI to report on failure
@@ -130,5 +127,8 @@ internal_log_assert(
     const int line_number,
     const char * func_name);
 
+#ifdef __cplusplus
+}
 #endif
 
+#endif // LOGGER_H

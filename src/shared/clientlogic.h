@@ -8,6 +8,13 @@ application.
 
 #import <Foundation/Foundation.h>
 
+#ifdef LORESEEKER
+#include "../../../src/animationtracker.hpp"
+#include "../../../src/frontendtouch.hpp"
+#include "../../../src/frontendcommand.hpp"
+#include "../../../src/mainmenu.hpp"
+#endif
+
 #include "tok_random.h"
 #include "texquad_type.h"
 #include "texture_array.h"
@@ -23,18 +30,6 @@ application.
 #include "scheduled_animations.h"
 #include "logger.h"
 
-#ifdef LORESEEKER
-typedef struct NamedTextureArray {
-    int32_t texturearray_i;
-    int32_t texture_i;
-} NamedTextureArray;
-#include <string>
-#include <unordered_map>
-#include "../../../src/animationtracker.hpp"
-#include "../../../src/frontendtouch.hpp"
-#include "../../../src/frontendcommand.hpp"
-#include "../../../src/mainmenu.hpp"
-#endif
 
 extern bool32_t application_running;
 
@@ -43,7 +38,10 @@ The engine will need a name for your application
 e.g. To create the application data directory on Apple platforms
 e.g. To display in the title bar
 */
-char * client_logic_get_application_name();
+char * client_logic_get_application_name(void);
+void client_logic_get_application_name_to_recipient(
+    char * recipient,
+    const uint32_t recipient_size);
 
 /*
 will be called once at startup, before rendering frame 1
@@ -73,10 +71,5 @@ updating your layout to match the new window
 void client_logic_window_resize(
     const uint32_t new_height,
     const uint32_t new_width);
-
-
-void client_logic_get_application_name(
-    char * recipient,
-    const uint32_t recipient_size);
 
 #endif

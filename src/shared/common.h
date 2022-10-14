@@ -25,6 +25,10 @@
 #define bool8_t uint8_t
 #define bool32_t uint32_t
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int tok_imini(const int x, const int y);
 int tok_imaxi(const int x, const int y);
 float tok_fminf(const float x, const float y);
@@ -52,14 +56,14 @@ void strcpy_capped(
     const uint32_t recipient_size,
     const char * origin);
 
-void __attribute__((no_instrument_function))
+void
 copy_strings(
     char * recipient,
     const uint32_t recipient_size,
     const char * origin,
     const uint32_t origin_size);
 
-uint32_t __attribute__((no_instrument_function))
+uint32_t
 get_string_length(   
     const char * null_terminated_string);
 
@@ -72,7 +76,7 @@ bool32_t are_equal_strings_of_length(
     const char * str2,
     const uint64_t length);
 
-void __attribute__((no_instrument_function))
+void
 int_to_string(
     const int32_t input,
     char * recipient,
@@ -123,11 +127,14 @@ string_to_float(
     const char * input,
     const uint32_t input_size);
 
-void __attribute__((no_instrument_function))
+void
 float_to_string(
     const float input,
     char * recipient,
     const uint32_t recipient_size);
 
+#ifdef __cplusplus
+}
 #endif
 
+#endif // COMMON_H

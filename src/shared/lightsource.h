@@ -10,6 +10,10 @@
 #include "window_size.h"
 #include "memorystore.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct zVertex {
     float x;
     float y;
@@ -63,13 +67,16 @@ extern uint32_t zlights_transformed_size;
 
 // void delete_lights_with_object_id(uint32_t object_id);
 
-void clean_deleted_lights();
+void clean_deleted_lights(void);
 
 // move each light around the camera (e.g. when the camera moves
 // right, we move all lights etc. to the left instead)
 // reminder: this is calculated once before 2d and 3d renderer
 // and then used in both
-void translate_lights();
+void translate_lights(void);
 
+#ifdef __cplusplus
+}
 #endif
 
+#endif // LIGHTSOURCE_H

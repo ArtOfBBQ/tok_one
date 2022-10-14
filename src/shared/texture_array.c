@@ -368,7 +368,7 @@ void register_new_texturearray_from_files(
             decoded_images_size);
 }
 
-void init_texture_arrays() {
+void init_texture_arrays(void) {
     
     // initialize texture arrays
     texture_arrays = (TextureArray *)malloc_from_unmanaged(
@@ -387,7 +387,7 @@ void init_texture_arrays() {
     }
 }
 
-void init_or_push_one_gpu_texture_array_if_needed() {
+void init_or_push_one_gpu_texture_array_if_needed(void) {
     
     for (int32_t i = 0; (uint32_t)i < texture_arrays_size; i++) {
         if (texture_arrays[i].request_init) {
@@ -501,7 +501,7 @@ static void register_new_texturearray_by_splitting_image(
     const uint32_t rows,
     const uint32_t columns)
 {
-    int new_texture_array_i = texture_arrays_size;
+    int new_texture_array_i = (int)texture_arrays_size;
     texture_arrays_size++;
     
     register_to_texturearray_by_splitting_image(
@@ -555,11 +555,11 @@ void update_texture_slice(
     log_assert(
         at_texture_array_i >= 0);
     log_assert(
-        at_texture_array_i < texture_arrays_size);
+        at_texture_array_i < (int)texture_arrays_size);
     log_assert(
         at_texture_i >= 0);
     log_assert(
-        at_texture_i < texture_arrays[at_texture_array_i].images_size);
+        at_texture_i < (int)texture_arrays[at_texture_array_i].images_size);
     
     texture_arrays[at_texture_array_i].images[at_texture_i].image =
         new_image;
@@ -585,9 +585,9 @@ void register_high_priority_if_unloaded(
         texture_arrays[texture_array_i].images[texture_i]
             .prioritize_asset_load = true;
         log_append("high priority found at texture array: ");
-        log_append_uint(texture_array_i);
+        log_append_int(texture_array_i);
         log_append(", texture_i: ");
-        log_append_uint(texture_i);
+        log_append_int(texture_i);
         log_append("\n");
     }
 }
@@ -609,7 +609,7 @@ void preregister_null_image(
             texture_arrays[i].single_img_width == width
             && texture_arrays[i].single_img_height == height)
         {
-            new_texturearray_i = i;
+            new_texturearray_i = (int)i;
             new_texture_i = (int32_t)texture_arrays[i].images_size;
             texture_arrays[i].images_size++;
             log_append("texture_arrays[");
@@ -685,8 +685,8 @@ void get_texture_location(
                 texture_arrays[i].images[j].filename,
                 for_filename))
             {
-                *texture_array_i_recipient = i;
-                *texture_i_recipient = j;
+                *texture_array_i_recipient = (int32_t)i;
+                *texture_i_recipient = (int32_t)j;
                 return;
             }
         }

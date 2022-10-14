@@ -535,7 +535,7 @@ void draw_texquads_to_render(
     }
 }
 
-void clean_deleted_texquads() {
+void clean_deleted_texquads(void) {
     
     if (texquads_to_render_size < 2) { return; }
     

@@ -20,7 +20,8 @@ void writable_filename_to_pathfile(
         filename_length + separator_size + 1,
         filename);
     
-    char * writables_path = platform_get_writables_path();
+    char writables_path[256];
+    platform_get_writables_path(writables_path, 256);
     uint32_t writables_path_length = get_string_length(writables_path);
     
     uint32_t full_filename_size =
@@ -49,7 +50,8 @@ void resource_filename_to_pathfile(
     char * recipient,
     const uint32_t assert_capacity)
 {
-    char * resource_path = platform_get_resources_path();
+    char resource_path[256];
+    platform_get_resources_path(resource_path, 256);
     strcpy_capped(
         recipient,
         assert_capacity,

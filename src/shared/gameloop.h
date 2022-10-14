@@ -10,9 +10,20 @@
 #include "bitmap_renderer.h"
 #include "software_renderer.h"
 #include "lightsource.h"
+#include "scheduled_animations.h"
+#include "clientlogic.h"
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void shared_gameloop_update(
     Vertex * vertices_for_gpu,
     uint32_t * vertices_for_gpu_size);
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif // GAMELOOP_H

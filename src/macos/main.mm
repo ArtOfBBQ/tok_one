@@ -213,7 +213,7 @@ float platform_get_current_window_bottom() {
 
 int main(int argc, const char * argv[]) {
     
-    client_logic_get_application_name(
+    client_logic_get_application_name_to_recipient(
         /* recipient: */ application_name,
         /* recipient_size: */ 100);
     
@@ -276,10 +276,7 @@ int main(int argc, const char * argv[]) {
     [mtk_view setDelegate: apple_gpu_delegate];
     
     char shader_lib_path_cstr[1000];
-    strcpy_capped(
-        shader_lib_path_cstr,
-        1000,
-        platform_get_resources_path());
+    platform_get_resources_path(shader_lib_path_cstr, 1000);
     strcat_capped(
         shader_lib_path_cstr,
         1000,

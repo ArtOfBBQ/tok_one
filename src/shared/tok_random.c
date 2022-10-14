@@ -11,7 +11,7 @@ void init_rand_with_seed(const uint64_t seed) {
     current_random_i = seed % RANDOM_SEQUENCE_SIZE;
 }
 
-uint32_t tok_rand() {
+uint32_t tok_rand(void) {
     
     current_random_i++;
     if (current_random_i >= RANDOM_SEQUENCE_SIZE) {
@@ -53,4 +53,3 @@ void shuffle_array(
         start_i += element_size; 
     }
 }
-

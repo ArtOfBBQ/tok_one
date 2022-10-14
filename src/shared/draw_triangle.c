@@ -55,7 +55,9 @@ static float get_triangle_area(
     const float x3,
     const float y3)
 {
-    return fabs( (x2-x1)*(y3-y1) - (x3-x1)*(y2-y1) );
+    float return_value = ( (x2-x1)*(y3-y1) - (x3-x1)*(y2-y1) );
+    
+    return return_value + ((return_value < 0) * (return_value * -2)); 
 }
 
 static bool32_t point_collides_triangle_area(
@@ -123,4 +125,3 @@ int32_t find_touchable_at(
     
     return -1;
 }
-

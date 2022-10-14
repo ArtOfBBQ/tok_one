@@ -15,14 +15,16 @@
 #include "../shared/platform_layer.h"
 
 bool32_t application_running = true;
-bool32_t has_retina_screen =
-    ([[UIScreen mainScreen]
-        respondsToSelector:@selector(displayLinkWithTarget:selector:)]
-    && ([UIScreen mainScreen].scale >= 2.0));
+bool32_t has_retina_screen = false;
+    
 
 int main(int argc, char * argv[]) {
     
-    client_logic_get_application_name(
+    has_retina_screen = ([[UIScreen mainScreen]
+        respondsToSelector:@selector(displayLinkWithTarget:selector:)]
+        && ([UIScreen mainScreen].scale >= 2.0));
+    
+    client_logic_get_application_name_to_recipient(
         /* recipient: */ application_name,
         /* recipient_size: */ 100);
     
@@ -31,6 +33,9 @@ int main(int argc, char * argv[]) {
     NSString * appDelegateClassName;
     // Setup code that might create autoreleased objects goes here.
     appDelegateClassName = NSStringFromClass([AppDelegate class]);
+    
+    init_renderer();
+    client_logic_startup();
     
     return UIApplicationMain(argc, argv, nil, appDelegateClassName);
 }

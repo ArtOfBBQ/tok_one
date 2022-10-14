@@ -9,7 +9,10 @@
 #include "vertex_types.h"
 #include "draw_triangle.h"
 #include "zpolygon.h"
-#include "clientlogic.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void init_renderer(void);
 void free_renderer(void);
@@ -20,5 +23,8 @@ void software_render(
     zLightSource * zlights_transformed,
     uint64_t elapsed_nanoseconds);
 
+#ifdef __cplusplus
+}
 #endif
 
+#endif // SOFTWARE_RENDERER_H

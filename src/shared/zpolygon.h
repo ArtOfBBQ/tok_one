@@ -12,6 +12,10 @@
 #include "lightsource.h"
 #include "window_size.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // projection constants
 typedef struct ProjectionConstants {
     float near;
@@ -142,6 +146,9 @@ float get_visibility_rating(
 float dot_of_vertices(
     const zVertex vertex_1,
     const zVertex vertex_2);
-
+    
+#ifdef __cplusplus
+}
 #endif
 
+#endif // ZPOLYGON_H

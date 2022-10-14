@@ -10,22 +10,22 @@ impossible
 extern float current_window_height;
 extern float current_window_width;
 
-char * platform_get_cwd() {
+void platform_get_cwd(char * recipient, const uint32_t recipient_size) {
     NSString * cwd = [[NSFileManager defaultManager] currentDirectoryPath];
     
     char * return_value = (char *)[cwd UTF8String];
     
-    return return_value;
+    strcpy_capped(recipient, recipient_size, return_value);
 }
 
-float platform_get_current_window_height() {
+float platform_get_current_window_height(void) {
     // NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     // NSRect full_screen_rect = [screen frame]; 
     // return (float)NSHeight(full_screen_rect);
     return current_window_height;
 }
 
-float platform_get_current_window_width() {
+float platform_get_current_window_width(void) {
     // NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     // NSRect full_screen_rect = [screen frame];
     // return (float)NSWidth(full_screen_rect);
@@ -39,4 +39,3 @@ float platform_x_to_x(const float x) {
 float platform_y_to_y(const float y) {
     return y;
 }
-

@@ -36,6 +36,10 @@ on each platform
 #import <AVFoundation/AVFoundation.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "common.h"
 #include "logger.h"
 #include "decodedimage.h"
@@ -47,7 +51,7 @@ typedef struct FileBuffer {
     bool32_t good;
 } FileBuffer;
 
-uint32_t platform_get_directory_separator_size();
+uint32_t platform_get_directory_separator_size(void);
 void platform_get_directory_separator(char * recipient);
 
 void resource_filename_to_pathfile(
@@ -60,11 +64,11 @@ void writable_filename_to_pathfile(
     const uint32_t recipient_capacity);
 
 // get current working directory
-char * platform_get_application_path(void);
-char * platform_get_resources_path(void);
-char * platform_get_cwd(void);
+void platform_get_application_path(char * recipient, const uint32_t recipient_size);
+void platform_get_resources_path(char * recipient, const uint32_t recipient_size);
+void platform_get_cwd(char * recipient, const uint32_t recipient_size);
 // a root directory where we're allowed to write
-char * platform_get_writables_path(void);
+void platform_get_writables_path(char * recipient, const uint32_t recipient_size);
 
 bool32_t platform_resource_exists(const char * resource_name);
 bool32_t platform_file_exists(const char * filepath);
@@ -140,10 +144,10 @@ void platform_start_thread(
 
 uint64_t platform_get_current_time_microsecs(void);
 
-float platform_get_current_window_left();
-float platform_get_current_window_bottom();
-float platform_get_current_window_height();
-float platform_get_current_window_width();
+float platform_get_current_window_left(void);
+float platform_get_current_window_bottom(void);
+float platform_get_current_window_height(void);
+float platform_get_current_window_width(void);
 
 float platform_x_to_x(const float x);
 float platform_y_to_y(const float y);
@@ -168,7 +172,7 @@ void platform_play_music_resource(char * resource_filename);
 /*
 creates a mutex and return the ID of said mutex for you to store
 */
-uint32_t platform_init_mutex_and_return_id();
+uint32_t platform_init_mutex_and_return_id(void);
 /*
 returns whether or not a mutex was locked, and locks the mutex if it
 was unlocked
@@ -176,5 +180,8 @@ was unlocked
 void platform_mutex_lock(const uint32_t mutex_id);
 void platform_mutex_unlock(const uint32_t mutex_id);
 
+#ifdef __cplusplus
+}
 #endif
 
+#endif // PLATFORM_LAYER_H 

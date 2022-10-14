@@ -4,6 +4,10 @@
 #include "platform_layer.h"
 #include "bitmap_renderer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int32_t font_texturearray_i;
 extern float font_height;
 extern float font_color[4];
@@ -33,5 +37,8 @@ void request_label_renderable(
 
 void request_fps_counter(uint64_t microseconds_elapsed);
 
+#ifdef __cplusplus
+}
 #endif
 
+#endif

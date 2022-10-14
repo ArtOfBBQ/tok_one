@@ -29,6 +29,10 @@ typedef struct DecodedImage {
     bool32_t good;
 } DecodedImage;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 uint64_t get_sum_rgba(const DecodedImage * input);
 uint32_t get_avg_rgba(const DecodedImage * input);
 
@@ -53,5 +57,8 @@ DecodedImage concatenate_images(
     uint32_t * out_sprite_rows,
     uint32_t * out_sprite_columns);
 
+#ifdef __cplusplus
+}
 #endif
 
+#endif // DECODED_IMAGE_H
