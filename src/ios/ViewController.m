@@ -7,9 +7,7 @@
 {
     UITouch * touch       = [touches anyObject];
     CGPoint touchLocation = [touch locationInView:self];
-    
-    printf("touchBegan at %f,%f\n", (float)touchLocation.x, (float)touchLocation.y);
-    
+        
     register_interaction(
         /* interaction : */
             &previous_touch_start,
@@ -59,9 +57,7 @@
 {
     UITouch * touch       = [touches anyObject];
     CGPoint touchLocation = [touch locationInView:self];
-    
-    printf("touchmoved at %f,%f\n", (float)touchLocation.x, (float)touchLocation.y);
-    
+        
     register_interaction(
         /* interaction : */
             &previous_touch_move,
@@ -89,9 +85,7 @@
 {
     UITouch * touch       = [touches anyObject];
     CGPoint touchLocation = [touch locationInView:self];
-    
-    printf("touchEnded at %f,%f\n", (float)touchLocation.x, (float)touchLocation.y);
-    
+        
     register_interaction(
         /* interaction : */
             &previous_touch_end,

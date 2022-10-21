@@ -26,7 +26,7 @@ zPolygon load_from_obj_file(char * filename) {
     return return_value;
 }
 
-void client_logic_get_application_name(
+void client_logic_get_application_name_to_recipient(
     char * recipient,
     const uint32_t recipient_size)
 {
@@ -39,6 +39,8 @@ void client_logic_get_application_name(
 }
 
 void client_logic_startup() {
+
+    init_rand_with_seed(platform_get_current_time_microsecs());
     
     const char * fontfile;
     fontfile = "font.png";

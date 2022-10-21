@@ -248,7 +248,7 @@ static uint32_t already_drawing = false;
 
 - (void)drawInMTKView:(MTKView *)view
 {
-    log_assert(!already_drawing);
+    if (already_drawing) { return; }
     already_drawing = true;
     
     MTLViewport viewport = {
