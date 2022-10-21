@@ -6,14 +6,14 @@ application.
 #ifndef CLIENTLOGIC_H
 #define CLIENTLOGIC_H
 
-#import <Foundation/Foundation.h>
-
-#ifdef LORESEEKER
-#include "../../../src/animationtracker.hpp"
-#include "../../../src/frontendtouch.hpp"
-#include "../../../src/frontendcommand.hpp"
-#include "../../../src/mainmenu.hpp"
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+#include "../../../src/animationtracker.h"
+#include "../../../src/frontendtouch.h"
+#include "../../../src/frontendcommand.h"
+#include "../../../src/mainmenu.h"
 
 #include "tok_random.h"
 #include "texquad_type.h"
@@ -71,5 +71,9 @@ updating your layout to match the new window
 void client_logic_window_resize(
     const uint32_t new_height,
     const uint32_t new_width);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

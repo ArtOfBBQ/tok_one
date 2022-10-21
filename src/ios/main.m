@@ -33,9 +33,6 @@ int main(int argc, char * argv[]) {
     NSString * appDelegateClassName;
     // Setup code that might create autoreleased objects goes here.
     appDelegateClassName = NSStringFromClass([AppDelegate class]);
-    
-    init_renderer();
-    client_logic_startup();
-    
+        
     return UIApplicationMain(argc, argv, nil, appDelegateClassName);
 }

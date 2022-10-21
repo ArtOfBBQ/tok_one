@@ -44,7 +44,12 @@ void shared_gameloop_update(
     if (!application_running) {
         texquads_to_render_size = 0;
         zpolygons_to_render_size = 0;
-        camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+        camera.x = 0.0f;
+        camera.y = 0.0f;
+        camera.z = 0.0f;
+        camera.x_angle = 0.0f;
+        camera.y_angle = 0.0f;
+        camera.z_angle = 0.0f;
         
         font_height = 28.0f;
         font_ignore_lighting = true;
