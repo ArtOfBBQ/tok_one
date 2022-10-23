@@ -44,6 +44,11 @@ void client_logic_get_application_name_to_recipient(
     const uint32_t recipient_size);
 
 /*
+will be called once when the app shuts down
+*/
+void client_logic_shutdown(void);
+
+/*
 will be called once at startup, before rendering frame 1
 */
 void client_logic_startup(void);

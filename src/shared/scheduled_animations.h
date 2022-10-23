@@ -136,7 +136,9 @@ void request_bump_animation(
     const uint32_t object_id,
     const uint32_t wait);
 
-void delete_all_rgba_animations_targeting(const uint32_t object_id);
+void delete_all_movement_animations_targeting(const int32_t object_id);
+void delete_all_rgba_animations_targeting(const int32_t object_id);
+void delete_all_animations_targeting(const int32_t object_id);
 
 #ifdef __cplusplus
 }

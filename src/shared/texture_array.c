@@ -834,9 +834,8 @@ void decode_all_null_images_with_memory(
     }
 }
 
-void flag_all_texture_arrays_to_request_gpu_init() {
+void flag_all_texture_arrays_to_request_gpu_init(void) {
     for (uint32_t i = 0; i < texture_arrays_size; i++) {
         texture_arrays[i].request_init = true;
     }
 }
-

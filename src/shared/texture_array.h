@@ -68,7 +68,7 @@ void decode_all_null_images_with_memory(
     uint8_t * dpng_working_memory,
     const uint64_t dpng_working_memory_size);
 
-void flag_all_texture_arrays_to_request_gpu_init();
+void flag_all_texture_arrays_to_request_gpu_init(void);
 
 #ifdef __cplusplus
 }

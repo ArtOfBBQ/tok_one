@@ -26,6 +26,9 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 @implementation GameWindowDelegate
 - (void)windowWillClose:(NSNotification *)notification {
     log_append("window will close, terminating app..\n");
+    
+    client_logic_shutdown();
+    
     add_profiling_stats_to_log();
     bool32_t write_succesful = false;
     log_dump(&write_succesful);

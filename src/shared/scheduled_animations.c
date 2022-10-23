@@ -560,8 +560,21 @@ void request_bump_animation(
     request_scheduled_animation(&revert_request);
 }
 
+void delete_all_movement_animations_targeting(
+    const int32_t object_id)
+{
+    for (uint32_t i = 0; i < scheduled_animations_size; i++) {
+        if (scheduled_animations[i].affected_object_id == (int32_t)object_id &&
+            (scheduled_animations[i].final_x_known ||
+            scheduled_animations[i].final_y_known))
+        {
+            scheduled_animations[i].deleted = true;
+        }
+    }
+}
+
 void delete_all_rgba_animations_targeting(
-    const uint32_t object_id)
+    const int32_t object_id)
 {
     for (uint32_t i = 0; i < scheduled_animations_size; i++) {
         if (scheduled_animations[i].affected_object_id == (int32_t)object_id &&
@@ -575,3 +588,10 @@ void delete_all_rgba_animations_targeting(
     }
 }
 
+void delete_all_animations_targeting(const int32_t object_id) {
+    for (uint32_t i = 0; i < scheduled_animations_size; i++) {
+        if (scheduled_animations[i].affected_object_id == object_id) {
+            scheduled_animations[i].deleted = true;
+        }
+    }
+}
