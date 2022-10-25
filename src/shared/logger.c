@@ -314,13 +314,10 @@ internal_log_append(
     if (application_running) {
         printf("%s", to_append);
     }
-    
-    return;
-    
-    uint32_t initial_log_i = log_i;
     #endif
     
     if (
+        caller_function_name != NULL &&
         !are_equal_strings(
             caller_function_name,
             last_log_func))
@@ -335,7 +332,7 @@ internal_log_append(
         
         char * prefix = (char *)"[";
         uint32_t prefix_length = get_string_length(prefix);
-        assert(log_i + prefix_length < LOG_SIZE);
+        if (log_i + prefix_length >= LOG_SIZE) { return; }
         strcpy_capped(
             /* recipient: */
                 log + log_i,
@@ -344,11 +341,11 @@ internal_log_append(
             /* origin: */
                 prefix);
         log_i += prefix_length;
-        assert(log_i < LOG_SIZE);
+        if (log_i >= LOG_SIZE) { return; }
         
         uint32_t func_length = get_string_length(
         caller_function_name);
-        assert(log_i + func_length < LOG_SIZE);
+        if (log_i + func_length < LOG_SIZE) { return; }
         
         strcpy_capped(
             /* recipient: */
@@ -358,11 +355,11 @@ internal_log_append(
             /* origin: */
                 caller_function_name);
         log_i += func_length;
-        assert(log_i < LOG_SIZE);
+        if (log_i >= LOG_SIZE) { return; }
         
         char * glue = (char *)"]: ";
         uint32_t glue_length = get_string_length(glue);
-        assert(log_i + glue_length < LOG_SIZE);
+        if (log_i + glue_length >= LOG_SIZE) { return; }
         strcpy_capped(
             /* recipient: */
                 log + log_i,
@@ -371,11 +368,11 @@ internal_log_append(
             /* origin: */
                 glue);
         log_i += glue_length;
-        assert(log_i < LOG_SIZE);
+        if (log_i >= LOG_SIZE) { return; }
     }
     
     uint32_t to_append_length = get_string_length(to_append);
-    assert(log_i + to_append_length < LOG_SIZE);
+    if (log_i + to_append_length >= LOG_SIZE) { return; }
     strcpy_capped(
         /* recipient: */
             log + log_i,
@@ -384,7 +381,7 @@ internal_log_append(
         /* origin: */
             to_append);
     log_i += to_append_length;
-    assert(log_i < LOG_SIZE);
+    if (log_i >= LOG_SIZE) { return; }
 }
 
 void __attribute__((no_instrument_function))
