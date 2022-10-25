@@ -15,7 +15,6 @@
 - (void)
     applicationWillTerminate:(UIApplication *)application
 {
-    application_running = false;
     client_logic_shutdown();
     
     add_profiling_stats_to_log();
