@@ -179,6 +179,8 @@ void float_to_string(
     char * recipient,
     const uint32_t recipient_size)
 {
+    (void)recipient_size;
+    
     float temp_above_decimal = (float)(int32_t)input;
     int32_t below_decimal =
         (int32_t)((input - temp_above_decimal) * 10000);
@@ -245,13 +247,14 @@ uint_to_string(
     uint32_t start_i = 0;
     uint32_t end_i;
     
-    uint32_t decimal = 1;
+    uint64_t decimal = 1;
     uint32_t input_div_dec = input;
     while (input_div_dec > 0) {
         uint32_t isolated_num = input % (decimal * 10);
         isolated_num /= decimal;
         recipient[i] = (char)('0' + isolated_num);
         i += 1;
+        assert(i < recipient_size);
         
         decimal *= 10;
         input_div_dec = input / decimal;

@@ -81,8 +81,6 @@ void shared_gameloop_update(
                 vertices_for_gpu,
             /* next_gpu_workload_size: */
                 vertices_for_gpu_size,
-            /* zlights_transformed: */
-                zlights_transformed,
             /* elapsed_microseconds: */
                 elapsed);
     }
@@ -91,8 +89,6 @@ void shared_gameloop_update(
         /* next_gpu_workload: */
             vertices_for_gpu,
         /* next_gpu_workload_size: */
-            vertices_for_gpu_size,
-        /* zlights_transformed: */
-            zlights_transformed);
+            vertices_for_gpu_size);
 }
 

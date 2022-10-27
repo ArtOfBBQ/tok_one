@@ -12,9 +12,10 @@ void init_renderer() {
 void software_render(
     Vertex * next_gpu_workload,
     uint32_t * next_workload_size,
-    zLightSource * zlights_transformed,
     uint64_t elapsed_nanoseconds)
 {
+    (void)elapsed_nanoseconds;
+    
     if (renderer_initialized != true) {
         log_append("renderer not initialized, aborting...\n");
         return;

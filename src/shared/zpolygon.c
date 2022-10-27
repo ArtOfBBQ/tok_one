@@ -396,7 +396,8 @@ void scale_zpolygon(
         for (uint32_t j = 0; j < 3; j++)
         {
             float height =
-                fabs(to_scale->triangles[i].vertices[j].y);
+                ((to_scale->triangles[i].vertices[j].y < 0) *  (to_scale->triangles[i].vertices[j].y * -1)) +
+                ((to_scale->triangles[i].vertices[j].y >= 0) *  (to_scale->triangles[i].vertices[j].y)); 
             if (height > largest_height)
             {
                 largest_height = height;

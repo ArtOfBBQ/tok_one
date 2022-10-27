@@ -338,8 +338,7 @@ static uint32_t already_drawing = false;
     [command_buffer
         addCompletedHandler:
             ^(id<MTLCommandBuffer> commandBuffer)
-        {
-        }];
+        {}];
     
     [command_buffer commit];
     

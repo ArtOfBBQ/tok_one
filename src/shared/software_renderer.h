@@ -20,7 +20,6 @@ void free_renderer(void);
 void software_render(
     Vertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size,
-    zLightSource * zlights_transformed,
     uint64_t elapsed_nanoseconds);
 
 #ifdef __cplusplus

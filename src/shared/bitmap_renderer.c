@@ -157,8 +157,7 @@ void delete_texquad_object(const int32_t with_object_id)
 static void add_quad_to_gpu_workload(
     TexQuad * to_add,
     Vertex * next_gpu_workload,
-    uint32_t * next_gpu_workload_size,
-    const zLightSource * zlights_transformed)
+    uint32_t * next_gpu_workload_size)
 {
     if (to_add->scale_factor_x < 0.01f ||
         to_add->scale_factor_y < 0.01f)
@@ -454,8 +453,7 @@ sorter_cmpr_texquad_lowest_z(
 
 void draw_texquads_to_render(
     Vertex * next_gpu_workload,
-    uint32_t * next_gpu_workload_size,
-    const zLightSource * zlights_transformed)
+    uint32_t * next_gpu_workload_size)
 {
     if (
         next_gpu_workload == NULL
@@ -530,8 +528,7 @@ void draw_texquads_to_render(
         add_quad_to_gpu_workload(
             &sorted_texquads[i],
             next_gpu_workload,
-            next_gpu_workload_size,
-            zlights_transformed);
+            next_gpu_workload_size);
     }
 }
 

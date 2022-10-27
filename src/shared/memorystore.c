@@ -76,6 +76,8 @@ uint8_t * malloc_from_managed(uint64_t size) {
 };
 
 void free_from_managed(uint8_t * to_free) {
+    (void)to_free;
+    
     // TODO: free up memory from the managed store
     return;
 };

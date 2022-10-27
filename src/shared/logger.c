@@ -55,6 +55,8 @@ extern "C" {
         void *this_fn,
         void * call_site)
     {
+        (void)call_site;
+        
         logger_activated = true;
         
         if (
@@ -134,6 +136,8 @@ extern "C" {
         void *this_fn,
         void *call_site)
     {
+        (void)call_site;
+        
         if (
             timed_function_map == NULL
             || !application_running)

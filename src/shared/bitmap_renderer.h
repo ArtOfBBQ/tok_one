@@ -47,8 +47,7 @@ void delete_texquad_object(
 /* Draw bitmap(s) of pixels and add them to the gpu's workload */
 void draw_texquads_to_render(
     Vertex * next_gpu_workload,
-    uint32_t * next_gpu_workload_size,
-    const zLightSource * zlights_transformed);
+    uint32_t * next_gpu_workload_size);
 
 void clean_deleted_texquads(void);
 
