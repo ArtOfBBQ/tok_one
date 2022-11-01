@@ -2,8 +2,8 @@
 
 #define MEM_ALIGNMENT_BYTES 16
 
-// 350mb ->                   350...000
-#define UNMANAGED_MEMORY_SIZE 350000000
+// 500mb ->                   500...000
+#define UNMANAGED_MEMORY_SIZE 500000000
 // 150mb ->                   150...000
 #define MANAGED_MEMORY_SIZE   150000000
 
@@ -39,7 +39,14 @@ uint8_t * malloc_from_unmanaged(uint64_t size) {
     assert((uintptr_t)(void *)unmanaged_memory % MEM_ALIGNMENT_BYTES == 0);
     
     uint8_t * return_value = (uint8_t *)(void *)unmanaged_memory;
-    assert(unmanaged_memory_size >= size);
+    if (size >= unmanaged_memory_size) {
+        log_append("Tried to malloc_from_unamanged for: ");
+        log_append_uint((uint32_t)(size / 1000000));
+        log_append("MB, but you only had: ");
+        log_append_uint((uint32_t)(unmanaged_memory_size / 1000000));
+        log_append("MB remaining");
+        assert(0);
+    }
     unmanaged_memory += size;
     unmanaged_memory_size -= size;
     

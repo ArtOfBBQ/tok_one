@@ -595,3 +595,11 @@ void delete_all_animations_targeting(const int32_t object_id) {
         }
     }
 }
+
+void delete_all_repeatforever_animations(void) {
+    for (uint32_t i = 0; i < scheduled_animations_size; i++) {
+        if (scheduled_animations[i].runs == 0) {
+            scheduled_animations[i].deleted = true;
+        }
+    }
+}

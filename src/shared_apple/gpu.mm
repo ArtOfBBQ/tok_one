@@ -132,7 +132,7 @@ static uint32_t already_drawing = false;
     _metal_textures = [
         [NSMutableArray alloc]
             initWithCapacity: TEXTUREARRAYS_SIZE];
-        
+    
     log_append("finished configureMetalWithDevice\n");
 }
 

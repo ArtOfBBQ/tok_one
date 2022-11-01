@@ -218,7 +218,7 @@ void int_to_string(
 {
     if (input < 0) {
         recipient[0] = '-';
-        int32_t positive_to_append = input * -1;
+        int32_t positive_to_append = (input + (input == INT32_MIN)) * -1;
         uint_to_string(
             /* input: */ (uint32_t)positive_to_append,
             /* recipient: */ recipient + 1,

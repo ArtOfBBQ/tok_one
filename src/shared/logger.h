@@ -13,6 +13,13 @@
 
 #define LOG_SIZE 5000000
 
+//#define log_assert(condition)
+//#define log_append(string)
+//#define log_append_char(num)
+//#define log_append_float(num)
+//#define log_append_int(num)
+//#define log_append_uint(num)
+
 #define log_assert(condition) internal_log_assert(condition, #condition, __FILE__, __LINE__, __func__)
 #define log_append(string) internal_log_append(string, __func__)
 #define log_append_char(num) internal_log_append_char(num, __func__)
