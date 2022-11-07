@@ -141,6 +141,8 @@ void delete_all_rgba_animations_targeting(const int32_t object_id);
 void delete_all_animations_targeting(const int32_t object_id);
 void delete_all_repeatforever_animations(void);
 
+extern ScheduledAnimation * scheduled_animations;
+extern uint32_t scheduled_animations_size;
 
 #ifdef __cplusplus
 }

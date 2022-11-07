@@ -350,3 +350,7 @@ void client_logic_window_resize(
     log_append("unhandled client_logic_window_resize()\n");
     log_dump_and_crash();
 }
+
+void client_logic_shutdown(void) {
+    // Your application shutdown code goes here!
+}

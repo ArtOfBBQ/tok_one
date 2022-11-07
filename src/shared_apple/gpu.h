@@ -23,6 +23,7 @@ extern uint64_t last_resize_request_at;
 @property (retain) id<MTLRenderPipelineState>
     combo_pipeline_state;
 @property (retain) NSMutableArray * metal_textures;
+
 - (void)
     initializeTextureArray:(int32_t)texturearray_i
     textureCount:(uint32_t)texture_count

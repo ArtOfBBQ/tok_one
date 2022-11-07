@@ -6,8 +6,10 @@
 AVAudioPlayer * active_music_player = NULL;
 static float sound_volume = 0.15f;
 
-void platform_get_writables_path(char * recipient, const uint32_t recipient_size) {
-    
+void platform_get_writables_path(
+    char * recipient,
+    const uint32_t recipient_size)
+{
     log_assert(application_name != NULL && application_name[0] != '\0');
     NSArray * paths = NSSearchPathForDirectoriesInDomains(
         NSApplicationSupportDirectory,
@@ -40,7 +42,10 @@ uint64_t __attribute__((no_instrument_function))
 platform_get_current_time_microsecs(void) {
     struct timeval tv;
     gettimeofday(&tv,NULL);
-    uint64_t result = 1000000 * (uint64_t)tv.tv_sec + (uint64_t)tv.tv_usec;
+    uint64_t result =
+        1000000 *
+            (uint64_t)tv.tv_sec +
+            (uint64_t)tv.tv_usec;
     
     return result;
 }

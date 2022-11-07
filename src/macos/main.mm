@@ -275,6 +275,8 @@ int main(int argc, const char * argv[]) {
     // [mtk_view setOpaque: NO];
     // mtk_view.opaque = false;
     // mtk_view.preferredFramesPerSecond = 60;
+    mtk_view.enableSetNeedsDisplay = false;
+    [mtk_view setPaused: false];
     
     window.contentView = mtk_view;
     
@@ -297,6 +299,6 @@ int main(int argc, const char * argv[]) {
         configureMetalWithDevice: metal_device
         andPixelFormat: mtk_view.colorPixelFormat
         fromFolder: shader_lib_path];
-        
+    
     return NSApplicationMain(argc, argv);
 }

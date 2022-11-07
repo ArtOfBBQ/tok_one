@@ -50,147 +50,151 @@ uint32_t backtrace_i = 0;
 #ifdef __cplusplus
 extern "C" {
 #endif
-    void __attribute__((no_instrument_function))
-    __cyg_profile_func_enter(
-        void *this_fn,
-        void * call_site)
+
+#ifndef IGNORE_LOGGER
+void __attribute__((no_instrument_function))
+__cyg_profile_func_enter(
+    void *this_fn,
+    void * call_site)
+{
+    (void)call_site;
+    
+    logger_activated = true;
+    
+    if (
+        timed_function_map == NULL
+        || !application_running)
     {
-        (void)call_site;
-        
-        logger_activated = true;
-        
-        if (
-            timed_function_map == NULL
-            || !application_running)
-        {
-            return;
-        }
-        
-        uint32_t entry_i =
-            (uint64_t)this_fn & (TIMED_FUNCTION_MAP_SIZE - 1);
-        
-        uint32_t link_i = 0;
-        while (
-            timed_function_map[entry_i]
-                .linked_list[link_i]
-                .function_address
-                    != (uint64_t)this_fn
-            && timed_function_map[entry_i]
-                .linked_list[link_i]
-                .function_address != 0)
-        {
-            link_i += 1;
-            log_assert(link_i < TIMED_FUNCTION_LINK_SIZE);
-        }
-        
-        // record +1 run for this function address
+        return;
+    }
+    
+    uint32_t entry_i =
+        (uint64_t)this_fn & (TIMED_FUNCTION_MAP_SIZE - 1);
+    
+    uint32_t link_i = 0;
+    while (
         timed_function_map[entry_i]
             .linked_list[link_i]
-            .function_address =
-                (uint64_t)this_fn;
-        timed_function_map[entry_i]
+            .function_address
+                != (uint64_t)this_fn
+        && timed_function_map[entry_i]
             .linked_list[link_i]
-            .times_ran += 1;
+            .function_address != 0)
+    {
+        link_i += 1;
+        log_assert(link_i < TIMED_FUNCTION_LINK_SIZE);
+    }
+    
+    // record +1 run for this function address
+    timed_function_map[entry_i]
+        .linked_list[link_i]
+        .function_address =
+            (uint64_t)this_fn;
+    timed_function_map[entry_i]
+        .linked_list[link_i]
+        .times_ran += 1;
+    
+    // record function name if necessary
+    if (timed_function_map[entry_i]
+        .linked_list[link_i]
+        .function_name[0] == '\0')
+    {
+        Dl_info info;
         
-        // record function name if necessary
-        if (timed_function_map[entry_i]
-            .linked_list[link_i]
-            .function_name[0] == '\0')
-        {
-            Dl_info info;
+        if (dladdr(this_fn, &info)) {
+            // info.dli_fname;
             
-            if (dladdr(this_fn, &info)) {
-                // info.dli_fname;
-                
-                assert(timed_function_map != NULL);
-                strcpy_capped(
-                    /* recipient: */
-                        timed_function_map[entry_i]
-                            .linked_list[link_i]
-                            .function_name,
-                    /* recipient_size: */
-                        MAX_TIMED_FUNCTION_NAME,
-                    /* origin: */
-                        info.dli_sname);
-            }
-        }
-        
-        // record when this function started running 
-        timed_function_map[entry_i]
-            .linked_list[link_i]
-            .currently_running += 1;
-        if (
-            timed_function_map[entry_i]
-                .linked_list[link_i]
-                .currently_running == 1)
-        {
-            timed_function_map[entry_i]
-                .linked_list[link_i]
-                .current_first_start_at =
-                    platform_get_current_time_microsecs();
+            assert(timed_function_map != NULL);
+            strcpy_capped(
+                /* recipient: */
+                    timed_function_map[entry_i]
+                        .linked_list[link_i]
+                        .function_name,
+                /* recipient_size: */
+                    MAX_TIMED_FUNCTION_NAME,
+                /* origin: */
+                    info.dli_sname);
         }
     }
     
-    void __attribute__((no_instrument_function))
-    __cyg_profile_func_exit(
-        void *this_fn,
-        void *call_site)
-    {
-        (void)call_site;
-        
-        if (
-            timed_function_map == NULL
-            || !application_running)
-        {
-            return;
-        }
-        
-        uint32_t entry_i =
-            (uint64_t)this_fn & (TIMED_FUNCTION_MAP_SIZE - 1);
-        
-        bool32_t found_link = false; 
-        uint32_t link_i = 0;
-        for (
-            ;
-            link_i < TIMED_FUNCTION_LINK_SIZE;
-            link_i++)
-        {
-            if (
-                timed_function_map[entry_i]
-                    .linked_list[link_i]
-                    .function_address
-                        == (uint64_t)this_fn)
-            {
-                found_link = true;
-                break;
-            }
-        }
-        
-        if (!found_link) { return; }
-
-        // find out when this func started running 
-        if (
-            timed_function_map[entry_i]
+    // record when this function started running 
+    timed_function_map[entry_i]
+        .linked_list[link_i]
+        .currently_running += 1;
+    if (
+        timed_function_map[entry_i]
             .linked_list[link_i]
             .currently_running == 1)
+    {
+        timed_function_map[entry_i]
+            .linked_list[link_i]
+            .current_first_start_at =
+                platform_get_current_time_microsecs();
+    }
+}
+
+void __attribute__((no_instrument_function))
+__cyg_profile_func_exit(
+    void *this_fn,
+    void *call_site)
+{
+    (void)call_site;
+    
+    if (
+        timed_function_map == NULL
+        || !application_running)
+    {
+        return;
+    }
+    
+    uint32_t entry_i =
+        (uint64_t)this_fn & (TIMED_FUNCTION_MAP_SIZE - 1);
+    
+    bool32_t found_link = false; 
+    uint32_t link_i = 0;
+    for (
+        ;
+        link_i < TIMED_FUNCTION_LINK_SIZE;
+        link_i++)
+    {
+        if (
+            timed_function_map[entry_i]
+                .linked_list[link_i]
+                .function_address
+                    == (uint64_t)this_fn)
         {
-            timed_function_map[entry_i]
-                .linked_list[link_i]
-                .time_tally +=
-                    (platform_get_current_time_microsecs() -
-                        timed_function_map[entry_i]
-                            .linked_list[link_i]
-                            .current_first_start_at);
-            
-            timed_function_map[entry_i]
-                .linked_list[link_i]
-                .current_first_start_at = 0;
+            found_link = true;
+            break;
         }
+    }
+    
+    if (!found_link) { return; }
+
+    // find out when this func started running 
+    if (
+        timed_function_map[entry_i]
+        .linked_list[link_i]
+        .currently_running == 1)
+    {
+        timed_function_map[entry_i]
+            .linked_list[link_i]
+            .time_tally +=
+                (platform_get_current_time_microsecs() -
+                    timed_function_map[entry_i]
+                        .linked_list[link_i]
+                        .current_first_start_at);
         
         timed_function_map[entry_i]
             .linked_list[link_i]
-            .currently_running -= 1;
+            .current_first_start_at = 0;
     }
+    
+    timed_function_map[entry_i]
+        .linked_list[link_i]
+        .currently_running -= 1;
+}
+#endif
+
 #ifdef __cplusplus
 }
 #endif

@@ -12,6 +12,10 @@
 #define NULL 0
 #endif
 
+#ifndef bool
+#define bool uint32_t
+#endif
+
 #define COMMON_SILENCE
 #ifndef COMMON_SILENCE
 #include <stdio.h>

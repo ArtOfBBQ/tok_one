@@ -6,7 +6,8 @@ static uint32_t already_drawing = false;
 
 @implementation MetalKitViewDelegate
 {
-    NSUInteger _currentFrameIndex;
+    NSUInteger current_frame_i;
+    MTLViewport viewport;
 }
 
 - (void)
@@ -14,7 +15,7 @@ static uint32_t already_drawing = false;
     andPixelFormat: (MTLPixelFormat)pixel_format
     fromFolder: (NSString *)shader_lib_filepath
 {
-    _currentFrameIndex = 0;
+    current_frame_i = 0;
     
     _metal_device = metal_device;
     _command_queue = [metal_device newCommandQueue];
@@ -132,6 +133,13 @@ static uint32_t already_drawing = false;
     _metal_textures = [
         [NSMutableArray alloc]
             initWithCapacity: TEXTUREARRAYS_SIZE];
+    
+    viewport.originX = 0;
+    viewport.originY = 0;
+    viewport.width = window_width * (has_retina_screen ? 2.0f : 1.0f);
+    viewport.height = window_height * (has_retina_screen ? 2.0f : 1.0f);
+    viewport.znear = 0.0f;
+    viewport.zfar = 0.0f;
     
     log_append("finished configureMetalWithDevice\n");
 }
@@ -251,19 +259,8 @@ static uint32_t already_drawing = false;
     if (already_drawing) { return; }
     already_drawing = true;
     
-    MTLViewport viewport = {
-        0,
-        0,
-        window_width * (has_retina_screen ? 2.0f : 1.0f),
-        window_height * (has_retina_screen ? 2.0f : 1.0f),
-        /* TODO: should be projection_constants.near? */ 0.0f,
-        /* TODO: should be projection_constants.far?  */ 0.0f,
-    };
-    
-    uint32_t frame_i = (uint32_t)_currentFrameIndex;
-    
     Vertex * vertices_for_gpu =
-        _render_commands.vertex_buffers[frame_i].vertices;
+        _render_commands.vertex_buffers[current_frame_i].vertices;
     uint32_t vertices_for_gpu_size = 0;
     
     shared_gameloop_update(
@@ -298,7 +295,7 @@ static uint32_t already_drawing = false;
     // encode the drawing of all triangles 
     id<MTLBuffer> current_buffered_vertices =
         [[self vertex_buffers]
-            objectAtIndex: _currentFrameIndex];
+            objectAtIndex: current_frame_i];
     [render_encoder
         setVertexBuffer: current_buffered_vertices  
         offset: 0 
@@ -329,16 +326,9 @@ static uint32_t already_drawing = false;
     id<CAMetalDrawable> current_drawable =
         [view currentDrawable];
     [command_buffer presentDrawable: current_drawable];
-    
-    uint32_t next_index = (uint32_t)_currentFrameIndex + 1;
-    if (next_index > 2) { next_index = 0; }
-    
-    _currentFrameIndex = next_index;
-    
-    [command_buffer
-        addCompletedHandler:
-            ^(id<MTLCommandBuffer> commandBuffer)
-        {}];
+        
+    current_frame_i += 1;
+    current_frame_i -= ((current_frame_i > 2)*3);
     
     [command_buffer commit];
     
@@ -351,6 +341,13 @@ static uint32_t already_drawing = false;
 {
     window_height = platform_get_current_window_height(); 
     window_width = platform_get_current_window_width();
+    
+    viewport.originX = 0;
+    viewport.originY = 0;
+    viewport.width = window_width * (has_retina_screen ? 2.0f : 1.0f);
+    viewport.height = window_height * (has_retina_screen ? 2.0f : 1.0f);
+    viewport.znear = 0.0f;
+    viewport.zfar = 0.0f;
 }
 @end
 

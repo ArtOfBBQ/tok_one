@@ -1,7 +1,7 @@
 #include "scheduled_animations.h"
 
 ScheduledAnimation * scheduled_animations;
-static uint32_t scheduled_animations_size = 0;
+uint32_t scheduled_animations_size = 0;
 
 void init_scheduled_animations(void) {
     scheduled_animations = (ScheduledAnimation *)malloc_from_unmanaged(
@@ -11,7 +11,7 @@ void init_scheduled_animations(void) {
 void construct_scheduled_animation(
     ScheduledAnimation * to_construct)
 {
-    to_construct->affected_object_id = 0;
+    to_construct->affected_object_id = -1;
     
     to_construct->set_texture_array_i = false;
     to_construct->new_texture_array_i = -1;
@@ -57,9 +57,33 @@ void request_scheduled_animation(
     ScheduledAnimation * to_add)
 {
     log_assert(to_add != NULL);
+    log_assert(!to_add->deleted);
+    
+    if (to_add->clientlogic_callback_when_finished_id < 0) {
+        log_assert(to_add->affected_object_id >= 0);
+        
+        bool found_target = false;
+        for (uint32_t i = 0; i < texquads_to_render_size; i++) {
+            if (!texquads_to_render[i].deleted && texquads_to_render[i].object_id == to_add->affected_object_id) {
+                found_target = true;
+            }
+        }
+        for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
+            if (!zlights_to_apply[i].deleted && zlights_to_apply[i].object_id == to_add->affected_object_id) {
+                found_target = true;
+            }
+        }
+        if (!found_target) {
+            log_append("WARNING: requested scheduled animation targeting object: ");
+            log_append_int(to_add->affected_object_id);
+            log_append_char('\n');
+            log_append_char('\n');
+        }
+    }
     to_add->remaining_microseconds = to_add->duration_microseconds;
     
     log_assert(scheduled_animations_size < SCHEDULED_ANIMATIONS_ARRAYSIZE);
+    
     for (
         int32_t i = 0;
         i < (int32_t)scheduled_animations_size;
@@ -75,6 +99,7 @@ void request_scheduled_animation(
     log_assert(SCHEDULED_ANIMATIONS_ARRAYSIZE > scheduled_animations_size);
     
     scheduled_animations[scheduled_animations_size] = *to_add;
+    log_assert(!scheduled_animations[scheduled_animations_size].deleted);
     scheduled_animations_size += 1;
     log_assert(
         SCHEDULED_ANIMATIONS_ARRAYSIZE
@@ -129,6 +154,19 @@ static void resolve_single_animation_effects(
     const uint64_t remaining_microseconds_at_start_of_run)
 {
     log_assert(remaining_microseconds_at_start_of_run >= elapsed_this_run);
+    
+    // TODO: remove this debugging code
+    if (anim->final_z_known) {
+        log_append("z-changing animation affecting object_id: ");
+        log_append_int(anim->affected_object_id);
+        log_append_char('\n');
+        log_append_char('\n');
+    }
+    
+    if (anim->deleted) { return; }
+    
+    bool found_at_least_one = false;
+    
     // apply effects
     for (
         int32_t l_i = (int32_t)zlights_to_apply_size - 1;
@@ -140,6 +178,8 @@ static void resolve_single_animation_effects(
                 anim->affected_object_id &&
             !zlights_to_apply[l_i].deleted)
         {
+            found_at_least_one = true;
+            
             if (!anim->final_x_known) {
                 zlights_to_apply[l_i].x +=
                     (anim->delta_x_per_second * elapsed_this_run) / 1000000;
@@ -208,12 +248,14 @@ static void resolve_single_animation_effects(
         uint32_t tq_i = 0;
         tq_i < texquads_to_render_size;
         tq_i++)
-    {
+    {   
         if (
             texquads_to_render[tq_i].object_id ==
                 anim->affected_object_id &&
             !texquads_to_render[tq_i].deleted)
         {
+            found_at_least_one = true;
+            
             if (anim->set_texture_array_i) {
                 texquads_to_render[tq_i].texturearray_i =
                     anim->new_texture_array_i;
@@ -256,7 +298,7 @@ static void resolve_single_animation_effects(
                          ((float)remaining_microseconds_at_start_of_run /
                           elapsed_this_run);
             }
-
+            
             if (!anim->final_z_known) {
                 texquads_to_render[tq_i].z +=
                     ((anim->delta_z_per_second
@@ -361,10 +403,17 @@ static void resolve_single_animation_effects(
             }
         }
     }
+    
+    if (!found_at_least_one && anim->clientlogic_callback_when_finished_id < 0) {
+        log_append("WARNING: animation targeting object_id: ");
+        log_append_int(anim->affected_object_id);
+        log_append(" failed to find any viable targets and is being retired!\n");
+        anim->deleted = true;
+    }
 }
 
 void resolve_animation_effects(const uint64_t microseconds_elapsed) {
-   
+    
     ScheduledAnimation * anim;
     for (
         int32_t animation_i = (int32_t)(scheduled_animations_size - 1);
@@ -396,8 +445,9 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
         uint64_t actual_elapsed_this_run = actual_elapsed;
         uint64_t remaining_microseconds_at_start_of_run =
             anim->remaining_microseconds;
+        bool delete_after_this_run = false;
         
-        if (anim->remaining_microseconds >= actual_elapsed) {
+        if (anim->remaining_microseconds > actual_elapsed) {
             anim->remaining_microseconds -= actual_elapsed;
         } else {
             
@@ -447,52 +497,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                     }
                 }
             } else {
-                
-                anim->deleted = true;
-                if (animation_i == (int32_t)scheduled_animations_size) {
-                    scheduled_animations_size -= 1;
-                }
-                
-                if (anim->clientlogic_callback_when_finished_id >= 0)  {
-                    client_logic_animation_callback(
-                        anim->clientlogic_callback_when_finished_id);
-                }
-                
-                if (anim->delete_object_when_finished) {
-                    for (
-                        int32_t tq_i = (int32_t)texquads_to_render_size - 1;
-                        tq_i >= 0;
-                        tq_i--)
-                    {
-                        if (
-                            texquads_to_render[tq_i].object_id ==
-                                anim->affected_object_id)
-                        {
-                            texquads_to_render[tq_i].deleted = true;
-                            texquads_to_render[tq_i].visible = false;
-                            texquads_to_render[tq_i].texturearray_i = -1;
-                            texquads_to_render[tq_i].texture_i = -1;
-                        }
-                    }
-                    
-                    for (
-                        int32_t l_i = (int32_t)zlights_to_apply_size - 1;
-                        l_i >= 0;
-                        l_i--)
-                    {
-                        if (
-                            zlights_to_apply[l_i].object_id ==
-                                anim->affected_object_id)
-                        {
-                            zlights_to_apply[l_i].deleted = true;
-                            
-                            if (l_i == (int32_t)zlights_to_apply_size - 1)
-                            {
-                                zlights_to_apply_size--;
-                            }
-                        }
-                    }
-                }
+                delete_after_this_run = true;
             }
         }
         
@@ -502,6 +507,55 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                 actual_elapsed_this_run,
                 remaining_microseconds_at_start_of_run);
         }
+        
+        if (delete_after_this_run) {
+            
+            anim->deleted = true;
+            if (animation_i == (int32_t)scheduled_animations_size) {
+                scheduled_animations_size -= 1;
+            }
+            
+            if (anim->clientlogic_callback_when_finished_id >= 0)  {
+                client_logic_animation_callback(
+                    anim->clientlogic_callback_when_finished_id);
+            }
+            
+            if (anim->delete_object_when_finished) {
+                for (
+                    int32_t tq_i = (int32_t)texquads_to_render_size - 1;
+                    tq_i >= 0;
+                    tq_i--)
+                {
+                    if (
+                        texquads_to_render[tq_i].object_id ==
+                            anim->affected_object_id)
+                    {
+                        texquads_to_render[tq_i].deleted = true;
+                        texquads_to_render[tq_i].visible = false;
+                        texquads_to_render[tq_i].texturearray_i = -1;
+                        texquads_to_render[tq_i].texture_i = -1;
+                    }
+                }
+                
+                for (
+                    int32_t l_i = (int32_t)zlights_to_apply_size - 1;
+                    l_i >= 0;
+                    l_i--)
+                {
+                    if (
+                        zlights_to_apply[l_i].object_id ==
+                            anim->affected_object_id)
+                    {
+                        zlights_to_apply[l_i].deleted = true;
+                        
+                        if (l_i == (int32_t)zlights_to_apply_size - 1)
+                        {
+                            zlights_to_apply_size--;
+                        }
+                    }
+                }
+            }
+        }     
     }
 }
 

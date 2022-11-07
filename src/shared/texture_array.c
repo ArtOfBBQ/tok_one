@@ -779,49 +779,82 @@ void decode_all_null_images_with_memory(
     const uint64_t dpng_working_memory_size)
 {
     while (true) {
-        // check for a high priority load
-        bool32_t found = false;
+        int32_t priority_png_texturearray_i = -1;
+        int32_t priority_png_texture_i = -1;
         int32_t nonpriority_texturearray_i = -1;
         int32_t nonpriority_texture_i = -1;
         
-        for (int32_t i = 0; (uint32_t)i < texture_arrays_size; i++) {
+        for (
+            int32_t i = 0;
+            (uint32_t)i < texture_arrays_size;
+            i++)
+        {
             for (
                 int32_t j = 0;
                 (uint32_t)j < texture_arrays[i].images_size;
                 j++)
             {
                 if (
-                    texture_arrays[i].images[j].image == NULL
-                    && texture_arrays[i].images[j].filename != NULL)
+                    texture_arrays[i].images[j].image == NULL &&
+                    texture_arrays[i].images[j].filename != NULL)
                 {
+                    uint32_t strlen = get_string_length(texture_arrays[i].images[j].filename);
+                    
+                    if (texture_arrays[i].images[j].prioritize_asset_load &&
+                        strlen > 4) {
+                        if (
+                            texture_arrays[i].images[j].filename[strlen - 3] == 'b' &&
+                            texture_arrays[i].images[j].filename[strlen - 2] == 'm' &&
+                            texture_arrays[i].images[j].filename[strlen - 1] == 'p')
+                        {
+                            log_append("decoding image: ");
+                            log_append(texture_arrays[i].images[j].filename);
+                            log_append_char('\n');
+                            decode_null_image_with_memory(
+                                /* const int32_t texture_array_i: */ i,
+                                /* const int32_t texture_i: */ j,
+                                /* uint8_t * dpng_working_memory: */ dpng_working_memory,
+                                /* const uint64_t dpng_working_memory_size: */ dpng_working_memory_size);
+                            continue;
+                        }
+                        
+                        if (
+                            texture_arrays[i].images[j].filename[strlen - 3] == 'p' &&
+                            texture_arrays[i].images[j].filename[strlen - 2] == 'n' &&
+                            texture_arrays[i].images[j].filename[strlen - 1] == 'g')
+                        {
+                            priority_png_texturearray_i = (int32_t)i;
+                            priority_png_texture_i = (int32_t)j;
+                            continue;
+                        }
+                    }
+                    
                     if (!texture_arrays[i].images[j].prioritize_asset_load)
                     {
                         nonpriority_texturearray_i = (int32_t)i;
                         nonpriority_texture_i = (int32_t)j;
                         continue;
                     }
-                    found = true;
-                    
-                    decode_null_image_with_memory(
-                        /* const int32_t texture_array_i: */
-                            i,
-                        /* const int32_t texture_i: */
-                            j,
-                        /* uint8_t * dpng_working_memory: */
-                            dpng_working_memory,
-                        /* const uint64_t dpng_working_memory_size: */
-                            dpng_working_memory_size);
                 }
             }
         }
         
-        if (found) { continue; }
+        int32_t i = -1;
+        int32_t j = -1;
+        if (priority_png_texture_i >= 0 && priority_png_texturearray_i >= 0) {
+            i = priority_png_texturearray_i;
+            j = priority_png_texture_i;
+        } else if (nonpriority_texture_i >= 0 && nonpriority_texturearray_i >= 0) {
+            i = nonpriority_texturearray_i;
+            j = nonpriority_texture_i;
+        }
         
-        int32_t i = nonpriority_texturearray_i;
-        int32_t j = nonpriority_texture_i;
         if (i < 0) { return; }
         if (j < 0) { return; }
-
+        
+        log_append("decoding image: ");
+        log_append(texture_arrays[i].images[j].filename);
+        log_append_char('\n');
         decode_null_image_with_memory(
             /* const int32_t texture_array_i: */
                 i,

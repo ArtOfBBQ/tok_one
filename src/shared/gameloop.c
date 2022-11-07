@@ -6,7 +6,7 @@ static uint64_t frame_no = 0;
 void shared_gameloop_update(
     Vertex * vertices_for_gpu,
     uint32_t * vertices_for_gpu_size)
-{
+{    
     frame_no++;
     uint64_t time = platform_get_current_time_microsecs();
     uint64_t elapsed = time - previous_time;
@@ -17,8 +17,8 @@ void shared_gameloop_update(
     previous_time = time;
     
     if (
-        time - last_resize_request_at < 1500000
-        && !request_post_resize_clearscreen)
+        time - last_resize_request_at < 1500000 &&
+        !request_post_resize_clearscreen)
     {
         if (time - last_resize_request_at < 300000) {
             return;
