@@ -18,9 +18,8 @@
 
 #define LOG_SIZE 5000000
 
-
 #ifdef IGNORE_LOGGER
-#define log_assert(condition)
+#define log_assert(condition) assert(condition)
 #define log_append(string)
 #define log_append_char(num)
 #define log_append_float(num)
@@ -53,7 +52,7 @@ __cyg_profile_func_exit(
     void *this_fn,
     void *call_site);
 
-extern char * assert_failed_message;
+extern char crashed_top_of_screen_msg[256];
 extern bool32_t application_running;
 
 /*
@@ -130,7 +129,7 @@ then crash the application.
 I use this instead of assert(0).
 */
 void __attribute__((no_instrument_function))
-log_dump_and_crash(void);
+log_dump_and_crash(const char * crash_message);
 
 /*
 Assert something, but use the GUI to report on failure

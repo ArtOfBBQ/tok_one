@@ -2,6 +2,15 @@
 #define COMMON_H
 
 #include <inttypes.h>
+// #define COMMON_IGNORE_ASSERTS
+#ifndef COMMON_IGNORE_ASSERTS
+#include <assert.h>
+#endif
+
+#define COMMON_SILENCE
+#ifndef COMMON_SILENCE
+#include <stdio.h>
+#endif
 
 #ifndef __cplusplus
 #define true 1
@@ -10,20 +19,6 @@
 
 #ifndef NULL
 #define NULL 0
-#endif
-
-#ifndef bool
-#define bool uint32_t
-#endif
-
-#define COMMON_SILENCE
-#ifndef COMMON_SILENCE
-#include <stdio.h>
-#endif
-
-// #define COMMON_IGNORE_ASSERTS
-#ifndef COMMON_IGNORE_ASSERTS
-#include <assert.h>
 #endif
 
 #define bool8_t uint8_t

@@ -120,12 +120,12 @@ void construct_scheduled_animation(ScheduledAnimation * to_construct);
 void request_scheduled_animation(ScheduledAnimation * to_add);
 
 void request_fade_and_destroy(
-    const uint32_t object_id,
+    const int32_t object_id,
     const uint64_t wait_first_microseconds,
     const uint64_t duration_microseconds);
 
 void request_fade_to(
-    const uint32_t object_id,
+    const int32_t object_id,
     const uint64_t wait_first_microseconds,
     const uint64_t duration_microseconds,
     const float target_alpha);

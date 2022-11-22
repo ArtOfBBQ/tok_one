@@ -107,16 +107,17 @@ void request_scheduled_animation(
 }
 
 void request_fade_and_destroy(
-    const uint32_t object_id,
+    const int32_t object_id,
     const uint64_t wait_before_first_run,
     const uint64_t duration_microseconds)
 {
     log_assert(duration_microseconds > 0);
+    log_assert(object_id >= 0);
     
     // register scheduled animation
     ScheduledAnimation modify_alpha;
     construct_scheduled_animation(&modify_alpha);
-    modify_alpha.affected_object_id = (int32_t)object_id;
+    modify_alpha.affected_object_id = object_id;
     modify_alpha.remaining_wait_before_next_run = wait_before_first_run;
     modify_alpha.duration_microseconds = duration_microseconds;
     modify_alpha.final_rgba_known[0] = true;
@@ -132,15 +133,17 @@ void request_fade_and_destroy(
 }
 
 void request_fade_to(
-    const uint32_t object_id,
+    const int32_t object_id,
     const uint64_t wait_before_first_run,
     const uint64_t duration_microseconds,
     const float target_alpha)
 {
+    log_assert(object_id >= 0);
+    
     // register scheduled animation
     ScheduledAnimation modify_alpha;
     construct_scheduled_animation(&modify_alpha);
-    modify_alpha.affected_object_id = (int32_t)object_id;
+    modify_alpha.affected_object_id = object_id;
     modify_alpha.remaining_wait_before_next_run = wait_before_first_run;
     modify_alpha.duration_microseconds = duration_microseconds;
     modify_alpha.final_rgba_known[3] = true;
@@ -154,14 +157,6 @@ static void resolve_single_animation_effects(
     const uint64_t remaining_microseconds_at_start_of_run)
 {
     log_assert(remaining_microseconds_at_start_of_run >= elapsed_this_run);
-    
-    // TODO: remove this debugging code
-    if (anim->final_z_known) {
-        log_append("z-changing animation affecting object_id: ");
-        log_append_int(anim->affected_object_id);
-        log_append_char('\n');
-        log_append_char('\n');
-    }
     
     if (anim->deleted) { return; }
     
@@ -248,7 +243,7 @@ static void resolve_single_animation_effects(
         uint32_t tq_i = 0;
         tq_i < texquads_to_render_size;
         tq_i++)
-    {   
+    {
         if (
             texquads_to_render[tq_i].object_id ==
                 anim->affected_object_id &&
@@ -404,11 +399,10 @@ static void resolve_single_animation_effects(
         }
     }
     
-    if (!found_at_least_one && anim->clientlogic_callback_when_finished_id < 0) {
+    if (!found_at_least_one && anim->clientlogic_callback_when_finished_id < 0 && anim->runs != 0) {
         log_append("WARNING: animation targeting object_id: ");
         log_append_int(anim->affected_object_id);
         log_append(" failed to find any viable targets and is being retired!\n");
-        anim->deleted = true;
     }
 }
 
@@ -529,11 +523,12 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                     if (
                         texquads_to_render[tq_i].object_id ==
                             anim->affected_object_id)
-                    {
+                    {                        
                         texquads_to_render[tq_i].deleted = true;
                         texquads_to_render[tq_i].visible = false;
                         texquads_to_render[tq_i].texturearray_i = -1;
                         texquads_to_render[tq_i].texture_i = -1;
+                        texquads_to_render[tq_i].object_id = -1;
                     }
                 }
                 

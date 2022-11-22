@@ -10,12 +10,14 @@ uint32_t zpolygons_to_render_size = 0;
 void init_projection_constants() {
     
     if (window_height < 50.0f || window_width < 50.0f) {
-        log_append("ERROR: unexpected window size [");
-        log_append_float(window_height);
-        log_append(",");
-        log_append_float(window_width);
-        log_append("]\n");
-        log_dump_and_crash();
+        char unexpected_window_sz_msg[256];
+        strcpy_capped(unexpected_window_sz_msg, 256, "ERROR: unexpected window size [");
+        strcat_int_capped(unexpected_window_sz_msg, 256, (int)window_height);
+        strcat_capped(unexpected_window_sz_msg, 256, ",");
+        strcat_int_capped(unexpected_window_sz_msg, 256, (int)window_width);
+        strcat_capped(unexpected_window_sz_msg, 256, "]\n");
+        log_append(unexpected_window_sz_msg);
+        log_dump_and_crash(unexpected_window_sz_msg);
     }
     
     ProjectionConstants * pjc = &projection_constants;
@@ -794,18 +796,7 @@ float get_visibility_rating(
     normalize_zvertex(&triangle_minus_observer);
     
     if (get_magnitude(triangle_minus_observer) > 1.01f) {
-        log_append(
-            "ERROR: normalized triangle_minus_observer still has magnitude of ");
-        log_append_float(get_magnitude(triangle_minus_observer));
-        log_append("\n");
-        log_append("triangle_minus_observer coords were: {");
-        log_append_float(triangle_minus_observer.x);
-        log_append(",");
-        log_append_float(triangle_minus_observer.y);
-        log_append(",");
-        log_append_float(triangle_minus_observer.z);
-        log_append("}\n");
-        log_dump_and_crash();
+        log_dump_and_crash("Normalized triangle had impossible magnitude of > 1.0f");
     }
     
     return dot_of_vertices(

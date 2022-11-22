@@ -14,8 +14,9 @@
 these variables may not exist on platforms where window resizing is
 impossible
 */
-float current_window_height = 600;
-float current_window_width = 900;
+float current_window_height = 1500;
+float current_window_width = 2000;
+bool32_t startup_complete = false; // dont trigger window resize code at startup
 
 MTKView * mtk_view = NULL; 
 
@@ -44,6 +45,8 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     windowWillResize:(NSWindow *)sender 
     toSize:(NSSize)frameSize
 {
+    if (!startup_complete) { return frameSize; }
+    
     last_resize_request_at = platform_get_current_time_microsecs();
     float title_bar_height =
         (float)([sender contentRectForFrameRect: sender.frame].size.height
@@ -299,6 +302,8 @@ int main(int argc, const char * argv[]) {
         configureMetalWithDevice: metal_device
         andPixelFormat: mtk_view.colorPixelFormat
         fromFolder: shader_lib_path];
+    
+    startup_complete = true;
     
     return NSApplicationMain(argc, argv);
 }

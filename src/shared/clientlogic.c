@@ -76,68 +76,28 @@ void client_logic_startup() {
     TexQuad sample_pic;
     construct_texquad(&sample_pic);
     sample_pic.object_id = 99999;
-    sample_pic.texturearray_i = 1;
-    sample_pic.texture_i = 0;
-    sample_pic.width_pixels = 300;
-    sample_pic.height_pixels = 300;
-    sample_pic.left_pixels = 200;
-    sample_pic.top_pixels = window_height / 2;
+    sample_pic.texturearray_i = -1;
+    sample_pic.texture_i = -1;
+    sample_pic.width_pixels = 200;
+    sample_pic.height_pixels = 200;
+    sample_pic.left_pixels = 0;
+    sample_pic.top_pixels = window_height * 0.5f;
     sample_pic.RGBA[0] = 1.0f;
-    sample_pic.RGBA[0] = 0.0f;
-    sample_pic.RGBA[0] = 0.5f;
-    sample_pic.RGBA[0] = 1.0f;
+    sample_pic.RGBA[1] = 1.0f;
+    sample_pic.RGBA[2] = 1.0f;
+    sample_pic.RGBA[3] = 0.2f;
     request_texquad_renderable(&sample_pic);
-    
-    ScheduledAnimation linked_rotate_right;
-    construct_scheduled_animation(&linked_rotate_right);
-    linked_rotate_right.affected_object_id = 99999;
-    linked_rotate_right.duration_microseconds = 400000;
-    linked_rotate_right.z_rotation_per_second = 1.8f;
-    linked_rotate_right.runs = 0;
-    linked_rotate_right.wait_before_each_run = 400000;
-    request_scheduled_animation(&linked_rotate_right);
-    
-    ScheduledAnimation linked_rotate_left;
-    construct_scheduled_animation(&linked_rotate_left);
-    linked_rotate_left.affected_object_id = 99999;
-    linked_rotate_left.duration_microseconds = 400000;
-    linked_rotate_left.z_rotation_per_second = -1.8f;
-    linked_rotate_left.runs = 0;
-    linked_rotate_left.remaining_wait_before_next_run = 400000;
-    linked_rotate_left.wait_before_each_run = 400000;
-    request_scheduled_animation(&linked_rotate_left);
-    
-    ScheduledAnimation linked_change_texarray;
-    construct_scheduled_animation(&linked_change_texarray);
-    linked_change_texarray.affected_object_id = 99999;
-    linked_change_texarray.duration_microseconds = 1;
-    linked_change_texarray.runs = 99999;
-    linked_change_texarray.set_texture_i = true;
-    linked_change_texarray.new_texture_i = 1;
-    linked_change_texarray.wait_before_each_run = 300000;
-    request_scheduled_animation(&linked_change_texarray);
-    
-    ScheduledAnimation linked_revert_texarray;
-    construct_scheduled_animation(&linked_revert_texarray);
-    linked_revert_texarray.affected_object_id = 99999;
-    linked_revert_texarray.duration_microseconds = 1;
-    linked_revert_texarray.runs = 99999;
-    linked_revert_texarray.set_texture_i = true;
-    linked_revert_texarray.new_texture_i = 0;
-    linked_revert_texarray.remaining_wait_before_next_run = 150000;
-    linked_revert_texarray.wait_before_each_run = 300000;
-    request_scheduled_animation(&linked_revert_texarray);
     
     font_ignore_lighting = false;
     request_label_renderable(
         /* const uint32_t with_id: */
             99,
         /* const char * text_to_draw: */
-            "i know dragons\nI KNOW DRAGONS\nwith feet like rabbits",
+            "I KNOW dragons\nline two\nline three\nline four blablablaba llng line will become line 5",
         /* const float left_pixelspace: */
-            100,
+            0,
         /* const float top_pixelspace: */
-            window_height - 100,
+            window_height * 0.5f,
         /* const float z: */
             1.0f,
         /* const float max_width: */
@@ -148,13 +108,13 @@ void client_logic_startup() {
     font_height = 80.0f;
     request_label_around(
         /* const uint32_t with_id: */
-            99,
+            100,
         /* const char * text_to_draw: */
-            "I'm a label\naround\nwith lb's\nyoyoyo yo yo ",
+            "I'm a label around\nwith linebreak\nthis is line 3",
         /* const float mid_x_pixelspace: */
-            400,
+            window_width - 215,
         /* const float top_y_pixelspace: */
-            window_height - 250,
+            window_height / 2,
         /* const float z: */
             1.0f,
         /* const float max_width: */
@@ -162,11 +122,21 @@ void client_logic_startup() {
         /* const bool32_t ignore_camera: */
             false);
     
-    // reminder: threadmain_id 0 calls load_assets() 
-    log_append("starting asset-loading thread...\n");
-    platform_start_thread(
-        client_logic_threadmain,
-        /* threadmain_id: */ 0);
+    ScheduledAnimation move_centered_label;
+    construct_scheduled_animation(&move_centered_label);
+    move_centered_label.affected_object_id = 100;
+    move_centered_label.final_x_known = true;
+    move_centered_label.final_mid_x = 10;
+    move_centered_label.final_y_known = true;
+    move_centered_label.final_mid_y = window_height;
+    move_centered_label.remaining_wait_before_next_run = 8000000;
+    move_centered_label.duration_microseconds = 8000000;
+    request_scheduled_animation(&move_centered_label);
+    
+    //    log_append("starting asset-loading thread...\n");
+    //    platform_start_thread(
+    //        client_logic_threadmain,
+    //        /* threadmain_id: */ 0);
     
     log_append("finished client_logic_startup()\n");
 }
@@ -185,11 +155,12 @@ void client_logic_threadmain(int32_t threadmain_id) {
 
 void client_logic_animation_callback(int32_t callback_id)
 {
-    log_append(
-        "unhandled client_logic_animation_callback(: ");
-    log_append_int(callback_id);
-    log_append("\n");
-    log_dump_and_crash();
+    char unhandled_callback_id[256];
+    strcpy_capped(unhandled_callback_id, 256, "unhandled client_logic_animation_callback: ");
+    strcat_int_capped(unhandled_callback_id, 256, callback_id);
+    strcat_capped(unhandled_callback_id, 256, ". You should handle it in clientlogic.c -> client_logic_animation_callback\n");
+    log_append(unhandled_callback_id);
+    log_dump_and_crash(unhandled_callback_id);
 }
 
 static uint32_t cur_color_i = 0;
@@ -340,15 +311,21 @@ void client_logic_update(uint64_t microseconds_elapsed)
     request_fps_counter(microseconds_elapsed);
     
     client_handle_touches_and_leftclicks(microseconds_elapsed);
-    client_handle_keypresses(microseconds_elapsed);
+    client_handle_keypresses(microseconds_elapsed);    
 }
 
 void client_logic_window_resize(
     const uint32_t new_height,
     const uint32_t new_width)
 {
-    log_append("unhandled client_logic_window_resize()\n");
-    log_dump_and_crash();
+    char unhandled_rs_msg[256];
+    strcpy_capped(unhandled_rs_msg, 256, "Error: unhandled client_logic_window_resize() to height/width: of ");
+    strcat_uint_capped(unhandled_rs_msg, 256, new_height);
+    strcat_capped(unhandled_rs_msg, 256, ", ");
+    strcat_uint_capped(unhandled_rs_msg, 256, new_width);
+    strcat_capped(unhandled_rs_msg, 256, ".\nEither prevent app resizing or handle in clientlogic.c\n");
+    log_append(unhandled_rs_msg);
+    log_dump_and_crash(unhandled_rs_msg);
 }
 
 void client_logic_shutdown(void) {

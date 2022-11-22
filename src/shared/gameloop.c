@@ -6,7 +6,7 @@ static uint64_t frame_no = 0;
 void shared_gameloop_update(
     Vertex * vertices_for_gpu,
     uint32_t * vertices_for_gpu_size)
-{    
+{
     frame_no++;
     uint64_t time = platform_get_current_time_microsecs();
     uint64_t elapsed = time - previous_time;
@@ -58,11 +58,17 @@ void shared_gameloop_update(
         font_color[2] = 1.0f;
         font_color[3] = 1.0f;
         
+        if (crashed_top_of_screen_msg[0] == '\0') {
+            strcpy_capped(crashed_top_of_screen_msg,
+            256,
+            "The engine failed an assertion, and also failed to retrieve an error message");
+        }
+        
         request_label_renderable(
             /* const uint32_t with_object_id: */
                 0,
             /* const char * text_to_draw: */
-                assert_failed_message,
+                crashed_top_of_screen_msg,
             /* const float left_pixelspace: */
                 10,
             /* const float top_pixelspace: */

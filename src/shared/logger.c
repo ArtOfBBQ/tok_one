@@ -1,7 +1,7 @@
 #include "logger.h"
 
 char application_name[100];
-char * assert_failed_message;
+char crashed_top_of_screen_msg[256];
 
 static bool32_t logger_activated = false;
 static char * log;
@@ -474,9 +474,10 @@ void __attribute__((no_instrument_function)) log_dump(bool32_t * good) {
 }
 
 void __attribute__((no_instrument_function))
-log_dump_and_crash(void) {
+log_dump_and_crash(const char * crash_message) {
     bool32_t log_dump_succesful = false;
     log_dump(&log_dump_succesful);
+    strcpy_capped(crashed_top_of_screen_msg, 256, crash_message);  
     application_running = false;
 }
 
@@ -501,116 +502,42 @@ internal_log_assert(
     assert(str_condition != NULL);
     assert(str_condition[0] != '\0');
     
-    assert(0);
-    log_dump_and_crash();
-    
-    uint32_t str_condition_len = get_string_length(str_condition);
-    uint32_t file_name_len     = get_string_length(file_name);
-    uint32_t func_name_len     = get_string_length(func_name);
-    
-    uint32_t screen_dump_size =
-        func_name_len +
-        str_condition_len +
-        (BACKTRACE_FUNCTIONS_TO_DISPLAY
-            * MAX_TIMED_FUNCTION_NAME) +
-        MAX_TIMED_FUNCTION_NAME +
-        25;
-    assert_failed_message = (char *)malloc_from_unmanaged(screen_dump_size);
-    
-    for (
-        uint32_t i = 0;
-        i < screen_dump_size;
-        i++)
-    {
-        assert_failed_message[i] = ' ';
-    }
-    
-    uint32_t recipient_at = 0;
+    //Assertion failed: (0), function main, file test.c, line 6.
+    char assert_failed_msg[256];
     
     strcpy_capped(
-        /* recipient: */
-            assert_failed_message + recipient_at,
-        /* recipient_size: */
-            screen_dump_size - recipient_at,
-        /* origin: */
-            file_name);
-    recipient_at += file_name_len;
+        assert_failed_msg,
+        256,
+        "Assertion failed: (");
+    strcat_capped(
+        assert_failed_msg,
+        256,
+        str_condition);
+    strcat_capped(
+        assert_failed_msg,
+        256,
+        "), function ");
+    strcat_capped(
+        assert_failed_msg,
+        256,
+        func_name);
+    strcat_capped(
+        assert_failed_msg,
+        256,
+        ", file ");
+    strcat_capped(
+        assert_failed_msg,
+        256,
+        file_name);
+    strcat_capped(
+        assert_failed_msg,
+        256,
+        ", line ");
+    strcat_int_capped(
+        assert_failed_msg,
+        256,
+        line_number);
     
-    char * connector = (char *)" - ";
-    uint32_t connector_length = get_string_length(connector);
-    strcpy_capped(
-        /* recipient: */
-            assert_failed_message + recipient_at,
-        /* recipient_size: */
-            screen_dump_size - recipient_at,
-        /* origin: */
-            connector);
-    recipient_at += connector_length;
-     
-    strcpy_capped(
-        /* recipient: */
-            assert_failed_message + recipient_at,
-        /* recipient_size: */
-            screen_dump_size - recipient_at,
-        /* origin: */
-            func_name);
-    recipient_at += func_name_len;
-    
-    char * connector2 = (char *)" (line ";
-    uint32_t connector2_length = get_string_length(connector2);
-    strcpy_capped(
-        /* recipient: */
-            assert_failed_message + recipient_at,
-        /* recipient_size: */
-            screen_dump_size - recipient_at,
-        /* origin: */
-            connector2);
-    recipient_at += connector2_length;
-    
-    char str_line[100];
-    int_to_string(
-        line_number,
-        str_line,
-        100);
-    uint32_t str_line_len = get_string_length(str_line);
-    strcpy_capped(
-        /* recipient: */
-            assert_failed_message + recipient_at,
-        /* recipient_size: */
-            screen_dump_size - recipient_at,
-        /* origin: */
-            str_line);
-    recipient_at += str_line_len;
-    
-    char * connector3 = (char *)"):\nAssertion failed: ";
-    uint32_t connector3_length = get_string_length(connector3);
-    strcpy_capped(
-        /* recipient: */
-            assert_failed_message + recipient_at,
-        /* recipient_size: */
-            screen_dump_size - recipient_at,
-        /* origin: */
-            connector3);
-    recipient_at += connector3_length;
-    
-    strcpy_capped(
-        /* recipient: */
-            assert_failed_message + recipient_at,
-        /* recipient_size: */
-            screen_dump_size - recipient_at,
-        /* origin: */
-            str_condition);
-    recipient_at += str_condition_len;
-    
-    char * connector4 = (char *)"\nBacktrace:\n";
-    uint32_t connector4_length = get_string_length(connector4);
-    strcpy_capped(
-        /* recipient: */
-            assert_failed_message + recipient_at,
-        /* recipient_size: */
-            screen_dump_size - recipient_at,
-        /* origin: */
-            connector4);
-    recipient_at += connector4_length;
+    log_dump_and_crash(assert_failed_msg);
 }
 

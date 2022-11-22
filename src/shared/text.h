@@ -18,7 +18,7 @@ void init_font(
     const uint64_t raw_fontmetrics_file_size);
 
 void request_label_around(
-    const uint32_t with_object_id,
+    const int32_t with_object_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
     const float mid_y_pixelspace,
@@ -27,7 +27,7 @@ void request_label_around(
     const bool32_t ignore_camera);
 
 void request_label_renderable(
-    const uint32_t with_object_id,
+    const int32_t with_object_id,
     const char * text_to_draw,
     const float left_pixelspace,
     const float top_pixelspace,

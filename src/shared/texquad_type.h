@@ -47,6 +47,9 @@ typedef struct TexQuad {
     float top_pixels; // y = window_height for top of screen
                       // y = 0 for right below the screen
     
+    float x_offset;   // an additional x offset unaffected by animations that target x/y 
+    float y_offset;   // an additional y offset unaffected by animations that target x/y
+    
     float height_pixels;
     float width_pixels;
     float scale_factor_x;

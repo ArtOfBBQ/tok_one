@@ -42,7 +42,7 @@ static uint32_t already_drawing = false;
             if (Error != NULL) {
                 NSLog(@" error => %@ ", [Error userInfo]);
             }
-            log_dump_and_crash();
+            return;
         } else {
             log_append("Success! Found the shader lib on 2nd try.\n");
         }
@@ -272,7 +272,7 @@ static uint32_t already_drawing = false;
     
     if (command_buffer == nil) {
         log_append("error - failed to get metal command buffer\n");
-        log_dump_and_crash();
+        log_dump_and_crash("error - failed to get metal command buffer\n");
         already_drawing = false;
         return;
     }

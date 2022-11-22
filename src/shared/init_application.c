@@ -37,11 +37,6 @@ void init_application() {
     
     window_height = platform_get_current_window_height();
     window_width = platform_get_current_window_width();
-    log_append("window height set to: ");
-    log_append_float(window_height);
-    log_append(" - window width set to: ");
-    log_append_float(window_width);
-    log_append("\n");
     
     init_projection_constants();
         

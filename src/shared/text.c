@@ -113,10 +113,11 @@ static float get_y_offset(const char input) {
     }
     
     return
-        (-codepoint_metrics[i].y1 *
+        ((-codepoint_metrics[i].y1 *
             global_font_metrics->scale_factor *
                 font_height) /
-                    global_font_metrics->font_size;
+                    global_font_metrics->font_size) +
+        (font_height * 0.75f);
 }
 
 static uint32_t find_next_linebreak(
@@ -156,104 +157,129 @@ static float get_next_word_width(const char * text) {
 }
 
 void request_label_around(
-    const uint32_t with_id,
+    const int32_t with_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
     const float top_y_pixelspace,
     const float z,
     const float max_width,
     const bool32_t ignore_camera)
-{    
+{
     log_assert(max_width > 0.0f);
+    log_assert(with_id >= 0);
     
-    uint32_t line_start_i = 0;
-    uint32_t line_end_i = 0;
-    float line_width = 0.0f;
+    uint32_t max_lines = 100;
+    float line_widths[max_lines];
+    float widest_line_width = 0.0f;
+    uint32_t line_count = 1;
     
     float cur_left = 0.0f;
     float cur_top = top_y_pixelspace;
     
-    while (text_to_draw[line_start_i] != '\0') {
+    // ****************************************
+    // set widest_line_width and line_count
+    // ****************************************
+    uint32_t cur_line_i = 0;
+    uint32_t i = 0;
+    while (text_to_draw[i] != '\0') {
+        line_widths[cur_line_i] += get_advance_width(text_to_draw[i]);            
+        i++;
         
-        line_end_i = find_next_linebreak(
-            /* input      : */ text_to_draw,
-            /* after_i    : */ line_start_i);
+        if (text_to_draw[i] == '\n') {
+            line_count += 1;
+            cur_line_i += 1;
+            log_assert(cur_line_i < max_lines);
+            continue;
+        }
         
-        if (line_end_i <= line_start_i)
-        {
+        if (text_to_draw[i] == '\0') {
             break;
         }
         
-        // calculate width of current line
-        line_width = 0.0f;
-        uint32_t i = line_start_i;
-        while (true) {
-            line_width += get_advance_width(text_to_draw[i]);
-            
-            i++;
-            if (text_to_draw[i] == '\0' || text_to_draw[i] == '\n') {
-                break;
-            }
-            
-            if (text_to_draw[i] == ' ') {
-                
-                if (
-                    line_width
+        if (text_to_draw[i] == ' ') {
+            if (
+                line_widths[cur_line_i]
                     + get_next_word_width(text_to_draw + i) > max_width)
-                {
-                    line_end_i = i;
-                    break;
-                }
-            }
-        }
-        
-        cur_left = mid_x_pixelspace - (0.5f * line_width);
-        for (
-            uint32_t j = line_start_i;
-            j <= line_end_i;
-            j++)
-        {
-            if (text_to_draw[j] == ' ') {
-                cur_left += (font_height / 2);
+            {
+                line_count += 1;
+                cur_line_i += 1;
                 continue;
             }
-            
-            TexQuad letter;
-            construct_texquad(&letter);
-            letter.ignore_lighting = font_ignore_lighting;
-            letter.ignore_camera = ignore_camera;
-            letter.object_id = (int32_t)with_id;
-            letter.texturearray_i = font_texturearray_i;
-            letter.texture_i = text_to_draw[j] - '!';
-            
-            for (
-                uint32_t rgba_i = 0;
-                rgba_i < 4;
-                rgba_i++)
-            {
-                letter.RGBA[rgba_i] = font_color[rgba_i];
-            }
-            
-            letter.left_pixels =
-                cur_left + get_left_side_bearing(text_to_draw[j]);
-            letter.top_pixels =
-                cur_top -
-                get_y_offset(text_to_draw[j]);
-            letter.height_pixels = font_height;
-            letter.width_pixels = letter.height_pixels;
-            letter.z = z;
-            
-            request_texquad_renderable(&letter);
-            cur_left += get_advance_width(text_to_draw[j]);
+        }
+    }
+    
+    printf("text to draw: %s\n", text_to_draw);
+    for (uint32_t line_i = 0; line_i < line_count; line_i++) {
+        printf("line %u has width: %f\n", line_i, line_widths[line_i]);
+        if (line_widths[line_i] > widest_line_width) {
+            log_assert(line_widths[line_i] > 0);
+            widest_line_width = line_widths[line_i];
+        }
+    }
+    printf("widest line width: %f\n", widest_line_width);
+    log_assert(widest_line_width > 0);
+    
+    i = 0;
+    cur_line_i = 0;
+    float label_left = mid_x_pixelspace - (widest_line_width / 2);
+    float cur_x_offset = (widest_line_width - line_widths[cur_line_i]) / 2;
+    float cur_y_offset = 0;
+    while (text_to_draw[i] != '\0') {
+        
+        if (text_to_draw[i] == '\n') {
+            cur_line_i += 1;
+            cur_y_offset -= font_height;
+            cur_x_offset = (widest_line_width - line_widths[cur_line_i]) / 2;
+            i++;
+            continue;
         }
         
-        cur_top -= font_height;
-        line_start_i = line_end_i;
+        if (text_to_draw[i] == ' ') {
+            if (
+                cur_x_offset +
+                    get_next_word_width(text_to_draw + i + 1) > max_width)
+            {
+                cur_line_i += 1;
+                cur_y_offset -= font_height;
+                cur_x_offset = (widest_line_width - line_widths[cur_line_i]) / 2;
+                i++;
+                continue;
+            }
+        }
+        
+        TexQuad letter;
+        construct_texquad(&letter);
+        letter.ignore_lighting = font_ignore_lighting;
+        letter.ignore_camera = ignore_camera;
+        letter.object_id = with_id;
+        letter.texturearray_i = font_texturearray_i;
+        letter.texture_i = text_to_draw[i] - '!';
+        
+        for (
+             uint32_t rgba_i = 0;
+             rgba_i < 4;
+             rgba_i++)
+        {
+            letter.RGBA[rgba_i] = font_color[rgba_i];
+        }
+        
+        letter.left_pixels = label_left;
+        letter.x_offset = cur_x_offset + get_left_side_bearing(text_to_draw[i]);
+        letter.top_pixels = top_y_pixelspace;
+        letter.y_offset = cur_y_offset - get_y_offset(text_to_draw[i]);
+        
+        letter.height_pixels = font_height;
+        letter.width_pixels = letter.height_pixels;
+        letter.z = z;
+        
+        request_texquad_renderable(&letter);
+        cur_x_offset += get_advance_width(text_to_draw[i]);
+        i++;
     }
 }
 
 void request_label_renderable(
-    const uint32_t with_id,
+    const int32_t with_id,
     const char * text_to_draw,
     const float left_pixelspace,
     const float top_pixelspace,
@@ -262,8 +288,8 @@ void request_label_renderable(
     const bool32_t ignore_camera)
 {
     log_assert(text_to_draw[0] != '\0');
-    float cur_left = left_pixelspace;
-    float cur_top = top_pixelspace;
+    float cur_x_offset = left_pixelspace;
+    float cur_y_offset = 0;
     
     uint32_t i = 0;
     // ignore leading ' '
@@ -274,7 +300,7 @@ void request_label_renderable(
     while (text_to_draw[i] != '\0') {
         
         if (text_to_draw[i] == ' ') {
-            cur_left += font_height / 2;
+            cur_x_offset += font_height / 2;
             i++;
             
             // TODO: check if next word fits inside max_width
@@ -282,28 +308,30 @@ void request_label_renderable(
                 /* const char * text: */ text_to_draw + i);
             
             if (
-                (cur_left + next_word_width - left_pixelspace) > max_width
+                (left_pixelspace +
+                    cur_x_offset +
+                    next_word_width -
+                    left_pixelspace) > max_width
                 && (next_word_width < max_width))
             {
-                cur_left = left_pixelspace;
-                cur_top  -= font_height;
+                cur_x_offset = 0;
+                cur_y_offset -= font_height;
             }
             continue;
         }
         
         if (text_to_draw[i] == '\n') {
-            cur_left = left_pixelspace;
-            cur_top -= font_height;
+            cur_x_offset = 0;
+            cur_y_offset -= font_height;
             i++;
             continue;
         }
         
         TexQuad letter;
         construct_texquad(&letter);
-        letter.object_id = (int32_t)with_id;
+        letter.object_id = with_id;
         letter.texturearray_i = font_texturearray_i;
         letter.texture_i = (int32_t)(text_to_draw[i] - '!');
-        
         for (
             uint32_t rgba_i = 0;
             rgba_i < 4;
@@ -311,11 +339,11 @@ void request_label_renderable(
         {
             letter.RGBA[rgba_i] = font_color[rgba_i];
         }
-        
-        letter.left_pixels =
-            cur_left + get_left_side_bearing(text_to_draw[i]);
-        letter.top_pixels =
-            cur_top - get_y_offset(text_to_draw[i]);
+        letter.left_pixels = left_pixelspace;
+        letter.top_pixels = top_pixelspace;
+        letter.x_offset =
+            cur_x_offset + get_left_side_bearing(text_to_draw[i]);
+        letter.y_offset = cur_y_offset - get_y_offset(text_to_draw[i]);
         letter.height_pixels = font_height * 0.8f;
         letter.width_pixels = letter.height_pixels;
         letter.ignore_lighting = font_ignore_lighting;
@@ -324,11 +352,11 @@ void request_label_renderable(
         
         request_texquad_renderable(&letter);
         
-        cur_left += get_advance_width(text_to_draw[i]);
-        if (cur_left + get_advance_width('w') - left_pixelspace >= max_width)
+        cur_x_offset += get_advance_width(text_to_draw[i]);
+        if (left_pixelspace + cur_x_offset + get_advance_width('w') >= max_width)
         {
-            cur_left = left_pixelspace;
-            cur_top  -= font_height;
+            cur_x_offset = 0;
+            cur_y_offset  -= font_height;
         }
         
         i++;
@@ -357,7 +385,7 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
     font_height = 12.0f;
     font_ignore_lighting = true;
     request_label_renderable(
-        /* with_id               : */ (uint32_t)label_object_id,
+        /* with_id               : */ label_object_id,
         /* char * text_to_draw   : */ fps_string,
         /* float left_pixelspace : */ 20.0f,
         /* float top_pixelspace  : */ 60.0f,

@@ -105,7 +105,7 @@ void request_texquad_renderable(TexQuad * to_add) {
         }
     }
     
-    assert(texquads_to_render_size + 1 < TEXQUADS_TO_RENDER_ARRAYSIZE);
+    log_assert(texquads_to_render_size + 1 < TEXQUADS_TO_RENDER_ARRAYSIZE);
     texquads_to_render[texquads_to_render_size] = *to_add;
     texquads_to_render_size += 1;
     
@@ -171,10 +171,13 @@ static void add_quad_to_gpu_workload(
     log_assert(to_add->subquads_per_row < 50);
     log_assert(to_add->width_pixels > 0.0f);
     
+    float offset_left = to_add->left_pixels + to_add->x_offset;
+    float offset_top = to_add->top_pixels + to_add->y_offset;
+    
     float parent_quad_middle_x =
-        to_add->left_pixels + (to_add->width_pixels / 2) - camera.x;
+        offset_left + (to_add->width_pixels / 2) - camera.x;
     float parent_quad_middle_y =
-        to_add->top_pixels -
+        offset_top -
             (to_add->height_pixels / 2) -
                 camera.y;
     
@@ -197,17 +200,17 @@ static void add_quad_to_gpu_workload(
             if (extra_scale_x != extra_scale_x) { return; } // not a number NaN
             if (extra_scale_y != extra_scale_y) { return; } // not a number NaN
             
-            float parent_left = to_add->left_pixels -
+            float parent_left = offset_left -
                 (extra_scale_x * 0.5f * to_add->width_pixels);
-            float parent_right = to_add->left_pixels +
+            float parent_right = offset_left +
                 to_add->width_pixels +
                 (extra_scale_x * 0.5f * to_add->width_pixels);
             if (parent_left >= parent_right) {
                 parent_right = parent_left + 0.001f;
             }
-            float parent_top = to_add->top_pixels +
+            float parent_top = offset_top +
                 (extra_scale_y * 0.5f * to_add->height_pixels);
-            float parent_bottom = to_add->top_pixels -
+            float parent_bottom = offset_top -
                 to_add->height_pixels -
                 (extra_scale_y * 0.5f * to_add->height_pixels);
             if (parent_top <= parent_bottom) {
