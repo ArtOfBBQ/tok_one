@@ -39,7 +39,7 @@ void init_application() {
     window_width = platform_get_current_window_width();
     
     init_projection_constants();
-        
+    
     construct_interaction(&previous_touch_start);
     construct_interaction(&previous_touch_end);
     construct_interaction(&previous_leftclick_start);

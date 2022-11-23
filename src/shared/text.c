@@ -173,8 +173,9 @@ void request_label_around(
     float widest_line_width = 0.0f;
     uint32_t line_count = 1;
     
-    float cur_left = 0.0f;
-    float cur_top = top_y_pixelspace;
+    for (uint32_t i = 0; i < 100; i++) {
+        line_widths[i] = 0.0f;
+    }
     
     // ****************************************
     // set widest_line_width and line_count
@@ -182,7 +183,7 @@ void request_label_around(
     uint32_t cur_line_i = 0;
     uint32_t i = 0;
     while (text_to_draw[i] != '\0') {
-        line_widths[cur_line_i] += get_advance_width(text_to_draw[i]);            
+        line_widths[cur_line_i] += get_advance_width(text_to_draw[i]);
         i++;
         
         if (text_to_draw[i] == '\n') {
@@ -198,9 +199,11 @@ void request_label_around(
         
         if (text_to_draw[i] == ' ') {
             if (
+                line_widths[cur_line_i] > 0.0f &&
                 line_widths[cur_line_i]
                     + get_next_word_width(text_to_draw + i) > max_width)
             {
+                log_assert(line_widths[cur_line_i] > 0.0f);
                 line_count += 1;
                 cur_line_i += 1;
                 continue;
@@ -208,15 +211,11 @@ void request_label_around(
         }
     }
     
-    printf("text to draw: %s\n", text_to_draw);
     for (uint32_t line_i = 0; line_i < line_count; line_i++) {
-        printf("line %u has width: %f\n", line_i, line_widths[line_i]);
         if (line_widths[line_i] > widest_line_width) {
-            log_assert(line_widths[line_i] > 0);
             widest_line_width = line_widths[line_i];
         }
     }
-    printf("widest line width: %f\n", widest_line_width);
     log_assert(widest_line_width > 0);
     
     i = 0;
@@ -237,7 +236,7 @@ void request_label_around(
         if (text_to_draw[i] == ' ') {
             if (
                 cur_x_offset +
-                    get_next_word_width(text_to_draw + i + 1) > max_width)
+                    get_next_word_width(text_to_draw + i) > max_width)
             {
                 cur_line_i += 1;
                 cur_y_offset -= font_height;
