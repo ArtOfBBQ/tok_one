@@ -38,6 +38,13 @@ FontMetrics * global_font_metrics = NULL;
 FontCodepoint * codepoint_metrics = NULL;
 uint32_t codepoint_metrics_size = 0;
 
+
+typedef struct PrefetchedLine {
+    float width;
+    int32_t start_i;
+    int32_t end_i;
+} PrefetchedLine;
+
 void init_font(
     const char * raw_fontmetrics_file_contents,
     const uint64_t raw_fontmetrics_file_size)
@@ -169,26 +176,31 @@ void request_label_around(
     log_assert(with_id >= 0);
     
     uint32_t max_lines = 100;
-    float line_widths[max_lines];
+    PrefetchedLine lines[max_lines];
     float widest_line_width = 0.0f;
-    uint32_t line_count = 1;
+    uint32_t lines_size = 1;
     
     for (uint32_t i = 0; i < 100; i++) {
-        line_widths[i] = 0.0f;
+        lines[i].width = 0.0f;
+        lines[i].start_i = -1;
+        lines[i].end_i = -1;
     }
     
-    // ****************************************
-    // set widest_line_width and line_count
-    // ****************************************
+    // *********************************************************
+    // prefetch line widths and which character they start/end
+    // *********************************************************
     uint32_t cur_line_i = 0;
-    uint32_t i = 0;
+    int32_t i = 0;
+    lines[cur_line_i].start_i = 0;
     while (text_to_draw[i] != '\0') {
-        line_widths[cur_line_i] += get_advance_width(text_to_draw[i]);
+        lines[cur_line_i].width += get_advance_width(text_to_draw[i]);
         i++;
         
         if (text_to_draw[i] == '\n') {
-            line_count += 1;
+            lines[cur_line_i].end_i = i;
+            lines_size += 1;
             cur_line_i += 1;
+            lines[cur_line_i].start_i = i + 1;
             log_assert(cur_line_i < max_lines);
             continue;
         }
@@ -199,81 +211,80 @@ void request_label_around(
         
         if (text_to_draw[i] == ' ') {
             if (
-                line_widths[cur_line_i] > 0.0f &&
-                line_widths[cur_line_i]
+                lines[cur_line_i].width > 0.0f &&
+                lines[cur_line_i].width
                     + get_next_word_width(text_to_draw + i) > max_width)
             {
-                log_assert(line_widths[cur_line_i] > 0.0f);
-                line_count += 1;
+                log_assert(lines[cur_line_i].width > 0.0f);
+                log_assert(lines[cur_line_i].start_i < i);
+                lines[cur_line_i].end_i = i;
+                lines_size += 1;
                 cur_line_i += 1;
+                lines[cur_line_i].start_i = i + 1;
+                log_assert(cur_line_i < max_lines);
                 continue;
             }
         }
     }
+    log_assert(text_to_draw[i] == '\0');
+    lines[cur_line_i].end_i = i;
+    if (lines[cur_line_i].end_i == lines[cur_line_i].start_i) {
+        lines_size -= 1;
+    }
     
-    for (uint32_t line_i = 0; line_i < line_count; line_i++) {
-        if (line_widths[line_i] > widest_line_width) {
-            widest_line_width = line_widths[line_i];
+    for (uint32_t line_i = 0; line_i < lines_size; line_i++) {
+        if (lines[line_i].width > widest_line_width) {
+            widest_line_width = lines[line_i].width;
         }
     }
     log_assert(widest_line_width > 0);
     
-    i = 0;
-    cur_line_i = 0;
-    float label_left = mid_x_pixelspace - (widest_line_width / 2);
-    float cur_x_offset = (widest_line_width - line_widths[cur_line_i]) / 2;
     float cur_y_offset = 0;
-    while (text_to_draw[i] != '\0') {
-        
-        if (text_to_draw[i] == '\n') {
-            cur_line_i += 1;
-            cur_y_offset -= font_height;
-            cur_x_offset = (widest_line_width - line_widths[cur_line_i]) / 2;
-            i++;
-            continue;
-        }
-        
-        if (text_to_draw[i] == ' ') {
-            if (
-                cur_x_offset +
-                    get_next_word_width(text_to_draw + i) > max_width)
-            {
-                cur_line_i += 1;
-                cur_y_offset -= font_height;
-                cur_x_offset = (widest_line_width - line_widths[cur_line_i]) / 2;
-                i++;
-                continue;
-            }
-        }
-        
-        TexQuad letter;
-        construct_texquad(&letter);
-        letter.ignore_lighting = font_ignore_lighting;
-        letter.ignore_camera = ignore_camera;
-        letter.object_id = with_id;
-        letter.texturearray_i = font_texturearray_i;
-        letter.texture_i = text_to_draw[i] - '!';
+    for (uint32_t line_i = 0; line_i < lines_size; line_i++) {
+        float label_left = mid_x_pixelspace - (widest_line_width / 2);
+        float cur_x_offset = (widest_line_width - lines[line_i].width) / 2;
         
         for (
-             uint32_t rgba_i = 0;
-             rgba_i < 4;
-             rgba_i++)
+            int32_t j = lines[line_i].start_i;
+            j <= lines[line_i].end_i;
+            j++)
         {
-            letter.RGBA[rgba_i] = font_color[rgba_i];
+            if (text_to_draw[j] == '\n') {
+                continue;
+            }
+            
+            if (text_to_draw[j] == '\0') {
+                return;
+            }
+            
+            TexQuad letter;
+            construct_texquad(&letter);
+            letter.ignore_lighting = font_ignore_lighting;
+            letter.ignore_camera = ignore_camera;
+            letter.object_id = with_id;
+            letter.texturearray_i = font_texturearray_i;
+            letter.texture_i = text_to_draw[j] - '!';
+            
+            for (
+                uint32_t rgba_i = 0;
+                rgba_i < 4;
+                rgba_i++)
+            {
+                letter.RGBA[rgba_i] = font_color[rgba_i];
+            }
+            
+            letter.left_pixels = label_left;
+            letter.x_offset = cur_x_offset + get_left_side_bearing(text_to_draw[j]);
+            letter.top_pixels = top_y_pixelspace;
+            letter.y_offset = cur_y_offset - get_y_offset(text_to_draw[j]);
+            letter.height_pixels = font_height;
+            letter.width_pixels = letter.height_pixels;
+            letter.z = z;
+            
+            request_texquad_renderable(&letter);
+            cur_x_offset += get_advance_width(text_to_draw[j]);
         }
-        
-        letter.left_pixels = label_left;
-        letter.x_offset = cur_x_offset + get_left_side_bearing(text_to_draw[i]);
-        letter.top_pixels = top_y_pixelspace;
-        letter.y_offset = cur_y_offset - get_y_offset(text_to_draw[i]);
-        
-        letter.height_pixels = font_height;
-        letter.width_pixels = letter.height_pixels;
-        letter.z = z;
-        
-        request_texquad_renderable(&letter);
-        cur_x_offset += get_advance_width(text_to_draw[i]);
-        i++;
+        cur_y_offset -= font_height;
     }
 }
 
