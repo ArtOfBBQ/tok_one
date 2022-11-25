@@ -96,35 +96,26 @@ float_to_string(
 int32_t
 string_to_int32_validate(
     const char * input,
-    const uint32_t input_size,
     bool32_t * good);
 
 int32_t
-string_to_int32(
-    const char * input,
-    const uint32_t input_size);
+string_to_int32(const char * input);
 
 uint32_t
 string_to_uint32_validate(
     const char * input,
-    const uint32_t input_size,
     bool32_t * good);
 
 uint32_t
-string_to_uint32(
-    const char * input,
-    const uint32_t input_size);
+string_to_uint32(const char * input);
 
 float
 string_to_float_validate(
     const char * input,
-    const uint32_t input_size,
     bool32_t * good);
 
 float
-string_to_float(
-    const char * input,
-    const uint32_t input_size);
+string_to_float(const char * input);
 
 void
 float_to_string(

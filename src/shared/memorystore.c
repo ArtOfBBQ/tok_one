@@ -13,31 +13,25 @@ static uint8_t * managed_memory = NULL;
 static uint64_t managed_memory_size = MANAGED_MEMORY_SIZE;
 static uint32_t malloc_mutex_id;
 
+// We can consider mmap instead of malloc
+// // #import <sys/mman.h>
+//(Vertex *)mmap(
+//    0,
+//    buffered_vertex_size,
+//    PROT_READ | PROT_WRITE,
+//    MAP_PRIVATE | MAP_ANON,
+//    -1,
+//    0);
+
 void init_memory_store(void) {
     malloc_mutex_id = platform_init_mutex_and_return_id();
-    unmanaged_memory = (uint8_t *)malloc(UNMANAGED_MEMORY_SIZE);
-    managed_memory = (uint8_t *)malloc(MANAGED_MEMORY_SIZE);
+    unmanaged_memory = platform_malloc_unaligned_block(UNMANAGED_MEMORY_SIZE);
+    managed_memory = platform_malloc_unaligned_block(MANAGED_MEMORY_SIZE);
 }
 
-uint8_t * malloc_from_unmanaged(uint64_t size) {
-    
-    platform_mutex_lock(malloc_mutex_id);
-    
-    assert(unmanaged_memory != NULL);
-    assert(size > 0);
-    
-    uint32_t padding = 0;
-    assert(unmanaged_memory_size >= MEM_ALIGNMENT_BYTES);
-    while ((uintptr_t)(void *)unmanaged_memory %
-        MEM_ALIGNMENT_BYTES != 0)
-    {
-        unmanaged_memory += 1;
-        padding += 1;
-    }
-    unmanaged_memory_size -= padding;
-    assert(padding < MEM_ALIGNMENT_BYTES);
-    assert((uintptr_t)(void *)unmanaged_memory % MEM_ALIGNMENT_BYTES == 0);
-    
+static uint8_t * malloc_from_unmanaged_without_aligning(
+    const uint64_t size)
+{
     uint8_t * return_value = (uint8_t *)(void *)unmanaged_memory;
     if (size >= unmanaged_memory_size) {
         log_append("Tried to malloc_from_unamanged for: ");
@@ -50,12 +44,49 @@ uint8_t * malloc_from_unmanaged(uint64_t size) {
     unmanaged_memory += size;
     unmanaged_memory_size -= size;
     
+    return return_value;
+}
+
+uint8_t * malloc_from_unmanaged_aligned(
+    const uint64_t size,
+    const uint32_t aligned_to)
+{
+    platform_mutex_lock(malloc_mutex_id);
+    
+    assert(unmanaged_memory != NULL);
+    assert(size > 0);    
+    
+    uint32_t padding = 0;
+    assert(unmanaged_memory_size >= aligned_to);
+    while ((uintptr_t)(void *)unmanaged_memory %
+        aligned_to != 0)
+    {
+        unmanaged_memory += 1;
+        padding += 1;
+    }
+    unmanaged_memory_size -= padding;
+    assert(padding < aligned_to);
+    assert((uintptr_t)(void *)unmanaged_memory % aligned_to == 0);
+    
+    uint8_t * return_value =
+        malloc_from_unmanaged_without_aligning(size);
+    
+    assert((uintptr_t)(void *)return_value % aligned_to == 0);
+    
     platform_mutex_unlock(malloc_mutex_id);
+        
+    return return_value;
+};
+
+uint8_t * malloc_from_unmanaged(const uint64_t size) {
+    uint8_t * return_value = malloc_from_unmanaged_aligned(
+        size,
+        MEM_ALIGNMENT_BYTES);
     
     return return_value;
 };
 
-uint8_t * malloc_from_managed(uint64_t size) {
+uint8_t * malloc_from_managed(const uint64_t size) {
     
     platform_mutex_lock(malloc_mutex_id);
     

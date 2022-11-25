@@ -2,13 +2,11 @@
 #define LOGGER_H
 
 //#define LOGGER_SILENCE
-//#define IGNORE_LOGGER
-
-
 #ifndef LOGGER_SILENCE
 #include "stdio.h"
 #endif
 
+#define IGNORE_LOGGER
 #ifndef IGNORE_LOGGER
 #include <dlfcn.h>
 #endif

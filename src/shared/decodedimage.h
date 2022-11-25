@@ -8,7 +8,6 @@ to play with it.
 
 #define bool32_t uint32_t
 
-#include <stdlib.h>
 #include "inttypes.h"
 
 #define DECODED_IMAGE_SILENCE
@@ -51,11 +50,11 @@ void overwrite_subregion(
     const uint32_t at_column,
     const uint32_t at_row);
 
-DecodedImage concatenate_images(
-    DecodedImage ** images_to_concat,
-    const uint32_t images_to_concat_size,
-    uint32_t * out_sprite_rows,
-    uint32_t * out_sprite_columns);
+//DecodedImage concatenate_images(
+//    DecodedImage ** images_to_concat,
+//    const uint32_t images_to_concat_size,
+//    uint32_t * out_sprite_rows,
+//    uint32_t * out_sprite_columns);
 
 #ifdef __cplusplus
 }

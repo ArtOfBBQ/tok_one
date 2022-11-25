@@ -47,7 +47,7 @@ static uint32_t chars_till_next_space_or_slash(
     {
         i++;
     }
-
+    
     return i;
 }
 
@@ -78,8 +78,8 @@ zPolygon parse_obj(
     
     // TODO: think about buffer size 
     // pass through buffer once to read all vertices 
-    #define LOADING_OBJ_BUF_SIZE 5000
-    zVertex new_vertices[LOADING_OBJ_BUF_SIZE];
+    #define LOADING_OBJ_BUF_SIZE 8000
+    zVertex * new_vertices = (zVertex *)malloc_from_managed(sizeof(zVertex) * LOADING_OBJ_BUF_SIZE);
     float uv_u[LOADING_OBJ_BUF_SIZE];
     float uv_v[LOADING_OBJ_BUF_SIZE];
     uint32_t new_uv_i = 0;
@@ -104,7 +104,7 @@ zPolygon parse_obj(
             log_assert(rawdata[i] != ' ');
             
             // read vertex x
-            new_vertex.x = (float)atof(rawdata + i);
+            new_vertex.x = string_to_float(rawdata + i);
             
             // discard vertex x
             i += chars_till_next_space_or_slash(
@@ -116,7 +116,7 @@ zPolygon parse_obj(
             log_assert(rawdata[i] != ' ');
             
             // read vertex y
-            new_vertex.y = (float)atof(rawdata + i);
+            new_vertex.y = string_to_float(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
             log_assert(rawdata[i] == ' ');
@@ -124,7 +124,7 @@ zPolygon parse_obj(
             log_assert(rawdata[i] != ' ');
             
             // read vertex z
-            new_vertex.z = (float)atof(rawdata + i);
+            new_vertex.z = string_to_float(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
             log_assert(rawdata[i] == '\n');
@@ -153,7 +153,7 @@ zPolygon parse_obj(
             log_assert(rawdata[i] != ' ');
             
             // read the u coordinate
-            uv_u[new_uv_i] = (float)atof(rawdata + i);
+            uv_u[new_uv_i] = string_to_float(rawdata + i);
             
             // discard the u coordinate
             i += chars_till_next_space_or_slash(
@@ -166,7 +166,7 @@ zPolygon parse_obj(
             log_assert(rawdata[i] != ' ');
             
             // read the v coordinate
-            uv_v[new_uv_i] = (float)atof(rawdata + i);
+            uv_v[new_uv_i] = string_to_float(rawdata + i);
             
             // discard the v coordinate
             i += chars_till_next_space_or_slash(
@@ -180,7 +180,7 @@ zPolygon parse_obj(
                 return_value.triangles_size += 1;
             }
             // skip until the next line break character 
-            while (rawdata[i] != '\n') {
+            while (rawdata[i] != '\n' && rawdata[i] != '\0') {
                 i++;
             }
             
@@ -204,7 +204,7 @@ zPolygon parse_obj(
         if (rawdata[i] == 'u') {
             
             uint32_t j = i + 1;
-            while (rawdata[j] != '\n') {
+            while (rawdata[j] != '\n' && rawdata[j] != '\0') {
                 j++;
             }
             uint32_t line_size = j - i;
@@ -248,7 +248,7 @@ zPolygon parse_obj(
             }
             
             // skip until the next line break character 
-            while (rawdata[i] != '\n') {
+            while (rawdata[i] != '\n' && rawdata[i] != '\0') {
                 i++;
             }
             // skip the line break character
@@ -265,11 +265,10 @@ zPolygon parse_obj(
             
             // read triangle data
             zTriangle new_triangle;
-            new_triangle.draw_normals = 0;
             new_triangle.visible = 1;
             
             // read 1st vertex index
-            int32_t vertex_i_0 = atoi(rawdata + i);
+            int32_t vertex_i_0 = string_to_int32(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
             
@@ -279,7 +278,7 @@ zPolygon parse_obj(
                 // skip the slash
                 i++;
                 uv_coord_i_0 =
-                    atoi(rawdata + i);
+                    string_to_int32(rawdata + i);
                 i += chars_till_next_space_or_slash(
                     rawdata + i);
             }
@@ -289,7 +288,7 @@ zPolygon parse_obj(
             log_assert(rawdata[i] != ' ');
             
             // read 2nd vertex index
-            int32_t vertex_i_1 = atoi(rawdata + i);
+            int32_t vertex_i_1 = string_to_int32(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
             
@@ -299,7 +298,7 @@ zPolygon parse_obj(
                 // skip the slash
                 i++;
                 uv_coord_i_1 =
-                    atoi(rawdata + i);
+                    string_to_int32(rawdata + i);
                 i += chars_till_next_space_or_slash(
                     rawdata + i);
             }
@@ -309,7 +308,7 @@ zPolygon parse_obj(
             log_assert(rawdata[i] != ' ');
             
             // read 3rd vertex index
-            int32_t vertex_i_2 = atoi(rawdata + i);
+            int32_t vertex_i_2 = string_to_int32(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
             int32_t uv_coord_i_2 = 0;
@@ -318,7 +317,7 @@ zPolygon parse_obj(
                 // skip the slash
                 i++;
                 uv_coord_i_2 =
-                    atoi(rawdata + i);
+                    string_to_int32(rawdata + i);
                 i += chars_till_next_space_or_slash(
                     rawdata + i);
             }
@@ -374,7 +373,7 @@ zPolygon parse_obj(
             new_triangle_i++;
         } else {
             // skip until the next line break character 
-            while (rawdata[i] != '\n') {
+            while (rawdata[i] != '\n' && rawdata[i] != '\0') {
                 i++;
             }
             
@@ -383,7 +382,42 @@ zPolygon parse_obj(
         }
     }
     
+    free_from_managed((uint8_t *)new_vertices);
+    
     return return_value;
+}
+
+void zpolygon_scale_to_width_given_z(
+    zPolygon * to_scale,
+    const float new_width,
+    const float when_observed_at_z)
+{
+    float largest_width = 0.0f;
+    for (uint32_t i = 0; i < to_scale->triangles_size; i++) {
+        for (uint32_t j = 0; j < 3; j++)
+        {
+            float width =
+                ((to_scale->triangles[i].vertices[j].x < 0) *  (to_scale->triangles[i].vertices[j].x * -1)) +
+                ((to_scale->triangles[i].vertices[j].x >= 0) *  (to_scale->triangles[i].vertices[j].x)); 
+            if (width > largest_width)
+            {
+                largest_width = width;
+            }
+        }
+    }
+    
+    float target_width = new_width / when_observed_at_z;
+    
+    float scale_factor = target_width / largest_width;
+    
+    for (uint32_t i = 0; i < to_scale->triangles_size; i++) {
+        for (uint32_t j = 0; j < 3; j++)
+        {
+            to_scale->triangles[i].vertices[j].x *= scale_factor;
+            to_scale->triangles[i].vertices[j].y *= scale_factor;
+            to_scale->triangles[i].vertices[j].z *= scale_factor;
+        }
+    }
 }
 
 void scale_zpolygon(

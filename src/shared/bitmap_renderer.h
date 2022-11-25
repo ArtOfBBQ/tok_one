@@ -16,7 +16,6 @@ exist.
 */
 
 #include <math.h>
-#include <stdlib.h>
 
 #include "window_size.h"
 #include "texquad_type.h"

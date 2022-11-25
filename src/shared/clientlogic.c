@@ -10,18 +10,21 @@ typedef struct TextureArrayLocation {
     int32_t texture_i;
 } TextureArrayLocation;
 
-zPolygon load_from_obj_file(char * filename) {
+zPolygon load_from_obj_file(char * filepath) {
     FileBuffer buffer;
-    buffer.size = (uint64_t)platform_get_filesize(filename) + 1;
-    char buffer_contents[buffer.size];
-    buffer.contents = (char *)&buffer_contents;
-    platform_read_file(
-        filename,
+    buffer.size = (uint64_t)platform_get_resource_size(filepath) + 1;
+    buffer.contents = (char *)malloc_from_managed(buffer.size);
+    platform_read_resource_file(
+        filepath,
         &buffer);
+    
+    assert(buffer.size > 1);
     
     zPolygon return_value = parse_obj(
         /* rawdata     : */ buffer.contents,
         /* rawdata_size: */ buffer.size);
+    
+    free_from_managed((uint8_t *)buffer.contents);
     
     return return_value;
 }
@@ -39,7 +42,7 @@ void client_logic_get_application_name_to_recipient(
 }
 
 void client_logic_startup() {
-
+    
     init_rand_with_seed(platform_get_current_time_microsecs());
     
     const char * fontfile;
@@ -59,84 +62,49 @@ void client_logic_startup() {
     
     zlights_to_apply[0].deleted = false;
     zlights_to_apply[0].object_id = -1;
-    zlights_to_apply[0].x = 0;
-    zlights_to_apply[0].y = 0;
-    zlights_to_apply[0].z = 0;
+    zlights_to_apply[0].x = window_width / 2;
+    zlights_to_apply[0].y = window_height / 2;
+    zlights_to_apply[0].z = 10.0f;
     zlights_to_apply[0].RGBA[0] = 1.0f;
-    zlights_to_apply[0].RGBA[1] = 0.7f;
-    zlights_to_apply[0].RGBA[2] = 0.7f;
+    zlights_to_apply[0].RGBA[1] = 0.25f;
+    zlights_to_apply[0].RGBA[2] = 0.25f;
     zlights_to_apply[0].RGBA[3] = 1.0f;
-    zlights_to_apply[0].reach = 4294967295;
-    zlights_to_apply[0].ambient = 1.0;
-    zlights_to_apply[0].diffuse = 0.0;
+    zlights_to_apply[0].reach = 100;
+    zlights_to_apply[0].ambient = 1.0f;
+    zlights_to_apply[0].diffuse = 1.0f;
     zlights_to_apply[0].deleted = false;
     zlights_to_apply_size++;
     log_assert(zlights_to_apply_size == 1);
     
-    TexQuad sample_pic;
-    construct_texquad(&sample_pic);
-    sample_pic.object_id = 99999;
-    sample_pic.texturearray_i = -1;
-    sample_pic.texture_i = -1;
-    sample_pic.width_pixels = 200;
-    sample_pic.height_pixels = 200;
-    sample_pic.left_pixels = 0;
-    sample_pic.top_pixels = window_height * 0.5f;
-    sample_pic.RGBA[0] = 1.0f;
-    sample_pic.RGBA[1] = 1.0f;
-    sample_pic.RGBA[2] = 1.0f;
-    sample_pic.RGBA[3] = 0.2f;
-    request_texquad_renderable(&sample_pic);
+    //    for (uint32_t x = 0; x < 3; x++) {
+    //        TexQuad background;
+    //        construct_texquad(&background);
+    //        background.object_id = -1;
+    //        background.texturearray_i = -1;
+    //        background.texture_i = -1;
+    //        background.width_pixels = 200;
+    //        background.height_pixels = 200;
+    //        background.left_pixels = 50 + (x * 200);
+    //        background.top_pixels = window_height * 0.5f;
+    //        background.z = 30.0f;
+    //        background.RGBA[0] = 1.0f;
+    //        background.RGBA[1] = 0.2f;
+    //        background.RGBA[2] = 0.2f;
+    //        background.RGBA[3] = 1.0f;
+    //        request_texquad_renderable(&background);
+    //    }
     
-    font_ignore_lighting = false;
-    request_label_renderable(
-        /* const uint32_t with_id: */
-            99,
-        /* const char * text_to_draw: */
-            "I KNOW dragons\nline two\nline three\nline four blablablaba llng line will become line 5",
-        /* const float left_pixelspace: */
-            0,
-        /* const float top_pixelspace: */
-            window_height * 0.5f,
-        /* const float z: */
-            1.0f,
-        /* const float max_width: */
-            450,
-        /* const bool32_t ignore_camera: */
-            false);
-    
-    font_height = 80.0f;
-    request_label_around(
-        /* const uint32_t with_id: */
-            100,
-        /* const char * text_to_draw: */
-            "I'm a label around\nwith linebreak\nthis is line 3",
-        /* const float mid_x_pixelspace: */
-            window_width - 215,
-        /* const float top_y_pixelspace: */
-            window_height / 2,
-        /* const float z: */
-            1.0f,
-        /* const float max_width: */
-            450,
-        /* const bool32_t ignore_camera: */
-            false);
-    
-    ScheduledAnimation move_centered_label;
-    construct_scheduled_animation(&move_centered_label);
-    move_centered_label.affected_object_id = 100;
-    move_centered_label.final_x_known = true;
-    move_centered_label.final_mid_x = 10;
-    move_centered_label.final_y_known = true;
-    move_centered_label.final_mid_y = window_height;
-    move_centered_label.remaining_wait_before_next_run = 8000000;
-    move_centered_label.duration_microseconds = 8000000;
-    request_scheduled_animation(&move_centered_label);
-    
-    //    log_append("starting asset-loading thread...\n");
-    //    platform_start_thread(
-    //        client_logic_threadmain,
-    //        /* threadmain_id: */ 0);
+    zPolygon teapot = load_from_obj_file("teapot.obj");
+    zpolygon_scale_to_width_given_z(
+        /* to_scale: */ &teapot,
+        /* new_width: */ 100,
+        /* when_observed_at_z: */ 20.0f);
+    teapot.object_id = 12345;
+    teapot.x = -2;
+    teapot.y = -2;
+    teapot.z = 20.0f;
+    zpolygons_to_render[zpolygons_to_render_size++] = teapot;
+    assert(zpolygons_to_render_size == 1);
     
     log_append("finished client_logic_startup()\n");
 }
@@ -311,7 +279,12 @@ void client_logic_update(uint64_t microseconds_elapsed)
     request_fps_counter(microseconds_elapsed);
     
     client_handle_touches_and_leftclicks(microseconds_elapsed);
-    client_handle_keypresses(microseconds_elapsed);    
+    client_handle_keypresses(microseconds_elapsed); 
+    
+    // zpolygons_to_render[0].z += 0.05f;
+    zpolygons_to_render[0].x += 0.001f;
+    zpolygons_to_render[0].y += 0.001f;
+    zpolygons_to_render[0].z_angle += 0.01f;
 }
 
 void client_logic_window_resize(

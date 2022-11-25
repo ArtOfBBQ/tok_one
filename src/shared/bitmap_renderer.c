@@ -472,13 +472,11 @@ void draw_texquads_to_render(
     }
     
     uint32_t original_texquads_to_render_size = texquads_to_render_size;
-    TexQuad sorted_texquads[original_texquads_to_render_size];
     
-    uint32_t sorted_texquads_size = 0;
     for (
         uint32_t i = 0;
-        i < original_texquads_to_render_size
-            && i < texquads_to_render_size;
+        i < original_texquads_to_render_size &&
+            i < texquads_to_render_size;
         i++)
     {
         if (
@@ -498,40 +496,13 @@ void draw_texquads_to_render(
                 (texquads_to_render[i].ignore_camera ? 0 : camera.y)
                     >= 0)
         {
-            log_assert(i < sizeof(sorted_texquads)/sizeof(*sorted_texquads));
             log_assert(i <= texquads_to_render_size);
-            sorted_texquads[sorted_texquads_size] = texquads_to_render[i];
-            log_assert(
-                sorted_texquads[sorted_texquads_size].width_pixels > 0.0f);
-            log_assert(
-                sorted_texquads[sorted_texquads_size].height_pixels > 0.0f);
-            sorted_texquads_size += 1;
-            assert(sorted_texquads_size <= texquads_to_render_size);
+            log_assert(i < TEXQUADS_TO_RENDER_ARRAYSIZE);
+            add_quad_to_gpu_workload(
+                &texquads_to_render[i],
+                next_gpu_workload,
+                next_gpu_workload_size);
         }
-    }
-    assert(sorted_texquads_size <= texquads_to_render_size);
-    
-    if (sorted_texquads_size < 1) {
-        return;
-    }
-    
-    qsort(
-        sorted_texquads,
-        sorted_texquads_size,
-        sizeof(TexQuad),
-        &sorter_cmpr_texquad_lowest_z);
-    
-    for (
-        uint32_t i = 0;
-        i < sorted_texquads_size;
-        i++)
-    {
-        log_assert(i < TEXQUADS_TO_RENDER_ARRAYSIZE);
-        
-        add_quad_to_gpu_workload(
-            &sorted_texquads[i],
-            next_gpu_workload,
-            next_gpu_workload_size);
     }
 }
 

@@ -1,8 +1,6 @@
 #ifndef ZPOLYGON_H
 #define ZPOLYGON_H
 
-// TODO: remove std lib
-#include <stdlib.h>
 #include <math.h>
 #include <inttypes.h>
 
@@ -43,7 +41,6 @@ typedef struct zTriangle {
                             instead"
                             */
     int32_t texture_i;     // index in texturearray
-    uint32_t draw_normals; // TODO: remove debugging flag(s)
     uint32_t visible;
 } zTriangle;
 
@@ -107,6 +104,11 @@ zVertex get_ztriangle_normal(
 zPolygon parse_obj(
     char * rawdata,
     uint64_t rawdata_size);
+
+void zpolygon_scale_to_width_given_z(
+    zPolygon * to_scale,
+    const float new_width,
+    const float when_observed_at_z);
 
 void scale_zpolygon(
     zPolygon * to_scale,

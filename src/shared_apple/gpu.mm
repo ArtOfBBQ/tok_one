@@ -93,8 +93,10 @@ static uint32_t already_drawing = false;
             format: @"Unable to setup rendering pipeline state"];
     }
     
-    int32_t page_size = getpagesize();
-    uint32_t buffered_vertex_size = (uint32_t)page_size * 5000;
+    // TODO: why am i copying this code I dont understand?
+    // TODO: learn about memory pages before you copypaste this bs
+    //    int32_t page_size = getpagesize();
+    //    uint32_t buffered_vertex_size = (uint32_t)page_size * 5000;
     
     _vertex_buffers = [[NSMutableArray alloc] init];
     
@@ -103,31 +105,32 @@ static uint32_t already_drawing = false;
         frame_i < 3;
         frame_i++)
     {
-        BufferedVertexCollection buffered_vertex = {};
+        BufferedVertexCollection buffered_vertex;
+        buffered_vertex.vertices_size = MAX_VERTICES_PER_BUFFER;
+        uint64_t allocation_size = sizeof(Vertex) * buffered_vertex.vertices_size;
+        allocation_size += (4096 - (allocation_size % 4096));
+        assert(allocation_size % 4096 == 0);
         buffered_vertex.vertices =
-            (Vertex *)mmap(
-                0,
-                buffered_vertex_size,
-                PROT_READ | PROT_WRITE,
-                MAP_PRIVATE | MAP_ANON,
-                -1,
-                0);
+            (Vertex *)malloc_from_unmanaged_aligned(
+                allocation_size,
+                4096);
         
-        _render_commands.vertex_buffers[frame_i] =
-            buffered_vertex;
+        _render_commands.vertex_buffers[frame_i] = buffered_vertex;
         
         id<MTLBuffer> MetalBufferedVertex =
             [metal_device
+                /* the pointer needs to be page aligned */
                 newBufferWithBytesNoCopy:
                     buffered_vertex.vertices
+                /* the length weirdly needs to be page aligned also */
                 length:
-                    buffered_vertex_size
+                    allocation_size
                 options:
                     MTLResourceStorageModeShared
+                /* deallocator = nil to opt out */
                 deallocator:
                     nil];
-        [_vertex_buffers
-            addObject: MetalBufferedVertex];
+        [_vertex_buffers addObject: MetalBufferedVertex];
     }
     
     _metal_textures = [

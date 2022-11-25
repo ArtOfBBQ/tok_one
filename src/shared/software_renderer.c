@@ -109,14 +109,6 @@ void software_render(
         }
     }
     
-    // sort all triangles so the most distant ones can be
-    // drawn first 
-    qsort(
-        triangles_to_draw,
-        triangles_to_draw_size,
-        sizeof(zTriangle),
-        &sorter_cmpr_lowest_z);
-    
     // we're not using the camera because the entire world
     // was translated to have the camera be at 0,0,0
     zVertex origin;

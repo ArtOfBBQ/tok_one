@@ -45,6 +45,8 @@ extern "C" {
 #include "decodedimage.h"
 #include "window_size.h"
 
+uint8_t * platform_malloc_unaligned_block(const uint64_t size);
+
 typedef struct FileBuffer {
     uint64_t size;
     char * contents;

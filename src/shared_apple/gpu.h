@@ -2,6 +2,7 @@
 #define GPU_H
 
 #include "../shared/logger.h"
+#include "../shared/memorystore.h"
 #include "../shared/texture_array.h"
 #include "../shared/vertex_types.h"
 #include "../shared/vertex_buffer_types.h"
@@ -10,7 +11,6 @@
 
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
-#import <sys/mman.h>
 #import <mach/mach_time.h>
 
 extern uint64_t last_resize_request_at;

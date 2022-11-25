@@ -278,10 +278,9 @@ uint_to_string(
 int32_t
 string_to_int32_validate(
     const char * input,
-    const uint32_t input_size,
     bool32_t * good)
 {
-    if (input_size < 1) {
+    if (input[0] == '\0') {
         #ifndef COMMON_SILENCE
         printf("ERROR : string_to_int32 with input_size < 1\n");
         #endif
@@ -294,9 +293,7 @@ string_to_int32_validate(
     if (input[0] == '-') {
         uint32_t temp = string_to_uint32(
             /* input: */
-                input + 1,
-            /* input_size: */
-                input_size - 1);
+                input + 1);
         
         if (temp > 2147483646) {
             #ifndef COMMON_SILENCE
@@ -308,47 +305,25 @@ string_to_int32_validate(
         }
         
         *good = true;
+        
         return (int32_t)temp * -1;
-    } else if (input[0] < '0' || input[0] > '9') {
-        *good = false;
+    }
+    
+    uint32_t unsigned_return = string_to_uint32_validate(input, good);
+    
+    if (!*good) {
         return 0;
     }
     
-    for (uint32_t i = 1; i < input_size; i++) {
-        if (input[i] < '0' || input[i] > '9') {
-            *good = false;
-            return 0;
-        }
-    }
-    
-    uint32_t unsigned_return =
-        string_to_uint32(
-            /* input: */
-                input,
-            /* input_size: */
-                input_size);
-    
-    if (unsigned_return > 2147483647) {
-        #ifndef COMMON_SILENCE
-        printf("ERROR : string_to_int32 exceeded INT_MAX\n");
-        #endif
-        *good = false;
-        return 0;
-    }
-    
-    *good = true; 
     return (int32_t)unsigned_return;
 }
 
 int32_t
-string_to_int32(
-    const char * input,
-    const uint32_t input_size)
+string_to_int32(const char * input)
 {
     bool32_t result_good = false;
     int32_t result = string_to_int32_validate(
         input,
-        input_size,
         &result_good);
     #ifndef COMMON_IGNORE_ASSERTS
     assert(result_good);
@@ -359,30 +334,12 @@ string_to_int32(
 uint32_t
 string_to_uint32_validate(
     const char * input,
-    const uint32_t input_size,
     bool32_t * good)
 {
-    if (input_size < 1) {
-        #ifndef COMMON_SILENCE
-        printf("ERROR : string_to_uint32 with input_size < 1\n");
-        #endif
-        *good = false;
-        return 0;
-    }
-    
     if (input[0] == '\0') {
         #ifndef COMMON_SILENCE
         printf(
             "ERR: string_to_uint32 but input[0] is nullterminator\n");
-        #endif
-        *good = false;
-        return 0;
-    }
-    
-    if (input_size >= 2147483647) {
-        #ifndef COMMON_SILENCE
-        printf(
-            "ERROR: string_to_uint32 has input > signed int max");
         #endif
         *good = false;
         return 0;
@@ -394,15 +351,14 @@ string_to_uint32_validate(
     // so the decimal should   1000000000
     
     uint32_t decimal = 1;
-    for (
-        int32_t i = (int32_t)input_size - 1;
-        i >= 0;
-        i--)
+    int32_t i = 0;
+    while (input[i] != '\0' && input[i] != ' ' && input[i] != '\n') {
+        i++;
+    }
+    i--;
+    
+    while (i >= 0)
     {
-        if (input[i] == '\n' || input[i] == '\0') {
-            continue;
-        }
-        
         if (input[i] < '0' || input[i] > '9') {
             *good = false;
             return return_value;
@@ -420,9 +376,12 @@ string_to_uint32_validate(
             *good = false;
             return return_value;
         }
+        
+        i--;
     }
     
     *good = true;
+    
     return return_value;
 }
 
@@ -440,13 +399,11 @@ static float powf(float input, uint32_t power) {
 
 uint32_t
 string_to_uint32(
-    const char * input,
-    const uint32_t input_size)
+    const char * input)
 {
     bool32_t result_good = false;
     uint32_t result = string_to_uint32_validate(
         input,
-        input_size,
         &result_good);
     #ifndef COMMON_IGNORE_ASSERTS
     assert(result_good);
@@ -457,17 +414,8 @@ string_to_uint32(
 float
 string_to_float_validate(
     const char * input,
-    const uint32_t input_size,
     bool32_t * good)
 {
-    if (input_size < 1) {
-        #ifndef COMMON_SILENCE
-        printf("ERROR : string_to_float with input_size < 1\n");
-        #endif
-        *good = false;
-        return 0;
-    }
-    
     if (input[0] == '\0') {
         #ifndef COMMON_SILENCE
         printf("ERR: string_to_float but input[0] is nullterminator\n");
@@ -476,13 +424,12 @@ string_to_float_validate(
         return 0;
     }
     
-    if (input_size >= 2147483647) {
-        #ifndef COMMON_SILENCE
-        printf(
-            "ERROR: string_to_float has input > signed int max");
-         #endif
-        *good = false;
-        return 0;
+    // TODO: remove debug code
+    if (input[0] == '-' &&
+        input[1] == '2' &&
+        input[2] == '.')
+    {
+        assert(true);
     }
     
     float return_value = 0;
@@ -491,15 +438,15 @@ string_to_float_validate(
     bool32_t found_num = false;
     bool32_t used_dot = false;
     char first_part[20];
-    uint32_t first_part_i = 0;
+    uint32_t first_part_size = 0;
     char second_part[20];
-    uint32_t second_part_i = 0;
+    uint32_t second_part_size = 0;
     
     if (input[0] == '-') {
         i++;
     }
     
-    while (i < input_size) {
+    while (input[i] != '\0' && input[i] != ' ' && input[i] != '\n') {
         if (!used_dot && found_num && input[i] == '.') {
             i++;
             used_dot = true;
@@ -509,9 +456,9 @@ string_to_float_validate(
         if (input[i] >= '0' && input[i] <= '9') {
             found_num = true;
             if (!used_dot) {
-                first_part[first_part_i++] = input[i];
+                first_part[first_part_size++] = input[i];
             } else {
-                second_part[second_part_i++] = input[i];
+                second_part[second_part_size++] = input[i];
             }
         } else {
             *good = false;
@@ -521,13 +468,12 @@ string_to_float_validate(
         i++;
     }
     
-    first_part[first_part_i] = '\0';
-    second_part[second_part_i] = '\0';
+    first_part[first_part_size] = '\0';
+    second_part[second_part_size] = '\0';
     
     bool32_t first_part_valid = false;
     int first_part_int = string_to_int32_validate(
         /* const char input: */ first_part,
-        /* const uint32_t input_size: */ first_part_i,
         &first_part_valid);
     if (!first_part_valid) {
         *good = false;
@@ -536,34 +482,40 @@ string_to_float_validate(
     bool32_t second_part_valid = false;
     int second_part_int = string_to_int32_validate(
         /* const char input: */ second_part,
-        /* const uint32_t input_size: */ first_part_i,
         &second_part_valid);
     if (!second_part_valid) {
         *good = false;
         return return_value;
     }
     
-    return_value += (float)first_part_int;
-    return_value += (float)second_part_int /
-        powf(10, second_part_i);
+    // throw away 0's at the end after the comma, they're useless
+    while (second_part_int % 10 == 0 && second_part_size > 0) {
+        second_part_int /= 10;
+        second_part_size -= 1;
+    }
     
-    // 12200
-    // needs to become
-    // 0.12200
-    // so we want to divide by: 100000
+    return_value += (float)first_part_int;
+    float divisor = 1;
+    for (uint32_t _ = 0; _ < second_part_size; _++) {
+        divisor *= 10;
+    }
+    return_value += ((float)second_part_int / divisor);
+    
+    if (input[0] == '-') {
+        return_value *= -1;
+    }
+    
     *good = true;
     return return_value;
 }
 
 float
 string_to_float(
-    const char * input,
-    const uint32_t input_size)
+    const char * input)
 {
     bool32_t result_good = false;
     float result = string_to_float_validate(
         input,
-        input_size,
         &result_good);
     #ifndef COMMON_IGNORE_ASSERTS
     assert(result_good);
