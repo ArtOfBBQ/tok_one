@@ -8,21 +8,26 @@ static uint32_t already_drawing = false;
 {
     NSUInteger current_frame_i;
     MTLViewport viewport;
+    VertexBuffer render_commands;
+    
+    id<MTLDevice> metal_device;
+    id<MTLCommandQueue> command_queue;
+    id<MTLRenderPipelineState> combo_pipeline_state;
+    id<MTLDepthStencilState> depth_stencil_state;
 }
 
 - (void)
-    configureMetalWithDevice: (id<MTLDevice>)metal_device
+    configureMetalWithDevice: (id<MTLDevice>)with_metal_device
     andPixelFormat: (MTLPixelFormat)pixel_format
     fromFolder: (NSString *)shader_lib_filepath
 {
     current_frame_i = 0;
     
-    _metal_device = metal_device;
-    _command_queue = [metal_device newCommandQueue];
+    metal_device = with_metal_device;
     
     NSError *Error = NULL;
     id<MTLLibrary> shader_library =
-        [metal_device newDefaultLibrary];
+        [with_metal_device newDefaultLibrary];
     
     if (shader_library == NULL)
     {
@@ -33,7 +38,7 @@ static uint32_t already_drawing = false;
         log_append("\n");
         
         shader_library =
-            [metal_device
+            [with_metal_device
                 newLibraryWithFile: shader_lib_filepath 
                 error: &Error];
         
@@ -63,7 +68,6 @@ static uint32_t already_drawing = false;
         setVertexFunction: vertex_shader];
     [combo_pipeline_descriptor
         setFragmentFunction: fragment_shader];
-    // TODO: set pixel format
     combo_pipeline_descriptor
         .colorAttachments[0]
         .pixelFormat = pixel_format;
@@ -78,12 +82,20 @@ static uint32_t already_drawing = false;
         .colorAttachments[0].destinationRGBBlendFactor =
             MTLBlendFactorOneMinusSourceAlpha;
     
-    _combo_pipeline_state =
-        [metal_device
+    combo_pipeline_descriptor.depthAttachmentPixelFormat =
+        MTLPixelFormatDepth32Float;
+    
+    combo_pipeline_state =
+        [with_metal_device
             newRenderPipelineStateWithDescriptor:
                 combo_pipeline_descriptor 
             error:
                 &Error];
+    
+    MTLDepthStencilDescriptor * depthDescriptor = [MTLDepthStencilDescriptor new];
+    depthDescriptor.depthCompareFunction = MTLCompareFunctionLessEqual;
+    depthDescriptor.depthWriteEnabled = true;
+    depth_stencil_state = [with_metal_device newDepthStencilStateWithDescriptor:depthDescriptor];
     
     if (Error != NULL)
     {
@@ -92,14 +104,11 @@ static uint32_t already_drawing = false;
             raise: @"Can't Setup Metal" 
             format: @"Unable to setup rendering pipeline state"];
     }
-    
-    // TODO: why am i copying this code I dont understand?
-    // TODO: learn about memory pages before you copypaste this bs
-    //    int32_t page_size = getpagesize();
-    //    uint32_t buffered_vertex_size = (uint32_t)page_size * 5000;
-    
+        
     _vertex_buffers = [[NSMutableArray alloc] init];
     
+    // TODO: use the apple-approved page size constant instead of
+    // hardcoding 4096, and verify it returns 4096
     for (
         uint32_t frame_i = 0;
         frame_i < 3;
@@ -115,10 +124,10 @@ static uint32_t already_drawing = false;
                 allocation_size,
                 4096);
         
-        _render_commands.vertex_buffers[frame_i] = buffered_vertex;
+        render_commands.vertex_buffers[frame_i] = buffered_vertex;
         
         id<MTLBuffer> MetalBufferedVertex =
-            [metal_device
+            [with_metal_device
                 /* the pointer needs to be page aligned */
                 newBufferWithBytesNoCopy:
                     buffered_vertex.vertices
@@ -142,7 +151,9 @@ static uint32_t already_drawing = false;
     viewport.width = window_width * (has_retina_screen ? 2.0f : 1.0f);
     viewport.height = window_height * (has_retina_screen ? 2.0f : 1.0f);
     viewport.znear = 0.0f;
-    viewport.zfar = 0.0f;
+    viewport.zfar = 1.0f;
+    
+    command_queue = [with_metal_device newCommandQueue];
     
     log_append("finished configureMetalWithDevice\n");
 }
@@ -163,7 +174,7 @@ static uint32_t already_drawing = false;
         texture_descriptor.width = 10;
         texture_descriptor.height = 10;
         id<MTLTexture> texture =
-            [_metal_device newTextureWithDescriptor:texture_descriptor];
+            [metal_device newTextureWithDescriptor:texture_descriptor];
         [_metal_textures addObject: texture];
     }
     
@@ -176,7 +187,7 @@ static uint32_t already_drawing = false;
     texture_descriptor.height = single_img_height;
     
     id<MTLTexture> texture =
-        [_metal_device
+        [metal_device
             newTextureWithDescriptor:texture_descriptor];
     
     [_metal_textures
@@ -234,7 +245,7 @@ static uint32_t already_drawing = false;
 - (void)drawClearScreen:(MTKView *)view
 {
     id<MTLCommandBuffer> command_buffer =
-        [[self command_queue] commandBuffer];
+        [command_queue commandBuffer];
     
     MTLRenderPassDescriptor * RenderPassDescriptor =
         [view currentRenderPassDescriptor];
@@ -245,11 +256,13 @@ static uint32_t already_drawing = false;
     MTLClearColor clear_color = MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);
     RenderPassDescriptor.colorAttachments[0].clearColor = clear_color;
     
-    id<MTLRenderCommandEncoder> render_encoder =
-        [command_buffer
-            renderCommandEncoderWithDescriptor:
-                RenderPassDescriptor];
-    [render_encoder endEncoding];
+    //    id<MTLRenderCommandEncoder> render_encoder =
+    //        [command_buffer
+    //            renderCommandEncoderWithDescriptor:
+    //                RenderPassDescriptor];
+    // [render_encoder setCullMode: MTLCullModeBack];
+    // [render_encoder setDepthStencilState: depth_stencil_state];
+    // [render_encoder endEncoding];
     
     id<CAMetalDrawable> current_drawable = [view currentDrawable];
     [command_buffer presentDrawable: current_drawable];
@@ -263,7 +276,7 @@ static uint32_t already_drawing = false;
     already_drawing = true;
     
     Vertex * vertices_for_gpu =
-        _render_commands.vertex_buffers[current_frame_i].vertices;
+        render_commands.vertex_buffers[current_frame_i].vertices;
     uint32_t vertices_for_gpu_size = 0;
     
     shared_gameloop_update(
@@ -271,7 +284,7 @@ static uint32_t already_drawing = false;
         &vertices_for_gpu_size);
     
     id<MTLCommandBuffer> command_buffer =
-        [[self command_queue] commandBuffer];
+        [command_queue commandBuffer];
     
     if (command_buffer == nil) {
         log_append("error - failed to get metal command buffer\n");
@@ -286,8 +299,8 @@ static uint32_t already_drawing = false;
         .colorAttachments[0]
         .loadAction = MTLLoadActionClear;
     
-    MTLClearColor clear_color = MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);
-    RenderPassDescriptor.colorAttachments[0].clearColor = clear_color;
+    RenderPassDescriptor.colorAttachments[0].clearColor =
+        MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);;
     
     id<MTLRenderCommandEncoder> render_encoder =
         [command_buffer
@@ -295,17 +308,16 @@ static uint32_t already_drawing = false;
                 RenderPassDescriptor];
     [render_encoder setViewport: viewport];
     
+    [render_encoder setRenderPipelineState: combo_pipeline_state];
+    [render_encoder setDepthStencilState: depth_stencil_state];
+    // [render_encoder setDepthClipMode: MTLDepthClipModeClip];
+    
     // encode the drawing of all triangles 
-    id<MTLBuffer> current_buffered_vertices =
-        [[self vertex_buffers]
-            objectAtIndex: current_frame_i];
     [render_encoder
-        setVertexBuffer: current_buffered_vertices  
+        setVertexBuffer: [[self vertex_buffers]
+            objectAtIndex: current_frame_i]  
         offset: 0 
         atIndex: 0];
-    [render_encoder
-        setRenderPipelineState:
-            [self combo_pipeline_state]];
     
     for (
         uint32_t i = 0;
@@ -321,15 +333,13 @@ static uint32_t already_drawing = false;
         drawPrimitives: MTLPrimitiveTypeTriangle
         vertexStart: 0
         vertexCount: vertices_for_gpu_size];
-    
     [render_encoder endEncoding];
+    
     
     // Schedule a present once the framebuffer is complete
     // using the current drawable
-    id<CAMetalDrawable> current_drawable =
-        [view currentDrawable];
-    [command_buffer presentDrawable: current_drawable];
-        
+    [command_buffer presentDrawable: [view currentDrawable]];
+    
     current_frame_i += 1;
     current_frame_i -= ((current_frame_i > 2)*3);
     
@@ -350,7 +360,7 @@ static uint32_t already_drawing = false;
     viewport.width = window_width * (has_retina_screen ? 2.0f : 1.0f);
     viewport.height = window_height * (has_retina_screen ? 2.0f : 1.0f);
     viewport.znear = 0.0f;
-    viewport.zfar = 0.0f;
+    viewport.zfar = 1.0f;
 }
 @end
 

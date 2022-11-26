@@ -16,12 +16,7 @@
 extern uint64_t last_resize_request_at;
 
 @interface MetalKitViewDelegate: NSObject<MTKViewDelegate>
-@property (retain) id<MTLDevice> metal_device;
-@property (retain) id<MTLCommandQueue> command_queue;
 @property (retain) NSMutableArray * vertex_buffers;
-@property VertexBuffer render_commands;
-@property (retain) id<MTLRenderPipelineState>
-    combo_pipeline_state;
 @property (retain) NSMutableArray * metal_textures;
 
 - (void)
@@ -39,7 +34,7 @@ extern uint64_t last_resize_request_at;
 - (void)
     drawClearScreen: (MTKView *)view;
 - (void)
-    configureMetalWithDevice: (id<MTLDevice>)metal_device
+    configureMetalWithDevice: (id<MTLDevice>)with_metal_device
     andPixelFormat: (MTLPixelFormat)pixel_format
     fromFolder: (NSString *)shader_lib_filepath;
 @end

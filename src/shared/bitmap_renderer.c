@@ -158,7 +158,7 @@ static void add_quad_to_gpu_workload(
     TexQuad * to_add,
     Vertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size)
-{
+{    
     if (to_add->scale_factor_x < 0.01f ||
         to_add->scale_factor_y < 0.01f)
     {
@@ -194,7 +194,8 @@ static void add_quad_to_gpu_workload(
             Vertex topleft[3];
             Vertex bottomright[3];
             
-            float z_value = 0.3f + (to_add->z * 0.0001f);
+            // wtf was I thinking here with z-value before?
+            float z_value = to_add->z; // 0.3f + (to_add->z * 0.0001f);
             float extra_scale_x = (to_add->scale_factor_x - 1.0f);
             float extra_scale_y = (to_add->scale_factor_y - 1.0f);
             if (extra_scale_x != extra_scale_x) { return; } // not a number NaN

@@ -12,7 +12,7 @@ draw_triangle(
     if (vertices_recipient == NULL) {
         return;
     }
-    
+        
     uint32_t vertex_i = *vertex_count_recipient;
     
     for (uint32_t i = 0; i < 3; i++) {
