@@ -446,14 +446,6 @@ static void add_quad_to_gpu_workload(
     }
 }
 
-static int __attribute__((no_instrument_function))
-sorter_cmpr_texquad_lowest_z(
-    const void * a,
-    const void * b)
-{
-    return ((TexQuad *)a)->z <= ((TexQuad *)b)->z ? -1 : 1;
-}
-
 void draw_texquads_to_render(
     Vertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size)

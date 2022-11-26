@@ -697,6 +697,8 @@ static float get_magnitude(zVertex input) {
         (input.x * input.x) +
         (input.y * input.y) +
         (input.z * input.z);
+        
+    // TODO: this square root is a performance bottleneck
     return sqrtf(sum_squares);
 }
 
@@ -772,7 +774,6 @@ zVertex get_ztriangle_normal(
     vector1.z =
         input->vertices[vertex_1].z
             - input->vertices[vertex_0].z;
-    // normalize_zvertex(&vector1);
     
     vector2.x =
         input->vertices[vertex_2].x
@@ -783,7 +784,6 @@ zVertex get_ztriangle_normal(
     vector2.z =
         input->vertices[vertex_2].z
             - input->vertices[vertex_0].z;
-    // normalize_zvertex(&vector2);
     
     normal.x =
         (vector1.y * vector2.z) - (vector1.z * vector2.y);
@@ -816,6 +816,8 @@ float get_visibility_rating(
     zVertex normal = get_ztriangle_normal(
         observed,
         observed_vertex_i);
+    
+    // TODO: performance bottleneck
     normalize_zvertex(&normal);
     
     // compare normal's similarity to a vector straight
@@ -827,11 +829,9 @@ float get_visibility_rating(
         observed_adj.vertices[observed_vertex_i].y;
     triangle_minus_observer.z =
         observed_adj.vertices[observed_vertex_i].z;
+        
+    // TODO: normalize_zvertex is a performance bottleneck
     normalize_zvertex(&triangle_minus_observer);
-    
-    if (get_magnitude(triangle_minus_observer) > 1.01f) {
-        log_dump_and_crash("Normalized triangle had impossible magnitude of > 1.0f");
-    }
     
     return dot_of_vertices(
         normal,

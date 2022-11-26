@@ -11,6 +11,70 @@ uint8_t * platform_malloc_unaligned_block(
     return return_value;
 }
 
+void platform_256_sqrt(
+    float * floats,
+    const uint32_t floats_size)
+{
+    #ifdef __AVX__
+    __m256 v1;
+    
+    for (uint32_t i = 0; i < floats_size; i++) {
+        v1 = _mm256_load_ps((floats + i)); 
+        v1 = _mm256_rsqrt_ps(v1);
+        _mm256_store_ps(floats + i, v1);
+    }
+    #else
+    for (uint32_t i = 0; i < floats_size; i++) {
+        floats[i] = sqrtf(floats[i]);
+    }
+    #endif
+}
+
+void platform_256_sub(
+    float * floats_1,
+    float * floats_2,
+    const uint32_t f1_f2_size)
+{
+    #ifdef __AVX__
+    __m256 v1;
+    __m256 v2;
+    
+    
+    for (uint32_t i = 0; i < f1_f2_size; i++) {
+        v1 = _mm256_load_ps((floats_1 + i)); 
+        v2 = _mm256_load_ps((floats_2 + i));
+        v1 = _mm256_sub_ps(v1, v2);
+        _mm256_store_ps(floats_1 + i, v1);
+    }
+    #else
+    for (uint32_t i = 0; i < f1_f2_size; i++) {
+        floats_1[i] = floats_1[i] - floats_2[i];
+    }
+    #endif
+}
+
+void platform_256_mul(
+    float * floats_1,
+    float * floats_2,
+    const uint32_t f1_f2_size)
+{
+    #ifdef __AVX__
+    __m256 v1;
+    __m256 v2;
+    
+    for (uint32_t i = 0; i < f1_f2_size; i++) {
+        v1 = _mm256_load_ps((floats_1 + i)); 
+        v2 = _mm256_load_ps((floats_2 + i));
+        v1 = _mm256_mul_ps(v1, v2);
+        _mm256_store_ps(floats_1 + i, v1);
+    }
+    #else
+    for (uint32_t i = 0; i < f1_f2_size; i++) {
+        floats_1[i] = floats_1[i] * floats_2[i];
+    }
+    #endif
+}
+
 AVAudioPlayer * active_music_player = NULL;
 static float sound_volume = 0.15f;
 

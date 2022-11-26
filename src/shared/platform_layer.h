@@ -36,6 +36,10 @@ on each platform
 #import <AVFoundation/AVFoundation.h>
 #endif
 
+#ifdef __AVX__
+#include "immintrin.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -46,6 +50,17 @@ extern "C" {
 #include "window_size.h"
 
 uint8_t * platform_malloc_unaligned_block(const uint64_t size);
+
+void platform_256_sqrt(float * floats, const uint32_t floats_size);
+void platform_256_sub(
+    float * floats_1,
+    float * floats_2,
+    const uint32_t f1_f2_size);
+void platform_256_mul(
+    float * floats_1,
+    float * floats_2,
+    const uint32_t f1_f2_size);
+
 
 typedef struct FileBuffer {
     uint64_t size;
