@@ -14,8 +14,8 @@
 these variables may not exist on platforms where window resizing is
 impossible
 */
-float current_window_height = 500;
-float current_window_width = 800;
+float current_window_height = 800;
+float current_window_width = 1000;
 bool32_t startup_complete = false; // dont trigger window resize code at startup
 
 MTKView * mtk_view = NULL; 

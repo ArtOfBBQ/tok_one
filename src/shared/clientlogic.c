@@ -64,15 +64,14 @@ void client_logic_startup() {
     zlights_to_apply[0].object_id = -1;
     zlights_to_apply[0].x = window_width / 2;
     zlights_to_apply[0].y = window_height / 2;
-    zlights_to_apply[0].z = 10.0f;
+    zlights_to_apply[0].z = 0.9f;
     zlights_to_apply[0].RGBA[0] = 1.0f;
     zlights_to_apply[0].RGBA[1] = 1.0f;
     zlights_to_apply[0].RGBA[2] = 1.0f;
     zlights_to_apply[0].RGBA[3] = 1.0f;
-    zlights_to_apply[0].reach = 100;
+    zlights_to_apply[0].reach = 500;
     zlights_to_apply[0].ambient = 1.0f;
     zlights_to_apply[0].diffuse = 1.0f;
-    zlights_to_apply[0].deleted = false;
     zlights_to_apply_size++;
     log_assert(zlights_to_apply_size == 1);
     
@@ -81,11 +80,11 @@ void client_logic_startup() {
     foreground_blue.object_id = -1;
     foreground_blue.texturearray_i = -1;
     foreground_blue.texture_i = -1;
-    foreground_blue.width_pixels = 200;
-    foreground_blue.height_pixels = 150;
-    foreground_blue.left_pixels = 375;
-    foreground_blue.top_pixels = window_height * 0.7f;
-    foreground_blue.z = 0.01f;
+    foreground_blue.width_pixels = 800;
+    foreground_blue.height_pixels = 800;
+    foreground_blue.left_pixels = 200;
+    foreground_blue.top_pixels = window_height;
+    foreground_blue.z = 0.5f;
     foreground_blue.RGBA[0] = 0.0f;
     foreground_blue.RGBA[1] = 0.0f;
     foreground_blue.RGBA[2] = 1.0f;
@@ -94,36 +93,17 @@ void client_logic_startup() {
     request_texquad_renderable(&foreground_blue);
     log_assert(texquads_to_render_size == 1);
     
-    for (uint32_t x = 0; x < 3; x++) {
-        TexQuad background;
-        construct_texquad(&background);
-        background.object_id = -1;
-        background.texturearray_i = -1;
-        background.texture_i = -1;
-        background.width_pixels = 200;
-        background.height_pixels = 200;
-        background.left_pixels = 50 + (x * 200);
-        background.top_pixels = window_height * 0.5f;
-        background.z = 0.2f; // 30.0f + (x * 1.0f);
-        background.RGBA[0] = 1.0f;
-        background.RGBA[1] = 0.2f * x;
-        background.RGBA[2] = 0.2f;
-        background.RGBA[3] = 1.0f;
-        request_texquad_renderable(&background);
-    }
+    zPolygon teapot = load_from_obj_file("teapot.obj");
+    scale_zpolygon(
+        /* to_scale: */ &teapot,
+        /* new_height: */ 0.04f);
     
-    
-    //    zPolygon teapot = load_from_obj_file("teapot.obj");
-    //    zpolygon_scale_to_width_given_z(
-    //        /* to_scale: */ &teapot,
-    //        /* new_width: */ 100,
-    //        /* when_observed_at_z: */ 20.0f);
-    //    teapot.object_id = 12345;
-    //    teapot.x = -2;
-    //    teapot.y = -2;
-    //    teapot.z = 40.0f;
-    //    zpolygons_to_render[zpolygons_to_render_size++] = teapot;
-    //    assert(zpolygons_to_render_size == 1);
+    teapot.object_id = 12345;
+    teapot.x = 0.1f;
+    teapot.y = 0.1f;
+    teapot.z = 0.2f;
+    zpolygons_to_render[zpolygons_to_render_size++] = teapot;
+    assert(zpolygons_to_render_size == 1);
     
     log_append("finished client_logic_startup()\n");
 }
@@ -191,7 +171,7 @@ static void request_fading_lightsquare(
         touch_highlight.object_id;
     zlights_to_apply[new_zlight_i].x = location_x;
     zlights_to_apply[new_zlight_i].y = location_y;
-    zlights_to_apply[new_zlight_i].z = 50.0f;
+    zlights_to_apply[new_zlight_i].z = 1.0f;
     
     if (cur_color_i == 0) {
         zlights_to_apply[new_zlight_i].RGBA[0] = 1.0f;
@@ -295,25 +275,13 @@ bool32_t fading_out = true;
 void client_logic_update(uint64_t microseconds_elapsed)
 {
     // TODO: our timer is weirdly broken on iOS. Fix it!
-    // request_fps_counter(microseconds_elapsed);
+    request_fps_counter(microseconds_elapsed);
     
     client_handle_touches_and_leftclicks(microseconds_elapsed);
     client_handle_keypresses(microseconds_elapsed); 
     
-    // zpolygons_to_render[0].z += 0.05f;
-    zpolygons_to_render[0].x += 0.001f;
-    zpolygons_to_render[0].y += 0.001f;
     zpolygons_to_render[0].z_angle += 0.01f;
-    
-    texquads_to_render[0].top_pixels += 0.05f;
-    texquads_to_render[0].z += 0.001f;
-    printf("blue foreground z: %f\n", texquads_to_render[0].z);
-    
-    if (texquads_to_render[0].z <= 0.8f &&
-        texquads_to_render[0].z >= 0.6f)
-    {
-        texquads_to_render[0].RGBA[0] = 1.0f;
-    }
+    printf("zpolygons_to_render[0].z: %f\n", zpolygons_to_render[0].z);
 }
 
 void client_logic_window_resize(

@@ -22,8 +22,8 @@ void software_render(
     }
     
     if (
-        next_gpu_workload == NULL
-        || next_workload_size == NULL)
+        next_gpu_workload == NULL ||
+        next_workload_size == NULL)
     {
         log_append("ERROR: platform layer didnt pass recipients\n");
         return;

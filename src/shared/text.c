@@ -399,7 +399,7 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
         /* char * text_to_draw   : */ fps_string,
         /* float left_pixelspace : */ 20.0f,
         /* float top_pixelspace  : */ 60.0f,
-        /* z                     : */ 5.0f,
+        /* z                     : */ 0.01f,
         /* float max_width       : */ window_width,
         /* bool32_t ignore_camera: */ true);
 }
