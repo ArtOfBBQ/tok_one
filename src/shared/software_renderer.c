@@ -54,6 +54,8 @@ void software_render(
     
     // transform all triangles
     zTriangle triangles_to_draw[triangles_to_draw_size];
+    zTriangle visible_triangles[triangles_to_draw_size];
+    uint32_t visible_triangles_size = 0;
     zTriangle position_translated;
     zTriangle camera_y_rotated;
     zTriangle camera_x_rotated;
@@ -133,44 +135,50 @@ void software_render(
                 > projection_constants.near
             && triangles_to_draw[i].vertices[2].z
                 > projection_constants.near)
-        {
-            Vertex triangle_to_draw[3];
-            
-            for (uint32_t v = 0; v < 3; v++) {
-                triangle_to_draw[v].lighting[0] = 0.0f;
-                triangle_to_draw[v].lighting[1] = 0.0f;
-                triangle_to_draw[v].lighting[2] = 0.0f;
-                triangle_to_draw[v].lighting[3] = 1.0f;
-            }
-            for (
-                uint32_t l = 0;
-                l < zlights_transformed_size;
-                l++)
-            {
-                ztriangle_apply_lighting(
-                    /* recipient: */
-                        triangle_to_draw,
-                    /* input: */
-                        triangles_to_draw + i,
-                    /* zlight_source: */
-                        &zlights_transformed[l]);
-            }
-            
-            ztriangle_to_2d(
-                /* recipient: */
-                    triangle_to_draw,
-                /* input: */
-                    triangles_to_draw + i);
-            
-            draw_triangle(
-                /* vertices_recipient: */
-                    next_gpu_workload,
-                /* vertex_count_recipient: */
-                    next_workload_size,
-                /* input: */
-                    triangle_to_draw);
-            if (!application_running) { return; }
+        {            
+            visible_triangles[visible_triangles_size++] = triangles_to_draw[i];
         }
     }
+    
+    uint32_t rendered_vertices_size = visible_triangles_size * 3;
+    Vertex rendered_vertices[rendered_vertices_size];
+    for (uint32_t rv_i = 0; rv_i < rendered_vertices_size; rv_i++) {
+        rendered_vertices[rv_i].lighting[0] = 0.0f;
+        rendered_vertices[rv_i].lighting[1] = 0.0f;
+        rendered_vertices[rv_i].lighting[2] = 0.0f;
+        rendered_vertices[rv_i].lighting[3] = 1.0f;
+    }
+    
+    for (uint32_t l_i = 0; l_i < zlights_to_apply_size; l_i++) {
+        ztriangles_apply_lighting(
+           /* zTriangle * inputs: */
+               visible_triangles,
+           /* const uint32_t inputs_size: */
+               visible_triangles_size,
+           /* Vertex * recipients: */
+               rendered_vertices,
+           /* const uint32_t recipients_size: */
+               rendered_vertices_size,
+           /* zLightSource * zlight_source: */
+               &zlights_to_apply[l_i]);
+    }
+    
+    for (uint32_t i = 0; i < visible_triangles_size; i++) {        
+        ztriangle_to_2d(
+            /* recipient: */
+            rendered_vertices + (i * 3),
+            /* input: */
+            visible_triangles + i);
+        
+        draw_triangle(
+            /* vertices_recipient: */
+                next_gpu_workload,
+            /* vertex_count_recipient: */
+                next_workload_size,
+            /* input: */
+                rendered_vertices + (i * 3));
+    }
+    
+    if (!application_running) { return; }
 }
 

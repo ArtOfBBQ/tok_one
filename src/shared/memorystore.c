@@ -1,6 +1,6 @@
 #include "memorystore.h"
 
-#define MEM_ALIGNMENT_BYTES 16
+#define MEM_ALIGNMENT_BYTES 32
 
 // 500mb ->                   500...000
 #define UNMANAGED_MEMORY_SIZE 500000000
@@ -12,16 +12,6 @@ static uint64_t unmanaged_memory_size = UNMANAGED_MEMORY_SIZE;
 static uint8_t * managed_memory = NULL;
 static uint64_t managed_memory_size = MANAGED_MEMORY_SIZE;
 static uint32_t malloc_mutex_id;
-
-// We can consider mmap instead of malloc
-// // #import <sys/mman.h>
-//(Vertex *)mmap(
-//    0,
-//    buffered_vertex_size,
-//    PROT_READ | PROT_WRITE,
-//    MAP_PRIVATE | MAP_ANON,
-//    -1,
-//    0);
 
 void init_memory_store(void) {
     malloc_mutex_id = platform_init_mutex_and_return_id();

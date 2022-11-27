@@ -230,12 +230,13 @@ int main(int argc, const char * argv[]) {
     log_append("initialized application: ");
     log_append(application_name);
     
-    log_append("\nconfirming we can save debug info - writing log.txt...\n");
+    log_append(
+        "\nconfirming we can save debug info - writing log.txt...\n");
     bool32_t initial_log_dump_succesful = false;
     log_dump(&initial_log_dump_succesful);
     if (!initial_log_dump_succesful) {
         log_append(
-            "Error - can't write to log.txt on boot, terminating app...\n");
+            "Error - can't write to log.txt, terminating app...\n");
         return 1;
     }
     
@@ -259,7 +260,8 @@ int main(int argc, const char * argv[]) {
     GameWindowDelegate * window_delegate =
         [[GameWindowDelegate alloc] init];
     
-    NSString * nsstring_app_name = [NSString stringWithUTF8String:application_name];  
+    NSString * nsstring_app_name =
+        [NSString stringWithUTF8String:application_name];  
     [window setDelegate: window_delegate];
     [window setTitle: nsstring_app_name];
     [window makeMainWindow]; 

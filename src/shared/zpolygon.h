@@ -64,6 +64,13 @@ typedef struct zPolygon {
 extern zPolygon zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
 extern uint32_t zpolygons_to_render_size;
 
+void ztriangles_apply_lighting(
+    zTriangle * inputs,
+    const uint32_t inputs_size,
+    Vertex * recipients,
+    const uint32_t recipients_size,
+    zLightSource * zlight_source);
+
 void __attribute__((no_instrument_function))
 ztriangle_apply_lighting(
     Vertex recipient[3],

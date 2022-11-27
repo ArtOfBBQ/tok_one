@@ -51,6 +51,13 @@ extern "C" {
 
 uint8_t * platform_malloc_unaligned_block(const uint64_t size);
 
+/*
+Vectorized math operations
+
+I only know how to do this with Intel's simd instructions for
+now, but anyway having it all in 1 place should make it easy to
+add arm or GPU compute functions when I learn how to call them.
+*/
 void platform_256_sqrt(float * floats, const uint32_t floats_size);
 void platform_256_sub(
     float * floats_1,
@@ -60,6 +67,14 @@ void platform_256_mul(
     float * floats_1,
     float * floats_2,
     const uint32_t f1_f2_size);
+void platform_256_div_scalar_by_input(
+    float * out_divisors,
+    const uint32_t out_divisors_size,
+    const float numerator);
+void platform_256_div_by_scalar(
+    float * out_numerators,
+    const uint32_t out_numerators_size,
+    const float divisor);
 
 
 typedef struct FileBuffer {

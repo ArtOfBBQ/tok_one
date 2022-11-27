@@ -62,15 +62,15 @@ void client_logic_startup() {
     
     zlights_to_apply[0].deleted = false;
     zlights_to_apply[0].object_id = -1;
-    zlights_to_apply[0].x = window_width / 2;
-    zlights_to_apply[0].y = window_height / 2;
+    zlights_to_apply[0].x = 0;
+    zlights_to_apply[0].y = 0;
     zlights_to_apply[0].z = 0.9f;
     zlights_to_apply[0].RGBA[0] = 1.0f;
     zlights_to_apply[0].RGBA[1] = 1.0f;
     zlights_to_apply[0].RGBA[2] = 1.0f;
     zlights_to_apply[0].RGBA[3] = 1.0f;
-    zlights_to_apply[0].reach = 500;
-    zlights_to_apply[0].ambient = 1.0f;
+    zlights_to_apply[0].reach = 25;
+    zlights_to_apply[0].ambient = 0.01f;
     zlights_to_apply[0].diffuse = 1.0f;
     zlights_to_apply_size++;
     log_assert(zlights_to_apply_size == 1);
@@ -281,7 +281,6 @@ void client_logic_update(uint64_t microseconds_elapsed)
     client_handle_keypresses(microseconds_elapsed); 
     
     zpolygons_to_render[0].z_angle += 0.01f;
-    printf("zpolygons_to_render[0].z: %f\n", zpolygons_to_render[0].z);
 }
 
 void client_logic_window_resize(

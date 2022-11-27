@@ -75,6 +75,49 @@ void platform_256_mul(
     #endif
 }
 
+void platform_256_div_scalar_by_input(
+    float * out_divisors,
+    const uint32_t out_divisors_size,
+    const float numerator)
+{
+    #ifdef __AVX__
+    __m256 v1 = _mm256_set_ps(numerator, numerator, numerator, numerator, numerator, numerator, numerator, numerator);
+    __m256 v2;
+    
+    for (uint32_t i = 0; i < out_divisors_size; i += 8) {
+        v2 = _mm256_load_ps((out_divisors + i)); 
+        v2 = _mm256_div_ps(v1, v2);
+        _mm256_store_ps(out_divisors + i, v2);
+    }
+    
+    #else
+    for (uint32_t i = 0; i < out_divisors_size; i++) {
+        out_divisors[i] = numerator / out_divisors[i];
+    }
+    #endif
+}
+
+void platform_256_div_scalar(
+    float * out_numerators,
+    const uint32_t out_numerators_size,
+    const float divisor)
+{
+    #ifdef __AVX__
+    __m256 v1;
+    __m256 v2 = _mm256_set_ps(divisor, divisor, divisor, divisor, divisor, divisor, divisor, divisor);
+    
+    for (uint32_t i = 0; i < out_numerators_size; i++) {
+        v1 = _mm256_load_ps((out_numerators + i)); 
+        v1 = _mm256_div_ps(v1, v2);
+        _mm256_store_ps(out_numerators + i, v1);
+    }
+    #else
+    for (uint32_t i = 0; i < out_numerators_size; i++) {
+        out_numerators[i] /= divisor;
+    }
+    #endif
+}
+
 AVAudioPlayer * active_music_player = NULL;
 static float sound_volume = 0.15f;
 

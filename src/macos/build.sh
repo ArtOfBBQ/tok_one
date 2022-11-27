@@ -2,7 +2,7 @@ APP_NAME="hello3dgfx"
 PLATFORM="macos"
 # COMPILER_ARGS="-fsanitize=address -finstrument-functions -Wall -x objective-c++ -std="c++17" -g -o0 -objC"
 # COMPILER_ARGS="-fsanitize=address -Wall -x objective-c++ -std="c++17" -g -o0 -objC"
-COMPILER_ARGS="-Wall -x objective-c -std="c99" -g -o0 -objC"
+COMPILER_ARGS="-Wall -x objective-c -std="c99" -g -o2 -objC"
 
 MAC_FRAMEWORKS="
     -framework AppKit 
@@ -26,20 +26,21 @@ echo "Creating build folder..."
 sudo mkdir -r build/$PLATFORM/$APP_NAME.app/debugout
 
 ############
-# echo "skipping metal library compilation..."
-echo "Creating metal library..."
-sudo xcrun -sdk macosx metal -gline-tables-only -MO -g -c "src/shared_apple/Shaders.metal" -o resources/Shaders.air
-sudo xcrun -sdk macosx metal -c "src/shared_apple/shaders.metal" -o Shaders.air
-sudo xcrun -sdk macosx metallib resources/Shaders.air -o build/$PLATFORM/$APP_NAME.app/Shaders.metallib
+echo "skipping metal library compilation..."
+# echo "Creating metal library..."
+# sudo xcrun -sdk macosx metal -gline-tables-only -MO -g -c "src/shared_apple/Shaders.metal" -o resources/Shaders.air
+# sudo xcrun -sdk macosx metal -c "src/shared_apple/shaders.metal" -o Shaders.air
+# sudo xcrun -sdk macosx metallib resources/Shaders.air -o build/$PLATFORM/$APP_NAME.app/Shaders.metallib
 ############
 
 ############
-# echo "skipping resource copy..."
-echo "copy resources..."
-sudo rm build/$PLATFORM/$APP_NAME.app/*.png
-sudo rm build/$PLATFORM/$APP_NAME.app/*.obj
-sudo cp resources/fontmetrics.dat build/$PLATFORM/$APP_NAME.app/fontmetrics.dat
-sudo cp resources/*.png build/$PLATFORM/$APP_NAME.app/
+echo "skipping resource copy..."
+# echo "copy resources..."
+# sudo rm build/$PLATFORM/$APP_NAME.app/*.png
+# sudo rm build/$PLATFORM/$APP_NAME.app/*.obj
+# sudo cp resources/fontmetrics.dat build/$PLATFORM/$APP_NAME.app/fontmetrics.dat
+# sudo cp resources/*.png build/$PLATFORM/$APP_NAME.app/
+# sudo cp resources/*.obj build/$PLATFORM/$APP_NAME.app/
 ############
 
 echo "Compiling & linking $APP_NAME..."
@@ -53,6 +54,5 @@ exit 0
 fi
 
 echo "Booting $APP_NAME"
-# (cd build/$PLATFORM/$APP_NAME.app && ./$APP_NAME)
 (cd build/$PLATFORM/$APP_NAME.app && ./$APP_NAME)
 

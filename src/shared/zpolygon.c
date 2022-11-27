@@ -7,6 +7,10 @@ ProjectionConstants projection_constants = {};
 zPolygon zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
 uint32_t zpolygons_to_render_size = 0;
 
+#define DISTANCES_TO_VERTICES_CAP 1000000
+static float * distances_to_vertices;
+static uint32_t distances_to_vertices_size = 0;
+
 void init_projection_constants() {
     
     if (window_height < 50.0f || window_width < 50.0f) {
@@ -33,6 +37,8 @@ void init_projection_constants() {
     
     pjc->aspect_ratio =
         window_height / window_width; 
+    
+    distances_to_vertices = (float *)malloc_from_unmanaged(DISTANCES_TO_VERTICES_CAP);
 }
 
 static uint32_t chars_till_next_space_or_slash(
@@ -454,6 +460,80 @@ void scale_zpolygon(
     }
 }
 
+void ztriangles_apply_lighting(
+    zTriangle * inputs,
+    const uint32_t inputs_size,
+    Vertex * recipients,
+    const uint32_t recipients_size,
+    zLightSource * zlight_source)
+{
+    log_assert(zlight_source != NULL);
+    if (zlight_source == NULL) { return; }
+    
+    zVertex light_source_pos;
+        light_source_pos.x = zlight_source->x;
+        light_source_pos.y = zlight_source->y;
+        light_source_pos.z = zlight_source->z;
+    
+    distances_to_vertices_size = (inputs_size * 3);
+    assert(distances_to_vertices_size < DISTANCES_TO_VERTICES_CAP);
+    
+    for (
+        uint32_t triangle_i = 0;
+        triangle_i < inputs_size;
+        triangle_i++)
+    {
+        // get distance from triangle vertices to light_source
+        
+        for (uint32_t m = 0; m < 3; m++) {
+            distances_to_vertices[(triangle_i * 3) + m] =
+                distance_to_zvertex(
+                    light_source_pos,
+                    inputs[triangle_i].vertices[m]);
+        }
+    }
+    
+    // convert distances_to_triangles to store distance modifiers instead
+    platform_256_div_scalar_by_input(
+        /* divisors: */ distances_to_vertices,
+        /* divisors_size: */ inputs_size * 3,
+        /* numerator: */ zlight_source->reach);
+    
+    for (uint32_t triangle_i = 0; triangle_i < inputs_size; triangle_i++) {
+        for (uint32_t l = 0; l < 3; l++) {
+            float ambient_mod = zlight_source->RGBA[l] * zlight_source->ambient;
+            float diffuse_mod = zlight_source->RGBA[l] * zlight_source->diffuse;
+            
+            for (
+                uint32_t m = 0;
+                m < 3;
+                m++)
+            {
+                uint32_t vertex_i = (triangle_i * 3) + m;
+                log_assert(vertex_i < recipients_size);
+                recipients[vertex_i].lighting[l] +=
+                    ambient_mod *
+                    distances_to_vertices[(triangle_i * 3) + m];
+                
+                // *******************************************
+                // add diffuse lighting
+                float diffuse_dot = get_visibility_rating(
+                    light_source_pos,
+                    &inputs[triangle_i],
+                    m);
+                
+                if (diffuse_dot < 0.0f)
+                {
+                    recipients[vertex_i].lighting[l] +=
+                        (diffuse_dot * -1) *
+                        diffuse_mod *
+                        distances_to_vertices[(triangle_i * 3) + m];
+                }
+            }
+        }
+    }
+}
+
 void __attribute__((no_instrument_function))
 ztriangle_apply_lighting(
     Vertex recipient[3],
@@ -463,17 +543,17 @@ ztriangle_apply_lighting(
     log_assert(zlight_source != NULL);
     if (zlight_source == NULL) { return; }
     
+    zVertex light_source_pos;
+        light_source_pos.x = zlight_source->x;
+        light_source_pos.y = zlight_source->y;
+        light_source_pos.z = zlight_source->z;
+    
     // add lighting to the 3 vertices
     for (
         uint32_t m = 0;
         m < 3;
         m++)
     {
-        zVertex light_source_pos;
-        light_source_pos.x = zlight_source->x;
-        light_source_pos.y = zlight_source->y;
-        light_source_pos.z = zlight_source->z;
-        
         float distance =
             distance_to_zvertex(
                 light_source_pos,
@@ -569,11 +649,7 @@ void ztriangle_to_2d(
         recipient[i].w = input->vertices[i].z == 0.0f ?
            0.0001f
            : input->vertices[i].z;
-        
-        // recipient[i].x /= recipient[i].w;
-        // recipient[i].y /= recipient[i].w;
-        // recipient[i].z /= recipient[i].w;
-        
+                
         recipient[i].uv[0] = input->vertices[i].uv[0];
         recipient[i].uv[1] = input->vertices[i].uv[1];
         
