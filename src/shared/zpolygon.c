@@ -487,11 +487,26 @@ void ztriangles_apply_lighting(
         
         for (uint32_t m = 0; m < 3; m++) {
             distances_to_vertices[(triangle_i * 3) + m] =
-                distance_to_zvertex(
+                get_distance(
                     light_source_pos,
                     inputs[triangle_i].vertices[m]);
         }
+        
+        /*
+        Same thing but try to unpack it
+        */
+        for (uint32_t m = 0; m < 3; m++) {
+            distances_to_vertices[(triangle_i * 3) + m] =
+                ((light_source_pos.x - inputs[triangle_i].vertices[m].x) *
+                    (light_source_pos.x - inputs[triangle_i].vertices[m].x)) + 
+                ((light_source_pos.y - inputs[triangle_i].vertices[m].y) *
+                    (light_source_pos.y - inputs[triangle_i].vertices[m].y)) + 
+                ((light_source_pos.z - inputs[triangle_i].vertices[m].z) *
+                    (light_source_pos.z - inputs[triangle_i].vertices[m].z));
+        }
     }
+    
+    platform_256_sqrt(distances_to_vertices, distances_to_vertices_size);
     
     // convert distances_to_triangles to store distance modifiers instead
     platform_256_div_scalar_by_input(
@@ -555,7 +570,7 @@ ztriangle_apply_lighting(
         m++)
     {
         float distance =
-            distance_to_zvertex(
+            get_distance(
                 light_source_pos,
                 input->vertices[m]);
         
@@ -816,16 +831,6 @@ float distance_to_ztriangle(
         get_distance(p1, p2.vertices[0]) +
         get_distance(p1, p2.vertices[1]) +
         get_distance(p1, p2.vertices[2])) / 3.0f;
-}
-
-float distance_to_zvertex(
-    const zVertex p1,
-    const zVertex p2)
-{
-    return (
-        get_distance(p1, p2) +
-        get_distance(p1, p2) +
-        get_distance(p1, p2)) / 3.0f;
 }
 
 zVertex get_ztriangle_normal(

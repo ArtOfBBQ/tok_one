@@ -69,8 +69,8 @@ void client_logic_startup() {
     zlights_to_apply[0].RGBA[1] = 1.0f;
     zlights_to_apply[0].RGBA[2] = 1.0f;
     zlights_to_apply[0].RGBA[3] = 1.0f;
-    zlights_to_apply[0].reach = 25;
-    zlights_to_apply[0].ambient = 0.01f;
+    zlights_to_apply[0].reach = 15;
+    zlights_to_apply[0].ambient = 0.03f;
     zlights_to_apply[0].diffuse = 1.0f;
     zlights_to_apply_size++;
     log_assert(zlights_to_apply_size == 1);
@@ -84,7 +84,7 @@ void client_logic_startup() {
     foreground_blue.height_pixels = 800;
     foreground_blue.left_pixels = 200;
     foreground_blue.top_pixels = window_height;
-    foreground_blue.z = 0.5f;
+    foreground_blue.z = 0.97f;
     foreground_blue.RGBA[0] = 0.0f;
     foreground_blue.RGBA[1] = 0.0f;
     foreground_blue.RGBA[2] = 1.0f;
@@ -96,11 +96,11 @@ void client_logic_startup() {
     zPolygon teapot = load_from_obj_file("teapot.obj");
     scale_zpolygon(
         /* to_scale: */ &teapot,
-        /* new_height: */ 0.04f);
+        /* new_height: */ 0.03f);
     
     teapot.object_id = 12345;
-    teapot.x = 0.1f;
-    teapot.y = 0.1f;
+    teapot.x = 0.0f;
+    teapot.y = 0.0f;
     teapot.z = 0.2f;
     zpolygons_to_render[zpolygons_to_render_size++] = teapot;
     assert(zpolygons_to_render_size == 1);
@@ -202,7 +202,7 @@ static void request_fading_lightsquare(
     
     zlights_to_apply[new_zlight_i].ambient = 0.0f;
     zlights_to_apply[new_zlight_i].diffuse = 1.0f;
-    zlights_to_apply[new_zlight_i].reach = 200.0f;
+    zlights_to_apply[new_zlight_i].reach = 75.0f;
     if (new_zlight_i == zlights_to_apply_size) {
          zlights_to_apply_size += 1;
     }

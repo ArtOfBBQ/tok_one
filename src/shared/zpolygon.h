@@ -139,10 +139,6 @@ float get_distance(
     const zVertex p1,
     const zVertex p2);
 
-float distance_to_zvertex(
-    const zVertex p1,
-    const zVertex p2);
-
 float distance_to_ztriangle(
     const zVertex p1,
     const zTriangle p2);

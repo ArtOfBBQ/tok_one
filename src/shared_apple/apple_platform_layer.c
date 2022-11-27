@@ -17,12 +17,13 @@ void platform_256_sqrt(
 {
     #ifdef __AVX__
     __m256 v1;
-    
-    for (uint32_t i = 0; i < floats_size; i++) {
+        
+    for (uint32_t i = 0; i < floats_size; i += 8) {
         v1 = _mm256_load_ps((floats + i)); 
-        v1 = _mm256_rsqrt_ps(v1);
+        v1 = _mm256_sqrt_ps(v1);
         _mm256_store_ps(floats + i, v1);
     }
+    
     #else
     for (uint32_t i = 0; i < floats_size; i++) {
         floats[i] = sqrtf(floats[i]);
