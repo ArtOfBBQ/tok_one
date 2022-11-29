@@ -15,7 +15,7 @@ void platform_256_sqrt(
     float * floats,
     const uint32_t floats_size)
 {
-    #ifdef __AVX__
+    #ifdef __AVX__BLABLBALBA
     __m256 v1;
         
     for (uint32_t i = 0; i < floats_size; i += 8) {
@@ -33,10 +33,10 @@ void platform_256_sqrt(
 
 void platform_256_sub(
     float * floats_1,
-    float * floats_2,
+    const float * floats_2,
     const uint32_t f1_f2_size)
 {
-    #ifdef __AVX__
+    #ifdef __AVX__BLABLBALBA
     __m256 v1;
     __m256 v2;
     
@@ -54,16 +54,62 @@ void platform_256_sub(
     #endif
 }
 
-void platform_256_mul(
+void platform_256_sub_scalar(
     float * floats_1,
-    float * floats_2,
+    const uint32_t floats_1_size,
+    const float subtraction)
+{
+    #ifdef __AVX__BLABLBALBA
+    __m256 v1;
+    __m256 v2 = _mm256_set_ps(
+        subtraction, subtraction, subtraction, subtraction,
+        subtraction, subtraction, subtraction, subtraction);
+    
+    for (uint32_t i = 0; i < floats_1_size; i += 8) {
+        v1 = _mm256_load_ps((floats_1 + i)); 
+        v1 = _mm256_sub_ps(v1, v2);
+        _mm256_store_ps(floats_1 + i, v1);
+    }
+    
+    #else
+    for (uint32_t i = 0; i < floats_1_size; i++) {
+        floats_1[i] -= subtraction;
+    }
+    #endif
+}
+
+void platform_256_add(
+    float * floats_1,
+    const float * floats_2,
     const uint32_t f1_f2_size)
 {
-    #ifdef __AVX__
+    #ifdef __AVX__BLABLBALBA
     __m256 v1;
     __m256 v2;
     
+    for (uint32_t i = 0; i < f1_f2_size; i += 8) {
+        v1 = _mm256_load_ps((floats_1 + i)); 
+        v2 = _mm256_load_ps((floats_2 + i));
+        v1 = _mm256_add_ps(v1, v2);
+        _mm256_store_ps(floats_1 + i, v1);
+    }
+    #else
     for (uint32_t i = 0; i < f1_f2_size; i++) {
+        floats_1[i] = floats_1[i] + floats_2[i];
+    }
+    #endif
+}
+
+void platform_256_mul(
+    float * floats_1,
+    const float * floats_2,
+    const uint32_t f1_f2_size)
+{
+    #ifdef __AVX__BLABLBALBA
+    __m256 v1;
+    __m256 v2;
+    
+    for (uint32_t i = 0; i < f1_f2_size; i+= 8) {
         v1 = _mm256_load_ps((floats_1 + i)); 
         v2 = _mm256_load_ps((floats_2 + i));
         v1 = _mm256_mul_ps(v1, v2);
@@ -76,12 +122,34 @@ void platform_256_mul(
     #endif
 }
 
+void platform_256_div(
+    float * floats_1,
+    const float * floats_2,
+    const uint32_t f1_f2_size)
+{
+    #ifdef __AVX__BLABLBALBA
+    __m256 v1;
+    __m256 v2;
+    
+    for (uint32_t i = 0; i < f1_f2_size; i+= 8) {
+        v1 = _mm256_load_ps((floats_1 + i)); 
+        v2 = _mm256_load_ps((floats_2 + i));
+        v1 = _mm256_div_ps(v1, v2);
+        _mm256_store_ps(floats_1 + i, v1);
+    }
+    #else
+    for (uint32_t i = 0; i < f1_f2_size; i++) {
+        floats_1[i] /= floats_2[i];
+    }
+    #endif
+}
+
 void platform_256_div_scalar_by_input(
     float * out_divisors,
     const uint32_t out_divisors_size,
     const float numerator)
 {
-    #ifdef __AVX__
+    #ifdef __AVX__BLABLBALBA
     __m256 v1 = _mm256_set_ps(numerator, numerator, numerator, numerator, numerator, numerator, numerator, numerator);
     __m256 v2;
     
@@ -103,11 +171,11 @@ void platform_256_div_scalar(
     const uint32_t out_numerators_size,
     const float divisor)
 {
-    #ifdef __AVX__
+    #ifdef __AVX__BLABLBALBA
     __m256 v1;
     __m256 v2 = _mm256_set_ps(divisor, divisor, divisor, divisor, divisor, divisor, divisor, divisor);
     
-    for (uint32_t i = 0; i < out_numerators_size; i++) {
+    for (uint32_t i = 0; i < out_numerators_size; i += 8) {
         v1 = _mm256_load_ps((out_numerators + i)); 
         v1 = _mm256_div_ps(v1, v2);
         _mm256_store_ps(out_numerators + i, v1);

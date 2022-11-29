@@ -105,8 +105,7 @@ zTriangle translate_ztriangle(
     const float by_z);
 
 zVertex get_ztriangle_normal(
-    const zTriangle * input,
-    const uint32_t at_vertex_i);
+    const zTriangle * input);
 
 zPolygon parse_obj(
     char * rawdata,
@@ -143,10 +142,14 @@ float distance_to_ztriangle(
     const zVertex p1,
     const zTriangle p2);
 
+void get_visibility_ratings(
+    const zVertex observer,
+    const zTriangle * observeds,
+    const uint32_t observeds_size,
+    float * out_visibility_ratings);
 float get_visibility_rating(
     const zVertex observer,
-    const zTriangle * observed,
-    const uint32_t observed_vertex_i);
+    const zTriangle * observed);
 
 float dot_of_vertices(
     const zVertex vertex_1,

@@ -125,8 +125,7 @@ void software_render(
         float perspective_dot_product =
             get_visibility_rating(
                 origin,
-                triangles_to_draw + i,
-                0);
+                triangles_to_draw + i);
         
         if (perspective_dot_product < 0.0f
             && triangles_to_draw[i].vertices[0].z
@@ -149,26 +148,28 @@ void software_render(
         rendered_vertices[rv_i].lighting[3] = 1.0f;
     }
     
-    for (uint32_t l_i = 0; l_i < zlights_to_apply_size; l_i++) {
+    for (uint32_t light_i = 0; light_i < zlights_to_apply_size; light_i++) {
         ztriangles_apply_lighting(
-           /* zTriangle * inputs: */
-               visible_triangles,
-           /* const uint32_t inputs_size: */
-               visible_triangles_size,
-           /* Vertex * recipients: */
-               rendered_vertices,
-           /* const uint32_t recipients_size: */
-               rendered_vertices_size,
-           /* zLightSource * zlight_source: */
-               &zlights_to_apply[l_i]);
+            /* zTriangle * inputs: */
+                visible_triangles,
+            /* const uint32_t inputs_size: */
+              visible_triangles_size,
+            /* Vertex * recipients: */
+              rendered_vertices,
+            /* const uint32_t recipients_size: */
+              rendered_vertices_size,
+            /* zLightSource * zlight_source: */
+              &zlights_to_apply[light_i]);
     }
     
-    for (uint32_t i = 0; i < visible_triangles_size; i++) {        
+    for (uint32_t i = 0; i < visible_triangles_size; i++) {
+        // note: this won't overwrite the lighting properties in rendered_vertices,
+        // only the positions
         ztriangle_to_2d(
             /* recipient: */
-            rendered_vertices + (i * 3),
+                rendered_vertices + (i * 3),
             /* input: */
-            visible_triangles + i);
+                visible_triangles + i);
         
         draw_triangle(
             /* vertices_recipient: */

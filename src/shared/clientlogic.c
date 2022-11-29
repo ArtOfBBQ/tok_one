@@ -62,15 +62,15 @@ void client_logic_startup() {
     
     zlights_to_apply[0].deleted = false;
     zlights_to_apply[0].object_id = -1;
-    zlights_to_apply[0].x = 0;
-    zlights_to_apply[0].y = 0;
+    zlights_to_apply[0].x = 0.0f;
+    zlights_to_apply[0].y = 0.3f;
     zlights_to_apply[0].z = 0.9f;
     zlights_to_apply[0].RGBA[0] = 1.0f;
-    zlights_to_apply[0].RGBA[1] = 1.0f;
-    zlights_to_apply[0].RGBA[2] = 1.0f;
+    zlights_to_apply[0].RGBA[1] = 0.2f;
+    zlights_to_apply[0].RGBA[2] = 0.2f;
     zlights_to_apply[0].RGBA[3] = 1.0f;
-    zlights_to_apply[0].reach = 15;
-    zlights_to_apply[0].ambient = 0.03f;
+    zlights_to_apply[0].reach = 50;
+    zlights_to_apply[0].ambient = 0.001f;
     zlights_to_apply[0].diffuse = 1.0f;
     zlights_to_apply_size++;
     log_assert(zlights_to_apply_size == 1);
@@ -96,12 +96,12 @@ void client_logic_startup() {
     zPolygon teapot = load_from_obj_file("teapot.obj");
     scale_zpolygon(
         /* to_scale: */ &teapot,
-        /* new_height: */ 0.03f);
+        /* new_height: */ 0.05f);
     
     teapot.object_id = 12345;
     teapot.x = 0.0f;
     teapot.y = 0.0f;
-    teapot.z = 0.2f;
+    teapot.z = 0.6f;
     zpolygons_to_render[zpolygons_to_render_size++] = teapot;
     assert(zpolygons_to_render_size == 1);
     

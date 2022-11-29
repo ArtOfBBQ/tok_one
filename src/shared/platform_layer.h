@@ -58,14 +58,28 @@ I only know how to do this with Intel's simd instructions for
 now, but anyway having it all in 1 place should make it easy to
 add arm or GPU compute functions when I learn how to call them.
 */
-void platform_256_sqrt(float * floats, const uint32_t floats_size);
+void platform_256_sqrt(
+    float * floats,
+    const uint32_t floats_size);
 void platform_256_sub(
     float * floats_1,
-    float * floats_2,
+    const float * floats_2,
+    const uint32_t f1_f2_size);
+void platform_256_sub_scalar(
+    float * floats_1,
+    const uint32_t floats_1_size,
+    const float subtraction);
+void platform_256_add(
+    float * floats_1,
+    const float * floats_2,
     const uint32_t f1_f2_size);
 void platform_256_mul(
     float * floats_1,
-    float * floats_2,
+    const float * floats_2,
+    const uint32_t f1_f2_size);
+void platform_256_div(
+    float * floats_1,
+    const float * floats_2,
     const uint32_t f1_f2_size);
 void platform_256_div_scalar_by_input(
     float * out_divisors,
