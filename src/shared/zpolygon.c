@@ -986,6 +986,34 @@ void normalize_zvertex(
     to_normalize->z /= magnitude;
 }
 
+static void dots_of_vertices(
+    const float * vertices_1_x,
+    const float * vertices_1_y,
+    const float * vertices_1_z,
+    const float * vertices_2_x,
+    const float * vertices_2_y,
+    const float * vertices_2_z,
+    const uint32_t vertices_size,
+    float * working_memory,
+    float * out_dots)
+{
+    for (uint32_t i = 0; i < vertices_size; i++) {
+        out_dots[i] = vertices_1_x[i];
+        working_memory[i] = vertices_1_y[i];
+    }
+    
+    platform_256_mul(out_dots, vertices_2_x, vertices_size);
+    platform_256_mul(working_memory, vertices_2_y, vertices_size);
+    platform_256_add(out_dots, working_memory, vertices_size);
+    
+    for (uint32_t i = 0; i < vertices_size; i++) {
+        working_memory[i] = vertices_1_z[i];
+    }
+    platform_256_mul(working_memory, vertices_2_z, vertices_size);
+    
+    platform_256_add(out_dots, working_memory, vertices_size);
+}
+
 float dot_of_vertices(
     const zVertex vertex_1,
     const zVertex vertex_2)
@@ -1027,32 +1055,19 @@ static void get_ztriangles_normals(
     float * out_normals_z,
     const uint32_t out_normals_size)
 {
-    uint32_t vertex_0 = 0;
-    uint32_t vertex_1 = 1;
-    uint32_t vertex_2 = 2;
-    
     zVertex vector1;
     zVertex vector2;
     
     for (uint32_t triangle_i = 0; triangle_i < out_normals_size; triangle_i++) {
-        if (triangle_i == 0) {
-            printf("getting normal for triangle 0 of %u\n", out_normals_size);
-            printf("inputs:\n");
-            printf("\tvertex 0: [%f, %f, %f]\n", vertices_x[0], vertices_y[0], vertices_z[0]);
-            printf("\tvertex 1: [%f, %f, %f]\n", vertices_x[1], vertices_y[1], vertices_z[1]);
-            printf("\tvertex 2: [%f, %f, %f]\n", vertices_x[2], vertices_y[2], vertices_z[2]);
-        }
-        log_assert(triangle_i < out_normals_size);
         uint32_t vertex_i = triangle_i * 3;
-        log_assert(vertex_i < vertices_size);
         
-        vector1.x = vertices_x[vertex_1] - vertices_x[vertex_0];
-        vector1.y = vertices_y[vertex_1] - vertices_y[vertex_0];
-        vector1.z = vertices_z[vertex_1] - vertices_z[vertex_0];
+        vector1.x = vertices_x[vertex_i + 1] - vertices_x[vertex_i + 0];
+        vector1.y = vertices_y[vertex_i + 1] - vertices_y[vertex_i + 0];
+        vector1.z = vertices_z[vertex_i + 1] - vertices_z[vertex_i + 0];
         
-        vector2.x = vertices_x[vertex_2] - vertices_x[vertex_0];
-        vector2.y = vertices_y[vertex_2] - vertices_y[vertex_0];
-        vector2.z = vertices_z[vertex_2] - vertices_z[vertex_0];
+        vector2.x = vertices_x[vertex_i + 2] - vertices_x[vertex_i + 0];
+        vector2.y = vertices_y[vertex_i + 2] - vertices_y[vertex_i + 0];
+        vector2.z = vertices_z[vertex_i + 2] - vertices_z[vertex_i + 0];
         
         out_normals_x[triangle_i] = (vector1.y * vector2.z) - (vector1.z * vector2.y);
         out_normals_y[triangle_i] = (vector1.z * vector2.x) - (vector1.x * vector2.z);
@@ -1134,39 +1149,17 @@ void get_visibility_ratings(
         input_vertices_size,
         observer.z);
     
-    const uint32_t normals_size = input_triangles_size;
-    // TODO: fix the vectorization of getting normals
     // get the normals of the imaginary triangles
-//    get_ztriangles_normals(
-//        observeds_adj_x,
-//        observeds_adj_y,
-//        observeds_adj_z,
-//        input_vertices_size,
-//        normals_x,
-//        normals_y,
-//        normals_z,
-//        normals_size);
-    for (
-        uint32_t triangle_i = 0;
-        triangle_i < normals_size;
-        triangle_i++)
-    {
-        zTriangle obs_tri;
-        obs_tri.vertices[0].x = observeds_adj_x[(triangle_i * 3)+0];
-        obs_tri.vertices[0].y = observeds_adj_y[(triangle_i * 3)+0];
-        obs_tri.vertices[0].z = observeds_adj_z[(triangle_i * 3)+0];
-        obs_tri.vertices[1].x = observeds_adj_x[(triangle_i * 3)+1];
-        obs_tri.vertices[1].y = observeds_adj_y[(triangle_i * 3)+1];
-        obs_tri.vertices[1].z = observeds_adj_z[(triangle_i * 3)+1];
-        obs_tri.vertices[2].x = observeds_adj_x[(triangle_i * 3)+2];
-        obs_tri.vertices[2].y = observeds_adj_y[(triangle_i * 3)+2];
-        obs_tri.vertices[2].z = observeds_adj_z[(triangle_i * 3)+2];
-        
-        zVertex normal = get_ztriangle_normal(&obs_tri);
-        normals_x[triangle_i] = normal.x;
-        normals_y[triangle_i] = normal.y;
-        normals_z[triangle_i] = normal.z;
-    }
+    const uint32_t normals_size = input_triangles_size;
+    get_ztriangles_normals(
+        observeds_adj_x,
+        observeds_adj_y,
+        observeds_adj_z,
+        input_vertices_size,
+        normals_x,
+        normals_y,
+        normals_z,
+        normals_size);
     
     log_assert(input_triangles_size < NORMALS_CAP);
     normalize_zvertices_inplace(
@@ -1177,33 +1170,38 @@ void get_visibility_ratings(
         normals_size);
     
     // normalize the adjusted observed triangles
-    // we actually only need vertex 0 from each triangle, so this is
-    // doing 3x the work for no reason
+    // we actually only need vertex 0 from each triangle, and
+    // we'll be using them again, so let's copy first
+    // REMINDER: this changes the observeds_adj_xyz arrays to
+    // be effectively 3x smaller!
+    for (uint32_t triangle_i = 1; triangle_i < input_triangles_size; triangle_i++) {
+        observeds_adj_x[triangle_i] =
+            observeds_adj_x[triangle_i * 3];
+        observeds_adj_y[triangle_i] =
+            observeds_adj_y[triangle_i * 3];
+        observeds_adj_z[triangle_i] =
+            observeds_adj_z[triangle_i * 3];
+    }
     normalize_zvertices_inplace(
         observeds_adj_x,
         observeds_adj_y,
         observeds_adj_z,
         magnitudes_working_memory,
-        input_vertices_size);
+        input_triangles_size);
     
-    // finally, get the dot product of each normal and the 'triangle minus observer''s
-    // 0th vertex
-    for (uint32_t triangle_i = 0; triangle_i < input_triangles_size; triangle_i++) {
-        zVertex normal;
-        normal.x = normals_x[triangle_i];
-        normal.y = normals_y[triangle_i];
-        normal.z = normals_z[triangle_i];
-        
-        uint32_t vertex_0_i = (triangle_i * 3);
-        zVertex triangle_minus_observer;
-        triangle_minus_observer.x = observeds_adj_x[vertex_0_i];
-        triangle_minus_observer.y = observeds_adj_y[vertex_0_i];
-        triangle_minus_observer.z = observeds_adj_z[vertex_0_i];
-        
-        out_visibility_ratings[triangle_i] = dot_of_vertices(
-            normal,
-            triangle_minus_observer);
-    }    
+    // finally, get the dot product of each triangle's normal
+    // and the 'normalized triangle minus observer' (so a vector
+    // pointing from the light or observer to the triangle's 0th vertex)
+    dots_of_vertices(
+        observeds_adj_x,
+        observeds_adj_y,
+        observeds_adj_z,
+        normals_x,
+        normals_y,
+        normals_z,
+        input_triangles_size,
+        magnitudes_working_memory,
+        out_visibility_ratings);
 }
 
 float get_visibility_rating(

@@ -153,13 +153,13 @@ void software_render(
             /* zTriangle * inputs: */
                 visible_triangles,
             /* const uint32_t inputs_size: */
-              visible_triangles_size,
+                visible_triangles_size,
             /* Vertex * recipients: */
-              rendered_vertices,
+                rendered_vertices,
             /* const uint32_t recipients_size: */
-              rendered_vertices_size,
+                rendered_vertices_size,
             /* zLightSource * zlight_source: */
-              &zlights_to_apply[light_i]);
+                &zlights_to_apply[light_i]);
     }
     
     for (uint32_t i = 0; i < visible_triangles_size; i++) {

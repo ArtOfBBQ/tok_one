@@ -15,7 +15,7 @@ void platform_256_sqrt(
     float * floats,
     const uint32_t floats_size)
 {
-    #ifdef __AVX__BLABLBALBA
+    #ifdef __AVX__
     __m256 v1;
         
     for (uint32_t i = 0; i < floats_size; i += 8) {
@@ -36,7 +36,7 @@ void platform_256_sub(
     const float * floats_2,
     const uint32_t f1_f2_size)
 {
-    #ifdef __AVX__BLABLBALBA
+    #ifdef __AVX__
     __m256 v1;
     __m256 v2;
     
@@ -59,7 +59,7 @@ void platform_256_sub_scalar(
     const uint32_t floats_1_size,
     const float subtraction)
 {
-    #ifdef __AVX__BLABLBALBA
+    #ifdef __AVX__
     __m256 v1;
     __m256 v2 = _mm256_set_ps(
         subtraction, subtraction, subtraction, subtraction,
@@ -83,7 +83,7 @@ void platform_256_add(
     const float * floats_2,
     const uint32_t f1_f2_size)
 {
-    #ifdef __AVX__BLABLBALBA
+    #ifdef __AVX__
     __m256 v1;
     __m256 v2;
     
@@ -105,7 +105,7 @@ void platform_256_mul(
     const float * floats_2,
     const uint32_t f1_f2_size)
 {
-    #ifdef __AVX__BLABLBALBA
+    #ifdef __AVX__
     __m256 v1;
     __m256 v2;
     
@@ -127,7 +127,7 @@ void platform_256_div(
     const float * floats_2,
     const uint32_t f1_f2_size)
 {
-    #ifdef __AVX__BLABLBALBA
+    #ifdef __AVX__
     __m256 v1;
     __m256 v2;
     
@@ -149,7 +149,7 @@ void platform_256_div_scalar_by_input(
     const uint32_t out_divisors_size,
     const float numerator)
 {
-    #ifdef __AVX__BLABLBALBA
+    #ifdef __AVX__
     __m256 v1 = _mm256_set_ps(numerator, numerator, numerator, numerator, numerator, numerator, numerator, numerator);
     __m256 v2;
     
@@ -171,7 +171,7 @@ void platform_256_div_scalar(
     const uint32_t out_numerators_size,
     const float divisor)
 {
-    #ifdef __AVX__BLABLBALBA
+    #ifdef __AVX__
     __m256 v1;
     __m256 v2 = _mm256_set_ps(divisor, divisor, divisor, divisor, divisor, divisor, divisor, divisor);
     
