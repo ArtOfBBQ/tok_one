@@ -60,13 +60,15 @@ typedef struct zPolygon {
 // in your application
 // index 0 to zpolygons_to_render_size will be rendered,
 // the rest of the array will be ignored
-#define ZPOLYGONS_TO_RENDER_ARRAYSIZE 2
+#define ZPOLYGONS_TO_RENDER_ARRAYSIZE 50
 extern zPolygon zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
 extern uint32_t zpolygons_to_render_size;
 
 void ztriangles_apply_lighting(
-    zTriangle * inputs,
-    const uint32_t inputs_size,
+    float * vertices_x,
+    float * vertices_y,
+    float * vertices_z,
+    const uint32_t vertices_size,
     Vertex * recipients,
     const uint32_t recipients_size,
     zLightSource * zlight_source);
@@ -77,13 +79,15 @@ ztriangle_apply_lighting(
     zTriangle * input,
     zLightSource * zlight_source);
 
-void ztriangle_to_3d(
-    Vertex recipient[3],
-    zTriangle * input);
+//void ztriangle_to_3d(
+//    Vertex recipient[3],
+//    zTriangle * input);
 
-void ztriangle_to_2d(
-    Vertex recipient[3],
-    zTriangle * input);
+void ztriangles_to_2d_inplace(
+    float * vertices_x,
+    float * vertices_y,
+    float * vertices_z,
+    const uint32_t vertices_size);
 
 zTriangle __attribute__((no_instrument_function))
 x_rotate_ztriangle(
@@ -144,8 +148,10 @@ float distance_to_ztriangle(
 
 void get_visibility_ratings(
     const zVertex observer,
-    const zTriangle * observeds,
-    const uint32_t observeds_size,
+    const float * vertices_x,
+    const float * vertices_y,
+    const float * vertices_z,
+    const uint32_t vertices_size,
     float * out_visibility_ratings);
 float get_visibility_rating(
     const zVertex observer,

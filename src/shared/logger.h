@@ -1,7 +1,7 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-//#define LOGGER_SILENCE
+#define LOGGER_SILENCE
 #ifndef LOGGER_SILENCE
 #include "stdio.h"
 #endif

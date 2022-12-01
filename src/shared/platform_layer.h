@@ -73,10 +73,18 @@ void platform_256_add(
     float * floats_1,
     const float * floats_2,
     const uint32_t f1_f2_size);
+void platform_256_add_scalar(
+    float * floats_1,
+    const uint32_t floats_1_size,
+    const float increment);
 void platform_256_mul(
     float * floats_1,
     const float * floats_2,
     const uint32_t f1_f2_size);
+void platform_256_mul_scalar(
+    float * floats_1,
+    const uint32_t floats_1_size,
+    const float multiplier);
 void platform_256_div(
     float * floats_1,
     const float * floats_2,

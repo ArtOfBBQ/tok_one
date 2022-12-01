@@ -336,13 +336,15 @@ string_to_uint32_validate(
     const char * input,
     bool32_t * good)
 {
-    if (input[0] == '\0') {
+    if (input[0] == '\0' || input[0] < '0' || input[0] > '9') {
         #ifndef COMMON_SILENCE
         printf(
             "ERR: string_to_uint32 but input[0] is nullterminator\n");
         #endif
         *good = false;
         return 0;
+    } else {
+        *good = true;
     }
     
     uint32_t return_value = 0;
@@ -360,7 +362,6 @@ string_to_uint32_validate(
     while (i >= 0)
     {
         if (input[i] < '0' || input[i] > '9') {
-            *good = false;
             return return_value;
         }
         
@@ -379,21 +380,7 @@ string_to_uint32_validate(
         
         i--;
     }
-    
-    *good = true;
-    
-    return return_value;
-}
-
-static float powf(float input, uint32_t power) {
-    if (power == 0) { return 1.0f; }
-    
-    float return_value = input;
-    
-    for (uint32_t _ = 0; _ < (power - 1); _++) {
-        return_value *= return_value;
-    }
-    
+        
     return return_value;
 }
 

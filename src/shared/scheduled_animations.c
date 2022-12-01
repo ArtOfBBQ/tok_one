@@ -62,7 +62,7 @@ void request_scheduled_animation(
     if (to_add->clientlogic_callback_when_finished_id < 0) {
         log_assert(to_add->affected_object_id >= 0);
         
-        bool found_target = false;
+        bool32_t found_target = false;
         for (uint32_t i = 0; i < texquads_to_render_size; i++) {
             if (!texquads_to_render[i].deleted && texquads_to_render[i].object_id == to_add->affected_object_id) {
                 found_target = true;
@@ -160,7 +160,7 @@ static void resolve_single_animation_effects(
     
     if (anim->deleted) { return; }
     
-    bool found_at_least_one = false;
+    bool32_t found_at_least_one = false;
     
     // apply effects
     for (
@@ -439,7 +439,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
         uint64_t actual_elapsed_this_run = actual_elapsed;
         uint64_t remaining_microseconds_at_start_of_run =
             anim->remaining_microseconds;
-        bool delete_after_this_run = false;
+        bool32_t delete_after_this_run = false;
         
         if (anim->remaining_microseconds > actual_elapsed) {
             anim->remaining_microseconds -= actual_elapsed;

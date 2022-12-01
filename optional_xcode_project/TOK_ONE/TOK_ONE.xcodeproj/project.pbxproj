@@ -127,6 +127,8 @@
 		60A99929287BDFF3003F7159 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60A99928287BDFF3003F7159 /* UIKit.framework */; };
 		60A9992F287C12BA003F7159 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60A9992E287C12BA003F7159 /* MetalKit.framework */; };
 		60A99931287C12C1003F7159 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60A99930287C12C1003F7159 /* Metal.framework */; };
+		EC1412B12938597400DA0D21 /* cardwithuvcoords.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */; };
+		EC1412B22938597400DA0D21 /* cardwithuvcoords.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */; };
 		EC6441A429318B6D00A0267B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = EC64419F29318B6D00A0267B /* main.m */; };
 		EC6441A529318B6D00A0267B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A029318B6D00A0267B /* AppDelegate.m */; };
 		EC6441A629318B6D00A0267B /* ios_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A129318B6D00A0267B /* ios_platform_layer.c */; };
@@ -205,6 +207,7 @@
 		60A99928287BDFF3003F7159 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS15.2.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		60A9992E287C12BA003F7159 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS15.2.sdk/System/Library/Frameworks/MetalKit.framework; sourceTree = DEVELOPER_DIR; };
 		60A99930287C12C1003F7159 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS15.2.sdk/System/Library/Frameworks/Metal.framework; sourceTree = DEVELOPER_DIR; };
+		EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */ = {isa = PBXFileReference; explicitFileType = compiled; fileEncoding = 4; name = cardwithuvcoords.obj; path = ../../resources/cardwithuvcoords.obj; sourceTree = "<group>"; };
 		EC64419E29318B6D00A0267B /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = ../../src/ios/AppDelegate.h; sourceTree = "<group>"; };
 		EC64419F29318B6D00A0267B /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../src/ios/main.m; sourceTree = "<group>"; };
 		EC6441A029318B6D00A0267B /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = ../../src/ios/AppDelegate.m; sourceTree = "<group>"; };
@@ -301,6 +304,7 @@
 			children = (
 				6009FB632876A47100FC5A60 /* fontmetrics.dat */,
 				601128AC28625BAF00F92967 /* font.png */,
+				EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */,
 				6080CC45286FFD1D00444118 /* phoebus.png */,
 				601128A928625BAE00F92967 /* structuredart1.png */,
 				601128AA28625BAE00F92967 /* structuredart2.png */,
@@ -467,6 +471,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EC1412B12938597400DA0D21 /* cardwithuvcoords.obj in Resources */,
 				6009FB642876A47100FC5A60 /* fontmetrics.dat in Resources */,
 				6080CC46286FFD1E00444118 /* phoebus.png in Resources */,
 				601128AD28625BAF00F92967 /* structuredart1.png in Resources */,
@@ -480,6 +485,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EC1412B22938597400DA0D21 /* cardwithuvcoords.obj in Resources */,
 				60A99921287BDF31003F7159 /* fontmetrics.dat in Resources */,
 				60A99924287BDF31003F7159 /* phoebus.png in Resources */,
 				60A9991F287BDF31003F7159 /* font.png in Resources */,
@@ -719,6 +725,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CLANG_X86_VECTOR_INSTRUCTIONS = avx;
 				CODE_SIGN_ENTITLEMENTS = TOKONE_macos/TOKONE_macos.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
@@ -758,7 +765,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = "-march=native";
+				OTHER_CFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.TOK.engine;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -801,6 +808,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CLANG_X86_VECTOR_INSTRUCTIONS = avx;
 				CODE_SIGN_ENTITLEMENTS = TOKONE_macos/TOKONE_macos.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
@@ -833,7 +841,7 @@
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				OTHER_CFLAGS = "-march=native";
+				OTHER_CFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.TOK.engine;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
@@ -876,6 +884,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CLANG_X86_VECTOR_INSTRUCTIONS = default;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
@@ -913,6 +922,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "march=native";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.TOK.TOKONE-iphone";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -956,6 +966,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CLANG_X86_VECTOR_INSTRUCTIONS = default;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
@@ -986,6 +997,7 @@
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_CFLAGS = "march=native";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.TOK.TOKONE-iphone";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;

@@ -40,8 +40,7 @@ void platform_256_sub(
     __m256 v1;
     __m256 v2;
     
-    
-    for (uint32_t i = 0; i < f1_f2_size; i++) {
+    for (uint32_t i = 0; i < f1_f2_size; i += 8) {
         v1 = _mm256_load_ps((floats_1 + i)); 
         v2 = _mm256_load_ps((floats_2 + i));
         v1 = _mm256_sub_ps(v1, v2);
@@ -100,6 +99,30 @@ void platform_256_add(
     #endif
 }
 
+void platform_256_add_scalar(
+    float * floats_1,
+    const uint32_t floats_1_size,
+    const float increment)
+{
+    #ifdef __AVX__
+    __m256 v1;
+    __m256 v2 = _mm256_set_ps(
+        increment, increment, increment, increment,
+        increment, increment, increment, increment);
+    
+    for (uint32_t i = 0; i < floats_1_size; i += 8) {
+        v1 = _mm256_load_ps((floats_1 + i)); 
+        v1 = _mm256_add_ps(v1, v2);
+        _mm256_store_ps(floats_1 + i, v1);
+    }
+    
+    #else
+    for (uint32_t i = 0; i < floats_1_size; i++) {
+        floats_1[i] += increment;
+    }
+    #endif
+}
+
 void platform_256_mul(
     float * floats_1,
     const float * floats_2,
@@ -118,6 +141,30 @@ void platform_256_mul(
     #else
     for (uint32_t i = 0; i < f1_f2_size; i++) {
         floats_1[i] = floats_1[i] * floats_2[i];
+    }
+    #endif
+}
+
+void platform_256_mul_scalar(
+    float * floats_1,
+    const uint32_t floats_1_size,
+    const float multiplier)
+{
+    #ifdef __AVX__
+    __m256 v1;
+    __m256 v2 = _mm256_set_ps(
+        multiplier, multiplier, multiplier, multiplier,
+        multiplier, multiplier, multiplier, multiplier);
+    
+    for (uint32_t i = 0; i < floats_1_size; i += 8) {
+        v1 = _mm256_load_ps((floats_1 + i)); 
+        v1 = _mm256_mul_ps(v1, v2);
+        _mm256_store_ps(floats_1 + i, v1);
+    }
+    
+    #else
+    for (uint32_t i = 0; i < floats_1_size; i++) {
+        floats_1[i] *= multiplier;
     }
     #endif
 }

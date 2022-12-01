@@ -10,10 +10,10 @@ application.
 extern "C" {
 #endif
 
-#include "../../../src/animationtracker.h"
-#include "../../../src/frontendtouch.h"
-#include "../../../src/frontendcommand.h"
-#include "../../../src/mainmenu.h"
+// #include "../../../src/animationtracker.h"
+// #include "../../../src/frontendtouch.h"
+// #include "../../../src/frontendcommand.h"
+// #include "../../../src/mainmenu.h"
 
 #include "tok_random.h"
 #include "texquad_type.h"

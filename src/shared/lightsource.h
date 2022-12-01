@@ -24,11 +24,56 @@ typedef struct zVertex {
 zVertex x_rotate_zvertex(
     const zVertex * input,
     const float angle);
+void x_rotate_zvertices_inplace(
+    float * vec_to_rotate_y,
+    float * vec_to_rotate_z,
+    float * working_memory_1,
+    float * working_memory_2,
+    const uint32_t vec_to_rotate_size,
+    const float * cos_angles,
+    const float * sin_angles);
+void x_rotate_zvertices_inplace_scalar_angle(
+    float * vec_to_rotate_y,
+    float * vec_to_rotate_z,
+    float * working_memory_1,
+    float * working_memory_2,
+    const uint32_t vec_to_rotate_size,
+    const float angle);
 zVertex y_rotate_zvertex(
     const zVertex * input,
     const float angle);
+void y_rotate_zvertices_inplace(
+    float * vec_to_rotate_x,
+    float * vec_to_rotate_z,
+    float * working_memory_1,
+    float * working_memory_2,
+    const uint32_t vec_to_rotate_size,
+    const float * cos_angles,
+    const float * sin_angles);
+void y_rotate_zvertices_inplace_scalar_angle(
+    float * vec_to_rotate_x,
+    float * vec_to_rotate_z,
+    float * working_memory_1,
+    float * working_memory_2,
+    const uint32_t vec_to_rotate_size,
+    const float angle);
 zVertex z_rotate_zvertex(
     const zVertex * input,
+    const float angle);
+void z_rotate_zvertices_inplace(
+    float * vec_to_rotate_x,
+    float * vec_to_rotate_y,
+    float * working_memory_1,
+    float * working_memory_2,
+    const uint32_t vec_to_rotate_size,
+    const float * cos_angles,
+    const float * sin_angles);
+void z_rotate_zvertices_inplace_scalar_angle(
+    float * vec_to_rotate_x,
+    float * vec_to_rotate_y,
+    float * working_memory_1,
+    float * working_memory_2,
+    const uint32_t vec_to_rotate_size,
     const float angle);
 
 typedef struct zCamera {

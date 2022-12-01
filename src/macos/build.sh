@@ -1,9 +1,8 @@
 APP_NAME="hello3dgfx"
 PLATFORM="macos"
-# COMPILER_ARGS="-fsanitize=address -finstrument-functions -Wall -x objective-c++ -std="c++17" -g -o0 -objC"
-# COMPILER_ARGS="-fsanitize=address -Wall -x objective-c++ -std="c++17" -g -o0 -objC"
-# COMPILER_ARGS="-march=native -Wall -x objective-c -std="c99" -g -o2 -objC"
-COMPILER_ARGS="-march=native -Wall -x objective-c -std="c99" -o2 -objC"
+# COMPILER_ARGS="-fsanitize=address -finstrument-functions -march=native -Wall -x objective-c -std="c99" -g -o0 -objC"
+# COMPILER_ARGS="-march=native -Wall -x objective-c -std="c99" -g -o0 -objC"
+COMPILER_ARGS="-march=native -Wall -x objective-c -std="c99" -o0 -objC"
 
 MAC_FRAMEWORKS="
     -framework AppKit 

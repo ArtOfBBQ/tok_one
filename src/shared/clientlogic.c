@@ -62,15 +62,15 @@ void client_logic_startup() {
     
     zlights_to_apply[0].deleted = false;
     zlights_to_apply[0].object_id = -1;
-    zlights_to_apply[0].x = 0.0f;
+    zlights_to_apply[0].x = 2.0f;
     zlights_to_apply[0].y = 0.3f;
     zlights_to_apply[0].z = 0.9f;
-    zlights_to_apply[0].RGBA[0] = 1.0f;
-    zlights_to_apply[0].RGBA[1] = 0.2f;
-    zlights_to_apply[0].RGBA[2] = 0.2f;
+    zlights_to_apply[0].RGBA[0] = 0.5f;
+    zlights_to_apply[0].RGBA[1] = 0.5f;
+    zlights_to_apply[0].RGBA[2] = 1.0f;
     zlights_to_apply[0].RGBA[3] = 1.0f;
-    zlights_to_apply[0].reach = 50;
-    zlights_to_apply[0].ambient = 0.001f;
+    zlights_to_apply[0].reach = 1;
+    zlights_to_apply[0].ambient = 0.5f;
     zlights_to_apply[0].diffuse = 1.0f;
     zlights_to_apply_size++;
     log_assert(zlights_to_apply_size == 1);
@@ -96,14 +96,41 @@ void client_logic_startup() {
     zPolygon teapot = load_from_obj_file("teapot.obj");
     scale_zpolygon(
         /* to_scale: */ &teapot,
-        /* new_height: */ 0.05f);
+        /* new_height: */ 0.8f);
     
     teapot.object_id = 12345;
     teapot.x = 0.0f;
     teapot.y = 0.0f;
-    teapot.z = 0.6f;
+    teapot.z = 2.9f;
+    teapot.x_angle = 0.0f;
+    teapot.y_angle = 0.0f;
+    teapot.z_angle = 0.0f;
+    for (uint32_t i = 0; i < teapot.triangles_size; i++) {
+        teapot.triangles[i].color[0] = 1.0f;
+        teapot.triangles[i].color[1] = 0.6f;
+        teapot.triangles[i].color[2] = 0.6f;
+        teapot.triangles[i].color[3] = 1.0f;
+        // teapot.triangles[i].texturearray_i = -1;
+        // teapot.triangles[i].texture_i = 0;
+    }
     zpolygons_to_render[zpolygons_to_render_size++] = teapot;
     assert(zpolygons_to_render_size == 1);
+    
+    zPolygon card = load_from_obj_file("cardwithuvcoords.obj");
+    scale_zpolygon(
+        /* to_scale: */ &card,
+        /* new_height: */ 0.005f);
+    card.x = 0.5f;
+    card.y = 0.0f;
+    card.z = 1.9f;
+    card.x_angle = 1.8f;
+    card.y_angle = 0.0f;
+    card.z_angle = 0.0f;
+    for (uint32_t i = 0; i < card.triangles_size; i++) {
+        card.triangles[i].texturearray_i = 1;
+        card.triangles[i].texture_i = 0;
+    }
+    zpolygons_to_render[zpolygons_to_render_size++] = card;
     
     log_append("finished client_logic_startup()\n");
 }
@@ -169,9 +196,9 @@ static void request_fading_lightsquare(
     zlights_to_apply[new_zlight_i].deleted = false;
     zlights_to_apply[new_zlight_i].object_id =
         touch_highlight.object_id;
-    zlights_to_apply[new_zlight_i].x = location_x;
-    zlights_to_apply[new_zlight_i].y = location_y;
-    zlights_to_apply[new_zlight_i].z = 1.0f;
+    zlights_to_apply[new_zlight_i].x = location_x / window_width;
+    zlights_to_apply[new_zlight_i].y = location_y / window_height;
+    zlights_to_apply[new_zlight_i].z = 0.55f;
     
     if (cur_color_i == 0) {
         zlights_to_apply[new_zlight_i].RGBA[0] = 1.0f;
@@ -280,7 +307,9 @@ void client_logic_update(uint64_t microseconds_elapsed)
     client_handle_touches_and_leftclicks(microseconds_elapsed);
     client_handle_keypresses(microseconds_elapsed); 
     
-    zpolygons_to_render[0].z_angle += 0.01f;
+    zpolygons_to_render[0].x_angle += 0.03f;
+    zpolygons_to_render[0].y_angle += 0.01f;
+    zpolygons_to_render[0].z_angle += 0.004f;
 }
 
 void client_logic_window_resize(

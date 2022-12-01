@@ -29,7 +29,6 @@ static float * normals_z;
 #define MAGNITUDES_CAP 1000000
 static float * magnitudes_working_memory;
 static float * magnitudes;
-static uint32_t magnitudes_size = 0;
 
 void init_projection_constants() {
     
@@ -491,8 +490,10 @@ void scale_zpolygon(
 }
 
 void ztriangles_apply_lighting(
-    zTriangle * inputs,
-    const uint32_t inputs_size,
+    float * vertices_x,
+    float * vertices_y,
+    float * vertices_z,
+    const uint32_t vertices_size,
     Vertex * recipients,
     const uint32_t recipients_size,
     zLightSource * zlight_source)
@@ -505,26 +506,23 @@ void ztriangles_apply_lighting(
         light_source_pos.y = zlight_source->y;
         light_source_pos.z = zlight_source->z;
     
-    distances_to_vertices_size = (inputs_size * 3);
+    distances_to_vertices_size = (vertices_size * 3);
     assert(distances_to_vertices_size < DISTANCES_TO_VERTICES_CAP);
-    
+
+    // get distance from triangle vertices to light_source    
     for (
-        uint32_t triangle_i = 0;
-        triangle_i < inputs_size;
-        triangle_i++)
+        uint32_t i = 0;
+        i < vertices_size;
+        i++)
     {
-        // get distance from triangle vertices to light_source
-        for (uint32_t m = 0; m < 3; m++) {
-            distances_to_vertices[(triangle_i * 3) + m] =
-                ((light_source_pos.x - inputs[triangle_i].vertices[m].x) *
-                    (light_source_pos.x - inputs[triangle_i].vertices[m].x)) + 
-                ((light_source_pos.y - inputs[triangle_i].vertices[m].y) *
-                    (light_source_pos.y - inputs[triangle_i].vertices[m].y)) + 
-                ((light_source_pos.z - inputs[triangle_i].vertices[m].z) *
-                    (light_source_pos.z - inputs[triangle_i].vertices[m].z));
-        }
+        distances_to_vertices[i] =
+            ((light_source_pos.x - vertices_x[i]) *
+             (light_source_pos.x - vertices_x[i])) +
+            ((light_source_pos.y - vertices_y[i]) *
+             (light_source_pos.y - vertices_y[i])) +
+            ((light_source_pos.z - vertices_z[i]) *
+             (light_source_pos.z - vertices_z[i])); 
     }
-    
     platform_256_sqrt(distances_to_vertices, distances_to_vertices_size);
     
     // convert distances_to_triangles to store distance modifiers instead
@@ -534,13 +532,15 @@ void ztriangles_apply_lighting(
         /* numerator: */ zlight_source->reach);
     
     // this is seperated to set the stage for converting to simd
-    diffused_dots_size = inputs_size;
+    diffused_dots_size = vertices_size / 3;
     log_assert(diffused_dots_size < DIFFUSED_DOTS_CAP);
     
     get_visibility_ratings(
         /* const zVertex observer         : */ light_source_pos,
-        /* const zTriangle observeds      : */ inputs,
-        /* const uint32_t observeds_size  : */ inputs_size,
+        /* triangle vertices x            : */ vertices_x,
+        /* triangle vertices y            : */ vertices_y,
+        /* triangle vertices z            : */ vertices_z,
+        /* const uint32_t observeds_size  : */ vertices_size,
         /* float * out_visibility_ratings : */ diffused_dots);
     
     for (uint32_t col_i = 0; col_i < 3; col_i++) {
@@ -548,7 +548,7 @@ void ztriangles_apply_lighting(
         float ambient_mod = zlight_source->RGBA[col_i] * zlight_source->ambient;
         float diffuse_mod = zlight_source->RGBA[col_i] * zlight_source->diffuse;
         
-        for (uint32_t triangle_i = 0; triangle_i < inputs_size; triangle_i++) {
+        for (uint32_t triangle_i = 0; triangle_i < diffused_dots_size; triangle_i++) {
             for (
                 uint32_t m = 0;
                 m < 3;
@@ -634,71 +634,27 @@ ztriangle_apply_lighting(
     }
 }
 
-void ztriangle_to_3d(
-    Vertex recipient[3],
-    zTriangle * input)
+void ztriangles_to_2d_inplace(
+    float * vertices_x,
+    float * vertices_y,
+    float * vertices_z,
+    const uint32_t vertices_size)
 {
     ProjectionConstants * pjc = &projection_constants;
     
-    for (uint32_t i = 0; i < 3; i++) {
-        recipient[i].x =
-            (pjc->aspect_ratio
-            * pjc->field_of_view_modifier
-            * input->vertices[i].x); 
-        recipient[i].y = input->vertices[i].y;
-        recipient[i].z = 0.0f;
-        
-        recipient[i].uv[0] = input->vertices[i].uv[0];
-        recipient[i].uv[1] = input->vertices[i].uv[1];
-        
-        for (uint32_t j = 0; j < 3; j++) {
-            recipient[i].RGBA[j] = input->color[j];
-        }
-        
-        recipient[i].texturearray_i = input->texturearray_i;
-        recipient[i].texture_i = input->texture_i;
-    }
-}
-
-void ztriangle_to_2d(
-    Vertex recipient[3],
-    zTriangle * input)
-{
-    ProjectionConstants * pjc = &projection_constants;
+    float x_multiplier = pjc->aspect_ratio *
+        pjc->field_of_view_modifier;
+    float z_multiplier = (pjc->far / (pjc->far - pjc->near));
+    float z_addition = (1.0f * (-pjc->far * pjc->near) /
+        (pjc->far - pjc->near));
     
-    for (uint32_t i = 0; i < 3; i++) {
-        
-        recipient[i].x =
-            input->vertices[i].x *
-            pjc->aspect_ratio *
-            pjc->field_of_view_modifier; 
-        
-        // note to self: y transformation
-        // doesn't use aspect ratio
-        recipient[i].y =
-            input->vertices[i].y *
-            pjc->field_of_view_modifier;
-        
-        recipient[i].z =
-            input->vertices[i].z *
-                pjc->far / (pjc->far - pjc->near) +
-            1.0f * (-pjc->far * pjc->near) /
-                (pjc->far - pjc->near);
-        
-        recipient[i].w = input->vertices[i].z == 0.0f ?
-           0.0001f
-           : input->vertices[i].z;
-                
-        recipient[i].uv[0] = input->vertices[i].uv[0];
-        recipient[i].uv[1] = input->vertices[i].uv[1];
-        
-        for (uint32_t j = 0; j < 4; j++) {
-            recipient[i].RGBA[j] = input->color[j];
-        }
-        
-        recipient[i].texturearray_i = input->texturearray_i;
-        recipient[i].texture_i = input->texture_i;
-    }
+    platform_256_mul_scalar(vertices_x, vertices_size, x_multiplier);
+    
+    // note to self: y transformation doesn't use aspect ratio
+    platform_256_mul_scalar(vertices_y, vertices_size, pjc->field_of_view_modifier);
+    
+    platform_256_mul_scalar(vertices_z, vertices_size, z_multiplier);
+    platform_256_add_scalar(vertices_z, vertices_size, z_addition);    
 }
 
 zTriangle __attribute__((no_instrument_function))
@@ -963,18 +919,6 @@ static void normalize_zvertices_inplace(
             vertices_x[i] = 0.0f;
         }
     }
-    
-    // TODO: remove debug asserts
-    for (uint32_t i = 0; i < vertices_size; i++) {
-        // check for NaN
-        log_assert(!(vertices_x[i] != vertices_x[i]));
-    }
-    log_assert(vertices_x[0] == first_tri.x);
-    log_assert(vertices_y[0] == first_tri.y);
-    log_assert(vertices_z[0] == first_tri.z);
-    log_assert(vertices_x[1] == second_tri.x);
-    log_assert(vertices_y[1] == second_tri.y);
-    log_assert(vertices_z[1] == second_tri.z);
 }
 
 void normalize_zvertex(
@@ -1116,52 +1060,50 @@ zVertex get_ztriangle_normal(
 
 void get_visibility_ratings(
     const zVertex observer,
-    const zTriangle * input_triangles,
-    const uint32_t input_triangles_size,
+    const float * vertices_x,
+    const float * vertices_y,
+    const float * vertices_z,
+    const uint32_t vertices_size,
     float * out_visibility_ratings)
 {
-    log_assert(input_triangles_size < OBSERVEDS_ADJ_CAP / 3);
-    const uint32_t input_vertices_size = input_triangles_size * 3;
-    log_assert(input_vertices_size < OBSERVEDS_ADJ_CAP);
-    
-    for (uint32_t i = 0; i < input_triangles_size; i++) {
-        for (uint32_t m = 0; m < 3; m++) {
-            uint32_t vertex_i = (i * 3) + m;
-            
-            observeds_adj_x[vertex_i] = input_triangles[i].vertices[m].x;
-            observeds_adj_y[vertex_i] = input_triangles[i].vertices[m].y;
-            observeds_adj_z[vertex_i] = input_triangles[i].vertices[m].z;
-        }
-    }
+    log_assert(vertices_size % 3 == 0);
     
     // find the imaginary position of the observed triangles
     // if we move the entire world so that the observer is at {0,0,0}
+    
+    for (uint32_t i = 0; i < vertices_size; i++) {
+        observeds_adj_x[i] = vertices_x[i];
+        observeds_adj_y[i] = vertices_y[i];
+        observeds_adj_z[i] = vertices_z[i];
+    }
+    
     platform_256_sub_scalar(
         observeds_adj_x,
-        input_vertices_size,
+        vertices_size,
         observer.x);
     platform_256_sub_scalar(
         observeds_adj_y,
-        input_vertices_size,
+        vertices_size,
         observer.y);
     platform_256_sub_scalar(
         observeds_adj_z,
-        input_vertices_size,
+        vertices_size,
         observer.z);
     
     // get the normals of the imaginary triangles
-    const uint32_t normals_size = input_triangles_size;
+    const uint32_t normals_size = vertices_size / 3;
+    log_assert(normals_size + 7 < NORMALS_CAP);
+    
     get_ztriangles_normals(
         observeds_adj_x,
         observeds_adj_y,
         observeds_adj_z,
-        input_vertices_size,
+        vertices_size,
         normals_x,
         normals_y,
         normals_z,
         normals_size);
     
-    log_assert(input_triangles_size < NORMALS_CAP);
     normalize_zvertices_inplace(
         normals_x,
         normals_y,
@@ -1174,7 +1116,7 @@ void get_visibility_ratings(
     // we'll be using them again, so let's copy first
     // REMINDER: this changes the observeds_adj_xyz arrays to
     // be effectively 3x smaller!
-    for (uint32_t triangle_i = 1; triangle_i < input_triangles_size; triangle_i++) {
+    for (uint32_t triangle_i = 1; triangle_i < normals_size; triangle_i++) {
         observeds_adj_x[triangle_i] =
             observeds_adj_x[triangle_i * 3];
         observeds_adj_y[triangle_i] =
@@ -1187,7 +1129,7 @@ void get_visibility_ratings(
         observeds_adj_y,
         observeds_adj_z,
         magnitudes_working_memory,
-        input_triangles_size);
+        normals_size);
     
     // finally, get the dot product of each triangle's normal
     // and the 'normalized triangle minus observer' (so a vector
@@ -1199,7 +1141,7 @@ void get_visibility_ratings(
         normals_x,
         normals_y,
         normals_z,
-        input_triangles_size,
+        normals_size,
         magnitudes_working_memory,
         out_visibility_ratings);
 }

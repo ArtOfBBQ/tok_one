@@ -3,7 +3,10 @@
 char application_name[100];
 char crashed_top_of_screen_msg[256];
 
+#ifndef IGNORE_LOGGER
 static bool32_t logger_activated = false;
+#endif
+
 static char * log;
 static uint32_t log_i = 0;
 

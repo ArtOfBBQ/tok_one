@@ -127,24 +127,6 @@ static float get_y_offset(const char input) {
         (font_height * 0.75f);
 }
 
-static uint32_t find_next_linebreak(
-    const char * input,
-    const uint32_t after_i)
-{
-    if (input[after_i] == '\0') { return after_i + 1; }
-    
-    uint32_t i = after_i + 1;
-    
-    while (input[i] != '\0') {
-        if (input[i] == '\n') {
-            return i;
-        }
-        i++;
-    }
-    
-    return i;
-}
-
 static float get_next_word_width(const char * text) {
     float return_value = 0.0f;
     
@@ -376,7 +358,11 @@ void request_label_renderable(
 void request_fps_counter(uint64_t microseconds_elapsed) {
     
     // TODO: our timer is weirdly broken on iOS. Fix it!
-    char fps_string[8] = "fps: xx";
+    #ifdef __AVX__
+    char fps_string[12] = "AVX fps: xx";
+    #else
+    char fps_string[12] = "std fps: xx";
+    #endif
     int32_t label_object_id = 0;
     uint64_t fps = 1000000 / microseconds_elapsed;
     /*
@@ -384,11 +370,11 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
         (float)((double)microseconds_elapsed / (double)16666);
     */
     if (fps < 100) {
-        fps_string[5] = '0' + ((fps / 10) % 10);
-        fps_string[6] = '0' + (fps % 10);
+        fps_string[9] = '0' + ((fps / 10) % 10);
+        fps_string[10] = '0' + (fps % 10);
     } else {
-        fps_string[5] = '9' + ((fps / 10) % 10);
-        fps_string[6] = '9' + (fps % 10);
+        fps_string[9] = '9' + ((fps / 10) % 10);
+        fps_string[10] = '9' + (fps % 10);
     }
     delete_texquad_object(label_object_id);
     
