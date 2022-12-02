@@ -4,9 +4,14 @@
 #define MAX_FILES_IN_SINGLE_TEXARRAY 200
 #define MAX_ASSET_FILES 1500
 
+#define HAS_ALPHA_NO 0
+#define HAS_ALPHA_YES 1
+#define HAS_ALPHA_UNCHECKED 2
+
 typedef struct TextureArrayImage {
     DecodedImage * image;
     char * filename;
+    bool32_t has_alpha_channel;
     bool32_t request_update;
     bool32_t prioritize_asset_load;
 } TextureArrayImage;
@@ -312,6 +317,8 @@ static void register_to_texturearray_from_images(
         log_assert(new_images[i]->rgba_values_size > 0);
         log_assert(new_images[i]->width == current_width);
         log_assert(new_images[i]->height == current_height);
+        texture_arrays[target_texture_array_i].images[i].has_alpha_channel =
+            HAS_ALPHA_UNCHECKED;
         texture_arrays[target_texture_array_i].images[i].image = new_images[i];
         texture_arrays[target_texture_array_i].images[i].request_update = true;
     }
@@ -382,6 +389,8 @@ void init_texture_arrays(void) {
             texture_arrays[i].images[j].request_update = false;
             texture_arrays[i].images[j].prioritize_asset_load = false;
             texture_arrays[i].images[j].filename = NULL;
+            texture_arrays[i].images[j].has_alpha_channel =
+                HAS_ALPHA_UNCHECKED;
             texture_arrays[i].images[j].image = NULL;
         }
     }
@@ -872,3 +881,31 @@ void flag_all_texture_arrays_to_request_gpu_init(void) {
         texture_arrays[i].request_init = true;
     }
 }
+
+bool32_t texture_has_alpha_channel(
+    const int32_t texturearray_i,
+    const int32_t texture_i)
+{
+    if (texturearray_i < 0 || texture_i < 0) { return false; }
+    
+    if (texture_arrays[texturearray_i].images[texture_i].has_alpha_channel ==
+        HAS_ALPHA_UNCHECKED)
+    {
+        texture_arrays[texturearray_i].images[texture_i].has_alpha_channel =
+            HAS_ALPHA_NO;
+        for (
+            uint32_t i = 3;
+            i < texture_arrays[texturearray_i].images[texture_i].image->rgba_values_size;
+            i += 4)
+        {
+            if (texture_arrays[texturearray_i].images[texture_i].image->rgba_values[i] < 255)
+            {
+                texture_arrays[texturearray_i].images[texture_i].has_alpha_channel =
+                    HAS_ALPHA_YES;
+            }
+        }
+    }
+    
+    return texture_arrays[texturearray_i].images[texture_i].has_alpha_channel;
+}
+

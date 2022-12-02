@@ -449,8 +449,12 @@ static void add_quad_to_gpu_workload(
 
 void draw_texquads_to_render(
     Vertex * next_gpu_workload,
-    uint32_t * next_gpu_workload_size)
+    uint32_t * next_gpu_workload_size,
+    bool32_t must_opaque,
+    bool32_t must_have_alpha_channel)
 {
+    log_assert(!must_opaque || !must_have_alpha_channel);
+    
     if (
         next_gpu_workload == NULL
         || next_gpu_workload_size == NULL)
@@ -489,6 +493,16 @@ void draw_texquads_to_render(
                 (texquads_to_render[i].ignore_camera ? 0 : camera.y)
                     >= 0)
         {
+            bool32_t has_alpha_channel =
+                texture_has_alpha_channel(
+                    texquads_to_render[i].texturearray_i,
+                    texquads_to_render[i].texture_i);
+            
+            if (must_opaque && has_alpha_channel) { continue; }
+            if (must_have_alpha_channel && !has_alpha_channel) { continue; }
+            
+            // TODO: make 2 workloads, 1 to be sorted and drawn last
+            // and 1 to just draw immediately
             log_assert(i <= texquads_to_render_size);
             log_assert(i < TEXQUADS_TO_RENDER_ARRAYSIZE);
             add_quad_to_gpu_workload(

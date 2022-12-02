@@ -70,6 +70,10 @@ void decode_all_null_images_with_memory(
 
 void flag_all_texture_arrays_to_request_gpu_init(void);
 
+bool32_t texture_has_alpha_channel(
+    const int32_t texturearray_i,
+    const int32_t texture_i);
+
 #ifdef __cplusplus
 }
 #endif

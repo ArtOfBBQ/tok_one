@@ -9,9 +9,7 @@ draw_triangle(
     uint32_t * vertex_count_recipient,
     Vertex input[3])
 {
-    if (vertices_recipient == NULL) {
-        return;
-    }
+    log_assert(vertices_recipient != NULL);
     
     uint32_t vertex_i = *vertex_count_recipient;
     

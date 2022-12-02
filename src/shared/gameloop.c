@@ -91,12 +91,28 @@ void shared_gameloop_update(
                 elapsed);
     }
     
+    // draw opaque 2d bitmaps
     draw_texquads_to_render(
         /* next_gpu_workload: */
             vertices_for_gpu,
         /* next_gpu_workload_size: */
-            vertices_for_gpu_size);
+            vertices_for_gpu_size,
+        /* must_opaque: */
+            true,
+        /* must_have_alpha_channel: */
+            false);
     
+    // draw transparent 2d bitmaps    
+    // TODO: sort these before shipping
+    draw_texquads_to_render(
+        /* next_gpu_workload: */
+            vertices_for_gpu,
+        /* next_gpu_workload_size: */
+            vertices_for_gpu_size,
+        /* must_opaque: */
+            false,
+        /* must_have_alpha_channel: */
+            true);
     
 }
 

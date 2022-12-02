@@ -54,11 +54,27 @@ void client_logic_startup() {
     
     char * filenames[2] = {
         (char *)"structuredart1.png",
-        (char *)"structuredart2.png"
+        (char *)"structuredart2.png",
     };
     register_new_texturearray_from_files(
         (const char **)filenames,
         2);
+    
+    char * moar_filenames[1] = {
+        (char *)"roundedborder.png",
+    };
+    register_new_texturearray_from_files(
+        (const char **)moar_filenames,
+        1);
+
+    request_label_around(
+        /* object_id: */ 12321,
+        /* text: */ "I'm a label!",
+        /* mid_x_pixels: */ 225,
+        /* top_pixels: */ 100,
+        /* z: */ 0.9f,
+        175,
+        false);
     
     zlights_to_apply[0].deleted = false;
     zlights_to_apply[0].object_id = -1;
@@ -77,21 +93,35 @@ void client_logic_startup() {
     
     TexQuad foreground_blue;
     construct_texquad(&foreground_blue);
-    foreground_blue.object_id = -1;
-    foreground_blue.texturearray_i = -1;
-    foreground_blue.texture_i = -1;
-    foreground_blue.width_pixels = 800;
-    foreground_blue.height_pixels = 800;
-    foreground_blue.left_pixels = 200;
-    foreground_blue.top_pixels = window_height;
-    foreground_blue.z = 0.97f;
-    foreground_blue.RGBA[0] = 0.0f;
-    foreground_blue.RGBA[1] = 0.0f;
-    foreground_blue.RGBA[2] = 1.0f;
-    foreground_blue.RGBA[3] = 1.0f;
-    log_assert(texquads_to_render_size == 0);
+    foreground_blue.object_id          = -1;
+    foreground_blue.texturearray_i     = -1;
+    foreground_blue.texture_i          = -1;
+    foreground_blue.width_pixels       = 200;
+    foreground_blue.height_pixels      = 200;
+    foreground_blue.left_pixels        = 125;
+    foreground_blue.top_pixels         = 125;
+    foreground_blue.z                  = 0.97f;
+    foreground_blue.RGBA[0]            = 1.0f;
+    foreground_blue.RGBA[1]            = 1.0f;
+    foreground_blue.RGBA[2]            = 1.0f;
+    foreground_blue.RGBA[3]            = 1.0f;
     request_texquad_renderable(&foreground_blue);
-    log_assert(texquads_to_render_size == 1);
+    
+    TexQuad foreground_red;
+    construct_texquad(&foreground_red);
+    foreground_red.object_id          = -1;
+    foreground_red.texturearray_i     = 2;
+    foreground_red.texture_i          = 0;
+    foreground_red.width_pixels       = 120;
+    foreground_red.height_pixels      = 120;
+    foreground_red.left_pixels        = 150;
+    foreground_red.top_pixels         = 150;
+    foreground_red.z                  = 0.95f;
+    foreground_red.RGBA[0]            = 1.0f;
+    foreground_red.RGBA[1]            = 1.0f;
+    foreground_red.RGBA[2]            = 1.0f;
+    foreground_red.RGBA[3]            = 1.0f;
+    request_texquad_renderable(&foreground_red);
     
     zPolygon teapot = load_from_obj_file("teapot.obj");
     scale_zpolygon(
@@ -116,21 +146,6 @@ void client_logic_startup() {
     zpolygons_to_render[zpolygons_to_render_size++] = teapot;
     assert(zpolygons_to_render_size == 1);
     
-    zPolygon card = load_from_obj_file("cardwithuvcoords.obj");
-    scale_zpolygon(
-        /* to_scale: */ &card,
-        /* new_height: */ 0.005f);
-    card.x = 0.5f;
-    card.y = 0.0f;
-    card.z = 1.9f;
-    card.x_angle = 1.8f;
-    card.y_angle = 0.0f;
-    card.z_angle = 0.0f;
-    for (uint32_t i = 0; i < card.triangles_size; i++) {
-        card.triangles[i].texturearray_i = 1;
-        card.triangles[i].texture_i = 0;
-    }
-    zpolygons_to_render[zpolygons_to_render_size++] = card;
     
     log_append("finished client_logic_startup()\n");
 }
