@@ -66,7 +66,7 @@ void client_logic_startup() {
     register_new_texturearray_from_files(
         (const char **)moar_filenames,
         1);
-
+    
     request_label_around(
         /* object_id: */ 12321,
         /* text: */ "I'm a label!",
@@ -101,8 +101,8 @@ void client_logic_startup() {
     foreground_blue.left_pixels        = 125;
     foreground_blue.top_pixels         = 125;
     foreground_blue.z                  = 0.97f;
-    foreground_blue.RGBA[0]            = 1.0f;
-    foreground_blue.RGBA[1]            = 1.0f;
+    foreground_blue.RGBA[0]            = 0.0f;
+    foreground_blue.RGBA[1]            = 0.0f;
     foreground_blue.RGBA[2]            = 1.0f;
     foreground_blue.RGBA[3]            = 1.0f;
     request_texquad_renderable(&foreground_blue);
@@ -110,16 +110,16 @@ void client_logic_startup() {
     TexQuad foreground_red;
     construct_texquad(&foreground_red);
     foreground_red.object_id          = -1;
-    foreground_red.texturearray_i     = 2;
-    foreground_red.texture_i          = 0;
+    foreground_red.texturearray_i     = -1;
+    foreground_red.texture_i          = -1;
     foreground_red.width_pixels       = 120;
     foreground_red.height_pixels      = 120;
     foreground_red.left_pixels        = 150;
     foreground_red.top_pixels         = 150;
     foreground_red.z                  = 0.95f;
     foreground_red.RGBA[0]            = 1.0f;
-    foreground_red.RGBA[1]            = 1.0f;
-    foreground_red.RGBA[2]            = 1.0f;
+    foreground_red.RGBA[1]            = 0.0f;
+    foreground_red.RGBA[2]            = 0.0f;
     foreground_red.RGBA[3]            = 1.0f;
     request_texquad_renderable(&foreground_red);
     
@@ -140,12 +140,11 @@ void client_logic_startup() {
         teapot.triangles[i].color[1] = 0.6f;
         teapot.triangles[i].color[2] = 0.6f;
         teapot.triangles[i].color[3] = 1.0f;
-        // teapot.triangles[i].texturearray_i = -1;
-        // teapot.triangles[i].texture_i = 0;
+        teapot.triangles[i].texturearray_i = -1;
+        teapot.triangles[i].texture_i = -1;
     }
     zpolygons_to_render[zpolygons_to_render_size++] = teapot;
     assert(zpolygons_to_render_size == 1);
-    
     
     log_append("finished client_logic_startup()\n");
 }

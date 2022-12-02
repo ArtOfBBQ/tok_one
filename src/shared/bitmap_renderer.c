@@ -87,10 +87,14 @@ void request_texquad_renderable(TexQuad * to_add) {
     log_assert(to_add->deleted == 0);
     log_assert(to_add->width_pixels > 0);
     log_assert(to_add->height_pixels > 0);
+    if (to_add->texturearray_i < 0) { log_assert(to_add->texture_i < 0); }
+    if (to_add->texture_i < 0) { log_assert(to_add->texturearray_i < 0); }
     
-    register_high_priority_if_unloaded(
-        to_add->texturearray_i,
-        to_add->texture_i);
+    if (to_add->texturearray_i >= 0) {
+        register_high_priority_if_unloaded(
+           to_add->texturearray_i,
+           to_add->texture_i);
+    }
     
     for (
         uint32_t i = 0;

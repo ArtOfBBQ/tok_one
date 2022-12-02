@@ -246,7 +246,7 @@ void request_label_around(
             letter.object_id = with_id;
             letter.texturearray_i = font_texturearray_i;
             letter.texture_i = text_to_draw[j] - '!';
-            
+            if (letter.texture_i < 0) { continue; }
             for (
                 uint32_t rgba_i = 0;
                 rgba_i < 4;

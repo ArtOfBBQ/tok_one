@@ -371,7 +371,7 @@ void register_new_texturearray_from_files(
     register_new_texturearray_from_images(
         /* DecodedImage ** new_images : */
             decoded_images_dblptr,
-        /* new_images_size: */
+        /* new_images_size            : */
             decoded_images_size);
 }
 
@@ -582,6 +582,8 @@ void register_high_priority_if_unloaded(
     const int32_t texture_array_i,
     const int32_t texture_i)
 {
+    log_assert(texture_array_i >= 0 && texture_i >= 0);
+    
     if (
         texture_array_i >= 0
         && texture_i >= 0
@@ -886,23 +888,43 @@ bool32_t texture_has_alpha_channel(
     const int32_t texturearray_i,
     const int32_t texture_i)
 {
-    if (texturearray_i < 0 || texture_i < 0) { return false; }
+    if (texturearray_i < 0 || texture_i < 0) {
+        log_assert(texturearray_i < 0 && texture_i < 0);
+        printf(
+            "no alpha by default for texture: [%i, %i]\n",
+            texturearray_i,
+            texture_i);
+        return HAS_ALPHA_NO;
+    }
     
-    if (texture_arrays[texturearray_i].images[texture_i].has_alpha_channel ==
-        HAS_ALPHA_UNCHECKED)
+    if (
+        texture_arrays[texturearray_i].images[texture_i].has_alpha_channel ==
+            HAS_ALPHA_UNCHECKED)
     {
-        texture_arrays[texturearray_i].images[texture_i].has_alpha_channel =
-            HAS_ALPHA_NO;
+        printf(
+            "check alpha for unset texture: [%i, %i]\n",
+            texturearray_i,
+            texture_i);
+        texture_arrays[texturearray_i].
+            images[texture_i].
+            has_alpha_channel = HAS_ALPHA_NO;
+        
         for (
             uint32_t i = 3;
-            i < texture_arrays[texturearray_i].images[texture_i].image->rgba_values_size;
+            i < texture_arrays[texturearray_i].
+                images[texture_i].image->rgba_values_size;
             i += 4)
         {
-            if (texture_arrays[texturearray_i].images[texture_i].image->rgba_values[i] < 255)
+            if (texture_arrays[texturearray_i].
+                images[texture_i].
+                image->rgba_values[i] < 255)
             {
+                printf(" ..  YES, had alpha\n");
                 texture_arrays[texturearray_i].images[texture_i].has_alpha_channel =
                     HAS_ALPHA_YES;
+                break;
             }
+            printf(" .. NO, was fully opqaue\n");
         }
     }
     
