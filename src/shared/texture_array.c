@@ -890,21 +890,16 @@ bool32_t texture_has_alpha_channel(
 {
     if (texturearray_i < 0 || texture_i < 0) {
         log_assert(texturearray_i < 0 && texture_i < 0);
-        printf(
-            "no alpha by default for texture: [%i, %i]\n",
-            texturearray_i,
-            texture_i);
         return HAS_ALPHA_NO;
     }
+    
+    log_assert(texturearray_i < texture_arrays_size);
+    log_assert(texture_i < texture_arrays[texturearray_i].images_size);
     
     if (
         texture_arrays[texturearray_i].images[texture_i].has_alpha_channel ==
             HAS_ALPHA_UNCHECKED)
     {
-        printf(
-            "check alpha for unset texture: [%i, %i]\n",
-            texturearray_i,
-            texture_i);
         texture_arrays[texturearray_i].
             images[texture_i].
             has_alpha_channel = HAS_ALPHA_NO;
@@ -919,12 +914,10 @@ bool32_t texture_has_alpha_channel(
                 images[texture_i].
                 image->rgba_values[i] < 255)
             {
-                printf(" ..  YES, had alpha\n");
                 texture_arrays[texturearray_i].images[texture_i].has_alpha_channel =
                     HAS_ALPHA_YES;
                 break;
             }
-            printf(" .. NO, was fully opqaue\n");
         }
     }
     

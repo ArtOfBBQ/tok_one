@@ -15,6 +15,7 @@ so you can enjoy retro game programming from when gpu's didn't
 exist.
 */
 
+#include <stdlib.h> // TODO: remove this and use own sort
 #include <math.h>
 
 #include "window_size.h"

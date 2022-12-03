@@ -102,17 +102,18 @@ void shared_gameloop_update(
         /* must_have_alpha_channel: */
             false);
     
-    // draw transparent 2d bitmaps    
-    // TODO: sort these before shipping
-    // draw_texquads_to_render(
-    //     /* next_gpu_workload: */
-    //         vertices_for_gpu,
-    //     /* next_gpu_workload_size: */
-    //         vertices_for_gpu_size,
-    //     /* must_opaque: */
-    //         false,
-    //     /* must_have_alpha_channel: */
-    //         true);
+    Vertex vertices_to_sort[TEXQUADS_TO_RENDER_ARRAYSIZE];
+    uint32_t vertices_to_sort_size = 0;
     
+    // draw transparent 2d bitmaps    
+    draw_texquads_to_render(
+        /* next_gpu_workload: */
+            vertices_for_gpu,
+        /* next_gpu_workload_size: */
+            vertices_for_gpu_size,
+        /* must_opaque: */
+            false,
+        /* must_have_alpha_channel: */
+            true);
 }
 

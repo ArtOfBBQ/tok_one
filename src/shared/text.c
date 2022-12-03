@@ -133,7 +133,7 @@ static float get_next_word_width(const char * text) {
     uint32_t i = 0;
     
     while(text[i] == ' ') {
-        return_value += get_advance_width(text[i]);
+    return_value += get_advance_width(text[i]);
         i++;
     }
     
@@ -246,7 +246,10 @@ void request_label_around(
             letter.object_id = with_id;
             letter.texturearray_i = font_texturearray_i;
             letter.texture_i = text_to_draw[j] - '!';
-            if (letter.texture_i < 0) { continue; }
+            if (letter.texture_i < 0) {
+                cur_x_offset += get_advance_width(text_to_draw[j]);
+                continue;
+            }
             for (
                 uint32_t rgba_i = 0;
                 rgba_i < 4;

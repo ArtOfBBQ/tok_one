@@ -198,8 +198,7 @@ static void add_quad_to_gpu_workload(
             Vertex topleft[3];
             Vertex bottomright[3];
             
-            // wtf was I thinking here with z-value before?
-            float z_value = to_add->z; // 0.3f + (to_add->z * 0.0001f);
+            float z_value = to_add->z;
             float extra_scale_x = (to_add->scale_factor_x - 1.0f);
             float extra_scale_y = (to_add->scale_factor_y - 1.0f);
             if (extra_scale_x != extra_scale_x) { return; } // not a number NaN
@@ -451,6 +450,11 @@ static void add_quad_to_gpu_workload(
     }
 }
 
+// static int cmpr_vertices_lowest_z(const void * a, const void * b)
+// {
+//     return (*(Vertex *)b).z - (*(Vertex *)b).z;
+// }
+
 void draw_texquads_to_render(
     Vertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size,
@@ -513,6 +517,21 @@ void draw_texquads_to_render(
                 &texquads_to_render[i],
                 next_gpu_workload,
                 next_gpu_workload_size);
+            
+            // if (must_have_alpha_channel) {
+            //     // TODO: sort here
+            //     // start sorting from original_texquads_to_render_size
+            //     // until texquads_to_render_size - 1
+            //     qsort(
+            //         /* void *base: */
+            //             next_gpu_workload,
+            //         /* size_t nitems: */
+            //             texquads_to_render_size - original_texquads_to_render_size,
+            //         /* size_t size (in bytes of 1 element): */
+            //             sizeof(Vertex),
+            //         /* int (*compar)(const void *, const void*): */
+            //             cmpr_vertices_lowest_z);
+            // }
         }
     }
 }
@@ -551,3 +570,4 @@ void clean_deleted_texquads(void) {
         }
     }
 }
+
