@@ -85,7 +85,13 @@ fragment_shader(
             in.texture_i);
     float4 texture_sample = float4(colorSample);
     
-    // return the color of the texture
-    return texture_sample * in.color * in.lighting;
+    float4 out_color = texture_sample * in.color * in.lighting;
+    
+    // This is reportedly a terrible way to do this, but I'm
+    // doing most of my rendering on CPU and using like 5% of gpu
+    // resources, and I simply don't know a better way yet
+    if (out_color[3] < 0.01f) { discard_fragment(); }
+    
+    return out_color;
 }
 

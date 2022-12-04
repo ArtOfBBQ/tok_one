@@ -1,8 +1,7 @@
 #import "gpu.h"
 
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
-
-static uint32_t already_drawing = false;
+uint32_t block_drawinmtkview = true;
 
 @implementation MetalKitViewDelegate
 {
@@ -12,8 +11,13 @@ static uint32_t already_drawing = false;
     
     id<MTLDevice> metal_device;
     id<MTLCommandQueue> command_queue;
-    id<MTLRenderPipelineState> combo_pipeline_state;
     id<MTLDepthStencilState> depth_stencil_state;
+    
+    // TODO: consider adding another pipeline state
+    // id<MTLRenderPipelineState> transparent_bitmap_state;
+    
+    // TODO: study semaphores
+    dispatch_semaphore_t _frameBoundarySemaphore;
 }
 
 - (void)
@@ -21,6 +25,7 @@ static uint32_t already_drawing = false;
     andPixelFormat: (MTLPixelFormat)pixel_format
     fromFolder: (NSString *)shader_lib_filepath
 {
+    _frameBoundarySemaphore = dispatch_semaphore_create(3);
     current_frame_i = 0;
     
     metal_device = with_metal_device;
@@ -85,7 +90,7 @@ static uint32_t already_drawing = false;
     combo_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
     
-    combo_pipeline_state =
+    _combo_pipeline_state =
         [with_metal_device
             newRenderPipelineStateWithDescriptor:
                 combo_pipeline_descriptor 
@@ -260,9 +265,9 @@ static uint32_t already_drawing = false;
     //        [command_buffer
     //            renderCommandEncoderWithDescriptor:
     //                RenderPassDescriptor];
-    // [render_encoder setCullMode: MTLCullModeBack];
-    // [render_encoder setDepthStencilState: depth_stencil_state];
-    // [render_encoder endEncoding];
+    //    [render_encoder setCullMode: MTLCullModeBack];
+    //    [render_encoder setDepthStencilState: depth_stencil_state];
+    //    [render_encoder endEncoding];
     
     id<CAMetalDrawable> current_drawable = [view currentDrawable];
     [command_buffer presentDrawable: current_drawable];
@@ -272,8 +277,12 @@ static uint32_t already_drawing = false;
 
 - (void)drawInMTKView:(MTKView *)view
 {
-    if (already_drawing) { return; }
-    already_drawing = true;
+    if (block_drawinmtkview) { return; }
+    block_drawinmtkview = true;
+    
+    dispatch_semaphore_wait(
+        _frameBoundarySemaphore,
+        DISPATCH_TIME_FOREVER);
     
     Vertex * vertices_for_gpu =
         render_commands.vertex_buffers[current_frame_i].vertices;
@@ -289,7 +298,7 @@ static uint32_t already_drawing = false;
     if (command_buffer == nil) {
         log_append("error - failed to get metal command buffer\n");
         log_dump_and_crash("error - failed to get metal command buffer\n");
-        already_drawing = false;
+        block_drawinmtkview = false;
         return;
     }
     
@@ -308,11 +317,10 @@ static uint32_t already_drawing = false;
                 RenderPassDescriptor];
     [render_encoder setViewport: viewport];
     
-    [render_encoder setRenderPipelineState: combo_pipeline_state];
+    [render_encoder setRenderPipelineState: _combo_pipeline_state];
     [render_encoder setDepthStencilState: depth_stencil_state];
     // [render_encoder setDepthClipMode: MTLDepthClipModeClip];
     
-    // encode the drawing of all triangles 
     [render_encoder
         setVertexBuffer: [[self vertex_buffers]
             objectAtIndex: current_frame_i]  
@@ -343,10 +351,17 @@ static uint32_t already_drawing = false;
     current_frame_i += 1;
     current_frame_i -= ((current_frame_i > 2)*3);
     
+    __block dispatch_semaphore_t semaphore = _frameBoundarySemaphore;
+    [command_buffer
+        addCompletedHandler:^(id<MTLCommandBuffer> commandBuffer)
+    {
+        dispatch_semaphore_signal(semaphore);
+    }];
+    
     [command_buffer commit];
     
     request_post_resize_clearscreen = false;
-    already_drawing = false;
+    block_drawinmtkview = false;
 }
 
 - (void)mtkView:(MTKView *)view

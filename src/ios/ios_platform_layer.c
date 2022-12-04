@@ -1,5 +1,6 @@
+#define PLATFORM_IOS
+
 #include "../shared/platform_layer.h"
-#import <UIKit/UIKit.h>
 
 float platform_get_current_window_height(void) {
     return (float)[UIScreen mainScreen].bounds.size.height;

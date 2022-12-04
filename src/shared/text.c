@@ -360,18 +360,16 @@ void request_label_renderable(
 
 void request_fps_counter(uint64_t microseconds_elapsed) {
     
-    // TODO: our timer is weirdly broken on iOS. Fix it!
     #ifdef __AVX__
     char fps_string[12] = "AVX fps: xx";
+    #elseif __ARM_NEON__
+    char fps_string[12] = "NEONfps: xx";
     #else
     char fps_string[12] = "std fps: xx";
     #endif
     int32_t label_object_id = 0;
     uint64_t fps = 1000000 / microseconds_elapsed;
-    /*
-    float elapsed_mod =
-        (float)((double)microseconds_elapsed / (double)16666);
-    */
+    
     if (fps < 100) {
         fps_string[9] = '0' + ((fps / 10) % 10);
         fps_string[10] = '0' + (fps % 10);

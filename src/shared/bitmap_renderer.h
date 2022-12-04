@@ -53,6 +53,8 @@ void draw_texquads_to_render(
 
 void clean_deleted_texquads(void);
 
+extern uint32_t sorts_this_frame;
+
 #ifdef __cplusplus
 }
 #endif

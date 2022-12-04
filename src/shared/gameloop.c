@@ -92,6 +92,7 @@ void shared_gameloop_update(
     }
     
     // draw opaque 2d bitmaps
+    sorts_this_frame = 0;
     draw_texquads_to_render(
         /* next_gpu_workload: */
             vertices_for_gpu,
@@ -101,10 +102,8 @@ void shared_gameloop_update(
             true,
         /* must_have_alpha_channel: */
             false);
-    
-    Vertex vertices_to_sort[TEXQUADS_TO_RENDER_ARRAYSIZE];
-    uint32_t vertices_to_sort_size = 0;
-    
+    log_assert(sorts_this_frame == 0);
+        
     // draw transparent 2d bitmaps    
     draw_texquads_to_render(
         /* next_gpu_workload: */
@@ -115,5 +114,6 @@ void shared_gameloop_update(
             false,
         /* must_have_alpha_channel: */
             true);
+    log_assert(sorts_this_frame < 2);
 }
 

@@ -450,10 +450,17 @@ static void add_quad_to_gpu_workload(
     }
 }
 
-// static int cmpr_vertices_lowest_z(const void * a, const void * b)
-// {
-//     return (*(Vertex *)b).z - (*(Vertex *)b).z;
-// }
+static int cmpr_vertices_lowest_z(const void * a, const void * b)
+{
+    if ((*(Vertex *)a).z < (*(Vertex *)b).z) {
+        return 1;
+    }
+    
+    return -1;
+}
+
+// TODO: remove debugging code
+uint32_t sorts_this_frame = 0;
 
 void draw_texquads_to_render(
     Vertex * next_gpu_workload,
@@ -477,6 +484,7 @@ void draw_texquads_to_render(
     }
     
     uint32_t original_texquads_to_render_size = texquads_to_render_size;
+    uint32_t original_gpu_workload_size = *next_gpu_workload_size;
     
     for (
         uint32_t i = 0;
@@ -502,37 +510,48 @@ void draw_texquads_to_render(
                     >= 0)
         {
             bool32_t has_alpha_channel =
+                texquads_to_render[i].RGBA[3] < 1.0f ||
                 texture_has_alpha_channel(
                     texquads_to_render[i].texturearray_i,
                     texquads_to_render[i].texture_i);
             
             if (must_opaque && has_alpha_channel) { continue; }
-            if (must_have_alpha_channel && !has_alpha_channel) { continue; }
+            if (must_have_alpha_channel && !has_alpha_channel) {
+                continue;
+            }
             
-            // TODO: make 2 workloads, 1 to be sorted and drawn last
-            // and 1 to just draw immediately
             log_assert(i <= texquads_to_render_size);
             log_assert(i < TEXQUADS_TO_RENDER_ARRAYSIZE);
             add_quad_to_gpu_workload(
                 &texquads_to_render[i],
                 next_gpu_workload,
                 next_gpu_workload_size);
-            
-            // if (must_have_alpha_channel) {
-            //     // TODO: sort here
-            //     // start sorting from original_texquads_to_render_size
-            //     // until texquads_to_render_size - 1
-            //     qsort(
-            //         /* void *base: */
-            //             next_gpu_workload,
-            //         /* size_t nitems: */
-            //             texquads_to_render_size - original_texquads_to_render_size,
-            //         /* size_t size (in bytes of 1 element): */
-            //             sizeof(Vertex),
-            //         /* int (*compar)(const void *, const void*): */
-            //             cmpr_vertices_lowest_z);
-            // }
         }
+    }
+    
+    // We're sorting here and only here because the sprites are
+    // transparent, and all of the opaque sprites are already in
+    // the next_gpu_workload's first chunk. Those can use the GPU's
+    // depth buffer, but from here on out we have to use the painter's
+    // algorithm. I've heard of more advanced ways to accomplish this
+    // on the GPU without any sorting, but I am not ready for that
+    if (
+        must_have_alpha_channel &&
+        *next_gpu_workload_size > original_gpu_workload_size)
+    {
+        // start sorting from original_texquads_to_render_size
+        // until texquads_to_render_size - 1
+        sorts_this_frame += 1;
+        qsort(
+            /* void *base: */
+                next_gpu_workload + *next_gpu_workload_size,
+            /* size_t nitems: */
+                *next_gpu_workload_size -
+                    original_gpu_workload_size,
+            /* size_t size (in bytes of 1 element): */
+                sizeof(Vertex),
+            /* int (*compar)(const void *, const void*): */
+                cmpr_vertices_lowest_z);
     }
 }
 

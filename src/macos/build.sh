@@ -1,8 +1,7 @@
 APP_NAME="hello3dgfx"
 PLATFORM="macos"
-COMPILER_ARGS="-fsanitize=address -finstrument-functions -march=native -ferror-limit=2 -Wall -x objective-c -std="c99" -g -o0 -objC"
-# COMPILER_ARGS="-march=native -Wall -x objective-c -std="c99" -o0 -objC"
-# COMPILER_ARGS="-march=native -Wall -x objective-c -std="c99" -o0 -objC"
+# COMPILER_ARGS="-fsanitize=address -finstrument-functions -march=native -ferror-limit=2 -Wall -x objective-c -std="c99" -g -o0 -objC"
+COMPILER_ARGS="-march=native -Wall -x objective-c -std="c99" -o0 -objC"
 
 MAC_FRAMEWORKS="
     -framework AppKit 
@@ -26,11 +25,11 @@ echo "Creating build folder..."
 sudo mkdir -r build/$PLATFORM/$APP_NAME.app/debugout
 
 ############
-echo "skipping metal library compilation..."
-# echo "Creating metal library..."
-# sudo xcrun -sdk macosx metal -gline-tables-only -MO -g -c "src/shared_apple/Shaders.metal" -o resources/Shaders.air
-# sudo xcrun -sdk macosx metal -c "src/shared_apple/shaders.metal" -o Shaders.air
-# sudo xcrun -sdk macosx metallib resources/Shaders.air -o build/$PLATFORM/$APP_NAME.app/Shaders.metallib
+# echo "skipping metal library compilation..."
+echo "Creating metal library..."
+sudo xcrun -sdk macosx metal -gline-tables-only -MO -g -c "src/shared_apple/Shaders.metal" -o resources/Shaders.air
+sudo xcrun -sdk macosx metal -c "src/shared_apple/shaders.metal" -o Shaders.air
+sudo xcrun -sdk macosx metallib resources/Shaders.air -o build/$PLATFORM/$APP_NAME.app/Shaders.metallib
 ############
 
 ############

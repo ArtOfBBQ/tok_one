@@ -53,4 +53,6 @@ void init_application() {
     init_renderer();
     
     client_logic_startup();
+    
+    block_drawinmtkview = false;
 }

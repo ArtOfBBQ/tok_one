@@ -16,6 +16,7 @@ static float * working_memory_2;
 static float * cosines;
 static float * sines;
 static float * visibility_ratings;
+static Vertex * rendered_vertices;
 
 void init_renderer() {
     renderer_initialized = true;
@@ -49,6 +50,8 @@ void init_renderer() {
         VERTICES_CAP * sizeof(float), 32);
     visibility_ratings = (float *)malloc_from_unmanaged_aligned(
         VERTICES_CAP * sizeof(float), 32);
+    rendered_vertices = (Vertex *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(Vertex), 32);
 }
 
 void software_render(
@@ -210,9 +213,7 @@ void software_render(
     origin.z = 0.0f;
     
     // this gets 1 'visibility rating' (a dot product) per triangle,
-    // so it will be 1/3rd the size of vertices_size
-    Vertex rendered_vertices[all_triangles_size*3];
-    
+    // so it will be 1/3rd the size of vertices_size    
     get_visibility_ratings(
         origin,
         triangle_vertices_x,

@@ -26,6 +26,10 @@ on each platform
 #ifndef PLATFORM_LAYER_H
 #define PLATFORM_LAYER_H
 
+#ifdef PLATFORM_IOS
+#import <UIKit/UIKit.h>
+#endif
+
 #ifdef PLATFORM_NS_FILEMANAGER
 #import <Foundation/Foundation.h>
 #endif

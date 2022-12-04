@@ -16,6 +16,8 @@
 extern "C" {
 #endif
 
+extern uint32_t block_drawinmtkview;
+
 void init_application(void);
 
 #ifdef __cplusplus

@@ -116,6 +116,10 @@ void platform_256_add_scalar(
         _mm256_store_ps(floats_1 + i, v1);
     }
     
+//    #elseif __ARM_NEON__
+//    float32x4_t v1;
+//    // float32x4_t v2 == loadtheincrement over and over
+    
     #else
     for (uint32_t i = 0; i < floats_1_size; i++) {
         floats_1[i] += increment;

@@ -893,13 +893,18 @@ bool32_t texture_has_alpha_channel(
         return HAS_ALPHA_NO;
     }
     
-    log_assert(texturearray_i < texture_arrays_size);
-    log_assert(texture_i < texture_arrays[texturearray_i].images_size);
+    log_assert(texturearray_i < (int32_t)texture_arrays_size);
     
     if (
         texture_arrays[texturearray_i].images[texture_i].has_alpha_channel ==
             HAS_ALPHA_UNCHECKED)
     {
+        log_assert(texture_i < (int32_t)texture_arrays[texturearray_i].images_size);
+        
+        if (texture_arrays[texturearray_i].images[texture_i].image == NULL) {
+            return HAS_ALPHA_NO;
+        }
+        
         texture_arrays[texturearray_i].
             images[texture_i].
             has_alpha_channel = HAS_ALPHA_NO;

@@ -124,15 +124,18 @@
 		60A99922287BDF31003F7159 /* structuredart2.png in Resources */ = {isa = PBXBuildFile; fileRef = 601128AA28625BAE00F92967 /* structuredart2.png */; };
 		60A99923287BDF31003F7159 /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = 601128AB28625BAE00F92967 /* teapot.obj */; };
 		60A99924287BDF31003F7159 /* phoebus.png in Resources */ = {isa = PBXBuildFile; fileRef = 6080CC45286FFD1D00444118 /* phoebus.png */; };
-		60A99929287BDFF3003F7159 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60A99928287BDFF3003F7159 /* UIKit.framework */; };
-		60A9992F287C12BA003F7159 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60A9992E287C12BA003F7159 /* MetalKit.framework */; };
-		60A99931287C12C1003F7159 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60A99930287C12C1003F7159 /* Metal.framework */; };
 		EC1412B12938597400DA0D21 /* cardwithuvcoords.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */; };
 		EC1412B22938597400DA0D21 /* cardwithuvcoords.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */; };
 		EC6441A429318B6D00A0267B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = EC64419F29318B6D00A0267B /* main.m */; };
 		EC6441A529318B6D00A0267B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A029318B6D00A0267B /* AppDelegate.m */; };
 		EC6441A629318B6D00A0267B /* ios_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A129318B6D00A0267B /* ios_platform_layer.c */; };
 		EC6441A729318B6D00A0267B /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A329318B6D00A0267B /* ViewController.m */; };
+		EC6B1F49293C9FD900837369 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F48293C9FD900837369 /* UIKit.framework */; };
+		EC6B1F4B293CA04800837369 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4A293CA04800837369 /* Foundation.framework */; };
+		EC6B1F4D293CA04F00837369 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4C293CA04F00837369 /* Metal.framework */; };
+		EC6B1F4F293CA05500837369 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4E293CA05500837369 /* MetalKit.framework */; };
+		EC6B1F51293CA06200837369 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F50293CA06200837369 /* AVFoundation.framework */; };
+		EC7B09D4293CAC8B000ED98E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = EC7B09D3293CAC8B000ED98E /* Main.storyboard */; };
 		EC7B171B293A23E400C1D20C /* roundedborder.png in Resources */ = {isa = PBXBuildFile; fileRef = EC7B171A293A23E300C1D20C /* roundedborder.png */; };
 		EC7B171C293A23E400C1D20C /* roundedborder.png in Resources */ = {isa = PBXBuildFile; fileRef = EC7B171A293A23E300C1D20C /* roundedborder.png */; };
 		EC92FDAD2902917500C10865 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
@@ -206,16 +209,19 @@
 		60A998B4287BCF52003F7159 /* TOKONE_iphone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TOKONE_iphone.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		60A998D9287BD332003F7159 /* decodedimage.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = decodedimage.c; path = ../../src/shared/decodedimage.c; sourceTree = "<group>"; };
 		60A998DA287BD333003F7159 /* decodedimage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = decodedimage.h; path = ../../src/shared/decodedimage.h; sourceTree = "<group>"; };
-		60A99928287BDFF3003F7159 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS15.2.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
-		60A9992E287C12BA003F7159 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS15.2.sdk/System/Library/Frameworks/MetalKit.framework; sourceTree = DEVELOPER_DIR; };
-		60A99930287C12C1003F7159 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS15.2.sdk/System/Library/Frameworks/Metal.framework; sourceTree = DEVELOPER_DIR; };
 		EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */ = {isa = PBXFileReference; explicitFileType = compiled; fileEncoding = 4; name = cardwithuvcoords.obj; path = ../../resources/cardwithuvcoords.obj; sourceTree = "<group>"; };
 		EC64419E29318B6D00A0267B /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = ../../src/ios/AppDelegate.h; sourceTree = "<group>"; };
 		EC64419F29318B6D00A0267B /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../src/ios/main.m; sourceTree = "<group>"; };
 		EC6441A029318B6D00A0267B /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = ../../src/ios/AppDelegate.m; sourceTree = "<group>"; };
-		EC6441A129318B6D00A0267B /* ios_platform_layer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ios_platform_layer.c; path = ../../src/ios/ios_platform_layer.c; sourceTree = "<group>"; };
+		EC6441A129318B6D00A0267B /* ios_platform_layer.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = ios_platform_layer.c; path = ../../src/ios/ios_platform_layer.c; sourceTree = "<group>"; };
 		EC6441A229318B6D00A0267B /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ViewController.h; path = ../../src/ios/ViewController.h; sourceTree = "<group>"; };
 		EC6441A329318B6D00A0267B /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ViewController.m; path = ../../src/ios/ViewController.m; sourceTree = "<group>"; };
+		EC6B1F48293C9FD900837369 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
+		EC6B1F4A293CA04800837369 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		EC6B1F4C293CA04F00837369 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/Metal.framework; sourceTree = DEVELOPER_DIR; };
+		EC6B1F4E293CA05500837369 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/MetalKit.framework; sourceTree = DEVELOPER_DIR; };
+		EC6B1F50293CA06200837369 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/AVFoundation.framework; sourceTree = DEVELOPER_DIR; };
+		EC7B09D3293CAC8B000ED98E /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Main.storyboard; path = ../../resources/ios/Main.storyboard; sourceTree = "<group>"; };
 		EC7B171A293A23E300C1D20C /* roundedborder.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = roundedborder.png; path = ../../resources/roundedborder.png; sourceTree = "<group>"; };
 		EC92FDAB2902917500C10865 /* decode_bmp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = decode_bmp.h; path = ../../src/shared/debigulator/src/decode_bmp.h; sourceTree = "<group>"; };
 		EC92FDAC2902917500C10865 /* decode_bmp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = decode_bmp.c; path = ../../src/shared/debigulator/src/decode_bmp.c; sourceTree = "<group>"; };
@@ -239,9 +245,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				60A99931287C12C1003F7159 /* Metal.framework in Frameworks */,
-				60A9992F287C12BA003F7159 /* MetalKit.framework in Frameworks */,
-				60A99929287BDFF3003F7159 /* UIKit.framework in Frameworks */,
+				EC6B1F51293CA06200837369 /* AVFoundation.framework in Frameworks */,
+				EC6B1F4F293CA05500837369 /* MetalKit.framework in Frameworks */,
+				EC6B1F4D293CA04F00837369 /* Metal.framework in Frameworks */,
+				EC6B1F4B293CA04800837369 /* Foundation.framework in Frameworks */,
+				EC6B1F49293C9FD900837369 /* UIKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -279,10 +287,12 @@
 		601128432861239600F92967 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				EC6B1F50293CA06200837369 /* AVFoundation.framework */,
+				EC6B1F4E293CA05500837369 /* MetalKit.framework */,
+				EC6B1F4C293CA04F00837369 /* Metal.framework */,
+				EC6B1F4A293CA04800837369 /* Foundation.framework */,
+				EC6B1F48293C9FD900837369 /* UIKit.framework */,
 				ECCB08A428DB6FD00038BBAC /* AVFoundation.framework */,
-				60A99930287C12C1003F7159 /* Metal.framework */,
-				60A9992E287C12BA003F7159 /* MetalKit.framework */,
-				60A99928287BDFF3003F7159 /* UIKit.framework */,
 				601128A72862588900F92967 /* AppKit.framework */,
 				601128A1286253FA00F92967 /* Metal.framework */,
 				601128A0286253FA00F92967 /* MetalKit.framework */,
@@ -305,6 +315,7 @@
 		601128B128625BC100F92967 /* resources */ = {
 			isa = PBXGroup;
 			children = (
+				EC7B09D3293CAC8B000ED98E /* Main.storyboard */,
 				6009FB632876A47100FC5A60 /* fontmetrics.dat */,
 				601128AC28625BAF00F92967 /* font.png */,
 				EC7B171A293A23E300C1D20C /* roundedborder.png */,
@@ -490,6 +501,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EC7B09D4293CAC8B000ED98E /* Main.storyboard in Resources */,
 				EC1412B22938597400DA0D21 /* cardwithuvcoords.obj in Resources */,
 				60A99921287BDF31003F7159 /* fontmetrics.dat in Resources */,
 				60A99924287BDF31003F7159 /* phoebus.png in Resources */,
@@ -649,7 +661,7 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				DEAD_CODE_STRIPPING = YES;
+				DEAD_CODE_STRIPPING = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -660,6 +672,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				STRIP_INSTALLED_PRODUCT = NO;
 			};
 			name = Debug;
 		};
@@ -684,7 +697,7 @@
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
-				DEAD_CODE_STRIPPING = YES;
+				DEAD_CODE_STRIPPING = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -693,6 +706,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				STRIP_INSTALLED_PRODUCT = NO;
 			};
 			name = Release;
 		};
@@ -893,12 +907,13 @@
 				CLANG_X86_VECTOR_INSTRUCTIONS = default;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
+				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 69FRAQZ2YR;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -913,9 +928,10 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = TOKONE_iphone/Info.plist;
+				INFOPLIST_FILE = "";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.card-games";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UILaunchStoryboardName = "";
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -928,7 +944,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = "march=native";
+				OTHER_CFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.TOK.TOKONE-iphone";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -975,12 +991,13 @@
 				CLANG_X86_VECTOR_INSTRUCTIONS = default;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
+				CREATE_INFOPLIST_SECTION_IN_BINARY = YES;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 69FRAQZ2YR;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -989,9 +1006,10 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = TOKONE_iphone/Info.plist;
+				INFOPLIST_FILE = "";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.card-games";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UILaunchStoryboardName = "";
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -1003,7 +1021,7 @@
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				OTHER_CFLAGS = "march=native";
+				OTHER_CFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.TOK.TOKONE-iphone";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
