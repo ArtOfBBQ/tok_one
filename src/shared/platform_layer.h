@@ -40,7 +40,9 @@ on each platform
 #import <AVFoundation/AVFoundation.h>
 #endif
 
-#ifdef __AVX__
+#ifdef __ARM_NEON
+#include "arm_neon.h"
+#elif defined(__AVX__)
 #include "immintrin.h"
 #endif
 

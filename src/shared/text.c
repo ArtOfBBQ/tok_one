@@ -359,14 +359,14 @@ void request_label_renderable(
 }
 
 void request_fps_counter(uint64_t microseconds_elapsed) {
-    
-    #ifdef __AVX__
-    char fps_string[12] = "AVX fps: xx";
-    #elseif __ARM_NEON__
+    #ifdef __ARM_NEON
     char fps_string[12] = "NEONfps: xx";
+    #elif defined(__AVX__)
+    char fps_string[12] = "AVX fps: xx";
     #else
     char fps_string[12] = "std fps: xx";
     #endif
+    
     int32_t label_object_id = 0;
     uint64_t fps = 1000000 / microseconds_elapsed;
     

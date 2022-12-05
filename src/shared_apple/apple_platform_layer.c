@@ -15,15 +15,20 @@ void platform_256_sqrt(
     float * floats,
     const uint32_t floats_size)
 {
-    #ifdef __AVX__
+    #ifdef __ARM_NEON
+    for (uint32_t i = 0; i < floats_size; i += 4) {
+        float32x4_t v1 = vld1q_f32(floats + i);
+        float32x4_t result = vsqrtq_f32(v1);
+        vst1q_f32(floats + i, result);
+    }
+    #elif defined(__AVX__)
     __m256 v1;
-        
+    
     for (uint32_t i = 0; i < floats_size; i += 8) {
         v1 = _mm256_load_ps((floats + i)); 
         v1 = _mm256_sqrt_ps(v1);
         _mm256_store_ps(floats + i, v1);
     }
-    
     #else
     for (uint32_t i = 0; i < floats_size; i++) {
         floats[i] = sqrtf(floats[i]);
@@ -36,7 +41,14 @@ void platform_256_sub(
     const float * floats_2,
     const uint32_t f1_f2_size)
 {
-    #ifdef __AVX__
+    #ifdef __ARM_NEON
+    for (uint32_t i = 0; i < f1_f2_size; i += 4) {
+        float32x4_t v1 = vld1q_f32(floats_1 + i);
+        float32x4_t v2 = vld1q_f32(floats_2 + i);
+        float32x4_t result = vsubq_f32(v1, v2);
+        vst1q_f32(floats_1 + i, result);
+    }
+    #elif defined(__AVX__)
     __m256 v1;
     __m256 v2;
     
@@ -58,7 +70,15 @@ void platform_256_sub_scalar(
     const uint32_t floats_1_size,
     const float subtraction)
 {
-    #ifdef __AVX__
+    #ifdef __ARM_NEON    
+    float32x4_t v2 = vld1q_dup_f32(&subtraction);
+    
+    for (uint32_t i = 0; i < floats_1_size; i += 4) {
+        float32x4_t v1 = vld1q_f32(floats_1 + i);
+        float32x4_t result = vsubq_f32(v1, v2);
+        vst1q_f32(floats_1 + i, result);
+    }
+    #elif defined(__AVX__)
     __m256 v1;
     __m256 v2 = _mm256_set_ps(
         subtraction, subtraction, subtraction, subtraction,
@@ -69,7 +89,6 @@ void platform_256_sub_scalar(
         v1 = _mm256_sub_ps(v1, v2);
         _mm256_store_ps(floats_1 + i, v1);
     }
-    
     #else
     for (uint32_t i = 0; i < floats_1_size; i++) {
         floats_1[i] -= subtraction;
@@ -82,7 +101,14 @@ void platform_256_add(
     const float * floats_2,
     const uint32_t f1_f2_size)
 {
-    #ifdef __AVX__
+    #ifdef __ARM_NEON
+    for (uint32_t i = 0; i < f1_f2_size; i += 4) {
+        float32x4_t v1 = vld1q_f32(floats_1 + i);
+        float32x4_t v2 = vld1q_f32(floats_2 + i);
+        float32x4_t sum = vaddq_f32(v1, v2);
+        vst1q_f32(floats_1 + i, sum);
+    }
+    #elif defined(__AVX__)
     __m256 v1;
     __m256 v2;
     
@@ -104,7 +130,15 @@ void platform_256_add_scalar(
     const uint32_t floats_1_size,
     const float increment)
 {
-    #ifdef __AVX__
+    #ifdef __ARM_NEON    
+    float32x4_t v2 = vld1q_dup_f32(&increment);
+    
+    for (uint32_t i = 0; i < floats_1_size; i += 4) {
+        float32x4_t v1 = vld1q_f32(floats_1 + i);
+        float32x4_t sum = vaddq_f32(v1, v2);
+        vst1q_f32(floats_1 + i, sum);
+    }
+    #elif defined(__AVX__)
     __m256 v1;
     __m256 v2 = _mm256_set_ps(
         increment, increment, increment, increment,
@@ -115,11 +149,6 @@ void platform_256_add_scalar(
         v1 = _mm256_add_ps(v1, v2);
         _mm256_store_ps(floats_1 + i, v1);
     }
-    
-//    #elseif __ARM_NEON__
-//    float32x4_t v1;
-//    // float32x4_t v2 == loadtheincrement over and over
-    
     #else
     for (uint32_t i = 0; i < floats_1_size; i++) {
         floats_1[i] += increment;
@@ -132,7 +161,14 @@ void platform_256_mul(
     const float * floats_2,
     const uint32_t f1_f2_size)
 {
-    #ifdef __AVX__
+    #ifdef __ARM_NEON
+    for (uint32_t i = 0; i < f1_f2_size; i += 4) {
+        float32x4_t v1 = vld1q_f32(floats_1 + i);
+        float32x4_t v2 = vld1q_f32(floats_2 + i);
+        float32x4_t result = vmulq_f32(v1, v2);
+        vst1q_f32(floats_1 + i, result);
+    }
+    #elif defined(__AVX__)
     __m256 v1;
     __m256 v2;
     
@@ -154,7 +190,15 @@ void platform_256_mul_scalar(
     const uint32_t floats_1_size,
     const float multiplier)
 {
-    #ifdef __AVX__
+    #ifdef __ARM_NEON    
+    float32x4_t v2 = vld1q_dup_f32(&multiplier);
+    
+    for (uint32_t i = 0; i < floats_1_size; i += 4) {
+        float32x4_t v1 = vld1q_f32(floats_1 + i);
+        float32x4_t result = vmulq_f32(v1, v2);
+        vst1q_f32(floats_1 + i, result);
+    }
+    #elif defined(__AVX__)
     __m256 v1;
     __m256 v2 = _mm256_set_ps(
         multiplier, multiplier, multiplier, multiplier,
@@ -165,7 +209,6 @@ void platform_256_mul_scalar(
         v1 = _mm256_mul_ps(v1, v2);
         _mm256_store_ps(floats_1 + i, v1);
     }
-    
     #else
     for (uint32_t i = 0; i < floats_1_size; i++) {
         floats_1[i] *= multiplier;
@@ -178,7 +221,14 @@ void platform_256_div(
     const float * floats_2,
     const uint32_t f1_f2_size)
 {
-    #ifdef __AVX__
+    #ifdef __ARM_NEON
+    for (uint32_t i = 0; i < f1_f2_size; i += 4) {
+        float32x4_t v1 = vld1q_f32(floats_1 + i);
+        float32x4_t v2 = vld1q_f32(floats_2 + i);
+        float32x4_t result = vdivq_f32(v1, v2);
+        vst1q_f32(floats_1 + i, result);
+    }
+    #elif defined(__AVX__)
     __m256 v1;
     __m256 v2;
     
@@ -200,7 +250,15 @@ void platform_256_div_scalar_by_input(
     const uint32_t out_divisors_size,
     const float numerator)
 {
-    #ifdef __AVX__
+    #ifdef __ARM_NEON    
+    float32x4_t v1 = vld1q_dup_f32(&numerator);
+    
+    for (uint32_t i = 0; i < out_divisors_size; i += 4) {
+        float32x4_t v2 = vld1q_f32(out_divisors + i);
+        float32x4_t result = vdivq_f32(v1, v2);
+        vst1q_f32(out_divisors + i, result);
+    }
+    #elif defined(__AVX__)
     __m256 v1 = _mm256_set_ps(numerator, numerator, numerator, numerator, numerator, numerator, numerator, numerator);
     __m256 v2;
     
@@ -209,7 +267,6 @@ void platform_256_div_scalar_by_input(
         v2 = _mm256_div_ps(v1, v2);
         _mm256_store_ps(out_divisors + i, v2);
     }
-    
     #else
     for (uint32_t i = 0; i < out_divisors_size; i++) {
         out_divisors[i] = numerator / out_divisors[i];
@@ -222,7 +279,15 @@ void platform_256_div_scalar(
     const uint32_t out_numerators_size,
     const float divisor)
 {
-    #ifdef __AVX__
+    #ifdef __ARM_NEON    
+    float32x4_t v2 = vld1q_dup_f32(&divisor);
+    
+    for (uint32_t i = 0; i < out_numerators_size; i += 4) {
+        float32x4_t v1 = vld1q_f32(out_numerators + i);
+        float32x4_t result = vdivq_f32(v1, v2);
+        vst1q_f32(out_numerators + i, result);
+    }
+    #elif defined(__AVX__)
     __m256 v1;
     __m256 v2 = _mm256_set_ps(divisor, divisor, divisor, divisor, divisor, divisor, divisor, divisor);
     
