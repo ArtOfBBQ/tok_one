@@ -24,9 +24,9 @@ void init_renderer() {
     camera.x = 0.0f;
     camera.y = 0.0f;
     camera.z = 0.0f;
-    camera.x_angle = 0.5f;
-    camera.y_angle = 0.3f;
-    camera.z_angle = 0.2f;
+    camera.x_angle = 0.0f;
+    camera.y_angle = 0.0f;
+    camera.z_angle = 0.0f;
     
     triangle_vertices_x = (float *)malloc_from_unmanaged_aligned(
         VERTICES_CAP * sizeof(float), 32);

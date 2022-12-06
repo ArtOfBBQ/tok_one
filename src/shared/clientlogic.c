@@ -86,48 +86,10 @@ void client_logic_startup() {
     zlights_to_apply[0].RGBA[2] = 1.0f;
     zlights_to_apply[0].RGBA[3] = 1.0f;
     zlights_to_apply[0].reach = 1;
-    zlights_to_apply[0].ambient = 0.5f;
+    zlights_to_apply[0].ambient = 1.0f;
     zlights_to_apply[0].diffuse = 1.0f;
     zlights_to_apply_size++;
     log_assert(zlights_to_apply_size == 1);
-    
-    TexQuad foreground_green;
-    construct_texquad(&foreground_green);
-    foreground_green.object_id          = 4;
-    foreground_green.texturearray_i     = -1;
-    foreground_green.texture_i          = -1;
-    foreground_green.width_pixels       = 800;
-    foreground_green.height_pixels      = 900;
-    foreground_green.left_pixels        = 50;
-    foreground_green.top_pixels         = window_height - 50;
-    foreground_green.z                  = 0.91f;
-    foreground_green.RGBA[0]            = 0.2f;
-    foreground_green.RGBA[1]            = 1.0f;
-    foreground_green.RGBA[2]            = 0.0f;
-    foreground_green.RGBA[3]            = 1.0f;
-    request_texquad_renderable(&foreground_green);
-    
-    ScheduledAnimation fade_green_quad;
-    construct_scheduled_animation(&fade_green_quad);
-    fade_green_quad.affected_object_id = 4;
-    fade_green_quad.final_rgba_known[3] = true;
-    fade_green_quad.final_rgba[3] = 0.0f;
-    fade_green_quad.remaining_wait_before_next_run = 2500000;
-    fade_green_quad.wait_before_each_run = 3500000;
-    fade_green_quad.duration_microseconds = 1200000;
-    fade_green_quad.runs = 0; // repeat forever
-    request_scheduled_animation(&fade_green_quad);
-    
-    ScheduledAnimation opacify_green_quad;
-    construct_scheduled_animation(&opacify_green_quad);
-    opacify_green_quad.affected_object_id = 4;
-    opacify_green_quad.final_rgba_known[3] = true;
-    opacify_green_quad.final_rgba[3] = 1.0f;
-    opacify_green_quad.remaining_wait_before_next_run = 500000;
-    opacify_green_quad.wait_before_each_run = 3500000;
-    opacify_green_quad.duration_microseconds = 1200000;
-    opacify_green_quad.runs = 0; // repeat forever
-    request_scheduled_animation(&opacify_green_quad);
     
     TexQuad foreground_blue;
     construct_texquad(&foreground_blue);
@@ -150,38 +112,16 @@ void client_logic_startup() {
     foreground_red.object_id          = 3;
     foreground_red.texturearray_i     = -1;
     foreground_red.texture_i          = -1;
-    foreground_red.width_pixels       = 120;
-    foreground_red.height_pixels      = 120;
-    foreground_red.left_pixels        = 150;
-    foreground_red.top_pixels         = 150;
+    foreground_red.width_pixels       = 50;
+    foreground_red.height_pixels      = 50;
+    foreground_red.left_pixels        = 200;
+    foreground_red.top_pixels         = 400;
     foreground_red.z                  = 0.95f;
     foreground_red.RGBA[0]            = 1.0f;
     foreground_red.RGBA[1]            = 0.0f;
     foreground_red.RGBA[2]            = 0.0f;
     foreground_red.RGBA[3]            = 1.0f;
     request_texquad_renderable(&foreground_red);
-    
-    ScheduledAnimation fade_red_quad;
-    construct_scheduled_animation(&fade_red_quad);
-    fade_red_quad.affected_object_id = 3;
-    fade_red_quad.final_rgba_known[3] = true;
-    fade_red_quad.final_rgba[3] = 0.0f;
-    fade_red_quad.remaining_wait_before_next_run = 2500000;
-    fade_red_quad.wait_before_each_run = 1700000;
-    fade_red_quad.duration_microseconds = 1500000;
-    fade_red_quad.runs = 0; // repeat forever
-    request_scheduled_animation(&fade_red_quad);
-    
-    ScheduledAnimation opacify_red_quad;
-    construct_scheduled_animation(&opacify_red_quad);
-    opacify_red_quad.affected_object_id = 3;
-    opacify_red_quad.final_rgba_known[3] = true;
-    opacify_red_quad.final_rgba[3] = 1.0f;
-    opacify_red_quad.remaining_wait_before_next_run = 500000;
-    opacify_red_quad.wait_before_each_run = 1700000;
-    opacify_red_quad.duration_microseconds = 1500000;
-    opacify_red_quad.runs = 0; // repeat forever
-    request_scheduled_animation(&opacify_red_quad);
     
     TexQuad purple_texture;
     construct_texquad(&purple_texture);
@@ -225,12 +165,13 @@ void client_logic_startup() {
     zPolygon teapot = load_from_obj_file("teapot.obj");
     scale_zpolygon(
         /* to_scale: */ &teapot,
-        /* new_height: */ 0.8f);
+        /* new_height: */ 0.05f);
+    center_zpolygon_offsets(&teapot);
     
     teapot.object_id = 12345;
-    teapot.x = 0.0f;
-    teapot.y = 0.0f;
-    teapot.z = 2.9f;
+    teapot.x = screen_x_to_3d_x(170);
+    teapot.y = screen_y_to_3d_y(140);
+    teapot.z = 1.0f;
     teapot.x_angle = 0.0f;
     teapot.y_angle = 0.0f;
     teapot.z_angle = 0.0f;
@@ -420,9 +361,9 @@ void client_logic_update(uint64_t microseconds_elapsed)
     client_handle_touches_and_leftclicks(microseconds_elapsed);
     client_handle_keypresses(microseconds_elapsed); 
     
-    zpolygons_to_render[0].x_angle += 0.03f;
-    zpolygons_to_render[0].y_angle += 0.01f;
-    zpolygons_to_render[0].z_angle += 0.004f;
+    //    zpolygons_to_render[0].x_angle += 0.03f;
+    //    zpolygons_to_render[0].y_angle += 0.01f;
+    //    zpolygons_to_render[0].z_angle += 0.004f;
 }
 
 void client_logic_window_resize(

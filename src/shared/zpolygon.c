@@ -489,6 +489,53 @@ void scale_zpolygon(
     }
 }
 
+void center_zpolygon_offsets(
+    zPolygon * to_center)
+{
+    log_assert(to_center != NULL);
+    if (to_center == NULL) { return; }
+    
+    float smallest_y = FLOAT32_MAX;
+    float largest_y = FLOAT32_MIN;
+    float smallest_x = FLOAT32_MAX;
+    float largest_x = FLOAT32_MIN;
+    float smallest_z = FLOAT32_MAX;
+    float largest_z = FLOAT32_MIN;
+    
+    for (uint32_t i = 0; i < to_center->triangles_size; i++) {
+        for (uint32_t j = 0; j < 3; j++)
+        {
+            float x = to_center->triangles[i].vertices[j].x;
+            float y = to_center->triangles[i].vertices[j].y;
+            float z = to_center->triangles[i].vertices[j].z;
+            
+            if (y > largest_y)  { largest_y = y;  }
+            if (y < smallest_y) { smallest_y = y; }
+            if (x > largest_x)  { largest_x = x;  }
+            if (x < smallest_x) { smallest_x = x; }
+            if (z > largest_z)  { largest_z = z;  }
+            if (z < smallest_z) { smallest_z = z; }
+        }
+    }
+    log_assert(largest_y > 0.0f);
+    log_assert(largest_y > smallest_y);
+    log_assert(largest_x > smallest_x);
+    log_assert(largest_z > smallest_z);
+    
+    float x_delta = (smallest_x + largest_x) / 2.0f;
+    float y_delta = (smallest_y + largest_y) / 2.0f;
+    float z_delta = (smallest_z + largest_z) / 2.0f;
+    
+    for (uint32_t i = 0; i < to_center->triangles_size; i++) {
+        for (uint32_t j = 0; j < 3; j++)
+        {
+            to_center->triangles[i].vertices[j].x -= x_delta;
+            to_center->triangles[i].vertices[j].y -= y_delta;
+            to_center->triangles[i].vertices[j].z -= z_delta;
+        }
+    }
+}
+
 void ztriangles_apply_lighting(
     float * vertices_x,
     float * vertices_y,
@@ -1214,3 +1261,21 @@ void zcamera_move_forward(
     to_move->z += final.z;
 }
 
+float screen_y_to_3d_y(const float screen_y)
+{
+    float return_value = screen_y / (window_height * 0.5f);
+    return_value -= 1.0f;
+    
+    return return_value;
+}
+
+float screen_x_to_3d_x(const float screen_x)
+{
+    float return_value = screen_x / (window_width * 0.5f);
+    return_value -= 1.0f;
+
+    return_value /= (projection_constants.aspect_ratio *
+        projection_constants.field_of_view_modifier);
+    
+    return return_value;
+}

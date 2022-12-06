@@ -79,10 +79,6 @@ ztriangle_apply_lighting(
     zTriangle * input,
     zLightSource * zlight_source);
 
-//void ztriangle_to_3d(
-//    Vertex recipient[3],
-//    zTriangle * input);
-
 void ztriangles_to_2d_inplace(
     float * vertices_x,
     float * vertices_y,
@@ -124,6 +120,9 @@ void scale_zpolygon(
     zPolygon * to_scale,
     const float new_height);
 
+void center_zpolygon_offsets(
+    zPolygon * to_center);
+
 float get_avg_z(
     const zTriangle * of_triangle);
 
@@ -160,6 +159,9 @@ float get_visibility_rating(
 float dot_of_vertices(
     const zVertex vertex_1,
     const zVertex vertex_2);
+
+float screen_y_to_3d_y(const float screen_y);
+float screen_x_to_3d_x(const float screen_x);
     
 #ifdef __cplusplus
 }
