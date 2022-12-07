@@ -354,7 +354,7 @@ string_to_uint32_validate(
     
     uint32_t decimal = 1;
     int32_t i = 0;
-    while (input[i] != '\0' && input[i] != ' ' && input[i] != '\n') {
+    while (input[i] != '\0' && input[i] >= '0' && input[i] <= '9') {
         i++;
     }
     i--;

@@ -111,46 +111,90 @@ static DecodedImage * malloc_img_from_filename_with_working_memory(
     
     DecodedImage * new_image = malloc_struct_from_unmanaged(DecodedImage);
     
-    get_PNG_width_height(
-        /* const uint8_t * compressed_input: */
-            (uint8_t *)file_buffer.contents,
-        /* const uint64_t compressed_input_size: */
-            file_buffer.size - 1,
-        /* uint32_t * out_width: */
-            &new_image->width,
-        /* uint32_t * out_height: */
-            &new_image->height,
-        /* uint32_t * out_good: */
-            &new_image->good);
-    
-    if (!new_image->good) {
-        set_unallocated_to_error_image(new_image);
-        free_from_managed((uint8_t *)file_buffer.contents);
-        return new_image;
+    if (
+        file_buffer.contents[1] == 'P' &&
+        file_buffer.contents[2] == 'N' &&
+        file_buffer.contents[3] == 'G')
+    {
+        get_PNG_width_height(
+            /* const uint8_t * compressed_input: */
+                (uint8_t *)file_buffer.contents,
+            /* const uint64_t compressed_input_size: */
+                file_buffer.size - 1,
+            /* uint32_t * out_width: */
+                &new_image->width,
+            /* uint32_t * out_height: */
+                &new_image->height,
+            /* uint32_t * out_good: */
+                &new_image->good);
+        
+        if (!new_image->good) {
+            set_unallocated_to_error_image(new_image);
+            free_from_managed((uint8_t *)file_buffer.contents);
+            return new_image;
+        }
+        
+        new_image->good = false;
+        new_image->pixel_count = new_image->width * new_image->height;
+        new_image->rgba_values_size = new_image->pixel_count * 4;
+        new_image->rgba_values = malloc_from_unmanaged(
+            new_image->rgba_values_size);
+        
+        decode_PNG(
+            /* const uint8_t * compressed_input: */
+                (uint8_t *)file_buffer.contents,
+            /* const uint64_t compressed_input_size: */
+                file_buffer.size - 1,
+            /* out_rgba_values: */
+                new_image->rgba_values,
+            /* rgba_values_size: */
+                new_image->rgba_values_size,
+            /* dpng_working_memory: */
+                dpng_working_memory,
+            /* dpng_working_memory_size: */
+                dpng_working_memory_size,
+            /* uint32_t * out_good: */
+                &new_image->good);
+    } else if (
+        file_buffer.contents[0] == 'B' &&
+        file_buffer.contents[1] == 'M')
+    {
+        get_BMP_width_height(
+            /* const uint8_t * compressed_input: */
+                (uint8_t *)file_buffer.contents,
+            /* const uint64_t compressed_input_size: */
+                file_buffer.size - 1,
+            /* uint32_t * out_width: */
+                &new_image->width,
+            /* uint32_t * out_height: */
+                &new_image->height,
+            /* uint32_t * out_good: */
+                &new_image->good);
+        
+        if (!new_image->good) {
+            set_unallocated_to_error_image(new_image);
+            free_from_managed((uint8_t *)file_buffer.contents);
+            return new_image;
+        }
+        
+        new_image->good = false;
+        new_image->pixel_count = new_image->width * new_image->height;
+        new_image->rgba_values_size = new_image->pixel_count * 4;
+        new_image->rgba_values = malloc_from_unmanaged(
+            new_image->rgba_values_size);
+        
+        decode_BMP(
+            /* raw_input: */ (uint8_t *)file_buffer.contents,
+            /* raw_input_size: */ file_buffer.size - 1,
+            /* out_rgba_values: */ new_image->rgba_values,
+            /* out_rgba_values_size: */ new_image->rgba_values_size,
+            /* out_good: */ &new_image->good);
+    } else {
+        log_append("unrecognized file format in: ");
+        log_append(filename);
+        log_append_char('\n');
+        new_image->good = false;
     }
-    
-    new_image->good = false;
-    new_image->pixel_count = new_image->width * new_image->height;
-    new_image->rgba_values_size = new_image->pixel_count * 4;
-    new_image->rgba_values = malloc_from_unmanaged(
-        new_image->rgba_values_size);
-    
-    decode_PNG(
-        /* const uint8_t * compressed_input: */
-            (uint8_t *)file_buffer.contents,
-        /* const uint64_t compressed_input_size: */
-            file_buffer.size - 1,
-        /* out_rgba_values: */
-            new_image->rgba_values,
-        /* rgba_values_size: */
-            new_image->rgba_values_size,
-        /* dpng_working_memory: */
-            dpng_working_memory,
-        /* dpng_working_memory_size: */
-            dpng_working_memory_size,
-        /* uint32_t * out_good: */
-            &new_image->good);
-    
     free_from_managed((uint8_t *)file_buffer.contents);
     
     if (!new_image->good) {

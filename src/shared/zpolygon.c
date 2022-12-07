@@ -98,9 +98,35 @@ static uint32_t chars_till_next_nonspace(
     return i;
 }
 
+/*
+Ducktaped together parser to read my .obj files from Blender
+I export to 'legacy obj' in Blender like this:
+
+Step 1:
+File -> Export -> Wavefront (.obj) (Legacy)
+
+Step 2:
+Maximize the 'geometry' panel and check:
+[x] Apply Modifiers
+[x] Include UVs
+[x] Write Materials (but don't use 'material groups' in the panel above)
+[x] Triangulate faces
+[x] Keep vertex order
+Uncheck everything else
+*/
 zPolygon parse_obj(
     char * rawdata,
-    uint64_t rawdata_size)
+    uint64_t rawdata_size,
+    const bool32_t flip_winding)
+{
+    return parse_obj_expecting_materials(rawdata, rawdata_size, NULL, 0, flip_winding);
+}
+zPolygon parse_obj_expecting_materials(
+    char * rawdata,
+    uint64_t rawdata_size,
+    ExpectedObjMaterials * expected_materials,
+    const uint32_t expected_materials_size,
+    const bool32_t flip_winding)
 {
     zPolygon return_value;
     return_value.x = 0.0f;
@@ -113,13 +139,15 @@ zPolygon parse_obj(
     
     // TODO: think about buffer size 
     // pass through buffer once to read all vertices 
-    #define LOADING_OBJ_BUF_SIZE 8000
-    zVertex * new_vertices = (zVertex *)malloc_from_managed(sizeof(zVertex) * LOADING_OBJ_BUF_SIZE);
+    #define LOADING_OBJ_BUF_SIZE 16000
+    zVertex * new_vertices = (zVertex *)malloc_from_managed(
+        sizeof(zVertex) * LOADING_OBJ_BUF_SIZE);
     float uv_u[LOADING_OBJ_BUF_SIZE];
     float uv_v[LOADING_OBJ_BUF_SIZE];
     uint32_t new_uv_i = 0;
     
     uint32_t i = 0;
+    uint32_t first_material_or_face_i = UINT32_MAX;
     uint32_t new_vertex_i = 0;
     while (i < rawdata_size) {
         
@@ -203,14 +231,30 @@ zPolygon parse_obj(
             // read the v coordinate
             uv_v[new_uv_i] = string_to_float(rawdata + i);
             
+            new_uv_i += 1;
+            
             // discard the v coordinate
             i += chars_till_next_space_or_slash(
                 rawdata + i);
             log_assert(rawdata[i] == '\n');
             
-            new_uv_i += 1;
-            
+            // discard the line break
+            i++;
+                        
         } else {
+            if (
+                rawdata[i] == 'f' ||
+                (
+                    rawdata[i] == 'u' &&
+                    rawdata[i+1] == 's' &&
+                    rawdata[i+2] == 'e' &&
+                    rawdata[i+3] == 'm'))
+            {
+                if (i < first_material_or_face_i) {
+                    first_material_or_face_i = i;
+                }
+            }
+            
             if (rawdata[i] == 'f') {
                 return_value.triangles_size += 1;
             }
@@ -229,57 +273,73 @@ zPolygon parse_obj(
         (zTriangle *)malloc_from_unmanaged(
             sizeof(zTriangle) * return_value.triangles_size);
     
-    i = 0;
+    i = first_material_or_face_i;
     uint32_t new_triangle_i = 0;
     int32_t using_texturearray_i = -1;
     int32_t using_texture_i = -1;
     float using_color[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
     
     while (i < rawdata_size) {
-        if (rawdata[i] == 'u') {
-            
+        if (rawdata[i] == 'u' &&
+            rawdata[i+1] == 's' &&
+            rawdata[i+2] == 'e' &&
+            rawdata[i+3] == 'm')
+        {
             uint32_t j = i + 1;
-            while (rawdata[j] != '\n' && rawdata[j] != '\0') {
+            while (
+                rawdata[j] != '\n' &&
+                rawdata[j] != '\0')
+            {
                 j++;
             }
             uint32_t line_size = j - i;
             
-            char usemtl_hint[line_size];
-            
-            for (j = 0; j < (line_size); j++) {
-                usemtl_hint[j] = rawdata[i + j];
-            }
-            
-            if (are_equal_strings_of_length(
-                "usemtl Face",
-                usemtl_hint,
-                line_size))
-            {
-                using_texturearray_i = 1;
-                using_texture_i = 2;
-            }
-            
-            if (
-                are_equal_strings_of_length(
-                    "usemtl Back",
-                    usemtl_hint,
-                    line_size))
-            {
-                using_texturearray_i = 1;
-                using_texture_i = 4;
-            }
-            
-            if (are_equal_strings_of_length(
-                    "usemtl Side",
-                    usemtl_hint,
-                    line_size))
-            {
-                using_texturearray_i = -1;
-                using_texture_i = -1;
-                using_color[0] = 0.5;
-                using_color[1] = 0.5;
-                using_color[2] = 0.5;
-                using_color[3] = 1.0;
+            if (expected_materials != NULL) {
+                char usemtl_hint[line_size];
+                char expected_mtl[line_size * 2];
+                
+                for (j = 0; j < (line_size); j++) {
+                    usemtl_hint[j] = rawdata[i + j];
+                }
+                
+                for (
+                    uint32_t mtl_i = 0;
+                    mtl_i < expected_materials_size;
+                    mtl_i++)
+                {
+                    strcpy_capped(
+                        expected_mtl,
+                        line_size*2,
+                        "usemtl ");
+                    strcat_capped(
+                        expected_mtl,
+                        line_size*2,
+                        expected_materials[mtl_i].material_name);
+                    
+                    if (
+                        are_equal_strings_of_length(
+                            expected_mtl,
+                            usemtl_hint,
+                            line_size))
+                    {
+                        log_append("Now using material: ");
+                        log_append(expected_mtl);
+                        log_append_char('\n');
+                        using_texturearray_i =
+                            expected_materials[mtl_i].texturearray_i;
+                        using_texture_i =
+                            expected_materials[mtl_i].texture_i;
+                        using_color[0] =
+                            expected_materials[mtl_i].rgba[0];
+                        using_color[1] =
+                            expected_materials[mtl_i].rgba[1];
+                        using_color[2] =
+                            expected_materials[mtl_i].rgba[2];
+                        using_color[3] =
+                            expected_materials[mtl_i].rgba[3];
+                        break;
+                    }
+                }
             }
             
             // skip until the next line break character 
@@ -312,10 +372,8 @@ zPolygon parse_obj(
             {
                 // skip the slash
                 i++;
-                uv_coord_i_0 =
-                    string_to_int32(rawdata + i);
-                i += chars_till_next_space_or_slash(
-                    rawdata + i);
+                uv_coord_i_0 = string_to_int32(rawdata + i);
+                i += chars_till_next_space_or_slash(rawdata + i);
             }
             
             log_assert(rawdata[i] == ' ');
@@ -368,32 +426,35 @@ zPolygon parse_obj(
             log_assert(uv_coord_i_1 < LOADING_OBJ_BUF_SIZE);
             log_assert(uv_coord_i_2 < LOADING_OBJ_BUF_SIZE);
             
-            new_triangle.vertices[0] =
+            uint32_t target_vertex_0 = flip_winding ? 2 : 0;
+            uint32_t target_vertex_1 = 1;
+            uint32_t target_vertex_2 = flip_winding ? 0 : 2;
+            
+            new_triangle.vertices[target_vertex_0] =
                 new_vertices[vertex_i_0 - 1];
-            new_triangle.vertices[1] =
+            new_triangle.vertices[target_vertex_1] =
                 new_vertices[vertex_i_1 - 1];
-            new_triangle.vertices[2] =
+            new_triangle.vertices[target_vertex_2] =
                 new_vertices[vertex_i_2 - 1];
             
             if (
-                uv_coord_i_0 > 0
-                && uv_coord_i_1 > 0
-                && uv_coord_i_2 > 0)
+                uv_coord_i_0 > 0 &&
+                uv_coord_i_1 > 0 &&
+                uv_coord_i_2 > 0)
             {
-                new_triangle.vertices[0].uv[0] =
-                    uv_u[uv_coord_i_0 - 1];
-                new_triangle.vertices[0].uv[1] =
-                    uv_v[uv_coord_i_0 - 1];
-                new_triangle.vertices[1].uv[0] =
-                    uv_u[uv_coord_i_1 - 1];
-                new_triangle.vertices[1].uv[1] =
-                    uv_v[uv_coord_i_1 - 1];
-                new_triangle.vertices[2].uv[0] =
-                    uv_u[uv_coord_i_2 - 1];
-                new_triangle.vertices[2].uv[1] =
-                    uv_v[uv_coord_i_2 - 1];
+                new_triangle.vertices[target_vertex_0].uv[0] =
+                uv_u[uv_coord_i_0 - 1];
+                new_triangle.vertices[target_vertex_0].uv[1] =
+                uv_v[uv_coord_i_0 - 1];
+                new_triangle.vertices[target_vertex_1].uv[0] =
+                uv_u[uv_coord_i_1 - 1];
+                new_triangle.vertices[target_vertex_1].uv[1] =
+                uv_v[uv_coord_i_1 - 1];
+                new_triangle.vertices[target_vertex_2].uv[0] =
+                uv_u[uv_coord_i_2 - 1];
+                new_triangle.vertices[target_vertex_2].uv[1] =
+                uv_v[uv_coord_i_2 - 1];
             }
-            
             
             new_triangle.color[0] = using_color[0];
             new_triangle.color[1] = using_color[1];
@@ -403,9 +464,11 @@ zPolygon parse_obj(
             new_triangle.texturearray_i = using_texturearray_i;
             new_triangle.texture_i = using_texture_i;
             
-            return_value.triangles[new_triangle_i] =
-                new_triangle;
+            return_value.triangles[new_triangle_i] = new_triangle;
             new_triangle_i++;
+            log_append("triangles finished parsing: ");
+            log_append_uint(new_triangle_i);
+            log_append_char('\n');
         } else {
             // skip until the next line break character 
             while (rawdata[i] != '\n' && rawdata[i] != '\0') {

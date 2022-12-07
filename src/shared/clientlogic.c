@@ -10,7 +10,35 @@ typedef struct TextureArrayLocation {
     int32_t texture_i;
 } TextureArrayLocation;
 
-zPolygon load_from_obj_file(char * filepath) {
+
+zPolygon load_from_obj_file_expecting_materials(
+    char * filepath,
+    ExpectedObjMaterials * expected_materials,
+    const uint32_t expected_materials_size,
+    const bool32_t flip_winding)
+{
+    FileBuffer buffer;
+    buffer.size = (uint64_t)platform_get_resource_size(filepath) + 1;
+    buffer.contents = (char *)malloc_from_managed(buffer.size);
+    platform_read_resource_file(
+        filepath,
+        &buffer);
+    
+    assert(buffer.size > 1);
+    
+    zPolygon return_value = parse_obj_expecting_materials(
+        /* rawdata     : */ buffer.contents,
+        /* rawdata_size: */ buffer.size,
+        expected_materials,
+        expected_materials_size,
+        flip_winding);
+    
+    free_from_managed((uint8_t *)buffer.contents);
+    
+    return return_value;
+}
+
+zPolygon load_from_obj_file(char * filepath, const bool32_t flip_winding) {
     FileBuffer buffer;
     buffer.size = (uint64_t)platform_get_resource_size(filepath) + 1;
     buffer.contents = (char *)malloc_from_managed(buffer.size);
@@ -22,7 +50,8 @@ zPolygon load_from_obj_file(char * filepath) {
     
     zPolygon return_value = parse_obj(
         /* rawdata     : */ buffer.contents,
-        /* rawdata_size: */ buffer.size);
+        /* rawdata_size: */ buffer.size,
+        flip_winding);
     
     free_from_managed((uint8_t *)buffer.contents);
     
@@ -67,6 +96,14 @@ void client_logic_startup() {
         (const char **)moar_filenames,
         1);
     
+    char * card_filenames[2] = {
+        (char *)"fs_justice.bmp",
+        (char *)"fs_cardback.bmp"
+    };
+    register_new_texturearray_from_files(
+        (const char **)card_filenames,
+        2);
+    
     request_label_around(
         /* object_id: */ 12321,
         /* text: */ "I'm a label!",
@@ -81,9 +118,9 @@ void client_logic_startup() {
     zlights_to_apply[0].x = 2.0f;
     zlights_to_apply[0].y = 0.3f;
     zlights_to_apply[0].z = 0.9f;
-    zlights_to_apply[0].RGBA[0] = 0.5f;
-    zlights_to_apply[0].RGBA[1] = 0.5f;
-    zlights_to_apply[0].RGBA[2] = 1.0f;
+    zlights_to_apply[0].RGBA[0] = 0.7f;
+    zlights_to_apply[0].RGBA[1] = 0.7f;
+    zlights_to_apply[0].RGBA[2] = 0.7f;
     zlights_to_apply[0].RGBA[3] = 1.0f;
     zlights_to_apply[0].reach = 1;
     zlights_to_apply[0].ambient = 1.0f;
@@ -91,21 +128,21 @@ void client_logic_startup() {
     zlights_to_apply_size++;
     log_assert(zlights_to_apply_size == 1);
     
-    TexQuad foreground_blue;
-    construct_texquad(&foreground_blue);
-    foreground_blue.object_id          = -1;
-    foreground_blue.texturearray_i     = -1;
-    foreground_blue.texture_i          = -1;
-    foreground_blue.width_pixels       = 200;
-    foreground_blue.height_pixels      = 200;
-    foreground_blue.left_pixels        = 125;
-    foreground_blue.top_pixels         = 125;
-    foreground_blue.z                  = 0.97f;
-    foreground_blue.RGBA[0]            = 0.5f;
-    foreground_blue.RGBA[1]            = 0.5f;
-    foreground_blue.RGBA[2]            = 1.0f;
-    foreground_blue.RGBA[3]            = 1.0f;
-    request_texquad_renderable(&foreground_blue);
+    TexQuad background_green;
+    construct_texquad(&background_green);
+    background_green.object_id          = -1;
+    background_green.texturearray_i     = -1;
+    background_green.texture_i          = -1;
+    background_green.width_pixels       = 200;
+    background_green.height_pixels      = 200;
+    background_green.left_pixels        = 125;
+    background_green.top_pixels         = 125;
+    background_green.z                  = 1.0f;
+    background_green.RGBA[0]            = 0.0f;
+    background_green.RGBA[1]            = 0.4f;
+    background_green.RGBA[2]            = 0.0f;
+    background_green.RGBA[3]            = 1.0f;
+    request_texquad_renderable(&background_green);
     
     TexQuad foreground_red;
     construct_texquad(&foreground_red);
@@ -137,7 +174,6 @@ void client_logic_startup() {
     purple_texture.RGBA[1]            = 1.0f;
     purple_texture.RGBA[2]            = 1.0f;
     purple_texture.RGBA[3]            = 1.0f;
-    log_assert(texture_has_alpha_channel(2, 0));
     request_texquad_renderable(&purple_texture);
     ScheduledAnimation move_purple_texture;
     construct_scheduled_animation(&move_purple_texture);
@@ -162,10 +198,10 @@ void client_logic_startup() {
     move_purple_texture_back.runs = 0; // repeat forever
     request_scheduled_animation(&move_purple_texture_back);
     
-    zPolygon teapot = load_from_obj_file("teapot.obj");
+    zPolygon teapot = load_from_obj_file("teapot.obj", false);
     scale_zpolygon(
         /* to_scale: */ &teapot,
-        /* new_height: */ 0.05f);
+        /* new_height: */ 0.1f);
     center_zpolygon_offsets(&teapot);
     
     teapot.object_id = 12345;
@@ -185,6 +221,53 @@ void client_logic_startup() {
     }
     zpolygons_to_render[zpolygons_to_render_size++] = teapot;
     assert(zpolygons_to_render_size == 1);
+    
+    uint32_t expected_materials_size = 3; 
+    ExpectedObjMaterials * expected_materials = (ExpectedObjMaterials *)
+        malloc_from_unmanaged(
+            sizeof(ExpectedObjMaterials) * expected_materials_size);
+    strcpy_capped(expected_materials[0].material_name, 16, "Frontface");
+    expected_materials[0].texturearray_i = 3;
+    expected_materials[0].texture_i = 0;
+    expected_materials[0].rgba[0] = 1.0f;
+    expected_materials[0].rgba[1] = 1.0f;
+    expected_materials[0].rgba[2] = 1.0f;
+    expected_materials[0].rgba[3] = 1.0f;
+    
+    strcpy_capped(expected_materials[1].material_name, 16, "Backface");
+    expected_materials[1].texturearray_i = 3;
+    expected_materials[1].texture_i = 1;
+    expected_materials[1].rgba[0] = 0.0f;
+    expected_materials[1].rgba[1] = 1.0f;
+    expected_materials[1].rgba[2] = 1.0f;
+    expected_materials[1].rgba[3] = 1.0f;
+    
+    strcpy_capped(expected_materials[2].material_name, 16, "Sideface");
+    expected_materials[2].texturearray_i = -1;
+    expected_materials[2].texture_i = -1;
+    expected_materials[2].rgba[0] = 1.0f;
+    expected_materials[2].rgba[1] = 1.0f;
+    expected_materials[2].rgba[2] = 1.0f;
+    expected_materials[2].rgba[3] = 1.0f;
+    
+    zPolygon card = load_from_obj_file_expecting_materials(
+        "cardwithuvcoords.obj",
+        expected_materials,
+        expected_materials_size,
+        false);
+    scale_zpolygon(
+        /* to_scale: */ &card,
+        /* new_height: */ 0.01f);
+    center_zpolygon_offsets(&card);
+    
+    card.object_id = 234;
+    card.x = screen_x_to_3d_x(225);
+    card.y = screen_y_to_3d_y(175);
+    card.z = 4.0f;
+    card.x_angle = 0.0f;
+    card.y_angle = 0.0f;
+    card.z_angle = 0.0f;
+    zpolygons_to_render[zpolygons_to_render_size++] = card;
     
     log_append("finished client_logic_startup()\n");
 }
@@ -216,7 +299,7 @@ static int32_t cur_texture_i = 0;
 static void request_fading_lightsquare(
     const float location_x,
     const float location_y)
-{ 
+{
     TexQuad touch_highlight;
     construct_texquad(&touch_highlight);
     touch_highlight.object_id = latest_object_id++;
@@ -278,6 +361,7 @@ static void request_fading_lightsquare(
             0.1f * (float)(tok_rand() % 10);
         zlights_to_apply[new_zlight_i].RGBA[3] = 1.0f;
     }
+    
     cur_color_i += 1;
     if (cur_color_i > 2) { cur_color_i = 0; }
     
@@ -361,9 +445,13 @@ void client_logic_update(uint64_t microseconds_elapsed)
     client_handle_touches_and_leftclicks(microseconds_elapsed);
     client_handle_keypresses(microseconds_elapsed); 
     
-    //    zpolygons_to_render[0].x_angle += 0.03f;
-    //    zpolygons_to_render[0].y_angle += 0.01f;
-    //    zpolygons_to_render[0].z_angle += 0.004f;
+    zpolygons_to_render[0].x_angle += 0.03f;
+    zpolygons_to_render[0].y_angle += 0.01f;
+    zpolygons_to_render[0].z_angle += 0.004f;
+    
+    zpolygons_to_render[1].x_angle += 0.03f;
+    zpolygons_to_render[1].y_angle += 0.01f;
+    zpolygons_to_render[1].z_angle += 0.004f;
 }
 
 void client_logic_window_resize(
