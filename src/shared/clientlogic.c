@@ -160,13 +160,13 @@ void client_logic_startup() {
         false);
     scale_zpolygon(
         /* to_scale: */ &card_1,
-        /* new_height: */ 0.2f);
+        /* new_height: */ 0.5f);
     center_zpolygon_offsets(&card_1);
     
     card_1.object_id = 234;
     card_1.touchable_id = 0;
-    card_1.x = screen_x_to_3d_x(window_width * 0.2f);
-    card_1.y = screen_y_to_3d_y(window_height * 0.2f);
+    card_1.x = screen_x_to_3d_x(window_width * 0.475f);
+    card_1.y = screen_y_to_3d_y(window_height * 0.425f);
     card_1.z = 1.0f;
     card_1.x_angle = 3.18f;
     card_1.y_angle = 3.2f;
@@ -175,22 +175,22 @@ void client_logic_startup() {
     
     zPolygon card_2 = card_1;
     card_2.object_id = 235;
-    card_2.x = screen_x_to_3d_x(window_width * 0.7f);
-    card_2.y = screen_y_to_3d_y(window_height * 0.2f);
+    card_2.x = screen_x_to_3d_x(window_width * 0.525f);
+    card_2.y = screen_y_to_3d_y(window_height * 0.425f);
     card_2.touchable_id = 1;
     zpolygons_to_render[zpolygons_to_render_size++] = card_2;
     
     zPolygon card_3 = card_1;
     card_3.object_id = 236;
-    card_3.x = screen_x_to_3d_x(window_width * 0.2f);
-    card_3.y = screen_y_to_3d_y(window_height * 0.7f);
+    card_3.x = screen_x_to_3d_x(window_width * 0.475f);
+    card_3.y = screen_y_to_3d_y(window_height * 0.525f);
     card_3.touchable_id = 2;
     zpolygons_to_render[zpolygons_to_render_size++] = card_3;
     
     zPolygon card_4 = card_1;
     card_4.object_id = 237;
-    card_4.x = screen_x_to_3d_x(window_width * 0.7f);
-    card_4.y = screen_y_to_3d_y(window_height * 0.7f);
+    card_4.x = screen_x_to_3d_x(window_width * 0.525f);
+    card_4.y = screen_y_to_3d_y(window_height * 0.525f);
     card_4.touchable_id = 3;
     zpolygons_to_render[zpolygons_to_render_size++] = card_4;
     
@@ -338,7 +338,7 @@ static void  client_handle_touches_and_leftclicks(
                 construct_scheduled_animation(&move_card_closer);
                 move_card_closer.affected_object_id = 234 + touch_id;
                 move_card_closer.final_z_known = true;
-                move_card_closer.final_mid_z = 1.0f;
+                move_card_closer.final_mid_z = 1.0f - (touch_id * 0.01f);
                 move_card_closer.remaining_wait_before_next_run = 200000;
                 move_card_closer.duration_microseconds = 250000;
                 request_scheduled_animation(&move_card_closer);
@@ -356,7 +356,7 @@ static void  client_handle_touches_and_leftclicks(
                 construct_scheduled_animation(&move_card_back);
                 move_card_back.affected_object_id = 234 + touch_id;
                 move_card_back.final_z_known = true;
-                move_card_back.final_mid_z = 2.0f;
+                move_card_back.final_mid_z = 3.0f + (touch_id * 0.01f);
                 move_card_back.remaining_wait_before_next_run = 200000;
                 move_card_back.duration_microseconds = 275000;
                 request_scheduled_animation(&move_card_back);

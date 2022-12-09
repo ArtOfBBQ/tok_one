@@ -34,6 +34,8 @@ draw_triangle(
                 .viewport_y[v] = input[v].y / input[v].w;
             touchable_triangles[touchable_triangles_size]
                 .touchable_id = touchable_id;
+            touchable_triangles[touchable_triangles_size]
+                .viewport_z[v] = input[v].z;
         }
         
         touchable_triangles_size++;
@@ -102,19 +104,29 @@ int32_t find_touchable_at(
     const float normalized_x,
     const float normalized_y)
 {
+    int32_t return_value = -1;
+    float current_z = FLOAT32_MAX;
+    
     for (
         int32_t i = (int32_t)(touchable_triangles_size - 1);
         i >= 0;
         i--)
     {
-        if (point_collides_triangle_area(
-            /* normalized_x : */ normalized_x,
-            /* normalized_y : */ normalized_y,
-            /* TriangleArea * area : */ &touchable_triangles[i]))
+        float avg_z = (
+            touchable_triangles[i].viewport_z[0] +
+            touchable_triangles[i].viewport_z[1] +
+            touchable_triangles[i].viewport_z[2]) / 3;
+        if (
+            avg_z < current_z &&
+            point_collides_triangle_area(
+                /* normalized_x : */ normalized_x,
+                /* normalized_y : */ normalized_y,
+                /* TriangleArea * area : */ &touchable_triangles[i]))
         {
-            return touchable_triangles[i].touchable_id;
+            current_z = avg_z;
+            return_value = touchable_triangles[i].touchable_id;
         }
     }
     
-    return -1;
+    return return_value;
 }
