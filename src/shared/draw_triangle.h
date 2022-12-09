@@ -21,13 +21,14 @@ extern "C" {
 #endif
 
 typedef struct TriangleArea {
-    // by normalized i mean this coordinate system:
+    // by viewport i mean this coordinate system:
     //   * -1.0f is the left of the screen
     //   * 1.0f is the right of the screen
     //   * 1.0f is the top of the screen
     //   * -1.0f is the bottom of the screen
-    float normalized_x[3];
-    float normalized_y[3];
+    float viewport_x[3];
+    float viewport_y[3];
+    float viewport_z[3];
     int32_t touchable_id;
 } TriangleArea;
 
@@ -39,11 +40,8 @@ void __attribute__((no_instrument_function))
 draw_triangle(
     Vertex * vertices_recipient,
     uint32_t * vertex_count_recipient,
-    Vertex input[3]);
-
-void register_touchable_triangle(
-    const int32_t touchable_id,
-    Vertex triangle_area[3]);
+    Vertex input[3],
+    int32_t touchable_id);
 
 int32_t find_touchable_at(
     const float normalized_x,

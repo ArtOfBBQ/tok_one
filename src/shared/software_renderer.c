@@ -17,6 +17,7 @@ static float * cosines;
 static float * sines;
 static float * visibility_ratings;
 static Vertex * rendered_vertices;
+static bool8_t * rendered_triangles_touchable_ids;
 
 void init_renderer() {
     renderer_initialized = true;
@@ -52,6 +53,8 @@ void init_renderer() {
         VERTICES_CAP * sizeof(float), 32);
     rendered_vertices = (Vertex *)malloc_from_unmanaged_aligned(
         VERTICES_CAP * sizeof(Vertex), 32);
+    rendered_triangles_touchable_ids = (bool8_t *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(bool8_t) / 3, 32);
 }
 
 void software_render(
@@ -277,6 +280,9 @@ void software_render(
                         zpolygons_to_render[zp_i].triangles[i].color[2];
                     rendered_vertices[visible_vertices_i].RGBA[3] =
                         zpolygons_to_render[zp_i].triangles[i].color[3];
+                    
+                    rendered_triangles_touchable_ids[visible_triangles_size] =
+                        zpolygons_to_render[zp_i].touchable_id;
                 }
                 visible_triangles_size += 1;
             }
@@ -314,8 +320,8 @@ void software_render(
         visible_vertices_size);
     
     for (uint32_t i = 0; i < visible_triangles_size; i++) {
-        // note: this won't overwrite the lighting properties in rendered_vertices,
-        // only the positions        
+        // note: this won't overwrite the lighting properties in
+        // rendered_vertices, only the positions
         rendered_vertices[(i*3)+0].x = triangle_vertices_x[(i*3)+0];
         rendered_vertices[(i*3)+1].x = triangle_vertices_x[(i*3)+1];
         rendered_vertices[(i*3)+2].x = triangle_vertices_x[(i*3)+2];        
@@ -332,7 +338,9 @@ void software_render(
             /* vertex_count_recipient: */
                 next_workload_size,
             /* input: */
-                rendered_vertices + (i * 3));
+                rendered_vertices + (i * 3),
+            /* touchable_id: */
+                rendered_triangles_touchable_ids[i]);
     }
     
     if (!application_running) { return; }

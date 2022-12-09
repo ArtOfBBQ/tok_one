@@ -46,6 +46,7 @@ typedef struct zTriangle {
 
 typedef struct zPolygon {
     uint32_t object_id;
+    int32_t touchable_id;
     zTriangle * triangles;
     uint32_t triangles_size;
     float x;
@@ -55,6 +56,7 @@ typedef struct zPolygon {
     float y_angle;
     float z_angle;
 } zPolygon;
+void construct_zpolygon(zPolygon * to_construct);
 
 // A buffer of zPolygon objects that should be rendered
 // in your application

@@ -57,9 +57,23 @@ typedef struct ScheduledAnimation {
     };
     // ****** end of translation animations
     
-    float x_rotation_per_second;
-    float y_rotation_per_second;
-    float z_rotation_per_second;
+    bool32_t final_x_angle_known;
+    union {
+        float x_rotation_per_second;
+        float final_x_angle;
+    };
+    
+    bool32_t final_y_angle_known;
+    union {
+        float y_rotation_per_second;
+        float final_y_angle;
+    };
+    
+    bool32_t final_z_angle_known;
+    union {
+        float z_rotation_per_second;
+        float final_z_angle;
+    };
     
     // *** absolute scaling (change width/height)
     // acts as reach/diffuse modifier for lights since lights have no size

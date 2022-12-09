@@ -129,13 +129,7 @@ zPolygon parse_obj_expecting_materials(
     const bool32_t flip_winding)
 {
     zPolygon return_value;
-    return_value.x = 0.0f;
-    return_value.y = 0.0f;
-    return_value.z = 1.0f;
-    return_value.z_angle = 0.0f;
-    return_value.y_angle = 0.0f; // 3.14 to face camera
-    return_value.x_angle = 0.0f;
-    return_value.triangles_size = 0;
+    construct_zpolygon(&return_value);
     
     // TODO: think about buffer size 
     // pass through buffer once to read all vertices 
@@ -682,6 +676,19 @@ void ztriangles_apply_lighting(
             }
         }
     }
+}
+
+void construct_zpolygon(zPolygon * to_construct) {
+    to_construct->object_id = -1;
+    to_construct->touchable_id = -1;
+    to_construct->triangles = NULL;
+    to_construct->triangles_size = 0;
+    to_construct->x = 0.0f;
+    to_construct->y = 0.0f;
+    to_construct->z = 1.0f;
+    to_construct->x_angle = 0.0f;
+    to_construct->y_angle = 0.0f;
+    to_construct->z_angle = 0.0f;
 }
 
 void __attribute__((no_instrument_function))

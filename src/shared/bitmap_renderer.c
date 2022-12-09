@@ -198,7 +198,6 @@ static void add_quad_to_gpu_workload(
             Vertex topleft[3];
             Vertex bottomright[3];
             
-            float z_value = to_add->z;
             float extra_scale_x = (to_add->scale_factor_x - 1.0f);
             float extra_scale_y = (to_add->scale_factor_y - 1.0f);
             if (extra_scale_x != extra_scale_x) { return; } // not a number NaN
@@ -261,7 +260,7 @@ static void add_quad_to_gpu_workload(
             // top left vertex
             topleft[0].x = left;
             topleft[0].y = top;
-            topleft[0].z = z_value;
+            topleft[0].z = to_add->z;
             topleft[0].w = 1.0f;
             topleft[0].texturearray_i =
                 to_add->texturearray_i;
@@ -276,7 +275,7 @@ static void add_quad_to_gpu_workload(
             // top right vertex
             topleft[1].x = right;
             topleft[1].y = top;
-            topleft[1].z = z_value;
+            topleft[1].z = to_add->z;
             topleft[1].w = 1.0f;
             topleft[1].texturearray_i =
                 to_add->texturearray_i;
@@ -291,7 +290,7 @@ static void add_quad_to_gpu_workload(
             // bottom left vertex
             topleft[2].x = left;
             topleft[2].y = bottom;
-            topleft[2].z = z_value;
+            topleft[2].z = to_add->z;
             topleft[2].w = 1.0f;
             topleft[2].texturearray_i =
                 to_add->texturearray_i;
@@ -307,7 +306,7 @@ static void add_quad_to_gpu_workload(
             // top right vertex
             bottomright[0].x = right;
             bottomright[0].y = top;
-            bottomright[0].z = z_value;
+            bottomright[0].z = to_add->z;
             bottomright[0].w = 1.0f;
             bottomright[0].texturearray_i =
                 to_add->texturearray_i;
@@ -323,7 +322,7 @@ static void add_quad_to_gpu_workload(
             // bottom left vertex
             bottomright[1].x = left;
             bottomright[1].y = bottom;
-            bottomright[1].z = z_value;
+            bottomright[1].z = to_add->z;
             bottomright[1].w = 1.0f;
             bottomright[1].texturearray_i =
                 to_add->texturearray_i;
@@ -339,7 +338,7 @@ static void add_quad_to_gpu_workload(
             // bottom right vertex
             bottomright[2].x = right;
             bottomright[2].y = bottom;
-            bottomright[2].z = z_value;
+            bottomright[2].z = to_add->z;
             bottomright[2].w = 1.0f;
             bottomright[2].texturearray_i =
                 to_add->texturearray_i;
@@ -411,10 +410,12 @@ static void add_quad_to_gpu_workload(
                 topleft_rotated[i].x -= 1.0f;
                 topleft_rotated[i].y /= (window_height * 0.5f);
                 topleft_rotated[i].y -= 1.0f;
+                // topleft_rotated[i].w = topleft_rotated[i].z;
                 bottomright_rotated[i].x /= (window_width * 0.5f);
                 bottomright_rotated[i].x -= 1.0f;
                 bottomright_rotated[i].y /= (window_height * 0.5f);
                 bottomright_rotated[i].y -= 1.0f;
+                // bottomright_rotated[i].w = bottomright_rotated[i].z;
             }
             
             draw_triangle(
@@ -423,7 +424,9 @@ static void add_quad_to_gpu_workload(
                 /* vertex_count_recipient: */
                     next_gpu_workload_size,
                 /* input: */
-                    topleft_rotated);
+                    topleft_rotated,
+                /* touchable_id: */
+                    to_add->touchable_id);
             
             draw_triangle(
                 /* vertices_recipient: */
@@ -431,21 +434,9 @@ static void add_quad_to_gpu_workload(
                 /* vertex_count_recipient: */
                     next_gpu_workload_size,
                 /* input: */
-                    bottomright_rotated);
-            
-            if (to_add->touchable_id >= 0) {
-                register_touchable_triangle(
-                    /* const int32_t touchable_id: */
-                        to_add->touchable_id,
-                    /* Vertex triangle_area[3]: */
-                        topleft_rotated);
-                
-                register_touchable_triangle(
-                    /* const int32_t touchable_id: */
-                        to_add->touchable_id,
-                    /* Vertex triangle_area[3]: */
-                        bottomright_rotated);
-            }
+                    bottomright_rotated,
+                /* touchable_id: */
+                    to_add->touchable_id);
         }
     }
 }

@@ -7,7 +7,8 @@ void __attribute__((no_instrument_function))
 draw_triangle(
     Vertex * vertices_recipient,
     uint32_t * vertex_count_recipient,
-    Vertex input[3])
+    Vertex input[3],
+    int32_t touchable_id)
 {
     log_assert(vertices_recipient != NULL);
     
@@ -18,31 +19,25 @@ draw_triangle(
         vertex_i++;
     }
     *vertex_count_recipient += 3;
-}
-
-void register_touchable_triangle(
-    const int32_t touchable_id,
-    Vertex triangle_area[3])
-{
-    log_assert(touchable_triangles_size < TOUCHABLE_TRIANGLES_ARRAYSIZE);
     
-    for (
-        uint32_t v = 0;
-        v < 3;
-        v++)
-    {
-        touchable_triangles[touchable_triangles_size]
-            .normalized_x[v] =
-                triangle_area[v].x;
-        touchable_triangles[touchable_triangles_size]
-            .normalized_y[v] =
-                triangle_area[v].y;
-        touchable_triangles[touchable_triangles_size]
-            .touchable_id =
-                touchable_id;
+    if (touchable_id >= 0) {
+        log_assert(touchable_triangles_size < TOUCHABLE_TRIANGLES_ARRAYSIZE);
+        
+        for (
+             uint32_t v = 0;
+             v < 3;
+             v++)
+        {
+            touchable_triangles[touchable_triangles_size]
+                .viewport_x[v] = input[v].x / input[v].w;
+            touchable_triangles[touchable_triangles_size]
+                .viewport_y[v] = input[v].y / input[v].w;
+            touchable_triangles[touchable_triangles_size]
+                .touchable_id = touchable_id;
+        }
+        
+        touchable_triangles_size++;
     }
-    
-    touchable_triangles_size++;
 }
 
 static float get_triangle_area(
@@ -64,34 +59,34 @@ static bool32_t point_collides_triangle_area(
     const TriangleArea * area)
 {
     float original_triangle_area = get_triangle_area(
-        /* x1: */ area->normalized_x[0],
-        /* y1: */ area->normalized_y[0],
-        /* x2: */ area->normalized_x[1],
-        /* y2: */ area->normalized_y[1],
-        /* x3: */ area->normalized_x[2],
-        /* y3: */ area->normalized_y[2]);
+        /* x1: */ area->viewport_x[0],
+        /* y1: */ area->viewport_y[0],
+        /* x2: */ area->viewport_x[1],
+        /* y2: */ area->viewport_y[1],
+        /* x3: */ area->viewport_x[2],
+        /* y3: */ area->viewport_y[2]);
     
     float inner_triangle1_area = get_triangle_area(
         /* x1: */ normalized_x,
         /* y1: */ normalized_y,
-        /* x2: */ area->normalized_x[1],
-        /* y2: */ area->normalized_y[1],
-        /* x3: */ area->normalized_x[2],
-        /* y3: */ area->normalized_y[2]);
+        /* x2: */ area->viewport_x[1],
+        /* y2: */ area->viewport_y[1],
+        /* x3: */ area->viewport_x[2],
+        /* y3: */ area->viewport_y[2]);
     
     float inner_triangle2_area = get_triangle_area(
-        /* x1: */ area->normalized_x[0],
-        /* y1: */ area->normalized_y[0],
+        /* x1: */ area->viewport_x[0],
+        /* y1: */ area->viewport_y[0],
         /* x2: */ normalized_x,
         /* y2: */ normalized_y,
-        /* x3: */ area->normalized_x[2],
-        /* y3: */ area->normalized_y[2]);
+        /* x3: */ area->viewport_x[2],
+        /* y3: */ area->viewport_y[2]);
 
     float inner_triangle3_area = get_triangle_area(
-        /* x1: */ area->normalized_x[0],
-        /* y1: */ area->normalized_y[0],
-        /* x2: */ area->normalized_x[1],
-        /* y2: */ area->normalized_y[1],
+        /* x1: */ area->viewport_x[0],
+        /* y1: */ area->viewport_y[0],
+        /* x2: */ area->viewport_x[1],
+        /* y2: */ area->viewport_y[1],
         /* x3: */ normalized_x,
         /* y3: */ normalized_y);
     

@@ -25,8 +25,12 @@ void construct_scheduled_animation(
     to_construct->delta_y_per_second = 0.0f;
     to_construct->delta_z_per_second = 0.0f;
     to_construct->delta_z_per_second = 0.0f;
+    
+    to_construct->final_x_angle_known = false;
     to_construct->x_rotation_per_second = 0.0f;
+    to_construct->final_y_angle_known = false;
     to_construct->y_rotation_per_second = 0.0f;
+    to_construct->final_z_angle_known = false;
     to_construct->z_rotation_per_second = 0.0f;
     
     to_construct->final_width_known = false;
@@ -396,6 +400,70 @@ static void resolve_single_animation_effects(
                                 elapsed_this_run);
                 }
             }
+        }
+    }
+    
+    for (
+        uint32_t zp_i = 0;
+        zp_i < zpolygons_to_render_size;
+        zp_i++)
+    {
+        if (
+            zpolygons_to_render[zp_i].object_id != anim->affected_object_id)
+        {
+            continue;
+        }
+        
+        if (!anim->final_z_known) {
+                zpolygons_to_render[zp_i].z +=
+                    ((anim->delta_z_per_second
+                        * elapsed_this_run)
+                            / 1000000);
+        } else {
+            float diff_z = anim->final_mid_z - zpolygons_to_render[zp_i].z;
+            zpolygons_to_render[zp_i].z +=
+                diff_z /
+                    ((float)remaining_microseconds_at_start_of_run /
+                        elapsed_this_run);
+        }
+        
+        if (!anim->final_x_angle_known) {
+            zpolygons_to_render[zp_i].x_angle +=
+                (anim->x_rotation_per_second
+                    * elapsed_this_run)
+                        / 1000000;
+        } else {
+            float diff_x_angle = anim->final_x_angle - zpolygons_to_render[zp_i].x_angle;
+            zpolygons_to_render[zp_i].x_angle +=
+                diff_x_angle /
+                    ((float)remaining_microseconds_at_start_of_run /
+                        elapsed_this_run);
+        }
+        
+        if (!anim->final_y_angle_known) {
+            zpolygons_to_render[zp_i].y_angle +=
+                (anim->y_rotation_per_second
+                    * elapsed_this_run)
+                        / 1000000;
+        } else {
+            float diff_y_angle = anim->final_y_angle - zpolygons_to_render[zp_i].y_angle;
+            zpolygons_to_render[zp_i].y_angle +=
+                diff_y_angle /
+                    ((float)remaining_microseconds_at_start_of_run /
+                        elapsed_this_run);
+        }
+        
+        if (!anim->final_z_angle_known) {
+            zpolygons_to_render[zp_i].z_angle +=
+                (anim->z_rotation_per_second
+                    * elapsed_this_run)
+                        / 1000000;
+        } else {
+            float diff_z_angle = anim->final_z_angle - zpolygons_to_render[zp_i].z_angle;
+            zpolygons_to_render[zp_i].z_angle +=
+                diff_z_angle /
+                    ((float)remaining_microseconds_at_start_of_run /
+                        elapsed_this_run);
         }
     }
     

@@ -70,7 +70,13 @@ void client_logic_get_application_name_to_recipient(
         /* origin: */ app_name);
 }
 
+static bool32_t ran_anim[4]; // 1 for each card in the test scene
 void client_logic_startup() {
+    
+    ran_anim[0] = false;
+    ran_anim[1] = false;
+    ran_anim[2] = false;
+    ran_anim[3] = false;
     
     init_rand_with_seed(platform_get_current_time_microsecs());
     
@@ -104,123 +110,20 @@ void client_logic_startup() {
         (const char **)card_filenames,
         2);
     
-    request_label_around(
-        /* object_id: */ 12321,
-        /* text: */ "I'm a label!",
-        /* mid_x_pixels: */ 225,
-        /* top_pixels: */ 100,
-        /* z: */ 0.9f,
-        175,
-        false);
-    
     zlights_to_apply[0].deleted = false;
     zlights_to_apply[0].object_id = -1;
     zlights_to_apply[0].x = 2.0f;
     zlights_to_apply[0].y = 0.3f;
     zlights_to_apply[0].z = 0.9f;
-    zlights_to_apply[0].RGBA[0] = 0.7f;
-    zlights_to_apply[0].RGBA[1] = 0.7f;
-    zlights_to_apply[0].RGBA[2] = 0.7f;
+    zlights_to_apply[0].RGBA[0] = 1.0f;
+    zlights_to_apply[0].RGBA[1] = 1.0f;
+    zlights_to_apply[0].RGBA[2] = 1.0f;
     zlights_to_apply[0].RGBA[3] = 1.0f;
-    zlights_to_apply[0].reach = 1;
+    zlights_to_apply[0].reach = 5;
     zlights_to_apply[0].ambient = 1.0f;
     zlights_to_apply[0].diffuse = 1.0f;
     zlights_to_apply_size++;
     log_assert(zlights_to_apply_size == 1);
-    
-    TexQuad background_green;
-    construct_texquad(&background_green);
-    background_green.object_id          = -1;
-    background_green.texturearray_i     = -1;
-    background_green.texture_i          = -1;
-    background_green.width_pixels       = 200;
-    background_green.height_pixels      = 200;
-    background_green.left_pixels        = 125;
-    background_green.top_pixels         = 125;
-    background_green.z                  = 1.0f;
-    background_green.RGBA[0]            = 0.0f;
-    background_green.RGBA[1]            = 0.4f;
-    background_green.RGBA[2]            = 0.0f;
-    background_green.RGBA[3]            = 1.0f;
-    request_texquad_renderable(&background_green);
-    
-    TexQuad foreground_red;
-    construct_texquad(&foreground_red);
-    foreground_red.object_id          = 3;
-    foreground_red.texturearray_i     = -1;
-    foreground_red.texture_i          = -1;
-    foreground_red.width_pixels       = 50;
-    foreground_red.height_pixels      = 50;
-    foreground_red.left_pixels        = 200;
-    foreground_red.top_pixels         = 400;
-    foreground_red.z                  = 0.95f;
-    foreground_red.RGBA[0]            = 1.0f;
-    foreground_red.RGBA[1]            = 0.0f;
-    foreground_red.RGBA[2]            = 0.0f;
-    foreground_red.RGBA[3]            = 1.0f;
-    request_texquad_renderable(&foreground_red);
-    
-    TexQuad purple_texture;
-    construct_texquad(&purple_texture);
-    purple_texture.object_id          = 5;
-    purple_texture.texturearray_i     = 2;
-    purple_texture.texture_i          = 0;
-    purple_texture.width_pixels       = 120;
-    purple_texture.height_pixels      = 120;
-    purple_texture.left_pixels        = 170;
-    purple_texture.top_pixels         = 140;
-    purple_texture.z                  = 0.92f;
-    purple_texture.RGBA[0]            = 1.0f;
-    purple_texture.RGBA[1]            = 1.0f;
-    purple_texture.RGBA[2]            = 1.0f;
-    purple_texture.RGBA[3]            = 1.0f;
-    request_texquad_renderable(&purple_texture);
-    ScheduledAnimation move_purple_texture;
-    construct_scheduled_animation(&move_purple_texture);
-    move_purple_texture.affected_object_id = 5;
-    move_purple_texture.z_rotation_per_second = -5.0f;
-    move_purple_texture.final_x_known = true;
-    move_purple_texture.final_mid_x = 400;
-    move_purple_texture.wait_before_each_run = 4000000;
-    move_purple_texture.duration_microseconds = 1000000;
-    move_purple_texture.runs = 0; // repeat forever
-    request_scheduled_animation(&move_purple_texture);
-    
-    ScheduledAnimation move_purple_texture_back;
-    construct_scheduled_animation(&move_purple_texture_back);
-    move_purple_texture_back.affected_object_id = 5;
-    move_purple_texture_back.z_rotation_per_second = 5.0f;
-    move_purple_texture_back.final_x_known = true;
-    move_purple_texture_back.final_mid_x = 200;
-    move_purple_texture_back.remaining_wait_before_next_run = 2000000;
-    move_purple_texture_back.wait_before_each_run = 4000000;
-    move_purple_texture_back.duration_microseconds = 1000000;
-    move_purple_texture_back.runs = 0; // repeat forever
-    request_scheduled_animation(&move_purple_texture_back);
-    
-    zPolygon teapot = load_from_obj_file("teapot.obj", false);
-    scale_zpolygon(
-        /* to_scale: */ &teapot,
-        /* new_height: */ 0.1f);
-    center_zpolygon_offsets(&teapot);
-    
-    teapot.object_id = 12345;
-    teapot.x = screen_x_to_3d_x(170);
-    teapot.y = screen_y_to_3d_y(140);
-    teapot.z = 1.0f;
-    teapot.x_angle = 0.0f;
-    teapot.y_angle = 0.0f;
-    teapot.z_angle = 0.0f;
-    for (uint32_t i = 0; i < teapot.triangles_size; i++) {
-        teapot.triangles[i].color[0] = 1.0f;
-        teapot.triangles[i].color[1] = 0.6f;
-        teapot.triangles[i].color[2] = 0.6f;
-        teapot.triangles[i].color[3] = 1.0f;
-        teapot.triangles[i].texturearray_i = -1;
-        teapot.triangles[i].texture_i = -1;
-    }
-    zpolygons_to_render[zpolygons_to_render_size++] = teapot;
-    assert(zpolygons_to_render_size == 1);
     
     uint32_t expected_materials_size = 3; 
     ExpectedObjMaterials * expected_materials = (ExpectedObjMaterials *)
@@ -250,24 +153,46 @@ void client_logic_startup() {
     expected_materials[2].rgba[2] = 1.0f;
     expected_materials[2].rgba[3] = 1.0f;
     
-    zPolygon card = load_from_obj_file_expecting_materials(
+    zPolygon card_1 = load_from_obj_file_expecting_materials(
         "cardwithuvcoords.obj",
         expected_materials,
         expected_materials_size,
         false);
     scale_zpolygon(
-        /* to_scale: */ &card,
-        /* new_height: */ 0.01f);
-    center_zpolygon_offsets(&card);
+        /* to_scale: */ &card_1,
+        /* new_height: */ 0.2f);
+    center_zpolygon_offsets(&card_1);
     
-    card.object_id = 234;
-    card.x = screen_x_to_3d_x(225);
-    card.y = screen_y_to_3d_y(175);
-    card.z = 4.0f;
-    card.x_angle = 0.0f;
-    card.y_angle = 0.0f;
-    card.z_angle = 0.0f;
-    zpolygons_to_render[zpolygons_to_render_size++] = card;
+    card_1.object_id = 234;
+    card_1.touchable_id = 0;
+    card_1.x = screen_x_to_3d_x(window_width * 0.2f);
+    card_1.y = screen_y_to_3d_y(window_height * 0.2f);
+    card_1.z = 1.0f;
+    card_1.x_angle = 3.18f;
+    card_1.y_angle = 3.2f;
+    card_1.z_angle = 0.0f;
+    zpolygons_to_render[zpolygons_to_render_size++] = card_1;
+    
+    zPolygon card_2 = card_1;
+    card_2.object_id = 235;
+    card_2.x = screen_x_to_3d_x(window_width * 0.7f);
+    card_2.y = screen_y_to_3d_y(window_height * 0.2f);
+    card_2.touchable_id = 1;
+    zpolygons_to_render[zpolygons_to_render_size++] = card_2;
+    
+    zPolygon card_3 = card_1;
+    card_3.object_id = 236;
+    card_3.x = screen_x_to_3d_x(window_width * 0.2f);
+    card_3.y = screen_y_to_3d_y(window_height * 0.7f);
+    card_3.touchable_id = 2;
+    zpolygons_to_render[zpolygons_to_render_size++] = card_3;
+    
+    zPolygon card_4 = card_1;
+    card_4.object_id = 237;
+    card_4.x = screen_x_to_3d_x(window_width * 0.7f);
+    card_4.y = screen_y_to_3d_y(window_height * 0.7f);
+    card_4.touchable_id = 3;
+    zpolygons_to_render[zpolygons_to_render_size++] = card_4;
     
     log_append("finished client_logic_startup()\n");
 }
@@ -396,9 +321,51 @@ static void  client_handle_touches_and_leftclicks(
     uint64_t microseconds_elapsed)
 {
     if (!previous_touch_or_leftclick_end.handled) {
-        request_fading_lightsquare(
-            previous_touch_or_leftclick_end.screen_x,
-            previous_touch_or_leftclick_end.screen_y);
+        int32_t touch_id = previous_touch_or_leftclick_end.touchable_id;
+        
+        if (touch_id >= 0 && touch_id < 4) {
+            if (!ran_anim[touch_id]) {
+                ran_anim[touch_id] = true;
+                ScheduledAnimation flip_card;
+                construct_scheduled_animation(&flip_card);
+                flip_card.affected_object_id = 234 + touch_id;
+                flip_card.final_y_angle_known = true;
+                flip_card.final_y_angle = 0.0f;
+                flip_card.duration_microseconds = 275000;
+                request_scheduled_animation(&flip_card);
+                
+                ScheduledAnimation move_card_closer;
+                construct_scheduled_animation(&move_card_closer);
+                move_card_closer.affected_object_id = 234 + touch_id;
+                move_card_closer.final_z_known = true;
+                move_card_closer.final_mid_z = 1.0f;
+                move_card_closer.remaining_wait_before_next_run = 200000;
+                move_card_closer.duration_microseconds = 250000;
+                request_scheduled_animation(&move_card_closer);
+            } else {
+                ran_anim[touch_id] = false;
+                ScheduledAnimation flip_card;
+                construct_scheduled_animation(&flip_card);
+                flip_card.affected_object_id = 234 + touch_id;
+                flip_card.final_y_angle_known = true;
+                flip_card.final_y_angle = 3.2f;
+                flip_card.duration_microseconds = 250000;
+                request_scheduled_animation(&flip_card);
+                
+                ScheduledAnimation move_card_back;
+                construct_scheduled_animation(&move_card_back);
+                move_card_back.affected_object_id = 234 + touch_id;
+                move_card_back.final_z_known = true;
+                move_card_back.final_mid_z = 2.0f;
+                move_card_back.remaining_wait_before_next_run = 200000;
+                move_card_back.duration_microseconds = 275000;
+                request_scheduled_animation(&move_card_back);
+            }
+        }
+        
+//        request_fading_lightsquare(
+//            previous_touch_or_leftclick_end.screen_x,
+//            previous_touch_or_leftclick_end.screen_y);
         
         previous_touch_or_leftclick_end.handled = true;
     }
@@ -437,6 +404,7 @@ static void client_handle_keypresses(uint64_t microseconds_elapsed) {
 
 bool32_t fading_out = true;
 
+static bool32_t flipping_right = true;
 void client_logic_update(uint64_t microseconds_elapsed)
 {
     // TODO: our timer is weirdly broken on iOS. Fix it!
@@ -444,14 +412,6 @@ void client_logic_update(uint64_t microseconds_elapsed)
     
     client_handle_touches_and_leftclicks(microseconds_elapsed);
     client_handle_keypresses(microseconds_elapsed); 
-    
-    zpolygons_to_render[0].x_angle += 0.03f;
-    zpolygons_to_render[0].y_angle += 0.01f;
-    zpolygons_to_render[0].z_angle += 0.004f;
-    
-    zpolygons_to_render[1].x_angle += 0.03f;
-    zpolygons_to_render[1].y_angle += 0.01f;
-    zpolygons_to_render[1].z_angle += 0.004f;
 }
 
 void client_logic_window_resize(
