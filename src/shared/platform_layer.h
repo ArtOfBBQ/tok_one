@@ -75,6 +75,11 @@ void platform_256_sub_scalar(
     float * floats_1,
     const uint32_t floats_1_size,
     const float subtraction);
+void platform_256_sub_scalarproduct(
+    float * subtract_from,
+    const uint32_t subtract_from_size,
+    const float base_scalar,
+    const float * multiply_scalar_by);
 void platform_256_add(
     float * floats_1,
     const float * floats_2,

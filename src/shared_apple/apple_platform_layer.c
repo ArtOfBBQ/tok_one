@@ -96,6 +96,44 @@ void platform_256_sub_scalar(
     #endif
 }
 
+void platform_256_sub_scalarproduct(
+    float * subtract_from,
+    const uint32_t subtract_from_size,
+    const float base_scalar,
+    const float * multiply_scalar_by)
+{
+    #ifdef __ARM_NEON  
+    float32x4_t v2 = vld1q_dup_f32(&base_scalar);
+    
+    for (uint32_t i = 0; i < subtract_from_size; i += 4) {
+        float32x4_t v1 = vld1q_f32(subtract_from + i);
+        float32x4_t v3 = vld1q_f32(multiply_scalar_by + i);
+        
+        v3 = vmulq_f32(v3, v2);
+        v1 = vsubq_f32(v1, v3);
+        vst1q_f32(subtract_from + i, v1);
+    }
+    #elif defined(__AVX__)
+    __m256 v1;
+    __m256 v2 = _mm256_set_ps(
+        base_scalar, base_scalar, base_scalar, base_scalar,
+        base_scalar, base_scalar, base_scalar, base_scalar);
+    __m256 v3;
+    
+    for (uint32_t i = 0; i < subtract_from_size; i += 8) {
+        v1 = _mm256_load_ps((subtract_from + i));
+        v3 = _mm256_load_ps((multiply_scalar_by + i));
+        v3 = _mm256_mul_ps(v3, v2);
+        v1 = _mm256_sub_ps(v1, v3);
+        _mm256_store_ps(subtract_from + i, v1);
+    }
+    #else
+    for (uint32_t i = 0; i < subtract_from_size; i++) {
+        subtract_from[i] -= (base_scalar * multiply_scalar_by[i]);
+    }
+    #endif
+}
+
 void platform_256_add(
     float * floats_1,
     const float * floats_2,

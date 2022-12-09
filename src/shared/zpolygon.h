@@ -45,7 +45,7 @@ typedef struct zTriangle {
 } zTriangle;
 
 typedef struct zPolygon {
-    uint32_t object_id;
+    int32_t object_id;
     int32_t touchable_id;
     zTriangle * triangles;
     uint32_t triangles_size;
@@ -55,6 +55,7 @@ typedef struct zPolygon {
     float x_angle;
     float y_angle;
     float z_angle;
+    bool32_t ignore_camera;
 } zPolygon;
 void construct_zpolygon(zPolygon * to_construct);
 

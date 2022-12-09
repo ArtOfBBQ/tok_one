@@ -11,6 +11,7 @@ static float * polygons_z;
 static float * triangle_vertices_x; // the xyz offsets of the triangles that make up the poly
 static float * triangle_vertices_y;
 static float * triangle_vertices_z;
+static float * camera_multipliers;
 static float * working_memory_1;
 static float * working_memory_2;
 static float * cosines;
@@ -44,6 +45,8 @@ void init_renderer() {
     working_memory_1 = (float *)malloc_from_unmanaged_aligned(
         VERTICES_CAP * sizeof(float), 32);
     working_memory_2 = (float *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(float), 32);
+    camera_multipliers = (float *)malloc_from_unmanaged_aligned(
         VERTICES_CAP * sizeof(float), 32);
     cosines = (float *)malloc_from_unmanaged_aligned(
         VERTICES_CAP * sizeof(float), 32);
@@ -134,6 +137,8 @@ void software_render(
                 x_angles[cur_vertex] = zpolygons_to_render[i].x_angle;
                 y_angles[cur_vertex] = zpolygons_to_render[i].y_angle;
                 z_angles[cur_vertex] = zpolygons_to_render[i].z_angle;
+                
+                camera_multipliers[cur_vertex] = (1.0f * !zpolygons_to_render[i].ignore_camera);
                 cur_vertex += 1;
             }
         }
@@ -175,13 +180,28 @@ void software_render(
         vertices_size,
         cosines,
         sines);
+    
     // translate the world so that the camera becomes 0,0,0
     platform_256_add(triangle_vertices_x, polygons_x, vertices_size);
     platform_256_add(triangle_vertices_y, polygons_y, vertices_size);
     platform_256_add(triangle_vertices_z, polygons_z, vertices_size);
-    platform_256_sub_scalar(triangle_vertices_x, vertices_size, camera.x);
-    platform_256_sub_scalar(triangle_vertices_y, vertices_size, camera.y);
-    platform_256_sub_scalar(triangle_vertices_z, vertices_size, camera.z);
+    
+    // working_memory_1 here should contain the reversed 'ignore camera' booleans
+    platform_256_sub_scalarproduct(
+        /* subtract_from: */ triangle_vertices_x,
+        /* subtract_from_size: */ vertices_size,
+        /* base_scalar: */ screen_x_to_3d_x(camera.x),
+        /* multiply_scalar_by: */ camera_multipliers);
+    platform_256_sub_scalarproduct(
+        /* subtract_from: */ triangle_vertices_y,
+        /* subtract_from_size: */ vertices_size,
+        /* base_scalar: */ screen_y_to_3d_y(camera.y),
+        /* multiply_scalar_by: */ camera_multipliers);
+    platform_256_sub_scalarproduct(
+        /* subtract_from: */ triangle_vertices_z,
+        /* subtract_from_size: */ vertices_size,
+        /* base_scalar: */ camera.z,
+        /* multiply_scalar_by: */ camera_multipliers);
     
     // next: camera-rotate x, y and z
     x_rotate_zvertices_inplace_scalar_angle(

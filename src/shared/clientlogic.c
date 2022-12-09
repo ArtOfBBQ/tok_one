@@ -192,6 +192,7 @@ void client_logic_startup() {
     card_4.x = screen_x_to_3d_x(window_width * 0.525f);
     card_4.y = screen_y_to_3d_y(window_height * 0.525f);
     card_4.touchable_id = 3;
+    card_4.ignore_camera = true;
     zpolygons_to_render[zpolygons_to_render_size++] = card_4;
     
     log_append("finished client_logic_startup()\n");

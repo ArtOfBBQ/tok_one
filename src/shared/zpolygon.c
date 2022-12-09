@@ -262,6 +262,8 @@ zPolygon parse_obj_expecting_materials(
         }
     }
     
+    log_assert(return_value.triangles_size > 0);
+    
     // pass through rawdata again to read all triangles 
     return_value.triangles =
         (zTriangle *)malloc_from_unmanaged(
@@ -689,6 +691,7 @@ void construct_zpolygon(zPolygon * to_construct) {
     to_construct->x_angle = 0.0f;
     to_construct->y_angle = 0.0f;
     to_construct->z_angle = 0.0f;
+    to_construct->ignore_camera = false;
 }
 
 void __attribute__((no_instrument_function))
