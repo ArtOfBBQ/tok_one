@@ -12,6 +12,7 @@ static float * triangle_vertices_x; // the xyz offsets of the triangles that mak
 static float * triangle_vertices_y;
 static float * triangle_vertices_z;
 static float * camera_multipliers;
+static float * lighting_multipliers;
 static float * working_memory_1;
 static float * working_memory_2;
 static float * cosines;
@@ -47,6 +48,8 @@ void init_renderer() {
     working_memory_2 = (float *)malloc_from_unmanaged_aligned(
         VERTICES_CAP * sizeof(float), 32);
     camera_multipliers = (float *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(float), 32);
+    lighting_multipliers = (float *)malloc_from_unmanaged_aligned(
         VERTICES_CAP * sizeof(float), 32);
     cosines = (float *)malloc_from_unmanaged_aligned(
         VERTICES_CAP * sizeof(float), 32);
@@ -139,6 +142,7 @@ void software_render(
                 z_angles[cur_vertex] = zpolygons_to_render[i].z_angle;
                 
                 camera_multipliers[cur_vertex] = (1.0f * !zpolygons_to_render[i].ignore_camera);
+                lighting_multipliers[cur_vertex] = (1.0f * !zpolygons_to_render[i].ignore_lighting);
                 cur_vertex += 1;
             }
         }
@@ -255,7 +259,7 @@ void software_render(
     {
         for (
            int32_t i = 0;
-           i < zpolygons_to_render[zp_i].triangles_size;
+           i < (int32_t)zpolygons_to_render[zp_i].triangles_size;
            i++)
         {
             uint32_t first_vertex_i = triangle_i * 3;
@@ -277,9 +281,9 @@ void software_render(
                     triangle_vertices_z[(visible_triangles_size * 3)+m] =
                         triangle_vertices_z[all_vertices_i];
                     
-                    rendered_vertices[visible_vertices_i].lighting[0] = 0.0f;
-                    rendered_vertices[visible_vertices_i].lighting[1] = 0.0f;
-                    rendered_vertices[visible_vertices_i].lighting[2] = 0.0f;
+                    rendered_vertices[visible_vertices_i].lighting[0] = (lighting_multipliers[i] - 1.0f)* -1.0f;
+                    rendered_vertices[visible_vertices_i].lighting[1] = rendered_vertices[visible_vertices_i].lighting[0];
+                    rendered_vertices[visible_vertices_i].lighting[2] = rendered_vertices[visible_vertices_i].lighting[0];
                     rendered_vertices[visible_vertices_i].lighting[3] = 1.0f;
                     
                     rendered_vertices[visible_vertices_i].texture_i =
@@ -320,6 +324,7 @@ void software_render(
             triangle_vertices_x,
             triangle_vertices_y,
             triangle_vertices_z,
+            lighting_multipliers,
             visible_vertices_size,
             rendered_vertices,
             visible_vertices_size,

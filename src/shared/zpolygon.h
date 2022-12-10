@@ -56,6 +56,7 @@ typedef struct zPolygon {
     float y_angle;
     float z_angle;
     bool32_t ignore_camera;
+    bool32_t ignore_lighting;
 } zPolygon;
 void construct_zpolygon(zPolygon * to_construct);
 
@@ -71,6 +72,7 @@ void ztriangles_apply_lighting(
     float * vertices_x,
     float * vertices_y,
     float * vertices_z,
+    float * lighting_multipliers,
     const uint32_t vertices_size,
     Vertex * recipients,
     const uint32_t recipients_size,

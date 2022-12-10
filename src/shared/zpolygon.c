@@ -599,6 +599,7 @@ void ztriangles_apply_lighting(
     float * vertices_x,
     float * vertices_y,
     float * vertices_z,
+    float * lighting_multipliers,
     const uint32_t vertices_size,
     Vertex * recipients,
     const uint32_t recipients_size,
@@ -664,7 +665,8 @@ void ztriangles_apply_lighting(
                 log_assert(vertex_i < recipients_size);
                 recipients[vertex_i].lighting[col_i] +=
                     ambient_mod *
-                    distances_to_vertices[vertex_i];
+                    distances_to_vertices[vertex_i] *
+                    lighting_multipliers[vertex_i];
                 
                 // *******************************************
                 // add diffuse lighting                
@@ -673,7 +675,8 @@ void ztriangles_apply_lighting(
                     recipients[vertex_i].lighting[col_i] +=
                         (diffused_dots[triangle_i] * -1) *
                         diffuse_mod *
-                        distances_to_vertices[vertex_i];
+                        distances_to_vertices[vertex_i] *
+                        lighting_multipliers[vertex_i];
                 }
             }
         }
@@ -691,6 +694,7 @@ void construct_zpolygon(zPolygon * to_construct) {
     to_construct->x_angle = 0.0f;
     to_construct->y_angle = 0.0f;
     to_construct->z_angle = 0.0f;
+    to_construct->ignore_lighting = false;
     to_construct->ignore_camera = false;
 }
 
