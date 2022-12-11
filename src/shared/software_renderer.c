@@ -1,44 +1,95 @@
 #include "software_renderer.h"
 
+static uint32_t renderer_initialized = false;
+
+// all of these are for vectorized
+// manipulation of our triangles vertices
+#define VERTICES_CAP 500000
+static float * polygons_x; // the xyz of the parent polygons
+static float * polygons_y;
+static float * polygons_z;
+static float * triangle_vertices_x; // the xyz offsets of the triangles that make up the poly
+static float * triangle_vertices_y;
+static float * triangle_vertices_z;
+static float * camera_multipliers;
+static float * lighting_multipliers;
+static float * working_memory_1;
+static float * working_memory_2;
+static float * cosines;
+static float * sines;
+static float * visibility_ratings;
+static Vertex * rendered_vertices;
+static bool8_t * rendered_triangles_touchable_ids;
+
 void init_renderer() {
-    current_touch.handled = true;
-    client_logic_startup();
     renderer_initialized = true;
     
-    last_mouse_up.handled = true;
-    last_mouse_down.handled = true;
-    last_mouse_move.handled = true;
-    last_mouse_up.handled = true;
     camera.x = 0.0f;
     camera.y = 0.0f;
+    camera.z = 0.0f;
+    camera.x_angle = 0.0f;
+    camera.y_angle = 0.0f;
+    camera.z_angle = 0.0f;
+    
+    triangle_vertices_x = (float *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(float), 32);
+    triangle_vertices_y = (float *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(float), 32);
+    triangle_vertices_z = (float *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(float), 32);
+    polygons_x = (float *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(float), 32);
+    polygons_y = (float *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(float), 32);
+    polygons_z = (float *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(float), 32);
+    working_memory_1 = (float *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(float), 32);
+    working_memory_2 = (float *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(float), 32);
+    camera_multipliers = (float *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(float), 32);
+    lighting_multipliers = (float *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(float), 32);
+    cosines = (float *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(float), 32);
+    sines = (float *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(float), 32);
+    visibility_ratings = (float *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(float), 32);
+    rendered_vertices = (Vertex *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(Vertex), 32);
+    rendered_triangles_touchable_ids = (bool8_t *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(bool8_t) / 3, 32);
 }
 
 void software_render(
     Vertex * next_gpu_workload,
     uint32_t * next_workload_size,
-    zLightSource * zlights_transformed,
     uint64_t elapsed_nanoseconds)
 {
+    (void)elapsed_nanoseconds;
+    
     if (renderer_initialized != true) {
-        printf("renderer not initialized, aborting...\n");
+        log_append("renderer not initialized, aborting...\n");
         return;
     }
     
     if (
-        next_gpu_workload == NULL
-        || next_workload_size == NULL)
+        next_gpu_workload == NULL ||
+        next_workload_size == NULL)
     {
-        printf("ERROR: platform layer didnt pass recipients\n");
+        log_append("ERROR: platform layer didnt pass recipients\n");
         return;
     }
-    
-    client_logic_update(elapsed_nanoseconds);
     
     if (zpolygons_to_render_size == 0) {
         return;
     }
     
-    uint32_t triangles_to_draw_size = 0;
+    assert(zpolygons_to_render_size < ZPOLYGONS_TO_RENDER_ARRAYSIZE);
+    
+    uint32_t all_triangles_size = 0;
     for (
         uint32_t i = 0;
         i < zpolygons_to_render_size;
@@ -49,22 +100,23 @@ void software_render(
             j < zpolygons_to_render[i].triangles_size;
             j++)
         {
-            triangles_to_draw_size++;
+            all_triangles_size++;
         }
     }
     
-    if (triangles_to_draw_size == 0) { return; }
+    if (all_triangles_size == 0) { return; }
     
-    // transform all triangles
-    zTriangle triangles_to_draw[triangles_to_draw_size];
-    zTriangle position_translated;
-    zTriangle camera_y_rotated;
-    zTriangle camera_x_rotated;
-    zTriangle camera_z_rotated;
-    zTriangle x_rotated;
-    zTriangle y_rotated;
-    zTriangle z_rotated;
-    uint32_t t = 0;
+    // transform all triangle vertices
+    // there's actually only 1 angle per polygon, so
+    // this is very wasteful
+    float x_angles[all_triangles_size * 3];
+    float y_angles[all_triangles_size * 3];
+    float z_angles[all_triangles_size * 3];
+    
+    const uint32_t vertices_size = all_triangles_size * 3;
+    assert(vertices_size < VERTICES_CAP);
+    
+    uint32_t cur_vertex = 0;
     for (
         uint32_t i = 0;
         i < zpolygons_to_render_size;
@@ -75,111 +127,247 @@ void software_render(
             j < zpolygons_to_render[i].triangles_size;
             j++)
         {
-            assert(t < triangles_to_draw_size);
-            
-            x_rotated = x_rotate_ztriangle(
-                zpolygons_to_render[i].triangles + j,
-                zpolygons_to_render[i].x_angle);
-            y_rotated = y_rotate_ztriangle(
-                &x_rotated,
-                zpolygons_to_render[i].y_angle);
-            z_rotated = z_rotate_ztriangle(
-                &y_rotated,
-                zpolygons_to_render[i].z_angle);
-            
-            position_translated = translate_ztriangle(
-                /* input: */
-                    &z_rotated,
-                /* by_x: */
-                    zpolygons_to_render[i].x - camera.x,
-                /* by_y: */
-                    zpolygons_to_render[i].y - camera.y,
-                /* by_z: */
-                    zpolygons_to_render[i].z - camera.z);
-            
-            camera_y_rotated = y_rotate_ztriangle(
-                &position_translated,
-                -camera.y_angle);
-            camera_x_rotated = x_rotate_ztriangle(
-                &camera_y_rotated,
-                -camera.x_angle);
-            camera_z_rotated = z_rotate_ztriangle(
-                &camera_x_rotated,
-                -camera.z_angle);
-            
-            triangles_to_draw[t] = camera_z_rotated;
-            t++;
+            for (uint32_t m = 0; m < 3; m++) {
+                triangle_vertices_x[cur_vertex] =
+                    zpolygons_to_render[i].triangles[j].vertices[m].x;
+                triangle_vertices_y[cur_vertex] =
+                    zpolygons_to_render[i].triangles[j].vertices[m].y;
+                triangle_vertices_z[cur_vertex] =
+                    zpolygons_to_render[i].triangles[j].vertices[m].z;
+                polygons_x[cur_vertex] = zpolygons_to_render[i].x;
+                polygons_y[cur_vertex] = zpolygons_to_render[i].y;
+                polygons_z[cur_vertex] = zpolygons_to_render[i].z;
+                x_angles[cur_vertex] = zpolygons_to_render[i].x_angle;
+                y_angles[cur_vertex] = zpolygons_to_render[i].y_angle;
+                z_angles[cur_vertex] = zpolygons_to_render[i].z_angle;
+                
+                camera_multipliers[cur_vertex] = (1.0f * !zpolygons_to_render[i].ignore_camera);
+                lighting_multipliers[cur_vertex] = (1.0f * !zpolygons_to_render[i].ignore_lighting);
+                cur_vertex += 1;
+            }
         }
     }
+        
+    for (uint32_t i = 0; i < vertices_size; i++) {
+        cosines[i] = cosf(x_angles[i]);
+        sines[i] = sinf(x_angles[i]);
+    }
+    x_rotate_zvertices_inplace(
+        triangle_vertices_y,
+        triangle_vertices_z, 
+        working_memory_1,
+        working_memory_2, 
+        vertices_size, 
+        cosines,
+        sines);
+    for (uint32_t i = 0; i < vertices_size; i++) {
+        cosines[i] = cosf(y_angles[i]);
+        sines[i] = sinf(y_angles[i]);
+    }
+    y_rotate_zvertices_inplace(
+        triangle_vertices_x,
+        triangle_vertices_z,
+        working_memory_1,
+        working_memory_2, 
+        vertices_size,
+        cosines,
+        sines);
+    for (uint32_t i = 0; i < vertices_size; i++) {
+        cosines[i] = cosf(z_angles[i]);
+        sines[i] = sinf(z_angles[i]);
+    }
+    z_rotate_zvertices_inplace(
+        triangle_vertices_x,
+        triangle_vertices_y,
+        working_memory_1,
+        working_memory_2, 
+        vertices_size,
+        cosines,
+        sines);
     
-    // sort all triangles so the most distant ones can be
-    // drawn first 
-    qsort(
-        triangles_to_draw,
-        triangles_to_draw_size,
-        sizeof(zTriangle),
-        &sorter_cmpr_lowest_z);
+    // translate the world so that the camera becomes 0,0,0
+    platform_256_add(triangle_vertices_x, polygons_x, vertices_size);
+    platform_256_add(triangle_vertices_y, polygons_y, vertices_size);
+    platform_256_add(triangle_vertices_z, polygons_z, vertices_size);
+    
+    // working_memory_1 here should contain the reversed 'ignore camera' booleans
+    platform_256_sub_scalarproduct(
+        /* subtract_from: */ triangle_vertices_x,
+        /* subtract_from_size: */ vertices_size,
+        /* base_scalar: */ screen_x_to_3d_x(camera.x),
+        /* multiply_scalar_by: */ camera_multipliers);
+    platform_256_sub_scalarproduct(
+        /* subtract_from: */ triangle_vertices_y,
+        /* subtract_from_size: */ vertices_size,
+        /* base_scalar: */ screen_y_to_3d_y(camera.y),
+        /* multiply_scalar_by: */ camera_multipliers);
+    platform_256_sub_scalarproduct(
+        /* subtract_from: */ triangle_vertices_z,
+        /* subtract_from_size: */ vertices_size,
+        /* base_scalar: */ camera.z,
+        /* multiply_scalar_by: */ camera_multipliers);
+    
+    // next: camera-rotate x, y and z
+    x_rotate_zvertices_inplace_scalar_angle(
+        triangle_vertices_y,
+        triangle_vertices_z, 
+        working_memory_1,
+        working_memory_2, 
+        vertices_size, 
+        -camera.x_angle);
+    y_rotate_zvertices_inplace_scalar_angle(
+        triangle_vertices_x,
+        triangle_vertices_z,
+        working_memory_1,
+        working_memory_2, 
+        vertices_size, 
+        -camera.y_angle);
+    z_rotate_zvertices_inplace_scalar_angle(
+        triangle_vertices_x,
+        triangle_vertices_y,
+        working_memory_1,
+        working_memory_2, 
+        vertices_size, 
+        -camera.z_angle);
+    
+    uint32_t visible_triangles_size = 0;
     
     // we're not using the camera because the entire world
     // was translated to have the camera be at 0,0,0
     zVertex origin;
     origin.x = 0.0f;
     origin.y = 0.0f;
-    origin.z = 0.0f; 
+    origin.z = 0.0f;
+    
+    // this gets 1 'visibility rating' (a dot product) per triangle,
+    // so it will be 1/3rd the size of vertices_size    
+    get_visibility_ratings(
+        origin,
+        triangle_vertices_x,
+        triangle_vertices_y,
+        triangle_vertices_z,
+        vertices_size,
+        visibility_ratings);
+    
+    // Next, we'll do a bunch of copying of the visible triangles to the front
+    // of the arrays, so we can ignore the invisible triangles at the end
+    uint32_t triangle_i = 0;
     for (
-        int32_t i = triangles_to_draw_size - 1;
-        i >= 0;
-        i -= 1)
+        uint32_t zp_i = 0;
+        zp_i < zpolygons_to_render_size;
+        zp_i++)
     {
-        float perspective_dot_product =
-            get_visibility_rating(
-                origin,
-                triangles_to_draw + i,
-                0);
-        
-        if (perspective_dot_product < 0.0f
-            && triangles_to_draw[i].vertices[0].z
-                > projection_constants.near
-            && triangles_to_draw[i].vertices[1].z
-                > projection_constants.near
-            && triangles_to_draw[i].vertices[2].z
-                > projection_constants.near)
+        for (
+           int32_t i = 0;
+           i < (int32_t)zpolygons_to_render[zp_i].triangles_size;
+           i++)
         {
-            Vertex triangle_to_draw[3];
-            
-            for (uint32_t v = 0; v < 3; v++) {
-                triangle_to_draw[v].lighting[0] = 0.0f;
-                triangle_to_draw[v].lighting[1] = 0.0f;
-                triangle_to_draw[v].lighting[2] = 0.0f;
-                triangle_to_draw[v].lighting[3] = 1.0f;
-            }
-            for (
-                uint32_t l = 0;
-                l < zlights_to_apply_size;
-                l++)
+            uint32_t first_vertex_i = triangle_i * 3;
+            log_assert(first_vertex_i < vertices_size);
+            if (
+                visibility_ratings[triangle_i] < 0.0f &&
+                (triangle_vertices_z[triangle_i * 3] > projection_constants.near ||
+                 triangle_vertices_z[(triangle_i * 3)+1] > projection_constants.near ||
+                 triangle_vertices_z[(triangle_i * 3)+2] > projection_constants.near))
             {
-                ztriangle_apply_lighting(
-                    /* recipient: */
-                        triangle_to_draw,
-                    /* input: */
-                        triangles_to_draw + i,
-                    /* zlight_source: */
-                        &zlights_transformed[l]);
+                for (uint32_t m = 0; m < 3; m++) {
+                    uint32_t all_vertices_i = (triangle_i * 3)+m;
+                    uint32_t visible_vertices_i = (visible_triangles_size * 3)+m;
+                    
+                    triangle_vertices_x[(visible_triangles_size * 3)+m] =
+                        triangle_vertices_x[all_vertices_i];
+                    triangle_vertices_y[(visible_triangles_size * 3)+m] =
+                        triangle_vertices_y[all_vertices_i];
+                    triangle_vertices_z[(visible_triangles_size * 3)+m] =
+                        triangle_vertices_z[all_vertices_i];
+                    
+                    rendered_vertices[visible_vertices_i].lighting[0] = (lighting_multipliers[i] - 1.0f)* -1.0f;
+                    rendered_vertices[visible_vertices_i].lighting[1] = rendered_vertices[visible_vertices_i].lighting[0];
+                    rendered_vertices[visible_vertices_i].lighting[2] = rendered_vertices[visible_vertices_i].lighting[0];
+                    rendered_vertices[visible_vertices_i].lighting[3] = 1.0f;
+                    
+                    rendered_vertices[visible_vertices_i].texture_i =
+                        zpolygons_to_render[zp_i].triangles[i].texture_i;
+                    rendered_vertices[visible_vertices_i].texturearray_i =
+                        zpolygons_to_render[zp_i].triangles[i].texturearray_i;
+                    
+                    rendered_vertices[visible_vertices_i].uv[0] =
+                        zpolygons_to_render[zp_i].triangles[i].vertices[m].uv[0];
+                    rendered_vertices[visible_vertices_i].uv[1] =
+                        zpolygons_to_render[zp_i].triangles[i].vertices[m].uv[1];
+                    
+                    rendered_vertices[visible_vertices_i].RGBA[0] =
+                        zpolygons_to_render[zp_i].triangles[i].color[0];
+                    rendered_vertices[visible_vertices_i].RGBA[1] =
+                        zpolygons_to_render[zp_i].triangles[i].color[1];
+                    rendered_vertices[visible_vertices_i].RGBA[2] =
+                        zpolygons_to_render[zp_i].triangles[i].color[2];
+                    rendered_vertices[visible_vertices_i].RGBA[3] =
+                        zpolygons_to_render[zp_i].triangles[i].color[3];
+                    
+                    rendered_triangles_touchable_ids[visible_triangles_size] =
+                        zpolygons_to_render[zp_i].touchable_id;
+                }
+                visible_triangles_size += 1;
             }
-            
-            ztriangle_to_2d(
-                /* recipient: */
-                    triangle_to_draw,
-                /* input: */
-                    triangles_to_draw + i);
-            
-            draw_triangle(
-                /* vertices_recipient: */
-                    next_gpu_workload,
-                /* vertex_count_recipient: */
-                    next_workload_size,
-                /* input: */
-                    triangle_to_draw);
+            triangle_i += 1;
         }
     }
+    uint32_t visible_vertices_size = visible_triangles_size * 3;
+    
+    for (
+        uint32_t light_i = 0;
+        light_i < zlights_to_apply_size;
+        light_i++)
+    {
+        ztriangles_apply_lighting(
+            triangle_vertices_x,
+            triangle_vertices_y,
+            triangle_vertices_z,
+            lighting_multipliers,
+            visible_vertices_size,
+            rendered_vertices,
+            visible_vertices_size,
+            &zlights_to_apply[light_i]);
+    }
+    
+    // w is basically just z before projection
+    for (uint32_t i = 0; i < visible_triangles_size; i++) {
+        rendered_vertices[(i*3)+0].w = triangle_vertices_z[(i*3)+0];
+        rendered_vertices[(i*3)+1].w = triangle_vertices_z[(i*3)+1];
+        rendered_vertices[(i*3)+2].w = triangle_vertices_z[(i*3)+2]; 
+    }
+    
+    ztriangles_to_2d_inplace(
+        triangle_vertices_x,
+        triangle_vertices_y,
+        triangle_vertices_z,
+        visible_vertices_size);
+    
+    for (uint32_t i = 0; i < visible_triangles_size; i++) {
+        // note: this won't overwrite the lighting properties in
+        // rendered_vertices, only the positions
+        rendered_vertices[(i*3)+0].x = triangle_vertices_x[(i*3)+0];
+        rendered_vertices[(i*3)+1].x = triangle_vertices_x[(i*3)+1];
+        rendered_vertices[(i*3)+2].x = triangle_vertices_x[(i*3)+2];        
+        rendered_vertices[(i*3)+0].y = triangle_vertices_y[(i*3)+0];
+        rendered_vertices[(i*3)+1].y = triangle_vertices_y[(i*3)+1];
+        rendered_vertices[(i*3)+2].y = triangle_vertices_y[(i*3)+2]; 
+        rendered_vertices[(i*3)+0].z = triangle_vertices_z[(i*3)+0];
+        rendered_vertices[(i*3)+1].z = triangle_vertices_z[(i*3)+1];
+        rendered_vertices[(i*3)+2].z = triangle_vertices_z[(i*3)+2]; 
+        
+        draw_triangle(
+            /* vertices_recipient: */
+                next_gpu_workload,
+            /* vertex_count_recipient: */
+                next_workload_size,
+            /* input: */
+                rendered_vertices + (i * 3),
+            /* touchable_id: */
+                rendered_triangles_touchable_ids[i]);
+    }
+    
+    if (!application_running) { return; }
 }
+

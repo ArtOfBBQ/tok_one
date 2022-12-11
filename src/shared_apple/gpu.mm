@@ -1,50 +1,69 @@
 #import "gpu.h"
 
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
-
-uint64_t previous_time;
+uint32_t block_drawinmtkview = true;
 
 @implementation MetalKitViewDelegate
 {
-    NSUInteger _currentFrameIndex;
+    NSUInteger current_frame_i;
+    MTLViewport viewport;
+    VertexBuffer render_commands;
+    
+    id<MTLDevice> metal_device;
+    id<MTLCommandQueue> command_queue;
+    id<MTLDepthStencilState> depth_stencil_state;
+    
+    // TODO: consider adding another pipeline state
+    // id<MTLRenderPipelineState> transparent_bitmap_state;
+    
+    // TODO: study semaphores
+    dispatch_semaphore_t _frameBoundarySemaphore;
 }
 
 - (void)
-    configureMetalWithDevice: (id<MTLDevice>)metal_device
+    configureMetalWithDevice: (id<MTLDevice>)with_metal_device
     andPixelFormat: (MTLPixelFormat)pixel_format
     fromFolder: (NSString *)shader_lib_filepath
 {
-    printf(
-        "configureMetalWithDevice() from path: %s\n",
-        [shader_lib_filepath
-            cStringUsingEncoding:NSUTF8StringEncoding]);
-    previous_time = platform_get_current_time_microsecs();
+    _frameBoundarySemaphore = dispatch_semaphore_create(3);
+    current_frame_i = 0;
     
-    _currentFrameIndex = 0;
-    
-    _metal_device = metal_device;
-    _command_queue = [metal_device newCommandQueue];
+    metal_device = with_metal_device;
     
     NSError *Error = NULL;
-    
     id<MTLLibrary> shader_library =
-        [metal_device
-            newLibraryWithFile: shader_lib_filepath 
-            error: &Error];
+        [with_metal_device newDefaultLibrary];
+    
+    if (shader_library == NULL)
+    {
+        log_append("failed to load default shader lib, trying ");
+        log_append(
+            [shader_lib_filepath
+                cStringUsingEncoding: NSASCIIStringEncoding]);
+        log_append("\n");
+        
+        shader_library =
+            [with_metal_device
+                newLibraryWithFile: shader_lib_filepath 
+                error: &Error];
+        
+        if (shader_library == NULL) {
+            log_append("Failed to find the shader library again\n");
+            if (Error != NULL) {
+                NSLog(@" error => %@ ", [Error userInfo]);
+            }
+            return;
+        } else {
+            log_append("Success! Found the shader lib on 2nd try.\n");
+        }
+    }
+    
     id<MTLFunction> vertex_shader =
         [shader_library newFunctionWithName:
             @"vertex_shader"];
     id<MTLFunction> fragment_shader =
         [shader_library newFunctionWithName:
             @"fragment_shader"];
-    
-    if (Error != NULL)
-    {
-        NSLog(@" error => %@ ", [Error userInfo]);
-        [NSException
-            raise: @"Can't Setup Metal" 
-            format: @"Unable to load shader libraries"];
-    }
     
     // Setup combo pipeline that handles
     // both colored & textured triangles
@@ -54,7 +73,6 @@ uint64_t previous_time;
         setVertexFunction: vertex_shader];
     [combo_pipeline_descriptor
         setFragmentFunction: fragment_shader];
-    // TODO: set pixel format
     combo_pipeline_descriptor
         .colorAttachments[0]
         .pixelFormat = pixel_format;
@@ -69,12 +87,20 @@ uint64_t previous_time;
         .colorAttachments[0].destinationRGBBlendFactor =
             MTLBlendFactorOneMinusSourceAlpha;
     
+    combo_pipeline_descriptor.depthAttachmentPixelFormat =
+        MTLPixelFormatDepth32Float;
+    
     _combo_pipeline_state =
-        [metal_device
+        [with_metal_device
             newRenderPipelineStateWithDescriptor:
                 combo_pipeline_descriptor 
             error:
                 &Error];
+    
+    MTLDepthStencilDescriptor * depthDescriptor = [MTLDepthStencilDescriptor new];
+    depthDescriptor.depthCompareFunction = MTLCompareFunctionLessEqual;
+    depthDescriptor.depthWriteEnabled = true;
+    depth_stencil_state = [with_metal_device newDepthStencilStateWithDescriptor:depthDescriptor];
     
     if (Error != NULL)
     {
@@ -83,78 +109,68 @@ uint64_t previous_time;
             raise: @"Can't Setup Metal" 
             format: @"Unable to setup rendering pipeline state"];
     }
-    
-    uint32_t PageSize = getpagesize();
-    uint32_t BufferedVertexSize = PageSize * 1000;
-    
+        
     _vertex_buffers = [[NSMutableArray alloc] init];
     
-    for (uint32_t frame_i = 0;
-         frame_i < 3;
-         frame_i++)
+    // TODO: use the apple-approved page size constant instead of
+    // hardcoding 4096, and verify it returns 4096
+    for (
+        uint32_t frame_i = 0;
+        frame_i < 3;
+        frame_i++)
     {
-        BufferedVertexCollection buffered_vertex = {};
+        BufferedVertexCollection buffered_vertex;
+        buffered_vertex.vertices_size = MAX_VERTICES_PER_BUFFER;
+        uint64_t allocation_size = sizeof(Vertex) * buffered_vertex.vertices_size;
+        allocation_size += (4096 - (allocation_size % 4096));
+        assert(allocation_size % 4096 == 0);
         buffered_vertex.vertices =
-            (Vertex *)mmap(
-                0,
-                BufferedVertexSize,
-                PROT_READ | PROT_WRITE,
-                MAP_PRIVATE | MAP_ANON,
-                -1,
-                0);
+            (Vertex *)malloc_from_unmanaged_aligned(
+                allocation_size,
+                4096);
         
-        _render_commands.vertex_buffers[frame_i] =
-            buffered_vertex;
+        render_commands.vertex_buffers[frame_i] = buffered_vertex;
         
         id<MTLBuffer> MetalBufferedVertex =
-            [metal_device
+            [with_metal_device
+                /* the pointer needs to be page aligned */
                 newBufferWithBytesNoCopy:
                     buffered_vertex.vertices
+                /* the length weirdly needs to be page aligned also */
                 length:
-                    BufferedVertexSize
+                    allocation_size
                 options:
                     MTLResourceStorageModeShared
+                /* deallocator = nil to opt out */
                 deallocator:
                     nil];
-        [_vertex_buffers
-            addObject: MetalBufferedVertex];
+        [_vertex_buffers addObject: MetalBufferedVertex];
     }
     
     _metal_textures = [
         [NSMutableArray alloc]
             initWithCapacity: TEXTUREARRAYS_SIZE];
     
-    // initialize a texture array for each object
-    // in the global var "texturearrays" 
-    assert(TEXTUREARRAYS_SIZE > 0);
-    for (
-        int32_t i = 0;
-        i < texture_arrays_size;
-        i++)
-    {
-        if (texture_arrays_size >= TEXTUREARRAYS_SIZE) {
-            printf(
-                "ERR - texture_arrays_size: %u with TEXTUREARRAYS_SIZE of %u\n",
-                texture_arrays_size,
-                TEXTUREARRAYS_SIZE);
-            assert(0);
-        }
-        [self updateTextureArray: i];
-    }
-
-    printf("finished configureMetalWithDevice\n");
+    viewport.originX = 0;
+    viewport.originY = 0;
+    viewport.width = window_width * (has_retina_screen ? 2.0f : 1.0f);
+    viewport.height = window_height * (has_retina_screen ? 2.0f : 1.0f);
+    viewport.znear = 0.0f;
+    viewport.zfar = 1.0f;
+    
+    command_queue = [with_metal_device newCommandQueue];
+    
+    log_append("finished configureMetalWithDevice\n");
 }
 
-- (void)updateTextureArray: (int32_t)texturearray_i
+- (void)
+    initializeTextureArray  : (int32_t)texturearray_i
+    textureCount            : (uint32_t)texture_count
+    singleImgWidth          : (uint32_t)single_img_width
+    singleImgHeight         : (uint32_t)single_img_height
 {
-    texture_arrays[texturearray_i].request_update = false;
-    printf("updateTextureArray: %i\n", texturearray_i);
-    assert(texturearray_i < TEXTUREARRAYS_SIZE);
-    assert(texturearray_i < texture_arrays_size);
-    int32_t i = texturearray_i;
-    
-    // pad objects to match
-    while ([_metal_textures count] <= i) {
+    // we always overwrite textures, so pad them to match first
+    while ((int32_t)[_metal_textures count] <= texturearray_i) {
         MTLTextureDescriptor * texture_descriptor =
             [[MTLTextureDescriptor alloc] init];
         texture_descriptor.textureType = MTLTextureType2DArray;
@@ -163,254 +179,244 @@ uint64_t previous_time;
         texture_descriptor.width = 10;
         texture_descriptor.height = 10;
         id<MTLTexture> texture =
-            [_metal_device
-                newTextureWithDescriptor:texture_descriptor];
+            [metal_device newTextureWithDescriptor:texture_descriptor];
         [_metal_textures addObject: texture];
-        printf(
-            "adding a padding texture, [_metal_textures count] is now: %u\n",
-            (uint32_t)[_metal_textures count]);
-    }
-    
-    if (texture_arrays[i].image == NULL) {
-        printf("aborted update because image was NULL\n");
-        return;
-    }
-    
-    uint32_t slice_count =
-        texture_arrays[i].sprite_rows *
-            texture_arrays[i].sprite_columns;
-    
-    if (
-        texture_arrays[i].sprite_rows == 0
-        || texture_arrays[i].sprite_columns == 0)
-    {
-        printf(
-            "texture_arrays[%u]'s sprite rows/cols was 0, did you forget to set it in clientlogic.c? TEXTUREARRAYS_SIZE (in vertex_types.h) was %u\n",
-            i,
-            TEXTUREARRAYS_SIZE);
-        assert(0);
     }
     
     MTLTextureDescriptor * texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
     texture_descriptor.textureType = MTLTextureType2DArray;
-    texture_descriptor.arrayLength = slice_count;
+    texture_descriptor.arrayLength = texture_count;
     texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
-    texture_descriptor.width =
-        texture_arrays[i].image->width
-            / texture_arrays[i].sprite_columns;
-    texture_descriptor.height =
-        texture_arrays[i].image->height
-            / texture_arrays[i].sprite_rows;
+    texture_descriptor.width = single_img_width;
+    texture_descriptor.height = single_img_height;
+    
     id<MTLTexture> texture =
-        [_metal_device
+        [metal_device
             newTextureWithDescriptor:texture_descriptor];
     
-    assert(texture_arrays[i].image->width >= 10);
-    assert(texture_arrays[i].image->height >= 10);
-    uint32_t slice_i = 0;
-    for (
-        uint32_t row_i = 1;
-        row_i <= texture_arrays[i].sprite_rows;
-        row_i++)
-    {
-        for (
-            uint32_t col_i = 1;
-            col_i <= texture_arrays[i].sprite_columns;
-            col_i++)
-        {
-            DecodedImage * new_slice =
-                extract_image(
-                    /* texture_array: */ &texture_arrays[i],
-                    /* x            : */ col_i,
-                    /* y            : */ row_i);
-            
-            MTLRegion region = {
-                {
-                    0,
-                    0,
-                    0
-                },
-                {
-                    new_slice->width,
-                    new_slice->height,
-                    1
-                }
-            };
-            
-            [texture
-                replaceRegion:
-                    region
-                mipmapLevel:
-                    0
-                slice:
-                    slice_i
-                withBytes:
-                    new_slice->rgba_values
-                bytesPerRow:
-                    new_slice->width * 4
-                bytesPerImage:
-                    /* docs: use 0 for anything other than
-                       MTLTextureType3D textures */
-                    0];
-            
-            // TODO: free heap memory
-            free(new_slice->rgba_values);
-            free(new_slice);
-            slice_i++;
-        }
-    }
+    [_metal_textures
+        replaceObjectAtIndex:(uint32_t)texturearray_i
+        withObject: texture];
+}
+- (void)
+    updateTextureArray : (int32_t)texturearray_i
+    atTexture          : (int32_t)texture_i
+    ofTextureArraySize : (uint32_t)texture_array_images_size
+    withImageOfWidth   : (uint32_t)image_width
+    andHeight          : (uint32_t)image_height
+    pixelValues        : (uint8_t *)rgba_values
+{
+    log_assert(texture_i >= 0);
     
-    printf("replacing object at index: %i\n", i);
-    [_metal_textures replaceObjectAtIndex:i withObject: texture];
-    printf("replaced\n");
+    if (texturearray_i >= (int32_t)[_metal_textures count]) {
+        log_append(
+            "Warning: tried to update uninitialized texturearray ");
+        log_append_int(texturearray_i);
+        log_append("\n");
+        return;
+    }
+        
+    MTLTextureDescriptor * texture_descriptor =
+        [[MTLTextureDescriptor alloc] init];
+    texture_descriptor.textureType = MTLTextureType2DArray;
+    texture_descriptor.arrayLength = texture_array_images_size;
+    texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
+    texture_descriptor.width = image_width;
+    texture_descriptor.height = image_height;
+    
+    MTLRegion region = {
+        { 0,0,0 },
+        { image_width, image_height, 1 }
+    };
+    
+    [[_metal_textures objectAtIndex: (NSUInteger)texturearray_i]
+        replaceRegion:
+            region
+        mipmapLevel:
+            0
+        slice:
+            (NSUInteger)texture_i
+        withBytes:
+            rgba_values
+        bytesPerRow:
+            image_width * 4
+        bytesPerImage:
+            /* docs: use 0 for anything other than
+               MTLTextureType3D textures */
+            0];
+}
+
+- (void)drawClearScreen:(MTKView *)view
+{
+    id<MTLCommandBuffer> command_buffer =
+        [command_queue commandBuffer];
+    
+    MTLRenderPassDescriptor * RenderPassDescriptor =
+        [view currentRenderPassDescriptor];
+    RenderPassDescriptor
+        .colorAttachments[0]
+        .loadAction = MTLLoadActionClear;
+    
+    MTLClearColor clear_color = MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);
+    RenderPassDescriptor.colorAttachments[0].clearColor = clear_color;
+    
+    //    id<MTLRenderCommandEncoder> render_encoder =
+    //        [command_buffer
+    //            renderCommandEncoderWithDescriptor:
+    //                RenderPassDescriptor];
+    //    [render_encoder setCullMode: MTLCullModeBack];
+    //    [render_encoder setDepthStencilState: depth_stencil_state];
+    //    [render_encoder endEncoding];
+    
+    id<CAMetalDrawable> current_drawable = [view currentDrawable];
+    [command_buffer presentDrawable: current_drawable];
+    [command_buffer commit];
+    [command_buffer waitUntilScheduled];
 }
 
 - (void)drawInMTKView:(MTKView *)view
 {
-    uint64_t time = platform_get_current_time_microsecs();
-    uint64_t elapsed = time - previous_time;
-    previous_time = time;
+    if (block_drawinmtkview) { return; }
+    block_drawinmtkview = true;
     
-    for (uint32_t i = 0; i < texture_arrays_size; i++) {
-        if (texture_arrays[i].request_update) {
-            [self updateTextureArray: i];
-            break;
-        }
-    }
-    
-    // TODO: this only works on retina
-    // because on retina screens, the MTLViewport is 2x
-    // the size of the window
-    MTLViewport viewport = {
-        0,
-        0,
-        window_width * 2.0f,
-        window_height * 2.0f };
-    
-    uint32_t frame_i = (uint32_t)_currentFrameIndex;
+    dispatch_semaphore_wait(
+        _frameBoundarySemaphore,
+        DISPATCH_TIME_FOREVER);
     
     Vertex * vertices_for_gpu =
-        _render_commands.vertex_buffers[frame_i].vertices;
+        render_commands.vertex_buffers[current_frame_i].vertices;
     uint32_t vertices_for_gpu_size = 0;
     
-    resolve_animation_effects(elapsed);
+    shared_gameloop_update(
+        vertices_for_gpu,
+        &vertices_for_gpu_size);
     
-    touchable_triangles_size = 0;
+    id<MTLCommandBuffer> command_buffer =
+        [command_queue commandBuffer];
     
-    // translate all lights
-    zLightSource zlights_transformed[zlights_to_apply_size];
-    translate_lights(
-        /* originals: */ &zlights_to_apply[0],
-        /* out_translated: */ &zlights_transformed[0],
-        /* lights_count: */ zlights_to_apply_size);
-    
-    software_render(
-        /* next_gpu_workload: */
-            vertices_for_gpu,
-        /* next_gpu_workload_size: */
-            &vertices_for_gpu_size,
-        /* zlights_transformed: */
-            zlights_transformed,
-        /* elapsed_microseconds: */
-            elapsed);
-    
-    draw_texquads_to_render(
-        /* next_gpu_workload: */
-            vertices_for_gpu,
-        /* next_gpu_workload_size: */
-            &vertices_for_gpu_size,
-        /* zlights_transformed: */
-            zlights_transformed);
-    
-    @autoreleasepool 
-    {
-        id<MTLCommandBuffer> command_buffer =
-            [[self command_queue] commandBuffer];
-        
-        if (command_buffer == nil) {
-            printf("error - failed to get command buffer¥n");
-            return;
-        }
-        
-        MTLRenderPassDescriptor *RenderPassDescriptor =
-            [view currentRenderPassDescriptor];
-        RenderPassDescriptor.colorAttachments[0].loadAction =
-            MTLLoadActionClear;
-        
-        MTLClearColor clear_color =
-            MTLClearColorMake(0.2f, 0.2f, 0.2f, 0.0f);
-        RenderPassDescriptor.colorAttachments[0].clearColor =
-            clear_color;
-        
-        id<MTLRenderCommandEncoder> render_encoder =
-            [command_buffer
-                renderCommandEncoderWithDescriptor:
-                    RenderPassDescriptor];
-        [render_encoder setViewport: viewport];
-        
-        // encode the drawing of all triangles 
-        id<MTLBuffer> current_buffered_vertices =
-            [[self vertex_buffers]
-                objectAtIndex: _currentFrameIndex];
-        [render_encoder
-            setVertexBuffer: current_buffered_vertices  
-            offset: 0 
-            atIndex: 0];
-        [render_encoder
-            setRenderPipelineState:
-                [self combo_pipeline_state]];
-        
-        for (
-            uint32_t i = 0;
-            i < texture_arrays_size;
-            i++)
-        {
-            if (i >= [_metal_textures count]) {
-                // TODO: remove debugging assert
-                assert(texture_arrays_size < 750);
-                continue;
-            }
-            [render_encoder
-                setFragmentTexture: _metal_textures[i]
-                atIndex: i];
-        }
-        
-        [render_encoder
-            drawPrimitives: MTLPrimitiveTypeTriangle
-            vertexStart: 0
-            vertexCount: vertices_for_gpu_size];
-        
-        [render_encoder endEncoding];
-        
-        // Schedule a present once the framebuffer is complete
-        // using the current drawable
-        id<CAMetalDrawable> current_drawable =
-            [view currentDrawable];
-        [command_buffer presentDrawable: current_drawable];
-        
-        uint32_t next_index = (int32_t)_currentFrameIndex + 1;
-        if (next_index > 2) { next_index = 0; }
-        
-        _currentFrameIndex = next_index;
-        
-        /*
-        [command_buffer
-            addCompletedHandler:
-                ^(id<MTLCommandBuffer> commandBuffer)
-            {
-            }];
-        */
-        
-        [command_buffer commit];
+    if (command_buffer == nil) {
+        log_append("error - failed to get metal command buffer\n");
+        log_dump_and_crash("error - failed to get metal command buffer\n");
+        block_drawinmtkview = false;
+        return;
     }
+    
+    MTLRenderPassDescriptor * RenderPassDescriptor =
+        [view currentRenderPassDescriptor];
+    RenderPassDescriptor
+        .colorAttachments[0]
+        .loadAction = MTLLoadActionClear;
+    
+    RenderPassDescriptor.colorAttachments[0].clearColor =
+        MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);;
+    
+    id<MTLRenderCommandEncoder> render_encoder =
+        [command_buffer
+            renderCommandEncoderWithDescriptor:
+                RenderPassDescriptor];
+    [render_encoder setViewport: viewport];
+    
+    [render_encoder setRenderPipelineState: _combo_pipeline_state];
+    [render_encoder setDepthStencilState: depth_stencil_state];
+    // [render_encoder setDepthClipMode: MTLDepthClipModeClip];
+    
+    [render_encoder
+        setVertexBuffer: [[self vertex_buffers]
+            objectAtIndex: current_frame_i]  
+        offset: 0 
+        atIndex: 0];
+    
+    for (
+        uint32_t i = 0;
+        i < [_metal_textures count];
+        i++)
+    {
+        [render_encoder
+            setFragmentTexture: _metal_textures[i]
+            atIndex: i];
+    }
+    
+    [render_encoder
+        drawPrimitives: MTLPrimitiveTypeTriangle
+        vertexStart: 0
+        vertexCount: vertices_for_gpu_size];
+    [render_encoder endEncoding];
+    
+    
+    // Schedule a present once the framebuffer is complete
+    // using the current drawable
+    [command_buffer presentDrawable: [view currentDrawable]];
+    
+    current_frame_i += 1;
+    current_frame_i -= ((current_frame_i > 2)*3);
+    
+    __block dispatch_semaphore_t semaphore = _frameBoundarySemaphore;
+    [command_buffer
+        addCompletedHandler:^(id<MTLCommandBuffer> commandBuffer)
+    {
+        dispatch_semaphore_signal(semaphore);
+    }];
+    
+    [command_buffer commit];
+    
+    request_post_resize_clearscreen = false;
+    block_drawinmtkview = false;
 }
 
 - (void)mtkView:(MTKView *)view
     drawableSizeWillChange:(CGSize)size
 {
-    window_height = size.height;
-    window_width = size.width;
+    window_height = platform_get_current_window_height(); 
+    window_width = platform_get_current_window_width();
+    
+    viewport.originX = 0;
+    viewport.originY = 0;
+    viewport.width = window_width * (has_retina_screen ? 2.0f : 1.0f);
+    viewport.height = window_height * (has_retina_screen ? 2.0f : 1.0f);
+    viewport.znear = 0.0f;
+    viewport.zfar = 1.0f;
+}
+@end
+
+void platform_gpu_init_texture_array(
+    const int32_t texture_array_i,
+    const uint32_t num_images,
+    const uint32_t single_image_width,
+    const uint32_t single_image_height)
+{
+    log_append("platform_gpu_init_texture_array texture_array_i: ");
+    log_append_int(texture_array_i);
+    log_append(", num_images: ");
+    log_append_uint(num_images);
+    log_append(", single_image_width: ");
+    log_append_uint(single_image_width);
+    log_append(", single_image_height: ");
+    log_append_uint(single_image_height);
+    log_append("\n");
+    
+    log_assert(apple_gpu_delegate != NULL);
+    
+    [apple_gpu_delegate
+        initializeTextureArray : texture_array_i
+        textureCount           : num_images
+        singleImgWidth         : single_image_width
+        singleImgHeight        : single_image_height];    
 }
 
-@end
+void platform_gpu_push_texture_slice(
+    const int32_t texture_array_i,
+    const int32_t texture_i,
+    const uint32_t parent_texture_array_images_size,
+    const uint32_t image_width,
+    const uint32_t image_height,
+    const uint8_t * rgba_values)
+{
+    [apple_gpu_delegate
+        updateTextureArray : (int32_t)texture_array_i
+        atTexture          : (int32_t)texture_i
+        ofTextureArraySize : (uint32_t)parent_texture_array_images_size
+        withImageOfWidth   : (uint32_t)image_width
+        andHeight          : (uint32_t)image_height
+        pixelValues        : (uint8_t *)rgba_values];
+}
