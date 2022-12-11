@@ -2,7 +2,9 @@ APP_NAME="hello3dgfx"
 PLATFORM="linux"
 
 COMPILER_OPTIONS="-std=c99 -I/usr/include/SDL2 -D_REENTRANT"
-LINKER_OPTIONS="-lSDL2"
+LINKER_OPTIONS="-lc -lSDL2 -lGL"
+
+TOK_ONE_SOURCE="src/shared/window_size.c"
 
 echo "Building $APP_NAME for $PLATFORM..."
 
@@ -15,7 +17,7 @@ mkdir build/$PLATFORM
 
 echo "Compiling & linking $APP_NAME..."
 if
-sudo gcc src/linux/main.c -o build/$PLATFORM/$APP_NAME $COMPILER_OPTIONS $LINKER_OPTIONS
+sudo gcc $TOK_ONE_SOURCE src/linux/main.c -o build/$PLATFORM/$APP_NAME $COMPILER_OPTIONS $LINKER_OPTIONS
 then
 echo "succesful compilation, running..."
 build/$PLATFORM/$APP_NAME
