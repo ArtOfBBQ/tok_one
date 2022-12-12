@@ -43,17 +43,17 @@ typedef struct ScheduledAnimation {
     bool32_t final_x_known;
     union {
         float delta_x_per_second;
-        float final_mid_x;
+        float final_screen_mid_x;
     };
     bool32_t final_y_known;
     union {
         float delta_y_per_second;
-        float final_mid_y;
+        float final_screen_mid_y;
     };
     bool32_t final_z_known;
     union {
         float delta_z_per_second;
-        float final_mid_z;
+        float final_screen_mid_z;
     };
     // ****** end of translation animations
     
@@ -94,16 +94,16 @@ typedef struct ScheduledAnimation {
     };
     
     // *** relative scaling animations
-    bool32_t final_xscale_known;
+    bool32_t final_scale_known;
     union {
-        float delta_xscale_per_second;
-        float final_xscale;
+        float delta_scale_per_second;
+        float final_scale;
     };
-    bool32_t final_yscale_known;
-    union {
-        float delta_yscale_per_second;
-        float final_yscale;
-    };
+    //    bool32_t final_yscale_known;
+    //    union {
+    //        float delta_yscale_per_second;
+    //        float final_yscale;
+    //    };
     // *** end of scaling animations
     
     bool32_t final_rgba_known[4];

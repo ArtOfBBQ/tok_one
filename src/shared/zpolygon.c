@@ -70,6 +70,39 @@ void init_projection_constants() {
     magnitudes = (float *)malloc_from_unmanaged(MAGNITUDES_CAP);
 }
 
+void request_zpolygon_to_render(zPolygon * to_add)
+{
+    log_assert(to_add->triangles != NULL);
+    log_assert(to_add->triangles_size > 0);
+    
+    for (uint32_t tri_i = 0; tri_i < to_add->triangles_size; tri_i++) {
+        if (to_add->triangles[tri_i].texturearray_i < 0) { log_assert(to_add->triangles[tri_i].texture_i < 0); }
+        if (to_add->triangles[tri_i].texture_i < 0) { log_assert(to_add->triangles[tri_i].texturearray_i < 0); }
+        
+        if (to_add->triangles[tri_i].texturearray_i >= 0) {
+            register_high_priority_if_unloaded(
+                to_add->triangles[tri_i].texturearray_i,
+                to_add->triangles[tri_i].texture_i);
+        }
+    }
+    
+    for (
+        uint32_t i = 0;
+        i < zpolygons_to_render_size;
+        i++)
+    {
+        if (zpolygons_to_render[i].deleted)
+        {
+            zpolygons_to_render[i] = *to_add;
+            return;
+        }
+    }
+    
+    log_assert(zpolygons_to_render_size + 1 < ZPOLYGONS_TO_RENDER_ARRAYSIZE);
+    zpolygons_to_render[zpolygons_to_render_size] = *to_add;
+    zpolygons_to_render_size += 1;
+}
+
 static uint32_t chars_till_next_space_or_slash(
     char * buffer)
 {
@@ -143,12 +176,14 @@ zPolygon parse_obj_expecting_materials(
     uint32_t i = 0;
     uint32_t first_material_or_face_i = UINT32_MAX;
     uint32_t new_vertex_i = 0;
+    
     while (i < rawdata_size) {
-        
         // read the 1st character, which denominates the type
         // of information
-        if (rawdata[i] == 'v'
-            && rawdata[i+1] == ' ') {
+        if (
+            rawdata[i] == 'v' &&
+            rawdata[i+1] == ' ')
+        {
             // discard the 'v'
             i++;
             
@@ -694,8 +729,10 @@ void construct_zpolygon(zPolygon * to_construct) {
     to_construct->x_angle = 0.0f;
     to_construct->y_angle = 0.0f;
     to_construct->z_angle = 0.0f;
+    to_construct->scale_factor = 1.0f;
     to_construct->ignore_lighting = false;
     to_construct->ignore_camera = false;
+    to_construct->deleted = false;
 }
 
 void __attribute__((no_instrument_function))

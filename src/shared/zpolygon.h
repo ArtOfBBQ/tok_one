@@ -9,6 +9,7 @@
 #include "vertex_types.h"
 #include "lightsource.h"
 #include "window_size.h"
+#include "texture_array.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,10 +56,13 @@ typedef struct zPolygon {
     float x_angle;
     float y_angle;
     float z_angle;
+    float scale_factor;
     bool32_t ignore_camera;
     bool32_t ignore_lighting;
+    bool32_t deleted;
 } zPolygon;
 void construct_zpolygon(zPolygon * to_construct);
+void request_zpolygon_to_render(zPolygon * to_add);
 
 // A buffer of zPolygon objects that should be rendered
 // in your application
@@ -193,7 +197,7 @@ float dot_of_vertices(
 
 float screen_y_to_3d_y(const float screen_y);
 float screen_x_to_3d_x(const float screen_x);
-    
+
 #ifdef __cplusplus
 }
 #endif

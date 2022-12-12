@@ -163,8 +163,7 @@ static void add_quad_to_gpu_workload(
     Vertex * next_gpu_workload,
     uint32_t * next_gpu_workload_size)
 {    
-    if (to_add->scale_factor_x < 0.01f ||
-        to_add->scale_factor_y < 0.01f)
+    if (to_add->scale_factor < 0.01f)
     {
         log_append(
             "skipping add_quad_to_gpu_workload() because scale factor is"
@@ -198,24 +197,24 @@ static void add_quad_to_gpu_workload(
             Vertex topleft[3];
             Vertex bottomright[3];
             
-            float extra_scale_x = (to_add->scale_factor_x - 1.0f);
-            float extra_scale_y = (to_add->scale_factor_y - 1.0f);
-            if (extra_scale_x != extra_scale_x) { return; } // not a number NaN
-            if (extra_scale_y != extra_scale_y) { return; } // not a number NaN
+            float extra_scale = (to_add->scale_factor - 1.0f);
+            // float extra_scale_y = (to_add->scale_factor_y - 1.0f);
+            if (extra_scale != extra_scale) { return; } // not a number NaN
+            // if (extra_scale_y != extra_scale_y) { return; } // not a number NaN
             
             float parent_left = offset_left -
-                (extra_scale_x * 0.5f * to_add->width_pixels);
+                (extra_scale * 0.5f * to_add->width_pixels);
             float parent_right = offset_left +
                 to_add->width_pixels +
-                (extra_scale_x * 0.5f * to_add->width_pixels);
+                (extra_scale * 0.5f * to_add->width_pixels);
             if (parent_left >= parent_right) {
                 parent_right = parent_left + 0.001f;
             }
             float parent_top = offset_top +
-                (extra_scale_y * 0.5f * to_add->height_pixels);
+                (extra_scale * 0.5f * to_add->height_pixels);
             float parent_bottom = offset_top -
                 to_add->height_pixels -
-                (extra_scale_y * 0.5f * to_add->height_pixels);
+                (extra_scale * 0.5f * to_add->height_pixels);
             if (parent_top <= parent_bottom) {
                 parent_top = parent_bottom + 0.01f;
             }

@@ -19,7 +19,7 @@ static float * cosines;
 static float * sines;
 static float * visibility_ratings;
 static Vertex * rendered_vertices;
-static bool8_t * rendered_triangles_touchable_ids;
+static int32_t * rendered_triangles_touchable_ids;
 
 void init_renderer() {
     renderer_initialized = true;
@@ -59,8 +59,8 @@ void init_renderer() {
         VERTICES_CAP * sizeof(float), 32);
     rendered_vertices = (Vertex *)malloc_from_unmanaged_aligned(
         VERTICES_CAP * sizeof(Vertex), 32);
-    rendered_triangles_touchable_ids = (bool8_t *)malloc_from_unmanaged_aligned(
-        VERTICES_CAP * sizeof(bool8_t) / 3, 32);
+    rendered_triangles_touchable_ids = (int32_t *)malloc_from_unmanaged_aligned(
+        VERTICES_CAP * sizeof(int32_t) / 3, 32);
 }
 
 void software_render(
@@ -141,13 +141,20 @@ void software_render(
                 y_angles[cur_vertex] = zpolygons_to_render[i].y_angle;
                 z_angles[cur_vertex] = zpolygons_to_render[i].z_angle;
                 
+                working_memory_1[cur_vertex] = zpolygons_to_render[i].scale_factor;
+                
                 camera_multipliers[cur_vertex] = (1.0f * !zpolygons_to_render[i].ignore_camera);
                 lighting_multipliers[cur_vertex] = (1.0f * !zpolygons_to_render[i].ignore_lighting);
                 cur_vertex += 1;
             }
         }
     }
-        
+    
+    // apply scaling modifier
+    platform_256_mul(triangle_vertices_x, working_memory_1, vertices_size);
+    platform_256_mul(triangle_vertices_y, working_memory_1, vertices_size);
+    platform_256_mul(triangle_vertices_z, working_memory_1, vertices_size);
+    
     for (uint32_t i = 0; i < vertices_size; i++) {
         cosines[i] = cosf(x_angles[i]);
         sines[i] = sinf(x_angles[i]);
@@ -257,6 +264,10 @@ void software_render(
         zp_i < zpolygons_to_render_size;
         zp_i++)
     {
+        if (zpolygons_to_render[zp_i].deleted) {
+            continue;
+        }
+        
         for (
            int32_t i = 0;
            i < (int32_t)zpolygons_to_render[zp_i].triangles_size;

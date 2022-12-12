@@ -38,10 +38,10 @@ void construct_scheduled_animation(
     to_construct->delta_width_per_second = 0.0f;
     to_construct->delta_height_per_second = 0.0f;
     
-    to_construct->final_xscale_known = false;
-    to_construct->final_yscale_known = false;
-    to_construct->delta_xscale_per_second = 0.0f;
-    to_construct->delta_yscale_per_second = 0.0f;
+    to_construct->final_scale_known = false;
+    //    to_construct->final_yscale_known = false;
+    to_construct->delta_scale_per_second = 0.0f;
+    // to_construct->delta_yscale_per_second = 0.0f;
     for (uint32_t i = 0; i < 4; i++) {
         to_construct->final_rgba_known[i] = false;
         to_construct->rgba_delta_per_second[i] = 0.0f;
@@ -67,16 +67,45 @@ void request_scheduled_animation(
         log_assert(to_add->affected_object_id >= 0);
         
         bool32_t found_target = false;
-        for (uint32_t i = 0; i < texquads_to_render_size; i++) {
-            if (!texquads_to_render[i].deleted && texquads_to_render[i].object_id == to_add->affected_object_id) {
+        for (
+            uint32_t i = 0;
+            i < texquads_to_render_size;
+            i++)
+        {
+            if (!texquads_to_render[i].deleted &&
+                texquads_to_render[i].object_id ==
+                    to_add->affected_object_id)
+            {
                 found_target = true;
             }
         }
-        for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
-            if (!zlights_to_apply[i].deleted && zlights_to_apply[i].object_id == to_add->affected_object_id) {
+        
+        for (
+            uint32_t i = 0;
+            i < zlights_to_apply_size;
+            i++)
+        {
+            if (
+                !zlights_to_apply[i].deleted &&
+                zlights_to_apply[i].object_id == to_add->affected_object_id)
+            {
                 found_target = true;
             }
         }
+        
+        for (
+            uint32_t zp_i = 0;
+            zp_i < zpolygons_to_render_size;
+            zp_i++)
+        {
+            if (
+                !zpolygons_to_render[zp_i].deleted &&
+                zpolygons_to_render[zp_i].object_id == to_add->affected_object_id)
+            {
+                found_target = true;
+            }
+        }
+        
         if (!found_target) {
             log_append("WARNING: requested scheduled animation targeting object: ");
             log_append_int(to_add->affected_object_id);
@@ -124,12 +153,6 @@ void request_fade_and_destroy(
     modify_alpha.affected_object_id = object_id;
     modify_alpha.remaining_wait_before_next_run = wait_before_first_run;
     modify_alpha.duration_microseconds = duration_microseconds;
-    modify_alpha.final_rgba_known[0] = true;
-    modify_alpha.final_rgba[3] = 0.0f;
-    modify_alpha.final_rgba_known[1] = true;
-    modify_alpha.final_rgba[3] = 0.0f;
-    modify_alpha.final_rgba_known[2] = true;
-    modify_alpha.final_rgba[3] = 0.0f;
     modify_alpha.final_rgba_known[3] = true;
     modify_alpha.final_rgba[3] = 0.0f;
     modify_alpha.delete_object_when_finished = true;
@@ -162,6 +185,12 @@ static void resolve_single_animation_effects(
 {
     log_assert(remaining_microseconds_at_start_of_run >= elapsed_this_run);
     
+    // TODO: remove debugging code
+    if (anim->y_rotation_per_second > 0.0f) {
+        // break here
+        log_assert(1);
+    }
+    
     if (anim->deleted) { return; }
     
     bool32_t found_at_least_one = false;
@@ -183,7 +212,7 @@ static void resolve_single_animation_effects(
                 zlights_to_apply[l_i].x +=
                     (anim->delta_x_per_second * elapsed_this_run) / 1000000;
             } else {
-                float diff_x = anim->final_mid_x - zlights_to_apply[l_i].x;
+                float diff_x = anim->final_screen_mid_x - zlights_to_apply[l_i].x;
                 zlights_to_apply[l_i].x +=
                     diff_x /
                         ((float)remaining_microseconds_at_start_of_run /
@@ -196,7 +225,7 @@ static void resolve_single_animation_effects(
                         * elapsed_this_run)
                             / 1000000);
             } else {
-                float diff_y = anim->final_mid_y - zlights_to_apply[l_i].y;
+                float diff_y = anim->final_screen_mid_y - zlights_to_apply[l_i].y;
                 zlights_to_apply[l_i].y +=
                     diff_y /
                         ((float)remaining_microseconds_at_start_of_run /
@@ -274,7 +303,7 @@ static void resolve_single_animation_effects(
                         (texquads_to_render[tq_i].width_pixels
                             / 2);
                 float diff_x =
-                    anim->final_mid_x - cur_mid_x;
+                    anim->final_screen_mid_x - cur_mid_x;
                 texquads_to_render[tq_i].left_pixels +=
                     diff_x /
                         ((float)remaining_microseconds_at_start_of_run /
@@ -291,7 +320,7 @@ static void resolve_single_animation_effects(
                   texquads_to_render[tq_i].top_pixels -
                     (texquads_to_render[tq_i].height_pixels
                         / 2);
-                float diff_y = anim->final_mid_y - cur_mid_y;
+                float diff_y = anim->final_screen_mid_y - cur_mid_y;
                 texquads_to_render[tq_i].top_pixels +=
                     diff_y /
                          ((float)remaining_microseconds_at_start_of_run /
@@ -304,7 +333,7 @@ static void resolve_single_animation_effects(
                         * elapsed_this_run)
                             / 1000000);
             } else {
-                float diff_z = anim->final_mid_z - texquads_to_render[tq_i].z;
+                float diff_z = anim->final_screen_mid_z - texquads_to_render[tq_i].z;
                 texquads_to_render[tq_i].z +=
                     diff_z /
                         ((float)remaining_microseconds_at_start_of_run /
@@ -349,37 +378,21 @@ static void resolve_single_animation_effects(
             
             // ***
             // relative scaling
-            if (!anim->final_xscale_known) {
-                texquads_to_render[tq_i].scale_factor_x +=
-                    (anim->delta_xscale_per_second *
+            if (!anim->final_scale_known) {
+                texquads_to_render[tq_i].scale_factor +=
+                    (anim->delta_scale_per_second *
                         elapsed_this_run) / 1000000;
             } else {
-                float diff_x =
-                    anim->final_xscale -
+                float diff_scale =
+                    anim->final_scale -
                         texquads_to_render[tq_i].
-                            scale_factor_x;
-                texquads_to_render[tq_i].scale_factor_x +=
-                    diff_x
+                            scale_factor;
+                texquads_to_render[tq_i].scale_factor +=
+                    diff_scale
                         / ((float)remaining_microseconds_at_start_of_run
                             / elapsed_this_run);
             }
             
-            if (!anim->final_yscale_known) {
-                texquads_to_render[tq_i].scale_factor_y +=
-                    (anim->delta_yscale_per_second *
-                        elapsed_this_run) / 1000000;
-            } else {
-                float diff_y =
-                    anim->final_yscale -
-                        texquads_to_render[tq_i]
-                            .scale_factor_y;
-                texquads_to_render[tq_i].scale_factor_y +=
-                    diff_y
-                        / ((float)remaining_microseconds_at_start_of_run
-                            / elapsed_this_run);
-            }
-            
-            // ***
             for (
                 uint32_t c = 0;
                 c < 4;
@@ -414,13 +427,43 @@ static void resolve_single_animation_effects(
             continue;
         }
         
+        found_at_least_one = true;
+        
+        if (!anim->final_x_known) {
+                zpolygons_to_render[zp_i].x +=
+                    ((anim->delta_x_per_second
+                        * elapsed_this_run)
+                            / 1000000);
+        } else {
+            float diff_x = screen_x_to_3d_x(anim->final_screen_mid_x) -
+                zpolygons_to_render[zp_i].x;
+            zpolygons_to_render[zp_i].x +=
+                diff_x /
+                    ((float)remaining_microseconds_at_start_of_run /
+                        elapsed_this_run);
+        }
+        
+        if (!anim->final_y_known) {
+                zpolygons_to_render[zp_i].y +=
+                    ((anim->delta_y_per_second
+                        * elapsed_this_run)
+                            / 1000000);
+        } else {
+            float diff_y = screen_y_to_3d_y(anim->final_screen_mid_y) -
+                zpolygons_to_render[zp_i].y;
+            zpolygons_to_render[zp_i].y +=
+                diff_y /
+                    ((float)remaining_microseconds_at_start_of_run /
+                        elapsed_this_run);
+        }
+        
         if (!anim->final_z_known) {
                 zpolygons_to_render[zp_i].z +=
                     ((anim->delta_z_per_second
                         * elapsed_this_run)
                             / 1000000);
         } else {
-            float diff_z = anim->final_mid_z - zpolygons_to_render[zp_i].z;
+            float diff_z = anim->final_screen_mid_z - zpolygons_to_render[zp_i].z;
             zpolygons_to_render[zp_i].z +=
                 diff_z /
                     ((float)remaining_microseconds_at_start_of_run /
@@ -441,11 +484,18 @@ static void resolve_single_animation_effects(
         }
         
         if (!anim->final_y_angle_known) {
+            if (anim->y_rotation_per_second > 0.1f) {
+                log_assert(1);
+            }
             zpolygons_to_render[zp_i].y_angle +=
                 (anim->y_rotation_per_second
                     * elapsed_this_run)
                         / 1000000;
         } else {
+            if (anim->y_rotation_per_second > 0.1f) {
+                log_assert(1);
+            }
+            
             float diff_y_angle = anim->final_y_angle - zpolygons_to_render[zp_i].y_angle;
             zpolygons_to_render[zp_i].y_angle +=
                 diff_y_angle /
@@ -464,6 +514,50 @@ static void resolve_single_animation_effects(
                 diff_z_angle /
                     ((float)remaining_microseconds_at_start_of_run /
                         elapsed_this_run);
+        }
+        
+        if (!anim->final_scale_known) {
+            zpolygons_to_render[zp_i].scale_factor +=
+                (anim->delta_scale_per_second *
+                    elapsed_this_run) / 1000000;
+        } else {
+            log_append("scale animation scaling object_id: ");
+            log_append_int(anim->affected_object_id);
+            log_append(" to scale: ");
+            log_append_float(anim->final_scale);
+            log_append_char('\n');
+            float diff_scale =
+                anim->final_scale - zpolygons_to_render[zp_i].scale_factor;
+            zpolygons_to_render[zp_i].scale_factor +=
+                diff_scale
+                    / ((float)remaining_microseconds_at_start_of_run
+                        / elapsed_this_run);
+        }
+        
+        for (
+            uint32_t c = 0;
+            c < 4;
+            c++)
+        {
+            if (!anim->final_rgba_known[c]) {
+                for (uint32_t tri_i = 0; tri_i < zpolygons_to_render[zp_i].triangles_size; tri_i++) {
+                    zpolygons_to_render[zp_i].triangles[tri_i].color[c] +=
+                        (anim->rgba_delta_per_second[c]
+                            * elapsed_this_run)
+                        / 1000000;
+                }
+            } else {
+                
+                for (uint32_t tri_i = 0; tri_i < zpolygons_to_render[zp_i].triangles_size; tri_i++) {
+                    float cur_val = zpolygons_to_render[zp_i].triangles[tri_i].color[c];
+                    float delta_val = anim->final_rgba[c] - cur_val;
+                    
+                    zpolygons_to_render[zp_i].triangles[tri_i].color[c] +=
+                        delta_val /
+                            ((float)remaining_microseconds_at_start_of_run /
+                                elapsed_this_run);
+                }
+            }
         }
     }
     
@@ -617,6 +711,20 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                         }
                     }
                 }
+                
+                for (
+                    int32_t zp_i = (int32_t)zpolygons_to_render_size - 1;
+                    zp_i >= 0;
+                    zp_i--)
+                {
+                    if (
+                        zpolygons_to_render[zp_i].object_id ==
+                            anim->affected_object_id)
+                    {                        
+                        zpolygons_to_render[zp_i].deleted = true;
+                        zpolygons_to_render[zp_i].object_id = -1;
+                    }
+                }
             }
         }     
     }
@@ -659,10 +767,10 @@ void request_bump_animation(
     embiggen_request.affected_object_id = (int32_t)object_id;
     embiggen_request.remaining_wait_before_next_run = wait;
     embiggen_request.duration_microseconds = duration / 2;
-    embiggen_request.final_xscale_known = true;
-    embiggen_request.final_xscale = 1.35f;
-    embiggen_request.final_yscale_known = true;
-    embiggen_request.final_yscale = 1.35f;
+    embiggen_request.final_scale_known = true;
+    embiggen_request.final_scale = 1.35f;
+    // embiggen_request.final_yscale_known = true;
+    // embiggen_request.final_yscale = 1.35f;
     request_scheduled_animation(&embiggen_request);
     
     ScheduledAnimation revert_request;
@@ -670,10 +778,10 @@ void request_bump_animation(
     revert_request.affected_object_id = (int32_t)object_id;
     revert_request.remaining_wait_before_next_run = wait + duration / 2;
     revert_request.duration_microseconds = duration / 2;
-    revert_request.final_xscale_known = true;
-    revert_request.final_xscale = 1.0f;
-    revert_request.final_yscale_known = true;
-    revert_request.final_yscale = 1.0f;
+    revert_request.final_scale_known = true;
+    revert_request.final_scale = 1.0f;
+    // revert_request.final_yscale_known = true;
+    // revert_request.final_yscale = 1.0f;
     request_scheduled_animation(&revert_request);
 }
 
