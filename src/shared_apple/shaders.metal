@@ -90,7 +90,7 @@ fragment_shader(
     // This is reportedly a terrible way to do this, but I'm
     // doing most of my rendering on CPU and using like 5% of gpu
     // resources, and I simply don't know a better way yet
-    if (out_color[3] < 0.01f) { discard_fragment(); }
+    if (out_color[3] < 0.05f) { discard_fragment(); }
     
     return out_color;
 }

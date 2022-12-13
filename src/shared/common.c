@@ -336,7 +336,7 @@ string_to_uint32_validate(
     const char * input,
     bool32_t * good)
 {
-    if (input[0] == '\0' || input[0] < '0' || input[0] > '9') {
+    if (input[0] < '0' || input[0] > '9') {
         #ifndef COMMON_SILENCE
         printf(
             "ERR: string_to_uint32 but input[0] is nullterminator\n");
@@ -354,7 +354,7 @@ string_to_uint32_validate(
     
     uint32_t decimal = 1;
     int32_t i = 0;
-    while (input[i] != '\0' && input[i] >= '0' && input[i] <= '9') {
+    while (input[i] >= '0' && input[i] <= '9') {
         i++;
     }
     i--;

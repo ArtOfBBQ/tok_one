@@ -27,3 +27,4 @@ void software_render(
 #endif
 
 #endif // SOFTWARE_RENDERER_H
+

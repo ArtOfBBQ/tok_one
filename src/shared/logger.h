@@ -6,7 +6,7 @@
 #include "stdio.h"
 #endif
 
-//#define IGNORE_LOGGER
+#define IGNORE_LOGGER
 #ifndef IGNORE_LOGGER
 #include <dlfcn.h>
 #endif
@@ -23,9 +23,7 @@
 #define log_append_float(num)
 #define log_append_int(num)
 #define log_append_uint(num)
-#endif
-
-#ifndef IGNORE_LOGGER
+#else
 #define log_assert(condition) internal_log_assert(condition, #condition, __FILE__, __LINE__, __func__)
 #define log_append(string) internal_log_append(string, __func__)
 #define log_append_char(num) internal_log_append_char(num, __func__)

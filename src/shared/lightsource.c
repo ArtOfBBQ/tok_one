@@ -310,14 +310,14 @@ void translate_lights(void)
         translated_light_pos.y = zlights_to_apply[i].y - camera.y;
         translated_light_pos.z = zlights_to_apply[i].z - camera.z;
         
-        if (
-            translated_light_pos.x - zlights_to_apply[i].reach >= window_width
-            || translated_light_pos.x + zlights_to_apply[i].reach <= 0
-            || translated_light_pos.y - zlights_to_apply[i].reach >= window_height
-            || translated_light_pos.y + zlights_to_apply[i].reach <= 0)
-        {
-            continue;
-        }
+        //        if (
+        //            translated_light_pos.x - zlights_to_apply[i].reach >= window_width
+        //            || translated_light_pos.x + zlights_to_apply[i].reach <= 0
+        //            || translated_light_pos.y - zlights_to_apply[i].reach >= window_height
+        //            || translated_light_pos.y + zlights_to_apply[i].reach <= 0)
+        //        {
+        //            continue;
+        //        }
         
         translated_light_pos = x_rotate_zvertex(
             &translated_light_pos,

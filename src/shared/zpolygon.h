@@ -45,10 +45,11 @@ typedef struct zTriangle {
     uint32_t visible;
 } zTriangle;
 
+#define POLYGON_TRIANGLES_SIZE 50
 typedef struct zPolygon {
     int32_t object_id;
     int32_t touchable_id;
-    zTriangle * triangles;
+    zTriangle triangles[POLYGON_TRIANGLES_SIZE];
     uint32_t triangles_size;
     float x;
     float y;
@@ -68,7 +69,7 @@ void request_zpolygon_to_render(zPolygon * to_add);
 // in your application
 // index 0 to zpolygons_to_render_size will be rendered,
 // the rest of the array will be ignored
-#define ZPOLYGONS_TO_RENDER_ARRAYSIZE 50
+#define ZPOLYGONS_TO_RENDER_ARRAYSIZE 1000
 extern zPolygon zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
 extern uint32_t zpolygons_to_render_size;
 

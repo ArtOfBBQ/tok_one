@@ -49,13 +49,10 @@ void init_projection_constants() {
     pjc->far = 1000.0f;
     
     float field_of_view = 90.0f;
-    pjc->field_of_view_rad =
-        ((field_of_view * 0.5f) / 180.0f) * 3.14159f;
-    pjc->field_of_view_modifier =
-        1.0f / tanf(pjc->field_of_view_rad);
+    pjc->field_of_view_rad = ((field_of_view * 0.5f) / 180.0f) * 3.14159f;
+    pjc->field_of_view_modifier = 1.0f / tanf(pjc->field_of_view_rad);
     
-    pjc->aspect_ratio =
-        window_height / window_width; 
+    pjc->aspect_ratio = window_height / window_width; 
     
     distances_to_vertices = (float *)malloc_from_unmanaged(DISTANCES_TO_VERTICES_CAP);
     diffused_dots = (float *)malloc_from_unmanaged(DIFFUSED_DOTS_CAP);
@@ -300,9 +297,10 @@ zPolygon parse_obj_expecting_materials(
     log_assert(return_value.triangles_size > 0);
     
     // pass through rawdata again to read all triangles 
-    return_value.triangles =
-        (zTriangle *)malloc_from_unmanaged(
-            sizeof(zTriangle) * return_value.triangles_size);
+    //    return_value.triangles =
+    //        (zTriangle *)malloc_from_unmanaged(
+    //            sizeof(zTriangle) * return_value.triangles_size);
+    log_assert(return_value.triangles_size < POLYGON_TRIANGLES_SIZE);
     
     i = first_material_or_face_i;
     uint32_t new_triangle_i = 0;
@@ -406,6 +404,12 @@ zPolygon parse_obj_expecting_materials(
                 uv_coord_i_0 = string_to_int32(rawdata + i);
                 i += chars_till_next_space_or_slash(rawdata + i);
             }
+            // skip any id's of normals
+            if (rawdata[i] == '/') {
+                i++;
+                log_assert(rawdata[i] != ' ');
+                i += chars_till_next_space_or_slash(rawdata + i);
+            }
             
             log_assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
@@ -426,6 +430,12 @@ zPolygon parse_obj_expecting_materials(
                 i += chars_till_next_space_or_slash(
                     rawdata + i);
             }
+            // skip any id's of normals
+            if (rawdata[i] == '/') {
+                i++;
+                log_assert(rawdata[i] != ' ');
+                i += chars_till_next_space_or_slash(rawdata + i);
+            }
             
             log_assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
@@ -445,6 +455,16 @@ zPolygon parse_obj_expecting_materials(
                 i += chars_till_next_space_or_slash(
                     rawdata + i);
             }
+            
+            // skip any id's of normals
+            if (rawdata[i] == '/') {
+                i++;
+                log_assert(rawdata[i] != ' ');
+                while (rawdata[i] <= '9' && rawdata[i] >= '0') {
+                    i++;
+                }
+            }
+            
             log_assert(rawdata[i] == '\n');
             i++;
             
@@ -721,7 +741,6 @@ void ztriangles_apply_lighting(
 void construct_zpolygon(zPolygon * to_construct) {
     to_construct->object_id = -1;
     to_construct->touchable_id = -1;
-    to_construct->triangles = NULL;
     to_construct->triangles_size = 0;
     to_construct->x = 0.0f;
     to_construct->y = 0.0f;
