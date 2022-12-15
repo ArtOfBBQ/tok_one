@@ -43,17 +43,17 @@ typedef struct ScheduledAnimation {
     bool32_t final_x_known;
     union {
         float delta_x_per_second;
-        float final_screen_mid_x;
+        float final_mid_x;
     };
     bool32_t final_y_known;
     union {
         float delta_y_per_second;
-        float final_screen_mid_y;
+        float final_mid_y;
     };
     bool32_t final_z_known;
     union {
         float delta_z_per_second;
-        float final_screen_mid_z;
+        float final_mid_z;
     };
     // ****** end of translation animations
     

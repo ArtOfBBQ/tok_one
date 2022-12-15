@@ -11,6 +11,20 @@ uint8_t * platform_malloc_unaligned_block(
     return return_value;
 }
 
+void platform_256_max_scalar(
+    float * floats,
+    const uint32_t floats_size,
+    const float scalar)
+{
+    // TODO: intel AVX & arm neon versions
+    
+    for (uint32_t i = 0; i < floats_size; i++) {
+        floats[i] =
+            ((floats[i] > scalar) * floats[i]) +
+            ((floats[i] <= scalar) * scalar);
+    }
+}
+
 void platform_256_sqrt(
     float * floats,
     const uint32_t floats_size)
@@ -78,7 +92,7 @@ void platform_256_sub_scalar(
         float32x4_t result = vsubq_f32(v1, v2);
         vst1q_f32(floats_1 + i, result);
     }
-    #elif defined(__AVX__)
+    #elif defined(__AVX__BLABLA)
     __m256 v1;
     __m256 v2 = _mm256_set_ps(
         subtraction, subtraction, subtraction, subtraction,
@@ -102,7 +116,7 @@ void platform_256_sub_scalarproduct(
     const float base_scalar,
     const float * multiply_scalar_by)
 {
-    #ifdef __ARM_NEON  
+    #ifdef __ARM_NEON
     float32x4_t v2 = vld1q_dup_f32(&base_scalar);
     
     for (uint32_t i = 0; i < subtract_from_size; i += 4) {

@@ -58,12 +58,15 @@ extern "C" {
 uint8_t * platform_malloc_unaligned_block(const uint64_t size);
 
 /*
-Vectorized math operations
+Compiler intrinsics // Vectorized math operations
 
-I only know how to do this with Intel's simd instructions for
-now, but anyway having it all in 1 place should make it easy to
-add arm or GPU compute functions when I learn how to call them.
+TODO: find out how bad it is that I keep load/storing on every operation
+TODO: consider mapping more directly 1 to 1 to the intrinsics to avoid waste
 */
+void platform_256_max_scalar(
+    float * floats,
+    const uint32_t floats_size,
+    const float scalar);
 void platform_256_sqrt(
     float * floats,
     const uint32_t floats_size);

@@ -9,6 +9,7 @@
 #include "vertex_types.h"
 #include "draw_triangle.h"
 #include "zpolygon.h"
+#include "bitmap_renderer.h"
 
 #ifdef __cplusplus
 extern "C" {

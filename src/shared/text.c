@@ -258,12 +258,12 @@ void request_label_around(
                 letter.RGBA[rgba_i] = font_color[rgba_i];
             }
             
-            letter.left_pixels = label_left;
+            letter.left_x = label_left;
             letter.x_offset = cur_x_offset + get_left_side_bearing(text_to_draw[j]);
-            letter.top_pixels = top_y_pixelspace;
+            letter.top_y = top_y_pixelspace;
             letter.y_offset = cur_y_offset - get_y_offset(text_to_draw[j]);
-            letter.height_pixels = font_height;
-            letter.width_pixels = letter.height_pixels;
+            letter.height = screenspace_height_to_height(font_height);
+            letter.width = screenspace_width_to_width(font_height);
             letter.z = z;
             
             request_texquad_renderable(&letter);
@@ -283,7 +283,7 @@ void request_label_renderable(
     const bool32_t ignore_camera)
 {
     log_assert(text_to_draw[0] != '\0');
-    float cur_x_offset = left_pixelspace;
+    float cur_x_offset = 0;
     float cur_y_offset = 0;
     
     uint32_t i = 0;
@@ -334,13 +334,15 @@ void request_label_renderable(
         {
             letter.RGBA[rgba_i] = font_color[rgba_i];
         }
-        letter.left_pixels = left_pixelspace;
-        letter.top_pixels = top_pixelspace;
+        letter.left_x = screenspace_x_to_x(left_pixelspace);
+        letter.top_y = screenspace_y_to_y(top_pixelspace);
         letter.x_offset =
-            cur_x_offset + get_left_side_bearing(text_to_draw[i]);
-        letter.y_offset = cur_y_offset - get_y_offset(text_to_draw[i]);
-        letter.height_pixels = font_height * 0.8f;
-        letter.width_pixels = letter.height_pixels;
+            screenspace_width_to_width(
+                cur_x_offset + get_left_side_bearing(text_to_draw[i]));
+        letter.y_offset =
+            screenspace_height_to_height(cur_y_offset - get_y_offset(text_to_draw[i]));
+        letter.height = screenspace_height_to_height(font_height * 0.8f);
+        letter.width = screenspace_width_to_width(font_height * 0.8f);
         letter.ignore_lighting = font_ignore_lighting;
         letter.ignore_camera = ignore_camera;
         letter.z = z;
@@ -371,10 +373,10 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
     uint64_t fps = 1000000 / microseconds_elapsed;
     
     if (fps < 100) {
-        fps_string[9] = '0' + ((fps / 10) % 10);
+        fps_string[ 9] = '0' + ((fps / 10) % 10);
         fps_string[10] = '0' + (fps % 10);
     } else {
-        fps_string[9] = '9' + ((fps / 10) % 10);
+        fps_string[ 9] = '9' + ((fps / 10) % 10);
         fps_string[10] = '9' + (fps % 10);
     }
     delete_texquad_object(label_object_id);
@@ -386,7 +388,7 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
         /* char * text_to_draw   : */ fps_string,
         /* float left_pixelspace : */ 20.0f,
         /* float top_pixelspace  : */ 60.0f,
-        /* z                     : */ 0.01f,
+        /* z                     : */ 1.0f,
         /* float max_width       : */ window_width,
         /* bool32_t ignore_camera: */ true);
 }

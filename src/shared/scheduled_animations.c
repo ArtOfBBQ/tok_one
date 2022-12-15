@@ -212,7 +212,7 @@ static void resolve_single_animation_effects(
                 zlights_to_apply[l_i].x +=
                     (anim->delta_x_per_second * elapsed_this_run) / 1000000;
             } else {
-                float diff_x = anim->final_screen_mid_x - zlights_to_apply[l_i].x;
+                float diff_x = anim->final_mid_x - zlights_to_apply[l_i].x;
                 zlights_to_apply[l_i].x +=
                     diff_x /
                         ((float)remaining_microseconds_at_start_of_run /
@@ -225,13 +225,26 @@ static void resolve_single_animation_effects(
                         * elapsed_this_run)
                             / 1000000);
             } else {
-                float diff_y = anim->final_screen_mid_y - zlights_to_apply[l_i].y;
+                float diff_y = anim->final_mid_y - zlights_to_apply[l_i].y;
                 zlights_to_apply[l_i].y +=
                     diff_y /
                         ((float)remaining_microseconds_at_start_of_run /
                             elapsed_this_run);
             }
-
+            
+            if (!anim->final_z_known) {
+                zlights_to_apply[l_i].z +=
+                    ((anim->delta_z_per_second
+                        * elapsed_this_run)
+                            / 1000000);
+            } else {
+                float diff_z = anim->final_mid_z - zlights_to_apply[l_i].z;
+                zlights_to_apply[l_i].z +=
+                    diff_z /
+                        ((float)remaining_microseconds_at_start_of_run /
+                            elapsed_this_run);
+            }
+            
             if (!anim->final_reach_known) {
                 zlights_to_apply[l_i].reach +=
                     ((anim->delta_reach_per_second
@@ -293,35 +306,35 @@ static void resolve_single_animation_effects(
             }
             
             if (!anim->final_x_known) {
-                texquads_to_render[tq_i].left_pixels +=
+                texquads_to_render[tq_i].left_x +=
                     (anim->delta_x_per_second
                         * elapsed_this_run)
                             / 1000000;
             } else {
                 float cur_mid_x =
-                    texquads_to_render[tq_i].left_pixels +
-                        (texquads_to_render[tq_i].width_pixels
+                    texquads_to_render[tq_i].left_x +
+                        (texquads_to_render[tq_i].width
                             / 2);
                 float diff_x =
-                    anim->final_screen_mid_x - cur_mid_x;
-                texquads_to_render[tq_i].left_pixels +=
+                    anim->final_mid_x - cur_mid_x;
+                texquads_to_render[tq_i].left_x +=
                     diff_x /
                         ((float)remaining_microseconds_at_start_of_run /
                             elapsed_this_run);
             }
             
             if (!anim->final_y_known) {
-                texquads_to_render[tq_i].top_pixels +=
+                texquads_to_render[tq_i].top_y +=
                     ((anim->delta_y_per_second
                         * elapsed_this_run)
                             / 1000000);
             } else {
                 float cur_mid_y =
-                  texquads_to_render[tq_i].top_pixels -
-                    (texquads_to_render[tq_i].height_pixels
+                  texquads_to_render[tq_i].top_y -
+                    (texquads_to_render[tq_i].height
                         / 2);
-                float diff_y = anim->final_screen_mid_y - cur_mid_y;
-                texquads_to_render[tq_i].top_pixels +=
+                float diff_y = anim->final_mid_y - cur_mid_y;
+                texquads_to_render[tq_i].top_y +=
                     diff_y /
                          ((float)remaining_microseconds_at_start_of_run /
                           elapsed_this_run);
@@ -333,7 +346,7 @@ static void resolve_single_animation_effects(
                         * elapsed_this_run)
                             / 1000000);
             } else {
-                float diff_z = anim->final_screen_mid_z - texquads_to_render[tq_i].z;
+                float diff_z = anim->final_mid_z - texquads_to_render[tq_i].z;
                 texquads_to_render[tq_i].z +=
                     diff_z /
                         ((float)remaining_microseconds_at_start_of_run /
@@ -348,28 +361,28 @@ static void resolve_single_animation_effects(
             // ***
             // absolute scaling
             if (!anim->final_width_known) {
-                texquads_to_render[tq_i].width_pixels +=
+                texquads_to_render[tq_i].width +=
                     ((anim->delta_width_per_second
                         * elapsed_this_run)
                             / 1000000);
             } else {
-                float cur_width = texquads_to_render[tq_i].width_pixels;
+                float cur_width = texquads_to_render[tq_i].width;
                 float diff_width = anim->final_width - cur_width;
-                texquads_to_render[tq_i].width_pixels +=
+                texquads_to_render[tq_i].width +=
                     diff_width
                         / ((float)remaining_microseconds_at_start_of_run /
                            elapsed_this_run);
             }
             
             if (!anim->final_height_known) {
-                texquads_to_render[tq_i].height_pixels +=
+                texquads_to_render[tq_i].height +=
                     ((anim->delta_height_per_second
                         * elapsed_this_run)
                             / 1000000);
             } else {
-                float cur_height = texquads_to_render[tq_i].height_pixels;
+                float cur_height = texquads_to_render[tq_i].height;
                 float diff_height = anim->final_height - cur_height;
-                texquads_to_render[tq_i].height_pixels +=
+                texquads_to_render[tq_i].height +=
                     diff_height
                         / ((float)remaining_microseconds_at_start_of_run
                             / elapsed_this_run);
@@ -435,7 +448,7 @@ static void resolve_single_animation_effects(
                         * elapsed_this_run)
                             / 1000000);
         } else {
-            float diff_x = screen_x_to_3d_x(anim->final_screen_mid_x) -
+            float diff_x = anim->final_mid_x -
                 zpolygons_to_render[zp_i].x;
             zpolygons_to_render[zp_i].x +=
                 diff_x /
@@ -449,7 +462,7 @@ static void resolve_single_animation_effects(
                         * elapsed_this_run)
                             / 1000000);
         } else {
-            float diff_y = screen_y_to_3d_y(anim->final_screen_mid_y) -
+            float diff_y = anim->final_mid_y -
                 zpolygons_to_render[zp_i].y;
             zpolygons_to_render[zp_i].y +=
                 diff_y /
@@ -463,7 +476,7 @@ static void resolve_single_animation_effects(
                         * elapsed_this_run)
                             / 1000000);
         } else {
-            float diff_z = anim->final_screen_mid_z - zpolygons_to_render[zp_i].z;
+            float diff_z = anim->final_mid_z - zpolygons_to_render[zp_i].z;
             zpolygons_to_render[zp_i].z +=
                 diff_z /
                     ((float)remaining_microseconds_at_start_of_run /

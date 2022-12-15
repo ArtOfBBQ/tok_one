@@ -32,9 +32,9 @@ void register_interaction(
     touch_record->touchable_id =
         find_touchable_at(
             /* normalized_x : */
-                ((x * 2) / window_width) - 1.0f,
+                screenspace_x_to_x(x),
             /* normalized_y : */
-                ((y * 2) / window_height) - 1.0f);
+                screenspace_y_to_y(y));
     touch_record->screen_x = x;
     touch_record->screen_y = y;
     touch_record->timestamp = platform_get_current_time_microsecs();
@@ -61,4 +61,3 @@ void register_keydown(uint32_t key_id)
     
     keypress_map[key_id] = true;
 }
-

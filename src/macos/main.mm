@@ -14,8 +14,6 @@
 these variables may not exist on platforms where window resizing is
 impossible
 */
-float current_window_height = 800;
-float current_window_width = 1000;
 bool32_t startup_complete = false; // dont trigger window resize code at startup
 
 MTKView * mtk_view = NULL; 
@@ -48,8 +46,9 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     float title_bar_height =
         (float)([sender contentRectForFrameRect: sender.frame].size.height
             - sender.frame.size.height);
-    current_window_height = (float)(frameSize.height + title_bar_height);
-    current_window_width = (float)frameSize.width;
+    window_height = (float)(frameSize.height + title_bar_height);
+    window_width = (float)frameSize.width;
+    aspect_ratio = window_height / window_width;
     
     if (!startup_complete) { return frameSize; }
     

@@ -6,6 +6,7 @@
 
 #include "logger.h"
 #include "common.h"
+#include "platform_layer.h"
 #include "vertex_types.h"
 #include "lightsource.h"
 #include "window_size.h"
@@ -21,7 +22,6 @@ typedef struct ProjectionConstants {
     float far;
     float field_of_view_rad;
     float field_of_view_modifier;
-    float aspect_ratio;
 } ProjectionConstants;
 
 extern ProjectionConstants projection_constants;
@@ -83,11 +83,13 @@ void ztriangles_apply_lighting(
     const uint32_t recipients_size,
     zLightSource * zlight_source);
 
-void __attribute__((no_instrument_function))
+/*
+void 
 ztriangle_apply_lighting(
     Vertex recipient[3],
     zTriangle * input,
     zLightSource * zlight_source);
+*/
 
 void ztriangles_to_2d_inplace(
     float * vertices_x,
@@ -95,15 +97,15 @@ void ztriangles_to_2d_inplace(
     float * vertices_z,
     const uint32_t vertices_size);
 
-zTriangle __attribute__((no_instrument_function))
+zTriangle
 x_rotate_ztriangle(
     const zTriangle * input,
     const float angle);
-zTriangle __attribute__((no_instrument_function))
+zTriangle
 y_rotate_ztriangle(
     const zTriangle * input,
     const float angle);
-zTriangle __attribute__((no_instrument_function))
+zTriangle 
 z_rotate_ztriangle(
     const zTriangle * input,
     const float angle);
@@ -188,16 +190,18 @@ void get_visibility_ratings(
     const float * vertices_z,
     const uint32_t vertices_size,
     float * out_visibility_ratings);
+/*
 float get_visibility_rating(
     const zVertex observer,
     const zTriangle * observed);
+*/
 
 float dot_of_vertices(
     const zVertex vertex_1,
     const zVertex vertex_2);
 
-float screen_y_to_3d_y(const float screen_y);
-float screen_x_to_3d_x(const float screen_x);
+// float screen_y_to_3d_y(const float screen_y);
+// float screen_x_to_3d_x(const float screen_x);
 
 #ifdef __cplusplus
 }

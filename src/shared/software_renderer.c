@@ -83,7 +83,7 @@ void software_render(
         return;
     }
     
-    if (zpolygons_to_render_size == 0) {
+    if (zpolygons_to_render_size == 0 && texquads_to_render_size == 0) {
         return;
     }
     
@@ -103,6 +103,7 @@ void software_render(
             all_triangles_size++;
         }
     }
+    all_triangles_size += (texquads_to_render_size * 2);
     
     if (all_triangles_size == 0) { return; }
     
@@ -148,6 +149,98 @@ void software_render(
                 cur_vertex += 1;
             }
         }
+    }
+    
+    for (uint32_t i = 0; i < texquads_to_render_size; i++) {
+        float offset_left = texquads_to_render[i].left_x + texquads_to_render[i].x_offset;
+        float offset_right = offset_left + texquads_to_render[i].width;
+        float offset_mid_x = (offset_left + offset_right) / 2;
+        
+        float offset_top = texquads_to_render[i].top_y + texquads_to_render[i].y_offset;
+        float offset_bottom = offset_top - texquads_to_render[i].height;
+        float offset_mid_y = (offset_top + offset_bottom) / 2;
+        
+        // *** top left triangle
+        // topleft vertex
+        triangle_vertices_x[cur_vertex    ] = offset_left - offset_mid_x;
+        triangle_vertices_y[cur_vertex    ] = offset_top - offset_mid_y;
+        triangle_vertices_z[cur_vertex    ] = 0;
+        // topright vertex
+        triangle_vertices_x[cur_vertex + 1] = offset_right - offset_mid_x;
+        triangle_vertices_y[cur_vertex + 1] = offset_top - offset_mid_y;
+        triangle_vertices_z[cur_vertex + 1] = 0;
+        // bottomleft vertex
+        triangle_vertices_x[cur_vertex + 2] = offset_left - offset_mid_x;
+        triangle_vertices_y[cur_vertex + 2] = offset_bottom - offset_mid_y;
+        triangle_vertices_z[cur_vertex + 2] = 0;
+        
+        // *** bottom right triangle
+        // topright vertex
+        triangle_vertices_x[cur_vertex + 3] = offset_right - offset_mid_x;
+        triangle_vertices_y[cur_vertex + 3] = offset_top - offset_mid_y;
+        triangle_vertices_z[cur_vertex + 3] = 0;
+        // bottomright vertex
+        triangle_vertices_x[cur_vertex + 4] = offset_right - offset_mid_x;
+        triangle_vertices_y[cur_vertex + 4] = offset_bottom - offset_mid_y;
+        triangle_vertices_z[cur_vertex + 4] = 0;
+        // bottomleft vertex
+        triangle_vertices_x[cur_vertex + 5] = offset_left - offset_mid_x;
+        triangle_vertices_y[cur_vertex + 5] = offset_bottom - offset_mid_y;
+        triangle_vertices_z[cur_vertex + 5] = 0;
+        
+        polygons_x[cur_vertex  ] = offset_mid_x;
+        polygons_y[cur_vertex  ] = offset_mid_y;
+        polygons_z[cur_vertex  ] = texquads_to_render[i].z;
+        polygons_x[cur_vertex+1] = offset_mid_x;
+        polygons_y[cur_vertex+1] = offset_mid_y;
+        polygons_z[cur_vertex+1] = texquads_to_render[i].z;
+        polygons_x[cur_vertex+2] = offset_mid_x;
+        polygons_y[cur_vertex+2] = offset_mid_y;
+        polygons_z[cur_vertex+2] = texquads_to_render[i].z;
+        polygons_x[cur_vertex+3] = offset_mid_x;
+        polygons_y[cur_vertex+3] = offset_mid_y;
+        polygons_z[cur_vertex+3] = texquads_to_render[i].z;
+        polygons_x[cur_vertex+4] = offset_mid_x;
+        polygons_y[cur_vertex+4] = offset_mid_y;
+        polygons_z[cur_vertex+4] = texquads_to_render[i].z;
+        polygons_x[cur_vertex+5] = offset_mid_x;
+        polygons_y[cur_vertex+5] = offset_mid_y;
+        polygons_z[cur_vertex+5] = texquads_to_render[i].z;
+        
+        x_angles[cur_vertex  ] = 0.0f;
+        y_angles[cur_vertex  ] = 0.0f;
+        z_angles[cur_vertex  ] = texquads_to_render[i].z_angle;
+        x_angles[cur_vertex+1] = 0.0f;
+        y_angles[cur_vertex+1] = 0.0f;
+        z_angles[cur_vertex+1] = texquads_to_render[i].z_angle;
+        x_angles[cur_vertex+2] = 0.0f;
+        y_angles[cur_vertex+2] = 0.0f;
+        z_angles[cur_vertex+2] = texquads_to_render[i].z_angle;
+        x_angles[cur_vertex+3] = 0.0f;
+        y_angles[cur_vertex+3] = 0.0f;
+        z_angles[cur_vertex+3] = texquads_to_render[i].z_angle;
+        x_angles[cur_vertex+4] = 0.0f;
+        y_angles[cur_vertex+4] = 0.0f;
+        z_angles[cur_vertex+4] = texquads_to_render[i].z_angle;
+        x_angles[cur_vertex+5] = 0.0f;
+        y_angles[cur_vertex+5] = 0.0f;
+        z_angles[cur_vertex+5] = texquads_to_render[i].z_angle;
+        
+        working_memory_1[cur_vertex    ] = texquads_to_render[i].scale_factor;
+        working_memory_1[cur_vertex + 1] = texquads_to_render[i].scale_factor;
+        working_memory_1[cur_vertex + 2] = texquads_to_render[i].scale_factor;
+        working_memory_1[cur_vertex + 3] = texquads_to_render[i].scale_factor;
+        working_memory_1[cur_vertex + 4] = texquads_to_render[i].scale_factor;
+        working_memory_1[cur_vertex + 5] = texquads_to_render[i].scale_factor;
+        
+        camera_multipliers[cur_vertex    ] = (1.0f * !texquads_to_render[i].ignore_camera);
+        camera_multipliers[cur_vertex + 1] = (1.0f * !texquads_to_render[i].ignore_camera);
+        camera_multipliers[cur_vertex + 2] = (1.0f * !texquads_to_render[i].ignore_camera);
+        camera_multipliers[cur_vertex + 3] = (1.0f * !texquads_to_render[i].ignore_camera);
+        camera_multipliers[cur_vertex + 4] = (1.0f * !texquads_to_render[i].ignore_camera);
+        camera_multipliers[cur_vertex + 5] = (1.0f * !texquads_to_render[i].ignore_camera);
+        
+        cur_vertex += 6;
     }
     
     // apply scaling modifier
@@ -197,16 +290,15 @@ void software_render(
     platform_256_add(triangle_vertices_y, polygons_y, vertices_size);
     platform_256_add(triangle_vertices_z, polygons_z, vertices_size);
     
-    // working_memory_1 here should contain the reversed 'ignore camera' booleans
     platform_256_sub_scalarproduct(
         /* subtract_from: */ triangle_vertices_x,
         /* subtract_from_size: */ vertices_size,
-        /* base_scalar: */ screen_x_to_3d_x(camera.x),
+        /* base_scalar: */ camera.x,
         /* multiply_scalar_by: */ camera_multipliers);
     platform_256_sub_scalarproduct(
         /* subtract_from: */ triangle_vertices_y,
         /* subtract_from_size: */ vertices_size,
-        /* base_scalar: */ screen_y_to_3d_y(camera.y),
+        /* base_scalar: */ camera.y,
         /* multiply_scalar_by: */ camera_multipliers);
     platform_256_sub_scalarproduct(
         /* subtract_from: */ triangle_vertices_z,
@@ -215,27 +307,64 @@ void software_render(
         /* multiply_scalar_by: */ camera_multipliers);
     
     // next: camera-rotate x, y and z
-    x_rotate_zvertices_inplace_scalar_angle(
+    float real_cos_angle     = cosf(-camera.x_angle);
+    float real_sin_angle     = sinf(-camera.x_angle);
+    float ignoring_cos_angle = cosf(0.0f);
+    float ignoring_sin_angle = sinf(0.0f);
+    for (uint32_t i = 0; i < vertices_size; i++) {
+        cosines[i] =
+            (real_cos_angle     * camera_multipliers[i]) +
+            (ignoring_cos_angle * !camera_multipliers[i]);
+        sines[i] =
+            (real_sin_angle     * camera_multipliers[i]) +
+            (ignoring_sin_angle * !camera_multipliers[i]);
+    }
+    x_rotate_zvertices_inplace(
         triangle_vertices_y,
         triangle_vertices_z, 
         working_memory_1,
         working_memory_2, 
         vertices_size, 
-        -camera.x_angle);
-    y_rotate_zvertices_inplace_scalar_angle(
+        cosines,
+        sines);
+    
+    real_cos_angle = cosf(-camera.y_angle);
+    real_sin_angle = sinf(-camera.y_angle);
+    for (uint32_t i = 0; i < vertices_size; i++) {
+        cosines[i] =
+            (real_cos_angle     * camera_multipliers[i]) +
+            (ignoring_cos_angle * !camera_multipliers[i]);
+        sines[i] =
+            (real_sin_angle     * camera_multipliers[i]) +
+            (ignoring_sin_angle * !camera_multipliers[i]);
+    }
+    y_rotate_zvertices_inplace(
         triangle_vertices_x,
         triangle_vertices_z,
         working_memory_1,
         working_memory_2, 
-        vertices_size, 
-        -camera.y_angle);
-    z_rotate_zvertices_inplace_scalar_angle(
+        vertices_size,
+        cosines,
+        sines);
+    
+    real_cos_angle = cosf(-camera.z_angle);
+    real_sin_angle = sinf(-camera.z_angle);
+    for (uint32_t i = 0; i < vertices_size; i++) {
+        cosines[i] =
+            (real_cos_angle     * camera_multipliers[i]) +
+            (ignoring_cos_angle * !camera_multipliers[i]);
+        sines[i] =
+            (real_sin_angle     * camera_multipliers[i]) +
+            (ignoring_sin_angle * !camera_multipliers[i]);
+    }
+    z_rotate_zvertices_inplace(
         triangle_vertices_x,
-        triangle_vertices_y,
+        triangle_vertices_y, 
         working_memory_1,
         working_memory_2, 
         vertices_size, 
-        -camera.z_angle);
+        cosines,
+        sines);
     
     // we're not using the camera because the entire world
     // was translated to have the camera be at 0,0,0
@@ -244,8 +373,7 @@ void software_render(
     origin.y = 0.0f;
     origin.z = 0.0f;
     
-    // this gets 1 'visibility rating' (a dot product) per triangle,
-    // so it will be 1/3rd the size of vertices_size    
+    // this gets 1 'visibility rating' (a dot product) per vertex
     get_visibility_ratings(
         origin,
         triangle_vertices_x,
@@ -278,7 +406,7 @@ void software_render(
             
             log_assert(first_visible_vertex_i < vertices_size);
             if (
-                visibility_ratings[all_triangle_i] < 0.0f &&
+                (visibility_ratings[first_all_vertex_i] < 0.0f) &&
                 (triangle_vertices_z[first_all_vertex_i] > projection_constants.near ||
                  triangle_vertices_z[first_all_vertex_i+1] > projection_constants.near ||
                  triangle_vertices_z[first_all_vertex_i+2] > projection_constants.near))
@@ -296,9 +424,12 @@ void software_render(
                     
                     lighting_multipliers[visible_vertices_i] =
                         (1.0f * !zpolygons_to_render[zp_i].ignore_lighting);
-                    rendered_vertices[visible_vertices_i].lighting[0] = (lighting_multipliers[visible_vertices_i] - 1.0f) * -1.0f;
-                    rendered_vertices[visible_vertices_i].lighting[1] = (lighting_multipliers[visible_vertices_i] - 1.0f) * -1.0f;
-                    rendered_vertices[visible_vertices_i].lighting[2] = (lighting_multipliers[visible_vertices_i] - 1.0f) * -1.0f;
+                    rendered_vertices[visible_vertices_i].lighting[0] =
+                        (lighting_multipliers[visible_vertices_i] - 1.0f) * -1.0f;
+                    rendered_vertices[visible_vertices_i].lighting[1] = 
+                        (lighting_multipliers[visible_vertices_i] - 1.0f) * -1.0f;
+                    rendered_vertices[visible_vertices_i].lighting[2] =
+                        (lighting_multipliers[visible_vertices_i] - 1.0f) * -1.0f;
                     rendered_vertices[visible_vertices_i].lighting[3] = 1.0f;
                     
                     rendered_vertices[visible_vertices_i].texture_i =
@@ -331,12 +462,91 @@ void software_render(
         }
     }
     
+    float left_uv_coord = 0.0f;
+    float right_uv_coord = 1.0f;
+    float bottom_uv_coord = 1.0f;
+    float top_uv_coord = 0.0f;
+    for (
+       int32_t tq_i = 0;
+       tq_i < texquads_to_render_size;
+       tq_i++)
+    {
+        uint32_t first_visible_vertex_i = visible_triangle_i * 3;
+        uint32_t first_all_vertex_i = all_triangle_i * 3;
+        
+        log_assert(first_visible_vertex_i < vertices_size);
+        if (visibility_ratings[first_all_vertex_i] < 0.0f)
+        {
+            for (uint32_t m = 0; m < 6; m++) {
+                triangle_vertices_x[first_visible_vertex_i + m] =
+                    triangle_vertices_x[first_all_vertex_i + m];
+                triangle_vertices_y[first_visible_vertex_i + m] =
+                    triangle_vertices_y[first_all_vertex_i + m];
+                triangle_vertices_z[first_visible_vertex_i + m] =
+                    triangle_vertices_z[first_all_vertex_i + m];
+                
+                lighting_multipliers[first_visible_vertex_i + m] =
+                    (1.0f * !texquads_to_render[tq_i].ignore_lighting);
+                
+                rendered_vertices[first_visible_vertex_i + m].lighting[0] =
+                    (lighting_multipliers[first_visible_vertex_i + m] - 1.0f) * -1.0f;
+                rendered_vertices[first_visible_vertex_i + m].lighting[1] =
+                    (lighting_multipliers[first_visible_vertex_i + m] - 1.0f) * -1.0f;
+                rendered_vertices[first_visible_vertex_i + m].lighting[2] =
+                    (lighting_multipliers[first_visible_vertex_i + m] - 1.0f) * -1.0f;
+                rendered_vertices[first_visible_vertex_i + m].lighting[3] = 1.0f;
+                
+                rendered_vertices[first_visible_vertex_i + m].texture_i =
+                    texquads_to_render[tq_i].texture_i;
+                rendered_vertices[first_visible_vertex_i + m].texturearray_i =
+                    texquads_to_render[tq_i].texturearray_i;
+                
+                rendered_vertices[first_visible_vertex_i + m].RGBA[0] =
+                    texquads_to_render[tq_i].RGBA[0];
+                rendered_vertices[first_visible_vertex_i + m].RGBA[1] =
+                    texquads_to_render[tq_i].RGBA[1];
+                rendered_vertices[first_visible_vertex_i + m].RGBA[2] =
+                    texquads_to_render[tq_i].RGBA[2];
+                rendered_vertices[first_visible_vertex_i + m].RGBA[3] =
+                    texquads_to_render[tq_i].RGBA[3];
+                
+                rendered_triangles_touchable_ids[visible_triangle_i    ] =
+                    texquads_to_render[tq_i].touchable_id;
+                rendered_triangles_touchable_ids[visible_triangle_i + 1] =
+                    texquads_to_render[tq_i].touchable_id;
+            }
+            
+            // topleft
+            rendered_vertices[first_visible_vertex_i + 0].uv[0] = left_uv_coord;
+            rendered_vertices[first_visible_vertex_i + 0].uv[1] = top_uv_coord;
+            // topright
+            rendered_vertices[first_visible_vertex_i + 1].uv[0] = right_uv_coord;
+            rendered_vertices[first_visible_vertex_i + 1].uv[1] = top_uv_coord;
+            // bottomleft
+            rendered_vertices[first_visible_vertex_i + 2].uv[0] = left_uv_coord;
+            rendered_vertices[first_visible_vertex_i + 2].uv[1] = bottom_uv_coord;
+            // topright
+            rendered_vertices[first_visible_vertex_i + 3].uv[0] = right_uv_coord;
+            rendered_vertices[first_visible_vertex_i + 3].uv[1] = top_uv_coord;
+            // bottomright
+            rendered_vertices[first_visible_vertex_i + 4].uv[0] = right_uv_coord;
+            rendered_vertices[first_visible_vertex_i + 4].uv[1] = bottom_uv_coord;
+            // bottomleft
+            rendered_vertices[first_visible_vertex_i + 5].uv[0] = left_uv_coord;
+            rendered_vertices[first_visible_vertex_i + 5].uv[1] = bottom_uv_coord;
+            
+            visible_triangle_i += 2;
+        }
+        
+        all_triangle_i += 2;
+    }
+    
     uint32_t visible_triangles_size = visible_triangle_i;
     uint32_t visible_vertices_size = visible_triangle_i * 3;
     
     for (
         uint32_t light_i = 0;
-        light_i < zlights_to_apply_size;
+        light_i < zlights_transformed_size;
         light_i++)
     {
         ztriangles_apply_lighting(
@@ -347,7 +557,7 @@ void software_render(
             visible_vertices_size,
             rendered_vertices,
             visible_vertices_size,
-            &zlights_to_apply[light_i]);
+            &zlights_transformed[light_i]);
     }
     
     // w is basically just z before projection
@@ -385,8 +595,5 @@ void software_render(
                 rendered_vertices + (i * 3),
             /* touchable_id: */
                 rendered_triangles_touchable_ids[i]);
-    }
-    
-    if (!application_running) { return; }
+    }    
 }
-

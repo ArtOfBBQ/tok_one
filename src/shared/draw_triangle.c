@@ -101,8 +101,8 @@ static bool32_t point_collides_triangle_area(
 }
 
 int32_t find_touchable_at(
-    const float normalized_x,
-    const float normalized_y)
+    const float x,
+    const float y)
 {
     int32_t return_value = -1;
     float current_z = FLOAT32_MAX;
@@ -119,8 +119,8 @@ int32_t find_touchable_at(
         if (
             avg_z < current_z &&
             point_collides_triangle_area(
-                /* normalized_x : */ normalized_x,
-                /* normalized_y : */ normalized_y,
+                /* normalized_x : */ x,
+                /* normalized_y : */ y,
                 /* TriangleArea * area : */ &touchable_triangles[i]))
         {
             current_z = avg_z;

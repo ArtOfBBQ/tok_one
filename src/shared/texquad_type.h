@@ -43,15 +43,15 @@ typedef struct TexQuad {
     // will be mixed with this color
     float RGBA[4];
     
-    float left_pixels;
-    float top_pixels; // y = window_height for top of screen
-                      // y = 0 for right below the screen
+    float left_x;
+    float top_y; // y = window_height for top of screen
+                 // y = 0 for right below the screen
     
     float x_offset;   // an additional x offset unaffected by animations that target x/y 
     float y_offset;   // an additional y offset unaffected by animations that target x/y
     
-    float height_pixels;
-    float width_pixels;
+    float height;
+    float width;
     float scale_factor;
     float z;
     float z_angle;

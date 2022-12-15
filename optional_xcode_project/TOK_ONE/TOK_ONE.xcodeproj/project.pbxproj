@@ -135,11 +135,15 @@
 		EC6B1F4D293CA04F00837369 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4C293CA04F00837369 /* Metal.framework */; };
 		EC6B1F4F293CA05500837369 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4E293CA05500837369 /* MetalKit.framework */; };
 		EC6B1F51293CA06200837369 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F50293CA06200837369 /* AVFoundation.framework */; };
+		EC70CC9C29402917005CE3E9 /* fs_justice.bmp in Resources */ = {isa = PBXBuildFile; fileRef = EC70CC9B29402917005CE3E9 /* fs_justice.bmp */; };
+		EC70CC9E29403011005CE3E9 /* fs_cardback.bmp in Resources */ = {isa = PBXBuildFile; fileRef = EC70CC9D29403010005CE3E9 /* fs_cardback.bmp */; };
 		EC7B09D4293CAC8B000ED98E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = EC7B09D3293CAC8B000ED98E /* Main.storyboard */; };
 		EC7B171B293A23E400C1D20C /* roundedborder.png in Resources */ = {isa = PBXBuildFile; fileRef = EC7B171A293A23E300C1D20C /* roundedborder.png */; };
 		EC7B171C293A23E400C1D20C /* roundedborder.png in Resources */ = {isa = PBXBuildFile; fileRef = EC7B171A293A23E300C1D20C /* roundedborder.png */; };
 		EC92FDAD2902917500C10865 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
 		EC92FDAE2902917500C10865 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
+		EC9E143D2940BA9800C856D0 /* fs_justice.bmp in Resources */ = {isa = PBXBuildFile; fileRef = EC70CC9B29402917005CE3E9 /* fs_justice.bmp */; };
+		EC9E143E2940BA9B00C856D0 /* fs_cardback.bmp in Resources */ = {isa = PBXBuildFile; fileRef = EC70CC9D29403010005CE3E9 /* fs_cardback.bmp */; };
 		ECCB08A528DB6FD00038BBAC /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECCB08A428DB6FD00038BBAC /* AVFoundation.framework */; };
 /* End PBXBuildFile section */
 
@@ -221,6 +225,8 @@
 		EC6B1F4C293CA04F00837369 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/Metal.framework; sourceTree = DEVELOPER_DIR; };
 		EC6B1F4E293CA05500837369 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/MetalKit.framework; sourceTree = DEVELOPER_DIR; };
 		EC6B1F50293CA06200837369 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/AVFoundation.framework; sourceTree = DEVELOPER_DIR; };
+		EC70CC9B29402917005CE3E9 /* fs_justice.bmp */ = {isa = PBXFileReference; explicitFileType = compiled; name = fs_justice.bmp; path = ../../resources/fs_justice.bmp; sourceTree = "<group>"; };
+		EC70CC9D29403010005CE3E9 /* fs_cardback.bmp */ = {isa = PBXFileReference; explicitFileType = compiled; name = fs_cardback.bmp; path = ../../resources/fs_cardback.bmp; sourceTree = "<group>"; };
 		EC7B09D3293CAC8B000ED98E /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Main.storyboard; path = ../../resources/ios/Main.storyboard; sourceTree = "<group>"; };
 		EC7B171A293A23E300C1D20C /* roundedborder.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = roundedborder.png; path = ../../resources/roundedborder.png; sourceTree = "<group>"; };
 		EC92FDAB2902917500C10865 /* decode_bmp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = decode_bmp.h; path = ../../src/shared/debigulator/src/decode_bmp.h; sourceTree = "<group>"; };
@@ -317,7 +323,9 @@
 			children = (
 				EC7B09D3293CAC8B000ED98E /* Main.storyboard */,
 				6009FB632876A47100FC5A60 /* fontmetrics.dat */,
+				EC70CC9D29403010005CE3E9 /* fs_cardback.bmp */,
 				601128AC28625BAF00F92967 /* font.png */,
+				EC70CC9B29402917005CE3E9 /* fs_justice.bmp */,
 				EC7B171A293A23E300C1D20C /* roundedborder.png */,
 				EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */,
 				6080CC45286FFD1D00444118 /* phoebus.png */,
@@ -486,6 +494,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EC70CC9E29403011005CE3E9 /* fs_cardback.bmp in Resources */,
+				EC70CC9C29402917005CE3E9 /* fs_justice.bmp in Resources */,
 				EC1412B12938597400DA0D21 /* cardwithuvcoords.obj in Resources */,
 				6009FB642876A47100FC5A60 /* fontmetrics.dat in Resources */,
 				6080CC46286FFD1E00444118 /* phoebus.png in Resources */,
@@ -505,6 +515,8 @@
 				EC1412B22938597400DA0D21 /* cardwithuvcoords.obj in Resources */,
 				60A99921287BDF31003F7159 /* fontmetrics.dat in Resources */,
 				60A99924287BDF31003F7159 /* phoebus.png in Resources */,
+				EC9E143D2940BA9800C856D0 /* fs_justice.bmp in Resources */,
+				EC9E143E2940BA9B00C856D0 /* fs_cardback.bmp in Resources */,
 				EC7B171C293A23E400C1D20C /* roundedborder.png in Resources */,
 				60A9991F287BDF31003F7159 /* font.png in Resources */,
 				60A99923287BDF31003F7159 /* teapot.obj in Resources */,

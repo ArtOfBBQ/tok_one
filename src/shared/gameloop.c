@@ -70,50 +70,24 @@ void shared_gameloop_update(
             /* const char * text_to_draw: */
                 crashed_top_of_screen_msg,
             /* const float left_pixelspace: */
-                10,
+                30,
             /* const float top_pixelspace: */
-                window_height - 20,
+                window_height - 30,
             /* const float z: */
-                0.5f,
+                0.99f,
             /* const float max_width: */
-                window_width - 20,
+                window_width - 30,
             /* const bool32_t ignore_camera: */
                 true);
     } else {
         client_logic_update(elapsed);
-        
-        software_render(
-            /* next_gpu_workload: */
-                vertices_for_gpu,
-            /* next_gpu_workload_size: */
-                vertices_for_gpu_size,
-            /* elapsed_microseconds: */
-                elapsed);
     }
     
-    // draw opaque 2d bitmaps
-    sorts_this_frame = 0;
-    draw_texquads_to_render(
+    software_render(
         /* next_gpu_workload: */
             vertices_for_gpu,
         /* next_gpu_workload_size: */
             vertices_for_gpu_size,
-        /* must_opaque: */
-            true,
-        /* must_have_alpha_channel: */
-            false);
-    log_assert(sorts_this_frame == 0);
-        
-    // draw transparent 2d bitmaps    
-    draw_texquads_to_render(
-        /* next_gpu_workload: */
-            vertices_for_gpu,
-        /* next_gpu_workload_size: */
-            vertices_for_gpu_size,
-        /* must_opaque: */
-            false,
-        /* must_have_alpha_channel: */
-            true);
-    log_assert(sorts_this_frame < 2);
+        /* elapsed_microseconds: */
+            elapsed);
 }
-

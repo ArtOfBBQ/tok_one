@@ -309,7 +309,7 @@ uint32_t block_drawinmtkview = true;
         .loadAction = MTLLoadActionClear;
     
     RenderPassDescriptor.colorAttachments[0].clearColor =
-        MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);;
+        MTLClearColorMake(0.0f, 0.0f, 0.1f, 1.0f);;
     
     id<MTLRenderCommandEncoder> render_encoder =
         [command_buffer
