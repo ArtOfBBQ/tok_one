@@ -34,7 +34,10 @@ void init_projection_constants() {
     
     if (window_height < 50.0f || window_width < 50.0f) {
         char unexpected_window_sz_msg[256];
-        strcpy_capped(unexpected_window_sz_msg, 256, "ERROR: unexpected window size [");
+        strcpy_capped(
+            unexpected_window_sz_msg,
+            256,
+            "ERROR: unexpected window size [");
         strcat_int_capped(unexpected_window_sz_msg, 256, (int)window_height);
         strcat_capped(unexpected_window_sz_msg, 256, ",");
         strcat_int_capped(unexpected_window_sz_msg, 256, (int)window_width);
@@ -149,6 +152,7 @@ zPolygon parse_obj(
 {
     return parse_obj_expecting_materials(rawdata, rawdata_size, NULL, 0, flip_winding);
 }
+
 zPolygon parse_obj_expecting_materials(
     char * rawdata,
     uint64_t rawdata_size,
@@ -159,7 +163,7 @@ zPolygon parse_obj_expecting_materials(
     zPolygon return_value;
     construct_zpolygon(&return_value);
     
-    // TODO: think about buffer size 
+    // TODO: think about buffer size
     // pass through buffer once to read all vertices 
     #define LOADING_OBJ_BUF_SIZE 16000
     zVertex * new_vertices = (zVertex *)malloc_from_managed(
@@ -175,6 +179,15 @@ zPolygon parse_obj_expecting_materials(
     while (i < rawdata_size) {
         // read the 1st character, which denominates the type
         // of information
+        
+        char dbg_newline[30];
+        strcpy_capped(dbg_newline, 30, rawdata + i);
+        uint32_t dbg_i = 0;
+        while (dbg_i < 29 && dbg_newline[dbg_i] != '\n') {
+            dbg_i++;
+        }
+        dbg_newline[dbg_i] = '\0';
+        
         if (
             rawdata[i] == 'v' &&
             rawdata[i+1] == ' ')
@@ -294,11 +307,15 @@ zPolygon parse_obj_expecting_materials(
     
     log_assert(return_value.triangles_size > 0);
     
-    // pass through rawdata again to read all triangles 
-    //    return_value.triangles =
-    //        (zTriangle *)malloc_from_unmanaged(
-    //            sizeof(zTriangle) * return_value.triangles_size);
-    log_assert(return_value.triangles_size < POLYGON_TRIANGLES_SIZE);
+    if (return_value.triangles_size >= POLYGON_TRIANGLES_SIZE) {
+        char error_msg[100];
+        strcpy_capped(error_msg, 100, "Error: POLYGON_TRIANGLES_SIZE was ");
+        strcat_uint_capped(error_msg, 100, POLYGON_TRIANGLES_SIZE);
+        strcat_capped(error_msg, 100, ", but return_value.triangles_size is ");
+        strcat_uint_capped(error_msg, 100, return_value.triangles_size);
+        log_dump_and_crash(error_msg);
+        assert(0);
+    }
     
     i = first_material_or_face_i;
     uint32_t new_triangle_i = 0;
@@ -385,11 +402,12 @@ zPolygon parse_obj_expecting_materials(
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
             
-            // read triangle data
-            zTriangle new_triangle;
-            new_triangle.visible = 1;
+            // read the indices of the vertices first
+            // there could be 3 or 4 vertices to a face,
+            // but if there are more we don't support that yet
+            uint32_t face_vertex_indices_size = 0;
             
-            // read 1st vertex index
+            log_append("read 1st vertex index\n");
             int32_t vertex_i_0 = string_to_int32(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
@@ -413,7 +431,7 @@ zPolygon parse_obj_expecting_materials(
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
             
-            // read 2nd vertex index
+            log_append("read 2nd vertex index\n");
             int32_t vertex_i_1 = string_to_int32(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
@@ -439,7 +457,7 @@ zPolygon parse_obj_expecting_materials(
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
             
-            // read 3rd vertex index
+            log_append("read 3rd vertex index\n");
             int32_t vertex_i_2 = string_to_int32(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
@@ -463,8 +481,102 @@ zPolygon parse_obj_expecting_materials(
                 }
             }
             
-            log_assert(rawdata[i] == '\n');
-            i++;
+            while (rawdata[i] == ' ') { i++; }
+            
+            if (rawdata[i] != '\n') {
+                log_append("read 4th vertex index\n");
+                int32_t vertex_i_3 = string_to_int32(rawdata + i);
+                i += chars_till_next_space_or_slash(
+                    rawdata + i);
+                int32_t uv_coord_i_3 = 0;
+                if (rawdata[i] == '/')
+                {
+                    // skip the slash
+                    i++;
+                    uv_coord_i_3 =
+                        string_to_int32(rawdata + i);
+                    i += chars_till_next_space_or_slash(
+                        rawdata + i);
+                }
+                
+                // skip any id's of normals
+                if (rawdata[i] == '/') {
+                    i++;
+                    log_assert(rawdata[i] != ' ');
+                    while (rawdata[i] <= '9' && rawdata[i] >= '0') {
+                        i++;
+                    }
+                }
+                
+                // there were 2 triangles in this face
+                // the 1st triangle will be added anyway later, but
+                // we do need to add the extra 2nd triangle here
+                zTriangle new_triangle;
+                new_triangle.visible = 1;
+                
+                log_assert(vertex_i_0 != vertex_i_1);
+                log_assert(vertex_i_0 != vertex_i_2);
+                log_assert(vertex_i_0 > 0);
+                log_assert(vertex_i_1 > 0);
+                log_assert(vertex_i_2 > 0);
+                log_assert(uv_coord_i_0 < LOADING_OBJ_BUF_SIZE);
+                log_assert(uv_coord_i_1 < LOADING_OBJ_BUF_SIZE);
+                log_assert(uv_coord_i_2 < LOADING_OBJ_BUF_SIZE);
+                
+                uint32_t target_vertex_0 = 0;
+                uint32_t target_vertex_1 = 1;
+                uint32_t target_vertex_2 = 2;
+                
+                new_triangle.vertices[target_vertex_0] =
+                    new_vertices[vertex_i_0 - 1];
+                new_triangle.vertices[target_vertex_1] =
+                    new_vertices[vertex_i_2 - 1];
+                new_triangle.vertices[target_vertex_2] =
+                    new_vertices[vertex_i_3 - 1];
+                
+                if (
+                    uv_coord_i_0 > 0 &&
+                    uv_coord_i_1 > 0 &&
+                    uv_coord_i_2 > 0)
+                {
+                    new_triangle.vertices[target_vertex_0].uv[0] =
+                    uv_u[uv_coord_i_0 - 1];
+                    new_triangle.vertices[target_vertex_0].uv[1] =
+                    uv_v[uv_coord_i_0 - 1];
+                    new_triangle.vertices[target_vertex_1].uv[0] =
+                    uv_u[uv_coord_i_2 - 1];
+                    new_triangle.vertices[target_vertex_1].uv[1] =
+                    uv_v[uv_coord_i_2 - 1];
+                    new_triangle.vertices[target_vertex_2].uv[0] =
+                    uv_u[uv_coord_i_3 - 1];
+                    new_triangle.vertices[target_vertex_2].uv[1] =
+                    uv_v[uv_coord_i_3 - 1];
+                }
+                
+                new_triangle.color[0] = using_color[0];
+                new_triangle.color[1] = using_color[1];
+                new_triangle.color[2] = using_color[2];
+                new_triangle.color[3] = using_color[3];
+                
+                new_triangle.texturearray_i = using_texturearray_i;
+                new_triangle.texture_i = using_texture_i;
+                
+                log_append("4 vertex face, return_value.triangles_size adjusted to: ");
+                log_append_uint(return_value.triangles_size);
+                log_append_char('\n');
+                return_value.triangles_size += 1;
+                log_assert(new_triangle_i < POLYGON_TRIANGLES_SIZE);
+                
+                return_value.triangles[new_triangle_i] = new_triangle;
+                new_triangle_i++;
+            } else {
+                // there was only 1 triangle
+            }
+            
+            // if you get here there was only 1 triangle OR
+            // there were 2 triangles and you already did the other one
+            zTriangle new_triangle;
+            new_triangle.visible = 1;
             
             log_assert(vertex_i_0 != vertex_i_1);
             log_assert(vertex_i_0 != vertex_i_2);
@@ -513,11 +625,16 @@ zPolygon parse_obj_expecting_materials(
             new_triangle.texturearray_i = using_texturearray_i;
             new_triangle.texture_i = using_texture_i;
             
+            log_assert(new_triangle_i < ZPOLYGONS_TO_RENDER_ARRAYSIZE);
             return_value.triangles[new_triangle_i] = new_triangle;
             new_triangle_i++;
             log_append("triangles finished parsing: ");
             log_append_uint(new_triangle_i);
             log_append_char('\n');
+            
+            log_assert(rawdata[i] == '\n');
+            i++;
+            
         } else {
             // skip until the next line break character 
             while (rawdata[i] != '\n' && rawdata[i] != '\0') {
@@ -530,6 +647,17 @@ zPolygon parse_obj_expecting_materials(
     }
     
     free_from_managed((uint8_t *)new_vertices);
+    
+    if (return_value.triangles_size >= POLYGON_TRIANGLES_SIZE) {
+        char error_msg[100];
+        strcpy_capped(error_msg, 100, "Error: POLYGON_TRIANGLES_SIZE was ");
+        strcat_uint_capped(error_msg, 100, POLYGON_TRIANGLES_SIZE);
+        strcat_capped(error_msg, 100, ", but return_value.triangles_size is ");
+        strcat_uint_capped(error_msg, 100, return_value.triangles_size);
+        strcat_capped(error_msg, 100, "\n");
+        log_dump_and_crash(error_msg);
+        assert(0);
+    }
     
     return return_value;
 }

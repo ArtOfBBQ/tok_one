@@ -482,6 +482,10 @@ log_dump_and_crash(const char * crash_message) {
     log_dump(&log_dump_succesful);
     strcpy_capped(crashed_top_of_screen_msg, 256, crash_message);  
     application_running = false;
+
+    #ifndef LOGGER_SILENCE
+    printf("DUMP & CRASHED: %s\n", crash_message);
+    #endif
 }
 
 void __attribute__((no_instrument_function))

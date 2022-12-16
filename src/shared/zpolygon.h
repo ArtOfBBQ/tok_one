@@ -45,7 +45,7 @@ typedef struct zTriangle {
     uint32_t visible;
 } zTriangle;
 
-#define POLYGON_TRIANGLES_SIZE 50
+#define POLYGON_TRIANGLES_SIZE 700
 typedef struct zPolygon {
     int32_t object_id;
     int32_t touchable_id;

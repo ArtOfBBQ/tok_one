@@ -18,6 +18,10 @@ zPolygon load_from_obj_file_expecting_materials(
     const uint32_t expected_materials_size,
     const bool32_t flip_winding)
 {
+    log_append("loading obj file: ");
+    log_append(filepath);
+    log_append_char('\n');
+    
     FileBuffer buffer;
     buffer.size = (uint64_t)platform_get_resource_size(filepath) + 1;
     buffer.contents = (char *)malloc_from_managed(buffer.size);
@@ -173,6 +177,51 @@ void client_logic_startup() {
         /* new_height: */ 0.5f);
     center_zpolygon_offsets(&card_model);
     
+    ExpectedObjMaterials key_materials;
+    strcpy_capped(
+        key_materials.material_name,
+        16,
+        "Metal");
+    key_materials.texturearray_i = -1;
+    key_materials.texture_i = -1;
+    key_materials.rgba[0] = 1.0f;
+    key_materials.rgba[1] = 1.0f;
+    key_materials.rgba[2] = 0.4f;
+    key_materials.rgba[3] = 1.0f;
+    zPolygon key = load_from_obj_file_expecting_materials(
+        "key.obj",
+        &key_materials,
+        1,
+        false);
+    printf("key.triangles_size: %u first 5 vertices:\n", key.triangles_size);
+    for (uint32_t _ = 0; _ < 5; _++) {
+        printf(
+            "{%f, %f, %f}\n",
+            key.triangles[_].vertices[0].x,
+            key.triangles[_].vertices[0].y,
+            key.triangles[_].vertices[0].z);
+        printf(
+            "{%f, %f, %f}\n",
+            key.triangles[_].vertices[1].x,
+            key.triangles[_].vertices[1].y,
+            key.triangles[_].vertices[1].z);
+        printf(
+            "{%f, %f, %f}\n",
+            key.triangles[_].vertices[2].x,
+            key.triangles[_].vertices[2].y,
+            key.triangles[_].vertices[2].z);
+        printf("***\n");
+    }
+    
+    log_assert(key.triangles_size > 0);
+    scale_zpolygon(
+        /* to_scale: */ &key,
+        /* new_height: */ 0.5f);
+    key.x = 0.5f;
+    key.y = 0.5f;
+    key.z = 1.0f;
+    zpolygons_to_render[zpolygons_to_render_size++] = key;
+    
     zPolygon card_1 = card_model;
     card_1.object_id = 234;
     card_1.touchable_id = 0;
@@ -182,7 +231,7 @@ void client_logic_startup() {
     card_1.x_angle = 3.18f;
     card_1.y_angle = 3.2f;
     card_1.z_angle = 0.0f;
-    zpolygons_to_render[zpolygons_to_render_size++] = card_1;
+    // zpolygons_to_render[zpolygons_to_render_size++] = card_1;
     
     zPolygon card_2 = card_1;
     card_2.object_id = 235;
@@ -190,6 +239,8 @@ void client_logic_startup() {
     card_2.y = 0.75f;
     card_2.touchable_id = 1;
     //    zpolygons_to_render[zpolygons_to_render_size++] = card_2;
+    
+    
     
     TexQuad purplewheeltexture;
     construct_texquad(&purplewheeltexture);
@@ -402,9 +453,9 @@ static void  client_handle_touches_and_leftclicks(
             }
         }
         
-        //        request_fading_lightsquare(
-        //            previous_touch_or_leftclick_end.screen_x,
-        //            previous_touch_or_leftclick_end.screen_y);
+        request_fading_lightsquare(
+            previous_touch_or_leftclick_end.screen_x,
+            previous_touch_or_leftclick_end.screen_y);
         
         previous_touch_or_leftclick_end.handled = true;
     }

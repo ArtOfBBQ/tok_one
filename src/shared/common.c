@@ -411,14 +411,6 @@ string_to_float_validate(
         return 0;
     }
     
-    // TODO: remove debug code
-    if (input[0] == '-' &&
-        input[1] == '2' &&
-        input[2] == '.')
-    {
-        assert(true);
-    }
-    
     float return_value = 0;
     
     uint32_t i = 0;
@@ -456,7 +448,6 @@ string_to_float_validate(
     }
     
     first_part[first_part_size] = '\0';
-    second_part[second_part_size] = '\0';
     
     bool32_t first_part_valid = false;
     int first_part_int = string_to_int32_validate(
@@ -466,6 +457,13 @@ string_to_float_validate(
         *good = false;
         return return_value;
     }
+
+    if (second_part_size < 1) {
+        *good = true;
+        return return_value;
+    }
+    
+    second_part[second_part_size] = '\0';
     bool32_t second_part_valid = false;
     int second_part_int = string_to_int32_validate(
         /* const char input: */ second_part,
@@ -504,7 +502,21 @@ string_to_float(
     float result = string_to_float_validate(
         input,
         &result_good);
+    
     #ifndef COMMON_IGNORE_ASSERTS
+    #ifndef COMMON_SILENCE
+    if (!result_good) {
+        printf(
+            "string_to_float failed to parse input: %c%c%c%c%c%c%c\n",
+            input[0],
+            input[1],
+            input[2],
+            input[3],
+            input[4],
+            input[5],
+            input[6]);
+    }
+    #endif
     assert(result_good);
     #endif
     return result;
