@@ -697,7 +697,7 @@ void zpolygon_scale_to_width_given_z(
 
 void scale_zpolygon(
     zPolygon * to_scale,
-    const float new_height)
+    const float new_size)
 {
     log_assert(to_scale != NULL);
     if (to_scale == NULL) { return; }
@@ -717,7 +717,26 @@ void scale_zpolygon(
     }
     log_assert(largest_height > 0.0f);
     
-    float scale_factor = new_height / largest_height;
+    float largest_width = 0.0f;
+    for (uint32_t i = 0; i < to_scale->triangles_size; i++) {
+        for (uint32_t j = 0; j < 3; j++)
+        {
+            float width =
+                ((to_scale->triangles[i].vertices[j].x < 0) *  (to_scale->triangles[i].vertices[j].x * -1)) +
+                ((to_scale->triangles[i].vertices[j].x >= 0) *  (to_scale->triangles[i].vertices[j].x)); 
+            if (width > largest_width)
+            {
+                largest_width = width;
+            }
+        }
+    }
+    log_assert(largest_width > 0.0f);
+    
+    float width_scale_factor = new_size / largest_width;
+    float height_scale_factor = new_size / largest_height;
+    float scale_factor =
+        ((width_scale_factor > height_scale_factor) * height_scale_factor) +
+        ((width_scale_factor <= height_scale_factor) * width_scale_factor);
     
     for (uint32_t i = 0; i < to_scale->triangles_size; i++) {
         for (uint32_t j = 0; j < 3; j++)

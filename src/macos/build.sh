@@ -1,7 +1,7 @@
 APP_NAME="hello3dgfx"
 PLATFORM="macos"
-# COMPILER_ARGS="-fsanitize=address -finstrument-functions -march=native -ferror-limit=2 -Wall -x objective-c -std="c99" -g -o0 -objC"
-COMPILER_ARGS="-march=native -Wall -x objective-c -std="c99" -o0 -objC"
+COMPILER_ARGS="-march=native -Wall -x objective-c -std=c99 -g -o0 -objC"
+# COMPILER_ARGS="-march=native -Wall -x objective-c -std=c99 -o0 -objC"
 
 MAC_FRAMEWORKS="
     -framework AppKit 
@@ -21,30 +21,27 @@ sudo rm -r -f build/$PLATFORM/$APP_NAME.app/*.txt
 sudo rm -r -f build/$PLATFORM/$APP_NAME.app/$APP_NAME
 sudo rm -r -f build/$PLATFORM/$APP_NAME.app/$APP_NAME.dsym
 
-echo "Creating build folder..."
-sudo mkdir -r build/$PLATFORM/$APP_NAME.app/debugout
-
 ############
-echo "skipping metal library compilation..."
-# echo "Creating metal library..."
-# sudo xcrun -sdk macosx metal -gline-tables-only -MO -g -c "src/shared_apple/Shaders.metal" -o resources/Shaders.air
-# sudo xcrun -sdk macosx metal -c "src/shared_apple/shaders.metal" -o Shaders.air
-# sudo xcrun -sdk macosx metallib resources/Shaders.air -o build/$PLATFORM/$APP_NAME.app/Shaders.metallib
+# echo "skipping metal library compilation..."
+echo "Creating metal library..."
+sudo xcrun -sdk macosx metal -gline-tables-only -MO -g -c "src/shared_apple/Shaders.metal" -o resources/Shaders.air
+sudo xcrun -sdk macosx metal -c "src/shared_apple/shaders.metal" -o Shaders.air
+sudo xcrun -sdk macosx metallib resources/Shaders.air -o build/$PLATFORM/$APP_NAME.app/Shaders.metallib
 ############
 
 ############
 # echo "skipping resource copy..."
 echo "copy resources..."
-# sudo rm build/$PLATFORM/$APP_NAME.app/*.png
-# sudo rm build/$PLATFORM/$APP_NAME.app/*.obj
-# sudo cp resources/fontmetrics.dat build/$PLATFORM/$APP_NAME.app/fontmetrics.dat
-# sudo cp resources/*.png build/$PLATFORM/$APP_NAME.app/
-# sudo cp resources/*.obj build/$PLATFORM/$APP_NAME.app/
+sudo rm build/$PLATFORM/$APP_NAME.app/*.png
+sudo rm build/$PLATFORM/$APP_NAME.app/*.obj
+sudo cp resources/fontmetrics.dat build/$PLATFORM/$APP_NAME.app/fontmetrics.dat
+sudo cp resources/*.png build/$PLATFORM/$APP_NAME.app/
+sudo cp resources/*.obj build/$PLATFORM/$APP_NAME.app/
 ############
 
 echo "Compiling & linking $APP_NAME..."
 if
-sudo g++ $COMPILER_ARGS $MAC_FRAMEWORKS $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
+sudo gcc $COMPILER_ARGS $MAC_FRAMEWORKS $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
 then
 echo "compilation succesful"
 else

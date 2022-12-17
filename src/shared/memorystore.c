@@ -83,8 +83,10 @@ uint8_t * malloc_from_managed(const uint64_t size) {
     assert(managed_memory != NULL);
     assert(size > 0);
     
-    uint32_t padding = 0; 
-    while ((uintptr_t)(void *)managed_memory % MEM_ALIGNMENT_BYTES != 0) {
+    uint32_t padding = 0;
+    while (
+        (uintptr_t)(void *)managed_memory % MEM_ALIGNMENT_BYTES != 0)
+    {
         managed_memory += 1;
         padding += 1;
     }

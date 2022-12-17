@@ -184,35 +184,17 @@ void client_logic_startup() {
         "Metal");
     key_materials.texturearray_i = -1;
     key_materials.texture_i = -1;
-    key_materials.rgba[0] = 1.0f;
-    key_materials.rgba[1] = 1.0f;
-    key_materials.rgba[2] = 0.4f;
+    key_materials.rgba[0] = 0.6f;
+    key_materials.rgba[1] = 0.6f;
+    key_materials.rgba[2] = 0.25f;
     key_materials.rgba[3] = 1.0f;
     zPolygon key = load_from_obj_file_expecting_materials(
         "key.obj",
         &key_materials,
         1,
         false);
-    printf("key.triangles_size: %u first 5 vertices:\n", key.triangles_size);
-    for (uint32_t _ = 0; _ < 5; _++) {
-        printf(
-            "{%f, %f, %f}\n",
-            key.triangles[_].vertices[0].x,
-            key.triangles[_].vertices[0].y,
-            key.triangles[_].vertices[0].z);
-        printf(
-            "{%f, %f, %f}\n",
-            key.triangles[_].vertices[1].x,
-            key.triangles[_].vertices[1].y,
-            key.triangles[_].vertices[1].z);
-        printf(
-            "{%f, %f, %f}\n",
-            key.triangles[_].vertices[2].x,
-            key.triangles[_].vertices[2].y,
-            key.triangles[_].vertices[2].z);
-        printf("***\n");
-    }
     
+    key.object_id = 5;
     log_assert(key.triangles_size > 0);
     scale_zpolygon(
         /* to_scale: */ &key,
@@ -220,7 +202,17 @@ void client_logic_startup() {
     key.x = 0.5f;
     key.y = 0.5f;
     key.z = 1.0f;
-    zpolygons_to_render[zpolygons_to_render_size++] = key;
+    request_zpolygon_to_render(&key);
+    
+    ScheduledAnimation rotate_key;
+    construct_scheduled_animation(&rotate_key);
+    rotate_key.affected_object_id = 5;
+    rotate_key.z_rotation_per_second = 0.2f;
+    rotate_key.y_rotation_per_second = 0.5f;
+    rotate_key.x_rotation_per_second = 0.9f;
+    rotate_key.duration_microseconds = 1000000;
+    rotate_key.runs = 0;
+    request_scheduled_animation(&rotate_key);
     
     zPolygon card_1 = card_model;
     card_1.object_id = 234;
