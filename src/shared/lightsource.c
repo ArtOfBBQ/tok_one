@@ -28,35 +28,20 @@ zVertex x_rotate_zvertex(
 }
 
 void x_rotate_zvertices_inplace(
-    float * vec_to_rotate_y,
-    float * vec_to_rotate_z,
-    float * working_memory_1,
-    float * working_memory_2,
-    const uint32_t vec_to_rotate_size,
-    const float * cos_angles,
-    const float * sin_angles)
-{    
-    for (uint32_t i = 0; i < vec_to_rotate_size; i++) {
-        working_memory_1[i] = vec_to_rotate_y[i];
-        working_memory_2[i] = vec_to_rotate_z[i];
-    }
+    SIMD_FLOAT * vec_to_rotate_y,
+    SIMD_FLOAT * vec_to_rotate_z,
+    const SIMD_FLOAT cos_angles,
+    const SIMD_FLOAT sin_angles)
+{
+    SIMD_FLOAT mul_cosangles = simd_mul_floats(*vec_to_rotate_y, cos_angles);
+    SIMD_FLOAT mul_sinangles = simd_mul_floats(*vec_to_rotate_z, sin_angles);  
+    SIMD_FLOAT rotated_y = simd_sub_floats(mul_cosangles, mul_sinangles);      
     
-    platform_256_mul(working_memory_1, cos_angles, vec_to_rotate_size);
-    platform_256_mul(working_memory_2, sin_angles, vec_to_rotate_size);
-    platform_256_sub(working_memory_1, working_memory_2, vec_to_rotate_size);
-    // working_memory_1 now contains the final y values, so leave it untouched
+    mul_cosangles = simd_mul_floats(*vec_to_rotate_z, cos_angles);
+    mul_sinangles = simd_mul_floats(*vec_to_rotate_y, sin_angles);
+    *vec_to_rotate_z = simd_add_floats(mul_cosangles, mul_sinangles);
     
-    for (uint32_t i = 0; i < vec_to_rotate_size; i++) {
-        working_memory_2[i] = vec_to_rotate_y[i];
-    }
-    
-    platform_256_mul(vec_to_rotate_z, cos_angles, vec_to_rotate_size);
-    platform_256_mul(working_memory_2, sin_angles, vec_to_rotate_size);
-    platform_256_add(vec_to_rotate_z, working_memory_2, vec_to_rotate_size);
-    
-    for (uint32_t i = 0; i < vec_to_rotate_size; i++) {
-        vec_to_rotate_y[i] = working_memory_1[i];
-    }
+    *vec_to_rotate_y = rotated_y;
 }
 
 zVertex y_rotate_zvertex(
@@ -77,35 +62,20 @@ zVertex y_rotate_zvertex(
 }
 
 void y_rotate_zvertices_inplace(
-    float * vec_to_rotate_x,
-    float * vec_to_rotate_z,
-    float * working_memory_1,
-    float * working_memory_2,
-    const uint32_t vec_to_rotate_size,
-    const float * cos_angles,
-    const float * sin_angles)
-{        
-    for (uint32_t i = 0; i < vec_to_rotate_size; i++) {
-        working_memory_1[i] = vec_to_rotate_x[i];
-        working_memory_2[i] = vec_to_rotate_z[i];
-    }
+    SIMD_FLOAT * vec_to_rotate_x,
+    SIMD_FLOAT * vec_to_rotate_z,
+    const SIMD_FLOAT cos_angles,
+    const SIMD_FLOAT sin_angles)
+{
+    SIMD_FLOAT mul_cosangles = simd_mul_floats(*vec_to_rotate_x, cos_angles);
+    SIMD_FLOAT mul_sinangles = simd_mul_floats(*vec_to_rotate_z, sin_angles);  
+    SIMD_FLOAT rotated_x = simd_add_floats(mul_cosangles, mul_sinangles);      
     
-    platform_256_mul(working_memory_1, cos_angles, vec_to_rotate_size);
-    platform_256_mul(working_memory_2, sin_angles, vec_to_rotate_size);
-    platform_256_add(working_memory_1, working_memory_2, vec_to_rotate_size);
-    // working_memory_1 now contains the final x values, so leave it untouched
+    mul_cosangles = simd_mul_floats(*vec_to_rotate_z, cos_angles);
+    mul_sinangles = simd_mul_floats(*vec_to_rotate_x, sin_angles);
+    *vec_to_rotate_z = simd_sub_floats(mul_cosangles, mul_sinangles);
     
-    for (uint32_t i = 0; i < vec_to_rotate_size; i++) {
-        working_memory_2[i] = vec_to_rotate_x[i];
-    }
-    
-    platform_256_mul(vec_to_rotate_z, cos_angles, vec_to_rotate_size);
-    platform_256_mul(working_memory_2, sin_angles, vec_to_rotate_size);
-    platform_256_sub(vec_to_rotate_z, working_memory_2, vec_to_rotate_size);
-    
-    for (uint32_t i = 0; i < vec_to_rotate_size; i++) {
-        vec_to_rotate_x[i] = working_memory_1[i];
-    }
+    *vec_to_rotate_x = rotated_x;
 }
 
 zVertex z_rotate_zvertex(
@@ -126,35 +96,20 @@ zVertex z_rotate_zvertex(
 }
 
 void z_rotate_zvertices_inplace(
-    float * vec_to_rotate_x,
-    float * vec_to_rotate_y,
-    float * working_memory_1,
-    float * working_memory_2,
-    const uint32_t vec_to_rotate_size,
-    const float * cos_angles,
-    const float * sin_angles)
-{        
-    for (uint32_t i = 0; i < vec_to_rotate_size; i++) {
-        working_memory_1[i] = vec_to_rotate_x[i];
-        working_memory_2[i] = vec_to_rotate_y[i];
-    }
+    SIMD_FLOAT * vec_to_rotate_x,
+    SIMD_FLOAT * vec_to_rotate_y,
+    const SIMD_FLOAT cos_angles,
+    const SIMD_FLOAT sin_angles)
+{
+    SIMD_FLOAT mul_cosangles = simd_mul_floats(*vec_to_rotate_x, cos_angles);
+    SIMD_FLOAT mul_sinangles = simd_mul_floats(*vec_to_rotate_y, sin_angles);  
+    SIMD_FLOAT rotated_x = simd_sub_floats(mul_cosangles, mul_sinangles);      
     
-    platform_256_mul(working_memory_1, cos_angles, vec_to_rotate_size);
-    platform_256_mul(working_memory_2, sin_angles, vec_to_rotate_size);
-    platform_256_sub(working_memory_1, working_memory_2, vec_to_rotate_size);
-    // working_memory_1 now contains the final x values, so leave it untouched
+    mul_cosangles = simd_mul_floats(*vec_to_rotate_y, cos_angles);
+    mul_sinangles = simd_mul_floats(*vec_to_rotate_x, sin_angles);
+    *vec_to_rotate_y = simd_add_floats(mul_cosangles, mul_sinangles);
     
-    for (uint32_t i = 0; i < vec_to_rotate_size; i++) {
-        working_memory_2[i] = vec_to_rotate_x[i];
-    }
-    
-    platform_256_mul(vec_to_rotate_y, cos_angles, vec_to_rotate_size);
-    platform_256_mul(working_memory_2, sin_angles, vec_to_rotate_size);
-    platform_256_add(vec_to_rotate_y, working_memory_2, vec_to_rotate_size);
-    
-    for (uint32_t i = 0; i < vec_to_rotate_size; i++) {
-        vec_to_rotate_x[i] = working_memory_1[i];
-    }
+    *vec_to_rotate_x = rotated_x;
 }
 
 void clean_deleted_lights(void)

@@ -6,6 +6,7 @@
 
 #include <math.h>
 
+#include "simd.h"
 #include "common.h"
 #include "window_size.h"
 #include "memorystore.h"
@@ -25,37 +26,28 @@ zVertex x_rotate_zvertex(
     const zVertex * input,
     const float angle);
 void x_rotate_zvertices_inplace(
-    float * vec_to_rotate_y,
-    float * vec_to_rotate_z,
-    float * working_memory_1,
-    float * working_memory_2,
-    const uint32_t vec_to_rotate_size,
-    const float * cos_angles,
-    const float * sin_angles);
+    SIMD_FLOAT * vec_to_rotate_y,
+    SIMD_FLOAT * vec_to_rotate_z,
+    const SIMD_FLOAT cos_angles,
+    const SIMD_FLOAT sin_angles);
 
 zVertex y_rotate_zvertex(
     const zVertex * input,
     const float angle);
 void y_rotate_zvertices_inplace(
-    float * vec_to_rotate_x,
-    float * vec_to_rotate_z,
-    float * working_memory_1,
-    float * working_memory_2,
-    const uint32_t vec_to_rotate_size,
-    const float * cos_angles,
-    const float * sin_angles);
+    SIMD_FLOAT * vec_to_rotate_x,
+    SIMD_FLOAT * vec_to_rotate_z,
+    const SIMD_FLOAT cos_angles,
+    const SIMD_FLOAT sin_angles);
 
 zVertex z_rotate_zvertex(
     const zVertex * input,
     const float angle);
 void z_rotate_zvertices_inplace(
-    float * vec_to_rotate_x,
-    float * vec_to_rotate_y,
-    float * working_memory_1,
-    float * working_memory_2,
-    const uint32_t vec_to_rotate_size,
-    const float * cos_angles,
-    const float * sin_angles);
+    SIMD_FLOAT * vec_to_rotate_x,
+    SIMD_FLOAT * vec_to_rotate_y,
+    const SIMD_FLOAT cos_angles,
+    const SIMD_FLOAT sin_angles);
 
 typedef struct zCamera {
     float x;

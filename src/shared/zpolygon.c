@@ -1281,14 +1281,18 @@ static void get_ztriangles_normals(
         vector2.y = vertices_y[vertex_i + 2] - vertices_y[vertex_i + 0];
         vector2.z = vertices_z[vertex_i + 2] - vertices_z[vertex_i + 0];
         
-        // TODO: calculate a normal for each vertex instead of just copying the 1st one 3x
-        out_normals_x[vertex_i] = (vector1.y * vector2.z) - (vector1.z * vector2.y);
+        // TODO: calculate a normal for each vertex instead of just
+        // copying the 1st one 3x
+        out_normals_x[vertex_i] =
+            (vector1.y * vector2.z) - (vector1.z * vector2.y);
         out_normals_x[vertex_i+1] = out_normals_x[vertex_i];
         out_normals_x[vertex_i+2] = out_normals_x[vertex_i];
-        out_normals_y[vertex_i] = (vector1.z * vector2.x) - (vector1.x * vector2.z);
+        out_normals_y[vertex_i] =
+            (vector1.z * vector2.x) - (vector1.x * vector2.z);
         out_normals_y[vertex_i+1] = out_normals_y[vertex_i];
         out_normals_y[vertex_i+2] = out_normals_y[vertex_i];
-        out_normals_z[vertex_i] = (vector1.x * vector2.y) - (vector1.y * vector2.x);
+        out_normals_z[vertex_i] =
+            (vector1.x * vector2.y) - (vector1.y * vector2.x);
         out_normals_z[vertex_i+1] = out_normals_z[vertex_i];
         out_normals_z[vertex_i+2] = out_normals_z[vertex_i];
     }

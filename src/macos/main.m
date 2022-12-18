@@ -219,6 +219,7 @@ float platform_get_current_window_bottom() {
     return (float)window.frame.origin.y;
 }
 
+#include "../shared/simd.h"
 int main(int argc, const char * argv[]) {
     
     client_logic_get_application_name_to_recipient(
