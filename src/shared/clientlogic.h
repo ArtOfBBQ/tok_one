@@ -10,13 +10,6 @@ application.
 extern "C" {
 #endif
 
-#if 1
-#include "../../../src/animationtracker.h"
-#include "../../../src/frontendtouch.h"
-#include "../../../src/frontendcommand.h"
-#include "../../../src/mainmenu.h"
-#endif
-
 #include "tok_random.h"
 #include "texquad_type.h"
 #include "texture_array.h"
@@ -32,6 +25,7 @@ extern "C" {
 #include "scheduled_animations.h"
 #include "logger.h"
 
+#include "clientlogic_additional_defs.h"
 
 extern bool32_t application_running;
 
