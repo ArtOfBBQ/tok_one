@@ -1,6 +1,6 @@
 APP_NAME="hello3dgfx"
 PLATFORM="macos"
-COMPILER_ARGS="-I engine_src -I client_src -I engine_src/shared -march=native -Wall -x objective-c -std=c99 -g -o0 -objC"
+COMPILER_ARGS="-I engine_src -I client_src -I sampleproject_src -I engine_src/shared -march=native -Wall -x objective-c -std=c99 -g -o0 -objC"
 
 MAC_FRAMEWORKS="
     -framework AppKit 
@@ -8,7 +8,7 @@ MAC_FRAMEWORKS="
     -framework Metal
     -framework AVFoundation"
 
-TOK_ONE_SOURCEFILES="engine_src/$PLATFORM/main.m engine_src/$PLATFORM/macos_platform_layer.c engine_src/shared_apple/apple_platform_layer.c engine_src/shared_apple/gpu.m engine_src/shared_windows_macos/winmac_platform_layer.c engine_src/shared/common_platform_layer.c engine_src/shared/logger.c engine_src/shared/memorystore.c engine_src/shared/tok_random.c engine_src/shared/draw_triangle.c engine_src/shared/bitmap_renderer.c engine_src/shared/texture_array.c engine_src/shared/userinput.c engine_src/shared/zpolygon.c engine_src/shared/lightsource.c engine_src/shared/software_renderer.c engine_src/shared/window_size.c engine_src/shared/debigulator/src/decode_png.c engine_src/shared/debigulator/src/decode_bmp.c engine_src/shared/debigulator/src/inflate.c engine_src/shared//decodedimage.c client_src/clientlogic.c engine_src/shared/common.c engine_src/shared/text.c engine_src/shared/scheduled_animations.c engine_src/shared/texquad_type.c engine_src/shared/init_application.c engine_src/shared/gameloop.c"
+TOK_ONE_SOURCEFILES="engine_src/$PLATFORM/main.m engine_src/$PLATFORM/macos_platform_layer.c engine_src/shared_apple/apple_platform_layer.c engine_src/shared_apple/gpu.m engine_src/shared_windows_macos/winmac_platform_layer.c engine_src/shared/common_platform_layer.c engine_src/shared/logger.c engine_src/shared/memorystore.c engine_src/shared/tok_random.c engine_src/shared/draw_triangle.c engine_src/shared/bitmap_renderer.c engine_src/shared/texture_array.c engine_src/shared/userinput.c engine_src/shared/zpolygon.c engine_src/shared/lightsource.c engine_src/shared/software_renderer.c engine_src/shared/window_size.c engine_src/shared/debigulator/src/decode_png.c engine_src/shared/debigulator/src/decode_bmp.c engine_src/shared/debigulator/src/inflate.c engine_src/shared//decodedimage.c sampleproject_src/clientlogic.c engine_src/shared/common.c engine_src/shared/text.c engine_src/shared/scheduled_animations.c engine_src/shared/texquad_type.c engine_src/shared/init_application.c engine_src/shared/gameloop.c"
 
 echo "Building $APP_NAME for $PLATFORM..."
 
@@ -25,8 +25,8 @@ if test -f "build/$PLATFORM/$APP_NAME.app/shaders.metallib"; then
     echo "shaders.metallib already in build folder, skip metal compilation...."
 else
     echo "shaders.metallib not in build folder, compiling new metal library..."
-    sudo xcrun -sdk macosx metal -gline-tables-only -MO -g -c "src/shared_apple/Shaders.metal" -o resources/Shaders.air
-    sudo xcrun -sdk macosx metal -c "src/shared_apple/shaders.metal" -o Shaders.air
+    sudo xcrun -sdk macosx metal -gline-tables-only -MO -g -c "engine_src/shared_apple/Shaders.metal" -o resources/Shaders.air
+    sudo xcrun -sdk macosx metal -c "engine_src/shared_apple/shaders.metal" -o Shaders.air
     sudo xcrun -sdk macosx metallib resources/Shaders.air -o build/$PLATFORM/$APP_NAME.app/Shaders.metallib
 fi
 ############
