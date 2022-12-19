@@ -6,8 +6,7 @@ then
 echo "."
 else
 echo "Debigulator folder empty... Forgot to clone with submodules again?"
-echo "reminder: to download the submodule, try:"
-echo "cd engine_src/shared/debigulator"
+echo "reminder: to download the submodule, try git command:"
 echo "git submodule update --init"
 exit 0
 fi
