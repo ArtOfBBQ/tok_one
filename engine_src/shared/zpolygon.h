@@ -4,6 +4,7 @@
 #include <math.h>
 #include <inttypes.h>
 
+#include "simd.h"
 #include "logger.h"
 #include "common.h"
 #include "platform_layer.h"
