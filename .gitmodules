@@ -1,3 +1,3 @@
 [submodule "src/shared/debigulator"]
-	path = src/shared/debigulator
+	path = engine_src/shared/debigulator
 	url = git@github.com:ArtOfBBQ/debigulator.git
