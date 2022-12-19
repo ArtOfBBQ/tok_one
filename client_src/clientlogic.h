@@ -25,8 +25,6 @@ extern "C" {
 #include "scheduled_animations.h"
 #include "logger.h"
 
-#include "clientlogic_additional_defs.h"
-
 extern bool32_t application_running;
 
 /*

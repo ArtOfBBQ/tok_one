@@ -1,12 +1,12 @@
-#include "../shared/init_application.h"
-#include "../shared/common.h"
-#include "../shared/logger.h"
-#include "../shared/tok_random.h"
-#include "../shared/lightsource.h"
-#include "../shared_apple/gpu.h"
-#include "../shared/userinput.h"
-#include "../shared/window_size.h"
-#include "../shared/clientlogic.h"
+#include "shared/init_application.h"
+#include "shared/common.h"
+#include "shared/logger.h"
+#include "shared/tok_random.h"
+#include "shared/lightsource.h"
+#include "shared_apple/gpu.h"
+#include "shared/userinput.h"
+#include "shared/window_size.h"
+#include "clientlogic.h"
 
 #define SHARED_APPLE_PLATFORM
 

@@ -1,7 +1,6 @@
 APP_NAME="hello3dgfx"
 PLATFORM="macos"
-COMPILER_ARGS="-march=native -Wall -x objective-c -std=c99 -g -o0 -objC"
-# COMPILER_ARGS="-march=native -Wall -x objective-c -std=c99 -o0 -objC"
+COMPILER_ARGS="-I engine_src -I client_src -I engine_src/shared -march=native -Wall -x objective-c -std=c99 -g -o0 -objC"
 
 MAC_FRAMEWORKS="
     -framework AppKit 
@@ -9,7 +8,7 @@ MAC_FRAMEWORKS="
     -framework Metal
     -framework AVFoundation"
 
-TOK_ONE_SOURCEFILES="src/$PLATFORM/main.m src/$PLATFORM/macos_platform_layer.c src/shared_apple/apple_platform_layer.c src/shared_apple/gpu.m src/shared_windows_macos/winmac_platform_layer.c src/shared/common_platform_layer.c src/shared/logger.c src/shared/memorystore.c src/shared/tok_random.c src/shared/draw_triangle.c src/shared/bitmap_renderer.c src/shared/texture_array.c src/shared/userinput.c src/shared/zpolygon.c src/shared/lightsource.c src/shared/software_renderer.c src/shared/window_size.c src/shared/debigulator/src/decode_png.c src/shared/debigulator/src/decode_bmp.c src/shared/debigulator/src/inflate.c src/shared//decodedimage.c src/shared/clientlogic.c src/shared/common.c src/shared/text.c src/shared/scheduled_animations.c src/shared/texquad_type.c src/shared/init_application.c src/shared/gameloop.c"
+TOK_ONE_SOURCEFILES="engine_src/$PLATFORM/main.m engine_src/$PLATFORM/macos_platform_layer.c engine_src/shared_apple/apple_platform_layer.c engine_src/shared_apple/gpu.m engine_src/shared_windows_macos/winmac_platform_layer.c engine_src/shared/common_platform_layer.c engine_src/shared/logger.c engine_src/shared/memorystore.c engine_src/shared/tok_random.c engine_src/shared/draw_triangle.c engine_src/shared/bitmap_renderer.c engine_src/shared/texture_array.c engine_src/shared/userinput.c engine_src/shared/zpolygon.c engine_src/shared/lightsource.c engine_src/shared/software_renderer.c engine_src/shared/window_size.c engine_src/shared/debigulator/src/decode_png.c engine_src/shared/debigulator/src/decode_bmp.c engine_src/shared/debigulator/src/inflate.c engine_src/shared//decodedimage.c client_src/clientlogic.c engine_src/shared/common.c engine_src/shared/text.c engine_src/shared/scheduled_animations.c engine_src/shared/texquad_type.c engine_src/shared/init_application.c engine_src/shared/gameloop.c"
 
 echo "Building $APP_NAME for $PLATFORM..."
 

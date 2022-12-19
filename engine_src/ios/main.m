@@ -1,18 +1,18 @@
 #import <UIKit/UIKit.h>
 #import "AppDelegate.h"
 
-#include "../shared/init_application.h"
-#include "../shared/common.h"
-#include "../shared/logger.h"
-#include "../shared/tok_random.h"
-#include "../shared/lightsource.h"
-#include "../shared_apple/gpu.h"
-#include "../shared/userinput.h"
-#include "../shared/window_size.h"
-#include "../shared/clientlogic.h"
+#include "init_application.h"
+#include "common.h"
+#include "logger.h"
+#include "tok_random.h"
+#include "lightsource.h"
+#include "shared_apple/gpu.h"
+#include "userinput.h"
+#include "window_size.h"
+#include "clientlogic.h"
 
  // definitions of functions we need to implement
-#include "../shared/platform_layer.h"
+#include "platform_layer.h"
 
 bool32_t application_running = true;
 bool32_t has_retina_screen = false;
