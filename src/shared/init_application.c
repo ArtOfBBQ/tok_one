@@ -37,6 +37,7 @@ void init_application() {
     
     window_height = platform_get_current_window_height();
     window_width = platform_get_current_window_width();
+    aspect_ratio = window_height / window_width;
     
     init_projection_constants();
     

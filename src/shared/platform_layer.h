@@ -57,61 +57,6 @@ extern "C" {
 
 uint8_t * platform_malloc_unaligned_block(const uint64_t size);
 
-/*
-Compiler intrinsics // Vectorized math operations
-
-TODO: find out how bad it is that I keep load/storing on every operation
-TODO: consider mapping more directly 1 to 1 to the intrinsics to avoid waste
-*/
-void platform_256_max_scalar(
-    float * floats,
-    const uint32_t floats_size,
-    const float scalar);
-void platform_256_sqrt(
-    float * floats,
-    const uint32_t floats_size);
-void platform_256_sub(
-    float * floats_1,
-    const float * floats_2,
-    const uint32_t f1_f2_size);
-void platform_256_sub_scalar(
-    float * floats_1,
-    const uint32_t floats_1_size,
-    const float subtraction);
-void platform_256_sub_scalarproduct(
-    float * subtract_from,
-    const uint32_t subtract_from_size,
-    const float base_scalar,
-    const float * multiply_scalar_by);
-void platform_256_add(
-    float * floats_1,
-    const float * floats_2,
-    const uint32_t f1_f2_size);
-void platform_256_add_scalar(
-    float * floats_1,
-    const uint32_t floats_1_size,
-    const float increment);
-void platform_256_mul(
-    float * floats_1,
-    const float * floats_2,
-    const uint32_t f1_f2_size);
-void platform_256_mul_scalar(
-    float * floats_1,
-    const uint32_t floats_1_size,
-    const float multiplier);
-void platform_256_div(
-    float * floats_1,
-    const float * floats_2,
-    const uint32_t f1_f2_size);
-void platform_256_div_scalar_by_input(
-    float * out_divisors,
-    const uint32_t out_divisors_size,
-    const float numerator);
-void platform_256_div_by_scalar(
-    float * out_numerators,
-    const uint32_t out_numerators_size,
-    const float divisor);
-
 
 typedef struct FileBuffer {
     uint64_t size;

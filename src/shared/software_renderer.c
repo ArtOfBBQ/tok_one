@@ -468,7 +468,7 @@ void software_render(
             log_assert(first_visible_vertex_i < vertices_size);
             if (
                 (visibility_ratings[first_all_vertex_i] < 0.0f) &&
-                (triangle_vertices_z[first_all_vertex_i] > projection_constants.near ||
+                (triangle_vertices_z[first_all_vertex_i  ] > projection_constants.near ||
                  triangle_vertices_z[first_all_vertex_i+1] > projection_constants.near ||
                  triangle_vertices_z[first_all_vertex_i+2] > projection_constants.near))
             {

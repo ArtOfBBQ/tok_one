@@ -813,35 +813,43 @@ void ztriangles_apply_lighting(
         light_source_pos.y = zlight_source->y;
         light_source_pos.z = zlight_source->z;
     
+    SIMD_FLOAT simd_light_source_x = simd_set_float(light_source_pos.x);
+    SIMD_FLOAT simd_light_source_y = simd_set_float(light_source_pos.y);
+    SIMD_FLOAT simd_light_source_z = simd_set_float(light_source_pos.z);
+    SIMD_FLOAT simd_light_reach = simd_set_float(zlight_source->reach);
+    
     distances_to_vertices_size = vertices_size;
     assert(distances_to_vertices_size < DISTANCES_TO_VERTICES_CAP);
     
     // get distance from triangle vertices to light_source    
-    for (
-        uint32_t i = 0;
-        i < vertices_size;
-        i++)
-    {
-        distances_to_vertices[i] =
-            ((light_source_pos.x - vertices_x[i]) *
-             (light_source_pos.x - vertices_x[i])) +
-            ((light_source_pos.y - vertices_y[i]) *
-             (light_source_pos.y - vertices_y[i])) +
-            ((light_source_pos.z - vertices_z[i]) *
-             (light_source_pos.z - vertices_z[i])); 
+    for (uint32_t i = 0; i < vertices_size; i += SIMD_FLOAT_WIDTH) {
+        SIMD_FLOAT simd_vertices_x = simd_load_floats(vertices_x + i);
+        SIMD_FLOAT simd_vertices_y = simd_load_floats(vertices_y + i);
+        SIMD_FLOAT simd_vertices_z = simd_load_floats(vertices_z + i);
+        
+        SIMD_FLOAT simd_diff_x = simd_sub_floats(simd_vertices_x, simd_light_source_x);
+        SIMD_FLOAT simd_diff_y = simd_sub_floats(simd_vertices_y, simd_light_source_y);
+        SIMD_FLOAT simd_diff_z = simd_sub_floats(simd_vertices_z, simd_light_source_z);
+        
+        simd_diff_x = simd_mul_floats(simd_diff_x, simd_diff_x);
+        simd_diff_y = simd_mul_floats(simd_diff_y, simd_diff_y);
+        simd_diff_z = simd_mul_floats(simd_diff_z, simd_diff_z);
+        
+        SIMD_FLOAT total_dist = simd_add_floats(simd_diff_x, simd_diff_y);
+        total_dist = simd_add_floats(total_dist, simd_diff_z);
+        
+        total_dist = simd_sqrt_floats(total_dist);
+        
+        total_dist = simd_div_floats(simd_light_reach, total_dist);
+        
+        simd_store_floats(distances_to_vertices + i, total_dist);
     }
-    platform_256_sqrt(distances_to_vertices, distances_to_vertices_size);
     
+    // TODO: find out how to deal with NaN values
     for (uint32_t i = 0; i < distances_to_vertices_size; i++) {
         log_assert(distances_to_vertices[i] == distances_to_vertices[i]);
         if (distances_to_vertices[i] < 0.0000001f) { distances_to_vertices[i] = 0.00001f; }
     }
-    
-    // convert distances_to_triangles to store distance modifiers instead
-    platform_256_div_scalar_by_input(
-        /* divisors: */ distances_to_vertices,
-        /* divisors_size: */ distances_to_vertices_size,
-        /* numerator: */ zlight_source->reach);
     
     log_assert(vertices_size < DIFFUSED_DOTS_CAP);
     
@@ -852,8 +860,22 @@ void ztriangles_apply_lighting(
         /* triangle vertices z            : */ vertices_z,
         /* const uint32_t observeds_size  : */ vertices_size,
         /* float * out_visibility_ratings : */ diffused_dots);
-    platform_256_mul_scalar(diffused_dots, vertices_size, -1.0f);
-    platform_256_max_scalar(diffused_dots, vertices_size, 0.0f);
+    
+    // Reminder: it's necessary to have the float's address on ARM
+    // for these macros to work. Don't delete the stack floats on your intel
+    // machine - it will work but you will break the ARM build
+    float minus_one_scalar = -1.0f;
+    SIMD_FLOAT simd_minus_one_scalar = simd_set_float(minus_one_scalar);
+    float zero_scalar = 0.0f;
+    SIMD_FLOAT simd_zero_scalar = simd_set_float(zero_scalar);
+    for (uint32_t i = 0; i < vertices_size; i += SIMD_FLOAT_WIDTH) {
+        SIMD_FLOAT simd_diffused_dots = simd_load_floats(diffused_dots + i);
+        
+        simd_diffused_dots = simd_mul_floats(simd_diffused_dots, simd_minus_one_scalar);
+        simd_diffused_dots = simd_max_floats(simd_diffused_dots, simd_zero_scalar);
+        
+        simd_store_floats(diffused_dots + i, simd_diffused_dots);
+    }
     
     for (uint32_t col_i = 0; col_i < 3; col_i++) {
         
@@ -911,19 +933,33 @@ void ztriangles_to_2d_inplace(
 {
     ProjectionConstants * pjc = &projection_constants;
     
-    float x_multiplier = aspect_ratio *
-        pjc->field_of_view_modifier;
+    // Reminder: it's necessary to have the float's address on ARM
+    // for these macros to work. Don't delete the stack floats on your intel
+    // machine - it will work but you will break the ARM build
+    float x_multiplier = aspect_ratio * pjc->field_of_view_modifier;
+    SIMD_FLOAT simd_x_multiplier = simd_set_float(x_multiplier);
+    float y_multiplier = pjc->field_of_view_modifier;
+    SIMD_FLOAT simd_y_multiplier = simd_set_float(y_multiplier);
     float z_multiplier = (pjc->far / (pjc->far - pjc->near));
+    SIMD_FLOAT simd_z_multiplier = simd_set_float(z_multiplier);
     float z_addition = (1.0f * (-pjc->far * pjc->near) /
         (pjc->far - pjc->near));
+    SIMD_FLOAT simd_z_addition   = simd_set_float(z_addition);
     
-    platform_256_mul_scalar(vertices_x, vertices_size, x_multiplier);
-    
-    // note to self: y transformation doesn't use aspect ratio
-    platform_256_mul_scalar(vertices_y, vertices_size, pjc->field_of_view_modifier);
-    
-    platform_256_mul_scalar(vertices_z, vertices_size, z_multiplier);
-    platform_256_add_scalar(vertices_z, vertices_size, z_addition);    
+    for (uint32_t i = 0; i < vertices_size; i += SIMD_FLOAT_WIDTH) {
+        SIMD_FLOAT simd_vertices_x = simd_load_floats(vertices_x + i);
+        SIMD_FLOAT simd_vertices_y = simd_load_floats(vertices_y + i);
+        SIMD_FLOAT simd_vertices_z = simd_load_floats(vertices_z + i);
+        
+        simd_vertices_x = simd_mul_floats(simd_vertices_x, simd_x_multiplier);
+        simd_vertices_y = simd_mul_floats(simd_vertices_y, simd_y_multiplier);
+        simd_vertices_z = simd_mul_floats(simd_vertices_z, simd_z_multiplier);
+        simd_vertices_z = simd_add_floats(simd_vertices_z, simd_z_addition);
+        
+        simd_store_floats(vertices_x + i, simd_vertices_x);
+        simd_store_floats(vertices_y + i, simd_vertices_y);
+        simd_store_floats(vertices_z + i, simd_vertices_z);
+    }
 }
 
 zTriangle __attribute__((no_instrument_function))
@@ -1047,87 +1083,35 @@ static void get_magnitudes_inplace(
     const float * vertices_y,
     const float * vertices_z,
     float * recipient,
-    float * working_memory,
     const uint32_t vertices_and_recipient_size)
 {
     log_assert(vertices_and_recipient_size < MAGNITUDES_CAP);
     
     for (uint32_t i = 0; i < vertices_and_recipient_size; i++) {
-        // check for NaN
-        log_assert(!(vertices_x[i] != vertices_x[i]));
-    }
-    
-    for (uint32_t i = 0; i < vertices_and_recipient_size; i++) {
-        working_memory[i] = vertices_x[i];
         recipient[i] = vertices_y[i];
         
         // check for NaN
-        log_assert(!(working_memory[i] != working_memory[i]));
         log_assert(!(recipient[i] != recipient[i]));        
     }
     
-    // working_memory = x * x
-    platform_256_mul(working_memory, vertices_x, vertices_and_recipient_size);
-    
-    for (uint32_t i = 0; i < vertices_and_recipient_size; i++) {
-        // check for NaN
-        log_assert(!(working_memory[i] != working_memory[i]));
-        log_assert(!(recipient[i] != recipient[i]));        
-    }
-    
-    // recipient = y * y
-    platform_256_mul(recipient, vertices_y, vertices_and_recipient_size);
-    
-    for (uint32_t i = 0; i < vertices_and_recipient_size; i++) {
-        // check for NaN
-        log_assert(!(working_memory[i] != working_memory[i]));
-        log_assert(!(recipient[i] != recipient[i]));        
-    }
-    
-    // after this recipient is (x*x)+(y*y), and working memory is ready to be re-used
-    platform_256_add(recipient, working_memory, vertices_and_recipient_size);
-    
-    for (uint32_t i = 0; i < vertices_and_recipient_size; i++) {
-        // check for NaN
-        log_assert(!(working_memory[i] != working_memory[i]));
-        log_assert(!(recipient[i] != recipient[i]));        
-    }
-    
-    for (uint32_t i = 0; i < vertices_and_recipient_size; i++) {
-        working_memory[i] = vertices_z[i];
+    for (uint32_t i = 0; i < vertices_and_recipient_size; i += SIMD_FLOAT_WIDTH) {
+        SIMD_FLOAT simd_vertices_x = simd_load_floats(vertices_x + i);
+        SIMD_FLOAT simd_vertices_y = simd_load_floats(vertices_y + i);
+        SIMD_FLOAT simd_vertices_z = simd_load_floats(vertices_z + i);
+        
+        SIMD_FLOAT x_squared = simd_mul_floats(simd_vertices_x, simd_vertices_x);
+        SIMD_FLOAT y_squared = simd_mul_floats(simd_vertices_y, simd_vertices_y);
+        SIMD_FLOAT z_squared = simd_mul_floats(simd_vertices_z, simd_vertices_z);
+        SIMD_FLOAT sum_squares = simd_add_floats(x_squared, y_squared);
+        sum_squares = simd_add_floats(sum_squares, z_squared);
+        
+        sum_squares = simd_sqrt_floats(sum_squares);
+        
+        simd_store_floats(recipient + i, sum_squares);
     }
     
     for (uint32_t i = 0; i < vertices_and_recipient_size; i++) {
         // check for NaN
-        log_assert(!(working_memory[i] != working_memory[i]));
-        log_assert(!(recipient[i] != recipient[i]));        
-    }
-    
-    // working_memory = z * z
-    platform_256_mul(working_memory, vertices_z, vertices_and_recipient_size);
-    
-    
-    for (uint32_t i = 0; i < vertices_and_recipient_size; i++) {
-        // check for NaN
-        log_assert(!(working_memory[i] != working_memory[i]));
-        log_assert(!(recipient[i] != recipient[i]));        
-    }
-    
-    // after this, recipient becomes (x*x)+(y*y)+(z*z) 
-    platform_256_add(recipient, working_memory, vertices_and_recipient_size);
-    
-    for (uint32_t i = 0; i < vertices_and_recipient_size; i++) {
-        // check for NaN
-        log_assert(!(working_memory[i] != working_memory[i]));
-        log_assert(!(recipient[i] != recipient[i]));        
-    }
-    
-    // now we can take the root of the sum of squares
-    platform_256_sqrt(recipient, vertices_and_recipient_size);
-    
-    for (uint32_t i = 0; i < vertices_and_recipient_size; i++) {
-        // check for NaN
-        log_assert(!(working_memory[i] != working_memory[i]));
         log_assert(!(recipient[i] != recipient[i]));        
     }
 }
@@ -1151,36 +1135,30 @@ static void normalize_zvertices_inplace(
     second_tri.z = vertices_z[1];
     normalize_zvertex(&second_tri);
     // // TODO: end of debug code
-    
-    // TODO: remove debug asserts
-    for (uint32_t i = 0; i < vertices_size; i++) {
-        // check for NaN
-        log_assert(!(vertices_x[i] != vertices_x[i]));
-    }
-    
+        
     log_assert(vertices_size < MAGNITUDES_CAP);
     get_magnitudes_inplace(
         vertices_x,
         vertices_y,
         vertices_z,
         magnitudes,
-        working_memory,
         vertices_size);
     
-    // TODO: remove debug asserts
-    for (uint32_t i = 0; i < vertices_size; i++) {
-        // check for NaN
-        log_assert(!(vertices_x[i] != vertices_x[i]));
-        zVertex vertex;
-        vertex.x = vertices_x[i];
-        vertex.y = vertices_y[i];
-        vertex.z = vertices_z[i];
-        log_assert(magnitudes[i] == get_magnitude(vertex));
+    for (uint32_t i = 0; i < vertices_size; i += SIMD_FLOAT_WIDTH) {
+        SIMD_FLOAT simd_vertices_x = simd_load_floats(vertices_x + i);
+        SIMD_FLOAT simd_vertices_y = simd_load_floats(vertices_y + i);
+        SIMD_FLOAT simd_vertices_z = simd_load_floats(vertices_z + i);
+        
+        SIMD_FLOAT simd_magnitudes = simd_load_floats(magnitudes + i);
+        
+        simd_vertices_x = simd_div_floats(simd_vertices_x, simd_magnitudes);
+        simd_vertices_y = simd_div_floats(simd_vertices_y, simd_magnitudes);
+        simd_vertices_z = simd_div_floats(simd_vertices_z, simd_magnitudes);
+        
+        simd_store_floats(vertices_x + i, simd_vertices_x);
+        simd_store_floats(vertices_y + i, simd_vertices_y);
+        simd_store_floats(vertices_z + i, simd_vertices_z);
     }
-    
-    platform_256_div(vertices_x, magnitudes, vertices_size);
-    platform_256_div(vertices_y, magnitudes, vertices_size);
-    platform_256_div(vertices_z, magnitudes, vertices_size);
     
     // TODO: find a better way to deal with NaN
     for (uint32_t i = 0; i < vertices_size; i++) {
@@ -1207,24 +1185,29 @@ static void dots_of_vertices(
     const float * vertices_2_y,
     const float * vertices_2_z,
     const uint32_t vertices_size,
-    float * working_memory,
     float * out_dots)
 {
     for (uint32_t i = 0; i < vertices_size; i++) {
         out_dots[i] = vertices_1_x[i];
-        working_memory[i] = vertices_1_y[i];
     }
     
-    platform_256_mul(out_dots, vertices_2_x, vertices_size);
-    platform_256_mul(working_memory, vertices_2_y, vertices_size);
-    platform_256_add(out_dots, working_memory, vertices_size);
-    
-    for (uint32_t i = 0; i < vertices_size; i++) {
-        working_memory[i] = vertices_1_z[i];
+    for (uint32_t i = 0; i < vertices_size; i += SIMD_FLOAT_WIDTH) {
+        SIMD_FLOAT simd_vertices_1_x = simd_load_floats(vertices_1_x + i);
+        SIMD_FLOAT simd_vertices_1_y = simd_load_floats(vertices_1_y + i);
+        SIMD_FLOAT simd_vertices_1_z = simd_load_floats(vertices_1_z + i);
+        
+        SIMD_FLOAT simd_vertices_2_x = simd_load_floats(vertices_2_x + i);
+        SIMD_FLOAT simd_vertices_2_y = simd_load_floats(vertices_2_y + i);
+        SIMD_FLOAT simd_vertices_2_z = simd_load_floats(vertices_2_z + i);
+        
+        SIMD_FLOAT result = simd_mul_floats(simd_vertices_1_x, simd_vertices_2_x);
+        SIMD_FLOAT vertices_product =  simd_mul_floats(simd_vertices_1_y, simd_vertices_2_y);
+        result = simd_add_floats(result, vertices_product);
+        vertices_product =  simd_mul_floats(simd_vertices_1_z, simd_vertices_2_z);
+        result = simd_add_floats(result, vertices_product);
+        
+        simd_store_floats(out_dots + i, result);
     }
-    platform_256_mul(working_memory, vertices_2_z, vertices_size);
-    
-    platform_256_add(out_dots, working_memory, vertices_size);
 }
 
 float dot_of_vertices(
@@ -1371,20 +1354,31 @@ void get_visibility_ratings(
         magnitudes_working_memory,
         vertices_size);
     
-    // find the vectors pointing from the triangle vertices
-    // to the observer (vertex minus observer)
-    platform_256_sub_scalar(
-        observeds_adj_x,
-        vertices_size,
-        observer.x);
-    platform_256_sub_scalar(
-        observeds_adj_y,
-        vertices_size,
-        observer.y);
-    platform_256_sub_scalar(
-        observeds_adj_z,
-        vertices_size,
-        observer.z);
+    float observer_xs[SIMD_FLOAT_WIDTH];
+    float observer_ys[SIMD_FLOAT_WIDTH];
+    float observer_zs[SIMD_FLOAT_WIDTH];
+    for (uint32_t i = 0; i < SIMD_FLOAT_WIDTH; i++) {
+        observer_xs[i] = observer.x;
+        observer_ys[i] = observer.y;
+        observer_zs[i] = observer.z;
+    }
+    SIMD_FLOAT simd_observer_x = simd_load_floats(observer_xs);
+    SIMD_FLOAT simd_observer_y = simd_load_floats(observer_ys);
+    SIMD_FLOAT simd_observer_z = simd_load_floats(observer_zs);
+    
+    for (uint32_t i = 0; i < vertices_size; i += SIMD_FLOAT_WIDTH) {
+        SIMD_FLOAT simd_adj_x = simd_load_floats(observeds_adj_x + i);
+        SIMD_FLOAT simd_adj_y = simd_load_floats(observeds_adj_y + i);
+        SIMD_FLOAT simd_adj_z = simd_load_floats(observeds_adj_z + i);
+        
+        simd_adj_x = simd_sub_floats(simd_adj_x, simd_observer_x);
+        simd_adj_y = simd_sub_floats(simd_adj_y, simd_observer_y);
+        simd_adj_z = simd_sub_floats(simd_adj_z, simd_observer_z);
+        
+        simd_store_floats(observeds_adj_x + i, simd_adj_x);
+        simd_store_floats(observeds_adj_y + i, simd_adj_y);
+        simd_store_floats(observeds_adj_z + i, simd_adj_z);
+    }
     
     // normalize the vectors pointing from triangle to observer
     normalize_zvertices_inplace(
@@ -1404,7 +1398,6 @@ void get_visibility_ratings(
         normals_y,
         normals_z,
         vertices_size,
-        magnitudes_working_memory,
         out_visibility_ratings);
 }
 

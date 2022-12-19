@@ -141,6 +141,8 @@
 		ECB05E49294F8B1300050BD4 /* gpu.m in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E48294F8B1300050BD4 /* gpu.m */; };
 		ECB05E4B294F8B3500050BD4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E4A294F8B3500050BD4 /* main.m */; };
 		ECB05E4D294F8FD400050BD4 /* key.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECB05E4C294F8FD300050BD4 /* key.obj */; };
+		ECB05E4E2950864000050BD4 /* gpu.m in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E48294F8B1300050BD4 /* gpu.m */; };
+		ECB05E4F2950868E00050BD4 /* key.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECB05E4C294F8FD300050BD4 /* key.obj */; };
 		ECCB08A528DB6FD00038BBAC /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECCB08A428DB6FD00038BBAC /* AVFoundation.framework */; };
 /* End PBXBuildFile section */
 
@@ -512,6 +514,7 @@
 				60A99921287BDF31003F7159 /* fontmetrics.dat in Resources */,
 				60A99924287BDF31003F7159 /* phoebus.png in Resources */,
 				EC7B171C293A23E400C1D20C /* roundedborder.png in Resources */,
+				ECB05E4F2950868E00050BD4 /* key.obj in Resources */,
 				60A9991F287BDF31003F7159 /* font.png in Resources */,
 				60A99923287BDF31003F7159 /* teapot.obj in Resources */,
 				60A99920287BDF31003F7159 /* structuredart1.png in Resources */,
@@ -587,6 +590,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ECB05E4E2950864000050BD4 /* gpu.m in Sources */,
 				60A99914287BD4C4003F7159 /* texquad_type.h in Sources */,
 				60A99919287BD4C4003F7159 /* memorystore.h in Sources */,
 				60A998FE287BD4C3003F7159 /* memorystore.c in Sources */,
