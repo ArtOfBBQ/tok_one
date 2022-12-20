@@ -401,12 +401,7 @@ zPolygon parse_obj_expecting_materials(
             // skip the space(s) after the 'f'
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
-            
-            // read the indices of the vertices first
-            // there could be 3 or 4 vertices to a face,
-            // but if there are more we don't support that yet
-            uint32_t face_vertex_indices_size = 0;
-            
+                        
             log_append("read 1st vertex index\n");
             int32_t vertex_i_0 = string_to_int32(rawdata + i);
             i += chars_till_next_space_or_slash(
@@ -813,10 +808,10 @@ void ztriangles_apply_lighting(
         light_source_pos.y = zlight_source->y;
         light_source_pos.z = zlight_source->z;
     
-    SIMD_FLOAT simd_light_source_x = simd_set_float(light_source_pos.x);
-    SIMD_FLOAT simd_light_source_y = simd_set_float(light_source_pos.y);
-    SIMD_FLOAT simd_light_source_z = simd_set_float(light_source_pos.z);
-    SIMD_FLOAT simd_light_reach = simd_set_float(zlight_source->reach);
+    SIMD_FLOAT simd_light_source_x = simd_set_float(zlight_source->x);
+    SIMD_FLOAT simd_light_source_y = simd_set_float(zlight_source->y);
+    SIMD_FLOAT simd_light_source_z = simd_set_float(zlight_source->z);
+    SIMD_FLOAT simd_light_reach    = simd_set_float(zlight_source->reach);
     
     distances_to_vertices_size = vertices_size;
     assert(distances_to_vertices_size < DISTANCES_TO_VERTICES_CAP);
@@ -896,15 +891,11 @@ void ztriangles_apply_lighting(
             
             // *******************************************
             // add diffuse lighting                
-            // if (diffused_dots[triangle_i] < 0.0f)
-            //{
-            // (diffused_dots[triangle_i] * -1) *
             recipients[vertex_i].lighting[col_i] +=
                 diffused_dots[vertex_i] *
                 diffuse_mod *
                 distances_to_vertices[vertex_i] *
                 lighting_multipliers[vertex_i];
-            //}
         }
     }
 }
@@ -1120,7 +1111,6 @@ static void normalize_zvertices_inplace(
     float * vertices_x,
     float * vertices_y,
     float * vertices_z,
-    float * working_memory,
     const uint32_t vertices_size)
 {
     // TODO: remove debug asserts
@@ -1351,7 +1341,6 @@ void get_visibility_ratings(
         normals_x,
         normals_y,
         normals_z,
-        magnitudes_working_memory,
         vertices_size);
     
     float observer_xs[SIMD_FLOAT_WIDTH];
@@ -1385,7 +1374,6 @@ void get_visibility_ratings(
         observeds_adj_x,
         observeds_adj_y,
         observeds_adj_z,
-        magnitudes_working_memory,
         vertices_size);
     
     // finally, get the dot product of each triangle's vertex's normal
@@ -1400,47 +1388,6 @@ void get_visibility_ratings(
         vertices_size,
         out_visibility_ratings);
 }
-
-/*
-float get_visibility_rating(
-    const zVertex observer,
-    const zTriangle * observed)
-{
-    // let's move everything so that observer is at {0,0,0}
-    // we'll leave the observer as is and just use {0,0,0} where
-    // we would have used it
-    zTriangle observed_adj = *observed;
-    for (uint32_t i = 0; i < 3; i++) {
-        observed_adj.vertices[i].x =
-            observed->vertices[i].x - observer.x;
-        observed_adj.vertices[i].y =
-            observed->vertices[i].y - observer.y;
-        observed_adj.vertices[i].z =
-            observed->vertices[i].z - observer.z;
-    }
-    zVertex normal = get_ztriangle_normal(&observed_adj);
-    normalize_zvertex(&normal);
-    
-    // store the 1st vertex as a zVertex so we can
-    // use the normalize function
-    zVertex triangle_minus_observer;
-    triangle_minus_observer.x =
-        observed_adj.vertices[0].x;
-    triangle_minus_observer.y =
-        observed_adj.vertices[0].y;
-    triangle_minus_observer.z =
-        observed_adj.vertices[0].z;
-    
-    // TODO: normalize_zvertex is a performance bottleneck
-    normalize_zvertex(&triangle_minus_observer);
-    
-    float return_value = dot_of_vertices(
-        normal,
-        triangle_minus_observer);
-    
-    return return_value;
-}
-*/
 
 void zcamera_move_forward(
     zCamera * to_move,
