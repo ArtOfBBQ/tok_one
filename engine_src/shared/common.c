@@ -5,6 +5,11 @@ float tok_fminf(const float x, const float y)
     return ((x <= y) * x) + ((y < x) * y);
 }
 
+float tok_fmaxf(const float x, const float y)
+{
+    return ((x >  y) * x) + ((y <= x) * y);
+}
+
 int tok_imini(const int x, const int y)
 {
     return ((x <= y) * x) + ((y < x) * y);

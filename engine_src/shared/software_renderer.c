@@ -14,9 +14,6 @@ static float * triangle_vertices_z;
 static float * camera_multipliers;
 static float * lighting_multipliers;
 static float * working_memory_1;
-static float * working_memory_2;
-static float * cosines;
-static float * sines;
 static float * visibility_ratings;
 static Vertex * rendered_vertices;
 static int32_t * rendered_triangles_touchable_ids;
@@ -45,16 +42,14 @@ void init_renderer() {
         VERTICES_CAP * sizeof(float), 32);
     working_memory_1 = (float *)malloc_from_unmanaged_aligned(
         VERTICES_CAP * sizeof(float), 32);
-    working_memory_2 = (float *)malloc_from_unmanaged_aligned(
-        VERTICES_CAP * sizeof(float), 32);
     camera_multipliers = (float *)malloc_from_unmanaged_aligned(
         VERTICES_CAP * sizeof(float), 32);
     lighting_multipliers = (float *)malloc_from_unmanaged_aligned(
         VERTICES_CAP * sizeof(float), 32);
-    cosines = (float *)malloc_from_unmanaged_aligned(
-        VERTICES_CAP * sizeof(float), 32);
-    sines = (float *)malloc_from_unmanaged_aligned(
-        VERTICES_CAP * sizeof(float), 32);
+    //cosines = (float *)malloc_from_unmanaged_aligned(
+    //    VERTICES_CAP * sizeof(float), 32);
+    //sines = (float *)malloc_from_unmanaged_aligned(
+    //    VERTICES_CAP * sizeof(float), 32);
     visibility_ratings = (float *)malloc_from_unmanaged_aligned(
         VERTICES_CAP * sizeof(float), 32);
     rendered_vertices = (Vertex *)malloc_from_unmanaged_aligned(
@@ -110,9 +105,9 @@ void software_render(
     // transform all triangle vertices
     // there's actually only 1 angle per polygon, so
     // this is very wasteful
-    float x_angles[all_triangles_size * 3];
-    float y_angles[all_triangles_size * 3];
-    float z_angles[all_triangles_size * 3];
+    float x_angles[(all_triangles_size * 3) + (SIMD_FLOAT_WIDTH-1)];
+    float y_angles[(all_triangles_size * 3) + (SIMD_FLOAT_WIDTH-1)];
+    float z_angles[(all_triangles_size * 3) + (SIMD_FLOAT_WIDTH-1)];
     
     const uint32_t vertices_size = all_triangles_size * 3;
     assert(vertices_size < VERTICES_CAP);

@@ -34,6 +34,8 @@ extern "C" {
 int tok_imini(const int x, const int y);
 int tok_imaxi(const int x, const int y);
 float tok_fminf(const float x, const float y);
+float tok_fmaxf(const float x, const float y);
+
 
 void
 strcat_capped(
