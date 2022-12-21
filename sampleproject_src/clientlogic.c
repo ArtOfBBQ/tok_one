@@ -147,7 +147,8 @@ void client_logic_startup() {
         1,
         false);
     
-    key.object_id = 5;
+    key.object_id = 123;
+    key.touchable_id = 123;
     log_assert(key.triangles_size > 0);
     scale_zpolygon(
         /* to_scale: */ &key,
@@ -157,9 +158,17 @@ void client_logic_startup() {
     key.z = 1.0f;
     request_zpolygon_to_render(&key);
     
+    zPolygon anotherkey = key;
+    anotherkey.object_id = 124;
+    anotherkey.touchable_id = 124;
+    anotherkey.x = key.x - 0.3f;
+    anotherkey.y = key.y - 0.3f;
+    anotherkey.z = key.z - 0.3f;
+    request_zpolygon_to_render(&anotherkey);
+    
     ScheduledAnimation rotate_key;
     construct_scheduled_animation(&rotate_key);
-    rotate_key.affected_object_id = 5;
+    rotate_key.affected_object_id = 123;
     rotate_key.z_rotation_per_second = 0.2f;
     rotate_key.y_rotation_per_second = 0.5f;
     rotate_key.x_rotation_per_second = 0.9f;
@@ -167,6 +176,21 @@ void client_logic_startup() {
     rotate_key.duration_microseconds = 1000000;
     rotate_key.runs = 0;
     request_scheduled_animation(&rotate_key);
+    
+    TexQuad texture;
+    construct_texquad(&texture);
+    texture.RGBA[0] = 0.3f;
+    texture.RGBA[1] = 1.0f;
+    texture.RGBA[2] = 0.3f;
+    texture.RGBA[3] = 1.0f;
+    texture.object_id = 125;
+    texture.touchable_id = 125;
+    texture.top_y = 0.2f;
+    texture.left_x = 0.2f;
+    texture.width = 0.2f;
+    texture.height = 0.2f;
+    texture.ignore_camera = true;
+    request_texquad_renderable(&texture);
     
     log_append("finished client_logic_startup()\n");
 }
@@ -193,113 +217,28 @@ void client_logic_animation_callback(int32_t callback_id)
     log_dump_and_crash(unhandled_callback_id);
 }
 
-static uint32_t cur_color_i = 0;
-static int32_t cur_texture_i = 0;
-static void request_fading_lightsquare(
-    const float location_x,
-    const float location_y)
-{
-    TexQuad touch_highlight;
-    construct_texquad(&touch_highlight);
-    touch_highlight.object_id = latest_object_id++;
-    touch_highlight.left_x  = screenspace_x_to_x(location_x);
-    touch_highlight.top_y   = screenspace_y_to_y(location_y);
-    touch_highlight.z       = 1.0f;
-    touch_highlight.height  = screenspace_height_to_height(30.0f);
-    touch_highlight.width   = screenspace_width_to_width(30.0f);
-    touch_highlight.RGBA[0] = 1.0f;
-    touch_highlight.RGBA[0] = 0.0f;
-    touch_highlight.RGBA[0] = 1.0f;
-    touch_highlight.RGBA[0] = 1.0f;
-    touch_highlight.texturearray_i = 0;
-    touch_highlight.texture_i      = cur_texture_i++;
-    if (cur_texture_i > 92) { cur_texture_i = 0; }
-    request_texquad_renderable(&touch_highlight);
-    
-    uint32_t new_zlight_i;
-    for (
-        new_zlight_i = 0;
-        new_zlight_i <= zlights_to_apply_size;
-        new_zlight_i++)
-    {
-        if (zlights_to_apply[new_zlight_i].deleted
-            || new_zlight_i == zlights_to_apply_size)
-        {
-            break;
-        }
-    }
-    
-    zlights_to_apply[new_zlight_i].deleted = false;
-    zlights_to_apply[new_zlight_i].object_id =
-        touch_highlight.object_id;
-    zlights_to_apply[new_zlight_i].x = screenspace_x_to_x(location_x);
-    zlights_to_apply[new_zlight_i].y = screenspace_y_to_y(location_y);
-    zlights_to_apply[new_zlight_i].z = 1.0f;
-    
-    if (cur_color_i == 0) {
-        zlights_to_apply[new_zlight_i].RGBA[0] = 1.0f;
-        zlights_to_apply[new_zlight_i].RGBA[1] = 0.0f;
-        zlights_to_apply[new_zlight_i].RGBA[2] = 0.0f;
-        zlights_to_apply[new_zlight_i].RGBA[3] = 1.0f;
-    } else if (cur_color_i == 1) {
-        zlights_to_apply[new_zlight_i].RGBA[0] = 0.0f;
-        zlights_to_apply[new_zlight_i].RGBA[1] = 1.0f;
-        zlights_to_apply[new_zlight_i].RGBA[2] = 0.0f;
-        zlights_to_apply[new_zlight_i].RGBA[3] = 1.0f;
-    } else if (cur_color_i == 2) {
-        zlights_to_apply[new_zlight_i].RGBA[0] = 0.0f;
-        zlights_to_apply[new_zlight_i].RGBA[1] = 0.0f;
-        zlights_to_apply[new_zlight_i].RGBA[2] = 1.0f;
-        zlights_to_apply[new_zlight_i].RGBA[3] = 1.0f;
-    } else {
-        zlights_to_apply[new_zlight_i].RGBA[0] =
-            0.1f * (float)(tok_rand() % 10);
-        zlights_to_apply[new_zlight_i].RGBA[1] =
-            0.1f * (float)(tok_rand() % 10);
-        zlights_to_apply[new_zlight_i].RGBA[2] =
-            0.1f * (float)(tok_rand() % 10);
-        zlights_to_apply[new_zlight_i].RGBA[3] = 1.0f;
-    }
-    log_assert(zlights_to_apply[new_zlight_i].RGBA[0] >= 0.0f);
-    log_assert(zlights_to_apply[new_zlight_i].RGBA[1] >= 0.0f);
-    log_assert(zlights_to_apply[new_zlight_i].RGBA[2] >= 0.0f);
-    log_assert(zlights_to_apply[new_zlight_i].RGBA[3] >= 0.0f);
-    
-    cur_color_i += 1;
-    if (cur_color_i > 2) { cur_color_i = 0; }
-    
-    zlights_to_apply[new_zlight_i].ambient = 0.0f;
-    zlights_to_apply[new_zlight_i].diffuse = 1.0f;
-    zlights_to_apply[new_zlight_i].reach = 10.0f;
-    if (new_zlight_i == zlights_to_apply_size) {
-         zlights_to_apply_size += 1;
-    }
-    
-    ScheduledAnimation moveupandright;
-    construct_scheduled_animation(&moveupandright);
-    moveupandright.affected_object_id = touch_highlight.object_id;
-    moveupandright.duration_microseconds = 6000000;
-    moveupandright.delta_x_per_second = 0.3f;
-    moveupandright.delta_y_per_second = 0.3f;
-    request_scheduled_animation(&moveupandright);
-    
-    ScheduledAnimation vanish;
-    construct_scheduled_animation(&vanish);
-    vanish.affected_object_id = touch_highlight.object_id;
-    vanish.remaining_wait_before_next_run = 4000000;
-    vanish.duration_microseconds = 4000000;
-    vanish.delete_object_when_finished = true;
-    request_scheduled_animation(&vanish);
-}
-
 static void  client_handle_touches_and_leftclicks(
     uint64_t microseconds_elapsed)
 {
-    if (!previous_touch_or_leftclick_end.handled) {        
-        request_fading_lightsquare(
-            previous_touch_or_leftclick_end.screen_x,
-            previous_touch_or_leftclick_end.screen_y);
-        
+    if (!previous_touch_or_leftclick_end.handled) {
+        if (previous_touch_or_leftclick_end.touchable_id >= 0) {
+            ScheduledAnimation bump;
+            construct_scheduled_animation(&bump);
+            bump.affected_object_id = previous_touch_or_leftclick_end.touchable_id;
+            bump.final_scale_known = true;
+            bump.final_scale = 1.2f;
+            bump.duration_microseconds = 100000;
+            request_scheduled_animation(&bump);
+            
+            ScheduledAnimation unbump;
+            construct_scheduled_animation(&unbump);
+            unbump.affected_object_id = previous_touch_or_leftclick_end.touchable_id;
+            unbump.final_scale_known = true;
+            unbump.final_scale = 1.0f;
+            unbump.remaining_wait_before_next_run  = 100000;
+            unbump.duration_microseconds = 100000;
+            request_scheduled_animation(&unbump);
+        }
         previous_touch_or_leftclick_end.handled = true;
     }
 }
@@ -352,6 +291,16 @@ static void client_handle_keypresses(uint64_t microseconds_elapsed) {
     if (keypress_map[12] == true) {                                             
         // 'Q' key is pressed                                                   
         camera.x_angle -= cam_rotation_speed;                                   
+    }
+    
+    if (keypress_map[44] == true) {                                             
+        // / key                                                                
+        camera.z -= 0.01f;                                                      
+    }
+     
+    if (keypress_map[94] == true) {                                             
+        // _ key is pressed                                                     
+        camera.z += 0.01f;                                                      
     }
 }
 

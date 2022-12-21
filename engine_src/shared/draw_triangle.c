@@ -15,6 +15,7 @@ draw_triangle(
     uint32_t vertex_i = *vertex_count_recipient;
     
     for (uint32_t i = 0; i < 3; i++) {
+        log_assert(vertex_i + 1 < MAX_VERTICES_PER_BUFFER);
         vertices_recipient[vertex_i] = input[i];
         vertex_i++;
     }

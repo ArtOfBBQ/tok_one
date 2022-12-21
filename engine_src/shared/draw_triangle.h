@@ -15,6 +15,7 @@ the architecture is decided
 #include "common.h"
 #include "logger.h"
 #include "vertex_types.h"
+#include "vertex_buffer_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,7 +33,7 @@ typedef struct TriangleArea {
     int32_t touchable_id;
 } TriangleArea;
 
-#define TOUCHABLE_TRIANGLES_ARRAYSIZE 10000
+#define TOUCHABLE_TRIANGLES_ARRAYSIZE 30000
 extern TriangleArea * touchable_triangles;
 extern uint32_t touchable_triangles_size;
 

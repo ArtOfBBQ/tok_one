@@ -342,10 +342,6 @@ string_to_uint32_validate(
     bool32_t * good)
 {
     if (input[0] < '0' || input[0] > '9') {
-        #ifndef COMMON_SILENCE
-        printf(
-            "ERR: string_to_uint32 but input[0] is nullterminator\n");
-        #endif
         *good = false;
         return 0;
     } else {

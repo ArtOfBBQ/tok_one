@@ -366,16 +366,13 @@ uint32_t block_drawinmtkview = true;
 
 - (void)mtkView:(MTKView *)view
     drawableSizeWillChange:(CGSize)size
-{
-    window_height = platform_get_current_window_height(); 
-    window_width = platform_get_current_window_width();
-    
+{    
     viewport.originX = 0;
     viewport.originY = 0;
-    viewport.width = window_width * (has_retina_screen ? 2.0f : 1.0f);
-    viewport.height = window_height * (has_retina_screen ? 2.0f : 1.0f);
-    viewport.znear = 0.0f;
-    viewport.zfar = 1.0f;
+    viewport.width   = window_width * (has_retina_screen ? 2.0f : 1.0f);
+    viewport.height  = window_height * (has_retina_screen ? 2.0f : 1.0f);
+    viewport.znear   = 0.0f;
+    viewport.zfar    = 1.0f;
 }
 @end
 

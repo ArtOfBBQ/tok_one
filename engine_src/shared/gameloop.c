@@ -20,14 +20,14 @@ void shared_gameloop_update(
         time - last_resize_request_at < 1500000 &&
         !request_post_resize_clearscreen)
     {
-        if (time - last_resize_request_at < 300000) {
+        if (time - last_resize_request_at < 200000) {
             return;
         }
         
+        last_resize_request_at = 999999999;
         client_logic_window_resize(
             (uint32_t)window_height,
             (uint32_t)window_width);
-        last_resize_request_at = 999999999;
     } else {
         init_or_push_one_gpu_texture_array_if_needed();
     }

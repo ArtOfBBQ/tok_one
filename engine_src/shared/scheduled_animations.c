@@ -758,12 +758,10 @@ void request_dud_dance(const uint32_t object_id)
         move_request.duration_microseconds = step_size;
         move_request.delta_x_per_second =
             wait_first % (step_size * 2) == 0 ?
-                window_width * 0.07f
-                : window_width * -0.07f;
+                0.07f : -0.07f;
         move_request.delta_y_per_second =
             wait_first % (step_size * 2) == 0 ?
-                window_height * 0.07f
-                : window_height * -0.07f;
+                0.07f : -0.07f;
         request_scheduled_animation(
             &move_request);
     }

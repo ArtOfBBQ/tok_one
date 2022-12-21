@@ -52,8 +52,6 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     
     if (!startup_complete) { return frameSize; }
     
-    last_resize_request_at = platform_get_current_time_microsecs();
-    
     NSSize new_size = frameSize;
     new_size.height += title_bar_height;
     new_size.height *= 2;
@@ -63,7 +61,8 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     texquads_to_render_size = 0;
     zpolygons_to_render_size = 0; 
     zlights_to_apply_size = 0;
-    // [apple_gpu_delegate drawClearScreen: mtk_view];
+    
+    last_resize_request_at = platform_get_current_time_microsecs();
     
     return frameSize;
 }
