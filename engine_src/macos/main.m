@@ -294,6 +294,7 @@ int main(int argc, const char * argv[]) {
     // a render command encoder with the MetalKit view's `currentRenderPassDescriptor` property.
     mtk_view.clearDepth = 1.0f;
     [mtk_view setPaused: false];
+    [mtk_view setNeedsDisplay: false];
     
     window.contentView = mtk_view;
     

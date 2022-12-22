@@ -8,6 +8,7 @@
 #include "simd.h"
 #include "platform_layer.h"
 #include "vertex_types.h"
+#include "vertex_buffer_types.h"
 #include "draw_triangle.h"
 #include "zpolygon.h"
 #include "bitmap_renderer.h"

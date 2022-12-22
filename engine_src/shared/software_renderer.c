@@ -4,7 +4,6 @@ static uint32_t renderer_initialized = false;
 
 // all of these are for vectorized
 // manipulation of our triangles vertices
-#define VERTICES_CAP 500000
 static float * polygons_x; // the xyz of the parent polygons
 static float * polygons_y;
 static float * polygons_z;
@@ -13,7 +12,7 @@ static float * triangle_vertices_y;
 static float * triangle_vertices_z;
 static float * camera_multipliers;
 static float * lighting_multipliers;
-static float * working_memory_1;
+static float * scale_factors;
 static float * visibility_ratings;
 static Vertex * rendered_vertices;
 static int32_t * rendered_triangles_touchable_ids;
@@ -29,29 +28,29 @@ void init_renderer() {
     camera.z_angle = 0.0f;
     
     triangle_vertices_x = (float *)malloc_from_unmanaged_aligned(
-        VERTICES_CAP * sizeof(float), 32);
+        MAX_VERTICES_PER_BUFFER * sizeof(float), 32);
     triangle_vertices_y = (float *)malloc_from_unmanaged_aligned(
-        VERTICES_CAP * sizeof(float), 32);
+        MAX_VERTICES_PER_BUFFER * sizeof(float), 32);
     triangle_vertices_z = (float *)malloc_from_unmanaged_aligned(
-        VERTICES_CAP * sizeof(float), 32);
+        MAX_VERTICES_PER_BUFFER * sizeof(float), 32);
     polygons_x = (float *)malloc_from_unmanaged_aligned(
-        VERTICES_CAP * sizeof(float), 32);
+        MAX_VERTICES_PER_BUFFER * sizeof(float), 32);
     polygons_y = (float *)malloc_from_unmanaged_aligned(
-        VERTICES_CAP * sizeof(float), 32);
+        MAX_VERTICES_PER_BUFFER * sizeof(float), 32);
     polygons_z = (float *)malloc_from_unmanaged_aligned(
-        VERTICES_CAP * sizeof(float), 32);
-    working_memory_1 = (float *)malloc_from_unmanaged_aligned(
-        VERTICES_CAP * sizeof(float), 32);
+        MAX_VERTICES_PER_BUFFER * sizeof(float), 32);
+    scale_factors = (float *)malloc_from_unmanaged_aligned(
+        MAX_VERTICES_PER_BUFFER * sizeof(float), 32);
     camera_multipliers = (float *)malloc_from_unmanaged_aligned(
-        VERTICES_CAP * sizeof(float), 32);
+        MAX_VERTICES_PER_BUFFER * sizeof(float), 32);
     lighting_multipliers = (float *)malloc_from_unmanaged_aligned(
-        VERTICES_CAP * sizeof(float), 32);
+        MAX_VERTICES_PER_BUFFER * sizeof(float), 32);
     visibility_ratings = (float *)malloc_from_unmanaged_aligned(
-        VERTICES_CAP * sizeof(float), 32);
+        MAX_VERTICES_PER_BUFFER * sizeof(float), 32);
     rendered_vertices = (Vertex *)malloc_from_unmanaged_aligned(
-        VERTICES_CAP * sizeof(Vertex), 32);
+        MAX_VERTICES_PER_BUFFER * sizeof(Vertex), 32);
     rendered_triangles_touchable_ids = (int32_t *)malloc_from_unmanaged_aligned(
-        VERTICES_CAP * sizeof(int32_t) / 3, 32);
+        MAX_VERTICES_PER_BUFFER * sizeof(int32_t) / 3, 32);
 }
 
 void software_render(
@@ -106,7 +105,7 @@ void software_render(
     float z_angles[(all_triangles_size * 3) + (SIMD_FLOAT_WIDTH-1)];
     
     const uint32_t vertices_size = all_triangles_size * 3;
-    assert(vertices_size < VERTICES_CAP);
+    assert(vertices_size < MAX_VERTICES_PER_BUFFER);
     
     uint32_t cur_vertex = 0;
     for (
@@ -129,11 +128,12 @@ void software_render(
                 polygons_x[cur_vertex] = zpolygons_to_render[i].x;
                 polygons_y[cur_vertex] = zpolygons_to_render[i].y;
                 polygons_z[cur_vertex] = zpolygons_to_render[i].z;
+                
                 x_angles[cur_vertex] = zpolygons_to_render[i].x_angle;
                 y_angles[cur_vertex] = zpolygons_to_render[i].y_angle;
                 z_angles[cur_vertex] = zpolygons_to_render[i].z_angle;
                 
-                working_memory_1[cur_vertex] =
+                scale_factors[cur_vertex] =
                     zpolygons_to_render[i].scale_factor;
                 
                 camera_multipliers[cur_vertex] =
@@ -222,12 +222,12 @@ void software_render(
         y_angles[cur_vertex+5] = 0.0f;
         z_angles[cur_vertex+5] = texquads_to_render[i].z_angle;
         
-        working_memory_1[cur_vertex    ] = texquads_to_render[i].scale_factor;
-        working_memory_1[cur_vertex + 1] = texquads_to_render[i].scale_factor;
-        working_memory_1[cur_vertex + 2] = texquads_to_render[i].scale_factor;
-        working_memory_1[cur_vertex + 3] = texquads_to_render[i].scale_factor;
-        working_memory_1[cur_vertex + 4] = texquads_to_render[i].scale_factor;
-        working_memory_1[cur_vertex + 5] = texquads_to_render[i].scale_factor;
+        scale_factors[cur_vertex    ] = texquads_to_render[i].scale_factor;
+        scale_factors[cur_vertex + 1] = texquads_to_render[i].scale_factor;
+        scale_factors[cur_vertex + 2] = texquads_to_render[i].scale_factor;
+        scale_factors[cur_vertex + 3] = texquads_to_render[i].scale_factor;
+        scale_factors[cur_vertex + 4] = texquads_to_render[i].scale_factor;
+        scale_factors[cur_vertex + 5] = texquads_to_render[i].scale_factor;
         
         camera_multipliers[cur_vertex    ] =
             (1.0f * !texquads_to_render[i].ignore_camera);
@@ -259,22 +259,29 @@ void software_render(
     float minus_ones[SIMD_FLOAT_WIDTH];
     // sin of 0 is 0, so that's convenient
     
+    float cos_cam_x = cosf(-camera.x_angle);
+    float sin_cam_x = sinf(-camera.x_angle);
+    float cos_cam_y = cosf(-camera.y_angle);
+    float sin_cam_y = sinf(-camera.y_angle);
+    float cos_cam_z = cosf(-camera.z_angle);
+    float sin_cam_z = sinf(-camera.z_angle);
+    
     for (uint32_t i = 0; i < SIMD_FLOAT_WIDTH; i++) {
         camera_x_pos[i] = camera.x;
         camera_y_pos[i] = camera.y;
         camera_z_pos[i] = camera.z;
-        cos_camera_x_angles[i] = cosf(-camera.x_angle);
-        sin_camera_x_angles[i] = sinf(-camera.x_angle);
-        cos_camera_y_angles[i] = cosf(-camera.y_angle);
-        sin_camera_y_angles[i] = sinf(-camera.y_angle);
-        cos_camera_z_angles[i] = cosf(-camera.z_angle);
-        sin_camera_z_angles[i] = sinf(-camera.z_angle);
+        cos_camera_x_angles[i] = cos_cam_x;
+        sin_camera_x_angles[i] = sin_cam_x;
+        cos_camera_y_angles[i] = cos_cam_y;
+        sin_camera_y_angles[i] = sin_cam_y;
+        cos_camera_z_angles[i] = cos_cam_z;
+        sin_camera_z_angles[i] = sin_cam_z;
         cos_of_zero[i] = 1.0f;
         minus_ones[i] = -1.0f;
     }
-    SIMD_FLOAT simd_camera_x_pos = simd_load_floats(camera_x_pos);
-    SIMD_FLOAT simd_camera_y_pos = simd_load_floats(camera_y_pos);
-    SIMD_FLOAT simd_camera_z_pos = simd_load_floats(camera_z_pos);
+    SIMD_FLOAT simd_camera_x_pos       = simd_load_floats(camera_x_pos);
+    SIMD_FLOAT simd_camera_y_pos       = simd_load_floats(camera_y_pos);
+    SIMD_FLOAT simd_camera_z_pos       = simd_load_floats(camera_z_pos);
     SIMD_FLOAT simd_cos_camera_x_angle = simd_load_floats(cos_camera_x_angles);
     SIMD_FLOAT simd_sin_camera_x_angle = simd_load_floats(sin_camera_x_angles);
     SIMD_FLOAT simd_cos_camera_y_angle = simd_load_floats(cos_camera_y_angles);
@@ -286,7 +293,7 @@ void software_render(
     
     for (uint32_t i = 0; i < vertices_size; i += SIMD_FLOAT_WIDTH) {
         // apply scaling modifier
-        SIMD_FLOAT scaling_modifiers = simd_load_floats(working_memory_1 + i);
+        SIMD_FLOAT scaling_modifiers = simd_load_floats(scale_factors + i);
         
         SIMD_FLOAT simd_vertices_x = simd_load_floats(triangle_vertices_x + i);
         simd_vertices_x = simd_mul_floats(simd_vertices_x, scaling_modifiers);
@@ -359,8 +366,7 @@ void software_render(
         // these are always 1 or 0, 0 for 'ignore camera' vertices
         SIMD_FLOAT simd_camera_multipliers =
             simd_load_floats(camera_multipliers + i);
-        SIMD_FLOAT simd_reverse_camera_multipliers =
-        simd_reverse_camera_multipliers = simd_add_floats(
+        SIMD_FLOAT simd_reverse_camera_multipliers = simd_add_floats(
             simd_camera_multipliers,
             simd_minus_ones);
         simd_reverse_camera_multipliers = simd_mul_floats(
@@ -388,6 +394,7 @@ void software_render(
             simd_cos_of_zero, simd_reverse_camera_multipliers);
         SIMD_FLOAT simd_final_cos_angle = simd_add_floats(
             simd_cam_active_cos_angle, simd_cam_inactive_cos_angle);
+        // reminder: the sin of 0 is 0, so this works out naturally
         SIMD_FLOAT simd_final_sin_angle = simd_mul_floats(
             simd_sin_camera_x_angle, simd_camera_multipliers);
         x_rotate_zvertices_inplace(
@@ -406,6 +413,7 @@ void software_render(
             simd_cos_of_zero, simd_reverse_camera_multipliers);
         simd_final_cos_angle = simd_add_floats(
             simd_cam_active_cos_angle, simd_cam_inactive_cos_angle);
+        // reminder: the sin of 0 is 0, so this works out naturally
         simd_final_sin_angle = simd_mul_floats(
             simd_sin_camera_y_angle, simd_camera_multipliers);
         y_rotate_zvertices_inplace(
@@ -424,6 +432,7 @@ void software_render(
             simd_cos_of_zero, simd_reverse_camera_multipliers);
         simd_final_cos_angle = simd_add_floats(
             simd_cam_active_cos_angle, simd_cam_inactive_cos_angle);
+        // reminder: the sin of 0 is 0, so this works out naturally
         simd_final_sin_angle = simd_mul_floats(
             simd_sin_camera_z_angle, simd_camera_multipliers);
         z_rotate_zvertices_inplace(
@@ -553,7 +562,8 @@ void software_render(
         uint32_t first_all_vertex_i = all_triangle_i * 3;
         
         log_assert(first_visible_vertex_i < vertices_size);
-        if (visibility_ratings[first_all_vertex_i] < 0.0f)
+        if (
+            visibility_ratings[first_all_vertex_i] < 0.0f)
         {
             for (uint32_t m = 0; m < 6; m++) {
                 triangle_vertices_x[first_visible_vertex_i + m] =
