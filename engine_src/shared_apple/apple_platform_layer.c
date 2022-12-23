@@ -476,7 +476,7 @@ void platform_play_music_resource(char * resource_filename) {
     active_music_player = player;
 }
 
-#define MUTEXES_SIZE 5
+#define MUTEXES_SIZE 10
 static pthread_mutex_t mutexes[MUTEXES_SIZE];
 static uint32_t next_mutex_id = 0;
 /*

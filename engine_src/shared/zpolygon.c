@@ -13,7 +13,6 @@ static float * distances_to_vertices;
 static uint32_t distances_to_vertices_size = 0;
 #define DIFFUSED_DOTS_CAP 1000000
 static float * diffused_dots;
-static uint32_t diffused_dots_size = 0;
 
 static float * normals_x_buffer;
 static float * normals_y_buffer;
@@ -1338,24 +1337,3 @@ void zcamera_move_forward(
     to_move->y += final.y;
     to_move->z += final.z;
 }
-
-/*
-float screen_y_to_3d_y(const float screen_y)
-{
-    float return_value = screen_y / (window_height * 0.5f);
-    return_value -= 1.0f;
-    
-    return return_value;
-}
-
-float screen_x_to_3d_x(const float screen_x)
-{
-    float return_value = screen_x / (window_width * 0.5f);
-    return_value -= 1.0f;
-    
-    return_value /= (aspect_ratio *
-        projection_constants.field_of_view_modifier);
-    
-    return return_value;
-}
-*/
