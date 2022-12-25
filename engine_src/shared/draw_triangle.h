@@ -37,12 +37,14 @@ typedef struct TriangleArea {
 extern TriangleArea * touchable_triangles;
 extern uint32_t touchable_triangles_size;
 
-void __attribute__((no_instrument_function))
-draw_triangle(
+void draw_vertices(
     Vertex * vertices_recipient,
     uint32_t * vertex_count_recipient,
-    Vertex input[3],
-    int32_t touchable_id);
+    Vertex * input,
+    const uint32_t input_size);
+
+void register_touchable_triangle(
+    Vertex * input);
 
 int32_t find_touchable_at(
     const float normalized_x,

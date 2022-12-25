@@ -35,6 +35,7 @@ void zcamera_move_forward(
 
 typedef struct zTriangle {
     zVertex vertices[3];
+    zVertex normals[3];
     float color[4];         // RGBA, ignored if textured
     int32_t texturearray_i; /*
                             the index in the global var
@@ -84,13 +85,10 @@ void ztriangles_apply_lighting(
     const uint32_t recipients_size,
     zLightSource * zlight_source);
 
-/*
-void 
-ztriangle_apply_lighting(
-    Vertex recipient[3],
-    zTriangle * input,
-    zLightSource * zlight_source);
-*/
+void project_simd_vertices_to_2d(
+    SIMD_FLOAT * simd_vertices_x,
+    SIMD_FLOAT * simd_vertices_y,
+    SIMD_FLOAT * simd_vertices_z);
 
 void ztriangles_to_2d_inplace(
     float * vertices_x,
@@ -183,6 +181,17 @@ float get_distance(
 float distance_to_ztriangle(
     const zVertex p1,
     const zTriangle p2);
+
+SIMD_FLOAT simd_get_visibility_ratings(
+    const SIMD_FLOAT simd_observer_x,
+    const SIMD_FLOAT simd_observer_y,
+    const SIMD_FLOAT simd_observer_z,
+    SIMD_FLOAT vertices_x,
+    SIMD_FLOAT vertices_y,
+    SIMD_FLOAT vertices_z,
+    SIMD_FLOAT simd_normals_x,
+    SIMD_FLOAT simd_normals_y,
+    SIMD_FLOAT simd_normals_z);
 
 void get_visibility_ratings(
     const zVertex observer,

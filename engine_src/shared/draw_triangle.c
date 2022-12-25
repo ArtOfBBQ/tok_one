@@ -3,26 +3,29 @@
 TriangleArea * touchable_triangles;
 uint32_t touchable_triangles_size = 0;
 
-void __attribute__((no_instrument_function))
-draw_triangle(
+void draw_vertices(
     Vertex * vertices_recipient,
     uint32_t * vertex_count_recipient,
-    Vertex input[3],
-    int32_t touchable_id)
+    Vertex * input,
+    const uint32_t input_size)
 {
-    log_assert(vertices_recipient != NULL);
-    
     uint32_t vertex_i = *vertex_count_recipient;
     
-    for (uint32_t i = 0; i < 3; i++) {
-        log_assert(vertex_i + 1 < MAX_VERTICES_PER_BUFFER);
+    for (uint32_t i = 0; i < input_size; i++) {
+        assert(vertex_i + 1 < MAX_VERTICES_PER_BUFFER);
         vertices_recipient[vertex_i] = input[i];
         vertex_i++;
+        *vertex_count_recipient += 1;
     }
-    *vertex_count_recipient += 3;
-    
-    if (touchable_id >= 0) {
+}
+
+void register_touchable_triangle(
+    Vertex * input)
+{
+    if (input[0].touchable_id >= 0) {
         log_assert(touchable_triangles_size < TOUCHABLE_TRIANGLES_ARRAYSIZE);
+        log_assert(input[1].touchable_id == input[0].touchable_id);
+        log_assert(input[2].touchable_id == input[0].touchable_id);
         
         for (
              uint32_t v = 0;
@@ -34,7 +37,7 @@ draw_triangle(
             touchable_triangles[touchable_triangles_size]
                 .viewport_y[v] = input[v].y / input[v].w;
             touchable_triangles[touchable_triangles_size]
-                .touchable_id = touchable_id;
+                .touchable_id = input[v].touchable_id;
             touchable_triangles[touchable_triangles_size]
                 .viewport_z[v] = input[v].z;
         }

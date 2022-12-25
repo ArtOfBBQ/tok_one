@@ -83,6 +83,7 @@ void shared_gameloop_update(
         client_logic_update(elapsed);
     }
     
+    log_assert(*vertices_for_gpu_size < 1);
     software_render(
         /* next_gpu_workload: */
             vertices_for_gpu,
@@ -90,4 +91,15 @@ void shared_gameloop_update(
             vertices_for_gpu_size,
         /* elapsed_microseconds: */
             elapsed);
+    
+    uint32_t overflow_vertices = *vertices_for_gpu_size % 3;
+    *vertices_for_gpu_size -= overflow_vertices;
+    
+    for (
+        uint32_t triangle_start_i = 0;
+        triangle_start_i < *vertices_for_gpu_size;
+        triangle_start_i += 3)
+    {
+        register_touchable_triangle(vertices_for_gpu + triangle_start_i);
+    }
 }

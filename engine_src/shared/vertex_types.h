@@ -15,6 +15,7 @@ typedef struct Vertex {
                           // color/texture
     int texturearray_i; // -1 for no texture
     int texture_i;      // -1 for no texture
+    int touchable_id;
 }  Vertex;
 #pragma pack(pop)
 

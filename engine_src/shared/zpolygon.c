@@ -64,6 +64,13 @@ void request_zpolygon_to_render(zPolygon * to_add)
                 to_add->triangles[tri_i].texturearray_i,
                 to_add->triangles[tri_i].texture_i);
         }
+        
+        to_add->triangles[tri_i].normals[0] = get_ztriangle_normal(
+            &to_add->triangles[tri_i]);
+        to_add->triangles[tri_i].normals[1] = get_ztriangle_normal(
+            &to_add->triangles[tri_i]);
+        to_add->triangles[tri_i].normals[2] = get_ztriangle_normal(
+            &to_add->triangles[tri_i]);
     }
     
     for (
@@ -892,6 +899,29 @@ void construct_zpolygon(zPolygon * to_construct) {
     to_construct->deleted = false;
 }
 
+void project_simd_vertices_to_2d(
+    SIMD_FLOAT * simd_vertices_x,
+    SIMD_FLOAT * simd_vertices_y,
+    SIMD_FLOAT * simd_vertices_z)
+{
+    ProjectionConstants * pjc = &projection_constants;
+    
+    float x_multiplier = aspect_ratio * pjc->field_of_view_modifier;
+    SIMD_FLOAT simd_x_multiplier = simd_set_float(x_multiplier);
+    float y_multiplier = pjc->field_of_view_modifier;
+    SIMD_FLOAT simd_y_multiplier = simd_set_float(y_multiplier);
+    float z_multiplier = (pjc->far / (pjc->far - pjc->near));
+    SIMD_FLOAT simd_z_multiplier = simd_set_float(z_multiplier);
+    float z_addition = (1.0f * (-pjc->far * pjc->near) /
+        (pjc->far - pjc->near));
+    SIMD_FLOAT simd_z_addition   = simd_set_float(z_addition);
+    
+    *simd_vertices_x = simd_mul_floats(*simd_vertices_x, simd_x_multiplier);
+    *simd_vertices_y = simd_mul_floats(*simd_vertices_y, simd_y_multiplier);
+    *simd_vertices_z = simd_mul_floats(*simd_vertices_z, simd_z_multiplier);
+    *simd_vertices_z = simd_add_floats(*simd_vertices_z, simd_z_addition);
+}
+
 void ztriangles_to_2d_inplace(
     float * vertices_x,
     float * vertices_y,
@@ -1247,6 +1277,44 @@ zVertex get_ztriangle_normal(
     normal.z = (vector1.x * vector2.y) - (vector1.y * vector2.x);
     
     return normal;
+}
+
+SIMD_FLOAT simd_get_visibility_ratings(
+    const SIMD_FLOAT simd_observer_x,
+    const SIMD_FLOAT simd_observer_y,
+    const SIMD_FLOAT simd_observer_z,
+    SIMD_FLOAT vertices_x,
+    SIMD_FLOAT vertices_y,
+    SIMD_FLOAT vertices_z,
+    SIMD_FLOAT simd_normals_x,
+    SIMD_FLOAT simd_normals_y,
+    SIMD_FLOAT simd_normals_z)
+{
+    simd_normalize_zvertices_inplace(
+        &simd_normals_x,
+        &simd_normals_y,
+        &simd_normals_z);
+    
+    vertices_x = simd_sub_floats(vertices_x, simd_normals_x);
+    vertices_y = simd_sub_floats(vertices_y, simd_normals_y);
+    vertices_z = simd_sub_floats(vertices_z, simd_normals_z);
+    
+    vertices_x = simd_sub_floats(vertices_x, simd_observer_x);
+    vertices_y = simd_sub_floats(vertices_y, simd_observer_y);
+    vertices_z = simd_sub_floats(vertices_z, simd_observer_z);
+    
+    simd_normalize_zvertices_inplace(
+        &vertices_x,
+        &vertices_y,
+        &vertices_z);
+    
+    return simd_dots_of_vertices(
+        vertices_x,
+        vertices_y,
+        vertices_z,
+        simd_normals_x,
+        simd_normals_y,
+        simd_normals_z);
 }
 
 void get_visibility_ratings(
