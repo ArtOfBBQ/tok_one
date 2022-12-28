@@ -5,7 +5,8 @@ static uint64_t frame_no = 0;
 
 void shared_gameloop_update(
     Vertex * vertices_for_gpu,
-    uint32_t * vertices_for_gpu_size)
+    uint32_t * vertices_for_gpu_size,
+    LightCollection * lights_for_gpu)
 {
     frame_no++;
     uint64_t time = platform_get_current_time_microsecs();
@@ -38,8 +39,9 @@ void shared_gameloop_update(
     clean_deleted_lights();
     clean_deleted_texquads();
     
-    // translate all lights
-    translate_lights();
+    translate_lights(
+        lights_for_gpu);
+    assert(lights_for_gpu->lights_size > 0);
     
     if (!application_running) {
         texquads_to_render_size = 0;

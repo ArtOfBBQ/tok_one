@@ -124,14 +124,14 @@ Dump the entire debug log to debuglog.txt,
 then crash the application.
 I use this instead of assert(0).
 */
-void __attribute__((no_instrument_function))
+void
 log_dump_and_crash(const char * crash_message);
 
 /*
 Assert something, but use the GUI to report on failure
 instead of crashing the app
 */
-void __attribute__((no_instrument_function))
+void
 internal_log_assert(
     bool32_t condition,
     const char * str_condition,

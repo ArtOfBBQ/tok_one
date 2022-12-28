@@ -20,7 +20,8 @@ extern "C" {
 
 void shared_gameloop_update(
     Vertex * vertices_for_gpu,
-    uint32_t * vertices_for_gpu_size);
+    uint32_t * vertices_for_gpu_size,
+    LightCollection * lights_for_gpu);
 
 #ifdef __cplusplus
 }

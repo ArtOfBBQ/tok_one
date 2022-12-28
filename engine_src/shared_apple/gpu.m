@@ -3,6 +3,8 @@
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
 uint32_t block_drawinmtkview = true;
 
+BufferedVertexCollection triple_buffer[3];
+
 @implementation MetalKitViewDelegate
 {
     NSUInteger current_frame_i;
@@ -27,6 +29,9 @@ uint32_t block_drawinmtkview = true;
 {
     _frameBoundarySemaphore = dispatch_semaphore_create(3);
     current_frame_i = 0;
+    
+    _vertex_buffers = [[NSMutableArray alloc] init];
+    _light_buffers = [[NSMutableArray alloc] init];
     
     metal_device = with_metal_device;
     
@@ -109,8 +114,6 @@ uint32_t block_drawinmtkview = true;
             raise: @"Can't Setup Metal" 
             format: @"Unable to setup rendering pipeline state"];
     }
-        
-    _vertex_buffers = [[NSMutableArray alloc] init];
     
     // TODO: use the apple-approved page size constant instead of
     // hardcoding 4096, and verify it returns 4096
@@ -121,30 +124,54 @@ uint32_t block_drawinmtkview = true;
     {
         BufferedVertexCollection buffered_vertex;
         buffered_vertex.vertices_size = MAX_VERTICES_PER_BUFFER;
-        uint64_t allocation_size = sizeof(Vertex) * buffered_vertex.vertices_size;
-        allocation_size += (4096 - (allocation_size % 4096));
-        assert(allocation_size % 4096 == 0);
+        
+        uint64_t vertices_allocation_size = sizeof(Vertex) * buffered_vertex.vertices_size;
+        vertices_allocation_size += (4096 - (vertices_allocation_size % 4096));
+        assert(vertices_allocation_size % 4096 == 0);
         buffered_vertex.vertices =
             (Vertex *)malloc_from_unmanaged_aligned(
-                allocation_size,
+                vertices_allocation_size,
+                4096);
+        
+        uint64_t lights_allocation_size = sizeof(LightCollection);
+        lights_allocation_size += (4096 - (lights_allocation_size % 4096));
+        assert(lights_allocation_size % 4096 == 0);
+        buffered_vertex.light_collection =
+            (LightCollection *)malloc_from_unmanaged_aligned(
+                lights_allocation_size,
                 4096);
         
         render_commands.vertex_buffers[frame_i] = buffered_vertex;
         
-        id<MTLBuffer> MetalBufferedVertex =
+        id<MTLBuffer> MTLBufferFrameVertices =
             [with_metal_device
                 /* the pointer needs to be page aligned */
                 newBufferWithBytesNoCopy:
                     buffered_vertex.vertices
                 /* the length weirdly needs to be page aligned also */
                 length:
-                    allocation_size
+                    vertices_allocation_size
                 options:
                     MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
                 deallocator:
                     nil];
-        [_vertex_buffers addObject: MetalBufferedVertex];
+        [_vertex_buffers addObject: MTLBufferFrameVertices];
+        
+        id<MTLBuffer> MTLBufferFrameLights =
+            [with_metal_device
+                /* the pointer needs to be page aligned */
+                newBufferWithBytesNoCopy:
+                    buffered_vertex.light_collection
+                /* the length weirdly needs to be page aligned also */
+                length:
+                    lights_allocation_size
+                options:
+                    MTLResourceStorageModeShared
+                /* deallocator = nil to opt out */
+                deallocator:
+                    nil];
+         [_light_buffers addObject: MTLBufferFrameLights];
     }
     
     _metal_textures = [
@@ -230,7 +257,9 @@ uint32_t block_drawinmtkview = true;
         { image_width, image_height, 1 }
     };
     
-    [[_metal_textures objectAtIndex: (NSUInteger)texturearray_i]
+    [[_metal_textures
+        objectAtIndex:
+            (NSUInteger)texturearray_i]
         replaceRegion:
             region
         mipmapLevel:
@@ -280,17 +309,23 @@ uint32_t block_drawinmtkview = true;
     if (block_drawinmtkview) { return; }
     block_drawinmtkview = true;
     
-    dispatch_semaphore_wait(
-        _frameBoundarySemaphore,
-        DISPATCH_TIME_FOREVER);
+    //    dispatch_semaphore_wait(
+    //        _frameBoundarySemaphore,
+    //        DISPATCH_TIME_FOREVER);
     
+    @autoreleasepool {
     Vertex * vertices_for_gpu =
         render_commands.vertex_buffers[current_frame_i].vertices;
     uint32_t vertices_for_gpu_size = 0;
     
+    LightCollection * lights_for_gpu =
+        render_commands.vertex_buffers[current_frame_i].light_collection;
+    lights_for_gpu->lights_size = 0;
+    
     shared_gameloop_update(
         vertices_for_gpu,
-        &vertices_for_gpu_size);
+        &vertices_for_gpu_size,
+        lights_for_gpu);
     
     id<MTLCommandBuffer> command_buffer =
         [command_queue commandBuffer];
@@ -322,10 +357,20 @@ uint32_t block_drawinmtkview = true;
     // [render_encoder setDepthClipMode: MTLDepthClipModeClip];
     
     [render_encoder
-        setVertexBuffer: [[self vertex_buffers]
-            objectAtIndex: current_frame_i]  
+        setVertexBuffer:
+            [[self vertex_buffers]
+        objectAtIndex:
+            current_frame_i]  
         offset: 0 
         atIndex: 0];
+    
+    [render_encoder
+        setVertexBuffer:
+            [[self light_buffers]
+        objectAtIndex:
+            current_frame_i]
+        offset: 0
+        atIndex: 1];
     
     for (
         uint32_t i = 0;
@@ -343,7 +388,6 @@ uint32_t block_drawinmtkview = true;
         vertexCount: vertices_for_gpu_size];
     [render_encoder endEncoding];
     
-    
     // Schedule a present once the framebuffer is complete
     // using the current drawable
     [command_buffer presentDrawable: [view currentDrawable]];
@@ -351,14 +395,15 @@ uint32_t block_drawinmtkview = true;
     current_frame_i += 1;
     current_frame_i -= ((current_frame_i > 2)*3);
     
-    __block dispatch_semaphore_t semaphore = _frameBoundarySemaphore;
-    [command_buffer
-        addCompletedHandler:^(id<MTLCommandBuffer> commandBuffer)
-    {
-        dispatch_semaphore_signal(semaphore);
-    }];
+    //    __block dispatch_semaphore_t semaphore = _frameBoundarySemaphore;
+    //    [command_buffer
+    //        addCompletedHandler:^(id<MTLCommandBuffer> commandBuffer)
+    //    {
+    //        dispatch_semaphore_signal(semaphore);
+    //    }];
     
     [command_buffer commit];
+    }
     
     request_post_resize_clearscreen = false;
     block_drawinmtkview = false;

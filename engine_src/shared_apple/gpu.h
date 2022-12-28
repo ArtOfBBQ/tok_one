@@ -18,6 +18,7 @@ extern uint32_t block_drawinmtkview;
 
 @interface MetalKitViewDelegate: NSObject<MTKViewDelegate>
 @property (retain) NSMutableArray * vertex_buffers;
+@property (retain) NSMutableArray * light_buffers;
 @property (retain) NSMutableArray * metal_textures;
 @property (retain) id<MTLRenderPipelineState> combo_pipeline_state;
 

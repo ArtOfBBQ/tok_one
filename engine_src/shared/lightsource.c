@@ -6,9 +6,7 @@
 zCamera camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 
 zLightSource * zlights_to_apply = NULL;
-zLightSource * zlights_transformed = NULL;
 uint32_t zlights_to_apply_size = 0;
-uint32_t zlights_transformed_size = 0;
 
 zVertex x_rotate_zvertex(
     const zVertex * input,
@@ -122,13 +120,33 @@ void clean_deleted_lights(void)
     }
 }
 
+void project_float4_to_2d_inplace(
+    float * position_x,
+    float * position_y,
+    float * position_z)
+{
+    ProjectionConstants * pjc = &projection_constants;
+    
+    float x_multiplier = aspect_ratio * pjc->field_of_view_modifier;
+    float y_multiplier = pjc->field_of_view_modifier;
+    float z_multiplier = (pjc->far / (pjc->far - pjc->near));
+    float z_addition = (1.0f * (-pjc->far * pjc->near) /
+        (pjc->far - pjc->near));
+    
+    *position_x *= x_multiplier;
+    *position_y *= y_multiplier;
+    *position_z *= z_multiplier;
+    *position_z += z_addition;
+}
+
 // move each light so the camera becomes position 0,0,0
-void translate_lights(void)
+void translate_lights(
+    LightCollection * lights_for_gpu)
 {
     assert(zlights_to_apply_size < ZLIGHTS_TO_APPLY_ARRAYSIZE);
     
-    zlights_transformed_size = 0;
     zVertex translated_light_pos;
+    
     for (uint32_t i = 0; i < zlights_to_apply_size; i++)
     {
         translated_light_pos.x = zlights_to_apply[i].x - camera.x;
@@ -144,26 +162,29 @@ void translate_lights(void)
         translated_light_pos = z_rotate_zvertex(
             &translated_light_pos,
             -camera.z_angle);
+
+        project_float4_to_2d_inplace(
+            &translated_light_pos.x,
+            &translated_light_pos.y,
+            &translated_light_pos.z);
         
-        zlights_transformed[zlights_transformed_size]   = zlights_to_apply[i];
-        zlights_transformed[zlights_transformed_size].x = translated_light_pos.x;
-        zlights_transformed[zlights_transformed_size].y = translated_light_pos.y;
-        zlights_transformed[zlights_transformed_size].z = translated_light_pos.z;
-        zlights_transformed_size++;
-    }
-    
-    if (
-        camera.x == 0.0f &&
-        camera.y == 0.0f &&
-        camera.z == 0.0f &&
-        camera.x_angle == 0.0f &&
-        camera.y_angle == 0.0f &&
-        camera.z_angle == 0.0f)
-    {
-        for (uint32_t _ = 0; _ < zlights_transformed_size; _++) {
-            log_assert(zlights_transformed[_].x == zlights_to_apply[_].x);
-            log_assert(zlights_transformed[_].y == zlights_to_apply[_].y);
-            log_assert(zlights_transformed[_].z == zlights_to_apply[_].z);
-        }
+        lights_for_gpu->light_x[i]   = translated_light_pos.x;
+        lights_for_gpu->light_y[i]   = translated_light_pos.y;
+        lights_for_gpu->light_z[i]   = translated_light_pos.z;
+        lights_for_gpu->orig_x[i]    = zlights_to_apply[i].x;
+        lights_for_gpu->orig_y[i]    = zlights_to_apply[i].y;
+        lights_for_gpu->orig_z[i]    = zlights_to_apply[i].z;
+        lights_for_gpu->ambient[i]   = 1.0f; // zlights_to_apply[i].ambient;
+        lights_for_gpu->diffuse[i]   = zlights_to_apply[i].diffuse;
+        lights_for_gpu->red[i]       = zlights_to_apply[i].RGBA[0];
+        lights_for_gpu->green[i]     = zlights_to_apply[i].RGBA[1];
+        lights_for_gpu->blue[i]      = zlights_to_apply[i].RGBA[2];
+        
+        lights_for_gpu->ambient[i]   = zlights_to_apply[i].ambient; 
+        lights_for_gpu->diffuse[i]   = zlights_to_apply[i].diffuse;
+        
+        lights_for_gpu->reach[i]     = zlights_to_apply[i].reach;
+        
+        lights_for_gpu->lights_size += 1;
     }
 }

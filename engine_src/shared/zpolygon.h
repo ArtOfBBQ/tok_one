@@ -17,18 +17,6 @@
 extern "C" {
 #endif
 
-// projection constants
-typedef struct ProjectionConstants {
-    float near;
-    float far;
-    float field_of_view_rad;
-    float field_of_view_modifier;
-} ProjectionConstants;
-
-extern ProjectionConstants projection_constants;
-
-void init_projection_constants(void);
-
 void zcamera_move_forward(
     zCamera * to_move,
     const float distance);
@@ -47,7 +35,7 @@ typedef struct zTriangle {
     uint32_t visible;
 } zTriangle;
 
-#define POLYGON_TRIANGLES_SIZE 700
+#define POLYGON_TRIANGLES_SIZE 8400
 typedef struct zPolygon {
     int32_t object_id;
     int32_t touchable_id;
@@ -75,15 +63,15 @@ void request_zpolygon_to_render(zPolygon * to_add);
 extern zPolygon zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
 extern uint32_t zpolygons_to_render_size;
 
-void ztriangles_apply_lighting(
-    float * vertices_x,
-    float * vertices_y,
-    float * vertices_z,
-    float * lighting_multipliers,
-    const uint32_t vertices_size,
-    Vertex * recipients,
-    const uint32_t recipients_size,
-    zLightSource * zlight_source);
+//void ztriangles_apply_lighting(
+//    float * vertices_x,
+//    float * vertices_y,
+//    float * vertices_z,
+//    float * lighting_multipliers,
+//    const uint32_t vertices_size,
+//    Vertex * recipients,
+//    const uint32_t recipients_size,
+//    zLightSource * zlight_source);
 
 void project_simd_vertices_to_2d(
     SIMD_FLOAT * simd_vertices_x,

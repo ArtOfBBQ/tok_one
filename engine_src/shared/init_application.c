@@ -28,8 +28,6 @@ void init_application() {
     
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
         sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
-    zlights_transformed = (zLightSource *)malloc_from_unmanaged(
-        sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
     texquads_to_render = (TexQuad *)malloc_from_unmanaged(
         sizeof(TexQuad) * TEXQUADS_TO_RENDER_ARRAYSIZE);
     touchable_triangles = (TriangleArea *)malloc_from_unmanaged(

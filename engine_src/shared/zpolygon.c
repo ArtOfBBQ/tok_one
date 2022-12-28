@@ -65,12 +65,12 @@ void request_zpolygon_to_render(zPolygon * to_add)
                 to_add->triangles[tri_i].texture_i);
         }
         
-        to_add->triangles[tri_i].normals[0] = get_ztriangle_normal(
+        zVertex normal = get_ztriangle_normal(
             &to_add->triangles[tri_i]);
-        to_add->triangles[tri_i].normals[1] = get_ztriangle_normal(
-            &to_add->triangles[tri_i]);
-        to_add->triangles[tri_i].normals[2] = get_ztriangle_normal(
-            &to_add->triangles[tri_i]);
+        normalize_zvertex(&normal);
+        to_add->triangles[tri_i].normals[0] = normal; 
+        to_add->triangles[tri_i].normals[1] = normal;
+        to_add->triangles[tri_i].normals[2] = normal;
     }
     
     for (
@@ -609,7 +609,15 @@ zPolygon parse_obj_expecting_materials(
             new_triangle.texturearray_i = using_texturearray_i;
             new_triangle.texture_i = using_texture_i;
             
-            log_assert(new_triangle_i < ZPOLYGONS_TO_RENDER_ARRAYSIZE);
+            if (new_triangle_i >= POLYGON_TRIANGLES_SIZE) {
+                char err_txt[300];
+                strcpy_capped(err_txt, 300, "Tried to add new_triangle_i: ");
+                strcat_int_capped(err_txt, 300, new_triangle_i);
+                strcat_capped(err_txt, 300, ", but ZPOLYGONS_TO_RENDER_ARRAYSIZE was: ");
+                strcat_int_capped(err_txt, 300, ZPOLYGONS_TO_RENDER_ARRAYSIZE);
+                strcat_capped(err_txt, 300, "\n");
+                log_dump_and_crash(err_txt);
+            }
             return_value.triangles[new_triangle_i] = new_triangle;
             new_triangle_i++;
             log_append("triangles finished parsing: ");
@@ -779,109 +787,109 @@ void center_zpolygon_offsets(
     }
 }
 
-void ztriangles_apply_lighting(
-    float * vertices_x,
-    float * vertices_y,
-    float * vertices_z,
-    float * lighting_multipliers,
-    const uint32_t vertices_size,
-    Vertex * recipients,
-    const uint32_t recipients_size,
-    zLightSource * zlight_source)
-{
-    log_assert(zlight_source != NULL);
-    if (zlight_source == NULL) { return; }
-    
-    zVertex light_source_pos;
-        light_source_pos.x = zlight_source->x;
-        light_source_pos.y = zlight_source->y;
-        light_source_pos.z = zlight_source->z;
-    
-    SIMD_FLOAT simd_light_source_x = simd_set_float(zlight_source->x);
-    SIMD_FLOAT simd_light_source_y = simd_set_float(zlight_source->y);
-    SIMD_FLOAT simd_light_source_z = simd_set_float(zlight_source->z);
-    SIMD_FLOAT simd_light_reach    = simd_set_float(zlight_source->reach);
-    
-    distances_to_vertices_size = vertices_size;
-    assert(distances_to_vertices_size < DISTANCES_TO_VERTICES_CAP);
-    
-    // get distance from triangle vertices to light_source    
-    for (uint32_t i = 0; i < vertices_size; i += SIMD_FLOAT_WIDTH) {
-        SIMD_FLOAT simd_vertices_x = simd_load_floats(vertices_x + i);
-        SIMD_FLOAT simd_vertices_y = simd_load_floats(vertices_y + i);
-        SIMD_FLOAT simd_vertices_z = simd_load_floats(vertices_z + i);
-        
-        SIMD_FLOAT simd_diff_x = simd_sub_floats(simd_vertices_x, simd_light_source_x);
-        SIMD_FLOAT simd_diff_y = simd_sub_floats(simd_vertices_y, simd_light_source_y);
-        SIMD_FLOAT simd_diff_z = simd_sub_floats(simd_vertices_z, simd_light_source_z);
-        
-        simd_diff_x = simd_mul_floats(simd_diff_x, simd_diff_x);
-        simd_diff_y = simd_mul_floats(simd_diff_y, simd_diff_y);
-        simd_diff_z = simd_mul_floats(simd_diff_z, simd_diff_z);
-        
-        SIMD_FLOAT total_dist = simd_add_floats(simd_diff_x, simd_diff_y);
-        total_dist = simd_add_floats(total_dist, simd_diff_z);
-        
-        total_dist = simd_sqrt_floats(total_dist);
-        
-        total_dist = simd_div_floats(simd_light_reach, total_dist);
-        
-        simd_store_floats(distances_to_vertices + i, total_dist);
-    }
-        
-    log_assert(vertices_size < DIFFUSED_DOTS_CAP);
-    
-    get_visibility_ratings(
-        /* const zVertex observer         : */ light_source_pos,
-        /* triangle vertices x            : */ vertices_x,
-        /* triangle vertices y            : */ vertices_y,
-        /* triangle vertices z            : */ vertices_z,
-        /* const uint32_t observeds_size  : */ vertices_size,
-        /* float * out_visibility_ratings : */ diffused_dots);
-    
-    // Reminder: it's necessary to have the float's address on ARM
-    // for these macros to work. Don't delete the stack floats on your intel
-    // machine - it will work but you will break the ARM build
-    float minus_one_scalar = -1.0f;
-    SIMD_FLOAT simd_minus_one_scalar = simd_set_float(minus_one_scalar);
-    float zero_scalar = 0.0f;
-    SIMD_FLOAT simd_zero_scalar = simd_set_float(zero_scalar);
-    for (uint32_t i = 0; i < vertices_size; i += SIMD_FLOAT_WIDTH) {
-        SIMD_FLOAT simd_diffused_dots = simd_load_floats(diffused_dots + i);
-        
-        simd_diffused_dots = simd_mul_floats(simd_diffused_dots, simd_minus_one_scalar);
-        simd_diffused_dots = simd_max_floats(simd_diffused_dots, simd_zero_scalar);
-        
-        simd_store_floats(diffused_dots + i, simd_diffused_dots);
-    }
-    
-    for (uint32_t col_i = 0; col_i < 3; col_i++) {
-        
-        float ambient_mod = zlight_source->RGBA[col_i] * zlight_source->ambient;
-        float diffuse_mod = zlight_source->RGBA[col_i] * zlight_source->diffuse;
-        log_assert(diffuse_mod >= 0.0f);
-        log_assert(ambient_mod >= 0.0f);
-        
-        for (uint32_t vertex_i = 0; vertex_i < vertices_size; vertex_i++) {
-            log_assert(vertex_i < recipients_size);
-            
-            // *******************************************
-            // add ambient lighting   
-            recipients[vertex_i].lighting[col_i] +=
-                ambient_mod *
-                distances_to_vertices[vertex_i] *
-                lighting_multipliers[vertex_i];
-            
-            // *******************************************
-            // add diffuse lighting                
-            recipients[vertex_i].lighting[col_i] +=
-                diffused_dots[vertex_i] *
-                diffuse_mod *
-                distances_to_vertices[vertex_i] *
-                lighting_multipliers[vertex_i];
-        }
-    }
-}
+//void ztriangles_apply_lighting(
+//    float * vertices_x,
+//    float * vertices_y,
+//    float * vertices_z,
+//    float * lighting_multipliers,
+//    const uint32_t vertices_size,
+//    Vertex * recipients,
+//    const uint32_t recipients_size,
+//    zLightSource * zlight_source)
+//{
+//    log_assert(zlight_source != NULL);
+//    if (zlight_source == NULL) { return; }
+//    
+//    zVertex light_source_pos;
+//        light_source_pos.x = zlight_source->x;
+//        light_source_pos.y = zlight_source->y;
+//        light_source_pos.z = zlight_source->z;
+//    
+//    SIMD_FLOAT simd_light_source_x = simd_set_float(zlight_source->x);
+//    SIMD_FLOAT simd_light_source_y = simd_set_float(zlight_source->y);
+//    SIMD_FLOAT simd_light_source_z = simd_set_float(zlight_source->z);
+//    SIMD_FLOAT simd_light_reach    = simd_set_float(zlight_source->reach);
+//    
+//    distances_to_vertices_size = vertices_size;
+//    assert(distances_to_vertices_size < DISTANCES_TO_VERTICES_CAP);
+//    
+//    // get distance from triangle vertices to light_source    
+//    for (uint32_t i = 0; i < vertices_size; i += SIMD_FLOAT_WIDTH) {
+//        SIMD_FLOAT simd_vertices_x = simd_load_floats(vertices_x + i);
+//        SIMD_FLOAT simd_vertices_y = simd_load_floats(vertices_y + i);
+//        SIMD_FLOAT simd_vertices_z = simd_load_floats(vertices_z + i);
+//        
+//        SIMD_FLOAT simd_diff_x = simd_sub_floats(simd_vertices_x, simd_light_source_x);
+//        SIMD_FLOAT simd_diff_y = simd_sub_floats(simd_vertices_y, simd_light_source_y);
+//        SIMD_FLOAT simd_diff_z = simd_sub_floats(simd_vertices_z, simd_light_source_z);
+//        
+//        simd_diff_x = simd_mul_floats(simd_diff_x, simd_diff_x);
+//        simd_diff_y = simd_mul_floats(simd_diff_y, simd_diff_y);
+//        simd_diff_z = simd_mul_floats(simd_diff_z, simd_diff_z);
+//        
+//        SIMD_FLOAT total_dist = simd_add_floats(simd_diff_x, simd_diff_y);
+//        total_dist = simd_add_floats(total_dist, simd_diff_z);
+//        
+//        total_dist = simd_sqrt_floats(total_dist);
+//        
+//        total_dist = simd_div_floats(simd_light_reach, total_dist);
+//        
+//        simd_store_floats(distances_to_vertices + i, total_dist);
+//    }
+//        
+//    log_assert(vertices_size < DIFFUSED_DOTS_CAP);
+//    
+//    get_visibility_ratings(
+//        /* const zVertex observer         : */ light_source_pos,
+//        /* triangle vertices x            : */ vertices_x,
+//        /* triangle vertices y            : */ vertices_y,
+//        /* triangle vertices z            : */ vertices_z,
+//        /* const uint32_t observeds_size  : */ vertices_size,
+//        /* float * out_visibility_ratings : */ diffused_dots);
+//    
+//    // Reminder: it's necessary to have the float's address on ARM
+//    // for these macros to work. Don't delete the stack floats on your intel
+//    // machine - it will work but you will break the ARM build
+//    float minus_one_scalar = -1.0f;
+//    SIMD_FLOAT simd_minus_one_scalar = simd_set_float(minus_one_scalar);
+//    float zero_scalar = 0.0f;
+//    SIMD_FLOAT simd_zero_scalar = simd_set_float(zero_scalar);
+//    for (uint32_t i = 0; i < vertices_size; i += SIMD_FLOAT_WIDTH) {
+//        SIMD_FLOAT simd_diffused_dots = simd_load_floats(diffused_dots + i);
+//        
+//        simd_diffused_dots = simd_mul_floats(simd_diffused_dots, simd_minus_one_scalar);
+//        simd_diffused_dots = simd_max_floats(simd_diffused_dots, simd_zero_scalar);
+//        
+//        simd_store_floats(diffused_dots + i, simd_diffused_dots);
+//    }
+//    
+//    for (uint32_t col_i = 0; col_i < 3; col_i++) {
+//        
+//        float ambient_mod = zlight_source->RGBA[col_i] * zlight_source->ambient;
+//        float diffuse_mod = zlight_source->RGBA[col_i] * zlight_source->diffuse;
+//        log_assert(diffuse_mod >= 0.0f);
+//        log_assert(ambient_mod >= 0.0f);
+//        
+//        for (uint32_t vertex_i = 0; vertex_i < vertices_size; vertex_i++) {
+//            log_assert(vertex_i < recipients_size);
+//            
+//            // *******************************************
+//            // add ambient lighting   
+//            recipients[vertex_i].lighting[col_i] +=
+//                ambient_mod *
+//                distances_to_vertices[vertex_i] *
+//                lighting_multipliers[vertex_i];
+//            
+//            // *******************************************
+//            // add diffuse lighting                
+//            recipients[vertex_i].lighting[col_i] +=
+//                diffused_dots[vertex_i] *
+//                diffuse_mod *
+//                distances_to_vertices[vertex_i] *
+//                lighting_multipliers[vertex_i];
+//        }
+//    }
+//}
 
 void construct_zpolygon(zPolygon * to_construct) {
     to_construct->object_id = -1;

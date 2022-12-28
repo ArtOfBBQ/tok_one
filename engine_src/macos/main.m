@@ -88,6 +88,7 @@ NSWindowWithCustomResponder: NSWindow
 
 - (void)mouseDown:(NSEvent *)event
 {
+    @autoreleasepool {
     NSPoint screenspace_location = [NSEvent mouseLocation];
     
     register_interaction(
@@ -109,10 +110,12 @@ NSWindowWithCustomResponder: NSWindow
         /* screenspace_y: */
             (float)screenspace_location.y
                 - platform_get_current_window_bottom());
+    }
 }
 
 - (void)mouseUp:(NSEvent *)event
 {
+    @autoreleasepool {
     NSPoint screenspace_location = [NSEvent mouseLocation];
     
     register_interaction(
@@ -133,6 +136,7 @@ NSWindowWithCustomResponder: NSWindow
         /* screenspace_y: */
             (float)screenspace_location.y
                 - platform_get_current_window_bottom());
+    }
 }
 
 - (void)rightMouseDown:(NSEvent *)event
@@ -148,6 +152,7 @@ NSWindowWithCustomResponder: NSWindow
 }
 
 - (void)mouseMoved:(NSEvent *)event {
+    @autoreleasepool {
     NSPoint screenspace_location = [NSEvent mouseLocation];
     
     register_interaction(
@@ -169,9 +174,11 @@ NSWindowWithCustomResponder: NSWindow
         /* screenspace_y: */
             (float)screenspace_location.y
                 - platform_get_current_window_bottom());
+    }
 }
 
 - (void)mouseDragged:(NSEvent *)event {
+    @autoreleasepool {
     NSPoint screenspace_location = [NSEvent mouseLocation];
     
     register_interaction(
@@ -193,6 +200,7 @@ NSWindowWithCustomResponder: NSWindow
         /* screenspace_y: */
             (float)screenspace_location.y
                 - platform_get_current_window_bottom());
+    }
 }
 
 
@@ -320,5 +328,7 @@ int main(int argc, const char * argv[]) {
     
     startup_complete = true;
     
+    @autoreleasepool {
     return NSApplicationMain(argc, argv);
+    }
 }

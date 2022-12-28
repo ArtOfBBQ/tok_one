@@ -476,7 +476,7 @@ void __attribute__((no_instrument_function)) log_dump(bool32_t * good) {
             good);
 }
 
-void __attribute__((no_instrument_function))
+void
 log_dump_and_crash(const char * crash_message) {
     bool32_t log_dump_succesful = false;
     log_dump(&log_dump_succesful);
@@ -488,7 +488,7 @@ log_dump_and_crash(const char * crash_message) {
     #endif
 }
 
-void __attribute__((no_instrument_function))
+void
 internal_log_assert(
     bool32_t condition,
     const char * str_condition,

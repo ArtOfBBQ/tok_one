@@ -6,6 +6,7 @@
 
 #include <math.h>
 
+#include "vertex_types.h"
 #include "simd.h"
 #include "common.h"
 #include "window_size.h"
@@ -77,21 +78,24 @@ typedef struct zLightSource {
 // A buffer of zLightSources to light up your scene(s)
 // index 0 to zlights_to_apply_size will be rendered,
 // the rest of the array will be ignored
-#define ZLIGHTS_TO_APPLY_ARRAYSIZE 500
 extern zLightSource * zlights_to_apply;
-extern zLightSource * zlights_transformed;
 extern uint32_t zlights_to_apply_size;
-extern uint32_t zlights_transformed_size;
 
 // void delete_lights_with_object_id(uint32_t object_id);
 
 void clean_deleted_lights(void);
 
+void project_float4_to_2d_inplace(
+    float * position_x,
+    float * position_y,
+    float * position_z);
+
 // move each light around the camera (e.g. when the camera moves
 // right, we move all lights etc. to the left instead)
 // reminder: this is calculated once before 2d and 3d renderer
 // and then used in both
-void translate_lights(void);
+void translate_lights(
+    LightCollection * lights_for_gpu);
 
 #ifdef __cplusplus
 }
