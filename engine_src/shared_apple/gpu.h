@@ -4,8 +4,8 @@
 #include "../shared/logger.h"
 #include "../shared/memorystore.h"
 #include "../shared/texture_array.h"
-#include "../shared/vertex_types.h"
-#include "../shared/vertex_buffer_types.h"
+#include "../shared/cpu_gpu_shared_types.h"
+#include "../shared/cpu_to_gpu_types.h"
 #include "../shared/window_size.h"
 #include "../shared/gameloop.h"
 
@@ -17,10 +17,9 @@ extern uint64_t last_resize_request_at;
 extern uint32_t block_drawinmtkview;
 
 @interface MetalKitViewDelegate: NSObject<MTKViewDelegate>
-@property (retain) NSMutableArray * vertex_buffers;
-@property (retain) NSMutableArray * light_buffers;
 @property (retain) NSMutableArray * metal_textures;
 @property (retain) id<MTLRenderPipelineState> combo_pipeline_state;
+@property (retain) id<MTLDepthStencilState> depth_stencil_state;
 
 - (void)
     initializeTextureArray:(int32_t)texturearray_i
@@ -34,8 +33,6 @@ extern uint32_t block_drawinmtkview;
     withImageOfWidth: (uint32_t)image_width
     andHeight: (uint32_t)image_height
     pixelValues: (uint8_t *)rgba_values;
-- (void)
-    drawClearScreen: (MTKView *)view;
 - (void)
     configureMetalWithDevice: (id<MTLDevice>)with_metal_device
     andPixelFormat: (MTLPixelFormat)pixel_format

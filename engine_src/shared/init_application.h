@@ -9,7 +9,7 @@
 #include "shared/userinput.h"
 #include "shared/window_size.h"
 #include "shared/scheduled_animations.h"
-#include "shared/software_renderer.h"
+#include "shared/renderer.h"
 #include "clientlogic.h"
 
 #ifdef __cplusplus

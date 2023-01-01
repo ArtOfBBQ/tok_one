@@ -4,9 +4,9 @@ TriangleArea * touchable_triangles;
 uint32_t touchable_triangles_size = 0;
 
 void draw_vertices(
-    Vertex * vertices_recipient,
+    GPU_Vertex * vertices_recipient,
     uint32_t * vertex_count_recipient,
-    Vertex * input,
+    GPU_Vertex * input,
     const uint32_t input_size)
 {
     uint32_t vertex_i = *vertex_count_recipient;
@@ -19,32 +19,32 @@ void draw_vertices(
     }
 }
 
-void register_touchable_triangle(
-    Vertex * input)
-{
-    if (input[0].touchable_id >= 0) {
-        log_assert(touchable_triangles_size < TOUCHABLE_TRIANGLES_ARRAYSIZE);
-        log_assert(input[1].touchable_id == input[0].touchable_id);
-        log_assert(input[2].touchable_id == input[0].touchable_id);
-        
-        for (
-             uint32_t v = 0;
-             v < 3;
-             v++)
-        {
-            touchable_triangles[touchable_triangles_size]
-                .viewport_x[v] = input[v].x / input[v].w;
-            touchable_triangles[touchable_triangles_size]
-                .viewport_y[v] = input[v].y / input[v].w;
-            touchable_triangles[touchable_triangles_size]
-                .touchable_id = input[v].touchable_id;
-            touchable_triangles[touchable_triangles_size]
-                .viewport_z[v] = input[v].z;
-        }
-        
-        touchable_triangles_size++;
-    }
-}
+//void register_touchable_triangle(
+//    Vertex * input)
+//{
+//    if (input[0].touchable_id >= 0) {
+//        log_assert(touchable_triangles_size < TOUCHABLE_TRIANGLES_ARRAYSIZE);
+//        log_assert(input[1].touchable_id == input[0].touchable_id);
+//        log_assert(input[2].touchable_id == input[0].touchable_id);
+//        
+//        for (
+//             uint32_t v = 0;
+//             v < 3;
+//             v++)
+//        {
+//            touchable_triangles[touchable_triangles_size]
+//                .viewport_x[v] = input[v].x / input[v].w;
+//            touchable_triangles[touchable_triangles_size]
+//                .viewport_y[v] = input[v].y / input[v].w;
+//            touchable_triangles[touchable_triangles_size]
+//                .touchable_id = input[v].touchable_id;
+//            touchable_triangles[touchable_triangles_size]
+//                .viewport_z[v] = input[v].z;
+//        }
+//        
+//        touchable_triangles_size++;
+//    }
+//}
 
 static float get_triangle_area(
     const float x1,

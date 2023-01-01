@@ -6,7 +6,7 @@
 
 #include <math.h>
 
-#include "vertex_types.h"
+#include "cpu_gpu_shared_types.h"
 #include "simd.h"
 #include "common.h"
 #include "window_size.h"
@@ -90,12 +90,16 @@ void project_float4_to_2d_inplace(
     float * position_y,
     float * position_z);
 
+// just copy the lights without translation, for hardware renderer
+void copy_lights(
+    GPU_LightCollection * lights_for_gpu);
+
 // move each light around the camera (e.g. when the camera moves
 // right, we move all lights etc. to the left instead)
 // reminder: this is calculated once before 2d and 3d renderer
 // and then used in both
 void translate_lights(
-    LightCollection * lights_for_gpu);
+    GPU_LightCollection * lights_for_gpu);
 
 #ifdef __cplusplus
 }

@@ -3,12 +3,12 @@
 
 #include "logger.h"
 #include "window_size.h"
-#include "vertex_types.h"
+#include "cpu_gpu_shared_types.h"
 #include "platform_layer.h"
 #include "texture_array.h"
 #include "text.h"
 #include "bitmap_renderer.h"
-#include "software_renderer.h"
+#include "renderer.h"
 #include "lightsource.h"
 #include "scheduled_animations.h"
 #include "clientlogic.h"
@@ -19,9 +19,11 @@ extern "C" {
 #endif
 
 void shared_gameloop_update(
-    Vertex * vertices_for_gpu,
+    GPU_Vertex * vertices_for_gpu,
     uint32_t * vertices_for_gpu_size,
-    LightCollection * lights_for_gpu);
+    GPU_LightCollection * lights_for_gpu,
+    GPU_Camera * camera_for_gpu,
+    GPU_ProjectionConstants * projection_constants_for_gpu);
 
 #ifdef __cplusplus
 }

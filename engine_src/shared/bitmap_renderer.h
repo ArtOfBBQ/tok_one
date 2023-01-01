@@ -21,7 +21,7 @@ exist.
 #include "window_size.h"
 #include "texquad_type.h"
 #include "decodedimage.h"
-#include "vertex_types.h"
+#include "cpu_gpu_shared_types.h"
 #include "draw_triangle.h"
 #include "texture_array.h"
 #include "lightsource.h"

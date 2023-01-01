@@ -298,8 +298,9 @@ int main(int argc, const char * argv[]) {
     // Indicate that each pixel in the depth buffer is a 32-bit floating point value.
     mtk_view.depthStencilPixelFormat = MTLPixelFormatDepth32Float;
     
-    // Indicate that Metal should clear all values in the depth buffer to `1.0` when you create
-    // a render command encoder with the MetalKit view's `currentRenderPassDescriptor` property.
+    // Indicate that Metal should clear all values in the depth buffer to x
+    // when you create a render command encoder with the MetalKit view's
+    // `currentRenderPassDescriptor` property.
     mtk_view.clearDepth = 1.0f;
     [mtk_view setPaused: false];
     [mtk_view setNeedsDisplay: false];

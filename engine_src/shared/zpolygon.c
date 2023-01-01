@@ -1,54 +1,9 @@
 #include "zpolygon.h"
 
-ProjectionConstants projection_constants = {};
-
 // If you want to draw 3D objects to the screen, you need
 // to set them up here
 zPolygon zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
 uint32_t zpolygons_to_render_size = 0;
-
-// Pre-allocated arrays for apply_lighting(), a performance bottleneck
-#define DISTANCES_TO_VERTICES_CAP 1000000
-static float * distances_to_vertices;
-static uint32_t distances_to_vertices_size = 0;
-#define DIFFUSED_DOTS_CAP 1000000
-static float * diffused_dots;
-
-static float * normals_x_buffer;
-static float * normals_y_buffer;
-static float * normals_z_buffer;
-
-void init_projection_constants() {
-    
-    if (window_height < 50.0f || window_width < 50.0f) {
-        char unexpected_window_sz_msg[256];
-        strcpy_capped(
-            unexpected_window_sz_msg,
-            256,
-            "ERROR: unexpected window size [");
-        strcat_int_capped(unexpected_window_sz_msg, 256, (int)window_height);
-        strcat_capped(unexpected_window_sz_msg, 256, ",");
-        strcat_int_capped(unexpected_window_sz_msg, 256, (int)window_width);
-        strcat_capped(unexpected_window_sz_msg, 256, "]\n");
-        log_append(unexpected_window_sz_msg);
-        log_dump_and_crash(unexpected_window_sz_msg);
-    }
-    
-    ProjectionConstants * pjc = &projection_constants;
-    
-    pjc->near = 0.01f;
-    pjc->far = 1000.0f;
-    
-    float field_of_view = 90.0f;
-    pjc->field_of_view_rad = ((field_of_view * 0.5f) / 180.0f) * 3.14159f;
-    pjc->field_of_view_modifier = 1.0f / tanf(pjc->field_of_view_rad);
-    
-    distances_to_vertices = (float *)malloc_from_unmanaged(DISTANCES_TO_VERTICES_CAP);
-    diffused_dots         = (float *)malloc_from_unmanaged(DIFFUSED_DOTS_CAP);
-    normals_x_buffer      = (float *)malloc_from_unmanaged_aligned((SIMD_FLOAT_WIDTH * 4)+32, 32);
-    normals_y_buffer      = (float *)malloc_from_unmanaged_aligned((SIMD_FLOAT_WIDTH * 4)+32, 32);
-    normals_z_buffer      = (float *)malloc_from_unmanaged_aligned((SIMD_FLOAT_WIDTH * 4)+32, 32);
-}
 
 void request_zpolygon_to_render(zPolygon * to_add)
 {
@@ -390,8 +345,7 @@ zPolygon parse_obj_expecting_materials(
             // skip the space(s) after the 'f'
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
-                        
-            log_append("read 1st vertex index\n");
+            
             int32_t vertex_i_0 = string_to_int32(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
@@ -415,7 +369,6 @@ zPolygon parse_obj_expecting_materials(
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
             
-            log_append("read 2nd vertex index\n");
             int32_t vertex_i_1 = string_to_int32(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
@@ -441,7 +394,6 @@ zPolygon parse_obj_expecting_materials(
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
             
-            log_append("read 3rd vertex index\n");
             int32_t vertex_i_2 = string_to_int32(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
@@ -468,7 +420,6 @@ zPolygon parse_obj_expecting_materials(
             while (rawdata[i] == ' ') { i++; }
             
             if (rawdata[i] != '\n') {
-                log_append("read 4th vertex index\n");
                 int32_t vertex_i_3 = string_to_int32(rawdata + i);
                 i += chars_till_next_space_or_slash(
                     rawdata + i);
@@ -620,9 +571,6 @@ zPolygon parse_obj_expecting_materials(
             }
             return_value.triangles[new_triangle_i] = new_triangle;
             new_triangle_i++;
-            log_append("triangles finished parsing: ");
-            log_append_uint(new_triangle_i);
-            log_append_char('\n');
             
             log_assert(rawdata[i] == '\n');
             i++;
@@ -787,110 +735,6 @@ void center_zpolygon_offsets(
     }
 }
 
-//void ztriangles_apply_lighting(
-//    float * vertices_x,
-//    float * vertices_y,
-//    float * vertices_z,
-//    float * lighting_multipliers,
-//    const uint32_t vertices_size,
-//    Vertex * recipients,
-//    const uint32_t recipients_size,
-//    zLightSource * zlight_source)
-//{
-//    log_assert(zlight_source != NULL);
-//    if (zlight_source == NULL) { return; }
-//    
-//    zVertex light_source_pos;
-//        light_source_pos.x = zlight_source->x;
-//        light_source_pos.y = zlight_source->y;
-//        light_source_pos.z = zlight_source->z;
-//    
-//    SIMD_FLOAT simd_light_source_x = simd_set_float(zlight_source->x);
-//    SIMD_FLOAT simd_light_source_y = simd_set_float(zlight_source->y);
-//    SIMD_FLOAT simd_light_source_z = simd_set_float(zlight_source->z);
-//    SIMD_FLOAT simd_light_reach    = simd_set_float(zlight_source->reach);
-//    
-//    distances_to_vertices_size = vertices_size;
-//    assert(distances_to_vertices_size < DISTANCES_TO_VERTICES_CAP);
-//    
-//    // get distance from triangle vertices to light_source    
-//    for (uint32_t i = 0; i < vertices_size; i += SIMD_FLOAT_WIDTH) {
-//        SIMD_FLOAT simd_vertices_x = simd_load_floats(vertices_x + i);
-//        SIMD_FLOAT simd_vertices_y = simd_load_floats(vertices_y + i);
-//        SIMD_FLOAT simd_vertices_z = simd_load_floats(vertices_z + i);
-//        
-//        SIMD_FLOAT simd_diff_x = simd_sub_floats(simd_vertices_x, simd_light_source_x);
-//        SIMD_FLOAT simd_diff_y = simd_sub_floats(simd_vertices_y, simd_light_source_y);
-//        SIMD_FLOAT simd_diff_z = simd_sub_floats(simd_vertices_z, simd_light_source_z);
-//        
-//        simd_diff_x = simd_mul_floats(simd_diff_x, simd_diff_x);
-//        simd_diff_y = simd_mul_floats(simd_diff_y, simd_diff_y);
-//        simd_diff_z = simd_mul_floats(simd_diff_z, simd_diff_z);
-//        
-//        SIMD_FLOAT total_dist = simd_add_floats(simd_diff_x, simd_diff_y);
-//        total_dist = simd_add_floats(total_dist, simd_diff_z);
-//        
-//        total_dist = simd_sqrt_floats(total_dist);
-//        
-//        total_dist = simd_div_floats(simd_light_reach, total_dist);
-//        
-//        simd_store_floats(distances_to_vertices + i, total_dist);
-//    }
-//        
-//    log_assert(vertices_size < DIFFUSED_DOTS_CAP);
-//    
-//    get_visibility_ratings(
-//        /* const zVertex observer         : */ light_source_pos,
-//        /* triangle vertices x            : */ vertices_x,
-//        /* triangle vertices y            : */ vertices_y,
-//        /* triangle vertices z            : */ vertices_z,
-//        /* const uint32_t observeds_size  : */ vertices_size,
-//        /* float * out_visibility_ratings : */ diffused_dots);
-//    
-//    // Reminder: it's necessary to have the float's address on ARM
-//    // for these macros to work. Don't delete the stack floats on your intel
-//    // machine - it will work but you will break the ARM build
-//    float minus_one_scalar = -1.0f;
-//    SIMD_FLOAT simd_minus_one_scalar = simd_set_float(minus_one_scalar);
-//    float zero_scalar = 0.0f;
-//    SIMD_FLOAT simd_zero_scalar = simd_set_float(zero_scalar);
-//    for (uint32_t i = 0; i < vertices_size; i += SIMD_FLOAT_WIDTH) {
-//        SIMD_FLOAT simd_diffused_dots = simd_load_floats(diffused_dots + i);
-//        
-//        simd_diffused_dots = simd_mul_floats(simd_diffused_dots, simd_minus_one_scalar);
-//        simd_diffused_dots = simd_max_floats(simd_diffused_dots, simd_zero_scalar);
-//        
-//        simd_store_floats(diffused_dots + i, simd_diffused_dots);
-//    }
-//    
-//    for (uint32_t col_i = 0; col_i < 3; col_i++) {
-//        
-//        float ambient_mod = zlight_source->RGBA[col_i] * zlight_source->ambient;
-//        float diffuse_mod = zlight_source->RGBA[col_i] * zlight_source->diffuse;
-//        log_assert(diffuse_mod >= 0.0f);
-//        log_assert(ambient_mod >= 0.0f);
-//        
-//        for (uint32_t vertex_i = 0; vertex_i < vertices_size; vertex_i++) {
-//            log_assert(vertex_i < recipients_size);
-//            
-//            // *******************************************
-//            // add ambient lighting   
-//            recipients[vertex_i].lighting[col_i] +=
-//                ambient_mod *
-//                distances_to_vertices[vertex_i] *
-//                lighting_multipliers[vertex_i];
-//            
-//            // *******************************************
-//            // add diffuse lighting                
-//            recipients[vertex_i].lighting[col_i] +=
-//                diffused_dots[vertex_i] *
-//                diffuse_mod *
-//                distances_to_vertices[vertex_i] *
-//                lighting_multipliers[vertex_i];
-//        }
-//    }
-//}
-
 void construct_zpolygon(zPolygon * to_construct) {
     to_construct->object_id = -1;
     to_construct->touchable_id = -1;
@@ -912,7 +756,7 @@ void project_simd_vertices_to_2d(
     SIMD_FLOAT * simd_vertices_y,
     SIMD_FLOAT * simd_vertices_z)
 {
-    ProjectionConstants * pjc = &projection_constants;
+    GPU_ProjectionConstants * pjc = &projection_constants;
     
     float x_multiplier = aspect_ratio * pjc->field_of_view_modifier;
     SIMD_FLOAT simd_x_multiplier = simd_set_float(x_multiplier);
@@ -936,7 +780,7 @@ void ztriangles_to_2d_inplace(
     float * vertices_z,
     const uint32_t vertices_size)
 {
-    ProjectionConstants * pjc = &projection_constants;
+    GPU_ProjectionConstants * pjc = &projection_constants;
     
     // Reminder: it's necessary to have the float's address on ARM
     // for these macros to work. Don't delete the stack floats on your intel
@@ -1144,50 +988,6 @@ static SIMD_FLOAT simd_dots_of_vertices(
     return result;
 }
 
-static void dots_of_vertices(
-    const float * vertices_1_x,
-    const float * vertices_1_y,
-    const float * vertices_1_z,
-    const float * vertices_2_x,
-    const float * vertices_2_y,
-    const float * vertices_2_z,
-    const uint32_t vertices_size,
-    float * out_dots)
-{
-    for (uint32_t i = 0; i < vertices_size; i++) {
-        out_dots[i] = vertices_1_x[i];
-    }
-    
-    for (uint32_t i = 0; i < vertices_size; i += SIMD_FLOAT_WIDTH) {
-        SIMD_FLOAT simd_vertices_1_x = simd_load_floats(vertices_1_x + i);
-        SIMD_FLOAT simd_vertices_1_y = simd_load_floats(vertices_1_y + i);
-        SIMD_FLOAT simd_vertices_1_z = simd_load_floats(vertices_1_z + i);
-        
-        SIMD_FLOAT simd_vertices_2_x = simd_load_floats(vertices_2_x + i);
-        SIMD_FLOAT simd_vertices_2_y = simd_load_floats(vertices_2_y + i);
-        SIMD_FLOAT simd_vertices_2_z = simd_load_floats(vertices_2_z + i);
-        
-        SIMD_FLOAT result = simd_mul_floats(simd_vertices_1_x, simd_vertices_2_x);
-        SIMD_FLOAT vertices_product =  simd_mul_floats(simd_vertices_1_y, simd_vertices_2_y);
-        result = simd_add_floats(result, vertices_product);
-        vertices_product =  simd_mul_floats(simd_vertices_1_z, simd_vertices_2_z);
-        result = simd_add_floats(result, vertices_product);
-        
-        simd_store_floats(out_dots + i, result);
-    }
-}
-
-float dot_of_vertices(
-    const zVertex vertex_1,
-    const zVertex vertex_2)
-{
-    float dot_x = (vertex_1.x * vertex_2.x);
-    float dot_y = (vertex_1.y * vertex_2.y);
-    float dot_z = (vertex_1.z * vertex_2.z);
-    
-    return dot_x + dot_y + dot_z;
-}
-
 float get_distance(
     const zVertex p1,
     const zVertex p2)
@@ -1208,58 +1008,58 @@ float distance_to_ztriangle(
         get_distance(p1, p2.vertices[2])) / 3.0f;
 }
 
-static void simd_get_normals(
-    const float * vertices_x,
-    const float * vertices_y,
-    const float * vertices_z,
-    const int32_t first_tri_vertex_offset,
-    SIMD_FLOAT * out_normals_x,
-    SIMD_FLOAT * out_normals_y,
-    SIMD_FLOAT * out_normals_z)
-{
-    log_assert(first_tri_vertex_offset < 1);
-    
-    zVertex vector1;
-    zVertex vector2;
-    
-    for (
-        int32_t vertex_i = first_tri_vertex_offset;
-        vertex_i < SIMD_FLOAT_WIDTH;
-        vertex_i += 3)
-    {
-        vector1.x = vertices_x[vertex_i + 1] - vertices_x[vertex_i + 0];
-        vector1.y = vertices_y[vertex_i + 1] - vertices_y[vertex_i + 0];
-        vector1.z = vertices_z[vertex_i + 1] - vertices_z[vertex_i + 0];
-        
-        vector2.x = vertices_x[vertex_i + 2] - vertices_x[vertex_i + 0];
-        vector2.y = vertices_y[vertex_i + 2] - vertices_y[vertex_i + 0];
-        vector2.z = vertices_z[vertex_i + 2] - vertices_z[vertex_i + 0];
-        
-        // TODO: calculate a normal for each vertex instead of copying 1st
-        float cur_tri_normal_x = (vector1.y * vector2.z) - (vector1.z * vector2.y); 
-        float cur_tri_normal_y = (vector1.z * vector2.x) - (vector1.x * vector2.z);
-        float cur_tri_normal_z = (vector1.x * vector2.y) - (vector1.y * vector2.x); 
-        
-        log_assert(vertex_i + 2 >= 0);
-        normals_x_buffer[vertex_i+2] = cur_tri_normal_x;
-        normals_y_buffer[vertex_i+2] = cur_tri_normal_y;
-        normals_z_buffer[vertex_i+2] = cur_tri_normal_z;
-        
-        if (vertex_i + 1 < 0) { continue; }
-        normals_x_buffer[vertex_i+1] = cur_tri_normal_x;
-        normals_y_buffer[vertex_i+1] = cur_tri_normal_y;
-        normals_z_buffer[vertex_i+1] = cur_tri_normal_z;
-        
-        if (vertex_i < 0) { continue; }
-        normals_x_buffer[vertex_i  ] = cur_tri_normal_x;
-        normals_y_buffer[vertex_i  ] = cur_tri_normal_y;
-        normals_z_buffer[vertex_i  ] = cur_tri_normal_z;        
-    }
-    
-    *out_normals_x = simd_load_floats(normals_x_buffer);
-    *out_normals_y = simd_load_floats(normals_y_buffer);
-    *out_normals_z = simd_load_floats(normals_z_buffer);
-}
+//static void simd_get_normals(
+//    const float * vertices_x,
+//    const float * vertices_y,
+//    const float * vertices_z,
+//    const int32_t first_tri_vertex_offset,
+//    SIMD_FLOAT * out_normals_x,
+//    SIMD_FLOAT * out_normals_y,
+//    SIMD_FLOAT * out_normals_z)
+//{
+//    log_assert(first_tri_vertex_offset < 1);
+//    
+//    zVertex vector1;
+//    zVertex vector2;
+//    
+//    for (
+//        int32_t vertex_i = first_tri_vertex_offset;
+//        vertex_i < SIMD_FLOAT_WIDTH;
+//        vertex_i += 3)
+//    {
+//        vector1.x = vertices_x[vertex_i + 1] - vertices_x[vertex_i + 0];
+//        vector1.y = vertices_y[vertex_i + 1] - vertices_y[vertex_i + 0];
+//        vector1.z = vertices_z[vertex_i + 1] - vertices_z[vertex_i + 0];
+//        
+//        vector2.x = vertices_x[vertex_i + 2] - vertices_x[vertex_i + 0];
+//        vector2.y = vertices_y[vertex_i + 2] - vertices_y[vertex_i + 0];
+//        vector2.z = vertices_z[vertex_i + 2] - vertices_z[vertex_i + 0];
+//        
+//        // TODO: calculate a normal for each vertex instead of copying 1st
+//        float cur_tri_normal_x = (vector1.y * vector2.z) - (vector1.z * vector2.y); 
+//        float cur_tri_normal_y = (vector1.z * vector2.x) - (vector1.x * vector2.z);
+//        float cur_tri_normal_z = (vector1.x * vector2.y) - (vector1.y * vector2.x); 
+//        
+//        log_assert(vertex_i + 2 >= 0);
+//        normals_x_buffer[vertex_i+2] = cur_tri_normal_x;
+//        normals_y_buffer[vertex_i+2] = cur_tri_normal_y;
+//        normals_z_buffer[vertex_i+2] = cur_tri_normal_z;
+//        
+//        if (vertex_i + 1 < 0) { continue; }
+//        normals_x_buffer[vertex_i+1] = cur_tri_normal_x;
+//        normals_y_buffer[vertex_i+1] = cur_tri_normal_y;
+//        normals_z_buffer[vertex_i+1] = cur_tri_normal_z;
+//        
+//        if (vertex_i < 0) { continue; }
+//        normals_x_buffer[vertex_i  ] = cur_tri_normal_x;
+//        normals_y_buffer[vertex_i  ] = cur_tri_normal_y;
+//        normals_z_buffer[vertex_i  ] = cur_tri_normal_z;        
+//    }
+//    
+//    *out_normals_x = simd_load_floats(normals_x_buffer);
+//    *out_normals_y = simd_load_floats(normals_y_buffer);
+//    *out_normals_z = simd_load_floats(normals_z_buffer);
+//}
 
 zVertex get_ztriangle_normal(
     const zTriangle * input)
@@ -1323,67 +1123,6 @@ SIMD_FLOAT simd_get_visibility_ratings(
         simd_normals_x,
         simd_normals_y,
         simd_normals_z);
-}
-
-void get_visibility_ratings(
-    const zVertex observer,
-    const float * vertices_x,
-    const float * vertices_y,
-    const float * vertices_z,
-    const uint32_t vertices_size,
-    float * out_visibility_ratings)
-{
-    log_assert(vertices_size % 3 == 0);
-    
-    // get the normals of the triangles
-    // log_assert(vertices_size + 7 < NORMALS_CAP);
-    
-    SIMD_FLOAT simd_observer_x = simd_set_float(observer.x);
-    SIMD_FLOAT simd_observer_y = simd_set_float(observer.y);
-    SIMD_FLOAT simd_observer_z = simd_set_float(observer.z);
-    
-    SIMD_FLOAT simd_normals_x;
-    SIMD_FLOAT simd_normals_y;
-    SIMD_FLOAT simd_normals_z;
-    
-    for (uint32_t i = 0; i < vertices_size; i += SIMD_FLOAT_WIDTH) {
-        int32_t first_tri_vertex_offset = -1 * ((int32_t)i % 3);
-        simd_get_normals(
-            vertices_x + i,
-            vertices_y + i,
-            vertices_z + i,
-            first_tri_vertex_offset,
-            &simd_normals_x,
-            &simd_normals_y,
-            &simd_normals_z);
-        simd_normalize_zvertices_inplace(
-            &simd_normals_x,
-            &simd_normals_y,
-            &simd_normals_z);
-        
-        SIMD_FLOAT simd_adj_x = simd_load_floats(vertices_x + i);
-        SIMD_FLOAT simd_adj_y = simd_load_floats(vertices_y + i);
-        SIMD_FLOAT simd_adj_z = simd_load_floats(vertices_z + i);
-        
-        simd_adj_x = simd_sub_floats(simd_adj_x, simd_observer_x);
-        simd_adj_y = simd_sub_floats(simd_adj_y, simd_observer_y);
-        simd_adj_z = simd_sub_floats(simd_adj_z, simd_observer_z);
-        
-        simd_normalize_zvertices_inplace(
-            &simd_adj_x,
-            &simd_adj_y,
-            &simd_adj_z);
-        
-        SIMD_FLOAT dot_result = simd_dots_of_vertices(
-            simd_adj_x,
-            simd_adj_y,
-            simd_adj_z,
-            simd_normals_x,
-            simd_normals_y,
-            simd_normals_z);
-        
-        simd_store_floats(out_visibility_ratings + i, dot_result);
-    }
 }
 
 void zcamera_move_forward(

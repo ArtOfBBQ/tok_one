@@ -14,8 +14,8 @@ the architecture is decided
 
 #include "common.h"
 #include "logger.h"
-#include "vertex_types.h"
-#include "vertex_buffer_types.h"
+#include "cpu_gpu_shared_types.h"
+#include "cpu_to_gpu_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,13 +38,13 @@ extern TriangleArea * touchable_triangles;
 extern uint32_t touchable_triangles_size;
 
 void draw_vertices(
-    Vertex * vertices_recipient,
+    GPU_Vertex * vertices_recipient,
     uint32_t * vertex_count_recipient,
-    Vertex * input,
+    GPU_Vertex * input,
     const uint32_t input_size);
 
-void register_touchable_triangle(
-    Vertex * input);
+//void register_touchable_triangle(
+//    Vertex * input);
 
 int32_t find_touchable_at(
     const float normalized_x,

@@ -8,7 +8,7 @@
 #include "logger.h"
 #include "common.h"
 #include "platform_layer.h"
-#include "vertex_types.h"
+#include "cpu_gpu_shared_types.h"
 #include "lightsource.h"
 #include "window_size.h"
 #include "texture_array.h"
@@ -62,16 +62,6 @@ void request_zpolygon_to_render(zPolygon * to_add);
 #define ZPOLYGONS_TO_RENDER_ARRAYSIZE 1000
 extern zPolygon zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
 extern uint32_t zpolygons_to_render_size;
-
-//void ztriangles_apply_lighting(
-//    float * vertices_x,
-//    float * vertices_y,
-//    float * vertices_z,
-//    float * lighting_multipliers,
-//    const uint32_t vertices_size,
-//    Vertex * recipients,
-//    const uint32_t recipients_size,
-//    zLightSource * zlight_source);
 
 void project_simd_vertices_to_2d(
     SIMD_FLOAT * simd_vertices_x,
@@ -169,37 +159,6 @@ float get_distance(
 float distance_to_ztriangle(
     const zVertex p1,
     const zTriangle p2);
-
-SIMD_FLOAT simd_get_visibility_ratings(
-    const SIMD_FLOAT simd_observer_x,
-    const SIMD_FLOAT simd_observer_y,
-    const SIMD_FLOAT simd_observer_z,
-    SIMD_FLOAT vertices_x,
-    SIMD_FLOAT vertices_y,
-    SIMD_FLOAT vertices_z,
-    SIMD_FLOAT simd_normals_x,
-    SIMD_FLOAT simd_normals_y,
-    SIMD_FLOAT simd_normals_z);
-
-void get_visibility_ratings(
-    const zVertex observer,
-    const float * vertices_x,
-    const float * vertices_y,
-    const float * vertices_z,
-    const uint32_t vertices_size,
-    float * out_visibility_ratings);
-/*
-float get_visibility_rating(
-    const zVertex observer,
-    const zTriangle * observed);
-*/
-
-float dot_of_vertices(
-    const zVertex vertex_1,
-    const zVertex vertex_2);
-
-// float screen_y_to_3d_y(const float screen_y);
-// float screen_x_to_3d_x(const float screen_x);
 
 #ifdef __cplusplus
 }

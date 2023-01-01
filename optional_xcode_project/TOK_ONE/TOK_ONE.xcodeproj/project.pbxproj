@@ -15,7 +15,7 @@
 		601128452861239600F92967 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 601128442861239600F92967 /* Foundation.framework */; };
 		601128852862511700F92967 /* texture_array.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128662862511500F92967 /* texture_array.c */; };
 		601128862862511700F92967 /* userinput.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128692862511500F92967 /* userinput.c */; };
-		601128872862511700F92967 /* software_renderer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286C2862511500F92967 /* software_renderer.c */; };
+		601128872862511700F92967 /* renderer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286C2862511500F92967 /* renderer.c */; };
 		601128882862511800F92967 /* window_size.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286E2862511600F92967 /* window_size.c */; };
 		601128892862511800F92967 /* common.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286F2862511600F92967 /* common.c */; };
 		6011288A2862511800F92967 /* clientlogic.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128702862511600F92967 /* clientlogic.c */; };
@@ -64,27 +64,27 @@
 		60A998E8287BD4B7003F7159 /* userinput.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011286B2862511500F92967 /* userinput.h */; };
 		60A998E9287BD4B7003F7159 /* texture_array.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128682862511500F92967 /* texture_array.h */; };
 		60A998EA287BD4B7003F7159 /* text.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128672862511500F92967 /* text.h */; };
-		60A998EB287BD4B7003F7159 /* vertex_types.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287A2862511600F92967 /* vertex_types.h */; };
+		60A998EB287BD4B7003F7159 /* cpu_gpu_shared_types.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287A2862511600F92967 /* cpu_gpu_shared_types.h */; };
 		60A998EC287BD4B7003F7159 /* window_size.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128822862511700F92967 /* window_size.h */; };
 		60A998ED287BD4B7003F7159 /* zpolygon.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128842862511700F92967 /* zpolygon.h */; };
 		60A998EE287BD4B7003F7159 /* tok_random.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128802862511700F92967 /* tok_random.h */; };
-		60A998EF287BD4B7003F7159 /* software_renderer.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287B2862511700F92967 /* software_renderer.h */; };
-		60A998F0287BD4B7003F7159 /* vertex_buffer_types.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128762862511600F92967 /* vertex_buffer_types.h */; };
+		60A998EF287BD4B7003F7159 /* renderer.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287B2862511700F92967 /* renderer.h */; };
+		60A998F0287BD4B7003F7159 /* cpu_to_gpu_types.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128762862511600F92967 /* cpu_to_gpu_types.h */; };
 		60A998F1287BD4C3003F7159 /* logger.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128752862511600F92967 /* logger.h */; };
-		60A998F2287BD4C3003F7159 /* software_renderer.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287B2862511700F92967 /* software_renderer.h */; };
+		60A998F2287BD4C3003F7159 /* renderer.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287B2862511700F92967 /* renderer.h */; };
 		60A998F3287BD4C3003F7159 /* draw_triangle.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128732862511600F92967 /* draw_triangle.c */; };
 		60A998F4287BD4C3003F7159 /* apple_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = 60112896286253C100F92967 /* apple_platform_layer.c */; };
 		60A998F5287BD4C3003F7159 /* texture_array.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128682862511500F92967 /* texture_array.h */; };
 		60A998F6287BD4C3003F7159 /* common_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128722862511600F92967 /* common_platform_layer.c */; };
 		60A998F7287BD4C3003F7159 /* logger.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287F2862511700F92967 /* logger.c */; };
 		60A998F8287BD4C3003F7159 /* common.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC472870182700444118 /* common.h */; };
-		60A998FA287BD4C3003F7159 /* software_renderer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286C2862511500F92967 /* software_renderer.c */; };
+		60A998FA287BD4C3003F7159 /* renderer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286C2862511500F92967 /* renderer.c */; };
 		60A998FB287BD4C3003F7159 /* lightsource.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128712862511600F92967 /* lightsource.h */; };
 		60A998FC287BD4C3003F7159 /* texquad_type.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128792862511600F92967 /* texquad_type.c */; };
 		60A998FD287BD4C3003F7159 /* decodedimage.c in Sources */ = {isa = PBXBuildFile; fileRef = 60A998D9287BD332003F7159 /* decodedimage.c */; };
 		60A998FE287BD4C3003F7159 /* memorystore.c in Sources */ = {isa = PBXBuildFile; fileRef = 6009B4F328679E7D00F1F279 /* memorystore.c */; };
 		60A998FF287BD4C3003F7159 /* bitmap_renderer.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC482870182700444118 /* bitmap_renderer.h */; };
-		60A99900287BD4C3003F7159 /* vertex_buffer_types.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128762862511600F92967 /* vertex_buffer_types.h */; };
+		60A99900287BD4C3003F7159 /* cpu_to_gpu_types.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128762862511600F92967 /* cpu_to_gpu_types.h */; };
 		60A99901287BD4C3003F7159 /* text.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128672862511500F92967 /* text.h */; };
 		60A99902287BD4C3003F7159 /* decode_png.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011283C286122FE00F92967 /* decode_png.h */; };
 		60A99903287BD4C3003F7159 /* userinput.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128692862511500F92967 /* userinput.c */; };
@@ -105,7 +105,7 @@
 		60A99912287BD4C4003F7159 /* userinput.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011286B2862511500F92967 /* userinput.h */; };
 		60A99913287BD4C4003F7159 /* inflate.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011283E286122FE00F92967 /* inflate.h */; };
 		60A99914287BD4C4003F7159 /* texquad_type.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128812862511700F92967 /* texquad_type.h */; };
-		60A99915287BD4C4003F7159 /* vertex_types.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287A2862511600F92967 /* vertex_types.h */; };
+		60A99915287BD4C4003F7159 /* cpu_gpu_shared_types.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287A2862511600F92967 /* cpu_gpu_shared_types.h */; };
 		60A99916287BD4C4003F7159 /* scheduled_animations.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287D2862511700F92967 /* scheduled_animations.c */; };
 		60A99917287BD4C4003F7159 /* lightsource.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128782862511600F92967 /* lightsource.c */; };
 		60A99918287BD4C4003F7159 /* clientlogic.h in Sources */ = {isa = PBXBuildFile; fileRef = 608802F1286DCBE700B81255 /* clientlogic.h */; };
@@ -163,7 +163,7 @@
 		601128692862511500F92967 /* userinput.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = userinput.c; path = ../../engine_src/shared/userinput.c; sourceTree = "<group>"; };
 		6011286A2862511500F92967 /* scheduled_animations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = scheduled_animations.h; path = ../../engine_src/shared/scheduled_animations.h; sourceTree = "<group>"; };
 		6011286B2862511500F92967 /* userinput.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = userinput.h; path = ../../engine_src/shared/userinput.h; sourceTree = "<group>"; };
-		6011286C2862511500F92967 /* software_renderer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = software_renderer.c; path = ../../engine_src/shared/software_renderer.c; sourceTree = "<group>"; };
+		6011286C2862511500F92967 /* renderer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = renderer.c; path = ../../engine_src/shared/renderer.c; sourceTree = "<group>"; };
 		6011286D2862511500F92967 /* draw_triangle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = draw_triangle.h; path = ../../engine_src/shared/draw_triangle.h; sourceTree = "<group>"; };
 		6011286E2862511600F92967 /* window_size.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = window_size.c; path = ../../engine_src/shared/window_size.c; sourceTree = "<group>"; };
 		6011286F2862511600F92967 /* common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = common.c; path = ../../engine_src/shared/common.c; sourceTree = "<group>"; };
@@ -173,12 +173,12 @@
 		601128732862511600F92967 /* draw_triangle.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = draw_triangle.c; path = ../../engine_src/shared/draw_triangle.c; sourceTree = "<group>"; };
 		601128742862511600F92967 /* text.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = text.c; path = ../../engine_src/shared/text.c; sourceTree = "<group>"; };
 		601128752862511600F92967 /* logger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = logger.h; path = ../../engine_src/shared/logger.h; sourceTree = "<group>"; };
-		601128762862511600F92967 /* vertex_buffer_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = vertex_buffer_types.h; path = ../../engine_src/shared/vertex_buffer_types.h; sourceTree = "<group>"; };
+		601128762862511600F92967 /* cpu_to_gpu_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cpu_to_gpu_types.h; path = ../../engine_src/shared/cpu_to_gpu_types.h; sourceTree = "<group>"; };
 		601128772862511600F92967 /* tok_random.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tok_random.c; path = ../../engine_src/shared/tok_random.c; sourceTree = "<group>"; };
 		601128782862511600F92967 /* lightsource.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lightsource.c; path = ../../engine_src/shared/lightsource.c; sourceTree = "<group>"; };
 		601128792862511600F92967 /* texquad_type.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = texquad_type.c; path = ../../engine_src/shared/texquad_type.c; sourceTree = "<group>"; };
-		6011287A2862511600F92967 /* vertex_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = vertex_types.h; path = ../../engine_src/shared/vertex_types.h; sourceTree = "<group>"; };
-		6011287B2862511700F92967 /* software_renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = software_renderer.h; path = ../../engine_src/shared/software_renderer.h; sourceTree = "<group>"; };
+		6011287A2862511600F92967 /* cpu_gpu_shared_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cpu_gpu_shared_types.h; path = ../../engine_src/shared/cpu_gpu_shared_types.h; sourceTree = "<group>"; };
+		6011287B2862511700F92967 /* renderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = renderer.h; path = ../../engine_src/shared/renderer.h; sourceTree = "<group>"; };
 		6011287C2862511700F92967 /* bitmap_renderer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = bitmap_renderer.c; path = ../../engine_src/shared/bitmap_renderer.c; sourceTree = "<group>"; };
 		6011287D2862511700F92967 /* scheduled_animations.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = scheduled_animations.c; path = ../../engine_src/shared/scheduled_animations.c; sourceTree = "<group>"; };
 		6011287E2862511700F92967 /* zpolygon.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zpolygon.c; path = ../../engine_src/shared/zpolygon.c; sourceTree = "<group>"; };
@@ -211,12 +211,12 @@
 		60A998D9287BD332003F7159 /* decodedimage.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = decodedimage.c; path = ../../engine_src/shared/decodedimage.c; sourceTree = "<group>"; };
 		60A998DA287BD333003F7159 /* decodedimage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = decodedimage.h; path = ../../engine_src/shared/decodedimage.h; sourceTree = "<group>"; };
 		EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */ = {isa = PBXFileReference; explicitFileType = compiled; fileEncoding = 4; name = cardwithuvcoords.obj; path = ../../resources/cardwithuvcoords.obj; sourceTree = "<group>"; };
-		EC64419E29318B6D00A0267B /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = ../../src/ios/AppDelegate.h; sourceTree = "<group>"; };
-		EC64419F29318B6D00A0267B /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../src/ios/main.m; sourceTree = "<group>"; };
-		EC6441A029318B6D00A0267B /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = ../../src/ios/AppDelegate.m; sourceTree = "<group>"; };
-		EC6441A129318B6D00A0267B /* ios_platform_layer.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = ios_platform_layer.c; path = ../../src/ios/ios_platform_layer.c; sourceTree = "<group>"; };
-		EC6441A229318B6D00A0267B /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ViewController.h; path = ../../src/ios/ViewController.h; sourceTree = "<group>"; };
-		EC6441A329318B6D00A0267B /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ViewController.m; path = ../../src/ios/ViewController.m; sourceTree = "<group>"; };
+		EC64419E29318B6D00A0267B /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = ../../engine_src/ios/AppDelegate.h; sourceTree = "<group>"; };
+		EC64419F29318B6D00A0267B /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../engine_src/ios/main.m; sourceTree = "<group>"; };
+		EC6441A029318B6D00A0267B /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = ../../engine_src/ios/AppDelegate.m; sourceTree = "<group>"; };
+		EC6441A129318B6D00A0267B /* ios_platform_layer.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = ios_platform_layer.c; path = ../../engine_src/ios/ios_platform_layer.c; sourceTree = "<group>"; };
+		EC6441A229318B6D00A0267B /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ViewController.h; path = ../../engine_src/ios/ViewController.h; sourceTree = "<group>"; };
+		EC6441A329318B6D00A0267B /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ViewController.m; path = ../../engine_src/ios/ViewController.m; sourceTree = "<group>"; };
 		EC6B1F48293C9FD900837369 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		EC6B1F4A293CA04800837369 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		EC6B1F4C293CA04F00837369 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/Metal.framework; sourceTree = DEVELOPER_DIR; };
@@ -380,8 +380,8 @@
 				6011287D2862511700F92967 /* scheduled_animations.c */,
 				6011286A2862511500F92967 /* scheduled_animations.h */,
 				ECB05E46294F8AC200050BD4 /* simd.h */,
-				6011286C2862511500F92967 /* software_renderer.c */,
-				6011287B2862511700F92967 /* software_renderer.h */,
+				6011286C2862511500F92967 /* renderer.c */,
+				6011287B2862511700F92967 /* renderer.h */,
 				601128792862511600F92967 /* texquad_type.c */,
 				601128812862511700F92967 /* texquad_type.h */,
 				601128742862511600F92967 /* text.c */,
@@ -392,8 +392,8 @@
 				601128802862511700F92967 /* tok_random.h */,
 				601128692862511500F92967 /* userinput.c */,
 				6011286B2862511500F92967 /* userinput.h */,
-				601128762862511600F92967 /* vertex_buffer_types.h */,
-				6011287A2862511600F92967 /* vertex_types.h */,
+				601128762862511600F92967 /* cpu_to_gpu_types.h */,
+				6011287A2862511600F92967 /* cpu_gpu_shared_types.h */,
 				6011286E2862511600F92967 /* window_size.c */,
 				601128822862511700F92967 /* window_size.h */,
 				6011287E2862511700F92967 /* zpolygon.c */,
@@ -549,7 +549,7 @@
 				608802F2286DCBE700B81255 /* clientlogic.h in Sources */,
 				60A998EC287BD4B7003F7159 /* window_size.h in Sources */,
 				60A998E8287BD4B7003F7159 /* userinput.h in Sources */,
-				60A998EB287BD4B7003F7159 /* vertex_types.h in Sources */,
+				60A998EB287BD4B7003F7159 /* cpu_gpu_shared_types.h in Sources */,
 				6009B4F428679E7D00F1F279 /* memorystore.h in Sources */,
 				6009B4F528679E7D00F1F279 /* memorystore.c in Sources */,
 				60A998E0287BD494003F7159 /* draw_triangle.h in Sources */,
@@ -560,7 +560,7 @@
 				60A998E6287BD4AA003F7159 /* scheduled_animations.h in Sources */,
 				6011288E2862511800F92967 /* tok_random.c in Sources */,
 				6011289E286253DD00F92967 /* macos_platform_layer.c in Sources */,
-				60A998F0287BD4B7003F7159 /* vertex_buffer_types.h in Sources */,
+				60A998F0287BD4B7003F7159 /* cpu_to_gpu_types.h in Sources */,
 				60A998E1287BD494003F7159 /* decode_png.h in Sources */,
 				60A998E4287BD494003F7159 /* gpu.h in Sources */,
 				6011288A2862511800F92967 /* clientlogic.c in Sources */,
@@ -577,9 +577,9 @@
 				601128852862511700F92967 /* texture_array.c in Sources */,
 				60A998E2287BD494003F7159 /* lightsource.h in Sources */,
 				60112899286253C100F92967 /* shaders.metal in Sources */,
-				601128872862511700F92967 /* software_renderer.c in Sources */,
+				601128872862511700F92967 /* renderer.c in Sources */,
 				60A998ED287BD4B7003F7159 /* zpolygon.h in Sources */,
-				60A998EF287BD4B7003F7159 /* software_renderer.h in Sources */,
+				60A998EF287BD4B7003F7159 /* renderer.h in Sources */,
 				6011288B2862511800F92967 /* common_platform_layer.c in Sources */,
 				60A998EE287BD4B7003F7159 /* tok_random.h in Sources */,
 				6011288F2862511800F92967 /* lightsource.c in Sources */,
@@ -594,7 +594,7 @@
 				60A99914287BD4C4003F7159 /* texquad_type.h in Sources */,
 				60A99919287BD4C4003F7159 /* memorystore.h in Sources */,
 				60A998FE287BD4C3003F7159 /* memorystore.c in Sources */,
-				60A99900287BD4C3003F7159 /* vertex_buffer_types.h in Sources */,
+				60A99900287BD4C3003F7159 /* cpu_to_gpu_types.h in Sources */,
 				60A998FB287BD4C3003F7159 /* lightsource.h in Sources */,
 				60A99916287BD4C4003F7159 /* scheduled_animations.c in Sources */,
 				60A99908287BD4C3003F7159 /* tok_random.h in Sources */,
@@ -611,7 +611,7 @@
 				60A9991C287BD4C4003F7159 /* inflate.c in Sources */,
 				60A9991D287BD4C4003F7159 /* common.c in Sources */,
 				60A99904287BD4C3003F7159 /* tok_random.c in Sources */,
-				60A99915287BD4C4003F7159 /* vertex_types.h in Sources */,
+				60A99915287BD4C4003F7159 /* cpu_gpu_shared_types.h in Sources */,
 				EC6441A529318B6D00A0267B /* AppDelegate.m in Sources */,
 				60A99918287BD4C4003F7159 /* clientlogic.h in Sources */,
 				60A99909287BD4C3003F7159 /* platform_layer.h in Sources */,
@@ -640,10 +640,10 @@
 				6028DD332886EE54000E1E98 /* init_application.h in Sources */,
 				60A9990E287BD4C3003F7159 /* scheduled_animations.h in Sources */,
 				EC6441A429318B6D00A0267B /* main.m in Sources */,
-				60A998FA287BD4C3003F7159 /* software_renderer.c in Sources */,
+				60A998FA287BD4C3003F7159 /* renderer.c in Sources */,
 				60A9991B287BD4C4003F7159 /* draw_triangle.h in Sources */,
 				60A998F1287BD4C3003F7159 /* logger.h in Sources */,
-				60A998F2287BD4C3003F7159 /* software_renderer.h in Sources */,
+				60A998F2287BD4C3003F7159 /* renderer.h in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -672,6 +672,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				DEAD_CODE_STRIPPING = NO;
+				DEVELOPMENT_TEAM = 69FRAQZ2YR;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -716,6 +717,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				DEAD_CODE_STRIPPING = NO;
+				DEVELOPMENT_TEAM = 69FRAQZ2YR;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -724,6 +726,11 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					"../../sampleproject_src/**",
+					"../../client_src/**",
+					"../../engine_src/**",
+				);
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MTL_LANGUAGE_REVISION = Metal20;

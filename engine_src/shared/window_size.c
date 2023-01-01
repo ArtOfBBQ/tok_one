@@ -1,5 +1,7 @@
 #include "window_size.h"
 
+GPU_ProjectionConstants projection_constants;
+
 float window_height = 0.0f;
 float window_width = 0.0f;
 float aspect_ratio = 1.0f;
@@ -25,4 +27,23 @@ float screenspace_height_to_height(const float screenspace_height)
 float screenspace_width_to_width(const float screenspace_width)
 {
     return (screenspace_width * 2.0f) / window_width;
+}
+
+void init_projection_constants() {
+    
+    if (window_height < 50.0f || window_width < 50.0f) {
+        return;
+    }
+    
+    GPU_ProjectionConstants * pjc = &projection_constants;
+    
+    pjc->near = 0.1f;
+    pjc->far = 20.0f;
+    
+    float field_of_view = 90.0f;
+    pjc->field_of_view_rad = ((field_of_view * 0.5f) / 180.0f) * 3.14159f;
+    pjc->field_of_view_modifier = 1.0f / tok_tanf(pjc->field_of_view_rad); 
+    pjc->q = pjc->far / (pjc->far - pjc->near);
+    pjc->x_multiplier = aspect_ratio * pjc->field_of_view_modifier;
+    pjc->y_multiplier = pjc->field_of_view_modifier;
 }

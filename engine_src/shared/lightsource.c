@@ -125,7 +125,7 @@ void project_float4_to_2d_inplace(
     float * position_y,
     float * position_z)
 {
-    ProjectionConstants * pjc = &projection_constants;
+    GPU_ProjectionConstants * pjc = &projection_constants;
     
     float x_multiplier = aspect_ratio * pjc->field_of_view_modifier;
     float y_multiplier = pjc->field_of_view_modifier;
@@ -139,9 +139,30 @@ void project_float4_to_2d_inplace(
     *position_z += z_addition;
 }
 
+void copy_lights(
+    GPU_LightCollection * lights_for_gpu)
+{    
+    for (uint32_t i = 0; i < zlights_to_apply_size; i++)
+    {
+        lights_for_gpu->light_x[i]   = zlights_to_apply[i].x;
+        lights_for_gpu->light_y[i]   = zlights_to_apply[i].y;
+        lights_for_gpu->light_z[i]   = zlights_to_apply[i].z;
+        lights_for_gpu->red[i]       = zlights_to_apply[i].RGBA[0];
+        lights_for_gpu->green[i]     = zlights_to_apply[i].RGBA[1];
+        lights_for_gpu->blue[i]      = zlights_to_apply[i].RGBA[2];
+        
+        lights_for_gpu->ambient[i]   = zlights_to_apply[i].ambient; 
+        lights_for_gpu->diffuse[i]   = zlights_to_apply[i].diffuse;
+        
+        lights_for_gpu->reach[i]     = zlights_to_apply[i].reach;
+        
+        lights_for_gpu->lights_size += 1;
+    }
+}
+
 // move each light so the camera becomes position 0,0,0
 void translate_lights(
-    LightCollection * lights_for_gpu)
+    GPU_LightCollection * lights_for_gpu)
 {
     assert(zlights_to_apply_size < ZLIGHTS_TO_APPLY_ARRAYSIZE);
     
@@ -162,20 +183,18 @@ void translate_lights(
         translated_light_pos = z_rotate_zvertex(
             &translated_light_pos,
             -camera.z_angle);
-
-        project_float4_to_2d_inplace(
-            &translated_light_pos.x,
-            &translated_light_pos.y,
-            &translated_light_pos.z);
+        
+        //        project_float4_to_2d_inplace(
+        //            &translated_light_pos.x,
+        //            &translated_light_pos.y,
+        //            &translated_light_pos.z);
         
         lights_for_gpu->light_x[i]   = translated_light_pos.x;
         lights_for_gpu->light_y[i]   = translated_light_pos.y;
         lights_for_gpu->light_z[i]   = translated_light_pos.z;
-        lights_for_gpu->orig_x[i]    = zlights_to_apply[i].x;
-        lights_for_gpu->orig_y[i]    = zlights_to_apply[i].y;
-        lights_for_gpu->orig_z[i]    = zlights_to_apply[i].z;
-        lights_for_gpu->ambient[i]   = 1.0f; // zlights_to_apply[i].ambient;
-        lights_for_gpu->diffuse[i]   = zlights_to_apply[i].diffuse;
+        //        lights_for_gpu->orig_x[i]    = zlights_to_apply[i].x;
+        //        lights_for_gpu->orig_y[i]    = zlights_to_apply[i].y;
+        //        lights_for_gpu->orig_z[i]    = zlights_to_apply[i].z;
         lights_for_gpu->red[i]       = zlights_to_apply[i].RGBA[0];
         lights_for_gpu->green[i]     = zlights_to_apply[i].RGBA[1];
         lights_for_gpu->blue[i]      = zlights_to_apply[i].RGBA[2];

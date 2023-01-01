@@ -7,7 +7,7 @@
 #include "decodedimage.h"
 #include "debigulator/src/decode_png.h"
 #include "debigulator/src/decode_bmp.h"
-#include "vertex_types.h"
+#include "cpu_gpu_shared_types.h"
 
 #ifdef __cplusplus
 extern "C" {

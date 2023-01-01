@@ -4,18 +4,24 @@ static uint64_t previous_time = 0;
 static uint64_t frame_no = 0;
 
 void shared_gameloop_update(
-    Vertex * vertices_for_gpu,
+    GPU_Vertex * vertices_for_gpu,
     uint32_t * vertices_for_gpu_size,
-    LightCollection * lights_for_gpu)
+    GPU_LightCollection * lights_for_gpu,
+    GPU_Camera * camera_for_gpu,
+    GPU_ProjectionConstants * projection_constants_for_gpu)
 {
-    frame_no++;
     uint64_t time = platform_get_current_time_microsecs();
     uint64_t elapsed = time - previous_time;
     if (previous_time < 1) {
         previous_time = time;
         return;
     }
+    
+    *projection_constants_for_gpu = projection_constants;
+    
     previous_time = time;
+    
+    frame_no++;
     
     if (
         time - last_resize_request_at < 1500000 &&
@@ -39,8 +45,7 @@ void shared_gameloop_update(
     clean_deleted_lights();
     clean_deleted_texquads();
     
-    translate_lights(
-        lights_for_gpu);
+    copy_lights(lights_for_gpu);
     assert(lights_for_gpu->lights_size > 0);
     
     if (!application_running) {
@@ -85,8 +90,15 @@ void shared_gameloop_update(
         client_logic_update(elapsed);
     }
     
+    camera_for_gpu->x = camera.x;
+    camera_for_gpu->y = camera.y;
+    camera_for_gpu->z = camera.z;
+    camera_for_gpu->x_angle = camera.x_angle;
+    camera_for_gpu->y_angle = camera.y_angle;
+    camera_for_gpu->z_angle = camera.z_angle;
+    
     log_assert(*vertices_for_gpu_size < 1);
-    software_render(
+    hardware_render(
         /* next_gpu_workload: */
             vertices_for_gpu,
         /* next_gpu_workload_size: */
@@ -97,11 +109,11 @@ void shared_gameloop_update(
     uint32_t overflow_vertices = *vertices_for_gpu_size % 3;
     *vertices_for_gpu_size -= overflow_vertices;
     
-    for (
-        uint32_t triangle_start_i = 0;
-        triangle_start_i < *vertices_for_gpu_size;
-        triangle_start_i += 3)
-    {
-        register_touchable_triangle(vertices_for_gpu + triangle_start_i);
-    }
+    //    for (
+    //        uint32_t triangle_start_i = 0;
+    //        triangle_start_i < *vertices_for_gpu_size;
+    //        triangle_start_i += 3)
+    //    {
+    //        register_touchable_triangle(vertices_for_gpu + triangle_start_i);
+    //    }
 }

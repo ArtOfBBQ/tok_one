@@ -2,6 +2,7 @@
 #define WINDOW_SIZE_H
 
 #include "common.h"
+#include "cpu_gpu_shared_types.h"
 
 extern float window_height;
 extern float window_width;
@@ -15,16 +16,7 @@ float screenspace_y_to_y(const float screenspace_y);
 float screenspace_height_to_height(const float screenspace_height);
 float screenspace_width_to_width(const float screenspace_width);
 
-// projection constants
-typedef struct ProjectionConstants {
-    float near;
-    float far;
-    float field_of_view_rad;
-    float field_of_view_modifier;
-} ProjectionConstants;
-
-extern ProjectionConstants projection_constants;
-
+extern GPU_ProjectionConstants projection_constants;
 void init_projection_constants(void);
 
 #endif

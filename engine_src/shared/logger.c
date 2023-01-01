@@ -7,7 +7,7 @@ char crashed_top_of_screen_msg[256];
 static bool32_t logger_activated = false;
 #endif
 
-static char * log;
+static char * app_log;
 static uint32_t log_i = 0;
 
 #define MAX_TIMED_FUNCTION_NAME 80
@@ -208,7 +208,7 @@ setup_log(void) {
     log_assert(application_name != NULL);
     
     // create a log for debug text
-    log = (char *)malloc_from_unmanaged(LOG_SIZE);
+    app_log = (char *)malloc_from_unmanaged(LOG_SIZE);
     
     // create a hashmap for the functions in our app 
     // this is used for backtrace and profiling
@@ -346,7 +346,7 @@ internal_log_append(
         if (log_i + prefix_length >= LOG_SIZE) { return; }
         strcpy_capped(
             /* recipient: */
-                log + log_i,
+                app_log + log_i,
             /* recipient_size: */
                 LOG_SIZE,
             /* origin: */
@@ -360,7 +360,7 @@ internal_log_append(
         
         strcpy_capped(
             /* recipient: */
-                log + log_i,
+                app_log + log_i,
             /* recipient_size: */
                 LOG_SIZE,
             /* origin: */
@@ -373,7 +373,7 @@ internal_log_append(
         if (log_i + glue_length >= LOG_SIZE) { return; }
         strcpy_capped(
             /* recipient: */
-                log + log_i,
+                app_log + log_i,
             /* recipient_size: */
                 LOG_SIZE,
             /* origin: */
@@ -386,7 +386,7 @@ internal_log_append(
     if (log_i + to_append_length >= LOG_SIZE) { return; }
     strcpy_capped(
         /* recipient: */
-            log + log_i,
+            app_log + log_i,
         /* recipient_size: */
             LOG_SIZE,
         /* origin: */
@@ -463,13 +463,13 @@ add_profiling_stats_to_log(void)
 
 void __attribute__((no_instrument_function)) log_dump(bool32_t * good) {
     
-    log[log_i + 1] = '\0';
+    app_log[log_i + 1] = '\0';
     
     platform_write_file_to_writables(
         /* filepath_destination : */
             (char *)"log.txt",
         /* const char * output  : */
-            log,
+            app_log,
         /* output_size          : */
             log_i + 1,
         /* good                 : */

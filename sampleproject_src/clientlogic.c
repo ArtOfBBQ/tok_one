@@ -78,8 +78,6 @@ void client_logic_get_application_name_to_recipient(
 static bool32_t ran_anim[4]; // 1 for each card in the test scene
 void client_logic_startup() {
     
-    // camera.z_angle = 0.3f;
-    
     ran_anim[0] = false;
     ran_anim[1] = false;
     ran_anim[2] = false;
@@ -119,35 +117,51 @@ void client_logic_startup() {
     
     zlights_to_apply[0].deleted    =   false;
     zlights_to_apply[0].object_id  =      -1;
-    zlights_to_apply[0].x          =   -1.2f;
-    zlights_to_apply[0].y          =    0.0f;
-    zlights_to_apply[0].z          =    0.5f;
+    zlights_to_apply[0].x          =    0.35f;
+    zlights_to_apply[0].y          =    0.1f;
+    zlights_to_apply[0].z          =    0.9f;
     zlights_to_apply[0].RGBA[0]    =    1.0f;
     zlights_to_apply[0].RGBA[1]    =    0.0f;
     zlights_to_apply[0].RGBA[2]    =    0.0f;
     zlights_to_apply[0].RGBA[3]    =    1.0f;
-    zlights_to_apply[0].reach      =    1.75f;
-    zlights_to_apply[0].ambient    =    0.15f;
-    zlights_to_apply[0].diffuse    =    2.5f;
+    zlights_to_apply[0].reach      =    1.3f;
+    zlights_to_apply[0].ambient    =    0.0f;
+    zlights_to_apply[0].diffuse    =    1.0f;
     zlights_to_apply_size++;
     
     zlights_to_apply[1].deleted    =   false;
     zlights_to_apply[1].object_id  =      -1;
-    zlights_to_apply[1].x          =    0.8f;
-    zlights_to_apply[1].y          =    0.0f;
-    zlights_to_apply[1].z          =    0.5f;
+    zlights_to_apply[1].x          =    1.1f;
+    zlights_to_apply[1].y          =    0.1f;
+    zlights_to_apply[1].z          =    0.9f;
     zlights_to_apply[1].RGBA[0]    =    0.0f;
-    zlights_to_apply[1].RGBA[1]    =    0.0f;
-    zlights_to_apply[1].RGBA[2]    =    1.0f;
-    zlights_to_apply[1].RGBA[3]    =    1.0f;
-    zlights_to_apply[1].reach      =    1.75f;
-    zlights_to_apply[1].ambient    =    0.15f;
-    zlights_to_apply[1].diffuse    =    2.5f;
+    zlights_to_apply[1].RGBA[1]    =    1.0f;
+    zlights_to_apply[1].RGBA[2]    =    0.0f;
+    zlights_to_apply[1].RGBA[3]    =    0.2f;
+    zlights_to_apply[1].reach      =    1.3f;
+    zlights_to_apply[1].ambient    =    0.0f;
+    zlights_to_apply[1].diffuse    =    1.0f;
     zlights_to_apply_size++;
-    log_assert(zlights_to_apply_size == 2);
+    
+    zlights_to_apply[2].deleted    =   false;
+    zlights_to_apply[2].object_id  =      -1;
+    zlights_to_apply[2].x          =    1.6f;
+    zlights_to_apply[2].y          =    0.1f;
+    zlights_to_apply[2].z          =    0.9f;
+    zlights_to_apply[2].RGBA[0]    =    0.0f;
+    zlights_to_apply[2].RGBA[1]    =    0.0f;
+    zlights_to_apply[2].RGBA[2]    =    1.0f;
+    zlights_to_apply[2].RGBA[3]    =    1.0f;
+    zlights_to_apply[2].reach      =    1.3f;
+    zlights_to_apply[2].ambient    =    0.0f;
+    zlights_to_apply[2].diffuse    =    1.0f;
+    zlights_to_apply_size++;
+    
+    log_assert(zlights_to_apply_size == 3);
         
     zPolygon teapot = load_from_obj_file("teapot.obj", false);
-    // center_zpolygon_offsets(&teapot);
+    center_zpolygon_offsets(&teapot);
+    scale_zpolygon(&teapot, 1.0f);
     teapot = teapot;
     
     teapot.object_id = 123;
@@ -155,45 +169,71 @@ void client_logic_startup() {
     log_assert(teapot.triangles_size > 0);
     scale_zpolygon(
         /* to_scale: */ &teapot,
-        /* new_height: */ 0.5f);
-    teapot.x = 0.0f;
-    teapot.y = 0.0f;
-    teapot.z = 0.8f;
-    request_zpolygon_to_render(&teapot);
+        /* new_height: */ 0.15f);
+    teapot.x = 0.05f;
+    teapot.y = 0.05f;
+    teapot.z = 0.1f;
     
-    zPolygon anotherteapot = teapot;
-    anotherteapot.object_id = 124;
-    anotherteapot.touchable_id = 124;
-    anotherteapot.x = teapot.x - 0.3f;
-    anotherteapot.y = teapot.y - 0.3f;
-    anotherteapot.z = teapot.z - 1.5f;
-    request_zpolygon_to_render(&anotherteapot);
-    
-    ScheduledAnimation rotate_teapot;
-    construct_scheduled_animation(&rotate_teapot);
-    rotate_teapot.affected_object_id = 123;
-    rotate_teapot.z_rotation_per_second = 0.2f;
-    rotate_teapot.y_rotation_per_second = 0.5f;
-    rotate_teapot.x_rotation_per_second = 0.9f;
-    rotate_teapot.duration_microseconds = 1000000;
-    rotate_teapot.runs = 0;
-    request_scheduled_animation(&rotate_teapot);
+    for (uint32_t _ = 0; _ < 20; _++) {
+        zPolygon anotherteapot = teapot;
+        anotherteapot.object_id = 124 + _;
+        anotherteapot.touchable_id = -1;
+        anotherteapot.x = teapot.x + ((_ / 5) * 0.6f);
+        anotherteapot.y = teapot.y + ((_ / 10) * 0.6f);
+        anotherteapot.z = teapot.z + ((_ % 5) * 0.3f);
+        for (uint32_t tri_i = 0; tri_i < anotherteapot.triangles_size; tri_i++) {
+            anotherteapot.triangles[tri_i].color[0] = 0.5f;
+            anotherteapot.triangles[tri_i].color[1] = 0.5f;
+            anotherteapot.triangles[tri_i].color[2] = 0.5f;
+        }
+        
+        request_zpolygon_to_render(&anotherteapot);
+        
+        ScheduledAnimation rotate_teapot;
+        construct_scheduled_animation(&rotate_teapot);
+        rotate_teapot.affected_object_id = 124 + _;
+        rotate_teapot.x_rotation_per_second = 0.12f + (0.9f / (_ + 1));
+        rotate_teapot.y_rotation_per_second = -0.2f + (0.23f * _);
+        rotate_teapot.z_rotation_per_second = 0.1f + (0.1f * _);
+        rotate_teapot.duration_microseconds = 10000000;
+        rotate_teapot.runs = 0;
+        request_scheduled_animation(&rotate_teapot);
+    }
     
     TexQuad texture;
     construct_texquad(&texture);
-    texture.RGBA[0]       = 1.0f;
-    texture.RGBA[1]       = 1.0f;
+    texture.RGBA[0]       = 0.01f;
+    texture.RGBA[1]       = 0.01f;
     texture.RGBA[2]       = 1.0f;
     texture.RGBA[3]       = 1.0f;
-    texture.object_id     = 125;
-    texture.touchable_id  = 125;
-    texture.top_y         = 0.9f;
-    texture.left_x        = 0.9f;
-    texture.width         = 0.09f;
-    texture.height        = 0.09f;
+    texture.object_id     = 123;
+    texture.touchable_id  = 123;
+    texture.top_y         = 0.0f;
+    texture.left_x        = 0.0f;
+    texture.z             = 1.5f;
+    texture.width         = 1.0f;
+    texture.height        = 1.0f;
     texture.z_angle       = 0.3f;
     texture.ignore_camera = false;
     request_texquad_renderable(&texture);
+    
+    TexQuad anothertexture;
+    construct_texquad(&anothertexture);
+    anothertexture.RGBA[0]       = 1.0f;
+    anothertexture.RGBA[1]       = 0.0f;
+    anothertexture.RGBA[2]       = 0.0f;
+    anothertexture.RGBA[3]       = 1.0f;
+    anothertexture.object_id     = 124;
+    anothertexture.touchable_id  = 124;
+    anothertexture.top_y         = 0.2f;
+    anothertexture.left_x        = 0.2f;
+    anothertexture.z             = 1.6f;
+    anothertexture.width         = 1.0f;
+    anothertexture.height        = 1.0f;
+    anothertexture.z_angle       = 0.2f;
+    anothertexture.ignore_camera = false;
+    request_texquad_renderable(&anothertexture);
+    
     
     log_append("finished client_logic_startup()\n");
 }
@@ -311,33 +351,10 @@ bool32_t fading_out = true;
 
 void client_logic_update(uint64_t microseconds_elapsed)
 {
-    //    request_fps_counter(microseconds_elapsed);
+    request_fps_counter(microseconds_elapsed);
     
     client_handle_touches_and_leftclicks(microseconds_elapsed);
-    client_handle_keypresses(microseconds_elapsed);
-    
-    // TODO: remove this debug code
-    float light_0_to_polygon_0_dist_x =
-        (zpolygons_to_render[0].x - zlights_to_apply[0].x) *
-        (zpolygons_to_render[0].x - zlights_to_apply[0].x);
-    float light_0_to_polygon_0_dist_y =
-        (zpolygons_to_render[0].y - zlights_to_apply[0].y) *
-        (zpolygons_to_render[0].y - zlights_to_apply[0].y);
-    float light_0_to_polygon_0_dist_z =
-        (zpolygons_to_render[0].z - zlights_to_apply[0].z) *
-        (zpolygons_to_render[0].z - zlights_to_apply[0].z);
-    float sum_squares =
-        light_0_to_polygon_0_dist_x +
-        light_0_to_polygon_0_dist_y +
-        light_0_to_polygon_0_dist_z;
-    float distance = sqrtf(sum_squares);
-    
-    log_assert(zlights_to_apply[0].x == -1.2f);
-    log_assert(zlights_to_apply[0].y ==  0.0f);
-    log_assert(zlights_to_apply[0].z ==  0.5f);
-    log_assert(zlights_to_apply[1].x ==  0.8f);
-    log_assert(zlights_to_apply[1].y ==  0.0f);
-    log_assert(zlights_to_apply[1].z ==  0.5f);  
+    client_handle_keypresses(microseconds_elapsed);  
 }
 
 void client_logic_window_resize(
