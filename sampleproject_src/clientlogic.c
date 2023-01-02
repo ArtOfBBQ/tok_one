@@ -114,51 +114,7 @@ void client_logic_startup() {
     register_new_texturearray_from_files(
         (const char **)card_filenames,
         2);
-    
-    zlights_to_apply[0].deleted    =   false;
-    zlights_to_apply[0].object_id  =      -1;
-    zlights_to_apply[0].x          =    0.35f;
-    zlights_to_apply[0].y          =    0.1f;
-    zlights_to_apply[0].z          =    0.9f;
-    zlights_to_apply[0].RGBA[0]    =    1.0f;
-    zlights_to_apply[0].RGBA[1]    =    0.0f;
-    zlights_to_apply[0].RGBA[2]    =    0.0f;
-    zlights_to_apply[0].RGBA[3]    =    1.0f;
-    zlights_to_apply[0].reach      =    1.3f;
-    zlights_to_apply[0].ambient    =    0.0f;
-    zlights_to_apply[0].diffuse    =    1.0f;
-    zlights_to_apply_size++;
-    
-    zlights_to_apply[1].deleted    =   false;
-    zlights_to_apply[1].object_id  =      -1;
-    zlights_to_apply[1].x          =    1.1f;
-    zlights_to_apply[1].y          =    0.1f;
-    zlights_to_apply[1].z          =    0.9f;
-    zlights_to_apply[1].RGBA[0]    =    0.0f;
-    zlights_to_apply[1].RGBA[1]    =    1.0f;
-    zlights_to_apply[1].RGBA[2]    =    0.0f;
-    zlights_to_apply[1].RGBA[3]    =    0.2f;
-    zlights_to_apply[1].reach      =    1.3f;
-    zlights_to_apply[1].ambient    =    0.0f;
-    zlights_to_apply[1].diffuse    =    1.0f;
-    zlights_to_apply_size++;
-    
-    zlights_to_apply[2].deleted    =   false;
-    zlights_to_apply[2].object_id  =      -1;
-    zlights_to_apply[2].x          =    1.6f;
-    zlights_to_apply[2].y          =    0.1f;
-    zlights_to_apply[2].z          =    0.9f;
-    zlights_to_apply[2].RGBA[0]    =    0.0f;
-    zlights_to_apply[2].RGBA[1]    =    0.0f;
-    zlights_to_apply[2].RGBA[2]    =    1.0f;
-    zlights_to_apply[2].RGBA[3]    =    1.0f;
-    zlights_to_apply[2].reach      =    1.3f;
-    zlights_to_apply[2].ambient    =    0.0f;
-    zlights_to_apply[2].diffuse    =    1.0f;
-    zlights_to_apply_size++;
-    
-    log_assert(zlights_to_apply_size == 3);
-        
+            
     zPolygon teapot = load_from_obj_file("teapot.obj", false);
     center_zpolygon_offsets(&teapot);
     scale_zpolygon(&teapot, 1.0f);
@@ -170,16 +126,16 @@ void client_logic_startup() {
     scale_zpolygon(
         /* to_scale: */ &teapot,
         /* new_height: */ 0.15f);
-    teapot.x = 0.05f;
-    teapot.y = 0.05f;
-    teapot.z = 0.1f;
+    teapot.x = -0.55f;
+    teapot.y = -0.3f;
+    teapot.z = 0.6f;
     
     for (uint32_t _ = 0; _ < 20; _++) {
         zPolygon anotherteapot = teapot;
         anotherteapot.object_id = 124 + _;
         anotherteapot.touchable_id = -1;
-        anotherteapot.x = teapot.x + ((_ / 5) * 0.6f);
-        anotherteapot.y = teapot.y + ((_ / 10) * 0.6f);
+        anotherteapot.x = teapot.x + ((_ / 5) * 0.4f);
+        anotherteapot.y = teapot.y;
         anotherteapot.z = teapot.z + ((_ % 5) * 0.3f);
         for (uint32_t tri_i = 0; tri_i < anotherteapot.triangles_size; tri_i++) {
             anotherteapot.triangles[tri_i].color[0] = 0.5f;
@@ -192,48 +148,59 @@ void client_logic_startup() {
         ScheduledAnimation rotate_teapot;
         construct_scheduled_animation(&rotate_teapot);
         rotate_teapot.affected_object_id = 124 + _;
-        rotate_teapot.x_rotation_per_second = 0.12f + (0.9f / (_ + 1));
-        rotate_teapot.y_rotation_per_second = -0.2f + (0.23f * _);
-        rotate_teapot.z_rotation_per_second = 0.1f + (0.1f * _);
+        rotate_teapot.x_rotation_per_second = 0.2f + (0.9f / (_ + 1));
+        rotate_teapot.y_rotation_per_second = -0.3f + (0.05f * _);
+        rotate_teapot.z_rotation_per_second = 0.4f + (0.04f * _);
         rotate_teapot.duration_microseconds = 10000000;
         rotate_teapot.runs = 0;
         request_scheduled_animation(&rotate_teapot);
     }
     
-    TexQuad texture;
-    construct_texquad(&texture);
-    texture.RGBA[0]       = 0.01f;
-    texture.RGBA[1]       = 0.01f;
-    texture.RGBA[2]       = 1.0f;
-    texture.RGBA[3]       = 1.0f;
-    texture.object_id     = 123;
-    texture.touchable_id  = 123;
-    texture.top_y         = 0.0f;
-    texture.left_x        = 0.0f;
-    texture.z             = 1.5f;
-    texture.width         = 1.0f;
-    texture.height        = 1.0f;
-    texture.z_angle       = 0.3f;
-    texture.ignore_camera = false;
-    request_texquad_renderable(&texture);
-    
-    TexQuad anothertexture;
-    construct_texquad(&anothertexture);
-    anothertexture.RGBA[0]       = 1.0f;
-    anothertexture.RGBA[1]       = 0.0f;
-    anothertexture.RGBA[2]       = 0.0f;
-    anothertexture.RGBA[3]       = 1.0f;
-    anothertexture.object_id     = 124;
-    anothertexture.touchable_id  = 124;
-    anothertexture.top_y         = 0.2f;
-    anothertexture.left_x        = 0.2f;
-    anothertexture.z             = 1.6f;
-    anothertexture.width         = 1.0f;
-    anothertexture.height        = 1.0f;
-    anothertexture.z_angle       = 0.2f;
-    anothertexture.ignore_camera = false;
-    request_texquad_renderable(&anothertexture);
-    
+    #define NUM_LIGHTS 4
+    float light_size = 0.05f;
+    float light_xs[NUM_LIGHTS];
+    light_xs[0] = -0.3f;
+    light_xs[1] = -0.3f;
+    light_xs[2] = 0.3f;
+    light_xs[3] = 0.3f;
+    float light_zs[NUM_LIGHTS];
+    light_zs[0] = 1.0f;
+    light_zs[1] = 0.7f;
+    light_zs[2] = 1.0f;
+    light_zs[3] = 0.7f;
+    for (uint32_t i = 0; i < NUM_LIGHTS; i++) {
+        
+        zlights_to_apply[i].deleted    =   false;
+        zlights_to_apply[i].object_id  =      -1;
+        zlights_to_apply[i].x          =    light_xs[i];
+        zlights_to_apply[i].y          =    0.2f;
+        zlights_to_apply[i].z          =    light_zs[i];
+        zlights_to_apply[i].RGBA[0]    =    i % 3 == 0 ? 1.0f : 0.0f; 
+        zlights_to_apply[i].RGBA[1]    =    i % 2 == 0 ? 1.0f : 0.0f;
+        zlights_to_apply[i].RGBA[2]    =    i % 3 == 1 ? 1.0f : 0.0f;
+        zlights_to_apply[i].RGBA[3]    =    1.0f;
+        zlights_to_apply[i].reach      =    1.0f;
+        zlights_to_apply[i].ambient    =    0.1f;
+        zlights_to_apply[i].diffuse    =    1.0f;
+        zlights_to_apply_size++;
+        
+        TexQuad texture;
+        construct_texquad(&texture);
+        texture.RGBA[0]       = zlights_to_apply[i].RGBA[0] * 5.0f;
+        texture.RGBA[1]       = zlights_to_apply[i].RGBA[1] * 5.0f;
+        texture.RGBA[2]       = zlights_to_apply[i].RGBA[2] * 5.0f;
+        texture.RGBA[3]       = 1.0f;
+        texture.object_id     = 123;
+        texture.touchable_id  = 123;
+        texture.top_y         = zlights_to_apply[i].y - (light_size / 2);
+        texture.left_x        = zlights_to_apply[i].x - (light_size / 2);
+        texture.z             = zlights_to_apply[i].z;
+        texture.width         = light_size;
+        texture.height        = light_size;
+        texture.z_angle       = 0.0f;
+        texture.ignore_camera = false;
+        request_texquad_renderable(&texture);
+    }
     
     log_append("finished client_logic_startup()\n");
 }

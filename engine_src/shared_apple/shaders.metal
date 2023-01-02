@@ -105,12 +105,12 @@ vertex_shader(
         camera->y,
         camera->z,
         0.0f);
-        
+    
     // rotate vertices
     float4 x_rotated_vertices = x_rotate(mesh_vertices, input_array[vertex_i].x_angle);
     float4 x_rotated_normals = x_rotate(mesh_normals, input_array[vertex_i].x_angle);
     float4 y_rotated_vertices = y_rotate(x_rotated_vertices, input_array[vertex_i].y_angle);
-    float4 y_rotated_normals = x_rotate(x_rotated_normals, input_array[vertex_i].y_angle);
+    float4 y_rotated_normals = y_rotate(x_rotated_normals, input_array[vertex_i].y_angle);
     float4 z_rotated_vertices = z_rotate(y_rotated_vertices, input_array[vertex_i].z_angle);
     float4 z_rotated_normals = z_rotate(y_rotated_normals, input_array[vertex_i].z_angle);
     
@@ -177,7 +177,7 @@ vertex_shader(
         normalize(z_rotated_normals);
         
         float4 vec_from_light_to_vertex = normalize(translated_pos - light_pos);
-        float visibility_rating = max(0.0f, dot(z_rotated_normals, vec_from_light_to_vertex));
+        float visibility_rating = max(0.0f, -1.0f * dot(z_rotated_normals, vec_from_light_to_vertex));
         
         out.lighting += (
             distance_mod *
