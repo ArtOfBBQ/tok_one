@@ -63,17 +63,6 @@ void request_zpolygon_to_render(zPolygon * to_add);
 extern zPolygon zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
 extern uint32_t zpolygons_to_render_size;
 
-void project_simd_vertices_to_2d(
-    SIMD_FLOAT * simd_vertices_x,
-    SIMD_FLOAT * simd_vertices_y,
-    SIMD_FLOAT * simd_vertices_z);
-
-void ztriangles_to_2d_inplace(
-    float * vertices_x,
-    float * vertices_y,
-    float * vertices_z,
-    const uint32_t vertices_size);
-
 zTriangle
 x_rotate_ztriangle(
     const zTriangle * input,
@@ -92,6 +81,13 @@ zTriangle translate_ztriangle(
     const float by_x,
     const float by_y,
     const float by_z);
+
+float dot_of_zvertices(
+    const zVertex * a,
+    const zVertex * b);
+zVertex crossproduct_of_zvertices(
+    const zVertex * a,
+    const zVertex * b);
 
 zVertex get_ztriangle_normal(
     const zTriangle * input);
@@ -159,6 +155,22 @@ float get_distance(
 float distance_to_ztriangle(
     const zVertex p1,
     const zTriangle p2);
+
+int32_t find_touchable_from_xy(
+    const float x,
+    const float y);
+
+bool32_t ray_intersects_triangle(
+    const zVertex * ray_origin,
+    const zVertex * ray_direction,
+    const zTriangle * triangle,
+    zVertex * recipient_hit_point);
+
+bool32_t ray_intersects_zpolygon(
+    const zVertex * ray_origin,
+    const zVertex * ray_direction,
+    const zPolygon * mesh,
+    zVertex * recipient_hit_point);
 
 #ifdef __cplusplus
 }

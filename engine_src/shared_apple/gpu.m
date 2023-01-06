@@ -2,6 +2,7 @@
 
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
 uint32_t block_drawinmtkview = true;
+GPUSharedDataCollection gpu_shared_data_collection;
 
 // objective-c "id" of the MTLBuffer objects
 static id vertex_buffers[3];
@@ -14,7 +15,6 @@ static id projection_constant_buffers[3];
 {
     NSUInteger current_frame_i;
     MTLViewport viewport;
-    GPUSharedDataCollection gpu_shared_data_collection;
     
     id<MTLDevice> metal_device;
     id<MTLCommandQueue> command_queue;
@@ -246,7 +246,7 @@ static id projection_constant_buffers[3];
              /* deallocator = nil to opt out */
              deallocator:
                  nil];
-        projection_constant_buffers[frame_i] = MTLBufferProjectionConstants;
+         projection_constant_buffers[frame_i] = MTLBufferProjectionConstants;
     }
     
     _metal_textures = [
@@ -267,7 +267,7 @@ static id projection_constant_buffers[3];
 }
 
 - (void)
-    initializeTextureArray  : (int32_t)texturearray_i
+    initializeTextureArray  : ( int32_t)texturearray_i
     textureCount            : (uint32_t)texture_count
     singleImgWidth          : (uint32_t)single_img_width
     singleImgHeight         : (uint32_t)single_img_height

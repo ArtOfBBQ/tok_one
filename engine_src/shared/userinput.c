@@ -27,18 +27,29 @@ void register_interaction(
     const float x,
     const float y)
 {
+    uint64_t timestamp = platform_get_current_time_microsecs();
+    if (timestamp - touch_record->timestamp < 100000) { return; }
+    
     // note: this returns -1 when no touchable is there
     // which is what we want
-    touch_record->touchable_id =
-        find_touchable_at(
-            /* normalized_x : */
-                screenspace_x_to_x(x),
-            /* normalized_y : */
-                screenspace_y_to_y(y));
-    touch_record->screen_x = x;
-    touch_record->screen_y = y;
-    touch_record->timestamp = platform_get_current_time_microsecs();
-    touch_record->handled = false;
+    
+    int32_t prev_frame_i = gpu_shared_data_collection.frame_i - 1;
+    if (prev_frame_i < 0) { prev_frame_i = 2; }
+    
+    if (
+        touch_record != &previous_touch_move &&
+        touch_record != &previous_mouse_move &&
+        touch_record != &previous_mouse_or_touch_move)
+    {
+        //        touch_record->touchable_id = find_touchable_from_xy(
+        //            -1.0f + ((x / window_width) * 2),
+        //            -1.0f + ((y / window_height) * 2));
+    }
+    
+    touch_record->screen_x     = x;
+    touch_record->screen_y     = y;
+    touch_record->timestamp    = timestamp;
+    touch_record->handled      = false;
 }
 
 void register_keyup(uint32_t key_id)

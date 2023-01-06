@@ -10,7 +10,11 @@ void request_zpolygon_to_render(zPolygon * to_add)
     log_assert(to_add->triangles != NULL);
     log_assert(to_add->triangles_size > 0);
     
-    for (uint32_t tri_i = 0; tri_i < to_add->triangles_size; tri_i++) {
+    for (
+        uint32_t tri_i = 0;
+        tri_i < to_add->triangles_size;
+        tri_i++)
+    {
         if (to_add->triangles[tri_i].texturearray_i < 0) { log_assert(to_add->triangles[tri_i].texture_i < 0); }
         if (to_add->triangles[tri_i].texture_i < 0) { log_assert(to_add->triangles[tri_i].texturearray_i < 0); }
         
@@ -20,8 +24,7 @@ void request_zpolygon_to_render(zPolygon * to_add)
                 to_add->triangles[tri_i].texture_i);
         }
         
-        zVertex normal = get_ztriangle_normal(
-            &to_add->triangles[tri_i]);
+        zVertex normal = get_ztriangle_normal(&to_add->triangles[tri_i]);
         normalize_zvertex(&normal);
         to_add->triangles[tri_i].normals[0] = normal; 
         to_add->triangles[tri_i].normals[1] = normal;
@@ -751,66 +754,6 @@ void construct_zpolygon(zPolygon * to_construct) {
     to_construct->deleted = false;
 }
 
-void project_simd_vertices_to_2d(
-    SIMD_FLOAT * simd_vertices_x,
-    SIMD_FLOAT * simd_vertices_y,
-    SIMD_FLOAT * simd_vertices_z)
-{
-    GPU_ProjectionConstants * pjc = &projection_constants;
-    
-    float x_multiplier = aspect_ratio * pjc->field_of_view_modifier;
-    SIMD_FLOAT simd_x_multiplier = simd_set_float(x_multiplier);
-    float y_multiplier = pjc->field_of_view_modifier;
-    SIMD_FLOAT simd_y_multiplier = simd_set_float(y_multiplier);
-    float z_multiplier = (pjc->far / (pjc->far - pjc->near));
-    SIMD_FLOAT simd_z_multiplier = simd_set_float(z_multiplier);
-    float z_addition = (1.0f * (-pjc->far * pjc->near) /
-        (pjc->far - pjc->near));
-    SIMD_FLOAT simd_z_addition   = simd_set_float(z_addition);
-    
-    *simd_vertices_x = simd_mul_floats(*simd_vertices_x, simd_x_multiplier);
-    *simd_vertices_y = simd_mul_floats(*simd_vertices_y, simd_y_multiplier);
-    *simd_vertices_z = simd_mul_floats(*simd_vertices_z, simd_z_multiplier);
-    *simd_vertices_z = simd_add_floats(*simd_vertices_z, simd_z_addition);
-}
-
-void ztriangles_to_2d_inplace(
-    float * vertices_x,
-    float * vertices_y,
-    float * vertices_z,
-    const uint32_t vertices_size)
-{
-    GPU_ProjectionConstants * pjc = &projection_constants;
-    
-    // Reminder: it's necessary to have the float's address on ARM
-    // for these macros to work. Don't delete the stack floats on your intel
-    // machine - it will work but you will break the ARM build
-    float x_multiplier = aspect_ratio * pjc->field_of_view_modifier;
-    SIMD_FLOAT simd_x_multiplier = simd_set_float(x_multiplier);
-    float y_multiplier = pjc->field_of_view_modifier;
-    SIMD_FLOAT simd_y_multiplier = simd_set_float(y_multiplier);
-    float z_multiplier = (pjc->far / (pjc->far - pjc->near));
-    SIMD_FLOAT simd_z_multiplier = simd_set_float(z_multiplier);
-    float z_addition = (1.0f * (-pjc->far * pjc->near) /
-        (pjc->far - pjc->near));
-    SIMD_FLOAT simd_z_addition   = simd_set_float(z_addition);
-    
-    for (uint32_t i = 0; i < vertices_size; i += SIMD_FLOAT_WIDTH) {
-        SIMD_FLOAT simd_vertices_x = simd_load_floats(vertices_x + i);
-        SIMD_FLOAT simd_vertices_y = simd_load_floats(vertices_y + i);
-        SIMD_FLOAT simd_vertices_z = simd_load_floats(vertices_z + i);
-        
-        simd_vertices_x = simd_mul_floats(simd_vertices_x, simd_x_multiplier);
-        simd_vertices_y = simd_mul_floats(simd_vertices_y, simd_y_multiplier);
-        simd_vertices_z = simd_mul_floats(simd_vertices_z, simd_z_multiplier);
-        simd_vertices_z = simd_add_floats(simd_vertices_z, simd_z_addition);
-        
-        simd_store_floats(vertices_x + i, simd_vertices_x);
-        simd_store_floats(vertices_y + i, simd_vertices_y);
-        simd_store_floats(vertices_z + i, simd_vertices_z);
-    }
-}
-
 zTriangle __attribute__((no_instrument_function))
 x_rotate_ztriangle(
     const zTriangle * input,
@@ -829,6 +772,10 @@ x_rotate_ztriangle(
     {
         return_value.vertices[i] = x_rotate_zvertex(
             &return_value.vertices[i],
+            angle);
+        
+        return_value.normals[i] = x_rotate_zvertex(
+            &return_value.normals[i],
             angle);
     }
     
@@ -855,6 +802,10 @@ z_rotate_ztriangle(
         return_value.vertices[i] = z_rotate_zvertex(
             &return_value.vertices[i],
             angle);
+        
+        return_value.normals[i] = z_rotate_zvertex(
+            &return_value.normals[i],
+            angle);
     }
     
     return return_value;
@@ -878,6 +829,10 @@ y_rotate_ztriangle(
     {
         return_value.vertices[i] = y_rotate_zvertex(
             &return_value.vertices[i],
+            angle);
+        
+        return_value.normals[i] = y_rotate_zvertex(
+            &return_value.normals[i],
             angle);
     }
     
@@ -927,35 +882,6 @@ static float get_magnitude(zVertex input) {
     return sqrtf(sum_squares);
 }
 
-static SIMD_FLOAT simd_get_magnitudes(
-    const SIMD_FLOAT vertices_x,
-    const SIMD_FLOAT vertices_y,
-    const SIMD_FLOAT vertices_z)
-{    
-    SIMD_FLOAT x_squared = simd_mul_floats(vertices_x, vertices_x);
-    SIMD_FLOAT y_squared = simd_mul_floats(vertices_y, vertices_y);
-    SIMD_FLOAT z_squared = simd_mul_floats(vertices_z, vertices_z);
-    SIMD_FLOAT sum_squares = simd_add_floats(x_squared, y_squared);
-    sum_squares = simd_add_floats(sum_squares, z_squared);
-    
-    return simd_sqrt_floats(sum_squares);
-}
-
-static void simd_normalize_zvertices_inplace(
-    SIMD_FLOAT * simd_vertices_x,
-    SIMD_FLOAT * simd_vertices_y,
-    SIMD_FLOAT * simd_vertices_z)
-{
-    SIMD_FLOAT simd_magnitudes = simd_get_magnitudes(
-        *simd_vertices_x,
-        *simd_vertices_y,
-        *simd_vertices_z);
-    
-    *simd_vertices_x = simd_div_floats(*simd_vertices_x, simd_magnitudes);
-    *simd_vertices_y = simd_div_floats(*simd_vertices_y, simd_magnitudes);
-    *simd_vertices_z = simd_div_floats(*simd_vertices_z, simd_magnitudes);
-}
-
 void normalize_zvertex(
     zVertex * to_normalize)
 {
@@ -963,29 +889,6 @@ void normalize_zvertex(
     to_normalize->x /= magnitude;
     to_normalize->y /= magnitude;
     to_normalize->z /= magnitude;
-}
-
-static SIMD_FLOAT simd_dots_of_vertices(
-    const SIMD_FLOAT simd_vertices_1_x,
-    const SIMD_FLOAT simd_vertices_1_y,
-    const SIMD_FLOAT simd_vertices_1_z,
-    const SIMD_FLOAT simd_vertices_2_x,
-    const SIMD_FLOAT simd_vertices_2_y,
-    const SIMD_FLOAT simd_vertices_2_z)
-{
-    SIMD_FLOAT result = simd_mul_floats(
-        simd_vertices_1_x,
-        simd_vertices_2_x);
-    
-    SIMD_FLOAT vertices_product =  simd_mul_floats(
-        simd_vertices_1_y,
-        simd_vertices_2_y);
-    
-    result = simd_add_floats(result, vertices_product);
-    vertices_product =  simd_mul_floats(simd_vertices_1_z, simd_vertices_2_z);
-    result = simd_add_floats(result, vertices_product);
-    
-    return result;
 }
 
 float get_distance(
@@ -1007,59 +910,6 @@ float distance_to_ztriangle(
         get_distance(p1, p2.vertices[1]) +
         get_distance(p1, p2.vertices[2])) / 3.0f;
 }
-
-//static void simd_get_normals(
-//    const float * vertices_x,
-//    const float * vertices_y,
-//    const float * vertices_z,
-//    const int32_t first_tri_vertex_offset,
-//    SIMD_FLOAT * out_normals_x,
-//    SIMD_FLOAT * out_normals_y,
-//    SIMD_FLOAT * out_normals_z)
-//{
-//    log_assert(first_tri_vertex_offset < 1);
-//    
-//    zVertex vector1;
-//    zVertex vector2;
-//    
-//    for (
-//        int32_t vertex_i = first_tri_vertex_offset;
-//        vertex_i < SIMD_FLOAT_WIDTH;
-//        vertex_i += 3)
-//    {
-//        vector1.x = vertices_x[vertex_i + 1] - vertices_x[vertex_i + 0];
-//        vector1.y = vertices_y[vertex_i + 1] - vertices_y[vertex_i + 0];
-//        vector1.z = vertices_z[vertex_i + 1] - vertices_z[vertex_i + 0];
-//        
-//        vector2.x = vertices_x[vertex_i + 2] - vertices_x[vertex_i + 0];
-//        vector2.y = vertices_y[vertex_i + 2] - vertices_y[vertex_i + 0];
-//        vector2.z = vertices_z[vertex_i + 2] - vertices_z[vertex_i + 0];
-//        
-//        // TODO: calculate a normal for each vertex instead of copying 1st
-//        float cur_tri_normal_x = (vector1.y * vector2.z) - (vector1.z * vector2.y); 
-//        float cur_tri_normal_y = (vector1.z * vector2.x) - (vector1.x * vector2.z);
-//        float cur_tri_normal_z = (vector1.x * vector2.y) - (vector1.y * vector2.x); 
-//        
-//        log_assert(vertex_i + 2 >= 0);
-//        normals_x_buffer[vertex_i+2] = cur_tri_normal_x;
-//        normals_y_buffer[vertex_i+2] = cur_tri_normal_y;
-//        normals_z_buffer[vertex_i+2] = cur_tri_normal_z;
-//        
-//        if (vertex_i + 1 < 0) { continue; }
-//        normals_x_buffer[vertex_i+1] = cur_tri_normal_x;
-//        normals_y_buffer[vertex_i+1] = cur_tri_normal_y;
-//        normals_z_buffer[vertex_i+1] = cur_tri_normal_z;
-//        
-//        if (vertex_i < 0) { continue; }
-//        normals_x_buffer[vertex_i  ] = cur_tri_normal_x;
-//        normals_y_buffer[vertex_i  ] = cur_tri_normal_y;
-//        normals_z_buffer[vertex_i  ] = cur_tri_normal_z;        
-//    }
-//    
-//    *out_normals_x = simd_load_floats(normals_x_buffer);
-//    *out_normals_y = simd_load_floats(normals_y_buffer);
-//    *out_normals_z = simd_load_floats(normals_z_buffer);
-//}
 
 zVertex get_ztriangle_normal(
     const zTriangle * input)
@@ -1087,42 +937,32 @@ zVertex get_ztriangle_normal(
     return normal;
 }
 
-SIMD_FLOAT simd_get_visibility_ratings(
-    const SIMD_FLOAT simd_observer_x,
-    const SIMD_FLOAT simd_observer_y,
-    const SIMD_FLOAT simd_observer_z,
-    SIMD_FLOAT vertices_x,
-    SIMD_FLOAT vertices_y,
-    SIMD_FLOAT vertices_z,
-    SIMD_FLOAT simd_normals_x,
-    SIMD_FLOAT simd_normals_y,
-    SIMD_FLOAT simd_normals_z)
+float dot_of_zvertices(
+    const zVertex * a,
+    const zVertex * b)
 {
-    simd_normalize_zvertices_inplace(
-        &simd_normals_x,
-        &simd_normals_y,
-        &simd_normals_z);
+    return
+        (a->x * b->x) +
+        (a->y * b->y) +
+        (a->z * b->z);
+}
+
+zVertex crossproduct_of_zvertices(
+    const zVertex * a,
+    const zVertex * b)
+{
+    /*
+    cx = aybz − azby
+    cy = azbx − axbz
+    cz = axby − aybx
+    */
+    zVertex result;
     
-    vertices_x = simd_sub_floats(vertices_x, simd_normals_x);
-    vertices_y = simd_sub_floats(vertices_y, simd_normals_y);
-    vertices_z = simd_sub_floats(vertices_z, simd_normals_z);
+    result.x = (a->y * b->z) - (a->z * b->y);
+    result.y = (a->z * b->x) - (a->x * b->z);
+    result.z = (a->x * b->y) - (a->y * b->x);
     
-    vertices_x = simd_sub_floats(vertices_x, simd_observer_x);
-    vertices_y = simd_sub_floats(vertices_y, simd_observer_y);
-    vertices_z = simd_sub_floats(vertices_z, simd_observer_z);
-    
-    simd_normalize_zvertices_inplace(
-        &vertices_x,
-        &vertices_y,
-        &vertices_z);
-    
-    return simd_dots_of_vertices(
-        vertices_x,
-        vertices_y,
-        vertices_z,
-        simd_normals_x,
-        simd_normals_y,
-        simd_normals_z);
+    return result;
 }
 
 void zcamera_move_forward(
@@ -1151,4 +991,304 @@ void zcamera_move_forward(
     to_move->x += final.x;
     to_move->y += final.y;
     to_move->z += final.z;
+}
+
+bool32_t ray_intersects_triangle(
+    const zVertex * ray_origin,
+    const zVertex * ray_direction,
+    const zTriangle * triangle,
+    zVertex * recipient_hit_point)
+{
+    /*
+    Reminder: The plane offset is named 'D' in this explanation:
+    "...and D is the distance from the origin (0, 0, 0) to the
+    plane (if we trace a line from the origin to the plane,
+    parallel to the plane's normal)."
+    "..we know the plane's normal and that the three triangle's
+    vertices (V0, V1, V2) lie in the plane. It is, therefore,
+    possible to compute  D. Any of the three vertices can be
+    chosen. Let's choose V0:
+    float D = -dotProduct(N, v0);"
+    (source https://www.scratchapixel.com
+    */
+    
+    float plane_offset = -1.0f * dot_of_zvertices(
+        &triangle->normals[0],
+        &triangle->vertices[0]);
+    
+    /*
+    We also know that point P is the intersection point of the ray, and the 
+    point lies in the plane. Consequently, we can substitute (x, y, z)
+    for P or O + tR that P is equal to and solve for t:
+    
+    float t = - (dot(N, orig) + D) / dot(N, dir);
+    */
+    float denominator = dot_of_zvertices(
+        &triangle->normals[0],
+        ray_direction);
+    if (denominator < 0.0001f && denominator > -0.0001f) {
+        // the ray doesn't intersect with the triangle's plane,
+        // I think this is always because the ray travels in parallel with the
+        // triangle
+        return false;
+    }
+    
+    float t =
+        (-1.0f * (
+            dot_of_zvertices(&triangle->normals[0], ray_origin) +
+                plane_offset)) /
+            denominator;
+    
+    // if t is < 0, the triangle's plane must be behind us which counts as
+    // a miss
+    if (t <= 0.0f) {
+        return false;
+    }
+    
+    // We now have computed t, which we can use to calculate the position of P:
+    // Vec3f Phit = orig + t * dir;
+    recipient_hit_point->x = ray_origin->x + (t * ray_direction->x);
+    recipient_hit_point->y = ray_origin->y + (t * ray_direction->y);
+    recipient_hit_point->z = ray_origin->z + (t * ray_direction->z);
+    
+    /*
+    Now that we have found the point P, which is the point where the ray and
+    the plane intersect, we still have to find out if P is inside the triangle
+    (in which case the ray intersects the triangle) or if P is outside (in
+    which case the rays misses the triangle)
+    
+    to find out if P is inside the triangle, we can test if the dot product of
+    the vector along the edge and the vector defined by the first vertex of the
+    tested edge and P is positive (meaning P is on the left side of the edge).
+    If P is on the left of all three edges, then P is inside the triangle.
+    
+    pseudocode:
+    Vec3f edge0 = v1 - v0;
+    Vec3f edge1 = v2 - v1;
+    Vec3f edge2 = v0 - v2;
+    Vec3f C0 = P - v0;
+    Vec3f C1 = P - v1;
+    Vec3f C2 = P - v2;
+    if (
+        dotProduct(N, crossProduct(edge0, C0)) > 0 && 
+        dotProduct(N, crossProduct(edge1, C1)) > 0 &&
+        dotProduct(N, crossProduct(edge2, C2)) > 0)
+    {
+        return true; // P is inside the triangle
+    }
+    */
+    zVertex edge0;
+    edge0.x = triangle->vertices[1].x - triangle->vertices[0].x;
+    edge0.y = triangle->vertices[1].y - triangle->vertices[0].y;
+    edge0.z = triangle->vertices[1].z - triangle->vertices[0].z;
+    
+    zVertex edge1;
+    edge1.x = triangle->vertices[2].x - triangle->vertices[1].x;
+    edge1.y = triangle->vertices[2].y - triangle->vertices[1].y;
+    edge1.z = triangle->vertices[2].z - triangle->vertices[1].z;
+    
+    zVertex edge2;
+    edge2.x = triangle->vertices[0].x - triangle->vertices[2].x;
+    edge2.y = triangle->vertices[0].y - triangle->vertices[2].y;
+    edge2.z = triangle->vertices[0].z - triangle->vertices[2].z;
+    
+    zVertex C0;
+    C0.x = recipient_hit_point->x - triangle->vertices[0].x;
+    C0.y = recipient_hit_point->y - triangle->vertices[0].y;
+    C0.z = recipient_hit_point->z - triangle->vertices[0].z;
+    
+    zVertex C1;
+    C1.x = recipient_hit_point->x - triangle->vertices[1].x;
+    C1.y = recipient_hit_point->y - triangle->vertices[1].y;
+    C1.z = recipient_hit_point->z - triangle->vertices[1].z;
+    
+    zVertex C2;
+    C2.x = recipient_hit_point->x - triangle->vertices[2].x;
+    C2.y = recipient_hit_point->y - triangle->vertices[2].y;
+    C2.z = recipient_hit_point->z - triangle->vertices[2].z;
+    
+    zVertex cross0 = crossproduct_of_zvertices(&edge0, &C0);
+    zVertex cross1 = crossproduct_of_zvertices(&edge1, &C1);
+    zVertex cross2 = crossproduct_of_zvertices(&edge2, &C2);
+    
+    if (
+        dot_of_zvertices(
+            &triangle->normals[0],
+            &cross0) > 0.0f &&
+        dot_of_zvertices(
+            &triangle->normals[0],
+            &cross1) > 0.0f &&
+        dot_of_zvertices(
+            &triangle->normals[0],
+            &cross2) > 0.0f)
+    {
+        // TODO: remove debug asserts
+        float vertex_0_to_hit = get_distance(
+            *recipient_hit_point,
+            triangle->vertices[0]);
+        float vertex_1_to_hit = get_distance(
+            *recipient_hit_point,
+            triangle->vertices[1]);
+        float vertex_2_to_hit = get_distance(
+            *recipient_hit_point,
+            triangle->vertices[2]);
+        log_assert(vertex_0_to_hit < 0.8f);
+        log_assert(vertex_1_to_hit < 0.8f);
+        log_assert(vertex_2_to_hit < 0.8f);
+        
+        return true;
+    }
+    
+    return false;
+}
+
+bool32_t ray_intersects_zpolygon(
+    const zVertex * ray_origin,
+    const zVertex * ray_direction,
+    const zPolygon * mesh,
+    zVertex * recipient_hit_point)
+{
+    if (mesh->deleted)
+    {
+        return false;
+    }
+    
+    for (
+        uint32_t tri_i = 0;
+        tri_i < mesh->triangles_size;
+        tri_i++)
+    {
+        zTriangle triangle;
+        for (uint32_t m = 0; m < 3; m++) {
+            triangle.vertices[m] =
+                mesh->triangles[tri_i].vertices[m];
+            triangle.normals[m] =
+                mesh->triangles[tri_i].normals[m];
+        }
+        
+        x_rotate_ztriangle(&triangle, mesh->x_angle);
+        y_rotate_ztriangle(&triangle, mesh->y_angle);
+        z_rotate_ztriangle(&triangle, mesh->z_angle);
+        
+        for (uint32_t m = 0; m < 3; m++) {
+            triangle.vertices[m].x += mesh->x;
+            triangle.vertices[m].y += mesh->y;
+            triangle.vertices[m].z += mesh->z;
+        }
+        
+        float dist_to_raypos = get_distance(
+            *ray_origin,
+            triangle.vertices[0]);
+        
+        float lowest_hit_dist = FLOAT32_MAX;
+        
+        if (dist_to_raypos < lowest_hit_dist) {
+            
+            bool32_t ray_intersects = ray_intersects_triangle(
+                /* const zVertex * ray_origin: */
+                    ray_origin,
+                /* const zVertex * ray_direction: */
+                    ray_direction,
+                /* const zTriangle * triangle: */
+                    &triangle,
+                /* collision_point: */
+                    recipient_hit_point);
+            
+            if (ray_intersects) {
+                lowest_hit_dist = dist_to_raypos;
+                return true; // no need to check other triangles in this zpoly
+            }
+        }
+    }
+    
+    return false;
+}
+
+int32_t find_touchable_from_xy(
+    const float x,
+    const float y)
+{
+    zVertex ray_position;
+    ray_position.x = camera.x + x;
+    ray_position.y = camera.y + y;
+    ray_position.z = camera.z;
+    
+    zVertex camera_direction;
+    camera_direction.x = 0.0f;
+    camera_direction.y = 0.0f;
+    camera_direction.z = 1.0f;
+    
+    camera_direction = x_rotate_zvertex(&camera_direction, camera.x_angle);
+    camera_direction = y_rotate_zvertex(&camera_direction, camera.y_angle);
+    normalize_zvertex(&camera_direction);
+    
+    float lowest_hit_dist = FLOAT32_MAX;
+    int32_t return_value = -1;
+    
+    for (
+        uint32_t zp_i = 0;
+        zp_i < zpolygons_to_render_size;
+        zp_i++)
+    {        
+        for (
+            uint32_t tri_i = 0;
+            tri_i < zpolygons_to_render[zp_i].triangles_size;
+            tri_i++)
+        {
+            if (zpolygons_to_render[zp_i].deleted ||
+                zpolygons_to_render[zp_i].touchable_id < 0)
+            {
+                continue;
+            }
+            
+            zTriangle triangle;
+            for (uint32_t m = 0; m < 3; m++) {
+                triangle.vertices[m].x =
+                    zpolygons_to_render[zp_i].triangles[tri_i].vertices[m].x;
+                triangle.vertices[m].y =
+                    zpolygons_to_render[zp_i].triangles[tri_i].vertices[m].y;
+                triangle.vertices[m].z =
+                    zpolygons_to_render[zp_i].triangles[tri_i].vertices[m].z;
+                triangle.normals[m] =
+                    zpolygons_to_render[zp_i].triangles[tri_i].normals[m];
+            }
+            
+            x_rotate_ztriangle(&triangle, zpolygons_to_render[zp_i].x_angle);
+            y_rotate_ztriangle(&triangle, zpolygons_to_render[zp_i].y_angle);
+            z_rotate_ztriangle(&triangle, zpolygons_to_render[zp_i].z_angle);
+            
+            for (uint32_t m = 0; m < 3; m++) {
+                triangle.vertices[m].x += zpolygons_to_render[zp_i].x;
+                triangle.vertices[m].y += zpolygons_to_render[zp_i].y;
+                triangle.vertices[m].z += zpolygons_to_render[zp_i].z;
+            }
+            
+            float dist_to_raypos = get_distance(
+                ray_position,
+                triangle.vertices[0]);
+            
+            if (dist_to_raypos < lowest_hit_dist) {
+                
+                zVertex point_of_collision;
+                
+                bool32_t ray_intersects = ray_intersects_triangle(
+                    /* const zVertex * ray_origin: */
+                        &ray_position,
+                    /* const zVertex * ray_direction: */
+                        &camera_direction,
+                    /* const zTriangle * triangle: */
+                        &triangle,
+                    /* collision_point: */
+                        &point_of_collision);
+                
+                if (ray_intersects) {
+                    lowest_hit_dist = dist_to_raypos;
+                    return_value = zpolygons_to_render[zp_i].touchable_id;
+                    break; // no need to check other triangles in this zpoly
+                }
+            }
+        }
+    }
+    
+    return return_value;
 }

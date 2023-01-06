@@ -381,7 +381,7 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
     }
     delete_texquad_object(label_object_id);
     
-    font_height = 12.0f;
+    font_height = 16.0f;
     font_ignore_lighting = true;
     request_label_renderable(
         /* with_id               : */ label_object_id,

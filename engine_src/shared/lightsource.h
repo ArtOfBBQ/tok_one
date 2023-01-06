@@ -81,7 +81,7 @@ typedef struct zLightSource {
 extern zLightSource * zlights_to_apply;
 extern uint32_t zlights_to_apply_size;
 
-// void delete_lights_with_object_id(uint32_t object_id);
+void request_zlightsource(zLightSource * to_request);
 
 void clean_deleted_lights(void);
 

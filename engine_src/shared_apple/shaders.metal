@@ -94,6 +94,9 @@ vertex_shader(
         input_array[vertex_i].z,
         1.0f);
     
+    mesh_vertices *= input_array[vertex_i].scale_factor;
+    mesh_vertices[3] = 1.0f;
+    
     float4 mesh_normals = vector_float4(
         input_array[vertex_i].normal_x,
         input_array[vertex_i].normal_y,
@@ -107,23 +110,46 @@ vertex_shader(
         0.0f);
     
     // rotate vertices
-    float4 x_rotated_vertices = x_rotate(mesh_vertices, input_array[vertex_i].x_angle);
-    float4 x_rotated_normals = x_rotate(mesh_normals, input_array[vertex_i].x_angle);
-    float4 y_rotated_vertices = y_rotate(x_rotated_vertices, input_array[vertex_i].y_angle);
-    float4 y_rotated_normals = y_rotate(x_rotated_normals, input_array[vertex_i].y_angle);
-    float4 z_rotated_vertices = z_rotate(y_rotated_vertices, input_array[vertex_i].z_angle);
-    float4 z_rotated_normals = z_rotate(y_rotated_normals, input_array[vertex_i].z_angle);
+    float4 x_rotated_vertices = x_rotate(
+        mesh_vertices,
+        input_array[vertex_i].x_angle);
+    float4 x_rotated_normals  = x_rotate(
+        mesh_normals,
+        input_array[vertex_i].x_angle);
+    float4 y_rotated_vertices = y_rotate(
+        x_rotated_vertices,
+        input_array[vertex_i].y_angle);
+    float4 y_rotated_normals  = y_rotate(
+        x_rotated_normals,
+        input_array[vertex_i].y_angle);
+    float4 z_rotated_vertices = z_rotate(
+        y_rotated_vertices,
+        input_array[vertex_i].z_angle);
+    float4 z_rotated_normals  = z_rotate(
+        y_rotated_normals,
+        input_array[vertex_i].z_angle);
     
     // translate to world position
     float4 translated_pos = z_rotated_vertices + parent_mesh_position;
-    float4 camera_translated_pos = translated_pos - camera_position;
     
-    // rotate around camera
-    float4 cam_x_rotated = x_rotate(camera_translated_pos, -camera->x_angle);
-    float4 cam_y_rotated = x_rotate(cam_x_rotated, -camera->y_angle);
-    float4 cam_z_rotated = z_rotate(cam_y_rotated, -camera->z_angle);
-    
-    out.position = cam_z_rotated;
+    if (input_array[vertex_i].ignore_camera < 1.0f) {
+        float4 camera_translated_pos = translated_pos - camera_position;
+        
+        // rotate around camera
+        float4 cam_x_rotated = x_rotate(
+            camera_translated_pos,
+            -camera->x_angle);
+        float4 cam_y_rotated = y_rotate(
+            cam_x_rotated,
+            -camera->y_angle);
+        float4 cam_z_rotated = z_rotate(
+            cam_y_rotated,
+            -camera->z_angle);
+        
+        out.position = cam_z_rotated;
+    } else {
+        out.position = translated_pos;
+    }
     
     // projection
     out.position[0] *= projection_constants->x_multiplier;
@@ -146,6 +172,18 @@ vertex_shader(
         1.0f);
     
     out.lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    
+    out.texturearray_i = input_array[vertex_i].texturearray_i;
+    out.texture_i = input_array[vertex_i].texture_i;
+    out.texture_coordinate = vector_float2(
+        input_array[vertex_i].uv[0],
+        input_array[vertex_i].uv[1]);
+    
+    if (input_array[vertex_i].ignore_lighting > 0.0f) {
+        out.lighting += input_array[vertex_i].ignore_lighting;
+        return out;
+    }
+    
     for (
         uint32_t i = 0;
         i < light_collection->lights_size;
@@ -185,13 +223,7 @@ vertex_shader(
             (light_collection->diffuse[i] * 3.0f) *
             visibility_rating);
     }
-    
-    out.texturearray_i = input_array[vertex_i].texturearray_i;
-    out.texture_i = input_array[vertex_i].texture_i;
-    out.texture_coordinate = vector_float2(
-        input_array[vertex_i].uv[0],
-        input_array[vertex_i].uv[1]);
-    
+        
     clamp(out.lighting, 0.15f, 1.0f);
     
     return out;
@@ -200,7 +232,8 @@ vertex_shader(
 fragment float4
 fragment_shader(
     RasterizerPixel in [[stage_in]],
-    array<texture2d_array<half>, TEXTUREARRAYS_SIZE> color_textures [[texture(0)]])
+    array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
+        color_textures[[ texture(0) ]])
 {
     float4 out_color = in.color;
     
@@ -218,9 +251,9 @@ fragment_shader(
         // Sample the texture to obtain a color
         const half4 color_sample =
         color_textures[in.texturearray_i].sample(
-                                                 textureSampler,
-                                                 in.texture_coordinate, 
-                                                 in.texture_i);
+            textureSampler,
+            in.texture_coordinate, 
+            in.texture_i);
         float4 texture_sample = float4(color_sample);
         
         out_color *= texture_sample * in.lighting;

@@ -8,6 +8,19 @@ zCamera camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 zLightSource * zlights_to_apply = NULL;
 uint32_t zlights_to_apply_size = 0;
 
+void request_zlightsource(zLightSource * to_request)
+{
+    for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
+        if (zlights_to_apply[i].deleted) {
+            zlights_to_apply[i] = *to_request;
+            return;
+        }
+    }
+    
+    zlights_to_apply[zlights_to_apply_size] = *to_request;
+    zlights_to_apply_size += 1;
+}
+
 zVertex x_rotate_zvertex(
     const zVertex * input,
     const float angle)
@@ -141,22 +154,25 @@ void project_float4_to_2d_inplace(
 
 void copy_lights(
     GPU_LightCollection * lights_for_gpu)
-{    
+{
+    lights_for_gpu->lights_size = 0;
     for (uint32_t i = 0; i < zlights_to_apply_size; i++)
     {
-        lights_for_gpu->light_x[i]   = zlights_to_apply[i].x;
-        lights_for_gpu->light_y[i]   = zlights_to_apply[i].y;
-        lights_for_gpu->light_z[i]   = zlights_to_apply[i].z;
-        lights_for_gpu->red[i]       = zlights_to_apply[i].RGBA[0];
-        lights_for_gpu->green[i]     = zlights_to_apply[i].RGBA[1];
-        lights_for_gpu->blue[i]      = zlights_to_apply[i].RGBA[2];
-        
-        lights_for_gpu->ambient[i]   = zlights_to_apply[i].ambient; 
-        lights_for_gpu->diffuse[i]   = zlights_to_apply[i].diffuse;
-        
-        lights_for_gpu->reach[i]     = zlights_to_apply[i].reach;
-        
-        lights_for_gpu->lights_size += 1;
+        if (!zlights_to_apply[i].deleted) {
+            lights_for_gpu->light_x[lights_for_gpu->lights_size]   = zlights_to_apply[i].x;
+            lights_for_gpu->light_y[lights_for_gpu->lights_size]   = zlights_to_apply[i].y;
+            lights_for_gpu->light_z[lights_for_gpu->lights_size]   = zlights_to_apply[i].z;
+            lights_for_gpu->red[lights_for_gpu->lights_size]       = zlights_to_apply[i].RGBA[0];
+            lights_for_gpu->green[lights_for_gpu->lights_size]     = zlights_to_apply[i].RGBA[1];
+            lights_for_gpu->blue[lights_for_gpu->lights_size]      = zlights_to_apply[i].RGBA[2];
+            
+            lights_for_gpu->ambient[lights_for_gpu->lights_size]   = zlights_to_apply[i].ambient; 
+            lights_for_gpu->diffuse[lights_for_gpu->lights_size]   = zlights_to_apply[i].diffuse;
+            
+            lights_for_gpu->reach[lights_for_gpu->lights_size]     = zlights_to_apply[i].reach;
+            
+            lights_for_gpu->lights_size += 1;
+        }
     }
 }
 

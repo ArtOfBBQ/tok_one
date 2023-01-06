@@ -17,6 +17,7 @@ float screenspace_height_to_height(const float screenspace_height);
 float screenspace_width_to_width(const float screenspace_width);
 
 extern GPU_ProjectionConstants projection_constants;
+
 void init_projection_constants(void);
 
 #endif

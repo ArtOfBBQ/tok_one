@@ -91,25 +91,28 @@ NSWindowWithCustomResponder: NSWindow
     @autoreleasepool {
     NSPoint screenspace_location = [NSEvent mouseLocation];
     
+    const float screenspace_x =
+        (float)screenspace_location.x
+            - platform_get_current_window_left();
+    const float screenspace_y =
+        (float)screenspace_location.y
+                - platform_get_current_window_bottom();
+    
     register_interaction(
         /* interaction : */
             &previous_leftclick_start,
         /* screenspace_x: */
-            (float)screenspace_location.x
-                - platform_get_current_window_left(),
+            screenspace_x,
         /* screenspace_y: */
-            (float)screenspace_location.y
-                - platform_get_current_window_bottom());
+            screenspace_y);
     
     register_interaction(
         /* interaction : */
             &previous_touch_or_leftclick_start,
         /* screenspace_x: */
-            (float)screenspace_location.x
-                - platform_get_current_window_left(),
+            screenspace_x,
         /* screenspace_y: */
-            (float)screenspace_location.y
-                - platform_get_current_window_bottom());
+            screenspace_y);
     }
 }
 

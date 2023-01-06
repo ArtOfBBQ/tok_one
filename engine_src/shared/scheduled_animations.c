@@ -105,13 +105,6 @@ void request_scheduled_animation(
                 found_target = true;
             }
         }
-        
-        if (!found_target) {
-            log_append("WARNING: requested scheduled animation targeting object: ");
-            log_append_int(to_add->affected_object_id);
-            log_append_char('\n');
-            log_append_char('\n');
-        }
     }
     to_add->remaining_microseconds = to_add->duration_microseconds;
     
@@ -534,11 +527,6 @@ static void resolve_single_animation_effects(
                 (anim->delta_scale_per_second *
                     elapsed_this_run) / 1000000;
         } else {
-            log_append("scale animation scaling object_id: ");
-            log_append_int(anim->affected_object_id);
-            log_append(" to scale: ");
-            log_append_float(anim->final_scale);
-            log_append_char('\n');
             float diff_scale =
                 anim->final_scale - zpolygons_to_render[zp_i].scale_factor;
             zpolygons_to_render[zp_i].scale_factor +=
@@ -572,13 +560,7 @@ static void resolve_single_animation_effects(
                 }
             }
         }
-    }
-    
-    if (!found_at_least_one && anim->clientlogic_callback_when_finished_id < 0 && anim->runs != 0) {
-        log_append("WARNING: animation targeting object_id: ");
-        log_append_int(anim->affected_object_id);
-        log_append(" failed to find any viable targets and is being retired!\n");
-    }
+    }    
 }
 
 void resolve_animation_effects(const uint64_t microseconds_elapsed) {
@@ -698,7 +680,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                     if (
                         texquads_to_render[tq_i].object_id ==
                             anim->affected_object_id)
-                    {                        
+                    {                  
                         texquads_to_render[tq_i].deleted = true;
                         texquads_to_render[tq_i].visible = false;
                         texquads_to_render[tq_i].texturearray_i = -1;

@@ -82,7 +82,13 @@ void hardware_render(
                     zpolygons_to_render[zp_i].triangles[tri_i].vertices[m].uv[0];
                 next_gpu_workload[*next_workload_size].uv[1] =
                     zpolygons_to_render[zp_i].triangles[tri_i].vertices[m].uv[1];
-                                
+                next_gpu_workload[*next_workload_size].ignore_lighting =
+                    zpolygons_to_render[zp_i].ignore_lighting;
+                next_gpu_workload[*next_workload_size].scale_factor =
+                    zpolygons_to_render[zp_i].scale_factor;
+                next_gpu_workload[*next_workload_size].ignore_camera =
+                    zpolygons_to_render[zp_i].ignore_camera;
+                
                 *next_workload_size += 1;
                 assert(*next_workload_size - 1 < MAX_VERTICES_PER_BUFFER);
             }
@@ -136,6 +142,12 @@ void hardware_render(
             texquads_to_render[tq_i].RGBA[2];
         next_gpu_workload[*next_workload_size].RGBA[3] =
             texquads_to_render[tq_i].RGBA[3];
+        next_gpu_workload[*next_workload_size].ignore_lighting =
+            texquads_to_render[tq_i].ignore_lighting;
+        next_gpu_workload[*next_workload_size].scale_factor =
+            texquads_to_render[tq_i].scale_factor;
+        next_gpu_workload[*next_workload_size].ignore_camera =
+            texquads_to_render[tq_i].ignore_camera;
         // top right vertex
         next_gpu_workload[*next_workload_size + 1].x = offset_right - offset_mid_x;
         next_gpu_workload[*next_workload_size + 1].y = offset_top - offset_mid_y;
@@ -164,6 +176,12 @@ void hardware_render(
             texquads_to_render[tq_i].RGBA[2];
         next_gpu_workload[*next_workload_size + 1].RGBA[3] =
             texquads_to_render[tq_i].RGBA[3];
+        next_gpu_workload[*next_workload_size + 1].ignore_lighting =
+            texquads_to_render[tq_i].ignore_lighting;
+        next_gpu_workload[*next_workload_size + 1].scale_factor =
+            texquads_to_render[tq_i].scale_factor;
+        next_gpu_workload[*next_workload_size + 1].ignore_camera =
+            texquads_to_render[tq_i].ignore_camera;
         // bottom left vertex
         next_gpu_workload[*next_workload_size + 2].x = offset_left - offset_mid_x;
         next_gpu_workload[*next_workload_size + 2].y = offset_bottom - offset_mid_y;
@@ -192,6 +210,12 @@ void hardware_render(
             texquads_to_render[tq_i].RGBA[2];
         next_gpu_workload[*next_workload_size + 2].RGBA[3] =
             texquads_to_render[tq_i].RGBA[3];
+        next_gpu_workload[*next_workload_size + 2].ignore_lighting =
+            texquads_to_render[tq_i].ignore_lighting;
+        next_gpu_workload[*next_workload_size + 2].scale_factor =
+            texquads_to_render[tq_i].scale_factor;
+        next_gpu_workload[*next_workload_size + 2].ignore_camera =
+            texquads_to_render[tq_i].ignore_camera;
         // top right vertex
         next_gpu_workload[*next_workload_size + 3].x = offset_right - offset_mid_x;
         next_gpu_workload[*next_workload_size + 3].y = offset_top - offset_mid_y;
@@ -220,6 +244,12 @@ void hardware_render(
             texquads_to_render[tq_i].RGBA[2];
         next_gpu_workload[*next_workload_size + 3].RGBA[3] =
             texquads_to_render[tq_i].RGBA[3];
+        next_gpu_workload[*next_workload_size + 3].ignore_lighting =
+            texquads_to_render[tq_i].ignore_lighting;
+        next_gpu_workload[*next_workload_size + 3].scale_factor =
+            texquads_to_render[tq_i].scale_factor;
+        next_gpu_workload[*next_workload_size + 3].ignore_camera =
+            texquads_to_render[tq_i].ignore_camera;
         // bottom right vertex
         next_gpu_workload[*next_workload_size + 4].x = offset_right - offset_mid_x;
         next_gpu_workload[*next_workload_size + 4].y = offset_bottom - offset_mid_y;
@@ -248,6 +278,12 @@ void hardware_render(
             texquads_to_render[tq_i].RGBA[2];
         next_gpu_workload[*next_workload_size + 4].RGBA[3] =
             texquads_to_render[tq_i].RGBA[3];
+        next_gpu_workload[*next_workload_size + 4].ignore_lighting =
+            texquads_to_render[tq_i].ignore_lighting;
+        next_gpu_workload[*next_workload_size + 4].scale_factor =
+            texquads_to_render[tq_i].scale_factor;
+        next_gpu_workload[*next_workload_size + 4].ignore_camera =
+            texquads_to_render[tq_i].ignore_camera;
         // bottom left vertex
         next_gpu_workload[*next_workload_size + 5].x = offset_left - offset_mid_x;
         next_gpu_workload[*next_workload_size + 5].y = offset_bottom - offset_mid_y;
@@ -276,6 +312,12 @@ void hardware_render(
             texquads_to_render[tq_i].RGBA[2];
         next_gpu_workload[*next_workload_size + 5].RGBA[3] =
             texquads_to_render[tq_i].RGBA[3];
+        next_gpu_workload[*next_workload_size + 5].ignore_lighting =
+            texquads_to_render[tq_i].ignore_lighting;
+        next_gpu_workload[*next_workload_size + 5].scale_factor =
+            texquads_to_render[tq_i].scale_factor;
+        next_gpu_workload[*next_workload_size + 5].ignore_camera =
+            texquads_to_render[tq_i].ignore_camera;
         
         *next_workload_size += 6;
     }

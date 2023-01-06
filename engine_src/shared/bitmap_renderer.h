@@ -30,7 +30,7 @@ exist.
 extern "C" {
 #endif
 
-#define TEXQUADS_TO_RENDER_ARRAYSIZE 2000
+#define TEXQUADS_TO_RENDER_ARRAYSIZE 3000
 extern TexQuad * texquads_to_render;
 extern uint32_t texquads_to_render_size;
 

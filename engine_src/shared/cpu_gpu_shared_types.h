@@ -18,8 +18,11 @@ typedef struct GPU_Vertex {
     float normal_x;
     float normal_y;
     float normal_z;
+    float scale_factor;
     float uv  [2];
     float RGBA[4];
+    float ignore_lighting;
+    float ignore_camera;
     int   texturearray_i; // -1 for no texture
     int   texture_i;      // -1 for no texture
     int   touchable_id;
@@ -56,6 +59,15 @@ typedef struct GPU_ProjectionConstants {
     float x_multiplier;
     float y_multiplier;
 } GPU_ProjectionConstants;
-//#pragma pack(pop)
+
+// trying this for storing which pixels are associated with which touchable_id
+// after all rotation/translation/projection is finished
+#define MAX_SCREEN_WIDTH 4000
+#define MAX_SCREEN_HEIGHT 3000
+typedef struct GPU_TouchablePixels {
+    int touchable_id[MAX_SCREEN_WIDTH * MAX_SCREEN_HEIGHT];
+} GPU_TouchablePixels;
+// #pragma pack(pop)
 
 #endif
+

@@ -1,5 +1,5 @@
-#ifndef VERTEX_BUFFER_TYPES_H
-#define VERTEX_BUFFER_TYPES_H
+#ifndef CPU_TO_GPU_TYPES_H
+#define CPU_TO_GPU_TYPES_H
 
 #define MAX_VERTICES_PER_BUFFER 400000 
 #define MAX_LIGHTS_PER_BUFFER 100
@@ -17,6 +17,7 @@ typedef struct GPUDataForSingleFrame
     GPU_LightCollection * light_collection;
     GPU_Camera * camera;
     GPU_ProjectionConstants * projection_constants;
+    GPU_TouchablePixels * touchable_pixels;
 } GPUDataForSingleFrame;
 
 typedef struct GPUSharedDataCollection
@@ -25,4 +26,6 @@ typedef struct GPUSharedDataCollection
     GPUDataForSingleFrame triple_buffers[3];
 } GPUSharedDataCollection;
 
-#endif
+extern GPUSharedDataCollection gpu_shared_data_collection;
+
+#endif // CPU_TO_GPU_TYPES_H

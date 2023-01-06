@@ -1,8 +1,5 @@
 #include "draw_triangle.h"
 
-TriangleArea * touchable_triangles;
-uint32_t touchable_triangles_size = 0;
-
 void draw_vertices(
     GPU_Vertex * vertices_recipient,
     uint32_t * vertex_count_recipient,
@@ -18,33 +15,6 @@ void draw_vertices(
         *vertex_count_recipient += 1;
     }
 }
-
-//void register_touchable_triangle(
-//    Vertex * input)
-//{
-//    if (input[0].touchable_id >= 0) {
-//        log_assert(touchable_triangles_size < TOUCHABLE_TRIANGLES_ARRAYSIZE);
-//        log_assert(input[1].touchable_id == input[0].touchable_id);
-//        log_assert(input[2].touchable_id == input[0].touchable_id);
-//        
-//        for (
-//             uint32_t v = 0;
-//             v < 3;
-//             v++)
-//        {
-//            touchable_triangles[touchable_triangles_size]
-//                .viewport_x[v] = input[v].x / input[v].w;
-//            touchable_triangles[touchable_triangles_size]
-//                .viewport_y[v] = input[v].y / input[v].w;
-//            touchable_triangles[touchable_triangles_size]
-//                .touchable_id = input[v].touchable_id;
-//            touchable_triangles[touchable_triangles_size]
-//                .viewport_z[v] = input[v].z;
-//        }
-//        
-//        touchable_triangles_size++;
-//    }
-//}
 
 static float get_triangle_area(
     const float x1,
@@ -104,33 +74,3 @@ static bool32_t point_collides_triangle_area(
     return result;
 }
 
-int32_t find_touchable_at(
-    const float x,
-    const float y)
-{
-    int32_t return_value = -1;
-    float current_z = FLOAT32_MAX;
-    
-    for (
-        int32_t i = (int32_t)(touchable_triangles_size - 1);
-        i >= 0;
-        i--)
-    {
-        float avg_z = (
-            touchable_triangles[i].viewport_z[0] +
-            touchable_triangles[i].viewport_z[1] +
-            touchable_triangles[i].viewport_z[2]) / 3;
-        if (
-            avg_z < current_z &&
-            point_collides_triangle_area(
-                /* normalized_x : */ x,
-                /* normalized_y : */ y,
-                /* TriangleArea * area : */ &touchable_triangles[i]))
-        {
-            current_z = avg_z;
-            return_value = touchable_triangles[i].touchable_id;
-        }
-    }
-    
-    return return_value;
-}

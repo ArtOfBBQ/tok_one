@@ -33,22 +33,11 @@ typedef struct TriangleArea {
     int32_t touchable_id;
 } TriangleArea;
 
-#define TOUCHABLE_TRIANGLES_ARRAYSIZE 30000
-extern TriangleArea * touchable_triangles;
-extern uint32_t touchable_triangles_size;
-
 void draw_vertices(
     GPU_Vertex * vertices_recipient,
     uint32_t * vertex_count_recipient,
     GPU_Vertex * input,
     const uint32_t input_size);
-
-//void register_touchable_triangle(
-//    Vertex * input);
-
-int32_t find_touchable_at(
-    const float normalized_x,
-    const float normalized_y);
 
 #ifdef __cplusplus
 }

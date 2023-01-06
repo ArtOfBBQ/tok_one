@@ -7,6 +7,10 @@ void init_application() {
     
     init_scheduled_animations();
     init_texture_arrays();
+
+    gpu_shared_data_collection.triple_buffers[0].touchable_pixels = NULL;
+    gpu_shared_data_collection.triple_buffers[1].touchable_pixels = NULL;
+    gpu_shared_data_collection.triple_buffers[2].touchable_pixels = NULL;
     
     // initialize font with fontmetrics.dat
     FileBuffer font_metrics_file;
@@ -30,8 +34,6 @@ void init_application() {
         sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
     texquads_to_render = (TexQuad *)malloc_from_unmanaged(
         sizeof(TexQuad) * TEXQUADS_TO_RENDER_ARRAYSIZE);
-    touchable_triangles = (TriangleArea *)malloc_from_unmanaged(
-        sizeof(TriangleArea) * TOUCHABLE_TRIANGLES_ARRAYSIZE);
     
     window_height = platform_get_current_window_height();
     window_width = platform_get_current_window_width();
