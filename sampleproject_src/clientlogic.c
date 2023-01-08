@@ -202,93 +202,24 @@ static void  client_handle_touches_and_leftclicks(
             previous_touch_or_leftclick_end.touchable_id;
         previous_touch_or_leftclick_end.handled = true;
         
-        // let's make a visualization of the ray we're using to check what
-        // we're clicking (because I'm having trouble understanding ray-triangle
-        // intersection)
-        zVertex ray_origin;
-        ray_origin.x = camera.x -1.0f +
-            ((previous_touch_or_leftclick_end.screen_x / window_width) * 2.0f);
-        ray_origin.y = camera.y -1.0f +
-            ((previous_touch_or_leftclick_end.screen_y / window_height) * 2.0f);
-        ray_origin.z = camera.z;
-        
-        zVertex ray_direction;
-        ray_direction.x = 0.0f;
-        ray_direction.y = 0.0f;
-        ray_direction.z = 1.0f;
-        ray_direction = x_rotate_zvertex(&ray_direction, camera.x_angle);
-        ray_direction = y_rotate_zvertex(&ray_direction, camera.y_angle);
-        normalize_zvertex(&ray_direction);
-        
-        uint32_t ray_obj_id = (tok_rand() % 2000) + 500;
-        float ray_size = 0.02f;
-        
-        for (float t = 0.01f; t < 10.0f; t += 0.05f) {
-            TexQuad point_in_ray;
-            construct_texquad(&point_in_ray);
-            point_in_ray.object_id = ray_obj_id;
-            point_in_ray.left_x = ray_origin.x + (ray_direction.x * t);
-            point_in_ray.top_y = ray_origin.y + (ray_direction.y * t);
-            point_in_ray.z = ray_origin.z + (ray_direction.z * t);
-            point_in_ray.width = ray_size;
-            point_in_ray.height = ray_size;
-            point_in_ray.RGBA[0] = 1.0f - (t / 10.0f);
-            point_in_ray.RGBA[1] = t / 10.0f;
-            point_in_ray.RGBA[2] = t / 10.0f;
-            point_in_ray.RGBA[3] = 1.0f;
-            point_in_ray.ignore_lighting = true;
-            request_texquad_renderable(&point_in_ray);
-        }
-        
-        ScheduledAnimation fade_ray;
-        construct_scheduled_animation(&fade_ray);
-        fade_ray.affected_object_id = ray_obj_id;
-        fade_ray.duration_microseconds = 1500000;
-        fade_ray.final_rgba_known[0] = true;
-        fade_ray.final_rgba[0] = 0.0f;
-        fade_ray.final_rgba_known[1] = true;
-        fade_ray.final_rgba[1] = 0.0f;
-        fade_ray.final_rgba_known[2] = true;
-        fade_ray.final_rgba[2] = 0.0f;
-        fade_ray.delete_object_when_finished = true;
-        request_scheduled_animation(&fade_ray);
-        
-        zVertex collision_point;
-        
-        for (
-            uint32_t zp_i = 0;
-            zp_i < zpolygons_to_render_size;
-            zp_i++)
-        {
-            if (
-                ray_intersects_zpolygon(
-                    /* const zVertex * ray_origin: */
-                        &ray_origin,
-                    /* const zVertex * ray_direction: */
-                        &ray_direction,
-                    /* const zPolygon * mesh: */
-                        &zpolygons_to_render[zp_i],
-                    /* zVertex * recipient_hit_point: */
-                        &collision_point))
-            {
-                ScheduledAnimation bump;
-                construct_scheduled_animation(&bump);
-                bump.affected_object_id = zpolygons_to_render[zp_i].object_id;
-                bump.final_scale_known = true;
-                bump.final_scale = 1.3f;
-                bump.duration_microseconds = 150000;
-                
-                ScheduledAnimation unbump;
-                construct_scheduled_animation(&unbump);
-                unbump.affected_object_id = bump.affected_object_id;
-                unbump.final_scale_known = true;
-                unbump.final_scale = 1.0f;
-                unbump.remaining_wait_before_next_run  = 200000;
-                unbump.duration_microseconds = 150000;
-                
-                request_scheduled_animation(&bump);
-                request_scheduled_animation(&unbump);
-            }   
+        if (leftclick_touchable_id >= 0) {
+            ScheduledAnimation bump;
+            construct_scheduled_animation(&bump);
+            bump.affected_object_id = leftclick_touchable_id + 123;
+            bump.final_scale_known = true;
+            bump.final_scale = 1.2f;
+            bump.duration_microseconds = 100000;
+            
+            ScheduledAnimation unbump;
+            construct_scheduled_animation(&unbump);
+            unbump.affected_object_id = bump.affected_object_id;
+            unbump.final_scale_known = true;
+            unbump.final_scale = 1.0f;
+            unbump.duration_microseconds = 100000;
+            unbump.remaining_wait_before_next_run = 100000;
+            
+            request_scheduled_animation(&bump);
+            request_scheduled_animation(&unbump);
         }
     }
 }

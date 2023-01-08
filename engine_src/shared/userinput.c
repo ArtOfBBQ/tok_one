@@ -41,9 +41,10 @@ void register_interaction(
         touch_record != &previous_mouse_move &&
         touch_record != &previous_mouse_or_touch_move)
     {
-        //        touch_record->touchable_id = find_touchable_from_xy(
-        //            -1.0f + ((x / window_width) * 2),
-        //            -1.0f + ((y / window_height) * 2));
+        touch_record->touchable_id = find_touchable_from_xy(
+            -1.0f + ((x / window_width) * 2),
+            -1.0f + ((y / window_height) * 2));
+        printf("touchable updated: %i\n", touch_record->touchable_id);
     }
     
     touch_record->screen_x     = x;

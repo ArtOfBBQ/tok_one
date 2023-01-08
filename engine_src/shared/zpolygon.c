@@ -1147,12 +1147,7 @@ bool32_t ray_intersects_zpolygon(
     const zVertex * ray_direction,
     const zPolygon * mesh,
     zVertex * recipient_hit_point)
-{
-    if (mesh->deleted)
-    {
-        return false;
-    }
-    
+{    
     for (
         uint32_t tri_i = 0;
         tri_i < mesh->triangles_size;
@@ -1208,19 +1203,35 @@ int32_t find_touchable_from_xy(
     const float x,
     const float y)
 {
-    zVertex ray_position;
-    ray_position.x = camera.x + x;
-    ray_position.y = camera.y + y;
-    ray_position.z = camera.z;
+    float clicked_viewport_x = x;
+    float clicked_viewport_y = y;
     
-    zVertex camera_direction;
-    camera_direction.x = 0.0f;
-    camera_direction.y = 0.0f;
-    camera_direction.z = 1.0f;
+    zVertex ray_origin;
+    ray_origin.x = camera.x;
+    ray_origin.y = camera.y;
+    ray_origin.z = camera.z;
     
-    camera_direction = x_rotate_zvertex(&camera_direction, camera.x_angle);
-    camera_direction = y_rotate_zvertex(&camera_direction, camera.y_angle);
-    normalize_zvertex(&camera_direction);
+    // we need a point that's distant, but yet also ends up at the same
+    // screen position as ray_origin
+    // given:
+    // projected_x = x * pjc->x_multiplier / z
+    // and we want projected_x to be ray_origin.x:
+    // ray_origin.x = (x * pjc->x_multiplier) / z
+    // ray_origin.x * z = x * pjc->x_multi
+    // (ray_origin.x * z / pjc->x_multi) = x
+    zVertex distant_point = ray_origin;
+    distant_point.x = (clicked_viewport_x * 100.0f) /
+        projection_constants.x_multiplier;
+    distant_point.y = (clicked_viewport_y * 100.0f) /
+        projection_constants.field_of_view_modifier;
+    distant_point.z = 100.0f;
+    
+    zVertex ray_direction = distant_point;
+    normalize_zvertex(&ray_direction);
+    ray_direction = x_rotate_zvertex(&ray_direction, camera.x_angle);
+    ray_direction = y_rotate_zvertex(&ray_direction, camera.y_angle);
+    ray_direction = z_rotate_zvertex(&ray_direction, camera.z_angle);
+    normalize_zvertex(&ray_direction);
     
     float lowest_hit_dist = FLOAT32_MAX;
     int32_t return_value = -1;
@@ -1229,64 +1240,36 @@ int32_t find_touchable_from_xy(
         uint32_t zp_i = 0;
         zp_i < zpolygons_to_render_size;
         zp_i++)
-    {        
-        for (
-            uint32_t tri_i = 0;
-            tri_i < zpolygons_to_render[zp_i].triangles_size;
-            tri_i++)
+    {
+        if (
+            zpolygons_to_render[zp_i].deleted ||
+            zpolygons_to_render[zp_i].touchable_id < 0)
         {
-            if (zpolygons_to_render[zp_i].deleted ||
-                zpolygons_to_render[zp_i].touchable_id < 0)
-            {
-                continue;
-            }
-            
-            zTriangle triangle;
-            for (uint32_t m = 0; m < 3; m++) {
-                triangle.vertices[m].x =
-                    zpolygons_to_render[zp_i].triangles[tri_i].vertices[m].x;
-                triangle.vertices[m].y =
-                    zpolygons_to_render[zp_i].triangles[tri_i].vertices[m].y;
-                triangle.vertices[m].z =
-                    zpolygons_to_render[zp_i].triangles[tri_i].vertices[m].z;
-                triangle.normals[m] =
-                    zpolygons_to_render[zp_i].triangles[tri_i].normals[m];
-            }
-            
-            x_rotate_ztriangle(&triangle, zpolygons_to_render[zp_i].x_angle);
-            y_rotate_ztriangle(&triangle, zpolygons_to_render[zp_i].y_angle);
-            z_rotate_ztriangle(&triangle, zpolygons_to_render[zp_i].z_angle);
-            
-            for (uint32_t m = 0; m < 3; m++) {
-                triangle.vertices[m].x += zpolygons_to_render[zp_i].x;
-                triangle.vertices[m].y += zpolygons_to_render[zp_i].y;
-                triangle.vertices[m].z += zpolygons_to_render[zp_i].z;
-            }
-            
-            float dist_to_raypos = get_distance(
-                ray_position,
-                triangle.vertices[0]);
-            
-            if (dist_to_raypos < lowest_hit_dist) {
-                
-                zVertex point_of_collision;
-                
-                bool32_t ray_intersects = ray_intersects_triangle(
-                    /* const zVertex * ray_origin: */
-                        &ray_position,
-                    /* const zVertex * ray_direction: */
-                        &camera_direction,
-                    /* const zTriangle * triangle: */
-                        &triangle,
-                    /* collision_point: */
-                        &point_of_collision);
-                
-                if (ray_intersects) {
-                    lowest_hit_dist = dist_to_raypos;
-                    return_value = zpolygons_to_render[zp_i].touchable_id;
-                    break; // no need to check other triangles in this zpoly
-                }
-            }
+            continue;
+        }
+        
+        zVertex point_of_collision;
+        
+        bool32_t ray_intersects = ray_intersects_zpolygon(
+            /* const zVertex * ray_origin: */
+                &ray_origin,
+            /* const zVertex * ray_direction: */
+                &ray_direction,
+            /* const zPolygon * mesh: */
+                &zpolygons_to_render[zp_i],
+            /* collision_point: */
+                &point_of_collision);
+        
+        float distance_to_hit = get_distance(
+            point_of_collision,
+            ray_origin);
+        
+        if (
+            ray_intersects &&
+            distance_to_hit < lowest_hit_dist)
+        {
+            lowest_hit_dist = distance_to_hit;
+            return_value = zpolygons_to_render[zp_i].touchable_id;
         }
     }
     
