@@ -49,7 +49,7 @@ void request_zpolygon_to_render(zPolygon * to_add)
     zpolygons_to_render_size += 1;
 }
 
-void delete_zpolygon_object(const uint32_t with_object_id)
+void delete_zpolygon_object(const int32_t with_object_id)
 {
     for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
         if (zpolygons_to_render[i].object_id == with_object_id) {
@@ -1002,7 +1002,6 @@ bool32_t ray_intersects_triangle(
     float D = -dotProduct(N, v0);"
     (source https://www.scratchapixel.com
     */
-    
     float plane_offset = -1.0f * dot_of_zvertices(
         &triangle->normal,
         &triangle->vertices[0]);
@@ -1113,7 +1112,6 @@ bool32_t ray_intersects_triangle(
             &triangle->normal,
             &cross2) > 0.0f)
     {
-        // TODO: remove debug asserts
         float vertex_0_to_hit = get_distance(
             *recipient_hit_point,
             triangle->vertices[0]);
@@ -1138,7 +1136,7 @@ bool32_t ray_intersects_zpolygon(
     const zVertex * ray_direction,
     const zPolygon * mesh,
     zVertex * recipient_hit_point)
-{    
+{
     for (
         uint32_t tri_i = 0;
         tri_i < mesh->triangles_size;
@@ -1198,10 +1196,10 @@ zPolygon construct_quad(
     float mid_x = left_x + (width  / 2);
     float mid_y = top_y  + (height / 2);
     
-    float left_vertex   = left_x - mid_x;
-    float right_vertex  = mid_x  - left_x;
-    float top_vertex    = mid_y - top_y;
-    float bottom_vertex = top_y - mid_y;
+    float left_vertex     = left_x - mid_x;
+    float right_vertex    = mid_x  - left_x;
+    float top_vertex      = mid_y - top_y;
+    float bottom_vertex   = top_y - mid_y;
     
     float left_uv_coord   = 0.0f;
     float right_uv_coord  = 1.0f;
@@ -1216,67 +1214,67 @@ zPolygon construct_quad(
     // top & left triangle
     // **
     // top left vertex
-    return_value.triangles[0].vertices[0].x = left_vertex;
-    return_value.triangles[0].vertices[0].y = top_vertex;
-    return_value.triangles[0].vertices[0].z = 0.0f;
+    return_value.triangles[0].vertices[0].x     = left_vertex;
+    return_value.triangles[0].vertices[0].y     = top_vertex;
+    return_value.triangles[0].vertices[0].z     = 0.0f;
     return_value.triangles[0].vertices[0].uv[0] = left_uv_coord;
     return_value.triangles[0].vertices[0].uv[1] = top_uv_coord;
     // top right vertex
-    return_value.triangles[0].vertices[1].x = right_vertex;
-    return_value.triangles[0].vertices[1].y = top_vertex;
-    return_value.triangles[0].vertices[1].z = 0.0f;
+    return_value.triangles[0].vertices[1].x     = right_vertex;
+    return_value.triangles[0].vertices[1].y     = top_vertex;
+    return_value.triangles[0].vertices[1].z     = 0.0f;
     return_value.triangles[0].vertices[1].uv[0] = right_uv_coord;
     return_value.triangles[0].vertices[1].uv[1] = top_uv_coord;
     // bottom left vertex
-    return_value.triangles[0].vertices[2].x = left_vertex;
-    return_value.triangles[0].vertices[2].y = bottom_vertex;
-    return_value.triangles[0].vertices[2].z = 0.0f;
+    return_value.triangles[0].vertices[2].x     = left_vertex;
+    return_value.triangles[0].vertices[2].y     = bottom_vertex;
+    return_value.triangles[0].vertices[2].z     = 0.0f;
     return_value.triangles[0].vertices[2].uv[0] = left_uv_coord;
     return_value.triangles[0].vertices[2].uv[1] = bottom_uv_coord;
     
-    return_value.triangles[0].normal.x = 0.0f;
-    return_value.triangles[0].normal.y = 0.0f;
-    return_value.triangles[0].normal.z = 1.0f;
+    return_value.triangles[0].normal.x       = 0.0f;
+    return_value.triangles[0].normal.y       = 0.0f;
+    return_value.triangles[0].normal.z       = 1.0f;
     return_value.triangles[0].texturearray_i = -1;
-    return_value.triangles[0].texture_i = -1;
-    return_value.triangles[0].color[0] = 1.0f;
-    return_value.triangles[0].color[1] = 1.0f;
-    return_value.triangles[0].color[2] = 1.0f;
-    return_value.triangles[0].color[3] = 1.0f;
-    return_value.triangles[0].visible = true;
+    return_value.triangles[0].texture_i      = -1;
+    return_value.triangles[0].color[0]       = 1.0f;
+    return_value.triangles[0].color[1]       = 1.0f;
+    return_value.triangles[0].color[2]       = 1.0f;
+    return_value.triangles[0].color[3]       = 1.0f;
+    return_value.triangles[0].visible        = true;
     
     // **
     // right & bottom triangle
     // **
     // top right vertex
-    return_value.triangles[1].vertices[0].x = right_vertex;
-    return_value.triangles[1].vertices[0].y = top_vertex;
-    return_value.triangles[1].vertices[0].z = 0.0f;
+    return_value.triangles[1].vertices[0].x     = right_vertex;
+    return_value.triangles[1].vertices[0].y     = top_vertex;
+    return_value.triangles[1].vertices[0].z     = 0.0f;
     return_value.triangles[1].vertices[0].uv[0] = right_uv_coord;
     return_value.triangles[1].vertices[0].uv[1] = top_uv_coord;
     // bottom right vertex
-    return_value.triangles[1].vertices[1].x = right_vertex;
-    return_value.triangles[1].vertices[1].y = bottom_vertex;
-    return_value.triangles[1].vertices[1].z = 0.0f;
+    return_value.triangles[1].vertices[1].x     = right_vertex;
+    return_value.triangles[1].vertices[1].y     = bottom_vertex;
+    return_value.triangles[1].vertices[1].z     = 0.0f;
     return_value.triangles[1].vertices[1].uv[0] = right_uv_coord;
     return_value.triangles[1].vertices[1].uv[1] = bottom_uv_coord;
     // bottom left vertex
-    return_value.triangles[1].vertices[2].x = left_vertex;
-    return_value.triangles[1].vertices[2].y = bottom_vertex;
-    return_value.triangles[1].vertices[2].z = 0.0f;
+    return_value.triangles[1].vertices[2].x     = left_vertex;
+    return_value.triangles[1].vertices[2].y     = bottom_vertex;
+    return_value.triangles[1].vertices[2].z     = 0.0f;
     return_value.triangles[1].vertices[2].uv[0] = left_uv_coord;
     return_value.triangles[1].vertices[2].uv[1] = bottom_uv_coord;
     
-    return_value.triangles[1].normal.x = 0.0f;
-    return_value.triangles[1].normal.y = 0.0f;
-    return_value.triangles[1].normal.z = 1.0f;
+    return_value.triangles[1].normal.x       = 0.0f;
+    return_value.triangles[1].normal.y       = 0.0f;
+    return_value.triangles[1].normal.z       = 1.0f;
     return_value.triangles[1].texturearray_i = -1;
-    return_value.triangles[1].texture_i = -1;
-    return_value.triangles[1].color[0] = 1.0f;
-    return_value.triangles[1].color[1] = 1.0f;
-    return_value.triangles[1].color[2] = 1.0f;
-    return_value.triangles[1].color[3] = 1.0f;
-    return_value.triangles[1].visible = true;
+    return_value.triangles[1].texture_i      = -1;
+    return_value.triangles[1].color[0]       = 1.0f;
+    return_value.triangles[1].color[1]       = 1.0f;
+    return_value.triangles[1].color[2]       = 1.0f;
+    return_value.triangles[1].color[3]       = 1.0f;
+    return_value.triangles[1].visible        = true;
     
     return return_value;
 }

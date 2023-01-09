@@ -157,6 +157,9 @@ void request_label_around(
     log_assert(max_width > 0.0f);
     log_assert(with_id >= 0);
     
+    float original_height = font_height;
+    font_height *= z;
+    
     uint32_t max_lines = 100;
     PrefetchedLine lines[max_lines];
     float widest_line_width = 0.0f;
@@ -208,6 +211,7 @@ void request_label_around(
             }
         }
     }
+    
     log_assert(text_to_draw[i] == '\0');
     lines[cur_line_i].end_i = i;
     if (lines[cur_line_i].end_i == lines[cur_line_i].start_i) {
@@ -226,14 +230,15 @@ void request_label_around(
     label.ignore_lighting = font_ignore_lighting;
     label.ignore_camera = ignore_camera;
     label.object_id = with_id;
-    float label_left = mid_x_pixelspace - (widest_line_width / 2);
+    // float label_left = mid_x_pixelspace - (widest_line_width / 2);
     label.x = screenspace_x_to_x(mid_x_pixelspace);
     label.y = screenspace_y_to_y(top_y_pixelspace + ((lines_size * font_height) / 2));
     label.z = z;
+    label.triangles_size = 0;
     
     float cur_y_offset = 0;
     for (uint32_t line_i = 0; line_i < lines_size; line_i++) {
-        float cur_x_offset = (widest_line_width - lines[line_i].width) / 2;
+        float cur_x_offset = -1.0f * ((lines[line_i].width) / 2);
         
         for (
             int32_t j = lines[line_i].start_i;
@@ -272,9 +277,9 @@ void request_label_around(
             }
             
             float letter_x_offset = screenspace_width_to_width(
-                cur_x_offset + get_left_side_bearing(text_to_draw[j]));
+                (cur_x_offset + get_left_side_bearing(text_to_draw[j])));
             float letter_y_offset = screenspace_height_to_height(
-                cur_y_offset - get_y_offset(text_to_draw[j]));
+                (cur_y_offset - get_y_offset(text_to_draw[j])));
             letter.z = 0;
             
             for (uint32_t m = 0; m < 3; m++) {
@@ -285,9 +290,11 @@ void request_label_around(
             }
             
             letter.triangles[0].texturearray_i = font_texturearray_i;
-            letter.triangles[0].texture_i = text_to_draw[j] - '!';
+            letter.triangles[0].texture_i      = text_to_draw[j] - '!';
+            letter.triangles[1].texturearray_i = font_texturearray_i;
+            letter.triangles[1].texture_i      = text_to_draw[j] - '!';
             
-            label.triangles[label.triangles_size] = letter.triangles[0];
+            label.triangles[label.triangles_size    ] = letter.triangles[0];
             label.triangles[label.triangles_size + 1] = letter.triangles[1];
             label.triangles_size += 2;
             
@@ -303,6 +310,8 @@ void request_label_around(
         log_append(text_to_draw);
         log_append_char('\n');
     }
+    
+    font_height = original_height;
 }
 
 void request_label_renderable(
@@ -392,7 +401,8 @@ void request_label_renderable(
             screenspace_width_to_width(
                 cur_x_offset + get_left_side_bearing(text_to_draw[i]));
         float letter_y_offset =
-            screenspace_height_to_height(cur_y_offset - get_y_offset(text_to_draw[i]));
+            screenspace_height_to_height(
+                cur_y_offset - get_y_offset(text_to_draw[i]));
         
         for (uint32_t m = 0; m < 3; m++) {
             letter.triangles[0].vertices[m].x += letter_x_offset;

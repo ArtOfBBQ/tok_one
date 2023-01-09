@@ -30,11 +30,11 @@ void register_interaction(
     uint64_t timestamp = platform_get_current_time_microsecs();
     if (timestamp - touch_record->timestamp < 100000) { return; }
     
-    touch_record->screen_x     = x;
-    touch_record->screen_y     = y;
-    touch_record->timestamp    = timestamp;
+    touch_record->screen_x           = x;
+    touch_record->screen_y           = y;
+    touch_record->timestamp          = timestamp;
     touch_record->checked_touchables = false;
-    touch_record->handled      = false;
+    touch_record->handled            = false;
 }
 
 void register_keyup(uint32_t key_id)

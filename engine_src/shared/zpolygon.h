@@ -63,7 +63,7 @@ void request_zpolygon_to_render(zPolygon * to_add);
 extern zPolygon zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
 extern uint32_t zpolygons_to_render_size;
 
-void delete_zpolygon_object(const uint32_t with_object_id);
+void delete_zpolygon_object(const int32_t with_object_id);
 
 zTriangle
 x_rotate_ztriangle(

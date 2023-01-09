@@ -41,7 +41,11 @@ static int32_t closest_touchable_from_screen_ray(
     float smallest_dist = FLOAT32_MAX;
     zVertex collision_point;
     
-    for (uint32_t zp_i = 0; zp_i < zpolygons_to_render_size; zp_i++) {
+    for (
+        uint32_t zp_i = 0;
+        zp_i < zpolygons_to_render_size;
+        zp_i++)
+    {
         bool32_t hit = ray_intersects_zpolygon(
             &ray_origin,
             &ray_direction,
@@ -54,7 +58,7 @@ static int32_t closest_touchable_from_screen_ray(
             return_value = zpolygons_to_render[zp_i].touchable_id;
         }
     }
-        
+    
     return return_value;
 }
 
