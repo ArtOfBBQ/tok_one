@@ -145,7 +145,6 @@ static float get_next_word_width(const char * text) {
     return return_value;
 }
 
-// TODO: implement without texquads
 void request_label_around(
     const int32_t with_id,
     const char * text_to_draw,
@@ -155,123 +154,155 @@ void request_label_around(
     const float max_width,
     const bool32_t ignore_camera)
 {
-//    log_assert(max_width > 0.0f);
-//    log_assert(with_id >= 0);
-//    
-//    uint32_t max_lines = 100;
-//    PrefetchedLine lines[max_lines];
-//    float widest_line_width = 0.0f;
-//    uint32_t lines_size = 1;
-//    
-//    for (uint32_t i = 0; i < 100; i++) {
-//        lines[i].width = 0.0f;
-//        lines[i].start_i = -1;
-//        lines[i].end_i = -1;
-//    }
-//    
-//    // *********************************************************
-//    // prefetch line widths and which character they start/end
-//    // *********************************************************
-//    uint32_t cur_line_i = 0;
-//    int32_t i = 0;
-//    lines[cur_line_i].start_i = 0;
-//    while (text_to_draw[i] != '\0') {
-//        lines[cur_line_i].width += get_advance_width(text_to_draw[i]);
-//        i++;
-//        
-//        if (text_to_draw[i] == '\n') {
-//            lines[cur_line_i].end_i = i;
-//            lines_size += 1;
-//            cur_line_i += 1;
-//            lines[cur_line_i].start_i = i + 1;
-//            log_assert(cur_line_i < max_lines);
-//            continue;
-//        }
-//        
-//        if (text_to_draw[i] == '\0') {
-//            break;
-//        }
-//        
-//        if (text_to_draw[i] == ' ') {
-//            if (
-//                lines[cur_line_i].width > 0.0f &&
-//                lines[cur_line_i].width
-//                    + get_next_word_width(text_to_draw + i) > max_width)
-//            {
-//                log_assert(lines[cur_line_i].width > 0.0f);
-//                log_assert(lines[cur_line_i].start_i < i);
-//                lines[cur_line_i].end_i = i;
-//                lines_size += 1;
-//                cur_line_i += 1;
-//                lines[cur_line_i].start_i = i + 1;
-//                log_assert(cur_line_i < max_lines);
-//                continue;
-//            }
-//        }
-//    }
-//    log_assert(text_to_draw[i] == '\0');
-//    lines[cur_line_i].end_i = i;
-//    if (lines[cur_line_i].end_i == lines[cur_line_i].start_i) {
-//        lines_size -= 1;
-//    }
-//    
-//    for (uint32_t line_i = 0; line_i < lines_size; line_i++) {
-//        if (lines[line_i].width > widest_line_width) {
-//            widest_line_width = lines[line_i].width;
-//        }
-//    }
-//    log_assert(widest_line_width > 0);
-//    
-//    float cur_y_offset = 0;
-//    for (uint32_t line_i = 0; line_i < lines_size; line_i++) {
-//        float label_left = mid_x_pixelspace - (widest_line_width / 2);
-//        float cur_x_offset = (widest_line_width - lines[line_i].width) / 2;
-//        
-//        for (
-//            int32_t j = lines[line_i].start_i;
-//            j <= lines[line_i].end_i;
-//            j++)
-//        {
-//            if (text_to_draw[j] == '\n') {
-//                continue;
-//            }
-//            
-//            if (text_to_draw[j] == '\0') {
-//                return;
-//            }
-//            
-//            TexQuad letter;
-//            construct_texquad(&letter);
-//            letter.ignore_lighting = font_ignore_lighting;
-//            letter.ignore_camera = ignore_camera;
-//            letter.object_id = with_id;
-//            letter.texturearray_i = font_texturearray_i;
-//            letter.texture_i = text_to_draw[j] - '!';
-//            if (letter.texture_i < 0) {
-//                cur_x_offset += get_advance_width(text_to_draw[j]);
-//                continue;
-//            }
-//            for (
-//                uint32_t rgba_i = 0;
-//                rgba_i < 4;
-//                rgba_i++)
-//            {
-//                letter.RGBA[rgba_i] = font_color[rgba_i];
-//            }
-//            
-//            letter.left_x = label_left;
-//            letter.x_offset = cur_x_offset + get_left_side_bearing(text_to_draw[j]);
-//            letter.top_y = top_y_pixelspace;
-//            letter.y_offset = cur_y_offset - get_y_offset(text_to_draw[j]);
-//            letter.height = screenspace_height_to_height(font_height);
-//            letter.width = screenspace_width_to_width(font_height);
-//            letter.z = z;
-//            
-//            request_texquad_renderable(&letter);
-//            cur_x_offset += get_advance_width(text_to_draw[j]);
-//        }
-//        cur_y_offset -= font_height;
-//    }
+    log_assert(max_width > 0.0f);
+    log_assert(with_id >= 0);
+    
+    uint32_t max_lines = 100;
+    PrefetchedLine lines[max_lines];
+    float widest_line_width = 0.0f;
+    uint32_t lines_size = 1;
+    
+    for (uint32_t i = 0; i < 100; i++) {
+        lines[i].width = 0.0f;
+        lines[i].start_i = -1;
+        lines[i].end_i = -1;
+    }
+    
+    // *********************************************************
+    // prefetch line widths and which character they start/end
+    // *********************************************************
+    uint32_t cur_line_i = 0;
+    int32_t i = 0;
+    lines[cur_line_i].start_i = 0;
+    while (text_to_draw[i] != '\0') {
+        lines[cur_line_i].width += get_advance_width(text_to_draw[i]);
+        i++;
+        
+        if (text_to_draw[i] == '\n') {
+            lines[cur_line_i].end_i = i;
+            lines_size += 1;
+            cur_line_i += 1;
+            lines[cur_line_i].start_i = i + 1;
+            log_assert(cur_line_i < max_lines);
+            continue;
+        }
+        
+        if (text_to_draw[i] == '\0') {
+            break;
+        }
+        
+        if (text_to_draw[i] == ' ') {
+            if (
+                lines[cur_line_i].width > 0.0f &&
+                lines[cur_line_i].width
+                    + get_next_word_width(text_to_draw + i) > max_width)
+            {
+                log_assert(lines[cur_line_i].width > 0.0f);
+                log_assert(lines[cur_line_i].start_i < i);
+                lines[cur_line_i].end_i = i;
+                lines_size += 1;
+                cur_line_i += 1;
+                lines[cur_line_i].start_i = i + 1;
+                log_assert(cur_line_i < max_lines);
+                continue;
+            }
+        }
+    }
+    log_assert(text_to_draw[i] == '\0');
+    lines[cur_line_i].end_i = i;
+    if (lines[cur_line_i].end_i == lines[cur_line_i].start_i) {
+        lines_size -= 1;
+    }
+    
+    for (uint32_t line_i = 0; line_i < lines_size; line_i++) {
+        if (lines[line_i].width > widest_line_width) {
+            widest_line_width = lines[line_i].width;
+        }
+    }
+    log_assert(widest_line_width > 0);
+    
+    zPolygon label;
+    construct_zpolygon(&label);
+    label.ignore_lighting = font_ignore_lighting;
+    label.ignore_camera = ignore_camera;
+    label.object_id = with_id;
+    float label_left = mid_x_pixelspace - (widest_line_width / 2);
+    label.x = screenspace_x_to_x(mid_x_pixelspace);
+    label.y = screenspace_y_to_y(top_y_pixelspace + ((lines_size * font_height) / 2));
+    label.z = z;
+    
+    float cur_y_offset = 0;
+    for (uint32_t line_i = 0; line_i < lines_size; line_i++) {
+        float cur_x_offset = (widest_line_width - lines[line_i].width) / 2;
+        
+        for (
+            int32_t j = lines[line_i].start_i;
+            j <= lines[line_i].end_i;
+            j++)
+        {
+            if (text_to_draw[j] == '\n') {
+                continue;
+            }
+            
+            if (text_to_draw[j] == '\0') {
+                break;
+            }
+            
+            zPolygon letter = construct_quad(
+                 /* const float left_x: */
+                     0,
+                 /* const float top_y: */
+                     0,
+                 /* const float width: */
+                     screenspace_width_to_width(font_height),
+                 /* const float height: */
+                     screenspace_height_to_height(font_height));
+            
+            if ((text_to_draw[j] - '!') < 0) {
+                cur_x_offset += get_advance_width(text_to_draw[j]);
+                continue;
+            }
+            for (
+                uint32_t rgba_i = 0;
+                rgba_i < 4;
+                rgba_i++)
+            {
+                letter.triangles[0].color[rgba_i] = font_color[rgba_i];
+                letter.triangles[1].color[rgba_i] = font_color[rgba_i];
+            }
+            
+            float letter_x_offset = screenspace_width_to_width(
+                cur_x_offset + get_left_side_bearing(text_to_draw[j]));
+            float letter_y_offset = screenspace_height_to_height(
+                cur_y_offset - get_y_offset(text_to_draw[j]));
+            letter.z = 0;
+            
+            for (uint32_t m = 0; m < 3; m++) {
+                letter.triangles[0].vertices[m].x += letter_x_offset;
+                letter.triangles[0].vertices[m].y += letter_y_offset;
+                letter.triangles[1].vertices[m].x += letter_x_offset;
+                letter.triangles[1].vertices[m].y += letter_y_offset;
+            }
+            
+            letter.triangles[0].texturearray_i = font_texturearray_i;
+            letter.triangles[0].texture_i = text_to_draw[j] - '!';
+            
+            label.triangles[label.triangles_size] = letter.triangles[0];
+            label.triangles[label.triangles_size + 1] = letter.triangles[1];
+            label.triangles_size += 2;
+            
+            cur_x_offset += get_advance_width(text_to_draw[j]);
+        }
+        cur_y_offset -= font_height;
+    }
+    
+    if (label.triangles_size > 0) {
+        request_zpolygon_to_render(&label);
+    } else {
+        log_append("Warning: no triangles in label made of text: ");
+        log_append(text_to_draw);
+        log_append_char('\n');
+    }
 }
 
 void request_label_renderable(

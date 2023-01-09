@@ -28,11 +28,8 @@ void request_zpolygon_to_render(zPolygon * to_add)
                 to_add->triangles[tri_i].texture_i);
         }
         
-        zVertex normal = get_ztriangle_normal(&to_add->triangles[tri_i]);
-        normalize_zvertex(&normal);
-        to_add->triangles[tri_i].normals[0] = normal; 
-        to_add->triangles[tri_i].normals[1] = normal;
-        to_add->triangles[tri_i].normals[2] = normal;
+        to_add->triangles[tri_i].normal = get_ztriangle_normal(&to_add->triangles[tri_i]);
+        normalize_zvertex(&to_add->triangles[tri_i].normal);
     }
     
     for (
@@ -787,8 +784,8 @@ x_rotate_ztriangle(
             &return_value.vertices[i],
             angle);
         
-        return_value.normals[i] = x_rotate_zvertex(
-            &return_value.normals[i],
+        return_value.normal = x_rotate_zvertex(
+            &return_value.normal,
             angle);
     }
     
@@ -816,8 +813,8 @@ z_rotate_ztriangle(
             &return_value.vertices[i],
             angle);
         
-        return_value.normals[i] = z_rotate_zvertex(
-            &return_value.normals[i],
+        return_value.normal = z_rotate_zvertex(
+            &return_value.normal,
             angle);
     }
     
@@ -844,8 +841,8 @@ y_rotate_ztriangle(
             &return_value.vertices[i],
             angle);
         
-        return_value.normals[i] = y_rotate_zvertex(
-            &return_value.normals[i],
+        return_value.normal = y_rotate_zvertex(
+            &return_value.normal,
             angle);
     }
     
@@ -1007,7 +1004,7 @@ bool32_t ray_intersects_triangle(
     */
     
     float plane_offset = -1.0f * dot_of_zvertices(
-        &triangle->normals[0],
+        &triangle->normal,
         &triangle->vertices[0]);
     
     /*
@@ -1018,7 +1015,7 @@ bool32_t ray_intersects_triangle(
     float t = - (dot(N, orig) + D) / dot(N, dir);
     */
     float denominator = dot_of_zvertices(
-        &triangle->normals[0],
+        &triangle->normal,
         ray_direction);
     if (denominator < 0.0001f && denominator > -0.0001f) {
         // the ray doesn't intersect with the triangle's plane,
@@ -1029,7 +1026,7 @@ bool32_t ray_intersects_triangle(
     
     float t =
         (-1.0f * (
-            dot_of_zvertices(&triangle->normals[0], ray_origin) +
+            dot_of_zvertices(&triangle->normal, ray_origin) +
                 plane_offset)) /
             denominator;
     
@@ -1107,13 +1104,13 @@ bool32_t ray_intersects_triangle(
     
     if (
         dot_of_zvertices(
-            &triangle->normals[0],
+            &triangle->normal,
             &cross0) > 0.0f &&
         dot_of_zvertices(
-            &triangle->normals[0],
+            &triangle->normal,
             &cross1) > 0.0f &&
         dot_of_zvertices(
-            &triangle->normals[0],
+            &triangle->normal,
             &cross2) > 0.0f)
     {
         // TODO: remove debug asserts
@@ -1147,13 +1144,7 @@ bool32_t ray_intersects_zpolygon(
         tri_i < mesh->triangles_size;
         tri_i++)
     {
-        zTriangle triangle;
-        for (uint32_t m = 0; m < 3; m++) {
-            triangle.vertices[m] =
-                mesh->triangles[tri_i].vertices[m];
-            triangle.normals[m] =
-                mesh->triangles[tri_i].normals[m];
-        }
+        zTriangle triangle = mesh->triangles[tri_i];
         
         x_rotate_ztriangle(&triangle, mesh->x_angle);
         y_rotate_ztriangle(&triangle, mesh->y_angle);
@@ -1243,18 +1234,16 @@ zPolygon construct_quad(
     return_value.triangles[0].vertices[2].uv[0] = left_uv_coord;
     return_value.triangles[0].vertices[2].uv[1] = bottom_uv_coord;
     
-    
-    return_value.triangles[0].normals[0].x = 0.0f;
-    return_value.triangles[0].normals[0].y = 0.0f;
-    return_value.triangles[0].normals[0].z = 1.0f;
-    return_value.triangles[0].normals[1] = return_value.triangles[0].normals[0];
-    return_value.triangles[0].normals[2] = return_value.triangles[0].normals[0];
+    return_value.triangles[0].normal.x = 0.0f;
+    return_value.triangles[0].normal.y = 0.0f;
+    return_value.triangles[0].normal.z = 1.0f;
     return_value.triangles[0].texturearray_i = -1;
     return_value.triangles[0].texture_i = -1;
     return_value.triangles[0].color[0] = 1.0f;
     return_value.triangles[0].color[1] = 1.0f;
     return_value.triangles[0].color[2] = 1.0f;
     return_value.triangles[0].color[3] = 1.0f;
+    return_value.triangles[0].visible = true;
     
     // **
     // right & bottom triangle
@@ -1278,17 +1267,16 @@ zPolygon construct_quad(
     return_value.triangles[1].vertices[2].uv[0] = left_uv_coord;
     return_value.triangles[1].vertices[2].uv[1] = bottom_uv_coord;
     
-    return_value.triangles[1].normals[0].x = 0.0f;
-    return_value.triangles[1].normals[0].y = 0.0f;
-    return_value.triangles[1].normals[0].z = 1.0f;
-    return_value.triangles[1].normals[1] = return_value.triangles[1].normals[0];
-    return_value.triangles[1].normals[2] = return_value.triangles[1].normals[0];
+    return_value.triangles[1].normal.x = 0.0f;
+    return_value.triangles[1].normal.y = 0.0f;
+    return_value.triangles[1].normal.z = 1.0f;
     return_value.triangles[1].texturearray_i = -1;
     return_value.triangles[1].texture_i = -1;
     return_value.triangles[1].color[0] = 1.0f;
     return_value.triangles[1].color[1] = 1.0f;
     return_value.triangles[1].color[2] = 1.0f;
     return_value.triangles[1].color[3] = 1.0f;
+    return_value.triangles[1].visible = true;
     
     return return_value;
 }

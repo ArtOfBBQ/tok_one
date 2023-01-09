@@ -23,7 +23,7 @@ void zcamera_move_forward(
 
 typedef struct zTriangle {
     zVertex vertices[3];
-    zVertex normals[3];
+    zVertex normal;
     float color[4];         // RGBA, ignored if textured
     int32_t texturearray_i; /*
                             the index in the global var

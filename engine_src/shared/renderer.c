@@ -59,11 +59,11 @@ void hardware_render(
                 next_gpu_workload[*next_workload_size].z_angle =
                     zpolygons_to_render[zp_i].z_angle;
                 next_gpu_workload[*next_workload_size].normal_x =
-                    zpolygons_to_render[zp_i].triangles[tri_i].normals[m].x;
+                    zpolygons_to_render[zp_i].triangles[tri_i].normal.x;
                 next_gpu_workload[*next_workload_size].normal_y =
-                    zpolygons_to_render[zp_i].triangles[tri_i].normals[m].y;
+                    zpolygons_to_render[zp_i].triangles[tri_i].normal.y;
                 next_gpu_workload[*next_workload_size].normal_z =
-                    zpolygons_to_render[zp_i].triangles[tri_i].normals[m].z;
+                    zpolygons_to_render[zp_i].triangles[tri_i].normal.z;
                 next_gpu_workload[*next_workload_size].RGBA[0] =
                     zpolygons_to_render[zp_i].triangles[tri_i].color[0];
                 next_gpu_workload[*next_workload_size].RGBA[1] =
