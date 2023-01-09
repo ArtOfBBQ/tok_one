@@ -274,7 +274,6 @@ void request_label_around(
 //    }
 }
 
-// TODO: implement without texquads
 void request_label_renderable(
     const int32_t with_id,
     const char * text_to_draw,
@@ -294,8 +293,19 @@ void request_label_renderable(
         i++;
     }
     
+    zPolygon label_to_render;
+    construct_zpolygon(&label_to_render);
+    label_to_render.object_id = with_id;
+    label_to_render.x = screenspace_x_to_x(left_pixelspace);
+    label_to_render.y = screenspace_y_to_y(top_pixelspace);
+    label_to_render.ignore_lighting = font_ignore_lighting;
+    label_to_render.ignore_camera = ignore_camera;
+    label_to_render.z = z;
+    
+    float letter_width = screenspace_width_to_width(font_height * 0.8f);
+    float letter_height = screenspace_height_to_height(font_height * 0.8f);
+    
     while (text_to_draw[i] != '\0') {
-        
         if (text_to_draw[i] == ' ') {
             cur_x_offset += font_height / 2;
             i++;
@@ -326,18 +336,18 @@ void request_label_renderable(
         
         zPolygon letter = construct_quad(
             /* const float left_x: */
-                screenspace_x_to_x(left_pixelspace),
+                0,
             /* const float top_y: */
-                screenspace_y_to_y(top_pixelspace),
+                0,
             /* const float width: */
-                screenspace_width_to_width(font_height * 0.8f),
+                letter_width,
             /* const float height: */
-                screenspace_height_to_height(font_height * 0.8f));
-        letter.object_id = with_id;
+                letter_height);
         letter.triangles[0].texturearray_i = font_texturearray_i;
         letter.triangles[1].texturearray_i = font_texturearray_i;
         letter.triangles[0].texture_i = (int32_t)(text_to_draw[i] - '!');
-        letter.triangles[1].texture_i = (int32_t)(text_to_draw[i] - '!'); 
+        letter.triangles[1].texture_i = (int32_t)(text_to_draw[i] - '!');
+         
         for (
             uint32_t rgba_i = 0;
             rgba_i < 4;
@@ -346,28 +356,37 @@ void request_label_renderable(
             letter.triangles[0].color[rgba_i] = font_color[rgba_i];
             letter.triangles[1].color[rgba_i] = font_color[rgba_i];
         }
-        // TODO: recreate or rethink why this was even necessary
-        // TODO: maybe we can just put put all letters in 1 zpolygon instead?
-        //        letter.x_offset =
-        //            screenspace_width_to_width(
-        //                cur_x_offset + get_left_side_bearing(text_to_draw[i]));
-        //        letter.y_offset =
-        //            screenspace_height_to_height(cur_y_offset - get_y_offset(text_to_draw[i]));
-        letter.ignore_lighting = font_ignore_lighting;
-        letter.ignore_camera = ignore_camera;
-        letter.z = z;
         
-        request_zpolygon_to_render(&letter);
+        float letter_x_offset =
+            screenspace_width_to_width(
+                cur_x_offset + get_left_side_bearing(text_to_draw[i]));
+        float letter_y_offset =
+            screenspace_height_to_height(cur_y_offset - get_y_offset(text_to_draw[i]));
         
+        for (uint32_t m = 0; m < 3; m++) {
+            letter.triangles[0].vertices[m].x += letter_x_offset;
+            letter.triangles[0].vertices[m].y += letter_y_offset;
+            letter.triangles[1].vertices[m].x += letter_x_offset;
+            letter.triangles[1].vertices[m].y += letter_y_offset;
+        }
+        
+        label_to_render.triangles[label_to_render.triangles_size] =
+            letter.triangles[0];
+        label_to_render.triangles[label_to_render.triangles_size + 1] =
+            letter.triangles[1];
+        label_to_render.triangles_size += 2;
+                
         cur_x_offset += get_advance_width(text_to_draw[i]);
         if (left_pixelspace + cur_x_offset + get_advance_width('w') >= max_width)
         {
-            cur_x_offset = 0;
+            cur_x_offset   = 0;
             cur_y_offset  -= font_height;
         }
         
         i++;
     }
+    
+    request_zpolygon_to_render(&label_to_render);
 }
 
 void request_fps_counter(uint64_t microseconds_elapsed) {
