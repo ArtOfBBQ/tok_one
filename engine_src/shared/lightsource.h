@@ -50,6 +50,9 @@ void z_rotate_zvertices_inplace(
     const SIMD_FLOAT cos_angles,
     const SIMD_FLOAT sin_angles);
 
+void normalize_zvertex(
+    zVertex * to_normalize);
+
 typedef struct zCamera {
     float x;
     float y;

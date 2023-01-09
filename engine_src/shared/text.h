@@ -2,7 +2,7 @@
 #define TEXT_H
 
 #include "platform_layer.h"
-#include "bitmap_renderer.h"
+#include "zpolygon.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -2,9 +2,8 @@
 #define USERINPUT_H
 
 #include "common.h"
-#include "zpolygon.h"
+#include "lightsource.h"
 #include "platform_layer.h"
-#include "bitmap_renderer.h"
 
 #define KEYPRESS_MAP_SIZE 1000
 
@@ -14,6 +13,7 @@ extern "C" {
 
 typedef struct Interaction {
     int32_t touchable_id;
+    bool32_t checked_touchables;
     float screen_x;
     float screen_y;
     uint64_t timestamp;

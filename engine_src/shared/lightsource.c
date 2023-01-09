@@ -123,6 +123,25 @@ void z_rotate_zvertices_inplace(
     *vec_to_rotate_x = rotated_x;
 }
 
+static float get_magnitude(zVertex input) {
+    float sum_squares =
+        (input.x * input.x) +
+        (input.y * input.y) +
+        (input.z * input.z);
+    
+    // TODO: this square root is a performance bottleneck
+    return sqrtf(sum_squares);
+}
+
+void normalize_zvertex(
+    zVertex * to_normalize)
+{
+    float magnitude = get_magnitude(*to_normalize);
+    to_normalize->x /= magnitude;
+    to_normalize->y /= magnitude;
+    to_normalize->z /= magnitude;
+}
+
 void clean_deleted_lights(void)
 {
     while (
@@ -200,17 +219,10 @@ void translate_lights(
             &translated_light_pos,
             -camera.z_angle);
         
-        //        project_float4_to_2d_inplace(
-        //            &translated_light_pos.x,
-        //            &translated_light_pos.y,
-        //            &translated_light_pos.z);
-        
         lights_for_gpu->light_x[i]   = translated_light_pos.x;
         lights_for_gpu->light_y[i]   = translated_light_pos.y;
         lights_for_gpu->light_z[i]   = translated_light_pos.z;
-        //        lights_for_gpu->orig_x[i]    = zlights_to_apply[i].x;
-        //        lights_for_gpu->orig_y[i]    = zlights_to_apply[i].y;
-        //        lights_for_gpu->orig_z[i]    = zlights_to_apply[i].z;
+        
         lights_for_gpu->red[i]       = zlights_to_apply[i].RGBA[0];
         lights_for_gpu->green[i]     = zlights_to_apply[i].RGBA[1];
         lights_for_gpu->blue[i]      = zlights_to_apply[i].RGBA[2];

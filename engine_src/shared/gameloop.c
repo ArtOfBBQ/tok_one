@@ -3,6 +3,61 @@
 static uint64_t previous_time = 0;
 static uint64_t frame_no = 0;
 
+static int32_t closest_touchable_from_screen_ray(
+    const float screen_x,
+    const float screen_y)
+{
+    float clicked_viewport_x = screen_x;
+    float clicked_viewport_y = screen_y;
+    
+    zVertex ray_origin;
+    ray_origin.x = camera.x;
+    ray_origin.y = camera.y;
+    ray_origin.z = camera.z;
+    
+    // we need a point that's distant, but yet also ends up at the same
+    // screen position as ray_origin
+    // given:
+    // projected_x = x * pjc->x_multiplier / z
+    // and we want projected_x to be ray_origin.x:
+    // ray_origin.x = (x * pjc->x_multiplier) / z
+    // ray_origin.x * z = x * pjc->x_multi
+    // (ray_origin.x * z / pjc->x_multi) = x
+    zVertex distant_point = ray_origin;
+    distant_point.x = (clicked_viewport_x * 100.0f) /
+        projection_constants.x_multiplier;
+    distant_point.y = (clicked_viewport_y * 100.0f) /
+        projection_constants.field_of_view_modifier;
+    distant_point.z = 100.0f;
+    
+    zVertex ray_direction = distant_point;
+    normalize_zvertex(&ray_direction);
+    ray_direction = x_rotate_zvertex(&ray_direction, camera.x_angle);
+    ray_direction = y_rotate_zvertex(&ray_direction, camera.y_angle);
+    ray_direction = z_rotate_zvertex(&ray_direction, camera.z_angle);
+    normalize_zvertex(&ray_direction);
+    
+    int32_t return_value = -1;
+    float smallest_dist = FLOAT32_MAX;
+    zVertex collision_point;
+    
+    for (uint32_t zp_i = 0; zp_i < zpolygons_to_render_size; zp_i++) {
+        bool32_t hit = ray_intersects_zpolygon(
+            &ray_origin,
+            &ray_direction,
+            &zpolygons_to_render[zp_i],
+            &collision_point);
+        
+        float dist_to_hit = get_distance(collision_point, ray_origin);
+        if (hit && dist_to_hit < smallest_dist) {
+            smallest_dist = dist_to_hit;
+            return_value = zpolygons_to_render[zp_i].touchable_id;
+        }
+    }
+        
+    return return_value;
+}
+
 void shared_gameloop_update(
     GPU_Vertex * vertices_for_gpu,
     uint32_t * vertices_for_gpu_size,
@@ -41,13 +96,10 @@ void shared_gameloop_update(
     
     resolve_animation_effects(elapsed);
     clean_deleted_lights();
-    clean_deleted_texquads();
     
     copy_lights(lights_for_gpu);
-    assert(lights_for_gpu->lights_size > 0);
     
     if (!application_running) {
-        texquads_to_render_size = 0;
         zpolygons_to_render_size = 0;
         camera.x = 0.0f;
         camera.y = 0.0f;
@@ -85,6 +137,47 @@ void shared_gameloop_update(
             /* const bool32_t ignore_camera: */
                 true);
     } else {
+        Interaction * touchable_seekers[10];
+        touchable_seekers[0] = &previous_touch_start;
+        touchable_seekers[1] = &previous_touch_end;
+        touchable_seekers[2] = &previous_leftclick_start;
+        touchable_seekers[3] = &previous_leftclick_end;
+        touchable_seekers[4] = &previous_touch_or_leftclick_start;
+        touchable_seekers[5] = &previous_touch_or_leftclick_end;
+        touchable_seekers[6] = &previous_rightclick_start;
+        touchable_seekers[7] = &previous_rightclick_end;
+        
+        for (uint32_t i = 0; i < 8; i++) {
+            if (touchable_seekers[i]->handled
+                || touchable_seekers[i]->checked_touchables)
+            {
+                continue;
+            }
+            
+            touchable_seekers[i]->touchable_id =
+                closest_touchable_from_screen_ray(
+                    /* screen_x: */
+                        touchable_seekers[i]->screen_x,
+                    /* screen_y: */
+                        touchable_seekers[i]->screen_y); 
+            touchable_seekers[i]->checked_touchables = true;
+            
+            for (uint32_t j = i + 1; j < 8; j++) {
+                if (
+                   touchable_seekers[j]->checked_touchables ||
+                   touchable_seekers[j]->handled) {
+                    continue;
+                }
+                
+                if (
+                   touchable_seekers[i]->screen_x == touchable_seekers[j]->screen_x &&
+                   touchable_seekers[i]->screen_y == touchable_seekers[j]->screen_y)
+               {
+                   touchable_seekers[j]->touchable_id = touchable_seekers[i]->touchable_id;
+                   touchable_seekers[j]->checked_touchables = true;
+               }
+            }
+        }
         client_logic_update(elapsed);
     }
     

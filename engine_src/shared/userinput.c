@@ -30,26 +30,10 @@ void register_interaction(
     uint64_t timestamp = platform_get_current_time_microsecs();
     if (timestamp - touch_record->timestamp < 100000) { return; }
     
-    // note: this returns -1 when no touchable is there
-    // which is what we want
-    
-    int32_t prev_frame_i = gpu_shared_data_collection.frame_i - 1;
-    if (prev_frame_i < 0) { prev_frame_i = 2; }
-    
-    if (
-        touch_record != &previous_touch_move &&
-        touch_record != &previous_mouse_move &&
-        touch_record != &previous_mouse_or_touch_move)
-    {
-        touch_record->touchable_id = find_touchable_from_xy(
-            -1.0f + ((x / window_width) * 2),
-            -1.0f + ((y / window_height) * 2));
-        printf("touchable updated: %i\n", touch_record->touchable_id);
-    }
-    
     touch_record->screen_x     = x;
     touch_record->screen_y     = y;
     touch_record->timestamp    = timestamp;
+    touch_record->checked_touchables = false;
     touch_record->handled      = false;
 }
 

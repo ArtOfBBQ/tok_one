@@ -15,8 +15,12 @@ void request_zpolygon_to_render(zPolygon * to_add)
         tri_i < to_add->triangles_size;
         tri_i++)
     {
-        if (to_add->triangles[tri_i].texturearray_i < 0) { log_assert(to_add->triangles[tri_i].texture_i < 0); }
-        if (to_add->triangles[tri_i].texture_i < 0) { log_assert(to_add->triangles[tri_i].texturearray_i < 0); }
+        if (to_add->triangles[tri_i].texturearray_i < 0) {
+            log_assert(to_add->triangles[tri_i].texture_i < 0);
+        }
+        if (to_add->triangles[tri_i].texture_i < 0) {
+            log_assert(to_add->triangles[tri_i].texturearray_i < 0);
+        }
         
         if (to_add->triangles[tri_i].texturearray_i >= 0) {
             register_high_priority_if_unloaded(
@@ -46,6 +50,15 @@ void request_zpolygon_to_render(zPolygon * to_add)
     log_assert(zpolygons_to_render_size + 1 < ZPOLYGONS_TO_RENDER_ARRAYSIZE);
     zpolygons_to_render[zpolygons_to_render_size] = *to_add;
     zpolygons_to_render_size += 1;
+}
+
+void delete_zpolygon_object(const uint32_t with_object_id)
+{
+    for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
+        if (zpolygons_to_render[i].object_id == with_object_id) {
+            zpolygons_to_render[i].deleted = true;
+        }
+    }
 }
 
 static uint32_t chars_till_next_space_or_slash(
@@ -872,25 +885,6 @@ int sorter_cmpr_lowest_z(
     return get_avg_z((zTriangle *)a) < get_avg_z((zTriangle *)b) ? -1 : 1;
 }
 
-static float get_magnitude(zVertex input) {
-    float sum_squares =
-        (input.x * input.x) +
-        (input.y * input.y) +
-        (input.z * input.z);
-    
-    // TODO: this square root is a performance bottleneck
-    return sqrtf(sum_squares);
-}
-
-void normalize_zvertex(
-    zVertex * to_normalize)
-{
-    float magnitude = get_magnitude(*to_normalize);
-    to_normalize->x /= magnitude;
-    to_normalize->y /= magnitude;
-    to_normalize->z /= magnitude;
-}
-
 float get_distance(
     const zVertex p1,
     const zVertex p2)
@@ -1199,79 +1193,102 @@ bool32_t ray_intersects_zpolygon(
     return false;
 }
 
-int32_t find_touchable_from_xy(
-    const float x,
-    const float y)
+zPolygon construct_quad(
+    const float left_x,
+    const float top_y,
+    const float width,
+    const float height)
 {
-    float clicked_viewport_x = x;
-    float clicked_viewport_y = y;
+    zPolygon return_value;
+    construct_zpolygon(&return_value);
     
-    zVertex ray_origin;
-    ray_origin.x = camera.x;
-    ray_origin.y = camera.y;
-    ray_origin.z = camera.z;
+    return_value.triangles_size = 2;
     
-    // we need a point that's distant, but yet also ends up at the same
-    // screen position as ray_origin
-    // given:
-    // projected_x = x * pjc->x_multiplier / z
-    // and we want projected_x to be ray_origin.x:
-    // ray_origin.x = (x * pjc->x_multiplier) / z
-    // ray_origin.x * z = x * pjc->x_multi
-    // (ray_origin.x * z / pjc->x_multi) = x
-    zVertex distant_point = ray_origin;
-    distant_point.x = (clicked_viewport_x * 100.0f) /
-        projection_constants.x_multiplier;
-    distant_point.y = (clicked_viewport_y * 100.0f) /
-        projection_constants.field_of_view_modifier;
-    distant_point.z = 100.0f;
+    float mid_x = left_x + (width  / 2);
+    float mid_y = top_y  + (height / 2);
     
-    zVertex ray_direction = distant_point;
-    normalize_zvertex(&ray_direction);
-    ray_direction = x_rotate_zvertex(&ray_direction, camera.x_angle);
-    ray_direction = y_rotate_zvertex(&ray_direction, camera.y_angle);
-    ray_direction = z_rotate_zvertex(&ray_direction, camera.z_angle);
-    normalize_zvertex(&ray_direction);
+    float left_vertex   = left_x - mid_x;
+    float right_vertex  = mid_x  - left_x;
+    float top_vertex    = mid_y - top_y;
+    float bottom_vertex = top_y - mid_y;
     
-    float lowest_hit_dist = FLOAT32_MAX;
-    int32_t return_value = -1;
+    float left_uv_coord   = 0.0f;
+    float right_uv_coord  = 1.0f;
+    float bottom_uv_coord = 1.0f;
+    float top_uv_coord    = 0.0f;
     
-    for (
-        uint32_t zp_i = 0;
-        zp_i < zpolygons_to_render_size;
-        zp_i++)
-    {
-        if (
-            zpolygons_to_render[zp_i].deleted ||
-            zpolygons_to_render[zp_i].touchable_id < 0)
-        {
-            continue;
-        }
-        
-        zVertex point_of_collision;
-        
-        bool32_t ray_intersects = ray_intersects_zpolygon(
-            /* const zVertex * ray_origin: */
-                &ray_origin,
-            /* const zVertex * ray_direction: */
-                &ray_direction,
-            /* const zPolygon * mesh: */
-                &zpolygons_to_render[zp_i],
-            /* collision_point: */
-                &point_of_collision);
-        
-        float distance_to_hit = get_distance(
-            point_of_collision,
-            ray_origin);
-        
-        if (
-            ray_intersects &&
-            distance_to_hit < lowest_hit_dist)
-        {
-            lowest_hit_dist = distance_to_hit;
-            return_value = zpolygons_to_render[zp_i].touchable_id;
-        }
-    }
+    return_value.x = mid_x;
+    return_value.y = mid_y;
+    return_value.z = 1.0f;
+    
+    // **
+    // top & left triangle
+    // **
+    // top left vertex
+    return_value.triangles[0].vertices[0].x = left_vertex;
+    return_value.triangles[0].vertices[0].y = top_vertex;
+    return_value.triangles[0].vertices[0].z = 0.0f;
+    return_value.triangles[0].vertices[0].uv[0] = left_uv_coord;
+    return_value.triangles[0].vertices[0].uv[1] = top_uv_coord;
+    // top right vertex
+    return_value.triangles[0].vertices[1].x = right_vertex;
+    return_value.triangles[0].vertices[1].y = top_vertex;
+    return_value.triangles[0].vertices[1].z = 0.0f;
+    return_value.triangles[0].vertices[1].uv[0] = right_uv_coord;
+    return_value.triangles[0].vertices[1].uv[1] = top_uv_coord;
+    // bottom left vertex
+    return_value.triangles[0].vertices[2].x = left_vertex;
+    return_value.triangles[0].vertices[2].y = bottom_vertex;
+    return_value.triangles[0].vertices[2].z = 0.0f;
+    return_value.triangles[0].vertices[2].uv[0] = left_uv_coord;
+    return_value.triangles[0].vertices[2].uv[1] = bottom_uv_coord;
+    
+    
+    return_value.triangles[0].normals[0].x = 0.0f;
+    return_value.triangles[0].normals[0].y = 0.0f;
+    return_value.triangles[0].normals[0].z = 1.0f;
+    return_value.triangles[0].normals[1] = return_value.triangles[0].normals[0];
+    return_value.triangles[0].normals[2] = return_value.triangles[0].normals[0];
+    return_value.triangles[0].texturearray_i = -1;
+    return_value.triangles[0].texture_i = -1;
+    return_value.triangles[0].color[0] = 1.0f;
+    return_value.triangles[0].color[1] = 1.0f;
+    return_value.triangles[0].color[2] = 1.0f;
+    return_value.triangles[0].color[3] = 1.0f;
+    
+    // **
+    // right & bottom triangle
+    // **
+    // top right vertex
+    return_value.triangles[1].vertices[0].x = right_vertex;
+    return_value.triangles[1].vertices[0].y = top_vertex;
+    return_value.triangles[1].vertices[0].z = 0.0f;
+    return_value.triangles[1].vertices[0].uv[0] = right_uv_coord;
+    return_value.triangles[1].vertices[0].uv[1] = top_uv_coord;
+    // bottom right vertex
+    return_value.triangles[1].vertices[1].x = right_vertex;
+    return_value.triangles[1].vertices[1].y = bottom_vertex;
+    return_value.triangles[1].vertices[1].z = 0.0f;
+    return_value.triangles[1].vertices[1].uv[0] = right_uv_coord;
+    return_value.triangles[1].vertices[1].uv[1] = bottom_uv_coord;
+    // bottom left vertex
+    return_value.triangles[1].vertices[2].x = left_vertex;
+    return_value.triangles[1].vertices[2].y = bottom_vertex;
+    return_value.triangles[1].vertices[2].z = 0.0f;
+    return_value.triangles[1].vertices[2].uv[0] = left_uv_coord;
+    return_value.triangles[1].vertices[2].uv[1] = bottom_uv_coord;
+    
+    return_value.triangles[1].normals[0].x = 0.0f;
+    return_value.triangles[1].normals[0].y = 0.0f;
+    return_value.triangles[1].normals[0].z = 1.0f;
+    return_value.triangles[1].normals[1] = return_value.triangles[1].normals[0];
+    return_value.triangles[1].normals[2] = return_value.triangles[1].normals[0];
+    return_value.triangles[1].texturearray_i = -1;
+    return_value.triangles[1].texture_i = -1;
+    return_value.triangles[1].color[0] = 1.0f;
+    return_value.triangles[1].color[1] = 1.0f;
+    return_value.triangles[1].color[2] = 1.0f;
+    return_value.triangles[1].color[3] = 1.0f;
     
     return return_value;
 }

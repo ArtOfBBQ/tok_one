@@ -4,7 +4,6 @@
 #define SCHEDULED_ANIMATIONS_ARRAYSIZE 2000
 
 #include "common.h"
-#include "bitmap_renderer.h" // for texquads_to_render
 #include "zpolygon.h"
 #include "clientlogic.h"
 

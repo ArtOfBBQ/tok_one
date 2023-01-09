@@ -151,22 +151,23 @@ void client_logic_startup() {
         zlights_to_apply[i].diffuse    =    1.0f;
         zlights_to_apply_size++;
         
-        TexQuad texture;
-        construct_texquad(&texture);
-        texture.RGBA[0]       = zlights_to_apply[i].RGBA[0] * 5.0f;
-        texture.RGBA[1]       = zlights_to_apply[i].RGBA[1] * 5.0f;
-        texture.RGBA[2]       = zlights_to_apply[i].RGBA[2] * 5.0f;
-        texture.RGBA[3]       = 1.0f;
-        texture.object_id     = 123;
-        texture.touchable_id  = 123;
-        texture.top_y         = zlights_to_apply[i].y - (light_size / 2);
-        texture.left_x        = zlights_to_apply[i].x - (light_size / 2);
-        texture.z             = zlights_to_apply[i].z;
-        texture.width         = light_size;
-        texture.height        = light_size;
-        texture.z_angle       = 0.0f;
-        texture.ignore_camera = false;
-        request_texquad_renderable(&texture);
+        zPolygon quad = construct_quad(
+            /* float left_x: */
+                zlights_to_apply[i].x - (light_size / 2),
+            /* float top_y: */
+                zlights_to_apply[i].y - (light_size / 2),
+            /* float width: */
+                light_size,
+            /* float height: */
+                light_size);
+        quad.object_id = 123;
+        quad.touchable_id = 123;
+        quad.triangles[0].texturearray_i = 1;
+        quad.triangles[0].texture_i = 1;
+        quad.triangles[1].texturearray_i = 1;
+        quad.triangles[1].texture_i = 1;
+        // quad.ignore_lighting = true;
+        request_zpolygon_to_render(&quad);
     }
     
     log_append("finished client_logic_startup()\n");
@@ -297,30 +298,39 @@ static void client_handle_keypresses(uint64_t microseconds_elapsed) {
         camera_direction = x_rotate_zvertex(&camera_direction, camera.x_angle);
         camera_direction = y_rotate_zvertex(&camera_direction, camera.y_angle);
         
-        TexQuad bullet;
-        construct_texquad(&bullet);
+        zPolygon bullet = construct_quad(                                               
+            /* left: */                                                         
+                camera.x - (bullet_size / 2),                                   
+            /* top:  */                                                         
+                camera.y - (bullet_size / 2),                                   
+            /* width: */                                                        
+                bullet_size,                                                    
+            /* height: */                                                       
+                bullet_size);
         bullet.object_id = 54321 + (tok_rand() % 1000);
-        bullet.left_x = camera.x - (bullet_size / 2);                                                      
-        bullet.top_y = camera.y - (bullet_size / 2);
-        bullet.width = bullet_size;
-        bullet.height = bullet_size;
         bullet.z = camera.z;
-        bullet.RGBA[0] = ((float)(tok_rand() % 100)) / 100.0f;
-        bullet.RGBA[1] = ((float)(tok_rand() % 100)) / 100.0f;
-        bullet.RGBA[2] = ((float)(tok_rand() % 100)) / 100.0f;
-        bullet.RGBA[3] = 1.0f;
+        float r_color = ((float)(tok_rand() % 100)) / 100.0f;
+        float g_color = ((float)(tok_rand() % 100)) / 100.0f;
+        float b_color = ((float)(tok_rand() % 100)) / 100.0f;
+        for (uint32_t tri_i = 0; tri_i < bullet.triangles_size; tri_i++) {
+            bullet.triangles[tri_i].color[0] = r_color;
+            bullet.triangles[tri_i].color[1] = g_color;
+            bullet.triangles[tri_i].color[2] = b_color;
+            bullet.triangles[tri_i].color[3] = 1.0f;
+        }
+        bullet.ignore_lighting = true;
         
         zLightSource bullet_light;
         bullet_light.object_id = bullet.object_id;
-        bullet_light.RGBA[0] = bullet.RGBA[0];
-        bullet_light.RGBA[1] = bullet.RGBA[1];
-        bullet_light.RGBA[2] = bullet.RGBA[2];
+        bullet_light.RGBA[0] = bullet.triangles[0].color[0];
+        bullet_light.RGBA[1] = bullet.triangles[0].color[1];
+        bullet_light.RGBA[2] = bullet.triangles[0].color[2];
         bullet_light.RGBA[3] = 1.0f;
         bullet_light.reach = 1.5f;
         bullet_light.ambient = 0.2f;
         bullet_light.diffuse = 2.0f;
-        bullet_light.x = bullet.left_x + (bullet_size * 0.5f);
-        bullet_light.y = bullet.top_y + (bullet_size * 0.5f);
+        bullet_light.x = bullet.x;
+        bullet_light.y = bullet.y;
         bullet_light.z = bullet.z;
         bullet_light.deleted = false;
         
@@ -334,7 +344,7 @@ static void client_handle_keypresses(uint64_t microseconds_elapsed) {
         move_bullet.duration_microseconds = 5000000;
         move_bullet.runs = 1;
         
-        request_texquad_renderable(&bullet);
+        request_zpolygon_to_render(&bullet);
         request_zlightsource(&bullet_light);
         request_scheduled_animation(&move_bullet);
     }

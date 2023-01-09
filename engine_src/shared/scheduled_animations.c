@@ -67,18 +67,6 @@ void request_scheduled_animation(
         log_assert(to_add->affected_object_id >= 0);
         
         bool32_t found_target = false;
-        for (
-            uint32_t i = 0;
-            i < texquads_to_render_size;
-            i++)
-        {
-            if (!texquads_to_render[i].deleted &&
-                texquads_to_render[i].object_id ==
-                    to_add->affected_object_id)
-            {
-                found_target = true;
-            }
-        }
         
         for (
             uint32_t i = 0;
@@ -270,150 +258,6 @@ static void resolve_single_animation_effects(
                         anim->final_rgba[c] - cur_val;
                     
                     zlights_to_apply[l_i].RGBA[c] +=
-                        delta_val /
-                            ((float)remaining_microseconds_at_start_of_run /
-                                elapsed_this_run);
-                }
-            }
-        }
-    }
-    
-    for (
-        uint32_t tq_i = 0;
-        tq_i < texquads_to_render_size;
-        tq_i++)
-    {
-        if (
-            texquads_to_render[tq_i].object_id ==
-                anim->affected_object_id &&
-            !texquads_to_render[tq_i].deleted)
-        {
-            found_at_least_one = true;
-            
-            if (anim->set_texture_array_i) {
-                texquads_to_render[tq_i].texturearray_i =
-                    anim->new_texture_array_i;
-            }
-            if (anim->set_texture_i) {
-                texquads_to_render[tq_i].texture_i = anim->new_texture_i;
-            }
-            
-            if (!anim->final_x_known) {
-                texquads_to_render[tq_i].left_x +=
-                    (anim->delta_x_per_second
-                        * elapsed_this_run)
-                            / 1000000;
-            } else {
-                float cur_mid_x =
-                    texquads_to_render[tq_i].left_x +
-                        (texquads_to_render[tq_i].width
-                            / 2);
-                float diff_x =
-                    anim->final_mid_x - cur_mid_x;
-                texquads_to_render[tq_i].left_x +=
-                    diff_x /
-                        ((float)remaining_microseconds_at_start_of_run /
-                            elapsed_this_run);
-            }
-            
-            if (!anim->final_y_known) {
-                texquads_to_render[tq_i].top_y +=
-                    ((anim->delta_y_per_second
-                        * elapsed_this_run)
-                            / 1000000);
-            } else {
-                float cur_mid_y =
-                  texquads_to_render[tq_i].top_y -
-                    (texquads_to_render[tq_i].height
-                        / 2);
-                float diff_y = anim->final_mid_y - cur_mid_y;
-                texquads_to_render[tq_i].top_y +=
-                    diff_y /
-                         ((float)remaining_microseconds_at_start_of_run /
-                          elapsed_this_run);
-            }
-            
-            if (!anim->final_z_known) {
-                texquads_to_render[tq_i].z +=
-                    ((anim->delta_z_per_second
-                        * elapsed_this_run)
-                            / 1000000);
-            } else {
-                float diff_z = anim->final_mid_z - texquads_to_render[tq_i].z;
-                texquads_to_render[tq_i].z +=
-                    diff_z /
-                        ((float)remaining_microseconds_at_start_of_run /
-                            elapsed_this_run);
-            }
-            
-            texquads_to_render[tq_i].z_angle +=
-                (anim->z_rotation_per_second
-                    * elapsed_this_run)
-                        / 1000000;
-            
-            // ***
-            // absolute scaling
-            if (!anim->final_width_known) {
-                texquads_to_render[tq_i].width +=
-                    ((anim->delta_width_per_second
-                        * elapsed_this_run)
-                            / 1000000);
-            } else {
-                float cur_width = texquads_to_render[tq_i].width;
-                float diff_width = anim->final_width - cur_width;
-                texquads_to_render[tq_i].width +=
-                    diff_width
-                        / ((float)remaining_microseconds_at_start_of_run /
-                           elapsed_this_run);
-            }
-            
-            if (!anim->final_height_known) {
-                texquads_to_render[tq_i].height +=
-                    ((anim->delta_height_per_second
-                        * elapsed_this_run)
-                            / 1000000);
-            } else {
-                float cur_height = texquads_to_render[tq_i].height;
-                float diff_height = anim->final_height - cur_height;
-                texquads_to_render[tq_i].height +=
-                    diff_height
-                        / ((float)remaining_microseconds_at_start_of_run
-                            / elapsed_this_run);
-            }
-            // ***
-            
-            // ***
-            // relative scaling
-            if (!anim->final_scale_known) {
-                texquads_to_render[tq_i].scale_factor +=
-                    (anim->delta_scale_per_second *
-                        elapsed_this_run) / 1000000;
-            } else {
-                float diff_scale =
-                    anim->final_scale -
-                        texquads_to_render[tq_i].
-                            scale_factor;
-                texquads_to_render[tq_i].scale_factor +=
-                    diff_scale
-                        / ((float)remaining_microseconds_at_start_of_run
-                            / elapsed_this_run);
-            }
-            
-            for (
-                uint32_t c = 0;
-                c < 4;
-                c++)
-            {
-                if (!anim->final_rgba_known[c]) {
-                    texquads_to_render[tq_i].RGBA[c] +=
-                        (anim->rgba_delta_per_second[c]
-                            * elapsed_this_run)
-                                / 1000000;
-                } else {
-                    float cur_val = texquads_to_render[tq_i].RGBA[c];
-                    float delta_val = anim->final_rgba[c] - cur_val;
-                    
-                    texquads_to_render[tq_i].RGBA[c] +=
                         delta_val /
                             ((float)remaining_microseconds_at_start_of_run /
                                 elapsed_this_run);
@@ -672,23 +516,6 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
             }
             
             if (anim->delete_object_when_finished) {
-                for (
-                    int32_t tq_i = (int32_t)texquads_to_render_size - 1;
-                    tq_i >= 0;
-                    tq_i--)
-                {
-                    if (
-                        texquads_to_render[tq_i].object_id ==
-                            anim->affected_object_id)
-                    {                  
-                        texquads_to_render[tq_i].deleted = true;
-                        texquads_to_render[tq_i].visible = false;
-                        texquads_to_render[tq_i].texturearray_i = -1;
-                        texquads_to_render[tq_i].texture_i = -1;
-                        texquads_to_render[tq_i].object_id = -1;
-                    }
-                }
-                
                 for (
                     int32_t l_i = (int32_t)zlights_to_apply_size - 1;
                     l_i >= 0;

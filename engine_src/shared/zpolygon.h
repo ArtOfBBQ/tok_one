@@ -63,6 +63,8 @@ void request_zpolygon_to_render(zPolygon * to_add);
 extern zPolygon zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
 extern uint32_t zpolygons_to_render_size;
 
+void delete_zpolygon_object(const uint32_t with_object_id);
+
 zTriangle
 x_rotate_ztriangle(
     const zTriangle * input,
@@ -145,9 +147,6 @@ void z_sort(
     zTriangle * triangles,
     const uint32_t triangles_size);
 
-void normalize_zvertex(
-    zVertex * to_normalize);
-
 float get_distance(
     const zVertex p1,
     const zVertex p2);
@@ -155,10 +154,6 @@ float get_distance(
 float distance_to_ztriangle(
     const zVertex p1,
     const zTriangle p2);
-
-int32_t find_touchable_from_xy(
-    const float x,
-    const float y);
 
 bool32_t ray_intersects_triangle(
     const zVertex * ray_origin,
@@ -171,6 +166,12 @@ bool32_t ray_intersects_zpolygon(
     const zVertex * ray_direction,
     const zPolygon * mesh,
     zVertex * recipient_hit_point);
+
+zPolygon construct_quad(
+    const float left_x,
+    const float top_y,
+    const float width,
+    const float height);
 
 #ifdef __cplusplus
 }
