@@ -676,8 +676,10 @@ void scale_zpolygon(
         for (uint32_t j = 0; j < 3; j++)
         {
             float width =
-                ((to_scale->triangles[i].vertices[j].x < 0) *  (to_scale->triangles[i].vertices[j].x * -1)) +
-                ((to_scale->triangles[i].vertices[j].x >= 0) *  (to_scale->triangles[i].vertices[j].x)); 
+                ((to_scale->triangles[i].vertices[j].x < 0) * 
+                    (to_scale->triangles[i].vertices[j].x * -1)) +
+                ((to_scale->triangles[i].vertices[j].x >= 0) * 
+                    (to_scale->triangles[i].vertices[j].x)); 
             if (width > largest_width)
             {
                 largest_width = width;
@@ -1112,20 +1114,7 @@ bool32_t ray_intersects_triangle(
         dot_of_zvertices(
             &triangle->normal,
             &cross2) > 0.0f)
-    {
-        float vertex_0_to_hit = get_distance(
-            *recipient_hit_point,
-            triangle->vertices[0]);
-        float vertex_1_to_hit = get_distance(
-            *recipient_hit_point,
-            triangle->vertices[1]);
-        float vertex_2_to_hit = get_distance(
-            *recipient_hit_point,
-            triangle->vertices[2]);
-        log_assert(vertex_0_to_hit < 0.8f);
-        log_assert(vertex_1_to_hit < 0.8f);
-        log_assert(vertex_2_to_hit < 0.8f);
-        
+    {        
         return true;
     }
     

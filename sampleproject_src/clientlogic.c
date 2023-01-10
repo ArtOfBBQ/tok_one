@@ -45,26 +45,26 @@ void client_logic_get_application_name_to_recipient(
 static bool32_t ran_anim[4]; // 1 for each card in the test scene
 void client_logic_startup() {
     
-    //    font_height = 40.0f;
-    //    font_color[0] = 1.0f;
-    //    font_color[1] = 1.0f;
-    //    font_color[2] = 1.0f;
-    //    font_color[3] = 1.0f;
-    //    request_label_around(
-    //        /* const int32_t with_id: */
-    //            9999,
-    //        /* const char * text_to_draw: */
-    //            "Press space to shoot a light\nClick a teapot to bump it",
-    //        /* const float mid_x_pixelspace: */
-    //            window_width * 0.5f,
-    //        /* const float top_y_pixelspace: */
-    //            window_height * 0.5f,
-    //        /* const float z: */
-    //            0.05f,
-    //        /* const float max_width: */
-    //            1000.0f,
-    //        /* const bool32_t ignore_camera: */
-    //            true);
+    font_height = 40.0f;
+    font_color[0] = 1.0f;
+    font_color[1] = 1.0f;
+    font_color[2] = 1.0f;
+    font_color[3] = 1.0f;
+    request_label_around(
+        /* const int32_t with_id: */
+            9999,
+        /* const char * text_to_draw: */
+            "Press space to shoot a light\nClick a teapot to bump it",
+        /* const float mid_x_pixelspace: */
+            window_width * 0.5f,
+        /* const float top_y_pixelspace: */
+            window_height * 0.75f,
+        /* const float z: */
+            1.0f,
+        /* const float max_width: */
+            1000.0f,
+        /* const bool32_t ignore_camera: */
+            true);
     
     ran_anim[0] = false;
     ran_anim[1] = false;

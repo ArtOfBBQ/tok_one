@@ -15,6 +15,11 @@ static int32_t closest_touchable_from_screen_ray(
     ray_origin.y = camera.y;
     ray_origin.z = camera.z;
     
+    zVertex ignore_camera_ray_origin;
+    ignore_camera_ray_origin.x = 0.0f;
+    ignore_camera_ray_origin.y = 0.0f;
+    ignore_camera_ray_origin.z = 0.0f;
+    
     // we need a point that's distant, but yet also ends up at the same
     // screen position as ray_origin
     // given:
@@ -37,6 +42,8 @@ static int32_t closest_touchable_from_screen_ray(
     ray_direction = z_rotate_zvertex(&ray_direction, camera.z_angle);
     normalize_zvertex(&ray_direction);
     
+    normalize_zvertex(&distant_point);
+    
     int32_t return_value = -1;
     float smallest_dist = FLOAT32_MAX;
     zVertex collision_point;
@@ -46,11 +53,27 @@ static int32_t closest_touchable_from_screen_ray(
         zp_i < zpolygons_to_render_size;
         zp_i++)
     {
-        bool32_t hit = ray_intersects_zpolygon(
-            &ray_origin,
-            &ray_direction,
-            &zpolygons_to_render[zp_i],
-            &collision_point);
+        if (
+            zpolygons_to_render[zp_i].deleted ||
+            zpolygons_to_render[zp_i].touchable_id < 0)
+        {
+            continue;
+        }
+        
+        bool32_t hit = false;
+        if (zpolygons_to_render[zp_i].ignore_camera) {
+            hit = ray_intersects_zpolygon(
+                &ignore_camera_ray_origin,
+                &distant_point,
+                &zpolygons_to_render[zp_i],
+                &collision_point);
+        } else {
+            hit = ray_intersects_zpolygon(
+                &ray_origin,
+                &ray_direction,
+                &zpolygons_to_render[zp_i],
+                &collision_point);
+        }
         
         float dist_to_hit = get_distance(collision_point, ray_origin);
         if (hit && dist_to_hit < smallest_dist) {
@@ -209,12 +232,4 @@ void shared_gameloop_update(
     
     uint32_t overflow_vertices = *vertices_for_gpu_size % 3;
     *vertices_for_gpu_size -= overflow_vertices;
-    
-    //    for (
-    //        uint32_t triangle_start_i = 0;
-    //        triangle_start_i < *vertices_for_gpu_size;
-    //        triangle_start_i += 3)
-    //    {
-    //        register_touchable_triangle(vertices_for_gpu + triangle_start_i);
-    //    }
 }
