@@ -45,26 +45,26 @@ void client_logic_get_application_name_to_recipient(
 static bool32_t ran_anim[4]; // 1 for each card in the test scene
 void client_logic_startup() {
     
-    font_height = 40.0f;
-    font_color[0] = 1.0f;
-    font_color[1] = 1.0f;
-    font_color[2] = 1.0f;
-    font_color[3] = 1.0f;
-    request_label_around(
-        /* const int32_t with_id: */
-            9999,
-        /* const char * text_to_draw: */
-            "Press space to shoot a light\nClick a teapot to bump it",
-        /* const float mid_x_pixelspace: */
-            window_width * 0.5f,
-        /* const float top_y_pixelspace: */
-            window_height * 0.5f,
-        /* const float z: */
-            0.05f,
-        /* const float max_width: */
-            1000.0f,
-        /* const bool32_t ignore_camera: */
-            true);
+    //    font_height = 40.0f;
+    //    font_color[0] = 1.0f;
+    //    font_color[1] = 1.0f;
+    //    font_color[2] = 1.0f;
+    //    font_color[3] = 1.0f;
+    //    request_label_around(
+    //        /* const int32_t with_id: */
+    //            9999,
+    //        /* const char * text_to_draw: */
+    //            "Press space to shoot a light\nClick a teapot to bump it",
+    //        /* const float mid_x_pixelspace: */
+    //            window_width * 0.5f,
+    //        /* const float top_y_pixelspace: */
+    //            window_height * 0.5f,
+    //        /* const float z: */
+    //            0.05f,
+    //        /* const float max_width: */
+    //            1000.0f,
+    //        /* const bool32_t ignore_camera: */
+    //            true);
     
     ran_anim[0] = false;
     ran_anim[1] = false;
@@ -118,14 +118,19 @@ void client_logic_startup() {
     teapot.y = -0.3f;
     teapot.z = 0.7f;
     
-    for (uint32_t _ = 0; _ < 20; _++) {
+    for (uint32_t _ = 0; _ < 1; _++) {
         zPolygon anotherteapot = teapot;
         anotherteapot.object_id = 124 + _;
         anotherteapot.touchable_id = 1 + _;
         anotherteapot.x = teapot.x + ((_ / 5) * 0.4f);
         anotherteapot.y = teapot.y;
         anotherteapot.z = teapot.z + ((_ % 5) * 0.3f);
-        for (uint32_t tri_i = 0; tri_i < anotherteapot.triangles_size; tri_i++) {
+        
+        for (
+            uint32_t tri_i = 0;
+            tri_i < anotherteapot.triangles_size;
+            tri_i++)
+        {
             anotherteapot.triangles[tri_i].color[0] = 0.4f;
             anotherteapot.triangles[tri_i].color[1] = 0.4f;
             anotherteapot.triangles[tri_i].color[2] = 0.6f;
@@ -319,14 +324,14 @@ static void client_handle_keypresses(uint64_t microseconds_elapsed) {
         camera_direction = x_rotate_zvertex(&camera_direction, camera.x_angle);
         camera_direction = y_rotate_zvertex(&camera_direction, camera.y_angle);
         
-        zPolygon bullet = construct_quad(                                               
-            /* left: */                                                         
+        zPolygon bullet = construct_quad(                                            
+            /* left: */
                 camera.x - (bullet_size / 2),                                   
-            /* top:  */                                                         
-                camera.y - (bullet_size / 2),                                   
-            /* width: */                                                        
+            /* top:  */                                   
+                camera.y - (bullet_size / 2),                                  
+            /* width: */
                 bullet_size,                                                    
-            /* height: */                                                       
+            /* height: */
                 bullet_size);
         bullet.object_id = 54321 + (tok_rand() % 1000);
         bullet.z = camera.z;
@@ -360,9 +365,9 @@ static void client_handle_keypresses(uint64_t microseconds_elapsed) {
         move_bullet.affected_object_id = bullet.object_id;
         move_bullet.delta_x_per_second = camera_direction.x;
         move_bullet.delta_y_per_second = camera_direction.y;
-        move_bullet.delta_z_per_second = camera_direction.z;
+        move_bullet.delta_z_per_second = camera_direction.z * 3.0f;
         move_bullet.delete_object_when_finished = true;
-        move_bullet.duration_microseconds = 5000000;
+        move_bullet.duration_microseconds = 2500000;
         move_bullet.runs = 1;
         
         request_zpolygon_to_render(&bullet);

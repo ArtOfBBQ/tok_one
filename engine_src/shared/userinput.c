@@ -49,7 +49,7 @@ void register_keyup(uint32_t key_id)
 }
 
 void register_keydown(uint32_t key_id)
-{ 
+{
     log_append("register key down: ");
     log_append_uint(key_id);
     log_append("\n");

@@ -7,8 +7,8 @@ static int32_t closest_touchable_from_screen_ray(
     const float screen_x,
     const float screen_y)
 {
-    float clicked_viewport_x = screen_x;
-    float clicked_viewport_y = screen_y;
+    float clicked_viewport_x = -1.0f + ((screen_x / window_width) * 2.0f);
+    float clicked_viewport_y = -1.0f + ((screen_y / window_height) * 2.0f);
     
     zVertex ray_origin;
     ray_origin.x = camera.x;
@@ -152,8 +152,9 @@ void shared_gameloop_update(
         touchable_seekers[7] = &previous_rightclick_end;
         
         for (uint32_t i = 0; i < 8; i++) {
-            if (touchable_seekers[i]->handled
-                || touchable_seekers[i]->checked_touchables)
+            if (
+                touchable_seekers[i]->handled ||
+                touchable_seekers[i]->checked_touchables)
             {
                 continue;
             }
@@ -168,20 +169,25 @@ void shared_gameloop_update(
             
             for (uint32_t j = i + 1; j < 8; j++) {
                 if (
-                   touchable_seekers[j]->checked_touchables ||
-                   touchable_seekers[j]->handled) {
+                    touchable_seekers[j]->checked_touchables ||
+                    touchable_seekers[j]->handled)
+                {
                     continue;
                 }
                 
                 if (
-                   touchable_seekers[i]->screen_x == touchable_seekers[j]->screen_x &&
-                   touchable_seekers[i]->screen_y == touchable_seekers[j]->screen_y)
-               {
-                   touchable_seekers[j]->touchable_id = touchable_seekers[i]->touchable_id;
-                   touchable_seekers[j]->checked_touchables = true;
-               }
+                    touchable_seekers[i]->screen_x ==
+                        touchable_seekers[j]->screen_x &&
+                    touchable_seekers[i]->screen_y ==
+                        touchable_seekers[j]->screen_y)
+                {
+                    touchable_seekers[j]->touchable_id =
+                        touchable_seekers[i]->touchable_id;
+                    touchable_seekers[j]->checked_touchables = true;
+                }
             }
         }
+        
         client_logic_update(elapsed);
     }
     

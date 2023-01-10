@@ -534,19 +534,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                     }
                 }
                 
-                for (
-                    int32_t zp_i = (int32_t)zpolygons_to_render_size - 1;
-                    zp_i >= 0;
-                    zp_i--)
-                {
-                    if (
-                        zpolygons_to_render[zp_i].object_id ==
-                            anim->affected_object_id)
-                    {                        
-                        zpolygons_to_render[zp_i].deleted = true;
-                        zpolygons_to_render[zp_i].object_id = -1;
-                    }
-                }
+                delete_zpolygon_object(anim->affected_object_id);
             }
         }     
     }

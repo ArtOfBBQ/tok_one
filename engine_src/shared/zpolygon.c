@@ -54,6 +54,7 @@ void delete_zpolygon_object(const int32_t with_object_id)
     for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
         if (zpolygons_to_render[i].object_id == with_object_id) {
             zpolygons_to_render[i].deleted = true;
+            zpolygons_to_render[i].object_id = -1;
         }
     }
 }

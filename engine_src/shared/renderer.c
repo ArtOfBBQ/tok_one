@@ -38,6 +38,8 @@ void hardware_render(
     log_assert(zpolygons_to_render_size < ZPOLYGONS_TO_RENDER_ARRAYSIZE);
     
     for (uint32_t zp_i = 0; zp_i < zpolygons_to_render_size; zp_i++) {
+        if (zpolygons_to_render[zp_i].deleted) { continue; }
+        
         for (uint32_t tri_i = 0; tri_i < zpolygons_to_render[zp_i].triangles_size; tri_i++) {
             for (uint32_t m = 0; m < 3; m++) {
                 next_gpu_workload[*next_workload_size].x =
