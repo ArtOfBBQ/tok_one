@@ -118,7 +118,7 @@ void client_logic_startup() {
     teapot.y = -0.3f;
     teapot.z = 0.7f;
     
-    for (uint32_t _ = 0; _ < 1; _++) {
+    for (uint32_t _ = 0; _ < 20; _++) {
         zPolygon anotherteapot = teapot;
         anotherteapot.object_id = 124 + _;
         anotherteapot.touchable_id = 1 + _;
@@ -153,28 +153,33 @@ void client_logic_startup() {
     float light_size = 0.05f;
     float light_xs[NUM_LIGHTS];
     light_xs[0] = -0.3f;
-    light_xs[1] = -0.3f;
+    light_xs[1] = -0.35f;
     light_xs[2] = 0.3f;
-    light_xs[3] = 0.3f;
+    light_xs[3] = 0.35f;
+    float light_ys[NUM_LIGHTS];
+    light_ys[0] = 0.2f;
+    light_ys[1] = 0.21f;
+    light_ys[2] = 0.5f;
+    light_ys[3] = 0.51f;
     float light_zs[NUM_LIGHTS];
     light_zs[0] = 1.0f;
     light_zs[1] = 0.7f;
-    light_zs[2] = 1.0f;
-    light_zs[3] = 0.7f;
+    light_zs[2] = 1.3f;
+    light_zs[3] = 0.4f;
+    
     for (uint32_t i = 0; i < NUM_LIGHTS; i++) {
-        
-        zlights_to_apply[i].deleted    =   false;
-        zlights_to_apply[i].object_id  =      -1;
-        zlights_to_apply[i].x          =    light_xs[i];
-        zlights_to_apply[i].y          =    0.2f;
-        zlights_to_apply[i].z          =    light_zs[i];
-        zlights_to_apply[i].RGBA[0]    =    i % 3 == 0 ? 1.0f : 0.0f; 
-        zlights_to_apply[i].RGBA[1]    =    i % 2 == 0 ? 1.0f : 0.0f;
-        zlights_to_apply[i].RGBA[2]    =    i % 3 == 1 ? 1.0f : 0.0f;
-        zlights_to_apply[i].RGBA[3]    =    1.0f;
-        zlights_to_apply[i].reach      =    1.0f;
-        zlights_to_apply[i].ambient    =    0.1f;
-        zlights_to_apply[i].diffuse    =    1.0f;
+        zlights_to_apply[i].deleted      =    false;
+        zlights_to_apply[i].object_id    =    123 + 250 + i;
+        zlights_to_apply[i].x            =    light_xs[i];
+        zlights_to_apply[i].y            =    light_ys[i];
+        zlights_to_apply[i].z            =    light_zs[i];
+        zlights_to_apply[i].RGBA[0]      =    i % 3 == 0 ? 1.0f : 0.0f; 
+        zlights_to_apply[i].RGBA[1]      =    i % 2 == 0 ? 1.0f : 0.0f;
+        zlights_to_apply[i].RGBA[2]      =    i % 3 == 1 ? 1.0f : 0.0f;
+        zlights_to_apply[i].RGBA[3]      =    1.0f;
+        zlights_to_apply[i].reach        =    1.0f;
+        zlights_to_apply[i].ambient      =    0.1f;
+        zlights_to_apply[i].diffuse      =    1.0f;
         zlights_to_apply_size++;
         
         zPolygon quad = construct_quad(
@@ -186,13 +191,14 @@ void client_logic_startup() {
                 light_size,
             /* float height: */
                 light_size);
-        quad.object_id = 123;
-        quad.touchable_id = 123;
+        quad.z = light_zs[i];
+        quad.object_id                   = 123 + 250 + i;
+        quad.touchable_id                = 250 + i;
+        quad.ignore_lighting             = true;
         quad.triangles[0].texturearray_i = 1;
-        quad.triangles[0].texture_i = 1;
+        quad.triangles[0].texture_i      = 1;
         quad.triangles[1].texturearray_i = 1;
-        quad.triangles[1].texture_i = 1;
-        // quad.ignore_lighting = true;
+        quad.triangles[1].texture_i      = 1;
         request_zpolygon_to_render(&quad);
     }
     
@@ -230,19 +236,23 @@ static void  client_handle_touches_and_leftclicks(
         previous_touch_or_leftclick_end.handled = true;
         
         if (leftclick_touchable_id >= 0) {
+            log_append("leftclick_touchable_id: ");
+            log_append_int(leftclick_touchable_id);
+            log_append_char('\n');
+            
             ScheduledAnimation bump;
             construct_scheduled_animation(&bump);
-            bump.affected_object_id = leftclick_touchable_id + 123;
-            bump.final_scale_known = true;
-            bump.final_scale = 1.2f;
+            bump.affected_object_id    = leftclick_touchable_id + 123;
+            bump.final_scale_known     = true;
+            bump.final_scale           = 1.2f;
             bump.duration_microseconds = 100000;
             
             ScheduledAnimation unbump;
             construct_scheduled_animation(&unbump);
-            unbump.affected_object_id = bump.affected_object_id;
-            unbump.final_scale_known = true;
-            unbump.final_scale = 1.0f;
-            unbump.duration_microseconds = 100000;
+            unbump.affected_object_id             = bump.affected_object_id;
+            unbump.final_scale_known              = true;
+            unbump.final_scale                    = 1.0f;
+            unbump.duration_microseconds          = 100000;
             unbump.remaining_wait_before_next_run = 100000;
             
             request_scheduled_animation(&bump);
@@ -309,6 +319,12 @@ static void client_handle_keypresses(uint64_t microseconds_elapsed) {
     if (keypress_map[94] == true) {                                             
         // _ key is pressed                                                     
         camera.z += 0.01f;                                                      
+    }
+    
+    if (keypress_map[17] == true) {                                             
+        // T key is pressed
+        keypress_map[17] = false;
+        visual_debug_mode = !visual_debug_mode;
     }
     
     if (keypress_map[49] == true) {                                             

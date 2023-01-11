@@ -5,6 +5,28 @@
 zPolygon zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
 uint32_t zpolygons_to_render_size = 0;
 
+static void set_zpolygon_hitbox(
+    zPolygon * mesh)
+{
+    log_assert(mesh->triangles_size > 0);
+    
+    float total_height = 0.0f;
+    float total_width  = 0.0f;
+    float total_depth  = 0.0f;
+    
+    for (uint32_t i = 0; i < mesh->triangles_size; i++) {
+        for (uint32_t m = 0; m < 3; m++) {
+            total_width  += fabs(mesh->triangles[i].vertices[m].x);
+            total_height += fabs(mesh->triangles[i].vertices[m].y);
+            total_depth  += fabs(mesh->triangles[i].vertices[m].z);
+        }
+    }
+    
+    mesh->hitbox_height = total_height / mesh->triangles_size;
+    mesh->hitbox_width  = total_width  / mesh->triangles_size;
+    mesh->hitbox_depth  = total_depth  / mesh->triangles_size;
+}
+
 void request_zpolygon_to_render(zPolygon * to_add)
 {
     log_assert(to_add->triangles != NULL);
@@ -30,6 +52,9 @@ void request_zpolygon_to_render(zPolygon * to_add)
         
         to_add->triangles[tri_i].normal = get_ztriangle_normal(&to_add->triangles[tri_i]);
         normalize_zvertex(&to_add->triangles[tri_i].normal);
+        
+        // set the hitbox height, width, and depth
+        set_zpolygon_hitbox(to_add);
     }
     
     for (
@@ -1121,7 +1146,7 @@ bool32_t ray_intersects_triangle(
     return false;
 }
 
-bool32_t ray_intersects_zpolygon(
+bool32_t ray_intersects_zpolygon_triangles(
     const zVertex * ray_origin,
     const zVertex * ray_direction,
     const zPolygon * mesh,
@@ -1167,6 +1192,95 @@ bool32_t ray_intersects_zpolygon(
                 return true; // no need to check other triangles in this zpoly
             }
         }
+    }
+    
+    return false;
+}
+
+bool32_t ray_intersects_zpolygon_hitbox(
+    const zVertex * ray_origin,
+    const zVertex * ray_direction,
+    const zPolygon * mesh,
+    zVertex * recipient_hit_point)
+{
+    /*
+    Reminder: The plane offset is named 'D' in this explanation:
+    "...and D is the distance from the origin (0, 0, 0) to the
+    plane (if we trace a line from the origin to the plane,
+    parallel to the plane's normal)."
+    "..we know the plane's normal and that the three triangle's
+    vertices (V0, V1, V2) lie in the plane. It is, therefore,
+    possible to compute  D. Any of the three vertices can be
+    chosen. Let's choose V0:
+    float D = -dotProduct(N, v0);"
+    (source https://www.scratchapixel.com
+    */
+    zVertex mesh_center;
+    zVertex mesh_normal;
+    mesh_center.x = mesh->x;
+    mesh_center.y = mesh->y;
+    mesh_center.z = mesh->z;
+    mesh_normal.x = 0.0f;
+    mesh_normal.y = 0.0f;
+    mesh_normal.z = -1.0f;
+    //    mesh_normal = x_rotate_zvertex(&mesh_normal, mesh->x_angle);
+    //    mesh_normal = y_rotate_zvertex(&mesh_normal, mesh->y_angle);
+    //    mesh_normal = z_rotate_zvertex(&mesh_normal, mesh->z_angle);
+    
+    float plane_offset = -1.0f * dot_of_zvertices(
+        &mesh_normal,
+        &mesh_center);
+    
+    /*
+    We also know that point P is the intersection point of the ray, and the 
+    point lies in the plane. Consequently, we can substitute (x, y, z)
+    for P or O + tR that P is equal to and solve for t:
+    
+    float t = - (dot(N, orig) + D) / dot(N, dir);
+    */
+    float denominator = dot_of_zvertices(
+        &mesh_normal,
+        ray_direction);
+    if (denominator < 0.0001f && denominator > -0.0001f) {
+        // the ray doesn't intersect with the triangle's plane,
+        // I think this is always because the ray travels in parallel with the
+        // triangle
+        return false;
+    }
+    
+    float t =
+        (-1.0f * (
+            dot_of_zvertices(&mesh_normal, ray_origin) +
+                plane_offset)) /
+            denominator;
+    
+    // if t is < 0, the triangle's plane must be behind us which counts as
+    // a miss
+    if (t <= 0.0f) {
+        return false;
+    }
+    
+    // We now have computed t, which we can use to calculate the position of P:
+    // Vec3f Phit = orig + t * dir;
+    recipient_hit_point->x = ray_origin->x + (t * ray_direction->x);
+    recipient_hit_point->y = ray_origin->y + (t * ray_direction->y);
+    recipient_hit_point->z = ray_origin->z + (t * ray_direction->z);
+    
+    zVertex center_to_hit_ray;
+    center_to_hit_ray.x = recipient_hit_point->x - mesh->x;
+    center_to_hit_ray.y = recipient_hit_point->y - mesh->y;
+    center_to_hit_ray.z = recipient_hit_point->z - mesh->z;
+    x_rotate_zvertex(&center_to_hit_ray, mesh->x_angle);
+    y_rotate_zvertex(&center_to_hit_ray, mesh->y_angle);
+    z_rotate_zvertex(&center_to_hit_ray, mesh->z_angle);
+    
+    // Now I just want to check if this hit is within the zpolygon's hitbox
+    if (
+        fabs(center_to_hit_ray.x) <= mesh->hitbox_width &&
+        fabs(center_to_hit_ray.y) <= mesh->hitbox_height &&
+        fabs(center_to_hit_ray.z) <= mesh->hitbox_depth)
+    {
+        return true;
     }
     
     return false;

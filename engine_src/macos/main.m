@@ -105,13 +105,7 @@ NSWindowWithCustomResponder: NSWindow
         /* screenspace_y: */
             screenspace_y);
     
-    register_interaction(
-        /* interaction : */
-            &previous_touch_or_leftclick_start,
-        /* screenspace_x: */
-            screenspace_x,
-        /* screenspace_y: */
-            screenspace_y);
+    previous_touch_or_leftclick_start = previous_leftclick_start;
     }
 }
 
@@ -129,15 +123,7 @@ NSWindowWithCustomResponder: NSWindow
             (float)screenspace_location.y
                 - platform_get_current_window_bottom());
     
-    register_interaction(
-        /* interaction : */
-            &previous_touch_or_leftclick_end,
-        /* screenspace_x: */
-            (float)screenspace_location.x
-                - platform_get_current_window_left(),
-        /* screenspace_y: */
-            (float)screenspace_location.y
-                - platform_get_current_window_bottom());
+    previous_touch_or_leftclick_end = previous_leftclick_end;
     }
 }
 
@@ -167,15 +153,7 @@ NSWindowWithCustomResponder: NSWindow
             (float)screenspace_location.y
                 - platform_get_current_window_bottom());
     
-    register_interaction(
-        /* interaction : */
-            &previous_mouse_or_touch_move,
-        /* screenspace_x: */
-            (float)screenspace_location.x
-                - platform_get_current_window_left(),
-        /* screenspace_y: */
-            (float)screenspace_location.y
-                - platform_get_current_window_bottom());
+    previous_mouse_or_touch_move = previous_mouse_move;
     }
 }
 
@@ -193,15 +171,7 @@ NSWindowWithCustomResponder: NSWindow
             (float)screenspace_location.y
                 - platform_get_current_window_bottom());
     
-    register_interaction(
-        /* interaction : */
-            &previous_mouse_or_touch_move,
-        /* screenspace_x: */
-            (float)screenspace_location.x
-                - platform_get_current_window_left(),
-        /* screenspace_y: */
-            (float)screenspace_location.y
-                - platform_get_current_window_bottom());
+    previous_mouse_or_touch_move = previous_mouse_move;
     }
 }
 

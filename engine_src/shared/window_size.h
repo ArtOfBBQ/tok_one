@@ -4,6 +4,9 @@
 #include "common.h"
 #include "cpu_gpu_shared_types.h"
 
+extern bool32_t visual_debug_mode;
+extern int32_t visual_debug_highlight_touchable_id;
+
 extern float window_height;
 extern float window_width;
 extern float aspect_ratio;

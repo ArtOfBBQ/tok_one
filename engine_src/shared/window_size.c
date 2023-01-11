@@ -2,6 +2,9 @@
 
 GPU_ProjectionConstants projection_constants;
 
+bool32_t visual_debug_mode = false;
+int32_t visual_debug_highlight_touchable_id = -1;
+
 float window_height = 0.0f;
 float window_width = 0.0f;
 float aspect_ratio = 1.0f;

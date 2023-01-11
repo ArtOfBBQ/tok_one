@@ -29,11 +29,18 @@ static int32_t closest_touchable_from_screen_ray(
     // ray_origin.x * z = x * pjc->x_multi
     // (ray_origin.x * z / pjc->x_multi) = x
     zVertex distant_point = ray_origin;
-    distant_point.x = (clicked_viewport_x * 100.0f) /
+    distant_point.x += (clicked_viewport_x * 100.0f) /
         projection_constants.x_multiplier;
-    distant_point.y = (clicked_viewport_y * 100.0f) /
+    distant_point.y += (clicked_viewport_y * 100.0f) /
         projection_constants.field_of_view_modifier;
     distant_point.z = 100.0f;
+    
+    zVertex distant_point_ignore_camera;
+    distant_point_ignore_camera.x = (clicked_viewport_x * 100.0f) /
+        projection_constants.x_multiplier;
+    distant_point_ignore_camera.y = (clicked_viewport_y * 100.0f) /
+        projection_constants.field_of_view_modifier;
+    distant_point_ignore_camera.z = 100.0f;
     
     zVertex ray_direction = distant_point;
     normalize_zvertex(&ray_direction);
@@ -42,7 +49,7 @@ static int32_t closest_touchable_from_screen_ray(
     ray_direction = z_rotate_zvertex(&ray_direction, camera.z_angle);
     normalize_zvertex(&ray_direction);
     
-    normalize_zvertex(&distant_point);
+    normalize_zvertex(&distant_point_ignore_camera);
     
     int32_t return_value = -1;
     float smallest_dist = FLOAT32_MAX;
@@ -62,13 +69,13 @@ static int32_t closest_touchable_from_screen_ray(
         
         bool32_t hit = false;
         if (zpolygons_to_render[zp_i].ignore_camera) {
-            hit = ray_intersects_zpolygon(
+            hit = ray_intersects_zpolygon_hitbox(
                 &ignore_camera_ray_origin,
-                &distant_point,
+                &distant_point_ignore_camera,
                 &zpolygons_to_render[zp_i],
                 &collision_point);
         } else {
-            hit = ray_intersects_zpolygon(
+            hit = ray_intersects_zpolygon_hitbox(
                 &ray_origin,
                 &ray_direction,
                 &zpolygons_to_render[zp_i],
@@ -164,17 +171,20 @@ void shared_gameloop_update(
             /* const bool32_t ignore_camera: */
                 true);
     } else {
-        Interaction * touchable_seekers[10];
-        touchable_seekers[0] = &previous_touch_start;
-        touchable_seekers[1] = &previous_touch_end;
-        touchable_seekers[2] = &previous_leftclick_start;
-        touchable_seekers[3] = &previous_leftclick_end;
-        touchable_seekers[4] = &previous_touch_or_leftclick_start;
-        touchable_seekers[5] = &previous_touch_or_leftclick_end;
-        touchable_seekers[6] = &previous_rightclick_start;
-        touchable_seekers[7] = &previous_rightclick_end;
+        Interaction * touchable_seekers[11];
+        touchable_seekers[0]  = &previous_touch_start;
+        touchable_seekers[1]  = &previous_touch_end;
+        touchable_seekers[2]  = &previous_leftclick_start;
+        touchable_seekers[3]  = &previous_leftclick_end;
+        touchable_seekers[4]  = &previous_touch_or_leftclick_start;
+        touchable_seekers[5]  = &previous_touch_or_leftclick_end;
+        touchable_seekers[6]  = &previous_rightclick_start;
+        touchable_seekers[7]  = &previous_rightclick_end;
+        touchable_seekers[8]  = &previous_mouse_move;
+        touchable_seekers[9]  = &previous_touch_move;
+        touchable_seekers[10] = &previous_mouse_or_touch_move;
         
-        for (uint32_t i = 0; i < 8; i++) {
+        for (uint32_t i = 0; i < 11; i++) {
             if (
                 touchable_seekers[i]->handled ||
                 touchable_seekers[i]->checked_touchables)
@@ -188,9 +198,17 @@ void shared_gameloop_update(
                         touchable_seekers[i]->screen_x,
                     /* screen_y: */
                         touchable_seekers[i]->screen_y); 
+            if (i >= 8) {
+                if (touchable_seekers[i]->touchable_id >= 0) {
+                    log_append("break here\n");
+                }
+                visual_debug_highlight_touchable_id =
+                    touchable_seekers[i]->touchable_id;
+            }
+            
             touchable_seekers[i]->checked_touchables = true;
             
-            for (uint32_t j = i + 1; j < 8; j++) {
+            for (uint32_t j = i + 1; j < 11; j++) {
                 if (
                     touchable_seekers[j]->checked_touchables ||
                     touchable_seekers[j]->handled)

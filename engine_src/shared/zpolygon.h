@@ -47,6 +47,9 @@ typedef struct zPolygon {
     float x_angle;
     float y_angle;
     float z_angle;
+    float hitbox_width;
+    float hitbox_height;
+    float hitbox_depth;
     float scale_factor;
     bool32_t ignore_camera;
     bool32_t ignore_lighting;
@@ -54,7 +57,7 @@ typedef struct zPolygon {
 } zPolygon;
 void construct_zpolygon(zPolygon * to_construct);
 void request_zpolygon_to_render(zPolygon * to_add);
-
+	
 // A buffer of zPolygon objects that should be rendered
 // in your application
 // index 0 to zpolygons_to_render_size will be rendered,
@@ -161,7 +164,13 @@ bool32_t ray_intersects_triangle(
     const zTriangle * triangle,
     zVertex * recipient_hit_point);
 
-bool32_t ray_intersects_zpolygon(
+bool32_t ray_intersects_zpolygon_triangles(
+    const zVertex * ray_origin,
+    const zVertex * ray_direction,
+    const zPolygon * mesh,
+    zVertex * recipient_hit_point);
+
+bool32_t ray_intersects_zpolygon_hitbox(
     const zVertex * ray_origin,
     const zVertex * ray_direction,
     const zPolygon * mesh,
