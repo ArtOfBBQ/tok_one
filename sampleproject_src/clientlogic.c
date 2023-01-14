@@ -54,7 +54,7 @@ void client_logic_startup() {
         /* const int32_t with_id: */
             9999,
         /* const char * text_to_draw: */
-            "Press space to shoot a light\nClick a teapot to bump it",
+            "Press space to shoot a light\nClick a teapot to bump it\npress T to toggle debug\npress C to reset camera",
         /* const float mid_x_pixelspace: */
             window_width * 0.5f,
         /* const float top_y_pixelspace: */
@@ -125,6 +125,9 @@ void client_logic_startup() {
         anotherteapot.x = teapot.x + ((_ / 5) * 0.4f);
         anotherteapot.y = teapot.y;
         anotherteapot.z = teapot.z + ((_ % 5) * 0.3f);
+        anotherteapot.x_angle = 0.0f;
+        anotherteapot.y_angle = 0.3f;
+        anotherteapot.z_angle = 0.0f;
         
         for (
             uint32_t tri_i = 0;
@@ -138,30 +141,30 @@ void client_logic_startup() {
         
         request_zpolygon_to_render(&anotherteapot);
         
-        ScheduledAnimation rotate_teapot;
-        construct_scheduled_animation(&rotate_teapot);
-        rotate_teapot.affected_object_id    = 124 + _;
-        rotate_teapot.x_rotation_per_second = 0.2f + (0.9f / (_ + 1));
-        rotate_teapot.y_rotation_per_second = -0.3f + (0.05f * _);
-        rotate_teapot.z_rotation_per_second = 0.4f + (0.04f * _);
-        rotate_teapot.duration_microseconds = 10000000;
-        rotate_teapot.runs = 0;
-        request_scheduled_animation(&rotate_teapot);
+        //        ScheduledAnimation rotate_teapot;
+        //        construct_scheduled_animation(&rotate_teapot);
+        //        rotate_teapot.affected_object_id    = 124 + _;
+        //        rotate_teapot.x_rotation_per_second = 0.2f + (0.9f / (_ + 1));
+        //        rotate_teapot.y_rotation_per_second = -0.3f + (0.05f * _);
+        //        rotate_teapot.z_rotation_per_second = 0.4f + (0.04f * _);
+        //        rotate_teapot.duration_microseconds = 10000000;
+        //        rotate_teapot.runs = 0;
+        //        request_scheduled_animation(&rotate_teapot);
     }
     
     #define NUM_LIGHTS 4
     float light_size = 0.05f;
-    float light_xs[NUM_LIGHTS];
+    float light_xs[NUM_LIGHTS + 3];
     light_xs[0] = -0.3f;
     light_xs[1] = -0.35f;
     light_xs[2] = 0.3f;
     light_xs[3] = 0.35f;
-    float light_ys[NUM_LIGHTS];
+    float light_ys[NUM_LIGHTS + 3];
     light_ys[0] = 0.2f;
     light_ys[1] = 0.21f;
     light_ys[2] = 0.5f;
     light_ys[3] = 0.51f;
-    float light_zs[NUM_LIGHTS];
+    float light_zs[NUM_LIGHTS + 3];
     light_zs[0] = 1.0f;
     light_zs[1] = 0.7f;
     light_zs[2] = 1.3f;
@@ -199,6 +202,7 @@ void client_logic_startup() {
         quad.triangles[0].texture_i      = 1;
         quad.triangles[1].texturearray_i = 1;
         quad.triangles[1].texture_i      = 1;
+        quad.x_angle                     = i * 0.3f;
         request_zpolygon_to_render(&quad);
     }
     
@@ -304,6 +308,16 @@ static void client_handle_keypresses(uint64_t microseconds_elapsed) {
     if (keypress_map[7] == true) {                                              
         // 'X' key                                                               
         camera.z_angle += cam_rotation_speed;                                    
+    }
+
+    if (keypress_map[8] == true) {                                             
+        // C key is pressed, reset camera
+        camera.x = 0.0f;
+        camera.y = 0.0f;
+        camera.z = 0.0f;
+        camera.x_angle = 0.0f;
+        camera.y_angle = 0.0f;
+        camera.z_angle = 0.0f;
     }
     
     if (keypress_map[12] == true) {                                             

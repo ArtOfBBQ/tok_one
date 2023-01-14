@@ -60,6 +60,7 @@ echo "compilation failed"
 exit 0
 fi
 
-echo "Booting $APP_NAME"
-(cd build/$PLATFORM/$APP_NAME.app && ./$APP_NAME)
+# echo "Booting $APP_NAME"
+# (cd build/$PLATFORM/$APP_NAME.app && ./$APP_NAME)
+open build/$PLATFORM/$APP_NAME.app
 

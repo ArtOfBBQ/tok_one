@@ -5,55 +5,53 @@ static uint64_t frame_no = 0;
 
 static int32_t closest_touchable_from_screen_ray(
     const float screen_x,
-    const float screen_y)
+    const float screen_y,
+    zVertex * collision_point)
 {
-    float clicked_viewport_x = -1.0f + ((screen_x / window_width) * 2.0f);
-    float clicked_viewport_y = -1.0f + ((screen_y / window_height) * 2.0f);
+    float clicked_viewport_x =
+        -1.0f + ((screen_x / window_width) * 2.0f);
+    float clicked_viewport_y =
+        -1.0f + ((screen_y / window_height) * 2.0f);
     
     zVertex ray_origin;
-    ray_origin.x = camera.x;
-    ray_origin.y = camera.y;
-    ray_origin.z = camera.z;
-    
-    zVertex ignore_camera_ray_origin;
-    ignore_camera_ray_origin.x = 0.0f;
-    ignore_camera_ray_origin.y = 0.0f;
-    ignore_camera_ray_origin.z = 0.0f;
+    ray_origin.x =
+        (clicked_viewport_x / projection_constants.x_multiplier) *
+            projection_constants.near;
+    ray_origin.y =
+        (clicked_viewport_y / projection_constants.field_of_view_modifier) *
+            projection_constants.near;
+    ray_origin.z = projection_constants.near;
     
     // we need a point that's distant, but yet also ends up at the same
     // screen position as ray_origin
+    //
+    // This is also the distant point we draw to for visual debug
+    //
     // given:
     // projected_x = x * pjc->x_multiplier / z
     // and we want projected_x to be ray_origin.x:
     // ray_origin.x = (x * pjc->x_multiplier) / z
     // ray_origin.x * z = x * pjc->x_multi
     // (ray_origin.x * z / pjc->x_multi) = x
-    zVertex distant_point = ray_origin;
-    distant_point.x += (clicked_viewport_x * 100.0f) /
-        projection_constants.x_multiplier;
-    distant_point.y += (clicked_viewport_y * 100.0f) /
-        projection_constants.field_of_view_modifier;
-    distant_point.z = 100.0f;
-    
-    zVertex distant_point_ignore_camera;
-    distant_point_ignore_camera.x = (clicked_viewport_x * 100.0f) /
-        projection_constants.x_multiplier;
-    distant_point_ignore_camera.y = (clicked_viewport_y * 100.0f) /
-        projection_constants.field_of_view_modifier;
-    distant_point_ignore_camera.z = 100.0f;
+    float offset_z = camera.z + 1.0f;
+    zVertex distant_point;
+    distant_point.x =
+        (clicked_viewport_x / projection_constants.x_multiplier) *
+            offset_z;
+    distant_point.y =
+        (clicked_viewport_y / projection_constants.field_of_view_modifier) *
+            offset_z;
+    distant_point.z = offset_z;
     
     zVertex ray_direction = distant_point;
     normalize_zvertex(&ray_direction);
-    ray_direction = x_rotate_zvertex(&ray_direction, camera.x_angle);
-    ray_direction = y_rotate_zvertex(&ray_direction, camera.y_angle);
-    ray_direction = z_rotate_zvertex(&ray_direction, camera.z_angle);
-    normalize_zvertex(&ray_direction);
-    
-    normalize_zvertex(&distant_point_ignore_camera);
+    //    ray_direction = x_rotate_zvertex(&ray_direction, camera.x_angle);
+    //    ray_direction = y_rotate_zvertex(&ray_direction, camera.y_angle);
+    //    ray_direction = z_rotate_zvertex(&ray_direction, camera.z_angle);
+    //    normalize_zvertex(&ray_direction);
     
     int32_t return_value = -1;
     float smallest_dist = FLOAT32_MAX;
-    zVertex collision_point;
     
     for (
         uint32_t zp_i = 0;
@@ -67,25 +65,19 @@ static int32_t closest_touchable_from_screen_ray(
             continue;
         }
         
+        zVertex current_collision_point;
         bool32_t hit = false;
-        if (zpolygons_to_render[zp_i].ignore_camera) {
-            hit = ray_intersects_zpolygon_hitbox(
-                &ignore_camera_ray_origin,
-                &distant_point_ignore_camera,
-                &zpolygons_to_render[zp_i],
-                &collision_point);
-        } else {
-            hit = ray_intersects_zpolygon_hitbox(
-                &ray_origin,
-                &ray_direction,
-                &zpolygons_to_render[zp_i],
-                &collision_point);
-        }
+        hit = ray_intersects_zpolygon_hitbox(
+            &ray_origin,
+            &ray_direction,
+            &zpolygons_to_render[zp_i],
+            &current_collision_point);
         
-        float dist_to_hit = get_distance(collision_point, ray_origin);
+        float dist_to_hit = get_distance(*collision_point, ray_origin);
         if (hit && dist_to_hit < smallest_dist) {
             smallest_dist = dist_to_hit;
             return_value = zpolygons_to_render[zp_i].touchable_id;
+            *collision_point = current_collision_point;            
         }
     }
     
@@ -105,6 +97,8 @@ void shared_gameloop_update(
         previous_time = time;
         return;
     }
+    
+    visual_debug_collision_size = ((time % 500000) / 50000) * 0.001f;
     
     *projection_constants_for_gpu = projection_constants;
     
@@ -192,16 +186,82 @@ void shared_gameloop_update(
                 continue;
             }
             
+            zVertex collision_point;
             touchable_seekers[i]->touchable_id =
                 closest_touchable_from_screen_ray(
                     /* screen_x: */
                         touchable_seekers[i]->screen_x,
                     /* screen_y: */
-                        touchable_seekers[i]->screen_y); 
-            if (i >= 8) {
+                        touchable_seekers[i]->screen_y,
+                    /* collision point: */
+                        &collision_point);
+            
+            if (
+                visual_debug_mode &&
+                touchable_seekers[i] == &previous_leftclick_start)
+            {
                 if (touchable_seekers[i]->touchable_id >= 0) {
-                    log_append("break here\n");
+                    // TODO: remove debug code
+                    int32_t zp_i = 0;
+                    for (; zp_i < zpolygons_to_render_size; zp_i++) {
+                        if (zpolygons_to_render[zp_i].touchable_id ==
+                            touchable_seekers[i]->touchable_id)
+                        {
+                            break;
+                        }
+                    }
+                    log_assert(zp_i >= 0);
+                    log_assert(zpolygons_to_render[zp_i].touchable_id ==
+                               touchable_seekers[i]->touchable_id);
+                    float dist_x = collision_point.x - zpolygons_to_render[zp_i].x;
+                    float dist_y = collision_point.y - zpolygons_to_render[zp_i].y;
+                    float dist_z = collision_point.z - zpolygons_to_render[zp_i].z;
+                    log_assert(dist_x < 0.2f);
+                    log_assert(dist_y < 0.2f);
+                    log_assert(dist_z < 0.2f);
+                    
+                    visual_debug_collision[0] = collision_point.x;
+                    visual_debug_collision[1] = collision_point.y;
+                    visual_debug_collision[2] = collision_point.z;
                 }
+                
+                float clicked_viewport_x =
+                    -1.0f + (
+                        (touchable_seekers[i]->screen_x / window_width) *
+                            2.0f);
+                float clicked_viewport_y =
+                    -1.0f + (
+                        (touchable_seekers[i]->screen_y / window_height) *
+                            2.0f);
+                
+                visual_debug_ray_origin_direction[0] =
+                    (clicked_viewport_x / projection_constants.x_multiplier) *
+                        projection_constants.near;
+                visual_debug_ray_origin_direction[1] =
+                    (clicked_viewport_y / projection_constants.field_of_view_modifier) *
+                        projection_constants.near;
+                visual_debug_ray_origin_direction[2] =
+                    projection_constants.near;
+                visual_debug_ray_origin_direction[3] =
+                    ((clicked_viewport_x /
+                        projection_constants.x_multiplier) *
+                            projection_constants.near) + 0.001f;
+                visual_debug_ray_origin_direction[4] =
+                    ((clicked_viewport_y /
+                        projection_constants.field_of_view_modifier) *
+                            projection_constants.near) + 0.001f;
+                visual_debug_ray_origin_direction[5] =
+                    projection_constants.near;
+                visual_debug_ray_origin_direction[6] =
+                    (clicked_viewport_x /
+                        projection_constants.x_multiplier);
+                visual_debug_ray_origin_direction[7] =
+                    (clicked_viewport_y /
+                        projection_constants.field_of_view_modifier);
+                visual_debug_ray_origin_direction[8] = 1.0f;
+            }
+            
+            if (i == 8) {
                 visual_debug_highlight_touchable_id =
                     touchable_seekers[i]->touchable_id;
             }

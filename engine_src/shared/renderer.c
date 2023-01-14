@@ -31,6 +31,70 @@ void hardware_render(
         return;
     }
     
+    if (visual_debug_mode) {
+        // draw the last collision point from the click ray
+        for (uint32_t m = 0; m < 3; m++) {
+            next_gpu_workload[*next_workload_size + m].x =
+                m  < 2 ?
+                    -visual_debug_collision_size :
+                    visual_debug_collision_size;
+            next_gpu_workload[*next_workload_size + m].y =
+                m == 1 ? 
+                    -visual_debug_collision_size :
+                    visual_debug_collision_size;
+            next_gpu_workload[*next_workload_size + m].z =
+                0.0f;
+            next_gpu_workload[*next_workload_size + m].parent_x =
+                visual_debug_collision[0];
+            next_gpu_workload[*next_workload_size + m].parent_y =
+                visual_debug_collision[1];
+            next_gpu_workload[*next_workload_size + m].parent_z =
+                visual_debug_collision[2];
+            next_gpu_workload[*next_workload_size + m].texturearray_i = -1;
+            next_gpu_workload[*next_workload_size + m].texture_i = -1;
+            next_gpu_workload[*next_workload_size + m].RGBA[0] = 1.0f;
+            next_gpu_workload[*next_workload_size + m].RGBA[1] = 0.1f;
+            next_gpu_workload[*next_workload_size + m].RGBA[2] = 0.1f;
+            next_gpu_workload[*next_workload_size + m].RGBA[3] = 1.0f;
+            next_gpu_workload[*next_workload_size + m].ignore_lighting = true;
+            next_gpu_workload[*next_workload_size + m].scale_factor = 1.0f;
+            next_gpu_workload[*next_workload_size + m].ignore_camera = false;
+            next_gpu_workload[*next_workload_size + m].touchable_id = -1;
+            next_gpu_workload[*next_workload_size + m].x_angle = 0.5f;
+            next_gpu_workload[*next_workload_size + m].y_angle = 0.5f;
+            next_gpu_workload[*next_workload_size + m].z_angle = 0.0f;
+        }
+        *next_workload_size += 3;
+        
+        // draw the ray that's used for finding touchables when clicking
+        // as a triangle
+        for (uint32_t m = 0; m < 3; m++) {
+            next_gpu_workload[*next_workload_size + m].x =
+                visual_debug_ray_origin_direction[(m*3) + 0];
+            next_gpu_workload[*next_workload_size + m].y =
+                visual_debug_ray_origin_direction[(m*3) + 1];
+            next_gpu_workload[*next_workload_size + m].z =
+                visual_debug_ray_origin_direction[(m*3) + 2];
+            next_gpu_workload[*next_workload_size + m].parent_x = 0.0f;
+            next_gpu_workload[*next_workload_size + m].parent_y = 0.0f;
+            next_gpu_workload[*next_workload_size + m].parent_z = 0.0f;
+            next_gpu_workload[*next_workload_size + m].texturearray_i = -1;
+            next_gpu_workload[*next_workload_size + m].texture_i = -1;
+            next_gpu_workload[*next_workload_size + m].RGBA[0] = 1.0f;
+            next_gpu_workload[*next_workload_size + m].RGBA[1] = 1.0f;
+            next_gpu_workload[*next_workload_size + m].RGBA[2] = 1.0f;
+            next_gpu_workload[*next_workload_size + m].RGBA[3] = 0.75f;
+            next_gpu_workload[*next_workload_size + m].ignore_lighting = true;
+            next_gpu_workload[*next_workload_size + m].scale_factor = 1.0f;
+            next_gpu_workload[*next_workload_size + m].ignore_camera = false;
+            next_gpu_workload[*next_workload_size + m].touchable_id = -1;
+            next_gpu_workload[*next_workload_size + m].x_angle = 0.0f;
+            next_gpu_workload[*next_workload_size + m].y_angle = 0.0f;
+            next_gpu_workload[*next_workload_size + m].z_angle = 0.0f;
+        }
+        *next_workload_size += 3;
+    }
+    
     if (zpolygons_to_render_size == 0) {
         return;
     }
@@ -40,7 +104,11 @@ void hardware_render(
     for (uint32_t zp_i = 0; zp_i < zpolygons_to_render_size; zp_i++) {
         if (zpolygons_to_render[zp_i].deleted) { continue; }
         
-        for (uint32_t tri_i = 0; tri_i < zpolygons_to_render[zp_i].triangles_size; tri_i++) {
+        for (
+            uint32_t tri_i = 0;
+            tri_i < zpolygons_to_render[zp_i].triangles_size;
+            tri_i++)
+        {
             for (uint32_t m = 0; m < 3; m++) {
                 next_gpu_workload[*next_workload_size].x =
                     zpolygons_to_render[zp_i].triangles[tri_i].vertices[m].x;
@@ -95,7 +163,7 @@ void hardware_render(
                 assert(*next_workload_size - 1 < MAX_VERTICES_PER_BUFFER);
             }
         }
-                
+        
         // draw touchable hitboxes (the white rectangles) in visual debug mode
         if (visual_debug_mode && zpolygons_to_render[zp_i].touchable_id >= 0) {
             

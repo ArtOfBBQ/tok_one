@@ -6,6 +6,9 @@
 
 extern bool32_t visual_debug_mode;
 extern int32_t visual_debug_highlight_touchable_id;
+extern float visual_debug_ray_origin_direction[9];
+extern float visual_debug_collision[3];
+extern float visual_debug_collision_size;
 
 extern float window_height;
 extern float window_width;

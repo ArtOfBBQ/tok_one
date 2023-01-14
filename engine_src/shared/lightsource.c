@@ -25,6 +25,17 @@ zVertex x_rotate_zvertex(
     const zVertex * input,
     const float angle)
 {
+    //    float4 rotated_vertices = vertices;
+    //    float cos_angle = cos(x_angle);
+    //    float sin_angle = sin(x_angle);
+    //    
+    //    rotated_vertices[1] =
+    //        vertices[1] * cos_angle -
+    //        vertices[2] * sin_angle;
+    //    rotated_vertices[2] =
+    //        vertices[1] * sin_angle +
+    //        vertices[2] * cos_angle;
+    
     zVertex return_value = *input;
     
     return_value.y =
@@ -59,11 +70,22 @@ zVertex y_rotate_zvertex(
     const zVertex * input,
     const float angle)
 {
+    // float4 rotated_vertices = vertices;
+    // float cos_angle = cos(y_angle);
+    // float sin_angle = sin(y_angle);
+    // 
+    // rotated_vertices[0] =
+    //     vertices[0] * cos_angle +
+    //     vertices[2] * sin_angle;
+    // rotated_vertices[2] =
+    //     vertices[2] * cos_angle -
+    //     vertices[0] * sin_angle;
+    
     zVertex return_value = *input;
     
     return_value.x =
-        (input->x * cosf(angle))
-        + (input->z * sinf(angle));
+        (input->x * cosf(angle)) +
+        (input->z * sinf(angle));
     
     return_value.z =
         (input->z * cosf(angle)) -
@@ -93,11 +115,22 @@ zVertex z_rotate_zvertex(
     const zVertex * input,
     const float angle)
 {
+    //    float4 rotated_vertices = vertices;
+    //    float cos_angle = cos(z_angle);
+    //    float sin_angle = sin(z_angle);
+    //    
+    //    rotated_vertices[0] =
+    //        vertices[0] * cos_angle -
+    //        vertices[1] * sin_angle;
+    //    rotated_vertices[1] =
+    //        vertices[1] * cos_angle +
+    //        vertices[0] * sin_angle;
+    
     zVertex return_value = *input;
     
     return_value.x =
-        (input->x * cosf(angle))
-        - (input->y * sinf(angle));
+        (input->x * cosf(angle)) -
+        (input->y * sinf(angle));
     
     return_value.y =
         (input->y * cosf(angle)) +

@@ -158,17 +158,17 @@ float distance_to_ztriangle(
     const zVertex p1,
     const zTriangle p2);
 
-bool32_t ray_intersects_triangle(
-    const zVertex * ray_origin,
-    const zVertex * ray_direction,
-    const zTriangle * triangle,
-    zVertex * recipient_hit_point);
+//bool32_t ray_intersects_triangle(
+//    const zVertex * ray_origin,
+//    const zVertex * ray_direction,
+//    const zTriangle * triangle,
+//    zVertex * recipient_hit_point);
 
-bool32_t ray_intersects_zpolygon_triangles(
-    const zVertex * ray_origin,
-    const zVertex * ray_direction,
-    const zPolygon * mesh,
-    zVertex * recipient_hit_point);
+//bool32_t ray_intersects_zpolygon_triangles(
+//    const zVertex * ray_origin,
+//    const zVertex * ray_direction,
+//    const zPolygon * mesh,
+//    zVertex * recipient_hit_point);
 
 bool32_t ray_intersects_zpolygon_hitbox(
     const zVertex * ray_origin,
