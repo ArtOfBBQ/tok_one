@@ -357,9 +357,9 @@ static id projection_constant_buffers[3];
     if (block_drawinmtkview) { return; }
     block_drawinmtkview = true;
     
-    dispatch_semaphore_wait(
-        _frameBoundarySemaphore,
-        DISPATCH_TIME_FOREVER);
+    //    dispatch_semaphore_wait(
+    //        _frameBoundarySemaphore,
+    //        DISPATCH_TIME_FOREVER);
     
     GPU_Vertex * vertices_for_gpu =
         gpu_shared_data_collection.triple_buffers[current_frame_i].vertices;
@@ -509,11 +509,11 @@ static id projection_constant_buffers[3];
     current_frame_i += 1;
     current_frame_i -= ((current_frame_i > 2)*3);
     
-    __block dispatch_semaphore_t semaphore = _frameBoundarySemaphore;
+    //    __block dispatch_semaphore_t semaphore = _frameBoundarySemaphore;
     [command_buffer
         addCompletedHandler:^(id<MTLCommandBuffer> commandBuffer)
     {
-        dispatch_semaphore_signal(semaphore);
+        // dispatch_semaphore_signal(semaphore);
     }];
     
     [command_buffer commit];

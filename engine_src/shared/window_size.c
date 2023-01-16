@@ -9,8 +9,8 @@ float visual_debug_collision[3];
 float visual_debug_collision_size = 0.01f;
 
 float window_height = 0.0f;
-float window_width = 0.0f;
-float aspect_ratio = 1.0f;
+float window_width  = 0.0f;
+float aspect_ratio  = 1.0f;
 
 uint64_t last_resize_request_at = 99999999999;
 bool32_t request_post_resize_clearscreen = false;
@@ -53,8 +53,7 @@ void init_projection_constants() {
     pjc->x_multiplier = aspect_ratio * pjc->field_of_view_modifier;
     pjc->y_multiplier = pjc->field_of_view_modifier;
     
-    visual_debug_collision[0] = 0.0f;
-    visual_debug_collision[1] = 0.0f;
-    visual_debug_collision[2] = 0.1f;
+    visual_debug_collision[0] =  0.0f;
+    visual_debug_collision[1] =  0.0f;
+    visual_debug_collision[2] = -5.0f;
 }
-

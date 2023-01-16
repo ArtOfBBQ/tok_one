@@ -258,10 +258,13 @@ void request_label_around(
                      0,
                  /* const float top_y: */
                      0,
+                 /* const float z: */
+                     label.z,
                  /* const float width: */
                      screenspace_width_to_width(font_height),
                  /* const float height: */
                      screenspace_height_to_height(font_height));
+            letter.z = 0.0f;
             
             if ((text_to_draw[j] - '!') < 0) {
                 cur_x_offset += get_advance_width(text_to_draw[j]);
@@ -379,6 +382,8 @@ void request_label_renderable(
                 0,
             /* const float top_y: */
                 0,
+            /* const flota z: */
+                0.01f,
             /* const float width: */
                 letter_width,
             /* const float height: */

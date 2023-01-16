@@ -179,6 +179,7 @@ bool32_t ray_intersects_zpolygon_hitbox(
 zPolygon construct_quad(
     const float left_x,
     const float top_y,
+    const float z,
     const float width,
     const float height);
 

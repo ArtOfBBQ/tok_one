@@ -5,9 +5,9 @@ static uint32_t renderer_initialized = false;
 void init_renderer() {
     renderer_initialized = true;
     
-    camera.x = 0.0f;
-    camera.y = 0.0f;
-    camera.z = 0.0f;
+    camera.x       = 0.0f;
+    camera.y       = 0.0f;
+    camera.z       = 0.0f;
     camera.x_angle = 0.0f;
     camera.y_angle = 0.0f;
     camera.z_angle = 0.0f;
@@ -86,7 +86,7 @@ void hardware_render(
             next_gpu_workload[*next_workload_size + m].RGBA[3] = 0.75f;
             next_gpu_workload[*next_workload_size + m].ignore_lighting = true;
             next_gpu_workload[*next_workload_size + m].scale_factor = 1.0f;
-            next_gpu_workload[*next_workload_size + m].ignore_camera = false;
+            next_gpu_workload[*next_workload_size + m].ignore_camera = true;
             next_gpu_workload[*next_workload_size + m].touchable_id = -1;
             next_gpu_workload[*next_workload_size + m].x_angle = 0.0f;
             next_gpu_workload[*next_workload_size + m].y_angle = 0.0f;

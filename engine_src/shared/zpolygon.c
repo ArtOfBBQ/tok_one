@@ -1360,8 +1360,9 @@ bool32_t ray_intersects_zpolygon_hitbox(
             &normalized_plane_normal,
             &plane_offset_minus_ray_origin) /
                 denominator;
+        
         float diff = t_values[p] - t_values_alternative;
-        log_assert(diff < 0.1f);
+        log_assert(diff <  0.1f);
         log_assert(diff > -0.1f);
         // end of debug check
         
@@ -1400,14 +1401,20 @@ bool32_t ray_intersects_zpolygon_hitbox(
         // hitbox
         // it's now an 'axis aligned' hitbox (since we rotated the collision
         // point and not the hitbox itself), so we can just check the bounds
-        float thresh = 0.001f;
+        float tolerance = 0.03f;
         if (
-            reverse_rotated_center_to_hit.x - thresh <=  ( mesh->hitbox_width  / 2 ) &&
-            reverse_rotated_center_to_hit.x + thresh >= -( mesh->hitbox_width  / 2 ) &&
-            reverse_rotated_center_to_hit.y - thresh <=  ( mesh->hitbox_height / 2 ) &&
-            reverse_rotated_center_to_hit.y + thresh >= -( mesh->hitbox_height / 2 ) &&
-            reverse_rotated_center_to_hit.z - thresh <=  ( mesh->hitbox_depth  / 2 ) &&
-            reverse_rotated_center_to_hit.z + thresh >= -( mesh->hitbox_depth  / 2 ))
+            (reverse_rotated_center_to_hit.x - tolerance) <= 
+                 ( mesh->hitbox_width  / 2 ) &&
+            (reverse_rotated_center_to_hit.x + tolerance) >=
+                -( mesh->hitbox_width  / 2 ) &&
+            (reverse_rotated_center_to_hit.y - tolerance) <=
+                 ( mesh->hitbox_height / 2 ) &&
+            (reverse_rotated_center_to_hit.y + tolerance) >=
+                -( mesh->hitbox_height / 2 ) &&
+            (reverse_rotated_center_to_hit.z - tolerance) <=
+                 ( mesh->hitbox_depth  / 2 ) &&
+            (reverse_rotated_center_to_hit.z + tolerance) >=
+                -( mesh->hitbox_depth  / 2 ))
         {
             hit_plane[p] = true;
         }
@@ -1424,17 +1431,6 @@ bool32_t ray_intersects_zpolygon_hitbox(
             return_value = true;
             *recipient_hit_point = hit_points[p];
             closest_t = t_values[p];
-            
-            // TODO: remove debug check
-            float dist = get_distance(
-                *recipient_hit_point,
-                mesh_center);
-            
-            log_assert(
-                dist <
-                    (mesh->hitbox_depth +
-                    mesh->hitbox_width +
-                    mesh->hitbox_height));
         }
     }
     
@@ -1444,30 +1440,33 @@ bool32_t ray_intersects_zpolygon_hitbox(
 zPolygon construct_quad(
     const float left_x,
     const float top_y,
+    const float z,
     const float width,
     const float height)
 {
+    log_assert(z > 0.0f);
+    
     zPolygon return_value;
     construct_zpolygon(&return_value);
     
     return_value.triangles_size = 2;
     
-    float mid_x = left_x + (width  / 2);
-    float mid_y = top_y  + (height / 2);
+    const float mid_x           = left_x + (width  / 2);
+    const float mid_y           = top_y  + (height / 2);
     
-    float left_vertex     = left_x - mid_x;
-    float right_vertex    = mid_x  - left_x;
-    float top_vertex      = mid_y - top_y;
-    float bottom_vertex   = top_y - mid_y;
+    const float left_vertex     = (left_x - mid_x ) * z;
+    const float right_vertex    = (mid_x  - left_x) * z;
+    const float top_vertex      = (mid_y  - top_y ) * z;
+    const float bottom_vertex   = (top_y  - mid_y ) * z;
     
-    float left_uv_coord   = 0.0f;
-    float right_uv_coord  = 1.0f;
-    float bottom_uv_coord = 1.0f;
-    float top_uv_coord    = 0.0f;
+    const float left_uv_coord   = 0.0f;
+    const float right_uv_coord  = 1.0f;
+    const float bottom_uv_coord = 1.0f;
+    const float top_uv_coord    = 0.0f;
     
     return_value.x = mid_x;
     return_value.y = mid_y;
-    return_value.z = 1.0f;
+    return_value.z = z;
     
     // **
     // top & left triangle
