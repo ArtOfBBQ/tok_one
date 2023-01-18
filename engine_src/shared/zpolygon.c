@@ -10,25 +10,48 @@ static void set_zpolygon_hitbox(
 {
     log_assert(mesh->triangles_size > 0);
     
-    float total_height = 0.0f;
-    float total_width  = 0.0f;
-    float total_depth  = 0.0f;
+    float top = 0.0f;
+    float bottom = 0.0f;
+    float left = 0.0f;
+    float right = 0.0f;
+    float back = 0.0f;
+    float front = 0.0f;
     
     for (uint32_t i = 0; i < mesh->triangles_size; i++) {
         for (uint32_t m = 0; m < 3; m++) {
-            total_width  += fabs(mesh->triangles[i].vertices[m].x);
-            total_height += fabs(mesh->triangles[i].vertices[m].y);
-            total_depth  += fabs(mesh->triangles[i].vertices[m].z);
+            if (mesh->triangles[i].vertices[m].x < left) {
+                left = mesh->triangles[i].vertices[m].x;
+            } else if (mesh->triangles[i].vertices[m].x > right) {
+                right = mesh->triangles[i].vertices[m].x; 
+            }
+            
+            if (mesh->triangles[i].vertices[m].y < bottom) {
+                bottom = mesh->triangles[i].vertices[m].y;
+            } else if (mesh->triangles[i].vertices[m].y > top) {
+                top = mesh->triangles[i].vertices[m].y; 
+            }
+            
+            if (mesh->triangles[i].vertices[m].z < front) {
+                front = mesh->triangles[i].vertices[m].z;
+            } else if (mesh->triangles[i].vertices[m].z > back) {
+                back = mesh->triangles[i].vertices[m].z; 
+            }
         }
     }
     
-    total_width += 0.0001f;
-    total_height += 0.0001f;
-    total_depth += 0.0001f;
+    log_assert(bottom <= 0.0f);
+    log_assert(top    >= 0.0f);
     
-    mesh->hitbox_height = total_height / mesh->triangles_size;
-    mesh->hitbox_width  = total_width  / mesh->triangles_size;
-    mesh->hitbox_depth  = total_depth  / mesh->triangles_size;
+    log_assert(left   <= 0.0f);
+    log_assert(right  >= 0.0f);
+    
+    log_assert(back   >= 0.0f);
+    log_assert(front  <= 0.0f);
+    log_assert(back >= front);
+    
+    mesh->hitbox_height = (top - bottom) + 0.00001f;
+    mesh->hitbox_width  = (right - left) + 0.00001f;
+    mesh->hitbox_depth  = (back - front) + 0.00001f;
 }
 
 void request_zpolygon_to_render(zPolygon * to_add)
