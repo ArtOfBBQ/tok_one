@@ -17,8 +17,8 @@ extern float aspect_ratio;
 extern uint64_t last_resize_request_at;
 extern bool32_t request_post_resize_clearscreen;
 
-float screenspace_x_to_x(const float screenspace_x);
-float screenspace_y_to_y(const float screenspace_y);
+float screenspace_x_to_x(const float screenspace_x, const float given_z);
+float screenspace_y_to_y(const float screenspace_y, const float given_z);
 float screenspace_height_to_height(const float screenspace_height);
 float screenspace_width_to_width(const float screenspace_width);
 

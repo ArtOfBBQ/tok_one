@@ -106,6 +106,8 @@ NSWindowWithCustomResponder: NSWindow
             screenspace_y);
     
     previous_touch_or_leftclick_start = previous_leftclick_start;
+    previous_mouse_move               = previous_leftclick_start;
+    previous_mouse_or_touch_move      = previous_leftclick_start;
     }
 }
 
@@ -124,6 +126,8 @@ NSWindowWithCustomResponder: NSWindow
                 - platform_get_current_window_bottom());
     
     previous_touch_or_leftclick_end = previous_leftclick_end;
+    previous_mouse_move             = previous_leftclick_end;
+    previous_mouse_or_touch_move    = previous_leftclick_end;
     }
 }
 

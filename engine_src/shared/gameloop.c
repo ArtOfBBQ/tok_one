@@ -235,7 +235,7 @@ void shared_gameloop_update(
         touchable_seekers[9]  = &previous_touch_move;
         touchable_seekers[10] = &previous_mouse_or_touch_move;
         
-        for (uint32_t i = 0; i < 11; i++) {
+        for (uint32_t i = 0; i < 8; i++) {
             if (
                 touchable_seekers[i]->handled ||
                 touchable_seekers[i]->checked_touchables)
@@ -279,6 +279,8 @@ void shared_gameloop_update(
                     touchable_seekers[j]->checked_touchables = true;
                 }
             }
+            
+            break; // max 1 ray per frame
         }
         
         client_logic_update(elapsed);

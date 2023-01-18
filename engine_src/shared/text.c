@@ -231,8 +231,8 @@ void request_label_around(
     label.ignore_camera = ignore_camera;
     label.object_id = with_id;
     // float label_left = mid_x_pixelspace - (widest_line_width / 2);
-    label.x = screenspace_x_to_x(mid_x_pixelspace);
-    label.y = screenspace_y_to_y(top_y_pixelspace + ((lines_size * font_height) / 2));
+    label.x = screenspace_x_to_x(mid_x_pixelspace, z);
+    label.y = screenspace_y_to_y(top_y_pixelspace + ((lines_size * font_height) / 2), z);
     label.z = z;
     label.triangles_size = 0;
     
@@ -339,8 +339,8 @@ void request_label_renderable(
     zPolygon label_to_render;
     construct_zpolygon(&label_to_render);
     label_to_render.object_id = with_id;
-    label_to_render.x = screenspace_x_to_x(left_pixelspace);
-    label_to_render.y = screenspace_y_to_y(top_pixelspace);
+    label_to_render.x = screenspace_x_to_x(left_pixelspace, z);
+    label_to_render.y = screenspace_y_to_y(top_pixelspace, z);
     label_to_render.ignore_lighting = font_ignore_lighting;
     label_to_render.ignore_camera = ignore_camera;
     label_to_render.z = z;
