@@ -47,7 +47,7 @@ static void set_zpolygon_hitbox(
     
     log_assert(back   >= 0.0f);
     log_assert(front  <= 0.0f);
-    log_assert(back >= front);
+    log_assert(back   >= front);
     
     mesh->hitbox_height = (top - bottom) + 0.00001f;
     mesh->hitbox_width  = (right - left) + 0.00001f;
@@ -713,10 +713,12 @@ void scale_zpolygon(
         for (uint32_t j = 0; j < 3; j++)
         {
             float height =
-                ((to_scale->triangles[i].vertices[j].y < 0) *  (to_scale->triangles[i].vertices[j].y * -1)) +
-                ((to_scale->triangles[i].vertices[j].y >= 0) *  (to_scale->triangles[i].vertices[j].y)); 
-            if (height > largest_height)
-            {
+                ((to_scale->triangles[i].vertices[j].y  < 0) * 
+                    (to_scale->triangles[i].vertices[j].y * -1)) +
+                ((to_scale->triangles[i].vertices[j].y >= 0) *
+                    (to_scale->triangles[i].vertices[j].y));
+            
+            if (height > largest_height) {
                 largest_height = height;
             }
         }
@@ -740,11 +742,13 @@ void scale_zpolygon(
     }
     log_assert(largest_width > 0.0f);
     
-    float width_scale_factor = new_size / largest_width;
+    float width_scale_factor  = new_size / largest_width;
     float height_scale_factor = new_size / largest_height;
     float scale_factor =
-        ((width_scale_factor > height_scale_factor) * height_scale_factor) +
-        ((width_scale_factor <= height_scale_factor) * width_scale_factor);
+        ((width_scale_factor > height_scale_factor) *
+            height_scale_factor) +
+        ((width_scale_factor <= height_scale_factor) *
+            width_scale_factor);
     
     for (uint32_t i = 0; i < to_scale->triangles_size; i++) {
         for (uint32_t j = 0; j < 3; j++)
