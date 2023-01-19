@@ -17,6 +17,7 @@ void request_zlightsource(zLightSource * to_request)
         }
     }
     
+    log_assert(zlights_to_apply_size + 1 < ZLIGHTS_TO_APPLY_ARRAYSIZE);
     zlights_to_apply[zlights_to_apply_size] = *to_request;
     zlights_to_apply_size += 1;
 }
@@ -221,7 +222,8 @@ void copy_lights(
             lights_for_gpu->ambient[lights_for_gpu->lights_size]   = zlights_to_apply[i].ambient; 
             lights_for_gpu->diffuse[lights_for_gpu->lights_size]   = zlights_to_apply[i].diffuse;
             
-            lights_for_gpu->reach[lights_for_gpu->lights_size]     = zlights_to_apply[i].reach;
+            lights_for_gpu->reach[lights_for_gpu->lights_size]     =
+                zlights_to_apply[i].reach * zlights_to_apply[i].RGBA[3];
             
             lights_for_gpu->lights_size += 1;
         }

@@ -379,6 +379,23 @@ static void resolve_single_animation_effects(
                         / elapsed_this_run);
         }
         
+        if (anim->set_texture_array_i || anim->set_texture_i) {
+            for (
+                uint32_t tri_i = 0;
+                tri_i < zpolygons_to_render[zp_i].triangles_size;
+                tri_i++)
+            {
+                if (anim->set_texture_array_i) {
+                    zpolygons_to_render[zp_i].triangles[tri_i].texturearray_i =
+                        anim->new_texture_array_i;
+                }
+                if (anim->set_texture_i) {
+                    zpolygons_to_render[zp_i].triangles[tri_i].texture_i =
+                        anim->new_texture_i;
+                }
+            }
+        }
+        
         for (
             uint32_t c = 0;
             c < 4;
@@ -386,10 +403,14 @@ static void resolve_single_animation_effects(
         {
             if (!anim->final_rgba_known[c]) {
                 for (uint32_t tri_i = 0; tri_i < zpolygons_to_render[zp_i].triangles_size; tri_i++) {
-                    zpolygons_to_render[zp_i].triangles[tri_i].color[c] +=
-                        (anim->rgba_delta_per_second[c]
+                    if (anim->rgba_delta_per_second[c] > 0.0f) {
+                        log_append("break here");
+                    }
+                    float delta = ((anim->rgba_delta_per_second[c]
                             * elapsed_this_run)
-                        / 1000000;
+                        / 1000000);
+                    zpolygons_to_render[zp_i].triangles[tri_i].color[c] +=
+                        delta;
                 }
             } else {
                 
