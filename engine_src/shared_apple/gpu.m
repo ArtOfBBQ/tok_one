@@ -478,8 +478,6 @@ static id projection_constant_buffers[3];
         offset: 0
         atIndex: 2];
     
-    id<MTLBuffer> projection_constants_for_this_frame =
-        projection_constant_buffers[current_frame_i];
     [render_encoder
         setVertexBuffer:
             projection_constant_buffers[current_frame_i]
@@ -509,12 +507,12 @@ static id projection_constant_buffers[3];
     current_frame_i += 1;
     current_frame_i -= ((current_frame_i > 2)*3);
     
-    //    __block dispatch_semaphore_t semaphore = _frameBoundarySemaphore;
-    [command_buffer
-        addCompletedHandler:^(id<MTLCommandBuffer> commandBuffer)
-    {
-        // dispatch_semaphore_signal(semaphore);
-    }];
+    //    __block dispatch_semaphore_t semaphore = _frameBoundarySemaphore;]
+    //    [command_buffer
+    //        addCompletedHandler:^(id<MTLCommandBuffer> commandBuffer)
+    //    {
+    //        dispatch_semaphore_signal(semaphore);
+    //    }];
     
     [command_buffer commit];
     

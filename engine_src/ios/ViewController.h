@@ -2,7 +2,7 @@
 #import <MetalKit/MetalKit.h>
 
 #import "../shared_apple/gpu.h"
-#import "../shared/software_renderer.h"
+#import "../shared/renderer.h"
 
 @interface TouchableMTKView : MTKView
 - (void)

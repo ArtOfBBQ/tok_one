@@ -156,7 +156,6 @@ TouchableMTKView * _my_mtk_view;
     
     // _my_mtk_view.drawableSize = size;
     
-    texquads_to_render_size = 0;
     zpolygons_to_render_size = 0; 
     zlights_to_apply_size = 0;
 }

@@ -2,7 +2,7 @@
 
 // If you want to draw 3D objects to the screen, you need
 // to set them up here
-zPolygon zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
+zPolygon * zpolygons_to_render;
 uint32_t zpolygons_to_render_size = 0;
 
 static void set_zpolygon_hitbox(
@@ -170,6 +170,9 @@ zPolygon parse_obj_expecting_materials(
     const uint32_t expected_materials_size,
     const bool32_t flip_winding)
 {
+    log_assert(rawdata != NULL);
+    log_assert(rawdata_size > 0);
+    
     zPolygon return_value;
     construct_zpolygon(&return_value);
     
@@ -629,7 +632,7 @@ zPolygon parse_obj_expecting_materials(
             if (new_triangle_i >= POLYGON_TRIANGLES_SIZE) {
                 char err_txt[300];
                 strcpy_capped(err_txt, 300, "Tried to add new_triangle_i: ");
-                strcat_int_capped(err_txt, 300, new_triangle_i);
+                strcat_uint_capped(err_txt, 300, new_triangle_i);
                 strcat_capped(err_txt, 300, ", but ZPOLYGONS_TO_RENDER_ARRAYSIZE was: ");
                 strcat_int_capped(err_txt, 300, ZPOLYGONS_TO_RENDER_ARRAYSIZE);
                 strcat_capped(err_txt, 300, "\n");
@@ -821,6 +824,9 @@ void construct_zpolygon(zPolygon * to_construct) {
     to_construct->ignore_lighting = false;
     to_construct->ignore_camera = false;
     to_construct->deleted = false;
+    to_construct->rgb_bonus[0] = 0.0f;
+    to_construct->rgb_bonus[1] = 0.0f;
+    to_construct->rgb_bonus[2] = 0.0f;
 }
 
 zTriangle __attribute__((no_instrument_function))

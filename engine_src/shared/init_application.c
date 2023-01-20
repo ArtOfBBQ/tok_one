@@ -27,9 +27,13 @@ void init_application() {
             &font_metrics_file);
     log_assert(font_metrics_file.good);
     init_font(
-        /* raw_fontmetrics_file_contents: */ font_metrics_file.contents,
-        /* raw_fontmetrics_file_size: */ font_metrics_file.size);
+        /* raw_fontmetrics_file_contents: */
+            font_metrics_file.contents,
+        /* raw_fontmetrics_file_size: */
+            font_metrics_file.size);
     
+    zpolygons_to_render = (zPolygon *)malloc_from_unmanaged(
+        sizeof(zPolygon) * ZPOLYGONS_TO_RENDER_ARRAYSIZE);
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
         sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
     

@@ -18,6 +18,8 @@ void hardware_render(
     uint32_t * next_workload_size,
     uint64_t elapsed_nanoseconds)
 {
+    (void)elapsed_nanoseconds;
+    
     if (renderer_initialized != true) {
         log_append("renderer not initialized, aborting...\n");
         return;
@@ -101,7 +103,11 @@ void hardware_render(
     
     log_assert(zpolygons_to_render_size < ZPOLYGONS_TO_RENDER_ARRAYSIZE);
     
-    for (uint32_t zp_i = 0; zp_i < zpolygons_to_render_size; zp_i++) {
+    for (
+        uint32_t zp_i = 0;
+        zp_i < zpolygons_to_render_size;
+        zp_i++)
+    {
         if (zpolygons_to_render[zp_i].deleted) { continue; }
         
         for (
@@ -135,11 +141,14 @@ void hardware_render(
                 next_gpu_workload[*next_workload_size].normal_z =
                     zpolygons_to_render[zp_i].triangles[tri_i].normal.z;
                 next_gpu_workload[*next_workload_size].RGBA[0] =
-                    zpolygons_to_render[zp_i].triangles[tri_i].color[0];
+                    zpolygons_to_render[zp_i].triangles[tri_i].color[0]
+                        + zpolygons_to_render[zp_i].rgb_bonus[0];
                 next_gpu_workload[*next_workload_size].RGBA[1] =
-                    zpolygons_to_render[zp_i].triangles[tri_i].color[1];
+                    zpolygons_to_render[zp_i].triangles[tri_i].color[1]
+                        + zpolygons_to_render[zp_i].rgb_bonus[1];
                 next_gpu_workload[*next_workload_size].RGBA[2] =
-                    zpolygons_to_render[zp_i].triangles[tri_i].color[2];
+                    zpolygons_to_render[zp_i].triangles[tri_i].color[2]
+                        + zpolygons_to_render[zp_i].rgb_bonus[2];
                 next_gpu_workload[*next_workload_size].RGBA[3] =
                     zpolygons_to_render[zp_i].triangles[tri_i].color[3];
                 next_gpu_workload[*next_workload_size].touchable_id =

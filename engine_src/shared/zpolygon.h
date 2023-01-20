@@ -4,6 +4,8 @@
 #include <math.h>
 #include <inttypes.h>
 
+#include "clientlogic_macro_settings.h"
+
 #include "simd.h"
 #include "logger.h"
 #include "common.h"
@@ -35,12 +37,11 @@ typedef struct zTriangle {
     uint32_t visible;
 } zTriangle;
 
-#define POLYGON_TRIANGLES_SIZE 8400
 typedef struct zPolygon {
-    int32_t object_id;
-    int32_t touchable_id;
     zTriangle triangles[POLYGON_TRIANGLES_SIZE];
     uint32_t triangles_size;
+    int32_t object_id;
+    int32_t touchable_id;
     float x;
     float y;
     float z;
@@ -50,6 +51,7 @@ typedef struct zPolygon {
     float hitbox_width;
     float hitbox_height;
     float hitbox_depth;
+    float rgb_bonus[3];
     float scale_factor;
     bool32_t ignore_camera;
     bool32_t ignore_lighting;
@@ -62,8 +64,7 @@ void request_zpolygon_to_render(zPolygon * to_add);
 // in your application
 // index 0 to zpolygons_to_render_size will be rendered,
 // the rest of the array will be ignored
-#define ZPOLYGONS_TO_RENDER_ARRAYSIZE 1000
-extern zPolygon zpolygons_to_render[ZPOLYGONS_TO_RENDER_ARRAYSIZE];
+extern zPolygon * zpolygons_to_render;
 extern uint32_t zpolygons_to_render_size;
 
 void delete_zpolygon_object(const int32_t with_object_id);
