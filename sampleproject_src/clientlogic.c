@@ -10,7 +10,11 @@ typedef struct TextureArrayLocation {
     int32_t texture_i;
 } TextureArrayLocation;
 
-zPolygon load_from_obj_file(char * filepath, const bool32_t flip_winding) {
+void load_from_obj_file(
+    char * filepath,
+    const bool32_t flip_winding,
+    zPolygon * recipient)
+{
     FileBuffer buffer;
     buffer.size = (uint64_t)platform_get_resource_size(filepath) + 1;
     buffer.contents = (char *)malloc_from_managed(buffer.size);
@@ -20,14 +24,13 @@ zPolygon load_from_obj_file(char * filepath, const bool32_t flip_winding) {
     
     assert(buffer.size > 1);
     
-    zPolygon return_value = parse_obj(
+    parse_obj(
         /* rawdata     : */ buffer.contents,
         /* rawdata_size: */ buffer.size,
-        flip_winding);
+        flip_winding,
+        recipient);
     
-    free_from_managed((uint8_t *)buffer.contents);
-    
-    return return_value;
+    free_from_managed((uint8_t *)buffer.contents);    
 }
 
 void client_logic_get_application_name_to_recipient(
@@ -42,34 +45,28 @@ void client_logic_get_application_name_to_recipient(
         /* origin: */ app_name);
 }
 
-static bool32_t ran_anim[4]; // 1 for each card in the test scene
-void client_logic_startup() {
+void client_logic_startup(void) {
     
-    font_height = 40.0f;
-    font_color[0] = 1.0f;
-    font_color[1] = 1.0f;
-    font_color[2] = 1.0f;
-    font_color[3] = 1.0f;
-    request_label_around(
-        /* const int32_t with_id: */
-            9999,
-        /* const char * text_to_draw: */
-            "Press space to shoot a light\nClick a teapot to bump it\npress T to toggle debug\npress C to reset camera",
-        /* const float mid_x_pixelspace: */
-            window_width * 0.5f,
-        /* const float top_y_pixelspace: */
-            window_height * 0.75f,
-        /* const float z: */
-            1.0f,
-        /* const float max_width: */
-            1000.0f,
-        /* const bool32_t ignore_camera: */
-            true);
-    
-    ran_anim[0] = false;
-    ran_anim[1] = false;
-    ran_anim[2] = false;
-    ran_anim[3] = false;
+    //    font_height = 40.0f;
+    //    font_color[0] = 1.0f;
+    //    font_color[1] = 1.0f;
+    //    font_color[2] = 1.0f;
+    //    font_color[3] = 1.0f;
+    //    request_label_around(
+    //        /* const int32_t with_id: */
+    //            9999,
+    //        /* const char * text_to_draw: */
+    //            "Space: shoot light\nClick: bump\nT: Toggle debug\nC: reset camera",
+    //        /* const float mid_x_pixelspace: */
+    //            window_width * 0.5f,
+    //        /* const float top_y_pixelspace: */
+    //            window_height * 0.75f,
+    //        /* const float z: */
+    //            1.0f,
+    //        /* const float max_width: */
+    //            1000.0f,
+    //        /* const bool32_t ignore_camera: */
+    //            true);
     
     init_rand_with_seed(platform_get_current_time_microsecs());
     
@@ -103,42 +100,48 @@ void client_logic_startup() {
         (const char **)card_filenames,
         2);
     
-    zPolygon teapot = load_from_obj_file("teapot.obj", false);
-    center_zpolygon_offsets(&teapot);
-    scale_zpolygon(&teapot, 1.0f);
+    zPolygon * teapot = (zPolygon *)malloc_from_managed(
+        sizeof(zPolygon));
+    load_from_obj_file("teapot.obj", false, teapot);
+    center_zpolygon_offsets(teapot);
+    scale_zpolygon(teapot, 1.0f);
     
-    teapot.object_id = 123;
-    teapot.touchable_id = 1;
-    log_assert(teapot.triangles_size > 0);
+    teapot->object_id = 123;
+    teapot->touchable_id = 1;
+    log_assert(teapot->triangles_size > 0);
     scale_zpolygon(
-        /* to_scale: */ &teapot,
-        /* new_height: */ 0.15f);
-    teapot.x = -0.55f;
-    teapot.y = -0.3f;
-    teapot.z = 0.7f;
+        /* to_scale: */
+            teapot,
+        /* new_height: */
+            0.15f);
+    teapot->x = -0.55f;
+    teapot->y = -0.3f;
+    teapot->z = 0.7f;
     
+    for (
+        uint32_t tri_i = 0;
+        tri_i < teapot->triangles_size;
+        tri_i++)
+    {
+        teapot->triangles[tri_i].color[0] = 0.4f;
+        teapot->triangles[tri_i].color[1] = 0.4f;
+        teapot->triangles[tri_i].color[2] = 0.6f;
+    }
+    
+    zPolygon * anotherteapot = (zPolygon *)malloc_from_managed(
+        sizeof(zPolygon));
     for (uint32_t _ = 0; _ < 20; _++) {
-        zPolygon anotherteapot = teapot;
-        anotherteapot.object_id = 124 + _;
-        anotherteapot.touchable_id = 1 + _;
-        anotherteapot.x = teapot.x + ((_ / 5) * 0.4f);
-        anotherteapot.y = teapot.y;
-        anotherteapot.z = teapot.z + ((_ % 5) * 0.3f);
-        anotherteapot.x_angle = (_ * 0.48f);
-        anotherteapot.y_angle = (_ * 0.35f);
-        anotherteapot.z_angle = (_ * 0.61f);
+        *anotherteapot = *teapot;
+        anotherteapot->object_id = 124 + _;
+        anotherteapot->touchable_id = 1 + _;
+        anotherteapot->x = teapot->x + ((_ / 5) * 0.4f);
+        anotherteapot->y = teapot->y;
+        anotherteapot->z = teapot->z + ((_ % 5) * 0.3f);
+        anotherteapot->x_angle = (_ * 0.48f);
+        anotherteapot->y_angle = (_ * 0.35f);
+        anotherteapot->z_angle = (_ * 0.61f);
         
-        for (
-            uint32_t tri_i = 0;
-            tri_i < anotherteapot.triangles_size;
-            tri_i++)
-        {
-            anotherteapot.triangles[tri_i].color[0] = 0.4f;
-            anotherteapot.triangles[tri_i].color[1] = 0.4f;
-            anotherteapot.triangles[tri_i].color[2] = 0.6f;
-        }
-        
-        request_zpolygon_to_render(&anotherteapot);
+        request_zpolygon_to_render(anotherteapot);
         
         ScheduledAnimation rotate_teapot;
         construct_scheduled_animation(&rotate_teapot);
@@ -150,6 +153,7 @@ void client_logic_startup() {
         rotate_teapot.runs = 0;
         request_scheduled_animation(&rotate_teapot);
     }
+    free_from_managed((uint8_t *)anotherteapot);
     
     #define NUM_LIGHTS 4
     float light_size = 0.05f;
@@ -184,7 +188,8 @@ void client_logic_startup() {
         zlights_to_apply[i].diffuse      =    1.0f;
         zlights_to_apply_size++;
         
-        zPolygon quad = construct_quad(
+        zPolygon * quad = (zPolygon *)malloc_from_managed(sizeof(zPolygon));
+        construct_quad(
             /* float left_x: */
                 zlights_to_apply[i].x - (light_size / 2),
             /* float top_y: */
@@ -194,17 +199,20 @@ void client_logic_startup() {
             /* float width: */
                 light_size,
             /* float height: */
-                light_size);
-        quad.object_id                   = 123 + 250 + i;
-        quad.touchable_id                = 250 + i;
-        quad.ignore_lighting             = true;
-        quad.ignore_camera               = i == 0;
-        quad.triangles[0].texturearray_i = 1;
-        quad.triangles[0].texture_i      = 1;
-        quad.triangles[1].texturearray_i = 1;
-        quad.triangles[1].texture_i      = 1;
-        quad.x_angle                     = i * 0.3f;
-        request_zpolygon_to_render(&quad);
+                light_size,
+            /* recipient: */
+                quad);
+        quad->object_id                   = 123 + 250 + i;
+        quad->touchable_id                = 250 + i;
+        quad->ignore_lighting             = true;
+        quad->ignore_camera               = i == 0;
+        quad->triangles[0].texturearray_i = 1;
+        quad->triangles[0].texture_i      = 1;
+        quad->triangles[1].texturearray_i = 1;
+        quad->triangles[1].texture_i      = 1;
+        quad->x_angle                     = i * 0.3f;
+        request_zpolygon_to_render(quad);
+        free_from_managed((uint8_t *)quad);
     }
     
     log_append("finished client_logic_startup()\n");
@@ -225,9 +233,18 @@ void client_logic_threadmain(int32_t threadmain_id) {
 void client_logic_animation_callback(int32_t callback_id)
 {
     char unhandled_callback_id[256];
-    strcpy_capped(unhandled_callback_id, 256, "unhandled client_logic_animation_callback: ");
-    strcat_int_capped(unhandled_callback_id, 256, callback_id);
-    strcat_capped(unhandled_callback_id, 256, ". You should handle it in clientlogic.c -> client_logic_animation_callback\n");
+    strcpy_capped(
+        unhandled_callback_id,
+        256,
+        "unhandled client_logic_animation_callback: ");
+    strcat_int_capped(
+        unhandled_callback_id,
+        256,
+        callback_id);
+    strcat_capped(
+        unhandled_callback_id,
+        256,
+        ". Find in clientlogic.c -> client_logic_animation_callback\n");
     log_append(unhandled_callback_id);
     log_dump_and_crash(unhandled_callback_id);
 }
@@ -235,10 +252,10 @@ void client_logic_animation_callback(int32_t callback_id)
 static void  client_handle_touches_and_leftclicks(
     uint64_t microseconds_elapsed)
 {
-    if (!previous_touch_or_leftclick_end.handled) {
+    if (!user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].handled) {
         int32_t leftclick_touchable_id =
-            previous_touch_or_leftclick_end.touchable_id;
-        previous_touch_or_leftclick_end.handled = true;
+            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].touchable_id;
+        user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].handled = true;
         
         if (leftclick_touchable_id >= 0) {
             log_append("leftclick_touchable_id: ");
@@ -350,7 +367,8 @@ static void client_handle_keypresses(uint64_t microseconds_elapsed) {
     if (keypress_map[17] == true) {                                             
         // T key is pressed
         keypress_map[17] = false;
-        visual_debug_mode = !visual_debug_mode;
+        window_globals->visual_debug_mode =
+            !window_globals->visual_debug_mode;
     }
     
     if (keypress_map[49] == true) {                                             
@@ -366,7 +384,8 @@ static void client_handle_keypresses(uint64_t microseconds_elapsed) {
         camera_direction = x_rotate_zvertex(&camera_direction, camera.x_angle);
         camera_direction = y_rotate_zvertex(&camera_direction, camera.y_angle);
         
-        zPolygon bullet = construct_quad(                                            
+        zPolygon bullet;
+        construct_quad(                                            
             /* left: */
                 camera.x - (bullet_size / 2),                                   
             /* top:  */                                   
@@ -376,7 +395,9 @@ static void client_handle_keypresses(uint64_t microseconds_elapsed) {
             /* width: */
                 bullet_size,                                                    
             /* height: */
-                bullet_size);
+                bullet_size,
+            /* recipient: */
+                &bullet);
         bullet.object_id = 54321 + (tok_rand() % 1000);
         bullet.z = camera.z;
         float r_color = ((float)(tok_rand() % 100)) / 100.0f;
@@ -435,11 +456,17 @@ void client_logic_window_resize(
     const uint32_t new_width)
 {
     char unhandled_rs_msg[256];
-    strcpy_capped(unhandled_rs_msg, 256, "Error: unhandled client_logic_window_resize() to height/width: of ");
+    strcpy_capped(
+        unhandled_rs_msg,
+        256,
+        "Error: unhandled client_logic_window_resize() to height/width: of ");
     strcat_uint_capped(unhandled_rs_msg, 256, new_height);
     strcat_capped(unhandled_rs_msg, 256, ", ");
     strcat_uint_capped(unhandled_rs_msg, 256, new_width);
-    strcat_capped(unhandled_rs_msg, 256, ".\nEither prevent app resizing or handle in clientlogic.c\n");
+    strcat_capped(
+        unhandled_rs_msg,
+        256,
+        ".\nEither prevent app resizing or handle in clientlogic.c\n");
     log_append(unhandled_rs_msg);
     log_dump_and_crash(unhandled_rs_msg);
 }

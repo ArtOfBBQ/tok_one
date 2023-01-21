@@ -16,7 +16,7 @@
 
 bool32_t application_running = true;
 bool32_t has_retina_screen = false;
-    
+
 
 int main(int argc, char * argv[]) {
     
@@ -33,6 +33,6 @@ int main(int argc, char * argv[]) {
     NSString * appDelegateClassName;
     // Setup code that might create autoreleased objects goes here.
     appDelegateClassName = NSStringFromClass([AppDelegate class]);
-        
+    
     return UIApplicationMain(argc, argv, nil, appDelegateClassName);
 }

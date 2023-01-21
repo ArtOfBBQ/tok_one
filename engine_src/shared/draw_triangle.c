@@ -15,16 +15,3 @@ void draw_vertices(
         *vertex_count_recipient += 1;
     }
 }
-
-//static float get_triangle_area(
-//    const float x1,
-//    const float y1,
-//    const float x2,
-//    const float y2,
-//    const float x3,
-//    const float y3)
-//{
-//    float return_value = ( (x2-x1)*(y3-y1) - (x3-x1)*(y2-y1) );
-//    
-//    return return_value + ((return_value < 0) * (return_value * -2)); 
-//}

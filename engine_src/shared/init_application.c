@@ -5,6 +5,16 @@ void init_application() {
     
     setup_log();
     
+    window_globals = (WindowGlobals *)malloc_from_unmanaged(
+        sizeof(WindowGlobals));
+    keypress_map = (bool32_t *)malloc_from_unmanaged(
+        sizeof(bool32_t) * KEYPRESS_MAP_SIZE);
+    zpolygons_to_render = (zPolygon *)malloc_from_unmanaged(
+        sizeof(zPolygon) * ZPOLYGONS_TO_RENDER_ARRAYSIZE);
+    zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
+        sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
+
+    
     init_scheduled_animations();
     init_texture_arrays();
 
@@ -31,27 +41,19 @@ void init_application() {
             font_metrics_file.contents,
         /* raw_fontmetrics_file_size: */
             font_metrics_file.size);
-    
-    zpolygons_to_render = (zPolygon *)malloc_from_unmanaged(
-        sizeof(zPolygon) * ZPOLYGONS_TO_RENDER_ARRAYSIZE);
-    zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
-        sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
-    
-    window_height = platform_get_current_window_height();
-    window_width = platform_get_current_window_width();
-    aspect_ratio = window_height / window_width;
+        
+    window_globals->window_height = platform_get_current_window_height();
+    window_globals->window_width = platform_get_current_window_width();
+    window_globals->aspect_ratio =
+        window_globals->window_height / window_globals->window_width;
     
     init_projection_constants();
     
-    construct_interaction(&previous_touch_start);
-    construct_interaction(&previous_touch_end);
-    construct_interaction(&previous_leftclick_start);
-    construct_interaction(&previous_leftclick_end);
-    construct_interaction(&previous_touch_or_leftclick_start);
-    construct_interaction(&previous_touch_or_leftclick_end);
-    construct_interaction(&previous_rightclick_start);
-    construct_interaction(&previous_rightclick_end);
-    construct_interaction(&previous_mouse_move);
+    user_interactions = (Interaction *)
+        malloc_from_unmanaged(sizeof(Interaction) * USER_INTERACTIONS_SIZE);
+    for (uint32_t m = 0; m < USER_INTERACTIONS_SIZE; m++) {
+        construct_interaction(&user_interactions[m]);
+    }
     
     init_renderer();
     

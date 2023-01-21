@@ -2,11 +2,6 @@
 
 #define MEM_ALIGNMENT_BYTES 32
 
-// 500mb ->                   500...000
-#define UNMANAGED_MEMORY_SIZE 500000000
-// 150mb ->                   150...000
-#define MANAGED_MEMORY_SIZE   150000000
-
 static uint8_t * unmanaged_memory = NULL;
 static uint64_t unmanaged_memory_size = UNMANAGED_MEMORY_SIZE;
 static uint8_t * managed_memory = NULL;

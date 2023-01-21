@@ -191,9 +191,10 @@ void project_float4_to_2d_inplace(
     float * position_y,
     float * position_z)
 {
-    GPU_ProjectionConstants * pjc = &projection_constants;
+    GPU_ProjectionConstants * pjc = &window_globals->projection_constants;
     
-    float x_multiplier = aspect_ratio * pjc->field_of_view_modifier;
+    float x_multiplier =
+        window_globals->aspect_ratio * pjc->field_of_view_modifier;
     float y_multiplier = pjc->field_of_view_modifier;
     float z_multiplier = (pjc->far / (pjc->far - pjc->near));
     float z_addition = (1.0f * (-pjc->far * pjc->near) /

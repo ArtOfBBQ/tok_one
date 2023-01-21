@@ -18,5 +18,11 @@ a 2D sprite is represented with only 2 triangles.
 */
 #define POLYGON_TRIANGLES_SIZE 8400
 
-#endif // CLIENTLOGIC_MACRO_SETTINGS
 
+// 190mb ->                   190...000
+#define UNMANAGED_MEMORY_SIZE 190000000 // 180 too little, 205 enough
+// 90 mb ->                    90...000
+#define MANAGED_MEMORY_SIZE    90000000
+
+
+#endif // CLIENTLOGIC_MACRO_SETTINGS

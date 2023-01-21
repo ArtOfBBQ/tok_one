@@ -46,9 +46,10 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     float title_bar_height =
         (float)([sender contentRectForFrameRect: sender.frame].size.height
             - sender.frame.size.height);
-    window_height = (float)(frameSize.height + title_bar_height);
-    window_width = (float)frameSize.width;
-    aspect_ratio = window_height / window_width;
+    window_globals->window_height = (float)(frameSize.height + title_bar_height);
+    window_globals->window_width = (float)frameSize.width;
+    window_globals->aspect_ratio =
+        window_globals->window_height / window_globals->window_width;
     
     if (!startup_complete) { return frameSize; }
     
@@ -61,7 +62,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     zpolygons_to_render_size = 0; 
     zlights_to_apply_size = 0;
     
-    last_resize_request_at = platform_get_current_time_microsecs();
+    window_globals->last_resize_request_at = platform_get_current_time_microsecs();
     
     return frameSize;
 }
@@ -99,15 +100,18 @@ NSWindowWithCustomResponder: NSWindow
     
     register_interaction(
         /* interaction : */
-            &previous_leftclick_start,
+            &user_interactions[INTR_PREVIOUS_LEFTCLICK_START],
         /* screenspace_x: */
             screenspace_x,
         /* screenspace_y: */
             screenspace_y);
     
-    previous_touch_or_leftclick_start = previous_leftclick_start;
-    previous_mouse_move               = previous_leftclick_start;
-    previous_mouse_or_touch_move      = previous_leftclick_start;
+    user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START] =
+        user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
+    user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
+        user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
+    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
+        user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
     }
 }
 
@@ -118,16 +122,19 @@ NSWindowWithCustomResponder: NSWindow
     
     register_interaction(
         /* interaction : */
-            &previous_leftclick_end,
+            &user_interactions[INTR_PREVIOUS_LEFTCLICK_END],
         /* screenspace_x: */
             (float)screenspace_location.x - platform_get_current_window_left(),
         /* screenspace_y: */
             (float)screenspace_location.y
                 - platform_get_current_window_bottom());
     
-    previous_touch_or_leftclick_end = previous_leftclick_end;
-    previous_mouse_move             = previous_leftclick_end;
-    previous_mouse_or_touch_move    = previous_leftclick_end;
+    user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END] =
+        user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
+    user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
+        user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
+    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
+        user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
     }
 }
 
@@ -149,7 +156,7 @@ NSWindowWithCustomResponder: NSWindow
     
     register_interaction(
         /* interaction : */
-            &previous_mouse_move,
+            &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],
         /* screenspace_x: */
             (float)screenspace_location.x
                 - platform_get_current_window_left(),
@@ -157,7 +164,8 @@ NSWindowWithCustomResponder: NSWindow
             (float)screenspace_location.y
                 - platform_get_current_window_bottom());
     
-    previous_mouse_or_touch_move = previous_mouse_move;
+    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
+        user_interactions[INTR_PREVIOUS_MOUSE_MOVE];
     }
 }
 
@@ -167,7 +175,7 @@ NSWindowWithCustomResponder: NSWindow
     
     register_interaction(
         /* interaction : */
-            &previous_mouse_move,
+            &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],
         /* screenspace_x: */
             (float)screenspace_location.x
                 - platform_get_current_window_left(),
@@ -175,7 +183,8 @@ NSWindowWithCustomResponder: NSWindow
             (float)screenspace_location.y
                 - platform_get_current_window_bottom());
     
-    previous_mouse_or_touch_move = previous_mouse_move;
+    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
+        user_interactions[INTR_PREVIOUS_MOUSE_MOVE];
     }
 }
 

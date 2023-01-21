@@ -111,22 +111,24 @@ and texture_i 1 if you had labeled some faces of your object with the material
 You could set the texturearray_i and texture_i to -1 and use a color for
 another material name, etc.
 */
-zPolygon parse_obj(
+void parse_obj(
     char * rawdata,
     uint64_t rawdata_size,
-    const bool32_t flip_winding);
+    const bool32_t flip_winding,
+    zPolygon * recipient);
 typedef struct ExpectedObjMaterials {
     char material_name[16];
     int32_t texturearray_i;
     int32_t texture_i;
     float rgba[4];
 } ExpectedObjMaterials;
-zPolygon parse_obj_expecting_materials(
+void parse_obj_expecting_materials(
     char * rawdata,
     uint64_t rawdata_size,
     ExpectedObjMaterials * expected_materials,
     const uint32_t expected_materials_size,
-    const bool32_t flip_winding);
+    const bool32_t flip_winding,
+    zPolygon * recipient);
 
 void zpolygon_scale_to_width_given_z(
     zPolygon * to_scale,
@@ -177,19 +179,21 @@ bool32_t ray_intersects_zpolygon_hitbox(
     const zPolygon * mesh,
     zVertex * recipient_hit_point);
 
-zPolygon construct_quad_around(
+void construct_quad_around(
     const float mid_x,
     const float mid_y,
     const float z,
     const float width,
-    const float height);
+    const float height,
+    zPolygon * recipient);
 
-zPolygon construct_quad(
+void construct_quad(
     const float left_x,
     const float top_y,
     const float z,
     const float width,
-    const float height);
+    const float height,
+    zPolygon * recipient);
 
 #ifdef __cplusplus
 }

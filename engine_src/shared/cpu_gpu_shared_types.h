@@ -4,7 +4,7 @@
 #define TEXTUREARRAYS_SIZE 31
 #define ZLIGHTS_TO_APPLY_ARRAYSIZE 50
 
-//#pragma pack(push, 1)
+#pragma pack(push, 1)
 typedef struct GPU_Vertex {
     float x;
     float y;
@@ -67,7 +67,7 @@ typedef struct GPU_ProjectionConstants {
 typedef struct GPU_TouchablePixels {
     int touchable_id[MAX_SCREEN_WIDTH * MAX_SCREEN_HEIGHT];
 } GPU_TouchablePixels;
-// #pragma pack(pop)
+#pragma pack(pop)
 
 #endif
 

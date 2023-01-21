@@ -115,6 +115,7 @@
 		60A99924287BDF31003F7159 /* phoebus.png in Resources */ = {isa = PBXBuildFile; fileRef = 6080CC45286FFD1D00444118 /* phoebus.png */; };
 		EC1412B12938597400DA0D21 /* cardwithuvcoords.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */; };
 		EC1412B22938597400DA0D21 /* cardwithuvcoords.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */; };
+		EC1BD95C297B5DBE00A9BA54 /* clientlogic_macro_settings.h in Sources */ = {isa = PBXBuildFile; fileRef = EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */; };
 		EC6441A429318B6D00A0267B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = EC64419F29318B6D00A0267B /* main.m */; };
 		EC6441A529318B6D00A0267B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A029318B6D00A0267B /* AppDelegate.m */; };
 		EC6441A629318B6D00A0267B /* ios_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A129318B6D00A0267B /* ios_platform_layer.c */; };
@@ -199,6 +200,7 @@
 		60A998D9287BD332003F7159 /* decodedimage.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = decodedimage.c; path = ../../engine_src/shared/decodedimage.c; sourceTree = "<group>"; };
 		60A998DA287BD333003F7159 /* decodedimage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = decodedimage.h; path = ../../engine_src/shared/decodedimage.h; sourceTree = "<group>"; };
 		EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */ = {isa = PBXFileReference; explicitFileType = compiled; fileEncoding = 4; name = cardwithuvcoords.obj; path = ../../resources/cardwithuvcoords.obj; sourceTree = "<group>"; };
+		EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = clientlogic_macro_settings.h; path = ../../sampleproject_src/clientlogic_macro_settings.h; sourceTree = "<group>"; };
 		EC64419E29318B6D00A0267B /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = ../../engine_src/ios/AppDelegate.h; sourceTree = "<group>"; };
 		EC64419F29318B6D00A0267B /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../engine_src/ios/main.m; sourceTree = "<group>"; };
 		EC6441A029318B6D00A0267B /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = ../../engine_src/ios/AppDelegate.m; sourceTree = "<group>"; };
@@ -334,6 +336,7 @@
 		60A998DE287BD468003F7159 /* shared_macos_iphone */ = {
 			isa = PBXGroup;
 			children = (
+				EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */,
 				60112896286253C100F92967 /* apple_platform_layer.c */,
 				601128702862511600F92967 /* clientlogic.c */,
 				608802F1286DCBE700B81255 /* clientlogic.h */,
@@ -513,6 +516,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EC1BD95C297B5DBE00A9BA54 /* clientlogic_macro_settings.h in Sources */,
 				ECB05E4B294F8B3500050BD4 /* main.m in Sources */,
 				ECB05E49294F8B1300050BD4 /* gpu.m in Sources */,
 				ECB05E47294F8AC300050BD4 /* simd.h in Sources */,

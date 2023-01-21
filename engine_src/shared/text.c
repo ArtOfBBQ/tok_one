@@ -38,7 +38,6 @@ FontMetrics * global_font_metrics = NULL;
 FontCodepoint * codepoint_metrics = NULL;
 uint32_t codepoint_metrics_size = 0;
 
-
 typedef struct PrefetchedLine {
     float width;
     int32_t start_i;
@@ -226,6 +225,7 @@ void request_label_around(
     log_assert(widest_line_width > 0);
     
     zPolygon label;
+    zPolygon letter;
     construct_zpolygon(&label);
     label.ignore_lighting = font_ignore_lighting;
     label.ignore_camera = ignore_camera;
@@ -253,17 +253,19 @@ void request_label_around(
                 break;
             }
             
-            zPolygon letter = construct_quad(
-                 /* const float left_x: */
+            construct_quad(
+                /* const float left_x: */
+                    0,
+                /* const float top_y: */
                      0,
-                 /* const float top_y: */
-                     0,
-                 /* const float z: */
-                     label.z,
-                 /* const float width: */
-                     screenspace_width_to_width(font_height),
-                 /* const float height: */
-                     screenspace_height_to_height(font_height));
+                /* const float z: */
+                    label.z,
+                /* const float width: */
+                    screenspace_width_to_width(font_height),
+                /* const float height: */
+                    screenspace_height_to_height(font_height),
+                /* recipient: */
+                    &letter);
             letter.z = 0.0f;
             
             if ((text_to_draw[j] - '!') < 0) {
@@ -338,6 +340,7 @@ void request_label_renderable(
     
     zPolygon label_to_render;
     construct_zpolygon(&label_to_render);
+    zPolygon letter;
     label_to_render.object_id = with_id;
     label_to_render.x = screenspace_x_to_x(left_pixelspace, z);
     label_to_render.y = screenspace_y_to_y(top_pixelspace, z);
@@ -377,7 +380,7 @@ void request_label_renderable(
             continue;
         }
         
-        zPolygon letter = construct_quad(
+        construct_quad(
             /* const float left_x: */
                 0,
             /* const float top_y: */
@@ -387,12 +390,14 @@ void request_label_renderable(
             /* const float width: */
                 letter_width,
             /* const float height: */
-                letter_height);
+                letter_height,
+            /* recipient: */
+                &letter);
         letter.triangles[0].texturearray_i = font_texturearray_i;
         letter.triangles[1].texturearray_i = font_texturearray_i;
         letter.triangles[0].texture_i = (int32_t)(text_to_draw[i] - '!');
         letter.triangles[1].texture_i = (int32_t)(text_to_draw[i] - '!');
-         
+        
         for (
             uint32_t rgba_i = 0;
             rgba_i < 4;
@@ -464,6 +469,6 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
         /* float left_pixelspace : */ 20.0f,
         /* float top_pixelspace  : */ 60.0f,
         /* z                     : */ 1.0f,
-        /* float max_width       : */ window_width,
+        /* float max_width       : */ window_globals->window_width,
         /* bool32_t ignore_camera: */ true);
 }

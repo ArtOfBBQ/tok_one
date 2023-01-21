@@ -7,10 +7,10 @@
 {
     UITouch * touch       = [touches anyObject];
     CGPoint touchLocation = [touch locationInView:self];
-        
+    
     register_interaction(
         /* interaction : */
-            &previous_touch_start,
+            &user_interactions[INTR_PREVIOUS_TOUCH_START],
         /* screenspace_x: */
             platform_x_to_x((float)touchLocation.x
                 - platform_get_current_window_left()),
@@ -20,7 +20,7 @@
     
     register_interaction(
         /* interaction : */
-            &previous_touch_or_leftclick_start,
+            &user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START],
         /* screenspace_x: */
             platform_x_to_x((float)touchLocation.x
                 - platform_get_current_window_left()),
@@ -32,7 +32,7 @@
     // TODO: was trying out move as well to combat some weird UI touch bug that only happens on ios
     register_interaction(
         /* interaction : */
-            &previous_touch_move,
+            &user_interactions[INTR_PREVIOUS_TOUCH_MOVE],
         /* screenspace_x: */
             platform_x_to_x((float)touchLocation.x
                 - platform_get_current_window_left()),
@@ -42,7 +42,7 @@
     
     register_interaction(
         /* interaction : */
-            &previous_mouse_or_touch_move,
+            &user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE],
         /* screenspace_x: */
             platform_x_to_x((float)touchLocation.x
                 - platform_get_current_window_left()),
@@ -60,7 +60,7 @@
         
     register_interaction(
         /* interaction : */
-            &previous_touch_move,
+            &user_interactions[INTR_PREVIOUS_TOUCH_MOVE],
         /* screenspace_x: */
             platform_x_to_x((float)touchLocation.x
                 - platform_get_current_window_left()),
@@ -70,7 +70,7 @@
     
     register_interaction(
         /* interaction : */
-            &previous_mouse_or_touch_move,
+            &user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE],
         /* screenspace_x: */
             platform_x_to_x((float)touchLocation.x
                 - platform_get_current_window_left()),
@@ -88,7 +88,7 @@
         
     register_interaction(
         /* interaction : */
-            &previous_touch_end,
+            &user_interactions[INTR_PREVIOUS_TOUCH_END],
         /* screenspace_x: */
             platform_x_to_x((float)touchLocation.x
                 - platform_get_current_window_left()),
@@ -98,7 +98,7 @@
     
     register_interaction(
         /* interaction : */
-            &previous_touch_or_leftclick_end,
+            &user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END],
         /* screenspace_x: */
             platform_x_to_x((float)touchLocation.x
                 - platform_get_current_window_left()),
@@ -152,7 +152,7 @@ TouchableMTKView * _my_mtk_view;
     withTransitionCoordinator:
         (id<UIViewControllerTransitionCoordinator>)coordinator
 {
-    last_resize_request_at = platform_get_current_time_microsecs();
+    window_globals->last_resize_request_at = platform_get_current_time_microsecs();
     
     // _my_mtk_view.drawableSize = size;
     

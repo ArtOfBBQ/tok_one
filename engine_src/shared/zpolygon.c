@@ -155,26 +155,33 @@ Maximize the 'geometry' panel and check:
 [x] Keep vertex order
 Uncheck everything else
 */
-zPolygon parse_obj(
+void parse_obj(
     char * rawdata,
     uint64_t rawdata_size,
-    const bool32_t flip_winding)
+    const bool32_t flip_winding,
+    zPolygon * recipient)
 {
-    return parse_obj_expecting_materials(rawdata, rawdata_size, NULL, 0, flip_winding);
+    parse_obj_expecting_materials(
+        rawdata,
+        rawdata_size,
+        NULL,
+        0,
+        flip_winding,
+        recipient);
 }
 
-zPolygon parse_obj_expecting_materials(
+void parse_obj_expecting_materials(
     char * rawdata,
     uint64_t rawdata_size,
     ExpectedObjMaterials * expected_materials,
     const uint32_t expected_materials_size,
-    const bool32_t flip_winding)
+    const bool32_t flip_winding,
+    zPolygon * recipient)
 {
     log_assert(rawdata != NULL);
     log_assert(rawdata_size > 0);
     
-    zPolygon return_value;
-    construct_zpolygon(&return_value);
+    construct_zpolygon(recipient);
     
     // TODO: think about buffer size
     // pass through buffer once to read all vertices 
@@ -306,7 +313,7 @@ zPolygon parse_obj_expecting_materials(
             }
             
             if (rawdata[i] == 'f') {
-                return_value.triangles_size += 1;
+                recipient->triangles_size += 1;
             }
             // skip until the next line break character 
             while (rawdata[i] != '\n' && rawdata[i] != '\0') {
@@ -318,14 +325,14 @@ zPolygon parse_obj_expecting_materials(
         }
     }
     
-    log_assert(return_value.triangles_size > 0);
+    log_assert(recipient->triangles_size > 0);
     
-    if (return_value.triangles_size >= POLYGON_TRIANGLES_SIZE) {
+    if (recipient->triangles_size >= POLYGON_TRIANGLES_SIZE) {
         char error_msg[100];
         strcpy_capped(error_msg, 100, "Error: POLYGON_TRIANGLES_SIZE was ");
         strcat_uint_capped(error_msg, 100, POLYGON_TRIANGLES_SIZE);
-        strcat_capped(error_msg, 100, ", but return_value.triangles_size is ");
-        strcat_uint_capped(error_msg, 100, return_value.triangles_size);
+        strcat_capped(error_msg, 100, ", but recipient->triangles_size is ");
+        strcat_uint_capped(error_msg, 100, recipient->triangles_size);
         log_dump_and_crash(error_msg);
         assert(0);
     }
@@ -565,13 +572,13 @@ zPolygon parse_obj_expecting_materials(
                 new_triangle.texturearray_i = using_texturearray_i;
                 new_triangle.texture_i = using_texture_i;
                 
-                log_append("4 vertex face, return_value.triangles_size adjusted to: ");
-                log_append_uint(return_value.triangles_size);
+                log_append("4 vertex face, recipient->triangles_size adjusted to: ");
+                log_append_uint(recipient->triangles_size);
                 log_append_char('\n');
-                return_value.triangles_size += 1;
+                recipient->triangles_size += 1;
                 log_assert(new_triangle_i < POLYGON_TRIANGLES_SIZE);
                 
-                return_value.triangles[new_triangle_i] = new_triangle;
+                recipient->triangles[new_triangle_i] = new_triangle;
                 new_triangle_i++;
             } else {
                 // there was only 1 triangle
@@ -638,7 +645,7 @@ zPolygon parse_obj_expecting_materials(
                 strcat_capped(err_txt, 300, "\n");
                 log_dump_and_crash(err_txt);
             }
-            return_value.triangles[new_triangle_i] = new_triangle;
+            recipient->triangles[new_triangle_i] = new_triangle;
             new_triangle_i++;
             
             log_assert(rawdata[i] == '\n');
@@ -657,18 +664,16 @@ zPolygon parse_obj_expecting_materials(
     
     free_from_managed((uint8_t *)new_vertices);
     
-    if (return_value.triangles_size >= POLYGON_TRIANGLES_SIZE) {
+    if (recipient->triangles_size >= POLYGON_TRIANGLES_SIZE) {
         char error_msg[100];
         strcpy_capped(error_msg, 100, "Error: POLYGON_TRIANGLES_SIZE was ");
         strcat_uint_capped(error_msg, 100, POLYGON_TRIANGLES_SIZE);
-        strcat_capped(error_msg, 100, ", but return_value.triangles_size is ");
-        strcat_uint_capped(error_msg, 100, return_value.triangles_size);
+        strcat_capped(error_msg, 100, ", but recipient->triangles_size is ");
+        strcat_uint_capped(error_msg, 100, recipient->triangles_size);
         strcat_capped(error_msg, 100, "\n");
         log_dump_and_crash(error_msg);
         assert(0);
     }
-    
-    return return_value;
 }
 
 void zpolygon_scale_to_width_given_z(
@@ -1470,19 +1475,19 @@ bool32_t ray_intersects_zpolygon_hitbox(
     return return_value;
 }
 
-zPolygon construct_quad(
+void construct_quad(
     const float left_x,
     const float top_y,
     const float z,
     const float width,
-    const float height)
+    const float height,
+    zPolygon * recipient)
 {
     log_assert(z > 0.0f);
     
-    zPolygon return_value;
-    construct_zpolygon(&return_value);
+    construct_zpolygon(recipient);
     
-    return_value.triangles_size = 2;
+    recipient->triangles_size = 2;
     
     const float mid_x           = left_x + (width  / 2);
     const float mid_y           = top_y  + (height / 2);
@@ -1497,92 +1502,90 @@ zPolygon construct_quad(
     const float bottom_uv_coord = 1.0f;
     const float top_uv_coord    = 0.0f;
     
-    return_value.x = mid_x;
-    return_value.y = mid_y;
-    return_value.z = z;
+    recipient->x = mid_x;
+    recipient->y = mid_y;
+    recipient->z = z;
     
     // **
     // top & left triangle
     // **
     // top left vertex
-    return_value.triangles[0].vertices[0].x     = left_vertex;
-    return_value.triangles[0].vertices[0].y     = top_vertex;
-    return_value.triangles[0].vertices[0].z     = 0.0f;
-    return_value.triangles[0].vertices[0].uv[0] = left_uv_coord;
-    return_value.triangles[0].vertices[0].uv[1] = top_uv_coord;
+    recipient->triangles[0].vertices[0].x     = left_vertex;
+    recipient->triangles[0].vertices[0].y     = top_vertex;
+    recipient->triangles[0].vertices[0].z     = 0.0f;
+    recipient->triangles[0].vertices[0].uv[0] = left_uv_coord;
+    recipient->triangles[0].vertices[0].uv[1] = top_uv_coord;
     // top right vertex
-    return_value.triangles[0].vertices[1].x     = right_vertex;
-    return_value.triangles[0].vertices[1].y     = top_vertex;
-    return_value.triangles[0].vertices[1].z     = 0.0f;
-    return_value.triangles[0].vertices[1].uv[0] = right_uv_coord;
-    return_value.triangles[0].vertices[1].uv[1] = top_uv_coord;
+    recipient->triangles[0].vertices[1].x     = right_vertex;
+    recipient->triangles[0].vertices[1].y     = top_vertex;
+    recipient->triangles[0].vertices[1].z     = 0.0f;
+    recipient->triangles[0].vertices[1].uv[0] = right_uv_coord;
+    recipient->triangles[0].vertices[1].uv[1] = top_uv_coord;
     // bottom left vertex
-    return_value.triangles[0].vertices[2].x     = left_vertex;
-    return_value.triangles[0].vertices[2].y     = bottom_vertex;
-    return_value.triangles[0].vertices[2].z     = 0.0f;
-    return_value.triangles[0].vertices[2].uv[0] = left_uv_coord;
-    return_value.triangles[0].vertices[2].uv[1] = bottom_uv_coord;
+    recipient->triangles[0].vertices[2].x     = left_vertex;
+    recipient->triangles[0].vertices[2].y     = bottom_vertex;
+    recipient->triangles[0].vertices[2].z     = 0.0f;
+    recipient->triangles[0].vertices[2].uv[0] = left_uv_coord;
+    recipient->triangles[0].vertices[2].uv[1] = bottom_uv_coord;
     
-    return_value.triangles[0].normal.x       = 0.0f;
-    return_value.triangles[0].normal.y       = 0.0f;
-    return_value.triangles[0].normal.z       = 1.0f;
-    return_value.triangles[0].texturearray_i = -1;
-    return_value.triangles[0].texture_i      = -1;
-    return_value.triangles[0].color[0]       = 1.0f;
-    return_value.triangles[0].color[1]       = 1.0f;
-    return_value.triangles[0].color[2]       = 1.0f;
-    return_value.triangles[0].color[3]       = 1.0f;
-    return_value.triangles[0].visible        = true;
+    recipient->triangles[0].normal.x       = 0.0f;
+    recipient->triangles[0].normal.y       = 0.0f;
+    recipient->triangles[0].normal.z       = 1.0f;
+    recipient->triangles[0].texturearray_i = -1;
+    recipient->triangles[0].texture_i      = -1;
+    recipient->triangles[0].color[0]       = 1.0f;
+    recipient->triangles[0].color[1]       = 1.0f;
+    recipient->triangles[0].color[2]       = 1.0f;
+    recipient->triangles[0].color[3]       = 1.0f;
+    recipient->triangles[0].visible        = true;
     
     // **
     // right & bottom triangle
     // **
     // top right vertex
-    return_value.triangles[1].vertices[0].x     = right_vertex;
-    return_value.triangles[1].vertices[0].y     = top_vertex;
-    return_value.triangles[1].vertices[0].z     = 0.0f;
-    return_value.triangles[1].vertices[0].uv[0] = right_uv_coord;
-    return_value.triangles[1].vertices[0].uv[1] = top_uv_coord;
+    recipient->triangles[1].vertices[0].x     = right_vertex;
+    recipient->triangles[1].vertices[0].y     = top_vertex;
+    recipient->triangles[1].vertices[0].z     = 0.0f;
+    recipient->triangles[1].vertices[0].uv[0] = right_uv_coord;
+    recipient->triangles[1].vertices[0].uv[1] = top_uv_coord;
     // bottom right vertex
-    return_value.triangles[1].vertices[1].x     = right_vertex;
-    return_value.triangles[1].vertices[1].y     = bottom_vertex;
-    return_value.triangles[1].vertices[1].z     = 0.0f;
-    return_value.triangles[1].vertices[1].uv[0] = right_uv_coord;
-    return_value.triangles[1].vertices[1].uv[1] = bottom_uv_coord;
+    recipient->triangles[1].vertices[1].x     = right_vertex;
+    recipient->triangles[1].vertices[1].y     = bottom_vertex;
+    recipient->triangles[1].vertices[1].z     = 0.0f;
+    recipient->triangles[1].vertices[1].uv[0] = right_uv_coord;
+    recipient->triangles[1].vertices[1].uv[1] = bottom_uv_coord;
     // bottom left vertex
-    return_value.triangles[1].vertices[2].x     = left_vertex;
-    return_value.triangles[1].vertices[2].y     = bottom_vertex;
-    return_value.triangles[1].vertices[2].z     = 0.0f;
-    return_value.triangles[1].vertices[2].uv[0] = left_uv_coord;
-    return_value.triangles[1].vertices[2].uv[1] = bottom_uv_coord;
+    recipient->triangles[1].vertices[2].x     = left_vertex;
+    recipient->triangles[1].vertices[2].y     = bottom_vertex;
+    recipient->triangles[1].vertices[2].z     = 0.0f;
+    recipient->triangles[1].vertices[2].uv[0] = left_uv_coord;
+    recipient->triangles[1].vertices[2].uv[1] = bottom_uv_coord;
     
-    return_value.triangles[1].normal.x       = 0.0f;
-    return_value.triangles[1].normal.y       = 0.0f;
-    return_value.triangles[1].normal.z       = 1.0f;
-    return_value.triangles[1].texturearray_i = -1;
-    return_value.triangles[1].texture_i      = -1;
-    return_value.triangles[1].color[0]       = 1.0f;
-    return_value.triangles[1].color[1]       = 1.0f;
-    return_value.triangles[1].color[2]       = 1.0f;
-    return_value.triangles[1].color[3]       = 1.0f;
-    return_value.triangles[1].visible        = true;
-    
-    return return_value;
+    recipient->triangles[1].normal.x       = 0.0f;
+    recipient->triangles[1].normal.y       = 0.0f;
+    recipient->triangles[1].normal.z       = 1.0f;
+    recipient->triangles[1].texturearray_i = -1;
+    recipient->triangles[1].texture_i      = -1;
+    recipient->triangles[1].color[0]       = 1.0f;
+    recipient->triangles[1].color[1]       = 1.0f;
+    recipient->triangles[1].color[2]       = 1.0f;
+    recipient->triangles[1].color[3]       = 1.0f;
+    recipient->triangles[1].visible        = true;
 }
 
-zPolygon construct_quad_around(
+void construct_quad_around(
     const float mid_x,
     const float mid_y,
     const float z,
     const float width,
-    const float height)
+    const float height,
+    zPolygon * recipient)
 {
     log_assert(z > 0.0f);
     
-    zPolygon return_value;
-    construct_zpolygon(&return_value);
+    construct_zpolygon(recipient);
     
-    return_value.triangles_size = 2;
+    recipient->triangles_size = 2;
     
     const float projected_mid_x = mid_x;
     const float projected_mid_y = mid_y;
@@ -1597,75 +1600,73 @@ zPolygon construct_quad_around(
     const float bottom_uv_coord = 1.0f;
     const float top_uv_coord    = 0.0f;
     
-    return_value.x = projected_mid_x;
-    return_value.y = projected_mid_y;
-    return_value.z = z;
+    recipient->x = projected_mid_x;
+    recipient->y = projected_mid_y;
+    recipient->z = z;
     
     // **
     // top & left triangle
     // **
     // top left vertex
-    return_value.triangles[0].vertices[0].x     = left_vertex;
-    return_value.triangles[0].vertices[0].y     = top_vertex;
-    return_value.triangles[0].vertices[0].z     = 0.0f;
-    return_value.triangles[0].vertices[0].uv[0] = left_uv_coord;
-    return_value.triangles[0].vertices[0].uv[1] = top_uv_coord;
+    recipient->triangles[0].vertices[0].x     = left_vertex;
+    recipient->triangles[0].vertices[0].y     = top_vertex;
+    recipient->triangles[0].vertices[0].z     = 0.0f;
+    recipient->triangles[0].vertices[0].uv[0] = left_uv_coord;
+    recipient->triangles[0].vertices[0].uv[1] = top_uv_coord;
     // top right vertex
-    return_value.triangles[0].vertices[1].x     = right_vertex;
-    return_value.triangles[0].vertices[1].y     = top_vertex;
-    return_value.triangles[0].vertices[1].z     = 0.0f;
-    return_value.triangles[0].vertices[1].uv[0] = right_uv_coord;
-    return_value.triangles[0].vertices[1].uv[1] = top_uv_coord;
+    recipient->triangles[0].vertices[1].x     = right_vertex;
+    recipient->triangles[0].vertices[1].y     = top_vertex;
+    recipient->triangles[0].vertices[1].z     = 0.0f;
+    recipient->triangles[0].vertices[1].uv[0] = right_uv_coord;
+    recipient->triangles[0].vertices[1].uv[1] = top_uv_coord;
     // bottom left vertex
-    return_value.triangles[0].vertices[2].x     = left_vertex;
-    return_value.triangles[0].vertices[2].y     = bottom_vertex;
-    return_value.triangles[0].vertices[2].z     = 0.0f;
-    return_value.triangles[0].vertices[2].uv[0] = left_uv_coord;
-    return_value.triangles[0].vertices[2].uv[1] = bottom_uv_coord;
+    recipient->triangles[0].vertices[2].x     = left_vertex;
+    recipient->triangles[0].vertices[2].y     = bottom_vertex;
+    recipient->triangles[0].vertices[2].z     = 0.0f;
+    recipient->triangles[0].vertices[2].uv[0] = left_uv_coord;
+    recipient->triangles[0].vertices[2].uv[1] = bottom_uv_coord;
     
-    return_value.triangles[0].normal.x       = 0.0f;
-    return_value.triangles[0].normal.y       = 0.0f;
-    return_value.triangles[0].normal.z       = 1.0f;
-    return_value.triangles[0].texturearray_i = -1;
-    return_value.triangles[0].texture_i      = -1;
-    return_value.triangles[0].color[0]       = 1.0f;
-    return_value.triangles[0].color[1]       = 1.0f;
-    return_value.triangles[0].color[2]       = 1.0f;
-    return_value.triangles[0].color[3]       = 1.0f;
-    return_value.triangles[0].visible        = true;
+    recipient->triangles[0].normal.x       = 0.0f;
+    recipient->triangles[0].normal.y       = 0.0f;
+    recipient->triangles[0].normal.z       = 1.0f;
+    recipient->triangles[0].texturearray_i = -1;
+    recipient->triangles[0].texture_i      = -1;
+    recipient->triangles[0].color[0]       = 1.0f;
+    recipient->triangles[0].color[1]       = 1.0f;
+    recipient->triangles[0].color[2]       = 1.0f;
+    recipient->triangles[0].color[3]       = 1.0f;
+    recipient->triangles[0].visible        = true;
     
     // **
     // right & bottom triangle
     // **
     // top right vertex
-    return_value.triangles[1].vertices[0].x     = right_vertex;
-    return_value.triangles[1].vertices[0].y     = top_vertex;
-    return_value.triangles[1].vertices[0].z     = 0.0f;
-    return_value.triangles[1].vertices[0].uv[0] = right_uv_coord;
-    return_value.triangles[1].vertices[0].uv[1] = top_uv_coord;
+    recipient->triangles[1].vertices[0].x     = right_vertex;
+    recipient->triangles[1].vertices[0].y     = top_vertex;
+    recipient->triangles[1].vertices[0].z     = 0.0f;
+    recipient->triangles[1].vertices[0].uv[0] = right_uv_coord;
+    recipient->triangles[1].vertices[0].uv[1] = top_uv_coord;
     // bottom right vertex
-    return_value.triangles[1].vertices[1].x     = right_vertex;
-    return_value.triangles[1].vertices[1].y     = bottom_vertex;
-    return_value.triangles[1].vertices[1].z     = 0.0f;
-    return_value.triangles[1].vertices[1].uv[0] = right_uv_coord;
-    return_value.triangles[1].vertices[1].uv[1] = bottom_uv_coord;
+    recipient->triangles[1].vertices[1].x     = right_vertex;
+    recipient->triangles[1].vertices[1].y     = bottom_vertex;
+    recipient->triangles[1].vertices[1].z     = 0.0f;
+    recipient->triangles[1].vertices[1].uv[0] = right_uv_coord;
+    recipient->triangles[1].vertices[1].uv[1] = bottom_uv_coord;
     // bottom left vertex
-    return_value.triangles[1].vertices[2].x     = left_vertex;
-    return_value.triangles[1].vertices[2].y     = bottom_vertex;
-    return_value.triangles[1].vertices[2].z     = 0.0f;
-    return_value.triangles[1].vertices[2].uv[0] = left_uv_coord;
-    return_value.triangles[1].vertices[2].uv[1] = bottom_uv_coord;
+    recipient->triangles[1].vertices[2].x     = left_vertex;
+    recipient->triangles[1].vertices[2].y     = bottom_vertex;
+    recipient->triangles[1].vertices[2].z     = 0.0f;
+    recipient->triangles[1].vertices[2].uv[0] = left_uv_coord;
+    recipient->triangles[1].vertices[2].uv[1] = bottom_uv_coord;
     
-    return_value.triangles[1].normal.x       = 0.0f;
-    return_value.triangles[1].normal.y       = 0.0f;
-    return_value.triangles[1].normal.z       = 1.0f;
-    return_value.triangles[1].texturearray_i = -1;
-    return_value.triangles[1].texture_i      = -1;
-    return_value.triangles[1].color[0]       = 1.0f;
-    return_value.triangles[1].color[1]       = 1.0f;
-    return_value.triangles[1].color[2]       = 1.0f;
-    return_value.triangles[1].color[3]       = 1.0f;
-    return_value.triangles[1].visible        = true;
-    
-    return return_value;
+    recipient->triangles[1].normal.x       = 0.0f;
+    recipient->triangles[1].normal.y       = 0.0f;
+    recipient->triangles[1].normal.z       = 1.0f;
+    recipient->triangles[1].texturearray_i = -1;
+    recipient->triangles[1].texture_i      = -1;
+    recipient->triangles[1].color[0]       = 1.0f;
+    recipient->triangles[1].color[1]       = 1.0f;
+    recipient->triangles[1].color[2]       = 1.0f;
+    recipient->triangles[1].color[3]       = 1.0f;
+    recipient->triangles[1].visible        = true;
 }

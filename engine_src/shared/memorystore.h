@@ -5,6 +5,7 @@
 #include <assert.h>
 #endif
 
+#include "clientlogic_macro_settings.h"
 #include "platform_layer.h"
 #include "common.h"
 

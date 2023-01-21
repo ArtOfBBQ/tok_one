@@ -1,18 +1,8 @@
 #include "userinput.h"
 
-bool32_t keypress_map[KEYPRESS_MAP_SIZE];
+bool32_t * keypress_map; //[KEYPRESS_MAP_SIZE];
 
-Interaction previous_touch_start;
-Interaction previous_touch_end;
-Interaction previous_leftclick_start;
-Interaction previous_leftclick_end;
-Interaction previous_touch_or_leftclick_start;
-Interaction previous_touch_or_leftclick_end;
-Interaction previous_rightclick_start;
-Interaction previous_rightclick_end;
-Interaction previous_mouse_move;
-Interaction previous_touch_move;
-Interaction previous_mouse_or_touch_move;
+Interaction * user_interactions = NULL;
 
 void construct_interaction(Interaction * to_construct) {
     to_construct->touchable_id = -1;

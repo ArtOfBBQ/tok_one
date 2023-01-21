@@ -33,25 +33,25 @@ void hardware_render(
         return;
     }
     
-    if (visual_debug_mode) {
+    if (window_globals->visual_debug_mode) {
         // draw the last collision point from the click ray
         for (uint32_t m = 0; m < 3; m++) {
             next_gpu_workload[*next_workload_size + m].x =
                 m  < 2 ?
-                    -visual_debug_collision_size :
-                    visual_debug_collision_size;
+                    -window_globals->visual_debug_collision_size :
+                    window_globals->visual_debug_collision_size;
             next_gpu_workload[*next_workload_size + m].y =
                 m == 1 ? 
-                    -visual_debug_collision_size :
-                    visual_debug_collision_size;
+                    -window_globals->visual_debug_collision_size :
+                    window_globals->visual_debug_collision_size;
             next_gpu_workload[*next_workload_size + m].z =
                 0.0f;
             next_gpu_workload[*next_workload_size + m].parent_x =
-                visual_debug_collision[0];
+                window_globals->visual_debug_collision[0];
             next_gpu_workload[*next_workload_size + m].parent_y =
-                visual_debug_collision[1];
+                window_globals->visual_debug_collision[1];
             next_gpu_workload[*next_workload_size + m].parent_z =
-                visual_debug_collision[2];
+                window_globals->visual_debug_collision[2];
             next_gpu_workload[*next_workload_size + m].texturearray_i = -1;
             next_gpu_workload[*next_workload_size + m].texture_i = -1;
             next_gpu_workload[*next_workload_size + m].RGBA[0] = 1.0f;
@@ -72,11 +72,11 @@ void hardware_render(
         // as a triangle
         for (uint32_t m = 0; m < 3; m++) {
             next_gpu_workload[*next_workload_size + m].x =
-                visual_debug_ray_origin_direction[(m*3) + 0];
+                window_globals->visual_debug_ray_origin_direction[(m*3) + 0];
             next_gpu_workload[*next_workload_size + m].y =
-                visual_debug_ray_origin_direction[(m*3) + 1];
+                window_globals->visual_debug_ray_origin_direction[(m*3) + 1];
             next_gpu_workload[*next_workload_size + m].z =
-                visual_debug_ray_origin_direction[(m*3) + 2];
+                window_globals->visual_debug_ray_origin_direction[(m*3) + 2];
             next_gpu_workload[*next_workload_size + m].parent_x = 0.0f;
             next_gpu_workload[*next_workload_size + m].parent_y = 0.0f;
             next_gpu_workload[*next_workload_size + m].parent_z = 0.0f;
@@ -174,8 +174,10 @@ void hardware_render(
         }
         
         // draw touchable hitboxes (the white rectangles) in visual debug mode
-        if (visual_debug_mode && zpolygons_to_render[zp_i].touchable_id >= 0) {
-            
+        if (
+            window_globals->visual_debug_mode &&
+            zpolygons_to_render[zp_i].touchable_id >= 0)
+        {
             float hitbox_left   = -(zpolygons_to_render[zp_i].hitbox_width / 2);
             float hitbox_right  = (zpolygons_to_render[zp_i].hitbox_width / 2);
             float hitbox_top    = (zpolygons_to_render[zp_i].hitbox_height / 2);
@@ -357,10 +359,12 @@ void hardware_render(
                 next_gpu_workload[*next_workload_size + m].RGBA[0] = 0.8f;
                 next_gpu_workload[*next_workload_size + m].RGBA[1] = 0.8f +
                     ((zpolygons_to_render[zp_i].touchable_id ==
-                        visual_debug_highlight_touchable_id) * 0.2f);
+                        window_globals->visual_debug_highlight_touchable_id) *
+                            0.2f);
                 next_gpu_workload[*next_workload_size + m].RGBA[2] = 0.4f +
                     ((zpolygons_to_render[zp_i].touchable_id ==
-                        visual_debug_highlight_touchable_id) * 0.4f);
+                        window_globals->visual_debug_highlight_touchable_id) *
+                            0.4f);
                 next_gpu_workload[*next_workload_size + m].RGBA[3] = 1.0f;
                 next_gpu_workload[*next_workload_size + m].ignore_lighting =
                     true;

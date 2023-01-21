@@ -255,9 +255,11 @@ static id projection_constant_buffers[3];
     
     viewport.originX = 0;
     viewport.originY = 0;
-    viewport.width   = window_width * (has_retina_screen ? 2.0f : 1.0f);
-    viewport.height  = window_height * (has_retina_screen ? 2.0f : 1.0f);
-    viewport.znear   = projection_constants.near;
+    viewport.width   = window_globals->window_width *
+        (has_retina_screen ? 2.0f : 1.0f);
+    viewport.height  = window_globals->window_height *
+        (has_retina_screen ? 2.0f : 1.0f);
+    viewport.znear   = window_globals->projection_constants.near;
     // TODO: restore to pjc's value
     viewport.zfar    = 1.0f; // projection_constants.far;
     
@@ -516,7 +518,7 @@ static id projection_constant_buffers[3];
     
     [command_buffer commit];
     
-    request_post_resize_clearscreen = false;
+    window_globals->request_post_resize_clearscreen = false;
     block_drawinmtkview = false;
 }
 
@@ -525,10 +527,12 @@ static id projection_constant_buffers[3];
 {    
     viewport.originX = 0.0f;
     viewport.originY = 0.0f;
-    viewport.width   = window_width * (has_retina_screen ? 2.0f : 1.0f);
-    viewport.height  = window_height * (has_retina_screen ? 2.0f : 1.0f);
-    viewport.znear   = projection_constants.near;
-    viewport.zfar    = projection_constants.far;
+    viewport.width   = window_globals->window_width *
+        (has_retina_screen ? 2.0f : 1.0f);
+    viewport.height  = window_globals->window_height *
+        (has_retina_screen ? 2.0f : 1.0f);
+    viewport.znear   = window_globals->projection_constants.near;
+    viewport.zfar    = window_globals->projection_constants.far;
 }
 @end
 
