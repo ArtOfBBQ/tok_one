@@ -14,7 +14,6 @@
 #import <mach/mach_time.h>
 
 extern uint64_t last_resize_request_at;
-extern uint32_t block_drawinmtkview;
 
 @interface MetalKitViewDelegate: NSObject<MTKViewDelegate>
 @property (retain) NSMutableArray * metal_textures;

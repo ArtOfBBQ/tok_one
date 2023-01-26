@@ -155,15 +155,16 @@ vertex_shader(
     out.position[0] *= projection_constants->x_multiplier;
     out.position[1] *= projection_constants->field_of_view_modifier;
     out.position[3]  = out.position[2];
-    out.position[2]  =
-         (out.position[2] * out.position[2]) / projection_constants->far;
+    out.position[2]  =     
+        (out.position[2] * projection_constants->q) -
+        (projection_constants->near * projection_constants->q);
     
     out.color = vector_float4(
         input_array[vertex_i].RGBA[0],
         input_array[vertex_i].RGBA[1],
         input_array[vertex_i].RGBA[2],
         input_array[vertex_i].RGBA[3]);
-    clamp(out.color, 0.05f, 1.0f);
+    clamp(out.color, 0.25f, 1.0f);
     
     out.surface_normal = vector_float4(
         input_array[vertex_i].normal_x,
@@ -223,8 +224,8 @@ vertex_shader(
             (light_collection->diffuse[i] * 3.0f) *
             visibility_rating);
     }
-        
-    clamp(out.lighting, 0.15f, 1.0f);
+    
+    clamp(out.lighting, 0.25f, 1.0f);
     
     return out;
 }

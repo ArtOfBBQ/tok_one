@@ -47,175 +47,105 @@ void client_logic_get_application_name_to_recipient(
 
 void client_logic_startup(void) {
     
-    //    font_height = 40.0f;
-    //    font_color[0] = 1.0f;
-    //    font_color[1] = 1.0f;
-    //    font_color[2] = 1.0f;
-    //    font_color[3] = 1.0f;
-    //    request_label_around(
-    //        /* const int32_t with_id: */
-    //            9999,
-    //        /* const char * text_to_draw: */
-    //            "Space: shoot light\nClick: bump\nT: Toggle debug\nC: reset camera",
-    //        /* const float mid_x_pixelspace: */
-    //            window_width * 0.5f,
-    //        /* const float top_y_pixelspace: */
-    //            window_height * 0.75f,
-    //        /* const float z: */
-    //            1.0f,
-    //        /* const float max_width: */
-    //            1000.0f,
-    //        /* const bool32_t ignore_camera: */
-    //            true);
-    
-    init_rand_with_seed(platform_get_current_time_microsecs());
-    
     const char * fontfile;
-    fontfile = "font.png";
-    register_new_texturearray_by_splitting_file(
+        fontfile = "font.png";
+        register_new_texturearray_by_splitting_file(
         /* filename : */ fontfile,
         /* rows     : */ 10,
         /* columns  : */ 10);
     
-    char * filenames[2] = {
-        (char *)"structuredart1.png",
-        (char *)"structuredart2.png",
+    char * filenames[1] = {
+       (char *)"structuredart1.png",
     };
     register_new_texturearray_from_files(
         (const char **)filenames,
-        2);
-    
-    char * moar_filenames[1] = {
-        (char *)"roundedborder.png",
-    };
-    register_new_texturearray_from_files(
-        (const char **)moar_filenames,
         1);
     
-    char * card_filenames[2] = {
-        (char *)"fs_justice.bmp",
-        (char *)"fs_cardback.bmp"
-    };
-    register_new_texturearray_from_files(
-        (const char **)card_filenames,
-        2);
+    //    for (uint32_t x = 0; x < 5; x++) {
+    //        for (uint32_t y = 0; y < 5; y++) {
+    //            for (uint32_t z = 0; z < 5; z++) {
+    //            
+    //                if (y % 2 == 0) {
+    //                    zPolygon quad;
+    //                    construct_quad_around(
+    //                        /* const float mid_x: */
+    //                            x * 0.25f,
+    //                        /* const float mid_y: */
+    //                            y * 0.25f,
+    //                        /* const float z: */
+    //                            (z + 1) * 0.25f,
+    //                        /* const float width: */
+    //                            0.25f,
+    //                        /* const float height: */
+    //                            0.25f,
+    //                        /* zPolygon * recipient: */
+    //                            &quad);
+    //                    quad.triangles[0].texturearray_i = 1;
+    //                    quad.triangles[0].texture_i = 0;
+    //                    quad.triangles[1].texturearray_i = 1;
+    //                    quad.triangles[1].texture_i = 0;
+    //                    quad.triangles[0].color[0] = z * 0.2f;
+    //                    quad.triangles[0].color[1] = z * 0.2f;
+    //                    quad.triangles[1].color[0] = z * 0.2f;
+    //                    quad.triangles[1].color[1] = z * 0.2f;
+    //                    quad.ignore_lighting = true;
+    //                    request_zpolygon_to_render(&quad);
+    //                } else {
+    //                    
+    //                }
+    //            }
+    //        }
+    //    }
     
-    zPolygon * teapot = (zPolygon *)malloc_from_managed(
-        sizeof(zPolygon));
-    load_from_obj_file("teapot.obj", false, teapot);
-    center_zpolygon_offsets(teapot);
-    scale_zpolygon(teapot, 1.0f);
+    FileBuffer obj_buffer;                                                  
+    obj_buffer.size = platform_get_resource_size(
+        "cardwithuvcoords.obj");
+    obj_buffer.contents = (char *)malloc_from_managed(
+        obj_buffer.size);
     
-    teapot->object_id = 123;
-    teapot->touchable_id = 1;
-    log_assert(teapot->triangles_size > 0);
-    scale_zpolygon(
-        /* to_scale: */
-            teapot,
-        /* new_height: */
-            0.15f);
-    teapot->x = -0.55f;
-    teapot->y = -0.3f;
-    teapot->z = 0.7f;
+    platform_read_resource_file(                                            
+        "cardwithuvcoords.obj",                                       
+        &obj_buffer);
+    
+    zPolygon new_mesh;
+    parse_obj_expecting_materials(                                          
+        /* rawdata: */                                                      
+            obj_buffer.contents,
+        /* rawdata_size: */                                                 
+            obj_buffer.size,
+        /* expected_materials: */
+            NULL,
+        /* expected_materials_size: */                                      
+            0,
+        /* flip_winding: */                                                 
+            false,
+        /* recipient: */
+            &new_mesh);
+    
+    scale_zpolygon(&new_mesh, 0.2f);
+    
+    new_mesh.x = 0.0f;
+    new_mesh.y = 0.3f;
     
     for (
         uint32_t tri_i = 0;
-        tri_i < teapot->triangles_size;
+        tri_i < new_mesh.triangles_size;
         tri_i++)
     {
-        teapot->triangles[tri_i].color[0] = 0.4f;
-        teapot->triangles[tri_i].color[1] = 0.4f;
-        teapot->triangles[tri_i].color[2] = 0.6f;
+        new_mesh.triangles[tri_i] = x_rotate_ztriangle(
+            &new_mesh.triangles[tri_i],
+            1.66f);
+
+        new_mesh.triangles[tri_i] = y_rotate_ztriangle(
+            &new_mesh.triangles[tri_i],
+            2.0f);        
+        
+        new_mesh.triangles[tri_i] = z_rotate_ztriangle(
+            &new_mesh.triangles[tri_i],
+            1.66f);
     }
     
-    zPolygon * anotherteapot = (zPolygon *)malloc_from_managed(
-        sizeof(zPolygon));
-    for (uint32_t _ = 0; _ < 20; _++) {
-        *anotherteapot = *teapot;
-        anotherteapot->object_id = 124 + _;
-        anotherteapot->touchable_id = 1 + _;
-        anotherteapot->x = teapot->x + ((_ / 5) * 0.4f);
-        anotherteapot->y = teapot->y;
-        anotherteapot->z = teapot->z + ((_ % 5) * 0.3f);
-        anotherteapot->x_angle = (_ * 0.48f);
-        anotherteapot->y_angle = (_ * 0.35f);
-        anotherteapot->z_angle = (_ * 0.61f);
-        
-        request_zpolygon_to_render(anotherteapot);
-        
-        ScheduledAnimation rotate_teapot;
-        construct_scheduled_animation(&rotate_teapot);
-        rotate_teapot.affected_object_id    =   124 + _;
-        rotate_teapot.x_rotation_per_second =  0.4f + (1.8f / (_ + 1));
-        rotate_teapot.y_rotation_per_second = -0.6f + (0.1f  * _);
-        rotate_teapot.z_rotation_per_second =  0.8f + (0.08f * _);
-        rotate_teapot.duration_microseconds = 10000000;
-        rotate_teapot.runs = 0;
-        request_scheduled_animation(&rotate_teapot);
-    }
-    free_from_managed((uint8_t *)anotherteapot);
-    
-    #define NUM_LIGHTS 4
-    float light_size = 0.05f;
-    float light_xs[NUM_LIGHTS + 3];
-    light_xs[0] = -0.3f;
-    light_xs[1] = -0.35f;
-    light_xs[2] = 0.3f;
-    light_xs[3] = 0.35f;
-    float light_ys[NUM_LIGHTS + 3];
-    light_ys[0] = 0.2f;
-    light_ys[1] = 0.21f;
-    light_ys[2] = 0.5f;
-    light_ys[3] = 0.51f;
-    float light_zs[NUM_LIGHTS + 3];
-    light_zs[0] = 1.0f;
-    light_zs[1] = 0.7f;
-    light_zs[2] = 1.3f;
-    light_zs[3] = 0.4f;
-    
-    for (uint32_t i = 0; i < NUM_LIGHTS; i++) {
-        zlights_to_apply[i].deleted      =    false;
-        zlights_to_apply[i].object_id    =    123 + 250 + i;
-        zlights_to_apply[i].x            =    light_xs[i];
-        zlights_to_apply[i].y            =    light_ys[i];
-        zlights_to_apply[i].z            =    light_zs[i];
-        zlights_to_apply[i].RGBA[0]      =    i % 3 == 0 ? 1.0f : 0.0f; 
-        zlights_to_apply[i].RGBA[1]      =    i % 2 == 0 ? 1.0f : 0.0f;
-        zlights_to_apply[i].RGBA[2]      =    i % 3 == 1 ? 1.0f : 0.0f;
-        zlights_to_apply[i].RGBA[3]      =    1.0f;
-        zlights_to_apply[i].reach        =    1.0f;
-        zlights_to_apply[i].ambient      =    0.1f;
-        zlights_to_apply[i].diffuse      =    1.0f;
-        zlights_to_apply_size++;
-        
-        zPolygon * quad = (zPolygon *)malloc_from_managed(sizeof(zPolygon));
-        construct_quad(
-            /* float left_x: */
-                zlights_to_apply[i].x - (light_size / 2),
-            /* float top_y: */
-                zlights_to_apply[i].y - (light_size / 2),
-            /* z: */
-                light_zs[i],
-            /* float width: */
-                light_size,
-            /* float height: */
-                light_size,
-            /* recipient: */
-                quad);
-        quad->object_id                   = 123 + 250 + i;
-        quad->touchable_id                = 250 + i;
-        quad->ignore_lighting             = true;
-        quad->ignore_camera               = i == 0;
-        quad->triangles[0].texturearray_i = 1;
-        quad->triangles[0].texture_i      = 1;
-        quad->triangles[1].texturearray_i = 1;
-        quad->triangles[1].texture_i      = 1;
-        quad->x_angle                     = i * 0.3f;
-        request_zpolygon_to_render(quad);
-        free_from_managed((uint8_t *)quad);
-    }
-    
-    log_append("finished client_logic_startup()\n");
+    request_zpolygon_to_render(&new_mesh);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -254,7 +184,8 @@ static void  client_handle_touches_and_leftclicks(
 {
     if (!user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].handled) {
         int32_t leftclick_touchable_id =
-            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].touchable_id;
+            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
+                touchable_id;
         user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].handled = true;
         
         if (leftclick_touchable_id >= 0) {
@@ -284,53 +215,47 @@ static void  client_handle_touches_and_leftclicks(
     }
 }
 
-static void client_handle_keypresses(uint64_t microseconds_elapsed) {
+static void client_handle_keypresses(
+    uint64_t microseconds_elapsed)
+{
     float elapsed_mod =
         (float)((double)microseconds_elapsed / (double)16666);
     float cam_speed = 0.1f * elapsed_mod;
     float cam_rotation_speed = 0.05f * elapsed_mod;
     
-    if (keypress_map[123] == true)
+    if (keypress_map[TOK_KEY_LEFTARROW] == true)
     {
-        // left arrow key
         camera.x -= cam_speed;
     }
     
-    if (keypress_map[124] == true)
+    if (keypress_map[TOK_KEY_RIGHTARROW] == true)
     {
-        // right arrow key
         camera.x += cam_speed;
     }
     
-    if (keypress_map[125] == true)
+    if (keypress_map[TOK_KEY_DOWNARROW] == true)
     {
-        // down arrow key
         camera.y -= cam_speed;
     }
     
-    if (keypress_map[126] == true)
+    if (keypress_map[TOK_KEY_UPARROW] == true)
     {
-        // up arrow key is pressed
         camera.y += cam_speed;
     }
-     
-    if (keypress_map[0] == true) {                                              
-        // 'A' key is pressed                                                   
+    
+    if (keypress_map[TOK_KEY_A] == true) {                                                                                                 
         camera.x_angle += cam_rotation_speed;                                   
     }
     
-    if (keypress_map[6] == true) {                                              
-        // 'Z' key is pressed                                                   
+    if (keypress_map[TOK_KEY_Z] == true) {                                                                                                
         camera.z_angle -= cam_rotation_speed;                                   
     }
     
-    if (keypress_map[7] == true) {                                              
-        // 'X' key                                                               
+    if (keypress_map[TOK_KEY_X] == true) {                                                                                                 
         camera.z_angle += cam_rotation_speed;                                    
     }
-
-    if (keypress_map[8] == true) {                                             
-        // C key is pressed, reset camera
+    
+    if (keypress_map[TOK_KEY_C] == true) {                                             
         camera.x = 0.0f;
         camera.y = 0.0f;
         camera.z = 0.0f;
@@ -339,41 +264,37 @@ static void client_handle_keypresses(uint64_t microseconds_elapsed) {
         camera.z_angle = 0.0f;
     }
     
-    if (keypress_map[12] == true) {                                             
-        // 'Q' key is pressed                                                   
+    if (keypress_map[TOK_KEY_Q] == true) {                                                                                               
         camera.x_angle -= cam_rotation_speed;                                   
     }
     
-    if (keypress_map[13] == true) {                                             
-        // 'W' key is pressed                                                   
+    if (keypress_map[TOK_KEY_W] == true) {                                             
         camera.y_angle -= cam_rotation_speed;                              
     }
     
-    if (keypress_map[1] == true) {                                             
-        // 'S' key is pressed                                                   
+    if (keypress_map[TOK_KEY_S] == true) {                                                                                               
         camera.y_angle += cam_rotation_speed;                                   
     }
     
-    if (keypress_map[44] == true) {                                             
-        // / key                                                                
+    if (keypress_map[TOK_KEY_BACKSLASH] == true) {                                             
+        // / key                                           
         camera.z -= 0.01f;                                                      
     }
     
-    if (keypress_map[94] == true) {                                             
-        // _ key is pressed                                                     
+    if (keypress_map[TOK_KEY_UNDERSCORE] == true) {                                             
         camera.z += 0.01f;                                                      
     }
     
-    if (keypress_map[17] == true) {                                             
+    if (keypress_map[TOK_KEY_T] == true) {                                             
         // T key is pressed
-        keypress_map[17] = false;
+        keypress_map[TOK_KEY_T] = false;
         window_globals->visual_debug_mode =
             !window_globals->visual_debug_mode;
     }
     
-    if (keypress_map[49] == true) {                                             
+    if (keypress_map[TOK_KEY_SPACEBAR] == true) {                                             
         // spacebar key is pressed
-        keypress_map[49] = false;
+        keypress_map[TOK_KEY_SPACEBAR] = false;
         float bullet_size = 0.1f;     
         
         zVertex camera_direction;
@@ -445,10 +366,23 @@ bool32_t fading_out = true;
 
 void client_logic_update(uint64_t microseconds_elapsed)
 {
-    // request_fps_counter(microseconds_elapsed);
+    request_fps_counter(microseconds_elapsed);
     
     client_handle_touches_and_leftclicks(microseconds_elapsed);
     client_handle_keypresses(microseconds_elapsed);  
+}
+
+void client_logic_evaluate_terminal_command(
+    char * command,
+    char * response,
+    const uint32_t response_cap)
+{
+    if (are_equal_strings(command, "EXAMPLE COMMAND")) {
+        strcpy_capped(response, response_cap, "Hello from clientlogic!");
+        return;
+    }
+    
+    strcpy_capped(response, response_cap, "Unrecognized command");
 }
 
 void client_logic_window_resize(

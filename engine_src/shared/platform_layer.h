@@ -157,11 +157,6 @@ void platform_start_thread(
 
 uint64_t platform_get_current_time_microsecs(void);
 
-float platform_get_current_window_left(void);
-float platform_get_current_window_bottom(void);
-float platform_get_current_window_height(void);
-float platform_get_current_window_width(void);
-
 float platform_x_to_x(const float x);
 float platform_y_to_y(const float y);
 

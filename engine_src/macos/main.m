@@ -6,9 +6,144 @@
 #include "shared_apple/gpu.h"
 #include "shared/userinput.h"
 #include "shared/window_size.h"
+#include "shared/simd.h"
+
 #include "clientlogic.h"
 
+
 #define SHARED_APPLE_PLATFORM
+
+static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
+{
+    char err_msg[128];
+    
+    switch (apple_key) {
+        case (24):
+            return TOK_KEY_HAT;
+        case (29):
+            return TOK_KEY_0;
+        case (27):
+            return TOK_KEY_MINUS;
+        case (36):
+            return TOK_KEY_ENTER;
+        case (123):
+            return TOK_KEY_LEFTARROW;
+        case (124):
+            return TOK_KEY_RIGHTARROW;
+        case (125):
+            return TOK_KEY_DOWNARROW;
+        case (126):
+            return TOK_KEY_UPARROW;
+        case (18):
+            return TOK_KEY_1;
+        case (19):
+            return TOK_KEY_2;
+        case (20):
+            return TOK_KEY_3;
+        case (21):
+            return TOK_KEY_4;
+        case (23):
+            return TOK_KEY_5;
+        case (22):
+            return TOK_KEY_6;
+        case (26):
+            return TOK_KEY_7;
+        case (28):
+            return TOK_KEY_8;
+        case (25):
+            return TOK_KEY_9;
+        case (0):
+            return TOK_KEY_A;
+        case (1):
+            return TOK_KEY_S;
+        case (2):
+            return TOK_KEY_D;
+        case (3):
+            return TOK_KEY_F;
+        case (4):
+            return TOK_KEY_H;
+        case (5):
+            return TOK_KEY_G;
+        case (6):
+            return TOK_KEY_Z;
+        case (7):
+            return TOK_KEY_X;
+        case (8):
+            return TOK_KEY_C;
+        case (9):
+            return TOK_KEY_V;
+        case (12):
+            return TOK_KEY_Q;
+        case (13):
+            return TOK_KEY_W;
+        case (14):
+            return TOK_KEY_E;
+        case (15):
+            return TOK_KEY_R;
+        case (17):
+            return TOK_KEY_T;
+        case (16):
+            return TOK_KEY_Y;
+        case (32):
+            return TOK_KEY_U;
+        case (34):
+            return TOK_KEY_I;
+        case (31):
+            return TOK_KEY_O;
+        case (35):
+            return TOK_KEY_P;
+        case (37):
+            return TOK_KEY_L;
+        case (38):
+            return TOK_KEY_J;
+        case (40):
+            return TOK_KEY_K;
+        case (41):
+            return TOK_KEY_SEMICOLON;
+        case (39):
+            return TOK_KEY_COLON;
+        case (30):
+            return TOK_KEY_OPENSQUAREBRACKET;
+        case (33):
+            return TOK_KEY_AT;
+        case (42):
+            return TOK_KEY_CLOSESQUAREBRACKET;
+        case (11):
+            return TOK_KEY_B;
+        case (45):
+            return TOK_KEY_N;
+        case (46):
+            return TOK_KEY_M;
+        case (43):
+            return TOK_KEY_COMMA;
+        case (47):
+            return TOK_KEY_FULLSTOP;
+        case (44):
+            return TOK_KEY_BACKSLASH;
+        case (49):
+            return TOK_KEY_SPACEBAR;
+        case (51):
+            return TOK_KEY_BACKSPACE;
+        case (53):
+            return TOK_KEY_ESCAPE;
+        case (93):
+            return TOK_KEY_YENSIGN;
+        case (94):
+            return TOK_KEY_UNDERSCORE;
+        case (102):
+            return TOK_KEY_ROMAJIBUTTON;
+        case (104):
+            return TOK_KEY_KANABUTTON;
+        default:
+            strcpy_capped(err_msg, 128, "unhandled apple keycode: ");
+            strcat_uint_capped(err_msg, 128, apple_key);
+            strcat_capped(err_msg, 128, "\n");
+    }
+    
+    log_dump_and_crash(err_msg);
+    
+    return TOK_KEY_ESCAPE;
+}
 
 /*
 these variables may not exist on platforms where window resizing is
@@ -46,10 +181,10 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     float title_bar_height =
         (float)([sender contentRectForFrameRect: sender.frame].size.height
             - sender.frame.size.height);
-    window_globals->window_height = (float)(frameSize.height + title_bar_height);
-    window_globals->window_width = (float)frameSize.width;
-    window_globals->aspect_ratio =
-        window_globals->window_height / window_globals->window_width;
+    window_globals->window_height =
+        (float)(frameSize.height + title_bar_height);
+    window_globals->window_width =
+        (float)frameSize.width;
     
     if (!startup_complete) { return frameSize; }
     
@@ -59,10 +194,10 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     new_size.width *= 2;
     mtk_view.drawableSize = new_size;
     
-    zpolygons_to_render_size = 0; 
-    zlights_to_apply_size = 0;
+    window_globals->last_resize_request_at =
+        platform_get_current_time_microsecs();
     
-    window_globals->last_resize_request_at = platform_get_current_time_microsecs();
+    zpolygons_to_render_size = 0;
     
     return frameSize;
 }
@@ -89,22 +224,15 @@ NSWindowWithCustomResponder: NSWindow
 - (void)mouseDown:(NSEvent *)event
 {
     @autoreleasepool {
-    NSPoint screenspace_location = [NSEvent mouseLocation];
-    
-    const float screenspace_x =
-        (float)screenspace_location.x
-            - platform_get_current_window_left();
-    const float screenspace_y =
-        (float)screenspace_location.y
-                - platform_get_current_window_bottom();
-    
+    NSPoint window_location = [event locationInWindow];
+        
     register_interaction(
         /* interaction : */
             &user_interactions[INTR_PREVIOUS_LEFTCLICK_START],
         /* screenspace_x: */
-            screenspace_x,
+            window_location.x,
         /* screenspace_y: */
-            screenspace_y);
+            window_location.y);
     
     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START] =
         user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
@@ -118,16 +246,15 @@ NSWindowWithCustomResponder: NSWindow
 - (void)mouseUp:(NSEvent *)event
 {
     @autoreleasepool {
-    NSPoint screenspace_location = [NSEvent mouseLocation];
+    NSPoint window_location = [event locationInWindow];
     
     register_interaction(
         /* interaction : */
             &user_interactions[INTR_PREVIOUS_LEFTCLICK_END],
         /* screenspace_x: */
-            (float)screenspace_location.x - platform_get_current_window_left(),
+            window_location.x,
         /* screenspace_y: */
-            (float)screenspace_location.y
-                - platform_get_current_window_bottom());
+            window_location.y);
     
     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END] =
         user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
@@ -140,9 +267,7 @@ NSWindowWithCustomResponder: NSWindow
 
 - (void)rightMouseDown:(NSEvent *)event
 {
-    log_append("unhandled mouse event\n");
-    
-    // NSPoint screenspace_location = [NSEvent mouseLocation];
+    log_append("unhandled mouse event\n");    
 }
 
 - (void)rightMouseUp:(NSEvent *)event
@@ -152,17 +277,15 @@ NSWindowWithCustomResponder: NSWindow
 
 - (void)mouseMoved:(NSEvent *)event {
     @autoreleasepool {
-    NSPoint screenspace_location = [NSEvent mouseLocation];
+    NSPoint window_location = [event locationInWindow];
     
     register_interaction(
         /* interaction : */
             &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],
         /* screenspace_x: */
-            (float)screenspace_location.x
-                - platform_get_current_window_left(),
+            (float)window_location.x,
         /* screenspace_y: */
-            (float)screenspace_location.y
-                - platform_get_current_window_bottom());
+            (float)window_location.y);
     
     user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
         user_interactions[INTR_PREVIOUS_MOUSE_MOVE];
@@ -171,17 +294,15 @@ NSWindowWithCustomResponder: NSWindow
 
 - (void)mouseDragged:(NSEvent *)event {
     @autoreleasepool {
-    NSPoint screenspace_location = [NSEvent mouseLocation];
+    NSPoint window_location = [event locationInWindow];
     
     register_interaction(
         /* interaction : */
             &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],
         /* screenspace_x: */
-            (float)screenspace_location.x
-                - platform_get_current_window_left(),
+            (float)window_location.x,
         /* screenspace_y: */
-            (float)screenspace_location.y
-                - platform_get_current_window_bottom());
+            (float)window_location.y);
     
     user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
         user_interactions[INTR_PREVIOUS_MOUSE_MOVE];
@@ -190,11 +311,11 @@ NSWindowWithCustomResponder: NSWindow
 
 
 - (void)keyDown:(NSEvent *)event {
-    register_keydown(event.keyCode);
+    register_keydown(apple_keycode_to_tokone_keycode(event.keyCode));
 }
 
 - (void)keyUp:(NSEvent *)event {
-    register_keyup(event.keyCode);
+    register_keyup(apple_keycode_to_tokone_keycode(event.keyCode));
 }
 @end
 
@@ -203,15 +324,6 @@ bool32_t has_retina_screen = true;
 
 NSWindowWithCustomResponder * window = NULL;
 
-float platform_get_current_window_left() {
-    return (float)window.frame.origin.x;
-}
-
-float platform_get_current_window_bottom() {
-    return (float)window.frame.origin.y;
-}
-
-#include "../shared/simd.h"
 int main(int argc, const char * argv[]) {
     
     client_logic_get_application_name_to_recipient(
@@ -240,17 +352,18 @@ int main(int argc, const char * argv[]) {
     
     // NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     NSRect window_rect = NSMakeRect(
-        /* x: */ 200,
-        /* y: */ 250,
-        /* width: */ platform_get_current_window_width(),
-        /* height: */ platform_get_current_window_height());
+        /* x: */ INITIAL_WINDOW_LEFT,
+        /* y: */ INITIAL_WINDOW_BOTTOM,
+        /* width: */ INITIAL_WINDOW_WIDTH,
+        /* height: */ INITIAL_WINDOW_HEIGHT);
     
     window =
         [[NSWindowWithCustomResponder alloc]
             initWithContentRect: window_rect 
-            styleMask: NSWindowStyleMaskTitled
-                         | NSWindowStyleMaskClosable
-                         | NSWindowStyleMaskResizable
+            styleMask:
+                NSWindowStyleMaskTitled |
+                NSWindowStyleMaskClosable |
+                NSWindowStyleMaskResizable
             backing: NSBackingStoreBuffered 
             defer: NO];
     window.animationBehavior = NSWindowAnimationBehaviorNone;
@@ -286,7 +399,7 @@ int main(int argc, const char * argv[]) {
     // Indicate that Metal should clear all values in the depth buffer to x
     // when you create a render command encoder with the MetalKit view's
     // `currentRenderPassDescriptor` property.
-    mtk_view.clearDepth = 1.0f;
+    mtk_view.clearDepth = CLEARDEPTH;
     [mtk_view setPaused: false];
     [mtk_view setNeedsDisplay: false];
     

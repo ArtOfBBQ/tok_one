@@ -11,8 +11,13 @@ uint8_t * platform_malloc_unaligned_block(
     return return_value;
 }
 
-AVAudioPlayer * active_music_player = NULL;
-static float sound_volume = 0.15f;
+#define MAX_SIMUL_SOUNDS 3
+static AVAudioPlayer * sound_players[MAX_SIMUL_SOUNDS];
+static uint32_t next_sound_player = 0;
+
+static AVAudioPlayer * active_music_player = NULL;
+static float sound_volume = 0.135f;
+static float music_volume = 0.0f; // 0.035f;
 
 void platform_get_writables_path(
     char * recipient,
@@ -434,14 +439,20 @@ void platform_play_sound_resource(char * resource_filename) {
     NSURL * soundFileURL = [NSURL
         fileURLWithPath: soundPathFile];
     
-    AVAudioPlayer * sound_player = [
-        [AVAudioPlayer alloc]
+    sound_players[next_sound_player] =
+        [[AVAudioPlayer alloc]
             initWithContentsOfURL:soundFileURL
             error:nil];
-    [sound_player setVolume: sound_volume];
-    sound_player.numberOfLoops = 0;
     
-    [sound_player play];
+    [sound_players[next_sound_player] setVolume: sound_volume];
+    sound_players[next_sound_player].numberOfLoops = 0;
+    
+    [sound_players[next_sound_player] play];
+    
+    next_sound_player++;
+    if (next_sound_player >= MAX_SIMUL_SOUNDS) {
+        next_sound_player = 0;
+    }
 }
 
 void platform_play_music_resource(char * resource_filename) { 
@@ -449,28 +460,28 @@ void platform_play_music_resource(char * resource_filename) {
         [active_music_player setVolume: 0.0f fadeDuration: 1];
     }
     
-    char sound_pathfile[500];
+    char sound_pathfile[512];
     resource_filename_to_pathfile(
         /* filename: */
             resource_filename,
         /* recipient: */
             sound_pathfile,
         /* recipient_capacity: */
-            500);
+            512);
     
     NSString * soundPathFile = [NSString
         stringWithUTF8String: sound_pathfile];
     NSURL * soundFileURL = [NSURL
         fileURLWithPath: soundPathFile];
     
-    AVAudioPlayer * player = [
-        [AVAudioPlayer alloc]
+    AVAudioPlayer * player =
+        [[AVAudioPlayer alloc]
             initWithContentsOfURL:soundFileURL
             error:nil];
     player.numberOfLoops = 0;
     
-    [player setVolume: 0.0f];
-    [player setVolume: sound_volume fadeDuration: 5];
+    [player setVolume: 0.00000001f];
+    [player setVolume: music_volume fadeDuration: 5];
     [player play];
     
     active_music_player = player;

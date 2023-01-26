@@ -123,6 +123,7 @@ TouchableMTKView * _my_mtk_view;
     _my_mtk_view.paused = NO;
     _my_mtk_view.enableSetNeedsDisplay = NO;
     _my_mtk_view.depthStencilPixelFormat = MTLPixelFormatDepth32Float;
+    _my_mtk_view.clearDepth = 1.0f;
     
     _metal_device = MTLCreateSystemDefaultDevice();
     

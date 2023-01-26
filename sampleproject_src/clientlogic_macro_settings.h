@@ -10,19 +10,25 @@ I'll add some flags to ignore rotations etc
 /*
 The maximum number of sprites/meshes in your app.
 */
-#define ZPOLYGONS_TO_RENDER_ARRAYSIZE 50
+#define ZPOLYGONS_TO_RENDER_ARRAYSIZE 500
 
 /*
-the max # of triangles in 1 zpolygon. Use 2 for a simple 2D app or game, since
-a 2D sprite is represented with only 2 triangles.
+the max # of triangles in 1 zpolygon. 2 is enough for simple 2D sprites,
+but that will block you from being able to make text labels which have
+2 triangles per letter.
 */
-#define POLYGON_TRIANGLES_SIZE 8400
+#define POLYGON_TRIANGLES_SIZE 1000
 
 
-// 190mb ->                   190...000
-#define UNMANAGED_MEMORY_SIZE 190000000 // 180 too little, 205 enough
+// 290mb ->                   290...000
+#define UNMANAGED_MEMORY_SIZE 290000000
 // 90 mb ->                    90...000
 #define MANAGED_MEMORY_SIZE    90000000
+
+#define INITIAL_WINDOW_HEIGHT   800
+#define INITIAL_WINDOW_WIDTH   1200
+#define INITIAL_WINDOW_LEFT     300
+#define INITIAL_WINDOW_BOTTOM   100
 
 
 #endif // CLIENTLOGIC_MACRO_SETTINGS

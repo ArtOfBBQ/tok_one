@@ -7,17 +7,27 @@ void init_application() {
     
     window_globals = (WindowGlobals *)malloc_from_unmanaged(
         sizeof(WindowGlobals));
+    
+    window_globals->window_height = INITIAL_WINDOW_HEIGHT;
+    window_globals->window_width  = INITIAL_WINDOW_WIDTH;
+    window_globals->window_left   = INITIAL_WINDOW_LEFT;
+    window_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
+    window_globals->aspect_ratio =
+        window_globals->window_height / window_globals->window_width;
+    
+    init_projection_constants();
+    
     keypress_map = (bool32_t *)malloc_from_unmanaged(
         sizeof(bool32_t) * KEYPRESS_MAP_SIZE);
     zpolygons_to_render = (zPolygon *)malloc_from_unmanaged(
         sizeof(zPolygon) * ZPOLYGONS_TO_RENDER_ARRAYSIZE);
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
         sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
-
     
+    terminal_init();
     init_scheduled_animations();
     init_texture_arrays();
-
+    
     gpu_shared_data_collection.triple_buffers[0].touchable_pixels = NULL;
     gpu_shared_data_collection.triple_buffers[1].touchable_pixels = NULL;
     gpu_shared_data_collection.triple_buffers[2].touchable_pixels = NULL;
@@ -41,13 +51,6 @@ void init_application() {
             font_metrics_file.contents,
         /* raw_fontmetrics_file_size: */
             font_metrics_file.size);
-        
-    window_globals->window_height = platform_get_current_window_height();
-    window_globals->window_width = platform_get_current_window_width();
-    window_globals->aspect_ratio =
-        window_globals->window_height / window_globals->window_width;
-    
-    init_projection_constants();
     
     user_interactions = (Interaction *)
         malloc_from_unmanaged(sizeof(Interaction) * USER_INTERACTIONS_SIZE);
@@ -58,6 +61,4 @@ void init_application() {
     init_renderer();
     
     client_logic_startup();
-    
-    block_drawinmtkview = false;
 }

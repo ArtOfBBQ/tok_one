@@ -29,10 +29,6 @@ void register_interaction(
 
 void register_keyup(uint32_t key_id)
 {
-    log_append("register key up: ");
-    log_append_uint(key_id);
-    log_append("\n");
-    
     log_assert(key_id < KEYPRESS_MAP_SIZE);
     
     keypress_map[key_id] = false;
@@ -40,9 +36,6 @@ void register_keyup(uint32_t key_id)
 
 void register_keydown(uint32_t key_id)
 {
-    log_append("register key down: ");
-    log_append_uint(key_id);
-    log_append("\n");
     log_assert(key_id < KEYPRESS_MAP_SIZE);
     
     keypress_map[key_id] = true;

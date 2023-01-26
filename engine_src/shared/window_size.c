@@ -7,7 +7,8 @@ float screenspace_x_to_x(const float screenspace_x, const float given_z)
 {
     return (
         ((screenspace_x * 2.0f) / window_globals->window_width) - 1.0f)
-            * given_z;
+            * given_z
+            / window_globals->aspect_ratio;
 }
 
 float screenspace_y_to_y(const float screenspace_y, const float given_z)
@@ -17,14 +18,23 @@ float screenspace_y_to_y(const float screenspace_y, const float given_z)
             * given_z;
 }
 
-float screenspace_height_to_height(const float screenspace_height)
+float screenspace_height_to_height(
+    const float screenspace_height,
+    const float given_z)
 {
-    return (screenspace_height * 2.0f) / window_globals->window_height;
+    return (
+        (screenspace_height * 2.0f) / window_globals->window_height)
+            * given_z;
 }
 
-float screenspace_width_to_width(const float screenspace_width)
+float screenspace_width_to_width(
+    const float screenspace_width,
+    const float given_z)
 {
-    return (screenspace_width * 2.0f) / window_globals->window_width;
+    return
+        ((screenspace_width * 2.0f) / window_globals->window_width)
+            * given_z
+            / window_globals->aspect_ratio;
 }
 
 void init_projection_constants() {
@@ -39,7 +49,7 @@ void init_projection_constants() {
     GPU_ProjectionConstants * pjc = &window_globals->projection_constants;
     
     pjc->near = 0.1f;
-    pjc->far = 20.0f;
+    pjc->far = 10.0f;
     
     float field_of_view = 90.0f;
     pjc->field_of_view_rad = ((field_of_view * 0.5f) / 180.0f) * 3.14159f;

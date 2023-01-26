@@ -128,6 +128,8 @@
 		EC7B09D4293CAC8B000ED98E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = EC7B09D3293CAC8B000ED98E /* Main.storyboard */; };
 		EC7B171B293A23E400C1D20C /* roundedborder.png in Resources */ = {isa = PBXBuildFile; fileRef = EC7B171A293A23E300C1D20C /* roundedborder.png */; };
 		EC7B171C293A23E400C1D20C /* roundedborder.png in Resources */ = {isa = PBXBuildFile; fileRef = EC7B171A293A23E300C1D20C /* roundedborder.png */; };
+		EC7C25262980B6AA00DB7BC8 /* terminal.h in Sources */ = {isa = PBXBuildFile; fileRef = EC7C25242980B6A900DB7BC8 /* terminal.h */; };
+		EC7C25272980B6AA00DB7BC8 /* terminal.c in Sources */ = {isa = PBXBuildFile; fileRef = EC7C25252980B6A900DB7BC8 /* terminal.c */; };
 		EC92FDAD2902917500C10865 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
 		EC92FDAE2902917500C10865 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
 		ECB05E47294F8AC300050BD4 /* simd.h in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E46294F8AC200050BD4 /* simd.h */; };
@@ -214,6 +216,8 @@
 		EC6B1F50293CA06200837369 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/AVFoundation.framework; sourceTree = DEVELOPER_DIR; };
 		EC7B09D3293CAC8B000ED98E /* Main.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Main.storyboard; path = ../../resources/ios/Main.storyboard; sourceTree = "<group>"; };
 		EC7B171A293A23E300C1D20C /* roundedborder.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = roundedborder.png; path = ../../resources/roundedborder.png; sourceTree = "<group>"; };
+		EC7C25242980B6A900DB7BC8 /* terminal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = terminal.h; path = ../../engine_src/shared/terminal.h; sourceTree = "<group>"; };
+		EC7C25252980B6A900DB7BC8 /* terminal.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = terminal.c; path = ../../engine_src/shared/terminal.c; sourceTree = "<group>"; };
 		EC92FDAB2902917500C10865 /* decode_bmp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = decode_bmp.h; path = ../../engine_src/shared/debigulator/src/decode_bmp.h; sourceTree = "<group>"; };
 		EC92FDAC2902917500C10865 /* decode_bmp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = decode_bmp.c; path = ../../engine_src/shared/debigulator/src/decode_bmp.c; sourceTree = "<group>"; };
 		ECB05E46294F8AC200050BD4 /* simd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = simd.h; path = ../../engine_src/shared/simd.h; sourceTree = "<group>"; };
@@ -336,13 +340,15 @@
 		60A998DE287BD468003F7159 /* shared_macos_iphone */ = {
 			isa = PBXGroup;
 			children = (
-				EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */,
 				60112896286253C100F92967 /* apple_platform_layer.c */,
+				EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */,
 				601128702862511600F92967 /* clientlogic.c */,
 				608802F1286DCBE700B81255 /* clientlogic.h */,
 				601128722862511600F92967 /* common_platform_layer.c */,
 				6011286F2862511600F92967 /* common.c */,
 				6080CC472870182700444118 /* common.h */,
+				6011287A2862511600F92967 /* cpu_gpu_shared_types.h */,
+				601128762862511600F92967 /* cpu_to_gpu_types.h */,
 				EC92FDAC2902917500C10865 /* decode_bmp.c */,
 				EC92FDAB2902917500C10865 /* decode_bmp.h */,
 				6011283D286122FE00F92967 /* decode_png.c */,
@@ -366,11 +372,13 @@
 				6009B4F328679E7D00F1F279 /* memorystore.c */,
 				6009B4F228679E7D00F1F279 /* memorystore.h */,
 				601128832862511700F92967 /* platform_layer.h */,
+				6011286C2862511500F92967 /* renderer.c */,
+				6011287B2862511700F92967 /* renderer.h */,
 				6011287D2862511700F92967 /* scheduled_animations.c */,
 				6011286A2862511500F92967 /* scheduled_animations.h */,
 				ECB05E46294F8AC200050BD4 /* simd.h */,
-				6011286C2862511500F92967 /* renderer.c */,
-				6011287B2862511700F92967 /* renderer.h */,
+				EC7C25252980B6A900DB7BC8 /* terminal.c */,
+				EC7C25242980B6A900DB7BC8 /* terminal.h */,
 				601128742862511600F92967 /* text.c */,
 				601128672862511500F92967 /* text.h */,
 				601128662862511500F92967 /* texture_array.c */,
@@ -379,8 +387,6 @@
 				601128802862511700F92967 /* tok_random.h */,
 				601128692862511500F92967 /* userinput.c */,
 				6011286B2862511500F92967 /* userinput.h */,
-				601128762862511600F92967 /* cpu_to_gpu_types.h */,
-				6011287A2862511600F92967 /* cpu_gpu_shared_types.h */,
 				6011286E2862511600F92967 /* window_size.c */,
 				601128822862511700F92967 /* window_size.h */,
 				6011287E2862511700F92967 /* zpolygon.c */,
@@ -516,6 +522,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EC7C25262980B6AA00DB7BC8 /* terminal.h in Sources */,
+				EC7C25272980B6AA00DB7BC8 /* terminal.c in Sources */,
 				EC1BD95C297B5DBE00A9BA54 /* clientlogic_macro_settings.h in Sources */,
 				ECB05E4B294F8B3500050BD4 /* main.m in Sources */,
 				ECB05E49294F8B1300050BD4 /* gpu.m in Sources */,
@@ -655,6 +663,7 @@
 				DEVELOPMENT_TEAM = 69FRAQZ2YR;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -699,6 +708,7 @@
 				DEAD_CODE_STRIPPING = NO;
 				DEVELOPMENT_TEAM = 69FRAQZ2YR;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;

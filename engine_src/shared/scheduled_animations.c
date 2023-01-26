@@ -63,7 +63,9 @@ void request_scheduled_animation(
     log_assert(to_add != NULL);
     log_assert(!to_add->deleted);
     
-    if (to_add->clientlogic_callback_when_finished_id < 0) {
+    if (
+        to_add->clientlogic_callback_when_finished_id < 0)
+    {
         log_assert(to_add->affected_object_id >= 0);
         
         bool32_t found_target = false;
@@ -96,7 +98,8 @@ void request_scheduled_animation(
     }
     to_add->remaining_microseconds = to_add->duration_microseconds;
     
-    log_assert(scheduled_animations_size < SCHEDULED_ANIMATIONS_ARRAYSIZE);
+    log_assert(
+        scheduled_animations_size < SCHEDULED_ANIMATIONS_ARRAYSIZE);
     
     for (
         int32_t i = 0;
@@ -110,7 +113,8 @@ void request_scheduled_animation(
         }
     }
     
-    log_assert(SCHEDULED_ANIMATIONS_ARRAYSIZE > scheduled_animations_size);
+    log_assert(
+        SCHEDULED_ANIMATIONS_ARRAYSIZE > scheduled_animations_size);
     
     scheduled_animations[scheduled_animations_size] = *to_add;
     log_assert(!scheduled_animations[scheduled_animations_size].deleted);
@@ -134,6 +138,8 @@ void request_fade_and_destroy(
     modify_alpha.affected_object_id = object_id;
     modify_alpha.remaining_wait_before_next_run = wait_before_first_run;
     modify_alpha.duration_microseconds = duration_microseconds;
+    modify_alpha.rgba_delta_per_second[1] = -1.0f;
+    modify_alpha.rgba_delta_per_second[2] = -1.0f;
     modify_alpha.final_rgba_known[3] = true;
     modify_alpha.final_rgba[3] = 0.0f;
     modify_alpha.delete_object_when_finished = true;
@@ -168,7 +174,6 @@ static void resolve_single_animation_effects(
     
     // TODO: remove debugging code
     if (anim->y_rotation_per_second > 0.0f) {
-        // break here
         log_assert(1);
     }
     
@@ -403,9 +408,6 @@ static void resolve_single_animation_effects(
         {
             if (!anim->final_rgba_known[c]) {
                 for (uint32_t tri_i = 0; tri_i < zpolygons_to_render[zp_i].triangles_size; tri_i++) {
-                    if (anim->rgba_delta_per_second[c] > 0.0f) {
-                        log_append("break here");
-                    }
                     float delta = ((anim->rgba_delta_per_second[c]
                             * elapsed_this_run)
                         / 1000000);
@@ -537,6 +539,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
             }
             
             if (anim->delete_object_when_finished) {
+                
                 for (
                     int32_t l_i = (int32_t)zlights_to_apply_size - 1;
                     l_i >= 0;
@@ -557,7 +560,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                 
                 delete_zpolygon_object(anim->affected_object_id);
             }
-        }     
+        }
     }
 }
 

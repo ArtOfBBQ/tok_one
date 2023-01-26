@@ -1,6 +1,7 @@
 #ifndef GAMELOOP_H
 #define GAMELOOP_H
 
+#include "terminal.h"
 #include "logger.h"
 #include "window_size.h"
 #include "cpu_gpu_shared_types.h"
@@ -29,4 +30,3 @@ void shared_gameloop_update(
 #endif
 
 #endif // GAMELOOP_H
-

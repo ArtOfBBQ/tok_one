@@ -34,7 +34,6 @@ typedef struct zTriangle {
                             instead"
                             */
     int32_t texture_i;     // index in texturearray
-    uint32_t visible;
 } zTriangle;
 
 typedef struct zPolygon {
@@ -56,6 +55,7 @@ typedef struct zPolygon {
     bool32_t ignore_camera;
     bool32_t ignore_lighting;
     bool32_t deleted;
+    bool32_t visible;
 } zPolygon;
 void construct_zpolygon(zPolygon * to_construct);
 void request_zpolygon_to_render(zPolygon * to_add);
@@ -161,18 +161,6 @@ float distance_to_ztriangle(
     const zVertex p1,
     const zTriangle p2);
 
-//bool32_t ray_intersects_triangle(
-//    const zVertex * ray_origin,
-//    const zVertex * ray_direction,
-//    const zTriangle * triangle,
-//    zVertex * recipient_hit_point);
-
-//bool32_t ray_intersects_zpolygon_triangles(
-//    const zVertex * ray_origin,
-//    const zVertex * ray_direction,
-//    const zPolygon * mesh,
-//    zVertex * recipient_hit_point);
-
 bool32_t ray_intersects_zpolygon_hitbox(
     const zVertex * ray_origin,
     const zVertex * ray_direction,
@@ -181,7 +169,7 @@ bool32_t ray_intersects_zpolygon_hitbox(
 
 void construct_quad_around(
     const float mid_x,
-    const float mid_y,
+    const float bottom_y,
     const float z,
     const float width,
     const float height,

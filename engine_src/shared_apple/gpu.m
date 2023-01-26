@@ -1,7 +1,6 @@
 #import "gpu.h"
 
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
-uint32_t block_drawinmtkview = true;
 GPUSharedDataCollection gpu_shared_data_collection;
 
 // objective-c "id" of the MTLBuffer objects
@@ -18,12 +17,6 @@ static id projection_constant_buffers[3];
     
     id<MTLDevice> metal_device;
     id<MTLCommandQueue> command_queue;
-    
-    // TODO: consider adding another pipeline state
-    // id<MTLRenderPipelineState> transparent_bitmap_state;
-    
-    // TODO: study semaphores
-    dispatch_semaphore_t _frameBoundarySemaphore;
 }
 
 - (void)
@@ -31,7 +24,6 @@ static id projection_constant_buffers[3];
     andPixelFormat: (MTLPixelFormat)pixel_format
     fromFolder: (NSString *)shader_lib_filepath
 {
-    _frameBoundarySemaphore = dispatch_semaphore_create(3);
     current_frame_i = 0;
         
     metal_device = with_metal_device;
@@ -259,9 +251,13 @@ static id projection_constant_buffers[3];
         (has_retina_screen ? 2.0f : 1.0f);
     viewport.height  = window_globals->window_height *
         (has_retina_screen ? 2.0f : 1.0f);
-    viewport.znear   = window_globals->projection_constants.near;
-    // TODO: restore to pjc's value
-    viewport.zfar    = 1.0f; // projection_constants.far;
+    /*
+    These near/far values are the final viewport coordinates (after fragment
+    shader), not to be confused with window_globals->projection_constants.near
+    that's in our world space and much larger numbers
+    */
+    viewport.znear   = 0.001f; 
+    viewport.zfar    = 1.0f;
     
     command_queue = [with_metal_device newCommandQueue];
     
@@ -356,13 +352,6 @@ static id projection_constant_buffers[3];
 
 - (void)drawInMTKView:(MTKView *)view
 {
-    if (block_drawinmtkview) { return; }
-    block_drawinmtkview = true;
-    
-    //    dispatch_semaphore_wait(
-    //        _frameBoundarySemaphore,
-    //        DISPATCH_TIME_FOREVER);
-    
     GPU_Vertex * vertices_for_gpu =
         gpu_shared_data_collection.triple_buffers[current_frame_i].vertices;
     uint32_t vertices_for_gpu_size = 0;
@@ -388,8 +377,12 @@ static id projection_constant_buffers[3];
         camera_for_gpu,
         projection_constants_for_gpu);
     
+    if (lights_for_gpu->lights_size < 1) {
+        // log_append("warning: 0 lights in scene...\n");
+    }
+    
     if (vertices_for_gpu_size < 1) {
-        block_drawinmtkview = false;
+        // log_append("warning: no vertices to draw...\n");
         return;
     }
     
@@ -410,13 +403,11 @@ static id projection_constant_buffers[3];
         assert(vertices_for_gpu[i].parent_x == vertices_for_gpu[i].parent_x);
     }
     
-    id<MTLCommandBuffer> command_buffer =
-        [command_queue commandBuffer];
+    id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
     
     if (command_buffer == nil) {
         log_append("error - failed to get metal command buffer\n");
         log_dump_and_crash("error - failed to get metal command buffer\n");
-        block_drawinmtkview = false;
         return;
     }
     
@@ -427,53 +418,40 @@ static id projection_constant_buffers[3];
         loadAction = MTLLoadActionClear;
     // this inherits from the view's cleardepth (in macos/main.m for mac os),
     // don't set it here
-    assert(RenderPassDescriptor.depthAttachment.clearDepth == 1.0f);
+    assert(RenderPassDescriptor.depthAttachment.clearDepth == CLEARDEPTH);
     
     RenderPassDescriptor
         .colorAttachments[0]
         .loadAction = MTLLoadActionClear;
     RenderPassDescriptor.colorAttachments[0].clearColor =
-        MTLClearColorMake(0.0f, 0.03f, 0.03f, 1.0f);;
+        MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);;
     
     id<MTLRenderCommandEncoder> render_encoder =
         [command_buffer
             renderCommandEncoderWithDescriptor:
                 RenderPassDescriptor];
-    assert(viewport.zfar >= viewport.znear);
+    assert(viewport.zfar > viewport.znear);
     [render_encoder setViewport: viewport];
     
     [render_encoder setRenderPipelineState: _combo_pipeline_state];
     assert(_depth_stencil_state != nil);
     [render_encoder setDepthStencilState: _depth_stencil_state];
-    // [render_encoder setDepthClipMode: MTLDepthClipModeClip];
+    [render_encoder setDepthClipMode: MTLDepthClipModeClip];
     
-    id<MTLBuffer> vertex_buffer_for_this_frame =
-        vertex_buffers[current_frame_i];
-    assert([vertex_buffer_for_this_frame contents] ==
-        gpu_shared_data_collection.triple_buffers[current_frame_i].vertices);
     [render_encoder
         setVertexBuffer:
-            vertex_buffer_for_this_frame
+            vertex_buffers[current_frame_i]
         offset:
             0 
         atIndex:
             0];
     
-    id<MTLBuffer> light_buffer_for_this_Frame = light_buffers[current_frame_i];
-    assert([light_buffer_for_this_Frame contents] ==
-        gpu_shared_data_collection.
-            triple_buffers[current_frame_i].
-            light_collection);
     [render_encoder
         setVertexBuffer:
             light_buffers[current_frame_i]
         offset: 0
         atIndex: 1];
     
-    id<MTLBuffer> camera_buffer_for_this_frame =
-        camera_buffers[current_frame_i];
-    assert([camera_buffer_for_this_frame contents] ==
-        gpu_shared_data_collection.triple_buffers[current_frame_i].camera);
     [render_encoder
         setVertexBuffer:
             camera_buffers[current_frame_i]
@@ -509,17 +487,7 @@ static id projection_constant_buffers[3];
     current_frame_i += 1;
     current_frame_i -= ((current_frame_i > 2)*3);
     
-    //    __block dispatch_semaphore_t semaphore = _frameBoundarySemaphore;]
-    //    [command_buffer
-    //        addCompletedHandler:^(id<MTLCommandBuffer> commandBuffer)
-    //    {
-    //        dispatch_semaphore_signal(semaphore);
-    //    }];
-    
-    [command_buffer commit];
-    
-    window_globals->request_post_resize_clearscreen = false;
-    block_drawinmtkview = false;
+    [command_buffer commit];    
 }
 
 - (void)mtkView:(MTKView *)view
@@ -531,8 +499,13 @@ static id projection_constant_buffers[3];
         (has_retina_screen ? 2.0f : 1.0f);
     viewport.height  = window_globals->window_height *
         (has_retina_screen ? 2.0f : 1.0f);
-    viewport.znear   = window_globals->projection_constants.near;
-    viewport.zfar    = window_globals->projection_constants.far;
+    /*
+    These near/far values are the final viewport coordinates (after fragment
+    shader), not to be confused with window_globals->projection_constants.near
+    that's in our world space and much larger numbers
+    */
+    viewport.znear   = 0.001f; 
+    viewport.zfar    = 1.0f;
 }
 @end
 

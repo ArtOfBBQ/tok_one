@@ -213,17 +213,25 @@ void copy_lights(
     for (uint32_t i = 0; i < zlights_to_apply_size; i++)
     {
         if (!zlights_to_apply[i].deleted) {
-            lights_for_gpu->light_x[lights_for_gpu->lights_size]   = zlights_to_apply[i].x;
-            lights_for_gpu->light_y[lights_for_gpu->lights_size]   = zlights_to_apply[i].y;
-            lights_for_gpu->light_z[lights_for_gpu->lights_size]   = zlights_to_apply[i].z;
-            lights_for_gpu->red[lights_for_gpu->lights_size]       = zlights_to_apply[i].RGBA[0];
-            lights_for_gpu->green[lights_for_gpu->lights_size]     = zlights_to_apply[i].RGBA[1];
-            lights_for_gpu->blue[lights_for_gpu->lights_size]      = zlights_to_apply[i].RGBA[2];
+            lights_for_gpu->light_x[lights_for_gpu->lights_size] =
+                zlights_to_apply[i].x;
+            lights_for_gpu->light_y[lights_for_gpu->lights_size] =
+                zlights_to_apply[i].y;
+            lights_for_gpu->light_z[lights_for_gpu->lights_size] =
+                zlights_to_apply[i].z;
+            lights_for_gpu->red[lights_for_gpu->lights_size] =
+                zlights_to_apply[i].RGBA[0];
+            lights_for_gpu->green[lights_for_gpu->lights_size] =
+                zlights_to_apply[i].RGBA[1];
+            lights_for_gpu->blue[lights_for_gpu->lights_size] =
+                zlights_to_apply[i].RGBA[2];
             
-            lights_for_gpu->ambient[lights_for_gpu->lights_size]   = zlights_to_apply[i].ambient; 
-            lights_for_gpu->diffuse[lights_for_gpu->lights_size]   = zlights_to_apply[i].diffuse;
+            lights_for_gpu->ambient[lights_for_gpu->lights_size] =
+                zlights_to_apply[i].ambient; 
+            lights_for_gpu->diffuse[lights_for_gpu->lights_size] =
+                zlights_to_apply[i].diffuse;
             
-            lights_for_gpu->reach[lights_for_gpu->lights_size]     =
+            lights_for_gpu->reach[lights_for_gpu->lights_size] =
                 zlights_to_apply[i].reach * zlights_to_apply[i].RGBA[3];
             
             lights_for_gpu->lights_size += 1;

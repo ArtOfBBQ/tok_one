@@ -145,6 +145,24 @@ static int32_t closest_touchable_from_screen_ray(
     return return_value;
 }
 
+static void update_terminal() {
+    if (keypress_map[TOK_KEY_ENTER]) {
+        keypress_map[TOK_KEY_ENTER] = false;
+        terminal_commit_or_activate();
+    }
+    
+    if (terminal_active) {
+        for (uint32_t i = 0; i < KEYPRESS_MAP_SIZE; i++) {
+            if (keypress_map[i]) {
+                terminal_sendchar(i);
+                keypress_map[i] = false;
+            }
+        }
+    }
+    
+    terminal_render();
+}
+
 void shared_gameloop_update(
     GPU_Vertex * vertices_for_gpu,
     uint32_t * vertices_for_gpu_size,
@@ -158,36 +176,6 @@ void shared_gameloop_update(
         previous_time = time;
         return;
     }
-    
-    window_globals->visual_debug_collision_size =
-        ((time % 500000) / 50000) * 0.001f;
-    
-    *projection_constants_for_gpu = window_globals->projection_constants;
-    
-    previous_time = time;
-    
-    frame_no++;
-    
-    if (
-        time - window_globals->last_resize_request_at < 1500000 &&
-        !window_globals->request_post_resize_clearscreen)
-    {
-        if (time - window_globals->last_resize_request_at < 200000) {
-            return;
-        }
-        
-        window_globals->last_resize_request_at = 999999999;
-        client_logic_window_resize(
-            (uint32_t)window_globals->window_height,
-            (uint32_t)window_globals->window_width);
-    } else {
-        init_or_push_one_gpu_texture_array_if_needed();
-    }
-    
-    resolve_animation_effects(elapsed);
-    clean_deleted_lights();
-    
-    copy_lights(lights_for_gpu);
     
     if (!application_running) {
         zpolygons_to_render_size = 0;
@@ -221,12 +209,61 @@ void shared_gameloop_update(
             /* const float top_pixelspace: */
                 window_globals->window_height - 30,
             /* const float z: */
-                0.99f,
+                1.0f,
             /* const float max_width: */
                 window_globals->window_width - 30,
             /* const bool32_t ignore_camera: */
                 true);
-    } else {        
+    }
+    
+    window_globals->visual_debug_collision_size =
+        ((time % 500000) / 50000) * 0.001f;
+    
+    *projection_constants_for_gpu = window_globals->projection_constants;
+    
+    previous_time = time;
+    
+    frame_no++;
+    
+    if (
+        time - window_globals->last_resize_request_at < 1500000)
+    {
+        if (
+            time - window_globals->last_resize_request_at < 500000)
+        {
+            // possibly a request we already handled, or not the final
+            // request, wait...
+            // we break, not return, because we do want to render an
+            // empty screen
+        } else {
+            
+            //        zpolygons_to_render_size = 0; 
+            //        zlights_to_apply_size = 0;
+            window_globals->aspect_ratio =
+                window_globals->window_height / window_globals->window_width;
+            init_projection_constants();
+            
+            window_globals->last_resize_request_at -= 1500000;
+            
+            terminal_redraw_backgrounds();
+            
+            client_logic_window_resize(
+                (uint32_t)window_globals->window_height,
+                (uint32_t)window_globals->window_width);
+       }
+    } else {
+        init_or_push_one_gpu_texture_array_if_needed();
+    }
+    
+    if (application_running == true) {
+        
+        update_terminal();
+        
+        resolve_animation_effects(elapsed);
+        clean_deleted_lights();
+        
+        copy_lights(lights_for_gpu);
+        
         for (uint32_t i = 0; i < 8; i++) {
             if (
                 user_interactions[i].handled ||
@@ -275,7 +312,7 @@ void shared_gameloop_update(
             break; // max 1 ray per frame
         }
         
-        client_logic_update(elapsed);
+        client_logic_update(elapsed);        
     }
     
     camera_for_gpu->x = camera.x;

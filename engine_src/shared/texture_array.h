@@ -47,7 +47,8 @@ void preregister_null_image(
     char * filename,
     const uint32_t height,
     const uint32_t width);
-void preregister_file_as_null_image(char * filename);
+void preregister_file_as_null_image(
+    char * filename);
 
 void register_high_priority_if_unloaded(
     const int32_t texture_array_i,

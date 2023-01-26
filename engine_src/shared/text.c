@@ -231,8 +231,12 @@ void request_label_around(
     label.ignore_camera = ignore_camera;
     label.object_id = with_id;
     // float label_left = mid_x_pixelspace - (widest_line_width / 2);
-    label.x = screenspace_x_to_x(mid_x_pixelspace, z);
-    label.y = screenspace_y_to_y(top_y_pixelspace + ((lines_size * font_height) / 2), z);
+    label.x = screenspace_x_to_x(
+        mid_x_pixelspace,
+        z);
+    label.y = screenspace_y_to_y(
+        top_y_pixelspace + ((lines_size * font_height) / 2),
+        z);
     label.z = z;
     label.triangles_size = 0;
     
@@ -261,9 +265,9 @@ void request_label_around(
                 /* const float z: */
                     label.z,
                 /* const float width: */
-                    screenspace_width_to_width(font_height),
+                    screenspace_width_to_width(font_height, label.z),
                 /* const float height: */
-                    screenspace_height_to_height(font_height),
+                    screenspace_height_to_height(font_height, label.z),
                 /* recipient: */
                     &letter);
             letter.z = 0.0f;
@@ -282,9 +286,11 @@ void request_label_around(
             }
             
             float letter_x_offset = screenspace_width_to_width(
-                (cur_x_offset + get_left_side_bearing(text_to_draw[j])));
+                (cur_x_offset + get_left_side_bearing(text_to_draw[j])),
+                label.z);
             float letter_y_offset = screenspace_height_to_height(
-                (cur_y_offset - get_y_offset(text_to_draw[j])));
+                (cur_y_offset - get_y_offset(text_to_draw[j])),
+                label.z);
             letter.z = 0;
             
             for (uint32_t m = 0; m < 3; m++) {
@@ -299,6 +305,7 @@ void request_label_around(
             letter.triangles[1].texturearray_i = font_texturearray_i;
             letter.triangles[1].texture_i      = text_to_draw[j] - '!';
             
+            log_assert(label.triangles_size + 1 < POLYGON_TRIANGLES_SIZE);
             label.triangles[label.triangles_size    ] = letter.triangles[0];
             label.triangles[label.triangles_size + 1] = letter.triangles[1];
             label.triangles_size += 2;
@@ -348,8 +355,10 @@ void request_label_renderable(
     label_to_render.ignore_camera = ignore_camera;
     label_to_render.z = z;
     
-    float letter_width = screenspace_width_to_width(font_height * 0.8f);
-    float letter_height = screenspace_height_to_height(font_height * 0.8f);
+    float letter_width = screenspace_width_to_width(
+        font_height * 0.8f, z);
+    float letter_height = screenspace_height_to_height(
+        font_height * 0.8f, z);
     
     while (text_to_draw[i] != '\0') {
         if (text_to_draw[i] == ' ') {
@@ -409,10 +418,10 @@ void request_label_renderable(
         
         float letter_x_offset =
             screenspace_width_to_width(
-                cur_x_offset + get_left_side_bearing(text_to_draw[i]));
+                cur_x_offset + get_left_side_bearing(text_to_draw[i]), z);
         float letter_y_offset =
             screenspace_height_to_height(
-                cur_y_offset - get_y_offset(text_to_draw[i]));
+                cur_y_offset - get_y_offset(text_to_draw[i]), z);
         
         for (uint32_t m = 0; m < 3; m++) {
             letter.triangles[0].vertices[m].x += letter_x_offset;
@@ -421,12 +430,13 @@ void request_label_renderable(
             letter.triangles[1].vertices[m].y += letter_y_offset;
         }
         
+        log_assert(label_to_render.triangles_size + 1 < POLYGON_TRIANGLES_SIZE);
         label_to_render.triangles[label_to_render.triangles_size] =
             letter.triangles[0];
         label_to_render.triangles[label_to_render.triangles_size + 1] =
             letter.triangles[1];
         label_to_render.triangles_size += 2;
-                
+        
         cur_x_offset += get_advance_width(text_to_draw[i]);
         if (left_pixelspace + cur_x_offset + get_advance_width('w') >= max_width)
         {

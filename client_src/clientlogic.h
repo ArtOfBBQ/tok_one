@@ -23,6 +23,7 @@ extern "C" {
 #include "text.h"
 #include "scheduled_animations.h"
 #include "logger.h"
+#include "terminal.h"
 
 #include "clientlogic_additional_defs.h"
 
@@ -63,6 +64,18 @@ void client_logic_animation_callback(int32_t callback_id);
 will be called once per frame, before rendering that frame
 */
 void client_logic_update(uint64_t microseconds_elapsed);
+
+/*
+Will be called when the debugging terminal receives a command, so you can make
+your app respond to the commands of your choice
+
+You're expected to send a response by filling in 'response', and you must not
+exceed the character limit ('response_cap')
+*/
+void client_logic_evaluate_terminal_command(
+    char * command,
+    char * response,
+    const uint32_t response_cap);
 
 /*
 this will be called whenever your app's window resizes - you can react by

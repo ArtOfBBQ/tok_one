@@ -108,7 +108,12 @@ void hardware_render(
         zp_i < zpolygons_to_render_size;
         zp_i++)
     {
-        if (zpolygons_to_render[zp_i].deleted) { continue; }
+        if (
+            zpolygons_to_render[zp_i].deleted ||
+            !zpolygons_to_render[zp_i].visible)
+        {
+            continue;
+        }
         
         for (
             uint32_t tri_i = 0;

@@ -104,8 +104,9 @@ void request_zpolygon_to_render(zPolygon * to_add)
 void delete_zpolygon_object(const int32_t with_object_id)
 {
     for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
-        if (zpolygons_to_render[i].object_id == with_object_id) {
-            zpolygons_to_render[i].deleted = true;
+        if (zpolygons_to_render[i].object_id == with_object_id)
+        {
+            zpolygons_to_render[i].deleted   = true;
             zpolygons_to_render[i].object_id = -1;
         }
     }
@@ -386,9 +387,6 @@ void parse_obj_expecting_materials(
                             usemtl_hint,
                             line_size))
                     {
-                        log_append("Now using material: ");
-                        log_append(expected_mtl);
-                        log_append_char('\n');
                         using_texturearray_i =
                             expected_materials[mtl_i].texturearray_i;
                         using_texture_i =
@@ -523,7 +521,6 @@ void parse_obj_expecting_materials(
                 // the 1st triangle will be added anyway later, but
                 // we do need to add the extra 2nd triangle here
                 zTriangle new_triangle;
-                new_triangle.visible = 1;
                 
                 log_assert(vertex_i_0 != vertex_i_1);
                 log_assert(vertex_i_0 != vertex_i_2);
@@ -572,9 +569,6 @@ void parse_obj_expecting_materials(
                 new_triangle.texturearray_i = using_texturearray_i;
                 new_triangle.texture_i = using_texture_i;
                 
-                log_append("4 vertex face, recipient->triangles_size adjusted to: ");
-                log_append_uint(recipient->triangles_size);
-                log_append_char('\n');
                 recipient->triangles_size += 1;
                 log_assert(new_triangle_i < POLYGON_TRIANGLES_SIZE);
                 
@@ -587,7 +581,6 @@ void parse_obj_expecting_materials(
             // if you get here there was only 1 triangle OR
             // there were 2 triangles and you already did the other one
             zTriangle new_triangle;
-            new_triangle.visible = 1;
             
             log_assert(vertex_i_0 != vertex_i_1);
             log_assert(vertex_i_0 != vertex_i_2);
@@ -828,13 +821,14 @@ void construct_zpolygon(zPolygon * to_construct) {
     to_construct->scale_factor = 1.0f;
     to_construct->ignore_lighting = false;
     to_construct->ignore_camera = false;
+    to_construct->visible = true;
     to_construct->deleted = false;
     to_construct->rgb_bonus[0] = 0.0f;
     to_construct->rgb_bonus[1] = 0.0f;
     to_construct->rgb_bonus[2] = 0.0f;
 }
 
-zTriangle __attribute__((no_instrument_function))
+zTriangle
 x_rotate_ztriangle(
     const zTriangle * input,
     const float angle)
@@ -863,7 +857,7 @@ x_rotate_ztriangle(
 }
 
 
-zTriangle __attribute__((no_instrument_function))
+zTriangle
 z_rotate_ztriangle(
     const zTriangle * input,
     const float angle)
@@ -891,7 +885,7 @@ z_rotate_ztriangle(
     return return_value;
 }
 
-zTriangle __attribute__((no_instrument_function))
+zTriangle
 y_rotate_ztriangle(
     const zTriangle * input,
     const float angle)
@@ -1477,7 +1471,7 @@ bool32_t ray_intersects_zpolygon_hitbox(
 
 void construct_quad(
     const float left_x,
-    const float top_y,
+    const float bottom_y,
     const float z,
     const float width,
     const float height,
@@ -1490,12 +1484,12 @@ void construct_quad(
     recipient->triangles_size = 2;
     
     const float mid_x           = left_x + (width  / 2);
-    const float mid_y           = top_y  + (height / 2);
+    const float mid_y           = bottom_y  + (height / 2);
     
-    const float left_vertex     = (left_x - mid_x ) * z;
-    const float right_vertex    = (mid_x  - left_x) * z;
-    const float top_vertex      = (mid_y  - top_y ) * z;
-    const float bottom_vertex   = (top_y  - mid_y ) * z;
+    const float left_vertex     = (left_x - mid_x );
+    const float right_vertex    = (mid_x  - left_x);
+    const float top_vertex      = (mid_y  - bottom_y );
+    const float bottom_vertex   = (bottom_y - mid_y );
     
     const float left_uv_coord   = 0.0f;
     const float right_uv_coord  = 1.0f;
@@ -1505,6 +1499,7 @@ void construct_quad(
     recipient->x = mid_x;
     recipient->y = mid_y;
     recipient->z = z;
+    recipient->visible = true;
     
     // **
     // top & left triangle
@@ -1537,7 +1532,6 @@ void construct_quad(
     recipient->triangles[0].color[1]       = 1.0f;
     recipient->triangles[0].color[2]       = 1.0f;
     recipient->triangles[0].color[3]       = 1.0f;
-    recipient->triangles[0].visible        = true;
     
     // **
     // right & bottom triangle
@@ -1570,7 +1564,6 @@ void construct_quad(
     recipient->triangles[1].color[1]       = 1.0f;
     recipient->triangles[1].color[2]       = 1.0f;
     recipient->triangles[1].color[3]       = 1.0f;
-    recipient->triangles[1].visible        = true;
 }
 
 void construct_quad_around(
@@ -1590,10 +1583,10 @@ void construct_quad_around(
     const float projected_mid_x = mid_x;
     const float projected_mid_y = mid_y;
     
-    const float left_vertex     = -((width  / 2) * z);
-    const float right_vertex    =  ((width  / 2) * z);
-    const float top_vertex      =  ((height / 2) * z);
-    const float bottom_vertex   = -((height / 2) * z);
+    const float left_vertex     = -(width  / 2);
+    const float right_vertex    =  (width  / 2);
+    const float top_vertex      =  (height / 2);
+    const float bottom_vertex   = -(height / 2);
     
     const float left_uv_coord   = 0.0f;
     const float right_uv_coord  = 1.0f;
@@ -1603,6 +1596,7 @@ void construct_quad_around(
     recipient->x = projected_mid_x;
     recipient->y = projected_mid_y;
     recipient->z = z;
+    recipient->visible = true;
     
     // **
     // top & left triangle
@@ -1635,7 +1629,6 @@ void construct_quad_around(
     recipient->triangles[0].color[1]       = 1.0f;
     recipient->triangles[0].color[2]       = 1.0f;
     recipient->triangles[0].color[3]       = 1.0f;
-    recipient->triangles[0].visible        = true;
     
     // **
     // right & bottom triangle
@@ -1668,5 +1661,4 @@ void construct_quad_around(
     recipient->triangles[1].color[1]       = 1.0f;
     recipient->triangles[1].color[2]       = 1.0f;
     recipient->triangles[1].color[3]       = 1.0f;
-    recipient->triangles[1].visible        = true;
 }
