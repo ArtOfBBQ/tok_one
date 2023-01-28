@@ -230,9 +230,9 @@ NSWindowWithCustomResponder: NSWindow
         /* interaction : */
             &user_interactions[INTR_PREVIOUS_LEFTCLICK_START],
         /* screenspace_x: */
-            window_location.x,
+            (float)window_location.x,
         /* screenspace_y: */
-            window_location.y);
+            (float)window_location.y);
     
     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START] =
         user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
@@ -252,9 +252,9 @@ NSWindowWithCustomResponder: NSWindow
         /* interaction : */
             &user_interactions[INTR_PREVIOUS_LEFTCLICK_END],
         /* screenspace_x: */
-            window_location.x,
+            (float)window_location.x,
         /* screenspace_y: */
-            window_location.y);
+            (float)window_location.y);
     
     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END] =
         user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
@@ -330,7 +330,15 @@ int main(int argc, const char * argv[]) {
         /* recipient: */ application_name,
         /* recipient_size: */ 100);
     
-    init_application();
+    init_application(
+        /* const float window_left: */
+            INITIAL_WINDOW_LEFT,
+        /* const float window_width: */
+            INITIAL_WINDOW_WIDTH,
+        /* const float window_bottom: */
+            INITIAL_WINDOW_BOTTOM,
+        /* const float window_height: */
+            INITIAL_WINDOW_HEIGHT);
     log_append("initialized application: ");
     log_append(application_name);
     

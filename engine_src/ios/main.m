@@ -28,7 +28,15 @@ int main(int argc, char * argv[]) {
         /* recipient: */ application_name,
         /* recipient_size: */ 100);
     
-    init_application();
+    init_application(
+        /* const float window_left: */
+            0.0f,
+        /* const float window_width: */
+            (float)[UIScreen mainScreen].bounds.size.width,
+        /* const float window_bottom: */
+            0.0f,
+        /* const float window_height: */
+            (float)[UIScreen mainScreen].bounds.size.height);
     
     NSString * appDelegateClassName;
     // Setup code that might create autoreleased objects goes here.

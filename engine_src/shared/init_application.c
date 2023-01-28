@@ -1,6 +1,11 @@
 #include "init_application.h"
 
-void init_application() {
+void init_application(
+    const float window_left,
+    const float window_width,
+    const float window_bottom,
+    const float window_height)
+{
     init_memory_store();
     
     setup_log();
@@ -8,10 +13,11 @@ void init_application() {
     window_globals = (WindowGlobals *)malloc_from_unmanaged(
         sizeof(WindowGlobals));
     
-    window_globals->window_height = INITIAL_WINDOW_HEIGHT;
-    window_globals->window_width  = INITIAL_WINDOW_WIDTH;
-    window_globals->window_left   = INITIAL_WINDOW_LEFT;
-    window_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
+    window_globals->window_height = window_height;
+    window_globals->window_width  = window_width;
+    window_globals->window_left   = window_left;
+    window_globals->window_bottom = window_bottom;
+    
     window_globals->aspect_ratio =
         window_globals->window_height / window_globals->window_width;
     
