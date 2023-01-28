@@ -708,48 +708,36 @@ void scale_zpolygon(
 {
     log_assert(to_scale != NULL);
     if (to_scale == NULL) { return; }
+        
+    float highest_ascent = 0.0f;
+    float lowest_descent = 0.0f;
     
-    float largest_height = 0.0f;
-    for (uint32_t i = 0; i < to_scale->triangles_size; i++) {
-        for (uint32_t j = 0; j < 3; j++)
+    for (
+        uint32_t i = 0;
+        i < to_scale->triangles_size;
+        i++)
+    {
+        for (
+            uint32_t j = 0;
+            j < 3;
+            j++)
         {
-            float height =
-                ((to_scale->triangles[i].vertices[j].y  < 0) * 
-                    (to_scale->triangles[i].vertices[j].y * -1)) +
-                ((to_scale->triangles[i].vertices[j].y >= 0) *
-                    (to_scale->triangles[i].vertices[j].y));
-            
-            if (height > largest_height) {
-                largest_height = height;
-            }
-        }
-    }
-    log_assert(largest_height > 0.0f);
-    
-    float largest_width = 0.0f;
-    for (uint32_t i = 0; i < to_scale->triangles_size; i++) {
-        for (uint32_t j = 0; j < 3; j++)
-        {
-            float width =
-                ((to_scale->triangles[i].vertices[j].x < 0) * 
-                    (to_scale->triangles[i].vertices[j].x * -1)) +
-                ((to_scale->triangles[i].vertices[j].x >= 0) * 
-                    (to_scale->triangles[i].vertices[j].x)); 
-            if (width > largest_width)
+            if (
+                to_scale->triangles[i].vertices[j].y > highest_ascent)
             {
-                largest_width = width;
+                highest_ascent = to_scale->triangles[i].vertices[j].y;
+            }
+            
+            if (
+                to_scale->triangles[i].vertices[j].y < lowest_descent)
+            {
+                lowest_descent = to_scale->triangles[i].vertices[j].y;
             }
         }
     }
-    log_assert(largest_width > 0.0f);
+    log_assert(highest_ascent > lowest_descent);
     
-    float width_scale_factor  = new_size / largest_width;
-    float height_scale_factor = new_size / largest_height;
-    float scale_factor =
-        ((width_scale_factor > height_scale_factor) *
-            height_scale_factor) +
-        ((width_scale_factor <= height_scale_factor) *
-            width_scale_factor);
+    float scale_factor = new_size / (highest_ascent - lowest_descent);
     
     for (uint32_t i = 0; i < to_scale->triangles_size; i++) {
         for (uint32_t j = 0; j < 3; j++)

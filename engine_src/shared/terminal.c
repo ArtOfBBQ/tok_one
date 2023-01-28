@@ -321,6 +321,9 @@ static bool32_t evaluate_terminal_command(
         camera.x = 0.0f;
         camera.y = 0.0f;
         camera.z = 0.0f;
+        camera.x_angle = 0.0f;
+        camera.y_angle = 0.0f;
+        camera.z_angle = 0.0f;
         strcpy_capped(
             response,
             SINGLE_LINE_MAX,

@@ -61,91 +61,35 @@ void client_logic_startup(void) {
         (const char **)filenames,
         1);
     
-    //    for (uint32_t x = 0; x < 5; x++) {
-    //        for (uint32_t y = 0; y < 5; y++) {
-    //            for (uint32_t z = 0; z < 5; z++) {
-    //            
-    //                if (y % 2 == 0) {
-    //                    zPolygon quad;
-    //                    construct_quad_around(
-    //                        /* const float mid_x: */
-    //                            x * 0.25f,
-    //                        /* const float mid_y: */
-    //                            y * 0.25f,
-    //                        /* const float z: */
-    //                            (z + 1) * 0.25f,
-    //                        /* const float width: */
-    //                            0.25f,
-    //                        /* const float height: */
-    //                            0.25f,
-    //                        /* zPolygon * recipient: */
-    //                            &quad);
-    //                    quad.triangles[0].texturearray_i = 1;
-    //                    quad.triangles[0].texture_i = 0;
-    //                    quad.triangles[1].texturearray_i = 1;
-    //                    quad.triangles[1].texture_i = 0;
-    //                    quad.triangles[0].color[0] = z * 0.2f;
-    //                    quad.triangles[0].color[1] = z * 0.2f;
-    //                    quad.triangles[1].color[0] = z * 0.2f;
-    //                    quad.triangles[1].color[1] = z * 0.2f;
-    //                    quad.ignore_lighting = true;
-    //                    request_zpolygon_to_render(&quad);
-    //                } else {
-    //                    
-    //                }
-    //            }
-    //        }
-    //    }
-    
-    FileBuffer obj_buffer;                                                  
-    obj_buffer.size = platform_get_resource_size(
-        "cardwithuvcoords.obj");
-    obj_buffer.contents = (char *)malloc_from_managed(
-        obj_buffer.size);
-    
-    platform_read_resource_file(                                            
-        "cardwithuvcoords.obj",                                       
-        &obj_buffer);
-    
-    zPolygon new_mesh;
-    parse_obj_expecting_materials(                                          
-        /* rawdata: */                                                      
-            obj_buffer.contents,
-        /* rawdata_size: */                                                 
-            obj_buffer.size,
-        /* expected_materials: */
-            NULL,
-        /* expected_materials_size: */                                      
-            0,
-        /* flip_winding: */                                                 
-            false,
-        /* recipient: */
-            &new_mesh);
-    
-    scale_zpolygon(&new_mesh, 0.2f);
-    
-    new_mesh.x = 0.0f;
-    new_mesh.y = 0.3f;
-    
-    for (
-        uint32_t tri_i = 0;
-        tri_i < new_mesh.triangles_size;
-        tri_i++)
-    {
-        new_mesh.triangles[tri_i] = x_rotate_ztriangle(
-            &new_mesh.triangles[tri_i],
-            1.66f);
-
-        new_mesh.triangles[tri_i] = y_rotate_ztriangle(
-            &new_mesh.triangles[tri_i],
-            2.0f);        
+    for (uint32_t uint_z = 0; uint_z < 50; uint_z++) {
         
-        new_mesh.triangles[tri_i] = z_rotate_ztriangle(
-            &new_mesh.triangles[tri_i],
-            1.66f);
+        float z = 0.01f + (0.25f * uint_z);
+        
+        zPolygon quad;
+        construct_quad_around(
+            /* const float mid_x: */
+                screenspace_x_to_x(300, z),
+            /* const float mid_y: */
+                screenspace_y_to_y(300, z),
+            /* const float z: */
+                z,
+            /* const float width: */
+                0.1f,
+            /* const float height: */
+                0.1f,
+            /* zPolygon * recipient: */
+                &quad);
+        quad.triangles[0].texturearray_i = 1;
+        quad.triangles[0].texture_i = 0;
+        quad.triangles[1].texturearray_i = 1;
+        quad.triangles[1].texture_i = 0;
+        quad.triangles[0].color[0] = z * 0.2f;
+        quad.triangles[0].color[1] = z * 0.2f;
+        quad.triangles[1].color[0] = z * 0.2f;
+        quad.triangles[1].color[1] = z * 0.2f;
+        quad.ignore_lighting = true;
+        request_zpolygon_to_render(&quad);
     }
-    
-    request_zpolygon_to_render(&new_mesh);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
