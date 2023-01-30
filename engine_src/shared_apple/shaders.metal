@@ -200,11 +200,12 @@ vertex_shader(
             light_collection->red[i],
             light_collection->green[i],
             light_collection->blue[i],
-            1.0f); 
+            1.0f);
         float distance = get_distance(
             light_pos,
             translated_pos);
-        float distance_mod = light_collection->reach[i] - distance;
+        float distance_mod = (light_collection->reach[i] + 0.5f)
+            - (distance * distance);
         distance_mod = clamp(distance_mod, 0.0f, 10.0f);
         
         out.lighting += (
