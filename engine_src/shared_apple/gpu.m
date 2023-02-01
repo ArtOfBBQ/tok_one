@@ -13,10 +13,27 @@ static id projection_constant_buffers[3];
 @implementation MetalKitViewDelegate
 {
     NSUInteger current_frame_i;
-    MTLViewport viewport;
+    MTLViewport cached_viewport;
     
     id<MTLDevice> metal_device;
     id<MTLCommandQueue> command_queue;
+}
+
+- (void) updateViewport
+{
+    cached_viewport.originX = 0;
+    cached_viewport.originY = 0;
+    cached_viewport.width   = window_globals->window_width *
+        (has_retina_screen ? 2.0f : 1.0f);
+    cached_viewport.height  = window_globals->window_height *
+        (has_retina_screen ? 2.0f : 1.0f);
+    /*
+    These near/far values are the final viewport coordinates (after fragment
+    shader), not to be confused with window_globals->projection_constants.near
+    that's in our world space and much larger numbers
+    */
+    cached_viewport.znear   = 0.001f; 
+    cached_viewport.zfar    = 1.0f;
 }
 
 - (void)
@@ -245,19 +262,7 @@ static id projection_constant_buffers[3];
         [NSMutableArray alloc]
             initWithCapacity: TEXTUREARRAYS_SIZE];
     
-    viewport.originX = 0;
-    viewport.originY = 0;
-    viewport.width   = window_globals->window_width *
-        (has_retina_screen ? 2.0f : 1.0f);
-    viewport.height  = window_globals->window_height *
-        (has_retina_screen ? 2.0f : 1.0f);
-    /*
-    These near/far values are the final viewport coordinates (after fragment
-    shader), not to be confused with window_globals->projection_constants.near
-    that's in our world space and much larger numbers
-    */
-    viewport.znear   = 0.001f; 
-    viewport.zfar    = 1.0f;
+    [self updateViewport];
     
     command_queue = [with_metal_device newCommandQueue];
     
@@ -377,32 +382,6 @@ static id projection_constant_buffers[3];
         camera_for_gpu,
         projection_constants_for_gpu);
     
-    if (lights_for_gpu->lights_size < 1) {
-        // log_append("warning: 0 lights in scene...\n");
-    }
-    
-    if (vertices_for_gpu_size < 1) {
-        // log_append("warning: no vertices to draw...\n");
-        return;
-    }
-    
-    assert(vertices_for_gpu_size < MAX_VERTICES_PER_BUFFER);
-    assert(lights_for_gpu->light_x[0] == lights_for_gpu->light_x[0]);
-    assert(lights_for_gpu->light_y[0] == lights_for_gpu->light_y[0]);
-    assert(lights_for_gpu->light_z[0] == lights_for_gpu->light_z[0]);
-    assert(camera_for_gpu->x_angle == camera_for_gpu->x_angle);
-    assert(camera_for_gpu->y_angle == camera_for_gpu->y_angle);
-    assert(camera_for_gpu->z_angle == camera_for_gpu->z_angle);
-    assert(projection_constants_for_gpu->x_multiplier > 0.0f);
-    assert(projection_constants_for_gpu->y_multiplier > 0.0f);
-    assert(projection_constants_for_gpu->q > 0.0f);
-    
-    // TODO: remove debug code checking for NaN
-    for (uint32_t i = 0; i < vertices_for_gpu_size; i++) {
-        assert(vertices_for_gpu[i].x == vertices_for_gpu[i].x);
-        assert(vertices_for_gpu[i].parent_x == vertices_for_gpu[i].parent_x);
-    }
-    
     id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
     
     if (command_buffer == nil) {
@@ -416,6 +395,7 @@ static id projection_constant_buffers[3];
     RenderPassDescriptor.
         depthAttachment.
         loadAction = MTLLoadActionClear;
+    
     // this inherits from the view's cleardepth (in macos/main.m for mac os),
     // don't set it here
     assert(RenderPassDescriptor.depthAttachment.clearDepth == CLEARDEPTH);
@@ -430,8 +410,8 @@ static id projection_constant_buffers[3];
         [command_buffer
             renderCommandEncoderWithDescriptor:
                 RenderPassDescriptor];
-    assert(viewport.zfar > viewport.znear);
-    [render_encoder setViewport: viewport];
+    assert(cached_viewport.zfar > cached_viewport.znear);
+    [render_encoder setViewport: cached_viewport];
     
     [render_encoder setRenderPipelineState: _combo_pipeline_state];
     assert(_depth_stencil_state != nil);
@@ -492,20 +472,14 @@ static id projection_constant_buffers[3];
 
 - (void)mtkView:(MTKView *)view
     drawableSizeWillChange:(CGSize)size
-{    
-    viewport.originX = 0.0f;
-    viewport.originY = 0.0f;
-    viewport.width   = window_globals->window_width *
-        (has_retina_screen ? 2.0f : 1.0f);
-    viewport.height  = window_globals->window_height *
-        (has_retina_screen ? 2.0f : 1.0f);
-    /*
-    These near/far values are the final viewport coordinates (after fragment
-    shader), not to be confused with window_globals->projection_constants.near
-    that's in our world space and much larger numbers
-    */
-    viewport.znear   = 0.001f; 
-    viewport.zfar    = 1.0f;
+{
+    log_append("[mtkview DrawableSizeWillChange]: using window_globals ");
+    log_append_uint((uint32_t)window_globals->window_height);
+    log_append_char(',');
+    log_append_uint((uint32_t)window_globals->window_width);
+    log_append_char('\n');
+    
+    [self updateViewport];
 }
 @end
 

@@ -151,13 +151,16 @@ impossible
 */
 bool32_t startup_complete = false; // dont trigger window resize code at startup
 
-MTKView * mtk_view = NULL; 
+MTKView * mtk_view = NULL;
 
 @interface
 GameWindowDelegate: NSObject<NSWindowDelegate>
 @end
 
 @implementation GameWindowDelegate
+NSSize last_nonfull_screen_size;
+NSSize last_nonfull_drawable_size;
+
 - (void)windowWillClose:(NSNotification *)notification {
     log_append("window will close, terminating app..\n");
     
@@ -174,21 +177,61 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     [NSApp terminate: nil];
 }
 
+// This allows you to override the full screen size
 - (NSSize)
-    windowWillResize:(NSWindow *)sender 
-    toSize:(NSSize)frameSize
+    window:(NSWindow *)window
+    willUseFullScreenContentSize:(NSSize)proposedSize
 {
-    float title_bar_height =
-        (float)([sender contentRectForFrameRect: sender.frame].size.height
-            - sender.frame.size.height);
+    log_append("willuseFullScreenContentSize: ");
+    log_append_uint((uint32_t)proposedSize.height);
+    log_append(", ");
+    log_append_uint((uint32_t)proposedSize.width);
+    log_append_char('\n');
+        
+    [self
+        handleResizeTo: proposedSize
+        withTitleBarHeight: 0];
+    
+    return proposedSize;
+}
+
+// WindowWillResize() also triggers after this 
+// the order always seems the same on my computer
+- (void)
+    windowWillEnterFullScreen:(NSNotification *)notification
+{
+    log_append("window will enter full screen\n");
+    // I'm stashing this info because NSEvents won't give the correct
+    // info when entering full screen and then going back to window mode
+    last_nonfull_screen_size.width = window_globals->window_width;
+    last_nonfull_screen_size.height = window_globals->window_height;
+    last_nonfull_drawable_size = mtk_view.drawableSize;
+    log_append("cached for next window minimization: ");
+    log_append_uint((uint32_t)last_nonfull_screen_size.height);
+    log_append_char(',');
+    log_append_uint((uint32_t)last_nonfull_screen_size.width);
+    log_append_char('\n');
+    log_append("cached for next mtkview drawable minimization: ");
+    log_append_uint((uint32_t)last_nonfull_drawable_size.height);
+    log_append_char(',');
+    log_append_uint((uint32_t)last_nonfull_drawable_size.width);
+    log_append_char('\n');
+    
+    zpolygons_to_render_size = 0;
+}
+
+- (void)
+    handleResizeTo: (NSSize)size
+    withTitleBarHeight: (float)title_bar_height
+{
+    zpolygons_to_render_size = 0;
+    
     window_globals->window_height =
-        (float)(frameSize.height + title_bar_height);
+        (float)(size.height + title_bar_height);
     window_globals->window_width =
-        (float)frameSize.width;
+        (float)size.width;
     
-    if (!startup_complete) { return frameSize; }
-    
-    NSSize new_size = frameSize;
+    NSSize new_size = size;
     new_size.height += title_bar_height;
     new_size.height *= 2;
     new_size.width *= 2;
@@ -196,8 +239,33 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     
     window_globals->last_resize_request_at =
         platform_get_current_time_microsecs();
-    
+}
+
+// WindowWillResize() doesn't seem to trigger after this consistently
+- (void)
+    windowWillExitFullScreen:(NSNotification *)notification
+{
+    log_append("window will exit full screen\n");
+        
     zpolygons_to_render_size = 0;
+}
+
+- (NSSize)
+    windowWillResize:(NSWindow *)sender
+    toSize:(NSSize)frameSize
+{
+    if (!startup_complete)
+    {
+        return frameSize;
+    }
+    
+    float title_bar_height =
+        (float)([sender contentRectForFrameRect: sender.frame].size.height
+            - sender.frame.size.height);
+    
+    [self
+        handleResizeTo: frameSize
+        withTitleBarHeight: title_bar_height];
     
     return frameSize;
 }
@@ -324,6 +392,7 @@ bool32_t has_retina_screen = true;
 
 NSWindowWithCustomResponder * window = NULL;
 
+
 int main(int argc, const char * argv[]) {
     
     client_logic_get_application_name_to_recipient(
@@ -369,8 +438,8 @@ int main(int argc, const char * argv[]) {
         [[NSWindowWithCustomResponder alloc]
             initWithContentRect: window_rect 
             styleMask:
-                NSWindowStyleMaskTitled |
-                NSWindowStyleMaskClosable |
+                NSWindowStyleMaskTitled    |
+                NSWindowStyleMaskClosable  |
                 NSWindowStyleMaskResizable
             backing: NSBackingStoreBuffered 
             defer: NO];

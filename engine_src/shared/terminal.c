@@ -111,12 +111,13 @@ void terminal_redraw_backgrounds(void) {
     current.triangles[1].color[3] = term_background_color[3];
     current.ignore_camera = true;
     current.ignore_lighting = true;
+    current.visible = terminal_active;
     current.object_id = terminal_back_object_id;
     request_zpolygon_to_render(&current);
     
     
-    construct_zpolygon(&current);
     // The console history area
+    construct_zpolygon(&current);
     construct_quad(
        /* const float left_x: */
            screenspace_x_to_x(
@@ -151,6 +152,7 @@ void terminal_redraw_backgrounds(void) {
     current.triangles[1].color[1] = term_background_color[1];
     current.triangles[1].color[2] = term_background_color[2];
     current.triangles[1].color[3] = term_background_color[3];
+    current.visible = terminal_active;
     current.ignore_camera = true;
     current.ignore_lighting = true;
     current.object_id = INT32_MAX;
@@ -391,6 +393,28 @@ static bool32_t evaluate_terminal_command(
             response,
             SINGLE_LINE_MAX,
             ZLIGHTS_TO_APPLY_ARRAYSIZE);
+        return true;
+    }
+    
+    if (
+        are_equal_strings(command, "WINDOW"))
+    {
+        strcpy_capped(
+            response,
+            SINGLE_LINE_MAX,
+            "window height: ");
+        strcat_uint_capped(
+            response,
+            SINGLE_LINE_MAX,
+            (uint32_t)window_globals->window_height);
+        strcat_capped(
+            response,
+            SINGLE_LINE_MAX,
+            ", width: ");
+        strcat_uint_capped(
+            response,
+            SINGLE_LINE_MAX,
+            (uint32_t)window_globals->window_width);
         return true;
     }
     

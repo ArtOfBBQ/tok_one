@@ -36,6 +36,7 @@ extern uint64_t last_resize_request_at;
     configureMetalWithDevice: (id<MTLDevice>)with_metal_device
     andPixelFormat: (MTLPixelFormat)pixel_format
     fromFolder: (NSString *)shader_lib_filepath;
+- (void) updateViewport;
 @end
 
 extern MetalKitViewDelegate * apple_gpu_delegate;

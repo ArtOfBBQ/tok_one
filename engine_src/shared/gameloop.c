@@ -226,25 +226,26 @@ void shared_gameloop_update(
     frame_no++;
     
     if (
-        time - window_globals->last_resize_request_at < 1500000)
+        time - window_globals->last_resize_request_at < 2000000)
     {
         if (
-            time - window_globals->last_resize_request_at < 500000)
+            time - window_globals->last_resize_request_at < 100000)
         {
             // possibly a request we already handled, or not the final
             // request, wait...
             // we break, not return, because we do want to render an
             // empty screen
+            log_append("w82RZ - ");
+            return;
         } else {
             
-            //        zpolygons_to_render_size = 0; 
-            //        zlights_to_apply_size = 0;
+            window_globals->last_resize_request_at = 0;
+            log_append("\nOK, resize window\n");
+            
             window_globals->aspect_ratio =
                 window_globals->window_height / window_globals->window_width;
             init_projection_constants();
-            
-            window_globals->last_resize_request_at -= 1500000;
-            
+                        
             terminal_redraw_backgrounds();
             
             client_logic_window_resize(
