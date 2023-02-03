@@ -180,17 +180,17 @@ void terminal_render(void) {
         font_height = TERM_FONT_SIZE;
         
         // draw the terminal's history as a label
-        uint32_t history_label_top =
+        float history_label_top =
             window_globals->window_height -
-                (TERMINAL_WHITESPACE * 2) -
-                (TERMINAL_WHITESPACE / 4);
-        uint32_t history_label_height =
+                (TERMINAL_WHITESPACE * 2.0f) -
+                (TERMINAL_WHITESPACE / 4.0f);
+        float history_label_height =
             window_globals->window_height -
                 font_height -
                 (TERMINAL_WHITESPACE * 4.5f);
         
         uint32_t max_lines_in_history =
-            history_label_height / (font_height * 1.0f);
+            (uint32_t)(history_label_height / (font_height * 1.0f));
         
         uint32_t char_offset = terminal_history_size;
         uint32_t lines_taken = 0;

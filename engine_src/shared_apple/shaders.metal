@@ -262,7 +262,7 @@ fragment_shader(
         out_color *= texture_sample * in.lighting;
     }
     
-    int diamond_size = 25.0f;
+    int diamond_size = 20.0f;
     int neghalfdiamond = -1.0f * (diamond_size / 2);
     
     float bottomright_bonus =
