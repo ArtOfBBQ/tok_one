@@ -8,7 +8,6 @@ using namespace metal;
 typedef struct
 {
     float4 position [[position]];
-    float4 surface_normal;
     float4 color;
     float2 texture_coordinate;
     float4 lighting;
@@ -166,11 +165,11 @@ vertex_shader(
         input_array[vertex_i].RGBA[3]);
     clamp(out.color, 0.25f, 1.0f);
     
-    out.surface_normal = vector_float4(
-        input_array[vertex_i].normal_x,
-        input_array[vertex_i].normal_y,
-        input_array[vertex_i].normal_z,
-        1.0f);
+    //    out.surface_normal = vector_float4(
+    //        input_array[vertex_i].normal_x,
+    //        input_array[vertex_i].normal_y,
+    //        input_array[vertex_i].normal_z,
+    //        1.0f);
     
     out.lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
     
@@ -182,6 +181,7 @@ vertex_shader(
     
     if (input_array[vertex_i].ignore_lighting > 0.0f) {
         out.lighting += 1.0f;
+        out.lighting[3] = 1.0f;
         return out;
     }
     
@@ -227,6 +227,7 @@ vertex_shader(
     }
     
     clamp(out.lighting, 0.25f, 1.0f);
+    out.lighting[3] = 1.0f;
     
     return out;
 }
@@ -260,10 +261,34 @@ fragment_shader(
         
         out_color *= texture_sample * in.lighting;
     }
-    // This is reportedly a terrible way to do this, but I'm
-    // doing most of my rendering on CPU and using like 5% of gpu
-    // resources, and I simply don't know a better way yet
-    if (out_color[3] < 0.05f) { discard_fragment(); }
     
+    int diamond_size = 25.0f;
+    int neghalfdiamond = -1.0f * (diamond_size / 2);
+    
+    float bottomright_bonus =
+        0.75f *
+        in.texture_coordinate[0] *
+        in.texture_coordinate[1];
+    bottomright_bonus -= 0.35f;
+    clamp(bottomright_bonus, -0.35f, 0.35f);
+    
+    int alpha_tresh = (int)(
+        (out_color[3] +
+            bottomright_bonus) *
+                diamond_size);
+    
+    if (
+        out_color[3] < 0.01f ||
+        (
+            out_color[3] < 0.99f &&
+            (
+                abs((neghalfdiamond + (int)in.position.x % diamond_size)) +
+                abs((neghalfdiamond + (int)in.position.y % diamond_size))
+            ) > alpha_tresh))
+    {
+        discard_fragment();
+    }
+    
+    out_color[3] = 1.0f;
     return out_color;
 }

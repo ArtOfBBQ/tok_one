@@ -61,35 +61,34 @@ void client_logic_startup(void) {
         (const char **)filenames,
         1);
     
-    for (uint32_t uint_z = 0; uint_z < 50; uint_z++) {
-        
-        float z = 0.01f + (0.25f * uint_z);
-        
-        zPolygon quad;
-        construct_quad_around(
-            /* const float mid_x: */
-                screenspace_x_to_x(300, z),
-            /* const float mid_y: */
-                screenspace_y_to_y(300, z),
-            /* const float z: */
-                z,
-            /* const float width: */
-                0.1f,
-            /* const float height: */
-                0.1f,
-            /* zPolygon * recipient: */
-                &quad);
-        quad.triangles[0].texturearray_i = 1;
-        quad.triangles[0].texture_i = 0;
-        quad.triangles[1].texturearray_i = 1;
-        quad.triangles[1].texture_i = 0;
-        quad.triangles[0].color[0] = z * 0.2f;
-        quad.triangles[0].color[1] = z * 0.2f;
-        quad.triangles[1].color[0] = z * 0.2f;
-        quad.triangles[1].color[1] = z * 0.2f;
-        quad.ignore_lighting = true;
-        request_zpolygon_to_render(&quad);
-    }
+    float z = 1.0f;
+    zPolygon quad;
+    construct_quad_around(
+        /* const float mid_x: */
+            0.0f,
+        /* const float mid_y: */
+            0.0f,
+        /* const float z: */
+            z,
+        /* const float width: */
+            0.3f,
+        /* const float height: */
+            0.3f,
+        /* zPolygon * recipient: */
+            &quad);
+    quad.triangles[0].texturearray_i = 1;
+    quad.triangles[0].texture_i = 0;
+    quad.triangles[1].texturearray_i = 1;
+    quad.triangles[1].texture_i = 0;
+    quad.triangles[0].color[0] = z * 0.2f;
+    quad.triangles[0].color[1] = z * 0.2f;
+    quad.triangles[1].color[0] = z * 0.2f;
+    quad.triangles[1].color[1] = z * 0.2f;
+    quad.object_id = 12345;
+    quad.ignore_lighting = true;
+    request_zpolygon_to_render(&quad);
+    
+    uint64_t duration = 3000000;    
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -126,37 +125,7 @@ void client_logic_animation_callback(int32_t callback_id)
 static void  client_handle_touches_and_leftclicks(
     uint64_t microseconds_elapsed)
 {
-    if (!user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].handled) {
-        int32_t leftclick_touchable_id =
-            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
-                touchable_id;
-        user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].handled = true;
-        
-        if (leftclick_touchable_id >= 0) {
-            log_append("leftclick_touchable_id: ");
-            log_append_int(leftclick_touchable_id);
-            log_append_char('\n');
-            
-            ScheduledAnimation bump;
-            construct_scheduled_animation(&bump);
-            int32_t o_id = leftclick_touchable_id + 123;
-            bump.affected_object_id    = o_id;
-            bump.final_scale_known     = true;
-            bump.final_scale           = 1.2f;
-            bump.duration_microseconds = 50000;
-            
-            ScheduledAnimation unbump;
-            construct_scheduled_animation(&unbump);
-            unbump.affected_object_id             =   o_id;
-            unbump.final_scale_known              =   true;
-            unbump.final_scale                    =   1.0f;
-            unbump.duration_microseconds          = 150000;
-            unbump.remaining_wait_before_next_run =  50000;
-            
-            request_scheduled_animation(&bump);
-            request_scheduled_animation(&unbump);
-        }
-    }
+    // handle mouse events here
 }
 
 static void client_handle_keypresses(
@@ -200,12 +169,47 @@ static void client_handle_keypresses(
     }
     
     if (keypress_map[TOK_KEY_C] == true) {                                             
-        camera.x = 0.0f;
-        camera.y = 0.0f;
-        camera.z = 0.0f;
-        camera.x_angle = 0.0f;
-        camera.y_angle = 0.0f;
-        camera.z_angle = 0.0f;
+        for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
+            if (zpolygons_to_render[i].object_id ==
+                12345)
+            {
+                for (
+                    uint32_t tri_i = 0;
+                    tri_i < zpolygons_to_render[i].triangles_size;
+                    tri_i++)
+                {
+                    zpolygons_to_render[i].triangles[tri_i].color[3] += 0.01f;
+                    log_append("quad alpha: ");
+                    log_append_uint(
+                         (uint32_t)(
+                             zpolygons_to_render[i].triangles[tri_i].color[3] *
+                                 100.0f));
+                    log_append_char('\n');
+                }
+            }
+        }
+    }
+    
+    if (keypress_map[TOK_KEY_V] == true) {                                             
+        for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
+            if (zpolygons_to_render[i].object_id ==
+                12345)
+            {
+                for (
+                     uint32_t tri_i = 0;
+                     tri_i < zpolygons_to_render[i].triangles_size;
+                     tri_i++)
+                {
+                    zpolygons_to_render[i].triangles[tri_i].color[3] -= 0.01f;
+                    log_append("quad alpha: ");
+                    log_append_uint(
+                         (uint32_t)(
+                             zpolygons_to_render[i].triangles[tri_i].color[3] *
+                                 100.0f));
+                    log_append_char('\n');
+                }
+            }
+        }
     }
     
     if (keypress_map[TOK_KEY_Q] == true) {                                                                                               

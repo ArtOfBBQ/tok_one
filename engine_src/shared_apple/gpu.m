@@ -92,15 +92,15 @@ static id projection_constant_buffers[3];
         .colorAttachments[0]
         .pixelFormat = pixel_format;
     // Mix colors according to alpha channel
-    [combo_pipeline_descriptor
-        .colorAttachments[0]
-        setBlendingEnabled: YES];
-    combo_pipeline_descriptor
-        .colorAttachments[0].sourceRGBBlendFactor =
-            MTLBlendFactorSourceAlpha;
-    combo_pipeline_descriptor
-        .colorAttachments[0].destinationRGBBlendFactor =
-            MTLBlendFactorOneMinusSourceAlpha;
+    //    [combo_pipeline_descriptor
+    //        .colorAttachments[0]
+    //        setBlendingEnabled: YES];
+    //    combo_pipeline_descriptor
+    //        .colorAttachments[0].sourceRGBBlendFactor =
+    //            MTLBlendFactorSourceAlpha;
+    //    combo_pipeline_descriptor
+    //        .colorAttachments[0].destinationRGBBlendFactor =
+    //            MTLBlendFactorOneMinusSourceAlpha;
     
     // note: this must be the same as the MTKView's pixel format 
     combo_pipeline_descriptor.depthAttachmentPixelFormat =
