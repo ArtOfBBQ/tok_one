@@ -169,7 +169,7 @@ bool32_t ray_intersects_zpolygon_hitbox(
 
 void construct_quad_around(
     const float mid_x,
-    const float bottom_y,
+    const float mid_y,
     const float z,
     const float width,
     const float height,
