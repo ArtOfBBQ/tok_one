@@ -172,6 +172,7 @@ void terminal_render(void) {
     }
     
     if (requesting_label_update) {
+        log_append("redraw terminal label...\n");
         delete_zpolygon_object(
             /* const int32_t with_object_id: */
                 terminal_labels_object_id);
@@ -215,6 +216,15 @@ void terminal_render(void) {
         if (terminal_history[char_offset] == '\n') {
             char_offset += 1;
         }
+        
+        log_append("terminal history: ");
+        log_append(terminal_history + char_offset);
+        log_append_char('\n');
+        
+        font_color[0] = term_font_color[0];
+        font_color[1] = term_font_color[1];
+        font_color[2] = term_font_color[2];
+        font_color[3] = term_font_color[3];
         
         request_label_renderable(
             /* const int32_t with_object_id: */
@@ -306,7 +316,7 @@ void terminal_sendchar(uint32_t to_send) {
         to_send <= '}' &&
         last_i < SINGLE_LINE_MAX)
     {
-        current_command[last_i] = to_send;
+        current_command[last_i] = (char)to_send;
         current_command[last_i + 1] = '\0';
         requesting_label_update = true;
     }
@@ -431,7 +441,9 @@ static bool32_t evaluate_terminal_command(
 }
 
 void terminal_commit_or_activate(void) {
-
+    
+    requesting_label_update = true;
+    
     if (
         terminal_active &&
         current_command[0] != '\0')
@@ -456,7 +468,6 @@ void terminal_commit_or_activate(void) {
                 "\n");
             current_command[0] = '\0';
             update_terminal_history_size();
-            requesting_label_update = true;
             return;
         } else {
             client_logic_evaluate_terminal_command(
@@ -473,13 +484,11 @@ void terminal_commit_or_activate(void) {
                 "\n");
             current_command[0] = '\0';
             update_terminal_history_size();
-            requesting_label_update = true;
             return;
         }
     }
     
     terminal_active = !terminal_active;
     
-    destroy_terminal_objects();
-    requesting_label_update = true;
+    destroy_terminal_objects();    
 }
