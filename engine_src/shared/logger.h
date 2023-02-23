@@ -116,8 +116,7 @@ add_profiling_stats_to_log(void);
 /*
 dump the entire debug log to debuglog.txt
 */
-void __attribute__((no_instrument_function))
-log_dump(bool32_t * good);
+void log_dump(bool32_t * good);
 
 /*
 Dump the entire debug log to debuglog.txt,

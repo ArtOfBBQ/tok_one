@@ -424,7 +424,9 @@ void platform_start_thread(
         });
 }
 
-void platform_play_sound_resource(char * resource_filename) { 
+void platform_play_sound_resource(const char * resource_filename) {
+    log_assert(resource_filename != NULL);
+    
     char sound_pathfile[500];
     resource_filename_to_pathfile(
         /* filename: */
@@ -433,6 +435,8 @@ void platform_play_sound_resource(char * resource_filename) {
             sound_pathfile,
         /* recipient_capacity: */
             500);
+    
+    log_assert(platform_resource_exists(resource_filename));
     
     NSString * soundPathFile = [NSString
         stringWithUTF8String: sound_pathfile];
@@ -455,7 +459,7 @@ void platform_play_sound_resource(char * resource_filename) {
     }
 }
 
-void platform_play_music_resource(char * resource_filename) { 
+void platform_play_music_resource(const char * resource_filename) { 
     if (active_music_player != NULL) {
         [active_music_player setVolume: 0.0f fadeDuration: 1];
     }
@@ -507,12 +511,14 @@ returns whether or not a mutex was locked, and locks the mutex if it
 was unlocked
 */
 void platform_mutex_lock(const uint32_t mutex_id) {
+    log_assert(mutex_id < MUTEXES_SIZE);
     int return_value = pthread_mutex_lock(&(mutexes[mutex_id]));
     log_assert(return_value == 0);
     return;
 }
 
 void platform_mutex_unlock(const uint32_t mutex_id) {
+    log_assert(mutex_id < MUTEXES_SIZE);
     int return_value = pthread_mutex_unlock(&(mutexes[mutex_id]));
     log_assert(return_value == 0);
     return;

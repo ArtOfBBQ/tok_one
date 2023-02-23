@@ -174,8 +174,8 @@ void platform_gpu_push_texture_slice(
     const uint32_t image_height,
     const uint8_t * rgba_values);
 
-void platform_play_sound_resource(char * resource_filename);
-void platform_play_music_resource(char * resource_filename);
+void platform_play_sound_resource(const char * resource_filename);
+void platform_play_music_resource(const char * resource_filename);
 
 /*
 creates a mutex and return the ID of said mutex for you to store

@@ -461,8 +461,9 @@ add_profiling_stats_to_log(void)
     }
 }
 
-void __attribute__((no_instrument_function)) log_dump(bool32_t * good) {
+void log_dump(bool32_t * good) {
     
+    if (app_log == NULL) { return; }
     app_log[log_i + 1] = '\0';
     
     platform_write_file_to_writables(

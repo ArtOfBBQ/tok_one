@@ -5,6 +5,9 @@ void writable_filename_to_pathfile(
     char * recipient,
     const uint32_t assert_capacity)
 {
+    log_assert(filename != NULL);
+    log_assert(recipient != NULL);
+    
     uint32_t filename_length = get_string_length(filename);
     uint32_t separator_size = platform_get_directory_separator_size();
     char separator[separator_size + 1];
@@ -42,6 +45,8 @@ void writable_filename_to_pathfile(
         recipient,
         assert_capacity,
         separator_and_filename);
+    
+    log_assert(recipient[0] != '\0');
 };
 
 
@@ -50,6 +55,9 @@ void resource_filename_to_pathfile(
     char * recipient,
     const uint32_t assert_capacity)
 {
+    log_assert(filename != NULL);
+    log_assert(recipient != NULL);
+    
     char resource_path[256];
     platform_get_resources_path(resource_path, 256);
     strcpy_capped(
@@ -68,6 +76,8 @@ void resource_filename_to_pathfile(
         recipient,
         assert_capacity,
         filename);
+    
+    log_assert(recipient[0] != '\0');
 };
 
 void platform_delete_writable(const char * writable_filename) {
