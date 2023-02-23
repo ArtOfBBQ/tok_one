@@ -1,19 +1,20 @@
-// functions we must implement
-// #include "../shared/platform_layer.h" 
-
-// shared functionality we can use
-#include "../shared/common.h"
-// #include "../shared/userinput.h"
-#include "../shared/window_size.h"
-// #include "../shared/vertex_types.h"
-// #include "../shared/zpolygon.h"
-// #include "../shared/software_renderer.h"
-// #include "../shared/bitmap_renderer.h"
-// #include "../shared/clientlogic.h"
-
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <GL/gl.h>
+
+// functions we must implement
+#include "../shared/platform_layer.h" 
+
+// shared functionality we can use
+#include "shared/init_application.h"
+#include "shared/common.h"
+#include "shared/logger.h"
+#include "shared/tok_random.h"
+#include "shared/lightsource.h"
+#include "shared/userinput.h"
+#include "shared/window_size.h"
+#include "shared/simd.h"
+
 
 static bool32_t handle_SDL_event(
     SDL_Event * event)
@@ -32,6 +33,8 @@ static bool32_t handle_SDL_event(
 
 int main(int argc, const char * argv[]) 
 {
+    init_projection_constants();
+    
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         SDL_ShowSimpleMessageBox(
             /* Uint32 flags: */
@@ -75,8 +78,8 @@ int main(int argc, const char * argv[])
         glViewport(
             0,
             0,
-            window_width,
-            window_height);
+            window_globals->window_width,
+            window_globals->window_height);
         glClearColor(red, 0.0f, 1.0f, 1.0f);
         red -= 0.03f;
         if (red < 0.0f) { red = 1.0f; }

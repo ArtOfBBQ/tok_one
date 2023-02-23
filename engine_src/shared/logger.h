@@ -6,7 +6,7 @@
 #include "stdio.h"
 #endif
 
-//#define IGNORE_LOGGER
+#define IGNORE_LOGGER
 #ifndef IGNORE_LOGGER
 #include <dlfcn.h>
 #endif

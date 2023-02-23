@@ -11,8 +11,8 @@ echo "git submodule update --init"
 exit 0
 fi
 
-# bash engine_src/linux/build.sh
-bash engine_src/macos/build.sh
+bash engine_src/linux/build.sh
+# bash engine_src/macos/build.sh
 # bash engine_src/macos/buildtests.sh
 # bash engine_src/ios/build.sh
 
