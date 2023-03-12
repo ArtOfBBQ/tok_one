@@ -17,6 +17,25 @@ void init_font(
     const char * raw_fontmetrics_file_contents,
     const uint64_t raw_fontmetrics_file_size);
 
+/*
+This function includes offsets, which is only useful if you
+are setting up your label as part of a group of objects and
+you're intending to move the object (that includes this label)
+to a new location later with a ScheduledAnimation. It will then
+retain the offsets. If you don't care about this just use the
+function below which keeps all offsets at 0
+*/
+void request_label_offset_around(
+    const int32_t with_id,
+    const char * text_to_draw,
+    const float mid_x_pixelspace,
+    const float top_y_pixelspace,
+    const float pixelspace_x_offset_for_each_character,
+    const float pixelspace_y_offset_for_each_character,
+    const float z,
+    const float max_width,
+    const bool32_t ignore_camera);
+
 void request_label_around(
     const int32_t with_object_id,
     const char * text_to_draw,

@@ -144,11 +144,13 @@ static float get_next_word_width(const char * text) {
     return return_value;
 }
 
-void request_label_around(
+void request_label_offset_around(
     const int32_t with_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
     const float top_y_pixelspace,
+    const float pixelspace_x_offset_for_each_character,
+    const float pixelspace_y_offset_for_each_character,
     const float z,
     const float max_width,
     const bool32_t ignore_camera)
@@ -240,9 +242,11 @@ void request_label_around(
     label.z = z;
     label.triangles_size = 0;
     
-    float cur_y_offset = 0;
+    float cur_y_offset_pixelspace = pixelspace_y_offset_for_each_character;
     for (uint32_t line_i = 0; line_i < lines_size; line_i++) {
-        float cur_x_offset = -1.0f * ((lines[line_i].width) / 2);
+        float cur_x_offset_pixelspace =
+            pixelspace_x_offset_for_each_character +
+                (-1.0f * ((lines[line_i].width) / 2));
         
         for (
             int32_t j = lines[line_i].start_i;
@@ -273,7 +277,7 @@ void request_label_around(
             letter.z = 0.0f;
             
             if ((text_to_draw[j] - '!') < 0) {
-                cur_x_offset += get_advance_width(text_to_draw[j]);
+                cur_x_offset_pixelspace += get_advance_width(text_to_draw[j]);
                 continue;
             }
             for (
@@ -286,10 +290,10 @@ void request_label_around(
             }
             
             float letter_x_offset = screenspace_width_to_width(
-                (cur_x_offset + get_left_side_bearing(text_to_draw[j])),
+                (cur_x_offset_pixelspace + get_left_side_bearing(text_to_draw[j])),
                 label.z);
             float letter_y_offset = screenspace_height_to_height(
-                (cur_y_offset - get_y_offset(text_to_draw[j])),
+                (cur_y_offset_pixelspace - get_y_offset(text_to_draw[j])),
                 label.z);
             letter.z = 0;
             
@@ -310,9 +314,9 @@ void request_label_around(
             label.triangles[label.triangles_size + 1] = letter.triangles[1];
             label.triangles_size += 2;
             
-            cur_x_offset += get_advance_width(text_to_draw[j]);
+            cur_x_offset_pixelspace += get_advance_width(text_to_draw[j]);
         }
-        cur_y_offset -= font_height;
+        cur_y_offset_pixelspace -= font_height;
     }
     
     if (label.triangles_size > 0) {
@@ -324,6 +328,37 @@ void request_label_around(
     }
     
     font_height = original_height;
+
+}
+
+void request_label_around(
+    const int32_t with_id,
+    const char * text_to_draw,
+    const float mid_x_pixelspace,
+    const float top_y_pixelspace,
+    const float z,
+    const float max_width,
+    const bool32_t ignore_camera)
+{
+    request_label_offset_around(
+        /* const int32_t with_id: */
+            with_id,
+        /* const char * text_to_draw: */
+            text_to_draw,
+        /* const float mid_x_pixelspace: */
+            mid_x_pixelspace,
+        /* const float top_y_pixelspace: */
+            top_y_pixelspace,
+        /* const float pixelspace_x_offset_for_each_character: */
+            0.0f,
+        /* const float pixelspace_y_offset_for_each_character: */
+            0.0f,
+        /* const float z: */
+            z,
+        /* const float max_width: */
+            max_width,
+        /* const bool32_t ignore_camera: */
+            ignore_camera);
 }
 
 void request_label_renderable(
