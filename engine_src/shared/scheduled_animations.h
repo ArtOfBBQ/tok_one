@@ -111,6 +111,12 @@ typedef struct ScheduledAnimation {
         float final_rgba[4];
     };
     
+    bool32_t final_rgb_bonus_known[3];
+    union {
+        float rgb_bonus_delta_per_second[3];
+        float final_rgb_bonus[3];
+    };
+    
     uint64_t wait_before_each_run;           // resets timer each run
     uint64_t remaining_wait_before_next_run; // gets reset by above each run
                                              // can be used as wait before 1st

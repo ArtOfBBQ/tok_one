@@ -1,15 +1,12 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-//#define LOGGER_SILENCE
+#define LOGGER_SILENCE
 #ifndef LOGGER_SILENCE
 #include "stdio.h"
 #endif
 
-//#define IGNORE_LOGGER
-#ifndef IGNORE_LOGGER
-#include <dlfcn.h>
-#endif
+#define IGNORE_LOGGER
 
 #include "common.h"
 #include "memorystore.h"
@@ -38,16 +35,6 @@ extern "C" {
 #endif
 extern char application_name[100];
 
-void __attribute__((no_instrument_function))
-__cyg_profile_func_enter(
-    void *this_fn,
-    void *call_site);
-
-void __attribute__((no_instrument_function))
-__cyg_profile_func_exit(
-    void *this_fn,
-    void *call_site);
-
 extern char crashed_top_of_screen_msg[256];
 extern bool32_t application_running;
 
@@ -66,7 +53,7 @@ void internal_log_append(
 /*
 don't use the internal_ functions, use the macros that call them.
 */
-void __attribute__((no_instrument_function))
+void
 internal_log_append_int(
     const int32_t to_append,
     const char * caller_function_name);
@@ -74,7 +61,7 @@ internal_log_append_int(
 /*
 don't use the internal_ functions, use the macros that call them.
 */
-void __attribute__((no_instrument_function))
+void
 internal_log_append_uint(
     const uint32_t to_append,
     const char * caller_function_name);
@@ -83,7 +70,7 @@ internal_log_append_uint(
 /*
 don't use the internal_ functions, use the macros that call them.
 */
-void __attribute__((no_instrument_function))
+void
 internal_log_append_uint(
     const uint32_t to_append,
     const char * caller_function_name);
@@ -91,7 +78,7 @@ internal_log_append_uint(
 /*
 don't use the internal_ functions, use the macros that call them.
 */
-void __attribute__((no_instrument_function))
+void
 internal_log_append_char(
     const char to_append,
     const char * caller_function_name);
@@ -99,19 +86,10 @@ internal_log_append_char(
 /*
 don't use the internal_ functions, use the macros that call them.
 */
-void __attribute__((no_instrument_function))
+void
 internal_log_append_float(
     const float to_append,
     const char * caller_function_name);
-
-
-void __attribute__((no_instrument_function))
-get_log_backtrace(
-    char * return_value,
-    uint32_t return_value_capacity);
-
-void __attribute__((no_instrument_function))
-add_profiling_stats_to_log(void);
 
 /*
 dump the entire debug log to debuglog.txt

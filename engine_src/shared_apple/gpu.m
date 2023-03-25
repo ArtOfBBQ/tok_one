@@ -8,7 +8,7 @@ static id vertex_buffers[3];
 static id light_buffers [3];
 static id camera_buffers[3];
 static id projection_constant_buffers[3];
-
+static dispatch_semaphore_t drawing_semaphore;
 
 @implementation MetalKitViewDelegate
 {
@@ -42,7 +42,9 @@ static id projection_constant_buffers[3];
     fromFolder: (NSString *)shader_lib_filepath
 {
     current_frame_i = 0;
-        
+    
+    drawing_semaphore = dispatch_semaphore_create(/* initial value: */ 3);
+    
     metal_device = with_metal_device;
     
     NSError *Error = NULL;
@@ -357,6 +359,10 @@ static id projection_constant_buffers[3];
 
 - (void)drawInMTKView:(MTKView *)view
 {
+    dispatch_semaphore_wait(
+        /* dispatch_semaphore_t _Nonnull dsema: */ drawing_semaphore,
+        /* dispatch_time_t timeout: */ DISPATCH_TIME_FOREVER);
+    
     GPU_Vertex * vertices_for_gpu =
         gpu_shared_data_collection.triple_buffers[current_frame_i].vertices;
     uint32_t vertices_for_gpu_size = 0;
@@ -466,6 +472,12 @@ static id projection_constant_buffers[3];
     
     current_frame_i += 1;
     current_frame_i -= ((current_frame_i > 2)*3);
+    
+    [command_buffer addCompletedHandler:^(id<MTLCommandBuffer> arg_cmd_buffer) {
+        (void)arg_cmd_buffer;
+        
+        dispatch_semaphore_signal(drawing_semaphore);
+    }];
     
     [command_buffer commit];    
 }

@@ -29,7 +29,7 @@ void request_label_offset_around(
     const int32_t with_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
-    const float top_y_pixelspace,
+    const float mid_y_pixelspace,
     const float pixelspace_x_offset_for_each_character,
     const float pixelspace_y_offset_for_each_character,
     const float z,

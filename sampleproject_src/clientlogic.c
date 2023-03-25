@@ -61,34 +61,58 @@ void client_logic_startup(void) {
         (const char **)filenames,
         1);
     
-    float z = 1.0f;
+    float pixelspace_x = 500.0f;
+    float pixelspace_y = 350.0f;
+    #define OUR_OBJ_Z 0.6f
+    float z = OUR_OBJ_Z;
     zPolygon quad;
     construct_quad_around(
         /* const float mid_x: */
-            0.0f,
+            screenspace_x_to_x(pixelspace_x, z),
         /* const float mid_y: */
-            0.0f,
+            screenspace_y_to_y(pixelspace_y, z),
         /* const float z: */
             z,
         /* const float width: */
-            0.3f,
+            screenspace_width_to_width(100, z),
         /* const float height: */
-            0.3f,
+            screenspace_height_to_height(100, z),
         /* zPolygon * recipient: */
             &quad);
-    quad.triangles[0].texturearray_i = 1;
-    quad.triangles[0].texture_i = 0;
-    quad.triangles[1].texturearray_i = 1;
-    quad.triangles[1].texture_i = 0;
-    quad.triangles[0].color[0] = z * 0.2f;
-    quad.triangles[0].color[1] = z * 0.2f;
-    quad.triangles[1].color[0] = z * 0.2f;
-    quad.triangles[1].color[1] = z * 0.2f;
+    quad.triangles[0].color[0] = 1.0f;
+    quad.triangles[0].color[1] = 0.0f;
+    quad.triangles[0].color[2] = 1.0f;
+    quad.triangles[1].color[0] = 1.0f;
+    quad.triangles[1].color[1] = 0.0f;
+    quad.triangles[1].color[2] = 1.0f;
     quad.object_id = 12345;
     quad.ignore_lighting = true;
     request_zpolygon_to_render(&quad);
     
-    uint64_t duration = 3000000;    
+    font_height = 30;
+    font_color[0] = 0.0f;
+    font_color[1] = 1.0f;
+    font_color[2] = 0.0f;
+    font_color[3] = 1.0f;
+    request_label_offset_around(
+        /* const int32_t with_id: */
+            quad.object_id,
+        /* const char * text_to_draw: */
+            "I'm a label with fixed offsets!",
+        /* const float mid_x_pixelspace: */
+            pixelspace_x,
+        /* const float top_y_pixelspace: */
+            pixelspace_y,
+        /* const float pixelspace_x_offset_for_each_character: */
+            50.0f,
+        /* const float pixelspace_y_offset_for_each_character: */
+            50.0f,
+        /* const float z: */
+            z,
+        /* const float max_width: */
+            100,
+        /* const uint32_t ignore_camera: */
+            false);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -125,7 +149,19 @@ void client_logic_animation_callback(int32_t callback_id)
 static void  client_handle_touches_and_leftclicks(
     uint64_t microseconds_elapsed)
 {
-    // handle mouse events here
+    if (!user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].handled) {
+        user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].handled =
+            true;
+        
+        ScheduledAnimation move_quadandlabel;
+        construct_scheduled_animation(&move_quadandlabel);
+        move_quadandlabel.affected_object_id = 12345;
+        move_quadandlabel.final_x_known = true;
+        move_quadandlabel.final_mid_x = screenspace_x_to_x(tok_rand() % (uint32_t)window_globals->window_width, OUR_OBJ_Z);
+        move_quadandlabel.final_y_known = true;
+        move_quadandlabel.final_mid_y = screenspace_y_to_y(tok_rand() % (uint32_t)window_globals->window_height, OUR_OBJ_Z);;
+        request_scheduled_animation(&move_quadandlabel);
+    }
 }
 
 static void client_handle_keypresses(

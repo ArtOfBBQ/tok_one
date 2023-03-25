@@ -46,6 +46,10 @@ void construct_scheduled_animation(
         to_construct->final_rgba_known[i] = false;
         to_construct->rgba_delta_per_second[i] = 0.0f;
     }
+    for (uint32_t i = 0; i < 3; i++) {
+        to_construct->final_rgb_bonus_known[i] = false;
+        to_construct->rgb_bonus_delta_per_second[i] = 0.0f;
+    }
     
     to_construct->wait_before_each_run = 0;
     to_construct->remaining_wait_before_next_run = 0;
@@ -425,6 +429,28 @@ static void resolve_single_animation_effects(
                             ((float)remaining_microseconds_at_start_of_run /
                                 elapsed_this_run);
                 }
+            }
+        }
+        
+        for (
+            uint32_t c = 0;
+            c < 3;
+            c++)
+        {
+            if (!anim->final_rgb_bonus_known[c]) {
+                float delta = ((anim->rgb_bonus_delta_per_second[c]
+                        * elapsed_this_run)
+                    / 1000000);
+                    zpolygons_to_render[zp_i].rgb_bonus[c] +=
+                        delta;
+            } else {
+                float cur_val = zpolygons_to_render[zp_i].rgb_bonus[c];
+                float delta_val = anim->final_rgb_bonus[c] - cur_val;
+                
+                zpolygons_to_render[zp_i].rgb_bonus[c] +=
+                    delta_val /
+                        ((float)remaining_microseconds_at_start_of_run /
+                            elapsed_this_run);
             }
         }
     }    

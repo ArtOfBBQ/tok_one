@@ -166,7 +166,6 @@ NSSize last_nonfull_drawable_size;
     
     client_logic_shutdown();
     
-    add_profiling_stats_to_log();
     bool32_t write_succesful = false;
     log_dump(&write_succesful);
     

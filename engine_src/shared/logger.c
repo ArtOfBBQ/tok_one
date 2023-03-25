@@ -10,242 +10,19 @@ static bool32_t logger_activated = false;
 static char * app_log;
 static uint32_t log_i = 0;
 
-#define MAX_TIMED_FUNCTION_NAME 80
-char last_log_func[MAX_TIMED_FUNCTION_NAME];
-
-typedef struct TimedFunction {
-    uint64_t function_address;
-    char function_name[MAX_TIMED_FUNCTION_NAME];
-    uint32_t times_ran;
-    uint64_t time_tally;
-    uint64_t current_first_start_at;
-    uint32_t currently_running;
-} TimedFunction;
-
-#define TIMED_FUNCTION_LINK_SIZE 30
-typedef struct TimedFunctionLink {
-    TimedFunction linked_list[TIMED_FUNCTION_LINK_SIZE];
-} TimedFunctionLink;
-
-#define TIMED_FUNCTION_MAP_SIZE 4096
-TimedFunctionLink * timed_function_map = NULL;
-
-/*
-By 'backtrace circle' I mean a conceptually circular array
-where the element at position 0 follows the final element etc.
-
-So we store each function name wheenver it runs, and when
-we get to the end of the array, we start storing at the front
-again. If you request the last 5 functions when backtrace_i
-is at 3, it would be elements 50,0,1,2,3
-*/
-#define BACKTRACE_CIRCLE_SIZE 50
-typedef struct BacktraceCircle {
-    char function_names[MAX_TIMED_FUNCTION_NAME][BACKTRACE_CIRCLE_SIZE];
-    
-    uint32_t thread_id;
-} BacktraceCircle;
-
-BacktraceCircle * backtrace_circles = NULL;
-uint32_t backtrace_i = 0;
-#define BACKTRACE_FUNCTIONS_TO_DISPLAY 5
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#ifndef IGNORE_LOGGER
-void __attribute__((no_instrument_function))
-__cyg_profile_func_enter(
-    void *this_fn,
-    void * call_site)
-{
-    (void)call_site;
-    
-    logger_activated = true;
-    
-    if (
-        timed_function_map == NULL
-        || !application_running)
-    {
-        return;
-    }
-    
-    uint32_t entry_i =
-        (uint64_t)this_fn & (TIMED_FUNCTION_MAP_SIZE - 1);
-    
-    uint32_t link_i = 0;
-    while (
-        timed_function_map[entry_i]
-            .linked_list[link_i]
-            .function_address
-                != (uint64_t)this_fn
-        && timed_function_map[entry_i]
-            .linked_list[link_i]
-            .function_address != 0)
-    {
-        link_i += 1;
-        log_assert(link_i < TIMED_FUNCTION_LINK_SIZE);
-    }
-    
-    // record +1 run for this function address
-    timed_function_map[entry_i]
-        .linked_list[link_i]
-        .function_address =
-            (uint64_t)this_fn;
-    timed_function_map[entry_i]
-        .linked_list[link_i]
-        .times_ran += 1;
-    
-    // record function name if necessary
-    if (timed_function_map[entry_i]
-        .linked_list[link_i]
-        .function_name[0] == '\0')
-    {
-        Dl_info info;
-        
-        if (dladdr(this_fn, &info)) {
-            // info.dli_fname;
-            
-            assert(timed_function_map != NULL);
-            strcpy_capped(
-                /* recipient: */
-                    timed_function_map[entry_i]
-                        .linked_list[link_i]
-                        .function_name,
-                /* recipient_size: */
-                    MAX_TIMED_FUNCTION_NAME,
-                /* origin: */
-                    info.dli_sname);
-        }
-    }
-    
-    // record when this function started running 
-    timed_function_map[entry_i]
-        .linked_list[link_i]
-        .currently_running += 1;
-    if (
-        timed_function_map[entry_i]
-            .linked_list[link_i]
-            .currently_running == 1)
-    {
-        timed_function_map[entry_i]
-            .linked_list[link_i]
-            .current_first_start_at =
-                platform_get_current_time_microsecs();
-    }
-}
-
-void __attribute__((no_instrument_function))
-__cyg_profile_func_exit(
-    void *this_fn,
-    void *call_site)
-{
-    (void)call_site;
-    
-    if (
-        timed_function_map == NULL
-        || !application_running)
-    {
-        return;
-    }
-    
-    uint32_t entry_i =
-        (uint64_t)this_fn & (TIMED_FUNCTION_MAP_SIZE - 1);
-    
-    bool32_t found_link = false; 
-    uint32_t link_i = 0;
-    for (
-        ;
-        link_i < TIMED_FUNCTION_LINK_SIZE;
-        link_i++)
-    {
-        if (
-            timed_function_map[entry_i]
-                .linked_list[link_i]
-                .function_address
-                    == (uint64_t)this_fn)
-        {
-            found_link = true;
-            break;
-        }
-    }
-    
-    if (!found_link) { return; }
-
-    // find out when this func started running 
-    if (
-        timed_function_map[entry_i]
-        .linked_list[link_i]
-        .currently_running == 1)
-    {
-        timed_function_map[entry_i]
-            .linked_list[link_i]
-            .time_tally +=
-                (platform_get_current_time_microsecs() -
-                    timed_function_map[entry_i]
-                        .linked_list[link_i]
-                        .current_first_start_at);
-        
-        timed_function_map[entry_i]
-            .linked_list[link_i]
-            .current_first_start_at = 0;
-    }
-    
-    timed_function_map[entry_i]
-        .linked_list[link_i]
-        .currently_running -= 1;
-}
-#endif
-
-#ifdef __cplusplus
-}
-#endif
-
-void __attribute__((no_instrument_function))
-setup_log(void) {
+void setup_log(void) {
 
     log_assert(application_name != NULL);
     
     // create a log for debug text
     app_log = (char *)malloc_from_unmanaged(LOG_SIZE);
-    
-    // create a hashmap for the functions in our app 
-    // this is used for backtrace and profiling
-    timed_function_map =
-        (TimedFunctionLink *)malloc_from_unmanaged(
-            TIMED_FUNCTION_MAP_SIZE * sizeof(TimedFunctionLink)); 
-    // initialize values
-    for (
-        uint32_t i = 0;
-        i < TIMED_FUNCTION_MAP_SIZE;
-        i++)
-    {
-        for (
-            uint32_t j = 0;
-            j < TIMED_FUNCTION_LINK_SIZE;
-            j++)
-        {
-            timed_function_map[i]
-                .linked_list[j]
-                .function_address = 0;
-            timed_function_map[i]
-                .linked_list[j]
-                .time_tally = 0;
-            timed_function_map[i]
-                .linked_list[j]
-                .times_ran = 0;
-            timed_function_map[i]
-                .linked_list[j]
-                .current_first_start_at = 0;
-            timed_function_map[i]
-                .linked_list[j]
-                .currently_running = 0;
-        }
-    }
 }
 
-void __attribute__((no_instrument_function))
+void
 internal_log_append_uint(
     const uint32_t to_append,
     const char * caller_function_name)
@@ -264,7 +41,7 @@ internal_log_append_uint(
         caller_function_name);
 }
 
-void __attribute__((no_instrument_function))
+void
 internal_log_append_char(
     const char to_append,
     const char * caller_function_name)
@@ -278,7 +55,7 @@ internal_log_append_char(
         caller_function_name);
 }
 
-void __attribute__((no_instrument_function))
+void
 internal_log_append_int(
     const int32_t to_append,
     const char * caller_function_name)
@@ -297,7 +74,7 @@ internal_log_append_int(
         caller_function_name);
 }
 
-void __attribute__((no_instrument_function))
+void
 internal_log_append_float(
     const float to_append,
     const char * caller_function_name)
@@ -316,7 +93,7 @@ internal_log_append_float(
         caller_function_name);
 }
 
-void __attribute__((no_instrument_function))
+void
 internal_log_append(
     const char * to_append,
     const char * caller_function_name)
@@ -328,19 +105,8 @@ internal_log_append(
     #endif
     
     if (
-        caller_function_name != NULL &&
-        !are_equal_strings(
-            caller_function_name,
-            last_log_func))
+        caller_function_name != NULL)
     {
-        strcpy_capped(
-            /* recipient: */
-                last_log_func,
-            /* recipient_size: */
-                MAX_TIMED_FUNCTION_NAME,
-            /* origin: */
-                caller_function_name);
-        
         char * prefix = (char *)"[";
         uint32_t prefix_length = get_string_length(prefix);
         if (log_i + prefix_length >= LOG_SIZE) { return; }
@@ -393,72 +159,6 @@ internal_log_append(
             to_append);
     log_i += to_append_length;
     if (log_i >= LOG_SIZE) { return; }
-}
-
-void __attribute__((no_instrument_function))
-add_profiling_stats_to_log(void)
-{
-    TimedFunction top30_timedfuncs[30];
-    for (uint32_t i = 0; i < 30; i++) {
-        char emptyslotstr[] = "empty slot";
-        strcpy_capped(
-            /* recipient: */
-                top30_timedfuncs[i].function_name,
-            /* recipient_size: */
-                MAX_TIMED_FUNCTION_NAME,
-            /* origin: */
-                emptyslotstr);
-        
-        top30_timedfuncs[i].times_ran = 0;
-        top30_timedfuncs[i].time_tally = 0;
-    }
-    
-    for (
-        uint32_t i = 0;
-        i < TIMED_FUNCTION_MAP_SIZE;
-        i++)
-    {
-        for (
-            uint32_t l = 0;
-            l < TIMED_FUNCTION_LINK_SIZE;
-            l++)
-        {
-            for (
-                uint32_t j = 0;
-                j < 30;
-                j++)
-            {
-                if (
-                    timed_function_map[i]
-                        .linked_list[l]
-                        .time_tally >
-                            top30_timedfuncs[j].time_tally)
-                {
-                    top30_timedfuncs[j] =
-                        timed_function_map[i].linked_list[l];
-                    break;
-                }
-            }
-        }
-    }
-    
-    log_append("\n***TOP 30 FUNCTIONS***\n");
-    for (uint32_t j = 0; j < 30; j++) {
-        log_append("[");
-        if (j < 10) {
-            log_append(" ");
-        }
-        log_append_uint(j);
-        log_append("] - ");
-        log_append(top30_timedfuncs[j].function_name);
-        log_append(" @");
-        log_append_uint((uint32_t)top30_timedfuncs[j].function_address);
-        log_append(" * times ran: ");
-        log_append_uint(top30_timedfuncs[j].times_ran);
-        log_append(", time spent: ");
-        log_append_uint((uint32_t)top30_timedfuncs[j].time_tally);
-        log_append("\n");
-    }
 }
 
 void log_dump(bool32_t * good) {
@@ -548,4 +248,3 @@ internal_log_assert(
     
     log_dump_and_crash(assert_failed_msg);
 }
-

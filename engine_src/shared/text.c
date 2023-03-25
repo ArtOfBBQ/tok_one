@@ -148,7 +148,7 @@ void request_label_offset_around(
     const int32_t with_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
-    const float top_y_pixelspace,
+    const float mid_y_pixelspace,
     const float pixelspace_x_offset_for_each_character,
     const float pixelspace_y_offset_for_each_character,
     const float z,
@@ -237,16 +237,19 @@ void request_label_offset_around(
         mid_x_pixelspace,
         z);
     label.y = screenspace_y_to_y(
-        top_y_pixelspace + ((lines_size * font_height) / 2),
+        mid_y_pixelspace,
         z);
     label.z = z;
     label.triangles_size = 0;
     
-    float cur_y_offset_pixelspace = pixelspace_y_offset_for_each_character;
+    float cur_y_offset_pixelspace =
+        (((lines_size - 1) * font_height) / 2) +
+        pixelspace_y_offset_for_each_character;
     for (uint32_t line_i = 0; line_i < lines_size; line_i++) {
         float cur_x_offset_pixelspace =
             pixelspace_x_offset_for_each_character +
-                (-1.0f * ((lines[line_i].width) / 2));
+                (-1.0f * ((lines[line_i].width) / 2) +
+                (font_height / 2));
         
         for (
             int32_t j = lines[line_i].start_i;
@@ -335,7 +338,7 @@ void request_label_around(
     const int32_t with_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
-    const float top_y_pixelspace,
+    const float mid_y_pixelspace,
     const float z,
     const float max_width,
     const bool32_t ignore_camera)
@@ -347,8 +350,8 @@ void request_label_around(
             text_to_draw,
         /* const float mid_x_pixelspace: */
             mid_x_pixelspace,
-        /* const float top_y_pixelspace: */
-            top_y_pixelspace,
+        /* const float mid_y_pixelspace: */
+            mid_y_pixelspace,
         /* const float pixelspace_x_offset_for_each_character: */
             0.0f,
         /* const float pixelspace_y_offset_for_each_character: */

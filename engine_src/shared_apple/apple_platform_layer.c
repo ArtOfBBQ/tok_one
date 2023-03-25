@@ -427,30 +427,40 @@ void platform_start_thread(
 void platform_play_sound_resource(const char * resource_filename) {
     log_assert(resource_filename != NULL);
     
-    char sound_pathfile[500];
+    return;
+    
+    char sound_pathfile[750];
     resource_filename_to_pathfile(
         /* filename: */
             resource_filename,
         /* recipient: */
             sound_pathfile,
         /* recipient_capacity: */
-            500);
+            750);
     
     log_assert(platform_resource_exists(resource_filename));
     
     NSString * soundPathFile = [NSString
         stringWithUTF8String: sound_pathfile];
+    
     NSURL * soundFileURL = [NSURL
         fileURLWithPath: soundPathFile];
+    
+    NSError * error_value = nil;
     
     sound_players[next_sound_player] =
         [[AVAudioPlayer alloc]
             initWithContentsOfURL:soundFileURL
-            error:nil];
+            error:&error_value];
+    
+    if (error_value != NULL) {
+        log_append("break here");
+        log_assert(0);
+    }
     
     [sound_players[next_sound_player] setVolume: sound_volume];
     sound_players[next_sound_player].numberOfLoops = 0;
-    
+    // [sound_players[next_sound_player] setDelegate: NULL];
     [sound_players[next_sound_player] play];
     
     next_sound_player++;
@@ -459,7 +469,9 @@ void platform_play_sound_resource(const char * resource_filename) {
     }
 }
 
-void platform_play_music_resource(const char * resource_filename) { 
+void platform_play_music_resource(const char * resource_filename) {
+    return;
+    
     if (active_music_player != NULL) {
         [active_music_player setVolume: 0.0f fadeDuration: 1];
     }
