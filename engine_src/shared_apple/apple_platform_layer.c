@@ -185,12 +185,18 @@ bool32_t platform_file_exists(
         isDirectory: &is_directory])
     {
         if (is_directory) {
+	    log_append("warning filepath: ");
+	    log_append(filepath);
+	    log_append(" is a directory, returnin FALSE for existence\n");
             return false;
         }
         
         return true;
     }
     
+    log_append("filepath: ");
+    log_append(filepath);
+    log_append(" does not exist, returning FALSE...\n");
     return false;
 }
 
