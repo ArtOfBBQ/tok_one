@@ -3,6 +3,10 @@
 #include "../shared/platform_layer.h"
 #import "Appkit/Appkit.h"
 
+void platform_close_application(void) {
+    [NSApp terminate: nil];
+}
+
 void platform_get_cwd(char * recipient, const uint32_t recipient_size) {
     NSString * cwd = [[NSFileManager defaultManager] currentDirectoryPath];
     

@@ -173,7 +173,7 @@ NSSize last_nonfull_drawable_size;
         log_append("ERROR - failed to store the log file on app termination..\n");
     }
     
-    [NSApp terminate: nil];
+    platform_close_application();
 }
 
 // This allows you to override the full screen size

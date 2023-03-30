@@ -669,28 +669,43 @@ void parse_obj_expecting_materials(
     }
 }
 
+void zpolygon_scale_width_only_given_z(
+    zPolygon * to_scale,
+    const float new_width,
+    const float when_observed_at_z)
+{
+    float current_width = zpolygon_get_width(to_scale);
+    
+    float target_width = new_width / when_observed_at_z;
+    
+    float scale_factor = target_width / current_width;
+    
+    if (scale_factor == 1.0f) {
+        return;
+    }
+    
+    for (uint32_t i = 0; i < to_scale->triangles_size; i++) {
+        for (uint32_t j = 0; j < 3; j++)
+        {
+            to_scale->triangles[i].vertices[j].x *= scale_factor;
+        }
+    }
+}
+
 void zpolygon_scale_to_width_given_z(
     zPolygon * to_scale,
     const float new_width,
     const float when_observed_at_z)
 {
-    float largest_width = 0.0f;
-    for (uint32_t i = 0; i < to_scale->triangles_size; i++) {
-        for (uint32_t j = 0; j < 3; j++)
-        {
-            float width =
-                ((to_scale->triangles[i].vertices[j].x < 0) *  (to_scale->triangles[i].vertices[j].x * -1)) +
-                ((to_scale->triangles[i].vertices[j].x >= 0) *  (to_scale->triangles[i].vertices[j].x)); 
-            if (width > largest_width)
-            {
-                largest_width = width;
-            }
-        }
-    }
+    float current_width = zpolygon_get_width(to_scale);
     
     float target_width = new_width / when_observed_at_z;
     
-    float scale_factor = target_width / largest_width;
+    float scale_factor = target_width / current_width;
+    
+    if (scale_factor == 1.0f) {
+        return;
+    }
     
     for (uint32_t i = 0; i < to_scale->triangles_size; i++) {
         for (uint32_t j = 0; j < 3; j++)
@@ -794,6 +809,30 @@ void center_zpolygon_offsets(
             to_center->triangles[i].vertices[j].z -= z_delta;
         }
     }
+}
+
+float zpolygon_get_width(
+    const zPolygon * to_inspect)
+{
+    float leftmost_x = FLOAT32_MAX;
+    float rightmost_x = FLOAT32_MIN;
+    
+    for (uint32_t i = 0; i < to_inspect->triangles_size; i++) {
+        for (uint32_t j = 0; j < 3; j++)
+        {
+            if (to_inspect->triangles[i].vertices[j].x < leftmost_x) {
+                leftmost_x = to_inspect->triangles[i].vertices[j].x;
+            }
+            
+            if (to_inspect->triangles[i].vertices[j].x > rightmost_x) {
+                rightmost_x = to_inspect->triangles[i].vertices[j].x;
+            }
+        }
+    }
+    
+    log_assert(rightmost_x > leftmost_x);
+    
+    return rightmost_x - leftmost_x;
 }
 
 void construct_zpolygon(zPolygon * to_construct) {

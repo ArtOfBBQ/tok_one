@@ -428,6 +428,17 @@ static bool32_t evaluate_terminal_command(
         return true;
     }
     
+    if (are_equal_strings(command, "quit") ||
+        are_equal_strings(command, "Quit") ||
+        are_equal_strings(command, "QUIT") ||
+        are_equal_strings(command, "exit") ||
+        are_equal_strings(command, "Exit") ||
+        are_equal_strings(command, "EXIT"))
+    {
+        platform_close_application();
+        return true;
+    }
+    
     if (are_equal_strings(command, "CRASH")) {
         strcpy_capped(
             response,

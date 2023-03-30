@@ -130,6 +130,11 @@ void parse_obj_expecting_materials(
     const bool32_t flip_winding,
     zPolygon * recipient);
 
+void zpolygon_scale_width_only_given_z(
+    zPolygon * to_scale,
+    const float new_width,
+    const float when_observed_at_z);
+
 void zpolygon_scale_to_width_given_z(
     zPolygon * to_scale,
     const float new_width,
@@ -141,6 +146,9 @@ void scale_zpolygon(
 
 void center_zpolygon_offsets(
     zPolygon * to_center);
+
+float zpolygon_get_width(
+    const zPolygon * to_inspect);
 
 float get_avg_z(
     const zTriangle * of_triangle);

@@ -55,6 +55,8 @@ extern "C" {
 #include "decodedimage.h"
 #include "window_size.h"
 
+void platform_close_application(void);
+
 uint8_t * platform_malloc_unaligned_block(const uint64_t size);
 
 
