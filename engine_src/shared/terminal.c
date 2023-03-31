@@ -428,6 +428,31 @@ static bool32_t evaluate_terminal_command(
         return true;
     }
     
+    if (
+        are_equal_strings(command, "VISUAL DEBUG") ||
+        are_equal_strings(command, "DEBUG") ||
+        are_equal_strings(command, "DEBUG LINES") ||
+        are_equal_strings(command, "SHOW LINES") ||
+        are_equal_strings(command, "OUTLINES") ||
+        are_equal_strings(command, "SHOW OUTLINES"))
+    {
+        window_globals->visual_debug_mode = !window_globals->visual_debug_mode;
+        if (!window_globals->visual_debug_mode) {
+            delete_zpolygon_object(0);
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Exiting visual debug mode");
+        } else {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Activating visual debug mode");
+        }
+        
+        return true;
+    }
+    
     if (are_equal_strings(command, "quit") ||
         are_equal_strings(command, "Quit") ||
         are_equal_strings(command, "QUIT") ||

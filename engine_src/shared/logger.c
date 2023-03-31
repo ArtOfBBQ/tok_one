@@ -207,6 +207,7 @@ internal_log_assert(
         line_number,
         str_condition != NULL ? str_condition : "NULL");
     #endif
+    
     assert(str_condition != NULL);
     assert(str_condition[0] != '\0');
     

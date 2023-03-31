@@ -2,6 +2,10 @@
 
 #include "../shared/platform_layer.h"
 
+void platform_close_application(void) {
+    log_append("Won't close app on iOS...\n");
+}
+
 float platform_x_to_x(const float x) {
     return x;
 }
