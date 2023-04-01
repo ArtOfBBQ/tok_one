@@ -449,8 +449,13 @@ static void resolve_single_animation_effects(
                 }
             } else {
                 
-                for (uint32_t tri_i = 0; tri_i < zpolygons_to_render[zp_i].triangles_size; tri_i++) {
-                    float cur_val = zpolygons_to_render[zp_i].triangles[tri_i].color[c];
+                for (
+                    uint32_t tri_i = 0;
+                    tri_i < zpolygons_to_render[zp_i].triangles_size;
+                    tri_i++)
+                {
+                    float cur_val =
+                        zpolygons_to_render[zp_i].triangles[tri_i].color[c];
                     float delta_val = anim->final_rgba[c] - cur_val;
                     
                     zpolygons_to_render[zp_i].triangles[tri_i].color[c] +=

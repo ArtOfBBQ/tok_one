@@ -262,20 +262,10 @@ fragment_shader(
         out_color *= texture_sample * in.lighting;
     }
     
-    int diamond_size = 20.0f;
+    int diamond_size = 35.0f;
     int neghalfdiamond = -1.0f * (diamond_size / 2);
-    
-    float bottomright_bonus =
-        0.75f *
-        in.texture_coordinate[0] *
-        in.texture_coordinate[1];
-    bottomright_bonus -= 0.35f;
-    clamp(bottomright_bonus, -0.35f, 0.35f);
-    
-    int alpha_tresh = (int)(
-        (out_color[3] +
-            bottomright_bonus) *
-                diamond_size);
+        
+    int alpha_tresh = (int)(out_color[3] * diamond_size);
     
     if (
         out_color[3] < 0.01f ||
