@@ -26,6 +26,11 @@ typedef struct ScheduledAnimation {
     */
     int32_t affected_object_id;
     
+    // An animation, on activation, will delete any other animations that are
+    // targeting the same properties of the same object ('Duplicates'). By
+    // default, it skips deleting duplicates when
+    bool32_t destroy_even_waiting_duplicates;
+    
     bool32_t set_texture_array_i;
     int32_t new_texture_array_i;
     bool32_t set_texture_i;
@@ -137,6 +142,10 @@ typedef struct ScheduledAnimation {
 void construct_scheduled_animation(ScheduledAnimation * to_construct);
 
 void request_scheduled_animation(ScheduledAnimation * to_add);
+
+void delete_conflicting_animations(
+    ScheduledAnimation * priority_anim,
+    const int32_t self_index);
 
 void request_fade_and_destroy(
     const int32_t object_id,

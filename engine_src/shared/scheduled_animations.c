@@ -17,6 +17,7 @@ void construct_scheduled_animation(
     to_construct->new_texture_array_i = -1;
     to_construct->set_texture_i = false;
     to_construct->new_texture_i = -1;
+    to_construct->destroy_even_waiting_duplicates = false;
     
     to_construct->final_x_known = false;
     to_construct->final_y_known = false;
@@ -39,13 +40,13 @@ void construct_scheduled_animation(
     to_construct->delta_height_per_second = 0.0f;
     
     to_construct->final_scale_known = false;
-    //    to_construct->final_yscale_known = false;
     to_construct->delta_scale_per_second = 0.0f;
-    // to_construct->delta_yscale_per_second = 0.0f;
+    
     for (uint32_t i = 0; i < 4; i++) {
         to_construct->final_rgba_known[i] = false;
         to_construct->rgba_delta_per_second[i] = 0.0f;
     }
+    
     for (uint32_t i = 0; i < 3; i++) {
         to_construct->final_rgb_bonus_known[i] = false;
         to_construct->rgb_bonus_delta_per_second[i] = 0.0f;
@@ -105,6 +106,12 @@ void request_scheduled_animation(
     log_assert(
         scheduled_animations_size < SCHEDULED_ANIMATIONS_ARRAYSIZE);
     
+    if (to_add->remaining_wait_before_next_run < 1) {
+        delete_conflicting_animations(
+            to_add,
+            -1);
+    }
+    
     for (
         int32_t i = 0;
         i < (int32_t)scheduled_animations_size;
@@ -126,6 +133,95 @@ void request_scheduled_animation(
     log_assert(
         SCHEDULED_ANIMATIONS_ARRAYSIZE
             > scheduled_animations_size);
+}
+
+void delete_conflicting_animations(
+    ScheduledAnimation * priority_anim,
+    const int32_t self_index)
+{
+    float float_threshold = 0.0001f;
+    
+    for (
+        int32_t i = 0;
+        i < (int32_t)scheduled_animations_size;
+        i++)
+    {
+        if (
+            (scheduled_animations[i].remaining_wait_before_next_run > 0 &&
+                !priority_anim->destroy_even_waiting_duplicates) ||
+            scheduled_animations[i].deleted ||
+            scheduled_animations[i].clientlogic_callback_when_finished_id
+                != -1 ||
+            (scheduled_animations[i].affected_object_id !=
+                priority_anim->affected_object_id) ||
+            i == self_index ||
+            scheduled_animations[i].runs != 1)
+        {
+            continue;
+        }
+        
+        if (
+            (
+                priority_anim->final_z_known ||
+                priority_anim->delta_z_per_second < -float_threshold ||
+                priority_anim->delta_z_per_second >  float_threshold
+            ) &&
+            (
+                scheduled_animations[i].final_z_known ||
+                scheduled_animations[i].delta_z_per_second < -float_threshold ||
+                scheduled_animations[i].delta_z_per_second >  float_threshold
+            ))
+        {
+            scheduled_animations[i].deleted = true;
+        }
+        
+        if (
+            (
+                priority_anim->final_x_known ||
+                priority_anim->delta_x_per_second < -float_threshold ||
+                priority_anim->delta_x_per_second >  float_threshold
+            ) &&
+            (
+                scheduled_animations[i].final_x_known ||
+                scheduled_animations[i].delta_x_per_second < -float_threshold ||
+                scheduled_animations[i].delta_x_per_second >  float_threshold
+            ))
+        {
+            scheduled_animations[i].deleted = true;
+        }
+        
+        if (
+            (
+                priority_anim->final_y_known ||
+                priority_anim->delta_y_per_second < -float_threshold ||
+                priority_anim->delta_y_per_second >  float_threshold
+            ) &&
+            (
+                scheduled_animations[i].final_y_known ||
+                scheduled_animations[i].delta_y_per_second < -float_threshold ||
+                scheduled_animations[i].delta_y_per_second >  float_threshold
+            ))
+        {
+            scheduled_animations[i].deleted = true;
+        }
+        
+        if (
+            (
+                priority_anim->final_y_angle_known ||
+                priority_anim->y_rotation_per_second < -float_threshold ||
+                priority_anim->y_rotation_per_second >  float_threshold
+            ) &&
+            (
+                scheduled_animations[i].final_y_angle_known ||
+                scheduled_animations[i].y_rotation_per_second <
+                    -float_threshold ||
+                scheduled_animations[i].y_rotation_per_second >
+                    float_threshold
+            ))
+        {
+            scheduled_animations[i].deleted = true;
+        }
+    }
 }
 
 void request_fade_and_destroy(
@@ -511,9 +607,11 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
         uint64_t actual_elapsed = microseconds_elapsed;
         
         if (anim->remaining_wait_before_next_run > 0) {
-            if (actual_elapsed > anim->remaining_wait_before_next_run) {
+            if (actual_elapsed >= anim->remaining_wait_before_next_run) {
                 actual_elapsed -= anim->remaining_wait_before_next_run;
                 anim->remaining_wait_before_next_run = 0;
+                
+                delete_conflicting_animations(anim, animation_i);
             } else {
                 anim->remaining_wait_before_next_run -= actual_elapsed;
                 continue;
