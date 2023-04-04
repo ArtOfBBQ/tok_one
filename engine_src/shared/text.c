@@ -469,6 +469,8 @@ void request_label_renderable(
         }
         
         log_assert(label_to_render.triangles_size + 1 < POLYGON_TRIANGLES_SIZE);
+        if (!application_running) { return; }
+        
         label_to_render.triangles[label_to_render.triangles_size] =
             letter.triangles[0];
         label_to_render.triangles[label_to_render.triangles_size + 1] =

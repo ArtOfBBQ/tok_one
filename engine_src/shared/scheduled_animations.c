@@ -161,63 +161,97 @@ void delete_conflicting_animations(
         }
         
         if (
+            priority_anim->final_z_known &&
+            scheduled_animations[i].final_z_known)
+        {
+            scheduled_animations[i].deleted = true;
+        }
+        
+        if (
             (
-                priority_anim->final_z_known ||
+            !priority_anim->final_z_known &&
+            (
                 priority_anim->delta_z_per_second < -float_threshold ||
                 priority_anim->delta_z_per_second >  float_threshold
-            ) &&
+            )) &&
             (
-                scheduled_animations[i].final_z_known ||
+            !scheduled_animations[i].final_z_known &&
+            (
                 scheduled_animations[i].delta_z_per_second < -float_threshold ||
                 scheduled_animations[i].delta_z_per_second >  float_threshold
-            ))
+            )))
+        {
+            scheduled_animations[i].deleted = true;
+        }
+        
+        if (
+            priority_anim->final_x_known &&
+            scheduled_animations[i].final_x_known)
         {
             scheduled_animations[i].deleted = true;
         }
         
         if (
             (
-                priority_anim->final_x_known ||
+            !priority_anim->final_x_known &&
+            (
                 priority_anim->delta_x_per_second < -float_threshold ||
                 priority_anim->delta_x_per_second >  float_threshold
-            ) &&
+            )) &&
             (
-                scheduled_animations[i].final_x_known ||
+            !scheduled_animations[i].final_x_known &&
+            (
                 scheduled_animations[i].delta_x_per_second < -float_threshold ||
                 scheduled_animations[i].delta_x_per_second >  float_threshold
-            ))
+            )))
+        {
+            scheduled_animations[i].deleted = true;
+        }
+        
+        if (
+            priority_anim->final_y_known &&
+            scheduled_animations[i].final_y_known)
         {
             scheduled_animations[i].deleted = true;
         }
         
         if (
             (
-                priority_anim->final_y_known ||
+            !priority_anim->final_y_known &&
+            (
                 priority_anim->delta_y_per_second < -float_threshold ||
                 priority_anim->delta_y_per_second >  float_threshold
-            ) &&
+            )) &&
             (
-                scheduled_animations[i].final_y_known ||
+            !scheduled_animations[i].final_y_known &&
+            (
                 scheduled_animations[i].delta_y_per_second < -float_threshold ||
                 scheduled_animations[i].delta_y_per_second >  float_threshold
-            ))
+            )))
+        {
+            scheduled_animations[i].deleted = true;
+        }
+        
+        if (
+            priority_anim->final_y_angle_known &&
+            scheduled_animations[i].final_y_angle_known)
         {
             scheduled_animations[i].deleted = true;
         }
         
         if (
             (
-                priority_anim->final_y_angle_known ||
+            !priority_anim->final_y_angle_known &&
+            (
                 priority_anim->y_rotation_per_second < -float_threshold ||
                 priority_anim->y_rotation_per_second >  float_threshold
-            ) &&
+            )) &&
             (
-                scheduled_animations[i].final_y_angle_known ||
-                scheduled_animations[i].y_rotation_per_second <
-                    -float_threshold ||
-                scheduled_animations[i].y_rotation_per_second >
-                    float_threshold
-            ))
+            !scheduled_animations[i].final_y_angle_known &&
+            (
+                scheduled_animations[i].y_rotation_per_second < -float_threshold ||
+                scheduled_animations[i].y_rotation_per_second >  float_threshold
+            )))
         {
             scheduled_animations[i].deleted = true;
         }
