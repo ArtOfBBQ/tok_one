@@ -751,6 +751,8 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                 }
                 
                 delete_zpolygon_object(anim->affected_object_id);
+                
+                delete_particle_effect(anim->affected_object_id);
             }
         }
     }

@@ -14,6 +14,7 @@ extern "C" {
 #include "texture_array.h"
 #include "zpolygon.h"
 #include "lightsource.h"
+#include "particle.h"
 #include "cpu_gpu_shared_types.h"
 #include "decodedimage.h"
 #include "platform_layer.h"

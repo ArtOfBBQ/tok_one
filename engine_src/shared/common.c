@@ -426,12 +426,21 @@ string_to_float_validate(
     uint32_t first_part_size = 0;
     char second_part[20];
     uint32_t second_part_size = 0;
+   
+    bool32_t found_exponent = false;
+    int32_t exponent_modifier = 1; 
+    int32_t exponent = 0;
     
     if (input[0] == '-') {
         i++;
     }
     
-    while (input[i] != '\0' && input[i] != ' ' && input[i] != '\n') {
+    while (
+        input[i] != '\0' &&
+        input[i] != ' ' &&
+        input[i] != '\n' &&
+        input[i] != '\r')
+    {
         if (!used_dot && found_num && input[i] == '.') {
             i++;
             used_dot = true;
@@ -440,11 +449,34 @@ string_to_float_validate(
         
         if (input[i] >= '0' && input[i] <= '9') {
             found_num = true;
-            if (!used_dot) {
+	    if (found_exponent) {
+		if (exponent == 0) {
+		    exponent = input[i] - '0';
+		} else {
+		    *good = false;
+		    return return_value;
+		}
+	    } else if (!used_dot) {
                 first_part[first_part_size++] = input[i];
             } else {
                 second_part[second_part_size++] = input[i];
             }
+        } else if (input[i] == 'e' || input[i] == 'E')
+	{
+	    if (found_exponent) {
+		*good = false;
+		return return_value;
+	    }
+	    found_exponent = true;
+	    if (input[i+1] == '-') {
+		exponent_modifier = -1;
+		i++;
+	    } else if (input[i+1] == '+') {
+		i++;
+	    } else {
+		*good = false;
+		return return_value;
+	    }
         } else {
             *good = false;
             return return_value;
@@ -464,37 +496,45 @@ string_to_float_validate(
         return return_value;
     }
 
-    if (second_part_size < 1) {
-        *good = true;
-        return return_value;
-    }
+    if (second_part_size > 0) {
     
-    second_part[second_part_size] = '\0';
-    bool32_t second_part_valid = false;
-    int second_part_int = string_to_int32_validate(
-        /* const char input: */ second_part,
-        &second_part_valid);
-    if (!second_part_valid) {
-        *good = false;
-        return return_value;
+	second_part[second_part_size] = '\0';
+	bool32_t second_part_valid = false;
+	int second_part_int = string_to_int32_validate(
+	    /* const char input: */ second_part,
+	    &second_part_valid);
+	if (!second_part_valid) {
+	    *good = false;
+	    return return_value;
+	}
+	
+	// throw away 0's at the end after the comma, they're useless
+	while (second_part_int % 10 == 0 && second_part_size > 0) {
+	    second_part_int /= 10;
+	    second_part_size -= 1;
+	}
+	
+	return_value += (float)first_part_int;
+	float divisor = 1;
+	for (uint32_t _ = 0; _ < second_part_size; _++) {
+	    divisor *= 10;
+	}
+	return_value += ((float)second_part_int / divisor);
+	
+	if (input[0] == '-') {
+	    return_value *= -1;
+	}
     }
-    
-    // throw away 0's at the end after the comma, they're useless
-    while (second_part_int % 10 == 0 && second_part_size > 0) {
-        second_part_int /= 10;
-        second_part_size -= 1;
+   
+    // apply the 'scientific notation' exponent
+    // e-4 means we want to multiply by -1 * (10^4)
+    printf("exponent: %i, modifier: %i\n", exponent, exponent_modifier);
+    float scinot_modifier = 1;
+    for (uint32_t _ = 0; _ < exponent; _++) {
+	scinot_modifier *= (exponent_modifier < 0 ? 0.1f : 10.0f);
     }
-    
-    return_value += (float)first_part_int;
-    float divisor = 1;
-    for (uint32_t _ = 0; _ < second_part_size; _++) {
-        divisor *= 10;
-    }
-    return_value += ((float)second_part_int / divisor);
-    
-    if (input[0] == '-') {
-        return_value *= -1;
-    }
+    printf("applying scientific notation mod: %f\n", scinot_modifier);
+    return_value *= scinot_modifier;
     
     *good = true;
     return return_value;

@@ -116,6 +116,8 @@
 		EC1412B12938597400DA0D21 /* cardwithuvcoords.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */; };
 		EC1412B22938597400DA0D21 /* cardwithuvcoords.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */; };
 		EC1BD95C297B5DBE00A9BA54 /* clientlogic_macro_settings.h in Sources */ = {isa = PBXBuildFile; fileRef = EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */; };
+		EC31932429DFAAFB00E320CD /* particle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC31932329DFAAFB00E320CD /* particle.c */; };
+		EC31932529DFAAFB00E320CD /* particle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC31932329DFAAFB00E320CD /* particle.c */; };
 		EC6441A429318B6D00A0267B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = EC64419F29318B6D00A0267B /* main.m */; };
 		EC6441A529318B6D00A0267B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A029318B6D00A0267B /* AppDelegate.m */; };
 		EC6441A629318B6D00A0267B /* ios_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A129318B6D00A0267B /* ios_platform_layer.c */; };
@@ -203,6 +205,8 @@
 		60A998DA287BD333003F7159 /* decodedimage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = decodedimage.h; path = ../../engine_src/shared/decodedimage.h; sourceTree = "<group>"; };
 		EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */ = {isa = PBXFileReference; explicitFileType = compiled; fileEncoding = 4; name = cardwithuvcoords.obj; path = ../../resources/cardwithuvcoords.obj; sourceTree = "<group>"; };
 		EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = clientlogic_macro_settings.h; path = ../../sampleproject_src/clientlogic_macro_settings.h; sourceTree = "<group>"; };
+		EC31932229DFAAFB00E320CD /* particle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = particle.h; path = ../../engine_src/shared/particle.h; sourceTree = "<group>"; };
+		EC31932329DFAAFB00E320CD /* particle.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = particle.c; path = ../../engine_src/shared/particle.c; sourceTree = "<group>"; };
 		EC64419E29318B6D00A0267B /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = ../../engine_src/ios/AppDelegate.h; sourceTree = "<group>"; };
 		EC64419F29318B6D00A0267B /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../engine_src/ios/main.m; sourceTree = "<group>"; };
 		EC6441A029318B6D00A0267B /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = ../../engine_src/ios/AppDelegate.m; sourceTree = "<group>"; };
@@ -359,6 +363,8 @@
 				6011286D2862511500F92967 /* draw_triangle.h */,
 				6064C0BF2892504A00E8B3AD /* gameloop.c */,
 				6064C0BE2892504A00E8B3AD /* gameloop.h */,
+				EC31932329DFAAFB00E320CD /* particle.c */,
+				EC31932229DFAAFB00E320CD /* particle.h */,
 				60112898286253C100F92967 /* gpu.h */,
 				ECB05E48294F8B1300050BD4 /* gpu.m */,
 				60112839286122FE00F92967 /* inflate.c */,
@@ -537,6 +543,7 @@
 				60A998E5287BD4AA003F7159 /* platform_layer.h in Sources */,
 				60A998DB287BD333003F7159 /* decodedimage.c in Sources */,
 				60A998E9287BD4B7003F7159 /* texture_array.h in Sources */,
+				EC31932429DFAAFB00E320CD /* particle.c in Sources */,
 				60A998DC287BD333003F7159 /* decodedimage.h in Sources */,
 				6080CC492870182700444118 /* common.h in Sources */,
 				60A998DF287BD494003F7159 /* inflate.h in Sources */,
@@ -591,6 +598,7 @@
 				60A99908287BD4C3003F7159 /* tok_random.h in Sources */,
 				60A9990F287BD4C4003F7159 /* text.c in Sources */,
 				60A9991A287BD4C4003F7159 /* window_size.c in Sources */,
+				EC31932529DFAAFB00E320CD /* particle.c in Sources */,
 				60A9990A287BD4C3003F7159 /* zpolygon.h in Sources */,
 				EC6441A629318B6D00A0267B /* ios_platform_layer.c in Sources */,
 				60A998F8287BD4C3003F7159 /* common.h in Sources */,

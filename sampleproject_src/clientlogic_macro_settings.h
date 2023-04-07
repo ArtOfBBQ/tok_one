@@ -19,6 +19,10 @@ but that will block you from being able to make text labels which have
 */
 #define POLYGON_TRIANGLES_SIZE 1000
 
+/*
+The max # of particle effects in your app
+*/
+#define PARTICLE_EFFECTS_SIZE 1
 
 // 290mb ->                   290...000
 #define UNMANAGED_MEMORY_SIZE 290000000

@@ -432,9 +432,7 @@ void platform_start_thread(
 
 void platform_play_sound_resource(const char * resource_filename) {
     log_assert(resource_filename != NULL);
-    
-    return;
-    
+        
     char sound_pathfile[750];
     resource_filename_to_pathfile(
         /* filename: */

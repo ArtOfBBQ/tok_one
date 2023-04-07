@@ -118,9 +118,9 @@ static uint32_t chars_till_next_space_or_slash(
     uint32_t i = 0;
     
     while (
-        buffer[i] != '\n'
-        && buffer[i] != ' '
-        && buffer[i] != '/')
+        buffer[i] != '\n' &&
+        buffer[i] != ' ' &&
+        buffer[i] != '/')
     {
         i++;
     }
@@ -385,7 +385,7 @@ void parse_obj_expecting_materials(
                         are_equal_strings_of_length(
                             expected_mtl,
                             usemtl_hint,
-                            line_size))
+                            get_string_length(expected_mtl)))
                     {
                         using_texturearray_i =
                             expected_materials[mtl_i].texturearray_i;
@@ -493,7 +493,7 @@ void parse_obj_expecting_materials(
             
             while (rawdata[i] == ' ') { i++; }
             
-            if (rawdata[i] != '\n') {
+            if (rawdata[i] != '\n' && rawdata[i] != '\r') {
                 int32_t vertex_i_3 = string_to_int32(rawdata + i);
                 i += chars_till_next_space_or_slash(
                     rawdata + i);
@@ -641,7 +641,7 @@ void parse_obj_expecting_materials(
             recipient->triangles[new_triangle_i] = new_triangle;
             new_triangle_i++;
             
-            log_assert(rawdata[i] == '\n');
+            log_assert(rawdata[i] == '\n' || rawdata[i] == '\r');
             i++;
             
         } else {

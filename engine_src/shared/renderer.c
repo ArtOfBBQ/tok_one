@@ -96,11 +96,7 @@ void hardware_render(
         }
         *next_workload_size += 3;
     }
-    
-    if (zpolygons_to_render_size == 0) {
-        return;
-    }
-    
+        
     log_assert(zpolygons_to_render_size < ZPOLYGONS_TO_RENDER_ARRAYSIZE);
     
     for (
@@ -388,5 +384,12 @@ void hardware_render(
             *next_workload_size += 24;
             assert(*next_workload_size - 1 < MAX_VERTICES_PER_BUFFER);
         }
-    }    
+    }
+    
+    if (application_running) {
+        add_particle_effects_to_workload(
+            next_gpu_workload,
+            next_workload_size,
+            elapsed_nanoseconds);
+    }
 }

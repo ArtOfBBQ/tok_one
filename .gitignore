@@ -22,4 +22,5 @@ Shaders.air
 run.sh
 
 build/*
+test/*
 assetprep/build/*

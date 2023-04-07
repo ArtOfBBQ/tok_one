@@ -11,6 +11,7 @@
 #include "cpu_to_gpu_types.h"
 #include "draw_triangle.h"
 #include "zpolygon.h"
+#include "particle.h"
 
 #ifdef __cplusplus
 extern "C" {

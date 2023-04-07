@@ -29,6 +29,8 @@ void init_application(
         sizeof(zPolygon) * ZPOLYGONS_TO_RENDER_ARRAYSIZE);
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
         sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
+    particle_effects = (ParticleEffect *)malloc_from_unmanaged(
+        sizeof(ParticleEffect) * PARTICLE_EFFECTS_SIZE);
     
     terminal_init();
     init_scheduled_animations();
