@@ -11,13 +11,24 @@ void construct_particle_effect(
     to_construct->y = 0;
     to_construct->z = 0;
     to_construct->scale_factor = 1.0f;
-    to_construct->width = 0.02f;
+    to_construct->top_width = 0.02f;
+    to_construct->origin_width = 0.02f;
     to_construct->height = 0.02f;
     to_construct->spawns_per_second = 200;
     to_construct->particle_size = 0.01f;
     to_construct->elapsed = 0;
     to_construct->duration_per_particle = 2000000;
     to_construct->deleted = false;
+    
+    to_construct->origin_rgba[0] = 1.0f;
+    to_construct->origin_rgba[1] = 1.0f;
+    to_construct->origin_rgba[2] = 1.0f;
+    to_construct->origin_rgba[3] = 1.0f;
+    
+    to_construct->final_rgba[0] = 1.0f;
+    to_construct->final_rgba[1] = 1.0f;
+    to_construct->final_rgba[2] = 1.0f;
+    to_construct->final_rgba[3] = 1.0f;
 }
 
 void request_particle_effect(
@@ -56,6 +67,13 @@ void add_particle_effects_to_workload(
 {
     for (uint32_t i = 0; i < particle_effects_size; i++) {
         if (!particle_effects[i].deleted) {
+            
+            zVertex ray_to_camera;
+            ray_to_camera.x = particle_effects[i].x - camera.x;
+            ray_to_camera.y = particle_effects[i].y - camera.y;
+            ray_to_camera.z = particle_effects[i].z - camera.z;
+            normalize_zvertex(&ray_to_camera);
+            
             particle_effects[i].elapsed += elapsed_nanoseconds;
             particle_effects[i].elapsed =
                 particle_effects[i].elapsed %
@@ -80,11 +98,14 @@ void add_particle_effects_to_workload(
                         particle_effects[i].duration_per_particle;
                 
                 float xy_direction_radians =
-                    ((spawn_i * 10000) % 628) / 100.0f;
+                    ((spawn_i * 100000) % 6280) / 1000.0f;
                 float xy_distance_traveled =
-                    ((particle_effects[i].width /
-                        particle_effects[i].duration_per_particle) *
-                            spawn_lifetime_so_far);
+                    (
+                        (((particle_effects[i].top_width /
+                            particle_effects[i].duration_per_particle) *
+                                spawn_lifetime_so_far)) +
+                        particle_effects[i].origin_width)
+                    / 2;
                 
                 float x_offset =
                     sinf(xy_direction_radians) * xy_distance_traveled;
@@ -94,10 +115,29 @@ void add_particle_effects_to_workload(
                     particle_effects[i].duration_per_particle) *
                         spawn_lifetime_so_far);
                 
+                float fraction_of_duration =
+                    (float)spawn_lifetime_so_far /
+                        (float)particle_effects[i].duration_per_particle;
                 float red =
-                    0.3f +
-                    ((1.0f / particle_effects[i].duration_per_particle)
-                        * spawn_lifetime_so_far);
+                    (particle_effects[i].final_rgba[0] *
+                        fraction_of_duration) +
+                    (particle_effects[i].origin_rgba[0] *
+                        (1.0f - fraction_of_duration));
+                float green =
+                    (particle_effects[i].final_rgba[1] *
+                        fraction_of_duration) +
+                    (particle_effects[i].origin_rgba[1] *
+                        (1.0f - fraction_of_duration));
+                float blue =
+                    (particle_effects[i].final_rgba[2] *
+                        fraction_of_duration) +
+                    (particle_effects[i].origin_rgba[2] *
+                        (1.0f - fraction_of_duration));
+                float alpha =
+                    (particle_effects[i].final_rgba[3] *
+                        fraction_of_duration) +
+                    (particle_effects[i].origin_rgba[3] *
+                        (1.0f - fraction_of_duration));
                 
                 for (uint32_t m = 0; m < 3; m++) {
                     next_gpu_workload[*next_workload_size].parent_x =
@@ -115,9 +155,13 @@ void add_particle_effects_to_workload(
                             -half_size :
                             half_size;
                     next_gpu_workload[*next_workload_size].z = 0.0f;
-                    next_gpu_workload[*next_workload_size].normal_x =  0.0f;
-                    next_gpu_workload[*next_workload_size].normal_y =  0.0f;
-                    next_gpu_workload[*next_workload_size].normal_z = -1.0f;
+                    // billboarding (always face to camera)
+                    next_gpu_workload[*next_workload_size].normal_x =
+                        ray_to_camera.x;
+                    next_gpu_workload[*next_workload_size].normal_y =
+                        ray_to_camera.y;
+                    next_gpu_workload[*next_workload_size].normal_z =
+                        ray_to_camera.z;
                     next_gpu_workload[*next_workload_size].ignore_lighting =
                         true;
                     next_gpu_workload[*next_workload_size].ignore_camera =
@@ -132,11 +176,10 @@ void add_particle_effects_to_workload(
                     next_gpu_workload[*next_workload_size].x_angle = 0.0f;
                     next_gpu_workload[*next_workload_size].y_angle = 0.0f;
                     next_gpu_workload[*next_workload_size].z_angle = 0.0f;
-                    next_gpu_workload[*next_workload_size].RGBA[0] =
-                        red;
-                    next_gpu_workload[*next_workload_size].RGBA[1] = 1.0f;
-                    next_gpu_workload[*next_workload_size].RGBA[2] = 1.0f;
-                    next_gpu_workload[*next_workload_size].RGBA[3] = 1.0f;
+                    next_gpu_workload[*next_workload_size].RGBA[0] = red;
+                    next_gpu_workload[*next_workload_size].RGBA[1] = green;
+                    next_gpu_workload[*next_workload_size].RGBA[2] = blue;
+                    next_gpu_workload[*next_workload_size].RGBA[3] = alpha;
                     
                     *next_workload_size += 1;
                 }

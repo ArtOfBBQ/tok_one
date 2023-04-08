@@ -60,59 +60,44 @@ void client_logic_startup(void) {
     register_new_texturearray_from_files(
         (const char **)filenames,
         1);
-    
-    float pixelspace_x = 500.0f;
-    float pixelspace_y = 350.0f;
-    #define OUR_OBJ_Z 0.6f
-    float z = OUR_OBJ_Z;
-    zPolygon quad;
-    construct_quad_around(
-        /* const float mid_x: */
-            screenspace_x_to_x(pixelspace_x, z),
-        /* const float mid_y: */
-            screenspace_y_to_y(pixelspace_y, z),
-        /* const float z: */
-            z,
-        /* const float width: */
-            screenspace_width_to_width(100, z),
-        /* const float height: */
-            screenspace_height_to_height(100, z),
-        /* zPolygon * recipient: */
-            &quad);
-    quad.triangles[0].color[0] = 1.0f;
-    quad.triangles[0].color[1] = 0.0f;
-    quad.triangles[0].color[2] = 1.0f;
-    quad.triangles[1].color[0] = 1.0f;
-    quad.triangles[1].color[1] = 0.0f;
-    quad.triangles[1].color[2] = 1.0f;
-    quad.object_id = 12345;
-    quad.ignore_lighting = true;
-    request_zpolygon_to_render(&quad);
-    
-    font_height = 30;
-    font_color[0] = 0.0f;
-    font_color[1] = 1.0f;
-    font_color[2] = 0.0f;
+        
+    font_height = 50;
+    font_color[0] = 1.0f;
+    font_color[1] = 0.0f;
+    font_color[2] = 0.4f;
     font_color[3] = 1.0f;
     request_label_offset_around(
         /* const int32_t with_id: */
-            quad.object_id,
+            -1,
         /* const char * text_to_draw: */
-            "I'm a label with fixed offsets!",
+            "Let's work on particle FX",
         /* const float mid_x_pixelspace: */
-            pixelspace_x,
-        /* const float top_y_pixelspace: */
-            pixelspace_y,
+            window_globals->window_width / 2,
+        /* const float mid_y_pixelspace: */
+            window_globals->window_height * 0.85f,
         /* const float pixelspace_x_offset_for_each_character: */
             50.0f,
         /* const float pixelspace_y_offset_for_each_character: */
             50.0f,
         /* const float z: */
-            z,
+            1.0f,
         /* const float max_width: */
-            100,
+            window_globals->window_width * 0.75f,
         /* const uint32_t ignore_camera: */
             false);
+    
+    ParticleEffect portal;
+    construct_particle_effect(&portal);
+    portal.x = 0.0f;
+    portal.y = 0.0f;
+    portal.z = 0.5f;
+    portal.particle_size = 0.005f;
+    portal.duration_per_particle = 2000000;
+    portal.height = 0.25f;
+    portal.origin_width = 0.15f;
+    portal.top_width = 0.25f;
+    portal.spawns_per_second = 1000;
+    request_particle_effect(&portal);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -149,19 +134,6 @@ void client_logic_animation_callback(int32_t callback_id)
 static void  client_handle_touches_and_leftclicks(
     uint64_t microseconds_elapsed)
 {
-    if (!user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].handled) {
-        user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].handled =
-            true;
-        
-        ScheduledAnimation move_quadandlabel;
-        construct_scheduled_animation(&move_quadandlabel);
-        move_quadandlabel.affected_object_id = 12345;
-        move_quadandlabel.final_x_known = true;
-        move_quadandlabel.final_mid_x = screenspace_x_to_x(tok_rand() % (uint32_t)window_globals->window_width, OUR_OBJ_Z);
-        move_quadandlabel.final_y_known = true;
-        move_quadandlabel.final_mid_y = screenspace_y_to_y(tok_rand() % (uint32_t)window_globals->window_height, OUR_OBJ_Z);;
-        request_scheduled_animation(&move_quadandlabel);
-    }
 }
 
 static void client_handle_keypresses(
@@ -204,50 +176,6 @@ static void client_handle_keypresses(
         camera.z_angle += cam_rotation_speed;                                    
     }
     
-    if (keypress_map[TOK_KEY_C] == true) {                                             
-        for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
-            if (zpolygons_to_render[i].object_id ==
-                12345)
-            {
-                for (
-                    uint32_t tri_i = 0;
-                    tri_i < zpolygons_to_render[i].triangles_size;
-                    tri_i++)
-                {
-                    zpolygons_to_render[i].triangles[tri_i].color[3] += 0.01f;
-                    log_append("quad alpha: ");
-                    log_append_uint(
-                         (uint32_t)(
-                             zpolygons_to_render[i].triangles[tri_i].color[3] *
-                                 100.0f));
-                    log_append_char('\n');
-                }
-            }
-        }
-    }
-    
-    if (keypress_map[TOK_KEY_V] == true) {                                             
-        for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
-            if (zpolygons_to_render[i].object_id ==
-                12345)
-            {
-                for (
-                     uint32_t tri_i = 0;
-                     tri_i < zpolygons_to_render[i].triangles_size;
-                     tri_i++)
-                {
-                    zpolygons_to_render[i].triangles[tri_i].color[3] -= 0.01f;
-                    log_append("quad alpha: ");
-                    log_append_uint(
-                         (uint32_t)(
-                             zpolygons_to_render[i].triangles[tri_i].color[3] *
-                                 100.0f));
-                    log_append_char('\n');
-                }
-            }
-        }
-    }
-    
     if (keypress_map[TOK_KEY_Q] == true) {                                                                                               
         camera.x_angle -= cam_rotation_speed;                                   
     }
@@ -267,13 +195,6 @@ static void client_handle_keypresses(
     
     if (keypress_map[TOK_KEY_UNDERSCORE] == true) {                                             
         camera.z += 0.01f;                                                      
-    }
-    
-    if (keypress_map[TOK_KEY_T] == true) {                                             
-        // T key is pressed
-        keypress_map[TOK_KEY_T] = false;
-        window_globals->visual_debug_mode =
-            !window_globals->visual_debug_mode;
     }
     
     if (keypress_map[TOK_KEY_SPACEBAR] == true) {                                             

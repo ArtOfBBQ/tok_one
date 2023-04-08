@@ -156,7 +156,6 @@ void request_label_offset_around(
     const bool32_t ignore_camera)
 {
     log_assert(max_width > 0.0f);
-    log_assert(with_id >= 0);
     
     float original_height = font_height;
     font_height *= z;
@@ -511,6 +510,10 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
     delete_zpolygon_object(label_object_id);
     
     font_height = 16.0f;
+    font_color[0] = 1.0f;
+    font_color[1] = 1.0f;
+    font_color[2] = 1.0f;
+    font_color[3] = 1.0f;
     font_ignore_lighting = true;
     request_label_renderable(
         /* with_id               : */ label_object_id,

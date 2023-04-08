@@ -386,7 +386,7 @@ string_to_uint32_validate(
         
         i--;
     }
-        
+    
     return return_value;
 }
 
@@ -411,7 +411,7 @@ string_to_float_validate(
 {
     if (input[0] == '\0') {
         #ifndef COMMON_SILENCE
-        printf("ERR: string_to_float but input[0] is nullterminator\n");
+        printf("ERROR: string_to_float but input[0] is nullterminator\n");
         #endif
         *good = false;
         return 0;
@@ -528,12 +528,10 @@ string_to_float_validate(
    
     // apply the 'scientific notation' exponent
     // e-4 means we want to multiply by -1 * (10^4)
-    printf("exponent: %i, modifier: %i\n", exponent, exponent_modifier);
     float scinot_modifier = 1;
     for (uint32_t _ = 0; _ < exponent; _++) {
 	scinot_modifier *= (exponent_modifier < 0 ? 0.1f : 10.0f);
     }
-    printf("applying scientific notation mod: %f\n", scinot_modifier);
     return_value *= scinot_modifier;
     
     *good = true;
