@@ -74,6 +74,27 @@ void add_particle_effects_to_workload(
             ray_to_camera.z = particle_effects[i].z - camera.z;
             normalize_zvertex(&ray_to_camera);
             
+            // get a vector perpendicular to the camera ray
+            zVertex arbitrary_vector;
+            arbitrary_vector.x = ray_to_camera.z;
+            arbitrary_vector.y = ray_to_camera.x;
+            arbitrary_vector.z = ray_to_camera.y;
+            
+            zVertex triangle_directions[3];
+            
+            triangle_directions[0] =
+                crossproduct_of_zvertices(&ray_to_camera, &arbitrary_vector);
+            normalize_zvertex(&triangle_directions[0]);
+            // we now have a vector perpendicular to the camera ray
+            
+            triangle_directions[1] =
+                crossproduct_of_zvertices(&arbitrary_vector, &ray_to_camera);
+            normalize_zvertex(&triangle_directions[1]);
+            
+            triangle_directions[2] =
+                crossproduct_of_zvertices(&triangle_directions[0], &ray_to_camera);
+            normalize_zvertex(&triangle_directions[2]);
+            
             particle_effects[i].elapsed += elapsed_nanoseconds;
             particle_effects[i].elapsed =
                 particle_effects[i].elapsed %
@@ -146,16 +167,13 @@ void add_particle_effects_to_workload(
                         particle_effects[i].y + y_offset;
                     next_gpu_workload[*next_workload_size].parent_z =
                         particle_effects[i].z + z_offset;
+                    // we're billboarding (always face to camera)
                     next_gpu_workload[*next_workload_size].x =
-                        m < 1 ?
-                            -half_size :
-                            half_size;
+                        triangle_directions[m].x * half_size;
                     next_gpu_workload[*next_workload_size].y =
-                        m < 2 ?
-                            -half_size :
-                            half_size;
-                    next_gpu_workload[*next_workload_size].z = 0.0f;
-                    // billboarding (always face to camera)
+                        triangle_directions[m].y * half_size;
+                    next_gpu_workload[*next_workload_size].z =
+                        triangle_directions[m].z * half_size;
                     next_gpu_workload[*next_workload_size].normal_x =
                         ray_to_camera.x;
                     next_gpu_workload[*next_workload_size].normal_y =
