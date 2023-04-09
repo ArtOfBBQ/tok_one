@@ -92,11 +92,17 @@ void client_logic_startup(void) {
     portal.y = 0.0f;
     portal.z = 0.5f;
     portal.particle_size = 0.005f;
-    portal.duration_per_particle = 2000000;
-    portal.height = 0.25f;
-    portal.origin_width = 0.15f;
-    portal.top_width = 0.25f;
-    portal.spawns_per_second = 1000;
+    portal.particle_lifespan = 2000000;
+    portal.particle_direction[0] = 0.5f;
+    portal.particle_direction[1] = 0.5f;
+    portal.particle_direction[2] = 0.1f;
+    
+    portal.particle_spawns_per_second = 1000;
+    portal.particle_distance_per_second = 0.3f;
+    
+    portal.particle_direction_max_x_angle_variance = 157;
+    portal.particle_direction_max_y_angle_variance = 157;
+    
     request_particle_effect(&portal);
 }
 

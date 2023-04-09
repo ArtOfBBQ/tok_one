@@ -3,13 +3,26 @@
 
 #include "common.h"
 
+#define RANDOM_IGNORE_ASSERTS
+#ifndef RANDOM_IGNORE_ASSERTS
+#include "assert.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#define RANDOM_SEQUENCE_SIZE 2000
+
 void init_rand_with_seed(const uint64_t seed);
+
 uint32_t tok_rand(void);
-void shuffle_array(void * array, const uint32_t array_size, const uint32_t element_size);
+uint32_t tok_rand_at_i(const uint64_t index);
+
+void shuffle_array(
+    void * array,
+    const uint32_t array_size,
+    const uint32_t element_size);
 
 #ifdef __cplusplus
 }
