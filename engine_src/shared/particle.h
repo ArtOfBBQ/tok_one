@@ -5,6 +5,9 @@
 extern "C" {
 #endif
 
+#define MAX_PARTICLE_TEXTURES 10
+#define PARTICLE_RGBA_PROGRESSION_MAX 10
+
 #include "clientlogic_macro_settings.h"
 #include "common.h"
 #include "logger.h"
@@ -23,22 +26,15 @@ typedef struct ParticleEffect {
     bool32_t deleted;
     
     uint32_t particle_spawns_per_second;
-    float particle_size;
+    float particle_height;
+    float particle_width;
     uint64_t particle_lifespan;
     
-    float particle_origin_rgba[4];
-    float particle_final_rgba[4];
+    float particle_rgba_progression[PARTICLE_RGBA_PROGRESSION_MAX][4];
+    uint32_t particle_rgba_progression_size;
     
     float particle_direction[3]; // the direction the particles fly in
     float particle_distance_per_second; // 1.0f to travel 1.0f per second
-    
-    // set these to 0 to have each particle start exactly at the origin
-    // set max_y to 20 to randomly have each particle offset by a y-axis value
-    // between 0.0f and 0.2f
-    uint32_t particle_origin_max_x_variance;
-    uint32_t particle_origin_max_y_variance;
-    uint32_t particle_origin_max_z_variance;
-    
     // set these to 0 to have each particle fly exactly in particle_direction
     // (so you will basically end up with a line)
     // set max_x_angle_variance to 318 to randomly rotate each particle's
@@ -47,6 +43,24 @@ typedef struct ParticleEffect {
     uint32_t particle_direction_max_x_angle_variance;
     uint32_t particle_direction_max_y_angle_variance;
     uint32_t particle_direction_max_z_angle_variance;
+    
+    float squared_direction[3];
+    float squared_distance_per_second;
+    uint32_t squared_direction_max_x_angle_variance;
+    uint32_t squared_direction_max_y_angle_variance;
+    uint32_t squared_direction_max_z_angle_variance;
+    
+    // set these to 0 to have each particle start exactly at the origin
+    // set max_y to 20 to randomly have each particle offset by a y-axis value
+    // between 0.0f and 0.2f
+    uint32_t particle_origin_max_x_variance;
+    uint32_t particle_origin_max_y_variance;
+    uint32_t particle_origin_max_z_variance;
+    
+    
+    int32_t random_texturearray_i[MAX_PARTICLE_TEXTURES];
+    int32_t random_texture_i[MAX_PARTICLE_TEXTURES];
+    int32_t random_textures_size;
 } ParticleEffect;
 
 extern ParticleEffect * particle_effects;
