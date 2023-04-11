@@ -3,12 +3,14 @@
 ScheduledAnimation * scheduled_animations;
 uint32_t scheduled_animations_size = 0;
 
+static bool32_t waiting_for_user_commit = false;
+
 void init_scheduled_animations(void) {
     scheduled_animations = (ScheduledAnimation *)malloc_from_unmanaged(
         sizeof(ScheduledAnimation) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
 }
 
-void construct_scheduled_animation(
+static void construct_scheduled_animation(
     ScheduledAnimation * to_construct)
 {
     to_construct->affected_object_id = -1;
@@ -59,9 +61,49 @@ void construct_scheduled_animation(
     to_construct->runs = 1;
     to_construct->delete_object_when_finished = false;
     to_construct->deleted = false;
+    to_construct->committed = false;
     to_construct->clientlogic_callback_when_finished_id = -1;
 }
 
+ScheduledAnimation * next_scheduled_animation(void) {
+    
+    log_assert(!waiting_for_user_commit); // commit before requesting again
+        
+    ScheduledAnimation * return_value = NULL;
+    
+    for (
+        int32_t i = 0;
+        i < (int32_t)scheduled_animations_size;
+        i++)
+    {
+        if (scheduled_animations[i].deleted)
+        {
+            return_value = &scheduled_animations[i];
+        }
+    }
+    
+    if (return_value == NULL) {
+        return_value = &scheduled_animations[scheduled_animations_size++];
+    }
+    
+    construct_scheduled_animation(return_value);
+    
+    return return_value;
+}
+
+void commit_scheduled_animation(ScheduledAnimation * to_commit) {
+    log_assert(!to_commit->committed);
+    
+    to_commit->remaining_microseconds = to_commit->duration_microseconds;
+    
+    to_commit->committed = true;
+    
+    if (to_commit->remaining_wait_before_next_run < 1) {
+        delete_conflicting_animations(to_commit);
+    }
+}
+
+/*
 void request_scheduled_animation(
     ScheduledAnimation * to_add)
 {
@@ -134,10 +176,9 @@ void request_scheduled_animation(
         SCHEDULED_ANIMATIONS_ARRAYSIZE
             > scheduled_animations_size);
 }
+*/
 
-void delete_conflicting_animations(
-    ScheduledAnimation * priority_anim,
-    const int32_t self_index)
+void delete_conflicting_animations(ScheduledAnimation * priority_anim)
 {
     float float_threshold = 0.0001f;
     
@@ -146,25 +187,30 @@ void delete_conflicting_animations(
         i < (int32_t)scheduled_animations_size;
         i++)
     {
+        // candidate for elimination when it conflicts
+        ScheduledAnimation * candidate = &scheduled_animations[i];
+        
+        // never conflict with yourself
+        if (priority_anim == candidate) { continue; }
+        
         if (
-            (scheduled_animations[i].remaining_wait_before_next_run > 0 &&
+            (candidate->remaining_wait_before_next_run > 0 &&
                 !priority_anim->destroy_even_waiting_duplicates) ||
-            scheduled_animations[i].deleted ||
-            scheduled_animations[i].clientlogic_callback_when_finished_id
+            candidate->deleted ||
+            candidate->clientlogic_callback_when_finished_id
                 != -1 ||
-            (scheduled_animations[i].affected_object_id !=
+            (candidate->affected_object_id !=
                 priority_anim->affected_object_id) ||
-            i == self_index ||
-            scheduled_animations[i].runs != 1)
+            candidate->runs != 1)
         {
             continue;
         }
         
         if (
             priority_anim->final_z_known &&
-            scheduled_animations[i].final_z_known)
+            candidate->final_z_known)
         {
-            scheduled_animations[i].deleted = true;
+            candidate->deleted = true;
         }
         
         if (
@@ -175,20 +221,20 @@ void delete_conflicting_animations(
                 priority_anim->delta_z_per_second >  float_threshold
             )) &&
             (
-            !scheduled_animations[i].final_z_known &&
+            !candidate->final_z_known &&
             (
-                scheduled_animations[i].delta_z_per_second < -float_threshold ||
-                scheduled_animations[i].delta_z_per_second >  float_threshold
+                candidate->delta_z_per_second < -float_threshold ||
+                candidate->delta_z_per_second >  float_threshold
             )))
         {
-            scheduled_animations[i].deleted = true;
+            candidate->deleted = true;
         }
         
         if (
             priority_anim->final_x_known &&
-            scheduled_animations[i].final_x_known)
+            candidate->final_x_known)
         {
-            scheduled_animations[i].deleted = true;
+            candidate->deleted = true;
         }
         
         if (
@@ -199,20 +245,20 @@ void delete_conflicting_animations(
                 priority_anim->delta_x_per_second >  float_threshold
             )) &&
             (
-            !scheduled_animations[i].final_x_known &&
+            !candidate->final_x_known &&
             (
-                scheduled_animations[i].delta_x_per_second < -float_threshold ||
-                scheduled_animations[i].delta_x_per_second >  float_threshold
+                candidate->delta_x_per_second < -float_threshold ||
+                candidate->delta_x_per_second >  float_threshold
             )))
         {
-            scheduled_animations[i].deleted = true;
+            candidate->deleted = true;
         }
         
         if (
             priority_anim->final_y_known &&
-            scheduled_animations[i].final_y_known)
+            candidate->final_y_known)
         {
-            scheduled_animations[i].deleted = true;
+            candidate->deleted = true;
         }
         
         if (
@@ -223,20 +269,20 @@ void delete_conflicting_animations(
                 priority_anim->delta_y_per_second >  float_threshold
             )) &&
             (
-            !scheduled_animations[i].final_y_known &&
+            !candidate->final_y_known &&
             (
-                scheduled_animations[i].delta_y_per_second < -float_threshold ||
-                scheduled_animations[i].delta_y_per_second >  float_threshold
+                candidate->delta_y_per_second < -float_threshold ||
+                candidate->delta_y_per_second >  float_threshold
             )))
         {
-            scheduled_animations[i].deleted = true;
+            candidate->deleted = true;
         }
         
         if (
             priority_anim->final_y_angle_known &&
-            scheduled_animations[i].final_y_angle_known)
+            candidate->final_y_angle_known)
         {
-            scheduled_animations[i].deleted = true;
+            candidate->deleted = true;
         }
         
         if (
@@ -247,13 +293,13 @@ void delete_conflicting_animations(
                 priority_anim->y_rotation_per_second >  float_threshold
             )) &&
             (
-            !scheduled_animations[i].final_y_angle_known &&
+            !candidate->final_y_angle_known &&
             (
-                scheduled_animations[i].y_rotation_per_second < -float_threshold ||
-                scheduled_animations[i].y_rotation_per_second >  float_threshold
+                candidate->y_rotation_per_second < -float_threshold ||
+                candidate->y_rotation_per_second >  float_threshold
             )))
         {
-            scheduled_animations[i].deleted = true;
+            candidate->deleted = true;
         }
     }
 }
@@ -267,17 +313,16 @@ void request_fade_and_destroy(
     log_assert(object_id >= 0);
     
     // register scheduled animation
-    ScheduledAnimation modify_alpha;
-    construct_scheduled_animation(&modify_alpha);
-    modify_alpha.affected_object_id = object_id;
-    modify_alpha.remaining_wait_before_next_run = wait_before_first_run;
-    modify_alpha.duration_microseconds = duration_microseconds;
-    modify_alpha.rgba_delta_per_second[1] = -0.5f;
-    modify_alpha.rgba_delta_per_second[2] = -0.5f;
-    modify_alpha.final_rgba_known[3] = true;
-    modify_alpha.final_rgba[3] = 0.0f;
-    modify_alpha.delete_object_when_finished = true;
-    request_scheduled_animation(&modify_alpha);
+    ScheduledAnimation * modify_alpha = next_scheduled_animation();
+    modify_alpha->affected_object_id = object_id;
+    modify_alpha->remaining_wait_before_next_run = wait_before_first_run;
+    modify_alpha->duration_microseconds = duration_microseconds;
+    modify_alpha->rgba_delta_per_second[1] = -0.5f;
+    modify_alpha->rgba_delta_per_second[2] = -0.5f;
+    modify_alpha->final_rgba_known[3] = true;
+    modify_alpha->final_rgba[3] = 0.0f;
+    modify_alpha->delete_object_when_finished = true;
+    commit_scheduled_animation(modify_alpha);
 }
 
 void request_fade_to(
@@ -289,14 +334,13 @@ void request_fade_to(
     log_assert(object_id >= 0);
     
     // register scheduled animation
-    ScheduledAnimation modify_alpha;
-    construct_scheduled_animation(&modify_alpha);
-    modify_alpha.affected_object_id = object_id;
-    modify_alpha.remaining_wait_before_next_run = wait_before_first_run;
-    modify_alpha.duration_microseconds = duration_microseconds;
-    modify_alpha.final_rgba_known[3] = true;
-    modify_alpha.final_rgba[3] = target_alpha;
-    request_scheduled_animation(&modify_alpha);
+    ScheduledAnimation * modify_alpha = next_scheduled_animation();
+    modify_alpha->affected_object_id = object_id;
+    modify_alpha->remaining_wait_before_next_run = wait_before_first_run;
+    modify_alpha->duration_microseconds = duration_microseconds;
+    modify_alpha->final_rgba_known[3] = true;
+    modify_alpha->final_rgba[3] = target_alpha;
+    commit_scheduled_animation(modify_alpha);
 }
 
 static void resolve_single_animation_effects(
@@ -638,6 +682,10 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
             continue;
         }
         
+        if (!anim->committed) {
+            continue;
+        }
+        
         uint64_t actual_elapsed = microseconds_elapsed;
         
         if (anim->remaining_wait_before_next_run > 0) {
@@ -645,7 +693,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                 actual_elapsed -= anim->remaining_wait_before_next_run;
                 anim->remaining_wait_before_next_run = 0;
                 
-                delete_conflicting_animations(anim, animation_i);
+                delete_conflicting_animations(anim);
             } else {
                 anim->remaining_wait_before_next_run -= actual_elapsed;
                 continue;
@@ -766,19 +814,17 @@ void request_dud_dance(const uint32_t object_id)
         wait_first < step_size * 8;
         wait_first += step_size)
     {
-        ScheduledAnimation move_request;
-        construct_scheduled_animation(&move_request);
-        move_request.affected_object_id = (int32_t)object_id;
-        move_request.remaining_wait_before_next_run = wait_first;
-        move_request.duration_microseconds = step_size;
-        move_request.delta_x_per_second =
+        ScheduledAnimation * move_request = next_scheduled_animation();
+        move_request->affected_object_id = (int32_t)object_id;
+        move_request->remaining_wait_before_next_run = wait_first;
+        move_request->duration_microseconds = step_size;
+        move_request->delta_x_per_second =
             wait_first % (step_size * 2) == 0 ?
                 0.07f : -0.07f;
-        move_request.delta_y_per_second =
+        move_request->delta_y_per_second =
             wait_first % (step_size * 2) == 0 ?
                 0.07f : -0.07f;
-        request_scheduled_animation(
-            &move_request);
+        commit_scheduled_animation(move_request);
     }
 }
 
@@ -788,27 +834,21 @@ void request_bump_animation(
 {
     uint64_t duration = 200000;
     
-    ScheduledAnimation embiggen_request;
-    construct_scheduled_animation(&embiggen_request);
-    embiggen_request.affected_object_id = (int32_t)object_id;
-    embiggen_request.remaining_wait_before_next_run = wait;
-    embiggen_request.duration_microseconds = duration / 2;
-    embiggen_request.final_scale_known = true;
-    embiggen_request.final_scale = 1.35f;
-    // embiggen_request.final_yscale_known = true;
-    // embiggen_request.final_yscale = 1.35f;
-    request_scheduled_animation(&embiggen_request);
+    ScheduledAnimation * embiggen_request = next_scheduled_animation();
+    embiggen_request->affected_object_id = (int32_t)object_id;
+    embiggen_request->remaining_wait_before_next_run = wait;
+    embiggen_request->duration_microseconds = duration / 2;
+    embiggen_request->final_scale_known = true;
+    embiggen_request->final_scale = 1.35f;
+    commit_scheduled_animation(embiggen_request);
     
-    ScheduledAnimation revert_request;
-    construct_scheduled_animation(&revert_request);
-    revert_request.affected_object_id = (int32_t)object_id;
-    revert_request.remaining_wait_before_next_run = wait + duration / 2;
-    revert_request.duration_microseconds = duration / 2;
-    revert_request.final_scale_known = true;
-    revert_request.final_scale = 1.0f;
-    // revert_request.final_yscale_known = true;
-    // revert_request.final_yscale = 1.0f;
-    request_scheduled_animation(&revert_request);
+    ScheduledAnimation * revert_request = next_scheduled_animation();
+    revert_request->affected_object_id = (int32_t)object_id;
+    revert_request->remaining_wait_before_next_run = wait + duration / 2;
+    revert_request->duration_microseconds = duration / 2;
+    revert_request->final_scale_known = true;
+    revert_request->final_scale = 1.0f;
+    commit_scheduled_animation(revert_request);
 }
 
 void delete_all_movement_animations_targeting(

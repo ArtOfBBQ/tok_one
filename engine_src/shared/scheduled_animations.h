@@ -131,6 +131,8 @@ typedef struct ScheduledAnimation {
     uint32_t runs; // 0 to repeat forever, 1 to run 1x, 2 to run 2x etc
     bool32_t delete_object_when_finished;
     bool32_t deleted;
+    bool32_t committed;
+    
     // ****
     // set to -1 to not callback at all
     // if 0 or higher, client_logic_animation_callback()
@@ -139,13 +141,10 @@ typedef struct ScheduledAnimation {
     // ****
 } ScheduledAnimation;
 
-void construct_scheduled_animation(ScheduledAnimation * to_construct);
+ScheduledAnimation * next_scheduled_animation(void);
+void commit_scheduled_animation(ScheduledAnimation * to_commit);
 
-void request_scheduled_animation(ScheduledAnimation * to_add);
-
-void delete_conflicting_animations(
-    ScheduledAnimation * priority_anim,
-    const int32_t self_index);
+void delete_conflicting_animations(ScheduledAnimation * priority_anim);
 
 void request_fade_and_destroy(
     const int32_t object_id,

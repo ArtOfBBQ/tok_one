@@ -312,19 +312,19 @@ static void client_handle_keypresses(
         bullet_light.z = bullet.z;
         bullet_light.deleted = false;
         
-        ScheduledAnimation move_bullet;
-        construct_scheduled_animation(&move_bullet);
-        move_bullet.affected_object_id = bullet.object_id;
-        move_bullet.delta_x_per_second = camera_direction.x;
-        move_bullet.delta_y_per_second = camera_direction.y;
-        move_bullet.delta_z_per_second = camera_direction.z * 3.0f;
-        move_bullet.delete_object_when_finished = true;
-        move_bullet.duration_microseconds = 2500000;
-        move_bullet.runs = 1;
+        ScheduledAnimation * move_bullet = next_scheduled_animation();
+        move_bullet->affected_object_id = bullet.object_id;
+        move_bullet->delta_x_per_second = camera_direction.x;
+        move_bullet->delta_y_per_second = camera_direction.y;
+        move_bullet->delta_z_per_second = camera_direction.z * 3.0f;
+        move_bullet->delete_object_when_finished = true;
+        move_bullet->duration_microseconds = 2500000;
+        move_bullet->runs = 1;
         
         request_zpolygon_to_render(&bullet);
         request_zlightsource(&bullet_light);
-        request_scheduled_animation(&move_bullet);
+        
+        commit_scheduled_animation(move_bullet);
     }
 }
 
