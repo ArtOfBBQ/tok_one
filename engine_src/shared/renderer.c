@@ -116,13 +116,23 @@ void hardware_render(
             tri_i < zpolygons_to_render[zp_i].triangles_size;
             tri_i++)
         {
+            int32_t material_i = all_meshes[
+                zpolygons_to_render[zp_i].mesh_head_i + tri_i].
+                    parent_material_i;
+            log_assert(material_i >= 0);
+            log_assert(
+                material_i < zpolygons_to_render[zp_i].triangle_materials_size);
+            
             for (uint32_t m = 0; m < 3; m++) {
                 next_gpu_workload[*next_workload_size].x =
-                    zpolygons_to_render[zp_i].triangles[tri_i].vertices[m].x;
+                    all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
+                        vertices[m].x;
                 next_gpu_workload[*next_workload_size].y =
-                    zpolygons_to_render[zp_i].triangles[tri_i].vertices[m].y;
+                    all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
+                        vertices[m].y;
                 next_gpu_workload[*next_workload_size].z =
-                    zpolygons_to_render[zp_i].triangles[tri_i].vertices[m].z;
+                    all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
+                        vertices[m].z;
                 next_gpu_workload[*next_workload_size].parent_x =
                     zpolygons_to_render[zp_i].x;
                 next_gpu_workload[*next_workload_size].parent_y =
@@ -136,32 +146,43 @@ void hardware_render(
                 next_gpu_workload[*next_workload_size].z_angle =
                     zpolygons_to_render[zp_i].z_angle;
                 next_gpu_workload[*next_workload_size].normal_x =
-                    zpolygons_to_render[zp_i].triangles[tri_i].normal.x;
+                    all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
+                        normal.x;
                 next_gpu_workload[*next_workload_size].normal_y =
-                    zpolygons_to_render[zp_i].triangles[tri_i].normal.y;
+                    all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
+                        normal.y;
                 next_gpu_workload[*next_workload_size].normal_z =
-                    zpolygons_to_render[zp_i].triangles[tri_i].normal.z;
+                    all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
+                        normal.z;
                 next_gpu_workload[*next_workload_size].RGBA[0] =
-                    zpolygons_to_render[zp_i].triangles[tri_i].color[0]
-                        + zpolygons_to_render[zp_i].rgb_bonus[0];
+                    zpolygons_to_render[zp_i].
+                        triangle_materials[material_i].color[0]
+                            + zpolygons_to_render[zp_i].rgb_bonus[0];
                 next_gpu_workload[*next_workload_size].RGBA[1] =
-                    zpolygons_to_render[zp_i].triangles[tri_i].color[1]
-                        + zpolygons_to_render[zp_i].rgb_bonus[1];
+                    zpolygons_to_render[zp_i].
+                        triangle_materials[material_i].color[1]
+                            + zpolygons_to_render[zp_i].rgb_bonus[1];
                 next_gpu_workload[*next_workload_size].RGBA[2] =
-                    zpolygons_to_render[zp_i].triangles[tri_i].color[2]
-                        + zpolygons_to_render[zp_i].rgb_bonus[2];
+                    zpolygons_to_render[zp_i].
+                        triangle_materials[material_i].color[2]
+                            + zpolygons_to_render[zp_i].rgb_bonus[2];
                 next_gpu_workload[*next_workload_size].RGBA[3] =
-                    zpolygons_to_render[zp_i].triangles[tri_i].color[3];
+                    zpolygons_to_render[zp_i].
+                        triangle_materials[material_i].color[3];
                 next_gpu_workload[*next_workload_size].touchable_id =
                     zpolygons_to_render[zp_i].touchable_id;
                 next_gpu_workload[*next_workload_size].texture_i =
-                    zpolygons_to_render[zp_i].triangles[tri_i].texture_i;
+                    zpolygons_to_render[zp_i].
+                        triangle_materials[material_i].texture_i;
                 next_gpu_workload[*next_workload_size].texturearray_i =
-                    zpolygons_to_render[zp_i].triangles[tri_i].texturearray_i;
+                    zpolygons_to_render[zp_i].
+                        triangle_materials[material_i].texturearray_i;
                 next_gpu_workload[*next_workload_size].uv[0] =
-                    zpolygons_to_render[zp_i].triangles[tri_i].vertices[m].uv[0];
+                    all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
+                        vertices[m].uv[0];
                 next_gpu_workload[*next_workload_size].uv[1] =
-                    zpolygons_to_render[zp_i].triangles[tri_i].vertices[m].uv[1];
+                    all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
+                        vertices[m].uv[1];
                 next_gpu_workload[*next_workload_size].ignore_lighting =
                     zpolygons_to_render[zp_i].ignore_lighting;
                 next_gpu_workload[*next_workload_size].scale_factor =

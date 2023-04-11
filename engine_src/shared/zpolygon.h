@@ -15,6 +15,8 @@
 #include "window_size.h"
 #include "texture_array.h"
 
+#define MAX_MATERIALS_SIZE 10
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -23,9 +25,7 @@ void zcamera_move_forward(
     zCamera * to_move,
     const float distance);
 
-typedef struct zTriangle {
-    zVertex vertices[3];
-    zVertex normal;
+typedef struct TriangleMaterial {
     float color[4];         // RGBA, ignored if textured
     int32_t texturearray_i; /*
                             the index in the global var
@@ -34,11 +34,25 @@ typedef struct zTriangle {
                             instead"
                             */
     int32_t texture_i;     // index in texturearray
+} TriangleMaterial;
+
+typedef struct zTriangle {
+    zVertex vertices[3];
+    zVertex normal;
+    int32_t parent_material_i;
 } zTriangle;
 
+extern zTriangle * all_meshes;
+extern uint32_t all_meshes_size;
+
+int32_t new_mesh_head_id_from_file(const char * filenames);
+
 typedef struct zPolygon {
-    zTriangle triangles[POLYGON_TRIANGLES_SIZE];
+    // zTriangle triangles[POLYGON_TRIANGLES_SIZE];
+    uint32_t mesh_head_i;
     uint32_t triangles_size;
+    TriangleMaterial triangle_materials[MAX_MATERIALS_SIZE];
+    uint32_t triangle_materials_size;
     int32_t object_id;
     int32_t touchable_id;
     float x;
@@ -115,7 +129,8 @@ void parse_obj(
     char * rawdata,
     uint64_t rawdata_size,
     const bool32_t flip_winding,
-    zPolygon * recipient);
+    zTriangle * recipient,
+    uint32_t * recipient_size);
 typedef struct ExpectedObjMaterials {
     char material_name[16];
     int32_t texturearray_i;
@@ -128,7 +143,8 @@ void parse_obj_expecting_materials(
     ExpectedObjMaterials * expected_materials,
     const uint32_t expected_materials_size,
     const bool32_t flip_winding,
-    zPolygon * recipient);
+    zTriangle * recipient,
+    uint32_t * recipient_size);
 
 void zpolygon_scale_width_only_given_z(
     zPolygon * to_scale,

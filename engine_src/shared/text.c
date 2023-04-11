@@ -287,8 +287,9 @@ void request_label_offset_around(
                 rgba_i < 4;
                 rgba_i++)
             {
-                letter.triangles[0].color[rgba_i] = font_color[rgba_i];
-                letter.triangles[1].color[rgba_i] = font_color[rgba_i];
+                // TODO: rewrite for using all_meshes
+                // letter.triangles[0].color[rgba_i] = font_color[rgba_i];
+                // letter.triangles[1].color[rgba_i] = font_color[rgba_i];
             }
             
             float letter_x_offset = screenspace_width_to_width(
@@ -300,20 +301,21 @@ void request_label_offset_around(
             letter.z = 0;
             
             for (uint32_t m = 0; m < 3; m++) {
-                letter.triangles[0].vertices[m].x += letter_x_offset;
-                letter.triangles[0].vertices[m].y += letter_y_offset;
-                letter.triangles[1].vertices[m].x += letter_x_offset;
-                letter.triangles[1].vertices[m].y += letter_y_offset;
+                // TODO: rewrite for using all_meshes
+                //                letter.triangles[0].vertices[m].x += letter_x_offset;
+                //                letter.triangles[0].vertices[m].y += letter_y_offset;
+                //                letter.triangles[1].vertices[m].x += letter_x_offset;
+                //                letter.triangles[1].vertices[m].y += letter_y_offset;
             }
             
-            letter.triangles[0].texturearray_i = font_texturearray_i;
-            letter.triangles[0].texture_i      = text_to_draw[j] - '!';
-            letter.triangles[1].texturearray_i = font_texturearray_i;
-            letter.triangles[1].texture_i      = text_to_draw[j] - '!';
+            // TODO: rewrite for using all_meshes
+            //            letter.triangles[0].texturearray_i = font_texturearray_i;
+            //            letter.triangles[0].texture_i      = text_to_draw[j] - '!';
+            //            letter.triangles[1].texturearray_i = font_texturearray_i;
+            //            letter.triangles[1].texture_i      = text_to_draw[j] - '!';
             
-            log_assert(label.triangles_size + 1 < POLYGON_TRIANGLES_SIZE);
-            label.triangles[label.triangles_size    ] = letter.triangles[0];
-            label.triangles[label.triangles_size + 1] = letter.triangles[1];
+            // label.triangles[label.triangles_size    ] = letter.triangles[0];
+            // label.triangles[label.triangles_size + 1] = letter.triangles[1];
             label.triangles_size += 2;
             
             cur_x_offset_pixelspace += get_advance_width(text_to_draw[j]);
@@ -439,18 +441,20 @@ void request_label_renderable(
                 letter_height,
             /* recipient: */
                 &letter);
-        letter.triangles[0].texturearray_i = font_texturearray_i;
-        letter.triangles[1].texturearray_i = font_texturearray_i;
-        letter.triangles[0].texture_i = (int32_t)(text_to_draw[i] - '!');
-        letter.triangles[1].texture_i = (int32_t)(text_to_draw[i] - '!');
+        
+        // TODO: rewrite for using all_meshes
+        //        letter.triangles[0].texturearray_i = font_texturearray_i;
+        //        letter.triangles[1].texturearray_i = font_texturearray_i;
+        //        letter.triangles[0].texture_i = (int32_t)(text_to_draw[i] - '!');
+        //        letter.triangles[1].texture_i = (int32_t)(text_to_draw[i] - '!');
         
         for (
             uint32_t rgba_i = 0;
             rgba_i < 4;
             rgba_i++)
         {
-            letter.triangles[0].color[rgba_i] = font_color[rgba_i];
-            letter.triangles[1].color[rgba_i] = font_color[rgba_i];
+            // letter.triangles[0].color[rgba_i] = font_color[rgba_i];
+            // letter.triangles[1].color[rgba_i] = font_color[rgba_i];
         }
         
         float letter_x_offset =
@@ -461,19 +465,18 @@ void request_label_renderable(
                 cur_y_offset - get_y_offset(text_to_draw[i]), z);
         
         for (uint32_t m = 0; m < 3; m++) {
-            letter.triangles[0].vertices[m].x += letter_x_offset;
-            letter.triangles[0].vertices[m].y += letter_y_offset;
-            letter.triangles[1].vertices[m].x += letter_x_offset;
-            letter.triangles[1].vertices[m].y += letter_y_offset;
+            // TODO: rewrite for using all_meshes
+            //            letter.triangles[0].vertices[m].x += letter_x_offset;
+            //            letter.triangles[0].vertices[m].y += letter_y_offset;
+            //            letter.triangles[1].vertices[m].x += letter_x_offset;
+            //            letter.triangles[1].vertices[m].y += letter_y_offset;
         }
-        
-        log_assert(label_to_render.triangles_size + 1 < POLYGON_TRIANGLES_SIZE);
-        
-        label_to_render.triangles[label_to_render.triangles_size] =
-            letter.triangles[0];
-        label_to_render.triangles[label_to_render.triangles_size + 1] =
-            letter.triangles[1];
-        label_to_render.triangles_size += 2;
+                
+        //        label_to_render.triangles[label_to_render.triangles_size] =
+        //            letter.triangles[0];
+        //        label_to_render.triangles[label_to_render.triangles_size + 1] =
+        //            letter.triangles[1];
+        // label_to_render.triangles_size += 2;
         
         cur_x_offset += get_advance_width(text_to_draw[i]);
         if (left_pixelspace + cur_x_offset + get_advance_width('w') >= max_width)
@@ -485,7 +488,8 @@ void request_label_renderable(
         i++;
     }
     
-    request_zpolygon_to_render(&label_to_render);
+    // TODO: fix labels
+    // request_zpolygon_to_render(&label_to_render);
 }
 
 void request_fps_counter(uint64_t microseconds_elapsed) {

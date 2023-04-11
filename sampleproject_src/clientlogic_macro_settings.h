@@ -17,7 +17,7 @@ the max # of triangles in 1 zpolygon. 2 is enough for simple 2D sprites,
 but that will block you from being able to make text labels which have
 2 triangles per letter.
 */
-#define POLYGON_TRIANGLES_SIZE 1000
+#define ALL_MESH_TRIANGLES_SIZE 10000
 
 /*
 The max # of particle effects in your app
