@@ -10,18 +10,12 @@
 #include "simd.h"
 #include "common.h"
 #include "window_size.h"
+#include "triangle.h"
 #include "memorystore.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef struct zVertex {
-    float x;
-    float y;
-    float z;
-    float uv[2];         // texture coords, ignored if untextured
-} zVertex;
 
 zVertex x_rotate_zvertex(
     const zVertex * input,

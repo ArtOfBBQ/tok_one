@@ -14,8 +14,9 @@
 #include "lightsource.h"
 #include "window_size.h"
 #include "texture_array.h"
+#include "objmodel.h"
 
-#define MAX_MATERIALS_SIZE 10
+#define MAX_MATERIALS_SIZE 4
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,20 +37,8 @@ typedef struct TriangleMaterial {
     int32_t texture_i;     // index in texturearray
 } TriangleMaterial;
 
-typedef struct zTriangle {
-    zVertex vertices[3];
-    zVertex normal;
-    int32_t parent_material_i;
-} zTriangle;
-
-extern zTriangle * all_meshes;
-extern uint32_t all_meshes_size;
-
-int32_t new_mesh_head_id_from_file(const char * filenames);
-
 typedef struct zPolygon {
-    // zTriangle triangles[POLYGON_TRIANGLES_SIZE];
-    uint32_t mesh_head_i;
+    uint32_t mesh_head_i; // triangles start at all_meshes[mesh_head_i]
     uint32_t triangles_size;
     TriangleMaterial triangle_materials[MAX_MATERIALS_SIZE];
     uint32_t triangle_materials_size;
@@ -65,7 +54,18 @@ typedef struct zPolygon {
     float hitbox_height;
     float hitbox_depth;
     float rgb_bonus[3];
+    
+    /*
+    The x,y, and z multipliers are meant as permanent settings to adjust the
+    size of the linked mesh. Scale factor affects all vertices and is meant as
+    an animation target (so it's normally 1.0f and you change it temporarily to
+    resize your objects)
+    */
+    float x_multiplier;
+    float y_multiplier;
+    float z_multiplier;
     float scale_factor;
+    
     bool32_t ignore_camera;
     bool32_t ignore_lighting;
     bool32_t deleted;
@@ -111,40 +111,6 @@ zVertex crossproduct_of_zvertices(
 
 zVertex get_ztriangle_normal(
     const zTriangle * input);
-
-/*
-The base version of parse_obj will just ignore materials and set all texture_i
-'s to -1, all texturearray_i's to -1, and all colors to 1.0f.
-
-If you need more specific behavior, pass an array of ExpectedObjMaterials to
-set textures or colors
-
-For example, you could set material_name to 'marble' and set texturearray_i 5
-and texture_i 1 if you had labeled some faces of your object with the material
-'marble' in Blender and your marble texture was stored at 5,1.
-You could set the texturearray_i and texture_i to -1 and use a color for
-another material name, etc.
-*/
-void parse_obj(
-    char * rawdata,
-    uint64_t rawdata_size,
-    const bool32_t flip_winding,
-    zTriangle * recipient,
-    uint32_t * recipient_size);
-typedef struct ExpectedObjMaterials {
-    char material_name[16];
-    int32_t texturearray_i;
-    int32_t texture_i;
-    float rgba[4];
-} ExpectedObjMaterials;
-void parse_obj_expecting_materials(
-    char * rawdata,
-    uint64_t rawdata_size,
-    ExpectedObjMaterials * expected_materials,
-    const uint32_t expected_materials_size,
-    const bool32_t flip_winding,
-    zTriangle * recipient,
-    uint32_t * recipient_size);
 
 void zpolygon_scale_width_only_given_z(
     zPolygon * to_scale,

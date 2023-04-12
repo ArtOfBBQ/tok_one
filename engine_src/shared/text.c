@@ -457,12 +457,12 @@ void request_label_renderable(
             // letter.triangles[1].color[rgba_i] = font_color[rgba_i];
         }
         
-        float letter_x_offset =
-            screenspace_width_to_width(
-                cur_x_offset + get_left_side_bearing(text_to_draw[i]), z);
-        float letter_y_offset =
-            screenspace_height_to_height(
-                cur_y_offset - get_y_offset(text_to_draw[i]), z);
+        //        float letter_x_offset =
+        //            screenspace_width_to_width(
+        //                cur_x_offset + get_left_side_bearing(text_to_draw[i]), z);
+        //        float letter_y_offset =
+        //            screenspace_height_to_height(
+        //                cur_y_offset - get_y_offset(text_to_draw[i]), z);
         
         for (uint32_t m = 0; m < 3; m++) {
             // TODO: rewrite for using all_meshes

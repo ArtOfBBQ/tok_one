@@ -126,13 +126,16 @@ void hardware_render(
             for (uint32_t m = 0; m < 3; m++) {
                 next_gpu_workload[*next_workload_size].x =
                     all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
-                        vertices[m].x;
+                        vertices[m].x *
+                    zpolygons_to_render[zp_i].x_multiplier;
                 next_gpu_workload[*next_workload_size].y =
                     all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
-                        vertices[m].y;
+                        vertices[m].y *
+                    zpolygons_to_render[zp_i].y_multiplier;
                 next_gpu_workload[*next_workload_size].z =
                     all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
-                        vertices[m].z;
+                        vertices[m].z *
+                    zpolygons_to_render[zp_i].z_multiplier;
                 next_gpu_workload[*next_workload_size].parent_x =
                     zpolygons_to_render[zp_i].x;
                 next_gpu_workload[*next_workload_size].parent_y =

@@ -27,8 +27,7 @@ void init_application(
         sizeof(bool32_t) * KEYPRESS_MAP_SIZE);
     zpolygons_to_render = (zPolygon *)malloc_from_unmanaged(
         sizeof(zPolygon) * ZPOLYGONS_TO_RENDER_ARRAYSIZE);
-    all_meshes = (zTriangle *)malloc_from_unmanaged(
-        sizeof(zTriangle) * ALL_MESH_TRIANGLES_SIZE);
+    init_all_meshes();
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
         sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
     particle_effects = (ParticleEffect *)malloc_from_unmanaged(

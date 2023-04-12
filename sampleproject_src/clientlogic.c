@@ -48,6 +48,10 @@ void client_logic_get_application_name_to_recipient(
 }
 
 void client_logic_startup(void) {
+
+    log_append("sizeof(zPolygon): ");
+    log_append_uint(sizeof(zPolygon));
+    log_append_char('\n');
     
     const char * fontfile;
         fontfile = "font.png";
@@ -71,7 +75,7 @@ void client_logic_startup(void) {
     };
     
     int32_t key_mesh_head_id =
-        new_mesh_head_id_from_file(obj_filenames[0]);
+        new_mesh_head_id_from_resource(obj_filenames[0]);
     
     zPolygon key;
     construct_zpolygon(&key);
@@ -308,24 +312,22 @@ static void client_handle_keypresses(
             /* z:    */
                 1.0f,
             /* width: */
-                bullet_size,                                                    
+                bullet_size,                                                  
             /* height: */
                 bullet_size,
             /* recipient: */
                 &bullet);
         bullet.object_id = 54321 + (tok_rand() % 1000);
         bullet.z = camera.z;
-        float r_color = ((float)(tok_rand() % 100)) / 100.0f;
-        float g_color = ((float)(tok_rand() % 100)) / 100.0f;
-        float b_color = ((float)(tok_rand() % 100)) / 100.0f;
-        for (uint32_t tri_i = 0; tri_i < bullet.triangles_size; tri_i++) {
-            // TODO: colors with all_meshes
-            //            bullet.triangles[tri_i].color[0] = r_color;
-            //            bullet.triangles[tri_i].color[1] = g_color;
-            //            bullet.triangles[tri_i].color[2] = b_color;
-            //            bullet.triangles[tri_i].color[3] = 1.0f;
-        }
+        bullet.triangle_materials[0].color[0] =
+            ((float)(tok_rand() % 100)) / 100.0f;
+        bullet.triangle_materials[0].color[1] =
+            ((float)(tok_rand() % 100)) / 100.0f;
+        bullet.triangle_materials[0].color[2] =
+            ((float)(tok_rand() % 100)) / 100.0f;
         bullet.ignore_lighting = true;
+        bullet.x_multiplier = 0.02f;
+        bullet.y_multiplier = 0.02f;
         
         zLightSource bullet_light;
         bullet_light.object_id = bullet.object_id;

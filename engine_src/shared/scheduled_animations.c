@@ -614,13 +614,25 @@ static void resolve_single_animation_effects(
             c++)
         {
             if (!anim->final_rgba_known[c]) {
-                for (uint32_t tri_i = 0; tri_i < zpolygons_to_render[zp_i].triangles_size; tri_i++) {
+                for (
+                    uint32_t tri_i = 0;
+                    tri_i < zpolygons_to_render[zp_i].triangles_size;
+                    tri_i++)
+                {
                     float delta = ((anim->rgba_delta_per_second[c]
                             * elapsed_this_run)
                         / 1000000);
-                    // TODO: store color in zpoly, not in all_meshes
-                    // zpolygons_to_render[zp_i].triangles[tri_i].color[c] +=
-                    //     delta;
+                        
+                    for (
+                        uint32_t mat_i = 0;
+                        mat_i < zpolygons_to_render[zp_i].
+                            triangle_materials_size;
+                        mat_i++)
+                    {
+                        zpolygons_to_render[zp_i].
+                            triangle_materials[0].color[c] +=
+                                delta;
+                    }
                 }
             } else {
                 
@@ -629,15 +641,23 @@ static void resolve_single_animation_effects(
                     tri_i < zpolygons_to_render[zp_i].triangles_size;
                     tri_i++)
                 {
-                    // TODO: store color in zpoly, not in all_meshes
-                    //                    float cur_val =
-                    //                        zpolygons_to_render[zp_i].triangles[tri_i].color[c];
-                    //                    float delta_val = anim->final_rgba[c] - cur_val;
-                    //
-                    //                    zpolygons_to_render[zp_i].triangles[tri_i].color[c] +=
-                    //                        delta_val /
-                    //                            ((float)remaining_microseconds_at_start_of_run /
-                    //                                elapsed_this_run);
+                    for (
+                        uint32_t mat_i = 0;
+                        mat_i < zpolygons_to_render[zp_i].
+                            triangle_materials_size;
+                        mat_i++)
+                    {
+                        float cur_val =
+                            zpolygons_to_render[zp_i].
+                                triangle_materials[mat_i].color[c];
+                        float delta_val = anim->final_rgba[c] - cur_val;
+                        
+                        zpolygons_to_render[zp_i].
+                                triangle_materials[mat_i].color[c] +=
+                            delta_val /
+                                ((float)remaining_microseconds_at_start_of_run /
+                                    elapsed_this_run);
+                    }
                 }
             }
         }

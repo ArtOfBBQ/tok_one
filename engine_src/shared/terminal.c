@@ -345,49 +345,6 @@ static bool32_t evaluate_terminal_command(
         return true;
     }
     
-    if (are_equal_strings(command, "ZPOLYGONS")) {
-        strcpy_capped(
-            response,
-            SINGLE_LINE_MAX,
-            "# of zPolygons: ");
-        strcat_uint_capped(
-            response,
-            SINGLE_LINE_MAX,
-            zpolygons_to_render_size);
-        strcat_capped(
-            response,
-            SINGLE_LINE_MAX,
-            " of ");
-        strcat_uint_capped(
-            response,
-            SINGLE_LINE_MAX,
-            ZPOLYGONS_TO_RENDER_ARRAYSIZE);
-        
-        uint32_t highest_tris = 0;
-        for (uint32_t zp_i = 0; zp_i < zpolygons_to_render_size; zp_i++) {
-            if (zpolygons_to_render[zp_i].triangles_size > highest_tris) {
-                highest_tris = zpolygons_to_render[zp_i].triangles_size;
-            }
-        }
-        strcat_capped(
-            response,
-            SINGLE_LINE_MAX,
-            "\nHighest triangle count: ");
-        strcat_uint_capped(
-            response,
-            SINGLE_LINE_MAX,
-            highest_tris);
-        strcat_capped(
-            response,
-            SINGLE_LINE_MAX,
-            " of ");
-        strcat_uint_capped(
-            response,
-            SINGLE_LINE_MAX,
-            ALL_MESH_TRIANGLES_SIZE);
-        return true;
-    }
-    
     if (are_equal_strings(command, "ZLIGHTS")) {
         strcpy_capped(
             response,
