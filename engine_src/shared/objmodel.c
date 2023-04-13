@@ -23,30 +23,30 @@ void init_all_meshes(void) {
     
     all_meshes[0].normal.x = 0.0f;
     all_meshes[0].normal.y = 0.0f;
-    all_meshes[0].normal.z = 1.0f;
+    all_meshes[0].normal.z = -1.0f;
     all_meshes[0].parent_material_i = 0;
     // top left vertex
-    all_meshes[0].vertices[0].x = left_vertex;
-    all_meshes[0].vertices[0].y = top_vertex;
-    all_meshes[0].vertices[0].z = 0.0f;
+    all_meshes[0].vertices[0].x     = left_vertex;
+    all_meshes[0].vertices[0].y     = top_vertex;
+    all_meshes[0].vertices[0].z     = 0.0f;
     all_meshes[0].vertices[0].uv[0] = left_uv_coord;
     all_meshes[0].vertices[0].uv[1] = top_uv_coord;
     // top right vertex
-    all_meshes[0].vertices[1].x = right_vertex;
-    all_meshes[0].vertices[1].y = top_vertex;
-    all_meshes[0].vertices[1].z = 0.0f;
+    all_meshes[0].vertices[1].x     = right_vertex;
+    all_meshes[0].vertices[1].y     = top_vertex;
+    all_meshes[0].vertices[1].z     = 0.0f;
     all_meshes[0].vertices[1].uv[0] = right_uv_coord;
     all_meshes[0].vertices[1].uv[1] = top_uv_coord;
     // bottom left vertex
-    all_meshes[0].vertices[2].x = left_vertex;
-    all_meshes[0].vertices[2].y = bottom_vertex;
-    all_meshes[0].vertices[2].z = 0.0f;
+    all_meshes[0].vertices[2].x     = left_vertex;
+    all_meshes[0].vertices[2].y     = bottom_vertex;
+    all_meshes[0].vertices[2].z     = 0.0f;
     all_meshes[0].vertices[2].uv[0] = left_uv_coord;
     all_meshes[0].vertices[2].uv[1] = bottom_uv_coord;
     
     all_meshes[1].normal.x = 0.0f;
     all_meshes[1].normal.y = 0.0f;
-    all_meshes[1].normal.z = 1.0f;
+    all_meshes[1].normal.z = -1.0f;
     all_meshes[1].parent_material_i = 0;
     // top right vertex
     all_meshes[1].vertices[0].x = right_vertex;

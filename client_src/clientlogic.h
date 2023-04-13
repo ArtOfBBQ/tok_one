@@ -31,16 +31,6 @@ extern "C" {
 extern bool32_t application_running;
 
 /*
-The engine will need a name for your application
-e.g. To create the application data directory on Apple platforms
-e.g. To display in the title bar
-*/
-char * client_logic_get_application_name(void);
-void client_logic_get_application_name_to_recipient(
-    char * recipient,
-    const uint32_t recipient_size);
-
-/*
 will be called once when the app shuts down
 */
 void client_logic_shutdown(void);

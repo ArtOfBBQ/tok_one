@@ -501,7 +501,7 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
     char fps_string[12] = "std fps: xx";
     #endif
     
-    int32_t label_object_id = 0;
+    int32_t label_object_id = FPS_COUNTER_OBJECT_ID;
     uint64_t fps = 1000000 / microseconds_elapsed;
     
     if (fps < 100) {

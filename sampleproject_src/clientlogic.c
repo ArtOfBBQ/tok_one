@@ -1,52 +1,5 @@
 #include "clientlogic.h"
 
-#define TEXTURE_FILENAMES_SIZE 6
-DecodedImage * decoded_pngs[TEXTURE_FILENAMES_SIZE];
-
-int32_t latest_object_id = 72;
-
-typedef struct TextureArrayLocation {
-    int32_t texturearray_i;
-    int32_t texture_i;
-} TextureArrayLocation;
-
-void load_from_obj_file(
-    char * filepath,
-    const bool32_t flip_winding,
-    zTriangle * recipient,
-    uint32_t * recipient_size)
-{
-    FileBuffer buffer;
-    buffer.size = (uint64_t)platform_get_resource_size(filepath) + 1;
-    buffer.contents = (char *)malloc_from_managed(buffer.size);
-    platform_read_resource_file(
-        filepath,
-        &buffer);
-    
-    assert(buffer.size > 1);
-    
-    parse_obj(
-        /* rawdata     : */ buffer.contents,
-        /* rawdata_size: */ buffer.size,
-        flip_winding,
-        recipient,
-        recipient_size);
-    
-    free_from_managed((uint8_t *)buffer.contents);    
-}
-
-void client_logic_get_application_name_to_recipient(
-    char * recipient,
-    const uint32_t recipient_size)
-{
-    char * app_name = (char *)"TOK ONE";
-    
-    strcpy_capped(
-        /* recipient: */ recipient,
-        /* recipient_size: */ recipient_size,
-        /* origin: */ app_name);
-}
-
 void client_logic_startup(void) {
 
     log_append("sizeof(zPolygon): ");
@@ -69,30 +22,66 @@ void client_logic_startup(void) {
         (const char **)filenames,
         3);
     
-    char * obj_filenames[2] = {
-        "key.obj",
-        "teapot.obj"
-    };
+    for (uint32_t i = 1; i < 5; i++) {
+        zPolygon new_quad;
+        
+        // reminder: higher y is higher on screen
+        float mid_x = -0.5f + (i == 1 || i == 4 ? 0.5f : 0.0f);
+        float mid_y = (-0.5f + (i < 3 ? 0.5f : 0.0f)) + 0.5f;
+        log_append("quad: ");
+        log_append_uint(i);
+        printf("at: [%f,%f]\n", mid_x, mid_y);
+        construct_quad_around(
+            /* const float mid_x: */
+                mid_x,
+            /* const float mid_y: */
+                mid_y,
+            /* const float z: */
+                0.5f,
+            /* const float width: */
+                0.2f,
+            /* const float height: */
+                0.25f,
+            /* zPolygon * recipient: */
+                &new_quad);
+        
+        new_quad.object_id = i;
+        new_quad.triangle_materials[0].color[0] = 1.0f - (i * 0.25f);
+        new_quad.triangle_materials[0].color[1] = i * 0.25f;
+        new_quad.triangle_materials[0].color[2] = 0.3f;
+        new_quad.triangle_materials[0].color[3] = 1.0f;
+        new_quad.triangle_materials[0].texturearray_i = -1;
+        new_quad.triangle_materials[0].texture_i = -1;
+        new_quad.ignore_lighting = false;
+        new_quad.touchable_id = i;
+        request_zpolygon_to_render(&new_quad);
+    }
     
-    int32_t key_mesh_head_id =
-        new_mesh_head_id_from_resource(obj_filenames[0]);
     
-    zPolygon key;
-    construct_zpolygon(&key);
-    key.mesh_head_i = key_mesh_head_id;
-    key.triangles_size = all_meshes_size;
-    key.x = 0.0f;
-    key.y = 0.0f;
-    key.z = 0.5f;
-    key.triangle_materials[key.triangle_materials_size].color[0] = 0.5f;
-    key.triangle_materials[key.triangle_materials_size].color[1] = 0.5f;
-    key.triangle_materials[key.triangle_materials_size].color[2] = 0.1f;
-    key.triangle_materials[key.triangle_materials_size].color[3] = 1.0f;
-    key.triangle_materials[key.triangle_materials_size].texturearray_i = -1;
-    key.triangle_materials[key.triangle_materials_size].texture_i = -1;
-    key.triangle_materials_size++;
-    key.ignore_lighting = true;
-    request_zpolygon_to_render(&key);
+    //    char * obj_filenames[2] = {
+    //        "key.obj",
+    //        "teapot.obj"
+    //    };
+    
+    //    int32_t key_mesh_head_id =
+    //        new_mesh_head_id_from_resource(obj_filenames[0]);
+    //
+    //    zPolygon key;
+    //    construct_zpolygon(&key);
+    //    key.mesh_head_i = key_mesh_head_id;
+    //    key.triangles_size = all_meshes_size;
+    //    key.x = 0.0f;
+    //    key.y = 0.0f;
+    //    key.z = 0.5f;
+    //    key.triangle_materials[key.triangle_materials_size].color[0] = 0.5f;
+    //    key.triangle_materials[key.triangle_materials_size].color[1] = 0.5f;
+    //    key.triangle_materials[key.triangle_materials_size].color[2] = 0.1f;
+    //    key.triangle_materials[key.triangle_materials_size].color[3] = 1.0f;
+    //    key.triangle_materials[key.triangle_materials_size].texturearray_i = -1;
+    //    key.triangle_materials[key.triangle_materials_size].texture_i = -1;
+    //    key.triangle_materials_size++;
+    //    key.ignore_lighting = true;
+    //    request_zpolygon_to_render(&key);
     
     //
     //    font_height = 50;
@@ -227,6 +216,15 @@ void client_logic_animation_callback(int32_t callback_id)
 static void  client_handle_touches_and_leftclicks(
     uint64_t microseconds_elapsed)
 {
+    if (!user_interactions[INTR_PREVIOUS_LEFTCLICK_START].handled) {
+        user_interactions[INTR_PREVIOUS_LEFTCLICK_START].handled = true;
+        
+        if (user_interactions[INTR_PREVIOUS_LEFTCLICK_START].touchable_id < 5) {
+            request_bump_animation(
+                user_interactions[INTR_PREVIOUS_LEFTCLICK_START].touchable_id,
+                0.0f);
+        }
+    }
 }
 
 static void client_handle_keypresses(

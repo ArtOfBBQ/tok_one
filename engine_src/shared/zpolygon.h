@@ -16,6 +16,8 @@
 #include "texture_array.h"
 #include "objmodel.h"
 
+#define FPS_COUNTER_OBJECT_ID 0
+
 #define MAX_MATERIALS_SIZE 4
 
 #ifdef __cplusplus

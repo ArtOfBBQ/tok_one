@@ -394,10 +394,6 @@ NSWindowWithCustomResponder * window = NULL;
 
 int main(int argc, const char * argv[]) {
     
-    client_logic_get_application_name_to_recipient(
-        /* recipient: */ application_name,
-        /* recipient_size: */ 100);
-    
     init_application(
         /* const float window_left: */
             INITIAL_WINDOW_LEFT,
@@ -408,7 +404,7 @@ int main(int argc, const char * argv[]) {
         /* const float window_height: */
             INITIAL_WINDOW_HEIGHT);
     log_append("initialized application: ");
-    log_append(application_name);
+    log_append(APPLICATION_NAME);
     
     log_append(
         "\nconfirming we can save debug info - writing log.txt...\n");
@@ -448,7 +444,7 @@ int main(int argc, const char * argv[]) {
         [[GameWindowDelegate alloc] init];
     
     NSString * nsstring_app_name =
-        [NSString stringWithUTF8String:application_name];  
+        [NSString stringWithUTF8String:APPLICATION_NAME];
     [window setDelegate: window_delegate];
     [window setTitle: nsstring_app_name];
     [window makeMainWindow]; 

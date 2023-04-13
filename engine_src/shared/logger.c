@@ -1,6 +1,5 @@
 #include "logger.h"
 
-char application_name[100];
 char crashed_top_of_screen_msg[256];
 
 #ifndef IGNORE_LOGGER
@@ -15,8 +14,6 @@ extern "C" {
 #endif
 
 void setup_log(void) {
-
-    log_assert(application_name != NULL);
     
     // create a log for debug text
     app_log = (char *)malloc_from_unmanaged(LOG_SIZE);

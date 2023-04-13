@@ -17,26 +17,35 @@ static void set_zpolygon_hitbox(
     
     for (uint32_t i = 0; i < mesh->triangles_size; i++) {
         for (uint32_t m = 0; m < 3; m++) {
-            if (all_meshes[mesh->mesh_head_i + i].vertices[m].x < left) {
-                left = all_meshes[mesh->mesh_head_i + i].vertices[m].x;
-            } else if (all_meshes[mesh->mesh_head_i + i].vertices[m].x > right) {
-                right = all_meshes[mesh->mesh_head_i + i].vertices[m].x;
+            float cur_vertex_x =
+                all_meshes[mesh->mesh_head_i + i].vertices[m].x *
+                        mesh->x_multiplier;
+            float cur_vertex_y =
+                all_meshes[mesh->mesh_head_i + i].vertices[m].y *
+                        mesh->y_multiplier;
+            float cur_vertex_z =
+                all_meshes[mesh->mesh_head_i + i].vertices[m].z *
+                        mesh->z_multiplier;
+            
+            if (cur_vertex_x < left) {
+                left = cur_vertex_x;
+            } else if (cur_vertex_x > right) {
+                right = cur_vertex_x;
             }
             
-            if (all_meshes[mesh->mesh_head_i + i].vertices[m].y < bottom) {
-                bottom = all_meshes[mesh->mesh_head_i + i].vertices[m].y;
-            } else if (all_meshes[mesh->mesh_head_i + i].vertices[m].y > top) {
-                top = all_meshes[mesh->mesh_head_i + i].vertices[m].y;
+            if (cur_vertex_y < bottom) {
+                bottom = cur_vertex_y;
+            } else if (cur_vertex_y > top) {
+                top = cur_vertex_y;
             }
             
-            if (
-                all_meshes[mesh->mesh_head_i + i].vertices[m].z < front)
+            if (cur_vertex_z < front)
             {
-                front = all_meshes[mesh->mesh_head_i + i].vertices[m].z;
+                front = cur_vertex_z;
             } else if (
-                all_meshes[mesh->mesh_head_i + i].vertices[m].z > back)
+                cur_vertex_z > back)
             {
-                back = all_meshes[mesh->mesh_head_i + i].vertices[m].z;
+                back = cur_vertex_z;
             }
         }
     }
@@ -61,6 +70,14 @@ void request_zpolygon_to_render(zPolygon * to_add)
     log_assert(to_add->mesh_head_i >= 0);
     log_assert(to_add->triangles_size > 0);
     
+    if (to_add->object_id == FPS_COUNTER_OBJECT_ID) {
+        char errmsg[64];
+        strcpy_capped(errmsg, 64, "object_id: ");
+        strcat_uint_capped(errmsg, 64, FPS_COUNTER_OBJECT_ID);
+        strcat_capped(errmsg, 64, " is reserved for FPS counter, don't use\n");
+        log_dump_and_crash(errmsg);
+    }
+    
     for (
         uint32_t tri_i = 0;
         tri_i < to_add->triangles_size;
@@ -77,11 +94,7 @@ void request_zpolygon_to_render(zPolygon * to_add)
                 to_add->triangle_materials[material_i].texturearray_i,
                 to_add->triangle_materials[material_i].texture_i);
         }
-        
-        // TODO: this needs to happen when mesh initialized, not on request zpoly
-        // all_meshes[to_add->mesh_head_i + tri_i].normal = get_ztriangle_normal(&to_add->triangles[tri_i]);
-        // normalize_zvertex(&to_add->triangles[tri_i].normal);
-        
+                
         // set the hitbox height, width, and depth
         set_zpolygon_hitbox(to_add);
     }
@@ -959,6 +972,14 @@ void construct_quad(
     
     // a quad is hardcoded in objmodel.c's init_all_meshes()
     recipient->mesh_head_i = 0;
+    
+    // the hardcoded quad offsets range from -1.0f to 1.0f,
+    // so the current width is 2.0f
+    float current_width = 2.0f;
+    float current_height = 2.0f;
+    recipient->x_multiplier = width / current_width;
+    recipient->y_multiplier = height / current_height;
+    
     recipient->triangles_size = 2;
     recipient->triangle_materials[0].color[0] = 1.0f;
     recipient->triangle_materials[0].color[1] = 1.0f;
@@ -981,13 +1002,17 @@ void construct_quad_around(
     
     construct_zpolygon(recipient);
     
-    const float projected_mid_x = mid_x;
-    const float projected_mid_y = mid_y;
-        
-    recipient->x = projected_mid_x;
-    recipient->y = projected_mid_y;
-    recipient->z = z;
+    recipient->x       = mid_x;
+    recipient->y       = mid_y;
+    recipient->z       = z;
     recipient->visible = true;
+    
+    // the hardcoded quad offsets range from -1.0f to 1.0f,
+    // so the current width is 2.0f
+    float current_width = 2.0f;
+    float current_height = 2.0f;
+    recipient->x_multiplier = width / current_width;
+    recipient->y_multiplier = height / current_height;
     
     recipient->mesh_head_i = 0;
     recipient->triangles_size = 2;

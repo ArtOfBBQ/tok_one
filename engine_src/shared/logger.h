@@ -34,7 +34,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-extern char application_name[100];
 
 extern char crashed_top_of_screen_msg[256];
 extern bool32_t application_running;

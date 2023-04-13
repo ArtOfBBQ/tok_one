@@ -23,7 +23,6 @@ void platform_get_writables_path(
     char * recipient,
     const uint32_t recipient_size)
 {
-    log_assert(application_name != NULL && application_name[0] != '\0');
     NSArray * paths = NSSearchPathForDirectoriesInDomains(
         NSApplicationSupportDirectory,
         NSUserDomainMask,
@@ -37,7 +36,7 @@ void platform_get_writables_path(
     
     strcpy_capped(recipient, recipient_size, library_dir);
     strcat_capped(recipient, recipient_size, "/");
-    strcat_capped(recipient, recipient_size, application_name);
+    strcat_capped(recipient, recipient_size, APPLICATION_NAME);
     
     platform_mkdir_if_not_exist(recipient);
 }
