@@ -9,6 +9,22 @@
 extern "C" {
 #endif
 
+#define OBJ_STRING_SIZE 128
+typedef struct MeshSummary {
+    char resource_name[OBJ_STRING_SIZE]; // the filename of the resource without path
+    int32_t mesh_id;
+    int32_t all_meshes_head_i;
+    int32_t triangles_size;
+    char material_names[MAX_MATERIALS_SIZE][OBJ_STRING_SIZE];
+    uint32_t materials_size;
+} MeshSummary;
+
+extern MeshSummary * all_mesh_summaries;
+extern uint32_t all_mesh_summaries_size;
+
+extern zTriangle * all_mesh_triangles;
+extern uint32_t all_mesh_triangles_size;
+
 void init_all_meshes(void);
 
 /*
@@ -24,31 +40,30 @@ and texture_i 1 if you had labeled some faces of your object with the material
 You could set the texturearray_i and texture_i to -1 and use a color for
 another material name, etc.
 */
-void parse_obj(
-    char * rawdata,
-    uint64_t rawdata_size,
-    const bool32_t flip_winding,
-    zTriangle * recipient,
-    uint32_t * recipient_size);
 typedef struct ExpectedObjMaterials {
     char material_name[16];
     int32_t texturearray_i;
     int32_t texture_i;
     float rgba[4];
 } ExpectedObjMaterials;
-void parse_obj_expecting_materials(
-    char * rawdata,
-    uint64_t rawdata_size,
-    ExpectedObjMaterials * expected_materials,
-    const uint32_t expected_materials_size,
-    const bool32_t flip_winding,
-    zTriangle * recipient,
-    uint32_t * recipient_size);
 
-extern zTriangle * all_meshes;
-extern uint32_t all_meshes_size;
+//void parse_obj(
+//    const char * rawdata,
+//    const uint64_t rawdata_size,
+//    MeshSummary * summary_recipient,
+//    zTriangle * triangles_recipient,
+//    uint32_t * triangles_recipient_size);
 
-int32_t new_mesh_head_id_from_resource(
+//void parse_obj_expecting_materials(
+//    char * rawdata,
+//    uint64_t rawdata_size,
+//    ExpectedObjMaterials * expected_materials,
+//    const uint32_t expected_materials_size,
+//    const bool32_t flip_winding,
+//    zTriangle * recipient,
+//    uint32_t * recipient_size);
+
+int32_t new_mesh_id_from_resource(
     const char * filename);
 
 #ifdef __cplusplus

@@ -155,6 +155,8 @@ void request_label_offset_around(
     const float max_width,
     const bool32_t ignore_camera)
 {
+    return;
+    
     log_assert(max_width > 0.0f);
     
     float original_height = font_height;
@@ -239,7 +241,7 @@ void request_label_offset_around(
         mid_y_pixelspace,
         z);
     label.z = z;
-    label.triangles_size = 0;
+    // label.triangles_size = 0;
     
     float cur_y_offset_pixelspace =
         (((lines_size - 1) * font_height) / 2) +
@@ -316,20 +318,20 @@ void request_label_offset_around(
             
             // label.triangles[label.triangles_size    ] = letter.triangles[0];
             // label.triangles[label.triangles_size + 1] = letter.triangles[1];
-            label.triangles_size += 2;
+            // label.triangles_size += 2;
             
             cur_x_offset_pixelspace += get_advance_width(text_to_draw[j]);
         }
         cur_y_offset_pixelspace -= font_height;
     }
     
-    if (label.triangles_size > 0) {
-        request_zpolygon_to_render(&label);
-    } else {
-        log_append("Warning: no triangles in label made of text: ");
-        log_append(text_to_draw);
-        log_append_char('\n');
-    }
+    //    if (label.triangles_size > 0) {
+    //        request_zpolygon_to_render(&label);
+    //    } else {
+    //        log_append("Warning: no triangles in label made of text: ");
+    //        log_append(text_to_draw);
+    //        log_append_char('\n');
+    //    }
     
     font_height = original_height;
 

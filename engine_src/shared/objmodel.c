@@ -1,10 +1,22 @@
 #include "objmodel.h"
 
-zTriangle * all_meshes;
-uint32_t all_meshes_size = 0;
+MeshSummary * all_mesh_summaries;
+uint32_t all_mesh_summaries_size;
+
+zTriangle * all_mesh_triangles;
+uint32_t all_mesh_triangles_size = 0;
+
+#define PARSER_VERTEX_BUFFER_SIZE 16000
+static zVertex * parser_vertex_buffer = NULL;
 
 void init_all_meshes(void) {
-    all_meshes = (zTriangle *)malloc_from_unmanaged(
+    parser_vertex_buffer = (zVertex *)malloc_from_unmanaged(
+        sizeof(zVertex) * PARSER_VERTEX_BUFFER_SIZE);
+    
+    all_mesh_summaries = (MeshSummary *)malloc_from_unmanaged(
+        sizeof(MeshSummary) * ALL_MESHES_SIZE);
+    
+    all_mesh_triangles = (zTriangle *)malloc_from_unmanaged(
         sizeof(zTriangle) * ALL_MESH_TRIANGLES_SIZE);
     
     // Let's hardcode a basic quad since that's a mesh that will be used by
@@ -12,6 +24,16 @@ void init_all_meshes(void) {
     // this also illustrates what will happen if we read a .obj file with the
     // parser: we grab the data below from the file and fill in all_meshes
     // with the triangles
+    strcpy_capped(
+        all_mesh_summaries[0].resource_name,
+        OBJ_STRING_SIZE,
+        "basic_quad");
+    all_mesh_summaries[0].triangles_size = 2;
+    all_mesh_summaries[0].mesh_id = 0;
+    all_mesh_summaries[0].all_meshes_head_i = 0;
+    all_mesh_summaries[0].materials_size = 1;
+    all_mesh_summaries_size = 1;
+    
     const float left_vertex     = -1.0f;
     const float right_vertex    = 1.0f;
     const float top_vertex      = 1.0f;
@@ -21,57 +43,168 @@ void init_all_meshes(void) {
     const float bottom_uv_coord = 1.0f;
     const float top_uv_coord    = 0.0f;
     
-    all_meshes[0].normal.x = 0.0f;
-    all_meshes[0].normal.y = 0.0f;
-    all_meshes[0].normal.z = -1.0f;
-    all_meshes[0].parent_material_i = 0;
+    all_mesh_triangles[0].normal.x = 0.0f;
+    all_mesh_triangles[0].normal.y = 0.0f;
+    all_mesh_triangles[0].normal.z = -1.0f;
+    all_mesh_triangles[0].parent_material_i = 0;
     // top left vertex
-    all_meshes[0].vertices[0].x     = left_vertex;
-    all_meshes[0].vertices[0].y     = top_vertex;
-    all_meshes[0].vertices[0].z     = 0.0f;
-    all_meshes[0].vertices[0].uv[0] = left_uv_coord;
-    all_meshes[0].vertices[0].uv[1] = top_uv_coord;
+    all_mesh_triangles[0].vertices[0].x     = left_vertex;
+    all_mesh_triangles[0].vertices[0].y     = top_vertex;
+    all_mesh_triangles[0].vertices[0].z     = 0.0f;
+    all_mesh_triangles[0].vertices[0].uv[0] = left_uv_coord;
+    all_mesh_triangles[0].vertices[0].uv[1] = top_uv_coord;
     // top right vertex
-    all_meshes[0].vertices[1].x     = right_vertex;
-    all_meshes[0].vertices[1].y     = top_vertex;
-    all_meshes[0].vertices[1].z     = 0.0f;
-    all_meshes[0].vertices[1].uv[0] = right_uv_coord;
-    all_meshes[0].vertices[1].uv[1] = top_uv_coord;
+    all_mesh_triangles[0].vertices[1].x     = right_vertex;
+    all_mesh_triangles[0].vertices[1].y     = top_vertex;
+    all_mesh_triangles[0].vertices[1].z     = 0.0f;
+    all_mesh_triangles[0].vertices[1].uv[0] = right_uv_coord;
+    all_mesh_triangles[0].vertices[1].uv[1] = top_uv_coord;
     // bottom left vertex
-    all_meshes[0].vertices[2].x     = left_vertex;
-    all_meshes[0].vertices[2].y     = bottom_vertex;
-    all_meshes[0].vertices[2].z     = 0.0f;
-    all_meshes[0].vertices[2].uv[0] = left_uv_coord;
-    all_meshes[0].vertices[2].uv[1] = bottom_uv_coord;
+    all_mesh_triangles[0].vertices[2].x     = left_vertex;
+    all_mesh_triangles[0].vertices[2].y     = bottom_vertex;
+    all_mesh_triangles[0].vertices[2].z     = 0.0f;
+    all_mesh_triangles[0].vertices[2].uv[0] = left_uv_coord;
+    all_mesh_triangles[0].vertices[2].uv[1] = bottom_uv_coord;
     
-    all_meshes[1].normal.x = 0.0f;
-    all_meshes[1].normal.y = 0.0f;
-    all_meshes[1].normal.z = -1.0f;
-    all_meshes[1].parent_material_i = 0;
+    all_mesh_triangles[1].normal.x = 0.0f;
+    all_mesh_triangles[1].normal.y = 0.0f;
+    all_mesh_triangles[1].normal.z = -1.0f;
+    all_mesh_triangles[1].parent_material_i = 0;
     // top right vertex
-    all_meshes[1].vertices[0].x = right_vertex;
-    all_meshes[1].vertices[0].y = top_vertex;
-    all_meshes[1].vertices[0].z = 0.0f;
-    all_meshes[1].vertices[0].uv[0] = right_uv_coord;
-    all_meshes[1].vertices[0].uv[1] = top_uv_coord;
+    all_mesh_triangles[1].vertices[0].x = right_vertex;
+    all_mesh_triangles[1].vertices[0].y = top_vertex;
+    all_mesh_triangles[1].vertices[0].z = 0.0f;
+    all_mesh_triangles[1].vertices[0].uv[0] = right_uv_coord;
+    all_mesh_triangles[1].vertices[0].uv[1] = top_uv_coord;
     // bottom right vertex
-    all_meshes[1].vertices[1].x = right_vertex;
-    all_meshes[1].vertices[1].y = bottom_vertex;
-    all_meshes[1].vertices[1].z = 0.0f;
-    all_meshes[1].vertices[1].uv[0] = right_uv_coord;
-    all_meshes[1].vertices[1].uv[1] = bottom_uv_coord;
+    all_mesh_triangles[1].vertices[1].x = right_vertex;
+    all_mesh_triangles[1].vertices[1].y = bottom_vertex;
+    all_mesh_triangles[1].vertices[1].z = 0.0f;
+    all_mesh_triangles[1].vertices[1].uv[0] = right_uv_coord;
+    all_mesh_triangles[1].vertices[1].uv[1] = bottom_uv_coord;
     // bottom left vertex
-    all_meshes[1].vertices[2].x = left_vertex;
-    all_meshes[1].vertices[2].y = bottom_vertex;
-    all_meshes[1].vertices[2].z = 0.0f;
-    all_meshes[1].vertices[2].uv[0] = left_uv_coord;
-    all_meshes[1].vertices[2].uv[1] = bottom_uv_coord;
+    all_mesh_triangles[1].vertices[2].x = left_vertex;
+    all_mesh_triangles[1].vertices[2].y = bottom_vertex;
+    all_mesh_triangles[1].vertices[2].z = 0.0f;
+    all_mesh_triangles[1].vertices[2].uv[0] = left_uv_coord;
+    all_mesh_triangles[1].vertices[2].uv[1] = bottom_uv_coord;
+    all_mesh_triangles_size = 2;
+}
+
+static void assert_objmodel_validity(int32_t mesh_id) {
+    log_assert(mesh_id >= 0);
+    log_assert(mesh_id < all_mesh_summaries_size);
+    log_assert(all_mesh_summaries[mesh_id].all_meshes_head_i >= 0);
+    log_assert(
+        all_mesh_summaries[mesh_id].triangles_size < ALL_MESH_TRIANGLES_SIZE);
+    int32_t all_meshes_tail_i =
+        all_mesh_summaries[mesh_id].all_meshes_head_i +
+        all_mesh_summaries[mesh_id].triangles_size;
+    log_assert(all_meshes_tail_i <= all_mesh_triangles_size);
     
-    all_meshes_size = 2;
+    // get all materials mentioned in any triangle
+    int32_t materials_mentioned[MAX_MATERIALS_SIZE];
+    uint32_t materials_mentioned_size = 0;
+    for (
+        uint32_t tri_i = all_mesh_summaries[mesh_id].all_meshes_head_i;
+        tri_i < all_meshes_tail_i;
+        tri_i++)
+    {
+        int32_t new_mat_id = all_mesh_triangles[tri_i].parent_material_i;
+        
+        bool32_t already_in = false;
+        for (uint32_t i = 0; i < materials_mentioned_size; i++) {
+            if (materials_mentioned[i] == new_mat_id) {
+                already_in = true;
+                break;
+            }
+        }
+        
+        if (!already_in) {
+            log_assert(materials_mentioned_size + 1 < MAX_MATERIALS_SIZE);
+            materials_mentioned[materials_mentioned_size++] = new_mat_id;
+            log_assert(
+                new_mat_id < all_mesh_summaries[mesh_id].materials_size);
+        }
+    }
+    
+    // assert each mentioned material is in the summary
+    for (
+        uint32_t mentioned_i = 0;
+        mentioned_i < materials_mentioned_size;
+        mentioned_i++)
+    {
+        log_assert(mentioned_i >= 0);
+        log_assert(mentioned_i < all_mesh_summaries[mesh_id].materials_size);
+    }
+    
+    for (
+        uint32_t mat_i = 0;
+        mat_i < all_mesh_summaries[mesh_id].materials_size;
+        mat_i++)
+    {
+        bool32_t material_was_mentioned_in_at_least_one_triangle = false;
+        
+        for (uint32_t i = 0; i < materials_mentioned_size; i++) {
+            if (materials_mentioned[i] == mat_i) {
+                material_was_mentioned_in_at_least_one_triangle = true;
+            }
+        }
+        
+        if (!material_was_mentioned_in_at_least_one_triangle) {
+            char err_msg[256];
+            strcpy_capped(
+                err_msg,
+                256,
+                "Material[");
+            strcat_int_capped(
+                err_msg,
+                256,
+                mat_i);
+            strcat_capped(
+                err_msg,
+                256,
+                "]: '");
+            strcat_capped(
+                err_msg,
+                256,
+                all_mesh_summaries[mesh_id].material_names[mat_i]);
+            strcat_capped(
+                err_msg,
+                256,
+                "' of 3D model in file: ");
+            strcat_capped(
+                err_msg,
+                256,
+                all_mesh_summaries[mesh_id].resource_name);
+            strcat_capped(
+                err_msg,
+                256,
+                " was never used by any of its triangle faces.");
+            log_dump_and_crash(err_msg);
+        }
+    }
+}
+
+static void guess_ztriangle_normal(zTriangle * input) {
+    zVertex vector1;
+    zVertex vector2;
+    
+    vector1.x = input->vertices[1].x - input->vertices[0].x;
+    vector1.y = input->vertices[1].y - input->vertices[0].y;
+    vector1.z = input->vertices[1].z - input->vertices[0].z;
+    
+    vector2.x = input->vertices[2].x - input->vertices[0].x;
+    vector2.y = input->vertices[2].y - input->vertices[0].y;
+    vector2.z = input->vertices[2].z - input->vertices[0].z;
+    
+    input->normal.x = (vector1.y * vector2.z) - (vector1.z * vector2.y);
+    input->normal.y = (vector1.z * vector2.x) - (vector1.x * vector2.z);
+    input->normal.z = (vector1.x * vector2.y) - (vector1.y * vector2.x);
 }
 
 static uint32_t chars_till_next_space_or_slash(
-    char * buffer)
+    const char * buffer)
 {
     uint32_t i = 0;
     
@@ -87,7 +220,7 @@ static uint32_t chars_till_next_space_or_slash(
 }
 
 static uint32_t chars_till_next_nonspace(
-    char * buffer)
+    const char * buffer)
 {
     uint32_t i = 0;
 
@@ -98,64 +231,25 @@ static uint32_t chars_till_next_nonspace(
     return i;
 }
 
-/*
-Ducktaped together parser to read my .obj files from Blender
-I export to 'legacy obj' in Blender like this:
-
-Step 1:
-File -> Export -> Wavefront (.obj) (Legacy)
-
-Step 2:
-Maximize the 'geometry' panel and check:
-[x] Apply Modifiers
-[x] Include UVs
-[x] Write Materials (but don't use 'material groups' in the panel above)
-[x] Triangulate faces
-[x] Keep vertex order
-Uncheck everything else
-*/
 void parse_obj(
-    char * rawdata,
-    uint64_t rawdata_size,
-    const bool32_t flip_winding,
-    zTriangle * recipient,
-    uint32_t * recipient_size)
-{
-    parse_obj_expecting_materials(
-        rawdata,
-        rawdata_size,
-        NULL,
-        0,
-        flip_winding,
-        recipient,
-        recipient_size);
-}
-
-void parse_obj_expecting_materials(
-    char * rawdata,
-    uint64_t rawdata_size,
-    ExpectedObjMaterials * expected_materials,
-    const uint32_t expected_materials_size,
-    const bool32_t flip_winding,
-    zTriangle * recipient,
-    uint32_t * recipient_size)
+    const char * rawdata,
+    const uint64_t rawdata_size,
+    MeshSummary * summary_recipient,
+    zTriangle * triangles_recipient,
+    uint32_t * triangles_recipient_size)
 {
     log_assert(rawdata != NULL);
     log_assert(rawdata_size > 0);
     
-    // TODO: think about buffer size
-    // pass through buffer once to read all vertices
-    #define LOADING_OBJ_BUF_SIZE 16000
-    zVertex * new_vertices = (zVertex *)malloc_from_managed(
-        sizeof(zVertex) * LOADING_OBJ_BUF_SIZE);
-    float uv_u[LOADING_OBJ_BUF_SIZE];
-    float uv_v[LOADING_OBJ_BUF_SIZE];
+    float parser_uv_u[PARSER_VERTEX_BUFFER_SIZE];
+    float parser_uv_v[PARSER_VERTEX_BUFFER_SIZE];
     uint32_t new_uv_i = 0;
     
     uint32_t i = 0;
     uint32_t first_material_or_face_i = UINT32_MAX;
     uint32_t new_vertex_i = 0;
     
+    // first pass
     while (i < rawdata_size) {
         // read the 1st character, which denominates the type
         // of information
@@ -210,14 +304,14 @@ void parse_obj_expecting_materials(
             log_assert(rawdata[i] == '\n');
             i++;
             
-            new_vertices[new_vertex_i] = new_vertex;
+            parser_vertex_buffer[new_vertex_i] = new_vertex;
             log_assert(
-                new_vertices[new_vertex_i].x == new_vertex.x);
+                parser_vertex_buffer[new_vertex_i].x == new_vertex.x);
             log_assert(
-                new_vertices[new_vertex_i].y
+                parser_vertex_buffer[new_vertex_i].y
                     == new_vertex.y);
             log_assert(
-                new_vertices[new_vertex_i].z
+                parser_vertex_buffer[new_vertex_i].z
                     == new_vertex.z);
             new_vertex_i++;
         } else if (
@@ -233,7 +327,7 @@ void parse_obj_expecting_materials(
             log_assert(rawdata[i] != ' ');
             
             // read the u coordinate
-            uv_u[new_uv_i] = string_to_float(rawdata + i);
+            parser_uv_u[new_uv_i] = string_to_float(rawdata + i);
             
             // discard the u coordinate
             i += chars_till_next_space_or_slash(
@@ -246,7 +340,7 @@ void parse_obj_expecting_materials(
             log_assert(rawdata[i] != ' ');
             
             // read the v coordinate
-            uv_v[new_uv_i] = string_to_float(rawdata + i);
+            parser_uv_v[new_uv_i] = string_to_float(rawdata + i);
             
             new_uv_i += 1;
             
@@ -273,7 +367,7 @@ void parse_obj_expecting_materials(
             }
             
             if (rawdata[i] == 'f') {
-                *recipient_size += 1;
+                *triangles_recipient_size += 1;
             }
             // skip until the next line break character
             while (rawdata[i] != '\n' && rawdata[i] != '\0') {
@@ -285,69 +379,72 @@ void parse_obj_expecting_materials(
         }
     }
     
-    log_assert(*recipient_size > 0);
+    log_assert(*triangles_recipient_size > 0);
     
-    if (*recipient_size >= ALL_MESH_TRIANGLES_SIZE) {
+    if (*triangles_recipient_size >= ALL_MESH_TRIANGLES_SIZE) {
         char error_msg[100];
         strcpy_capped(error_msg, 100, "Error: POLYGON_TRIANGLES_SIZE was ");
         strcat_uint_capped(error_msg, 100, ALL_MESH_TRIANGLES_SIZE);
         strcat_capped(error_msg, 100, ", but recipient->triangles_size is ");
-        strcat_uint_capped(error_msg, 100, *recipient_size);
+        strcat_uint_capped(error_msg, 100, *triangles_recipient_size);
         log_dump_and_crash(error_msg);
         assert(0);
     }
     
+    // second pass starts at material or face specifications
     i = first_material_or_face_i;
     uint32_t new_triangle_i = 0;
     int32_t using_material_i = 0;
     
     while (i < rawdata_size) {
-        if (rawdata[i] == 'u' &&
+        if (
+            rawdata[i+0] == 'u' &&
             rawdata[i+1] == 's' &&
             rawdata[i+2] == 'e' &&
-            rawdata[i+3] == 'm')
+            rawdata[i+3] == 'm' &&
+            rawdata[i+4] == 't' &&
+            rawdata[i+5] == 'l' &&
+            rawdata[i+6] == ' ')
         {
-            uint32_t j = i + 1;
-            while (
-                rawdata[j] != '\n' &&
-                rawdata[j] != '\0')
-            {
-                j++;
-            }
-            uint32_t line_size = j - i;
+            uint32_t j = i + 7;
             
-            if (expected_materials != NULL) {
-                char usemtl_hint[line_size];
-                char expected_mtl[line_size * 2];
-                
-                for (j = 0; j < (line_size); j++) {
-                    usemtl_hint[j] = rawdata[i + j];
-                }
-                
-                for (
-                    uint32_t mtl_i = 0;
-                    mtl_i < expected_materials_size;
-                    mtl_i++)
+            char material_name[OBJ_STRING_SIZE];
+            uint32_t material_name_size = 0;
+            while (
+                rawdata[j] != '\0' &&
+                rawdata[j] != ' ' &&
+                rawdata[j] != '\n')
+            {
+                material_name[material_name_size++] = rawdata[j++];
+            }
+            material_name[material_name_size] = '\0';
+            
+            bool32_t already_existed = false;
+            
+            for (
+                int32_t mat_i = 0;
+                mat_i < summary_recipient->materials_size;
+                mat_i++)
+            {
+                if (
+                    are_equal_strings(
+                        summary_recipient->material_names[mat_i],
+                        material_name))
                 {
-                    strcpy_capped(
-                        expected_mtl,
-                        line_size*2,
-                        "usemtl ");
-                    strcat_capped(
-                        expected_mtl,
-                        line_size*2,
-                        expected_materials[mtl_i].material_name);
-                    
-                    if (
-                        are_equal_strings_of_length(
-                            expected_mtl,
-                            usemtl_hint,
-                            get_string_length(expected_mtl)))
-                    {
-                        using_material_i = mtl_i;
-                        break;
-                    }
+                    already_existed = true;
+                    using_material_i = mat_i;
+                    break;
                 }
+            }
+            
+            if (!already_existed) {
+                strcpy_capped(
+                    summary_recipient->material_names[
+                        summary_recipient->materials_size],
+                    OBJ_STRING_SIZE,
+                    material_name);
+                summary_recipient->materials_size += 1;
+                using_material_i = summary_recipient->materials_size - 1;
             }
             
             // skip until the next line break character
@@ -356,7 +453,6 @@ void parse_obj_expecting_materials(
             }
             // skip the line break character
             i++;
-            
         } else if (rawdata[i] == 'f') {
             // discard the 'f'
             i++;
@@ -473,20 +569,20 @@ void parse_obj_expecting_materials(
                 log_assert(vertex_i_0 > 0);
                 log_assert(vertex_i_1 > 0);
                 log_assert(vertex_i_2 > 0);
-                log_assert(uv_coord_i_0 < LOADING_OBJ_BUF_SIZE);
-                log_assert(uv_coord_i_1 < LOADING_OBJ_BUF_SIZE);
-                log_assert(uv_coord_i_2 < LOADING_OBJ_BUF_SIZE);
+                log_assert(uv_coord_i_0 < PARSER_VERTEX_BUFFER_SIZE);
+                log_assert(uv_coord_i_1 < PARSER_VERTEX_BUFFER_SIZE);
+                log_assert(uv_coord_i_2 < PARSER_VERTEX_BUFFER_SIZE);
                 
                 uint32_t target_vertex_0 = 0;
                 uint32_t target_vertex_1 = 1;
                 uint32_t target_vertex_2 = 2;
                 
                 new_triangle.vertices[target_vertex_0] =
-                    new_vertices[vertex_i_0 - 1];
+                    parser_vertex_buffer[vertex_i_0 - 1];
                 new_triangle.vertices[target_vertex_1] =
-                    new_vertices[vertex_i_2 - 1];
+                    parser_vertex_buffer[vertex_i_2 - 1];
                 new_triangle.vertices[target_vertex_2] =
-                    new_vertices[vertex_i_3 - 1];
+                    parser_vertex_buffer[vertex_i_3 - 1];
                 
                 if (
                     uv_coord_i_0 > 0 &&
@@ -494,26 +590,29 @@ void parse_obj_expecting_materials(
                     uv_coord_i_2 > 0)
                 {
                     new_triangle.vertices[target_vertex_0].uv[0] =
-                    uv_u[uv_coord_i_0 - 1];
+                    parser_uv_u[uv_coord_i_0 - 1];
                     new_triangle.vertices[target_vertex_0].uv[1] =
-                    uv_v[uv_coord_i_0 - 1];
+                    parser_uv_v[uv_coord_i_0 - 1];
                     new_triangle.vertices[target_vertex_1].uv[0] =
-                    uv_u[uv_coord_i_2 - 1];
+                    parser_uv_u[uv_coord_i_2 - 1];
                     new_triangle.vertices[target_vertex_1].uv[1] =
-                    uv_v[uv_coord_i_2 - 1];
+                    parser_uv_v[uv_coord_i_2 - 1];
                     new_triangle.vertices[target_vertex_2].uv[0] =
-                    uv_u[uv_coord_i_3 - 1];
+                    parser_uv_u[uv_coord_i_3 - 1];
                     new_triangle.vertices[target_vertex_2].uv[1] =
-                    uv_v[uv_coord_i_3 - 1];
+                    parser_uv_v[uv_coord_i_3 - 1];
                 }
                 
                 new_triangle.parent_material_i = using_material_i;
                 
-                *recipient_size += 1;
+                *triangles_recipient_size += 1;
                 log_assert(new_triangle_i < ALL_MESH_TRIANGLES_SIZE);
                 
-                recipient[new_triangle_i] = new_triangle;
+                // TODO: don't guess if .obj mentioned a normal
+                guess_ztriangle_normal(&new_triangle);
+                triangles_recipient[new_triangle_i] = new_triangle;
                 new_triangle_i++;
+                summary_recipient->triangles_size += 1;
             } else {
                 // there was only 1 triangle
             }
@@ -527,20 +626,20 @@ void parse_obj_expecting_materials(
             log_assert(vertex_i_0 > 0);
             log_assert(vertex_i_1 > 0);
             log_assert(vertex_i_2 > 0);
-            log_assert(uv_coord_i_0 < LOADING_OBJ_BUF_SIZE);
-            log_assert(uv_coord_i_1 < LOADING_OBJ_BUF_SIZE);
-            log_assert(uv_coord_i_2 < LOADING_OBJ_BUF_SIZE);
+            log_assert(uv_coord_i_0 < PARSER_VERTEX_BUFFER_SIZE);
+            log_assert(uv_coord_i_1 < PARSER_VERTEX_BUFFER_SIZE);
+            log_assert(uv_coord_i_2 < PARSER_VERTEX_BUFFER_SIZE);
             
-            uint32_t target_vertex_0 = flip_winding ? 2 : 0;
+            uint32_t target_vertex_0 = 0;
             uint32_t target_vertex_1 = 1;
-            uint32_t target_vertex_2 = flip_winding ? 0 : 2;
+            uint32_t target_vertex_2 = 2;
             
             new_triangle.vertices[target_vertex_0] =
-                new_vertices[vertex_i_0 - 1];
+                parser_vertex_buffer[vertex_i_0 - 1];
             new_triangle.vertices[target_vertex_1] =
-                new_vertices[vertex_i_1 - 1];
+                parser_vertex_buffer[vertex_i_1 - 1];
             new_triangle.vertices[target_vertex_2] =
-                new_vertices[vertex_i_2 - 1];
+                parser_vertex_buffer[vertex_i_2 - 1];
             
             if (
                 uv_coord_i_0 > 0 &&
@@ -548,23 +647,26 @@ void parse_obj_expecting_materials(
                 uv_coord_i_2 > 0)
             {
                 new_triangle.vertices[target_vertex_0].uv[0] =
-                uv_u[uv_coord_i_0 - 1];
+                parser_uv_u[uv_coord_i_0 - 1];
                 new_triangle.vertices[target_vertex_0].uv[1] =
-                uv_v[uv_coord_i_0 - 1];
+                parser_uv_v[uv_coord_i_0 - 1];
                 new_triangle.vertices[target_vertex_1].uv[0] =
-                uv_u[uv_coord_i_1 - 1];
+                parser_uv_u[uv_coord_i_1 - 1];
                 new_triangle.vertices[target_vertex_1].uv[1] =
-                uv_v[uv_coord_i_1 - 1];
+                parser_uv_v[uv_coord_i_1 - 1];
                 new_triangle.vertices[target_vertex_2].uv[0] =
-                uv_u[uv_coord_i_2 - 1];
+                parser_uv_u[uv_coord_i_2 - 1];
                 new_triangle.vertices[target_vertex_2].uv[1] =
-                uv_v[uv_coord_i_2 - 1];
+                parser_uv_v[uv_coord_i_2 - 1];
             }
             
             new_triangle.parent_material_i = using_material_i;
             
-            recipient[new_triangle_i] = new_triangle;
+            // TODO: don't guess if triangle had normal data
+            guess_ztriangle_normal(&new_triangle);
+            triangles_recipient[new_triangle_i] = new_triangle;
             new_triangle_i++;
+            summary_recipient->triangles_size += 1;
             
             log_assert(rawdata[i] == '\n' || rawdata[i] == '\r');
             i++;
@@ -580,17 +682,19 @@ void parse_obj_expecting_materials(
         }
     }
     
-    free_from_managed((uint8_t *)new_vertices);
+    free_from_managed((uint8_t *)parser_vertex_buffer);
 }
 
-int32_t new_mesh_head_id_from_resource(
+
+int32_t new_mesh_id_from_resource(
     const char * filename)
 {
-    int32_t new_mesh_head_id = all_meshes_size;
+    int32_t new_mesh_head_id = all_mesh_triangles_size;
     
     FileBuffer obj_file;
     
     obj_file.size = platform_get_resource_size(filename);
+    log_assert(obj_file.size > 0);
     obj_file.contents = (char *)malloc_from_managed(obj_file.size);
     obj_file.good = false;
     
@@ -602,14 +706,35 @@ int32_t new_mesh_head_id_from_resource(
     
     log_assert(obj_file.good);
     
+    all_mesh_summaries[all_mesh_summaries_size].all_meshes_head_i =
+        new_mesh_head_id;
+    all_mesh_summaries[all_mesh_summaries_size].mesh_id =
+        all_mesh_summaries_size;
+    
     parse_obj(
-        /* char * rawdata: */ obj_file.contents,
-        /* uint64_t rawdata_size: */ obj_file.size,
-        /* const uint32_t flip_winding: */ false,
-        /* zTriangle recipient: */ all_meshes + new_mesh_head_id,
-        /* uint32_t * recipient_size: */ &all_meshes_size);
+        /* const char * rawdata: */
+            obj_file.contents,
+        /* const uint64_t rawdata_size: */
+            obj_file.size,
+        /* MeshSummary * summary_recipient: */
+            all_mesh_summaries + all_mesh_summaries_size,
+        /* zTriangle * triangles_recipient: */
+            all_mesh_triangles + new_mesh_head_id,
+        /* uint32_t * triangles_recipient_size: */
+            &all_mesh_triangles_size);
     
-    log_assert((int32_t)all_meshes_size > new_mesh_head_id);
+    log_assert((int32_t)all_mesh_triangles_size > new_mesh_head_id);
     
-    return new_mesh_head_id;
+    all_mesh_summaries[all_mesh_summaries_size].triangles_size =
+        all_mesh_triangles_size - new_mesh_head_id;
+    
+    strcpy_capped(
+        all_mesh_summaries[all_mesh_summaries_size].resource_name,
+        OBJ_STRING_SIZE,
+        filename);
+    all_mesh_summaries_size += 1;
+    
+    assert_objmodel_validity(all_mesh_summaries_size - 1);
+    
+    return all_mesh_summaries_size - 1;
 }

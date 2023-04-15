@@ -111,31 +111,27 @@ void hardware_render(
             continue;
         }
         
+        int32_t mesh_id = zpolygons_to_render[zp_i].mesh_id;
+        int32_t tail_i =
+            all_mesh_summaries[mesh_id].all_meshes_head_i +
+                all_mesh_summaries[mesh_id].triangles_size;
         for (
-            uint32_t tri_i = 0;
-            tri_i < zpolygons_to_render[zp_i].triangles_size;
+            uint32_t tri_i = all_mesh_summaries[mesh_id].all_meshes_head_i;
+            tri_i < tail_i;
             tri_i++)
         {
-            int32_t material_i = all_meshes[
-                zpolygons_to_render[zp_i].mesh_head_i + tri_i].
-                    parent_material_i;
-            log_assert(material_i >= 0);
-            log_assert(
-                material_i < zpolygons_to_render[zp_i].triangle_materials_size);
+            int32_t material_i = all_mesh_triangles[tri_i].parent_material_i;
             
             for (uint32_t m = 0; m < 3; m++) {
                 next_gpu_workload[*next_workload_size].x =
-                    all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
-                        vertices[m].x *
-                    zpolygons_to_render[zp_i].x_multiplier;
+                    all_mesh_triangles[tri_i].vertices[m].x *
+                        zpolygons_to_render[zp_i].x_multiplier;
                 next_gpu_workload[*next_workload_size].y =
-                    all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
-                        vertices[m].y *
-                    zpolygons_to_render[zp_i].y_multiplier;
+                    all_mesh_triangles[tri_i].vertices[m].y *
+                        zpolygons_to_render[zp_i].y_multiplier;
                 next_gpu_workload[*next_workload_size].z =
-                    all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
-                        vertices[m].z *
-                    zpolygons_to_render[zp_i].z_multiplier;
+                    all_mesh_triangles[tri_i].vertices[m].z *
+                        zpolygons_to_render[zp_i].z_multiplier;
                 next_gpu_workload[*next_workload_size].parent_x =
                     zpolygons_to_render[zp_i].x;
                 next_gpu_workload[*next_workload_size].parent_y =
@@ -149,14 +145,11 @@ void hardware_render(
                 next_gpu_workload[*next_workload_size].z_angle =
                     zpolygons_to_render[zp_i].z_angle;
                 next_gpu_workload[*next_workload_size].normal_x =
-                    all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
-                        normal.x;
+                    all_mesh_triangles[tri_i].normal.x;
                 next_gpu_workload[*next_workload_size].normal_y =
-                    all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
-                        normal.y;
+                    all_mesh_triangles[tri_i].normal.y;
                 next_gpu_workload[*next_workload_size].normal_z =
-                    all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
-                        normal.z;
+                    all_mesh_triangles[tri_i].normal.z;
                 next_gpu_workload[*next_workload_size].RGBA[0] =
                     zpolygons_to_render[zp_i].
                         triangle_materials[material_i].color[0]
@@ -181,10 +174,10 @@ void hardware_render(
                     zpolygons_to_render[zp_i].
                         triangle_materials[material_i].texturearray_i;
                 next_gpu_workload[*next_workload_size].uv[0] =
-                    all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
+                    all_mesh_triangles[tri_i].
                         vertices[m].uv[0];
                 next_gpu_workload[*next_workload_size].uv[1] =
-                    all_meshes[zpolygons_to_render[zp_i].mesh_head_i + tri_i].
+                    all_mesh_triangles[tri_i].
                         vertices[m].uv[1];
                 next_gpu_workload[*next_workload_size].ignore_lighting =
                     zpolygons_to_render[zp_i].ignore_lighting;

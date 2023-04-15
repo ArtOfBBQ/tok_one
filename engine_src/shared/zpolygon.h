@@ -18,8 +18,6 @@
 
 #define FPS_COUNTER_OBJECT_ID 0
 
-#define MAX_MATERIALS_SIZE 4
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,8 +38,7 @@ typedef struct TriangleMaterial {
 } TriangleMaterial;
 
 typedef struct zPolygon {
-    uint32_t mesh_head_i; // triangles start at all_meshes[mesh_head_i]
-    uint32_t triangles_size;
+    int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
     TriangleMaterial triangle_materials[MAX_MATERIALS_SIZE];
     uint32_t triangle_materials_size;
     int32_t object_id;
@@ -124,7 +121,7 @@ void zpolygon_scale_to_width_given_z(
     const float new_width,
     const float when_observed_at_z);
 
-void scale_zpolygon(
+void scale_zpolygon_multipliers_to_height(
     zPolygon * to_scale,
     const float new_height);
 

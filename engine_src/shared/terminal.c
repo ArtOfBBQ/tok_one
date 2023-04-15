@@ -26,7 +26,12 @@ static void destroy_terminal_objects(void) {
         if (zpolygons_to_render[i].object_id ==
             terminal_back_object_id)
         {
-            for (uint32_t tri_i = 0; tri_i < zpolygons_to_render[i].triangles_size; tri_i++) {
+            for (
+                uint32_t tri_i = 0;
+                tri_i < all_mesh_summaries[zpolygons_to_render[i].mesh_id].
+                    triangles_size;
+                tri_i++)
+            {
                 zpolygons_to_render[i].visible = terminal_active;
             }
         }

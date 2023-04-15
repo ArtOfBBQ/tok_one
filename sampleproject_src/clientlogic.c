@@ -22,66 +22,104 @@ void client_logic_startup(void) {
         (const char **)filenames,
         3);
     
-    for (uint32_t i = 1; i < 5; i++) {
-        zPolygon new_quad;
-        
-        // reminder: higher y is higher on screen
-        float mid_x = -0.5f + (i == 1 || i == 4 ? 0.5f : 0.0f);
-        float mid_y = (-0.5f + (i < 3 ? 0.5f : 0.0f)) + 0.5f;
-        log_append("quad: ");
-        log_append_uint(i);
-        printf("at: [%f,%f]\n", mid_x, mid_y);
-        construct_quad_around(
-            /* const float mid_x: */
-                mid_x,
-            /* const float mid_y: */
-                mid_y,
-            /* const float z: */
-                0.5f,
-            /* const float width: */
-                0.2f,
-            /* const float height: */
-                0.25f,
-            /* zPolygon * recipient: */
-                &new_quad);
-        
-        new_quad.object_id = i;
-        new_quad.triangle_materials[0].color[0] = 1.0f - (i * 0.25f);
-        new_quad.triangle_materials[0].color[1] = i * 0.25f;
-        new_quad.triangle_materials[0].color[2] = 0.3f;
-        new_quad.triangle_materials[0].color[3] = 1.0f;
-        new_quad.triangle_materials[0].texturearray_i = -1;
-        new_quad.triangle_materials[0].texture_i = -1;
-        new_quad.ignore_lighting = false;
-        new_quad.touchable_id = i;
-        request_zpolygon_to_render(&new_quad);
+    char * filenames_2[1] = {
+       "structuredart2.png",
+    };
+    register_new_texturearray_from_files((const char **)filenames_2, 1);
+    
+    //    for (uint32_t i = 1; i < 5; i++) {
+    //        zPolygon new_quad;
+    //
+    //        // reminder: higher y is higher on screen
+    //        float mid_x = -0.5f + (i == 1 || i == 4 ? 0.5f : 0.0f);
+    //        float mid_y = (-0.5f + (i < 3 ? 0.5f : 0.0f)) + 0.5f;
+    //        log_append("quad: ");
+    //        log_append_uint(i);
+    //        printf("at: [%f,%f]\n", mid_x, mid_y);
+    //        construct_quad_around(
+    //            /* const float mid_x: */
+    //                mid_x,
+    //            /* const float mid_y: */
+    //                mid_y,
+    //            /* const float z: */
+    //                0.5f,
+    //            /* const float width: */
+    //                0.2f,
+    //            /* const float height: */
+    //                0.25f,
+    //            /* zPolygon * recipient: */
+    //                &new_quad);
+    //
+    //        new_quad.object_id = i;
+    //        new_quad.triangle_materials[0].color[0] = 1.0f - (i * 0.25f);
+    //        new_quad.triangle_materials[0].color[1] = i * 0.25f;
+    //        new_quad.triangle_materials[0].color[2] = 0.3f;
+    //        new_quad.triangle_materials[0].color[3] = 1.0f;
+    //        new_quad.triangle_materials[0].texturearray_i = 2;
+    //        new_quad.triangle_materials[0].texture_i = 0;
+    //        new_quad.ignore_lighting = false;
+    //        new_quad.touchable_id = i;
+    //        request_zpolygon_to_render(&new_quad);
+    //    }
+    
+    
+    char * obj_filenames[3] = {
+        "key.obj",
+        "teapot.obj",
+        "disk.obj"
+    };
+    
+    int32_t key_mesh_id =
+        new_mesh_id_from_resource(obj_filenames[0]);
+    
+    for (uint32_t i = key_mesh_id; i < all_mesh_triangles_size; i++) {
+        log_assert(all_mesh_triangles[i].parent_material_i >= 0);
     }
     
-    
-    //    char * obj_filenames[2] = {
-    //        "key.obj",
-    //        "teapot.obj"
-    //    };
-    
-    //    int32_t key_mesh_head_id =
-    //        new_mesh_head_id_from_resource(obj_filenames[0]);
-    //
     //    zPolygon key;
     //    construct_zpolygon(&key);
-    //    key.mesh_head_i = key_mesh_head_id;
-    //    key.triangles_size = all_meshes_size;
-    //    key.x = 0.0f;
-    //    key.y = 0.0f;
-    //    key.z = 0.5f;
-    //    key.triangle_materials[key.triangle_materials_size].color[0] = 0.5f;
-    //    key.triangle_materials[key.triangle_materials_size].color[1] = 0.5f;
-    //    key.triangle_materials[key.triangle_materials_size].color[2] = 0.1f;
-    //    key.triangle_materials[key.triangle_materials_size].color[3] = 1.0f;
-    //    key.triangle_materials[key.triangle_materials_size].texturearray_i = -1;
-    //    key.triangle_materials[key.triangle_materials_size].texture_i = -1;
-    //    key.triangle_materials_size++;
-    //    key.ignore_lighting = true;
+    //    key.mesh_head_i = all_mesh_summaries[key_mesh_id].all_meshes_head_i;
+    //    key.triangles_size = all_mesh_summaries[key_mesh_id].triangles_size;
+    //    key.x =  0.15f;
+    //    key.y =  0.0f;
+    //    key.z =  0.5f;
+    //    key.triangle_materials[0].color[0] = 1.0f;
+    //    key.triangle_materials[0].color[1] = 1.0f;
+    //    key.triangle_materials[0].color[2] = 1.0f;
+    //    key.triangle_materials[0].color[3] = 1.0f;
+    //    key.triangle_materials[0].texturearray_i = 2;
+    //    key.triangle_materials[0].texture_i = 0;
+    //    key.triangle_materials_size = 1;
+    //
+    //    scale_zpolygon_multipliers_to_height(&key, 0.25f);
     //    request_zpolygon_to_render(&key);
+    
+    int32_t disk_mesh_id =
+        new_mesh_id_from_resource(obj_filenames[2]);
+    
+    zPolygon disk;
+    construct_zpolygon(&disk);
+    disk.mesh_id = disk_mesh_id;
+    disk.x = 1.0f;
+    disk.y = 0.0f;
+    disk.z = 0.5f;
+    disk.triangle_materials[0].color[0] = 1.0f;
+    disk.triangle_materials[0].color[1] = 0.0f;
+    disk.triangle_materials[0].color[2] = 0.0f;
+    disk.triangle_materials[0].color[3] = 1.0f;
+    disk.triangle_materials[0].texturearray_i = -1;
+    disk.triangle_materials[0].texture_i = -1;
+    disk.triangle_materials[1].color[0] = 1.0f;
+    disk.triangle_materials[1].color[1] = 1.0f;
+    disk.triangle_materials[1].color[2] = 1.0f;
+    disk.triangle_materials[1].color[3] = 1.0f;
+    disk.triangle_materials[1].texturearray_i = 2;
+    disk.triangle_materials[1].texture_i = 0;
+    disk.triangle_materials_size = 2;
+    disk.x_angle = 3.14f;
+    
+    scale_zpolygon_multipliers_to_height(&disk, 0.5f);
+    request_zpolygon_to_render(&disk);
     
     //
     //    font_height = 50;

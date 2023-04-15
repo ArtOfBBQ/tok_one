@@ -144,14 +144,8 @@
 		ECB05E4D294F8FD400050BD4 /* key.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECB05E4C294F8FD300050BD4 /* key.obj */; };
 		ECB05E4E2950864000050BD4 /* gpu.m in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E48294F8B1300050BD4 /* gpu.m */; };
 		ECB05E4F2950868E00050BD4 /* key.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECB05E4C294F8FD300050BD4 /* key.obj */; };
-		ECB2B71529E33C5900151F15 /* flame1.png in Resources */ = {isa = PBXBuildFile; fileRef = ECB2B71229E33C5800151F15 /* flame1.png */; };
-		ECB2B71629E33C5900151F15 /* flame1.png in Resources */ = {isa = PBXBuildFile; fileRef = ECB2B71229E33C5800151F15 /* flame1.png */; };
-		ECB2B71729E33C5900151F15 /* flame2.png in Resources */ = {isa = PBXBuildFile; fileRef = ECB2B71329E33C5800151F15 /* flame2.png */; };
-		ECB2B71829E33C5900151F15 /* flame2.png in Resources */ = {isa = PBXBuildFile; fileRef = ECB2B71329E33C5800151F15 /* flame2.png */; };
-		ECB2B71929E33C5900151F15 /* flame3.png in Resources */ = {isa = PBXBuildFile; fileRef = ECB2B71429E33C5800151F15 /* flame3.png */; };
-		ECB2B71A29E33C5900151F15 /* flame3.png in Resources */ = {isa = PBXBuildFile; fileRef = ECB2B71429E33C5800151F15 /* flame3.png */; };
-		ECB2B71C29E362C100151F15 /* flame4.png in Resources */ = {isa = PBXBuildFile; fileRef = ECB2B71B29E362C100151F15 /* flame4.png */; };
-		ECB2B71D29E362C100151F15 /* flame4.png in Resources */ = {isa = PBXBuildFile; fileRef = ECB2B71B29E362C100151F15 /* flame4.png */; };
+		ECC47A6029E9111C0082A7C6 /* disk.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECC47A5F29E9111C0082A7C6 /* disk.obj */; };
+		ECC47A6129E9111C0082A7C6 /* disk.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECC47A5F29E9111C0082A7C6 /* disk.obj */; };
 		ECCB08A528DB6FD00038BBAC /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECCB08A428DB6FD00038BBAC /* AVFoundation.framework */; };
 /* End PBXBuildFile section */
 
@@ -243,11 +237,8 @@
 		ECB05E46294F8AC200050BD4 /* simd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = simd.h; path = ../../engine_src/shared/simd.h; sourceTree = "<group>"; };
 		ECB05E48294F8B1300050BD4 /* gpu.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = gpu.m; path = ../../engine_src/shared_apple/gpu.m; sourceTree = "<group>"; };
 		ECB05E4A294F8B3500050BD4 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../engine_src/macos/main.m; sourceTree = "<group>"; };
-		ECB05E4C294F8FD300050BD4 /* key.obj */ = {isa = PBXFileReference; explicitFileType = compiled; name = key.obj; path = ../../resources/key.obj; sourceTree = "<group>"; };
-		ECB2B71229E33C5800151F15 /* flame1.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = flame1.png; path = ../../resources/flame1.png; sourceTree = "<group>"; };
-		ECB2B71329E33C5800151F15 /* flame2.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = flame2.png; path = ../../resources/flame2.png; sourceTree = "<group>"; };
-		ECB2B71429E33C5800151F15 /* flame3.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = flame3.png; path = ../../resources/flame3.png; sourceTree = "<group>"; };
-		ECB2B71B29E362C100151F15 /* flame4.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = flame4.png; path = ../../resources/flame4.png; sourceTree = "<group>"; };
+		ECB05E4C294F8FD300050BD4 /* key.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = key.obj; path = ../../resources/key.obj; sourceTree = "<group>"; };
+		ECC47A5F29E9111C0082A7C6 /* disk.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = disk.obj; path = ../../resources/disk.obj; sourceTree = "<group>"; };
 		ECCB08A428DB6FD00038BBAC /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -342,12 +333,9 @@
 				ECB05E4C294F8FD300050BD4 /* key.obj */,
 				6009FB632876A47100FC5A60 /* fontmetrics.dat */,
 				601128AC28625BAF00F92967 /* font.png */,
+				ECC47A5F29E9111C0082A7C6 /* disk.obj */,
 				EC7B171A293A23E300C1D20C /* roundedborder.png */,
-				ECB2B71229E33C5800151F15 /* flame1.png */,
 				EC18FF4129E3DC8B00ED785C /* blob1.png */,
-				ECB2B71329E33C5800151F15 /* flame2.png */,
-				ECB2B71B29E362C100151F15 /* flame4.png */,
-				ECB2B71429E33C5800151F15 /* flame3.png */,
 				EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */,
 				6080CC45286FFD1D00444118 /* phoebus.png */,
 				EC18FF4429E3DD8900ED785C /* blob2.png */,
@@ -520,8 +508,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ECC47A6029E9111C0082A7C6 /* disk.obj in Resources */,
 				ECB05E4D294F8FD400050BD4 /* key.obj in Resources */,
-				ECB2B71929E33C5900151F15 /* flame3.png in Resources */,
 				EC1412B12938597400DA0D21 /* cardwithuvcoords.obj in Resources */,
 				6009FB642876A47100FC5A60 /* fontmetrics.dat in Resources */,
 				6080CC46286FFD1E00444118 /* phoebus.png in Resources */,
@@ -530,12 +518,9 @@
 				601128AD28625BAF00F92967 /* structuredart1.png in Resources */,
 				EC18FF4629E3DD8900ED785C /* blob2.png in Resources */,
 				601128AE28625BAF00F92967 /* structuredart2.png in Resources */,
-				ECB2B71C29E362C100151F15 /* flame4.png in Resources */,
 				601128B028625BAF00F92967 /* font.png in Resources */,
 				601128AF28625BAF00F92967 /* teapot.obj in Resources */,
-				ECB2B71529E33C5900151F15 /* flame1.png in Resources */,
 				EC18FF4829E3DD8900ED785C /* blob3.png in Resources */,
-				ECB2B71729E33C5900151F15 /* flame2.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -544,17 +529,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				EC7B09D4293CAC8B000ED98E /* Main.storyboard in Resources */,
-				ECB2B71A29E33C5900151F15 /* flame3.png in Resources */,
 				EC1412B22938597400DA0D21 /* cardwithuvcoords.obj in Resources */,
+				ECC47A6129E9111C0082A7C6 /* disk.obj in Resources */,
 				60A99921287BDF31003F7159 /* fontmetrics.dat in Resources */,
 				60A99924287BDF31003F7159 /* phoebus.png in Resources */,
 				EC18FF4329E3DC8B00ED785C /* blob1.png in Resources */,
-				ECB2B71629E33C5900151F15 /* flame1.png in Resources */,
-				ECB2B71D29E362C100151F15 /* flame4.png in Resources */,
 				EC7B171C293A23E400C1D20C /* roundedborder.png in Resources */,
 				ECB05E4F2950868E00050BD4 /* key.obj in Resources */,
 				60A9991F287BDF31003F7159 /* font.png in Resources */,
-				ECB2B71829E33C5900151F15 /* flame2.png in Resources */,
 				60A99923287BDF31003F7159 /* teapot.obj in Resources */,
 				EC18FF4729E3DD8900ED785C /* blob2.png in Resources */,
 				EC18FF4929E3DD8900ED785C /* blob3.png in Resources */,

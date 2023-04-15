@@ -6,7 +6,7 @@ uint32_t zpolygons_to_render_size = 0;
 static void set_zpolygon_hitbox(
     zPolygon * mesh)
 {
-    log_assert(mesh->triangles_size > 0);
+    log_assert(all_mesh_summaries[mesh->mesh_id].triangles_size > 0);
     
     float top = 0.0f;
     float bottom = 0.0f;
@@ -15,16 +15,20 @@ static void set_zpolygon_hitbox(
     float back = 0.0f;
     float front = 0.0f;
     
-    for (uint32_t i = 0; i < mesh->triangles_size; i++) {
+    for (
+        uint32_t i = 0;
+        i < all_mesh_summaries[mesh->mesh_id].triangles_size;
+        i++)
+    {
         for (uint32_t m = 0; m < 3; m++) {
             float cur_vertex_x =
-                all_meshes[mesh->mesh_head_i + i].vertices[m].x *
+                all_mesh_triangles[mesh->mesh_id + i].vertices[m].x *
                         mesh->x_multiplier;
             float cur_vertex_y =
-                all_meshes[mesh->mesh_head_i + i].vertices[m].y *
+                all_mesh_triangles[mesh->mesh_id + i].vertices[m].y *
                         mesh->y_multiplier;
             float cur_vertex_z =
-                all_meshes[mesh->mesh_head_i + i].vertices[m].z *
+                all_mesh_triangles[mesh->mesh_id + i].vertices[m].z *
                         mesh->z_multiplier;
             
             if (cur_vertex_x < left) {
@@ -67,8 +71,9 @@ static void set_zpolygon_hitbox(
 
 void request_zpolygon_to_render(zPolygon * to_add)
 {
-    log_assert(to_add->mesh_head_i >= 0);
-    log_assert(to_add->triangles_size > 0);
+    log_assert(to_add->mesh_id >= 0);
+    log_assert(to_add->mesh_id < all_mesh_summaries_size);
+    log_assert(all_mesh_summaries[to_add->mesh_id].triangles_size > 0);
     
     if (to_add->object_id == FPS_COUNTER_OBJECT_ID) {
         char errmsg[64];
@@ -78,26 +83,50 @@ void request_zpolygon_to_render(zPolygon * to_add)
         log_dump_and_crash(errmsg);
     }
     
+    int32_t all_mesh_triangles_tail_i =
+        all_mesh_summaries[to_add->mesh_id].all_meshes_head_i +
+            all_mesh_summaries[to_add->mesh_id].triangles_size;
     for (
-        uint32_t tri_i = 0;
-        tri_i < to_add->triangles_size;
+        uint32_t tri_i = all_mesh_summaries[to_add->mesh_id].all_meshes_head_i;
+        tri_i < all_mesh_triangles_tail_i;
         tri_i++)
     {
         int32_t material_i =
-            all_meshes[to_add->mesh_head_i + tri_i].parent_material_i;
+            all_mesh_triangles[tri_i].parent_material_i;
         
         log_assert(material_i >= 0);
-        log_assert(material_i < to_add->triangle_materials_size);
+        if (material_i >= to_add->triangle_materials_size) {
+            char err_msg[256];
+            strcpy_capped(err_msg, 256, "New zpolygon has only ");
+            strcat_uint_capped(err_msg, 256, to_add->triangle_materials_size);
+            strcat_capped(
+                err_msg,
+                256,
+                " material settings, but is using mesh ");
+            strcat_uint_capped(err_msg, 256, to_add->mesh_id);
+            strcat_capped(err_msg, 256, " (");
+            strcat_capped(
+                err_msg,
+                256,
+                all_mesh_summaries[to_add->mesh_id].resource_name);
+            strcat_capped(err_msg, 256, ") which requires ");
+            strcat_uint_capped(
+                err_msg,
+                256,
+                all_mesh_summaries[to_add->mesh_id].materials_size);
+            log_dump_and_crash(err_msg);
+        }
         
         if (to_add->triangle_materials[material_i].texturearray_i >= 0) {
             register_high_priority_if_unloaded(
                 to_add->triangle_materials[material_i].texturearray_i,
                 to_add->triangle_materials[material_i].texture_i);
         }
-                
-        // set the hitbox height, width, and depth
-        set_zpolygon_hitbox(to_add);
     }
+    
+    // set the hitbox height, width, and depth
+    set_zpolygon_hitbox(to_add);
+
     
     for (
         uint32_t i = 0;
@@ -159,19 +188,25 @@ void zpolygon_scale_to_width_given_z(
     to_scale->scale_factor = scale_factor;
 }
 
-void scale_zpolygon(
+void scale_zpolygon_multipliers_to_height(
     zPolygon * to_scale,
-    const float new_size)
+    const float new_height)
 {
     log_assert(to_scale != NULL);
+    log_assert(to_scale->mesh_id >= 0);
+    log_assert(to_scale->mesh_id < all_mesh_summaries_size);
+    
     if (to_scale == NULL) { return; }
-        
+    
     float highest_ascent = 0.0f;
     float lowest_descent = 0.0f;
     
+    int32_t mesh_triangles_tail_i =
+        all_mesh_summaries[to_scale->mesh_id].all_meshes_head_i +
+            all_mesh_summaries[to_scale->mesh_id].triangles_size;
     for (
-        uint32_t i = 0;
-        i < to_scale->triangles_size;
+        uint32_t i = all_mesh_summaries[to_scale->mesh_id].all_meshes_head_i;
+        i < mesh_triangles_tail_i;
         i++)
     {
         for (
@@ -180,27 +215,27 @@ void scale_zpolygon(
             j++)
         {
             if (
-                all_meshes[to_scale->mesh_head_i + i].vertices[j].y >
+                all_mesh_triangles[to_scale->mesh_id + i].vertices[j].y >
                     highest_ascent)
             {
                 highest_ascent =
-                    all_meshes[to_scale->mesh_head_i + i].vertices[j].y;
+                    all_mesh_triangles[to_scale->mesh_id + i].vertices[j].y;
             }
             
             if (
-                all_meshes[to_scale->mesh_head_i + i].vertices[j].y <
+                all_mesh_triangles[to_scale->mesh_id + i].vertices[j].y <
                     lowest_descent)
             {
                 lowest_descent =
-                    all_meshes[to_scale->mesh_head_i + i].vertices[j].y;
+                    all_mesh_triangles[to_scale->mesh_id + i].vertices[j].y;
             }
         }
     }
     log_assert(highest_ascent > lowest_descent);
     
-    float scale_factor = new_size / (highest_ascent - lowest_descent);
-    
-    to_scale->scale_factor = scale_factor;
+    to_scale->y_multiplier = new_height / (highest_ascent - lowest_descent);
+    to_scale->x_multiplier = to_scale->y_multiplier;
+    to_scale->z_multiplier = to_scale->y_multiplier;
 }
 
 // TODO: rewrite for all_meshes instead of doing every time for diff zpolys
@@ -257,22 +292,26 @@ float zpolygon_get_width(
     float leftmost_x = FLOAT32_MAX;
     float rightmost_x = FLOAT32_MIN;
     
-    for (uint32_t i = 0; i < to_inspect->triangles_size; i++) {
+    for (
+        uint32_t i = 0;
+        i < all_mesh_summaries[to_inspect->mesh_id].triangles_size;
+        i++)
+    {
         for (uint32_t j = 0; j < 3; j++)
         {
             if (
-                all_meshes[to_inspect->mesh_head_i + i].vertices[j].x <
+                all_mesh_triangles[to_inspect->mesh_id + i].vertices[j].x <
                     leftmost_x)
             {
-                leftmost_x = all_meshes[to_inspect->mesh_head_i + i].
+                leftmost_x = all_mesh_triangles[to_inspect->mesh_id + i].
                     vertices[j].x;
             }
             
             if (
-                all_meshes[to_inspect->mesh_head_i + i].vertices[j].x >
+                all_mesh_triangles[to_inspect->mesh_id + i].vertices[j].x >
                     rightmost_x)
             {
-                rightmost_x = all_meshes[to_inspect->mesh_head_i + i].
+                rightmost_x = all_mesh_triangles[to_inspect->mesh_id + i].
                     vertices[j].x;
             }
         }
@@ -284,9 +323,9 @@ float zpolygon_get_width(
 }
 
 void construct_zpolygon(zPolygon * to_construct) {
+    to_construct->mesh_id = -1;
     to_construct->object_id = -1;
     to_construct->touchable_id = -1;
-    to_construct->triangles_size = 0;
     to_construct->x = 0.0f;
     to_construct->y = 0.0f;
     to_construct->z = 1.0f;
@@ -304,6 +343,13 @@ void construct_zpolygon(zPolygon * to_construct) {
     to_construct->rgb_bonus[0] = 0.0f;
     to_construct->rgb_bonus[1] = 0.0f;
     to_construct->rgb_bonus[2] = 0.0f;
+    
+    to_construct->triangle_materials[0].color[0] = 1.0f;
+    to_construct->triangle_materials[0].color[1] = 1.0f;
+    to_construct->triangle_materials[0].color[2] = 1.0f;
+    to_construct->triangle_materials[0].color[3] = 1.0f;
+    to_construct->triangle_materials[0].texture_i = -1;
+    to_construct->triangle_materials[0].texturearray_i = -1;
     
     to_construct->triangle_materials_size = 0;
 }
@@ -971,7 +1017,7 @@ void construct_quad(
     recipient->ignore_camera = false;
     
     // a quad is hardcoded in objmodel.c's init_all_meshes()
-    recipient->mesh_head_i = 0;
+    recipient->mesh_id = 0;
     
     // the hardcoded quad offsets range from -1.0f to 1.0f,
     // so the current width is 2.0f
@@ -980,7 +1026,6 @@ void construct_quad(
     recipient->x_multiplier = width / current_width;
     recipient->y_multiplier = height / current_height;
     
-    recipient->triangles_size = 2;
     recipient->triangle_materials[0].color[0] = 1.0f;
     recipient->triangle_materials[0].color[1] = 1.0f;
     recipient->triangle_materials[0].color[2] = 1.0f;
@@ -1014,8 +1059,7 @@ void construct_quad_around(
     recipient->x_multiplier = width / current_width;
     recipient->y_multiplier = height / current_height;
     
-    recipient->mesh_head_i = 0;
-    recipient->triangles_size = 2;
+    recipient->mesh_id = 0;
     recipient->triangle_materials[0].color[0] = 1.0f;
     recipient->triangle_materials[0].color[1] = 1.0f;
     recipient->triangle_materials[0].color[2] = 1.0f;

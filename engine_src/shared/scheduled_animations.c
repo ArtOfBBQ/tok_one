@@ -616,7 +616,8 @@ static void resolve_single_animation_effects(
             if (!anim->final_rgba_known[c]) {
                 for (
                     uint32_t tri_i = 0;
-                    tri_i < zpolygons_to_render[zp_i].triangles_size;
+                    tri_i < all_mesh_summaries[
+                        zpolygons_to_render[zp_i].mesh_id].triangles_size;
                     tri_i++)
                 {
                     float delta = ((anim->rgba_delta_per_second[c]
@@ -635,29 +636,22 @@ static void resolve_single_animation_effects(
                     }
                 }
             } else {
-                
                 for (
-                    uint32_t tri_i = 0;
-                    tri_i < zpolygons_to_render[zp_i].triangles_size;
-                    tri_i++)
+                    uint32_t mat_i = 0;
+                    mat_i < zpolygons_to_render[zp_i].
+                        triangle_materials_size;
+                    mat_i++)
                 {
-                    for (
-                        uint32_t mat_i = 0;
-                        mat_i < zpolygons_to_render[zp_i].
-                            triangle_materials_size;
-                        mat_i++)
-                    {
-                        float cur_val =
-                            zpolygons_to_render[zp_i].
-                                triangle_materials[mat_i].color[c];
-                        float delta_val = anim->final_rgba[c] - cur_val;
-                        
+                    float cur_val =
                         zpolygons_to_render[zp_i].
-                                triangle_materials[mat_i].color[c] +=
-                            delta_val /
-                                ((float)remaining_microseconds_at_start_of_run /
-                                    elapsed_this_run);
-                    }
+                            triangle_materials[mat_i].color[c];
+                    float delta_val = anim->final_rgba[c] - cur_val;
+                    
+                    zpolygons_to_render[zp_i].
+                            triangle_materials[mat_i].color[c] +=
+                        delta_val /
+                            ((float)remaining_microseconds_at_start_of_run /
+                                elapsed_this_run);
                 }
             }
         }
