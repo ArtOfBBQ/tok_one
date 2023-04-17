@@ -74,13 +74,16 @@ void request_zpolygon_to_render(zPolygon * to_add)
     log_assert(to_add->mesh_id >= 0);
     log_assert(to_add->mesh_id < (int32_t)all_mesh_summaries_size);
     log_assert(all_mesh_summaries[to_add->mesh_id].triangles_size > 0);
-    
-    if (to_add->object_id == FPS_COUNTER_OBJECT_ID) {
-        char errmsg[64];
-        strcpy_capped(errmsg, 64, "object_id: ");
-        strcat_uint_capped(errmsg, 64, FPS_COUNTER_OBJECT_ID);
-        strcat_capped(errmsg, 64, " is reserved for FPS counter, don't use\n");
-        log_dump_and_crash(errmsg);
+        
+    for (
+        int32_t mat_i = 0;
+        mat_i < (int32_t)to_add->triangle_materials_size;
+        mat_i++)
+    {
+        for (int32_t col_i = 0; col_i < 4; col_i++) {
+            log_assert(to_add->triangle_materials[mat_i].color[col_i] >= 0.0f);
+            log_assert(to_add->triangle_materials[mat_i].color[col_i] <= 1.0f);
+        }
     }
     
     int32_t all_mesh_triangles_tail_i =
@@ -213,6 +216,8 @@ void construct_zpolygon(zPolygon * to_construct) {
     to_construct->x = 0.0f;
     to_construct->y = 0.0f;
     to_construct->z = 1.0f;
+    to_construct->x_offset = 0.0f;
+    to_construct->y_offset = 0.0f;
     to_construct->x_angle = 0.0f;
     to_construct->y_angle = 0.0f;
     to_construct->z_angle = 0.0f;
@@ -893,8 +898,10 @@ void construct_quad(
     
     construct_zpolygon(recipient);
     
-    const float mid_x = left_x + (width  / 2);
-    const float mid_y = bottom_y  + (height / 2);
+    const float mid_x =
+        left_x + (width  / 2);
+    const float mid_y =
+        bottom_y  + (height / 2);
     
     recipient->x = mid_x;
     recipient->y = mid_y;

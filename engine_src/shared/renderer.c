@@ -116,7 +116,7 @@ void hardware_render(
             all_mesh_summaries[mesh_id].all_meshes_head_i +
                 all_mesh_summaries[mesh_id].triangles_size;
         for (
-            uint32_t tri_i = all_mesh_summaries[mesh_id].all_meshes_head_i;
+            int32_t tri_i = all_mesh_summaries[mesh_id].all_meshes_head_i;
             tri_i < tail_i;
             tri_i++)
         {
@@ -133,9 +133,11 @@ void hardware_render(
                     all_mesh_triangles[tri_i].vertices[m].z *
                         zpolygons_to_render[zp_i].z_multiplier;
                 next_gpu_workload[*next_workload_size].parent_x =
-                    zpolygons_to_render[zp_i].x;
+                    (zpolygons_to_render[zp_i].x +
+                        zpolygons_to_render[zp_i].x_offset);
                 next_gpu_workload[*next_workload_size].parent_y =
-                    zpolygons_to_render[zp_i].y;
+                    (zpolygons_to_render[zp_i].y +
+                        zpolygons_to_render[zp_i].y_offset);
                 next_gpu_workload[*next_workload_size].parent_z =
                     zpolygons_to_render[zp_i].z;
                 next_gpu_workload[*next_workload_size].x_angle =
@@ -152,16 +154,28 @@ void hardware_render(
                     all_mesh_triangles[tri_i].normal.z;
                 next_gpu_workload[*next_workload_size].RGBA[0] =
                     zpolygons_to_render[zp_i].
-                        triangle_materials[material_i].color[0]
-                            + zpolygons_to_render[zp_i].rgb_bonus[0];
+                        triangle_materials[material_i].color[0] +
+                            zpolygons_to_render[zp_i].rgb_bonus[0];
+                log_assert(
+                    next_gpu_workload[*next_workload_size].RGBA[0] >= -5.0f);
+                log_assert(
+                    next_gpu_workload[*next_workload_size].RGBA[0] <= 20.0f);
                 next_gpu_workload[*next_workload_size].RGBA[1] =
                     zpolygons_to_render[zp_i].
-                        triangle_materials[material_i].color[1]
-                            + zpolygons_to_render[zp_i].rgb_bonus[1];
+                        triangle_materials[material_i].color[1] +
+                            zpolygons_to_render[zp_i].rgb_bonus[1];
+                log_assert(
+                    next_gpu_workload[*next_workload_size].RGBA[1] >= -5.0f);
+                log_assert(
+                    next_gpu_workload[*next_workload_size].RGBA[1] <= 20.0f);
                 next_gpu_workload[*next_workload_size].RGBA[2] =
                     zpolygons_to_render[zp_i].
-                        triangle_materials[material_i].color[2]
-                            + zpolygons_to_render[zp_i].rgb_bonus[2];
+                        triangle_materials[material_i].color[2] +
+                            zpolygons_to_render[zp_i].rgb_bonus[2];
+                log_assert(
+                    next_gpu_workload[*next_workload_size].RGBA[2] >= -5.0f);
+                log_assert(
+                    next_gpu_workload[*next_workload_size].RGBA[2] <= 20.0f);
                 next_gpu_workload[*next_workload_size].RGBA[3] =
                     zpolygons_to_render[zp_i].
                         triangle_materials[material_i].color[3];
@@ -403,7 +417,7 @@ void hardware_render(
         }
     }
     
-    if (application_running) {
+    if (application_running && 0) {
         add_particle_effects_to_workload(
             next_gpu_workload,
             next_workload_size,

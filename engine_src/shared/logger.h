@@ -1,16 +1,15 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-// #define LOGGER_SILENCE
+//#define LOGGER_SILENCE
 #ifndef LOGGER_SILENCE
 #include "stdio.h"
 #endif
 
-// #define IGNORE_LOGGER
+//#define IGNORE_LOGGER
 
 #include "common.h"
 #include "memorystore.h"
-
 
 #define LOG_SIZE 5000000
 

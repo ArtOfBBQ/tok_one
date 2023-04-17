@@ -106,15 +106,10 @@ void terminal_redraw_backgrounds(void) {
         /* zPolygon * recipien: */
             &current);
     
-    // TODO: color should be independent of mesh
-    //    all_meshes[current.mesh_head_i + 0].color[0] = term_background_color[0];
-    //    current.triangles[0].color[1] = term_background_color[1];
-    //    current.triangles[0].color[2] = term_background_color[2];
-    //    current.triangles[0].color[3] = term_background_color[3];
-    //    current.triangles[1].color[0] = term_background_color[0];
-    //    current.triangles[1].color[1] = term_background_color[1];
-    //    current.triangles[1].color[2] = term_background_color[2];
-    //    current.triangles[1].color[3] = term_background_color[3];
+    current.triangle_materials[0].color[0] = term_background_color[0];
+    current.triangle_materials[0].color[1] = term_background_color[1];
+    current.triangle_materials[0].color[2] = term_background_color[2];
+    current.triangle_materials[0].color[3] = term_background_color[3];
     current.ignore_camera = true;
     current.ignore_lighting = true;
     current.visible = terminal_active;
@@ -150,15 +145,10 @@ void terminal_redraw_backgrounds(void) {
        /* zPolygon * recipien: */
            &current);
     
-    // TODO: color should be independent of mesh
-    //    current.triangles[0].color[0] = term_background_color[0];
-    //    current.triangles[0].color[1] = term_background_color[1];
-    //    current.triangles[0].color[2] = term_background_color[2];
-    //    current.triangles[0].color[3] = term_background_color[3];
-    //    current.triangles[1].color[0] = term_background_color[0];
-    //    current.triangles[1].color[1] = term_background_color[1];
-    //    current.triangles[1].color[2] = term_background_color[2];
-    //    current.triangles[1].color[3] = term_background_color[3];
+    current.triangle_materials[0].color[0] = term_background_color[0];
+    current.triangle_materials[0].color[1] = term_background_color[1];
+    current.triangle_materials[0].color[2] = term_background_color[2];
+    current.triangle_materials[0].color[3] = term_background_color[3];
     current.visible = terminal_active;
     current.ignore_camera = true;
     current.ignore_lighting = true;

@@ -103,11 +103,6 @@ typedef struct ScheduledAnimation {
         float delta_scale_per_second;
         float final_scale;
     };
-    //    bool32_t final_yscale_known;
-    //    union {
-    //        float delta_yscale_per_second;
-    //        float final_yscale;
-    //    };
     // *** end of scaling animations
     
     bool32_t final_rgba_known[4];

@@ -15,18 +15,18 @@ static void construct_scheduled_animation(
 {
     to_construct->affected_object_id = -1;
     
+    to_construct->destroy_even_waiting_duplicates = false;
+    
     to_construct->set_texture_array_i = false;
     to_construct->new_texture_array_i = -1;
     to_construct->set_texture_i = false;
     to_construct->new_texture_i = -1;
-    to_construct->destroy_even_waiting_duplicates = false;
     
     to_construct->final_x_known = false;
-    to_construct->final_y_known = false;
-    to_construct->final_z_known = false;
     to_construct->delta_x_per_second = 0.0f;
+    to_construct->final_y_known = false;
     to_construct->delta_y_per_second = 0.0f;
-    to_construct->delta_z_per_second = 0.0f;
+    to_construct->final_z_known = false;
     to_construct->delta_z_per_second = 0.0f;
     
     to_construct->final_x_angle_known = false;
@@ -37,8 +37,8 @@ static void construct_scheduled_animation(
     to_construct->z_rotation_per_second = 0.0f;
     
     to_construct->final_width_known = false;
-    to_construct->final_height_known = false;
     to_construct->delta_width_per_second = 0.0f;
+    to_construct->final_height_known = false;
     to_construct->delta_height_per_second = 0.0f;
     
     to_construct->final_scale_known = false;
@@ -98,85 +98,17 @@ void commit_scheduled_animation(ScheduledAnimation * to_commit) {
     
     to_commit->committed = true;
     
+    for (uint32_t col_i = 0; col_i < 4; col_i++) {
+        if (to_commit->final_rgba_known[col_i]) {
+            log_assert(to_commit->final_rgba[col_i] >= 0.0f);
+            log_assert(to_commit->final_rgba[col_i] <= 1.0f);
+        }
+    }
+    
     if (to_commit->remaining_wait_before_next_run < 1) {
         delete_conflicting_animations(to_commit);
     }
 }
-
-/*
-void request_scheduled_animation(
-    ScheduledAnimation * to_add)
-{
-    log_assert(to_add != NULL);
-    log_assert(!to_add->deleted);
-    
-    if (
-        to_add->clientlogic_callback_when_finished_id < 0)
-    {
-        log_assert(to_add->affected_object_id >= 0);
-        
-        bool32_t found_target = false;
-        
-        for (
-            uint32_t i = 0;
-            i < zlights_to_apply_size;
-            i++)
-        {
-            if (
-                !zlights_to_apply[i].deleted &&
-                zlights_to_apply[i].object_id == to_add->affected_object_id)
-            {
-                found_target = true;
-            }
-        }
-        
-        for (
-            uint32_t zp_i = 0;
-            zp_i < zpolygons_to_render_size;
-            zp_i++)
-        {
-            if (
-                !zpolygons_to_render[zp_i].deleted &&
-                zpolygons_to_render[zp_i].object_id == to_add->affected_object_id)
-            {
-                found_target = true;
-            }
-        }
-    }
-    to_add->remaining_microseconds = to_add->duration_microseconds;
-    
-    log_assert(
-        scheduled_animations_size < SCHEDULED_ANIMATIONS_ARRAYSIZE);
-    
-    if (to_add->remaining_wait_before_next_run < 1) {
-        delete_conflicting_animations(
-            to_add,
-            -1);
-    }
-    
-    for (
-        int32_t i = 0;
-        i < (int32_t)scheduled_animations_size;
-        i++)
-    {
-        if (scheduled_animations[i].deleted)
-        {
-            scheduled_animations[i] = *to_add;
-            return;
-        }
-    }
-    
-    log_assert(
-        SCHEDULED_ANIMATIONS_ARRAYSIZE > scheduled_animations_size);
-    
-    scheduled_animations[scheduled_animations_size] = *to_add;
-    log_assert(!scheduled_animations[scheduled_animations_size].deleted);
-    scheduled_animations_size += 1;
-    log_assert(
-        SCHEDULED_ANIMATIONS_ARRAYSIZE
-            > scheduled_animations_size);
-}
-*/
 
 void delete_conflicting_animations(ScheduledAnimation * priority_anim)
 {
@@ -370,8 +302,6 @@ static void resolve_single_animation_effects(
                 anim->affected_object_id &&
             !zlights_to_apply[l_i].deleted)
         {
-            found_at_least_one = true;
-            
             if (!anim->final_x_known) {
                 zlights_to_apply[l_i].x +=
                     (anim->delta_x_per_second * elapsed_this_run) / 1000000;
@@ -430,20 +360,26 @@ static void resolve_single_animation_effects(
                 c++)
             {
                 if (!anim->final_rgba_known[c]) {
-                    zlights_to_apply[l_i].RGBA[c] +=
+                    float delta =
                         (anim->rgba_delta_per_second[c]
                             * elapsed_this_run)
                                 / 1000000;
+                    
+                    if (delta > 0.0001f || delta < 0.0001f) {
+                        zlights_to_apply[l_i].RGBA[c] += delta;
+                    }
                 } else {
                     float cur_val =
                         zlights_to_apply[l_i].RGBA[c];
                     float delta_val =
                         anim->final_rgba[c] - cur_val;
                     
-                    zlights_to_apply[l_i].RGBA[c] +=
-                        delta_val /
-                            ((float)remaining_microseconds_at_start_of_run /
-                                elapsed_this_run);
+                    if (delta_val > 0.0001f || delta_val < 0.0001f) {
+                        zlights_to_apply[l_i].RGBA[c] +=
+                            delta_val /
+                                ((float)remaining_microseconds_at_start_of_run /
+                                    elapsed_this_run);
+                    }
                 }
             }
         }
@@ -614,16 +550,11 @@ static void resolve_single_animation_effects(
             c++)
         {
             if (!anim->final_rgba_known[c]) {
-                for (
-                    uint32_t tri_i = 0;
-                    tri_i < all_mesh_summaries[
-                        zpolygons_to_render[zp_i].mesh_id].triangles_size;
-                    tri_i++)
-                {
-                    float delta = ((anim->rgba_delta_per_second[c]
-                            * elapsed_this_run)
-                        / 1000000);
-                        
+                float delta = ((anim->rgba_delta_per_second[c]
+                        * elapsed_this_run)
+                    / 1000000);
+                
+                if (delta > 0.0001f || delta < 0.0001f) {
                     for (
                         uint32_t mat_i = 0;
                         mat_i < zpolygons_to_render[zp_i].
@@ -631,7 +562,7 @@ static void resolve_single_animation_effects(
                         mat_i++)
                     {
                         zpolygons_to_render[zp_i].
-                            triangle_materials[0].color[c] +=
+                            triangle_materials[mat_i].color[c] +=
                                 delta;
                     }
                 }
@@ -647,11 +578,13 @@ static void resolve_single_animation_effects(
                             triangle_materials[mat_i].color[c];
                     float delta_val = anim->final_rgba[c] - cur_val;
                     
-                    zpolygons_to_render[zp_i].
-                            triangle_materials[mat_i].color[c] +=
-                        delta_val /
-                            ((float)remaining_microseconds_at_start_of_run /
-                                elapsed_this_run);
+                    if (delta_val > 0.00001f || delta_val < 0.00001f) {
+                        zpolygons_to_render[zp_i].
+                                triangle_materials[mat_i].color[c] +=
+                            delta_val /
+                                ((float)remaining_microseconds_at_start_of_run /
+                                    elapsed_this_run);
+                    }
                 }
             }
         }

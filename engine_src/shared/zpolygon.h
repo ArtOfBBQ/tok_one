@@ -54,6 +54,9 @@ typedef struct zPolygon {
     float hitbox_depth;
     float rgb_bonus[3];
     
+    float x_offset;
+    float y_offset;
+    
     /*
     The x,y, and z multipliers are meant as permanent settings to adjust the
     size of the linked mesh. Scale factor affects all vertices and is meant as
@@ -72,7 +75,7 @@ typedef struct zPolygon {
 } zPolygon;
 void construct_zpolygon(zPolygon * to_construct);
 void request_zpolygon_to_render(zPolygon * to_add);
-	
+
 // A buffer of zPolygon objects that should be rendered
 // in your application
 // index 0 to zpolygons_to_render_size will be rendered,
