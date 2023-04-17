@@ -551,31 +551,31 @@ static void resolve_single_animation_effects(
         
         if (!anim->final_width_known) {
             if (anim->delta_width_per_second != 0.0f) {
-                float cur_width = zpolygon_get_width(&zpolygons_to_render[zp_i]);
-            
-                float bonus_width = (anim->delta_width_per_second
-                    * elapsed_this_run)
-                        / 1000000;
-                
-                zpolygon_scale_width_only_given_z(
-                    /* zPolygon * to_scale: */ &zpolygons_to_render[zp_i],
-                    /* const float new_width: */ cur_width + bonus_width,
-                    /* const float when_observed_at_z: */ 1.0f);
+                //                float cur_width = zpolygon_get_width(&zpolygons_to_render[zp_i]);
+                //
+                //                float bonus_width = (anim->delta_width_per_second
+                //                    * elapsed_this_run)
+                //                        / 1000000;
+                //
+                //                zpolygon_scale_width_only_given_z(
+                //                    /* zPolygon * to_scale: */ &zpolygons_to_render[zp_i],
+                //                    /* const float new_width: */ cur_width + bonus_width,
+                //                    /* const float when_observed_at_z: */ 1.0f);
             }
         } else {
-            float cur_width = zpolygon_get_width(&zpolygons_to_render[zp_i]);
-            
-            float diff_width = anim->final_width - cur_width;
-            
-            float new_width = cur_width +
-                (diff_width /
-                    ((float)remaining_microseconds_at_start_of_run /
-                        elapsed_this_run));
-            
-            zpolygon_scale_width_only_given_z(
-                /* zPolygon * to_scale: */ &zpolygons_to_render[zp_i],
-                /* const float new_width: */ new_width,
-                /* const float when_observed_at_z: */ 1.0f);
+            //            float cur_width = zpolygon_get_width(&zpolygons_to_render[zp_i]);
+            //
+            //            float diff_width = anim->final_width - cur_width;
+            //
+            //            float new_width = cur_width +
+            //                (diff_width /
+            //                    ((float)remaining_microseconds_at_start_of_run /
+            //                        elapsed_this_run));
+            //
+            //            zpolygon_scale_width_only_given_z(
+            //                /* zPolygon * to_scale: */ &zpolygons_to_render[zp_i],
+            //                /* const float new_width: */ new_width,
+            //                /* const float when_observed_at_z: */ 1.0f);
         }
         
         if (!anim->final_scale_known) {

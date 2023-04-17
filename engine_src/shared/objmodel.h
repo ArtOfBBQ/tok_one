@@ -40,31 +40,18 @@ and texture_i 1 if you had labeled some faces of your object with the material
 You could set the texturearray_i and texture_i to -1 and use a color for
 another material name, etc.
 */
-typedef struct ExpectedObjMaterials {
-    char material_name[16];
-    int32_t texturearray_i;
-    int32_t texture_i;
-    float rgba[4];
-} ExpectedObjMaterials;
-
-//void parse_obj(
-//    const char * rawdata,
-//    const uint64_t rawdata_size,
-//    MeshSummary * summary_recipient,
-//    zTriangle * triangles_recipient,
-//    uint32_t * triangles_recipient_size);
-
-//void parse_obj_expecting_materials(
-//    char * rawdata,
-//    uint64_t rawdata_size,
-//    ExpectedObjMaterials * expected_materials,
-//    const uint32_t expected_materials_size,
-//    const bool32_t flip_winding,
-//    zTriangle * recipient,
-//    uint32_t * recipient_size);
+//typedef struct ExpectedObjMaterials {
+//    char material_name[16];
+//    int32_t texturearray_i;
+//    int32_t texture_i;
+//    float rgba[4];
+//} ExpectedObjMaterials;
 
 int32_t new_mesh_id_from_resource(
     const char * filename);
+
+void center_mesh_offsets(
+    const int32_t mesh_id);
 
 #ifdef __cplusplus
 }
