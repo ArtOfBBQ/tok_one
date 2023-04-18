@@ -417,7 +417,7 @@ void hardware_render(
         }
     }
     
-    if (application_running && 0) {
+    if (application_running) {
         add_particle_effects_to_workload(
             next_gpu_workload,
             next_workload_size,
