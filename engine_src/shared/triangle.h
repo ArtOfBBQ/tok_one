@@ -1,7 +1,9 @@
 #ifndef TRIANGLE_H
 #define TRIANGLE_H
 
-// #include "common.h"
+#include "common.h"
+
+#include <math.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,6 +21,9 @@ typedef struct zTriangle {
     zVertex normal;
     int32_t parent_material_i;
 } zTriangle;
+
+void normalize_zvertex(
+    zVertex * to_normalize);
 
 #ifdef __cplusplus
 }

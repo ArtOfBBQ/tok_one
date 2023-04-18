@@ -6,12 +6,30 @@ uint32_t all_mesh_summaries_size;
 zTriangle * all_mesh_triangles;
 uint32_t all_mesh_triangles_size = 0;
 
+typedef struct BufferedNormal {
+    float x;
+    float y;
+    float z;
+} BufferedNormal;
+
 #define PARSER_VERTEX_BUFFER_SIZE 16000
 static zVertex * parser_vertex_buffer = NULL;
+static BufferedNormal * parser_normals_buffer = NULL;
+static float * parser_uv_u_buffer = NULL;
+static float * parser_uv_v_buffer = NULL;
 
 void init_all_meshes(void) {
     parser_vertex_buffer = (zVertex *)malloc_from_unmanaged(
         sizeof(zVertex) * PARSER_VERTEX_BUFFER_SIZE);
+    
+    parser_normals_buffer = (BufferedNormal *)malloc_from_unmanaged(
+        sizeof(BufferedNormal) * PARSER_VERTEX_BUFFER_SIZE);
+    
+    parser_uv_u_buffer = (float *)malloc_from_unmanaged(
+        sizeof(float) * PARSER_VERTEX_BUFFER_SIZE);
+    
+    parser_uv_v_buffer = (float *)malloc_from_unmanaged(
+        sizeof(float) * PARSER_VERTEX_BUFFER_SIZE);
     
     all_mesh_summaries = (MeshSummary *)malloc_from_unmanaged(
         sizeof(MeshSummary) * ALL_MESHES_SIZE);
@@ -212,7 +230,8 @@ static uint32_t chars_till_next_space_or_slash(
     while (
         buffer[i] != '\n' &&
         buffer[i] != ' ' &&
-        buffer[i] != '/')
+        buffer[i] != '/' &&
+        buffer[i] != '\r')
     {
         i++;
     }
@@ -241,15 +260,14 @@ static void parse_obj(
 {
     log_assert(rawdata != NULL);
     log_assert(rawdata_size > 0);
-
-    float parser_uv_u[PARSER_VERTEX_BUFFER_SIZE];
-    float parser_uv_v[PARSER_VERTEX_BUFFER_SIZE];
-    uint32_t new_uv_i = 0;
-
+    
     uint32_t i = 0;
     uint32_t first_material_or_face_i = UINT32_MAX;
-    uint32_t new_vertex_i = 0;
-
+    
+    uint32_t next_verrtex_i = 0;
+    uint32_t next_uv_i = 0;
+    uint32_t next_normal_i = 0;
+    
     // first pass
     while (i < rawdata_size) {
         // read the 1st character, which denominates the type
@@ -302,19 +320,19 @@ static void parse_obj(
             new_vertex.z = string_to_float(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
-            log_assert(rawdata[i] == '\n');
+            log_assert(rawdata[i] == '\n' || rawdata[i] == '\r');
             i++;
-
-            parser_vertex_buffer[new_vertex_i] = new_vertex;
+            
+            parser_vertex_buffer[next_verrtex_i] = new_vertex;
             log_assert(
-                parser_vertex_buffer[new_vertex_i].x == new_vertex.x);
+                parser_vertex_buffer[next_verrtex_i].x == new_vertex.x);
             log_assert(
-                parser_vertex_buffer[new_vertex_i].y
+                parser_vertex_buffer[next_verrtex_i].y
                     == new_vertex.y);
             log_assert(
-                parser_vertex_buffer[new_vertex_i].z
+                parser_vertex_buffer[next_verrtex_i].z
                     == new_vertex.z);
-            new_vertex_i++;
+            next_verrtex_i++;
         } else if (
             rawdata[i] == 'v'
             && rawdata[i+1] == 't')
@@ -328,7 +346,7 @@ static void parse_obj(
             log_assert(rawdata[i] != ' ');
 
             // read the u coordinate
-            parser_uv_u[new_uv_i] = string_to_float(rawdata + i);
+            parser_uv_u_buffer[next_uv_i] = string_to_float(rawdata + i);
 
             // discard the u coordinate
             i += chars_till_next_space_or_slash(
@@ -341,18 +359,80 @@ static void parse_obj(
             log_assert(rawdata[i] != ' ');
 
             // read the v coordinate
-            parser_uv_v[new_uv_i] = string_to_float(rawdata + i);
+            parser_uv_v_buffer[next_uv_i] = string_to_float(rawdata + i);
 
-            new_uv_i += 1;
+            next_uv_i += 1;
 
             // discard the v coordinate
             i += chars_till_next_space_or_slash(
                 rawdata + i);
-            log_assert(rawdata[i] == '\n');
-
+            
+            // there may be a 3rd 'w' entry in a 'vt' line, skip if so
+            if (rawdata[i] == ' ') {
+                i++;
+                i += chars_till_next_space_or_slash(rawdata + i);
+            }
+            
+            log_assert(rawdata[i] == '\n' || rawdata[i] == '\r');
+            
             // discard the line break
-            i++;
+            while (rawdata[i] == '\n' || rawdata[i] == '\r') {
+                i++;
+            }
+            
+        } else if (
+            rawdata[i] == 'v'
+            && rawdata[i+1] == 'n')
+        {
+            // discard the 'vn'
+            i += 2;
+            
+            // skip the space(s) after the 'vt'
+            log_assert(rawdata[i] == ' ');
+            i += chars_till_next_nonspace(rawdata + i);
+            log_assert(rawdata[i] != ' ');
+            
+            parser_normals_buffer[next_normal_i].x =
+                string_to_float(rawdata + i);
+            
+            // discard the normal x
+            i += chars_till_next_space_or_slash(
+                rawdata + i);
+            log_assert(rawdata[i] == ' ');
 
+            // skip the space(s) after the normal x
+            log_assert(rawdata[i] == ' ');
+            i += chars_till_next_nonspace(rawdata + i);
+            log_assert(rawdata[i] != ' ');
+
+            // read the normal y
+            parser_normals_buffer[next_normal_i].y =
+                string_to_float(rawdata + i);
+            
+            // discard the normal y
+            i += chars_till_next_space_or_slash(
+                rawdata + i);
+            log_assert(rawdata[i] == ' ');
+
+            // skip the space(s) after the normal y
+            log_assert(rawdata[i] == ' ');
+            i += chars_till_next_nonspace(rawdata + i);
+            log_assert(rawdata[i] != ' ');
+            
+            // read the normal z
+            parser_normals_buffer[next_normal_i].z =
+                string_to_float(rawdata + i);
+            
+            // discard the normal z
+            i += chars_till_next_space_or_slash(
+                rawdata + i);
+            log_assert(rawdata[i] == '\n' || rawdata[i] == '\r');
+            // discard the line break
+            while (rawdata[i] == '\n' || rawdata[i] == '\r') {
+                i++;
+            }
+            
+            next_normal_i += 1;
         } else {
             if (
                 rawdata[i] == 'f' ||
@@ -376,7 +456,9 @@ static void parse_obj(
             }
 
             // skip the line break character
-            i++;
+            while (rawdata[i] == '\n' || rawdata[i] == '\r') {
+                i++;
+            }
         }
     }
 
@@ -396,7 +478,7 @@ static void parse_obj(
     i = first_material_or_face_i;
     uint32_t new_triangle_i = 0;
     int32_t using_material_i = 0;
-
+    
     while (i < rawdata_size) {
         if (
             rawdata[i+0] == 'u' &&
@@ -448,13 +530,15 @@ static void parse_obj(
                 summary_recipient->materials_size += 1;
                 using_material_i = summary_recipient->materials_size - 1;
             }
-
+            
             // skip until the next line break character
             while (rawdata[i] != '\n' && rawdata[i] != '\0') {
                 i++;
             }
             // skip the line break character
-            i++;
+            while (rawdata[i] == '\n' || rawdata[i] == '\r') {
+                i++;
+            }
         } else if (rawdata[i] == 'f') {
             // discard the 'f'
             i++;
@@ -463,12 +547,13 @@ static void parse_obj(
             // skip the space(s) after the 'f'
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
-
+            
             int32_t vertex_i_0 = string_to_int32(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
-
             int32_t uv_coord_i_0 = 0;
+            int32_t normals_i_0 = 0;
+            
             if (rawdata[i] == '/')
             {
                 // skip the slash
@@ -476,13 +561,13 @@ static void parse_obj(
                 uv_coord_i_0 = string_to_int32(rawdata + i);
                 i += chars_till_next_space_or_slash(rawdata + i);
             }
-            // skip any id's of normals
+            // add index to normal if any
             if (rawdata[i] == '/') {
                 i++;
-                log_assert(rawdata[i] != ' ');
+                normals_i_0 = string_to_int32(rawdata + i);
                 i += chars_till_next_space_or_slash(rawdata + i);
             }
-
+            
             log_assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
@@ -490,8 +575,9 @@ static void parse_obj(
             int32_t vertex_i_1 = string_to_int32(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
-
             int32_t uv_coord_i_1 = 0;
+            int32_t normals_i_1 = 0;
+            
             if (rawdata[i] == '/')
             {
                 // skip the slash
@@ -501,10 +587,11 @@ static void parse_obj(
                 i += chars_till_next_space_or_slash(
                     rawdata + i);
             }
-            // skip any id's of normals
+            // add index to normal if any
             if (rawdata[i] == '/') {
                 i++;
                 log_assert(rawdata[i] != ' ');
+                normals_i_1 = string_to_int32(rawdata + i);
                 i += chars_till_next_space_or_slash(rawdata + i);
             }
 
@@ -516,6 +603,8 @@ static void parse_obj(
             i += chars_till_next_space_or_slash(
                 rawdata + i);
             int32_t uv_coord_i_2 = 0;
+            int32_t normals_i_2 = 0;
+            
             if (rawdata[i] == '/')
             {
                 // skip the slash
@@ -526,15 +615,16 @@ static void parse_obj(
                     rawdata + i);
             }
 
-            // skip any id's of normals
+            // add index to normal if any
             if (rawdata[i] == '/') {
                 i++;
                 log_assert(rawdata[i] != ' ');
+                normals_i_2 = string_to_int32(rawdata + i);
                 while (rawdata[i] <= '9' && rawdata[i] >= '0') {
                     i++;
                 }
             }
-
+            
             while (rawdata[i] == ' ') { i++; }
 
             if (rawdata[i] != '\n' && rawdata[i] != '\r') {
@@ -542,6 +632,7 @@ static void parse_obj(
                 i += chars_till_next_space_or_slash(
                     rawdata + i);
                 int32_t uv_coord_i_3 = 0;
+                int32_t normals_i_3 = 0;
                 if (rawdata[i] == '/')
                 {
                     // skip the slash
@@ -551,11 +642,12 @@ static void parse_obj(
                     i += chars_till_next_space_or_slash(
                         rawdata + i);
                 }
-
-                // skip any id's of normals
+                
+                // add normals
                 if (rawdata[i] == '/') {
                     i++;
-                    log_assert(rawdata[i] != ' ');
+                    normals_i_3 =
+                        string_to_int32(rawdata + i);
                     while (rawdata[i] <= '9' && rawdata[i] >= '0') {
                         i++;
                     }
@@ -565,7 +657,7 @@ static void parse_obj(
                 // the 1st triangle will be added anyway later, but
                 // we do need to add the extra 2nd triangle here
                 zTriangle new_triangle;
-
+                
                 log_assert(vertex_i_0 != vertex_i_1);
                 log_assert(vertex_i_0 != vertex_i_2);
                 log_assert(vertex_i_0 > 0);
@@ -574,7 +666,10 @@ static void parse_obj(
                 log_assert(uv_coord_i_0 < PARSER_VERTEX_BUFFER_SIZE);
                 log_assert(uv_coord_i_1 < PARSER_VERTEX_BUFFER_SIZE);
                 log_assert(uv_coord_i_2 < PARSER_VERTEX_BUFFER_SIZE);
-
+                log_assert(normals_i_0 < PARSER_VERTEX_BUFFER_SIZE);
+                log_assert(normals_i_1 < PARSER_VERTEX_BUFFER_SIZE);
+                log_assert(normals_i_2 < PARSER_VERTEX_BUFFER_SIZE);
+                
                 uint32_t target_vertex_0 = 0;
                 uint32_t target_vertex_1 = 1;
                 uint32_t target_vertex_2 = 2;
@@ -592,26 +687,45 @@ static void parse_obj(
                     uv_coord_i_2 > 0)
                 {
                     new_triangle.vertices[target_vertex_0].uv[0] =
-                    parser_uv_u[uv_coord_i_0 - 1];
+                    parser_uv_u_buffer[uv_coord_i_0 - 1];
                     new_triangle.vertices[target_vertex_0].uv[1] =
-                    parser_uv_v[uv_coord_i_0 - 1];
+                    parser_uv_v_buffer[uv_coord_i_0 - 1];
                     new_triangle.vertices[target_vertex_1].uv[0] =
-                    parser_uv_u[uv_coord_i_2 - 1];
+                    parser_uv_u_buffer[uv_coord_i_2 - 1];
                     new_triangle.vertices[target_vertex_1].uv[1] =
-                    parser_uv_v[uv_coord_i_2 - 1];
+                    parser_uv_v_buffer[uv_coord_i_2 - 1];
                     new_triangle.vertices[target_vertex_2].uv[0] =
-                    parser_uv_u[uv_coord_i_3 - 1];
+                    parser_uv_u_buffer[uv_coord_i_3 - 1];
                     new_triangle.vertices[target_vertex_2].uv[1] =
-                    parser_uv_v[uv_coord_i_3 - 1];
+                    parser_uv_v_buffer[uv_coord_i_3 - 1];
                 }
-
+                
+                if (
+                    normals_i_0 > 0 &&
+                    normals_i_1 > 0 &&
+                    normals_i_2 > 0)
+                {
+                    new_triangle.normal.x = (
+                        parser_normals_buffer[normals_i_0 - 1].x +
+                        parser_normals_buffer[normals_i_1 - 1].x +
+                        parser_normals_buffer[normals_i_2 - 1].x) / 3.0f;
+                    new_triangle.normal.y = (
+                        parser_normals_buffer[normals_i_0 - 1].y +
+                        parser_normals_buffer[normals_i_1 - 1].y +
+                        parser_normals_buffer[normals_i_2 - 1].y) / 3.0f;
+                    new_triangle.normal.z = (
+                        parser_normals_buffer[normals_i_0 - 1].z +
+                        parser_normals_buffer[normals_i_1 - 1].z +
+                        parser_normals_buffer[normals_i_2 - 1].z) / 3.0f;
+                } else {
+                    guess_ztriangle_normal(&new_triangle);
+                }
                 new_triangle.parent_material_i = using_material_i;
-
+                
                 *triangles_recipient_size += 1;
                 log_assert(new_triangle_i < ALL_MESH_TRIANGLES_SIZE);
-
-                // TODO: don't guess if .obj mentioned a normal
-                guess_ztriangle_normal(&new_triangle);
+                
+                normalize_zvertex(&new_triangle.normal);
                 triangles_recipient[new_triangle_i] = new_triangle;
                 new_triangle_i++;
                 summary_recipient->triangles_size += 1;
@@ -631,7 +745,10 @@ static void parse_obj(
             log_assert(uv_coord_i_0 < PARSER_VERTEX_BUFFER_SIZE);
             log_assert(uv_coord_i_1 < PARSER_VERTEX_BUFFER_SIZE);
             log_assert(uv_coord_i_2 < PARSER_VERTEX_BUFFER_SIZE);
-
+            log_assert(normals_i_0 < PARSER_VERTEX_BUFFER_SIZE);
+            log_assert(normals_i_1 < PARSER_VERTEX_BUFFER_SIZE);
+            log_assert(normals_i_2 < PARSER_VERTEX_BUFFER_SIZE);
+            
             uint32_t target_vertex_0 = 0;
             uint32_t target_vertex_1 = 1;
             uint32_t target_vertex_2 = 2;
@@ -649,27 +766,47 @@ static void parse_obj(
                 uv_coord_i_2 > 0)
             {
                 new_triangle.vertices[target_vertex_0].uv[0] =
-                parser_uv_u[uv_coord_i_0 - 1];
+                parser_uv_u_buffer[uv_coord_i_0 - 1];
                 new_triangle.vertices[target_vertex_0].uv[1] =
-                parser_uv_v[uv_coord_i_0 - 1];
+                parser_uv_v_buffer[uv_coord_i_0 - 1];
                 new_triangle.vertices[target_vertex_1].uv[0] =
-                parser_uv_u[uv_coord_i_1 - 1];
+                parser_uv_u_buffer[uv_coord_i_1 - 1];
                 new_triangle.vertices[target_vertex_1].uv[1] =
-                parser_uv_v[uv_coord_i_1 - 1];
+                parser_uv_v_buffer[uv_coord_i_1 - 1];
                 new_triangle.vertices[target_vertex_2].uv[0] =
-                parser_uv_u[uv_coord_i_2 - 1];
+                parser_uv_u_buffer[uv_coord_i_2 - 1];
                 new_triangle.vertices[target_vertex_2].uv[1] =
-                parser_uv_v[uv_coord_i_2 - 1];
+                parser_uv_v_buffer[uv_coord_i_2 - 1];
             }
-
+            
+            if (
+                normals_i_0 > 0 &&
+                normals_i_1 > 0 &&
+                normals_i_2 > 0)
+            {
+                new_triangle.normal.x = (
+                    parser_normals_buffer[normals_i_0 - 1].x +
+                    parser_normals_buffer[normals_i_1 - 1].x +
+                    parser_normals_buffer[normals_i_2 - 1].x) / 3.0f;
+                new_triangle.normal.y = (
+                    parser_normals_buffer[normals_i_0 - 1].y +
+                    parser_normals_buffer[normals_i_1 - 1].y +
+                    parser_normals_buffer[normals_i_2 - 1].y) / 3.0f;
+                new_triangle.normal.z = (
+                    parser_normals_buffer[normals_i_0 - 1].z +
+                    parser_normals_buffer[normals_i_1 - 1].z +
+                    parser_normals_buffer[normals_i_2 - 1].z) / 3.0f;
+            } else {
+                guess_ztriangle_normal(&new_triangle);
+            }
+            
             new_triangle.parent_material_i = using_material_i;
-
-            // TODO: don't guess if triangle had normal data
-            guess_ztriangle_normal(&new_triangle);
+            
+            normalize_zvertex(&new_triangle.normal);
             triangles_recipient[new_triangle_i] = new_triangle;
             new_triangle_i++;
             summary_recipient->triangles_size += 1;
-
+            
             log_assert(rawdata[i] == '\n' || rawdata[i] == '\r');
             i++;
 
@@ -680,7 +817,9 @@ static void parse_obj(
             }
 
             // skip the line break character
-            i++;
+            while (rawdata[i] == '\n' || rawdata[i] == '\r') {
+                i++;
+            }
         }
     }
 

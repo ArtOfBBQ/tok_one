@@ -24,10 +24,6 @@ int main(int argc, char * argv[]) {
         respondsToSelector:@selector(displayLinkWithTarget:selector:)]
         && ([UIScreen mainScreen].scale >= 2.0));
     
-    client_logic_get_application_name_to_recipient(
-        /* recipient: */ application_name,
-        /* recipient_size: */ 100);
-    
     init_application(
         /* const float window_left: */
             0.0f,

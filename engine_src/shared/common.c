@@ -449,34 +449,35 @@ string_to_float_validate(
         
         if (input[i] >= '0' && input[i] <= '9') {
             found_num = true;
-	    if (found_exponent) {
-		if (exponent == 0) {
-		    exponent = input[i] - '0';
-		} else {
-		    *good = false;
-		    return return_value;
-		}
-	    } else if (!used_dot) {
+            if (found_exponent) {
+                if (exponent == 0) {
+                    exponent = input[i] - '0';
+                } else {
+                    // TODO: exponents of 10 or higher
+                    exponent = 10;
+                }
+            } else if (!used_dot) {
                 first_part[first_part_size++] = input[i];
             } else {
                 second_part[second_part_size++] = input[i];
             }
-        } else if (input[i] == 'e' || input[i] == 'E')
-	{
-	    if (found_exponent) {
-		*good = false;
-		return return_value;
-	    }
-	    found_exponent = true;
-	    if (input[i+1] == '-') {
-		exponent_modifier = -1;
-		i++;
-	    } else if (input[i+1] == '+') {
-		i++;
-	    } else {
-		*good = false;
-		return return_value;
-	    }
+        } else if (
+            input[i] == 'e' || input[i] == 'E')
+        {
+            if (found_exponent) {
+                *good = false;
+                return return_value;
+            }
+            found_exponent = true;
+            if (input[i+1] == '-') {
+                exponent_modifier = -1;
+                i++;
+            } else if (input[i+1] == '+') {
+                i++;
+            } else {
+                *good = false;
+                return return_value;
+            }
         } else {
             *good = false;
             return return_value;

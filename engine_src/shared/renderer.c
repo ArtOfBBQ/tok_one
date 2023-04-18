@@ -68,8 +68,10 @@ void hardware_render(
         }
         *next_workload_size += 3;
         
-        // draw the ray that's used for finding touchables when clicking
-        // as a triangle
+        /*
+        draw the ray that's used for finding touchables when clicking as a
+        triangle
+        */
         for (uint32_t m = 0; m < 3; m++) {
             next_gpu_workload[*next_workload_size + m].x =
                 window_globals->visual_debug_ray_origin_direction[(m*3) + 0];
