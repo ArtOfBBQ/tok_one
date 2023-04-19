@@ -26,7 +26,7 @@ of the engine for your specific app.
 // the max # of (probably from .obj) meshes/models in your app
 #define ALL_MESHES_SIZE 100
 // the max # of triangles in all of your meshes/models combined
-#define ALL_MESH_TRIANGLES_SIZE 10000
+#define ALL_MESH_TRIANGLES_SIZE 50000
 // The max number of 'materials' in 1 of your meshes_models (must be 1+)
 #define MAX_MATERIALS_SIZE 5
 

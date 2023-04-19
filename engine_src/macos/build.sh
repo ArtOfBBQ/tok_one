@@ -8,7 +8,7 @@ MAC_FRAMEWORKS="
     -framework Metal
     -framework AVFoundation"
 
-TOK_ONE_SOURCEFILES="engine_src/$PLATFORM/main.m engine_src/$PLATFORM/macos_platform_layer.c engine_src/shared_apple/apple_platform_layer.c engine_src/shared_apple/gpu.m engine_src/shared_windows_macos/winmac_platform_layer.c engine_src/shared/common_platform_layer.c engine_src/shared/logger.c engine_src/shared/memorystore.c engine_src/shared/tok_random.c engine_src/shared/objmodel.c engine_src/shared/texture_array.c engine_src/shared/userinput.c engine_src/shared/zpolygon.c engine_src/shared/lightsource.c engine_src/shared/renderer.c engine_src/shared/window_size.c engine_src/shared/debigulator/src/decode_png.c engine_src/shared/debigulator/src/decode_bmp.c engine_src/shared/debigulator/src/inflate.c engine_src/shared//decodedimage.c sampleproject_src/clientlogic.c engine_src/shared/common.c engine_src/shared/text.c engine_src/shared/scheduled_animations.c engine_src/shared/init_application.c engine_src/shared/gameloop.c engine_src/shared/terminal.c engine_src/shared/particle.c"
+TOK_ONE_SOURCEFILES="engine_src/$PLATFORM/main.m engine_src/$PLATFORM/macos_platform_layer.c engine_src/shared_apple/apple_platform_layer.c engine_src/shared_apple/gpu.m engine_src/shared_windows_macos/winmac_platform_layer.c engine_src/shared/common_platform_layer.c engine_src/shared/logger.c engine_src/shared/memorystore.c engine_src/shared/tok_random.c engine_src/shared/objmodel.c engine_src/shared/texture_array.c engine_src/shared/userinput.c engine_src/shared/zpolygon.c engine_src/shared/lightsource.c engine_src/shared/renderer.c engine_src/shared/window_size.c engine_src/shared/debigulator/src/decode_png.c engine_src/shared/debigulator/src/decode_bmp.c engine_src/shared/debigulator/src/inflate.c engine_src/shared//decodedimage.c sampleproject_src/clientlogic.c engine_src/shared/common.c engine_src/shared/text.c engine_src/shared/scheduled_animations.c engine_src/shared/init_application.c engine_src/shared/gameloop.c engine_src/shared/terminal.c engine_src/shared/particle.c engine_src/shared/triangle.c"
 
 echo "Building $APP_NAME for $PLATFORM..."
 
@@ -54,13 +54,9 @@ echo "Compiling & linking $APP_NAME..."
 if
 sudo gcc $COMPILER_ARGS $MAC_FRAMEWORKS $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
 then
-echo "compilation succesful"
+echo "compilation succesful."
 else
 echo "compilation failed"
 exit 0
 fi
-
-# echo "Booting $APP_NAME"
-# (cd build/$PLATFORM/$APP_NAME.app && ./$APP_NAME)
-open build/$PLATFORM/$APP_NAME.app
 

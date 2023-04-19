@@ -12,7 +12,7 @@ typedef struct BufferedNormal {
     float z;
 } BufferedNormal;
 
-#define PARSER_VERTEX_BUFFER_SIZE 16000
+#define PARSER_VERTEX_BUFFER_SIZE 64000
 static zVertex * parser_vertex_buffer = NULL;
 static BufferedNormal * parser_normals_buffer = NULL;
 static float * parser_uv_u_buffer = NULL;
@@ -528,7 +528,8 @@ static void parse_obj(
                     OBJ_STRING_SIZE,
                     material_name);
                 summary_recipient->materials_size += 1;
-                using_material_i = summary_recipient->materials_size - 1;
+                using_material_i =
+                    (int32_t)summary_recipient->materials_size - 1;
             }
             
             // skip until the next line break character
@@ -807,6 +808,9 @@ static void parse_obj(
             new_triangle_i++;
             summary_recipient->triangles_size += 1;
             
+            // some objs have trailing spaces here
+            while (rawdata[i] == ' ') { i++; }
+            
             log_assert(rawdata[i] == '\n' || rawdata[i] == '\r');
             i++;
 
@@ -867,7 +871,7 @@ int32_t new_mesh_id_from_resource(
     log_assert((int32_t)all_mesh_triangles_size > new_mesh_head_id);
     
     all_mesh_summaries[all_mesh_summaries_size].triangles_size =
-        all_mesh_triangles_size - new_mesh_head_id;
+        (int32_t)all_mesh_triangles_size - new_mesh_head_id;
     
     strcpy_capped(
         all_mesh_summaries[all_mesh_summaries_size].resource_name,
@@ -875,15 +879,15 @@ int32_t new_mesh_id_from_resource(
         filename);
     all_mesh_summaries_size += 1;
     
-    assert_objmodel_validity(all_mesh_summaries_size - 1);
+    assert_objmodel_validity((int32_t)all_mesh_summaries_size - 1);
     
-    return all_mesh_summaries_size - 1;
+    return (int32_t)all_mesh_summaries_size - 1;
 }
 
 void center_mesh_offsets(
     const int32_t mesh_id)
 {
-    log_assert(mesh_id < all_mesh_summaries_size);
+    log_assert(mesh_id < (int32_t)all_mesh_summaries_size);
     
     float smallest_y = FLOAT32_MAX;
     float largest_y = FLOAT32_MIN;
@@ -923,9 +927,18 @@ void center_mesh_offsets(
         }
     }
     
+    // if smallest x is -6 and largest x is -2, we want to apply +4 to everything
+    // then smallest x will be -2 and largest 2
+    
+    // if smallest x is 2 and largest x is 6, we want to apply -4 to everything
+    // then smallest x will be -2 and largest 2
     float x_delta = (smallest_x + largest_x) / 2.0f;
     float y_delta = (smallest_y + largest_y) / 2.0f;
     float z_delta = (smallest_z + largest_z) / 2.0f;
+    
+    float new_smallest_x = smallest_x - x_delta;
+    float new_largest_x = largest_x - x_delta;
+    log_assert(new_smallest_x + new_largest_x == 0.0f);
     
     for (
         int32_t tri_i = all_mesh_summaries[mesh_id].all_meshes_head_i;
