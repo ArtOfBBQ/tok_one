@@ -226,7 +226,7 @@ vertex_shader(
             visibility_rating);
     }
     
-    clamp(out.lighting, 0.25f, 1.0f);
+    clamp(out.lighting, 0.05f, 1.0f);
     out.lighting[3] = 1.0f;
     
     return out;

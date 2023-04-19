@@ -207,10 +207,9 @@ void hardware_render(
             }
         }
         
-        // draw touchable hitboxes (the white rectangles) in visual debug mode
+        // draw touchable hitboxes (the yellow lines) in visual debug mode
         if (
-            window_globals->visual_debug_mode &&
-            zpolygons_to_render[zp_i].touchable_id >= 0)
+            window_globals->visual_debug_mode)
         {
             float hitbox_left   = -(zpolygons_to_render[zp_i].hitbox_width / 2);
             float hitbox_right  = (zpolygons_to_render[zp_i].hitbox_width / 2);

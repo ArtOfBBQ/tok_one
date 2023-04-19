@@ -71,6 +71,7 @@ void client_logic_startup(void) {
     
     int32_t xmastree_mesh_id =
         new_mesh_id_from_resource(obj_filenames[0]);
+    center_mesh_offsets(xmastree_mesh_id);
     
     for (uint32_t i = xmastree_mesh_id; i < all_mesh_triangles_size; i++) {
         log_assert(all_mesh_triangles[i].parent_material_i >= 0);
@@ -107,6 +108,7 @@ void client_logic_startup(void) {
     
     int32_t disk_mesh_id =
         new_mesh_id_from_resource(obj_filenames[2]);
+    center_mesh_offsets(disk_mesh_id);
     
     zPolygon disk;
     construct_zpolygon(&disk);
@@ -129,7 +131,7 @@ void client_logic_startup(void) {
     disk.triangle_materials_size = 2;
     disk.x_angle = 3.14f;
     
-    scale_zpolygon_multipliers_to_height(&disk, 0.5f);
+    // scale_zpolygon_multipliers_to_height(&disk, 0.25f);
     request_zpolygon_to_render(&disk);
     
     font_height = 50;

@@ -128,6 +128,8 @@
 		EC6441A529318B6D00A0267B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A029318B6D00A0267B /* AppDelegate.m */; };
 		EC6441A629318B6D00A0267B /* ios_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A129318B6D00A0267B /* ios_platform_layer.c */; };
 		EC6441A729318B6D00A0267B /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A329318B6D00A0267B /* ViewController.m */; };
+		EC6A301B29EFA1440071C58F /* triangle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6A301A29EFA1440071C58F /* triangle.c */; };
+		EC6A301C29EFA1440071C58F /* triangle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6A301A29EFA1440071C58F /* triangle.c */; };
 		EC6B1F49293C9FD900837369 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F48293C9FD900837369 /* UIKit.framework */; };
 		EC6B1F4B293CA04800837369 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4A293CA04800837369 /* Foundation.framework */; };
 		EC6B1F4D293CA04F00837369 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4C293CA04F00837369 /* Metal.framework */; };
@@ -226,6 +228,7 @@
 		EC6441A129318B6D00A0267B /* ios_platform_layer.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = ios_platform_layer.c; path = ../../engine_src/ios/ios_platform_layer.c; sourceTree = "<group>"; };
 		EC6441A229318B6D00A0267B /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ViewController.h; path = ../../engine_src/ios/ViewController.h; sourceTree = "<group>"; };
 		EC6441A329318B6D00A0267B /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ViewController.m; path = ../../engine_src/ios/ViewController.m; sourceTree = "<group>"; };
+		EC6A301A29EFA1440071C58F /* triangle.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = triangle.c; path = ../../engine_src/shared/triangle.c; sourceTree = "<group>"; };
 		EC6B1F48293C9FD900837369 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		EC6B1F4A293CA04800837369 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		EC6B1F4C293CA04F00837369 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/Metal.framework; sourceTree = DEVELOPER_DIR; };
@@ -402,6 +405,7 @@
 				EC31932329DFAAFB00E320CD /* particle.c */,
 				EC31932229DFAAFB00E320CD /* particle.h */,
 				601128832862511700F92967 /* platform_layer.h */,
+				EC6A301A29EFA1440071C58F /* triangle.c */,
 				6011286C2862511500F92967 /* renderer.c */,
 				6011287B2862511700F92967 /* renderer.h */,
 				6011287D2862511700F92967 /* scheduled_animations.c */,
@@ -587,6 +591,7 @@
 				60A998EC287BD4B7003F7159 /* window_size.h in Sources */,
 				60A998E8287BD4B7003F7159 /* userinput.h in Sources */,
 				60A998EB287BD4B7003F7159 /* cpu_gpu_shared_types.h in Sources */,
+				EC6A301B29EFA1440071C58F /* triangle.c in Sources */,
 				6009B4F428679E7D00F1F279 /* memorystore.h in Sources */,
 				6009B4F528679E7D00F1F279 /* memorystore.c in Sources */,
 				60112842286122FE00F92967 /* decode_png.c in Sources */,
@@ -647,6 +652,7 @@
 				60A99915287BD4C4003F7159 /* cpu_gpu_shared_types.h in Sources */,
 				EC6441A529318B6D00A0267B /* AppDelegate.m in Sources */,
 				60A99918287BD4C4003F7159 /* clientlogic.h in Sources */,
+				EC6A301C29EFA1440071C58F /* triangle.c in Sources */,
 				60A99909287BD4C3003F7159 /* platform_layer.h in Sources */,
 				60A998F4287BD4C3003F7159 /* apple_platform_layer.c in Sources */,
 				6028DD342886EE54000E1E98 /* init_application.c in Sources */,

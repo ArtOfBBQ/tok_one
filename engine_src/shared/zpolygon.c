@@ -15,20 +15,24 @@ static void set_zpolygon_hitbox(
     float back = 0.0f;
     float front = 0.0f;
     
+    int32_t triangles_tail_i =
+        all_mesh_summaries[mesh->mesh_id].all_meshes_head_i +
+        all_mesh_summaries[mesh->mesh_id].triangles_size;
+    
     for (
-        int32_t i = 0;
-        i < (int32_t)all_mesh_summaries[mesh->mesh_id].triangles_size;
-        i++)
+        int32_t tri_i = all_mesh_summaries[mesh->mesh_id].all_meshes_head_i;
+        tri_i < triangles_tail_i;
+        tri_i++)
     {
         for (uint32_t m = 0; m < 3; m++) {
             float cur_vertex_x =
-                all_mesh_triangles[mesh->mesh_id + i].vertices[m].x *
+                all_mesh_triangles[tri_i].vertices[m].x *
                         mesh->x_multiplier;
             float cur_vertex_y =
-                all_mesh_triangles[mesh->mesh_id + i].vertices[m].y *
+                all_mesh_triangles[tri_i].vertices[m].y *
                         mesh->y_multiplier;
             float cur_vertex_z =
-                all_mesh_triangles[mesh->mesh_id + i].vertices[m].z *
+                all_mesh_triangles[tri_i].vertices[m].z *
                         mesh->z_multiplier;
             
             if (cur_vertex_x < left) {
@@ -43,12 +47,9 @@ static void set_zpolygon_hitbox(
                 top = cur_vertex_y;
             }
             
-            if (cur_vertex_z < front)
-            {
+            if (cur_vertex_z < front) {
                 front = cur_vertex_z;
-            } else if (
-                cur_vertex_z > back)
-            {
+            } else if (cur_vertex_z > back) {
                 back = cur_vertex_z;
             }
         }
@@ -185,20 +186,12 @@ void scale_zpolygon_multipliers_to_height(
             j < 3;
             j++)
         {
-            if (
-                all_mesh_triangles[i].vertices[j].y >
-                    highest_ascent)
-            {
-                highest_ascent =
-                    all_mesh_triangles[i].vertices[j].y;
+            if (all_mesh_triangles[i].vertices[j].y > highest_ascent) {
+                highest_ascent = all_mesh_triangles[i].vertices[j].y;
             }
             
-            if (
-                all_mesh_triangles[i].vertices[j].y <
-                    lowest_descent)
-            {
-                lowest_descent =
-                    all_mesh_triangles[i].vertices[j].y;
+            if (all_mesh_triangles[i].vertices[j].y < lowest_descent) {
+                lowest_descent = all_mesh_triangles[i].vertices[j].y;
             }
         }
     }
