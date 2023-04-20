@@ -149,8 +149,8 @@ void request_label_offset_around(
     const char * text_to_draw,
     const float mid_x_pixelspace,
     const float mid_y_pixelspace,
-    const float pixelspace_x_offset_for_each_character,
-    const float pixelspace_y_offset_for_each_character,
+    const float pixelspace_extra_x_offset,
+    const float pixelspace_extra_y_offset,
     const float z,
     const float max_width,
     const bool32_t ignore_camera)
@@ -226,16 +226,11 @@ void request_label_offset_around(
     log_assert(widest_line_width > 0);
     
     zPolygon letter;
-    // float label_left = mid_x_pixelspace - (widest_line_width / 2);
     
     float cur_y_offset_pixelspace =
-        (((lines_size - 1) * font_height) / 2) +
-        pixelspace_y_offset_for_each_character;
+        (((lines_size - 1) * font_height) / 2);
     for (uint32_t line_i = 0; line_i < lines_size; line_i++) {
-        float cur_x_offset_pixelspace =
-            pixelspace_x_offset_for_each_character +
-                (-1.0f * ((lines[line_i].width) / 2) +
-                (font_height / 2));
+        float cur_x_offset_pixelspace = -((lines[line_i].width) / 2);
         
         for (
             int32_t j = lines[line_i].start_i;
@@ -285,12 +280,17 @@ void request_label_offset_around(
             }
             
             letter.x_offset = screenspace_width_to_width(
-                (cur_x_offset_pixelspace + get_left_side_bearing(text_to_draw[j])),
+                (cur_x_offset_pixelspace +
+                    get_left_side_bearing(text_to_draw[j]) +
+                    pixelspace_extra_x_offset),
                 z);
             letter.y_offset = screenspace_height_to_height(
-                (cur_y_offset_pixelspace - get_y_offset(text_to_draw[j])),
+                (cur_y_offset_pixelspace -
+                    get_y_offset(text_to_draw[j]) -
+                    (font_height * 0.5f) +
+                    pixelspace_extra_y_offset),
                 z);
-                        
+            
             letter.triangle_materials[0].texturearray_i = font_texturearray_i;
             letter.triangle_materials[0].texture_i      = text_to_draw[j] - '!';
             
