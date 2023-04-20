@@ -20,11 +20,6 @@ int tok_imaxi(const int x, const int y)
     return ((x <= y) * y) + ((x > y) * x);
 }
 
-float tok_tanf(const float input)
-{
-    return tanf(input);
-}
-
 void
 strcat_capped(
     char * recipient,

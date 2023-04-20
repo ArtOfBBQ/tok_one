@@ -53,7 +53,7 @@ void init_projection_constants() {
     
     float field_of_view = 90.0f;
     pjc->field_of_view_rad = ((field_of_view * 0.5f) / 180.0f) * 3.14159f;
-    pjc->field_of_view_modifier = 1.0f / tok_tanf(pjc->field_of_view_rad); 
+    pjc->field_of_view_modifier = 1.0f / tanf(pjc->field_of_view_rad);
     pjc->q = pjc->far / (pjc->far - pjc->near);
     pjc->x_multiplier =
         window_globals->aspect_ratio * pjc->field_of_view_modifier;

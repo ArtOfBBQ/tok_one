@@ -3,8 +3,6 @@
 
 #include "common.h"
 
-#include <math.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif

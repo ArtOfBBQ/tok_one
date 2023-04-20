@@ -2,7 +2,7 @@
 #define COMMON_H
 
 #include <inttypes.h>
-#include <math.h> // TODO: implement math functions
+#include <math.h>
 
 // #define COMMON_IGNORE_ASSERTS
 #ifndef COMMON_IGNORE_ASSERTS
@@ -37,7 +37,6 @@ int   tok_imini(const int x, const int y);
 int   tok_imaxi(const int x, const int y);
 float tok_fminf(const float x, const float y);
 float tok_fmaxf(const float x, const float y);
-float tok_tanf (const float input);
 
 
 void
