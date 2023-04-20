@@ -528,20 +528,22 @@ static void resolve_single_animation_effects(
         }
         
         if (anim->set_texture_array_i || anim->set_texture_i) {
-            //            for (
-            //                uint32_t tri_i = 0;
-            //                tri_i < zpolygons_to_render[zp_i].triangles_size;
-            //                tri_i++)
-            //            {
-            //                if (anim->set_texture_array_i) {
-            //                    zpolygons_to_render[zp_i].triangles[tri_i].texturearray_i =
-            //                        anim->new_texture_array_i;
-            //                }
-            //                if (anim->set_texture_i) {
-            //                    zpolygons_to_render[zp_i].triangles[tri_i].texture_i =
-            //                        anim->new_texture_i;
-            //                }
-            //            }
+            for (
+                uint32_t mat_i = 0;
+                mat_i < zpolygons_to_render[zp_i].triangle_materials_size;
+                mat_i++)
+            {
+                if (anim->set_texture_array_i) {
+                    zpolygons_to_render[zp_i].triangle_materials[mat_i].
+                        texturearray_i =
+                            anim->new_texture_array_i;
+                }
+                if (anim->set_texture_i) {
+                    zpolygons_to_render[zp_i].triangle_materials[mat_i].
+                        texture_i =
+                            anim->new_texture_i;
+                }
+            }
         }
         
         for (
