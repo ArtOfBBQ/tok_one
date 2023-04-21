@@ -36,10 +36,10 @@ static void construct_scheduled_animation(
     to_construct->final_z_angle_known = false;
     to_construct->z_rotation_per_second = 0.0f;
     
-    to_construct->final_width_known = false;
-    to_construct->delta_width_per_second = 0.0f;
-    to_construct->final_height_known = false;
-    to_construct->delta_height_per_second = 0.0f;
+    to_construct->final_x_multiplier_known = false;
+    to_construct->delta_x_multiplier_per_second = 0.0f;
+    to_construct->final_y_multiplier_known = false;
+    to_construct->delta_y_multiplier_per_second = 0.0f;
     
     to_construct->final_scale_known = false;
     to_construct->delta_scale_per_second = 0.0f;
@@ -281,12 +281,7 @@ static void resolve_single_animation_effects(
     const uint64_t remaining_microseconds_at_start_of_run)
 {
     log_assert(remaining_microseconds_at_start_of_run >= elapsed_this_run);
-    
-    // TODO: remove debugging code
-    if (anim->y_rotation_per_second > 0.0f) {
-        log_assert(1);
-    }
-    
+        
     if (anim->deleted) { return; }
     
     bool32_t found_at_least_one = false;
@@ -485,33 +480,36 @@ static void resolve_single_animation_effects(
                         elapsed_this_run);
         }
         
-        if (!anim->final_width_known) {
-            if (anim->delta_width_per_second != 0.0f) {
-                //                float cur_width = zpolygon_get_width(&zpolygons_to_render[zp_i]);
-                //
-                //                float bonus_width = (anim->delta_width_per_second
-                //                    * elapsed_this_run)
-                //                        / 1000000;
-                //
-                //                zpolygon_scale_width_only_given_z(
-                //                    /* zPolygon * to_scale: */ &zpolygons_to_render[zp_i],
-                //                    /* const float new_width: */ cur_width + bonus_width,
-                //                    /* const float when_observed_at_z: */ 1.0f);
+        if (!anim->final_x_multiplier_known) {
+            if (anim->delta_x_multiplier_per_second != 0.0f) {
+                zpolygons_to_render[zp_i].x_multiplier +=
+                (anim->delta_x_multiplier_per_second
+                    * elapsed_this_run)
+                        / 1000000;
             }
         } else {
-            //            float cur_width = zpolygon_get_width(&zpolygons_to_render[zp_i]);
-            //
-            //            float diff_width = anim->final_width - cur_width;
-            //
-            //            float new_width = cur_width +
-            //                (diff_width /
-            //                    ((float)remaining_microseconds_at_start_of_run /
-            //                        elapsed_this_run));
-            //
-            //            zpolygon_scale_width_only_given_z(
-            //                /* zPolygon * to_scale: */ &zpolygons_to_render[zp_i],
-            //                /* const float new_width: */ new_width,
-            //                /* const float when_observed_at_z: */ 1.0f);
+            float diff_x_multiplier = anim->final_x_multiplier -
+                zpolygons_to_render[zp_i].x_multiplier;
+            zpolygons_to_render[zp_i].x_multiplier +=
+                diff_x_multiplier /
+                    ((float)remaining_microseconds_at_start_of_run /
+                        elapsed_this_run);
+        }
+        
+        if (!anim->final_y_multiplier_known) {
+            if (anim->delta_y_multiplier_per_second != 0.0f) {
+                zpolygons_to_render[zp_i].y_multiplier +=
+                (anim->delta_y_multiplier_per_second
+                    * elapsed_this_run)
+                        / 1000000;
+            }
+        } else {
+            float diff_y_multiplier = anim->final_y_multiplier -
+                zpolygons_to_render[zp_i].y_multiplier;
+            zpolygons_to_render[zp_i].y_multiplier +=
+                diff_y_multiplier /
+                    ((float)remaining_microseconds_at_start_of_run /
+                        elapsed_this_run);
         }
         
         if (!anim->final_scale_known) {

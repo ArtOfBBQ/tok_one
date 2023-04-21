@@ -50,6 +50,9 @@ void init_all_meshes(void) {
     all_mesh_summaries[0].mesh_id = 0;
     all_mesh_summaries[0].all_meshes_head_i = 0;
     all_mesh_summaries[0].materials_size = 1;
+    all_mesh_summaries[0].base_width = 2.0f;
+    all_mesh_summaries[0].base_height = 2.0f;
+    all_mesh_summaries[0].base_depth = 2.0f;
     all_mesh_summaries_size = 1;
     
     const float left_vertex     = -1.0f;
@@ -872,6 +875,51 @@ int32_t new_mesh_id_from_resource(
     
     all_mesh_summaries[all_mesh_summaries_size].triangles_size =
         (int32_t)all_mesh_triangles_size - new_mesh_head_id;
+    
+    // fetch base width/height/depth and store
+    float min_x = 0.0f;
+    float max_x = 0.0f;
+    float min_y = 0.0f;
+    float max_y = 0.0f;
+    float min_z = 0.0f;
+    float max_z = 0.0f;
+    
+    for (
+        int32_t tri_i = new_mesh_head_id;
+        tri_i < (int32_t)all_mesh_triangles_size;
+        tri_i++)
+    {
+        for (uint32_t m = 0; m < 3; m++) {
+            if (min_x > all_mesh_triangles[tri_i].vertices[m].x) {
+                min_x = all_mesh_triangles[tri_i].vertices[m].x;
+            }
+            if (min_y > all_mesh_triangles[tri_i].vertices[m].y) {
+                min_y = all_mesh_triangles[tri_i].vertices[m].y;
+            }
+            if (min_z > all_mesh_triangles[tri_i].vertices[m].z) {
+                min_z = all_mesh_triangles[tri_i].vertices[m].z;
+            }
+            if (max_x < all_mesh_triangles[tri_i].vertices[m].x) {
+                max_x = all_mesh_triangles[tri_i].vertices[m].x;
+            }
+            if (max_y < all_mesh_triangles[tri_i].vertices[m].y) {
+                max_y = all_mesh_triangles[tri_i].vertices[m].y;
+            }
+            if (max_z < all_mesh_triangles[tri_i].vertices[m].z) {
+                max_z = all_mesh_triangles[tri_i].vertices[m].z;
+            }
+        }
+    }
+    
+    log_assert(max_x >= min_x);
+    log_assert(max_y >= min_z);
+    log_assert(max_z >= min_z);
+    all_mesh_summaries[all_mesh_summaries_size].base_width =
+        max_x - min_x;
+    all_mesh_summaries[all_mesh_summaries_size].base_height =
+        max_y - min_y;
+    all_mesh_summaries[all_mesh_summaries_size].base_depth =
+        max_z - min_z;
     
     strcpy_capped(
         all_mesh_summaries[all_mesh_summaries_size].resource_name,

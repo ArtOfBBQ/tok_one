@@ -160,46 +160,51 @@ void delete_zpolygon_object(const int32_t with_object_id)
     }
 }
 
+float get_x_multiplier_for_width(
+    zPolygon * for_poly,
+    const float for_width)
+{
+    log_assert(for_poly != NULL);
+    log_assert(for_poly->mesh_id >= 0);
+    log_assert(for_poly->mesh_id < (int32_t)all_mesh_summaries_size);
+    
+    log_assert(for_poly != NULL);
+    log_assert(for_poly->mesh_id >= 0);
+    log_assert(for_poly->mesh_id < (int32_t)all_mesh_summaries_size);
+    
+    float return_value =
+        for_width / all_mesh_summaries[for_poly->mesh_id].base_width;
+    
+    return return_value;
+}
+
+float get_y_multiplier_for_height(
+    zPolygon * for_poly,
+    const float for_height)
+{
+    log_assert(for_poly != NULL);
+    log_assert(for_poly->mesh_id >= 0);
+    log_assert(for_poly->mesh_id < (int32_t)all_mesh_summaries_size);
+    
+    float return_value =
+        for_height / all_mesh_summaries[for_poly->mesh_id].base_height;
+    
+    return return_value;
+}
+
 void scale_zpolygon_multipliers_to_height(
     zPolygon * to_scale,
     const float new_height)
 {
-    log_assert(to_scale != NULL);
-    log_assert(to_scale->mesh_id >= 0);
-    log_assert(to_scale->mesh_id < (int32_t)all_mesh_summaries_size);
+    float new_multiplier = get_y_multiplier_for_height(
+        /* zPolygon * for_poly: */
+            to_scale,
+        /* const float for_height: */
+            new_height);
     
-    if (to_scale == NULL) { return; }
-    
-    float highest_ascent = 0.0f;
-    float lowest_descent = 0.0f;
-    
-    int32_t mesh_triangles_tail_i =
-        all_mesh_summaries[to_scale->mesh_id].all_meshes_head_i +
-            all_mesh_summaries[to_scale->mesh_id].triangles_size;
-    for (
-        int32_t i = all_mesh_summaries[to_scale->mesh_id].all_meshes_head_i;
-        i < mesh_triangles_tail_i;
-        i++)
-    {
-        for (
-            uint32_t j = 0;
-            j < 3;
-            j++)
-        {
-            if (all_mesh_triangles[i].vertices[j].y > highest_ascent) {
-                highest_ascent = all_mesh_triangles[i].vertices[j].y;
-            }
-            
-            if (all_mesh_triangles[i].vertices[j].y < lowest_descent) {
-                lowest_descent = all_mesh_triangles[i].vertices[j].y;
-            }
-        }
-    }
-    log_assert(highest_ascent > lowest_descent);
-    
-    to_scale->y_multiplier = new_height / (highest_ascent - lowest_descent);
-    to_scale->x_multiplier = to_scale->y_multiplier;
-    to_scale->z_multiplier = to_scale->y_multiplier;
+    to_scale->y_multiplier = new_multiplier;
+    to_scale->x_multiplier = new_multiplier;
+    to_scale->z_multiplier = new_multiplier;
 }
 
 void construct_zpolygon(zPolygon * to_construct) {

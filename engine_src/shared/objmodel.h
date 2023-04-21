@@ -15,6 +15,9 @@ typedef struct MeshSummary {
     int32_t mesh_id;
     int32_t all_meshes_head_i;
     int32_t triangles_size;
+    float base_width;
+    float base_height;
+    float base_depth;
     char material_names[MAX_MATERIALS_SIZE][OBJ_STRING_SIZE];
     uint32_t materials_size;
 } MeshSummary;

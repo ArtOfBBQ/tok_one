@@ -82,19 +82,19 @@ typedef struct ScheduledAnimation {
     // *** absolute scaling (change width/height)
     // acts as reach/diffuse modifier for lights since lights have no size
     union {
-        bool32_t final_width_known;
+        bool32_t final_x_multiplier_known;
         bool32_t final_reach_known;
     };
     union {
-        float delta_width_per_second;
-        float final_width;
+        float delta_x_multiplier_per_second;
+        float final_x_multiplier;
         float delta_reach_per_second;
         float final_reach;
     };
-    bool32_t final_height_known;
+    bool32_t final_y_multiplier_known;
     union {
-        float delta_height_per_second;
-        float final_height;
+        float delta_y_multiplier_per_second;
+        float final_y_multiplier;
     };
     
     // *** relative scaling animations

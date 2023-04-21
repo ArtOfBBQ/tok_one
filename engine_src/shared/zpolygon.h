@@ -114,6 +114,13 @@ zVertex crossproduct_of_zvertices(
 zVertex get_ztriangle_normal(
     const zTriangle * input);
 
+float get_y_multiplier_for_height(
+    zPolygon * for_poly,
+    const float for_height);
+float get_x_multiplier_for_width(
+    zPolygon * for_poly,
+    const float for_width);
+
 void scale_zpolygon_multipliers_to_height(
     zPolygon * to_scale,
     const float new_height);
