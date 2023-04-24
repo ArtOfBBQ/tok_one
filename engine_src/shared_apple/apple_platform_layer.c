@@ -17,7 +17,7 @@ static uint32_t next_sound_player = 0;
 
 static AVAudioPlayer * active_music_player = NULL;
 static float sound_volume = 0.135f;
-static float music_volume = 0.0f; // 0.035f;
+static float music_volume = 0.035f;
 
 void platform_get_writables_path(
     char * recipient,
@@ -498,7 +498,7 @@ void platform_play_music_resource(const char * resource_filename) {
             error:nil];
     player.numberOfLoops = 0;
     
-    [player setVolume: 0.00000001f];
+    [player setVolume: 0.001f];
     [player setVolume: music_volume fadeDuration: 5];
     [player play];
     

@@ -84,30 +84,45 @@ void client_logic_startup(void) {
     new_quad.triangle_materials[0].color[3] = 1.00f;
     request_zpolygon_to_render(&new_quad);
     
-    font_height = 250;
+    font_height = 25;
     font_color[0] = 1.0f;
     font_color[1] = 0.0f;
     font_color[2] = 0.4f;
     font_color[3] = 1.0f;
-    request_label_offset_around(
-        /* const int32_t with_id: */
+    request_label_renderable(
+        /* const int32_t object_id : */
             -1,
         /* const char * text_to_draw: */
-            "9",
-        /* const float mid_x_pixelspace: */
-            window_globals->window_width * 0.5f,
-        /* const float mid_y_pixelspace: */
-            window_globals->window_height * 0.5f,
-        /* const float extra_x_offset: */
-            0.0f,
-        /* const float extra_y_offset: */
-            0.0f,
+            "I'm a label originating at:\nx = 50, y = 50\n!!!123456799",
+        /* const float left_pixelspace: */
+            50,
+        /* const float top_pixelspace: */
+            window_globals->window_height - 50,
         /* const float z: */
-            nq_z - 0.0001f,
-        /* const float max_width: */
-            window_globals->window_width * 0.75f,
+            1.0f,
+        /* const float max_width :*/
+            window_globals->window_width,
         /* const uint32_t ignore_camera: */
-            false);
+            true);
+    //    request_label_offset_around(
+    //        /* const int32_t with_id: */
+    //            -1,
+    //        /* const char * text_to_draw: */
+    //            "9",
+    //        /* const float mid_x_pixelspace: */
+    //            window_globals->window_width * 0.5f,
+    //        /* const float mid_y_pixelspace: */
+    //            window_globals->window_height * 0.5f,
+    //        /* const float extra_x_offset: */
+    //            0.0f,
+    //        /* const float extra_y_offset: */
+    //            0.0f,
+    //        /* const float z: */
+    //            nq_z - 0.0001f,
+    //        /* const float max_width: */
+    //            window_globals->window_width * 0.75f,
+    //        /* const uint32_t ignore_camera: */
+    //            false);
     
     //    ParticleEffect fountain;
     //    construct_particle_effect(&fountain);

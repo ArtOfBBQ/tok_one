@@ -206,7 +206,7 @@ vertex_shader(
             translated_pos);
         float distance_mod = (light_collection->reach[i] + 0.5f)
             - (distance * distance);
-        distance_mod = clamp(distance_mod, 0.0f, 10.0f);
+        distance_mod = clamp(distance_mod, 0.0f, 5.0f);
         
         out.lighting += (
             distance_mod *
@@ -274,7 +274,8 @@ fragment_shader(
             (
                 abs((neghalfdiamond + (int)in.position.x % diamond_size)) +
                 abs((neghalfdiamond + (int)in.position.y % diamond_size))
-            ) > alpha_tresh))
+            ) > alpha_tresh
+        ))
     {
         discard_fragment();
     }

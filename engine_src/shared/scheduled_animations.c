@@ -249,8 +249,8 @@ void request_fade_and_destroy(
     modify_alpha->affected_object_id = object_id;
     modify_alpha->remaining_wait_before_next_run = wait_before_first_run;
     modify_alpha->duration_microseconds = duration_microseconds;
-    modify_alpha->rgba_delta_per_second[1] = -0.5f;
-    modify_alpha->rgba_delta_per_second[2] = -0.5f;
+    modify_alpha->rgba_delta_per_second[1] = -0.05f;
+    modify_alpha->rgba_delta_per_second[2] = -0.05f;
     modify_alpha->final_rgba_known[3] = true;
     modify_alpha->final_rgba[3] = 0.0f;
     modify_alpha->delete_object_when_finished = true;

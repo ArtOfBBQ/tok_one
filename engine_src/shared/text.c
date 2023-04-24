@@ -466,7 +466,7 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
         /* with_id               : */ label_object_id,
         /* char * text_to_draw   : */ fps_string,
         /* float left_pixelspace : */ 20.0f,
-        /* float top_pixelspace  : */ 60.0f,
+        /* float top_pixelspace  : */ 30.0f,
         /* z                     : */ 1.0f,
         /* float max_width       : */ window_globals->window_width,
         /* bool32_t ignore_camera: */ true);
