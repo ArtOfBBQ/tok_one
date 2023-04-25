@@ -172,6 +172,15 @@ void construct_quad(
     const float height,
     zPolygon * recipient);
 
+void construct_cube_around(
+    const float mid_x,
+    const float mid_y,
+    const float z,
+    const float width,
+    const float height,
+    const float depth,
+    zPolygon * recipient);
+
 #ifdef __cplusplus
 }
 #endif

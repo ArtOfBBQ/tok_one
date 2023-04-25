@@ -32,78 +32,100 @@ void client_logic_startup(void) {
         "tree.obj",
         "disk.obj",
     };
-
-    ParticleEffect fountain;
-    construct_particle_effect(&fountain);
-    fountain.x = 0.0f;
-    fountain.y = 0.0f;
-    fountain.z = 0.75f;
-    fountain.particle_height = screenspace_height_to_height(12, 1.0f);
-    fountain.particle_width = screenspace_width_to_width(12, 1.0f);
-    fountain.particle_lifespan = 2500000;
-    fountain.particle_spawns_per_second = 200;
     
-    fountain.particle_direction[0] = 0.0f;
-    fountain.particle_direction[1] = 1.0f;
-    fountain.particle_direction[2] = 0.0f;
-    fountain.particle_direction_max_x_angle_variance = 0;
-    fountain.particle_direction_max_y_angle_variance = 0;
-    fountain.particle_direction_max_z_angle_variance = 60;
-    fountain.particle_distance_per_second   =  0.3f;
+    float cube_z = 0.75f;
+    zPolygon cube;
+    construct_cube_around(
+        screenspace_x_to_x(window_globals->window_width / 2, cube_z),
+        screenspace_y_to_y(window_globals->window_height / 2, cube_z),
+        cube_z,
+        /* width: */
+            0.25f,
+        /* height: */
+            0.25f,
+        /* depth: */
+            0.25f,
+        /* recipient: */
+            &cube);
+    cube.triangle_materials[0].color[0] = 0.0f;
+    cube.triangle_materials[0].color[1] = 1.0f;
+    cube.triangle_materials[0].color[2] = 1.0f;
+    cube.triangle_materials[0].color[3] = 1.0f;
+    cube.triangle_materials[0].texturearray_i = 0;
+    cube.triangle_materials[0].texture_i = 5;
+    request_zpolygon_to_render(&cube);
     
-    fountain.squared_direction[0] =  0.0f;
-    fountain.squared_direction[1] = -1.0f;
-    fountain.squared_direction[2] =  0.0f;
-    fountain.squared_direction_max_x_angle_variance = 0;
-    fountain.squared_direction_max_y_angle_variance = 0;
-    fountain.squared_direction_max_z_angle_variance = 60;
-    fountain.squared_distance_per_second    =  0.15f;
-    
-    fountain.particle_origin_max_x_variance = 3;
-    fountain.particle_origin_max_y_variance = 3;
-    fountain.particle_origin_max_z_variance = 10;
-    
-    fountain.particle_rgba_progression[0][0] = 1.0f;
-    fountain.particle_rgba_progression[0][1] = 1.0f;
-    fountain.particle_rgba_progression[0][2] = 1.0f;
-    fountain.particle_rgba_progression[0][3] = 1.0f;
-    fountain.particle_rgba_progression[1][0] = 0.6f;
-    fountain.particle_rgba_progression[1][1] = 0.6f;
-    fountain.particle_rgba_progression[1][2] = 1.0f;
-    fountain.particle_rgba_progression[1][3] = 1.0f;
-    fountain.particle_rgba_progression[2][0] = 0.4f;
-    fountain.particle_rgba_progression[2][1] = 0.4f;
-    fountain.particle_rgba_progression[2][2] = 1.0f;
-    fountain.particle_rgba_progression[2][3] = 1.0f;
-    fountain.particle_rgba_progression[3][0] = 0.3f;
-    fountain.particle_rgba_progression[3][1] = 0.2f;
-    fountain.particle_rgba_progression[3][2] = 1.0f;
-    fountain.particle_rgba_progression[3][3] = 1.0f;
-    fountain.particle_rgba_progression[4][0] = 0.6f;
-    fountain.particle_rgba_progression[4][1] = 0.6f;
-    fountain.particle_rgba_progression[4][2] = 1.0f;
-    fountain.particle_rgba_progression[4][3] = 1.0f;
-    fountain.particle_rgba_progression[5][0] = 0.8f;
-    fountain.particle_rgba_progression[5][1] = 0.8f;
-    fountain.particle_rgba_progression[5][2] = 1.0f;
-    fountain.particle_rgba_progression[5][3] = 1.0;
-    fountain.particle_rgba_progression[6][0] = 1.0f;
-    fountain.particle_rgba_progression[6][1] = 1.0f;
-    fountain.particle_rgba_progression[6][2] = 1.0f;
-    fountain.particle_rgba_progression[6][3] = 1.0;
-    
-    fountain.particle_rgba_progression_size = 7;
-    
-    fountain.random_texturearray_i[0] = 1;
-    fountain.random_texture_i[0] = 0;
-    fountain.random_texturearray_i[1] = 1;
-    fountain.random_texture_i[1] = 1;
-    fountain.random_texturearray_i[2] = 1;
-    fountain.random_texture_i[2] = 2;
-    
-    fountain.random_textures_size = 3;
-    
-    request_particle_effect(&fountain);
+    //    ParticleEffect fountain;
+    //    construct_particle_effect(&fountain);
+    //    fountain.x = 0.0f;
+    //    fountain.y = 0.0f;
+    //    fountain.z = 0.75f;
+    //    fountain.particle_height = screenspace_height_to_height(12, 1.0f);
+    //    fountain.particle_width = screenspace_width_to_width(12, 1.0f);
+    //    fountain.particle_lifespan = 2500000;
+    //    fountain.particle_spawns_per_second = 200;
+    //
+    //    fountain.particle_direction[0] = 0.0f;
+    //    fountain.particle_direction[1] = 1.0f;
+    //    fountain.particle_direction[2] = 0.0f;
+    //    fountain.particle_direction_max_x_angle_variance = 0;
+    //    fountain.particle_direction_max_y_angle_variance = 0;
+    //    fountain.particle_direction_max_z_angle_variance = 60;
+    //    fountain.particle_distance_per_second   =  0.3f;
+    //
+    //    fountain.squared_direction[0] =  0.0f;
+    //    fountain.squared_direction[1] = -1.0f;
+    //    fountain.squared_direction[2] =  0.0f;
+    //    fountain.squared_direction_max_x_angle_variance = 0;
+    //    fountain.squared_direction_max_y_angle_variance = 0;
+    //    fountain.squared_direction_max_z_angle_variance = 60;
+    //    fountain.squared_distance_per_second    =  0.15f;
+    //
+    //    fountain.particle_origin_max_x_variance = 3;
+    //    fountain.particle_origin_max_y_variance = 3;
+    //    fountain.particle_origin_max_z_variance = 10;
+    //
+    //    fountain.particle_rgba_progression[0][0] = 1.0f;
+    //    fountain.particle_rgba_progression[0][1] = 1.0f;
+    //    fountain.particle_rgba_progression[0][2] = 1.0f;
+    //    fountain.particle_rgba_progression[0][3] = 1.0f;
+    //    fountain.particle_rgba_progression[1][0] = 0.6f;
+    //    fountain.particle_rgba_progression[1][1] = 0.6f;
+    //    fountain.particle_rgba_progression[1][2] = 1.0f;
+    //    fountain.particle_rgba_progression[1][3] = 1.0f;
+    //    fountain.particle_rgba_progression[2][0] = 0.4f;
+    //    fountain.particle_rgba_progression[2][1] = 0.4f;
+    //    fountain.particle_rgba_progression[2][2] = 1.0f;
+    //    fountain.particle_rgba_progression[2][3] = 1.0f;
+    //    fountain.particle_rgba_progression[3][0] = 0.3f;
+    //    fountain.particle_rgba_progression[3][1] = 0.2f;
+    //    fountain.particle_rgba_progression[3][2] = 1.0f;
+    //    fountain.particle_rgba_progression[3][3] = 1.0f;
+    //    fountain.particle_rgba_progression[4][0] = 0.6f;
+    //    fountain.particle_rgba_progression[4][1] = 0.6f;
+    //    fountain.particle_rgba_progression[4][2] = 1.0f;
+    //    fountain.particle_rgba_progression[4][3] = 1.0f;
+    //    fountain.particle_rgba_progression[5][0] = 0.8f;
+    //    fountain.particle_rgba_progression[5][1] = 0.8f;
+    //    fountain.particle_rgba_progression[5][2] = 1.0f;
+    //    fountain.particle_rgba_progression[5][3] = 1.0;
+    //    fountain.particle_rgba_progression[6][0] = 1.0f;
+    //    fountain.particle_rgba_progression[6][1] = 1.0f;
+    //    fountain.particle_rgba_progression[6][2] = 1.0f;
+    //    fountain.particle_rgba_progression[6][3] = 1.0;
+    //
+    //    fountain.particle_rgba_progression_size = 7;
+    //
+    //    fountain.random_texturearray_i[0] = 1;
+    //    fountain.random_texture_i[0] = 0;
+    //    fountain.random_texturearray_i[1] = 1;
+    //    fountain.random_texture_i[1] = 1;
+    //    fountain.random_texturearray_i[2] = 1;
+    //    fountain.random_texture_i[2] = 2;
+    //
+    //    fountain.random_textures_size = 3;
+    //
+    //    request_particle_effect(&fountain);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {

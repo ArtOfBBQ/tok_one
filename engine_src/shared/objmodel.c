@@ -38,10 +38,8 @@ void init_all_meshes(void) {
         sizeof(zTriangle) * ALL_MESH_TRIANGLES_SIZE);
     
     // Let's hardcode a basic quad since that's a mesh that will be used by
-    // pretty much every app and has negligible cost
-    // this also illustrates what will happen if we read a .obj file with the
-    // parser: we grab the data below from the file and fill in all_meshes
-    // with the triangles
+    // even the features inherent to the engine itself (the terminal, any
+    // text labels, the FPS label, etc)
     strcpy_capped(
         all_mesh_summaries[0].resource_name,
         OBJ_STRING_SIZE,
@@ -53,11 +51,10 @@ void init_all_meshes(void) {
     all_mesh_summaries[0].base_width = 2.0f;
     all_mesh_summaries[0].base_height = 2.0f;
     all_mesh_summaries[0].base_depth = 2.0f;
-    all_mesh_summaries_size = 1;
     
     const float left_vertex     = -1.0f;
-    const float right_vertex    = 1.0f;
-    const float top_vertex      = 1.0f;
+    const float right_vertex    =  1.0f;
+    const float top_vertex      =  1.0f;
     const float bottom_vertex   = -1.0f;
     const float left_uv_coord   = 0.0f;
     const float right_uv_coord  = 1.0f;
@@ -109,7 +106,260 @@ void init_all_meshes(void) {
     all_mesh_triangles[1].vertices[2].z = 0.0f;
     all_mesh_triangles[1].vertices[2].uv[0] = left_uv_coord;
     all_mesh_triangles[1].vertices[2].uv[1] = bottom_uv_coord;
-    all_mesh_triangles_size = 2;
+    
+    // Let's hardcode a basic cube since that will be used by the particle
+    // effects system
+    strcpy_capped(
+        all_mesh_summaries[1].resource_name,
+        OBJ_STRING_SIZE,
+        "basic_cube");
+    all_mesh_summaries[1].triangles_size = 12;
+    all_mesh_summaries[1].mesh_id = 1;
+    all_mesh_summaries[1].all_meshes_head_i = 2;
+    all_mesh_summaries[1].materials_size = 1;
+    all_mesh_summaries[1].base_width = 1.0f;
+    all_mesh_summaries[1].base_height = 1.0f;
+    all_mesh_summaries[1].base_depth = 1.0f;
+    all_mesh_summaries_size = 2;
+    
+    const float front_vertex =  -1.0f;
+    const float back_vertex  =   1.0f;
+    
+    // cube's front face
+    all_mesh_triangles[2].normal.x = 0.0f;
+    all_mesh_triangles[2].normal.y = 0.0f;
+    all_mesh_triangles[2].normal.z = -1.0f;
+    all_mesh_triangles[2].parent_material_i = 0;
+    all_mesh_triangles[2].vertices[0].x     = left_vertex;
+    all_mesh_triangles[2].vertices[0].y     = top_vertex;
+    all_mesh_triangles[2].vertices[0].z     = front_vertex;
+    all_mesh_triangles[2].vertices[0].uv[0] = left_uv_coord;
+    all_mesh_triangles[2].vertices[0].uv[1] = top_uv_coord;
+    all_mesh_triangles[2].vertices[1].x     = right_vertex;
+    all_mesh_triangles[2].vertices[1].y     = top_vertex;
+    all_mesh_triangles[2].vertices[1].z     = front_vertex;
+    all_mesh_triangles[2].vertices[1].uv[0] = right_uv_coord;
+    all_mesh_triangles[2].vertices[1].uv[1] = top_uv_coord;
+    all_mesh_triangles[2].vertices[2].x     = left_vertex;
+    all_mesh_triangles[2].vertices[2].y     = bottom_vertex;
+    all_mesh_triangles[2].vertices[2].z     = front_vertex;
+    all_mesh_triangles[2].vertices[2].uv[0] = left_uv_coord;
+    all_mesh_triangles[2].vertices[2].uv[1] = bottom_uv_coord;
+    all_mesh_triangles[3].normal.x = 0.0f;
+    all_mesh_triangles[3].normal.y = 0.0f;
+    all_mesh_triangles[3].normal.z = -1.0f;
+    all_mesh_triangles[3].parent_material_i = 0;
+    all_mesh_triangles[3].vertices[0].x = right_vertex;
+    all_mesh_triangles[3].vertices[0].y = top_vertex;
+    all_mesh_triangles[3].vertices[0].z = front_vertex;
+    all_mesh_triangles[3].vertices[0].uv[0] = right_uv_coord;
+    all_mesh_triangles[3].vertices[0].uv[1] = top_uv_coord;
+    all_mesh_triangles[3].vertices[1].x = right_vertex;
+    all_mesh_triangles[3].vertices[1].y = bottom_vertex;
+    all_mesh_triangles[3].vertices[1].z = front_vertex;
+    all_mesh_triangles[3].vertices[1].uv[0] = right_uv_coord;
+    all_mesh_triangles[3].vertices[1].uv[1] = bottom_uv_coord;
+    all_mesh_triangles[3].vertices[2].x = left_vertex;
+    all_mesh_triangles[3].vertices[2].y = bottom_vertex;
+    all_mesh_triangles[3].vertices[2].z = front_vertex;
+    all_mesh_triangles[3].vertices[2].uv[0] = left_uv_coord;
+    all_mesh_triangles[3].vertices[2].uv[1] = bottom_uv_coord;
+    // cube's back face
+    all_mesh_triangles[4].normal.x = 0.0f;
+    all_mesh_triangles[4].normal.y = 0.0f;
+    all_mesh_triangles[4].normal.z = 1.0f;
+    all_mesh_triangles[4].parent_material_i = 0;
+    all_mesh_triangles[4].vertices[0].x     = left_vertex;
+    all_mesh_triangles[4].vertices[0].y     = top_vertex;
+    all_mesh_triangles[4].vertices[0].z     = back_vertex;
+    all_mesh_triangles[4].vertices[0].uv[0] = left_uv_coord;
+    all_mesh_triangles[4].vertices[0].uv[1] = top_uv_coord;
+    all_mesh_triangles[4].vertices[1].x     = right_vertex;
+    all_mesh_triangles[4].vertices[1].y     = top_vertex;
+    all_mesh_triangles[4].vertices[1].z     = back_vertex;
+    all_mesh_triangles[4].vertices[1].uv[0] = right_uv_coord;
+    all_mesh_triangles[4].vertices[1].uv[1] = top_uv_coord;
+    all_mesh_triangles[4].vertices[2].x     = left_vertex;
+    all_mesh_triangles[4].vertices[2].y     = bottom_vertex;
+    all_mesh_triangles[4].vertices[2].z     = back_vertex;
+    all_mesh_triangles[4].vertices[2].uv[0] = left_uv_coord;
+    all_mesh_triangles[4].vertices[2].uv[1] = bottom_uv_coord;
+    all_mesh_triangles[5].normal.x = 0.0f;
+    all_mesh_triangles[5].normal.y = 0.0f;
+    all_mesh_triangles[5].normal.z = 1.0f;
+    all_mesh_triangles[5].parent_material_i = 0;
+    all_mesh_triangles[5].vertices[0].x = right_vertex;
+    all_mesh_triangles[5].vertices[0].y = top_vertex;
+    all_mesh_triangles[5].vertices[0].z = back_vertex;
+    all_mesh_triangles[5].vertices[0].uv[0] = right_uv_coord;
+    all_mesh_triangles[5].vertices[0].uv[1] = top_uv_coord;
+    all_mesh_triangles[5].vertices[1].x = right_vertex;
+    all_mesh_triangles[5].vertices[1].y = bottom_vertex;
+    all_mesh_triangles[5].vertices[1].z = back_vertex;
+    all_mesh_triangles[5].vertices[1].uv[0] = right_uv_coord;
+    all_mesh_triangles[5].vertices[1].uv[1] = bottom_uv_coord;
+    all_mesh_triangles[5].vertices[2].x = left_vertex;
+    all_mesh_triangles[5].vertices[2].y = bottom_vertex;
+    all_mesh_triangles[5].vertices[2].z = back_vertex;
+    all_mesh_triangles[5].vertices[2].uv[0] = left_uv_coord;
+    all_mesh_triangles[5].vertices[2].uv[1] = bottom_uv_coord;
+    // cube's left face
+    all_mesh_triangles[6].normal.x = -1.0f;
+    all_mesh_triangles[6].normal.y = 0.0f;
+    all_mesh_triangles[6].normal.z = 0.0f;
+    all_mesh_triangles[6].parent_material_i = 0;
+    all_mesh_triangles[6].vertices[0].x     = left_vertex;
+    all_mesh_triangles[6].vertices[0].y     = top_vertex;
+    all_mesh_triangles[6].vertices[0].z     = back_vertex;
+    all_mesh_triangles[6].vertices[0].uv[0] = left_uv_coord;
+    all_mesh_triangles[6].vertices[0].uv[1] = top_uv_coord;
+    all_mesh_triangles[6].vertices[1].x     = left_vertex;
+    all_mesh_triangles[6].vertices[1].y     = top_vertex;
+    all_mesh_triangles[6].vertices[1].z     = front_vertex;
+    all_mesh_triangles[6].vertices[1].uv[0] = right_uv_coord;
+    all_mesh_triangles[6].vertices[1].uv[1] = top_uv_coord;
+    all_mesh_triangles[6].vertices[2].x     = left_vertex;
+    all_mesh_triangles[6].vertices[2].y     = bottom_vertex;
+    all_mesh_triangles[6].vertices[2].z     = back_vertex;
+    all_mesh_triangles[6].vertices[2].uv[0] = left_uv_coord;
+    all_mesh_triangles[6].vertices[2].uv[1] = bottom_uv_coord;
+    all_mesh_triangles[7].normal.x = -1.0f;
+    all_mesh_triangles[7].normal.y = 0.0f;
+    all_mesh_triangles[7].normal.z = 0.0f;
+    all_mesh_triangles[7].parent_material_i = 0;
+    all_mesh_triangles[7].vertices[0].x = left_vertex;
+    all_mesh_triangles[7].vertices[0].y = top_vertex;
+    all_mesh_triangles[7].vertices[0].z = front_vertex;
+    all_mesh_triangles[7].vertices[0].uv[0] = right_uv_coord;
+    all_mesh_triangles[7].vertices[0].uv[1] = top_uv_coord;
+    all_mesh_triangles[7].vertices[1].x = left_vertex;
+    all_mesh_triangles[7].vertices[1].y = bottom_vertex;
+    all_mesh_triangles[7].vertices[1].z = front_vertex;
+    all_mesh_triangles[7].vertices[1].uv[0] = right_uv_coord;
+    all_mesh_triangles[7].vertices[1].uv[1] = bottom_uv_coord;
+    all_mesh_triangles[7].vertices[2].x = left_vertex;
+    all_mesh_triangles[7].vertices[2].y = bottom_vertex;
+    all_mesh_triangles[7].vertices[2].z = back_vertex;
+    all_mesh_triangles[7].vertices[2].uv[0] = left_uv_coord;
+    all_mesh_triangles[7].vertices[2].uv[1] = bottom_uv_coord;
+    // cube's right face
+    all_mesh_triangles[8].normal.x = 1.0f;
+    all_mesh_triangles[8].normal.y = 0.0f;
+    all_mesh_triangles[8].normal.z = 0.0f;
+    all_mesh_triangles[8].parent_material_i = 0;
+    all_mesh_triangles[8].vertices[0].x     = right_vertex;
+    all_mesh_triangles[8].vertices[0].y     = top_vertex;
+    all_mesh_triangles[8].vertices[0].z     = back_vertex;
+    all_mesh_triangles[8].vertices[0].uv[0] = left_uv_coord;
+    all_mesh_triangles[8].vertices[0].uv[1] = top_uv_coord;
+    all_mesh_triangles[8].vertices[1].x     = right_vertex;
+    all_mesh_triangles[8].vertices[1].y     = top_vertex;
+    all_mesh_triangles[8].vertices[1].z     = front_vertex;
+    all_mesh_triangles[8].vertices[1].uv[0] = right_uv_coord;
+    all_mesh_triangles[8].vertices[1].uv[1] = top_uv_coord;
+    all_mesh_triangles[8].vertices[2].x     = right_vertex;
+    all_mesh_triangles[8].vertices[2].y     = bottom_vertex;
+    all_mesh_triangles[8].vertices[2].z     = back_vertex;
+    all_mesh_triangles[8].vertices[2].uv[0] = left_uv_coord;
+    all_mesh_triangles[8].vertices[2].uv[1] = bottom_uv_coord;
+    all_mesh_triangles[9].normal.x = 1.0f;
+    all_mesh_triangles[9].normal.y = 0.0f;
+    all_mesh_triangles[9].normal.z = 0.0f;
+    all_mesh_triangles[9].parent_material_i = 0;
+    all_mesh_triangles[9].vertices[0].x = right_vertex;
+    all_mesh_triangles[9].vertices[0].y = top_vertex;
+    all_mesh_triangles[9].vertices[0].z = front_vertex;
+    all_mesh_triangles[9].vertices[0].uv[0] = right_uv_coord;
+    all_mesh_triangles[9].vertices[0].uv[1] = top_uv_coord;
+    all_mesh_triangles[9].vertices[1].x = right_vertex;
+    all_mesh_triangles[9].vertices[1].y = bottom_vertex;
+    all_mesh_triangles[9].vertices[1].z = front_vertex;
+    all_mesh_triangles[9].vertices[1].uv[0] = right_uv_coord;
+    all_mesh_triangles[9].vertices[1].uv[1] = bottom_uv_coord;
+    all_mesh_triangles[9].vertices[2].x = right_vertex;
+    all_mesh_triangles[9].vertices[2].y = bottom_vertex;
+    all_mesh_triangles[9].vertices[2].z = back_vertex;
+    all_mesh_triangles[9].vertices[2].uv[0] = left_uv_coord;
+    all_mesh_triangles[9].vertices[2].uv[1] = bottom_uv_coord;
+    // cube's top face
+    all_mesh_triangles[10].normal.x = 0.0f;
+    all_mesh_triangles[10].normal.y = 1.0f;
+    all_mesh_triangles[10].normal.z = 0.0f;
+    all_mesh_triangles[10].parent_material_i = 0;
+    all_mesh_triangles[10].vertices[0].x     = left_vertex;
+    all_mesh_triangles[10].vertices[0].y     = top_vertex;
+    all_mesh_triangles[10].vertices[0].z     = back_vertex;
+    all_mesh_triangles[10].vertices[0].uv[0] = left_uv_coord;
+    all_mesh_triangles[10].vertices[0].uv[1] = top_uv_coord;
+    all_mesh_triangles[10].vertices[1].x     = right_vertex;
+    all_mesh_triangles[10].vertices[1].y     = top_vertex;
+    all_mesh_triangles[10].vertices[1].z     = back_vertex;
+    all_mesh_triangles[10].vertices[1].uv[0] = right_uv_coord;
+    all_mesh_triangles[10].vertices[1].uv[1] = top_uv_coord;
+    all_mesh_triangles[10].vertices[2].x     = left_vertex;
+    all_mesh_triangles[10].vertices[2].y     = top_vertex;
+    all_mesh_triangles[10].vertices[2].z     = front_vertex;
+    all_mesh_triangles[10].vertices[2].uv[0] = left_uv_coord;
+    all_mesh_triangles[10].vertices[2].uv[1] = bottom_uv_coord;
+    all_mesh_triangles[11].normal.x = 0.0f;
+    all_mesh_triangles[11].normal.y = 1.0f;
+    all_mesh_triangles[11].normal.z = 0.0f;
+    all_mesh_triangles[11].parent_material_i = 0;
+    all_mesh_triangles[11].vertices[0].x = right_vertex;
+    all_mesh_triangles[11].vertices[0].y = top_vertex;
+    all_mesh_triangles[11].vertices[0].z = back_vertex;
+    all_mesh_triangles[11].vertices[0].uv[0] = right_uv_coord;
+    all_mesh_triangles[11].vertices[0].uv[1] = top_uv_coord;
+    all_mesh_triangles[11].vertices[1].x = right_vertex;
+    all_mesh_triangles[11].vertices[1].y = top_vertex;
+    all_mesh_triangles[11].vertices[1].z = front_vertex;
+    all_mesh_triangles[11].vertices[1].uv[0] = right_uv_coord;
+    all_mesh_triangles[11].vertices[1].uv[1] = bottom_uv_coord;
+    all_mesh_triangles[11].vertices[2].x = left_vertex;
+    all_mesh_triangles[11].vertices[2].y = top_vertex;
+    all_mesh_triangles[11].vertices[2].z = front_vertex;
+    all_mesh_triangles[11].vertices[2].uv[0] = left_uv_coord;
+    all_mesh_triangles[11].vertices[2].uv[1] = bottom_uv_coord;
+    // cube's bottom face
+    all_mesh_triangles[12].normal.x = 0.0f;
+    all_mesh_triangles[12].normal.y = -1.0f;
+    all_mesh_triangles[12].normal.z = 0.0f;
+    all_mesh_triangles[12].parent_material_i = 0;
+    all_mesh_triangles[12].vertices[0].x     = left_vertex;
+    all_mesh_triangles[12].vertices[0].y     = bottom_vertex;
+    all_mesh_triangles[12].vertices[0].z     = back_vertex;
+    all_mesh_triangles[12].vertices[0].uv[0] = left_uv_coord;
+    all_mesh_triangles[12].vertices[0].uv[1] = top_uv_coord;
+    all_mesh_triangles[12].vertices[1].x     = right_vertex;
+    all_mesh_triangles[12].vertices[1].y     = bottom_vertex;
+    all_mesh_triangles[12].vertices[1].z     = back_vertex;
+    all_mesh_triangles[12].vertices[1].uv[0] = right_uv_coord;
+    all_mesh_triangles[12].vertices[1].uv[1] = top_uv_coord;
+    all_mesh_triangles[12].vertices[2].x     = left_vertex;
+    all_mesh_triangles[12].vertices[2].y     = bottom_vertex;
+    all_mesh_triangles[12].vertices[2].z     = front_vertex;
+    all_mesh_triangles[12].vertices[2].uv[0] = left_uv_coord;
+    all_mesh_triangles[12].vertices[2].uv[1] = bottom_uv_coord;
+    all_mesh_triangles[13].normal.x = 0.0f;
+    all_mesh_triangles[13].normal.y = -1.0f;
+    all_mesh_triangles[13].normal.z = 0.0f;
+    all_mesh_triangles[13].parent_material_i = 0;
+    all_mesh_triangles[13].vertices[0].x = right_vertex;
+    all_mesh_triangles[13].vertices[0].y = bottom_vertex;
+    all_mesh_triangles[13].vertices[0].z = back_vertex;
+    all_mesh_triangles[13].vertices[0].uv[0] = right_uv_coord;
+    all_mesh_triangles[13].vertices[0].uv[1] = top_uv_coord;
+    all_mesh_triangles[13].vertices[1].x = right_vertex;
+    all_mesh_triangles[13].vertices[1].y = bottom_vertex;
+    all_mesh_triangles[13].vertices[1].z = front_vertex;
+    all_mesh_triangles[13].vertices[1].uv[0] = right_uv_coord;
+    all_mesh_triangles[13].vertices[1].uv[1] = bottom_uv_coord;
+    all_mesh_triangles[13].vertices[2].x = left_vertex;
+    all_mesh_triangles[13].vertices[2].y = bottom_vertex;
+    all_mesh_triangles[13].vertices[2].z = front_vertex;
+    all_mesh_triangles[13].vertices[2].uv[0] = left_uv_coord;
+    all_mesh_triangles[13].vertices[2].uv[1] = bottom_uv_coord;
+    all_mesh_triangles_size = 14;
 }
 
 static void assert_objmodel_validity(int32_t mesh_id) {

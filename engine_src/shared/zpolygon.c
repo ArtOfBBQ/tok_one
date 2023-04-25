@@ -959,3 +959,40 @@ void construct_quad_around(
     recipient->triangle_materials[0].texture_i = -1;
     recipient->triangle_materials_size = 1;
 }
+
+void construct_cube_around(
+    const float mid_x,
+    const float mid_y,
+    const float z,
+    const float width,
+    const float height,
+    const float depth,
+    zPolygon * recipient)
+{
+    log_assert(z > 0.0f);
+    
+    construct_zpolygon(recipient);
+    
+    recipient->x       = mid_x;
+    recipient->y       = mid_y;
+    recipient->z       = z;
+    recipient->visible = true;
+    
+    // the hardcoded quad offsets range from -1.0f to 1.0f,
+    // so the current width is 2.0f
+    float current_width = 2.0f;
+    float current_height = 2.0f;
+    float current_depth = 2.0f;
+    recipient->x_multiplier = width / current_width;
+    recipient->y_multiplier = height / current_height;
+    recipient->z_multiplier = depth / current_depth;
+    
+    recipient->mesh_id = 1;
+    recipient->triangle_materials[0].color[0] = 1.0f;
+    recipient->triangle_materials[0].color[1] = 1.0f;
+    recipient->triangle_materials[0].color[2] = 1.0f;
+    recipient->triangle_materials[0].color[3] = 1.0f;
+    recipient->triangle_materials[0].texturearray_i = -1;
+    recipient->triangle_materials[0].texture_i = -1;
+    recipient->triangle_materials_size = 1;
+}
