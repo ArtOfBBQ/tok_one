@@ -16,6 +16,9 @@ extern "C" {
 
 typedef struct ParticleEffect {
     int32_t object_id;
+    
+    int32_t mesh_id_to_spawn;
+    
     float x;
     float y;
     float z;
@@ -26,9 +29,13 @@ typedef struct ParticleEffect {
     bool32_t deleted;
     
     uint32_t particle_spawns_per_second;
-    float particle_height;
-    float particle_width;
+    float particle_x_multiplier;
+    float particle_y_multiplier;
+    float particle_z_multiplier;
+    bool32_t particles_ignore_lighting;
+    
     uint64_t particle_lifespan;
+    uint64_t pause_between_spawns;
     
     float particle_rgba_progression[PARTICLE_RGBA_PROGRESSION_MAX][4];
     uint32_t particle_rgba_progression_size;
