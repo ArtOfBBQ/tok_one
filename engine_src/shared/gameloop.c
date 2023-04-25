@@ -49,7 +49,7 @@ static int32_t closest_touchable_from_screen_ray(
     //
     // given:
     // projected_x = x * pjc->x_multiplier / z
-    // and we want projected_x to be ray_origin.x:
+    //     and we want projected_x to be ray_origin.x:
     // ray_origin.x = (x * pjc->x_multiplier) / z
     // ray_origin.x * z = x * pjc->x_multi
     // (ray_origin.x * z / pjc->x_multi) = x

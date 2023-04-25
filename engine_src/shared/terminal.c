@@ -6,9 +6,9 @@ bool32_t terminal_active = false;
 static char * current_command = NULL;
 
 #define TERMINAL_HISTORY_MAX 500000
-#define TERMINAL_WHITESPACE   15.0f
+#define TERMINAL_WHITESPACE    8.0f
 
-#define TERM_FONT_SIZE        30.0f
+#define TERM_FONT_SIZE        14.0f
 #define TERM_Z                0.11f
 static char * terminal_history = NULL;
 static uint32_t terminal_history_size = 0;
@@ -81,8 +81,7 @@ void terminal_redraw_backgrounds(void) {
     
     terminal_back_object_id = INT32_MAX;
     
-    zPolygon current;
-    // The current input area
+    zPolygon current_command_input;
     construct_quad(
         /* const float left_x: */
             screenspace_x_to_x(
@@ -104,21 +103,25 @@ void terminal_redraw_backgrounds(void) {
                 font_height + TERMINAL_WHITESPACE,
                 TERM_Z),
         /* zPolygon * recipien: */
-            &current);
+            &current_command_input);
     
-    current.triangle_materials[0].color[0] = term_background_color[0];
-    current.triangle_materials[0].color[1] = term_background_color[1];
-    current.triangle_materials[0].color[2] = term_background_color[2];
-    current.triangle_materials[0].color[3] = term_background_color[3];
-    current.ignore_camera = true;
-    current.ignore_lighting = true;
-    current.visible = terminal_active;
-    current.object_id = terminal_back_object_id;
-    request_zpolygon_to_render(&current);
+    current_command_input.triangle_materials[0].color[0] =
+        term_background_color[0];
+    current_command_input.triangle_materials[0].color[1] =
+        term_background_color[1];
+    current_command_input.triangle_materials[0].color[2] =
+        term_background_color[2];
+    current_command_input.triangle_materials[0].color[3] =
+        term_background_color[3];
+    current_command_input.ignore_camera = true;
+    current_command_input.ignore_lighting = true;
+    current_command_input.visible = terminal_active;
+    current_command_input.object_id = terminal_back_object_id;
+    request_zpolygon_to_render(&current_command_input);
     
     
     // The console history area
-    construct_zpolygon(&current);
+    construct_zpolygon(&current_command_input);
     construct_quad(
        /* const float left_x: */
            screenspace_x_to_x(
@@ -143,18 +146,18 @@ void terminal_redraw_backgrounds(void) {
                    (TERMINAL_WHITESPACE * 4),
                TERM_Z),
        /* zPolygon * recipien: */
-           &current);
+           &current_command_input);
     
-    current.triangle_materials[0].color[0] = term_background_color[0];
-    current.triangle_materials[0].color[1] = term_background_color[1];
-    current.triangle_materials[0].color[2] = term_background_color[2];
-    current.triangle_materials[0].color[3] = term_background_color[3];
-    current.visible = terminal_active;
-    current.ignore_camera = true;
-    current.ignore_lighting = true;
-    current.object_id = INT32_MAX;
+    current_command_input.triangle_materials[0].color[0] = term_background_color[0];
+    current_command_input.triangle_materials[0].color[1] = term_background_color[1];
+    current_command_input.triangle_materials[0].color[2] = term_background_color[2];
+    current_command_input.triangle_materials[0].color[3] = term_background_color[3];
+    current_command_input.visible = terminal_active;
+    current_command_input.ignore_camera = true;
+    current_command_input.ignore_lighting = true;
+    current_command_input.object_id = INT32_MAX;
     
-    request_zpolygon_to_render(&current);
+    request_zpolygon_to_render(&current_command_input);
     
     requesting_label_update = true;
 }
@@ -180,8 +183,7 @@ void terminal_render(void) {
         // draw the terminal's history as a label
         float history_label_top =
             window_globals->window_height -
-                (TERMINAL_WHITESPACE * 2.0f) -
-                (TERMINAL_WHITESPACE / 4.0f);
+                (TERMINAL_WHITESPACE * 2.0f);
         float history_label_height =
             window_globals->window_height -
                 font_height -
@@ -229,11 +231,11 @@ void terminal_render(void) {
             /* const char * text_to_draw: */
                 terminal_history + char_offset,
             /* const float left_pixelspace: */
-                TERMINAL_WHITESPACE * 2.5f,
+                TERMINAL_WHITESPACE * 2.0f,
             /* const float top_pixelspace: */
                 history_label_top,
             /* const float z: */
-                TERM_Z - 0.01f,
+                TERM_Z - 0.001f,
             /* const float max_width: */
                 window_globals->window_width -
                     (TERMINAL_WHITESPACE * 2),
@@ -253,10 +255,10 @@ void terminal_render(void) {
             /* const char * text_to_draw: */
                 current_command,
             /* const float left_pixelspace: */
-                TERMINAL_WHITESPACE * 2.5f,
+                TERMINAL_WHITESPACE * 2.0f,
             /* const float top_pixelspace: */
                 font_height +
-                    (TERMINAL_WHITESPACE / 4),
+                    (TERMINAL_WHITESPACE * 1.5f),
             /* const float z: */
                 TERM_Z - 0.01f,
             /* const float max_width: */

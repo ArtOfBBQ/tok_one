@@ -250,7 +250,7 @@ void request_label_offset_around(
                     screenspace_x_to_x(
                         mid_x_pixelspace,
                         z),
-                /* const float top_y: */
+                /* const float bottom_y */
                     screenspace_y_to_y(
                         mid_y_pixelspace,
                         z),
@@ -390,8 +390,8 @@ void request_label_renderable(
         construct_quad(
             /* const float left_x: */
                 screenspace_x_to_x(left_pixelspace, z),
-            /* const float top_y: */
-                screenspace_y_to_y(top_pixelspace, z),
+            /* const float bottom_y: */
+                screenspace_y_to_y(top_pixelspace - font_height, z),
             /* const flota z: */
                 z,
             /* const float width: */
