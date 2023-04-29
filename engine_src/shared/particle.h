@@ -68,6 +68,11 @@ typedef struct ParticleEffect {
     int32_t random_texturearray_i[MAX_PARTICLE_TEXTURES];
     int32_t random_texture_i[MAX_PARTICLE_TEXTURES];
     int32_t random_textures_size;
+    
+    bool32_t generate_light;
+    float light_reach;
+    float light_strength;
+    float light_rgb[3];
 } ParticleEffect;
 
 extern ParticleEffect * particle_effects;
@@ -82,6 +87,7 @@ void delete_particle_effect(int32_t with_object_id);
 void add_particle_effects_to_workload(
     GPU_Vertex * next_gpu_workload,
     uint32_t * next_workload_size,
+    GPU_LightCollection * lights_for_gpu,
     uint64_t elapsed_nanoseconds);
 
 #ifdef __cplusplus

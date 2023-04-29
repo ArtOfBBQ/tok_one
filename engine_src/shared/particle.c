@@ -62,6 +62,13 @@ void construct_particle_effect(
     to_construct->particle_origin_max_x_variance = 0.0f;
     to_construct->particle_origin_max_y_variance = 0.0f;
     to_construct->particle_origin_max_z_variance = 0.0f;
+    
+    to_construct->generate_light = true;
+    to_construct->light_reach = 1.0f;
+    to_construct->light_strength = 1.0f;
+    to_construct->light_rgb[0] = 1.0f;
+    to_construct->light_rgb[1] = 0.5f;
+    to_construct->light_rgb[2] = 0.25f;
 }
 
 void request_particle_effect(
@@ -115,9 +122,85 @@ void delete_particle_effect(int32_t with_object_id) {
     }
 }
 
+static void get_particle_color_at_elapsed(
+    const uint32_t particle_i,
+    const uint64_t elapsed,
+    float * out_red,
+    float * out_green,
+    float * out_blue,
+    float * out_alpha)
+{
+    // Get the current color (which is somewhere between origin_rgba
+    // and final_rgba)
+    uint64_t single_color_duration =
+        (particle_effects[particle_i].particle_lifespan /
+            particle_effects[particle_i].particle_rgba_progression_size);
+    
+    uint32_t first_color_i =
+        (uint32_t)(elapsed /
+            (single_color_duration + 5));
+    
+    log_assert(first_color_i >= 0);
+    if (
+        first_color_i >=
+            particle_effects[particle_i].particle_rgba_progression_size)
+    {
+        first_color_i =
+            particle_effects[particle_i].particle_rgba_progression_size - 1;
+    }
+    log_assert(
+        first_color_i <
+            particle_effects[particle_i].particle_rgba_progression_size);
+    
+    uint32_t second_color_i =
+        first_color_i + 1 <
+            particle_effects[particle_i].particle_rgba_progression_size ?
+        first_color_i + 1 :
+        first_color_i;
+    
+    float transition_progress =
+        (float)(elapsed % single_color_duration) /
+            1000000.0f;
+    log_assert(transition_progress >= 0.0f);
+    log_assert(transition_progress <= 1.0f);
+    
+    *out_red =
+        (particle_effects[particle_i].
+            particle_rgba_progression[first_color_i][0] *
+                (1.0f - transition_progress)) +
+        (particle_effects[particle_i].
+            particle_rgba_progression[second_color_i][0] *
+                transition_progress);
+    *out_green =
+        (particle_effects[particle_i].
+            particle_rgba_progression[first_color_i][1] *
+                (1.0f - transition_progress)) +
+        (particle_effects[particle_i].
+            particle_rgba_progression[second_color_i][1] *
+                transition_progress);
+    *out_blue =
+        (particle_effects[particle_i].
+            particle_rgba_progression[first_color_i][2] *
+                (1.0f - transition_progress)) +
+        (particle_effects[particle_i].
+            particle_rgba_progression[second_color_i][2] *
+                transition_progress);
+    
+    if (out_alpha == NULL) { return; }
+    
+    *out_alpha =
+        (particle_effects[particle_i].
+            particle_rgba_progression[first_color_i][3] *
+                (1.0f - transition_progress)) +
+        (particle_effects[particle_i].
+            particle_rgba_progression[second_color_i][3] *
+                transition_progress);
+}
+
 void add_particle_effects_to_workload(
     GPU_Vertex * next_gpu_workload,
     uint32_t * next_workload_size,
+    GPU_LightCollection * lights_for_gpu,
     uint64_t elapsed_nanoseconds)
 {
     zVertex randomized_direction;
@@ -129,9 +212,7 @@ void add_particle_effects_to_workload(
         
     for (uint32_t i = 0; i < particle_effects_size; i++) {
         if (!particle_effects[i].deleted) {
-        
-            bool32_t created_at_least_1_particle = false;
-            
+                        
             log_assert(
                particle_effects[i].particle_rgba_progression_size <=
                    PARTICLE_RGBA_PROGRESSION_MAX);
@@ -148,6 +229,8 @@ void add_particle_effects_to_workload(
             interval_between_spawns =
                 1000000 / particle_effects[i].particle_spawns_per_second;
             
+            uint32_t particles_active = 0;
+            
             for (
                 uint32_t spawn_i = 0;
                 spawn_i < spawns_in_duration;
@@ -161,8 +244,9 @@ void add_particle_effects_to_workload(
                 int32_t texture_i = -1;
                 
                 if (particle_effects[i].random_textures_size > 0) {
-                    int32_t rand_texture_i = tok_rand_at_i(rand_i + 12) %
-                        particle_effects[i].random_textures_size;
+                    int32_t rand_texture_i =
+                        (int32_t)tok_rand_at_i(rand_i + 12) %
+                            particle_effects[i].random_textures_size;
                     
                     texturearray_i = particle_effects[i].
                         random_texturearray_i[rand_texture_i];
@@ -182,7 +266,7 @@ void add_particle_effects_to_workload(
                     continue;
                 }
                 
-                created_at_least_1_particle = true;
+                particles_active += 1;
                 
                 float distance_traveled =
                     ((float)spawn_lifetime_so_far / 1000000.0f) *
@@ -326,61 +410,23 @@ void add_particle_effects_to_workload(
                 
                 normalize_zvertex(&randomized_direction);
                 
-                // Get the current color (which is somewhere between origin_rgba
-                // and final_rgba)
-                int64_t single_color_duration =
-                    (float)(particle_effects[i].particle_lifespan /
-                        particle_effects[i].particle_rgba_progression_size);
-                
-                int32_t first_color_i =
-                    (int32_t)(spawn_lifetime_so_far /
-                        (single_color_duration + 5));
-                
-                log_assert(first_color_i >= 0);
-                log_assert(
-                    first_color_i <
-                        particle_effects[i].particle_rgba_progression_size);
-                
-                int32_t second_color_i =
-                    first_color_i + 1 <
-                        particle_effects[i].particle_rgba_progression_size ?
-                    first_color_i + 1 :
-                    first_color_i;
-                
-                float transition_progress =
-                    (float)(spawn_lifetime_so_far % single_color_duration) /
-                        1000000.0f;
-                log_assert(transition_progress >= 0.0f);
-                log_assert(transition_progress <= 1.0f);
-                
-                float red =
-                    (particle_effects[i].
-                        particle_rgba_progression[first_color_i][0] *
-                            (1.0f - transition_progress)) +
-                    (particle_effects[i].
-                        particle_rgba_progression[second_color_i][0] *
-                            transition_progress);
-                float green =
-                    (particle_effects[i].
-                        particle_rgba_progression[first_color_i][1] *
-                            (1.0f - transition_progress)) +
-                    (particle_effects[i].
-                        particle_rgba_progression[second_color_i][1] *
-                            transition_progress);
-                float blue =
-                    (particle_effects[i].
-                        particle_rgba_progression[first_color_i][2] *
-                            (1.0f - transition_progress)) +
-                    (particle_effects[i].
-                        particle_rgba_progression[second_color_i][2] *
-                            transition_progress);
-                float alpha =
-                    (particle_effects[i].
-                        particle_rgba_progression[first_color_i][3] *
-                            (1.0f - transition_progress)) +
-                    (particle_effects[i].
-                        particle_rgba_progression[second_color_i][3] *
-                            transition_progress);
+                float red;
+                float green;
+                float blue;
+                float alpha;
+                get_particle_color_at_elapsed(
+                    /* at_particle_i: */
+                        i,
+                    /* elapsed: */
+                        spawn_lifetime_so_far,
+                    /* const float * out_red: */
+                        &red,
+                    /* const float * out_green: */
+                        &green,
+                    /* const float * out_blue: */
+                        &blue,
+                    /* const float * alpha: */
+                        &alpha);
                 
                 float initial_x_offset = 0;
                 if (particle_effects[i].particle_origin_max_x_variance > 0)
@@ -443,7 +489,7 @@ void add_particle_effects_to_workload(
                     tri_i++)
                 {
                     log_assert(tri_i >= 0);
-                    log_assert(tri_i < all_mesh_triangles_size);
+                    log_assert(tri_i < (int32_t)all_mesh_triangles_size);
                     
                     for (int32_t m = 0; m < 3; m++) {
                         next_gpu_workload[*next_workload_size].parent_x =
@@ -506,9 +552,36 @@ void add_particle_effects_to_workload(
                 }
             }
             
-            if (!created_at_least_1_particle) {
+            if (particles_active < 1) {
                 particle_effects[i].random_seed =
                     tok_rand() % RANDOM_SEQUENCE_SIZE;
+            } else if (particle_effects[i].generate_light) {
+                lights_for_gpu->light_x[lights_for_gpu->lights_size] =
+                    particle_effects[i].x;
+                lights_for_gpu->light_y[lights_for_gpu->lights_size] =
+                    particle_effects[i].y;
+                lights_for_gpu->light_z[lights_for_gpu->lights_size] =
+                    particle_effects[i].z;
+                
+                lights_for_gpu->red[lights_for_gpu->lights_size] =
+                    particle_effects[i].light_rgb[0];
+                lights_for_gpu->green[lights_for_gpu->lights_size] =
+                    particle_effects[i].light_rgb[1];
+                lights_for_gpu->blue[lights_for_gpu->lights_size] =
+                    particle_effects[i].light_rgb[2];
+                
+                lights_for_gpu->reach[lights_for_gpu->lights_size] =
+                    particle_effects[i].light_reach;
+                
+                float light_strength =
+                    particle_effects[i].light_strength * (
+                        (float)particles_active / (float)spawns_in_duration);
+                
+                lights_for_gpu->ambient[lights_for_gpu->lights_size] =
+                    0.05f * light_strength;
+                lights_for_gpu->diffuse[lights_for_gpu->lights_size] =
+                    1.0f * light_strength;
+                lights_for_gpu->lights_size += 1;
             }
         }
     }

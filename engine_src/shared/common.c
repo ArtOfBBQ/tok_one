@@ -494,32 +494,34 @@ string_to_float_validate(
 
     if (second_part_size > 0) {
     
-	second_part[second_part_size] = '\0';
-	bool32_t second_part_valid = false;
-	int second_part_int = string_to_int32_validate(
-	    /* const char input: */ second_part,
-	    &second_part_valid);
-	if (!second_part_valid) {
-	    *good = false;
-	    return return_value;
-	}
+        if (second_part_size > 6) { second_part_size = 6; }
+        
+        second_part[second_part_size] = '\0';
+        bool32_t second_part_valid = false;
+        int second_part_int = string_to_int32_validate(
+            /* const char input: */ second_part,
+            &second_part_valid);
+        if (!second_part_valid) {
+            *good = false;
+            return return_value;
+        }
+        
+        // throw away 0's at the end after the comma, they're useless
+        while (second_part_int % 10 == 0 && second_part_size > 0) {
+            second_part_int /= 10;
+            second_part_size -= 1;
+        }
 	
-	// throw away 0's at the end after the comma, they're useless
-	while (second_part_int % 10 == 0 && second_part_size > 0) {
-	    second_part_int /= 10;
-	    second_part_size -= 1;
-	}
-	
-	return_value += (float)first_part_int;
-	float divisor = 1;
-	for (uint32_t _ = 0; _ < second_part_size; _++) {
-	    divisor *= 10;
-	}
-	return_value += ((float)second_part_int / divisor);
-	
-	if (input[0] == '-') {
-	    return_value *= -1;
-	}
+        return_value += (float)first_part_int;
+        float divisor = 1;
+        for (uint32_t _ = 0; _ < second_part_size; _++) {
+            divisor *= 10;
+        }
+        return_value += ((float)second_part_int / divisor);
+        
+        if (input[0] == '-') {
+            return_value *= -1;
+        }
     }
    
     // apply the 'scientific notation' exponent

@@ -329,6 +329,8 @@ void shared_gameloop_update(
             vertices_for_gpu,
         /* next_gpu_workload_size: */
             vertices_for_gpu_size,
+        /* lights_for_gpu: */
+            lights_for_gpu,
         /* elapsed_microseconds: */
             elapsed);
     

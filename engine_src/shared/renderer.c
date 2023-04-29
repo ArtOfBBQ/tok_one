@@ -16,6 +16,7 @@ void init_renderer() {
 void hardware_render(
     GPU_Vertex * next_gpu_workload,
     uint32_t * next_workload_size,
+    GPU_LightCollection * lights_for_gpu,
     uint64_t elapsed_nanoseconds)
 {
     (void)elapsed_nanoseconds;
@@ -126,20 +127,20 @@ void hardware_render(
             
             for (uint32_t m = 0; m < 3; m++) {
                 next_gpu_workload[*next_workload_size].x =
-                    all_mesh_triangles[tri_i].vertices[m].x *
-                        zpolygons_to_render[zp_i].x_multiplier;
+                    (all_mesh_triangles[tri_i].vertices[m].x *
+                        zpolygons_to_render[zp_i].x_multiplier) +
+                    zpolygons_to_render[zp_i].x_offset;
                 next_gpu_workload[*next_workload_size].y =
-                    all_mesh_triangles[tri_i].vertices[m].y *
-                        zpolygons_to_render[zp_i].y_multiplier;
+                    (all_mesh_triangles[tri_i].vertices[m].y *
+                        zpolygons_to_render[zp_i].y_multiplier) +
+                    zpolygons_to_render[zp_i].y_offset;
                 next_gpu_workload[*next_workload_size].z =
-                    all_mesh_triangles[tri_i].vertices[m].z *
-                        zpolygons_to_render[zp_i].z_multiplier;
+                    (all_mesh_triangles[tri_i].vertices[m].z *
+                        zpolygons_to_render[zp_i].z_multiplier);
                 next_gpu_workload[*next_workload_size].parent_x =
-                    (zpolygons_to_render[zp_i].x +
-                        zpolygons_to_render[zp_i].x_offset);
+                    zpolygons_to_render[zp_i].x;
                 next_gpu_workload[*next_workload_size].parent_y =
-                    (zpolygons_to_render[zp_i].y +
-                        zpolygons_to_render[zp_i].y_offset);
+                    zpolygons_to_render[zp_i].y;
                 next_gpu_workload[*next_workload_size].parent_z =
                     zpolygons_to_render[zp_i].z;
                 next_gpu_workload[*next_workload_size].x_angle =
@@ -423,6 +424,7 @@ void hardware_render(
         add_particle_effects_to_workload(
             next_gpu_workload,
             next_workload_size,
+            lights_for_gpu,
             elapsed_nanoseconds);
     }
 }
