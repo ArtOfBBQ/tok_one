@@ -33,6 +33,7 @@ void init_application(
     particle_effects = (ParticleEffect *)malloc_from_unmanaged(
         sizeof(ParticleEffect) * PARTICLE_EFFECTS_SIZE);
     
+    shared_gameloop_init();
     terminal_init();
     init_scheduled_animations();
     init_texture_arrays();

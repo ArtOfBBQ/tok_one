@@ -254,6 +254,7 @@ void request_fade_and_destroy(
     modify_alpha->final_rgba_known[3] = true;
     modify_alpha->final_rgba[3] = 0.0f;
     modify_alpha->delete_object_when_finished = true;
+    modify_alpha->destroy_even_waiting_duplicates = false;
     commit_scheduled_animation(modify_alpha);
 }
 

@@ -2,6 +2,8 @@
 
 static uint64_t previous_time = 0;
 static uint64_t frame_no = 0;
+static uint32_t gameloop_mutex_id;
+static bool32_t gameloop_already_running = false;
 
 static int32_t closest_touchable_from_screen_ray(
     const float screen_x,
@@ -163,6 +165,10 @@ static void update_terminal() {
     terminal_render();
 }
 
+void shared_gameloop_init(void) {
+    gameloop_mutex_id = platform_init_mutex_and_return_id();
+}
+
 void shared_gameloop_update(
     GPU_Vertex * vertices_for_gpu,
     uint32_t * vertices_for_gpu_size,
@@ -170,10 +176,13 @@ void shared_gameloop_update(
     GPU_Camera * camera_for_gpu,
     GPU_ProjectionConstants * projection_constants_for_gpu)
 {
+    platform_mutex_lock(gameloop_mutex_id);
+    
     uint64_t time = platform_get_current_time_microsecs();
     uint64_t elapsed = time - previous_time;
     if (previous_time < 1) {
         previous_time = time;
+        platform_mutex_unlock(gameloop_mutex_id);
         return;
     }
     
@@ -236,6 +245,7 @@ void shared_gameloop_update(
             // we break, not return, because we do want to render an
             // empty screen
             log_append("w82RZ - ");
+            platform_mutex_unlock(gameloop_mutex_id);
             return;
         } else {
             
@@ -336,4 +346,6 @@ void shared_gameloop_update(
     
     uint32_t overflow_vertices = *vertices_for_gpu_size % 3;
     *vertices_for_gpu_size -= overflow_vertices;
+    
+    platform_mutex_unlock(gameloop_mutex_id);
 }

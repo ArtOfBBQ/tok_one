@@ -430,8 +430,10 @@ void platform_start_thread(
 }
 
 void platform_play_sound_resource(const char * resource_filename) {
+    return;
+    
     log_assert(resource_filename != NULL);
-        
+    
     char sound_pathfile[750];
     resource_filename_to_pathfile(
         /* filename: */
@@ -473,7 +475,7 @@ void platform_play_sound_resource(const char * resource_filename) {
 }
 
 void platform_play_music_resource(const char * resource_filename) {
-    
+    return;
     if (active_music_player != NULL) {
         [active_music_player setVolume: 0.0f fadeDuration: 1];
     }

@@ -10,6 +10,7 @@
 #include "shared/window_size.h"
 #include "shared/scheduled_animations.h"
 #include "shared/renderer.h"
+#include "shared/gameloop.h"
 #include "clientlogic.h"
 
 #ifdef __cplusplus

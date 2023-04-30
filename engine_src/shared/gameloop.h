@@ -18,6 +18,8 @@
 extern "C" {
 #endif
 
+void shared_gameloop_init(void);
+
 void shared_gameloop_update(
     GPU_Vertex * vertices_for_gpu,
     uint32_t * vertices_for_gpu_size,
