@@ -1,38 +1,9 @@
 #include "clientlogic.h"
 
-void client_logic_startup(void) {
-    
-    log_append("sizeof(zPolygon): ");
-    log_append_uint(sizeof(zPolygon));
-    log_append_char('\n');
-    
-    const char * fontfile;
-        fontfile = "font.png";
-        register_new_texturearray_by_splitting_file(
-        /* filename : */ fontfile,
-        /* rows     : */ 10,
-        /* columns  : */ 10);
-    
-    char * filenames[3] = {
-       "blob1.png",
-       "blob2.png",
-       "blob3.png",
-    };
-    register_new_texturearray_from_files(
-        (const char **)filenames,
-        3);
-    
-    char * filenames_2[1] = {
-       "structuredart2.png",
-    };
-    register_new_texturearray_from_files((const char **)filenames_2, 1);
-    
-    char * obj_filenames[3] = {
-        "xmas_tree.obj",
-        "tree.obj",
-        "disk.obj",
-    };
-    
+/*
+Call this example function in client_logic_startup to make a fountain
+*/
+static void request_particle_fountain() {
     ParticleEffect fountain;
     construct_particle_effect(&fountain);
     fountain.x = 0.0f;
@@ -107,6 +78,72 @@ void client_logic_startup(void) {
     fountain.random_textures_size = 3;
     
     request_particle_effect(&fountain);
+}
+
+static float slider_value = 0.0f;
+void client_logic_startup(void) {
+    
+    const char * fontfile;
+        fontfile = "font.png";
+    register_new_texturearray_by_splitting_file(
+        /* filename : */ fontfile,
+        /* rows     : */ 10,
+        /* columns  : */ 10);
+    
+    char * filenames[3] = {
+       "blob1.png",
+       "blob2.png",
+       "blob3.png",
+    };
+    register_new_texturearray_from_files(
+        (const char **)filenames,
+        3);
+    
+    char * filenames_2[1] = {
+       "structuredart2.png",
+    };
+    register_new_texturearray_from_files((const char **)filenames_2, 1);
+    
+    char * obj_filenames[3] = {
+        "xmas_tree.obj",
+        "tree.obj",
+        "disk.obj",
+    };
+    
+    // all sliders use this image as the background 
+    get_texture_location(
+	/* char * for_filename: */
+	    "structuredart2.png",
+	/* int32_t * texture_array_i_recipient: */
+	    &next_ui_element_settings.slider_background_texturearray_i,
+	/* int32_t * texture_i_recipient: */
+	    &next_ui_element_settings.slider_background_texture_i);
+    // all sliders use this image as the pin you slide left/right
+    get_texture_location(
+	/* char * for_filename: */
+	    "structuredart2.png",
+	/* int32_t * texture_array_i_recipient: */
+	    &next_ui_element_settings.slider_background_texturearray_i,
+	/* int32_t * texture_i_recipient: */
+	    &next_ui_element_settings.slider_background_texture_i);
+
+    // all sliders use this width/height
+    next_ui_element_settings.slider_width_screenspace = 300;
+    next_ui_element_settings.slider_height_screenspace = 20;
+    
+    request_float_slider(
+        /* const float x_screenspace: */
+            250,
+        /* const float y_screenspace: */
+            250,
+        /* const float z: */
+            0.75f,
+        /* const float min_value: */
+            0.0f,
+        /* const float max_value: */
+            1.0f,
+        /* const float * linked_value: */
+            &slider_value);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {

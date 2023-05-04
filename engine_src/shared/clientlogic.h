@@ -22,6 +22,7 @@ extern "C" {
 #include "debigulator/src/decode_bmp.h"
 #include "userinput.h"
 #include "text.h"
+#include "uielement.h"
 #include "scheduled_animations.h"
 #include "logger.h"
 #include "terminal.h"

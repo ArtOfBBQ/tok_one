@@ -27,7 +27,7 @@ void zcamera_move_forward(
     const float distance);
 
 typedef struct TriangleMaterial {
-    float color[4];         // RGBA, ignored if textured
+    float color[4];
     int32_t texturearray_i; /*
                             the index in the global var
                             'texture_arrays' of the texturearray

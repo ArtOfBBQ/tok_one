@@ -45,7 +45,6 @@
 		6064C0C22892505000E8B3AD /* gameloop.c in Sources */ = {isa = PBXBuildFile; fileRef = 6064C0BF2892504A00E8B3AD /* gameloop.c */; };
 		6080CC46286FFD1E00444118 /* phoebus.png in Resources */ = {isa = PBXBuildFile; fileRef = 6080CC45286FFD1D00444118 /* phoebus.png */; };
 		6080CC492870182700444118 /* common.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC472870182700444118 /* common.h */; };
-		608802F2286DCBE700B81255 /* clientlogic.h in Sources */ = {isa = PBXBuildFile; fileRef = 608802F1286DCBE700B81255 /* clientlogic.h */; };
 		60A998DB287BD333003F7159 /* decodedimage.c in Sources */ = {isa = PBXBuildFile; fileRef = 60A998D9287BD332003F7159 /* decodedimage.c */; };
 		60A998DC287BD333003F7159 /* decodedimage.h in Sources */ = {isa = PBXBuildFile; fileRef = 60A998DA287BD333003F7159 /* decodedimage.h */; };
 		60A998DF287BD494003F7159 /* inflate.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011283E286122FE00F92967 /* inflate.h */; };
@@ -97,7 +96,6 @@
 		60A99915287BD4C4003F7159 /* cpu_gpu_shared_types.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287A2862511600F92967 /* cpu_gpu_shared_types.h */; };
 		60A99916287BD4C4003F7159 /* scheduled_animations.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287D2862511700F92967 /* scheduled_animations.c */; };
 		60A99917287BD4C4003F7159 /* lightsource.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128782862511600F92967 /* lightsource.c */; };
-		60A99918287BD4C4003F7159 /* clientlogic.h in Sources */ = {isa = PBXBuildFile; fileRef = 608802F1286DCBE700B81255 /* clientlogic.h */; };
 		60A99919287BD4C4003F7159 /* memorystore.h in Sources */ = {isa = PBXBuildFile; fileRef = 6009B4F228679E7D00F1F279 /* memorystore.h */; };
 		60A9991A287BD4C4003F7159 /* window_size.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286E2862511600F92967 /* window_size.c */; };
 		60A9991C287BD4C4003F7159 /* inflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 60112839286122FE00F92967 /* inflate.c */; };
@@ -135,6 +133,8 @@
 		EC6B1F4D293CA04F00837369 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4C293CA04F00837369 /* Metal.framework */; };
 		EC6B1F4F293CA05500837369 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4E293CA05500837369 /* MetalKit.framework */; };
 		EC6B1F51293CA06200837369 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F50293CA06200837369 /* AVFoundation.framework */; };
+		EC6E12162A03BD90004E7BD1 /* uielement.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12142A03BD8F004E7BD1 /* uielement.c */; };
+		EC6E12172A03BD90004E7BD1 /* uielement.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12142A03BD8F004E7BD1 /* uielement.c */; };
 		EC78509A29E62CA800E6882A /* objmodel.c in Sources */ = {isa = PBXBuildFile; fileRef = EC78509929E62CA800E6882A /* objmodel.c */; };
 		EC78509B29E62CA800E6882A /* objmodel.c in Sources */ = {isa = PBXBuildFile; fileRef = EC78509929E62CA800E6882A /* objmodel.c */; };
 		EC7B09D4293CAC8B000ED98E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = EC7B09D3293CAC8B000ED98E /* Main.storyboard */; };
@@ -209,7 +209,6 @@
 		6064C0BF2892504A00E8B3AD /* gameloop.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = gameloop.c; path = ../../engine_src/shared/gameloop.c; sourceTree = "<group>"; };
 		6080CC45286FFD1D00444118 /* phoebus.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = phoebus.png; path = ../../resources/phoebus.png; sourceTree = "<group>"; };
 		6080CC472870182700444118 /* common.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = common.h; path = ../../engine_src/shared/common.h; sourceTree = "<group>"; };
-		608802F1286DCBE700B81255 /* clientlogic.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = clientlogic.h; path = ../../client_src/clientlogic.h; sourceTree = "<group>"; };
 		60A998B4287BCF52003F7159 /* TOKONE_iphone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TOKONE_iphone.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		60A998D9287BD332003F7159 /* decodedimage.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = decodedimage.c; path = ../../engine_src/shared/decodedimage.c; sourceTree = "<group>"; };
 		60A998DA287BD333003F7159 /* decodedimage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = decodedimage.h; path = ../../engine_src/shared/decodedimage.h; sourceTree = "<group>"; };
@@ -234,6 +233,9 @@
 		EC6B1F4C293CA04F00837369 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/Metal.framework; sourceTree = DEVELOPER_DIR; };
 		EC6B1F4E293CA05500837369 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/MetalKit.framework; sourceTree = DEVELOPER_DIR; };
 		EC6B1F50293CA06200837369 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/AVFoundation.framework; sourceTree = DEVELOPER_DIR; };
+		EC6E12132A03BD8F004E7BD1 /* clientlogic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = clientlogic.h; path = ../../engine_src/shared/clientlogic.h; sourceTree = "<group>"; };
+		EC6E12142A03BD8F004E7BD1 /* uielement.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = uielement.c; path = ../../engine_src/shared/uielement.c; sourceTree = "<group>"; };
+		EC6E12152A03BD8F004E7BD1 /* uielement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = uielement.h; path = ../../engine_src/shared/uielement.h; sourceTree = "<group>"; };
 		EC78509829E62CA800E6882A /* objmodel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = objmodel.h; path = ../../engine_src/shared/objmodel.h; sourceTree = "<group>"; };
 		EC78509929E62CA800E6882A /* objmodel.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = objmodel.c; path = ../../engine_src/shared/objmodel.c; sourceTree = "<group>"; };
 		EC78509C29E639F900E6882A /* triangle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = triangle.h; path = ../../engine_src/shared/triangle.h; sourceTree = "<group>"; };
@@ -373,10 +375,12 @@
 				60112896286253C100F92967 /* apple_platform_layer.c */,
 				EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */,
 				601128702862511600F92967 /* clientlogic.c */,
-				608802F1286DCBE700B81255 /* clientlogic.h */,
 				601128722862511600F92967 /* common_platform_layer.c */,
 				6011286F2862511600F92967 /* common.c */,
 				6080CC472870182700444118 /* common.h */,
+				EC6E12132A03BD8F004E7BD1 /* clientlogic.h */,
+				EC6E12142A03BD8F004E7BD1 /* uielement.c */,
+				EC6E12152A03BD8F004E7BD1 /* uielement.h */,
 				6011287A2862511600F92967 /* cpu_gpu_shared_types.h */,
 				601128762862511600F92967 /* cpu_to_gpu_types.h */,
 				EC78509929E62CA800E6882A /* objmodel.c */,
@@ -587,7 +591,6 @@
 				60A998DC287BD333003F7159 /* decodedimage.h in Sources */,
 				6080CC492870182700444118 /* common.h in Sources */,
 				60A998DF287BD494003F7159 /* inflate.h in Sources */,
-				608802F2286DCBE700B81255 /* clientlogic.h in Sources */,
 				60A998EC287BD4B7003F7159 /* window_size.h in Sources */,
 				60A998E8287BD4B7003F7159 /* userinput.h in Sources */,
 				60A998EB287BD4B7003F7159 /* cpu_gpu_shared_types.h in Sources */,
@@ -609,6 +612,7 @@
 				601128942862511800F92967 /* logger.c in Sources */,
 				60A998E3287BD494003F7159 /* logger.h in Sources */,
 				6011283F286122FE00F92967 /* inflate.c in Sources */,
+				EC6E12162A03BD90004E7BD1 /* uielement.c in Sources */,
 				601128862862511700F92967 /* userinput.c in Sources */,
 				601128882862511800F92967 /* window_size.c in Sources */,
 				601128932862511800F92967 /* zpolygon.c in Sources */,
@@ -651,7 +655,6 @@
 				60A99904287BD4C3003F7159 /* tok_random.c in Sources */,
 				60A99915287BD4C4003F7159 /* cpu_gpu_shared_types.h in Sources */,
 				EC6441A529318B6D00A0267B /* AppDelegate.m in Sources */,
-				60A99918287BD4C4003F7159 /* clientlogic.h in Sources */,
 				EC6A301C29EFA1440071C58F /* triangle.c in Sources */,
 				60A99909287BD4C3003F7159 /* platform_layer.h in Sources */,
 				60A998F4287BD4C3003F7159 /* apple_platform_layer.c in Sources */,
@@ -661,6 +664,7 @@
 				60A9990B287BD4C3003F7159 /* decodedimage.h in Sources */,
 				EC92FDAE2902917500C10865 /* decode_bmp.c in Sources */,
 				60A99910287BD4C4003F7159 /* texture_array.c in Sources */,
+				EC6E12172A03BD90004E7BD1 /* uielement.c in Sources */,
 				6064C0C22892505000E8B3AD /* gameloop.c in Sources */,
 				60A9991E287BD4D6003F7159 /* shaders.metal in Sources */,
 				EC6441A729318B6D00A0267B /* ViewController.m in Sources */,

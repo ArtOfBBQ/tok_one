@@ -8,9 +8,10 @@
 #define HAS_ALPHA_YES 1
 #define HAS_ALPHA_UNCHECKED 2
 
+#define TEXTUREARRAY_FILENAME_SIZE 128
 typedef struct TextureArrayImage {
     DecodedImage * image;
-    char * filename;
+    char filename[TEXTUREARRAY_FILENAME_SIZE];
     bool32_t has_alpha_channel;
     bool32_t request_update;
     bool32_t prioritize_asset_load;
@@ -320,6 +321,7 @@ static DecodedImage * extract_image(
 static void register_to_texturearray_from_images(
     const int32_t target_texture_array_i,
     DecodedImage ** new_images,
+    char ** new_img_filenames,
     const uint32_t new_images_size)
 {
     log_assert(new_images_size > 0);
@@ -365,11 +367,22 @@ static void register_to_texturearray_from_images(
             HAS_ALPHA_UNCHECKED;
         texture_arrays[target_texture_array_i].images[i].image = new_images[i];
         texture_arrays[target_texture_array_i].images[i].request_update = true;
+        if (
+            new_img_filenames != NULL &&
+            new_img_filenames[i] != NULL)
+        {
+            log_assert(new_img_filenames[i] != NULL);
+            strcpy_capped(
+                texture_arrays[target_texture_array_i].images[i].filename,
+                128,
+                new_img_filenames[i]);
+        }
     }
 }
 
 static void register_new_texturearray_from_images(
     DecodedImage ** new_images,
+    char ** new_img_filenames,
     const uint32_t new_images_size)
 {
     int32_t new_i = (int32_t)texture_arrays_size;
@@ -380,6 +393,7 @@ static void register_new_texturearray_from_images(
     register_to_texturearray_from_images(
         new_i,
         new_images,
+        new_img_filenames,
         new_images_size);
 }
 
@@ -415,6 +429,8 @@ void register_new_texturearray_from_files(
     register_new_texturearray_from_images(
         /* DecodedImage ** new_images : */
             decoded_images_dblptr,
+        /* new_img_filenames: */
+            filenames,
         /* new_images_size            : */
             decoded_images_size);
 }
@@ -432,7 +448,7 @@ void init_texture_arrays(void) {
         for (uint32_t j = 0; j < MAX_FILES_IN_SINGLE_TEXARRAY; j++) {
             texture_arrays[i].images[j].request_update = false;
             texture_arrays[i].images[j].prioritize_asset_load = false;
-            texture_arrays[i].images[j].filename = NULL;
+            texture_arrays[i].images[j].filename[0] = '\0';
             texture_arrays[i].images[j].has_alpha_channel =
                 HAS_ALPHA_UNCHECKED;
             texture_arrays[i].images[j].image = NULL;
@@ -530,6 +546,8 @@ static void register_to_texturearray_by_splitting_image(
             texture_array_i,
         /* DecodedImage ** new_images : */
             subimages_dblptr,
+        /* new_img_filenames: */
+            NULL,
         /* new_images_size: */
             rows * columns);
 }
@@ -691,8 +709,10 @@ void preregister_null_image(
         texture_arrays[new_texturearray_i].single_img_height = height;
     }
     
-    texture_arrays[new_texturearray_i].images[new_texture_i].filename =
-        filename;
+    strcpy_capped(
+        texture_arrays[new_texturearray_i].images[new_texture_i].filename,
+        TEXTUREARRAY_FILENAME_SIZE,
+        filename);
 }
 
 void preregister_file_as_null_image(char * filename) {
@@ -747,7 +767,10 @@ void get_texture_location(
         }
     }
     
-    log_assert(0);
+    char err_msg[128];
+    strcpy_capped(err_msg, 128, "Couldn't find filename in texture_arrays: ");
+    strcat_capped(err_msg, 128, for_filename);
+    log_dump_and_crash(err_msg);
 }
 
 void decode_null_image_with_memory(
@@ -851,9 +874,10 @@ void decode_all_null_images_with_memory(
             {
                 if (
                     texture_arrays[i].images[j].image == NULL &&
-                    texture_arrays[i].images[j].filename != NULL)
+                    texture_arrays[i].images[j].filename[0] != '\0')
                 {
-                    uint32_t strlen = get_string_length(texture_arrays[i].images[j].filename);
+                    uint32_t strlen = get_string_length(
+                        texture_arrays[i].images[j].filename);
                     
                     if (texture_arrays[i].images[j].prioritize_asset_load &&
                         strlen > 4) {

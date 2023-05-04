@@ -21,6 +21,9 @@ Shaders.air
 # my 'run only, dont build' script
 run.sh
 
+# ctags file
+tags
+
 build/*
 test/*
 assetprep/build/*
