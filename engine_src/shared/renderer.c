@@ -35,40 +35,6 @@ void hardware_render(
     }
     
     if (window_globals->visual_debug_mode) {
-        // draw the last collision point from the click ray
-        for (uint32_t m = 0; m < 3; m++) {
-            next_gpu_workload[*next_workload_size + m].x =
-                m  < 2 ?
-                    -window_globals->visual_debug_collision_size :
-                    window_globals->visual_debug_collision_size;
-            next_gpu_workload[*next_workload_size + m].y =
-                m == 1 ? 
-                    -window_globals->visual_debug_collision_size :
-                    window_globals->visual_debug_collision_size;
-            next_gpu_workload[*next_workload_size + m].z =
-                0.0f;
-            next_gpu_workload[*next_workload_size + m].parent_x =
-                window_globals->visual_debug_collision[0];
-            next_gpu_workload[*next_workload_size + m].parent_y =
-                window_globals->visual_debug_collision[1];
-            next_gpu_workload[*next_workload_size + m].parent_z =
-                window_globals->visual_debug_collision[2];
-            next_gpu_workload[*next_workload_size + m].texturearray_i = -1;
-            next_gpu_workload[*next_workload_size + m].texture_i = -1;
-            next_gpu_workload[*next_workload_size + m].RGBA[0] = 1.0f;
-            next_gpu_workload[*next_workload_size + m].RGBA[1] = 0.1f;
-            next_gpu_workload[*next_workload_size + m].RGBA[2] = 0.1f;
-            next_gpu_workload[*next_workload_size + m].RGBA[3] = 1.0f;
-            next_gpu_workload[*next_workload_size + m].ignore_lighting = true;
-            next_gpu_workload[*next_workload_size + m].scale_factor = 1.0f;
-            next_gpu_workload[*next_workload_size + m].ignore_camera = false;
-            next_gpu_workload[*next_workload_size + m].touchable_id = -1;
-            next_gpu_workload[*next_workload_size + m].x_angle = 0.5f;
-            next_gpu_workload[*next_workload_size + m].y_angle = 0.5f;
-            next_gpu_workload[*next_workload_size + m].z_angle = 0.0f;
-        }
-        *next_workload_size += 3;
-        
         /*
         draw the ray that's used for finding touchables when clicking as a
         triangle
@@ -213,174 +179,110 @@ void hardware_render(
             window_globals->visual_debug_mode &&
             zpolygons_to_render[zp_i].touchable_id >= 0)
         {
-            float hitbox_left   = -(zpolygons_to_render[zp_i].hitbox_width / 2);
-            float hitbox_right  = (zpolygons_to_render[zp_i].hitbox_width / 2);
-            float hitbox_top    = (zpolygons_to_render[zp_i].hitbox_height / 2);
-            float hitbox_bottom = -(zpolygons_to_render[zp_i].hitbox_height / 2);
+            float hitbox_left   =
+                -(zpolygons_to_render[zp_i].hitbox_width / 2) +
+                zpolygons_to_render[zp_i].x_offset;
+            float hitbox_right  =
+                (zpolygons_to_render[zp_i].hitbox_width / 2) +
+                zpolygons_to_render[zp_i].x_offset;
+            float hitbox_top    =
+                (zpolygons_to_render[zp_i].hitbox_height / 2) +
+                zpolygons_to_render[zp_i].y_offset;
+            float hitbox_bottom =
+                -(zpolygons_to_render[zp_i].hitbox_height / 2) +
+                zpolygons_to_render[zp_i].y_offset;
             float hitbox_front  = -(zpolygons_to_render[zp_i].hitbox_depth / 2);
             float hitbox_back   = (zpolygons_to_render[zp_i].hitbox_depth / 2);
             
             // triangle 1:
             // top left front to top right front
-            next_gpu_workload[*next_workload_size].x =
-                hitbox_left;
-            next_gpu_workload[*next_workload_size].y =
-                hitbox_top;
-            next_gpu_workload[*next_workload_size].z =
-                hitbox_front;
+            next_gpu_workload[*next_workload_size].x = hitbox_left;
+            next_gpu_workload[*next_workload_size].y = hitbox_top;
+            next_gpu_workload[*next_workload_size].z = hitbox_front;
             // top right front
-            next_gpu_workload[*next_workload_size + 1].x =
-                hitbox_right;
-            next_gpu_workload[*next_workload_size + 1].y =
-                hitbox_top;
-            next_gpu_workload[*next_workload_size + 1].z =
-                hitbox_front;
+            next_gpu_workload[*next_workload_size + 1].x = hitbox_right;
+            next_gpu_workload[*next_workload_size + 1].y = hitbox_top;
+            next_gpu_workload[*next_workload_size + 1].z = hitbox_front;
             // top right front
-            next_gpu_workload[*next_workload_size + 2].x =
-                hitbox_right;
-            next_gpu_workload[*next_workload_size + 2].y =
-                hitbox_top;
-            next_gpu_workload[*next_workload_size + 2].z =
-                hitbox_front + 0.01f;
+            next_gpu_workload[*next_workload_size + 2].x = hitbox_right;
+            next_gpu_workload[*next_workload_size + 2].y = hitbox_top;
+            next_gpu_workload[*next_workload_size + 2].z = hitbox_front + 0.01f;
             // triangle 2:
             // bottom left front to bottom right front
-            next_gpu_workload[*next_workload_size + 3].x =
-                hitbox_left;
-            next_gpu_workload[*next_workload_size + 3].y =
-                hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 3].z =
-                hitbox_front;
-            next_gpu_workload[*next_workload_size + 4].x =
-                hitbox_right;
-            next_gpu_workload[*next_workload_size + 4].y =
-                hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 4].z =
-                hitbox_front;
-            next_gpu_workload[*next_workload_size + 5].x =
-                hitbox_right;
-            next_gpu_workload[*next_workload_size + 5].y =
-                hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 5].z =
-                hitbox_front + 0.01f;
+            next_gpu_workload[*next_workload_size + 3].x = hitbox_left;
+            next_gpu_workload[*next_workload_size + 3].y = hitbox_bottom;
+            next_gpu_workload[*next_workload_size + 3].z = hitbox_front;
+            next_gpu_workload[*next_workload_size + 4].x = hitbox_right;
+            next_gpu_workload[*next_workload_size + 4].y = hitbox_bottom;
+            next_gpu_workload[*next_workload_size + 4].z = hitbox_front;
+            next_gpu_workload[*next_workload_size + 5].x = hitbox_right;
+            next_gpu_workload[*next_workload_size + 5].y = hitbox_bottom;
+            next_gpu_workload[*next_workload_size + 5].z = hitbox_front + 0.01f;
             // triangle 3:
             // top left back to top right back
-            next_gpu_workload[*next_workload_size + 6].x =
-                hitbox_left;
-            next_gpu_workload[*next_workload_size + 6].y =
-                hitbox_top;
-            next_gpu_workload[*next_workload_size + 6].z =
-                hitbox_back;
-            next_gpu_workload[*next_workload_size + 7].x =
-                hitbox_right;
-            next_gpu_workload[*next_workload_size + 7].y =
-                hitbox_top;
-            next_gpu_workload[*next_workload_size + 7].z =
-                hitbox_back;
-            next_gpu_workload[*next_workload_size + 8].x =
-                hitbox_right;
-            next_gpu_workload[*next_workload_size + 8].y =
-                hitbox_top;
-            next_gpu_workload[*next_workload_size + 8].z =
-                hitbox_back + 0.01f;
+            next_gpu_workload[*next_workload_size + 6].x = hitbox_left;
+            next_gpu_workload[*next_workload_size + 6].y = hitbox_top;
+            next_gpu_workload[*next_workload_size + 6].z = hitbox_back;
+            next_gpu_workload[*next_workload_size + 7].x = hitbox_right;
+            next_gpu_workload[*next_workload_size + 7].y = hitbox_top;
+            next_gpu_workload[*next_workload_size + 7].z = hitbox_back;
+            next_gpu_workload[*next_workload_size + 8].x = hitbox_right;
+            next_gpu_workload[*next_workload_size + 8].y = hitbox_top;
+            next_gpu_workload[*next_workload_size + 8].z = hitbox_back + 0.01f;
             // triangle 4:
-            next_gpu_workload[*next_workload_size + 9].x =
-                hitbox_left;
-            next_gpu_workload[*next_workload_size + 9].y =
-                hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 9].z =
-                hitbox_back;
-            next_gpu_workload[*next_workload_size + 10].x =
-                hitbox_right;
-            next_gpu_workload[*next_workload_size + 10].y =
-                hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 10].z =
-                hitbox_back;
-            next_gpu_workload[*next_workload_size + 11].x =
-                hitbox_right;
-            next_gpu_workload[*next_workload_size + 11].y =
-                hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 11].z =
-                hitbox_back + 0.01f;
+            next_gpu_workload[*next_workload_size + 9].x = hitbox_left;
+            next_gpu_workload[*next_workload_size + 9].y = hitbox_bottom;
+            next_gpu_workload[*next_workload_size + 9].z = hitbox_back;
+            next_gpu_workload[*next_workload_size + 10].x = hitbox_right;
+            next_gpu_workload[*next_workload_size + 10].y = hitbox_bottom;
+            next_gpu_workload[*next_workload_size + 10].z = hitbox_back;
+            next_gpu_workload[*next_workload_size + 11].x = hitbox_right;
+            next_gpu_workload[*next_workload_size + 11].y = hitbox_bottom;
+            next_gpu_workload[*next_workload_size + 11].z = hitbox_back + 0.01f;
             // triangle 5:
             // top left front to bottom left front
-            next_gpu_workload[*next_workload_size + 12].x =
-                hitbox_left;
-            next_gpu_workload[*next_workload_size + 12].y =
-                hitbox_top;
-            next_gpu_workload[*next_workload_size + 12].z =
-                hitbox_front;
-            next_gpu_workload[*next_workload_size + 13].x =
-                hitbox_left;
-            next_gpu_workload[*next_workload_size + 13].y =
-                hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 13].z =
-                hitbox_front;
-            next_gpu_workload[*next_workload_size + 14].x =
-                hitbox_left + 0.01f;
-            next_gpu_workload[*next_workload_size + 14].y =
-                hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 14].z =
-                hitbox_front;
+            next_gpu_workload[*next_workload_size + 12].x = hitbox_left;
+            next_gpu_workload[*next_workload_size + 12].y = hitbox_top;
+            next_gpu_workload[*next_workload_size + 12].z = hitbox_front;
+            next_gpu_workload[*next_workload_size + 13].x = hitbox_left;
+            next_gpu_workload[*next_workload_size + 13].y = hitbox_bottom;
+            next_gpu_workload[*next_workload_size + 13].z = hitbox_front;
+            next_gpu_workload[*next_workload_size + 14].x = hitbox_left + 0.01f;
+            next_gpu_workload[*next_workload_size + 14].y = hitbox_bottom;
+            next_gpu_workload[*next_workload_size + 14].z = hitbox_front;
             // triangle 6:
             // top right front to bottom right front
-            next_gpu_workload[*next_workload_size + 15].x =
-                hitbox_right;
-            next_gpu_workload[*next_workload_size + 15].y =
-                hitbox_top;
-            next_gpu_workload[*next_workload_size + 15].z =
-                hitbox_front;
-            next_gpu_workload[*next_workload_size + 16].x =
-                hitbox_right;
-            next_gpu_workload[*next_workload_size + 16].y =
-                hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 16].z =
-                hitbox_front;
-            next_gpu_workload[*next_workload_size + 17].x =
-                hitbox_right + 0.01f;
-            next_gpu_workload[*next_workload_size + 17].y =
-                hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 17].z =
-                hitbox_front;
+            next_gpu_workload[*next_workload_size + 15].x = hitbox_right;
+            next_gpu_workload[*next_workload_size + 15].y = hitbox_top;
+            next_gpu_workload[*next_workload_size + 15].z = hitbox_front;
+            next_gpu_workload[*next_workload_size + 16].x = hitbox_right;
+            next_gpu_workload[*next_workload_size + 16].y = hitbox_bottom;
+            next_gpu_workload[*next_workload_size + 16].z = hitbox_front;
+            next_gpu_workload[*next_workload_size + 17].x = hitbox_right + 0.01f;
+            next_gpu_workload[*next_workload_size + 17].y = hitbox_bottom;
+            next_gpu_workload[*next_workload_size + 17].z = hitbox_front;
             // triangle 7:
             // top left back to bottom left back
-            next_gpu_workload[*next_workload_size + 18].x =
-                hitbox_left;
-            next_gpu_workload[*next_workload_size + 18].y =
-                hitbox_top;
-            next_gpu_workload[*next_workload_size + 18].z =
-                hitbox_back;
-            next_gpu_workload[*next_workload_size + 19].x =
-                hitbox_left;
-            next_gpu_workload[*next_workload_size + 19].y =
-                hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 19].z =
-                hitbox_back;
-            next_gpu_workload[*next_workload_size + 20].x =
-                hitbox_left + 0.01f;
-            next_gpu_workload[*next_workload_size + 20].y =
-                hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 20].z =
-                hitbox_back;
+            next_gpu_workload[*next_workload_size + 18].x = hitbox_left;
+            next_gpu_workload[*next_workload_size + 18].y = hitbox_top;
+            next_gpu_workload[*next_workload_size + 18].z = hitbox_back;
+            next_gpu_workload[*next_workload_size + 19].x = hitbox_left;
+            next_gpu_workload[*next_workload_size + 19].y = hitbox_bottom;
+            next_gpu_workload[*next_workload_size + 19].z = hitbox_back;
+            next_gpu_workload[*next_workload_size + 20].x = hitbox_left + 0.01f;
+            next_gpu_workload[*next_workload_size + 20].y = hitbox_bottom;
+            next_gpu_workload[*next_workload_size + 20].z = hitbox_back;
             // triangle 8:
             // top right back to bottom right back
-            next_gpu_workload[*next_workload_size + 21].x =
-                hitbox_right;
-            next_gpu_workload[*next_workload_size + 21].y =
-                hitbox_top;
-            next_gpu_workload[*next_workload_size + 21].z =
-                hitbox_back;
-            next_gpu_workload[*next_workload_size + 22].x =
-                hitbox_right;
-            next_gpu_workload[*next_workload_size + 22].y =
-                hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 22].z =
-                hitbox_back;
-            next_gpu_workload[*next_workload_size + 23].x =
-                hitbox_right + 0.01f;
-            next_gpu_workload[*next_workload_size + 23].y =
-                hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 23].z =
-                hitbox_back;
+            next_gpu_workload[*next_workload_size + 21].x = hitbox_right;
+            next_gpu_workload[*next_workload_size + 21].y = hitbox_top;
+            next_gpu_workload[*next_workload_size + 21].z = hitbox_back;
+            next_gpu_workload[*next_workload_size + 22].x = hitbox_right;
+            next_gpu_workload[*next_workload_size + 22].y = hitbox_bottom;
+            next_gpu_workload[*next_workload_size + 22].z = hitbox_back;
+            next_gpu_workload[*next_workload_size + 23].x = hitbox_right + 0.01f;
+            next_gpu_workload[*next_workload_size + 23].y = hitbox_bottom;
+            next_gpu_workload[*next_workload_size + 23].z = hitbox_back;
             
             for (uint32_t m = 0; m < 24; m++) {
                 next_gpu_workload[*next_workload_size + m].parent_x =

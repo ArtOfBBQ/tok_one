@@ -67,14 +67,14 @@ static void request_particle_fountain() {
     fountain.particle_rgba_progression[6][3] = 0.0;
     
     fountain.particle_rgba_progression_size = 7;
-
+    
     fountain.random_texturearray_i[0] = 1;
     fountain.random_texture_i[0] = 0;
     fountain.random_texturearray_i[1] = 1;
     fountain.random_texture_i[1] = 1;
     fountain.random_texturearray_i[2] = 1;
     fountain.random_texture_i[2] = 2;
-
+    
     fountain.random_textures_size = 3;
     
     request_particle_effect(&fountain);
@@ -83,8 +83,7 @@ static void request_particle_fountain() {
 static float slider_value = 0.0f;
 void client_logic_startup(void) {
     
-    const char * fontfile;
-        fontfile = "font.png";
+    const char * fontfile = "font.png";
     register_new_texturearray_by_splitting_file(
         /* filename : */ fontfile,
         /* rows     : */ 10,
@@ -95,14 +94,16 @@ void client_logic_startup(void) {
        "blob2.png",
        "blob3.png",
     };
+    
     register_new_texturearray_from_files(
         (const char **)filenames,
         3);
     
     char * filenames_2[1] = {
-       "structuredart2.png",
+        "structuredart2.png",
     };
-    register_new_texturearray_from_files((const char **)filenames_2, 1);
+    register_new_texturearray_from_files(
+        (const char **)filenames_2, 1);
     
     char * obj_filenames[3] = {
         "xmas_tree.obj",
@@ -115,21 +116,24 @@ void client_logic_startup(void) {
 	/* char * for_filename: */
 	    "structuredart2.png",
 	/* int32_t * texture_array_i_recipient: */
-	    &next_ui_element_settings.slider_background_texturearray_i,
+	    &next_ui_element_settings->slider_background_texturearray_i,
 	/* int32_t * texture_i_recipient: */
-	    &next_ui_element_settings.slider_background_texture_i);
+	    &next_ui_element_settings->slider_background_texture_i);
+    
     // all sliders use this image as the pin you slide left/right
     get_texture_location(
 	/* char * for_filename: */
 	    "structuredart2.png",
 	/* int32_t * texture_array_i_recipient: */
-	    &next_ui_element_settings.slider_background_texturearray_i,
+	    &next_ui_element_settings->slider_pin_texturearray_i,
 	/* int32_t * texture_i_recipient: */
-	    &next_ui_element_settings.slider_background_texture_i);
-
+	    &next_ui_element_settings->slider_pin_texture_i);
+    
     // all sliders use this width/height
-    next_ui_element_settings.slider_width_screenspace = 300;
-    next_ui_element_settings.slider_height_screenspace = 20;
+    next_ui_element_settings->slider_width_screenspace = 300;
+    next_ui_element_settings->slider_height_screenspace = 15;
+    next_ui_element_settings->pin_width_screenspace = 20;
+    next_ui_element_settings->pin_height_screenspace = 60;
     
     request_float_slider(
         /* const float x_screenspace: */
@@ -175,20 +179,6 @@ void client_logic_animation_callback(int32_t callback_id)
         ". Find in clientlogic.c -> client_logic_animation_callback\n");
     log_append(unhandled_callback_id);
     log_dump_and_crash(unhandled_callback_id);
-}
-
-static void  client_handle_touches_and_leftclicks(
-    uint64_t microseconds_elapsed)
-{
-    if (!user_interactions[INTR_PREVIOUS_LEFTCLICK_START].handled) {
-        user_interactions[INTR_PREVIOUS_LEFTCLICK_START].handled = true;
-        
-        if (user_interactions[INTR_PREVIOUS_LEFTCLICK_START].touchable_id < 5) {
-            request_bump_animation(
-                user_interactions[INTR_PREVIOUS_LEFTCLICK_START].touchable_id,
-                0.0f);
-        }
-    }
 }
 
 static void client_handle_keypresses(
@@ -327,7 +317,6 @@ void client_logic_update(uint64_t microseconds_elapsed)
 {
     request_fps_counter(microseconds_elapsed);
     
-    client_handle_touches_and_leftclicks(microseconds_elapsed);
     client_handle_keypresses(microseconds_elapsed);  
 }
 

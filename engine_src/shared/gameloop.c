@@ -123,6 +123,9 @@ static int32_t closest_touchable_from_screen_ray(
         offset_polygon.x -= camera_offset_x;
         offset_polygon.y -= camera_offset_y;
         offset_polygon.z -= camera_offset_z;
+        offset_polygon.x += offset_polygon.x_offset;
+        offset_polygon.y += offset_polygon.y_offset;
+        
         hit = ray_intersects_zpolygon_hitbox(
             offset_polygon.ignore_camera ?
                 &ray_origin : &ray_origin_rotated,
@@ -322,6 +325,8 @@ void shared_gameloop_update(
             
             break; // max 1 ray per frame
         }
+        
+        ui_elements_handle_touches(elapsed);
         
         client_logic_update(elapsed);        
     }

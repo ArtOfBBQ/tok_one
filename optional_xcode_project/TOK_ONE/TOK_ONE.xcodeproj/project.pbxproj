@@ -135,6 +135,8 @@
 		EC6B1F51293CA06200837369 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F50293CA06200837369 /* AVFoundation.framework */; };
 		EC6E12162A03BD90004E7BD1 /* uielement.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12142A03BD8F004E7BD1 /* uielement.c */; };
 		EC6E12172A03BD90004E7BD1 /* uielement.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12142A03BD8F004E7BD1 /* uielement.c */; };
+		EC6E121A2A04CE13004E7BD1 /* objectid.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12182A04CE12004E7BD1 /* objectid.c */; };
+		EC6E121B2A04CE13004E7BD1 /* objectid.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12182A04CE12004E7BD1 /* objectid.c */; };
 		EC78509A29E62CA800E6882A /* objmodel.c in Sources */ = {isa = PBXBuildFile; fileRef = EC78509929E62CA800E6882A /* objmodel.c */; };
 		EC78509B29E62CA800E6882A /* objmodel.c in Sources */ = {isa = PBXBuildFile; fileRef = EC78509929E62CA800E6882A /* objmodel.c */; };
 		EC7B09D4293CAC8B000ED98E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = EC7B09D3293CAC8B000ED98E /* Main.storyboard */; };
@@ -236,6 +238,8 @@
 		EC6E12132A03BD8F004E7BD1 /* clientlogic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = clientlogic.h; path = ../../engine_src/shared/clientlogic.h; sourceTree = "<group>"; };
 		EC6E12142A03BD8F004E7BD1 /* uielement.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = uielement.c; path = ../../engine_src/shared/uielement.c; sourceTree = "<group>"; };
 		EC6E12152A03BD8F004E7BD1 /* uielement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = uielement.h; path = ../../engine_src/shared/uielement.h; sourceTree = "<group>"; };
+		EC6E12182A04CE12004E7BD1 /* objectid.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = objectid.c; path = ../../engine_src/shared/objectid.c; sourceTree = "<group>"; };
+		EC6E12192A04CE13004E7BD1 /* objectid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = objectid.h; path = ../../engine_src/shared/objectid.h; sourceTree = "<group>"; };
 		EC78509829E62CA800E6882A /* objmodel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = objmodel.h; path = ../../engine_src/shared/objmodel.h; sourceTree = "<group>"; };
 		EC78509929E62CA800E6882A /* objmodel.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = objmodel.c; path = ../../engine_src/shared/objmodel.c; sourceTree = "<group>"; };
 		EC78509C29E639F900E6882A /* triangle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = triangle.h; path = ../../engine_src/shared/triangle.h; sourceTree = "<group>"; };
@@ -375,6 +379,8 @@
 				60112896286253C100F92967 /* apple_platform_layer.c */,
 				EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */,
 				601128702862511600F92967 /* clientlogic.c */,
+				EC6E12182A04CE12004E7BD1 /* objectid.c */,
+				EC6E12192A04CE13004E7BD1 /* objectid.h */,
 				601128722862511600F92967 /* common_platform_layer.c */,
 				6011286F2862511600F92967 /* common.c */,
 				6080CC472870182700444118 /* common.h */,
@@ -591,6 +597,7 @@
 				60A998DC287BD333003F7159 /* decodedimage.h in Sources */,
 				6080CC492870182700444118 /* common.h in Sources */,
 				60A998DF287BD494003F7159 /* inflate.h in Sources */,
+				EC6E121A2A04CE13004E7BD1 /* objectid.c in Sources */,
 				60A998EC287BD4B7003F7159 /* window_size.h in Sources */,
 				60A998E8287BD4B7003F7159 /* userinput.h in Sources */,
 				60A998EB287BD4B7003F7159 /* cpu_gpu_shared_types.h in Sources */,
@@ -676,6 +683,7 @@
 				60A998FD287BD4C3003F7159 /* decodedimage.c in Sources */,
 				60A998F5287BD4C3003F7159 /* texture_array.h in Sources */,
 				60A99911287BD4C4003F7159 /* zpolygon.c in Sources */,
+				EC6E121B2A04CE13004E7BD1 /* objectid.c in Sources */,
 				60A9990C287BD4C3003F7159 /* decode_png.c in Sources */,
 				60A99913287BD4C4003F7159 /* inflate.h in Sources */,
 				6028DD332886EE54000E1E98 /* init_application.h in Sources */,

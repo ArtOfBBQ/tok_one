@@ -290,6 +290,7 @@ NSWindowWithCustomResponder: NSWindow
 
 - (void)mouseDown:(NSEvent *)event
 {
+    printf("mouse down\n");
     @autoreleasepool {
     NSPoint window_location = [event locationInWindow];
         
@@ -307,11 +308,16 @@ NSWindowWithCustomResponder: NSWindow
         user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
     user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
         user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
+    
+    user_interactions[INTR_PREVIOUS_TOUCH_END].handled = true;
+    user_interactions[INTR_PREVIOUS_LEFTCLICK_END].handled = true;
+    user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].handled = true;
     }
 }
 
 - (void)mouseUp:(NSEvent *)event
 {
+    printf("mouse up\n");
     @autoreleasepool {
     NSPoint window_location = [event locationInWindow];
     

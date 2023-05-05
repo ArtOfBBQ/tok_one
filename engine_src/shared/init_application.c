@@ -22,6 +22,8 @@ void init_application(
         window_globals->window_height / window_globals->window_width;
     
     init_projection_constants();
+
+    init_ui_elements();
     
     keypress_map = (bool32_t *)malloc_from_unmanaged(
         sizeof(bool32_t) * KEYPRESS_MAP_SIZE);
