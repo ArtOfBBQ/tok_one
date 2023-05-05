@@ -9,8 +9,10 @@ typedef struct ActiveUIElement {
     bool32_t clickable;
     bool32_t slideable;
     bool32_t deleted;
+    float slider_width;
     float slider_min;
     float slider_max;
+    float * slider_linked_value;
 } ActiveUIElement;
 
 NextUIElementSettings * next_ui_element_settings = NULL;
@@ -62,10 +64,6 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                     currently_sliding_touchable_id =
                         active_ui_elements[i].touchable_id;
                     
-                    printf(
-                        "started sliding on object: %i - %i\n",
-                        currently_sliding_object_id,
-                        currently_sliding_touchable_id);
                     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
                         handled = true;
                 }
@@ -90,20 +88,49 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
         }
         
         if (ui_elem_i >= 0) {
-        
+            
             for (int32_t zp_i = 0; zp_i < zpolygons_to_render_size; zp_i++) {
                 if (
                     zpolygons_to_render[zp_i].object_id ==
                         currently_sliding_object_id)
                 {
                     // set slider value
-                    zpolygons_to_render[zp_i].x_offset =
+                    float new_x_offset =
                         screenspace_x_to_x(
-                            user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].
-                                screen_x,
+                            user_interactions[
+                                INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_x,
                             zpolygons_to_render[zp_i].z) -
                         zpolygons_to_render[zp_i].x;
-                    printf("updated x-offset\n");
+                    
+                    if (
+                        new_x_offset <
+                            -active_ui_elements[ui_elem_i].slider_width / 2)
+                    {
+                        new_x_offset =
+                            -active_ui_elements[ui_elem_i].slider_width / 2;
+                    }
+                    
+                    if (
+                        new_x_offset >
+                            active_ui_elements[ui_elem_i].slider_width / 2)
+                    {
+                        new_x_offset =
+                            active_ui_elements[ui_elem_i].slider_width / 2;
+                    }
+                    
+                    zpolygons_to_render[zp_i].x_offset = new_x_offset;
+
+                    float slider_pct = (new_x_offset /
+                        active_ui_elements[ui_elem_i].slider_width) + 0.5f;
+                    
+                    log_assert(
+                        active_ui_elements[ui_elem_i].slider_linked_value !=
+                            NULL);
+                    *(active_ui_elements[ui_elem_i].slider_linked_value) =
+                        active_ui_elements[ui_elem_i].slider_min +
+                            ((active_ui_elements[ui_elem_i].slider_max -
+                                active_ui_elements[ui_elem_i].slider_min) *
+                                    slider_pct);
                 }
             }
         }
@@ -114,8 +141,6 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
         currently_sliding_touchable_id >= 0 &&
         currently_sliding_object_id >= 0)
     {
-        printf("stopped sliding\n");
-        
         user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].handled = true;
         
         currently_sliding_object_id = -1;
@@ -129,7 +154,7 @@ void request_float_slider(
     const float z,
     const float min_value,
     const float max_value,
-    const float * linked_value)
+    float * linked_value)
 {
     zPolygon slider_back;
     construct_zpolygon(
@@ -177,13 +202,13 @@ void request_float_slider(
         /* const float z: */
             pin_z,
         /* const float width: */
-                screenspace_width_to_width(
-                    next_ui_element_settings->pin_width_screenspace,
-                    pin_z),
+            screenspace_width_to_width(
+                next_ui_element_settings->pin_width_screenspace,
+                pin_z),
         /* const float height: */
-                screenspace_height_to_height(
-                    next_ui_element_settings->pin_height_screenspace,
-                    pin_z),
+            screenspace_height_to_height(
+                next_ui_element_settings->pin_height_screenspace,
+                pin_z),
         /* zPolygon * recipient: */
             &slider_pin);
     
@@ -202,10 +227,15 @@ void request_float_slider(
     ActiveUIElement * next_active_element = next_active_ui_element();
     next_active_element->object_id = slider_pin.object_id;
     next_active_element->touchable_id = slider_pin.touchable_id;
+    next_active_element->slider_width = 
+        screenspace_width_to_width(
+            next_ui_element_settings->slider_width_screenspace,
+            z);
     next_active_element->slider_min = min_value;
     next_active_element->slider_max = max_value;
     next_active_element->slideable = true;
     next_active_element->deleted = false;
+    next_active_element->slider_linked_value = linked_value;
     
     request_zpolygon_to_render(&slider_pin);
 }

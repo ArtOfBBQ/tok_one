@@ -80,7 +80,7 @@ static void request_particle_fountain() {
     request_particle_effect(&fountain);
 }
 
-static float slider_value = 0.0f;
+float slider_value = 0.0f;
 void client_logic_startup(void) {
     
     const char * fontfile = "font.png";
@@ -135,6 +135,8 @@ void client_logic_startup(void) {
     next_ui_element_settings->pin_width_screenspace = 20;
     next_ui_element_settings->pin_height_screenspace = 60;
     
+    request_particle_fountain();
+    
     request_float_slider(
         /* const float x_screenspace: */
             250,
@@ -143,11 +145,39 @@ void client_logic_startup(void) {
         /* const float z: */
             0.75f,
         /* const float min_value: */
+            0.06f,
+        /* const float max_value: */
+            0.6f,
+        /* const float * linked_value: */
+            &particle_effects[0].particle_distance_per_second);
+    
+    request_float_slider(
+        /* const float x_screenspace: */
+            250,
+        /* const float y_screenspace: */
+            280,
+        /* const float z: */
+            0.75f,
+        /* const float min_value: */
             0.0f,
         /* const float max_value: */
             1.0f,
         /* const float * linked_value: */
-            &slider_value);
+            &particle_effects[0].particle_rgba_progression[1][0]);
+    
+    request_float_slider(
+        /* const float x_screenspace: */
+            250,
+        /* const float y_screenspace: */
+            310,
+        /* const float z: */
+            0.75f,
+        /* const float min_value: */
+            0.0f,
+        /* const float max_value: */
+            1.0f,
+        /* const float * linked_value: */
+            &particle_effects[0].particle_rgba_progression[2][0]);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -272,7 +302,7 @@ static void client_handle_keypresses(
         bullet.object_id = 54321 + (tok_rand() % 1000);
         bullet.z = camera.z;
         bullet.triangle_materials[0].color[0] =
-            ((float)(tok_rand() % 100)) / 100.0f;
+            slider_value;
         bullet.triangle_materials[0].color[1] =
             ((float)(tok_rand() % 100)) / 100.0f;
         bullet.triangle_materials[0].color[2] =
@@ -316,7 +346,7 @@ bool32_t fading_out = true;
 void client_logic_update(uint64_t microseconds_elapsed)
 {
     request_fps_counter(microseconds_elapsed);
-    
+        
     client_handle_keypresses(microseconds_elapsed);  
 }
 

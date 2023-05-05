@@ -52,7 +52,7 @@ void request_float_slider(
     const float z,
     const float min_value,
     const float max_value,
-    const float * linked_value);
+    float * linked_value);
 
 #ifdef __cplusplus
 }
