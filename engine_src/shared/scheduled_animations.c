@@ -282,7 +282,7 @@ static void resolve_single_animation_effects(
     const uint64_t remaining_microseconds_at_start_of_run)
 {
     log_assert(remaining_microseconds_at_start_of_run >= elapsed_this_run);
-        
+    
     if (anim->deleted) { return; }
     
     bool32_t found_at_least_one = false;
@@ -395,10 +395,10 @@ static void resolve_single_animation_effects(
         found_at_least_one = true;
         
         if (!anim->final_x_known) {
-                zpolygons_to_render[zp_i].x +=
-                    ((anim->delta_x_per_second
-                        * elapsed_this_run)
-                            / 1000000);
+            zpolygons_to_render[zp_i].x +=
+                ((anim->delta_x_per_second
+                    * elapsed_this_run)
+                        / 1000000);
         } else {
             float diff_x = anim->final_mid_x -
                 zpolygons_to_render[zp_i].x;

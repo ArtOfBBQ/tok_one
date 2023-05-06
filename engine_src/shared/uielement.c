@@ -38,21 +38,36 @@ void init_ui_elements(void) {
         malloc_from_unmanaged(sizeof(NextUIElementSettings));
 
     next_ui_element_settings->ignore_lighting = true;
-
+    next_ui_element_settings->ignore_camera = false;
+    next_ui_element_settings->button_background_texturearray_i = -1;
+    next_ui_element_settings->button_background_texture_i = -1;
+    next_ui_element_settings->slider_background_texturearray_i = -1;
+    next_ui_element_settings->slider_background_texture_i = -1;
+    next_ui_element_settings->slider_pin_texturearray_i = -1;
+    next_ui_element_settings->slider_pin_texture_i = -1;
+    
     active_ui_elements = (ActiveUIElement *)malloc_from_unmanaged(
         sizeof(ActiveUIElement) * ACTIVE_UI_ELEMENTS_SIZE);
 }
 
 void ui_elements_handle_touches(uint64_t ms_elapsed)
 {
+    (void)ms_elapsed;
+    
     if (
         !user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].handled)
     {
         if (
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                touchable_id >= 0)
+                touchable_id >= 0 &&
+            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+                touchable_id < LAST_UI_TOUCHABLE_ID)
         {
-            for (uint32_t i = 0; i < active_ui_elements_size; i++) {
+            for (
+                uint32_t i = 0;
+                i < active_ui_elements_size;
+                i++)
+            {
                 if (
                     !active_ui_elements[i].deleted &&
                     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
@@ -70,26 +85,32 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
             }
         }
     }
-        
+    
     if (
         currently_sliding_touchable_id >= 0 &&
         currently_sliding_object_id >= 0)
     {
         int32_t ui_elem_i = -1;
-        for (ui_elem_i = 0; ui_elem_i < active_ui_elements_size; ui_elem_i++) {
+        for (
+            ui_elem_i = 0;
+            ui_elem_i < (int32_t)active_ui_elements_size;
+            ui_elem_i++)
+        {
             if (
                 !active_ui_elements[ui_elem_i].deleted &&
                 user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
                     touchable_id ==
                 active_ui_elements[ui_elem_i].touchable_id)
             {
+                user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+                    handled = true;
                 break;
             }
         }
         
         if (ui_elem_i >= 0) {
             
-            for (int32_t zp_i = 0; zp_i < zpolygons_to_render_size; zp_i++) {
+            for (uint32_t zp_i = 0; zp_i < zpolygons_to_render_size; zp_i++) {
                 if (
                     zpolygons_to_render[zp_i].object_id ==
                         currently_sliding_object_id)
@@ -149,6 +170,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
 }
 
 void request_float_slider(
+    const int32_t with_object_id,
     const float x_screenspace,
     const float y_screenspace,
     const float z,
@@ -157,48 +179,47 @@ void request_float_slider(
     float * linked_value)
 {
     zPolygon slider_back;
-    construct_zpolygon(
-        /* zPolygon * to_construct: */
-            &slider_back);
     
     construct_quad_around(
         /* const float mid_x: */
-                screenspace_x_to_x(x_screenspace, z),
-            /* const float mid_y: */
-                screenspace_y_to_y(y_screenspace, z),
+            screenspace_x_to_x(x_screenspace, z),
+        /* const float mid_y: */
+            screenspace_y_to_y(y_screenspace, z),
         /* const float z: */
             z,
         /* const float width: */
-                screenspace_width_to_width(
-                    next_ui_element_settings->slider_width_screenspace,
-                    z),
+            screenspace_width_to_width(
+                next_ui_element_settings->slider_width_screenspace,
+                z),
         /* const float height: */
-                screenspace_height_to_height(
-                    next_ui_element_settings->slider_height_screenspace,
-                    z),
+            screenspace_height_to_height(
+                next_ui_element_settings->slider_height_screenspace,
+                z),
         /* zPolygon * recipient: */
             &slider_back);
+    slider_back.object_id = with_object_id;
     
     slider_back.triangle_materials[0].texturearray_i =
         next_ui_element_settings->slider_background_texturearray_i;
     slider_back.triangle_materials[0].texture_i =
         next_ui_element_settings->slider_background_texture_i;
+    slider_back.triangle_materials[0].color[0] = 1.0f;
+    slider_back.triangle_materials[0].color[1] = 1.0f;
+    slider_back.triangle_materials[0].color[2] = 0.5f;
+    slider_back.triangle_materials[0].color[3] = 1.0f;
     
     slider_back.ignore_lighting = next_ui_element_settings->ignore_lighting;
+    slider_back.ignore_camera = next_ui_element_settings->ignore_camera;
     
     request_zpolygon_to_render(&slider_back);
 
     zPolygon slider_pin;
-    construct_zpolygon(
-    /* zPolygon * to_construct: */
-        &slider_pin);
-    
     float pin_z = z - 0.001f;
     construct_quad_around(
         /* const float mid_x: */
-                screenspace_x_to_x(x_screenspace, pin_z),
-            /* const float mid_y: */
-                screenspace_y_to_y(y_screenspace, pin_z),
+            screenspace_x_to_x(x_screenspace, pin_z),
+        /* const float mid_y: */
+            screenspace_y_to_y(y_screenspace, pin_z),
         /* const float z: */
             pin_z,
         /* const float width: */
@@ -212,6 +233,7 @@ void request_float_slider(
         /* zPolygon * recipient: */
             &slider_pin);
     
+    slider_pin.object_id = with_object_id;
     slider_pin.x_offset = 0.0f;
     slider_pin.y_offset = 0.0f;
     
@@ -219,10 +241,14 @@ void request_float_slider(
         next_ui_element_settings->slider_pin_texturearray_i;
     slider_pin.triangle_materials[0].texture_i =
         next_ui_element_settings->slider_pin_texture_i;
+    slider_pin.triangle_materials[0].color[0] = 1.0f;
+    slider_pin.triangle_materials[0].color[1] = 1.0f;
+    slider_pin.triangle_materials[0].color[2] = 0.5f;
+    slider_pin.triangle_materials[0].color[3] = 1.0f;
     
     slider_pin.ignore_lighting = next_ui_element_settings->ignore_lighting;
-    slider_pin.object_id = next_object_id();
-    slider_pin.touchable_id = next_touchable_id();
+    slider_pin.ignore_camera = next_ui_element_settings->ignore_camera;
+    slider_pin.touchable_id = next_ui_element_touchable_id();
     
     ActiveUIElement * next_active_element = next_active_ui_element();
     next_active_element->object_id = slider_pin.object_id;
@@ -239,4 +265,3 @@ void request_float_slider(
     
     request_zpolygon_to_render(&slider_pin);
 }
-

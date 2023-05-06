@@ -75,7 +75,7 @@ void request_zpolygon_to_render(zPolygon * to_add)
     log_assert(to_add->mesh_id >= 0);
     log_assert(to_add->mesh_id < (int32_t)all_mesh_summaries_size);
     log_assert(all_mesh_summaries[to_add->mesh_id].triangles_size > 0);
-        
+    
     for (
         int32_t mat_i = 0;
         mat_i < (int32_t)to_add->triangle_materials_size;
@@ -130,7 +130,6 @@ void request_zpolygon_to_render(zPolygon * to_add)
     
     // set the hitbox height, width, and depth
     set_zpolygon_hitbox(to_add);
-
     
     for (
         uint32_t i = 0;

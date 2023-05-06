@@ -176,6 +176,11 @@ void platform_gpu_push_texture_slice(
     const uint32_t image_height,
     const uint8_t * rgba_values);
 
+extern float platform_sound_volume;
+extern float platform_music_volume;
+
+void platform_update_sound_volume(void);
+void platform_update_music_volume(void);
 void platform_play_sound_resource(const char * resource_filename);
 void platform_play_music_resource(const char * resource_filename);
 

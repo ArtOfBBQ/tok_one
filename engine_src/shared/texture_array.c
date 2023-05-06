@@ -321,7 +321,7 @@ static DecodedImage * extract_image(
 static void register_to_texturearray_from_images(
     const int32_t target_texture_array_i,
     DecodedImage ** new_images,
-    char ** new_img_filenames,
+    const char ** new_img_filenames,
     const uint32_t new_images_size)
 {
     log_assert(new_images_size > 0);
@@ -382,7 +382,7 @@ static void register_to_texturearray_from_images(
 
 static void register_new_texturearray_from_images(
     DecodedImage ** new_images,
-    char ** new_img_filenames,
+    const char ** new_img_filenames,
     const uint32_t new_images_size)
 {
     int32_t new_i = (int32_t)texture_arrays_size;

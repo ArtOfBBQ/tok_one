@@ -16,8 +16,8 @@ static AVAudioPlayer * sound_players[MAX_SIMUL_SOUNDS];
 static uint32_t next_sound_player = 0;
 
 static AVAudioPlayer * active_music_player = NULL;
-static float sound_volume = 0.135f;
-static float music_volume = 0.035f;
+float platform_sound_volume = 0.135f;
+float platform_music_volume = 0.035f;
 
 void platform_get_writables_path(
     char * recipient,
@@ -463,7 +463,7 @@ void platform_play_sound_resource(const char * resource_filename) {
         log_assert(0);
     }
     
-    [sound_players[next_sound_player] setVolume: sound_volume];
+    [sound_players[next_sound_player] setVolume: platform_sound_volume];
     sound_players[next_sound_player].numberOfLoops = 0;
     // [sound_players[next_sound_player] setDelegate: NULL];
     [sound_players[next_sound_player] play];
@@ -474,8 +474,17 @@ void platform_play_sound_resource(const char * resource_filename) {
     }
 }
 
+void platform_update_sound_volume(void) {
+    for (uint32_t i = 0; i < MAX_SIMUL_SOUNDS; i++) {
+        [sound_players[i] setVolume: platform_sound_volume];
+    }
+}
+
+void platform_update_music_volume(void) {
+    [active_music_player setVolume: platform_music_volume];
+}
+
 void platform_play_music_resource(const char * resource_filename) {
-    return;
     if (active_music_player != NULL) {
         [active_music_player setVolume: 0.0f fadeDuration: 1];
     }
@@ -501,7 +510,7 @@ void platform_play_music_resource(const char * resource_filename) {
     player.numberOfLoops = 0;
     
     [player setVolume: 0.001f];
-    [player setVolume: music_volume fadeDuration: 5];
+    [player setVolume: platform_music_volume fadeDuration: 5];
     [player play];
     
     active_music_player = player;

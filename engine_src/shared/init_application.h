@@ -6,6 +6,7 @@
 #include "shared/tok_random.h"
 #include "shared/lightsource.h"
 #include "shared/text.h"
+#include "shared/uielement.h"
 #include "shared/userinput.h"
 #include "shared/window_size.h"
 #include "shared/scheduled_animations.h"

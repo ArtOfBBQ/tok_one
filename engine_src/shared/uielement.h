@@ -22,6 +22,7 @@ some sliders, change the slider size, and then request some more sliders
 */
 typedef struct NextUIElementSettings {
     bool32_t ignore_lighting;
+    bool32_t ignore_camera;
     int32_t  slider_background_texturearray_i;
     int32_t  slider_background_texture_i;
     int32_t  slider_pin_texturearray_i;
@@ -47,6 +48,7 @@ A slider linked to a float of your choice, for the user to slide left/right to
 get the value of their choosing
 */
 void request_float_slider(
+    const int32_t with_object_id,
     const float x_screenspace,
     const float y_screenspace,
     const float z,
@@ -59,5 +61,4 @@ void request_float_slider(
 #endif
 
 #endif // UI_ELEMENT_H
-
 

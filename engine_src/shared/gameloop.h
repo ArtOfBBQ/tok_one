@@ -8,6 +8,7 @@
 #include "platform_layer.h"
 #include "texture_array.h"
 #include "text.h"
+#include "uielement.h"
 #include "renderer.h"
 #include "lightsource.h"
 #include "scheduled_animations.h"
