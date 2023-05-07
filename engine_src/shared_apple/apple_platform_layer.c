@@ -402,7 +402,6 @@ void platform_start_thread(
 }
 
 void platform_play_sound_resource(const char * resource_filename) {
-    return;
     
     log_assert(resource_filename != NULL);
     

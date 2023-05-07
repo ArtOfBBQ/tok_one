@@ -188,7 +188,7 @@ NSSize last_nonfull_drawable_size;
     log_append(", ");
     log_append_uint((uint32_t)proposedSize.width);
     log_append_char('\n');
-        
+    
     [self
         handleResizeTo: proposedSize
         withTitleBarHeight: 0];

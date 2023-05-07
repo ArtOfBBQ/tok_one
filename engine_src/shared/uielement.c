@@ -2,6 +2,7 @@
 
 static int32_t currently_sliding_touchable_id = -1;
 static int32_t currently_sliding_object_id = -1;
+static char slider_sound[128];
 
 typedef struct ActiveUIElement {
     int32_t touchable_id;
@@ -14,6 +15,7 @@ typedef struct ActiveUIElement {
     float slider_min;
     float slider_max;
     float * slider_linked_value;
+    char interaction_sound_filename[128];
 } ActiveUIElement;
 
 NextUIElementSettings * next_ui_element_settings = NULL;
@@ -46,6 +48,7 @@ void init_ui_elements(void) {
     next_ui_element_settings->slider_background_texture_i = -1;
     next_ui_element_settings->slider_pin_texturearray_i = -1;
     next_ui_element_settings->slider_pin_texture_i = -1;
+    next_ui_element_settings->interaction_sound_filename[0] = '\0';
     
     active_ui_elements = (ActiveUIElement *)malloc_from_unmanaged(
         sizeof(ActiveUIElement) * ACTIVE_UI_ELEMENTS_SIZE);
@@ -79,6 +82,33 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                         active_ui_elements[i].object_id_2;
                     currently_sliding_touchable_id =
                         active_ui_elements[i].touchable_id;
+                    
+                    for (
+                        uint32_t zp_i = 0;
+                        zp_i < zpolygons_to_render_size;
+                        zp_i++)
+                    {
+                        if (zpolygons_to_render[zp_i].object_id ==
+                            currently_sliding_object_id)
+                        {
+                            zpolygons_to_render[zp_i].scale_factor = 1.05f;
+                        }
+                    }
+                    
+                    ScheduledAnimation * bump_pin = next_scheduled_animation();
+                    bump_pin->affected_object_id = currently_sliding_object_id;
+                    bump_pin->final_scale_known = true;
+                    bump_pin->final_scale = 1.0f;
+                    bump_pin->remaining_microseconds = 200000;
+                    commit_scheduled_animation(bump_pin);
+                    
+                    if (
+                        active_ui_elements[i].
+                            interaction_sound_filename[0] != '\0')
+                    {
+                        request_sound(
+                            active_ui_elements[i].interaction_sound_filename);
+                    }
                     
                     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
                         handled = true;
@@ -183,7 +213,6 @@ void request_float_slider(
     log_assert(background_object_id != pin_object_id);
     
     zPolygon slider_back;
-    
     construct_quad_around(
         /* const float mid_x: */
             screenspace_x_to_x(x_screenspace, z),
@@ -209,7 +238,7 @@ void request_float_slider(
         next_ui_element_settings->slider_background_texture_i;
     slider_back.triangle_materials[0].color[0] = 1.0f;
     slider_back.triangle_materials[0].color[1] = 1.0f;
-    slider_back.triangle_materials[0].color[2] = 0.5f;
+    slider_back.triangle_materials[0].color[2] = 1.0f;
     slider_back.triangle_materials[0].color[3] = 1.0f;
     
     slider_back.ignore_lighting = next_ui_element_settings->ignore_lighting;
@@ -263,7 +292,7 @@ void request_float_slider(
         next_ui_element_settings->slider_pin_texture_i;
     slider_pin.triangle_materials[0].color[0] = 1.0f;
     slider_pin.triangle_materials[0].color[1] = 1.0f;
-    slider_pin.triangle_materials[0].color[2] = 0.5f;
+    slider_pin.triangle_materials[0].color[2] = 1.0f;
     slider_pin.triangle_materials[0].color[3] = 1.0f;
     
     slider_pin.ignore_lighting = next_ui_element_settings->ignore_lighting;
@@ -283,7 +312,10 @@ void request_float_slider(
     next_active_element->slideable = true;
     next_active_element->deleted = false;
     next_active_element->slider_linked_value = linked_value;
-    
+    strcpy_capped(
+        next_active_element->interaction_sound_filename,
+        128,
+        next_ui_element_settings->interaction_sound_filename);
     request_zpolygon_to_render(&slider_pin);
 }
 

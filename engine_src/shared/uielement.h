@@ -34,6 +34,7 @@ typedef struct NextUIElementSettings {
     int32_t  button_background_texturearray_i;
     int32_t  button_background_texture_i;
     float    slider;
+    char     interaction_sound_filename[128];
 } NextUIElementSettings;
 
 extern NextUIElementSettings * next_ui_element_settings;
