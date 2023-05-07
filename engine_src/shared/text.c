@@ -444,7 +444,6 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
     char fps_string[12] = "std fps: xx";
     #endif
     
-    int32_t label_object_id = FPS_COUNTER_OBJECT_ID;
     uint64_t fps = 1000000 / microseconds_elapsed;
     
     if (fps < 100) {
@@ -454,7 +453,7 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
         fps_string[ 9] = '9' + ((fps / 10) % 10);
         fps_string[10] = '9' + (fps % 10);
     }
-    delete_zpolygon_object(label_object_id);
+    delete_zpolygon_object(FPS_COUNTER_OBJECT_ID);
     
     font_height = 16.0f;
     font_color[0] = 1.0f;
@@ -463,7 +462,7 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
     font_color[3] = 1.0f;
     font_ignore_lighting = true;
     request_label_renderable(
-        /* with_id               : */ label_object_id,
+        /* with_id               : */ FPS_COUNTER_OBJECT_ID,
         /* char * text_to_draw   : */ fps_string,
         /* float left_pixelspace : */ 20.0f,
         /* float top_pixelspace  : */ 30.0f,

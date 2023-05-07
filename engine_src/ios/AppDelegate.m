@@ -15,6 +15,8 @@
 - (void)
     applicationWillTerminate:(UIApplication *)application
 {
+    shared_shutdown_application();
+    
     client_logic_shutdown();
     
     bool32_t write_succesful = false;

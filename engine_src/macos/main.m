@@ -164,6 +164,8 @@ NSSize last_nonfull_drawable_size;
 - (void)windowWillClose:(NSNotification *)notification {
     log_append("window will close, terminating app..\n");
     
+    shared_shutdown_application();
+    
     client_logic_shutdown();
     
     bool32_t write_succesful = false;
@@ -217,6 +219,15 @@ NSSize last_nonfull_drawable_size;
     log_append_char('\n');
     
     zpolygons_to_render_size = 0;
+}
+
+- (void)windowDidMove:(NSNotification *)notification
+{
+    // WTF apple
+    window_globals->window_left =
+        ((NSWindow *)[notification object]).frame.origin.x;
+    window_globals->window_bottom =
+        ((NSWindow *)[notification object]).frame.origin.y;
 }
 
 - (void)
@@ -400,15 +411,7 @@ NSWindowWithCustomResponder * window = NULL;
 
 int main(int argc, const char * argv[]) {
     
-    init_application(
-        /* const float window_left: */
-            INITIAL_WINDOW_LEFT,
-        /* const float window_width: */
-            INITIAL_WINDOW_WIDTH,
-        /* const float window_bottom: */
-            INITIAL_WINDOW_BOTTOM,
-        /* const float window_height: */
-            INITIAL_WINDOW_HEIGHT);
+    init_application();
     log_append("initialized application: ");
     log_append(APPLICATION_NAME);
     
@@ -430,10 +433,10 @@ int main(int argc, const char * argv[]) {
     
     // NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     NSRect window_rect = NSMakeRect(
-        /* x: */ INITIAL_WINDOW_LEFT,
-        /* y: */ INITIAL_WINDOW_BOTTOM,
-        /* width: */ INITIAL_WINDOW_WIDTH,
-        /* height: */ INITIAL_WINDOW_HEIGHT);
+        /* x: */ window_globals->window_left,
+        /* y: */ window_globals->window_bottom,
+        /* width: */ window_globals->window_width,
+        /* height: */ window_globals->window_height);
     
     window =
         [[NSWindowWithCustomResponder alloc]

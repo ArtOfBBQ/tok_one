@@ -6,6 +6,7 @@ static int32_t currently_sliding_object_id = -1;
 typedef struct ActiveUIElement {
     int32_t touchable_id;
     int32_t object_id;
+    int32_t object_id_2;
     bool32_t clickable;
     bool32_t slideable;
     bool32_t deleted;
@@ -75,7 +76,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                     active_ui_elements[i].touchable_id)
                 {
                     currently_sliding_object_id =
-                        active_ui_elements[i].object_id;
+                        active_ui_elements[i].object_id_2;
                     currently_sliding_touchable_id =
                         active_ui_elements[i].touchable_id;
                     
@@ -170,7 +171,8 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
 }
 
 void request_float_slider(
-    const int32_t with_object_id,
+    const int32_t background_object_id,
+    const int32_t pin_object_id,
     const float x_screenspace,
     const float y_screenspace,
     const float z,
@@ -178,6 +180,8 @@ void request_float_slider(
     const float max_value,
     float * linked_value)
 {
+    log_assert(background_object_id != pin_object_id);
+    
     zPolygon slider_back;
     
     construct_quad_around(
@@ -197,7 +201,7 @@ void request_float_slider(
                 z),
         /* zPolygon * recipient: */
             &slider_back);
-    slider_back.object_id = with_object_id;
+    slider_back.object_id = background_object_id;
     
     slider_back.triangle_materials[0].texturearray_i =
         next_ui_element_settings->slider_background_texturearray_i;
@@ -233,8 +237,24 @@ void request_float_slider(
         /* zPolygon * recipient: */
             &slider_pin);
     
-    slider_pin.object_id = with_object_id;
-    slider_pin.x_offset = 0.0f;
+    slider_pin.object_id = pin_object_id;
+    
+    if (*linked_value < min_value) {
+        *linked_value = min_value;
+    }
+    if (*linked_value > max_value) {
+        *linked_value = max_value;
+    }
+    
+    float initial_slider_progress =
+        (*linked_value - min_value) / (max_value - min_value);
+    float initial_x_offset_screenspace =
+        -(next_ui_element_settings->slider_width_screenspace / 2) +
+        (initial_slider_progress *
+            next_ui_element_settings->slider_width_screenspace);
+    slider_pin.x_offset =
+        screenspace_width_to_width(initial_x_offset_screenspace, pin_z);
+    
     slider_pin.y_offset = 0.0f;
     
     slider_pin.triangle_materials[0].texturearray_i =
@@ -251,7 +271,8 @@ void request_float_slider(
     slider_pin.touchable_id = next_ui_element_touchable_id();
     
     ActiveUIElement * next_active_element = next_active_ui_element();
-    next_active_element->object_id = slider_pin.object_id;
+    next_active_element->object_id = background_object_id;
+    next_active_element->object_id_2 = pin_object_id;
     next_active_element->touchable_id = slider_pin.touchable_id;
     next_active_element->slider_width = 
         screenspace_width_to_width(
@@ -264,4 +285,14 @@ void request_float_slider(
     next_active_element->slider_linked_value = linked_value;
     
     request_zpolygon_to_render(&slider_pin);
+}
+
+void unregister_ui_element_with_object_id(
+    const int32_t with_object_id)
+{
+    for (uint32_t i = 0; i < active_ui_elements_size; i++) {
+        if (active_ui_elements[i].object_id == with_object_id) {
+            active_ui_elements[i].deleted = true;
+        }
+    }
 }

@@ -404,7 +404,7 @@ static dispatch_semaphore_t drawing_semaphore;
     
     // this inherits from the view's cleardepth (in macos/main.m for mac os),
     // don't set it here
-    assert(RenderPassDescriptor.depthAttachment.clearDepth == CLEARDEPTH);
+    // assert(RenderPassDescriptor.depthAttachment.clearDepth == CLEARDEPTH);
     
     RenderPassDescriptor
         .colorAttachments[0]

@@ -24,15 +24,17 @@ int main(int argc, char * argv[]) {
         respondsToSelector:@selector(displayLinkWithTarget:selector:)]
         && ([UIScreen mainScreen].scale >= 2.0));
     
-    init_application(
-        /* const float window_left: */
-            0.0f,
-        /* const float window_width: */
-            (float)[UIScreen mainScreen].bounds.size.width,
-        /* const float window_bottom: */
-            0.0f,
-        /* const float window_height: */
-            (float)[UIScreen mainScreen].bounds.size.height);
+    
+    init_application();
+    
+    // These can't be chosen on smartphones, so overwrite our preferred values
+    // with the values the phone forces on us
+    window_globals->window_bottom = 0;
+    window_globals->window_left = 0;
+    window_globals->window_width =
+        (float)[UIScreen mainScreen].bounds.size.width;
+    window_globals->window_height =
+        (float)[UIScreen mainScreen].bounds.size.height;
     
     NSString * appDelegateClassName;
     // Setup code that might create autoreleased objects goes here.

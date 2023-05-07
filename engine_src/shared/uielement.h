@@ -48,13 +48,17 @@ A slider linked to a float of your choice, for the user to slide left/right to
 get the value of their choosing
 */
 void request_float_slider(
-    const int32_t with_object_id,
+    const int32_t background_object_id,
+    const int32_t pin_object_id,
     const float x_screenspace,
     const float y_screenspace,
     const float z,
     const float min_value,
     const float max_value,
     float * linked_value);
+
+void unregister_ui_element_with_object_id(
+    const int32_t with_object_id);
 
 #ifdef __cplusplus
 }

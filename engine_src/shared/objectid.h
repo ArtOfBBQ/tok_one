@@ -9,7 +9,6 @@ extern "C" {
 
 #define MAX_OBJECT_ID 2000
 
-#define LAST_UI_ELEMENT_ID 100
 #define FIRST_NONUI_OBJECT_ID 101
 
 #define LAST_UI_TOUCHABLE_ID 100
@@ -34,4 +33,3 @@ int32_t next_nonui_touchable_id(void);
 #endif
 
 #endif // OBJECT_ID_H
-

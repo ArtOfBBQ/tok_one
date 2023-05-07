@@ -113,21 +113,21 @@ void client_logic_startup(void) {
     
     // all sliders use this image as the background 
     get_texture_location(
-	/* char * for_filename: */
-	    "structuredart2.png",
-	/* int32_t * texture_array_i_recipient: */
-	    &next_ui_element_settings->slider_background_texturearray_i,
-	/* int32_t * texture_i_recipient: */
-	    &next_ui_element_settings->slider_background_texture_i);
+        /* char * for_filename: */
+            "structuredart2.png",
+        /* int32_t * texture_array_i_recipient: */
+            &next_ui_element_settings->slider_background_texturearray_i,
+        /* int32_t * texture_i_recipient: */
+            &next_ui_element_settings->slider_background_texture_i);
     
     // all sliders use this image as the pin you slide left/right
     get_texture_location(
-	/* char * for_filename: */
-	    "structuredart2.png",
-	/* int32_t * texture_array_i_recipient: */
-	    &next_ui_element_settings->slider_pin_texturearray_i,
-	/* int32_t * texture_i_recipient: */
-	    &next_ui_element_settings->slider_pin_texture_i);
+        /* char * for_filename: */
+            "structuredart2.png",
+        /* int32_t * texture_array_i_recipient: */
+            &next_ui_element_settings->slider_pin_texturearray_i,
+        /* int32_t * texture_i_recipient: */
+            &next_ui_element_settings->slider_pin_texture_i);
     
     // all sliders use this width/height
     next_ui_element_settings->slider_width_screenspace = 300;
@@ -138,6 +138,10 @@ void client_logic_startup(void) {
     request_particle_fountain();
     
     request_float_slider(
+        /* const int32_t background_object_id: */
+            next_ui_element_object_id(),
+        /* const int32_t pin_object_id: */
+            next_ui_element_object_id(),
         /* const float x_screenspace: */
             250,
         /* const float y_screenspace: */
@@ -152,6 +156,10 @@ void client_logic_startup(void) {
             &particle_effects[0].particle_distance_per_second);
     
     request_float_slider(
+        /* const int32_t background_object_id: */
+            next_ui_element_object_id(),
+        /* const int32_t pin_object_id: */
+            next_ui_element_object_id(),
         /* const float x_screenspace: */
             250,
         /* const float y_screenspace: */
@@ -164,20 +172,6 @@ void client_logic_startup(void) {
             1.0f,
         /* const float * linked_value: */
             &particle_effects[0].particle_rgba_progression[1][0]);
-    
-    request_float_slider(
-        /* const float x_screenspace: */
-            250,
-        /* const float y_screenspace: */
-            310,
-        /* const float z: */
-            0.75f,
-        /* const float min_value: */
-            0.0f,
-        /* const float max_value: */
-            1.0f,
-        /* const float * linked_value: */
-            &particle_effects[0].particle_rgba_progression[2][0]);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {

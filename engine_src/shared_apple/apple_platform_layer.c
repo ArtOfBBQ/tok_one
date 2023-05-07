@@ -16,8 +16,8 @@ static AVAudioPlayer * sound_players[MAX_SIMUL_SOUNDS];
 static uint32_t next_sound_player = 0;
 
 static AVAudioPlayer * active_music_player = NULL;
-float platform_sound_volume = 0.135f;
-float platform_music_volume = 0.035f;
+float platform_sound_volume = 0.15f;
+float platform_music_volume = 0.15f;
 
 void platform_get_writables_path(
     char * recipient,
@@ -111,23 +111,6 @@ uint64_t platform_get_filesize(const char * filepath) {
     return return_value;
 }
 
-void platform_read_resource_file(
-    const char * filename,
-    FileBuffer * out_preallocatedbuffer)
-{
-    char pathfile[500];
-    resource_filename_to_pathfile(
-        filename,
-        /* recipient: */ pathfile,
-        /* capacity: */ 500);
-    
-    platform_read_file(
-        /* filepath :*/
-            pathfile,
-        /* out_preallocatedbuffer: */
-            out_preallocatedbuffer);
-}
-
 void platform_read_file(
     const char * filepath,
     FileBuffer * out_preallocatedbuffer)
@@ -158,17 +141,6 @@ void platform_read_file(
     
     out_preallocatedbuffer->good = true;
     }
-}
-
-bool32_t platform_resource_exists(const char * resource_name) {
-    char pathfile[500];
-    resource_filename_to_pathfile(
-        resource_name,
-        /* recipient: */ pathfile,
-        /* capacity: */ 500);
-    
-    return platform_file_exists(
-        /* filepath: */ pathfile);
 }
 
 bool32_t platform_file_exists(

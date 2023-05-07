@@ -20,11 +20,9 @@ extern "C" {
 
 extern uint32_t block_drawinmtkview;
 
-void init_application(
-    const float window_left,
-    const float window_width,
-    const float window_bottom,
-    const float window_height);
+void init_application(void);
+
+void shared_shutdown_application(void);
 
 #ifdef __cplusplus
 }

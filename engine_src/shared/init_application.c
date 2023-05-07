@@ -1,22 +1,56 @@
 #include "init_application.h"
 
-void init_application(
-    const float window_left,
-    const float window_width,
-    const float window_bottom,
-    const float window_height)
+typedef struct EngineSaveFile {
+    float window_left;
+    float window_width;
+    float window_bottom;
+    float window_height;
+    float music_volume;
+    float sound_volume;
+} EngineSaveFile;
+
+static EngineSaveFile * engine_save_file = NULL;
+
+void init_application(void)
 {
     init_memory_store();
     
     setup_log();
     
+    engine_save_file = (EngineSaveFile *)malloc_from_unmanaged(
+        sizeof(EngineSaveFile));
+    
+    char full_writable_pathfile[256];
+    writable_filename_to_pathfile(
+        "enginestate.dat",
+        full_writable_pathfile,
+        256);
+    FileBuffer engine_save;
+    engine_save.contents = NULL;
+    if (platform_file_exists(full_writable_pathfile)) {
+        engine_save.size = platform_get_filesize(full_writable_pathfile);
+        engine_save.contents = (char *)malloc_from_managed(engine_save.size);
+        platform_read_file(full_writable_pathfile, &engine_save);
+        *engine_save_file = *(EngineSaveFile *)engine_save.contents;
+        printf("engine save contents: %s\n", engine_save.contents);
+    }
+    
     window_globals = (WindowGlobals *)malloc_from_unmanaged(
         sizeof(WindowGlobals));
     
-    window_globals->window_height = window_height;
-    window_globals->window_width  = window_width;
-    window_globals->window_left   = window_left;
-    window_globals->window_bottom = window_bottom;
+    if (engine_save.contents != NULL) {
+        window_globals->window_height = engine_save_file->window_height;
+        window_globals->window_width  = engine_save_file->window_width;
+        window_globals->window_left   = engine_save_file->window_left;
+        window_globals->window_bottom = engine_save_file->window_bottom;
+        platform_music_volume = engine_save_file->music_volume;
+        platform_sound_volume = engine_save_file->sound_volume;
+    } else {
+        window_globals->window_height = INITIAL_WINDOW_HEIGHT;
+        window_globals->window_width  = INITIAL_WINDOW_WIDTH;
+        window_globals->window_left   = INITIAL_WINDOW_LEFT;
+        window_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
+    }
     
     window_globals->aspect_ratio =
         window_globals->window_height / window_globals->window_width;
@@ -73,4 +107,28 @@ void init_application(
     init_renderer();
     
     client_logic_startup();
+}
+
+void shared_shutdown_application(void)
+{
+    log_assert(engine_save_file != NULL);
+    
+    engine_save_file->music_volume = platform_music_volume;
+    engine_save_file->sound_volume = platform_sound_volume;
+    
+    engine_save_file->window_bottom = window_globals->window_bottom;
+    engine_save_file->window_height = window_globals->window_height;
+    engine_save_file->window_left = window_globals->window_left;
+    engine_save_file->window_width = window_globals->window_width;
+    
+    uint32_t good = false;
+    platform_write_file_to_writables(
+        /* const char filepath_inside_writables: */
+            "enginestate.dat",
+        /* const char * output: */
+            (char *)engine_save_file,
+        /* output_size: */
+            sizeof(EngineSaveFile),
+        /* uint32_t good: */
+            &good);
 }
