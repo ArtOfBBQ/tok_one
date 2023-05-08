@@ -228,9 +228,13 @@ void request_label_offset_around(
     zPolygon letter;
     
     float cur_y_offset_pixelspace =
-        (((lines_size - 1) * font_height) / 2);
+        (font_height * 0.42f) +
+        ((lines_size - 1) * font_height * 0.5f);
+    
     for (uint32_t line_i = 0; line_i < lines_size; line_i++) {
-        float cur_x_offset_pixelspace = -((lines[line_i].width) / 2);
+        float cur_x_offset_pixelspace =
+            (font_height * 0.5f) -
+            (lines[line_i].width * 0.5f);
         
         for (
             int32_t j = lines[line_i].start_i;
@@ -245,7 +249,7 @@ void request_label_offset_around(
                 break;
             }
             
-            construct_quad(
+            construct_quad_around(
                 /* const float left_x: */
                     screenspace_x_to_x(
                         mid_x_pixelspace,
@@ -271,6 +275,7 @@ void request_label_offset_around(
                 cur_x_offset_pixelspace += get_advance_width(text_to_draw[j]);
                 continue;
             }
+            
             for (
                 uint32_t rgba_i = 0;
                 rgba_i < 4;

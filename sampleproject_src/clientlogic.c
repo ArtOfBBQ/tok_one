@@ -111,67 +111,52 @@ void client_logic_startup(void) {
         "disk.obj",
     };
     
-    // all sliders use this image as the background 
-    get_texture_location(
-        /* char * for_filename: */
-            "structuredart2.png",
-        /* int32_t * texture_array_i_recipient: */
-            &next_ui_element_settings->slider_background_texturearray_i,
-        /* int32_t * texture_i_recipient: */
-            &next_ui_element_settings->slider_background_texture_i);
+    // request_particle_fountain();
     
-    // all sliders use this image as the pin you slide left/right
-    get_texture_location(
-        /* char * for_filename: */
-            "structuredart2.png",
-        /* int32_t * texture_array_i_recipient: */
-            &next_ui_element_settings->slider_pin_texturearray_i,
-        /* int32_t * texture_i_recipient: */
-            &next_ui_element_settings->slider_pin_texture_i);
+    float midx = 551;
+    float midy = 351;
     
-    // all sliders use this width/height
-    next_ui_element_settings->slider_width_screenspace = 300;
-    next_ui_element_settings->slider_height_screenspace = 15;
-    next_ui_element_settings->pin_width_screenspace = 20;
-    next_ui_element_settings->pin_height_screenspace = 60;
+    float redquad_z = 0.75f;
+    zPolygon sample_quad;
+    construct_quad_around(
+        /* mid_x: */ screenspace_x_to_x(midx, redquad_z),
+        /* const float mid_y: */ screenspace_y_to_y(midy, redquad_z),
+        /* const float z: */ redquad_z,
+        /* const float width: */ 0.8f,
+        /* const float height: */ 0.2f,
+        /* zPolygon * recipient: */ &sample_quad);
+    sample_quad.triangle_materials[0].color[0] = 1.0f;
+    sample_quad.triangle_materials[0].color[1] = 0.0f;
+    sample_quad.triangle_materials[0].color[2] = 0.0f;
+    sample_quad.ignore_lighting = true;
+    request_zpolygon_to_render(&sample_quad);
     
-    request_particle_fountain();
+    zPolygon midyline;
+    construct_quad_around(
+        /* mid_x: */ screenspace_x_to_x(midx, redquad_z),
+        /* const float mid_y: */ screenspace_y_to_y(midy, redquad_z),
+        /* const float z: */ redquad_z,
+        /* const float width: */ 3.2f,
+        /* const float height: */ 0.005f,
+        /* zPolygon * recipient: */ &midyline);
+    midyline.triangle_materials[0].color[0] = 0.0f;
+    midyline.triangle_materials[0].color[1] = 1.0f;
+    midyline.triangle_materials[0].color[2] = 1.0f;
+    midyline.ignore_lighting = true;
+    request_zpolygon_to_render(&midyline);
     
-    request_float_slider(
-        /* const int32_t background_object_id: */
-            next_ui_element_object_id(),
-        /* const int32_t pin_object_id: */
-            next_ui_element_object_id(),
-        /* const float x_screenspace: */
-            250,
-        /* const float y_screenspace: */
-            250,
-        /* const float z: */
-            0.75f,
-        /* const float min_value: */
-            0.06f,
-        /* const float max_value: */
-            0.6f,
-        /* const float * linked_value: */
-            &particle_effects[0].particle_distance_per_second);
-    
-    request_float_slider(
-        /* const int32_t background_object_id: */
-            next_ui_element_object_id(),
-        /* const int32_t pin_object_id: */
-            next_ui_element_object_id(),
-        /* const float x_screenspace: */
-            250,
-        /* const float y_screenspace: */
-            280,
-        /* const float z: */
-            0.75f,
-        /* const float min_value: */
-            0.0f,
-        /* const float max_value: */
-            1.0f,
-        /* const float * linked_value: */
-            &particle_effects[0].particle_rgba_progression[1][0]);
+    font_height = 100;
+    font_color[0] = 0.0f;
+    font_color[1] = 1.0f;
+    font_color[2] = 1.0f;
+    request_label_around(
+        /* with_id: */ 50,
+        /* text_to_draw: */ "im a label bro!",
+        /* mid_x_pixelspace: */ midx,
+        /* mid_y_pixelspace: */ midy,
+        /* z: */ redquad_z - 0.00001f,
+        /* max_width: */ 5500,
+        /* ignore_camera: */ false);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
