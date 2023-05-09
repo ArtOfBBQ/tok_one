@@ -114,17 +114,31 @@ void client_logic_startup(void) {
     // request_particle_fountain();
     
     float midx = 551;
-    float midy = 351;
+    float midy = 251;
     
-    float redquad_z = 0.75f;
+    float redquad_width = 600;
+    float redquad_height = 100;
+    
+    float redquad_z = 0.35f;
+    
     zPolygon sample_quad;
     construct_quad_around(
-        /* mid_x: */ screenspace_x_to_x(midx, redquad_z),
-        /* const float mid_y: */ screenspace_y_to_y(midy, redquad_z),
-        /* const float z: */ redquad_z,
-        /* const float width: */ 0.8f,
-        /* const float height: */ 0.2f,
+        /* mid_x: */
+            screenspace_x_to_x(midx, redquad_z),
+        /* const float mid_y: */
+            screenspace_y_to_y(midy, redquad_z),
+        /* const float z: */
+            redquad_z,
+        /* const float width: */
+            screenspace_width_to_width(
+                redquad_width,
+                redquad_z),
+        /* const float height: */
+            screenspace_height_to_height(
+                redquad_height,
+                redquad_z),
         /* zPolygon * recipient: */ &sample_quad);
+    
     sample_quad.triangle_materials[0].color[0] = 1.0f;
     sample_quad.triangle_materials[0].color[1] = 0.0f;
     sample_quad.triangle_materials[0].color[2] = 0.0f;
@@ -133,25 +147,31 @@ void client_logic_startup(void) {
     
     zPolygon midyline;
     construct_quad_around(
-        /* mid_x: */ screenspace_x_to_x(midx, redquad_z),
-        /* const float mid_y: */ screenspace_y_to_y(midy, redquad_z),
-        /* const float z: */ redquad_z,
-        /* const float width: */ 3.2f,
-        /* const float height: */ 0.005f,
+        /* mid_x: */
+            screenspace_x_to_x(midx, redquad_z),
+        /* const float mid_y: */
+            screenspace_y_to_y(midy, redquad_z),
+        /* const float z: */
+            redquad_z,
+        /* const float width: */
+            screenspace_width_to_width(redquad_width*2, redquad_z),
+        /* const float height: */
+            0.001f,
         /* zPolygon * recipient: */ &midyline);
+    
     midyline.triangle_materials[0].color[0] = 0.0f;
     midyline.triangle_materials[0].color[1] = 1.0f;
     midyline.triangle_materials[0].color[2] = 1.0f;
     midyline.ignore_lighting = true;
     request_zpolygon_to_render(&midyline);
     
-    font_height = 100;
+    font_height = redquad_height;
     font_color[0] = 0.0f;
     font_color[1] = 1.0f;
     font_color[2] = 1.0f;
     request_label_around(
         /* with_id: */ 50,
-        /* text_to_draw: */ "im a label bro!",
+        /* text_to_draw: */ "I'm a LABEL broqb!",
         /* mid_x_pixelspace: */ midx,
         /* mid_y_pixelspace: */ midy,
         /* z: */ redquad_z - 0.00001f,
@@ -346,20 +366,20 @@ void client_logic_window_resize(
     const uint32_t new_height,
     const uint32_t new_width)
 {
-    char unhandled_rs_msg[256];
-    strcpy_capped(
-        unhandled_rs_msg,
-        256,
-        "Error: unhandled client_logic_window_resize() to height/width: of ");
-    strcat_uint_capped(unhandled_rs_msg, 256, new_height);
-    strcat_capped(unhandled_rs_msg, 256, ", ");
-    strcat_uint_capped(unhandled_rs_msg, 256, new_width);
-    strcat_capped(
-        unhandled_rs_msg,
-        256,
-        ".\nEither prevent app resizing or handle in clientlogic.c\n");
-    log_append(unhandled_rs_msg);
-    log_dump_and_crash(unhandled_rs_msg);
+    //    char unhandled_rs_msg[256];
+    //    strcpy_capped(
+    //        unhandled_rs_msg,
+    //        256,
+    //        "Error: unhandled client_logic_window_resize() to height/width: of ");
+    //    strcat_uint_capped(unhandled_rs_msg, 256, new_height);
+    //    strcat_capped(unhandled_rs_msg, 256, ", ");
+    //    strcat_uint_capped(unhandled_rs_msg, 256, new_width);
+    //    strcat_capped(
+    //        unhandled_rs_msg,
+    //        256,
+    //        ".\nEither prevent app resizing or handle in clientlogic.c\n");
+    //    log_append(unhandled_rs_msg);
+    //    log_dump_and_crash(unhandled_rs_msg);
 }
 
 void client_logic_shutdown(void) {

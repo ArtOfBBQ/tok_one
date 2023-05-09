@@ -157,9 +157,6 @@ void request_label_offset_around(
 {
     log_assert(max_width > 0.0f);
     
-    float original_height = font_height;
-    font_height *= z;
-    
     uint32_t max_lines = 100;
     PrefetchedLine lines[max_lines];
     float widest_line_width = 0.0f;
@@ -304,8 +301,6 @@ void request_label_offset_around(
         }
         cur_y_offset_pixelspace -= font_height;
     }
-    
-    font_height = original_height;
 }
 
 void request_label_around(
@@ -382,6 +377,7 @@ void request_label_renderable(
                 cur_x_offset = 0;
                 cur_y_offset -= font_height;
             }
+            
             continue;
         }
         

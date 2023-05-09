@@ -6,10 +6,11 @@ bool32_t terminal_active = false;
 static char * current_command = NULL;
 
 #define TERMINAL_HISTORY_MAX 500000
-#define TERMINAL_WHITESPACE    8.0f
+#define TERMINAL_WHITESPACE    7.0f
 
 #define TERM_FONT_SIZE        14.0f
-#define TERM_Z                0.11f
+#define TERM_Z                0.11001f
+#define TERM_LABELS_Z         0.11000f
 static char * terminal_history = NULL;
 static uint32_t terminal_history_size = 0;
 
@@ -27,7 +28,7 @@ static void destroy_terminal_objects(void) {
             terminal_back_object_id)
         {
             for (
-                uint32_t tri_i = 0;
+                int32_t tri_i = 0;
                 tri_i < all_mesh_summaries[zpolygons_to_render[i].mesh_id].
                     triangles_size;
                 tri_i++)
@@ -81,15 +82,21 @@ void terminal_redraw_backgrounds(void) {
     
     terminal_back_object_id = INT32_MAX;
     
+    float current_input_height = font_height + TERMINAL_WHITESPACE;
+    float command_history_height =
+        window_globals->window_height -
+        current_input_height -
+        (TERMINAL_WHITESPACE * 3);
+    
     zPolygon current_command_input;
-    construct_quad(
-        /* const float left_x: */
+    construct_quad_around(
+        /* const float mid_x: */
             screenspace_x_to_x(
-                TERMINAL_WHITESPACE,
+                window_globals->window_width / 2,
                 TERM_Z),
-        /* const float bottom_y: */
+        /* const float mid_y: */
             screenspace_y_to_y(
-                TERMINAL_WHITESPACE,
+                (TERMINAL_WHITESPACE * 1.5f) + (font_height / 2),
                 TERM_Z),
         /* const float z: */
             TERM_Z,
@@ -100,7 +107,7 @@ void terminal_redraw_backgrounds(void) {
                 TERM_Z),
         /* const float height: */
             screenspace_height_to_height(
-                font_height + TERMINAL_WHITESPACE,
+                current_input_height,
                 TERM_Z),
         /* zPolygon * recipien: */
             &current_command_input);
@@ -119,18 +126,18 @@ void terminal_redraw_backgrounds(void) {
     current_command_input.object_id = terminal_back_object_id;
     request_zpolygon_to_render(&current_command_input);
     
-    
     // The console history area
     construct_zpolygon(&current_command_input);
-    construct_quad(
-       /* const float left_x: */
+    construct_quad_around(
+       /* const float mid_x: */
            screenspace_x_to_x(
-               TERMINAL_WHITESPACE,
+               window_globals->window_width / 2,
                TERM_Z),
-       /* const float bottom_y: */
+       /* const float mid_y: */
            screenspace_y_to_y(
-               font_height +
-                   (TERMINAL_WHITESPACE * 3),
+               (command_history_height / 2) +
+                   current_input_height +
+                   (TERMINAL_WHITESPACE * 2),
                TERM_Z),
        /* const float z: */
            TERM_Z,
@@ -141,9 +148,7 @@ void terminal_redraw_backgrounds(void) {
                 TERM_Z),
        /* const float height: */
            screenspace_height_to_height(
-               window_globals->window_height -
-                   font_height -
-                   (TERMINAL_WHITESPACE * 4),
+               command_history_height,
                TERM_Z),
        /* zPolygon * recipien: */
            &current_command_input);
@@ -183,7 +188,7 @@ void terminal_render(void) {
         // draw the terminal's history as a label
         float history_label_top =
             window_globals->window_height -
-                (TERMINAL_WHITESPACE * 2.0f);
+                (TERMINAL_WHITESPACE * 2);
         float history_label_height =
             window_globals->window_height -
                 font_height -
@@ -235,7 +240,7 @@ void terminal_render(void) {
             /* const float top_pixelspace: */
                 history_label_top,
             /* const float z: */
-                TERM_Z - 0.001f,
+                TERM_LABELS_Z,
             /* const float max_width: */
                 window_globals->window_width -
                     (TERMINAL_WHITESPACE * 2),
@@ -250,21 +255,19 @@ void terminal_render(void) {
         
         // the terminal's current input as a label
         request_label_renderable(
-            /* const int32_t with_object_id: */
+            /* with_object_id: */
                 terminal_labels_object_id,
             /* const char * text_to_draw: */
                 current_command,
             /* const float left_pixelspace: */
-                TERMINAL_WHITESPACE * 2.0f,
+                TERMINAL_WHITESPACE * 2,
             /* const float top_pixelspace: */
-                font_height +
-                    (TERMINAL_WHITESPACE * 1.5f),
+                (TERMINAL_WHITESPACE * 2) + (font_height * 0.8f),
             /* const float z: */
-                TERM_Z - 0.01f,
+                TERM_LABELS_Z,
             /* const float max_width: */
-                window_globals->window_width -
-                    (TERMINAL_WHITESPACE * 2),
-            /* const bool32_t ignore_camera: */
+                window_globals->window_width - (TERMINAL_WHITESPACE * 2),
+            /* const uint32_t ignore_camera: */
                 true);
         
         font_height = previous_font_height;
@@ -275,9 +278,7 @@ void terminal_render(void) {
 
 void terminal_sendchar(uint32_t to_send) {
     
-    if (
-        to_send == TOK_KEY_ESCAPE)
-    {
+    if (to_send == TOK_KEY_ESCAPE) {
         // ESC key
         current_command[0] = '\0';
         terminal_active = false;
