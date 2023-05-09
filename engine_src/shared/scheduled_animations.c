@@ -756,9 +756,13 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
     }
 }
 
-void request_dud_dance(const uint32_t object_id)
+void request_dud_dance(
+    const uint32_t object_id, const float magnitude)
 {
     uint64_t step_size = 60000;
+    
+    float delta = 0.07f * magnitude;
+    
     for (
         uint64_t wait_first = 0;
         wait_first < step_size * 8;
@@ -770,10 +774,10 @@ void request_dud_dance(const uint32_t object_id)
         move_request->duration_microseconds = step_size;
         move_request->delta_x_per_second =
             wait_first % (step_size * 2) == 0 ?
-                0.07f : -0.07f;
+                delta : -delta;
         move_request->delta_y_per_second =
             wait_first % (step_size * 2) == 0 ?
-                0.07f : -0.07f;
+                delta : -delta;
         commit_scheduled_animation(move_request);
     }
 }

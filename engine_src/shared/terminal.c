@@ -82,7 +82,7 @@ void terminal_redraw_backgrounds(void) {
     
     terminal_back_object_id = INT32_MAX;
     
-    float current_input_height = font_height + TERMINAL_WHITESPACE;
+    float current_input_height = (TERM_FONT_SIZE * 2);
     float command_history_height =
         window_globals->window_height -
         current_input_height -
@@ -96,7 +96,7 @@ void terminal_redraw_backgrounds(void) {
                 TERM_Z),
         /* const float mid_y: */
             screenspace_y_to_y(
-                (TERMINAL_WHITESPACE * 1.5f) + (font_height / 2),
+                (TERMINAL_WHITESPACE * 1.5f) + (TERM_FONT_SIZE / 2),
                 TERM_Z),
         /* const float z: */
             TERM_Z,
@@ -191,11 +191,11 @@ void terminal_render(void) {
                 (TERMINAL_WHITESPACE * 2);
         float history_label_height =
             window_globals->window_height -
-                font_height -
+                TERM_FONT_SIZE -
                 (TERMINAL_WHITESPACE * 4.5f);
         
         uint32_t max_lines_in_history =
-            (uint32_t)(history_label_height / (font_height * 1.0f));
+            (uint32_t)(history_label_height / (TERM_FONT_SIZE * 1.0f));
         
         uint32_t char_offset = terminal_history_size;
         uint32_t lines_taken = 0;
@@ -262,7 +262,7 @@ void terminal_render(void) {
             /* const float left_pixelspace: */
                 TERMINAL_WHITESPACE * 2,
             /* const float top_pixelspace: */
-                (TERMINAL_WHITESPACE * 2) + (font_height * 0.8f),
+                (TERMINAL_WHITESPACE * 2) + (TERM_FONT_SIZE * 0.7f),
             /* const float z: */
                 TERM_LABELS_Z,
             /* const float max_width: */
