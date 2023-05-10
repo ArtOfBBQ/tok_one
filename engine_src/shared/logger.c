@@ -211,6 +211,7 @@ internal_log_assert(
     //Assertion failed: (0), function main, file test.c, line 6.
     char assert_failed_msg[256];
     
+
     strcpy_capped(
         assert_failed_msg,
         256,

@@ -144,6 +144,74 @@ static float get_next_word_width(const char * text) {
     return return_value;
 }
 
+static void prefetch_label_lines(
+    const char * text_to_draw,
+    const float max_width,
+    PrefetchedLine * recipient,
+    uint32_t * recipient_size)
+{
+    float widest_line_width = 0.0f;
+    *recipient_size = 1;
+    
+    for (uint32_t i = 0; i < 100; i++) {
+        recipient[i].width = 0.0f;
+        recipient[i].start_i = -1;
+        recipient[i].end_i = -1;
+    }
+    
+    // *********************************************************
+    // prefetch line widths and which character they start/end
+    // *********************************************************
+    uint32_t cur_line_i = 0;
+    int32_t i = 0;
+    recipient[cur_line_i].start_i = 0;
+    while (text_to_draw[i] != '\0') {
+        recipient[cur_line_i].width += get_advance_width(text_to_draw[i]);
+        i++;
+        
+        if (text_to_draw[i] == '\n') {
+            recipient[cur_line_i].end_i = i;
+            *recipient_size += 1;
+            cur_line_i += 1;
+            recipient[cur_line_i].start_i = i + 1;
+            continue;
+        }
+        
+        if (text_to_draw[i] == '\0') {
+            break;
+        }
+        
+        if (text_to_draw[i] == ' ') {
+            if (
+                recipient[cur_line_i].width > 0.0f &&
+                recipient[cur_line_i].width
+                    + get_next_word_width(text_to_draw + i) > max_width)
+            {
+                log_assert(recipient[cur_line_i].width > 0.0f);
+                log_assert(recipient[cur_line_i].start_i < i);
+                recipient[cur_line_i].end_i = i;
+                *recipient_size += 1;
+                cur_line_i += 1;
+                recipient[cur_line_i].start_i = i + 1;
+                continue;
+            }
+        }
+    }
+    
+    log_assert(text_to_draw[i] == '\0');
+    recipient[cur_line_i].end_i = i;
+    if (recipient[cur_line_i].end_i == recipient[cur_line_i].start_i) {
+        *recipient_size -= 1;
+    }
+    
+    for (uint32_t line_i = 0; line_i < *recipient_size; line_i++) {
+        if (recipient[line_i].width > widest_line_width) {
+            widest_line_width = recipient[line_i].width;
+        }
+    }
+    log_assert(widest_line_width > 0);
+}
+
 void request_label_offset_around(
     const int32_t with_id,
     const char * text_to_draw,
@@ -159,68 +227,9 @@ void request_label_offset_around(
     
     uint32_t max_lines = 100;
     PrefetchedLine lines[max_lines];
-    float widest_line_width = 0.0f;
-    uint32_t lines_size = 1;
-    
-    for (uint32_t i = 0; i < 100; i++) {
-        lines[i].width = 0.0f;
-        lines[i].start_i = -1;
-        lines[i].end_i = -1;
-    }
-    
-    // *********************************************************
-    // prefetch line widths and which character they start/end
-    // *********************************************************
-    uint32_t cur_line_i = 0;
-    int32_t i = 0;
-    lines[cur_line_i].start_i = 0;
-    while (text_to_draw[i] != '\0') {
-        lines[cur_line_i].width += get_advance_width(text_to_draw[i]);
-        i++;
-        
-        if (text_to_draw[i] == '\n') {
-            lines[cur_line_i].end_i = i;
-            lines_size += 1;
-            cur_line_i += 1;
-            lines[cur_line_i].start_i = i + 1;
-            log_assert(cur_line_i < max_lines);
-            continue;
-        }
-        
-        if (text_to_draw[i] == '\0') {
-            break;
-        }
-        
-        if (text_to_draw[i] == ' ') {
-            if (
-                lines[cur_line_i].width > 0.0f &&
-                lines[cur_line_i].width
-                    + get_next_word_width(text_to_draw + i) > max_width)
-            {
-                log_assert(lines[cur_line_i].width > 0.0f);
-                log_assert(lines[cur_line_i].start_i < i);
-                lines[cur_line_i].end_i = i;
-                lines_size += 1;
-                cur_line_i += 1;
-                lines[cur_line_i].start_i = i + 1;
-                log_assert(cur_line_i < max_lines);
-                continue;
-            }
-        }
-    }
-    
-    log_assert(text_to_draw[i] == '\0');
-    lines[cur_line_i].end_i = i;
-    if (lines[cur_line_i].end_i == lines[cur_line_i].start_i) {
-        lines_size -= 1;
-    }
-    
-    for (uint32_t line_i = 0; line_i < lines_size; line_i++) {
-        if (lines[line_i].width > widest_line_width) {
-            widest_line_width = lines[line_i].width;
-        }
-    }
-    log_assert(widest_line_width > 0);
+    uint32_t lines_size;
+    prefetch_label_lines(text_to_draw, max_width, lines, &lines_size);
+    log_assert(lines_size < max_lines);
     
     zPolygon letter;
     
@@ -301,6 +310,43 @@ void request_label_offset_around(
         }
         cur_y_offset_pixelspace -= font_height;
     }
+}
+
+void request_label_around_x_at_top_y(
+    const int32_t with_object_id,
+    const char * text_to_draw,
+    const float mid_x_pixelspace,
+    const float top_y_pixelspace,
+    const float z,
+    const float max_width,
+    const bool32_t ignore_camera)
+{
+    uint32_t max_lines = 100;
+    PrefetchedLine lines[max_lines];
+    uint32_t lines_size;
+    prefetch_label_lines(text_to_draw, max_width, lines, &lines_size);
+    log_assert(lines_size < max_lines);
+    
+    request_label_offset_around(
+        /* const int32_t with_id: */
+            with_object_id,
+        /* const char * text_to_draw: */
+            text_to_draw,
+        /* const float mid_x_pixelspace: */
+            mid_x_pixelspace,
+        /* const float mid_y_pixelspace: */
+            top_y_pixelspace -
+                ((lines_size) * (font_height / 2)),
+        /* const float pixelspace_x_offset_for_each_character: */
+            0.0f,
+        /* const float pixelspace_y_offset_for_each_character: */
+            0.0f,
+        /* const float z: */
+            z,
+        /* const float max_width: */
+            max_width,
+        /* const bool32_t ignore_camera: */
+            ignore_camera);
 }
 
 void request_label_around(

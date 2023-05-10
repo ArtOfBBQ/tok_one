@@ -114,10 +114,10 @@ void client_logic_startup(void) {
     // request_particle_fountain();
     
     float midx = 551;
-    float midy = 251;
+    float midy = 551;
     
     float redquad_width = 600;
-    float redquad_height = 100;
+    float redquad_height = 65;
     
     float redquad_z = 0.35f;
     
@@ -169,11 +169,11 @@ void client_logic_startup(void) {
     font_color[0] = 0.0f;
     font_color[1] = 1.0f;
     font_color[2] = 1.0f;
-    request_label_around(
+    request_label_around_x_at_top_y(
         /* with_id: */ 50,
-        /* text_to_draw: */ "I'm a LABEL broqb!",
+        /* text_to_draw: */ "I'm a LABEL bro!\ni start at a top y\nand am centered around an x",
         /* mid_x_pixelspace: */ midx,
-        /* mid_y_pixelspace: */ midy,
+        /* top_y_pixelspace: */ midy,
         /* z: */ redquad_z - 0.00001f,
         /* max_width: */ 5500,
         /* ignore_camera: */ false);

@@ -36,6 +36,15 @@ void request_label_offset_around(
     const float max_width,
     const bool32_t ignore_camera);
 
+void request_label_around_x_at_top_y(
+    const int32_t with_object_id,
+    const char * text_to_draw,
+    const float mid_x_pixelspace,
+    const float top_y_pixelspace,
+    const float z,
+    const float max_width,
+    const bool32_t ignore_camera);
+
 void request_label_around(
     const int32_t with_object_id,
     const char * text_to_draw,
