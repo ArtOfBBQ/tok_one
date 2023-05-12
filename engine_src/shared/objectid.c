@@ -4,11 +4,11 @@
 // a bunch of letters that combine to make a button)
 int32_t retired_object_id = RETIRED_BUT_NOT_DELETED_ID + 1;
 
-int32_t latest_nonui_object_id = FIRST_NONUI_OBJECT_ID;
-int32_t latest_ui_element_object_id = 1;
+static int32_t latest_nonui_object_id = FIRST_NONUI_OBJECT_ID;
+static int32_t latest_ui_element_object_id = 1;
 
-int32_t latest_nonui_touchable_id = FIRST_NONUI_TOUCHABLE_ID;
-int32_t latest_ui_element_touchable_id = 0;
+static int32_t latest_nonui_touchable_id = FIRST_NONUI_TOUCHABLE_ID;
+static int32_t latest_ui_element_touchable_id = 0;
 
 int32_t next_ui_element_object_id(void) {
     log_assert(latest_ui_element_object_id + 1 < FIRST_NONUI_OBJECT_ID);

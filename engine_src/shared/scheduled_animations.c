@@ -616,6 +616,8 @@ static void resolve_single_animation_effects(
 
 void resolve_animation_effects(const uint64_t microseconds_elapsed) {
     
+    log_assert(microseconds_elapsed < 1000000);
+    
     ScheduledAnimation * anim;
     for (
         int32_t animation_i = (int32_t)(scheduled_animations_size - 1);
@@ -664,46 +666,17 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
             // delete or set up next run
             if (anim->runs > 1 || anim->runs == 0) {
                 
-                uint64_t excess_from_last_run_mcrs =
-                    (actual_elapsed - anim->remaining_microseconds);
-                
-                while (excess_from_last_run_mcrs > 0) {
-                    if (anim->runs > 1) {
-                        anim->runs -= 1;
-                    } else {
-                        log_assert(anim->runs == 0);
-                    }
-                    
-                    anim->remaining_wait_before_next_run =
-                        anim->wait_before_each_run;
-                    
-                    if (
-                        anim->remaining_wait_before_next_run >=
-                            excess_from_last_run_mcrs)
-                    {
-                        anim->remaining_wait_before_next_run -=
-                            excess_from_last_run_mcrs;
-                        excess_from_last_run_mcrs = 0;
-                    } else {
-                        excess_from_last_run_mcrs -=
-                            anim->remaining_wait_before_next_run;
-                        anim->remaining_wait_before_next_run = 0;
-                    }
-                    
-                    anim->remaining_microseconds =
-                        anim->duration_microseconds;
-                    
-                    if (anim->remaining_microseconds >=
-                        excess_from_last_run_mcrs)
-                    {
-                        anim->remaining_microseconds -=
-                            excess_from_last_run_mcrs;
-                        excess_from_last_run_mcrs = 0;
-                    } else {
-                        excess_from_last_run_mcrs -=
-                            anim->remaining_microseconds;
-                    }
+                if (anim->runs > 1) {
+                    anim->runs -= 1;
+                } else {
+                    anim->runs = 0;
                 }
+                
+                anim->remaining_wait_before_next_run =
+                    anim->wait_before_each_run;
+                
+                anim->remaining_microseconds =
+                    anim->duration_microseconds;
             } else {
                 delete_after_this_run = true;
             }
@@ -757,7 +730,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
 }
 
 void request_dud_dance(
-    const uint32_t object_id, const float magnitude)
+    const int32_t object_id, const float magnitude)
 {
     uint64_t step_size = 60000;
     
@@ -783,7 +756,7 @@ void request_dud_dance(
 }
 
 void request_bump_animation(
-    const uint32_t object_id,
+    const int32_t object_id,
     const uint32_t wait)
 {
     uint64_t duration = 200000;

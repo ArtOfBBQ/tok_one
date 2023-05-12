@@ -152,10 +152,10 @@ void request_fade_to(
     const uint64_t duration_microseconds,
     const float target_alpha);
 
-void request_dud_dance(const uint32_t object_id, const float magnitude);
+void request_dud_dance(const int32_t object_id, const float magnitude);
 
 void request_bump_animation(
-    const uint32_t object_id,
+    const int32_t object_id,
     const uint32_t wait);
 
 void delete_all_movement_animations_targeting(const int32_t object_id);
