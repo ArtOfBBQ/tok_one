@@ -50,6 +50,7 @@ on each platform
 extern "C" {
 #endif
 
+#include "clientlogic_macro_settings.h"
 #include "common.h"
 #include "logger.h"
 #include "decodedimage.h"

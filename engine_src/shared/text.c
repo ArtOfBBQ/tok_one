@@ -209,7 +209,7 @@ static void prefetch_label_lines(
             widest_line_width = recipient[line_i].width;
         }
     }
-    log_assert(widest_line_width > 0);
+    log_assert(widest_line_width > 0.0f);
 }
 
 void request_label_offset_around(
@@ -224,6 +224,7 @@ void request_label_offset_around(
     const bool32_t ignore_camera)
 {
     log_assert(max_width > 0.0f);
+    log_assert(font_height > 0);
     
     uint32_t max_lines = 100;
     PrefetchedLine lines[max_lines];

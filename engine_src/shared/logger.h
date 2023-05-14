@@ -9,7 +9,6 @@
 //#define IGNORE_LOGGER
 
 #include "common.h"
-#include "memorystore.h"
 
 #define LOG_SIZE 5000000
 
@@ -38,9 +37,10 @@ extern char crashed_top_of_screen_msg[256];
 extern bool32_t application_running;
 
 /*
-Allocates memory. This is only necessary in C99
+Allocates memory. You need to pass a chunk of memory of LOG_SIZE bytes
+example with c standard library: setup_log(malloc(LOG_SIZE));
 */
-void setup_log(void);
+void setup_log(char * memory_log_size_bytes);
 
 /*
 don't use the internal_ functions, use the macros that call them.

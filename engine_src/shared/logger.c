@@ -13,10 +13,10 @@ static uint32_t log_i = 0;
 extern "C" {
 #endif
 
-void setup_log(void) {
+void setup_log(char * memory_log_size_bytes) {
     
     // create a log for debug text
-    app_log = (char *)malloc_from_unmanaged(LOG_SIZE);
+    app_log = memory_log_size_bytes;
 }
 
 void
@@ -160,18 +160,21 @@ internal_log_append(
 
 void log_dump(bool32_t * good) {
     
-    if (app_log == NULL) { return; }
-    app_log[log_i + 1] = '\0';
+    // TODO: move this elsewhere so logger can avoid #including platform_layer.h
+    //    if (app_log == NULL) { return; }
+    //    app_log[log_i + 1] = '\0';
+    //
+    //    platform_write_file_to_writables(
+    //        /* filepath_destination : */
+    //            (char *)"log.txt",
+    //        /* const char * output  : */
+    //            app_log,
+    //        /* output_size          : */
+    //            log_i + 1,
+    //        /* good                 : */
+    //            good);
     
-    platform_write_file_to_writables(
-        /* filepath_destination : */
-            (char *)"log.txt",
-        /* const char * output  : */
-            app_log,
-        /* output_size          : */
-            log_i + 1,
-        /* good                 : */
-            good);
+    *good = true;
 }
 
 void

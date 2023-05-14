@@ -5,6 +5,8 @@
 #include "logger.h"
 #include "triangle.h"
 
+#include "memorystore.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

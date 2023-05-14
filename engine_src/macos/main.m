@@ -201,22 +201,11 @@ NSSize last_nonfull_drawable_size;
 - (void)
     windowWillEnterFullScreen:(NSNotification *)notification
 {
-    log_append("window will enter full screen\n");
     // I'm stashing this info because NSEvents won't give the correct
     // info when entering full screen and then going back to window mode
     last_nonfull_screen_size.width = window_globals->window_width;
     last_nonfull_screen_size.height = window_globals->window_height;
     last_nonfull_drawable_size = mtk_view.drawableSize;
-    log_append("cached for next window minimization: ");
-    log_append_uint((uint32_t)last_nonfull_screen_size.height);
-    log_append_char(',');
-    log_append_uint((uint32_t)last_nonfull_screen_size.width);
-    log_append_char('\n');
-    log_append("cached for next mtkview drawable minimization: ");
-    log_append_uint((uint32_t)last_nonfull_drawable_size.height);
-    log_append_char(',');
-    log_append_uint((uint32_t)last_nonfull_drawable_size.width);
-    log_append_char('\n');
     
     zpolygons_to_render_size = 0;
 }
@@ -301,7 +290,6 @@ NSWindowWithCustomResponder: NSWindow
 
 - (void)mouseDown:(NSEvent *)event
 {
-    printf("mouse down\n");
     @autoreleasepool {
     NSPoint window_location = [event locationInWindow];
         
@@ -328,7 +316,6 @@ NSWindowWithCustomResponder: NSWindow
 
 - (void)mouseUp:(NSEvent *)event
 {
-    printf("mouse up\n");
     @autoreleasepool {
     NSPoint window_location = [event locationInWindow];
     

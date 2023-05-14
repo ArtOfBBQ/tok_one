@@ -15,7 +15,7 @@ void init_application(void)
 {
     init_memory_store();
     
-    setup_log();
+    setup_log((char *)malloc_from_unmanaged(LOG_SIZE));
     
     engine_save_file = (EngineSaveFile *)malloc_from_unmanaged(
         sizeof(EngineSaveFile));

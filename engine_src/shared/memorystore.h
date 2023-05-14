@@ -6,9 +6,9 @@
 #endif
 
 #include "clientlogic_macro_settings.h"
-#include "platform_layer.h"
 #include "common.h"
-
+#include "logger.h"
+#include "platform_layer.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,9 +21,9 @@ uint8_t * malloc_from_unmanaged_aligned(
     const uint32_t aligned_to);
 
 #define malloc_struct_from_unmanaged(type) (type *)malloc_from_unmanaged(sizeof(type))
-uint8_t * malloc_from_unmanaged(const uint64_t size);
+void * malloc_from_unmanaged(size_t size);
+void * malloc_from_managed(size_t size);
 
-uint8_t * malloc_from_managed(const uint64_t size);
 void free_from_managed(uint8_t * to_free);
 
 #ifdef __cplusplus

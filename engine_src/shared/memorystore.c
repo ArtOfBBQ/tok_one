@@ -63,7 +63,7 @@ uint8_t * malloc_from_unmanaged_aligned(
     return return_value;
 };
 
-uint8_t * malloc_from_unmanaged(const uint64_t size) {
+void * malloc_from_unmanaged(size_t size) {
     uint8_t * return_value = malloc_from_unmanaged_aligned(
         size,
         MEM_ALIGNMENT_BYTES);
@@ -71,7 +71,7 @@ uint8_t * malloc_from_unmanaged(const uint64_t size) {
     return return_value;
 };
 
-uint8_t * malloc_from_managed(const uint64_t size) {
+void * malloc_from_managed(size_t size) {
     
     platform_mutex_lock(malloc_mutex_id);
     
