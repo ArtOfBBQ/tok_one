@@ -22,7 +22,9 @@ typedef struct ShatterEffect {
     uint64_t elapsed;
     
     uint64_t longest_random_delay_before_launch;
-    uint64_t fade_out_after_launch;
+    
+    uint64_t start_fade_out_at_elapsed;
+    uint64_t finish_fade_out_at_elapsed;
     
     float exploding_distance_per_second;
     

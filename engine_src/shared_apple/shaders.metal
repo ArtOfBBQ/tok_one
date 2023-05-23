@@ -163,7 +163,7 @@ vertex_shader(
         input_array[vertex_i].RGBA[1],
         input_array[vertex_i].RGBA[2],
         input_array[vertex_i].RGBA[3]);
-    clamp(out.color, 0.25f, 1.0f);
+    clamp(out.color, 0.05f, 1.0f);
     
     //    out.surface_normal = vector_float4(
     //        input_array[vertex_i].normal_x,

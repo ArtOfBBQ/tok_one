@@ -1280,6 +1280,14 @@ void create_shattered_version_of_mesh(
     const int32_t mesh_id,
     const uint32_t triangles_multiplier)
 {
+    if (triangles_multiplier == 1) {
+        all_mesh_summaries[mesh_id].shattered_triangles_size =
+            all_mesh_summaries[mesh_id].triangles_size;
+        all_mesh_summaries[mesh_id].shattered_triangles_head_i =
+            all_mesh_summaries[mesh_id].triangles_head_i;
+        return;
+    }
+    
     int32_t orig_head_i =
         all_mesh_summaries[mesh_id].triangles_head_i;
     int32_t orig_tail_i =
@@ -1325,32 +1333,57 @@ void create_shattered_version_of_mesh(
         zTriangle first_tri;
         zTriangle second_tri;
         
-        zVertex mid_of_vertex_1_and_2;
-        mid_of_vertex_1_and_2.x =
-            (all_mesh_triangles[biggest_area_i].vertices[1].x +
-            all_mesh_triangles[biggest_area_i].vertices[2].x) / 2;
-        mid_of_vertex_1_and_2.y =
-            (all_mesh_triangles[biggest_area_i].vertices[1].y +
-            all_mesh_triangles[biggest_area_i].vertices[2].y) / 2;
-        mid_of_vertex_1_and_2.z =
-            (all_mesh_triangles[biggest_area_i].vertices[1].z +
-            all_mesh_triangles[biggest_area_i].vertices[2].z) / 2;
-        mid_of_vertex_1_and_2.uv[0] =
-            (all_mesh_triangles[biggest_area_i].vertices[1].uv[0] +
-            all_mesh_triangles[biggest_area_i].vertices[2].uv[0]) / 2;
-        mid_of_vertex_1_and_2.uv[1] =
-            (all_mesh_triangles[biggest_area_i].vertices[1].uv[1] +
-            all_mesh_triangles[biggest_area_i].vertices[2].uv[1]) / 2;
+        int32_t opposite_vertex_i = temp_new_tail_i % 3; // random
+        int32_t split_line_start_vertex_i = (temp_new_tail_i + 1) % 3; // random
+        int32_t split_line_end_vertex_i = (temp_new_tail_i + 2) % 3; // random
+        
+        zVertex mid_of_line;
+        mid_of_line.x =
+            (all_mesh_triangles[biggest_area_i].
+                vertices[split_line_start_vertex_i].x +
+            all_mesh_triangles[biggest_area_i].
+                vertices[split_line_end_vertex_i].x) / 2;
+        mid_of_line.y =
+            (all_mesh_triangles[biggest_area_i].
+                vertices[split_line_start_vertex_i].y +
+            all_mesh_triangles[biggest_area_i].
+                vertices[split_line_end_vertex_i].y) / 2;
+        mid_of_line.z =
+            (all_mesh_triangles[biggest_area_i].
+                vertices[split_line_start_vertex_i].z +
+            all_mesh_triangles[biggest_area_i].
+                vertices[split_line_end_vertex_i].z) / 2;
+        mid_of_line.uv[0] =
+            (all_mesh_triangles[biggest_area_i].
+                vertices[split_line_start_vertex_i].uv[0] +
+            all_mesh_triangles[biggest_area_i].
+                vertices[split_line_end_vertex_i].uv[0]) / 2;
+        mid_of_line.uv[1] =
+            (all_mesh_triangles[biggest_area_i].
+                vertices[split_line_start_vertex_i].uv[1] +
+            all_mesh_triangles[biggest_area_i].
+                vertices[split_line_end_vertex_i].uv[1]) / 2;
         
         first_tri.normal = all_mesh_triangles[biggest_area_i].normal;
-        first_tri.vertices[0] = all_mesh_triangles[biggest_area_i].vertices[0];
-        first_tri.vertices[1] = all_mesh_triangles[biggest_area_i].vertices[1];
-        first_tri.vertices[2] = mid_of_vertex_1_and_2;
+        first_tri.vertices[opposite_vertex_i] =
+            all_mesh_triangles[biggest_area_i].vertices[opposite_vertex_i];
+        first_tri.vertices[split_line_start_vertex_i] =
+            all_mesh_triangles[biggest_area_i].
+                vertices[split_line_start_vertex_i];
+        first_tri.vertices[split_line_end_vertex_i] = mid_of_line;
         
         second_tri.normal = all_mesh_triangles[biggest_area_i].normal;
-        second_tri.vertices[0] = all_mesh_triangles[biggest_area_i].vertices[0];
-        second_tri.vertices[1] = mid_of_vertex_1_and_2;
-        second_tri.vertices[2] = all_mesh_triangles[biggest_area_i].vertices[2];
+        second_tri.vertices[opposite_vertex_i] =
+            all_mesh_triangles[biggest_area_i].vertices[opposite_vertex_i];
+        second_tri.vertices[split_line_start_vertex_i] =
+            mid_of_line;
+        second_tri.vertices[split_line_end_vertex_i] =
+            all_mesh_triangles[biggest_area_i].vertices[2];
+        
+        first_tri.parent_material_i =
+            all_mesh_triangles[biggest_area_i].parent_material_i;
+        second_tri.parent_material_i =
+            all_mesh_triangles[biggest_area_i].parent_material_i;
         
         all_mesh_triangles[biggest_area_i] = first_tri;
         all_mesh_triangles[temp_new_tail_i++] = second_tri;

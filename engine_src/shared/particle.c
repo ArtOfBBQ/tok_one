@@ -17,7 +17,11 @@ void construct_shatter_effect(
     to_construct->deleted = false;
     
     to_construct->longest_random_delay_before_launch = 500000;
-    to_construct->fade_out_after_launch = 2000000;
+    
+    //                                         2...000 (2 seconds)
+    to_construct->start_fade_out_at_elapsed =  2000000;
+    //                                         35..000 (3.5 seconds)
+    to_construct->finish_fade_out_at_elapsed = 3500000;
     
     to_construct->exploding_distance_per_second = 0.5f;
     
@@ -116,6 +120,16 @@ void add_shatter_effects_to_workload(
                     shattered_triangles_size;
         log_assert(tri_tail_i >= 0);
         
+        uint64_t lifetime_so_far = shatter_effects[i].elapsed;
+        if (
+            lifetime_so_far >
+                shatter_effects[i].finish_fade_out_at_elapsed +
+                    shatter_effects[i].longest_random_delay_before_launch)
+        {
+            shatter_effects[i].deleted = true;
+            continue;
+        }
+        
         for (
             uint32_t tri_i = tri_head_i;
             tri_i <= tri_tail_i;
@@ -123,24 +137,34 @@ void add_shatter_effects_to_workload(
         {
             uint64_t random_delay =
                 tok_rand_at_i(
-                    ((shatter_effects[i].random_seed + tri_i) % (RANDOM_SEQUENCE_SIZE - 1))
+                    ((shatter_effects[i].random_seed + tri_i) %
+                        (RANDOM_SEQUENCE_SIZE - 1))
                     ) %
                 shatter_effects[i].longest_random_delay_before_launch;
-            uint64_t lifetime_so_far = shatter_effects[i].elapsed;
             
             uint64_t delayed_lifetime_so_far =
                 lifetime_so_far > random_delay ?
                     lifetime_so_far - random_delay : 0;
             
-            float alpha =
-                shatter_effects[i].fade_out_after_launch /
-                    (delayed_lifetime_so_far + 1);
+            float alpha = 1.0f;
             
             if (
-                lifetime_so_far >
-                    (shatter_effects[i].fade_out_after_launch * 2))
+                delayed_lifetime_so_far >
+                    shatter_effects[i].finish_fade_out_at_elapsed)
             {
-                shatter_effects[i].deleted = true;
+                alpha = 0.0f;
+            } else if (
+                delayed_lifetime_so_far >
+                    shatter_effects[i].start_fade_out_at_elapsed)
+            {
+                alpha =
+                    1.0f -
+                    ((float)(delayed_lifetime_so_far -
+                        shatter_effects[i].start_fade_out_at_elapsed) /
+                    (float)(shatter_effects[i].finish_fade_out_at_elapsed -
+                        shatter_effects[i].start_fade_out_at_elapsed));
+                log_assert(alpha >= 0.0f);
+                log_assert(alpha < 1.0f);
             }
             
             zVertex exploding_direction;

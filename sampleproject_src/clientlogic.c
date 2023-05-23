@@ -80,6 +80,8 @@ static void request_particle_fountain() {
     request_particle_effect(&fountain);
 }
 
+static zPolygon xmastree;
+static int32_t xmastree_object_id;
 float slider_value = 0.0f;
 void client_logic_startup(void) {
     
@@ -121,7 +123,7 @@ void client_logic_startup(void) {
     
     center_mesh_offsets(xmastree_mesh_id);
     
-    // request_particle_fountain();
+    request_particle_fountain();
     
     zLightSource im_a_light;
     im_a_light.x = -1.5f;
@@ -136,64 +138,56 @@ void client_logic_startup(void) {
     im_a_light.reach = 6.0f;
     request_zlightsource(&im_a_light);
     
-    zPolygon xmastree;
-    construct_zpolygon(&xmastree);
-    xmastree.mesh_id = xmastree_mesh_id;
-    xmastree.x = 0.0f;
-    xmastree.y = 0.0f;
-    xmastree.z = 1.25f;
-    xmastree.triangle_materials[0].color[0] = 0.05f; // christmas decorations?
-    xmastree.triangle_materials[0].color[1] = 0.05f;
-    xmastree.triangle_materials[0].color[2] = 1.0f;
-    xmastree.triangle_materials[0].color[3] = 1.0f;
-    xmastree.triangle_materials[1].color[0] = 1.0f; // leaves
-    xmastree.triangle_materials[1].color[1] = 1.0f;
-    xmastree.triangle_materials[1].color[2] = 1.0f;
-    xmastree.triangle_materials[1].color[3] = 1.0f;
-    xmastree.triangle_materials[1].texturearray_i = 2;
-    xmastree.triangle_materials[1].texture_i = 0;
-    xmastree.triangle_materials[2].color[0] = 0.3f; // trunk
-    xmastree.triangle_materials[2].color[1] = 0.08f;
-    xmastree.triangle_materials[2].color[2] = 0.05f;
-    xmastree.triangle_materials[2].color[3] = 1.0f;
-    xmastree.triangle_materials_size = 3;
-    xmastree.x_multiplier = 0.1f;
-    xmastree.y_multiplier = 0.1f;
-    xmastree.z_multiplier = 0.1f;
-    // request_zpolygon_to_render(&xmastree);
+    //    construct_zpolygon(&xmastree);
+    //    xmastree.mesh_id = new_mesh_id_from_resource("xmas_tree.obj");
+    //    xmastree.x = 0.0f;
+    //    xmastree.y = 0.0f;
+    //    xmastree.z = 1.25f;
+    //    xmastree.triangle_materials[0].color[0] = 0.05f; // christmas decorations?
+    //    xmastree.triangle_materials[0].color[1] = 0.05f;
+    //    xmastree.triangle_materials[0].color[2] = 1.0f;
+    //    xmastree.triangle_materials[0].color[3] = 1.0f;
+    //    xmastree.triangle_materials[1].color[0] = 1.0f; // leaves
+    //    xmastree.triangle_materials[1].color[1] = 1.0f;
+    //    xmastree.triangle_materials[1].color[2] = 1.0f;
+    //    xmastree.triangle_materials[1].color[3] = 1.0f;
+    //    xmastree.triangle_materials[1].texturearray_i = 2;
+    //    xmastree.triangle_materials[1].texture_i = 0;
+    //    xmastree.triangle_materials[2].color[0] = 0.3f; // trunk
+    //    xmastree.triangle_materials[2].color[1] = 0.08f;
+    //    xmastree.triangle_materials[2].color[2] = 0.05f;
+    //    xmastree.triangle_materials[2].color[3] = 1.0f;
+    //    xmastree.triangle_materials_size = 3;
+    //    xmastree.x_multiplier = 0.1f;
+    //    xmastree.y_multiplier = 0.1f;
+    //    xmastree.z_multiplier = 0.1f;
     
-    //    zPolygon xmastree;
-    //    construct_quad(
-    //        /* const float left_x: */
-    //            -0.5f,
-    //        /* const float bottom_y: */
-    //            0.0f,
-    //        /* const float z: */
-    //            0.75f,
-    //        /* const float width: */
-    //            0.2f,
-    //        /* const float height: */
-    //            0.2f,
-    //        /* zPolygon * recipient: */
-    //            &xmastree);
-    //    xmastree.triangle_materials[0].texturearray_i = 3;
-    //    xmastree.triangle_materials[0].texture_i = 0;
+    // example 2: use a quad instead
+    construct_quad(
+        /* const float left_x: */
+            0.25f,
+        /* const float bottom_y: */
+            0.0f,
+        /* const float z: */
+            0.75f,
+        /* const float width: */
+            0.2f,
+        /* const float height: */
+            0.2f,
+        /* zPolygon * recipient: */
+            &xmastree);
+    xmastree.triangle_materials[0].texturearray_i = 3;
+    xmastree.triangle_materials[0].texture_i = 0;
+    
+    // this code needs to run regardless of what example mesh we're using
+    xmastree_object_id = next_nonui_object_id();
+    xmastree.object_id = xmastree_object_id;
+    request_zpolygon_to_render(&xmastree);
     create_shattered_version_of_mesh(
         /* mesh_id: */
             xmastree.mesh_id,
         /* triangles_multiplier: */
-            25);
-    
-    ShatterEffect * dissolving_quad = next_shatter_effect(
-        /* constructed with zpolygon: */ &xmastree);
-    //                                                    2...000 2.0 seconds
-    dissolving_quad->longest_random_delay_before_launch = 2000000;
-    dissolving_quad->exploding_distance_per_second = 0.02f;
-    dissolving_quad->linear_distance_per_second = 0.01f;
-    dissolving_quad->squared_distance_per_second = 0.01f;
-    //                                       40..000 4.0 seconds
-    dissolving_quad->fade_out_after_launch = 4000000;
-    commit_shatter_effect(dissolving_quad);
+            1);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -286,6 +280,25 @@ static void client_handle_keypresses(
     
     if (keypress_map[TOK_KEY_UNDERSCORE] == true) {                                             
         camera.z += 0.01f;                                                      
+    }
+    
+    if (keypress_map[TOK_KEY_T] == true) {
+        keypress_map[TOK_KEY_T] = false;
+        
+        delete_zpolygon_object(xmastree_object_id);
+        ShatterEffect * dissolving_quad = next_shatter_effect(
+        /* constructed with zpolygon: */ &xmastree);
+        //                                                    35..000 3.5 seconds
+        dissolving_quad->longest_random_delay_before_launch = 3500000;
+        dissolving_quad->exploding_distance_per_second = 0.07f;
+        dissolving_quad->linear_distance_per_second = 0.01f;
+        dissolving_quad->squared_distance_per_second = 0.01f;
+        
+        //                                            15..000 1.5 seconds
+        dissolving_quad->start_fade_out_at_elapsed  = 1500000;
+        //                                            25..000 2.5 seconds
+        dissolving_quad->finish_fade_out_at_elapsed = 2500000;
+        commit_shatter_effect(dissolving_quad);
     }
     
     if (keypress_map[TOK_KEY_SPACEBAR] == true) {                                             
