@@ -13,13 +13,15 @@ extern "C" {
 
 #define OBJ_STRING_SIZE 128
 typedef struct MeshSummary {
-    char resource_name[OBJ_STRING_SIZE]; // the filename of the resource without path
+    char resource_name[OBJ_STRING_SIZE]; // the resource filename (without path)
     int32_t mesh_id;
-    int32_t all_meshes_head_i;
+    int32_t triangles_head_i;
     int32_t triangles_size;
     float base_width;
     float base_height;
     float base_depth;
+    int32_t shattered_triangles_head_i; // -1 if no shattered version
+    int32_t shattered_triangles_size; // 0 if no shattered version
     char material_names[MAX_MATERIALS_SIZE][OBJ_STRING_SIZE];
     uint32_t materials_size;
 } MeshSummary;
@@ -57,6 +59,21 @@ int32_t new_mesh_id_from_resource(
 
 void center_mesh_offsets(
     const int32_t mesh_id);
+
+/*
+Creates a version of the mesh with (normally needless) extra triangles
+
+This can be useful if you have a very large flat area that needs to catch
+lights in between its vertices, or if you plan to 'shatter' or explode the
+mesh into many pieces.
+
+After running this function, the new triangles can be found in:
+all_mesh_summaries[your_mesh_id].shattered_triangles_head_i;
+all_mesh_summaries[your_mesh_id].shattered_triangles_size;
+*/
+void create_shattered_version_of_mesh(
+    const int32_t mesh_id,
+    const uint32_t triangles_mulfiplier);
 
 #ifdef __cplusplus
 }

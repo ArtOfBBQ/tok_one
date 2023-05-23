@@ -40,6 +40,7 @@ typedef struct TriangleMaterial {
 typedef struct zPolygon {
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
     TriangleMaterial triangle_materials[MAX_MATERIALS_SIZE];
+    
     uint32_t triangle_materials_size;
     int32_t object_id;
     int32_t touchable_id;
@@ -105,9 +106,6 @@ zTriangle translate_ztriangle(
     const float by_z);
 
 float dot_of_zvertices(
-    const zVertex * a,
-    const zVertex * b);
-zVertex crossproduct_of_zvertices(
     const zVertex * a,
     const zVertex * b);
 

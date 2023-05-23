@@ -23,6 +23,13 @@ typedef struct zTriangle {
 void normalize_zvertex(
     zVertex * to_normalize);
 
+zVertex crossproduct_of_zvertices(
+    const zVertex * a,
+    const zVertex * b);
+
+float get_triangle_area(
+    zTriangle * subject);
+
 #ifdef __cplusplus
 }
 #endif

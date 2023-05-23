@@ -82,10 +82,10 @@ void hardware_render(
         
         int32_t mesh_id = zpolygons_to_render[zp_i].mesh_id;
         int32_t tail_i =
-            all_mesh_summaries[mesh_id].all_meshes_head_i +
+            all_mesh_summaries[mesh_id].triangles_head_i +
                 all_mesh_summaries[mesh_id].triangles_size;
         for (
-            int32_t tri_i = all_mesh_summaries[mesh_id].all_meshes_head_i;
+            int32_t tri_i = all_mesh_summaries[mesh_id].triangles_head_i;
             tri_i < tail_i;
             tri_i++)
         {
@@ -324,6 +324,11 @@ void hardware_render(
     
     if (application_running) {
         add_particle_effects_to_workload(
+            next_gpu_workload,
+            next_workload_size,
+            lights_for_gpu,
+            elapsed_nanoseconds);
+        add_shatter_effects_to_workload(
             next_gpu_workload,
             next_workload_size,
             lights_for_gpu,

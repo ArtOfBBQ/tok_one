@@ -187,6 +187,10 @@ log_dump_and_crash(const char * crash_message) {
     #ifndef LOGGER_SILENCE
     printf("DUMP & CRASHED: %s\n", crash_message);
     #endif
+    
+    #ifdef IGNORE_LOGGER
+    assert(0);
+    #endif
 }
 
 void

@@ -6,9 +6,9 @@ Call this example function in client_logic_startup to make a fountain
 static void request_particle_fountain() {
     ParticleEffect fountain;
     construct_particle_effect(&fountain);
-    fountain.x = 0.0f;
+    fountain.x = -1.5f;
     fountain.y = 0.0f;
-    fountain.z = 0.75f;
+    fountain.z = 2.0f;
     fountain.mesh_id_to_spawn = 1;
     fountain.particle_y_multiplier = 0.007f;
     fountain.particle_x_multiplier = 0.007f;
@@ -100,10 +100,16 @@ void client_logic_startup(void) {
         3);
     
     char * filenames_2[1] = {
-        "structuredart2.png",
+        "leaves3.png",
     };
     register_new_texturearray_from_files(
         (const char **)filenames_2, 1);
+    
+    char * filenames_3[1] = {
+        "structuredart2.png",
+    };
+    register_new_texturearray_from_files(
+        (const char **)filenames_3, 1);
     
     char * obj_filenames[3] = {
         "xmas_tree.obj",
@@ -111,72 +117,83 @@ void client_logic_startup(void) {
         "disk.obj",
     };
     
+    int32_t xmastree_mesh_id = new_mesh_id_from_resource(obj_filenames[0]);
+    
+    center_mesh_offsets(xmastree_mesh_id);
+    
     // request_particle_fountain();
     
-    float midx = 551;
-    float midy = 551;
+    zLightSource im_a_light;
+    im_a_light.x = -1.5f;
+    im_a_light.y = 1.5f;
+    im_a_light.z = 0.5f;
+    im_a_light.ambient = 0.8f;
+    im_a_light.diffuse = 0.8f;
+    im_a_light.RGBA[0] = 1.0f;
+    im_a_light.RGBA[1] = 1.0f;
+    im_a_light.RGBA[2] = 1.0f;
+    im_a_light.RGBA[3] = 1.0f;
+    im_a_light.reach = 6.0f;
+    request_zlightsource(&im_a_light);
     
-    float redquad_width = 600;
-    float redquad_height = 65;
+    zPolygon xmastree;
+    construct_zpolygon(&xmastree);
+    xmastree.mesh_id = xmastree_mesh_id;
+    xmastree.x = 0.0f;
+    xmastree.y = 0.0f;
+    xmastree.z = 1.25f;
+    xmastree.triangle_materials[0].color[0] = 0.05f; // christmas decorations?
+    xmastree.triangle_materials[0].color[1] = 0.05f;
+    xmastree.triangle_materials[0].color[2] = 1.0f;
+    xmastree.triangle_materials[0].color[3] = 1.0f;
+    xmastree.triangle_materials[1].color[0] = 1.0f; // leaves
+    xmastree.triangle_materials[1].color[1] = 1.0f;
+    xmastree.triangle_materials[1].color[2] = 1.0f;
+    xmastree.triangle_materials[1].color[3] = 1.0f;
+    xmastree.triangle_materials[1].texturearray_i = 2;
+    xmastree.triangle_materials[1].texture_i = 0;
+    xmastree.triangle_materials[2].color[0] = 0.3f; // trunk
+    xmastree.triangle_materials[2].color[1] = 0.08f;
+    xmastree.triangle_materials[2].color[2] = 0.05f;
+    xmastree.triangle_materials[2].color[3] = 1.0f;
+    xmastree.triangle_materials_size = 3;
+    xmastree.x_multiplier = 0.1f;
+    xmastree.y_multiplier = 0.1f;
+    xmastree.z_multiplier = 0.1f;
+    // request_zpolygon_to_render(&xmastree);
     
-    float redquad_z = 0.35f;
+    //    zPolygon xmastree;
+    //    construct_quad(
+    //        /* const float left_x: */
+    //            -0.5f,
+    //        /* const float bottom_y: */
+    //            0.0f,
+    //        /* const float z: */
+    //            0.75f,
+    //        /* const float width: */
+    //            0.2f,
+    //        /* const float height: */
+    //            0.2f,
+    //        /* zPolygon * recipient: */
+    //            &xmastree);
+    //    xmastree.triangle_materials[0].texturearray_i = 3;
+    //    xmastree.triangle_materials[0].texture_i = 0;
+    create_shattered_version_of_mesh(
+        /* mesh_id: */
+            xmastree.mesh_id,
+        /* triangles_multiplier: */
+            25);
     
-    zPolygon sample_quad;
-    construct_quad_around(
-        /* mid_x: */
-            screenspace_x_to_x(midx, redquad_z),
-        /* const float mid_y: */
-            screenspace_y_to_y(midy, redquad_z),
-        /* const float z: */
-            redquad_z,
-        /* const float width: */
-            screenspace_width_to_width(
-                redquad_width,
-                redquad_z),
-        /* const float height: */
-            screenspace_height_to_height(
-                redquad_height,
-                redquad_z),
-        /* zPolygon * recipient: */ &sample_quad);
-    
-    sample_quad.triangle_materials[0].color[0] = 1.0f;
-    sample_quad.triangle_materials[0].color[1] = 0.0f;
-    sample_quad.triangle_materials[0].color[2] = 0.0f;
-    sample_quad.ignore_lighting = true;
-    request_zpolygon_to_render(&sample_quad);
-    
-    zPolygon midyline;
-    construct_quad_around(
-        /* mid_x: */
-            screenspace_x_to_x(midx, redquad_z),
-        /* const float mid_y: */
-            screenspace_y_to_y(midy, redquad_z),
-        /* const float z: */
-            redquad_z,
-        /* const float width: */
-            screenspace_width_to_width(redquad_width*2, redquad_z),
-        /* const float height: */
-            0.001f,
-        /* zPolygon * recipient: */ &midyline);
-    
-    midyline.triangle_materials[0].color[0] = 0.0f;
-    midyline.triangle_materials[0].color[1] = 1.0f;
-    midyline.triangle_materials[0].color[2] = 1.0f;
-    midyline.ignore_lighting = true;
-    request_zpolygon_to_render(&midyline);
-    
-    font_height = redquad_height;
-    font_color[0] = 0.0f;
-    font_color[1] = 1.0f;
-    font_color[2] = 1.0f;
-    request_label_around_x_at_top_y(
-        /* with_id: */ 50,
-        /* text_to_draw: */ "I'm a LABEL bro!\ni start at a top y\nand am centered around an x",
-        /* mid_x_pixelspace: */ midx,
-        /* top_y_pixelspace: */ midy,
-        /* z: */ redquad_z - 0.00001f,
-        /* max_width: */ 5500,
-        /* ignore_camera: */ false);
+    ShatterEffect * dissolving_quad = next_shatter_effect(
+        /* constructed with zpolygon: */ &xmastree);
+    //                                                    2...000 2.0 seconds
+    dissolving_quad->longest_random_delay_before_launch = 2000000;
+    dissolving_quad->exploding_distance_per_second = 0.02f;
+    dissolving_quad->linear_distance_per_second = 0.01f;
+    dissolving_quad->squared_distance_per_second = 0.01f;
+    //                                       40..000 4.0 seconds
+    dissolving_quad->fade_out_after_launch = 4000000;
+    commit_shatter_effect(dissolving_quad);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {

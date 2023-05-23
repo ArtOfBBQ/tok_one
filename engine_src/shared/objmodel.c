@@ -3,6 +3,25 @@
 MeshSummary * all_mesh_summaries;
 uint32_t all_mesh_summaries_size;
 
+static void construct_mesh_summary(
+    MeshSummary * to_construct,
+    const int32_t id)
+{
+    to_construct->resource_name[0] = '\0';
+    to_construct->mesh_id = id;
+    to_construct->triangles_head_i = -1;
+    to_construct->triangles_size = 0;
+    to_construct->base_width = 0.0f;
+    to_construct->base_height = 0.0f;
+    to_construct->base_depth = 0.0f;
+    to_construct->shattered_triangles_head_i = -1;
+    to_construct->shattered_triangles_size = 0;
+    for (uint32_t mat_i = 0; mat_i < MAX_MATERIALS_SIZE; mat_i++) {
+        to_construct->material_names[mat_i][0] = '\0';
+    }
+    to_construct->materials_size = 0;
+}
+
 zTriangle * all_mesh_triangles;
 uint32_t all_mesh_triangles_size = 0;
 
@@ -34,6 +53,10 @@ void init_all_meshes(void) {
     all_mesh_summaries = (MeshSummary *)malloc_from_unmanaged(
         sizeof(MeshSummary) * ALL_MESHES_SIZE);
     
+    for (uint32_t i = 0; i < ALL_MESHES_SIZE; i++) {
+        construct_mesh_summary(&all_mesh_summaries[i], i);
+    }
+    
     all_mesh_triangles = (zTriangle *)malloc_from_unmanaged(
         sizeof(zTriangle) * ALL_MESH_TRIANGLES_SIZE);
     
@@ -46,8 +69,10 @@ void init_all_meshes(void) {
         "basic_quad");
     all_mesh_summaries[0].triangles_size = 2;
     all_mesh_summaries[0].mesh_id = 0;
-    all_mesh_summaries[0].all_meshes_head_i = 0;
+    all_mesh_summaries[0].triangles_head_i = 0;
     all_mesh_summaries[0].materials_size = 1;
+    all_mesh_summaries[0].shattered_triangles_head_i = -1;
+    all_mesh_summaries[0].shattered_triangles_size = 0;
     all_mesh_summaries[0].base_width = 2.0f;
     all_mesh_summaries[0].base_height = 2.0f;
     all_mesh_summaries[0].base_depth = 2.0f;
@@ -115,7 +140,7 @@ void init_all_meshes(void) {
         "basic_cube");
     all_mesh_summaries[1].triangles_size = 12;
     all_mesh_summaries[1].mesh_id = 1;
-    all_mesh_summaries[1].all_meshes_head_i = 2;
+    all_mesh_summaries[1].triangles_head_i = 2;
     all_mesh_summaries[1].materials_size = 1;
     all_mesh_summaries[1].base_width = 1.0f;
     all_mesh_summaries[1].base_height = 1.0f;
@@ -365,11 +390,11 @@ void init_all_meshes(void) {
 static void assert_objmodel_validity(int32_t mesh_id) {
     log_assert(mesh_id >= 0);
     log_assert(mesh_id < (int32_t)all_mesh_summaries_size);
-    log_assert(all_mesh_summaries[mesh_id].all_meshes_head_i >= 0);
+    log_assert(all_mesh_summaries[mesh_id].triangles_head_i >= 0);
     log_assert(
         all_mesh_summaries[mesh_id].triangles_size < ALL_MESH_TRIANGLES_SIZE);
     int32_t all_meshes_tail_i =
-        all_mesh_summaries[mesh_id].all_meshes_head_i +
+        all_mesh_summaries[mesh_id].triangles_head_i +
         all_mesh_summaries[mesh_id].triangles_size;
     log_assert(all_meshes_tail_i <= (int32_t)all_mesh_triangles_size);
     
@@ -377,7 +402,7 @@ static void assert_objmodel_validity(int32_t mesh_id) {
     int32_t materials_mentioned[MAX_MATERIALS_SIZE];
     uint32_t materials_mentioned_size = 0;
     for (
-        int32_t tri_i = all_mesh_summaries[mesh_id].all_meshes_head_i;
+        int32_t tri_i = all_mesh_summaries[mesh_id].triangles_head_i;
         tri_i < all_meshes_tail_i;
         tri_i++)
     {
@@ -1104,7 +1129,7 @@ int32_t new_mesh_id_from_resource(
     
     log_assert(obj_file.good);
     
-    all_mesh_summaries[all_mesh_summaries_size].all_meshes_head_i =
+    all_mesh_summaries[all_mesh_summaries_size].triangles_head_i =
         new_mesh_head_id;
     all_mesh_summaries[all_mesh_summaries_size].mesh_id =
         (int32_t)all_mesh_summaries_size;
@@ -1195,11 +1220,11 @@ void center_mesh_offsets(
     float largest_z = FLOAT32_MIN;
     
     int32_t tail_i =
-        all_mesh_summaries[mesh_id].all_meshes_head_i +
+        all_mesh_summaries[mesh_id].triangles_head_i +
             all_mesh_summaries[mesh_id].triangles_size;
     
     for (
-        int32_t tri_i = all_mesh_summaries[mesh_id].all_meshes_head_i;
+        int32_t tri_i = all_mesh_summaries[mesh_id].triangles_head_i;
         tri_i < tail_i;
         tri_i++)
     {
@@ -1239,7 +1264,7 @@ void center_mesh_offsets(
     log_assert(new_smallest_x + new_largest_x == 0.0f);
     
     for (
-        int32_t tri_i = all_mesh_summaries[mesh_id].all_meshes_head_i;
+        int32_t tri_i = all_mesh_summaries[mesh_id].triangles_head_i;
         tri_i < tail_i;
         tri_i++)
     {
@@ -1249,4 +1274,89 @@ void center_mesh_offsets(
             all_mesh_triangles[tri_i].vertices[m].z -= z_delta;
         }
     }
+}
+
+void create_shattered_version_of_mesh(
+    const int32_t mesh_id,
+    const uint32_t triangles_multiplier)
+{
+    int32_t orig_head_i =
+        all_mesh_summaries[mesh_id].triangles_head_i;
+    int32_t orig_tail_i =
+        all_mesh_summaries[mesh_id].triangles_head_i +
+        all_mesh_summaries[mesh_id].triangles_size;
+    
+    int32_t new_head_i = all_mesh_triangles_size;
+    all_mesh_summaries[mesh_id].shattered_triangles_head_i = new_head_i;
+    all_mesh_summaries[mesh_id].shattered_triangles_size =
+        all_mesh_summaries[mesh_id].triangles_size *
+            triangles_multiplier;
+    
+    int32_t goal_new_tail_i =
+        all_mesh_triangles_size +
+        all_mesh_summaries[mesh_id].shattered_triangles_size;
+    
+    // first, copy all of the original triangles as they are
+    for (uint32_t i = 0; i < (orig_tail_i - orig_head_i); i++) {
+        all_mesh_triangles[new_head_i + i] =
+            all_mesh_triangles[orig_head_i + i];
+    }
+    
+    int32_t temp_new_tail_i = new_head_i + (orig_tail_i - orig_head_i);
+    
+    while (temp_new_tail_i < goal_new_tail_i) {
+        // find the biggest triangle to split in 2
+        float biggest_area = FLOAT32_MIN;
+        int32_t biggest_area_i = -1;
+        
+        for (uint32_t i = new_head_i; i <= temp_new_tail_i; i++) {
+            float area =
+                get_triangle_area(&all_mesh_triangles[i]);
+            if (area > biggest_area) {
+                biggest_area = area;
+                biggest_area_i = i;
+            }
+        }
+        
+        log_assert(biggest_area >= 0);
+        log_assert(biggest_area_i >= 0);
+        
+        // split the triangle at biggest_area_i into 2
+        zTriangle first_tri;
+        zTriangle second_tri;
+        
+        zVertex mid_of_vertex_1_and_2;
+        mid_of_vertex_1_and_2.x =
+            (all_mesh_triangles[biggest_area_i].vertices[1].x +
+            all_mesh_triangles[biggest_area_i].vertices[2].x) / 2;
+        mid_of_vertex_1_and_2.y =
+            (all_mesh_triangles[biggest_area_i].vertices[1].y +
+            all_mesh_triangles[biggest_area_i].vertices[2].y) / 2;
+        mid_of_vertex_1_and_2.z =
+            (all_mesh_triangles[biggest_area_i].vertices[1].z +
+            all_mesh_triangles[biggest_area_i].vertices[2].z) / 2;
+        mid_of_vertex_1_and_2.uv[0] =
+            (all_mesh_triangles[biggest_area_i].vertices[1].uv[0] +
+            all_mesh_triangles[biggest_area_i].vertices[2].uv[0]) / 2;
+        mid_of_vertex_1_and_2.uv[1] =
+            (all_mesh_triangles[biggest_area_i].vertices[1].uv[1] +
+            all_mesh_triangles[biggest_area_i].vertices[2].uv[1]) / 2;
+        
+        first_tri.normal = all_mesh_triangles[biggest_area_i].normal;
+        first_tri.vertices[0] = all_mesh_triangles[biggest_area_i].vertices[0];
+        first_tri.vertices[1] = all_mesh_triangles[biggest_area_i].vertices[1];
+        first_tri.vertices[2] = mid_of_vertex_1_and_2;
+        
+        second_tri.normal = all_mesh_triangles[biggest_area_i].normal;
+        second_tri.vertices[0] = all_mesh_triangles[biggest_area_i].vertices[0];
+        second_tri.vertices[1] = mid_of_vertex_1_and_2;
+        second_tri.vertices[2] = all_mesh_triangles[biggest_area_i].vertices[2];
+        
+        all_mesh_triangles[biggest_area_i] = first_tri;
+        all_mesh_triangles[temp_new_tail_i++] = second_tri;
+    }
+    
+    log_assert(all_mesh_triangles_size < goal_new_tail_i);
+    
+    all_mesh_triangles_size = goal_new_tail_i + 1;
 }

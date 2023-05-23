@@ -126,6 +126,8 @@
 		EC6441A529318B6D00A0267B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A029318B6D00A0267B /* AppDelegate.m */; };
 		EC6441A629318B6D00A0267B /* ios_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A129318B6D00A0267B /* ios_platform_layer.c */; };
 		EC6441A729318B6D00A0267B /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A329318B6D00A0267B /* ViewController.m */; };
+		EC67AE162A1B0813002D8380 /* leaves3.png in Resources */ = {isa = PBXBuildFile; fileRef = EC67AE152A1B0813002D8380 /* leaves3.png */; };
+		EC67AE172A1B0813002D8380 /* leaves3.png in Resources */ = {isa = PBXBuildFile; fileRef = EC67AE152A1B0813002D8380 /* leaves3.png */; };
 		EC6A301B29EFA1440071C58F /* triangle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6A301A29EFA1440071C58F /* triangle.c */; };
 		EC6A301C29EFA1440071C58F /* triangle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6A301A29EFA1440071C58F /* triangle.c */; };
 		EC6B1F49293C9FD900837369 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F48293C9FD900837369 /* UIKit.framework */; };
@@ -229,6 +231,7 @@
 		EC6441A129318B6D00A0267B /* ios_platform_layer.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = ios_platform_layer.c; path = ../../engine_src/ios/ios_platform_layer.c; sourceTree = "<group>"; };
 		EC6441A229318B6D00A0267B /* ViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ViewController.h; path = ../../engine_src/ios/ViewController.h; sourceTree = "<group>"; };
 		EC6441A329318B6D00A0267B /* ViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ViewController.m; path = ../../engine_src/ios/ViewController.m; sourceTree = "<group>"; };
+		EC67AE152A1B0813002D8380 /* leaves3.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = leaves3.png; path = ../../resources/leaves3.png; sourceTree = "<group>"; };
 		EC6A301A29EFA1440071C58F /* triangle.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = triangle.c; path = ../../engine_src/shared/triangle.c; sourceTree = "<group>"; };
 		EC6B1F48293C9FD900837369 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		EC6B1F4A293CA04800837369 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
@@ -351,6 +354,7 @@
 				ECC47A5F29E9111C0082A7C6 /* disk.obj */,
 				EC0BFBD729EE71A200E4BC1C /* tree.obj */,
 				EC0BFBD829EE71A200E4BC1C /* xmas_tree.obj */,
+				EC67AE152A1B0813002D8380 /* leaves3.png */,
 				EC7B171A293A23E300C1D20C /* roundedborder.png */,
 				EC18FF4129E3DC8B00ED785C /* blob1.png */,
 				EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */,
@@ -531,6 +535,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				ECC47A6029E9111C0082A7C6 /* disk.obj in Resources */,
+				EC67AE162A1B0813002D8380 /* leaves3.png in Resources */,
 				ECB05E4D294F8FD400050BD4 /* key.obj in Resources */,
 				EC1412B12938597400DA0D21 /* cardwithuvcoords.obj in Resources */,
 				6009FB642876A47100FC5A60 /* fontmetrics.dat in Resources */,
@@ -558,6 +563,7 @@
 				60A99921287BDF31003F7159 /* fontmetrics.dat in Resources */,
 				60A99924287BDF31003F7159 /* phoebus.png in Resources */,
 				EC18FF4329E3DC8B00ED785C /* blob1.png in Resources */,
+				EC67AE172A1B0813002D8380 /* leaves3.png in Resources */,
 				EC0BFBDA29EE71A200E4BC1C /* tree.obj in Resources */,
 				EC7B171C293A23E400C1D20C /* roundedborder.png in Resources */,
 				ECB05E4F2950868E00050BD4 /* key.obj in Resources */,

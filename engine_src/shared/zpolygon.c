@@ -16,11 +16,11 @@ static void set_zpolygon_hitbox(
     float front = 0.0f;
     
     int32_t triangles_tail_i =
-        all_mesh_summaries[mesh->mesh_id].all_meshes_head_i +
+        all_mesh_summaries[mesh->mesh_id].triangles_head_i +
         all_mesh_summaries[mesh->mesh_id].triangles_size;
     
     for (
-        int32_t tri_i = all_mesh_summaries[mesh->mesh_id].all_meshes_head_i;
+        int32_t tri_i = all_mesh_summaries[mesh->mesh_id].triangles_head_i;
         tri_i < triangles_tail_i;
         tri_i++)
     {
@@ -88,10 +88,10 @@ void request_zpolygon_to_render(zPolygon * to_add)
     }
     
     int32_t all_mesh_triangles_tail_i =
-        all_mesh_summaries[to_add->mesh_id].all_meshes_head_i +
+        all_mesh_summaries[to_add->mesh_id].triangles_head_i +
             all_mesh_summaries[to_add->mesh_id].triangles_size;
     for (
-        int32_t tri_i = all_mesh_summaries[to_add->mesh_id].all_meshes_head_i;
+        int32_t tri_i = all_mesh_summaries[to_add->mesh_id].triangles_head_i;
         tri_i < all_mesh_triangles_tail_i;
         tri_i++)
     {
@@ -414,24 +414,6 @@ float dot_of_zvertices(
         (a->x * b->x) +
         (a->y * b->y) +
         (a->z * b->z);
-}
-
-zVertex crossproduct_of_zvertices(
-    const zVertex * a,
-    const zVertex * b)
-{
-    /*
-    cx = aybz − azby
-    cy = azbx − axbz
-    cz = axby − aybx
-    */
-    zVertex result;
-    
-    result.x = (a->y * b->z) - (a->z * b->y);
-    result.y = (a->z * b->x) - (a->x * b->z);
-    result.z = (a->x * b->y) - (a->y * b->x);
-    
-    return result;
 }
 
 void zcamera_move_forward(

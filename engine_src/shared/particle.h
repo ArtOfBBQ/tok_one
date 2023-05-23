@@ -8,11 +8,49 @@ extern "C" {
 #define MAX_PARTICLE_TEXTURES 10
 #define PARTICLE_RGBA_PROGRESSION_MAX 10
 
+#include "cpu_to_gpu_types.h"
 #include "clientlogic_macro_settings.h"
 #include "common.h"
 #include "logger.h"
 #include "tok_random.h"
 #include "zpolygon.h"
+
+typedef struct ShatterEffect {
+    zPolygon zpolygon_to_shatter;
+    
+    uint64_t random_seed;
+    uint64_t elapsed;
+    
+    uint64_t longest_random_delay_before_launch;
+    uint64_t fade_out_after_launch;
+    
+    float exploding_distance_per_second;
+    
+    float linear_distance_per_second;
+    float linear_direction[3];
+    
+    float squared_distance_per_second;
+    float squared_direction[3];
+    
+    bool32_t deleted;
+    bool32_t committed;
+} ShatterEffect;
+extern ShatterEffect * shatter_effects;
+extern uint32_t shatter_effects_size;
+
+void construct_shatter_effect(
+    ShatterEffect * to_construct,
+    zPolygon * from_zpolygon);
+ShatterEffect * next_shatter_effect(zPolygon * construct_with_zpolygon);
+void commit_shatter_effect(
+    ShatterEffect * to_commit);
+
+void add_shatter_effects_to_workload(
+    GPU_Vertex * next_gpu_workload,
+    uint32_t * next_workload_size,
+    GPU_LightCollection * lights_for_gpu,
+    uint64_t elapsed_nanoseconds);
+
 
 typedef struct ParticleEffect {
     int32_t object_id;
@@ -63,7 +101,6 @@ typedef struct ParticleEffect {
     uint32_t particle_origin_max_x_variance;
     uint32_t particle_origin_max_y_variance;
     uint32_t particle_origin_max_z_variance;
-    
     
     int32_t random_texturearray_i[MAX_PARTICLE_TEXTURES];
     int32_t random_texture_i[MAX_PARTICLE_TEXTURES];

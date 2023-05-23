@@ -68,6 +68,8 @@ void init_application(void)
         sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
     particle_effects = (ParticleEffect *)malloc_from_unmanaged(
         sizeof(ParticleEffect) * PARTICLE_EFFECTS_SIZE);
+    shatter_effects = (ShatterEffect *)malloc_from_unmanaged(
+        sizeof(ShatterEffect) * SHATTER_EFFECTS_SIZE);
     
     shared_gameloop_init();
     terminal_init();
