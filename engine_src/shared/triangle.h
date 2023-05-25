@@ -2,6 +2,7 @@
 #define TRIANGLE_H
 
 #include "common.h"
+#include "logger.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,8 +28,13 @@ zVertex crossproduct_of_zvertices(
     const zVertex * a,
     const zVertex * b);
 
+float get_squared_distance(
+    const zVertex a,
+    const zVertex b);
+float get_squared_triangle_length(
+    const zTriangle * subject);
 float get_triangle_area(
-    zTriangle * subject);
+    const zTriangle * subject);
 
 #ifdef __cplusplus
 }

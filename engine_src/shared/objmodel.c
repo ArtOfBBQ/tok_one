@@ -1293,6 +1293,8 @@ void create_shattered_version_of_mesh(
     int32_t orig_tail_i =
         all_mesh_summaries[mesh_id].triangles_head_i +
         all_mesh_summaries[mesh_id].triangles_size;
+    int32_t orig_triangles_size =
+        all_mesh_summaries[mesh_id].triangles_size;
     
     int32_t new_head_i = all_mesh_triangles_size;
     all_mesh_summaries[mesh_id].shattered_triangles_head_i = new_head_i;
@@ -1305,21 +1307,27 @@ void create_shattered_version_of_mesh(
         all_mesh_summaries[mesh_id].shattered_triangles_size;
     
     // first, copy all of the original triangles as they are
-    for (uint32_t i = 0; i < (orig_tail_i - orig_head_i); i++) {
+    int32_t temp_new_tail_i = new_head_i + orig_triangles_size - 1;
+    for (uint32_t i = 0; i < orig_triangles_size; i++) {
+        log_assert(orig_head_i + i <= orig_tail_i);
         all_mesh_triangles[new_head_i + i] =
             all_mesh_triangles[orig_head_i + i];
+        log_assert(new_head_i + i <= temp_new_tail_i);
+        
+        float tri_length = get_squared_triangle_length(
+            &all_mesh_triangles[new_head_i + i]);
+        log_assert(tri_length > 0);
     }
     
-    int32_t temp_new_tail_i = new_head_i + (orig_tail_i - orig_head_i);
-    
-    while (temp_new_tail_i < goal_new_tail_i) {
+    while (temp_new_tail_i <= goal_new_tail_i) {
+        
         // find the biggest triangle to split in 2
         float biggest_area = FLOAT32_MIN;
         int32_t biggest_area_i = -1;
         
         for (uint32_t i = new_head_i; i <= temp_new_tail_i; i++) {
             float area =
-                get_triangle_area(&all_mesh_triangles[i]);
+                get_squared_triangle_length(&all_mesh_triangles[i]);
             if (area > biggest_area) {
                 biggest_area = area;
                 biggest_area_i = i;
@@ -1333,60 +1341,178 @@ void create_shattered_version_of_mesh(
         zTriangle first_tri;
         zTriangle second_tri;
         
-        int32_t opposite_vertex_i = temp_new_tail_i % 3; // random
-        int32_t split_line_start_vertex_i = (temp_new_tail_i + 1) % 3; // random
-        int32_t split_line_end_vertex_i = (temp_new_tail_i + 2) % 3; // random
+        int32_t midline_start_vx_i = 0;
+        int32_t midline_end_vx_i = 1;
+        
+        #define USE_MIDLINE -1
+        int32_t first_new_triangle_vertices[3];
+        int32_t second_new_triangle_vertices[3];
+        
+        float distance_0_to_1 =
+            get_squared_distance(
+                all_mesh_triangles[biggest_area_i].vertices[0],
+                all_mesh_triangles[biggest_area_i].vertices[1]);
+        float distance_1_to_2 =
+            get_squared_distance(
+                all_mesh_triangles[biggest_area_i].vertices[1],
+                all_mesh_triangles[biggest_area_i].vertices[2]);
+        float distance_2_to_0 =
+            get_squared_distance(
+                all_mesh_triangles[biggest_area_i].vertices[2],
+                all_mesh_triangles[biggest_area_i].vertices[0]);
+        
+        log_assert(distance_0_to_1 > 0.0f);
+        log_assert(distance_1_to_2 > 0.0f);
+        log_assert(distance_2_to_0 > 0.0f);
+        
+        if (
+            distance_0_to_1 > distance_1_to_2 &&
+            distance_0_to_1 > distance_2_to_0)
+        {
+            /*
+            Our triangle's with vertices 0,1, and 2, with 0-1 being the
+            biggest line and 'M' splitting that line in the middle
+            0    M     1
+            ...........
+            .      .
+            .   .
+            . .
+            .
+            2
+            */
+            midline_start_vx_i = 0;
+            midline_end_vx_i = 1;
+            
+            // first new triangle will be 0-M-2
+            first_new_triangle_vertices[0] = 0;
+            first_new_triangle_vertices[1] = USE_MIDLINE;
+            first_new_triangle_vertices[2] = 2;
+            
+            // and the second triangle will be M-1-2
+            second_new_triangle_vertices[0] = USE_MIDLINE;
+            second_new_triangle_vertices[1] = 1;
+            second_new_triangle_vertices[2] = 2;
+        } else if (
+            distance_1_to_2 > distance_2_to_0 &&
+            distance_1_to_2 > distance_0_to_1)
+        {
+            /*
+            0          1
+            ...........
+            .      .
+            .   .
+            . .   M
+            .
+            2
+            */
+            
+            midline_start_vx_i = 1;
+            midline_end_vx_i = 2;
+            
+            first_new_triangle_vertices[0] = 0;
+            first_new_triangle_vertices[1] = 1;
+            first_new_triangle_vertices[2] = USE_MIDLINE;
+            
+            second_new_triangle_vertices[0] = 0;
+            second_new_triangle_vertices[1] = USE_MIDLINE;
+            second_new_triangle_vertices[2] = 2;
+        } else {
+            /*
+            0          1
+            ...........
+            .      .
+            M   .
+            . .
+            .
+            2
+            */
+            
+            log_assert(distance_2_to_0 >= distance_1_to_2);
+            log_assert(distance_2_to_0 >= distance_0_to_1);
+            
+            midline_start_vx_i = 0;
+            midline_end_vx_i = 2;
+            
+            first_new_triangle_vertices[0] = 0;
+            first_new_triangle_vertices[1] = 1;
+            first_new_triangle_vertices[2] = USE_MIDLINE;
+            
+            second_new_triangle_vertices[0] = USE_MIDLINE;
+            second_new_triangle_vertices[1] = 1;
+            second_new_triangle_vertices[2] = 2;
+        }
         
         zVertex mid_of_line;
         mid_of_line.x =
             (all_mesh_triangles[biggest_area_i].
-                vertices[split_line_start_vertex_i].x +
+                vertices[midline_start_vx_i].x +
             all_mesh_triangles[biggest_area_i].
-                vertices[split_line_end_vertex_i].x) / 2;
+                vertices[midline_end_vx_i].x) / 2;
         mid_of_line.y =
             (all_mesh_triangles[biggest_area_i].
-                vertices[split_line_start_vertex_i].y +
+                vertices[midline_start_vx_i].y +
             all_mesh_triangles[biggest_area_i].
-                vertices[split_line_end_vertex_i].y) / 2;
+                vertices[midline_end_vx_i].y) / 2;
         mid_of_line.z =
             (all_mesh_triangles[biggest_area_i].
-                vertices[split_line_start_vertex_i].z +
+                vertices[midline_start_vx_i].z +
             all_mesh_triangles[biggest_area_i].
-                vertices[split_line_end_vertex_i].z) / 2;
+                vertices[midline_end_vx_i].z) / 2;
         mid_of_line.uv[0] =
             (all_mesh_triangles[biggest_area_i].
-                vertices[split_line_start_vertex_i].uv[0] +
+                vertices[midline_start_vx_i].uv[0] +
             all_mesh_triangles[biggest_area_i].
-                vertices[split_line_end_vertex_i].uv[0]) / 2;
+                vertices[midline_end_vx_i].uv[0]) / 2;
         mid_of_line.uv[1] =
             (all_mesh_triangles[biggest_area_i].
-                vertices[split_line_start_vertex_i].uv[1] +
+                vertices[midline_start_vx_i].uv[1] +
             all_mesh_triangles[biggest_area_i].
-                vertices[split_line_end_vertex_i].uv[1]) / 2;
+                vertices[midline_end_vx_i].uv[1]) / 2;
         
         first_tri.normal = all_mesh_triangles[biggest_area_i].normal;
-        first_tri.vertices[opposite_vertex_i] =
-            all_mesh_triangles[biggest_area_i].vertices[opposite_vertex_i];
-        first_tri.vertices[split_line_start_vertex_i] =
-            all_mesh_triangles[biggest_area_i].
-                vertices[split_line_start_vertex_i];
-        first_tri.vertices[split_line_end_vertex_i] = mid_of_line;
-        
         second_tri.normal = all_mesh_triangles[biggest_area_i].normal;
-        second_tri.vertices[opposite_vertex_i] =
-            all_mesh_triangles[biggest_area_i].vertices[opposite_vertex_i];
-        second_tri.vertices[split_line_start_vertex_i] =
-            mid_of_line;
-        second_tri.vertices[split_line_end_vertex_i] =
-            all_mesh_triangles[biggest_area_i].vertices[2];
-        
         first_tri.parent_material_i =
             all_mesh_triangles[biggest_area_i].parent_material_i;
         second_tri.parent_material_i =
             all_mesh_triangles[biggest_area_i].parent_material_i;
+        for (uint32_t m = 0; m < 3; m++) {
+            
+            if (first_new_triangle_vertices[m] == USE_MIDLINE) {
+                first_tri.vertices[m] = mid_of_line;
+            } else {
+                log_assert(first_new_triangle_vertices[m] >= 0);
+                log_assert(first_new_triangle_vertices[m] < 3);
+                first_tri.vertices[m] =
+                    all_mesh_triangles[biggest_area_i].
+                        vertices[first_new_triangle_vertices[m]];
+            }
+            
+            if (second_new_triangle_vertices[m] == USE_MIDLINE) {
+                second_tri.vertices[m] = mid_of_line;
+            } else {
+                log_assert(second_new_triangle_vertices[m] >= 0);
+                log_assert(second_new_triangle_vertices[m] < 3);
+                second_tri.vertices[m] =
+                    all_mesh_triangles[biggest_area_i].
+                        vertices[second_new_triangle_vertices[m]];
+            }
+        }
+        
+        float orig_area =
+            get_squared_triangle_length(
+                &all_mesh_triangles[biggest_area_i]);
+        float first_tri_area =
+            get_squared_triangle_length(&first_tri);
+        float second_tri_area =
+            get_squared_triangle_length(&second_tri);
+        log_assert(orig_area > 0.0f);
+        log_assert(first_tri_area > 0.0f);
+        log_assert(second_tri_area > 0.0f);
         
         all_mesh_triangles[biggest_area_i] = first_tri;
-        all_mesh_triangles[temp_new_tail_i++] = second_tri;
+        all_mesh_triangles[temp_new_tail_i + 1] = second_tri;
+        
+        temp_new_tail_i++;
     }
     
     log_assert(all_mesh_triangles_size < goal_new_tail_i);

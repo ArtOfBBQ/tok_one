@@ -126,58 +126,60 @@ void client_logic_startup(void) {
     request_particle_fountain();
     
     zLightSource im_a_light;
-    im_a_light.x = -1.5f;
-    im_a_light.y = 1.5f;
-    im_a_light.z = 0.5f;
+    im_a_light.x = -0.75f;
+    im_a_light.y = 0.75f;
+    im_a_light.z = 0.7f;
     im_a_light.ambient = 0.8f;
     im_a_light.diffuse = 0.8f;
     im_a_light.RGBA[0] = 1.0f;
     im_a_light.RGBA[1] = 1.0f;
     im_a_light.RGBA[2] = 1.0f;
     im_a_light.RGBA[3] = 1.0f;
-    im_a_light.reach = 6.0f;
+    im_a_light.reach = 1.5f;
+    im_a_light.deleted = false;
     request_zlightsource(&im_a_light);
     
-    //    construct_zpolygon(&xmastree);
-    //    xmastree.mesh_id = new_mesh_id_from_resource("xmas_tree.obj");
-    //    xmastree.x = 0.0f;
-    //    xmastree.y = 0.0f;
-    //    xmastree.z = 1.25f;
-    //    xmastree.triangle_materials[0].color[0] = 0.05f; // christmas decorations?
-    //    xmastree.triangle_materials[0].color[1] = 0.05f;
-    //    xmastree.triangle_materials[0].color[2] = 1.0f;
-    //    xmastree.triangle_materials[0].color[3] = 1.0f;
-    //    xmastree.triangle_materials[1].color[0] = 1.0f; // leaves
-    //    xmastree.triangle_materials[1].color[1] = 1.0f;
-    //    xmastree.triangle_materials[1].color[2] = 1.0f;
-    //    xmastree.triangle_materials[1].color[3] = 1.0f;
-    //    xmastree.triangle_materials[1].texturearray_i = 2;
-    //    xmastree.triangle_materials[1].texture_i = 0;
-    //    xmastree.triangle_materials[2].color[0] = 0.3f; // trunk
-    //    xmastree.triangle_materials[2].color[1] = 0.08f;
-    //    xmastree.triangle_materials[2].color[2] = 0.05f;
-    //    xmastree.triangle_materials[2].color[3] = 1.0f;
-    //    xmastree.triangle_materials_size = 3;
-    //    xmastree.x_multiplier = 0.1f;
-    //    xmastree.y_multiplier = 0.1f;
-    //    xmastree.z_multiplier = 0.1f;
+    // example 1: the 'christams tree' obj file
+    construct_zpolygon(&xmastree);
+    xmastree.mesh_id = new_mesh_id_from_resource("xmas_tree.obj");
+    xmastree.x = 0.0f;
+    xmastree.y = -0.5f;
+    xmastree.z = 1.0f;
+    xmastree.triangle_materials[0].color[0] = 0.05f; // christmas decorations?
+    xmastree.triangle_materials[0].color[1] = 0.05f;
+    xmastree.triangle_materials[0].color[2] = 1.0f;
+    xmastree.triangle_materials[0].color[3] = 1.0f;
+    xmastree.triangle_materials[1].color[0] = 1.0f; // leaves
+    xmastree.triangle_materials[1].color[1] = 1.0f;
+    xmastree.triangle_materials[1].color[2] = 1.0f;
+    xmastree.triangle_materials[1].color[3] = 1.0f;
+    xmastree.triangle_materials[1].texturearray_i = 2;
+    xmastree.triangle_materials[1].texture_i = 0;
+    xmastree.triangle_materials[2].color[0] = 0.3f; // trunk
+    xmastree.triangle_materials[2].color[1] = 0.08f;
+    xmastree.triangle_materials[2].color[2] = 0.05f;
+    xmastree.triangle_materials[2].color[3] = 1.0f;
+    xmastree.triangle_materials_size = 3;
+    xmastree.x_multiplier = 0.1f;
+    xmastree.y_multiplier = 0.1f;
+    xmastree.z_multiplier = 0.1f;
     
     // example 2: use a quad instead
-    construct_quad(
-        /* const float left_x: */
-            0.25f,
-        /* const float bottom_y: */
-            0.0f,
-        /* const float z: */
-            0.75f,
-        /* const float width: */
-            0.2f,
-        /* const float height: */
-            0.2f,
-        /* zPolygon * recipient: */
-            &xmastree);
-    xmastree.triangle_materials[0].texturearray_i = 3;
-    xmastree.triangle_materials[0].texture_i = 0;
+    //    construct_quad(
+    //        /* const float left_x: */
+    //            0.25f,
+    //        /* const float bottom_y: */
+    //            0.0f,
+    //        /* const float z: */
+    //            0.75f,
+    //        /* const float width: */
+    //            0.2f,
+    //        /* const float height: */
+    //            0.2f,
+    //        /* zPolygon * recipient: */
+    //            &xmastree);
+    //    xmastree.triangle_materials[0].texturearray_i = 3;
+    //    xmastree.triangle_materials[0].texture_i = 0;
     
     // this code needs to run regardless of what example mesh we're using
     xmastree_object_id = next_nonui_object_id();
@@ -187,7 +189,7 @@ void client_logic_startup(void) {
         /* mesh_id: */
             xmastree.mesh_id,
         /* triangles_multiplier: */
-            1);
+            30);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -288,16 +290,22 @@ static void client_handle_keypresses(
         delete_zpolygon_object(xmastree_object_id);
         ShatterEffect * dissolving_quad = next_shatter_effect(
         /* constructed with zpolygon: */ &xmastree);
-        //                                                    35..000 3.5 seconds
-        dissolving_quad->longest_random_delay_before_launch = 3500000;
-        dissolving_quad->exploding_distance_per_second = 0.07f;
-        dissolving_quad->linear_distance_per_second = 0.01f;
-        dissolving_quad->squared_distance_per_second = 0.01f;
+        //                                                     40.000 0.4 seconds
+        dissolving_quad->longest_random_delay_before_launch =  400000;
+        dissolving_quad->exploding_distance_per_second = 0.4f;
+        dissolving_quad->linear_distance_per_second = 0.3f;
+        dissolving_quad->linear_direction[0] =  0.0f;
+        dissolving_quad->linear_direction[1] =  1.0f;
+        dissolving_quad->linear_direction[2] =  0.0f;
+        dissolving_quad->squared_distance_per_second = 0.15f;
+        dissolving_quad->squared_direction[0] =  1.0f;
+        dissolving_quad->squared_direction[1] =  0.0f;
+        dissolving_quad->squared_direction[2] =  0.0f;
         
+        //                                             75.000 0.75 seconds
+        dissolving_quad->start_fade_out_at_elapsed  =  750000;
         //                                            15..000 1.5 seconds
-        dissolving_quad->start_fade_out_at_elapsed  = 1500000;
-        //                                            25..000 2.5 seconds
-        dissolving_quad->finish_fade_out_at_elapsed = 2500000;
+        dissolving_quad->finish_fade_out_at_elapsed = 1500000;
         commit_shatter_effect(dissolving_quad);
     }
     

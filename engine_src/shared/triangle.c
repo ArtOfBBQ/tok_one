@@ -37,8 +37,66 @@ zVertex crossproduct_of_zvertices(
     return result;
 }
 
+float get_squared_distance(
+    const zVertex a,
+    const zVertex b)
+{
+    return
+        ((a.x - b.x) * (a.x - b.x)) +
+        ((a.y - b.y) * (a.y - b.y)) +
+        ((a.z - b.z) * (a.z - b.z));
+}
+
+/* the largest length amongst any dimension be it x, y, or z */
+float get_squared_triangle_length(
+    const zTriangle * subject)
+{
+    float largest_squared_dist = FLOAT32_MIN;
+    int32_t largest_start_vertex_i = -1;
+    int32_t largest_end_vertex_i = -1;
+    
+    for (int32_t start_vertex_i = 0; start_vertex_i < 3; start_vertex_i++) {
+        
+        int32_t end_vertex_i = (start_vertex_i + 1) % 3;
+        
+        float squared_x =
+            ((subject->vertices[start_vertex_i].x -
+                subject->vertices[end_vertex_i].x) *
+            (subject->vertices[start_vertex_i].x -
+                subject->vertices[end_vertex_i].x));
+        float squared_y =
+            ((subject->vertices[start_vertex_i].y -
+                subject->vertices[end_vertex_i].y) *
+            (subject->vertices[start_vertex_i].y -
+                subject->vertices[end_vertex_i].y));
+        float squared_z =
+            ((subject->vertices[start_vertex_i].z -
+                subject->vertices[end_vertex_i].z) *
+            (subject->vertices[start_vertex_i].z -
+                subject->vertices[end_vertex_i].z));
+        
+        float new_squared_dist =
+            squared_x +
+            squared_y +
+            squared_z;
+        
+        log_assert(new_squared_dist > 0.0f);
+        
+        if (new_squared_dist > largest_squared_dist) {
+            largest_squared_dist = new_squared_dist;
+            largest_start_vertex_i = start_vertex_i;
+            largest_end_vertex_i = end_vertex_i;
+            log_assert(largest_start_vertex_i != largest_end_vertex_i);
+        }
+    }
+    
+    log_assert(largest_start_vertex_i != largest_end_vertex_i);
+    
+    return largest_squared_dist;
+}
+
 float get_triangle_area(
-    zTriangle * subject)
+    const zTriangle * subject)
 {
     zVertex zero_to_one;
     zero_to_one.x = subject->vertices[1].x - subject->vertices[0].x;
@@ -55,6 +113,8 @@ float get_triangle_area(
         &zero_to_two);
     
     float return_value = get_magnitude(crossproduct) * 0.5f;
+    
+    log_assert(return_value > 0.0f);
     
     return return_value;
 }

@@ -380,8 +380,10 @@ void request_particle_effect(
         to_request->particle_rgba_progression_size <=
             PARTICLE_RGBA_PROGRESSION_MAX);
     
-    log_assert(to_request->mesh_id_to_spawn >= 0);
-    log_assert(to_request->mesh_id_to_spawn < all_mesh_summaries_size);
+    log_assert(
+        to_request->mesh_id_to_spawn >= 0);
+    log_assert(
+        to_request->mesh_id_to_spawn < all_mesh_summaries_size);
     
     for (
         uint32_t col_i = 0;
