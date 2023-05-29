@@ -373,7 +373,9 @@ void platform_get_resources_path(char * recipient, const uint32_t recipient_size
     strcpy_capped(
         recipient,
         recipient_size,
-        (char *)[[[NSBundle mainBundle] resourcePath] cStringUsingEncoding: NSASCIIStringEncoding]);
+        (char *)[
+            [[NSBundle mainBundle] resourcePath]
+                cStringUsingEncoding: NSASCIIStringEncoding]);
 }
 
 void platform_start_thread(

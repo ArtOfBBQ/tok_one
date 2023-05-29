@@ -117,6 +117,8 @@ typedef struct ScheduledAnimation {
         float final_rgb_bonus[3];
     };
     
+    uint32_t internal_trigger_count; // TODO: remove me, I'm debug code
+    
     uint64_t wait_before_each_run;           // resets timer each run
     uint64_t remaining_wait_before_next_run; // gets reset by above each run
                                              // can be used as wait before 1st
@@ -124,6 +126,7 @@ typedef struct ScheduledAnimation {
     uint64_t duration_microseconds;   // duration at the start of each run
     uint64_t remaining_microseconds;  // remaining duration (this run)
     uint32_t runs; // 0 to repeat forever, 1 to run 1x, 2 to run 2x etc
+    uint64_t shatter_effect_duration; // 0 for no shatter effect
     bool32_t delete_object_when_finished;
     bool32_t deleted;
     bool32_t committed;
@@ -140,6 +143,11 @@ ScheduledAnimation * next_scheduled_animation(void);
 void commit_scheduled_animation(ScheduledAnimation * to_commit);
 
 void delete_conflicting_animations(ScheduledAnimation * priority_anim);
+
+void request_shatter_and_destroy(
+    const int32_t object_id,
+    const uint64_t wait_before_first_run,
+    const uint64_t duration_microseconds);
 
 void request_fade_and_destroy(
     const int32_t object_id,

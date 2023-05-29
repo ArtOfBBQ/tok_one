@@ -1,6 +1,6 @@
 #include "particle.h"
 
-#define MINIMUM_SHATTER_TRIANGLES 2000
+#define MINIMUM_SHATTER_TRIANGLES 200
 
 ShatterEffect * shatter_effects;
 uint32_t shatter_effects_size;
@@ -23,7 +23,8 @@ void construct_shatter_effect(
     //                                         35..000 (3.5 seconds)
     to_construct->finish_fade_out_at_elapsed = 3500000;
     
-    to_construct->exploding_distance_per_second = 0.5f;
+    to_construct->exploding_distance_per_second =
+        0.25f + ((tok_rand() % 50) * 0.01f);
     
     to_construct->linear_distance_per_second = 0.0f;
     to_construct->linear_direction[0] = -0.1f;
@@ -34,6 +35,13 @@ void construct_shatter_effect(
     to_construct->squared_direction[0] = -0.1f;
     to_construct->squared_direction[1] = 1.0f;
     to_construct->squared_direction[2] = 0.2f;
+    
+    to_construct->xyz_rotation_per_second[0] =
+        (float)(tok_rand() % 628) * 0.01f;
+    to_construct->xyz_rotation_per_second[1] =
+        (float)(tok_rand() % 628) * 0.01f;
+    to_construct->xyz_rotation_per_second[2] =
+        (float)(tok_rand() % 628) * 0.01f;
     
     // if the zpolygon has too few triangles, it won't make for an interesting
     // particle effect. We will 'shatter' the triangles and point to a split up
@@ -53,7 +61,11 @@ void construct_shatter_effect(
                 /* mesh_id: */
                     to_construct->zpolygon_to_shatter.mesh_id,
                 /* triangles_multiplier: */
-                    4);
+                    (uint32_t)(1 + (
+                        MINIMUM_SHATTER_TRIANGLES /
+                            all_mesh_summaries[
+                                to_construct->zpolygon_to_shatter.mesh_id].
+                                    triangles_size)));
         } else {
             // use the original as the shattered version
             all_mesh_summaries[to_construct->zpolygon_to_shatter.mesh_id].
@@ -185,6 +197,13 @@ void add_shatter_effects_to_workload(
                     shatter_effects[i].zpolygon_to_shatter.z;
             normalize_zvertex(&exploding_direction);
             
+            float rotation_applied[3];
+            
+            for (uint32_t r = 0; r < 3; r++) {
+                rotation_applied[r] =
+                    ((float)delayed_lifetime_so_far / 1000000.0f) *
+                        shatter_effects[i].xyz_rotation_per_second[r];
+            }
             float exploding_distance_traveled =
                 ((float)delayed_lifetime_so_far / 1000000.0f) *
                     shatter_effects[i].exploding_distance_per_second;
@@ -235,11 +254,14 @@ void add_shatter_effects_to_workload(
                         (exploding_distance_traveled *
                             exploding_direction.z);;
                 next_gpu_workload[*next_workload_size].x_angle =
-                    shatter_effects[i].zpolygon_to_shatter.x_angle;
+                    shatter_effects[i].zpolygon_to_shatter.x_angle +
+                        rotation_applied[0];
                 next_gpu_workload[*next_workload_size].y_angle =
-                    shatter_effects[i].zpolygon_to_shatter.y_angle;
+                    shatter_effects[i].zpolygon_to_shatter.y_angle +
+                        rotation_applied[1];
                 next_gpu_workload[*next_workload_size].z_angle =
-                    shatter_effects[i].zpolygon_to_shatter.z_angle;
+                    shatter_effects[i].zpolygon_to_shatter.z_angle +
+                        rotation_applied[2];
                 next_gpu_workload[*next_workload_size].normal_x =
                     all_mesh_triangles[tri_i].normal.x;
                 next_gpu_workload[*next_workload_size].normal_y =

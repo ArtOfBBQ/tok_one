@@ -59,10 +59,12 @@ static void construct_scheduled_animation(
     to_construct->duration_microseconds = 1000000;
     to_construct->remaining_microseconds = 0; // gets set when scheduling
     to_construct->runs = 1;
+    to_construct->shatter_effect_duration = 0;
     to_construct->delete_object_when_finished = false;
     to_construct->deleted = false;
     to_construct->committed = false;
     to_construct->clientlogic_callback_when_finished_id = -1;
+    to_construct->internal_trigger_count = 0;
 }
 
 ScheduledAnimation * next_scheduled_animation(void) {
@@ -95,6 +97,10 @@ void commit_scheduled_animation(ScheduledAnimation * to_commit) {
     log_assert(!to_commit->committed);
     
     to_commit->remaining_microseconds = to_commit->duration_microseconds;
+    
+    if (to_commit->shatter_effect_duration > 0) {
+        log_assert(to_commit->remaining_microseconds == 1);
+    }
     
     to_commit->committed = true;
     
@@ -236,6 +242,26 @@ void delete_conflicting_animations(ScheduledAnimation * priority_anim)
     }
 }
 
+void request_shatter_and_destroy(
+    const int32_t object_id,
+    const uint64_t wait_before_first_run,
+    const uint64_t duration_microseconds)
+{
+    log_assert(duration_microseconds > 0);
+    log_assert(object_id >= 0);
+    
+    // register scheduled animation
+    ScheduledAnimation * shatter = next_scheduled_animation();
+    shatter->affected_object_id = object_id;
+    shatter->remaining_wait_before_next_run = wait_before_first_run;
+    shatter->duration_microseconds = 1;
+    shatter->remaining_microseconds = 1;
+    shatter->shatter_effect_duration = duration_microseconds;
+    shatter->delete_object_when_finished = true;
+    shatter->destroy_even_waiting_duplicates = false;
+    commit_scheduled_animation(shatter);
+}
+
 void request_fade_and_destroy(
     const int32_t object_id,
     const uint64_t wait_before_first_run,
@@ -284,6 +310,8 @@ static void resolve_single_animation_effects(
     log_assert(remaining_microseconds_at_start_of_run >= elapsed_this_run);
     
     if (anim->deleted) { return; }
+    
+    anim->internal_trigger_count += 1;
     
     bool32_t found_at_least_one = false;
     
@@ -387,12 +415,30 @@ static void resolve_single_animation_effects(
         zp_i++)
     {
         if (
-            zpolygons_to_render[zp_i].object_id != anim->affected_object_id)
+            zpolygons_to_render[zp_i].object_id != anim->affected_object_id ||
+            zpolygons_to_render[zp_i].deleted)
         {
             continue;
         }
         
         found_at_least_one = true;
+        
+        if (anim->shatter_effect_duration > 0) {
+            ShatterEffect * shatter_anim = next_shatter_effect(
+                /* construct_with_poly: */
+                    &zpolygons_to_render[zp_i]);
+            shatter_anim->longest_random_delay_before_launch =
+                anim->shatter_effect_duration / 3;
+            shatter_anim->start_fade_out_at_elapsed =
+                (anim->shatter_effect_duration / 10) * 9;
+            shatter_anim->finish_fade_out_at_elapsed =
+                anim->shatter_effect_duration;
+            shatter_anim->exploding_distance_per_second =
+                0.25f;
+            shatter_anim->linear_distance_per_second = 0;
+            shatter_anim->squared_distance_per_second = 0;
+            commit_shatter_effect(shatter_anim);
+        }
         
         if (!anim->final_x_known) {
             zpolygons_to_render[zp_i].x +=
@@ -700,7 +746,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                 client_logic_animation_callback(
                     anim->clientlogic_callback_when_finished_id);
             }
-            
+                    
             if (anim->delete_object_when_finished) {
                 
                 for (
@@ -759,12 +805,12 @@ void request_bump_animation(
     const int32_t object_id,
     const uint32_t wait)
 {
-    uint64_t duration = 200000;
+    uint64_t duration = 150000;
     
     ScheduledAnimation * embiggen_request = next_scheduled_animation();
     embiggen_request->affected_object_id = (int32_t)object_id;
     embiggen_request->remaining_wait_before_next_run = wait;
-    embiggen_request->duration_microseconds = duration / 2;
+    embiggen_request->duration_microseconds = duration / 5;
     embiggen_request->final_scale_known = true;
     embiggen_request->final_scale = 1.35f;
     commit_scheduled_animation(embiggen_request);
@@ -772,7 +818,7 @@ void request_bump_animation(
     ScheduledAnimation * revert_request = next_scheduled_animation();
     revert_request->affected_object_id = (int32_t)object_id;
     revert_request->remaining_wait_before_next_run = wait + duration / 2;
-    revert_request->duration_microseconds = duration / 2;
+    revert_request->duration_microseconds = (duration / 5) * 4;
     revert_request->final_scale_known = true;
     revert_request->final_scale = 1.0f;
     commit_scheduled_animation(revert_request);

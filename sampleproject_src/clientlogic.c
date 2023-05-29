@@ -82,6 +82,7 @@ static void request_particle_fountain() {
 
 static zPolygon xmastree;
 static int32_t xmastree_object_id;
+static int32_t label_object_id;
 float slider_value = 0.0f;
 void client_logic_startup(void) {
     
@@ -190,6 +191,16 @@ void client_logic_startup(void) {
             xmastree.mesh_id,
         /* triangles_multiplier: */
             30);
+    
+    label_object_id = next_nonui_object_id();
+    request_label_around(
+        label_object_id,
+        "Press T for a shatter effect",
+        /* mid_x_pixelspace: */ window_globals->window_width / 2,
+        /* y: */ window_globals->window_height / 2,
+        /* z: */ 0.75f,
+        /* max_width: */ (window_globals->window_width / 4) * 3,
+        /* ignore_camera: */ true);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -287,26 +298,33 @@ static void client_handle_keypresses(
     if (keypress_map[TOK_KEY_T] == true) {
         keypress_map[TOK_KEY_T] = false;
         
-        delete_zpolygon_object(xmastree_object_id);
-        ShatterEffect * dissolving_quad = next_shatter_effect(
-        /* constructed with zpolygon: */ &xmastree);
-        //                                                     40.000 0.4 seconds
-        dissolving_quad->longest_random_delay_before_launch =  400000;
-        dissolving_quad->exploding_distance_per_second = 0.4f;
-        dissolving_quad->linear_distance_per_second = 0.3f;
-        dissolving_quad->linear_direction[0] =  0.0f;
-        dissolving_quad->linear_direction[1] =  1.0f;
-        dissolving_quad->linear_direction[2] =  0.0f;
-        dissolving_quad->squared_distance_per_second = 0.15f;
-        dissolving_quad->squared_direction[0] =  1.0f;
-        dissolving_quad->squared_direction[1] =  0.0f;
-        dissolving_quad->squared_direction[2] =  0.0f;
-        
-        //                                             75.000 0.75 seconds
-        dissolving_quad->start_fade_out_at_elapsed  =  750000;
-        //                                            15..000 1.5 seconds
-        dissolving_quad->finish_fade_out_at_elapsed = 1500000;
-        commit_shatter_effect(dissolving_quad);
+        if (tok_rand() % 2 == 0) {
+            request_shatter_and_destroy(
+                label_object_id,
+                /* wait_us: */ 500,
+                /* duration_us: */ 2000000);
+        } else {
+            delete_zpolygon_object(xmastree_object_id);
+            ShatterEffect * dissolving_quad = next_shatter_effect(
+            /* constructed with zpolygon: */ &xmastree);
+            //                                                     40.000 0.4 seconds
+            dissolving_quad->longest_random_delay_before_launch =  400000;
+            dissolving_quad->exploding_distance_per_second = 0.4f;
+            dissolving_quad->linear_distance_per_second = 0.3f;
+            dissolving_quad->linear_direction[0] =  0.0f;
+            dissolving_quad->linear_direction[1] =  1.0f;
+            dissolving_quad->linear_direction[2] =  0.0f;
+            dissolving_quad->squared_distance_per_second = 0.15f;
+            dissolving_quad->squared_direction[0] =  1.0f;
+            dissolving_quad->squared_direction[1] =  0.0f;
+            dissolving_quad->squared_direction[2] =  0.0f;
+            
+            //                                             75.000 0.75 seconds
+            dissolving_quad->start_fade_out_at_elapsed  =  750000;
+            //                                            15..000 1.5 seconds
+            dissolving_quad->finish_fade_out_at_elapsed = 1500000;
+            commit_shatter_effect(dissolving_quad);
+        }
     }
     
     if (keypress_map[TOK_KEY_SPACEBAR] == true) {                                             

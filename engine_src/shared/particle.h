@@ -34,6 +34,8 @@ typedef struct ShatterEffect {
     float squared_distance_per_second;
     float squared_direction[3];
     
+    float xyz_rotation_per_second[3];
+    
     bool32_t deleted;
     bool32_t committed;
 } ShatterEffect;
