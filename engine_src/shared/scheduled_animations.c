@@ -428,14 +428,13 @@ static void resolve_single_animation_effects(
                 /* construct_with_poly: */
                     &zpolygons_to_render[zp_i]);
             shatter_anim->longest_random_delay_before_launch =
-                anim->shatter_effect_duration / 3;
+                anim->shatter_effect_duration / 2;
             shatter_anim->start_fade_out_at_elapsed =
                 (anim->shatter_effect_duration / 10) * 9;
             shatter_anim->finish_fade_out_at_elapsed =
                 anim->shatter_effect_duration;
-            shatter_anim->exploding_distance_per_second =
-                0.25f;
-            shatter_anim->linear_distance_per_second = 0;
+            shatter_anim->exploding_distance_per_second = 0.35f;
+            shatter_anim->linear_distance_per_second = 0.1f;
             shatter_anim->squared_distance_per_second = 0;
             commit_shatter_effect(shatter_anim);
         }

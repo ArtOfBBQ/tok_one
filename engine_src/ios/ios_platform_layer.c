@@ -15,3 +15,11 @@ float platform_x_to_x(const float x) {
 float platform_y_to_y(const float y) {
     return (window_globals->window_height - y);
 }
+
+void platform_open_folder_in_window_if_possible(
+    const char * folderpath)
+{
+    (void)folderpath;
+    
+    log_append("Ignoring folder open request - impossible on iOS\n");
+}

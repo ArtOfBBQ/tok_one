@@ -79,6 +79,9 @@ void writable_filename_to_pathfile(
     char * recipient,
     const uint32_t recipient_capacity);
 
+void platform_open_folder_in_window_if_possible(
+    const char * folderpath);
+
 // get current working directory
 void platform_get_application_path(char * recipient, const uint32_t recipient_size);
 void platform_get_resources_path(char * recipient, const uint32_t recipient_size);

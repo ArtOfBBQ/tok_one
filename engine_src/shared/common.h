@@ -2,6 +2,7 @@
 #define COMMON_H
 
 #include <inttypes.h>
+#include <stddef.h>
 #include <math.h>
 
 // #define COMMON_IGNORE_ASSERTS

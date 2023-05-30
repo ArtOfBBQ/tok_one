@@ -27,9 +27,9 @@ void construct_shatter_effect(
         0.25f + ((tok_rand() % 50) * 0.01f);
     
     to_construct->linear_distance_per_second = 0.0f;
-    to_construct->linear_direction[0] = -0.1f;
-    to_construct->linear_direction[1] = 1.0f;
-    to_construct->linear_direction[2] = 0.2f;
+    to_construct->linear_direction[0] =  0.1f;
+    to_construct->linear_direction[1] =  0.1f;
+    to_construct->linear_direction[2] = -0.8f;
     
     to_construct->squared_distance_per_second = 0.0f;
     to_construct->squared_direction[0] = -0.1f;

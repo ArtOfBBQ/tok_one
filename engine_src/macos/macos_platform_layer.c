@@ -23,3 +23,18 @@ float platform_y_to_y(const float y) {
     return y;
 }
 
+void platform_open_folder_in_window_if_possible(
+    const char * folderpath)
+{
+    log_append("Trying to open folder: ");
+    log_append(folderpath);
+    log_append_char('\n');
+    
+    if (folderpath == NULL || folderpath[0] == '\0') {
+        return;
+    }
+    
+    NSString * folderpath_ns = [NSString stringWithUTF8String:folderpath];
+    NSURL *folderURL = [NSURL URLWithString:folderpath_ns];
+    [[NSWorkspace sharedWorkspace] openURL: folderURL];
+}
