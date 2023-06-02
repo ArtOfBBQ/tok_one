@@ -381,6 +381,7 @@ void construct_particle_effect(
     to_construct->particle_rgba_progression[1][3] = 1.0f;
     
     to_construct->particle_rgba_progression_size = 2;
+    to_construct->max_color_variance = 0.05f;
     
     to_construct->random_textures_size = 0;
     
@@ -465,6 +466,36 @@ void delete_particle_effect(int32_t with_object_id) {
     }
 }
 
+static void adjust_colors_by_random(
+    float * out_red,
+    float * out_green,
+    float * out_blue,
+    const float max_variance,
+    const uint64_t random_seed)
+{
+    float red_bonus =
+        (max_variance / 100.0f) * (tok_rand_at_i(random_seed + 0) % 100) -
+        (max_variance / 100.0f) * (tok_rand_at_i(random_seed + 11) % 100);
+    float green_bonus =
+        (max_variance / 100.0f) * (tok_rand_at_i(random_seed + 12) % 100) -
+        (max_variance / 100.0f) * (tok_rand_at_i(random_seed + 3) % 100);
+    float blue_bonus =
+        (max_variance / 100.0f) * (tok_rand_at_i(random_seed + 4) % 100) -
+        (max_variance / 100.0f) * (tok_rand_at_i(random_seed + 15) % 100);
+    
+    *out_red += red_bonus;
+    if (*out_red < 0.0f) { *out_red = 0.0f; }
+    if (*out_red > 1.0f) { *out_red = 1.0f; }
+    
+    *out_green += green_bonus;
+    if (*out_green < 0.0f) { *out_green = 0.0f; }
+    if (*out_green > 1.0f) { *out_green = 1.0f; }
+    
+    *out_blue += blue_bonus;
+    if (*out_blue < 0.0f) { *out_blue = 0.0f; }
+    if (*out_blue > 1.0f) { *out_blue = 1.0f; }
+}
+
 static void get_particle_color_at_elapsed(
     const uint32_t particle_i,
     const uint64_t elapsed,
@@ -505,7 +536,9 @@ static void get_particle_color_at_elapsed(
         (float)(elapsed % single_color_duration) /
             1000000.0f;
     log_assert(transition_progress >= 0.0f);
-    log_assert(transition_progress <= 1.0f);
+    if (transition_progress > 1.0f) {
+        transition_progress = 1.0f;
+    }
     
     *out_red =
         (particle_effects[particle_i].
@@ -580,7 +613,7 @@ void add_particle_effects_to_workload(
                 spawn_i++)
             {
                 uint64_t rand_i =
-                    (particle_effects[i].random_seed + (spawn_i * 13)) %
+                    (particle_effects[i].random_seed + (spawn_i * 36)) %
                         (RANDOM_SEQUENCE_SIZE - 50);
                 
                 int32_t texturearray_i = -1;
@@ -770,6 +803,13 @@ void add_particle_effects_to_workload(
                         &blue,
                     /* const float * alpha: */
                         &alpha);
+                
+                adjust_colors_by_random(
+                    &red,
+                    &green,
+                    &blue,
+                    /* max_variance: */ particle_effects[i].max_color_variance,
+                    /* random_seed: */ rand_i);
                 
                 float initial_x_offset = 0;
                 if (particle_effects[i].particle_origin_max_x_variance > 0)

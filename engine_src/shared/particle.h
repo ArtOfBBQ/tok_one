@@ -84,6 +84,7 @@ typedef struct ParticleEffect {
     
     float particle_rgba_progression[PARTICLE_RGBA_PROGRESSION_MAX][4];
     uint32_t particle_rgba_progression_size;
+    float max_color_variance;
     
     float particle_direction[3]; // the direction the particles fly in
     float particle_distance_per_second; // 1.0f to travel 1.0f per second
