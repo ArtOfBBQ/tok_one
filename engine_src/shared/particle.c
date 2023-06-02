@@ -5,16 +5,14 @@
 ShatterEffect * shatter_effects;
 uint32_t shatter_effects_size;
 
-void construct_shatter_effect(
-    ShatterEffect * to_construct,
-    zPolygon * from_zpolygon)
+static void construct_shatter_effect_no_zpoly(
+    ShatterEffect * to_construct)
 {
-    to_construct->zpolygon_to_shatter = *from_zpolygon;
-    
     to_construct->random_seed = tok_rand() % 75;
     to_construct->elapsed = 0;
     to_construct->committed = false;
     to_construct->deleted = false;
+    to_construct->limit_triangles_to = 0;
     
     to_construct->longest_random_delay_before_launch = 500000;
     
@@ -42,66 +40,76 @@ void construct_shatter_effect(
         (float)(tok_rand() % 628) * 0.01f;
     to_construct->xyz_rotation_per_second[2] =
         (float)(tok_rand() % 628) * 0.01f;
+}
+
+ShatterEffect * next_shatter_effect()
+{
+    for (uint32_t i = 0; i < shatter_effects_size; i++) {
+        if (shatter_effects[i].deleted) {
+            construct_shatter_effect_no_zpoly(&shatter_effects[i]);
+            return &shatter_effects[i];
+        }
+    }
     
+    shatter_effects_size += 1;
+    construct_shatter_effect_no_zpoly(
+        &shatter_effects[shatter_effects_size - 1]);
+    return &shatter_effects[shatter_effects_size - 1];
+}
+
+ShatterEffect * next_shatter_effect_with_zpoly(
+    zPolygon * construct_with_zpolygon)
+{
+    ShatterEffect * return_value = next_shatter_effect();
+    
+    log_assert(shatter_effects_size < SHATTER_EFFECTS_SIZE);
+    return_value->zpolygon_to_shatter = *construct_with_zpolygon;
+    
+    return return_value;
+}
+
+void commit_shatter_effect(
+    ShatterEffect * to_commit)
+{
     // if the zpolygon has too few triangles, it won't make for an interesting
     // particle effect. We will 'shatter' the triangles and point to a split up
     // version. If there's enough triangles, we will simply set the 'shattered'
     // pointers to be the same as the original pointers
     if (
-        all_mesh_summaries[to_construct->zpolygon_to_shatter.mesh_id]
+        all_mesh_summaries[to_commit->zpolygon_to_shatter.mesh_id]
             .shattered_triangles_size == 0)
     {
         if (
-            all_mesh_summaries[to_construct->zpolygon_to_shatter.mesh_id]
+            all_mesh_summaries[to_commit->zpolygon_to_shatter.mesh_id]
                 .triangles_size <
                     MINIMUM_SHATTER_TRIANGLES)
         {
             // we need to create a shatttered version of this
             create_shattered_version_of_mesh(
                 /* mesh_id: */
-                    to_construct->zpolygon_to_shatter.mesh_id,
+                    to_commit->zpolygon_to_shatter.mesh_id,
                 /* triangles_multiplier: */
                     (uint32_t)(1 + (
                         MINIMUM_SHATTER_TRIANGLES /
                             all_mesh_summaries[
-                                to_construct->zpolygon_to_shatter.mesh_id].
+                                to_commit->zpolygon_to_shatter.mesh_id].
                                     triangles_size)));
         } else {
             // use the original as the shattered version
-            all_mesh_summaries[to_construct->zpolygon_to_shatter.mesh_id].
+            all_mesh_summaries[to_commit->zpolygon_to_shatter.mesh_id].
                 shattered_triangles_size =
                     all_mesh_summaries[
-                        to_construct->zpolygon_to_shatter.mesh_id].
+                        to_commit->zpolygon_to_shatter.mesh_id].
                             triangles_size;
             
-            all_mesh_summaries[to_construct->zpolygon_to_shatter.mesh_id].
+            all_mesh_summaries[to_commit->zpolygon_to_shatter.mesh_id].
                 shattered_triangles_head_i =
                     all_mesh_summaries[
-                        to_construct->zpolygon_to_shatter.mesh_id].
+                        to_commit->zpolygon_to_shatter.mesh_id].
                             triangles_head_i;
         }
     }
-}
-
-ShatterEffect * next_shatter_effect(zPolygon * construct_with_zpolygon)
-{
-    for (uint32_t i = 0; i < shatter_effects_size; i++) {
-        if (shatter_effects[i].deleted) {
-            construct_shatter_effect(
-                &shatter_effects[i],
-                construct_with_zpolygon);
-            return &shatter_effects[i];
-        }
-    }
     
-    log_assert(shatter_effects_size < SHATTER_EFFECTS_SIZE);
-    construct_shatter_effect(
-        &shatter_effects[shatter_effects_size],
-        construct_with_zpolygon);
-    return &shatter_effects[shatter_effects_size++];
-}
-
-void commit_shatter_effect(ShatterEffect * to_commit) {
     to_commit->committed = true;
 }
 
@@ -131,6 +139,15 @@ void add_shatter_effects_to_workload(
                 shatter_effects[i].zpolygon_to_shatter.mesh_id].
                     shattered_triangles_size;
         log_assert(tri_tail_i >= 0);
+        
+        int32_t full_tri_count = (tri_tail_i - tri_head_i);
+        if (shatter_effects[i].limit_triangles_to > 0 &&
+            full_tri_count > (int32_t)shatter_effects[i].limit_triangles_to)
+        {
+            int32_t excess_tri_count =
+                full_tri_count - (int32_t)shatter_effects[i].limit_triangles_to;
+            tri_tail_i -= excess_tri_count;
+        }
         
         uint64_t lifetime_so_far = shatter_effects[i].elapsed;
         if (

@@ -424,7 +424,7 @@ static void resolve_single_animation_effects(
         found_at_least_one = true;
         
         if (anim->shatter_effect_duration > 0) {
-            ShatterEffect * shatter_anim = next_shatter_effect(
+            ShatterEffect * shatter_anim = next_shatter_effect_with_zpoly(
                 /* construct_with_poly: */
                     &zpolygons_to_render[zp_i]);
             shatter_anim->longest_random_delay_before_launch =
