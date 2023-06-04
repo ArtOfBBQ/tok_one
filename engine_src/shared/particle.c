@@ -586,7 +586,11 @@ void add_particle_effects_to_workload(
     uint64_t interval_between_spawns;
     uint64_t spawn_lifetime_so_far;
     
-    for (uint32_t i = 0; i < particle_effects_size; i++) {
+    for (
+        uint32_t i = 0;
+        i < particle_effects_size;
+        i++)
+    {
         if (!particle_effects[i].deleted) {
             
             log_assert(
@@ -613,8 +617,9 @@ void add_particle_effects_to_workload(
                 spawn_i++)
             {
                 uint64_t rand_i =
-                    (particle_effects[i].random_seed + (spawn_i * 36)) %
-                        (RANDOM_SEQUENCE_SIZE - 50);
+                    (particle_effects[i].random_seed
+                        + (spawn_i * 41) + (spawn_i % 3)) %
+                        (RANDOM_SEQUENCE_SIZE - 10);
                 
                 int32_t texturearray_i = -1;
                 int32_t texture_i = -1;
@@ -838,7 +843,7 @@ void add_particle_effects_to_workload(
                     float y_offset_neg = (float)(
                         tok_rand_at_i(rand_i + 9) %
                             particle_effects[i].
-                                particle_origin_max_x_variance) /
+                                particle_origin_max_y_variance) /
                                     100.0f;
                     initial_y_offset += (y_offset_pos - y_offset_neg);
                 }

@@ -105,7 +105,7 @@ typedef struct ParticleEffect {
     
     // set these to 0 to have each particle start exactly at the origin
     // set max_y to 20 to randomly have each particle offset by a y-axis value
-    // between 0.0f and 0.2f
+    // between 0.0f and 0.2f (so it's 100x)
     uint32_t particle_origin_max_x_variance;
     uint32_t particle_origin_max_y_variance;
     uint32_t particle_origin_max_z_variance;
