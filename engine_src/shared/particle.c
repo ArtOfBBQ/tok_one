@@ -389,6 +389,7 @@ void construct_particle_effect(
     to_construct->particle_direction[1] = 0.0f;
     to_construct->particle_direction[2] = 0.0f;
     to_construct->particle_distance_per_second = 0.5f;
+    to_construct->particle_distance_max_variance = 0;
     to_construct->particle_direction_max_x_angle_variance = 0;
     to_construct->particle_direction_max_y_angle_variance = 0;
     to_construct->particle_direction_max_z_angle_variance = 0;
@@ -649,9 +650,28 @@ void add_particle_effects_to_workload(
                 
                 particles_active += 1;
                 
+                // distance variance
+                float dist_pos = 0;
+                float dist_neg = 0;
+                if (particle_effects[i].particle_distance_max_variance > 0) {
+                    dist_pos = (float)(
+                            tok_rand_at_i(rand_i + 19) %
+                                particle_effects[i].
+                                    particle_distance_max_variance) /
+                                        100.0f;
+                    dist_neg = (float)(
+                        tok_rand_at_i(rand_i + 20) %
+                            particle_effects[i].
+                                particle_distance_max_variance) /
+                                    100.0f;
+                }
+                
                 float distance_traveled =
                     ((float)spawn_lifetime_so_far / 1000000.0f) *
-                        particle_effects[i].particle_distance_per_second;
+                        (
+                            particle_effects[i].particle_distance_per_second +
+                            dist_pos +
+                            dist_neg);
                 float sq_distance_traveled =
                     (((float)spawn_lifetime_so_far / 1000000.0f) *
                     ((float)spawn_lifetime_so_far / 1000000.0f)) *
@@ -773,12 +793,12 @@ void add_particle_effects_to_workload(
                     squared_direction_max_z_angle_variance > 0)
                 {
                     float z_rotation_pos = (float)(
-                        tok_rand_at_i(rand_i + 14) %
+                        tok_rand_at_i(rand_i + 17) %
                             particle_effects[i].
                                 squared_direction_max_z_angle_variance) /
                                     100.0f;
                     float z_rotation_neg = (float)(
-                        tok_rand_at_i(rand_i + 15) %
+                        tok_rand_at_i(rand_i + 18) %
                             particle_effects[i].
                                 squared_direction_max_z_angle_variance) /
                                     100.0f;

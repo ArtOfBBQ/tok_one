@@ -88,6 +88,8 @@ typedef struct ParticleEffect {
     
     float particle_direction[3]; // the direction the particles fly in
     float particle_distance_per_second; // 1.0f to travel 1.0f per second
+    
+    uint32_t particle_distance_max_variance;
     // set these to 0 to have each particle fly exactly in particle_direction
     // (so you will basically end up with a line)
     // set max_x_angle_variance to 318 to randomly rotate each particle's
