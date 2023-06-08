@@ -215,7 +215,11 @@ void client_logic_threadmain(int32_t threadmain_id) {
     }
 }
 
-void client_logic_animation_callback(int32_t callback_id)
+void client_logic_animation_callback(
+    const int32_t callback_id,
+    const float arg_1,
+    const float arg_2,
+    const int32_t arg_3)
 {
     char unhandled_callback_id[256];
     strcpy_capped(

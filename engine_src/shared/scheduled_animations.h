@@ -16,6 +16,14 @@ void init_scheduled_animations(void);
 void resolve_animation_effects(const uint64_t microseconds_elapsed);
 
 typedef struct ScheduledAnimation {
+    uint64_t wait_before_each_run;           // resets timer each run
+    uint64_t remaining_wait_before_next_run; // gets reset by above each run
+                                             // can be used as wait before 1st
+                                             // run
+    uint64_t duration_microseconds;   // duration at the start of each run
+    uint64_t remaining_microseconds;  // remaining duration (this run)
+    uint64_t shatter_effect_duration; // 0 for no shatter effect
+    
     /*
     Any texquads (2d) or zlights with this object_id will be affected by the
     animation. If you request changes to the Z (depth) attribute of an object,
@@ -118,15 +126,7 @@ typedef struct ScheduledAnimation {
     };
     
     uint32_t internal_trigger_count; // TODO: remove me, I'm debug code
-    
-    uint64_t wait_before_each_run;           // resets timer each run
-    uint64_t remaining_wait_before_next_run; // gets reset by above each run
-                                             // can be used as wait before 1st
-                                             // run
-    uint64_t duration_microseconds;   // duration at the start of each run
-    uint64_t remaining_microseconds;  // remaining duration (this run)
     uint32_t runs; // 0 to repeat forever, 1 to run 1x, 2 to run 2x etc
-    uint64_t shatter_effect_duration; // 0 for no shatter effect
     bool32_t delete_object_when_finished;
     bool32_t deleted;
     bool32_t committed;
@@ -136,6 +136,9 @@ typedef struct ScheduledAnimation {
     // if 0 or higher, client_logic_animation_callback()
     // will be called with this id as its callback
     int32_t clientlogic_callback_when_finished_id;
+    float clientlogic_arg_1;
+    float clientlogic_arg_2;
+    int32_t clientlogic_arg_3;
     // ****
 } ScheduledAnimation;
 

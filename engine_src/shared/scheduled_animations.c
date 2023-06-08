@@ -64,6 +64,8 @@ static void construct_scheduled_animation(
     to_construct->deleted = false;
     to_construct->committed = false;
     to_construct->clientlogic_callback_when_finished_id = -1;
+    to_construct->clientlogic_arg_1 = 0.0f;
+    to_construct->clientlogic_arg_2 = 0.0f;
     to_construct->internal_trigger_count = 0;
 }
 
@@ -743,9 +745,12 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
             
             if (anim->clientlogic_callback_when_finished_id >= 0)  {
                 client_logic_animation_callback(
-                    anim->clientlogic_callback_when_finished_id);
+                    anim->clientlogic_callback_when_finished_id,
+                    anim->clientlogic_arg_1,
+                    anim->clientlogic_arg_2,
+                    anim->clientlogic_arg_3);
             }
-                    
+            
             if (anim->delete_object_when_finished) {
                 
                 for (
