@@ -103,9 +103,6 @@ uint64_t platform_get_filesize(const char * filepath) {
         return 0;
     }
     
-    // let's not use 20MB+ files in development
-    assert(file_size < 20000000);
-
     return_value = file_size;
     
     return return_value;

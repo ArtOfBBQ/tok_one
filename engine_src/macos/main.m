@@ -10,8 +10,11 @@
 
 #include "clientlogic.h"
 
-
 #define SHARED_APPLE_PLATFORM
+
+#if __cplusplus
+extern "C" {
+#endif
 
 static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 {
@@ -499,3 +502,8 @@ int main(int argc, const char * argv[]) {
     return NSApplicationMain(argc, argv);
     }
 }
+
+#if __cplusplus
+}
+#endif
+

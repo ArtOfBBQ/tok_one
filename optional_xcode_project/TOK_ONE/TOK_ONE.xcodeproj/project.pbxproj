@@ -27,8 +27,8 @@
 		601128932862511800F92967 /* zpolygon.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287E2862511700F92967 /* zpolygon.c */; };
 		601128942862511800F92967 /* logger.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287F2862511700F92967 /* logger.c */; };
 		60112899286253C100F92967 /* shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 60112895286253C100F92967 /* shaders.metal */; };
-		6011289A286253C100F92967 /* apple_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = 60112896286253C100F92967 /* apple_platform_layer.c */; };
-		6011289E286253DD00F92967 /* macos_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011289C286253DD00F92967 /* macos_platform_layer.c */; };
+		6011289A286253C100F92967 /* apple_platform_layer.m in Sources */ = {isa = PBXBuildFile; fileRef = 60112896286253C100F92967 /* apple_platform_layer.m */; };
+		6011289E286253DD00F92967 /* macos_platform_layer.m in Sources */ = {isa = PBXBuildFile; fileRef = 6011289C286253DD00F92967 /* macos_platform_layer.m */; };
 		601128A2286253FA00F92967 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 601128A0286253FA00F92967 /* MetalKit.framework */; };
 		601128A3286253FA00F92967 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 601128A1286253FA00F92967 /* Metal.framework */; };
 		601128A82862588900F92967 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 601128A72862588900F92967 /* AppKit.framework */; };
@@ -65,7 +65,7 @@
 		60A998F0287BD4B7003F7159 /* cpu_to_gpu_types.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128762862511600F92967 /* cpu_to_gpu_types.h */; };
 		60A998F1287BD4C3003F7159 /* logger.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128752862511600F92967 /* logger.h */; };
 		60A998F2287BD4C3003F7159 /* renderer.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287B2862511700F92967 /* renderer.h */; };
-		60A998F4287BD4C3003F7159 /* apple_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = 60112896286253C100F92967 /* apple_platform_layer.c */; };
+		60A998F4287BD4C3003F7159 /* apple_platform_layer.m in Sources */ = {isa = PBXBuildFile; fileRef = 60112896286253C100F92967 /* apple_platform_layer.m */; };
 		60A998F5287BD4C3003F7159 /* texture_array.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128682862511500F92967 /* texture_array.h */; };
 		60A998F6287BD4C3003F7159 /* common_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128722862511600F92967 /* common_platform_layer.c */; };
 		60A998F7287BD4C3003F7159 /* logger.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287F2862511700F92967 /* logger.c */; };
@@ -197,9 +197,9 @@
 		601128832862511700F92967 /* platform_layer.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = platform_layer.h; path = ../../engine_src/shared/platform_layer.h; sourceTree = "<group>"; };
 		601128842862511700F92967 /* zpolygon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zpolygon.h; path = ../../engine_src/shared/zpolygon.h; sourceTree = "<group>"; };
 		60112895286253C100F92967 /* shaders.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = shaders.metal; path = ../../engine_src/shared_apple/shaders.metal; sourceTree = "<group>"; };
-		60112896286253C100F92967 /* apple_platform_layer.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = apple_platform_layer.c; path = ../../engine_src/shared_apple/apple_platform_layer.c; sourceTree = "<group>"; };
+		60112896286253C100F92967 /* apple_platform_layer.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = apple_platform_layer.m; path = ../../engine_src/shared_apple/apple_platform_layer.m; sourceTree = "<group>"; };
 		60112898286253C100F92967 /* gpu.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = gpu.h; path = ../../engine_src/shared_apple/gpu.h; sourceTree = "<group>"; };
-		6011289C286253DD00F92967 /* macos_platform_layer.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = macos_platform_layer.c; path = ../../engine_src/macos/macos_platform_layer.c; sourceTree = "<group>"; };
+		6011289C286253DD00F92967 /* macos_platform_layer.m */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = macos_platform_layer.m; path = ../../engine_src/macos/macos_platform_layer.m; sourceTree = "<group>"; };
 		601128A0286253FA00F92967 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		601128A1286253FA00F92967 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		601128A72862588900F92967 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
@@ -372,7 +372,7 @@
 			isa = PBXGroup;
 			children = (
 				ECB05E4A294F8B3500050BD4 /* main.m */,
-				6011289C286253DD00F92967 /* macos_platform_layer.c */,
+				6011289C286253DD00F92967 /* macos_platform_layer.m */,
 			);
 			name = macos_only;
 			sourceTree = "<group>";
@@ -380,7 +380,7 @@
 		60A998DE287BD468003F7159 /* shared_macos_iphone */ = {
 			isa = PBXGroup;
 			children = (
-				60112896286253C100F92967 /* apple_platform_layer.c */,
+				60112896286253C100F92967 /* apple_platform_layer.m */,
 				EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */,
 				601128702862511600F92967 /* clientlogic.c */,
 				EC6E12182A04CE12004E7BD1 /* objectid.c */,
@@ -611,13 +611,13 @@
 				6009B4F428679E7D00F1F279 /* memorystore.h in Sources */,
 				6009B4F528679E7D00F1F279 /* memorystore.c in Sources */,
 				60112842286122FE00F92967 /* decode_png.c in Sources */,
-				6011289A286253C100F92967 /* apple_platform_layer.c in Sources */,
+				6011289A286253C100F92967 /* apple_platform_layer.m in Sources */,
 				60A998EA287BD4B7003F7159 /* text.h in Sources */,
 				EC78509A29E62CA800E6882A /* objmodel.c in Sources */,
 				601128922862511800F92967 /* scheduled_animations.c in Sources */,
 				60A998E6287BD4AA003F7159 /* scheduled_animations.h in Sources */,
 				6011288E2862511800F92967 /* tok_random.c in Sources */,
-				6011289E286253DD00F92967 /* macos_platform_layer.c in Sources */,
+				6011289E286253DD00F92967 /* macos_platform_layer.m in Sources */,
 				60A998F0287BD4B7003F7159 /* cpu_to_gpu_types.h in Sources */,
 				60A998E1287BD494003F7159 /* decode_png.h in Sources */,
 				60A998E4287BD494003F7159 /* gpu.h in Sources */,
@@ -670,7 +670,7 @@
 				EC6441A529318B6D00A0267B /* AppDelegate.m in Sources */,
 				EC6A301C29EFA1440071C58F /* triangle.c in Sources */,
 				60A99909287BD4C3003F7159 /* platform_layer.h in Sources */,
-				60A998F4287BD4C3003F7159 /* apple_platform_layer.c in Sources */,
+				60A998F4287BD4C3003F7159 /* apple_platform_layer.m in Sources */,
 				6028DD342886EE54000E1E98 /* init_application.c in Sources */,
 				60A99903287BD4C3003F7159 /* userinput.c in Sources */,
 				EC78509B29E62CA800E6882A /* objmodel.c in Sources */,

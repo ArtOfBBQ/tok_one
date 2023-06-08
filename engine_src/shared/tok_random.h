@@ -14,7 +14,7 @@ extern "C" {
 
 #define RANDOM_SEQUENCE_SIZE 2000
 
-void init_rand_with_seed(const uint64_t seed);
+extern uint32_t random_seed;
 
 uint32_t tok_rand(void);
 uint32_t tok_rand_at_i(const uint64_t index);

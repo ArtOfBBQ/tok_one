@@ -305,8 +305,9 @@ static void client_handle_keypresses(
                 /* duration_us: */ 2000000);
         } else {
             delete_zpolygon_object(xmastree_object_id);
-            ShatterEffect * dissolving_quad = next_shatter_effect(
-            /* constructed with zpolygon: */ &xmastree);
+            ShatterEffect * dissolving_quad = next_shatter_effect();
+            dissolving_quad->zpolygon_to_shatter = xmastree;
+            
             //                                                     40.000 0.4 seconds
             dissolving_quad->longest_random_delay_before_launch =  400000;
             dissolving_quad->exploding_distance_per_second = 0.4f;

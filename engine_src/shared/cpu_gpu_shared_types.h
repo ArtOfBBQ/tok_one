@@ -70,4 +70,3 @@ typedef struct GPU_TouchablePixels {
 #pragma pack(pop)
 
 #endif
-
