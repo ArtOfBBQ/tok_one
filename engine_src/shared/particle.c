@@ -10,6 +10,7 @@ static void construct_shatter_effect_no_zpoly(
 {
     to_construct->random_seed = tok_rand() % 75;
     to_construct->elapsed = 0;
+    to_construct->wait_first = 0;
     to_construct->committed = false;
     to_construct->deleted = false;
     to_construct->limit_triangles_to = 0;
@@ -124,6 +125,14 @@ void add_shatter_effects_to_workload(
             !shatter_effects[i].committed)
         {
             continue;
+        }
+        
+        if (shatter_effects[i].wait_first > elapsed_nanoseconds) {
+            shatter_effects[i].wait_first -= elapsed_nanoseconds;
+            continue;
+        } else if (shatter_effects[i].wait_first > 0) {
+            shatter_effects[i].wait_first = 0;
+            elapsed_nanoseconds -= shatter_effects[i].wait_first;
         }
         
         shatter_effects[i].elapsed += elapsed_nanoseconds;

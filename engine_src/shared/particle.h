@@ -20,6 +20,7 @@ typedef struct ShatterEffect {
     
     uint64_t random_seed;
     uint64_t elapsed;
+    uint64_t wait_first;
     
     uint64_t longest_random_delay_before_launch;
     

@@ -308,7 +308,7 @@ static void client_handle_keypresses(
             ShatterEffect * dissolving_quad = next_shatter_effect();
             dissolving_quad->zpolygon_to_shatter = xmastree;
             
-            //                                                     40.000 0.4 seconds
+            //                                                     40.000 0.4s
             dissolving_quad->longest_random_delay_before_launch =  400000;
             dissolving_quad->exploding_distance_per_second = 0.4f;
             dissolving_quad->linear_distance_per_second = 0.3f;

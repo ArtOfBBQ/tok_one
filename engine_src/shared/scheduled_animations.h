@@ -160,7 +160,10 @@ void request_fade_to(
     const uint64_t duration_microseconds,
     const float target_alpha);
 
-void request_dud_dance(const int32_t object_id, const float magnitude);
+void request_dud_dance(
+    const int32_t object_id,
+    const float magnitude,
+    const uint64_t wait_first_microseconds);
 
 void request_bump_animation(
     const int32_t object_id,

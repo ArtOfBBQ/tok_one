@@ -775,26 +775,29 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
 }
 
 void request_dud_dance(
-    const int32_t object_id, const float magnitude)
+    const int32_t object_id,
+    const float magnitude,
+    const uint64_t wait_first_microseconds)
 {
     uint64_t step_size = 60000;
     
     float delta = 0.07f * magnitude;
     
     for (
-        uint64_t wait_first = 0;
-        wait_first < step_size * 8;
-        wait_first += step_size)
+        uint64_t wait_extra = 0;
+        wait_extra < step_size * 8;
+        wait_extra += step_size)
     {
         ScheduledAnimation * move_request = next_scheduled_animation();
         move_request->affected_object_id = (int32_t)object_id;
-        move_request->remaining_wait_before_next_run = wait_first;
+        move_request->remaining_wait_before_next_run =
+            wait_first_microseconds + wait_extra;
         move_request->duration_microseconds = step_size;
         move_request->delta_x_per_second =
-            wait_first % (step_size * 2) == 0 ?
+            wait_extra % (step_size * 2) == 0 ?
                 delta : -delta;
         move_request->delta_y_per_second =
-            wait_first % (step_size * 2) == 0 ?
+            wait_extra % (step_size * 2) == 0 ?
                 delta : -delta;
         commit_scheduled_animation(move_request);
     }
