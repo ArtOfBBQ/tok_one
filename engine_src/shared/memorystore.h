@@ -20,7 +20,6 @@ uint8_t * malloc_from_unmanaged_aligned(
     const uint64_t size,
     const uint32_t aligned_to);
 
-#define malloc_struct_from_unmanaged(type) (type *)malloc_from_unmanaged(sizeof(type))
 void * malloc_from_unmanaged(size_t size);
 void * malloc_from_managed(size_t size);
 

@@ -110,7 +110,7 @@ static DecodedImage * malloc_img_from_filename_with_working_memory(
     }
     log_assert(file_buffer.good);
     
-    DecodedImage * new_image = malloc_struct_from_unmanaged(DecodedImage);
+    DecodedImage * new_image = malloc_from_unmanaged(sizeof(DecodedImage));
     
     if (
         file_buffer.contents[1] == 'P' &&
@@ -250,7 +250,7 @@ static DecodedImage * extract_image(
     log_assert(y <= sprite_rows);
     if (!application_running) { return NULL; }
     
-    DecodedImage * new_image = malloc_struct_from_unmanaged(DecodedImage);
+    DecodedImage * new_image = malloc_from_unmanaged(sizeof(DecodedImage));
     log_assert(new_image != NULL);
     
     uint32_t slice_size_bytes =
@@ -796,7 +796,7 @@ void decode_null_image_with_memory(
     log_assert(file_buffer.good);
     
     DecodedImage * new_image =
-        malloc_struct_from_unmanaged(DecodedImage);
+        malloc_from_unmanaged(sizeof(DecodedImage));
     new_image->height = texture_arrays[i].single_img_height;
     new_image->width = texture_arrays[i].single_img_width;
     log_assert(new_image->height > 0);
@@ -806,7 +806,7 @@ void decode_null_image_with_memory(
     log_assert(new_image->rgba_values_size > 0);
     new_image->rgba_values = (uint8_t *)
         malloc_from_unmanaged(new_image->rgba_values_size);
-
+    
     if (file_buffer.contents[1] == 'P' &&
         file_buffer.contents[2] == 'N')
     {
@@ -846,6 +846,7 @@ void decode_null_image_with_memory(
     log_assert(new_image->good);
     log_assert(new_image->height == texture_arrays[i].single_img_height);
     log_assert(new_image->width == texture_arrays[i].single_img_width);
+    new_image->pixel_count = new_image->height * new_image->width;
     
     texture_arrays[i].images[j].image = new_image;
     texture_arrays[i].images[j].request_update = true;
