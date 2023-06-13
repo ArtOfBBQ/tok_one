@@ -161,8 +161,6 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 @end
 
 @implementation GameWindowDelegate
-NSSize last_nonfull_screen_size;
-NSSize last_nonfull_drawable_size;
 
 - (void)windowWillClose:(NSNotification *)notification {
     log_append("window will close, terminating app..\n");
@@ -182,74 +180,38 @@ NSSize last_nonfull_drawable_size;
 }
 
 // This allows you to override the full screen size
-- (NSSize)
-    window:(NSWindow *)window
-    willUseFullScreenContentSize:(NSSize)proposedSize
-{
-    log_append("willuseFullScreenContentSize: ");
-    log_append_uint((uint32_t)proposedSize.height);
-    log_append(", ");
-    log_append_uint((uint32_t)proposedSize.width);
-    log_append_char('\n');
-    
-    [self
-        handleResizeTo: proposedSize
-        withTitleBarHeight: 0];
-    
-    return proposedSize;
-}
+//- (NSSize)
+//    window:(NSWindow *)window
+//    willUseFullScreenContentSize:(NSSize)proposedSize
+//{
+//    log_append("willuseFullScreenContentSize: ");
+//    log_append_uint((uint32_t)proposedSize.height);
+//    log_append(", ");
+//    log_append_uint((uint32_t)proposedSize.width);
+//    log_append_char('\n');
+//
+//    [self
+//        handleResizeTo: proposedSize
+//        withTitleBarHeight: 0];
+//
+//    return proposedSize;
+//}
 
-// WindowWillResize() also triggers after this 
-// the order always seems the same on my computer
 - (void)
     windowWillEnterFullScreen:(NSNotification *)notification
 {
-    // I'm stashing this info because NSEvents won't give the correct
-    // info when entering full screen and then going back to window mode
-    last_nonfull_screen_size.width = window_globals->window_width;
-    last_nonfull_screen_size.height = window_globals->window_height;
-    last_nonfull_drawable_size = mtk_view.drawableSize;
-    
     zpolygons_to_render_size = 0;
+    shatter_effects_size = 0;
+    particle_effects_size = 0;
 }
 
 - (void)windowDidMove:(NSNotification *)notification
 {
     // WTF apple
     window_globals->window_left =
-        ((NSWindow *)[notification object]).frame.origin.x;
+        (float)(((NSWindow *)[notification object]).frame.origin.x);
     window_globals->window_bottom =
-        ((NSWindow *)[notification object]).frame.origin.y;
-}
-
-- (void)
-    handleResizeTo: (NSSize)size
-    withTitleBarHeight: (float)title_bar_height
-{
-    zpolygons_to_render_size = 0;
-    
-    window_globals->window_height =
-        (float)(size.height + title_bar_height);
-    window_globals->window_width =
-        (float)size.width;
-    
-    NSSize new_size = size;
-    new_size.height += title_bar_height;
-    new_size.height *= 2;
-    new_size.width *= 2;
-    mtk_view.drawableSize = new_size;
-    
-    window_globals->last_resize_request_at =
-        platform_get_current_time_microsecs();
-}
-
-// WindowWillResize() doesn't seem to trigger after this consistently
-- (void)
-    windowWillExitFullScreen:(NSNotification *)notification
-{
-    log_append("window will exit full screen\n");
-        
-    zpolygons_to_render_size = 0;
+        (float)(((NSWindow *)[notification object]).frame.origin.y);
 }
 
 - (NSSize)
@@ -261,15 +223,36 @@ NSSize last_nonfull_drawable_size;
         return frameSize;
     }
     
-    float title_bar_height =
-        (float)([sender contentRectForFrameRect: sender.frame].size.height
-            - sender.frame.size.height);
-    
-    [self
-        handleResizeTo: frameSize
-        withTitleBarHeight: title_bar_height];
+    zpolygons_to_render_size = 0;
+    particle_effects_size = 0;
+    shatter_effects_size = 0;
     
     return frameSize;
+}
+
+- (void)windowDidResize:(NSNotification *)notification {
+    if (!startup_complete) {
+        return;
+    }
+    
+    NSRect window_frame = ((NSWindow *)[notification object]).frame;
+    
+    NSSize size = [mtk_view frame].size;
+        
+    printf(
+         "window did resize, window_frame: [%f, %f], "
+         "mtk_view_frame: [%f, %f]\n",
+         window_frame.size.height,
+         window_frame.size.width,
+         size.height,
+         size.width);
+    
+    window_globals->window_height = (float)window_frame.size.height;
+    window_globals->window_width = (float)window_frame.size.width;
+    window_globals->titlebar_height =
+        (float)(window_frame.size.height - size.height);
+    window_globals->last_resize_request_at =
+        platform_get_current_time_microsecs();
 }
 @end
 
@@ -393,11 +376,20 @@ NSWindowWithCustomResponder: NSWindow
 }
 @end
 
+NSWindowWithCustomResponder * window = NULL;
+
 bool32_t application_running = true;
 bool32_t has_retina_screen = true;
 
-NSWindowWithCustomResponder * window = NULL;
-
+//static void get_window_size(
+//    uint32_t * width,
+//    uint32_t * height)
+//{
+//    NSSize size = [ [ window contentView ] frame ].size;
+//
+//    *width = (uint32_t)size.width;
+//    *height = (uint32_t)size.height;
+//}
 
 int main(int argc, const char * argv[]) {
     

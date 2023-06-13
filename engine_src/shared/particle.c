@@ -629,7 +629,7 @@ void add_particle_effects_to_workload(
                 uint64_t rand_i =
                     (particle_effects[i].random_seed
                         + (spawn_i * 41) + (spawn_i % 3)) %
-                        (RANDOM_SEQUENCE_SIZE - 10);
+                        (RANDOM_SEQUENCE_SIZE - 50);
                 
                 int32_t texturearray_i = -1;
                 int32_t texture_i = -1;

@@ -25,7 +25,8 @@ static dispatch_semaphore_t drawing_semaphore;
     cached_viewport.originY = 0;
     cached_viewport.width   = window_globals->window_width *
         (has_retina_screen ? 2.0f : 1.0f);
-    cached_viewport.height  = window_globals->window_height *
+    cached_viewport.height  =
+        (window_globals->window_height - window_globals->titlebar_height) *
         (has_retina_screen ? 2.0f : 1.0f);
     /*
     These near/far values are the final viewport coordinates (after fragment

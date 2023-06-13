@@ -195,6 +195,23 @@ void delete_conflicting_animations(ScheduledAnimation * priority_anim)
         }
         
         if (
+            (
+            !priority_anim->final_x_angle_known &&
+            (
+                priority_anim->x_rotation_per_second < -float_threshold ||
+                priority_anim->x_rotation_per_second >  float_threshold
+            )) &&
+            (
+            !candidate->final_x_angle_known &&
+            (
+                candidate->x_rotation_per_second < -float_threshold ||
+                candidate->x_rotation_per_second >  float_threshold
+            )))
+        {
+            candidate->deleted = true;
+        }
+        
+        if (
             priority_anim->final_y_known &&
             candidate->final_y_known)
         {
@@ -781,8 +798,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
 
 void request_dud_dance(
     const int32_t object_id,
-    const float magnitude,
-    const uint64_t wait_first_microseconds)
+    const float magnitude)
 {
     uint64_t step_size = 60000;
     
@@ -795,8 +811,7 @@ void request_dud_dance(
     {
         ScheduledAnimation * move_request = next_scheduled_animation();
         move_request->affected_object_id = (int32_t)object_id;
-        move_request->remaining_wait_before_next_run =
-            wait_first_microseconds + wait_extra;
+        move_request->remaining_wait_before_next_run = wait_extra;
         move_request->duration_microseconds = step_size;
         move_request->delta_x_per_second =
             wait_extra % (step_size * 2) == 0 ?
