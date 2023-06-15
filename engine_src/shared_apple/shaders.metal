@@ -180,8 +180,7 @@ vertex_shader(
         input_array[vertex_i].uv[1]);
     
     if (input_array[vertex_i].ignore_lighting > 0.0f) {
-        out.lighting += 1.0f;
-        out.lighting[3] = 1.0f;
+        out.lighting = float4(1.0f, 1.0f, 1.0f, 1.0f);
         return out;
     }
     

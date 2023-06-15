@@ -69,9 +69,12 @@ static int32_t closest_touchable_from_screen_ray(
     
     
     zVertex distant_point_rotated = distant_point;
-    distant_point_rotated = x_rotate_zvertex(&distant_point_rotated, camera.x_angle);
-    distant_point_rotated = y_rotate_zvertex(&distant_point_rotated, camera.y_angle);
-    distant_point_rotated = z_rotate_zvertex(&distant_point_rotated, camera.z_angle);
+    distant_point_rotated =
+        x_rotate_zvertex(&distant_point_rotated, camera.x_angle);
+    distant_point_rotated =
+        y_rotate_zvertex(&distant_point_rotated, camera.y_angle);
+    distant_point_rotated =
+        z_rotate_zvertex(&distant_point_rotated, camera.z_angle);
     
     window_globals->visual_debug_ray_origin_direction[0] =
         ray_origin.x;
