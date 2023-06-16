@@ -28,6 +28,9 @@ static dispatch_semaphore_t drawing_semaphore;
     cached_viewport.height  =
         (window_globals->window_height - window_globals->titlebar_height) *
         (has_retina_screen ? 2.0f : 1.0f);
+    assert(cached_viewport.width > 0.0f);
+    assert(cached_viewport.height > 0.0f);
+    
     /*
     These near/far values are the final viewport coordinates (after fragment
     shader), not to be confused with window_globals->projection_constants.near
@@ -419,6 +422,8 @@ static dispatch_semaphore_t drawing_semaphore;
                 RenderPassDescriptor];
     assert(cached_viewport.zfar > cached_viewport.znear);
     [render_encoder setViewport: cached_viewport];
+    assert(cached_viewport.width > 0.0f);
+    assert(cached_viewport.height > 0.0f);
     
     [render_encoder setRenderPipelineState: _combo_pipeline_state];
     assert(_depth_stencil_state != nil);

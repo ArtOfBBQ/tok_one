@@ -1,5 +1,7 @@
 #include "texture_array.h"
 
+static uint32_t texture_arrays_mutex_id;
+
 #define MAX_ASSET_FILENAME_SIZE 30
 #define MAX_FILES_IN_SINGLE_TEXARRAY 200
 #define MAX_ASSET_FILES 1500
@@ -324,6 +326,8 @@ static void register_to_texturearray_from_images(
     const char ** new_img_filenames,
     const uint32_t new_images_size)
 {
+    platform_mutex_lock(texture_arrays_mutex_id);
+    
     log_assert(new_images_size > 0);
     for (uint32_t i = 0; i < new_images_size; i++) {
         log_assert(new_images[i] != NULL);
@@ -378,6 +382,8 @@ static void register_to_texturearray_from_images(
                 new_img_filenames[i]);
         }
     }
+    
+    platform_mutex_unlock(texture_arrays_mutex_id);
 }
 
 static void register_new_texturearray_from_images(
@@ -385,10 +391,13 @@ static void register_new_texturearray_from_images(
     const char ** new_img_filenames,
     const uint32_t new_images_size)
 {
+    platform_mutex_lock(texture_arrays_mutex_id);
     int32_t new_i = (int32_t)texture_arrays_size;
     log_assert(new_i < TEXTUREARRAYS_SIZE);
-
+    
+    
     texture_arrays_size++;
+    platform_mutex_unlock(texture_arrays_mutex_id);
     
     register_to_texturearray_from_images(
         new_i,
@@ -437,6 +446,8 @@ void register_new_texturearray_from_files(
 
 void init_texture_arrays(void) {
     
+    texture_arrays_mutex_id = platform_init_mutex_and_return_id();
+    
     // initialize texture arrays
     texture_arrays = (TextureArray *)malloc_from_unmanaged(
         sizeof(TextureArray) * TEXTUREARRAYS_SIZE);
@@ -457,6 +468,8 @@ void init_texture_arrays(void) {
 }
 
 void init_or_push_one_gpu_texture_array_if_needed(void) {
+    
+    platform_mutex_lock(texture_arrays_mutex_id);
     
     for (int32_t i = 0; (uint32_t)i < texture_arrays_size; i++) {
         if (texture_arrays[i].request_init) {
@@ -493,6 +506,8 @@ void init_or_push_one_gpu_texture_array_if_needed(void) {
             }
         }
     }
+    
+    platform_mutex_unlock(texture_arrays_mutex_id);
 }
 
 static void register_to_texturearray_by_splitting_image(
@@ -857,6 +872,8 @@ void decode_all_null_images_with_memory(
     uint8_t * dpng_working_memory,
     const uint64_t dpng_working_memory_size)
 {
+    platform_mutex_lock(texture_arrays_mutex_id);
+    
     while (true) {
         int32_t priority_png_texturearray_i = -1;
         int32_t priority_png_texture_i = -1;
@@ -929,8 +946,8 @@ void decode_all_null_images_with_memory(
             j = nonpriority_texture_i;
         }
         
-        if (i < 0) { return; }
-        if (j < 0) { return; }
+        if (i < 0) { break; }
+        if (j < 0) { break; }
         
         log_append("decoding image: ");
         log_append(texture_arrays[i].images[j].filename);
@@ -945,6 +962,8 @@ void decode_all_null_images_with_memory(
             /* const uint64_t dpng_working_memory_size: */
                 dpng_working_memory_size);
     }
+    
+    platform_mutex_unlock(texture_arrays_mutex_id);
 }
 
 void flag_all_texture_arrays_to_request_gpu_init(void) {

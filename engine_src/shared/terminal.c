@@ -51,11 +51,7 @@ static void update_terminal_history_size() {
 void terminal_init(void) {
     current_command = (char *)malloc_from_unmanaged(
         SINGLE_LINE_MAX);
-    
-    strcpy_capped(
-        current_command,
-        SINGLE_LINE_MAX,
-        "");
+    current_command[0] = '\0';
     
     terminal_history = (char *)malloc_from_unmanaged(
         TERMINAL_HISTORY_MAX);

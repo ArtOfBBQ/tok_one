@@ -15,7 +15,21 @@ void init_application(void)
 {
     init_memory_store();
     
-    setup_log((char *)malloc_from_unmanaged(LOG_SIZE));
+    keypress_map = (bool32_t *)malloc_from_unmanaged(
+        sizeof(bool32_t) * KEYPRESS_MAP_SIZE);
+    for (uint32_t i = 0; i < KEYPRESS_MAP_SIZE; i++) {
+        keypress_map[i] = false;
+    }
+    
+    init_logger(
+        /* void * arg_malloc_function(size_t size): */
+            malloc_from_unmanaged,
+        /* uint32_t (* arg_create_mutex_function)(void): */
+            platform_init_mutex_and_return_id,
+        /* void arg_mutex_lock_function(const uint32_t mutex_id): */
+            platform_mutex_lock,
+        /* void arg_mutex_unlock_function(const uint32_t mutex_id: */
+            platform_mutex_unlock);
     
     engine_save_file = (EngineSaveFile *)malloc_from_unmanaged(
         sizeof(EngineSaveFile));
@@ -37,12 +51,14 @@ void init_application(void)
     
     window_globals = (WindowGlobals *)malloc_from_unmanaged(
         sizeof(WindowGlobals));
+    window_globals->visual_debug_mode = false;
     
     if (engine_save.contents != NULL) {
         window_globals->window_height = engine_save_file->window_height;
         window_globals->window_width  = engine_save_file->window_width;
         window_globals->window_left   = engine_save_file->window_left;
         window_globals->window_bottom = engine_save_file->window_bottom;
+        window_globals->titlebar_height = 0.0f;
         platform_music_volume = engine_save_file->music_volume;
         platform_sound_volume = engine_save_file->sound_volume;
     } else {
@@ -50,6 +66,7 @@ void init_application(void)
         window_globals->window_width  = INITIAL_WINDOW_WIDTH;
         window_globals->window_left   = INITIAL_WINDOW_LEFT;
         window_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
+        window_globals->titlebar_height = 0.0f;
     }
     
     window_globals->aspect_ratio =
@@ -59,8 +76,6 @@ void init_application(void)
     
     init_ui_elements();
     
-    keypress_map = (bool32_t *)malloc_from_unmanaged(
-        sizeof(bool32_t) * KEYPRESS_MAP_SIZE);
     zpolygons_to_render = (zPolygon *)malloc_from_unmanaged(
         sizeof(zPolygon) * ZPOLYGONS_TO_RENDER_ARRAYSIZE);
     init_all_meshes();

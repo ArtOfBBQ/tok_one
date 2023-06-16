@@ -6,6 +6,14 @@ char crashed_top_of_screen_msg[256];
 // static bool32_t logger_activated = false;
 #endif
 
+// These are function pointers to our injected dependencies
+static void * (* malloc_function)(size_t size) = NULL;
+static uint32_t (* create_mutex_function)(void) = NULL;
+static void (* mutex_lock_function)(const uint32_t mutex_id) = NULL;
+static void (* mutex_unlock_function)(const uint32_t mutex_id) = NULL;
+static uint32_t logger_mutex_id = UINT32_MAX;
+
+#define LOG_SIZE 5000000
 static char * app_log;
 static uint32_t log_i = 0;
 
@@ -13,10 +21,22 @@ static uint32_t log_i = 0;
 extern "C" {
 #endif
 
-void setup_log(char * memory_log_size_bytes) {
+void init_logger(
+    void * arg_malloc_function(size_t size),
+    uint32_t (* arg_create_mutex_function)(void),
+    void arg_mutex_lock_function(const uint32_t mutex_id),
+    void arg_mutex_unlock_function(const uint32_t mutex_id))
+{
+    malloc_function = arg_malloc_function;
+    create_mutex_function = arg_create_mutex_function;
+    mutex_lock_function = arg_mutex_lock_function;
+    mutex_unlock_function = arg_mutex_unlock_function;
     
     // create a log for debug text
-    app_log = memory_log_size_bytes;
+    app_log = malloc_function(sizeof(LOG_SIZE));
+    app_log[0] = '\0';
+    log_i = 0;
+    logger_mutex_id = create_mutex_function();
 }
 
 void
@@ -95,6 +115,8 @@ internal_log_append(
     const char * to_append,
     const char * caller_function_name)
 {
+    mutex_lock_function(logger_mutex_id);
+    
     #ifndef LOGGER_SILENCE
     if (application_running) {
         printf("%s", to_append);
@@ -106,7 +128,11 @@ internal_log_append(
     {
         char * prefix = (char *)"[";
         uint32_t prefix_length = get_string_length(prefix);
-        if (log_i + prefix_length >= LOG_SIZE) { return; }
+        if (log_i + prefix_length >= LOG_SIZE) {
+            mutex_unlock_function(logger_mutex_id);
+            return;
+        }
+        
         strcpy_capped(
             /* recipient: */
                 app_log + log_i,
@@ -115,11 +141,17 @@ internal_log_append(
             /* origin: */
                 prefix);
         log_i += prefix_length;
-        if (log_i >= LOG_SIZE) { return; }
+        if (log_i >= LOG_SIZE) {
+            mutex_unlock_function(logger_mutex_id);
+            return;
+        }
         
         uint32_t func_length = get_string_length(
         caller_function_name);
-        if (log_i + func_length < LOG_SIZE) { return; }
+        if (log_i + func_length >= LOG_SIZE) {
+            mutex_unlock_function(logger_mutex_id);
+            return;
+        }
         
         strcpy_capped(
             /* recipient: */
@@ -129,11 +161,17 @@ internal_log_append(
             /* origin: */
                 caller_function_name);
         log_i += func_length;
-        if (log_i >= LOG_SIZE) { return; }
+        if (log_i >= LOG_SIZE) {
+            mutex_unlock_function(logger_mutex_id);
+            return;
+        }
         
         char * glue = (char *)"]: ";
         uint32_t glue_length = get_string_length(glue);
-        if (log_i + glue_length >= LOG_SIZE) { return; }
+        if (log_i + glue_length >= LOG_SIZE) {
+            mutex_unlock_function(logger_mutex_id);
+            return;
+        }
         strcpy_capped(
             /* recipient: */
                 app_log + log_i,
@@ -142,11 +180,17 @@ internal_log_append(
             /* origin: */
                 glue);
         log_i += glue_length;
-        if (log_i >= LOG_SIZE) { return; }
+        if (log_i >= LOG_SIZE) {
+            mutex_unlock_function(logger_mutex_id);
+            return;
+        }
     }
     
     uint32_t to_append_length = get_string_length(to_append);
-    if (log_i + to_append_length >= LOG_SIZE) { return; }
+    if (log_i + to_append_length >= LOG_SIZE) {
+        mutex_unlock_function(logger_mutex_id);
+        return;
+    }
     strcpy_capped(
         /* recipient: */
             app_log + log_i,
@@ -155,7 +199,8 @@ internal_log_append(
         /* origin: */
             to_append);
     log_i += to_append_length;
-    if (log_i >= LOG_SIZE) { return; }
+    
+    mutex_unlock_function(logger_mutex_id);
 }
 
 void log_dump(bool32_t * good) {

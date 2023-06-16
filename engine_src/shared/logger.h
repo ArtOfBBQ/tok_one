@@ -10,8 +10,6 @@
 
 #include "common.h"
 
-#define LOG_SIZE 5000000
-
 #ifdef IGNORE_LOGGER
 #define log_assert(condition) assert(condition)
 #define log_append(string)
@@ -40,7 +38,11 @@ extern bool32_t application_running;
 Allocates memory. You need to pass a chunk of memory of LOG_SIZE bytes
 example with c standard library: setup_log(malloc(LOG_SIZE));
 */
-void setup_log(char * memory_log_size_bytes);
+void init_logger(
+    void * malloc_function(size_t size),
+    uint32_t (* create_mutex_function)(void),
+    void mutex_lock_function(const uint32_t mutex_id),
+    void mutex_unlock_function(const uint32_t mutex_id));
 
 /*
 don't use the internal_ functions, use the macros that call them.
