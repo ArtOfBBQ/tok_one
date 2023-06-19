@@ -194,6 +194,8 @@ void shared_gameloop_update(
     
     if (elapsed > 33333) { elapsed = 33333; }
     
+    log_assert(elapsed < 60000);
+    
     if (!application_running) {
         zpolygons_to_render_size = 0;
         camera.x = 0.0f;

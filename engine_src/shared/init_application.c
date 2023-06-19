@@ -148,4 +148,12 @@ void shared_shutdown_application(void)
             sizeof(EngineSaveFile),
         /* uint32_t good: */
             &good);
+    
+    char memory_usage_desc[512];
+    get_memory_usage_summary_string(
+        /* char * recipient: */
+            memory_usage_desc,
+        /* const uint32_t recipient_cap: */
+            512);
+    log_append(memory_usage_desc);
 }

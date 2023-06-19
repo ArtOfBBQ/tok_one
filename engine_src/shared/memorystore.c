@@ -8,6 +8,68 @@ static uint8_t * managed_memory = NULL;
 static uint64_t managed_memory_size = MANAGED_MEMORY_SIZE;
 static uint32_t malloc_mutex_id;
 
+void get_memory_usage_summary_string(
+    char * recipient,
+    const uint32_t recipient_cap)
+{
+    strcpy_capped(
+        recipient,
+        recipient_cap,
+        "Unmanaged memory use: ");
+    strcat_uint_capped(
+        recipient,
+        recipient_cap,
+        UNMANAGED_MEMORY_SIZE - (uint32_t)unmanaged_memory_size);
+    strcat_capped(
+        recipient,
+        recipient_cap,
+        " of: ");
+    strcat_uint_capped(
+        recipient,
+        recipient_cap,
+        UNMANAGED_MEMORY_SIZE);
+    strcat_capped(
+        recipient,
+        recipient_cap,
+        " (");
+    strcat_uint_capped(
+        recipient,
+        recipient_cap,
+        (uint32_t)(
+            (float)(UNMANAGED_MEMORY_SIZE - (uint32_t)unmanaged_memory_size)
+                / (float)UNMANAGED_MEMORY_SIZE * 100.0f));
+    strcat_capped(
+        recipient,
+        recipient_cap,
+        "%)\nManaged memory use: ");
+    strcat_uint_capped(
+        recipient,
+        recipient_cap,
+        MANAGED_MEMORY_SIZE - (uint32_t)managed_memory_size);
+    strcat_capped(
+        recipient,
+        recipient_cap,
+        " of: ");
+    strcat_uint_capped(
+        recipient,
+        recipient_cap,
+        MANAGED_MEMORY_SIZE);
+    strcat_capped(
+        recipient,
+        recipient_cap,
+        " (");
+    strcat_uint_capped(
+        recipient,
+        recipient_cap,
+        (uint32_t)(
+            (float)(MANAGED_MEMORY_SIZE - (uint32_t)managed_memory_size)
+                / (float)MANAGED_MEMORY_SIZE * 100.0f));
+    strcat_capped(
+        recipient,
+        recipient_cap,
+        "%)\n");
+}
+
 void init_memory_store(void) {
     malloc_mutex_id = platform_init_mutex_and_return_id();
     unmanaged_memory = platform_malloc_unaligned_block(UNMANAGED_MEMORY_SIZE);

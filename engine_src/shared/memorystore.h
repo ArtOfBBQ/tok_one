@@ -14,6 +14,10 @@
 extern "C" {
 #endif
 
+void get_memory_usage_summary_string(
+    char * recipient,
+    const uint32_t recipient_cap);
+
 void init_memory_store(void);
 
 uint8_t * malloc_from_unmanaged_aligned(
