@@ -131,7 +131,9 @@ internal_log_append(
         char * prefix = (char *)"[";
         uint32_t prefix_length = get_string_length(prefix);
         if (log_i + prefix_length >= LOG_SIZE) {
-            mutex_unlock_function(logger_mutex_id);
+            if (mutex_unlock_function != NULL) {
+                mutex_unlock_function(logger_mutex_id);
+            }
             return;
         }
         
@@ -164,14 +166,18 @@ internal_log_append(
                 caller_function_name);
         log_i += func_length;
         if (log_i >= LOG_SIZE) {
-            mutex_unlock_function(logger_mutex_id);
+            if (mutex_unlock_function != NULL) {
+                mutex_unlock_function(logger_mutex_id);
+            }
             return;
         }
         
         char * glue = (char *)"]: ";
         uint32_t glue_length = get_string_length(glue);
         if (log_i + glue_length >= LOG_SIZE) {
-            mutex_unlock_function(logger_mutex_id);
+            if (mutex_unlock_function != NULL) {
+                mutex_unlock_function(logger_mutex_id);
+            }
             return;
         }
         strcpy_capped(
@@ -183,14 +189,18 @@ internal_log_append(
                 glue);
         log_i += glue_length;
         if (log_i >= LOG_SIZE) {
-            mutex_unlock_function(logger_mutex_id);
+            if (mutex_unlock_function != NULL) {
+                mutex_unlock_function(logger_mutex_id);
+            }
             return;
         }
     }
     
     uint32_t to_append_length = get_string_length(to_append);
     if (log_i + to_append_length >= LOG_SIZE) {
-        mutex_unlock_function(logger_mutex_id);
+        if (mutex_unlock_function != NULL) {
+            mutex_unlock_function(logger_mutex_id);
+        }
         return;
     }
     strcpy_capped(
@@ -202,7 +212,9 @@ internal_log_append(
             to_append);
     log_i += to_append_length;
     
-    mutex_unlock_function(logger_mutex_id);
+    if (mutex_unlock_function != NULL) {
+        mutex_unlock_function(logger_mutex_id);
+    }
 }
 
 void log_dump(bool32_t * good) {
@@ -303,3 +315,4 @@ internal_log_assert(
     
     log_dump_and_crash(assert_failed_msg);
 }
+
