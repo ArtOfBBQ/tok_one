@@ -24,7 +24,6 @@ int main(int argc, char * argv[]) {
         respondsToSelector:@selector(displayLinkWithTarget:selector:)]
         && ([UIScreen mainScreen].scale >= 2.0));
     
-    
     init_application();
     
     // These can't be chosen on smartphones, so overwrite our preferred values

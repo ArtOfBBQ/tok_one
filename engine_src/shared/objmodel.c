@@ -54,7 +54,7 @@ void init_all_meshes(void) {
         sizeof(MeshSummary) * ALL_MESHES_SIZE);
     
     for (uint32_t i = 0; i < ALL_MESHES_SIZE; i++) {
-        construct_mesh_summary(&all_mesh_summaries[i], i);
+        construct_mesh_summary(&all_mesh_summaries[i], (int32_t)i);
     }
     
     all_mesh_triangles = (zTriangle *)malloc_from_unmanaged(
@@ -1104,7 +1104,7 @@ static void parse_obj(
             }
         }
     }
-
+    
     free_from_managed((uint8_t *)parser_vertex_buffer);
 }
 
@@ -1113,6 +1113,7 @@ int32_t new_mesh_id_from_resource(
     const char * filename)
 {
     int32_t new_mesh_head_id = (int32_t)all_mesh_triangles_size;
+    log_assert(all_mesh_summaries_size < ALL_MESHES_SIZE);
     
     FileBuffer obj_file;
     
@@ -1201,6 +1202,7 @@ int32_t new_mesh_id_from_resource(
         OBJ_STRING_SIZE,
         filename);
     all_mesh_summaries_size += 1;
+    log_assert(all_mesh_summaries_size <= ALL_MESHES_SIZE);
     
     assert_objmodel_validity((int32_t)all_mesh_summaries_size - 1);
     

@@ -75,12 +75,18 @@ void hardware_render(
     {
         if (
             zpolygons_to_render[zp_i].deleted ||
-            !zpolygons_to_render[zp_i].visible)
+            !zpolygons_to_render[zp_i].visible ||
+            zpolygons_to_render[zp_i].mesh_id < 0 ||
+            (uint32_t)zpolygons_to_render[zp_i].mesh_id >=
+                all_mesh_summaries_size)
         {
             continue;
         }
         
         int32_t mesh_id = zpolygons_to_render[zp_i].mesh_id;
+        log_assert(mesh_id >= 0);
+        log_assert(mesh_id < (int32_t)all_mesh_summaries_size);
+        
         int32_t tail_i =
             all_mesh_summaries[mesh_id].triangles_head_i +
                 all_mesh_summaries[mesh_id].triangles_size;

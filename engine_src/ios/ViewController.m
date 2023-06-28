@@ -29,7 +29,8 @@
                 - window_globals->window_bottom));
     
     // TODO: remove if this doesn't work out
-    // TODO: was trying out move as well to combat some weird UI touch bug that only happens on ios
+    // TODO: was trying out move as well to combat some weird UI touch bug
+    // TODO: that only happens on ios
     register_interaction(
         /* interaction : */
             &user_interactions[INTR_PREVIOUS_TOUCH_MOVE],
@@ -153,7 +154,8 @@ TouchableMTKView * _my_mtk_view;
     withTransitionCoordinator:
         (id<UIViewControllerTransitionCoordinator>)coordinator
 {
-    window_globals->last_resize_request_at = platform_get_current_time_microsecs();
+    window_globals->last_resize_request_at =
+        platform_get_current_time_microsecs();
     
     // _my_mtk_view.drawableSize = size;
     

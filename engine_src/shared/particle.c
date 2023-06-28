@@ -8,7 +8,10 @@ uint32_t shatter_effects_size;
 static void construct_shatter_effect_no_zpoly(
     ShatterEffect * to_construct)
 {
-    to_construct->random_seed = tok_rand() % 75;
+    to_construct->random_seed =
+        tok_rand_at_i(
+            platform_get_current_time_microsecs() %
+                RANDOM_SEQUENCE_SIZE) % 75;
     to_construct->elapsed = 0;
     to_construct->wait_first = 0;
     to_construct->committed = false;
@@ -23,7 +26,9 @@ static void construct_shatter_effect_no_zpoly(
     to_construct->finish_fade_out_at_elapsed = 3500000;
     
     to_construct->exploding_distance_per_second =
-        0.25f + ((tok_rand() % 50) * 0.01f);
+        0.25f + (tok_rand_at_i(
+            platform_get_current_time_microsecs() %
+                RANDOM_SEQUENCE_SIZE) % 50) * 0.01f;
     
     to_construct->linear_distance_per_second = 0.0f;
     to_construct->linear_direction[0] =  0.1f;
@@ -36,11 +41,17 @@ static void construct_shatter_effect_no_zpoly(
     to_construct->squared_direction[2] = 0.2f;
     
     to_construct->xyz_rotation_per_second[0] =
-        (float)(tok_rand() % 628) * 0.01f;
+        (float)(tok_rand_at_i((5 +
+            platform_get_current_time_microsecs()) %
+                RANDOM_SEQUENCE_SIZE) % 628) * 0.01f;
     to_construct->xyz_rotation_per_second[1] =
-        (float)(tok_rand() % 628) * 0.01f;
+        (float)(tok_rand_at_i((3 +
+            platform_get_current_time_microsecs()) %
+                RANDOM_SEQUENCE_SIZE) % 628) * 0.01f;
     to_construct->xyz_rotation_per_second[2] =
-        (float)(tok_rand() % 628) * 0.01f;
+        (float)(tok_rand_at_i((19 +
+            platform_get_current_time_microsecs()) %
+                RANDOM_SEQUENCE_SIZE) % 628) * 0.01f;
 }
 
 ShatterEffect * next_shatter_effect()

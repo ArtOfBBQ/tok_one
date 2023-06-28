@@ -36,7 +36,9 @@ void init_logger(
     app_log = malloc_function(sizeof(LOG_SIZE));
     app_log[0] = '\0';
     log_i = 0;
-    logger_mutex_id = create_mutex_function();
+    if (create_mutex_function != NULL) {
+        logger_mutex_id = create_mutex_function();
+    }
 }
 
 void
@@ -226,7 +228,10 @@ void
 log_dump_and_crash(const char * crash_message) {
     bool32_t log_dump_succesful = false;
     log_dump(&log_dump_succesful);
-    strcpy_capped(crashed_top_of_screen_msg, 256, crash_message);  
+    strcpy_capped(
+        crashed_top_of_screen_msg,
+        256,
+        crash_message);
     application_running = false;
     
     #ifndef LOGGER_SILENCE
@@ -262,7 +267,6 @@ internal_log_assert(
     
     //Assertion failed: (0), function main, file test.c, line 6.
     char assert_failed_msg[256];
-    
     
     strcpy_capped(
         assert_failed_msg,

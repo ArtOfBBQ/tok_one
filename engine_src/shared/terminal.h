@@ -16,6 +16,7 @@ extern bool32_t terminal_active;
 
 void terminal_init(void);
 
+void destroy_terminal_objects(void);
 void terminal_redraw_backgrounds(void);
 void terminal_render(void);
 void terminal_sendchar(uint32_t to_send);

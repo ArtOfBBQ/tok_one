@@ -523,7 +523,7 @@ string_to_float_validate(
             return_value *= -1;
         }
     }
-   
+    
     // apply the 'scientific notation' exponent
     // e-4 means we want to multiply by -1 * (10^4)
     float scinot_modifier = 1;

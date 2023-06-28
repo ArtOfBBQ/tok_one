@@ -74,6 +74,7 @@ void request_zpolygon_to_render(zPolygon * to_add)
 {
     log_assert(to_add->mesh_id >= 0);
     log_assert(to_add->mesh_id < (int32_t)all_mesh_summaries_size);
+    log_assert(to_add->mesh_id < ALL_MESHES_SIZE);
     log_assert(all_mesh_summaries[to_add->mesh_id].triangles_size > 0);
     
     for (

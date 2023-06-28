@@ -1,31 +1,31 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
-// #define LOGGER_SILENCE
-#ifndef LOGGER_SILENCE
-#include <stdio.h>
-#endif
-
-// #define IGNORE_LOGGER
-
 #include "common.h"
 
-#ifdef IGNORE_LOGGER
-#define log_assert(condition) assert(condition)
-#define log_append(string)
-#define log_append_char(num)
-#define log_append_float(num)
-#define log_append_int(num)
-#define log_append_uint(num)
-#else
-#define log_assert(condition) internal_log_assert(condition, #condition, __FILE__, __LINE__, __func__)
+#define LOGGER_SILENCE
+#ifndef LOGGER_SILENCE
+#include <stdio.h>
 #define log_append(string) internal_log_append(string, __func__)
 #define log_append_char(num) internal_log_append_char(num, __func__)
 #define log_append_float(num) internal_log_append_float(num, __func__)
 #define log_append_int(num) internal_log_append_int(num, __func__)
 #define log_append_uint(num) internal_log_append_uint(num, __func__)
+#else
+#define log_append(string)
+#define log_append_char(num)
+#define log_append_float(num)
+#define log_append_int(num)
+#define log_append_uint(num)
 #endif
 
+// #define IGNORE_LOGGER_ASSERTS
+#ifdef IGNORE_LOGGER_ASSERTS
+#include <assert.h>
+#define log_assert(condition) assert(condition)
+#else
+#define log_assert(condition) internal_log_assert(condition, #condition, __FILE__, __LINE__, __func__)
+#endif
 
 #ifdef __cplusplus
 extern "C" {

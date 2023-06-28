@@ -22,7 +22,7 @@ static int32_t terminal_labels_object_id = INT32_MAX - 1;
 
 static bool32_t requesting_label_update = false;
 
-static void destroy_terminal_objects(void) {
+void destroy_terminal_objects(void) {
     for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
         if (zpolygons_to_render[i].object_id ==
             terminal_back_object_id)
