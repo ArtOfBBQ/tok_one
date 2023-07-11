@@ -131,6 +131,8 @@ void add_shatter_effects_to_workload(
     GPU_LightCollection * lights_for_gpu,
     uint64_t elapsed_nanoseconds)
 {
+    (void)lights_for_gpu;
+    
     for (uint32_t i = 0; i < shatter_effects_size; i++) {
         if (shatter_effects[i].deleted ||
             !shatter_effects[i].committed)
@@ -180,13 +182,13 @@ void add_shatter_effects_to_workload(
         }
         
         for (
-            uint32_t tri_i = tri_head_i;
+            int32_t tri_i = tri_head_i;
             tri_i <= tri_tail_i;
             tri_i++)
         {
             uint64_t random_delay =
                 tok_rand_at_i(
-                    ((shatter_effects[i].random_seed + tri_i) %
+                    ((shatter_effects[i].random_seed + (uint32_t)tri_i) %
                         (RANDOM_SEQUENCE_SIZE - 1))
                     ) %
                 shatter_effects[i].longest_random_delay_before_launch;
@@ -364,11 +366,6 @@ void add_shatter_effects_to_workload(
 ParticleEffect * particle_effects;
 uint32_t particle_effects_size;
 
-static const float left_uv_coord   = 0.0f;
-static const float right_uv_coord  = 1.0f;
-static const float bottom_uv_coord = 1.0f;
-static const float top_uv_coord    = 0.0f;
-
 void construct_particle_effect(
     ParticleEffect * to_construct)
 {
@@ -444,7 +441,7 @@ void request_particle_effect(
     log_assert(
         to_request->mesh_id_to_spawn >= 0);
     log_assert(
-        to_request->mesh_id_to_spawn < all_mesh_summaries_size);
+        (uint32_t)to_request->mesh_id_to_spawn < all_mesh_summaries_size);
     
     for (
         uint32_t col_i = 0;
@@ -492,17 +489,17 @@ static void adjust_colors_by_random(
     float * out_green,
     float * out_blue,
     const float max_variance,
-    const uint64_t random_seed)
+    const uint64_t at_random_seed)
 {
     float red_bonus =
-        (max_variance / 100.0f) * (tok_rand_at_i(random_seed + 0) % 100) -
-        (max_variance / 100.0f) * (tok_rand_at_i(random_seed + 11) % 100);
+        (max_variance / 100.0f) * (tok_rand_at_i(at_random_seed + 0) % 100) -
+        (max_variance / 100.0f) * (tok_rand_at_i(at_random_seed + 11) % 100);
     float green_bonus =
-        (max_variance / 100.0f) * (tok_rand_at_i(random_seed + 12) % 100) -
-        (max_variance / 100.0f) * (tok_rand_at_i(random_seed + 3) % 100);
+        (max_variance / 100.0f) * (tok_rand_at_i(at_random_seed + 12) % 100) -
+        (max_variance / 100.0f) * (tok_rand_at_i(at_random_seed + 3) % 100);
     float blue_bonus =
-        (max_variance / 100.0f) * (tok_rand_at_i(random_seed + 4) % 100) -
-        (max_variance / 100.0f) * (tok_rand_at_i(random_seed + 15) % 100);
+        (max_variance / 100.0f) * (tok_rand_at_i(at_random_seed + 4) % 100) -
+        (max_variance / 100.0f) * (tok_rand_at_i(at_random_seed + 15) % 100);
     
     *out_red += red_bonus;
     if (*out_red < 0.0f) { *out_red = 0.0f; }

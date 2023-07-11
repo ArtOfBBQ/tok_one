@@ -2,7 +2,6 @@
 
 static int32_t currently_sliding_touchable_id = -1;
 static int32_t currently_sliding_object_id = -1;
-static char slider_sound[128];
 
 typedef struct ActiveUIElement {
     int32_t touchable_id;

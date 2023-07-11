@@ -103,9 +103,7 @@ void commit_scheduled_animation(ScheduledAnimation * to_commit) {
     if (to_commit->shatter_effect_duration > 0) {
         log_assert(to_commit->remaining_microseconds == 1);
     }
-    
-    to_commit->committed = true;
-    
+        
     for (uint32_t col_i = 0; col_i < 4; col_i++) {
         if (to_commit->final_rgba_known[col_i]) {
             log_assert(to_commit->final_rgba[col_i] >= 0.0f);
@@ -116,11 +114,13 @@ void commit_scheduled_animation(ScheduledAnimation * to_commit) {
     if (to_commit->remaining_wait_before_next_run < 1) {
         delete_conflicting_animations(to_commit);
     }
+    
+    to_commit->committed = true;
 }
 
 void delete_conflicting_animations(ScheduledAnimation * priority_anim)
 {
-    float float_threshold = 0.0001f;
+    float float_threshold = 0.00001f;
     
     for (
         int32_t i = 0;
@@ -332,6 +332,8 @@ static void resolve_single_animation_effects(
     
     anim->internal_trigger_count += 1;
     
+    float time_delta = (float)elapsed_this_run / 1000000.0f;
+    
     bool32_t found_at_least_one = false;
     
     // apply effects
@@ -347,7 +349,7 @@ static void resolve_single_animation_effects(
         {
             if (!anim->final_x_known) {
                 zlights_to_apply[l_i].x +=
-                    (anim->delta_x_per_second * elapsed_this_run) / 1000000;
+                    (anim->delta_x_per_second * time_delta);
             } else {
                 float diff_x = anim->final_mid_x - zlights_to_apply[l_i].x;
                 zlights_to_apply[l_i].x +=
@@ -358,9 +360,7 @@ static void resolve_single_animation_effects(
             
             if (!anim->final_y_known) {
                 zlights_to_apply[l_i].y +=
-                    ((anim->delta_y_per_second
-                        * elapsed_this_run)
-                            / 1000000);
+                    (anim->delta_y_per_second * time_delta);
             } else {
                 float diff_y = anim->final_mid_y - zlights_to_apply[l_i].y;
                 zlights_to_apply[l_i].y +=
@@ -460,9 +460,9 @@ static void resolve_single_animation_effects(
         
         if (!anim->final_x_known) {
             zpolygons_to_render[zp_i].x +=
-                ((anim->delta_x_per_second
-                    * elapsed_this_run)
-                        / 1000000);
+                ((anim->delta_x_per_second *
+                    (float)elapsed_this_run)
+                            / 1000000.0f);
         } else {
             float diff_x = anim->final_mid_x -
                 zpolygons_to_render[zp_i].x;
@@ -473,10 +473,10 @@ static void resolve_single_animation_effects(
         }
         
         if (!anim->final_y_known) {
-                zpolygons_to_render[zp_i].y +=
-                    ((anim->delta_y_per_second
-                        * elapsed_this_run)
-                            / 1000000);
+            zpolygons_to_render[zp_i].y +=
+                ((anim->delta_y_per_second *
+                    (float)elapsed_this_run)
+                        / 1000000.0f);
         } else {
             float diff_y = anim->final_mid_y -
                 zpolygons_to_render[zp_i].y;
@@ -800,25 +800,23 @@ void request_dud_dance(
     const int32_t object_id,
     const float magnitude)
 {
-    uint64_t step_size = 60000;
+    uint64_t step_size = 70000;
     
     float delta = 0.07f * magnitude;
     
     for (
-        uint64_t wait_extra = 0;
-        wait_extra < step_size * 8;
-        wait_extra += step_size)
+        uint32_t step = 0;
+        step < 8;
+        step++)
     {
+        uint64_t wait_extra = step * step_size;
+        
         ScheduledAnimation * move_request = next_scheduled_animation();
         move_request->affected_object_id = (int32_t)object_id;
         move_request->remaining_wait_before_next_run = wait_extra;
-        move_request->duration_microseconds = step_size;
-        move_request->delta_x_per_second =
-            wait_extra % (step_size * 2) == 0 ?
-                delta : -delta;
-        move_request->delta_y_per_second =
-            wait_extra % (step_size * 2) == 0 ?
-                delta : -delta;
+        move_request->duration_microseconds = step_size - 2000;
+        move_request->delta_x_per_second = step % 2 == 0 ? delta : -delta;
+        move_request->delta_y_per_second = move_request->delta_x_per_second;
         commit_scheduled_animation(move_request);
     }
 }

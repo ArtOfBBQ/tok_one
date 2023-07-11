@@ -1298,19 +1298,19 @@ void create_shattered_version_of_mesh(
     int32_t orig_triangles_size =
         all_mesh_summaries[mesh_id].triangles_size;
     
-    int32_t new_head_i = all_mesh_triangles_size;
+    int32_t new_head_i = (int32_t)all_mesh_triangles_size;
     all_mesh_summaries[mesh_id].shattered_triangles_head_i = new_head_i;
     all_mesh_summaries[mesh_id].shattered_triangles_size =
         all_mesh_summaries[mesh_id].triangles_size *
-            triangles_multiplier;
+            (int32_t)triangles_multiplier;
     
     int32_t goal_new_tail_i =
-        all_mesh_triangles_size +
-        all_mesh_summaries[mesh_id].shattered_triangles_size;
+        (int32_t)all_mesh_triangles_size +
+        (int32_t)all_mesh_summaries[mesh_id].shattered_triangles_size;
     
     // first, copy all of the original triangles as they are
     int32_t temp_new_tail_i = new_head_i + orig_triangles_size - 1;
-    for (uint32_t i = 0; i < orig_triangles_size; i++) {
+    for (int32_t i = 0; i < orig_triangles_size; i++) {
         log_assert(orig_head_i + i <= orig_tail_i);
         all_mesh_triangles[new_head_i + i] =
             all_mesh_triangles[orig_head_i + i];
@@ -1327,7 +1327,7 @@ void create_shattered_version_of_mesh(
         float biggest_area = FLOAT32_MIN;
         int32_t biggest_area_i = -1;
         
-        for (uint32_t i = new_head_i; i <= temp_new_tail_i; i++) {
+        for (int32_t i = new_head_i; i <= temp_new_tail_i; i++) {
             float area =
                 get_squared_triangle_length(&all_mesh_triangles[i]);
             if (area > biggest_area) {
@@ -1517,7 +1517,7 @@ void create_shattered_version_of_mesh(
         temp_new_tail_i++;
     }
     
-    log_assert(all_mesh_triangles_size < goal_new_tail_i);
+    log_assert(all_mesh_triangles_size < (uint32_t)goal_new_tail_i);
     
-    all_mesh_triangles_size = goal_new_tail_i + 1;
+    all_mesh_triangles_size = (uint32_t)goal_new_tail_i + 1;
 }

@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-#define LOGGER_SILENCE
+//#define LOGGER_SILENCE
 #ifndef LOGGER_SILENCE
 #include <stdio.h>
 #define log_append(string) internal_log_append(string, __func__)
@@ -21,8 +21,9 @@
 
 // #define IGNORE_LOGGER_ASSERTS
 #ifdef IGNORE_LOGGER_ASSERTS
-#include <assert.h>
-#define log_assert(condition) assert(condition)
+#define LOGGER_IGNORE_ASSERTS // alias
+// #include <assert.h>
+#define log_assert(condition)
 #else
 #define log_assert(condition) internal_log_assert(condition, #condition, __FILE__, __LINE__, __func__)
 #endif
