@@ -100,6 +100,7 @@ void request_zpolygon_to_render(zPolygon * to_add)
             all_mesh_triangles[tri_i].parent_material_i;
         
         log_assert(material_i >= 0);
+        #ifndef LOGGER_IGNORE_ASSERTS
         if (material_i >= (int32_t)to_add->triangle_materials_size) {
             char err_msg[256];
             strcpy_capped(err_msg, 256, "New zpolygon has only ");
@@ -121,6 +122,7 @@ void request_zpolygon_to_render(zPolygon * to_add)
                 all_mesh_summaries[to_add->mesh_id].materials_size);
             log_dump_and_crash(err_msg);
         }
+        #endif
         
         if (to_add->triangle_materials[material_i].texturearray_i >= 0) {
             register_high_priority_if_unloaded(
@@ -411,10 +413,31 @@ float dot_of_zvertices(
     const zVertex * a,
     const zVertex * b)
 {
-    return
-        (a->x * b->x) +
-        (a->y * b->y) +
-        (a->z * b->z);
+    float x =
+        (
+            a->x *
+            b->x
+        );
+    x = (isnan(x) || !isfinite(x)) ? FLOAT32_MAX : x;
+    log_assert(!isnan(x));
+    log_assert(isfinite(x));
+    
+    float y = (a->y * b->y);
+    y = (isnan(y) || !isfinite(y)) ? FLOAT32_MAX : y;
+    log_assert(!isnan(y));
+    log_assert(isfinite(y));
+    
+    float z = (a->z * b->z);
+    z = (isnan(z) || !isfinite(z)) ? FLOAT32_MAX : z;
+    log_assert(!isnan(z));
+    log_assert(isfinite(z));
+    
+    float return_value = x + y + z;
+    
+    log_assert(!isnan(return_value));
+    log_assert(isfinite(return_value));
+    
+    return return_value;
 }
 
 void zcamera_move_forward(
@@ -695,8 +718,14 @@ bool32_t ray_intersects_zpolygon_hitbox(
         
         plane_normals[p]    = x_rotate_zvertex(
             &plane_normals[p], mesh->x_angle);
+        log_assert(plane_normals[p].x == plane_normals[p].x);
+        log_assert(plane_normals[p].y == plane_normals[p].y);
+        log_assert(plane_normals[p].z == plane_normals[p].z);
         plane_normals[p]    = y_rotate_zvertex(
             &plane_normals[p], mesh->y_angle);
+        log_assert(plane_normals[p].x == plane_normals[p].x);
+        log_assert(plane_normals[p].y == plane_normals[p].y);
+        log_assert(plane_normals[p].z == plane_normals[p].z);
         plane_normals[p]    = z_rotate_zvertex(
             &plane_normals[p], mesh->z_angle);
     }
@@ -716,7 +745,16 @@ bool32_t ray_intersects_zpolygon_hitbox(
         
         // now we can normalize the offsets and use them as our normal value
         zVertex normalized_plane_normal = plane_normals[p];
+        log_assert(isfinite(normalized_plane_normal.x));
+        log_assert(isfinite(normalized_plane_normal.y));
+        log_assert(isfinite(normalized_plane_normal.z));
         normalize_zvertex(&normalized_plane_normal);
+        log_assert(normalized_plane_normal.x == normalized_plane_normal.x);
+        log_assert(isfinite(normalized_plane_normal.x));
+        log_assert(normalized_plane_normal.y == normalized_plane_normal.y);
+        log_assert(isfinite(normalized_plane_normal.y));
+        log_assert(normalized_plane_normal.z == normalized_plane_normal.z);
+        log_assert(isfinite(normalized_plane_normal.z));
         
         /*
         A plane is defined as:

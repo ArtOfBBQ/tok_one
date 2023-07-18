@@ -236,6 +236,7 @@ void log_dump(bool32_t * good) {
     *good = true;
 }
 
+#ifndef LOGGER_IGNORE_ASSERTS
 void
 log_dump_and_crash(const char * crash_message) {
     bool32_t log_dump_succesful = false;
@@ -254,7 +255,9 @@ log_dump_and_crash(const char * crash_message) {
     assert(0);
     #endif
 }
+#endif
 
+#ifndef LOGGER_IGNORE_ASSERTS
 void
 internal_log_assert(
     bool32_t condition,
@@ -263,6 +266,8 @@ internal_log_assert(
     const int line_number,
     const char * func_name)
 {
+    printf("WARNING - ASSERTS ARE RUNNING!!!\n");
+    
     if (condition || !application_running) { return; }
     
     #ifndef LOGGER_SILENCE
@@ -315,4 +320,5 @@ internal_log_assert(
     
     log_dump_and_crash(assert_failed_msg);
 }
+#endif
 

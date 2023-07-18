@@ -417,6 +417,7 @@ static bool32_t evaluate_terminal_command(
         return true;
     }
     
+    #ifndef LOGGER_IGNORE_ASSERTS
     if (are_equal_strings(command, "CRASH")) {
         strcpy_capped(
             response,
@@ -425,6 +426,7 @@ static bool32_t evaluate_terminal_command(
         log_dump_and_crash("Terminal-induced crash");
         return true;
     }
+    #endif
     
     return false;
 }

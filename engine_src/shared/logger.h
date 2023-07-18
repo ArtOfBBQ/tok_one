@@ -19,12 +19,18 @@
 #define log_append_uint(num)
 #endif
 
-// #define IGNORE_LOGGER_ASSERTS
 #ifdef IGNORE_LOGGER_ASSERTS
 #define LOGGER_IGNORE_ASSERTS // alias
-// #include <assert.h>
+#endif
+
+#ifdef LOGGER_IGNORE_ASSERTS
+#define IGNORE_LOGGER_ASSERTS // alias
+#endif
+
+#ifdef LOGGER_IGNORE_ASSERTS
 #define log_assert(condition)
 #else
+#include <stdio.h>
 #define log_assert(condition) internal_log_assert(condition, #condition, __FILE__, __LINE__, __func__)
 #endif
 
@@ -98,6 +104,7 @@ dump the entire debug log to debuglog.txt
 */
 void log_dump(bool32_t * good);
 
+#ifndef LOGGER_IGNORE_ASSERTS
 /*
 Dump the entire debug log to debuglog.txt,
 then crash the application.
@@ -117,6 +124,7 @@ internal_log_assert(
     const char * file_name,
     const int line_number,
     const char * func_name);
+#endif
 
 #ifdef __cplusplus
 }

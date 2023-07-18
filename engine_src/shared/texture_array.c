@@ -782,10 +782,12 @@ void get_texture_location(
         }
     }
     
+    #ifndef LOGGER_IGNORE_ASSERTS
     char err_msg[128];
     strcpy_capped(err_msg, 128, "Couldn't find filename in texture_arrays: ");
     strcat_capped(err_msg, 128, for_filename);
     log_dump_and_crash(err_msg);
+    #endif
 }
 
 void decode_null_image_with_memory(

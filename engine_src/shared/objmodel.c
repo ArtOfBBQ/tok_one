@@ -435,6 +435,7 @@ static void assert_objmodel_validity(int32_t mesh_id) {
         log_assert(mentioned_i < all_mesh_summaries[mesh_id].materials_size);
     }
     
+    #ifndef LOGGER_IGNORE_ASSERTS
     for (
         int32_t mat_i = 0;
         mat_i < (int32_t)all_mesh_summaries[mesh_id].materials_size;
@@ -481,6 +482,7 @@ static void assert_objmodel_validity(int32_t mesh_id) {
             log_dump_and_crash(err_msg);
         }
     }
+    #endif
 }
 
 static void guess_ztriangle_normal(zTriangle * input) {
@@ -741,7 +743,8 @@ static void parse_obj(
     }
 
     log_assert(*triangles_recipient_size > 0);
-
+    
+    #ifndef LOGGER_IGNORE_ASSERTS
     if (*triangles_recipient_size >= ALL_MESH_TRIANGLES_SIZE) {
         char error_msg[100];
         strcpy_capped(error_msg, 100, "Error: POLYGON_TRIANGLES_SIZE was ");
@@ -751,6 +754,7 @@ static void parse_obj(
         log_dump_and_crash(error_msg);
         assert(0);
     }
+    #endif
 
     // second pass starts at material or face specifications
     i = first_material_or_face_i;

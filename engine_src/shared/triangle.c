@@ -1,22 +1,48 @@
 #include "triangle.h"
 
 static float get_magnitude(zVertex input) {
-    float sum_squares =
-        (input.x * input.x) +
-        (input.y * input.y) +
-        (input.z * input.z);
+    float x = (input.x * input.x);
+    float y = (input.y * input.y);
+    float z = (input.z * input.z);
     
-    // TODO: this square root is a performance bottleneck
-    return sqrtf(sum_squares);
+    float sum_squares = x + y + z;
+    
+    sum_squares = isnan(sum_squares) || !isfinite(sum_squares) ?
+        FLOAT32_MAX : sum_squares;
+    
+    float return_value = sqrtf(sum_squares);
+    
+    log_assert(isfinite(return_value));
+    log_assert(!isnan(return_value));
+    
+    return return_value;
 }
 
 void normalize_zvertex(
     zVertex * to_normalize)
 {
     float magnitude = get_magnitude(*to_normalize);
+    if (magnitude < 0.0001f && magnitude > -0.0001f) {
+        magnitude = 0.0001f;
+    }
+    
+    log_assert(!isnan(to_normalize->x));
+    log_assert(isfinite(to_normalize->x));
     to_normalize->x /= magnitude;
+    log_assert(!isnan(to_normalize->x));
+    log_assert(isfinite(to_normalize->x));
+    
+    log_assert(!isnan(to_normalize->y));
+    log_assert(isfinite(to_normalize->y));
     to_normalize->y /= magnitude;
+    log_assert(!isnan(to_normalize->y));
+    log_assert(isfinite(to_normalize->y));
+    
+    log_assert(!isnan(to_normalize->z));
+    log_assert(isfinite(to_normalize->z));
     to_normalize->z /= magnitude;
+    log_assert(!isnan(to_normalize->z));
+    log_assert(isfinite(to_normalize->z));
 }
 
 zVertex crossproduct_of_zvertices(

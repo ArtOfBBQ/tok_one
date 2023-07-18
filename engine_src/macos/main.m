@@ -18,7 +18,9 @@ extern "C" {
 
 static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 {
+    #ifndef LOGGER_IGNORE_ASSERTS
     char err_msg[128];
+    #endif
     
     switch (apple_key) {
         case (24):
@@ -138,12 +140,17 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
         case (104):
             return TOK_KEY_KANABUTTON;
         default:
+            #ifndef LOGGER_IGNORE_ASSERTS
             strcpy_capped(err_msg, 128, "unhandled apple keycode: ");
             strcat_uint_capped(err_msg, 128, apple_key);
             strcat_capped(err_msg, 128, "\n");
+            #endif
+            break;
     }
     
+    #ifndef LOGGER_IGNORE_ASSERTS
     log_dump_and_crash(err_msg);
+    #endif
     
     return TOK_KEY_ESCAPE;
 }

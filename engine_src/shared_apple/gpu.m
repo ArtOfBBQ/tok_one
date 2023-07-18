@@ -396,7 +396,9 @@ static dispatch_semaphore_t drawing_semaphore;
     
     if (command_buffer == nil) {
         log_append("error - failed to get metal command buffer\n");
+        #ifndef LOGGER_IGNORE_ASSERTS
         log_dump_and_crash("error - failed to get metal command buffer\n");
+        #endif
         return;
     }
     
