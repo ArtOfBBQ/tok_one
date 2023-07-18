@@ -242,22 +242,20 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
         return;
     }
     
-    NSRect window_frame = ((NSWindow *)[notification object]).frame;
-    
     NSSize size = [mtk_view frame].size;
-        
-    printf(
-         "window did resize, window_frame: [%f, %f], "
-         "mtk_view_frame: [%f, %f]\n",
-         window_frame.size.height,
-         window_frame.size.width,
-         size.height,
-         size.width);
+    // [apple_gpu_delegate updateViewport];
     
-    window_globals->window_height = (float)window_frame.size.height;
-    window_globals->window_width = (float)window_frame.size.width;
-    window_globals->titlebar_height =
-        (float)(window_frame.size.height - size.height);
+    // (float)window_frame.size.height;
+    window_globals->window_height = (float)size.height;
+    // (float)window_frame.size.width;
+    window_globals->window_width = (float)size.width;
+    
+    printf(
+        "windowDidResize [%f, %f]\n",
+        window_globals->window_height,
+        window_globals->window_width);
+    //    window_globals->titlebar_height =
+    //        (float)(window_frame.size.height - size.height);
     window_globals->last_resize_request_at =
         platform_get_current_time_microsecs();
 }
@@ -388,16 +386,6 @@ NSWindowWithCustomResponder * window = NULL;
 bool32_t application_running = true;
 bool32_t has_retina_screen = true;
 
-//static void get_window_size(
-//    uint32_t * width,
-//    uint32_t * height)
-//{
-//    NSSize size = [ [ window contentView ] frame ].size;
-//
-//    *width = (uint32_t)size.width;
-//    *height = (uint32_t)size.height;
-//}
-
 int main(int argc, const char * argv[]) {
     
     init_application();
@@ -498,7 +486,7 @@ int main(int argc, const char * argv[]) {
     startup_complete = true;
     
     @autoreleasepool {
-    return NSApplicationMain(argc, argv);
+        return NSApplicationMain(argc, argv);
     }
 }
 

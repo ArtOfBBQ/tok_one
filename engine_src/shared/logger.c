@@ -266,8 +266,6 @@ internal_log_assert(
     const int line_number,
     const char * func_name)
 {
-    printf("WARNING - ASSERTS ARE RUNNING!!!\n");
-    
     if (condition || !application_running) { return; }
     
     #ifndef LOGGER_SILENCE

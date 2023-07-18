@@ -13,7 +13,6 @@ typedef struct WindowGlobals {
     float visual_debug_collision[3];
     float visual_debug_collision_size;
     
-    float titlebar_height;
     float window_height;
     float window_width;
     float window_left;

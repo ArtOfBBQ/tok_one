@@ -58,15 +58,15 @@ void init_application(void)
         window_globals->window_width  = engine_save_file->window_width;
         window_globals->window_left   = engine_save_file->window_left;
         window_globals->window_bottom = engine_save_file->window_bottom;
-        window_globals->titlebar_height = 0.0f;
         platform_music_volume = engine_save_file->music_volume;
         platform_sound_volume = engine_save_file->sound_volume;
+        window_globals->last_resize_request_at =
+            platform_get_current_time_microsecs();
     } else {
         window_globals->window_height = INITIAL_WINDOW_HEIGHT;
         window_globals->window_width  = INITIAL_WINDOW_WIDTH;
         window_globals->window_left   = INITIAL_WINDOW_LEFT;
         window_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
-        window_globals->titlebar_height = 0.0f;
     }
     
     window_globals->aspect_ratio =

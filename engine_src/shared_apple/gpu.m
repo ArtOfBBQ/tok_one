@@ -26,7 +26,7 @@ static dispatch_semaphore_t drawing_semaphore;
     cached_viewport.width   = window_globals->window_width *
         (has_retina_screen ? 2.0f : 1.0f);
     cached_viewport.height  =
-        (window_globals->window_height - window_globals->titlebar_height) *
+        window_globals->window_height *
         (has_retina_screen ? 2.0f : 1.0f);
     assert(cached_viewport.width > 0.0f);
     assert(cached_viewport.height > 0.0f);
@@ -493,11 +493,10 @@ static dispatch_semaphore_t drawing_semaphore;
 - (void)mtkView:(MTKView *)view
     drawableSizeWillChange:(CGSize)size
 {
-    log_append("[mtkview DrawableSizeWillChange]: using window_globals ");
-    log_append_uint((uint32_t)window_globals->window_height);
-    log_append_char(',');
-    log_append_uint((uint32_t)window_globals->window_width);
-    log_append_char('\n');
+    printf(
+        "[mtkview DrawableSizeWillChange]: using window_globals [%u, %u]\n",
+        (uint32_t)window_globals->window_height,
+        (uint32_t)window_globals->window_width);
     
     [self updateViewport];
 }
