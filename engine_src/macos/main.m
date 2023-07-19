@@ -250,10 +250,6 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     // (float)window_frame.size.width;
     window_globals->window_width = (float)size.width;
     
-    printf(
-        "windowDidResize [%f, %f]\n",
-        window_globals->window_height,
-        window_globals->window_width);
     //    window_globals->titlebar_height =
     //        (float)(window_frame.size.height - size.height);
     window_globals->last_resize_request_at =

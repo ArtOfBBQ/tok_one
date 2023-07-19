@@ -248,10 +248,10 @@ void shared_gameloop_update(
     platform_update_music_volume();
     
     if (
-        time - window_globals->last_resize_request_at < 2000000)
+        time - window_globals->last_resize_request_at < 1500000)
     {
         if (
-            time - window_globals->last_resize_request_at < 100000)
+            time - window_globals->last_resize_request_at < 250000)
         {
             // possibly a request we already handled, or not the final
             // request, wait...

@@ -46,7 +46,6 @@ void init_application(void)
         engine_save.contents = (char *)malloc_from_managed(engine_save.size);
         platform_read_file(full_writable_pathfile, &engine_save);
         *engine_save_file = *(EngineSaveFile *)engine_save.contents;
-        printf("engine save contents: %s\n", engine_save.contents);
     }
     
     window_globals = (WindowGlobals *)malloc_from_unmanaged(
