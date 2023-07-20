@@ -1,8 +1,13 @@
 #include "../shared/platform_layer.h"
 
-char * platform_get_cwd()
+void platform_get_cwd(
+    char * recipient,
+    const uint32_t recipient_size)
 {
-    return "./";
+    strcpy_capped(
+        recipient,
+        recipient_size,
+        "./");
 }
 
 uint64_t platform_get_current_time_microsecs()
@@ -10,10 +15,20 @@ uint64_t platform_get_current_time_microsecs()
     return 1;
 }
 
-char * platform_get_application_path() {
-    return "./";
+void platform_get_application_path(
+    char * recipient,
+    const uint32_t recipient_size)
+{
+    strcpy_capped(
+        recipient,
+        recipient_size,
+        "./");
 }
 
-void platform_start_thread(int32_t threadmain_id) {
+void platform_start_thread(
+    void (*function_to_run)(int32_t),
+    int32_t argument)
+{
+    
 }
 
