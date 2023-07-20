@@ -23,22 +23,26 @@ static int32_t terminal_labels_object_id = INT32_MAX - 1;
 static bool32_t requesting_label_update = false;
 
 void destroy_terminal_objects(void) {
-    for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
-        if (zpolygons_to_render[i].object_id ==
-            terminal_back_object_id)
-        {
-            for (
-                int32_t tri_i = 0;
-                tri_i < all_mesh_summaries[zpolygons_to_render[i].mesh_id].
-                    triangles_size;
-                tri_i++)
+    if (terminal_back_object_id >= 0) {
+        for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
+            if (zpolygons_to_render[i].object_id ==
+                terminal_back_object_id)
             {
-                zpolygons_to_render[i].visible = terminal_active;
+                for (
+                    int32_t tri_i = 0;
+                    tri_i < all_mesh_summaries[zpolygons_to_render[i].mesh_id].
+                        triangles_size;
+                    tri_i++)
+                {
+                    zpolygons_to_render[i].visible = terminal_active;
+                }
             }
         }
     }
     
-    delete_zpolygon_object(terminal_labels_object_id);
+    if (terminal_labels_object_id >= 0) {
+        delete_zpolygon_object(terminal_labels_object_id);
+    }
 }
 
 static void update_terminal_history_size() {

@@ -488,6 +488,17 @@ void init_or_push_one_gpu_texture_array_if_needed(void) {
             {
                 if (texture_arrays[i].images[j].request_update) {
                     texture_arrays[i].images[j].request_update = false;
+                    #ifndef IGNORE_LOGGER_ASSERTS
+                    log_assert(texture_arrays[i]
+                            .images[j]
+                            .image != NULL);
+                    log_assert(
+                        texture_arrays[i]
+                                .images[j]
+                                .image->rgba_values != NULL);
+                    if (!application_running) { return; }
+                    #endif
+                    
                     platform_gpu_push_texture_slice(
                         i,
                         j,
