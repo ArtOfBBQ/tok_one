@@ -78,6 +78,11 @@ bool32_t are_equal_strings(
     const char * str1,
     const char * str2);
 
+bool32_t
+are_equal_until_nullterminator(
+    const char * str1,
+    const char * str2);
+
 bool32_t are_equal_strings_of_length(
     const char * str1,
     const char * str2,

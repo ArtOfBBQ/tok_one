@@ -23,6 +23,9 @@ of the engine for your specific app.
 // The maximum number of 3D or 2D sprites in your app.
 #define ZPOLYGONS_TO_RENDER_ARRAYSIZE 500
 
+// The maximum number of 'scheduled animations' simultaneously running
+#define SCHEDULED_ANIMATIONS_ARRAYSIZE 3000
+
 // the max # of (probably from .obj) meshes/models in your app
 #define ALL_MESHES_SIZE 100
 // the max # of triangles in all of your meshes/models combined

@@ -1,8 +1,6 @@
 #ifndef SCHEDULED_ANIMATION_H
 #define SCHEDULED_ANIMATION_H
 
-#define SCHEDULED_ANIMATIONS_ARRAYSIZE 2000
-
 #include "common.h"
 #include "zpolygon.h"
 #include "clientlogic.h"

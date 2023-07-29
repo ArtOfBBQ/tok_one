@@ -165,6 +165,29 @@ are_equal_strings(
 }
 
 bool32_t
+are_equal_until_nullterminator(
+    const char * str1,
+    const char * str2)
+{
+    if (str1 == NULL || str2 == NULL) {
+        return false;
+    }
+    
+    uint32_t i = 0;
+    while (
+        str1[i] != '\0' &&
+        str2[i] != '\0')
+    {
+        if (str1[i] != str2[i]) {
+            return false;
+        }
+        i++;
+    }
+    
+    return true;
+}
+
+bool32_t
 are_equal_strings_of_length(
     const char * str1,
     const char * str2,

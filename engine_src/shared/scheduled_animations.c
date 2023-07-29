@@ -72,7 +72,8 @@ static void construct_scheduled_animation(
 ScheduledAnimation * next_scheduled_animation(void) {
     
     log_assert(!waiting_for_user_commit); // commit before requesting again
-        
+    log_assert(
+        scheduled_animations_size < SCHEDULED_ANIMATIONS_ARRAYSIZE);
     ScheduledAnimation * return_value = NULL;
     
     for (
@@ -87,6 +88,8 @@ ScheduledAnimation * next_scheduled_animation(void) {
     }
     
     if (return_value == NULL) {
+        log_assert(
+            scheduled_animations_size + 1 < SCHEDULED_ANIMATIONS_ARRAYSIZE);
         return_value = &scheduled_animations[scheduled_animations_size++];
     }
     
