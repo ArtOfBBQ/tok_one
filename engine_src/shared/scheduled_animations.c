@@ -337,8 +337,6 @@ static void resolve_single_animation_effects(
     
     float time_delta = (float)elapsed_this_run / 1000000.0f;
     
-    bool32_t found_at_least_one = false;
-    
     // apply effects
     for (
         int32_t l_i = (int32_t)zlights_to_apply_size - 1;
@@ -442,9 +440,7 @@ static void resolve_single_animation_effects(
         {
             continue;
         }
-        
-        found_at_least_one = true;
-        
+                
         if (anim->shatter_effect_duration > 0) {
             ShatterEffect * shatter_anim = next_shatter_effect_with_zpoly(
                 /* construct_with_poly: */

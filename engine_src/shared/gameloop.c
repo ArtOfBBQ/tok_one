@@ -10,6 +10,7 @@ static int32_t closest_touchable_from_screen_ray(
     const float screen_y,
     zVertex * collision_point)
 {
+    #ifndef LOGGER_IGNORE_ASSERTS
     uint32_t nonzero_camera_angles = 0;
     if (camera.x_angle != 0.0f) { nonzero_camera_angles += 1; }
     if (camera.y_angle != 0.0f) { nonzero_camera_angles += 1; }
@@ -18,6 +19,7 @@ static int32_t closest_touchable_from_screen_ray(
     // TODO: study raytracing math and find out why our solution doesn't
     // TODO: support 2 or more camera rotations  
     log_assert(nonzero_camera_angles < 2);
+    #endif
     
     float clicked_viewport_x =
         -1.0f + ((screen_x / window_globals->window_width) * 2.0f);

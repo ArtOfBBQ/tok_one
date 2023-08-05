@@ -421,23 +421,16 @@ float dot_of_zvertices(
             b->x
         );
     x = (isnan(x) || !isfinite(x)) ? FLOAT32_MAX : x;
-    log_assert(!isnan(x));
-    log_assert(isfinite(x));
     
     float y = (a->y * b->y);
     y = (isnan(y) || !isfinite(y)) ? FLOAT32_MAX : y;
-    log_assert(!isnan(y));
-    log_assert(isfinite(y));
     
     float z = (a->z * b->z);
     z = (isnan(z) || !isfinite(z)) ? FLOAT32_MAX : z;
-    log_assert(!isnan(z));
-    log_assert(isfinite(z));
     
     float return_value = x + y + z;
     
     log_assert(!isnan(return_value));
-    log_assert(isfinite(return_value));
     
     return return_value;
 }
@@ -747,16 +740,10 @@ bool32_t ray_intersects_zpolygon_hitbox(
         
         // now we can normalize the offsets and use them as our normal value
         zVertex normalized_plane_normal = plane_normals[p];
-        log_assert(isfinite(normalized_plane_normal.x));
-        log_assert(isfinite(normalized_plane_normal.y));
-        log_assert(isfinite(normalized_plane_normal.z));
         normalize_zvertex(&normalized_plane_normal);
         log_assert(normalized_plane_normal.x == normalized_plane_normal.x);
-        log_assert(isfinite(normalized_plane_normal.x));
         log_assert(normalized_plane_normal.y == normalized_plane_normal.y);
-        log_assert(isfinite(normalized_plane_normal.y));
         log_assert(normalized_plane_normal.z == normalized_plane_normal.z);
-        log_assert(isfinite(normalized_plane_normal.z));
         
         /*
         A plane is defined as:
@@ -824,6 +811,7 @@ bool32_t ray_intersects_zpolygon_hitbox(
                 plane_offsets[p]);
         t_values[p] /= denominator;
         
+        #ifndef LOGGER_IGNORE_ASSERTS
         // This should give about the same result:
         float t_values_alternative = dot_of_zvertices(
             &normalized_plane_normal,
@@ -833,6 +821,8 @@ bool32_t ray_intersects_zpolygon_hitbox(
         float diff = t_values[p] - t_values_alternative;
         log_assert(diff <  0.1f);
         log_assert(diff > -0.1f);
+        #endif
+        
         // end of debug check
         
         // if t is < 0, the triangle's plane must be behind us which counts as
