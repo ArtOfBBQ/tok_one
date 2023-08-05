@@ -169,10 +169,15 @@ float get_x_multiplier_for_width(
     const float for_width)
 {
     log_assert(for_poly != NULL);
+    #ifndef LOGGER_IGNORE_ASSERTS
+    if (for_poly == NULL) {
+        return 0.0f;
+    }
+    #endif
+    
     log_assert(for_poly->mesh_id >= 0);
     log_assert(for_poly->mesh_id < (int32_t)all_mesh_summaries_size);
     
-    log_assert(for_poly != NULL);
     log_assert(for_poly->mesh_id >= 0);
     log_assert(for_poly->mesh_id < (int32_t)all_mesh_summaries_size);
     
@@ -187,6 +192,12 @@ float get_y_multiplier_for_height(
     const float for_height)
 {
     log_assert(for_poly != NULL);
+    #ifndef LOGGER_IGNORE_ASSERTS
+    if (for_poly == NULL) {
+        return 0.0f;
+    }
+    #endif
+    
     log_assert(for_poly->mesh_id >= 0);
     log_assert(for_poly->mesh_id < (int32_t)all_mesh_summaries_size);
     

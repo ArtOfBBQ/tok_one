@@ -3,8 +3,6 @@
 ScheduledAnimation * scheduled_animations;
 uint32_t scheduled_animations_size = 0;
 
-static bool32_t waiting_for_user_commit = false;
-
 void init_scheduled_animations(void) {
     scheduled_animations = (ScheduledAnimation *)malloc_from_unmanaged(
         sizeof(ScheduledAnimation) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
@@ -70,8 +68,6 @@ static void construct_scheduled_animation(
 }
 
 ScheduledAnimation * next_scheduled_animation(void) {
-    
-    log_assert(!waiting_for_user_commit); // commit before requesting again
     log_assert(
         scheduled_animations_size < SCHEDULED_ANIMATIONS_ARRAYSIZE);
     ScheduledAnimation * return_value = NULL;
