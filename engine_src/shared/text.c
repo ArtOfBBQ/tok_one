@@ -57,12 +57,13 @@ void init_font(
     #ifndef LOGGER_IGNORE_ASSERTS
     uint64_t filesize_remaining =
         raw_fontmetrics_file_size - sizeof(FontMetrics);
-    codepoint_metrics_size = (uint32_t)global_font_metrics->codepoints_in_font;
     log_assert(filesize_remaining % sizeof(FontCodepoint) == 0);
     log_assert(
         filesize_remaining ==
             codepoint_metrics_size * sizeof(FontCodepoint));
     #endif
+    
+    codepoint_metrics_size = (uint32_t)global_font_metrics->codepoints_in_font;
     
     codepoint_metrics =
         (FontCodepoint *)buffer_at;
