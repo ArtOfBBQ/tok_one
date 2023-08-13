@@ -61,13 +61,9 @@ void get_texture_location(
 
 void decode_null_image_with_memory(
     const int32_t texture_array_i,
-    const int32_t texture_i,
-    uint8_t * dpng_working_memory,
-    const uint64_t dpng_working_memory_size);
+    const int32_t texture_i);
 
-void decode_all_null_images_with_memory(
-    uint8_t * dpng_working_memory,
-    const uint64_t dpng_working_memory_size);
+void decode_all_null_images_with_memory(void);
 
 void flag_all_texture_arrays_to_request_gpu_init(void);
 

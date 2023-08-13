@@ -552,7 +552,7 @@ static void parse_obj(
     while (i < rawdata_size) {
         // read the 1st character, which denominates the type
         // of information
-
+        
         char dbg_newline[30];
         strcpy_capped(dbg_newline, 30, rawdata + i);
         uint32_t dbg_i = 0;
@@ -915,7 +915,7 @@ static void parse_obj(
                 i += chars_till_next_space_or_slash(
                     rawdata + i);
                 int32_t uv_coord_i_3 = 0;
-                int32_t normals_i_3 = 0;
+                // int32_t normals_i_3 = 0;
                 if (rawdata[i] == '/')
                 {
                     // skip the slash
@@ -929,12 +929,12 @@ static void parse_obj(
                 // add normals
                 if (rawdata[i] == '/') {
                     i++;
-                    normals_i_3 = string_to_int32(rawdata + i);
+                    // normals_i_3 = string_to_int32(rawdata + i);
                     while (rawdata[i] <= '9' && rawdata[i] >= '0') {
                         i++;
                     }
                 }
-
+                
                 // there were 2 triangles in this face
                 // the 1st triangle will be added anyway later, but
                 // we do need to add the extra 2nd triangle here

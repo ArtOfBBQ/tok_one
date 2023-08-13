@@ -280,6 +280,8 @@ static dispatch_semaphore_t drawing_semaphore;
     singleImgWidth          : (uint32_t)single_img_width
     singleImgHeight         : (uint32_t)single_img_height
 {
+    assert(texturearray_i < 31);
+    
     // we always overwrite textures, so pad them to match first
     while ((int32_t)[_metal_textures count] <= texturearray_i) {
         MTLTextureDescriptor * texture_descriptor =
@@ -302,9 +304,8 @@ static dispatch_semaphore_t drawing_semaphore;
     texture_descriptor.width = single_img_width;
     texture_descriptor.height = single_img_height;
     
-    id<MTLTexture> texture =
-        [metal_device
-            newTextureWithDescriptor:texture_descriptor];
+    id<MTLTexture> texture = [metal_device
+        newTextureWithDescriptor:texture_descriptor];
     
     [_metal_textures
         replaceObjectAtIndex:(uint32_t)texturearray_i

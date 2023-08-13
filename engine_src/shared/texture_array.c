@@ -152,10 +152,6 @@ static DecodedImage * malloc_img_from_filename_with_working_memory(
                 new_image->rgba_values,
             /* rgba_values_size: */
                 new_image->rgba_values_size,
-            /* dpng_working_memory: */
-                dpng_working_memory,
-            /* dpng_working_memory_size: */
-                dpng_working_memory_size,
             /* uint32_t * out_good: */
                 &new_image->good);
     } else if (
@@ -803,9 +799,7 @@ void get_texture_location(
 
 void decode_null_image_with_memory(
     const int32_t texture_array_i,
-    const int32_t texture_i,
-    uint8_t * dpng_working_memory,
-    const uint64_t dpng_working_memory_size)
+    const int32_t texture_i)
 {
     int32_t i = texture_array_i;
     int32_t j = texture_i;
@@ -847,10 +841,6 @@ void decode_null_image_with_memory(
                 new_image->rgba_values,
             /* rgba_values_size: */
                 new_image->rgba_values_size,
-            /* dpng_working_memory: */
-                dpng_working_memory,
-            /* dpng_working_memory_size: */
-                dpng_working_memory_size,
             /* uint32_t * out_good: */
                 &new_image->good);
     } else {
@@ -881,9 +871,7 @@ void decode_null_image_with_memory(
     texture_arrays[i].images[j].prioritize_asset_load = false;
 }
 
-void decode_all_null_images_with_memory(
-    uint8_t * dpng_working_memory,
-    const uint64_t dpng_working_memory_size)
+void decode_all_null_images_with_memory(void)
 {
     platform_mutex_lock(texture_arrays_mutex_id);
     
@@ -922,9 +910,7 @@ void decode_all_null_images_with_memory(
                             log_append_char('\n');
                             decode_null_image_with_memory(
                                 /* const int32_t texture_array_i: */ i,
-                                /* const int32_t texture_i: */ j,
-                                /* uint8_t * dpng_working_memory: */ dpng_working_memory,
-                                /* const uint64_t dpng_working_memory_size: */ dpng_working_memory_size);
+                                /* const int32_t texture_i: */ j);
                             continue;
                         }
                         
@@ -969,11 +955,7 @@ void decode_all_null_images_with_memory(
             /* const int32_t texture_array_i: */
                 i,
             /* const int32_t texture_i: */
-                j,
-            /* uint8_t * dpng_working_memory: */
-                dpng_working_memory,
-            /* const uint64_t dpng_working_memory_size: */
-                dpng_working_memory_size);
+                j);
     }
     
     platform_mutex_unlock(texture_arrays_mutex_id);

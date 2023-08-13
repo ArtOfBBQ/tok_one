@@ -103,8 +103,10 @@ float get_squared_triangle_length(
         
         if (new_squared_dist > largest_squared_dist) {
             largest_squared_dist = new_squared_dist;
+            #ifndef LOGGER_IGNORE_ASSERTS
             largest_start_vertex_i = start_vertex_i;
             largest_end_vertex_i = end_vertex_i;
+            #endif
             log_assert(largest_start_vertex_i != largest_end_vertex_i);
         }
     }

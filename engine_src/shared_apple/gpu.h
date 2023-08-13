@@ -16,9 +16,9 @@
 extern uint64_t last_resize_request_at;
 
 @interface MetalKitViewDelegate: NSObject<MTKViewDelegate>
-@property (atomic, retain) NSMutableArray * metal_textures;
-@property (atomic, retain) id<MTLRenderPipelineState> combo_pipeline_state;
-@property (atomic, retain) id<MTLDepthStencilState> depth_stencil_state;
+@property (retain) NSMutableArray * metal_textures;
+@property (retain) id<MTLRenderPipelineState> combo_pipeline_state;
+@property (retain) id<MTLDepthStencilState> depth_stencil_state;
 
 - (void)
     initializeTextureArray:(int32_t)texturearray_i
