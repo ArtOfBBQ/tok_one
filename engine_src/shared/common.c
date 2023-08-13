@@ -550,8 +550,8 @@ string_to_float_validate(
     // apply the 'scientific notation' exponent
     // e-4 means we want to multiply by -1 * (10^4)
     float scinot_modifier = 1;
-    for (uint32_t _ = 0; _ < exponent; _++) {
-	scinot_modifier *= (exponent_modifier < 0 ? 0.1f : 10.0f);
+    for (int32_t _ = 0; _ < exponent; _++) {
+        scinot_modifier *= (exponent_modifier < 0 ? 0.1f : 10.0f);
     }
     return_value *= scinot_modifier;
     

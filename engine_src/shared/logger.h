@@ -53,7 +53,7 @@ void init_logger(
     void * malloc_function(size_t size),
     uint32_t (* create_mutex_function)(void),
     void mutex_lock_function(const uint32_t mutex_id),
-    void mutex_unlock_function(const uint32_t mutex_id));
+    int32_t mutex_unlock_function(const uint32_t mutex_id));
 
 /*
 don't use the internal_ functions, use the macros that call them.

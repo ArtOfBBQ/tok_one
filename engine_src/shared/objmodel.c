@@ -929,8 +929,7 @@ static void parse_obj(
                 // add normals
                 if (rawdata[i] == '/') {
                     i++;
-                    normals_i_3 =
-                        string_to_int32(rawdata + i);
+                    normals_i_3 = string_to_int32(rawdata + i);
                     while (rawdata[i] <= '9' && rawdata[i] >= '0') {
                         i++;
                     }
@@ -1265,9 +1264,11 @@ void center_mesh_offsets(
     float y_delta = (smallest_y + largest_y) / 2.0f;
     float z_delta = (smallest_z + largest_z) / 2.0f;
     
+    #ifndef LOGGER_IGNORE_ASSERTS
     float new_smallest_x = smallest_x - x_delta;
     float new_largest_x = largest_x - x_delta;
     log_assert(new_smallest_x + new_largest_x == 0.0f);
+    #endif
     
     for (
         int32_t tri_i = all_mesh_summaries[mesh_id].triangles_head_i;
@@ -1296,9 +1297,11 @@ void create_shattered_version_of_mesh(
     
     int32_t orig_head_i =
         all_mesh_summaries[mesh_id].triangles_head_i;
+    #ifndef LOGGER_IGNORE_ASSERTS
     int32_t orig_tail_i =
         all_mesh_summaries[mesh_id].triangles_head_i +
         all_mesh_summaries[mesh_id].triangles_size;
+    #endif
     int32_t orig_triangles_size =
         all_mesh_summaries[mesh_id].triangles_size;
     
@@ -1318,11 +1321,14 @@ void create_shattered_version_of_mesh(
         log_assert(orig_head_i + i <= orig_tail_i);
         all_mesh_triangles[new_head_i + i] =
             all_mesh_triangles[orig_head_i + i];
+        
+        #ifndef LOGGER_IGNORE_ASSERTS
         log_assert(new_head_i + i <= temp_new_tail_i);
         
         float tri_length = get_squared_triangle_length(
             &all_mesh_triangles[new_head_i + i]);
         log_assert(tri_length > 0);
+        #endif
     }
     
     while (temp_new_tail_i <= goal_new_tail_i) {
@@ -1504,6 +1510,7 @@ void create_shattered_version_of_mesh(
             }
         }
         
+        #ifndef LOGGER_IGNORE_ASSERTS
         float orig_area =
             get_squared_triangle_length(
                 &all_mesh_triangles[biggest_area_i]);
@@ -1514,6 +1521,7 @@ void create_shattered_version_of_mesh(
         log_assert(orig_area > 0.0f);
         log_assert(first_tri_area > 0.0f);
         log_assert(second_tri_area > 0.0f);
+        #endif
         
         all_mesh_triangles[biggest_area_i] = first_tri;
         all_mesh_triangles[temp_new_tail_i + 1] = second_tri;

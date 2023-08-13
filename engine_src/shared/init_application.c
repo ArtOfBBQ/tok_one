@@ -28,7 +28,7 @@ void init_application(void)
             platform_init_mutex_and_return_id,
         /* void arg_mutex_lock_function(const uint32_t mutex_id): */
             platform_mutex_lock,
-        /* void arg_mutex_unlock_function(const uint32_t mutex_id: */
+        /* int32_t arg_mutex_unlock_function(const uint32_t mutex_id: */
             platform_mutex_unlock);
     
     engine_save_file = (EngineSaveFile *)malloc_from_unmanaged(

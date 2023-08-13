@@ -197,7 +197,7 @@ returns whether or not a mutex was locked, and locks the mutex if it
 was unlocked
 */
 void platform_mutex_lock(const uint32_t mutex_id);
-void platform_mutex_unlock(const uint32_t mutex_id);
+int32_t platform_mutex_unlock(const uint32_t mutex_id);
 
 #ifdef __cplusplus
 }

@@ -84,8 +84,9 @@ void writable_filename_to_pathfile(
     
     char writables_path[256];
     platform_get_writables_path(writables_path, 256);
-    uint32_t writables_path_length = get_string_length(writables_path);
     
+    #ifndef LOGGER_IGNORE_ASSERTS
+    uint32_t writables_path_length = get_string_length(writables_path);
     uint32_t full_filename_size =
         (filename_length
             + writables_path_length
@@ -95,6 +96,7 @@ void writable_filename_to_pathfile(
         recipient[0] = '\0';
         return;
     }
+    #endif
     
     strcpy_capped(
         recipient,

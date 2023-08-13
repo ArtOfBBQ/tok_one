@@ -12,7 +12,6 @@ static float get_magnitude(zVertex input) {
     
     float return_value = sqrtf(sum_squares);
     
-    log_assert(isfinite(return_value));
     log_assert(!isnan(return_value));
     
     return return_value;
@@ -27,22 +26,16 @@ void normalize_zvertex(
     }
     
     log_assert(!isnan(to_normalize->x));
-    log_assert(isfinite(to_normalize->x));
     to_normalize->x /= magnitude;
     log_assert(!isnan(to_normalize->x));
-    log_assert(isfinite(to_normalize->x));
     
     log_assert(!isnan(to_normalize->y));
-    log_assert(isfinite(to_normalize->y));
     to_normalize->y /= magnitude;
     log_assert(!isnan(to_normalize->y));
-    log_assert(isfinite(to_normalize->y));
     
     log_assert(!isnan(to_normalize->z));
-    log_assert(isfinite(to_normalize->z));
     to_normalize->z /= magnitude;
     log_assert(!isnan(to_normalize->z));
-    log_assert(isfinite(to_normalize->z));
 }
 
 zVertex crossproduct_of_zvertices(

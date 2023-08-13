@@ -52,8 +52,7 @@ static dispatch_semaphore_t drawing_semaphore;
     metal_device = with_metal_device;
     
     NSError *Error = NULL;
-    id<MTLLibrary> shader_library =
-        [with_metal_device newDefaultLibrary];
+    id<MTLLibrary> shader_library = [with_metal_device newDefaultLibrary];
     
     if (shader_library == NULL)
     {

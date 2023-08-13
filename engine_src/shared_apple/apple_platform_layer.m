@@ -494,9 +494,11 @@ static uint32_t next_mutex_id = 0;
 creates a mutex and return the ID of said mutex for you to store
 */
 uint32_t platform_init_mutex_and_return_id(void) {
+    #ifndef LOGGER_IGNORE_ASSERTS
     log_assert(next_mutex_id + 1 < MUTEXES_SIZE);
-    int success = pthread_mutex_init(&(mutexes[next_mutex_id]), NULL);
+    int32_t success = pthread_mutex_init(&(mutexes[next_mutex_id]), NULL);
     log_assert(success == 0);
+    #endif
     uint32_t return_value = next_mutex_id;
     next_mutex_id++;
     return return_value;
@@ -508,14 +510,18 @@ was unlocked
 */
 void platform_mutex_lock(const uint32_t mutex_id) {
     log_assert(mutex_id < MUTEXES_SIZE);
-    int return_value = pthread_mutex_lock(&(mutexes[mutex_id]));
+    #ifndef LOGGER_IGNORE_ASSERTS
+    int return_value =
+    #endif
+        pthread_mutex_lock(&(mutexes[mutex_id]));
     log_assert(return_value == 0);
     return;
 }
 
-void platform_mutex_unlock(const uint32_t mutex_id) {
+int32_t platform_mutex_unlock(const uint32_t mutex_id) {
     log_assert(mutex_id < MUTEXES_SIZE);
     int return_value = pthread_mutex_unlock(&(mutexes[mutex_id]));
     log_assert(return_value == 0);
-    return;
+    
+    return return_value;
 }
