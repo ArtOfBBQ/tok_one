@@ -34,9 +34,7 @@ void register_new_texturearray_by_splitting_file(
 void update_texture_slice_from_file_with_memory(
     const char * filename,
     const int32_t at_texture_array_i,
-    const int32_t at_texture_i,
-    uint8_t * dpng_working_memory,
-    uint64_t dpng_working_memory_size);
+    const int32_t at_texture_i);
 
 void update_texture_slice(
     DecodedImage * new_image,

@@ -89,9 +89,7 @@ static void set_unallocated_to_error_image(
 }
 
 static DecodedImage * malloc_img_from_filename_with_working_memory(
-    const char * filename,
-    const uint8_t * dpng_working_memory,
-    const uint64_t dpng_working_memory_size)
+    const char * filename)
 {
     FileBuffer file_buffer;
     file_buffer.size = platform_get_resource_size(filename) + 1;
@@ -213,17 +211,10 @@ static DecodedImage * malloc_img_from_filename_with_working_memory(
 static DecodedImage * malloc_img_from_filename(
     const char * filename)
 {
-    uint64_t dpng_working_memory_size = 10000000;
-    uint8_t * dpng_working_memory =
-        malloc_from_managed(dpng_working_memory_size);
-    
     DecodedImage * return_value =
         malloc_img_from_filename_with_working_memory(
-            filename,
-            dpng_working_memory,
-            dpng_working_memory_size);
+            filename);
     
-    free_from_managed(dpng_working_memory);
     log_assert(return_value->good);
     
     return return_value;
@@ -624,15 +615,11 @@ void register_new_texturearray_by_splitting_file(
 void update_texture_slice_from_file_with_memory(
     const char * filename,
     const int32_t at_texture_array_i,
-    const int32_t at_texture_i,
-    uint8_t * dpng_working_memory,
-    uint64_t dpng_working_memory_size)
+    const int32_t at_texture_i)
 {
     DecodedImage * img =
         malloc_img_from_filename_with_working_memory(
-            filename,
-            dpng_working_memory,
-            dpng_working_memory_size);
+            filename);
     
     update_texture_slice(
         img,

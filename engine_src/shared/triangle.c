@@ -71,8 +71,10 @@ float get_squared_triangle_length(
     const zTriangle * subject)
 {
     float largest_squared_dist = FLOAT32_MIN;
+    #ifndef LOGGER_IGNORE_ASSERTS
     int32_t largest_start_vertex_i = -1;
     int32_t largest_end_vertex_i = -1;
+    #endif
     
     for (int32_t start_vertex_i = 0; start_vertex_i < 3; start_vertex_i++) {
         
