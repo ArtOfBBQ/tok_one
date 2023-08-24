@@ -468,6 +468,7 @@ void init_or_push_one_gpu_texture_array_if_needed(void) {
                 texture_arrays[i].single_img_height);
             break;
         } else {
+            log_assert(texture_arrays[i].images_size < 2000);
             for (
                 int32_t j = 0;
                 (uint32_t)j < texture_arrays[i].images_size;
@@ -764,6 +765,7 @@ void get_texture_location(
     *texture_i_recipient = -1;
     
     for (uint32_t i = 0; i < texture_arrays_size; i++) {
+        log_assert(texture_arrays[i].images_size < 2000);
         for (uint32_t j = 0; j < texture_arrays[i].images_size; j++) {
             if (are_equal_strings(
                 texture_arrays[i].images[j].filename,
@@ -873,6 +875,7 @@ void decode_all_null_images_with_memory(void)
             (uint32_t)i < texture_arrays_size;
             i++)
         {
+            log_assert(texture_arrays[i].images_size < 2000);
             for (
                 int32_t j = 0;
                 (uint32_t)j < texture_arrays[i].images_size;
