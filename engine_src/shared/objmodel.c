@@ -841,8 +841,13 @@ static void parse_obj(
             {
                 // skip the slash
                 i++;
-                uv_coord_i_0 = string_to_int32(rawdata + i);
-                i += chars_till_next_space_or_slash(rawdata + i);
+                
+                // could be another slash, sometimes there is no uv coordinate
+                if (rawdata[i] != '/') {
+                    // must be a uv coord then
+                    uv_coord_i_0 = string_to_int32(rawdata + i);
+                    i += chars_till_next_space_or_slash(rawdata + i);
+                }
             }
             // add index to normal if any
             if (rawdata[i] == '/') {
@@ -865,10 +870,15 @@ static void parse_obj(
             {
                 // skip the slash
                 i++;
-                uv_coord_i_1 =
-                    string_to_int32(rawdata + i);
-                i += chars_till_next_space_or_slash(
-                    rawdata + i);
+                
+                // could be another slash, sometimes there is no uv coordinate
+                if (rawdata[i] != '/') {
+                    // must be a uv coord then
+                    uv_coord_i_1 =
+                        string_to_int32(rawdata + i);
+                    i += chars_till_next_space_or_slash(
+                        rawdata + i);
+                }
             }
             // add index to normal if any
             if (rawdata[i] == '/') {
@@ -892,10 +902,15 @@ static void parse_obj(
             {
                 // skip the slash
                 i++;
-                uv_coord_i_2 =
-                    string_to_int32(rawdata + i);
-                i += chars_till_next_space_or_slash(
-                    rawdata + i);
+                
+                // could be another slash, sometimes there is no uv coordinate
+                if (rawdata[i] != '/') {
+                    // must be a uv coord then
+                    uv_coord_i_2 =
+                        string_to_int32(rawdata + i);
+                    i += chars_till_next_space_or_slash(
+                        rawdata + i);
+                }
             }
 
             // add index to normal if any
@@ -920,10 +935,15 @@ static void parse_obj(
                 {
                     // skip the slash
                     i++;
-                    uv_coord_i_3 =
-                        string_to_int32(rawdata + i);
-                    i += chars_till_next_space_or_slash(
-                        rawdata + i);
+                    
+                    // could be another slash, sometimes there is no uv coordinate
+                    if (rawdata[i] != '/') {
+                        // must be a uv coord then
+                        uv_coord_i_3 =
+                            string_to_int32(rawdata + i);
+                        i += chars_till_next_space_or_slash(
+                            rawdata + i);
+                    }
                 }
                 
                 // add normals
