@@ -8,18 +8,45 @@ zCamera camera = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
 zLightSource * zlights_to_apply = NULL;
 uint32_t zlights_to_apply_size = 0;
 
-void request_zlightsource(zLightSource * to_request)
-{
+static void construct_zlight(zLightSource * to_construct) {
+    to_construct->x         = 0.0f;
+    to_construct->y         = 0.0f;
+    to_construct->z         = 0.0f;
+    to_construct->x_offset  = 0.0f;
+    to_construct->y_offset  = 0.0f;
+    to_construct->z_offset  = 0.0f;
+    to_construct->RGBA[0]   = 0.1f;
+    to_construct->RGBA[1]   = 0.1f;
+    to_construct->RGBA[2]   = 0.1f;
+    to_construct->RGBA[3]   = 1.0f;
+    to_construct->ambient   = 1.00f;
+    to_construct->diffuse   = 0.10f;
+    to_construct->deleted   = false;
+    to_construct->committed = false;
+}
+
+zLightSource * next_zlight(void) {
+    zLightSource * return_value = NULL;
     for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
         if (zlights_to_apply[i].deleted) {
-            zlights_to_apply[i] = *to_request;
-            return;
+            return_value = &zlights_to_apply[i];
+            break;
         }
     }
     
     log_assert(zlights_to_apply_size + 1 < ZLIGHTS_TO_APPLY_ARRAYSIZE);
-    zlights_to_apply[zlights_to_apply_size] = *to_request;
+    return_value = &zlights_to_apply[zlights_to_apply_size];
+    return_value->committed = false;
     zlights_to_apply_size += 1;
+    
+    construct_zlight(return_value);
+    
+    return return_value;
+}
+
+void commit_zlight(zLightSource * to_request)
+{
+    to_request->committed = true;
 }
 
 zVertex x_rotate_zvertex(
@@ -195,11 +222,14 @@ void copy_lights(
     {
         if (!zlights_to_apply[i].deleted) {
             lights_for_gpu->light_x[lights_for_gpu->lights_size] =
-                zlights_to_apply[i].x;
+                zlights_to_apply[i].x +
+                zlights_to_apply[i].x_offset;
             lights_for_gpu->light_y[lights_for_gpu->lights_size] =
-                zlights_to_apply[i].y;
+                zlights_to_apply[i].y +
+                zlights_to_apply[i].y_offset;
             lights_for_gpu->light_z[lights_for_gpu->lights_size] =
-                zlights_to_apply[i].z;
+                zlights_to_apply[i].z +
+                zlights_to_apply[i].z_offset;
             lights_for_gpu->red[lights_for_gpu->lights_size] =
                 zlights_to_apply[i].RGBA[0];
             lights_for_gpu->green[lights_for_gpu->lights_size] =

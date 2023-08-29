@@ -60,9 +60,13 @@ typedef struct zLightSource {
                        // ScheduledAnimations that affect the entire group
                        // set to -1 to not be a party of any group
     bool32_t deleted;
+    bool32_t committed;
     float x;
     float y;
     float z;
+    float x_offset;    // these 3 _offset values are unaffected by animations,
+    float y_offset;    // so you can give the light the same object_id as a
+    float z_offset;    // sprite and move them both, keeping the light offset
     float RGBA[4];
     float reach;       // max distance before light intensity 0
     float ambient;     // how much ambient light does this radiate?
@@ -75,7 +79,8 @@ typedef struct zLightSource {
 extern zLightSource * zlights_to_apply;
 extern uint32_t zlights_to_apply_size;
 
-void request_zlightsource(zLightSource * to_request);
+zLightSource * next_zlight(void);
+void commit_zlight(zLightSource * to_request);
 
 void clean_deleted_lights(void);
 

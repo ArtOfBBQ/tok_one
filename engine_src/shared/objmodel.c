@@ -417,7 +417,7 @@ static void assert_objmodel_validity(int32_t mesh_id) {
         }
         
         if (!already_in) {
-            log_assert(materials_mentioned_size + 1 < MAX_MATERIALS_SIZE);
+            log_assert(materials_mentioned_size < MAX_MATERIALS_SIZE);
             materials_mentioned[materials_mentioned_size++] = new_mat_id;
             log_assert(
                 new_mat_id <
@@ -834,7 +834,7 @@ static void parse_obj(
             int32_t vertex_i_0 = string_to_int32(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
-            int32_t uv_coord_i_0 = 0;
+            int32_t uv_coord_i_0 = -1;
             int32_t normals_i_0 = 0;
             
             if (rawdata[i] == '/')
@@ -863,7 +863,7 @@ static void parse_obj(
             int32_t vertex_i_1 = string_to_int32(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
-            int32_t uv_coord_i_1 = 0;
+            int32_t uv_coord_i_1 = -1;
             int32_t normals_i_1 = 0;
             
             if (rawdata[i] == '/')
@@ -887,7 +887,7 @@ static void parse_obj(
                 normals_i_1 = string_to_int32(rawdata + i);
                 i += chars_till_next_space_or_slash(rawdata + i);
             }
-
+            
             log_assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
@@ -895,7 +895,7 @@ static void parse_obj(
             int32_t vertex_i_2 = string_to_int32(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
-            int32_t uv_coord_i_2 = 0;
+            int32_t uv_coord_i_2 = -1;
             int32_t normals_i_2 = 0;
             
             if (rawdata[i] == '/')
@@ -929,7 +929,7 @@ static void parse_obj(
                 int32_t vertex_i_3 = string_to_int32(rawdata + i);
                 i += chars_till_next_space_or_slash(
                     rawdata + i);
-                int32_t uv_coord_i_3 = 0;
+                int32_t uv_coord_i_3 = -1;
                 // int32_t normals_i_3 = 0;
                 if (rawdata[i] == '/')
                 {
@@ -989,17 +989,30 @@ static void parse_obj(
                     uv_coord_i_2 > 0)
                 {
                     new_triangle.vertices[target_vertex_0].uv[0] =
-                    parser_uv_u_buffer[uv_coord_i_0 - 1];
+                        parser_uv_u_buffer[uv_coord_i_0 - 1];
                     new_triangle.vertices[target_vertex_0].uv[1] =
-                    parser_uv_v_buffer[uv_coord_i_0 - 1];
+                        parser_uv_v_buffer[uv_coord_i_0 - 1];
                     new_triangle.vertices[target_vertex_1].uv[0] =
-                    parser_uv_u_buffer[uv_coord_i_2 - 1];
+                        parser_uv_u_buffer[uv_coord_i_1 - 1];
                     new_triangle.vertices[target_vertex_1].uv[1] =
-                    parser_uv_v_buffer[uv_coord_i_2 - 1];
+                        parser_uv_v_buffer[uv_coord_i_1 - 1];
                     new_triangle.vertices[target_vertex_2].uv[0] =
-                    parser_uv_u_buffer[uv_coord_i_3 - 1];
+                        parser_uv_u_buffer[uv_coord_i_3 - 1];
                     new_triangle.vertices[target_vertex_2].uv[1] =
-                    parser_uv_v_buffer[uv_coord_i_3 - 1];
+                        parser_uv_v_buffer[uv_coord_i_3 - 1];
+                } else {
+                    new_triangle.vertices[target_vertex_0].uv[0] =
+                        0.0f;
+                    new_triangle.vertices[target_vertex_0].uv[1] =
+                        0.0f;
+                    new_triangle.vertices[target_vertex_1].uv[0] =
+                        1.0f;
+                    new_triangle.vertices[target_vertex_1].uv[1] =
+                        0.0f;
+                    new_triangle.vertices[target_vertex_2].uv[0] =
+                        0.0f;
+                    new_triangle.vertices[target_vertex_2].uv[1] =
+                        1.0f;
                 }
                 
                 if (
@@ -1068,17 +1081,30 @@ static void parse_obj(
                 uv_coord_i_2 > 0)
             {
                 new_triangle.vertices[target_vertex_0].uv[0] =
-                parser_uv_u_buffer[uv_coord_i_0 - 1];
+                    parser_uv_u_buffer[uv_coord_i_0 - 1];
                 new_triangle.vertices[target_vertex_0].uv[1] =
-                parser_uv_v_buffer[uv_coord_i_0 - 1];
+                    parser_uv_v_buffer[uv_coord_i_0 - 1];
                 new_triangle.vertices[target_vertex_1].uv[0] =
-                parser_uv_u_buffer[uv_coord_i_1 - 1];
+                    parser_uv_u_buffer[uv_coord_i_1 - 1];
                 new_triangle.vertices[target_vertex_1].uv[1] =
-                parser_uv_v_buffer[uv_coord_i_1 - 1];
+                    parser_uv_v_buffer[uv_coord_i_1 - 1];
                 new_triangle.vertices[target_vertex_2].uv[0] =
-                parser_uv_u_buffer[uv_coord_i_2 - 1];
+                    parser_uv_u_buffer[uv_coord_i_2 - 1];
                 new_triangle.vertices[target_vertex_2].uv[1] =
-                parser_uv_v_buffer[uv_coord_i_2 - 1];
+                    parser_uv_v_buffer[uv_coord_i_2 - 1];
+            } else {
+                new_triangle.vertices[target_vertex_0].uv[0] =
+                    1.0f;
+                new_triangle.vertices[target_vertex_0].uv[1] =
+                    0.0f;
+                new_triangle.vertices[target_vertex_1].uv[0] =
+                    1.0f;
+                new_triangle.vertices[target_vertex_1].uv[1] =
+                    1.0f;
+                new_triangle.vertices[target_vertex_2].uv[0] =
+                    0.0f;
+                new_triangle.vertices[target_vertex_2].uv[1] =
+                    1.0f;
             }
             
             if (
