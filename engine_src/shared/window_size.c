@@ -46,7 +46,7 @@ void init_projection_constants() {
         return;
     }
     
-    GPU_ProjectionConstants * pjc = &window_globals->projection_constants;
+    GPUProjectionConstants * pjc = &window_globals->projection_constants;
     
     pjc->near = 0.1f;
     pjc->far = 10.0f;

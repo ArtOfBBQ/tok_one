@@ -74,10 +74,10 @@ float get_distance(
 vertex RasterizerPixel
 vertex_shader(
     uint vertex_i [[ vertex_id ]],
-    const device GPU_Vertex * input_array [[ buffer(0) ]],
-    const device GPU_LightCollection * light_collection [[ buffer(1) ]],
-    const device GPU_Camera * camera [[ buffer(2) ]],
-    const device GPU_ProjectionConstants * projection_constants [[ buffer(3) ]])
+    const device GPUVertex * input_array [[ buffer(0) ]],
+    const device GPULightCollection * light_collection [[ buffer(1) ]],
+    const device GPUCamera * camera [[ buffer(2) ]],
+    const device GPUProjectionConstants * projection_constants [[ buffer(3) ]])
 {
     RasterizerPixel out;
     

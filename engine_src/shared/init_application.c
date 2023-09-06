@@ -89,11 +89,7 @@ void init_application(void)
     terminal_init();
     init_scheduled_animations();
     init_texture_arrays();
-    
-    gpu_shared_data_collection.triple_buffers[0].touchable_pixels = NULL;
-    gpu_shared_data_collection.triple_buffers[1].touchable_pixels = NULL;
-    gpu_shared_data_collection.triple_buffers[2].touchable_pixels = NULL;
-    
+        
     // initialize font with fontmetrics.dat
     FileBuffer font_metrics_file;
     font_metrics_file.size = platform_get_resource_size(

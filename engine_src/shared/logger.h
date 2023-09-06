@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-//#define LOGGER_SILENCE
+#define LOGGER_SILENCE
 #ifndef LOGGER_SILENCE
 #include <stdio.h>
 #define log_append(string) internal_log_append(string, __func__)
@@ -18,6 +18,8 @@
 #define log_append_int(num)
 #define log_append_uint(num)
 #endif
+
+#define IGNORE_LOGGER_ASSERTS
 
 #ifdef IGNORE_LOGGER_ASSERTS
 #ifndef LOGGER_IGNORE_ASSERTS

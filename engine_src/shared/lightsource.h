@@ -91,14 +91,14 @@ void project_float4_to_2d_inplace(
 
 // just copy the lights without translation, for hardware renderer
 void copy_lights(
-    GPU_LightCollection * lights_for_gpu);
+    GPULightCollection * lights_for_gpu);
 
 // move each light around the camera (e.g. when the camera moves
 // right, we move all lights etc. to the left instead)
 // reminder: this is calculated once before 2d and 3d renderer
 // and then used in both
 void translate_lights(
-    GPU_LightCollection * lights_for_gpu);
+    GPULightCollection * lights_for_gpu);
 
 #ifdef __cplusplus
 }

@@ -126,9 +126,9 @@ void commit_shatter_effect(
 }
 
 void add_shatter_effects_to_workload(
-    GPU_Vertex * next_gpu_workload,
+    GPUVertex * next_gpu_workload,
     uint32_t * next_workload_size,
-    GPU_LightCollection * lights_for_gpu,
+    GPULightCollection * lights_for_gpu,
     uint64_t elapsed_nanoseconds)
 {
     (void)lights_for_gpu;
@@ -592,9 +592,9 @@ static void get_particle_color_at_elapsed(
 }
 
 void add_particle_effects_to_workload(
-    GPU_Vertex * next_gpu_workload,
+    GPUVertex * next_gpu_workload,
     uint32_t * next_workload_size,
-    GPU_LightCollection * lights_for_gpu,
+    GPULightCollection * lights_for_gpu,
     uint64_t elapsed_nanoseconds)
 {
     zVertex randomized_direction;

@@ -177,11 +177,11 @@ void shared_gameloop_init(void) {
 }
 
 void shared_gameloop_update(
-    GPU_Vertex * vertices_for_gpu,
+    GPUVertex * vertices_for_gpu,
     uint32_t * vertices_for_gpu_size,
-    GPU_LightCollection * lights_for_gpu,
-    GPU_Camera * camera_for_gpu,
-    GPU_ProjectionConstants * projection_constants_for_gpu)
+    GPULightCollection * lights_for_gpu,
+    GPUCamera * camera_for_gpu,
+    GPUProjectionConstants * projection_constants_for_gpu)
 {
     platform_mutex_lock(gameloop_mutex_id);
     

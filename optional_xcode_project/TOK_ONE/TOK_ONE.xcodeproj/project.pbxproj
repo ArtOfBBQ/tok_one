@@ -122,8 +122,6 @@
 		EC1BD95C297B5DBE00A9BA54 /* clientlogic_macro_settings.h in Sources */ = {isa = PBXBuildFile; fileRef = EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */; };
 		EC31932429DFAAFB00E320CD /* particle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC31932329DFAAFB00E320CD /* particle.c */; };
 		EC31932529DFAAFB00E320CD /* particle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC31932329DFAAFB00E320CD /* particle.c */; };
-		EC44FAAE2A32EA6D00907908 /* button.png in Resources */ = {isa = PBXBuildFile; fileRef = EC44FAAD2A32EA6D00907908 /* button.png */; };
-		EC44FAAF2A32EA6D00907908 /* button.png in Resources */ = {isa = PBXBuildFile; fileRef = EC44FAAD2A32EA6D00907908 /* button.png */; };
 		EC6441A429318B6D00A0267B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = EC64419F29318B6D00A0267B /* main.m */; };
 		EC6441A529318B6D00A0267B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A029318B6D00A0267B /* AppDelegate.m */; };
 		EC6441A629318B6D00A0267B /* ios_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A129318B6D00A0267B /* ios_platform_layer.c */; };
@@ -227,7 +225,6 @@
 		EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = clientlogic_macro_settings.h; path = ../../sampleproject_src/clientlogic_macro_settings.h; sourceTree = "<group>"; };
 		EC31932229DFAAFB00E320CD /* particle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = particle.h; path = ../../engine_src/shared/particle.h; sourceTree = "<group>"; };
 		EC31932329DFAAFB00E320CD /* particle.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = particle.c; path = ../../engine_src/shared/particle.c; sourceTree = "<group>"; };
-		EC44FAAD2A32EA6D00907908 /* button.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = button.png; path = ../../resources/button.png; sourceTree = "<group>"; };
 		EC64419E29318B6D00A0267B /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = ../../engine_src/ios/AppDelegate.h; sourceTree = "<group>"; };
 		EC64419F29318B6D00A0267B /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../engine_src/ios/main.m; sourceTree = "<group>"; };
 		EC6441A029318B6D00A0267B /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = ../../engine_src/ios/AppDelegate.m; sourceTree = "<group>"; };
@@ -356,7 +353,6 @@
 				601128AC28625BAF00F92967 /* font.png */,
 				ECC47A5F29E9111C0082A7C6 /* disk.obj */,
 				EC0BFBD729EE71A200E4BC1C /* tree.obj */,
-				EC44FAAD2A32EA6D00907908 /* button.png */,
 				EC0BFBD829EE71A200E4BC1C /* xmas_tree.obj */,
 				EC67AE152A1B0813002D8380 /* leaves3.png */,
 				EC7B171A293A23E300C1D20C /* roundedborder.png */,
@@ -387,19 +383,12 @@
 				60112896286253C100F92967 /* apple_platform_layer.m */,
 				EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */,
 				601128702862511600F92967 /* clientlogic.c */,
-				EC6E12182A04CE12004E7BD1 /* objectid.c */,
-				EC6E12192A04CE13004E7BD1 /* objectid.h */,
+				EC6E12132A03BD8F004E7BD1 /* clientlogic.h */,
 				601128722862511600F92967 /* common_platform_layer.c */,
 				6011286F2862511600F92967 /* common.c */,
 				6080CC472870182700444118 /* common.h */,
-				EC6E12132A03BD8F004E7BD1 /* clientlogic.h */,
-				EC6E12142A03BD8F004E7BD1 /* uielement.c */,
-				EC6E12152A03BD8F004E7BD1 /* uielement.h */,
 				6011287A2862511600F92967 /* cpu_gpu_shared_types.h */,
 				601128762862511600F92967 /* cpu_to_gpu_types.h */,
-				EC78509929E62CA800E6882A /* objmodel.c */,
-				EC78509829E62CA800E6882A /* objmodel.h */,
-				EC78509C29E639F900E6882A /* triangle.h */,
 				EC92FDAC2902917500C10865 /* decode_bmp.c */,
 				EC92FDAB2902917500C10865 /* decode_bmp.h */,
 				6011283D286122FE00F92967 /* decode_png.c */,
@@ -420,10 +409,13 @@
 				601128752862511600F92967 /* logger.h */,
 				6009B4F328679E7D00F1F279 /* memorystore.c */,
 				6009B4F228679E7D00F1F279 /* memorystore.h */,
+				EC6E12182A04CE12004E7BD1 /* objectid.c */,
+				EC6E12192A04CE13004E7BD1 /* objectid.h */,
+				EC78509929E62CA800E6882A /* objmodel.c */,
+				EC78509829E62CA800E6882A /* objmodel.h */,
 				EC31932329DFAAFB00E320CD /* particle.c */,
 				EC31932229DFAAFB00E320CD /* particle.h */,
 				601128832862511700F92967 /* platform_layer.h */,
-				EC6A301A29EFA1440071C58F /* triangle.c */,
 				6011286C2862511500F92967 /* renderer.c */,
 				6011287B2862511700F92967 /* renderer.h */,
 				6011287D2862511700F92967 /* scheduled_animations.c */,
@@ -437,6 +429,10 @@
 				601128682862511500F92967 /* texture_array.h */,
 				601128772862511600F92967 /* tok_random.c */,
 				601128802862511700F92967 /* tok_random.h */,
+				EC6A301A29EFA1440071C58F /* triangle.c */,
+				EC78509C29E639F900E6882A /* triangle.h */,
+				EC6E12142A03BD8F004E7BD1 /* uielement.c */,
+				EC6E12152A03BD8F004E7BD1 /* uielement.h */,
 				601128692862511500F92967 /* userinput.c */,
 				6011286B2862511500F92967 /* userinput.h */,
 				6011286E2862511600F92967 /* window_size.c */,
@@ -545,7 +541,6 @@
 				6009FB642876A47100FC5A60 /* fontmetrics.dat in Resources */,
 				6080CC46286FFD1E00444118 /* phoebus.png in Resources */,
 				EC7B171B293A23E400C1D20C /* roundedborder.png in Resources */,
-				EC44FAAE2A32EA6D00907908 /* button.png in Resources */,
 				EC18FF4229E3DC8B00ED785C /* blob1.png in Resources */,
 				EC0BFBDB29EE71A200E4BC1C /* xmas_tree.obj in Resources */,
 				601128AD28625BAF00F92967 /* structuredart1.png in Resources */,
@@ -569,7 +564,6 @@
 				60A99924287BDF31003F7159 /* phoebus.png in Resources */,
 				EC18FF4329E3DC8B00ED785C /* blob1.png in Resources */,
 				EC67AE172A1B0813002D8380 /* leaves3.png in Resources */,
-				EC44FAAF2A32EA6D00907908 /* button.png in Resources */,
 				EC0BFBDA29EE71A200E4BC1C /* tree.obj in Resources */,
 				EC7B171C293A23E400C1D20C /* roundedborder.png in Resources */,
 				ECB05E4F2950868E00050BD4 /* key.obj in Resources */,

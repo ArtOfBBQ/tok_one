@@ -320,3 +320,9 @@ internal_log_assert(
 }
 #endif
 
+typedef struct TimerResults {
+    uint64_t inprogress_start;
+    uint64_t inprogress_end;
+    uint64_t averaged_result_so_far;
+    uint32_t runs;
+} TimerResults;

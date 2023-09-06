@@ -199,7 +199,7 @@ void project_float4_to_2d_inplace(
     float * position_y,
     float * position_z)
 {
-    GPU_ProjectionConstants * pjc = &window_globals->projection_constants;
+    GPUProjectionConstants * pjc = &window_globals->projection_constants;
     
     float x_multiplier =
         window_globals->aspect_ratio * pjc->field_of_view_modifier;
@@ -215,7 +215,7 @@ void project_float4_to_2d_inplace(
 }
 
 void copy_lights(
-    GPU_LightCollection * lights_for_gpu)
+    GPULightCollection * lights_for_gpu)
 {
     lights_for_gpu->lights_size = 0;
     for (uint32_t i = 0; i < zlights_to_apply_size; i++)
@@ -252,7 +252,7 @@ void copy_lights(
 
 // move each light so the camera becomes position 0,0,0
 void translate_lights(
-    GPU_LightCollection * lights_for_gpu)
+    GPULightCollection * lights_for_gpu)
 {
     assert(zlights_to_apply_size < ZLIGHTS_TO_APPLY_ARRAYSIZE);
     

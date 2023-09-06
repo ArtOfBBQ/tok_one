@@ -12,12 +12,11 @@
 // to be aligned to page size
 typedef struct GPUDataForSingleFrame
 {
-    GPU_Vertex * vertices;
-    uint32_t vertices_size;
-    GPU_LightCollection * light_collection;
-    GPU_Camera * camera;
-    GPU_ProjectionConstants * projection_constants;
-    GPU_TouchablePixels * touchable_pixels;
+    GPUVertex *                            vertices;
+    uint32_t                          vertices_size;
+    GPULightCollection *           light_collection;
+    GPUCamera *                              camera;
+    GPUProjectionConstants *   projection_constants;
 } GPUDataForSingleFrame;
 
 typedef struct GPUSharedDataCollection

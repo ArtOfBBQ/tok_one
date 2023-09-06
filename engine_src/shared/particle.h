@@ -54,9 +54,9 @@ void commit_shatter_effect(
     ShatterEffect * to_commit);
 
 void add_shatter_effects_to_workload(
-    GPU_Vertex * next_gpu_workload,
+    GPUVertex * next_gpu_workload,
     uint32_t * next_workload_size,
-    GPU_LightCollection * lights_for_gpu,
+    GPULightCollection * lights_for_gpu,
     uint64_t elapsed_nanoseconds);
 
 
@@ -133,9 +133,9 @@ void request_particle_effect(ParticleEffect * to_request);
 void delete_particle_effect(int32_t with_object_id);
 
 void add_particle_effects_to_workload(
-    GPU_Vertex * next_gpu_workload,
+    GPUVertex * next_gpu_workload,
     uint32_t * next_workload_size,
-    GPU_LightCollection * lights_for_gpu,
+    GPULightCollection * lights_for_gpu,
     uint64_t elapsed_nanoseconds);
 
 #ifdef __cplusplus

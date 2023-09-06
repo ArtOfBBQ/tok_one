@@ -147,37 +147,37 @@ static dispatch_semaphore_t drawing_semaphore;
         gpu_single_frame_data.vertices_size = MAX_VERTICES_PER_BUFFER;
         
         uint64_t vertices_allocation_size =
-            sizeof(GPU_Vertex) * gpu_single_frame_data.vertices_size;
+            sizeof(GPUVertex) * gpu_single_frame_data.vertices_size;
         vertices_allocation_size += (4096 - (vertices_allocation_size % 4096));
         assert(vertices_allocation_size % 4096 == 0);
         gpu_single_frame_data.vertices =
-            (GPU_Vertex *)malloc_from_unmanaged_aligned(
+            (GPUVertex *)malloc_from_unmanaged_aligned(
                 vertices_allocation_size,
                 4096);
         
-        uint64_t lights_allocation_size = sizeof(GPU_LightCollection);
+        uint64_t lights_allocation_size = sizeof(GPULightCollection);
         lights_allocation_size += (4096 - (lights_allocation_size % 4096));
         assert(lights_allocation_size % 4096 == 0);
         gpu_single_frame_data.light_collection =
-            (GPU_LightCollection *)malloc_from_unmanaged_aligned(
+            (GPULightCollection *)malloc_from_unmanaged_aligned(
                 lights_allocation_size,
                 4096);
         
-        uint64_t camera_allocation_size = sizeof(GPU_Camera);
+        uint64_t camera_allocation_size = sizeof(GPUCamera);
         camera_allocation_size += (4096 - (camera_allocation_size % 4096));
         assert(camera_allocation_size % 4096 == 0);
         gpu_single_frame_data.camera =
-            (GPU_Camera *)malloc_from_unmanaged_aligned(
+            (GPUCamera *)malloc_from_unmanaged_aligned(
                 camera_allocation_size,
                 4096);
         
         uint64_t projection_constants_allocation_size =
-            sizeof(GPU_ProjectionConstants);
+            sizeof(GPUProjectionConstants);
         projection_constants_allocation_size +=
             (4096 - (projection_constants_allocation_size % 4096));
         assert(projection_constants_allocation_size % 4096 == 0);
         gpu_single_frame_data.projection_constants =
-            (GPU_ProjectionConstants *)malloc_from_unmanaged_aligned(
+            (GPUProjectionConstants *)malloc_from_unmanaged_aligned(
                 projection_constants_allocation_size,
                 4096);
         
@@ -367,20 +367,20 @@ static dispatch_semaphore_t drawing_semaphore;
         /* dispatch_semaphore_t _Nonnull dsema: */ drawing_semaphore,
         /* dispatch_time_t timeout: */ DISPATCH_TIME_FOREVER);
     
-    GPU_Vertex * vertices_for_gpu =
+    GPUVertex * vertices_for_gpu =
         gpu_shared_data_collection.triple_buffers[current_frame_i].vertices;
     uint32_t vertices_for_gpu_size = 0;
     
-    GPU_LightCollection * lights_for_gpu =
+    GPULightCollection * lights_for_gpu =
         gpu_shared_data_collection.
             triple_buffers[current_frame_i].
             light_collection;
     lights_for_gpu->lights_size = 0;
     
-    GPU_Camera * camera_for_gpu =
+    GPUCamera * camera_for_gpu =
         gpu_shared_data_collection.triple_buffers[current_frame_i].camera;
     
-    GPU_ProjectionConstants * projection_constants_for_gpu =
+    GPUProjectionConstants * projection_constants_for_gpu =
         gpu_shared_data_collection.
             triple_buffers[current_frame_i]
             .projection_constants;

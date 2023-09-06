@@ -20,7 +20,7 @@ typedef struct WindowGlobals {
     float aspect_ratio;
     
     uint64_t last_resize_request_at;
-    GPU_ProjectionConstants projection_constants;
+    GPUProjectionConstants projection_constants;
 } WindowGlobals;
 
 extern WindowGlobals * window_globals;
