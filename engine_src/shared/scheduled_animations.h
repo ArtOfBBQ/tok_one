@@ -20,7 +20,7 @@ typedef struct ScheduledAnimation {
                                              // run
     uint64_t duration_microseconds;   // duration at the start of each run
     uint64_t remaining_microseconds;  // remaining duration (this run)
-    uint64_t shatter_effect_duration; // 0 for no shatter effect
+    // uint64_t shatter_effect_duration; // 0 for no shatter effect
     
     /*
     Any texquads (2d) or zlights with this object_id will be affected by the
@@ -148,7 +148,11 @@ void delete_conflicting_animations(ScheduledAnimation * priority_anim);
 void request_shatter_and_destroy(
     const int32_t object_id,
     const uint64_t wait_before_first_run,
-    const uint64_t duration_microseconds);
+    const uint64_t duration_microseconds,
+    const float exploding_distance_per_second,
+    const float xyz_rotation_per_second[3],
+    const float linear_distance_per_second,
+    const float linear_direction[3]);
 
 void request_fade_and_destroy(
     const int32_t object_id,

@@ -57,7 +57,6 @@ static void construct_scheduled_animation(
     to_construct->duration_microseconds = 1000000;
     to_construct->remaining_microseconds = 0; // gets set when scheduling
     to_construct->runs = 1;
-    to_construct->shatter_effect_duration = 0;
     to_construct->delete_object_when_finished = false;
     to_construct->deleted = false;
     to_construct->committed = false;
@@ -98,10 +97,6 @@ void commit_scheduled_animation(ScheduledAnimation * to_commit) {
     log_assert(!to_commit->committed);
     
     to_commit->remaining_microseconds = to_commit->duration_microseconds;
-    
-    if (to_commit->shatter_effect_duration > 0) {
-        log_assert(to_commit->remaining_microseconds == 1);
-    }
         
     for (uint32_t col_i = 0; col_i < 4; col_i++) {
         if (to_commit->final_rgba_known[col_i]) {
@@ -263,21 +258,52 @@ void delete_conflicting_animations(ScheduledAnimation * priority_anim)
 void request_shatter_and_destroy(
     const int32_t object_id,
     const uint64_t wait_before_first_run,
-    const uint64_t duration_microseconds)
+    const uint64_t duration_microseconds,
+    const float exploding_distance_per_second,
+    const float xyz_rotation_per_second[3],
+    const float linear_distance_per_second,
+    const float linear_direction[3])
 {
     log_assert(duration_microseconds > 0);
     log_assert(object_id >= 0);
     
-    // register scheduled animation
-    ScheduledAnimation * shatter = next_scheduled_animation();
-    shatter->affected_object_id = object_id;
-    shatter->remaining_wait_before_next_run = wait_before_first_run;
-    shatter->duration_microseconds = 1;
-    shatter->remaining_microseconds = 1;
-    shatter->shatter_effect_duration = duration_microseconds;
-    shatter->delete_object_when_finished = true;
-    shatter->destroy_even_waiting_duplicates = false;
-    commit_scheduled_animation(shatter);
+    for (
+        uint32_t zp_i = 0;
+        zp_i < zpolygons_to_render_size;
+        zp_i++)
+    {
+        if (zpolygons_to_render[zp_i].deleted ||
+            zpolygons_to_render[zp_i].object_id != object_id)
+        {
+            continue;
+        }
+        
+        ShatterEffect * shatter = next_shatter_effect();
+        shatter->zpolygon_to_shatter = zpolygons_to_render[zp_i];
+        shatter->wait_first = wait_before_first_run;
+        shatter->longest_random_delay_before_launch = duration_microseconds / 2;
+        shatter->start_fade_out_at_elapsed =
+            (duration_microseconds / 10) * 9;
+        shatter->finish_fade_out_at_elapsed = duration_microseconds;
+        // shatter->linear_direction[0] = 0; // x
+        // shatter->linear_direction[1] = 0; // y
+        // shatter->linear_direction[2] = 0; // z
+        shatter->linear_direction[0] = linear_direction[0];
+        shatter->linear_direction[1] = linear_direction[1];
+        shatter->linear_direction[2] = linear_direction[2];
+        shatter->linear_distance_per_second =
+            linear_distance_per_second;
+        shatter->exploding_distance_per_second =
+            exploding_distance_per_second;
+        shatter->squared_distance_per_second = 0.0f;
+        
+        shatter->xyz_rotation_per_second[0] = xyz_rotation_per_second[0];
+        shatter->xyz_rotation_per_second[1] = xyz_rotation_per_second[1];
+        shatter->xyz_rotation_per_second[2] = xyz_rotation_per_second[2];
+        commit_shatter_effect(shatter);
+        
+        zpolygons_to_render[zp_i].deleted = true;
+    }
 }
 
 void request_fade_and_destroy(
@@ -435,22 +461,6 @@ static void resolve_single_animation_effects(
             zpolygons_to_render[zp_i].deleted)
         {
             continue;
-        }
-                
-        if (anim->shatter_effect_duration > 0) {
-            ShatterEffect * shatter_anim = next_shatter_effect_with_zpoly(
-                /* construct_with_poly: */
-                    &zpolygons_to_render[zp_i]);
-            shatter_anim->longest_random_delay_before_launch =
-                anim->shatter_effect_duration / 2;
-            shatter_anim->start_fade_out_at_elapsed =
-                (anim->shatter_effect_duration / 10) * 9;
-            shatter_anim->finish_fade_out_at_elapsed =
-                anim->shatter_effect_duration;
-            shatter_anim->exploding_distance_per_second = 0.35f;
-            shatter_anim->linear_distance_per_second = 0.1f;
-            shatter_anim->squared_distance_per_second = 0;
-            commit_shatter_effect(shatter_anim);
         }
         
         if (!anim->final_x_known) {

@@ -66,6 +66,7 @@ ShatterEffect * next_shatter_effect()
     shatter_effects_size += 1;
     construct_shatter_effect_no_zpoly(
         &shatter_effects[shatter_effects_size - 1]);
+    
     return &shatter_effects[shatter_effects_size - 1];
 }
 

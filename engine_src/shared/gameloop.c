@@ -195,8 +195,6 @@ void shared_gameloop_update(
     
     if (elapsed > 33333) { elapsed = 33333; }
     
-    log_assert(elapsed < 60000);
-    
     if (!application_running) {
         zpolygons_to_render_size = 0;
         camera.x = 0.0f;
@@ -349,7 +347,6 @@ void shared_gameloop_update(
     camera_for_gpu->y_angle = camera.y_angle;
     camera_for_gpu->z_angle = camera.z_angle;
     
-    log_assert(*vertices_for_gpu_size < 1);
     hardware_render(
         /* next_gpu_workload: */
             vertices_for_gpu,

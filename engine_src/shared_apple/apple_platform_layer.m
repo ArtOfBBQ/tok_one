@@ -11,7 +11,7 @@ uint8_t * platform_malloc_unaligned_block(
     return return_value;
 }
 
-#define MAX_SIMUL_SOUNDS 3
+#define MAX_SIMUL_SOUNDS 10
 static AVAudioPlayer * sound_players[MAX_SIMUL_SOUNDS];
 static uint32_t next_sound_player = 0;
 
@@ -422,6 +422,10 @@ void platform_play_sound_resource(const char * resource_filename) {
         fileURLWithPath: soundPathFile];
     
     NSError * error_value = nil;
+    
+    if (sound_players[next_sound_player].playing) {
+        return;
+    }
     
     sound_players[next_sound_player] =
         [[AVAudioPlayer alloc]

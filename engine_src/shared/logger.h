@@ -19,8 +19,6 @@
 #define log_append_uint(num)
 #endif
 
-#define IGNORE_LOGGER_ASSERTS
-
 #ifdef IGNORE_LOGGER_ASSERTS
 #ifndef LOGGER_IGNORE_ASSERTS
 #define LOGGER_IGNORE_ASSERTS // alias
@@ -32,6 +30,7 @@
 #define IGNORE_LOGGER_ASSERTS // alias
 #endif
 #endif
+
 
 #ifdef LOGGER_IGNORE_ASSERTS
 #define log_assert(condition)

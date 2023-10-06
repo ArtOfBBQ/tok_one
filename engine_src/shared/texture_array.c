@@ -870,12 +870,14 @@ void decode_all_null_images_with_memory(void)
         int32_t nonpriority_texturearray_i = -1;
         int32_t nonpriority_texture_i = -1;
         
+        log_assert(texture_arrays_size <= TEXTUREARRAYS_SIZE);
+        
         for (
             int32_t i = 0;
             (uint32_t)i < texture_arrays_size;
             i++)
         {
-            log_assert(texture_arrays[i].images_size < 2000);
+            log_assert(texture_arrays[i].images_size <= MAX_IMAGES_IN_TEXARRAY);
             for (
                 int32_t j = 0;
                 (uint32_t)j < texture_arrays[i].images_size;
