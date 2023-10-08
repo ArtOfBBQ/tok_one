@@ -311,10 +311,23 @@ static void client_handle_keypresses(
         keypress_map[TOK_KEY_T] = false;
         
         if (tok_rand() % 2 == 0) {
+            float xyz_rot_per_sec[3];
+            float lin_direct[3];
             request_shatter_and_destroy(
-                label_object_id,
-                /* wait_us: */ 500,
-                /* duration_us: */ 2000000);
+                /* const int32_t object_id: */
+                    label_object_id,
+                /* const uint64_t wait_before_first_run: */
+                    500,
+                /* const uint64_t duration_microseconds: */
+                    2000000,
+                /* const float exploding_distance_per_second: */
+                    0.2f,
+                /* const float xyz_rotation_per_second[3]: */
+                    xyz_rot_per_sec,
+                /* const float linear_distance_per_second: */
+                    0.1f,
+                /* const float linear_direction[3]: */
+                    lin_direct);
         } else {
             delete_zpolygon_object(xmastree_object_id);
             ShatterEffect * dissolving_quad = next_shatter_effect();
