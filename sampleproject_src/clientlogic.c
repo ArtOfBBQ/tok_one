@@ -312,7 +312,13 @@ static void client_handle_keypresses(
         
         if (tok_rand() % 2 == 0) {
             float xyz_rot_per_sec[3];
+            xyz_rot_per_sec[0] = 0.1f;
+            xyz_rot_per_sec[1] = 0.1f;
+            xyz_rot_per_sec[2] = 0.1f;
             float lin_direct[3];
+            lin_direct[0] = 0.1f;
+            lin_direct[1] = 0.0f;
+            lin_direct[2] = 0.1f;
             request_shatter_and_destroy(
                 /* const int32_t object_id: */
                     label_object_id,
