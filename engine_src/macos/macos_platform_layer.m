@@ -38,3 +38,4 @@ void platform_open_folder_in_window_if_possible(
     NSURL *folderURL = [NSURL URLWithString:folderpath_ns];
     [[NSWorkspace sharedWorkspace] openURL: folderURL];
 }
+

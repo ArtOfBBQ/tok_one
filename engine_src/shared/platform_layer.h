@@ -36,9 +36,10 @@ on each platform
 
 #ifdef SHARED_APPLE_PLATFORM
 #include <sys/time.h>
-#include <pthread.h>
 #import <AVFoundation/AVFoundation.h>
 #endif
+
+#include <pthread.h>
 
 #ifdef __ARM_NEON
 #include "arm_neon.h"

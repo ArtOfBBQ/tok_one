@@ -89,10 +89,12 @@ void client_logic_startup(void) {
     init_PNG_decoder(malloc_from_unmanaged);
     
     const char * fontfile = "font.png";
-    register_new_texturearray_by_splitting_file(
-        /* filename : */ fontfile,
-        /* rows     : */ 10,
-        /* columns  : */ 10);
+    if (platform_resource_exists("font.png")) {
+        register_new_texturearray_by_splitting_file(
+            /* filename : */ fontfile,
+            /* rows     : */ 10,
+            /* columns  : */ 10);
+    }
     
     char * filenames[3] = {
        "blob1.png",

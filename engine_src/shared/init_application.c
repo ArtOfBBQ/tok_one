@@ -28,7 +28,7 @@ void init_application(void)
             platform_init_mutex_and_return_id,
         /* void arg_mutex_lock_function(const uint32_t mutex_id): */
             platform_mutex_lock,
-        /* int32_t arg_mutex_unlock_function(const uint32_t mutex_id: */
+        /* int32_t arg_mutex_unlock_function(const uint32_t mutex_id): */
             platform_mutex_unlock);
     
     engine_save_file = (EngineSaveFile *)malloc_from_unmanaged(
@@ -89,26 +89,27 @@ void init_application(void)
     terminal_init();
     init_scheduled_animations();
     init_texture_arrays();
-        
+    
     // initialize font with fontmetrics.dat
     FileBuffer font_metrics_file;
     font_metrics_file.size = platform_get_resource_size(
         /* filename: */ "fontmetrics.dat");
-    log_assert(font_metrics_file.size > 0);
     
-    font_metrics_file.contents = (char *)malloc_from_unmanaged(
-        font_metrics_file.size);
-    platform_read_resource_file(
-        /* const char * filepath: */
-            "fontmetrics.dat",
-        /* FileBuffer * out_preallocatedbuffer: */
-            &font_metrics_file);
-    log_assert(font_metrics_file.good);
-    init_font(
-        /* raw_fontmetrics_file_contents: */
-            font_metrics_file.contents,
-        /* raw_fontmetrics_file_size: */
+    if (font_metrics_file.size > 0) {
+        font_metrics_file.contents = (char *)malloc_from_unmanaged(
             font_metrics_file.size);
+        platform_read_resource_file(
+            /* const char * filepath: */
+                "fontmetrics.dat",
+            /* FileBuffer * out_preallocatedbuffer: */
+                &font_metrics_file);
+        log_assert(font_metrics_file.good);
+        init_font(
+            /* raw_fontmetrics_file_contents: */
+                font_metrics_file.contents,
+            /* raw_fontmetrics_file_size: */
+                font_metrics_file.size);
+    }
     
     user_interactions = (Interaction *)
         malloc_from_unmanaged(sizeof(Interaction) * USER_INTERACTIONS_SIZE);

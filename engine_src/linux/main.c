@@ -1,13 +1,15 @@
-#define bool uint32_t
-#define true 1
-#define false 0
-
 #include <unistd.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <GL/glx.h>
 
+#include "common.h"
+#include "window_size.h"
+#include "init_application.h"
 #include "opengl.h" // engine_src/shared_opengl/opengl.h
+
+extern char application_path[128];
+uint32_t application_running = 1;
 
 #define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
 #define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
@@ -15,7 +17,7 @@ typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXC
 
 // Helper to check for extension string presence.  Adapted from:
 //   http://www.opengl.org/resources/features/OGLextensions/
-static bool isExtensionSupported(const char *extList, const char *extension)
+static bool32_t isExtensionSupported(const char *extList, const char *extension)
 {
   const char *start;
   const char *where, *terminator;
@@ -46,7 +48,7 @@ static bool isExtensionSupported(const char *extList, const char *extension)
   return false;
 }
 
-static bool ctxErrorOccurred = false;
+static bool32_t ctxErrorOccurred = false;
 static int ctxErrorHandler( Display *dpy, XErrorEvent *ev )
 {
     ctxErrorOccurred = true;
@@ -55,6 +57,18 @@ static int ctxErrorHandler( Display *dpy, XErrorEvent *ev )
 
 int main(int argc, char* argv[])
 {
+    // on linux the relative application path is always in argv[0],
+    // but it's followed by the application name
+    strcpy_capped(application_path, 128, argv[0]);
+    uint32_t char_i = 0;
+    while (application_path[char_i] != '\0') { char_i++; }
+    while (application_path[char_i] != '/')  { char_i--; }
+    application_path[char_i] = '\0';
+    
+    init_application();
+    
+    printf("%s\n", "finished init_application()");
+    
     Display *display = XOpenDisplay(NULL);
     
     if (!display)
@@ -113,9 +127,17 @@ int main(int argc, char* argv[])
         if ( vi )
         {
             int samp_buf, samples;
-            glXGetFBConfigAttrib( display, fbc[i], GLX_SAMPLE_BUFFERS, &samp_buf );
-            glXGetFBConfigAttrib( display, fbc[i], GLX_SAMPLES       , &samples  );
-
+            glXGetFBConfigAttrib(
+                display,
+                fbc[i],
+                GLX_SAMPLE_BUFFERS,
+                &samp_buf);
+            glXGetFBConfigAttrib(
+                display,
+                fbc[i],
+                GLX_SAMPLES,
+                &samples);
+            
             if ( best_fbc < 0 || samp_buf && samples > best_num_samp )
             best_fbc = i, best_num_samp = samples;
             if ( worst_fbc < 0 || !samp_buf || samples < worst_num_samp )
@@ -137,7 +159,7 @@ int main(int argc, char* argv[])
     Colormap cmap;
     swa.colormap = cmap = XCreateColormap(
         display,
-        RootWindow( display, vi->screen ), 
+        RootWindow(display, vi->screen), 
         vi->visual,
         AllocNone);
     swa.background_pixmap = None ;
@@ -145,18 +167,30 @@ int main(int argc, char* argv[])
     swa.event_mask        = StructureNotifyMask;
     
     Window win = XCreateWindow(
-        display,
-        RootWindow( display, vi->screen ), 
-        0,
-        0,
-        100,
-        100,
-        0,
-        vi->depth,
-        InputOutput, 
-        vi->visual, 
-        CWBorderPixel|CWColormap|CWEventMask,
-        &swa);
+        /* display: */
+            display,
+        /* parent: */
+            RootWindow( display, vi->screen ),
+        /* x: */
+            0,
+        /* y: */
+            0,
+        /* width: */
+            window_globals->window_width,
+        /* height: */
+            window_globals->window_height,
+        /* border_width: */
+            0,
+        /* depth: */
+            vi->depth,
+        /* class: */
+            InputOutput, 
+        /* visual: */
+            vi->visual, 
+        /* valuemask: */
+            CWBorderPixel|CWColormap|CWEventMask,
+        /* attributes: */
+            &swa);
     
     if (!win)
     {
@@ -171,33 +205,40 @@ int main(int argc, char* argv[])
     XMapWindow( display, win );
 
     // Get the default screen's GLX extension list
-    const char *glxExts = glXQueryExtensionsString( display,
-                                                  DefaultScreen( display ) );
-
+    const char *glxExts = glXQueryExtensionsString(
+        display,
+        DefaultScreen(display));
+    
     // NOTE: It is not necessary to create or make current to a context before
     // calling glXGetProcAddressARB
     glXCreateContextAttribsARBProc glXCreateContextAttribsARB = 0;
     glXCreateContextAttribsARB = (glXCreateContextAttribsARBProc)
-           glXGetProcAddressARB( (const GLubyte *) "glXCreateContextAttribsARB" );
-
+        glXGetProcAddressARB((const GLubyte *)"glXCreateContextAttribsARB");
+    
     GLXContext ctx = 0;
-
+    
     // Install an X error handler so the application won't exit if GL 3.0
     // context allocation fails.
     //
-    // Note this error handler is global.  All display connections in all threads
-    // of a process use the same error handler, so be sure to guard against other
-    // threads issuing X commands while this code is running.
+    // Note this error handler is global.  All display connections in all
+    // threads of a process use the same error handler, so be sure to guard
+    // against other threads issuing X commands while this code is running.
     ctxErrorOccurred = false;
     int (*oldHandler)(Display*, XErrorEvent*) =
-      XSetErrorHandler(&ctxErrorHandler);
-
+        XSetErrorHandler(&ctxErrorHandler);
+    
     // Check for the GLX_ARB_create_context extension string and the function.
     // If either is not present, use GLX 1.3 context creation method.
-    if ( !isExtensionSupported( glxExts, "GLX_ARB_create_context" ) ||
-       !glXCreateContextAttribsARB )
+    if (
+        !isExtensionSupported(glxExts, "GLX_ARB_create_context") ||
+        !glXCreateContextAttribsARB)
     {
-        ctx = glXCreateNewContext( display, bestFbc, GLX_RGBA_TYPE, 0, True );
+        ctx = glXCreateNewContext(
+            display,
+            bestFbc,
+            GLX_RGBA_TYPE,
+            0,
+            True);
     } else {
         // If it does, try to get a GL 3.0 context!
         int context_attribs[] =

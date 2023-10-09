@@ -318,6 +318,10 @@ static void register_to_texturearray_from_images(
     log_assert(new_images_size > 0);
     for (uint32_t i = 0; i < new_images_size; i++) {
         log_assert(new_images[i] != NULL);
+        if (new_images[i] == NULL) {
+            platform_mutex_unlock(texture_arrays_mutex_id);
+            return;
+        }
         log_assert(new_images[i]->width > 0);
         log_assert(new_images[i]->height > 0);
         log_assert(new_images[i]->rgba_values_size > 0);
@@ -516,10 +520,13 @@ static void register_to_texturearray_by_splitting_image(
     const uint32_t columns)
 {
     log_assert(new_image != NULL);
+    if (new_image == NULL) { return; }
     log_assert(new_image->rgba_values != NULL);
     log_assert(new_image->rgba_values_size > 0);
     log_assert(rows >= 1);
     log_assert(columns >= 1);
+    
+    if (new_image->rgba_values_size < 1) { return; }
     
     DecodedImage ** subimages = (DecodedImage **)
         malloc_from_unmanaged(sizeof(DecodedImage *) * rows * columns);
@@ -541,6 +548,8 @@ static void register_to_texturearray_by_splitting_image(
                     col_i + 1,
                 /* const uint32_t y: */
                     row_i + 1);
+            
+            if (new_img == NULL) { continue; }
             log_assert(new_img->good);
             
             if (expected_width == 0 || expected_height == 0) {
