@@ -44,3 +44,4 @@ extern uint64_t previous_time;
 extern bool32_t has_retina_screen;
 
 #endif
+

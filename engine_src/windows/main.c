@@ -78,7 +78,7 @@ void win32_init_opengl(HWND window) {
         } else {
             printf("ERROR - wgl_swap_interval_ext wasn't avaialble on this platform\n");
         }
-       
+        
         printf("dynamically load OpenGL extension functions...\n"); 
         glCompileShader =
             (ptr_gl_compile_shader *)

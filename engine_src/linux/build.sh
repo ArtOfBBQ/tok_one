@@ -1,12 +1,13 @@
 APP_NAME="hello3dgfx"
 PLATFORM="linux"
 
-COMPILER_OPTIONS="-w -Wfatal-errors -I engine_src -I client_src -I sampleproject_src -I engine_src/shared -march=native -x c -std=c99 -o0"
+COMPILER_OPTIONS="-w -Wfatal-errors -I engine_src -I client_src -I sampleproject_src -I engine_src/shared -I engine_src/shared_opengl -march=native -x c -std=c99 -o0"
 
 LINKER_OPTIONS="-lc -lGL -lX11"
 
 TOK_ONE_LINUX_SOURCE="
-engine_src/linux/main.c"
+engine_src/linux/main.c
+engine_src/shared_opengl/opengl.c"
 
 # TOK_ONE_LINUX_SOURCE="
 # engine_src/linux/main.c
