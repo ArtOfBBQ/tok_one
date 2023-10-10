@@ -4,37 +4,6 @@
 GLuint program_id;
 unsigned int VAO;
 
-ptr_gl_compile_shader * glCompileShader;
-ptr_gl_get_shader_iv * glGetShaderiv;
-ptr_gl_get_shader_info_log * glGetShaderInfoLog;
-ptr_gl_create_shader * glCreateShader;
-ptr_gl_create_program * glCreateProgram;
-ptr_gl_link_program * glLinkProgram;
-ptr_gl_shader_source * glShaderSource;
-// ptr_gl_attach_shader * glAttachShader;
-ptr_gl_use_program * glUseProgram;
-ptr_gl_gen_buffers * glGenBuffers;
-ptr_gl_bind_buffer * glBindBuffer;
-ptr_gl_buffer_data * glBufferData;
-ptr_gl_gen_vertex_arrays * glGenVertexArrays;
-ptr_gl_bind_vertex_array * glBindVertexArray;
-ptr_gl_vertex_attrib_pointer * glVertexAttribPointer;
-ptr_gl_enable_vertex_attrib_array * glEnableVertexAttribArray;
-ptr_gl_generate_mipmap * glGenerateMipmap;
-// ptr_gl_active_texture * glActiveTexture;
-ptr_gl_uniform_1i * glUniform1i;
-ptr_gl_get_uniform_location * glGetUniformLocation;
-// ptr_gl_tex_image_3d * glTexImage3D;
-// ptr_gl_tex_sub_image_3d * glTexSubImage3D;
-ptr_gl_tex_storage_3d * glTexStorage3D;
-
-
-OpenGLInfo get_opengl_info() {
-    OpenGLInfo return_value;
-    
-    return return_value;
-}
-
 void opengl_compile_shaders(
     char * vertex_shader_source,
     uint32_t vertex_shader_source_size,
@@ -46,8 +15,6 @@ void opengl_compile_shaders(
     // allocate buffer memory...
     GLuint vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
     
-    // FileBuffer * vertex_shader_source =
-    //     platform_read_file("vertex_shader.glsl");
     assert(vertex_shader_source_size > 0);
     assert(vertex_shader_source != NULL);
     
@@ -57,7 +24,7 @@ void opengl_compile_shaders(
         /* shader count : */
             1,
         /* shader source: */
-            &vertex_shader_source,
+            vertex_shader_source,
         /* source length: */
             NULL);
     
@@ -95,8 +62,8 @@ void opengl_compile_shaders(
         /* source length: */
             NULL);
     
-    glCompileShader(
-        fragment_shader_id);
+    glCompileShader(fragment_shader_id);
+    
     glGetShaderiv(
         fragment_shader_id,
         GL_COMPILE_STATUS,
@@ -229,7 +196,6 @@ void opengl_compile_shaders(
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     assert(sizeof(float) == 4); // x,y,uv,rgba,lighting
     assert(sizeof(uint32_t) == 4); // texture_i
-    assert(sizeof(GPUVertex) == 44);
     // assert(sizeof(gpu_workload_buffer) == 44 * VERTEX_BUFFER_SIZE);
     glBufferData(
         /* target: */
@@ -260,6 +226,7 @@ void opengl_compile_shaders(
             sizeof(GPUVertex),
         /* offset : */
             (void*)(offsetof(GPUVertex, x)));
+    
     // struct field; float y;
     glVertexAttribPointer(
         /* location (in shader source): */
@@ -274,6 +241,7 @@ void opengl_compile_shaders(
             sizeof(GPUVertex),
         /* offset : */
             (void*)(offsetof(GPUVertex, y)));
+    
     // struct field; float uv[2];
     glVertexAttribPointer(
         /* location (in shader source): */
@@ -288,6 +256,7 @@ void opengl_compile_shaders(
             sizeof(GPUVertex),
         /* offset : */
             (void*)(offsetof(GPUVertex, uv)));
+    
     // struct field: float RGBA[4];
     glVertexAttribPointer(
         /* location (in shader source): */
@@ -302,6 +271,7 @@ void opengl_compile_shaders(
             sizeof(GPUVertex),
         /* offset : */
             (void*)(offsetof(GPUVertex, RGBA)));
+    
     // struct field: float lightning:
     glVertexAttribPointer(
         /* location (in shader source): */

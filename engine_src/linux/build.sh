@@ -53,7 +53,7 @@ engine_src/shared/objectid.c"
 echo "Building $APP_NAME for $PLATFORM..."
 
 echo "deleting previous build(s)..."
-rm -r -f build/$PLATFORM
+rm -r -f build/$PLATFORM/$APP_NAME/$APP_NAME
 
 echo "Creating build folder..."
 mkdir build
@@ -65,7 +65,7 @@ mkdir build/$PLATFORM/$APP_NAME/resources
 echo "copy resources..."
 
 pushd resources > /dev/null
-for extension in png obj dat
+for extension in png obj dat glsl
 do
     for f in *.$extension;
     do

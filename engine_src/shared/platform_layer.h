@@ -205,3 +205,4 @@ int32_t platform_mutex_unlock(const uint32_t mutex_id);
 #endif
 
 #endif // PLATFORM_LAYER_H 
+

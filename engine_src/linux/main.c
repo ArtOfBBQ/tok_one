@@ -69,6 +69,42 @@ int main(int argc, char* argv[])
     
     printf("%s\n", "finished init_application()");
     
+    FileBuffer vertex_shader_source;
+    vertex_shader_source.size = 
+        platform_get_resource_size("vertex_shader.glsl");
+    vertex_shader_source.contents = (char *)malloc_from_managed(
+        vertex_shader_source.size + 1);
+    platform_read_resource_file(
+        /* const char * resource name: */
+            "vertex_shader.glsl",
+        /* FileBuffer * out_preallocatedbuffer: */
+            &vertex_shader_source);
+    
+    printf("vertex shader: %u bytes\n", vertex_shader_source.size);
+    
+    FileBuffer fragment_shader_source;
+    fragment_shader_source.size = 
+        platform_get_resource_size("fragment_shader.glsl");
+    fragment_shader_source.contents = (char *)malloc_from_managed(
+        fragment_shader_source.size + 1);
+    platform_read_resource_file(
+        /* const char * resource name: */
+            "fragment_shader.glsl",
+        /* FileBuffer * out_preallocatedbuffer: */
+            &fragment_shader_source);
+    
+    printf("fragment shader: %u bytes\n", fragment_shader_source.size);
+    
+    opengl_compile_shaders(
+        /* char * vertex_shader_source: */
+            vertex_shader_source.contents,
+        /* uint32_t vertex_shader_source_size: */
+            vertex_shader_source.size,
+        /* char * fragment_shader_source: */
+            fragment_shader_source.contents,
+        /* uint32_t fragment_shader_source_size: */
+            fragment_shader_source.size);
+    
     Display *display = XOpenDisplay(NULL);
     
     if (!display)
