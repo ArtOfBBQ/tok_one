@@ -4,6 +4,110 @@
 GLuint program_id;
 unsigned int VAO;
 
+void opengl_render_triangles(void) {
+    
+    // TODO: Learn exactly when nescessary, I hope we can just set & forget
+    // glUseProgram(program_id);
+    
+    unsigned int VBO;
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    assert(sizeof(float) == 4); // x,y,uv,rgba,lighting
+    assert(sizeof(uint32_t) == 4); // texture_i
+    
+    GPUVertex data[3];
+    data[0].x = 0.25f;
+    data[0].y = 0.75;
+    data[0].z = 1.00f;
+    data[1].x = 0.75f;
+    data[1].y = 0.75f;
+    data[1].z = 1.00f;
+    data[2].x = 0.25f;
+    data[2].y = 0.25f;
+    data[2].z = 1.00f;
+    
+    glBufferData(
+        /* target: */
+            GL_ARRAY_BUFFER,
+        /* size: */
+            3,
+        /* data: (to init with, or NULL to copy no data) */
+            data,
+        /* usage: */
+            GL_DYNAMIC_DRAW);
+    
+    glDrawArrays(
+        /* GLenum mode: */
+            GL_TRIANGLES,
+        /* GLint first: */
+            0,
+        /* GLint count: */
+            3);
+}
+
+static void opengl_compile_given_shader(
+    GLuint shader_id,
+    char * shader_source,
+    GLint source_length)
+{
+    glShaderSource(
+        /* GLuint handle: */
+            shader_id,
+        /* shader count : */
+            1,
+        /* const GLchar ** string: */
+            &shader_source,
+        /* const GLint * length: */
+            &source_length);
+    
+    glCompileShader(shader_id);
+    
+    GLint is_compiled = INT8_MAX;
+    char info_log[512];
+    info_log[0] = '\0';
+    glGetShaderiv(
+        /* GLuint id: */
+            shader_id,
+        /* GLenum pname: */
+            GL_COMPILE_STATUS,
+        /* GLint * params: */
+            &is_compiled);
+    
+    if (is_compiled == GL_FALSE) {
+        printf("%s\n", "failed to compile shader with source: ");
+        printf("%s\n", "*******");
+        printf("%s\n", shader_source);
+        printf("%s\n", "*******");
+        GLenum err_value = glGetError();
+        printf("glGetError returned: %u\n", err_value);
+        printf("%s\n", "*******");
+        
+        glGetShaderInfoLog(
+            /* GLuint shader id: */
+                shader_id,
+            /* GLsizei max length: */
+                512,
+            /* GLsizei * length: */
+                NULL,
+            /* GLchar * infolog: */
+                info_log);
+        printf("shader info log: %s\n", info_log);
+        printf("%s\n", "*******");
+        assert(0);
+    } else if (is_compiled == GL_TRUE) {
+        
+    } else {
+        printf(
+            "glGetShaderiv() returned an impossible value. Expected GL_TRUE "
+            "(%i) or GL_FALSE (%i), got: %i\n",
+            GL_TRUE,
+            GL_FALSE,
+            is_compiled);
+        assert(0);
+    }
+}
+
+
 void opengl_compile_shaders(
     char * vertex_shader_source,
     uint32_t vertex_shader_source_size,
@@ -17,78 +121,45 @@ void opengl_compile_shaders(
     
     assert(vertex_shader_source_size > 0);
     assert(vertex_shader_source != NULL);
-    
-    glShaderSource(
-        /* shader handle: */
+
+    opengl_compile_given_shader(
+        /* GLuint shader_id: */
             vertex_shader_id,
-        /* shader count : */
-            1,
-        /* shader source: */
+        /* char * shader_source: */
             vertex_shader_source,
-        /* source length: */
-            NULL);
-    
-    glCompileShader(vertex_shader_id);
-    unsigned int success;
-    char info_log[512];
-    glGetShaderiv(
-        vertex_shader_id,
-        GL_COMPILE_STATUS,
-        &success);
-    
-    if (success) {
-        // vertex shader source was compiled
-    } else {
-        // failed to compile vertex shader
-        glGetShaderInfoLog(
-            vertex_shader_id,
-            512,
-            NULL,
-            info_log);
-        assert(0);
-    }
+        /* GLint source_length: */
+            vertex_shader_source_size);
     
     GLuint fragment_shader_id =
         glCreateShader(GL_FRAGMENT_SHADER);
     assert(fragment_shader_source_size > 0);
     assert(fragment_shader_source != NULL);
-    glShaderSource(
-        /* shader handle: */
+    opengl_compile_given_shader(
+        /* GLuint shader_id: */
             fragment_shader_id,
-        /* shader count : */
-            1,
-        /* shader source: */
+        /* char * shader_source: */
             fragment_shader_source,
-        /* source length: */
-            NULL);
+        /* GLint source_length: */
+            fragment_shader_source_size);
     
-    glCompileShader(fragment_shader_id);
-    
-    glGetShaderiv(
-        fragment_shader_id,
-        GL_COMPILE_STATUS,
-        &success);
-    
-    if (success) {
-        // fragment shader source was compiled
-    } else {
-        // failed to compile fragment shader\n");
-        glGetShaderInfoLog(
-            fragment_shader_id,
-            512,
-            NULL,
-            info_log);
-        assert(0);
-    }
-    
-    // attach fragment shader to program
+    // attach compiled shaders to program
     program_id = glCreateProgram();
     glAttachShader(program_id, vertex_shader_id);
-    glAttachShader(
-        program_id,
-        fragment_shader_id);
-    
+    glAttachShader(program_id, fragment_shader_id);
     glLinkProgram(program_id);
+    
+    GLint success = -1;
+    glGetProgramiv(
+        /* GLuint program id: */
+            program_id,
+        /* GLenum pname: */
+            GL_LINK_STATUS,
+        /* GLint * params: */
+            &success);
+    assert(success);
+    
+    // glDeleteShader(vertex_shader_id); // TODO: activate after everything works
+    // glDeleteShader(fragment_shader_id); // TODO: activate after everything works
     
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
@@ -190,23 +261,7 @@ void opengl_compile_shaders(
     //            texture_name),
     //        0);
     //}
-    
-    unsigned int VBO;
-    glGenBuffers(1, &VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    assert(sizeof(float) == 4); // x,y,uv,rgba,lighting
-    assert(sizeof(uint32_t) == 4); // texture_i
-    // assert(sizeof(gpu_workload_buffer) == 44 * VERTEX_BUFFER_SIZE);
-    glBufferData(
-        /* target: */
-            GL_ARRAY_BUFFER,
-        /* size: */
-            MAX_VERTICES_PER_BUFFER * sizeof(GPUVertex),
-        /* data: (to init with, or NULL to copy no data) */
-            NULL,
-        /* usage: */
-            GL_DYNAMIC_DRAW);
-    
+     
     /*
     Attribute pointers describe the fields of our data
     sructure (the Vertex struct in shared/vertex_types.h)

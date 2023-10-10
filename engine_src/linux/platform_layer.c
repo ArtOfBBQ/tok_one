@@ -96,7 +96,7 @@ void platform_read_file(
         f);
     fclose(f);
     
-    out_preallocatedbuffer->contents[out_preallocatedbuffer->size] = 0;
+    out_preallocatedbuffer->contents[out_preallocatedbuffer->size] = '\0';
 }
 
 bool32_t platform_file_exists(

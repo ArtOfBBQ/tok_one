@@ -69,41 +69,6 @@ int main(int argc, char* argv[])
     
     printf("%s\n", "finished init_application()");
     
-    FileBuffer vertex_shader_source;
-    vertex_shader_source.size = 
-        platform_get_resource_size("vertex_shader.glsl");
-    vertex_shader_source.contents = (char *)malloc_from_managed(
-        vertex_shader_source.size + 1);
-    platform_read_resource_file(
-        /* const char * resource name: */
-            "vertex_shader.glsl",
-        /* FileBuffer * out_preallocatedbuffer: */
-            &vertex_shader_source);
-    
-    printf("vertex shader: %u bytes\n", vertex_shader_source.size);
-    
-    FileBuffer fragment_shader_source;
-    fragment_shader_source.size = 
-        platform_get_resource_size("fragment_shader.glsl");
-    fragment_shader_source.contents = (char *)malloc_from_managed(
-        fragment_shader_source.size + 1);
-    platform_read_resource_file(
-        /* const char * resource name: */
-            "fragment_shader.glsl",
-        /* FileBuffer * out_preallocatedbuffer: */
-            &fragment_shader_source);
-    
-    printf("fragment shader: %u bytes\n", fragment_shader_source.size);
-    
-    opengl_compile_shaders(
-        /* char * vertex_shader_source: */
-            vertex_shader_source.contents,
-        /* uint32_t vertex_shader_source_size: */
-            vertex_shader_source.size,
-        /* char * fragment_shader_source: */
-            fragment_shader_source.contents,
-        /* uint32_t fragment_shader_source_size: */
-            fragment_shader_source.size);
     
     Display *display = XOpenDisplay(NULL);
     
@@ -237,9 +202,9 @@ int main(int argc, char* argv[])
     XFree( vi );
 
     XStoreName( display, win, "GL 3.0 Window" );
-
+    
     XMapWindow( display, win );
-
+    
     // Get the default screen's GLX extension list
     const char *glxExts = glXQueryExtensionsString(
         display,
@@ -281,22 +246,28 @@ int main(int argc, char* argv[])
           {
             GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
             GLX_CONTEXT_MINOR_VERSION_ARB, 0,
-            //GLX_CONTEXT_FLAGS_ARB        , GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+            // GLX_CONTEXT_FLAGS_ARB        ,
+            // GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
             None
           };
-
-        ctx = glXCreateContextAttribsARB( display, bestFbc, 0,
-                                          True, context_attribs );
-
+        
+        ctx = glXCreateContextAttribsARB(
+            display,
+            bestFbc,
+            0,
+            True,
+            context_attribs
+        );
+        
         // Sync to ensure any errors generated are processed.
-        XSync( display, False );
+        XSync(display, False);
         if (!ctxErrorOccurred && ctx) {
           // Created GL 3.0 context
         } else {
-          // Couldn't create GL 3.0 context.  Fall back to old-style 2.x context.
-          // When a context version below 3.0 is requested, implementations will
-          // return the newest context version compatible with OpenGL versions less
-          // than version 3.0.
+          // Couldn't create GL 3.0 context.  Fall back to old-style 2.x
+          // context. When a context version below 3.0 is requested,
+          // implementations will return the newest context version compatible
+          // with OpenGL versions less than version 3.0.
           // GLX_CONTEXT_MAJOR_VERSION_ARB = 1
           context_attribs[1] = 1;
           // GLX_CONTEXT_MINOR_VERSION_ARB = 0
@@ -336,14 +307,60 @@ int main(int argc, char* argv[])
     // Making context current
     glXMakeCurrent( display, win, ctx );
     
+    // Jelle: compile shaders
+    FileBuffer vertex_shader_source;
+    vertex_shader_source.size = 
+        platform_get_resource_size("vertex_shader.glsl");
+    vertex_shader_source.contents = (char *)malloc_from_managed(
+        vertex_shader_source.size + 1);
+    platform_read_resource_file(
+        /* const char * resource name: */
+            "vertex_shader.glsl",
+        /* FileBuffer * out_preallocatedbuffer: */
+            &vertex_shader_source);
+    
+    printf("vertex shader: %u bytes\n", vertex_shader_source.size);
+    
+    FileBuffer fragment_shader_source;
+    fragment_shader_source.size = 
+        platform_get_resource_size("fragment_shader.glsl");
+    fragment_shader_source.contents = (char *)malloc_from_managed(
+        fragment_shader_source.size + 1);
+    platform_read_resource_file(
+        /* const char * resource name: */
+            "fragment_shader.glsl",
+        /* FileBuffer * out_preallocatedbuffer: */
+            &fragment_shader_source);
+    
+    printf("fragment shader: %u bytes\n", fragment_shader_source.size);
+    
+    sleep(1);
+    
+    opengl_compile_shaders(
+        /* char * vertex_shader_source: */
+            vertex_shader_source.contents,
+        /* uint32_t vertex_shader_source_size: */
+            vertex_shader_source.size,
+        /* char * fragment_shader_source: */
+            fragment_shader_source.contents,
+        /* uint32_t fragment_shader_source_size: */
+            fragment_shader_source.size);
+    
+    // Jelle: more drawing code
     glClearColor( 0, 0.5, 1, 1 );
     glClear( GL_COLOR_BUFFER_BIT );
-    glXSwapBuffers ( display, win );
+    
+    opengl_render_triangles(); 
+    
+    glXSwapBuffers (display, win);
     
     sleep(1);
     
     glClearColor (1, 0.5, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT);
+
+    opengl_render_triangles(); 
+    
     glXSwapBuffers(display, win);
     
     sleep(1);
