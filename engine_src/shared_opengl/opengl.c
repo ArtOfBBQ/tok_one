@@ -245,7 +245,6 @@ void opengl_compile_shaders(
     uint32_t cur_offset = 0;
     for (uint32_t _ = 0; _ < 12; _++) {
         
-        if (_ == 3) { assert(cur_offset == 8); }
         glVertexAttribPointer(
             /* GLuint index (location in shader source): */
                 _,
