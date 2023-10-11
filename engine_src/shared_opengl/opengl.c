@@ -9,11 +9,10 @@ void opengl_render_triangles(void) {
     assert(VAO < UINT32_MAX);
     assert(VBO < UINT32_MAX);
     
-    
     // glPointSize(50); // for GL_POINTS
     glDrawArrays(
         /* GLenum mode: */
-            GL_TRIANGLES,
+            GL_TRIANGLES,// GL_POINTS, 
         /* GLint first: */
             0,
         /* GLint count (# of vertices to render): */
@@ -168,12 +167,42 @@ void opengl_compile_shaders(
     GPUVertex data[3];
     data[0].x = 0.25f;
     data[0].y = 0.75f;
+    data[0].z = 0.75f;
+    data[0].normal_x = 0.0f;
+    data[0].normal_y = 0.0f;
+    data[0].normal_z = 1.0f;
+    data[0].uv[0] = 1.0f;
+    data[0].uv[1] = 0.0f;
+    data[0].RGBA[0] = 1.0f;
+    data[0].RGBA[1] = 0.0f;
+    data[0].RGBA[2] = 0.0f;
+    data[0].RGBA[3] = 1.0f;
     
     data[1].x = 0.75f;
     data[1].y = 0.75f;
+    data[1].z = 0.75f;
+    data[1].normal_x = 0.0f;
+    data[1].normal_y = 0.0f;
+    data[1].normal_z = 1.0f;
+    data[1].uv[0] = 0.0f;
+    data[1].uv[1] = 1.0f;
+    data[1].RGBA[0] = 0.0f;
+    data[1].RGBA[1] = 1.0f;
+    data[1].RGBA[2] = 0.0f;
+    data[1].RGBA[3] = 1.0f;
     
     data[2].x = 0.50f;
     data[2].y = 0.25f;
+    data[2].z = 0.25f;
+    data[2].normal_x = 0.0f;
+    data[2].normal_y = 0.0f;
+    data[2].normal_z = 1.0f;
+    data[2].uv[0] = 1.0f;
+    data[2].uv[1] = 1.0f;
+    data[2].RGBA[0] = 0.0f;
+    data[2].RGBA[1] = 0.0f;
+    data[2].RGBA[2] = 1.0f;
+    data[2].RGBA[3] = 1.0f;
     
     err_value = glGetError();
     assert(err_value == GL_NO_ERROR);
@@ -186,7 +215,7 @@ void opengl_compile_shaders(
         /* const GLvoid * data: (to init with, or NULL to copy no data) */
             (const GLvoid *)data,
         /* usage: */
-            GL_STATIC_DRAW);
+            GL_DYNAMIC_DRAW);
     
     err_value = glGetError();
     if (err_value != GL_NO_ERROR) {
@@ -212,61 +241,47 @@ void opengl_compile_shaders(
     Attribute pointers describe the fields of our data
     sructure (the Vertex struct in shared/vertex_types.h)
     */
-    // struct field: float x;
-    assert(sizeof(GPUVertex) == 96);
-    assert(offsetof(GPUVertex, x) == 0); 
-    glVertexAttribPointer(
-        /* GLuint index (location in shader source): */
-            0,
-        /* GLint size (number of components per vertex, must be 1-4): */
-            1,
-        /* GLenum type (of data): */
-            GL_FLOAT,
-        /* GLboolean normalize data: */
-            GL_FALSE,
-        /* GLsizei stride (to next 'x'): */
-            sizeof(GPUVertex),
-        /* const GLvoid * pointer (offset) : */
-            (void *)(0));
-    
-    err_value = glGetError();
-    if (err_value != GL_NO_ERROR) {
-        switch (err_value) {
-            case GL_INVALID_VALUE:
-                printf("%s\n", "GL_INVALID_VALUE");
-                break;
-            case GL_INVALID_ENUM:
-                printf("%s\n", "GL_INVALID_ENUM");
-                break;
-            case GL_INVALID_OPERATION:
-                printf("%s\n", "GL_INVALID_OPERATION");
-                break;
-            default:
-                printf("%s\n", "unhandled!");
+    uint32_t field_sizes[12] = { 3, 3, 2, 4, 1, 1, 3, 3, 1, 1, 1, 1 };
+    uint32_t cur_offset = 0;
+    for (uint32_t _ = 0; _ < 12; _++) {
+        
+        if (_ == 3) { assert(cur_offset == 8); }
+        glVertexAttribPointer(
+            /* GLuint index (location in shader source): */
+                _,
+            /* GLint size (number of components per vertex, must be 1-4): */
+                field_sizes[_],
+            /* GLenum type (of data): */
+                GL_FLOAT,
+            /* GLboolean normalize data: */
+                GL_FALSE,
+            /* GLsizei stride; */
+                sizeof(GPUVertex),
+            /* const GLvoid * pointer (offset) : */
+                (void *)(cur_offset * sizeof(float)));
+        
+        cur_offset += field_sizes[_];
+        
+        err_value = glGetError();
+        if (err_value != GL_NO_ERROR) {
+            switch (err_value) {
+                case GL_INVALID_VALUE:
+                    printf("%s\n", "GL_INVALID_VALUE");
+                    break;
+                case GL_INVALID_ENUM:
+                    printf("%s\n", "GL_INVALID_ENUM");
+                    break;
+                case GL_INVALID_OPERATION:
+                    printf("%s\n", "GL_INVALID_OPERATION");
+                    break;
+                default:
+                    printf("%s\n", "unhandled!");
+            }
+            assert(0);
         }
-        assert(0);
+        
+        glEnableVertexAttribArray(_);
     }
-    
-    assert(sizeof(GLfloat) == 4);
-    assert(sizeof(float) == 4);
-    assert(offsetof(GPUVertex, y) == 4); 
-    // struct field: float x;
-    glVertexAttribPointer(
-        /* GLuint index (in shader source): */
-            1,
-        /* GLint size (number of components per vertex, must be 1-4): */
-            1,
-        /* GLenum type (of data): */
-            GL_FLOAT,
-        /* GLboolean normalize data: */
-            GL_FALSE,
-        /* GLsizei stride: */
-            sizeof(GPUVertex),
-        /* const GLvoid * pointer (offset) : */
-            (void*)(4));
-    
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
     
     glDeleteShader(vertex_shader_id);
     glDeleteShader(fragment_shader_id);

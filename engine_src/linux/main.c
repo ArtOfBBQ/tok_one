@@ -210,7 +210,7 @@ int main(int argc, char* argv[])
     // Done with the visual info data
     XFree(vi);
     
-    XStoreName(display, win, "GL 3.0 Window");
+    XStoreName(display, win, APPLICATION_NAME);
     
     XMapWindow(display, win);
     
@@ -360,16 +360,7 @@ int main(int argc, char* argv[])
             fragment_shader_source.size);
     
     // Jelle: more drawing code
-    glClearColor(0, 0.5, 1, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
-    
-    opengl_render_triangles(); 
-    
-    glXSwapBuffers(display, win);
-    
-    sleep(2);
-    
-    glClearColor(1, 0.5, 0, 1);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     
     opengl_render_triangles(); 

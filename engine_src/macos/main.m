@@ -447,7 +447,8 @@ int main(int argc, const char * argv[]) {
     // mtk_view.preferredFramesPerSecond = 60;
     mtk_view.enableSetNeedsDisplay = false;
     
-    // Indicate that each pixel in the depth buffer is a 32-bit floating point value.
+    // Indicate that each pixel in the depth buffer is a 32-bit floating point
+    // value.
     mtk_view.depthStencilPixelFormat = MTLPixelFormatDepth32Float;
     
     // Indicate that Metal should clear all values in the depth buffer to x
