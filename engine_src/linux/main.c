@@ -13,43 +13,51 @@ uint32_t application_running = 1;
 
 #define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
 #define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
-typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
+typedef GLXContext (*glXCreateContextAttribsARBProc)(
+    Display*,
+    GLXFBConfig,
+    GLXContext,
+    Bool,
+    const int*);
 
 // Helper to check for extension string presence.  Adapted from:
 //   http://www.opengl.org/resources/features/OGLextensions/
-static bool32_t isExtensionSupported(const char *extList, const char *extension)
+static bool32_t isExtensionSupported(
+    const char *extList,
+    const char *extension)
 {
-  const char *start;
-  const char *where, *terminator;
-  
-  /* Extension names should not have spaces. */
-  where = strchr(extension, ' ');
-  if (where || *extension == '\0')
-    return false;
-
-  /* It takes a bit of care to be fool-proof about parsing the
+    const char *start;
+    const char *where, *terminator;
+    
+    /* Extension names should not have spaces. */
+    where = strchr(extension, ' ');
+    if (where || *extension == '\0') {
+        return false;
+    }
+    
+    /* It takes a bit of care to be fool-proof about parsing the
      OpenGL extensions string. Don't be fooled by sub-strings,
      etc. */
-  for (start=extList;;) {
-    where = strstr(start, extension);
-
-    if (!where)
-      break;
-
-    terminator = where + strlen(extension);
-
-    if ( where == start || *(where - 1) == ' ' )
-      if ( *terminator == ' ' || *terminator == '\0' )
-        return true;
-
-    start = terminator;
-  }
-
-  return false;
+    for (start=extList;;) {
+        where = strstr(start, extension);
+        
+        if (!where)
+          break;
+        
+        terminator = where + strlen(extension);
+        
+        if ( where == start || *(where - 1) == ' ' )
+          if ( *terminator == ' ' || *terminator == '\0' )
+            return true;
+        
+        start = terminator;
+    }
+    
+    return false;
 }
 
 static bool32_t ctxErrorOccurred = false;
-static int ctxErrorHandler( Display *dpy, XErrorEvent *ev )
+static int ctxErrorHandler(Display *dpy, XErrorEvent *ev)
 {
     ctxErrorOccurred = true;
     return 0;
@@ -69,11 +77,9 @@ int main(int argc, char* argv[])
     
     printf("%s\n", "finished init_application()");
     
-    
     Display *display = XOpenDisplay(NULL);
     
-    if (!display)
-    {
+    if (!display) {
         exit(1);
     }
     
@@ -119,7 +125,10 @@ int main(int argc, char* argv[])
     }
     
     // Pick the FB config/visual with the most samples per pixel
-    int best_fbc = -1, worst_fbc = -1, best_num_samp = -1, worst_num_samp = 999;
+    int best_fbc = -1;
+    int worst_fbc = -1;
+    int best_num_samp = -1;
+    int worst_num_samp = 999;
     
     int i;
     for (i=0; i<fbcount; ++i)
@@ -199,14 +208,14 @@ int main(int argc, char* argv[])
     }
     
     // Done with the visual info data
-    XFree( vi );
-
-    XStoreName( display, win, "GL 3.0 Window" );
+    XFree(vi);
     
-    XMapWindow( display, win );
+    XStoreName(display, win, "GL 3.0 Window");
+    
+    XMapWindow(display, win);
     
     // Get the default screen's GLX extension list
-    const char *glxExts = glXQueryExtensionsString(
+    const char * glxExts = glXQueryExtensionsString(
         display,
         DefaultScreen(display));
     
@@ -225,13 +234,15 @@ int main(int argc, char* argv[])
     // threads of a process use the same error handler, so be sure to guard
     // against other threads issuing X commands while this code is running.
     ctxErrorOccurred = false;
-    int (*oldHandler)(Display*, XErrorEvent*) =
+    int (* oldHandler)(Display *, XErrorEvent *) =
         XSetErrorHandler(&ctxErrorHandler);
     
     // Check for the GLX_ARB_create_context extension string and the function.
     // If either is not present, use GLX 1.3 context creation method.
     if (
-        !isExtensionSupported(glxExts, "GLX_ARB_create_context") ||
+        !isExtensionSupported(
+            glxExts,
+            "GLX_ARB_create_context") ||
         !glXCreateContextAttribsARB)
     {
         ctx = glXCreateNewContext(
@@ -264,20 +275,20 @@ int main(int argc, char* argv[])
         if (!ctxErrorOccurred && ctx) {
           // Created GL 3.0 context
         } else {
-          // Couldn't create GL 3.0 context.  Fall back to old-style 2.x
-          // context. When a context version below 3.0 is requested,
-          // implementations will return the newest context version compatible
-          // with OpenGL versions less than version 3.0.
-          // GLX_CONTEXT_MAJOR_VERSION_ARB = 1
-          context_attribs[1] = 1;
-          // GLX_CONTEXT_MINOR_VERSION_ARB = 0
-          context_attribs[3] = 0;
-          
-          ctxErrorOccurred = false;
-          
-          // Failed to create GL 3.0 context
-          // ... using old-style GLX context
-          ctx = glXCreateContextAttribsARB(
+            // Couldn't create GL 3.0 context.  Fall back to old-style 2.x
+            // context. When a context version below 3.0 is requested,
+            // implementations will return the newest context version compatible
+            // with OpenGL versions less than version 3.0.
+            // GLX_CONTEXT_MAJOR_VERSION_ARB = 1
+            context_attribs[1] = 1;
+            // GLX_CONTEXT_MINOR_VERSION_ARB = 0
+            context_attribs[3] = 0;
+
+            ctxErrorOccurred = false;
+
+            // Failed to create GL 3.0 context
+            // ... using old-style GLX context
+            ctx = glXCreateContextAttribsARB(
                 display,
                 bestFbc,
                 0, 
@@ -287,10 +298,10 @@ int main(int argc, char* argv[])
     }
     
     // Sync to ensure any errors generated are processed.
-    XSync( display, False );
+    XSync(display, False);
     
     // Restore the original error handler
-    XSetErrorHandler( oldHandler );
+    XSetErrorHandler(oldHandler);
     
     if (ctxErrorOccurred || !ctx)
     {
@@ -305,7 +316,7 @@ int main(int argc, char* argv[])
     }
     
     // Making context current
-    glXMakeCurrent( display, win, ctx );
+    glXMakeCurrent(display, win, ctx);
     
     // Jelle: compile shaders
     FileBuffer vertex_shader_source;
@@ -319,7 +330,9 @@ int main(int argc, char* argv[])
         /* FileBuffer * out_preallocatedbuffer: */
             &vertex_shader_source);
     
-    printf("vertex shader: %u bytes\n", vertex_shader_source.size);
+    printf(
+        "vertex shader: %u bytes\n",
+        vertex_shader_source.size);
     
     FileBuffer fragment_shader_source;
     fragment_shader_source.size = 
@@ -332,9 +345,9 @@ int main(int argc, char* argv[])
         /* FileBuffer * out_preallocatedbuffer: */
             &fragment_shader_source);
     
-    printf("fragment shader: %u bytes\n", fragment_shader_source.size);
-    
-    sleep(1);
+    printf(
+        "fragment shader: %u bytes\n",
+        fragment_shader_source.size);
     
     opengl_compile_shaders(
         /* char * vertex_shader_source: */
@@ -347,25 +360,25 @@ int main(int argc, char* argv[])
             fragment_shader_source.size);
     
     // Jelle: more drawing code
-    glClearColor( 0, 0.5, 1, 1 );
-    glClear( GL_COLOR_BUFFER_BIT );
-    
-    opengl_render_triangles(); 
-    
-    glXSwapBuffers (display, win);
-    
-    sleep(1);
-    
-    glClearColor (1, 0.5, 0, 1);
+    glClearColor(0, 0.5, 1, 1);
     glClear(GL_COLOR_BUFFER_BIT);
-
+    
     opengl_render_triangles(); 
     
     glXSwapBuffers(display, win);
     
-    sleep(1);
+    sleep(2);
     
-    glXMakeCurrent( display, 0, 0);
+    glClearColor(1, 0.5, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+    
+    opengl_render_triangles(); 
+    
+    glXSwapBuffers(display, win);
+    
+    sleep(2);
+    
+    glXMakeCurrent(display, 0, 0);
     glXDestroyContext(display, ctx);
     
     XDestroyWindow(display, win);
