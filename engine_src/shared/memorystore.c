@@ -1,10 +1,10 @@
 #include "memorystore.h"
 
-#define MEM_ALIGNMENT_BYTES 32
+#define MEM_ALIGNMENT_BYTES 256
 
-static uint8_t * unmanaged_memory = NULL;
+static void * unmanaged_memory = NULL;
 static uint64_t unmanaged_memory_size = UNMANAGED_MEMORY_SIZE;
-static uint8_t * managed_memory = NULL;
+static void * managed_memory = NULL;
 static uint64_t managed_memory_size = MANAGED_MEMORY_SIZE;
 static uint32_t malloc_mutex_id;
 
@@ -76,10 +76,10 @@ void init_memory_store(void) {
     managed_memory = platform_malloc_unaligned_block(MANAGED_MEMORY_SIZE);
 }
 
-static uint8_t * malloc_from_unmanaged_without_aligning(
+static void * malloc_from_unmanaged_without_aligning(
     const uint64_t size)
 {
-    uint8_t * return_value = (uint8_t *)(void *)unmanaged_memory;
+    void * return_value = unmanaged_memory;
     if (size >= unmanaged_memory_size) {
         log_append("Tried to malloc_from_unamanged for: ");
         log_append_uint((uint32_t)(size / 1000000));
@@ -94,7 +94,7 @@ static uint8_t * malloc_from_unmanaged_without_aligning(
     return return_value;
 }
 
-uint8_t * malloc_from_unmanaged_aligned(
+void * malloc_from_unmanaged_aligned(
     const uint64_t size,
     const uint32_t aligned_to)
 {
@@ -115,7 +115,7 @@ uint8_t * malloc_from_unmanaged_aligned(
     assert(padding < aligned_to);
     assert((uintptr_t)(void *)unmanaged_memory % aligned_to == 0);
     
-    uint8_t * return_value =
+    void * return_value =
         malloc_from_unmanaged_without_aligning(size);
     
     assert((uintptr_t)(void *)return_value % aligned_to == 0);
@@ -126,7 +126,7 @@ uint8_t * malloc_from_unmanaged_aligned(
 };
 
 void * malloc_from_unmanaged(size_t size) {
-    uint8_t * return_value = malloc_from_unmanaged_aligned(
+    void * return_value = malloc_from_unmanaged_aligned(
         size,
         MEM_ALIGNMENT_BYTES);
     
@@ -151,7 +151,7 @@ void * malloc_from_managed(size_t size) {
     assert(padding < MEM_ALIGNMENT_BYTES);
     assert((uintptr_t)(void *)managed_memory % MEM_ALIGNMENT_BYTES == 0);
     
-    uint8_t * return_value = managed_memory;
+    void * return_value = managed_memory;
     
     assert(managed_memory_size >= size);
     managed_memory += size;
@@ -162,9 +162,10 @@ void * malloc_from_managed(size_t size) {
     return return_value;
 };
 
-void free_from_managed(uint8_t * to_free) {
+void free_from_managed(void * to_free) {
     (void)to_free;
     
     // TODO: free up memory from the managed store
     return;
 };
+

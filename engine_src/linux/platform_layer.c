@@ -13,10 +13,26 @@ void platform_get_cwd(
         "./");
 }
 
-uint8_t * platform_malloc_unaligned_block(
+void * platform_malloc_unaligned_block(
     const uint64_t size)
 {
-    uint8_t * return_value = (uint8_t *)malloc(size);
+    void * return_value = mmap(
+        /* void *addr: */
+            NULL,
+        /* size_t len: */
+            size,
+        /* int prot: */
+            PROT_READ | PROT_WRITE,
+        /* int flags: */
+            MAP_SHARED | MAP_ANONYMOUS,
+        /* int fildes: */
+            -1,
+        /* off_t offset: */
+            0);
+    
+    if (return_value == MAP_FAILED) {
+        return_value = NULL;
+    }
     
     return return_value;
 }

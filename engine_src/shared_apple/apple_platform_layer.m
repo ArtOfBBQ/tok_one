@@ -3,10 +3,10 @@
 
 #include "../shared/platform_layer.h"
 
-uint8_t * platform_malloc_unaligned_block(
+void * platform_malloc_unaligned_block(
     const uint64_t size)
 {
-    uint8_t * return_value = (uint8_t *)malloc(size);
+    void * return_value = (uint8_t *)malloc(size);
     
     return return_value;
 }

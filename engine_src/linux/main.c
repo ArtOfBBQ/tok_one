@@ -416,7 +416,7 @@ int main(int argc, char* argv[])
     // Jelle: more drawing code
     uint32_t current_frame_i = 0;
     for (uint32_t _ = 0; _ < 10; _++) {
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         
         gpu_shared_data_collection.
@@ -430,6 +430,10 @@ int main(int argc, char* argv[])
         shared_gameloop_update(
             &gpu_shared_data_collection.
                 triple_buffers[current_frame_i]);
+        
+        opengl_set_projection_constants(
+            /* GPUProjectionConstants * pjc: */
+                &window_globals->projection_constants);
         
         printf(
             "frame_i: %u, vertices_for_gpu_size: %u\n",

@@ -6,6 +6,8 @@ unsigned int VAO = UINT32_MAX;
 unsigned int VBO = UINT32_MAX;
 static GLuint err_value = UINT32_MAX;
 
+static GPUVertex * test_data = NULL;
+
 void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
     
     assert(VAO < UINT32_MAX);
@@ -13,7 +15,7 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
     
     if (frame_data->vertices_size < 1) { return; }
     assert(frame_data->vertices != NULL); 
-
+    
     err_value = glGetError();
     if (err_value != GL_NO_ERROR) {
         switch (err_value) {
@@ -33,13 +35,75 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         assert(0);
     }
     
+    printf("sizeof(GPUVertex): %u\n", sizeof(GPUVertex));
+    if (test_data == NULL) {
+        // test_data = (GPUVertex *)malloc(sizeof(GPUVertex) * 3);
+        // test_data = (GPUVertex *)aligned_alloc(
+        //     /* size_t alignemnt_size: */
+        //         128,
+        //     /* size_t size: */
+        //         (sizeof(GPUVertex) * 3));
+        test_data = (GPUVertex *)malloc_from_unmanaged(
+            sizeof(GPUVertex) * 3);
+    }
+    assert(test_data != NULL);
+    assert(((uintptr_t)(void *)test_data) % 16 == 0);
+    
+    for (uint32_t i = 0; i < sizeof(GPUVertex) * 3; i++) {
+        int8_t val = ((int8_t *)test_data)[i];
+        printf("val: %i\n", val);
+        // assert(val == 0);
+    }
+    
+    test_data[0].x       = 0.25f;
+    test_data[0].y       = 0.75f;
+    test_data[0].z       = 1.00f;
+    test_data[0].parent_x   = 0.00f;
+    test_data[0].parent_y   = 0.00f;
+    test_data[0].parent_z   = 0.00f;
+    test_data[0].x_angle = 0.00f;
+    test_data[0].y_angle = 0.00f;
+    test_data[0].z_angle = 0.00f;
+    test_data[0].RGBA[0] = 0.20f;
+    test_data[0].RGBA[1] = 0.75f;
+    test_data[0].RGBA[2] = 0.50f;
+    test_data[0].RGBA[3] = 1.00f;
+    test_data[1].x       = 0.75f;
+    test_data[1].y       = 0.75f;
+    test_data[1].z       = 1.00f;
+    test_data[1].parent_x   = 0.10f;
+    test_data[1].parent_y   = 0.10f;
+    test_data[1].parent_z   = 0.10f;
+    test_data[1].x_angle = 0.00f;
+    test_data[1].y_angle = 0.00f;
+    test_data[1].z_angle = 0.00f;
+    test_data[1].RGBA[0] = 0.25f;
+    test_data[1].RGBA[1] = 0.25f;
+    test_data[1].RGBA[2] = 0.50f;
+    test_data[1].RGBA[3] = 1.00f;
+    test_data[2].x       = 0.50f;
+    test_data[2].y       = 0.25f;
+    test_data[2].z       = 1.00f;
+    test_data[2].parent_x   = -0.10f;
+    test_data[2].parent_y   = -0.10f;
+    test_data[2].parent_z   = -0.10f;
+    test_data[2].x_angle = 0.00f;
+    test_data[2].y_angle = 0.00f;
+    test_data[2].z_angle = 0.00f;
+    test_data[2].RGBA[0] = 1.00f;
+    test_data[2].RGBA[1] = 0.40f;
+    test_data[2].RGBA[2] = 0.15f;
+    test_data[2].RGBA[3] = 1.00f;
+    
     glBufferData(
         /* target: */
             GL_ARRAY_BUFFER,
         /* size_in_bytes: */
-            (sizeof(GPUVertex) * frame_data->vertices_size),
+            (sizeof(GPUVertex) * 3),
+            // (sizeof(GPUVertex) * frame_data->vertices_size),
         /* const GLvoid * data: (to init with, or NULL to copy no data) */
-            (const GLvoid *)frame_data->vertices,
+            test_data,
+            // (const GLvoid *)frame_data->vertices,
         /* usage: */
             GL_DYNAMIC_DRAW);
     
@@ -62,14 +126,32 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         assert(0);
     }
     
-    // glPointSize(50); // for GL_POINTS
+    glPointSize(50); // for GL_POINTS
     glDrawArrays(
         /* GLenum mode: */
-            GL_TRIANGLES,// GL_POINTS, 
+            GL_POINTS, 
         /* GLint first: */
             0,
         /* GLint count (# of vertices to render): */
             frame_data->vertices_size);
+    err_value = glGetError();
+    if (err_value != GL_NO_ERROR) {
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled error when sending buffer data!");
+                break;
+        }
+        assert(0);
+    }
 }
 
 static void opengl_compile_given_shader(
@@ -269,8 +351,9 @@ void opengl_compile_shaders(
     glDeleteShader(fragment_shader_id);
 }
 
-void opengl_set_projection_constants(GPUProjectionConstants * pjc) {
-    
+void opengl_set_projection_constants(
+    GPUProjectionConstants * pjc)
+{
     GLuint loc;
     
     loc = glGetUniformLocation(

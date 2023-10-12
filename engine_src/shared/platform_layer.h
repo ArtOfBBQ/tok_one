@@ -41,6 +41,7 @@ on each platform
 
 #ifdef LINUX_PLATFORM
 #include <sys/time.h>
+#include <sys/mman.h>
 #endif
 
 #include <pthread.h>
@@ -63,7 +64,7 @@ extern "C" {
 
 void platform_close_application(void);
 
-uint8_t * platform_malloc_unaligned_block(const uint64_t size);
+void * platform_malloc_unaligned_block(const uint64_t size);
 
 
 typedef struct FileBuffer {

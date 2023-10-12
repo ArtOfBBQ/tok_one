@@ -215,7 +215,10 @@ vertex_shader(
         normalize(z_rotated_normals);
         
         float4 vec_from_light_to_vertex = normalize(translated_pos - light_pos);
-        float visibility_rating = max(0.0f, -1.0f * dot(z_rotated_normals, vec_from_light_to_vertex));
+        float visibility_rating = max(
+            0.0f,
+            -1.0f * dot(z_rotated_normals,
+            vec_from_light_to_vertex));
         
         out.lighting += (
             distance_mod *
@@ -244,7 +247,6 @@ fragment_shader(
     {
         out_color *= in.lighting;
     } else {
-        
         constexpr sampler textureSampler(
             mag_filter::nearest,
             min_filter::nearest);

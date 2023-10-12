@@ -170,7 +170,6 @@ void client_logic_startup(void) {
         xmastree.y_multiplier = 0.1f;
         xmastree.z_multiplier = 0.1f;
         
-        
         // example 2: use a quad instead
         //    construct_quad(
         //        /* const float left_x: */
