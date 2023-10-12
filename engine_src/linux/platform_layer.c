@@ -32,15 +32,11 @@ void platform_get_directory_separator(char * recipient) {
 
 uint64_t
 platform_get_current_time_microsecs(void) {
-    // TODO: we need time to any rendering
-    // struct timeval tv;
-    // gettimeofday(&tv,NULL);
-    // uint64_t result =
-    //     1000000 *
-    //         (uint64_t)tv.tv_sec +
-    //         (uint64_t)tv.tv_usec;
-    
-    return 1;
+    struct timeval currentTime;
+    gettimeofday(&currentTime, NULL);
+    return 
+        ((uint64_t)currentTime.tv_sec * (uint64_t)1e6) +
+        (uint64_t)currentTime.tv_usec;
 }
 
 /*
@@ -82,9 +78,12 @@ void platform_read_file(
     const char * filepath,
     FileBuffer * out_preallocatedbuffer)
 {
+    out_preallocatedbuffer->good = false;
     FILE * f = fopen(filepath, "rb");
     
-    if (!f) { return; }
+    if (!f) {
+        return;
+    }
     
     fseek(f, 0, SEEK_END);
     out_preallocatedbuffer->size = ftell(f);
@@ -98,6 +97,7 @@ void platform_read_file(
     fclose(f);
     
     out_preallocatedbuffer->contents[out_preallocatedbuffer->size] = '\0';
+    out_preallocatedbuffer->good = out_preallocatedbuffer->size > 0;
 }
 
 bool32_t platform_file_exists(
@@ -174,19 +174,20 @@ void platform_get_filenames_in(
     // TODO: implement
 }
 
+char application_path[128];
+
 void
 platform_get_application_path(
     char * recipient,
     const uint32_t recipient_size)
 {
-    // strcpy_capped(
-    //     recipient,
-    //     recipient_size,
-    //     (char *)[[[NSBundle mainBundle] bundlePath]
-    //         cStringUsingEncoding: NSASCIIStringEncoding]);
+    strcpy_capped(
+        recipient,
+        recipient_size,
+        application_path);
 }
 
-char application_path[128];
+
 void platform_get_resources_path(
     char * recipient,
     const uint32_t recipient_size)

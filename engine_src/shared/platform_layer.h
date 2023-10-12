@@ -39,6 +39,10 @@ on each platform
 #import <AVFoundation/AVFoundation.h>
 #endif
 
+#ifdef LINUX_PLATFORM
+#include <sys/time.h>
+#endif
+
 #include <pthread.h>
 
 #ifdef __ARM_NEON

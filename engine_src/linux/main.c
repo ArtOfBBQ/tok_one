@@ -380,7 +380,7 @@ int main(int argc, char* argv[])
             gpu_shared_data_collection.triple_buffers[frame_i].vertices_size;
         vertices_allocation_size += (4096 - (vertices_allocation_size % 4096));
         assert(vertices_allocation_size % 4096 == 0);
-        gpu_shared_data_collection.triple_buffers[frame_i].vertices_size =
+        gpu_shared_data_collection.triple_buffers[frame_i].vertices =
             (GPUVertex *)malloc_from_unmanaged_aligned(
                 vertices_allocation_size,
                 4096);
@@ -445,6 +445,11 @@ int main(int argc, char* argv[])
         
         current_frame_i += 1;
         current_frame_i -= ((current_frame_i > 2)*3);
+        
+        if (!application_running) {
+            printf("%s\n", crashed_top_of_screen_msg);
+            break;
+        }
     
         sleep(2);
     }

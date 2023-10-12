@@ -182,12 +182,12 @@ void shared_gameloop_update(
     platform_mutex_lock(gameloop_mutex_id);
     
     uint64_t time = platform_get_current_time_microsecs();
-    uint64_t elapsed = time - previous_time;
     if (previous_time < 1) {
         previous_time = time;
         platform_mutex_unlock(gameloop_mutex_id);
         return;
     }
+    uint64_t elapsed = time - previous_time;
     
     if (elapsed > 33333) { elapsed = 33333; }
     
