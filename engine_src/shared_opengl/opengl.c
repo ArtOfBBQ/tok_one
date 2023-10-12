@@ -4,10 +4,63 @@
 GLuint program_id;
 unsigned int VAO = UINT32_MAX;
 unsigned int VBO = UINT32_MAX;
-void opengl_render_triangles(void) {
+static GLuint err_value = UINT32_MAX;
+
+void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
     
     assert(VAO < UINT32_MAX);
     assert(VBO < UINT32_MAX);
+    
+    if (frame_data->vertices_size < 1) { return; }
+    assert(frame_data->vertices != NULL); 
+
+    err_value = glGetError();
+    if (err_value != GL_NO_ERROR) {
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled error at start of frame!");
+                break;
+        }
+        assert(0);
+    }
+    
+    glBufferData(
+        /* target: */
+            GL_ARRAY_BUFFER,
+        /* size_in_bytes: */
+            (sizeof(GPUVertex) * frame_data->vertices_size),
+        /* const GLvoid * data: (to init with, or NULL to copy no data) */
+            (const GLvoid *)frame_data->vertices,
+        /* usage: */
+            GL_DYNAMIC_DRAW);
+    
+    err_value = glGetError();
+    if (err_value != GL_NO_ERROR) {
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled error when sending buffer data!");
+                break;
+        }
+        assert(0);
+    }
     
     // glPointSize(50); // for GL_POINTS
     glDrawArrays(
@@ -16,7 +69,7 @@ void opengl_render_triangles(void) {
         /* GLint first: */
             0,
         /* GLint count (# of vertices to render): */
-            3);
+            frame_data->vertices_size);
 }
 
 static void opengl_compile_given_shader(
@@ -164,78 +217,8 @@ void opengl_compile_shaders(
     // glEnableVertexAttribArray(0);
     // glEnableVertexAttribArray(1);
     
-    GPUVertex data[3];
-    data[0].x = 0.25f;
-    data[0].y = 0.75f;
-    data[0].z = 0.75f;
-    data[0].normal_x = 0.0f;
-    data[0].normal_y = 0.0f;
-    data[0].normal_z = 1.0f;
-    data[0].uv[0] = 1.0f;
-    data[0].uv[1] = 0.0f;
-    data[0].RGBA[0] = 1.0f;
-    data[0].RGBA[1] = 0.0f;
-    data[0].RGBA[2] = 0.0f;
-    data[0].RGBA[3] = 1.0f;
-    
-    data[1].x = 0.75f;
-    data[1].y = 0.75f;
-    data[1].z = 0.75f;
-    data[1].normal_x = 0.0f;
-    data[1].normal_y = 0.0f;
-    data[1].normal_z = 1.0f;
-    data[1].uv[0] = 0.0f;
-    data[1].uv[1] = 1.0f;
-    data[1].RGBA[0] = 0.0f;
-    data[1].RGBA[1] = 1.0f;
-    data[1].RGBA[2] = 0.0f;
-    data[1].RGBA[3] = 1.0f;
-    
-    data[2].x = 0.50f;
-    data[2].y = 0.25f;
-    data[2].z = 0.25f;
-    data[2].normal_x = 0.0f;
-    data[2].normal_y = 0.0f;
-    data[2].normal_z = 1.0f;
-    data[2].uv[0] = 1.0f;
-    data[2].uv[1] = 1.0f;
-    data[2].RGBA[0] = 0.0f;
-    data[2].RGBA[1] = 0.0f;
-    data[2].RGBA[2] = 1.0f;
-    data[2].RGBA[3] = 1.0f;
-    
     err_value = glGetError();
-    assert(err_value == GL_NO_ERROR);
-    
-    glBufferData(
-        /* target: */
-            GL_ARRAY_BUFFER,
-        /* size_in_bytes: */
-            (sizeof(GPUVertex) * 3),
-        /* const GLvoid * data: (to init with, or NULL to copy no data) */
-            (const GLvoid *)data,
-        /* usage: */
-            GL_DYNAMIC_DRAW);
-    
-    err_value = glGetError();
-    if (err_value != GL_NO_ERROR) {
-        switch (err_value) {
-            case GL_INVALID_VALUE:
-                printf("%s\n", "GL_INVALID_VALUE");
-                break;
-            case GL_INVALID_ENUM:
-                printf("%s\n", "GL_INVALID_ENUM");
-                break;
-            case GL_INVALID_OPERATION:
-                printf("%s\n", "GL_INVALID_OPERATION");
-                break;
-            default:
-                printf("%s\n", "unhandled!");
-                break;
-        }
-        assert(0);
-    }
-    
+    assert(err_value == GL_NO_ERROR); 
     
     /*
     Attribute pointers describe the fields of our data
@@ -281,8 +264,48 @@ void opengl_compile_shaders(
         
         glEnableVertexAttribArray(_);
     }
-    
+     
     glDeleteShader(vertex_shader_id);
     glDeleteShader(fragment_shader_id);
+}
+
+void opengl_set_projection_constants(GPUProjectionConstants * pjc) {
+    
+    GLuint loc;
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "projection_constants.near");
+    glUniform1f(loc, pjc->near);
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "projection_constants.far");
+    glUniform1f(loc, pjc->far);
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "projection_constants.q");
+    glUniform1f(loc, pjc->q);
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "projection_constants.field_of_view_rad");
+    glUniform1f(loc, pjc->field_of_view_rad);
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "projection_constants.field_of_view_modifier");
+    glUniform1f(loc, pjc->field_of_view_modifier);
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "projection_constants.x_multiplier");
+    glUniform1f(loc, pjc->x_multiplier);
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "projection_constants.y_multiplier");
+    glUniform1f(loc, pjc->y_multiplier);
 }
 

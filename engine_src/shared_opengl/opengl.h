@@ -5,6 +5,7 @@
 #include "cpu_gpu_shared_types.h"
 #include "cpu_to_gpu_types.h"
 #include "common.h"
+#include "window_size.h"
 
 #ifndef OPENGL_H
 #define OPENGL_H
@@ -23,13 +24,15 @@ typedef char GLchar;
 extern GLuint program_id;
 extern unsigned int VAO;
 
-void opengl_render_triangles(void);
+void opengl_render_triangles(GPUDataForSingleFrame * frame_data);
 
 void opengl_compile_shaders(
     char * vertex_shader_source,
     uint32_t vertex_shader_source_size,
     char * fragment_shader_source,
     uint32_t fragment_shader_source_size);
+
+void opengl_set_projection_constants(GPUProjectionConstants * pjc);
 
 #endif
 

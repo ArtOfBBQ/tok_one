@@ -7,6 +7,8 @@
 #include "window_size.h"
 #include "init_application.h"
 #include "opengl.h" // engine_src/shared_opengl/opengl.h
+#include "cpu_to_gpu_types.h"
+#include "gameloop.h"
 
 extern char application_path[128];
 uint32_t application_running = 1;
@@ -359,15 +361,93 @@ int main(int argc, char* argv[])
         /* uint32_t fragment_shader_source_size: */
             fragment_shader_source.size);
     
+    opengl_set_projection_constants(
+        /* GPUProjectionConstants * pjc: */
+            &window_globals->projection_constants);
+    
+    // TODO: this code is duplicated in macos X, unify to shared code
+    // allocate 3 buffers
+    GPUSharedDataCollection gpu_shared_data_collection;
+    for (
+        uint32_t frame_i = 0;
+        frame_i < 3;
+        frame_i++)
+    {
+        gpu_shared_data_collection.triple_buffers[frame_i].vertices_size =
+            MAX_VERTICES_PER_BUFFER;
+        uint64_t vertices_allocation_size =
+            sizeof(GPUVertex) *
+            gpu_shared_data_collection.triple_buffers[frame_i].vertices_size;
+        vertices_allocation_size += (4096 - (vertices_allocation_size % 4096));
+        assert(vertices_allocation_size % 4096 == 0);
+        gpu_shared_data_collection.triple_buffers[frame_i].vertices_size =
+            (GPUVertex *)malloc_from_unmanaged_aligned(
+                vertices_allocation_size,
+                4096);
+        
+        uint64_t lights_allocation_size = sizeof(GPULightCollection);
+        lights_allocation_size += (4096 - (lights_allocation_size % 4096));
+        assert(lights_allocation_size % 4096 == 0);
+        gpu_shared_data_collection.triple_buffers[frame_i].light_collection =
+            (GPULightCollection *)malloc_from_unmanaged_aligned(
+                lights_allocation_size,
+                4096);
+        
+        uint64_t camera_allocation_size = sizeof(GPUCamera);
+        camera_allocation_size += (4096 - (camera_allocation_size % 4096));
+        assert(camera_allocation_size % 4096 == 0);
+        gpu_shared_data_collection.triple_buffers[frame_i].camera =
+            (GPUCamera *)malloc_from_unmanaged_aligned(
+                camera_allocation_size,
+                4096);
+        
+        uint64_t projection_constants_allocation_size =
+            sizeof(GPUProjectionConstants);
+        projection_constants_allocation_size +=
+            (4096 - (projection_constants_allocation_size % 4096));
+        assert(projection_constants_allocation_size % 4096 == 0);
+        gpu_shared_data_collection.triple_buffers[frame_i].
+            projection_constants =
+                (GPUProjectionConstants *)malloc_from_unmanaged_aligned(
+                    projection_constants_allocation_size,
+                    4096);
+    }
+    
     // Jelle: more drawing code
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    uint32_t current_frame_i = 0;
+    for (uint32_t _ = 0; _ < 10; _++) {
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        
+        gpu_shared_data_collection.
+            triple_buffers[current_frame_i].
+            vertices_size = 0;
+        gpu_shared_data_collection.
+            triple_buffers[current_frame_i].
+            light_collection->
+            lights_size = 0;
+        
+        shared_gameloop_update(
+            &gpu_shared_data_collection.
+                triple_buffers[current_frame_i]);
+        
+        printf(
+            "frame_i: %u, vertices_for_gpu_size: %u\n",
+            current_frame_i,
+            gpu_shared_data_collection.
+                triple_buffers[current_frame_i].
+                vertices_size);
+        
+        opengl_render_triangles(
+            &gpu_shared_data_collection.triple_buffers[current_frame_i]); 
+        
+        glXSwapBuffers(display, win);
+        
+        current_frame_i += 1;
+        current_frame_i -= ((current_frame_i > 2)*3);
     
-    opengl_render_triangles(); 
-    
-    glXSwapBuffers(display, win);
-    
-    sleep(2);
+        sleep(2);
+    }
     
     glXMakeCurrent(display, 0, 0);
     glXDestroyContext(display, ctx);

@@ -19,6 +19,18 @@ out vec4 vertex_lighting;
 // out float fragment_texture_i;
 // out vec2 fragment_uv;
 
+struct GPUProjectionConstants {
+    float near;
+    float far;
+    float q;
+    float field_of_view_rad;
+    float field_of_view_modifier;
+    float x_multiplier;
+    float y_multiplier;
+};
+
+uniform GPUProjectionConstants projection_constants;
+
 vec4 x_rotate(vec4 vertices, float x_angle) {
     vec4 rotated_vertices = vertices;
     float cos_angle = cos(x_angle);
@@ -107,12 +119,12 @@ void main()
     
     // projection
     gl_Position     = translated_pos;
-    // gl_Position[0] *= projection_constants->x_multiplier;
-    // gl_Position[1] *= projection_constants->field_of_view_modifier;
+    gl_Position[0] *= projection_constants.x_multiplier;
+    gl_Position[1] *= projection_constants.field_of_view_modifier;
     gl_Position[3]  = gl_Position[2];
-    // gl_Position[2]  =     
-    //     (gl_Position[2] * projection_constants->q) -
-    //     (projection_constants->near * projection_constants->q);
+    gl_Position[2]  =     
+        (gl_Position[2] * projection_constants.q) -
+        (projection_constants.near * projection_constants.q);
     
     vertex_color = rgba;
     clamp(vertex_color, 0.05f, 1.0f);
