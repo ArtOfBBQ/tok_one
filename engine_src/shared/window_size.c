@@ -51,15 +51,14 @@ void init_projection_constants() {
     pjc->near = 0.1f;
     pjc->far = 10.0f;
     
-    float field_of_view = 90.0f;
+    // this hardcoded value was calculated with:
+    // float field_of_view = 90.0f;
+    // pjc->field_of_view_rad = ((field_of_view * 0.5f) / 180.0f) * 3.14159f;
+    pjc->field_of_view_rad = 0.7853975;
     
     // this hardcoded value was calculated with:
-    // = ((field_of_view * 0.5f) / 180.0f) * 3.14159f;
-    pjc->field_of_view_rad = 1.4137155;     
-    
-    // this hardcoded value was calculated with:
-    // = 1.0f / tanf(pjc->field_of_view_rad);
-    pjc->field_of_view_modifier = 0.15838566f;
+    // pjc->field_of_view_modifier = 1.0f / tanf(pjc->field_of_view_rad);
+    pjc->field_of_view_modifier = 1.000001326795777;
     
     pjc->q = pjc->far / (pjc->far - pjc->near);
     pjc->x_multiplier =

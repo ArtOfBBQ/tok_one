@@ -16,7 +16,7 @@ void init_renderer() {
 inline static void zpolygons_to_triangles(
     GPUVertex * next_gpu_workload,
     uint32_t * next_workload_size)
-{
+{    
     for (
         uint32_t zp_i = 0;
         zp_i < zpolygons_to_render_size;
@@ -243,6 +243,7 @@ inline static void zpolygons_to_triangles(
                     vertices[2].uv[1];
             
             *next_workload_size += 3;
+            log_assert(*next_workload_size <= MAX_VERTICES_PER_BUFFER);
         }
         log_assert(*next_workload_size <= MAX_VERTICES_PER_BUFFER);
         

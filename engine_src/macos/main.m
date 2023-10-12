@@ -249,6 +249,10 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     window_globals->window_height = (float)size.height;
     // (float)window_frame.size.width;
     window_globals->window_width = (float)size.width;
+    window_globals->aspect_ratio =
+        window_globals->window_height / window_globals->window_width;
+    
+    [apple_gpu_delegate updateViewport];
     
     //    window_globals->titlebar_height =
     //        (float)(window_frame.size.height - size.height);

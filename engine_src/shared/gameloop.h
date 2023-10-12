@@ -22,11 +22,7 @@ extern "C" {
 void shared_gameloop_init(void);
 
 void shared_gameloop_update(
-    GPUVertex * vertices_for_gpu,
-    uint32_t * vertices_for_gpu_size,
-    GPULightCollection * lights_for_gpu,
-    GPUCamera * camera_for_gpu,
-    GPUProjectionConstants * projection_constants_for_gpu);
+    GPUDataForSingleFrame * frame_data);
 
 #ifdef __cplusplus
 }

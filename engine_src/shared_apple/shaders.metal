@@ -112,18 +112,23 @@ vertex_shader(
     float4 x_rotated_vertices = x_rotate(
         mesh_vertices,
         input_array[vertex_i].x_angle);
+    
     float4 x_rotated_normals  = x_rotate(
         mesh_normals,
         input_array[vertex_i].x_angle);
+    
     float4 y_rotated_vertices = y_rotate(
         x_rotated_vertices,
         input_array[vertex_i].y_angle);
+    
     float4 y_rotated_normals  = y_rotate(
         x_rotated_normals,
         input_array[vertex_i].y_angle);
+    
     float4 z_rotated_vertices = z_rotate(
         y_rotated_vertices,
         input_array[vertex_i].z_angle);
+    
     float4 z_rotated_normals  = z_rotate(
         y_rotated_normals,
         input_array[vertex_i].z_angle);
@@ -164,12 +169,6 @@ vertex_shader(
         input_array[vertex_i].RGBA[2],
         input_array[vertex_i].RGBA[3]);
     clamp(out.color, 0.05f, 1.0f);
-    
-    //    out.surface_normal = vector_float4(
-    //        input_array[vertex_i].normal_x,
-    //        input_array[vertex_i].normal_y,
-    //        input_array[vertex_i].normal_z,
-    //        1.0f);
     
     out.lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
     

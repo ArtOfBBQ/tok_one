@@ -7,9 +7,8 @@
 #include "cpu_gpu_shared_types.h"
 #include "common.h"
 
-// This needs to have pointers because apple's
-// metal (both ios and macosx) requires shared data
-// to be aligned to page size
+// This is a bunch of pointers because apple's metal (both ios and macosx)
+// requires shared data to be aligned to page size :(
 typedef struct GPUDataForSingleFrame
 {
     GPUVertex *                            vertices;

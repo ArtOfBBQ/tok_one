@@ -23,7 +23,8 @@ static dispatch_semaphore_t drawing_semaphore;
 {
     cached_viewport.originX = 0;
     cached_viewport.originY = 0;
-    cached_viewport.width   = window_globals->window_width *
+    cached_viewport.width   =
+        window_globals->window_width *
         (has_retina_screen ? 2.0f : 1.0f);
     cached_viewport.height  =
         window_globals->window_height *
@@ -243,23 +244,27 @@ static dispatch_semaphore_t drawing_semaphore;
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
-         assert([MTLBufferFrameCamera contents] == gpu_single_frame_data.camera);
-         assert([MTLBufferFrameCamera contents] == gpu_shared_data_collection.triple_buffers[frame_i].camera);
+         assert(
+            [MTLBufferFrameCamera contents] == gpu_single_frame_data.camera);
+         assert(
+            [MTLBufferFrameCamera contents] ==
+                gpu_shared_data_collection.triple_buffers[frame_i].camera);
          camera_buffers[frame_i] = MTLBufferFrameCamera;
          
          id<MTLBuffer> MTLBufferProjectionConstants =
-         [with_metal_device
-             /* the pointer needs to be page aligned */
-             newBufferWithBytesNoCopy:
-                 gpu_single_frame_data.projection_constants
-             /* the length weirdly needs to be page aligned also */
-             length:
-                 projection_constants_allocation_size
-             options:
-                 MTLResourceStorageModeShared
-             /* deallocator = nil to opt out */
-             deallocator:
-                 nil];
+             [with_metal_device
+                 /* the pointer needs to be page aligned */
+                     newBufferWithBytesNoCopy:
+                         gpu_single_frame_data.projection_constants
+                 /* the length weirdly needs to be page aligned also */
+                     length:
+                         projection_constants_allocation_size
+                     options:
+                         MTLResourceStorageModeShared
+                 /* deallocator = nil to opt out */
+                     deallocator:
+                         nil];
+         
          projection_constant_buffers[frame_i] = MTLBufferProjectionConstants;
     }
     
@@ -311,6 +316,7 @@ static dispatch_semaphore_t drawing_semaphore;
         replaceObjectAtIndex:(uint32_t)texturearray_i
         withObject: texture];
 }
+
 - (void)
     updateTextureArray : (int32_t)texturearray_i
     atTexture          : (int32_t)texture_i
@@ -367,30 +373,8 @@ static dispatch_semaphore_t drawing_semaphore;
         /* dispatch_semaphore_t _Nonnull dsema: */ drawing_semaphore,
         /* dispatch_time_t timeout: */ DISPATCH_TIME_FOREVER);
     
-    GPUVertex * vertices_for_gpu =
-        gpu_shared_data_collection.triple_buffers[current_frame_i].vertices;
-    uint32_t vertices_for_gpu_size = 0;
-    
-    GPULightCollection * lights_for_gpu =
-        gpu_shared_data_collection.
-            triple_buffers[current_frame_i].
-            light_collection;
-    lights_for_gpu->lights_size = 0;
-    
-    GPUCamera * camera_for_gpu =
-        gpu_shared_data_collection.triple_buffers[current_frame_i].camera;
-    
-    GPUProjectionConstants * projection_constants_for_gpu =
-        gpu_shared_data_collection.
-            triple_buffers[current_frame_i]
-            .projection_constants;
-    
     shared_gameloop_update(
-        vertices_for_gpu,
-        &vertices_for_gpu_size,
-        lights_for_gpu,
-        camera_for_gpu,
-        projection_constants_for_gpu);
+        &gpu_shared_data_collection.triple_buffers[current_frame_i]);
     
     id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
     
@@ -404,6 +388,7 @@ static dispatch_semaphore_t drawing_semaphore;
     
     MTLRenderPassDescriptor * RenderPassDescriptor =
         [view currentRenderPassDescriptor];
+    
     RenderPassDescriptor.
         depthAttachment.
         loadAction = MTLLoadActionClear;
@@ -415,6 +400,7 @@ static dispatch_semaphore_t drawing_semaphore;
     RenderPassDescriptor
         .colorAttachments[0]
         .loadAction = MTLLoadActionClear;
+    
     RenderPassDescriptor.colorAttachments[0].clearColor =
         MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);;
     
@@ -422,6 +408,7 @@ static dispatch_semaphore_t drawing_semaphore;
         [command_buffer
             renderCommandEncoderWithDescriptor:
                 RenderPassDescriptor];
+    
     assert(cached_viewport.zfar > cached_viewport.znear);
     [render_encoder setViewport: cached_viewport];
     assert(cached_viewport.width > 0.0f);
@@ -471,7 +458,9 @@ static dispatch_semaphore_t drawing_semaphore;
     [render_encoder
         drawPrimitives: MTLPrimitiveTypeTriangle
         vertexStart: 0
-        vertexCount: vertices_for_gpu_size];
+        vertexCount: gpu_shared_data_collection.
+            triple_buffers[current_frame_i].vertices_size];
+    
     [render_encoder endEncoding];
     
     // Schedule a present once the framebuffer is complete

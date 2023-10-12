@@ -177,11 +177,7 @@ void shared_gameloop_init(void) {
 }
 
 void shared_gameloop_update(
-    GPUVertex * vertices_for_gpu,
-    uint32_t * vertices_for_gpu_size,
-    GPULightCollection * lights_for_gpu,
-    GPUCamera * camera_for_gpu,
-    GPUProjectionConstants * projection_constants_for_gpu)
+    GPUDataForSingleFrame * frame_data)
 {
     platform_mutex_lock(gameloop_mutex_id);
     
@@ -197,12 +193,12 @@ void shared_gameloop_update(
     
     if (!application_running) {
         zpolygons_to_render_size = 0;
-        camera.x = 0.0f;
-        camera.y = 0.0f;
-        camera.z = 0.0f;
-        camera.x_angle = 0.0f;
-        camera.y_angle = 0.0f;
-        camera.z_angle = 0.0f;
+        frame_data->camera->x = 0.0f;
+        frame_data->camera->y = 0.0f;
+        frame_data->camera->z = 0.0f;
+        frame_data->camera->x_angle = 0.0f;
+        frame_data->camera->y_angle = 0.0f;
+        frame_data->camera->z_angle = 0.0f;
         
         font_height = 28.0f;
         font_ignore_lighting = true;
@@ -237,7 +233,8 @@ void shared_gameloop_update(
     window_globals->visual_debug_collision_size =
         ((time % 500000) / 50000) * 0.001f;
     
-    *projection_constants_for_gpu = window_globals->projection_constants;
+    *frame_data->projection_constants =
+        window_globals->projection_constants;
     
     previous_time = time;
     
@@ -285,7 +282,7 @@ void shared_gameloop_update(
         resolve_animation_effects(elapsed);
         clean_deleted_lights();
         
-        copy_lights(lights_for_gpu);
+        copy_lights(frame_data->light_collection);
         
         for (uint32_t i = 0; i < 8; i++) {
             if (
@@ -340,25 +337,27 @@ void shared_gameloop_update(
         client_logic_update(elapsed);        
     }
     
-    camera_for_gpu->x = camera.x;
-    camera_for_gpu->y = camera.y;
-    camera_for_gpu->z = camera.z;
-    camera_for_gpu->x_angle = camera.x_angle;
-    camera_for_gpu->y_angle = camera.y_angle;
-    camera_for_gpu->z_angle = camera.z_angle;
+    frame_data->camera->x = camera.x;
+    frame_data->camera->y = camera.y;
+    frame_data->camera->z = camera.z;
+    frame_data->camera->x_angle = camera.x_angle;
+    frame_data->camera->y_angle = camera.y_angle;
+    frame_data->camera->z_angle = camera.z_angle;
     
+    frame_data->vertices_size = 0;
     hardware_render(
-        /* next_gpu_workload: */
-            vertices_for_gpu,
-        /* next_gpu_workload_size: */
-            vertices_for_gpu_size,
-        /* lights_for_gpu: */
-            lights_for_gpu,
-        /* elapsed_microseconds: */
+        /* GPUVertex * next_gpu_workload: */
+            frame_data->vertices,
+        /* uint32_t * next_gpu_workload_size: */
+            &frame_data->vertices_size,
+        /* GPULightCollection * light_collection: */
+            frame_data->light_collection,
+        /* uint64_t elapsed_microseconds: */
             elapsed);
     
-    uint32_t overflow_vertices = *vertices_for_gpu_size % 3;
-    *vertices_for_gpu_size -= overflow_vertices;
+    uint32_t overflow_vertices = frame_data->vertices_size % 3;
+    frame_data->vertices_size -= overflow_vertices;
     
     platform_mutex_unlock(gameloop_mutex_id);
 }
+
