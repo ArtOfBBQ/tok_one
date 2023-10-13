@@ -1,14 +1,20 @@
+// Linux & OpenGL headers
 #include <unistd.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <GL/glx.h>
 
+// tok one platform specific headers
+#include "opengl.h"
+#include "linuxkeyboard.h"
+
+// tok one shared engine headers
 #include "common.h"
+#include "cpu_to_gpu_types.h"
 #include "window_size.h"
 #include "init_application.h"
-#include "opengl.h" // engine_src/shared_opengl/opengl.h
-#include "cpu_to_gpu_types.h"
 #include "gameloop.h"
+#include "userinput.h"
 
 extern char application_path[128];
 uint32_t application_running = 1;
@@ -367,11 +373,27 @@ int main(int argc, char* argv[])
         /* GPUProjectionConstants * pjc: */
             &window_globals->projection_constants);
     
+    XSelectInput(display, win, KeyPressMask | KeyReleaseMask);
+    
     // Jelle: more drawing code
     uint32_t current_frame_i = 0;
-    for (uint32_t _ = 0; _ < 10; _++) {
+    for (uint32_t _ = 0; _ < 200000; _++) {
         glClearColor(0.0f, 0.0f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+        
+        /* keyboard events */
+        XEvent event;
+        XNextEvent(display, &event);
+        if (event.type == KeyPress)
+        {
+            uint32_t tok_one_key = linux_keycode_to_tokone_keycode(
+                event.xkey.keycode);
+            register_keyup(tok_one_key);
+        } else if (event.type == KeyRelease) {
+            uint32_t tok_one_key = linux_keycode_to_tokone_keycode(
+                event.xkey.keycode);
+            register_keydown(tok_one_key);
+        }
         
         gpu_shared_data_collection.
             triple_buffers[current_frame_i].
@@ -408,8 +430,6 @@ int main(int argc, char* argv[])
             printf("%s\n", crashed_top_of_screen_msg);
             break;
         }
-    
-        sleep(2);
     }
     
     glXMakeCurrent(display, 0, 0);

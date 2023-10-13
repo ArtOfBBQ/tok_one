@@ -19,6 +19,7 @@ TOK_ONE_LINUX_SOURCE="
 engine_src/linux/main.c
 engine_src/shared_opengl/opengl.c
 engine_src/linux/platform_layer.c
+engine_src/linux/linuxkeyboard.c
 "
 
 TOK_ONE_SHARED_SOURCE="

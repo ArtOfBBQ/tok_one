@@ -33,46 +33,6 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         assert(0);
     }
     
-    frame_data->vertices[0].x       = 0.25f;
-    frame_data->vertices[0].y       = 0.75f;
-    frame_data->vertices[0].z       = 1.00f;
-    frame_data->vertices[0].parent_x   = 0.00f;
-    frame_data->vertices[0].parent_y   = 0.00f;
-    frame_data->vertices[0].parent_z   = 0.00f;
-    frame_data->vertices[0].x_angle = 0.00f;
-    frame_data->vertices[0].y_angle = 0.00f;
-    frame_data->vertices[0].z_angle = 0.00f;
-    frame_data->vertices[0].RGBA[0] = 0.20f;
-    frame_data->vertices[0].RGBA[1] = 0.75f;
-    frame_data->vertices[0].RGBA[2] = 0.50f;
-    frame_data->vertices[0].RGBA[3] = 1.00f;
-    frame_data->vertices[1].x       = 0.75f;
-    frame_data->vertices[1].y       = 0.75f;
-    frame_data->vertices[1].z       = 1.00f;
-    frame_data->vertices[1].parent_x   = 0.10f;
-    frame_data->vertices[1].parent_y   = 0.10f;
-    frame_data->vertices[1].parent_z   = 0.10f;
-    frame_data->vertices[1].x_angle = 0.00f;
-    frame_data->vertices[1].y_angle = 0.00f;
-    frame_data->vertices[1].z_angle = 0.00f;
-    frame_data->vertices[1].RGBA[0] = 0.25f;
-    frame_data->vertices[1].RGBA[1] = 0.25f;
-    frame_data->vertices[1].RGBA[2] = 0.50f;
-    frame_data->vertices[1].RGBA[3] = 1.00f;
-    frame_data->vertices[2].x       = 0.50f;
-    frame_data->vertices[2].y       = 0.25f;
-    frame_data->vertices[2].z       = 1.00f;
-    frame_data->vertices[2].parent_x   = -0.10f;
-    frame_data->vertices[2].parent_y   = -0.10f;
-    frame_data->vertices[2].parent_z   = -0.10f;
-    frame_data->vertices[2].x_angle = 0.00f;
-    frame_data->vertices[2].y_angle = 0.00f;
-    frame_data->vertices[2].z_angle = 0.00f;
-    frame_data->vertices[2].RGBA[0] = 1.00f;
-    frame_data->vertices[2].RGBA[1] = 0.40f;
-    frame_data->vertices[2].RGBA[2] = 0.15f;
-    frame_data->vertices[2].RGBA[3] = 1.00f;
-    
     glBufferData(
         /* target: */
             GL_ARRAY_BUFFER,
