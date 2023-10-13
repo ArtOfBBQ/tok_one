@@ -20,6 +20,10 @@ typedef struct GPUSharedDataCollection
 {
     uint32_t frame_i;
     GPUDataForSingleFrame triple_buffers[3];
+    uint32_t vertices_allocation_size;
+    uint32_t lights_allocation_size;
+    uint32_t camera_allocation_size;
+    uint32_t projection_constants_allocation_size;
 } GPUSharedDataCollection;
 
 extern GPUSharedDataCollection gpu_shared_data_collection;

@@ -143,56 +143,15 @@ static dispatch_semaphore_t drawing_semaphore;
         frame_i < 3;
         frame_i++)
     {
-        GPUDataForSingleFrame gpu_single_frame_data =
-            gpu_shared_data_collection.triple_buffers[frame_i];
-        gpu_single_frame_data.vertices_size = MAX_VERTICES_PER_BUFFER;
-        
-        uint64_t vertices_allocation_size =
-            sizeof(GPUVertex) * gpu_single_frame_data.vertices_size;
-        vertices_allocation_size += (4096 - (vertices_allocation_size % 4096));
-        assert(vertices_allocation_size % 4096 == 0);
-        gpu_single_frame_data.vertices =
-            (GPUVertex *)malloc_from_unmanaged_aligned(
-                vertices_allocation_size,
-                4096);
-        
-        uint64_t lights_allocation_size = sizeof(GPULightCollection);
-        lights_allocation_size += (4096 - (lights_allocation_size % 4096));
-        assert(lights_allocation_size % 4096 == 0);
-        gpu_single_frame_data.light_collection =
-            (GPULightCollection *)malloc_from_unmanaged_aligned(
-                lights_allocation_size,
-                4096);
-        
-        uint64_t camera_allocation_size = sizeof(GPUCamera);
-        camera_allocation_size += (4096 - (camera_allocation_size % 4096));
-        assert(camera_allocation_size % 4096 == 0);
-        gpu_single_frame_data.camera =
-            (GPUCamera *)malloc_from_unmanaged_aligned(
-                camera_allocation_size,
-                4096);
-        
-        uint64_t projection_constants_allocation_size =
-            sizeof(GPUProjectionConstants);
-        projection_constants_allocation_size +=
-            (4096 - (projection_constants_allocation_size % 4096));
-        assert(projection_constants_allocation_size % 4096 == 0);
-        gpu_single_frame_data.projection_constants =
-            (GPUProjectionConstants *)malloc_from_unmanaged_aligned(
-                projection_constants_allocation_size,
-                4096);
-        
-        gpu_shared_data_collection.triple_buffers[frame_i] =
-            gpu_single_frame_data;
-        
         id<MTLBuffer> MTLBufferFrameVertices =
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
-                        gpu_single_frame_data.vertices
+                        gpu_shared_data_collection.
+                            triple_buffers[frame_i].vertices
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        vertices_allocation_size
+                        gpu_shared_data_collection.vertices_allocation_size
                     options:
                         MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
@@ -201,7 +160,7 @@ static dispatch_semaphore_t drawing_semaphore;
         assert(MTLBufferFrameVertices != nil);
         assert(
             [MTLBufferFrameVertices contents] ==
-                gpu_single_frame_data.vertices);
+                gpu_shared_data_collection.triple_buffers[frame_i].vertices);
         assert(
             [MTLBufferFrameVertices contents] ==
                 gpu_shared_data_collection.triple_buffers[frame_i].vertices);
@@ -212,10 +171,11 @@ static dispatch_semaphore_t drawing_semaphore;
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
-                        gpu_single_frame_data.light_collection
+                        gpu_shared_data_collection.
+                            triple_buffers[frame_i].light_collection
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        lights_allocation_size
+                        gpu_shared_data_collection.lights_allocation_size
                     options:
                         MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
@@ -223,29 +183,35 @@ static dispatch_semaphore_t drawing_semaphore;
                         nil];
          assert(
             [MTLBufferFrameLights contents] ==
-                gpu_single_frame_data.light_collection);
+                gpu_shared_data_collection.
+                    triple_buffers[frame_i].light_collection);
          assert(
             [MTLBufferFrameLights contents] ==
                 gpu_shared_data_collection.
                     triple_buffers[frame_i].
                     light_collection);
+         
          light_buffers[frame_i] = MTLBufferFrameLights;
          
          id<MTLBuffer> MTLBufferFrameCamera =
              [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
-                        gpu_single_frame_data.camera
+                        gpu_shared_data_collection.
+                            triple_buffers[frame_i].camera
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        camera_allocation_size
+                        gpu_shared_data_collection.camera_allocation_size
                     options:
                         MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
+         
          assert(
-            [MTLBufferFrameCamera contents] == gpu_single_frame_data.camera);
+            [MTLBufferFrameCamera contents] ==
+                gpu_shared_data_collection.
+                    triple_buffers[frame_i].camera);
          assert(
             [MTLBufferFrameCamera contents] ==
                 gpu_shared_data_collection.triple_buffers[frame_i].camera);
@@ -255,10 +221,12 @@ static dispatch_semaphore_t drawing_semaphore;
              [with_metal_device
                  /* the pointer needs to be page aligned */
                      newBufferWithBytesNoCopy:
-                         gpu_single_frame_data.projection_constants
+                         gpu_shared_data_collection.
+                            triple_buffers[frame_i].projection_constants
                  /* the length weirdly needs to be page aligned also */
                      length:
-                         projection_constants_allocation_size
+                         gpu_shared_data_collection.
+                            projection_constants_allocation_size
                      options:
                          MTLResourceStorageModeShared
                  /* deallocator = nil to opt out */
