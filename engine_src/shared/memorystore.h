@@ -27,7 +27,7 @@ void * malloc_from_unmanaged_aligned(
 void * malloc_from_unmanaged(size_t size);
 void * malloc_from_managed(size_t size);
 
-void free_from_managed(uint8_t * to_free);
+void free_from_managed(void * to_free);
 
 #ifdef __cplusplus
 }

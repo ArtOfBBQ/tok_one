@@ -357,8 +357,10 @@ void add_shatter_effects_to_workload(
                 next_gpu_workload[*next_workload_size].ignore_camera =
                     shatter_effects[i].zpolygon_to_shatter.ignore_camera;
                 
+                if (*next_workload_size + 1 >= MAX_VERTICES_PER_BUFFER) {
+                    return;
+                }
                 *next_workload_size += 1;
-                assert(*next_workload_size - 1 < MAX_VERTICES_PER_BUFFER);
             }
         }
     }
@@ -973,6 +975,11 @@ void add_particle_effects_to_workload(
                         next_gpu_workload[*next_workload_size].RGBA[2] = blue;
                         next_gpu_workload[*next_workload_size].RGBA[3] = alpha;
                         
+                        if (
+                            *next_workload_size + 1 >= MAX_VERTICES_PER_BUFFER)
+                        {
+                            return;
+                        }
                         *next_workload_size += 1;
                     }
                 }

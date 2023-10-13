@@ -7,8 +7,8 @@ of the engine for your specific app.
 */
 
 // The 2 pools of memory your app allocates on startup
-// 75mb ->                     75...000
-#define UNMANAGED_MEMORY_SIZE  75000000
+// 175mb ->                    175...000
+#define UNMANAGED_MEMORY_SIZE  175000000
 // 50 mb ->                    50...000
 #define MANAGED_MEMORY_SIZE    50000000
 
@@ -21,7 +21,7 @@ of the engine for your specific app.
 #define INITIAL_WINDOW_BOTTOM   100
 
 // The maximum number of vertices/lights to send to the GPU each frame
-#define MAX_VERTICES_PER_BUFFER 5000 
+#define MAX_VERTICES_PER_BUFFER 35000
 #define MAX_LIGHTS_PER_BUFFER 5
 
 // The maximum number of 3D or 2D sprites in your app.

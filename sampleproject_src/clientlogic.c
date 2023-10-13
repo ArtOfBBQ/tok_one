@@ -145,7 +145,7 @@ void client_logic_startup(void) {
     commit_zlight(im_a_light);
         
     // example 1: the 'christams tree' obj file
-    for (uint32_t i = 0; i < 75; i++) {
+    for (uint32_t i = 0; i < 6; i++) {
         construct_zpolygon(&xmastree);
         xmastree.mesh_id = xmastree_mesh_id;
         xmastree.x = 0.0f + (0.35f * (i % 10));
