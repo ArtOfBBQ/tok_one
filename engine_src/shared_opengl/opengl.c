@@ -6,8 +6,6 @@ unsigned int VAO = UINT32_MAX;
 unsigned int VBO = UINT32_MAX;
 static GLuint err_value = UINT32_MAX;
 
-static GPUVertex * test_data = NULL;
-
 void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
     
     assert(VAO < UINT32_MAX);
@@ -35,75 +33,53 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         assert(0);
     }
     
-    printf("sizeof(GPUVertex): %u\n", sizeof(GPUVertex));
-    if (test_data == NULL) {
-        // test_data = (GPUVertex *)malloc(sizeof(GPUVertex) * 3);
-        // test_data = (GPUVertex *)aligned_alloc(
-        //     /* size_t alignemnt_size: */
-        //         128,
-        //     /* size_t size: */
-        //         (sizeof(GPUVertex) * 3));
-        test_data = (GPUVertex *)malloc_from_unmanaged(
-            sizeof(GPUVertex) * 3);
-    }
-    assert(test_data != NULL);
-    assert(((uintptr_t)(void *)test_data) % 16 == 0);
-    
-    for (uint32_t i = 0; i < sizeof(GPUVertex) * 3; i++) {
-        int8_t val = ((int8_t *)test_data)[i];
-        printf("val: %i\n", val);
-        // assert(val == 0);
-    }
-    
-    test_data[0].x       = 0.25f;
-    test_data[0].y       = 0.75f;
-    test_data[0].z       = 1.00f;
-    test_data[0].parent_x   = 0.00f;
-    test_data[0].parent_y   = 0.00f;
-    test_data[0].parent_z   = 0.00f;
-    test_data[0].x_angle = 0.00f;
-    test_data[0].y_angle = 0.00f;
-    test_data[0].z_angle = 0.00f;
-    test_data[0].RGBA[0] = 0.20f;
-    test_data[0].RGBA[1] = 0.75f;
-    test_data[0].RGBA[2] = 0.50f;
-    test_data[0].RGBA[3] = 1.00f;
-    test_data[1].x       = 0.75f;
-    test_data[1].y       = 0.75f;
-    test_data[1].z       = 1.00f;
-    test_data[1].parent_x   = 0.10f;
-    test_data[1].parent_y   = 0.10f;
-    test_data[1].parent_z   = 0.10f;
-    test_data[1].x_angle = 0.00f;
-    test_data[1].y_angle = 0.00f;
-    test_data[1].z_angle = 0.00f;
-    test_data[1].RGBA[0] = 0.25f;
-    test_data[1].RGBA[1] = 0.25f;
-    test_data[1].RGBA[2] = 0.50f;
-    test_data[1].RGBA[3] = 1.00f;
-    test_data[2].x       = 0.50f;
-    test_data[2].y       = 0.25f;
-    test_data[2].z       = 1.00f;
-    test_data[2].parent_x   = -0.10f;
-    test_data[2].parent_y   = -0.10f;
-    test_data[2].parent_z   = -0.10f;
-    test_data[2].x_angle = 0.00f;
-    test_data[2].y_angle = 0.00f;
-    test_data[2].z_angle = 0.00f;
-    test_data[2].RGBA[0] = 1.00f;
-    test_data[2].RGBA[1] = 0.40f;
-    test_data[2].RGBA[2] = 0.15f;
-    test_data[2].RGBA[3] = 1.00f;
+    frame_data->vertices[0].x       = 0.25f;
+    frame_data->vertices[0].y       = 0.75f;
+    frame_data->vertices[0].z       = 1.00f;
+    frame_data->vertices[0].parent_x   = 0.00f;
+    frame_data->vertices[0].parent_y   = 0.00f;
+    frame_data->vertices[0].parent_z   = 0.00f;
+    frame_data->vertices[0].x_angle = 0.00f;
+    frame_data->vertices[0].y_angle = 0.00f;
+    frame_data->vertices[0].z_angle = 0.00f;
+    frame_data->vertices[0].RGBA[0] = 0.20f;
+    frame_data->vertices[0].RGBA[1] = 0.75f;
+    frame_data->vertices[0].RGBA[2] = 0.50f;
+    frame_data->vertices[0].RGBA[3] = 1.00f;
+    frame_data->vertices[1].x       = 0.75f;
+    frame_data->vertices[1].y       = 0.75f;
+    frame_data->vertices[1].z       = 1.00f;
+    frame_data->vertices[1].parent_x   = 0.10f;
+    frame_data->vertices[1].parent_y   = 0.10f;
+    frame_data->vertices[1].parent_z   = 0.10f;
+    frame_data->vertices[1].x_angle = 0.00f;
+    frame_data->vertices[1].y_angle = 0.00f;
+    frame_data->vertices[1].z_angle = 0.00f;
+    frame_data->vertices[1].RGBA[0] = 0.25f;
+    frame_data->vertices[1].RGBA[1] = 0.25f;
+    frame_data->vertices[1].RGBA[2] = 0.50f;
+    frame_data->vertices[1].RGBA[3] = 1.00f;
+    frame_data->vertices[2].x       = 0.50f;
+    frame_data->vertices[2].y       = 0.25f;
+    frame_data->vertices[2].z       = 1.00f;
+    frame_data->vertices[2].parent_x   = -0.10f;
+    frame_data->vertices[2].parent_y   = -0.10f;
+    frame_data->vertices[2].parent_z   = -0.10f;
+    frame_data->vertices[2].x_angle = 0.00f;
+    frame_data->vertices[2].y_angle = 0.00f;
+    frame_data->vertices[2].z_angle = 0.00f;
+    frame_data->vertices[2].RGBA[0] = 1.00f;
+    frame_data->vertices[2].RGBA[1] = 0.40f;
+    frame_data->vertices[2].RGBA[2] = 0.15f;
+    frame_data->vertices[2].RGBA[3] = 1.00f;
     
     glBufferData(
         /* target: */
             GL_ARRAY_BUFFER,
         /* size_in_bytes: */
-            (sizeof(GPUVertex) * 3),
-            // (sizeof(GPUVertex) * frame_data->vertices_size),
+            sizeof(GPUVertex) * frame_data->vertices_size,
         /* const GLvoid * data: (to init with, or NULL to copy no data) */
-            test_data,
-            // (const GLvoid *)frame_data->vertices,
+            (const GLvoid *)frame_data->vertices,
         /* usage: */
             GL_DYNAMIC_DRAW);
     

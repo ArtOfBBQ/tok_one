@@ -13,6 +13,8 @@
 extern char application_path[128];
 uint32_t application_running = 1;
 
+GPUSharedDataCollection gpu_shared_data_collection;
+
 #define GLX_CONTEXT_MAJOR_VERSION_ARB       0x2091
 #define GLX_CONTEXT_MINOR_VERSION_ARB       0x2092
 typedef GLXContext (*glXCreateContextAttribsARBProc)(
@@ -364,54 +366,6 @@ int main(int argc, char* argv[])
     opengl_set_projection_constants(
         /* GPUProjectionConstants * pjc: */
             &window_globals->projection_constants);
-    
-    // TODO: this code is duplicated in macos X, unify to shared code
-    // allocate 3 buffers
-    GPUSharedDataCollection gpu_shared_data_collection;
-    for (
-        uint32_t frame_i = 0;
-        frame_i < 3;
-        frame_i++)
-    {
-        gpu_shared_data_collection.triple_buffers[frame_i].vertices_size =
-            MAX_VERTICES_PER_BUFFER;
-        uint64_t vertices_allocation_size =
-            sizeof(GPUVertex) *
-            gpu_shared_data_collection.triple_buffers[frame_i].vertices_size;
-        vertices_allocation_size += (4096 - (vertices_allocation_size % 4096));
-        assert(vertices_allocation_size % 4096 == 0);
-        gpu_shared_data_collection.triple_buffers[frame_i].vertices =
-            (GPUVertex *)malloc_from_unmanaged_aligned(
-                vertices_allocation_size,
-                4096);
-        
-        uint64_t lights_allocation_size = sizeof(GPULightCollection);
-        lights_allocation_size += (4096 - (lights_allocation_size % 4096));
-        assert(lights_allocation_size % 4096 == 0);
-        gpu_shared_data_collection.triple_buffers[frame_i].light_collection =
-            (GPULightCollection *)malloc_from_unmanaged_aligned(
-                lights_allocation_size,
-                4096);
-        
-        uint64_t camera_allocation_size = sizeof(GPUCamera);
-        camera_allocation_size += (4096 - (camera_allocation_size % 4096));
-        assert(camera_allocation_size % 4096 == 0);
-        gpu_shared_data_collection.triple_buffers[frame_i].camera =
-            (GPUCamera *)malloc_from_unmanaged_aligned(
-                camera_allocation_size,
-                4096);
-        
-        uint64_t projection_constants_allocation_size =
-            sizeof(GPUProjectionConstants);
-        projection_constants_allocation_size +=
-            (4096 - (projection_constants_allocation_size % 4096));
-        assert(projection_constants_allocation_size % 4096 == 0);
-        gpu_shared_data_collection.triple_buffers[frame_i].
-            projection_constants =
-                (GPUProjectionConstants *)malloc_from_unmanaged_aligned(
-                    projection_constants_allocation_size,
-                    4096);
-    }
     
     // Jelle: more drawing code
     uint32_t current_frame_i = 0;
