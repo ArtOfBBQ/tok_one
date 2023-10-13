@@ -369,15 +369,11 @@ int main(int argc, char* argv[])
         /* uint32_t fragment_shader_source_size: */
             fragment_shader_source.size);
     
-    opengl_set_projection_constants(
-        /* GPUProjectionConstants * pjc: */
-            &window_globals->projection_constants);
-    
     XSelectInput(display, win, KeyPressMask | KeyReleaseMask);
     
     // Jelle: more drawing code
     uint32_t current_frame_i = 0;
-    for (uint32_t _ = 0; _ < 200000; _++) {
+    for (uint32_t _ = 0; _ < 150000; _++) {
         glClearColor(0.0f, 0.0f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         
@@ -388,11 +384,11 @@ int main(int argc, char* argv[])
         {
             uint32_t tok_one_key = linux_keycode_to_tokone_keycode(
                 event.xkey.keycode);
-            register_keyup(tok_one_key);
+            register_keydown(tok_one_key);
         } else if (event.type == KeyRelease) {
             uint32_t tok_one_key = linux_keycode_to_tokone_keycode(
                 event.xkey.keycode);
-            register_keydown(tok_one_key);
+            register_keyup(tok_one_key);
         }
         
         gpu_shared_data_collection.
@@ -400,16 +396,21 @@ int main(int argc, char* argv[])
             vertices_size = 0;
         gpu_shared_data_collection.
             triple_buffers[current_frame_i].
-            light_collection->
-            lights_size = 0;
+            light_collection->lights_size = 0;
         
         shared_gameloop_update(
             &gpu_shared_data_collection.
                 triple_buffers[current_frame_i]);
         
-        opengl_set_projection_constants(
-            /* GPUProjectionConstants * pjc: */
-                &window_globals->projection_constants);
+        assert(
+            camera.x == gpu_shared_data_collection.
+                triple_buffers[current_frame_i].camera->x);
+        assert(
+            camera.y == gpu_shared_data_collection.
+                triple_buffers[current_frame_i].camera->y);
+        assert(
+            camera.z == gpu_shared_data_collection.
+                triple_buffers[current_frame_i].camera->z);
         
         printf(
             "frame_i: %u, vertices_for_gpu_size: %u\n",

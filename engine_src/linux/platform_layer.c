@@ -328,6 +328,6 @@ void platform_gpu_push_texture_slice(
 }
 
 void platform_close_application(void) {
-    
+    exit(0);    
 }
 

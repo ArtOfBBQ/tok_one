@@ -7,16 +7,34 @@ uint32_t linux_keycode_to_tokone_keycode(const uint32_t linux_key)
     #endif
     
     switch (linux_key) {
-        case (24):
+        case ( 24):
             return TOK_KEY_ENTER;
-        case (36):
+        case ( 25):
+            return TOK_KEY_W;
+        case ( 26):
+            return TOK_KEY_E;
+        case ( 28):
+            return TOK_KEY_T;
+        case ( 31):
+            return TOK_KEY_I;
+        case ( 36):
             return TOK_KEY_ENTER;
-        case (41):
+        case ( 38):
+            return TOK_KEY_Q;
+        case ( 39):
+            return TOK_KEY_S;
+        case ( 41):
             return TOK_KEY_SPACEBAR;
-        case (65):
+        case ( 53):
+            return TOK_KEY_X;
+        case ( 61):
+            return TOK_KEY_BACKSLASH;
+        case ( 65):
             return TOK_KEY_SPACEBAR;
-        case (72):
+        case ( 72):
             return TOK_KEY_RIGHTARROW;
+        case ( 97):
+            return TOK_KEY_UNDERSCORE;
         case (111):
             return TOK_KEY_UPARROW;
         case (113):
@@ -25,8 +43,6 @@ uint32_t linux_keycode_to_tokone_keycode(const uint32_t linux_key)
             return TOK_KEY_RIGHTARROW;
         case (116):
             return TOK_KEY_DOWNARROW;
-        case (150):
-            return TOK_KEY_LEFTARROW;
         default:
             #ifndef LOGGER_IGNORE_ASSERTS
             strcpy_capped(err_msg, 128, "unhandled linux keycode: ");

@@ -153,10 +153,14 @@ void terminal_redraw_backgrounds(void) {
        /* zPolygon * recipien: */
            &current_command_input);
     
-    current_command_input.triangle_materials[0].color[0] = term_background_color[0];
-    current_command_input.triangle_materials[0].color[1] = term_background_color[1];
-    current_command_input.triangle_materials[0].color[2] = term_background_color[2];
-    current_command_input.triangle_materials[0].color[3] = term_background_color[3];
+    current_command_input.triangle_materials[0].color[0] =
+        term_background_color[0];
+    current_command_input.triangle_materials[0].color[1] =
+        term_background_color[1];
+    current_command_input.triangle_materials[0].color[2] =
+        term_background_color[2];
+    current_command_input.triangle_materials[0].color[3] =
+        term_background_color[3];
     current_command_input.visible = terminal_active;
     current_command_input.ignore_camera = true;
     current_command_input.ignore_lighting = true;
@@ -487,3 +491,4 @@ void terminal_commit_or_activate(void) {
     
     destroy_terminal_objects();    
 }
+

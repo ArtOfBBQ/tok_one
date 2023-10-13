@@ -11,6 +11,8 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
     assert(VAO < UINT32_MAX);
     assert(VBO < UINT32_MAX);
     
+    glUseProgram(program_id);
+    
     if (frame_data->vertices_size < 1) { return; }
     assert(frame_data->vertices != NULL); 
     
@@ -32,6 +34,11 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         }
         assert(0);
     }
+    
+    frame_data->vertices[0].ignore_camera = 1.0f;
+    frame_data->vertices[0].RGBA[1] = 1.0f;
+    frame_data->vertices[1].ignore_camera = 1.0f;
+    frame_data->vertices[2].ignore_camera = 1.0f;
     
     glBufferData(
         /* target: */
@@ -61,8 +68,49 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         }
         assert(0);
     }
+
+    opengl_set_camera(frame_data->camera);
+    err_value = glGetError();
+    if (err_value != GL_NO_ERROR) {
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled error when sending buffer data!");
+                break;
+        }
+        assert(0);
+    }
     
-    glPointSize(50); // for GL_POINTS
+    opengl_set_projection_constants(frame_data->projection_constants);
+    
+    err_value = glGetError();
+    if (err_value != GL_NO_ERROR) {
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled error when sending buffer data!");
+                break;
+        }
+        assert(0);
+    }
+     
+    glPointSize(10); // for GL_POINTS
     glDrawArrays(
         /* GLenum mode: */
             GL_POINTS, 
@@ -157,10 +205,10 @@ void opengl_compile_shaders(
     uint32_t vertex_shader_source_size,
     char * fragment_shader_source,
     uint32_t fragment_shader_source_size)
-{
-    // opengl_compile_shaders()...
-    
+{ 
     // allocate buffer memory...
+    program_id = glCreateProgram();
+    glUseProgram(program_id);
     GLuint vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
     GLenum err_value;
     
@@ -187,10 +235,12 @@ void opengl_compile_shaders(
             fragment_shader_source_size);
     
     // attach compiled shaders to program
-    program_id = glCreateProgram();
     glAttachShader(program_id, vertex_shader_id);
     glAttachShader(program_id, fragment_shader_id);
+    err_value = glGetError();
     glLinkProgram(program_id);
+    err_value = glGetError();
+    assert(err_value == 0);
     
     GLint success = -1;
     glGetProgramiv(
@@ -203,7 +253,23 @@ void opengl_compile_shaders(
     assert(success);
     
     err_value = glGetError();
-    assert(err_value == GL_NO_ERROR);
+    if (err_value != 0) {
+        printf("%s\n", "opengl: bad link status");
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled!");
+        }
+        assert(0);
+    }
     
     glGenVertexArrays(1, &VAO);
     err_value = glGetError();
@@ -287,44 +353,152 @@ void opengl_compile_shaders(
     glDeleteShader(fragment_shader_id);
 }
 
+void opengl_set_camera(
+    GPUCamera * camera)
+{
+    printf("set camera: {%f,%f,%f}", camera->x, camera->y, camera->z);
+    printf(
+        " - angle: {%f,%f,%f}\n",
+        camera->x_angle, camera->y_angle, camera->z_angle);
+    
+    GLint loc = -1;
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "camera_position");
+    assert(loc == 0);
+    assert(glGetError() == 0);
+    glProgramUniform3f(
+        program_id,
+        loc,
+        camera->x, camera->y, camera->z);
+    assert(glGetError() == 0);
+    
+    float doublecheck_cam_pos[3];
+    doublecheck_cam_pos[0] = 3234.5f;
+    doublecheck_cam_pos[1] = 3214.5f;
+    glGetUniformfv(program_id, loc, doublecheck_cam_pos);
+    assert(glGetError() == 0);
+    assert(doublecheck_cam_pos[0] == camera->x);
+    assert(doublecheck_cam_pos[1] == camera->y);
+    assert(doublecheck_cam_pos[2] == camera->z);
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "camera_angle");
+    assert(loc == 1);
+    assert(glGetError() == 0);
+    glProgramUniform3f(
+        program_id,
+        loc,
+        camera->x_angle, camera->y_angle, camera->z_angle);
+    assert(glGetError() == 0);
+
+    float doublecheck_cam_angle[3];
+    doublecheck_cam_angle[2] = 234.12f;
+    glGetUniformfv(program_id, loc, doublecheck_cam_angle);
+    assert(glGetError() == 0);
+    assert(doublecheck_cam_angle[0] == camera->x_angle);
+    assert(doublecheck_cam_angle[1] == camera->y_angle);
+    assert(doublecheck_cam_angle[2] == camera->z_angle);
+}
+
 void opengl_set_projection_constants(
     GPUProjectionConstants * pjc)
 {
-    GLuint loc;
+    assert(pjc != NULL);
+    glUseProgram(program_id);
+    
+    printf(
+        "setting pjc: near %f, far %f, q: %f, fov_rad: %f, fov_mod: %f, "
+        "x_multiplier: %f, y_multiplier: %f\n",
+        pjc->near,
+        pjc->far,
+        pjc->q,
+        pjc->field_of_view_rad,
+        pjc->field_of_view_modifier,
+        pjc->x_multiplier,
+        pjc->y_multiplier);
+    
+    // set viewport
+    glDepthRangef(
+        /* GLfloat nearVal: */ 
+            pjc->near,
+        /* GLfloat farVal: */
+            pjc->far);
+    
+    GLint loc = -1;
     
     loc = glGetUniformLocation(
         program_id,
-        "projection_constants.near");
-    glUniform1f(loc, pjc->near);
+        "projection_constants_near");
+    printf("projection_constants_near at loc: %i\n", loc);
+    assert(glGetError() == 0);
+    assert(loc == 2);
+    assert(pjc->near > 0.099f);
+    assert(pjc->near < 0.110f);
+    printf("copying pjc->near to uniform: %f\n", pjc->near);
+    assert(glGetError() == 0);
+    glProgramUniform1f(program_id, loc, pjc->near);
+    assert(glGetError() == 0);
     
+    loc = -1;
     loc = glGetUniformLocation(
         program_id,
-        "projection_constants.far");
-    glUniform1f(loc, pjc->far);
+        "projection_constants_q");
+    assert(glGetError() == 0);
+    assert(loc == 3);
+    printf("projection_constants_q at loc: %i\n", loc);
+    glProgramUniform1f(program_id, loc, pjc->q);
+    assert(glGetError() == 0);
     
+    loc = -1;
     loc = glGetUniformLocation(
         program_id,
-        "projection_constants.q");
-    glUniform1f(loc, pjc->q);
+        "projection_constants_fov_modifier");
+    printf("projection_constants_fov_modifier at loc: %i\n", loc);
+    assert(loc == 4);
+    glProgramUniform1f(program_id, loc, pjc->field_of_view_modifier);
+    assert(glGetError() == 0);
     
+    loc = -1;
     loc = glGetUniformLocation(
         program_id,
-        "projection_constants.field_of_view_rad");
-    glUniform1f(loc, pjc->field_of_view_rad);
+        "projection_constants_x_multiplier");
+    printf("projection_constants_x_multiplier at loc: %i\n", loc);
+    assert(loc == 5);
+    glProgramUniform1f(program_id, loc, pjc->x_multiplier);
+    assert(glGetError() == 0);
     
+    
+    // TODO: find out why the uniform
+    // TODO: 'projection_constants_near' isn't getting set
     loc = glGetUniformLocation(
         program_id,
-        "projection_constants.field_of_view_modifier");
-    glUniform1f(loc, pjc->field_of_view_modifier);
+        "projection_constants_near");
+    assert(loc == 2);
+    printf("loc for check_near: %i\n", loc);
+    GLfloat check_near = -123.0f;
+    glGetUniformfv(program_id, loc, &check_near);
     
-    loc = glGetUniformLocation(
-        program_id,
-        "projection_constants.x_multiplier");
-    glUniform1f(loc, pjc->x_multiplier);
-    
-    loc = glGetUniformLocation(
-        program_id,
-        "projection_constants.y_multiplier");
-    glUniform1f(loc, pjc->y_multiplier);
+    err_value = glGetError();
+    if (err_value != GL_NO_ERROR) {
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled!");
+        }
+        assert(0);
+    }
+    printf("check_near: %f, pjc->near: %f\n", check_near, pjc->near);
+    assert(check_near == pjc->near);
 }
 

@@ -15,21 +15,13 @@ layout (location = 11) in float touchable_id;
 
 out vec4 vertex_color;
 out vec4 vertex_lighting;
-// out float fragment_texturearray_i;
-// out float fragment_texture_i;
-// out vec2 fragment_uv;
 
-struct GPUProjectionConstants {
-    float near;
-    float far;
-    float q;
-    float field_of_view_rad;
-    float field_of_view_modifier;
-    float x_multiplier;
-    float y_multiplier;
-};
-
-uniform GPUProjectionConstants projection_constants;
+uniform vec3 camera_position;
+uniform vec3 camera_angle;
+uniform float projection_constants_near;
+uniform float projection_constants_q;
+uniform float projection_constants_fov_modifier;
+uniform float projection_constants_x_multiplier;
 
 vec4 x_rotate(vec4 vertices, float x_angle) {
     vec4 rotated_vertices = vertices;
@@ -87,8 +79,6 @@ void main()
     
     vec4 mesh_normals = vec4(normal, 1.0f);
     
-    vec4 camera_position = vec4(0.0f, 0.0f, 0.0f, 0.0f);
-    
     // rotate vertices
     vec4 x_rotated_vertices = x_rotate(
         mesh_vertices,
@@ -96,12 +86,14 @@ void main()
     vec4 x_rotated_normals  = x_rotate(
         mesh_normals,
         parent_angle[0]);
+    
     vec4 y_rotated_vertices = y_rotate(
         x_rotated_vertices,
         parent_angle[1]);
     vec4 y_rotated_normals  = y_rotate(
         x_rotated_normals,
         parent_angle[1]);
+    
     vec4 z_rotated_vertices = z_rotate(
         y_rotated_vertices,
         parent_angle[2]);
@@ -111,14 +103,34 @@ void main()
     
     vec4 translated_pos = z_rotated_vertices + parent_mesh_pos;
     
+    // translate to world position
+    if (ignore_camera < 0.9f) {
+        vec4 camera_translated_pos =
+            translated_pos - vec4(camera_position, 0.0f);
+        
+        vec4 camera_x_rotated = x_rotate(
+            camera_translated_pos,
+            -camera_angle[0]);
+        vec4 camera_y_rotated = y_rotate(
+            camera_x_rotated,
+            -camera_angle[1]);
+        vec4 camera_z_rotated = z_rotate(
+            camera_y_rotated,
+            -camera_angle[2]);
+        
+        gl_Position = camera_z_rotated;
+        
+    } else {
+        gl_Position = translated_pos;
+    }
+    
     // projection
-    gl_Position             = translated_pos;
-    //gl_Position[0]       *= projection_constants.x_multiplier;
-    //gl_Position[1]       *= projection_constants.field_of_view_modifier;
-    //gl_Position[3]        = gl_Position[2];
-    //gl_Position[2]        =     
-    //    (gl_Position[2] * projection_constants.q) -
-    //    (projection_constants.near * projection_constants.q);
+    gl_Position[0] = gl_Position[0] * projection_constants_x_multiplier;
+    gl_Position[1] = gl_Position[1] * projection_constants_fov_modifier;
+    gl_Position[3] = gl_Position[2];
+    gl_Position[2] =
+        (gl_Position[2] * projection_constants_q) -
+        (projection_constants_near * projection_constants_q);
     
     vertex_color = rgba;
     clamp(vertex_color, 0.10f, 1.0f);
@@ -133,7 +145,7 @@ void main()
         return;
     }
     
-    clamp(vertex_lighting, 0.15f, 1.0f);
-    vertex_lighting[3] = 1.0f;    
+    clamp(vertex_lighting, 0.20f, 1.0f);
+    vertex_lighting[3] = 1.0f;
 }
 

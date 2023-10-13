@@ -143,9 +143,9 @@ void client_logic_startup(void) {
     im_a_light->reach = 1.5f;
     im_a_light->deleted = false;
     commit_zlight(im_a_light);
-        
+    
     // example 1: the 'christams tree' obj file
-    for (uint32_t i = 0; i < 6; i++) {
+    for (uint32_t i = 0; i < 3; i++) {
         construct_zpolygon(&xmastree);
         xmastree.mesh_id = xmastree_mesh_id;
         xmastree.x = 0.0f + (0.35f * (i % 10));
@@ -250,8 +250,7 @@ void client_logic_animation_callback(
 static void client_handle_keypresses(
     uint64_t microseconds_elapsed)
 {
-    float elapsed_mod =
-        (float)((double)microseconds_elapsed / (double)16666);
+    float elapsed_mod = (float)((double)microseconds_elapsed / (double)16666);
     float cam_speed = 0.1f * elapsed_mod;
     float cam_rotation_speed = 0.05f * elapsed_mod;
     
@@ -433,7 +432,7 @@ bool32_t fading_out = true;
 void client_logic_update(uint64_t microseconds_elapsed)
 {
     request_fps_counter(microseconds_elapsed);
-        
+    
     client_handle_keypresses(microseconds_elapsed);  
 }
 
@@ -454,20 +453,7 @@ void client_logic_window_resize(
     const uint32_t new_height,
     const uint32_t new_width)
 {
-    //    char unhandled_rs_msg[256];
-    //    strcpy_capped(
-    //        unhandled_rs_msg,
-    //        256,
-    //        "Error: unhandled client_logic_window_resize() to height/width: of ");
-    //    strcat_uint_capped(unhandled_rs_msg, 256, new_height);
-    //    strcat_capped(unhandled_rs_msg, 256, ", ");
-    //    strcat_uint_capped(unhandled_rs_msg, 256, new_width);
-    //    strcat_capped(
-    //        unhandled_rs_msg,
-    //        256,
-    //        ".\nEither prevent app resizing or handle in clientlogic.c\n");
-    //    log_append(unhandled_rs_msg);
-    //    log_dump_and_crash(unhandled_rs_msg);
+    
 }
 
 void client_logic_shutdown(void) {
