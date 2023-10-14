@@ -35,11 +35,6 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         assert(0);
     }
     
-    frame_data->vertices[0].ignore_camera = 1.0f;
-    frame_data->vertices[0].RGBA[1] = 1.0f;
-    frame_data->vertices[1].ignore_camera = 1.0f;
-    frame_data->vertices[2].ignore_camera = 1.0f;
-    
     glBufferData(
         /* target: */
             GL_ARRAY_BUFFER,
@@ -109,11 +104,11 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         }
         assert(0);
     }
-     
-    glPointSize(10); // for GL_POINTS
+    
+    // glPointSize(10); // for GL_POINTS
     glDrawArrays(
         /* GLenum mode: */
-            GL_POINTS, 
+            GL_TRIANGLES, 
         /* GLint first: */
             0,
         /* GLint count (# of vertices to render): */
@@ -167,13 +162,7 @@ static void opengl_compile_given_shader(
             &is_compiled);
     
     if (is_compiled == GL_FALSE) {
-        printf("%s\n", "failed to compile shader with source: ");
-        printf("%s\n", "*******");
-        printf("%s\n", shader_source);
-        printf("%s\n", "*******");
         GLenum err_value = glGetError();
-        printf("glGetError returned: %u\n", err_value);
-        printf("%s\n", "*******");
         
         glGetShaderInfoLog(
             /* GLuint shader id: */
@@ -184,8 +173,6 @@ static void opengl_compile_given_shader(
                 NULL,
             /* GLchar * infolog: */
                 info_log);
-        printf("shader info log: %s\n", info_log);
-        printf("%s\n", "*******");
         assert(0);
     } else if (is_compiled == GL_TRUE) {
         
@@ -210,7 +197,6 @@ void opengl_compile_shaders(
     GLenum err_value;
     
     program_id = glCreateProgram();
-    printf("program_id: %u\n", program_id);
     assert(program_id == 1);
     GLuint vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
     err_value = glGetError();
@@ -361,11 +347,6 @@ void opengl_compile_shaders(
 void opengl_set_camera(
     GPUCamera * camera)
 {
-    printf("set camera: {%f,%f,%f}", camera->x, camera->y, camera->z);
-    printf(
-        " - angle: {%f,%f,%f}\n",
-        camera->x_angle, camera->y_angle, camera->z_angle);
-    
     GLint loc = -1;
     
     assert(program_id == 1);
@@ -407,22 +388,6 @@ void opengl_set_camera(
         assert(0);
     }
     
-    float doublecheck_cam_pos[3];
-    doublecheck_cam_pos[0] = 3234.5f;
-    doublecheck_cam_pos[1] = 3214.5f;
-    doublecheck_cam_pos[2] = 1.5f;
-    assert(loc == 0);
-    glGetUniformfv(program_id, loc, doublecheck_cam_pos);
-    printf(
-        "(position) doublecheck values: {%f,%f,%f}\n",
-        doublecheck_cam_pos[0],
-        doublecheck_cam_pos[1],
-        doublecheck_cam_pos[2]);
-    assert(glGetError() == 0);
-    assert(doublecheck_cam_pos[0] == camera->x);
-    assert(doublecheck_cam_pos[1] == camera->y);
-    assert(doublecheck_cam_pos[2] == camera->z);
-    
     loc = glGetUniformLocation(
         program_id,
         "camera_angle");
@@ -453,17 +418,6 @@ void opengl_set_projection_constants(
     assert(pjc != NULL);
     glUseProgram(program_id);
     
-    printf(
-        "setting pjc: near %f, far %f, q: %f, fov_rad: %f, fov_mod: %f, "
-        "x_multiplier: %f, y_multiplier: %f\n",
-        pjc->near,
-        pjc->far,
-        pjc->q,
-        pjc->field_of_view_rad,
-        pjc->field_of_view_modifier,
-        pjc->x_multiplier,
-        pjc->y_multiplier);
-    
     // set viewport
     glDepthRangef(
         /* GLfloat nearVal: */ 
@@ -476,12 +430,10 @@ void opengl_set_projection_constants(
     loc = glGetUniformLocation(
         program_id,
         "projection_constants_near");
-    printf("projection_constants_near at loc: %i\n", loc);
     assert(glGetError() == 0);
     assert(loc == 2);
     assert(pjc->near > 0.099f);
     assert(pjc->near < 0.110f);
-    printf("copying pjc->near to uniform: %f\n", pjc->near);
     assert(glGetError() == 0);
     // reminder: don't use glUniform1f, it's buggy on ubuntu with some
     // drivers, use glUniform1fv instead
@@ -494,7 +446,6 @@ void opengl_set_projection_constants(
         "projection_constants_q");
     assert(glGetError() == 0);
     assert(loc == 3);
-    printf("projection_constants_q at loc: %i\n", loc);
     // reminder: don't use glUniform1f, it's buggy on ubuntu with some
     // drivers, use glUniform1fv instead
     glUniform1fv(loc, 1, &pjc->q);
@@ -504,7 +455,6 @@ void opengl_set_projection_constants(
     loc = glGetUniformLocation(
         program_id,
         "projection_constants_fov_modifier");
-    printf("projection_constants_fov_modifier at loc: %i\n", loc);
     assert(loc == 4);
     // reminder: don't use glUniform1f, it's buggy on ubuntu with some
     // drivers, use glUniform1fv instead
@@ -515,41 +465,10 @@ void opengl_set_projection_constants(
     loc = glGetUniformLocation(
         program_id,
         "projection_constants_x_multiplier");
-    printf("projection_constants_x_multiplier at loc: %i\n", loc);
     assert(loc == 5);
     // reminder: don't use glUniform1f, it's buggy on ubuntu with some
     // drivers, use glUniform1fv instead
     glUniform1fv(loc, 1, &pjc->x_multiplier);
     assert(glGetError() == 0);
-    
-    // TODO: find out why the uniform
-    // TODO: 'projection_constants_near' isn't getting set
-    loc = glGetUniformLocation(
-        program_id,
-        "projection_constants_near");
-    assert(loc == 2);
-    printf("loc for check_near: %i\n", loc);
-    GLfloat check_near = -123.0f;
-    glGetUniformfv(program_id, loc, &check_near);
-    
-    err_value = glGetError();
-    if (err_value != GL_NO_ERROR) {
-        switch (err_value) {
-            case GL_INVALID_VALUE:
-                printf("%s\n", "GL_INVALID_VALUE");
-                break;
-            case GL_INVALID_ENUM:
-                printf("%s\n", "GL_INVALID_ENUM");
-                break;
-            case GL_INVALID_OPERATION:
-                printf("%s\n", "GL_INVALID_OPERATION");
-                break;
-            default:
-                printf("%s\n", "unhandled!");
-        }
-        assert(0);
-    }
-    printf("check_near: %f, pjc->near: %f\n", check_near, pjc->near);
-    assert(check_near == pjc->near);
 }
 

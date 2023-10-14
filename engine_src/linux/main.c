@@ -347,10 +347,6 @@ int main(int argc, char* argv[])
         /* FileBuffer * out_preallocatedbuffer: */
             &vertex_shader_source);
     
-    printf(
-        "vertex shader: %u bytes\n",
-        vertex_shader_source.size);
-    
     FileBuffer fragment_shader_source;
     fragment_shader_source.size = 
         platform_get_resource_size("fragment_shader.glsl");
@@ -361,10 +357,6 @@ int main(int argc, char* argv[])
             "fragment_shader.glsl",
         /* FileBuffer * out_preallocatedbuffer: */
             &fragment_shader_source);
-    
-    printf(
-        "fragment shader: %u bytes\n",
-        fragment_shader_source.size);
     
     opengl_compile_shaders(
         /* char * vertex_shader_source: */
@@ -377,25 +369,25 @@ int main(int argc, char* argv[])
             fragment_shader_source.size);
     
     XSelectInput(display, win, KeyPressMask | KeyReleaseMask);
+    XEvent event;
     
-    // Jelle: more drawing code
     uint32_t current_frame_i = 0;
-    for (uint32_t _ = 0; _ < 150000; _++) {
+    while (application_running) {
         glClearColor(0.0f, 0.0f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         
         /* keyboard events */
-        XEvent event;
-        XNextEvent(display, &event);
-        if (event.type == KeyPress)
-        {
-            uint32_t tok_one_key = linux_keycode_to_tokone_keycode(
-                event.xkey.keycode);
-            register_keydown(tok_one_key);
-        } else if (event.type == KeyRelease) {
-            uint32_t tok_one_key = linux_keycode_to_tokone_keycode(
-                event.xkey.keycode);
-            register_keyup(tok_one_key);
+        while (XPending(display)) {
+            XNextEvent(display, &event);
+            if (event.type == KeyPress) {
+                uint32_t tok_one_key = linux_keycode_to_tokone_keycode(
+                    event.xkey.keycode);
+                register_keydown(tok_one_key);
+            } else if (event.type == KeyRelease) {
+                uint32_t tok_one_key = linux_keycode_to_tokone_keycode(
+                    event.xkey.keycode);
+                register_keyup(tok_one_key);
+            }
         }
         
         gpu_shared_data_collection.
@@ -406,27 +398,7 @@ int main(int argc, char* argv[])
             light_collection->lights_size = 0;
         
         shared_gameloop_update(
-            &gpu_shared_data_collection.
-                triple_buffers[current_frame_i]);
-
-        if (_ > 0) {
-            assert(
-                camera.x == gpu_shared_data_collection.
-                    triple_buffers[current_frame_i].camera->x);
-            assert(
-                camera.y == gpu_shared_data_collection.
-                    triple_buffers[current_frame_i].camera->y);
-            assert(
-                camera.z == gpu_shared_data_collection.
-                    triple_buffers[current_frame_i].camera->z);
-        }
-        
-        printf(
-            "frame_i: %u, vertices_for_gpu_size: %u\n",
-            current_frame_i,
-            gpu_shared_data_collection.
-                triple_buffers[current_frame_i].
-                vertices_size);
+            &gpu_shared_data_collection.triple_buffers[current_frame_i]);
         
         opengl_render_triangles(
             &gpu_shared_data_collection.triple_buffers[current_frame_i]); 
@@ -435,11 +407,6 @@ int main(int argc, char* argv[])
         
         current_frame_i += 1;
         current_frame_i -= ((current_frame_i > 2)*3);
-        
-        if (!application_running) {
-            printf("%s\n", crashed_top_of_screen_msg);
-            break;
-        }
     }
     
     glXMakeCurrent(display, 0, 0);
@@ -448,6 +415,8 @@ int main(int argc, char* argv[])
     XDestroyWindow(display, win);
     XFreeColormap(display, cmap);
     XCloseDisplay(display);
+    
+    platform_close_application();
     
     return 0;
 }
