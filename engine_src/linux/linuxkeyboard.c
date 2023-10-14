@@ -29,6 +29,8 @@ uint32_t linux_keycode_to_tokone_keycode(const uint32_t linux_key)
             return TOK_KEY_9;
         case ( 19):
             return TOK_KEY_0;
+        case ( 22):
+            return TOK_KEY_BACKSPACE;
         case ( 24):
             return TOK_KEY_Q;
         case ( 25):
