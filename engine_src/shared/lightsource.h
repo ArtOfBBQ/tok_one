@@ -44,15 +44,7 @@ void z_rotate_zvertices_inplace(
     const SIMD_FLOAT cos_angles,
     const SIMD_FLOAT sin_angles);
 
-typedef struct zCamera {
-    float x;
-    float y;
-    float z;
-    float x_angle;
-    float y_angle;
-    float z_angle;
-} zCamera;
-extern zCamera camera;
+extern GPUCamera camera;
 
 typedef struct zLightSource {
     int32_t object_id; // you can make a group of lights and/or texquads by

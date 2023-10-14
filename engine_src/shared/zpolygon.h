@@ -23,7 +23,7 @@ extern "C" {
 #endif
 
 void zcamera_move_forward(
-    zCamera * to_move,
+    GPUCamera * to_move,
     const float distance);
 
 typedef struct TriangleMaterial {

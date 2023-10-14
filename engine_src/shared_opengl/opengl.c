@@ -207,10 +207,14 @@ void opengl_compile_shaders(
     uint32_t fragment_shader_source_size)
 { 
     // allocate buffer memory...
-    program_id = glCreateProgram();
-    glUseProgram(program_id);
-    GLuint vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
     GLenum err_value;
+    
+    program_id = glCreateProgram();
+    printf("program_id: %u\n", program_id);
+    assert(program_id == 1);
+    GLuint vertex_shader_id = glCreateShader(GL_VERTEX_SHADER);
+    err_value = glGetError();
+    assert(err_value == 0);
     
     assert(vertex_shader_source_size > 0);
     assert(vertex_shader_source != NULL);
@@ -222,8 +226,12 @@ void opengl_compile_shaders(
             vertex_shader_source,
         /* GLint source_length: */
             vertex_shader_source_size);
+    err_value = glGetError();
+    assert(err_value == 0);
     
     GLuint fragment_shader_id = glCreateShader(GL_FRAGMENT_SHADER);
+    err_value = glGetError();
+    assert(err_value == 0);
     assert(fragment_shader_source_size > 0);
     assert(fragment_shader_source != NULL);
     opengl_compile_given_shader(
@@ -233,11 +241,16 @@ void opengl_compile_shaders(
             fragment_shader_source,
         /* GLint source_length: */
             fragment_shader_source_size);
+    err_value = glGetError();
+    assert(err_value == 0);
     
     // attach compiled shaders to program
     glAttachShader(program_id, vertex_shader_id);
+    err_value = glGetError();
+    assert(err_value == 0);
     glAttachShader(program_id, fragment_shader_id);
     err_value = glGetError();
+    assert(err_value == 0);
     glLinkProgram(program_id);
     err_value = glGetError();
     assert(err_value == 0);
@@ -271,6 +284,11 @@ void opengl_compile_shaders(
         assert(0);
     }
     
+    // TODO: Learn exactly when nescessary, I hope we can just set & forget
+    glUseProgram(program_id); // TODO: can this have averse effects?
+    err_value = glGetError();
+    assert(err_value == 0);
+    
     glGenVertexArrays(1, &VAO);
     err_value = glGetError();
     assert(err_value == GL_NO_ERROR);
@@ -278,7 +296,7 @@ void opengl_compile_shaders(
     glGenBuffers(1, &VBO);
     err_value = glGetError();
     assert(err_value == GL_NO_ERROR);
-
+    
     glBindVertexArray(VAO);
     err_value = glGetError();
     assert(err_value == GL_NO_ERROR);
@@ -286,23 +304,6 @@ void opengl_compile_shaders(
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     err_value = glGetError();
     assert(err_value == GL_NO_ERROR);
-
-    // TODO: Learn exactly when nescessary, I hope we can just set & forget
-    glUseProgram(program_id);
-    err_value = glGetError();
-    assert(err_value == GL_NO_ERROR);
-    
-    glBindVertexArray(VAO); 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    err_value = glGetError();
-    assert(err_value == GL_NO_ERROR);
-    
-    // glEnableVertexAttribArray(0);
-    // glEnableVertexAttribArray(1);
-    
-    err_value = glGetError();
-    assert(err_value == GL_NO_ERROR); 
     
     /*
     Attribute pointers describe the fields of our data
@@ -348,9 +349,13 @@ void opengl_compile_shaders(
         
         glEnableVertexAttribArray(_);
     }
-     
-    glDeleteShader(vertex_shader_id);
-    glDeleteShader(fragment_shader_id);
+
+    // validate program
+    success = 0;
+    glValidateProgram(program_id);
+    glGetProgramiv(program_id, GL_VALIDATE_STATUS, &success);
+    assert(success);
+    assert(glGetError() == 0);
 }
 
 void opengl_set_camera(
@@ -363,21 +368,56 @@ void opengl_set_camera(
     
     GLint loc = -1;
     
+    assert(program_id == 1);
+    glUseProgram(program_id);
+    assert(glGetError() == 0);
+    
     loc = glGetUniformLocation(
         program_id,
         "camera_position");
     assert(loc == 0);
     assert(glGetError() == 0);
-    glProgramUniform3f(
-        program_id,
+    // there is also glProgramUniform3f, but that's not in OpenGL 3.0
+    // We are using 'glUseProgram' explicitly here and before this so
+    // I don't think that can be the problem
+    float cam_pos[3];
+    cam_pos[0] = camera->x;
+    cam_pos[1] = camera->y;
+    cam_pos[2] = camera->z;
+    glUniform3fv(
         loc,
-        camera->x, camera->y, camera->z);
-    assert(glGetError() == 0);
+        1,
+        cam_pos);
+    err_value = glGetError();
+    if (err_value != 0) {
+        printf("error trying to set camera pos uniform\n");
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled!");
+        }
+        assert(0);
+    }
     
     float doublecheck_cam_pos[3];
     doublecheck_cam_pos[0] = 3234.5f;
     doublecheck_cam_pos[1] = 3214.5f;
+    doublecheck_cam_pos[2] = 1.5f;
+    assert(loc == 0);
     glGetUniformfv(program_id, loc, doublecheck_cam_pos);
+    printf(
+        "(position) doublecheck values: {%f,%f,%f}\n",
+        doublecheck_cam_pos[0],
+        doublecheck_cam_pos[1],
+        doublecheck_cam_pos[2]);
     assert(glGetError() == 0);
     assert(doublecheck_cam_pos[0] == camera->x);
     assert(doublecheck_cam_pos[1] == camera->y);
@@ -388,12 +428,16 @@ void opengl_set_camera(
         "camera_angle");
     assert(loc == 1);
     assert(glGetError() == 0);
-    glProgramUniform3f(
-        program_id,
+    float cam_angle[3];
+    cam_angle[0] = camera->x_angle;
+    cam_angle[1] = camera->y_angle;
+    cam_angle[2] = camera->z_angle;
+    glUniform3fv(
         loc,
-        camera->x_angle, camera->y_angle, camera->z_angle);
+        1,
+        cam_angle);
     assert(glGetError() == 0);
-
+    
     float doublecheck_cam_angle[3];
     doublecheck_cam_angle[2] = 234.12f;
     glGetUniformfv(program_id, loc, doublecheck_cam_angle);
@@ -439,7 +483,9 @@ void opengl_set_projection_constants(
     assert(pjc->near < 0.110f);
     printf("copying pjc->near to uniform: %f\n", pjc->near);
     assert(glGetError() == 0);
-    glProgramUniform1f(program_id, loc, pjc->near);
+    // reminder: don't use glUniform1f, it's buggy on ubuntu with some
+    // drivers, use glUniform1fv instead
+    glUniform1fv(loc, 1, &pjc->near);
     assert(glGetError() == 0);
     
     loc = -1;
@@ -449,7 +495,9 @@ void opengl_set_projection_constants(
     assert(glGetError() == 0);
     assert(loc == 3);
     printf("projection_constants_q at loc: %i\n", loc);
-    glProgramUniform1f(program_id, loc, pjc->q);
+    // reminder: don't use glUniform1f, it's buggy on ubuntu with some
+    // drivers, use glUniform1fv instead
+    glUniform1fv(loc, 1, &pjc->q);
     assert(glGetError() == 0);
     
     loc = -1;
@@ -458,7 +506,9 @@ void opengl_set_projection_constants(
         "projection_constants_fov_modifier");
     printf("projection_constants_fov_modifier at loc: %i\n", loc);
     assert(loc == 4);
-    glProgramUniform1f(program_id, loc, pjc->field_of_view_modifier);
+    // reminder: don't use glUniform1f, it's buggy on ubuntu with some
+    // drivers, use glUniform1fv instead
+    glUniform1fv(loc, 1, &pjc->field_of_view_modifier);
     assert(glGetError() == 0);
     
     loc = -1;
@@ -467,9 +517,10 @@ void opengl_set_projection_constants(
         "projection_constants_x_multiplier");
     printf("projection_constants_x_multiplier at loc: %i\n", loc);
     assert(loc == 5);
-    glProgramUniform1f(program_id, loc, pjc->x_multiplier);
+    // reminder: don't use glUniform1f, it's buggy on ubuntu with some
+    // drivers, use glUniform1fv instead
+    glUniform1fv(loc, 1, &pjc->x_multiplier);
     assert(glGetError() == 0);
-    
     
     // TODO: find out why the uniform
     // TODO: 'projection_constants_near' isn't getting set

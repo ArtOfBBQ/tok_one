@@ -84,6 +84,13 @@ int main(int argc, char* argv[])
     application_path[char_i] = '\0';
     
     init_application();
+
+    camera.x = 0.2f;
+    camera.y = 0.35f;
+    camera.z = -0.1f;
+    camera.x_angle = 0.15;
+    camera.y_angle = 0.07f;
+    camera.z_angle = -0.1f;
     
     printf("%s\n", "finished init_application()");
     
@@ -401,16 +408,18 @@ int main(int argc, char* argv[])
         shared_gameloop_update(
             &gpu_shared_data_collection.
                 triple_buffers[current_frame_i]);
-        
-        assert(
-            camera.x == gpu_shared_data_collection.
-                triple_buffers[current_frame_i].camera->x);
-        assert(
-            camera.y == gpu_shared_data_collection.
-                triple_buffers[current_frame_i].camera->y);
-        assert(
-            camera.z == gpu_shared_data_collection.
-                triple_buffers[current_frame_i].camera->z);
+
+        if (_ > 0) {
+            assert(
+                camera.x == gpu_shared_data_collection.
+                    triple_buffers[current_frame_i].camera->x);
+            assert(
+                camera.y == gpu_shared_data_collection.
+                    triple_buffers[current_frame_i].camera->y);
+            assert(
+                camera.z == gpu_shared_data_collection.
+                    triple_buffers[current_frame_i].camera->z);
+        }
         
         printf(
             "frame_i: %u, vertices_for_gpu_size: %u\n",

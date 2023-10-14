@@ -447,7 +447,7 @@ float dot_of_zvertices(
 }
 
 void zcamera_move_forward(
-    zCamera * to_move,
+    GPUCamera * to_move,
     const float distance)
 {
     // pick a point that would be in front of the camera
