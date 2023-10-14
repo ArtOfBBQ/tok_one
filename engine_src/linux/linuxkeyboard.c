@@ -30,7 +30,7 @@ uint32_t linux_keycode_to_tokone_keycode(const uint32_t linux_key)
         case ( 19):
             return TOK_KEY_0;
         case ( 24):
-            return TOK_KEY_ENTER;
+            return TOK_KEY_Q;
         case ( 25):
             return TOK_KEY_W;
         case ( 26):
@@ -52,7 +52,7 @@ uint32_t linux_keycode_to_tokone_keycode(const uint32_t linux_key)
         case ( 36):
             return TOK_KEY_ENTER;
         case ( 38):
-            return TOK_KEY_Q;
+            return TOK_KEY_A;
         case ( 39):
             return TOK_KEY_S;
         case ( 40):
