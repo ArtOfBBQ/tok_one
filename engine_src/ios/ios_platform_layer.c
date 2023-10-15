@@ -2,6 +2,14 @@
 
 #include "../shared/platform_layer.h"
 
+void * platform_malloc_unaligned_block(
+    const uint64_t size)
+{
+    void * return_value = malloc(size);
+    
+    return return_value;
+}
+
 void platform_close_application(void) {
     log_append("Won't close app on iOS...\n");
 }

@@ -3,6 +3,30 @@
 #include "../shared/platform_layer.h"
 #import "Appkit/Appkit.h"
 
+void * platform_malloc_unaligned_block(
+    const uint64_t size)
+{
+    void * return_value = mmap(
+        /* void *: */
+            NULL,
+        /* size_t: */
+            size,
+        /* int prot: */
+            PROT_READ | PROT_WRITE,
+        /* int: */
+            MAP_SHARED | MAP_ANONYMOUS,
+        /* int: */
+            -1,
+        /* off_t: */
+            0);
+    
+    if (return_value == MAP_FAILED) {
+        return NULL;
+    }
+    
+    return return_value;
+}
+
 void platform_close_application(void) {
     [NSApp terminate: nil];
 }
