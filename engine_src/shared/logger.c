@@ -117,13 +117,13 @@ internal_log_append(
     const char * to_append,
     const char * caller_function_name)
 {
-    mutex_lock_function(logger_mutex_id);
-    
     #ifndef LOGGER_SILENCE
     if (application_running) {
         printf("%s", to_append);
     }
     #endif
+    
+    mutex_lock_function(logger_mutex_id);
     
     if (
         caller_function_name != NULL)

@@ -30,7 +30,8 @@ zLightSource * next_zlight(void) {
     for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
         if (zlights_to_apply[i].deleted) {
             return_value = &zlights_to_apply[i];
-            break;
+            construct_zlight(return_value);
+            return return_value;
         }
     }
     
