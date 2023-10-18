@@ -14,7 +14,7 @@ static int32_t (* mutex_unlock_function)(const uint32_t mutex_id) = NULL;
 static uint32_t logger_mutex_id = UINT32_MAX;
 
 #define LOG_SIZE 5000000
-static char * app_log;
+static char * app_log = NULL;
 static uint32_t log_i = 0;
 
 #ifdef __cplusplus
@@ -33,7 +33,7 @@ void init_logger(
     mutex_unlock_function = arg_mutex_unlock_function;
     
     // create a log for debug text
-    app_log = malloc_function(sizeof(LOG_SIZE));
+    app_log = malloc_function(LOG_SIZE);
     app_log[0] = '\0';
     log_i = 0;
     if (create_mutex_function != NULL) {
@@ -161,7 +161,7 @@ internal_log_append(
             /* recipient: */
                 app_log + log_i,
             /* recipient_size: */
-                LOG_SIZE,
+                LOG_SIZE - log_i,
             /* origin: */
                 caller_function_name);
         log_i += func_length;
@@ -245,6 +245,7 @@ log_dump_and_crash(const char * crash_message) {
         crashed_top_of_screen_msg,
         256,
         crash_message);
+    
     application_running = false;
     
     #ifndef LOGGER_SILENCE

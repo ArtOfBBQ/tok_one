@@ -198,11 +198,12 @@ void platform_play_music_resource(const char * resource_filename);
 creates a mutex and return the ID of said mutex for you to store
 */
 uint32_t platform_init_mutex_and_return_id(void);
-/*
-returns whether or not a mutex was locked, and locks the mutex if it
-was unlocked
-*/
+
+/* returns true if mutex succesfully locked */
+bool32_t platform_mutex_trylock(const uint32_t mutex_id);
+
 void platform_mutex_lock(const uint32_t mutex_id);
+
 int32_t platform_mutex_unlock(const uint32_t mutex_id);
 
 #ifdef __cplusplus

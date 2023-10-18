@@ -52,7 +52,13 @@ void init_application(void)
         sizeof(WindowGlobals));
     window_globals->visual_debug_mode = false;
     
-    if (engine_save.contents != NULL) {
+    if (
+        engine_save.contents != NULL &&
+        engine_save_file->window_height > 10 &&
+        engine_save_file->window_height < INITIAL_WINDOW_HEIGHT * 3 &&
+        engine_save_file->window_width > 10 &&
+        engine_save_file->window_width < INITIAL_WINDOW_WIDTH * 3)
+    {
         window_globals->window_height = engine_save_file->window_height;
         window_globals->window_width  = engine_save_file->window_width;
         window_globals->window_left   = engine_save_file->window_left;
