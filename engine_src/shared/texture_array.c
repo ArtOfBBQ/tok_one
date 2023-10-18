@@ -318,8 +318,7 @@ static void register_to_texturearray_from_images(
     for (uint32_t i = 0; i < new_images_size; i++) {
         log_assert(new_images[i] != NULL);
         if (new_images[i] == NULL) {
-            platform_mutex_unlock(
-                texture_arrays_mutex_ids[target_texture_array_i]);
+            platform_mutex_unlock(texture_arrays_mutex_ids[target_texture_array_i]);
             return;
         }
         log_assert(new_images[i]->width > 0);
@@ -373,7 +372,6 @@ static void register_to_texturearray_from_images(
                 new_img_filenames[i]);
         }
     }
-    
     platform_mutex_unlock(texture_arrays_mutex_ids[target_texture_array_i]);
 }
 
@@ -869,9 +867,11 @@ void decode_null_image_with_memory(
     log_assert(new_image->width == texture_arrays[i].single_img_width);
     new_image->pixel_count = new_image->height * new_image->width;
     
+    platform_mutex_lock(texture_arrays_mutex_ids[i]);
     texture_arrays[i].images[j].image = new_image;
     texture_arrays[i].images[j].request_update = true;
     texture_arrays[i].images[j].prioritize_asset_load = false;
+    platform_mutex_unlock(texture_arrays_mutex_ids[i]);
 }
 
 void decode_all_null_images_with_memory(void)
@@ -889,7 +889,6 @@ void decode_all_null_images_with_memory(void)
             (uint32_t)i < texture_arrays_size;
             i++)
         {
-            platform_mutex_lock(texture_arrays_mutex_ids[i]);
             log_assert(texture_arrays[i].images_size <= MAX_IMAGES_IN_TEXARRAY);
             for (
                 int32_t j = 0;
@@ -906,9 +905,12 @@ void decode_all_null_images_with_memory(void)
                     if (texture_arrays[i].images[j].prioritize_asset_load &&
                         strlen > 4) {
                         if (
-                            texture_arrays[i].images[j].filename[strlen - 3] == 'b' &&
-                            texture_arrays[i].images[j].filename[strlen - 2] == 'm' &&
-                            texture_arrays[i].images[j].filename[strlen - 1] == 'p')
+                            texture_arrays[i].images[j].
+                                filename[strlen - 3] == 'b' &&
+                            texture_arrays[i].images[j].
+                                filename[strlen - 2] == 'm' &&
+                            texture_arrays[i].images[j].
+                                filename[strlen - 1] == 'p')
                         {
                             log_append("decoding image: ");
                             log_append(texture_arrays[i].images[j].filename);
@@ -920,9 +922,12 @@ void decode_all_null_images_with_memory(void)
                         }
                         
                         if (
-                            texture_arrays[i].images[j].filename[strlen - 3] == 'p' &&
-                            texture_arrays[i].images[j].filename[strlen - 2] == 'n' &&
-                            texture_arrays[i].images[j].filename[strlen - 1] == 'g')
+                            texture_arrays[i].images[j].
+                                filename[strlen - 3] == 'p' &&
+                            texture_arrays[i].images[j].
+                                filename[strlen - 2] == 'n' &&
+                            texture_arrays[i].images[j].
+                                filename[strlen - 1] == 'g')
                         {
                             priority_png_texturearray_i = (int32_t)i;
                             priority_png_texture_i = (int32_t)j;
@@ -938,7 +943,6 @@ void decode_all_null_images_with_memory(void)
                     }
                 }
             }
-            platform_mutex_unlock(texture_arrays_mutex_ids[i]);
         }
         
         int32_t i = -1;
@@ -964,13 +968,11 @@ void decode_all_null_images_with_memory(void)
         log_append("decoding image: ");
         log_append(texture_arrays[i].images[j].filename);
         log_append_char('\n');
-        platform_mutex_lock(texture_arrays_mutex_ids[i]);
         decode_null_image_with_memory(
             /* const int32_t texture_array_i: */
                 i,
             /* const int32_t texture_i: */
                 j);
-        platform_mutex_unlock(texture_arrays_mutex_ids[i]);
     }
 }
 
@@ -995,7 +997,8 @@ bool32_t texture_has_alpha_channel(
         texture_arrays[texturearray_i].images[texture_i].has_alpha_channel ==
             HAS_ALPHA_UNCHECKED)
     {
-        log_assert(texture_i < (int32_t)texture_arrays[texturearray_i].images_size);
+        log_assert(
+            texture_i < (int32_t)texture_arrays[texturearray_i].images_size);
         
         if (texture_arrays[texturearray_i].images[texture_i].image == NULL) {
             return HAS_ALPHA_NO;
@@ -1015,8 +1018,8 @@ bool32_t texture_has_alpha_channel(
                 images[texture_i].
                 image->rgba_values[i] < 255)
             {
-                texture_arrays[texturearray_i].images[texture_i].has_alpha_channel =
-                    HAS_ALPHA_YES;
+                texture_arrays[texturearray_i].
+                    images[texture_i].has_alpha_channel = HAS_ALPHA_YES;
                 break;
             }
         }
