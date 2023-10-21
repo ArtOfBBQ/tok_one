@@ -269,24 +269,6 @@ void platform_play_music_resource(
     
 }
 
-void platform_gpu_init_texture_array(
-    const int32_t texture_array_i,
-    const uint32_t num_images,
-    const uint32_t single_image_width,
-    const uint32_t single_image_height)
-{
-}
-
-void platform_gpu_push_texture_slice(
-    const int32_t texture_array_i,
-    const int32_t texture_i,
-    const uint32_t parent_texture_array_images_size,
-    const uint32_t image_width,
-    const uint32_t image_height,
-    const uint8_t * rgba_values)
-{
-}
-
 void platform_close_application(void) {
     exit(0);    
 }

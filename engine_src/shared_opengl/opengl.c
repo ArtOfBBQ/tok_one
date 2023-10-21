@@ -2,6 +2,7 @@
 
 // We'll need these 2 identifiers while drawing
 GLuint program_id;
+GLuint fragment_shader_id;
 unsigned int VAO = UINT32_MAX;
 unsigned int VBO = UINT32_MAX;
 static GLuint err_value = UINT32_MAX;
@@ -173,6 +174,7 @@ static void opengl_compile_given_shader(
                 NULL,
             /* GLchar * infolog: */
                 info_log);
+        printf("info_log: %s\n", info_log);
         assert(0);
     } else if (is_compiled == GL_TRUE) {
         
@@ -215,7 +217,7 @@ void opengl_compile_shaders(
     err_value = glGetError();
     assert(err_value == 0);
     
-    GLuint fragment_shader_id = glCreateShader(GL_FRAGMENT_SHADER);
+    fragment_shader_id = glCreateShader(GL_FRAGMENT_SHADER);
     err_value = glGetError();
     assert(err_value == 0);
     assert(fragment_shader_source_size > 0);
@@ -299,13 +301,18 @@ void opengl_compile_shaders(
     uint32_t cur_offset = 0;
     for (uint32_t _ = 0; _ < 12; _++) {
         
+        GLenum current_type = GL_FLOAT;
+        if (_ >= 4 && _ <= 5) {
+            current_type = GL_INT;
+        }
+        
         glVertexAttribPointer(
             /* GLuint index (location in shader source): */
                 _,
             /* GLint size (number of components per vertex, must be 1-4): */
                 field_sizes[_],
             /* GLenum type (of data): */
-                GL_FLOAT,
+                current_type,
             /* GLboolean normalize data: */
                 GL_FALSE,
             /* GLsizei stride; */
@@ -335,7 +342,7 @@ void opengl_compile_shaders(
         
         glEnableVertexAttribArray(_);
     }
-
+    
     // validate program
     success = 0;
     glValidateProgram(program_id);
@@ -410,6 +417,180 @@ void opengl_set_camera(
     assert(doublecheck_cam_angle[0] == camera->x_angle);
     assert(doublecheck_cam_angle[1] == camera->y_angle);
     assert(doublecheck_cam_angle[2] == camera->z_angle);
+}
+
+static GLuint texture_array_ids[TEXTUREARRAYS_SIZE];
+
+void platform_gpu_init_texture_array(
+    const int32_t texture_array_i,
+    const uint32_t num_images,
+    const uint32_t single_image_width,
+    const uint32_t single_image_height)
+{
+    printf(
+        "opengl must init texture array: %i\n",
+        texture_array_i);
+    
+    glGenTextures(1, &texture_array_ids[texture_array_i]);
+    assert(glGetError() == 0);
+    assert(texture_array_i < 10);
+
+    if (texture_array_i > 0) { return; }
+    
+    glActiveTexture(
+        GL_TEXTURE0 + texture_array_i);
+    assert(glGetError() == 0);
+    
+    glBindTexture(
+        GL_TEXTURE_2D_ARRAY,
+        texture_array_ids[texture_array_i]);
+    assert(glGetError() == 0);
+    
+    GLuint loc = glGetUniformLocation(
+        program_id,
+        "texture_arrays[0]");
+    assert(glGetError() == 0);
+    
+    uint32_t value = 0;
+    glUniform1iv(loc, 1, &value);
+    assert(glGetError() == 0);
+    
+    //There is also glTexStorage3D in openGL 4
+    glTexImage3D(
+        /* GLenum target: */
+            GL_TEXTURE_2D_ARRAY,
+        /* GLint level (mipmap, 0 is base): */
+            0,
+        /* GLint internalFormat: */
+            GL_RGBA8,
+        /* GLsizei width: */
+            single_image_width,
+        /* GLsizei height: */
+            single_image_height,
+        /* GLsizei depth: */
+            num_images,
+        /* GLint border (must be 0): */
+            0,
+        /* GLenum format: */
+            GL_RGBA,
+        /* GLenum type (of input data): */
+            GL_UNSIGNED_BYTE,
+        /* const GLvoid * data: */
+            NULL);
+    err_value = glGetError();
+    if (err_value != GL_NO_ERROR) {
+        printf("%s\n", "glTexImage3D failed!");
+        switch (err_value) {
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            default:
+                printf("%s\n", "Unhandled error");
+        }
+        assert(err_value == GL_NO_ERROR);
+    }
+    
+    glTexParameteri(
+        /* GLenum target: */
+            GL_TEXTURE_2D_ARRAY,
+        /* GLenum pname: */
+            GL_TEXTURE_WRAP_S,
+        /* GLint param: */
+            GL_MIRRORED_REPEAT);
+    assert(glGetError() == 0);
+    glTexParameteri(
+        /* GLenum target: */
+            GL_TEXTURE_2D_ARRAY,
+        /* GLenum pname: */
+            GL_TEXTURE_WRAP_T,
+        /* GLint param: */
+            GL_MIRRORED_REPEAT);
+    assert(glGetError() == 0);
+    glTexParameteri(
+        /* GLenum target: */
+            GL_TEXTURE_2D_ARRAY,
+        /* GLenum pname: */
+            GL_TEXTURE_MIN_FILTER,
+        /* GLint param: */
+            GL_NEAREST);
+    assert(glGetError() == 0);
+    glTexParameteri(
+        /* GLenum target: */
+            GL_TEXTURE_2D_ARRAY,
+        /* GLenum pname: */
+            GL_TEXTURE_MAG_FILTER,
+        /* GLint param: */
+            GL_LINEAR);
+    assert(glGetError() == 0);
+}
+
+void platform_gpu_push_texture_slice(
+    const int32_t texture_array_i,
+    const int32_t texture_i,
+    const uint32_t parent_texture_array_images_size,
+    const uint32_t image_width,
+    const uint32_t image_height,
+    const uint8_t * rgba_values)
+{
+    printf("opengl_push_texture()\n");
+    assert(image_width > 0);
+    assert(image_height > 0);
+    assert(parent_texture_array_images_size > texture_i);
+    
+    if (texture_array_i > 0) { return; }
+    
+    glActiveTexture(
+        GL_TEXTURE0 + texture_array_i);
+    assert(glGetError() == 0);
+    
+    glBindTexture(
+        GL_TEXTURE_2D_ARRAY,
+        texture_array_ids[texture_array_i]);
+    assert(glGetError() == 0);
+    
+    glTexSubImage3D(
+        /* GLenum target: */
+            GL_TEXTURE_2D_ARRAY,
+        /* GLint level: */
+            0,
+        /* GLint xoffset: */
+            0,
+        /* GLint yoffset: */
+            0,
+        /* GLint zoffset: */
+            0,
+        /* GLsizei width: */
+            image_width,
+        /* GLsizei height: */
+            image_height,
+        /* GLsizei depth: */
+            texture_i,
+        /* GLenum format: */
+            GL_RGBA,
+        /* GLenum type: */
+            GL_UNSIGNED_BYTE,
+        /* const GLvoid * data: */
+            rgba_values);
+    
+    err_value = glGetError();
+    if (err_value != GL_NO_ERROR) {
+        printf("%s\n", "Error during glTexSubImage3D!");
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled error at start of frame!");
+                break;
+        }
+        assert(0);
+    }
 }
 
 void opengl_set_projection_constants(

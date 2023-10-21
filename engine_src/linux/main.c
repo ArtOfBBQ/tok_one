@@ -84,7 +84,7 @@ int main(int argc, char* argv[])
     application_path[char_i] = '\0';
     
     init_application();
-
+    
     camera.x = 0.2f;
     camera.y = 0.35f;
     camera.z = -0.1f;

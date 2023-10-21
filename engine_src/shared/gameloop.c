@@ -2,7 +2,7 @@
 
 static uint64_t previous_time = 0;
 static uint64_t frame_no = 0;
-static uint32_t gameloop_mutex_id;
+static uint32_t gameloop_mutex_id = UINT32_MAX;
 
 static int32_t closest_touchable_from_screen_ray(
     const float screen_x,

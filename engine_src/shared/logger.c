@@ -123,7 +123,7 @@ internal_log_append(
     }
     #endif
     
-    mutex_lock_function(logger_mutex_id);
+    // mutex_lock_function(logger_mutex_id);
     
     if (
         caller_function_name != NULL)
@@ -132,7 +132,7 @@ internal_log_append(
         uint32_t prefix_length = get_string_length(prefix);
         if (log_i + prefix_length >= LOG_SIZE) {
             if (mutex_unlock_function != NULL) {
-                mutex_unlock_function(logger_mutex_id);
+                // mutex_unlock_function(logger_mutex_id);
             }
             return;
         }
@@ -146,14 +146,14 @@ internal_log_append(
                 prefix);
         log_i += prefix_length;
         if (log_i >= LOG_SIZE) {
-            mutex_unlock_function(logger_mutex_id);
+            // mutex_unlock_function(logger_mutex_id);
             return;
         }
         
         uint32_t func_length = get_string_length(
         caller_function_name);
         if (log_i + func_length >= LOG_SIZE) {
-            mutex_unlock_function(logger_mutex_id);
+            // mutex_unlock_function(logger_mutex_id);
             return;
         }
         
@@ -167,7 +167,7 @@ internal_log_append(
         log_i += func_length;
         if (log_i >= LOG_SIZE) {
             if (mutex_unlock_function != NULL) {
-                mutex_unlock_function(logger_mutex_id);
+                // mutex_unlock_function(logger_mutex_id);
             }
             return;
         }
@@ -176,7 +176,7 @@ internal_log_append(
         uint32_t glue_length = get_string_length(glue);
         if (log_i + glue_length >= LOG_SIZE) {
             if (mutex_unlock_function != NULL) {
-                mutex_unlock_function(logger_mutex_id);
+                // mutex_unlock_function(logger_mutex_id);
             }
             return;
         }
@@ -190,7 +190,7 @@ internal_log_append(
         log_i += glue_length;
         if (log_i >= LOG_SIZE) {
             if (mutex_unlock_function != NULL) {
-                mutex_unlock_function(logger_mutex_id);
+                // mutex_unlock_function(logger_mutex_id);
             }
             return;
         }
@@ -199,7 +199,7 @@ internal_log_append(
     uint32_t to_append_length = get_string_length(to_append);
     if (log_i + to_append_length >= LOG_SIZE) {
         if (mutex_unlock_function != NULL) {
-            mutex_unlock_function(logger_mutex_id);
+            // mutex_unlock_function(logger_mutex_id);
         }
         return;
     }
@@ -213,7 +213,7 @@ internal_log_append(
     log_i += to_append_length;
     
     if (mutex_unlock_function != NULL) {
-        mutex_unlock_function(logger_mutex_id);
+        // mutex_unlock_function(logger_mutex_id);
     }
 }
 

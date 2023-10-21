@@ -9,11 +9,7 @@ creates a mutex and return the ID of said mutex for you to store
 uint32_t platform_init_mutex_and_return_id(void) {
     
     log_assert(next_mutex_id + 1 < MUTEXES_SIZE);
-    #ifndef LOGGER_IGNORE_ASSERTS
-    int32_t success =
-    #endif
-        pthread_mutex_init(&(mutexes[next_mutex_id]), NULL);
-    log_assert(success == 0);
+    pthread_mutex_init(&(mutexes[next_mutex_id]), NULL);
     uint32_t return_value = next_mutex_id;
     next_mutex_id++;
     return return_value;
@@ -35,9 +31,12 @@ bool32_t platform_mutex_trylock(const uint32_t mutex_id)
 returns whether or not a mutex was locked, and locks the mutex if it
 was unlocked
 */
-void platform_mutex_lock(const uint32_t mutex_id) {
+void platform_mutex_lock(
+    const uint32_t mutex_id)
+{
     log_assert(mutex_id < MUTEXES_SIZE);
-    pthread_mutex_lock(&(mutexes[mutex_id]));
+    int return_value = pthread_mutex_lock(&(mutexes[mutex_id]));
+    log_assert(return_value == 0);
     return;
 }
 

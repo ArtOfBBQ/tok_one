@@ -1,11 +1,11 @@
-#version 330 core
+#version 460 core
 
 layout (location = 0) in vec3 xyz;
 layout (location = 1) in vec3 normal;
 layout (location = 2) in vec2 uv;
 layout (location = 3) in vec4 rgba;
-layout (location = 4) in float texturearray_i;
-layout (location = 5) in float texture_i;
+layout (location = 4) in int texturearray_i;
+layout (location = 5) in int texture_i;
 layout (location = 6) in vec3 parent_xyz;
 layout (location = 7) in vec3 parent_angle;
 layout (location = 8) in float scale_factor;
@@ -13,8 +13,11 @@ layout (location = 9) in float ignore_lighting;
 layout (location = 10) in float ignore_camera;
 layout (location = 11) in float touchable_id;
 
-out vec4 vertex_color;
-out vec4 vertex_lighting;
+out vec2 vert_to_frag_uv;
+out vec4 vert_to_frag_color;
+flat out int vert_to_frag_texturearray_i;
+flat out int vert_to_frag_texture_i;
+out vec4 vert_to_frag_lighting;
 
 uniform vec3 camera_position;
 uniform vec3 camera_angle;
@@ -66,6 +69,19 @@ vec4 z_rotate(vec4 vertices, float z_angle) {
         vertices[0] * sin_angle;
     
     return rotated_vertices;
+}
+
+float get_distance(
+    vec4 a,
+    vec4 b)
+{
+    vec4 squared_diffs = (a-b)*(a-b);
+    
+    float sum_squares = dot(
+        squared_diffs,
+        vec4(1.0f,1.0f,1.0f,1.0f));
+    
+    return sqrt(sum_squares);
 }
 
 void main()
@@ -132,20 +148,25 @@ void main()
         (gl_Position[2] * projection_constants_q) -
         (projection_constants_near * projection_constants_q);
     
-    vertex_color = rgba;
-    clamp(vertex_color, 0.10f, 1.0f);
-    // out.texturearray_i = input_array[vertex_i].texturearray_i;
-    // out.texture_i = input_array[vertex_i].texture_i;
+    vert_to_frag_color = rgba;
+    clamp(vert_to_frag_color, 0.10f, 1.0f);
+    
+    vert_to_frag_uv = uv;
+    vert_to_frag_texturearray_i = texturearray_i;
+    vert_to_frag_texture_i = texture_i;
+    
+    // out.texturearray_i = input_array[vert_to_frag_i].texturearray_i;
+    // out.texture_i = input_array[vert_to_frag_i].texture_i;
     // out.texture_coordinate = vector_float2(
-    //     input_array[vertex_i].uv[0],
-    //     input_array[vertex_i].uv[1]);
+    //     input_array[vert_to_frag_i].uv[0],
+    //     input_array[vert_to_frag_i].uv[1]);
     
     if (ignore_lighting > 0.0f) {
-        vertex_lighting = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        vert_to_frag_lighting = vec4(1.0f, 1.0f, 1.0f, 1.0f);
         return;
     }
     
-    clamp(vertex_lighting, 0.20f, 1.0f);
-    vertex_lighting[3] = 1.0f;
+    clamp(vert_to_frag_lighting, 0.20f, 1.0f);
+    vert_to_frag_lighting[3] = 1.0f;
 }
 
