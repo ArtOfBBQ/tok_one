@@ -173,7 +173,6 @@ void main()
         (projection_constants_near * projection_constants_q);
     
     vert_to_frag_color = rgba;
-    clamp(vert_to_frag_color, 0.05f, 1.0f);
     
     vert_to_frag_uv = uv;
     

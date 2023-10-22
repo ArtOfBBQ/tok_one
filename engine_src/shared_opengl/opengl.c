@@ -7,6 +7,8 @@ unsigned int VAO = UINT32_MAX;
 unsigned int VBO = UINT32_MAX;
 static GLuint err_value = UINT32_MAX;
 
+static GLuint texture_array_ids[TEXTUREARRAYS_SIZE];
+
 void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
     
     assert(VAO < UINT32_MAX);
@@ -212,6 +214,14 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         }
         assert(0);
     }
+
+    glActiveTexture(GL_TEXTURE0);
+    assert(glGetError() == 0);
+    
+    glBindTexture(
+        GL_TEXTURE_2D_ARRAY,
+        texture_array_ids[0]);
+    assert(glGetError() == 0);
     
     // glPointSize(10); // for GL_POINTS
     glDrawArrays(
@@ -401,6 +411,11 @@ void opengl_compile_shaders(
     err_value = glGetError();
     assert(err_value == GL_NO_ERROR);
     
+    // We didn't use the standard alpha channel in Metal, so it shouldn't
+    // be enabled here
+    // glEnable(GL_BLEND);
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
     /*
     Attribute pointers describe the fields of our data
     sructure (the Vertex struct in shared/vertex_types.h)
@@ -575,8 +590,6 @@ void opengl_set_camera(
     assert(doublecheck_cam_angle[2] == camera->z_angle);
 }
 
-static GLuint texture_array_ids[TEXTUREARRAYS_SIZE];
-
 /* reminder: this is mutex protected */
 void platform_gpu_init_texture_array(
     const int32_t texture_array_i,
@@ -584,10 +597,14 @@ void platform_gpu_init_texture_array(
     const uint32_t single_image_width,
     const uint32_t single_image_height)
 {
-    return;
+    if (texture_array_i > 0) { return; }
+    
     printf(
-        "opengl must init texture array: %i\n",
-        texture_array_i);
+        "opengl must init texture array: %i with %u images (%ux%u)\n",
+        texture_array_i,
+        num_images,
+        single_image_width,
+        single_image_height);
     
     glGenTextures(1, &texture_array_ids[texture_array_i]);
     assert(glGetError() == 0);
@@ -602,13 +619,13 @@ void platform_gpu_init_texture_array(
         texture_array_ids[texture_array_i]);
     assert(glGetError() == 0);
     
-    char name_in_shader[64];
-    strcpy_capped(name_in_shader, 64, "texture_arrays[");
-    strcat_uint_capped(name_in_shader, 64, texture_array_i);
-    strcat_capped(name_in_shader, 64, "]");
+    // char name_in_shader[64];
+    // strcpy_capped(name_in_shader, 64, "texture_arrays[");
+    // strcat_uint_capped(name_in_shader, 64, texture_array_i);
+    // strcat_capped(name_in_shader, 64, "]");
     GLuint loc = glGetUniformLocation(
         program_id,
-        name_in_shader);
+        "texture_array_1");
     assert(glGetError() == 0);
     
     glUniform1iv(loc, 1, &texture_array_i);
@@ -656,7 +673,7 @@ void platform_gpu_init_texture_array(
         /* GLenum pname: */
             GL_TEXTURE_WRAP_S,
         /* GLint param: */
-            GL_MIRRORED_REPEAT);
+            GL_CLAMP_TO_EDGE);
     assert(glGetError() == 0);
     
     glTexParameteri(
@@ -665,7 +682,7 @@ void platform_gpu_init_texture_array(
         /* GLenum pname: */
             GL_TEXTURE_WRAP_T,
         /* GLint param: */
-            GL_MIRRORED_REPEAT);
+            GL_CLAMP_TO_EDGE);
     assert(glGetError() == 0);
     
     glTexParameteri(
@@ -683,8 +700,11 @@ void platform_gpu_init_texture_array(
         /* GLenum pname: */
             GL_TEXTURE_MAG_FILTER,
         /* GLint param: */
-            GL_LINEAR);
+            GL_NEAREST);
     assert(glGetError() == 0);
+    
+    // glEnable(GL_TEXTURE_2D_ARRAY);
+    // assert(glGetError() == 0);
 }
 
 /* reminder: this is mutex protected  */
@@ -696,8 +716,12 @@ void platform_gpu_push_texture_slice(
     const uint32_t image_height,
     const uint8_t * rgba_values)
 {
-    return;
-    printf("opengl_push_texture()\n");
+    if (texture_array_i > 0) { return; }
+    
+    printf(
+        "opengl_push_texture(): %u to array: %u\n",
+        texture_i,
+        texture_array_i);
     assert(image_width > 0);
     assert(image_height > 0);
     assert(parent_texture_array_images_size > texture_i);
@@ -711,28 +735,76 @@ void platform_gpu_push_texture_slice(
         texture_array_ids[texture_array_i]);
     assert(glGetError() == 0);
     
+    // Note: this fails, but it shows the letter shapes at least
+    // Previously we passed GL_UNSIGNED_BYTE and that fails completely
     glTexSubImage3D(
-        /* GLenum target: */
+        /*
+        GLenum target:
+        Specifies the target texture.
+        Must be GL_TEXTURE_3D or GL_TEXTURE_2D_ARRAY
+        */
             GL_TEXTURE_2D_ARRAY,
-        /* GLint level: */
+        /*
+        GLint level:
+        Specifies the level-of-detail number. Level 0 is the base image level.
+        Level n is the nth mipmap reduction image 
+        */
             0,
-        /* GLint xoffset: */
+        /*
+        GLint xoffset:
+        Specifies a texel offset in the x direction within the texture array
+        */
             0,
-        /* GLint yoffset: */
+        /*
+        GLint yoffset:
+        Specifies a texel offset in the y direction within the texture array
+        */
             0,
-        /* GLint zoffset: */
-            0,
-        /* GLsizei width: */
-            image_width,
-        /* GLsizei height: */
-            image_height,
-        /* GLsizei depth: */
+        /*
+        GLint zoffset:
+        Specifies a texel offset in the z direction within the texture array.
+        */
             texture_i,
-        /* GLenum format: */
+        /*
+        GLsizei width:
+        Specifies the width of the texture subimage 
+        */
+            image_width,
+        /*
+        GLsizei height:
+        Specifies the height of the texture subimage 
+        */
+            image_height,
+        /*
+        GLsizei depth:
+        Specifies the depth of the texture subimage 
+        */
+            1,
+        /*
+        GLenum format:
+        Specifies the format of the pixel data.
+        The following symbolic values are accepted:
+        GL_RED, GL_RG, GL_RGB, GL_BGR, GL_RGBA, and GL_BGRA 
+        */
             GL_RGBA,
-        /* GLenum type: */
-            GL_UNSIGNED_BYTE,
-        /* const GLvoid * data: */
+        /*
+        GLenum type:
+        Specifies the data type of the pixel data.
+        The following symbolic values are accepted:
+        GL_UNSIGNED_BYTE, GL_BYTE, GL_UNSIGNED_SHORT, GL_SHORT,
+        GL_UNSIGNED_INT, GL_INT, GL_FLOAT, GL_UNSIGNED_BYTE_3_3_2,
+        GL_UNSIGNED_BYTE_2_3_3_REV, GL_UNSIGNED_SHORT_5_6_5,
+        GL_UNSIGNED_SHORT_5_6_5_REV, GL_UNSIGNED_SHORT_4_4_4_4,
+        GL_UNSIGNED_SHORT_4_4_4_4_REV, GL_UNSIGNED_SHORT_5_5_5_1,
+        GL_UNSIGNED_SHORT_1_5_5_5_REV, GL_UNSIGNED_INT_8_8_8_8,
+        GL_UNSIGNED_INT_8_8_8_8_REV, GL_UNSIGNED_INT_10_10_10_2,
+        GL_UNSIGNED_INT_2_10_10_10_REV
+        */
+            GL_UNSIGNED_INT_8_8_8_8,
+        /*
+        const GLvoid * data:
+        Specifies a pointer to the image data in memory.
+        */
             rgba_values);
     
     err_value = glGetError();
