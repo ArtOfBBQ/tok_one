@@ -149,24 +149,26 @@ void main()
         (projection_constants_near * projection_constants_q);
     
     vert_to_frag_color = rgba;
-    clamp(vert_to_frag_color, 0.10f, 1.0f);
+    clamp(vert_to_frag_color, 0.05f, 1.0f);
     
     vert_to_frag_uv = uv;
+    
     vert_to_frag_texturearray_i = texturearray_i;
     vert_to_frag_texture_i = texture_i;
-    
-    // out.texturearray_i = input_array[vert_to_frag_i].texturearray_i;
-    // out.texture_i = input_array[vert_to_frag_i].texture_i;
-    // out.texture_coordinate = vector_float2(
-    //     input_array[vert_to_frag_i].uv[0],
-    //     input_array[vert_to_frag_i].uv[1]);
     
     if (ignore_lighting > 0.0f) {
         vert_to_frag_lighting = vec4(1.0f, 1.0f, 1.0f, 1.0f);
         return;
     }
+
+    // init lighting
+    vert_to_frag_lighting = vec4(0.0f, 0.0f, 0.0f, 1.0f);
     
-    clamp(vert_to_frag_lighting, 0.20f, 1.0f);
+    // add bonus for each light
+    vert_to_frag_lighting[0] = 0.85f;
+    
+    // at the end
+    clamp(vert_to_frag_lighting, 0.05f, 1.0f);
     vert_to_frag_lighting[3] = 1.0f;
 }
 

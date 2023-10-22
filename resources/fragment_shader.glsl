@@ -26,12 +26,11 @@ void main()
             texture_arrays[vert_to_frag_texturearray_i],
             vec3(vert_to_frag_uv, vert_to_frag_texture_i));
         
-        FragColor *=
-            texture_sample *
-            vert_to_frag_lighting;
+        FragColor *= texture_sample;
+        FragColor *= vert_to_frag_lighting;
     }
     
-    if (vert_to_frag_color[3] < 0.05f) {
+    if (vert_to_frag_color[3] < 0.01f) {
         discard;
         return;
     }

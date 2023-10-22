@@ -36,6 +36,11 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         assert(0);
     }
     
+    for (uint32_t i = 0; i < frame_data->vertices_size; i++) {
+        assert(frame_data->vertices->texture_i < 500);
+        assert(frame_data->vertices->texturearray_i < TEXTUREARRAYS_SIZE);
+    }
+    
     glBufferData(
         /* target: */
             GL_ARRAY_BUFFER,
@@ -297,6 +302,9 @@ void opengl_compile_shaders(
     Attribute pointers describe the fields of our data
     sructure (the Vertex struct in shared/vertex_types.h)
     */
+    assert(sizeof(int) == sizeof(float));
+    assert(sizeof(GLint) == sizeof(GLfloat));
+    assert(sizeof(GLint) == sizeof(int));
     uint32_t field_sizes[12] = { 3, 3, 2, 4, 1, 1, 3, 3, 1, 1, 1, 1 };
     uint32_t cur_offset = 0;
     for (uint32_t _ = 0; _ < 12; _++) {
@@ -306,19 +314,42 @@ void opengl_compile_shaders(
             current_type = GL_INT;
         }
         
-        glVertexAttribPointer(
-            /* GLuint index (location in shader source): */
-                _,
-            /* GLint size (number of components per vertex, must be 1-4): */
-                field_sizes[_],
-            /* GLenum type (of data): */
-                current_type,
-            /* GLboolean normalize data: */
-                GL_FALSE,
-            /* GLsizei stride; */
-                sizeof(GPUVertex),
-            /* const GLvoid * pointer (offset) : */
-                (void *)(cur_offset * sizeof(float)));
+        if (current_type == GL_INT) {
+            /*
+            This is another massive trap in OpenGL:
+            You have to use glVertexAttribIPointer, not glVertexAttribPointer,
+            when and only when setting up a vertex input that's an int. The
+            other version also accepts GL_INT and the documentation claims that
+            it can be used for ints, but it silently fails and garbles your
+            int values to some huge value even if you set normalize data to
+            GL_FALSE.
+            */
+            glVertexAttribIPointer(
+                /* GLuint index (location in shader source): */
+                    _,
+                /* GLint size (number of components per vertex, must be 1-4): */
+                    field_sizes[_],
+                /* GLenum type (of data): */
+                    current_type,
+                /* GLsizei stride; */
+                    sizeof(GPUVertex),
+                /* const GLvoid * pointer (offset) : */
+                    (void *)(cur_offset * sizeof(float)));
+        } else {
+            glVertexAttribPointer(
+                /* GLuint index (location in shader source): */
+                    _,
+                /* GLint size (number of components per vertex, must be 1-4): */
+                    field_sizes[_],
+                /* GLenum type (of data): */
+                    current_type,
+                /* GLboolean normalize data: */
+                    GL_FALSE,
+                /* GLsizei stride; */
+                    sizeof(GPUVertex),
+                /* const GLvoid * pointer (offset) : */
+                    (void *)(cur_offset * sizeof(float)));
+        }
         
         cur_offset += field_sizes[_];
         
@@ -341,6 +372,7 @@ void opengl_compile_shaders(
         }
         
         glEnableVertexAttribArray(_);
+        assert(glGetError() == 0);
     }
     
     // validate program
@@ -421,6 +453,7 @@ void opengl_set_camera(
 
 static GLuint texture_array_ids[TEXTUREARRAYS_SIZE];
 
+/* reminder: this is mutex protected */
 void platform_gpu_init_texture_array(
     const int32_t texture_array_i,
     const uint32_t num_images,
@@ -433,9 +466,7 @@ void platform_gpu_init_texture_array(
     
     glGenTextures(1, &texture_array_ids[texture_array_i]);
     assert(glGetError() == 0);
-    assert(texture_array_i < 10);
-
-    if (texture_array_i > 0) { return; }
+    assert(texture_array_i < 31);
     
     glActiveTexture(
         GL_TEXTURE0 + texture_array_i);
@@ -524,6 +555,7 @@ void platform_gpu_init_texture_array(
     assert(glGetError() == 0);
 }
 
+/* reminder: this is mutex protected  */
 void platform_gpu_push_texture_slice(
     const int32_t texture_array_i,
     const int32_t texture_i,
@@ -536,8 +568,6 @@ void platform_gpu_push_texture_slice(
     assert(image_width > 0);
     assert(image_height > 0);
     assert(parent_texture_array_images_size > texture_i);
-    
-    if (texture_array_i > 0) { return; }
     
     glActiveTexture(
         GL_TEXTURE0 + texture_array_i);

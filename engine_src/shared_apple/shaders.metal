@@ -101,13 +101,7 @@ vertex_shader(
         input_array[vertex_i].normal_y,
         input_array[vertex_i].normal_z,
         1.0f);
-    
-    float4 camera_position = vector_float4(
-        camera->x,
-        camera->y,
-        camera->z,
-        0.0f);
-    
+     
     // rotate vertices
     float4 x_rotated_vertices = x_rotate(
         mesh_vertices,
@@ -134,6 +128,11 @@ vertex_shader(
     float4 translated_pos = z_rotated_vertices + parent_mesh_position;
     
     if (input_array[vertex_i].ignore_camera < 1.0f) {
+        float4 camera_position = vector_float4(
+            camera->x,
+            camera->y,
+            camera->z,
+            0.0f);
         float4 camera_translated_pos = translated_pos - camera_position;
         
         // rotate around camera
@@ -166,9 +165,7 @@ vertex_shader(
         input_array[vertex_i].RGBA[2],
         input_array[vertex_i].RGBA[3]);
     clamp(out.color, 0.05f, 1.0f);
-    
-    out.lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
-    
+     
     out.texturearray_i = input_array[vertex_i].texturearray_i;
     out.texture_i = input_array[vertex_i].texture_i;
     out.texture_coordinate = vector_float2(
@@ -180,6 +177,7 @@ vertex_shader(
         return out;
     }
     
+    out.lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
     for (
         uint32_t i = 0;
         i < light_collection->lights_size;
