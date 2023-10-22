@@ -16,7 +16,17 @@ void main()
 {
     FragColor = vert_to_frag_color; 
     
-    if (vert_to_frag_texturearray_i < 0 ||
+    // if (
+    //     (vert_to_frag_uv[0] > 1.1f || vert_to_frag_uv[1] > 1.1f) ||
+    //     (vert_to_frag_uv[1] < -0.75f || vert_to_frag_uv[1] < -0.75f)
+    //     )
+    // {
+    //     FragColor = vec4(0.0f, 1.0f, 1.0f, 1.0f);
+    //     return;
+    // }
+    
+    if (
+        vert_to_frag_texturearray_i < 0 ||
         vert_to_frag_texture_i < 0)
     {
         // FragColor *= vert_to_frag_lighting;

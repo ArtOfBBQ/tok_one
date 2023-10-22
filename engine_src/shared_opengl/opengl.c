@@ -36,9 +36,17 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         assert(0);
     }
     
-    for (uint32_t i = 0; i < frame_data->vertices_size; i++) {
-        assert(frame_data->vertices->texture_i < 500);
-        assert(frame_data->vertices->texturearray_i < TEXTUREARRAYS_SIZE);
+    for (
+        uint32_t i = 0;
+        i < frame_data->vertices_size;
+        i++)
+    {
+        assert(frame_data->vertices[i].uv[0] > -0.1f);
+        assert(frame_data->vertices[i].uv[1] > -0.1f);
+        assert(frame_data->vertices[i].uv[0] <  1.05f);
+        assert(frame_data->vertices[i].uv[1] <  1.05f);
+        assert(frame_data->vertices[i].texture_i < 500);
+        assert(frame_data->vertices[i].texturearray_i < TEXTUREARRAYS_SIZE);
     }
     
     glBufferData(
@@ -69,7 +77,102 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         }
         assert(0);
     }
-
+    
+    // TODO: query the data in GL_ARRAY_BUFFER to make sure it's correct
+    for (uint32_t i = 0; i < 10; i++) {
+        if (i >= frame_data->vertices_size) { break; }
+        float actual = 1234345.0f;
+        glGetBufferSubData(
+            /* GLenum target: */
+                GL_ARRAY_BUFFER,
+            /* GLintptr offset: */
+                (i * sizeof(GPUVertex)) + 0,
+            /* GLsizeiptr size: */
+                4,
+            /* void * data): */
+                &actual);
+        assert(actual == frame_data->vertices[i].x);
+        actual = 2934.2f;
+        glGetBufferSubData(
+            /* GLenum target: */
+                GL_ARRAY_BUFFER,
+            /* GLintptr offset: */
+                (i * sizeof(GPUVertex)) + 4,
+            /* GLsizeiptr size: */
+                4,
+            /* void * data): */
+                &actual);
+        assert(actual == frame_data->vertices[i].y);
+        actual = 2934.2f;
+        glGetBufferSubData(
+            /* GLenum target: */
+                GL_ARRAY_BUFFER,
+            /* GLintptr offset: */
+                (i * sizeof(GPUVertex)) + 8,
+            /* GLsizeiptr size: */
+                4,
+            /* void * data): */
+                &actual);
+        assert(actual == frame_data->vertices[i].z);
+        actual = 2934.2f;
+        glGetBufferSubData(
+            /* GLenum target: */
+                GL_ARRAY_BUFFER,
+            /* GLintptr offset: */
+                (i * sizeof(GPUVertex)) + 12,
+            /* GLsizeiptr size: */
+                4,
+            /* void * data): */
+                &actual);
+        assert(actual == frame_data->vertices[i].normal_x);
+        actual = 2934.2f;
+        glGetBufferSubData(
+            /* GLenum target: */
+                GL_ARRAY_BUFFER,
+            /* GLintptr offset: */
+                (i * sizeof(GPUVertex)) + 16,
+            /* GLsizeiptr size: */
+                4,
+            /* void * data): */
+                &actual);
+        assert(actual == frame_data->vertices[i].normal_y);
+        actual = 2934.2f;
+        glGetBufferSubData(
+            /* GLenum target: */
+                GL_ARRAY_BUFFER,
+            /* GLintptr offset: */
+                (i * sizeof(GPUVertex)) + 20,
+            /* GLsizeiptr size: */
+                4,
+            /* void * data): */
+                &actual);
+        assert(actual == frame_data->vertices[i].normal_z);
+        actual = 234.0f;
+        glGetBufferSubData(
+            /* GLenum target: */
+                GL_ARRAY_BUFFER,
+            /* GLintptr offset: */
+                (i * sizeof(GPUVertex)) + 24,
+            /* GLsizeiptr size: */
+                4,
+            /* void * data): */
+                &actual);
+        assert(actual == frame_data->vertices[i].uv[0]);
+        assert(actual < 1.05f && actual > -0.05f);
+        actual = -125.0f;
+        glGetBufferSubData(
+            /* GLenum target: */
+                GL_ARRAY_BUFFER,
+            /* GLintptr offset: */
+                (i * sizeof(GPUVertex)) + 28,
+            /* GLsizeiptr size: */
+                4,
+            /* void * data: */
+                &actual);
+        assert(actual == frame_data->vertices[i].uv[1]);
+        assert(actual < 1.05f && actual > -0.05f);
+    }
+    
     opengl_set_camera(frame_data->camera);
     err_value = glGetError();
     if (err_value != GL_NO_ERROR) {
@@ -90,8 +193,7 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         assert(0);
     }
     
-    opengl_set_projection_constants(frame_data->projection_constants);
-    
+    opengl_set_projection_constants(frame_data->projection_constants); 
     err_value = glGetError();
     if (err_value != GL_NO_ERROR) {
         switch (err_value) {
@@ -119,6 +221,7 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
             0,
         /* GLint count (# of vertices to render): */
             frame_data->vertices_size);
+    
     err_value = glGetError();
     if (err_value != GL_NO_ERROR) {
         switch (err_value) {
@@ -305,16 +408,22 @@ void opengl_compile_shaders(
     assert(sizeof(int) == sizeof(float));
     assert(sizeof(GLint) == sizeof(GLfloat));
     assert(sizeof(GLint) == sizeof(int));
-    uint32_t field_sizes[12] = { 3, 3, 2, 4, 1, 1, 3, 3, 1, 1, 1, 1 };
+    uint32_t field_sizes[12]   = { 3, 3, 2, 4,  1,  1,  3,  3,  1,  1,  1,  1};
+    uint32_t field_offsets[12] = { 0, 3, 6, 8, 12, 13, 14, 17, 20, 21, 22, 23};
     uint32_t cur_offset = 0;
+    
     for (uint32_t _ = 0; _ < 12; _++) {
         
+        printf("vertex attribute: %u (%u items)\n", _, field_sizes[_]);
+        
         GLenum current_type = GL_FLOAT;
-        if (_ >= 4 && _ <= 5) {
+        if (_ >= 4 && _ <= 5 || _ == 11) {
             current_type = GL_INT;
         }
+        assert(cur_offset == field_offsets[_]);
         
         if (current_type == GL_INT) {
+            printf("%s\n", "type GL_INT");
             /*
             This is another massive trap in OpenGL:
             You have to use glVertexAttribIPointer, not glVertexAttribPointer,
@@ -330,27 +439,32 @@ void opengl_compile_shaders(
                 /* GLint size (number of components per vertex, must be 1-4): */
                     field_sizes[_],
                 /* GLenum type (of data): */
-                    current_type,
+                    GL_INT,
                 /* GLsizei stride; */
                     sizeof(GPUVertex),
                 /* const GLvoid * pointer (offset) : */
                     (void *)(cur_offset * sizeof(float)));
         } else {
+            printf("%s\n", "type GL_FLOAT");
+            /*
+            DANGER: this function is part of the trap
+            it bizarrely casts your input to floats, even if you explicitly
+            state they're ints
+            */
             glVertexAttribPointer(
                 /* GLuint index (location in shader source): */
                     _,
-                /* GLint size (number of components per vertex, must be 1-4): */
+                /* GLint size (no. of components per vertex, must be 1-4): */
                     field_sizes[_],
                 /* GLenum type (of data): */
-                    current_type,
+                    GL_FLOAT,
                 /* GLboolean normalize data: */
                     GL_FALSE,
                 /* GLsizei stride; */
-                    sizeof(GPUVertex),
+                   sizeof(GPUVertex),
                 /* const GLvoid * pointer (offset) : */
                     (void *)(cur_offset * sizeof(float)));
         }
-        
         cur_offset += field_sizes[_];
         
         err_value = glGetError();
@@ -374,6 +488,16 @@ void opengl_compile_shaders(
         glEnableVertexAttribArray(_);
         assert(glGetError() == 0);
     }
+    // now that we're done, the offset should be the entirety of a GPUVertex
+    if (cur_offset != sizeof(GPUVertex) / 4) {
+        printf("cur_offset: %i\n", cur_offset);
+        printf(
+            "sizeof(GPUVertex): %i, which div 4 is: %i\n",
+            sizeof(GPUVertex),
+            sizeof(GPUVertex) / 4);
+        assert(0);
+    }
+    
     
     // validate program
     success = 0;
@@ -460,6 +584,7 @@ void platform_gpu_init_texture_array(
     const uint32_t single_image_width,
     const uint32_t single_image_height)
 {
+    return;
     printf(
         "opengl must init texture array: %i\n",
         texture_array_i);
@@ -477,13 +602,16 @@ void platform_gpu_init_texture_array(
         texture_array_ids[texture_array_i]);
     assert(glGetError() == 0);
     
+    char name_in_shader[64];
+    strcpy_capped(name_in_shader, 64, "texture_arrays[");
+    strcat_uint_capped(name_in_shader, 64, texture_array_i);
+    strcat_capped(name_in_shader, 64, "]");
     GLuint loc = glGetUniformLocation(
         program_id,
-        "texture_arrays[0]");
+        name_in_shader);
     assert(glGetError() == 0);
     
-    uint32_t value = 0;
-    glUniform1iv(loc, 1, &value);
+    glUniform1iv(loc, 1, &texture_array_i);
     assert(glGetError() == 0);
     
     //There is also glTexStorage3D in openGL 4
@@ -508,6 +636,7 @@ void platform_gpu_init_texture_array(
             GL_UNSIGNED_BYTE,
         /* const GLvoid * data: */
             NULL);
+    
     err_value = glGetError();
     if (err_value != GL_NO_ERROR) {
         printf("%s\n", "glTexImage3D failed!");
@@ -529,6 +658,7 @@ void platform_gpu_init_texture_array(
         /* GLint param: */
             GL_MIRRORED_REPEAT);
     assert(glGetError() == 0);
+    
     glTexParameteri(
         /* GLenum target: */
             GL_TEXTURE_2D_ARRAY,
@@ -537,6 +667,7 @@ void platform_gpu_init_texture_array(
         /* GLint param: */
             GL_MIRRORED_REPEAT);
     assert(glGetError() == 0);
+    
     glTexParameteri(
         /* GLenum target: */
             GL_TEXTURE_2D_ARRAY,
@@ -545,6 +676,7 @@ void platform_gpu_init_texture_array(
         /* GLint param: */
             GL_NEAREST);
     assert(glGetError() == 0);
+    
     glTexParameteri(
         /* GLenum target: */
             GL_TEXTURE_2D_ARRAY,
@@ -564,6 +696,7 @@ void platform_gpu_push_texture_slice(
     const uint32_t image_height,
     const uint8_t * rgba_values)
 {
+    return;
     printf("opengl_push_texture()\n");
     assert(image_width > 0);
     assert(image_height > 0);

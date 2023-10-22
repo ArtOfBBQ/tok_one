@@ -36,7 +36,7 @@ static void request_particle_fountain() {
     fountain.particle_origin_max_x_variance = 3;
     fountain.particle_origin_max_y_variance = 3;
     fountain.particle_origin_max_z_variance = 3;
-
+    
     fountain.particle_rgba_progression[0][0] = 1.0f;
     fountain.particle_rgba_progression[0][1] = 1.0f;
     fountain.particle_rgba_progression[0][2] = 1.0f;

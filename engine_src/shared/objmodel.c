@@ -619,30 +619,42 @@ static void parse_obj(
         {
             // discard the 'vt'
             i += 2;
-
+            
             // skip the space(s) after the 'vt'
             log_assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
-
+            
             // read the u coordinate
             parser_uv_u_buffer[next_uv_i] = string_to_float(rawdata + i);
-
+            if (parser_uv_u_buffer[next_uv_i] < 0.0f) {
+                parser_uv_u_buffer[next_uv_i] = 0.0f;
+            }
+            if (parser_uv_u_buffer[next_uv_i] > 1.0f) {
+                parser_uv_u_buffer[next_uv_i] = 1.0f;
+            }
+            
             // discard the u coordinate
             i += chars_till_next_space_or_slash(
                 rawdata + i);
             log_assert(rawdata[i] == ' ');
-
+            
             // skip the space(s) after the u coord
             log_assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
-
+            
             // read the v coordinate
             parser_uv_v_buffer[next_uv_i] = string_to_float(rawdata + i);
-
+            if (parser_uv_v_buffer[next_uv_i] < 0.0f) {
+                parser_uv_v_buffer[next_uv_i] = 0.0f;
+            }
+            if (parser_uv_v_buffer[next_uv_i] > 1.0f) {
+                parser_uv_v_buffer[next_uv_i] = 1.0f;
+            }
+            
             next_uv_i += 1;
-
+            
             // discard the v coordinate
             i += chars_till_next_space_or_slash(
                 rawdata + i);

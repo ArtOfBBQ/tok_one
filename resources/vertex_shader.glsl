@@ -1,17 +1,41 @@
 #version 460 core
 
-layout (location = 0) in vec3 xyz;
-layout (location = 1) in vec3 normal;
-layout (location = 2) in vec2 uv;
-layout (location = 3) in vec4 rgba;
-layout (location = 4) in int texturearray_i;
-layout (location = 5) in int texture_i;
-layout (location = 6) in vec3 parent_xyz;
-layout (location = 7) in vec3 parent_angle;
-layout (location = 8) in float scale_factor;
-layout (location = 9) in float ignore_lighting;
+// typedef struct GPUVertex {
+//     float x;
+//     float y;
+//     float z;
+//     /* Currently same for "entire" triangle, but who cares about 3 vertices */
+//     float normal_x;
+//     float normal_y;
+//     float normal_z;
+//     float uv  [2];
+//     float RGBA[4];
+//     int   texturearray_i; // -1 for no texture
+//     int   texture_i;      // -1 for no texture
+//     /* Same for parent */
+//     float parent_x; // same for entire parent
+//     float parent_y; // same for entire parent
+//     float parent_z; // same for entire parent
+//     float x_angle; // same for entire parent
+//     float y_angle; // same for entire parent
+//     float z_angle; // same for entire parent
+//     float scale_factor; // same for entire parent
+//     float ignore_lighting; // same for entire parent
+//     float ignore_camera; // same for entire parent
+//     int   touchable_id; // same for entire parent
+// } GPUVertex;
+layout (location =  0) in vec3 xyz;
+layout (location =  1) in vec3 normal;
+layout (location =  2) in vec2 uv;
+layout (location =  3) in vec4 rgba;
+layout (location =  4) in int texturearray_i;
+layout (location =  5) in int texture_i;
+layout (location =  6) in vec3 parent_xyz;
+layout (location =  7) in vec3 parent_angle;
+layout (location =  8) in float scale_factor;
+layout (location =  9) in float ignore_lighting;
 layout (location = 10) in float ignore_camera;
-layout (location = 11) in float touchable_id;
+layout (location = 11) in int touchable_id;
 
 out vec2 vert_to_frag_uv;
 out vec4 vert_to_frag_color;
@@ -160,7 +184,7 @@ void main()
         vert_to_frag_lighting = vec4(1.0f, 1.0f, 1.0f, 1.0f);
         return;
     }
-
+    
     // init lighting
     vert_to_frag_lighting = vec4(0.0f, 0.0f, 0.0f, 1.0f);
     

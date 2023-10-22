@@ -28,7 +28,6 @@ typedef struct GPUVertex {
     float ignore_lighting; // same for entire parent
     float ignore_camera; // same for entire parent
     int   touchable_id; // same for entire parent
-    float padding[8];
 } GPUVertex;
 
 typedef struct GPUCamera {
