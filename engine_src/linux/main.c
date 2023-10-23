@@ -368,7 +368,10 @@ int main(int argc, char* argv[])
         /* uint32_t fragment_shader_source_size: */
             fragment_shader_source.size);
     
-    XSelectInput(display, win, KeyPressMask | KeyReleaseMask);
+    XSelectInput(
+        display,
+        win,
+        KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask);
     XEvent event;
     
     uint32_t current_frame_i = 0;
@@ -387,6 +390,88 @@ int main(int argc, char* argv[])
                 uint32_t tok_one_key = linux_keycode_to_tokone_keycode(
                     event.xkey.keycode);
                 register_keyup(tok_one_key);
+            } else if (event.type == ButtonPress) {
+                switch (event.xbutton.button) {
+                    case 1:
+                        printf("Left Click: [%d, %d]\n",
+                            event.xbutton.x_root,
+                            event.xbutton.y_root);
+                        register_interaction(
+                            /* interaction : */
+                                &user_interactions[
+                                    INTR_PREVIOUS_LEFTCLICK_START],
+                            /* screenspace_x: */
+                                event.xbutton.x_root,
+                            /* screenspace_y: */
+                                event.xbutton.y_root);
+                        
+                        user_interactions[
+                            INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START] =
+                                user_interactions[
+                                    INTR_PREVIOUS_LEFTCLICK_START];
+                        user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
+                            user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
+                        user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
+                            user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
+                        
+                        user_interactions[INTR_PREVIOUS_TOUCH_END].
+                            handled = true;
+                        user_interactions[INTR_PREVIOUS_LEFTCLICK_END].
+                            handled = true;
+                        user_interactions[
+                            INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
+                                handled = true;
+                        break;
+                    case 2:
+                        printf("Middle Click\n");
+                        break;
+                    case 3:
+                        printf("Right Click\n");
+                        break;
+                    case 4:
+                        printf("Scroll UP\n");
+                        break;
+                    case 5:
+                        printf("Scroll Down\n");
+                        break;
+                }
+            } else if (event.type == ButtonRelease) {
+                switch (event.xbutton.button) {
+                    case 1:
+                        printf("Left Up: [%d, %d]\n",
+                            event.xbutton.x_root,
+                            event.xbutton.y_root);
+                        register_interaction(
+                            /* interaction : */
+                                &user_interactions[
+                                    INTR_PREVIOUS_LEFTCLICK_END],
+                            /* screenspace_x: */
+                                event.xbutton.x_root,
+                            /* screenspace_y: */
+                                event.xbutton.y_root);
+                        
+                        user_interactions[
+                            INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END] =
+                                user_interactions[
+                                    INTR_PREVIOUS_LEFTCLICK_END];
+                        user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
+                            user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
+                        user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
+                            user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
+                        break;
+                    case 2:
+                        printf("Middle Up\n");
+                        break;
+                    case 3:
+                        printf("Right Up\n");
+                        break;
+                    case 4:
+                        printf("Scroll UP\n");
+                        break;
+                    case 5:
+                        printf("Scroll Down\n");
+                        break;
+                }
             }
         }
         
