@@ -22,7 +22,6 @@ static void opengl_set_lights(
         program_id,
         "lights_x");
     assert(glGetError() == 0);
-    
     glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->light_x);
     assert(glGetError() == 0);
     
@@ -30,31 +29,27 @@ static void opengl_set_lights(
         program_id,
         "lights_y");
     assert(glGetError() == 0);
-    
-    glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->light_x);
+    glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->light_y);
     assert(glGetError() == 0);
-
+    
     loc = glGetUniformLocation(
         program_id,
         "lights_z");
     assert(glGetError() == 0);
-    
-    glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->light_x);
+    glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->light_z);
     assert(glGetError() == 0);
 
     loc = glGetUniformLocation(
         program_id,
         "lights_ambient");
     assert(glGetError() == 0);
-    
     glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->ambient);
     assert(glGetError() == 0);
-
+    
     loc = glGetUniformLocation(
         program_id,
         "lights_diffuse");
     assert(glGetError() == 0);
-    
     glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->diffuse);
     assert(glGetError() == 0);
 
@@ -62,7 +57,6 @@ static void opengl_set_lights(
         program_id,
         "lights_reach");
     assert(glGetError() == 0);
-    
     glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->reach);
     assert(glGetError() == 0);
     
@@ -70,7 +64,6 @@ static void opengl_set_lights(
         program_id,
         "lights_red");
     assert(glGetError() == 0);
-    
     glUniform1fv(
         loc,
         ZLIGHTS_TO_APPLY_ARRAYSIZE,
@@ -81,7 +74,6 @@ static void opengl_set_lights(
         program_id,
         "lights_green");
     assert(glGetError() == 0);
-    
     glUniform1fv(
         loc,
         ZLIGHTS_TO_APPLY_ARRAYSIZE,
@@ -92,7 +84,6 @@ static void opengl_set_lights(
         program_id,
         "lights_blue");
     assert(glGetError() == 0);
-    
     glUniform1fv(
         loc,
         ZLIGHTS_TO_APPLY_ARRAYSIZE,
@@ -103,7 +94,6 @@ static void opengl_set_lights(
         program_id,
         "lights_size");
     assert(glGetError() == 0);
-    
     int size[1];
     size[0] = (int32_t)light_collection->lights_size;
     glUniform1iv(
