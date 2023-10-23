@@ -9,6 +9,178 @@ static GLuint err_value = UINT32_MAX;
 
 static GLuint texture_array_ids[TEXTUREARRAYS_SIZE];
 
+static void opengl_set_lights(
+    GPULightCollection * light_collection)
+{
+    /*
+    Reminder: If ZLIGHTS_TO_APPLY_ARRAYSIZE gets updated,
+    you need to update the glsl vertex shader
+    */
+    assert(ZLIGHTS_TO_APPLY_ARRAYSIZE == 50);
+    
+    GLint loc = glGetUniformLocation(
+        program_id,
+        "lights_x");
+    assert(glGetError() == 0);
+    
+    glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->light_x);
+    assert(glGetError() == 0);
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "lights_y");
+    assert(glGetError() == 0);
+    
+    glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->light_x);
+    assert(glGetError() == 0);
+
+    loc = glGetUniformLocation(
+        program_id,
+        "lights_z");
+    assert(glGetError() == 0);
+    
+    glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->light_x);
+    assert(glGetError() == 0);
+
+    loc = glGetUniformLocation(
+        program_id,
+        "lights_ambient");
+    assert(glGetError() == 0);
+    
+    glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->ambient);
+    assert(glGetError() == 0);
+
+    loc = glGetUniformLocation(
+        program_id,
+        "lights_diffuse");
+    assert(glGetError() == 0);
+    
+    glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->diffuse);
+    assert(glGetError() == 0);
+
+    loc = glGetUniformLocation(
+        program_id,
+        "lights_reach");
+    assert(glGetError() == 0);
+    
+    glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->reach);
+    assert(glGetError() == 0);
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "lights_red");
+    assert(glGetError() == 0);
+    
+    glUniform1fv(
+        loc,
+        ZLIGHTS_TO_APPLY_ARRAYSIZE,
+        light_collection->red);
+    assert(glGetError() == 0);
+
+    loc = glGetUniformLocation(
+        program_id,
+        "lights_green");
+    assert(glGetError() == 0);
+    
+    glUniform1fv(
+        loc,
+        ZLIGHTS_TO_APPLY_ARRAYSIZE,
+        light_collection->green);
+    assert(glGetError() == 0);
+
+    loc = glGetUniformLocation(
+        program_id,
+        "lights_blue");
+    assert(glGetError() == 0);
+    
+    glUniform1fv(
+        loc,
+        ZLIGHTS_TO_APPLY_ARRAYSIZE,
+        light_collection->blue);
+    assert(glGetError() == 0);
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "lights_size");
+    assert(glGetError() == 0);
+    
+    int size[1];
+    size[0] = (int32_t)light_collection->lights_size;
+    glUniform1iv(
+        loc,
+        1,
+        &size);
+    assert(glGetError() == 0);
+}
+
+static void opengl_set_camera(
+    GPUCamera * camera)
+{
+    GLint loc = -1;
+    
+    assert(program_id == 1);
+    glUseProgram(program_id);
+    assert(glGetError() == 0);
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "camera_position");
+    assert(loc == 0);
+    assert(glGetError() == 0);
+    // there is also glProgramUniform3f, but that's not in OpenGL 3.0
+    // We are using 'glUseProgram' explicitly here and before this so
+    // I don't think that can be the problem
+    float cam_pos[3];
+    cam_pos[0] = camera->x;
+    cam_pos[1] = camera->y;
+    cam_pos[2] = camera->z;
+    glUniform3fv(
+        loc,
+        1,
+        cam_pos);
+    err_value = glGetError();
+    if (err_value != 0) {
+        printf("error trying to set camera pos uniform\n");
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled!");
+        }
+        assert(0);
+    }
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "camera_angle");
+    assert(loc == 1);
+    assert(glGetError() == 0);
+    float cam_angle[3];
+    cam_angle[0] = camera->x_angle;
+    cam_angle[1] = camera->y_angle;
+    cam_angle[2] = camera->z_angle;
+    glUniform3fv(
+        loc,
+        1,
+        cam_angle);
+    assert(glGetError() == 0);
+    
+    float doublecheck_cam_angle[3];
+    doublecheck_cam_angle[2] = 234.12f;
+    glGetUniformfv(program_id, loc, doublecheck_cam_angle);
+    assert(glGetError() == 0);
+    assert(doublecheck_cam_angle[0] == camera->x_angle);
+    assert(doublecheck_cam_angle[1] == camera->y_angle);
+    assert(doublecheck_cam_angle[2] == camera->z_angle);
+}
+
 void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
     
     assert(VAO < UINT32_MAX);
@@ -79,101 +251,9 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         }
         assert(0);
     }
-    
-    // TODO: query the data in GL_ARRAY_BUFFER to make sure it's correct
-    for (uint32_t i = 0; i < 10; i++) {
-        if (i >= frame_data->vertices_size) { break; }
-        float actual = 1234345.0f;
-        glGetBufferSubData(
-            /* GLenum target: */
-                GL_ARRAY_BUFFER,
-            /* GLintptr offset: */
-                (i * sizeof(GPUVertex)) + 0,
-            /* GLsizeiptr size: */
-                4,
-            /* void * data): */
-                &actual);
-        assert(actual == frame_data->vertices[i].x);
-        actual = 2934.2f;
-        glGetBufferSubData(
-            /* GLenum target: */
-                GL_ARRAY_BUFFER,
-            /* GLintptr offset: */
-                (i * sizeof(GPUVertex)) + 4,
-            /* GLsizeiptr size: */
-                4,
-            /* void * data): */
-                &actual);
-        assert(actual == frame_data->vertices[i].y);
-        actual = 2934.2f;
-        glGetBufferSubData(
-            /* GLenum target: */
-                GL_ARRAY_BUFFER,
-            /* GLintptr offset: */
-                (i * sizeof(GPUVertex)) + 8,
-            /* GLsizeiptr size: */
-                4,
-            /* void * data): */
-                &actual);
-        assert(actual == frame_data->vertices[i].z);
-        actual = 2934.2f;
-        glGetBufferSubData(
-            /* GLenum target: */
-                GL_ARRAY_BUFFER,
-            /* GLintptr offset: */
-                (i * sizeof(GPUVertex)) + 12,
-            /* GLsizeiptr size: */
-                4,
-            /* void * data): */
-                &actual);
-        assert(actual == frame_data->vertices[i].normal_x);
-        actual = 2934.2f;
-        glGetBufferSubData(
-            /* GLenum target: */
-                GL_ARRAY_BUFFER,
-            /* GLintptr offset: */
-                (i * sizeof(GPUVertex)) + 16,
-            /* GLsizeiptr size: */
-                4,
-            /* void * data): */
-                &actual);
-        assert(actual == frame_data->vertices[i].normal_y);
-        actual = 2934.2f;
-        glGetBufferSubData(
-            /* GLenum target: */
-                GL_ARRAY_BUFFER,
-            /* GLintptr offset: */
-                (i * sizeof(GPUVertex)) + 20,
-            /* GLsizeiptr size: */
-                4,
-            /* void * data): */
-                &actual);
-        assert(actual == frame_data->vertices[i].normal_z);
-        actual = 234.0f;
-        glGetBufferSubData(
-            /* GLenum target: */
-                GL_ARRAY_BUFFER,
-            /* GLintptr offset: */
-                (i * sizeof(GPUVertex)) + 24,
-            /* GLsizeiptr size: */
-                4,
-            /* void * data): */
-                &actual);
-        assert(actual == frame_data->vertices[i].uv[0]);
-        assert(actual < 1.05f && actual > -0.05f);
-        actual = -125.0f;
-        glGetBufferSubData(
-            /* GLenum target: */
-                GL_ARRAY_BUFFER,
-            /* GLintptr offset: */
-                (i * sizeof(GPUVertex)) + 28,
-            /* GLsizeiptr size: */
-                4,
-            /* void * data: */
-                &actual);
-        assert(actual == frame_data->vertices[i].uv[1]);
-        assert(actual < 1.05f && actual > -0.05f);
-    }
+
+    opengl_set_lights(frame_data->light_collection);
+    err_value = glGetError();
     
     opengl_set_camera(frame_data->camera);
     err_value = glGetError();
@@ -214,19 +294,11 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         }
         assert(0);
     }
-
-    glActiveTexture(GL_TEXTURE0);
-    assert(glGetError() == 0);
-    
-    // glBindTexture(
-    //     GL_TEXTURE_2D_ARRAY,
-    //     texture_array_ids[texture_array_i]);
-    // assert(glGetError() == 0);
     
     // glPointSize(10); // for GL_POINTS
     glDrawArrays(
         /* GLenum mode: */
-            GL_TRIANGLES, 
+            GL_TRIANGLES,
         /* GLint first: */
             0,
         /* GLint count (# of vertices to render): */
@@ -257,6 +329,7 @@ static void opengl_compile_given_shader(
     char * shader_source,
     GLint source_length)
 {
+    printf("compile shader with id: %u\n", shader_id);
     glShaderSource(
         /* GLuint handle: */
             shader_id,
@@ -520,74 +593,6 @@ void opengl_compile_shaders(
     glGetProgramiv(program_id, GL_VALIDATE_STATUS, &success);
     assert(success);
     assert(glGetError() == 0);
-}
-
-void opengl_set_camera(
-    GPUCamera * camera)
-{
-    GLint loc = -1;
-    
-    assert(program_id == 1);
-    glUseProgram(program_id);
-    assert(glGetError() == 0);
-    
-    loc = glGetUniformLocation(
-        program_id,
-        "camera_position");
-    assert(loc == 0);
-    assert(glGetError() == 0);
-    // there is also glProgramUniform3f, but that's not in OpenGL 3.0
-    // We are using 'glUseProgram' explicitly here and before this so
-    // I don't think that can be the problem
-    float cam_pos[3];
-    cam_pos[0] = camera->x;
-    cam_pos[1] = camera->y;
-    cam_pos[2] = camera->z;
-    glUniform3fv(
-        loc,
-        1,
-        cam_pos);
-    err_value = glGetError();
-    if (err_value != 0) {
-        printf("error trying to set camera pos uniform\n");
-        switch (err_value) {
-            case GL_INVALID_VALUE:
-                printf("%s\n", "GL_INVALID_VALUE");
-                break;
-            case GL_INVALID_ENUM:
-                printf("%s\n", "GL_INVALID_ENUM");
-                break;
-            case GL_INVALID_OPERATION:
-                printf("%s\n", "GL_INVALID_OPERATION");
-                break;
-            default:
-                printf("%s\n", "unhandled!");
-        }
-        assert(0);
-    }
-    
-    loc = glGetUniformLocation(
-        program_id,
-        "camera_angle");
-    assert(loc == 1);
-    assert(glGetError() == 0);
-    float cam_angle[3];
-    cam_angle[0] = camera->x_angle;
-    cam_angle[1] = camera->y_angle;
-    cam_angle[2] = camera->z_angle;
-    glUniform3fv(
-        loc,
-        1,
-        cam_angle);
-    assert(glGetError() == 0);
-    
-    float doublecheck_cam_angle[3];
-    doublecheck_cam_angle[2] = 234.12f;
-    glGetUniformfv(program_id, loc, doublecheck_cam_angle);
-    assert(glGetError() == 0);
-    assert(doublecheck_cam_angle[0] == camera->x_angle);
-    assert(doublecheck_cam_angle[1] == camera->y_angle);
-    assert(doublecheck_cam_angle[2] == camera->z_angle);
 }
 
 /* reminder: this is mutex protected */

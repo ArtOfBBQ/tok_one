@@ -212,12 +212,13 @@ vertex_shader(
         float4 vec_from_light_to_vertex = normalize(translated_pos - light_pos);
         float visibility_rating = max(
             0.0f,
-            -1.0f * dot(z_rotated_normals,
-            vec_from_light_to_vertex));
+            -1.0f * dot(
+                z_rotated_normals,
+                vec_from_light_to_vertex));
         
         out.lighting += (
-            distance_mod *
             light_color *
+            distance_mod *
             (light_collection->diffuse[i] * 3.0f) *
             visibility_rating);
     }

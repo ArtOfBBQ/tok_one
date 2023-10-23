@@ -1,29 +1,5 @@
 #version 460 core
 
-// typedef struct GPUVertex {
-//     float x;
-//     float y;
-//     float z;
-//     /* Currently same for "entire" triangle, but who cares about 3 vertices */
-//     float normal_x;
-//     float normal_y;
-//     float normal_z;
-//     float uv  [2];
-//     float RGBA[4];
-//     int   texturearray_i; // -1 for no texture
-//     int   texture_i;      // -1 for no texture
-//     /* Same for parent */
-//     float parent_x; // same for entire parent
-//     float parent_y; // same for entire parent
-//     float parent_z; // same for entire parent
-//     float x_angle; // same for entire parent
-//     float y_angle; // same for entire parent
-//     float z_angle; // same for entire parent
-//     float scale_factor; // same for entire parent
-//     float ignore_lighting; // same for entire parent
-//     float ignore_camera; // same for entire parent
-//     int   touchable_id; // same for entire parent
-// } GPUVertex;
 layout (location =  0) in vec3 xyz;
 layout (location =  1) in vec3 normal;
 layout (location =  2) in vec2 uv;
@@ -49,6 +25,17 @@ uniform float projection_constants_near;
 uniform float projection_constants_q;
 uniform float projection_constants_fov_modifier;
 uniform float projection_constants_x_multiplier;
+
+uniform float lights_x[50];
+uniform float lights_y[50];
+uniform float lights_z[50];
+uniform float lights_ambient[50];
+uniform float lights_diffuse[50];
+uniform float lights_reach[50];
+uniform float lights_red[50];
+uniform float lights_green[50];
+uniform float lights_blue[50];
+uniform int lights_size;
 
 vec4 x_rotate(vec4 vertices, float x_angle) {
     vec4 rotated_vertices = vertices;
@@ -188,9 +175,49 @@ void main()
     vert_to_frag_lighting = vec4(0.0f, 0.0f, 0.0f, 1.0f);
     
     // add bonus for each light
-    vert_to_frag_lighting[0] = 0.20f;
-    vert_to_frag_lighting[1] = 0.20f;
-    vert_to_frag_lighting[2] = 0.20f;
+    for (
+        int i = 0;
+        i < lights_size;
+        i++)
+    {
+        // ambient lighting
+        vec4 light_pos = vec4(lights_x[i], lights_y[i], lights_z[i], 1.0f);
+        vec4 light_rgba = vec4(
+            lights_red[i],
+            lights_green[i],
+            lights_red[i],
+            1.0f);
+        float distance = get_distance(
+            light_pos,
+            translated_pos);
+        float distance_mod = (lights_reach[i] + 0.5f)
+            - (distance * distance);
+        distance_mod = clamp(distance_mod, 0.0f, 5.0f);
+        
+        // vert_to_frag_lighting +=
+        //     (light_rgba * distance_mod * lights_ambient[i]);
+        
+        // diffuse lighting
+        vec4 normalized_normals = normalize(z_rotated_normals);
+        
+        vec4 vec_from_light_to_vertex = normalize(
+            translated_pos - light_pos);
+        
+        float dot = dot(
+            normalized_normals,
+            vec_from_light_to_vertex);
+        float visibility_rating = max(
+            0.0f,
+            -1.0f * dot);
+        
+         vec4 lighting_to_add = (
+            light_rgba *
+            distance_mod *
+            (lights_diffuse[i] * 3.0f) *
+            visibility_rating);
+        
+        vert_to_frag_lighting += lighting_to_add;
+    }
     
     // at the end
     clamp(vert_to_frag_lighting, 0.05f, 1.0f);
