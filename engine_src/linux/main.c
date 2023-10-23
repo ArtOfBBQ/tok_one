@@ -393,34 +393,34 @@ int main(int argc, char* argv[])
             } else if (event.type == ButtonPress) {
                 switch (event.xbutton.button) {
                     case 1:
-                        printf("Left Click: [%d, %d]\n",
-                            event.xbutton.x_root,
-                            event.xbutton.y_root);
-                        register_interaction(
-                            /* interaction : */
-                                &user_interactions[
-                                    INTR_PREVIOUS_LEFTCLICK_START],
-                            /* screenspace_x: */
-                                event.xbutton.x_root,
-                            /* screenspace_y: */
-                                event.xbutton.y_root);
-                        
-                        user_interactions[
-                            INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START] =
-                                user_interactions[
-                                    INTR_PREVIOUS_LEFTCLICK_START];
-                        user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
-                            user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
-                        user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
-                            user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
-                        
-                        user_interactions[INTR_PREVIOUS_TOUCH_END].
-                            handled = true;
-                        user_interactions[INTR_PREVIOUS_LEFTCLICK_END].
-                            handled = true;
-                        user_interactions[
-                            INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
-                                handled = true;
+                        printf("Left Click: [%f, %f]\n",
+                            (float)event.xbutton.x,
+                            (float)event.xbutton.y);
+                        // register_interaction(
+                        //     /* interaction : */
+                        //         &user_interactions[
+                        //             INTR_PREVIOUS_LEFTCLICK_START],
+                        //     /* screenspace_x: */
+                        //         event.xbutton.x_root,
+                        //     /* screenspace_y: */
+                        //         event.xbutton.y_root);
+                        // 
+                        // user_interactions[
+                        //     INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START] =
+                        //         user_interactions[
+                        //             INTR_PREVIOUS_LEFTCLICK_START];
+                        // user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
+                        //     user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
+                        // user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
+                        //     user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
+                        // 
+                        // user_interactions[INTR_PREVIOUS_TOUCH_END].
+                        //     handled = true;
+                        // user_interactions[INTR_PREVIOUS_LEFTCLICK_END].
+                        //     handled = true;
+                        // user_interactions[
+                        //     INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
+                        //         handled = true;
                         break;
                     case 2:
                         printf("Middle Click\n");
@@ -438,26 +438,26 @@ int main(int argc, char* argv[])
             } else if (event.type == ButtonRelease) {
                 switch (event.xbutton.button) {
                     case 1:
-                        printf("Left Up: [%d, %d]\n",
-                            event.xbutton.x_root,
-                            event.xbutton.y_root);
-                        register_interaction(
-                            /* interaction : */
-                                &user_interactions[
-                                    INTR_PREVIOUS_LEFTCLICK_END],
-                            /* screenspace_x: */
-                                event.xbutton.x_root,
-                            /* screenspace_y: */
-                                event.xbutton.y_root);
-                        
-                        user_interactions[
-                            INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END] =
-                                user_interactions[
-                                    INTR_PREVIOUS_LEFTCLICK_END];
-                        user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
-                            user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
-                        user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
-                            user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
+                        printf("Left Up: [%f, %f]\n",
+                            (float)event.xbutton.x,
+                            (float)event.xbutton.y);
+                        // register_interaction(
+                        //     /* interaction : */
+                        //         &user_interactions[
+                        //             INTR_PREVIOUS_LEFTCLICK_END],
+                        //     /* screenspace_x: */
+                        //         event.xbutton.x_root,
+                        //     /* screenspace_y: */
+                        //         event.xbutton.y_root);
+                        // 
+                        // user_interactions[
+                        //     INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END] =
+                        //         user_interactions[
+                        //             INTR_PREVIOUS_LEFTCLICK_END];
+                        // user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
+                        //     user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
+                        // user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
+                        //     user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
                         break;
                     case 2:
                         printf("Middle Up\n");
