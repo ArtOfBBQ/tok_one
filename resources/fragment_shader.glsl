@@ -10,7 +10,7 @@ out vec4 FragColor;
 
 // Takes an extra 3rd texture coordinate (layer),
 // which is just an index in the array
-uniform sampler2DArray texture_array_1;
+uniform sampler2DArray texture_arrays[32];
 
 void main()
 {
@@ -22,13 +22,12 @@ void main()
     {
         FragColor *= vert_to_frag_lighting;
     } else {
-        
         vec4 texture_sample = texture(
-            texture_array_1,
+            texture_arrays[vert_to_frag_texturearray_i],
             vec3(vert_to_frag_uv, float(vert_to_frag_texture_i)));
         
         FragColor *= texture_sample;
-        // FragColor *= vert_to_frag_lighting;
+        FragColor *= vert_to_frag_lighting;
     }
     
     if (FragColor[3] < 0.01f) {
@@ -36,6 +35,6 @@ void main()
         return;
     }
     
-    // FragColor[3] = 1.0f;
+    FragColor[3] = 1.0f;
 }
 

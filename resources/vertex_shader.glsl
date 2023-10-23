@@ -188,7 +188,9 @@ void main()
     vert_to_frag_lighting = vec4(0.0f, 0.0f, 0.0f, 1.0f);
     
     // add bonus for each light
-    vert_to_frag_lighting[0] = 0.85f;
+    vert_to_frag_lighting[0] = 0.20f;
+    vert_to_frag_lighting[1] = 0.20f;
+    vert_to_frag_lighting[2] = 0.20f;
     
     // at the end
     clamp(vert_to_frag_lighting, 0.05f, 1.0f);

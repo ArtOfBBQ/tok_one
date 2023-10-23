@@ -218,10 +218,10 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
     glActiveTexture(GL_TEXTURE0);
     assert(glGetError() == 0);
     
-    glBindTexture(
-        GL_TEXTURE_2D_ARRAY,
-        texture_array_ids[0]);
-    assert(glGetError() == 0);
+    // glBindTexture(
+    //     GL_TEXTURE_2D_ARRAY,
+    //     texture_array_ids[texture_array_i]);
+    // assert(glGetError() == 0);
     
     // glPointSize(10); // for GL_POINTS
     glDrawArrays(
@@ -597,8 +597,6 @@ void platform_gpu_init_texture_array(
     const uint32_t single_image_width,
     const uint32_t single_image_height)
 {
-    if (texture_array_i > 0) { return; }
-    
     printf(
         "opengl must init texture array: %i with %u images (%ux%u)\n",
         texture_array_i,
@@ -619,13 +617,13 @@ void platform_gpu_init_texture_array(
         texture_array_ids[texture_array_i]);
     assert(glGetError() == 0);
     
-    // char name_in_shader[64];
-    // strcpy_capped(name_in_shader, 64, "texture_arrays[");
-    // strcat_uint_capped(name_in_shader, 64, texture_array_i);
-    // strcat_capped(name_in_shader, 64, "]");
+    char name_in_shader[64];
+    strcpy_capped(name_in_shader, 64, "texture_arrays[");
+    strcat_uint_capped(name_in_shader, 64, texture_array_i);
+    strcat_capped(name_in_shader, 64, "]");
     GLuint loc = glGetUniformLocation(
         program_id,
-        "texture_array_1");
+        name_in_shader);
     assert(glGetError() == 0);
     
     glUniform1iv(loc, 1, &texture_array_i);
@@ -702,9 +700,6 @@ void platform_gpu_init_texture_array(
         /* GLint param: */
             GL_NEAREST);
     assert(glGetError() == 0);
-    
-    // glEnable(GL_TEXTURE_2D_ARRAY);
-    // assert(glGetError() == 0);
 }
 
 /* reminder: this is mutex protected  */
@@ -716,8 +711,6 @@ void platform_gpu_push_texture_slice(
     const uint32_t image_height,
     const uint8_t * rgba_values)
 {
-    if (texture_array_i > 0) { return; }
-    
     printf(
         "opengl_push_texture(): %u to array: %u\n",
         texture_i,
@@ -734,9 +727,10 @@ void platform_gpu_push_texture_slice(
         GL_TEXTURE_2D_ARRAY,
         texture_array_ids[texture_array_i]);
     assert(glGetError() == 0);
-    
-    // Note: this fails, but it shows the letter shapes at least
-    // Previously we passed GL_UNSIGNED_BYTE and that fails completely
+   
+    // GL_UNSIGNED_BYTE is correct, opengl just shows very different results
+    // from metal when alpha blending / testing is not set up yet and you're
+    // not discarding any fragments.
     glTexSubImage3D(
         /*
         GLenum target:
@@ -800,7 +794,7 @@ void platform_gpu_push_texture_slice(
         GL_UNSIGNED_INT_8_8_8_8_REV, GL_UNSIGNED_INT_10_10_10_2,
         GL_UNSIGNED_INT_2_10_10_10_REV
         */
-            GL_UNSIGNED_INT_8_8_8_8,
+            GL_UNSIGNED_BYTE,
         /*
         const GLvoid * data:
         Specifies a pointer to the image data in memory.
