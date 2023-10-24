@@ -1,5 +1,4 @@
-# echo "Deleting buggy, useless, resource intensive and in all other ways awful Apple malware..."
-# rm -r /Users/jellevandeneynde/Library/Developer/Xcode/DerivedData
+PLATFORM="$(uname -s)"
 
 if test -f "engine_src/shared/debigulator/src/decode_png.c";
 then
@@ -11,8 +10,12 @@ echo "git submodule update --init"
 exit 0
 fi
 
-# bash engine_src/linux/build.sh $1
-bash engine_src/macos/build.sh $1
-# bash engine_src/macos/buildtests.sh $1
-# bash engine_src/ios/build.sh $1
+if [[ $PLATFORM = "Darwin" ]]; then
+    bash engine_src/macos/build.sh $1
+    # bash engine_src/macos/buildtests.sh $1
+elif [[ $PLATFORM = "Linux" ]]; then
+    bash engine_src/linux/build.sh $1
+else
+    echo "Unknown platform, please add in build.sh"
+fi
 
