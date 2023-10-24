@@ -34,5 +34,13 @@ float screenspace_width_to_width(
 
 void init_projection_constants(void);
 
+void update_window_position(
+    float left,
+    float bottom);
+void update_window_size(
+    float width,
+    float height,
+    uint64_t at_timestamp_microseconds);
+
 #endif
 

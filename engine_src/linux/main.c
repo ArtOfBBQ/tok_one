@@ -513,30 +513,21 @@ int main(int argc, char* argv[])
                 }
             } else if (event.type == ConfigureNotify) {
                 // Window configuration did change
-                printf("window config changed!\n");
+                update_window_size(
+                    /* width: */
+                        event.xconfigure.width,
+                    /* height: */
+                        event.xconfigure.height,
+                    /* at_timestamp_microsecs: */
+                        platform_get_current_time_microsecs());
                 
-                window_globals->window_height = event.xconfigure.height;
-                window_globals->window_width  = event.xconfigure.width;
-                window_globals->aspect_ratio =
-                    window_globals->window_height /
-                        window_globals->window_width;
-                
-                window_globals->window_left =
-                    event.xconfigure.x;
-                window_globals->window_bottom =
-                    screen->height -
-                    window_globals->window_height -
-                    event.xconfigure.y;
-                
-                window_globals->last_resize_request_at =
-                    platform_get_current_time_microsecs();
-
-                printf(
-                    "window at [%f,%f] sized [%f/%f]\n",
-                    window_globals->window_left,
-                    window_globals->window_bottom,
-                    window_globals->window_width,
-                    window_globals->window_height);
+                update_window_position(
+                    /* float left: */
+                        event.xconfigure.x;
+                    /* float bottom: */
+                        screen->height -
+                        window_globals->window_height -
+                        event.xconfigure.y);
             }
         }
         

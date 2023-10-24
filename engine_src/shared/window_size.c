@@ -69,3 +69,25 @@ void init_projection_constants() {
     window_globals->visual_debug_collision[1] =  0.0f;
     window_globals->visual_debug_collision[2] = -5.0f;
 }
+
+void update_window_position(
+    float left,
+    float bottom)
+{
+    window_globals->window_left = left;
+    window_globals->window_bottom = bottom;
+}
+
+void update_window_size(
+    float width,
+    float height,
+    uint64_t at_timestamp_microseconds)
+{
+    window_globals->window_height = height;
+    window_globals->window_width = width;
+    
+    window_globals->aspect_ratio = height / width;
+    
+    window_globals->last_resize_request_at = at_timestamp_microseconds;
+}
+

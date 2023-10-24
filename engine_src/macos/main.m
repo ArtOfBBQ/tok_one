@@ -214,11 +214,9 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 
 - (void)windowDidMove:(NSNotification *)notification
 {
-    // WTF apple
-    window_globals->window_left =
-        (float)(((NSWindow *)[notification object]).frame.origin.x);
-    window_globals->window_bottom =
-        (float)(((NSWindow *)[notification object]).frame.origin.y);
+    update_window_position(
+        (float)(((NSWindow *)[notification object]).frame.origin.x),
+        (float)(((NSWindow *)[notification object]).frame.origin.y));
 }
 
 - (NSSize)
@@ -243,21 +241,16 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     }
     
     NSSize size = [mtk_view frame].size;
-    // [apple_gpu_delegate updateViewport];
     
-    // (float)window_frame.size.height;
-    window_globals->window_height = (float)size.height;
-    // (float)window_frame.size.width;
-    window_globals->window_width = (float)size.width;
-    window_globals->aspect_ratio =
-        window_globals->window_height / window_globals->window_width;
+    update_window_size(
+        /* width: */
+            (float)size.width,
+        /* height: */
+            (float)size.height,
+        /* at_timestamp_microsecs: */
+            platform_get_current_time_microsecs());
     
     [apple_gpu_delegate updateViewport];
-    
-    //    window_globals->titlebar_height =
-    //        (float)(window_frame.size.height - size.height);
-    window_globals->last_resize_request_at =
-        platform_get_current_time_microsecs();
 }
 @end
 
