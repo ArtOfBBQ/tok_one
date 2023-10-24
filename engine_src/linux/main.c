@@ -523,7 +523,7 @@ int main(int argc, char* argv[])
                 
                 update_window_position(
                     /* float left: */
-                        event.xconfigure.x;
+                        event.xconfigure.x,
                     /* float bottom: */
                         screen->height -
                         window_globals->window_height -
