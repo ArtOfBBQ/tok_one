@@ -12,6 +12,7 @@ TOK_ONE_SOURCEFILES="
 engine_src/$PLATFORM/main.m
 engine_src/$PLATFORM/macos_platform_layer.m
 engine_src/shared_apple/gpu.m
+engine_src/shared_apple/apple_platform_layer.m
 engine_src/shared_windows_macos/winmac_platform_layer.c
 engine_src/shared_linux_apple/platform_layer.c
 engine_src/shared/common_platform_layer.c
