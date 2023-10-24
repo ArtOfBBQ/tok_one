@@ -95,6 +95,7 @@ int main(int argc, char* argv[])
     printf("%s\n", "finished init_application()");
     
     Display *display = XOpenDisplay(NULL);
+    Screen * screen = ScreenOfDisplay(display, 0);
     
     if (!display) {
         exit(1);
@@ -123,8 +124,13 @@ int main(int argc, char* argv[])
     
     // FBConfigs were added in GLX version 1.3.
     if (
-        !glXQueryVersion(display, &glx_major, &glx_minor) ||
-        ((glx_major == 1) && (glx_minor < 3)) ||
+        !glXQueryVersion(
+            display,
+            &glx_major,
+            &glx_minor) ||
+        (
+            (glx_major == 1) &&
+            (glx_minor < 3)) ||
         (glx_major < 1))
     {
         exit(1);
@@ -135,7 +141,7 @@ int main(int argc, char* argv[])
         display,
         DefaultScreen(display),
         visual_attribs, &fbcount);
-
+    
     if (!fbc)
     {
         exit(1);
@@ -150,8 +156,8 @@ int main(int argc, char* argv[])
     int i;
     for (i=0; i<fbcount; ++i)
     {
-        XVisualInfo *vi = glXGetVisualFromFBConfig( display, fbc[i] );
-        if ( vi )
+        XVisualInfo *vi = glXGetVisualFromFBConfig(display, fbc[i]);
+        if (vi)
         {
             int samp_buf, samples;
             glXGetFBConfigAttrib(
@@ -180,7 +186,9 @@ int main(int argc, char* argv[])
     XFree( fbc );
     
     // Get a visual
-    XVisualInfo *vi = glXGetVisualFromFBConfig( display, bestFbc );
+    XVisualInfo *vi = glXGetVisualFromFBConfig(
+        display,
+        bestFbc);
     
     XSetWindowAttributes swa;
     Colormap cmap;
@@ -190,18 +198,25 @@ int main(int argc, char* argv[])
         vi->visual,
         AllocNone);
     swa.background_pixmap = None ;
-    swa.border_pixel      = 0;
+    swa.border_pixel      = 255;
     swa.event_mask        = StructureNotifyMask;
+    swa.override_redirect = false;
     
+    // x and y parameters are weirdly ignored
+    // override_redirect fixes that, but 
+    // comes with its own set of problems
+    // trying to learn how to fix this
     Window win = XCreateWindow(
         /* display: */
             display,
         /* parent: */
-            RootWindow( display, vi->screen ),
-        /* x: */
-            0,
-        /* y: */
-            0,
+            RootWindow(display, vi->screen),
+        /* int x (left): */
+            (int)window_globals->window_left,
+        /* int y (top): */
+            screen->height -
+            window_globals->window_height -
+            (int)window_globals->window_bottom,
         /* width: */
             window_globals->window_width,
         /* height: */
@@ -215,7 +230,10 @@ int main(int argc, char* argv[])
         /* visual: */
             vi->visual, 
         /* valuemask: */
-            CWBorderPixel|CWColormap|CWEventMask,
+            CWBorderPixel |
+            CWColormap |
+            CWEventMask |
+            CWOverrideRedirect,
         /* attributes: */
             &swa);
     
@@ -335,6 +353,21 @@ int main(int argc, char* argv[])
     // Making context current
     glXMakeCurrent(display, win, ctx);
     
+    // This straight up crashes the app
+    // XMoveResizeWindow(
+    //     /* display: */
+    //         display,
+    //     /* window: */
+    //         &win,
+    //     /* x: */
+    //         20,
+    //     /* y: */
+    //         20,
+    //     /* width: */
+    //         100,
+    //     /* height: */
+    //         100);
+    
     // Jelle: compile shaders
     FileBuffer vertex_shader_source;
     vertex_shader_source.size = 
@@ -371,7 +404,11 @@ int main(int argc, char* argv[])
     XSelectInput(
         display,
         win,
-        KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask);
+        KeyPressMask |
+        KeyReleaseMask |
+        ButtonPressMask |
+        ButtonReleaseMask |
+        StructureNotifyMask);
     XEvent event;
     
     uint32_t current_frame_i = 0;
@@ -379,9 +416,10 @@ int main(int argc, char* argv[])
         glClearColor(0.0f, 0.0f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         
-        /* keyboard events */
+        /* events */
         while (XPending(display)) {
             XNextEvent(display, &event);
+            // keyboard key pressed
             if (event.type == KeyPress) {
                 uint32_t tok_one_key = linux_keycode_to_tokone_keycode(
                     event.xkey.keycode);
@@ -436,6 +474,7 @@ int main(int argc, char* argv[])
                         break;
                 }
             } else if (event.type == ButtonRelease) {
+                // keyboard key up
                 switch (event.xbutton.button) {
                     case 1:
                         printf("Left Up: [%f, %f]\n",
@@ -472,6 +511,32 @@ int main(int argc, char* argv[])
                         printf("Scroll Down\n");
                         break;
                 }
+            } else if (event.type == ConfigureNotify) {
+                // Window configuration did change
+                printf("window config changed!\n");
+                
+                window_globals->window_height = event.xconfigure.height;
+                window_globals->window_width  = event.xconfigure.width;
+                window_globals->aspect_ratio =
+                    window_globals->window_height /
+                        window_globals->window_width;
+                
+                window_globals->window_left =
+                    event.xconfigure.x;
+                window_globals->window_bottom =
+                    screen->height -
+                    window_globals->window_height -
+                    event.xconfigure.y;
+                
+                window_globals->last_resize_request_at =
+                    platform_get_current_time_microsecs();
+
+                printf(
+                    "window at [%f,%f] sized [%f/%f]\n",
+                    window_globals->window_left,
+                    window_globals->window_bottom,
+                    window_globals->window_width,
+                    window_globals->window_height);
             }
         }
         
