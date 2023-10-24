@@ -141,7 +141,7 @@ void platform_copy_file(
     const char * filepath_source,
     const char * filepath_destination)
 {
-    // TODO: implement
+    
 }
 
 void
@@ -151,7 +151,21 @@ platform_write_file(
     const uint32_t output_size,
     bool32_t * good)
 {
-    // TODO: implement
+    int fd = open(filepath, 0, 0); 
+    
+    // write is basically the equivalent of the syscall
+    // it requires unistd.h
+    ssize_t bytes_written = write(
+        /* int fd: */
+            fd,
+        /* const void buf: */
+            output,
+        /* size_t count: */
+            output_size);
+    
+    if (output_size ==  bytes_written) {
+        *good = true;
+    }
 }
 
 void platform_write_file_to_writables(
@@ -245,13 +259,13 @@ void platform_start_thread(
     // dispatch_async, since we need pthreads for mutex locks anyway
     // Let's revisit this when we port to other platforms
     
-    // pthread_t thread;
-    // uint32_t result = pthread_create(
-    //     &thread,
-    //     NULL,
-    //     function_to_run,
-    //     argument);
-    // log_assert(result == 0);
+    pthread_t thread;
+    uint32_t result = pthread_create(
+        &thread,
+        NULL,
+        function_to_run,
+        argument);
+    log_assert(result == 0);
 }
 
 void platform_play_sound_resource(
