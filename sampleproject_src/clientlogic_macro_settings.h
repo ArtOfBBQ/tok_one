@@ -15,10 +15,10 @@ of the engine for your specific app.
 #define APPLICATION_NAME "TOK ONE"
 
 // These startup window settings have no effect on tablets/smartphones
-#define INITIAL_WINDOW_HEIGHT   300
-#define INITIAL_WINDOW_WIDTH    400
-#define INITIAL_WINDOW_LEFT     150
-#define INITIAL_WINDOW_BOTTOM    10
+#define INITIAL_WINDOW_HEIGHT   400
+#define INITIAL_WINDOW_WIDTH    500
+#define INITIAL_WINDOW_LEFT       0
+#define INITIAL_WINDOW_BOTTOM     0
 
 // The maximum number of vertices/lights to send to the GPU each frame
 #define MAX_VERTICES_PER_BUFFER 35000

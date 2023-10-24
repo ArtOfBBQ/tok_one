@@ -190,6 +190,10 @@ int main(int argc, char* argv[])
         display,
         bestFbc);
     
+    int window_left = (int)window_globals->window_left;
+    int window_top =
+        (int)window_globals->window_height +
+        (int)window_globals->window_bottom;
     XSetWindowAttributes swa;
     Colormap cmap;
     swa.colormap = cmap = XCreateColormap(
@@ -212,11 +216,9 @@ int main(int argc, char* argv[])
         /* parent: */
             RootWindow(display, vi->screen),
         /* int x (left): */
-            (int)window_globals->window_left,
+            window_left, // will be ignored & overridden because X11 is cool
         /* int y (top): */
-            screen->height -
-            window_globals->window_height -
-            (int)window_globals->window_bottom,
+            window_top, // will be ignored & overridden because X11 is cool
         /* width: */
             window_globals->window_width,
         /* height: */
@@ -241,6 +243,21 @@ int main(int argc, char* argv[])
     {
         exit(1);
     }
+
+    // This is incredible to me, but this is
+    // how we re-request the ignored params
+    // from before to get some control over
+    // where the window is positioned
+    XSizeHints my_hints;
+    my_hints.flags = PPosition | PSize;
+    my_hints.x = window_left;
+    my_hints.y = window_top;
+    my_hints.width = window_globals->window_width;
+    my_hints.height = window_globals->window_height;
+    XSetNormalHints(
+        display,
+        win,
+        &my_hints);
     
     // Done with the visual info data
     XFree(vi);
@@ -352,21 +369,6 @@ int main(int argc, char* argv[])
     
     // Making context current
     glXMakeCurrent(display, win, ctx);
-    
-    // This straight up crashes the app
-    // XMoveResizeWindow(
-    //     /* display: */
-    //         display,
-    //     /* window: */
-    //         &win,
-    //     /* x: */
-    //         20,
-    //     /* y: */
-    //         20,
-    //     /* width: */
-    //         100,
-    //     /* height: */
-    //         100);
     
     // Jelle: compile shaders
     FileBuffer vertex_shader_source;
@@ -528,6 +530,12 @@ int main(int argc, char* argv[])
                         screen->height -
                         window_globals->window_height -
                         event.xconfigure.y);
+                
+                glViewport(
+                    0,
+                    0,
+                    window_globals->window_width,
+                    window_globals->window_height);
             }
         }
         
