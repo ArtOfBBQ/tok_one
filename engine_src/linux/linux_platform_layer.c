@@ -273,3 +273,9 @@ void platform_close_application(void) {
     exit(0);    
 }
 
+void platform_open_folder_in_window_if_possible(
+    const char * folderpath)
+{
+    // TODO: implement me
+}
+

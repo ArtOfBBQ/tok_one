@@ -17,9 +17,9 @@ LINKER_OPTIONS="-lc -lm -lGL -lX11 -pthread"
 TOK_ONE_LINUX_SOURCE="
 engine_src/linux/main.c
 engine_src/shared_opengl/opengl.c
-engine_src/linux/platform_layer.c
+engine_src/linux/linux_platform_layer.c
 engine_src/linux/linuxkeyboard.c
-engine_src/shared_linux_apple/platform_layer.c
+engine_src/shared_linux_apple/linux_apple_platform_layer.c
 "
 
 TOK_ONE_SHARED_SOURCE="
