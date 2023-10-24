@@ -130,7 +130,84 @@ bool32_t platform_file_exists(
 }
 
 void platform_mkdir_if_not_exist(const char * dirname) {    
-    mkdir(dirname, 0700);
+    // returns 0 on success
+    
+    uint32_t i = 0;
+    char intermed_dir[256];
+    while (dirname[i] != '\0') {
+        while (dirname[i] != '/' && dirname[i] != '\0') {
+            i++;
+        }
+        
+        uint32_t j = 0;
+        for (; j < i; j++) {
+            intermed_dir[j] = dirname[j];
+        }
+        intermed_dir[j] = '\0';
+        
+        log_append("platform_mkdir_if_not_exist(");
+        log_append(intermed_dir);
+        log_append(")\n");
+        
+        int return_value = mkdir(intermed_dir, 0700);
+        if (return_value != 0) {
+            switch (errno) {
+                case EACCES: {
+                    log_append("EACCES\n");
+                    break;
+                }
+                case EBADF: {
+                    log_append("EBADF\n");
+                    break;
+                }
+                case EDQUOT:
+                    log_append("EDQUOT\n");
+                    break;
+                case EEXIST:
+                    log_append("EEXIST\n");
+                    break;
+                case EFAULT:
+                    log_append("EFAULT\n");
+                    break;
+                case EINVAL:
+                    log_append("EINVAL\n");
+                    break;
+                case ELOOP:
+                    log_append("ELOOP\n");
+                    break;
+                case EMLINK:
+                    log_append("EMLINK\n");
+                    break;
+                case ENAMETOOLONG:
+                    log_append("ENAMETOOLONG\n");
+                    break;
+                case ENOENT:
+                    log_append("ENOENT\n");
+                    break;
+                case ENOMEM:
+                    log_append("ENOMEM\n");
+                    break;
+                case ENOSPC:
+                    log_append("ENOSPC\n");
+                    break;
+                case ENOTDIR:
+                    log_append("ENOTDIR\n");
+                    break;
+                case EPERM:
+                    log_append("EPERM\n");
+                    break;
+                case EROFS:
+                    log_append("EROFS\n");
+                    break;
+                default: {
+                    log_append("unhandled error\n");
+                }
+                assert(0);
+            }
+        }
+        
+        i++;
+    }
 }
 
 void platform_delete_file(const char * filepath) {
@@ -141,7 +218,112 @@ void platform_copy_file(
     const char * filepath_source,
     const char * filepath_destination)
 {
+    log_append("platform_copy_file() copying from file: ");
+    log_append(filepath_source);
+    log_append(" to file: ");
+    log_append(filepath_destination);
+    log_append_char('\n');
     
+    platform_delete_file(filepath_destination);
+    
+    int fd_source      = open(filepath_source     , O_RDONLY); 
+    if (fd_source == -1) {
+        log_append("failed to open file as a copy source: ");
+        log_append(filepath_source);
+        log_append_char('\n');
+        assert(0);
+    }
+    
+    int fd_destination = open(
+        filepath_destination,
+        O_CREAT | O_WRONLY | O_TRUNC,
+        0644); 
+    
+    if (fd_destination == -1) {
+        log_append("failed to open file as a copy source: ");
+        log_append(filepath_destination);
+        log_append_char('\n');
+        assert(0);
+    }
+    
+    struct stat source_stats;
+    fstat(fd_source, &source_stats);
+    log_append("source file size in bytes: ");
+    log_append_uint(source_stats.st_size);
+    log_append_char('\n');
+    
+    int bytes_copied = copy_file_range(
+        /* int fd_in: */
+            fd_source,
+        /* off64_t * off_in: */
+            0,
+        /* int fd_out: */
+            fd_destination,
+        /* off64_t * off_out: */
+            0,
+        /* size_t len: */
+            source_stats.st_size,
+        /* unsigned int flags: */
+            0);
+    
+    if (bytes_copied == -1) {
+        switch (errno) {
+            case EBADF: {
+                log_append("EBADF\n");
+                break;
+            }
+            case EFBIG: {
+                log_append("EFBIG\n");
+                break;
+            }
+            case EINVAL: {
+                log_append("EINVAL\n");
+                break;
+            }
+            case EIO: {
+                log_append("EIO\n");
+                break;
+            }
+            case EISDIR: {
+                log_append("EISDIR\n");
+                break;
+            }
+            case ENOMEM: {
+                log_append("ENOMEM\n");
+                break;
+            }
+            case ENOSPC: {
+                log_append("ENOSPC\n");
+                break;
+            }
+            case EOPNOTSUPP: {
+                log_append("EOPNOTSUPP\n");
+                break;
+            }
+            case EOVERFLOW: {
+                log_append("EOVERFLOW\n");
+                break;
+            }
+            case EPERM: {
+                log_append("EPERM\n");
+                break;
+            }
+            case ETXTBSY: {
+                log_append("ETXBSY\n");
+                break;
+            }
+            case EXDEV: {
+                log_append("EXDEV\n");
+                break;
+            }
+            default: {
+                log_append("unhandled error\n");
+            }
+            assert(0);
+        }
+    }
+    
+    assert(bytes_copied == source_stats.st_size);
 }
 
 void
@@ -225,10 +407,6 @@ void platform_get_resources_path(
         recipient,
         recipient_size,
         application_path);
-    strcat_capped(
-        recipient,
-        recipient_size,
-        "/resources");
 }
 
 void platform_get_writables_path(

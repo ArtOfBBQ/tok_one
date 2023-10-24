@@ -43,6 +43,8 @@ on each platform
 #include <sys/time.h>
 #include <sys/mman.h>
 #include <sys/stat.h> // stat function to check if dir exists
+#include <sys/errno.h>
+#include <fcntl.h> // contains flags like O_RDONLY for open()
 #endif
 
 #include <pthread.h>
