@@ -130,12 +130,11 @@ bool32_t platform_file_exists(
 }
 
 void platform_mkdir_if_not_exist(const char * dirname) {    
-    
-    // TODO: implement
+    mkdir(dirname, 0700);
 }
 
 void platform_delete_file(const char * filepath) {
-    // TODO: implement
+    unlink(filepath);
 }
 
 void platform_copy_file(
@@ -225,11 +224,17 @@ void platform_get_writables_path(
     strcpy_capped(
         recipient,
         recipient_size,
-        application_path);
+        "/var/lib/");
     strcat_capped(
         recipient,
         recipient_size,
-        "/saveddata");
+        APPLICATION_NAME);
+    
+    uint32_t i = 0;
+    while (recipient[i] != '\0') {
+        if (recipient[i] == ' ') { recipient[i] = '_'; }
+        i++;
+    }
 }
 
 void platform_start_thread(

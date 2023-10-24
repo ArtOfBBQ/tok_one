@@ -42,6 +42,7 @@ on each platform
 #ifdef LINUX_PLATFORM
 #include <sys/time.h>
 #include <sys/mman.h>
+#include <sys/stat.h> // stat function to check if dir exists
 #endif
 
 #include <pthread.h>
