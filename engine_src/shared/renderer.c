@@ -70,9 +70,14 @@ inline static void zpolygons_to_triangles(
             next_gpu_workload[*next_workload_size + 0].texture_i =
                 zpolygons_to_render[zp_i].
                     triangle_materials[material_i].texture_i;
+            log_assert(
+                next_gpu_workload[*next_workload_size + 0].texture_i < 5000);
             next_gpu_workload[*next_workload_size + 0].texturearray_i =
                 zpolygons_to_render[zp_i].
                     triangle_materials[material_i].texturearray_i;
+            log_assert(
+                next_gpu_workload[*next_workload_size + 0].texturearray_i <
+                    TEXTUREARRAYS_SIZE);
             next_gpu_workload[*next_workload_size + 0].ignore_lighting =
                 zpolygons_to_render[zp_i].ignore_lighting;
             next_gpu_workload[*next_workload_size + 0].scale_factor =
@@ -135,9 +140,14 @@ inline static void zpolygons_to_triangles(
             next_gpu_workload[*next_workload_size + 1].texture_i =
                 zpolygons_to_render[zp_i].
                     triangle_materials[material_i].texture_i;
+            log_assert(
+                next_gpu_workload[*next_workload_size + 1].texture_i < 5000);
             next_gpu_workload[*next_workload_size + 1].texturearray_i =
                 zpolygons_to_render[zp_i].
                     triangle_materials[material_i].texturearray_i;
+            log_assert(
+                next_gpu_workload[*next_workload_size + 1].texturearray_i <
+                    TEXTUREARRAYS_SIZE);
             next_gpu_workload[*next_workload_size + 1].ignore_lighting =
                 zpolygons_to_render[zp_i].ignore_lighting;
             next_gpu_workload[*next_workload_size + 1].scale_factor =
@@ -200,9 +210,14 @@ inline static void zpolygons_to_triangles(
             next_gpu_workload[*next_workload_size + 2].texture_i =
                 zpolygons_to_render[zp_i].
                     triangle_materials[material_i].texture_i;
+            log_assert(
+                next_gpu_workload[*next_workload_size + 2].texture_i < 5000);
             next_gpu_workload[*next_workload_size + 2].texturearray_i =
                 zpolygons_to_render[zp_i].
                     triangle_materials[material_i].texturearray_i;
+            log_assert(
+                next_gpu_workload[*next_workload_size + 2].texturearray_i <
+                    TEXTUREARRAYS_SIZE);
             next_gpu_workload[*next_workload_size + 2].ignore_lighting =
                 zpolygons_to_render[zp_i].ignore_lighting;
             next_gpu_workload[*next_workload_size + 2].scale_factor =

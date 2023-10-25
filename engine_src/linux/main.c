@@ -514,6 +514,7 @@ int main(int argc, char* argv[])
                         break;
                 }
             } else if (event.type == ConfigureNotify) {
+                
                 // Window configuration did change
                 update_window_size(
                     /* width: */

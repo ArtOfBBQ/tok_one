@@ -131,7 +131,7 @@ void init_application(void)
     gpu_shared_data_collection.vertices_allocation_size +=
         (4096 - (gpu_shared_data_collection.vertices_allocation_size % 4096));
     assert(gpu_shared_data_collection.vertices_allocation_size % 4096 == 0);
-    
+     
     gpu_shared_data_collection.lights_allocation_size =
         sizeof(GPULightCollection);
     gpu_shared_data_collection.lights_allocation_size +=
@@ -160,6 +160,13 @@ void init_application(void)
             (GPUVertex *)malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection.vertices_allocation_size,
                 4096);
+        
+        for (uint32_t i = 0; i < MAX_VERTICES_PER_BUFFER; i++) {
+            gpu_shared_data_collection.triple_buffers[frame_i].
+                vertices[i].texture_i = -1;
+            gpu_shared_data_collection.triple_buffers[frame_i].
+                vertices[i].texturearray_i = -1;
+        }
         
         gpu_shared_data_collection.triple_buffers[frame_i].light_collection =
             (GPULightCollection *)malloc_from_unmanaged_aligned(

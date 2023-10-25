@@ -129,6 +129,8 @@ void request_zpolygon_to_render(zPolygon * to_add)
                 to_add->triangle_materials[material_i].texturearray_i,
                 to_add->triangle_materials[material_i].texture_i);
         }
+
+        log_assert(to_add->triangle_materials[material_i].texture_i < 5000);
     }
     
     // set the hitbox height, width, and depth

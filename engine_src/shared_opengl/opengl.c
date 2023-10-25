@@ -210,8 +210,15 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         assert(frame_data->vertices[i].uv[1] > -0.1f);
         assert(frame_data->vertices[i].uv[0] <  1.05f);
         assert(frame_data->vertices[i].uv[1] <  1.05f);
-        assert(frame_data->vertices[i].texture_i < 5000);
-        assert(frame_data->vertices[i].texturearray_i < TEXTUREARRAYS_SIZE);
+        if (
+            frame_data->vertices[i].texturearray_i >= TEXTUREARRAYS_SIZE ||
+            frame_data->vertices[i].texture_i >= 5000)
+        {
+            printf(
+                "corrupted vertex: %u\n",
+                i);
+            assert(0);
+        }
     }
     #endif
     
