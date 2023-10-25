@@ -353,6 +353,30 @@ void shared_gameloop_update(
     
     uint32_t overflow_vertices = frame_data->vertices_size % 3;
     frame_data->vertices_size -= overflow_vertices;
+
+    #ifndef LOGGER_IGNORE_ASSERTS
+    for (
+        uint32_t i = 0;
+        i < frame_data->vertices_size;
+        i++)
+    {
+        assert(frame_data->vertices[i].uv[0] > -0.1f);
+        assert(frame_data->vertices[i].uv[1] > -0.1f);
+        assert(frame_data->vertices[i].uv[0] <  1.05f);
+        assert(frame_data->vertices[i].uv[1] <  1.05f);
+        if (
+            frame_data->vertices[i].texturearray_i >= TEXTUREARRAYS_SIZE ||
+            frame_data->vertices[i].texture_i >= 5000)
+        {
+            printf(
+                "(engine check) corrupted vertex: %u, texture_i %i and texturearray_i %i\n",
+                i,
+                frame_data->vertices[i].texture_i,
+                frame_data->vertices[i].texturearray_i);
+            assert(0);
+        }
+    }
+    #endif
     
     platform_mutex_unlock(gameloop_mutex_id);
 }

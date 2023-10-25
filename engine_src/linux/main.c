@@ -75,6 +75,12 @@ static int ctxErrorHandler(Display *dpy, XErrorEvent *ev)
 
 int main(int argc, char* argv[])
 {
+    printf("starting TOK ONE with preallocation:\n");
+    printf("UNMANAGED_MEMORY_SIZE: %u\n", UNMANAGED_MEMORY_SIZE);
+    printf("MANAGED_MEMORY_SIZE: %u\n", MANAGED_MEMORY_SIZE);
+
+    sleep(1);
+    
     // on linux the relative application path is always in argv[0],
     // but it's followed by the application name
     strcpy_capped(application_path, 128, argv[0]);
@@ -84,13 +90,6 @@ int main(int argc, char* argv[])
     application_path[char_i] = '\0';
     
     init_application();
-    
-    camera.x = 0.2f;
-    camera.y = 0.35f;
-    camera.z = -0.1f;
-    camera.x_angle = 0.15;
-    camera.y_angle = 0.07f;
-    camera.z_angle = -0.1f;
     
     printf("%s\n", "finished init_application()");
     
@@ -414,9 +413,10 @@ int main(int argc, char* argv[])
     XEvent event;
     
     uint32_t current_frame_i = 0;
+    uint64_t lifetime_frame_i = 0;
     while (application_running) {
         glClearColor(0.0f, 0.0f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         /* events */
         while (XPending(display)) {
@@ -547,16 +547,29 @@ int main(int argc, char* argv[])
             triple_buffers[current_frame_i].
             light_collection->lights_size = 0;
         
+        assert(current_frame_i >= 0);
+        assert(current_frame_i <= 2);
         shared_gameloop_update(
             &gpu_shared_data_collection.triple_buffers[current_frame_i]);
         
+        assert(current_frame_i >= 0);
+        assert(current_frame_i <= 2);
+        assert(
+            gpu_shared_data_collection.triple_buffers[current_frame_i].
+                vertices_size % 3 == 0);
+        printf(
+            "about to render %u vertices in frame %u (lifetime: %u)\n",
+            gpu_shared_data_collection.triple_buffers[current_frame_i].
+                vertices_size,
+            current_frame_i,
+            lifetime_frame_i);
         opengl_render_triangles(
             &gpu_shared_data_collection.triple_buffers[current_frame_i]); 
         
         glXSwapBuffers(display, win);
         
-        current_frame_i += 1;
-        current_frame_i -= ((current_frame_i > 2)*3);
+        lifetime_frame_i += 1;
+        current_frame_i = lifetime_frame_i % 3;
     }
     
     glXMakeCurrent(display, 0, 0);

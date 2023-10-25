@@ -173,6 +173,30 @@ static void opengl_set_camera(
 
 void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
     
+    #ifndef LOGGER_IGNORE_ASSERTS
+    for (
+        uint32_t i = 0;
+        i < frame_data->vertices_size;
+        i++)
+    {
+        assert(frame_data->vertices[i].uv[0] > -0.1f);
+        assert(frame_data->vertices[i].uv[1] > -0.1f);
+        assert(frame_data->vertices[i].uv[0] <  1.05f);
+        assert(frame_data->vertices[i].uv[1] <  1.05f);
+        if (
+            frame_data->vertices[i].texturearray_i >= TEXTUREARRAYS_SIZE ||
+            frame_data->vertices[i].texture_i >= 5000)
+        {
+            printf(
+                "(first check) corrupted vertex: %u, texture_i %i and texturearray_i %i\n",
+                i,
+                frame_data->vertices[i].texture_i,
+                frame_data->vertices[i].texturearray_i);
+            assert(0);
+        }
+    }
+    #endif
+    
     assert(VAO < UINT32_MAX);
     assert(VBO < UINT32_MAX);
     
@@ -215,7 +239,7 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
             frame_data->vertices[i].texture_i >= 5000)
         {
             printf(
-                "corrupted vertex: %u\n",
+                "(second check) corrupted vertex: %u\n",
                 i);
             assert(0);
         }
@@ -293,6 +317,8 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         }
         assert(0);
     }
+    
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     // glPointSize(10); // for GL_POINTS
     glDrawArrays(
@@ -487,6 +513,11 @@ void opengl_compile_shaders(
     // be enabled here
     // glEnable(GL_BLEND);
     // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // The depth buffer is so much easier here than with Metal. Nice!
+    glEnable(GL_DEPTH_TEST);
+    glClearDepth(2.0f);
+    glDepthFunc(GL_LEQUAL);
     
     /*
     Attribute pointers describe the fields of our data
@@ -833,11 +864,20 @@ void opengl_set_projection_constants(
     glUseProgram(program_id);
     
     // set viewport
+    // these args might be getting clamped
+    // to 0 - 1, I wish opengl would just
+    // throw instead of silently clamping
     glDepthRangef(
         /* GLfloat nearVal: */ 
             pjc->near,
         /* GLfloat farVal: */
             pjc->far);
+    
+    glFrustum(
+        0, 1,
+        0, 1,
+        pjc->near,
+        pjc->far);
     
     GLint loc = -1;
     

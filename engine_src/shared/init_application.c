@@ -131,7 +131,7 @@ void init_application(void)
     gpu_shared_data_collection.vertices_allocation_size +=
         (4096 - (gpu_shared_data_collection.vertices_allocation_size % 4096));
     assert(gpu_shared_data_collection.vertices_allocation_size % 4096 == 0);
-     
+    
     gpu_shared_data_collection.lights_allocation_size =
         sizeof(GPULightCollection);
     gpu_shared_data_collection.lights_allocation_size +=
