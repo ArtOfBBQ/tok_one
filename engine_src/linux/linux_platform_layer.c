@@ -239,13 +239,22 @@ void platform_copy_file(
         assert(0);
     }
     
+    char destination_pathonly[256];
+    strcpy_capped(destination_pathonly, 256, filepath_destination);
+    uint32_t i = 0;
+    while (destination_pathonly[i] != '\0') { i++; }
+    while (i >= 0 && destination_pathonly[i] != '/') { i--; }
+    destination_pathonly[i] = '\0';
+    platform_mkdir_if_not_exist(
+        destination_pathonly);
+    
     int fd_destination = open(
         filepath_destination,
         O_CREAT | O_WRONLY | O_TRUNC,
         0644); 
     
     if (fd_destination == -1) {
-        log_append("failed to open file as a copy source: ");
+        log_append("failed to open file as a copy destination: ");
         log_append(filepath_destination);
         log_append_char('\n');
         assert(0);
