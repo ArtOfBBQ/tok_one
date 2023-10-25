@@ -423,6 +423,21 @@ static dispatch_semaphore_t drawing_semaphore;
             atIndex: i];
     }
     
+    #ifndef IGNORE_LOGGER_ASSERTS
+    for (
+        uint32_t i = 0;
+        i < gpu_shared_data_collection.
+            triple_buffers[current_frame_i].
+            vertices_size;
+        i++)
+    {
+        log_assert(
+            gpu_shared_data_collection.
+                triple_buffers[current_frame_i].
+                vertices[i].texture_i < 5000);
+    }
+    #endif
+    
     [render_encoder
         drawPrimitives: MTLPrimitiveTypeTriangle
         vertexStart: 0

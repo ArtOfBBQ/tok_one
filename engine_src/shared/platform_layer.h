@@ -156,6 +156,7 @@ If there's an error reading the file, the buffer's 'good' field will be set to
 void platform_read_resource_file(
     const char * filename,
     FileBuffer * out_preallocatedbuffer);
+
 void platform_read_file(
     const char * filepath,
     FileBuffer * out_preallocatedbuffer);
