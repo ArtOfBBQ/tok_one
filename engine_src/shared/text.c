@@ -490,7 +490,9 @@ void request_label_renderable(
     }
 }
 
-void request_fps_counter(uint64_t microseconds_elapsed) {
+void request_fps_counter(
+    uint64_t microseconds_elapsed)
+{
     #ifdef __ARM_NEON
     char fps_string[12] = "NEONfps: xx";
     #elif defined(__AVX__)
@@ -505,8 +507,8 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
         fps_string[ 9] = '0' + ((fps / 10) % 10);
         fps_string[10] = '0' + (fps % 10);
     } else {
-        fps_string[ 9] = '9' + ((fps / 10) % 10);
-        fps_string[10] = '9' + (fps % 10);
+        fps_string[ 9] = '9';
+        fps_string[10] = '9';
     }
     delete_zpolygon_object(FPS_COUNTER_OBJECT_ID);
     
@@ -517,11 +519,18 @@ void request_fps_counter(uint64_t microseconds_elapsed) {
     font_color[3] = 1.0f;
     font_ignore_lighting = true;
     request_label_renderable(
-        /* with_id               : */ FPS_COUNTER_OBJECT_ID,
-        /* char * text_to_draw   : */ fps_string,
-        /* float left_pixelspace : */ 20.0f,
-        /* float top_pixelspace  : */ 30.0f,
-        /* z                     : */ 1.0f,
-        /* float max_width       : */ window_globals->window_width,
-        /* bool32_t ignore_camera: */ true);
+        /* with_id               : */
+            FPS_COUNTER_OBJECT_ID,
+        /* char * text_to_draw   : */
+            fps_string,
+        /* float left_pixelspace : */
+            20.0f,
+        /* float top_pixelspace  : */
+            30.0f,
+        /* z                     : */
+            1.0f,
+        /* float max_width       : */
+            window_globals->window_width,
+        /* bool32_t ignore_camera: */
+            true);
 }

@@ -189,8 +189,6 @@ void shared_gameloop_update(
     }
     uint64_t elapsed = time - previous_time;
     
-    if (elapsed > 33333) { elapsed = 33333; }
-    
     if (!application_running) {
         zpolygons_to_render_size = 0;
         frame_data->camera->x = 0.0f;

@@ -200,6 +200,7 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         assert(0);
     }
     
+    #ifndef LOGGER_IGNORE_ASSERTS
     for (
         uint32_t i = 0;
         i < frame_data->vertices_size;
@@ -212,6 +213,7 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         assert(frame_data->vertices[i].texture_i < 5000);
         assert(frame_data->vertices[i].texturearray_i < TEXTUREARRAYS_SIZE);
     }
+    #endif
     
     glBufferData(
         /* target: */
