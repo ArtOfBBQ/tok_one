@@ -102,18 +102,23 @@ void platform_read_file(
     }
     
     fseek(f, 0, SEEK_END);
-    out_preallocatedbuffer->size = ftell(f);
+    uint32_t total_filesize = ftell(f);
     fseek(f, 0, SEEK_SET);
+    
+    uint32_t bytes_to_read = total_filesize;
+    if (out_preallocatedbuffer->size < total_filesize) {
+        bytes_to_read = out_preallocatedbuffer->size;
+    }
     
     fread(
         out_preallocatedbuffer->contents,
-        out_preallocatedbuffer->size,
+        bytes_to_read,
         1,
         f);
     fclose(f);
     
-    out_preallocatedbuffer->contents[out_preallocatedbuffer->size] = '\0';
-    out_preallocatedbuffer->good = out_preallocatedbuffer->size > 0;
+    out_preallocatedbuffer->contents[bytes_to_read] = '\0';
+    out_preallocatedbuffer->good = bytes_to_read > 0;
 }
 
 bool32_t platform_file_exists(
@@ -333,6 +338,10 @@ platform_write_file(
     const uint32_t output_size,
     bool32_t * good)
 {
+    log_append("platform_write_file(");
+    log_append(filepath);
+    log_append(")\n");
+    
     int fd = open(filepath, 0, 0); 
     
     // write is basically the equivalent of the syscall
@@ -382,7 +391,22 @@ void platform_get_filenames_in(
     const uint32_t recipient_capacity,
     uint32_t * recipient_size)
 {
-    // TODO: implement
+    DIR * d = NULL;
+    struct dirent * dir = NULL;
+    
+    d = opendir(directory);
+    
+    *recipient_size = 0;
+    if (d) {
+        while ((dir = readdir(d)) != NULL) {
+            strcpy_capped(
+                filenames[*recipient_size],
+                128,
+                dir->d_name);
+            *recipient_size += 1;
+        }
+        closedir(d);
+    }
 }
 
 char application_path[128];

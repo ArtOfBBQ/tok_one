@@ -45,6 +45,7 @@ on each platform
 #include <sys/stat.h> // stat function to check if dir exists
 #include <sys/errno.h>
 #include <fcntl.h> // contains flags like O_RDONLY for open()
+#include <dirent.h> // to list files in a dir
 #endif
 
 #include <pthread.h>
