@@ -418,9 +418,8 @@ int main(int argc, char* argv[])
     
     uint32_t current_frame_i = 0;
     uint64_t lifetime_frame_i = 0;
-
+    
     glClearColor(0.0f, 0.03f, 0.015, 1.0f);
-    glClearDepth(10.0f);
     while (application_running) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         

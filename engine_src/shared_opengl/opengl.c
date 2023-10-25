@@ -519,7 +519,7 @@ void opengl_compile_shaders(
     // for depth, the test is LESS OR EQUAL,
     // 
     glEnable(GL_DEPTH_TEST);
-    glClearDepth(2.0f);
+    glClearDepth(50.0f);
     glDepthFunc(GL_LEQUAL); // on metal: LEQUAL
     
     /*
@@ -870,6 +870,8 @@ void opengl_set_projection_constants(
     // these args might be getting clamped
     // to 0 - 1, I wish opengl would just
     // throw instead of silently clamping
+    assert(pjc->near > 0.005f);
+    assert(pjc->far < 100.0f);
     glDepthRangef(
         /* GLfloat nearVal: */ 
             pjc->near,
@@ -889,8 +891,8 @@ void opengl_set_projection_constants(
         "projection_constants_near");
     assert(glGetError() == 0);
     assert(loc == 2);
-    assert(pjc->near > 0.099f);
-    assert(pjc->near < 0.110f);
+    assert(pjc->near > 0.009f);
+    assert(pjc->near < 0.5f);
     assert(glGetError() == 0);
     // reminder: don't use glUniform1f, it's buggy on ubuntu with some
     // drivers, use glUniform1fv instead

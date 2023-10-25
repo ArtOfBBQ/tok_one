@@ -194,8 +194,8 @@ void main()
             - (distance * distance);
         distance_mod = clamp(distance_mod, 0.0f, 5.0f);
         
-        // vert_to_frag_lighting +=
-        //     (light_rgba * distance_mod * lights_ambient[i]);
+        vert_to_frag_lighting +=
+            (light_rgba * distance_mod * lights_ambient[i]);
         
         // diffuse lighting
         vec4 normalized_normals = normalize(z_rotated_normals);

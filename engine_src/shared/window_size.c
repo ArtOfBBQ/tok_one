@@ -48,8 +48,8 @@ void init_projection_constants() {
     
     GPUProjectionConstants * pjc = &window_globals->projection_constants;
     
-    pjc->near = 0.1f;
-    pjc->far = 10.0f;
+    pjc->near = 0.25f;
+    pjc->far =  9.0f;
     
     // this hardcoded value was calculated with:
     // float field_of_view = 90.0f;
