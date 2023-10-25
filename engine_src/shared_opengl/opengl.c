@@ -514,10 +514,13 @@ void opengl_compile_shaders(
     // glEnable(GL_BLEND);
     // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
-    // The depth buffer is so much easier here than with Metal. Nice!
+    // The depth buffer is so much easier here than with Metal.
+    // On metal, we chose 32-bit floats
+    // for depth, the test is LESS OR EQUAL,
+    // 
     glEnable(GL_DEPTH_TEST);
     glClearDepth(2.0f);
-    glDepthFunc(GL_LEQUAL);
+    glDepthFunc(GL_LEQUAL); // on metal: LEQUAL
     
     /*
     Attribute pointers describe the fields of our data

@@ -188,6 +188,7 @@ void shared_gameloop_update(
         return;
     }
     uint64_t elapsed = time - previous_time;
+    printf("elapsed: %lu\n", elapsed);
     
     if (!application_running) {
         zpolygons_to_render_size = 0;

@@ -16,6 +16,10 @@
 #include "gameloop.h"
 #include "userinput.h"
 
+#ifdef LOGGER_IGNORE_ASSERTS
+#define assert(x)
+#endif
+
 extern char application_path[128];
 uint32_t application_running = 1;
 
@@ -414,8 +418,10 @@ int main(int argc, char* argv[])
     
     uint32_t current_frame_i = 0;
     uint64_t lifetime_frame_i = 0;
+
+    glClearColor(0.0f, 0.03f, 0.015, 1.0f);
+    glClearDepth(10.0f);
     while (application_running) {
-        glClearColor(0.0f, 0.0f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         /* events */
@@ -566,7 +572,9 @@ int main(int argc, char* argv[])
         opengl_render_triangles(
             &gpu_shared_data_collection.triple_buffers[current_frame_i]); 
         
+        // XSync(display, False);
         glXSwapBuffers(display, win);
+        glFinish();
         
         lifetime_frame_i += 1;
         current_frame_i = lifetime_frame_i % 3;
