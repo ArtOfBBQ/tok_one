@@ -226,6 +226,8 @@ void platform_copy_file(
         stringWithCString:filepath_source
         encoding:NSASCIIStringEncoding];
     
+    // if (platform_file_exists()f)
+    
     NSString * nsfilepath_destination = [NSString
         stringWithCString:filepath_destination
         encoding:NSASCIIStringEncoding];
