@@ -424,46 +424,56 @@ int main(int argc, char* argv[])
         /* events */
         while (XPending(display)) {
             XNextEvent(display, &event);
-            // keyboard key pressed
+            float mouse_x =
+                event.xbutton.x;
+            float mouse_y =
+                window_globals->window_height - event.xbutton.y;
+            
             if (event.type == KeyPress) {
+                // keyboard key pressed
                 uint32_t tok_one_key = linux_keycode_to_tokone_keycode(
                     event.xkey.keycode);
                 register_keydown(tok_one_key);
             } else if (event.type == KeyRelease) {
+                // keyboard key released
                 uint32_t tok_one_key = linux_keycode_to_tokone_keycode(
                     event.xkey.keycode);
                 register_keyup(tok_one_key);
             } else if (event.type == ButtonPress) {
+                // mouse click
+                // event.xbutton.x_root,
+                // event.ybutton.y_root,
+                
                 switch (event.xbutton.button) {
                     case 1:
                         printf("Left Click: [%f, %f]\n",
-                            (float)event.xbutton.x,
-                            (float)event.xbutton.y);
-                        // register_interaction(
-                        //     /* interaction : */
-                        //         &user_interactions[
-                        //             INTR_PREVIOUS_LEFTCLICK_START],
-                        //     /* screenspace_x: */
-                        //         event.xbutton.x_root,
-                        //     /* screenspace_y: */
-                        //         event.xbutton.y_root);
-                        // 
-                        // user_interactions[
-                        //     INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START] =
-                        //         user_interactions[
-                        //             INTR_PREVIOUS_LEFTCLICK_START];
-                        // user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
-                        //     user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
-                        // user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
-                        //     user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
-                        // 
-                        // user_interactions[INTR_PREVIOUS_TOUCH_END].
-                        //     handled = true;
-                        // user_interactions[INTR_PREVIOUS_LEFTCLICK_END].
-                        //     handled = true;
-                        // user_interactions[
-                        //     INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
-                        //         handled = true;
+                            mouse_x,
+                            mouse_y);
+                        register_interaction(
+                            /* interaction : */
+                                &user_interactions[
+                                    INTR_PREVIOUS_LEFTCLICK_START],
+                            /* screenspace_x: */
+                                mouse_x,
+                            /* screenspace_y: */
+                                mouse_y);
+                        
+                        user_interactions[
+                            INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START] =
+                                user_interactions[
+                                    INTR_PREVIOUS_LEFTCLICK_START];
+                        user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
+                            user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
+                        user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
+                            user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
+                        
+                        user_interactions[INTR_PREVIOUS_TOUCH_END].
+                            handled = true;
+                        user_interactions[INTR_PREVIOUS_LEFTCLICK_END].
+                            handled = true;
+                        user_interactions[
+                            INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
+                                handled = true;
                         break;
                     case 2:
                         printf("Middle Click\n");
@@ -479,29 +489,28 @@ int main(int argc, char* argv[])
                         break;
                 }
             } else if (event.type == ButtonRelease) {
-                // keyboard key up
                 switch (event.xbutton.button) {
                     case 1:
                         printf("Left Up: [%f, %f]\n",
-                            (float)event.xbutton.x,
-                            (float)event.xbutton.y);
-                        // register_interaction(
-                        //     /* interaction : */
-                        //         &user_interactions[
-                        //             INTR_PREVIOUS_LEFTCLICK_END],
-                        //     /* screenspace_x: */
-                        //         event.xbutton.x_root,
-                        //     /* screenspace_y: */
-                        //         event.xbutton.y_root);
-                        // 
-                        // user_interactions[
-                        //     INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END] =
-                        //         user_interactions[
-                        //             INTR_PREVIOUS_LEFTCLICK_END];
-                        // user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
-                        //     user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
-                        // user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
-                        //     user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
+                            mouse_x,
+                            mouse_y);
+                        register_interaction(
+                            /* interaction : */
+                                &user_interactions[
+                                    INTR_PREVIOUS_LEFTCLICK_END],
+                            /* screenspace_x: */
+                                mouse_x,
+                            /* screenspace_y: */
+                                mouse_y);
+                        
+                        user_interactions[
+                            INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END] =
+                                user_interactions[
+                                    INTR_PREVIOUS_LEFTCLICK_END];
+                        user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
+                            user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
+                        user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
+                            user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
                         break;
                     case 2:
                         printf("Middle Up\n");
