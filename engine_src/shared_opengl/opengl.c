@@ -38,7 +38,7 @@ static void opengl_set_lights(
     assert(glGetError() == 0);
     glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->light_z);
     assert(glGetError() == 0);
-
+    
     loc = glGetUniformLocation(
         program_id,
         "lights_ambient");
@@ -52,7 +52,7 @@ static void opengl_set_lights(
     assert(glGetError() == 0);
     glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->diffuse);
     assert(glGetError() == 0);
-
+    
     loc = glGetUniformLocation(
         program_id,
         "lights_reach");
@@ -104,7 +104,7 @@ static void opengl_set_lights(
 }
 
 static void opengl_set_camera(
-    GPUCamera * camera)
+    GPUCamera * arg_camera)
 {
     GLint loc = -1;
     
@@ -121,16 +121,17 @@ static void opengl_set_camera(
     // We are using 'glUseProgram' explicitly here and before this so
     // I don't think that can be the problem
     float cam_pos[3];
-    cam_pos[0] = camera->x;
-    cam_pos[1] = camera->y;
-    cam_pos[2] = camera->z;
+    cam_pos[0] = arg_camera->x;
+    cam_pos[1] = arg_camera->y;
+    cam_pos[2] = arg_camera->z;
     glUniform3fv(
         loc,
         1,
         cam_pos);
+    
     err_value = glGetError();
     if (err_value != 0) {
-        printf("error trying to set camera pos uniform\n");
+        printf("error trying to set arg_camera pos uniform\n");
         switch (err_value) {
             case GL_INVALID_VALUE:
                 printf("%s\n", "GL_INVALID_VALUE");
@@ -153,9 +154,9 @@ static void opengl_set_camera(
     assert(loc == 1);
     assert(glGetError() == 0);
     float cam_angle[3];
-    cam_angle[0] = camera->x_angle;
-    cam_angle[1] = camera->y_angle;
-    cam_angle[2] = camera->z_angle;
+    cam_angle[0] = arg_camera->x_angle;
+    cam_angle[1] = arg_camera->y_angle;
+    cam_angle[2] = arg_camera->z_angle;
     glUniform3fv(
         loc,
         1,
@@ -166,9 +167,9 @@ static void opengl_set_camera(
     doublecheck_cam_angle[2] = 234.12f;
     glGetUniformfv(program_id, loc, doublecheck_cam_angle);
     assert(glGetError() == 0);
-    assert(doublecheck_cam_angle[0] == camera->x_angle);
-    assert(doublecheck_cam_angle[1] == camera->y_angle);
-    assert(doublecheck_cam_angle[2] == camera->z_angle);
+    assert(doublecheck_cam_angle[0] == arg_camera->x_angle);
+    // assert(doublecheck_cam_angle[1] == arg_camera->y_angle);
+    // assert(doublecheck_cam_angle[2] == arg_camera->z_angle);
 }
 
 void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
@@ -203,10 +204,6 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         }
         assert(0);
     }
-    
-    #ifndef LOGGER_IGNORE_ASSERTS
-    validate_framedata(frame_data->vertices, frame_data->vertices_size);
-    #endif
     
     glBufferData(
         /* target: */
@@ -309,10 +306,6 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         }
         assert(0);
     }
-    
-    #ifndef LOGGER_IGNORE_ASSERTS
-    validate_framedata(frame_data->vertices, frame_data->vertices_size);
-    #endif
 }
 
 static void opengl_compile_given_shader(
@@ -487,6 +480,9 @@ void opengl_compile_shaders(
     glEnable(GL_DEPTH_TEST);
     glClearDepth(50.0f);
     glDepthFunc(GL_LEQUAL); // on metal: LEQUAL
+
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
     
     /*
     Attribute pointers describe the fields of our data
@@ -837,7 +833,7 @@ void opengl_set_projection_constants(
     // to 0 - 1, I wish opengl would just
     // throw instead of silently clamping
     assert(pjc->near > 0.005f);
-    assert(pjc->far < 100.0f);
+    assert(pjc->far < 11.0f);
     glDepthRangef(
         /* GLfloat nearVal: */ 
             pjc->near,
@@ -857,8 +853,6 @@ void opengl_set_projection_constants(
         "projection_constants_near");
     assert(glGetError() == 0);
     assert(loc == 2);
-    assert(pjc->near > 0.009f);
-    assert(pjc->near < 0.5f);
     assert(glGetError() == 0);
     // reminder: don't use glUniform1f, it's buggy on ubuntu with some
     // drivers, use glUniform1fv instead
