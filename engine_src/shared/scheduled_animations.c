@@ -684,9 +684,7 @@ static void resolve_single_animation_effects(
 }
 
 void resolve_animation_effects(const uint64_t microseconds_elapsed) {
-    
-    log_assert(microseconds_elapsed < 1000000);
-    
+        
     ScheduledAnimation * anim;
     for (
         int32_t animation_i = (int32_t)(scheduled_animations_size - 1);
