@@ -82,8 +82,6 @@ int main(int argc, char* argv[])
     printf("starting TOK ONE with preallocation:\n");
     printf("UNMANAGED_MEMORY_SIZE: %u\n", UNMANAGED_MEMORY_SIZE);
     printf("MANAGED_MEMORY_SIZE: %u\n", MANAGED_MEMORY_SIZE);
-
-    sleep(1);
     
     // on linux the relative application path is always in argv[0],
     // but it's followed by the application name
@@ -416,7 +414,7 @@ int main(int argc, char* argv[])
         StructureNotifyMask);
     XEvent event;
     
-    uint32_t current_frame_i = 0;
+    uint32_t current_frame_i  = 0;
     uint64_t lifetime_frame_i = 0;
     
     glClearColor(0.0f, 0.03f, 0.015, 1.0f);
@@ -562,12 +560,7 @@ int main(int argc, char* argv[])
         assert(
             gpu_shared_data_collection.triple_buffers[current_frame_i].
                 vertices_size % 3 == 0);
-        printf(
-            "about to render %u vertices in frame %u (lifetime: %u)\n",
-            gpu_shared_data_collection.triple_buffers[current_frame_i].
-                vertices_size,
-            current_frame_i,
-            lifetime_frame_i);
+        
         opengl_render_triangles(
             &gpu_shared_data_collection.triple_buffers[current_frame_i]); 
         

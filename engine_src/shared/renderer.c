@@ -71,7 +71,8 @@ inline static void zpolygons_to_triangles(
                 zpolygons_to_render[zp_i].
                     triangle_materials[material_i].texture_i;
             log_assert(
-                next_gpu_workload[*next_workload_size + 0].texture_i < 5000);
+                next_gpu_workload[*next_workload_size + 0].texture_i <
+                    MAX_FILES_IN_SINGLE_TEXARRAY);
             next_gpu_workload[*next_workload_size + 0].texturearray_i =
                 zpolygons_to_render[zp_i].
                     triangle_materials[material_i].texturearray_i;
@@ -141,7 +142,8 @@ inline static void zpolygons_to_triangles(
                 zpolygons_to_render[zp_i].
                     triangle_materials[material_i].texture_i;
             log_assert(
-                next_gpu_workload[*next_workload_size + 1].texture_i < 5000);
+                next_gpu_workload[*next_workload_size + 1].texture_i <
+                    MAX_FILES_IN_SINGLE_TEXARRAY);
             next_gpu_workload[*next_workload_size + 1].texturearray_i =
                 zpolygons_to_render[zp_i].
                     triangle_materials[material_i].texturearray_i;
@@ -211,7 +213,8 @@ inline static void zpolygons_to_triangles(
                 zpolygons_to_render[zp_i].
                     triangle_materials[material_i].texture_i;
             log_assert(
-                next_gpu_workload[*next_workload_size + 2].texture_i < 5000);
+                next_gpu_workload[*next_workload_size + 2].texture_i <
+                    MAX_FILES_IN_SINGLE_TEXARRAY);
             next_gpu_workload[*next_workload_size + 2].texturearray_i =
                 zpolygons_to_render[zp_i].
                     triangle_materials[material_i].texturearray_i;
@@ -281,7 +284,7 @@ inline static void zpolygons_to_triangles(
                 zpolygons_to_render[zp_i].y_offset;
             float hitbox_front  = -(zpolygons_to_render[zp_i].hitbox_depth / 2);
             float hitbox_back   = (zpolygons_to_render[zp_i].hitbox_depth / 2);
-
+            
             // triangle 1:
             // top left front to top right front
             next_gpu_workload[*next_workload_size].x = hitbox_left;
@@ -479,6 +482,7 @@ void hardware_render(
             next_workload_size,
             lights_for_gpu,
             elapsed_nanoseconds);
+        
         add_shatter_effects_to_workload(
             next_gpu_workload,
             next_workload_size,

@@ -38,6 +38,7 @@ void get_memory_usage_summary_string(
         (uint32_t)(
             (float)(UNMANAGED_MEMORY_SIZE - (uint32_t)unmanaged_memory_size)
                 / (float)UNMANAGED_MEMORY_SIZE * 100.0f));
+    
     strcat_capped(
         recipient,
         recipient_cap,
@@ -73,7 +74,15 @@ void get_memory_usage_summary_string(
 void init_memory_store(void) {
     malloc_mutex_id = platform_init_mutex_and_return_id();
     unmanaged_memory = platform_malloc_unaligned_block(UNMANAGED_MEMORY_SIZE);
-    managed_memory = platform_malloc_unaligned_block(MANAGED_MEMORY_SIZE);
+    managed_memory   = platform_malloc_unaligned_block(MANAGED_MEMORY_SIZE  );
+    
+    for (uint32_t i = 0; i < UNMANAGED_MEMORY_SIZE; i++) {
+        ((uint8_t *)unmanaged_memory)[i] = 0;
+    }
+    
+    for (uint32_t i = 0; i < MANAGED_MEMORY_SIZE; i++) {
+        ((uint8_t *)managed_memory)[i] = 0;
+    }
 }
 
 static void * malloc_from_unmanaged_without_aligning(
@@ -87,7 +96,9 @@ static void * malloc_from_unmanaged_without_aligning(
         log_append_uint((uint32_t)(unmanaged_memory_size / 1000000));
         log_append("MB remaining");
         assert(0);
+        return NULL;
     }
+    
     unmanaged_memory += size;
     unmanaged_memory_size -= size;
     
@@ -101,22 +112,22 @@ void * malloc_from_unmanaged_aligned(
     platform_mutex_lock(malloc_mutex_id);
     
     assert(unmanaged_memory != NULL);
-    assert(size > 0);    
+    assert(size > 0);
     
     uint32_t padding = 0;
     assert(unmanaged_memory_size >= aligned_to);
-    while ((uintptr_t)(void *)unmanaged_memory %
-        aligned_to != 0)
+    while (
+        (uintptr_t)(void *)unmanaged_memory % aligned_to != 0)
     {
         unmanaged_memory += 1;
         padding += 1;
     }
+    assert(unmanaged_memory_size > padding);
     unmanaged_memory_size -= padding;
     assert(padding < aligned_to);
     assert((uintptr_t)(void *)unmanaged_memory % aligned_to == 0);
     
-    void * return_value =
-        malloc_from_unmanaged_without_aligning(size);
+    void * return_value = malloc_from_unmanaged_without_aligning(size);
     
     assert((uintptr_t)(void *)return_value % aligned_to == 0);
     

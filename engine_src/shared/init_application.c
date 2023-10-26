@@ -161,12 +161,14 @@ void init_application(void)
                 gpu_shared_data_collection.vertices_allocation_size,
                 4096);
         
+        #ifndef LOGGER_IGNORE_ASSERTS
         for (uint32_t i = 0; i < MAX_VERTICES_PER_BUFFER; i++) {
             gpu_shared_data_collection.triple_buffers[frame_i].
                 vertices[i].texture_i = -1;
             gpu_shared_data_collection.triple_buffers[frame_i].
                 vertices[i].texturearray_i = -1;
         }
+        #endif
         
         gpu_shared_data_collection.triple_buffers[frame_i].light_collection =
             (GPULightCollection *)malloc_from_unmanaged_aligned(
@@ -177,6 +179,7 @@ void init_application(void)
             (GPUCamera *)malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection.camera_allocation_size,
                 4096);
+        
         gpu_shared_data_collection.triple_buffers[frame_i].camera->x = 0.0f;
         gpu_shared_data_collection.triple_buffers[frame_i].camera->y = 0.0f;
         gpu_shared_data_collection.triple_buffers[frame_i].camera->z = 0.0f;

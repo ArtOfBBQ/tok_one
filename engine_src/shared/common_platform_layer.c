@@ -125,3 +125,4 @@ void platform_delete_writable(
     
     platform_delete_file(writable_filename);
 }
+

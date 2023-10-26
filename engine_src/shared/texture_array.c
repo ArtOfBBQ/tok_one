@@ -3,7 +3,6 @@
 static uint32_t texture_arrays_mutex_ids[TEXTUREARRAYS_SIZE];
 
 #define MAX_ASSET_FILENAME_SIZE 30
-#define MAX_FILES_IN_SINGLE_TEXARRAY 200
 #define MAX_ASSET_FILES 1500
 
 #define HAS_ALPHA_NO 0
@@ -19,9 +18,8 @@ typedef struct TextureArrayImage {
     bool32_t prioritize_asset_load;
 } TextureArrayImage;
 
-#define MAX_IMAGES_IN_TEXARRAY 300
 typedef struct TextureArray {
-    TextureArrayImage images[MAX_IMAGES_IN_TEXARRAY];
+    TextureArrayImage images[MAX_FILES_IN_SINGLE_TEXARRAY];
     uint32_t images_size;
     uint32_t single_img_width;
     uint32_t single_img_height;
@@ -313,12 +311,14 @@ static void register_to_texturearray_from_images(
     const char ** new_img_filenames,
     const uint32_t new_images_size)
 {
+    log_assert(target_texture_array_i < TEXTUREARRAYS_SIZE);
     platform_mutex_lock(texture_arrays_mutex_ids[target_texture_array_i]);
     log_assert(new_images_size > 0);
     for (uint32_t i = 0; i < new_images_size; i++) {
         log_assert(new_images[i] != NULL);
         if (new_images[i] == NULL) {
-            platform_mutex_unlock(texture_arrays_mutex_ids[target_texture_array_i]);
+            platform_mutex_unlock(
+                texture_arrays_mutex_ids[target_texture_array_i]);
             return;
         }
         log_assert(new_images[i]->width > 0);
@@ -383,6 +383,7 @@ static void register_new_texturearray_from_images(
     int32_t new_i = (int32_t)texture_arrays_size;
     log_assert(new_i < TEXTUREARRAYS_SIZE);
     texture_arrays_size++;
+    log_assert(texture_arrays_size <= TEXTUREARRAYS_SIZE);
     
     register_to_texturearray_from_images(
         new_i,
@@ -600,6 +601,7 @@ static void register_new_texturearray_by_splitting_image(
 {
     int new_texture_array_i = (int)texture_arrays_size;
     texture_arrays_size++;
+    log_assert(texture_arrays_size <= TEXTUREARRAYS_SIZE);
     
     register_to_texturearray_by_splitting_image(
         /* DecodedImage * new_image: */
@@ -700,6 +702,7 @@ void preregister_null_image(
     // set new_texturearray_i and new_texture_i if so
     for (uint32_t i = 0; i < texture_arrays_size; i++)
     {
+        log_assert(i < TEXTUREARRAYS_SIZE);
         if (
             texture_arrays[i].single_img_width == width
             && texture_arrays[i].single_img_height == height)
@@ -724,6 +727,7 @@ void preregister_null_image(
     if (new_texturearray_i < 0) {
         new_texturearray_i = (int32_t)texture_arrays_size;
         texture_arrays_size++;
+        log_assert(texture_arrays_size <= TEXTUREARRAYS_SIZE);
         new_texture_i = 0;
         
         texture_arrays[new_texturearray_i].images_size = 1;
@@ -889,7 +893,7 @@ void decode_all_null_images_with_memory(void)
             (uint32_t)i < texture_arrays_size;
             i++)
         {
-            log_assert(texture_arrays[i].images_size <= MAX_IMAGES_IN_TEXARRAY);
+            log_assert(texture_arrays[i].images_size <= MAX_FILES_IN_SINGLE_TEXARRAY);
             for (
                 int32_t j = 0;
                 (uint32_t)j < texture_arrays[i].images_size;
@@ -964,6 +968,9 @@ void decode_all_null_images_with_memory(void)
         if (i < 0 || j < 0) {
             break;
         }
+        
+        log_assert(i < TEXTUREARRAYS_SIZE);
+        log_assert(j < MAX_FILES_IN_SINGLE_TEXARRAY);
         
         log_append("decoding image: ");
         log_append(texture_arrays[i].images[j].filename);

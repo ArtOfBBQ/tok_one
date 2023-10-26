@@ -71,11 +71,11 @@ for extension in png obj dat glsl
 do
     for f in *.$extension;
     do
-    if test -f "../build/$PLATFORM/$APP_NAME/resources/$f"; then
+    if test -f "../build/$PLATFORM/$APP_NAME/$f"; then
         echo "$f was already in build folder...."
     else
         echo "copying resource file $f to build folder..."
-        sudo cp -r -f $f ../build/$PLATFORM/$APP_NAME/resources/$f
+        sudo cp -r -f $f ../build/$PLATFORM/$APP_NAME/$f
     fi
     done
 done

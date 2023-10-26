@@ -461,6 +461,21 @@ void request_particle_effect(
         log_assert(to_request->particle_rgba_progression[col_i][3] <= 1.0f);
     }
     
+    assert(to_request->random_textures_size < MAX_PARTICLE_TEXTURES);
+    for (
+        uint32_t i = 0;
+        i < to_request->random_textures_size;
+        i++)
+    {
+        assert(
+            to_request->random_texturearray_i[i] <
+                TEXTUREARRAYS_SIZE);
+        
+        assert(
+            to_request->random_texture_i[i] <
+                MAX_FILES_IN_SINGLE_TEXARRAY);
+    }
+    
     for (uint32_t i = 0; i < particle_effects_size; i++) {
         if (particle_effects[i].deleted) {
             particle_effects[i] = *to_request;
@@ -652,8 +667,10 @@ void add_particle_effects_to_workload(
                     
                     texturearray_i = particle_effects[i].
                         random_texturearray_i[rand_texture_i];
+                    assert(texturearray_i < TEXTUREARRAYS_SIZE);
                     texture_i = particle_effects[i].
                         random_texture_i[rand_texture_i];
+                    assert(texture_i < MAX_FILES_IN_SINGLE_TEXARRAY);
                 }
                 
                 spawn_lifetime_so_far =
@@ -951,8 +968,16 @@ void add_particle_effects_to_workload(
                             all_mesh_triangles[tri_i].vertices[m].uv[1];
                         next_gpu_workload[*next_workload_size].texturearray_i =
                             texturearray_i;
+                        assert(
+                            next_gpu_workload[*next_workload_size].
+                                texturearray_i < TEXTUREARRAYS_SIZE);
+                        assert(texturearray_i < TEXTUREARRAYS_SIZE);
                         next_gpu_workload[*next_workload_size].texture_i =
                             texture_i;
+                        assert(
+                            next_gpu_workload[*next_workload_size].
+                                texture_i < MAX_FILES_IN_SINGLE_TEXARRAY);
+                        assert(texture_i < MAX_FILES_IN_SINGLE_TEXARRAY);
                         next_gpu_workload[*next_workload_size].normal_x =
                             all_mesh_triangles[tri_i].normal.x;
                         next_gpu_workload[*next_workload_size].normal_y =
