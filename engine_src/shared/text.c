@@ -528,7 +528,7 @@ void request_fps_counter(
         /* float top_pixelspace  : */
             30.0f,
         /* z                     : */
-            1.0f,
+            0.05f,
         /* float max_width       : */
             window_globals->window_width,
         /* bool32_t ignore_camera: */
