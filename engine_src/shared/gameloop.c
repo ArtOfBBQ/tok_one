@@ -241,9 +241,9 @@ void shared_gameloop_update(
     platform_update_sound_volume();
     platform_update_music_volume();
     
-    if (time - window_globals->last_resize_request_at < 1500000)
+    if (time - window_globals->last_resize_request_at < 2000000)
     {
-        if (time - window_globals->last_resize_request_at < 250000)
+        if (time - window_globals->last_resize_request_at < 350000)
         {
             // possibly a request we already handled, or not the final
             // request, wait...
@@ -257,10 +257,10 @@ void shared_gameloop_update(
             window_globals->last_resize_request_at = 0;
             log_append("\nOK, resize window\n");
             
-            window_globals->aspect_ratio =
-                window_globals->window_height / window_globals->window_width;
             init_projection_constants();
-                        
+            
+            platform_gpu_update_viewport();
+            
             terminal_redraw_backgrounds();
             
             client_logic_window_resize(

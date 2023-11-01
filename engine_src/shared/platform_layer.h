@@ -177,6 +177,8 @@ uint64_t platform_get_current_time_microsecs(void);
 float platform_x_to_x(const float x);
 float platform_y_to_y(const float y);
 
+void platform_gpu_update_viewport(void);
+
 void platform_gpu_init_texture_array(
     const int32_t texture_array_i,
     const uint32_t num_images,

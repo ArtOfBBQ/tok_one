@@ -437,7 +437,7 @@ int main(int argc, const char * argv[]) {
         initWithFrame: window_rect
         device: metal_device];
     
-    mtk_view.autoResizeDrawable = false;
+    mtk_view.autoResizeDrawable = true;
     
     // [mtk_view setOpaque: NO];
     // mtk_view.opaque = false;

@@ -465,14 +465,14 @@ static dispatch_semaphore_t drawing_semaphore;
 - (void)mtkView:(MTKView *)view
     drawableSizeWillChange:(CGSize)size
 {
-    printf(
-        "[mtkview DrawableSizeWillChange]: using window_globals [%u, %u]\n",
-        (uint32_t)window_globals->window_height,
-        (uint32_t)window_globals->window_width);
-    
-    [self updateViewport];
+    //[self updateViewport];
 }
 @end
+
+void platform_gpu_update_viewport()
+{
+    [apple_gpu_delegate updateViewport];
+}
 
 void platform_gpu_init_texture_array(
     const int32_t texture_array_i,
