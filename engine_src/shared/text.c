@@ -479,7 +479,7 @@ void request_label_renderable(
                 cur_y_offset - get_y_offset(text_to_draw[i]), z);
         
         cur_x_offset += get_advance_width(text_to_draw[i]);
-        if (left_pixelspace + cur_x_offset + get_advance_width('w') >= max_width)
+        if (cur_x_offset + get_advance_width('w') >= max_width)
         {
             cur_x_offset   = 0;
             cur_y_offset  -= font_height;
