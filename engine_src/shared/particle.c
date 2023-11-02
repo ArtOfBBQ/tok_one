@@ -464,7 +464,7 @@ void request_particle_effect(
     assert(to_request->random_textures_size < MAX_PARTICLE_TEXTURES);
     for (
         uint32_t i = 0;
-        i < to_request->random_textures_size;
+        (int32_t)i < to_request->random_textures_size;
         i++)
     {
         assert(
