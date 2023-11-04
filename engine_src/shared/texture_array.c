@@ -814,7 +814,7 @@ void decode_null_image_with_memory(
         texture_arrays[i].images[j].filename) + 1;
     
     file_buffer.contents =
-        (char *)malloc_from_unmanaged(sizeof(char)
+        (char *)malloc_from_managed(sizeof(char)
             * file_buffer.size);
     platform_read_resource_file(
         texture_arrays[i].images[j].filename,
@@ -870,6 +870,8 @@ void decode_null_image_with_memory(
     log_assert(new_image->height == texture_arrays[i].single_img_height);
     log_assert(new_image->width == texture_arrays[i].single_img_width);
     new_image->pixel_count = new_image->height * new_image->width;
+    
+    free_from_managed(file_buffer.contents);
     
     platform_mutex_lock(texture_arrays_mutex_ids[i]);
     texture_arrays[i].images[j].image = new_image;
