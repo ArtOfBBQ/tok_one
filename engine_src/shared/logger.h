@@ -18,18 +18,6 @@
 #define log_append_uint(num)
 #endif
 
-#ifdef IGNORE_LOGGER_ASSERTS
-#ifndef LOGGER_IGNORE_ASSERTS
-#define LOGGER_IGNORE_ASSERTS // alias
-#endif
-#endif
-
-#ifdef LOGGER_IGNORE_ASSERTS
-#ifndef IGNORE_LOGGER_ASSERTS
-#define IGNORE_LOGGER_ASSERTS // alias
-#endif
-#endif
-
 #ifdef LOGGER_IGNORE_ASSERTS
 #define log_assert(condition)
 #else

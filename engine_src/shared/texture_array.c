@@ -477,7 +477,7 @@ void init_or_push_one_gpu_texture_array_if_needed(void) {
                 {
                     if (texture_arrays[i].images[j].request_update) {
                         texture_arrays[i].images[j].request_update = false;
-                        #ifndef IGNORE_LOGGER_ASSERTS
+                        #ifndef LOGGER_IGNORE_ASSERTS
                         log_assert(texture_arrays[i]
                                 .images[j]
                                 .image != NULL);
