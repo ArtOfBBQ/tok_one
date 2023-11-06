@@ -131,17 +131,19 @@ void init_application(void)
     gpu_shared_data_collection.vertices_allocation_size +=
         (4096 - (gpu_shared_data_collection.vertices_allocation_size % 4096));
     assert(gpu_shared_data_collection.vertices_allocation_size % 4096 == 0);
-
+    
     gpu_shared_data_collection.polygons_allocation_size =
         sizeof(GPUPolygonCollection);
     gpu_shared_data_collection.polygons_allocation_size +=
         (4096 - (gpu_shared_data_collection.polygons_allocation_size % 4096));
+    assert(gpu_shared_data_collection.polygons_allocation_size > 0);
     assert(gpu_shared_data_collection.polygons_allocation_size % 4096 == 0);
     
     gpu_shared_data_collection.lights_allocation_size =
         sizeof(GPULightCollection);
     gpu_shared_data_collection.lights_allocation_size +=
         (4096 - (gpu_shared_data_collection.lights_allocation_size % 4096));
+    assert(gpu_shared_data_collection.lights_allocation_size > 0);
     assert(gpu_shared_data_collection.lights_allocation_size % 4096 == 0);
     
     gpu_shared_data_collection.camera_allocation_size = sizeof(GPUCamera);
@@ -177,7 +179,7 @@ void init_application(void)
         #endif
         
         gpu_shared_data_collection.triple_buffers[frame_i].polygon_collection =
-            (GPUVertex *)malloc_from_unmanaged_aligned(
+            (GPUPolygonCollection *)malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection.polygons_allocation_size,
                 4096);
         

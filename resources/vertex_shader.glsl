@@ -25,11 +25,16 @@ uniform float zpolygons_scale_factor[1000];
 uniform float zpolygons_ignore_lighting[1000];
 uniform float zpolygons_ignore_camera[1000];
 
-out vec2 vert_to_frag_uv;
-out vec4 vert_to_frag_color;
-flat out int vert_to_frag_texturearray_i;
-flat out int vert_to_frag_texture_i;
-out vec4 vert_to_frag_lighting;
+uniform float lights_x      [75];
+uniform float lights_y      [75];
+uniform float lights_z      [75];
+uniform float lights_ambient[75];
+uniform float lights_diffuse[75];
+uniform float lights_reach  [75];
+uniform float lights_red    [75];
+uniform float lights_green  [75];
+uniform float lights_blue   [75];
+uniform int lights_size;
 
 uniform vec3 camera_position;
 uniform vec3 camera_angle;
@@ -38,16 +43,11 @@ uniform float projection_constants_q;
 uniform float projection_constants_fov_modifier;
 uniform float projection_constants_x_multiplier;
 
-uniform float lights_x[75];
-uniform float lights_y[75];
-uniform float lights_z[75];
-uniform float lights_ambient[75];
-uniform float lights_diffuse[75];
-uniform float lights_reach[75];
-uniform float lights_red[75];
-uniform float lights_green[75];
-uniform float lights_blue[75];
-uniform int lights_size;
+out vec2 vert_to_frag_uv;
+out vec4 vert_to_frag_color;
+flat out int vert_to_frag_texturearray_i;
+flat out int vert_to_frag_texture_i;
+out vec4 vert_to_frag_lighting;
 
 vec4 x_rotate(vec4 vertices, float x_angle) {
     vec4 rotated_vertices = vertices;
@@ -201,7 +201,7 @@ void main()
         vec4 light_rgba = vec4(
             lights_red[i],
             lights_green[i],
-            lights_red[i],
+            lights_blue[i],
             1.0f);
         float distance = get_distance(
             light_pos,

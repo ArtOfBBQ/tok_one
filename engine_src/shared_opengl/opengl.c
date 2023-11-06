@@ -9,6 +9,63 @@ static GLuint err_value = UINT32_MAX;
 
 static GLuint texture_array_ids[TEXTUREARRAYS_SIZE];
 
+#ifndef LOGGER_IGNORE_ASSERTS
+static void spotcheck_uniform(
+    char * uniform_name,
+    float expected_value)
+{
+    GLint loc = glGetUniformLocation(
+        program_id,
+        uniform_name);
+    assert(glGetError() == 0);
+    
+    if (loc < 0) {
+        printf(
+            "error on spot check, variable %s returns location %i\n",
+            uniform_name,
+            loc);
+        assert(loc >= 0);
+    }
+    
+    GLfloat actual_gpu_value;
+    actual_gpu_value = 23.555f;
+    glGetUniformfv(
+        program_id,
+        loc,
+        &actual_gpu_value);
+    err_value = glGetError();
+    if (err_value != 0) {
+        printf("error trying to fetch uniform for spot-checking\n");
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled!");
+        }
+        printf(
+            "uniform name: %s, at location: %i\n",
+            uniform_name,
+            loc);
+        assert(0);
+    }
+    if (actual_gpu_value != expected_value) {
+        printf(
+            "uniform %s's actual gpu value was %f, expected: %f\n",
+            uniform_name,
+            actual_gpu_value,
+            expected_value);
+        assert(0);
+    }
+}
+#endif
+
 static void opengl_set_polygons(
     GPUPolygonCollection * polygon_collection)
 {
@@ -24,13 +81,29 @@ static void opengl_set_polygons(
     assert(glGetError() == 0);
     glUniform1fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->x);
     assert(glGetError() == 0);
-
+    #ifndef LOGGER_IGNORE_ASSERTS
+    spotcheck_uniform(
+        "zpolygons_x[0]",
+        polygon_collection->x[0]);
+    spotcheck_uniform(
+        "zpolygons_x[8]",
+        polygon_collection->x[8]);
+    #endif
+    
     loc = glGetUniformLocation(
         program_id,
         "zpolygons_y");
     assert(glGetError() == 0);
     glUniform1fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->y);
     assert(glGetError() == 0);
+    #ifndef LOGGER_IGNORE_ASSERTS
+    spotcheck_uniform(
+        "zpolygons_y[2]",
+        polygon_collection->y[2]);
+    spotcheck_uniform(
+        "zpolygons_y[5]",
+        polygon_collection->y[5]);
+    #endif
     
     loc = glGetUniformLocation(
         program_id,
@@ -45,14 +118,22 @@ static void opengl_set_polygons(
     assert(glGetError() == 0);
     glUniform1fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->x_angle);
     assert(glGetError() == 0);
-
+    
     loc = glGetUniformLocation(
         program_id,
         "zpolygons_y_angle");
     assert(glGetError() == 0);
     glUniform1fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->y_angle);
     assert(glGetError() == 0);
-
+    #ifndef LOGGER_IGNORE_ASSERTS
+    spotcheck_uniform(
+        "zpolygons_y_angle[2]",
+        polygon_collection->y_angle[2]);
+    spotcheck_uniform(
+        "zpolygons_y_angle[5]",
+        polygon_collection->y_angle[5]);
+    #endif
+    
     loc = glGetUniformLocation(
         program_id,
         "zpolygons_z_angle");
@@ -69,7 +150,7 @@ static void opengl_set_polygons(
         MAX_POLYGONS_PER_BUFFER,
         polygon_collection->scale_factor);
     assert(glGetError() == 0);
-
+    
     loc = glGetUniformLocation(
         program_id,
         "zpolygons_ignore_lighting");
@@ -79,7 +160,7 @@ static void opengl_set_polygons(
         MAX_POLYGONS_PER_BUFFER,
         polygon_collection->ignore_lighting);
     assert(glGetError() == 0);
-
+    
     loc = glGetUniformLocation(
         program_id,
         "zpolygons_ignore_camera");
@@ -106,6 +187,17 @@ static void opengl_set_lights(
     assert(glGetError() == 0);
     glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->light_x);
     assert(glGetError() == 0);
+    #ifndef LOGGER_IGNORE_ASSERTS
+    spotcheck_uniform(
+        "lights_x[0]",
+        light_collection->light_x[0]);
+    spotcheck_uniform(
+        "lights_x[8]",
+        light_collection->light_x[8]);
+    spotcheck_uniform(
+        "lights_x[12]",
+        light_collection->light_x[12]);
+    #endif
     
     loc = glGetUniformLocation(
         program_id,
@@ -113,6 +205,14 @@ static void opengl_set_lights(
     assert(glGetError() == 0);
     glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->light_y);
     assert(glGetError() == 0);
+    #ifndef LOGGER_IGNORE_ASSERTS
+    spotcheck_uniform(
+        "lights_y[0]",
+        light_collection->light_y[0]);
+    spotcheck_uniform(
+        "lights_y[1]",
+        light_collection->light_y[1]);
+    #endif
     
     loc = glGetUniformLocation(
         program_id,
@@ -120,6 +220,11 @@ static void opengl_set_lights(
     assert(glGetError() == 0);
     glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->light_z);
     assert(glGetError() == 0);
+    #ifndef LOGGER_IGNORE_ASSERTS
+    spotcheck_uniform(
+        "lights_z[1]",
+        light_collection->light_z[1]);
+    #endif
     
     loc = glGetUniformLocation(
         program_id,
@@ -127,13 +232,24 @@ static void opengl_set_lights(
     assert(glGetError() == 0);
     glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->ambient);
     assert(glGetError() == 0);
+    #ifndef LOGGER_IGNORE_ASSERTS
+    spotcheck_uniform(
+        "lights_ambient[5]",
+        light_collection->ambient[5]);
+    #endif
     
     loc = glGetUniformLocation(
         program_id,
         "lights_diffuse");
     assert(glGetError() == 0);
+    assert(loc >= 0);
     glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->diffuse);
     assert(glGetError() == 0);
+    #ifndef LOGGER_IGNORE_ASSERTS
+    spotcheck_uniform(
+        "lights_diffuse[7]",
+        light_collection->diffuse[7]);
+    #endif
     
     loc = glGetUniformLocation(
         program_id,
@@ -141,36 +257,80 @@ static void opengl_set_lights(
     assert(glGetError() == 0);
     glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->reach);
     assert(glGetError() == 0);
+    #ifndef LOGGER_IGNORE_ASSERTS
+    spotcheck_uniform(
+        "lights_reach[14]",
+        light_collection->reach[14]);
+    #endif
     
     loc = glGetUniformLocation(
         program_id,
         "lights_red");
     assert(glGetError() == 0);
+    assert(loc >= 0);
     glUniform1fv(
         loc,
         MAX_LIGHTS_PER_BUFFER,
         light_collection->red);
     assert(glGetError() == 0);
-
+    #ifndef LOGGER_IGNORE_ASSERTS
+    spotcheck_uniform(
+        "lights_red[0]",
+        light_collection->red[0]);
+    spotcheck_uniform(
+        "lights_red[4]",
+        light_collection->red[4]);
+    #endif
+    
     loc = glGetUniformLocation(
         program_id,
         "lights_green");
     assert(glGetError() == 0);
+    assert(loc >= 0);
     glUniform1fv(
         loc,
         MAX_LIGHTS_PER_BUFFER,
         light_collection->green);
     assert(glGetError() == 0);
-
+    #ifndef LOGGER_IGNORE_ASSERTS
+    spotcheck_uniform(
+        "lights_green[0]",
+        light_collection->green[0]);
+    spotcheck_uniform(
+        "lights_green[1]",
+        light_collection->green[1]);
+    spotcheck_uniform(
+        "lights_green[4]",
+        light_collection->green[4]);
+    spotcheck_uniform(
+        "lights_green[74]",
+        light_collection->green[74]);
+    #endif
+    
     loc = glGetUniformLocation(
         program_id,
         "lights_blue");
     assert(glGetError() == 0);
+    assert(loc >= 0);
     glUniform1fv(
         loc,
         MAX_LIGHTS_PER_BUFFER,
         light_collection->blue);
     assert(glGetError() == 0);
+    #ifndef LOGGER_IGNORE_ASSERTS
+    spotcheck_uniform(
+        "lights_blue[0]",
+        light_collection->blue[0]);
+    spotcheck_uniform(
+        "lights_blue[1]",
+        light_collection->blue[1]);
+    spotcheck_uniform(
+        "lights_blue[4]",
+        light_collection->blue[4]);
+    spotcheck_uniform(
+        "lights_blue[74]",
+        light_collection->blue[74]);
+    #endif
     
     loc = glGetUniformLocation(
         program_id,
@@ -183,6 +343,14 @@ static void opengl_set_lights(
         1,
         &size);
     assert(glGetError() == 0);
+    
+    #ifndef LOGGER_IGNORE_ASSERTS
+    int doublecheck_lights_size;
+    doublecheck_lights_size = 234;
+    glGetUniformiv(program_id, loc, &doublecheck_lights_size);
+    assert(glGetError() == 0);
+    assert(doublecheck_lights_size == light_collection->lights_size);
+    #endif
 }
 
 static void opengl_set_camera(
