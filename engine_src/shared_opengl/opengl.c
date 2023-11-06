@@ -31,7 +31,7 @@ static void opengl_set_polygons(
     assert(glGetError() == 0);
     glUniform1fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->y);
     assert(glGetError() == 0);
-
+    
     loc = glGetUniformLocation(
         program_id,
         "zpolygons_z");
@@ -280,6 +280,24 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
                 break;
         }
         assert(0);
+    }
+    #endif
+
+    #ifndef LOGGER_IGNORE_ASSERTS
+    for (uint32_t i = 0; i < frame_data->vertices_size; i++) {
+        if (
+            frame_data->vertices[i].polygon_i < 0 ||
+            frame_data->vertices[i].polygon_i >=
+                frame_data->polygon_collection->size)
+        {
+            printf(
+                "invalid polygon_i: %u\n",
+                frame_data->vertices[i].polygon_i);
+            assert(frame_data->vertices[i].polygon_i >= 0);
+            assert(
+                frame_data->vertices[i].polygon_i <
+                    frame_data->polygon_collection->size);
+        }
     }
     #endif
     
@@ -582,16 +600,16 @@ void opengl_compile_shaders(
     assert(sizeof(int) == sizeof(float));
     assert(sizeof(GLint) == sizeof(GLfloat));
     assert(sizeof(GLint) == sizeof(int));
-    uint32_t field_sizes[12]   = { 3, 3, 2, 4,  1,  1 };
-    uint32_t field_offsets[12] = { 0, 3, 6, 8, 12, 13 };
+    uint32_t field_sizes[12]   = { 3, 3, 2, 4,  1,  1, 1  };
+    uint32_t field_offsets[12] = { 0, 3, 6, 8, 12, 13, 14 };
     uint32_t cur_offset = 0;
     
-    for (uint32_t _ = 0; _ < 6; _++) {
+    for (uint32_t _ = 0; _ < 7; _++) {
         
         printf("vertex attribute: %u (%u items)\n", _, field_sizes[_]);
         
         GLenum current_type = GL_FLOAT;
-        if (_ >= 4 && _ <= 5 || _ == 11) {
+        if (_ >= 4 && _ <= 6) {
             current_type = GL_INT;
         }
         assert(cur_offset == field_offsets[_]);
@@ -671,7 +689,6 @@ void opengl_compile_shaders(
             sizeof(GPUVertex) / 4);
         assert(0);
     }
-    
     
     // validate program
     success = 0;

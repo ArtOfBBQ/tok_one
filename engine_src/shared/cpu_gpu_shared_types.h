@@ -19,6 +19,7 @@ typedef struct GPUVertex {
     float RGBA[4];
     int   texturearray_i; // -1 for no texture
     int   texture_i;      // -1 for no texture
+    int   polygon_i;      // index into GPUPolygonCollection buffer
 } GPUVertex;
 
 typedef struct GPUCamera {

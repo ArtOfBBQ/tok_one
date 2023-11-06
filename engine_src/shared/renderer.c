@@ -22,7 +22,7 @@ inline static void zpolygons_to_triangles(
     assert(*next_workload_size == 0);
     
     for (
-        uint32_t zp_i = 0;
+        int32_t zp_i = 0;
         zp_i < zpolygons_to_render_size;
         zp_i++)
     {
@@ -54,7 +54,6 @@ inline static void zpolygons_to_triangles(
             zpolygons_to_render[zp_i].ignore_lighting;
         gpu_polygons->ignore_camera[gpu_polygons->size] =
             zpolygons_to_render[zp_i].ignore_camera;
-        gpu_polygons->size += 1;
         log_assert(gpu_polygons->size < MAX_POLYGONS_PER_BUFFER);
         
         int32_t mesh_id = zpolygons_to_render[zp_i].mesh_id;
@@ -104,6 +103,8 @@ inline static void zpolygons_to_triangles(
                 //     zpolygons_to_render[zp_i].touchable_id;
                 
                 // redundant copying, same for entire material
+                next_gpu_workload[*next_workload_size + m].polygon_i =
+                    gpu_polygons->size;
                 next_gpu_workload[*next_workload_size + m].texture_i =
                     zpolygons_to_render[zp_i].
                         triangle_materials[material_i].texture_i;
@@ -116,6 +117,7 @@ inline static void zpolygons_to_triangles(
                 log_assert(
                     next_gpu_workload[*next_workload_size + m].texturearray_i <
                         TEXTUREARRAYS_SIZE);
+                
                 next_gpu_workload[*next_workload_size + m].RGBA[0] =
                     zpolygons_to_render[zp_i].
                         triangle_materials[material_i].color[0] +
@@ -288,7 +290,11 @@ inline static void zpolygons_to_triangles(
         //     log_assert(*next_workload_size - 1 < MAX_VERTICES_PER_BUFFER);
         // }
         // #endif
+
+        gpu_polygons->size += 1;
     }
+    
+    assert(gpu_polygons->size <= zpolygons_to_render_size);
 }
 
 void hardware_render(

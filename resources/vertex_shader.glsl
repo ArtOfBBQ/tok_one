@@ -6,6 +6,7 @@ layout (location =  2) in vec2 uv;
 layout (location =  3) in vec4 rgba;
 layout (location =  4) in int texturearray_i;
 layout (location =  5) in int texture_i;
+layout (location =  6) in int polygon_i;
 
 // layout (location =  6) in vec3 parent_xyz;
 // layout (location =  7) in vec3 parent_angle;
@@ -108,8 +109,6 @@ float get_distance(
 
 void main()
 {
-    int polygon_i = 0;
-    
     vec4 parent_mesh_pos = vec4(
         zpolygons_x[polygon_i],
         zpolygons_y[polygon_i],
@@ -217,17 +216,12 @@ void main()
         // diffuse lighting
         vec4 normalized_normals = normalize(z_rotated_normals);
         
-        vec4 vec_from_light_to_vertex = normalize(
-            translated_pos - light_pos);
+        vec4 vec_from_light_to_vertex = normalize(translated_pos - light_pos);
         
-        float dot = dot(
-            normalized_normals,
-            vec_from_light_to_vertex);
-        float visibility_rating = max(
-            0.0f,
-            -1.0f * dot);
+        float dot = dot(normalized_normals, vec_from_light_to_vertex);
+        float visibility_rating = max(0.0f, -1.0f * dot);
         
-         vec4 lighting_to_add = (
+        vec4 lighting_to_add = (
             light_rgba *
             distance_mod *
             (lights_diffuse[i] * 3.0f) *
@@ -237,7 +231,7 @@ void main()
     }
     
     // at the end
-    clamp(vert_to_frag_lighting, 0.05f, 1.0f);
+    vert_to_frag_lighting = clamp(vert_to_frag_lighting, 0.08f, 10.0f);
     vert_to_frag_lighting[3] = 1.0f;
 }
 

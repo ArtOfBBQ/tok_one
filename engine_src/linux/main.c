@@ -560,6 +560,11 @@ int main(int argc, char* argv[])
         shared_gameloop_update(
             &gpu_shared_data_collection.triple_buffers[current_frame_i]);
         
+        printf(
+            "polygons in new frame: %u\n",
+            gpu_shared_data_collection.triple_buffers[current_frame_i].
+                polygon_collection->size);
+        
         assert(current_frame_i >= 0);
         assert(current_frame_i <= 2);
         assert(
