@@ -363,7 +363,7 @@ static bool32_t evaluate_terminal_command(
         strcat_uint_capped(
             response,
             SINGLE_LINE_MAX,
-            ZLIGHTS_TO_APPLY_ARRAYSIZE);
+            MAX_LIGHTS_PER_BUFFER);
         return true;
     }
     

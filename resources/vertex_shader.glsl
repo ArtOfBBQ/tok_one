@@ -26,15 +26,15 @@ uniform float projection_constants_q;
 uniform float projection_constants_fov_modifier;
 uniform float projection_constants_x_multiplier;
 
-uniform float lights_x[50];
-uniform float lights_y[50];
-uniform float lights_z[50];
-uniform float lights_ambient[50];
-uniform float lights_diffuse[50];
-uniform float lights_reach[50];
-uniform float lights_red[50];
-uniform float lights_green[50];
-uniform float lights_blue[50];
+uniform float lights_x[75];
+uniform float lights_y[75];
+uniform float lights_z[75];
+uniform float lights_ambient[75];
+uniform float lights_diffuse[75];
+uniform float lights_reach[75];
+uniform float lights_red[75];
+uniform float lights_green[75];
+uniform float lights_blue[75];
 uniform int lights_size;
 
 vec4 x_rotate(vec4 vertices, float x_angle) {

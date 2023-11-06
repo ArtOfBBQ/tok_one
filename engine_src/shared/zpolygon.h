@@ -39,9 +39,10 @@ typedef struct TriangleMaterial {
 
 typedef struct zPolygon {
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
-    TriangleMaterial triangle_materials[MAX_MATERIALS_SIZE];
     
+    TriangleMaterial triangle_materials[MAX_MATERIALS_SIZE];
     uint32_t triangle_materials_size;
+    
     int32_t object_id;
     int32_t touchable_id;
     float x;

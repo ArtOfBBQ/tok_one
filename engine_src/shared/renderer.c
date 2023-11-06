@@ -47,218 +47,86 @@ inline static void zpolygons_to_triangles(
         {
             int32_t material_i = all_mesh_triangles[tri_i].parent_material_i;
             
-            next_gpu_workload[*next_workload_size + 0].parent_x =
-                zpolygons_to_render[zp_i].x;
-            next_gpu_workload[*next_workload_size + 0].parent_y =
-                zpolygons_to_render[zp_i].y;
-            next_gpu_workload[*next_workload_size + 0].parent_z =
-                zpolygons_to_render[zp_i].z;
-            next_gpu_workload[*next_workload_size + 0].x_angle =
-                zpolygons_to_render[zp_i].x_angle;
-            next_gpu_workload[*next_workload_size + 0].y_angle =
-                zpolygons_to_render[zp_i].y_angle;
-            next_gpu_workload[*next_workload_size + 0].z_angle =
-                zpolygons_to_render[zp_i].z_angle;
-            next_gpu_workload[*next_workload_size + 0].normal_x =
-                all_mesh_triangles[tri_i].normal.x;
-            next_gpu_workload[*next_workload_size + 0].normal_y =
-                all_mesh_triangles[tri_i].normal.y;
-            next_gpu_workload[*next_workload_size + 0].normal_z =
-                all_mesh_triangles[tri_i].normal.z;
-            next_gpu_workload[*next_workload_size + 0].touchable_id =
-                zpolygons_to_render[zp_i].touchable_id;
-            next_gpu_workload[*next_workload_size + 0].texture_i =
-                zpolygons_to_render[zp_i].
-                    triangle_materials[material_i].texture_i;
-            log_assert(
-                next_gpu_workload[*next_workload_size + 0].texture_i <
-                    MAX_FILES_IN_SINGLE_TEXARRAY);
-            next_gpu_workload[*next_workload_size + 0].texturearray_i =
-                zpolygons_to_render[zp_i].
-                    triangle_materials[material_i].texturearray_i;
-            log_assert(
-                next_gpu_workload[*next_workload_size + 0].texturearray_i <
-                    TEXTUREARRAYS_SIZE);
-            next_gpu_workload[*next_workload_size + 0].ignore_lighting =
-                zpolygons_to_render[zp_i].ignore_lighting;
-            next_gpu_workload[*next_workload_size + 0].scale_factor =
-                zpolygons_to_render[zp_i].scale_factor;
-            next_gpu_workload[*next_workload_size + 0].ignore_camera =
-                zpolygons_to_render[zp_i].ignore_camera;
-            next_gpu_workload[*next_workload_size + 0].RGBA[0] =
-                zpolygons_to_render[zp_i].
-                    triangle_materials[material_i].color[0] +
-                        zpolygons_to_render[zp_i].rgb_bonus[0];
-            next_gpu_workload[*next_workload_size + 0].RGBA[1] =
-                zpolygons_to_render[zp_i].
-                    triangle_materials[material_i].color[1] +
-                        zpolygons_to_render[zp_i].rgb_bonus[1];
-            next_gpu_workload[*next_workload_size + 0].RGBA[2] =
-                zpolygons_to_render[zp_i].
-                    triangle_materials[material_i].color[2] +
-                        zpolygons_to_render[zp_i].rgb_bonus[2];
-            next_gpu_workload[*next_workload_size + 0].RGBA[3] =
-                zpolygons_to_render[zp_i].
-                    triangle_materials[material_i].color[3];
-            next_gpu_workload[*next_workload_size + 0].x =
-                    (all_mesh_triangles[tri_i].vertices[0].x *
-                        zpolygons_to_render[zp_i].x_multiplier) +
-                    zpolygons_to_render[zp_i].x_offset;
-            next_gpu_workload[*next_workload_size + 0].y =
-                (all_mesh_triangles[tri_i].vertices[0].y *
-                    zpolygons_to_render[zp_i].y_multiplier) +
-                zpolygons_to_render[zp_i].y_offset;
-            next_gpu_workload[*next_workload_size + 0].z =
-                (all_mesh_triangles[tri_i].vertices[0].z *
-                    zpolygons_to_render[zp_i].z_multiplier);
-            next_gpu_workload[*next_workload_size + 0].uv[0] =
-                all_mesh_triangles[tri_i].
-                    vertices[0].uv[0];
-            next_gpu_workload[*next_workload_size + 0].uv[1] =
-                all_mesh_triangles[tri_i].
-                    vertices[0].uv[1];
-            
-            next_gpu_workload[*next_workload_size + 1].parent_x =
-                zpolygons_to_render[zp_i].x;
-            next_gpu_workload[*next_workload_size + 1].parent_y =
-                zpolygons_to_render[zp_i].y;
-            next_gpu_workload[*next_workload_size + 1].parent_z =
-                zpolygons_to_render[zp_i].z;
-            next_gpu_workload[*next_workload_size + 1].x_angle =
-                zpolygons_to_render[zp_i].x_angle;
-            next_gpu_workload[*next_workload_size + 1].y_angle =
-                zpolygons_to_render[zp_i].y_angle;
-            next_gpu_workload[*next_workload_size + 1].z_angle =
-                zpolygons_to_render[zp_i].z_angle;
-            next_gpu_workload[*next_workload_size + 1].normal_x =
-                all_mesh_triangles[tri_i].normal.x;
-            next_gpu_workload[*next_workload_size + 1].normal_y =
-                all_mesh_triangles[tri_i].normal.y;
-            next_gpu_workload[*next_workload_size + 1].normal_z =
-                all_mesh_triangles[tri_i].normal.z;
-            next_gpu_workload[*next_workload_size + 1].touchable_id =
-                zpolygons_to_render[zp_i].touchable_id;
-            next_gpu_workload[*next_workload_size + 1].texture_i =
-                zpolygons_to_render[zp_i].
-                    triangle_materials[material_i].texture_i;
-            log_assert(
-                next_gpu_workload[*next_workload_size + 1].texture_i <
-                    MAX_FILES_IN_SINGLE_TEXARRAY);
-            next_gpu_workload[*next_workload_size + 1].texturearray_i =
-                zpolygons_to_render[zp_i].
-                    triangle_materials[material_i].texturearray_i;
-            log_assert(
-                next_gpu_workload[*next_workload_size + 1].texturearray_i <
-                    TEXTUREARRAYS_SIZE);
-            next_gpu_workload[*next_workload_size + 1].ignore_lighting =
-                zpolygons_to_render[zp_i].ignore_lighting;
-            next_gpu_workload[*next_workload_size + 1].scale_factor =
-                zpolygons_to_render[zp_i].scale_factor;
-            next_gpu_workload[*next_workload_size + 1].ignore_camera =
-                zpolygons_to_render[zp_i].ignore_camera;
-            next_gpu_workload[*next_workload_size + 1].RGBA[0] =
-                zpolygons_to_render[zp_i].
-                    triangle_materials[material_i].color[0] +
-                        zpolygons_to_render[zp_i].rgb_bonus[0];
-            next_gpu_workload[*next_workload_size + 1].RGBA[1] =
-                zpolygons_to_render[zp_i].
-                    triangle_materials[material_i].color[1] +
-                        zpolygons_to_render[zp_i].rgb_bonus[1];
-            next_gpu_workload[*next_workload_size + 1].RGBA[2] =
-                zpolygons_to_render[zp_i].
-                    triangle_materials[material_i].color[2] +
-                        zpolygons_to_render[zp_i].rgb_bonus[2];
-            next_gpu_workload[*next_workload_size + 1].RGBA[3] =
-                zpolygons_to_render[zp_i].
-                    triangle_materials[material_i].color[3];
-            next_gpu_workload[*next_workload_size + 1].x =
-                    (all_mesh_triangles[tri_i].vertices[1].x *
-                        zpolygons_to_render[zp_i].x_multiplier) +
-                    zpolygons_to_render[zp_i].x_offset;
-            next_gpu_workload[*next_workload_size + 1].y =
-                (all_mesh_triangles[tri_i].vertices[1].y *
-                    zpolygons_to_render[zp_i].y_multiplier) +
-                zpolygons_to_render[zp_i].y_offset;
-            next_gpu_workload[*next_workload_size + 1].z =
-                (all_mesh_triangles[tri_i].vertices[1].z *
-                    zpolygons_to_render[zp_i].z_multiplier);
-            next_gpu_workload[*next_workload_size + 1].uv[0] =
-                all_mesh_triangles[tri_i].
-                    vertices[1].uv[0];
-            next_gpu_workload[*next_workload_size + 1].uv[1] =
-                all_mesh_triangles[tri_i].
-                    vertices[1].uv[1];
-            
-            next_gpu_workload[*next_workload_size + 2].parent_x =
-                zpolygons_to_render[zp_i].x;
-            next_gpu_workload[*next_workload_size + 2].parent_y =
-                zpolygons_to_render[zp_i].y;
-            next_gpu_workload[*next_workload_size + 2].parent_z =
-                zpolygons_to_render[zp_i].z;
-            next_gpu_workload[*next_workload_size + 2].x_angle =
-                zpolygons_to_render[zp_i].x_angle;
-            next_gpu_workload[*next_workload_size + 2].y_angle =
-                zpolygons_to_render[zp_i].y_angle;
-            next_gpu_workload[*next_workload_size + 2].z_angle =
-                zpolygons_to_render[zp_i].z_angle;
-            next_gpu_workload[*next_workload_size + 2].normal_x =
-                all_mesh_triangles[tri_i].normal.x;
-            next_gpu_workload[*next_workload_size + 2].normal_y =
-                all_mesh_triangles[tri_i].normal.y;
-            next_gpu_workload[*next_workload_size + 2].normal_z =
-                all_mesh_triangles[tri_i].normal.z;
-            next_gpu_workload[*next_workload_size + 2].touchable_id =
-                zpolygons_to_render[zp_i].touchable_id;
-            next_gpu_workload[*next_workload_size + 2].texture_i =
-                zpolygons_to_render[zp_i].
-                    triangle_materials[material_i].texture_i;
-            log_assert(
-                next_gpu_workload[*next_workload_size + 2].texture_i <
-                    MAX_FILES_IN_SINGLE_TEXARRAY);
-            next_gpu_workload[*next_workload_size + 2].texturearray_i =
-                zpolygons_to_render[zp_i].
-                    triangle_materials[material_i].texturearray_i;
-            log_assert(
-                next_gpu_workload[*next_workload_size + 2].texturearray_i <
-                    TEXTUREARRAYS_SIZE);
-            next_gpu_workload[*next_workload_size + 2].ignore_lighting =
-                zpolygons_to_render[zp_i].ignore_lighting;
-            next_gpu_workload[*next_workload_size + 2].scale_factor =
-                zpolygons_to_render[zp_i].scale_factor;
-            next_gpu_workload[*next_workload_size + 2].ignore_camera =
-                zpolygons_to_render[zp_i].ignore_camera;
-            next_gpu_workload[*next_workload_size + 2].RGBA[0] =
-                zpolygons_to_render[zp_i].
-                    triangle_materials[material_i].color[0] +
-                        zpolygons_to_render[zp_i].rgb_bonus[0];
-            next_gpu_workload[*next_workload_size + 2].RGBA[1] =
-                zpolygons_to_render[zp_i].
-                    triangle_materials[material_i].color[1] +
-                        zpolygons_to_render[zp_i].rgb_bonus[1];
-            next_gpu_workload[*next_workload_size + 2].RGBA[2] =
-                zpolygons_to_render[zp_i].
-                    triangle_materials[material_i].color[2] +
-                        zpolygons_to_render[zp_i].rgb_bonus[2];
-            next_gpu_workload[*next_workload_size + 2].RGBA[3] =
-                zpolygons_to_render[zp_i].
-                    triangle_materials[material_i].color[3];
-            next_gpu_workload[*next_workload_size + 2].x =
-                    (all_mesh_triangles[tri_i].vertices[2].x *
-                        zpolygons_to_render[zp_i].x_multiplier) +
-                    zpolygons_to_render[zp_i].x_offset;
-            next_gpu_workload[*next_workload_size + 2].y =
-                (all_mesh_triangles[tri_i].vertices[2].y *
-                    zpolygons_to_render[zp_i].y_multiplier) +
-                zpolygons_to_render[zp_i].y_offset;
-            next_gpu_workload[*next_workload_size + 2].z =
-                (all_mesh_triangles[tri_i].vertices[2].z *
-                    zpolygons_to_render[zp_i].z_multiplier);
-            next_gpu_workload[*next_workload_size + 2].uv[0] =
-                all_mesh_triangles[tri_i].
-                    vertices[2].uv[0];
-            next_gpu_workload[*next_workload_size + 2].uv[1] =
-                all_mesh_triangles[tri_i].
-                    vertices[2].uv[1];
+            for (uint32_t m = 0; m < 3; m++) {
+                
+                // redundant copying, same for whole zpoly
+                next_gpu_workload[*next_workload_size + m].parent_x =
+                    zpolygons_to_render[zp_i].x;
+                next_gpu_workload[*next_workload_size + m].parent_y =
+                    zpolygons_to_render[zp_i].y;
+                next_gpu_workload[*next_workload_size + m].parent_z =
+                    zpolygons_to_render[zp_i].z;
+                next_gpu_workload[*next_workload_size + m].x_angle =
+                    zpolygons_to_render[zp_i].x_angle;
+                next_gpu_workload[*next_workload_size + m].y_angle =
+                    zpolygons_to_render[zp_i].y_angle;
+                next_gpu_workload[*next_workload_size + m].z_angle =
+                    zpolygons_to_render[zp_i].z_angle;
+                next_gpu_workload[*next_workload_size + m].ignore_lighting =
+                    zpolygons_to_render[zp_i].ignore_lighting;
+                next_gpu_workload[*next_workload_size + m].scale_factor =
+                    zpolygons_to_render[zp_i].scale_factor;
+                next_gpu_workload[*next_workload_size + m].ignore_camera =
+                    zpolygons_to_render[zp_i].ignore_camera;
+                
+                // actually nescessary every frame, non-redundant copying
+                next_gpu_workload[*next_workload_size + m].normal_x =
+                    all_mesh_triangles[tri_i].normal.x;
+                next_gpu_workload[*next_workload_size + m].normal_y =
+                    all_mesh_triangles[tri_i].normal.y;
+                next_gpu_workload[*next_workload_size + m].normal_z =
+                    all_mesh_triangles[tri_i].normal.z;
+                next_gpu_workload[*next_workload_size + m].x =
+                        (all_mesh_triangles[tri_i].vertices[m].x *
+                            zpolygons_to_render[zp_i].x_multiplier) +
+                        zpolygons_to_render[zp_i].x_offset;
+                next_gpu_workload[*next_workload_size + m].y =
+                    (all_mesh_triangles[tri_i].vertices[m].y *
+                        zpolygons_to_render[zp_i].y_multiplier) +
+                    zpolygons_to_render[zp_i].y_offset;
+                next_gpu_workload[*next_workload_size + m].z =
+                    (all_mesh_triangles[tri_i].vertices[m].z *
+                        zpolygons_to_render[zp_i].z_multiplier);
+                next_gpu_workload[*next_workload_size + m].uv[0] =
+                    all_mesh_triangles[tri_i].
+                        vertices[m].uv[0];
+                next_gpu_workload[*next_workload_size + m].uv[1] =
+                    all_mesh_triangles[tri_i].
+                        vertices[m].uv[1];
+                
+                // completely useless, should be removed from GPUVertex
+                next_gpu_workload[*next_workload_size + m].touchable_id =
+                    zpolygons_to_render[zp_i].touchable_id;
+                
+                // redundant copying, same for entire material
+                next_gpu_workload[*next_workload_size + m].texture_i =
+                    zpolygons_to_render[zp_i].
+                        triangle_materials[material_i].texture_i;
+                log_assert(
+                    next_gpu_workload[*next_workload_size + m].texture_i <
+                        MAX_FILES_IN_SINGLE_TEXARRAY);
+                next_gpu_workload[*next_workload_size + m].texturearray_i =
+                    zpolygons_to_render[zp_i].
+                        triangle_materials[material_i].texturearray_i;
+                log_assert(
+                    next_gpu_workload[*next_workload_size + m].texturearray_i <
+                        TEXTUREARRAYS_SIZE);
+                next_gpu_workload[*next_workload_size + m].RGBA[0] =
+                    zpolygons_to_render[zp_i].
+                        triangle_materials[material_i].color[0] +
+                            zpolygons_to_render[zp_i].rgb_bonus[0];
+                next_gpu_workload[*next_workload_size + m].RGBA[1] =
+                    zpolygons_to_render[zp_i].
+                        triangle_materials[material_i].color[1] +
+                            zpolygons_to_render[zp_i].rgb_bonus[1];
+                next_gpu_workload[*next_workload_size + m].RGBA[2] =
+                    zpolygons_to_render[zp_i].
+                        triangle_materials[material_i].color[2] +
+                            zpolygons_to_render[zp_i].rgb_bonus[2];
+                next_gpu_workload[*next_workload_size + m].RGBA[3] =
+                    zpolygons_to_render[zp_i].
+                        triangle_materials[material_i].color[3];
+            }
             
             *next_workload_size += 3;
             log_assert(*next_workload_size <= MAX_VERTICES_PER_BUFFER);
@@ -266,6 +134,7 @@ inline static void zpolygons_to_triangles(
         log_assert(*next_workload_size <= MAX_VERTICES_PER_BUFFER);
         
         // draw touchable hitboxes (the yellow lines) in visual debug mode
+        #ifndef LOGGER_IGNORE_ASSERTS
         if (
             window_globals->visual_debug_mode &&
             zpolygons_to_render[zp_i].touchable_id >= 0)
@@ -412,6 +281,7 @@ inline static void zpolygons_to_triangles(
             *next_workload_size += 24;
             log_assert(*next_workload_size - 1 < MAX_VERTICES_PER_BUFFER);
         }
+        #endif
     }
 }
 
@@ -436,6 +306,7 @@ void hardware_render(
         return;
     }
     
+    #ifndef LOGGER_IGNORE_ASSERTS
     if (window_globals->visual_debug_mode) {
         /*
         draw the ray that's used for finding touchables when clicking as a
@@ -469,6 +340,7 @@ void hardware_render(
         }
         *next_workload_size += 3;
     }
+    #endif
     
     log_assert(zpolygons_to_render_size < ZPOLYGONS_TO_RENDER_ARRAYSIZE);
     
@@ -477,16 +349,16 @@ void hardware_render(
         next_workload_size);
     
     if (application_running) {
-        add_particle_effects_to_workload(
-            next_gpu_workload,
-            next_workload_size,
-            lights_for_gpu,
-            elapsed_nanoseconds);
-        
-        add_shatter_effects_to_workload(
-            next_gpu_workload,
-            next_workload_size,
-            lights_for_gpu,
-            elapsed_nanoseconds);
+        // add_particle_effects_to_workload(
+        //     next_gpu_workload,
+        //     next_workload_size,
+        //     lights_for_gpu,
+        //     elapsed_nanoseconds);
+        // 
+        // add_shatter_effects_to_workload(
+        //     next_gpu_workload,
+        //     next_workload_size,
+        //     lights_for_gpu,
+        //     elapsed_nanoseconds);
     }
 }

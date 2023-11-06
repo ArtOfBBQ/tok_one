@@ -85,7 +85,7 @@ void init_application(void)
         sizeof(zPolygon) * ZPOLYGONS_TO_RENDER_ARRAYSIZE);
     init_all_meshes();
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
-        sizeof(zLightSource) * ZLIGHTS_TO_APPLY_ARRAYSIZE);
+        sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
     particle_effects = (ParticleEffect *)malloc_from_unmanaged(
         sizeof(ParticleEffect) * PARTICLE_EFFECTS_SIZE);
     shatter_effects = (ShatterEffect *)malloc_from_unmanaged(

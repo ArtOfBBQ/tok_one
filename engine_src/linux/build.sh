@@ -5,7 +5,7 @@ if [[ $1 = "DEBUG" ]]; then
     COMPILER_OPTIONS="-D LINUX_PLATFORM -fsanitize=address -w -Wfatal-errors -pthread -I engine_src -I client_src -I sampleproject_src -I engine_src/shared_linux_apple -I engine_src/shared -I engine_src/shared_opengl -march=native -x c -std=gnu99 -o0 -g"
 else
     if [[ $1 = "RELEASE" ]]; then
-        COMPILER_OPTIONS="-D LINUX_PLATFORM -w -Wfatal-errors -pthread -I engine_src -I client_src -I sampleproject_src -I engine_src/shared -I engine_src/shared_linux_apple -I engine_src/shared_opengl -march=native -x c -std=gnu99 -o0"
+        COMPILER_OPTIONS="-D LINUX_PLATFORM -D LOGGER_IGNORE_ASSERTS -D NDEBUG -w -Wfatal-errors -pthread -I engine_src -I client_src -I sampleproject_src -I engine_src/shared -I engine_src/shared_linux_apple -I engine_src/shared_opengl -march=native -x c -std=gnu99 -o0"
     else
         echo "pass DEBUG or RELEASE as a command line argument"
         exit 0
@@ -55,7 +55,7 @@ echo "Building $APP_NAME for $PLATFORM..."
 
 echo "deleting previous build(s)..."
 rm -r -f build/$PLATFORM/$APP_NAME/$APP_NAME
-# rm build/$PLATFORM/$APP_NAME/resources/*.glsl
+rm build/$PLATFORM/$APP_NAME/*.glsl
 
 echo "Creating build folder..."
 mkdir build

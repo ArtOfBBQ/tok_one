@@ -15,17 +15,17 @@ of the engine for your specific app.
 #define APPLICATION_NAME "TOK ONE"
 
 // These startup window settings have no effect on tablets/smartphones
-#define INITIAL_WINDOW_HEIGHT   400
-#define INITIAL_WINDOW_WIDTH    500
+#define INITIAL_WINDOW_HEIGHT    800
+#define INITIAL_WINDOW_WIDTH    1000
 #define INITIAL_WINDOW_LEFT       0
 #define INITIAL_WINDOW_BOTTOM     0
 
 // The maximum number of vertices/lights to send to the GPU each frame
-#define MAX_VERTICES_PER_BUFFER 35000
-#define MAX_LIGHTS_PER_BUFFER 5
+#define MAX_VERTICES_PER_BUFFER 350000
+#define MAX_LIGHTS_PER_BUFFER 75
 
 // The maximum number of 3D or 2D sprites in your app.
-#define ZPOLYGONS_TO_RENDER_ARRAYSIZE 500
+#define ZPOLYGONS_TO_RENDER_ARRAYSIZE 1000
 
 // The maximum number of 'scheduled animations' simultaneously running
 #define SCHEDULED_ANIMATIONS_ARRAYSIZE 3000

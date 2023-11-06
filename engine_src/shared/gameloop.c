@@ -4,6 +4,10 @@ static uint64_t previous_time = 0;
 static uint64_t frame_no = 0;
 static uint32_t gameloop_mutex_id = UINT32_MAX;
 
+#define ELAPSED_SAMPLE_COUNT 50
+static uint64_t elapsed_sample[ELAPSED_SAMPLE_COUNT];
+static uint32_t elapsed_sample_size = 0;
+
 static int32_t closest_touchable_from_screen_ray(
     const float screen_x,
     const float screen_y,
@@ -179,15 +183,31 @@ void shared_gameloop_init(void) {
 void shared_gameloop_update(
     GPUDataForSingleFrame * frame_data)
 {
-    platform_mutex_lock(gameloop_mutex_id);
+    // platform_mutex_lock(gameloop_mutex_id);
     
     uint64_t time = platform_get_current_time_microsecs();
     if (previous_time < 1) {
         previous_time = time;
-        platform_mutex_unlock(gameloop_mutex_id);
+        // platform_mutex_unlock(gameloop_mutex_id);
         return;
     }
     uint64_t elapsed = time - previous_time;
+    
+    // TODO: delete me 
+    if (time % 5 == 0) {
+        if (elapsed_sample_size < ELAPSED_SAMPLE_COUNT) {
+            elapsed_sample[elapsed_sample_size++] = elapsed;
+        } else {
+            uint64_t elapsed_total = 0;
+            for (uint32_t i = 0; i < ELAPSED_SAMPLE_COUNT; i++) {
+                elapsed_total += elapsed_sample[i];
+            }
+            printf(
+                "average elapsed per frame in samples: %u\n",
+                elapsed_total / ELAPSED_SAMPLE_COUNT);
+            assert(0);
+        }
+    }
     
     if (!application_running) {
         zpolygons_to_render_size = 0;
@@ -250,7 +270,7 @@ void shared_gameloop_update(
             // we break, not return, because we do want to render an
             // empty screen
             log_append("w82RZ - ");
-            platform_mutex_unlock(gameloop_mutex_id);
+            // platform_mutex_unlock(gameloop_mutex_id);
             return;
         } else {
             
@@ -351,13 +371,9 @@ void shared_gameloop_update(
         /* uint64_t elapsed_microseconds: */
             elapsed);
     
-    #ifndef LOGGER_IGNORE_ASSERTS
-    validate_framedata(frame_data->vertices, frame_data->vertices_size);
-    #endif
-    
     uint32_t overflow_vertices = frame_data->vertices_size % 3;
     frame_data->vertices_size -= overflow_vertices;
     
-    platform_mutex_unlock(gameloop_mutex_id);
+    // platform_mutex_unlock(gameloop_mutex_id);
 }
 

@@ -13,51 +13,51 @@ static void opengl_set_lights(
     GPULightCollection * light_collection)
 {
     /*
-    Reminder: If ZLIGHTS_TO_APPLY_ARRAYSIZE gets updated,
+    Reminder: If MAX_LIGHTS_PER_BUFFER gets updated,
     you need to update the glsl vertex shader
     */
-    assert(ZLIGHTS_TO_APPLY_ARRAYSIZE == 50);
+    assert(MAX_LIGHTS_PER_BUFFER == 75);
     
     GLint loc = glGetUniformLocation(
         program_id,
         "lights_x");
     assert(glGetError() == 0);
-    glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->light_x);
+    glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->light_x);
     assert(glGetError() == 0);
     
     loc = glGetUniformLocation(
         program_id,
         "lights_y");
     assert(glGetError() == 0);
-    glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->light_y);
+    glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->light_y);
     assert(glGetError() == 0);
     
     loc = glGetUniformLocation(
         program_id,
         "lights_z");
     assert(glGetError() == 0);
-    glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->light_z);
+    glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->light_z);
     assert(glGetError() == 0);
     
     loc = glGetUniformLocation(
         program_id,
         "lights_ambient");
     assert(glGetError() == 0);
-    glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->ambient);
+    glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->ambient);
     assert(glGetError() == 0);
     
     loc = glGetUniformLocation(
         program_id,
         "lights_diffuse");
     assert(glGetError() == 0);
-    glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->diffuse);
+    glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->diffuse);
     assert(glGetError() == 0);
     
     loc = glGetUniformLocation(
         program_id,
         "lights_reach");
     assert(glGetError() == 0);
-    glUniform1fv(loc, ZLIGHTS_TO_APPLY_ARRAYSIZE, light_collection->reach);
+    glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->reach);
     assert(glGetError() == 0);
     
     loc = glGetUniformLocation(
@@ -66,7 +66,7 @@ static void opengl_set_lights(
     assert(glGetError() == 0);
     glUniform1fv(
         loc,
-        ZLIGHTS_TO_APPLY_ARRAYSIZE,
+        MAX_LIGHTS_PER_BUFFER,
         light_collection->red);
     assert(glGetError() == 0);
 
@@ -76,7 +76,7 @@ static void opengl_set_lights(
     assert(glGetError() == 0);
     glUniform1fv(
         loc,
-        ZLIGHTS_TO_APPLY_ARRAYSIZE,
+        MAX_LIGHTS_PER_BUFFER,
         light_collection->green);
     assert(glGetError() == 0);
 
@@ -86,7 +86,7 @@ static void opengl_set_lights(
     assert(glGetError() == 0);
     glUniform1fv(
         loc,
-        ZLIGHTS_TO_APPLY_ARRAYSIZE,
+        MAX_LIGHTS_PER_BUFFER,
         light_collection->blue);
     assert(glGetError() == 0);
     
@@ -174,18 +174,15 @@ static void opengl_set_camera(
 
 void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
     
-    #ifndef LOGGER_IGNORE_ASSERTS
-    validate_framedata(frame_data->vertices, frame_data->vertices_size);
-    #endif
-    
     assert(VAO < UINT32_MAX);
     assert(VBO < UINT32_MAX);
     
     glUseProgram(program_id);
     
     if (frame_data->vertices_size < 1) { return; }
+
+    #ifndef LOGGER_IGNORE_ASSERTS
     assert(frame_data->vertices != NULL); 
-    
     err_value = glGetError();
     if (err_value != GL_NO_ERROR) {
         switch (err_value) {
@@ -204,6 +201,7 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         }
         assert(0);
     }
+    #endif
     
     glBufferData(
         /* target: */
@@ -215,6 +213,7 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         /* usage: */
             GL_DYNAMIC_DRAW);
     
+    #ifndef LOGGER_IGNORE_ASSERTS
     err_value = glGetError();
     if (err_value != GL_NO_ERROR) {
         switch (err_value) {
@@ -233,11 +232,15 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         }
         assert(0);
     }
+    #endif
 
     opengl_set_lights(frame_data->light_collection);
+    #ifndef LOGGER_IGNORE_ASSERTS
     err_value = glGetError();
+    #endif
     
     opengl_set_camera(frame_data->camera);
+    #ifndef LOGGER_IGNORE_ASSERTS
     err_value = glGetError();
     if (err_value != GL_NO_ERROR) {
         switch (err_value) {
@@ -256,26 +259,27 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         }
         assert(0);
     }
+    #endif
     
-    opengl_set_projection_constants(frame_data->projection_constants); 
-    err_value = glGetError();
-    if (err_value != GL_NO_ERROR) {
-        switch (err_value) {
-            case GL_INVALID_VALUE:
-                printf("%s\n", "GL_INVALID_VALUE");
-                break;
-            case GL_INVALID_ENUM:
-                printf("%s\n", "GL_INVALID_ENUM");
-                break;
-            case GL_INVALID_OPERATION:
-                printf("%s\n", "GL_INVALID_OPERATION");
-                break;
-            default:
-                printf("%s\n", "unhandled error when sending buffer data!");
-                break;
-        }
-        assert(0);
-    }
+    // opengl_set_projection_constants(frame_data->projection_constants); 
+    // err_value = glGetError();
+    // if (err_value != GL_NO_ERROR) {
+    //     switch (err_value) {
+    //         case GL_INVALID_VALUE:
+    //             printf("%s\n", "GL_INVALID_VALUE");
+    //             break;
+    //         case GL_INVALID_ENUM:
+    //             printf("%s\n", "GL_INVALID_ENUM");
+    //             break;
+    //         case GL_INVALID_OPERATION:
+    //             printf("%s\n", "GL_INVALID_OPERATION");
+    //             break;
+    //         default:
+    //             printf("%s\n", "unhandled error when sending buffer data!");
+    //             break;
+    //     }
+    //     assert(0);
+    // }
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
@@ -288,6 +292,7 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         /* GLint count (# of vertices to render): */
             frame_data->vertices_size);
     
+    #ifndef LOGGER_IGNORE_ASSERTS
     err_value = glGetError();
     if (err_value != GL_NO_ERROR) {
         switch (err_value) {
@@ -306,6 +311,7 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         }
         assert(0);
     }
+    #endif
 }
 
 static void opengl_compile_given_shader(

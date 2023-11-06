@@ -35,7 +35,7 @@ zLightSource * next_zlight(void) {
         }
     }
     
-    log_assert(zlights_to_apply_size + 1 < ZLIGHTS_TO_APPLY_ARRAYSIZE);
+    log_assert(zlights_to_apply_size + 1 < MAX_LIGHTS_PER_BUFFER);
     return_value = &zlights_to_apply[zlights_to_apply_size];
     return_value->committed = false;
     zlights_to_apply_size += 1;
@@ -255,7 +255,7 @@ void copy_lights(
 void translate_lights(
     GPULightCollection * lights_for_gpu)
 {
-    assert(zlights_to_apply_size < ZLIGHTS_TO_APPLY_ARRAYSIZE);
+    assert(zlights_to_apply_size < MAX_LIGHTS_PER_BUFFER);
     
     zVertex translated_light_pos;
     

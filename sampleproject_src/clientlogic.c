@@ -130,27 +130,13 @@ void client_logic_startup(void) {
     
     request_particle_fountain();
     
-    zLightSource * im_a_light = next_zlight();
-    im_a_light->x = -0.75f;
-    im_a_light->y = 0.75f;
-    im_a_light->z = 0.7f;
-    im_a_light->ambient = 0.8f;
-    im_a_light->diffuse = 0.8f;
-    im_a_light->RGBA[0] = 1.0f;
-    im_a_light->RGBA[1] = 1.0f;
-    im_a_light->RGBA[2] = 1.0f;
-    im_a_light->RGBA[3] = 1.0f;
-    im_a_light->reach = 1.5f;
-    im_a_light->deleted = false;
-    commit_zlight(im_a_light);
-    
     // example 1: the 'christams tree' obj file
-    for (uint32_t i = 0; i < 2; i++) {
+    for (uint32_t i = 0; i < 800; i++) {
         construct_zpolygon(&xmastree);
         xmastree.mesh_id = xmastree_mesh_id;
-        xmastree.x = 0.0f + (0.35f * (i % 10));
-        xmastree.y = -0.5f + (0.35f * (i / 10));
-        xmastree.z = 1.0f + (0.01 * i);
+        xmastree.x = 0.0f + (0.30f * (i % 30));
+        xmastree.y = -0.5f + (0.30f * (i / 30));
+        xmastree.z = 1.0f + (0.015f * i);
         xmastree.triangle_materials[0].color[0] = 0.05f; // christmas decorations?
         xmastree.triangle_materials[0].color[1] = 0.05f;
         xmastree.triangle_materials[0].color[2] = 1.0f;
@@ -166,9 +152,9 @@ void client_logic_startup(void) {
         xmastree.triangle_materials[2].color[2] = 0.05f;
         xmastree.triangle_materials[2].color[3] = 1.0f;
         xmastree.triangle_materials_size = 3;
-        xmastree.x_multiplier = 0.1f;
-        xmastree.y_multiplier = 0.1f;
-        xmastree.z_multiplier = 0.1f;
+        xmastree.x_multiplier = 0.05f;
+        xmastree.y_multiplier = 0.05f;
+        xmastree.z_multiplier = 0.05f;
         
         // example 2: use a quad instead
         //    construct_quad(
@@ -191,6 +177,22 @@ void client_logic_startup(void) {
         xmastree_object_id = next_nonui_object_id();
         xmastree.object_id = xmastree_object_id;
         request_zpolygon_to_render(&xmastree);
+        
+        if (i % 14 == 0) {
+            zLightSource * im_a_light = next_zlight();
+            im_a_light->x = xmastree.x;
+            im_a_light->y = xmastree.y;
+            im_a_light->z = xmastree.z;
+            im_a_light->ambient = 0.8f;
+            im_a_light->diffuse = 0.8f;
+            im_a_light->RGBA[0] = 0.0f + ((i % 5) * 0.20f);
+            im_a_light->RGBA[1] = 0.0f + (((i+1) % 5) * 0.20f);
+            im_a_light->RGBA[2] = 1.0f - ((i % 5) * 0.20f);
+            im_a_light->RGBA[3] = 1.0f;
+            im_a_light->reach = 3.0f;
+            im_a_light->deleted = false;
+            commit_zlight(im_a_light);
+        }
     }
     
     create_shattered_version_of_mesh(

@@ -16,10 +16,6 @@
 #include "gameloop.h"
 #include "userinput.h"
 
-#ifdef LOGGER_IGNORE_ASSERTS
-#define assert(x)
-#endif
-
 extern char application_path[128];
 uint32_t application_running = 1;
 
