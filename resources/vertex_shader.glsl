@@ -8,13 +8,6 @@ layout (location =  4) in int texturearray_i;
 layout (location =  5) in int texture_i;
 layout (location =  6) in int polygon_i;
 
-// layout (location =  6) in vec3 parent_xyz;
-// layout (location =  7) in vec3 parent_angle;
-// layout (location =  8) in float scale_factor;
-// layout (location =  9) in float ignore_lighting;
-// layout (location = 10) in float ignore_camera;
-// layout (location = 11) in int touchable_id;
-
 uniform float zpolygons_x[1000];
 uniform float zpolygons_y[1000];
 uniform float zpolygons_z[1000];

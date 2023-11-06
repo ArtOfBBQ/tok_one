@@ -148,7 +148,7 @@ void request_zpolygon_to_render(zPolygon * to_add)
         }
     }
     
-    log_assert(zpolygons_to_render_size + 1 < ZPOLYGONS_TO_RENDER_ARRAYSIZE);
+    log_assert(zpolygons_to_render_size + 1 < MAX_POLYGONS_PER_BUFFER);
     zpolygons_to_render[zpolygons_to_render_size] = *to_add;
     zpolygons_to_render_size += 1;
 }

@@ -82,7 +82,7 @@ void init_application(void)
     init_ui_elements();
     
     zpolygons_to_render = (zPolygon *)malloc_from_unmanaged(
-        sizeof(zPolygon) * ZPOLYGONS_TO_RENDER_ARRAYSIZE);
+        sizeof(zPolygon) * MAX_POLYGONS_PER_BUFFER);
     init_all_meshes();
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
         sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);

@@ -365,7 +365,7 @@ void hardware_render(
     #endif
     #endif
     
-    log_assert(zpolygons_to_render_size < ZPOLYGONS_TO_RENDER_ARRAYSIZE);
+    log_assert(zpolygons_to_render_size < MAX_POLYGONS_PER_BUFFER);
     
     zpolygons_to_triangles(
         next_gpu_workload,

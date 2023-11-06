@@ -131,7 +131,7 @@ void client_logic_startup(void) {
     request_particle_fountain();
     
     // example 1: the 'christams tree' obj file
-    for (uint32_t i = 0; i < 800; i++) {
+    for (uint32_t i = 0; i <  800; i++) {
         construct_zpolygon(&xmastree);
         xmastree.mesh_id = xmastree_mesh_id;
         xmastree.x = 0.0f + (0.30f * (i % 30));
