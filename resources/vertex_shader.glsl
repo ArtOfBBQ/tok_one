@@ -21,6 +21,11 @@ uniform float zpolygons_z[1000];
 uniform float zpolygons_x_angle[1000];
 uniform float zpolygons_y_angle[1000];
 uniform float zpolygons_z_angle[1000];
+uniform float zpolygons_x_multiplier[1000];
+uniform float zpolygons_y_multiplier[1000];
+uniform float zpolygons_z_multiplier[1000];
+uniform float zpolygons_x_offset[1000];
+uniform float zpolygons_y_offset[1000];
 uniform float zpolygons_scale_factor[1000];
 uniform float zpolygons_ignore_lighting[1000];
 uniform float zpolygons_ignore_camera[1000];
@@ -115,7 +120,22 @@ void main()
         zpolygons_z[polygon_i],
         0.0f);
     
+    vec4 parent_vertex_multipliers = vec4(
+        zpolygons_x_multiplier[polygon_i],
+        zpolygons_y_multiplier[polygon_i],
+        zpolygons_z_multiplier[polygon_i],
+        1.0f);
+    
+    vec4 parent_vertex_offsets = vec4(
+        zpolygons_x_offset[polygon_i],
+        zpolygons_y_offset[polygon_i],
+        0.0f,
+        0.0f);
+    
     vec4 mesh_vertices = vec4(xyz, 1.0f);
+    
+    mesh_vertices *= parent_vertex_multipliers;
+    mesh_vertices += parent_vertex_offsets;
     
     mesh_vertices *= zpolygons_scale_factor[polygon_i];
     mesh_vertices[3] = 1.0f;
@@ -162,7 +182,6 @@ void main()
             -camera_angle[2]);
         
         gl_Position = camera_z_rotated;
-        
     } else {
         gl_Position = translated_pos;
     }

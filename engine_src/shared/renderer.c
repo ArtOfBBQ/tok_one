@@ -48,6 +48,16 @@ inline static void zpolygons_to_triangles(
             zpolygons_to_render[zp_i].y_angle;
         gpu_polygons->z_angle[gpu_polygons->size] =
             zpolygons_to_render[zp_i].z_angle;
+        gpu_polygons->x_multiplier[gpu_polygons->size] =
+            zpolygons_to_render[zp_i].x_multiplier;
+        gpu_polygons->y_multiplier[gpu_polygons->size] =
+            zpolygons_to_render[zp_i].y_multiplier;
+        gpu_polygons->z_multiplier[gpu_polygons->size] =
+            zpolygons_to_render[zp_i].z_multiplier;
+        gpu_polygons->x_offset[gpu_polygons->size] =
+            zpolygons_to_render[zp_i].x_offset;
+        gpu_polygons->y_offset[gpu_polygons->size] =
+            zpolygons_to_render[zp_i].y_offset;
         gpu_polygons->scale_factor[gpu_polygons->size] =
             zpolygons_to_render[zp_i].scale_factor;
         gpu_polygons->ignore_lighting[gpu_polygons->size] =
@@ -81,16 +91,13 @@ inline static void zpolygons_to_triangles(
                 next_gpu_workload[*next_workload_size + m].normal_z =
                     all_mesh_triangles[tri_i].normal.z;
                 next_gpu_workload[*next_workload_size + m].x =
-                        (all_mesh_triangles[tri_i].vertices[m].x *
-                            zpolygons_to_render[zp_i].x_multiplier) +
+                        all_mesh_triangles[tri_i].vertices[m].x +
                         zpolygons_to_render[zp_i].x_offset;
                 next_gpu_workload[*next_workload_size + m].y =
-                    (all_mesh_triangles[tri_i].vertices[m].y *
-                        zpolygons_to_render[zp_i].y_multiplier) +
+                    all_mesh_triangles[tri_i].vertices[m].y +
                     zpolygons_to_render[zp_i].y_offset;
                 next_gpu_workload[*next_workload_size + m].z =
-                    (all_mesh_triangles[tri_i].vertices[m].z *
-                        zpolygons_to_render[zp_i].z_multiplier);
+                    all_mesh_triangles[tri_i].vertices[m].z;
                 next_gpu_workload[*next_workload_size + m].uv[0] =
                     all_mesh_triangles[tri_i].
                         vertices[m].uv[0];

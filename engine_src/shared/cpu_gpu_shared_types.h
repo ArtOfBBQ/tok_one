@@ -38,6 +38,11 @@ typedef struct GPUPolygonCollection {
     float x_angle        [MAX_POLYGONS_PER_BUFFER];
     float y_angle        [MAX_POLYGONS_PER_BUFFER];
     float z_angle        [MAX_POLYGONS_PER_BUFFER];
+    float x_multiplier   [MAX_POLYGONS_PER_BUFFER];
+    float y_multiplier   [MAX_POLYGONS_PER_BUFFER];
+    float z_multiplier   [MAX_POLYGONS_PER_BUFFER];
+    float x_offset       [MAX_POLYGONS_PER_BUFFER];
+    float y_offset       [MAX_POLYGONS_PER_BUFFER];
     float scale_factor   [MAX_POLYGONS_PER_BUFFER];
     float ignore_lighting[MAX_POLYGONS_PER_BUFFER];
     float ignore_camera  [MAX_POLYGONS_PER_BUFFER];

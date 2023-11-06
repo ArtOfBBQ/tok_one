@@ -143,6 +143,72 @@ static void opengl_set_polygons(
     
     loc = glGetUniformLocation(
         program_id,
+        "zpolygons_x_multiplier");
+    assert(glGetError() == 0);
+    glUniform1fv(
+        loc,
+        MAX_POLYGONS_PER_BUFFER,
+        polygon_collection->x_multiplier);
+    assert(glGetError() == 0);
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "zpolygons_y_multiplier");
+    assert(glGetError() == 0);
+    glUniform1fv(
+        loc,
+        MAX_POLYGONS_PER_BUFFER,
+        polygon_collection->y_multiplier);
+    assert(glGetError() == 0);
+    #ifndef LOGGER_IGNORE_ASSERTS
+    spotcheck_uniform(
+        "zpolygons_y_multiplier[2]",
+        polygon_collection->y_multiplier[2]);
+    spotcheck_uniform(
+        "zpolygons_y_multiplier[5]",
+        polygon_collection->y_multiplier[5]);
+    #endif
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "zpolygons_z_multiplier");
+    assert(glGetError() == 0);
+    glUniform1fv(
+        loc,
+        MAX_POLYGONS_PER_BUFFER,
+        polygon_collection->z_multiplier);
+    assert(glGetError() == 0);
+
+    loc = glGetUniformLocation(
+        program_id,
+        "zpolygons_x_offset");
+    assert(glGetError() == 0);
+    glUniform1fv(
+        loc,
+        MAX_POLYGONS_PER_BUFFER,
+        polygon_collection->x_offset);
+    assert(glGetError() == 0);
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "zpolygons_y_offset");
+    assert(glGetError() == 0);
+    glUniform1fv(
+        loc,
+        MAX_POLYGONS_PER_BUFFER,
+        polygon_collection->y_offset);
+    assert(glGetError() == 0);
+    #ifndef LOGGER_IGNORE_ASSERTS
+    spotcheck_uniform(
+        "zpolygons_y_offset[2]",
+        polygon_collection->y_offset[2]);
+    spotcheck_uniform(
+        "zpolygons_y_offset[5]",
+        polygon_collection->y_offset[5]);
+    #endif
+    
+    loc = glGetUniformLocation(
+        program_id,
         "zpolygons_scale_factor");
     assert(glGetError() == 0);
     glUniform1fv(
@@ -349,7 +415,6 @@ static void opengl_set_lights(
         1,
         &size);
     assert(glGetError() == 0);
-    printf("lights size: %i\n", (int32_t)light_collection->lights_size);
     
     #ifndef LOGGER_IGNORE_ASSERTS
     int doublecheck_lights_size;
