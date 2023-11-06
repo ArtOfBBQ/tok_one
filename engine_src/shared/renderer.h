@@ -23,6 +23,7 @@ void hardware_render(
     GPUVertex * next_gpu_workload,
     uint32_t * next_workload_size,
     GPULightCollection * lights_for_gpu,
+    GPUPolygonCollection * polygons_for_gpu,
     uint64_t elapsed_nanoseconds);
 
 //void software_render(

@@ -15,8 +15,12 @@ void init_renderer() {
 
 inline static void zpolygons_to_triangles(
     GPUVertex * next_gpu_workload,
-    uint32_t * next_workload_size)
-{    
+    uint32_t * next_workload_size,
+    GPUPolygonCollection * gpu_polygons)
+{
+    assert(gpu_polygons->size == 0);
+    assert(*next_workload_size == 0);
+    
     for (
         uint32_t zp_i = 0;
         zp_i < zpolygons_to_render_size;
@@ -31,6 +35,27 @@ inline static void zpolygons_to_triangles(
         {
             continue;
         }
+        
+        gpu_polygons->x[gpu_polygons->size] =
+            zpolygons_to_render[zp_i].x;
+        gpu_polygons->y[gpu_polygons->size] =
+            zpolygons_to_render[zp_i].y;
+        gpu_polygons->z[gpu_polygons->size] =
+            zpolygons_to_render[zp_i].z;
+        gpu_polygons->x_angle[gpu_polygons->size] =
+            zpolygons_to_render[zp_i].x_angle;
+        gpu_polygons->y_angle[gpu_polygons->size] =
+            zpolygons_to_render[zp_i].y_angle;
+        gpu_polygons->z_angle[gpu_polygons->size] =
+            zpolygons_to_render[zp_i].z_angle;
+        gpu_polygons->scale_factor[gpu_polygons->size] =
+            zpolygons_to_render[zp_i].scale_factor;
+        gpu_polygons->ignore_lighting[gpu_polygons->size] =
+            zpolygons_to_render[zp_i].ignore_lighting;
+        gpu_polygons->ignore_camera[gpu_polygons->size] =
+            zpolygons_to_render[zp_i].ignore_camera;
+        gpu_polygons->size += 1;
+        log_assert(gpu_polygons->size < MAX_POLYGONS_PER_BUFFER);
         
         int32_t mesh_id = zpolygons_to_render[zp_i].mesh_id;
         log_assert(mesh_id >= 0);
@@ -48,26 +73,6 @@ inline static void zpolygons_to_triangles(
             int32_t material_i = all_mesh_triangles[tri_i].parent_material_i;
             
             for (uint32_t m = 0; m < 3; m++) {
-                
-                // redundant copying, same for whole zpoly
-                next_gpu_workload[*next_workload_size + m].parent_x =
-                    zpolygons_to_render[zp_i].x;
-                next_gpu_workload[*next_workload_size + m].parent_y =
-                    zpolygons_to_render[zp_i].y;
-                next_gpu_workload[*next_workload_size + m].parent_z =
-                    zpolygons_to_render[zp_i].z;
-                next_gpu_workload[*next_workload_size + m].x_angle =
-                    zpolygons_to_render[zp_i].x_angle;
-                next_gpu_workload[*next_workload_size + m].y_angle =
-                    zpolygons_to_render[zp_i].y_angle;
-                next_gpu_workload[*next_workload_size + m].z_angle =
-                    zpolygons_to_render[zp_i].z_angle;
-                next_gpu_workload[*next_workload_size + m].ignore_lighting =
-                    zpolygons_to_render[zp_i].ignore_lighting;
-                next_gpu_workload[*next_workload_size + m].scale_factor =
-                    zpolygons_to_render[zp_i].scale_factor;
-                next_gpu_workload[*next_workload_size + m].ignore_camera =
-                    zpolygons_to_render[zp_i].ignore_camera;
                 
                 // actually nescessary every frame, non-redundant copying
                 next_gpu_workload[*next_workload_size + m].normal_x =
@@ -95,8 +100,8 @@ inline static void zpolygons_to_triangles(
                         vertices[m].uv[1];
                 
                 // completely useless, should be removed from GPUVertex
-                next_gpu_workload[*next_workload_size + m].touchable_id =
-                    zpolygons_to_render[zp_i].touchable_id;
+                // next_gpu_workload[*next_workload_size + m].touchable_id =
+                //     zpolygons_to_render[zp_i].touchable_id;
                 
                 // redundant copying, same for entire material
                 next_gpu_workload[*next_workload_size + m].texture_i =
@@ -133,155 +138,156 @@ inline static void zpolygons_to_triangles(
         }
         log_assert(*next_workload_size <= MAX_VERTICES_PER_BUFFER);
         
-        // draw touchable hitboxes (the yellow lines) in visual debug mode
-        #ifndef LOGGER_IGNORE_ASSERTS
-        if (
-            window_globals->visual_debug_mode &&
-            zpolygons_to_render[zp_i].touchable_id >= 0)
-        {
-            float hitbox_left   =
-                -(zpolygons_to_render[zp_i].hitbox_width / 2) +
-                zpolygons_to_render[zp_i].x_offset;
-            float hitbox_right  =
-                (zpolygons_to_render[zp_i].hitbox_width / 2) +
-                zpolygons_to_render[zp_i].x_offset;
-            float hitbox_top    =
-                (zpolygons_to_render[zp_i].hitbox_height / 2) +
-                zpolygons_to_render[zp_i].y_offset;
-            float hitbox_bottom =
-                -(zpolygons_to_render[zp_i].hitbox_height / 2) +
-                zpolygons_to_render[zp_i].y_offset;
-            float hitbox_front  = -(zpolygons_to_render[zp_i].hitbox_depth / 2);
-            float hitbox_back   = (zpolygons_to_render[zp_i].hitbox_depth / 2);
-            
-            // triangle 1:
-            // top left front to top right front
-            next_gpu_workload[*next_workload_size].x = hitbox_left;
-            next_gpu_workload[*next_workload_size].y = hitbox_top;
-            next_gpu_workload[*next_workload_size].z = hitbox_front;
-            // top right front
-            next_gpu_workload[*next_workload_size + 1].x = hitbox_right;
-            next_gpu_workload[*next_workload_size + 1].y = hitbox_top;
-            next_gpu_workload[*next_workload_size + 1].z = hitbox_front;
-            // top right front
-            next_gpu_workload[*next_workload_size + 2].x = hitbox_right;
-            next_gpu_workload[*next_workload_size + 2].y = hitbox_top;
-            next_gpu_workload[*next_workload_size + 2].z = hitbox_front + 0.01f;
-            // triangle 2:
-            // bottom left front to bottom right front
-            next_gpu_workload[*next_workload_size + 3].x = hitbox_left;
-            next_gpu_workload[*next_workload_size + 3].y = hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 3].z = hitbox_front;
-            next_gpu_workload[*next_workload_size + 4].x = hitbox_right;
-            next_gpu_workload[*next_workload_size + 4].y = hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 4].z = hitbox_front;
-            next_gpu_workload[*next_workload_size + 5].x = hitbox_right;
-            next_gpu_workload[*next_workload_size + 5].y = hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 5].z = hitbox_front + 0.01f;
-            // triangle 3:
-            // top left back to top right back
-            next_gpu_workload[*next_workload_size + 6].x = hitbox_left;
-            next_gpu_workload[*next_workload_size + 6].y = hitbox_top;
-            next_gpu_workload[*next_workload_size + 6].z = hitbox_back;
-            next_gpu_workload[*next_workload_size + 7].x = hitbox_right;
-            next_gpu_workload[*next_workload_size + 7].y = hitbox_top;
-            next_gpu_workload[*next_workload_size + 7].z = hitbox_back;
-            next_gpu_workload[*next_workload_size + 8].x = hitbox_right;
-            next_gpu_workload[*next_workload_size + 8].y = hitbox_top;
-            next_gpu_workload[*next_workload_size + 8].z = hitbox_back + 0.01f;
-            // triangle 4:
-            next_gpu_workload[*next_workload_size + 9].x = hitbox_left;
-            next_gpu_workload[*next_workload_size + 9].y = hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 9].z = hitbox_back;
-            next_gpu_workload[*next_workload_size + 10].x = hitbox_right;
-            next_gpu_workload[*next_workload_size + 10].y = hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 10].z = hitbox_back;
-            next_gpu_workload[*next_workload_size + 11].x = hitbox_right;
-            next_gpu_workload[*next_workload_size + 11].y = hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 11].z = hitbox_back + 0.01f;
-            // triangle 5:
-            // top left front to bottom left front
-            next_gpu_workload[*next_workload_size + 12].x = hitbox_left;
-            next_gpu_workload[*next_workload_size + 12].y = hitbox_top;
-            next_gpu_workload[*next_workload_size + 12].z = hitbox_front;
-            next_gpu_workload[*next_workload_size + 13].x = hitbox_left;
-            next_gpu_workload[*next_workload_size + 13].y = hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 13].z = hitbox_front;
-            next_gpu_workload[*next_workload_size + 14].x = hitbox_left + 0.01f;
-            next_gpu_workload[*next_workload_size + 14].y = hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 14].z = hitbox_front;
-            // triangle 6:
-            // top right front to bottom right front
-            next_gpu_workload[*next_workload_size + 15].x = hitbox_right;
-            next_gpu_workload[*next_workload_size + 15].y = hitbox_top;
-            next_gpu_workload[*next_workload_size + 15].z = hitbox_front;
-            next_gpu_workload[*next_workload_size + 16].x = hitbox_right;
-            next_gpu_workload[*next_workload_size + 16].y = hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 16].z = hitbox_front;
-            next_gpu_workload[*next_workload_size + 17].x = hitbox_right + 0.01f;
-            next_gpu_workload[*next_workload_size + 17].y = hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 17].z = hitbox_front;
-            // triangle 7:
-            // top left back to bottom left back
-            next_gpu_workload[*next_workload_size + 18].x = hitbox_left;
-            next_gpu_workload[*next_workload_size + 18].y = hitbox_top;
-            next_gpu_workload[*next_workload_size + 18].z = hitbox_back;
-            next_gpu_workload[*next_workload_size + 19].x = hitbox_left;
-            next_gpu_workload[*next_workload_size + 19].y = hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 19].z = hitbox_back;
-            next_gpu_workload[*next_workload_size + 20].x = hitbox_left + 0.01f;
-            next_gpu_workload[*next_workload_size + 20].y = hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 20].z = hitbox_back;
-            // triangle 8:
-            // top right back to bottom right back
-            next_gpu_workload[*next_workload_size + 21].x = hitbox_right;
-            next_gpu_workload[*next_workload_size + 21].y = hitbox_top;
-            next_gpu_workload[*next_workload_size + 21].z = hitbox_back;
-            next_gpu_workload[*next_workload_size + 22].x = hitbox_right;
-            next_gpu_workload[*next_workload_size + 22].y = hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 22].z = hitbox_back;
-            next_gpu_workload[*next_workload_size + 23].x = hitbox_right + 0.01f;
-            next_gpu_workload[*next_workload_size + 23].y = hitbox_bottom;
-            next_gpu_workload[*next_workload_size + 23].z = hitbox_back;
+        // TODO: this will need to be re-done after refactoring the GPU buffers
+        // // draw touchable hitboxes (the yellow lines) in visual debug mode
+        // #ifndef LOGGER_IGNORE_ASSERTS
+        // if (
+        //     window_globals->visual_debug_mode &&
+        //     zpolygons_to_render[zp_i].touchable_id >= 0)
+        // {
+        //     float hitbox_left   =
+        //         -(zpolygons_to_render[zp_i].hitbox_width / 2) +
+        //         zpolygons_to_render[zp_i].x_offset;
+        //     float hitbox_right  =
+        //         (zpolygons_to_render[zp_i].hitbox_width / 2) +
+        //         zpolygons_to_render[zp_i].x_offset;
+        //     float hitbox_top    =
+        //         (zpolygons_to_render[zp_i].hitbox_height / 2) +
+        //         zpolygons_to_render[zp_i].y_offset;
+        //     float hitbox_bottom =
+        //         -(zpolygons_to_render[zp_i].hitbox_height / 2) +
+        //         zpolygons_to_render[zp_i].y_offset;
+        //     float hitbox_front  = -(zpolygons_to_render[zp_i].hitbox_depth / 2);
+        //     float hitbox_back   = (zpolygons_to_render[zp_i].hitbox_depth / 2);
+        //     
+        //     // triangle 1:
+        //     // top left front to top right front
+        //     next_gpu_workload[*next_workload_size].x = hitbox_left;
+        //     next_gpu_workload[*next_workload_size].y = hitbox_top;
+        //     next_gpu_workload[*next_workload_size].z = hitbox_front;
+        //     // top right front
+        //     next_gpu_workload[*next_workload_size + 1].x = hitbox_right;
+        //     next_gpu_workload[*next_workload_size + 1].y = hitbox_top;
+        //     next_gpu_workload[*next_workload_size + 1].z = hitbox_front;
+        //     // top right front
+        //     next_gpu_workload[*next_workload_size + 2].x = hitbox_right;
+        //     next_gpu_workload[*next_workload_size + 2].y = hitbox_top;
+        //     next_gpu_workload[*next_workload_size + 2].z = hitbox_front + 0.01f;
+        //     // triangle 2:
+        //     // bottom left front to bottom right front
+        //     next_gpu_workload[*next_workload_size + 3].x = hitbox_left;
+        //     next_gpu_workload[*next_workload_size + 3].y = hitbox_bottom;
+        //     next_gpu_workload[*next_workload_size + 3].z = hitbox_front;
+        //     next_gpu_workload[*next_workload_size + 4].x = hitbox_right;
+        //     next_gpu_workload[*next_workload_size + 4].y = hitbox_bottom;
+        //     next_gpu_workload[*next_workload_size + 4].z = hitbox_front;
+        //     next_gpu_workload[*next_workload_size + 5].x = hitbox_right;
+        //     next_gpu_workload[*next_workload_size + 5].y = hitbox_bottom;
+        //     next_gpu_workload[*next_workload_size + 5].z = hitbox_front + 0.01f;
+        //     // triangle 3:
+        //     // top left back to top right back
+        //     next_gpu_workload[*next_workload_size + 6].x = hitbox_left;
+        //     next_gpu_workload[*next_workload_size + 6].y = hitbox_top;
+        //     next_gpu_workload[*next_workload_size + 6].z = hitbox_back;
+        //     next_gpu_workload[*next_workload_size + 7].x = hitbox_right;
+        //     next_gpu_workload[*next_workload_size + 7].y = hitbox_top;
+        //     next_gpu_workload[*next_workload_size + 7].z = hitbox_back;
+        //     next_gpu_workload[*next_workload_size + 8].x = hitbox_right;
+        //     next_gpu_workload[*next_workload_size + 8].y = hitbox_top;
+        //     next_gpu_workload[*next_workload_size + 8].z = hitbox_back + 0.01f;
+        //     // triangle 4:
+        //     next_gpu_workload[*next_workload_size + 9].x = hitbox_left;
+        //     next_gpu_workload[*next_workload_size + 9].y = hitbox_bottom;
+        //     next_gpu_workload[*next_workload_size + 9].z = hitbox_back;
+        //     next_gpu_workload[*next_workload_size + 10].x = hitbox_right;
+        //     next_gpu_workload[*next_workload_size + 10].y = hitbox_bottom;
+        //     next_gpu_workload[*next_workload_size + 10].z = hitbox_back;
+        //     next_gpu_workload[*next_workload_size + 11].x = hitbox_right;
+        //     next_gpu_workload[*next_workload_size + 11].y = hitbox_bottom;
+        //     next_gpu_workload[*next_workload_size + 11].z = hitbox_back + 0.01f;
+        //     // triangle 5:
+        //     // top left front to bottom left front
+        //     next_gpu_workload[*next_workload_size + 12].x = hitbox_left;
+        //     next_gpu_workload[*next_workload_size + 12].y = hitbox_top;
+        //     next_gpu_workload[*next_workload_size + 12].z = hitbox_front;
+        //     next_gpu_workload[*next_workload_size + 13].x = hitbox_left;
+        //     next_gpu_workload[*next_workload_size + 13].y = hitbox_bottom;
+        //     next_gpu_workload[*next_workload_size + 13].z = hitbox_front;
+        //     next_gpu_workload[*next_workload_size + 14].x = hitbox_left + 0.01f;
+        //     next_gpu_workload[*next_workload_size + 14].y = hitbox_bottom;
+        //     next_gpu_workload[*next_workload_size + 14].z = hitbox_front;
+        //     // triangle 6:
+        //     // top right front to bottom right front
+        //     next_gpu_workload[*next_workload_size + 15].x = hitbox_right;
+        //     next_gpu_workload[*next_workload_size + 15].y = hitbox_top;
+        //     next_gpu_workload[*next_workload_size + 15].z = hitbox_front;
+        //     next_gpu_workload[*next_workload_size + 16].x = hitbox_right;
+        //     next_gpu_workload[*next_workload_size + 16].y = hitbox_bottom;
+        //     next_gpu_workload[*next_workload_size + 16].z = hitbox_front;
+        //     next_gpu_workload[*next_workload_size + 17].x = hitbox_right + 0.01f;
+        //     next_gpu_workload[*next_workload_size + 17].y = hitbox_bottom;
+        //     next_gpu_workload[*next_workload_size + 17].z = hitbox_front;
+        //     // triangle 7:
+        //     // top left back to bottom left back
+        //     next_gpu_workload[*next_workload_size + 18].x = hitbox_left;
+        //     next_gpu_workload[*next_workload_size + 18].y = hitbox_top;
+        //     next_gpu_workload[*next_workload_size + 18].z = hitbox_back;
+        //     next_gpu_workload[*next_workload_size + 19].x = hitbox_left;
+        //     next_gpu_workload[*next_workload_size + 19].y = hitbox_bottom;
+        //     next_gpu_workload[*next_workload_size + 19].z = hitbox_back;
+        //     next_gpu_workload[*next_workload_size + 20].x = hitbox_left + 0.01f;
+        //     next_gpu_workload[*next_workload_size + 20].y = hitbox_bottom;
+        //     next_gpu_workload[*next_workload_size + 20].z = hitbox_back;
+        //     // triangle 8:
+        //     // top right back to bottom right back
+        //     next_gpu_workload[*next_workload_size + 21].x = hitbox_right;
+        //     next_gpu_workload[*next_workload_size + 21].y = hitbox_top;
+        //     next_gpu_workload[*next_workload_size + 21].z = hitbox_back;
+        //     next_gpu_workload[*next_workload_size + 22].x = hitbox_right;
+        //     next_gpu_workload[*next_workload_size + 22].y = hitbox_bottom;
+        //     next_gpu_workload[*next_workload_size + 22].z = hitbox_back;
+        //     next_gpu_workload[*next_workload_size + 23].x = hitbox_right + 0.01f;
+        //     next_gpu_workload[*next_workload_size + 23].y = hitbox_bottom;
+        //     next_gpu_workload[*next_workload_size + 23].z = hitbox_back;
 
-            for (uint32_t m = 0; m < 24; m++) {
-                uint32_t next_wl_i = *next_workload_size + m;
-                next_gpu_workload[next_wl_i].parent_x =
-                    zpolygons_to_render[zp_i].x;
-                next_gpu_workload[next_wl_i].parent_y =
-                    zpolygons_to_render[zp_i].y;
-                next_gpu_workload[next_wl_i].parent_z =
-                    zpolygons_to_render[zp_i].z;
-                next_gpu_workload[next_wl_i].texturearray_i = -1;
-                next_gpu_workload[next_wl_i].texture_i = -1;
-                next_gpu_workload[next_wl_i].RGBA[0] = 0.8f;
-                next_gpu_workload[next_wl_i].RGBA[1] = 0.8f +
-                    ((zpolygons_to_render[zp_i].touchable_id ==
-                        window_globals->visual_debug_highlight_touchable_id) *
-                            0.2f);
-                next_gpu_workload[next_wl_i].RGBA[2] = 0.4f +
-                    ((zpolygons_to_render[zp_i].touchable_id ==
-                        window_globals->visual_debug_highlight_touchable_id) *
-                            0.4f);
-                next_gpu_workload[next_wl_i].RGBA[3] = 1.0f;
-                next_gpu_workload[next_wl_i].ignore_lighting =
-                    true;
-                next_gpu_workload[next_wl_i].scale_factor = 1.0f;
-                next_gpu_workload[next_wl_i].ignore_camera =
-                    zpolygons_to_render[zp_i].ignore_camera;
-                next_gpu_workload[next_wl_i].touchable_id = -1;
-                next_gpu_workload[next_wl_i].x_angle =
-                    zpolygons_to_render[zp_i].x_angle;
-                next_gpu_workload[next_wl_i].y_angle =
-                    zpolygons_to_render[zp_i].y_angle;
-                next_gpu_workload[next_wl_i].z_angle =
-                    zpolygons_to_render[zp_i].z_angle;
-            }
+        //     for (uint32_t m = 0; m < 24; m++) {
+        //         uint32_t next_wl_i = *next_workload_size + m;
+        //         next_gpu_workload[next_wl_i].parent_x =
+        //             zpolygons_to_render[zp_i].x;
+        //         next_gpu_workload[next_wl_i].parent_y =
+        //             zpolygons_to_render[zp_i].y;
+        //         next_gpu_workload[next_wl_i].parent_z =
+        //             zpolygons_to_render[zp_i].z;
+        //         next_gpu_workload[next_wl_i].texturearray_i = -1;
+        //         next_gpu_workload[next_wl_i].texture_i = -1;
+        //         next_gpu_workload[next_wl_i].RGBA[0] = 0.8f;
+        //         next_gpu_workload[next_wl_i].RGBA[1] = 0.8f +
+        //             ((zpolygons_to_render[zp_i].touchable_id ==
+        //                 window_globals->visual_debug_highlight_touchable_id) *
+        //                     0.2f);
+        //         next_gpu_workload[next_wl_i].RGBA[2] = 0.4f +
+        //             ((zpolygons_to_render[zp_i].touchable_id ==
+        //                 window_globals->visual_debug_highlight_touchable_id) *
+        //                     0.4f);
+        //         next_gpu_workload[next_wl_i].RGBA[3] = 1.0f;
+        //         next_gpu_workload[next_wl_i].ignore_lighting =
+        //             true;
+        //         next_gpu_workload[next_wl_i].scale_factor = 1.0f;
+        //         next_gpu_workload[next_wl_i].ignore_camera =
+        //             zpolygons_to_render[zp_i].ignore_camera;
+        //         next_gpu_workload[next_wl_i].touchable_id = -1;
+        //         next_gpu_workload[next_wl_i].x_angle =
+        //             zpolygons_to_render[zp_i].x_angle;
+        //         next_gpu_workload[next_wl_i].y_angle =
+        //             zpolygons_to_render[zp_i].y_angle;
+        //         next_gpu_workload[next_wl_i].z_angle =
+        //             zpolygons_to_render[zp_i].z_angle;
+        //     }
 
-            *next_workload_size += 24;
-            log_assert(*next_workload_size - 1 < MAX_VERTICES_PER_BUFFER);
-        }
-        #endif
+        //     *next_workload_size += 24;
+        //     log_assert(*next_workload_size - 1 < MAX_VERTICES_PER_BUFFER);
+        // }
+        // #endif
     }
 }
 
@@ -289,6 +295,7 @@ void hardware_render(
     GPUVertex * next_gpu_workload,
     uint32_t * next_workload_size,
     GPULightCollection * lights_for_gpu,
+    GPUPolygonCollection * polygons_for_gpu,
     uint64_t elapsed_nanoseconds)
 {
     (void)elapsed_nanoseconds;
@@ -306,6 +313,8 @@ void hardware_render(
         return;
     }
     
+    // TODO: will need re-iplementation after we refactor the gpu buffers
+    #if 0
     #ifndef LOGGER_IGNORE_ASSERTS
     if (window_globals->visual_debug_mode) {
         /*
@@ -321,19 +330,19 @@ void hardware_render(
                 window_globals->visual_debug_ray_origin_direction[(m*3) + 1];
             next_gpu_workload[next_wl_i].z =
                 window_globals->visual_debug_ray_origin_direction[(m*3) + 2];
-            next_gpu_workload[next_wl_i].parent_x = 0.0f;
-            next_gpu_workload[next_wl_i].parent_y = 0.0f;
-            next_gpu_workload[next_wl_i].parent_z = 0.0f;
+            // next_gpu_workload[next_wl_i].parent_x = 0.0f;
+            // next_gpu_workload[next_wl_i].parent_y = 0.0f;
+            // next_gpu_workload[next_wl_i].parent_z = 0.0f;
             next_gpu_workload[next_wl_i].texturearray_i = -1;
             next_gpu_workload[next_wl_i].texture_i = -1;
             next_gpu_workload[next_wl_i].RGBA[0] = 1.0f;
             next_gpu_workload[next_wl_i].RGBA[1] = 1.0f;
             next_gpu_workload[next_wl_i].RGBA[2] = 1.0f;
             next_gpu_workload[next_wl_i].RGBA[3] = 0.75f;
-            next_gpu_workload[next_wl_i].ignore_lighting = true;
-            next_gpu_workload[next_wl_i].scale_factor = 1.0f;
-            next_gpu_workload[next_wl_i].ignore_camera = true;
-            next_gpu_workload[next_wl_i].touchable_id = -1;
+            // next_gpu_workload[next_wl_i].ignore_lighting = true;
+            // next_gpu_workload[next_wl_i].scale_factor = 1.0f;
+            // next_gpu_workload[next_wl_i].ignore_camera = true;
+            // next_gpu_workload[next_wl_i].touchable_id = -1;
             next_gpu_workload[next_wl_i].x_angle = 0.0f;
             next_gpu_workload[next_wl_i].y_angle = 0.0f;
             next_gpu_workload[next_wl_i].z_angle = 0.0f;
@@ -341,24 +350,26 @@ void hardware_render(
         *next_workload_size += 3;
     }
     #endif
+    #endif
     
     log_assert(zpolygons_to_render_size < ZPOLYGONS_TO_RENDER_ARRAYSIZE);
     
     zpolygons_to_triangles(
         next_gpu_workload,
-        next_workload_size);
+        next_workload_size,
+        polygons_for_gpu);
     
     if (application_running) {
-        // add_particle_effects_to_workload(
-        //     next_gpu_workload,
-        //     next_workload_size,
-        //     lights_for_gpu,
-        //     elapsed_nanoseconds);
-        // 
-        // add_shatter_effects_to_workload(
-        //     next_gpu_workload,
-        //     next_workload_size,
-        //     lights_for_gpu,
-        //     elapsed_nanoseconds);
+        add_particle_effects_to_workload(
+            next_gpu_workload,
+            next_workload_size,
+            lights_for_gpu,
+            elapsed_nanoseconds);
+        
+        add_shatter_effects_to_workload(
+            next_gpu_workload,
+            next_workload_size,
+            lights_for_gpu,
+            elapsed_nanoseconds);
     }
 }

@@ -9,6 +9,88 @@ static GLuint err_value = UINT32_MAX;
 
 static GLuint texture_array_ids[TEXTUREARRAYS_SIZE];
 
+static void opengl_set_polygons(
+    GPUPolygonCollection * polygon_collection)
+{
+    /*
+    Reminder: If MAX_POLYGONS_PER_BUFFER gets updated,
+    you need to update the glsl vertex shader
+    */
+    assert(MAX_POLYGONS_PER_BUFFER == 1000);
+    
+    GLint loc = glGetUniformLocation(
+        program_id,
+        "zpolygons_x");
+    assert(glGetError() == 0);
+    glUniform1fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->x);
+    assert(glGetError() == 0);
+
+    loc = glGetUniformLocation(
+        program_id,
+        "zpolygons_y");
+    assert(glGetError() == 0);
+    glUniform1fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->y);
+    assert(glGetError() == 0);
+
+    loc = glGetUniformLocation(
+        program_id,
+        "zpolygons_z");
+    assert(glGetError() == 0);
+    glUniform1fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->z);
+    assert(glGetError() == 0);
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "zpolygons_x_angle");
+    assert(glGetError() == 0);
+    glUniform1fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->x_angle);
+    assert(glGetError() == 0);
+
+    loc = glGetUniformLocation(
+        program_id,
+        "zpolygons_y_angle");
+    assert(glGetError() == 0);
+    glUniform1fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->y_angle);
+    assert(glGetError() == 0);
+
+    loc = glGetUniformLocation(
+        program_id,
+        "zpolygons_z_angle");
+    assert(glGetError() == 0);
+    glUniform1fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->z_angle);
+    assert(glGetError() == 0);
+    
+    loc = glGetUniformLocation(
+        program_id,
+        "zpolygons_scale_factor");
+    assert(glGetError() == 0);
+    glUniform1fv(
+        loc,
+        MAX_POLYGONS_PER_BUFFER,
+        polygon_collection->scale_factor);
+    assert(glGetError() == 0);
+
+    loc = glGetUniformLocation(
+        program_id,
+        "zpolygons_ignore_lighting");
+    assert(glGetError() == 0);
+    glUniform1fv(
+        loc,
+        MAX_POLYGONS_PER_BUFFER,
+        polygon_collection->ignore_lighting);
+    assert(glGetError() == 0);
+
+    loc = glGetUniformLocation(
+        program_id,
+        "zpolygons_ignore_camera");
+    assert(glGetError() == 0);
+    glUniform1fv(
+        loc,
+        MAX_POLYGONS_PER_BUFFER,
+        polygon_collection->ignore_camera);
+    assert(glGetError() == 0);
+}
+
 static void opengl_set_lights(
     GPULightCollection * light_collection)
 {
@@ -115,7 +197,6 @@ static void opengl_set_camera(
     loc = glGetUniformLocation(
         program_id,
         "camera_position");
-    assert(loc == 0);
     assert(glGetError() == 0);
     // there is also glProgramUniform3f, but that's not in OpenGL 3.0
     // We are using 'glUseProgram' explicitly here and before this so
@@ -151,7 +232,6 @@ static void opengl_set_camera(
     loc = glGetUniformLocation(
         program_id,
         "camera_angle");
-    assert(loc == 1);
     assert(glGetError() == 0);
     float cam_angle[3];
     cam_angle[0] = arg_camera->x_angle;
@@ -233,7 +313,12 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
         assert(0);
     }
     #endif
-
+    
+    opengl_set_polygons(frame_data->polygon_collection);
+    #ifndef LOGGER_IGNORE_ASSERTS
+    err_value = glGetError();
+    #endif
+    
     opengl_set_lights(frame_data->light_collection);
     #ifndef LOGGER_IGNORE_ASSERTS
     err_value = glGetError();
@@ -492,16 +577,16 @@ void opengl_compile_shaders(
     
     /*
     Attribute pointers describe the fields of our data
-    sructure (the Vertex struct in shared/vertex_types.h)
+    sructure (the Vertex struct in shared/cpu_gpu_shared_types.h)
     */
     assert(sizeof(int) == sizeof(float));
     assert(sizeof(GLint) == sizeof(GLfloat));
     assert(sizeof(GLint) == sizeof(int));
-    uint32_t field_sizes[12]   = { 3, 3, 2, 4,  1,  1,  3,  3,  1,  1,  1,  1};
-    uint32_t field_offsets[12] = { 0, 3, 6, 8, 12, 13, 14, 17, 20, 21, 22, 23};
+    uint32_t field_sizes[12]   = { 3, 3, 2, 4,  1,  1 };
+    uint32_t field_offsets[12] = { 0, 3, 6, 8, 12, 13 };
     uint32_t cur_offset = 0;
     
-    for (uint32_t _ = 0; _ < 12; _++) {
+    for (uint32_t _ = 0; _ < 6; _++) {
         
         printf("vertex attribute: %u (%u items)\n", _, field_sizes[_]);
         
@@ -858,7 +943,6 @@ void opengl_set_projection_constants(
         program_id,
         "projection_constants_near");
     assert(glGetError() == 0);
-    assert(loc == 2);
     assert(glGetError() == 0);
     // reminder: don't use glUniform1f, it's buggy on ubuntu with some
     // drivers, use glUniform1fv instead
@@ -870,7 +954,6 @@ void opengl_set_projection_constants(
         program_id,
         "projection_constants_q");
     assert(glGetError() == 0);
-    assert(loc == 3);
     // reminder: don't use glUniform1f, it's buggy on ubuntu with some
     // drivers, use glUniform1fv instead
     glUniform1fv(loc, 1, &pjc->q);
@@ -880,7 +963,6 @@ void opengl_set_projection_constants(
     loc = glGetUniformLocation(
         program_id,
         "projection_constants_fov_modifier");
-    assert(loc == 4);
     // reminder: don't use glUniform1f, it's buggy on ubuntu with some
     // drivers, use glUniform1fv instead
     glUniform1fv(loc, 1, &pjc->field_of_view_modifier);
@@ -890,7 +972,6 @@ void opengl_set_projection_constants(
     loc = glGetUniformLocation(
         program_id,
         "projection_constants_x_multiplier");
-    assert(loc == 5);
     // reminder: don't use glUniform1f, it's buggy on ubuntu with some
     // drivers, use glUniform1fv instead
     glUniform1fv(loc, 1, &pjc->x_multiplier);

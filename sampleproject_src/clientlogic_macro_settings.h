@@ -21,6 +21,7 @@ of the engine for your specific app.
 #define INITIAL_WINDOW_BOTTOM     0
 
 // The maximum number of vertices/lights to send to the GPU each frame
+#define MAX_POLYGONS_PER_BUFFER   1000
 #define MAX_VERTICES_PER_BUFFER 350000
 #define MAX_LIGHTS_PER_BUFFER 75
 

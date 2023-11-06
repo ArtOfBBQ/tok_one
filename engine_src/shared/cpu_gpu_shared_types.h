@@ -19,17 +19,6 @@ typedef struct GPUVertex {
     float RGBA[4];
     int   texturearray_i; // -1 for no texture
     int   texture_i;      // -1 for no texture
-    /* Same for parent */
-    float parent_x;       // same for entire parent
-    float parent_y;       // same for entire parent
-    float parent_z;       // same for entire parent
-    float x_angle;        // same for entire parent
-    float y_angle;        // same for entire parent
-    float z_angle;        // same for entire parent
-    float scale_factor;   // same for entire parent
-    float ignore_lighting;// same for entire parent
-    float ignore_camera;  // same for entire parent
-    int   touchable_id;   // same for entire parent
 } GPUVertex;
 
 typedef struct GPUCamera {
@@ -40,6 +29,19 @@ typedef struct GPUCamera {
     float y_angle;
     float z_angle;
 } GPUCamera;
+
+typedef struct GPUPolygonCollection {
+    float x              [MAX_POLYGONS_PER_BUFFER];
+    float y              [MAX_POLYGONS_PER_BUFFER];
+    float z              [MAX_POLYGONS_PER_BUFFER];
+    float x_angle        [MAX_POLYGONS_PER_BUFFER];
+    float y_angle        [MAX_POLYGONS_PER_BUFFER];
+    float z_angle        [MAX_POLYGONS_PER_BUFFER];
+    float scale_factor   [MAX_POLYGONS_PER_BUFFER];
+    float ignore_lighting[MAX_POLYGONS_PER_BUFFER];
+    float ignore_camera  [MAX_POLYGONS_PER_BUFFER];
+    unsigned int size;
+} GPUPolygonCollection;
 
 typedef struct GPULightCollection {
     float light_x[MAX_LIGHTS_PER_BUFFER];

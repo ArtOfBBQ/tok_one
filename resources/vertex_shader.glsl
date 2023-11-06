@@ -6,12 +6,23 @@ layout (location =  2) in vec2 uv;
 layout (location =  3) in vec4 rgba;
 layout (location =  4) in int texturearray_i;
 layout (location =  5) in int texture_i;
-layout (location =  6) in vec3 parent_xyz;
-layout (location =  7) in vec3 parent_angle;
-layout (location =  8) in float scale_factor;
-layout (location =  9) in float ignore_lighting;
-layout (location = 10) in float ignore_camera;
-layout (location = 11) in int touchable_id;
+
+// layout (location =  6) in vec3 parent_xyz;
+// layout (location =  7) in vec3 parent_angle;
+// layout (location =  8) in float scale_factor;
+// layout (location =  9) in float ignore_lighting;
+// layout (location = 10) in float ignore_camera;
+// layout (location = 11) in int touchable_id;
+
+uniform float zpolygons_x[1000];
+uniform float zpolygons_y[1000];
+uniform float zpolygons_z[1000];
+uniform float zpolygons_x_angle[1000];
+uniform float zpolygons_y_angle[1000];
+uniform float zpolygons_z_angle[1000];
+uniform float zpolygons_scale_factor[1000];
+uniform float zpolygons_ignore_lighting[1000];
+uniform float zpolygons_ignore_camera[1000];
 
 out vec2 vert_to_frag_uv;
 out vec4 vert_to_frag_color;
@@ -97,11 +108,17 @@ float get_distance(
 
 void main()
 {
-    vec4 parent_mesh_pos = vec4(parent_xyz, 0.0f);
+    int polygon_i = 0;
+    
+    vec4 parent_mesh_pos = vec4(
+        zpolygons_x[polygon_i],
+        zpolygons_y[polygon_i],
+        zpolygons_z[polygon_i],
+        0.0f);
     
     vec4 mesh_vertices = vec4(xyz, 1.0f);
     
-    mesh_vertices *= scale_factor;
+    mesh_vertices *= zpolygons_scale_factor[polygon_i];
     mesh_vertices[3] = 1.0f;
     
     vec4 mesh_normals = vec4(normal, 1.0f);
@@ -109,29 +126,29 @@ void main()
     // rotate vertices
     vec4 x_rotated_vertices = x_rotate(
         mesh_vertices,
-        parent_angle[0]);
+        zpolygons_x_angle[polygon_i]);
     vec4 x_rotated_normals  = x_rotate(
         mesh_normals,
-        parent_angle[0]);
+        zpolygons_x_angle[polygon_i]);
     
     vec4 y_rotated_vertices = y_rotate(
         x_rotated_vertices,
-        parent_angle[1]);
+        zpolygons_y_angle[polygon_i]);
     vec4 y_rotated_normals  = y_rotate(
         x_rotated_normals,
-        parent_angle[1]);
+        zpolygons_y_angle[polygon_i]);
     
     vec4 z_rotated_vertices = z_rotate(
         y_rotated_vertices,
-        parent_angle[2]);
+        zpolygons_z_angle[polygon_i]);
     vec4 z_rotated_normals  = z_rotate(
         y_rotated_normals,
-        parent_angle[2]);
+        zpolygons_z_angle[polygon_i]);
     
     vec4 translated_pos = z_rotated_vertices + parent_mesh_pos;
     
     // translate to world position
-    if (ignore_camera < 0.9f) {
+    if (zpolygons_ignore_camera[polygon_i] < 0.9f) {
         vec4 camera_translated_pos =
             translated_pos - vec4(camera_position, 0.0f);
         
@@ -166,7 +183,7 @@ void main()
     vert_to_frag_texturearray_i = texturearray_i;
     vert_to_frag_texture_i = texture_i;
     
-    if (ignore_lighting > 0.0f) {
+    if (zpolygons_ignore_lighting[polygon_i] > 0.0f) {
         vert_to_frag_lighting = vec4(1.0f, 1.0f, 1.0f, 1.0f);
         return;
     }

@@ -193,22 +193,6 @@ void shared_gameloop_update(
     }
     uint64_t elapsed = time - previous_time;
     
-    // TODO: delete me 
-    if (time % 5 == 0) {
-        if (elapsed_sample_size < ELAPSED_SAMPLE_COUNT) {
-            elapsed_sample[elapsed_sample_size++] = elapsed;
-        } else {
-            uint64_t elapsed_total = 0;
-            for (uint32_t i = 0; i < ELAPSED_SAMPLE_COUNT; i++) {
-                elapsed_total += elapsed_sample[i];
-            }
-            printf(
-                "average elapsed per frame in samples: %u\n",
-                elapsed_total / ELAPSED_SAMPLE_COUNT);
-            assert(0);
-        }
-    }
-    
     if (!application_running) {
         zpolygons_to_render_size = 0;
         frame_data->camera->x = 0.0f;
@@ -361,6 +345,8 @@ void shared_gameloop_update(
     frame_data->camera->z_angle = camera.z_angle;
     
     frame_data->vertices_size = 0;
+    frame_data->light_collection->lights_size = 0;
+    frame_data->polygon_collection->size = 0;
     hardware_render(
         /* GPUVertex * next_gpu_workload: */
             frame_data->vertices,
@@ -368,6 +354,8 @@ void shared_gameloop_update(
             &frame_data->vertices_size,
         /* GPULightCollection * light_collection: */
             frame_data->light_collection,
+        /* GPUPolygonCollection * polygon_collection: */
+            frame_data->polygon_collection,
         /* uint64_t elapsed_microseconds: */
             elapsed);
     
