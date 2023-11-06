@@ -15,6 +15,7 @@ typedef struct GPUVertex {
     float normal_x;
     float normal_y;
     float normal_z;
+    /* Below: same for entire material: */
     float uv  [2];
     float RGBA[4];
     int   texturearray_i; // -1 for no texture
@@ -32,17 +33,11 @@ typedef struct GPUCamera {
 } GPUCamera;
 
 typedef struct GPUPolygonCollection {
-    float x              [MAX_POLYGONS_PER_BUFFER];
-    float y              [MAX_POLYGONS_PER_BUFFER];
-    float z              [MAX_POLYGONS_PER_BUFFER];
-    float x_angle        [MAX_POLYGONS_PER_BUFFER];
-    float y_angle        [MAX_POLYGONS_PER_BUFFER];
-    float z_angle        [MAX_POLYGONS_PER_BUFFER];
-    float x_multiplier   [MAX_POLYGONS_PER_BUFFER];
-    float y_multiplier   [MAX_POLYGONS_PER_BUFFER];
-    float z_multiplier   [MAX_POLYGONS_PER_BUFFER];
-    float x_offset       [MAX_POLYGONS_PER_BUFFER];
-    float y_offset       [MAX_POLYGONS_PER_BUFFER];
+    float xyz            [MAX_POLYGONS_PER_BUFFER][3];
+    float xyz_angle      [MAX_POLYGONS_PER_BUFFER][3];
+    float xyz_multiplier [MAX_POLYGONS_PER_BUFFER][3];
+    float xy_offset      [MAX_POLYGONS_PER_BUFFER][2];
+    float bonus_rgb      [MAX_POLYGONS_PER_BUFFER][3];
     float scale_factor   [MAX_POLYGONS_PER_BUFFER];
     float ignore_lighting[MAX_POLYGONS_PER_BUFFER];
     float ignore_camera  [MAX_POLYGONS_PER_BUFFER];

@@ -73,139 +73,51 @@ static void opengl_set_polygons(
     Reminder: If MAX_POLYGONS_PER_BUFFER gets updated,
     you need to update the glsl vertex shader
     */
-    assert(MAX_POLYGONS_PER_BUFFER == 1000);
+    assert(MAX_POLYGONS_PER_BUFFER == 800);
     
     GLint loc = glGetUniformLocation(
         program_id,
-        "zpolygons_x");
+        "zpolygons_xyz");
     assert(glGetError() == 0);
-    glUniform1fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->x);
-    assert(glGetError() == 0);
-    #ifndef LOGGER_IGNORE_ASSERTS
-    spotcheck_uniform(
-        "zpolygons_x[0]",
-        polygon_collection->x[0]);
-    spotcheck_uniform(
-        "zpolygons_x[8]",
-        polygon_collection->x[8]);
-    #endif
-    
-    loc = glGetUniformLocation(
-        program_id,
-        "zpolygons_y");
-    assert(glGetError() == 0);
-    glUniform1fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->y);
-    assert(glGetError() == 0);
-    #ifndef LOGGER_IGNORE_ASSERTS
-    spotcheck_uniform(
-        "zpolygons_y[2]",
-        polygon_collection->y[2]);
-    spotcheck_uniform(
-        "zpolygons_y[5]",
-        polygon_collection->y[5]);
-    #endif
-    
-    loc = glGetUniformLocation(
-        program_id,
-        "zpolygons_z");
-    assert(glGetError() == 0);
-    glUniform1fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->z);
+    glUniform3fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->xyz);
     assert(glGetError() == 0);
     
     loc = glGetUniformLocation(
         program_id,
-        "zpolygons_x_angle");
+        "zpolygons_xyz_angle");
     assert(glGetError() == 0);
-    glUniform1fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->x_angle);
-    assert(glGetError() == 0);
-    
-    loc = glGetUniformLocation(
-        program_id,
-        "zpolygons_y_angle");
-    assert(glGetError() == 0);
-    glUniform1fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->y_angle);
-    assert(glGetError() == 0);
-    #ifndef LOGGER_IGNORE_ASSERTS
-    spotcheck_uniform(
-        "zpolygons_y_angle[2]",
-        polygon_collection->y_angle[2]);
-    spotcheck_uniform(
-        "zpolygons_y_angle[5]",
-        polygon_collection->y_angle[5]);
-    #endif
-    
-    loc = glGetUniformLocation(
-        program_id,
-        "zpolygons_z_angle");
-    assert(glGetError() == 0);
-    glUniform1fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->z_angle);
-    assert(glGetError() == 0);
-    
-    loc = glGetUniformLocation(
-        program_id,
-        "zpolygons_x_multiplier");
-    assert(glGetError() == 0);
-    glUniform1fv(
-        loc,
-        MAX_POLYGONS_PER_BUFFER,
-        polygon_collection->x_multiplier);
-    assert(glGetError() == 0);
-    
-    loc = glGetUniformLocation(
-        program_id,
-        "zpolygons_y_multiplier");
-    assert(glGetError() == 0);
-    glUniform1fv(
-        loc,
-        MAX_POLYGONS_PER_BUFFER,
-        polygon_collection->y_multiplier);
-    assert(glGetError() == 0);
-    #ifndef LOGGER_IGNORE_ASSERTS
-    spotcheck_uniform(
-        "zpolygons_y_multiplier[2]",
-        polygon_collection->y_multiplier[2]);
-    spotcheck_uniform(
-        "zpolygons_y_multiplier[5]",
-        polygon_collection->y_multiplier[5]);
-    #endif
-    
-    loc = glGetUniformLocation(
-        program_id,
-        "zpolygons_z_multiplier");
-    assert(glGetError() == 0);
-    glUniform1fv(
-        loc,
-        MAX_POLYGONS_PER_BUFFER,
-        polygon_collection->z_multiplier);
+    glUniform3fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->xyz_angle);
     assert(glGetError() == 0);
 
     loc = glGetUniformLocation(
         program_id,
-        "zpolygons_x_offset");
+        "zpolygons_xyz_multiplier");
     assert(glGetError() == 0);
-    glUniform1fv(
+    glUniform3fv(
         loc,
         MAX_POLYGONS_PER_BUFFER,
-        polygon_collection->x_offset);
+        polygon_collection->xyz_multiplier);
+    assert(glGetError() == 0);
+
+    loc = glGetUniformLocation(
+        program_id,
+        "zpolygons_xy_offset");
+    assert(glGetError() == 0);
+    glUniform2fv(
+        loc,
+        MAX_POLYGONS_PER_BUFFER,
+        polygon_collection->xy_offset);
     assert(glGetError() == 0);
     
     loc = glGetUniformLocation(
         program_id,
-        "zpolygons_y_offset");
+        "zpolygons_bonus_rgb");
     assert(glGetError() == 0);
-    glUniform1fv(
+    glUniform3fv(
         loc,
         MAX_POLYGONS_PER_BUFFER,
-        polygon_collection->y_offset);
+        polygon_collection->bonus_rgb);
     assert(glGetError() == 0);
-    #ifndef LOGGER_IGNORE_ASSERTS
-    spotcheck_uniform(
-        "zpolygons_y_offset[2]",
-        polygon_collection->y_offset[2]);
-    spotcheck_uniform(
-        "zpolygons_y_offset[5]",
-        polygon_collection->y_offset[5]);
-    #endif
     
     loc = glGetUniformLocation(
         program_id,

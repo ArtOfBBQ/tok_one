@@ -23,7 +23,7 @@ of the engine for your specific app.
 // TODO: implement simple macro replacements in glsl shaders so this can just
 // be changed without having to update shaders
 // The maximum number of vertices/lights to send to the GPU each frame
-#define MAX_POLYGONS_PER_BUFFER   1000
+#define MAX_POLYGONS_PER_BUFFER    800
 #define MAX_VERTICES_PER_BUFFER 700000
 #define MAX_LIGHTS_PER_BUFFER       75
 

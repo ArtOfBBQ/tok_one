@@ -36,28 +36,35 @@ inline static void zpolygons_to_triangles(
             continue;
         }
         
-        gpu_polygons->x[gpu_polygons->size] =
+        assert(gpu_polygons->size < MAX_POLYGONS_PER_BUFFER);
+        gpu_polygons->xyz[gpu_polygons->size][0] =
             zpolygons_to_render[zp_i].x;
-        gpu_polygons->y[gpu_polygons->size] =
+        gpu_polygons->xyz[gpu_polygons->size][1] =
             zpolygons_to_render[zp_i].y;
-        gpu_polygons->z[gpu_polygons->size] =
+        gpu_polygons->xyz[gpu_polygons->size][2] =
             zpolygons_to_render[zp_i].z;
-        gpu_polygons->x_angle[gpu_polygons->size] =
+        gpu_polygons->xyz_angle[gpu_polygons->size][0] =
             zpolygons_to_render[zp_i].x_angle;
-        gpu_polygons->y_angle[gpu_polygons->size] =
+        gpu_polygons->xyz_angle[gpu_polygons->size][1] =
             zpolygons_to_render[zp_i].y_angle;
-        gpu_polygons->z_angle[gpu_polygons->size] =
+        gpu_polygons->xyz_angle[gpu_polygons->size][2] =
             zpolygons_to_render[zp_i].z_angle;
-        gpu_polygons->x_multiplier[gpu_polygons->size] =
+        gpu_polygons->xyz_multiplier[gpu_polygons->size][0] =
             zpolygons_to_render[zp_i].x_multiplier;
-        gpu_polygons->y_multiplier[gpu_polygons->size] =
+        gpu_polygons->xyz_multiplier[gpu_polygons->size][1] =
             zpolygons_to_render[zp_i].y_multiplier;
-        gpu_polygons->z_multiplier[gpu_polygons->size] =
+        gpu_polygons->xyz_multiplier[gpu_polygons->size][2] =
             zpolygons_to_render[zp_i].z_multiplier;
-        gpu_polygons->x_offset[gpu_polygons->size] =
+        gpu_polygons->xy_offset[gpu_polygons->size][0] =
             zpolygons_to_render[zp_i].x_offset;
-        gpu_polygons->y_offset[gpu_polygons->size] =
+        gpu_polygons->xy_offset[gpu_polygons->size][1] =
             zpolygons_to_render[zp_i].y_offset;
+        gpu_polygons->bonus_rgb[gpu_polygons->size][0] =
+            zpolygons_to_render[zp_i].rgb_bonus[0];
+        gpu_polygons->bonus_rgb[gpu_polygons->size][1] =
+            zpolygons_to_render[zp_i].rgb_bonus[1];
+        gpu_polygons->bonus_rgb[gpu_polygons->size][2] =
+            zpolygons_to_render[zp_i].rgb_bonus[2];
         gpu_polygons->scale_factor[gpu_polygons->size] =
             zpolygons_to_render[zp_i].scale_factor;
         gpu_polygons->ignore_lighting[gpu_polygons->size] =
@@ -104,14 +111,14 @@ inline static void zpolygons_to_triangles(
                 next_gpu_workload[*next_workload_size + m].uv[1] =
                     all_mesh_triangles[tri_i].
                         vertices[m].uv[1];
+                next_gpu_workload[*next_workload_size + m].polygon_i =
+                    gpu_polygons->size;
                 
                 // completely useless, should be removed from GPUVertex
                 // next_gpu_workload[*next_workload_size + m].touchable_id =
                 //     zpolygons_to_render[zp_i].touchable_id;
                 
                 // redundant copying, same for entire material
-                next_gpu_workload[*next_workload_size + m].polygon_i =
-                    gpu_polygons->size;
                 next_gpu_workload[*next_workload_size + m].texture_i =
                     zpolygons_to_render[zp_i].
                         triangle_materials[material_i].texture_i;
@@ -127,16 +134,13 @@ inline static void zpolygons_to_triangles(
                 
                 next_gpu_workload[*next_workload_size + m].RGBA[0] =
                     zpolygons_to_render[zp_i].
-                        triangle_materials[material_i].color[0] +
-                            zpolygons_to_render[zp_i].rgb_bonus[0];
+                        triangle_materials[material_i].color[0];
                 next_gpu_workload[*next_workload_size + m].RGBA[1] =
                     zpolygons_to_render[zp_i].
-                        triangle_materials[material_i].color[1] +
-                            zpolygons_to_render[zp_i].rgb_bonus[1];
+                        triangle_materials[material_i].color[1];
                 next_gpu_workload[*next_workload_size + m].RGBA[2] =
                     zpolygons_to_render[zp_i].
-                        triangle_materials[material_i].color[2] +
-                            zpolygons_to_render[zp_i].rgb_bonus[2];
+                        triangle_materials[material_i].color[2];
                 next_gpu_workload[*next_workload_size + m].RGBA[3] =
                     zpolygons_to_render[zp_i].
                         triangle_materials[material_i].color[3];

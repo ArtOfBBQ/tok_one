@@ -8,20 +8,14 @@ layout (location =  4) in int texturearray_i;
 layout (location =  5) in int texture_i;
 layout (location =  6) in int polygon_i;
 
-uniform float zpolygons_x[1000];
-uniform float zpolygons_y[1000];
-uniform float zpolygons_z[1000];
-uniform float zpolygons_x_angle[1000];
-uniform float zpolygons_y_angle[1000];
-uniform float zpolygons_z_angle[1000];
-uniform float zpolygons_x_multiplier[1000];
-uniform float zpolygons_y_multiplier[1000];
-uniform float zpolygons_z_multiplier[1000];
-uniform float zpolygons_x_offset[1000];
-uniform float zpolygons_y_offset[1000];
-uniform float zpolygons_scale_factor[1000];
-uniform float zpolygons_ignore_lighting[1000];
-uniform float zpolygons_ignore_camera[1000];
+uniform vec3  zpolygons_xyz[800];
+uniform vec3  zpolygons_xyz_angle[800];
+uniform vec3  zpolygons_xyz_multiplier[800];
+uniform vec2  zpolygons_xy_offset[800];
+uniform vec3  zpolygons_bonus_rgb[800];
+uniform float zpolygons_scale_factor[800];
+uniform float zpolygons_ignore_lighting[800];
+uniform float zpolygons_ignore_camera[800];
 
 uniform float lights_x      [75];
 uniform float lights_y      [75];
@@ -34,8 +28,8 @@ uniform float lights_green  [75];
 uniform float lights_blue   [75];
 uniform int lights_size;
 
-uniform vec3 camera_position;
-uniform vec3 camera_angle;
+uniform vec3  camera_position;
+uniform vec3  camera_angle;
 uniform float projection_constants_near;
 uniform float projection_constants_q;
 uniform float projection_constants_fov_modifier;
@@ -108,20 +102,15 @@ float get_distance(
 void main()
 {
     vec4 parent_mesh_pos = vec4(
-        zpolygons_x[polygon_i],
-        zpolygons_y[polygon_i],
-        zpolygons_z[polygon_i],
+        zpolygons_xyz[polygon_i],
         0.0f);
     
     vec4 parent_vertex_multipliers = vec4(
-        zpolygons_x_multiplier[polygon_i],
-        zpolygons_y_multiplier[polygon_i],
-        zpolygons_z_multiplier[polygon_i],
+        zpolygons_xyz_multiplier[polygon_i],
         1.0f);
     
     vec4 parent_vertex_offsets = vec4(
-        zpolygons_x_offset[polygon_i],
-        zpolygons_y_offset[polygon_i],
+        zpolygons_xy_offset[polygon_i],
         0.0f,
         0.0f);
     
@@ -138,24 +127,24 @@ void main()
     // rotate vertices
     vec4 x_rotated_vertices = x_rotate(
         mesh_vertices,
-        zpolygons_x_angle[polygon_i]);
+        zpolygons_xyz_angle[polygon_i][0]);
     vec4 x_rotated_normals  = x_rotate(
         mesh_normals,
-        zpolygons_x_angle[polygon_i]);
+        zpolygons_xyz_angle[polygon_i][0]);
     
     vec4 y_rotated_vertices = y_rotate(
         x_rotated_vertices,
-        zpolygons_y_angle[polygon_i]);
+        zpolygons_xyz_angle[polygon_i][1]);
     vec4 y_rotated_normals  = y_rotate(
         x_rotated_normals,
-        zpolygons_y_angle[polygon_i]);
+        zpolygons_xyz_angle[polygon_i][1]);
     
     vec4 z_rotated_vertices = z_rotate(
         y_rotated_vertices,
-        zpolygons_z_angle[polygon_i]);
+        zpolygons_xyz_angle[polygon_i][2]);
     vec4 z_rotated_normals  = z_rotate(
         y_rotated_normals,
-        zpolygons_z_angle[polygon_i]);
+        zpolygons_xyz_angle[polygon_i][2]);
     
     vec4 translated_pos = z_rotated_vertices + parent_mesh_pos;
     
@@ -188,6 +177,10 @@ void main()
         (projection_constants_near * projection_constants_q);
     
     vert_to_frag_color = rgba;
+    vec4 rgba_bonus = vec4(
+        zpolygons_bonus_rgb[polygon_i],
+        0.0f);
+    vert_to_frag_color += rgba_bonus;
     
     vert_to_frag_uv = uv;
     
