@@ -345,7 +345,6 @@ void shared_gameloop_update(
     frame_data->camera->z_angle = camera.z_angle;
     
     frame_data->vertices_size = 0;
-    frame_data->light_collection->lights_size = 0;
     frame_data->polygon_collection->size = 0;
     hardware_render(
         /* GPUVertex * next_gpu_workload: */

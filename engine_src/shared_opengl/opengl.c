@@ -247,6 +247,9 @@ static void opengl_set_lights(
     assert(glGetError() == 0);
     #ifndef LOGGER_IGNORE_ASSERTS
     spotcheck_uniform(
+        "lights_diffuse[0]",
+        light_collection->diffuse[0]);
+    spotcheck_uniform(
         "lights_diffuse[7]",
         light_collection->diffuse[7]);
     #endif
@@ -258,6 +261,9 @@ static void opengl_set_lights(
     glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->reach);
     assert(glGetError() == 0);
     #ifndef LOGGER_IGNORE_ASSERTS
+    spotcheck_uniform(
+        "lights_reach[4]",
+        light_collection->reach[4]);
     spotcheck_uniform(
         "lights_reach[14]",
         light_collection->reach[14]);
@@ -343,6 +349,7 @@ static void opengl_set_lights(
         1,
         &size);
     assert(glGetError() == 0);
+    printf("lights size: %i\n", (int32_t)light_collection->lights_size);
     
     #ifndef LOGGER_IGNORE_ASSERTS
     int doublecheck_lights_size;

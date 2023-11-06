@@ -224,7 +224,7 @@ void main()
         vec4 lighting_to_add = (
             light_rgba *
             distance_mod *
-            (lights_diffuse[i] * 3.0f) *
+            ((lights_diffuse[i] + 1.0f) * 3.0f) *
             visibility_rating);
         
         vert_to_frag_lighting += lighting_to_add;
