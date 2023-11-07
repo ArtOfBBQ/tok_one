@@ -84,46 +84,48 @@ ShatterEffect * next_shatter_effect_with_zpoly(
 void commit_shatter_effect(
     ShatterEffect * to_commit)
 {
-    // if the zpolygon has too few triangles, it won't make for an interesting
-    // particle effect. We will 'shatter' the triangles and point to a split up
-    // version. If there's enough triangles, we will simply set the 'shattered'
-    // pointers to be the same as the original pointers
-    if (
-        all_mesh_summaries[to_commit->zpolygon_to_shatter.mesh_id]
-            .shattered_triangles_size == 0)
-    {
-        if (
-            all_mesh_summaries[to_commit->zpolygon_to_shatter.mesh_id]
-                .triangles_size <
-                    MINIMUM_SHATTER_TRIANGLES)
-        {
-            // we need to create a shatttered version of this
-            create_shattered_version_of_mesh(
-                /* mesh_id: */
-                    to_commit->zpolygon_to_shatter.mesh_id,
-                /* triangles_multiplier: */
-                    (uint32_t)(1 + (
-                        MINIMUM_SHATTER_TRIANGLES /
-                            all_mesh_summaries[
-                                to_commit->zpolygon_to_shatter.mesh_id].
-                                    triangles_size)));
-        } else {
-            // use the original as the shattered version
-            all_mesh_summaries[to_commit->zpolygon_to_shatter.mesh_id].
-                shattered_triangles_size =
-                    all_mesh_summaries[
-                        to_commit->zpolygon_to_shatter.mesh_id].
-                            triangles_size;
-            
-            all_mesh_summaries[to_commit->zpolygon_to_shatter.mesh_id].
-                shattered_triangles_head_i =
-                    all_mesh_summaries[
-                        to_commit->zpolygon_to_shatter.mesh_id].
-                            triangles_head_i;
-        }
-    }
+    // TODO: rewrite using new all_mesh_vertices instead of all_mesh_triangles
     
-    to_commit->committed = true;
+    // // if the zpolygon has too few triangles, it won't make for an interesting
+    // // particle effect. We will 'shatter' the triangles and point to a split up
+    // // version. If there's enough triangles, we will simply set the 'shattered'
+    // // pointers to be the same as the original pointers
+    // if (
+    //     all_mesh_summaries[to_commit->zpolygon_to_shatter.mesh_id]
+    //         .shattered_vertices_size == 0)
+    // {
+    //     if (
+    //         all_mesh_summaries[to_commit->zpolygon_to_shatter.mesh_id]
+    //             .triangles_size <
+    //                 MINIMUM_SHATTER_TRIANGLES)
+    //     {
+    //         // we need to create a shatttered version of this
+    //         create_shattered_version_of_mesh(
+    //             /* mesh_id: */
+    //                 to_commit->zpolygon_to_shatter.mesh_id,
+    //             /* triangles_multiplier: */
+    //                 (uint32_t)(1 + (
+    //                     MINIMUM_SHATTER_TRIANGLES /
+    //                         all_mesh_summaries[
+    //                             to_commit->zpolygon_to_shatter.mesh_id].
+    //                                 triangles_size)));
+    //     } else {
+    //         // use the original as the shattered version
+    //         all_mesh_summaries[to_commit->zpolygon_to_shatter.mesh_id].
+    //             shattered_triangles_size =
+    //                 all_mesh_summaries[
+    //                     to_commit->zpolygon_to_shatter.mesh_id].
+    //                         triangles_size;
+    //         
+    //         all_mesh_summaries[to_commit->zpolygon_to_shatter.mesh_id].
+    //             shattered_triangles_head_i =
+    //                 all_mesh_summaries[
+    //                     to_commit->zpolygon_to_shatter.mesh_id].
+    //                         triangles_head_i;
+    //     }
+    // }
+    // 
+    // to_commit->committed = true;
 }
 
 void add_shatter_effects_to_workload(

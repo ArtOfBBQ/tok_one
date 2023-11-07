@@ -55,7 +55,7 @@ echo "Building $APP_NAME for $PLATFORM..."
 
 echo "deleting previous build(s)..."
 rm -r -f build/$PLATFORM/$APP_NAME/$APP_NAME
-rm build/$PLATFORM/$APP_NAME/*.glsl
+# rm build/$PLATFORM/$APP_NAME/*.glsl
 
 echo "Creating build folder..."
 mkdir build

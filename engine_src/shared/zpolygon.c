@@ -6,7 +6,7 @@ uint32_t zpolygons_to_render_size = 0;
 static void set_zpolygon_hitbox(
     zPolygon * mesh)
 {
-    log_assert(all_mesh_summaries[mesh->mesh_id].triangles_size > 0);
+    log_assert(all_mesh_summaries[mesh->mesh_id].vertices_size > 0);
     
     float top = 0.0f;
     float bottom = 0.0f;
@@ -15,24 +15,24 @@ static void set_zpolygon_hitbox(
     float back = 0.0f;
     float front = 0.0f;
     
-    int32_t triangles_tail_i =
-        all_mesh_summaries[mesh->mesh_id].triangles_head_i +
-        all_mesh_summaries[mesh->mesh_id].triangles_size;
+    int32_t vertices_tail_i =
+        all_mesh_summaries[mesh->mesh_id].vertices_head_i +
+        all_mesh_summaries[mesh->mesh_id].vertices_size;
     
     for (
-        int32_t tri_i = all_mesh_summaries[mesh->mesh_id].triangles_head_i;
-        tri_i < triangles_tail_i;
-        tri_i++)
+        int32_t vert_i = all_mesh_summaries[mesh->mesh_id].vertices_head_i;
+        vert_i < vertices_tail_i;
+        vert_i++)
     {
         for (uint32_t m = 0; m < 3; m++) {
             float cur_vertex_x =
-                all_mesh_triangles[tri_i].vertices[m].x *
+                all_mesh_vertices[vert_i + m].xyz[0] *
                         mesh->x_multiplier;
             float cur_vertex_y =
-                all_mesh_triangles[tri_i].vertices[m].y *
+                all_mesh_vertices[vert_i + m].xyz[1] *
                         mesh->y_multiplier;
             float cur_vertex_z =
-                all_mesh_triangles[tri_i].vertices[m].z *
+                all_mesh_vertices[vert_i + m].xyz[2] *
                         mesh->z_multiplier;
             
             if (cur_vertex_x < left) {
@@ -75,7 +75,7 @@ void request_zpolygon_to_render(zPolygon * to_add)
     log_assert(to_add->mesh_id >= 0);
     log_assert(to_add->mesh_id < (int32_t)all_mesh_summaries_size);
     log_assert(to_add->mesh_id < ALL_MESHES_SIZE);
-    log_assert(all_mesh_summaries[to_add->mesh_id].triangles_size > 0);
+    log_assert(all_mesh_summaries[to_add->mesh_id].vertices_size > 0);
     
     for (
         int32_t mat_i = 0;
@@ -88,16 +88,15 @@ void request_zpolygon_to_render(zPolygon * to_add)
         }
     }
     
-    int32_t all_mesh_triangles_tail_i =
-        all_mesh_summaries[to_add->mesh_id].triangles_head_i +
-            all_mesh_summaries[to_add->mesh_id].triangles_size;
+    int32_t all_mesh_vertices_tail_i =
+        all_mesh_summaries[to_add->mesh_id].vertices_head_i +
+            all_mesh_summaries[to_add->mesh_id].vertices_size;
     for (
-        int32_t tri_i = all_mesh_summaries[to_add->mesh_id].triangles_head_i;
-        tri_i < all_mesh_triangles_tail_i;
-        tri_i++)
+        int32_t vert_i = all_mesh_summaries[to_add->mesh_id].vertices_head_i;
+        vert_i < all_mesh_vertices_tail_i;
+        vert_i++)
     {
-        int32_t material_i =
-            all_mesh_triangles[tri_i].parent_material_i;
+        int32_t material_i = all_mesh_vertices[vert_i].material_i;
         
         log_assert(material_i >= 0);
         #ifndef LOGGER_IGNORE_ASSERTS
@@ -129,7 +128,7 @@ void request_zpolygon_to_render(zPolygon * to_add)
                 to_add->triangle_materials[material_i].texturearray_i,
                 to_add->triangle_materials[material_i].texture_i);
         }
-
+        
         log_assert(to_add->triangle_materials[material_i].texture_i < 5000);
     }
     

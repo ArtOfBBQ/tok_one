@@ -77,79 +77,87 @@ inline static void zpolygons_to_triangles(
         log_assert(mesh_id >= 0);
         log_assert(mesh_id < (int32_t)all_mesh_summaries_size);
         
-        int32_t tail_i =
-            all_mesh_summaries[mesh_id].triangles_head_i +
-                all_mesh_summaries[mesh_id].triangles_size;
+        // int32_t tail_i =
+        //     all_mesh_summaries[mesh_id].vertices_head_i +
+        //         all_mesh_summaries[mesh_id].vertices_size;
         
-        for (
-            int32_t tri_i = all_mesh_summaries[mesh_id].triangles_head_i;
-            tri_i < tail_i;
-            tri_i++)
-        {
-            int32_t material_i = all_mesh_triangles[tri_i].parent_material_i;
-            
-            for (uint32_t m = 0; m < 3; m++) {
-                
-                // actually nescessary every frame, non-redundant copying
-                next_gpu_workload[*next_workload_size + m].normal_x =
-                    all_mesh_triangles[tri_i].normal.x;
-                next_gpu_workload[*next_workload_size + m].normal_y =
-                    all_mesh_triangles[tri_i].normal.y;
-                next_gpu_workload[*next_workload_size + m].normal_z =
-                    all_mesh_triangles[tri_i].normal.z;
-                next_gpu_workload[*next_workload_size + m].x =
-                        all_mesh_triangles[tri_i].vertices[m].x +
-                        zpolygons_to_render[zp_i].x_offset;
-                next_gpu_workload[*next_workload_size + m].y =
-                    all_mesh_triangles[tri_i].vertices[m].y +
-                    zpolygons_to_render[zp_i].y_offset;
-                next_gpu_workload[*next_workload_size + m].z =
-                    all_mesh_triangles[tri_i].vertices[m].z;
-                next_gpu_workload[*next_workload_size + m].uv[0] =
-                    all_mesh_triangles[tri_i].
-                        vertices[m].uv[0];
-                next_gpu_workload[*next_workload_size + m].uv[1] =
-                    all_mesh_triangles[tri_i].
-                        vertices[m].uv[1];
-                next_gpu_workload[*next_workload_size + m].polygon_i =
-                    gpu_polygons->size;
-                
-                // completely useless, should be removed from GPUVertex
-                // next_gpu_workload[*next_workload_size + m].touchable_id =
-                //     zpolygons_to_render[zp_i].touchable_id;
-                
-                // redundant copying, same for entire material
-                next_gpu_workload[*next_workload_size + m].texture_i =
-                    zpolygons_to_render[zp_i].
-                        triangle_materials[material_i].texture_i;
-                log_assert(
-                    next_gpu_workload[*next_workload_size + m].texture_i <
-                        MAX_FILES_IN_SINGLE_TEXARRAY);
-                next_gpu_workload[*next_workload_size + m].texturearray_i =
-                    zpolygons_to_render[zp_i].
-                        triangle_materials[material_i].texturearray_i;
-                log_assert(
-                    next_gpu_workload[*next_workload_size + m].texturearray_i <
-                        TEXTUREARRAYS_SIZE);
-                
-                next_gpu_workload[*next_workload_size + m].RGBA[0] =
-                    zpolygons_to_render[zp_i].
-                        triangle_materials[material_i].color[0];
-                next_gpu_workload[*next_workload_size + m].RGBA[1] =
-                    zpolygons_to_render[zp_i].
-                        triangle_materials[material_i].color[1];
-                next_gpu_workload[*next_workload_size + m].RGBA[2] =
-                    zpolygons_to_render[zp_i].
-                        triangle_materials[material_i].color[2];
-                next_gpu_workload[*next_workload_size + m].RGBA[3] =
-                    zpolygons_to_render[zp_i].
-                        triangle_materials[material_i].color[3];
-            }
-            
-            *next_workload_size += 3;
-            log_assert(*next_workload_size <= MAX_VERTICES_PER_BUFFER);
-        }
-        log_assert(*next_workload_size <= MAX_VERTICES_PER_BUFFER);
+        // TODO: copying vertices should no longer be needed every frame, stop
+        // for (
+        //     int32_t tri_i = all_mesh_summaries[mesh_id].triangles_head_i;
+        //     tri_i < tail_i;
+        //     tri_i++)
+        // {
+        //     int32_t material_i = all_mesh_triangles[tri_i].parent_material_i;
+        //     
+        //     for (uint32_t m = 0; m < 3; m++) {
+        //         
+        //         // TODO: replace these with an index to a gpu vertex that
+        //         // has the xyz, the normal_xyz, the texture_i,
+        //         // the texturearray_i, and the rgba
+        //         // then we just update the list of vertices to draw every
+        //         // frame and let the gpu reconstruct with indexing
+        //         // next_gpu_workload[*next_workload_size + m].vertex_i =
+        //         //     const_vertex_i;
+        //         
+        //         next_gpu_workload[*next_workload_size + m].normal_x =
+        //             all_mesh_triangles[tri_i].normal.x;
+        //         next_gpu_workload[*next_workload_size + m].normal_y =
+        //             all_mesh_triangles[tri_i].normal.y;
+        //         next_gpu_workload[*next_workload_size + m].normal_z =
+        //             all_mesh_triangles[tri_i].normal.z;
+        //         next_gpu_workload[*next_workload_size + m].x =
+        //                 all_mesh_triangles[tri_i].vertices[m].x +
+        //                 zpolygons_to_render[zp_i].x_offset;
+        //         next_gpu_workload[*next_workload_size + m].y =
+        //             all_mesh_triangles[tri_i].vertices[m].y +
+        //             zpolygons_to_render[zp_i].y_offset;
+        //         next_gpu_workload[*next_workload_size + m].z =
+        //             all_mesh_triangles[tri_i].vertices[m].z;
+        //         next_gpu_workload[*next_workload_size + m].uv[0] =
+        //             all_mesh_triangles[tri_i].
+        //                 vertices[m].uv[0];
+        //         next_gpu_workload[*next_workload_size + m].uv[1] =
+        //             all_mesh_triangles[tri_i].
+        //                 vertices[m].uv[1];
+        //         next_gpu_workload[*next_workload_size + m].polygon_i =
+        //             gpu_polygons->size;
+        //         
+        //         // completely useless, should be removed from GPUVertex
+        //         // next_gpu_workload[*next_workload_size + m].touchable_id =
+        //         //     zpolygons_to_render[zp_i].touchable_id;
+        //         
+        //         // redundant copying, same for entire material
+        //         next_gpu_workload[*next_workload_size + m].texture_i =
+        //             zpolygons_to_render[zp_i].
+        //                 triangle_materials[material_i].texture_i;
+        //         log_assert(
+        //             next_gpu_workload[*next_workload_size + m].texture_i <
+        //                 MAX_FILES_IN_SINGLE_TEXARRAY);
+        //         next_gpu_workload[*next_workload_size + m].texturearray_i =
+        //             zpolygons_to_render[zp_i].
+        //                 triangle_materials[material_i].texturearray_i;
+        //         log_assert(
+        //             next_gpu_workload[*next_workload_size + m].texturearray_i <
+        //                 TEXTUREARRAYS_SIZE);
+        //         
+        //         next_gpu_workload[*next_workload_size + m].RGBA[0] =
+        //             zpolygons_to_render[zp_i].
+        //                 triangle_materials[material_i].color[0];
+        //         next_gpu_workload[*next_workload_size + m].RGBA[1] =
+        //             zpolygons_to_render[zp_i].
+        //                 triangle_materials[material_i].color[1];
+        //         next_gpu_workload[*next_workload_size + m].RGBA[2] =
+        //             zpolygons_to_render[zp_i].
+        //                 triangle_materials[material_i].color[2];
+        //         next_gpu_workload[*next_workload_size + m].RGBA[3] =
+        //             zpolygons_to_render[zp_i].
+        //                 triangle_materials[material_i].color[3];
+        //     }
+        //     
+        //     *next_workload_size += 3;
+        //     log_assert(*next_workload_size <= MAX_VERTICES_PER_BUFFER);
+        // }
+        // log_assert(*next_workload_size <= MAX_VERTICES_PER_BUFFER);
         
         // TODO: this will need to be re-done after refactoring the GPU buffers
         // // draw touchable hitboxes (the yellow lines) in visual debug mode
@@ -301,7 +309,7 @@ inline static void zpolygons_to_triangles(
         //     log_assert(*next_workload_size - 1 < MAX_VERTICES_PER_BUFFER);
         // }
         // #endif
-
+        
         gpu_polygons->size += 1;
     }
     

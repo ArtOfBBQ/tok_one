@@ -31,7 +31,7 @@ void destroy_terminal_objects(void) {
                 for (
                     int32_t tri_i = 0;
                     tri_i < all_mesh_summaries[zpolygons_to_render[i].mesh_id].
-                        triangles_size;
+                        vertices_size;
                     tri_i++)
                 {
                     zpolygons_to_render[i].visible = terminal_active;

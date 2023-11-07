@@ -15,13 +15,13 @@ extern "C" {
 typedef struct MeshSummary {
     char resource_name[OBJ_STRING_SIZE]; // the resource filename (without path)
     int32_t mesh_id;
-    int32_t triangles_head_i;
-    int32_t triangles_size;
+    int32_t vertices_head_i;
+    int32_t vertices_size;
     float base_width;
     float base_height;
     float base_depth;
-    int32_t shattered_triangles_head_i; // -1 if no shattered version
-    int32_t shattered_triangles_size; // 0 if no shattered version
+    int32_t shattered_vertices_head_i; // -1 if no shattered version
+    int32_t shattered_vertices_size; // 0 if no shattered version
     char material_names[MAX_MATERIALS_SIZE][OBJ_STRING_SIZE];
     uint32_t materials_size;
 } MeshSummary;
@@ -29,8 +29,8 @@ typedef struct MeshSummary {
 extern MeshSummary * all_mesh_summaries;
 extern uint32_t all_mesh_summaries_size;
 
-extern zTriangle * all_mesh_triangles;
-extern uint32_t all_mesh_triangles_size;
+extern GPULockedVertex * all_mesh_vertices;
+extern uint32_t all_mesh_vertices_size;
 
 void init_all_meshes(void);
 
