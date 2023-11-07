@@ -151,14 +151,6 @@ void init_application(void)
         (4096 - (gpu_shared_data_collection.camera_allocation_size % 4096));
     assert(gpu_shared_data_collection.camera_allocation_size % 4096 == 0);
     
-    gpu_shared_data_collection.projection_constants_allocation_size =
-        sizeof(GPUProjectionConstants);
-    gpu_shared_data_collection.projection_constants_allocation_size +=
-        (4096 - (gpu_shared_data_collection.
-            projection_constants_allocation_size % 4096));
-    assert(gpu_shared_data_collection.
-        projection_constants_allocation_size % 4096 == 0);
-    
     for (
         uint32_t frame_i = 0;
         frame_i < 3;
@@ -202,13 +194,6 @@ void init_application(void)
             triple_buffers[frame_i].camera->y_angle = 0.0f;
         gpu_shared_data_collection.
             triple_buffers[frame_i].camera->z_angle = 0.0f;
-        
-        gpu_shared_data_collection.triple_buffers[frame_i].
-            projection_constants =
-                (GPUProjectionConstants *)malloc_from_unmanaged_aligned(
-                    gpu_shared_data_collection.
-                        projection_constants_allocation_size,
-                    4096);
     }
     
     client_logic_startup();

@@ -235,9 +235,6 @@ void shared_gameloop_update(
     window_globals->visual_debug_collision_size =
         ((time % 500000) / 50000) * 0.001f;
     
-    *frame_data->projection_constants =
-        window_globals->projection_constants;
-    
     previous_time = time;
     
     frame_no++;

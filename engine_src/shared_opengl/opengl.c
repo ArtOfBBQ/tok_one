@@ -516,26 +516,6 @@ void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
     }
     #endif
     
-    // opengl_set_projection_constants(frame_data->projection_constants); 
-    // err_value = glGetError();
-    // if (err_value != GL_NO_ERROR) {
-    //     switch (err_value) {
-    //         case GL_INVALID_VALUE:
-    //             printf("%s\n", "GL_INVALID_VALUE");
-    //             break;
-    //         case GL_INVALID_ENUM:
-    //             printf("%s\n", "GL_INVALID_ENUM");
-    //             break;
-    //         case GL_INVALID_OPERATION:
-    //             printf("%s\n", "GL_INVALID_OPERATION");
-    //             break;
-    //         default:
-    //             printf("%s\n", "unhandled error when sending buffer data!");
-    //             break;
-    //     }
-    //     assert(0);
-    // }
-    
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     // glPointSize(10); // for GL_POINTS

@@ -13,7 +13,6 @@ typedef struct GPUDataForSingleFrame
     GPUPolygonCollection *       polygon_collection;
     GPULightCollection *           light_collection;
     GPUCamera *                              camera;
-    GPUProjectionConstants *   projection_constants;
     uint32_t                          vertices_size;
 } GPUDataForSingleFrame;
 
