@@ -4,7 +4,8 @@
 #define TEXTUREARRAYS_SIZE 31
 #define MAX_FILES_IN_SINGLE_TEXARRAY 200
 
-#include "clientlogic_macro_settings.h"
+#define MAX_POLYGONS_PER_BUFFER 800
+#define MAX_LIGHTS_PER_BUFFER  75
 
 #pragma pack(push, 1)
 typedef struct GPUVertex {
@@ -86,7 +87,12 @@ typedef struct GPUProjectionConstants {
     float x_multiplier;
     float y_multiplier;
 } GPUProjectionConstants;
+
+typedef struct GPULockedMaterial {
+    float RGBA[4];
+    unsigned int texturearray_i;
+    unsigned int texture_i;
+} GPULockedMaterial;
 #pragma pack(pop)
 
 #endif
-

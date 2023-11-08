@@ -21,8 +21,9 @@ of the engine for your specific app.
 #define INITIAL_WINDOW_BOTTOM      0
 
 // TODO: implement simple macro replacements in glsl shaders so this can just
-// be changed without having to update shaders
-// The maximum number of vertices/lights to send to the GPU each frame
+// TODO: be changed without having to update shaders
+// The maximum number of polygons/lights to send to the GPU each frame
+// The maximum number of triangle vertices to be stored on gpu permanently
 #define MAX_POLYGONS_PER_BUFFER    800
 #define MAX_VERTICES_PER_BUFFER 700000
 #define MAX_LIGHTS_PER_BUFFER       75
@@ -34,8 +35,8 @@ of the engine for your specific app.
 #define ALL_MESHES_SIZE 100
 // the max # of triangles in all of your meshes/models combined
 #define ALL_MESH_VERTICES_SIZE 90000
-// The max number of 'materials' in 1 of your meshes_models (must be 1+)
-#define MAX_MATERIALS_SIZE 5
+// The max number of 'materials' in all of your app/game (must be 1+)
+#define MAX_MATERIALS_SIZE 500
 
 /*
 The max # of simultaneously active particle effects in your app

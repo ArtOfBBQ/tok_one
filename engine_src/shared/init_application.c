@@ -151,6 +151,24 @@ void init_application(void)
         (4096 - (gpu_shared_data_collection.camera_allocation_size % 4096));
     assert(gpu_shared_data_collection.camera_allocation_size % 4096 == 0);
     
+    gpu_shared_data_collection.materials_allocation_size =
+        (sizeof(GPULockedMaterial) * MAX_MATERIALS_SIZE);
+    gpu_shared_data_collection.materials_allocation_size +=
+        (4096 - (gpu_shared_data_collection.
+            materials_allocation_size % 4096));
+    assert(gpu_shared_data_collection.materials_allocation_size > 0);
+    assert(gpu_shared_data_collection.materials_allocation_size %
+        4096 == 0);
+    
+    gpu_shared_data_collection.projection_constants_allocation_size =
+        sizeof(GPUProjectionConstants);
+    gpu_shared_data_collection.projection_constants_allocation_size +=
+        (4096 - (gpu_shared_data_collection.
+            projection_constants_allocation_size % 4096));
+    assert(gpu_shared_data_collection.projection_constants_allocation_size > 0);
+    assert(gpu_shared_data_collection.projection_constants_allocation_size %
+        4096 == 0);
+    
     for (
         uint32_t frame_i = 0;
         frame_i < 3;
@@ -181,20 +199,27 @@ void init_application(void)
                 4096);
         
         gpu_shared_data_collection.triple_buffers[frame_i].camera =
-            (GPUCamera *)malloc_from_unmanaged_aligned(
-                gpu_shared_data_collection.camera_allocation_size,
-                4096);
+        (GPUCamera *)malloc_from_unmanaged_aligned(
+            gpu_shared_data_collection.camera_allocation_size,
+            4096);
         
         gpu_shared_data_collection.triple_buffers[frame_i].camera->x = 0.0f;
         gpu_shared_data_collection.triple_buffers[frame_i].camera->y = 0.0f;
         gpu_shared_data_collection.triple_buffers[frame_i].camera->z = 0.0f;
-        gpu_shared_data_collection.
-            triple_buffers[frame_i].camera->x_angle = 0.0f;
-        gpu_shared_data_collection.
-            triple_buffers[frame_i].camera->y_angle = 0.0f;
-        gpu_shared_data_collection.
-            triple_buffers[frame_i].camera->z_angle = 0.0f;
+        gpu_shared_data_collection.triple_buffers[frame_i].camera->x_angle = 0.0f;
+        gpu_shared_data_collection.triple_buffers[frame_i].camera->y_angle = 0.0f;
+        gpu_shared_data_collection.triple_buffers[frame_i].camera->z_angle = 0.0f;
     }
+    
+    gpu_shared_data_collection.materials =
+        (GPULockedMaterial *)malloc_from_unmanaged_aligned(
+            gpu_shared_data_collection.materials_allocation_size,
+            4096);
+    
+    gpu_shared_data_collection.projection_constants =
+        (GPUProjectionConstants *)malloc_from_unmanaged_aligned(
+            gpu_shared_data_collection.projection_constants_allocation_size,
+            4096);
     
     client_logic_startup();
 }

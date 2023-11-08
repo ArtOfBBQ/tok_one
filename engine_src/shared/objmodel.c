@@ -61,6 +61,10 @@ void init_all_meshes(void) {
     all_mesh_vertices = (GPULockedVertex *)malloc_from_unmanaged(
         sizeof(GPULockedVertex) * ALL_MESH_VERTICES_SIZE);
     
+    for (uint32_t i = 0; i < ALL_MESH_VERTICES_SIZE; i++) {
+        all_mesh_vertices[i].material_i = -1;
+    }
+    
     // Let's hardcode a basic quad since that's a mesh that will be used by
     // even the features inherent to the engine itself (the terminal, any
     // text labels, the FPS label, etc)
@@ -635,6 +639,179 @@ static void guess_ztriangle_normal(zTriangle * input) {
     input->normal.z = (vector1.x * vector2.y) - (vector1.y * vector2.x);
 }
 
+static float get_vertex_magnitude(float input_xyz[3]) {
+    float x = (input_xyz[0] * input_xyz[0]);
+    float y = (input_xyz[1] * input_xyz[1]);
+    float z = (input_xyz[2] * input_xyz[2]);
+    
+    float sum_squares = x + y + z;
+    
+    sum_squares = isnan(sum_squares) || !isfinite(sum_squares) ?
+        FLOAT32_MAX : sum_squares;
+    
+    float return_value = sqrtf(sum_squares);
+    
+    log_assert(!isnan(return_value));
+    
+    return return_value;
+}
+
+static void normalize_gpu_triangle_normals(GPULockedVertex * input) {
+    float magnitude = get_vertex_magnitude(input->xyz);
+
+    if (magnitude < 0.0001f && magnitude > -0.0001f) {
+        magnitude = 0.0001f;
+    }
+    
+    log_assert(!isnan(input->xyz[0]));
+    input->xyz[0] /= magnitude;
+    log_assert(!isnan(input->xyz[0]));
+    
+    log_assert(!isnan(input->xyz[1]));
+    input->xyz[1] /= magnitude;
+    log_assert(!isnan(input->xyz[1]));
+    
+    log_assert(!isnan(input->xyz[2]));
+    input->xyz[2] /= magnitude;
+    log_assert(!isnan(input->xyz[2]));
+}
+
+static void guess_gpu_triangle_normal(GPULockedVertex * input) {
+    float vec1_x = input[1].xyz[0] - input[0].xyz[0];
+    float vec1_y = input[1].xyz[1] - input[0].xyz[1];
+    float vec1_z = input[1].xyz[2] - input[0].xyz[2];
+    
+    float vec2_x = input[2].xyz[0] - input[0].xyz[0];
+    float vec2_y = input[2].xyz[1] - input[0].xyz[1];
+    float vec2_z = input[2].xyz[2] - input[0].xyz[2];
+    
+    input[0].normal_xyz[0] = (vec1_y * vec2_z) - (vec1_z * vec2_y);
+    input[0].normal_xyz[1] = (vec1_z * vec2_x) - (vec1_x * vec2_z);
+    input[0].normal_xyz[2] = (vec1_x * vec2_y) - (vec1_y * vec2_x);
+    input[1].normal_xyz[0] = input[0].normal_xyz[0];
+    input[1].normal_xyz[1] = input[0].normal_xyz[1];
+    input[1].normal_xyz[2] = input[0].normal_xyz[2];
+    input[2].normal_xyz[0] = input[0].normal_xyz[0];
+    input[2].normal_xyz[1] = input[0].normal_xyz[1];
+    input[2].normal_xyz[2] = input[0].normal_xyz[2];
+}
+
+static void populate_new_triangle_with_parser_buffers(
+    GPULockedVertex * triangle_recipient,
+    int32_t vertex_i_0,
+    int32_t vertex_i_1,
+    int32_t vertex_i_2,
+    int32_t uv_coord_i_0,
+    int32_t uv_coord_i_1,
+    int32_t uv_coord_i_2,
+    int32_t normals_i_0,
+    int32_t normals_i_1,
+    int32_t normals_i_2,
+    int32_t using_material_1,
+    int32_t using_material_2,
+    int32_t using_material_3)
+{
+    log_assert(vertex_i_0 != vertex_i_1);
+    log_assert(vertex_i_0 != vertex_i_2);
+    log_assert(vertex_i_0 > 0);
+    log_assert(vertex_i_1 > 0);
+    log_assert(vertex_i_2 > 0);
+    log_assert(uv_coord_i_0 < PARSER_VERTEX_BUFFER_SIZE);
+    log_assert(uv_coord_i_1 < PARSER_VERTEX_BUFFER_SIZE);
+    log_assert(uv_coord_i_2 < PARSER_VERTEX_BUFFER_SIZE);
+    log_assert(normals_i_0 < PARSER_VERTEX_BUFFER_SIZE);
+    log_assert(normals_i_1 < PARSER_VERTEX_BUFFER_SIZE);
+    log_assert(normals_i_2 < PARSER_VERTEX_BUFFER_SIZE);
+    
+    uint32_t target_vertex_0 = 0;
+    uint32_t target_vertex_1 = 1;
+    uint32_t target_vertex_2 = 2;
+    
+    triangle_recipient[target_vertex_0].xyz[0] =
+        parser_vertex_buffer[vertex_i_0 - 1].x;
+    triangle_recipient[target_vertex_0].xyz[1] =
+        parser_vertex_buffer[vertex_i_0 - 1].y;
+    triangle_recipient[target_vertex_0].xyz[2] =
+        parser_vertex_buffer[vertex_i_0 - 1].z;
+    triangle_recipient[target_vertex_1].xyz[0] =
+        parser_vertex_buffer[vertex_i_1 - 1].x;
+    triangle_recipient[target_vertex_1].xyz[1] =
+        parser_vertex_buffer[vertex_i_1 - 1].y;
+    triangle_recipient[target_vertex_1].xyz[2] =
+        parser_vertex_buffer[vertex_i_1 - 1].z;
+    triangle_recipient[target_vertex_2].xyz[0] =
+        parser_vertex_buffer[vertex_i_2 - 1].x;
+    triangle_recipient[target_vertex_2].xyz[1] =
+        parser_vertex_buffer[vertex_i_2 - 1].y;
+    triangle_recipient[target_vertex_2].xyz[2] =
+        parser_vertex_buffer[vertex_i_2 - 1].z;
+    
+    if (
+        uv_coord_i_0 > 0 &&
+        uv_coord_i_1 > 0 &&
+        uv_coord_i_2 > 0)
+    {
+        triangle_recipient[target_vertex_0].uv[0] =
+            parser_uv_u_buffer[uv_coord_i_0 - 1];
+        triangle_recipient[target_vertex_0].uv[1] =
+            parser_uv_v_buffer[uv_coord_i_0 - 1];
+        triangle_recipient[target_vertex_1].uv[0] =
+            parser_uv_u_buffer[uv_coord_i_1 - 1];
+        triangle_recipient[target_vertex_1].uv[1] =
+            parser_uv_v_buffer[uv_coord_i_1 - 1];
+        triangle_recipient[target_vertex_2].uv[0] =
+            parser_uv_u_buffer[uv_coord_i_2 - 1];
+        triangle_recipient[target_vertex_2].uv[1] =
+            parser_uv_v_buffer[uv_coord_i_2 - 1];
+    } else {
+        triangle_recipient[target_vertex_0].uv[0] =
+            1.0f;
+        triangle_recipient[target_vertex_0].uv[1] =
+            0.0f;
+        triangle_recipient[target_vertex_1].uv[0] =
+            1.0f;
+        triangle_recipient[target_vertex_1].uv[1] =
+            1.0f;
+        triangle_recipient[target_vertex_2].uv[0] =
+            0.0f;
+        triangle_recipient[target_vertex_2].uv[1] =
+            1.0f;
+    }
+    
+    if (
+        normals_i_0 > 0 &&
+        normals_i_1 > 0 &&
+        normals_i_2 > 0)
+    {
+        triangle_recipient[target_vertex_0].normal_xyz[0] =
+            parser_normals_buffer[normals_i_0 - 1].x;
+        triangle_recipient[target_vertex_0].normal_xyz[1] =
+            parser_normals_buffer[normals_i_0 - 1].y;
+        triangle_recipient[target_vertex_0].normal_xyz[2] =
+            parser_normals_buffer[normals_i_0 - 1].z;
+        triangle_recipient[target_vertex_1].normal_xyz[0] =
+            parser_normals_buffer[normals_i_1 - 1].x;
+        triangle_recipient[target_vertex_1].normal_xyz[1] =
+            parser_normals_buffer[normals_i_1 - 1].y;
+        triangle_recipient[target_vertex_1].normal_xyz[2] =
+            parser_normals_buffer[normals_i_1 - 1].z;
+        triangle_recipient[target_vertex_2].normal_xyz[0] =
+            parser_normals_buffer[normals_i_2 - 1].x;
+        triangle_recipient[target_vertex_2].normal_xyz[1] =
+            parser_normals_buffer[normals_i_2 - 1].y;
+        triangle_recipient[target_vertex_2].normal_xyz[2] =
+            parser_normals_buffer[normals_i_2 - 1].z;
+    } else {
+        guess_gpu_triangle_normal(triangle_recipient);
+    }
+    
+    triangle_recipient[0].material_i = using_material_1;
+    triangle_recipient[1].material_i = using_material_2;
+    triangle_recipient[2].material_i = using_material_3;
+    
+    normalize_gpu_triangle_normals(triangle_recipient);
+}
+
 static uint32_t chars_till_next_space_or_slash(
     const char * buffer)
 {
@@ -668,7 +845,7 @@ static void parse_obj(
     const char * rawdata,
     const uint64_t rawdata_size,
     MeshSummary * summary_recipient,
-    zTriangle * triangles_recipient,
+    GPULockedVertex * triangles_recipient,
     uint32_t * triangles_recipient_size)
 {
     log_assert(rawdata != NULL);
@@ -1103,7 +1280,7 @@ static void parse_obj(
                 // there were 2 triangles in this face
                 // the 1st triangle will be added anyway later, but
                 // we do need to add the extra 2nd triangle here
-                zTriangle new_triangle;
+                GPULockedVertex new_triangle[3];
                 
                 log_assert(vertex_i_0 != vertex_i_1);
                 log_assert(vertex_i_0 != vertex_i_2);
@@ -1120,73 +1297,41 @@ static void parse_obj(
                 uint32_t target_vertex_0 = 0;
                 uint32_t target_vertex_1 = 1;
                 uint32_t target_vertex_2 = 2;
-
-                new_triangle.vertices[target_vertex_0] =
-                    parser_vertex_buffer[vertex_i_0 - 1];
-                new_triangle.vertices[target_vertex_1] =
-                    parser_vertex_buffer[vertex_i_2 - 1];
-                new_triangle.vertices[target_vertex_2] =
-                    parser_vertex_buffer[vertex_i_3 - 1];
-
-                if (
-                    uv_coord_i_0 > 0 &&
-                    uv_coord_i_1 > 0 &&
-                    uv_coord_i_2 > 0)
-                {
-                    new_triangle.vertices[target_vertex_0].uv[0] =
-                        parser_uv_u_buffer[uv_coord_i_0 - 1];
-                    new_triangle.vertices[target_vertex_0].uv[1] =
-                        parser_uv_v_buffer[uv_coord_i_0 - 1];
-                    new_triangle.vertices[target_vertex_1].uv[0] =
-                        parser_uv_u_buffer[uv_coord_i_1 - 1];
-                    new_triangle.vertices[target_vertex_1].uv[1] =
-                        parser_uv_v_buffer[uv_coord_i_1 - 1];
-                    new_triangle.vertices[target_vertex_2].uv[0] =
-                        parser_uv_u_buffer[uv_coord_i_3 - 1];
-                    new_triangle.vertices[target_vertex_2].uv[1] =
-                        parser_uv_v_buffer[uv_coord_i_3 - 1];
-                } else {
-                    new_triangle.vertices[target_vertex_0].uv[0] =
-                        0.0f;
-                    new_triangle.vertices[target_vertex_0].uv[1] =
-                        0.0f;
-                    new_triangle.vertices[target_vertex_1].uv[0] =
-                        1.0f;
-                    new_triangle.vertices[target_vertex_1].uv[1] =
-                        0.0f;
-                    new_triangle.vertices[target_vertex_2].uv[0] =
-                        0.0f;
-                    new_triangle.vertices[target_vertex_2].uv[1] =
-                        1.0f;
-                }
-                
-                if (
-                    normals_i_0 > 0 &&
-                    normals_i_1 > 0 &&
-                    normals_i_2 > 0)
-                {
-                    new_triangle.normal.x = (
-                        parser_normals_buffer[normals_i_0 - 1].x +
-                        parser_normals_buffer[normals_i_1 - 1].x +
-                        parser_normals_buffer[normals_i_2 - 1].x) / 3.0f;
-                    new_triangle.normal.y = (
-                        parser_normals_buffer[normals_i_0 - 1].y +
-                        parser_normals_buffer[normals_i_1 - 1].y +
-                        parser_normals_buffer[normals_i_2 - 1].y) / 3.0f;
-                    new_triangle.normal.z = (
-                        parser_normals_buffer[normals_i_0 - 1].z +
-                        parser_normals_buffer[normals_i_1 - 1].z +
-                        parser_normals_buffer[normals_i_2 - 1].z) / 3.0f;
-                } else {
-                    guess_ztriangle_normal(&new_triangle);
-                }
-                new_triangle.parent_material_i = using_material_i;
+                populate_new_triangle_with_parser_buffers(
+                    /* GPULockedVertex * triangle_recipient: */
+                        new_triangle,
+                    /* int32_t vertex_i_0: */
+                        vertex_i_0,
+                    /* int32_t vertex_i_1: */
+                        vertex_i_1,
+                    /* int32_t vertex_i_2: */
+                        vertex_i_2,
+                    /* int32_t uv_coord_i_0: */
+                        uv_coord_i_0,
+                    /* int32_t uv_coord_i_1: */
+                        uv_coord_i_1,
+                    /* int32_t uv_coord_i_2: */
+                        uv_coord_i_2,
+                    /* int32_t normals_i_0: */
+                        normals_i_0,
+                    /* int32_t normals_i_1: */
+                        normals_i_1,
+                    /* int32_t normals_i_2: */
+                        normals_i_2,
+                    /* int32_t using_material_1: */
+                        using_material_i,
+                    /* int32_t using_material_2: */
+                        using_material_i,
+                    /* int32_t using_material_3: */
+                        using_material_i);
                 
                 *triangles_recipient_size += 1;
                 log_assert(new_triangle_i < ALL_MESH_VERTICES_SIZE);
                 
-                normalize_zvertex(&new_triangle.normal);
-                triangles_recipient[new_triangle_i] = new_triangle;
+                triangles_recipient[(new_triangle_i * 3) + 0] = new_triangle[0];
+                triangles_recipient[(new_triangle_i * 3) + 1] = new_triangle[1];
+                triangles_recipient[(new_triangle_i * 3) + 2] = new_triangle[2];
+                
                 new_triangle_i++;
                 summary_recipient->vertices_size += 3;
             } else {
@@ -1195,88 +1340,40 @@ static void parse_obj(
 
             // if you get here there was only 1 triangle OR
             // there were 2 triangles and you already did the other one
-            zTriangle new_triangle;
-
-            log_assert(vertex_i_0 != vertex_i_1);
-            log_assert(vertex_i_0 != vertex_i_2);
-            log_assert(vertex_i_0 > 0);
-            log_assert(vertex_i_1 > 0);
-            log_assert(vertex_i_2 > 0);
-            log_assert(uv_coord_i_0 < PARSER_VERTEX_BUFFER_SIZE);
-            log_assert(uv_coord_i_1 < PARSER_VERTEX_BUFFER_SIZE);
-            log_assert(uv_coord_i_2 < PARSER_VERTEX_BUFFER_SIZE);
-            log_assert(normals_i_0 < PARSER_VERTEX_BUFFER_SIZE);
-            log_assert(normals_i_1 < PARSER_VERTEX_BUFFER_SIZE);
-            log_assert(normals_i_2 < PARSER_VERTEX_BUFFER_SIZE);
+            GPULockedVertex new_triangle[3];
             
-            uint32_t target_vertex_0 = 0;
-            uint32_t target_vertex_1 = 1;
-            uint32_t target_vertex_2 = 2;
-
-            new_triangle.vertices[target_vertex_0] =
-                parser_vertex_buffer[vertex_i_0 - 1];
-            new_triangle.vertices[target_vertex_1] =
-                parser_vertex_buffer[vertex_i_1 - 1];
-            new_triangle.vertices[target_vertex_2] =
-                parser_vertex_buffer[vertex_i_2 - 1];
-
-            if (
-                uv_coord_i_0 > 0 &&
-                uv_coord_i_1 > 0 &&
-                uv_coord_i_2 > 0)
-            {
-                new_triangle.vertices[target_vertex_0].uv[0] =
-                    parser_uv_u_buffer[uv_coord_i_0 - 1];
-                new_triangle.vertices[target_vertex_0].uv[1] =
-                    parser_uv_v_buffer[uv_coord_i_0 - 1];
-                new_triangle.vertices[target_vertex_1].uv[0] =
-                    parser_uv_u_buffer[uv_coord_i_1 - 1];
-                new_triangle.vertices[target_vertex_1].uv[1] =
-                    parser_uv_v_buffer[uv_coord_i_1 - 1];
-                new_triangle.vertices[target_vertex_2].uv[0] =
-                    parser_uv_u_buffer[uv_coord_i_2 - 1];
-                new_triangle.vertices[target_vertex_2].uv[1] =
-                    parser_uv_v_buffer[uv_coord_i_2 - 1];
-            } else {
-                new_triangle.vertices[target_vertex_0].uv[0] =
-                    1.0f;
-                new_triangle.vertices[target_vertex_0].uv[1] =
-                    0.0f;
-                new_triangle.vertices[target_vertex_1].uv[0] =
-                    1.0f;
-                new_triangle.vertices[target_vertex_1].uv[1] =
-                    1.0f;
-                new_triangle.vertices[target_vertex_2].uv[0] =
-                    0.0f;
-                new_triangle.vertices[target_vertex_2].uv[1] =
-                    1.0f;
-            }
+            populate_new_triangle_with_parser_buffers(
+                /* GPULockedVertex * triangle_recipient: */
+                    new_triangle,
+                /* int32_t vertex_i_0: */
+                    vertex_i_0,
+                /* int32_t vertex_i_1: */
+                    vertex_i_1,
+                /* int32_t vertex_i_2: */
+                    vertex_i_2,
+                /* int32_t uv_coord_i_0: */
+                    uv_coord_i_0,
+                /* int32_t uv_coord_i_1: */
+                    uv_coord_i_1,
+                /* int32_t uv_coord_i_2: */
+                    uv_coord_i_2,
+                /* int32_t normals_i_0: */
+                    normals_i_0,
+                /* int32_t normals_i_1: */
+                    normals_i_1,
+                /* int32_t normals_i_2: */
+                    normals_i_2,
+                /* int32_t using_material_1: */
+                    using_material_i,
+                /* int32_t using_material_2: */
+                    using_material_i,
+                /* int32_t using_material_3: */
+                    using_material_i);
             
-            if (
-                normals_i_0 > 0 &&
-                normals_i_1 > 0 &&
-                normals_i_2 > 0)
-            {
-                new_triangle.normal.x = (
-                    parser_normals_buffer[normals_i_0 - 1].x +
-                    parser_normals_buffer[normals_i_1 - 1].x +
-                    parser_normals_buffer[normals_i_2 - 1].x) / 3.0f;
-                new_triangle.normal.y = (
-                    parser_normals_buffer[normals_i_0 - 1].y +
-                    parser_normals_buffer[normals_i_1 - 1].y +
-                    parser_normals_buffer[normals_i_2 - 1].y) / 3.0f;
-                new_triangle.normal.z = (
-                    parser_normals_buffer[normals_i_0 - 1].z +
-                    parser_normals_buffer[normals_i_1 - 1].z +
-                    parser_normals_buffer[normals_i_2 - 1].z) / 3.0f;
-            } else {
-                guess_ztriangle_normal(&new_triangle);
-            }
+            triangles_recipient[(new_triangle_i * 3) + 0] = new_triangle[0];
+            triangles_recipient[(new_triangle_i * 3) + 1] = new_triangle[1];
+            triangles_recipient[(new_triangle_i * 3) + 2] = new_triangle[2];
             
-            new_triangle.parent_material_i = using_material_i;
-            
-            normalize_zvertex(&new_triangle.normal);
-            triangles_recipient[new_triangle_i] = new_triangle;
             new_triangle_i++;
             summary_recipient->vertices_size += 3;
             

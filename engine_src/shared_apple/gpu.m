@@ -4,10 +4,14 @@ MetalKitViewDelegate * apple_gpu_delegate = NULL;
 GPUSharedDataCollection gpu_shared_data_collection;
 
 // objective-c "id" of the MTLBuffer objects
-static id vertex_buffers[3];
+static id polygon_buffers[3];
 static id light_buffers [3];
+static id vertex_buffers[3];
 static id camera_buffers[3];
-static id projection_constant_buffers[3];
+static id material_buffer;
+static id projection_constants_buffer;
+
+// static id projection_constant_buffers[3];
 static dispatch_semaphore_t drawing_semaphore;
 
 @implementation MetalKitViewDelegate
@@ -143,6 +147,27 @@ static dispatch_semaphore_t drawing_semaphore;
         frame_i < 3;
         frame_i++)
     {
+        id<MTLBuffer> MTLBufferFramePolygons =
+            [with_metal_device
+                /* the pointer needs to be page aligned */
+                    newBufferWithBytesNoCopy:
+                        gpu_shared_data_collection.
+                            triple_buffers[frame_i].polygon_collection
+                /* the length weirdly needs to be page aligned also */
+                    length:
+                        gpu_shared_data_collection.polygons_allocation_size
+                    options:
+                        MTLResourceStorageModeShared
+                /* deallocator = nil to opt out */
+                    deallocator:
+                        nil];
+        assert(MTLBufferFramePolygons != nil);
+        assert(
+            [MTLBufferFramePolygons contents] ==
+                gpu_shared_data_collection.triple_buffers[frame_i].polygon_collection);
+        polygon_buffers[frame_i] = MTLBufferFramePolygons;
+        assert(polygon_buffers[frame_i] != nil);
+        
         id<MTLBuffer> MTLBufferFrameVertices =
             [with_metal_device
                 /* the pointer needs to be page aligned */
@@ -158,9 +183,6 @@ static dispatch_semaphore_t drawing_semaphore;
                     deallocator:
                         nil];
         assert(MTLBufferFrameVertices != nil);
-        assert(
-            [MTLBufferFrameVertices contents] ==
-                gpu_shared_data_collection.triple_buffers[frame_i].vertices);
         assert(
             [MTLBufferFrameVertices contents] ==
                 gpu_shared_data_collection.triple_buffers[frame_i].vertices);
@@ -181,20 +203,16 @@ static dispatch_semaphore_t drawing_semaphore;
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
-         assert(
-            [MTLBufferFrameLights contents] ==
-                gpu_shared_data_collection.
-                    triple_buffers[frame_i].light_collection);
-         assert(
+         
+        assert(
             [MTLBufferFrameLights contents] ==
                 gpu_shared_data_collection.
                     triple_buffers[frame_i].
                     light_collection);
+        light_buffers[frame_i] = MTLBufferFrameLights;
          
-         light_buffers[frame_i] = MTLBufferFrameLights;
-         
-         id<MTLBuffer> MTLBufferFrameCamera =
-             [with_metal_device
+        id<MTLBuffer> MTLBufferFrameCamera =
+            [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         gpu_shared_data_collection.
@@ -207,33 +225,47 @@ static dispatch_semaphore_t drawing_semaphore;
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
-         
-         assert(
-            [MTLBufferFrameCamera contents] ==
-                gpu_shared_data_collection.
-                    triple_buffers[frame_i].camera);
-         assert(
+        assert(
             [MTLBufferFrameCamera contents] ==
                 gpu_shared_data_collection.triple_buffers[frame_i].camera);
-         camera_buffers[frame_i] = MTLBufferFrameCamera;
+        camera_buffers[frame_i] = MTLBufferFrameCamera;
          
-         id<MTLBuffer> MTLBufferProjectionConstants =
-             [with_metal_device
-                 /* the pointer needs to be page aligned */
+        id<MTLBuffer> MTLBufferMaterials =
+            [with_metal_device
+                /* the pointer needs to be page aligned */
+                    newBufferWithBytesNoCopy:
+                        gpu_shared_data_collection.materials
+                /* the length weirdly needs to be page aligned also */
+                    length:
+                        gpu_shared_data_collection.materials_allocation_size
+                    options:
+                        MTLResourceStorageModeShared
+                /* deallocator = nil to opt out */
+                    deallocator:
+                        nil];
+        assert(
+            [MTLBufferMaterials contents] ==
+                gpu_shared_data_collection.materials);
+        material_buffer = MTLBufferMaterials;
+        
+        id<MTLBuffer> MTLBufferProjectionConstants =
+            [with_metal_device
+                /* the pointer needs to be page aligned */
                      newBufferWithBytesNoCopy:
-                         gpu_shared_data_collection.
-                            triple_buffers[frame_i].projection_constants
-                 /* the length weirdly needs to be page aligned also */
-                     length:
-                         gpu_shared_data_collection.
+                         gpu_shared_data_collection.projection_constants
+                /* the length weirdly needs to be page aligned also */
+                    length:
+                        gpu_shared_data_collection.
                             projection_constants_allocation_size
-                     options:
-                         MTLResourceStorageModeShared
-                 /* deallocator = nil to opt out */
-                     deallocator:
-                         nil];
-         
-         projection_constant_buffers[frame_i] = MTLBufferProjectionConstants;
+                    options:
+                        MTLResourceStorageModeShared
+                /* deallocator = nil to opt out */
+                    deallocator:
+                        nil];
+        assert(
+            [MTLBufferProjectionConstants contents] ==
+                gpu_shared_data_collection.projection_constants);
+        projection_constants_buffer = MTLBufferProjectionConstants;
     }
     
     _metal_textures = [
@@ -389,9 +421,9 @@ static dispatch_semaphore_t drawing_semaphore;
     
     [render_encoder
         setVertexBuffer:
-            vertex_buffers[current_frame_i]
+            polygon_buffers[current_frame_i]
         offset:
-            0 
+            0
         atIndex:
             0];
     
@@ -409,9 +441,27 @@ static dispatch_semaphore_t drawing_semaphore;
     
     [render_encoder
         setVertexBuffer:
-            projection_constant_buffers[current_frame_i]
-        offset: 0
-        atIndex: 3];
+            vertex_buffers[current_frame_i]
+        offset:
+            0 
+        atIndex:
+            3];
+    
+    [render_encoder
+        setVertexBuffer:
+            material_buffer
+        offset:
+            0
+        atIndex:
+            4];
+    
+    [render_encoder
+        setVertexBuffer:
+            projection_constants_buffer
+        offset:
+            0
+        atIndex:
+            5];
     
     for (
         uint32_t i = 0;
