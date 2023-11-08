@@ -155,23 +155,23 @@ void client_logic_startup(void) {
         xmastree.x_multiplier = 0.05f;
         xmastree.y_multiplier = 0.05f;
         xmastree.z_multiplier = 0.05f;
-        
+    
         // example 2: use a quad instead
-        //    construct_quad(
-        //        /* const float left_x: */
-        //            0.25f,
-        //        /* const float bottom_y: */
-        //            0.0f,
-        //        /* const float z: */
-        //            0.75f,
-        //        /* const float width: */
-        //            0.2f,
-        //        /* const float height: */
-        //            0.2f,
-        //        /* zPolygon * recipient: */
-        //            &xmastree);
-        //    xmastree.triangle_materials[0].texturearray_i = 3;
-        //    xmastree.triangle_materials[0].texture_i = 0;
+        //        construct_quad(
+        //            /* const float left_x: */
+        //                0.25f,
+        //            /* const float bottom_y: */
+        //                0.0f,
+        //            /* const float z: */
+        //                0.75f,
+        //            /* const float width: */
+        //                0.2f,
+        //            /* const float height: */
+        //                0.2f,
+        //            /* zPolygon * recipient: */
+        //                &xmastree);
+        //        xmastree.triangle_materials[0].texturearray_i = 3;
+        //        xmastree.triangle_materials[0].texture_i = 0;
         
         // this code needs to run regardless of what example mesh we're using
         xmastree_object_id = next_nonui_object_id();

@@ -87,11 +87,11 @@ inline static void zpolygons_to_triangles(
             vert_i < vert_tail_i;
             vert_i++)
         {
-            (*next_gpu_workload).locked_vertex_i = vert_i;
-            (*next_gpu_workload).polygon_i = zp_i;
-            next_gpu_workload += 1;
+            next_gpu_workload[*next_workload_size].locked_vertex_i = vert_i;
+            next_gpu_workload[*next_workload_size].polygon_i = zp_i;
+            *next_workload_size += 1;
         }
-        *next_workload_size += all_mesh_summaries[mesh_id].vertices_size;
+        // *next_workload_size += all_mesh_summaries[mesh_id].vertices_size;
         
         gpu_polygons->size += 1;
     }

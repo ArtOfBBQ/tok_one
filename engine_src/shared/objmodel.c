@@ -101,7 +101,7 @@ void init_all_meshes(void) {
     all_mesh_vertices[0].normal_xyz[2]          = -1.0f;
     all_mesh_vertices[0].uv[0]                  = left_uv_coord;
     all_mesh_vertices[0].uv[1]                  = top_uv_coord;
-    all_mesh_vertices[0].material_i      = 0;
+    all_mesh_vertices[0].material_i             = 0;
     // top right vertex
     all_mesh_vertices[1].xyz[0]                 = right_vertex;
     all_mesh_vertices[1].xyz[1]                 = top_vertex;
@@ -111,7 +111,7 @@ void init_all_meshes(void) {
     all_mesh_vertices[1].normal_xyz[2]          = -1.0f;
     all_mesh_vertices[1].uv[0]                  = right_uv_coord;
     all_mesh_vertices[1].uv[1]                  = top_uv_coord;
-    all_mesh_vertices[1].material_i      = 0;
+    all_mesh_vertices[1].material_i             = 0;
     // bottom left vertex
     all_mesh_vertices[2].xyz[0]                 = left_vertex;
     all_mesh_vertices[2].xyz[1]                 = bottom_vertex;
@@ -119,17 +119,17 @@ void init_all_meshes(void) {
     all_mesh_vertices[2].normal_xyz[0]          = 0.0f;
     all_mesh_vertices[2].normal_xyz[1]          = 0.0f;
     all_mesh_vertices[2].normal_xyz[2]          = -1.0f;
-    all_mesh_vertices[2].uv[0]             = left_uv_coord;
-    all_mesh_vertices[2].uv[1]             = bottom_uv_coord;
-    all_mesh_vertices[2].material_i = 0;
+    all_mesh_vertices[2].uv[0]                  = left_uv_coord;
+    all_mesh_vertices[2].uv[1]                  = bottom_uv_coord;
+    all_mesh_vertices[2].material_i             = 0;
     
     // basic quad, triangle 2 
     // top right vertex
     all_mesh_vertices[3].xyz[0]                 = right_vertex;
     all_mesh_vertices[3].xyz[1]                 = top_vertex;
     all_mesh_vertices[3].xyz[2]                 = 0.0f;
-    all_mesh_vertices[3].uv[0]             = right_uv_coord;
-    all_mesh_vertices[3].uv[1]             = top_uv_coord;
+    all_mesh_vertices[3].uv[0]                  = right_uv_coord;
+    all_mesh_vertices[3].uv[1]                  = top_uv_coord;
     all_mesh_vertices[3].normal_xyz[0]          = 0.0f;
     all_mesh_vertices[3].normal_xyz[1]          = 0.0f;
     all_mesh_vertices[3].normal_xyz[2]          = -1.0f;
@@ -796,8 +796,8 @@ static void parse_obj(
     const char * rawdata,
     const uint64_t rawdata_size,
     MeshSummary * summary_recipient,
-    GPULockedVertex * triangles_recipient,
-    uint32_t * triangles_recipient_size)
+    GPULockedVertex * locked_vertices_recipient,
+    uint32_t * locked_vertices_recipient_size)
 {
     log_assert(rawdata != NULL);
     log_assert(rawdata_size > 0);
@@ -1001,7 +1001,7 @@ static void parse_obj(
             }
             
             if (rawdata[i] == 'f') {
-                *triangles_recipient_size += 1;
+                
             }
             // skip until the next line break character
             while (rawdata[i] != '\n' && rawdata[i] != '\0') {
@@ -1015,15 +1015,15 @@ static void parse_obj(
         }
     }
     
-    log_assert(*triangles_recipient_size > 0);
+    log_assert(*locked_vertices_recipient_size > 0);
     
     #ifndef LOGGER_IGNORE_ASSERTS
-    if (*triangles_recipient_size >= ALL_LOCKED_VERTICES_SIZE) {
+    if (*locked_vertices_recipient_size >= ALL_LOCKED_VERTICES_SIZE) {
         char error_msg[100];
         strcpy_capped(error_msg, 100, "Error: ALL_LOCKED_VERTICES_SIZE was ");
         strcat_uint_capped(error_msg, 100, ALL_LOCKED_VERTICES_SIZE);
         strcat_capped(error_msg, 100, ", but recipient->triangles_size is ");
-        strcat_uint_capped(error_msg, 100, *triangles_recipient_size);
+        strcat_uint_capped(error_msg, 100, *locked_vertices_recipient_size);
         log_dump_and_crash(error_msg);
         assert(0);
     }
@@ -1099,7 +1099,7 @@ static void parse_obj(
             // discard the 'f'
             i++;
             log_assert(rawdata[i] == ' ');
-
+            
             // skip the space(s) after the 'f'
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
@@ -1273,19 +1273,22 @@ static void parse_obj(
                     /* int32_t using_material_3: */
                         using_material_i);
                 
-                *triangles_recipient_size += 1;
                 log_assert(new_triangle_i < ALL_LOCKED_VERTICES_SIZE);
                 
-                triangles_recipient[(new_triangle_i * 3) + 0] = new_triangle[0];
-                triangles_recipient[(new_triangle_i * 3) + 1] = new_triangle[1];
-                triangles_recipient[(new_triangle_i * 3) + 2] = new_triangle[2];
+                locked_vertices_recipient[(new_triangle_i * 3) + 0] =
+                    new_triangle[0];
+                locked_vertices_recipient[(new_triangle_i * 3) + 1] =
+                    new_triangle[1];
+                locked_vertices_recipient[(new_triangle_i * 3) + 2] =
+                    new_triangle[2];
+                (*locked_vertices_recipient_size) += 3;
                 
                 new_triangle_i++;
                 summary_recipient->vertices_size += 3;
             } else {
                 // there was only 1 triangle
             }
-
+            
             // if you get here there was only 1 triangle OR
             // there were 2 triangles and you already did the other one
             GPULockedVertex new_triangle[3];
@@ -1318,9 +1321,13 @@ static void parse_obj(
                 /* int32_t using_material_3: */
                     using_material_i);
             
-            triangles_recipient[(new_triangle_i * 3) + 0] = new_triangle[0];
-            triangles_recipient[(new_triangle_i * 3) + 1] = new_triangle[1];
-            triangles_recipient[(new_triangle_i * 3) + 2] = new_triangle[2];
+            locked_vertices_recipient[(new_triangle_i * 3) + 0] =
+                new_triangle[0];
+            locked_vertices_recipient[(new_triangle_i * 3) + 1] =
+                new_triangle[1];
+            locked_vertices_recipient[(new_triangle_i * 3) + 2] =
+                new_triangle[2];
+            (*locked_vertices_recipient_size) += 3;
             
             new_triangle_i++;
             summary_recipient->vertices_size += 3;
@@ -1330,13 +1337,13 @@ static void parse_obj(
             
             log_assert(rawdata[i] == '\n' || rawdata[i] == '\r');
             i++;
-
+            
         } else {
             // skip until the next line break character
             while (rawdata[i] != '\n' && rawdata[i] != '\0') {
                 i++;
             }
-
+            
             // skip the line break character
             while (rawdata[i] == '\n' || rawdata[i] == '\r') {
                 i++;
@@ -1346,7 +1353,6 @@ static void parse_obj(
     
     free_from_managed((uint8_t *)parser_vertex_buffer);
 }
-
 
 int32_t new_mesh_id_from_resource(
     const char * filename)
