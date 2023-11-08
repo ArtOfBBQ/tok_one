@@ -160,6 +160,15 @@ void init_application(void)
     assert(gpu_shared_data_collection.materials_allocation_size %
         4096 == 0);
     
+    gpu_shared_data_collection.locked_vertices_allocation_size =
+        (sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
+    gpu_shared_data_collection.locked_vertices_allocation_size +=
+        (4096 - (gpu_shared_data_collection.
+            locked_vertices_allocation_size % 4096));
+    assert(gpu_shared_data_collection.locked_vertices_allocation_size > 0);
+    assert(gpu_shared_data_collection.locked_vertices_allocation_size %
+        4096 == 0);
+    
     gpu_shared_data_collection.projection_constants_allocation_size =
         sizeof(GPUProjectionConstants);
     gpu_shared_data_collection.projection_constants_allocation_size +=
@@ -178,15 +187,6 @@ void init_application(void)
             (GPUVertex *)malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection.vertices_allocation_size,
                 4096);
-        
-        #ifndef LOGGER_IGNORE_ASSERTS
-        for (uint32_t i = 0; i < MAX_VERTICES_PER_BUFFER; i++) {
-            gpu_shared_data_collection.triple_buffers[frame_i].
-                vertices[i].texture_i = -1;
-            gpu_shared_data_collection.triple_buffers[frame_i].
-                vertices[i].texturearray_i = -1;
-        }
-        #endif
         
         gpu_shared_data_collection.triple_buffers[frame_i].polygon_collection =
             (GPUPolygonCollection *)malloc_from_unmanaged_aligned(
@@ -211,12 +211,17 @@ void init_application(void)
         gpu_shared_data_collection.triple_buffers[frame_i].camera->z_angle = 0.0f;
     }
     
-    gpu_shared_data_collection.materials =
+    gpu_shared_data_collection.locked_materials =
         (GPULockedMaterial *)malloc_from_unmanaged_aligned(
             gpu_shared_data_collection.materials_allocation_size,
             4096);
     
-    gpu_shared_data_collection.projection_constants =
+    gpu_shared_data_collection.locked_vertices =
+        (GPULockedVertex *)malloc_from_unmanaged_aligned(
+            gpu_shared_data_collection.locked_vertices_allocation_size,
+            4096);
+    
+    gpu_shared_data_collection.locked_pjc =
         (GPUProjectionConstants *)malloc_from_unmanaged_aligned(
             gpu_shared_data_collection.projection_constants_allocation_size,
             4096);

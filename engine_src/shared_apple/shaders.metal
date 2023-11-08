@@ -74,16 +74,18 @@ float get_distance(
 vertex RasterizerPixel
 vertex_shader(
     uint vertex_i [[ vertex_id ]],
-    const device GPUPolygonCollection * polygon_collection [[ buffer(0) ]],
-    const device GPULightCollection * light_collection [[ buffer(1) ]],
-    const device GPUCamera * camera [[ buffer(2) ]],
-    const device GPULockedVertex * locked_vertices [[ buffer(3) ]],
-    const device GPULockedMaterial * locked_materials [[ buffer(4) ]],
-    const device GPUProjectionConstants * projection_constants [[ buffer(5) ]])
+    const device GPUVertex * vertices [[ buffer(0) ]],
+    const device GPUPolygonCollection * polygon_collection [[ buffer(1) ]],
+    const device GPULightCollection * light_collection [[ buffer(2) ]],
+    const device GPUCamera * camera [[ buffer(3) ]],
+    const device GPULockedVertex * locked_vertices [[ buffer(4) ]],
+    const device GPULockedMaterial * locked_materials [[ buffer(5) ]],
+    const device GPUProjectionConstants * projection_constants [[ buffer(6) ]])
 {
     RasterizerPixel out;
     
-    uint polygon_i = 0;
+    uint polygon_i = vertices[vertex_i].polygon_i;
+    uint locked_vertex_i = vertices[vertex_i].locked_vertex_i;
     
     float4 parent_mesh_position = vector_float4(
         polygon_collection->xyz[polygon_i][0],
@@ -92,18 +94,18 @@ vertex_shader(
         0.0f);
     
     float4 mesh_vertices = vector_float4(
-        locked_vertices[vertex_i].xyz[0],
-        locked_vertices[vertex_i].xyz[1],
-        locked_vertices[vertex_i].xyz[2],
+        locked_vertices[locked_vertex_i].xyz[0],
+        locked_vertices[locked_vertex_i].xyz[1],
+        locked_vertices[locked_vertex_i].xyz[2],
         0.0f);
     
     mesh_vertices *= polygon_collection->scale_factor[polygon_i];
     mesh_vertices[3] = 1.0f;
     
     float4 mesh_normals = vector_float4(
-        locked_vertices[vertex_i].normal_xyz[0],
-        locked_vertices[vertex_i].normal_xyz[1],
-        locked_vertices[vertex_i].normal_xyz[2],
+        locked_vertices[locked_vertex_i].normal_xyz[0],
+        locked_vertices[locked_vertex_i].normal_xyz[1],
+        locked_vertices[locked_vertex_i].normal_xyz[2],
         1.0f);
      
     // rotate vertices
@@ -163,7 +165,7 @@ vertex_shader(
         (out.position[2] * projection_constants->q) -
         (projection_constants->near * projection_constants->q);
     
-    uint material_i = locked_vertices[vertex_i].material_i;
+    uint material_i = locked_vertices[locked_vertex_i].material_i;
     
     out.color = vector_float4(
         locked_materials[material_i].RGBA[0],
@@ -175,8 +177,8 @@ vertex_shader(
     out.texturearray_i = locked_materials[material_i].texturearray_i;
     out.texture_i = locked_materials[material_i].texture_i;
     out.texture_coordinate = vector_float2(
-        locked_vertices[vertex_i].uv[0],
-        locked_vertices[vertex_i].uv[1]);
+        locked_vertices[locked_vertex_i].uv[0],
+        locked_vertices[locked_vertex_i].uv[1]);
     
     if (polygon_collection->ignore_lighting[polygon_i] > 0.0f) {
         out.lighting = float4(1.0f, 1.0f, 1.0f, 1.0f);

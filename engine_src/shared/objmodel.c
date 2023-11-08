@@ -57,11 +57,11 @@ void init_all_meshes(void) {
         construct_mesh_summary(&all_mesh_summaries[i], (int32_t)i);
     }
     
-    assert(ALL_MESH_VERTICES_SIZE > 0);
+    assert(ALL_LOCKED_VERTICES_SIZE > 0);
     all_mesh_vertices = (GPULockedVertex *)malloc_from_unmanaged(
-        sizeof(GPULockedVertex) * ALL_MESH_VERTICES_SIZE);
+        sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
     
-    for (uint32_t i = 0; i < ALL_MESH_VERTICES_SIZE; i++) {
+    for (uint32_t i = 0; i < ALL_LOCKED_VERTICES_SIZE; i++) {
         all_mesh_vertices[i].material_i = -1;
     }
     
@@ -528,7 +528,7 @@ static void assert_objmodel_validity(int32_t mesh_id) {
     log_assert(mesh_id < (int32_t)all_mesh_summaries_size);
     log_assert(all_mesh_summaries[mesh_id].vertices_head_i >= 0);
     log_assert(
-        all_mesh_summaries[mesh_id].vertices_size < ALL_MESH_VERTICES_SIZE);
+        all_mesh_summaries[mesh_id].vertices_size < ALL_LOCKED_VERTICES_SIZE);
     int32_t all_vertices_tail_i =
         all_mesh_summaries[mesh_id].vertices_head_i +
         all_mesh_summaries[mesh_id].vertices_size;
@@ -571,55 +571,6 @@ static void assert_objmodel_validity(int32_t mesh_id) {
         log_assert(mentioned_i >= 0);
         log_assert(mentioned_i < all_mesh_summaries[mesh_id].materials_size);
     }
-    
-    #ifndef LOGGER_IGNORE_ASSERTS
-    for (
-        int32_t mat_i = 0;
-        mat_i < (int32_t)all_mesh_summaries[mesh_id].materials_size;
-        mat_i++)
-    {
-        bool32_t material_was_mentioned_in_at_least_one_triangle = false;
-        
-        for (int32_t i = 0; i < (int32_t)materials_mentioned_size; i++) {
-            if (materials_mentioned[i] == mat_i) {
-                material_was_mentioned_in_at_least_one_triangle = true;
-            }
-        }
-        
-        if (!material_was_mentioned_in_at_least_one_triangle) {
-            char err_msg[256];
-            strcpy_capped(
-                err_msg,
-                256,
-                "Material[");
-            strcat_int_capped(
-                err_msg,
-                256,
-                mat_i);
-            strcat_capped(
-                err_msg,
-                256,
-                "]: '");
-            strcat_capped(
-                err_msg,
-                256,
-                all_mesh_summaries[mesh_id].material_names[mat_i]);
-            strcat_capped(
-                err_msg,
-                256,
-                "' of 3D model in file: ");
-            strcat_capped(
-                err_msg,
-                256,
-                all_mesh_summaries[mesh_id].resource_name);
-            strcat_capped(
-                err_msg,
-                256,
-                " was never used by any of its triangle faces.");
-            log_dump_and_crash(err_msg);
-        }
-    }
-    #endif
 }
 
 static void guess_ztriangle_normal(zTriangle * input) {
@@ -870,34 +821,34 @@ static void parse_obj(
             dbg_i++;
         }
         dbg_newline[dbg_i] = '\0';
-
+        
         if (
             rawdata[i] == 'v' &&
             rawdata[i+1] == ' ')
         {
             // discard the 'v'
             i++;
-
+            
             // read vertex data
             zVertex new_vertex;
-
+            
             // skip the space(s) after the 'v'
             log_assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
-
+            
             // read vertex x
             new_vertex.x = string_to_float(rawdata + i);
-
+            
             // discard vertex x
             i += chars_till_next_space_or_slash(
                 rawdata + i);
             log_assert(rawdata[i] == ' ');
-
+            
             // discard the spaces after vertex x
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
-
+            
             // read vertex y
             new_vertex.y = string_to_float(rawdata + i);
             i += chars_till_next_space_or_slash(
@@ -905,7 +856,7 @@ static void parse_obj(
             log_assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
-
+            
             // read vertex z
             new_vertex.z = string_to_float(rawdata + i);
             i += chars_till_next_space_or_slash(
@@ -1001,12 +952,12 @@ static void parse_obj(
             i += chars_till_next_space_or_slash(
                 rawdata + i);
             log_assert(rawdata[i] == ' ');
-
+            
             // skip the space(s) after the normal x
             log_assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
-
+            
             // read the normal y
             parser_normals_buffer[next_normal_i].y =
                 string_to_float(rawdata + i);
@@ -1015,7 +966,7 @@ static void parse_obj(
             i += chars_till_next_space_or_slash(
                 rawdata + i);
             log_assert(rawdata[i] == ' ');
-
+                
             // skip the space(s) after the normal y
             log_assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
@@ -1048,7 +999,7 @@ static void parse_obj(
                     first_material_or_face_i = i;
                 }
             }
-
+            
             if (rawdata[i] == 'f') {
                 *triangles_recipient_size += 1;
             }
@@ -1056,28 +1007,28 @@ static void parse_obj(
             while (rawdata[i] != '\n' && rawdata[i] != '\0') {
                 i++;
             }
-
+            
             // skip the line break character
             while (rawdata[i] == '\n' || rawdata[i] == '\r') {
                 i++;
             }
         }
     }
-
+    
     log_assert(*triangles_recipient_size > 0);
     
     #ifndef LOGGER_IGNORE_ASSERTS
-    if (*triangles_recipient_size >= ALL_MESH_VERTICES_SIZE) {
+    if (*triangles_recipient_size >= ALL_LOCKED_VERTICES_SIZE) {
         char error_msg[100];
-        strcpy_capped(error_msg, 100, "Error: ALL_MESH_VERTICES_SIZE was ");
-        strcat_uint_capped(error_msg, 100, ALL_MESH_VERTICES_SIZE);
+        strcpy_capped(error_msg, 100, "Error: ALL_LOCKED_VERTICES_SIZE was ");
+        strcat_uint_capped(error_msg, 100, ALL_LOCKED_VERTICES_SIZE);
         strcat_capped(error_msg, 100, ", but recipient->triangles_size is ");
         strcat_uint_capped(error_msg, 100, *triangles_recipient_size);
         log_dump_and_crash(error_msg);
         assert(0);
     }
     #endif
-
+    
     // second pass starts at material or face specifications
     i = first_material_or_face_i;
     uint32_t new_triangle_i = 0;
@@ -1094,7 +1045,7 @@ static void parse_obj(
             rawdata[i+6] == ' ')
         {
             uint32_t j = i + 7;
-
+            
             char material_name[OBJ_STRING_SIZE];
             uint32_t material_name_size = 0;
             while (
@@ -1108,7 +1059,7 @@ static void parse_obj(
             material_name[material_name_size] = '\0';
             
             bool32_t already_existed = false;
-
+            
             for (
                 int32_t mat_i = 0;
                 mat_i < (int32_t)summary_recipient->materials_size;
@@ -1124,7 +1075,7 @@ static void parse_obj(
                     break;
                 }
             }
-
+            
             if (!already_existed) {
                 strcpy_capped(
                     summary_recipient->material_names[
@@ -1181,7 +1132,7 @@ static void parse_obj(
             log_assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
-
+            
             int32_t vertex_i_1 = string_to_int32(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
@@ -1213,7 +1164,7 @@ static void parse_obj(
             log_assert(rawdata[i] == ' ');
             i += chars_till_next_nonspace(rawdata + i);
             log_assert(rawdata[i] != ' ');
-
+            
             int32_t vertex_i_2 = string_to_int32(rawdata + i);
             i += chars_till_next_space_or_slash(
                 rawdata + i);
@@ -1234,7 +1185,7 @@ static void parse_obj(
                         rawdata + i);
                 }
             }
-
+            
             // add index to normal if any
             if (rawdata[i] == '/') {
                 i++;
@@ -1246,9 +1197,9 @@ static void parse_obj(
             }
             
             while (rawdata[i] == ' ') { i++; }
-
+            
             if (rawdata[i] != '\n' && rawdata[i] != '\r') {
-                int32_t vertex_i_3 = string_to_int32(rawdata + i);
+                // int32_t vertex_i_3 = string_to_int32(rawdata + i);
                 i += chars_till_next_space_or_slash(
                     rawdata + i);
                 int32_t uv_coord_i_3 = -1;
@@ -1294,9 +1245,6 @@ static void parse_obj(
                 log_assert(normals_i_1 < PARSER_VERTEX_BUFFER_SIZE);
                 log_assert(normals_i_2 < PARSER_VERTEX_BUFFER_SIZE);
                 
-                uint32_t target_vertex_0 = 0;
-                uint32_t target_vertex_1 = 1;
-                uint32_t target_vertex_2 = 2;
                 populate_new_triangle_with_parser_buffers(
                     /* GPULockedVertex * triangle_recipient: */
                         new_triangle,
@@ -1326,7 +1274,7 @@ static void parse_obj(
                         using_material_i);
                 
                 *triangles_recipient_size += 1;
-                log_assert(new_triangle_i < ALL_MESH_VERTICES_SIZE);
+                log_assert(new_triangle_i < ALL_LOCKED_VERTICES_SIZE);
                 
                 triangles_recipient[(new_triangle_i * 3) + 0] = new_triangle[0];
                 triangles_recipient[(new_triangle_i * 3) + 1] = new_triangle[1];

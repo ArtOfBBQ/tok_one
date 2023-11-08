@@ -19,15 +19,18 @@ typedef struct GPUDataForSingleFrame
 typedef struct GPUSharedDataCollection
 {
     GPUDataForSingleFrame triple_buffers[3];
-    GPUProjectionConstants * projection_constants;
-    GPULockedMaterial * materials;
-    uint32_t frame_i;
+    GPUProjectionConstants * locked_pjc;
+    GPULockedMaterial * locked_materials;
+    GPULockedVertex * locked_vertices;
+    uint32_t locked_vertices_size;
     uint32_t vertices_allocation_size;
+    uint32_t locked_vertices_allocation_size;
     uint32_t polygons_allocation_size;
     uint32_t lights_allocation_size;
     uint32_t camera_allocation_size;
     uint32_t materials_allocation_size;
     uint32_t projection_constants_allocation_size;
+    uint32_t frame_i;
 } GPUSharedDataCollection;
 
 extern GPUSharedDataCollection gpu_shared_data_collection;

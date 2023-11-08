@@ -344,14 +344,7 @@ void shared_gameloop_update(
     frame_data->vertices_size = 0;
     frame_data->polygon_collection->size = 0;
     hardware_render(
-        /* GPUVertex * next_gpu_workload: */
-            frame_data->vertices,
-        /* uint32_t * next_gpu_workload_size: */
-            &frame_data->vertices_size,
-        /* GPULightCollection * light_collection: */
-            frame_data->light_collection,
-        /* GPUPolygonCollection * polygon_collection: */
-            frame_data->polygon_collection,
+            frame_data,
         /* uint64_t elapsed_microseconds: */
             elapsed);
     

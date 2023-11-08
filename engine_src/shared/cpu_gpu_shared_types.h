@@ -9,19 +9,8 @@
 
 #pragma pack(push, 1)
 typedef struct GPUVertex {
-    float x;
-    float y;
-    float z;
-    /* Currently same for "entire" triangle */
-    float normal_x;
-    float normal_y;
-    float normal_z;
-    /* Below: same for entire material: */
-    float uv  [2];
-    float RGBA[4];
-    int   texturearray_i; // -1 for no texture
-    int   texture_i;      // -1 for no texture
-    int   polygon_i;      // index into GPUPolygonCollection buffer
+    int locked_vertex_i; // index into GPULockedVertex buffer
+    int polygon_i;       // index into GPUPolygonCollection buffer
 } GPUVertex;
 
 /*
