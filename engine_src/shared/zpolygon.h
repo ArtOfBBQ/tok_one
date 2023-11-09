@@ -26,7 +26,7 @@ void zcamera_move_forward(
     GPUCamera * to_move,
     const float distance);
 
-typedef struct TriangleMaterial {
+typedef struct VertexMaterial {
     float color[4];
     int32_t texturearray_i; /*
                             the index in the global var
@@ -35,13 +35,13 @@ typedef struct TriangleMaterial {
                             instead"
                             */
     int32_t texture_i;     // index in texturearray
-} TriangleMaterial;
+} VertexMaterial;
 
 typedef struct zPolygon {
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
     
-    TriangleMaterial triangle_materials[MAX_MATERIALS_SIZE];
-    uint32_t triangle_materials_size;
+    VertexMaterial vertex_materials[MAX_MATERIALS_PER_POLYGON];
+    uint32_t vertex_materials_size;
     
     int32_t object_id;
     int32_t touchable_id;

@@ -598,16 +598,16 @@ static void resolve_single_animation_effects(
         if (anim->set_texture_array_i || anim->set_texture_i) {
             for (
                 uint32_t mat_i = 0;
-                mat_i < zpolygons_to_render[zp_i].triangle_materials_size;
+                mat_i < zpolygons_to_render[zp_i].vertex_materials_size;
                 mat_i++)
             {
                 if (anim->set_texture_array_i) {
-                    zpolygons_to_render[zp_i].triangle_materials[mat_i].
+                    zpolygons_to_render[zp_i].vertex_materials[mat_i].
                         texturearray_i =
                             anim->new_texture_array_i;
                 }
                 if (anim->set_texture_i) {
-                    zpolygons_to_render[zp_i].triangle_materials[mat_i].
+                    zpolygons_to_render[zp_i].vertex_materials[mat_i].
                         texture_i =
                             anim->new_texture_i;
                 }
@@ -628,11 +628,11 @@ static void resolve_single_animation_effects(
                     for (
                         uint32_t mat_i = 0;
                         mat_i < zpolygons_to_render[zp_i].
-                            triangle_materials_size;
+                            vertex_materials_size;
                         mat_i++)
                     {
                         zpolygons_to_render[zp_i].
-                            triangle_materials[mat_i].color[c] +=
+                            vertex_materials[mat_i].color[c] +=
                                 delta;
                     }
                 }
@@ -640,17 +640,17 @@ static void resolve_single_animation_effects(
                 for (
                     uint32_t mat_i = 0;
                     mat_i < zpolygons_to_render[zp_i].
-                        triangle_materials_size;
+                        vertex_materials_size;
                     mat_i++)
                 {
                     float cur_val =
                         zpolygons_to_render[zp_i].
-                            triangle_materials[mat_i].color[c];
+                            vertex_materials[mat_i].color[c];
                     float delta_val = anim->final_rgba[c] - cur_val;
                     
                     if (delta_val > 0.00001f || delta_val < 0.00001f) {
                         zpolygons_to_render[zp_i].
-                                triangle_materials[mat_i].color[c] +=
+                                vertex_materials[mat_i].color[c] +=
                             delta_val /
                                 ((float)remaining_microseconds_at_start_of_run /
                                     elapsed_this_run);

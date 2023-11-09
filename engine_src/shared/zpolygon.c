@@ -26,13 +26,13 @@ static void set_zpolygon_hitbox(
     {
         for (uint32_t m = 0; m < 3; m++) {
             float cur_vertex_x =
-                all_mesh_vertices[vert_i + m].xyz[0] *
+                all_mesh_vertices[vert_i + m].gpu_data.xyz[0] *
                         mesh->x_multiplier;
             float cur_vertex_y =
-                all_mesh_vertices[vert_i + m].xyz[1] *
+                all_mesh_vertices[vert_i + m].gpu_data.xyz[1] *
                         mesh->y_multiplier;
             float cur_vertex_z =
-                all_mesh_vertices[vert_i + m].xyz[2] *
+                all_mesh_vertices[vert_i + m].gpu_data.xyz[2] *
                         mesh->z_multiplier;
             
             if (cur_vertex_x < left) {
@@ -79,12 +79,12 @@ void request_zpolygon_to_render(zPolygon * to_add)
     
     for (
         int32_t mat_i = 0;
-        mat_i < (int32_t)to_add->triangle_materials_size;
+        mat_i < (int32_t)to_add->vertex_materials_size;
         mat_i++)
     {
         for (int32_t col_i = 0; col_i < 4; col_i++) {
-            log_assert(to_add->triangle_materials[mat_i].color[col_i] >= 0.0f);
-            log_assert(to_add->triangle_materials[mat_i].color[col_i] <= 1.0f);
+            log_assert(to_add->vertex_materials[mat_i].color[col_i] >= 0.0f);
+            log_assert(to_add->vertex_materials[mat_i].color[col_i] <= 1.0f);
         }
     }
     
@@ -92,44 +92,17 @@ void request_zpolygon_to_render(zPolygon * to_add)
         all_mesh_summaries[to_add->mesh_id].vertices_head_i +
             all_mesh_summaries[to_add->mesh_id].vertices_size;
     for (
-        int32_t vert_i = all_mesh_summaries[to_add->mesh_id].vertices_head_i;
-        vert_i < all_mesh_vertices_tail_i;
-        vert_i++)
+        int32_t mat_i = 0;
+        mat_i < to_add->vertex_materials_size;
+        mat_i++)
     {
-        int32_t material_i = all_mesh_vertices[vert_i].material_i;
-        
-        log_assert(material_i >= 0);
-        #ifndef LOGGER_IGNORE_ASSERTS
-        if (material_i >= (int32_t)to_add->triangle_materials_size) {
-            char err_msg[256];
-            strcpy_capped(err_msg, 256, "New zpolygon has only ");
-            strcat_uint_capped(err_msg, 256, to_add->triangle_materials_size);
-            strcat_capped(
-                err_msg,
-                256,
-                " material settings, but is using mesh ");
-            strcat_int_capped(err_msg, 256, to_add->mesh_id);
-            strcat_capped(err_msg, 256, " (");
-            strcat_capped(
-                err_msg,
-                256,
-                all_mesh_summaries[to_add->mesh_id].resource_name);
-            strcat_capped(err_msg, 256, ") which requires ");
-            strcat_uint_capped(
-                err_msg,
-                256,
-                all_mesh_summaries[to_add->mesh_id].materials_size);
-            log_dump_and_crash(err_msg);
-        }
-        #endif
-        
-        if (to_add->triangle_materials[material_i].texturearray_i >= 0) {
+        if (to_add->vertex_materials[mat_i].texturearray_i >= 0) {
             register_high_priority_if_unloaded(
-                to_add->triangle_materials[material_i].texturearray_i,
-                to_add->triangle_materials[material_i].texture_i);
+                to_add->vertex_materials[mat_i].texturearray_i,
+                to_add->vertex_materials[mat_i].texture_i);
         }
         
-        log_assert(to_add->triangle_materials[material_i].texture_i < 5000);
+        log_assert(to_add->vertex_materials[mat_i].texture_i < 5000);
     }
     
     // set the hitbox height, width, and depth
@@ -247,16 +220,16 @@ void construct_zpolygon(zPolygon * to_construct) {
     to_construct->rgb_bonus[1] = 0.0f;
     to_construct->rgb_bonus[2] = 0.0f;
     
-    for (uint32_t i = 0; i < MAX_MATERIALS_SIZE; i++) {
-        to_construct->triangle_materials[i].color[0] = 1.0f;
-        to_construct->triangle_materials[i].color[1] = 1.0f;
-        to_construct->triangle_materials[i].color[2] = 1.0f;
-        to_construct->triangle_materials[i].color[3] = 1.0f;
-        to_construct->triangle_materials[i].texture_i = -1;
-        to_construct->triangle_materials[i].texturearray_i = -1;
+    for (uint32_t i = 0; i < MAX_MATERIALS_PER_POLYGON; i++) {
+        to_construct->vertex_materials[i].color[0] = 1.0f;
+        to_construct->vertex_materials[i].color[1] = 1.0f;
+        to_construct->vertex_materials[i].color[2] = 1.0f;
+        to_construct->vertex_materials[i].color[3] = 1.0f;
+        to_construct->vertex_materials[i].texture_i = -1;
+        to_construct->vertex_materials[i].texturearray_i = -1;
     }
     
-    to_construct->triangle_materials_size = 0;
+    to_construct->vertex_materials_size = 0;
 }
 
 zTriangle
@@ -941,13 +914,13 @@ void construct_quad(
     recipient->x_multiplier = width / current_width;
     recipient->y_multiplier = height / current_height;
     
-    recipient->triangle_materials[0].color[0] = 1.0f;
-    recipient->triangle_materials[0].color[1] = 1.0f;
-    recipient->triangle_materials[0].color[2] = 1.0f;
-    recipient->triangle_materials[0].color[3] = 1.0f;
-    recipient->triangle_materials[0].texturearray_i = -1;
-    recipient->triangle_materials[0].texture_i = -1;
-    recipient->triangle_materials_size = 1;
+    recipient->vertex_materials[0].color[0] = 1.0f;
+    recipient->vertex_materials[0].color[1] = 1.0f;
+    recipient->vertex_materials[0].color[2] = 1.0f;
+    recipient->vertex_materials[0].color[3] = 1.0f;
+    recipient->vertex_materials[0].texturearray_i = -1;
+    recipient->vertex_materials[0].texture_i = -1;
+    recipient->vertex_materials_size = 1;
 }
 
 void construct_quad_around(
@@ -975,13 +948,13 @@ void construct_quad_around(
     recipient->y_multiplier = height / current_height;
     
     recipient->mesh_id = 0;
-    recipient->triangle_materials[0].color[0] = 1.0f;
-    recipient->triangle_materials[0].color[1] = 1.0f;
-    recipient->triangle_materials[0].color[2] = 1.0f;
-    recipient->triangle_materials[0].color[3] = 1.0f;
-    recipient->triangle_materials[0].texturearray_i = -1;
-    recipient->triangle_materials[0].texture_i = -1;
-    recipient->triangle_materials_size = 1;
+    recipient->vertex_materials[0].color[0] = 1.0f;
+    recipient->vertex_materials[0].color[1] = 1.0f;
+    recipient->vertex_materials[0].color[2] = 1.0f;
+    recipient->vertex_materials[0].color[3] = 1.0f;
+    recipient->vertex_materials[0].texturearray_i = -1;
+    recipient->vertex_materials[0].texture_i = -1;
+    recipient->vertex_materials_size = 1;
 }
 
 void construct_cube_around(
@@ -1012,11 +985,11 @@ void construct_cube_around(
     recipient->z_multiplier = depth / current_depth;
     
     recipient->mesh_id = 1;
-    recipient->triangle_materials[0].color[0] = 1.0f;
-    recipient->triangle_materials[0].color[1] = 1.0f;
-    recipient->triangle_materials[0].color[2] = 1.0f;
-    recipient->triangle_materials[0].color[3] = 1.0f;
-    recipient->triangle_materials[0].texturearray_i = -1;
-    recipient->triangle_materials[0].texture_i = -1;
-    recipient->triangle_materials_size = 1;
+    recipient->vertex_materials[0].color[0] = 1.0f;
+    recipient->vertex_materials[0].color[1] = 1.0f;
+    recipient->vertex_materials[0].color[2] = 1.0f;
+    recipient->vertex_materials[0].color[3] = 1.0f;
+    recipient->vertex_materials[0].texturearray_i = -1;
+    recipient->vertex_materials[0].texture_i = -1;
+    recipient->vertex_materials_size = 1;
 }

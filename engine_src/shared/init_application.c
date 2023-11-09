@@ -150,16 +150,7 @@ void init_application(void)
     gpu_shared_data_collection.camera_allocation_size +=
         (4096 - (gpu_shared_data_collection.camera_allocation_size % 4096));
     assert(gpu_shared_data_collection.camera_allocation_size % 4096 == 0);
-    
-    gpu_shared_data_collection.materials_allocation_size =
-        (sizeof(GPULockedMaterial) * MAX_MATERIALS_SIZE);
-    gpu_shared_data_collection.materials_allocation_size +=
-        (4096 - (gpu_shared_data_collection.
-            materials_allocation_size % 4096));
-    assert(gpu_shared_data_collection.materials_allocation_size > 0);
-    assert(gpu_shared_data_collection.materials_allocation_size %
-        4096 == 0);
-    
+        
     gpu_shared_data_collection.locked_vertices_allocation_size =
         (sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
     gpu_shared_data_collection.locked_vertices_allocation_size +=
@@ -210,11 +201,6 @@ void init_application(void)
         gpu_shared_data_collection.triple_buffers[frame_i].camera->y_angle = 0.0f;
         gpu_shared_data_collection.triple_buffers[frame_i].camera->z_angle = 0.0f;
     }
-    
-    gpu_shared_data_collection.locked_materials =
-        (GPULockedMaterial *)malloc_from_unmanaged_aligned(
-            gpu_shared_data_collection.materials_allocation_size,
-            4096);
     
     gpu_shared_data_collection.locked_vertices =
         (GPULockedVertex *)malloc_from_unmanaged_aligned(

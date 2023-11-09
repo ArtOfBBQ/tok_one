@@ -118,116 +118,98 @@ void client_logic_startup(void) {
     register_new_texturearray_from_files(
         (const char **)filenames_3, 1);
     
-    //    char * obj_filenames[3] = {
-    //        "xmas_tree.obj",
-    //        "tree.obj",
-    //        "disk.obj",
-    //    };
-    
-    //    int32_t xmastree_mesh_id = new_mesh_id_from_resource(obj_filenames[0]);
-    //
-    //    center_mesh_offsets(xmastree_mesh_id);
-    
-    // request_particle_fountain();
-    
-    // example 1: the 'christams tree' obj file
-    //    for (uint32_t i = 0; i <  700; i++) {
-    //        construct_zpolygon(&xmastree);
-    //        xmastree.mesh_id = xmastree_mesh_id;
-    //        xmastree.x = 0.0f + (0.30f * (i % 30));
-    //        xmastree.y = -0.5f + (0.30f * (i / 30));
-    //        xmastree.z = 1.0f + (0.015f * i);
-    //        xmastree.triangle_materials[0].color[0] = 0.05f; // christmas decorations?
-    //        xmastree.triangle_materials[0].color[1] = 0.05f;
-    //        xmastree.triangle_materials[0].color[2] = 1.0f;
-    //        xmastree.triangle_materials[0].color[3] = 1.0f;
-    //        xmastree.triangle_materials[1].color[0] = 1.0f; // leaves
-    //        xmastree.triangle_materials[1].color[1] = 1.0f;
-    //        xmastree.triangle_materials[1].color[2] = 1.0f;
-    //        xmastree.triangle_materials[1].color[3] = 1.0f;
-    //        xmastree.triangle_materials[1].texturearray_i = 2;
-    //        xmastree.triangle_materials[1].texture_i = 0;
-    //        xmastree.triangle_materials[2].color[0] = 0.3f; // trunk
-    //        xmastree.triangle_materials[2].color[1] = 0.08f;
-    //        xmastree.triangle_materials[2].color[2] = 0.05f;
-    //        xmastree.triangle_materials[2].color[3] = 1.0f;
-    //        xmastree.triangle_materials_size = 3;
-    //        xmastree.x_multiplier = 0.05f;
-    //        xmastree.y_multiplier = 0.05f;
-    //        xmastree.z_multiplier = 0.05f;
-    //
-    //        // example 2: use a quad instead
-    //        //        construct_quad(
-    //        //            /* const float left_x: */
-    //        //                0.25f,
-    //        //            /* const float bottom_y: */
-    //        //                0.0f,
-    //        //            /* const float z: */
-    //        //                0.75f,
-    //        //            /* const float width: */
-    //        //                0.2f,
-    //        //            /* const float height: */
-    //        //                0.2f,
-    //        //            /* zPolygon * recipient: */
-    //        //                &xmastree);
-    //        //        xmastree.triangle_materials[0].texturearray_i = 3;
-    //        //        xmastree.triangle_materials[0].texture_i = 0;
-    //
-    //        // this code needs to run regardless of what example mesh we're using
-    //        xmastree_object_id = next_nonui_object_id();
-    //        xmastree.object_id = xmastree_object_id;
-    //        request_zpolygon_to_render(&xmastree);
-    //
-    //        if (i % 14 == 0) {
-    //            zLightSource * im_a_light = next_zlight();
-    //            im_a_light->x = xmastree.x;
-    //            im_a_light->y = xmastree.y;
-    //            im_a_light->z = xmastree.z;
-    //            im_a_light->ambient = 0.8f;
-    //            im_a_light->diffuse = 0.8f;
-    //            im_a_light->RGBA[0] = 0.0f + ((i % 5) * 0.20f);
-    //            im_a_light->RGBA[1] = 0.0f + (((i+1) % 5) * 0.20f);
-    //            im_a_light->RGBA[2] = 1.0f - ((i % 5) * 0.20f);
-    //            im_a_light->RGBA[3] = 1.0f;
-    //            im_a_light->reach = 3.0f;
-    //            im_a_light->deleted = false;
-    //            commit_zlight(im_a_light);
-    //        }
-    //    }
-    
-    //    create_shattered_version_of_mesh(
-    //        /* mesh_id: */
-    //            xmastree.mesh_id,
-    //        /* triangles_multiplier: */
-    //            30);
-    //
-    //    label_object_id = next_nonui_object_id();
-    //    request_label_around(
-    //        label_object_id,
-    //        "Hi",
-    //        /* mid_x_pixelspace: */ window_globals->window_width / 2,
-    //        /* y: */ window_globals->window_height / 2,
-    //        /* z: */ 0.75f,
-    //        /* max_width: */ (window_globals->window_width / 4) * 3,
-    //        /* ignore_camera: */ true);
-    
-    zPolygon simple_quad;
-    construct_zpolygon(&simple_quad);
-    simple_quad.mesh_id = 0;
-    simple_quad.x = 0;
-    simple_quad.y = 0;
-    simple_quad.z = 0.2f;
-    simple_quad.x_multiplier = get_x_multiplier_for_width(&simple_quad, 0.25f);
-    simple_quad.y_multiplier = get_y_multiplier_for_height(&simple_quad, 0.25f);
-    simple_quad.triangle_materials[0].color[0] = 1.0f;
-    simple_quad.triangle_materials[0].color[1] = 0.2f;
-    simple_quad.triangle_materials[0].color[2] = 0.3f;
-    simple_quad.triangle_materials[0].color[3] = 1.0f;
-    simple_quad.triangle_materials[0].texturearray_i = -1;
-    simple_quad.triangle_materials[0].texture_i = -1;
-    simple_quad.triangle_materials_size = 1;
-    simple_quad.ignore_lighting = true;
-    request_zpolygon_to_render(&simple_quad);
+    char * obj_filenames[3] = {
+        "xmas_tree.obj",
+        "tree.obj",
+        "disk.obj",
+    };
+
+    int32_t xmastree_mesh_id = new_mesh_id_from_resource(obj_filenames[0]);
+
+    center_mesh_offsets(xmastree_mesh_id);
+
+ request_particle_fountain();
+
+ // example 1: the 'christams tree' obj file
+    for (uint32_t i = 0; i <  700; i++) {
+        construct_zpolygon(&xmastree);
+        xmastree.mesh_id = xmastree_mesh_id;
+        xmastree.x = 0.0f + (0.30f * (i % 30));
+        xmastree.y = -0.5f + (0.30f * (i / 30));
+        xmastree.z = 1.0f + (0.015f * i);
+        xmastree.vertex_materials[0].color[0] = 0.05f; // christmas decorations?
+        xmastree.vertex_materials[0].color[1] = 0.05f;
+        xmastree.vertex_materials[0].color[2] = 1.0f;
+        xmastree.vertex_materials[0].color[3] = 1.0f;
+        xmastree.vertex_materials[1].color[0] = 1.0f; // leaves
+        xmastree.vertex_materials[1].color[1] = 1.0f;
+        xmastree.vertex_materials[1].color[2] = 1.0f;
+        xmastree.vertex_materials[1].color[3] = 1.0f;
+        xmastree.vertex_materials[1].texturearray_i = 2;
+        xmastree.vertex_materials[1].texture_i = 0;
+        xmastree.vertex_materials[2].color[0] = 0.3f; // trunk
+        xmastree.vertex_materials[2].color[1] = 0.08f;
+        xmastree.vertex_materials[2].color[2] = 0.05f;
+        xmastree.vertex_materials[2].color[3] = 1.0f;
+        xmastree.vertex_materials_size = 3;
+        xmastree.x_multiplier = 0.05f;
+        xmastree.y_multiplier = 0.05f;
+        xmastree.z_multiplier = 0.05f;
+
+        // example 2: use a quad instead
+        //        construct_quad(
+        //            /* const float left_x: */
+        //                0.25f,
+        //            /* const float bottom_y: */
+        //                0.0f,
+        //            /* const float z: */
+        //                0.75f,
+        //            /* const float width: */
+        //                0.2f,
+        //            /* const float height: */
+        //                0.2f,
+        //            /* zPolygon * recipient: */
+        //                &xmastree);
+        //        xmastree.triangle_materials[0].texturearray_i = 3;
+        //        xmastree.triangle_materials[0].texture_i = 0;
+
+        // this code needs to run regardless of what example mesh we're using
+        xmastree_object_id = next_nonui_object_id();
+        xmastree.object_id = xmastree_object_id;
+        request_zpolygon_to_render(&xmastree);
+
+        if (i % 14 == 0) {
+            zLightSource * im_a_light = next_zlight();
+            im_a_light->x = xmastree.x;
+            im_a_light->y = xmastree.y;
+            im_a_light->z = xmastree.z;
+            im_a_light->ambient = 0.8f;
+            im_a_light->diffuse = 0.8f;
+            im_a_light->RGBA[0] = 0.0f + ((i % 5) * 0.20f);
+            im_a_light->RGBA[1] = 0.0f + (((i+1) % 5) * 0.20f);
+            im_a_light->RGBA[2] = 1.0f - ((i % 5) * 0.20f);
+            im_a_light->RGBA[3] = 1.0f;
+            im_a_light->reach = 3.0f;
+            im_a_light->deleted = false;
+            commit_zlight(im_a_light);
+        }
+    }
+
+    create_shattered_version_of_mesh(
+        /* mesh_id: */
+            xmastree.mesh_id,
+        /* triangles_multiplier: */
+            30);
+
+    label_object_id = next_nonui_object_id();
+    request_label_around(
+        label_object_id,
+        "Hi",
+        /* mid_x_pixelspace: */ window_globals->window_width / 2,
+        /* y: */ window_globals->window_height / 2,
+        /* z: */ 0.75f,
+        /* max_width: */ (window_globals->window_width / 4) * 3,
+        /* ignore_camera: */ true);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -408,12 +390,6 @@ static void client_handle_keypresses(
                 &bullet);
         bullet.object_id = 54321 + (tok_rand() % 1000);
         bullet.z = camera.z;
-        bullet.triangle_materials[0].color[0] =
-            slider_value;
-        bullet.triangle_materials[0].color[1] =
-            ((float)(tok_rand() % 100)) / 100.0f;
-        bullet.triangle_materials[0].color[2] =
-            ((float)(tok_rand() % 100)) / 100.0f;
         bullet.ignore_lighting = true;
         bullet.x_multiplier = 0.02f;
         bullet.y_multiplier = 0.02f;

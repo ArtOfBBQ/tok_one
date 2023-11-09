@@ -9,6 +9,9 @@
 
 #pragma pack(push, 1)
 typedef struct GPUVertex {
+    float color[4];
+    int texturearray_i;
+    int texture_i;
     int locked_vertex_i; // index into GPULockedVertex buffer
     int polygon_i;       // index into GPUPolygonCollection buffer
 } GPUVertex;
@@ -30,7 +33,6 @@ typedef struct GPULockedVertex {
     float xyz       [3];
     float normal_xyz[3];
     float uv        [2];
-    int material_i;
 } GPULockedVertex;
 
 typedef struct GPUCamera {

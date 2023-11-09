@@ -231,14 +231,14 @@ void request_float_slider(
             &slider_back);
     slider_back.object_id = background_object_id;
     
-    slider_back.triangle_materials[0].texturearray_i =
+    slider_back.vertex_materials[0].texturearray_i =
         next_ui_element_settings->slider_background_texturearray_i;
-    slider_back.triangle_materials[0].texture_i =
+    slider_back.vertex_materials[0].texture_i =
         next_ui_element_settings->slider_background_texture_i;
-    slider_back.triangle_materials[0].color[0] = 1.0f;
-    slider_back.triangle_materials[0].color[1] = 1.0f;
-    slider_back.triangle_materials[0].color[2] = 1.0f;
-    slider_back.triangle_materials[0].color[3] = 1.0f;
+    slider_back.vertex_materials[0].color[0] = 1.0f;
+    slider_back.vertex_materials[0].color[1] = 1.0f;
+    slider_back.vertex_materials[0].color[2] = 1.0f;
+    slider_back.vertex_materials[0].color[3] = 1.0f;
     
     slider_back.ignore_lighting = next_ui_element_settings->ignore_lighting;
     slider_back.ignore_camera = next_ui_element_settings->ignore_camera;
@@ -285,14 +285,14 @@ void request_float_slider(
     
     slider_pin.y_offset = 0.0f;
     
-    slider_pin.triangle_materials[0].texturearray_i =
+    slider_pin.vertex_materials[0].texturearray_i =
         next_ui_element_settings->slider_pin_texturearray_i;
-    slider_pin.triangle_materials[0].texture_i =
+    slider_pin.vertex_materials[0].texture_i =
         next_ui_element_settings->slider_pin_texture_i;
-    slider_pin.triangle_materials[0].color[0] = 1.0f;
-    slider_pin.triangle_materials[0].color[1] = 1.0f;
-    slider_pin.triangle_materials[0].color[2] = 1.0f;
-    slider_pin.triangle_materials[0].color[3] = 1.0f;
+    slider_pin.vertex_materials[0].color[0] = 1.0f;
+    slider_pin.vertex_materials[0].color[1] = 1.0f;
+    slider_pin.vertex_materials[0].color[2] = 1.0f;
+    slider_pin.vertex_materials[0].color[3] = 1.0f;
     
     slider_pin.ignore_lighting = next_ui_element_settings->ignore_lighting;
     slider_pin.ignore_camera = next_ui_element_settings->ignore_camera;

@@ -9,7 +9,6 @@ static id light_buffers [3];
 static id vertex_buffers[3];
 static id camera_buffers[3];
 static id locked_vertex_buffer;
-static id material_buffer;
 static id projection_constants_buffer;
 
 // static id projection_constant_buffers[3];
@@ -28,23 +27,21 @@ static dispatch_semaphore_t drawing_semaphore;
 {
     for (uint32_t i = 0; i < ALL_LOCKED_VERTICES_SIZE; i++) {
         gpu_shared_data_collection.locked_vertices[i].xyz[0] =
-            all_mesh_vertices[i].xyz[0];
+            all_mesh_vertices[i].gpu_data.xyz[0];
         gpu_shared_data_collection.locked_vertices[i].xyz[1] =
-            all_mesh_vertices[i].xyz[1];
+            all_mesh_vertices[i].gpu_data.xyz[1];
         gpu_shared_data_collection.locked_vertices[i].xyz[2] =
-            all_mesh_vertices[i].xyz[2];
+            all_mesh_vertices[i].gpu_data.xyz[2];
         gpu_shared_data_collection.locked_vertices[i].normal_xyz[0] =
-            all_mesh_vertices[i].normal_xyz[0];
+            all_mesh_vertices[i].gpu_data.normal_xyz[0];
         gpu_shared_data_collection.locked_vertices[i].normal_xyz[1] =
-            all_mesh_vertices[i].normal_xyz[1];
+            all_mesh_vertices[i].gpu_data.normal_xyz[1];
         gpu_shared_data_collection.locked_vertices[i].normal_xyz[2] =
-            all_mesh_vertices[i].normal_xyz[2];
-        gpu_shared_data_collection.locked_vertices[i].material_i =
-            all_mesh_vertices[i].material_i;
+            all_mesh_vertices[i].gpu_data.normal_xyz[2];
         gpu_shared_data_collection.locked_vertices[i].uv[0] =
-            all_mesh_vertices[i].uv[0];
+            all_mesh_vertices[i].gpu_data.uv[0];
         gpu_shared_data_collection.locked_vertices[i].uv[1] =
-            all_mesh_vertices[i].uv[1];
+            all_mesh_vertices[i].gpu_data.uv[1];
     }
     
     gpu_shared_data_collection.locked_vertices_size =
@@ -283,24 +280,6 @@ static dispatch_semaphore_t drawing_semaphore;
             gpu_shared_data_collection.locked_vertices);
     locked_vertex_buffer = MTLBufferLockedVertices;
     
-    id<MTLBuffer> MTLBufferMaterials =
-        [with_metal_device
-            /* the pointer needs to be page aligned */
-                newBufferWithBytesNoCopy:
-                    gpu_shared_data_collection.locked_materials
-            /* the length weirdly needs to be page aligned also */
-                length:
-                    gpu_shared_data_collection.materials_allocation_size
-                options:
-                    MTLResourceStorageModeShared
-            /* deallocator = nil to opt out */
-                deallocator:
-                    nil];
-    assert(
-        [MTLBufferMaterials contents] ==
-            gpu_shared_data_collection.locked_materials);
-    material_buffer = MTLBufferMaterials;
-    
     id<MTLBuffer> MTLBufferProjectionConstants =
         [with_metal_device
             /* the pointer needs to be page aligned */
@@ -435,17 +414,7 @@ static dispatch_semaphore_t drawing_semaphore;
         gpu_shared_data_collection.triple_buffers[current_frame_i].
             polygon_collection->size,
         gpu_shared_data_collection.locked_vertices_size);
-    
-    // TODO: reset materials and colors
-    for (uint32_t i = 0; i < MAX_MATERIALS_SIZE; i++) {
-        gpu_shared_data_collection.locked_materials[i].texturearray_i = -1;
-        gpu_shared_data_collection.locked_materials[i].texture_i = -1;
-        gpu_shared_data_collection.locked_materials[i].RGBA[0] = 0.5f;
-        gpu_shared_data_collection.locked_materials[i].RGBA[1] = 0.1f;
-        gpu_shared_data_collection.locked_materials[i].RGBA[2] = 1.0f;
-        gpu_shared_data_collection.locked_materials[i].RGBA[3] = 1.0f;
-    }
-    
+        
     id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
     
     if (command_buffer == nil) {
@@ -524,22 +493,14 @@ static dispatch_semaphore_t drawing_semaphore;
             0 
         atIndex:
             4];
-    
-    [render_encoder
-        setVertexBuffer:
-            material_buffer
-        offset:
-            0
-        atIndex:
-            5];
-    
+        
     [render_encoder
         setVertexBuffer:
             projection_constants_buffer
         offset:
             0
         atIndex:
-            6];
+            5];
     
     for (
         uint32_t i = 0;

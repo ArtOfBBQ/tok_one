@@ -80,8 +80,7 @@ vertex_shader(
     const device GPULightCollection * light_collection [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPULockedVertex * locked_vertices [[ buffer(4) ]],
-    const device GPULockedMaterial * locked_materials [[ buffer(5) ]],
-    const device GPUProjectionConstants * projection_constants [[ buffer(6) ]])
+    const device GPUProjectionConstants * projection_constants [[ buffer(5) ]])
 {
     RasterizerPixel out;
     
@@ -180,18 +179,16 @@ vertex_shader(
     out.position[2]  =     
         (out.position[2] * projection_constants->q) -
         (projection_constants->near * projection_constants->q);
-    
-    uint material_i = locked_vertices[locked_vertex_i].material_i;
-    
+        
     out.color = vector_float4(
-        locked_materials[material_i].RGBA[0],
-        locked_materials[material_i].RGBA[1],
-        locked_materials[material_i].RGBA[2],
-        locked_materials[material_i].RGBA[3]);
+        vertices[vertex_i].color[0],
+        vertices[vertex_i].color[1],
+        vertices[vertex_i].color[2],
+        vertices[vertex_i].color[3]);
     clamp(out.color, 0.05f, 1.0f);
     
-    out.texturearray_i = locked_materials[material_i].texturearray_i;
-    out.texture_i = locked_materials[material_i].texture_i;
+    out.texturearray_i = vertices[vertex_i].texturearray_i;
+    out.texture_i = vertices[vertex_i].texture_i;
     out.texture_coordinate = vector_float2(
         locked_vertices[locked_vertex_i].uv[0],
         locked_vertices[locked_vertex_i].uv[1]);

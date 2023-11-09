@@ -89,9 +89,25 @@ inline static void zpolygons_to_triangles(
         {
             next_gpu_workload[*next_workload_size].locked_vertex_i = vert_i;
             next_gpu_workload[*next_workload_size].polygon_i = zp_i;
+            
+            uint32_t mat_i = all_mesh_vertices[vert_i].parent_material_i;
+            log_assert(mat_i < zpolygons_to_render[zp_i].vertex_materials_size);
+            
+            next_gpu_workload[*next_workload_size].color[0] =
+                zpolygons_to_render[zp_i].vertex_materials[mat_i].color[0];
+            next_gpu_workload[*next_workload_size].color[1] =
+                zpolygons_to_render[zp_i].vertex_materials[mat_i].color[1];
+            next_gpu_workload[*next_workload_size].color[2] =
+                zpolygons_to_render[zp_i].vertex_materials[mat_i].color[2];
+            next_gpu_workload[*next_workload_size].color[3] =
+                zpolygons_to_render[zp_i].vertex_materials[mat_i].color[3];
+            next_gpu_workload[*next_workload_size].texture_i =
+                zpolygons_to_render[zp_i].vertex_materials[mat_i].texture_i;
+            next_gpu_workload[*next_workload_size].texturearray_i =
+                zpolygons_to_render[zp_i].vertex_materials[mat_i].
+                    texturearray_i;
             *next_workload_size += 1;
         }
-        // *next_workload_size += all_mesh_summaries[mesh_id].vertices_size;
         
         gpu_polygons->size += 1;
     }
