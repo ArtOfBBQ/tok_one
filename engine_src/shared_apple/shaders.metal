@@ -13,6 +13,7 @@ typedef struct
     float4 lighting;
     int texturearray_i;
     int texture_i;
+    float point_size [[point_size]];
 } RasterizerPixel;
 
 float4 x_rotate(float4 vertices, float x_angle) {
@@ -98,6 +99,21 @@ vertex_shader(
         locked_vertices[locked_vertex_i].xyz[1],
         locked_vertices[locked_vertex_i].xyz[2],
         0.0f);
+    
+    float4 vertex_multipliers = vector_float4(
+        polygon_collection->xyz_multiplier[polygon_i][0],
+        polygon_collection->xyz_multiplier[polygon_i][1],
+        polygon_collection->xyz_multiplier[polygon_i][2],
+        1.0f);
+    
+    float4 vertex_offsets = vector_float4(
+        polygon_collection->xy_offset[polygon_i][0],
+        polygon_collection->xy_offset[polygon_i][1],
+        0.0f,
+        0.0f);
+    
+    mesh_vertices *= vertex_multipliers;
+    mesh_vertices += vertex_offsets;
     
     mesh_vertices *= polygon_collection->scale_factor[polygon_i];
     mesh_vertices[3] = 1.0f;
@@ -233,6 +249,9 @@ vertex_shader(
     
     clamp(out.lighting, 0.05f, 1.0f);
     out.lighting[3] = 1.0f;
+    
+    out.color[0] = 1.0f;
+    out.point_size = 15.0f;
     
     return out;
 }

@@ -478,6 +478,7 @@ int main(int argc, const char * argv[]) {
         fromFolder: shader_lib_path];
     
     platform_gpu_copy_locked_vertices();
+    platform_gpu_update_viewport();
     
     startup_complete = true;
     

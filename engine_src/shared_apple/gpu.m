@@ -75,6 +75,9 @@ static dispatch_semaphore_t drawing_semaphore;
     */
     cached_viewport.znear   = 0.001f; 
     cached_viewport.zfar    = 1.0f;
+    
+    *gpu_shared_data_collection.locked_pjc =
+        window_globals->projection_constants;
 }
 
 - (void)
