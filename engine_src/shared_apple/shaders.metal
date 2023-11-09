@@ -179,13 +179,12 @@ vertex_shader(
     out.position[2]  =     
         (out.position[2] * projection_constants->q) -
         (projection_constants->near * projection_constants->q);
-        
+    
     out.color = vector_float4(
         vertices[vertex_i].color[0],
         vertices[vertex_i].color[1],
         vertices[vertex_i].color[2],
         vertices[vertex_i].color[3]);
-    clamp(out.color, 0.05f, 1.0f);
     
     out.texturearray_i = vertices[vertex_i].texturearray_i;
     out.texture_i = vertices[vertex_i].texture_i;
@@ -245,9 +244,7 @@ vertex_shader(
     }
     
     clamp(out.lighting, 0.05f, 1.0f);
-    out.lighting[3] = 1.0f;
     
-    out.color[0] = 1.0f;
     out.point_size = 15.0f;
     
     return out;

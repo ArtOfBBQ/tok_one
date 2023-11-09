@@ -123,15 +123,15 @@ void client_logic_startup(void) {
         "tree.obj",
         "disk.obj",
     };
-
+    
     int32_t xmastree_mesh_id = new_mesh_id_from_resource(obj_filenames[0]);
-
+    
     center_mesh_offsets(xmastree_mesh_id);
-
- request_particle_fountain();
-
- // example 1: the 'christams tree' obj file
-    for (uint32_t i = 0; i <  700; i++) {
+    
+    request_particle_fountain();
+    
+    // example 1: the 'christams tree' obj file
+    for (uint32_t i = 0; i <  350; i++) {
         construct_zpolygon(&xmastree);
         xmastree.mesh_id = xmastree_mesh_id;
         xmastree.x = 0.0f + (0.30f * (i % 30));
@@ -155,7 +155,7 @@ void client_logic_startup(void) {
         xmastree.x_multiplier = 0.05f;
         xmastree.y_multiplier = 0.05f;
         xmastree.z_multiplier = 0.05f;
-
+    
         // example 2: use a quad instead
         //        construct_quad(
         //            /* const float left_x: */
@@ -172,12 +172,12 @@ void client_logic_startup(void) {
         //                &xmastree);
         //        xmastree.triangle_materials[0].texturearray_i = 3;
         //        xmastree.triangle_materials[0].texture_i = 0;
-
+        
         // this code needs to run regardless of what example mesh we're using
         xmastree_object_id = next_nonui_object_id();
         xmastree.object_id = xmastree_object_id;
         request_zpolygon_to_render(&xmastree);
-
+        
         if (i % 14 == 0) {
             zLightSource * im_a_light = next_zlight();
             im_a_light->x = xmastree.x;

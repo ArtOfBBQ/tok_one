@@ -8,6 +8,7 @@ static id polygon_buffers[3];
 static id light_buffers [3];
 static id vertex_buffers[3];
 static id camera_buffers[3];
+static id locked_vertex_populator_buffer;
 static id locked_vertex_buffer;
 static id projection_constants_buffer;
 
@@ -50,6 +51,26 @@ static dispatch_semaphore_t drawing_semaphore;
     printf(
         "copied %u locked vertices to gpu\n",
         gpu_shared_data_collection.locked_vertices_size);
+    
+    // Create a command buffer for GPU work.
+    id <MTLCommandBuffer> commandBuffer = [command_queue commandBuffer];
+    
+    // Encode a blit pass to copy data from the source buffer to the private buffer.
+    id <MTLBlitCommandEncoder> blitCommandEncoder =
+        [commandBuffer blitCommandEncoder];
+    [blitCommandEncoder
+        copyFromBuffer:locked_vertex_populator_buffer
+        sourceOffset:0
+        toBuffer:locked_vertex_buffer
+        destinationOffset:0
+        size:gpu_shared_data_collection.locked_vertices_allocation_size];
+    [blitCommandEncoder endEncoding];
+    
+    // Add a completion handler and commit the command buffer.
+    [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> cb) {
+        // Populate private buffer.
+    }];
+    [commandBuffer commit];
 }
 
 - (void) updateViewport
@@ -262,7 +283,7 @@ static dispatch_semaphore_t drawing_semaphore;
         camera_buffers[frame_i] = MTLBufferFrameCamera;
     }
     
-    id<MTLBuffer> MTLBufferLockedVertices =
+    id<MTLBuffer> MTLBufferLockedVerticesPopulator =
         [with_metal_device
             /* the pointer needs to be page aligned */
                 newBufferWithBytesNoCopy:
@@ -276,8 +297,16 @@ static dispatch_semaphore_t drawing_semaphore;
                 deallocator:
                     nil];
     assert(
-        [MTLBufferLockedVertices contents] ==
+        [MTLBufferLockedVerticesPopulator contents] ==
             gpu_shared_data_collection.locked_vertices);
+    locked_vertex_populator_buffer = MTLBufferLockedVerticesPopulator;
+    
+    id<MTLBuffer> MTLBufferLockedVertices =
+        [with_metal_device
+            newBufferWithLength:
+                gpu_shared_data_collection.locked_vertices_allocation_size
+            options:
+                MTLResourceStorageModePrivate];
     locked_vertex_buffer = MTLBufferLockedVertices;
     
     id<MTLBuffer> MTLBufferProjectionConstants =
