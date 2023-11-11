@@ -547,134 +547,134 @@ static void normalize_gpu_triangle_normals(GPULockedVertex * input) {
     log_assert(!isnan(input->xyz[2]));
 }
 
-static void guess_gpu_triangle_normal(GPULockedVertex * input) {
-    float vec1_x = input[1].xyz[0] - input[0].xyz[0];
-    float vec1_y = input[1].xyz[1] - input[0].xyz[1];
-    float vec1_z = input[1].xyz[2] - input[0].xyz[2];
+static void guess_gpu_triangle_normal(GPULockedVertex * to_change) {
+    float vec1_x = to_change[1].xyz[0] - to_change[0].xyz[0];
+    float vec1_y = to_change[1].xyz[1] - to_change[0].xyz[1];
+    float vec1_z = to_change[1].xyz[2] - to_change[0].xyz[2];
     
-    float vec2_x = input[2].xyz[0] - input[0].xyz[0];
-    float vec2_y = input[2].xyz[1] - input[0].xyz[1];
-    float vec2_z = input[2].xyz[2] - input[0].xyz[2];
+    float vec2_x = to_change[2].xyz[0] - to_change[0].xyz[0];
+    float vec2_y = to_change[2].xyz[1] - to_change[0].xyz[1];
+    float vec2_z = to_change[2].xyz[2] - to_change[0].xyz[2];
     
-    input[0].normal_xyz[0] = (vec1_y * vec2_z) - (vec1_z * vec2_y);
-    input[0].normal_xyz[1] = (vec1_z * vec2_x) - (vec1_x * vec2_z);
-    input[0].normal_xyz[2] = (vec1_x * vec2_y) - (vec1_y * vec2_x);
-    input[1].normal_xyz[0] = input[0].normal_xyz[0];
-    input[1].normal_xyz[1] = input[0].normal_xyz[1];
-    input[1].normal_xyz[2] = input[0].normal_xyz[2];
-    input[2].normal_xyz[0] = input[0].normal_xyz[0];
-    input[2].normal_xyz[1] = input[0].normal_xyz[1];
-    input[2].normal_xyz[2] = input[0].normal_xyz[2];
+    to_change[0].normal_xyz[0] = (vec1_y * vec2_z) - (vec1_z * vec2_y);
+    to_change[0].normal_xyz[1] = (vec1_z * vec2_x) - (vec1_x * vec2_z);
+    to_change[0].normal_xyz[2] = (vec1_x * vec2_y) - (vec1_y * vec2_x);
+    to_change[1].normal_xyz[0] = to_change[0].normal_xyz[0];
+    to_change[1].normal_xyz[1] = to_change[0].normal_xyz[1];
+    to_change[1].normal_xyz[2] = to_change[0].normal_xyz[2];
+    to_change[2].normal_xyz[0] = to_change[0].normal_xyz[0];
+    to_change[2].normal_xyz[1] = to_change[0].normal_xyz[1];
+    to_change[2].normal_xyz[2] = to_change[0].normal_xyz[2];
 }
 
-static void populate_new_triangle_with_parser_buffers(
-    GPULockedVertex * triangle_recipient,
-    int32_t vertex_i_0,
-    int32_t vertex_i_1,
-    int32_t vertex_i_2,
-    int32_t uv_coord_i_0,
-    int32_t uv_coord_i_1,
-    int32_t uv_coord_i_2,
-    int32_t normals_i_0,
-    int32_t normals_i_1,
-    int32_t normals_i_2)
-{
-    log_assert(vertex_i_0 != vertex_i_1);
-    log_assert(vertex_i_0 != vertex_i_2);
-    log_assert(vertex_i_0 > 0);
-    log_assert(vertex_i_1 > 0);
-    log_assert(vertex_i_2 > 0);
-    log_assert(uv_coord_i_0 < PARSER_VERTEX_BUFFER_SIZE);
-    log_assert(uv_coord_i_1 < PARSER_VERTEX_BUFFER_SIZE);
-    log_assert(uv_coord_i_2 < PARSER_VERTEX_BUFFER_SIZE);
-    log_assert(normals_i_0 < PARSER_VERTEX_BUFFER_SIZE);
-    log_assert(normals_i_1 < PARSER_VERTEX_BUFFER_SIZE);
-    log_assert(normals_i_2 < PARSER_VERTEX_BUFFER_SIZE);
-    
-    uint32_t target_vertex_0 = 0;
-    uint32_t target_vertex_1 = 1;
-    uint32_t target_vertex_2 = 2;
-    
-    triangle_recipient[target_vertex_0].xyz[0] =
-        parser_vertex_buffer[vertex_i_0 - 1].x;
-    triangle_recipient[target_vertex_0].xyz[1] =
-        parser_vertex_buffer[vertex_i_0 - 1].y;
-    triangle_recipient[target_vertex_0].xyz[2] =
-        parser_vertex_buffer[vertex_i_0 - 1].z;
-    triangle_recipient[target_vertex_1].xyz[0] =
-        parser_vertex_buffer[vertex_i_1 - 1].x;
-    triangle_recipient[target_vertex_1].xyz[1] =
-        parser_vertex_buffer[vertex_i_1 - 1].y;
-    triangle_recipient[target_vertex_1].xyz[2] =
-        parser_vertex_buffer[vertex_i_1 - 1].z;
-    triangle_recipient[target_vertex_2].xyz[0] =
-        parser_vertex_buffer[vertex_i_2 - 1].x;
-    triangle_recipient[target_vertex_2].xyz[1] =
-        parser_vertex_buffer[vertex_i_2 - 1].y;
-    triangle_recipient[target_vertex_2].xyz[2] =
-        parser_vertex_buffer[vertex_i_2 - 1].z;
-    
-    if (
-        uv_coord_i_0 > 0 &&
-        uv_coord_i_1 > 0 &&
-        uv_coord_i_2 > 0)
-    {
-        triangle_recipient[target_vertex_0].uv[0] =
-            parser_uv_u_buffer[uv_coord_i_0 - 1];
-        triangle_recipient[target_vertex_0].uv[1] =
-            parser_uv_v_buffer[uv_coord_i_0 - 1];
-        triangle_recipient[target_vertex_1].uv[0] =
-            parser_uv_u_buffer[uv_coord_i_1 - 1];
-        triangle_recipient[target_vertex_1].uv[1] =
-            parser_uv_v_buffer[uv_coord_i_1 - 1];
-        triangle_recipient[target_vertex_2].uv[0] =
-            parser_uv_u_buffer[uv_coord_i_2 - 1];
-        triangle_recipient[target_vertex_2].uv[1] =
-            parser_uv_v_buffer[uv_coord_i_2 - 1];
-    } else {
-        triangle_recipient[target_vertex_0].uv[0] =
-            1.0f;
-        triangle_recipient[target_vertex_0].uv[1] =
-            0.0f;
-        triangle_recipient[target_vertex_1].uv[0] =
-            1.0f;
-        triangle_recipient[target_vertex_1].uv[1] =
-            1.0f;
-        triangle_recipient[target_vertex_2].uv[0] =
-            0.0f;
-        triangle_recipient[target_vertex_2].uv[1] =
-            1.0f;
-    }
-    
-    if (
-        normals_i_0 > 0 &&
-        normals_i_1 > 0 &&
-        normals_i_2 > 0)
-    {
-        triangle_recipient[target_vertex_0].normal_xyz[0] =
-            parser_normals_buffer[normals_i_0 - 1].x;
-        triangle_recipient[target_vertex_0].normal_xyz[1] =
-            parser_normals_buffer[normals_i_0 - 1].y;
-        triangle_recipient[target_vertex_0].normal_xyz[2] =
-            parser_normals_buffer[normals_i_0 - 1].z;
-        triangle_recipient[target_vertex_1].normal_xyz[0] =
-            parser_normals_buffer[normals_i_1 - 1].x;
-        triangle_recipient[target_vertex_1].normal_xyz[1] =
-            parser_normals_buffer[normals_i_1 - 1].y;
-        triangle_recipient[target_vertex_1].normal_xyz[2] =
-            parser_normals_buffer[normals_i_1 - 1].z;
-        triangle_recipient[target_vertex_2].normal_xyz[0] =
-            parser_normals_buffer[normals_i_2 - 1].x;
-        triangle_recipient[target_vertex_2].normal_xyz[1] =
-            parser_normals_buffer[normals_i_2 - 1].y;
-        triangle_recipient[target_vertex_2].normal_xyz[2] =
-            parser_normals_buffer[normals_i_2 - 1].z;
-    } else {
-        guess_gpu_triangle_normal(triangle_recipient);
-    }
-    
-    normalize_gpu_triangle_normals(triangle_recipient);
-}
+//static void populate_new_triangle_with_parser_buffers(
+//    GPULockedVertex * triangle_recipient,
+//    int32_t vertex_i_0,
+//    int32_t vertex_i_1,
+//    int32_t vertex_i_2,
+//    int32_t uv_coord_i_0,
+//    int32_t uv_coord_i_1,
+//    int32_t uv_coord_i_2,
+//    int32_t normals_i_0,
+//    int32_t normals_i_1,
+//    int32_t normals_i_2)
+//{
+//    log_assert(vertex_i_0 != vertex_i_1);
+//    log_assert(vertex_i_0 != vertex_i_2);
+//    log_assert(vertex_i_0 > 0);
+//    log_assert(vertex_i_1 > 0);
+//    log_assert(vertex_i_2 > 0);
+//    log_assert(uv_coord_i_0 < PARSER_VERTEX_BUFFER_SIZE);
+//    log_assert(uv_coord_i_1 < PARSER_VERTEX_BUFFER_SIZE);
+//    log_assert(uv_coord_i_2 < PARSER_VERTEX_BUFFER_SIZE);
+//    log_assert(normals_i_0 < PARSER_VERTEX_BUFFER_SIZE);
+//    log_assert(normals_i_1 < PARSER_VERTEX_BUFFER_SIZE);
+//    log_assert(normals_i_2 < PARSER_VERTEX_BUFFER_SIZE);
+//
+//    uint32_t target_vertex_0 = 0;
+//    uint32_t target_vertex_1 = 1;
+//    uint32_t target_vertex_2 = 2;
+//
+//    triangle_recipient[target_vertex_0].xyz[0] =
+//        parser_vertex_buffer[vertex_i_0 - 1].x;
+//    triangle_recipient[target_vertex_0].xyz[1] =
+//        parser_vertex_buffer[vertex_i_0 - 1].y;
+//    triangle_recipient[target_vertex_0].xyz[2] =
+//        parser_vertex_buffer[vertex_i_0 - 1].z;
+//    triangle_recipient[target_vertex_1].xyz[0] =
+//        parser_vertex_buffer[vertex_i_1 - 1].x;
+//    triangle_recipient[target_vertex_1].xyz[1] =
+//        parser_vertex_buffer[vertex_i_1 - 1].y;
+//    triangle_recipient[target_vertex_1].xyz[2] =
+//        parser_vertex_buffer[vertex_i_1 - 1].z;
+//    triangle_recipient[target_vertex_2].xyz[0] =
+//        parser_vertex_buffer[vertex_i_2 - 1].x;
+//    triangle_recipient[target_vertex_2].xyz[1] =
+//        parser_vertex_buffer[vertex_i_2 - 1].y;
+//    triangle_recipient[target_vertex_2].xyz[2] =
+//        parser_vertex_buffer[vertex_i_2 - 1].z;
+//
+//    if (
+//        uv_coord_i_0 > 0 &&
+//        uv_coord_i_1 > 0 &&
+//        uv_coord_i_2 > 0)
+//    {
+//        triangle_recipient[target_vertex_0].uv[0] =
+//            parser_uv_u_buffer[uv_coord_i_0 - 1];
+//        triangle_recipient[target_vertex_0].uv[1] =
+//            parser_uv_v_buffer[uv_coord_i_0 - 1];
+//        triangle_recipient[target_vertex_1].uv[0] =
+//            parser_uv_u_buffer[uv_coord_i_1 - 1];
+//        triangle_recipient[target_vertex_1].uv[1] =
+//            parser_uv_v_buffer[uv_coord_i_1 - 1];
+//        triangle_recipient[target_vertex_2].uv[0] =
+//            parser_uv_u_buffer[uv_coord_i_2 - 1];
+//        triangle_recipient[target_vertex_2].uv[1] =
+//            parser_uv_v_buffer[uv_coord_i_2 - 1];
+//    } else {
+//        triangle_recipient[target_vertex_0].uv[0] =
+//            1.0f;
+//        triangle_recipient[target_vertex_0].uv[1] =
+//            0.0f;
+//        triangle_recipient[target_vertex_1].uv[0] =
+//            1.0f;
+//        triangle_recipient[target_vertex_1].uv[1] =
+//            1.0f;
+//        triangle_recipient[target_vertex_2].uv[0] =
+//            0.0f;
+//        triangle_recipient[target_vertex_2].uv[1] =
+//            1.0f;
+//    }
+//
+//    if (
+//        normals_i_0 > 0 &&
+//        normals_i_1 > 0 &&
+//        normals_i_2 > 0)
+//    {
+//        triangle_recipient[target_vertex_0].normal_xyz[0] =
+//            parser_normals_buffer[normals_i_0 - 1].x;
+//        triangle_recipient[target_vertex_0].normal_xyz[1] =
+//            parser_normals_buffer[normals_i_0 - 1].y;
+//        triangle_recipient[target_vertex_0].normal_xyz[2] =
+//            parser_normals_buffer[normals_i_0 - 1].z;
+//        triangle_recipient[target_vertex_1].normal_xyz[0] =
+//            parser_normals_buffer[normals_i_1 - 1].x;
+//        triangle_recipient[target_vertex_1].normal_xyz[1] =
+//            parser_normals_buffer[normals_i_1 - 1].y;
+//        triangle_recipient[target_vertex_1].normal_xyz[2] =
+//            parser_normals_buffer[normals_i_1 - 1].z;
+//        triangle_recipient[target_vertex_2].normal_xyz[0] =
+//            parser_normals_buffer[normals_i_2 - 1].x;
+//        triangle_recipient[target_vertex_2].normal_xyz[1] =
+//            parser_normals_buffer[normals_i_2 - 1].y;
+//        triangle_recipient[target_vertex_2].normal_xyz[2] =
+//            parser_normals_buffer[normals_i_2 - 1].z;
+//    } else {
+//        guess_gpu_triangle_normal(triangle_recipient);
+//    }
+//
+//    normalize_gpu_triangle_normals(triangle_recipient);
+//}
 
 static uint32_t chars_till_next_space_or_slash(
     const char * buffer)
@@ -705,568 +705,6 @@ static uint32_t chars_till_next_nonspace(
     return i;
 }
 
-static void parse_obj(
-    const char * rawdata,
-    const uint64_t rawdata_size,
-    MeshSummary * summary_recipient,
-    GPULockedVertexWithMaterial * vertices_recipient,
-    uint32_t * recipient_size)
-{
-    log_assert(rawdata != NULL);
-    log_assert(rawdata_size > 0);
-    
-    uint32_t i = 0;
-    uint32_t first_material_or_face_i = UINT32_MAX;
-    
-    uint32_t next_verrtex_i = 0;
-    uint32_t next_uv_i = 0;
-    uint32_t next_normal_i = 0;
-    
-    // first pass
-    while (i < rawdata_size) {
-        // read the 1st character, which denominates the type
-        // of information
-        
-        char dbg_newline[30];
-        strcpy_capped(dbg_newline, 30, rawdata + i);
-        uint32_t dbg_i = 0;
-        while (dbg_i < 29 && dbg_newline[dbg_i] != '\n') {
-            dbg_i++;
-        }
-        dbg_newline[dbg_i] = '\0';
-        
-        if (
-            rawdata[i] == 'v' &&
-            rawdata[i+1] == ' ')
-        {
-            // discard the 'v'
-            i++;
-            
-            // read vertex data
-            zVertex new_vertex;
-            
-            // skip the space(s) after the 'v'
-            log_assert(rawdata[i] == ' ');
-            i += chars_till_next_nonspace(rawdata + i);
-            log_assert(rawdata[i] != ' ');
-            
-            // read vertex x
-            new_vertex.x = string_to_float(rawdata + i);
-            
-            // discard vertex x
-            i += chars_till_next_space_or_slash(
-                rawdata + i);
-            log_assert(rawdata[i] == ' ');
-            
-            // discard the spaces after vertex x
-            i += chars_till_next_nonspace(rawdata + i);
-            log_assert(rawdata[i] != ' ');
-            
-            // read vertex y
-            new_vertex.y = string_to_float(rawdata + i);
-            i += chars_till_next_space_or_slash(
-                rawdata + i);
-            log_assert(rawdata[i] == ' ');
-            i += chars_till_next_nonspace(rawdata + i);
-            log_assert(rawdata[i] != ' ');
-            
-            // read vertex z
-            new_vertex.z = string_to_float(rawdata + i);
-            i += chars_till_next_space_or_slash(
-                rawdata + i);
-            log_assert(rawdata[i] == '\n' || rawdata[i] == '\r');
-            i++;
-            
-            parser_vertex_buffer[next_verrtex_i] = new_vertex;
-            log_assert(
-                parser_vertex_buffer[next_verrtex_i].x == new_vertex.x);
-            log_assert(
-                parser_vertex_buffer[next_verrtex_i].y
-                    == new_vertex.y);
-            log_assert(
-                parser_vertex_buffer[next_verrtex_i].z
-                    == new_vertex.z);
-            next_verrtex_i++;
-        } else if (
-            rawdata[i] == 'v'
-            && rawdata[i+1] == 't')
-        {
-            // discard the 'vt'
-            i += 2;
-            
-            // skip the space(s) after the 'vt'
-            log_assert(rawdata[i] == ' ');
-            i += chars_till_next_nonspace(rawdata + i);
-            log_assert(rawdata[i] != ' ');
-            
-            // read the u coordinate
-            parser_uv_u_buffer[next_uv_i] = string_to_float(rawdata + i);
-            if (parser_uv_u_buffer[next_uv_i] < 0.0f) {
-                parser_uv_u_buffer[next_uv_i] = 0.0f;
-            }
-            if (parser_uv_u_buffer[next_uv_i] > 1.0f) {
-                parser_uv_u_buffer[next_uv_i] = 1.0f;
-            }
-            
-            // discard the u coordinate
-            i += chars_till_next_space_or_slash(
-                rawdata + i);
-            log_assert(rawdata[i] == ' ');
-            
-            // skip the space(s) after the u coord
-            log_assert(rawdata[i] == ' ');
-            i += chars_till_next_nonspace(rawdata + i);
-            log_assert(rawdata[i] != ' ');
-            
-            // read the v coordinate
-            parser_uv_v_buffer[next_uv_i] = string_to_float(rawdata + i);
-            if (parser_uv_v_buffer[next_uv_i] < 0.0f) {
-                parser_uv_v_buffer[next_uv_i] = 0.0f;
-            }
-            if (parser_uv_v_buffer[next_uv_i] > 1.0f) {
-                parser_uv_v_buffer[next_uv_i] = 1.0f;
-            }
-            
-            next_uv_i += 1;
-            
-            // discard the v coordinate
-            i += chars_till_next_space_or_slash(
-                rawdata + i);
-            
-            // there may be a 3rd 'w' entry in a 'vt' line, skip if so
-            if (rawdata[i] == ' ') {
-                i++;
-                i += chars_till_next_space_or_slash(rawdata + i);
-            }
-            
-            log_assert(rawdata[i] == '\n' || rawdata[i] == '\r');
-            
-            // discard the line break
-            while (rawdata[i] == '\n' || rawdata[i] == '\r') {
-                i++;
-            }
-            
-        } else if (
-            rawdata[i] == 'v'
-            && rawdata[i+1] == 'n')
-        {
-            // discard the 'vn'
-            i += 2;
-            
-            // skip the space(s) after the 'vt'
-            log_assert(rawdata[i] == ' ');
-            i += chars_till_next_nonspace(rawdata + i);
-            log_assert(rawdata[i] != ' ');
-            
-            parser_normals_buffer[next_normal_i].x =
-                string_to_float(rawdata + i);
-            
-            // discard the normal x
-            i += chars_till_next_space_or_slash(
-                rawdata + i);
-            log_assert(rawdata[i] == ' ');
-            
-            // skip the space(s) after the normal x
-            log_assert(rawdata[i] == ' ');
-            i += chars_till_next_nonspace(rawdata + i);
-            log_assert(rawdata[i] != ' ');
-            
-            // read the normal y
-            parser_normals_buffer[next_normal_i].y =
-                string_to_float(rawdata + i);
-            
-            // discard the normal y
-            i += chars_till_next_space_or_slash(
-                rawdata + i);
-            log_assert(rawdata[i] == ' ');
-                
-            // skip the space(s) after the normal y
-            log_assert(rawdata[i] == ' ');
-            i += chars_till_next_nonspace(rawdata + i);
-            log_assert(rawdata[i] != ' ');
-            
-            // read the normal z
-            parser_normals_buffer[next_normal_i].z =
-                string_to_float(rawdata + i);
-            
-            // discard the normal z
-            i += chars_till_next_space_or_slash(
-                rawdata + i);
-            log_assert(rawdata[i] == '\n' || rawdata[i] == '\r');
-            // discard the line break
-            while (rawdata[i] == '\n' || rawdata[i] == '\r') {
-                i++;
-            }
-            
-            next_normal_i += 1;
-        } else {
-            if (
-                rawdata[i] == 'f' ||
-                (
-                    rawdata[i] == 'u' &&
-                    rawdata[i+1] == 's' &&
-                    rawdata[i+2] == 'e' &&
-                    rawdata[i+3] == 'm'))
-            {
-                if (i < first_material_or_face_i) {
-                    first_material_or_face_i = i;
-                }
-            }
-            
-            if (rawdata[i] == 'f') {
-                
-            }
-            // skip until the next line break character
-            while (rawdata[i] != '\n' && rawdata[i] != '\0') {
-                i++;
-            }
-            
-            // skip the line break character
-            while (rawdata[i] == '\n' || rawdata[i] == '\r') {
-                i++;
-            }
-        }
-    }
-    
-    log_assert(*recipient_size > 0);
-    
-    #ifndef LOGGER_IGNORE_ASSERTS
-    if (*recipient_size >= ALL_LOCKED_VERTICES_SIZE) {
-        char error_msg[100];
-        strcpy_capped(error_msg, 100, "Error: ALL_LOCKED_VERTICES_SIZE was ");
-        strcat_uint_capped(error_msg, 100, ALL_LOCKED_VERTICES_SIZE);
-        strcat_capped(error_msg, 100, ", but recipient->triangles_size is ");
-        strcat_uint_capped(error_msg, 100, *recipient_size);
-        log_dump_and_crash(error_msg);
-        assert(0);
-    }
-    #endif
-    
-    // second pass starts at material or face specifications
-    i = first_material_or_face_i;
-    uint32_t new_triangle_i = 0;
-    int32_t using_material_i = 0;
-    
-    while (i < rawdata_size) {
-        if (
-            rawdata[i+0] == 'u' &&
-            rawdata[i+1] == 's' &&
-            rawdata[i+2] == 'e' &&
-            rawdata[i+3] == 'm' &&
-            rawdata[i+4] == 't' &&
-            rawdata[i+5] == 'l' &&
-            rawdata[i+6] == ' ')
-        {
-            uint32_t j = i + 7;
-            
-            char material_name[OBJ_STRING_SIZE];
-            uint32_t material_name_size = 0;
-            while (
-                rawdata[j] != '\0' &&
-                rawdata[j] != ' ' &&
-                rawdata[j] != '\n' &&
-                rawdata[j] != '\r')
-            {
-                material_name[material_name_size++] = rawdata[j++];
-            }
-            material_name[material_name_size] = '\0';
-            
-            bool32_t already_existed = false;
-            
-            for (
-                int32_t mat_i = 0;
-                mat_i < (int32_t)summary_recipient->materials_size;
-                mat_i++)
-            {
-                if (
-                    are_equal_strings(
-                        summary_recipient->material_names[mat_i],
-                        material_name))
-                {
-                    already_existed = true;
-                    using_material_i = mat_i;
-                    break;
-                }
-            }
-            
-            if (!already_existed) {
-                strcpy_capped(
-                    summary_recipient->material_names[
-                        summary_recipient->materials_size],
-                    OBJ_STRING_SIZE,
-                    material_name);
-                summary_recipient->materials_size += 1;
-                using_material_i =
-                    (int32_t)summary_recipient->materials_size - 1;
-            }
-            
-            // skip until the next line break character
-            while (rawdata[i] != '\n' && rawdata[i] != '\0') {
-                i++;
-            }
-            // skip the line break character
-            while (rawdata[i] == '\n' || rawdata[i] == '\r') {
-                i++;
-            }
-        } else if (rawdata[i] == 'f') {
-            // discard the 'f'
-            i++;
-            log_assert(rawdata[i] == ' ');
-            
-            // skip the space(s) after the 'f'
-            i += chars_till_next_nonspace(rawdata + i);
-            log_assert(rawdata[i] != ' ');
-            
-            int32_t vertex_i_0 = string_to_int32(rawdata + i);
-            i += chars_till_next_space_or_slash(
-                rawdata + i);
-            int32_t uv_coord_i_0 = -1;
-            int32_t normals_i_0 = 0;
-            
-            if (rawdata[i] == '/')
-            {
-                // skip the slash
-                i++;
-                
-                // could be another slash, sometimes there is no uv coordinate
-                if (rawdata[i] != '/') {
-                    // must be a uv coord then
-                    uv_coord_i_0 = string_to_int32(rawdata + i);
-                    i += chars_till_next_space_or_slash(rawdata + i);
-                }
-            }
-            // add index to normal if any
-            if (rawdata[i] == '/') {
-                i++;
-                normals_i_0 = string_to_int32(rawdata + i);
-                i += chars_till_next_space_or_slash(rawdata + i);
-            }
-            
-            log_assert(rawdata[i] == ' ');
-            i += chars_till_next_nonspace(rawdata + i);
-            log_assert(rawdata[i] != ' ');
-            
-            int32_t vertex_i_1 = string_to_int32(rawdata + i);
-            i += chars_till_next_space_or_slash(
-                rawdata + i);
-            int32_t uv_coord_i_1 = -1;
-            int32_t normals_i_1 = 0;
-            
-            if (rawdata[i] == '/')
-            {
-                // skip the slash
-                i++;
-                
-                // could be another slash, sometimes there is no uv coordinate
-                if (rawdata[i] != '/') {
-                    // must be a uv coord then
-                    uv_coord_i_1 =
-                        string_to_int32(rawdata + i);
-                    i += chars_till_next_space_or_slash(
-                        rawdata + i);
-                }
-            }
-            // add index to normal if any
-            if (rawdata[i] == '/') {
-                i++;
-                log_assert(rawdata[i] != ' ');
-                normals_i_1 = string_to_int32(rawdata + i);
-                i += chars_till_next_space_or_slash(rawdata + i);
-            }
-            
-            log_assert(rawdata[i] == ' ');
-            i += chars_till_next_nonspace(rawdata + i);
-            log_assert(rawdata[i] != ' ');
-            
-            int32_t vertex_i_2 = string_to_int32(rawdata + i);
-            i += chars_till_next_space_or_slash(
-                rawdata + i);
-            int32_t uv_coord_i_2 = -1;
-            int32_t normals_i_2 = 0;
-            
-            if (rawdata[i] == '/')
-            {
-                // skip the slash
-                i++;
-                
-                // could be another slash, sometimes there is no uv coordinate
-                if (rawdata[i] != '/') {
-                    // must be a uv coord then
-                    uv_coord_i_2 =
-                        string_to_int32(rawdata + i);
-                    i += chars_till_next_space_or_slash(
-                        rawdata + i);
-                }
-            }
-            
-            // add index to normal if any
-            if (rawdata[i] == '/') {
-                i++;
-                log_assert(rawdata[i] != ' ');
-                normals_i_2 = string_to_int32(rawdata + i);
-                while (rawdata[i] <= '9' && rawdata[i] >= '0') {
-                    i++;
-                }
-            }
-            
-            while (rawdata[i] == ' ') { i++; }
-            
-            if (rawdata[i] != '\n' && rawdata[i] != '\r') {
-                // int32_t vertex_i_3 = string_to_int32(rawdata + i);
-                i += chars_till_next_space_or_slash(
-                    rawdata + i);
-                int32_t uv_coord_i_3 = -1;
-                // int32_t normals_i_3 = 0;
-                if (rawdata[i] == '/')
-                {
-                    // skip the slash
-                    i++;
-                    
-                    // could be another slash, sometimes there is no uv coordinate
-                    if (rawdata[i] != '/') {
-                        // must be a uv coord then
-                        uv_coord_i_3 =
-                            string_to_int32(rawdata + i);
-                        i += chars_till_next_space_or_slash(
-                            rawdata + i);
-                    }
-                }
-                
-                // add normals
-                if (rawdata[i] == '/') {
-                    i++;
-                    // normals_i_3 = string_to_int32(rawdata + i);
-                    while (rawdata[i] <= '9' && rawdata[i] >= '0') {
-                        i++;
-                    }
-                }
-                
-                // there were 2 triangles in this face
-                // the 1st triangle will be added anyway later, but
-                // we do need to add the extra 2nd triangle here
-                GPULockedVertex new_triangle[3];
-                
-                log_assert(vertex_i_0 != vertex_i_1);
-                log_assert(vertex_i_0 != vertex_i_2);
-                log_assert(vertex_i_0 > 0);
-                log_assert(vertex_i_1 > 0);
-                log_assert(vertex_i_2 > 0);
-                log_assert(uv_coord_i_0 < PARSER_VERTEX_BUFFER_SIZE);
-                log_assert(uv_coord_i_1 < PARSER_VERTEX_BUFFER_SIZE);
-                log_assert(uv_coord_i_2 < PARSER_VERTEX_BUFFER_SIZE);
-                log_assert(normals_i_0 < PARSER_VERTEX_BUFFER_SIZE);
-                log_assert(normals_i_1 < PARSER_VERTEX_BUFFER_SIZE);
-                log_assert(normals_i_2 < PARSER_VERTEX_BUFFER_SIZE);
-                
-                populate_new_triangle_with_parser_buffers(
-                    /* GPULockedVertex * triangle_recipient: */
-                        new_triangle,
-                    /* int32_t vertex_i_0: */
-                        vertex_i_0,
-                    /* int32_t vertex_i_1: */
-                        vertex_i_1,
-                    /* int32_t vertex_i_2: */
-                        vertex_i_2,
-                    /* int32_t uv_coord_i_0: */
-                        uv_coord_i_0,
-                    /* int32_t uv_coord_i_1: */
-                        uv_coord_i_1,
-                    /* int32_t uv_coord_i_2: */
-                        uv_coord_i_2,
-                    /* int32_t normals_i_0: */
-                        normals_i_0,
-                    /* int32_t normals_i_1: */
-                        normals_i_1,
-                    /* int32_t normals_i_2: */
-                        normals_i_2);
-                
-                log_assert(new_triangle_i < ALL_LOCKED_VERTICES_SIZE);
-                
-                vertices_recipient[(new_triangle_i * 3) + 0].gpu_data =
-                    new_triangle[0];
-                vertices_recipient[(new_triangle_i * 3) + 0].parent_material_i =
-                    using_material_i;
-                vertices_recipient[(new_triangle_i * 3) + 1].gpu_data =
-                    new_triangle[1];
-                vertices_recipient[(new_triangle_i * 3) + 1].parent_material_i =
-                    using_material_i;
-                vertices_recipient[(new_triangle_i * 3) + 2].gpu_data =
-                    new_triangle[2];
-                vertices_recipient[(new_triangle_i * 3) + 2].parent_material_i =
-                    using_material_i;
-                (*recipient_size) += 3;
-                
-                new_triangle_i++;
-                summary_recipient->vertices_size += 3;
-            } else {
-                // there was only 1 triangle
-            }
-            
-            // if you get here there was only 1 triangle OR
-            // there were 2 triangles and you already did the other one
-            GPULockedVertex new_triangle[3];
-            
-            populate_new_triangle_with_parser_buffers(
-                /* GPULockedVertex * triangle_recipient: */
-                    new_triangle,
-                /* int32_t vertex_i_0: */
-                    vertex_i_0,
-                /* int32_t vertex_i_1: */
-                    vertex_i_1,
-                /* int32_t vertex_i_2: */
-                    vertex_i_2,
-                /* int32_t uv_coord_i_0: */
-                    uv_coord_i_0,
-                /* int32_t uv_coord_i_1: */
-                    uv_coord_i_1,
-                /* int32_t uv_coord_i_2: */
-                    uv_coord_i_2,
-                /* int32_t normals_i_0: */
-                    normals_i_0,
-                /* int32_t normals_i_1: */
-                    normals_i_1,
-                /* int32_t normals_i_2: */
-                    normals_i_2);
-            
-            vertices_recipient[(new_triangle_i * 3) + 0].gpu_data =
-                new_triangle[0];
-            vertices_recipient[(new_triangle_i * 3) + 0].parent_material_i =
-                using_material_i;
-            vertices_recipient[(new_triangle_i * 3) + 1].gpu_data =
-                new_triangle[1];
-            vertices_recipient[(new_triangle_i * 3) + 1].parent_material_i =
-                using_material_i;
-            vertices_recipient[(new_triangle_i * 3) + 2].gpu_data =
-                new_triangle[2];
-            vertices_recipient[(new_triangle_i * 3) + 2].parent_material_i =
-                using_material_i;
-            (*recipient_size) += 3;
-            
-            new_triangle_i++;
-            summary_recipient->vertices_size += 3;
-            
-            // some objs have trailing spaces here
-            while (rawdata[i] == ' ') { i++; }
-            
-            log_assert(rawdata[i] == '\n' || rawdata[i] == '\r');
-            i++;
-            
-        } else {
-            // skip until the next line break character
-            while (rawdata[i] != '\n' && rawdata[i] != '\0') {
-                i++;
-            }
-            
-            // skip the line break character
-            while (rawdata[i] == '\n' || rawdata[i] == '\r') {
-                i++;
-            }
-        }
-    }
-    
-    free_from_managed((uint8_t *)parser_vertex_buffer);
-}
-
 int32_t new_mesh_id_from_resource(
     const char * filename)
 {
@@ -1288,27 +726,95 @@ int32_t new_mesh_id_from_resource(
     
     log_assert(obj_file.good);
     
+    ParsedObj parsed_obj;
+    uint32_t good = 0;
+    parse_obj(
+        /* ParsedObj * recipient: */
+            &parsed_obj,
+        /* char * raw_buffer: */
+            obj_file.contents,
+        /* uint32_t * success: */
+            &good);
+    
+    if (
+        parsed_obj.vertices_count < 1 ||
+        parsed_obj.triangles_count < 1)
+    {
+        good = 0;
+    }
+    
+    if (!good) {
+        return -1;
+    }
+    
     all_mesh_summaries[all_mesh_summaries_size].vertices_head_i =
-        new_mesh_head_id;
+        all_mesh_vertices_size;
+    
+    for (
+        uint32_t triangle_i = 0;
+        triangle_i < parsed_obj.triangles_count;
+        triangle_i++)
+    {
+        for (uint32_t _ = 0; _ < 3; _++) {
+            uint32_t vert_i = parsed_obj.triangles[triangle_i][_];
+            
+            all_mesh_vertices[all_mesh_vertices_size].gpu_data.xyz[0] =
+                parsed_obj.vertices[vert_i][0];
+            all_mesh_vertices[all_mesh_vertices_size].gpu_data.xyz[1] =
+                parsed_obj.vertices[vert_i][1];
+            all_mesh_vertices[all_mesh_vertices_size].gpu_data.xyz[2] =
+                parsed_obj.vertices[vert_i][2];
+            
+            if (parsed_obj.normals_count > 0) {
+                uint32_t norm_i = parsed_obj.triangle_normals[triangle_i][_];
+                
+                log_assert(norm_i < parsed_obj.normals_count);
+                
+                all_mesh_vertices[all_mesh_vertices_size].gpu_data.
+                    normal_xyz[0] =
+                        parsed_obj.normals[norm_i][0];
+                all_mesh_vertices[all_mesh_vertices_size].gpu_data.
+                    normal_xyz[1] =
+                        parsed_obj.normals[norm_i][1];
+                all_mesh_vertices[all_mesh_vertices_size].gpu_data.
+                    normal_xyz[2] =
+                        parsed_obj.normals[norm_i][2];
+            } else {
+                // No normal data in .obj, impute a normal
+                // TODO: check results properly, maybe make it a part of the
+                // TODO: .obj parser?
+                guess_gpu_triangle_normal(
+                    /* GPULockedVertex * to_change: */
+                        &all_mesh_vertices[all_mesh_vertices_size].gpu_data);
+            }
+            
+            if (parsed_obj.textures_count > 0) {
+                uint32_t text_i = parsed_obj.triangle_textures[triangle_i][_];
+                
+                log_assert(text_i < parsed_obj.textures_count);
+                
+                all_mesh_vertices[all_mesh_vertices_size].gpu_data.uv[0] =
+                    parsed_obj.textures[text_i][0];
+                all_mesh_vertices[all_mesh_vertices_size].gpu_data.uv[1] =
+                    parsed_obj.textures[text_i][1];
+            } else {
+                // No uv data in .obj file, gotta guess
+                // TODO: Maybe should be part of the obj parser?
+                all_mesh_vertices[all_mesh_vertices_size].gpu_data.uv[0] =
+                    all_mesh_vertices_size % 2 == 0 ? 0.0f : 1.0f;
+                all_mesh_vertices[all_mesh_vertices_size].gpu_data.uv[1] =
+                    (all_mesh_vertices_size + 1) % 2 == 0 ? 0.0f : 1.0f;
+            }
+            
+            all_mesh_vertices_size += 1;
+        }
+    }
+    
     all_mesh_summaries[all_mesh_summaries_size].mesh_id =
         (int32_t)all_mesh_summaries_size;
-    
-    parse_obj(
-        /* const char * rawdata: */
-            obj_file.contents,
-        /* const uint64_t rawdata_size: */
-            obj_file.size,
-        /* MeshSummary * summary_recipient: */
-            all_mesh_summaries + all_mesh_summaries_size,
-        /* zTriangle * triangles_recipient: */
-            all_mesh_vertices + new_mesh_head_id,
-        /* uint32_t * triangles_recipient_size: */
-            &all_mesh_vertices_size);
-    
-    log_assert((int32_t)all_mesh_vertices_size > new_mesh_head_id);
-    
     all_mesh_summaries[all_mesh_summaries_size].vertices_size =
-        (int32_t)all_mesh_vertices_size - new_mesh_head_id;
+        all_mesh_vertices_size -
+        all_mesh_summaries[all_mesh_summaries_size].vertices_head_i;
     
     // fetch base width/height/depth and store
     float min_x = 0.0f;
@@ -1690,4 +1196,3 @@ void create_shattered_version_of_mesh(
     all_mesh_vertices_size = (uint32_t)goal_new_tail_i + 1;
     #endif
 }
-

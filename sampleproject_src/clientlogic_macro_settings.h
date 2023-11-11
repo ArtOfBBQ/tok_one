@@ -7,8 +7,8 @@ of the engine for your specific app.
 */
 
 // The 2 pools of memory your app allocates on startup
-// 350mb ->                    350...000
-#define UNMANAGED_MEMORY_SIZE  350000000
+// 500mb ->                    500...000
+#define UNMANAGED_MEMORY_SIZE  500000000
 // 50 mb ->                    50...000
 #define MANAGED_MEMORY_SIZE    50000000
 
@@ -24,9 +24,9 @@ of the engine for your specific app.
 // TODO: be changed without having to update shaders
 // The maximum number of polygons/lights to send to the GPU each frame
 // The maximum number of triangle vertices to be stored on gpu permanently
-#define MAX_POLYGONS_PER_BUFFER    800
-#define MAX_VERTICES_PER_BUFFER 700000
-#define MAX_LIGHTS_PER_BUFFER       75
+// #define MAX_POLYGONS_PER_BUFFER   1600
+#define MAX_VERTICES_PER_BUFFER   3400000
+// #define MAX_LIGHTS_PER_BUFFER       75
 
 // The maximum number of 'scheduled animations' simultaneously running
 #define SCHEDULED_ANIMATIONS_ARRAYSIZE 3000

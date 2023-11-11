@@ -4,8 +4,8 @@
 #define TEXTUREARRAYS_SIZE 31
 #define MAX_FILES_IN_SINGLE_TEXARRAY 200
 
-#define MAX_POLYGONS_PER_BUFFER 800
-#define MAX_LIGHTS_PER_BUFFER  75
+#define MAX_POLYGONS_PER_BUFFER   1600
+#define MAX_LIGHTS_PER_BUFFER       75
 
 #pragma pack(push, 1)
 typedef struct GPUVertex {

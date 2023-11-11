@@ -549,10 +549,10 @@ static dispatch_semaphore_t drawing_semaphore;
             vertices_size;
         i++)
     {
-        log_assert(
+        assert(
             gpu_shared_data_collection.
                 triple_buffers[current_frame_i].
-                vertices[i].locked_vertex_i < 5000);
+                vertices[i].locked_vertex_i < ALL_LOCKED_VERTICES_SIZE);
     }
     #endif
     

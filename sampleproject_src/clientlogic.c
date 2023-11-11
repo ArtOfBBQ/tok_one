@@ -124,22 +124,22 @@ void client_logic_startup(void) {
         "disk.obj",
     };
     
-    int32_t xmastree_mesh_id = new_mesh_id_from_resource(obj_filenames[0]);
+    int32_t xmastree_mesh_id = new_mesh_id_from_resource("teapot.obj");
     
-    center_mesh_offsets(xmastree_mesh_id);
+    // center_mesh_offsets(xmastree_mesh_id);
     
     request_particle_fountain();
     
     // example 1: the 'christams tree' obj file
-    for (uint32_t i = 0; i <  350; i++) {
+    for (uint32_t i = 0; i < 10; i++) {
         construct_zpolygon(&xmastree);
         xmastree.mesh_id = xmastree_mesh_id;
         xmastree.x = 0.0f + (0.30f * (i % 30));
-        xmastree.y = -0.5f + (0.30f * (i / 30));
+        xmastree.y = -0.5f + (0.30f * (i / 15));
         xmastree.z = 1.0f + (0.015f * i);
-        xmastree.vertex_materials[0].color[0] = 0.05f; // christmas decorations?
+        xmastree.vertex_materials[0].color[0] = (i % 10) * 0.05f; // christmas decorations?
         xmastree.vertex_materials[0].color[1] = 0.05f;
-        xmastree.vertex_materials[0].color[2] = 1.0f;
+        xmastree.vertex_materials[0].color[2] = 1.0f - ((i % 10) * 0.1f);
         xmastree.vertex_materials[0].color[3] = 1.0f;
         xmastree.vertex_materials[1].color[0] = 1.0f; // leaves
         xmastree.vertex_materials[1].color[1] = 1.0f;
@@ -189,7 +189,7 @@ void client_logic_startup(void) {
             im_a_light->RGBA[1] = 0.0f + (((i+1) % 5) * 0.20f);
             im_a_light->RGBA[2] = 1.0f - ((i % 5) * 0.20f);
             im_a_light->RGBA[3] = 1.0f;
-            im_a_light->reach = 3.0f;
+            im_a_light->reach = 2.0f;
             im_a_light->deleted = false;
             commit_zlight(im_a_light);
         }

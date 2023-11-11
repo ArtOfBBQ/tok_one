@@ -15,6 +15,8 @@ void init_application(void)
 {
     init_memory_store();
     
+    init_obj_parser(malloc_from_managed, free_from_managed);
+    
     keypress_map = (bool32_t *)malloc_from_unmanaged(
         sizeof(bool32_t) * KEYPRESS_MAP_SIZE);
     for (uint32_t i = 0; i < KEYPRESS_MAP_SIZE; i++) {

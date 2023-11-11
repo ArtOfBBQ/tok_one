@@ -36,7 +36,10 @@ inline static void zpolygons_to_triangles(
             continue;
         }
         
+        assert(gpu_polygons->size <= zpolygons_to_render_size);
+        assert(zpolygons_to_render_size < MAX_POLYGONS_PER_BUFFER);
         assert(gpu_polygons->size < MAX_POLYGONS_PER_BUFFER);
+        
         gpu_polygons->xyz[gpu_polygons->size][0] =
             zpolygons_to_render[zp_i].x;
         gpu_polygons->xyz[gpu_polygons->size][1] =
@@ -80,6 +83,7 @@ inline static void zpolygons_to_triangles(
         int32_t vert_tail_i =
             all_mesh_summaries[mesh_id].vertices_head_i +
                 all_mesh_summaries[mesh_id].vertices_size;
+        assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
         
         // TODO: copying vertices should no longer be needed every frame, stop
         for (
@@ -107,6 +111,7 @@ inline static void zpolygons_to_triangles(
                 zpolygons_to_render[zp_i].vertex_materials[mat_i].
                     texturearray_i;
             *next_workload_size += 1;
+            assert(*next_workload_size < MAX_VERTICES_PER_BUFFER);
         }
         
         gpu_polygons->size += 1;
