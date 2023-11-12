@@ -87,8 +87,46 @@ static float consume_float(
             below_comma_adj /= 10.0f;
         }
     }
+
+    float return_value = ((float)above_comma + below_comma_adj) *
+        final_multiplier;
     
-    return ((float)above_comma + below_comma_adj) * final_multiplier;
+    if ((*raw_buffer)[0] == 'e') {
+        // 'to the power of 10' adjustment
+        (*raw_buffer)++;
+        
+        uint32_t div_instead = 0;
+        if ((*raw_buffer)[0] == '+') {
+            (*raw_buffer)++;
+        } else if ((*raw_buffer)[0] == '-') {
+            div_instead = 1;
+            (*raw_buffer)++;
+        }
+        
+        #ifndef OBJ_PARSER_NO_ASSERTS
+        assert((*raw_buffer)[0] >= '0');
+        assert((*raw_buffer)[0] <= '9');
+        #endif
+        
+        uint32_t e_num = consume_uint(raw_buffer, good);
+        if (!good) { return 0.0f; }
+        
+        uint32_t extracted_mod = 10;
+        for (uint32_t _ = 1; _ < e_num; _++) {
+            extracted_mod *= 10;
+        }
+        
+        if (e_num == 0) {
+            // 0.22fe+0 is just 0.2ff, so just pass
+            // kind of weird that ppl would write this but i run into it
+        } else if (!div_instead) {
+            return_value *= extracted_mod;
+        } else {
+            return_value /= extracted_mod;
+        }
+    }
+    
+    return return_value;
 }
 
 static void consume_separated_uints(
@@ -280,7 +318,29 @@ void parse_obj(
         
         if (raw_buffer[0] == '\0') { return; }
         
-        if (raw_buffer[0] == 'v' && raw_buffer[1] == ' ') {
+        if (raw_buffer[0] == '#') {
+            // comment, ignore
+            while (raw_buffer[0] != '\n' && raw_buffer[0] != '\0') {
+                raw_buffer++;
+            }
+        } else if (raw_buffer[0] == 'o' && raw_buffer[1] == ' ') {
+            // object spec, ignore
+            while (raw_buffer[0] != '\n' && raw_buffer[0] != '\0') {
+                raw_buffer++;
+            }
+        } else if (
+            raw_buffer[0] == 'm' &&
+            raw_buffer[1] == 't' &&
+            raw_buffer[2] == 'l' &&
+            raw_buffer[3] == 'l' &&
+            raw_buffer[4] == 'i' &&
+            raw_buffer[5] == 'b')
+        {
+            // mttlib spec, ignore
+            while (raw_buffer[0] != '\n' && raw_buffer[0] != '\0') {
+                raw_buffer++;
+            }
+        } else if (raw_buffer[0] == 'v' && raw_buffer[1] == ' ') {
             // vertex data
             
             raw_buffer++; // skip the 'v'
@@ -476,7 +536,11 @@ void parse_obj(
             raw_buffer[4] == 't' &&
             raw_buffer[5] == 'l')
         {
-            while (raw_buffer[0] != '\n' && raw_buffer[0] != '\0') {
+            while (
+                raw_buffer[0] != '\n' &&
+                raw_buffer[0] != '\r' &&
+                raw_buffer[0] != '\0')
+            {
                 raw_buffer++;
             }
         } else {
@@ -491,14 +555,17 @@ void parse_obj(
             break;
         }
         
-        if (raw_buffer[0] != '\n') {
+        if (raw_buffer[0] != '\n' && raw_buffer[0] != '\r') {
             *success = 0;
             #ifndef OBJ_PARSER_NO_ASSERTS
             assert(0);
             #endif
             return;
         }
-        raw_buffer++; // discard the newline
+        
+        while (raw_buffer[0] == '\n' || raw_buffer[0] == '\r') {
+            raw_buffer++; // discard the newline
+        }
     }
     
     return;

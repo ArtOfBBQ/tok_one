@@ -124,7 +124,8 @@ void client_logic_startup(void) {
         "disk.obj",
     };
     
-    int32_t xmastree_mesh_id = new_mesh_id_from_resource("teapot.obj");
+    int32_t xmastree_mesh_id = new_mesh_id_from_resource(obj_filenames[0]);
+    int32_t teapot_mesh_id = new_mesh_id_from_resource("teapot.obj");
     
     // center_mesh_offsets(xmastree_mesh_id);
     
@@ -133,7 +134,7 @@ void client_logic_startup(void) {
     // example 1: the 'christams tree' obj file
     for (uint32_t i = 0; i < 10; i++) {
         construct_zpolygon(&xmastree);
-        xmastree.mesh_id = xmastree_mesh_id;
+        xmastree.mesh_id = i % 3 == 0 ? xmastree_mesh_id : teapot_mesh_id;
         xmastree.x = 0.0f + (0.30f * (i % 30));
         xmastree.y = -0.5f + (0.30f * (i / 15));
         xmastree.z = 1.0f + (0.015f * i);
@@ -155,7 +156,7 @@ void client_logic_startup(void) {
         xmastree.x_multiplier = 0.05f;
         xmastree.y_multiplier = 0.05f;
         xmastree.z_multiplier = 0.05f;
-    
+        
         // example 2: use a quad instead
         //        construct_quad(
         //            /* const float left_x: */

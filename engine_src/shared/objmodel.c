@@ -758,27 +758,31 @@ int32_t new_mesh_id_from_resource(
         for (uint32_t _ = 0; _ < 3; _++) {
             uint32_t vert_i = parsed_obj.triangles[triangle_i][_];
             
+            log_assert(vert_i >= 1);
+            log_assert(vert_i <= parsed_obj.vertices_count);
+            
             all_mesh_vertices[all_mesh_vertices_size].gpu_data.xyz[0] =
-                parsed_obj.vertices[vert_i][0];
+                parsed_obj.vertices[vert_i - 1][0];
             all_mesh_vertices[all_mesh_vertices_size].gpu_data.xyz[1] =
-                parsed_obj.vertices[vert_i][1];
+                parsed_obj.vertices[vert_i - 1][1];
             all_mesh_vertices[all_mesh_vertices_size].gpu_data.xyz[2] =
-                parsed_obj.vertices[vert_i][2];
+                parsed_obj.vertices[vert_i - 1][2];
             
             if (parsed_obj.normals_count > 0) {
                 uint32_t norm_i = parsed_obj.triangle_normals[triangle_i][_];
                 
-                log_assert(norm_i < parsed_obj.normals_count);
+                log_assert(norm_i >= 1);
+                log_assert(norm_i <= parsed_obj.normals_count);
                 
                 all_mesh_vertices[all_mesh_vertices_size].gpu_data.
                     normal_xyz[0] =
-                        parsed_obj.normals[norm_i][0];
+                        parsed_obj.normals[norm_i - 1][0];
                 all_mesh_vertices[all_mesh_vertices_size].gpu_data.
                     normal_xyz[1] =
-                        parsed_obj.normals[norm_i][1];
+                        parsed_obj.normals[norm_i - 1][1];
                 all_mesh_vertices[all_mesh_vertices_size].gpu_data.
                     normal_xyz[2] =
-                        parsed_obj.normals[norm_i][2];
+                        parsed_obj.normals[norm_i - 1][2];
             } else {
                 // No normal data in .obj, impute a normal
                 // TODO: check results properly, maybe make it a part of the
@@ -791,12 +795,13 @@ int32_t new_mesh_id_from_resource(
             if (parsed_obj.textures_count > 0) {
                 uint32_t text_i = parsed_obj.triangle_textures[triangle_i][_];
                 
-                log_assert(text_i < parsed_obj.textures_count);
+                log_assert(text_i >= 1);
+                log_assert(text_i <= parsed_obj.textures_count);
                 
                 all_mesh_vertices[all_mesh_vertices_size].gpu_data.uv[0] =
-                    parsed_obj.textures[text_i][0];
+                    parsed_obj.textures[text_i - 1][0];
                 all_mesh_vertices[all_mesh_vertices_size].gpu_data.uv[1] =
-                    parsed_obj.textures[text_i][1];
+                    parsed_obj.textures[text_i - 1][1];
             } else {
                 // No uv data in .obj file, gotta guess
                 // TODO: Maybe should be part of the obj parser?
