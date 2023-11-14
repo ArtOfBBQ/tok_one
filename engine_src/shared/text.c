@@ -462,6 +462,8 @@ void request_label_renderable(
         
         letter.vertex_materials[0].texturearray_i = font_texturearray_i;
         letter.vertex_materials[0].texture_i = (int32_t)(text_to_draw[i] - '!');
+        log_assert(letter.vertex_materials[0].texture_i >=    0);
+        log_assert(letter.vertex_materials[0].texture_i <  1000);
         
         for (
             uint32_t rgba_i = 0;

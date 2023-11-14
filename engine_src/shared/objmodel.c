@@ -752,6 +752,8 @@ int32_t new_mesh_id_from_resource(
     all_mesh_summaries[all_mesh_summaries_size].vertices_head_i =
         (int32_t)all_mesh_vertices_size;
     
+    log_assert(all_mesh_vertices_size < ALL_LOCKED_VERTICES_SIZE);
+    
     all_mesh_summaries[all_mesh_summaries_size].materials_size =
         parsed_obj.materials_count;
     for (uint32_t i = 0; i < parsed_obj.materials_count; i++) {
@@ -773,6 +775,7 @@ int32_t new_mesh_id_from_resource(
             
             log_assert(vert_i >= 1);
             log_assert(vert_i <= parsed_obj.vertices_count);
+            log_assert(all_mesh_vertices_size < ALL_LOCKED_VERTICES_SIZE);
             
             all_mesh_vertices[all_mesh_vertices_size].gpu_data.xyz[0] =
                 parsed_obj.vertices[vert_i - 1][0];
@@ -857,14 +860,14 @@ int32_t new_mesh_id_from_resource(
 
                 log_assert(vert_i >= 1);
                 log_assert(vert_i <= parsed_obj.vertices_count);
-
+                
                 all_mesh_vertices[all_mesh_vertices_size].gpu_data.xyz[0] =
                     parsed_obj.vertices[vert_i - 1][0];
                 all_mesh_vertices[all_mesh_vertices_size].gpu_data.xyz[1] =
                     parsed_obj.vertices[vert_i - 1][1];
                 all_mesh_vertices[all_mesh_vertices_size].gpu_data.xyz[2] =
                     parsed_obj.vertices[vert_i - 1][2];
-
+                
                 all_mesh_vertices[all_mesh_vertices_size].parent_material_i =
                     cur_material_i;
 

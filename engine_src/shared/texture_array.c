@@ -485,6 +485,7 @@ void init_or_push_one_gpu_texture_array_if_needed(void) {
                                     .images[j]
                                     .image->rgba_values != NULL);
                         #endif
+                        
                         if (!application_running) {
                             platform_mutex_unlock(texture_arrays_mutex_ids[i]);
                             return;

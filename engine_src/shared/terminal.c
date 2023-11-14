@@ -59,7 +59,6 @@ void terminal_init(void) {
     
     terminal_history = (char *)malloc_from_unmanaged(
         TERMINAL_HISTORY_MAX);
-    
     strcpy_capped(
         terminal_history,
         TERMINAL_HISTORY_MAX,
