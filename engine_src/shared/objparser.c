@@ -1,19 +1,19 @@
 #include "objparser.h"
 
-static void * (* malloc_function)(size_t);
+static void * (* malloc_function)(unsigned long);
 static void   (*   free_function)(void *);
 
 void init_obj_parser(
-    void * (* arg_malloc_function)(size_t),
+    void * (* arg_malloc_function)(unsigned long),
     void (* arg_free_function)(void *))
 {
     malloc_function = arg_malloc_function;
     free_function = arg_free_function;
 }
 
-static uint32_t consume_uint(
+static unsigned int consume_uint(
     char ** raw_buffer,
-    uint32_t * good)
+    unsigned int * good)
 {
     #ifndef OBJ_PARSER_NO_ASSERTS
     assert(*raw_buffer[0] >= '0');
@@ -25,10 +25,10 @@ static uint32_t consume_uint(
         return 0.0f;
     }
     
-    uint32_t return_value = 0;
+    unsigned int return_value = 0;
     
     while ((*raw_buffer)[0] >= '0' && (*raw_buffer)[0] <= '9') {
-        uint32_t new_digit = (*raw_buffer)[0] - '0';
+        unsigned int new_digit = (*raw_buffer)[0] - '0';
         return_value *= 10;
         return_value += new_digit;
         (*raw_buffer)++;
@@ -39,7 +39,7 @@ static uint32_t consume_uint(
 
 static float consume_float(
     char ** raw_buffer,
-    uint32_t * good)
+    unsigned int * good)
 {
     float final_multiplier = 1.0f;
     if ((*raw_buffer)[0] == '-') {
@@ -57,10 +57,10 @@ static float consume_float(
         return 0.0f;
     }
     
-    uint32_t above_comma = consume_uint(raw_buffer, good);
-    uint32_t below_comma = 0;
+    unsigned int above_comma = consume_uint(raw_buffer, good);
+    unsigned int below_comma = 0;
     float below_comma_adj = 0.0f;
-    uint32_t below_comma_leading_zeros = 0;
+    unsigned int below_comma_leading_zeros = 0;
     
     if ((*raw_buffer)[0] == '.') {
         (*raw_buffer)++;
@@ -83,7 +83,7 @@ static float consume_float(
             below_comma_adj /= 10.0f;
         }
         
-        for (uint32_t _ = 0; _ < below_comma_leading_zeros; _++) {
+        for (unsigned int _ = 0; _ < below_comma_leading_zeros; _++) {
             below_comma_adj /= 10.0f;
         }
     }
@@ -95,7 +95,7 @@ static float consume_float(
         // 'to the power of 10' adjustment
         (*raw_buffer)++;
         
-        uint32_t div_instead = 0;
+        unsigned int div_instead = 0;
         if ((*raw_buffer)[0] == '+') {
             (*raw_buffer)++;
         } else if ((*raw_buffer)[0] == '-') {
@@ -108,11 +108,11 @@ static float consume_float(
         assert((*raw_buffer)[0] <= '9');
         #endif
         
-        uint32_t e_num = consume_uint(raw_buffer, good);
+        unsigned int e_num = consume_uint(raw_buffer, good);
         if (!good) { return 0.0f; }
         
-        uint32_t extracted_mod = 10;
-        for (uint32_t _ = 1; _ < e_num; _++) {
+        unsigned int extracted_mod = 10;
+        for (unsigned int _ = 1; _ < e_num; _++) {
             extracted_mod *= 10;
         }
         
@@ -131,21 +131,21 @@ static float consume_float(
 
 static void consume_separated_uints(
     char ** from_buffer,
-    int32_t * recipient,
-    uint32_t * success)
+    int * recipient,
+    unsigned int * success)
 {
-    uint32_t new_num = consume_uint(
+    unsigned int new_num = consume_uint(
         from_buffer,
         success);
     
     if (!*success) { return; }
     
     #ifndef OBJ_PARSER_NO_ASSERTS
-    assert(new_num < INT32_MAX);
+    assert(new_num < 2147483647);
     #endif
-    recipient[0] = (int32_t)new_num;
+    recipient[0] = (int)new_num;
     
-    uint32_t recipient_i = 0;
+    unsigned int recipient_i = 0;
     while ((*from_buffer)[0] == '/') {
         
         (*from_buffer)++; // ditch the '/'
@@ -163,36 +163,148 @@ static void consume_separated_uints(
         if (!success) { return; }
         
         #ifndef OBJ_PARSER_NO_ASSERTS
-        assert(new_num < INT32_MAX);
+        assert(new_num < 2147483647);
         #endif
-        recipient[recipient_i] = (int32_t)new_num;
+        recipient[recipient_i] = (int)new_num;
     }
+}
+
+/*
+spacenum = space followed by a "number" that may include '/'
+
+this is for counting the number of faces in a line
+
+for example, the string:
+"f 3/2/1 3/4/1 2/3/2
+this text doesnt matter"
+
+...has 3 faces because there are 3 spaces followed by numbers before the next
+line break.
+*/
+static unsigned int count_upcoming_spacenums(
+    const char * in_buffer)
+{
+    unsigned int return_value = 0;
+    
+    unsigned int i = 0;
+    while (in_buffer[i] != '\n' && in_buffer[i] != '\0') {
+        if (in_buffer[i] == ' ') {
+            unsigned int j = i;
+            while (in_buffer[j] == ' ') {
+                j++;
+            }
+            if (in_buffer[j] >= '0' && in_buffer[j] <= '9') {
+                return_value += 1;
+                while (
+                    (in_buffer[j] >= '0' && in_buffer[j] <= '9') ||
+                    in_buffer[j] == '/')
+                {
+                    j++;
+                }
+            } else {
+                break;
+            }
+        }
+        i++;
+    }
+    
+    return return_value;
+}
+
+static int get_material_i_or_register_new(
+    ParsedObj * in_obj,
+    char * name)
+{
+    int already_exist_i = -1;
+    
+    #ifndef OBJ_PARSER_NO_ASSERTS
+    assert(name[0] != '\0');
+    #endif
+    
+    unsigned int char_i;
+    for (
+        unsigned int mat_i = 0;
+        mat_i < in_obj->materials_count;
+        mat_i++)
+    {
+        char_i = 0;
+        unsigned int match = 1;
+        while (name[char_i] != '\0') {
+            if (in_obj->materials[mat_i].name[char_i] !=
+                name[char_i])
+            {
+                match = 0;
+                break;
+            }
+            char_i++;
+        }
+        
+        if (!match) {
+            continue;
+        } else {
+            already_exist_i = (int)mat_i;
+            break;
+        }
+    }
+    
+    if (already_exist_i >= 0) {
+        return already_exist_i;
+    }
+    
+    int first_unused_material = -1;
+    for (int _ = 0; _ <= in_obj->materials_count; _++) {
+        if (in_obj->materials[_].name[0] == '\0') {
+            first_unused_material = _;
+            break;
+        }
+    }
+    
+    #ifndef OBJ_PARSER_IGNORE_ASSERTS
+    // no room for more materials? impossible
+    assert(first_unused_material >= 0);
+    #endif
+    
+    char_i = 0;
+    while (name[char_i] != '\0') {
+        in_obj->materials[first_unused_material].
+            name[char_i] =
+                name[char_i];
+        char_i++;
+    }
+    in_obj->materials[first_unused_material].name[char_i] = '\0';
+    
+    return first_unused_material;
 }
 
 void parse_obj(
     ParsedObj * recipient,
     char * raw_buffer,
-    uint32_t * success)
+    unsigned int * success)
 {
     #ifndef OBJ_PARSER_NO_ASSERTS
-    assert(recipient != NULL);
-    assert(raw_buffer != NULL);
+    assert(recipient != 0);
+    assert(raw_buffer != 0);
     #endif
     
     *success = 1;
     
-    recipient->triangles = NULL;
-    recipient->triangle_textures = NULL;
-    recipient->triangle_normals = NULL;
-    recipient->quads = NULL;
-    recipient->quad_textures = NULL;
-    recipient->quad_normals = NULL;
-    recipient->textures = NULL;
-    recipient->normals = NULL;
+    recipient->triangles = 0;
+    recipient->triangle_textures = 0;
+    recipient->triangle_normals = 0;
+    recipient->quads = 0;
+    recipient->quad_textures = 0;
+    recipient->quad_normals = 0;
+    recipient->textures = 0;
+    recipient->normals = 0;
+    recipient->materials = malloc_function(sizeof(ParsedMaterial) * 200);
+    for (unsigned int i = 0; i < 200; i++) {
+        recipient->materials[i].name[0] = '\0';
+    }
     
     recipient->vertices_count = 0;
     recipient->textures_count = 0;
     recipient->normals_count = 0;
+    recipient->materials_count = 0;
     
     recipient->triangles_count = 0;
     recipient->quads_count = 0;
@@ -201,10 +313,44 @@ void parse_obj(
     1st run: count the number of vertices and faces so we know how much memory
     to allocate.
     */
-    uint32_t i = 0;
+    unsigned int i = 0;
     while (raw_buffer[i] != '\0') {
         if (raw_buffer[i] == 'v' && raw_buffer[i + 1] == ' ') {
             recipient->vertices_count += 1;
+        }
+        if (
+            raw_buffer[i + 0] == 'u' &&
+            raw_buffer[i + 1] == 's' &&
+            raw_buffer[i + 2] == 'e' &&
+            raw_buffer[i + 3] == 'm' &&
+            raw_buffer[i + 4] == 't' &&
+            raw_buffer[i + 5] == 'l' &&
+            raw_buffer[i + 6] == ' ')
+        {
+            i += 7;
+            
+            char material_name[64];
+            unsigned int char_i = 0;
+            while (
+                raw_buffer[i] != '\n' &&
+                raw_buffer[i] != '\r' &&
+                raw_buffer[i] != '\0')
+            {
+                material_name[char_i++] = raw_buffer[i];
+                i++;
+            }
+            material_name[char_i] = '\0';
+            
+            unsigned int new_material_i = get_material_i_or_register_new(
+                recipient,
+                material_name);
+            if (new_material_i >= recipient->materials_count) {
+                recipient->materials_count += 1;
+            }
+            
+            #ifndef OBJ_PARSER_NO_ASSERTS
+            assert(new_material_i < recipient->materials_count);
+            #endif
         }
         if (raw_buffer[i] == 'v' && raw_buffer[i + 1] == 'n') {
             recipient->normals_count += 1;
@@ -213,23 +359,24 @@ void parse_obj(
             recipient->textures_count += 1;
         }
         if (raw_buffer[i] == 'f' && raw_buffer[i + 1] == ' ') {
-            // peek ahead to decide if triangle, quad, or whatever
-            uint32_t spaces_before_lb = 0;
-            uint32_t j = i;
-            while (raw_buffer[j] != '\n' && raw_buffer[j] != '\0') {
-                if (raw_buffer[j] == ' ') { spaces_before_lb += 1; }
-                j++;
-            }
+            /*
+            peek ahead to decide if triangle, quad, or whatever
+            we are essentially looking for a space(s) followed by a number(s)
+            or a 'spacenum'
+            */
+            unsigned int spacenums_before_lb = count_upcoming_spacenums(
+                raw_buffer + i);
             
-            if (spaces_before_lb == 3) {
+            if (spacenums_before_lb == 3) {
                 recipient->triangles_count += 1;
-            } else if (spaces_before_lb == 4) {
+            } else if (spacenums_before_lb == 4) {
                 recipient->quads_count += 1;
             } else {
                 // We're not supporting faces with more than 4 vertices for now
                 #ifndef OBJ_PARSER_NO_ASSERTS
                 assert(0);
                 #endif
+                
                 *success = 0;
                 return;
             }
@@ -246,11 +393,20 @@ void parse_obj(
         return;
     }
     recipient->vertices = malloc_function(
-        sizeof(uint32_t[6]) * recipient->vertices_count);
+        sizeof(unsigned int[6]) * recipient->vertices_count);
+    
+    free_function(recipient->materials);
+    if (recipient->materials_count > 0) {
+        recipient->materials = malloc_function(
+            sizeof(ParsedMaterial) * recipient->materials_count);
+        for (unsigned int j = 0; j < recipient->materials_count; j++) {
+            recipient->materials[j].name[0] = '\0';
+        }
+    }
     
     if (recipient->normals_count > 0) {
         recipient->normals = malloc_function(
-            sizeof(uint32_t[3]) * recipient->normals_count);
+            sizeof(unsigned int[3]) * recipient->normals_count);
         
         #ifndef OBJ_PARSER_NO_ASSERTS
         assert(
@@ -259,12 +415,12 @@ void parse_obj(
         
         if (recipient->triangles_count > 0) {
             recipient->triangle_normals = malloc_function(
-                sizeof(uint32_t[3]) * recipient->triangles_count);
+                sizeof(unsigned int[3]) * recipient->triangles_count);
         }
         
         if (recipient->quads_count > 0) {
             recipient->quad_normals = malloc_function(
-                sizeof(uint32_t[4]) * recipient->quads_count);
+                sizeof(unsigned int[4]) * recipient->quads_count);
         }
     }
     if (recipient->textures_count > 0) {
@@ -278,45 +434,81 @@ void parse_obj(
         
         if (recipient->triangles_count > 0) {
             recipient->triangle_textures = malloc_function(
-                sizeof(uint32_t[3]) * recipient->triangles_count);
+                sizeof(unsigned int[3]) * recipient->triangles_count);
+            for (
+                unsigned int tri_i = 0;
+                tri_i < recipient->triangles_count;
+                tri_i++)
+            {
+                recipient->triangle_textures[tri_i][0] = 1;
+                recipient->triangle_textures[tri_i][1] = 1;
+                recipient->triangle_textures[tri_i][2] = 1;
+            }
         }
         
         if (recipient->quads_count > 0) {
             recipient->quad_textures = malloc_function(
-                sizeof(uint32_t[4]) * recipient->quads_count);
+                sizeof(unsigned int[4]) * recipient->quads_count);
+            for (
+                unsigned int quad_i = 0;
+                quad_i < recipient->quads_count;
+                quad_i++)
+            {
+                recipient->quad_textures[quad_i][0] = 1;
+                recipient->quad_textures[quad_i][1] = 1;
+                recipient->quad_textures[quad_i][2] = 1;
+                recipient->quad_textures[quad_i][3] = 1;
+            }
         }
     }
     
     if (recipient->triangles_count > 0) {
         recipient->triangles = malloc_function(
-            sizeof(uint32_t[3]) * recipient->triangles_count);
+            sizeof(unsigned int[5]) * recipient->triangles_count);
     }
-    for (uint32_t i = 0; i < recipient->triangles_count; i++) {
-        recipient->triangles[i][0] = 0;
-        recipient->triangles[i][1] = 0;
-        recipient->triangles[i][2] = 0;
+    for (unsigned int j = 0; j < recipient->triangles_count; j++) {
+        recipient->triangles[j][0] = 0; // vertex index 1
+        recipient->triangles[j][1] = 0; // vertex index 2
+        recipient->triangles[j][2] = 0; // vertex index 3
+        recipient->triangles[j][3] = 0; // smooth shading default = 0
+        recipient->triangles[j][4] = 0; // use material 0
     }
     
     if (recipient->quads_count > 0) {
         recipient->quads = malloc_function(
-            sizeof(uint32_t) *
-            4 *
+            sizeof(unsigned int) *
+            6 *
             recipient->quads_count);
+    }
+    for (unsigned int j = 0; j < recipient->quads_count; j++) {
+        recipient->quads[j][0] = 0; // vertex index 1
+        recipient->quads[j][1] = 0; // vertex index 2
+        recipient->quads[j][2] = 0; // vertex index 3
+        recipient->quads[j][3] = 0; // vertex index 4
+        recipient->quads[j][4] = 0; // smooth shading default = 0
+        recipient->quads[j][5] = 0; // use material 0
     }
     
     // run 2: read in the data
-    uint32_t cur_vertex_i = 0;
-    uint32_t cur_texture_i = 0;
-    uint32_t cur_normal_i = 0;
-    uint32_t cur_triangle_i = 0;
-    uint32_t cur_quad_i = 0;
+    unsigned int cur_vertex_i = 0;
+    unsigned int cur_texture_i = 0;
+    unsigned int cur_normal_i = 0;
+    unsigned int cur_material_i = 0;
+    unsigned int cur_triangle_i = 0;
+    unsigned int cur_quad_i = 0;
+    unsigned int smooth_shading = 0;
     
     while (raw_buffer[0] != '\0') {
         while (raw_buffer[0] == ' ' || raw_buffer[0] == '\n') {
             raw_buffer++;
         }
         
-        if (raw_buffer[0] == '\0') { return; }
+        if (raw_buffer[0] == '\0') {
+            #ifndef OBJ_PARSER_NO_ASSERTS
+            assert(0);
+            #endif
+            return;
+        }
         
         if (raw_buffer[0] == '#') {
             // comment, ignore
@@ -325,6 +517,47 @@ void parse_obj(
             }
         } else if (raw_buffer[0] == 'o' && raw_buffer[1] == ' ') {
             // object spec, ignore
+            while (raw_buffer[0] != '\n' && raw_buffer[0] != '\0') {
+                raw_buffer++;
+            }
+        } else if (raw_buffer[0] == 'g' && raw_buffer[1] == ' ') {
+            // group spec, ignore
+            while (raw_buffer[0] != '\n' && raw_buffer[0] != '\0') {
+                raw_buffer++;
+            }
+        } else if (raw_buffer[0] == 'l' && raw_buffer[1] == ' ') {
+            // line spec, ignore for now
+            while (raw_buffer[0] != '\n' && raw_buffer[0] != '\0') {
+                raw_buffer++;
+            }
+        } else if (raw_buffer[0] == 's' && raw_buffer[1] == ' ') {
+            // change smooth shading status
+            
+            // ditch the "s "
+            raw_buffer += 2;
+            
+            if (raw_buffer[0] == '1' ||
+                (raw_buffer[0] == 'o' && raw_buffer[1] == 'n'))
+            {
+                smooth_shading = 1;
+            } else if (
+                raw_buffer[0] == '0' ||
+                (
+                    raw_buffer[0] == 'o' &&
+                    raw_buffer[1] == 'f' &&
+                    raw_buffer[2] == 'f'))
+            {
+                smooth_shading = 0;
+            } else {
+                // expected 's on', 's off', 's 1', or 's 0'
+                #ifndef OBJ_PARSER_NO_ASSERTS
+                assert(0);
+                #endif
+                
+                *success = 0;
+                return;
+            }
+            
             while (raw_buffer[0] != '\n' && raw_buffer[0] != '\0') {
                 raw_buffer++;
             }
@@ -348,10 +581,18 @@ void parse_obj(
                 raw_buffer++;
             }
             
-            for (uint32_t axis_i = 0; axis_i < 3; axis_i++) {
+            for (unsigned int axis_i = 0; axis_i < 3; axis_i++) {
+                #ifndef OBJ_PARSER_NO_ASSERTS
+                assert(cur_vertex_i < recipient->vertices_count);
+                #endif
                 recipient->vertices[cur_vertex_i][axis_i] =
                     consume_float(&raw_buffer, success);
-                if (!*success) { return; }
+                if (!*success) {
+                    #ifndef OBJ_PARSER_NO_ASSERTS
+                    assert(0);
+                    #endif
+                    return;
+                }
                 
                 while (raw_buffer[0] == ' ') {
                     raw_buffer++;
@@ -359,33 +600,36 @@ void parse_obj(
             }
             
             cur_vertex_i += 1;
+            #ifndef OBJ_PARSER_NO_ASSERTS
+            // actually should be < vertices_count, but this may be the last one
+            assert(cur_vertex_i <= recipient->vertices_count);
+            #endif
         } else if (raw_buffer[0] == 'f' && raw_buffer[1] == ' ') {
             // face data
             
             raw_buffer++; // skip the 'f'
             
+            // peek ahead to decide how many vertices in this face
+            unsigned int vertices_in_face_count = count_upcoming_spacenums(
+                raw_buffer);
+            
             while (raw_buffer[0] == ' ') {
                 raw_buffer++;
             }
             
-            // peek ahead to decide how many vertices in this face
-            uint32_t verties_in_face_count = 1;
-            uint32_t peek_i = 0;
-            while (raw_buffer[peek_i] != '\n' && raw_buffer[peek_i] != '\0') {
-                if (raw_buffer[peek_i] == ' ') {
-                    verties_in_face_count += 1;
-                }
-                peek_i += 1;
-            }
-            
             #ifndef OBJ_PARSER_NO_ASSERTS
-            assert(verties_in_face_count > 2);
+            assert(vertices_in_face_count > 2);
             #endif
             
-            int32_t indexes[4];
-            switch (verties_in_face_count) {
+            int indexes[4];
+            switch (vertices_in_face_count) {
                 case 3: {
-                    uint32_t consec_entry_i = 0;
+                    #ifndef OBJ_PARSER_NO_ASSERTS
+                    assert(recipient->triangles != 0);
+                    assert(recipient->triangles_count > 0);
+                    #endif
+                    
+                    unsigned int consec_entry_i = 0;
                     while (raw_buffer[0] >= '0' && raw_buffer[0] <= '9') {
                         indexes[0] = -1;
                         indexes[1] = -1;
@@ -396,24 +640,38 @@ void parse_obj(
                             indexes,
                             success);
                         
-                        if (!success) { return; }
+                        if (!success) {
+                            #ifndef OBJ_PARSER_NO_ASSERTS
+                            assert(0);
+                            #endif
+                            return;
+                        }
                         
-                        if (indexes[0] == -1) {
+                        if (indexes[0] < 0) {
+                            #ifndef OBJ_PARSER_NO_ASSERTS
+                            assert(0);
+                            #endif
                             success = 0;
                             return;
                         }
                         
                         recipient->triangles[cur_triangle_i][consec_entry_i] =
-                            indexes[0];
+                            (unsigned int)indexes[0];
                         
-                        if (indexes[1] != -1) {
+                        if (indexes[1] >= 0) {
+                            #ifndef OBJ_PARSER_NO_ASSERTS
+                            assert(recipient->triangle_textures != 0);
+                            assert(indexes[1] >= 1);
+                            assert(
+                                indexes[1] <= (int)recipient->textures_count);
+                            #endif
                             recipient->triangle_textures[cur_triangle_i]
-                                [consec_entry_i] = indexes[1];
+                                [consec_entry_i] = (unsigned int)indexes[1];
                         }
                         
-                        if (indexes[2] != -1) {
+                        if (indexes[2] >= 0) {
                             recipient->triangle_normals[cur_triangle_i]
-                                [consec_entry_i] = indexes[2];
+                                [consec_entry_i] = (unsigned int)indexes[2];
                         }
                         
                         #ifndef OBJ_PARSER_NO_ASSERTS
@@ -421,6 +679,9 @@ void parse_obj(
                         #endif
                         
                         if (indexes[3] != -1) {
+                            #ifndef OBJ_PARSER_NO_ASSERTS
+                            assert(0);
+                            #endif
                             *success = 0;
                             return;
                         }
@@ -430,11 +691,22 @@ void parse_obj(
                         }
                         consec_entry_i += 1;
                     }
+                    
+                    recipient->triangles[cur_triangle_i][3] = smooth_shading;
+                    
+                    recipient->triangles[cur_triangle_i][4] = cur_material_i;
+                    
                     cur_triangle_i += 1;
                     break;
                 }
                 case 4: {
-                    uint32_t consec_entry_i = 0;
+                    #ifndef OBJ_PARSER_NO_ASSERTS
+                    assert(recipient->quads != 0);
+                    assert(recipient->quads_count > 0);
+                    assert(cur_quad_i < recipient->quads_count);
+                    #endif
+                    
+                    unsigned int consec_entry_i = 0;
                     while (raw_buffer[0] >= '0' && raw_buffer[0] <= '9') {
                         indexes[0] = -1;
                         indexes[1] = -1;
@@ -447,28 +719,34 @@ void parse_obj(
                         
                         if (!success) { return; }
                         
-                        if (indexes[0] == -1) {
+                        if (indexes[0] < 0) {
+                            #ifndef OBJ_PARSER_NO_ASSERTS
+                            assert(0);
+                            #endif
                             success = 0;
                             return;
                         }
                         
                         recipient->quads[cur_quad_i][consec_entry_i] =
-                            indexes[0];
+                            (unsigned int)indexes[0];
                         
-                        if (indexes[1] != -1) {
+                        if (indexes[1] >= 0) {
                             #ifndef OBJ_PARSER_NO_ASSERTS
-                            assert(recipient->quad_textures != NULL);
+                            assert(recipient->quad_textures != 0);
+                            assert(indexes[1] >= 1);
+                            assert(
+                                indexes[1] <= (int)recipient->textures_count);
                             #endif
                             recipient->quad_textures[cur_quad_i]
-                                [consec_entry_i] = indexes[1];
+                                [consec_entry_i] = (unsigned int)indexes[1];
                         }
                         
-                        if (indexes[2] != -1) {
+                        if (indexes[2] >= 0) {
                             #ifndef OBJ_PARSER_NO_ASSERTS
-                            assert(recipient->quad_normals != NULL);
+                            assert(recipient->quad_normals != 0);
                             #endif
                             recipient->quad_normals[cur_quad_i]
-                                [consec_entry_i] = indexes[2];
+                                [consec_entry_i] = (unsigned int)indexes[2];
                         }
                         
                         while (raw_buffer[0] == ' ') {
@@ -476,6 +754,27 @@ void parse_obj(
                         }
                         consec_entry_i += 1;
                     }
+                    
+                    recipient->quads[cur_quad_i][4] = smooth_shading;
+                    
+                    recipient->quads[cur_quad_i][5] = cur_material_i;
+                    
+                    #ifndef OBJ_PARSER_NO_ASSERTS
+                    if (recipient->quad_textures != 0) {
+                        assert(recipient->quad_textures[cur_quad_i][0] >= 0);
+                        assert(recipient->quad_textures[cur_quad_i][1] >= 0);
+                        assert(recipient->quad_textures[cur_quad_i][2] >= 0);
+                        assert(recipient->quad_textures[cur_quad_i][3] >= 0);
+                        assert(recipient->quad_textures[cur_quad_i][0] <=
+                            recipient->textures_count);
+                        assert(recipient->quad_textures[cur_quad_i][1] <=
+                            recipient->textures_count);
+                        assert(recipient->quad_textures[cur_quad_i][2] <=
+                            recipient->textures_count);
+                        assert(recipient->quad_textures[cur_quad_i][3] <=
+                            recipient->textures_count);
+                    }
+                    #endif
                     cur_quad_i += 1;
                     break;
                 }
@@ -496,7 +795,7 @@ void parse_obj(
                 raw_buffer++;
             }
             
-            for (uint32_t uv_i = 0; uv_i < 2; uv_i++) {
+            for (unsigned int uv_i = 0; uv_i < 2; uv_i++) {
                 recipient->textures[cur_texture_i][uv_i] =
                     consume_float(&raw_buffer, success);
                 if (!*success) { return; }
@@ -506,7 +805,27 @@ void parse_obj(
                 }
             }
             
-            cur_vertex_i += 1;
+            if (raw_buffer[0] >= '0' && raw_buffer[0] <= '9') {
+                // w coordinate of uv coordinate
+                float w_coordinate = consume_float(&raw_buffer, success);
+                
+                if (!*success) {
+                    #ifndef OBJ_PARSER_NO_ASSERTS
+                    assert(0);
+                    #endif
+                    return;
+                }
+                
+                while (raw_buffer[0] == ' ') {
+                    raw_buffer++;
+                }
+            }
+            
+            cur_texture_i += 1;
+            #ifndef OBJ_PARSER_NO_ASSERTS
+            // actually should be < vertices_count, but this may be the last one
+            assert(cur_texture_i <= recipient->textures_count);
+            #endif
         }  else if (raw_buffer[0] == 'v' && raw_buffer[1] == 'n') {
             
             raw_buffer++; // skip the 'v'
@@ -516,7 +835,7 @@ void parse_obj(
                 raw_buffer++;
             }
             
-            for (uint32_t axis_i = 0; axis_i < 3; axis_i++) {
+            for (unsigned int axis_i = 0; axis_i < 3; axis_i++) {
                 recipient->normals[cur_normal_i][axis_i] =
                     consume_float(&raw_buffer, success);
                 if (!*success) { return; }
@@ -527,6 +846,10 @@ void parse_obj(
             }
             
             cur_normal_i += 1;
+            #ifndef OBJ_PARSER_NO_ASSERTS
+            // actually should be < normals_count, but this may be the last one
+            assert(cur_normal_i <= recipient->normals_count);
+            #endif
             
         } else if (
             raw_buffer[0] == 'u' &&
@@ -534,15 +857,26 @@ void parse_obj(
             raw_buffer[2] == 'e' &&
             raw_buffer[3] == 'm' &&
             raw_buffer[4] == 't' &&
-            raw_buffer[5] == 'l')
+            raw_buffer[5] == 'l' &&
+            raw_buffer[6] == ' ')
         {
+            raw_buffer += 7;
+            
+            char material_name[64];
+            unsigned int char_i = 0;
             while (
                 raw_buffer[0] != '\n' &&
                 raw_buffer[0] != '\r' &&
                 raw_buffer[0] != '\0')
             {
+                material_name[char_i++] = raw_buffer[0];
                 raw_buffer++;
             }
+            material_name[char_i] = '\0';
+            
+            cur_material_i = get_material_i_or_register_new(
+                recipient,
+                material_name);
         } else {
             #ifndef OBJ_PARSER_NO_ASSERTS
             assert(0);
@@ -567,6 +901,19 @@ void parse_obj(
             raw_buffer++; // discard the newline
         }
     }
+    
+    #ifndef OBJ_PARSER_NO_ASSERTS
+    for (unsigned int quad_i = 0; quad_i < recipient->quads_count; quad_i++) {
+        if (recipient->quad_textures != 0) {
+            for (unsigned int m = 0; m < 4; m++) {
+                assert(recipient->quad_textures[quad_i][m] >= 1);
+                assert(
+                    (recipient->quad_textures[quad_i][m] - 1) <
+                    recipient->textures_count);
+            }
+        }
+    }
+    #endif
     
     return;
 }

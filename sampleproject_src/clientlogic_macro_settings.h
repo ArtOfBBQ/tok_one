@@ -7,10 +7,10 @@ of the engine for your specific app.
 */
 
 // The 2 pools of memory your app allocates on startup
-// 500mb ->                    500...000
-#define UNMANAGED_MEMORY_SIZE  500000000
-// 50 mb ->                    50...000
-#define MANAGED_MEMORY_SIZE    50000000
+// 600mb ->                    600...000
+#define UNMANAGED_MEMORY_SIZE  600000000
+// 50 mb ->                     50...000
+#define MANAGED_MEMORY_SIZE     50000000
 
 #define APPLICATION_NAME "TOK ONE"
 
@@ -25,7 +25,7 @@ of the engine for your specific app.
 // The maximum number of polygons/lights to send to the GPU each frame
 // The maximum number of triangle vertices to be stored on gpu permanently
 // #define MAX_POLYGONS_PER_BUFFER   1600
-#define MAX_VERTICES_PER_BUFFER   3400000
+#define MAX_VERTICES_PER_BUFFER   2500000
 // #define MAX_LIGHTS_PER_BUFFER       75
 
 // The maximum number of 'scheduled animations' simultaneously running
@@ -36,7 +36,7 @@ of the engine for your specific app.
 // the max # of triangles in all of your meshes/models combined
 #define ALL_LOCKED_VERTICES_SIZE 90000
 // The max number of 'materials ids' in 1 of your zpolygons
-#define MAX_MATERIALS_PER_POLYGON 10
+#define MAX_MATERIALS_SIZE 10
 
 /*
 The max # of simultaneously active particle effects in your app

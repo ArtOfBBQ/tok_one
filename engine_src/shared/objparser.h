@@ -1,9 +1,6 @@
 #ifndef OBJ_PARSER_H
 #define OBJ_PARSER_H
 
-#include <stdint.h>
-#include <stddef.h>
-
 #ifndef OBJ_PARSER_NO_ASSERTS
 #include <assert.h>
 #endif
@@ -16,26 +13,31 @@ vertices which build a polyline.
 l v1 v2 v3 v4 v5 v6 ...
 */
 
+typedef struct ParsedMaterial {
+    char name[64];
+} ParsedMaterial;
 
-/*
-*/
 typedef struct ParsedObj {
+    ParsedMaterial * materials;
     float (* vertices)[6]; // contains either xyzw,, or xyzrgb (, means unused)
     float (* textures)[2]; // contains u and v
     float (* normals)[3];  // xyz
     
-    uint32_t (* triangles)[3]; // 3 indexes into this->vertices
-    uint32_t (* quads)[4];
-    uint32_t (* triangle_textures)[3]; // 3 indexes into this->textures?
-    uint32_t (* quad_textures)[4];
-    uint32_t (* triangle_normals)[3]; // 3 indexes into this->normals
-    uint32_t (* quad_normals)[4];
+    // vert1, vert2, vert3, smooth, material_i
+    unsigned int (* triangles)[5];
+    // vert1, vert2, vert3, vert4, smooth, material_i
+    unsigned int (* quads)[6];
+    unsigned int (* triangle_textures)[3]; // 3 indexes into this->textures?
+    unsigned int (* quad_textures)[4];
+    unsigned int (* triangle_normals)[3]; // 3 indexes into this->normals
+    unsigned int (* quad_normals)[4];
     
-    uint32_t vertices_count;
-    uint32_t textures_count;
-    uint32_t normals_count;
-    uint32_t triangles_count;
-    uint32_t quads_count;
+    unsigned int materials_count;
+    unsigned int vertices_count;
+    unsigned int textures_count;
+    unsigned int normals_count;
+    unsigned int triangles_count;
+    unsigned int quads_count;
 } ParsedObj;
 
 /*
@@ -53,7 +55,7 @@ init_obj_parser(
     free);
 */
 void init_obj_parser(
-    void * (* malloc_function)       (size_t),
+    void * (* malloc_function)       (unsigned long),
     void   (* optional_free_function)(void *));
 
 /*
@@ -66,7 +68,7 @@ void init_obj_parser(
 void parse_obj(
     ParsedObj * recipient,
     char * raw_buffer,
-    uint32_t * success);
+    unsigned int * success);
 
 /*
 -> init_obj_parser() must run before this

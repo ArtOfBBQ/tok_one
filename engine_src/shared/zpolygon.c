@@ -24,7 +24,7 @@ static void set_zpolygon_hitbox(
         vert_i < vertices_tail_i;
         vert_i++)
     {
-        for (uint32_t m = 0; m < 3; m++) {
+        for (int32_t m = 0; m < 3; m++) {
             float cur_vertex_x =
                 all_mesh_vertices[vert_i + m].gpu_data.xyz[0] *
                         mesh->x_multiplier;
@@ -88,15 +88,19 @@ void request_zpolygon_to_render(zPolygon * to_add)
         }
     }
     
-    int32_t all_mesh_vertices_tail_i =
-        all_mesh_summaries[to_add->mesh_id].vertices_head_i +
-            all_mesh_summaries[to_add->mesh_id].vertices_size;
+    uint32_t all_mesh_vertices_tail_i =
+        (uint32_t)(all_mesh_summaries[to_add->mesh_id].vertices_head_i +
+            all_mesh_summaries[to_add->mesh_id].vertices_size -
+            1);
+    log_assert(all_mesh_vertices_tail_i < all_mesh_vertices_size);
+    
     for (
         int32_t mat_i = 0;
-        mat_i < to_add->vertex_materials_size;
+        mat_i < (int32_t)to_add->vertex_materials_size;
         mat_i++)
     {
         if (to_add->vertex_materials[mat_i].texturearray_i >= 0) {
+            log_assert(to_add->vertex_materials[mat_i].texture_i >= 0);
             register_high_priority_if_unloaded(
                 to_add->vertex_materials[mat_i].texturearray_i,
                 to_add->vertex_materials[mat_i].texture_i);
@@ -220,7 +224,7 @@ void construct_zpolygon(zPolygon * to_construct) {
     to_construct->rgb_bonus[1] = 0.0f;
     to_construct->rgb_bonus[2] = 0.0f;
     
-    for (uint32_t i = 0; i < MAX_MATERIALS_PER_POLYGON; i++) {
+    for (uint32_t i = 0; i < MAX_MATERIALS_SIZE; i++) {
         to_construct->vertex_materials[i].color[0] = 1.0f;
         to_construct->vertex_materials[i].color[1] = 1.0f;
         to_construct->vertex_materials[i].color[2] = 1.0f;

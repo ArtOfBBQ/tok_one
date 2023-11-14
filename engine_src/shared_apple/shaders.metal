@@ -295,6 +295,11 @@ fragment_shader(
         ))
     {
         discard_fragment();
+        //        out_color[0] = 0.0f;
+        //        out_color[1] = 1.0f;
+        //        out_color[2] = 1.0f;
+        //        out_color[3] = 1.0f;
+        //        return out_color;
     }
     
     out_color[3] = 1.0f;

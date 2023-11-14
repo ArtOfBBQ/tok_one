@@ -22,15 +22,15 @@ inline static void zpolygons_to_triangles(
     assert(*next_workload_size == 0);
     
     for (
-        int32_t zp_i = 0;
-        zp_i < zpolygons_to_render_size;
-        zp_i++)
+        int32_t cpu_zp_i = 0;
+        cpu_zp_i < zpolygons_to_render_size;
+        cpu_zp_i++)
     {
         if (
-            zpolygons_to_render[zp_i].deleted ||
-            !zpolygons_to_render[zp_i].visible ||
-            zpolygons_to_render[zp_i].mesh_id < 0 ||
-            (uint32_t)zpolygons_to_render[zp_i].mesh_id >=
+            zpolygons_to_render[cpu_zp_i].deleted ||
+            !zpolygons_to_render[cpu_zp_i].visible ||
+            zpolygons_to_render[cpu_zp_i].mesh_id < 0 ||
+            (uint32_t)zpolygons_to_render[cpu_zp_i].mesh_id >=
                 all_mesh_summaries_size)
         {
             continue;
@@ -41,42 +41,42 @@ inline static void zpolygons_to_triangles(
         assert(gpu_polygons->size < MAX_POLYGONS_PER_BUFFER);
         
         gpu_polygons->xyz[gpu_polygons->size][0] =
-            zpolygons_to_render[zp_i].x;
+            zpolygons_to_render[cpu_zp_i].x;
         gpu_polygons->xyz[gpu_polygons->size][1] =
-            zpolygons_to_render[zp_i].y;
+            zpolygons_to_render[cpu_zp_i].y;
         gpu_polygons->xyz[gpu_polygons->size][2] =
-            zpolygons_to_render[zp_i].z;
+            zpolygons_to_render[cpu_zp_i].z;
         gpu_polygons->xyz_angle[gpu_polygons->size][0] =
-            zpolygons_to_render[zp_i].x_angle;
+            zpolygons_to_render[cpu_zp_i].x_angle;
         gpu_polygons->xyz_angle[gpu_polygons->size][1] =
-            zpolygons_to_render[zp_i].y_angle;
+            zpolygons_to_render[cpu_zp_i].y_angle;
         gpu_polygons->xyz_angle[gpu_polygons->size][2] =
-            zpolygons_to_render[zp_i].z_angle;
+            zpolygons_to_render[cpu_zp_i].z_angle;
         gpu_polygons->xyz_multiplier[gpu_polygons->size][0] =
-            zpolygons_to_render[zp_i].x_multiplier;
+            zpolygons_to_render[cpu_zp_i].x_multiplier;
         gpu_polygons->xyz_multiplier[gpu_polygons->size][1] =
-            zpolygons_to_render[zp_i].y_multiplier;
+            zpolygons_to_render[cpu_zp_i].y_multiplier;
         gpu_polygons->xyz_multiplier[gpu_polygons->size][2] =
-            zpolygons_to_render[zp_i].z_multiplier;
+            zpolygons_to_render[cpu_zp_i].z_multiplier;
         gpu_polygons->xy_offset[gpu_polygons->size][0] =
-            zpolygons_to_render[zp_i].x_offset;
+            zpolygons_to_render[cpu_zp_i].x_offset;
         gpu_polygons->xy_offset[gpu_polygons->size][1] =
-            zpolygons_to_render[zp_i].y_offset;
+            zpolygons_to_render[cpu_zp_i].y_offset;
         gpu_polygons->bonus_rgb[gpu_polygons->size][0] =
-            zpolygons_to_render[zp_i].rgb_bonus[0];
+            zpolygons_to_render[cpu_zp_i].rgb_bonus[0];
         gpu_polygons->bonus_rgb[gpu_polygons->size][1] =
-            zpolygons_to_render[zp_i].rgb_bonus[1];
+            zpolygons_to_render[cpu_zp_i].rgb_bonus[1];
         gpu_polygons->bonus_rgb[gpu_polygons->size][2] =
-            zpolygons_to_render[zp_i].rgb_bonus[2];
+            zpolygons_to_render[cpu_zp_i].rgb_bonus[2];
         gpu_polygons->scale_factor[gpu_polygons->size] =
-            zpolygons_to_render[zp_i].scale_factor;
+            zpolygons_to_render[cpu_zp_i].scale_factor;
         gpu_polygons->ignore_lighting[gpu_polygons->size] =
-            zpolygons_to_render[zp_i].ignore_lighting;
+            zpolygons_to_render[cpu_zp_i].ignore_lighting;
         gpu_polygons->ignore_camera[gpu_polygons->size] =
-            zpolygons_to_render[zp_i].ignore_camera;
+            zpolygons_to_render[cpu_zp_i].ignore_camera;
         log_assert(gpu_polygons->size < MAX_POLYGONS_PER_BUFFER);
         
-        int32_t mesh_id = zpolygons_to_render[zp_i].mesh_id;
+        int32_t mesh_id = zpolygons_to_render[cpu_zp_i].mesh_id;
         log_assert(mesh_id >= 0);
         log_assert(mesh_id < (int32_t)all_mesh_summaries_size);
         
@@ -85,30 +85,31 @@ inline static void zpolygons_to_triangles(
                 all_mesh_summaries[mesh_id].vertices_size;
         assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
         
-        // TODO: copying vertices should no longer be needed every frame, stop
         for (
             int32_t vert_i = all_mesh_summaries[mesh_id].vertices_head_i;
             vert_i < vert_tail_i;
             vert_i++)
         {
             next_gpu_workload[*next_workload_size].locked_vertex_i = vert_i;
-            next_gpu_workload[*next_workload_size].polygon_i = zp_i;
+            next_gpu_workload[*next_workload_size].polygon_i =
+                (int)gpu_polygons->size; // this is not the same as cpu_zp_i!!!
             
             uint32_t mat_i = all_mesh_vertices[vert_i].parent_material_i;
-            log_assert(mat_i < zpolygons_to_render[zp_i].vertex_materials_size);
+            log_assert(
+                mat_i < zpolygons_to_render[cpu_zp_i].vertex_materials_size);
             
             next_gpu_workload[*next_workload_size].color[0] =
-                zpolygons_to_render[zp_i].vertex_materials[mat_i].color[0];
+                zpolygons_to_render[cpu_zp_i].vertex_materials[mat_i].color[0];
             next_gpu_workload[*next_workload_size].color[1] =
-                zpolygons_to_render[zp_i].vertex_materials[mat_i].color[1];
+                zpolygons_to_render[cpu_zp_i].vertex_materials[mat_i].color[1];
             next_gpu_workload[*next_workload_size].color[2] =
-                zpolygons_to_render[zp_i].vertex_materials[mat_i].color[2];
+                zpolygons_to_render[cpu_zp_i].vertex_materials[mat_i].color[2];
             next_gpu_workload[*next_workload_size].color[3] =
-                zpolygons_to_render[zp_i].vertex_materials[mat_i].color[3];
+                zpolygons_to_render[cpu_zp_i].vertex_materials[mat_i].color[3];
             next_gpu_workload[*next_workload_size].texture_i =
-                zpolygons_to_render[zp_i].vertex_materials[mat_i].texture_i;
+                zpolygons_to_render[cpu_zp_i].vertex_materials[mat_i].texture_i;
             next_gpu_workload[*next_workload_size].texturearray_i =
-                zpolygons_to_render[zp_i].vertex_materials[mat_i].
+                zpolygons_to_render[cpu_zp_i].vertex_materials[mat_i].
                     texturearray_i;
             *next_workload_size += 1;
             assert(*next_workload_size < MAX_VERTICES_PER_BUFFER);

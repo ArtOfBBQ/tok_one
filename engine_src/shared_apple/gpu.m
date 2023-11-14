@@ -48,10 +48,6 @@ static dispatch_semaphore_t drawing_semaphore;
     gpu_shared_data_collection.locked_vertices_size =
         all_mesh_vertices_size;
     
-    printf(
-        "copied %u locked vertices to gpu\n",
-        gpu_shared_data_collection.locked_vertices_size);
-    
     // Create a command buffer for GPU work.
     id <MTLCommandBuffer> commandBuffer = [command_queue commandBuffer];
     
@@ -337,6 +333,17 @@ static dispatch_semaphore_t drawing_semaphore;
     
     command_queue = [with_metal_device newCommandQueue];
     
+    // https://stackoverflow.com/questions/59002795/how-to-use-mtlsamplerstate-instead-of-declaring-a-sampler-in-my-fragment-shader
+    //    MTLSamplerDescriptor * sampler_desc = [MTLSamplerDescriptor new];
+    //    sampler_desc.rAddressMode = MTLSamplerAddressModeRepeat;
+    //    sampler_desc.sAddressMode = MTLSamplerAddressModeRepeat;
+    //    sampler_desc.tAddressMode = MTLSamplerAddressModeRepeat;
+    //    sampler_desc.minFilter = MTLSamplerMinMagFilterLinear;
+    //    sampler_desc.magFilter = MTLSamplerMinMagFilterLinear;
+    //    sampler_desc.mipFilter = MTLSamplerMipFilterNotMipmapped;
+    //    id<MTLSamplerState> ss =
+    //        [with_metal_device newSamplerStateWithDescriptor: sampler_desc];
+    
     log_append("finished configureMetalWithDevice\n");
 }
 
@@ -437,13 +444,6 @@ static dispatch_semaphore_t drawing_semaphore;
     shared_gameloop_update(
         &gpu_shared_data_collection.triple_buffers[current_frame_i]);
     
-    printf("metal code receiving: %u vertices in %u polygons, locked vertices: %u\n",
-        gpu_shared_data_collection.triple_buffers[current_frame_i].
-            vertices_size,
-        gpu_shared_data_collection.triple_buffers[current_frame_i].
-            polygon_collection->size,
-        gpu_shared_data_collection.locked_vertices_size);
-        
     id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
     
     if (command_buffer == nil) {
@@ -471,7 +471,7 @@ static dispatch_semaphore_t drawing_semaphore;
     
     RenderPassDescriptor.colorAttachments[0].clearColor =
         MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);;
-    
+        
     id<MTLRenderCommandEncoder> render_encoder =
         [command_buffer
             renderCommandEncoderWithDescriptor:
@@ -577,7 +577,7 @@ static dispatch_semaphore_t drawing_semaphore;
         dispatch_semaphore_signal(drawing_semaphore);
     }];
     
-    [command_buffer commit];    
+    [command_buffer commit];
 }
 
 - (void)mtkView:(MTKView *)view

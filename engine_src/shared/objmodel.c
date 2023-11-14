@@ -725,7 +725,7 @@ int32_t new_mesh_id_from_resource(
             &obj_file);
     
     log_assert(obj_file.good);
-    
+        
     ParsedObj parsed_obj;
     uint32_t good = 0;
     parse_obj(
@@ -735,26 +735,39 @@ int32_t new_mesh_id_from_resource(
             obj_file.contents,
         /* uint32_t * success: */
             &good);
+    log_assert(good);
     
     if (
         parsed_obj.vertices_count < 1 ||
-        parsed_obj.triangles_count < 1)
+        (parsed_obj.triangles_count + parsed_obj.quads_count) < 1)
     {
         good = 0;
     }
+    log_assert(good);
     
     if (!good) {
         return -1;
     }
     
     all_mesh_summaries[all_mesh_summaries_size].vertices_head_i =
-        all_mesh_vertices_size;
+        (int32_t)all_mesh_vertices_size;
+    
+    all_mesh_summaries[all_mesh_summaries_size].materials_size =
+        parsed_obj.materials_count;
+    for (uint32_t i = 0; i < parsed_obj.materials_count; i++) {
+        strcpy_capped(
+            all_mesh_summaries[all_mesh_summaries_size].material_names[i],
+            OBJ_STRING_SIZE,
+            parsed_obj.materials[i].name);
+    }
     
     for (
         uint32_t triangle_i = 0;
         triangle_i < parsed_obj.triangles_count;
         triangle_i++)
     {
+        uint32_t cur_material_i = parsed_obj.triangles[triangle_i][4];
+        
         for (uint32_t _ = 0; _ < 3; _++) {
             uint32_t vert_i = parsed_obj.triangles[triangle_i][_];
             
@@ -767,6 +780,24 @@ int32_t new_mesh_id_from_resource(
                 parsed_obj.vertices[vert_i - 1][1];
             all_mesh_vertices[all_mesh_vertices_size].gpu_data.xyz[2] =
                 parsed_obj.vertices[vert_i - 1][2];
+            
+            all_mesh_vertices[all_mesh_vertices_size].parent_material_i =
+                cur_material_i;
+            
+            #ifndef LOGGER_IGNORE_ASSERTS
+            if (all_mesh_vertices[all_mesh_vertices_size].parent_material_i > 0)
+            {
+                log_assert(
+                    all_mesh_vertices[all_mesh_vertices_size].
+                        parent_material_i <
+                            parsed_obj.materials_count);
+                log_assert(
+                    all_mesh_vertices[all_mesh_vertices_size].
+                        parent_material_i <
+                            all_mesh_summaries[all_mesh_summaries_size].
+                                materials_size);
+            }
+            #endif
             
             if (parsed_obj.normals_count > 0) {
                 uint32_t norm_i = parsed_obj.triangle_normals[triangle_i][_];
@@ -784,9 +815,6 @@ int32_t new_mesh_id_from_resource(
                     normal_xyz[2] =
                         parsed_obj.normals[norm_i - 1][2];
             } else {
-                // No normal data in .obj, impute a normal
-                // TODO: check results properly, maybe make it a part of the
-                // TODO: .obj parser?
                 guess_gpu_triangle_normal(
                     /* GPULockedVertex * to_change: */
                         &all_mesh_vertices[all_mesh_vertices_size].gpu_data);
@@ -800,6 +828,7 @@ int32_t new_mesh_id_from_resource(
                 
                 all_mesh_vertices[all_mesh_vertices_size].gpu_data.uv[0] =
                     parsed_obj.textures[text_i - 1][0];
+                
                 all_mesh_vertices[all_mesh_vertices_size].gpu_data.uv[1] =
                     parsed_obj.textures[text_i - 1][1];
             } else {
@@ -808,18 +837,114 @@ int32_t new_mesh_id_from_resource(
                 all_mesh_vertices[all_mesh_vertices_size].gpu_data.uv[0] =
                     all_mesh_vertices_size % 2 == 0 ? 0.0f : 1.0f;
                 all_mesh_vertices[all_mesh_vertices_size].gpu_data.uv[1] =
-                    (all_mesh_vertices_size + 1) % 2 == 0 ? 0.0f : 1.0f;
+                    all_mesh_vertices_size % 4 == 0 ? 0.0f : 1.0f;
             }
             
             all_mesh_vertices_size += 1;
         }
     }
     
+    for (
+        uint32_t quad_i = 0;
+        quad_i < parsed_obj.quads_count;
+        quad_i++)
+    {
+        uint32_t cur_material_i = parsed_obj.quads[quad_i][5];
+
+        for (uint32_t offset = 0; offset < 2; offset++) {
+            for (uint32_t _ = 0; _ < 3; _++) {
+                uint32_t vert_i = parsed_obj.quads[quad_i][_ + offset];
+
+                log_assert(vert_i >= 1);
+                log_assert(vert_i <= parsed_obj.vertices_count);
+
+                all_mesh_vertices[all_mesh_vertices_size].gpu_data.xyz[0] =
+                    parsed_obj.vertices[vert_i - 1][0];
+                all_mesh_vertices[all_mesh_vertices_size].gpu_data.xyz[1] =
+                    parsed_obj.vertices[vert_i - 1][1];
+                all_mesh_vertices[all_mesh_vertices_size].gpu_data.xyz[2] =
+                    parsed_obj.vertices[vert_i - 1][2];
+
+                all_mesh_vertices[all_mesh_vertices_size].parent_material_i =
+                    cur_material_i;
+
+                #ifndef LOGGER_IGNORE_ASSERTS
+                if (all_mesh_vertices[all_mesh_vertices_size].
+                    parent_material_i > 0)
+                {
+                    log_assert(
+                        all_mesh_vertices[all_mesh_vertices_size].
+                            parent_material_i <
+                                parsed_obj.materials_count);
+                    log_assert(
+                        all_mesh_vertices[all_mesh_vertices_size].
+                            parent_material_i <
+                                all_mesh_summaries[all_mesh_summaries_size].
+                                    materials_size);
+                }
+                #endif
+
+                if (parsed_obj.normals_count > 0) {
+                    uint32_t norm_i = parsed_obj.quad_normals[quad_i]
+                        [_ + offset];
+
+                    log_assert(norm_i >= 1);
+                    log_assert(norm_i <= parsed_obj.normals_count);
+
+                    all_mesh_vertices[all_mesh_vertices_size].gpu_data.
+                        normal_xyz[0] =
+                            parsed_obj.normals[norm_i - 1][0];
+                    all_mesh_vertices[all_mesh_vertices_size].gpu_data.
+                        normal_xyz[1] =
+                            parsed_obj.normals[norm_i - 1][1];
+                    all_mesh_vertices[all_mesh_vertices_size].gpu_data.
+                        normal_xyz[2] =
+                            parsed_obj.normals[norm_i - 1][2];
+                } else {
+                    guess_gpu_triangle_normal(
+                        /* GPULockedVertex * to_change: */
+                            &all_mesh_vertices[all_mesh_vertices_size].gpu_data);
+                }
+                
+                if (parsed_obj.textures_count > 0) {
+                    uint32_t text_i = parsed_obj.quad_textures[quad_i]
+                        [_ + offset];
+                    
+                    log_assert(text_i >= 1);
+                    log_assert(text_i <= parsed_obj.textures_count);
+                    
+                    all_mesh_vertices[all_mesh_vertices_size].gpu_data.uv[0] =
+                        parsed_obj.textures[text_i - 1][0];
+
+                    all_mesh_vertices[all_mesh_vertices_size].gpu_data.uv[1] =
+                        parsed_obj.textures[text_i - 1][1];
+                } else {
+                    // No uv data in .obj file, gotta guess
+                    // TODO: Maybe should be part of the obj parser?
+                    all_mesh_vertices[all_mesh_vertices_size].gpu_data.uv[0] =
+                        all_mesh_vertices_size % 2 == 0 ? 0.0f : 1.0f;
+                    all_mesh_vertices[all_mesh_vertices_size].gpu_data.uv[1] =
+                        all_mesh_vertices_size % 4 == 0 ? 0.0f : 1.0f;
+                }
+
+                all_mesh_vertices_size += 1;
+            }
+        }
+    }
+    
     all_mesh_summaries[all_mesh_summaries_size].mesh_id =
         (int32_t)all_mesh_summaries_size;
     all_mesh_summaries[all_mesh_summaries_size].vertices_size =
-        all_mesh_vertices_size -
+        (int32_t)all_mesh_vertices_size -
         all_mesh_summaries[all_mesh_summaries_size].vertices_head_i;
+    log_assert(all_mesh_summaries[all_mesh_summaries_size].vertices_size > 0);
+    
+    #ifndef LOGGER_IGNORE_ASSERTS
+    uint32_t new_tail_i = all_mesh_summaries[all_mesh_summaries_size].
+        vertices_head_i + all_mesh_summaries[all_mesh_summaries_size].
+            vertices_size - 1;
+    log_assert(new_tail_i < all_mesh_vertices_size);
+    #endif
     
     // fetch base width/height/depth and store
     float min_x = 0.0f;
@@ -834,7 +959,7 @@ int32_t new_mesh_id_from_resource(
         tri_i < (int32_t)all_mesh_vertices_size;
         tri_i += 3)
     {
-        for (uint32_t m = 0; m < 3; m++) {
+        for (int32_t m = 0; m < 3; m++) {
             if (min_x > all_mesh_vertices[tri_i + m].gpu_data.xyz[0]) {
                 min_x = all_mesh_vertices[tri_i + m].gpu_data.xyz[0];
             }
@@ -899,7 +1024,7 @@ void center_mesh_offsets(
         tri_i < tail_i;
         tri_i += 3)
     {
-        for (uint32_t m = 0; m < 3; m++) {
+        for (int32_t m = 0; m < 3; m++) {
             if (smallest_x > all_mesh_vertices[tri_i + m].gpu_data.xyz[0]) {
                 smallest_x = all_mesh_vertices[tri_i + m].gpu_data.xyz[0];
             }

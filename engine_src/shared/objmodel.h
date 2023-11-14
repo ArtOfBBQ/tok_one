@@ -23,7 +23,7 @@ typedef struct MeshSummary {
     float base_depth;
     int32_t shattered_vertices_head_i; // -1 if no shattered version
     int32_t shattered_vertices_size; // 0 if no shattered version
-    char material_names[MAX_MATERIALS_PER_POLYGON][OBJ_STRING_SIZE];
+    char material_names[MAX_MATERIALS_SIZE][OBJ_STRING_SIZE];
     uint32_t materials_size;
 } MeshSummary;
 

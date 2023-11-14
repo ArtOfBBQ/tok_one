@@ -40,7 +40,7 @@ typedef struct VertexMaterial {
 typedef struct zPolygon {
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
     
-    VertexMaterial vertex_materials[MAX_MATERIALS_PER_POLYGON];
+    VertexMaterial vertex_materials[MAX_MATERIALS_SIZE];
     uint32_t vertex_materials_size;
     
     int32_t object_id;
