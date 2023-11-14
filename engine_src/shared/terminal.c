@@ -31,7 +31,7 @@ void destroy_terminal_objects(void) {
                 for (
                     int32_t tri_i = 0;
                     tri_i < all_mesh_summaries[zpolygons_to_render[i].mesh_id].
-                        triangles_size;
+                        vertices_size;
                     tri_i++)
                 {
                     zpolygons_to_render[i].visible = terminal_active;
@@ -59,7 +59,6 @@ void terminal_init(void) {
     
     terminal_history = (char *)malloc_from_unmanaged(
         TERMINAL_HISTORY_MAX);
-    
     strcpy_capped(
         terminal_history,
         TERMINAL_HISTORY_MAX,
@@ -112,13 +111,13 @@ void terminal_redraw_backgrounds(void) {
         /* zPolygon * recipien: */
             &current_command_input);
     
-    current_command_input.triangle_materials[0].color[0] =
+    current_command_input.vertex_materials[0].color[0] =
         term_background_color[0];
-    current_command_input.triangle_materials[0].color[1] =
+    current_command_input.vertex_materials[0].color[1] =
         term_background_color[1];
-    current_command_input.triangle_materials[0].color[2] =
+    current_command_input.vertex_materials[0].color[2] =
         term_background_color[2];
-    current_command_input.triangle_materials[0].color[3] =
+    current_command_input.vertex_materials[0].color[3] =
         term_background_color[3];
     current_command_input.ignore_camera = true;
     current_command_input.ignore_lighting = true;
@@ -153,13 +152,13 @@ void terminal_redraw_backgrounds(void) {
        /* zPolygon * recipien: */
            &current_command_input);
     
-    current_command_input.triangle_materials[0].color[0] =
+    current_command_input.vertex_materials[0].color[0] =
         term_background_color[0];
-    current_command_input.triangle_materials[0].color[1] =
+    current_command_input.vertex_materials[0].color[1] =
         term_background_color[1];
-    current_command_input.triangle_materials[0].color[2] =
+    current_command_input.vertex_materials[0].color[2] =
         term_background_color[2];
-    current_command_input.triangle_materials[0].color[3] =
+    current_command_input.vertex_materials[0].color[3] =
         term_background_color[3];
     current_command_input.visible = terminal_active;
     current_command_input.ignore_camera = true;

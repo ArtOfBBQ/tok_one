@@ -477,6 +477,9 @@ int main(int argc, const char * argv[]) {
         andPixelFormat: mtk_view.colorPixelFormat
         fromFolder: shader_lib_path];
     
+    platform_gpu_copy_locked_vertices();
+    platform_gpu_update_viewport();
+    
     startup_complete = true;
     
     @autoreleasepool {

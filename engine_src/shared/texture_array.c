@@ -86,7 +86,12 @@ static void set_unallocated_to_error_image(
     set_allocated_to_error_image(to_replace);
 }
 
-static DecodedImage * malloc_img_from_filename_with_working_memory(
+//static DecodedImage * malloc_img_from_filename_with_working_memory(
+//    const char * filename)
+//{
+//}
+
+static DecodedImage * malloc_img_from_filename(
     const char * filename)
 {
     FileBuffer file_buffer;
@@ -105,6 +110,7 @@ static DecodedImage * malloc_img_from_filename_with_working_memory(
         log_append(filename);
         log_append("\n");
         free_from_managed((uint8_t *)file_buffer.contents);
+        return NULL;
     }
     log_assert(file_buffer.good);
     
@@ -206,18 +212,6 @@ static DecodedImage * malloc_img_from_filename_with_working_memory(
     return new_image;
 }
 
-static DecodedImage * malloc_img_from_filename(
-    const char * filename)
-{
-    DecodedImage * return_value =
-        malloc_img_from_filename_with_working_memory(
-            filename);
-    
-    log_assert(return_value->good);
-    
-    return return_value;
-}
-
 static DecodedImage * extract_image(
     const DecodedImage * original,
     const uint32_t sprite_columns,
@@ -237,8 +231,13 @@ static DecodedImage * extract_image(
     log_assert(y <= sprite_rows);
     if (!application_running) { return NULL; }
     
-    DecodedImage * new_image = malloc_from_unmanaged(sizeof(DecodedImage));
+    DecodedImage * new_image = malloc_from_unmanaged(
+        sizeof(DecodedImage));
     log_assert(new_image != NULL);
+    
+    #ifndef LOGGER_IGNORE_ASSERTS
+    if (!application_running) { return NULL; }
+    #endif
     
     uint32_t slice_size_bytes =
         original->rgba_values_size
@@ -486,6 +485,7 @@ void init_or_push_one_gpu_texture_array_if_needed(void) {
                                     .images[j]
                                     .image->rgba_values != NULL);
                         #endif
+                        
                         if (!application_running) {
                             platform_mutex_unlock(texture_arrays_mutex_ids[i]);
                             return;
@@ -633,7 +633,7 @@ void update_texture_slice_from_file_with_memory(
     const int32_t at_texture_i)
 {
     DecodedImage * img =
-        malloc_img_from_filename_with_working_memory(
+        malloc_img_from_filename(
             filename);
     
     update_texture_slice(

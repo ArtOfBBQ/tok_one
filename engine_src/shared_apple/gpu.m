@@ -4,10 +4,15 @@ MetalKitViewDelegate * apple_gpu_delegate = NULL;
 GPUSharedDataCollection gpu_shared_data_collection;
 
 // objective-c "id" of the MTLBuffer objects
-static id vertex_buffers[3];
+static id polygon_buffers[3];
 static id light_buffers [3];
+static id vertex_buffers[3];
 static id camera_buffers[3];
-static id projection_constant_buffers[3];
+static id locked_vertex_populator_buffer;
+static id locked_vertex_buffer;
+static id projection_constants_buffer;
+
+// static id projection_constant_buffers[3];
 static dispatch_semaphore_t drawing_semaphore;
 
 @implementation MetalKitViewDelegate
@@ -17,6 +22,51 @@ static dispatch_semaphore_t drawing_semaphore;
     
     id<MTLDevice> metal_device;
     id<MTLCommandQueue> command_queue;
+}
+
+- (void) copyLockedVertices
+{
+    for (uint32_t i = 0; i < ALL_LOCKED_VERTICES_SIZE; i++) {
+        gpu_shared_data_collection.locked_vertices[i].xyz[0] =
+            all_mesh_vertices[i].gpu_data.xyz[0];
+        gpu_shared_data_collection.locked_vertices[i].xyz[1] =
+            all_mesh_vertices[i].gpu_data.xyz[1];
+        gpu_shared_data_collection.locked_vertices[i].xyz[2] =
+            all_mesh_vertices[i].gpu_data.xyz[2];
+        gpu_shared_data_collection.locked_vertices[i].normal_xyz[0] =
+            all_mesh_vertices[i].gpu_data.normal_xyz[0];
+        gpu_shared_data_collection.locked_vertices[i].normal_xyz[1] =
+            all_mesh_vertices[i].gpu_data.normal_xyz[1];
+        gpu_shared_data_collection.locked_vertices[i].normal_xyz[2] =
+            all_mesh_vertices[i].gpu_data.normal_xyz[2];
+        gpu_shared_data_collection.locked_vertices[i].uv[0] =
+            all_mesh_vertices[i].gpu_data.uv[0];
+        gpu_shared_data_collection.locked_vertices[i].uv[1] =
+            all_mesh_vertices[i].gpu_data.uv[1];
+    }
+    
+    gpu_shared_data_collection.locked_vertices_size =
+        all_mesh_vertices_size;
+    
+    // Create a command buffer for GPU work.
+    id <MTLCommandBuffer> commandBuffer = [command_queue commandBuffer];
+    
+    // Encode a blit pass to copy data from the source buffer to the private buffer.
+    id <MTLBlitCommandEncoder> blitCommandEncoder =
+        [commandBuffer blitCommandEncoder];
+    [blitCommandEncoder
+        copyFromBuffer:locked_vertex_populator_buffer
+        sourceOffset:0
+        toBuffer:locked_vertex_buffer
+        destinationOffset:0
+        size:gpu_shared_data_collection.locked_vertices_allocation_size];
+    [blitCommandEncoder endEncoding];
+    
+    // Add a completion handler and commit the command buffer.
+    [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> cb) {
+        // Populate private buffer.
+    }];
+    [commandBuffer commit];
 }
 
 - (void) updateViewport
@@ -39,6 +89,9 @@ static dispatch_semaphore_t drawing_semaphore;
     */
     cached_viewport.znear   = 0.001f; 
     cached_viewport.zfar    = 1.0f;
+    
+    *gpu_shared_data_collection.locked_pjc =
+        window_globals->projection_constants;
 }
 
 - (void)
@@ -143,6 +196,27 @@ static dispatch_semaphore_t drawing_semaphore;
         frame_i < 3;
         frame_i++)
     {
+        id<MTLBuffer> MTLBufferFramePolygons =
+            [with_metal_device
+                /* the pointer needs to be page aligned */
+                    newBufferWithBytesNoCopy:
+                        gpu_shared_data_collection.
+                            triple_buffers[frame_i].polygon_collection
+                /* the length weirdly needs to be page aligned also */
+                    length:
+                        gpu_shared_data_collection.polygons_allocation_size
+                    options:
+                        MTLResourceStorageModeShared
+                /* deallocator = nil to opt out */
+                    deallocator:
+                        nil];
+        assert(MTLBufferFramePolygons != nil);
+        assert(
+            [MTLBufferFramePolygons contents] ==
+                gpu_shared_data_collection.triple_buffers[frame_i].polygon_collection);
+        polygon_buffers[frame_i] = MTLBufferFramePolygons;
+        assert(polygon_buffers[frame_i] != nil);
+        
         id<MTLBuffer> MTLBufferFrameVertices =
             [with_metal_device
                 /* the pointer needs to be page aligned */
@@ -158,9 +232,6 @@ static dispatch_semaphore_t drawing_semaphore;
                     deallocator:
                         nil];
         assert(MTLBufferFrameVertices != nil);
-        assert(
-            [MTLBufferFrameVertices contents] ==
-                gpu_shared_data_collection.triple_buffers[frame_i].vertices);
         assert(
             [MTLBufferFrameVertices contents] ==
                 gpu_shared_data_collection.triple_buffers[frame_i].vertices);
@@ -181,20 +252,15 @@ static dispatch_semaphore_t drawing_semaphore;
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
-         assert(
-            [MTLBufferFrameLights contents] ==
-                gpu_shared_data_collection.
-                    triple_buffers[frame_i].light_collection);
-         assert(
+        assert(
             [MTLBufferFrameLights contents] ==
                 gpu_shared_data_collection.
                     triple_buffers[frame_i].
                     light_collection);
+        light_buffers[frame_i] = MTLBufferFrameLights;
          
-         light_buffers[frame_i] = MTLBufferFrameLights;
-         
-         id<MTLBuffer> MTLBufferFrameCamera =
-             [with_metal_device
+        id<MTLBuffer> MTLBufferFrameCamera =
+            [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         gpu_shared_data_collection.
@@ -207,34 +273,57 @@ static dispatch_semaphore_t drawing_semaphore;
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
-         
-         assert(
-            [MTLBufferFrameCamera contents] ==
-                gpu_shared_data_collection.
-                    triple_buffers[frame_i].camera);
-         assert(
+        assert(
             [MTLBufferFrameCamera contents] ==
                 gpu_shared_data_collection.triple_buffers[frame_i].camera);
-         camera_buffers[frame_i] = MTLBufferFrameCamera;
-         
-         id<MTLBuffer> MTLBufferProjectionConstants =
-             [with_metal_device
-                 /* the pointer needs to be page aligned */
-                     newBufferWithBytesNoCopy:
-                         gpu_shared_data_collection.
-                            triple_buffers[frame_i].projection_constants
-                 /* the length weirdly needs to be page aligned also */
-                     length:
-                         gpu_shared_data_collection.
-                            projection_constants_allocation_size
-                     options:
-                         MTLResourceStorageModeShared
-                 /* deallocator = nil to opt out */
-                     deallocator:
-                         nil];
-         
-         projection_constant_buffers[frame_i] = MTLBufferProjectionConstants;
+        camera_buffers[frame_i] = MTLBufferFrameCamera;
     }
+    
+    id<MTLBuffer> MTLBufferLockedVerticesPopulator =
+        [with_metal_device
+            /* the pointer needs to be page aligned */
+                newBufferWithBytesNoCopy:
+                    gpu_shared_data_collection.locked_vertices
+            /* the length weirdly needs to be page aligned also */
+                length:
+                    gpu_shared_data_collection.locked_vertices_allocation_size
+                options:
+                    MTLResourceStorageModeShared
+            /* deallocator = nil to opt out */
+                deallocator:
+                    nil];
+    assert(
+        [MTLBufferLockedVerticesPopulator contents] ==
+            gpu_shared_data_collection.locked_vertices);
+    locked_vertex_populator_buffer = MTLBufferLockedVerticesPopulator;
+    
+    id<MTLBuffer> MTLBufferLockedVertices =
+        [with_metal_device
+            newBufferWithLength:
+                gpu_shared_data_collection.locked_vertices_allocation_size
+            options:
+                MTLResourceStorageModePrivate];
+    locked_vertex_buffer = MTLBufferLockedVertices;
+    
+    id<MTLBuffer> MTLBufferProjectionConstants =
+        [with_metal_device
+            /* the pointer needs to be page aligned */
+                 newBufferWithBytesNoCopy:
+                     gpu_shared_data_collection.locked_pjc
+            /* the length weirdly needs to be page aligned also */
+                length:
+                    gpu_shared_data_collection.
+                        projection_constants_allocation_size
+                options:
+                    MTLResourceStorageModeShared
+            /* deallocator = nil to opt out */
+                deallocator:
+                    nil];
+    assert(
+        [MTLBufferProjectionConstants contents] ==
+            gpu_shared_data_collection.locked_pjc);
+    projection_constants_buffer = MTLBufferProjectionConstants;
+    
     
     _metal_textures = [
         [NSMutableArray alloc]
@@ -243,6 +332,17 @@ static dispatch_semaphore_t drawing_semaphore;
     [self updateViewport];
     
     command_queue = [with_metal_device newCommandQueue];
+    
+    // https://stackoverflow.com/questions/59002795/how-to-use-mtlsamplerstate-instead-of-declaring-a-sampler-in-my-fragment-shader
+    //    MTLSamplerDescriptor * sampler_desc = [MTLSamplerDescriptor new];
+    //    sampler_desc.rAddressMode = MTLSamplerAddressModeRepeat;
+    //    sampler_desc.sAddressMode = MTLSamplerAddressModeRepeat;
+    //    sampler_desc.tAddressMode = MTLSamplerAddressModeRepeat;
+    //    sampler_desc.minFilter = MTLSamplerMinMagFilterLinear;
+    //    sampler_desc.magFilter = MTLSamplerMinMagFilterLinear;
+    //    sampler_desc.mipFilter = MTLSamplerMipFilterNotMipmapped;
+    //    id<MTLSamplerState> ss =
+    //        [with_metal_device newSamplerStateWithDescriptor: sampler_desc];
     
     log_append("finished configureMetalWithDevice\n");
 }
@@ -371,7 +471,7 @@ static dispatch_semaphore_t drawing_semaphore;
     
     RenderPassDescriptor.colorAttachments[0].clearColor =
         MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);;
-    
+        
     id<MTLRenderCommandEncoder> render_encoder =
         [command_buffer
             renderCommandEncoderWithDescriptor:
@@ -391,27 +491,45 @@ static dispatch_semaphore_t drawing_semaphore;
         setVertexBuffer:
             vertex_buffers[current_frame_i]
         offset:
-            0 
+            0
         atIndex:
             0];
     
     [render_encoder
         setVertexBuffer:
-            light_buffers[current_frame_i]
-        offset: 0
-        atIndex: 1];
+            polygon_buffers[current_frame_i]
+        offset:
+            0
+        atIndex:
+            1];
     
     [render_encoder
         setVertexBuffer:
-            camera_buffers[current_frame_i]
+            light_buffers[current_frame_i]
         offset: 0
         atIndex: 2];
     
     [render_encoder
         setVertexBuffer:
-            projection_constant_buffers[current_frame_i]
+            camera_buffers[current_frame_i]
         offset: 0
         atIndex: 3];
+    
+    [render_encoder
+        setVertexBuffer:
+            locked_vertex_buffer
+        offset:
+            0 
+        atIndex:
+            4];
+        
+    [render_encoder
+        setVertexBuffer:
+            projection_constants_buffer
+        offset:
+            0
+        atIndex:
+            5];
     
     for (
         uint32_t i = 0;
@@ -431,10 +549,10 @@ static dispatch_semaphore_t drawing_semaphore;
             vertices_size;
         i++)
     {
-        log_assert(
+        assert(
             gpu_shared_data_collection.
                 triple_buffers[current_frame_i].
-                vertices[i].texture_i < 5000);
+                vertices[i].locked_vertex_i < ALL_LOCKED_VERTICES_SIZE);
     }
     #endif
     
@@ -459,7 +577,7 @@ static dispatch_semaphore_t drawing_semaphore;
         dispatch_semaphore_signal(drawing_semaphore);
     }];
     
-    [command_buffer commit];    
+    [command_buffer commit];
 }
 
 - (void)mtkView:(MTKView *)view
@@ -469,9 +587,14 @@ static dispatch_semaphore_t drawing_semaphore;
 }
 @end
 
-void platform_gpu_update_viewport()
+void platform_gpu_update_viewport(void)
 {
     [apple_gpu_delegate updateViewport];
+}
+
+void platform_gpu_copy_locked_vertices(void)
+{
+    [apple_gpu_delegate copyLockedVertices];
 }
 
 void platform_gpu_init_texture_array(

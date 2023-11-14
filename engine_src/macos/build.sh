@@ -20,6 +20,7 @@ engine_src/shared/logger.c
 engine_src/shared/memorystore.c
 engine_src/shared/tok_random.c
 engine_src/shared/objmodel.c
+engine_src/shared/objparser.c
 engine_src/shared/texture_array.c
 engine_src/shared/userinput.c
 engine_src/shared/zpolygon.c

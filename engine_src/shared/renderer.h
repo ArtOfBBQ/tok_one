@@ -20,9 +20,7 @@ void init_renderer(void);
 void free_renderer(void);
 
 void hardware_render(
-    GPUVertex * next_gpu_workload,
-    uint32_t * next_workload_size,
-    GPULightCollection * lights_for_gpu,
+    GPUDataForSingleFrame * frame_data,
     uint64_t elapsed_nanoseconds);
 
 //void software_render(

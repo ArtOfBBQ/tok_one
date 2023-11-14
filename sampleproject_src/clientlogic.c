@@ -125,76 +125,64 @@ void client_logic_startup(void) {
     };
     
     int32_t xmastree_mesh_id = new_mesh_id_from_resource(obj_filenames[0]);
+    int32_t teapot_mesh_id = new_mesh_id_from_resource("teapot.obj");
     
     center_mesh_offsets(xmastree_mesh_id);
     
     request_particle_fountain();
     
     // example 1: the 'christams tree' obj file
-    for (uint32_t i = 0; i < 800; i++) {
+    for (uint32_t i = 0; i < 950; i++) {
         construct_zpolygon(&xmastree);
-        xmastree.mesh_id = xmastree_mesh_id;
-        xmastree.x = 0.0f + (0.30f * (i % 30));
-        xmastree.y = -0.5f + (0.30f * (i / 30));
-        xmastree.z = 1.0f + (0.015f * i);
-        xmastree.triangle_materials[0].color[0] = 0.05f; // christmas decorations?
-        xmastree.triangle_materials[0].color[1] = 0.05f;
-        xmastree.triangle_materials[0].color[2] = 1.0f;
-        xmastree.triangle_materials[0].color[3] = 1.0f;
-        xmastree.triangle_materials[1].color[0] = 1.0f; // leaves
-        xmastree.triangle_materials[1].color[1] = 1.0f;
-        xmastree.triangle_materials[1].color[2] = 1.0f;
-        xmastree.triangle_materials[1].color[3] = 1.0f;
-        xmastree.triangle_materials[1].texturearray_i = 2;
-        xmastree.triangle_materials[1].texture_i = 0;
-        xmastree.triangle_materials[2].color[0] = 0.3f; // trunk
-        xmastree.triangle_materials[2].color[1] = 0.08f;
-        xmastree.triangle_materials[2].color[2] = 0.05f;
-        xmastree.triangle_materials[2].color[3] = 1.0f;
-        xmastree.triangle_materials_size = 3;
+        xmastree.mesh_id = i % 20 == 0 ? teapot_mesh_id : xmastree_mesh_id;
+        xmastree.x =  0.0f + (0.18f * (i %  60));
+        xmastree.y = -0.5f + (0.18f * (i /  30));
+        xmastree.z =  1.0f + (0.25f * (i / 120));
+        xmastree.vertex_materials[0].color[0] = 0.15f; // christmas decorations?
+        xmastree.vertex_materials[0].color[1] = 0.15f;
+        xmastree.vertex_materials[0].color[2] = 0.6f - ((i % 4) * 0.1f);
+        xmastree.vertex_materials[0].color[3] = 1.0f;
+        xmastree.vertex_materials[1].color[0] = 0.25f; // leaves
+        xmastree.vertex_materials[1].color[1] = 0.8f;
+        xmastree.vertex_materials[1].color[2] = 0.5f;
+        xmastree.vertex_materials[1].color[3] = 1.0f;
+        xmastree.vertex_materials[1].texturearray_i = 2;
+        xmastree.vertex_materials[1].texture_i = 0;
+        xmastree.vertex_materials[2].color[0] = 0.3f; // trunk
+        xmastree.vertex_materials[2].color[1] = 0.08f;
+        xmastree.vertex_materials[2].color[2] = 0.05f;
+        xmastree.vertex_materials[2].color[3] = 1.0f;
+        xmastree.vertex_materials_size = 3;
         xmastree.x_multiplier = 0.05f;
         xmastree.y_multiplier = 0.05f;
         xmastree.z_multiplier = 0.05f;
-        
-        // example 2: use a quad instead
-        //    construct_quad(
-        //        /* const float left_x: */
-        //            0.25f,
-        //        /* const float bottom_y: */
-        //            0.0f,
-        //        /* const float z: */
-        //            0.75f,
-        //        /* const float width: */
-        //            0.2f,
-        //        /* const float height: */
-        //            0.2f,
-        //        /* zPolygon * recipient: */
-        //            &xmastree);
-        //    xmastree.triangle_materials[0].texturearray_i = 3;
-        //    xmastree.triangle_materials[0].texture_i = 0;
+        xmastree.z_angle = (tok_rand() % 261) * 0.01f;
+        xmastree.y_angle = (tok_rand() % 261) * 0.01f;
+        xmastree.x_angle = (tok_rand() % 261) * 0.01f;
+        xmastree.ignore_lighting = false;
         
         // this code needs to run regardless of what example mesh we're using
         xmastree_object_id = next_nonui_object_id();
         xmastree.object_id = xmastree_object_id;
         request_zpolygon_to_render(&xmastree);
         
-        if (i % 14 == 0) {
+        if (tok_rand() % 20 == 0) {
             zLightSource * im_a_light = next_zlight();
             im_a_light->x = xmastree.x;
             im_a_light->y = xmastree.y;
             im_a_light->z = xmastree.z;
             im_a_light->ambient = 0.8f;
             im_a_light->diffuse = 0.8f;
-            im_a_light->RGBA[0] = 0.0f + ((i % 5) * 0.20f);
-            im_a_light->RGBA[1] = 0.0f + (((i+1) % 5) * 0.20f);
-            im_a_light->RGBA[2] = 1.0f - ((i % 5) * 0.20f);
+            im_a_light->RGBA[0] = 0.0f + ((tok_rand() % 10) * 0.10f);
+            im_a_light->RGBA[1] = 0.0f + ((tok_rand() % 10) * 0.10f);
+            im_a_light->RGBA[2] = 0.0f - ((tok_rand() % 10) * 0.10f);
             im_a_light->RGBA[3] = 1.0f;
-            im_a_light->reach = 3.0f;
+            im_a_light->reach = 1.5f;
             im_a_light->deleted = false;
             commit_zlight(im_a_light);
         }
     }
-    
+
     create_shattered_version_of_mesh(
         /* mesh_id: */
             xmastree.mesh_id,
@@ -204,7 +192,7 @@ void client_logic_startup(void) {
     label_object_id = next_nonui_object_id();
     request_label_around(
         label_object_id,
-        "Press T for a shatter effect",
+        "Hi",
         /* mid_x_pixelspace: */ window_globals->window_width / 2,
         /* y: */ window_globals->window_height / 2,
         /* z: */ 0.75f,
@@ -390,12 +378,6 @@ static void client_handle_keypresses(
                 &bullet);
         bullet.object_id = 54321 + (tok_rand() % 1000);
         bullet.z = camera.z;
-        bullet.triangle_materials[0].color[0] =
-            slider_value;
-        bullet.triangle_materials[0].color[1] =
-            ((float)(tok_rand() % 100)) / 100.0f;
-        bullet.triangle_materials[0].color[2] =
-            ((float)(tok_rand() % 100)) / 100.0f;
         bullet.ignore_lighting = true;
         bullet.x_multiplier = 0.02f;
         bullet.y_multiplier = 0.02f;

@@ -6,36 +6,40 @@ layout (location =  2) in vec2 uv;
 layout (location =  3) in vec4 rgba;
 layout (location =  4) in int texturearray_i;
 layout (location =  5) in int texture_i;
-layout (location =  6) in vec3 parent_xyz;
-layout (location =  7) in vec3 parent_angle;
-layout (location =  8) in float scale_factor;
-layout (location =  9) in float ignore_lighting;
-layout (location = 10) in float ignore_camera;
-layout (location = 11) in int touchable_id;
+layout (location =  6) in int polygon_i;
+
+uniform vec3  zpolygons_xyz[800];
+uniform vec3  zpolygons_xyz_angle[800];
+uniform vec3  zpolygons_xyz_multiplier[800];
+uniform vec2  zpolygons_xy_offset[800];
+uniform vec3  zpolygons_bonus_rgb[800];
+uniform float zpolygons_scale_factor[800];
+uniform float zpolygons_ignore_lighting[800];
+uniform float zpolygons_ignore_camera[800];
+
+uniform float lights_x      [75];
+uniform float lights_y      [75];
+uniform float lights_z      [75];
+uniform float lights_ambient[75];
+uniform float lights_diffuse[75];
+uniform float lights_reach  [75];
+uniform float lights_red    [75];
+uniform float lights_green  [75];
+uniform float lights_blue   [75];
+uniform int lights_size;
+
+uniform vec3  camera_position;
+uniform vec3  camera_angle;
+uniform float projection_constants_near;
+uniform float projection_constants_q;
+uniform float projection_constants_fov_modifier;
+uniform float projection_constants_x_multiplier;
 
 out vec2 vert_to_frag_uv;
 out vec4 vert_to_frag_color;
 flat out int vert_to_frag_texturearray_i;
 flat out int vert_to_frag_texture_i;
 out vec4 vert_to_frag_lighting;
-
-uniform vec3 camera_position;
-uniform vec3 camera_angle;
-uniform float projection_constants_near;
-uniform float projection_constants_q;
-uniform float projection_constants_fov_modifier;
-uniform float projection_constants_x_multiplier;
-
-uniform float lights_x[75];
-uniform float lights_y[75];
-uniform float lights_z[75];
-uniform float lights_ambient[75];
-uniform float lights_diffuse[75];
-uniform float lights_reach[75];
-uniform float lights_red[75];
-uniform float lights_green[75];
-uniform float lights_blue[75];
-uniform int lights_size;
 
 vec4 x_rotate(vec4 vertices, float x_angle) {
     vec4 rotated_vertices = vertices;
@@ -97,11 +101,25 @@ float get_distance(
 
 void main()
 {
-    vec4 parent_mesh_pos = vec4(parent_xyz, 0.0f);
+    vec4 parent_mesh_pos = vec4(
+        zpolygons_xyz[polygon_i],
+        0.0f);
+    
+    vec4 parent_vertex_multipliers = vec4(
+        zpolygons_xyz_multiplier[polygon_i],
+        1.0f);
+    
+    vec4 parent_vertex_offsets = vec4(
+        zpolygons_xy_offset[polygon_i],
+        0.0f,
+        0.0f);
     
     vec4 mesh_vertices = vec4(xyz, 1.0f);
     
-    mesh_vertices *= scale_factor;
+    mesh_vertices *= parent_vertex_multipliers;
+    mesh_vertices += parent_vertex_offsets;
+    
+    mesh_vertices *= zpolygons_scale_factor[polygon_i];
     mesh_vertices[3] = 1.0f;
     
     vec4 mesh_normals = vec4(normal, 1.0f);
@@ -109,29 +127,29 @@ void main()
     // rotate vertices
     vec4 x_rotated_vertices = x_rotate(
         mesh_vertices,
-        parent_angle[0]);
+        zpolygons_xyz_angle[polygon_i][0]);
     vec4 x_rotated_normals  = x_rotate(
         mesh_normals,
-        parent_angle[0]);
+        zpolygons_xyz_angle[polygon_i][0]);
     
     vec4 y_rotated_vertices = y_rotate(
         x_rotated_vertices,
-        parent_angle[1]);
+        zpolygons_xyz_angle[polygon_i][1]);
     vec4 y_rotated_normals  = y_rotate(
         x_rotated_normals,
-        parent_angle[1]);
+        zpolygons_xyz_angle[polygon_i][1]);
     
     vec4 z_rotated_vertices = z_rotate(
         y_rotated_vertices,
-        parent_angle[2]);
+        zpolygons_xyz_angle[polygon_i][2]);
     vec4 z_rotated_normals  = z_rotate(
         y_rotated_normals,
-        parent_angle[2]);
+        zpolygons_xyz_angle[polygon_i][2]);
     
     vec4 translated_pos = z_rotated_vertices + parent_mesh_pos;
     
     // translate to world position
-    if (ignore_camera < 0.9f) {
+    if (zpolygons_ignore_camera[polygon_i] < 0.9f) {
         vec4 camera_translated_pos =
             translated_pos - vec4(camera_position, 0.0f);
         
@@ -146,7 +164,6 @@ void main()
             -camera_angle[2]);
         
         gl_Position = camera_z_rotated;
-        
     } else {
         gl_Position = translated_pos;
     }
@@ -160,13 +177,17 @@ void main()
         (projection_constants_near * projection_constants_q);
     
     vert_to_frag_color = rgba;
+    vec4 rgba_bonus = vec4(
+        zpolygons_bonus_rgb[polygon_i],
+        0.0f);
+    vert_to_frag_color += rgba_bonus;
     
     vert_to_frag_uv = uv;
     
     vert_to_frag_texturearray_i = texturearray_i;
     vert_to_frag_texture_i = texture_i;
     
-    if (ignore_lighting > 0.0f) {
+    if (zpolygons_ignore_lighting[polygon_i] > 0.0f) {
         vert_to_frag_lighting = vec4(1.0f, 1.0f, 1.0f, 1.0f);
         return;
     }
@@ -185,7 +206,7 @@ void main()
         vec4 light_rgba = vec4(
             lights_red[i],
             lights_green[i],
-            lights_red[i],
+            lights_blue[i],
             1.0f);
         float distance = get_distance(
             light_pos,
@@ -200,27 +221,22 @@ void main()
         // diffuse lighting
         vec4 normalized_normals = normalize(z_rotated_normals);
         
-        vec4 vec_from_light_to_vertex = normalize(
-            translated_pos - light_pos);
+        vec4 vec_from_light_to_vertex = normalize(translated_pos - light_pos);
         
-        float dot = dot(
-            normalized_normals,
-            vec_from_light_to_vertex);
-        float visibility_rating = max(
-            0.0f,
-            -1.0f * dot);
+        float dot = dot(normalized_normals, vec_from_light_to_vertex);
+        float visibility_rating = max(0.0f, -1.0f * dot);
         
-         vec4 lighting_to_add = (
+        vec4 lighting_to_add = (
             light_rgba *
             distance_mod *
-            (lights_diffuse[i] * 3.0f) *
+            ((lights_diffuse[i] + 1.0f) * 3.0f) *
             visibility_rating);
         
         vert_to_frag_lighting += lighting_to_add;
     }
     
     // at the end
-    clamp(vert_to_frag_lighting, 0.05f, 1.0f);
+    vert_to_frag_lighting = clamp(vert_to_frag_lighting, 0.08f, 10.0f);
     vert_to_frag_lighting[3] = 1.0f;
 }
 

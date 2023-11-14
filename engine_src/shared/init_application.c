@@ -15,6 +15,8 @@ void init_application(void)
 {
     init_memory_store();
     
+    init_obj_parser(malloc_from_managed, free_from_managed);
+    
     keypress_map = (bool32_t *)malloc_from_unmanaged(
         sizeof(bool32_t) * KEYPRESS_MAP_SIZE);
     for (uint32_t i = 0; i < KEYPRESS_MAP_SIZE; i++) {
@@ -82,7 +84,7 @@ void init_application(void)
     init_ui_elements();
     
     zpolygons_to_render = (zPolygon *)malloc_from_unmanaged(
-        sizeof(zPolygon) * ZPOLYGONS_TO_RENDER_ARRAYSIZE);
+        sizeof(zPolygon) * MAX_POLYGONS_PER_BUFFER);
     init_all_meshes();
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
         sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
@@ -132,24 +134,42 @@ void init_application(void)
         (4096 - (gpu_shared_data_collection.vertices_allocation_size % 4096));
     assert(gpu_shared_data_collection.vertices_allocation_size % 4096 == 0);
     
+    gpu_shared_data_collection.polygons_allocation_size =
+        sizeof(GPUPolygonCollection);
+    gpu_shared_data_collection.polygons_allocation_size +=
+        (4096 - (gpu_shared_data_collection.polygons_allocation_size % 4096));
+    assert(gpu_shared_data_collection.polygons_allocation_size > 0);
+    assert(gpu_shared_data_collection.polygons_allocation_size % 4096 == 0);
+    
     gpu_shared_data_collection.lights_allocation_size =
         sizeof(GPULightCollection);
     gpu_shared_data_collection.lights_allocation_size +=
         (4096 - (gpu_shared_data_collection.lights_allocation_size % 4096));
+    assert(gpu_shared_data_collection.lights_allocation_size > 0);
     assert(gpu_shared_data_collection.lights_allocation_size % 4096 == 0);
     
     gpu_shared_data_collection.camera_allocation_size = sizeof(GPUCamera);
     gpu_shared_data_collection.camera_allocation_size +=
         (4096 - (gpu_shared_data_collection.camera_allocation_size % 4096));
     assert(gpu_shared_data_collection.camera_allocation_size % 4096 == 0);
+        
+    gpu_shared_data_collection.locked_vertices_allocation_size =
+        (sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
+    gpu_shared_data_collection.locked_vertices_allocation_size +=
+        (4096 - (gpu_shared_data_collection.
+            locked_vertices_allocation_size % 4096));
+    assert(gpu_shared_data_collection.locked_vertices_allocation_size > 0);
+    assert(gpu_shared_data_collection.locked_vertices_allocation_size %
+        4096 == 0);
     
     gpu_shared_data_collection.projection_constants_allocation_size =
         sizeof(GPUProjectionConstants);
     gpu_shared_data_collection.projection_constants_allocation_size +=
         (4096 - (gpu_shared_data_collection.
             projection_constants_allocation_size % 4096));
-    assert(gpu_shared_data_collection.
-        projection_constants_allocation_size % 4096 == 0);
+    assert(gpu_shared_data_collection.projection_constants_allocation_size > 0);
+    assert(gpu_shared_data_collection.projection_constants_allocation_size %
+        4096 == 0);
     
     for (
         uint32_t frame_i = 0;
@@ -161,14 +181,10 @@ void init_application(void)
                 gpu_shared_data_collection.vertices_allocation_size,
                 4096);
         
-        #ifndef LOGGER_IGNORE_ASSERTS
-        for (uint32_t i = 0; i < MAX_VERTICES_PER_BUFFER; i++) {
-            gpu_shared_data_collection.triple_buffers[frame_i].
-                vertices[i].texture_i = -1;
-            gpu_shared_data_collection.triple_buffers[frame_i].
-                vertices[i].texturearray_i = -1;
-        }
-        #endif
+        gpu_shared_data_collection.triple_buffers[frame_i].polygon_collection =
+            (GPUPolygonCollection *)malloc_from_unmanaged_aligned(
+                gpu_shared_data_collection.polygons_allocation_size,
+                4096);
         
         gpu_shared_data_collection.triple_buffers[frame_i].light_collection =
             (GPULightCollection *)malloc_from_unmanaged_aligned(
@@ -176,27 +192,27 @@ void init_application(void)
                 4096);
         
         gpu_shared_data_collection.triple_buffers[frame_i].camera =
-            (GPUCamera *)malloc_from_unmanaged_aligned(
-                gpu_shared_data_collection.camera_allocation_size,
-                4096);
+        (GPUCamera *)malloc_from_unmanaged_aligned(
+            gpu_shared_data_collection.camera_allocation_size,
+            4096);
         
         gpu_shared_data_collection.triple_buffers[frame_i].camera->x = 0.0f;
         gpu_shared_data_collection.triple_buffers[frame_i].camera->y = 0.0f;
         gpu_shared_data_collection.triple_buffers[frame_i].camera->z = 0.0f;
-        gpu_shared_data_collection.
-            triple_buffers[frame_i].camera->x_angle = 0.0f;
-        gpu_shared_data_collection.
-            triple_buffers[frame_i].camera->y_angle = 0.0f;
-        gpu_shared_data_collection.
-            triple_buffers[frame_i].camera->z_angle = 0.0f;
-        
-        gpu_shared_data_collection.triple_buffers[frame_i].
-            projection_constants =
-                (GPUProjectionConstants *)malloc_from_unmanaged_aligned(
-                    gpu_shared_data_collection.
-                        projection_constants_allocation_size,
-                    4096);
+        gpu_shared_data_collection.triple_buffers[frame_i].camera->x_angle = 0.0f;
+        gpu_shared_data_collection.triple_buffers[frame_i].camera->y_angle = 0.0f;
+        gpu_shared_data_collection.triple_buffers[frame_i].camera->z_angle = 0.0f;
     }
+    
+    gpu_shared_data_collection.locked_vertices =
+        (GPULockedVertex *)malloc_from_unmanaged_aligned(
+            gpu_shared_data_collection.locked_vertices_allocation_size,
+            4096);
+    
+    gpu_shared_data_collection.locked_pjc =
+        (GPUProjectionConstants *)malloc_from_unmanaged_aligned(
+            gpu_shared_data_collection.projection_constants_allocation_size,
+            4096);
     
     client_logic_startup();
 }

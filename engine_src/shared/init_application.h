@@ -12,6 +12,7 @@
 #include "shared/scheduled_animations.h"
 #include "shared/renderer.h"
 #include "shared/gameloop.h"
+#include "shared/objparser.h"
 #include "clientlogic.h"
 
 #ifdef __cplusplus

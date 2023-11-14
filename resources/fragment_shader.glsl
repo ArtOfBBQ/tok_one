@@ -17,18 +17,17 @@ void main()
     FragColor = vert_to_frag_color; 
     
     if (
-        vert_to_frag_texturearray_i < 0 ||
-        vert_to_frag_texture_i < 0)
+        vert_to_frag_texturearray_i >= 0 &&
+        vert_to_frag_texture_i >= 0)
     {
-        FragColor *= vert_to_frag_lighting;
-    } else {
         vec4 texture_sample = texture(
             texture_arrays[vert_to_frag_texturearray_i],
             vec3(vert_to_frag_uv, float(vert_to_frag_texture_i)));
         
         FragColor *= texture_sample;
-        FragColor *= vert_to_frag_lighting;
     }
+    
+    FragColor *= vert_to_frag_lighting;
     
     if (FragColor[3] < 0.01f) {
         discard;

@@ -107,6 +107,8 @@
 		60A99922287BDF31003F7159 /* structuredart2.png in Resources */ = {isa = PBXBuildFile; fileRef = 601128AA28625BAE00F92967 /* structuredart2.png */; };
 		60A99923287BDF31003F7159 /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = 601128AB28625BAE00F92967 /* teapot.obj */; };
 		60A99924287BDF31003F7159 /* phoebus.png in Resources */ = {isa = PBXBuildFile; fileRef = 6080CC45286FFD1D00444118 /* phoebus.png */; };
+		EC083A3A2AFF727900234FE3 /* objparser.c in Sources */ = {isa = PBXBuildFile; fileRef = EC083A392AFF727900234FE3 /* objparser.c */; };
+		EC083A3B2AFF727900234FE3 /* objparser.c in Sources */ = {isa = PBXBuildFile; fileRef = EC083A392AFF727900234FE3 /* objparser.c */; };
 		EC0BFBD929EE71A200E4BC1C /* tree.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC0BFBD729EE71A200E4BC1C /* tree.obj */; };
 		EC0BFBDA29EE71A200E4BC1C /* tree.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC0BFBD729EE71A200E4BC1C /* tree.obj */; };
 		EC0BFBDB29EE71A200E4BC1C /* xmas_tree.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC0BFBD829EE71A200E4BC1C /* xmas_tree.obj */; };
@@ -122,6 +124,7 @@
 		EC1BD95C297B5DBE00A9BA54 /* clientlogic_macro_settings.h in Sources */ = {isa = PBXBuildFile; fileRef = EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */; };
 		EC31932429DFAAFB00E320CD /* particle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC31932329DFAAFB00E320CD /* particle.c */; };
 		EC31932529DFAAFB00E320CD /* particle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC31932329DFAAFB00E320CD /* particle.c */; };
+		EC61E2D52AFB02B7004D316D /* linux_apple_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC61E2D42AFB02B7004D316D /* linux_apple_platform_layer.c */; };
 		EC6441A429318B6D00A0267B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = EC64419F29318B6D00A0267B /* main.m */; };
 		EC6441A529318B6D00A0267B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A029318B6D00A0267B /* AppDelegate.m */; };
 		EC6441A629318B6D00A0267B /* ios_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A129318B6D00A0267B /* ios_platform_layer.c */; };
@@ -216,6 +219,8 @@
 		60A998B4287BCF52003F7159 /* TOKONE_iphone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TOKONE_iphone.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		60A998D9287BD332003F7159 /* decodedimage.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = decodedimage.c; path = ../../engine_src/shared/decodedimage.c; sourceTree = "<group>"; };
 		60A998DA287BD333003F7159 /* decodedimage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = decodedimage.h; path = ../../engine_src/shared/decodedimage.h; sourceTree = "<group>"; };
+		EC083A382AFF727900234FE3 /* objparser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = objparser.h; path = ../../engine_src/shared/objparser.h; sourceTree = "<group>"; };
+		EC083A392AFF727900234FE3 /* objparser.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = objparser.c; path = ../../engine_src/shared/objparser.c; sourceTree = "<group>"; };
 		EC0BFBD729EE71A200E4BC1C /* tree.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = tree.obj; path = ../../resources/tree.obj; sourceTree = "<group>"; };
 		EC0BFBD829EE71A200E4BC1C /* xmas_tree.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = xmas_tree.obj; path = ../../resources/xmas_tree.obj; sourceTree = "<group>"; };
 		EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */ = {isa = PBXFileReference; explicitFileType = compiled; fileEncoding = 4; name = cardwithuvcoords.obj; path = ../../resources/cardwithuvcoords.obj; sourceTree = "<group>"; };
@@ -225,6 +230,7 @@
 		EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = clientlogic_macro_settings.h; path = ../../sampleproject_src/clientlogic_macro_settings.h; sourceTree = "<group>"; };
 		EC31932229DFAAFB00E320CD /* particle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = particle.h; path = ../../engine_src/shared/particle.h; sourceTree = "<group>"; };
 		EC31932329DFAAFB00E320CD /* particle.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = particle.c; path = ../../engine_src/shared/particle.c; sourceTree = "<group>"; };
+		EC61E2D42AFB02B7004D316D /* linux_apple_platform_layer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = linux_apple_platform_layer.c; path = ../../engine_src/shared_linux_apple/linux_apple_platform_layer.c; sourceTree = "<group>"; };
 		EC64419E29318B6D00A0267B /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = ../../engine_src/ios/AppDelegate.h; sourceTree = "<group>"; };
 		EC64419F29318B6D00A0267B /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../engine_src/ios/main.m; sourceTree = "<group>"; };
 		EC6441A029318B6D00A0267B /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = AppDelegate.m; path = ../../engine_src/ios/AppDelegate.m; sourceTree = "<group>"; };
@@ -253,7 +259,7 @@
 		EC92FDAB2902917500C10865 /* decode_bmp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = decode_bmp.h; path = ../../engine_src/shared/debigulator/src/decode_bmp.h; sourceTree = "<group>"; };
 		EC92FDAC2902917500C10865 /* decode_bmp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = decode_bmp.c; path = ../../engine_src/shared/debigulator/src/decode_bmp.c; sourceTree = "<group>"; };
 		ECB05E46294F8AC200050BD4 /* simd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = simd.h; path = ../../engine_src/shared/simd.h; sourceTree = "<group>"; };
-		ECB05E48294F8B1300050BD4 /* gpu.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = gpu.m; path = ../../engine_src/shared_apple/gpu.m; sourceTree = "<group>"; };
+		ECB05E48294F8B1300050BD4 /* gpu.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = gpu.m; path = ../../engine_src/shared_apple/gpu.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		ECB05E4A294F8B3500050BD4 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../engine_src/macos/main.m; sourceTree = "<group>"; };
 		ECB05E4C294F8FD300050BD4 /* key.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = key.obj; path = ../../resources/key.obj; sourceTree = "<group>"; };
 		ECC47A5F29E9111C0082A7C6 /* disk.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = disk.obj; path = ../../resources/disk.obj; sourceTree = "<group>"; };
@@ -336,6 +342,7 @@
 		601128A42862540400F92967 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				EC61E2D32AFB029F004D316D /* shared_apple_linux */,
 				EC6441A829318B7900A0267B /* iphone_only */,
 				60A998DE287BD468003F7159 /* shared_macos_iphone */,
 				60A998DD287BD459003F7159 /* macos_only */,
@@ -412,6 +419,8 @@
 				EC6E12182A04CE12004E7BD1 /* objectid.c */,
 				EC6E12192A04CE13004E7BD1 /* objectid.h */,
 				EC78509929E62CA800E6882A /* objmodel.c */,
+				EC083A392AFF727900234FE3 /* objparser.c */,
+				EC083A382AFF727900234FE3 /* objparser.h */,
 				EC78509829E62CA800E6882A /* objmodel.h */,
 				EC31932329DFAAFB00E320CD /* particle.c */,
 				EC31932229DFAAFB00E320CD /* particle.h */,
@@ -441,6 +450,14 @@
 				601128842862511700F92967 /* zpolygon.h */,
 			);
 			name = shared_macos_iphone;
+			sourceTree = "<group>";
+		};
+		EC61E2D32AFB029F004D316D /* shared_apple_linux */ = {
+			isa = PBXGroup;
+			children = (
+				EC61E2D42AFB02B7004D316D /* linux_apple_platform_layer.c */,
+			);
+			name = shared_apple_linux;
 			sourceTree = "<group>";
 		};
 		EC6441A829318B7900A0267B /* iphone_only */ = {
@@ -601,6 +618,7 @@
 				60A998E9287BD4B7003F7159 /* texture_array.h in Sources */,
 				EC31932429DFAAFB00E320CD /* particle.c in Sources */,
 				60A998DC287BD333003F7159 /* decodedimage.h in Sources */,
+				EC083A3A2AFF727900234FE3 /* objparser.c in Sources */,
 				6080CC492870182700444118 /* common.h in Sources */,
 				60A998DF287BD494003F7159 /* inflate.h in Sources */,
 				EC6E121A2A04CE13004E7BD1 /* objectid.c in Sources */,
@@ -614,6 +632,7 @@
 				6011289A286253C100F92967 /* apple_platform_layer.m in Sources */,
 				60A998EA287BD4B7003F7159 /* text.h in Sources */,
 				EC78509A29E62CA800E6882A /* objmodel.c in Sources */,
+				EC61E2D52AFB02B7004D316D /* linux_apple_platform_layer.c in Sources */,
 				601128922862511800F92967 /* scheduled_animations.c in Sources */,
 				60A998E6287BD4AA003F7159 /* scheduled_animations.h in Sources */,
 				6011288E2862511800F92967 /* tok_random.c in Sources */,
@@ -672,6 +691,7 @@
 				60A99909287BD4C3003F7159 /* platform_layer.h in Sources */,
 				60A998F4287BD4C3003F7159 /* apple_platform_layer.m in Sources */,
 				6028DD342886EE54000E1E98 /* init_application.c in Sources */,
+				EC083A3B2AFF727900234FE3 /* objparser.c in Sources */,
 				60A99903287BD4C3003F7159 /* userinput.c in Sources */,
 				EC78509B29E62CA800E6882A /* objmodel.c in Sources */,
 				60A9990B287BD4C3003F7159 /* decodedimage.h in Sources */,

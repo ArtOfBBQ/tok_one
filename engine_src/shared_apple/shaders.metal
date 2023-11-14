@@ -13,6 +13,7 @@ typedef struct
     float4 lighting;
     int texturearray_i;
     int texture_i;
+    float point_size [[point_size]];
 } RasterizerPixel;
 
 float4 x_rotate(float4 vertices, float x_angle) {
@@ -74,60 +75,80 @@ float get_distance(
 vertex RasterizerPixel
 vertex_shader(
     uint vertex_i [[ vertex_id ]],
-    const device GPUVertex * input_array [[ buffer(0) ]],
-    const device GPULightCollection * light_collection [[ buffer(1) ]],
-    const device GPUCamera * camera [[ buffer(2) ]],
-    const device GPUProjectionConstants * projection_constants [[ buffer(3) ]])
+    const device GPUVertex * vertices [[ buffer(0) ]],
+    const device GPUPolygonCollection * polygon_collection [[ buffer(1) ]],
+    const device GPULightCollection * light_collection [[ buffer(2) ]],
+    const device GPUCamera * camera [[ buffer(3) ]],
+    const device GPULockedVertex * locked_vertices [[ buffer(4) ]],
+    const device GPUProjectionConstants * projection_constants [[ buffer(5) ]])
 {
     RasterizerPixel out;
     
+    uint polygon_i = vertices[vertex_i].polygon_i;
+    uint locked_vertex_i = vertices[vertex_i].locked_vertex_i;
+    
     float4 parent_mesh_position = vector_float4(
-        input_array[vertex_i].parent_x,
-        input_array[vertex_i].parent_y,
-        input_array[vertex_i].parent_z,
+        polygon_collection->xyz[polygon_i][0],
+        polygon_collection->xyz[polygon_i][1],
+        polygon_collection->xyz[polygon_i][2],
         0.0f);
     
     float4 mesh_vertices = vector_float4(
-        input_array[vertex_i].x,
-        input_array[vertex_i].y,
-        input_array[vertex_i].z,
+        locked_vertices[locked_vertex_i].xyz[0],
+        locked_vertices[locked_vertex_i].xyz[1],
+        locked_vertices[locked_vertex_i].xyz[2],
+        0.0f);
+    
+    float4 vertex_multipliers = vector_float4(
+        polygon_collection->xyz_multiplier[polygon_i][0],
+        polygon_collection->xyz_multiplier[polygon_i][1],
+        polygon_collection->xyz_multiplier[polygon_i][2],
         1.0f);
     
-    mesh_vertices *= input_array[vertex_i].scale_factor;
+    float4 vertex_offsets = vector_float4(
+        polygon_collection->xy_offset[polygon_i][0],
+        polygon_collection->xy_offset[polygon_i][1],
+        0.0f,
+        0.0f);
+    
+    mesh_vertices *= vertex_multipliers;
+    mesh_vertices += vertex_offsets;
+    
+    mesh_vertices *= polygon_collection->scale_factor[polygon_i];
     mesh_vertices[3] = 1.0f;
     
     float4 mesh_normals = vector_float4(
-        input_array[vertex_i].normal_x,
-        input_array[vertex_i].normal_y,
-        input_array[vertex_i].normal_z,
+        locked_vertices[locked_vertex_i].normal_xyz[0],
+        locked_vertices[locked_vertex_i].normal_xyz[1],
+        locked_vertices[locked_vertex_i].normal_xyz[2],
         1.0f);
      
     // rotate vertices
     float4 x_rotated_vertices = x_rotate(
         mesh_vertices,
-        input_array[vertex_i].x_angle);
+        polygon_collection->xyz_angle[polygon_i][0]);
     float4 x_rotated_normals  = x_rotate(
         mesh_normals,
-        input_array[vertex_i].x_angle);
+        polygon_collection->xyz_angle[polygon_i][0]);
     
     float4 y_rotated_vertices = y_rotate(
         x_rotated_vertices,
-        input_array[vertex_i].y_angle);
+        polygon_collection->xyz_angle[polygon_i][1]);
     float4 y_rotated_normals  = y_rotate(
         x_rotated_normals,
-        input_array[vertex_i].y_angle);
+        polygon_collection->xyz_angle[polygon_i][1]);
     
     float4 z_rotated_vertices = z_rotate(
         y_rotated_vertices,
-        input_array[vertex_i].z_angle);
+        polygon_collection->xyz_angle[polygon_i][2]);
     float4 z_rotated_normals  = z_rotate(
         y_rotated_normals,
-        input_array[vertex_i].z_angle);
+        polygon_collection->xyz_angle[polygon_i][2]);
     
     // translate to world position
     float4 translated_pos = z_rotated_vertices + parent_mesh_position;
     
-    if (input_array[vertex_i].ignore_camera < 1.0f) {
+    if (polygon_collection->ignore_camera[polygon_i] < 1.0f) {
         float4 camera_position = vector_float4(
             camera->x,
             camera->y,
@@ -160,19 +181,18 @@ vertex_shader(
         (projection_constants->near * projection_constants->q);
     
     out.color = vector_float4(
-        input_array[vertex_i].RGBA[0],
-        input_array[vertex_i].RGBA[1],
-        input_array[vertex_i].RGBA[2],
-        input_array[vertex_i].RGBA[3]);
-    clamp(out.color, 0.05f, 1.0f);
-     
-    out.texturearray_i = input_array[vertex_i].texturearray_i;
-    out.texture_i = input_array[vertex_i].texture_i;
-    out.texture_coordinate = vector_float2(
-        input_array[vertex_i].uv[0],
-        input_array[vertex_i].uv[1]);
+        vertices[vertex_i].color[0],
+        vertices[vertex_i].color[1],
+        vertices[vertex_i].color[2],
+        vertices[vertex_i].color[3]);
     
-    if (input_array[vertex_i].ignore_lighting > 0.0f) {
+    out.texturearray_i = vertices[vertex_i].texturearray_i;
+    out.texture_i = vertices[vertex_i].texture_i;
+    out.texture_coordinate = vector_float2(
+        locked_vertices[locked_vertex_i].uv[0],
+        locked_vertices[locked_vertex_i].uv[1]);
+    
+    if (polygon_collection->ignore_lighting[polygon_i] > 0.0f) {
         out.lighting = float4(1.0f, 1.0f, 1.0f, 1.0f);
         return out;
     }
@@ -224,7 +244,8 @@ vertex_shader(
     }
     
     clamp(out.lighting, 0.05f, 1.0f);
-    out.lighting[3] = 1.0f;
+    
+    out.point_size = 15.0f;
     
     return out;
 }
@@ -274,6 +295,11 @@ fragment_shader(
         ))
     {
         discard_fragment();
+        //        out_color[0] = 0.0f;
+        //        out_color[1] = 1.0f;
+        //        out_color[2] = 1.0f;
+        //        out_color[3] = 1.0f;
+        //        return out_color;
     }
     
     out_color[3] = 1.0f;

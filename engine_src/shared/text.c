@@ -295,7 +295,7 @@ void request_label_offset_around(
                 rgba_i < 4;
                 rgba_i++)
             {
-                letter.triangle_materials[0].color[rgba_i] = font_color[rgba_i];
+                letter.vertex_materials[0].color[rgba_i] = font_color[rgba_i];
             }
             
             letter.x_offset = screenspace_width_to_width(
@@ -310,8 +310,8 @@ void request_label_offset_around(
                     pixelspace_extra_y_offset),
                 z);
             
-            letter.triangle_materials[0].texturearray_i = font_texturearray_i;
-            letter.triangle_materials[0].texture_i      = text_to_draw[j] - '!';
+            letter.vertex_materials[0].texturearray_i = font_texturearray_i;
+            letter.vertex_materials[0].texture_i      = text_to_draw[j] - '!';
             
             cur_x_offset_pixelspace += get_advance_width(text_to_draw[j]);
             request_zpolygon_to_render(&letter);
@@ -460,15 +460,17 @@ void request_label_renderable(
         letter.ignore_lighting = font_ignore_lighting;
         letter.ignore_camera = ignore_camera;
         
-        letter.triangle_materials[0].texturearray_i = font_texturearray_i;
-        letter.triangle_materials[0].texture_i = (int32_t)(text_to_draw[i] - '!');
+        letter.vertex_materials[0].texturearray_i = font_texturearray_i;
+        letter.vertex_materials[0].texture_i = (int32_t)(text_to_draw[i] - '!');
+        log_assert(letter.vertex_materials[0].texture_i >=    0);
+        log_assert(letter.vertex_materials[0].texture_i <  1000);
         
         for (
             uint32_t rgba_i = 0;
             rgba_i < 4;
             rgba_i++)
         {
-            letter.triangle_materials[0].color[rgba_i] = font_color[rgba_i];
+            letter.vertex_materials[0].color[rgba_i] = font_color[rgba_i];
         }
 
         letter.x_offset =

@@ -137,6 +137,7 @@ void * malloc_from_unmanaged_aligned(
 };
 
 void * malloc_from_unmanaged(size_t size) {
+    log_assert(size > 0);
     void * return_value = malloc_from_unmanaged_aligned(
         size,
         MEM_ALIGNMENT_BYTES);
