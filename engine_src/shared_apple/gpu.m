@@ -213,7 +213,8 @@ static dispatch_semaphore_t drawing_semaphore;
         assert(MTLBufferFramePolygons != nil);
         assert(
             [MTLBufferFramePolygons contents] ==
-                gpu_shared_data_collection.triple_buffers[frame_i].polygon_collection);
+                gpu_shared_data_collection.triple_buffers[frame_i].
+                    polygon_collection);
         polygon_buffers[frame_i] = MTLBufferFramePolygons;
         assert(polygon_buffers[frame_i] != nil);
         
@@ -560,7 +561,17 @@ static dispatch_semaphore_t drawing_semaphore;
         drawPrimitives: MTLPrimitiveTypeTriangle
         vertexStart: 0
         vertexCount: gpu_shared_data_collection.
-            triple_buffers[current_frame_i].vertices_size];
+            triple_buffers[current_frame_i].first_line_i];
+    
+    uint32_t lines_size = gpu_shared_data_collection.
+            triple_buffers[current_frame_i].vertices_size -
+        gpu_shared_data_collection.
+            triple_buffers[current_frame_i].first_line_i;
+    [render_encoder
+        drawPrimitives: MTLPrimitiveTypeLine
+        vertexStart: gpu_shared_data_collection.
+            triple_buffers[current_frame_i].first_line_i
+        vertexCount: lines_size];
     
     [render_encoder endEncoding];
     

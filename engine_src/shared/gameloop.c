@@ -4,10 +4,6 @@ static uint64_t previous_time = 0;
 static uint64_t frame_no = 0;
 static uint32_t gameloop_mutex_id = UINT32_MAX;
 
-#define ELAPSED_SAMPLE_COUNT 50
-static uint64_t elapsed_sample[ELAPSED_SAMPLE_COUNT];
-static uint32_t elapsed_sample_size = 0;
-
 static int32_t closest_touchable_from_screen_ray(
     const float screen_x,
     const float screen_y,
@@ -343,6 +339,7 @@ void shared_gameloop_update(
     
     frame_data->vertices_size = 0;
     frame_data->polygon_collection->size = 0;
+    frame_data->first_line_i = 0;
     hardware_render(
             frame_data,
         /* uint64_t elapsed_microseconds: */

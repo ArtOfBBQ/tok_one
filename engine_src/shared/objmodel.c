@@ -8,14 +8,14 @@ static void construct_mesh_summary(
     const int32_t id)
 {
     to_construct->resource_name[0]          = '\0';
-    to_construct->mesh_id                   = id;
-    to_construct->vertices_head_i           = -1; // index in all_mesh_vertices
-    to_construct->vertices_size             = 0;
+    to_construct->mesh_id                   =   id;
+    to_construct->vertices_head_i           =   -1; // index @ all_mesh_vertices
+    to_construct->vertices_size             =    0;
     to_construct->base_width                = 0.0f;
     to_construct->base_height               = 0.0f;
     to_construct->base_depth                = 0.0f;
-    to_construct->shattered_vertices_head_i = -1;
-    to_construct->shattered_vertices_size   = 0;
+    to_construct->shattered_vertices_head_i =   -1;
+    to_construct->shattered_vertices_size   =    0;
 }
 
 GPULockedVertexWithMaterial * all_mesh_vertices;
@@ -154,7 +154,6 @@ void init_all_meshes(void) {
     all_mesh_summaries[1].base_width = 1.0f;
     all_mesh_summaries[1].base_height = 1.0f;
     all_mesh_summaries[1].base_depth = 1.0f;
-    all_mesh_summaries_size = 2;
     
     const float front_vertex =  -1.0f;
     const float back_vertex  =   1.0f;
@@ -470,7 +469,33 @@ void init_all_meshes(void) {
     all_mesh_vertices[41].gpu_data.normal_xyz[0] = 0.0f;
     all_mesh_vertices[41].gpu_data.normal_xyz[1] = -1.0f;
     all_mesh_vertices[41].gpu_data.normal_xyz[2] = 0.0f;
-    all_mesh_vertices_size = 42;
+    
+    strcpy_capped(
+        all_mesh_summaries[2].resource_name,
+        OBJ_STRING_SIZE,
+        "basic_point");
+    all_mesh_summaries[2].mesh_id = 2;
+    all_mesh_summaries[2].vertices_head_i = 42;
+    all_mesh_summaries[2].vertices_size = 1;
+    all_mesh_summaries[2].base_width = 1.0f;
+    all_mesh_summaries[2].base_height = 1.0f;
+    all_mesh_summaries[2].base_depth = 1.0f;
+    all_mesh_summaries[2].materials_size = 1;
+    all_mesh_summaries[2].shattered_vertices_head_i = -1;
+    all_mesh_summaries[2].shattered_vertices_size = 0;
+    
+    // basic point (only 1 vertex)
+    all_mesh_vertices[42].gpu_data.xyz[0] = 0;
+    all_mesh_vertices[42].gpu_data.xyz[1] = 0;
+    all_mesh_vertices[42].gpu_data.xyz[2] = 0;
+    all_mesh_vertices[42].gpu_data.uv[0]  = 0;
+    all_mesh_vertices[42].gpu_data.uv[1]  = 0;
+    all_mesh_vertices[42].gpu_data.normal_xyz[0] =  0.0f;
+    all_mesh_vertices[42].gpu_data.normal_xyz[1] =  0.0f;
+    all_mesh_vertices[42].gpu_data.normal_xyz[2] = -1.0f;
+    
+    all_mesh_summaries_size = 3;
+    all_mesh_vertices_size = 43;
     
     free_from_managed(parser_vertex_buffer);
     
@@ -481,6 +506,7 @@ void init_all_meshes(void) {
     free_from_managed(parser_uv_v_buffer);
 }
 
+#ifndef LOGGER_IGNORE_ASSERTS
 static void assert_objmodel_validity(int32_t mesh_id) {
     log_assert(mesh_id >= 0);
     log_assert(mesh_id < (int32_t)all_mesh_summaries_size);
@@ -492,23 +518,24 @@ static void assert_objmodel_validity(int32_t mesh_id) {
         all_mesh_summaries[mesh_id].vertices_size;
     log_assert(all_vertices_tail_i <= (int32_t)all_mesh_vertices_size);
 }
+#endif
 
-static void guess_ztriangle_normal(zTriangle * input) {
-    zVertex vector1;
-    zVertex vector2;
-    
-    vector1.x = input->vertices[1].x - input->vertices[0].x;
-    vector1.y = input->vertices[1].y - input->vertices[0].y;
-    vector1.z = input->vertices[1].z - input->vertices[0].z;
-    
-    vector2.x = input->vertices[2].x - input->vertices[0].x;
-    vector2.y = input->vertices[2].y - input->vertices[0].y;
-    vector2.z = input->vertices[2].z - input->vertices[0].z;
-    
-    input->normal.x = (vector1.y * vector2.z) - (vector1.z * vector2.y);
-    input->normal.y = (vector1.z * vector2.x) - (vector1.x * vector2.z);
-    input->normal.z = (vector1.x * vector2.y) - (vector1.y * vector2.x);
-}
+//static void guess_ztriangle_normal(zTriangle * input) {
+//    zVertex vector1;
+//    zVertex vector2;
+//
+//    vector1.x = input->vertices[1].x - input->vertices[0].x;
+//    vector1.y = input->vertices[1].y - input->vertices[0].y;
+//    vector1.z = input->vertices[1].z - input->vertices[0].z;
+//
+//    vector2.x = input->vertices[2].x - input->vertices[0].x;
+//    vector2.y = input->vertices[2].y - input->vertices[0].y;
+//    vector2.z = input->vertices[2].z - input->vertices[0].z;
+//
+//    input->normal.x = (vector1.y * vector2.z) - (vector1.z * vector2.y);
+//    input->normal.y = (vector1.z * vector2.x) - (vector1.x * vector2.z);
+//    input->normal.z = (vector1.x * vector2.y) - (vector1.y * vector2.x);
+//}
 
 static float get_vertex_magnitude(float input_xyz[3]) {
     float x = (input_xyz[0] * input_xyz[0]);
@@ -943,9 +970,10 @@ int32_t new_mesh_id_from_resource(
     log_assert(all_mesh_summaries[all_mesh_summaries_size].vertices_size > 0);
     
     #ifndef LOGGER_IGNORE_ASSERTS
-    uint32_t new_tail_i = all_mesh_summaries[all_mesh_summaries_size].
-        vertices_head_i + all_mesh_summaries[all_mesh_summaries_size].
-            vertices_size - 1;
+    uint32_t new_tail_i = (uint32_t)(
+        all_mesh_summaries[all_mesh_summaries_size].vertices_head_i +
+        all_mesh_summaries[all_mesh_summaries_size].vertices_size -
+        1);
     log_assert(new_tail_i < all_mesh_vertices_size);
     #endif
     
@@ -1001,7 +1029,9 @@ int32_t new_mesh_id_from_resource(
     all_mesh_summaries_size += 1;
     log_assert(all_mesh_summaries_size <= ALL_MESHES_SIZE);
     
+    #ifndef LOGGER_IGNORE_ASSERTS
     assert_objmodel_validity((int32_t)all_mesh_summaries_size - 1);
+    #endif
     
     return (int32_t)all_mesh_summaries_size - 1;
 }

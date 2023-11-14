@@ -53,6 +53,7 @@ void init_application(void)
     window_globals = (WindowGlobals *)malloc_from_unmanaged(
         sizeof(WindowGlobals));
     window_globals->visual_debug_mode = false;
+    window_globals->wireframe_mode = false;
     
     if (
         engine_save.contents != NULL &&

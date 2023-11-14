@@ -17,41 +17,40 @@ static void set_zpolygon_hitbox(
     
     int32_t vertices_tail_i =
         all_mesh_summaries[mesh->mesh_id].vertices_head_i +
-        all_mesh_summaries[mesh->mesh_id].vertices_size;
+        all_mesh_summaries[mesh->mesh_id].vertices_size -
+        1;
     
     for (
         int32_t vert_i = all_mesh_summaries[mesh->mesh_id].vertices_head_i;
-        vert_i < vertices_tail_i;
+        vert_i <= vertices_tail_i;
         vert_i++)
     {
-        for (int32_t m = 0; m < 3; m++) {
-            float cur_vertex_x =
-                all_mesh_vertices[vert_i + m].gpu_data.xyz[0] *
-                        mesh->x_multiplier;
-            float cur_vertex_y =
-                all_mesh_vertices[vert_i + m].gpu_data.xyz[1] *
-                        mesh->y_multiplier;
-            float cur_vertex_z =
-                all_mesh_vertices[vert_i + m].gpu_data.xyz[2] *
-                        mesh->z_multiplier;
-            
-            if (cur_vertex_x < left) {
-                left = cur_vertex_x;
-            } else if (cur_vertex_x > right) {
-                right = cur_vertex_x;
-            }
-            
-            if (cur_vertex_y < bottom) {
-                bottom = cur_vertex_y;
-            } else if (cur_vertex_y > top) {
-                top = cur_vertex_y;
-            }
-            
-            if (cur_vertex_z < front) {
-                front = cur_vertex_z;
-            } else if (cur_vertex_z > back) {
-                back = cur_vertex_z;
-            }
+        float cur_vertex_x =
+            all_mesh_vertices[vert_i].gpu_data.xyz[0] *
+                    mesh->x_multiplier;
+        float cur_vertex_y =
+            all_mesh_vertices[vert_i].gpu_data.xyz[1] *
+                    mesh->y_multiplier;
+        float cur_vertex_z =
+            all_mesh_vertices[vert_i].gpu_data.xyz[2] *
+                    mesh->z_multiplier;
+        
+        if (cur_vertex_x < left) {
+            left = cur_vertex_x;
+        } else if (cur_vertex_x > right) {
+            right = cur_vertex_x;
+        }
+        
+        if (cur_vertex_y < bottom) {
+            bottom = cur_vertex_y;
+        } else if (cur_vertex_y > top) {
+            top = cur_vertex_y;
+        }
+        
+        if (cur_vertex_z < front) {
+            front = cur_vertex_z;
+        } else if (cur_vertex_z > back) {
+            back = cur_vertex_z;
         }
     }
     

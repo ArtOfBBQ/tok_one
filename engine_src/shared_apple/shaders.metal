@@ -245,7 +245,7 @@ vertex_shader(
     
     clamp(out.lighting, 0.05f, 1.0f);
     
-    out.point_size = 15.0f;
+    out.point_size = 40.0f;
     
     return out;
 }
@@ -295,11 +295,7 @@ fragment_shader(
         ))
     {
         discard_fragment();
-        //        out_color[0] = 0.0f;
-        //        out_color[1] = 1.0f;
-        //        out_color[2] = 1.0f;
-        //        out_color[3] = 1.0f;
-        //        return out_color;
+        return out_color;
     }
     
     out_color[3] = 1.0f;

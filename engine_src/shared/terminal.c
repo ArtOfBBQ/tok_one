@@ -413,6 +413,26 @@ static bool32_t evaluate_terminal_command(
         return true;
     }
     
+    if (
+        are_equal_strings(command, "WIREFRAME") ||
+        are_equal_strings(command, "WIREFRAME MODE"))
+    {
+        window_globals->wireframe_mode = !window_globals->wireframe_mode;
+        if (!window_globals->wireframe_mode) {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Exiting wireframe mode");
+        } else {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Activating wireframe mode");
+        }
+        
+        return true;
+    }
+    
     if (are_equal_strings(command, "quit") ||
         are_equal_strings(command, "Quit") ||
         are_equal_strings(command, "QUIT") ||

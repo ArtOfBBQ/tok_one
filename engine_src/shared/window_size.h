@@ -7,6 +7,7 @@
 #include "cpu_gpu_shared_types.h"
 
 typedef struct WindowGlobals {
+    bool32_t wireframe_mode;
     bool32_t visual_debug_mode;
     int32_t visual_debug_highlight_touchable_id;
     float visual_debug_ray_origin_direction[9];

@@ -28,7 +28,7 @@ static unsigned int consume_uint(
     unsigned int return_value = 0;
     
     while ((*raw_buffer)[0] >= '0' && (*raw_buffer)[0] <= '9') {
-        unsigned int new_digit = (*raw_buffer)[0] - '0';
+        unsigned int new_digit = (unsigned int)((*raw_buffer)[0] - '0');
         return_value *= 10;
         return_value += new_digit;
         (*raw_buffer)++;
@@ -252,7 +252,7 @@ static int get_material_i_or_register_new(
     }
     
     int first_unused_material = -1;
-    for (int _ = 0; _ <= in_obj->materials_count; _++) {
+    for (int _ = 0; _ <= (int)in_obj->materials_count; _++) {
         if (in_obj->materials[_].name[0] == '\0') {
             first_unused_material = _;
             break;
@@ -341,15 +341,15 @@ void parse_obj(
             }
             material_name[char_i] = '\0';
             
-            unsigned int new_material_i = get_material_i_or_register_new(
+            int new_material_i = get_material_i_or_register_new(
                 recipient,
                 material_name);
-            if (new_material_i >= recipient->materials_count) {
+            if (new_material_i >= (int)recipient->materials_count) {
                 recipient->materials_count += 1;
             }
             
             #ifndef OBJ_PARSER_NO_ASSERTS
-            assert(new_material_i < recipient->materials_count);
+            assert(new_material_i < (int)recipient->materials_count);
             #endif
         }
         if (raw_buffer[i] == 'v' && raw_buffer[i + 1] == 'n') {
@@ -808,6 +808,7 @@ void parse_obj(
             if (raw_buffer[0] >= '0' && raw_buffer[0] <= '9') {
                 // w coordinate of uv coordinate
                 float w_coordinate = consume_float(&raw_buffer, success);
+                (void)w_coordinate;
                 
                 if (!*success) {
                     #ifndef OBJ_PARSER_NO_ASSERTS
@@ -874,7 +875,7 @@ void parse_obj(
             }
             material_name[char_i] = '\0';
             
-            cur_material_i = get_material_i_or_register_new(
+            cur_material_i = (unsigned int)get_material_i_or_register_new(
                 recipient,
                 material_name);
         } else {
