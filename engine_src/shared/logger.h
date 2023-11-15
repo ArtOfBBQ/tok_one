@@ -42,6 +42,7 @@ void init_logger(
     void mutex_lock_function(const uint32_t mutex_id),
     int32_t mutex_unlock_function(const uint32_t mutex_id));
 
+#ifndef LOGGER_SILENCE
 /*
 don't use the internal_ functions, use the macros that call them.
 */
@@ -89,6 +90,7 @@ void
 internal_log_append_float(
     const float to_append,
     const char * caller_function_name);
+#endif
 
 /*
 dump the entire debug log to debuglog.txt

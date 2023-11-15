@@ -41,6 +41,7 @@ void init_logger(
     }
 }
 
+#ifndef LOGGER_SILENCE
 void
 internal_log_append_uint(
     const uint32_t to_append,
@@ -216,6 +217,7 @@ internal_log_append(
         // mutex_unlock_function(logger_mutex_id);
     }
 }
+#endif
 
 void log_dump(bool32_t * good) {
     

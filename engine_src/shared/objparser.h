@@ -1,7 +1,7 @@
 #ifndef OBJ_PARSER_H
 #define OBJ_PARSER_H
 
-#ifndef OBJ_PARSER_NO_ASSERTS
+#ifndef OBJ_PARSER_IGNORE_ASSERTS
 #include <assert.h>
 #endif
 
