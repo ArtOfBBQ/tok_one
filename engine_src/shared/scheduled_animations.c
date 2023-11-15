@@ -648,12 +648,12 @@ static void resolve_single_animation_effects(
                             vertex_materials[mat_i].color[c];
                     float delta_val = anim->final_rgba[c] - cur_val;
                     
-                    if (delta_val > 0.00001f || delta_val < 0.00001f) {
+                    if (delta_val > 0.0001f || delta_val < 0.0001f) {
                         zpolygons_to_render[zp_i].
                                 vertex_materials[mat_i].color[c] +=
-                            delta_val /
+                            (delta_val /
                                 ((float)remaining_microseconds_at_start_of_run /
-                                    elapsed_this_run);
+                                    elapsed_this_run));
                     }
                 }
             }

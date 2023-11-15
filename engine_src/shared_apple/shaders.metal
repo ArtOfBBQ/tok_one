@@ -10,7 +10,7 @@ typedef struct
     float4 position [[position]];
     float4 color;
     float2 texture_coordinate;
-    float4 lighting;
+    float3 lighting;
     int texturearray_i;
     int texture_i;
     float point_size [[point_size]];
@@ -193,11 +193,11 @@ vertex_shader(
         locked_vertices[locked_vertex_i].uv[1]);
     
     if (polygon_collection->ignore_lighting[polygon_i] > 0.0f) {
-        out.lighting = float4(1.0f, 1.0f, 1.0f, 1.0f);
+        out.lighting = float3(1.0f, 1.0f, 1.0f);
         return out;
     }
     
-    out.lighting = float4(0.0f, 0.0f, 0.0f, 1.0f);
+    out.lighting = float3(0.0f, 0.0f, 0.0f);
     for (
         uint32_t i = 0;
         i < light_collection->lights_size;
@@ -209,11 +209,10 @@ vertex_shader(
             light_collection->light_y[i],
             light_collection->light_z[i],
             1.0f);
-        float4 light_color = vector_float4(
+        float3 light_color = vector_float3(
             light_collection->red[i],
             light_collection->green[i],
-            light_collection->blue[i],
-            1.0f);
+            light_collection->blue[i]);
         float distance = get_distance(
             light_pos,
             translated_pos);
@@ -243,7 +242,7 @@ vertex_shader(
             visibility_rating);
     }
     
-    clamp(out.lighting, 0.05f, 1.0f);
+    out.lighting = clamp(out.lighting, 0.05f, 7.5f);
     
     out.point_size = 40.0f;
     
@@ -262,7 +261,7 @@ fragment_shader(
         in.texturearray_i < 0 ||
         in.texture_i < 0)
     {
-        out_color *= in.lighting;
+        out_color *= vector_float4(in.lighting, 1.0f);
     } else {
         constexpr sampler textureSampler(
             mag_filter::nearest,
@@ -276,7 +275,7 @@ fragment_shader(
             in.texture_i);
         float4 texture_sample = float4(color_sample);
         
-        out_color *= texture_sample * in.lighting;
+        out_color *= texture_sample * vector_float4(in.lighting, 1.0f);;
     }
     
     int diamond_size = 35.0f;

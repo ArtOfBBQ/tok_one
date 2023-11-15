@@ -79,11 +79,11 @@ typedef struct GPUProjectionConstants {
     float y_multiplier;
 } GPUProjectionConstants;
 
-typedef struct GPULockedMaterial {
-    float RGBA[4];
-    unsigned int texturearray_i;
-    unsigned int texture_i;
-} GPULockedMaterial;
+//typedef struct GPULockedMaterial {
+//    float RGBA[4];
+//    unsigned int texturearray_i;
+//    unsigned int texture_i;
+//} GPULockedMaterial;
 #pragma pack(pop)
 
 #endif

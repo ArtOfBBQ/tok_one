@@ -58,6 +58,12 @@ strcat_uint_capped(
     const uint32_t recipient_size,
     const uint32_t to_append);
 
+void
+strcat_float_capped(
+    char * recipient,
+    const uint32_t recipient_size,
+    const float to_append);
+
 void strcpy_capped(
     char * recipient,
     const uint32_t recipient_size,

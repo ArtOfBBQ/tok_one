@@ -65,6 +65,9 @@ void init_projection_constants() {
         window_globals->aspect_ratio * pjc->field_of_view_modifier;
     pjc->y_multiplier = pjc->field_of_view_modifier;
     
+    window_globals->visual_debug_highlight_touchable_id = -1;
+    window_globals->visual_debug_last_clicked_touchable_id = -1;
+    
     window_globals->visual_debug_collision[0] =  0.0f;
     window_globals->visual_debug_collision[1] =  0.0f;
     window_globals->visual_debug_collision[2] = -5.0f;

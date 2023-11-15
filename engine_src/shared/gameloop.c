@@ -295,10 +295,8 @@ void shared_gameloop_update(
                     /* collision point: */
                         &collision_point);
             
-            if (i == 8) {
-                window_globals->visual_debug_highlight_touchable_id =
-                    user_interactions[i].touchable_id;
-            }
+            window_globals->visual_debug_last_clicked_touchable_id =
+                user_interactions[i].touchable_id;
             
             user_interactions[i].checked_touchables = true;
             
