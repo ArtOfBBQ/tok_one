@@ -399,17 +399,10 @@ void hardware_render(
     
     zpolygons_to_triangles(
         frame_data);
-    
-    zpolygon_hitboxes_to_lines(
-        frame_data);
-    
+        
     if (application_running) {
-        // TODO: re-implement particle effects
-        //        add_particle_effects_to_workload(
-        //            next_gpu_workload,
-        //            next_workload_size,
-        //            lights_for_gpu,
-        //            elapsed_nanoseconds);
+        add_particle_effects_to_workload(frame_data, elapsed_nanoseconds);
+        
         //
         //        add_shatter_effects_to_workload(
         //            next_gpu_workload,
@@ -417,6 +410,9 @@ void hardware_render(
         //            lights_for_gpu,
         //            elapsed_nanoseconds);
     }
+    
+    zpolygon_hitboxes_to_lines(
+        frame_data);
     
     if (window_globals->wireframe_mode) {
         frame_data->first_line_i = 0;

@@ -133,9 +133,7 @@ void request_particle_effect(ParticleEffect * to_request);
 void delete_particle_effect(int32_t with_object_id);
 
 void add_particle_effects_to_workload(
-    GPUVertex * next_gpu_workload,
-    uint32_t * next_workload_size,
-    GPULightCollection * lights_for_gpu,
+    GPUDataForSingleFrame * frame_data,
     uint64_t elapsed_nanoseconds);
 
 #ifdef __cplusplus
