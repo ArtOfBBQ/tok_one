@@ -186,6 +186,14 @@ vertex_shader(
         vertices[vertex_i].color[2],
         vertices[vertex_i].color[3]);
     
+    float4 bonus_rgb = vector_float4(
+        polygon_collection->bonus_rgb[polygon_i][0],
+        polygon_collection->bonus_rgb[polygon_i][1],
+        polygon_collection->bonus_rgb[polygon_i][2],
+        0.0f);
+    
+    out.color += bonus_rgb;
+    
     out.texturearray_i = vertices[vertex_i].texturearray_i;
     out.texture_i = vertices[vertex_i].texture_i;
     out.texture_coordinate = vector_float2(

@@ -11,7 +11,7 @@ typedef struct EngineSaveFile {
 
 static EngineSaveFile * engine_save_file = NULL;
 
-void init_application(void)
+void init_application_before_gpu_init(void)
 {
     init_memory_store();
     
@@ -216,6 +216,11 @@ void init_application(void)
             4096);
     
     client_logic_startup();
+}
+
+void init_application_after_gpu_init(void) {
+    platform_gpu_copy_locked_vertices();
+    platform_gpu_update_viewport();
 }
 
 void shared_shutdown_application(void)
