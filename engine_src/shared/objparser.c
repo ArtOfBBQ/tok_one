@@ -392,10 +392,10 @@ void parse_obj(
         *success = 0;
         return;
     }
+    free_function(recipient->materials);
+    
     recipient->vertices = malloc_function(
         sizeof(unsigned int[6]) * recipient->vertices_count);
-    
-    free_function(recipient->materials);
     if (recipient->materials_count > 0) {
         recipient->materials = malloc_function(
             sizeof(ParsedMaterial) * recipient->materials_count);
@@ -672,6 +672,12 @@ void parse_obj(
                         if (indexes[2] >= 0) {
                             recipient->triangle_normals[cur_triangle_i]
                                 [consec_entry_i] = (unsigned int)indexes[2];
+                            #ifndef OBJ_PARSER_IGNORE_ASSERTS
+                            assert(recipient->triangle_normals[cur_triangle_i]
+                                [consec_entry_i] > 0);
+                            assert(recipient->triangle_normals[cur_triangle_i]
+                                [consec_entry_i] <= recipient->normals_count);
+                            #endif
                         }
                         
                         #ifndef OBJ_PARSER_IGNORE_ASSERTS
@@ -898,12 +904,31 @@ void parse_obj(
             return;
         }
         
-        while (raw_buffer[0] == '\n' || raw_buffer[0] == '\r') {
+        while (
+            raw_buffer[0] == '\n' ||
+            raw_buffer[0] == '\r' ||
+            raw_buffer[0] == '\x01' ||
+            raw_buffer[0] == '\x04' ||
+            raw_buffer[0] == '\xff')
+        {
             raw_buffer++; // discard the newline
         }
     }
     
     #ifndef OBJ_PARSER_IGNORE_ASSERTS
+    for (unsigned int tri_i = 0; tri_i < recipient->triangles_count; tri_i++) {
+        if (recipient->triangle_normals != 0) {
+            assert(recipient->triangle_normals[tri_i][0] >= 1);
+            assert(recipient->triangle_normals[tri_i][1] >= 1);
+            assert(recipient->triangle_normals[tri_i][2] >= 1);
+            assert(recipient->triangle_normals[tri_i][0] <=
+                recipient->normals_count);
+            assert(recipient->triangle_normals[tri_i][1] <=
+                recipient->normals_count);
+            assert(recipient->triangle_normals[tri_i][2] <=
+                recipient->normals_count);
+        }
+    }
     for (unsigned int quad_i = 0; quad_i < recipient->quads_count; quad_i++) {
         if (recipient->quad_textures != 0) {
             for (unsigned int m = 0; m < 4; m++) {
@@ -919,3 +944,40 @@ void parse_obj(
     return;
 }
 
+void free_obj(ParsedObj * to_free) {
+    if (to_free->quads != 0) {
+        free_function(to_free->quads);
+        to_free->quads = 0;
+    }
+    if (to_free->quad_textures != 0) {
+        free_function(to_free->quad_textures);
+        to_free->quad_textures = 0;
+    }
+    if (to_free->triangle_textures != 0) {
+        free_function(to_free->triangle_textures);
+    }
+    if (to_free->textures != 0) {
+        free_function(to_free->textures);
+        to_free->textures = 0;
+    }
+    if (to_free->quad_normals != 0) {
+        free_function(to_free->quad_normals);
+        to_free->quad_normals = 0;
+    }
+    if (to_free->triangle_normals != 0) {
+        free_function(to_free->triangle_normals);
+        to_free->triangle_normals = 0;
+    }
+    if (to_free->normals != 0) {
+        free_function(to_free->normals);
+        to_free->normals = 0;
+    }
+    if (to_free->materials != 0) {
+        free_function(to_free->materials);
+        to_free->materials = 0;
+    }
+    if (to_free->vertices != 0) {
+        free_function(to_free->vertices);
+        to_free->vertices = 0;
+    }
+}

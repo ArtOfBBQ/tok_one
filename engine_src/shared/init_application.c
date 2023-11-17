@@ -44,8 +44,9 @@ void init_application_before_gpu_init(void)
     FileBuffer engine_save;
     engine_save.contents = NULL;
     if (platform_file_exists(full_writable_pathfile)) {
-        engine_save.size = platform_get_filesize(full_writable_pathfile);
-        engine_save.contents = (char *)malloc_from_managed(engine_save.size);
+        engine_save.size_without_terminator = platform_get_filesize(full_writable_pathfile);
+        engine_save.contents = (char *)malloc_from_managed(
+            engine_save.size_without_terminator + 1);
         platform_read_file(full_writable_pathfile, &engine_save);
         *engine_save_file = *(EngineSaveFile *)engine_save.contents;
     }
@@ -77,6 +78,8 @@ void init_application_before_gpu_init(void)
         window_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
     }
     
+    free_from_managed(engine_save.contents);
+    
     window_globals->aspect_ratio =
         window_globals->window_height / window_globals->window_width;
     
@@ -101,12 +104,12 @@ void init_application_before_gpu_init(void)
     
     // initialize font with fontmetrics.dat
     FileBuffer font_metrics_file;
-    font_metrics_file.size = platform_get_resource_size(
+    font_metrics_file.size_without_terminator = platform_get_resource_size(
         /* filename: */ "fontmetrics.dat");
     
-    if (font_metrics_file.size > 0) {
+    if (font_metrics_file.size_without_terminator > 0) {
         font_metrics_file.contents = (char *)malloc_from_unmanaged(
-            font_metrics_file.size);
+            font_metrics_file.size_without_terminator + 1);
         platform_read_resource_file(
             /* const char * filepath: */
                 "fontmetrics.dat",
@@ -117,7 +120,7 @@ void init_application_before_gpu_init(void)
             /* raw_fontmetrics_file_contents: */
                 font_metrics_file.contents,
             /* raw_fontmetrics_file_size: */
-                font_metrics_file.size);
+                font_metrics_file.size_without_terminator);
     }
     
     user_interactions = (Interaction *)

@@ -27,25 +27,7 @@ typedef struct BufferedNormal {
     float z;
 } BufferedNormal;
 
-#define PARSER_VERTEX_BUFFER_SIZE 64000
-static zVertex * parser_vertex_buffer = NULL;
-static BufferedNormal * parser_normals_buffer = NULL;
-static float * parser_uv_u_buffer = NULL;
-static float * parser_uv_v_buffer = NULL;
-
 void init_all_meshes(void) {
-    parser_vertex_buffer = (zVertex *)malloc_from_managed(
-        sizeof(zVertex) * PARSER_VERTEX_BUFFER_SIZE);
-    
-    parser_normals_buffer = (BufferedNormal *)malloc_from_managed(
-        sizeof(BufferedNormal) * PARSER_VERTEX_BUFFER_SIZE);
-    
-    parser_uv_u_buffer = (float *)malloc_from_managed(
-        sizeof(float) * PARSER_VERTEX_BUFFER_SIZE);
-    
-    parser_uv_v_buffer = (float *)malloc_from_managed(
-        sizeof(float) * PARSER_VERTEX_BUFFER_SIZE);
-    
     all_mesh_summaries = (MeshSummary *)malloc_from_unmanaged(
         sizeof(MeshSummary) * ALL_MESHES_SIZE);
     
@@ -539,14 +521,6 @@ void init_all_meshes(void) {
     
     all_mesh_summaries_size = 3;
     all_mesh_vertices_size = 43;
-    
-    free_from_managed(parser_vertex_buffer);
-    
-    free_from_managed(parser_normals_buffer);
-    
-    free_from_managed(parser_uv_u_buffer);
-    
-    free_from_managed(parser_uv_v_buffer);
 }
 
 #ifndef LOGGER_IGNORE_ASSERTS
@@ -783,9 +757,9 @@ int32_t new_mesh_id_from_resource(
     
     FileBuffer obj_file;
     
-    obj_file.size = platform_get_resource_size(filename);
-    log_assert(obj_file.size > 0);
-    obj_file.contents = (char *)malloc_from_managed(obj_file.size);
+    obj_file.size_without_terminator = platform_get_resource_size(filename);
+    log_assert(obj_file.size_without_terminator > 0);
+    obj_file.contents = (char *)malloc_from_managed(obj_file.size_without_terminator + 1);
     obj_file.good = false;
     
     platform_read_resource_file(
@@ -795,7 +769,7 @@ int32_t new_mesh_id_from_resource(
             &obj_file);
     
     log_assert(obj_file.good);
-        
+    
     ParsedObj parsed_obj;
     uint32_t good = 0;
     parse_obj(
@@ -872,7 +846,10 @@ int32_t new_mesh_id_from_resource(
             }
             #endif
             
-            if (parsed_obj.normals_count > 0) {
+            if (parsed_obj.normals_count > 0 &&
+                parsed_obj.normals != NULL &&
+                parsed_obj.triangle_normals != NULL)
+            {
                 uint32_t norm_i = parsed_obj.triangle_normals[triangle_i][_];
                 
                 log_assert(norm_i >= 1);
@@ -1004,6 +981,10 @@ int32_t new_mesh_id_from_resource(
             }
         }
     }
+    
+    free_obj(&parsed_obj);
+    free_from_managed(obj_file.contents);
+    obj_file.contents = NULL;
     
     all_mesh_summaries[all_mesh_summaries_size].mesh_id =
         (int32_t)all_mesh_summaries_size;

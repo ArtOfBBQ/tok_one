@@ -95,11 +95,11 @@ static DecodedImage * malloc_img_from_filename(
     const char * filename)
 {
     FileBuffer file_buffer;
-    file_buffer.size = platform_get_resource_size(filename) + 1;
+    file_buffer.size_without_terminator = platform_get_resource_size(filename);
     
-    log_assert(file_buffer.size > 1);
+    log_assert(file_buffer.size_without_terminator > 1);
     file_buffer.contents =
-        (char *)malloc_from_managed(sizeof(char) * file_buffer.size);
+        (char *)malloc_from_managed(sizeof(char) * file_buffer.size_without_terminator + 1);
     
     platform_read_resource_file(
         filename,
@@ -125,7 +125,7 @@ static DecodedImage * malloc_img_from_filename(
             /* const uint8_t * compressed_input: */
                 (uint8_t *)file_buffer.contents,
             /* const uint64_t compressed_input_size: */
-                file_buffer.size - 1,
+                file_buffer.size_without_terminator - 1,
             /* uint32_t * out_width: */
                 &new_image->width,
             /* uint32_t * out_height: */
@@ -149,7 +149,7 @@ static DecodedImage * malloc_img_from_filename(
             /* const uint8_t * compressed_input: */
                 (uint8_t *)file_buffer.contents,
             /* const uint64_t compressed_input_size: */
-                file_buffer.size - 1,
+                file_buffer.size_without_terminator - 1,
             /* out_rgba_values: */
                 new_image->rgba_values,
             /* rgba_values_size: */
@@ -164,7 +164,7 @@ static DecodedImage * malloc_img_from_filename(
             /* const uint8_t * compressed_input: */
                 (uint8_t *)file_buffer.contents,
             /* const uint64_t compressed_input_size: */
-                file_buffer.size - 1,
+                file_buffer.size_without_terminator - 1,
             /* uint32_t * out_width: */
                 &new_image->width,
             /* uint32_t * out_height: */
@@ -186,7 +186,7 @@ static DecodedImage * malloc_img_from_filename(
         
         decode_BMP(
             /* raw_input: */ (uint8_t *)file_buffer.contents,
-            /* raw_input_size: */ file_buffer.size - 1,
+            /* raw_input_size: */ file_buffer.size_without_terminator - 1,
             /* out_rgba_values: */ new_image->rgba_values,
             /* out_rgba_values_size: */ new_image->rgba_values_size,
             /* out_good: */ &new_image->good);
@@ -196,7 +196,7 @@ static DecodedImage * malloc_img_from_filename(
         log_append_char('\n');
         new_image->good = false;
     }
-    free_from_managed((uint8_t *)file_buffer.contents);
+    free_from_managed(file_buffer.contents);
     
     if (!new_image->good) {
         set_allocated_to_error_image(new_image);
@@ -205,9 +205,7 @@ static DecodedImage * malloc_img_from_filename(
     
     log_assert(new_image->pixel_count * 4 == new_image->rgba_values_size);
     log_assert(new_image->pixel_count == new_image->width * new_image->height);
-    
-    free_from_managed((uint8_t *)file_buffer.contents);
-    
+        
     log_assert(new_image->good);
     return new_image;
 }
@@ -743,7 +741,7 @@ void preregister_null_image(
 
 void preregister_file_as_null_image(char * filename) {
     FileBuffer png_file;
-    png_file.size = 40; // read first 40 bytes only
+    png_file.size_without_terminator = 40; // read first 40 bytes only
     char png_file_contents[40];
     png_file.contents = (char *)&png_file_contents;
     platform_read_resource_file(
@@ -810,12 +808,12 @@ void decode_null_image_with_memory(
     int32_t j = texture_i;
     
     FileBuffer file_buffer;
-    file_buffer.size = platform_get_resource_size(
-        texture_arrays[i].images[j].filename) + 1;
+    file_buffer.size_without_terminator = platform_get_resource_size(
+        texture_arrays[i].images[j].filename);
     
     file_buffer.contents =
         (char *)malloc_from_managed(sizeof(char)
-            * file_buffer.size);
+            * file_buffer.size_without_terminator + 1);
     platform_read_resource_file(
         texture_arrays[i].images[j].filename,
         &file_buffer);
@@ -841,7 +839,7 @@ void decode_null_image_with_memory(
             /* const uint8_t * compressed_input: */
                 (uint8_t *)file_buffer.contents,
             /* const uint64_t compressed_input_size: */
-                file_buffer.size - 1,
+                file_buffer.size_without_terminator,
             /* out_rgba_values: */
                 new_image->rgba_values,
             /* rgba_values_size: */
@@ -857,7 +855,7 @@ void decode_null_image_with_memory(
             /* const uint8_t * raw_input: */
                 (uint8_t *)file_buffer.contents,
             /* const uint64_t raw_input_size: */
-                file_buffer.size - 1,
+                file_buffer.size_without_terminator,
             /* out_rgba_values: */
                 new_image->rgba_values,
             /* out_rgba_values_size: */

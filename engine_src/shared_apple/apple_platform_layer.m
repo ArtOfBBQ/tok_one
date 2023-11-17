@@ -119,14 +119,17 @@ void platform_read_file(
     
     if (error) {
         log_append("Error - failed [NSData initWithContentsOfFile:]\n");
-        out_preallocatedbuffer->size = 0;
+        out_preallocatedbuffer->size_without_terminator = 0;
         out_preallocatedbuffer->good = false;
         return;
     }
     
     [file_data
         getBytes: out_preallocatedbuffer->contents
-        length: out_preallocatedbuffer->size];
+        length: out_preallocatedbuffer->size_without_terminator];
+    
+    out_preallocatedbuffer->contents[
+        out_preallocatedbuffer->size_without_terminator] = '\0';
     
     out_preallocatedbuffer->good = true;
     }
