@@ -79,6 +79,21 @@ strcat_uint_capped(
     uint_to_string(to_append, recipient + i, recipient_size - i);
 }
 
+void
+strcat_float_capped(
+    char * recipient,
+    const uint32_t recipient_size,
+    const float to_append)
+{
+    uint32_t before_comma = (uint32_t)to_append;
+    uint32_t after_comma =
+        ((uint32_t)(to_append * 1000) - (before_comma * 1000));
+    strcat_uint_capped(recipient, recipient_size, before_comma);
+    strcat_capped(recipient, recipient_size, ".");
+    strcat_uint_capped(recipient, recipient_size, after_comma);
+    strcat_capped(recipient, recipient_size, "f");
+}
+
 void strcpy_capped(
     char * recipient,
     const uint32_t recipient_size,

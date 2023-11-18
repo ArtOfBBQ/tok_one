@@ -4,7 +4,7 @@
 #define TEXTUREARRAYS_SIZE 31
 #define MAX_FILES_IN_SINGLE_TEXARRAY 200
 
-#define MAX_POLYGONS_PER_BUFFER   1600
+#define MAX_POLYGONS_PER_BUFFER  10000
 #define MAX_LIGHTS_PER_BUFFER       75
 
 #pragma pack(push, 1)
@@ -44,15 +44,19 @@ typedef struct GPUCamera {
     float z_angle;
 } GPUCamera;
 
+typedef struct GPUPolygon {
+    float xyz[3];
+    float xyz_angle[3];
+    float bonus_rgb[3];
+    float xyz_multiplier[3];
+    float xyz_offset[3];
+    float scale_factor;
+    unsigned int ignore_lighting;
+    unsigned int ignore_camera;
+} GPUPolygon;
+
 typedef struct GPUPolygonCollection {
-    float xyz            [MAX_POLYGONS_PER_BUFFER][3];
-    float xyz_angle      [MAX_POLYGONS_PER_BUFFER][3];
-    float xyz_multiplier [MAX_POLYGONS_PER_BUFFER][3];
-    float xy_offset      [MAX_POLYGONS_PER_BUFFER][2];
-    float bonus_rgb      [MAX_POLYGONS_PER_BUFFER][3];
-    float scale_factor   [MAX_POLYGONS_PER_BUFFER];
-    float ignore_lighting[MAX_POLYGONS_PER_BUFFER];
-    float ignore_camera  [MAX_POLYGONS_PER_BUFFER];
+    GPUPolygon polygons[MAX_POLYGONS_PER_BUFFER];
     unsigned int size;
 } GPUPolygonCollection;
 
@@ -78,12 +82,6 @@ typedef struct GPUProjectionConstants {
     float x_multiplier;
     float y_multiplier;
 } GPUProjectionConstants;
-
-typedef struct GPULockedMaterial {
-    float RGBA[4];
-    unsigned int texturearray_i;
-    unsigned int texture_i;
-} GPULockedMaterial;
 #pragma pack(pop)
 
 #endif

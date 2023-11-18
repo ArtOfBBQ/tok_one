@@ -124,7 +124,7 @@ TouchableMTKView * _my_mtk_view;
     _my_mtk_view.paused = NO;
     _my_mtk_view.enableSetNeedsDisplay = NO;
     _my_mtk_view.depthStencilPixelFormat = MTLPixelFormatDepth32Float;
-    _my_mtk_view.clearDepth = 1.0f;
+    _my_mtk_view.clearDepth = CLEARDEPTH;
     
     _metal_device = MTLCreateSystemDefaultDevice();
     
@@ -139,13 +139,15 @@ TouchableMTKView * _my_mtk_view;
             pathForResource: @"default"
             ofType: @"metallib"];
     
-    apple_gpu_delegate =
-        [[MetalKitViewDelegate alloc] init];
+    apple_gpu_delegate = [[MetalKitViewDelegate alloc] init];
+    
     _my_mtk_view.delegate = apple_gpu_delegate;
     [apple_gpu_delegate
         configureMetalWithDevice: _metal_device
         andPixelFormat: _my_mtk_view.colorPixelFormat
         fromFolder: shader_lib_filepath];
+    
+    init_application_after_gpu_init();
 }
 
 - (void)
@@ -159,7 +161,7 @@ TouchableMTKView * _my_mtk_view;
     
     // _my_mtk_view.drawableSize = size;
     
-    zpolygons_to_render_size = 0; 
+    zpolygons_to_render->size = 0;
     zlights_to_apply_size = 0;
 }
 

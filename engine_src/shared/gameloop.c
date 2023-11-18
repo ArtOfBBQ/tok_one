@@ -4,10 +4,6 @@ static uint64_t previous_time = 0;
 static uint64_t frame_no = 0;
 static uint32_t gameloop_mutex_id = UINT32_MAX;
 
-#define ELAPSED_SAMPLE_COUNT 50
-static uint64_t elapsed_sample[ELAPSED_SAMPLE_COUNT];
-static uint32_t elapsed_sample_size = 0;
-
 static int32_t closest_touchable_from_screen_ray(
     const float screen_x,
     const float screen_y,
@@ -108,38 +104,42 @@ static int32_t closest_touchable_from_screen_ray(
     
     for (
         uint32_t zp_i = 0;
-        zp_i < zpolygons_to_render_size;
+        zp_i < zpolygons_to_render->size;
         zp_i++)
     {
         if (
-            zpolygons_to_render[zp_i].deleted ||
-            zpolygons_to_render[zp_i].touchable_id < 0)
+            zpolygons_to_render->cpu_data[zp_i].deleted ||
+            zpolygons_to_render->cpu_data[zp_i].touchable_id < 0)
         {
             continue;
         }
         
         zVertex current_collision_point;
         bool32_t hit = false;
-        zPolygon offset_polygon = zpolygons_to_render[zp_i];
-        float camera_offset_x = camera.x *
-            !zpolygons_to_render[zp_i].ignore_camera;
-        float camera_offset_y = camera.y *
-            !zpolygons_to_render[zp_i].ignore_camera;
-        float camera_offset_z = camera.z *
-            !zpolygons_to_render[zp_i].ignore_camera;
+        zPolygonCPU offset_polygon_cpu = zpolygons_to_render->cpu_data[zp_i];
+        GPUPolygon offset_polygon_gpu = zpolygons_to_render->gpu_data[zp_i];
         
-        offset_polygon.x -= camera_offset_x;
-        offset_polygon.y -= camera_offset_y;
-        offset_polygon.z -= camera_offset_z;
-        offset_polygon.x += offset_polygon.x_offset;
-        offset_polygon.y += offset_polygon.y_offset;
+        float camera_offset_x = camera.x *
+            !zpolygons_to_render->gpu_data[zp_i].ignore_camera;
+        float camera_offset_y = camera.y *
+            !zpolygons_to_render->gpu_data[zp_i].ignore_camera;
+        float camera_offset_z = camera.z *
+            !zpolygons_to_render->gpu_data[zp_i].ignore_camera;
+        
+        offset_polygon_gpu.xyz[0] -= camera_offset_x;
+        offset_polygon_gpu.xyz[1] -= camera_offset_y;
+        offset_polygon_gpu.xyz[2] -= camera_offset_z;
+        offset_polygon_gpu.xyz[0] += offset_polygon_gpu.xyz_offset[0];
+        offset_polygon_gpu.xyz[1] += offset_polygon_gpu.xyz_offset[1];
+        offset_polygon_gpu.xyz[2] += offset_polygon_gpu.xyz_offset[2];
         
         hit = ray_intersects_zpolygon_hitbox(
-            offset_polygon.ignore_camera ?
+            offset_polygon_gpu.ignore_camera ?
                 &ray_origin : &ray_origin_rotated,
-            offset_polygon.ignore_camera ?
+            offset_polygon_gpu.ignore_camera ?
                 &distant_point : &distant_point_rotated,
-            &offset_polygon,
+            &offset_polygon_cpu,
+            &offset_polygon_gpu,
             &current_collision_point);
         
         zVertex offset_collision_point = current_collision_point;
@@ -150,7 +150,7 @@ static int32_t closest_touchable_from_screen_ray(
         float dist_to_hit = get_distance(offset_collision_point, ray_origin);
         if (hit && dist_to_hit < smallest_dist) {
             smallest_dist = dist_to_hit;
-            return_value = offset_polygon.touchable_id;
+            return_value = offset_polygon_cpu.touchable_id;
             *collision_point = current_collision_point;            
         }
     }
@@ -194,7 +194,7 @@ void shared_gameloop_update(
     uint64_t elapsed = time - previous_time;
     
     if (!application_running) {
-        zpolygons_to_render_size = 0;
+        zpolygons_to_render->size = 0;
         frame_data->camera->x = 0.0f;
         frame_data->camera->y = 0.0f;
         frame_data->camera->z = 0.0f;
@@ -299,10 +299,8 @@ void shared_gameloop_update(
                     /* collision point: */
                         &collision_point);
             
-            if (i == 8) {
-                window_globals->visual_debug_highlight_touchable_id =
-                    user_interactions[i].touchable_id;
-            }
+            window_globals->visual_debug_last_clicked_touchable_id =
+                user_interactions[i].touchable_id;
             
             user_interactions[i].checked_touchables = true;
             
@@ -343,6 +341,7 @@ void shared_gameloop_update(
     
     frame_data->vertices_size = 0;
     frame_data->polygon_collection->size = 0;
+    frame_data->first_line_i = 0;
     hardware_render(
             frame_data,
         /* uint64_t elapsed_microseconds: */

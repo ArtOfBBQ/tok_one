@@ -1,7 +1,8 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include "inttypes.h"
+#include <string.h>
+#include <inttypes.h>
 
 #include "common.h"
 #include "window_size.h"

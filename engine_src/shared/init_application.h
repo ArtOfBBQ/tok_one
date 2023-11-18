@@ -21,7 +21,8 @@ extern "C" {
 
 extern uint32_t block_drawinmtkview;
 
-void init_application(void);
+void init_application_before_gpu_init(void);
+void init_application_after_gpu_init(void);
 
 void shared_shutdown_application(void);
 

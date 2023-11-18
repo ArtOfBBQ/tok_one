@@ -269,17 +269,17 @@ void request_shatter_and_destroy(
     
     for (
         uint32_t zp_i = 0;
-        zp_i < zpolygons_to_render_size;
+        zp_i < zpolygons_to_render->size;
         zp_i++)
     {
-        if (zpolygons_to_render[zp_i].deleted ||
-            zpolygons_to_render[zp_i].object_id != object_id)
+        if (zpolygons_to_render->cpu_data[zp_i].deleted ||
+            zpolygons_to_render->cpu_data[zp_i].object_id != object_id)
         {
             continue;
         }
         
         ShatterEffect * shatter = next_shatter_effect();
-        shatter->zpolygon_to_shatter = zpolygons_to_render[zp_i];
+        shatter->zpolygon_to_shatter_cpu = zpolygons_to_render->cpu_data[zp_i];
         shatter->wait_first = wait_before_first_run;
         shatter->longest_random_delay_before_launch = duration_microseconds / 2;
         shatter->start_fade_out_at_elapsed =
@@ -302,7 +302,7 @@ void request_shatter_and_destroy(
         shatter->xyz_rotation_per_second[2] = xyz_rotation_per_second[2];
         commit_shatter_effect(shatter);
         
-        zpolygons_to_render[zp_i].deleted = true;
+        zpolygons_to_render->cpu_data[zp_i].deleted = true;
     }
 }
 
@@ -453,65 +453,68 @@ static void resolve_single_animation_effects(
     
     for (
         uint32_t zp_i = 0;
-        zp_i < zpolygons_to_render_size;
+        zp_i < zpolygons_to_render->size;
         zp_i++)
     {
         if (
-            zpolygons_to_render[zp_i].object_id != anim->affected_object_id ||
-            zpolygons_to_render[zp_i].deleted)
+            zpolygons_to_render->cpu_data[zp_i].object_id !=
+                anim->affected_object_id ||
+            zpolygons_to_render->cpu_data[zp_i].deleted)
         {
             continue;
         }
         
         if (!anim->final_x_known) {
-            zpolygons_to_render[zp_i].x +=
+            zpolygons_to_render->gpu_data[zp_i].xyz[0] +=
                 ((anim->delta_x_per_second *
                     (float)elapsed_this_run)
                             / 1000000.0f);
         } else {
             float diff_x = anim->final_mid_x -
-                zpolygons_to_render[zp_i].x;
-            zpolygons_to_render[zp_i].x +=
+                zpolygons_to_render->gpu_data[zp_i].xyz[0];
+            zpolygons_to_render->gpu_data[zp_i].xyz[0] +=
                 diff_x /
                     ((float)remaining_microseconds_at_start_of_run /
                         elapsed_this_run);
         }
         
         if (!anim->final_y_known) {
-            zpolygons_to_render[zp_i].y +=
+            zpolygons_to_render->gpu_data[zp_i].xyz[1] +=
                 ((anim->delta_y_per_second *
                     (float)elapsed_this_run)
                         / 1000000.0f);
         } else {
             float diff_y = anim->final_mid_y -
-                zpolygons_to_render[zp_i].y;
-            zpolygons_to_render[zp_i].y +=
+                zpolygons_to_render->gpu_data[zp_i].xyz[1];
+            zpolygons_to_render->gpu_data[zp_i].xyz[1] +=
                 diff_y /
                     ((float)remaining_microseconds_at_start_of_run /
                         elapsed_this_run);
         }
         
         if (!anim->final_z_known) {
-                zpolygons_to_render[zp_i].z +=
+                zpolygons_to_render->gpu_data[zp_i].xyz[2] +=
                     ((anim->delta_z_per_second
                         * elapsed_this_run)
                             / 1000000);
         } else {
-            float diff_z = anim->final_mid_z - zpolygons_to_render[zp_i].z;
-            zpolygons_to_render[zp_i].z +=
+            float diff_z = anim->final_mid_z -
+                zpolygons_to_render->gpu_data[zp_i].xyz[2];
+            zpolygons_to_render->gpu_data[zp_i].xyz[2] +=
                 diff_z /
                     ((float)remaining_microseconds_at_start_of_run /
                         elapsed_this_run);
         }
         
         if (!anim->final_x_angle_known) {
-            zpolygons_to_render[zp_i].x_angle +=
+            zpolygons_to_render->gpu_data[zp_i].xyz_angle[0] +=
                 (anim->x_rotation_per_second
                     * elapsed_this_run)
                         / 1000000;
         } else {
-            float diff_x_angle = anim->final_x_angle - zpolygons_to_render[zp_i].x_angle;
-            zpolygons_to_render[zp_i].x_angle +=
+            float diff_x_angle = anim->final_x_angle -
+                zpolygons_to_render->gpu_data[zp_i].xyz_angle[0];
+            zpolygons_to_render->gpu_data[zp_i].xyz_angle[0] +=
                 diff_x_angle /
                     ((float)remaining_microseconds_at_start_of_run /
                         elapsed_this_run);
@@ -521,7 +524,7 @@ static void resolve_single_animation_effects(
             if (anim->y_rotation_per_second > 0.1f) {
                 log_assert(1);
             }
-            zpolygons_to_render[zp_i].y_angle +=
+            zpolygons_to_render->gpu_data[zp_i].xyz_angle[1] +=
                 (anim->y_rotation_per_second
                     * elapsed_this_run)
                         / 1000000;
@@ -530,21 +533,23 @@ static void resolve_single_animation_effects(
                 log_assert(1);
             }
             
-            float diff_y_angle = anim->final_y_angle - zpolygons_to_render[zp_i].y_angle;
-            zpolygons_to_render[zp_i].y_angle +=
+            float diff_y_angle = anim->final_y_angle -
+                zpolygons_to_render->gpu_data[zp_i].xyz_angle[1];
+            zpolygons_to_render->gpu_data[zp_i].xyz_angle[1] +=
                 diff_y_angle /
                     ((float)remaining_microseconds_at_start_of_run /
                         elapsed_this_run);
         }
         
         if (!anim->final_z_angle_known) {
-            zpolygons_to_render[zp_i].z_angle +=
+            zpolygons_to_render->gpu_data[zp_i].xyz_angle[2] +=
                 (anim->z_rotation_per_second
                     * elapsed_this_run)
                         / 1000000;
         } else {
-            float diff_z_angle = anim->final_z_angle - zpolygons_to_render[zp_i].z_angle;
-            zpolygons_to_render[zp_i].z_angle +=
+            float diff_z_angle = anim->final_z_angle -
+                zpolygons_to_render->gpu_data[zp_i].xyz_angle[2];
+            zpolygons_to_render->gpu_data[zp_i].xyz_angle[2] +=
                 diff_z_angle /
                     ((float)remaining_microseconds_at_start_of_run /
                         elapsed_this_run);
@@ -552,15 +557,15 @@ static void resolve_single_animation_effects(
         
         if (!anim->final_x_multiplier_known) {
             if (anim->delta_x_multiplier_per_second != 0.0f) {
-                zpolygons_to_render[zp_i].x_multiplier +=
+                zpolygons_to_render->gpu_data[zp_i].xyz_multiplier[0] +=
                 (anim->delta_x_multiplier_per_second
                     * elapsed_this_run)
                         / 1000000;
             }
         } else {
             float diff_x_multiplier = anim->final_x_multiplier -
-                zpolygons_to_render[zp_i].x_multiplier;
-            zpolygons_to_render[zp_i].x_multiplier +=
+                zpolygons_to_render->gpu_data[zp_i].xyz_multiplier[0];
+            zpolygons_to_render->gpu_data[zp_i].xyz_multiplier[0] +=
                 diff_x_multiplier /
                     ((float)remaining_microseconds_at_start_of_run /
                         elapsed_this_run);
@@ -568,28 +573,29 @@ static void resolve_single_animation_effects(
         
         if (!anim->final_y_multiplier_known) {
             if (anim->delta_y_multiplier_per_second != 0.0f) {
-                zpolygons_to_render[zp_i].y_multiplier +=
+                zpolygons_to_render->gpu_data[zp_i].xyz_multiplier[1] +=
                 (anim->delta_y_multiplier_per_second
                     * elapsed_this_run)
                         / 1000000;
             }
         } else {
             float diff_y_multiplier = anim->final_y_multiplier -
-                zpolygons_to_render[zp_i].y_multiplier;
-            zpolygons_to_render[zp_i].y_multiplier +=
+                zpolygons_to_render->gpu_data[zp_i].xyz_multiplier[1];
+            zpolygons_to_render->gpu_data[zp_i].xyz_multiplier[1] +=
                 diff_y_multiplier /
                     ((float)remaining_microseconds_at_start_of_run /
                         elapsed_this_run);
         }
         
         if (!anim->final_scale_known) {
-            zpolygons_to_render[zp_i].scale_factor +=
+            zpolygons_to_render->gpu_data[zp_i].scale_factor +=
                 (anim->delta_scale_per_second *
                     elapsed_this_run) / 1000000;
         } else {
             float diff_scale =
-                anim->final_scale - zpolygons_to_render[zp_i].scale_factor;
-            zpolygons_to_render[zp_i].scale_factor +=
+                anim->final_scale - zpolygons_to_render->gpu_data[zp_i].
+                    scale_factor;
+            zpolygons_to_render->gpu_data[zp_i].scale_factor +=
                 diff_scale
                     / ((float)remaining_microseconds_at_start_of_run
                         / elapsed_this_run);
@@ -598,16 +604,17 @@ static void resolve_single_animation_effects(
         if (anim->set_texture_array_i || anim->set_texture_i) {
             for (
                 uint32_t mat_i = 0;
-                mat_i < zpolygons_to_render[zp_i].vertex_materials_size;
+                mat_i < zpolygons_to_render->cpu_data[zp_i].
+                    vertex_materials_size;
                 mat_i++)
             {
                 if (anim->set_texture_array_i) {
-                    zpolygons_to_render[zp_i].vertex_materials[mat_i].
+                    zpolygons_to_render->cpu_data[zp_i].vertex_materials[mat_i].
                         texturearray_i =
                             anim->new_texture_array_i;
                 }
                 if (anim->set_texture_i) {
-                    zpolygons_to_render[zp_i].vertex_materials[mat_i].
+                    zpolygons_to_render->cpu_data[zp_i].vertex_materials[mat_i].
                         texture_i =
                             anim->new_texture_i;
                 }
@@ -627,11 +634,11 @@ static void resolve_single_animation_effects(
                 if (delta > 0.0001f || delta < 0.0001f) {
                     for (
                         uint32_t mat_i = 0;
-                        mat_i < zpolygons_to_render[zp_i].
+                        mat_i < zpolygons_to_render->cpu_data[zp_i].
                             vertex_materials_size;
                         mat_i++)
                     {
-                        zpolygons_to_render[zp_i].
+                        zpolygons_to_render->cpu_data[zp_i].
                             vertex_materials[mat_i].color[c] +=
                                 delta;
                     }
@@ -639,21 +646,21 @@ static void resolve_single_animation_effects(
             } else {
                 for (
                     uint32_t mat_i = 0;
-                    mat_i < zpolygons_to_render[zp_i].
+                    mat_i < zpolygons_to_render->cpu_data[zp_i].
                         vertex_materials_size;
                     mat_i++)
                 {
                     float cur_val =
-                        zpolygons_to_render[zp_i].
+                        zpolygons_to_render->cpu_data[zp_i].
                             vertex_materials[mat_i].color[c];
                     float delta_val = anim->final_rgba[c] - cur_val;
                     
-                    if (delta_val > 0.00001f || delta_val < 0.00001f) {
-                        zpolygons_to_render[zp_i].
+                    if (delta_val > 0.0001f || delta_val < 0.0001f) {
+                        zpolygons_to_render->cpu_data[zp_i].
                                 vertex_materials[mat_i].color[c] +=
-                            delta_val /
+                            (delta_val /
                                 ((float)remaining_microseconds_at_start_of_run /
-                                    elapsed_this_run);
+                                    elapsed_this_run));
                     }
                 }
             }
@@ -668,13 +675,14 @@ static void resolve_single_animation_effects(
                 float delta = ((anim->rgb_bonus_delta_per_second[c]
                         * elapsed_this_run)
                     / 1000000);
-                    zpolygons_to_render[zp_i].rgb_bonus[c] +=
+                    zpolygons_to_render->gpu_data[zp_i].bonus_rgb[c] +=
                         delta;
             } else {
-                float cur_val = zpolygons_to_render[zp_i].rgb_bonus[c];
+                float cur_val = zpolygons_to_render->
+                    gpu_data[zp_i].bonus_rgb[c];
                 float delta_val = anim->final_rgb_bonus[c] - cur_val;
                 
-                zpolygons_to_render[zp_i].rgb_bonus[c] +=
+                zpolygons_to_render->gpu_data[zp_i].bonus_rgb[c] +=
                     delta_val /
                         ((float)remaining_microseconds_at_start_of_run /
                             elapsed_this_run);

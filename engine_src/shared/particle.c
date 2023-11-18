@@ -71,12 +71,12 @@ ShatterEffect * next_shatter_effect()
 }
 
 ShatterEffect * next_shatter_effect_with_zpoly(
-    zPolygon * construct_with_zpolygon)
+    zPolygonCPU * construct_with_zpolygon)
 {
     ShatterEffect * return_value = next_shatter_effect();
     
     log_assert(shatter_effects_size < SHATTER_EFFECTS_SIZE);
-    return_value->zpolygon_to_shatter = *construct_with_zpolygon;
+    return_value->zpolygon_to_shatter_cpu = *construct_with_zpolygon;
     
     return return_value;
 }
@@ -614,437 +614,444 @@ static void get_particle_color_at_elapsed(
 }
 
 void add_particle_effects_to_workload(
-    GPUVertex * next_gpu_workload,
-    uint32_t * next_workload_size,
-    GPULightCollection * lights_for_gpu,
+    GPUDataForSingleFrame * frame_data,
     uint64_t elapsed_nanoseconds)
 {
-//    zVertex randomized_direction;
-//    zVertex randomized_squared_direction;
-//    
-//    uint64_t spawns_in_duration;
-//    uint64_t interval_between_spawns;
-//    uint64_t spawn_lifetime_so_far;
-//    
-//    for (
-//        uint32_t i = 0;
-//        i < particle_effects_size;
-//        i++)
-//    {
-//        if (!particle_effects[i].deleted) {
-//            
-//            log_assert(
-//               particle_effects[i].particle_rgba_progression_size <=
-//                   PARTICLE_RGBA_PROGRESSION_MAX);
-//            
-//            particle_effects[i].elapsed += elapsed_nanoseconds;
-//            particle_effects[i].elapsed =
-//                particle_effects[i].elapsed %
-//                    (particle_effects[i].particle_lifespan +
-//                        particle_effects[i].pause_between_spawns);
-//            
-//            spawns_in_duration =
-//                (particle_effects[i].particle_lifespan / 1000000) *
-//                    particle_effects[i].particle_spawns_per_second;
-//            interval_between_spawns =
-//                1000000 / particle_effects[i].particle_spawns_per_second;
-//            
-//            uint32_t particles_active = 0;
-//            
-//            for (
-//                uint32_t spawn_i = 0;
-//                spawn_i < spawns_in_duration;
-//                spawn_i++)
-//            {
-//                uint64_t rand_i =
-//                    (particle_effects[i].random_seed
-//                        + (spawn_i * 41) + (spawn_i % 3)) %
-//                        (RANDOM_SEQUENCE_SIZE - 50);
-//                
-//                int32_t texturearray_i = -1;
-//                int32_t texture_i = -1;
-//                
-//                if (particle_effects[i].random_textures_size > 0) {
-//                    int32_t rand_texture_i =
-//                        (int32_t)tok_rand_at_i(rand_i + 12) %
-//                            particle_effects[i].random_textures_size;
-//                    
-//                    texturearray_i = particle_effects[i].
-//                        random_texturearray_i[rand_texture_i];
-//                    assert(texturearray_i < TEXTUREARRAYS_SIZE);
-//                    texture_i = particle_effects[i].
-//                        random_texture_i[rand_texture_i];
-//                    assert(texture_i < MAX_FILES_IN_SINGLE_TEXARRAY);
-//                }
-//                
-//                spawn_lifetime_so_far =
-//                    (particle_effects[i].elapsed +
-//                    (spawn_i * interval_between_spawns)) %
-//                        (particle_effects[i].particle_lifespan +
-//                            particle_effects[i].pause_between_spawns);
-//                
-//                if (spawn_lifetime_so_far >
-//                    particle_effects[i].particle_lifespan)
-//                {
-//                    continue;
-//                }
-//                
-//                particles_active += 1;
-//                
-//                // distance variance
-//                float dist_pos = 0;
-//                float dist_neg = 0;
-//                if (particle_effects[i].particle_distance_max_variance > 0) {
-//                    dist_pos = (float)(
-//                            tok_rand_at_i(rand_i + 19) %
-//                                particle_effects[i].
-//                                    particle_distance_max_variance) /
-//                                        100.0f;
-//                    dist_neg = (float)(
-//                        tok_rand_at_i(rand_i + 20) %
-//                            particle_effects[i].
-//                                particle_distance_max_variance) /
-//                                    100.0f;
-//                }
-//                
-//                float distance_traveled =
-//                    ((float)spawn_lifetime_so_far / 1000000.0f) *
-//                        (
-//                            particle_effects[i].particle_distance_per_second +
-//                            dist_pos +
-//                            dist_neg);
-//                float sq_distance_traveled =
-//                    (((float)spawn_lifetime_so_far / 1000000.0f) *
-//                    ((float)spawn_lifetime_so_far / 1000000.0f)) *
-//                        particle_effects[i].squared_distance_per_second;
-//                
-//                randomized_direction.x =
-//                    particle_effects[i].particle_direction[0];
-//                randomized_direction.y =
-//                    particle_effects[i].particle_direction[1];
-//                randomized_direction.z =
-//                    particle_effects[i].particle_direction[2];
-//                randomized_squared_direction.x =
-//                    particle_effects[i].squared_direction[0];
-//                randomized_squared_direction.y =
-//                    particle_effects[i].squared_direction[1];
-//                randomized_squared_direction.z =
-//                    particle_effects[i].squared_direction[2];
-//                
-//                if (particle_effects[i].
-//                    particle_direction_max_x_angle_variance > 0)
-//                {
-//                    float x_rotation_pos = (float)(
-//                        tok_rand_at_i(rand_i + 0) %
-//                            particle_effects[i].
-//                                particle_direction_max_x_angle_variance) /
-//                                    100.0f;
-//                    float x_rotation_neg = (float)(
-//                        tok_rand_at_i(rand_i + 1) %
-//                            particle_effects[i].
-//                                particle_direction_max_x_angle_variance) /
-//                                    100.0f;
-//                    
-//                    float x_rotation = x_rotation_pos - x_rotation_neg;
-//                    randomized_direction = x_rotate_zvertex(
-//                        &randomized_direction,
-//                        x_rotation);
-//                }
-//                
-//                if (particle_effects[i].
-//                    squared_direction_max_x_angle_variance > 0)
-//                {
-//                    float x_rotation_pos = (float)(
-//                        tok_rand_at_i(rand_i + 14) %
-//                            particle_effects[i].
-//                                squared_direction_max_x_angle_variance) /
-//                                    100.0f;
-//                    float x_rotation_neg = (float)(
-//                        tok_rand_at_i(rand_i + 15) %
-//                            particle_effects[i].
-//                                squared_direction_max_x_angle_variance) /
-//                                    100.0f;
-//                    
-//                    float x_rotation = x_rotation_pos - x_rotation_neg;
-//                    
-//                    randomized_squared_direction = x_rotate_zvertex(
-//                        &randomized_squared_direction,
-//                        x_rotation);
-//                }
-//                
-//                if (particle_effects[i].
-//                    particle_direction_max_y_angle_variance > 0)
-//                {
-//                    float y_rotation_pos = (float)(
-//                        tok_rand_at_i(rand_i + 2) %
-//                            particle_effects[i].
-//                                particle_direction_max_y_angle_variance) /
-//                                    100.0f;
-//                    float y_rotation_neg = (float)(
-//                        tok_rand_at_i(rand_i + 3) %
-//                            particle_effects[i].
-//                                particle_direction_max_y_angle_variance) /
-//                                    100.0f;
-//                    float y_rotation = y_rotation_pos - y_rotation_neg;
-//                    randomized_direction = y_rotate_zvertex(
-//                        &randomized_direction,
-//                        y_rotation);
-//                }
-//                
-//                if (particle_effects[i].
-//                    squared_direction_max_y_angle_variance > 0)
-//                {
-//                    float y_rotation_pos = (float)(
-//                        tok_rand_at_i(rand_i + 14) %
-//                            particle_effects[i].
-//                                squared_direction_max_y_angle_variance) /
-//                                    100.0f;
-//                    float y_rotation_neg = (float)(
-//                        tok_rand_at_i(rand_i + 15) %
-//                            particle_effects[i].
-//                                squared_direction_max_y_angle_variance) /
-//                                    100.0f;
-//                    
-//                    float y_rotation = y_rotation_pos - y_rotation_neg;
-//                    randomized_squared_direction = y_rotate_zvertex(
-//                        &randomized_squared_direction,
-//                        y_rotation);
-//                }
-//                
-//                if (particle_effects[i].
-//                    particle_direction_max_z_angle_variance > 0)
-//                {
-//                    float z_rotation_pos = (float)(
-//                        tok_rand_at_i(rand_i + 4) %
-//                            particle_effects[i].
-//                                particle_direction_max_z_angle_variance) /
-//                                    100.0f;
-//                    float z_rotation_neg = (float)(
-//                        tok_rand_at_i(rand_i + 5) %
-//                            particle_effects[i].
-//                                particle_direction_max_z_angle_variance) /
-//                                    100.0f;
-//                    float z_rotation = z_rotation_pos - z_rotation_neg;
-//                    randomized_direction = z_rotate_zvertex(
-//                        &randomized_direction,
-//                        z_rotation);
-//                }
-//                
-//                if (particle_effects[i].
-//                    squared_direction_max_z_angle_variance > 0)
-//                {
-//                    float z_rotation_pos = (float)(
-//                        tok_rand_at_i(rand_i + 17) %
-//                            particle_effects[i].
-//                                squared_direction_max_z_angle_variance) /
-//                                    100.0f;
-//                    float z_rotation_neg = (float)(
-//                        tok_rand_at_i(rand_i + 18) %
-//                            particle_effects[i].
-//                                squared_direction_max_z_angle_variance) /
-//                                    100.0f;
-//                    
-//                    float z_rotation = z_rotation_pos - z_rotation_neg;
-//                    randomized_squared_direction = z_rotate_zvertex(
-//                        &randomized_squared_direction,
-//                        z_rotation);
-//                }
-//                
-//                normalize_zvertex(&randomized_direction);
-//                
-//                float red;
-//                float green;
-//                float blue;
-//                float alpha;
-//                get_particle_color_at_elapsed(
-//                    /* at_particle_i: */
-//                        i,
-//                    /* elapsed: */
-//                        spawn_lifetime_so_far,
-//                    /* const float * out_red: */
-//                        &red,
-//                    /* const float * out_green: */
-//                        &green,
-//                    /* const float * out_blue: */
-//                        &blue,
-//                    /* const float * alpha: */
-//                        &alpha);
-//                
-//                adjust_colors_by_random(
-//                    &red,
-//                    &green,
-//                    &blue,
-//                    /* max_variance: */ particle_effects[i].max_color_variance,
-//                    /* random_seed: */ rand_i);
-//                
-//                float initial_x_offset = 0;
-//                if (particle_effects[i].particle_origin_max_x_variance > 0)
-//                {
-//                    float x_offset_pos = (float)(
-//                        tok_rand_at_i(rand_i + 6) %
-//                            particle_effects[i].
-//                                particle_origin_max_x_variance) /
-//                                    100.0f;
-//                    float x_offset_neg = (float)(
-//                        tok_rand_at_i(rand_i + 7) %
-//                            particle_effects[i].
-//                                particle_origin_max_x_variance) /
-//                                    100.0f;
-//                    initial_x_offset += (x_offset_pos - x_offset_neg);
-//                }
-//                
-//                float initial_y_offset = 0;
-//                if (particle_effects[i].particle_origin_max_y_variance > 0)
-//                {
-//                    float y_offset_pos = (float)(
-//                        tok_rand_at_i(rand_i + 8) %
-//                            particle_effects[i].
-//                                particle_origin_max_y_variance) /
-//                                    100.0f;
-//                    float y_offset_neg = (float)(
-//                        tok_rand_at_i(rand_i + 9) %
-//                            particle_effects[i].
-//                                particle_origin_max_y_variance) /
-//                                    100.0f;
-//                    initial_y_offset += (y_offset_pos - y_offset_neg);
-//                }
-//                
-//                float initial_z_offset = 0;
-//                if (particle_effects[i].particle_origin_max_z_variance > 0)
-//                {
-//                    float z_offset_pos = (float)(
-//                        tok_rand_at_i(rand_i + 10) %
-//                            particle_effects[i].
-//                                particle_origin_max_z_variance) /
-//                                    100.0f;
-//                    float z_offset_neg = (float)(
-//                        tok_rand_at_i(rand_i + 11) %
-//                            particle_effects[i].
-//                                particle_origin_max_z_variance) /
-//                                    100.0f;
-//                    initial_z_offset += (z_offset_pos - z_offset_neg);
-//                }
-//                
-//                for (
-//                    int32_t tri_i = all_mesh_summaries[
-//                        particle_effects[i].mesh_id_to_spawn].triangles_head_i;
-//                    tri_i <
-//                        all_mesh_summaries[
-//                            particle_effects[i].mesh_id_to_spawn].
-//                                triangles_head_i +
-//                        all_mesh_summaries[
-//                            particle_effects[i].mesh_id_to_spawn].
-//                                triangles_size;
-//                    tri_i++)
-//                {
-//                    log_assert(tri_i >= 0);
-//                    log_assert(tri_i < (int32_t)all_mesh_triangles_size);
-//                    
-//                    for (int32_t m = 0; m < 3; m++) {
-//                        next_gpu_workload[*next_workload_size].parent_x =
-//                            (particle_effects[i].x + initial_x_offset) +
-//                                (distance_traveled * randomized_direction.x) +
-//                                (sq_distance_traveled *
-//                                    randomized_squared_direction.x);
-//                        next_gpu_workload[*next_workload_size].parent_y =
-//                            (particle_effects[i].y + initial_y_offset) +
-//                                (distance_traveled * randomized_direction.y) +
-//                                (sq_distance_traveled *
-//                                    randomized_squared_direction.y);
-//                        next_gpu_workload[*next_workload_size].parent_z =
-//                            (particle_effects[i].z + initial_z_offset) +
-//                                (distance_traveled * randomized_direction.z) +
-//                                (sq_distance_traveled *
-//                                    randomized_squared_direction.z);
-//                        
-//                        next_gpu_workload[*next_workload_size].x =
-//                            all_mesh_triangles[tri_i].vertices[m].x *
-//                                particle_effects[i].particle_x_multiplier;
-//                        next_gpu_workload[*next_workload_size].y =
-//                            all_mesh_triangles[tri_i].vertices[m].y *
-//                                particle_effects[i].particle_y_multiplier;;
-//                        next_gpu_workload[*next_workload_size].z =
-//                            all_mesh_triangles[tri_i].vertices[m].z *
-//                                particle_effects[i].particle_z_multiplier;;
-//                        next_gpu_workload[*next_workload_size].uv[0] =
-//                            all_mesh_triangles[tri_i].vertices[m].uv[0];
-//                        next_gpu_workload[*next_workload_size].uv[1] =
-//                            all_mesh_triangles[tri_i].vertices[m].uv[1];
-//                        next_gpu_workload[*next_workload_size].texturearray_i =
-//                            texturearray_i;
-//                        assert(
-//                            next_gpu_workload[*next_workload_size].
-//                                texturearray_i < TEXTUREARRAYS_SIZE);
-//                        assert(texturearray_i < TEXTUREARRAYS_SIZE);
-//                        next_gpu_workload[*next_workload_size].texture_i =
-//                            texture_i;
-//                        assert(
-//                            next_gpu_workload[*next_workload_size].
-//                                texture_i < MAX_FILES_IN_SINGLE_TEXARRAY);
-//                        assert(texture_i < MAX_FILES_IN_SINGLE_TEXARRAY);
-//                        next_gpu_workload[*next_workload_size].normal_x =
-//                            all_mesh_triangles[tri_i].normal.x;
-//                        next_gpu_workload[*next_workload_size].normal_y =
-//                            all_mesh_triangles[tri_i].normal.y;
-//                        next_gpu_workload[*next_workload_size].normal_z =
-//                            all_mesh_triangles[tri_i].normal.z;
-//                        next_gpu_workload[*next_workload_size].ignore_lighting =
-//                            particle_effects[i].particles_ignore_lighting;
-//                        next_gpu_workload[*next_workload_size].ignore_camera =
-//                            false;
-//                        next_gpu_workload[*next_workload_size].scale_factor =
-//                            1.0f;
-//                        next_gpu_workload[*next_workload_size].touchable_id =
-//                            -1;
-//                        next_gpu_workload[*next_workload_size].x_angle = 0.0f;
-//                        next_gpu_workload[*next_workload_size].y_angle = 0.0f;
-//                        next_gpu_workload[*next_workload_size].z_angle = 0.0f;
-//                        next_gpu_workload[*next_workload_size].RGBA[0] = red;
-//                        next_gpu_workload[*next_workload_size].RGBA[1] = green;
-//                        next_gpu_workload[*next_workload_size].RGBA[2] = blue;
-//                        next_gpu_workload[*next_workload_size].RGBA[3] = alpha;
-//                        
-//                        if (
-//                            *next_workload_size + 1 >= MAX_VERTICES_PER_BUFFER)
-//                        {
-//                            return;
-//                        }
-//                        *next_workload_size += 1;
-//                    }
-//                }
-//            }
-//            
-//            if (particles_active < 1) {
-//                particle_effects[i].random_seed =
-//                    tok_rand() % RANDOM_SEQUENCE_SIZE;
-//            } else if (particle_effects[i].generate_light) {
-//                lights_for_gpu->light_x[lights_for_gpu->lights_size] =
-//                    particle_effects[i].x;
-//                lights_for_gpu->light_y[lights_for_gpu->lights_size] =
-//                    particle_effects[i].y;
-//                lights_for_gpu->light_z[lights_for_gpu->lights_size] =
-//                    particle_effects[i].z;
-//                
-//                lights_for_gpu->red[lights_for_gpu->lights_size] =
-//                    particle_effects[i].light_rgb[0];
-//                lights_for_gpu->green[lights_for_gpu->lights_size] =
-//                    particle_effects[i].light_rgb[1];
-//                lights_for_gpu->blue[lights_for_gpu->lights_size] =
-//                    particle_effects[i].light_rgb[2];
-//                
-//                lights_for_gpu->reach[lights_for_gpu->lights_size] =
-//                    particle_effects[i].light_reach;
-//                
-//                float light_strength =
-//                    particle_effects[i].light_strength * (
-//                        (float)particles_active / (float)spawns_in_duration);
-//                
-//                lights_for_gpu->ambient[lights_for_gpu->lights_size] =
-//                    0.05f * light_strength;
-//                lights_for_gpu->diffuse[lights_for_gpu->lights_size] =
-//                    1.0f * light_strength;
-//                lights_for_gpu->lights_size += 1;
-//            }
-//        }
-//    }
+    zVertex randomized_direction;
+    zVertex randomized_squared_direction;
+    
+    uint64_t spawns_in_duration;
+    uint64_t interval_between_spawns;
+    uint64_t spawn_lifetime_so_far;
+    
+    for (
+        uint32_t i = 0;
+        i < particle_effects_size;
+        i++)
+    {
+        if (!particle_effects[i].deleted) {
+            log_assert(
+               particle_effects[i].particle_rgba_progression_size <=
+                   PARTICLE_RGBA_PROGRESSION_MAX);
+            
+            particle_effects[i].elapsed += elapsed_nanoseconds;
+            particle_effects[i].elapsed =
+                particle_effects[i].elapsed %
+                    (particle_effects[i].particle_lifespan +
+                        particle_effects[i].pause_between_spawns);
+            
+            spawns_in_duration =
+                (particle_effects[i].particle_lifespan / 1000000) *
+                    particle_effects[i].particle_spawns_per_second;
+            interval_between_spawns =
+                1000000 / particle_effects[i].particle_spawns_per_second;
+            
+            uint32_t particles_active = 0;
+            
+            for (
+                uint32_t spawn_i = 0;
+                spawn_i < spawns_in_duration;
+                spawn_i++)
+            {
+                uint64_t rand_i =
+                    (particle_effects[i].random_seed
+                        + (spawn_i * 41) + (spawn_i % 3)) %
+                        (RANDOM_SEQUENCE_SIZE - 50);
+                
+                int32_t texturearray_i = -1;
+                int32_t texture_i = -1;
+                
+                if (particle_effects[i].random_textures_size > 0) {
+                    int32_t rand_texture_i =
+                        (int32_t)tok_rand_at_i(rand_i + 12) %
+                            particle_effects[i].random_textures_size;
+                    
+                    texturearray_i = particle_effects[i].
+                        random_texturearray_i[rand_texture_i];
+                    assert(texturearray_i < TEXTUREARRAYS_SIZE);
+                    texture_i = particle_effects[i].
+                        random_texture_i[rand_texture_i];
+                    assert(texture_i < MAX_FILES_IN_SINGLE_TEXARRAY);
+                }
+                
+                spawn_lifetime_so_far =
+                    (particle_effects[i].elapsed +
+                    (spawn_i * interval_between_spawns)) %
+                        (particle_effects[i].particle_lifespan +
+                            particle_effects[i].pause_between_spawns);
+                
+                if (spawn_lifetime_so_far >
+                    particle_effects[i].particle_lifespan)
+                {
+                    continue;
+                }
+                
+                particles_active += 1;
+                
+                // distance variance
+                float dist_pos = 0;
+                float dist_neg = 0;
+                if (particle_effects[i].particle_distance_max_variance > 0) {
+                    dist_pos = (float)(
+                            tok_rand_at_i(rand_i + 19) %
+                                particle_effects[i].
+                                    particle_distance_max_variance) /
+                                        100.0f;
+                    dist_neg = (float)(
+                        tok_rand_at_i(rand_i + 20) %
+                            particle_effects[i].
+                                particle_distance_max_variance) /
+                                    100.0f;
+                }
+                
+                float distance_traveled =
+                    ((float)spawn_lifetime_so_far / 1000000.0f) *
+                        (
+                            particle_effects[i].particle_distance_per_second +
+                            dist_pos +
+                            dist_neg);
+                float sq_distance_traveled =
+                    (((float)spawn_lifetime_so_far / 1000000.0f) *
+                    ((float)spawn_lifetime_so_far / 1000000.0f)) *
+                        particle_effects[i].squared_distance_per_second;
+                
+                randomized_direction.x =
+                    particle_effects[i].particle_direction[0];
+                randomized_direction.y =
+                    particle_effects[i].particle_direction[1];
+                randomized_direction.z =
+                    particle_effects[i].particle_direction[2];
+                randomized_squared_direction.x =
+                    particle_effects[i].squared_direction[0];
+                randomized_squared_direction.y =
+                    particle_effects[i].squared_direction[1];
+                randomized_squared_direction.z =
+                    particle_effects[i].squared_direction[2];
+                
+                if (particle_effects[i].
+                    particle_direction_max_x_angle_variance > 0)
+                {
+                    float x_rotation_pos = (float)(
+                        tok_rand_at_i(rand_i + 0) %
+                            particle_effects[i].
+                                particle_direction_max_x_angle_variance) /
+                                    100.0f;
+                    float x_rotation_neg = (float)(
+                        tok_rand_at_i(rand_i + 1) %
+                            particle_effects[i].
+                                particle_direction_max_x_angle_variance) /
+                                    100.0f;
+                    
+                    float x_rotation = x_rotation_pos - x_rotation_neg;
+                    randomized_direction = x_rotate_zvertex(
+                        &randomized_direction,
+                        x_rotation);
+                }
+                
+                if (particle_effects[i].
+                    squared_direction_max_x_angle_variance > 0)
+                {
+                    float x_rotation_pos = (float)(
+                        tok_rand_at_i(rand_i + 14) %
+                            particle_effects[i].
+                                squared_direction_max_x_angle_variance) /
+                                    100.0f;
+                    float x_rotation_neg = (float)(
+                        tok_rand_at_i(rand_i + 15) %
+                            particle_effects[i].
+                                squared_direction_max_x_angle_variance) /
+                                    100.0f;
+                    
+                    float x_rotation = x_rotation_pos - x_rotation_neg;
+                    
+                    randomized_squared_direction = x_rotate_zvertex(
+                        &randomized_squared_direction,
+                        x_rotation);
+                }
+                
+                if (particle_effects[i].
+                    particle_direction_max_y_angle_variance > 0)
+                {
+                    float y_rotation_pos = (float)(
+                        tok_rand_at_i(rand_i + 2) %
+                            particle_effects[i].
+                                particle_direction_max_y_angle_variance) /
+                                    100.0f;
+                    float y_rotation_neg = (float)(
+                        tok_rand_at_i(rand_i + 3) %
+                            particle_effects[i].
+                                particle_direction_max_y_angle_variance) /
+                                    100.0f;
+                    float y_rotation = y_rotation_pos - y_rotation_neg;
+                    randomized_direction = y_rotate_zvertex(
+                        &randomized_direction,
+                        y_rotation);
+                }
+                
+                if (particle_effects[i].
+                    squared_direction_max_y_angle_variance > 0)
+                {
+                    float y_rotation_pos = (float)(
+                        tok_rand_at_i(rand_i + 14) %
+                            particle_effects[i].
+                                squared_direction_max_y_angle_variance) /
+                                    100.0f;
+                    float y_rotation_neg = (float)(
+                        tok_rand_at_i(rand_i + 15) %
+                            particle_effects[i].
+                                squared_direction_max_y_angle_variance) /
+                                    100.0f;
+                    
+                    float y_rotation = y_rotation_pos - y_rotation_neg;
+                    randomized_squared_direction = y_rotate_zvertex(
+                        &randomized_squared_direction,
+                        y_rotation);
+                }
+                
+                if (particle_effects[i].
+                    particle_direction_max_z_angle_variance > 0)
+                {
+                    float z_rotation_pos = (float)(
+                        tok_rand_at_i(rand_i + 4) %
+                            particle_effects[i].
+                                particle_direction_max_z_angle_variance) /
+                                    100.0f;
+                    float z_rotation_neg = (float)(
+                        tok_rand_at_i(rand_i + 5) %
+                            particle_effects[i].
+                                particle_direction_max_z_angle_variance) /
+                                    100.0f;
+                    float z_rotation = z_rotation_pos - z_rotation_neg;
+                    randomized_direction = z_rotate_zvertex(
+                        &randomized_direction,
+                        z_rotation);
+                }
+                
+                if (particle_effects[i].
+                    squared_direction_max_z_angle_variance > 0)
+                {
+                    float z_rotation_pos = (float)(
+                        tok_rand_at_i(rand_i + 17) %
+                            particle_effects[i].
+                                squared_direction_max_z_angle_variance) /
+                                    100.0f;
+                    float z_rotation_neg = (float)(
+                        tok_rand_at_i(rand_i + 18) %
+                            particle_effects[i].
+                                squared_direction_max_z_angle_variance) /
+                                    100.0f;
+                    
+                    float z_rotation = z_rotation_pos - z_rotation_neg;
+                    randomized_squared_direction = z_rotate_zvertex(
+                        &randomized_squared_direction,
+                        z_rotation);
+                }
+                
+                normalize_zvertex(&randomized_direction);
+                
+                float red;
+                float green;
+                float blue;
+                float alpha;
+                get_particle_color_at_elapsed(
+                    /* at_particle_i: */
+                        i,
+                    /* elapsed: */
+                        spawn_lifetime_so_far,
+                    /* const float * out_red: */
+                        &red,
+                    /* const float * out_green: */
+                        &green,
+                    /* const float * out_blue: */
+                        &blue,
+                    /* const float * alpha: */
+                        &alpha);
+                
+                adjust_colors_by_random(
+                    &red,
+                    &green,
+                    &blue,
+                    /* max_variance: */ particle_effects[i].max_color_variance,
+                    /* random_seed: */ rand_i);
+                
+                float initial_x_offset = 0;
+                if (particle_effects[i].particle_origin_max_x_variance > 0)
+                {
+                    float x_offset_pos = (float)(
+                        tok_rand_at_i(rand_i + 6) %
+                            particle_effects[i].
+                                particle_origin_max_x_variance) /
+                                    100.0f;
+                    float x_offset_neg = (float)(
+                        tok_rand_at_i(rand_i + 7) %
+                            particle_effects[i].
+                                particle_origin_max_x_variance) /
+                                    100.0f;
+                    initial_x_offset += (x_offset_pos - x_offset_neg);
+                }
+                
+                float initial_y_offset = 0;
+                if (particle_effects[i].particle_origin_max_y_variance > 0)
+                {
+                    float y_offset_pos = (float)(
+                        tok_rand_at_i(rand_i + 8) %
+                            particle_effects[i].
+                                particle_origin_max_y_variance) /
+                                    100.0f;
+                    float y_offset_neg = (float)(
+                        tok_rand_at_i(rand_i + 9) %
+                            particle_effects[i].
+                                particle_origin_max_y_variance) /
+                                    100.0f;
+                    initial_y_offset += (y_offset_pos - y_offset_neg);
+                }
+                
+                float initial_z_offset = 0;
+                if (particle_effects[i].particle_origin_max_z_variance > 0)
+                {
+                    float z_offset_pos = (float)(
+                        tok_rand_at_i(rand_i + 10) %
+                            particle_effects[i].
+                                particle_origin_max_z_variance) /
+                                    100.0f;
+                    float z_offset_neg = (float)(
+                        tok_rand_at_i(rand_i + 11) %
+                            particle_effects[i].
+                                particle_origin_max_z_variance) /
+                                    100.0f;
+                    initial_z_offset += (z_offset_pos - z_offset_neg);
+                }
+                
+                for (
+                    int32_t vert_i = all_mesh_summaries[
+                        particle_effects[i].mesh_id_to_spawn].vertices_head_i;
+                    vert_i <
+                        all_mesh_summaries[
+                            particle_effects[i].mesh_id_to_spawn].
+                                vertices_head_i +
+                        all_mesh_summaries[
+                            particle_effects[i].mesh_id_to_spawn].
+                                vertices_size;
+                    vert_i++)
+                {
+                    log_assert(vert_i >= 0);
+                    log_assert(vert_i < (int32_t)all_mesh_vertices_size);
+                    
+                    frame_data->vertices[frame_data->vertices_size].
+                        locked_vertex_i = vert_i;
+                    frame_data->vertices[frame_data->vertices_size].
+                        texturearray_i = texturearray_i;
+                    frame_data->vertices[frame_data->vertices_size].
+                        texture_i = texture_i;
+                    frame_data->vertices[frame_data->vertices_size].polygon_i =
+                        (int)frame_data->polygon_collection->size;
+                    
+                    frame_data->vertices[frame_data->vertices_size].
+                        color[0] = red;
+                    frame_data->vertices[frame_data->vertices_size].
+                        color[1] = green;
+                    frame_data->vertices[frame_data->vertices_size].
+                        color[2] = blue;
+                    frame_data->vertices[frame_data->vertices_size].
+                        color[3] = alpha;
+                    
+                    frame_data->vertices_size += 1;
+                    log_assert(
+                        frame_data->vertices_size < MAX_VERTICES_PER_BUFFER);
+                }
+                
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz[0] =
+                    (particle_effects[i].x + initial_x_offset) +
+                        (distance_traveled * randomized_direction.x) +
+                        (sq_distance_traveled *
+                            randomized_squared_direction.x);
+                
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz[1] =
+                    (particle_effects[i].y + initial_y_offset) +
+                        (distance_traveled * randomized_direction.y) +
+                        (sq_distance_traveled *
+                            randomized_squared_direction.y);
+                
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz[2] =
+                    (particle_effects[i].z + initial_z_offset) +
+                        (distance_traveled * randomized_direction.z) +
+                        (sq_distance_traveled *
+                            randomized_squared_direction.z);
+                
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_multiplier[0] =
+                        particle_effects[i].particle_x_multiplier;
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_multiplier[1] =
+                        particle_effects[i].particle_y_multiplier;
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_multiplier[2] =
+                        particle_effects[i].particle_z_multiplier;
+                
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].ignore_lighting =
+                        particle_effects[i].particles_ignore_lighting;
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].ignore_camera =
+                        false;
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].scale_factor = 1.0f;
+                
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_angle[0] = 0.0f;
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_angle[1] = 0.0f;
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_angle[2] = 0.0f;
+                
+                frame_data->polygon_collection->size += 1;
+            }
+            frame_data->first_line_i = frame_data->vertices_size;
+            
+            if (particles_active < 1) {
+                particle_effects[i].random_seed =
+                    tok_rand() % RANDOM_SEQUENCE_SIZE;
+            } else if (particle_effects[i].generate_light) {
+                frame_data->light_collection->light_x[
+                    frame_data->light_collection->lights_size] =
+                        particle_effects[i].x;
+                frame_data->light_collection->light_y[
+                    frame_data->light_collection->lights_size] =
+                        particle_effects[i].y;
+                frame_data->light_collection->light_z[
+                    frame_data->light_collection->lights_size] =
+                        particle_effects[i].z;
+                
+                frame_data->light_collection->red[
+                    frame_data->light_collection->lights_size] =
+                        particle_effects[i].light_rgb[0];
+                frame_data->light_collection->green[
+                    frame_data->light_collection->lights_size] =
+                        particle_effects[i].light_rgb[1];
+                frame_data->light_collection->blue[
+                    frame_data->light_collection->lights_size] =
+                        particle_effects[i].light_rgb[2];
+                
+                frame_data->light_collection->reach[
+                    frame_data->light_collection->lights_size] =
+                        particle_effects[i].light_reach;
+                
+                float light_strength =
+                    particle_effects[i].light_strength * (
+                        (float)particles_active / (float)spawns_in_duration);
+                
+                frame_data->light_collection->ambient[
+                    frame_data->light_collection->lights_size] =
+                            0.05f * light_strength;
+                frame_data->light_collection->diffuse[
+                    frame_data->light_collection->lights_size] =
+                        1.0f * light_strength;
+                    
+                frame_data->light_collection->lights_size += 1;
+            }
+        }
+    }
 }

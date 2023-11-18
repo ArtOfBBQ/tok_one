@@ -207,7 +207,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 - (void)
     windowWillEnterFullScreen:(NSNotification *)notification
 {
-    zpolygons_to_render_size = 0;
+    zpolygons_to_render->size = 0;
     shatter_effects_size = 0;
     particle_effects_size = 0;
 }
@@ -228,7 +228,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
         return frameSize;
     }
     
-    zpolygons_to_render_size = 0;
+    zpolygons_to_render->size = 0;
     particle_effects_size = 0;
     shatter_effects_size = 0;
     
@@ -381,7 +381,7 @@ bool32_t has_retina_screen = true;
 
 int main(int argc, const char * argv[]) {
     
-    init_application();
+    init_application_before_gpu_init();
     log_append("initialized application: ");
     log_append(APPLICATION_NAME);
     
@@ -477,8 +477,8 @@ int main(int argc, const char * argv[]) {
         andPixelFormat: mtk_view.colorPixelFormat
         fromFolder: shader_lib_path];
     
-    platform_gpu_copy_locked_vertices();
-    platform_gpu_update_viewport();
+    
+    init_application_after_gpu_init();
     
     startup_complete = true;
     

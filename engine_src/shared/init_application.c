@@ -11,7 +11,7 @@ typedef struct EngineSaveFile {
 
 static EngineSaveFile * engine_save_file = NULL;
 
-void init_application(void)
+void init_application_before_gpu_init(void)
 {
     init_memory_store();
     
@@ -44,8 +44,9 @@ void init_application(void)
     FileBuffer engine_save;
     engine_save.contents = NULL;
     if (platform_file_exists(full_writable_pathfile)) {
-        engine_save.size = platform_get_filesize(full_writable_pathfile);
-        engine_save.contents = (char *)malloc_from_managed(engine_save.size);
+        engine_save.size_without_terminator = platform_get_filesize(full_writable_pathfile);
+        engine_save.contents = (char *)malloc_from_managed(
+            engine_save.size_without_terminator + 1);
         platform_read_file(full_writable_pathfile, &engine_save);
         *engine_save_file = *(EngineSaveFile *)engine_save.contents;
     }
@@ -53,6 +54,7 @@ void init_application(void)
     window_globals = (WindowGlobals *)malloc_from_unmanaged(
         sizeof(WindowGlobals));
     window_globals->visual_debug_mode = false;
+    window_globals->wireframe_mode = false;
     
     if (
         engine_save.contents != NULL &&
@@ -76,6 +78,8 @@ void init_application(void)
         window_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
     }
     
+    free_from_managed(engine_save.contents);
+    
     window_globals->aspect_ratio =
         window_globals->window_height / window_globals->window_width;
     
@@ -83,8 +87,10 @@ void init_application(void)
     
     init_ui_elements();
     
-    zpolygons_to_render = (zPolygon *)malloc_from_unmanaged(
-        sizeof(zPolygon) * MAX_POLYGONS_PER_BUFFER);
+    zpolygons_to_render = (zPolygonCollection *)malloc_from_unmanaged(
+        sizeof(zPolygonCollection));
+    zpolygons_to_render->size = 0;
+    
     init_all_meshes();
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
         sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
@@ -100,12 +106,12 @@ void init_application(void)
     
     // initialize font with fontmetrics.dat
     FileBuffer font_metrics_file;
-    font_metrics_file.size = platform_get_resource_size(
+    font_metrics_file.size_without_terminator = platform_get_resource_size(
         /* filename: */ "fontmetrics.dat");
     
-    if (font_metrics_file.size > 0) {
+    if (font_metrics_file.size_without_terminator > 0) {
         font_metrics_file.contents = (char *)malloc_from_unmanaged(
-            font_metrics_file.size);
+            font_metrics_file.size_without_terminator + 1);
         platform_read_resource_file(
             /* const char * filepath: */
                 "fontmetrics.dat",
@@ -116,7 +122,7 @@ void init_application(void)
             /* raw_fontmetrics_file_contents: */
                 font_metrics_file.contents,
             /* raw_fontmetrics_file_size: */
-                font_metrics_file.size);
+                font_metrics_file.size_without_terminator);
     }
     
     user_interactions = (Interaction *)
@@ -215,6 +221,11 @@ void init_application(void)
             4096);
     
     client_logic_startup();
+}
+
+void init_application_after_gpu_init(void) {
+    platform_gpu_copy_locked_vertices();
+    platform_gpu_update_viewport();
 }
 
 void shared_shutdown_application(void)

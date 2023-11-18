@@ -1,8 +1,9 @@
 #import <UIKit/UIKit.h>
 #import <MetalKit/MetalKit.h>
 
-#import "../shared_apple/gpu.h"
-#import "../shared/renderer.h"
+#import "gpu.h"
+#import "renderer.h"
+#import "init_application.h"
 
 @interface TouchableMTKView : MTKView
 - (void)

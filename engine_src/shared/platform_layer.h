@@ -72,7 +72,7 @@ void * platform_malloc_unaligned_block(const uint64_t size);
 
 
 typedef struct FileBuffer {
-    uint64_t size;
+    uint64_t size_without_terminator;
     char * contents;
     bool32_t good;
 } FileBuffer;

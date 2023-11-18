@@ -22,19 +22,56 @@ static int32_t terminal_labels_object_id = INT32_MAX - 1;
 
 static bool32_t requesting_label_update = false;
 
+static void describe_zpolygon(
+    char * append_to,
+    uint32_t cap,
+    uint32_t zp_i)
+{
+    strcat_capped(append_to, cap, "\n***Zpolygon: ");
+    strcat_uint_capped(append_to, cap, zp_i);
+    for (
+        uint32_t mat_i = 0;
+        mat_i < zpolygons_to_render->cpu_data[zp_i].vertex_materials_size;
+        mat_i++)
+    {
+        strcat_capped(append_to, cap, "\nMaterial: ");
+        strcat_uint_capped(append_to, cap, mat_i);
+        strcat_capped(append_to, cap, "\nRGBA: [");
+        strcat_float_capped(
+            append_to, cap,
+            zpolygons_to_render->cpu_data[zp_i].
+                vertex_materials[mat_i].color[0]);
+        strcat_capped(append_to, cap, ", ");
+        strcat_float_capped(
+            append_to, cap,
+            zpolygons_to_render->cpu_data[zp_i].
+                vertex_materials[mat_i].color[1]);
+        strcat_capped(append_to, cap, ", ");
+        strcat_float_capped(
+            append_to, cap,
+            zpolygons_to_render->cpu_data[zp_i].
+                vertex_materials[mat_i].color[2]);
+        strcat_capped(append_to, cap, ", ");
+        strcat_float_capped(
+            append_to, cap,
+            zpolygons_to_render->cpu_data[zp_i].vertex_materials[mat_i].color[3]);
+        strcat_capped(append_to, cap, "]\n***");
+    }
+}
+
 void destroy_terminal_objects(void) {
     if (terminal_back_object_id >= 0) {
-        for (uint32_t i = 0; i < zpolygons_to_render_size; i++) {
-            if (zpolygons_to_render[i].object_id ==
+        for (uint32_t i = 0; i < zpolygons_to_render->size; i++) {
+            if (zpolygons_to_render->cpu_data[i].object_id ==
                 terminal_back_object_id)
             {
                 for (
                     int32_t tri_i = 0;
-                    tri_i < all_mesh_summaries[zpolygons_to_render[i].mesh_id].
-                        vertices_size;
+                    tri_i < all_mesh_summaries[
+                        zpolygons_to_render->cpu_data[i].mesh_id].vertices_size;
                     tri_i++)
                 {
-                    zpolygons_to_render[i].visible = terminal_active;
+                    zpolygons_to_render->cpu_data[i].visible = terminal_active;
                 }
             }
         }
@@ -87,7 +124,8 @@ void terminal_redraw_backgrounds(void) {
         current_input_height -
         (TERMINAL_WHITESPACE * 3);
     
-    zPolygon current_command_input;
+    zPolygonCPU current_command_input_cpu;
+    GPUPolygon current_command_input_gpu;
     construct_quad_around(
         /* const float mid_x: */
             screenspace_x_to_x(
@@ -109,24 +147,27 @@ void terminal_redraw_backgrounds(void) {
                 current_input_height,
                 TERM_Z),
         /* zPolygon * recipien: */
-            &current_command_input);
+            &current_command_input_gpu,
+            &current_command_input_cpu);
     
-    current_command_input.vertex_materials[0].color[0] =
+    current_command_input_cpu.vertex_materials[0].color[0] =
         term_background_color[0];
-    current_command_input.vertex_materials[0].color[1] =
+    current_command_input_cpu.vertex_materials[0].color[1] =
         term_background_color[1];
-    current_command_input.vertex_materials[0].color[2] =
+    current_command_input_cpu.vertex_materials[0].color[2] =
         term_background_color[2];
-    current_command_input.vertex_materials[0].color[3] =
+    current_command_input_cpu.vertex_materials[0].color[3] =
         term_background_color[3];
-    current_command_input.ignore_camera = true;
-    current_command_input.ignore_lighting = true;
-    current_command_input.visible = terminal_active;
-    current_command_input.object_id = terminal_back_object_id;
-    request_zpolygon_to_render(&current_command_input);
+    current_command_input_gpu.ignore_camera = true;
+    current_command_input_gpu.ignore_lighting = true;
+    current_command_input_cpu.visible = terminal_active;
+    current_command_input_cpu.object_id = terminal_back_object_id;
+    request_zpolygon_to_render(
+        &current_command_input_gpu,
+        &current_command_input_cpu);
     
     // The console history area
-    construct_zpolygon(&current_command_input);
+    construct_zpolygon(&current_command_input_gpu, &current_command_input_cpu);
     construct_quad_around(
        /* const float mid_x: */
            screenspace_x_to_x(
@@ -150,22 +191,25 @@ void terminal_redraw_backgrounds(void) {
                command_history_height,
                TERM_Z),
        /* zPolygon * recipien: */
-           &current_command_input);
+           &current_command_input_gpu,
+           &current_command_input_cpu);
     
-    current_command_input.vertex_materials[0].color[0] =
+    current_command_input_cpu.vertex_materials[0].color[0] =
         term_background_color[0];
-    current_command_input.vertex_materials[0].color[1] =
+    current_command_input_cpu.vertex_materials[0].color[1] =
         term_background_color[1];
-    current_command_input.vertex_materials[0].color[2] =
+    current_command_input_cpu.vertex_materials[0].color[2] =
         term_background_color[2];
-    current_command_input.vertex_materials[0].color[3] =
+    current_command_input_cpu.vertex_materials[0].color[3] =
         term_background_color[3];
-    current_command_input.visible = terminal_active;
-    current_command_input.ignore_camera = true;
-    current_command_input.ignore_lighting = true;
-    current_command_input.object_id = INT32_MAX;
+    current_command_input_cpu.visible = terminal_active;
+    current_command_input_gpu.ignore_camera = true;
+    current_command_input_gpu.ignore_lighting = true;
+    current_command_input_cpu.object_id = INT32_MAX;
     
-    request_zpolygon_to_render(&current_command_input);
+    request_zpolygon_to_render(
+        &current_command_input_gpu,
+        &current_command_input_cpu);
     
     requesting_label_update = true;
 }
@@ -389,6 +433,25 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
+        command[0] == 'Z' &&
+        command[1] == 'P' &&
+        command[2] == 'O' &&
+        command[3] == 'L' &&
+        command[4] == 'Y' &&
+        command[5] == 'G' &&
+        command[6] == 'O' &&
+        command[7] == 'N' &&
+        command[8] == ' ' &&
+        command[9] >= '0' && command[9] <= '9')
+    {
+        uint32_t zp_i = string_to_uint32(command + 9);
+        
+        response[0] = '\0';
+        describe_zpolygon(response, SINGLE_LINE_MAX, zp_i);
+        return true;
+    }
+    
+    if (
         are_equal_strings(command, "VISUAL DEBUG") ||
         are_equal_strings(command, "DEBUG") ||
         are_equal_strings(command, "DEBUG LINES") ||
@@ -408,6 +471,53 @@ static bool32_t evaluate_terminal_command(
                 response,
                 SINGLE_LINE_MAX,
                 "Activating visual debug mode");
+        }
+        
+        return true;
+    }
+    
+    if (
+        are_equal_strings(command, "WIREFRAME") ||
+        are_equal_strings(command, "WIREFRAME MODE"))
+    {
+        window_globals->wireframe_mode = !window_globals->wireframe_mode;
+        if (!window_globals->wireframe_mode) {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Exiting wireframe mode");
+        } else {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Activating wireframe mode");
+        }
+        
+        return true;
+    }
+    
+    if (
+        are_equal_strings(command, "UNTEXTURE") ||
+        are_equal_strings(command, "REMOVE TEXTURES") ||
+        are_equal_strings(command, "NO TEXTURES"))
+    {
+        strcpy_capped(
+            response,
+            SINGLE_LINE_MAX,
+            "Removing textures");
+        
+        for (uint32_t zp_i = 0; zp_i < zpolygons_to_render->size; zp_i++) {
+            for (
+                uint32_t mat_i = 0;
+                mat_i < zpolygons_to_render->cpu_data[zp_i].
+                    vertex_materials_size;
+                mat_i++)
+            {
+                zpolygons_to_render->cpu_data[zp_i].vertex_materials[mat_i].
+                    texturearray_i = -1;
+                zpolygons_to_render->cpu_data[zp_i].vertex_materials[mat_i].
+                    texture_i = -1;
+            }
         }
         
         return true;
@@ -488,6 +598,41 @@ void terminal_commit_or_activate(void) {
     
     terminal_active = !terminal_active;
     
+    if (terminal_active &&
+        window_globals->visual_debug_last_clicked_touchable_id >= 0)
+    {
+        int32_t touched_zp_i = -1;
+        for (uint32_t zp_i = 0; zp_i < zpolygons_to_render->size; zp_i++) {
+            if (zpolygons_to_render->cpu_data[zp_i].touchable_id ==
+                window_globals->visual_debug_last_clicked_touchable_id)
+            {
+                touched_zp_i = (int32_t)zp_i;
+                break;
+            }
+        }
+        strcat_capped(
+            terminal_history,
+            TERMINAL_HISTORY_MAX,
+            "Last touched touchable_id was: ");
+        strcat_int_capped(
+            terminal_history,
+            TERMINAL_HISTORY_MAX,
+            window_globals->visual_debug_last_clicked_touchable_id);
+        strcat_capped(
+            terminal_history,
+            TERMINAL_HISTORY_MAX,
+            ", belonging to zpolygon_i: ");
+        strcat_int_capped(
+            terminal_history,
+            TERMINAL_HISTORY_MAX,
+            touched_zp_i);
+        if (touched_zp_i >= 0) {
+            describe_zpolygon(
+                terminal_history,
+                TERMINAL_HISTORY_MAX,
+                (uint32_t)touched_zp_i);
+        }
+    }
+    
     destroy_terminal_objects();    
 }
-
