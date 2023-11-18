@@ -283,11 +283,8 @@ inline static void zpolygon_hitboxes_to_lines(
 inline static void zpolygons_to_triangles(
     GPUDataForSingleFrame * frame_data)
 {
-    uint32_t * next_workload_size = &frame_data->vertices_size;
-    GPUPolygonCollection * gpu_polygons = frame_data->polygon_collection;
-    
-    assert(gpu_polygons->size == 0);
-    assert(*next_workload_size == 0);
+    assert(frame_data->polygon_collection->size == 0);
+    assert(frame_data->vertices_size == 0);
     
     memcpy(
         /* void * dest: */
@@ -298,9 +295,10 @@ inline static void zpolygons_to_triangles(
             sizeof(GPUPolygon) * zpolygons_to_render->size);
     frame_data->polygon_collection->size = zpolygons_to_render->size;
     
-    log_assert(gpu_polygons->size <= zpolygons_to_render->size);
+    log_assert(
+        frame_data->polygon_collection->size <= zpolygons_to_render->size);
     log_assert(zpolygons_to_render->size < MAX_POLYGONS_PER_BUFFER);
-    log_assert(gpu_polygons->size < MAX_POLYGONS_PER_BUFFER);
+    log_assert(frame_data->polygon_collection->size < MAX_POLYGONS_PER_BUFFER);
     
     for (
         int32_t cpu_zp_i = 0;
@@ -309,10 +307,7 @@ inline static void zpolygons_to_triangles(
     {
         if (
             zpolygons_to_render->cpu_data[cpu_zp_i].deleted ||
-            !zpolygons_to_render->cpu_data[cpu_zp_i].visible ||
-            zpolygons_to_render->cpu_data[cpu_zp_i].mesh_id < 0 ||
-            (uint32_t)zpolygons_to_render->cpu_data[cpu_zp_i].mesh_id >=
-                all_mesh_summaries_size)
+            !zpolygons_to_render->cpu_data[cpu_zp_i].visible)
         {
             continue;
         }
@@ -331,34 +326,33 @@ inline static void zpolygons_to_triangles(
             vert_i < vert_tail_i;
             vert_i++)
         {
-            frame_data->vertices[*next_workload_size].locked_vertex_i = vert_i;
-            frame_data->vertices[*next_workload_size].polygon_i = cpu_zp_i;
-            // (int)gpu_polygons->size; // this is not the same as cpu_zp_i!!!
-            
             uint32_t mat_i = all_mesh_vertices[vert_i].parent_material_i;
             log_assert(
-                mat_i < zpolygons_to_render->cpu_data[cpu_zp_i].vertex_materials_size);
+                mat_i < zpolygons_to_render->cpu_data[cpu_zp_i].
+                    vertex_materials_size);
             
-            frame_data->vertices[*next_workload_size].color[0] =
-                zpolygons_to_render->cpu_data[cpu_zp_i].vertex_materials[mat_i].color[0];
-            frame_data->vertices[*next_workload_size].color[1] =
-                zpolygons_to_render->cpu_data[cpu_zp_i].vertex_materials[mat_i].color[1];
-            frame_data->vertices[*next_workload_size].color[2] =
-                zpolygons_to_render->cpu_data[cpu_zp_i].vertex_materials[mat_i].color[2];
-            frame_data->vertices[*next_workload_size].color[3] =
-                zpolygons_to_render->cpu_data[cpu_zp_i].vertex_materials[mat_i].color[3];
+            /*
+            This memcpy assumes the layout of both frame data's vertices
+            and vertex_materials is the same, and in the same order:
             
-            frame_data->vertices[*next_workload_size].texture_i =
-                zpolygons_to_render->cpu_data[cpu_zp_i].
-                    vertex_materials[mat_i].texture_i;
-            frame_data->vertices[*next_workload_size].texturearray_i =
-                zpolygons_to_render->cpu_data[cpu_zp_i].vertex_materials[mat_i].
-                    texturearray_i;
-            *next_workload_size += 1;
-            assert(*next_workload_size < MAX_VERTICES_PER_BUFFER);
+            float color[4]
+            int texture_i
+            int texturearray_i
+            */
+            memcpy(
+                /* void *__dst: */
+                    &frame_data->vertices[frame_data->vertices_size],
+                /* const void *__src: */
+                    &zpolygons_to_render->cpu_data[cpu_zp_i].vertex_materials[mat_i],
+                /* size_t __n: */
+                    sizeof(float) * 6);
+            
+            frame_data->vertices[frame_data->vertices_size].locked_vertex_i =
+                vert_i;
+            frame_data->vertices[frame_data->vertices_size].polygon_i =
+                cpu_zp_i;
+            frame_data->vertices_size += 1;
         }
-        
-        gpu_polygons->size += 1;
     }
     
     frame_data->first_line_i = frame_data->vertices_size;
