@@ -87,8 +87,10 @@ void init_application_before_gpu_init(void)
     
     init_ui_elements();
     
-    zpolygons_to_render = (zPolygon *)malloc_from_unmanaged(
-        sizeof(zPolygon) * MAX_POLYGONS_PER_BUFFER);
+    zpolygons_to_render = (zPolygonCollection *)malloc_from_unmanaged(
+        sizeof(zPolygonCollection));
+    zpolygons_to_render->size = 0;
+    
     init_all_meshes();
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
         sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);

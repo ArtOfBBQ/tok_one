@@ -84,13 +84,14 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                     
                     for (
                         uint32_t zp_i = 0;
-                        zp_i < zpolygons_to_render_size;
+                        zp_i < zpolygons_to_render->size;
                         zp_i++)
                     {
-                        if (zpolygons_to_render[zp_i].object_id ==
+                        if (zpolygons_to_render->cpu_data[zp_i].object_id ==
                             currently_sliding_object_id)
                         {
-                            zpolygons_to_render[zp_i].scale_factor = 1.05f;
+                            zpolygons_to_render->gpu_data[zp_i].scale_factor =
+                                1.05f;
                         }
                     }
                     
@@ -140,9 +141,13 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
         
         if (ui_elem_i >= 0) {
             
-            for (uint32_t zp_i = 0; zp_i < zpolygons_to_render_size; zp_i++) {
+            for (
+                uint32_t zp_i = 0;
+                zp_i < zpolygons_to_render->size;
+                zp_i++)
+            {
                 if (
-                    zpolygons_to_render[zp_i].object_id ==
+                    zpolygons_to_render->cpu_data[zp_i].object_id ==
                         currently_sliding_object_id)
                 {
                     // set slider value
@@ -150,8 +155,8 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                         screenspace_x_to_x(
                             user_interactions[
                                 INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_x,
-                            zpolygons_to_render[zp_i].z) -
-                        zpolygons_to_render[zp_i].x;
+                            zpolygons_to_render->gpu_data[zp_i].xyz[0]) -
+                        zpolygons_to_render->gpu_data[zp_i].xyz[0];
                     
                     if (
                         new_x_offset <
@@ -169,8 +174,9 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                             active_ui_elements[ui_elem_i].slider_width / 2;
                     }
                     
-                    zpolygons_to_render[zp_i].x_offset = new_x_offset;
-
+                    zpolygons_to_render->gpu_data[zp_i].xyz_offset[0] =
+                        new_x_offset;
+                    
                     float slider_pct = (new_x_offset /
                         active_ui_elements[ui_elem_i].slider_width) + 0.5f;
                     
@@ -211,7 +217,8 @@ void request_float_slider(
 {
     log_assert(background_object_id != pin_object_id);
     
-    zPolygon slider_back;
+    zPolygonCPU slider_back_cpu;
+    GPUPolygon slider_back_gpu;
     construct_quad_around(
         /* const float mid_x: */
             screenspace_x_to_x(x_screenspace, z),
@@ -228,24 +235,28 @@ void request_float_slider(
                 next_ui_element_settings->slider_height_screenspace,
                 z),
         /* zPolygon * recipient: */
-            &slider_back);
-    slider_back.object_id = background_object_id;
+            &slider_back_gpu,
+            &slider_back_cpu);
+    slider_back_cpu.object_id = background_object_id;
     
-    slider_back.vertex_materials[0].texturearray_i =
+    slider_back_cpu.vertex_materials[0].texturearray_i =
         next_ui_element_settings->slider_background_texturearray_i;
-    slider_back.vertex_materials[0].texture_i =
+    slider_back_cpu.vertex_materials[0].texture_i =
         next_ui_element_settings->slider_background_texture_i;
-    slider_back.vertex_materials[0].color[0] = 1.0f;
-    slider_back.vertex_materials[0].color[1] = 1.0f;
-    slider_back.vertex_materials[0].color[2] = 1.0f;
-    slider_back.vertex_materials[0].color[3] = 1.0f;
+    slider_back_cpu.vertex_materials[0].color[0] = 1.0f;
+    slider_back_cpu.vertex_materials[0].color[1] = 1.0f;
+    slider_back_cpu.vertex_materials[0].color[2] = 1.0f;
+    slider_back_cpu.vertex_materials[0].color[3] = 1.0f;
     
-    slider_back.ignore_lighting = next_ui_element_settings->ignore_lighting;
-    slider_back.ignore_camera = next_ui_element_settings->ignore_camera;
+    slider_back_gpu.ignore_lighting =
+        next_ui_element_settings->ignore_lighting;
+    slider_back_gpu.ignore_camera =
+        next_ui_element_settings->ignore_camera;
     
-    request_zpolygon_to_render(&slider_back);
-
-    zPolygon slider_pin;
+    request_zpolygon_to_render(&slider_back_gpu, &slider_back_cpu);
+    
+    zPolygonCPU slider_pin_cpu;
+    GPUPolygon slider_pin_gpu;
     float pin_z = z - 0.001f;
     construct_quad_around(
         /* const float mid_x: */
@@ -263,9 +274,10 @@ void request_float_slider(
                 next_ui_element_settings->pin_height_screenspace,
                 pin_z),
         /* zPolygon * recipient: */
-            &slider_pin);
+            &slider_pin_gpu,
+            &slider_pin_cpu);
     
-    slider_pin.object_id = pin_object_id;
+    slider_pin_cpu.object_id = pin_object_id;
     
     if (*linked_value < min_value) {
         *linked_value = min_value;
@@ -280,28 +292,30 @@ void request_float_slider(
         -(next_ui_element_settings->slider_width_screenspace / 2) +
         (initial_slider_progress *
             next_ui_element_settings->slider_width_screenspace);
-    slider_pin.x_offset =
+    slider_pin_gpu.xyz_offset[0] =
         screenspace_width_to_width(initial_x_offset_screenspace, pin_z);
     
-    slider_pin.y_offset = 0.0f;
+    slider_pin_gpu.xyz_offset[1] = 0.0f;
     
-    slider_pin.vertex_materials[0].texturearray_i =
+    slider_pin_cpu.vertex_materials[0].texturearray_i =
         next_ui_element_settings->slider_pin_texturearray_i;
-    slider_pin.vertex_materials[0].texture_i =
+    slider_pin_cpu.vertex_materials[0].texture_i =
         next_ui_element_settings->slider_pin_texture_i;
-    slider_pin.vertex_materials[0].color[0] = 1.0f;
-    slider_pin.vertex_materials[0].color[1] = 1.0f;
-    slider_pin.vertex_materials[0].color[2] = 1.0f;
-    slider_pin.vertex_materials[0].color[3] = 1.0f;
+    slider_pin_cpu.vertex_materials[0].color[0] = 1.0f;
+    slider_pin_cpu.vertex_materials[0].color[1] = 1.0f;
+    slider_pin_cpu.vertex_materials[0].color[2] = 1.0f;
+    slider_pin_cpu.vertex_materials[0].color[3] = 1.0f;
     
-    slider_pin.ignore_lighting = next_ui_element_settings->ignore_lighting;
-    slider_pin.ignore_camera = next_ui_element_settings->ignore_camera;
-    slider_pin.touchable_id = next_ui_element_touchable_id();
+    slider_pin_gpu.ignore_lighting =
+        next_ui_element_settings->ignore_lighting;
+    slider_pin_gpu.ignore_camera =
+        next_ui_element_settings->ignore_camera;
+    slider_pin_cpu.touchable_id = next_ui_element_touchable_id();
     
     ActiveUIElement * next_active_element = next_active_ui_element();
     next_active_element->object_id = background_object_id;
     next_active_element->object_id_2 = pin_object_id;
-    next_active_element->touchable_id = slider_pin.touchable_id;
+    next_active_element->touchable_id = slider_pin_cpu.touchable_id;
     next_active_element->slider_width = 
         screenspace_width_to_width(
             next_ui_element_settings->slider_width_screenspace,
@@ -315,7 +329,7 @@ void request_float_slider(
         next_active_element->interaction_sound_filename,
         128,
         next_ui_element_settings->interaction_sound_filename);
-    request_zpolygon_to_render(&slider_pin);
+    request_zpolygon_to_render(&slider_pin_gpu, &slider_pin_cpu);
 }
 
 void unregister_ui_element_with_object_id(

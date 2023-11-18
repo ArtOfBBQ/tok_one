@@ -16,7 +16,8 @@ extern "C" {
 #include "zpolygon.h"
 
 typedef struct ShatterEffect {
-    zPolygon zpolygon_to_shatter;
+    zPolygonCPU zpolygon_to_shatter_cpu;
+    GPUPolygon zpolygon_to_shatter_gpu;
     
     uint64_t random_seed;
     uint64_t elapsed;
@@ -49,7 +50,7 @@ extern uint32_t shatter_effects_size;
 //    zPolygon * from_zpolygon);
 ShatterEffect * next_shatter_effect(void);
 ShatterEffect * next_shatter_effect_with_zpoly(
-    zPolygon * construct_with_zpolygon);
+    zPolygonCPU * construct_with_zpolygon);
 void commit_shatter_effect(
     ShatterEffect * to_commit);
 

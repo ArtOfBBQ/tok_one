@@ -71,12 +71,12 @@ ShatterEffect * next_shatter_effect()
 }
 
 ShatterEffect * next_shatter_effect_with_zpoly(
-    zPolygon * construct_with_zpolygon)
+    zPolygonCPU * construct_with_zpolygon)
 {
     ShatterEffect * return_value = next_shatter_effect();
     
     log_assert(shatter_effects_size < SHATTER_EFFECTS_SIZE);
-    return_value->zpolygon_to_shatter = *construct_with_zpolygon;
+    return_value->zpolygon_to_shatter_cpu = *construct_with_zpolygon;
     
     return return_value;
 }
@@ -960,53 +960,52 @@ void add_particle_effects_to_workload(
                         frame_data->vertices_size < MAX_VERTICES_PER_BUFFER);
                 }
                 
-                frame_data->polygon_collection->xyz[
-                    frame_data->polygon_collection->size][0] =
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz[0] =
                     (particle_effects[i].x + initial_x_offset) +
                         (distance_traveled * randomized_direction.x) +
                         (sq_distance_traveled *
                             randomized_squared_direction.x);
                 
-                frame_data->polygon_collection->xyz[
-                    frame_data->polygon_collection->size][1] =
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz[1] =
                     (particle_effects[i].y + initial_y_offset) +
                         (distance_traveled * randomized_direction.y) +
                         (sq_distance_traveled *
                             randomized_squared_direction.y);
                 
-                frame_data->polygon_collection->xyz[
-                    frame_data->polygon_collection->size][2] =
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz[2] =
                     (particle_effects[i].z + initial_z_offset) +
                         (distance_traveled * randomized_direction.z) +
                         (sq_distance_traveled *
                             randomized_squared_direction.z);
                 
-                frame_data->polygon_collection->xyz_multiplier[
-                    frame_data->polygon_collection->size][0] =
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_multiplier[0] =
                         particle_effects[i].particle_x_multiplier;
-                frame_data->polygon_collection->xyz_multiplier[
-                    frame_data->polygon_collection->size][1] =
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_multiplier[1] =
                         particle_effects[i].particle_y_multiplier;
-                frame_data->polygon_collection->xyz_multiplier[
-                    frame_data->polygon_collection->size][2] =
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_multiplier[2] =
                         particle_effects[i].particle_z_multiplier;
                 
-                frame_data->polygon_collection->ignore_lighting[
-                    frame_data->polygon_collection->size] =
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].ignore_lighting =
                         particle_effects[i].particles_ignore_lighting;
-                frame_data->polygon_collection->ignore_camera[
-                    frame_data->polygon_collection->size] =
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].ignore_camera =
                         false;
-                frame_data->polygon_collection->scale_factor[
-                    frame_data->polygon_collection->size] =
-                        1.0f;
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].scale_factor = 1.0f;
                 
-                frame_data->polygon_collection->xyz_angle[
-                    frame_data->polygon_collection->size][0] = 0.0f;
-                frame_data->polygon_collection->xyz_angle[
-                    frame_data->polygon_collection->size][1] = 0.0f;
-                frame_data->polygon_collection->xyz_angle[
-                    frame_data->polygon_collection->size][2] = 0.0f;
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_angle[0] = 0.0f;
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_angle[1] = 0.0f;
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_angle[2] = 0.0f;
                 
                 frame_data->polygon_collection->size += 1;
             }

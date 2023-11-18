@@ -88,9 +88,9 @@ vertex_shader(
     uint locked_vertex_i = vertices[vertex_i].locked_vertex_i;
     
     float4 parent_mesh_position = vector_float4(
-        polygon_collection->xyz[polygon_i][0],
-        polygon_collection->xyz[polygon_i][1],
-        polygon_collection->xyz[polygon_i][2],
+        polygon_collection->polygons[polygon_i].xyz[0],
+        polygon_collection->polygons[polygon_i].xyz[1],
+        polygon_collection->polygons[polygon_i].xyz[2],
         0.0f);
     
     float4 mesh_vertices = vector_float4(
@@ -100,21 +100,21 @@ vertex_shader(
         0.0f);
     
     float4 vertex_multipliers = vector_float4(
-        polygon_collection->xyz_multiplier[polygon_i][0],
-        polygon_collection->xyz_multiplier[polygon_i][1],
-        polygon_collection->xyz_multiplier[polygon_i][2],
+        polygon_collection->polygons[polygon_i].xyz_multiplier[0],
+        polygon_collection->polygons[polygon_i].xyz_multiplier[1],
+        polygon_collection->polygons[polygon_i].xyz_multiplier[2],
         1.0f);
     
     float4 vertex_offsets = vector_float4(
-        polygon_collection->xy_offset[polygon_i][0],
-        polygon_collection->xy_offset[polygon_i][1],
-        0.0f,
+        polygon_collection->polygons[polygon_i].xyz_offset[0],
+        polygon_collection->polygons[polygon_i].xyz_offset[1],
+        polygon_collection->polygons[polygon_i].xyz_offset[2],
         0.0f);
     
     mesh_vertices *= vertex_multipliers;
     mesh_vertices += vertex_offsets;
     
-    mesh_vertices *= polygon_collection->scale_factor[polygon_i];
+    mesh_vertices *= polygon_collection->polygons[polygon_i].scale_factor;
     mesh_vertices[3] = 1.0f;
     
     float4 mesh_normals = vector_float4(
@@ -126,29 +126,29 @@ vertex_shader(
     // rotate vertices
     float4 x_rotated_vertices = x_rotate(
         mesh_vertices,
-        polygon_collection->xyz_angle[polygon_i][0]);
+        polygon_collection->polygons[polygon_i].xyz_angle[0]);
     float4 x_rotated_normals  = x_rotate(
         mesh_normals,
-        polygon_collection->xyz_angle[polygon_i][0]);
+        polygon_collection->polygons[polygon_i].xyz_angle[0]);
     
     float4 y_rotated_vertices = y_rotate(
         x_rotated_vertices,
-        polygon_collection->xyz_angle[polygon_i][1]);
+        polygon_collection->polygons[polygon_i].xyz_angle[1]);
     float4 y_rotated_normals  = y_rotate(
         x_rotated_normals,
-        polygon_collection->xyz_angle[polygon_i][1]);
+        polygon_collection->polygons[polygon_i].xyz_angle[1]);
     
     float4 z_rotated_vertices = z_rotate(
         y_rotated_vertices,
-        polygon_collection->xyz_angle[polygon_i][2]);
+        polygon_collection->polygons[polygon_i].xyz_angle[2]);
     float4 z_rotated_normals  = z_rotate(
         y_rotated_normals,
-        polygon_collection->xyz_angle[polygon_i][2]);
+        polygon_collection->polygons[polygon_i].xyz_angle[2]);
     
     // translate to world position
     float4 translated_pos = z_rotated_vertices + parent_mesh_position;
     
-    if (polygon_collection->ignore_camera[polygon_i] < 1.0f) {
+    if (polygon_collection->polygons[polygon_i].ignore_camera < 1.0f) {
         float4 camera_position = vector_float4(
             camera->x,
             camera->y,
@@ -187,9 +187,9 @@ vertex_shader(
         vertices[vertex_i].color[3]);
     
     float4 bonus_rgb = vector_float4(
-        polygon_collection->bonus_rgb[polygon_i][0],
-        polygon_collection->bonus_rgb[polygon_i][1],
-        polygon_collection->bonus_rgb[polygon_i][2],
+        polygon_collection->polygons[polygon_i].bonus_rgb[0],
+        polygon_collection->polygons[polygon_i].bonus_rgb[1],
+        polygon_collection->polygons[polygon_i].bonus_rgb[2],
         0.0f);
     
     out.color += bonus_rgb;
@@ -200,7 +200,7 @@ vertex_shader(
         locked_vertices[locked_vertex_i].uv[0],
         locked_vertices[locked_vertex_i].uv[1]);
     
-    if (polygon_collection->ignore_lighting[polygon_i] > 0.0f) {
+    if (polygon_collection->polygons[polygon_i].ignore_lighting > 0.0f) {
         out.lighting = float3(1.0f, 1.0f, 1.0f);
         return out;
     }

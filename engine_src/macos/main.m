@@ -207,7 +207,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 - (void)
     windowWillEnterFullScreen:(NSNotification *)notification
 {
-    zpolygons_to_render_size = 0;
+    zpolygons_to_render->size = 0;
     shatter_effects_size = 0;
     particle_effects_size = 0;
 }
@@ -228,7 +228,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
         return frameSize;
     }
     
-    zpolygons_to_render_size = 0;
+    zpolygons_to_render->size = 0;
     particle_effects_size = 0;
     shatter_effects_size = 0;
     

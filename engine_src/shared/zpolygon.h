@@ -37,53 +37,34 @@ typedef struct VertexMaterial {
     int32_t texture_i;     // index in texturearray
 } VertexMaterial;
 
-typedef struct zPolygon {
+typedef struct zPolygonCPU {
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
-    
     VertexMaterial vertex_materials[MAX_MATERIALS_SIZE];
     uint32_t vertex_materials_size;
     
     int32_t object_id;
     int32_t touchable_id;
-    float x;
-    float y;
-    float z;
-    float x_angle;
-    float y_angle;
-    float z_angle;
     float hitbox_width;
     float hitbox_height;
     float hitbox_depth;
-    float rgb_bonus[3];
     
-    float x_offset;
-    float y_offset;
-    
-    /*
-    The x,y, and z multipliers are meant as permanent settings to adjust the
-    size of the linked mesh. Scale factor affects all vertices and is meant as
-    an animation target (so it's normally 1.0f and you change it temporarily to
-    resize your objects)
-    */
-    float x_multiplier;
-    float y_multiplier;
-    float z_multiplier;
-    float scale_factor;
-    
-    bool32_t ignore_camera;
-    bool32_t ignore_lighting;
     bool32_t deleted;
     bool32_t visible;
-} zPolygon;
-void construct_zpolygon(zPolygon * to_construct);
-void request_zpolygon_to_render(zPolygon * to_add);
+} zPolygonCPU;
+
+typedef struct zPolygonCollection {
+    GPUPolygon gpu_data[MAX_POLYGONS_PER_BUFFER];
+    zPolygonCPU cpu_data[MAX_POLYGONS_PER_BUFFER];
+    uint32_t size;
+} zPolygonCollection;
+void construct_zpolygon(GPUPolygon * a, zPolygonCPU * b);
+void request_zpolygon_to_render(GPUPolygon * a, zPolygonCPU * b);
 
 // A buffer of zPolygon objects that should be rendered
 // in your application
 // index 0 to zpolygons_to_render_size will be rendered,
 // the rest of the array will be ignored
-extern zPolygon * zpolygons_to_render;
-extern uint32_t zpolygons_to_render_size;
+extern zPolygonCollection * zpolygons_to_render;
 
 void delete_zpolygon_object(const int32_t with_object_id);
 
@@ -114,18 +95,19 @@ zVertex get_ztriangle_normal(
     const zTriangle * input);
 
 float get_y_multiplier_for_height(
-    zPolygon * for_poly,
+    zPolygonCPU * for_poly,
     const float for_height);
 float get_x_multiplier_for_width(
-    zPolygon * for_poly,
+    zPolygonCPU * for_poly,
     const float for_width);
 
 void scale_zpolygon_multipliers_to_height(
-    zPolygon * to_scale,
+    zPolygonCPU * cpu_data,
+    GPUPolygon * gpu_data,
     const float new_height);
 
-void center_zpolygon_offsets(
-    zPolygon * to_center);
+//void center_zpolygon_offsets(
+//    zPolygon * to_center);
 
 //float zpolygon_get_width(
 //    const zPolygon * to_inspect);
@@ -152,7 +134,8 @@ float distance_to_ztriangle(
 bool32_t ray_intersects_zpolygon_hitbox(
     const zVertex * ray_origin,
     const zVertex * ray_direction,
-    const zPolygon * mesh,
+    const zPolygonCPU * cpu_data,
+    const GPUPolygon  * gpu_data,
     zVertex * recipient_hit_point);
 
 void construct_quad_around(
@@ -161,15 +144,17 @@ void construct_quad_around(
     const float z,
     const float width,
     const float height,
-    zPolygon * recipient);
+    GPUPolygon * gpu_data,
+    zPolygonCPU * cpu_data);
 
 void construct_quad(
     const float left_x,
-    const float top_y,
+    const float bottom_y,
     const float z,
     const float width,
     const float height,
-    zPolygon * recipient);
+    GPUPolygon * gpu_data,
+    zPolygonCPU * cpu_data);
 
 void construct_cube_around(
     const float mid_x,
@@ -178,7 +163,8 @@ void construct_cube_around(
     const float width,
     const float height,
     const float depth,
-    zPolygon * recipient);
+    GPUPolygon * gpu_data,
+    zPolygonCPU * cpu_data);
 
 #ifdef __cplusplus
 }
