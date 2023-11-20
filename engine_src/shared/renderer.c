@@ -372,9 +372,9 @@ void hardware_render(
     zpolygons_to_triangles(frame_data);
     
     if (application_running) {
-        // add_particle_effects_to_workload(frame_data, elapsed_nanoseconds);
+        add_particle_effects_to_workload(frame_data, elapsed_nanoseconds);
         
-        //
+
         //        add_shatter_effects_to_workload(
         //            next_gpu_workload,
         //            next_workload_size,

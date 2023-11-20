@@ -941,15 +941,6 @@ void add_particle_effects_to_workload(
                         locked_vertex_i = vert_i;
                     frame_data->vertices[frame_data->vertices_size].polygon_i =
                         (int)frame_data->polygon_collection->size;
-                    //
-                    //                    frame_data->vertices[frame_data->vertices_size].
-                    //                        color[0] = red;
-                    //                    frame_data->vertices[frame_data->vertices_size].
-                    //                        color[1] = green;
-                    //                    frame_data->vertices[frame_data->vertices_size].
-                    //                        color[2] = blue;
-                    //                    frame_data->vertices[frame_data->vertices_size].
-                    //                        color[3] = alpha;
                     
                     frame_data->vertices_size += 1;
                     log_assert(
@@ -1003,6 +994,30 @@ void add_particle_effects_to_workload(
                 frame_data->polygon_collection->polygons[
                     frame_data->polygon_collection->size].xyz_angle[2] = 0.0f;
                 
+                frame_data->polygon_materials[
+                    frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
+                        rgba[0] =
+                            red;
+                frame_data->polygon_materials[
+                    frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
+                        rgba[1] =
+                            green;
+                frame_data->polygon_materials[
+                    frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
+                        rgba[2] =
+                            blue;
+                frame_data->polygon_materials[
+                    frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
+                        rgba[3] =
+                            alpha;
+                
+                frame_data->polygon_materials[
+                    frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
+                        texturearray_i = texturearray_i;
+                frame_data->polygon_materials[
+                    frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
+                        texture_i = texture_i;
+                
                 frame_data->polygon_collection->size += 1;
             }
             frame_data->first_line_i = frame_data->vertices_size;
@@ -1045,7 +1060,7 @@ void add_particle_effects_to_workload(
                 frame_data->light_collection->diffuse[
                     frame_data->light_collection->lights_size] =
                         1.0f * light_strength;
-                    
+                
                 frame_data->light_collection->lights_size += 1;
             }
         }
