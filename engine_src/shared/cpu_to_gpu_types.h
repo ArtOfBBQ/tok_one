@@ -11,6 +11,7 @@ typedef struct GPUDataForSingleFrame
 {
     GPUVertex *                            vertices;
     GPUPolygonCollection *       polygon_collection;
+    GPUPolygonMaterial *          polygon_materials;
     GPUCamera *                              camera;
     GPULightCollection *           light_collection;
     uint32_t                          vertices_size;
@@ -26,6 +27,7 @@ typedef struct GPUSharedDataCollection
     uint32_t vertices_allocation_size;
     uint32_t locked_vertices_allocation_size;
     uint32_t polygons_allocation_size;
+    uint32_t polygon_materials_allocation_size;
     uint32_t lights_allocation_size;
     uint32_t camera_allocation_size;
     uint32_t projection_constants_allocation_size;

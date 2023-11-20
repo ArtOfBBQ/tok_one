@@ -39,8 +39,6 @@ typedef struct VertexMaterial {
 
 typedef struct zPolygonCPU {
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
-    VertexMaterial vertex_materials[MAX_MATERIALS_SIZE];
-    uint32_t vertex_materials_size;
     
     int32_t object_id;
     int32_t touchable_id;
@@ -48,17 +46,29 @@ typedef struct zPolygonCPU {
     float hitbox_height;
     float hitbox_depth;
     
+    bool32_t committed;
     bool32_t deleted;
     bool32_t visible;
 } zPolygonCPU;
 
 typedef struct zPolygonCollection {
     GPUPolygon gpu_data[MAX_POLYGONS_PER_BUFFER];
+    GPUPolygonMaterial gpu_materials[
+        MAX_POLYGONS_PER_BUFFER * MAX_MATERIALS_SIZE];
     zPolygonCPU cpu_data[MAX_POLYGONS_PER_BUFFER];
     uint32_t size;
 } zPolygonCollection;
-void construct_zpolygon(GPUPolygon * a, zPolygonCPU * b);
-void request_zpolygon_to_render(GPUPolygon * a, zPolygonCPU * b);
+
+typedef struct PolygonRequest {
+    GPUPolygon * gpu_data;
+    GPUPolygonMaterial * gpu_material;
+    zPolygonCPU * cpu_data;
+} PolygonRequest;
+
+void construct_zpolygon(PolygonRequest * to_construct);
+// Allocate a PolygonRequest on the stack, then call this
+void request_next_zpolygon(PolygonRequest * stack_recipient);
+void commit_zpolygon_to_render(PolygonRequest * to_commit);
 
 // A buffer of zPolygon objects that should be rendered
 // in your application
@@ -144,8 +154,7 @@ void construct_quad_around(
     const float z,
     const float width,
     const float height,
-    GPUPolygon * gpu_data,
-    zPolygonCPU * cpu_data);
+    PolygonRequest * stack_recipient);
 
 void construct_quad(
     const float left_x,
@@ -153,8 +162,7 @@ void construct_quad(
     const float z,
     const float width,
     const float height,
-    GPUPolygon * gpu_data,
-    zPolygonCPU * cpu_data);
+    PolygonRequest * stack_recipient);
 
 void construct_cube_around(
     const float mid_x,
@@ -163,8 +171,7 @@ void construct_cube_around(
     const float width,
     const float height,
     const float depth,
-    GPUPolygon * gpu_data,
-    zPolygonCPU * cpu_data);
+    PolygonRequest * stack_recipient);
 
 #ifdef __cplusplus
 }

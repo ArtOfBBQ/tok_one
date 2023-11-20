@@ -80,12 +80,15 @@ vertex_shader(
     const device GPULightCollection * light_collection [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPULockedVertex * locked_vertices [[ buffer(4) ]],
-    const device GPUProjectionConstants * projection_constants [[ buffer(5) ]])
+    const device GPUProjectionConstants * projection_constants [[ buffer(5) ]],
+    const device GPUPolygonMaterial * polygon_materials [[ buffer(6) ]])
 {
     RasterizerPixel out;
     
     uint polygon_i = vertices[vertex_i].polygon_i;
     uint locked_vertex_i = vertices[vertex_i].locked_vertex_i;
+    uint locked_material_i = (polygon_i * MAX_MATERIALS_SIZE) +
+        locked_vertices[locked_vertex_i].parent_material_i;
     
     float4 parent_mesh_position = vector_float4(
         polygon_collection->polygons[polygon_i].xyz[0],
@@ -181,10 +184,10 @@ vertex_shader(
         (projection_constants->near * projection_constants->q);
     
     out.color = vector_float4(
-        vertices[vertex_i].color[0],
-        vertices[vertex_i].color[1],
-        vertices[vertex_i].color[2],
-        vertices[vertex_i].color[3]);
+        polygon_materials[locked_material_i].rgba[0],
+        polygon_materials[locked_material_i].rgba[1],
+        polygon_materials[locked_material_i].rgba[2],
+        polygon_materials[locked_material_i].rgba[3]);
     
     float4 bonus_rgb = vector_float4(
         polygon_collection->polygons[polygon_i].bonus_rgb[0],
@@ -194,8 +197,11 @@ vertex_shader(
     
     out.color += bonus_rgb;
     
-    out.texturearray_i = vertices[vertex_i].texturearray_i;
-    out.texture_i = vertices[vertex_i].texture_i;
+    /* out.texturearray_i = vertices[vertex_i].texturearray_i; */
+    out.texturearray_i = polygon_materials[locked_material_i].texturearray_i;
+    /* out.texture_i = vertices[vertex_i].texture_i; */
+    out.texture_i = polygon_materials[locked_material_i].texture_i;
+    
     out.texture_coordinate = vector_float2(
         locked_vertices[locked_vertex_i].uv[0],
         locked_vertices[locked_vertex_i].uv[1]);

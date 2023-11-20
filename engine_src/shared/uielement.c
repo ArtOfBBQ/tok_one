@@ -217,8 +217,7 @@ void request_float_slider(
 {
     log_assert(background_object_id != pin_object_id);
     
-    zPolygonCPU slider_back_cpu;
-    GPUPolygon slider_back_gpu;
+    PolygonRequest slider_back;
     construct_quad_around(
         /* const float mid_x: */
             screenspace_x_to_x(x_screenspace, z),
@@ -235,28 +234,26 @@ void request_float_slider(
                 next_ui_element_settings->slider_height_screenspace,
                 z),
         /* zPolygon * recipient: */
-            &slider_back_gpu,
-            &slider_back_cpu);
-    slider_back_cpu.object_id = background_object_id;
+            &slider_back);
+    slider_back.cpu_data->object_id = background_object_id;
     
-    slider_back_cpu.vertex_materials[0].texturearray_i =
+    slider_back.gpu_material[0].texturearray_i =
         next_ui_element_settings->slider_background_texturearray_i;
-    slider_back_cpu.vertex_materials[0].texture_i =
+    slider_back.gpu_material[0].texture_i =
         next_ui_element_settings->slider_background_texture_i;
-    slider_back_cpu.vertex_materials[0].color[0] = 1.0f;
-    slider_back_cpu.vertex_materials[0].color[1] = 1.0f;
-    slider_back_cpu.vertex_materials[0].color[2] = 1.0f;
-    slider_back_cpu.vertex_materials[0].color[3] = 1.0f;
+    slider_back.gpu_material[0].rgba[0] = 1.0f;
+    slider_back.gpu_material[0].rgba[1] = 1.0f;
+    slider_back.gpu_material[0].rgba[2] = 1.0f;
+    slider_back.gpu_material[0].rgba[3] = 1.0f;
     
-    slider_back_gpu.ignore_lighting =
+    slider_back.gpu_data->ignore_lighting =
         next_ui_element_settings->ignore_lighting;
-    slider_back_gpu.ignore_camera =
+    slider_back.gpu_data->ignore_camera =
         next_ui_element_settings->ignore_camera;
     
-    request_zpolygon_to_render(&slider_back_gpu, &slider_back_cpu);
+    commit_zpolygon_to_render(&slider_back);
     
-    zPolygonCPU slider_pin_cpu;
-    GPUPolygon slider_pin_gpu;
+    PolygonRequest slider_pin;
     float pin_z = z - 0.001f;
     construct_quad_around(
         /* const float mid_x: */
@@ -274,10 +271,9 @@ void request_float_slider(
                 next_ui_element_settings->pin_height_screenspace,
                 pin_z),
         /* zPolygon * recipient: */
-            &slider_pin_gpu,
-            &slider_pin_cpu);
+            &slider_pin);
     
-    slider_pin_cpu.object_id = pin_object_id;
+    slider_pin.cpu_data->object_id = pin_object_id;
     
     if (*linked_value < min_value) {
         *linked_value = min_value;
@@ -292,30 +288,30 @@ void request_float_slider(
         -(next_ui_element_settings->slider_width_screenspace / 2) +
         (initial_slider_progress *
             next_ui_element_settings->slider_width_screenspace);
-    slider_pin_gpu.xyz_offset[0] =
+    slider_pin.gpu_data->xyz_offset[0] =
         screenspace_width_to_width(initial_x_offset_screenspace, pin_z);
     
-    slider_pin_gpu.xyz_offset[1] = 0.0f;
+    slider_pin.gpu_data->xyz_offset[1] = 0.0f;
     
-    slider_pin_cpu.vertex_materials[0].texturearray_i =
+    slider_pin.gpu_material[0].texturearray_i =
         next_ui_element_settings->slider_pin_texturearray_i;
-    slider_pin_cpu.vertex_materials[0].texture_i =
+    slider_pin.gpu_material[0].texture_i =
         next_ui_element_settings->slider_pin_texture_i;
-    slider_pin_cpu.vertex_materials[0].color[0] = 1.0f;
-    slider_pin_cpu.vertex_materials[0].color[1] = 1.0f;
-    slider_pin_cpu.vertex_materials[0].color[2] = 1.0f;
-    slider_pin_cpu.vertex_materials[0].color[3] = 1.0f;
+    slider_pin.gpu_material[0].rgba[0] = 1.0f;
+    slider_pin.gpu_material[0].rgba[1] = 1.0f;
+    slider_pin.gpu_material[0].rgba[2] = 1.0f;
+    slider_pin.gpu_material[0].rgba[3] = 1.0f;
     
-    slider_pin_gpu.ignore_lighting =
+    slider_pin.gpu_data->ignore_lighting =
         next_ui_element_settings->ignore_lighting;
-    slider_pin_gpu.ignore_camera =
+    slider_pin.gpu_data->ignore_camera =
         next_ui_element_settings->ignore_camera;
-    slider_pin_cpu.touchable_id = next_ui_element_touchable_id();
+    slider_pin.cpu_data->touchable_id = next_ui_element_touchable_id();
     
     ActiveUIElement * next_active_element = next_active_ui_element();
     next_active_element->object_id = background_object_id;
     next_active_element->object_id_2 = pin_object_id;
-    next_active_element->touchable_id = slider_pin_cpu.touchable_id;
+    next_active_element->touchable_id = slider_pin.cpu_data->touchable_id;
     next_active_element->slider_width = 
         screenspace_width_to_width(
             next_ui_element_settings->slider_width_screenspace,
@@ -329,7 +325,7 @@ void request_float_slider(
         next_active_element->interaction_sound_filename,
         128,
         next_ui_element_settings->interaction_sound_filename);
-    request_zpolygon_to_render(&slider_pin_gpu, &slider_pin_cpu);
+    commit_zpolygon_to_render(&slider_pin);
 }
 
 void unregister_ui_element_with_object_id(

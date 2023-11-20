@@ -147,6 +147,16 @@ void init_application_before_gpu_init(void)
     assert(gpu_shared_data_collection.polygons_allocation_size > 0);
     assert(gpu_shared_data_collection.polygons_allocation_size % 4096 == 0);
     
+    gpu_shared_data_collection.polygon_materials_allocation_size =
+        sizeof(GPUPolygonMaterial) *
+        MAX_MATERIALS_SIZE *
+        MAX_POLYGONS_PER_BUFFER;
+    gpu_shared_data_collection.polygon_materials_allocation_size +=
+        (4096 - (gpu_shared_data_collection.polygon_materials_allocation_size %
+            4096));
+    assert(gpu_shared_data_collection.polygon_materials_allocation_size
+        % 4096 == 0);
+    
     gpu_shared_data_collection.lights_allocation_size =
         sizeof(GPULightCollection);
     gpu_shared_data_collection.lights_allocation_size +=
@@ -158,7 +168,7 @@ void init_application_before_gpu_init(void)
     gpu_shared_data_collection.camera_allocation_size +=
         (4096 - (gpu_shared_data_collection.camera_allocation_size % 4096));
     assert(gpu_shared_data_collection.camera_allocation_size % 4096 == 0);
-        
+    
     gpu_shared_data_collection.locked_vertices_allocation_size =
         (sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
     gpu_shared_data_collection.locked_vertices_allocation_size +=
@@ -190,6 +200,11 @@ void init_application_before_gpu_init(void)
         gpu_shared_data_collection.triple_buffers[frame_i].polygon_collection =
             (GPUPolygonCollection *)malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection.polygons_allocation_size,
+                4096);
+        
+        gpu_shared_data_collection.triple_buffers[frame_i].polygon_materials =
+            (GPUPolygonMaterial *)malloc_from_unmanaged_aligned(
+                gpu_shared_data_collection.polygon_materials_allocation_size,
                 4096);
         
         gpu_shared_data_collection.triple_buffers[frame_i].light_collection =

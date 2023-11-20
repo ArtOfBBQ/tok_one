@@ -29,34 +29,6 @@ static void describe_zpolygon(
 {
     strcat_capped(append_to, cap, "\n***Zpolygon: ");
     strcat_uint_capped(append_to, cap, zp_i);
-    for (
-        uint32_t mat_i = 0;
-        mat_i < zpolygons_to_render->cpu_data[zp_i].vertex_materials_size;
-        mat_i++)
-    {
-        strcat_capped(append_to, cap, "\nMaterial: ");
-        strcat_uint_capped(append_to, cap, mat_i);
-        strcat_capped(append_to, cap, "\nRGBA: [");
-        strcat_float_capped(
-            append_to, cap,
-            zpolygons_to_render->cpu_data[zp_i].
-                vertex_materials[mat_i].color[0]);
-        strcat_capped(append_to, cap, ", ");
-        strcat_float_capped(
-            append_to, cap,
-            zpolygons_to_render->cpu_data[zp_i].
-                vertex_materials[mat_i].color[1]);
-        strcat_capped(append_to, cap, ", ");
-        strcat_float_capped(
-            append_to, cap,
-            zpolygons_to_render->cpu_data[zp_i].
-                vertex_materials[mat_i].color[2]);
-        strcat_capped(append_to, cap, ", ");
-        strcat_float_capped(
-            append_to, cap,
-            zpolygons_to_render->cpu_data[zp_i].vertex_materials[mat_i].color[3]);
-        strcat_capped(append_to, cap, "]\n***");
-    }
 }
 
 void destroy_terminal_objects(void) {
@@ -124,8 +96,8 @@ void terminal_redraw_backgrounds(void) {
         current_input_height -
         (TERMINAL_WHITESPACE * 3);
     
-    zPolygonCPU current_command_input_cpu;
-    GPUPolygon current_command_input_gpu;
+    PolygonRequest current_command_input;
+    request_next_zpolygon(&current_command_input);
     construct_quad_around(
         /* const float mid_x: */
             screenspace_x_to_x(
@@ -147,27 +119,25 @@ void terminal_redraw_backgrounds(void) {
                 current_input_height,
                 TERM_Z),
         /* zPolygon * recipien: */
-            &current_command_input_gpu,
-            &current_command_input_cpu);
+            &current_command_input);
     
-    current_command_input_cpu.vertex_materials[0].color[0] =
+    current_command_input.gpu_material[0].rgba[0] =
         term_background_color[0];
-    current_command_input_cpu.vertex_materials[0].color[1] =
+    current_command_input.gpu_material[0].rgba[1] =
         term_background_color[1];
-    current_command_input_cpu.vertex_materials[0].color[2] =
+    current_command_input.gpu_material[0].rgba[2] =
         term_background_color[2];
-    current_command_input_cpu.vertex_materials[0].color[3] =
+    current_command_input.gpu_material[0].rgba[3] =
         term_background_color[3];
-    current_command_input_gpu.ignore_camera = true;
-    current_command_input_gpu.ignore_lighting = true;
-    current_command_input_cpu.visible = terminal_active;
-    current_command_input_cpu.object_id = terminal_back_object_id;
-    request_zpolygon_to_render(
-        &current_command_input_gpu,
-        &current_command_input_cpu);
+    current_command_input.gpu_data->ignore_camera = true;
+    current_command_input.gpu_data->ignore_lighting = true;
+    current_command_input.cpu_data->visible = terminal_active;
+    current_command_input.cpu_data->object_id = terminal_back_object_id;
+    commit_zpolygon_to_render(&current_command_input);
     
     // The console history area
-    construct_zpolygon(&current_command_input_gpu, &current_command_input_cpu);
+    request_next_zpolygon(&current_command_input);
+    construct_zpolygon(&current_command_input);
     construct_quad_around(
        /* const float mid_x: */
            screenspace_x_to_x(
@@ -191,25 +161,22 @@ void terminal_redraw_backgrounds(void) {
                command_history_height,
                TERM_Z),
        /* zPolygon * recipien: */
-           &current_command_input_gpu,
-           &current_command_input_cpu);
+           &current_command_input);
     
-    current_command_input_cpu.vertex_materials[0].color[0] =
+    current_command_input.gpu_material[0].rgba[0] =
         term_background_color[0];
-    current_command_input_cpu.vertex_materials[0].color[1] =
+    current_command_input.gpu_material[0].rgba[1] =
         term_background_color[1];
-    current_command_input_cpu.vertex_materials[0].color[2] =
+    current_command_input.gpu_material[0].rgba[2] =
         term_background_color[2];
-    current_command_input_cpu.vertex_materials[0].color[3] =
+    current_command_input.gpu_material[0].rgba[3] =
         term_background_color[3];
-    current_command_input_cpu.visible = terminal_active;
-    current_command_input_gpu.ignore_camera = true;
-    current_command_input_gpu.ignore_lighting = true;
-    current_command_input_cpu.object_id = INT32_MAX;
+    current_command_input.cpu_data->visible = terminal_active;
+    current_command_input.gpu_data->ignore_camera = true;
+    current_command_input.gpu_data->ignore_lighting = true;
+    current_command_input.cpu_data->object_id = INT32_MAX;
     
-    request_zpolygon_to_render(
-        &current_command_input_gpu,
-        &current_command_input_cpu);
+    commit_zpolygon_to_render(&current_command_input);
     
     requesting_label_update = true;
 }
@@ -491,33 +458,6 @@ static bool32_t evaluate_terminal_command(
                 response,
                 SINGLE_LINE_MAX,
                 "Activating wireframe mode");
-        }
-        
-        return true;
-    }
-    
-    if (
-        are_equal_strings(command, "UNTEXTURE") ||
-        are_equal_strings(command, "REMOVE TEXTURES") ||
-        are_equal_strings(command, "NO TEXTURES"))
-    {
-        strcpy_capped(
-            response,
-            SINGLE_LINE_MAX,
-            "Removing textures");
-        
-        for (uint32_t zp_i = 0; zp_i < zpolygons_to_render->size; zp_i++) {
-            for (
-                uint32_t mat_i = 0;
-                mat_i < zpolygons_to_render->cpu_data[zp_i].
-                    vertex_materials_size;
-                mat_i++)
-            {
-                zpolygons_to_render->cpu_data[zp_i].vertex_materials[mat_i].
-                    texturearray_i = -1;
-                zpolygons_to_render->cpu_data[zp_i].vertex_materials[mat_i].
-                    texture_i = -1;
-            }
         }
         
         return true;

@@ -6,12 +6,10 @@
 
 #define MAX_POLYGONS_PER_BUFFER  10000
 #define MAX_LIGHTS_PER_BUFFER       75
+#define MAX_MATERIALS_SIZE          15
 
 #pragma pack(push, 1)
 typedef struct GPUVertex {
-    float color[4];
-    int texturearray_i;
-    int texture_i;
     int locked_vertex_i; // index into GPULockedVertex buffer
     int polygon_i;       // index into GPUPolygonCollection buffer
 } GPUVertex;
@@ -30,9 +28,10 @@ the parents that contain these (see zpolygons_to_render in zpolygon.h),
 not this.
 */
 typedef struct GPULockedVertex {
-    float xyz       [3];
-    float normal_xyz[3];
-    float uv        [2];
+    float        xyz       [3];
+    float        normal_xyz[3];
+    float        uv        [2];
+    unsigned int parent_material_i;
 } GPULockedVertex;
 
 typedef struct GPUCamera {
@@ -45,31 +44,37 @@ typedef struct GPUCamera {
 } GPUCamera;
 
 typedef struct GPUPolygon {
-    float xyz[3];
-    float xyz_angle[3];
-    float bonus_rgb[3];
-    float xyz_multiplier[3];
-    float xyz_offset[3];
-    float scale_factor;
+    float        xyz[3];
+    float        xyz_angle[3];
+    float        bonus_rgb[3];
+    float        xyz_multiplier[3];
+    float        xyz_offset[3];
+    float        scale_factor;
     unsigned int ignore_lighting;
     unsigned int ignore_camera;
 } GPUPolygon;
 
 typedef struct GPUPolygonCollection {
-    GPUPolygon polygons[MAX_POLYGONS_PER_BUFFER];
+    GPUPolygon   polygons[MAX_POLYGONS_PER_BUFFER];
     unsigned int size;
 } GPUPolygonCollection;
 
+typedef struct GPUPolygonMaterial {
+    float rgba[4];
+    int   texturearray_i;
+    int   texture_i;
+} GPUPolygonMaterial;
+
 typedef struct GPULightCollection {
-    float light_x[MAX_LIGHTS_PER_BUFFER];
-    float light_y[MAX_LIGHTS_PER_BUFFER];
-    float light_z[MAX_LIGHTS_PER_BUFFER];
-    float ambient[MAX_LIGHTS_PER_BUFFER];
-    float diffuse[MAX_LIGHTS_PER_BUFFER];
-    float reach  [MAX_LIGHTS_PER_BUFFER];
-    float red    [MAX_LIGHTS_PER_BUFFER];
-    float green  [MAX_LIGHTS_PER_BUFFER];
-    float blue   [MAX_LIGHTS_PER_BUFFER];
+    float        light_x[MAX_LIGHTS_PER_BUFFER];
+    float        light_y[MAX_LIGHTS_PER_BUFFER];
+    float        light_z[MAX_LIGHTS_PER_BUFFER];
+    float        ambient[MAX_LIGHTS_PER_BUFFER];
+    float        diffuse[MAX_LIGHTS_PER_BUFFER];
+    float        reach  [MAX_LIGHTS_PER_BUFFER];
+    float        red    [MAX_LIGHTS_PER_BUFFER];
+    float        green  [MAX_LIGHTS_PER_BUFFER];
+    float        blue   [MAX_LIGHTS_PER_BUFFER];
     unsigned int lights_size;
 } GPULightCollection;
 

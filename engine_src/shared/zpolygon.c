@@ -25,13 +25,13 @@ static void set_zpolygon_hitbox(
         vert_i++)
     {
         float cur_vertex_x =
-            all_mesh_vertices[vert_i].gpu_data.xyz[0] *
+            all_mesh_vertices->gpu_data[vert_i].xyz[0] *
                     mesh_gpu->xyz_multiplier[0];
         float cur_vertex_y =
-            all_mesh_vertices[vert_i].gpu_data.xyz[1] *
+            all_mesh_vertices->gpu_data[vert_i].xyz[1] *
                     mesh_gpu->xyz_multiplier[1];
         float cur_vertex_z =
-            all_mesh_vertices[vert_i].gpu_data.xyz[2] *
+            all_mesh_vertices->gpu_data[vert_i].xyz[2] *
                     mesh_gpu->xyz_multiplier[2];
         
         if (cur_vertex_x < left) {
@@ -68,48 +68,8 @@ static void set_zpolygon_hitbox(
     mesh_cpu->hitbox_depth  = (back - front) + 0.00001f;
 }
 
-void request_zpolygon_to_render(GPUPolygon * a, zPolygonCPU * b)
+void request_next_zpolygon(PolygonRequest * stack_recipient)
 {
-    log_assert(b->mesh_id >= 0);
-    log_assert(b->mesh_id < (int32_t)all_mesh_summaries_size);
-    log_assert(b->mesh_id < ALL_MESHES_SIZE);
-    log_assert(all_mesh_summaries[b->mesh_id].vertices_size > 0);
-    
-    for (
-        int32_t mat_i = 0;
-        mat_i < (int32_t)b->vertex_materials_size;
-        mat_i++)
-    {
-        for (int32_t col_i = 0; col_i < 4; col_i++) {
-            log_assert(b->vertex_materials[mat_i].color[col_i] >= 0.0f);
-            log_assert(b->vertex_materials[mat_i].color[col_i] <= 1.0f);
-        }
-    }
-    
-    uint32_t all_mesh_vertices_tail_i =
-        (uint32_t)(all_mesh_summaries[b->mesh_id].vertices_head_i +
-            all_mesh_summaries[b->mesh_id].vertices_size -
-            1);
-    log_assert(all_mesh_vertices_tail_i < all_mesh_vertices_size);
-    
-    for (
-        int32_t mat_i = 0;
-        mat_i < (int32_t)b->vertex_materials_size;
-        mat_i++)
-    {
-        if (b->vertex_materials[mat_i].texturearray_i >= 0) {
-            log_assert(b->vertex_materials[mat_i].texture_i >= 0);
-            register_high_priority_if_unloaded(
-                b->vertex_materials[mat_i].texturearray_i,
-                b->vertex_materials[mat_i].texture_i);
-        }
-        
-        log_assert(b->vertex_materials[mat_i].texture_i < 5000);
-    }
-    
-    // set the hitbox height, width, and depth
-    set_zpolygon_hitbox(b, a);
-    
     for (
         uint32_t i = 0;
         i < zpolygons_to_render->size;
@@ -117,16 +77,74 @@ void request_zpolygon_to_render(GPUPolygon * a, zPolygonCPU * b)
     {
         if (zpolygons_to_render->cpu_data[i].deleted)
         {
-            zpolygons_to_render->cpu_data[i] = *b;
-            zpolygons_to_render->gpu_data[i] = *a;
+            stack_recipient->cpu_data     = &zpolygons_to_render->cpu_data[i];
+            stack_recipient->gpu_data     = &zpolygons_to_render->gpu_data[i];
+            stack_recipient->gpu_material =
+                &zpolygons_to_render->gpu_materials[(i * MAX_MATERIALS_SIZE)+0];
+            stack_recipient->cpu_data->committed = false;
             return;
         }
     }
     
     log_assert(zpolygons_to_render->size + 1 < MAX_POLYGONS_PER_BUFFER);
-    zpolygons_to_render->cpu_data[zpolygons_to_render->size] = *b;
-    zpolygons_to_render->gpu_data[zpolygons_to_render->size] = *a;
+    stack_recipient->cpu_data     =
+        &zpolygons_to_render->cpu_data[zpolygons_to_render->size];
+    stack_recipient->gpu_data     =
+        &zpolygons_to_render->gpu_data[zpolygons_to_render->size];
+    stack_recipient->gpu_material = &zpolygons_to_render->
+        gpu_materials[(zpolygons_to_render->size * MAX_MATERIALS_SIZE) + 0];
+    stack_recipient->cpu_data[zpolygons_to_render->size].deleted = true;
+    stack_recipient->cpu_data->committed = false;
     zpolygons_to_render->size += 1;
+    
+    return;
+}
+
+void commit_zpolygon_to_render(PolygonRequest * to_commit)
+{
+    log_assert(to_commit->cpu_data->mesh_id >= 0);
+    log_assert(to_commit->cpu_data->mesh_id < (int32_t)all_mesh_summaries_size);
+    log_assert(to_commit->cpu_data->mesh_id < ALL_MESHES_SIZE);
+    log_assert(
+        all_mesh_summaries[to_commit->cpu_data->mesh_id].vertices_size > 0);
+    
+    uint32_t all_mesh_vertices_tail_i =
+        (uint32_t)(
+            all_mesh_summaries[to_commit->cpu_data->mesh_id].vertices_head_i +
+            all_mesh_summaries[to_commit->cpu_data->mesh_id].vertices_size -
+            1);
+    log_assert(all_mesh_vertices_tail_i < all_mesh_vertices->size);
+    for (
+        uint32_t vert_i = (uint32_t)
+            all_mesh_summaries[to_commit->cpu_data->mesh_id].vertices_head_i;
+        vert_i <= all_mesh_vertices_tail_i;
+        vert_i++)
+    {
+        log_assert(all_mesh_vertices->gpu_data[vert_i].parent_material_i >= 0);
+        log_assert(all_mesh_vertices->gpu_data[vert_i].parent_material_i  <
+            MAX_MATERIALS_SIZE);
+    }
+    
+    for (
+        int32_t mat_i = 0;
+        mat_i < MAX_MATERIALS_SIZE;
+        mat_i++)
+    {
+        if (to_commit->gpu_material[mat_i].texturearray_i >= 0) {
+            log_assert(to_commit->gpu_material[mat_i].texture_i >= 0);
+            register_high_priority_if_unloaded(
+                to_commit->gpu_material[mat_i].texturearray_i,
+                to_commit->gpu_material[mat_i].texture_i);
+        }
+        
+        log_assert(
+            to_commit->gpu_material[mat_i].texture_i < 5000);
+    }
+    
+    // set the hitbox height, width, and depth
+    set_zpolygon_hitbox(to_commit->cpu_data, to_commit->gpu_data);
+    
+    to_commit->cpu_data->committed = true;
 }
 
 void delete_zpolygon_object(const int32_t with_object_id)
@@ -201,40 +219,44 @@ void scale_zpolygon_multipliers_to_height(
     gpu_data->xyz_multiplier[2] = new_multiplier;
 }
 
-void construct_zpolygon(GPUPolygon * a, zPolygonCPU * b) {
-    a->xyz[0] = 0.0f;
-    a->xyz[1] = 0.0f;
-    a->xyz[2] = 1.0f;
-    a->xyz_offset[0] = 0.0f;
-    a->xyz_offset[1] = 0.0f;
-    a->xyz_offset[2] = 0.0f;
-    a->xyz_angle[0] = 0.0f;
-    a->xyz_angle[1] = 0.0f;
-    a->xyz_angle[2] = 0.0f;
-    a->xyz_multiplier[0] = 1.0f;
-    a->xyz_multiplier[1] = 1.0f;
-    a->xyz_multiplier[2] = 1.0f;
-    a->scale_factor = 1.0f;
-    a->ignore_lighting = false;
-    a->ignore_camera = false;
-    a->bonus_rgb[0] = 0.0f;
-    a->bonus_rgb[1] = 0.0f;
-    a->bonus_rgb[2] = 0.0f;
+void construct_zpolygon(PolygonRequest * to_construct) {
+    log_assert(to_construct->cpu_data != NULL);
+    log_assert(to_construct->gpu_data != NULL);
+    log_assert(to_construct->gpu_material != NULL);
     
-    b->mesh_id = -1;
-    b->object_id = -1;
-    b->touchable_id = -1;
-    b->visible = true;
-    b->deleted = false;
+    to_construct->gpu_data->xyz[0] = 0.0f;
+    to_construct->gpu_data->xyz[1] = 0.0f;
+    to_construct->gpu_data->xyz[2] = 1.0f;
+    to_construct->gpu_data->xyz_offset[0] = 0.0f;
+    to_construct->gpu_data->xyz_offset[1] = 0.0f;
+    to_construct->gpu_data->xyz_offset[2] = 0.0f;
+    to_construct->gpu_data->xyz_angle[0] = 0.0f;
+    to_construct->gpu_data->xyz_angle[1] = 0.0f;
+    to_construct->gpu_data->xyz_angle[2] = 0.0f;
+    to_construct->gpu_data->xyz_multiplier[0] = 1.0f;
+    to_construct->gpu_data->xyz_multiplier[1] = 1.0f;
+    to_construct->gpu_data->xyz_multiplier[2] = 1.0f;
+    to_construct->gpu_data->scale_factor = 1.0f;
+    to_construct->gpu_data->ignore_lighting = false;
+    to_construct->gpu_data->ignore_camera = false;
+    to_construct->gpu_data->bonus_rgb[0] = 0.0f;
+    to_construct->gpu_data->bonus_rgb[1] = 0.0f;
+    to_construct->gpu_data->bonus_rgb[2] = 0.0f;
+    
+    to_construct->cpu_data->mesh_id = -1;
+    to_construct->cpu_data->object_id = -1;
+    to_construct->cpu_data->touchable_id = -1;
+    to_construct->cpu_data->visible = true;
+    to_construct->cpu_data->deleted = false;
+    to_construct->cpu_data->committed = false;
     for (uint32_t i = 0; i < MAX_MATERIALS_SIZE; i++) {
-        b->vertex_materials[i].color[0] = 1.0f;
-        b->vertex_materials[i].color[1] = 1.0f;
-        b->vertex_materials[i].color[2] = 1.0f;
-        b->vertex_materials[i].color[3] = 1.0f;
-        b->vertex_materials[i].texture_i = -1;
-        b->vertex_materials[i].texturearray_i = -1;
+        to_construct->gpu_material[i].rgba[0] = 0.75f;
+        to_construct->gpu_material[i].rgba[1] = 0.75f;
+        to_construct->gpu_material[i].rgba[2] = 0.75f;
+        to_construct->gpu_material[i].rgba[3] = 0.75f;
+        to_construct->gpu_material[i].texture_i = -1;
+        to_construct->gpu_material[i].texturearray_i = -1;
     }
-    b->vertex_materials_size = 0;
 }
 
 zTriangle
@@ -899,42 +921,40 @@ void construct_quad(
     const float z,
     const float width,
     const float height,
-    GPUPolygon * gpu_data,
-    zPolygonCPU * cpu_data)
+    PolygonRequest * stack_recipient)
 {
     log_assert(z > 0.0f);
     
-    construct_zpolygon(gpu_data, cpu_data);
+    construct_zpolygon(stack_recipient);
     
     const float mid_x =
         left_x + (width  / 2);
     const float mid_y =
         bottom_y  + (height / 2);
     
-    gpu_data->xyz[0] = mid_x;
-    gpu_data->xyz[1] = mid_y;
-    gpu_data->xyz[2] = z;
-    cpu_data->visible = true;
-    gpu_data->ignore_camera = false;
+    stack_recipient->gpu_data->xyz[0] = mid_x;
+    stack_recipient->gpu_data->xyz[1] = mid_y;
+    stack_recipient->gpu_data->xyz[2] = z;
+    stack_recipient->cpu_data->visible = true;
+    stack_recipient->gpu_data->ignore_camera = false;
     
     // a quad is hardcoded in objmodel.c's init_all_meshes()
-    cpu_data->mesh_id = 0;
+    stack_recipient->cpu_data->mesh_id = 0;
     
     // the hardcoded quad offsets range from -1.0f to 1.0f,
     // so the current width is 2.0f
     float current_width = 2.0f;
     float current_height = 2.0f;
-    gpu_data->xyz_multiplier[0] = width / current_width;
-    gpu_data->xyz_multiplier[1] = height / current_height;
-    gpu_data->xyz_multiplier[2] = 1.0f;
+    stack_recipient->gpu_data->xyz_multiplier[0] = width / current_width;
+    stack_recipient->gpu_data->xyz_multiplier[1] = height / current_height;
+    stack_recipient->gpu_data->xyz_multiplier[2] = 1.0f;
     
-    cpu_data->vertex_materials[0].color[0] = 1.0f;
-    cpu_data->vertex_materials[0].color[1] = 1.0f;
-    cpu_data->vertex_materials[0].color[2] = 1.0f;
-    cpu_data->vertex_materials[0].color[3] = 1.0f;
-    cpu_data->vertex_materials[0].texturearray_i = -1;
-    cpu_data->vertex_materials[0].texture_i = -1;
-    cpu_data->vertex_materials_size = 1;
+    stack_recipient->gpu_material[0].rgba[0] = 1.0f;
+    stack_recipient->gpu_material[0].rgba[1] = 1.0f;
+    stack_recipient->gpu_material[0].rgba[2] = 1.0f;
+    stack_recipient->gpu_material[0].rgba[3] = 1.0f;
+    stack_recipient->gpu_material[0].texturearray_i = -1;
+    stack_recipient->gpu_material[0].texture_i = -1;
 }
 
 void construct_quad_around(
@@ -943,34 +963,32 @@ void construct_quad_around(
     const float z,
     const float width,
     const float height,
-    GPUPolygon * gpu_data,
-    zPolygonCPU * cpu_data)
+    PolygonRequest * stack_recipient)
 {
     log_assert(z > 0.0f);
     
-    construct_zpolygon(gpu_data, cpu_data);
+    construct_zpolygon(stack_recipient);
     
-    gpu_data->xyz[0]  = mid_x;
-    gpu_data->xyz[1]  = mid_y;
-    gpu_data->xyz[2]  = z;
-    cpu_data->visible = true;
+    stack_recipient->gpu_data->xyz[0]  = mid_x;
+    stack_recipient->gpu_data->xyz[1]  = mid_y;
+    stack_recipient->gpu_data->xyz[2]  = z;
+    stack_recipient->cpu_data->visible = true;
     
     // the hardcoded quad offsets range from -1.0f to 1.0f,
     // so the current width is 2.0f
     float current_width = 2.0f;
     float current_height = 2.0f;
-    gpu_data->xyz_multiplier[0] = width / current_width;
-    gpu_data->xyz_multiplier[1] = height / current_height;
-    gpu_data->xyz_multiplier[2] = 1.0f;
+    stack_recipient->gpu_data->xyz_multiplier[0] = width / current_width;
+    stack_recipient->gpu_data->xyz_multiplier[1] = height / current_height;
+    stack_recipient->gpu_data->xyz_multiplier[2] = 1.0f;
     
-    cpu_data->mesh_id = 0;
-    cpu_data->vertex_materials[0].color[0] = 1.0f;
-    cpu_data->vertex_materials[0].color[1] = 1.0f;
-    cpu_data->vertex_materials[0].color[2] = 1.0f;
-    cpu_data->vertex_materials[0].color[3] = 1.0f;
-    cpu_data->vertex_materials[0].texturearray_i = -1;
-    cpu_data->vertex_materials[0].texture_i = -1;
-    cpu_data->vertex_materials_size = 1;
+    stack_recipient->cpu_data->mesh_id = 0;
+    stack_recipient->gpu_material[0].rgba[0] = 1.0f;
+    stack_recipient->gpu_material[0].rgba[1] = 1.0f;
+    stack_recipient->gpu_material[0].rgba[2] = 1.0f;
+    stack_recipient->gpu_material[0].rgba[3] = 1.0f;
+    stack_recipient->gpu_material[0].texturearray_i = -1;
+    stack_recipient->gpu_material[0].texture_i = -1;
 }
 
 void construct_cube_around(
@@ -980,33 +998,31 @@ void construct_cube_around(
     const float width,
     const float height,
     const float depth,
-    GPUPolygon * gpu_data,
-    zPolygonCPU * cpu_data)
+    PolygonRequest * stack_recipient)
 {
     log_assert(z > 0.0f);
     
-    construct_zpolygon(gpu_data, cpu_data);
+    construct_zpolygon(stack_recipient);
     
-    gpu_data->xyz[0]  = mid_x;
-    gpu_data->xyz[1]  = mid_y;
-    gpu_data->xyz[2]  = z;
-    cpu_data->visible = true;
+    stack_recipient->gpu_data->xyz[0]  = mid_x;
+    stack_recipient->gpu_data->xyz[1]  = mid_y;
+    stack_recipient->gpu_data->xyz[2]  = z;
+    stack_recipient->cpu_data->visible = true;
     
     // the hardcoded quad offsets range from -1.0f to 1.0f,
     // so the current width is 2.0f
     float current_width = 2.0f;
     float current_height = 2.0f;
     float current_depth = 2.0f;
-    gpu_data->xyz_multiplier[0] = width / current_width;
-    gpu_data->xyz_multiplier[1] = height / current_height;
-    gpu_data->xyz_multiplier[2] = depth / current_depth;
+    stack_recipient->gpu_data->xyz_multiplier[0] = width / current_width;
+    stack_recipient->gpu_data->xyz_multiplier[1] = height / current_height;
+    stack_recipient->gpu_data->xyz_multiplier[2] = depth / current_depth;
     
-    cpu_data->mesh_id = 1;
-    cpu_data->vertex_materials[0].color[0] = 1.0f;
-    cpu_data->vertex_materials[0].color[1] = 1.0f;
-    cpu_data->vertex_materials[0].color[2] = 1.0f;
-    cpu_data->vertex_materials[0].color[3] = 1.0f;
-    cpu_data->vertex_materials[0].texturearray_i = -1;
-    cpu_data->vertex_materials[0].texture_i = -1;
-    cpu_data->vertex_materials_size = 1;
+    stack_recipient->cpu_data->mesh_id = 1;
+    stack_recipient->gpu_material[0].rgba[0] = 1.0f;
+    stack_recipient->gpu_material[0].rgba[1] = 1.0f;
+    stack_recipient->gpu_material[0].rgba[2] = 1.0f;
+    stack_recipient->gpu_material[0].rgba[3] = 1.0f;
+    stack_recipient->gpu_material[0].texturearray_i = -1;
+    stack_recipient->gpu_material[0].texture_i = -1;
 }

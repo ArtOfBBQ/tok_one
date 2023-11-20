@@ -27,16 +27,15 @@ typedef struct MeshSummary {
     uint32_t materials_size;
 } MeshSummary;
 
-typedef struct GPULockedVertexWithMaterial {
-    GPULockedVertex gpu_data;
-    uint32_t parent_material_i;
-} GPULockedVertexWithMaterial;
+typedef struct LockedVertexWithMaterialCollection {
+    GPULockedVertex gpu_data[ALL_LOCKED_VERTICES_SIZE];
+    uint32_t size;
+} LockedVertexWithMaterialCollection;
 
 extern MeshSummary * all_mesh_summaries;
 extern uint32_t all_mesh_summaries_size;
 
-extern GPULockedVertexWithMaterial * all_mesh_vertices;
-extern uint32_t all_mesh_vertices_size;
+extern LockedVertexWithMaterialCollection * all_mesh_vertices;
 
 void init_all_meshes(void);
 

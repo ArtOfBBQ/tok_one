@@ -935,25 +935,21 @@ void add_particle_effects_to_workload(
                     vert_i++)
                 {
                     log_assert(vert_i >= 0);
-                    log_assert(vert_i < (int32_t)all_mesh_vertices_size);
+                    log_assert(vert_i < (int32_t)all_mesh_vertices->size);
                     
                     frame_data->vertices[frame_data->vertices_size].
                         locked_vertex_i = vert_i;
-                    frame_data->vertices[frame_data->vertices_size].
-                        texturearray_i = texturearray_i;
-                    frame_data->vertices[frame_data->vertices_size].
-                        texture_i = texture_i;
                     frame_data->vertices[frame_data->vertices_size].polygon_i =
                         (int)frame_data->polygon_collection->size;
-                    
-                    frame_data->vertices[frame_data->vertices_size].
-                        color[0] = red;
-                    frame_data->vertices[frame_data->vertices_size].
-                        color[1] = green;
-                    frame_data->vertices[frame_data->vertices_size].
-                        color[2] = blue;
-                    frame_data->vertices[frame_data->vertices_size].
-                        color[3] = alpha;
+                    //
+                    //                    frame_data->vertices[frame_data->vertices_size].
+                    //                        color[0] = red;
+                    //                    frame_data->vertices[frame_data->vertices_size].
+                    //                        color[1] = green;
+                    //                    frame_data->vertices[frame_data->vertices_size].
+                    //                        color[2] = blue;
+                    //                    frame_data->vertices[frame_data->vertices_size].
+                    //                        color[3] = alpha;
                     
                     frame_data->vertices_size += 1;
                     log_assert(

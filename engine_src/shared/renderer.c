@@ -70,18 +70,18 @@ inline static void add_point_vertex(
     frame_data->polygon_collection->polygons[
         frame_data->polygon_collection->size].xyz_multiplier[2] = 1.0f;
     
-    frame_data->vertices[frame_data->vertices_size].texturearray_i =
-        -1;
-    frame_data->vertices[frame_data->vertices_size].texture_i = -1;
+    //    frame_data->vertices[frame_data->vertices_size].texturearray_i =
+    //        -1;
+    //    frame_data->vertices[frame_data->vertices_size].texture_i = -1;
     frame_data->vertices[frame_data->vertices_size].polygon_i =
         (int)frame_data->polygon_collection->size;
-    frame_data->vertices[frame_data->vertices_size].color[0] = 0.0f;
-    frame_data->vertices[frame_data->vertices_size].color[1] =
-        is_last_clicked ?
-            ((platform_get_current_time_microsecs() / 25000) % 80) * 0.01f :
-            1.0f;
-    frame_data->vertices[frame_data->vertices_size].color[2] = 1.0f;
-    frame_data->vertices[frame_data->vertices_size].color[3] = 1.0f;
+    //    frame_data->vertices[frame_data->vertices_size].color[0] = 0.0f;
+    //    frame_data->vertices[frame_data->vertices_size].color[1] =
+    //        is_last_clicked ?
+    //            ((platform_get_current_time_microsecs() / 25000) % 80) * 0.01f :
+    //            1.0f;
+    //    frame_data->vertices[frame_data->vertices_size].color[2] = 1.0f;
+    //    frame_data->vertices[frame_data->vertices_size].color[3] = 1.0f;
     frame_data->vertices[frame_data->vertices_size].locked_vertex_i =
         all_mesh_summaries[2].vertices_head_i;
     
@@ -300,6 +300,16 @@ inline static void zpolygons_to_triangles(
     log_assert(zpolygons_to_render->size < MAX_POLYGONS_PER_BUFFER);
     log_assert(frame_data->polygon_collection->size < MAX_POLYGONS_PER_BUFFER);
     
+    memcpy(
+        /* void *__dst: */
+            frame_data->polygon_materials,
+        /* const void *__src: */
+            zpolygons_to_render->gpu_materials,
+        /* size_t __n: */
+            sizeof(GPUPolygonMaterial) *
+                MAX_MATERIALS_SIZE *
+                MAX_POLYGONS_PER_BUFFER);
+    
     for (
         int32_t cpu_zp_i = 0;
         cpu_zp_i < (int32_t)zpolygons_to_render->size;
@@ -307,7 +317,8 @@ inline static void zpolygons_to_triangles(
     {
         if (
             zpolygons_to_render->cpu_data[cpu_zp_i].deleted ||
-            !zpolygons_to_render->cpu_data[cpu_zp_i].visible)
+            !zpolygons_to_render->cpu_data[cpu_zp_i].visible ||
+            !zpolygons_to_render->cpu_data[cpu_zp_i].committed)
         {
             continue;
         }
@@ -324,29 +335,8 @@ inline static void zpolygons_to_triangles(
         for (
             int32_t vert_i = all_mesh_summaries[mesh_id].vertices_head_i;
             vert_i < vert_tail_i;
-            vert_i++)
+            vert_i += 1)
         {
-            uint32_t mat_i = all_mesh_vertices[vert_i].parent_material_i;
-            log_assert(
-                mat_i < zpolygons_to_render->cpu_data[cpu_zp_i].
-                    vertex_materials_size);
-            
-            /*
-            This memcpy assumes the layout of both frame data's vertices
-            and vertex_materials is the same, and in the same order:
-            
-            float color[4]
-            int texture_i
-            int texturearray_i
-            */
-            memcpy(
-                /* void *__dst: */
-                    &frame_data->vertices[frame_data->vertices_size],
-                /* const void *__src: */
-                    &zpolygons_to_render->cpu_data[cpu_zp_i].vertex_materials[mat_i],
-                /* size_t __n: */
-                    sizeof(float) * 6);
-            
             frame_data->vertices[frame_data->vertices_size].locked_vertex_i =
                 vert_i;
             frame_data->vertices[frame_data->vertices_size].polygon_i =
@@ -382,7 +372,7 @@ void hardware_render(
     zpolygons_to_triangles(frame_data);
     
     if (application_running) {
-        add_particle_effects_to_workload(frame_data, elapsed_nanoseconds);
+        // add_particle_effects_to_workload(frame_data, elapsed_nanoseconds);
         
         //
         //        add_shatter_effects_to_workload(
@@ -392,8 +382,8 @@ void hardware_render(
         //            elapsed_nanoseconds);
     }
     
-    zpolygon_hitboxes_to_lines(
-        frame_data);
+    //    zpolygon_hitboxes_to_lines(
+    //        frame_data);
     
     if (window_globals->wireframe_mode) {
         frame_data->first_line_i = 0;
