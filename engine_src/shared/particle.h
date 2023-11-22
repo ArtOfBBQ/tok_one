@@ -18,6 +18,7 @@ extern "C" {
 typedef struct ShatterEffect {
     zPolygonCPU zpolygon_to_shatter_cpu;
     GPUPolygon zpolygon_to_shatter_gpu;
+    GPUPolygonMaterial zpolygon_to_shatter_material;
     
     uint64_t random_seed;
     uint64_t elapsed;
@@ -50,16 +51,15 @@ extern uint32_t shatter_effects_size;
 //    zPolygon * from_zpolygon);
 ShatterEffect * next_shatter_effect(void);
 ShatterEffect * next_shatter_effect_with_zpoly(
-    zPolygonCPU * construct_with_zpolygon);
+    zPolygonCPU * construct_with_zpolygon,
+    GPUPolygon * construct_with_polygon_gpu,
+    GPUPolygonMaterial * construct_with_polygon_material);
 void commit_shatter_effect(
     ShatterEffect * to_commit);
 
 void add_shatter_effects_to_workload(
-    GPUVertex * next_gpu_workload,
-    uint32_t * next_workload_size,
-    GPULightCollection * lights_for_gpu,
+    GPUDataForSingleFrame * frame_data,
     uint64_t elapsed_nanoseconds);
-
 
 typedef struct ParticleEffect {
     int32_t object_id;

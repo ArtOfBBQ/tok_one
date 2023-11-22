@@ -280,14 +280,14 @@ void request_shatter_and_destroy(
         
         ShatterEffect * shatter = next_shatter_effect();
         shatter->zpolygon_to_shatter_cpu = zpolygons_to_render->cpu_data[zp_i];
+        shatter->zpolygon_to_shatter_gpu = zpolygons_to_render->gpu_data[zp_i];
+        shatter->zpolygon_to_shatter_material =
+            zpolygons_to_render->gpu_materials[zp_i * MAX_MATERIALS_SIZE];
         shatter->wait_first = wait_before_first_run;
         shatter->longest_random_delay_before_launch = duration_microseconds / 2;
         shatter->start_fade_out_at_elapsed =
             (duration_microseconds / 10) * 9;
         shatter->finish_fade_out_at_elapsed = duration_microseconds;
-        // shatter->linear_direction[0] = 0; // x
-        // shatter->linear_direction[1] = 0; // y
-        // shatter->linear_direction[2] = 0; // z
         shatter->linear_direction[0] = linear_direction[0];
         shatter->linear_direction[1] = linear_direction[1];
         shatter->linear_direction[2] = linear_direction[2];

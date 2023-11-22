@@ -71,12 +71,19 @@ ShatterEffect * next_shatter_effect()
 }
 
 ShatterEffect * next_shatter_effect_with_zpoly(
-    zPolygonCPU * construct_with_zpolygon)
+    zPolygonCPU * construct_with_zpolygon,
+    GPUPolygon * construct_with_polygon_gpu,
+    GPUPolygonMaterial * construct_with_polygon_material)
 {
     ShatterEffect * return_value = next_shatter_effect();
     
     log_assert(shatter_effects_size < SHATTER_EFFECTS_SIZE);
-    return_value->zpolygon_to_shatter_cpu = *construct_with_zpolygon;
+    return_value->zpolygon_to_shatter_cpu =
+        *construct_with_zpolygon;
+    return_value->zpolygon_to_shatter_gpu =
+        *construct_with_polygon_gpu;
+    return_value->zpolygon_to_shatter_material =
+        *construct_with_polygon_material;
     
     return return_value;
 }
@@ -84,59 +91,51 @@ ShatterEffect * next_shatter_effect_with_zpoly(
 void commit_shatter_effect(
     ShatterEffect * to_commit)
 {
-    // TODO: rewrite using new all_mesh_vertices instead of all_mesh_triangles
+    // if the zpolygon has too few triangles, it won't make for an interesting
+    // particle effect. We will 'shatter' the triangles and point to a split up
+    // version. If there's enough triangles, we will simply set the 'shattered'
+    // pointers to be the same as the original pointers
+    if (
+     all_mesh_summaries[to_commit->zpolygon_to_shatter_cpu.mesh_id]
+         .shattered_vertices_size == 0)
+    {
+        if (
+            all_mesh_summaries[to_commit->zpolygon_to_shatter_cpu.mesh_id]
+                .vertices_size <
+                    MINIMUM_SHATTER_TRIANGLES)
+        {
+             // this has too few triangles, so shatter them into pieces
+             create_shattered_version_of_mesh(
+                 /* mesh_id: */
+                     to_commit->zpolygon_to_shatter_cpu.mesh_id,
+                 /* triangles_multiplier: */
+                     (uint32_t)(1 + (
+                         MINIMUM_SHATTER_TRIANGLES /
+                             all_mesh_summaries[
+                                 to_commit->zpolygon_to_shatter_cpu.mesh_id].
+                                     vertices_size)));
+        } else {
+            // use the original as the shattered version
+            all_mesh_summaries[to_commit->zpolygon_to_shatter_cpu.mesh_id].
+                shattered_vertices_size =
+                    all_mesh_summaries[
+                        to_commit->zpolygon_to_shatter_cpu.mesh_id].
+                            vertices_size;
+            
+            all_mesh_summaries[to_commit->zpolygon_to_shatter_cpu.mesh_id].
+                shattered_vertices_head_i =
+            all_mesh_summaries[
+                to_commit->zpolygon_to_shatter_cpu.mesh_id].vertices_head_i;
+        }
+    }
     
-    // // if the zpolygon has too few triangles, it won't make for an interesting
-    // // particle effect. We will 'shatter' the triangles and point to a split up
-    // // version. If there's enough triangles, we will simply set the 'shattered'
-    // // pointers to be the same as the original pointers
-    // if (
-    //     all_mesh_summaries[to_commit->zpolygon_to_shatter.mesh_id]
-    //         .shattered_vertices_size == 0)
-    // {
-    //     if (
-    //         all_mesh_summaries[to_commit->zpolygon_to_shatter.mesh_id]
-    //             .triangles_size <
-    //                 MINIMUM_SHATTER_TRIANGLES)
-    //     {
-    //         // we need to create a shatttered version of this
-    //         create_shattered_version_of_mesh(
-    //             /* mesh_id: */
-    //                 to_commit->zpolygon_to_shatter.mesh_id,
-    //             /* triangles_multiplier: */
-    //                 (uint32_t)(1 + (
-    //                     MINIMUM_SHATTER_TRIANGLES /
-    //                         all_mesh_summaries[
-    //                             to_commit->zpolygon_to_shatter.mesh_id].
-    //                                 triangles_size)));
-    //     } else {
-    //         // use the original as the shattered version
-    //         all_mesh_summaries[to_commit->zpolygon_to_shatter.mesh_id].
-    //             shattered_triangles_size =
-    //                 all_mesh_summaries[
-    //                     to_commit->zpolygon_to_shatter.mesh_id].
-    //                         triangles_size;
-    //         
-    //         all_mesh_summaries[to_commit->zpolygon_to_shatter.mesh_id].
-    //             shattered_triangles_head_i =
-    //                 all_mesh_summaries[
-    //                     to_commit->zpolygon_to_shatter.mesh_id].
-    //                         triangles_head_i;
-    //     }
-    // }
-    // 
-    // to_commit->committed = true;
+    to_commit->committed = true;
 }
 
 void add_shatter_effects_to_workload(
-    GPUVertex * next_gpu_workload,
-    uint32_t * next_workload_size,
-    GPULightCollection * lights_for_gpu,
+    GPUDataForSingleFrame * frame_data,
     uint64_t elapsed_nanoseconds)
 {
-    /*
-    (void)lights_for_gpu;
-    
     for (uint32_t i = 0; i < shatter_effects_size; i++) {
         if (shatter_effects[i].deleted ||
             !shatter_effects[i].committed)
@@ -156,14 +155,14 @@ void add_shatter_effects_to_workload(
         
         int32_t tri_head_i =
             all_mesh_summaries[
-                shatter_effects[i].zpolygon_to_shatter.mesh_id].
-                    shattered_triangles_head_i;
+                shatter_effects[i].zpolygon_to_shatter_cpu.mesh_id].
+                    shattered_vertices_head_i;
         log_assert(tri_head_i >= 0);
         int32_t tri_tail_i =
             tri_head_i +
             all_mesh_summaries[
-                shatter_effects[i].zpolygon_to_shatter.mesh_id].
-                    shattered_triangles_size;
+                shatter_effects[i].zpolygon_to_shatter_cpu.mesh_id].
+                    shattered_vertices_size;
         log_assert(tri_tail_i >= 0);
         
         int32_t full_tri_count = (tri_tail_i - tri_head_i);
@@ -186,13 +185,13 @@ void add_shatter_effects_to_workload(
         }
         
         for (
-            int32_t tri_i = tri_head_i;
-            tri_i <= tri_tail_i;
-            tri_i++)
+            int32_t vert_i = tri_head_i;
+            vert_i <= tri_tail_i;
+            vert_i += 3)
         {
             uint64_t random_delay =
                 tok_rand_at_i(
-                    ((shatter_effects[i].random_seed + (uint32_t)tri_i) %
+                    ((shatter_effects[i].random_seed + (uint32_t)vert_i) %
                         (RANDOM_SEQUENCE_SIZE - 1))
                     ) %
                 shatter_effects[i].longest_random_delay_before_launch;
@@ -224,26 +223,28 @@ void add_shatter_effects_to_workload(
             
             zVertex exploding_direction;
             exploding_direction.x =
-                ((all_mesh_triangles[tri_i].vertices[0].x +
-                all_mesh_triangles[tri_i].vertices[1].x +
-                all_mesh_triangles[tri_i].vertices[2].x) / 3) -
-                    shatter_effects[i].zpolygon_to_shatter.x;
+                 ((
+                    all_mesh_vertices->gpu_data[vert_i + 0].xyz[0] +
+                    all_mesh_vertices->gpu_data[vert_i + 1].xyz[0] +
+                    all_mesh_vertices->gpu_data[vert_i + 2].xyz[0]) / 3) -
+                        shatter_effects[i].zpolygon_to_shatter_gpu.xyz[0];
             exploding_direction.y =
-                ((all_mesh_triangles[tri_i].vertices[0].y +
-                all_mesh_triangles[tri_i].vertices[1].y +
-                all_mesh_triangles[tri_i].vertices[2].y) / 3) -
-                    shatter_effects[i].zpolygon_to_shatter.y;
+                ((
+                    all_mesh_vertices->gpu_data[vert_i + 0].xyz[1] +
+                    all_mesh_vertices->gpu_data[vert_i + 1].xyz[1] +
+                    all_mesh_vertices->gpu_data[vert_i + 2].xyz[1]) / 3) -
+                        shatter_effects[i].zpolygon_to_shatter_gpu.xyz[1];
             exploding_direction.z =
-                ((all_mesh_triangles[tri_i].vertices[0].z +
-                all_mesh_triangles[tri_i].vertices[1].z +
-                all_mesh_triangles[tri_i].vertices[2].z) / 3) -
-                    shatter_effects[i].zpolygon_to_shatter.z;
+                ((
+                    all_mesh_vertices->gpu_data[vert_i + 0].xyz[2] +
+                    all_mesh_vertices->gpu_data[vert_i + 1].xyz[2] +
+                    all_mesh_vertices->gpu_data[vert_i + 2].xyz[2]) / 3) -
+                        shatter_effects[i].zpolygon_to_shatter_gpu.xyz[2];
             normalize_zvertex(&exploding_direction);
             
-            float rotation_applied[3];
-            
+            float rotation[3];
             for (uint32_t r = 0; r < 3; r++) {
-                rotation_applied[r] =
+                rotation[r] =
                     ((float)delayed_lifetime_so_far / 1000000.0f) *
                         shatter_effects[i].xyz_rotation_per_second[r];
             }
@@ -258,116 +259,65 @@ void add_shatter_effects_to_workload(
                 ((float)delayed_lifetime_so_far / 1000000.0f)) *
                     shatter_effects[i].squared_distance_per_second;
             
-            int32_t material_i = all_mesh_triangles[tri_i].parent_material_i;
+            frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size] =
+                    shatter_effects[i].zpolygon_to_shatter_gpu;
             
-            for (uint32_t m = 0; m < 3; m++) {
-                next_gpu_workload[*next_workload_size].x =
-                    (all_mesh_triangles[tri_i].vertices[m].x *
-                        shatter_effects[i].zpolygon_to_shatter.x_multiplier) +
-                    shatter_effects[i].zpolygon_to_shatter.x_offset;
-                next_gpu_workload[*next_workload_size].y =
-                    (all_mesh_triangles[tri_i].vertices[m].y *
-                        shatter_effects[i].zpolygon_to_shatter.y_multiplier) +
-                    shatter_effects[i].zpolygon_to_shatter.y_offset;
-                next_gpu_workload[*next_workload_size].z =
-                    (all_mesh_triangles[tri_i].vertices[m].z *
-                        shatter_effects[i].zpolygon_to_shatter.z_multiplier);
-                next_gpu_workload[*next_workload_size].parent_x =
-                    shatter_effects[i].zpolygon_to_shatter.x +
-                        (linear_distance_traveled *
-                            shatter_effects[i].linear_direction[0]) +
-                        (sq_distance_traveled *
-                            shatter_effects[i].squared_direction[0]) +
-                        (exploding_distance_traveled *
-                            exploding_direction.x);
-                next_gpu_workload[*next_workload_size].parent_y =
-                    shatter_effects[i].zpolygon_to_shatter.y +
-                        (linear_distance_traveled *
-                            shatter_effects[i].linear_direction[1]) +
-                        (sq_distance_traveled *
-                            shatter_effects[i].squared_direction[1]) +
-                        (exploding_distance_traveled *
-                            exploding_direction.y);;
-                next_gpu_workload[*next_workload_size].parent_z =
-                    shatter_effects[i].zpolygon_to_shatter.z +
+            frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size].xyz[0] +=
+                    (linear_distance_traveled *
+                        shatter_effects[i].linear_direction[0]) +
+                    (sq_distance_traveled *
+                        shatter_effects[i].squared_direction[0]) +
+                    (exploding_distance_traveled *
+                        exploding_direction.x);
+            
+            frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size].xyz[1] +=
+                    (linear_distance_traveled *
+                        shatter_effects[i].linear_direction[1]) +
+                    (sq_distance_traveled *
+                        shatter_effects[i].squared_direction[1]) +
+                    (exploding_distance_traveled *
+                        exploding_direction.y);
+            
+            frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size].xyz[2] +=
                         (linear_distance_traveled *
                             shatter_effects[i].linear_direction[2]) +
                         (sq_distance_traveled *
                             shatter_effects[i].squared_direction[2]) +
                         (exploding_distance_traveled *
-                            exploding_direction.z);;
-                next_gpu_workload[*next_workload_size].x_angle =
-                    shatter_effects[i].zpolygon_to_shatter.x_angle +
-                        rotation_applied[0];
-                next_gpu_workload[*next_workload_size].y_angle =
-                    shatter_effects[i].zpolygon_to_shatter.y_angle +
-                        rotation_applied[1];
-                next_gpu_workload[*next_workload_size].z_angle =
-                    shatter_effects[i].zpolygon_to_shatter.z_angle +
-                        rotation_applied[2];
-                next_gpu_workload[*next_workload_size].normal_x =
-                    all_mesh_triangles[tri_i].normal.x;
-                next_gpu_workload[*next_workload_size].normal_y =
-                    all_mesh_triangles[tri_i].normal.y;
-                next_gpu_workload[*next_workload_size].normal_z =
-                    all_mesh_triangles[tri_i].normal.z;
-                next_gpu_workload[*next_workload_size].RGBA[0] =
-                    shatter_effects[i].zpolygon_to_shatter.
-                        triangle_materials[material_i].color[0] +
-                            shatter_effects[i].zpolygon_to_shatter.rgb_bonus[0];
-                log_assert(
-                    next_gpu_workload[*next_workload_size].RGBA[0] >= -5.0f);
-                log_assert(
-                    next_gpu_workload[*next_workload_size].RGBA[0] <= 20.0f);
-                next_gpu_workload[*next_workload_size].RGBA[1] =
-                    shatter_effects[i].zpolygon_to_shatter.
-                        triangle_materials[material_i].color[1] +
-                            shatter_effects[i].zpolygon_to_shatter.rgb_bonus[1];
-                log_assert(
-                    next_gpu_workload[*next_workload_size].RGBA[1] >= -5.0f);
-                log_assert(
-                    next_gpu_workload[*next_workload_size].RGBA[1] <= 20.0f);
-                next_gpu_workload[*next_workload_size].RGBA[2] =
-                    shatter_effects[i].zpolygon_to_shatter.
-                        triangle_materials[material_i].color[2] +
-                            shatter_effects[i].zpolygon_to_shatter.rgb_bonus[2];
-                log_assert(
-                    next_gpu_workload[*next_workload_size].RGBA[2] >= -5.0f);
-                log_assert(
-                    next_gpu_workload[*next_workload_size].RGBA[2] <= 20.0f);
-                next_gpu_workload[*next_workload_size].RGBA[3] =
-                    shatter_effects[i].zpolygon_to_shatter.
-                        triangle_materials[material_i].color[3] *
-                    alpha;
-                next_gpu_workload[*next_workload_size].touchable_id =
-                    shatter_effects[i].zpolygon_to_shatter.touchable_id;
-                next_gpu_workload[*next_workload_size].texture_i =
-                    shatter_effects[i].zpolygon_to_shatter.
-                        triangle_materials[material_i].texture_i;
-                next_gpu_workload[*next_workload_size].texturearray_i =
-                    shatter_effects[i].zpolygon_to_shatter.
-                        triangle_materials[material_i].texturearray_i;
-                next_gpu_workload[*next_workload_size].uv[0] =
-                    all_mesh_triangles[tri_i].
-                        vertices[m].uv[0];
-                next_gpu_workload[*next_workload_size].uv[1] =
-                    all_mesh_triangles[tri_i].
-                        vertices[m].uv[1];
-                next_gpu_workload[*next_workload_size].ignore_lighting =
-                    shatter_effects[i].zpolygon_to_shatter.ignore_lighting;
-                next_gpu_workload[*next_workload_size].scale_factor =
-                    shatter_effects[i].zpolygon_to_shatter.scale_factor;
-                next_gpu_workload[*next_workload_size].ignore_camera =
-                    shatter_effects[i].zpolygon_to_shatter.ignore_camera;
+                            exploding_direction.z);
+            
+            frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size].xyz_angle[0] +=
+                    rotation[0];
+            frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size].xyz_angle[1] +=
+                    rotation[1];
+            frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size].xyz_angle[2] +=
+                    rotation[2];
+            
+            frame_data->polygon_materials[
+                frame_data->polygon_collection->size *
+                    MAX_MATERIALS_SIZE] =
+                        shatter_effects[i].zpolygon_to_shatter_material;
+            
+            for (uint32_t m = 0; m < 3; m++) {
+                frame_data->vertices[frame_data->vertices_size].
+                    locked_vertex_i = vert_i;
+                frame_data->vertices[frame_data->vertices_size].polygon_i =
+                    (int)frame_data->polygon_collection->size;
                 
-                if (*next_workload_size + 1 >= MAX_VERTICES_PER_BUFFER) {
+                if (frame_data->vertices_size + 1 >= MAX_VERTICES_PER_BUFFER) {
                     return;
                 }
-                *next_workload_size += 1;
+                frame_data->vertices_size += 1;
             }
         }
     }
-    */
 }
 
 ParticleEffect * particle_effects;

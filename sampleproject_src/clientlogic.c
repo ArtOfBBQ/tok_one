@@ -2,7 +2,7 @@
 
 void client_logic_startup(void) {
     
-    init_PNG_decoder(malloc_from_unmanaged);
+    init_PNG_decoder(malloc_from_managed, free_from_managed);
     
     const char * fontfile = "font.png";
     if (platform_resource_exists("font.png")) {
@@ -20,7 +20,8 @@ void client_logic_startup(void) {
         /* const uint32_t filenames_size: */
             1);
     
-    zPolygon quad;
+    PolygonRequest quad;
+    request_next_zpolygon(&quad);
     construct_quad(
         /* const float left_x: */
             -0.125f,
@@ -34,14 +35,15 @@ void client_logic_startup(void) {
             0.25f,
         /* zPolygon *recipient: */
             &quad);
-    quad.vertex_materials[0].texture_i = 0;
-    quad.vertex_materials[0].texturearray_i = 1;
-    quad.vertex_materials[0].color[0] = 1.00f;
-    quad.vertex_materials[0].color[1] = 1.00f;
-    quad.vertex_materials[0].color[2] = 1.00f;
-    quad.vertex_materials[0].color[3] = 0.40f;
-    quad.ignore_lighting = true;
-    request_zpolygon_to_render(&quad);
+    quad.gpu_material[0].texture_i = 0;
+    quad.gpu_material[0].texturearray_i = 1;
+    quad.gpu_material[0].rgba[0] = 1.00f;
+    quad.gpu_material[0].rgba[1] = 1.00f;
+    quad.gpu_material[0].rgba[2] = 1.00f;
+    quad.gpu_material[0].rgba[3] = 0.40f;
+    quad.gpu_data->ignore_lighting = true;
+    quad.gpu_data->ignore_camera = true;
+    commit_zpolygon_to_render(&quad);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
