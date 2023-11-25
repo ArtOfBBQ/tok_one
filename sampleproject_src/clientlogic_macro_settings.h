@@ -36,7 +36,7 @@ of the engine for your specific app.
 // the max # of triangles in all of your meshes/models combined
 #define ALL_LOCKED_VERTICES_SIZE 90000
 // The max number of 'materials ids' in 1 of your zpolygons
-#define MAX_MATERIALS_SIZE 10
+// #define MAX_MATERIALS_SIZE 10
 
 /*
 The max # of simultaneously active particle effects in your app

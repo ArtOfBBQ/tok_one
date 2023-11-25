@@ -35,8 +35,8 @@ void init_all_meshes(void) {
     }
     
     assert(ALL_LOCKED_VERTICES_SIZE > 0);
-    all_mesh_vertices = (LockedVertexWithMaterialCollection *)malloc_from_unmanaged(
-        sizeof(LockedVertexWithMaterialCollection));
+    all_mesh_vertices = (LockedVertexWithMaterialCollection *)
+        malloc_from_unmanaged(sizeof(LockedVertexWithMaterialCollection));
     
     // Let's hardcode a basic quad since that's a mesh that will be used by
     // even the features inherent to the engine itself (the terminal, any
@@ -528,8 +528,8 @@ void init_all_meshes(void) {
     all_mesh_summaries[2].base_height = 1.0f;
     all_mesh_summaries[2].base_depth = 1.0f;
     all_mesh_summaries[2].materials_size = 1;
-    all_mesh_summaries[2].shattered_vertices_head_i = -1;
-    all_mesh_summaries[2].shattered_vertices_size = 0;
+    all_mesh_summaries[2].shattered_vertices_head_i = 42;
+    all_mesh_summaries[2].shattered_vertices_size = 1;
     
     // basic point (only 1 vertex)
     all_mesh_vertices->gpu_data[42].xyz[0]            = 0;
@@ -1123,12 +1123,94 @@ void center_mesh_offsets(
     }
 }
 
+static float get_squared_distance_from_locked_vertices(
+    const GPULockedVertex a,
+    const GPULockedVertex b)
+{
+    return
+        ((a.xyz[0] - b.xyz[0]) * (a.xyz[0] - b.xyz[0])) +
+        ((a.xyz[1] - b.xyz[1]) * (a.xyz[1] - b.xyz[1])) +
+        ((a.xyz[2] - b.xyz[2]) * (a.xyz[2] - b.xyz[2]));
+}
+
+/* the largest length amongst any dimension be it x, y, or z */
+static float get_squared_triangle_length_from_locked_vertices(
+    const GPULockedVertex * vertices)
+{
+    float largest_squared_dist = FLOAT32_MIN;
+    #ifndef LOGGER_IGNORE_ASSERTS
+    int32_t largest_start_vertex_i = -1;
+    int32_t largest_end_vertex_i = -1;
+    #endif
+    
+    for (int32_t start_vertex_i = 0; start_vertex_i < 3; start_vertex_i++) {
+        
+        int32_t end_vertex_i = (start_vertex_i + 1) % 3;
+        
+        float squared_x =
+            ((vertices[start_vertex_i].xyz[0] -
+                vertices[end_vertex_i].xyz[0]) *
+            (vertices[start_vertex_i].xyz[0] -
+                vertices[end_vertex_i].xyz[0]));
+        float squared_y =
+            ((vertices[start_vertex_i].xyz[1] -
+                vertices[end_vertex_i].xyz[1]) *
+            (vertices[start_vertex_i].xyz[1] -
+                vertices[end_vertex_i].xyz[1]));
+        float squared_z =
+            ((vertices[start_vertex_i].xyz[2] -
+                vertices[end_vertex_i].xyz[2]) *
+            (vertices[start_vertex_i].xyz[2] -
+                vertices[end_vertex_i].xyz[2]));
+        
+        float new_squared_dist =
+            squared_x +
+            squared_y +
+            squared_z;
+        
+        log_assert(new_squared_dist > 0.0f);
+        
+        if (new_squared_dist > largest_squared_dist) {
+            largest_squared_dist = new_squared_dist;
+            #ifndef LOGGER_IGNORE_ASSERTS
+            largest_start_vertex_i = start_vertex_i;
+            largest_end_vertex_i = end_vertex_i;
+            #endif
+            log_assert(largest_start_vertex_i != largest_end_vertex_i);
+        }
+    }
+    
+    log_assert(largest_start_vertex_i != largest_end_vertex_i);
+    
+    return largest_squared_dist;
+}
+
+static int32_t find_biggest_area_triangle_head_in(
+    int32_t head_vertex_i,
+    int32_t tail_vertex_i)
+{
+    log_assert(tail_vertex_i > head_vertex_i);
+    
+    float biggest_area = FLOAT32_MIN;
+    int32_t biggest_area_i = -1;
+    
+    for (int32_t i = head_vertex_i; i < tail_vertex_i; i += 3) {
+        float area = get_squared_triangle_length_from_locked_vertices(
+            &all_mesh_vertices->gpu_data[i]);
+        if (area > biggest_area) {
+            biggest_area = area;
+            biggest_area_i = i;
+        }
+    }
+    
+    return biggest_area_i;
+}
+
 void create_shattered_version_of_mesh(
     const int32_t mesh_id,
     const uint32_t triangles_multiplier)
 {
-    // TODO: re-implement after the gpu buffer refactoring
-    #if 0
+    log_assert(triangles_multiplier >= 1);
     if (triangles_multiplier == 1) {
         all_mesh_summaries[mesh_id].shattered_vertices_size =
             all_mesh_summaries[mesh_id].vertices_size;
@@ -1137,15 +1219,13 @@ void create_shattered_version_of_mesh(
         return;
     }
     
-    int32_t orig_head_i =
-        all_mesh_summaries[mesh_id].vertices_head_i;
+    int32_t orig_head_i = all_mesh_summaries[mesh_id].vertices_head_i;
     #ifndef LOGGER_IGNORE_ASSERTS
     int32_t orig_tail_i =
         all_mesh_summaries[mesh_id].vertices_head_i +
         all_mesh_summaries[mesh_id].vertices_size;
     #endif
-    int32_t orig_vertices_size =
-        all_mesh_summaries[mesh_id].vertices_size;
+    int32_t orig_vertices_size = all_mesh_summaries[mesh_id].vertices_size;
     
     int32_t new_head_i = (int32_t)all_mesh_vertices->size;
     
@@ -1158,17 +1238,28 @@ void create_shattered_version_of_mesh(
         (int32_t)all_mesh_vertices->size +
         (int32_t)all_mesh_summaries[mesh_id].shattered_vertices_size;
     
+    /*
+    We will iterate through all triangles, finding the biggest one each time.
+    Next, split the biggest one into 2, overwriting its original and appending
+    the new one.
+    This can be done once on app startup, since we preload all objs anyway.
+    */
+    
     // first, copy all of the original triangle vertices as they are
     int32_t temp_new_tail_i = new_head_i + orig_vertices_size - 1;
-    for (int32_t i = 0; i < orig_vertices_size; i++) {
+    for (int32_t i = 0; i < orig_vertices_size; i += 3) {
         log_assert(orig_head_i + i <= orig_tail_i);
-        all_mesh_vertices->gpu_data[new_head_i + i] =
-            all_mesh_vertices->gpu_data[orig_head_i + i];
+        all_mesh_vertices->gpu_data[new_head_i + i + 0] =
+            all_mesh_vertices->gpu_data[orig_head_i + i + 0];
+        all_mesh_vertices->gpu_data[new_head_i + i + 1] =
+            all_mesh_vertices->gpu_data[orig_head_i + i + 1];
+        all_mesh_vertices->gpu_data[new_head_i + i + 2] =
+            all_mesh_vertices->gpu_data[orig_head_i + i + 2];
         
         #ifndef LOGGER_IGNORE_ASSERTS
         log_assert(new_head_i + i <= temp_new_tail_i);
         
-        float tri_length = get_squared_triangle_length(
+        float tri_length = get_squared_triangle_length_from_locked_vertices(
             &all_mesh_vertices->gpu_data[new_head_i + i]);
         log_assert(tri_length > 0);
         #endif
@@ -1177,44 +1268,30 @@ void create_shattered_version_of_mesh(
     while (temp_new_tail_i <= goal_new_tail_i) {
         
         // find the biggest triangle to split in 2
-        float biggest_area = FLOAT32_MIN;
-        int32_t biggest_area_i = -1;
+        int32_t biggest_area_head_i = find_biggest_area_triangle_head_in(
+            new_head_i,
+            temp_new_tail_i);
         
-        for (int32_t i = new_head_i; i <= temp_new_tail_i; i++) {
-            float area =
-                get_squared_triangle_length(&all_mesh_vertices->gpu_data[i]);
-            if (area > biggest_area) {
-                biggest_area = area;
-                biggest_area_i = i;
-            }
-        }
-        
-        log_assert(biggest_area >= 0);
-        log_assert(biggest_area_i >= 0);
-        
-        // split the triangle at biggest_area_i into 2
-        zTriangle first_tri;
-        zTriangle second_tri;
-        
-        int32_t midline_start_vx_i = 0;
-        int32_t midline_end_vx_i = 1;
+        // find a 'middle line' that splits this triangle in 2
+        int32_t midline_start_vert_i = 0;
+        int32_t midline_end_vert_i = 1;
         
         #define USE_MIDLINE -1
-        int32_t first_new_triangle_vertices->gpu_data[3];
-        int32_t second_new_triangle_vertices->gpu_data[3];
+        int32_t first_new_triangle_vertices[3];
+        int32_t second_new_triangle_vertices[3];
         
         float distance_0_to_1 =
-            get_squared_distance(
-                all_mesh_vertices->gpu_data[biggest_area_i + 0],
-                all_mesh_vertices->gpu_data[biggest_area_i + 1]);
+            get_squared_distance_from_locked_vertices(
+                all_mesh_vertices->gpu_data[biggest_area_head_i + 0],
+                all_mesh_vertices->gpu_data[biggest_area_head_i + 1]);
         float distance_1_to_2 =
-            get_squared_distance(
-                all_mesh_vertices->gpu_data[biggest_area_i + 1],
-                all_mesh_vertices->gpu_data[biggest_area_i + 2]);
+            get_squared_distance_from_locked_vertices(
+                all_mesh_vertices->gpu_data[biggest_area_head_i + 1],
+                all_mesh_vertices->gpu_data[biggest_area_head_i + 2]);
         float distance_2_to_0 =
-            get_squared_distance(
-                all_mesh_vertices->gpu_data[biggest_area_i + 2],
-                all_mesh_vertices->gpu_data[biggest_area_i + 0]);
+            get_squared_distance_from_locked_vertices(
+                all_mesh_vertices->gpu_data[biggest_area_head_i + 2],
+                all_mesh_vertices->gpu_data[biggest_area_head_i + 0]);
         
         log_assert(distance_0_to_1 > 0.0f);
         log_assert(distance_1_to_2 > 0.0f);
@@ -1225,7 +1302,7 @@ void create_shattered_version_of_mesh(
             distance_0_to_1 > distance_2_to_0)
         {
             /*
-            Our triangle's with vertices 0,1, and 2, with 0-1 being the
+            Our triangle with vertices 0, 1, and 2, with 0-1 being the
             biggest line and 'M' splitting that line in the middle
             0    M     1
             ...........
@@ -1235,18 +1312,18 @@ void create_shattered_version_of_mesh(
             .
             2
             */
-            midline_start_vx_i = 0;
-            midline_end_vx_i = 1;
+            midline_start_vert_i = 0;
+            midline_end_vert_i = 1;
             
             // first new triangle will be 0-M-2
-            first_new_triangle_vertices->gpu_data[0] = 0;
-            first_new_triangle_vertices->gpu_data[1] = USE_MIDLINE;
-            first_new_triangle_vertices->gpu_data[2] = 2;
+            first_new_triangle_vertices[0] = 0;
+            first_new_triangle_vertices[1] = USE_MIDLINE;
+            first_new_triangle_vertices[2] = 2;
             
             // and the second triangle will be M-1-2
-            second_new_triangle_vertices->gpu_data[0] = USE_MIDLINE;
-            second_new_triangle_vertices->gpu_data[1] = 1;
-            second_new_triangle_vertices->gpu_data[2] = 2;
+            second_new_triangle_vertices[0] = USE_MIDLINE;
+            second_new_triangle_vertices[1] = 1;
+            second_new_triangle_vertices[2] = 2;
         } else if (
             distance_1_to_2 > distance_2_to_0 &&
             distance_1_to_2 > distance_0_to_1)
@@ -1261,16 +1338,16 @@ void create_shattered_version_of_mesh(
             2
             */
             
-            midline_start_vx_i = 1;
-            midline_end_vx_i = 2;
+            midline_start_vert_i = 1;
+            midline_end_vert_i = 2;
             
-            first_new_triangle_vertices->gpu_data[0] = 0;
-            first_new_triangle_vertices->gpu_data[1] = 1;
-            first_new_triangle_vertices->gpu_data[2] = USE_MIDLINE;
+            first_new_triangle_vertices[0] = 0;
+            first_new_triangle_vertices[1] = 1;
+            first_new_triangle_vertices[2] = USE_MIDLINE;
             
-            second_new_triangle_vertices->gpu_data[0] = 0;
-            second_new_triangle_vertices->gpu_data[1] = USE_MIDLINE;
-            second_new_triangle_vertices->gpu_data[2] = 2;
+            second_new_triangle_vertices[0] = 0;
+            second_new_triangle_vertices[1] = USE_MIDLINE;
+            second_new_triangle_vertices[2] = 2;
         } else {
             /*
             0          1
@@ -1285,95 +1362,104 @@ void create_shattered_version_of_mesh(
             log_assert(distance_2_to_0 >= distance_1_to_2);
             log_assert(distance_2_to_0 >= distance_0_to_1);
             
-            midline_start_vx_i = 0;
-            midline_end_vx_i = 2;
+            midline_start_vert_i = 0;
+            midline_end_vert_i = 2;
             
-            first_new_triangle_vertices->gpu_data[0] = 0;
-            first_new_triangle_vertices->gpu_data[1] = 1;
-            first_new_triangle_vertices->gpu_data[2] = USE_MIDLINE;
+            first_new_triangle_vertices[0] = 0;
+            first_new_triangle_vertices[1] = 1;
+            first_new_triangle_vertices[2] = USE_MIDLINE;
             
-            second_new_triangle_vertices->gpu_data[0] = USE_MIDLINE;
-            second_new_triangle_vertices->gpu_data[1] = 1;
-            second_new_triangle_vertices->gpu_data[2] = 2;
+            second_new_triangle_vertices[0] = USE_MIDLINE;
+            second_new_triangle_vertices[1] = 1;
+            second_new_triangle_vertices[2] = 2;
         }
         
-        zVertex mid_of_line;
-        mid_of_line.x =
-            (all_mesh_vertices->gpu_data[biggest_area_i].
-                vertices->gpu_data[midline_start_vx_i].x +
-            all_mesh_vertices->gpu_data[biggest_area_i].
-                vertices->gpu_data[midline_end_vx_i].x) / 2;
-        mid_of_line.y =
-            (all_mesh_vertices->gpu_data[biggest_area_i].
-                vertices->gpu_data[midline_start_vx_i].y +
-            all_mesh_vertices->gpu_data[biggest_area_i].
-                vertices->gpu_data[midline_end_vx_i].y) / 2;
-        mid_of_line.z =
-            (all_mesh_vertices->gpu_data[biggest_area_i].
-                vertices->gpu_data[midline_start_vx_i].z +
-            all_mesh_vertices->gpu_data[biggest_area_i].
-                vertices->gpu_data[midline_end_vx_i].z) / 2;
+        GPULockedVertex mid_of_line;
+        mid_of_line.xyz[0] =
+            (all_mesh_vertices->gpu_data[
+                    biggest_area_head_i + midline_start_vert_i].xyz[0] +
+                all_mesh_vertices->gpu_data[
+                    biggest_area_head_i + midline_end_vert_i].xyz[0]) / 2;
+        mid_of_line.xyz[1] =
+            (all_mesh_vertices->gpu_data[
+                biggest_area_head_i + midline_start_vert_i].xyz[1] +
+            all_mesh_vertices->gpu_data[
+                biggest_area_head_i + midline_end_vert_i].xyz[1]) / 2;
+        mid_of_line.xyz[2] =
+            (all_mesh_vertices->gpu_data[
+                biggest_area_head_i + midline_start_vert_i].xyz[2] +
+            all_mesh_vertices->gpu_data[
+                biggest_area_head_i + midline_end_vert_i].xyz[2]) / 2;
         mid_of_line.uv[0] =
-            (all_mesh_vertices->gpu_data[biggest_area_i].
-                vertices->gpu_data[midline_start_vx_i].uv[0] +
-            all_mesh_vertices->gpu_data[biggest_area_i].
-                vertices->gpu_data[midline_end_vx_i].uv[0]) / 2;
+            (all_mesh_vertices->gpu_data[
+                biggest_area_head_i + midline_start_vert_i].uv[0] +
+            all_mesh_vertices->gpu_data[
+                biggest_area_head_i + midline_end_vert_i].uv[0]) / 2;
         mid_of_line.uv[1] =
-            (all_mesh_vertices->gpu_data[biggest_area_i].
-                vertices->gpu_data[midline_start_vx_i].uv[1] +
-            all_mesh_vertices->gpu_data[biggest_area_i].
-                vertices->gpu_data[midline_end_vx_i].uv[1]) / 2;
+            (all_mesh_vertices->gpu_data[
+                biggest_area_head_i + midline_start_vert_i].uv[1] +
+            all_mesh_vertices->gpu_data[
+                biggest_area_head_i + midline_end_vert_i].uv[1]) / 2;
         
-        first_tri.normal = all_mesh_vertices->gpu_data[biggest_area_i].normal;
-        second_tri.normal = all_mesh_vertices->gpu_data[biggest_area_i].normal;
-        first_tri.parent_material_i =
-            all_mesh_vertices->gpu_data[biggest_area_i].material_i;
-        second_tri.parent_material_i =
-            all_mesh_vertices->gpu_data[biggest_area_i].material_i;
+        // split the triangle at biggest_area_i into 2
+        GPULockedVertex first_tri[3];
+        GPULockedVertex second_tri[3];
+        
+        first_tri[0] = all_mesh_vertices->gpu_data[biggest_area_head_i + 0];
+        first_tri[1] = all_mesh_vertices->gpu_data[biggest_area_head_i + 1];
+        first_tri[2] = all_mesh_vertices->gpu_data[biggest_area_head_i + 2];
+        
+        second_tri[0] = all_mesh_vertices->gpu_data[biggest_area_head_i + 0];
+        second_tri[0] = all_mesh_vertices->gpu_data[biggest_area_head_i + 1];
+        second_tri[0] = all_mesh_vertices->gpu_data[biggest_area_head_i + 2];
+        
         for (uint32_t m = 0; m < 3; m++) {
             
-            if (first_new_triangle_vertices->gpu_data[m] == USE_MIDLINE) {
-                first_tri.vertices->gpu_data[m] = mid_of_line;
+            if (first_new_triangle_vertices[m] == USE_MIDLINE) {
+                first_tri[m] = mid_of_line;
             } else {
-                log_assert(first_new_triangle_vertices->gpu_data[m] >= 0);
-                log_assert(first_new_triangle_vertices->gpu_data[m] < 3);
-                first_tri.vertices->gpu_data[m] =
-                    all_mesh_vertices->gpu_data[biggest_area_i].
-                        vertices->gpu_data[first_new_triangle_vertices->gpu_data[m]];
+                log_assert(first_new_triangle_vertices[m] >= 0);
+                log_assert(first_new_triangle_vertices[m] < 3);
+                first_tri[m] =
+                    all_mesh_vertices->gpu_data[
+                        biggest_area_head_i + first_new_triangle_vertices[m]];
             }
             
-            if (second_new_triangle_vertices->gpu_data[m] == USE_MIDLINE) {
-                second_tri.vertices->gpu_data[m] = mid_of_line;
+            if (second_new_triangle_vertices[m] == USE_MIDLINE) {
+                second_tri[m] = mid_of_line;
             } else {
-                log_assert(second_new_triangle_vertices->gpu_data[m] >= 0);
-                log_assert(second_new_triangle_vertices->gpu_data[m] < 3);
-                second_tri.vertices->gpu_data[m] =
-                    all_mesh_vertices->gpu_data[biggest_area_i].
-                        vertices->gpu_data[second_new_triangle_vertices->gpu_data[m]];
+                log_assert(second_new_triangle_vertices[m] >= 0);
+                log_assert(second_new_triangle_vertices[m]  < 3);
+                second_tri[m] =
+                    all_mesh_vertices->gpu_data[
+                        biggest_area_head_i + second_new_triangle_vertices[m]];
             }
         }
         
         #ifndef LOGGER_IGNORE_ASSERTS
         float orig_area =
-            get_squared_triangle_length(
-                &all_mesh_triangles[biggest_area_i]);
+            get_squared_triangle_length_from_locked_vertices(
+                &all_mesh_vertices->gpu_data[biggest_area_head_i]);
         float first_tri_area =
-            get_squared_triangle_length(&first_tri);
+            get_squared_triangle_length_from_locked_vertices(first_tri);
         float second_tri_area =
-            get_squared_triangle_length(&second_tri);
+            get_squared_triangle_length_from_locked_vertices(second_tri);
         log_assert(orig_area > 0.0f);
         log_assert(first_tri_area > 0.0f);
         log_assert(second_tri_area > 0.0f);
         #endif
         
-        all_mesh_vertices->gpu_data[biggest_area_i] = first_tri;
-        all_mesh_vertices->gpu_data[temp_new_tail_i + 1] = second_tri;
+        all_mesh_vertices->gpu_data[biggest_area_head_i + 0] = first_tri[0];
+        all_mesh_vertices->gpu_data[biggest_area_head_i + 1] = first_tri[1];
+        all_mesh_vertices->gpu_data[biggest_area_head_i + 2] = first_tri[2];
+        all_mesh_vertices->gpu_data[temp_new_tail_i + 1] = second_tri[0];
+        all_mesh_vertices->gpu_data[temp_new_tail_i + 2] = second_tri[1];
+        all_mesh_vertices->gpu_data[temp_new_tail_i + 3] = second_tri[2];
         
-        temp_new_tail_i++;
+        temp_new_tail_i += 3;
     }
     
     log_assert(all_mesh_vertices->size < (uint32_t)goal_new_tail_i);
     
     all_mesh_vertices->size = (uint32_t)goal_new_tail_i + 1;
-    #endif
 }

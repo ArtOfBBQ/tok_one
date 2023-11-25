@@ -22,6 +22,7 @@ void client_logic_startup(void) {
     
     PolygonRequest quad;
     request_next_zpolygon(&quad);
+
     construct_quad(
         /* const float left_x: */
             -0.125f,
@@ -35,15 +36,64 @@ void client_logic_startup(void) {
             0.25f,
         /* zPolygon *recipient: */
             &quad);
-    quad.gpu_material[0].texture_i = 0;
-    quad.gpu_material[0].texturearray_i = 1;
-    quad.gpu_material[0].rgba[0] = 1.00f;
-    quad.gpu_material[0].rgba[1] = 1.00f;
-    quad.gpu_material[0].rgba[2] = 1.00f;
-    quad.gpu_material[0].rgba[3] = 0.40f;
+    quad.cpu_data->object_id = 321;
+    quad.cpu_data->visible   = true;
     quad.gpu_data->ignore_lighting = true;
-    quad.gpu_data->ignore_camera = true;
+    quad.gpu_material[0].texture_i      = 0;
+    quad.gpu_material[0].texturearray_i = 1;
+    quad.gpu_material[0].rgba[0] = 0.50f;
+    quad.gpu_material[0].rgba[1] = 0.50f;
+    quad.gpu_material[0].rgba[2] = 0.75f;
+    quad.gpu_material[0].rgba[3] = 1.00f;
     commit_zpolygon_to_render(&quad);
+    
+    PolygonRequest teapot;
+    request_next_zpolygon(&teapot);
+    construct_zpolygon(&teapot);
+    teapot.cpu_data->object_id            = 321;
+    teapot.cpu_data->visible              = true;
+    teapot.gpu_data->xyz[0]               = 0.05f;
+    teapot.gpu_data->xyz[1]               = 0.05f;
+    teapot.gpu_data->xyz[2]               = 0.25f;
+    teapot.gpu_data->xyz_multiplier[0]    = 1.0f;
+    teapot.gpu_data->xyz_multiplier[1]    = 1.0f;
+    teapot.gpu_data->xyz_multiplier[2]    = 1.0f;
+    teapot.gpu_data->xyz_offset[0]        = 0.0f;
+    teapot.gpu_data->xyz_offset[1]        = 0.0f;
+    teapot.gpu_data->xyz_offset[2]        = 0.0f;
+    teapot.gpu_material[0].texture_i      = -1;
+    teapot.gpu_material[0].texturearray_i = -1;
+    teapot.gpu_material[0].rgba[0]        = 0.50f;
+    teapot.gpu_material[0].rgba[1]        = 0.50f;
+    teapot.gpu_material[0].rgba[2]        = 0.75f;
+    teapot.gpu_material[0].rgba[3]        = 1.00f;
+    int32_t teapot_mesh_id = new_mesh_id_from_resource("teapot.obj");
+    teapot.cpu_data->mesh_id              = teapot_mesh_id;
+    log_assert(teapot.cpu_data->mesh_id == 3); // after quad, cube, and point
+    teapot.gpu_data->ignore_lighting      = false;
+    teapot.gpu_data->ignore_camera        = false;
+    scale_zpolygon_multipliers_to_height(
+        /* zPolygonCPU * cpu_data: */
+            teapot.cpu_data,
+        /* GPUPolygon *gpu_data: */
+            teapot.gpu_data,
+        /* const float new_height: */
+            0.25f);
+    center_mesh_offsets(teapot_mesh_id);
+    commit_zpolygon_to_render(&teapot);
+    
+    zLightSource * light = next_zlight();
+    light->RGBA[0] =  0.50f;
+    light->RGBA[1] =  0.15f;
+    light->RGBA[2] =  0.15f;
+    light->RGBA[3] =  1.00f;
+    light->ambient =  1.00f;
+    light->diffuse =  1.00f;
+    light->reach   =  5.00f;
+    light->x       = -2.00f;
+    light->y       =  0.50f;
+    light->z       =  0.75f;
+    commit_zlight(light);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -107,28 +157,54 @@ static void client_handle_keypresses(
         camera.y += cam_speed;
     }
     
-    if (keypress_map[TOK_KEY_A] == true) {                                                                                                 
-        camera.x_angle += cam_rotation_speed;                                   
+    if (keypress_map[TOK_KEY_A] == true) {
+        camera.x_angle += cam_rotation_speed;
     }
     
-    if (keypress_map[TOK_KEY_Z] == true) {                                                                                                
-        camera.z_angle -= cam_rotation_speed;                                   
+    if (keypress_map[TOK_KEY_Z] == true) {
+        camera.z_angle -= cam_rotation_speed;
     }
     
-    if (keypress_map[TOK_KEY_X] == true) {                                                                                                 
-        camera.z_angle += cam_rotation_speed;                                    
+    if (keypress_map[TOK_KEY_X] == true) {
+        camera.z_angle += cam_rotation_speed;
     }
     
-    if (keypress_map[TOK_KEY_Q] == true) {                                                                                               
-        camera.x_angle -= cam_rotation_speed;                                   
+    if (keypress_map[TOK_KEY_Q] == true) {
+        camera.x_angle -= cam_rotation_speed;
     }
     
-    if (keypress_map[TOK_KEY_W] == true) {                                             
-        camera.y_angle -= cam_rotation_speed;                              
+    if (keypress_map[TOK_KEY_W] == true) {
+        camera.y_angle -= cam_rotation_speed;
     }
     
     if (keypress_map[TOK_KEY_S] == true) {
         camera.y_angle += cam_rotation_speed;
+    }
+    
+    if (keypress_map[TOK_KEY_T] == true) {
+        // particle effect for object id 321
+        for (uint32_t zp_i = 0; zp_i < zpolygons_to_render->size; zp_i++) {
+            if (zpolygons_to_render->cpu_data[zp_i].object_id != 321) {
+                continue;
+            }
+            
+            ShatterEffect * shatter = next_shatter_effect();
+            shatter->zpolygon_to_shatter_cpu =
+                zpolygons_to_render->cpu_data[zp_i];
+            zpolygons_to_render->cpu_data[zp_i].deleted = true;
+            shatter->zpolygon_to_shatter_gpu =
+                zpolygons_to_render->gpu_data[zp_i];
+            shatter->zpolygon_to_shatter_material =
+                zpolygons_to_render->gpu_materials[zp_i * MAX_MATERIALS_SIZE];
+            
+            shatter->longest_random_delay_before_launch = 5000000;
+            shatter->linear_direction[0] = 0.8f;
+            shatter->linear_direction[1] = 0.1f;
+            shatter->linear_direction[2] = 0.1f;
+            shatter->linear_distance_per_second = 0.05f;
+            shatter->exploding_distance_per_second = 0.05f;
+            commit_shatter_effect(shatter);
+        }
     }
     
     if (keypress_map[TOK_KEY_BACKSLASH] == true) {

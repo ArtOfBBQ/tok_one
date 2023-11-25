@@ -153,27 +153,18 @@ void add_shatter_effects_to_workload(
         
         shatter_effects[i].elapsed += elapsed_nanoseconds;
         
-        int32_t tri_head_i =
+        int32_t shatter_head_i =
             all_mesh_summaries[
                 shatter_effects[i].zpolygon_to_shatter_cpu.mesh_id].
                     shattered_vertices_head_i;
-        log_assert(tri_head_i >= 0);
-        int32_t tri_tail_i =
-            tri_head_i +
+        log_assert(shatter_head_i >= 0);
+        int32_t shatter_tail_i =
+            shatter_head_i +
             all_mesh_summaries[
                 shatter_effects[i].zpolygon_to_shatter_cpu.mesh_id].
                     shattered_vertices_size;
-        log_assert(tri_tail_i >= 0);
-        
-        int32_t full_tri_count = (tri_tail_i - tri_head_i);
-        if (shatter_effects[i].limit_triangles_to > 0 &&
-            full_tri_count > (int32_t)shatter_effects[i].limit_triangles_to)
-        {
-            int32_t excess_tri_count =
-                full_tri_count - (int32_t)shatter_effects[i].limit_triangles_to;
-            tri_tail_i -= excess_tri_count;
-        }
-        
+        log_assert(shatter_tail_i >= 0);
+         
         uint64_t lifetime_so_far = shatter_effects[i].elapsed;
         if (
             lifetime_so_far >
@@ -185,8 +176,8 @@ void add_shatter_effects_to_workload(
         }
         
         for (
-            int32_t vert_i = tri_head_i;
-            vert_i <= tri_tail_i;
+            int32_t vert_i = shatter_head_i;
+            vert_i <= shatter_tail_i;
             vert_i += 3)
         {
             uint64_t random_delay =
@@ -307,7 +298,7 @@ void add_shatter_effects_to_workload(
             
             for (uint32_t m = 0; m < 3; m++) {
                 frame_data->vertices[frame_data->vertices_size].
-                    locked_vertex_i = vert_i;
+                    locked_vertex_i = vert_i + m;
                 frame_data->vertices[frame_data->vertices_size].polygon_i =
                     (int)frame_data->polygon_collection->size;
                 
@@ -316,6 +307,7 @@ void add_shatter_effects_to_workload(
                 }
                 frame_data->vertices_size += 1;
             }
+            frame_data->polygon_collection->size += 1;
         }
     }
 }

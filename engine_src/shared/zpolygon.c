@@ -80,7 +80,8 @@ void request_next_zpolygon(PolygonRequest * stack_recipient)
             stack_recipient->cpu_data     = &zpolygons_to_render->cpu_data[i];
             stack_recipient->gpu_data     = &zpolygons_to_render->gpu_data[i];
             stack_recipient->gpu_material =
-                &zpolygons_to_render->gpu_materials[(i * MAX_MATERIALS_SIZE)+0];
+                &zpolygons_to_render->gpu_materials[
+                    (i * MAX_MATERIALS_SIZE) + 0];
             stack_recipient->cpu_data->committed = false;
             return;
         }
@@ -93,7 +94,7 @@ void request_next_zpolygon(PolygonRequest * stack_recipient)
         &zpolygons_to_render->gpu_data[zpolygons_to_render->size];
     stack_recipient->gpu_material = &zpolygons_to_render->
         gpu_materials[(zpolygons_to_render->size * MAX_MATERIALS_SIZE) + 0];
-    stack_recipient->cpu_data[zpolygons_to_render->size].deleted = true;
+    stack_recipient->cpu_data[zpolygons_to_render->size].deleted = false;
     stack_recipient->cpu_data->committed = false;
     zpolygons_to_render->size += 1;
     
