@@ -1310,8 +1310,8 @@ void create_shattered_version_of_mesh(
         log_assert(distance_2_to_0 > 0.0f);
         
         if (
-            distance_0_to_1 > distance_1_to_2 &&
-            distance_0_to_1 > distance_2_to_0)
+            distance_0_to_1 >= distance_1_to_2 &&
+            distance_0_to_1 >= distance_2_to_0)
         {
             /*
             Our triangle with vertices 0, 1, and 2, with 0-1 being the
@@ -1337,8 +1337,8 @@ void create_shattered_version_of_mesh(
             second_new_triangle_vertices[1] = 1;
             second_new_triangle_vertices[2] = 2;
         } else if (
-            distance_1_to_2 > distance_2_to_0 &&
-            distance_1_to_2 > distance_0_to_1)
+            distance_1_to_2 >= distance_2_to_0 &&
+            distance_1_to_2 >= distance_0_to_1)
         {
             /*
             0          1
@@ -1422,8 +1422,8 @@ void create_shattered_version_of_mesh(
         first_tri[2] = all_mesh_vertices->gpu_data[biggest_area_head_i + 2];
         
         second_tri[0] = all_mesh_vertices->gpu_data[biggest_area_head_i + 0];
-        second_tri[0] = all_mesh_vertices->gpu_data[biggest_area_head_i + 1];
-        second_tri[0] = all_mesh_vertices->gpu_data[biggest_area_head_i + 2];
+        second_tri[1] = all_mesh_vertices->gpu_data[biggest_area_head_i + 1];
+        second_tri[2] = all_mesh_vertices->gpu_data[biggest_area_head_i + 2];
         
         for (uint32_t m = 0; m < 3; m++) {
             

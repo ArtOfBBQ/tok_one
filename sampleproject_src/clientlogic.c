@@ -20,32 +20,48 @@ void client_logic_startup(void) {
         /* const uint32_t filenames_size: */
             1);
     
-    PolygonRequest quad;
-    request_next_zpolygon(&quad);
-
-    construct_quad(
-        /* const float left_x: */
-            -0.125f,
-        /* const float top_y: */
-            -0.125f,
+    request_label_around(
+        /* const int32_t with_object_id: */
+            321,
+        /* const char *text_to_draw: */
+            "Press T for a shatter effect",
+        /* const float mid_x_pixelspace: */
+            0.5f,
+        /* const float mid_y_pixelspace: */
+            0.5f,
         /* const float z: */
-            0.75f,
-        /* const float width: */
-            0.25f,
-        /* const float height: */
-            0.25f,
-        /* zPolygon *recipient: */
-            &quad);
-    quad.cpu_data->object_id = 321;
-    quad.cpu_data->visible   = true;
-    quad.gpu_data->ignore_lighting = true;
-    quad.gpu_material[0].texture_i      = 0;
-    quad.gpu_material[0].texturearray_i = 1;
-    quad.gpu_material[0].rgba[0] = 0.50f;
-    quad.gpu_material[0].rgba[1] = 0.50f;
-    quad.gpu_material[0].rgba[2] = 0.75f;
-    quad.gpu_material[0].rgba[3] = 1.00f;
-    commit_zpolygon_to_render(&quad);
+            0.9f,
+        /* const float max_width: */
+            1000.0f,
+        /* const uint32_t ignore_camera: */
+            false);
+    
+    //    PolygonRequest quad;
+    //    request_next_zpolygon(&quad);
+    //
+    //    construct_quad(
+    //        /* const float left_x: */
+    //            -0.125f,
+    //        /* const float top_y: */
+    //            -0.125f,
+    //        /* const float z: */
+    //            0.75f,
+    //        /* const float width: */
+    //            0.25f,
+    //        /* const float height: */
+    //            0.25f,
+    //        /* zPolygon *recipient: */
+    //            &quad);
+    //    quad.cpu_data->object_id = 321;
+    //    quad.cpu_data->visible   = true;
+    //    quad.gpu_data->ignore_lighting = true;
+    //    quad.gpu_material[0].texture_i      = 0;
+    //    quad.gpu_material[0].texturearray_i = 1;
+    //    quad.gpu_material[0].rgba[0] = 0.50f;
+    //    quad.gpu_material[0].rgba[1] = 0.50f;
+    //    quad.gpu_material[0].rgba[2] = 0.75f;
+    //    quad.gpu_material[0].rgba[3] = 1.00f;
+    //    commit_zpolygon_to_render(&quad);
     
     //    PolygonRequest teapot;
     //    request_next_zpolygon(&teapot);

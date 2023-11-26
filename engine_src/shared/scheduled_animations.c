@@ -285,16 +285,13 @@ void request_shatter_and_destroy(
             zpolygons_to_render->gpu_materials[zp_i * MAX_MATERIALS_SIZE];
         shatter->wait_first = wait_before_first_run;
         shatter->longest_random_delay_before_launch = duration_microseconds / 2;
-        shatter->start_fade_out_at_elapsed =
-            (duration_microseconds / 10) * 9;
+        shatter->start_fade_out_at_elapsed = (duration_microseconds / 10) * 9;
         shatter->finish_fade_out_at_elapsed = duration_microseconds;
         shatter->linear_direction[0] = linear_direction[0];
         shatter->linear_direction[1] = linear_direction[1];
         shatter->linear_direction[2] = linear_direction[2];
-        shatter->linear_distance_per_second =
-            linear_distance_per_second;
-        shatter->exploding_distance_per_second =
-            exploding_distance_per_second;
+        shatter->linear_distance_per_second = linear_distance_per_second;
+        shatter->exploding_distance_per_second = exploding_distance_per_second;
         shatter->squared_distance_per_second = 0.0f;
         
         shatter->xyz_rotation_per_second[0] = xyz_rotation_per_second[0];

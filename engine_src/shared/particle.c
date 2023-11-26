@@ -132,6 +132,12 @@ void commit_shatter_effect(
     normalize_vertex(to_commit->linear_direction);
     normalize_vertex(to_commit->squared_direction);
     
+    if (
+        to_commit->zpolygon_to_shatter_material.texturearray_i < 0)
+    {
+        log_append("debug here\n");
+    }
+    
     to_commit->committed = true;
 }
 
@@ -141,7 +147,9 @@ void add_shatter_effects_to_workload(
 {
     for (uint32_t i = 0; i < shatter_effects_size; i++) {
         if (shatter_effects[i].deleted ||
-            !shatter_effects[i].committed)
+            !shatter_effects[i].committed ||
+            !shatter_effects[i].zpolygon_to_shatter_cpu.committed ||
+            shatter_effects[i].zpolygon_to_shatter_cpu.deleted)
         {
             continue;
         }
@@ -161,6 +169,7 @@ void add_shatter_effects_to_workload(
                 shatter_effects[i].zpolygon_to_shatter_cpu.mesh_id].
                     shattered_vertices_head_i;
         log_assert(shatter_head_i >= 0);
+        
         int32_t shatter_tail_i =
             shatter_head_i +
             all_mesh_summaries[
@@ -315,7 +324,14 @@ void add_shatter_effects_to_workload(
                 }
                 frame_data->vertices_size += 1;
             }
-            frame_data->polygon_collection->size += 1;
+            
+            if (frame_data->polygon_collection->size + 1 <
+                MAX_POLYGONS_PER_BUFFER)
+            {
+                frame_data->polygon_collection->size += 1;
+            } else {
+                return;
+            }
         }
     }
 }

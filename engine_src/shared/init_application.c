@@ -240,18 +240,18 @@ void init_application_before_gpu_init(void)
 
 void init_application_after_gpu_init(void) {
     
-    #define MIN_TRIANGLES_FOR_SHATTER_EFFECT 600
+    #define MIN_VERTICES_FOR_SHATTER_EFFECT 600
     for (uint32_t i = 0; i < all_mesh_summaries_size; i++) {
         if (all_mesh_summaries[i].shattered_vertices_head_i < 0) {
             if (
                 all_mesh_summaries[i].shattered_vertices_size <
-                    MIN_TRIANGLES_FOR_SHATTER_EFFECT)
+                    MIN_VERTICES_FOR_SHATTER_EFFECT)
             {
                 create_shattered_version_of_mesh(
                     /* const int32_t mesh_id: */
                         all_mesh_summaries[i].mesh_id,
                     /* const uint32_t triangles_mulfiplier: */
-                        (MIN_TRIANGLES_FOR_SHATTER_EFFECT /
+                        (MIN_VERTICES_FOR_SHATTER_EFFECT /
                             (uint32_t)all_mesh_summaries[i].vertices_size) + 1);
                 log_assert(
                     all_mesh_summaries[i].shattered_vertices_head_i >= 0);
