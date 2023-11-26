@@ -17,6 +17,44 @@ static float get_magnitude(zVertex input) {
     return return_value;
 }
 
+static float get_vertex_magnitude(float * input) {
+    float x = (input[0] * input[0]);
+    float y = (input[1] * input[1]);
+    float z = (input[2] * input[2]);
+    
+    float sum_squares = x + y + z;
+    
+    sum_squares = isnan(sum_squares) || !isfinite(sum_squares) ?
+        FLOAT32_MAX : sum_squares;
+    
+    float return_value = sqrtf(sum_squares);
+    
+    log_assert(!isnan(return_value));
+    
+    return return_value;
+}
+
+void normalize_vertex(
+    float * to_normalize)
+{
+    float magnitude = get_vertex_magnitude(to_normalize);
+    if (magnitude < 0.0001f && magnitude > -0.0001f) {
+        magnitude = 0.0001f;
+    }
+    
+    log_assert(!isnan(to_normalize[0]));
+    to_normalize[0] /= magnitude;
+    log_assert(!isnan(to_normalize[0]));
+    
+    log_assert(!isnan(to_normalize[1]));
+    to_normalize[1] /= magnitude;
+    log_assert(!isnan(to_normalize[1]));
+    
+    log_assert(!isnan(to_normalize[2]));
+    to_normalize[2] /= magnitude;
+    log_assert(!isnan(to_normalize[2]));
+}
+
 void normalize_zvertex(
     zVertex * to_normalize)
 {

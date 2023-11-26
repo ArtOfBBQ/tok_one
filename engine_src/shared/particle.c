@@ -129,6 +129,9 @@ void commit_shatter_effect(
         }
     }
     
+    normalize_vertex(to_commit->linear_direction);
+    normalize_vertex(to_commit->squared_direction);
+    
     to_commit->committed = true;
 }
 
@@ -177,7 +180,7 @@ void add_shatter_effects_to_workload(
         
         for (
             int32_t vert_i = shatter_head_i;
-            vert_i <= shatter_tail_i;
+            vert_i < (shatter_tail_i - 1);
             vert_i += 3)
         {
             uint64_t random_delay =
@@ -190,6 +193,7 @@ void add_shatter_effects_to_workload(
             uint64_t delayed_lifetime_so_far =
                 lifetime_so_far > random_delay ?
                     lifetime_so_far - random_delay : 0;
+            log_assert(delayed_lifetime_so_far < shatter_effects[i].elapsed);
             
             float alpha = 1.0f;
             
@@ -296,10 +300,6 @@ void add_shatter_effects_to_workload(
                     MAX_MATERIALS_SIZE] =
                         shatter_effects[i].zpolygon_to_shatter_material;
             
-            frame_data->polygon_materials[
-                frame_data->polygon_collection->size *
-                    MAX_MATERIALS_SIZE].rgba[0] +=
-                        (-5 + ((int32_t)tok_rand() % 10)) * 0.02f;
             frame_data->polygon_materials[
                 frame_data->polygon_collection->size *
                     MAX_MATERIALS_SIZE].rgba[3] = alpha;
