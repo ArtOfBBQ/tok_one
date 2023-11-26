@@ -1146,6 +1146,9 @@ static float get_squared_triangle_length_from_locked_vertices(
     for (int32_t start_vertex_i = 0; start_vertex_i < 3; start_vertex_i++) {
         
         int32_t end_vertex_i = (start_vertex_i + 1) % 3;
+        log_assert(start_vertex_i != end_vertex_i);
+        log_assert(start_vertex_i <= 3);
+        log_assert(end_vertex_i <= 3);
         
         float squared_x =
             ((vertices[start_vertex_i].xyz[0] -
@@ -1190,13 +1193,15 @@ static int32_t find_biggest_area_triangle_head_in(
     int32_t tail_vertex_i)
 {
     log_assert(tail_vertex_i > head_vertex_i);
+    log_assert((tail_vertex_i - head_vertex_i) % 3 == 2);
     
     float biggest_area = FLOAT32_MIN;
     int32_t biggest_area_i = -1;
     
-    for (int32_t i = head_vertex_i; i < tail_vertex_i; i += 3) {
+    for (int32_t i = head_vertex_i; i < (tail_vertex_i - 2); i += 3) {
         float area = get_squared_triangle_length_from_locked_vertices(
-            &all_mesh_vertices->gpu_data[i]);
+            all_mesh_vertices->gpu_data + i);
+        log_assert(area > 0.0f);
         if (area > biggest_area) {
             biggest_area = area;
             biggest_area_i = i;
@@ -1235,8 +1240,9 @@ void create_shattered_version_of_mesh(
             (int32_t)triangles_multiplier;
     
     int32_t goal_new_tail_i =
-        (int32_t)all_mesh_vertices->size +
-        (int32_t)all_mesh_summaries[mesh_id].shattered_vertices_size;
+        (int32_t)all_mesh_summaries[mesh_id].shattered_vertices_head_i +
+        (int32_t)all_mesh_summaries[mesh_id].shattered_vertices_size -
+        1;
     
     /*
     We will iterate through all triangles, finding the biggest one each time.
@@ -1246,8 +1252,9 @@ void create_shattered_version_of_mesh(
     */
     
     // first, copy all of the original triangle vertices as they are
-    int32_t temp_new_tail_i = new_head_i + orig_vertices_size - 1;
+    int32_t temp_new_tail_i = new_head_i - 1;
     for (int32_t i = 0; i < orig_vertices_size; i += 3) {
+        
         log_assert(orig_head_i + i <= orig_tail_i);
         all_mesh_vertices->gpu_data[new_head_i + i + 0] =
             all_mesh_vertices->gpu_data[orig_head_i + i + 0];
@@ -1256,6 +1263,7 @@ void create_shattered_version_of_mesh(
         all_mesh_vertices->gpu_data[new_head_i + i + 2] =
             all_mesh_vertices->gpu_data[orig_head_i + i + 2];
         
+        temp_new_tail_i += 3;
         #ifndef LOGGER_IGNORE_ASSERTS
         log_assert(new_head_i + i <= temp_new_tail_i);
         
@@ -1264,13 +1272,17 @@ void create_shattered_version_of_mesh(
         log_assert(tri_length > 0);
         #endif
     }
+    log_assert(temp_new_tail_i > new_head_i);
+    log_assert((temp_new_tail_i - new_head_i) % 3 == 2);
     
-    while (temp_new_tail_i <= goal_new_tail_i) {
+    while (temp_new_tail_i < goal_new_tail_i) {
         
         // find the biggest triangle to split in 2
         int32_t biggest_area_head_i = find_biggest_area_triangle_head_in(
             new_head_i,
             temp_new_tail_i);
+        log_assert(biggest_area_head_i >= new_head_i);
+        log_assert((biggest_area_head_i - new_head_i) % 3 == 0);
         
         // find a 'middle line' that splits this triangle in 2
         int32_t midline_start_vert_i = 0;
@@ -1452,11 +1464,27 @@ void create_shattered_version_of_mesh(
         all_mesh_vertices->gpu_data[biggest_area_head_i + 0] = first_tri[0];
         all_mesh_vertices->gpu_data[biggest_area_head_i + 1] = first_tri[1];
         all_mesh_vertices->gpu_data[biggest_area_head_i + 2] = first_tri[2];
+        #ifndef LOGGER_IGNORE_ASSERTS
+        float overwritten_area =
+            get_squared_triangle_length_from_locked_vertices(
+                /* const GPULockedVertex * vertices: */
+                    all_mesh_vertices->gpu_data + biggest_area_head_i);
+        log_assert(overwritten_area > 0.0f);
+        #endif
+        
         all_mesh_vertices->gpu_data[temp_new_tail_i + 1] = second_tri[0];
         all_mesh_vertices->gpu_data[temp_new_tail_i + 2] = second_tri[1];
         all_mesh_vertices->gpu_data[temp_new_tail_i + 3] = second_tri[2];
+        #ifndef LOGGER_IGNORE_ASSERTS
+        float new_area =
+            get_squared_triangle_length_from_locked_vertices(
+                /* const GPULockedVertex * vertices: */
+                    all_mesh_vertices->gpu_data + temp_new_tail_i + 1);
+        log_assert(new_area > 0.0f);
+        #endif
         
         temp_new_tail_i += 3;
+        log_assert(temp_new_tail_i <= goal_new_tail_i);
     }
     
     log_assert(all_mesh_vertices->size < (uint32_t)goal_new_tail_i);

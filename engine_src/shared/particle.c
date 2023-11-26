@@ -296,9 +296,17 @@ void add_shatter_effects_to_workload(
                     MAX_MATERIALS_SIZE] =
                         shatter_effects[i].zpolygon_to_shatter_material;
             
+            frame_data->polygon_materials[
+                frame_data->polygon_collection->size *
+                    MAX_MATERIALS_SIZE].rgba[0] +=
+                        (-5 + ((int32_t)tok_rand() % 10)) * 0.02f;
+            frame_data->polygon_materials[
+                frame_data->polygon_collection->size *
+                    MAX_MATERIALS_SIZE].rgba[3] = alpha;
+            
             for (uint32_t m = 0; m < 3; m++) {
                 frame_data->vertices[frame_data->vertices_size].
-                    locked_vertex_i = vert_i + m;
+                    locked_vertex_i = (vert_i + (int32_t)m);
                 frame_data->vertices[frame_data->vertices_size].polygon_i =
                     (int)frame_data->polygon_collection->size;
                 
