@@ -40,6 +40,10 @@ static void construct_shatter_effect_no_zpoly(
     to_construct->squared_direction[1] = 1.0f;
     to_construct->squared_direction[2] = 0.2f;
     
+    to_construct->rgb_bonus_per_second[0] = 0.0f;
+    to_construct->rgb_bonus_per_second[1] = 0.0f;
+    to_construct->rgb_bonus_per_second[2] = 0.0f;
+    
     to_construct->xyz_rotation_per_second[0] =
         (float)(tok_rand_at_i((5 +
             platform_get_current_time_microsecs()) %
@@ -96,8 +100,8 @@ void commit_shatter_effect(
     // version. If there's enough triangles, we will simply set the 'shattered'
     // pointers to be the same as the original pointers
     if (
-     all_mesh_summaries[to_commit->zpolygon_to_shatter_cpu.mesh_id]
-         .shattered_vertices_size == 0)
+        all_mesh_summaries[to_commit->zpolygon_to_shatter_cpu.mesh_id]
+            .shattered_vertices_size == 0)
     {
         if (
             all_mesh_summaries[to_commit->zpolygon_to_shatter_cpu.mesh_id]
@@ -131,13 +135,7 @@ void commit_shatter_effect(
     
     normalize_vertex(to_commit->linear_direction);
     normalize_vertex(to_commit->squared_direction);
-    
-    if (
-        to_commit->zpolygon_to_shatter_material.texturearray_i < 0)
-    {
-        log_append("debug here\n");
-    }
-    
+        
     to_commit->committed = true;
 }
 
@@ -303,6 +301,19 @@ void add_shatter_effects_to_workload(
             frame_data->polygon_collection->polygons[
                 frame_data->polygon_collection->size].xyz_angle[2] +=
                     rotation[2];
+            
+            frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size].bonus_rgb[0] +=
+                    ((float)delayed_lifetime_so_far / 1000000.0f) *
+                        shatter_effects[i].rgb_bonus_per_second[0];
+            frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size].bonus_rgb[1] +=
+                    ((float)delayed_lifetime_so_far / 1000000.0f) *
+                        shatter_effects[i].rgb_bonus_per_second[1];
+            frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size].bonus_rgb[2] +=
+                    ((float)delayed_lifetime_so_far / 1000000.0f) *
+                        shatter_effects[i].rgb_bonus_per_second[2];
             
             frame_data->polygon_materials[
                 frame_data->polygon_collection->size *

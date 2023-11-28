@@ -218,6 +218,7 @@ void request_float_slider(
     log_assert(background_object_id != pin_object_id);
     
     PolygonRequest slider_back;
+    request_next_zpolygon(&slider_back);
     construct_quad_around(
         /* const float mid_x: */
             screenspace_x_to_x(x_screenspace, z),
@@ -254,6 +255,7 @@ void request_float_slider(
     commit_zpolygon_to_render(&slider_back);
     
     PolygonRequest slider_pin;
+    request_next_zpolygon(&slider_pin);
     float pin_z = z - 0.001f;
     construct_quad_around(
         /* const float mid_x: */

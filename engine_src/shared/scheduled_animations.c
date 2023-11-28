@@ -97,7 +97,7 @@ void commit_scheduled_animation(ScheduledAnimation * to_commit) {
     log_assert(!to_commit->committed);
     
     to_commit->remaining_microseconds = to_commit->duration_microseconds;
-        
+    
     for (uint32_t col_i = 0; col_i < 4; col_i++) {
         if (to_commit->final_rgba_known[col_i]) {
             log_assert(to_commit->final_rgba[col_i] >= 0.0f);
@@ -284,8 +284,9 @@ void request_shatter_and_destroy(
         shatter->zpolygon_to_shatter_material =
             zpolygons_to_render->gpu_materials[zp_i * MAX_MATERIALS_SIZE];
         shatter->wait_first = wait_before_first_run;
-        shatter->longest_random_delay_before_launch = duration_microseconds / 2;
-        shatter->start_fade_out_at_elapsed = (duration_microseconds / 10) * 9;
+        shatter->longest_random_delay_before_launch =
+            (duration_microseconds * 3) / 2;
+        shatter->start_fade_out_at_elapsed = (duration_microseconds / 10) * 8;
         shatter->finish_fade_out_at_elapsed = duration_microseconds;
         shatter->linear_direction[0] = linear_direction[0];
         shatter->linear_direction[1] = linear_direction[1];
@@ -297,6 +298,11 @@ void request_shatter_and_destroy(
         shatter->xyz_rotation_per_second[0] = xyz_rotation_per_second[0];
         shatter->xyz_rotation_per_second[1] = xyz_rotation_per_second[1];
         shatter->xyz_rotation_per_second[2] = xyz_rotation_per_second[2];
+        
+        shatter->rgb_bonus_per_second[0] = 0.75f;
+        shatter->rgb_bonus_per_second[1] = 0.35f;
+        shatter->rgb_bonus_per_second[2] = 0.35f;
+        
         commit_shatter_effect(shatter);
         
         zpolygons_to_render->cpu_data[zp_i].deleted = true;
@@ -497,10 +503,17 @@ static void resolve_single_animation_effects(
         } else {
             float diff_z = anim->final_mid_z -
                 zpolygons_to_render->gpu_data[zp_i].xyz[2];
+            float pct_of_entire_run =
+                (float)remaining_microseconds_at_start_of_run /
+                    elapsed_this_run;
+            
             zpolygons_to_render->gpu_data[zp_i].xyz[2] +=
-                diff_z /
-                    ((float)remaining_microseconds_at_start_of_run /
-                        elapsed_this_run);
+                diff_z / pct_of_entire_run;
+            if (remaining_microseconds_at_start_of_run == elapsed_this_run) {
+                log_assert(
+                    zpolygons_to_render->gpu_data[zp_i].xyz[2] ==
+                        anim->final_mid_z);
+            }
         }
         
         if (!anim->final_x_angle_known) {

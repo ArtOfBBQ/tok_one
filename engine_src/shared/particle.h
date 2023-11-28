@@ -38,6 +38,7 @@ typedef struct ShatterEffect {
     float squared_direction[3];
     
     float xyz_rotation_per_second[3];
+    float rgb_bonus_per_second[3];
     
     uint32_t limit_triangles_to; // 0 to render all triangles
     bool32_t deleted;
@@ -46,9 +47,6 @@ typedef struct ShatterEffect {
 extern ShatterEffect * shatter_effects;
 extern uint32_t shatter_effects_size;
 
-//void construct_shatter_effect(
-//    ShatterEffect * to_construct,
-//    zPolygon * from_zpolygon);
 ShatterEffect * next_shatter_effect(void);
 ShatterEffect * next_shatter_effect_with_zpoly(
     zPolygonCPU * construct_with_zpolygon,
