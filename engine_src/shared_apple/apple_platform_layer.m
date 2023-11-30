@@ -455,10 +455,15 @@ void platform_update_music_volume(void) {
     [active_music_player setVolume: platform_music_volume];
 }
 
-void platform_play_music_resource(const char * resource_filename) {
+void platform_play_music_resource(
+    const char * resource_filename,
+    const bool32_t loop_forever)
+{
     // return;
     if (active_music_player != NULL) {
-        [active_music_player setVolume: 0.0f fadeDuration: 1];
+        [active_music_player
+            setVolume: 0.0f
+            fadeDuration: 1];
     }
     
     char sound_pathfile[512];
@@ -479,7 +484,7 @@ void platform_play_music_resource(const char * resource_filename) {
         [[AVAudioPlayer alloc]
             initWithContentsOfURL:soundFileURL
             error:nil];
-    player.numberOfLoops = 0;
+    player.numberOfLoops = loop_forever ? -1 : 0;
     
     [player setVolume: 0.001f];
     [player setVolume: platform_music_volume fadeDuration: 5];

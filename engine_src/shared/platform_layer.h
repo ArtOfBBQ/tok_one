@@ -200,7 +200,9 @@ extern float platform_music_volume;
 void platform_update_sound_volume(void);
 void platform_update_music_volume(void);
 void platform_play_sound_resource(const char * resource_filename);
-void platform_play_music_resource(const char * resource_filename);
+void platform_play_music_resource(
+    const char * resource_filename,
+    const bool32_t loop_forever);
 
 /*
 creates a mutex and return the ID of said mutex for you to store
