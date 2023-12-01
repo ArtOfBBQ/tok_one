@@ -1,6 +1,7 @@
 #include "init_application.h"
 
 typedef struct EngineSaveFile {
+    bool32_t window_fullscreen;
     float window_left;
     float window_width;
     float window_bottom;
@@ -67,11 +68,13 @@ void init_application_before_gpu_init(void)
         window_globals->window_width  = engine_save_file->window_width;
         window_globals->window_left   = engine_save_file->window_left;
         window_globals->window_bottom = engine_save_file->window_bottom;
+        window_globals->fullscreen = engine_save_file->window_fullscreen;
         platform_music_volume = engine_save_file->music_volume;
         platform_sound_volume = engine_save_file->sound_volume;
         window_globals->last_resize_request_at =
             platform_get_current_time_microsecs();
     } else {
+        window_globals->fullscreen = false;
         window_globals->window_height = INITIAL_WINDOW_HEIGHT;
         window_globals->window_width  = INITIAL_WINDOW_WIDTH;
         window_globals->window_left   = INITIAL_WINDOW_LEFT;
@@ -84,7 +87,7 @@ void init_application_before_gpu_init(void)
         window_globals->window_height / window_globals->window_width;
     
     init_projection_constants();
-    
+        
     init_ui_elements();
     
     zpolygons_to_render = (zPolygonCollection *)malloc_from_unmanaged(
@@ -266,6 +269,10 @@ void init_application_after_gpu_init(void) {
     
     platform_gpu_copy_locked_vertices();
     platform_gpu_update_viewport();
+    
+    if (window_globals->fullscreen) {
+        platform_enter_fullscreen();
+    }
 }
 
 void shared_shutdown_application(void)
@@ -279,6 +286,7 @@ void shared_shutdown_application(void)
     engine_save_file->window_height = window_globals->window_height;
     engine_save_file->window_left = window_globals->window_left;
     engine_save_file->window_width = window_globals->window_width;
+    engine_save_file->window_fullscreen = window_globals->fullscreen;
     
     uint32_t good = false;
     platform_write_file_to_writables(

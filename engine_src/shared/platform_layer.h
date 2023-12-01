@@ -177,6 +177,7 @@ uint64_t platform_get_current_time_microsecs(void);
 float platform_x_to_x(const float x);
 float platform_y_to_y(const float y);
 
+void platform_enter_fullscreen(void);
 void platform_gpu_update_viewport(void);
 void platform_gpu_copy_locked_vertices(void);
 

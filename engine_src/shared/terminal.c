@@ -463,6 +463,17 @@ static bool32_t evaluate_terminal_command(
         return true;
     }
     
+    if (are_equal_strings(command, "FS") ||
+        are_equal_strings(command, "FULLSCREEN"))
+    {
+        strcpy_capped(
+            response,
+            SINGLE_LINE_MAX,
+            "Entering full screen...");
+        platform_enter_fullscreen();
+        return true;
+    }
+    
     if (are_equal_strings(command, "quit") ||
         are_equal_strings(command, "Quit") ||
         are_equal_strings(command, "QUIT") ||

@@ -186,30 +186,22 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     platform_close_application();
 }
 
-// This allows you to override the full screen size
-//- (NSSize)
-//    window:(NSWindow *)window
-//    willUseFullScreenContentSize:(NSSize)proposedSize
-//{
-//    log_append("willuseFullScreenContentSize: ");
-//    log_append_uint((uint32_t)proposedSize.height);
-//    log_append(", ");
-//    log_append_uint((uint32_t)proposedSize.width);
-//    log_append_char('\n');
-//
-//    [self
-//        handleResizeTo: proposedSize
-//        withTitleBarHeight: 0];
-//
-//    return proposedSize;
-//}
-
 - (void)
     windowWillEnterFullScreen:(NSNotification *)notification
 {
     zpolygons_to_render->size = 0;
     shatter_effects_size = 0;
     particle_effects_size = 0;
+    window_globals->fullscreen = true;
+}
+
+- (void)
+    windowWillExitFullScreen:(NSNotification *)notification
+{
+    zpolygons_to_render->size = 0;
+    shatter_effects_size = 0;
+    particle_effects_size = 0;
+    window_globals->fullscreen = false;
 }
 
 - (void)windowDidMove:(NSNotification *)notification
@@ -487,7 +479,10 @@ int main(int argc, const char * argv[]) {
     }
 }
 
+void platform_enter_fullscreen(void) {
+    [window toggleFullScreen: window];
+}
+
 #if __cplusplus
 }
 #endif
-
