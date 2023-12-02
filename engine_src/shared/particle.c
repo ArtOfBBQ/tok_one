@@ -954,6 +954,13 @@ void add_particle_effects_to_workload(
                 frame_data->polygon_collection->polygons[
                     frame_data->polygon_collection->size].xyz_multiplier[2] =
                         particle_effects[i].particle_z_multiplier;
+
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_offset[0] = 0.0f;
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_offset[1] = 0.0f;
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_offset[2] = 0.0f;
                 
                 frame_data->polygon_collection->polygons[
                     frame_data->polygon_collection->size].ignore_lighting =
