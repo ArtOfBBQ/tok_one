@@ -10,6 +10,10 @@ void * platform_malloc_unaligned_block(
     return return_value;
 }
 
+void platform_enter_fullscreen(void) {
+    log_append("Won't move to fullscreen on iOS...\n");
+}
+
 void platform_close_application(void) {
     log_append("Won't close app on iOS...\n");
 }
