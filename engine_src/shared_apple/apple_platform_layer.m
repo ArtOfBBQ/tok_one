@@ -336,6 +336,7 @@ void platform_get_filenames_in(
         return;
     }
     
+    log_assert([results count] <= recipient_capacity);
     uint32_t storable_results =
         (uint32_t)[results count] > recipient_capacity ?
             recipient_capacity
