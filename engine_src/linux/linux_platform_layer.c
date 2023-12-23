@@ -111,8 +111,8 @@ void platform_read_file(
     fseek(f, 0, SEEK_SET);
     
     uint32_t bytes_to_read = total_filesize;
-    if (out_preallocatedbuffer->size < total_filesize) {
-        bytes_to_read = out_preallocatedbuffer->size;
+    if (out_preallocatedbuffer->size_without_terminator < total_filesize) {
+        bytes_to_read = out_preallocatedbuffer->size_without_terminator;
     }
     
     fread(
@@ -499,7 +499,8 @@ void platform_update_music_volume(void) {
 }
 
 void platform_play_music_resource(
-    const char * resource_filename)
+    const char * resource_filename,
+    const bool32_t loop_forever)
 {
     
 }

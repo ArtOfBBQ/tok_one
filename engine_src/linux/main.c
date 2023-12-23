@@ -369,10 +369,10 @@ int main(int argc, char* argv[])
     
     // Jelle: compile shaders
     FileBuffer vertex_shader_source;
-    vertex_shader_source.size = 
+    vertex_shader_source.size_without_terminator = 
         platform_get_resource_size("vertex_shader.glsl");
     vertex_shader_source.contents = (char *)malloc_from_managed(
-        vertex_shader_source.size + 1);
+        vertex_shader_source.size_without_terminator + 1);
     platform_read_resource_file(
         /* const char * resource name: */
             "vertex_shader.glsl",
@@ -380,10 +380,10 @@ int main(int argc, char* argv[])
             &vertex_shader_source);
     
     FileBuffer fragment_shader_source;
-    fragment_shader_source.size = 
+    fragment_shader_source.size_without_terminator = 
         platform_get_resource_size("fragment_shader.glsl");
     fragment_shader_source.contents = (char *)malloc_from_managed(
-        fragment_shader_source.size + 1);
+        fragment_shader_source.size_without_terminator + 1);
     platform_read_resource_file(
         /* const char * resource name: */
             "fragment_shader.glsl",
@@ -394,11 +394,11 @@ int main(int argc, char* argv[])
         /* char * vertex_shader_source: */
             vertex_shader_source.contents,
         /* uint32_t vertex_shader_source_size: */
-            vertex_shader_source.size,
+            vertex_shader_source.size_without_terminator,
         /* char * fragment_shader_source: */
             fragment_shader_source.contents,
         /* uint32_t fragment_shader_source_size: */
-            fragment_shader_source.size);
+            fragment_shader_source.size_without_terminator);
     
     XSelectInput(
         display,
