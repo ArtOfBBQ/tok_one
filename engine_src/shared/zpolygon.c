@@ -251,14 +251,16 @@ void construct_zpolygon(PolygonRequest * to_construct) {
     to_construct->cpu_data->visible = true;
     to_construct->cpu_data->deleted = false;
     to_construct->cpu_data->committed = false;
-    for (uint32_t i = 0; i < MAX_MATERIALS_SIZE; i++) {
-        to_construct->gpu_material[i].rgba[0] = 0.75f;
-        to_construct->gpu_material[i].rgba[1] = 0.75f;
-        to_construct->gpu_material[i].rgba[2] = 0.75f;
-        to_construct->gpu_material[i].rgba[3] = 0.75f;
-        to_construct->gpu_material[i].texture_i = -1;
-        to_construct->gpu_material[i].texturearray_i = -1;
-    }
+    
+    // We only construct the 1st material, because some
+    // particle effects use this constructor and they only have 1 material
+    // (so using multiple would cause buffer overflow writing)
+    to_construct->gpu_material[0].rgba[0] = 0.75f;
+    to_construct->gpu_material[0].rgba[1] = 0.75f;
+    to_construct->gpu_material[0].rgba[2] = 0.75f;
+    to_construct->gpu_material[0].rgba[3] = 0.75f;
+    to_construct->gpu_material[0].texture_i = -1;
+    to_construct->gpu_material[0].texturearray_i = -1;
 }
 
 zTriangle

@@ -1,5 +1,188 @@
 #include "particle.h"
 
+
+LineParticle * lineparticle_effects;
+uint32_t lineparticle_effects_size;
+
+static void construct_lineparticle_effect_no_zpoly(
+    LineParticle * to_construct)
+{
+    to_construct->random_seed =
+        tok_rand_at_i(
+            platform_get_current_time_microsecs() %
+                RANDOM_SEQUENCE_SIZE) % 75;
+    to_construct->elapsed = 0;
+    to_construct->wait_first = 0;
+    to_construct->committed = false;
+    to_construct->deleted = false;
+    
+    to_construct->directions_size = 1;
+    to_construct->goals_x[0] = 0.2f;
+    to_construct->goals_y[0] = 0.2f;
+    to_construct->goals_z[0] = 0.0f;
+    to_construct->microsecs_to_goal[0] = 500000;
+    to_construct->trail_delay = 300000;
+    to_construct->particle_count = 500;
+}
+
+LineParticle * next_lineparticle_effect(void)
+{
+    for (uint32_t i = 0; i < lineparticle_effects_size; i++) {
+        if (lineparticle_effects[i].deleted) {
+            construct_lineparticle_effect_no_zpoly(&lineparticle_effects[i]);
+            return &lineparticle_effects[i];
+        }
+    }
+    
+    lineparticle_effects_size += 1;
+    construct_lineparticle_effect_no_zpoly(
+        &lineparticle_effects[lineparticle_effects_size - 1]);
+    
+    return &lineparticle_effects[lineparticle_effects_size - 1];
+}
+
+LineParticle * next_lineparticle_effect_with_zpoly(
+    zPolygonCPU * construct_with_zpolygon,
+    GPUPolygon * construct_with_polygon_gpu,
+    GPUPolygonMaterial * construct_with_polygon_material)
+{
+    LineParticle * return_value = next_lineparticle_effect();
+    
+    log_assert(lineparticle_effects_size < LINEPARTICLE_EFFECTS_SIZE);
+    return_value->zpolygon_cpu =
+        *construct_with_zpolygon;
+    return_value->zpolygon_gpu =
+        *construct_with_polygon_gpu;
+    return_value->zpolygon_material =
+        *construct_with_polygon_material;
+    
+    return return_value;
+}
+
+void commit_lineparticle_effect(
+    LineParticle * to_commit)
+{
+    log_assert(!to_commit->deleted);
+    to_commit->committed = true;
+}
+
+void add_lineparticle_effects_to_workload(
+    GPUDataForSingleFrame * frame_data,
+    uint64_t elapsed_nanoseconds)
+{
+    for (uint32_t i = 0; i < lineparticle_effects_size; i++) {
+        if (lineparticle_effects[i].deleted ||
+            !lineparticle_effects[i].committed ||
+            !lineparticle_effects[i].zpolygon_cpu.committed ||
+            lineparticle_effects[i].zpolygon_cpu.deleted)
+        {
+            continue;
+        }
+        
+        if (lineparticle_effects[i].wait_first > elapsed_nanoseconds) {
+            lineparticle_effects[i].wait_first -= elapsed_nanoseconds;
+            continue;
+        } else if (lineparticle_effects[i].wait_first > 0) {
+            lineparticle_effects[i].wait_first = 0;
+            elapsed_nanoseconds -= lineparticle_effects[i].wait_first;
+        }
+        
+        lineparticle_effects[i].elapsed += elapsed_nanoseconds;
+        
+        int32_t head_i =
+            all_mesh_summaries[
+                lineparticle_effects[i].zpolygon_cpu.mesh_id].
+                    vertices_head_i;
+        log_assert(head_i >= 0);
+        
+        int32_t tail_i =
+            head_i +
+            all_mesh_summaries[
+                lineparticle_effects[i].zpolygon_cpu.mesh_id].vertices_size;
+        log_assert(tail_i >= 0);
+        
+        uint64_t lifetime_so_far = lineparticle_effects[i].elapsed;
+        uint64_t total_lifetime = 0;
+        for (uint32_t _ = 0; _ < lineparticle_effects[i].directions_size; _++) {
+            total_lifetime += lineparticle_effects[i].microsecs_to_goal[_];
+        }
+        
+        if (
+            lifetime_so_far >
+                total_lifetime +
+                    lineparticle_effects[i].trail_delay)
+        {
+            lineparticle_effects[i].deleted = true;
+            continue;
+        }
+        
+        for (
+            uint32_t particle_i = 0;
+            particle_i < lineparticle_effects[i].particle_count;
+            particle_i++)
+        {
+            uint64_t particle_delay =
+                (total_lifetime / lineparticle_effects[i].particle_count) *
+                    particle_i;
+            
+            for (
+                int32_t vert_i = head_i;
+                vert_i < (tail_i - 1);
+                vert_i += 3)
+            {
+                uint64_t delayed_lifetime_so_far =
+                    lifetime_so_far > particle_delay ?
+                        lifetime_so_far - particle_delay : 0;
+                log_assert(
+                    delayed_lifetime_so_far <= lineparticle_effects[i].elapsed);
+                
+                float alpha = 1.0f;
+                
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size] =
+                        lineparticle_effects[i].zpolygon_gpu;
+                
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz[0] += 0;
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz[1] += 0;
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz[2] += 0;
+                
+                frame_data->polygon_materials[
+                    frame_data->polygon_collection->size *
+                        MAX_MATERIALS_SIZE] =
+                            lineparticle_effects[i].zpolygon_material;
+                
+                frame_data->polygon_materials[
+                    frame_data->polygon_collection->size *
+                        MAX_MATERIALS_SIZE].rgba[3] = alpha;
+                
+                for (uint32_t m = 0; m < 3; m++) {
+                    frame_data->vertices[frame_data->vertices_size].
+                        locked_vertex_i = (vert_i + (int32_t)m);
+                    frame_data->vertices[frame_data->vertices_size].polygon_i =
+                        (int)frame_data->polygon_collection->size;
+                    
+                    if (frame_data->vertices_size + 1 >= MAX_VERTICES_PER_BUFFER) {
+                        return;
+                    }
+                    frame_data->vertices_size += 1;
+                }
+                
+                if (frame_data->polygon_collection->size + 1 <
+                    MAX_POLYGONS_PER_BUFFER)
+                {
+                    frame_data->polygon_collection->size += 1;
+                } else {
+                    return;
+                }
+            }
+        }
+    }
+}
+
+
 #define MINIMUM_SHATTER_TRIANGLES 200
 
 ShatterEffect * shatter_effects;
@@ -58,7 +241,7 @@ static void construct_shatter_effect_no_zpoly(
                 RANDOM_SEQUENCE_SIZE) % 628) * 0.01f;
 }
 
-ShatterEffect * next_shatter_effect()
+ShatterEffect * next_shatter_effect(void)
 {
     for (uint32_t i = 0; i < shatter_effects_size; i++) {
         if (shatter_effects[i].deleted) {

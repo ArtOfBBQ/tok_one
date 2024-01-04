@@ -460,6 +460,7 @@ void platform_play_music_resource(
     const char * resource_filename,
     const bool32_t loop_forever)
 {
+    return;
     if (active_music_player != NULL) {
         [active_music_player
             setVolume: 0.0f

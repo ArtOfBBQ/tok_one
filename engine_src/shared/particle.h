@@ -15,6 +15,42 @@ extern "C" {
 #include "tok_random.h"
 #include "zpolygon.h"
 
+#define LINEPARTICLE_EFFECTS_SIZE 50
+#define MAX_LINEPARTICLE_DIRECTIONS 5
+typedef struct LineParticle {
+    zPolygonCPU zpolygon_cpu;
+    GPUPolygon zpolygon_gpu;
+    GPUPolygonMaterial zpolygon_material;
+    
+    uint64_t random_seed;
+    uint64_t elapsed;
+    uint64_t trail_delay;
+    uint64_t wait_first;
+    
+    float goals_x[MAX_LINEPARTICLE_DIRECTIONS];
+    float goals_y[MAX_LINEPARTICLE_DIRECTIONS];
+    float goals_z[MAX_LINEPARTICLE_DIRECTIONS];
+    float microsecs_to_goal[MAX_LINEPARTICLE_DIRECTIONS];
+    uint32_t directions_size;
+    
+    uint32_t particle_count;
+    
+    uint32_t deleted;
+    uint32_t committed;
+} LineParticle;
+extern LineParticle * lineparticle_effects;
+extern uint32_t lineparticle_effects_size;
+LineParticle * next_lineparticle_effect(void);
+LineParticle * next_lineparticle_effect_with_zpoly(
+    zPolygonCPU * construct_with_zpolygon,
+    GPUPolygon * construct_with_polygon_gpu,
+    GPUPolygonMaterial * construct_with_polygon_material);
+void commit_lineparticle_effect(
+    LineParticle * to_commit);
+void add_lineparticle_effects_to_workload(
+    GPUDataForSingleFrame * frame_data,
+    uint64_t elapsed_nanoseconds);
+
 typedef struct ShatterEffect {
     zPolygonCPU zpolygon_to_shatter_cpu;
     GPUPolygon zpolygon_to_shatter_gpu;

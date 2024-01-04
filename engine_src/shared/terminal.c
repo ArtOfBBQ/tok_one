@@ -54,7 +54,7 @@ void destroy_terminal_objects(void) {
     }
 }
 
-static void update_terminal_history_size() {
+static void update_terminal_history_size(void) {
     terminal_history_size = 0;
     while (terminal_history[terminal_history_size] != '\0') {
         terminal_history_size++;

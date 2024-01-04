@@ -20,84 +20,6 @@ void client_logic_startup(void) {
         /* const uint32_t filenames_size: */
             1);
     
-    request_label_around(
-        /* const int32_t with_object_id: */
-            321,
-        /* const char *text_to_draw: */
-            "Press T for a shatter effect",
-        /* const float mid_x_pixelspace: */
-            0.5f,
-        /* const float mid_y_pixelspace: */
-            0.5f,
-        /* const float z: */
-            0.9f,
-        /* const float max_width: */
-            1000.0f,
-        /* const uint32_t ignore_camera: */
-            false);
-    
-    //    PolygonRequest quad;
-    //    request_next_zpolygon(&quad);
-    //
-    //    construct_quad(
-    //        /* const float left_x: */
-    //            -0.125f,
-    //        /* const float top_y: */
-    //            -0.125f,
-    //        /* const float z: */
-    //            0.75f,
-    //        /* const float width: */
-    //            0.25f,
-    //        /* const float height: */
-    //            0.25f,
-    //        /* zPolygon *recipient: */
-    //            &quad);
-    //    quad.cpu_data->object_id = 321;
-    //    quad.cpu_data->visible   = true;
-    //    quad.gpu_data->ignore_lighting = true;
-    //    quad.gpu_material[0].texture_i      = 0;
-    //    quad.gpu_material[0].texturearray_i = 1;
-    //    quad.gpu_material[0].rgba[0] = 0.50f;
-    //    quad.gpu_material[0].rgba[1] = 0.50f;
-    //    quad.gpu_material[0].rgba[2] = 0.75f;
-    //    quad.gpu_material[0].rgba[3] = 1.00f;
-    //    commit_zpolygon_to_render(&quad);
-    
-    //    PolygonRequest teapot;
-    //    request_next_zpolygon(&teapot);
-    //    construct_zpolygon(&teapot);
-    //    teapot.cpu_data->object_id            = 321;
-    //    teapot.cpu_data->visible              = true;
-    //    teapot.gpu_data->xyz[0]               = 0.05f;
-    //    teapot.gpu_data->xyz[1]               = 0.05f;
-    //    teapot.gpu_data->xyz[2]               = 0.25f;
-    //    teapot.gpu_data->xyz_multiplier[0]    = 1.0f;
-    //    teapot.gpu_data->xyz_multiplier[1]    = 1.0f;
-    //    teapot.gpu_data->xyz_multiplier[2]    = 1.0f;
-    //    teapot.gpu_data->xyz_offset[0]        = 0.0f;
-    //    teapot.gpu_data->xyz_offset[1]        = 0.0f;
-    //    teapot.gpu_data->xyz_offset[2]        = 0.0f;
-    //    teapot.gpu_material[0].texture_i      = -1;
-    //    teapot.gpu_material[0].texturearray_i = -1;
-    //    teapot.gpu_material[0].rgba[0]        = 0.50f;
-    //    teapot.gpu_material[0].rgba[1]        = 0.50f;
-    //    teapot.gpu_material[0].rgba[2]        = 0.75f;
-    //    teapot.gpu_material[0].rgba[3]        = 1.00f;
-    //    int32_t teapot_mesh_id = new_mesh_id_from_resource("teapot.obj");
-    //    teapot.cpu_data->mesh_id              = teapot_mesh_id;
-    //    log_assert(teapot.cpu_data->mesh_id == 3); // after quad, cube, and point
-    //    teapot.gpu_data->ignore_lighting      = false;
-    //    teapot.gpu_data->ignore_camera        = false;
-    //    scale_zpolygon_multipliers_to_height(
-    //        /* zPolygonCPU * cpu_data: */
-    //            teapot.cpu_data,
-    //        /* GPUPolygon *gpu_data: */
-    //            teapot.gpu_data,
-    //        /* const float new_height: */
-    //            0.25f);
-    //    center_mesh_offsets(teapot_mesh_id);
-    //    commit_zpolygon_to_render(&teapot);
-    
     zLightSource * light = next_zlight();
     light->RGBA[0] =  0.50f;
     light->RGBA[1] =  0.15f;
@@ -110,6 +32,29 @@ void client_logic_startup(void) {
     light->y       =  0.50f;
     light->z       =  0.75f;
     commit_zlight(light);
+    
+    LineParticle * lines = next_lineparticle_effect();
+    PolygonRequest lines_polygon;
+    lines_polygon.cpu_data = &lines->zpolygon_cpu;
+    lines_polygon.gpu_data = &lines->zpolygon_gpu;
+    lines_polygon.gpu_material = &lines->zpolygon_material;
+    construct_quad(
+        /* const float left_x: */
+            0.0f,
+        /* const float bottom_y: */
+            0.0f,
+        /* const float z: */
+            0.5f,
+        /* const float width: */
+            screenspace_width_to_width(100.0f, 0.5f),
+        /* const float height: */
+            screenspace_height_to_height(100.0f, 0.5f),
+        /* PolygonRequest * stack_recipient: */
+            &lines_polygon);
+    lines_polygon.cpu_data->committed = true;
+    lines->microsecs_to_goal[0] = 15000000;
+    lines->directions_size = 1;
+    commit_lineparticle_effect(lines);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {

@@ -97,6 +97,8 @@ void init_application_before_gpu_init(void)
     init_all_meshes();
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
         sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
+    lineparticle_effects = (LineParticle *)malloc_from_unmanaged(
+        sizeof(LineParticle) * LINEPARTICLE_EFFECTS_SIZE);
     particle_effects = (ParticleEffect *)malloc_from_unmanaged(
         sizeof(ParticleEffect) * PARTICLE_EFFECTS_SIZE);
     shatter_effects = (ShatterEffect *)malloc_from_unmanaged(
