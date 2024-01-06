@@ -27,12 +27,20 @@ typedef struct LineParticle {
     uint64_t trail_delay;
     uint64_t wait_first;
     
-    float goals_x[MAX_LINEPARTICLE_DIRECTIONS];
-    float goals_y[MAX_LINEPARTICLE_DIRECTIONS];
-    float goals_z[MAX_LINEPARTICLE_DIRECTIONS];
-    float microsecs_to_goal[MAX_LINEPARTICLE_DIRECTIONS];
-    uint32_t directions_size;
+    uint64_t waypoint_duration[MAX_LINEPARTICLE_DIRECTIONS];
+    float waypoint_x[MAX_LINEPARTICLE_DIRECTIONS];
+    float waypoint_y[MAX_LINEPARTICLE_DIRECTIONS];
+    float waypoint_z[MAX_LINEPARTICLE_DIRECTIONS];
+    float waypoint_r[MAX_LINEPARTICLE_DIRECTIONS];
+    float waypoint_g[MAX_LINEPARTICLE_DIRECTIONS];
+    float waypoint_b[MAX_LINEPARTICLE_DIRECTIONS];
+    float waypoint_a[MAX_LINEPARTICLE_DIRECTIONS];
+    float waypoint_scalefactor[MAX_LINEPARTICLE_DIRECTIONS];
+    uint32_t waypoints_size;
     
+    uint64_t particle_zangle_variance_pct;
+    uint64_t particle_scalefactor_variance_pct;
+    uint64_t particle_rgb_variance_pct;
     uint32_t particle_count;
     
     uint32_t deleted;
