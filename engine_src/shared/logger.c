@@ -284,15 +284,15 @@ internal_log_assert(
     assert(str_condition[0] != '\0');
     
     //Assertion failed: (0), function main, file test.c, line 6.
-    char assert_failed_msg[256];
+    char assert_failed_msg[512];
     
     strcpy_capped(
         assert_failed_msg,
-        256,
+        512,
         "Assertion failed: (");
     strcat_capped(
         assert_failed_msg,
-        256,
+        512,
         str_condition);
     strcat_capped(
         assert_failed_msg,
@@ -300,23 +300,23 @@ internal_log_assert(
         "), function ");
     strcat_capped(
         assert_failed_msg,
-        256,
+        512,
         func_name);
     strcat_capped(
         assert_failed_msg,
-        256,
+        512,
         ", file ");
     strcat_capped(
         assert_failed_msg,
-        256,
+        512,
         file_name);
     strcat_capped(
         assert_failed_msg,
-        256,
+        512,
         ", line ");
     strcat_int_capped(
         assert_failed_msg,
-        256,
+        512,
         line_number);
     
     log_dump_and_crash(assert_failed_msg);

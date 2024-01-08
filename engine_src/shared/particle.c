@@ -83,11 +83,21 @@ void commit_lineparticle_effect(
 {
     log_assert(!to_commit->deleted);
     log_assert(to_commit->waypoints_size > 1);
+    log_assert(to_commit->zpolygon_cpu.committed);
+    log_assert(!to_commit->zpolygon_cpu.deleted);
+    log_assert(to_commit->zpolygon_material.rgba[0] < 1.05f);
+    log_assert(to_commit->zpolygon_material.rgba[1] < 1.05f);
+    log_assert(to_commit->zpolygon_material.rgba[2] < 1.05f);
+    log_assert(to_commit->zpolygon_material.rgba[3] < 1.05f);
+    log_assert(to_commit->zpolygon_material.rgba[0] > -0.01f);
+    log_assert(to_commit->zpolygon_material.rgba[1] > -0.01f);
+    log_assert(to_commit->zpolygon_material.rgba[2] > -0.01f);
+    log_assert(to_commit->zpolygon_material.rgba[3] > -0.01f);
     to_commit->committed = true;
     to_commit->random_seed = tok_rand() % RANDOM_SEQUENCE_SIZE;
 }
 
-#define add_variance(x, variance, randnum, randnum2) x += ((randnum % variance) * 0.01f); x -= ((randnum2 % variance) * 0.01f);
+#define add_variance(x, variance, randnum, randnum2) if (variance > 0) { x += ((randnum % variance) * 0.01f); x -= ((randnum2 % variance) * 0.01f); }
 
 void add_lineparticle_effects_to_workload(
     GPUDataForSingleFrame * frame_data,
@@ -115,8 +125,7 @@ void add_lineparticle_effects_to_workload(
         
         int32_t head_i =
             all_mesh_summaries[
-                lineparticle_effects[i].zpolygon_cpu.mesh_id].
-                    vertices_head_i;
+                lineparticle_effects[i].zpolygon_cpu.mesh_id].vertices_head_i;
         log_assert(head_i >= 0);
         
         int32_t tail_i = head_i +
@@ -132,8 +141,7 @@ void add_lineparticle_effects_to_workload(
         
         if (
             lifetime_so_far >
-                total_lifetime +
-                    lineparticle_effects[i].trail_delay)
+                total_lifetime + lineparticle_effects[i].trail_delay)
         {
             lineparticle_effects[i].deleted = true;
             continue;
@@ -170,146 +178,155 @@ void add_lineparticle_effects_to_workload(
                 (lineparticle_effects[i].random_seed + particle_i + 414) %
                     RANDOM_SEQUENCE_SIZE);
             
+            uint64_t delayed_lifetime_so_far =
+                    lifetime_so_far > particle_delay ?
+                        lifetime_so_far - particle_delay : 0;
+            log_assert(
+                delayed_lifetime_so_far <= lineparticle_effects[i].elapsed);
+            
+            uint64_t elapsed_in_this_waypoint = delayed_lifetime_so_far;
+            uint32_t prev_i = 0;
+            uint32_t next_i = 1;
+            
+            while (
+                prev_i < MAX_LINEPARTICLE_DIRECTIONS &&
+                elapsed_in_this_waypoint > lineparticle_effects[i].
+                    waypoint_duration[prev_i])
+            {
+                elapsed_in_this_waypoint -= lineparticle_effects[i].
+                    waypoint_duration[prev_i];
+                prev_i += 1;
+                next_i += 1;
+            }
+            
+            if (
+                next_i >= lineparticle_effects[i].waypoints_size ||
+                prev_i >= MAX_LINEPARTICLE_DIRECTIONS)
+            {
+                continue;
+            }
+            
+            frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size] =
+                    lineparticle_effects[i].zpolygon_gpu;
+            
+            float next_multiplier =
+                (float)elapsed_in_this_waypoint /
+                    (float)lineparticle_effects[i].
+                        waypoint_duration[prev_i];
+            log_assert(next_multiplier < 1.01f);
+            log_assert(next_multiplier > -0.01f);
+            float prev_multiplier = 1.0f - next_multiplier;
+            
+            frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size].xyz[0] =
+                    (prev_multiplier * lineparticle_effects[i].
+                        waypoint_x[prev_i]) +
+                    (next_multiplier * lineparticle_effects[i].
+                        waypoint_x[next_i]);
+            frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size].xyz[1] =
+                    (prev_multiplier * lineparticle_effects[i].
+                        waypoint_y[prev_i]) +
+                    (next_multiplier * lineparticle_effects[i].
+                        waypoint_y[next_i]);
+            frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size].xyz[2] =
+                    (prev_multiplier * lineparticle_effects[i].
+                        waypoint_z[prev_i]) +
+                    (next_multiplier * lineparticle_effects[i].
+                        waypoint_z[next_i]);
+            
+            frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size].scale_factor =
+                    (prev_multiplier * lineparticle_effects[i].
+                        waypoint_scalefactor[prev_i]) +
+                    (next_multiplier * lineparticle_effects[i].
+                        waypoint_scalefactor[next_i]);
+            add_variance(
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].scale_factor,
+                lineparticle_effects[i].
+                    particle_scalefactor_variance_pct,
+                particle_rands[0],
+                particle_rands[1]);
+            
+            frame_data->polygon_materials[
+                frame_data->polygon_collection->size *
+                    MAX_MATERIALS_SIZE] =
+                        lineparticle_effects[i].zpolygon_material;
+            
+            log_assert(frame_data->polygon_collection->polygons[0].
+                bonus_rgb[0] < 0.1f);
+            log_assert(frame_data->polygon_collection->polygons[0].
+                bonus_rgb[1] < 0.1f);
+            log_assert(frame_data->polygon_collection->polygons[0].
+                bonus_rgb[2] < 0.1f);
+            
+            frame_data->polygon_materials[
+                frame_data->polygon_collection->size *
+                    MAX_MATERIALS_SIZE].rgba[0] =
+                        (lineparticle_effects[i].waypoint_r[prev_i] *
+                            prev_multiplier) +
+                        (lineparticle_effects[i].waypoint_r[next_i] *
+                            next_multiplier);
+            add_variance(
+                frame_data->polygon_materials[
+                    frame_data->polygon_collection->size *
+                        MAX_MATERIALS_SIZE].rgba[0],
+                lineparticle_effects[i].particle_rgb_variance_pct,
+                particle_rands[2],
+                particle_rands[3]);
+            
+            frame_data->polygon_materials[
+                frame_data->polygon_collection->size *
+                    MAX_MATERIALS_SIZE].rgba[1] =
+                        (lineparticle_effects[i].waypoint_g[prev_i] *
+                            prev_multiplier) +
+                        (lineparticle_effects[i].waypoint_g[next_i] *
+                            next_multiplier);
+            add_variance(
+                frame_data->polygon_materials[
+                    frame_data->polygon_collection->size *
+                        MAX_MATERIALS_SIZE].rgba[1],
+                lineparticle_effects[i].particle_rgb_variance_pct,
+                particle_rands[3],
+                particle_rands[4]);
+            
+            frame_data->polygon_materials[
+                frame_data->polygon_collection->size *
+                    MAX_MATERIALS_SIZE].rgba[2] =
+                        (lineparticle_effects[i].waypoint_b[prev_i] *
+                            prev_multiplier) +
+                        (lineparticle_effects[i].waypoint_b[next_i] *
+                            next_multiplier);
+            add_variance(
+                frame_data->polygon_materials[
+                    frame_data->polygon_collection->size *
+                        MAX_MATERIALS_SIZE].rgba[2],
+                lineparticle_effects[i].particle_rgb_variance_pct,
+                particle_rands[1],
+                particle_rands[3]);
+            
+            frame_data->polygon_materials[
+                frame_data->polygon_collection->size *
+                    MAX_MATERIALS_SIZE].rgba[3] =
+                        ((lineparticle_effects[i].waypoint_a[prev_i] *
+                            prev_multiplier) +
+                        (lineparticle_effects[i].waypoint_a[next_i] *
+                            next_multiplier));
+            add_variance(
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_angle[2],
+                lineparticle_effects[i].particle_zangle_variance_pct,
+                particle_rands[2],
+                particle_rands[4]);
+            
             for (
                 int32_t vert_i = head_i;
                 vert_i < (tail_i - 1);
                 vert_i += 3)
             {
-                uint64_t delayed_lifetime_so_far =
-                    lifetime_so_far > particle_delay ?
-                        lifetime_so_far - particle_delay : 0;
-                log_assert(
-                    delayed_lifetime_so_far <= lineparticle_effects[i].elapsed);
-                
-                uint64_t elapsed_in_this_waypoint = delayed_lifetime_so_far;
-                uint32_t prev_i = 0;
-                uint32_t next_i = 1;
-                
-                while (
-                    prev_i < MAX_LINEPARTICLE_DIRECTIONS &&
-                    elapsed_in_this_waypoint > lineparticle_effects[i].
-                        waypoint_duration[prev_i])
-                {
-                    elapsed_in_this_waypoint -= lineparticle_effects[i].
-                        waypoint_duration[prev_i];
-                    prev_i += 1;
-                    next_i += 1;
-                }
-                
-                if (prev_i >= MAX_LINEPARTICLE_DIRECTIONS) {
-                    continue;
-                }
-                
-                frame_data->polygon_collection->polygons[
-                    frame_data->polygon_collection->size] =
-                        lineparticle_effects[i].zpolygon_gpu;
-                
-                float next_multiplier =
-                    (float)elapsed_in_this_waypoint /
-                        (float)lineparticle_effects[i].
-                            waypoint_duration[prev_i];
-                assert(next_multiplier < 1.01f);
-                float prev_multiplier = 1.0f - next_multiplier;
-                
-                frame_data->polygon_collection->polygons[
-                    frame_data->polygon_collection->size].xyz[0] =
-                        (prev_multiplier * lineparticle_effects[i].
-                            waypoint_x[prev_i]) +
-                        (next_multiplier * lineparticle_effects[i].
-                            waypoint_x[next_i]);
-                frame_data->polygon_collection->polygons[
-                    frame_data->polygon_collection->size].xyz[1] =
-                        (prev_multiplier * lineparticle_effects[i].
-                            waypoint_y[prev_i]) +
-                        (next_multiplier * lineparticle_effects[i].
-                            waypoint_y[next_i]);
-                frame_data->polygon_collection->polygons[
-                    frame_data->polygon_collection->size].xyz[2] =
-                        (prev_multiplier * lineparticle_effects[i].
-                            waypoint_z[prev_i]) +
-                        (next_multiplier * lineparticle_effects[i].
-                            waypoint_z[next_i]);
-                
-                frame_data->polygon_collection->polygons[
-                    frame_data->polygon_collection->size].scale_factor =
-                        (prev_multiplier * lineparticle_effects[i].
-                            waypoint_scalefactor[prev_i]) +
-                        (next_multiplier * lineparticle_effects[i].
-                            waypoint_scalefactor[next_i]);
-                
-                add_variance(
-                    frame_data->polygon_collection->polygons[
-                        frame_data->polygon_collection->size].scale_factor,
-                    lineparticle_effects[i].
-                                particle_scalefactor_variance_pct,
-                    particle_rands[0],
-                    particle_rands[1]);
-                
-                frame_data->polygon_materials[
-                    frame_data->polygon_collection->size *
-                        MAX_MATERIALS_SIZE] =
-                            lineparticle_effects[i].zpolygon_material;
-                
-                frame_data->polygon_materials[
-                    frame_data->polygon_collection->size *
-                        MAX_MATERIALS_SIZE].rgba[0] =
-                            (lineparticle_effects[i].waypoint_r[prev_i] *
-                                prev_multiplier) +
-                            (lineparticle_effects[i].waypoint_r[next_i] *
-                                next_multiplier);
-                add_variance(
-                    frame_data->polygon_materials[
-                        frame_data->polygon_collection->size *
-                            MAX_MATERIALS_SIZE].rgba[0],
-                    lineparticle_effects[i].particle_rgb_variance_pct,
-                    particle_rands[2],
-                    particle_rands[3]);
-                
-                frame_data->polygon_materials[
-                    frame_data->polygon_collection->size *
-                        MAX_MATERIALS_SIZE].rgba[1] =
-                            (lineparticle_effects[i].waypoint_g[prev_i] *
-                                prev_multiplier) +
-                            (lineparticle_effects[i].waypoint_g[next_i] *
-                                next_multiplier);
-                add_variance(
-                    frame_data->polygon_materials[
-                        frame_data->polygon_collection->size *
-                            MAX_MATERIALS_SIZE].rgba[1],
-                    lineparticle_effects[i].particle_rgb_variance_pct,
-                    particle_rands[3],
-                    particle_rands[4]);
-                
-                frame_data->polygon_materials[
-                    frame_data->polygon_collection->size *
-                        MAX_MATERIALS_SIZE].rgba[2] =
-                            (lineparticle_effects[i].waypoint_b[prev_i] *
-                                prev_multiplier) +
-                            (lineparticle_effects[i].waypoint_b[next_i] *
-                                next_multiplier);
-                add_variance(
-                    frame_data->polygon_materials[
-                        frame_data->polygon_collection->size *
-                            MAX_MATERIALS_SIZE].rgba[1],
-                    lineparticle_effects[i].particle_rgb_variance_pct,
-                    particle_rands[1],
-                    particle_rands[3]);
-                
-                frame_data->polygon_materials[
-                    frame_data->polygon_collection->size *
-                        MAX_MATERIALS_SIZE].rgba[3] =
-                            ((lineparticle_effects[i].waypoint_a[prev_i] *
-                                prev_multiplier) +
-                            (lineparticle_effects[i].waypoint_a[next_i] *
-                                next_multiplier));
-                
-                add_variance(
-                    frame_data->polygon_collection->polygons[
-                        frame_data->polygon_collection->size].xyz_angle[2],
-                    lineparticle_effects[i].particle_zangle_variance_pct,
-                    particle_rands[2],
-                    particle_rands[4]);
-                
                 for (uint32_t m = 0; m < 3; m++) {
                     frame_data->vertices[frame_data->vertices_size].
                         locked_vertex_i = (vert_i + (int32_t)m);
@@ -324,15 +341,15 @@ void add_lineparticle_effects_to_workload(
                     }
                     frame_data->vertices_size += 1;
                 }
+            }
                 
-                if (
-                    frame_data->polygon_collection->size + 1 <
-                        MAX_POLYGONS_PER_BUFFER)
-                {
-                    frame_data->polygon_collection->size += 1;
-                } else {
-                    return;
-                }
+            if (
+                frame_data->polygon_collection->size + 1 <
+                    MAX_POLYGONS_PER_BUFFER)
+            {
+                frame_data->polygon_collection->size += 1;
+            } else {
+                return;
             }
         }
     }

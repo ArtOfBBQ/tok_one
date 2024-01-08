@@ -134,11 +134,13 @@ static void client_handle_keypresses(
             /* const float z: */
                 0.5f,
             /* const float width: */
-                screenspace_width_to_width(125.0f, 0.5f),
+                screenspace_width_to_width(75.0f, 0.5f),
             /* const float height: */
-                screenspace_height_to_height(125.0f, 0.5f),
+                screenspace_height_to_height(75.0f, 0.5f),
             /* PolygonRequest * stack_recipient: */
                 &lines_polygon);
+        lines_polygon.gpu_data->ignore_camera = false;
+        lines_polygon.gpu_data->ignore_lighting = true;
         
         lines->zpolygon_material.texturearray_i = 1;
         lines->zpolygon_material.texture_i = 0;
@@ -147,63 +149,44 @@ static void client_handle_keypresses(
         lines->waypoint_duration[0] = 1250000;
         lines->waypoint_x[0] = screenspace_x_to_x(
             /* const float screenspace_x: */
-                50,
+                0,
             /* const float given_z: */
                 0.5f);
         lines->waypoint_y[0] = screenspace_y_to_y(
             /* const float screenspace_y: */
-                750,
+                0,
             /* const float given_z: */
-                0.75f);
+                0.5f);
         lines->waypoint_z[0] = 0.5f;
-        lines->waypoint_r[0] = 1.0f;
-        lines->waypoint_g[0] = 0.0f;
-        lines->waypoint_b[0] = 0.0f;
+        lines->waypoint_r[0] = 0.8f;
+        lines->waypoint_g[0] = 0.1f;
+        lines->waypoint_b[0] = 0.1f;
         lines->waypoint_a[0] = 1.0f;
         lines->waypoint_scalefactor[0] = 1.0f;
         lines->waypoint_duration[0] = 350000;
         
         lines->waypoint_x[1] = screenspace_x_to_x(
             /* const float screenspace_x: */
-                450,
+                window_globals->window_width,
             /* const float given_z: */
-                0.75f);
+                0.5f);
         lines->waypoint_y[1] = screenspace_y_to_y(
             /* const float screenspace_y: */
-                150,
+                0,
             /* const float given_z: */
-                0.75f);
-        lines->waypoint_z[1] = 0.75f;
+                0.5f);
+        lines->waypoint_z[1] = 0.5f;
         
-        lines->waypoint_r[1] = 0.2f;
-        lines->waypoint_g[1] = 1.0f;
-        lines->waypoint_b[1] = 0.0f;
+        lines->waypoint_r[1] = 0.4f;
+        lines->waypoint_g[1] = 0.8f;
+        lines->waypoint_b[1] = 0.2f;
         lines->waypoint_a[1] = 1.0f;
-        lines->waypoint_scalefactor[1] = 0.75f;
+        lines->waypoint_scalefactor[1] = 0.85f;
         lines->waypoint_duration[1] = 350000;
-        
-        lines->waypoint_x[2] = screenspace_x_to_x(
-            /* const float screenspace_x: */
-                550,
-            /* const float given_z: */
-                0.75f);
-        lines->waypoint_y[2] = screenspace_y_to_y(
-            /* const float screenspace_y: */
-                250,
-            /* const float given_z: */
-                0.65f);
-        lines->waypoint_z[2] = 0.75f;
-        
-        lines->waypoint_r[2] = 1.0f;
-        lines->waypoint_g[2] = 1.0f;
-        lines->waypoint_b[2] = 1.0f;
-        lines->waypoint_a[2] = 1.0f;
-        lines->waypoint_scalefactor[2] = 0.85f;
-        lines->waypoint_duration[2] = 350000;
+                
         lines->trail_delay = 500000;
-        
-        lines->waypoints_size = 3;
-        lines->particle_count = 25;
+        lines->waypoints_size = 2;
+        lines->particle_count = 50;
         lines->particle_zangle_variance_pct = 15;
         lines->particle_rgb_variance_pct = 15;
         lines->particle_scalefactor_variance_pct = 35;
