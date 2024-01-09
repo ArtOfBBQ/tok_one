@@ -54,6 +54,8 @@ LineParticle * next_lineparticle_effect(void)
     }
     
     lineparticle_effects_size += 1;
+    log_assert(lineparticle_effects_size < LINEPARTICLE_EFFECTS_SIZE);
+    
     construct_lineparticle_effect_no_zpoly(
         &lineparticle_effects[lineparticle_effects_size - 1]);
     
@@ -68,12 +70,9 @@ LineParticle * next_lineparticle_effect_with_zpoly(
     LineParticle * return_value = next_lineparticle_effect();
     
     log_assert(lineparticle_effects_size < LINEPARTICLE_EFFECTS_SIZE);
-    return_value->zpolygon_cpu =
-        *construct_with_zpolygon;
-    return_value->zpolygon_gpu =
-        *construct_with_polygon_gpu;
-    return_value->zpolygon_material =
-        *construct_with_polygon_material;
+    return_value->zpolygon_cpu = *construct_with_zpolygon;
+    return_value->zpolygon_gpu = *construct_with_polygon_gpu;
+    return_value->zpolygon_material = *construct_with_polygon_material;
     
     return return_value;
 }

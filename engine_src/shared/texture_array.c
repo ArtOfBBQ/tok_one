@@ -489,9 +489,6 @@ void init_or_push_one_gpu_texture_array_if_needed(void) {
                             return;
                         }
                         
-                        log_append("push an image from texture array: ");
-                        log_append_int(i);
-                        log_append_char('\n');
                         platform_gpu_push_texture_slice(
                             i,
                             j,
@@ -679,11 +676,6 @@ void register_high_priority_if_unloaded(
         // mark as high priority
         texture_arrays[texture_array_i].images[texture_i]
             .prioritize_asset_load = true;
-        log_append("high priority found at texture array: ");
-        log_append_int(texture_array_i);
-        log_append(", texture_i: ");
-        log_append_int(texture_i);
-        log_append("\n");
     }
 }
 
@@ -972,9 +964,6 @@ void decode_all_null_images_with_memory(void)
         log_assert(i < TEXTUREARRAYS_SIZE);
         log_assert(j < MAX_FILES_IN_SINGLE_TEXARRAY);
         
-        log_append("decoding image: ");
-        log_append(texture_arrays[i].images[j].filename);
-        log_append_char('\n');
         decode_null_image_with_memory(
             /* const int32_t texture_array_i: */
                 i,
