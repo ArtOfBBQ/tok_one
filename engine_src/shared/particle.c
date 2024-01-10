@@ -92,6 +92,10 @@ void commit_lineparticle_effect(
     log_assert(to_commit->zpolygon_material.rgba[1] > -0.01f);
     log_assert(to_commit->zpolygon_material.rgba[2] > -0.01f);
     log_assert(to_commit->zpolygon_material.rgba[3] > -0.01f);
+    log_assert(to_commit->zpolygon_gpu.xyz_multiplier[0] > 0.0f);
+    log_assert(to_commit->zpolygon_gpu.xyz_multiplier[1] > 0.0f);
+    log_assert(to_commit->zpolygon_gpu.xyz_multiplier[2] > 0.0f);
+    
     to_commit->committed = true;
     to_commit->random_seed = tok_rand() % RANDOM_SEQUENCE_SIZE;
 }
@@ -146,6 +150,7 @@ void add_lineparticle_effects_to_workload(
             continue;
         }
         
+        uint64_t particle_rands[5];
         for (
             uint32_t particle_i = 0;
             particle_i < lineparticle_effects[i].particle_count;
@@ -160,7 +165,6 @@ void add_lineparticle_effects_to_workload(
                 continue;
             }
             
-            uint64_t particle_rands[5];
             particle_rands[0] = tok_rand_at_i(
                 (lineparticle_effects[i].random_seed + particle_i) %
                     RANDOM_SEQUENCE_SIZE);
@@ -249,6 +253,35 @@ void add_lineparticle_effects_to_workload(
                     particle_scalefactor_variance_pct,
                 particle_rands[0],
                 particle_rands[1]);
+            
+            log_assert(
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_offset[0] == 0);
+            log_assert(
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_offset[0] == 0);
+            log_assert(
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_offset[0] == 0);
+            log_assert(
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].bonus_rgb[0] == 0);
+            log_assert(
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].bonus_rgb[1] == 0);
+            log_assert(
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].bonus_rgb[2] == 0);
+            
+            frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size].xyz_multiplier[0] =
+                    lineparticle_effects[i].zpolygon_gpu.xyz_multiplier[0];
+            frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size].xyz_multiplier[1] =
+                    lineparticle_effects[i].zpolygon_gpu.xyz_multiplier[1];
+            frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size].xyz_multiplier[2] =
+                    lineparticle_effects[i].zpolygon_gpu.xyz_multiplier[2];
             
             frame_data->polygon_materials[
                 frame_data->polygon_collection->size *

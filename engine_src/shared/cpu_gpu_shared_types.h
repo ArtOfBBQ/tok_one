@@ -47,7 +47,7 @@ typedef struct GPUPolygon {
     float        xyz[3];
     float        xyz_angle[3];
     float        bonus_rgb[3];
-    float        xyz_multiplier[3];
+    float        xyz_multiplier[3]; // determines width/height/depth
     float        xyz_offset[3];
     float        scale_factor;
     unsigned int ignore_lighting;
