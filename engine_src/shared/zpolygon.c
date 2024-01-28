@@ -70,6 +70,8 @@ static void set_zpolygon_hitbox(
 
 void request_next_zpolygon(PolygonRequest * stack_recipient)
 {
+    stack_recipient->materials_size = MAX_MATERIALS_SIZE;
+    
     for (
         uint32_t zp_i = 0;
         zp_i < zpolygons_to_render->size;
@@ -77,12 +79,14 @@ void request_next_zpolygon(PolygonRequest * stack_recipient)
     {
         if (zpolygons_to_render->cpu_data[zp_i].deleted)
         {
-            stack_recipient->cpu_data     = &zpolygons_to_render->cpu_data[zp_i];
-            stack_recipient->gpu_data     = &zpolygons_to_render->gpu_data[zp_i];
+            stack_recipient->cpu_data     =
+                &zpolygons_to_render->cpu_data[zp_i];
+            stack_recipient->gpu_data     =
+                &zpolygons_to_render->gpu_data[zp_i];
             stack_recipient->gpu_material =
-                zpolygons_to_render->gpu_materials + (zp_i * MAX_MATERIALS_SIZE);
+                zpolygons_to_render->gpu_materials +
+                (zp_i * MAX_MATERIALS_SIZE);
             stack_recipient->cpu_data->committed = false;
-            
             return;
         }
     }
@@ -92,11 +96,12 @@ void request_next_zpolygon(PolygonRequest * stack_recipient)
         &zpolygons_to_render->cpu_data[zpolygons_to_render->size];
     stack_recipient->gpu_data     =
         &zpolygons_to_render->gpu_data[zpolygons_to_render->size];
-    stack_recipient->gpu_material = zpolygons_to_render->gpu_materials +
+    stack_recipient->gpu_material =
+        zpolygons_to_render->gpu_materials +
         (zpolygons_to_render->size * MAX_MATERIALS_SIZE);
     stack_recipient->cpu_data[zpolygons_to_render->size].deleted = false;
     stack_recipient->cpu_data->committed = false;
-        
+    
     zpolygons_to_render->size += 1;
     
     return;
@@ -125,6 +130,8 @@ void commit_zpolygon_to_render(PolygonRequest * to_commit)
         log_assert(all_mesh_vertices->gpu_data[vert_i].parent_material_i >= 0);
         log_assert(all_mesh_vertices->gpu_data[vert_i].parent_material_i  <
             MAX_MATERIALS_SIZE);
+        log_assert(all_mesh_vertices->gpu_data[vert_i].parent_material_i  <
+            all_mesh_summaries[to_commit->cpu_data->mesh_id].materials_size);
     }
     
     for (
@@ -141,6 +148,13 @@ void commit_zpolygon_to_render(PolygonRequest * to_commit)
         
         log_assert(
             to_commit->gpu_material[mat_i].texture_i < 5000);
+        log_assert(
+            to_commit->gpu_material[mat_i].texturearray_i < TEXTUREARRAYS_SIZE);
+        
+        for (uint32_t rgba_i = 0; rgba_i < 4; rgba_i++) {
+            log_assert(to_commit->gpu_material[mat_i].rgba[rgba_i] >= -0.1f);
+            log_assert(to_commit->gpu_material[mat_i].rgba[rgba_i] <=  1.1f);
+        }
     }
     
     // set the hitbox height, width, and depth
@@ -221,40 +235,40 @@ void scale_zpolygon_multipliers_to_height(
     gpu_data->xyz_multiplier[2] = new_multiplier;
 }
 
-void construct_zpolygon(PolygonRequest * to_construct) {
-    log_assert(to_construct->cpu_data != NULL);
-    log_assert(to_construct->gpu_data != NULL);
-    log_assert(to_construct->gpu_material != NULL);
+void construct_zpolygon(
+    PolygonRequest * to_construct)
+{
+    assert(to_construct->cpu_data != NULL);
+    assert(to_construct->gpu_data != NULL);
+    assert(to_construct->gpu_material != NULL);
+    assert(
+        (to_construct->materials_size == 1 ||
+        to_construct->materials_size == MAX_MATERIALS_SIZE));
     
-    to_construct->gpu_data->xyz[0] = 0.0f;
-    to_construct->gpu_data->xyz[1] = 0.0f;
-    to_construct->gpu_data->xyz[2] = 1.0f;
-    to_construct->gpu_data->xyz_offset[0] = 0.0f;
-    to_construct->gpu_data->xyz_offset[1] = 0.0f;
-    to_construct->gpu_data->xyz_offset[2] = 0.0f;
-    to_construct->gpu_data->xyz_angle[0] = 0.0f;
-    to_construct->gpu_data->xyz_angle[1] = 0.0f;
-    to_construct->gpu_data->xyz_angle[2] = 0.0f;
+    memset(
+        to_construct->cpu_data,
+        0,
+        sizeof(zPolygonCPU));
+    memset(
+        to_construct->gpu_material,
+        0,
+        sizeof(GPUPolygonMaterial) *
+            to_construct->materials_size);
+    memset(
+        to_construct->gpu_data,
+        0,
+        sizeof(GPUPolygon));
+    
     to_construct->gpu_data->xyz_multiplier[0] = 1.0f;
     to_construct->gpu_data->xyz_multiplier[1] = 1.0f;
     to_construct->gpu_data->xyz_multiplier[2] = 1.0f;
     to_construct->gpu_data->scale_factor = 1.0f;
-    to_construct->gpu_data->ignore_lighting = false;
-    to_construct->gpu_data->ignore_camera = false;
-    to_construct->gpu_data->bonus_rgb[0] = 0.0f;
-    to_construct->gpu_data->bonus_rgb[1] = 0.0f;
-    to_construct->gpu_data->bonus_rgb[2] = 0.0f;
     
     to_construct->cpu_data->mesh_id = -1;
     to_construct->cpu_data->object_id = -1;
     to_construct->cpu_data->touchable_id = -1;
     to_construct->cpu_data->visible = true;
-    to_construct->cpu_data->deleted = false;
-    to_construct->cpu_data->committed = false;
     
-    // We only construct the 1st material, because some
-    // particle effects use this constructor and they only have 1 material
-    // (so using multiple would cause buffer overflow writing)
     to_construct->gpu_material[0].rgba[0] = 0.75f;
     to_construct->gpu_material[0].rgba[1] = 0.75f;
     to_construct->gpu_material[0].rgba[2] = 0.75f;

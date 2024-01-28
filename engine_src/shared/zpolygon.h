@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <inttypes.h>
+#include <string.h>
 
 #include "clientlogic_macro_settings.h"
 
@@ -63,9 +64,11 @@ typedef struct PolygonRequest {
     GPUPolygon * gpu_data;
     GPUPolygonMaterial * gpu_material;
     zPolygonCPU * cpu_data;
+    uint32_t materials_size;
 } PolygonRequest;
 
-void construct_zpolygon(PolygonRequest * to_construct);
+void construct_zpolygon(
+    PolygonRequest * to_construct);
 // Allocate a PolygonRequest on the stack, then call this
 void request_next_zpolygon(PolygonRequest * stack_recipient);
 void commit_zpolygon_to_render(PolygonRequest * to_commit);

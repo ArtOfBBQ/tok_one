@@ -37,7 +37,7 @@ float screenspace_width_to_width(
             / window_globals->aspect_ratio;
 }
 
-void init_projection_constants() {
+void init_projection_constants(void) {
     
     if (
         window_globals->window_height < 50.0f ||
@@ -93,4 +93,3 @@ void update_window_size(
     
     window_globals->last_resize_request_at = at_timestamp_microseconds;
 }
-

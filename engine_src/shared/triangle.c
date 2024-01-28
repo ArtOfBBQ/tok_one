@@ -1,5 +1,23 @@
 #include "triangle.h"
 
+inline static float get_magnitude_f3(float input_xyz[3]) {
+    float sum_squares =
+        (input_xyz[0] * input_xyz[0]) +
+        (input_xyz[1] * input_xyz[1]) +
+        (input_xyz[2] * input_xyz[2]);
+    
+    #ifndef LOGGER_IGNORE_ASSERTS
+    sum_squares = isnan(sum_squares) || !isfinite(sum_squares) ?
+        FLOAT32_MAX : sum_squares;
+    #endif
+    
+    float return_value = sqrtf(sum_squares);
+    
+    log_assert(!isnan(return_value));
+    
+    return return_value;
+}
+
 static float get_magnitude(zVertex input) {
     float x = (input.x * input.x);
     float y = (input.y * input.y);
@@ -53,6 +71,19 @@ void normalize_vertex(
     log_assert(!isnan(to_normalize[2]));
     to_normalize[2] /= magnitude;
     log_assert(!isnan(to_normalize[2]));
+}
+
+void normalize_zvertex_f3(
+    float to_normalize_xyz[3])
+{
+    float magnitude = get_magnitude_f3(to_normalize_xyz);
+    if (magnitude < 0.0001f && magnitude > -0.0001f) {
+        magnitude = 0.0001f;
+    }
+    
+    to_normalize_xyz[0] /= magnitude;
+    to_normalize_xyz[1] /= magnitude;
+    to_normalize_xyz[2] /= magnitude;
 }
 
 void normalize_zvertex(

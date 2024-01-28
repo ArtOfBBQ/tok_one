@@ -464,7 +464,9 @@ void parse_obj(
     
     if (recipient->triangles_count > 0) {
         recipient->triangles = malloc_function(
-            sizeof(unsigned int[5]) * recipient->triangles_count);
+            sizeof(unsigned int) *
+            5 *
+            recipient->triangles_count);
     }
     for (unsigned int j = 0; j < recipient->triangles_count; j++) {
         recipient->triangles[j][0] = 0; // vertex index 1

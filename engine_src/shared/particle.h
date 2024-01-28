@@ -15,7 +15,7 @@ extern "C" {
 #include "tok_random.h"
 #include "zpolygon.h"
 
-#define LINEPARTICLE_EFFECTS_SIZE 50
+#define LINEPARTICLE_EFFECTS_SIZE 100
 #define MAX_LINEPARTICLE_DIRECTIONS 5
 typedef struct LineParticle {
     zPolygonCPU zpolygon_cpu;
@@ -108,9 +108,7 @@ typedef struct ParticleEffect {
     
     int32_t mesh_id_to_spawn;
     
-    float x;
-    float y;
-    float z;
+    float xyz[3];
     float scale_factor;
     
     uint64_t random_seed;
@@ -118,9 +116,7 @@ typedef struct ParticleEffect {
     bool32_t deleted;
     
     uint32_t particle_spawns_per_second;
-    float particle_x_multiplier;
-    float particle_y_multiplier;
-    float particle_z_multiplier;
+    float particle_xyz_multiplier[3];
     bool32_t particles_ignore_lighting;
     
     uint64_t particle_lifespan;
@@ -139,22 +135,16 @@ typedef struct ParticleEffect {
     // set max_x_angle_variance to 318 to randomly rotate each particle's
     // direction by somewhere between 0.0f radians and 3.18f radians around the
     // x-axis, so you get particles flying in different directions
-    uint32_t particle_direction_max_x_angle_variance;
-    uint32_t particle_direction_max_y_angle_variance;
-    uint32_t particle_direction_max_z_angle_variance;
+    uint32_t particle_direction_max_xyz_angle_variance[3];
     
     float squared_direction[3];
     float squared_distance_per_second;
-    uint32_t squared_direction_max_x_angle_variance;
-    uint32_t squared_direction_max_y_angle_variance;
-    uint32_t squared_direction_max_z_angle_variance;
+    uint32_t squared_direction_max_xyz_angle_variance[3];
     
     // set these to 0 to have each particle start exactly at the origin
     // set max_y to 20 to randomly have each particle offset by a y-axis value
     // between 0.0f and 0.2f (so it's 100x)
-    uint32_t particle_origin_max_x_variance;
-    uint32_t particle_origin_max_y_variance;
-    uint32_t particle_origin_max_z_variance;
+    uint32_t particle_origin_max_xyz_variance[3];
     
     int32_t random_texturearray_i[MAX_PARTICLE_TEXTURES];
     int32_t random_texture_i[MAX_PARTICLE_TEXTURES];

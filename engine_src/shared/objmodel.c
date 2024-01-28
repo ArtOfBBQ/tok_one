@@ -596,7 +596,7 @@ static float get_vertex_magnitude(float input_xyz[3]) {
 
 static void normalize_gpu_triangle_normals(GPULockedVertex * input) {
     float magnitude = get_vertex_magnitude(input->xyz);
-
+    
     if (magnitude < 0.0001f && magnitude > -0.0001f) {
         magnitude = 0.0001f;
     }
@@ -772,11 +772,23 @@ static uint32_t chars_till_next_nonspace(
     return i;
 }
 
-int32_t new_mesh_id_from_resource(
-    const char * filename)
+static ParsedObj * parsed_obj = NULL;
+int32_t new_mesh_id_from_resource_asserts(
+    const char * filename,
+    const uint32_t expected_materials_count,
+    const char expected_materials_names[MAX_MATERIALS_SIZE][256])
 {
+    // TODO: remove debug code
+    //    if (are_equal_strings("house1.obj", filename)) {
+    //        log_append("break here\n");
+    //    }
+    
     int32_t new_mesh_head_id = (int32_t)all_mesh_vertices->size;
     log_assert(all_mesh_summaries_size < ALL_MESHES_SIZE);
+    
+    if (parsed_obj == NULL) {
+        parsed_obj = malloc_from_unmanaged(sizeof(ParsedObj));
+    }
     
     FileBuffer obj_file;
     
@@ -793,11 +805,11 @@ int32_t new_mesh_id_from_resource(
     
     log_assert(obj_file.good);
     
-    ParsedObj parsed_obj;
+    ;
     uint32_t good = 0;
     parse_obj(
         /* ParsedObj * recipient: */
-            &parsed_obj,
+            parsed_obj,
         /* char * raw_buffer: */
             obj_file.contents,
         /* uint32_t * success: */
@@ -805,8 +817,8 @@ int32_t new_mesh_id_from_resource(
     log_assert(good);
     
     if (
-        parsed_obj.vertices_count < 1 ||
-        (parsed_obj.triangles_count + parsed_obj.quads_count) < 1)
+        parsed_obj->vertices_count < 1 ||
+        (parsed_obj->triangles_count + parsed_obj->quads_count) < 1)
     {
         good = 0;
     }
@@ -822,74 +834,77 @@ int32_t new_mesh_id_from_resource(
     log_assert(all_mesh_vertices->size < ALL_LOCKED_VERTICES_SIZE);
     
     all_mesh_summaries[all_mesh_summaries_size].materials_size =
-        parsed_obj.materials_count;
-    for (uint32_t i = 0; i < parsed_obj.materials_count; i++) {
+        parsed_obj->materials_count;
+    for (uint32_t i = 0; i < parsed_obj->materials_count; i++) {
         strcpy_capped(
             all_mesh_summaries[all_mesh_summaries_size].material_names[i],
             OBJ_STRING_SIZE,
-            parsed_obj.materials[i].name);
+            parsed_obj->materials[i].name);
     }
     
     for (
         uint32_t triangle_i = 0;
-        triangle_i < parsed_obj.triangles_count;
+        triangle_i < parsed_obj->triangles_count;
         triangle_i++)
     {
-        uint32_t cur_material_i = parsed_obj.triangles[triangle_i][4];
+        uint32_t cur_material_i = parsed_obj->triangles[triangle_i][4];
+        log_assert(cur_material_i < parsed_obj->materials_count);
         
         for (uint32_t _ = 0; _ < 3; _++) {
-            uint32_t vert_i = parsed_obj.triangles[triangle_i][_];
+            uint32_t vert_i = parsed_obj->triangles[triangle_i][_];
             
             log_assert(vert_i >= 1);
-            log_assert(vert_i <= parsed_obj.vertices_count);
+            log_assert(vert_i <= parsed_obj->vertices_count);
             log_assert(all_mesh_vertices->size < ALL_LOCKED_VERTICES_SIZE);
             
             all_mesh_vertices->gpu_data[all_mesh_vertices->size].xyz[0] =
-                parsed_obj.vertices[vert_i - 1][0];
+                parsed_obj->vertices[vert_i - 1][0];
             all_mesh_vertices->gpu_data[all_mesh_vertices->size].xyz[1] =
-                parsed_obj.vertices[vert_i - 1][1];
+                parsed_obj->vertices[vert_i - 1][1];
             all_mesh_vertices->gpu_data[all_mesh_vertices->size].xyz[2] =
-                parsed_obj.vertices[vert_i - 1][2];
+                parsed_obj->vertices[vert_i - 1][2];
             
             all_mesh_vertices->gpu_data[all_mesh_vertices->size].
                 parent_material_i =
                     cur_material_i;
+            log_assert(cur_material_i >= 0);
+            log_assert(cur_material_i < MAX_MATERIALS_SIZE);
             
-            if (parsed_obj.normals_count > 0 &&
-                parsed_obj.normals != NULL &&
-                parsed_obj.triangle_normals != NULL)
+            if (parsed_obj->normals_count > 0 &&
+                parsed_obj->normals != NULL &&
+                parsed_obj->triangle_normals != NULL)
             {
-                uint32_t norm_i = parsed_obj.triangle_normals[triangle_i][_];
+                uint32_t norm_i = parsed_obj->triangle_normals[triangle_i][_];
                 
                 log_assert(norm_i >= 1);
-                log_assert(norm_i <= parsed_obj.normals_count);
+                log_assert(norm_i <= parsed_obj->normals_count);
                 
                 all_mesh_vertices->gpu_data[all_mesh_vertices->size].
                     normal_xyz[0] =
-                        parsed_obj.normals[norm_i - 1][0];
+                        parsed_obj->normals[norm_i - 1][0];
                 all_mesh_vertices->gpu_data[all_mesh_vertices->size].
                     normal_xyz[1] =
-                        parsed_obj.normals[norm_i - 1][1];
+                        parsed_obj->normals[norm_i - 1][1];
                 all_mesh_vertices->gpu_data[all_mesh_vertices->size].
                     normal_xyz[2] =
-                        parsed_obj.normals[norm_i - 1][2];
+                        parsed_obj->normals[norm_i - 1][2];
             } else {
                 guess_gpu_triangle_normal(
                     /* GPULockedVertex * to_change: */
                         &all_mesh_vertices->gpu_data[all_mesh_vertices->size]);
             }
             
-            if (parsed_obj.textures_count > 0) {
-                uint32_t text_i = parsed_obj.triangle_textures[triangle_i][_];
+            if (parsed_obj->textures_count > 0) {
+                uint32_t text_i = parsed_obj->triangle_textures[triangle_i][_];
                 
                 log_assert(text_i >= 1);
-                log_assert(text_i <= parsed_obj.textures_count);
+                log_assert(text_i <= parsed_obj->textures_count);
                 
                 all_mesh_vertices->gpu_data[all_mesh_vertices->size].uv[0] =
-                    parsed_obj.textures[text_i - 1][0];
+                    parsed_obj->textures[text_i - 1][0];
                 
                 all_mesh_vertices->gpu_data[all_mesh_vertices->size].uv[1] =
-                    parsed_obj.textures[text_i - 1][1];
+                    parsed_obj->textures[text_i - 1][1];
             } else {
                 // No uv data in .obj file, gotta guess
                 // TODO: Maybe should be part of the obj parser?
@@ -905,63 +920,64 @@ int32_t new_mesh_id_from_resource(
     
     for (
         uint32_t quad_i = 0;
-        quad_i < parsed_obj.quads_count;
+        quad_i < parsed_obj->quads_count;
         quad_i++)
     {
-        uint32_t cur_material_i = parsed_obj.quads[quad_i][5];
+        uint32_t cur_material_i = parsed_obj->quads[quad_i][5];
+        log_assert(cur_material_i < parsed_obj->materials_count);
         
         for (uint32_t offset = 0; offset < 2; offset++) {
             for (uint32_t _ = 0; _ < 3; _++) {
-                uint32_t vert_i = parsed_obj.quads[quad_i][_ + offset];
-
+                uint32_t vert_i = parsed_obj->quads[quad_i][_ + offset];
+                
                 log_assert(vert_i >= 1);
-                log_assert(vert_i <= parsed_obj.vertices_count);
+                log_assert(vert_i <= parsed_obj->vertices_count);
                 
                 all_mesh_vertices->gpu_data[all_mesh_vertices->size].xyz[0] =
-                    parsed_obj.vertices[vert_i - 1][0];
+                    parsed_obj->vertices[vert_i - 1][0];
                 all_mesh_vertices->gpu_data[all_mesh_vertices->size].xyz[1] =
-                    parsed_obj.vertices[vert_i - 1][1];
+                    parsed_obj->vertices[vert_i - 1][1];
                 all_mesh_vertices->gpu_data[all_mesh_vertices->size].xyz[2] =
-                    parsed_obj.vertices[vert_i - 1][2];
+                    parsed_obj->vertices[vert_i - 1][2];
                 
                 all_mesh_vertices->gpu_data[all_mesh_vertices->size].
                     parent_material_i =
                         cur_material_i;
                 
-                if (parsed_obj.normals_count > 0) {
-                    uint32_t norm_i = parsed_obj.quad_normals[quad_i]
+                if (parsed_obj->normals_count > 0) {
+                    uint32_t norm_i = parsed_obj->quad_normals[quad_i]
                         [_ + offset];
 
                     log_assert(norm_i >= 1);
-                    log_assert(norm_i <= parsed_obj.normals_count);
+                    log_assert(norm_i <= parsed_obj->normals_count);
 
                     all_mesh_vertices->gpu_data[all_mesh_vertices->size].
                         normal_xyz[0] =
-                            parsed_obj.normals[norm_i - 1][0];
+                            parsed_obj->normals[norm_i - 1][0];
                     all_mesh_vertices->gpu_data[all_mesh_vertices->size].
                         normal_xyz[1] =
-                            parsed_obj.normals[norm_i - 1][1];
+                            parsed_obj->normals[norm_i - 1][1];
                     all_mesh_vertices->gpu_data[all_mesh_vertices->size].
                         normal_xyz[2] =
-                            parsed_obj.normals[norm_i - 1][2];
+                            parsed_obj->normals[norm_i - 1][2];
                 } else {
                     guess_gpu_triangle_normal(
                         /* GPULockedVertex * to_change: */
                             &all_mesh_vertices->gpu_data[all_mesh_vertices->size]);
                 }
                 
-                if (parsed_obj.textures_count > 0) {
-                    uint32_t text_i = parsed_obj.quad_textures[quad_i]
+                if (parsed_obj->textures_count > 0) {
+                    uint32_t text_i = parsed_obj->quad_textures[quad_i]
                         [_ + offset];
                     
                     log_assert(text_i >= 1);
-                    log_assert(text_i <= parsed_obj.textures_count);
+                    log_assert(text_i <= parsed_obj->textures_count);
                     
                     all_mesh_vertices->gpu_data[all_mesh_vertices->size].uv[0] =
-                        parsed_obj.textures[text_i - 1][0];
+                        parsed_obj->textures[text_i - 1][0];
 
                     all_mesh_vertices->gpu_data[all_mesh_vertices->size].uv[1] =
-                        parsed_obj.textures[text_i - 1][1];
+                        parsed_obj->textures[text_i - 1][1];
                 } else {
                     // No uv data in .obj file, gotta guess
                     // TODO: Maybe should be part of the obj parser?
@@ -970,13 +986,22 @@ int32_t new_mesh_id_from_resource(
                     all_mesh_vertices->gpu_data[all_mesh_vertices->size].uv[1] =
                         all_mesh_vertices->size % 4 == 0 ? 0.0f : 1.0f;
                 }
-
+                
                 all_mesh_vertices->size += 1;
             }
         }
     }
     
-    free_obj(&parsed_obj);
+    if (expected_materials_names != NULL) {
+        log_assert(parsed_obj->materials_count == expected_materials_count);
+        for (uint32_t i = 0; i < parsed_obj->materials_count; i++) {
+            log_assert(
+                are_equal_strings(
+                    parsed_obj->materials[i].name,
+                    expected_materials_names[i]));
+        }
+    }
+    free_obj(parsed_obj);
     free_from_managed(obj_file.contents);
     obj_file.contents = NULL;
     
@@ -1052,6 +1077,12 @@ int32_t new_mesh_id_from_resource(
     #endif
     
     return (int32_t)all_mesh_summaries_size - 1;
+}
+
+int32_t new_mesh_id_from_resource(
+    const char * filename)
+{
+    return new_mesh_id_from_resource_asserts(filename, 0, NULL);
 }
 
 void center_mesh_offsets(

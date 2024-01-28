@@ -2,7 +2,7 @@
 
 static uint32_t renderer_initialized = false;
 
-void init_renderer() {
+void init_renderer(void) {
     renderer_initialized = true;
     
     camera.x       = 0.0f;
@@ -290,7 +290,7 @@ inline static void zpolygons_to_triangles(
         /* void * dest: */
             frame_data->polygon_collection,
         /* const void * src: */
-            &zpolygons_to_render->gpu_data,
+            zpolygons_to_render->gpu_data,
         /* size_t n: */
             sizeof(GPUPolygon) * zpolygons_to_render->size);
     frame_data->polygon_collection->size = zpolygons_to_render->size;
@@ -308,7 +308,7 @@ inline static void zpolygons_to_triangles(
         /* size_t __n: */
             sizeof(GPUPolygonMaterial) *
                 MAX_MATERIALS_SIZE *
-                MAX_POLYGONS_PER_BUFFER);
+                zpolygons_to_render->size);
     
     for (
         int32_t cpu_zp_i = 0;
@@ -342,6 +342,7 @@ inline static void zpolygons_to_triangles(
             frame_data->vertices[frame_data->vertices_size].polygon_i =
                 cpu_zp_i;
             frame_data->vertices_size += 1;
+            log_assert(frame_data->vertices_size < ALL_LOCKED_VERTICES_SIZE);
         }
     }
     

@@ -138,7 +138,11 @@ void add_lineparticle_effects_to_workload(
         
         uint64_t lifetime_so_far = lineparticle_effects[i].elapsed;
         uint64_t total_lifetime = 0;
-        for (uint32_t _ = 0; _ < lineparticle_effects[i].waypoints_size; _++) {
+        for (
+            uint32_t _ = 0;
+            _ < lineparticle_effects[i].waypoints_size;
+            _++)
+        {
             total_lifetime += lineparticle_effects[i].waypoint_duration[_];
         }
         
@@ -521,9 +525,10 @@ void commit_shatter_effect(
         }
     }
     
-    normalize_vertex(to_commit->linear_direction);
-    normalize_vertex(to_commit->squared_direction);
-        
+    normalize_zvertex_f3(to_commit->linear_direction);
+    normalize_zvertex_f3(to_commit->squared_direction);
+    
+    log_assert(to_commit->zpolygon_to_shatter_cpu.committed);
     to_commit->committed = true;
 }
 
@@ -743,15 +748,15 @@ void construct_particle_effect(
 {
     to_construct->object_id = -1;
     to_construct->mesh_id_to_spawn = 1;
-    to_construct->x = 0;
-    to_construct->y = 0;
-    to_construct->z = 0;
+    to_construct->xyz[0] = 0;
+    to_construct->xyz[1] = 0;
+    to_construct->xyz[2] = 0;
     to_construct->scale_factor = 1.0f;
     
     to_construct->particle_spawns_per_second = 200;
-    to_construct->particle_x_multiplier = 0.01f;
-    to_construct->particle_y_multiplier = 0.01f;
-    to_construct->particle_z_multiplier = 0.01f;
+    to_construct->particle_xyz_multiplier[0] = 0.01f;
+    to_construct->particle_xyz_multiplier[1] = 0.01f;
+    to_construct->particle_xyz_multiplier[2] = 0.01f;
     to_construct->particles_ignore_lighting = true;
     to_construct->random_seed = tok_rand() % 750;
     to_construct->particle_lifespan = 2000000;
@@ -779,21 +784,21 @@ void construct_particle_effect(
     to_construct->particle_direction[2] = 0.0f;
     to_construct->particle_distance_per_second = 0.5f;
     to_construct->particle_distance_max_variance = 0;
-    to_construct->particle_direction_max_x_angle_variance = 0;
-    to_construct->particle_direction_max_y_angle_variance = 0;
-    to_construct->particle_direction_max_z_angle_variance = 0;
+    to_construct->particle_direction_max_xyz_angle_variance[0] = 0;
+    to_construct->particle_direction_max_xyz_angle_variance[1] = 0;
+    to_construct->particle_direction_max_xyz_angle_variance[2] = 0;
     
     to_construct->squared_direction[0] = 0.0f;
     to_construct->squared_direction[1] = 0.0f;
     to_construct->squared_direction[2] = 0.0f;
     to_construct->squared_distance_per_second = 0.0f;
-    to_construct->squared_direction_max_x_angle_variance = 0.0f;
-    to_construct->squared_direction_max_y_angle_variance = 0.0f;
-    to_construct->squared_direction_max_z_angle_variance = 0.0f;
+    to_construct->squared_direction_max_xyz_angle_variance[0] = 0.0f;
+    to_construct->squared_direction_max_xyz_angle_variance[1] = 0.0f;
+    to_construct->squared_direction_max_xyz_angle_variance[2] = 0.0f;
     
-    to_construct->particle_origin_max_x_variance = 0.0f;
-    to_construct->particle_origin_max_y_variance = 0.0f;
-    to_construct->particle_origin_max_z_variance = 0.0f;
+    to_construct->particle_origin_max_xyz_variance[0] = 0.0f;
+    to_construct->particle_origin_max_xyz_variance[1] = 0.0f;
+    to_construct->particle_origin_max_xyz_variance[2] = 0.0f;
     
     to_construct->generate_light = true;
     to_construct->light_reach = 1.0f;
@@ -982,8 +987,8 @@ void add_particle_effects_to_workload(
     GPUDataForSingleFrame * frame_data,
     uint64_t elapsed_nanoseconds)
 {
-    zVertex randomized_direction;
-    zVertex randomized_squared_direction;
+    float randomized_direction_xyz[3];
+    float randomized_squared_direction_xyz[3];
     
     uint64_t spawns_in_duration;
     uint64_t interval_between_spawns;
@@ -1080,211 +1085,214 @@ void add_particle_effects_to_workload(
                     ((float)spawn_lifetime_so_far / 1000000.0f)) *
                         particle_effects[i].squared_distance_per_second;
                 
-                randomized_direction.x =
-                    particle_effects[i].particle_direction[0];
-                randomized_direction.y =
-                    particle_effects[i].particle_direction[1];
-                randomized_direction.z =
-                    particle_effects[i].particle_direction[2];
-                randomized_squared_direction.x =
-                    particle_effects[i].squared_direction[0];
-                randomized_squared_direction.y =
-                    particle_effects[i].squared_direction[1];
-                randomized_squared_direction.z =
-                    particle_effects[i].squared_direction[2];
+                randomized_direction_xyz[0] = particle_effects[i].
+                    particle_direction[0];
+                randomized_direction_xyz[1] = particle_effects[i].
+                    particle_direction[1];
+                randomized_direction_xyz[2] = particle_effects[i].
+                    particle_direction[2];
+                
+                randomized_squared_direction_xyz[0] = particle_effects[i].
+                    squared_direction[0];
+                randomized_squared_direction_xyz[1] = particle_effects[i].
+                    squared_direction[1];
+                randomized_squared_direction_xyz[2] = particle_effects[i].
+                    squared_direction[2];
                 
                 if (particle_effects[i].
-                    particle_direction_max_x_angle_variance > 0)
+                    particle_direction_max_xyz_angle_variance[0] > 0)
                 {
                     float x_rotation_pos = (float)(
                         tok_rand_at_i(rand_i + 0) %
                             particle_effects[i].
-                                particle_direction_max_x_angle_variance) /
+                                particle_direction_max_xyz_angle_variance[0]) /
                                     100.0f;
                     float x_rotation_neg = (float)(
                         tok_rand_at_i(rand_i + 1) %
                             particle_effects[i].
-                                particle_direction_max_x_angle_variance) /
+                                particle_direction_max_xyz_angle_variance[0]) /
                                     100.0f;
                     
                     float x_rotation = x_rotation_pos - x_rotation_neg;
-                    randomized_direction = x_rotate_zvertex(
-                        &randomized_direction,
+                    x_rotate_zvertex_f3(
+                        randomized_direction_xyz,
                         x_rotation);
                 }
                 
                 if (particle_effects[i].
-                    squared_direction_max_x_angle_variance > 0)
+                    squared_direction_max_xyz_angle_variance[0] > 0)
                 {
                     float x_rotation_pos = (float)(
                         tok_rand_at_i(rand_i + 14) %
                             particle_effects[i].
-                                squared_direction_max_x_angle_variance) /
+                                squared_direction_max_xyz_angle_variance[0]) /
                                     100.0f;
                     float x_rotation_neg = (float)(
                         tok_rand_at_i(rand_i + 15) %
                             particle_effects[i].
-                                squared_direction_max_x_angle_variance) /
+                                squared_direction_max_xyz_angle_variance[0]) /
                                     100.0f;
                     
                     float x_rotation = x_rotation_pos - x_rotation_neg;
                     
-                    randomized_squared_direction = x_rotate_zvertex(
-                        &randomized_squared_direction,
+                    x_rotate_zvertex_f3(
+                        randomized_squared_direction_xyz,
                         x_rotation);
                 }
                 
                 if (particle_effects[i].
-                    particle_direction_max_y_angle_variance > 0)
+                    particle_direction_max_xyz_angle_variance[1] > 0)
                 {
                     float y_rotation_pos = (float)(
                         tok_rand_at_i(rand_i + 2) %
                             particle_effects[i].
-                                particle_direction_max_y_angle_variance) /
+                                particle_direction_max_xyz_angle_variance[1]) /
                                     100.0f;
                     float y_rotation_neg = (float)(
                         tok_rand_at_i(rand_i + 3) %
                             particle_effects[i].
-                                particle_direction_max_y_angle_variance) /
+                                particle_direction_max_xyz_angle_variance[1]) /
                                     100.0f;
+                                    
+                    
                     float y_rotation = y_rotation_pos - y_rotation_neg;
-                    randomized_direction = y_rotate_zvertex(
-                        &randomized_direction,
+                    y_rotate_zvertex_f3(
+                        randomized_direction_xyz,
                         y_rotation);
                 }
                 
                 if (particle_effects[i].
-                    squared_direction_max_y_angle_variance > 0)
+                    squared_direction_max_xyz_angle_variance[1] > 0)
                 {
                     float y_rotation_pos = (float)(
                         tok_rand_at_i(rand_i + 14) %
                             particle_effects[i].
-                                squared_direction_max_y_angle_variance) /
+                                squared_direction_max_xyz_angle_variance[1]) /
                                     100.0f;
                     float y_rotation_neg = (float)(
                         tok_rand_at_i(rand_i + 15) %
                             particle_effects[i].
-                                squared_direction_max_y_angle_variance) /
+                                squared_direction_max_xyz_angle_variance[1]) /
                                     100.0f;
                     
                     float y_rotation = y_rotation_pos - y_rotation_neg;
-                    randomized_squared_direction = y_rotate_zvertex(
-                        &randomized_squared_direction,
+                    y_rotate_zvertex_f3(
+                        randomized_squared_direction_xyz,
                         y_rotation);
                 }
                 
                 if (particle_effects[i].
-                    particle_direction_max_z_angle_variance > 0)
+                    particle_direction_max_xyz_angle_variance[2] > 0)
                 {
                     float z_rotation_pos = (float)(
                         tok_rand_at_i(rand_i + 4) %
                             particle_effects[i].
-                                particle_direction_max_z_angle_variance) /
+                                particle_direction_max_xyz_angle_variance[2]) /
                                     100.0f;
                     float z_rotation_neg = (float)(
                         tok_rand_at_i(rand_i + 5) %
                             particle_effects[i].
-                                particle_direction_max_z_angle_variance) /
+                                particle_direction_max_xyz_angle_variance[2]) /
                                     100.0f;
                     float z_rotation = z_rotation_pos - z_rotation_neg;
-                    randomized_direction = z_rotate_zvertex(
-                        &randomized_direction,
+                    
+                    z_rotate_zvertex_f3(
+                        randomized_direction_xyz,
                         z_rotation);
                 }
                 
                 if (particle_effects[i].
-                    squared_direction_max_z_angle_variance > 0)
+                    squared_direction_max_xyz_angle_variance[2] > 0)
                 {
                     float z_rotation_pos = (float)(
                         tok_rand_at_i(rand_i + 17) %
                             particle_effects[i].
-                                squared_direction_max_z_angle_variance) /
+                                squared_direction_max_xyz_angle_variance[2]) /
                                     100.0f;
                     float z_rotation_neg = (float)(
                         tok_rand_at_i(rand_i + 18) %
                             particle_effects[i].
-                                squared_direction_max_z_angle_variance) /
+                                squared_direction_max_xyz_angle_variance[2]) /
                                     100.0f;
                     
                     float z_rotation = z_rotation_pos - z_rotation_neg;
-                    randomized_squared_direction = z_rotate_zvertex(
-                        &randomized_squared_direction,
+                    z_rotate_zvertex_f3(
+                        randomized_squared_direction_xyz,
                         z_rotation);
                 }
                 
-                normalize_zvertex(&randomized_direction);
+                normalize_zvertex_f3(randomized_direction_xyz);
                 
-                float red;
-                float green;
-                float blue;
-                float alpha;
+                float rgba[4];
                 get_particle_color_at_elapsed(
                     /* at_particle_i: */
                         i,
                     /* elapsed: */
                         spawn_lifetime_so_far,
                     /* const float * out_red: */
-                        &red,
+                        &rgba[0],
                     /* const float * out_green: */
-                        &green,
+                        &rgba[1],
                     /* const float * out_blue: */
-                        &blue,
+                        &rgba[2],
                     /* const float * alpha: */
-                        &alpha);
+                        &rgba[3]);
                 
                 adjust_colors_by_random(
-                    &red,
-                    &green,
-                    &blue,
+                    &rgba[0],
+                    &rgba[1],
+                    &rgba[2],
                     /* max_variance: */ particle_effects[i].max_color_variance,
                     /* random_seed: */ rand_i);
                 
-                float initial_x_offset = 0;
-                if (particle_effects[i].particle_origin_max_x_variance > 0)
+                float initial_xyz_offset[3];
+                initial_xyz_offset[0] = 0;
+                initial_xyz_offset[1] = 0;
+                initial_xyz_offset[2] = 0;
+                
+                if (particle_effects[i].particle_origin_max_xyz_variance[0] > 0)
                 {
                     float x_offset_pos = (float)(
                         tok_rand_at_i(rand_i + 6) %
                             particle_effects[i].
-                                particle_origin_max_x_variance) /
+                                particle_origin_max_xyz_variance[0]) /
                                     100.0f;
                     float x_offset_neg = (float)(
                         tok_rand_at_i(rand_i + 7) %
                             particle_effects[i].
-                                particle_origin_max_x_variance) /
+                                particle_origin_max_xyz_variance[0]) /
                                     100.0f;
-                    initial_x_offset += (x_offset_pos - x_offset_neg);
+                    initial_xyz_offset[0] += (x_offset_pos - x_offset_neg);
                 }
                 
-                float initial_y_offset = 0;
-                if (particle_effects[i].particle_origin_max_y_variance > 0)
+                if (particle_effects[i].particle_origin_max_xyz_variance[1] > 0)
                 {
                     float y_offset_pos = (float)(
                         tok_rand_at_i(rand_i + 8) %
                             particle_effects[i].
-                                particle_origin_max_y_variance) /
+                                particle_origin_max_xyz_variance[1]) /
                                     100.0f;
                     float y_offset_neg = (float)(
                         tok_rand_at_i(rand_i + 9) %
                             particle_effects[i].
-                                particle_origin_max_y_variance) /
+                                particle_origin_max_xyz_variance[1]) /
                                     100.0f;
-                    initial_y_offset += (y_offset_pos - y_offset_neg);
+                    initial_xyz_offset[1] += (y_offset_pos - y_offset_neg);
                 }
                 
-                float initial_z_offset = 0;
-                if (particle_effects[i].particle_origin_max_z_variance > 0)
+                if (particle_effects[i].particle_origin_max_xyz_variance[2] > 0)
                 {
                     float z_offset_pos = (float)(
                         tok_rand_at_i(rand_i + 10) %
                             particle_effects[i].
-                                particle_origin_max_z_variance) /
+                                particle_origin_max_xyz_variance[2]) /
                                     100.0f;
                     float z_offset_neg = (float)(
                         tok_rand_at_i(rand_i + 11) %
                             particle_effects[i].
-                                particle_origin_max_z_variance) /
+                                particle_origin_max_xyz_variance[2]) /
                                     100.0f;
-                    initial_z_offset += (z_offset_pos - z_offset_neg);
+                    initial_xyz_offset[2] += (z_offset_pos - z_offset_neg);
                 }
                 
                 for (
@@ -1314,34 +1322,34 @@ void add_particle_effects_to_workload(
                 
                 frame_data->polygon_collection->polygons[
                     frame_data->polygon_collection->size].xyz[0] =
-                    (particle_effects[i].x + initial_x_offset) +
-                        (distance_traveled * randomized_direction.x) +
+                    (particle_effects[i].xyz[0] + initial_xyz_offset[0]) +
+                        (distance_traveled * randomized_direction_xyz[0]) +
                         (sq_distance_traveled *
-                            randomized_squared_direction.x);
+                            randomized_squared_direction_xyz[0]);
                 
                 frame_data->polygon_collection->polygons[
                     frame_data->polygon_collection->size].xyz[1] =
-                    (particle_effects[i].y + initial_y_offset) +
-                        (distance_traveled * randomized_direction.y) +
+                    (particle_effects[i].xyz[1] + initial_xyz_offset[1]) +
+                        (distance_traveled * randomized_direction_xyz[1]) +
                         (sq_distance_traveled *
-                            randomized_squared_direction.y);
+                            randomized_squared_direction_xyz[1]);
                 
                 frame_data->polygon_collection->polygons[
                     frame_data->polygon_collection->size].xyz[2] =
-                    (particle_effects[i].z + initial_z_offset) +
-                        (distance_traveled * randomized_direction.z) +
+                    (particle_effects[i].xyz[2] + initial_xyz_offset[2]) +
+                        (distance_traveled * randomized_direction_xyz[2]) +
                         (sq_distance_traveled *
-                            randomized_squared_direction.z);
+                            randomized_squared_direction_xyz[2]);
                 
                 frame_data->polygon_collection->polygons[
                     frame_data->polygon_collection->size].xyz_multiplier[0] =
-                        particle_effects[i].particle_x_multiplier;
+                        particle_effects[i].particle_xyz_multiplier[0];
                 frame_data->polygon_collection->polygons[
                     frame_data->polygon_collection->size].xyz_multiplier[1] =
-                        particle_effects[i].particle_y_multiplier;
+                        particle_effects[i].particle_xyz_multiplier[1];
                 frame_data->polygon_collection->polygons[
                     frame_data->polygon_collection->size].xyz_multiplier[2] =
-                        particle_effects[i].particle_z_multiplier;
+                        particle_effects[i].particle_xyz_multiplier[2];
 
                 frame_data->polygon_collection->polygons[
                     frame_data->polygon_collection->size].xyz_offset[0] = 0.0f;
@@ -1368,20 +1376,16 @@ void add_particle_effects_to_workload(
                 
                 frame_data->polygon_materials[
                     frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
-                        rgba[0] =
-                            red;
+                        rgba[0] = rgba[0];
                 frame_data->polygon_materials[
                     frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
-                        rgba[1] =
-                            green;
+                        rgba[1] = rgba[1];
                 frame_data->polygon_materials[
                     frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
-                        rgba[2] =
-                            blue;
+                        rgba[2] = rgba[2];
                 frame_data->polygon_materials[
                     frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
-                        rgba[3] =
-                            alpha;
+                        rgba[3] = rgba[3];
                 
                 frame_data->polygon_materials[
                     frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
@@ -1400,13 +1404,13 @@ void add_particle_effects_to_workload(
             } else if (particle_effects[i].generate_light) {
                 frame_data->light_collection->light_x[
                     frame_data->light_collection->lights_size] =
-                        particle_effects[i].x;
+                        particle_effects[i].xyz[0];
                 frame_data->light_collection->light_y[
                     frame_data->light_collection->lights_size] =
-                        particle_effects[i].y;
+                        particle_effects[i].xyz[1];
                 frame_data->light_collection->light_z[
                     frame_data->light_collection->lights_size] =
-                        particle_effects[i].z;
+                        particle_effects[i].xyz[2];
                 
                 frame_data->light_collection->red[
                     frame_data->light_collection->lights_size] =

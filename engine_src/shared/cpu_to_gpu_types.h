@@ -36,11 +36,4 @@ typedef struct GPUSharedDataCollection
 
 extern GPUSharedDataCollection gpu_shared_data_collection;
 
-#ifndef LOGGER_IGNORE_ASSERTS
-void validate_framedata(
-    GPUVertex * vertices,
-    uint32_t vertices_size);
-#endif
-
 #endif // CPU_TO_GPU_TYPES_H
-

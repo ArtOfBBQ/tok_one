@@ -294,13 +294,13 @@ fragment_shader(
     
     int diamond_size = 35.0f;
     int neghalfdiamond = -1.0f * (diamond_size / 2);
-        
+    
     int alpha_tresh = (int)(out_color[3] * diamond_size);
     
     if (
-        out_color[3] < 0.01f ||
+        out_color[3] < 0.05f ||
         (
-            out_color[3] < 0.99f &&
+            out_color[3] < 0.95f &&
             (
                 abs((neghalfdiamond + (int)in.position.x % diamond_size)) +
                 abs((neghalfdiamond + (int)in.position.y % diamond_size))
@@ -314,4 +314,3 @@ fragment_shader(
     out_color[3] = 1.0f;
     return out_color;
 }
-

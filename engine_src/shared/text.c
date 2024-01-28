@@ -232,6 +232,8 @@ void request_label_offset_around(
 {
     log_assert(max_width > 0.0f);
     log_assert(font_height > 0);
+    log_assert(font_color[3] > -0.02f);
+    log_assert(font_color[3] < 1.05f);
     
     uint32_t max_lines = 100;
     PrefetchedLine lines[max_lines];

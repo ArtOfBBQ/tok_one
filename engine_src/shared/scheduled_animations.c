@@ -11,59 +11,12 @@ void init_scheduled_animations(void) {
 static void construct_scheduled_animation(
     ScheduledAnimation * to_construct)
 {
+    memset(to_construct, 0, sizeof(ScheduledAnimation));
+    
     to_construct->affected_object_id = -1;
     
-    to_construct->destroy_even_waiting_duplicates = false;
-    
-    to_construct->set_texture_array_i = false;
-    to_construct->new_texture_array_i = -1;
-    to_construct->set_texture_i = false;
-    to_construct->new_texture_i = -1;
-    
-    to_construct->final_x_known = false;
-    to_construct->delta_x_per_second = 0.0f;
-    to_construct->final_y_known = false;
-    to_construct->delta_y_per_second = 0.0f;
-    to_construct->final_z_known = false;
-    to_construct->delta_z_per_second = 0.0f;
-    
-    to_construct->final_x_angle_known = false;
-    to_construct->x_rotation_per_second = 0.0f;
-    to_construct->final_y_angle_known = false;
-    to_construct->y_rotation_per_second = 0.0f;
-    to_construct->final_z_angle_known = false;
-    to_construct->z_rotation_per_second = 0.0f;
-    
-    to_construct->final_x_multiplier_known = false;
-    to_construct->delta_x_multiplier_per_second = 0.0f;
-    to_construct->final_y_multiplier_known = false;
-    to_construct->delta_y_multiplier_per_second = 0.0f;
-    
-    to_construct->final_scale_known = false;
-    to_construct->delta_scale_per_second = 0.0f;
-    
-    for (uint32_t i = 0; i < 4; i++) {
-        to_construct->final_rgba_known[i] = false;
-        to_construct->rgba_delta_per_second[i] = 0.0f;
-    }
-    
-    for (uint32_t i = 0; i < 3; i++) {
-        to_construct->final_rgb_bonus_known[i] = false;
-        to_construct->rgb_bonus_delta_per_second[i] = 0.0f;
-    }
-    
-    to_construct->wait_before_each_run = 0;
-    to_construct->remaining_wait_before_next_run = 0;
-    to_construct->duration_microseconds = 1000000;
-    to_construct->remaining_microseconds = 0; // gets set when scheduling
     to_construct->runs = 1;
-    to_construct->delete_object_when_finished = false;
-    to_construct->deleted = false;
-    to_construct->committed = false;
     to_construct->clientlogic_callback_when_finished_id = -1;
-    to_construct->clientlogic_arg_1 = 0.0f;
-    to_construct->clientlogic_arg_2 = 0.0f;
-    to_construct->internal_trigger_count = 0;
 }
 
 ScheduledAnimation * next_scheduled_animation(void) {
@@ -273,6 +226,7 @@ void request_shatter_and_destroy(
         zp_i++)
     {
         if (zpolygons_to_render->cpu_data[zp_i].deleted ||
+            !zpolygons_to_render->cpu_data[zp_i].committed ||
             zpolygons_to_render->cpu_data[zp_i].object_id != object_id)
         {
             continue;

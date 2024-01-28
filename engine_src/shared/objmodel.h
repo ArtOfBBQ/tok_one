@@ -39,6 +39,11 @@ extern LockedVertexWithMaterialCollection * all_mesh_vertices;
 
 void init_all_meshes(void);
 
+int32_t new_mesh_id_from_resource_asserts(
+    const char * filename,
+    const uint32_t expected_materials_count,
+    const char expected_materials_names[MAX_MATERIALS_SIZE][256]);
+
 int32_t new_mesh_id_from_resource(
     const char * filename);
 

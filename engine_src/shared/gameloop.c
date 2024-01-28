@@ -158,7 +158,7 @@ static int32_t closest_touchable_from_screen_ray(
     return return_value;
 }
 
-static void update_terminal() {
+static void update_terminal(void) {
     if (keypress_map[TOK_KEY_ENTER]) {
         keypress_map[TOK_KEY_ENTER] = false;
         terminal_commit_or_activate();

@@ -21,6 +21,8 @@ typedef struct zTriangle {
     int32_t parent_material_i;
 } zTriangle;
 
+void normalize_zvertex_f3(
+    float to_normalize_xyz[3]);
 void normalize_vertex(
     float * to_normalize);
 void normalize_zvertex(
