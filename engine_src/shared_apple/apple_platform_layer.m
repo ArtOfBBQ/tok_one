@@ -3,11 +3,6 @@
 
 #include "platform_layer.h"
 
-#define MAX_SIMUL_SOUNDS 10
-static AVAudioPlayer * sound_players[MAX_SIMUL_SOUNDS];
-static uint32_t next_sound_player = 0;
-
-static AVAudioPlayer * active_music_player = NULL;
 float platform_sound_volume = 0.15f;
 float platform_music_volume = 0.15f;
 
@@ -364,7 +359,10 @@ platform_get_application_path(char * recipient, const uint32_t recipient_size) {
             cStringUsingEncoding: NSASCIIStringEncoding]);
 }
 
-void platform_get_resources_path(char * recipient, const uint32_t recipient_size) {
+void platform_get_resources_path(
+    char * recipient,
+    const uint32_t recipient_size)
+{
     strcpy_capped(
         recipient,
         recipient_size,
@@ -397,100 +395,3 @@ void platform_start_thread(
             function_to_run(argument);
         });
 }
-
-void platform_play_sound_resource(const char * resource_filename) {
-    return;
-    log_assert(resource_filename != NULL);
-    
-    char sound_pathfile[750];
-    resource_filename_to_pathfile(
-        /* filename: */
-            resource_filename,
-        /* recipient: */
-            sound_pathfile,
-        /* recipient_capacity: */
-            750);
-    
-    log_assert(platform_resource_exists(resource_filename));
-    
-    NSString * soundPathFile = [NSString
-        stringWithUTF8String: sound_pathfile];
-    
-    NSURL * soundFileURL = [NSURL
-        fileURLWithPath: soundPathFile];
-    
-    NSError * error_value = nil;
-    
-    if (sound_players[next_sound_player].playing) {
-        return;
-    }
-    
-    sound_players[next_sound_player] =
-        [[AVAudioPlayer alloc]
-            initWithContentsOfURL:soundFileURL
-            error:&error_value];
-    
-    if (error_value != NULL) {
-        log_append("break here");
-        log_assert(0);
-    }
-    
-    [sound_players[next_sound_player] setVolume: platform_sound_volume];
-    sound_players[next_sound_player].numberOfLoops = 0;
-    // [sound_players[next_sound_player] setDelegate: NULL];
-    [sound_players[next_sound_player] play];
-    
-    next_sound_player++;
-    if (next_sound_player >= MAX_SIMUL_SOUNDS) {
-        next_sound_player = 0;
-    }
-}
-
-void platform_update_sound_volume(void) {
-    for (uint32_t i = 0; i < MAX_SIMUL_SOUNDS; i++) {
-        [sound_players[i] setVolume: platform_sound_volume];
-    }
-}
-
-void platform_update_music_volume(void) {
-    [active_music_player setVolume: platform_music_volume];
-}
-
-void platform_play_music_resource(
-    const char * resource_filename,
-    const bool32_t loop_forever)
-{
-    return;
-    if (active_music_player != NULL) {
-        [active_music_player
-            setVolume: 0.0f
-            fadeDuration: 1];
-    }
-    
-    char sound_pathfile[512];
-    resource_filename_to_pathfile(
-        /* filename: */
-            resource_filename,
-        /* recipient: */
-            sound_pathfile,
-        /* recipient_capacity: */
-            512);
-    
-    NSString * soundPathFile = [NSString
-        stringWithUTF8String: sound_pathfile];
-    NSURL * soundFileURL = [NSURL
-        fileURLWithPath: soundPathFile];
-    
-    AVAudioPlayer * player =
-        [[AVAudioPlayer alloc]
-            initWithContentsOfURL:soundFileURL
-            error:nil];
-    player.numberOfLoops = loop_forever ? -1 : 0;
-    
-    [player setVolume: 0.001f];
-    [player setVolume: platform_music_volume fadeDuration: 5];
-    [player play];
-    
-    active_music_player = player;
-}
-

@@ -54,7 +54,25 @@ because I don't know much about how that works or how reliable it is
 
 
 // int16 lanes
-#ifdef __ARM_NEON_
+#ifdef __ARM_NEON
+#include "arm_neon.h"
+#define SIMD_INT16_WIDTH                    8
+#define SIMD_INT16                          int16x8_t
+#define simd_load_int16s(int16sptr)         vld1q_s16(int16sptr)
+#define simd_set_int16s(i16)                vld1q_dup_s16(&i16)
+#define simd_store_int16s(recip, from)      vst1q_s16(recip, from)
+#define simd_mul_int16s(a, b)               vmulq_s16(a, b)
+#define simd_add_int16s(a, b)               vaddq_s16(a, b)
+#define simd_sub_int16s(a, b)               vsubq_s16(a, b)
+#define simd_max_int16s(a, b)               vmaxq_s16(a, b)
+#define simd_min_int16s(a, b)               vminq_s16(a, b)
+
+// cmpgt stands for "Compare Greater". This returns 255 when true, not 1.
+#define simd_cmpgt_int16s(a, b)             vcgtq_s16(a, b)
+#define simd_cmplt_int16s(a, b)             vcltq_s16(a, b)
+#define simd_cmpeq_int16s(a, b)             vcleq_s16(a, b)
+#define simd_testz_int16s(a, b)             (vmaxvq_s16(a) == 0 && vmaxvq_s16(b) == 0)
+#define simd_test_all_ones_int16s(a)        (vmaxvq_s16(a) != 0)
 
 /*
 // TODO: implement AVX2 when we're on a CPU that supports it

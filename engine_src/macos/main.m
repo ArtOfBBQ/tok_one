@@ -1,13 +1,14 @@
-#include "shared/init_application.h"
-#include "shared/common.h"
-#include "shared/logger.h"
-#include "shared/tok_random.h"
-#include "shared/lightsource.h"
-#include "shared_apple/gpu.h"
-#include "shared/userinput.h"
-#include "shared/window_size.h"
-#include "shared/simd.h"
+#include "gpu.h"
+#include "apple_audio.h"
 
+#include "init_application.h"
+#include "common.h"
+#include "logger.h"
+#include "tok_random.h"
+#include "lightsource.h"
+#include "userinput.h"
+#include "window_size.h"
+#include "simd.h"
 #include "clientlogic.h"
 
 #define SHARED_APPLE_PLATFORM
@@ -471,6 +472,8 @@ int main(int argc, const char * argv[]) {
     
     
     init_application_after_gpu_init();
+    
+    start_audio_loop();
     
     startup_complete = true;
     

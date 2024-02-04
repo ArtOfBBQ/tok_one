@@ -36,7 +36,7 @@ on each platform
 
 #ifdef SHARED_APPLE_PLATFORM
 #include <sys/time.h>
-#import <AVFoundation/AVFoundation.h>
+#import <AudioToolbox/AudioToolbox.h>
 #endif
 
 #ifdef LINUX_PLATFORM
@@ -60,6 +60,7 @@ on each platform
 extern "C" {
 #endif
 
+#include "audio.h"
 #include "clientlogic_macro_settings.h"
 #include "common.h"
 #include "logger.h"
@@ -197,13 +198,6 @@ void platform_gpu_push_texture_slice(
 
 extern float platform_sound_volume;
 extern float platform_music_volume;
-
-void platform_update_sound_volume(void);
-void platform_update_music_volume(void);
-void platform_play_sound_resource(const char * resource_filename);
-void platform_play_music_resource(
-    const char * resource_filename,
-    const bool32_t loop_forever);
 
 /*
 creates a mutex and return the ID of said mutex for you to store

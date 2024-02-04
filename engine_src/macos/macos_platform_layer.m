@@ -1,7 +1,8 @@
 #define PLATFORM_NS_FILEMANAGER
 
-#include "../shared/platform_layer.h"
 #import "Appkit/Appkit.h"
+
+#include "platform_layer.h"
 
 void * platform_malloc_unaligned_block(
     const uint64_t size)

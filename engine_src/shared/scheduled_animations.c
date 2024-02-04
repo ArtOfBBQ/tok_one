@@ -256,7 +256,6 @@ void request_shatter_and_destroy(
         shatter->rgb_bonus_per_second[0] = 0.75f;
         shatter->rgb_bonus_per_second[1] = 0.35f;
         shatter->rgb_bonus_per_second[2] = 0.35f;
-        
         commit_shatter_effect(shatter);
         
         zpolygons_to_render->cpu_data[zp_i].deleted = true;

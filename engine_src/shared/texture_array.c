@@ -428,7 +428,7 @@ void register_new_texturearray_from_files(
 }
 
 void init_texture_arrays(void) {
-        
+    
     // initialize texture arrays
     texture_arrays = (TextureArray *)malloc_from_unmanaged(
         sizeof(TextureArray) * TEXTUREARRAYS_SIZE);

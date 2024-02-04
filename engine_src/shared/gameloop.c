@@ -239,9 +239,6 @@ void shared_gameloop_update(
     
     frame_no++;
     
-    platform_update_sound_volume();
-    platform_update_music_volume();
-    
     if (time - window_globals->last_resize_request_at < 2000000)
     {
         if (time - window_globals->last_resize_request_at < 350000)

@@ -106,8 +106,9 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                         active_ui_elements[i].
                             interaction_sound_filename[0] != '\0')
                     {
-                        platform_play_sound_resource(
-                            active_ui_elements[i].interaction_sound_filename);
+                        // add_audio();
+                        // platform_play_sound_resource(
+                        //    active_ui_elements[i].interaction_sound_filename);
                     }
                     
                     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].

@@ -81,7 +81,9 @@ void init_application_before_gpu_init(void)
         window_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
     }
     
-    free_from_managed(engine_save.contents);
+    if (engine_save.contents != NULL) {
+        free_from_managed(engine_save.contents);
+    }
     
     window_globals->aspect_ratio =
         window_globals->window_height / window_globals->window_width;
@@ -93,6 +95,10 @@ void init_application_before_gpu_init(void)
     zpolygons_to_render = (zPolygonCollection *)malloc_from_unmanaged(
         sizeof(zPolygonCollection));
     zpolygons_to_render->size = 0;
+    
+    init_audio(
+        /* void *(*arg_malloc_function)(size_t): */
+            malloc_from_unmanaged);
     
     init_all_meshes();
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
