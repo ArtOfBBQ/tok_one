@@ -36,7 +36,6 @@ on each platform
 
 #ifdef SHARED_APPLE_PLATFORM
 #include <sys/time.h>
-#import <AudioToolbox/AudioToolbox.h>
 #endif
 
 #ifdef LINUX_PLATFORM
@@ -60,23 +59,22 @@ on each platform
 extern "C" {
 #endif
 
-#include "audio.h"
+// #include "audio.h"
 #include "clientlogic_macro_settings.h"
 #include "common.h"
 #include "logger.h"
 #include "decodedimage.h"
 #include "window_size.h"
 
-void platform_close_application(void);
-
-void * platform_malloc_unaligned_block(const uint64_t size);
-
-
 typedef struct FileBuffer {
     uint64_t size_without_terminator;
     char * contents;
     bool32_t good;
 } FileBuffer;
+
+void platform_close_application(void);
+
+void * platform_malloc_unaligned_block(const uint64_t size);
 
 uint32_t platform_get_directory_separator_size(void);
 void platform_get_directory_separator(char * recipient);

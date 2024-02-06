@@ -278,7 +278,10 @@ void parse_wav(
         } else if (
             strings_are_equal(
                 chunk_header->ascii_id,
-                "ID3 "))
+                "ID3 ") ||
+            strings_are_equal(
+                chunk_header->ascii_id,
+                "id3 "))
         {
             raw_file_at += chunk_header->data_size;
             if (chunk_header->data_size % 2 == 1) {

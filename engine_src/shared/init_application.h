@@ -1,18 +1,20 @@
 #ifndef INIT_APPLICATION_H
 #define INIT_APPLICATION_H
 
-#include "shared/common.h"
-#include "shared/logger.h"
-#include "shared/tok_random.h"
-#include "shared/lightsource.h"
-#include "shared/text.h"
-#include "shared/uielement.h"
-#include "shared/userinput.h"
-#include "shared/window_size.h"
-#include "shared/scheduled_animations.h"
-#include "shared/renderer.h"
-#include "shared/gameloop.h"
-#include "shared/objparser.h"
+#include "common.h"
+#include "logger.h"
+#include "tok_random.h"
+#include "audio.h"
+#include "lightsource.h"
+#include "text.h"
+#include "uielement.h"
+#include "userinput.h"
+#include "window_size.h"
+#include "scheduled_animations.h"
+#include "renderer.h"
+#include "gameloop.h"
+#include "objparser.h"
+
 #include "clientlogic.h"
 
 #ifdef __cplusplus
