@@ -212,9 +212,6 @@ void parse_wav(
         file_header->file_size > (ptrdiff_t)(raw_file_at - raw_file) +
             (sizeof(ChunkHeader) + 2))
     {
-        //        int64_t data_left = (int64_t)data_size -
-        //            (int64_t)(ptrdiff_t)(raw_file_at - raw_file);
-        
         // assert((ptrdiff_t)(void *)raw_file_at % 32 == 0);
         ChunkHeader * chunk_header = consume_struct(raw_file_at, ChunkHeader);
         
@@ -318,6 +315,96 @@ void parse_wav(
             strings_are_equal(
                 chunk_header->ascii_id,
                 "_PMX"))
+        {
+            raw_file_at += chunk_header->data_size;
+            if (chunk_header->data_size % 2 == 1) {
+                raw_file_at += 1;
+            }
+        } else if (
+            strings_are_equal(
+                chunk_header->ascii_id,
+                "FLLR"))
+        {
+            raw_file_at += chunk_header->data_size;
+            if (chunk_header->data_size % 2 == 1) {
+                raw_file_at += 1;
+            }
+        } else if (
+            strings_are_equal(
+                chunk_header->ascii_id,
+                "smpl"))
+        {
+            raw_file_at += chunk_header->data_size;
+            if (chunk_header->data_size % 2 == 1) {
+                raw_file_at += 1;
+            }
+        } else if (
+            strings_are_equal(
+                chunk_header->ascii_id,
+                "splp"))
+        {
+            raw_file_at += chunk_header->data_size;
+            if (chunk_header->data_size % 2 == 1) {
+                raw_file_at += 1;
+            }
+        } else if (
+            strings_are_equal(
+                chunk_header->ascii_id,
+                "sprg"))
+        {
+            raw_file_at += chunk_header->data_size;
+            if (chunk_header->data_size % 2 == 1) {
+                raw_file_at += 1;
+            }
+        } else if (
+            strings_are_equal(
+                chunk_header->ascii_id,
+                "spcl"))
+        {
+            raw_file_at += chunk_header->data_size;
+            if (chunk_header->data_size % 2 == 1) {
+                raw_file_at += 1;
+            }
+        } else if (
+            strings_are_equal(
+                chunk_header->ascii_id,
+                "spcc"))
+        {
+            raw_file_at += chunk_header->data_size;
+            if (chunk_header->data_size % 2 == 1) {
+                raw_file_at += 1;
+            }
+        } else if (
+            strings_are_equal(
+                chunk_header->ascii_id,
+                "srtn"))
+        {
+            raw_file_at += chunk_header->data_size;
+            if (chunk_header->data_size % 2 == 1) {
+                raw_file_at += 1;
+            }
+        } else if (
+            strings_are_equal(
+                chunk_header->ascii_id,
+                "spca"))
+        {
+            raw_file_at += chunk_header->data_size;
+            if (chunk_header->data_size % 2 == 1) {
+                raw_file_at += 1;
+            }
+        } else if (
+            strings_are_equal(
+                chunk_header->ascii_id,
+                "acid"))
+        {
+            raw_file_at += chunk_header->data_size;
+            if (chunk_header->data_size % 2 == 1) {
+                raw_file_at += 1;
+            }
+        } else if (
+            strings_are_equal(
+                chunk_header->ascii_id,
+                "inst"))
         {
             raw_file_at += chunk_header->data_size;
             if (chunk_header->data_size % 2 == 1) {

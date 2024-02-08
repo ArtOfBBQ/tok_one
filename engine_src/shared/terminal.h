@@ -7,6 +7,7 @@
 #include "zpolygon.h"
 #include "text.h"
 #include "clientlogic.h"
+#include "wav.h"
 
 #ifdef __cplusplus
 extern "C" {

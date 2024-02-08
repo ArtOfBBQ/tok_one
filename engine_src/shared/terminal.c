@@ -357,6 +357,57 @@ static bool32_t evaluate_terminal_command(
         return true;
     }
     
+    if (
+        are_equal_strings(command, "DUMP SOUND") ||
+        are_equal_strings(command, "DUMP SOUND BUFFER"))
+    {
+        unsigned char * recipient =
+            malloc_from_managed(sound_settings->global_buffer_size_bytes + 100);
+        uint32_t recipient_size = 0;
+        
+        samples_to_wav(
+            /* unsigned char * recipient: */
+                recipient,
+            /* uint32_t * recipient_size: */
+                &recipient_size,
+            /* const uint32_t recipient_cap: */
+                sound_settings->global_buffer_size_bytes + 100,
+            /* int16_t * samples: */
+                sound_settings->samples_buffer,
+            /* const uint32_t samples_size: */
+                sound_settings->global_samples_size);
+        
+        strcpy_capped(
+            response,
+            SINGLE_LINE_MAX,
+            "Dumping global sound buffer to disk...");
+        
+        uint32_t good = 0;
+        platform_write_file_to_writables(
+            /* const char * filepath_inside_writables: */
+                "global_sound_buffer.wav",
+            /* const char * output: */
+                (char *)recipient,
+            /* const uint32_t output_size: */
+                recipient_size,
+            /* uint32_t * good: */
+                &good);
+        
+        if (good) {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "\nSuccess!");
+        } else {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "\nFailed to write to disk :(");
+        }
+        
+        return true;
+    }
+    
     if (are_equal_strings(command, "ZLIGHTS")) {
         strcpy_capped(
             response,
