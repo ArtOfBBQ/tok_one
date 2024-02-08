@@ -13,13 +13,13 @@ static void audio_callback(
     // we're just filling the entire buffer here
     // In a real game we might only fill part of the buffer and set the
     // mAudioDataBytes accordingly.
-    uint32_t bytes_to_copy_both_runs = buffer->mAudioDataBytesCapacity;
+    uint32_t samples_to_copy = buffer->mAudioDataBytesCapacity / 2;
     // uint32_t frames_to_copy_both_runs = bytes_to_copy_both_runs / 4;
     // buffer->mAudioDataByteSize = bytes_to_copy_both_runs;
     
     int16_t * platform_buffer_at = (int16_t *)buffer->mAudioData;
     
-    for (uint32_t _ = 0; _ < bytes_to_copy_both_runs / 2; _++) {
+    for (uint32_t _ = 0; _ < samples_to_copy; _++) {
         int32_t new_val = (int32_t)(
             (float)sound_settings->samples_buffer[
                 (sound_settings->play_cursor) %

@@ -14,7 +14,8 @@ typedef struct PermaSound {
 static PermaSound * all_permasounds = NULL;
 static int32_t all_permasounds_size = 0;
 
-#define ALL_AUDIOSAMPLES_SIZE 20000000
+// 60m                        60...000
+#define ALL_AUDIOSAMPLES_SIZE 60000000
 static int16_t * all_samples = NULL;
 int32_t all_samples_size = 0;
 
