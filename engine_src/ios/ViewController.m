@@ -148,6 +148,8 @@ TouchableMTKView * _my_mtk_view;
         fromFolder: shader_lib_filepath];
     
     init_application_after_gpu_init();
+    
+    start_audio_loop();
 }
 
 - (void)

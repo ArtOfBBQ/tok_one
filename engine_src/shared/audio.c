@@ -24,12 +24,12 @@ void init_audio(
 {
     malloc_function = arg_malloc_function;
     
-    sound_settings = arg_malloc_function(sizeof(SoundSettings));
+    sound_settings                 = arg_malloc_function(sizeof(SoundSettings));
     sound_settings->tone_frequency = 261.6f * 2; // 261.6 ~= Middle C frequency
-    sound_settings->volume = 1.0f;
-    sound_settings->sample_rate = 44100.0f;
-    sound_settings->play_cursor = 0;
-    sound_settings->callback_runs = 0;
+    sound_settings->volume         = 0.08f;
+    sound_settings->sample_rate    = 44100.0f;
+    sound_settings->play_cursor    = 0;
+    sound_settings->callback_runs  = 0;
     // sound_settings->platform_buffer_size_bytes = platform_buffer_size;
     sound_settings->global_buffer_size_bytes = 41000 * 180 * 2;
     log_assert(sound_settings->global_buffer_size_bytes % 2 == 0);
@@ -45,9 +45,9 @@ void init_audio(
         sizeof(PermaSound) * ALL_PERMASOUNDS_SIZE);
     
     for (uint32_t i = 0; i < ALL_PERMASOUNDS_SIZE; i++) {
-        all_permasounds[i].name[0] = '\0';
-        all_permasounds[i].allsamples_head_i = -1;
-        all_permasounds[i].allsamples_tail_i = -1;
+        all_permasounds[i].name[0]           = '\0';
+        all_permasounds[i].allsamples_head_i =   -1;
+        all_permasounds[i].allsamples_tail_i =   -1;
     }
     
     all_samples = arg_malloc_function(

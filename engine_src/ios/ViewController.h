@@ -2,6 +2,7 @@
 #import <MetalKit/MetalKit.h>
 
 #import "gpu.h"
+#import "apple_audio.h"
 #import "renderer.h"
 #import "init_application.h"
 
