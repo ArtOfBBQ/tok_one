@@ -12,12 +12,12 @@
 extern "C" {
 #endif
 
-#define RANDOM_SEQUENCE_SIZE 2000
+#define RANDOM_SEQUENCE_SIZE 999
 
 extern uint32_t random_seed;
 
-uint32_t tok_rand(void);
-uint32_t tok_rand_at_i(const uint64_t index);
+int32_t tok_rand(void);
+int32_t tok_rand_at_i(const uint64_t index);
 
 void shuffle_array(
     void * array,

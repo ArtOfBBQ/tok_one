@@ -8,7 +8,7 @@ static void construct_lineparticle_effect_no_zpoly(
     LineParticle * to_construct)
 {
     to_construct->random_seed =
-        tok_rand_at_i(
+        (uint64_t)tok_rand_at_i(
             platform_get_current_time_microsecs() %
                 RANDOM_SEQUENCE_SIZE) % 75;
     to_construct->elapsed = 0;
@@ -97,7 +97,7 @@ void commit_lineparticle_effect(
     log_assert(to_commit->zpolygon_gpu.xyz_multiplier[2] > 0.0f);
     
     to_commit->committed = true;
-    to_commit->random_seed = tok_rand() % RANDOM_SEQUENCE_SIZE;
+    to_commit->random_seed = (uint32_t)tok_rand() % RANDOM_SEQUENCE_SIZE;
 }
 
 #define add_variance(x, variance, randnum, randnum2) if (variance > 0) { x += ((randnum % variance) * 0.01f); x -= ((randnum2 % variance) * 0.01f); }
@@ -169,19 +169,19 @@ void add_lineparticle_effects_to_workload(
                 continue;
             }
             
-            particle_rands[0] = tok_rand_at_i(
+            particle_rands[0] = (uint32_t)tok_rand_at_i(
                 (lineparticle_effects[i].random_seed + particle_i) %
                     RANDOM_SEQUENCE_SIZE);
-            particle_rands[1] = tok_rand_at_i(
+            particle_rands[1] = (uint32_t)tok_rand_at_i(
                 (lineparticle_effects[i].random_seed + particle_i + 37) %
                     RANDOM_SEQUENCE_SIZE);
-            particle_rands[2] = tok_rand_at_i(
+            particle_rands[2] = (uint32_t)tok_rand_at_i(
                 (lineparticle_effects[i].random_seed + particle_i + 51) %
                     RANDOM_SEQUENCE_SIZE);
-            particle_rands[3] = tok_rand_at_i(
+            particle_rands[3] = (uint32_t)tok_rand_at_i(
                 (lineparticle_effects[i].random_seed + particle_i + 237) %
                     RANDOM_SEQUENCE_SIZE);
-            particle_rands[4] = tok_rand_at_i(
+            particle_rands[4] = (uint32_t)tok_rand_at_i(
                 (lineparticle_effects[i].random_seed + particle_i + 414) %
                     RANDOM_SEQUENCE_SIZE);
             
@@ -401,7 +401,7 @@ static void construct_shatter_effect_no_zpoly(
     ShatterEffect * to_construct)
 {
     to_construct->random_seed =
-        tok_rand_at_i(
+        (uint32_t)tok_rand_at_i(
             platform_get_current_time_microsecs() %
                 RANDOM_SEQUENCE_SIZE) % 75;
     to_construct->elapsed = 0;
@@ -443,11 +443,11 @@ static void construct_shatter_effect_no_zpoly(
     to_construct->xyz_rotation_per_second[1] =
         (float)(tok_rand_at_i((3 +
             platform_get_current_time_microsecs()) %
-                RANDOM_SEQUENCE_SIZE) % 628) * 0.01f;
+                RANDOM_SEQUENCE_SIZE) % 213) * 0.01f;
     to_construct->xyz_rotation_per_second[2] =
         (float)(tok_rand_at_i((19 +
             platform_get_current_time_microsecs()) %
-                RANDOM_SEQUENCE_SIZE) % 628) * 0.01f;
+                RANDOM_SEQUENCE_SIZE) % 544) * 0.01f;
 }
 
 ShatterEffect * next_shatter_effect(void)
@@ -584,7 +584,7 @@ void add_shatter_effects_to_workload(
             vert_i += 3)
         {
             uint64_t random_delay =
-                tok_rand_at_i(
+                (uint32_t)tok_rand_at_i(
                     ((shatter_effects[i].random_seed + (uint32_t)vert_i) %
                         (RANDOM_SEQUENCE_SIZE - 1))
                     ) %
@@ -758,7 +758,7 @@ void construct_particle_effect(
     to_construct->particle_xyz_multiplier[1] = 0.01f;
     to_construct->particle_xyz_multiplier[2] = 0.01f;
     to_construct->particles_ignore_lighting = true;
-    to_construct->random_seed = tok_rand() % 750;
+    to_construct->random_seed = (uint32_t)tok_rand() % 750;
     to_construct->particle_lifespan = 2000000;
     to_construct->pause_between_spawns = 0;
     to_construct->elapsed = 0;
@@ -1063,12 +1063,12 @@ void add_particle_effects_to_workload(
                 float dist_neg = 0;
                 if (particle_effects[i].particle_distance_max_variance > 0) {
                     dist_pos = (float)(
-                            tok_rand_at_i(rand_i + 19) %
+                            (uint32_t)tok_rand_at_i(rand_i + 19) %
                                 particle_effects[i].
                                     particle_distance_max_variance) /
                                         100.0f;
                     dist_neg = (float)(
-                        tok_rand_at_i(rand_i + 20) %
+                        (uint32_t)tok_rand_at_i(rand_i + 20) %
                             particle_effects[i].
                                 particle_distance_max_variance) /
                                     100.0f;
@@ -1103,12 +1103,12 @@ void add_particle_effects_to_workload(
                     particle_direction_max_xyz_angle_variance[0] > 0)
                 {
                     float x_rotation_pos = (float)(
-                        tok_rand_at_i(rand_i + 0) %
+                        (uint32_t)tok_rand_at_i(rand_i + 0) %
                             particle_effects[i].
                                 particle_direction_max_xyz_angle_variance[0]) /
                                     100.0f;
                     float x_rotation_neg = (float)(
-                        tok_rand_at_i(rand_i + 1) %
+                        (uint32_t)tok_rand_at_i(rand_i + 1) %
                             particle_effects[i].
                                 particle_direction_max_xyz_angle_variance[0]) /
                                     100.0f;
@@ -1123,12 +1123,12 @@ void add_particle_effects_to_workload(
                     squared_direction_max_xyz_angle_variance[0] > 0)
                 {
                     float x_rotation_pos = (float)(
-                        tok_rand_at_i(rand_i + 14) %
+                        (uint32_t)tok_rand_at_i(rand_i + 14) %
                             particle_effects[i].
                                 squared_direction_max_xyz_angle_variance[0]) /
                                     100.0f;
                     float x_rotation_neg = (float)(
-                        tok_rand_at_i(rand_i + 15) %
+                        (uint32_t)tok_rand_at_i(rand_i + 15) %
                             particle_effects[i].
                                 squared_direction_max_xyz_angle_variance[0]) /
                                     100.0f;
@@ -1144,12 +1144,12 @@ void add_particle_effects_to_workload(
                     particle_direction_max_xyz_angle_variance[1] > 0)
                 {
                     float y_rotation_pos = (float)(
-                        tok_rand_at_i(rand_i + 2) %
+                        (uint32_t)tok_rand_at_i(rand_i + 2) %
                             particle_effects[i].
                                 particle_direction_max_xyz_angle_variance[1]) /
                                     100.0f;
                     float y_rotation_neg = (float)(
-                        tok_rand_at_i(rand_i + 3) %
+                        (uint32_t)tok_rand_at_i(rand_i + 3) %
                             particle_effects[i].
                                 particle_direction_max_xyz_angle_variance[1]) /
                                     100.0f;
@@ -1165,12 +1165,12 @@ void add_particle_effects_to_workload(
                     squared_direction_max_xyz_angle_variance[1] > 0)
                 {
                     float y_rotation_pos = (float)(
-                        tok_rand_at_i(rand_i + 14) %
+                        (uint32_t)tok_rand_at_i(rand_i + 14) %
                             particle_effects[i].
                                 squared_direction_max_xyz_angle_variance[1]) /
                                     100.0f;
                     float y_rotation_neg = (float)(
-                        tok_rand_at_i(rand_i + 15) %
+                        (uint32_t)tok_rand_at_i(rand_i + 15) %
                             particle_effects[i].
                                 squared_direction_max_xyz_angle_variance[1]) /
                                     100.0f;
@@ -1185,12 +1185,12 @@ void add_particle_effects_to_workload(
                     particle_direction_max_xyz_angle_variance[2] > 0)
                 {
                     float z_rotation_pos = (float)(
-                        tok_rand_at_i(rand_i + 4) %
+                        (uint32_t)tok_rand_at_i(rand_i + 4) %
                             particle_effects[i].
                                 particle_direction_max_xyz_angle_variance[2]) /
                                     100.0f;
                     float z_rotation_neg = (float)(
-                        tok_rand_at_i(rand_i + 5) %
+                        (uint32_t)tok_rand_at_i(rand_i + 5) %
                             particle_effects[i].
                                 particle_direction_max_xyz_angle_variance[2]) /
                                     100.0f;
@@ -1205,12 +1205,12 @@ void add_particle_effects_to_workload(
                     squared_direction_max_xyz_angle_variance[2] > 0)
                 {
                     float z_rotation_pos = (float)(
-                        tok_rand_at_i(rand_i + 17) %
+                        (uint32_t)tok_rand_at_i(rand_i + 17) %
                             particle_effects[i].
                                 squared_direction_max_xyz_angle_variance[2]) /
                                     100.0f;
                     float z_rotation_neg = (float)(
-                        tok_rand_at_i(rand_i + 18) %
+                        (uint32_t)tok_rand_at_i(rand_i + 18) %
                             particle_effects[i].
                                 squared_direction_max_xyz_angle_variance[2]) /
                                     100.0f;
@@ -1253,12 +1253,12 @@ void add_particle_effects_to_workload(
                 if (particle_effects[i].particle_origin_max_xyz_variance[0] > 0)
                 {
                     float x_offset_pos = (float)(
-                        tok_rand_at_i(rand_i + 6) %
+                        (uint32_t)tok_rand_at_i(rand_i + 6) %
                             particle_effects[i].
                                 particle_origin_max_xyz_variance[0]) /
                                     100.0f;
                     float x_offset_neg = (float)(
-                        tok_rand_at_i(rand_i + 7) %
+                        (uint32_t)tok_rand_at_i(rand_i + 7) %
                             particle_effects[i].
                                 particle_origin_max_xyz_variance[0]) /
                                     100.0f;
@@ -1268,12 +1268,12 @@ void add_particle_effects_to_workload(
                 if (particle_effects[i].particle_origin_max_xyz_variance[1] > 0)
                 {
                     float y_offset_pos = (float)(
-                        tok_rand_at_i(rand_i + 8) %
+                        (uint32_t)tok_rand_at_i(rand_i + 8) %
                             particle_effects[i].
                                 particle_origin_max_xyz_variance[1]) /
                                     100.0f;
                     float y_offset_neg = (float)(
-                        tok_rand_at_i(rand_i + 9) %
+                        (uint32_t)tok_rand_at_i(rand_i + 9) %
                             particle_effects[i].
                                 particle_origin_max_xyz_variance[1]) /
                                     100.0f;
@@ -1283,12 +1283,12 @@ void add_particle_effects_to_workload(
                 if (particle_effects[i].particle_origin_max_xyz_variance[2] > 0)
                 {
                     float z_offset_pos = (float)(
-                        tok_rand_at_i(rand_i + 10) %
+                        (uint32_t)tok_rand_at_i(rand_i + 10) %
                             particle_effects[i].
                                 particle_origin_max_xyz_variance[2]) /
                                     100.0f;
                     float z_offset_neg = (float)(
-                        tok_rand_at_i(rand_i + 11) %
+                        (uint32_t)tok_rand_at_i(rand_i + 11) %
                             particle_effects[i].
                                 particle_origin_max_xyz_variance[2]) /
                                     100.0f;
@@ -1400,7 +1400,7 @@ void add_particle_effects_to_workload(
             
             if (particles_active < 1) {
                 particle_effects[i].random_seed =
-                    tok_rand() % RANDOM_SEQUENCE_SIZE;
+                    (uint32_t)tok_rand() % RANDOM_SEQUENCE_SIZE;
             } else if (particle_effects[i].generate_light) {
                 frame_data->light_collection->light_x[
                     frame_data->light_collection->lights_size] =
