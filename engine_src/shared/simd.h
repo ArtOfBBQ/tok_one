@@ -22,7 +22,7 @@ because I don't know much about how that works or how reliable it is
 #elif defined(__SSE2__)
 
 #include "immintrin.h"
-#define SIMD_INT8_WIDTH                     16
+#define SIMD_INT8_LANES                     16
 #define SIMD_INT8                           __m128i
 #define simd_load_int8s(int8sptr)           _mm_loadu_si128((const __m128i_u *)(int8sptr))
 #define simd_set_int8s(i8)                  _mm_set_epi8(i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8)
@@ -37,7 +37,7 @@ because I don't know much about how that works or how reliable it is
 #define simd_testz_int8s(a, b)              _mm_testz_si128(a, b)
 #else
 
-#define SIMD_INT8_WIDTH                     1
+#define SIMD_INT8_LANES                     1
 #define SIMD_INT8                           int8_t
 #define simd_load_int8s(int8sptr)           (int8sptr)[0]
 #define simd_set_int8s(i8)                  i8
@@ -56,7 +56,7 @@ because I don't know much about how that works or how reliable it is
 // int16 lanes
 #ifdef __ARM_NEON
 #include "arm_neon.h"
-#define SIMD_INT16_WIDTH                    8
+#define SIMD_INT16_LANES                    8
 #define SIMD_INT16                          int16x8_t
 #define simd_load_int16s(int16sptr)         vld1q_s16(int16sptr)
 #define simd_set_int16s(i16)                vld1q_dup_s16(&i16)
@@ -79,7 +79,7 @@ because I don't know much about how that works or how reliable it is
 #elif defined(__AVX__) && defined(__AVX2__)
 
 #include "immintrin.h"
-#define SIMD_INT16_WIDTH                    16
+#define SIMD_INT16_LANES                    16
 #define SIMD_INT16                          __m256i
 #define simd_load_int16s(int16sptr)         _mm256_loadu_si256(int16sptr) // AVX
 #define simd_set_int16s(i16)                _mm256_set1_epi16 // AVX
@@ -99,11 +99,11 @@ because I don't know much about how that works or how reliable it is
 #elif defined(__SSE2__) && defined(__SSE4_1__)
 
 #include "immintrin.h"
-#define SIMD_INT16_WIDTH                    8
+#define SIMD_INT16_LANES                    8
 #define SIMD_INT16                          __m128i
-#define simd_load_int16s(int16sptr)         _mm_loadu_si128((const __m128i_u *)(int16sptr)) // SSE2
+#define simd_load_int16s(int16sptr)         _mm_loadu_si128((const __m128i *)(int16sptr)) // SSE2
 #define simd_set_int16s(i16)                _mm_set1_epi16(i16) // SSE2
-#define simd_store_int16s(recip, from)      _mm_storeu_si128((__m128i_u *)recip, from) // SSE2
+#define simd_store_int16s(recip, from)      _mm_storeu_si128((__m128i *)recip, from) // SSE2
 #define simd_mul_int16s(a, b)               _mm_mullo_epi16(a, b) // SSE2
 #define simd_add_int16s(a, b)               _mm_add_epi16(a, b) // SSE2
 #define simd_sub_int16s(a, b)               _mm_sub_epi16(a, b) // SSE2
@@ -118,7 +118,7 @@ because I don't know much about how that works or how reliable it is
 #define simd_test_all_ones_int16s(a)        _mm_test_all_ones(a)  // SSE4.1
 #else
 
-#define SIMD_INT16_WIDTH                    1
+#define SIMD_INT16_LANES                    1
 #define SIMD_INT16                          int16_t
 #define simd_load_int16s(int16sptr)         (int16sptr)[0]
 #define simd_set_int16s(i16)                i16
@@ -138,7 +138,7 @@ because I don't know much about how that works or how reliable it is
 #ifdef __ARM_NEON
 
 #include "arm_neon.h"
-#define SIMD_FLOAT_WIDTH                    4
+#define SIMD_FLOAT_LANES                    4
 #define SIMD_FLOAT                          float32x4_t
 #define simd_load_floats(floatsptr)         vld1q_f32(floatsptr)
 #define simd_set_float(float)               vld1q_dup_f32(&float)
@@ -153,7 +153,7 @@ because I don't know much about how that works or how reliable it is
 #elif defined(__AVX__)
 
 #include "immintrin.h"
-#define SIMD_FLOAT_WIDTH                    8
+#define SIMD_FLOAT_LANES                    8
 #define SIMD_FLOAT                          __m256
 #define simd_load_floats(floatsptr)         _mm256_load_ps(floatsptr)
 #define simd_set_float(float)               _mm256_set_ps(float, float, float, float, float, float, float, float)
@@ -167,7 +167,7 @@ because I don't know much about how that works or how reliable it is
 
 #else
 
-#define SIMD_FLOAT_WIDTH                    1
+#define SIMD_FLOAT_LANES                    1
 #define SIMD_FLOAT                          float
 #define simd_load_floats(floatsptr)         (floatsptr)[0]
 #define simd_set_float(float)               float
