@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-#define RANDOM_IGNORE_ASSERTS
+// #define RANDOM_IGNORE_ASSERTS
 #ifndef RANDOM_IGNORE_ASSERTS
 #include "assert.h"
 #endif

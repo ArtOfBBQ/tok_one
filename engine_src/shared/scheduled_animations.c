@@ -241,7 +241,7 @@ void request_shatter_and_destroy(
         shatter->longest_random_delay_before_launch =
             (duration_microseconds * 3) / 2;
         shatter->start_fade_out_at_elapsed = (duration_microseconds / 10) * 8;
-        shatter->finish_fade_out_at_elapsed = duration_microseconds;
+        shatter->finish_fade_out_at_elapsed = duration_microseconds * 2;
         shatter->linear_direction[0] = linear_direction[0];
         shatter->linear_direction[1] = linear_direction[1];
         shatter->linear_direction[2] = linear_direction[2];

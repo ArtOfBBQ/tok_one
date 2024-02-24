@@ -560,23 +560,6 @@ static void assert_objmodel_validity(int32_t mesh_id) {
 }
 #endif
 
-//static void guess_ztriangle_normal(zTriangle * input) {
-//    zVertex vector1;
-//    zVertex vector2;
-//
-//    vector1.x = input->vertices->gpu_data[1].x - input->vertices->gpu_data[0].x;
-//    vector1.y = input->vertices->gpu_data[1].y - input->vertices->gpu_data[0].y;
-//    vector1.z = input->vertices->gpu_data[1].z - input->vertices->gpu_data[0].z;
-//
-//    vector2.x = input->vertices->gpu_data[2].x - input->vertices->gpu_data[0].x;
-//    vector2.y = input->vertices->gpu_data[2].y - input->vertices->gpu_data[0].y;
-//    vector2.z = input->vertices->gpu_data[2].z - input->vertices->gpu_data[0].z;
-//
-//    input->normal.x = (vector1.y * vector2.z) - (vector1.z * vector2.y);
-//    input->normal.y = (vector1.z * vector2.x) - (vector1.x * vector2.z);
-//    input->normal.z = (vector1.x * vector2.y) - (vector1.y * vector2.x);
-//}
-
 static float get_vertex_magnitude(float input_xyz[3]) {
     float x = (input_xyz[0] * input_xyz[0]);
     float y = (input_xyz[1] * input_xyz[1]);

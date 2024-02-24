@@ -100,7 +100,7 @@ void commit_lineparticle_effect(
     to_commit->random_seed = (uint32_t)tok_rand() % RANDOM_SEQUENCE_SIZE;
 }
 
-#define add_variance(x, variance, randnum, randnum2) if (variance > 0) { x += ((randnum % variance) * 0.01f); x -= ((randnum2 % variance) * 0.01f); }
+#define add_variance(x, variance, randnum, randnum2) if (variance > 0) { x += ((float)(randnum % variance) * 0.01f); x -= ((float)(randnum2 % variance) * 0.01f); }
 
 void add_lineparticle_effects_to_workload(
     GPUDataForSingleFrame * frame_data,
@@ -169,19 +169,19 @@ void add_lineparticle_effects_to_workload(
                 continue;
             }
             
-            particle_rands[0] = (uint32_t)tok_rand_at_i(
+            particle_rands[0] = (uint64_t)tok_rand_at_i(
                 (lineparticle_effects[i].random_seed + particle_i) %
                     RANDOM_SEQUENCE_SIZE);
-            particle_rands[1] = (uint32_t)tok_rand_at_i(
+            particle_rands[1] = (uint64_t)tok_rand_at_i(
                 (lineparticle_effects[i].random_seed + particle_i + 37) %
                     RANDOM_SEQUENCE_SIZE);
-            particle_rands[2] = (uint32_t)tok_rand_at_i(
+            particle_rands[2] = (uint64_t)tok_rand_at_i(
                 (lineparticle_effects[i].random_seed + particle_i + 51) %
                     RANDOM_SEQUENCE_SIZE);
-            particle_rands[3] = (uint32_t)tok_rand_at_i(
+            particle_rands[3] = (uint64_t)tok_rand_at_i(
                 (lineparticle_effects[i].random_seed + particle_i + 237) %
                     RANDOM_SEQUENCE_SIZE);
-            particle_rands[4] = (uint32_t)tok_rand_at_i(
+            particle_rands[4] = (uint64_t)tok_rand_at_i(
                 (lineparticle_effects[i].random_seed + particle_i + 414) %
                     RANDOM_SEQUENCE_SIZE);
             
@@ -529,6 +529,20 @@ void commit_shatter_effect(
     normalize_zvertex_f3(to_commit->squared_direction);
     
     log_assert(to_commit->zpolygon_to_shatter_cpu.committed);
+    log_assert(to_commit->zpolygon_to_shatter_material.texture_i >= -1);
+    log_assert(to_commit->zpolygon_to_shatter_material.texture_i <
+        MAX_FILES_IN_SINGLE_TEXARRAY);
+    log_assert(to_commit->zpolygon_to_shatter_material.texturearray_i >= -1);
+    log_assert(to_commit->zpolygon_to_shatter_material.texturearray_i <
+        TEXTUREARRAYS_SIZE);
+    log_assert(to_commit->zpolygon_to_shatter_material.rgba[0] >= 0.0f);
+    log_assert(to_commit->zpolygon_to_shatter_material.rgba[0] <= 1.0f);
+    log_assert(to_commit->zpolygon_to_shatter_material.rgba[1] >= 0.0f);
+    log_assert(to_commit->zpolygon_to_shatter_material.rgba[1] <= 1.0f);
+    log_assert(to_commit->zpolygon_to_shatter_material.rgba[2] >= 0.0f);
+    log_assert(to_commit->zpolygon_to_shatter_material.rgba[2] <= 1.0f);
+    log_assert(to_commit->zpolygon_to_shatter_material.rgba[3] >= 0.0f);
+    log_assert(to_commit->zpolygon_to_shatter_material.rgba[3] <= 1.0f);
     to_commit->committed = true;
 }
 
@@ -567,7 +581,7 @@ void add_shatter_effects_to_workload(
                 shatter_effects[i].zpolygon_to_shatter_cpu.mesh_id].
                     shattered_vertices_size;
         log_assert(shatter_tail_i >= 0);
-         
+        
         uint64_t lifetime_so_far = shatter_effects[i].elapsed;
         if (
             lifetime_so_far >
@@ -584,9 +598,9 @@ void add_shatter_effects_to_workload(
             vert_i += 3)
         {
             uint64_t random_delay =
-                (uint32_t)tok_rand_at_i(
+                (uint64_t)tok_rand_at_i(
                     ((shatter_effects[i].random_seed + (uint32_t)vert_i) %
-                        (RANDOM_SEQUENCE_SIZE - 1))
+                        RANDOM_SEQUENCE_SIZE)
                     ) %
                 shatter_effects[i].longest_random_delay_before_launch;
             
@@ -596,22 +610,27 @@ void add_shatter_effects_to_workload(
             log_assert(delayed_lifetime_so_far < shatter_effects[i].elapsed);
             
             float alpha = 1.0f;
-            
             if (
-                delayed_lifetime_so_far >
-                    shatter_effects[i].finish_fade_out_at_elapsed)
+                delayed_lifetime_so_far >=
+                    (shatter_effects[i].finish_fade_out_at_elapsed +
+                        random_delay))
             {
                 alpha = 0.0f;
             } else if (
                 delayed_lifetime_so_far >
-                    shatter_effects[i].start_fade_out_at_elapsed)
+                    (shatter_effects[i].start_fade_out_at_elapsed +
+                        random_delay))
             {
-                alpha =
-                    1.0f -
-                    ((float)(delayed_lifetime_so_far -
-                        shatter_effects[i].start_fade_out_at_elapsed) /
-                    (float)(shatter_effects[i].finish_fade_out_at_elapsed -
-                        shatter_effects[i].start_fade_out_at_elapsed));
+                float diff = delayed_lifetime_so_far -
+                    (shatter_effects[i].start_fade_out_at_elapsed +
+                        random_delay);
+                float max_diff =
+                    (shatter_effects[i].finish_fade_out_at_elapsed +
+                        random_delay) -
+                    (shatter_effects[i].start_fade_out_at_elapsed +
+                        random_delay);
+                
+                alpha = 1.0f - (diff / max_diff);
                 log_assert(alpha >= 0.0f);
                 log_assert(alpha < 1.0f);
             }
@@ -637,21 +656,15 @@ void add_shatter_effects_to_workload(
                         shatter_effects[i].zpolygon_to_shatter_gpu.xyz[2];
             normalize_zvertex(&exploding_direction);
             
-            float rotation[3];
-            for (uint32_t r = 0; r < 3; r++) {
-                rotation[r] =
-                    ((float)delayed_lifetime_so_far / 1000000.0f) *
-                        shatter_effects[i].xyz_rotation_per_second[r];
-            }
-            float exploding_distance_traveled =
-                ((float)delayed_lifetime_so_far / 1000000.0f) *
-                    shatter_effects[i].exploding_distance_per_second;
-            float linear_distance_traveled =
-                ((float)delayed_lifetime_so_far / 1000000.0f) *
-                    shatter_effects[i].linear_distance_per_second;
+            float delayed_secs_so_far = (float)delayed_lifetime_so_far /
+                1000000.0f;
+            
+            float exploding_distance_traveled = delayed_secs_so_far *
+                shatter_effects[i].exploding_distance_per_second;
+            float linear_distance_traveled = delayed_secs_so_far *
+                shatter_effects[i].linear_distance_per_second;
             float sq_distance_traveled =
-                (((float)delayed_lifetime_so_far / 1000000.0f) *
-                ((float)delayed_lifetime_so_far / 1000000.0f)) *
+                (delayed_secs_so_far * delayed_secs_so_far) *
                     shatter_effects[i].squared_distance_per_second;
             
             frame_data->polygon_collection->polygons[
@@ -659,63 +672,47 @@ void add_shatter_effects_to_workload(
                     shatter_effects[i].zpolygon_to_shatter_gpu;
             
             frame_data->polygon_collection->polygons[
-                frame_data->polygon_collection->size].xyz[0] +=
-                    (linear_distance_traveled *
-                        shatter_effects[i].linear_direction[0]) +
-                    (sq_distance_traveled *
-                        shatter_effects[i].squared_direction[0]) +
-                    (exploding_distance_traveled *
-                        exploding_direction.x);
-            
+                    frame_data->polygon_collection->size].xyz[0] +=
+                        (exploding_distance_traveled *
+                            exploding_direction.x);
             frame_data->polygon_collection->polygons[
-                frame_data->polygon_collection->size].xyz[1] +=
-                    (linear_distance_traveled *
-                        shatter_effects[i].linear_direction[1]) +
-                    (sq_distance_traveled *
-                        shatter_effects[i].squared_direction[1]) +
-                    (exploding_distance_traveled *
-                        exploding_direction.y);
-            
+                    frame_data->polygon_collection->size].xyz[1] +=
+                        (exploding_distance_traveled *
+                            exploding_direction.y);
             frame_data->polygon_collection->polygons[
-                frame_data->polygon_collection->size].xyz[2] +=
-                        (linear_distance_traveled *
-                            shatter_effects[i].linear_direction[2]) +
-                        (sq_distance_traveled *
-                            shatter_effects[i].squared_direction[2]) +
+                    frame_data->polygon_collection->size].xyz[2] +=
                         (exploding_distance_traveled *
                             exploding_direction.z);
             
-            frame_data->polygon_collection->polygons[
-                frame_data->polygon_collection->size].xyz_angle[0] +=
-                    rotation[0];
-            frame_data->polygon_collection->polygons[
-                frame_data->polygon_collection->size].xyz_angle[1] +=
-                    rotation[1];
-            frame_data->polygon_collection->polygons[
-                frame_data->polygon_collection->size].xyz_angle[2] +=
-                    rotation[2];
-            
-            frame_data->polygon_collection->polygons[
-                frame_data->polygon_collection->size].bonus_rgb[0] +=
-                    ((float)delayed_lifetime_so_far / 1000000.0f) *
-                        shatter_effects[i].rgb_bonus_per_second[0];
-            frame_data->polygon_collection->polygons[
-                frame_data->polygon_collection->size].bonus_rgb[1] +=
-                    ((float)delayed_lifetime_so_far / 1000000.0f) *
-                        shatter_effects[i].rgb_bonus_per_second[1];
-            frame_data->polygon_collection->polygons[
-                frame_data->polygon_collection->size].bonus_rgb[2] +=
-                    ((float)delayed_lifetime_so_far / 1000000.0f) *
-                        shatter_effects[i].rgb_bonus_per_second[2];
-            
-            frame_data->polygon_materials[
-                frame_data->polygon_collection->size *
-                    MAX_MATERIALS_SIZE] =
-                        shatter_effects[i].zpolygon_to_shatter_material;
+            for (uint32_t m = 0; m < 3; m++) {
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz[m] +=
+                            (linear_distance_traveled *
+                                shatter_effects[i].linear_direction[m]);
+                
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz[m] +=
+                        (sq_distance_traveled *
+                            shatter_effects[i].squared_direction[m]);
+                
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].xyz_angle[m] +=
+                        (delayed_secs_so_far *
+                            shatter_effects[i].xyz_rotation_per_second[m]);
+                
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].bonus_rgb[m] +=
+                        (delayed_secs_so_far *
+                            shatter_effects[i].rgb_bonus_per_second[m]);
+            }
             
             frame_data->polygon_materials[
-                frame_data->polygon_collection->size *
-                    MAX_MATERIALS_SIZE].rgba[3] = alpha;
+                frame_data->polygon_collection->size * MAX_MATERIALS_SIZE] =
+                    shatter_effects[i].zpolygon_to_shatter_material;
+            
+            frame_data->polygon_materials[
+                frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
+                    rgba[3] = alpha;
             
             for (uint32_t m = 0; m < 3; m++) {
                 frame_data->vertices[frame_data->vertices_size].
@@ -884,14 +881,14 @@ static void adjust_colors_by_random(
     const uint64_t at_random_seed)
 {
     float red_bonus =
-        (max_variance / 100.0f) * (tok_rand_at_i(at_random_seed + 0) % 100) -
-        (max_variance / 100.0f) * (tok_rand_at_i(at_random_seed + 11) % 100);
+        (max_variance / 100.0f) * ((uint32_t)tok_rand_at_i(at_random_seed + 0) % 100) -
+        (max_variance / 100.0f) * ((uint32_t)tok_rand_at_i(at_random_seed + 11) % 100);
     float green_bonus =
-        (max_variance / 100.0f) * (tok_rand_at_i(at_random_seed + 12) % 100) -
-        (max_variance / 100.0f) * (tok_rand_at_i(at_random_seed + 3) % 100);
+        (max_variance / 100.0f) * ((uint32_t)tok_rand_at_i(at_random_seed + 12) % 100) -
+        (max_variance / 100.0f) * ((uint32_t)tok_rand_at_i(at_random_seed + 3) % 100);
     float blue_bonus =
-        (max_variance / 100.0f) * (tok_rand_at_i(at_random_seed + 4) % 100) -
-        (max_variance / 100.0f) * (tok_rand_at_i(at_random_seed + 15) % 100);
+        (max_variance / 100.0f) * ((uint32_t)tok_rand_at_i(at_random_seed + 4) % 100) -
+        (max_variance / 100.0f) * ((uint32_t)tok_rand_at_i(at_random_seed + 15) % 100);
     
     *out_red += red_bonus;
     if (*out_red < 0.0f) { *out_red = 0.0f; }

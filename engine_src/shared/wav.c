@@ -30,7 +30,7 @@ typedef struct FormatChunkBody {
     uint16_t bits_per_sample;
 } FormatChunkBody;
 
-#define consume_struct(from_ptr, StructName) (StructName *)from_ptr; from_ptr += sizeof(StructName);
+#define consume_struct(from_ptr, StructName) *(StructName *)from_ptr; from_ptr += sizeof(StructName);
 
 static uint32_t strings_are_equal(
     char * string_1,
@@ -87,6 +87,8 @@ void samples_to_wav(
     int16_t * samples,
     const uint32_t samples_size)
 {
+    (void)recipient_cap; // TODO: check cap
+    
     FileHeader riff_header;
     riff_header.riff[0] = 'R';
     riff_header.riff[1] = 'I';
@@ -170,11 +172,11 @@ void parse_wav(
     *good = 1;
     
     unsigned char * raw_file_at = raw_file;
-    FileHeader * file_header = consume_struct(raw_file_at, FileHeader);
+    FileHeader file_header = consume_struct(raw_file_at, FileHeader);
     
     check_strings_equal(
         /* char * actual: */
-            file_header->riff,
+            file_header.riff,
         /* char * expected_nullterm: */
             "RIFF",
         /* char * field_description: */
@@ -183,11 +185,11 @@ void parse_wav(
             good);
     if (!*good) { return; }
     
-    if (file_header->file_size + 8 != data_size) {
+    if (file_header.file_size + 8 != data_size) {
         #ifndef WAV_SILENCE
         printf(
             ".wav header claims filesize %u+8 bytes, got %u byte datastream\n",
-            file_header->file_size,
+            file_header.file_size,
             data_size);
         #endif
         *good = 0;
@@ -196,7 +198,7 @@ void parse_wav(
     
     check_strings_equal(
         /* char * actual: */
-            file_header->wave,
+            file_header.wave,
         /* char * expected_nullterm: */
             "WAVE",
         /* char * field_description: */
@@ -209,15 +211,15 @@ void parse_wav(
     
     while (
         *good &&
-        file_header->file_size > (ptrdiff_t)(raw_file_at - raw_file) +
-            (sizeof(ChunkHeader) + 2))
+        file_header.file_size > (((ptrdiff_t)raw_file_at - (ptrdiff_t)raw_file) +
+            (ptrdiff_t)(sizeof(ChunkHeader) + 2)))
     {
         // assert((ptrdiff_t)(void *)raw_file_at % 32 == 0);
-        ChunkHeader * chunk_header = consume_struct(raw_file_at, ChunkHeader);
+        ChunkHeader chunk_header = consume_struct(raw_file_at, ChunkHeader);
         
         if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "JUNK"))
         {
             /*
@@ -233,13 +235,13 @@ void parse_wav(
             Data	Size bytes	nothing
             unused	1 byte	present if Size is odd
             */
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "bext"))
         {
             /*
@@ -248,175 +250,175 @@ void parse_wav(
             broadcast applications. Additional metadata chunks have also been
             developed;
             */
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "LGWV"))
         {
             // logic wave software, ignore
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "ResU"))
         {
             // undocumented chunk, ignore
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "ID3 ") ||
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "id3 "))
         {
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "SMED"))
         {
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "iXML"))
         {
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "LIST"))
         {
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "_PMX"))
         {
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "FLLR"))
         {
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "smpl"))
         {
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "splp"))
         {
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "sprg"))
         {
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "spcl"))
         {
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "spcc"))
         {
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "srtn"))
         {
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "spca"))
         {
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "acid"))
         {
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "inst"))
         {
-            raw_file_at += chunk_header->data_size;
-            if (chunk_header->data_size % 2 == 1) {
+            raw_file_at += chunk_header.data_size;
+            if (chunk_header.data_size % 2 == 1) {
                 raw_file_at += 1;
             }
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "fmt"))
         {
             format_data = *(FormatChunkBody *)raw_file_at;
-            raw_file_at += chunk_header->data_size;
+            raw_file_at += chunk_header.data_size;
             
             #ifndef WAV_IGNORE_ASSERTS
             assert(format_data.type == 1); // supporting only PCM for now
@@ -443,27 +445,27 @@ void parse_wav(
             #endif
         } else if (
             strings_are_equal(
-                chunk_header->ascii_id,
+                chunk_header.ascii_id,
                 "data"))
         {
-            if (chunk_header->data_size > (recipient_cap * 2)) {
+            if (chunk_header.data_size > (recipient_cap * 2)) {
                 #ifndef WAV_SILENCE
                 printf(
                     "Recipient size of %u can't contain %u bytes of sound "
                     "data\n",
                     recipient_cap,
-                    chunk_header->data_size);
+                    chunk_header.data_size);
                 #endif
                 *good = 0;
                 return;
             }
             
-            if (chunk_header->data_size > file_header->file_size) {
+            if (chunk_header.data_size > file_header.file_size) {
                 #ifndef WAV_SILENCE
                 printf(
                     "Chunk size %u larger than file size %u?\n",
-                    chunk_header->data_size,
-                    file_header->file_size);
+                    chunk_header.data_size,
+                    file_header.file_size);
                 #endif
                 *good = 0;
                 return;
@@ -477,16 +479,16 @@ void parse_wav(
             } else if (
                 format_data.bits_per_sample == 16)
             {
-                memcpy(recipient, raw_file_at, chunk_header->data_size);
-                *recipient_size = chunk_header->data_size / 2;
-                raw_file_at += chunk_header->data_size;
+                memcpy(recipient, raw_file_at, chunk_header.data_size);
+                *recipient_size = chunk_header.data_size / 2;
+                raw_file_at += chunk_header.data_size;
             }
         } else {
             *good = 0;
             #ifndef WAV_SILENCE
             printf(
                 "Unrecognized chunk type: %s\n",
-                chunk_header->ascii_id);
+                chunk_header.ascii_id);
             #endif
             return;
         }

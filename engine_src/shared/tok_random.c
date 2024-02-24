@@ -85,7 +85,7 @@ static int32_t random_sequence[RANDOM_SEQUENCE_SIZE] = {
     16494,22497,28982,30672,7615,30742,20463,11189,22002,15149,15798,23119,
     15989,9366,3446,6722,29293,15737,4743,27814,21315,25643,12845,1575,
     12279,5378,4111,18072,24720,3541,27766,22930,31529,26019,4840,12807,
-    15512,5304,2811,
+    15512,5304,2811
 };
 
 int32_t tok_rand(void) {
@@ -93,6 +93,10 @@ int32_t tok_rand(void) {
     if (random_seed >= RANDOM_SEQUENCE_SIZE) {
         random_seed = 0;
     }
+    
+    #ifndef RANDOM_IGNORE_ASSERTS
+    assert(random_sequence[random_seed] >= 0);
+    #endif
     
     return random_sequence[random_seed];
 }
@@ -102,6 +106,9 @@ int32_t tok_rand_at_i(const uint64_t index) {
     assert(index < RANDOM_SEQUENCE_SIZE);
     #endif
     
+    #ifndef RANDOM_IGNORE_ASSERTS
+    assert(random_sequence[random_seed] >= 0);
+    #endif
     return random_sequence[index];
 }
 
