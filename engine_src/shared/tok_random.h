@@ -1,6 +1,7 @@
 #ifndef TOK_RANDOM_H
 #define TOK_RANDOM_H
 
+#include "simd.h"
 #include "common.h"
 
 // #define RANDOM_IGNORE_ASSERTS
@@ -12,12 +13,15 @@
 extern "C" {
 #endif
 
-#define RANDOM_SEQUENCE_SIZE 999
+#define FLOAT_SEQUENCE_SIZE  4760
+#define RANDOM_SEQUENCE_SIZE  999
 
 extern uint32_t random_seed;
 
 int32_t tok_rand(void);
 int32_t tok_rand_at_i(const uint64_t index);
+
+SIMD_FLOAT tok_rand_simd_at_i(const uint64_t index);
 
 void shuffle_array(
     void * array,

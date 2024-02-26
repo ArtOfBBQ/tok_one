@@ -104,51 +104,34 @@ void add_shatter_effects_to_workload(
     uint64_t elapsed_nanoseconds);
 
 typedef struct ParticleEffect {
+    GPUPolygon gpustats_linear_add;
+    GPUPolygon gpustats_linear_variance_multipliers;
+    GPUPolygon gpustats_exponential_add;
+    
+    // Reminder on the way the linear variance multipliers work:
+    // -> random floats are generated from 0.0f to 1.0f
+    // -> those numbers are multiplied by the variance multipliers
+    //    e.g. if you set one to 0.1f, the final new rand will in [0.0f - 0.1f]
+    // -> each property adds to itself (rand * self)
+    // -> each property subtracts from itself (rand2 * self)
+    // You now have a property with some variance introduced. Most will center
+    // around the original value and the exceedingly rare case will be
+    // (linear_variance_multiplier * self) below or above its original value
+    
+    zPolygonCPU zpolygon_cpu;
+    GPUPolygon zpolygon_gpu;
+    GPUPolygonMaterial zpolygon_material;
+    
     int32_t object_id;
-    
-    int32_t mesh_id_to_spawn;
-    
-    float xyz[3];
-    float scale_factor;
     
     uint64_t random_seed;
     uint64_t elapsed;
     bool32_t deleted;
     
     uint32_t particle_spawns_per_second;
-    float particle_xyz_multiplier[3];
-    bool32_t particles_ignore_lighting;
     
     uint64_t particle_lifespan;
     uint64_t pause_between_spawns;
-    
-    float particle_rgba_progression[PARTICLE_RGBA_PROGRESSION_MAX][4];
-    uint32_t particle_rgba_progression_size;
-    float max_color_variance;
-    
-    float particle_direction[3]; // the direction the particles fly in
-    float particle_distance_per_second; // 1.0f to travel 1.0f per second
-    
-    uint32_t particle_distance_max_variance;
-    // set these to 0 to have each particle fly exactly in particle_direction
-    // (so you will basically end up with a line)
-    // set max_x_angle_variance to 318 to randomly rotate each particle's
-    // direction by somewhere between 0.0f radians and 3.18f radians around the
-    // x-axis, so you get particles flying in different directions
-    uint32_t particle_direction_max_xyz_angle_variance[3];
-    
-    float squared_direction[3];
-    float squared_distance_per_second;
-    uint32_t squared_direction_max_xyz_angle_variance[3];
-    
-    // set these to 0 to have each particle start exactly at the origin
-    // set max_y to 20 to randomly have each particle offset by a y-axis value
-    // between 0.0f and 0.2f (so it's 100x)
-    uint32_t particle_origin_max_xyz_variance[3];
-    
-    int32_t random_texturearray_i[MAX_PARTICLE_TEXTURES];
-    int32_t random_texture_i[MAX_PARTICLE_TEXTURES];
-    int32_t random_textures_size;
     
     bool32_t generate_light;
     float light_reach;

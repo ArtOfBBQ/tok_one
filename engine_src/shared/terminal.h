@@ -8,6 +8,7 @@
 #include "text.h"
 #include "clientlogic.h"
 #include "wav.h"
+#include "audio.h"
 
 #ifdef __cplusplus
 extern "C" {

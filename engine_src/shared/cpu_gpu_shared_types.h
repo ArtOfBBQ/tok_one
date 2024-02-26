@@ -52,6 +52,7 @@ typedef struct GPUPolygon {
     float        scale_factor;
     unsigned int ignore_lighting;
     unsigned int ignore_camera;
+    float        simd_padding[6];
 } GPUPolygon;
 
 typedef struct GPUPolygonCollection {

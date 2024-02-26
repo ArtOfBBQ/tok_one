@@ -149,6 +149,12 @@
 		EC7B171C293A23E400C1D20C /* roundedborder.png in Resources */ = {isa = PBXBuildFile; fileRef = EC7B171A293A23E300C1D20C /* roundedborder.png */; };
 		EC7C25262980B6AA00DB7BC8 /* terminal.h in Sources */ = {isa = PBXBuildFile; fileRef = EC7C25242980B6A900DB7BC8 /* terminal.h */; };
 		EC7C25272980B6AA00DB7BC8 /* terminal.c in Sources */ = {isa = PBXBuildFile; fileRef = EC7C25252980B6A900DB7BC8 /* terminal.c */; };
+		EC914B7E2B8AD447007FCBFC /* audio.c in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7A2B8AD447007FCBFC /* audio.c */; };
+		EC914B7F2B8AD447007FCBFC /* audio.c in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7A2B8AD447007FCBFC /* audio.c */; };
+		EC914B802B8AD447007FCBFC /* wav.c in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7B2B8AD447007FCBFC /* wav.c */; };
+		EC914B812B8AD447007FCBFC /* wav.c in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7B2B8AD447007FCBFC /* wav.c */; };
+		EC914B842B8AD5AB007FCBFC /* apple_audio.m in Sources */ = {isa = PBXBuildFile; fileRef = EC914B832B8AD5AB007FCBFC /* apple_audio.m */; };
+		EC914B852B8AD5AB007FCBFC /* apple_audio.m in Sources */ = {isa = PBXBuildFile; fileRef = EC914B832B8AD5AB007FCBFC /* apple_audio.m */; };
 		EC92FDAD2902917500C10865 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
 		EC92FDAE2902917500C10865 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
 		ECB05E47294F8AC300050BD4 /* simd.h in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E46294F8AC200050BD4 /* simd.h */; };
@@ -256,6 +262,12 @@
 		EC7B171A293A23E300C1D20C /* roundedborder.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = roundedborder.png; path = ../../resources/roundedborder.png; sourceTree = "<group>"; };
 		EC7C25242980B6A900DB7BC8 /* terminal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = terminal.h; path = ../../engine_src/shared/terminal.h; sourceTree = "<group>"; };
 		EC7C25252980B6A900DB7BC8 /* terminal.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = terminal.c; path = ../../engine_src/shared/terminal.c; sourceTree = "<group>"; };
+		EC914B7A2B8AD447007FCBFC /* audio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = audio.c; path = ../../engine_src/shared/audio.c; sourceTree = "<group>"; };
+		EC914B7B2B8AD447007FCBFC /* wav.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = wav.c; path = ../../engine_src/shared/wav.c; sourceTree = "<group>"; };
+		EC914B7C2B8AD447007FCBFC /* wav.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = wav.h; path = ../../engine_src/shared/wav.h; sourceTree = "<group>"; };
+		EC914B7D2B8AD447007FCBFC /* audio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = audio.h; path = ../../engine_src/shared/audio.h; sourceTree = "<group>"; };
+		EC914B822B8AD5AA007FCBFC /* apple_audio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = apple_audio.h; path = ../../engine_src/shared_apple/apple_audio.h; sourceTree = "<group>"; };
+		EC914B832B8AD5AB007FCBFC /* apple_audio.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = apple_audio.m; path = ../../engine_src/shared_apple/apple_audio.m; sourceTree = "<group>"; };
 		EC92FDAB2902917500C10865 /* decode_bmp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = decode_bmp.h; path = ../../engine_src/shared/debigulator/src/decode_bmp.h; sourceTree = "<group>"; };
 		EC92FDAC2902917500C10865 /* decode_bmp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = decode_bmp.c; path = ../../engine_src/shared/debigulator/src/decode_bmp.c; sourceTree = "<group>"; };
 		ECB05E46294F8AC200050BD4 /* simd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = simd.h; path = ../../engine_src/shared/simd.h; sourceTree = "<group>"; };
@@ -409,6 +421,8 @@
 				60112839286122FE00F92967 /* inflate.c */,
 				6011283E286122FE00F92967 /* inflate.h */,
 				6028DD2F2886EE35000E1E98 /* init_application.c */,
+				EC914B822B8AD5AA007FCBFC /* apple_audio.h */,
+				EC914B832B8AD5AB007FCBFC /* apple_audio.m */,
 				6028DD302886EE36000E1E98 /* init_application.h */,
 				601128782862511600F92967 /* lightsource.c */,
 				601128712862511600F92967 /* lightsource.h */,
@@ -431,6 +445,10 @@
 				6011286A2862511500F92967 /* scheduled_animations.h */,
 				ECB05E46294F8AC200050BD4 /* simd.h */,
 				EC7C25252980B6A900DB7BC8 /* terminal.c */,
+				EC914B7A2B8AD447007FCBFC /* audio.c */,
+				EC914B7D2B8AD447007FCBFC /* audio.h */,
+				EC914B7B2B8AD447007FCBFC /* wav.c */,
+				EC914B7C2B8AD447007FCBFC /* wav.h */,
 				EC7C25242980B6A900DB7BC8 /* terminal.h */,
 				601128742862511600F92967 /* text.c */,
 				601128672862511500F92967 /* text.h */,
@@ -607,6 +625,7 @@
 				ECB05E4B294F8B3500050BD4 /* main.m in Sources */,
 				ECB05E49294F8B1300050BD4 /* gpu.m in Sources */,
 				ECB05E47294F8AC300050BD4 /* simd.h in Sources */,
+				EC914B7E2B8AD447007FCBFC /* audio.c in Sources */,
 				6064C0C02892504A00E8B3AD /* gameloop.h in Sources */,
 				6064C0C12892504A00E8B3AD /* gameloop.c in Sources */,
 				6028DD312886EE36000E1E98 /* init_application.c in Sources */,
@@ -623,6 +642,7 @@
 				60A998DF287BD494003F7159 /* inflate.h in Sources */,
 				EC6E121A2A04CE13004E7BD1 /* objectid.c in Sources */,
 				60A998EC287BD4B7003F7159 /* window_size.h in Sources */,
+				EC914B842B8AD5AB007FCBFC /* apple_audio.m in Sources */,
 				60A998E8287BD4B7003F7159 /* userinput.h in Sources */,
 				60A998EB287BD4B7003F7159 /* cpu_gpu_shared_types.h in Sources */,
 				EC6A301B29EFA1440071C58F /* triangle.c in Sources */,
@@ -653,6 +673,7 @@
 				60A998E2287BD494003F7159 /* lightsource.h in Sources */,
 				60112899286253C100F92967 /* shaders.metal in Sources */,
 				601128872862511700F92967 /* renderer.c in Sources */,
+				EC914B802B8AD447007FCBFC /* wav.c in Sources */,
 				60A998ED287BD4B7003F7159 /* zpolygon.h in Sources */,
 				60A998EF287BD4B7003F7159 /* renderer.h in Sources */,
 				6011288B2862511800F92967 /* common_platform_layer.c in Sources */,
@@ -676,6 +697,7 @@
 				60A9991A287BD4C4003F7159 /* window_size.c in Sources */,
 				EC31932529DFAAFB00E320CD /* particle.c in Sources */,
 				60A9990A287BD4C3003F7159 /* zpolygon.h in Sources */,
+				EC914B852B8AD5AB007FCBFC /* apple_audio.m in Sources */,
 				EC6441A629318B6D00A0267B /* ios_platform_layer.c in Sources */,
 				60A998F8287BD4C3003F7159 /* common.h in Sources */,
 				60A9990D287BD4C3003F7159 /* gpu.h in Sources */,
@@ -695,6 +717,7 @@
 				60A99903287BD4C3003F7159 /* userinput.c in Sources */,
 				EC78509B29E62CA800E6882A /* objmodel.c in Sources */,
 				60A9990B287BD4C3003F7159 /* decodedimage.h in Sources */,
+				EC914B7F2B8AD447007FCBFC /* audio.c in Sources */,
 				EC92FDAE2902917500C10865 /* decode_bmp.c in Sources */,
 				60A99910287BD4C4003F7159 /* texture_array.c in Sources */,
 				EC6E12172A03BD90004E7BD1 /* uielement.c in Sources */,
@@ -708,6 +731,7 @@
 				60A99912287BD4C4003F7159 /* userinput.h in Sources */,
 				60A998FD287BD4C3003F7159 /* decodedimage.c in Sources */,
 				60A998F5287BD4C3003F7159 /* texture_array.h in Sources */,
+				EC914B812B8AD447007FCBFC /* wav.c in Sources */,
 				60A99911287BD4C4003F7159 /* zpolygon.c in Sources */,
 				EC6E121B2A04CE13004E7BD1 /* objectid.c in Sources */,
 				60A9990C287BD4C3003F7159 /* decode_png.c in Sources */,

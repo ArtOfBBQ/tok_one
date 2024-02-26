@@ -2,7 +2,7 @@
 
 void client_logic_startup(void) {
     
-    init_PNG_decoder(malloc_from_managed, free_from_managed);
+    init_PNG_decoder(malloc_from_managed, free_from_managed, memset, memcpy);
     
     const char * fontfile = "font.png";
     if (platform_resource_exists("font.png")) {
@@ -32,6 +32,33 @@ void client_logic_startup(void) {
     light->y       =  0.50f;
     light->z       =  0.75f;
     commit_zlight(light);
+    
+    ParticleEffect particles;
+    construct_particle_effect(&particles);
+    particles.zpolygon_cpu.mesh_id = 1; // hardcoded basic cube
+    particles.zpolygon_gpu.xyz[0] = 0.0f;
+    particles.zpolygon_gpu.xyz[1] = 0.0f;
+    particles.zpolygon_gpu.xyz[2] = 2.0f;
+    particles.gpustats_linear_add.xyz[0] =  0.25f;
+    particles.gpustats_linear_add.xyz[1] =  0.25f;
+    particles.gpustats_linear_add.xyz[2] =  0.00f;
+    particles.gpustats_linear_add.xyz_angle[0] =  1.80f;
+    particles.gpustats_linear_add.xyz_angle[1] =  1.80f;
+    particles.gpustats_linear_add.xyz_angle[2] =  1.80f;
+    particles.gpustats_linear_add.bonus_rgb[0] =  0.15f;
+    particles.gpustats_linear_add.bonus_rgb[1] =  0.15f;
+    particles.gpustats_linear_add.bonus_rgb[2] =  0.35f;
+    
+    particles.gpustats_linear_variance_multipliers.xyz[0] = 1.8f;
+    particles.gpustats_linear_variance_multipliers.xyz[1] = 3.6f;
+    particles.gpustats_linear_variance_multipliers.xyz[2] = 0.0f;
+    
+    // particles.gpustats_linear_variance_multipliers.xyz_angle[0] = 0.0f;
+    // particles.gpustats_linear_variance_multipliers.xyz_angle[1] = 0.0f;
+    // particles.gpustats_linear_variance_multipliers.xyz_angle[2] = 0.0f;
+    particles.particle_spawns_per_second = 500;
+    particles.particle_lifespan = 5000000;
+    request_particle_effect(&particles);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {

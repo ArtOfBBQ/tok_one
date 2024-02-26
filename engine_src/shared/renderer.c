@@ -297,8 +297,10 @@ inline static void zpolygons_to_triangles(
     
     log_assert(
         frame_data->polygon_collection->size <= zpolygons_to_render->size);
-    log_assert(zpolygons_to_render->size < MAX_POLYGONS_PER_BUFFER);
-    log_assert(frame_data->polygon_collection->size < MAX_POLYGONS_PER_BUFFER);
+    log_assert(
+        zpolygons_to_render->size < MAX_POLYGONS_PER_BUFFER);
+    log_assert(
+        frame_data->polygon_collection->size < MAX_POLYGONS_PER_BUFFER);
     
     memcpy(
         /* void *__dst: */

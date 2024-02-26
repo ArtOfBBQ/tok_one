@@ -38,6 +38,9 @@ of the engine for your specific app.
 // The max number of 'materials ids' in 1 of your zpolygons
 // #define MAX_MATERIALS_SIZE 10
 
+// the max # of permanently stored sounds in your app
+#define ALL_PERMASOUNDS_SIZE 100
+
 /*
 The max # of simultaneously active particle effects in your app
 */
