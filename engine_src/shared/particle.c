@@ -752,7 +752,42 @@ void construct_particle_effect(
     
     memset(
         /* void * b: */
-            &to_construct->gpustats_linear_variance_multipliers,
+            &to_construct->gpustats_initial_random_add_1,
+        /* int c: */
+            0,
+        /* size_t len: */
+            sizeof(GPUPolygon));
+    memset(
+        /* void * b: */
+            &to_construct->gpustats_initial_random_add_2,
+        /* int c: */
+            0,
+        /* size_t len: */
+            sizeof(GPUPolygon));
+    memset(
+        /* void * b: */
+            &to_construct->gpustats_pertime_add,
+        /* int c: */
+            0,
+        /* size_t len: */
+            sizeof(GPUPolygon));
+    memset(
+        /* void * b: */
+            &to_construct->gpustats_perexptime_add,
+        /* int c: */
+            0,
+        /* size_t len: */
+            sizeof(GPUPolygon));
+    memset(
+        /* void * b: */
+            &to_construct->gpustats_pertime_random_add_1,
+        /* int c: */
+            0,
+        /* size_t len: */
+            sizeof(GPUPolygon));
+    memset(
+        /* void * b: */
+            &to_construct->gpustats_pertime_random_add_2,
         /* int c: */
             0,
         /* size_t len: */
@@ -769,44 +804,6 @@ void construct_particle_effect(
     to_construct->zpolygon_gpu.xyz_multiplier[1] = 0.01f;
     to_construct->zpolygon_gpu.xyz_multiplier[2] = 0.01f;
     to_construct->zpolygon_gpu.ignore_lighting = true;
-    
-    to_construct->gpustats_linear_add.xyz[0] = 0.0f;
-    to_construct->gpustats_linear_add.xyz[1] = 0.0f;
-    to_construct->gpustats_linear_add.xyz[2] = 0.0f;
-    to_construct->gpustats_linear_add.xyz_angle[0] = 0.0f;
-    to_construct->gpustats_linear_add.xyz_angle[1] = 0.0f;
-    to_construct->gpustats_linear_add.xyz_angle[2] = 0.0f;
-    to_construct->gpustats_linear_add.bonus_rgb[0] = 0.0f;
-    to_construct->gpustats_linear_add.bonus_rgb[1] = 0.0f;
-    to_construct->gpustats_linear_add.bonus_rgb[2] = 0.0f;
-    to_construct->gpustats_linear_add.xyz_multiplier[0] = 0.0f;
-    to_construct->gpustats_linear_add.xyz_multiplier[1] = 0.0f;
-    to_construct->gpustats_linear_add.xyz_multiplier[2] = 0.0f;
-    to_construct->gpustats_linear_add.xyz_offset[0] = 0.0f;
-    to_construct->gpustats_linear_add.xyz_offset[1] = 0.0f;
-    to_construct->gpustats_linear_add.xyz_offset[2] = 0.0f;
-    to_construct->gpustats_linear_add.scale_factor = 0.0f;
-    to_construct->gpustats_linear_add.ignore_lighting = 0;
-    to_construct->gpustats_linear_add.ignore_camera = 0;
-    
-    to_construct->gpustats_exponential_add.xyz[0] = 0.0f;
-    to_construct->gpustats_exponential_add.xyz[1] = 0.0f;
-    to_construct->gpustats_exponential_add.xyz[2] = 0.0f;
-    to_construct->gpustats_exponential_add.xyz_angle[0] = 0.0f;
-    to_construct->gpustats_exponential_add.xyz_angle[1] = 0.0f;
-    to_construct->gpustats_exponential_add.xyz_angle[2] = 0.0f;
-    to_construct->gpustats_exponential_add.bonus_rgb[0] = 0.0f;
-    to_construct->gpustats_exponential_add.bonus_rgb[1] = 0.0f;
-    to_construct->gpustats_exponential_add.bonus_rgb[2] = 0.0f;
-    to_construct->gpustats_exponential_add.xyz_multiplier[0] = 0.0f;
-    to_construct->gpustats_exponential_add.xyz_multiplier[1] = 0.0f;
-    to_construct->gpustats_exponential_add.xyz_multiplier[2] = 0.0f;
-    to_construct->gpustats_exponential_add.xyz_offset[0] = 0.0f;
-    to_construct->gpustats_exponential_add.xyz_offset[1] = 0.0f;
-    to_construct->gpustats_exponential_add.xyz_offset[2] = 0.0f;
-    to_construct->gpustats_exponential_add.scale_factor = 0.0f;
-    to_construct->gpustats_exponential_add.ignore_lighting = 0;
-    to_construct->gpustats_exponential_add.ignore_camera = 0;
     
     to_construct->random_seed = (uint32_t)tok_rand() % 750;
     to_construct->particle_spawns_per_second = 200;
@@ -830,6 +827,8 @@ void request_particle_effect(
         to_request->zpolygon_cpu.mesh_id >= 0);
     log_assert(
         (uint32_t)to_request->zpolygon_cpu.mesh_id < all_mesh_summaries_size);
+    log_assert(
+        to_request->random_textures_size > 0);
     
     for (uint32_t i = 0; i < particle_effects_size; i++) {
         if (particle_effects[i].deleted) {
@@ -900,214 +899,246 @@ void add_particle_effects_to_workload(
         i < particle_effects_size;
         i++)
     {
-        if (!particle_effects[i].deleted) {
-            particle_effects[i].elapsed += elapsed_nanoseconds;
-            particle_effects[i].elapsed =
-                particle_effects[i].elapsed %
+        if (particle_effects[i].deleted)
+        {
+            continue;
+        }
+        
+        particle_effects[i].elapsed += elapsed_nanoseconds;
+        particle_effects[i].elapsed =
+            particle_effects[i].elapsed %
+                (particle_effects[i].particle_lifespan +
+                    particle_effects[i].pause_between_spawns);
+        
+        spawns_in_duration =
+            (particle_effects[i].particle_lifespan / 1000000) *
+                particle_effects[i].particle_spawns_per_second;
+        interval_between_spawns =
+            1000000 / particle_effects[i].particle_spawns_per_second;
+        
+        uint32_t particles_active = 0;
+        
+        for (
+            uint32_t spawn_i = 0;
+            spawn_i < spawns_in_duration;
+            spawn_i++)
+        {
+            uint64_t rand_i =
+                (particle_effects[i].random_seed
+                    + (spawn_i * 9)) %
+                    (FLOAT_SEQUENCE_SIZE - 256);
+            
+            spawn_lifetime_so_far =
+                (particle_effects[i].elapsed +
+                (spawn_i * interval_between_spawns)) %
                     (particle_effects[i].particle_lifespan +
                         particle_effects[i].pause_between_spawns);
             
-            spawns_in_duration =
-                (particle_effects[i].particle_lifespan / 1000000) *
-                    particle_effects[i].particle_spawns_per_second;
-            interval_between_spawns =
-                1000000 / particle_effects[i].particle_spawns_per_second;
+            if (spawn_lifetime_so_far >
+                particle_effects[i].particle_lifespan)
+            {
+                continue;
+            }
             
-            uint32_t particles_active = 0;
+            particles_active += 1;
             
             for (
-                uint32_t spawn_i = 0;
-                spawn_i < spawns_in_duration;
-                spawn_i++)
-            {
-                uint64_t rand_i =
-                    (particle_effects[i].random_seed
-                        + spawn_i) %
-                        (FLOAT_SEQUENCE_SIZE - 256);
-                
-                spawn_lifetime_so_far =
-                    (particle_effects[i].elapsed +
-                    (spawn_i * interval_between_spawns)) %
-                        (particle_effects[i].particle_lifespan +
-                            particle_effects[i].pause_between_spawns);
-                
-                if (spawn_lifetime_so_far >
-                    particle_effects[i].particle_lifespan)
-                {
-                    continue;
-                }
-                
-                particles_active += 1;
-                
-                for (
-                    int32_t vert_i = all_mesh_summaries[
+                int32_t vert_i = all_mesh_summaries[
+                    particle_effects[i].zpolygon_cpu.mesh_id].
+                        vertices_head_i;
+                vert_i <
+                    all_mesh_summaries[
                         particle_effects[i].zpolygon_cpu.mesh_id].
-                            vertices_head_i;
-                    vert_i <
-                        all_mesh_summaries[
-                            particle_effects[i].zpolygon_cpu.mesh_id].
-                                vertices_head_i +
-                        all_mesh_summaries[
-                            particle_effects[i].zpolygon_cpu.mesh_id].
-                                vertices_size;
-                    vert_i++)
-                {
-                    log_assert(vert_i >= 0);
-                    log_assert(vert_i < (int32_t)all_mesh_vertices->size);
-                    
-                    frame_data->vertices[frame_data->vertices_size].
-                        locked_vertex_i = vert_i;
-                    frame_data->vertices[frame_data->vertices_size].polygon_i =
-                        (int)frame_data->polygon_collection->size;
-                    
-                    frame_data->vertices_size += 1;
-                    log_assert(
-                        frame_data->vertices_size < MAX_VERTICES_PER_BUFFER);
-                }
+                            vertices_head_i +
+                    all_mesh_summaries[
+                        particle_effects[i].zpolygon_cpu.mesh_id].
+                            vertices_size;
+                vert_i++)
+            {
+                log_assert(vert_i >= 0);
+                log_assert(vert_i < (int32_t)all_mesh_vertices->size);
                 
-                memcpy(
-                    /* void * dst: */
-                        frame_data->polygon_collection->polygons +
-                            frame_data->polygon_collection->size,
-                    /* const void * src: */
-                        &particle_effects[i].zpolygon_gpu,
-                    /* size_t n: */
-                        sizeof(GPUPolygon));
+                frame_data->vertices[frame_data->vertices_size].
+                    locked_vertex_i = vert_i;
+                frame_data->vertices[frame_data->vertices_size].polygon_i =
+                    (int)frame_data->polygon_collection->size;
                 
-                frame_data->polygon_materials[
-                    frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
-                        rgba[0] = 0.75f;
-                frame_data->polygon_materials[
-                    frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
-                        rgba[1] = 0.3f;
-                frame_data->polygon_materials[
-                    frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
-                        rgba[2] = 0.3f;
-                frame_data->polygon_materials[
-                    frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
-                        rgba[3] = 1.0f;
-                
-                frame_data->polygon_materials[
-                    frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
-                        texturearray_i = -1;
-                frame_data->polygon_materials[
-                    frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
-                        texture_i = -1;
-                
-                float * linear_at = (float *)&particle_effects[i].
-                    gpustats_linear_add;
-                float * exponential_at = (float *)&particle_effects[i].
-                    gpustats_exponential_add;
-                float * linear_variance_at = (float *)&particle_effects[i].
-                    gpustats_linear_variance_multipliers;
-                float * recipient_at = (float *)&frame_data->polygon_collection->
-                    polygons[frame_data->polygon_collection->size];
-                
-                float one_million = 1000000.0f;
-                SIMD_FLOAT simdf_one_million = simd_set_float(one_million);
-                SIMD_FLOAT simdf_lifetime = simd_set_float(
-                    spawn_lifetime_so_far);
-                
-                // SIMD_FLOAT simdf_ten = simd_set_float(10.0f);
-                // simdf_rand = simd_div_floats(simdf_rand, simdf_ten);
-                // SIMD_FLOAT simdf_one = simd_set_float(0.95f);
-                // simdf_rand = simd_add_floats(simdf_one, simdf_rand);
-                
-                for (
-                    uint32_t i = 0;
-                    i < sizeof(GPUPolygon) / sizeof(float);
-                    i += SIMD_FLOAT_LANES)
-                {
-                    SIMD_FLOAT linear_add = simd_load_floats((linear_at + i));
-                    linear_add = simd_div_floats(linear_add, simdf_one_million);
-                    linear_add = simd_mul_floats(linear_add, simdf_lifetime);
-                    
-                    SIMD_FLOAT simdf_rand_pos = tok_rand_simd_at_i(
-                        (rand_i + ((i/SIMD_FLOAT_LANES) * 32)));
-                    SIMD_FLOAT simdf_rand_neg = tok_rand_simd_at_i(
-                        (rand_i + ((i/SIMD_FLOAT_LANES) * 32) + 64));
-                    SIMD_FLOAT simdf_linear_variance = simd_load_floats(
-                        linear_variance_at + i);
-                    simdf_rand_pos = simd_mul_floats(
-                        simdf_rand_pos,
-                        simdf_linear_variance);
-                    simdf_rand_neg = simd_mul_floats(
-                        simdf_rand_neg,
-                        simdf_linear_variance);
-                    float minus_one = -1.0f;
-                    simdf_rand_neg = simd_mul_floats(
-                        simdf_rand_neg,
-                        simd_set_float(minus_one));
-                    
-                    // From here on we use rand_pos to store pos + neg
-                    simdf_rand_pos = simd_add_floats(
-                        simdf_rand_pos,
-                        simdf_rand_neg);
-                    
-                    // Now we add the variance to the linear add
-                    linear_add = simd_add_floats(
-                        linear_add,
-                        simd_mul_floats(linear_add, simdf_rand_pos));
-                    
-                    SIMD_FLOAT exp_add = simd_load_floats((exponential_at + i));
-                    exp_add = simd_div_floats(exp_add, simdf_one_million);
-                    exp_add = simd_mul_floats(exp_add, simdf_lifetime);
-                    exp_add = simd_mul_floats(exp_add, exp_add);
-                    // exp_add = simd_mul_floats(exp_add, simdf_rand);
-                    
-                    SIMD_FLOAT recip = simd_load_floats(recipient_at + i);
-                    recip = simd_add_floats(recip, linear_add);
-                    recip = simd_add_floats(recip, exp_add);
-                    
-                    assert((ptrdiff_t)(recipient_at + i) % 32 == 0);
-                    simd_store_floats((recipient_at + i), recip);
-                }
-                
-                frame_data->polygon_collection->size += 1;
+                frame_data->vertices_size += 1;
+                log_assert(
+                    frame_data->vertices_size < MAX_VERTICES_PER_BUFFER);
             }
-            frame_data->first_line_i = frame_data->vertices_size;
             
-            if (particles_active < 1) {
-                particle_effects[i].random_seed =
-                    (uint32_t)tok_rand() % RANDOM_SEQUENCE_SIZE;
-            } else if (particle_effects[i].generate_light) {
-                frame_data->light_collection->light_x[
-                    frame_data->light_collection->lights_size] =
-                        particle_effects[i].zpolygon_gpu.xyz[0];
-                frame_data->light_collection->light_y[
-                    frame_data->light_collection->lights_size] =
-                        particle_effects[i].zpolygon_gpu.xyz[1];
-                frame_data->light_collection->light_z[
-                    frame_data->light_collection->lights_size] =
-                        particle_effects[i].zpolygon_gpu.xyz[2];
+            memcpy(
+                /* void * dst: */
+                    frame_data->polygon_collection->polygons +
+                        frame_data->polygon_collection->size,
+                /* const void * src: */
+                    &particle_effects[i].zpolygon_gpu,
+                /* size_t n: */
+                    sizeof(GPUPolygon));
+            
+            frame_data->polygon_materials[
+                frame_data->polygon_collection->size * MAX_MATERIALS_SIZE]
+                    = particle_effects[i].zpolygon_material;
+            frame_data->polygon_materials[
+                frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
+                    texturearray_i =
+                        particle_effects[i].random_texturearray_i[spawn_i %
+                            particle_effects[i].random_textures_size];
+            frame_data->polygon_materials[
+                frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
+                    texture_i =
+                        particle_effects[i].random_texture_i[spawn_i %
+                            particle_effects[i].random_textures_size];
+            
+            float * initial_random_add_1_at = (float *)&particle_effects[i].
+                gpustats_initial_random_add_1;
+            float * initial_random_add_2_at = (float *)&particle_effects[i].
+                gpustats_initial_random_add_2;
+            
+            float * pertime_add_at = (float *)&particle_effects[i].
+                gpustats_pertime_add;
+            float * perexptime_add_at = (float *)&particle_effects[i].
+                gpustats_perexptime_add;
+            float * pertime_random_add_1_at = (float *)&particle_effects[i].
+                gpustats_pertime_random_add_1;
+            float * pertime_random_add_2_at = (float *)&particle_effects[i].
+                gpustats_pertime_random_add_2;
+            float * recipient_at = (float *)&frame_data->polygon_collection->
+                polygons[frame_data->polygon_collection->size];
+            
+            float one_million = 1000000.0f;
+            float exponential_divisor = 1000.0f;
+            float one = 1.0f;
+            SIMD_FLOAT simdf_one_million = simd_set_float(one_million);
+            SIMD_FLOAT simdf_lifetime = simd_set_float(
+                spawn_lifetime_so_far);
+            SIMD_FLOAT simdf_lifetime_exp = simd_div_floats(
+                simdf_lifetime, simd_set_float(exponential_divisor));
+            simdf_lifetime_exp = simd_max_floats(
+                simdf_lifetime_exp,
+                simd_set_float(one));
+            simdf_lifetime_exp = simd_mul_floats(
+                simdf_lifetime_exp, simdf_lifetime_exp);
+            
+            // SIMD_FLOAT simdf_ten = simd_set_float(10.0f);
+            // simdf_rand = simd_div_floats(simdf_rand, simdf_ten);
+            // SIMD_FLOAT simdf_one = simd_set_float(0.95f);
+            // simdf_rand = simd_add_floats(simdf_one, simdf_rand);
+            
+            for (
+                uint32_t j = 0;
+                j < sizeof(GPUPolygon) / sizeof(float);
+                j += SIMD_FLOAT_LANES)
+            {
+                SIMD_FLOAT simdf_pertime_add = simd_load_floats(
+                    (pertime_add_at + j));
                 
-                frame_data->light_collection->red[
-                    frame_data->light_collection->lights_size] =
-                        particle_effects[i].light_rgb[0];
-                frame_data->light_collection->green[
-                    frame_data->light_collection->lights_size] =
-                        particle_effects[i].light_rgb[1];
-                frame_data->light_collection->blue[
-                    frame_data->light_collection->lights_size] =
-                        particle_effects[i].light_rgb[2];
+                // Add the '1st random over time' data
+                SIMD_FLOAT simdf_rand = tok_rand_simd_at_i(
+                    (rand_i + ((j/SIMD_FLOAT_LANES) * 32)) + 0);
+                SIMD_FLOAT simdf_pertime_random_add = simd_load_floats(
+                    pertime_random_add_1_at + j);
+                simdf_pertime_random_add = simd_mul_floats(
+                    simdf_pertime_random_add,
+                    simdf_rand);
+                simdf_pertime_add = simd_add_floats(
+                    simdf_pertime_add, simdf_pertime_random_add);
                 
-                frame_data->light_collection->reach[
-                    frame_data->light_collection->lights_size] =
-                        particle_effects[i].light_reach;
+                // Add the '2nd random over time' data
+                simdf_rand = tok_rand_simd_at_i(
+                    (rand_i + ((j/SIMD_FLOAT_LANES) * 32)) + 32);
+                simdf_pertime_random_add = simd_load_floats(
+                    pertime_random_add_2_at + j);
+                simdf_pertime_random_add = simd_mul_floats(
+                    simdf_pertime_random_add,
+                    simdf_rand);
+                simdf_pertime_add = simd_add_floats(
+                    simdf_pertime_add, simdf_pertime_random_add);
                 
-                float light_strength =
-                    particle_effects[i].light_strength * (
-                        (float)particles_active / (float)spawns_in_duration);
+                // Convert per second values to per microsecond effect
+                simdf_pertime_add = simd_div_floats(
+                    simdf_pertime_add, simdf_one_million);
+                simdf_pertime_add = simd_mul_floats(
+                    simdf_pertime_add, simdf_lifetime);
                 
-                frame_data->light_collection->ambient[
-                    frame_data->light_collection->lights_size] =
-                            0.05f * light_strength;
-                frame_data->light_collection->diffuse[
-                    frame_data->light_collection->lights_size] =
-                        1.0f * light_strength;
+                SIMD_FLOAT exp_add = simd_load_floats((perexptime_add_at + j));
+                exp_add = simd_mul_floats(exp_add, simdf_lifetime_exp);
+                exp_add = simd_div_floats(exp_add, simdf_one_million);
                 
-                frame_data->light_collection->lights_size += 1;
+                SIMD_FLOAT recip = simd_load_floats(recipient_at + j);
+                recip = simd_add_floats(recip, simdf_pertime_add);
+                recip = simd_add_floats(recip, exp_add);
+                
+                simdf_rand = tok_rand_simd_at_i(
+                    (rand_i + ((j/SIMD_FLOAT_LANES) * 32)) + 64);
+                SIMD_FLOAT simdf_initial_add = simd_load_floats(
+                    initial_random_add_1_at + j);
+                simdf_initial_add = simd_mul_floats(
+                    simdf_initial_add, simdf_rand);
+                recip = simd_add_floats(recip, simdf_initial_add);
+                
+                simdf_rand = tok_rand_simd_at_i(
+                    (rand_i + ((j/SIMD_FLOAT_LANES) * 32)) + 96);
+                simdf_initial_add = simd_load_floats(
+                    initial_random_add_2_at + j);
+                simdf_initial_add = simd_mul_floats(
+                    simdf_initial_add, simdf_rand);
+                recip = simd_add_floats(recip, simdf_initial_add);
+                
+                assert((ptrdiff_t)(recipient_at + j) % 32 == 0);
+                simd_store_floats((recipient_at + j), recip);
             }
+            if (frame_data->polygon_collection->polygons[
+                frame_data->polygon_collection->size].scale_factor < 0.01f)
+            {
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].scale_factor = 0.01f;
+            }
+            frame_data->polygon_collection->size += 1;
+        }
+        frame_data->first_line_i = frame_data->vertices_size;
+        
+        if (particles_active < 1) {
+            particle_effects[i].random_seed =
+                (uint32_t)tok_rand() % RANDOM_SEQUENCE_SIZE;
+        } else if (particle_effects[i].generate_light) {
+            frame_data->light_collection->light_x[
+                frame_data->light_collection->lights_size] =
+                    particle_effects[i].zpolygon_gpu.xyz[0];
+            frame_data->light_collection->light_y[
+                frame_data->light_collection->lights_size] =
+                    particle_effects[i].zpolygon_gpu.xyz[1];
+            frame_data->light_collection->light_z[
+                frame_data->light_collection->lights_size] =
+                    particle_effects[i].zpolygon_gpu.xyz[2];
+            
+            frame_data->light_collection->red[
+                frame_data->light_collection->lights_size] =
+                    particle_effects[i].light_rgb[0];
+            frame_data->light_collection->green[
+                frame_data->light_collection->lights_size] =
+                    particle_effects[i].light_rgb[1];
+            frame_data->light_collection->blue[
+                frame_data->light_collection->lights_size] =
+                    particle_effects[i].light_rgb[2];
+            
+            frame_data->light_collection->reach[
+                frame_data->light_collection->lights_size] =
+                    particle_effects[i].light_reach;
+            
+            float light_strength =
+                particle_effects[i].light_strength * (
+                    (float)particles_active / (float)spawns_in_duration);
+            
+            frame_data->light_collection->ambient[
+                frame_data->light_collection->lights_size] =
+                        0.05f * light_strength;
+            frame_data->light_collection->diffuse[
+                frame_data->light_collection->lights_size] =
+                    1.0f * light_strength;
+            
+            frame_data->light_collection->lights_size += 1;
         }
     }
 }

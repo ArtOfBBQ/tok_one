@@ -38,7 +38,9 @@ static ActiveUIElement * next_active_ui_element(void) {
 void init_ui_elements(void) {
     next_ui_element_settings = (NextUIElementSettings *)
         malloc_from_unmanaged(sizeof(NextUIElementSettings));
-
+    
+    next_ui_element_settings->slider_width_screenspace  = 100;
+    next_ui_element_settings->slider_height_screenspace =  40;
     next_ui_element_settings->ignore_lighting = true;
     next_ui_element_settings->ignore_camera = false;
     next_ui_element_settings->button_background_texturearray_i = -1;
@@ -216,6 +218,7 @@ void request_float_slider(
     const float max_value,
     float * linked_value)
 {
+    log_assert(next_ui_element_settings != NULL);
     log_assert(background_object_id != pin_object_id);
     
     PolygonRequest slider_back;
@@ -237,27 +240,30 @@ void request_float_slider(
                 z),
         /* zPolygon * recipient: */
             &slider_back);
+    
     slider_back.cpu_data->object_id = background_object_id;
     
     slider_back.gpu_material[0].texturearray_i =
         next_ui_element_settings->slider_background_texturearray_i;
     slider_back.gpu_material[0].texture_i =
         next_ui_element_settings->slider_background_texture_i;
-    slider_back.gpu_material[0].rgba[0] = 1.0f;
-    slider_back.gpu_material[0].rgba[1] = 1.0f;
-    slider_back.gpu_material[0].rgba[2] = 1.0f;
-    slider_back.gpu_material[0].rgba[3] = 1.0f;
+    slider_back.gpu_material[0].rgba[0] = 0.75f;
+    slider_back.gpu_material[0].rgba[1] = 1.00f;
+    slider_back.gpu_material[0].rgba[2] = 1.00f;
+    slider_back.gpu_material[0].rgba[3] = 1.00f;
     
     slider_back.gpu_data->ignore_lighting =
         next_ui_element_settings->ignore_lighting;
     slider_back.gpu_data->ignore_camera =
         next_ui_element_settings->ignore_camera;
-    
+    log_assert(slider_back.cpu_data->visible);
+    log_assert(!slider_back.cpu_data->committed);
+    log_assert(!slider_back.cpu_data->deleted);
     commit_zpolygon_to_render(&slider_back);
     
     PolygonRequest slider_pin;
     request_next_zpolygon(&slider_pin);
-    float pin_z = z - 0.001f;
+    float pin_z = z - 0.005f;
     construct_quad_around(
         /* const float mid_x: */
             screenspace_x_to_x(x_screenspace, pin_z),

@@ -157,7 +157,7 @@ because I don't know much about how that works or how reliable it is
 #define SIMD_FLOAT                          __m256
 #define simd_load_floats(floatsptr)         _mm256_loadu_ps(floatsptr)
 #define simd_set_float(float)               _mm256_set1_ps(float)
-#define simd_store_floats(floatsptr, from)  _mm256_store_ps(floatsptr, from)
+#define simd_store_floats(floatsptr, from)  _mm256_storeu_ps(floatsptr, from)
 #define simd_mul_floats(a, b)               _mm256_mul_ps(a, b)
 #define simd_div_floats(a, b)               _mm256_div_ps(a, b)
 #define simd_add_floats(a, b)               _mm256_add_ps(a, b)

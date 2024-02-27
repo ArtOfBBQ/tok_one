@@ -104,9 +104,12 @@ void add_shatter_effects_to_workload(
     uint64_t elapsed_nanoseconds);
 
 typedef struct ParticleEffect {
-    GPUPolygon gpustats_linear_add;
-    GPUPolygon gpustats_linear_variance_multipliers;
-    GPUPolygon gpustats_exponential_add;
+    GPUPolygon gpustats_initial_random_add_1;
+    GPUPolygon gpustats_initial_random_add_2;
+    GPUPolygon gpustats_pertime_add;
+    GPUPolygon gpustats_pertime_random_add_1;
+    GPUPolygon gpustats_pertime_random_add_2;
+    GPUPolygon gpustats_perexptime_add;
     
     // Reminder on the way the linear variance multipliers work:
     // -> random floats are generated from 0.0f to 1.0f
@@ -127,6 +130,10 @@ typedef struct ParticleEffect {
     uint64_t random_seed;
     uint64_t elapsed;
     bool32_t deleted;
+    
+    int32_t random_texturearray_i[MAX_PARTICLE_TEXTURES];
+    int32_t random_texture_i[MAX_PARTICLE_TEXTURES];
+    uint32_t random_textures_size;
     
     uint32_t particle_spawns_per_second;
     

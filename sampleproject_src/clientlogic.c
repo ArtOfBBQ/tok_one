@@ -21,44 +21,74 @@ void client_logic_startup(void) {
             1);
     
     zLightSource * light = next_zlight();
-    light->RGBA[0] =  0.50f;
-    light->RGBA[1] =  0.15f;
-    light->RGBA[2] =  0.15f;
-    light->RGBA[3] =  1.00f;
-    light->ambient =  1.00f;
-    light->diffuse =  1.00f;
-    light->reach   =  5.00f;
-    light->x       = -2.00f;
-    light->y       =  0.50f;
-    light->z       =  0.75f;
+    light->RGBA[0]       =  0.50f;
+    light->RGBA[1]       =  0.15f;
+    light->RGBA[2]       =  0.15f;
+    light->RGBA[3]       =  1.00f;
+    light->ambient       =  1.00f;
+    light->diffuse       =  1.00f;
+    light->reach         =  5.00f;
+    light->x             = -2.00f;
+    light->y             =  0.50f;
+    light->z             =  0.75f;
     commit_zlight(light);
     
     ParticleEffect particles;
     construct_particle_effect(&particles);
-    particles.zpolygon_cpu.mesh_id = 1; // hardcoded basic cube
-    particles.zpolygon_gpu.xyz[0] = 0.0f;
-    particles.zpolygon_gpu.xyz[1] = 0.0f;
-    particles.zpolygon_gpu.xyz[2] = 2.0f;
-    particles.gpustats_linear_add.xyz[0] =  0.25f;
-    particles.gpustats_linear_add.xyz[1] =  0.25f;
-    particles.gpustats_linear_add.xyz[2] =  0.00f;
-    particles.gpustats_linear_add.xyz_angle[0] =  1.80f;
-    particles.gpustats_linear_add.xyz_angle[1] =  1.80f;
-    particles.gpustats_linear_add.xyz_angle[2] =  1.80f;
-    particles.gpustats_linear_add.bonus_rgb[0] =  0.15f;
-    particles.gpustats_linear_add.bonus_rgb[1] =  0.15f;
-    particles.gpustats_linear_add.bonus_rgb[2] =  0.35f;
+    particles.zpolygon_cpu.mesh_id              = 1; // hardcoded basic cube
+    particles.zpolygon_gpu.xyz[0]               =   0.0f;
+    particles.zpolygon_gpu.xyz[1]               =   0.0f;
+    particles.zpolygon_gpu.xyz[2]               =   2.0f;
+    particles.gpustats_pertime_add.xyz[0]       =  0.00f;
+    particles.gpustats_pertime_add.xyz[1]       =  0.00f;
+    particles.gpustats_pertime_add.xyz[2]       = -0.10f;
+    particles.gpustats_pertime_add.xyz_angle[0] =  1.80f;
+    particles.gpustats_pertime_add.xyz_angle[1] =  1.80f;
+    particles.gpustats_pertime_add.xyz_angle[2] =  1.80f;
+    particles.gpustats_pertime_add.bonus_rgb[0] =  0.15f;
+    particles.gpustats_pertime_add.bonus_rgb[1] =  0.15f;
+    particles.gpustats_pertime_add.bonus_rgb[2] =  0.35f;
     
-    particles.gpustats_linear_variance_multipliers.xyz[0] = 1.8f;
-    particles.gpustats_linear_variance_multipliers.xyz[1] = 3.6f;
-    particles.gpustats_linear_variance_multipliers.xyz[2] = 0.0f;
+    particles.gpustats_pertime_random_add_1.xyz[0] =  1.8f;
+    particles.gpustats_pertime_random_add_1.xyz[1] =  1.8f;
+    particles.gpustats_pertime_random_add_1.xyz[2] =  0.0f;
+    particles.gpustats_pertime_random_add_2.xyz[0] = -1.8f;
+    particles.gpustats_pertime_random_add_2.xyz[1] = -1.8f;
+    particles.gpustats_pertime_random_add_2.xyz[2] = -0.0f;
     
-    // particles.gpustats_linear_variance_multipliers.xyz_angle[0] = 0.0f;
-    // particles.gpustats_linear_variance_multipliers.xyz_angle[1] = 0.0f;
-    // particles.gpustats_linear_variance_multipliers.xyz_angle[2] = 0.0f;
-    particles.particle_spawns_per_second = 500;
-    particles.particle_lifespan = 5000000;
+    particles.particle_spawns_per_second   =       5;
+    particles.particle_lifespan            = 5000000;
+    particles.random_texturearray_i[0]     =      -1;
+    particles.random_texture_i[0]          =      -1;
+    particles.random_textures_size         =       1;
     request_particle_effect(&particles);
+    
+    next_ui_element_settings->slider_width_screenspace         =   200;
+    next_ui_element_settings->slider_height_screenspace        =    80;
+    next_ui_element_settings->ignore_lighting                  =  true;
+    next_ui_element_settings->ignore_camera                    = false;
+    next_ui_element_settings->slider_background_texturearray_i =    -1;
+    next_ui_element_settings->slider_background_texture_i      =    -1;
+    next_ui_element_settings->slider_pin_texturearray_i        =    -1;
+    next_ui_element_settings->slider_pin_texture_i             =    -1;
+    
+    request_float_slider(
+        /* const int32_t background_object_id: */
+            next_ui_element_object_id(),
+        /* const int32_t pin_object_id: */
+            next_ui_element_object_id(),
+        /* const float x_screenspace: */
+            500,
+        /* const float y_screenspace: */
+            400,
+        /* const float z: */
+            0.5f,
+        /* const float min_value: */
+            -1.0f,
+        /* const float max_value: */
+            1.0f,
+        /* float * linked_value: */
+            &particles.gpustats_pertime_add.xyz[0]);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -258,7 +288,7 @@ static void client_handle_keypresses(
 
 void client_logic_update(uint64_t microseconds_elapsed)
 {
-    request_fps_counter(microseconds_elapsed);
+    // request_fps_counter(microseconds_elapsed);
     
     client_handle_keypresses(microseconds_elapsed);  
 }
