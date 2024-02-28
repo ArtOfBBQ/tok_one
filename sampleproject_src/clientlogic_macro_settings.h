@@ -25,7 +25,7 @@ of the engine for your specific app.
 // The maximum number of polygons/lights to send to the GPU each frame
 // The maximum number of triangle vertices to be stored on gpu permanently
 // #define MAX_POLYGONS_PER_BUFFER   1600
-#define MAX_VERTICES_PER_BUFFER   2500000
+#define MAX_VERTICES_PER_BUFFER   3000000
 // #define MAX_LIGHTS_PER_BUFFER       75
 
 // The maximum number of 'scheduled animations' simultaneously running

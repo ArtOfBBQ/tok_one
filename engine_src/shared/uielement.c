@@ -13,7 +13,7 @@ typedef struct ActiveUIElement {
     float slider_width;
     float slider_min;
     float slider_max;
-    float * slider_linked_value;
+    float * slider_linked_float;
     char interaction_sound_filename[128];
 } ActiveUIElement;
 
@@ -184,9 +184,9 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                         active_ui_elements[ui_elem_i].slider_width) + 0.5f;
                     
                     log_assert(
-                        active_ui_elements[ui_elem_i].slider_linked_value !=
+                        active_ui_elements[ui_elem_i].slider_linked_float !=
                             NULL);
-                    *(active_ui_elements[ui_elem_i].slider_linked_value) =
+                    *(active_ui_elements[ui_elem_i].slider_linked_float) =
                         active_ui_elements[ui_elem_i].slider_min +
                             ((active_ui_elements[ui_elem_i].slider_max -
                                 active_ui_elements[ui_elem_i].slider_min) *
@@ -271,7 +271,7 @@ void request_float_slider(
     
     PolygonRequest slider_pin;
     request_next_zpolygon(&slider_pin);
-    float pin_z = z - 0.005f;
+    float pin_z = z - 0.002f;
     construct_quad_around(
         /* const float mid_x: */
             screenspace_x_to_x(x_screenspace, pin_z),
@@ -341,7 +341,7 @@ void request_float_slider(
     next_active_element->slider_max = max_value;
     next_active_element->slideable = true;
     next_active_element->deleted = false;
-    next_active_element->slider_linked_value = linked_value;
+    next_active_element->slider_linked_float = linked_value;
     strcpy_capped(
         next_active_element->interaction_sound_filename,
         128,

@@ -7,14 +7,16 @@ typedef struct SliderRequest {
     float * linked_value;
 } SliderRequest;
 
-#define SLIDERS_SIZE 65
+#define SLIDERS_SIZE 78
 static SliderRequest * slider_requests = NULL;
+static char slider_titles[(SLIDERS_SIZE / 13)+1][64];
 
 void client_logic_startup(void) {
     
     slider_requests = malloc_from_unmanaged(
         sizeof(SliderRequest) * SLIDERS_SIZE);
     
+    strcpy_capped(slider_titles[0], 64, "per time add");
     strcpy_capped(slider_requests[0].label, 64, "X:");
     slider_requests[0].min_value = -5.0f;
     slider_requests[0].max_value =  5.0f;
@@ -97,6 +99,7 @@ void client_logic_startup(void) {
     slider_requests[12].linked_value =
         &particle_effects[0].gpustats_pertime_add.scale_factor;
     
+    strcpy_capped(slider_titles[1], 64, "init rand add 1");
     strcpy_capped(slider_requests[13].label, 64, "X:");
     slider_requests[13].min_value = -5.0f;
     slider_requests[13].max_value =  5.0f;
@@ -179,6 +182,7 @@ void client_logic_startup(void) {
     slider_requests[25].linked_value =
         &particle_effects[0].gpustats_initial_random_add_1.scale_factor;
     
+    strcpy_capped(slider_titles[2], 64, "init rand add 2");
     strcpy_capped(slider_requests[26].label, 64, "X:");
     slider_requests[26].min_value = -5.0f;
     slider_requests[26].max_value =  5.0f;
@@ -261,6 +265,7 @@ void client_logic_startup(void) {
     slider_requests[38].linked_value =
         &particle_effects[0].gpustats_initial_random_add_2.scale_factor;
     
+    strcpy_capped(slider_titles[3], 64, "+/time rand 1");
     strcpy_capped(slider_requests[39].label, 64, "X:");
     slider_requests[39].min_value = -5.0f;
     slider_requests[39].max_value =  5.0f;
@@ -343,6 +348,7 @@ void client_logic_startup(void) {
     slider_requests[51].linked_value =
         &particle_effects[0].gpustats_pertime_random_add_1.scale_factor;
     
+    strcpy_capped(slider_titles[4], 64, "+/time rand 2");
     strcpy_capped(slider_requests[52].label, 64, "X:");
     slider_requests[52].min_value = -5.0f;
     slider_requests[52].max_value =  5.0f;
@@ -424,6 +430,101 @@ void client_logic_startup(void) {
     slider_requests[64].max_value =  0.50f;
     slider_requests[64].linked_value =
         &particle_effects[0].gpustats_pertime_random_add_2.scale_factor;
+    
+    strcpy_capped(slider_titles[5], 64, "+/time^2");
+    strcpy_capped(slider_requests[65].label, 64, "X:");
+    slider_requests[65].min_value = -5.0f;
+    slider_requests[65].max_value =  5.0f;
+    slider_requests[65].linked_value =
+        &particle_effects[65].gpustats_perexptime_add.xyz[0];
+    
+    strcpy_capped(slider_requests[66].label, 64, "Y:");
+    slider_requests[66].min_value = -5.0f;
+    slider_requests[66].max_value =  5.0f;
+    slider_requests[66].linked_value =
+        &particle_effects[0].gpustats_perexptime_add.xyz[1];
+    
+    strcpy_capped(slider_requests[67].label, 64, "Z:");
+    slider_requests[67].min_value = -2.5f;
+    slider_requests[67].max_value =  2.5f;
+    slider_requests[67].linked_value =
+        &particle_effects[0].gpustats_perexptime_add.xyz[2];
+    
+    strcpy_capped(slider_requests[68].label, 64, "X rot:");
+    slider_requests[68].min_value = -2.7f;
+    slider_requests[68].max_value =  2.7f;
+    slider_requests[68].linked_value =
+        &particle_effects[0].gpustats_perexptime_add.xyz_angle[0];
+    
+    strcpy_capped(slider_requests[69].label, 64, "Y rot:");
+    slider_requests[69].min_value = -2.7f;
+    slider_requests[69].max_value =  2.7f;
+    slider_requests[69].linked_value =
+        &particle_effects[0].gpustats_perexptime_add.xyz_angle[1];
+    
+    strcpy_capped(slider_requests[70].label, 64, "Z rot:");
+    slider_requests[70].min_value = -2.7f;
+    slider_requests[70].max_value =  2.7f;
+    slider_requests[70].linked_value =
+        &particle_effects[0].gpustats_perexptime_add.xyz_angle[2];
+    
+    strcpy_capped(slider_requests[71].label, 64, "+R:");
+    slider_requests[71].min_value = -2.0f;
+    slider_requests[71].max_value =  2.0f;
+    slider_requests[71].linked_value =
+        &particle_effects[0].gpustats_perexptime_add.bonus_rgb[0];
+    
+    strcpy_capped(slider_requests[72].label, 64, "+G:");
+    slider_requests[72].min_value = -2.0f;
+    slider_requests[72].max_value =  2.0f;
+    slider_requests[72].linked_value =
+        &particle_effects[0].gpustats_perexptime_add.bonus_rgb[1];
+    
+    strcpy_capped(slider_requests[73].label, 64, "+B:");
+    slider_requests[73].min_value = -2.0f;
+    slider_requests[73].max_value =  2.0f;
+    slider_requests[73].linked_value =
+        &particle_effects[0].gpustats_perexptime_add.bonus_rgb[2];
+    
+    // xyz_multiplier
+    strcpy_capped(slider_requests[74].label, 64, "+Width:");
+    slider_requests[74].min_value = -0.25f;
+    slider_requests[74].max_value =  0.25f;
+    slider_requests[74].linked_value =
+        &particle_effects[0].gpustats_perexptime_add.xyz_multiplier[0];
+    
+    // xyz_multiplier
+    strcpy_capped(slider_requests[75].label, 64, "+Height:");
+    slider_requests[75].min_value = -0.25f;
+    slider_requests[75].max_value =  0.25f;
+    slider_requests[75].linked_value =
+        &particle_effects[0].gpustats_perexptime_add.xyz_multiplier[1];
+    
+    // xyz_multiplier
+    strcpy_capped(slider_requests[76].label, 64, "+Depth:");
+    slider_requests[76].min_value = -0.25f;
+    slider_requests[76].max_value =  0.25f;
+    slider_requests[76].linked_value =
+        &particle_effects[0].gpustats_perexptime_add.xyz_multiplier[2];
+    
+    // scale_factor
+    strcpy_capped(slider_requests[77].label, 64, "+Scale:");
+    slider_requests[77].min_value = -0.50f;
+    slider_requests[77].max_value =  0.50f;
+    slider_requests[77].linked_value =
+        &particle_effects[0].gpustats_perexptime_add.scale_factor;
+    
+    //    strcpy_capped(slider_requests[77].label, 64, "Spawn/sec:");
+    //    slider_requests[77].min_value =     1.0f;
+    //    slider_requests[77].max_value =  1000.f;
+    //    slider_requests[77].linked_value =
+    //        &particle_effects[0].particle_spawns_per_second;
+    //
+    //    strcpy_capped(slider_requests[78].label, 64, "Durtn:");
+    //    slider_requests[78].min_value =     1.0f;
+    //    slider_requests[78].max_value =  5000000.f;
+    //    slider_requests[78].linked_value =
+    //        &particle_effects[0].particle_lifespan;
     
     init_PNG_decoder(malloc_from_managed, free_from_managed, memset, memcpy);
     
@@ -515,11 +616,11 @@ void client_logic_startup(void) {
         font_color[3] = 1.0f;
         
         next_ui_element_settings->slider_background_rgba[0] =
-            (i / 13) * 0.25f;
+            (i / 13) * 0.15f;
         next_ui_element_settings->slider_background_rgba[1] =
-            (i / 26) * 0.40f;
+            (i / 26) * 0.30f;
         next_ui_element_settings->slider_background_rgba[2] =
-            1.0f - ((i / 13) * 0.2f);
+            1.0f - ((i / 13) * 0.15f);
         
         request_float_slider(
             /* const int32_t background_object_id: */
@@ -540,6 +641,42 @@ void client_logic_startup(void) {
                 slider_requests[i].max_value,
             /* float * linked_value: */
                 slider_requests[i].linked_value);
+        
+        if (i % 13 == 0 && i < 78) {
+            float prev_font_height = font_height;
+            font_height = 20;
+            font_color[0] = next_ui_element_settings->slider_background_rgba[0];
+            font_color[1] = next_ui_element_settings->slider_background_rgba[1];
+            font_color[2] = next_ui_element_settings->slider_background_rgba[2];
+            font_color[3] = 1.0f;
+            
+            request_label_renderable(
+                /* const int32_t with_object_id: */
+                    56,
+                /* const char * text_to_draw: */
+                    slider_titles[i / 13],
+                /* const float left_pixelspace: */
+                    window_globals->window_width -
+                        next_ui_element_settings->slider_width_screenspace -
+                        (next_ui_element_settings->slider_width_screenspace / 2) -
+                            ((prev_font_height * 9)/2),
+                /* const float top_pixelspace: */
+                    window_globals->window_height -
+                        (prev_font_height * 2.0f) -
+                        ((i + 7.0f) * 22.0f),
+                /* const float z: */
+                    0.75f,
+                /* const float max_width: */
+                    500,
+                /* const uint32_t ignore_camera: */
+                    0);
+            ScheduledAnimation * anim = next_scheduled_animation();
+            anim->affected_object_id = 56;
+            anim->final_z_angle_known = true;
+            anim->final_z_angle = 1.58f;
+            anim->duration_microseconds = 1;
+            commit_scheduled_animation(anim);
+        }
     }
 }
 
