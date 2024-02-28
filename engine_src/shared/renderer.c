@@ -27,14 +27,11 @@ inline static void add_point_vertex(
     }
     
     frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].xyz[0] =
-            x;
+        frame_data->polygon_collection->size].xyz[0] = x;
     frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].xyz[1] =
-            y;
+        frame_data->polygon_collection->size].xyz[1] = y;
     frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].xyz[2] =
-            z;
+        frame_data->polygon_collection->size].xyz[2] = z;
     frame_data->polygon_collection->polygons[
         frame_data->polygon_collection->size].ignore_lighting = true;
     frame_data->polygon_collection->polygons[
@@ -70,18 +67,24 @@ inline static void add_point_vertex(
     frame_data->polygon_collection->polygons[
         frame_data->polygon_collection->size].xyz_multiplier[2] = 1.0f;
     
-    //    frame_data->vertices[frame_data->vertices_size].texturearray_i =
-    //        -1;
-    //    frame_data->vertices[frame_data->vertices_size].texture_i = -1;
     frame_data->vertices[frame_data->vertices_size].polygon_i =
         (int)frame_data->polygon_collection->size;
-    //    frame_data->vertices[frame_data->vertices_size].color[0] = 0.0f;
-    //    frame_data->vertices[frame_data->vertices_size].color[1] =
-    //        is_last_clicked ?
-    //            ((platform_get_current_time_microsecs() / 25000) % 80) * 0.01f :
-    //            1.0f;
-    //    frame_data->vertices[frame_data->vertices_size].color[2] = 1.0f;
-    //    frame_data->vertices[frame_data->vertices_size].color[3] = 1.0f;
+    
+    frame_data->polygon_materials[MAX_MATERIALS_SIZE *
+        frame_data->polygon_collection->size].rgba[0] = 0.0f;
+    frame_data->polygon_materials[MAX_MATERIALS_SIZE *
+        frame_data->polygon_collection->size].rgba[1] = is_last_clicked ?
+            ((platform_get_current_time_microsecs() / 25000) % 80) * 0.01f :
+            1.0f;
+    frame_data->polygon_materials[MAX_MATERIALS_SIZE *
+        frame_data->polygon_collection->size].rgba[2] = 1.0f;
+    frame_data->polygon_materials[MAX_MATERIALS_SIZE *
+        frame_data->polygon_collection->size].rgba[3] = 1.0f;
+    frame_data->polygon_materials[MAX_MATERIALS_SIZE *
+        frame_data->polygon_collection->size].texturearray_i = -1;
+    frame_data->polygon_materials[MAX_MATERIALS_SIZE *
+        frame_data->polygon_collection->size].texture_i = -1;
+    
     frame_data->vertices[frame_data->vertices_size].locked_vertex_i =
         all_mesh_summaries[2].vertices_head_i;
     
@@ -95,7 +98,7 @@ inline static void zpolygon_hitboxes_to_lines(
     #ifndef LOGGER_IGNORE_ASSERTS
     if (
         window_globals->visual_debug_last_clicked_touchable_id < 0 &&
-        window_globals->visual_debug_mode)
+        !window_globals->visual_debug_mode)
     {
         return;
     }
@@ -109,22 +112,28 @@ inline static void zpolygon_hitboxes_to_lines(
                 is_last_clicked)
             {
                 float left =
-                    zpolygons_to_render->gpu_data[zp_i].xyz[0] -
+                    zpolygons_to_render->gpu_data[zp_i].xyz[0] +
+                    zpolygons_to_render->gpu_data[zp_i].xyz_offset[0] -
                     (zpolygons_to_render->cpu_data[zp_i].hitbox_width / 2);
                 float right =
                     zpolygons_to_render->gpu_data[zp_i].xyz[0] +
+                    zpolygons_to_render->gpu_data[zp_i].xyz_offset[0] +
                     (zpolygons_to_render->cpu_data[zp_i].hitbox_width / 2);
                 float top =
                     zpolygons_to_render->gpu_data[zp_i].xyz[1] +
+                    zpolygons_to_render->gpu_data[zp_i].xyz_offset[1] +
                     (zpolygons_to_render->cpu_data[zp_i].hitbox_height / 2);
                 float bottom =
-                    zpolygons_to_render->gpu_data[zp_i].xyz[1] -
+                    zpolygons_to_render->gpu_data[zp_i].xyz[1] +
+                    zpolygons_to_render->gpu_data[zp_i].xyz_offset[1] -
                     (zpolygons_to_render->cpu_data[zp_i].hitbox_height / 2);
                 float front =
-                    zpolygons_to_render->gpu_data[zp_i].xyz[2] -
+                    zpolygons_to_render->gpu_data[zp_i].xyz[2] +
+                    zpolygons_to_render->gpu_data[zp_i].xyz_offset[2] -
                     (zpolygons_to_render->cpu_data[zp_i].hitbox_depth / 2);
                 float back =
                     zpolygons_to_render->gpu_data[zp_i].xyz[2] +
+                    zpolygons_to_render->gpu_data[zp_i].xyz_offset[2] +
                     (zpolygons_to_render->cpu_data[zp_i].hitbox_depth / 2);
                 
                 zVertex topleftfront;
@@ -382,10 +391,10 @@ void hardware_render(
         add_lineparticle_effects_to_workload(frame_data, elapsed_nanoseconds);
         
         frame_data->first_line_i = frame_data->vertices_size;;
+        
+        zpolygon_hitboxes_to_lines(
+            frame_data);
     }
-    
-    //    zpolygon_hitboxes_to_lines(
-    //        frame_data);
     
     if (window_globals->wireframe_mode) {
         frame_data->first_line_i = 0;

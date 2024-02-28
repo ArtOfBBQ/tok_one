@@ -7,12 +7,12 @@ static void set_zpolygon_hitbox(
 {
     log_assert(all_mesh_summaries[mesh_cpu->mesh_id].vertices_size > 0);
     
-    float top = 0.0f;
+    float top    = 0.0f;
     float bottom = 0.0f;
-    float left = 0.0f;
-    float right = 0.0f;
-    float back = 0.0f;
-    float front = 0.0f;
+    float left   = 0.0f;
+    float right  = 0.0f;
+    float back   = 0.0f;
+    float front  = 0.0f;
     
     int32_t vertices_tail_i =
         all_mesh_summaries[mesh_cpu->mesh_id].vertices_head_i +
@@ -63,9 +63,9 @@ static void set_zpolygon_hitbox(
     log_assert(front  <= 0.0f);
     log_assert(back   >= front);
     
-    mesh_cpu->hitbox_height = (top - bottom) + 0.00001f;
-    mesh_cpu->hitbox_width  = (right - left) + 0.00001f;
-    mesh_cpu->hitbox_depth  = (back - front) + 0.00001f;
+    mesh_cpu->hitbox_height = (top - bottom) + 0.001f;
+    mesh_cpu->hitbox_width  = (right - left) + 0.001f;
+    mesh_cpu->hitbox_depth  = (back - front) + 0.001f;
 }
 
 void request_next_zpolygon(PolygonRequest * stack_recipient)
@@ -736,7 +736,6 @@ bool32_t ray_intersects_zpolygon_hitbox(
     plane_normals[5].z =                         0.0f;
     
     #define PLANES_TO_CHECK 6
-    // NaN checks
     for (uint32_t p = 0; p < PLANES_TO_CHECK; p++) {
         log_assert(plane_normals[p].x == plane_normals[p].x);
         log_assert(plane_normals[p].y == plane_normals[p].y);
@@ -827,8 +826,8 @@ bool32_t ray_intersects_zpolygon_hitbox(
             denominator > -0.0001f)
         {
             // the ray doesn't intersect with the triangle's plane,
-            // I think this is always because the ray travels in parallel with the
-            // triangle
+            // I think this is always because the ray travels in parallel with
+            // the triangle
             continue;
         }
         
@@ -897,7 +896,7 @@ bool32_t ray_intersects_zpolygon_hitbox(
         // hitbox
         // it's now an 'axis aligned' hitbox (since we rotated the collision
         // point and not the hitbox itself), so we can just check the bounds
-        float tolerance = 0.03f;
+        float tolerance = 0.002f;
         if (
             (reverse_rotated_center_to_hit.x - tolerance) <= 
                  ( cpu_data->hitbox_width  / 2 ) &&

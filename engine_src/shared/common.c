@@ -85,9 +85,14 @@ strcat_float_capped(
     const uint32_t recipient_size,
     const float to_append)
 {
-    uint32_t before_comma = (uint32_t)to_append;
+    float positive_append = to_append >= 0.0f ? to_append : -1.0f * to_append;
+    
+    uint32_t before_comma = (uint32_t)positive_append;
     uint32_t after_comma =
-        ((uint32_t)(to_append * 1000) - (before_comma * 1000));
+        ((uint32_t)(positive_append * 1000) - (before_comma * 1000));
+    if (to_append < 0.0f) {
+        strcat_capped(recipient, recipient_size, "-");
+    }
     strcat_uint_capped(recipient, recipient_size, before_comma);
     strcat_capped(recipient, recipient_size, ".");
     strcat_uint_capped(recipient, recipient_size, after_comma);

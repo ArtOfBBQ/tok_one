@@ -21,6 +21,8 @@ If you do want sliders of different sizes, you can set the slider size, request
 some sliders, change the slider size, and then request some more sliders
 */
 typedef struct NextUIElementSettings {
+    float    slider_background_rgba[4];
+    float    slider_pin_rgba[4];
     bool32_t ignore_lighting;
     bool32_t ignore_camera;
     int32_t  slider_background_texturearray_i;

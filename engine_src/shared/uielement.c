@@ -158,7 +158,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                         screenspace_x_to_x(
                             user_interactions[
                                 INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_x,
-                            zpolygons_to_render->gpu_data[zp_i].xyz[0]) -
+                            zpolygons_to_render->gpu_data[zp_i].xyz[2]) -
                         zpolygons_to_render->gpu_data[zp_i].xyz[0];
                     
                     if (
@@ -220,6 +220,10 @@ void request_float_slider(
 {
     log_assert(next_ui_element_settings != NULL);
     log_assert(background_object_id != pin_object_id);
+    log_assert(next_ui_element_settings->slider_width_screenspace > 0);
+    log_assert(next_ui_element_settings->slider_height_screenspace > 0);
+    log_assert(next_ui_element_settings->pin_width_screenspace > 0);
+    log_assert(next_ui_element_settings->pin_height_screenspace > 0);
     
     PolygonRequest slider_back;
     request_next_zpolygon(&slider_back);
@@ -247,10 +251,14 @@ void request_float_slider(
         next_ui_element_settings->slider_background_texturearray_i;
     slider_back.gpu_material[0].texture_i =
         next_ui_element_settings->slider_background_texture_i;
-    slider_back.gpu_material[0].rgba[0] = 0.75f;
-    slider_back.gpu_material[0].rgba[1] = 1.00f;
-    slider_back.gpu_material[0].rgba[2] = 1.00f;
-    slider_back.gpu_material[0].rgba[3] = 1.00f;
+    slider_back.gpu_material[0].rgba[0] =
+        next_ui_element_settings->slider_background_rgba[0];
+    slider_back.gpu_material[0].rgba[1] =
+        next_ui_element_settings->slider_background_rgba[1];
+    slider_back.gpu_material[0].rgba[2] =
+        next_ui_element_settings->slider_background_rgba[2];
+    slider_back.gpu_material[0].rgba[3] =
+        next_ui_element_settings->slider_background_rgba[3];
     
     slider_back.gpu_data->ignore_lighting =
         next_ui_element_settings->ignore_lighting;
@@ -306,10 +314,14 @@ void request_float_slider(
         next_ui_element_settings->slider_pin_texturearray_i;
     slider_pin.gpu_material[0].texture_i =
         next_ui_element_settings->slider_pin_texture_i;
-    slider_pin.gpu_material[0].rgba[0] = 1.0f;
-    slider_pin.gpu_material[0].rgba[1] = 1.0f;
-    slider_pin.gpu_material[0].rgba[2] = 1.0f;
-    slider_pin.gpu_material[0].rgba[3] = 1.0f;
+    slider_pin.gpu_material[0].rgba[0] =
+        next_ui_element_settings->slider_pin_rgba[0];
+    slider_pin.gpu_material[0].rgba[1] =
+        next_ui_element_settings->slider_pin_rgba[1];
+    slider_pin.gpu_material[0].rgba[2] =
+        next_ui_element_settings->slider_pin_rgba[2];
+    slider_pin.gpu_material[0].rgba[3] =
+        next_ui_element_settings->slider_pin_rgba[3];
     
     slider_pin.gpu_data->ignore_lighting =
         next_ui_element_settings->ignore_lighting;
