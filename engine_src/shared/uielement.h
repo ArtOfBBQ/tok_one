@@ -33,6 +33,9 @@ typedef struct NextUIElementSettings {
     float    slider_height_screenspace;
     float    pin_width_screenspace;
     float    pin_height_screenspace;
+    float    button_width_screenspace;
+    float    button_height_screenspace;
+    float    button_background_rgba[4];
     int32_t  button_background_texturearray_i;
     int32_t  button_background_texture_i;
     float    slider;
@@ -69,6 +72,14 @@ void request_float_slider(
     const float min_value,
     const float max_value,
     float * linked_value);
+
+void request_button(
+    const int32_t button_object_id,
+    const char * label,
+    const float x_screenspace,
+    const float y_screenspace,
+    const float z,
+    void (* funtion_pointer));
 
 void unregister_ui_element_with_object_id(
     const int32_t with_object_id);

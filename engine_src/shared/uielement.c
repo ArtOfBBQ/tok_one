@@ -25,6 +25,7 @@ typedef struct ActiveUIElement {
         int32_t * slider_linked_int;
     };
     char interaction_sound_filename[128];
+    void (* clicked_funcptr);
 } ActiveUIElement;
 
 NextUIElementSettings * next_ui_element_settings = NULL;
@@ -85,6 +86,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
             {
                 if (
                     !active_ui_elements[i].deleted &&
+                    active_ui_elements[i].slideable &&
                     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
                         touchable_id ==
                     active_ui_elements[i].touchable_id)
@@ -142,6 +144,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
         {
             if (
                 !active_ui_elements[ui_elem_i].deleted &&
+                active_ui_elements[ui_elem_i].slideable &&
                 user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
                     touchable_id ==
                 active_ui_elements[ui_elem_i].touchable_id)
@@ -160,6 +163,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                 zp_i++)
             {
                 if (
+                    active_ui_elements[ui_elem_i].slideable &&
                     zpolygons_to_render->cpu_data[zp_i].object_id ==
                         currently_sliding_object_id)
                 {
@@ -448,6 +452,84 @@ void request_float_slider(
     next_active_element->slider_linked_float = linked_value;
     next_active_element->slider_min_float = min_value;
     next_active_element->slider_max_float = max_value;
+}
+
+void request_button(
+    const int32_t button_object_id,
+    const char * label,
+    const float x_screenspace,
+    const float y_screenspace,
+    const float z,
+    void (* funtion_pointer))
+{
+    log_assert(next_ui_element_settings->button_width_screenspace  > 5.0f);
+    log_assert(next_ui_element_settings->button_height_screenspace > 5.0f);
+    
+    PolygonRequest button_request;
+    button_request.materials_size = 1;
+    request_next_zpolygon(&button_request);
+    construct_quad_around(
+        /* const float mid_x: */
+            screenspace_x_to_x(x_screenspace, z),
+        /* const float mid_y: */
+            screenspace_y_to_y(y_screenspace, z),
+        /* const float z: */
+            z,
+        /* const float width: */
+            screenspace_width_to_width(
+                next_ui_element_settings->button_width_screenspace,
+                z),
+        /* const float height: */
+            screenspace_height_to_height(
+                next_ui_element_settings->button_height_screenspace,
+                z),
+        /* PolygonRequest * stack_recipient: */
+            &button_request);
+    
+    button_request.cpu_data->object_id = button_object_id;
+    button_request.cpu_data->touchable_id = next_ui_element_touchable_id();
+    button_request.gpu_data->ignore_camera =
+        next_ui_element_settings->ignore_camera;
+    button_request.gpu_data->ignore_lighting =
+        next_ui_element_settings->ignore_lighting;
+    commit_zpolygon_to_render(&button_request);
+    
+    button_request.gpu_material->rgba[0] =
+        next_ui_element_settings->button_background_rgba[0];
+    button_request.gpu_material->rgba[1] =
+        next_ui_element_settings->button_background_rgba[1];
+    button_request.gpu_material->rgba[2] =
+        next_ui_element_settings->button_background_rgba[2];
+    button_request.gpu_material->rgba[3] =
+        next_ui_element_settings->button_background_rgba[3];
+    button_request.gpu_material->texturearray_i =
+        next_ui_element_settings->button_background_texturearray_i;
+    button_request.gpu_material->texture_i =
+        next_ui_element_settings->button_background_texture_i;
+    
+    request_label_around(
+        /* const int32_t with_object_id: */
+            button_object_id,
+        /* const char * text_to_draw: */
+            label,
+        /* const float mid_x_pixelspace: */
+            x_screenspace,
+        /* const float mid_y_pixelspace: */
+            y_screenspace,
+        /* const float z: */
+            z,
+        /* const float max_width: */
+            screenspace_width_to_width(
+                next_ui_element_settings->button_width_screenspace,
+                z),
+        /* const uint32_t ignore_camera: */
+            next_ui_element_settings->ignore_camera);
+    
+    ActiveUIElement * next_element = next_active_ui_element();
+    next_element->clickable = true;
+    next_element->clicked_funcptr = funtion_pointer;
+    next_element->touchable_id = button_request.cpu_data->touchable_id;
+    next_element->deleted = false;
 }
 
 void unregister_ui_element_with_object_id(

@@ -11,6 +11,10 @@ typedef struct SliderRequest {
 static SliderRequest * slider_requests = NULL;
 static char slider_titles[(SLIDERS_SIZE / 13)+1][64];
 
+static void save_particle_stats(void) {
+    printf("save!\n");
+}
+
 void client_logic_startup(void) {
     
     slider_requests = malloc_from_unmanaged(
@@ -624,6 +628,23 @@ void client_logic_startup(void) {
             1000,
         /* int32_t * linked_value: */
             (int32_t *)&particle_effects[0].particle_spawns_per_second);
+    font_height = 14;
+    request_label_renderable(-1, "spawns/sec",
+        /* const float left_pixelspace: */
+            (window_globals->window_width -
+                next_ui_element_settings->slider_width_screenspace) -
+                (font_height * 3) +
+                (next_ui_element_settings->slider_width_screenspace / 2) +
+                (font_height / 2),
+        /* const float top_pixelspace: */
+            window_globals->window_height - (14 * 5) + (3 * 22) +
+                (font_height / 2),
+        /* const float z: */
+            0.75f,
+        /* const float max_width: */
+            10000,
+        /* const uint32_t ignore_camera: */
+            false);
     
     next_ui_element_settings->slider_background_rgba[0] = 0.8f;
     next_ui_element_settings->slider_background_rgba[1] = 0.8f;
@@ -647,6 +668,22 @@ void client_logic_startup(void) {
             5000000,
         /* int32_t * linked_value: */
             (int32_t *)&particle_effects[0].particle_lifespan);
+    request_label_renderable(-1, "lifespan",
+        /* const float left_pixelspace: */
+            (window_globals->window_width -
+                next_ui_element_settings->slider_width_screenspace) -
+                (font_height * 3) +
+                (next_ui_element_settings->slider_width_screenspace / 2) +
+                (font_height / 2),
+        /* const float top_pixelspace: */
+            window_globals->window_height - (14 * 3) + (3 * 22) +
+                (font_height / 2),
+        /* const float z: */
+            0.75f,
+        /* const float max_width: */
+            10000,
+        /* const uint32_t ignore_camera: */
+            false);
     
     next_ui_element_settings->slider_background_rgba[0] = 0.8f;
     next_ui_element_settings->slider_background_rgba[1] = 0.6f;
@@ -670,6 +707,22 @@ void client_logic_startup(void) {
             5000000,
         /* int32_t * linked_value: */
             (int32_t *)&particle_effects[0].pause_between_spawns);
+    request_label_renderable(-1, "pause/spawn",
+        /* const float left_pixelspace: */
+            (window_globals->window_width -
+                next_ui_element_settings->slider_width_screenspace) -
+                (font_height * 3) +
+                (next_ui_element_settings->slider_width_screenspace / 2) +
+                (font_height / 2),
+        /* const float top_pixelspace: */
+            window_globals->window_height - (14 * 1) + (3 * 22) +
+                (font_height / 2),
+        /* const float z: */
+            0.75f,
+        /* const float max_width: */
+            10000,
+        /* const uint32_t ignore_camera: */
+            false);
     
     for (uint32_t i = 0; i < SLIDERS_SIZE; i++) {
         font_height   =   14;
@@ -741,6 +794,31 @@ void client_logic_startup(void) {
             commit_scheduled_animation(anim);
         }
     }
+    
+    // save button;
+    next_ui_element_settings->ignore_camera = true;
+    next_ui_element_settings->ignore_lighting = true;
+    next_ui_element_settings->button_width_screenspace = 75.0f;
+    next_ui_element_settings->button_height_screenspace = 40.0f;
+    next_ui_element_settings->button_background_rgba[0] = 0.2f;
+    next_ui_element_settings->button_background_rgba[1] = 0.3f;
+    next_ui_element_settings->button_background_rgba[2] = 1.0f;
+    next_ui_element_settings->button_background_rgba[3] = 1.0f;
+    next_ui_element_settings->button_background_texturearray_i = -1;
+    next_ui_element_settings->button_background_texture_i = -1;
+    request_button(
+        /* const int32_t button_object_id: */
+            next_ui_element_object_id(),
+        /* const char * label: */
+            "Save",
+        /* const float x_screenspace: */
+            (next_ui_element_settings->button_width_screenspace / 2) + 140,
+        /* const float y_screenspace: */
+            (next_ui_element_settings->button_height_screenspace / 2) + 10,
+        /* const float z: */
+            1.00f,
+        /* void (* funtion_pointer): */
+            save_particle_stats);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -944,6 +1022,8 @@ void client_logic_update(uint64_t microseconds_elapsed)
     
     delete_zpolygon_object(1001);
     
+    next_ui_element_settings->ignore_camera = false;
+    next_ui_element_settings->ignore_lighting = true;
     for (uint32_t i = 0; i < SLIDERS_SIZE; i++) {
         char label_and_num[128];
         strcpy_capped(label_and_num, 128, slider_requests[i].label);
