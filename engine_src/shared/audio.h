@@ -15,6 +15,8 @@ typedef struct SoundSettings {
     uint32_t global_samples_size;
     float tone_frequency;
     float volume;
+    float sfx_volume;
+    float music_volume;
     float sample_rate;
 } SoundSettings;
 
@@ -33,11 +35,13 @@ void add_audio_at_offset(
 
 void copy_audio(
     int16_t * data,
-    const uint32_t data_size);
+    const uint32_t data_size,
+    const bool32_t is_music);
 void copy_audio_at_offset(
     int16_t * samples,
     const uint32_t samples_size,
-    const uint64_t play_cursor_offset);
+    const uint64_t play_cursor_offset,
+    const bool32_t is_music);
 
 void add_permasound_to_global_buffer_at_offset(
     const int32_t permasound_id,
@@ -51,12 +55,14 @@ void add_permasound_to_global_buffer(
 
 void copy_permasound_to_global_buffer_at_offset(
     const int32_t permasound_id,
-    const uint64_t play_cursor_offset);
+    const uint64_t play_cursor_offset,
+    const bool32_t is_music);
 void copy_offset_permasound_to_global_buffer_at_offset(
     const int32_t permasound_id,
     const uint64_t permasound_offset,
     const uint64_t play_cursor_offset,
-    const uint32_t samples_to_copy_size);
+    const uint32_t samples_to_copy_size,
+    const bool32_t is_music);
 void copy_permasound_to_global_buffer(
     const int32_t permasound_id);
 

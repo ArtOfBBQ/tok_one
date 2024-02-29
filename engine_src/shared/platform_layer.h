@@ -194,9 +194,6 @@ void platform_gpu_push_texture_slice(
     const uint32_t image_height,
     const uint8_t * rgba_values);
 
-extern float platform_sound_volume;
-extern float platform_music_volume;
-
 /*
 creates a mutex and return the ID of said mutex for you to store
 */

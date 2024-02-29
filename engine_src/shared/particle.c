@@ -400,14 +400,13 @@ uint32_t shatter_effects_size;
 static void construct_shatter_effect_no_zpoly(
     ShatterEffect * to_construct)
 {
-    to_construct->random_seed =
-        (uint32_t)tok_rand_at_i(
-            platform_get_current_time_microsecs() %
-                RANDOM_SEQUENCE_SIZE) % 75;
-    to_construct->elapsed = 0;
-    to_construct->wait_first = 0;
-    to_construct->committed = false;
-    to_construct->deleted = false;
+    to_construct->random_seed        = (uint32_t)tok_rand_at_i(
+        platform_get_current_time_microsecs() %
+            RANDOM_SEQUENCE_SIZE) % 75;
+    to_construct->elapsed            = 0;
+    to_construct->wait_first         = 0;
+    to_construct->committed          = false;
+    to_construct->deleted            = false;
     to_construct->limit_triangles_to = 0;
     
     to_construct->longest_random_delay_before_launch = 500000;
@@ -805,7 +804,8 @@ void construct_particle_effect(
     to_construct->zpolygon_gpu.xyz_multiplier[2] = 0.01f;
     to_construct->zpolygon_gpu.ignore_lighting = true;
     
-    to_construct->random_seed = (uint32_t)tok_rand() % 750;
+    to_construct->random_seed = (uint32_t)
+        tok_rand() % (RANDOM_SEQUENCE_SIZE - 100);
     to_construct->particle_spawns_per_second = 200;
     to_construct->particle_lifespan = 2000000;
     to_construct->pause_between_spawns = 0;
@@ -934,8 +934,7 @@ void add_particle_effects_to_workload(
                     (particle_effects[i].particle_lifespan +
                         particle_effects[i].pause_between_spawns);
             
-            if (spawn_lifetime_so_far >
-                particle_effects[i].particle_lifespan)
+            if (spawn_lifetime_so_far > particle_effects[i].particle_lifespan)
             {
                 continue;
             }
@@ -980,11 +979,13 @@ void add_particle_effects_to_workload(
             frame_data->polygon_materials[
                 frame_data->polygon_collection->size * MAX_MATERIALS_SIZE]
                     = particle_effects[i].zpolygon_material;
+            
             frame_data->polygon_materials[
                 frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
                     texturearray_i =
                         particle_effects[i].random_texturearray_i[spawn_i %
                             particle_effects[i].random_textures_size];
+            
             frame_data->polygon_materials[
                 frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
                     texture_i =
@@ -1042,6 +1043,7 @@ void add_particle_effects_to_workload(
                 simdf_pertime_random_add = simd_mul_floats(
                     simdf_pertime_random_add,
                     simdf_rand);
+                
                 simdf_pertime_add = simd_add_floats(
                     simdf_pertime_add, simdf_pertime_random_add);
                 

@@ -10,10 +10,20 @@ typedef struct ActiveUIElement {
     bool32_t clickable;
     bool32_t slideable;
     bool32_t deleted;
+    bool32_t is_float;
     float slider_width;
-    float slider_min;
-    float slider_max;
-    float * slider_linked_float;
+    union {
+        float slider_min_float;
+        int32_t slider_min_int;
+    };
+    union {
+        float slider_max_float;
+        int32_t slider_max_int;
+    };
+    union {
+        float * slider_linked_float;
+        int32_t * slider_linked_int;
+    };
     char interaction_sound_filename[128];
 } ActiveUIElement;
 
@@ -183,14 +193,26 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                     float slider_pct = (new_x_offset /
                         active_ui_elements[ui_elem_i].slider_width) + 0.5f;
                     
-                    log_assert(
-                        active_ui_elements[ui_elem_i].slider_linked_float !=
-                            NULL);
-                    *(active_ui_elements[ui_elem_i].slider_linked_float) =
-                        active_ui_elements[ui_elem_i].slider_min +
-                            ((active_ui_elements[ui_elem_i].slider_max -
-                                active_ui_elements[ui_elem_i].slider_min) *
-                                    slider_pct);
+                    if (active_ui_elements[ui_elem_i].is_float) {
+                        log_assert(
+                            active_ui_elements[ui_elem_i].slider_linked_float !=
+                                NULL);
+                        *(active_ui_elements[ui_elem_i].slider_linked_float) =
+                            active_ui_elements[ui_elem_i].slider_min_float +
+                                ((active_ui_elements[ui_elem_i].
+                                    slider_max_float -
+                                    active_ui_elements[ui_elem_i].
+                                        slider_min_float) * slider_pct);
+                    } else {
+                        log_assert(
+                            active_ui_elements[ui_elem_i].slider_linked_int !=
+                                NULL);
+                        *(active_ui_elements[ui_elem_i].slider_linked_int) =
+                            active_ui_elements[ui_elem_i].slider_min_int +
+                                ((active_ui_elements[ui_elem_i].slider_max_int -
+                                    active_ui_elements[ui_elem_i].
+                                        slider_min_int) * slider_pct);
+                    }
                 }
             }
         }
@@ -208,15 +230,14 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
     }
 }
 
-void request_float_slider(
+static void request_slider_shared(
     const int32_t background_object_id,
     const int32_t pin_object_id,
     const float x_screenspace,
     const float y_screenspace,
     const float z,
-    const float min_value,
-    const float max_value,
-    float * linked_value)
+    const float initial_x_offset_screenspace,
+    ActiveUIElement * next_active_element)
 {
     log_assert(next_ui_element_settings != NULL);
     log_assert(background_object_id != pin_object_id);
@@ -292,19 +313,6 @@ void request_float_slider(
     
     slider_pin.cpu_data->object_id = pin_object_id;
     
-    if (*linked_value < min_value) {
-        *linked_value = min_value;
-    }
-    if (*linked_value > max_value) {
-        *linked_value = max_value;
-    }
-    
-    float initial_slider_progress =
-        (*linked_value - min_value) / (max_value - min_value);
-    float initial_x_offset_screenspace =
-        -(next_ui_element_settings->slider_width_screenspace / 2) +
-        (initial_slider_progress *
-            next_ui_element_settings->slider_width_screenspace);
     slider_pin.gpu_data->xyz_offset[0] =
         screenspace_width_to_width(initial_x_offset_screenspace, pin_z);
     
@@ -328,25 +336,118 @@ void request_float_slider(
     slider_pin.gpu_data->ignore_camera =
         next_ui_element_settings->ignore_camera;
     slider_pin.cpu_data->touchable_id = next_ui_element_touchable_id();
+    commit_zpolygon_to_render(&slider_pin);
     
-    ActiveUIElement * next_active_element = next_active_ui_element();
     next_active_element->object_id = background_object_id;
     next_active_element->object_id_2 = pin_object_id;
     next_active_element->touchable_id = slider_pin.cpu_data->touchable_id;
-    next_active_element->slider_width = 
+
+    next_active_element->slider_width =
         screenspace_width_to_width(
             next_ui_element_settings->slider_width_screenspace,
             z);
-    next_active_element->slider_min = min_value;
-    next_active_element->slider_max = max_value;
     next_active_element->slideable = true;
     next_active_element->deleted = false;
-    next_active_element->slider_linked_float = linked_value;
     strcpy_capped(
         next_active_element->interaction_sound_filename,
         128,
         next_ui_element_settings->interaction_sound_filename);
-    commit_zpolygon_to_render(&slider_pin);
+}
+
+void request_int_slider(
+    const int32_t background_object_id,
+    const int32_t pin_object_id,
+    const float x_screenspace,
+    const float y_screenspace,
+    const float z,
+    const int32_t min_value,
+    const int32_t max_value,
+    int32_t * linked_value)
+{
+    if (*linked_value < min_value) {
+        *linked_value = min_value;
+    }
+    if (*linked_value > max_value) {
+        *linked_value = max_value;
+    }
+    
+    float initial_slider_progress =
+        (*linked_value - min_value) / (max_value - min_value);
+    float initial_x_offset_screenspace =
+        -(next_ui_element_settings->slider_width_screenspace / 2) +
+        (initial_slider_progress *
+            next_ui_element_settings->slider_width_screenspace);
+    
+    ActiveUIElement * next_active_element = next_active_ui_element();
+    
+    request_slider_shared(
+        /* const int32_t background_object_id: */
+            background_object_id,
+        /* const int32_t pin_object_id: */
+            pin_object_id,
+        /* const float x_screenspace: */
+            x_screenspace,
+        /* const float y_screenspace: */
+            y_screenspace,
+        /* const float z: */
+            z,
+        /* initial_x_offset_screenspace: */
+            initial_x_offset_screenspace,
+        /* ActiveUIElement * next_active_element: */
+            next_active_element);
+    
+    next_active_element->is_float = false;
+    next_active_element->slider_linked_int = linked_value;
+    next_active_element->slider_min_int = min_value;
+    next_active_element->slider_max_int = max_value;
+}
+
+void request_float_slider(
+    const int32_t background_object_id,
+    const int32_t pin_object_id,
+    const float x_screenspace,
+    const float y_screenspace,
+    const float z,
+    const float min_value,
+    const float max_value,
+    float * linked_value)
+{
+    if (*linked_value < min_value) {
+        *linked_value = min_value;
+    }
+    if (*linked_value > max_value) {
+        *linked_value = max_value;
+    }
+    
+    float initial_slider_progress =
+        (*linked_value - min_value) / (max_value - min_value);
+    float initial_x_offset_screenspace =
+        -(next_ui_element_settings->slider_width_screenspace / 2) +
+        (initial_slider_progress *
+            next_ui_element_settings->slider_width_screenspace);
+    
+    ActiveUIElement * next_active_element = next_active_ui_element();
+    
+    request_slider_shared(
+        /* const int32_t background_object_id: */
+            background_object_id,
+        /* const int32_t pin_object_id: */
+            pin_object_id,
+        /* const float x_screenspace: */
+            x_screenspace,
+        /* const float y_screenspace: */
+            y_screenspace,
+        /* const float z: */
+            z,
+        /* initial_x_offset_screenspace: */
+            initial_x_offset_screenspace,
+        /* ActiveUIElement * next_active_element: */
+            next_active_element);
+    
+    next_active_element->is_float = true;
+    next_active_element->slider_linked_float = linked_value;
+    next_active_element->slider_min_float = min_value;
+    next_active_element->slider_max_float = max_value;
 }
 
 void unregister_ui_element_with_object_id(

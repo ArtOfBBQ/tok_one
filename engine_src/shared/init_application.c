@@ -57,6 +57,10 @@ void init_application_before_gpu_init(void)
     window_globals->visual_debug_mode = false;
     window_globals->wireframe_mode = false;
     
+    init_audio(
+        /* void *(*arg_malloc_function)(size_t): */
+            malloc_from_unmanaged);
+    
     if (
         engine_save.contents != NULL &&
         engine_save_file->window_height > 10 &&
@@ -69,8 +73,8 @@ void init_application_before_gpu_init(void)
         window_globals->window_left   = engine_save_file->window_left;
         window_globals->window_bottom = engine_save_file->window_bottom;
         window_globals->fullscreen = engine_save_file->window_fullscreen;
-        platform_music_volume = engine_save_file->music_volume;
-        platform_sound_volume = engine_save_file->sound_volume;
+        sound_settings->music_volume = engine_save_file->music_volume;
+        sound_settings->sfx_volume = engine_save_file->sound_volume;
         window_globals->last_resize_request_at =
             platform_get_current_time_microsecs();
     } else {
@@ -95,10 +99,6 @@ void init_application_before_gpu_init(void)
     zpolygons_to_render = (zPolygonCollection *)malloc_from_unmanaged(
         sizeof(zPolygonCollection));
     zpolygons_to_render->size = 0;
-    
-    init_audio(
-        /* void *(*arg_malloc_function)(size_t): */
-            malloc_from_unmanaged);
     
     init_all_meshes();
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
@@ -290,8 +290,8 @@ void shared_shutdown_application(void)
 {
     log_assert(engine_save_file != NULL);
     
-    engine_save_file->music_volume = platform_music_volume;
-    engine_save_file->sound_volume = platform_sound_volume;
+    engine_save_file->music_volume = sound_settings->music_volume;
+    engine_save_file->sound_volume = sound_settings->sfx_volume;
     
     engine_save_file->window_bottom = window_globals->window_bottom;
     engine_save_file->window_height = window_globals->window_height;

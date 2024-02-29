@@ -46,6 +46,16 @@ void init_ui_elements(void);
 
 void ui_elements_handle_touches(uint64_t ms_elapsed);
 
+void request_int_slider(
+    const int32_t background_object_id,
+    const int32_t pin_object_id,
+    const float x_screenspace,
+    const float y_screenspace,
+    const float z,
+    const int32_t min_value,
+    const int32_t max_value,
+    int32_t * linked_value);
+
 /*
 A slider linked to a float of your choice, for the user to slide left/right to
 get the value of their choosing

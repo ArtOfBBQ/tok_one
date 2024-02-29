@@ -3,9 +3,6 @@
 
 #include "platform_layer.h"
 
-float platform_sound_volume = 0.15f;
-float platform_music_volume = 0.15f;
-
 void platform_get_writables_path(
     char * recipient,
     const uint32_t recipient_size)

@@ -89,7 +89,8 @@ void add_audio(
 
 void copy_audio(
     int16_t * data,
-    const uint32_t data_size)
+    const uint32_t data_size,
+    const bool32_t is_music)
 {
     assert(data_size < sound_settings->global_buffer_size_bytes);
     
@@ -99,18 +100,24 @@ void copy_audio(
         /* const uint32_t data_size: */
             data_size,
         /* const uint64_t play_cursor_offset: */
-            DEFAULT_WRITING_OFFSET);
+            DEFAULT_WRITING_OFFSET,
+        /* const bool32_t is_music: */
+            is_music);
 }
 
 void copy_audio_at_offset(
     int16_t * samples,
     const uint32_t samples_size,
-    const uint64_t play_cursor_offset)
+    const uint64_t play_cursor_offset,
+    const bool32_t is_music)
 {
     assert(samples_size < sound_settings->global_buffer_size_bytes);
     
     for (uint32_t i = 0; i < samples_size; i++) {
-        int32_t new_value = samples[i];
+        int32_t new_value = (int32_t)(samples[i] * (
+            is_music ?
+                sound_settings->music_volume :
+                sound_settings->sfx_volume));
         new_value = new_value > INT16_MAX ? INT16_MAX : new_value;
         new_value = new_value < INT16_MIN ? INT16_MIN : new_value;
         sound_settings->samples_buffer[
@@ -179,7 +186,8 @@ void add_permasound_to_global_buffer(
 
 void copy_permasound_to_global_buffer_at_offset(
     const int32_t permasound_id,
-    const uint64_t play_cursor_offset)
+    const uint64_t play_cursor_offset,
+    const bool32_t is_music)
 {
     log_assert(permasound_id >= 0);
     log_assert(all_permasounds[permasound_id].allsamples_tail_i >
@@ -196,14 +204,17 @@ void copy_permasound_to_global_buffer_at_offset(
             (uint32_t)all_permasounds[permasound_id].allsamples_tail_i -
                 (uint32_t)all_permasounds[permasound_id].allsamples_head_i,
         /* const uint32_t play_cursor_offset: */
-            play_cursor_offset);
+            play_cursor_offset,
+        /* const bool32_t is_music: */
+            is_music);
 }
 
 void copy_offset_permasound_to_global_buffer_at_offset(
     const int32_t permasound_id,
     const uint64_t permasound_offset,
     const uint64_t play_cursor_offset,
-    const uint32_t samples_to_copy_size)
+    const uint32_t samples_to_copy_size,
+    const bool32_t is_music)
 {
     log_assert(permasound_id >= 0);
     log_assert(all_permasounds[permasound_id].allsamples_tail_i >
@@ -222,7 +233,9 @@ void copy_offset_permasound_to_global_buffer_at_offset(
         /* const uint32_t data_size: */
             samples_to_copy_size,
         /* const uint32_t play_cursor_offset: */
-            play_cursor_offset);
+            play_cursor_offset,
+        /* const bool32_t is_music: */
+            is_music);
 }
 
 void copy_permasound_to_global_buffer(

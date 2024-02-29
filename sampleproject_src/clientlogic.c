@@ -104,7 +104,7 @@ void client_logic_startup(void) {
     slider_requests[13].min_value = -5.0f;
     slider_requests[13].max_value =  5.0f;
     slider_requests[13].linked_value =
-        &particle_effects[13].gpustats_initial_random_add_1.xyz[0];
+        &particle_effects[0].gpustats_initial_random_add_1.xyz[0];
     
     strcpy_capped(slider_requests[14].label, 64, "Y:");
     slider_requests[14].min_value = -5.0f;
@@ -187,7 +187,7 @@ void client_logic_startup(void) {
     slider_requests[26].min_value = -5.0f;
     slider_requests[26].max_value =  5.0f;
     slider_requests[26].linked_value =
-        &particle_effects[26].gpustats_initial_random_add_2.xyz[0];
+        &particle_effects[0].gpustats_initial_random_add_2.xyz[0];
     
     strcpy_capped(slider_requests[27].label, 64, "Y:");
     slider_requests[27].min_value = -5.0f;
@@ -270,7 +270,7 @@ void client_logic_startup(void) {
     slider_requests[39].min_value = -5.0f;
     slider_requests[39].max_value =  5.0f;
     slider_requests[39].linked_value =
-        &particle_effects[39].gpustats_pertime_random_add_1.xyz[0];
+        &particle_effects[0].gpustats_pertime_random_add_1.xyz[0];
     
     strcpy_capped(slider_requests[40].label, 64, "Y:");
     slider_requests[40].min_value = -5.0f;
@@ -353,7 +353,7 @@ void client_logic_startup(void) {
     slider_requests[52].min_value = -5.0f;
     slider_requests[52].max_value =  5.0f;
     slider_requests[52].linked_value =
-        &particle_effects[52].gpustats_pertime_random_add_2.xyz[0];
+        &particle_effects[0].gpustats_pertime_random_add_2.xyz[0];
     
     strcpy_capped(slider_requests[53].label, 64, "Y:");
     slider_requests[53].min_value = -5.0f;
@@ -436,7 +436,7 @@ void client_logic_startup(void) {
     slider_requests[65].min_value = -5.0f;
     slider_requests[65].max_value =  5.0f;
     slider_requests[65].linked_value =
-        &particle_effects[65].gpustats_perexptime_add.xyz[0];
+        &particle_effects[0].gpustats_perexptime_add.xyz[0];
     
     strcpy_capped(slider_requests[66].label, 64, "Y:");
     slider_requests[66].min_value = -5.0f;
@@ -514,18 +514,6 @@ void client_logic_startup(void) {
     slider_requests[77].linked_value =
         &particle_effects[0].gpustats_perexptime_add.scale_factor;
     
-    //    strcpy_capped(slider_requests[77].label, 64, "Spawn/sec:");
-    //    slider_requests[77].min_value =     1.0f;
-    //    slider_requests[77].max_value =  1000.f;
-    //    slider_requests[77].linked_value =
-    //        &particle_effects[0].particle_spawns_per_second;
-    //
-    //    strcpy_capped(slider_requests[78].label, 64, "Durtn:");
-    //    slider_requests[78].min_value =     1.0f;
-    //    slider_requests[78].max_value =  5000000.f;
-    //    slider_requests[78].linked_value =
-    //        &particle_effects[0].particle_lifespan;
-    
     init_PNG_decoder(malloc_from_managed, free_from_managed, memset, memcpy);
     
     const char * fontfile = "font.png";
@@ -559,29 +547,35 @@ void client_logic_startup(void) {
     
     ParticleEffect particles;
     construct_particle_effect(&particles);
+    
+    particles.zpolygon_material.rgba[0] = 0.3f;
+    particles.zpolygon_material.rgba[1] = 0.3f;
+    particles.zpolygon_material.rgba[2] = 0.3f;
+    particles.zpolygon_material.rgba[3] = 1.0f;
+    
     particles.zpolygon_cpu.mesh_id              =      1; // hardcoded cube
     particles.zpolygon_gpu.xyz[0]               =   0.0f;
     particles.zpolygon_gpu.xyz[1]               =   0.0f;
     particles.zpolygon_gpu.xyz[2]               =   2.0f;
     particles.gpustats_pertime_add.xyz[0]       =  0.00f;
     particles.gpustats_pertime_add.xyz[1]       =  0.00f;
-    particles.gpustats_pertime_add.xyz[2]       = -0.10f;
-    particles.gpustats_pertime_add.xyz_angle[0] =  1.80f;
-    particles.gpustats_pertime_add.xyz_angle[1] =  1.80f;
-    particles.gpustats_pertime_add.xyz_angle[2] =  1.80f;
-    particles.gpustats_pertime_add.bonus_rgb[0] =  0.15f;
-    particles.gpustats_pertime_add.bonus_rgb[1] =  0.15f;
-    particles.gpustats_pertime_add.bonus_rgb[2] =  0.35f;
+    particles.gpustats_pertime_add.xyz[2]       =  0.00f;
+    particles.gpustats_pertime_add.xyz_angle[0] =  0.00f;
+    particles.gpustats_pertime_add.xyz_angle[1] =  0.00f;
+    particles.gpustats_pertime_add.xyz_angle[2] =  0.00f;
+    particles.gpustats_pertime_add.bonus_rgb[0] =  0.00f;
+    particles.gpustats_pertime_add.bonus_rgb[1] =  0.00f;
+    particles.gpustats_pertime_add.bonus_rgb[2] =  0.00f;
     
-    particles.gpustats_pertime_random_add_1.xyz[0] =  1.8f;
-    particles.gpustats_pertime_random_add_1.xyz[1] =  1.8f;
+    particles.gpustats_pertime_random_add_1.xyz[0] =  0.0f;
+    particles.gpustats_pertime_random_add_1.xyz[1] =  0.0f;
     particles.gpustats_pertime_random_add_1.xyz[2] =  0.0f;
-    particles.gpustats_pertime_random_add_2.xyz[0] = -1.8f;
-    particles.gpustats_pertime_random_add_2.xyz[1] = -1.8f;
-    particles.gpustats_pertime_random_add_2.xyz[2] = -0.0f;
+    particles.gpustats_pertime_random_add_2.xyz[0] =  0.0f;
+    particles.gpustats_pertime_random_add_2.xyz[1] =  0.0f;
+    particles.gpustats_pertime_random_add_2.xyz[2] =  0.0f;
     
-    particles.particle_spawns_per_second   =       5;
-    particles.particle_lifespan            = 5000000;
+    particles.particle_spawns_per_second   =    1000;
+    particles.particle_lifespan            = 2500000;
     particles.random_texturearray_i[0]     =      -1;
     particles.random_texture_i[0]          =      -1;
     particles.random_textures_size         =       1;
@@ -607,6 +601,75 @@ void client_logic_startup(void) {
     next_ui_element_settings->slider_pin_rgba[3]               =  1.0f;
     
     assert(particle_effects_size == 1);
+    
+    next_ui_element_settings->slider_background_rgba[0] = 0.2f;
+    next_ui_element_settings->slider_background_rgba[1] = 0.0f;
+    next_ui_element_settings->slider_background_rgba[2] = 0.0f;
+    request_int_slider(
+        /* const int32_t background_object_id: */
+            next_ui_element_object_id(),
+        /* const int32_t pin_object_id: */
+            next_ui_element_object_id(),
+        /* const float x_screenspace: */
+            window_globals->window_width -
+                next_ui_element_settings->slider_width_screenspace -
+                    (14 * 3),
+        /* const float y_screenspace: */
+            window_globals->window_height - (14 * 5) + (3 * 22),
+        /* const float z: */
+            0.75f,
+        /* const float min_value: */
+            1,
+        /* const float max_value: */
+            1000,
+        /* int32_t * linked_value: */
+            (int32_t *)&particle_effects[0].particle_spawns_per_second);
+    
+    next_ui_element_settings->slider_background_rgba[0] = 0.8f;
+    next_ui_element_settings->slider_background_rgba[1] = 0.8f;
+    next_ui_element_settings->slider_background_rgba[2] = 0.8f;
+    request_int_slider(
+        /* const int32_t background_object_id: */
+            next_ui_element_object_id(),
+        /* const int32_t pin_object_id: */
+            next_ui_element_object_id(),
+        /* const float x_screenspace: */
+            window_globals->window_width -
+                next_ui_element_settings->slider_width_screenspace -
+                    (14 * 3),
+        /* const float y_screenspace: */
+            window_globals->window_height - (14 * 3) + (3 * 22),
+        /* const float z: */
+            0.75f,
+        /* const float min_value: */
+            1,
+        /* const float max_value: */
+            5000000,
+        /* int32_t * linked_value: */
+            (int32_t *)&particle_effects[0].particle_lifespan);
+    
+    next_ui_element_settings->slider_background_rgba[0] = 0.8f;
+    next_ui_element_settings->slider_background_rgba[1] = 0.6f;
+    next_ui_element_settings->slider_background_rgba[2] = 0.6f;
+    request_int_slider(
+        /* const int32_t background_object_id: */
+            next_ui_element_object_id(),
+        /* const int32_t pin_object_id: */
+            next_ui_element_object_id(),
+        /* const float x_screenspace: */
+            window_globals->window_width -
+                next_ui_element_settings->slider_width_screenspace -
+                    (14 * 3),
+        /* const float y_screenspace: */
+            window_globals->window_height - (14 * 1) + (3 * 22),
+        /* const float z: */
+            0.75f,
+        /* const float min_value: */
+            1,
+        /* const float max_value: */
+            5000000,
+        /* int32_t * linked_value: */
+            (int32_t *)&particle_effects[0].pause_between_spawns);
     
     for (uint32_t i = 0; i < SLIDERS_SIZE; i++) {
         font_height   =   14;
@@ -652,7 +715,7 @@ void client_logic_startup(void) {
             
             request_label_renderable(
                 /* const int32_t with_object_id: */
-                    56,
+                    1000,
                 /* const char * text_to_draw: */
                     slider_titles[i / 13],
                 /* const float left_pixelspace: */
@@ -671,7 +734,7 @@ void client_logic_startup(void) {
                 /* const uint32_t ignore_camera: */
                     0);
             ScheduledAnimation * anim = next_scheduled_animation();
-            anim->affected_object_id = 56;
+            anim->affected_object_id = 1000;
             anim->final_z_angle_known = true;
             anim->final_z_angle = 1.58f;
             anim->duration_microseconds = 1;
@@ -879,7 +942,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
 {
     request_fps_counter(microseconds_elapsed);
     
-    delete_zpolygon_object(55);
+    delete_zpolygon_object(1001);
     
     for (uint32_t i = 0; i < SLIDERS_SIZE; i++) {
         char label_and_num[128];
@@ -892,7 +955,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
         
         request_label_renderable(
             /* const int32_t with_object_id: */
-                55,
+                1001,
             /* const char * text_to_draw: */
                 label_and_num,
             /* const float left_pixelspace: */
