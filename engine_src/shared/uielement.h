@@ -79,7 +79,7 @@ void request_button(
     const float x_screenspace,
     const float y_screenspace,
     const float z,
-    void (* funtion_pointer));
+    void (* funtion_pointer)(void));
 
 void unregister_ui_element_with_object_id(
     const int32_t with_object_id);

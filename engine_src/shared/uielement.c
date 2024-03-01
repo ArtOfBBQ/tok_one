@@ -2,6 +2,7 @@
 
 static int32_t currently_sliding_touchable_id = -1;
 static int32_t currently_sliding_object_id = -1;
+static int32_t currently_clicking_object_id = -1;
 
 typedef struct ActiveUIElement {
     int32_t touchable_id;
@@ -25,7 +26,7 @@ typedef struct ActiveUIElement {
         int32_t * slider_linked_int;
     };
     char interaction_sound_filename[128];
-    void (* clicked_funcptr);
+    void (* clicked_funcptr)(void);
 } ActiveUIElement;
 
 NextUIElementSettings * next_ui_element_settings = NULL;
@@ -50,17 +51,17 @@ void init_ui_elements(void) {
     next_ui_element_settings = (NextUIElementSettings *)
         malloc_from_unmanaged(sizeof(NextUIElementSettings));
     
-    next_ui_element_settings->slider_width_screenspace  = 100;
-    next_ui_element_settings->slider_height_screenspace =  40;
-    next_ui_element_settings->ignore_lighting = true;
-    next_ui_element_settings->ignore_camera = false;
+    next_ui_element_settings->slider_width_screenspace         = 100;
+    next_ui_element_settings->slider_height_screenspace        =  40;
+    next_ui_element_settings->ignore_lighting                  = true;
+    next_ui_element_settings->ignore_camera                    = false;
     next_ui_element_settings->button_background_texturearray_i = -1;
-    next_ui_element_settings->button_background_texture_i = -1;
+    next_ui_element_settings->button_background_texture_i      = -1;
     next_ui_element_settings->slider_background_texturearray_i = -1;
-    next_ui_element_settings->slider_background_texture_i = -1;
-    next_ui_element_settings->slider_pin_texturearray_i = -1;
-    next_ui_element_settings->slider_pin_texture_i = -1;
-    next_ui_element_settings->interaction_sound_filename[0] = '\0';
+    next_ui_element_settings->slider_background_texture_i      = -1;
+    next_ui_element_settings->slider_pin_texturearray_i        = -1;
+    next_ui_element_settings->slider_pin_texture_i             = -1;
+    next_ui_element_settings->interaction_sound_filename[0]    = '\0';
     
     active_ui_elements = (ActiveUIElement *)malloc_from_unmanaged(
         sizeof(ActiveUIElement) * ACTIVE_UI_ELEMENTS_SIZE);
@@ -85,14 +86,19 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                 i++)
             {
                 if (
-                    !active_ui_elements[i].deleted &&
-                    active_ui_elements[i].slideable &&
+                    active_ui_elements[i].deleted ||
                     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                        touchable_id ==
+                        touchable_id !=
                     active_ui_elements[i].touchable_id)
                 {
+                    continue;
+                }
+                
+                if (
+                    active_ui_elements[i].slideable)
+                {
                     currently_sliding_object_id =
-                        active_ui_elements[i].object_id_2;
+                    active_ui_elements[i].object_id_2;
                     currently_sliding_touchable_id =
                         active_ui_elements[i].touchable_id;
                     
@@ -112,22 +118,50 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                     ScheduledAnimation * bump_pin = next_scheduled_animation();
                     bump_pin->affected_object_id = currently_sliding_object_id;
                     bump_pin->final_scale_known = true;
-                    bump_pin->final_scale = 1.0f;
-                    bump_pin->remaining_microseconds = 200000;
+                    bump_pin->final_scale = 1.20f;
+                    bump_pin->duration_microseconds = 20;
                     commit_scheduled_animation(bump_pin);
                     
-                    if (
-                        active_ui_elements[i].
-                            interaction_sound_filename[0] != '\0')
-                    {
-                        // add_audio();
-                        // platform_play_sound_resource(
-                        //    active_ui_elements[i].interaction_sound_filename);
-                    }
-                    
-                    user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                        handled = true;
+                    bump_pin = next_scheduled_animation();
+                    bump_pin->affected_object_id = currently_sliding_object_id;
+                    bump_pin->final_scale_known = true;
+                    bump_pin->final_scale = 1.0f;
+                    bump_pin->wait_before_each_run = 20;
+                    bump_pin->duration_microseconds = 200000;
+                    commit_scheduled_animation(bump_pin);
                 }
+                
+                if (active_ui_elements[i].clickable) {
+                    currently_clicking_object_id =
+                        active_ui_elements[i].object_id;
+                    
+                    ScheduledAnimation * bump = next_scheduled_animation();
+                    bump->affected_object_id = currently_clicking_object_id;
+                    bump->final_scale_known = true;
+                    bump->final_scale = 1.25f;
+                    bump->duration_microseconds = 40;
+                    commit_scheduled_animation(bump);
+                    
+                    ScheduledAnimation * flatten = next_scheduled_animation();
+                    flatten->affected_object_id = currently_clicking_object_id;
+                    flatten->final_scale_known = true;
+                    flatten->final_scale = 1.0f;
+                    flatten->wait_before_each_run = 50;
+                    flatten->duration_microseconds = 250000;
+                    commit_scheduled_animation(flatten);
+                }
+                
+                if (
+                    active_ui_elements[i].
+                        interaction_sound_filename[0] != '\0')
+                {
+                    // add_audio();
+                    // platform_play_sound_resource(
+                    //    active_ui_elements[i].interaction_sound_filename);
+                }
+                
+                user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+                    handled = true;
             }
         }
     }
@@ -223,14 +257,41 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
     }
     
     if (
-        !user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].handled &&
-        currently_sliding_touchable_id >= 0 &&
-        currently_sliding_object_id >= 0)
+        !user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].handled)
     {
-        user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].handled = true;
+        if (
+            currently_sliding_touchable_id >= 0 &&
+            currently_sliding_object_id >= 0)
+        {
+            currently_sliding_object_id = -1;
+            currently_sliding_touchable_id = -1;
+        }
         
-        currently_sliding_object_id = -1;
-        currently_sliding_touchable_id = -1;
+        if (
+            currently_clicking_object_id >= 0)
+        {
+            int32_t ui_elem_i = -1;
+            for (
+                ui_elem_i = 0;
+                ui_elem_i < (int32_t)active_ui_elements_size;
+                ui_elem_i++)
+            {
+                if (
+                    !active_ui_elements[ui_elem_i].deleted &&
+                    active_ui_elements[ui_elem_i].clickable &&
+                    user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
+                        touchable_id ==
+                    active_ui_elements[ui_elem_i].touchable_id)
+                {
+                    active_ui_elements[ui_elem_i].clicked_funcptr();
+                    break;
+                }
+            }
+            
+            currently_sliding_object_id = -1;
+        }
+        
+        user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].handled = true;
     }
 }
 
@@ -460,7 +521,7 @@ void request_button(
     const float x_screenspace,
     const float y_screenspace,
     const float z,
-    void (* funtion_pointer))
+    void (* funtion_pointer)(void))
 {
     log_assert(next_ui_element_settings->button_width_screenspace  > 5.0f);
     log_assert(next_ui_element_settings->button_height_screenspace > 5.0f);
@@ -529,6 +590,7 @@ void request_button(
     next_element->clickable = true;
     next_element->clicked_funcptr = funtion_pointer;
     next_element->touchable_id = button_request.cpu_data->touchable_id;
+    next_element->object_id = button_object_id;
     next_element->deleted = false;
 }
 

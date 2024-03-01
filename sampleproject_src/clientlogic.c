@@ -12,7 +12,38 @@ static SliderRequest * slider_requests = NULL;
 static char slider_titles[(SLIDERS_SIZE / 13)+1][64];
 
 static void save_particle_stats(void) {
-    printf("save!\n");
+    
+    char writables_path[256];
+    writables_path[0] = '\0';
+    
+    platform_get_writables_path(
+        /* char * recipient: */
+            writables_path,
+        /* const uint32_t recipient_size: */
+            256);
+    
+    char dir_sep[4];
+    platform_get_directory_separator(dir_sep);
+    
+    char writables_filepath[256];
+    strcpy_capped(writables_filepath, 256, writables_path);
+    strcat_capped(writables_filepath, 256, dir_sep);
+    strcat_capped(writables_filepath, 256, "particlestats.txt");
+    
+    uint32_t good = 0;
+    char * output = "I'm a particle stat list!\nHere's some stats <3";
+    platform_write_file(
+        /* const char * filepath_destination: */
+            writables_filepath,
+        /* const char * output: */
+            output,
+        /* const uint32_t output_size: */
+            get_string_length(output),
+        /* uint32_t * good: */
+            &good);
+    assert(good);
+    
+    platform_open_folder_in_window_if_possible(writables_path);
 }
 
 void client_logic_startup(void) {
@@ -817,7 +848,7 @@ void client_logic_startup(void) {
             (next_ui_element_settings->button_height_screenspace / 2) + 10,
         /* const float z: */
             1.00f,
-        /* void (* funtion_pointer): */
+        /* void (* funtion_pointer)(void): */
             save_particle_stats);
 }
 

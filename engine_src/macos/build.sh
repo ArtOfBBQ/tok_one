@@ -1,17 +1,34 @@
 APP_NAME="hello3dgfx"
-PLATFORM="macos"
-COMPILER_ARGS="-I engine_src -I client_src -I sampleproject_src -I engine_src/shared -march=native -Wall -x objective-c -std=c99 -o0 -objC"
+
+COMPILER_ARGS="
+-I engine_src/shared_apple
+-I engine_src/macos
+-I engine_src/shared_linux_apple
+-I engine_src/shared_windows_macos
+-I engine_src/shared
+-I client_src
+-I sampleproject_src
+-Wall -x objective-c -std=c99 -o0 -objC"
+
+if [[ $1 = "DEBUG" ]]; then
+COMPILER_ARGS_EXTRA="-march=native -g"
+else
+    if [[ $1 = "RELEASE" ]]; then
+    COMPILER_ARGS_EXTRA="-march=native"
+    fi
+fi
 
 MAC_FRAMEWORKS="
     -framework AppKit 
     -framework MetalKit 
     -framework Metal
-    -framework AVFoundation"
+    -framework AudioToolbox"
 
 TOK_ONE_SOURCEFILES="
-engine_src/$PLATFORM/main.m
-engine_src/$PLATFORM/macos_platform_layer.m
+engine_src/macos/main.m
+engine_src/macos/macos_platform_layer.m
 engine_src/shared_apple/gpu.m
+engine_src/shared_apple/apple_audio.m
 engine_src/shared_apple/apple_platform_layer.m
 engine_src/shared_windows_macos/winmac_platform_layer.c
 engine_src/shared_linux_apple/linux_apple_platform_layer.c
@@ -41,26 +58,24 @@ engine_src/shared/terminal.c
 engine_src/shared/particle.c
 engine_src/shared/triangle.c
 engine_src/shared/uielement.c
-engine_src/shared/objectid.c"
-
-echo "Building $APP_NAME for $PLATFORM..."
+engine_src/shared/objectid.c
+engine_src/shared/audio.c
+engine_src/shared/wav.c"
 
 echo "create build folder..>"
-sudo mkdir -p build/$PLATFORM/$APP_NAME.app
+sudo mkdir -p build/macos/$APP_NAME.app
 
 echo "deleting previous build..."
-sudo rm -r -f build/$PLATFORM/$APP_NAME.app/*.txt
-sudo rm -r -f build/$PLATFORM/$APP_NAME.app/$APP_NAME
-sudo rm -r -f build/$PLATFORM/$APP_NAME.app/$APP_NAME.dsym
-
+sudo rm -r -f build/macos/$APP_NAME.app/*.txt
+sudo rm -r -f build/macos/$APP_NAME.app/$APP_NAME sudo rm -r -f build/macos/$APP_NAME.app/$APP_NAME.dsym
 ############
-if test -f "build/$PLATFORM/$APP_NAME.app/shaders.metallib"; then
+if test -f "build/macos/$APP_NAME.app/shaders.metallib"; then
     echo "shaders.metallib already in build folder, skip metal compilation...."
 else
     echo "shaders.metallib not in build folder, compiling new metal library..."
     sudo xcrun -sdk macosx metal -gline-tables-only -MO -g -c "engine_src/shared_apple/Shaders.metal" -o resources/Shaders.air
     sudo xcrun -sdk macosx metal -c "engine_src/shared_apple/shaders.metal" -o Shaders.air
-    sudo xcrun -sdk macosx metallib resources/Shaders.air -o build/$PLATFORM/$APP_NAME.app/Shaders.metallib
+    sudo xcrun -sdk macosx metallib resources/Shaders.air -o build/macos/$APP_NAME.app/Shaders.metallib
 fi
 ############
 
@@ -72,11 +87,11 @@ for extension in png obj dat
 do
     for f in *.$extension;
     do
-    if test -f "../build/$PLATFORM/$APP_NAME.app/$f"; then
+    if test -f "../build/macos/$APP_NAME.app/$f"; then
         echo "$f was already in build folder...."
     else
         echo "copying resource file $f to build folder..."
-        sudo cp -r -f $f ../build/$PLATFORM/$APP_NAME.app/$f
+        sudo cp -r -f $f ../build/macos/$APP_NAME.app/$f
     fi
     done
 done
@@ -85,11 +100,11 @@ popd > /dev/null
 
 echo "Compiling & linking $APP_NAME..."
 if
-sudo gcc $COMPILER_ARGS $MAC_FRAMEWORKS $TOK_ONE_SOURCEFILES -o build/$PLATFORM/$APP_NAME.app/$APP_NAME
+sudo gcc $COMPILER_ARGS $COMPILER_ARGS_EXTRA $MAC_FRAMEWORKS $TOK_ONE_SOURCEFILES -o build/macos/$APP_NAME.app/$APP_NAME
 then
 echo "compilation succesful."
 read -p "enter to run app, ctrl-c to quit"
-open build/$PLATFORM/$APP_NAME.app
+open build/macos/$APP_NAME.app
 else
 echo "compilation failed"
 exit 0

@@ -60,7 +60,7 @@ void platform_open_folder_in_window_if_possible(
     }
     
     NSString * folderpath_ns = [NSString stringWithUTF8String:folderpath];
-    NSURL *folderURL = [NSURL URLWithString:folderpath_ns];
+    NSURL * folderURL = [NSURL fileURLWithPath: folderpath_ns];
     [[NSWorkspace sharedWorkspace] openURL: folderURL];
 }
 
