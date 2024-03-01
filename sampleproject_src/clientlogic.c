@@ -18,7 +18,7 @@ typedef struct SliderTitle {
     float unoffset_y_screenspace;
 } SliderTitle;
 
-#define SLIDERS_SIZE 78
+#define SLIDERS_SIZE 91
 #define SLIDERTITLES_SIZE (SLIDERS_SIZE / 13)+1
 static SliderRequest * slider_requests = NULL;
 static SliderTitle slider_titles[SLIDERTITLES_SIZE];
@@ -43,8 +43,112 @@ static void save_particle_stats(void) {
     strcat_capped(writables_filepath, 256, dir_sep);
     strcat_capped(writables_filepath, 256, "particlestats.txt");
     
+    if (platform_file_exists(writables_filepath)) {
+        platform_delete_file(writables_filepath);
+    }
+    
     uint32_t good = 0;
-    char * output = "I'm a particle stat list!\nHere's some stats <3";
+    
+    char * output = malloc_from_managed(1000000);
+    
+    output[0] = '\0';
+    
+    /*
+    Reminder: Zpolygon struct layout
+    
+    float        xyz[3];
+    float        xyz_angle[3];
+    float        bonus_rgb[3];
+    float        xyz_multiplier[3]; // determines width/height/depth
+    float        xyz_offset[3];
+    float        scale_factor;
+    unsigned int ignore_lighting;
+    unsigned int ignore_camera;
+    float        simd_padding[6];
+    */
+    
+    typedef struct DumpableStat {
+        char name[128];
+        GPUPolygon * source;
+    } DumpableStat;
+    
+    DumpableStat * dumpable_stats = malloc_from_managed(
+        sizeof(DumpableStat) * 10);
+    
+    dumpable_stats[0].source = &particle_effects[0].zpolygon_gpu;
+    strcpy_capped(dumpable_stats[0].name, 128, "zpolygon_gpu");
+    dumpable_stats[1].source = &particle_effects[0].gpustats_initial_random_add_1;
+    strcpy_capped(dumpable_stats[1].name, 128, "gpustats_initial_random_add_1");
+    dumpable_stats[2].source = &particle_effects[0].gpustats_initial_random_add_2;
+    strcpy_capped(dumpable_stats[2].name, 128, "gpustats_initial_random_add_2");
+    dumpable_stats[3].source = &particle_effects[0].gpustats_pertime_random_add_1;
+    strcpy_capped(dumpable_stats[3].name, 128, "gpustats_pertime_random_add_1");
+    dumpable_stats[4].source = &particle_effects[0].gpustats_pertime_random_add_2;
+    strcpy_capped(dumpable_stats[4].name, 128, "gpustats_pertime_random_add_2");
+    dumpable_stats[5].source = &particle_effects[0].gpustats_pertime_add;
+    strcpy_capped(dumpable_stats[5].name, 128, "gpustats_pertime_add");
+    dumpable_stats[6].source = &particle_effects[0].gpustats_perexptime_add;
+    strcpy_capped(dumpable_stats[6].name, 128, "gpustats_perexptime_add");
+    
+    for (uint32_t stat_i = 0; stat_i < 7; stat_i++) {
+        for (uint32_t m = 0; m < 3; m++) {
+            strcat_capped(output, 1000000, "particle->");
+            strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
+            strcat_capped(output, 1000000, ".xyz[");
+            strcat_uint_capped(output, 1000000, m);
+            strcat_capped(output, 1000000, "] = ");
+            strcat_float_capped(
+                output, 1000000, dumpable_stats[stat_i].source->xyz[m]);
+            strcat_capped(output, 1000000, "\n");
+        }
+        for (uint32_t m = 0; m < 3; m++) {
+            strcat_capped(output, 1000000, "particle->");
+            strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
+            strcat_capped(output, 1000000, ".xyz_angle[");
+            strcat_uint_capped(output, 1000000, m);
+            strcat_capped(output, 1000000, "] = ");
+            strcat_float_capped(
+                output, 1000000, dumpable_stats[stat_i].source->xyz_angle[m]);
+            strcat_capped(output, 1000000, "\n");
+        }
+        for (uint32_t m = 0; m < 3; m++) {
+            strcat_capped(output, 1000000, "particle->");
+            strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
+            strcat_capped(output, 1000000, ".bonus_rgb[");
+            strcat_uint_capped(output, 1000000, m);
+            strcat_capped(output, 1000000, "] = ");
+            strcat_float_capped(
+                output, 1000000, dumpable_stats[stat_i].source->bonus_rgb[m]);
+            strcat_capped(output, 1000000, "\n");
+        }
+        for (uint32_t m = 0; m < 3; m++) {
+            strcat_capped(output, 1000000, "particle->");
+            strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
+            strcat_capped(output, 1000000, ".xyz_multiplier[");
+            strcat_uint_capped(output, 1000000, m);
+            strcat_capped(output, 1000000, "] = ");
+            strcat_float_capped(
+                output, 1000000, dumpable_stats[stat_i].source->xyz_multiplier[m]);
+            strcat_capped(output, 1000000, "\n");
+        }
+        for (uint32_t m = 0; m < 3; m++) {
+            strcat_capped(output, 1000000, "particle->");
+            strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
+            strcat_capped(output, 1000000, ".xyz_offset[");
+            strcat_uint_capped(output, 1000000, m);
+            strcat_capped(output, 1000000, "] = ");
+            strcat_float_capped(
+                output, 1000000, dumpable_stats[stat_i].source->xyz_offset[m]);
+            strcat_capped(output, 1000000, "\n");
+        }
+        strcat_capped(output, 1000000, "particle->");
+        strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
+        strcat_capped(output, 1000000, ".scale_factor = ");
+        strcat_float_capped(
+            output, 1000000, particle_effects[stat_i].zpolygon_gpu.scale_factor);
+        strcat_capped(output, 1000000, "\n");
+    }
+    
     platform_write_file(
         /* const char * filepath_destination: */
             writables_filepath,
@@ -57,6 +161,7 @@ static void save_particle_stats(void) {
     assert(good);
     
     platform_open_folder_in_window_if_possible(writables_path);
+    free_from_managed(output);
 }
 
 static float particle_y_offset = 0;
@@ -571,6 +676,89 @@ void client_logic_startup(void) {
     slider_requests[77].linked_float =
         &particle_effects[0].gpustats_perexptime_add.scale_factor;
     
+    strcpy_capped(slider_titles[6].title, 64, "Base Mesh");
+    strcpy_capped(slider_requests[78].label, 64, "X:");
+    slider_requests[78].min_float_value = -5.0f;
+    slider_requests[78].max_float_value =  5.0f;
+    slider_requests[78].linked_float =
+        &particle_effects[0].zpolygon_gpu.xyz[0];
+    
+    strcpy_capped(slider_requests[79].label, 64, "Y:");
+    slider_requests[79].min_float_value = -5.0f;
+    slider_requests[79].max_float_value =  5.0f;
+    slider_requests[79].linked_float =
+        &particle_effects[0].zpolygon_gpu.xyz[1];
+    
+    strcpy_capped(slider_requests[80].label, 64, "Z:");
+    slider_requests[80].min_float_value = -2.5f;
+    slider_requests[80].max_float_value =  2.5f;
+    slider_requests[80].linked_float =
+        &particle_effects[0].zpolygon_gpu.xyz[2];
+    
+    strcpy_capped(slider_requests[81].label, 64, "X rot:");
+    slider_requests[81].min_float_value = -2.7f;
+    slider_requests[81].max_float_value =  2.7f;
+    slider_requests[81].linked_float =
+        &particle_effects[0].zpolygon_gpu.xyz_angle[0];
+    
+    strcpy_capped(slider_requests[82].label, 64, "Y rot:");
+    slider_requests[82].min_float_value = -2.7f;
+    slider_requests[82].max_float_value =  2.7f;
+    slider_requests[82].linked_float =
+        &particle_effects[0].zpolygon_gpu.xyz_angle[1];
+    
+    strcpy_capped(slider_requests[83].label, 64, "Z rot:");
+    slider_requests[83].min_float_value = -2.7f;
+    slider_requests[83].max_float_value =  2.7f;
+    slider_requests[83].linked_float =
+        &particle_effects[0].zpolygon_gpu.xyz_angle[2];
+    
+    strcpy_capped(slider_requests[84].label, 64, "+R:");
+    slider_requests[84].min_float_value = -2.0f;
+    slider_requests[84].max_float_value =  2.0f;
+    slider_requests[84].linked_float =
+        &particle_effects[0].zpolygon_gpu.bonus_rgb[0];
+    
+    strcpy_capped(slider_requests[85].label, 64, "+G:");
+    slider_requests[85].min_float_value = -2.0f;
+    slider_requests[85].max_float_value =  2.0f;
+    slider_requests[85].linked_float =
+        &particle_effects[0].zpolygon_gpu.bonus_rgb[1];
+    
+    strcpy_capped(slider_requests[86].label, 64, "+B:");
+    slider_requests[86].min_float_value = -2.0f;
+    slider_requests[86].max_float_value =  2.0f;
+    slider_requests[86].linked_float =
+        &particle_effects[0].zpolygon_gpu.bonus_rgb[2];
+    
+    // xyz_multiplier
+    strcpy_capped(slider_requests[87].label, 64, "+Width:");
+    slider_requests[87].min_float_value = -0.25f;
+    slider_requests[87].max_float_value =  0.25f;
+    slider_requests[87].linked_float =
+        &particle_effects[0].zpolygon_gpu.xyz_multiplier[0];
+    
+    // xyz_multiplier
+    strcpy_capped(slider_requests[88].label, 64, "+Height:");
+    slider_requests[88].min_float_value = -0.25f;
+    slider_requests[88].max_float_value =  0.25f;
+    slider_requests[88].linked_float =
+        &particle_effects[0].zpolygon_gpu.xyz_multiplier[1];
+    
+    // xyz_multiplier
+    strcpy_capped(slider_requests[89].label, 64, "+Depth:");
+    slider_requests[89].min_float_value = -0.25f;
+    slider_requests[89].max_float_value =  0.25f;
+    slider_requests[89].linked_float =
+        &particle_effects[0].zpolygon_gpu.xyz_multiplier[2];
+    
+    // scale_factor
+    strcpy_capped(slider_requests[90].label, 64, "+Scale:");
+    slider_requests[90].min_float_value = -0.50f;
+    slider_requests[90].max_float_value =  0.50f;
+    slider_requests[90].linked_float =
+        &particle_effects[0].zpolygon_gpu.scale_factor;
+    
     init_PNG_decoder(malloc_from_managed, free_from_managed, memset, memcpy);
     
     const char * fontfile = "font.png";
@@ -603,7 +791,7 @@ void client_logic_startup(void) {
     commit_zlight(light);
     
     for (uint32_t i = 0; i < SLIDERS_SIZE; i++) {
-        if (i % 13 == 0 && i < 75) {
+        if (i % 13 == 0 && i < 92) {
             slider_titles[i / 13].object_id = next_nonui_object_id();
         }
         
@@ -831,7 +1019,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
         for (uint32_t i = 0; i < SLIDERS_SIZE; i++) {
             font_height = 14;
             
-            if (i % 13 == 0 && i < 75) {
+            if (i % 13 == 0 && i < 91) {
                 slider_titles[i / 13].unoffset_y_screenspace =
                     window_globals->window_height -
                         (font_height * 2.0f) -
@@ -962,7 +1150,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
                         slider_requests[i].linked_int);
             }
             
-            if (i % 13 == 0 && i < 78) {
+            if (i % 13 == 0 && i < 91) {
                 float prev_font_height = 14;
                 font_height = 20;
                 font_color[0] = next_ui_element_settings->slider_background_rgba[0];
@@ -1002,7 +1190,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
         // save button;
         next_ui_element_settings->ignore_camera = true;
         next_ui_element_settings->ignore_lighting = true;
-        next_ui_element_settings->button_width_screenspace = 75.0f;
+        next_ui_element_settings->button_width_screenspace = 115.0f;
         next_ui_element_settings->button_height_screenspace = 40.0f;
         next_ui_element_settings->button_background_rgba[0] = 0.2f;
         next_ui_element_settings->button_background_rgba[1] = 0.3f;
@@ -1014,7 +1202,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
             /* const int32_t button_object_id: */
                 next_ui_element_object_id(),
             /* const char * label: */
-                "Save",
+                "Save to .txt",
             /* const float x_screenspace: */
                 (next_ui_element_settings->button_width_screenspace / 2) + 140,
             /* const float y_screenspace: */

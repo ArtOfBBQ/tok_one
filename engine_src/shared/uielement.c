@@ -581,9 +581,7 @@ void request_button(
         /* const float z: */
             z,
         /* const float max_width: */
-            screenspace_width_to_width(
-                next_ui_element_settings->button_width_screenspace,
-                z),
+            next_ui_element_settings->button_width_screenspace,
         /* const uint32_t ignore_camera: */
             next_ui_element_settings->ignore_camera);
     
