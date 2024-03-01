@@ -194,6 +194,7 @@ void shared_gameloop_update(
     uint64_t elapsed = time - previous_time;
     
     if (!application_running) {
+        delete_all_ui_elements();
         zpolygons_to_render->size = 0;
         frame_data->camera->x = 0.0f;
         frame_data->camera->y = 0.0f;

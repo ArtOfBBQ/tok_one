@@ -12,7 +12,7 @@ of the engine for your specific app.
 // 50 mb ->                     50...000
 #define MANAGED_MEMORY_SIZE     50000000
 
-#define APPLICATION_NAME "TOK ONE"
+#define APPLICATION_NAME "Particlez"
 
 // These startup window settings have no effect on tablets/smartphones
 #define INITIAL_WINDOW_HEIGHT    800

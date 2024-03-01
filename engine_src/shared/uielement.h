@@ -84,6 +84,8 @@ void request_button(
 void unregister_ui_element_with_object_id(
     const int32_t with_object_id);
 
+void delete_all_ui_elements(void);
+
 #ifdef __cplusplus
 }
 #endif

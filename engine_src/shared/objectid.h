@@ -26,6 +26,7 @@ int32_t next_ui_element_object_id(void);
 int32_t next_nonui_object_id(void);
 
 int32_t next_ui_element_touchable_id(void);
+void clear_ui_element_touchable_ids(void);
 int32_t next_nonui_touchable_id(void);
 
 #ifdef __cplusplus

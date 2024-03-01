@@ -42,6 +42,7 @@ static ActiveUIElement * next_active_ui_element(void) {
         }
     }
     
+    log_assert(active_ui_elements_size < ACTIVE_UI_ELEMENTS_SIZE);
     active_ui_elements[active_ui_elements_size].deleted = true;
     active_ui_elements_size += 1;
     return &active_ui_elements[active_ui_elements_size - 1];
@@ -604,3 +605,10 @@ void unregister_ui_element_with_object_id(
     }
 }
 
+void delete_all_ui_elements(void) {
+    for (uint32_t i = 0; i < active_ui_elements_size; i++) {
+        active_ui_elements[i].deleted = false;
+    }
+    clear_ui_element_touchable_ids();
+    active_ui_elements_size = 0;
+}
