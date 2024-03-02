@@ -27,6 +27,7 @@ typedef struct ActiveUIElement {
     };
     char interaction_sound_filename[128];
     void (* clicked_funcptr)(void);
+    void (* slid_funcptr)(void);
 } ActiveUIElement;
 
 NextUIElementSettings * next_ui_element_settings = NULL;
@@ -38,6 +39,7 @@ ActiveUIElement * active_ui_elements = NULL;
 static ActiveUIElement * next_active_ui_element(void) {
     for (uint32_t i = 0; i < active_ui_elements_size; i++) {
         if (active_ui_elements[i].deleted) {
+            memset(&active_ui_elements[i], 0, sizeof(ActiveUIElement));
             return &active_ui_elements[i];
         }
     }
@@ -45,12 +47,14 @@ static ActiveUIElement * next_active_ui_element(void) {
     log_assert(active_ui_elements_size < ACTIVE_UI_ELEMENTS_SIZE);
     active_ui_elements[active_ui_elements_size].deleted = true;
     active_ui_elements_size += 1;
+    memset(&active_ui_elements[active_ui_elements_size - 1], 0, sizeof(ActiveUIElement));
     return &active_ui_elements[active_ui_elements_size - 1];
 }
 
 void init_ui_elements(void) {
     next_ui_element_settings = (NextUIElementSettings *)
         malloc_from_unmanaged(sizeof(NextUIElementSettings));
+    memset(next_ui_element_settings, 0, sizeof(NextUIElementSettings));
     
     next_ui_element_settings->slider_width_screenspace         = 100;
     next_ui_element_settings->slider_height_screenspace        =  40;
@@ -62,9 +66,12 @@ void init_ui_elements(void) {
     next_ui_element_settings->slider_background_texture_i      = -1;
     next_ui_element_settings->slider_pin_texturearray_i        = -1;
     next_ui_element_settings->slider_pin_texture_i             = -1;
-    next_ui_element_settings->interaction_sound_filename[0]    = '\0';
     
     active_ui_elements = (ActiveUIElement *)malloc_from_unmanaged(
+        sizeof(ActiveUIElement) * ACTIVE_UI_ELEMENTS_SIZE);
+    memset(
+        active_ui_elements,
+        0,
         sizeof(ActiveUIElement) * ACTIVE_UI_ELEMENTS_SIZE);
 }
 
@@ -252,6 +259,10 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                                     active_ui_elements[ui_elem_i].
                                         slider_min_int) * slider_pct);
                     }
+                    
+                    if (active_ui_elements[ui_elem_i].slid_funcptr != NULL) {
+                        active_ui_elements[ui_elem_i].slid_funcptr();
+                    }
                 }
             }
         }
@@ -407,7 +418,9 @@ static void request_slider_shared(
     next_active_element->object_id = background_object_id;
     next_active_element->object_id_2 = pin_object_id;
     next_active_element->touchable_id = slider_pin.cpu_data->touchable_id;
-
+    next_active_element->slid_funcptr =
+        next_ui_element_settings->slider_slid_funcptr;
+    
     next_active_element->slider_width =
         screenspace_width_to_width(
             next_ui_element_settings->slider_width_screenspace,

@@ -18,12 +18,16 @@ typedef struct SliderTitle {
     float unoffset_y_screenspace;
 } SliderTitle;
 
-#define SLIDERS_SIZE 91
+#define SLIDERS_SIZE 98
 #define SLIDERTITLES_SIZE (SLIDERS_SIZE / 13)+1
 static SliderRequest * slider_requests = NULL;
 static SliderTitle slider_titles[SLIDERTITLES_SIZE];
-static bool32_t update_slider_positions = true;
+static bool32_t update_slider_positions_and_label_vals = true;
 static bool32_t full_redraw_sliders = false;
+
+static void slider_callback_request_update(void) {
+    update_slider_positions_and_label_vals = true;
+}
 
 static void save_particle_stats(void) {
     char writables_path[256];
@@ -145,7 +149,33 @@ static void save_particle_stats(void) {
         strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
         strcat_capped(output, 1000000, ".scale_factor = ");
         strcat_float_capped(
-            output, 1000000, particle_effects[stat_i].zpolygon_gpu.scale_factor);
+            output, 1000000,dumpable_stats[stat_i].source->scale_factor);
+        strcat_capped(output, 1000000, "\n");
+    }
+    
+    strcat_capped(output, 1000000, "particle->lifespan = ");
+    strcat_uint_capped(
+        output, 1000000, (uint32_t)particle_effects[0].particle_lifespan);
+    strcat_capped(output, 1000000, "\n");
+    
+    strcat_capped(output, 1000000, "particle->particle_spawns_per_second = ");
+    strcat_uint_capped(
+        output, 1000000, particle_effects[0].particle_spawns_per_second);
+    strcat_capped(output, 1000000, "\n");
+    
+    strcat_capped(output, 1000000, "particle->pause_between_spawns = ");
+    strcat_uint_capped(
+        output, 1000000, (uint32_t)particle_effects[0].pause_between_spawns);
+    strcat_capped(output, 1000000, "\n");
+    
+    for (uint32_t m = 0; m < 4; m++) {
+        strcat_capped(output, 1000000, "particle->zpolygon_material.rgba[");
+        strcat_uint_capped(output, 1000000, m);
+        strcat_capped(output, 1000000, "] = ");
+        strcat_float_capped(
+            output,
+            1000000,
+            (uint32_t)particle_effects[0].zpolygon_material.rgba[m]);
         strcat_capped(output, 1000000, "\n");
     }
     
@@ -759,6 +789,50 @@ void client_logic_startup(void) {
     slider_requests[90].linked_float =
         &particle_effects[0].zpolygon_gpu.scale_factor;
     
+    // scale_factor
+    strcpy_capped(slider_requests[91].label, 64, "Lifespan: ");
+    slider_requests[91].min_int_value =        1;
+    slider_requests[91].max_int_value =  4500000;
+    slider_requests[91].linked_int    =
+        (int32_t *)&particle_effects[0].particle_lifespan;
+    
+    strcpy_capped(slider_requests[92].label, 64, "Spawns/sec: ");
+    slider_requests[92].min_int_value =        1;
+    slider_requests[92].max_int_value =     3000;
+    slider_requests[92].linked_int    =
+        (int32_t *)&particle_effects[0].particle_spawns_per_second;
+    
+    strcpy_capped(slider_requests[93].label, 64, "Pause: ");
+    slider_requests[93].min_int_value =        1;
+    slider_requests[93].max_int_value =  9000000;
+    slider_requests[93].linked_int    =
+        (int32_t *)&particle_effects[0].pause_between_spawns;
+    
+    // Materials
+    strcpy_capped(slider_requests[94].label, 64, "Material R:");
+    slider_requests[94].min_float_value =  0.0f;
+    slider_requests[94].max_float_value =  1.0f;
+    slider_requests[94].linked_float =
+        &particle_effects[0].zpolygon_material.rgba[0];
+    
+    strcpy_capped(slider_requests[95].label, 64, "Material G:");
+    slider_requests[95].min_float_value =  0.0f;
+    slider_requests[95].max_float_value =  1.0f;
+    slider_requests[95].linked_float =
+        &particle_effects[0].zpolygon_material.rgba[1];
+    
+    strcpy_capped(slider_requests[96].label, 64, "Material B:");
+    slider_requests[96].min_float_value =  0.0f;
+    slider_requests[96].max_float_value =  1.0f;
+    slider_requests[96].linked_float =
+        &particle_effects[0].zpolygon_material.rgba[2];
+    
+    strcpy_capped(slider_requests[97].label, 64, "Material A:");
+    slider_requests[97].min_float_value =  0.0f;
+    slider_requests[97].max_float_value =  1.0f;
+    slider_requests[97].linked_float =
+        &particle_effects[0].zpolygon_material.rgba[3];
+    
     init_PNG_decoder(malloc_from_managed, free_from_managed, memset, memcpy);
     
     const char * fontfile = "font.png";
@@ -846,13 +920,13 @@ static void client_handle_keypresses(
     if (keypress_map[TOK_KEY_OPENSQUAREBRACKET] == true)
     {
         particle_y_offset -= 15.0f;
-        update_slider_positions = true;
+        update_slider_positions_and_label_vals = true;
     }
     
     if (keypress_map[TOK_KEY_CLOSESQUAREBRACKET] == true)
     {
         particle_y_offset += 15.0f;
-        update_slider_positions = true;
+        update_slider_positions_and_label_vals = true;
     }
     
     if (keypress_map[TOK_KEY_LEFTARROW] == true)
@@ -1016,9 +1090,8 @@ void client_logic_update(uint64_t microseconds_elapsed)
     client_handle_keypresses(microseconds_elapsed);
     
     if (full_redraw_sliders) {
+        font_height = 14;
         for (uint32_t i = 0; i < SLIDERS_SIZE; i++) {
-            font_height = 14;
-            
             if (i % 13 == 0 && i < 91) {
                 slider_titles[i / 13].unoffset_y_screenspace =
                     window_globals->window_height -
@@ -1085,6 +1158,9 @@ void client_logic_update(uint64_t microseconds_elapsed)
         next_ui_element_settings->ignore_lighting                  = true;
         assert(particle_effects_size == 1);
         
+        next_ui_element_settings->slider_slid_funcptr =
+            slider_callback_request_update;
+        
         for (uint32_t i = 0; i < SLIDERS_SIZE; i++) {
             font_height   =   14;
             font_color[0] = 0.5f;
@@ -1098,7 +1174,15 @@ void client_logic_update(uint64_t microseconds_elapsed)
                 (i / 26) * 0.30f;
             next_ui_element_settings->slider_background_rgba[2] =
                 1.0f - ((i / 13) * 0.15f);
-            // next_ui_element_settings->interacted_funcptr = request_slider_update;
+            
+            float slider_x_screenspace = window_globals->window_width -
+                next_ui_element_settings->slider_width_screenspace -
+                    (font_height * 3);
+            
+            float slider_y_screenspace = window_globals->window_height -
+                (font_height * 2) -
+                (i * 22) +
+                particle_y_offset;
             
             if (slider_requests[i].linked_float != NULL) {
                 request_float_slider(
@@ -1107,14 +1191,9 @@ void client_logic_update(uint64_t microseconds_elapsed)
                     /* const int32_t pin_object_id: */
                         slider_requests[i].pin_object_id,
                     /* const float x_screenspace: */
-                        window_globals->window_width -
-                            next_ui_element_settings->slider_width_screenspace -
-                                (font_height * 3),
+                        slider_x_screenspace,
                     /* const float y_screenspace: */
-                        window_globals->window_height -
-                            (font_height * 2) -
-                            (i * 22) +
-                            particle_y_offset,
+                        slider_y_screenspace,
                     /* const float z: */
                         0.75f,
                     /* const float min_value: */
@@ -1132,19 +1211,14 @@ void client_logic_update(uint64_t microseconds_elapsed)
                     /* const int32_t pin_object_id: */
                         slider_requests[i].pin_object_id,
                     /* const float x_screenspace: */
-                        window_globals->window_width -
-                            next_ui_element_settings->slider_width_screenspace -
-                                (font_height * 3),
+                        slider_x_screenspace,
                     /* const float y_screenspace: */
-                        window_globals->window_height -
-                            (font_height * 2) -
-                            (i * 22) +
-                            particle_y_offset,
+                        slider_y_screenspace,
                     /* const float z: */
                         0.75f,
-                    /* const float min_value: */
+                    /* const int32_t min_value: */
                         slider_requests[i].min_int_value,
-                    /* const float max_value: */
+                    /* const int32_t max_value: */
                         slider_requests[i].max_int_value,
                     /* float * linked_value: */
                         slider_requests[i].linked_int);
@@ -1187,7 +1261,10 @@ void client_logic_update(uint64_t microseconds_elapsed)
             }
         }
         
+        next_ui_element_settings->slider_slid_funcptr = NULL;
+        
         // save button;
+        font_height = 14;
         next_ui_element_settings->ignore_camera = true;
         next_ui_element_settings->ignore_lighting = true;
         next_ui_element_settings->button_width_screenspace = 115.0f;
@@ -1215,10 +1292,10 @@ void client_logic_update(uint64_t microseconds_elapsed)
         full_redraw_sliders = false;
     }
     
-    if (!update_slider_positions) { return; }
+    if (!update_slider_positions_and_label_vals) { return; }
     
     delete_zpolygon_object(slider_labels_object_id);
-    update_slider_positions = false;
+    update_slider_positions_and_label_vals = false;
     next_ui_element_settings->ignore_camera = true;
     next_ui_element_settings->ignore_lighting = true;
     font_height = 14;
@@ -1264,10 +1341,19 @@ void client_logic_update(uint64_t microseconds_elapsed)
         char label_and_num[128];
         strcpy_capped(label_and_num, 128, slider_requests[i].label);
         strcat_capped(label_and_num, 128, " ");
-        strcat_float_capped(
+        
+        if (slider_requests[i].linked_float != NULL) {
+            strcat_float_capped(
             label_and_num,
             128,
             *slider_requests[i].linked_float);
+        } else {
+            log_assert(slider_requests[i].linked_int != NULL);
+            strcat_int_capped(
+            label_and_num,
+            128,
+            *slider_requests[i].linked_int);
+        }
         
         request_label_renderable(
             /* const int32_t with_object_id: */
@@ -1318,7 +1404,7 @@ void client_logic_window_resize(
 {
     // You're notified that the window is resized!
     full_redraw_sliders = true;
-    update_slider_positions = true;
+    update_slider_positions_and_label_vals = true;
 }
 
 void client_logic_shutdown(void) {
