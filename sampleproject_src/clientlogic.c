@@ -103,7 +103,7 @@ static void save_particle_stats(void) {
             strcat_capped(output, 1000000, "] = ");
             strcat_float_capped(
                 output, 1000000, dumpable_stats[stat_i].source->xyz[m]);
-            strcat_capped(output, 1000000, "\n");
+            strcat_capped(output, 1000000, ";\n");
         }
         for (uint32_t m = 0; m < 3; m++) {
             strcat_capped(output, 1000000, "particle->");
@@ -113,7 +113,7 @@ static void save_particle_stats(void) {
             strcat_capped(output, 1000000, "] = ");
             strcat_float_capped(
                 output, 1000000, dumpable_stats[stat_i].source->xyz_angle[m]);
-            strcat_capped(output, 1000000, "\n");
+            strcat_capped(output, 1000000, ";\n");
         }
         for (uint32_t m = 0; m < 3; m++) {
             strcat_capped(output, 1000000, "particle->");
@@ -123,7 +123,7 @@ static void save_particle_stats(void) {
             strcat_capped(output, 1000000, "] = ");
             strcat_float_capped(
                 output, 1000000, dumpable_stats[stat_i].source->bonus_rgb[m]);
-            strcat_capped(output, 1000000, "\n");
+            strcat_capped(output, 1000000, ";\n");
         }
         for (uint32_t m = 0; m < 3; m++) {
             strcat_capped(output, 1000000, "particle->");
@@ -133,7 +133,7 @@ static void save_particle_stats(void) {
             strcat_capped(output, 1000000, "] = ");
             strcat_float_capped(
                 output, 1000000, dumpable_stats[stat_i].source->xyz_multiplier[m]);
-            strcat_capped(output, 1000000, "\n");
+            strcat_capped(output, 1000000, ";\n");
         }
         for (uint32_t m = 0; m < 3; m++) {
             strcat_capped(output, 1000000, "particle->");
@@ -143,30 +143,30 @@ static void save_particle_stats(void) {
             strcat_capped(output, 1000000, "] = ");
             strcat_float_capped(
                 output, 1000000, dumpable_stats[stat_i].source->xyz_offset[m]);
-            strcat_capped(output, 1000000, "\n");
+            strcat_capped(output, 1000000, ";\n");
         }
         strcat_capped(output, 1000000, "particle->");
         strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
         strcat_capped(output, 1000000, ".scale_factor = ");
         strcat_float_capped(
             output, 1000000,dumpable_stats[stat_i].source->scale_factor);
-        strcat_capped(output, 1000000, "\n");
+        strcat_capped(output, 1000000, ";\n");
     }
     
-    strcat_capped(output, 1000000, "particle->lifespan = ");
+    strcat_capped(output, 1000000, "particle->particle_lifespan = ");
     strcat_uint_capped(
         output, 1000000, (uint32_t)particle_effects[0].particle_lifespan);
-    strcat_capped(output, 1000000, "\n");
+    strcat_capped(output, 1000000, ";\n");
     
     strcat_capped(output, 1000000, "particle->particle_spawns_per_second = ");
     strcat_uint_capped(
         output, 1000000, particle_effects[0].particle_spawns_per_second);
-    strcat_capped(output, 1000000, "\n");
+    strcat_capped(output, 1000000, ";\n");
     
     strcat_capped(output, 1000000, "particle->pause_between_spawns = ");
     strcat_uint_capped(
         output, 1000000, (uint32_t)particle_effects[0].pause_between_spawns);
-    strcat_capped(output, 1000000, "\n");
+    strcat_capped(output, 1000000, ";\n");
     
     for (uint32_t m = 0; m < 4; m++) {
         strcat_capped(output, 1000000, "particle->zpolygon_material.rgba[");
@@ -176,7 +176,7 @@ static void save_particle_stats(void) {
             output,
             1000000,
             (uint32_t)particle_effects[0].zpolygon_material.rgba[m]);
-        strcat_capped(output, 1000000, "\n");
+        strcat_capped(output, 1000000, ";\n");
     }
     
     platform_write_file(
