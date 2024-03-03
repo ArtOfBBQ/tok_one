@@ -79,75 +79,9 @@ static void opengl_set_polygons(
         program_id,
         "zpolygons_xyz");
     assert(glGetError() == 0);
-    glUniform3fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->xyz);
+    // glUniform3fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->xyz);
     assert(glGetError() == 0);
     
-    loc = glGetUniformLocation(
-        program_id,
-        "zpolygons_xyz_angle");
-    assert(glGetError() == 0);
-    glUniform3fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->xyz_angle);
-    assert(glGetError() == 0);
-
-    loc = glGetUniformLocation(
-        program_id,
-        "zpolygons_xyz_multiplier");
-    assert(glGetError() == 0);
-    glUniform3fv(
-        loc,
-        MAX_POLYGONS_PER_BUFFER,
-        polygon_collection->xyz_multiplier);
-    assert(glGetError() == 0);
-
-    loc = glGetUniformLocation(
-        program_id,
-        "zpolygons_xy_offset");
-    assert(glGetError() == 0);
-    glUniform2fv(
-        loc,
-        MAX_POLYGONS_PER_BUFFER,
-        polygon_collection->xy_offset);
-    assert(glGetError() == 0);
-    
-    loc = glGetUniformLocation(
-        program_id,
-        "zpolygons_bonus_rgb");
-    assert(glGetError() == 0);
-    glUniform3fv(
-        loc,
-        MAX_POLYGONS_PER_BUFFER,
-        polygon_collection->bonus_rgb);
-    assert(glGetError() == 0);
-    
-    loc = glGetUniformLocation(
-        program_id,
-        "zpolygons_scale_factor");
-    assert(glGetError() == 0);
-    glUniform1fv(
-        loc,
-        MAX_POLYGONS_PER_BUFFER,
-        polygon_collection->scale_factor);
-    assert(glGetError() == 0);
-    
-    loc = glGetUniformLocation(
-        program_id,
-        "zpolygons_ignore_lighting");
-    assert(glGetError() == 0);
-    glUniform1fv(
-        loc,
-        MAX_POLYGONS_PER_BUFFER,
-        polygon_collection->ignore_lighting);
-    assert(glGetError() == 0);
-    
-    loc = glGetUniformLocation(
-        program_id,
-        "zpolygons_ignore_camera");
-    assert(glGetError() == 0);
-    glUniform1fv(
-        loc,
-        MAX_POLYGONS_PER_BUFFER,
-        polygon_collection->ignore_camera);
-    assert(glGetError() == 0);
 }
 
 static void opengl_set_lights(
@@ -402,6 +336,12 @@ static void opengl_set_camera(
     assert(doublecheck_cam_angle[0] == arg_camera->x_angle);
     // assert(doublecheck_cam_angle[1] == arg_camera->y_angle);
     // assert(doublecheck_cam_angle[2] == arg_camera->z_angle);
+}
+
+void platform_gpu_copy_locked_vertices(void)
+{
+    printf("ERROR - copy locked vertices not implemented yet in opengl!");
+    assert(0);
 }
 
 void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {

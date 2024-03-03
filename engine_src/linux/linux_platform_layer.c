@@ -3,6 +3,11 @@
 float platform_sound_volume = 0.15f;
 float platform_music_volume = 0.15f;
 
+void platform_enter_fullscreen(void) {
+    printf("Enter fullscreen request unhandled!");
+    assert(0);
+}
+
 void platform_gpu_update_viewport(void)
 {
     opengl_set_projection_constants(&window_globals->projection_constants);

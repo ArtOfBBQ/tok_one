@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
     while (application_path[char_i] != '/')  { char_i--; }
     application_path[char_i] = '\0';
     
-    init_application();
+    init_application_before_gpu_init();
     
     printf("%s\n", "finished init_application()");
     
@@ -412,6 +412,8 @@ int main(int argc, char* argv[])
     
     uint32_t current_frame_i  = 0;
     uint64_t lifetime_frame_i = 0;
+    
+    init_application_after_gpu_init();
     
     glClearColor(0.0f, 0.03f, 0.015, 1.0f);
     while (application_running) {

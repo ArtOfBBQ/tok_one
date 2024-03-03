@@ -8,14 +8,18 @@ layout (location =  4) in int texturearray_i;
 layout (location =  5) in int texture_i;
 layout (location =  6) in int polygon_i;
 
-uniform vec3  zpolygons_xyz[800];
-uniform vec3  zpolygons_xyz_angle[800];
-uniform vec3  zpolygons_xyz_multiplier[800];
-uniform vec2  zpolygons_xy_offset[800];
-uniform vec3  zpolygons_bonus_rgb[800];
-uniform float zpolygons_scale_factor[800];
-uniform float zpolygons_ignore_lighting[800];
-uniform float zpolygons_ignore_camera[800];
+struct zPolygon {
+    float xyz[3];
+    float xyz_angle[3];
+    float xyz_multiplier[3];
+    float xy_offset[2];
+    float bonus_rgb[3];
+    float scale_factor;
+    float ignore_lighting;
+    float ignore_camera;
+}
+
+uniform zPolygon zpolygons[800];
 
 uniform float lights_x      [75];
 uniform float lights_y      [75];

@@ -1,11 +1,21 @@
 APP_NAME="hello3dgfx"
 PLATFORM="linux"
 
+COMPILER_OPTIONS_SHARED="
+-x c -std=gnu99 -o0 -pthread
+-D LINUX_PLATFORM 
+-I engine_src
+-I client_src
+-I sampleproject_src
+-I engine_src/shared
+-I engine_src/shared_linux_apple
+-I engine_src/shared_opengl"
+
 if [[ $1 = "DEBUG" ]]; then
-    COMPILER_OPTIONS="-D LINUX_PLATFORM -fsanitize=address -w -Wfatal-errors -pthread -I engine_src -I client_src -I sampleproject_src -I engine_src/shared_linux_apple -I engine_src/shared -I engine_src/shared_opengl -march=native -x c -std=gnu99 -o0 -g"
+    COMPILER_OPTIONS_EXTRA="-fsanitize=address -w -Wfatal-errors -march=native -g"
 else
     if [[ $1 = "RELEASE" ]]; then
-        COMPILER_OPTIONS="-D LINUX_PLATFORM -D LOGGER_IGNORE_ASSERTS -D NDEBUG -w -Wfatal-errors -pthread -I engine_src -I client_src -I sampleproject_src -I engine_src/shared -I engine_src/shared_linux_apple -I engine_src/shared_opengl -march=native -x c -std=gnu99 -o0"
+        COMPILER_OPTIONS_EXTRA="-D LOGGER_IGNORE_ASSERTS -D NDEBUG -w -Wfatal-errors -march=native -O2"
     else
         echo "pass DEBUG or RELEASE as a command line argument"
         exit 0
@@ -27,7 +37,10 @@ engine_src/shared/common_platform_layer.c
 engine_src/shared/logger.c
 engine_src/shared/memorystore.c
 engine_src/shared/tok_random.c
+engine_src/shared/audio.c
+engine_src/shared/wav.c
 engine_src/shared/objmodel.c
+engine_src/shared/objparser.c
 engine_src/shared/texture_array.c
 engine_src/shared/userinput.c
 engine_src/shared/zpolygon.c
@@ -84,7 +97,7 @@ popd > /dev/null
 
 echo "Compiling & linking $APP_NAME..."
 if
-    sudo gcc $COMPILER_OPTIONS $TOK_ONE_LINUX_SOURCE $TOK_ONE_SHARED_SOURCE -o build/$PLATFORM/$APP_NAME/$APP_NAME $LINKER_OPTIONS 
+    sudo gcc $COMPILER_OPTIONS_SHARED $COMPILER_OPTIONS_EXTRA $TOK_ONE_LINUX_SOURCE $TOK_ONE_SHARED_SOURCE -o build/$PLATFORM/$APP_NAME/$APP_NAME $LINKER_OPTIONS 
     then
     echo "succesful compilation, running..."
         if [[ $1 = "DEBUG" ]]; then
