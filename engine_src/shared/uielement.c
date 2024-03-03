@@ -295,6 +295,8 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                         touchable_id ==
                     active_ui_elements[ui_elem_i].touchable_id)
                 {
+                    user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
+                        handled = true;
                     active_ui_elements[ui_elem_i].clicked_funcptr();
                     break;
                 }
@@ -302,8 +304,6 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
             
             currently_sliding_object_id = -1;
         }
-        
-        user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].handled = true;
     }
 }
 
