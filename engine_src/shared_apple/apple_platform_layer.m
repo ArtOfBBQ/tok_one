@@ -169,7 +169,9 @@ void platform_mkdir_if_not_exist(const char * dirname) {
         isDirectory: true];
     assert(directory_url != NULL);
     
-    if (![[NSFileManager defaultManager] fileExistsAtPath:directory_path])
+    if (
+        ![[NSFileManager defaultManager]
+            fileExistsAtPath:directory_path])
     {
         NSError * error = NULL;
         

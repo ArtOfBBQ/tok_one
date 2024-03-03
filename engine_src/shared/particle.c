@@ -1032,12 +1032,16 @@ void add_particle_effects_to_workload(
                 j < sizeof(GPUPolygon) / sizeof(float);
                 j += SIMD_FLOAT_LANES)
             {
+                // We expect padding to prevent out of bounds ops
+                log_assert((j + SIMD_FLOAT_LANES) * sizeof(float) <=
+                    sizeof(GPUPolygon));
+                
                 SIMD_FLOAT simdf_pertime_add = simd_load_floats(
                     (pertime_add_at + j));
                 
                 // Add the '1st random over time' data
                 SIMD_FLOAT simdf_rand = tok_rand_simd_at_i(
-                    (rand_i + ((j/SIMD_FLOAT_LANES) * 32)) + 0);
+                    (rand_i + ((j/SIMD_FLOAT_LANES) * (SIMD_FLOAT_LANES * 4))) + 0);
                 SIMD_FLOAT simdf_pertime_random_add = simd_load_floats(
                     pertime_random_add_1_at + j);
                 simdf_pertime_random_add = simd_mul_floats(
@@ -1049,7 +1053,7 @@ void add_particle_effects_to_workload(
                 
                 // Add the '2nd random over time' data
                 simdf_rand = tok_rand_simd_at_i(
-                    (rand_i + ((j/SIMD_FLOAT_LANES) * 32)) + 32);
+                    (rand_i + ((j/SIMD_FLOAT_LANES) * (SIMD_FLOAT_LANES * 4))) + (SIMD_FLOAT_LANES * 4));
                 simdf_pertime_random_add = simd_load_floats(
                     pertime_random_add_2_at + j);
                 simdf_pertime_random_add = simd_mul_floats(
@@ -1073,7 +1077,7 @@ void add_particle_effects_to_workload(
                 recip = simd_add_floats(recip, exp_add);
                 
                 simdf_rand = tok_rand_simd_at_i(
-                    (rand_i + ((j/SIMD_FLOAT_LANES) * 32)) + 64);
+                    (rand_i + ((j/SIMD_FLOAT_LANES) * (SIMD_FLOAT_LANES * 4))) + (SIMD_FLOAT_LANES * 8));
                 SIMD_FLOAT simdf_initial_add = simd_load_floats(
                     initial_random_add_1_at + j);
                 simdf_initial_add = simd_mul_floats(
@@ -1081,14 +1085,15 @@ void add_particle_effects_to_workload(
                 recip = simd_add_floats(recip, simdf_initial_add);
                 
                 simdf_rand = tok_rand_simd_at_i(
-                    (rand_i + ((j/SIMD_FLOAT_LANES) * 32)) + 96);
+                    (rand_i + ((j/SIMD_FLOAT_LANES) * (SIMD_FLOAT_LANES * 4))) + (SIMD_FLOAT_LANES * 12));
                 simdf_initial_add = simd_load_floats(
                     initial_random_add_2_at + j);
                 simdf_initial_add = simd_mul_floats(
                     simdf_initial_add, simdf_rand);
                 recip = simd_add_floats(recip, simdf_initial_add);
                 
-                assert((ptrdiff_t)(recipient_at + j) % 32 == 0);
+                log_assert((ptrdiff_t)(recipient_at + j) %
+                    (long)(SIMD_FLOAT_LANES * sizeof(float)) == 0);
                 simd_store_floats((recipient_at + j), recip);
             }
             if (frame_data->polygon_collection->polygons[

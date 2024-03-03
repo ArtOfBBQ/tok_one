@@ -190,6 +190,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 - (void)
     windowWillEnterFullScreen:(NSNotification *)notification
 {
+    delete_all_ui_elements();
     zpolygons_to_render->size = 0;
     shatter_effects_size = 0;
     particle_effects_size = 0;
@@ -199,6 +200,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 - (void)
     windowWillExitFullScreen:(NSNotification *)notification
 {
+    delete_all_ui_elements();
     zpolygons_to_render->size = 0;
     shatter_effects_size = 0;
     particle_effects_size = 0;
@@ -221,6 +223,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
         return frameSize;
     }
     
+    delete_all_ui_elements();
     zpolygons_to_render->size = 0;
     particle_effects_size = 0;
     shatter_effects_size = 0;

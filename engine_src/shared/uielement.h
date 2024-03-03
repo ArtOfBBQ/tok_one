@@ -21,6 +21,7 @@ If you do want sliders of different sizes, you can set the slider size, request
 some sliders, change the slider size, and then request some more sliders
 */
 typedef struct NextUIElementSettings {
+    void     (* slider_slid_funcptr)(void);
     float    slider_background_rgba[4];
     float    slider_pin_rgba[4];
     bool32_t ignore_lighting;
@@ -79,10 +80,12 @@ void request_button(
     const float x_screenspace,
     const float y_screenspace,
     const float z,
-    void (* funtion_pointer));
+    void (* funtion_pointer)(void));
 
 void unregister_ui_element_with_object_id(
     const int32_t with_object_id);
+
+void delete_all_ui_elements(void);
 
 #ifdef __cplusplus
 }

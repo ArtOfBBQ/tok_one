@@ -27,6 +27,10 @@ int32_t next_ui_element_touchable_id(void) {
     return latest_ui_element_touchable_id++;
 }
 
+void clear_ui_element_touchable_ids(void) {
+    latest_ui_element_touchable_id = 0;
+}
+
 int32_t next_nonui_touchable_id(void) {
     log_assert(latest_nonui_touchable_id >= FIRST_NONUI_TOUCHABLE_ID);
     log_assert(latest_nonui_touchable_id < INT32_MAX);

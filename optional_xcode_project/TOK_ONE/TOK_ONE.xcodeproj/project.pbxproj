@@ -137,7 +137,6 @@
 		EC6B1F4B293CA04800837369 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4A293CA04800837369 /* Foundation.framework */; };
 		EC6B1F4D293CA04F00837369 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4C293CA04F00837369 /* Metal.framework */; };
 		EC6B1F4F293CA05500837369 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4E293CA05500837369 /* MetalKit.framework */; };
-		EC6B1F51293CA06200837369 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F50293CA06200837369 /* AVFoundation.framework */; };
 		EC6E12162A03BD90004E7BD1 /* uielement.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12142A03BD8F004E7BD1 /* uielement.c */; };
 		EC6E12172A03BD90004E7BD1 /* uielement.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12142A03BD8F004E7BD1 /* uielement.c */; };
 		EC6E121A2A04CE13004E7BD1 /* objectid.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12182A04CE12004E7BD1 /* objectid.c */; };
@@ -155,6 +154,7 @@
 		EC914B812B8AD447007FCBFC /* wav.c in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7B2B8AD447007FCBFC /* wav.c */; };
 		EC914B842B8AD5AB007FCBFC /* apple_audio.m in Sources */ = {isa = PBXBuildFile; fileRef = EC914B832B8AD5AB007FCBFC /* apple_audio.m */; };
 		EC914B852B8AD5AB007FCBFC /* apple_audio.m in Sources */ = {isa = PBXBuildFile; fileRef = EC914B832B8AD5AB007FCBFC /* apple_audio.m */; };
+		EC914B8A2B9199A1007FCBFC /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC914B892B9199A1007FCBFC /* AudioToolbox.framework */; };
 		EC92FDAD2902917500C10865 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
 		EC92FDAE2902917500C10865 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
 		ECB05E47294F8AC300050BD4 /* simd.h in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E46294F8AC200050BD4 /* simd.h */; };
@@ -165,7 +165,6 @@
 		ECB05E4F2950868E00050BD4 /* key.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECB05E4C294F8FD300050BD4 /* key.obj */; };
 		ECC47A6029E9111C0082A7C6 /* disk.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECC47A5F29E9111C0082A7C6 /* disk.obj */; };
 		ECC47A6129E9111C0082A7C6 /* disk.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECC47A5F29E9111C0082A7C6 /* disk.obj */; };
-		ECCB08A528DB6FD00038BBAC /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ECCB08A428DB6FD00038BBAC /* AVFoundation.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -249,7 +248,6 @@
 		EC6B1F4A293CA04800837369 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		EC6B1F4C293CA04F00837369 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/Metal.framework; sourceTree = DEVELOPER_DIR; };
 		EC6B1F4E293CA05500837369 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/MetalKit.framework; sourceTree = DEVELOPER_DIR; };
-		EC6B1F50293CA06200837369 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS16.1.sdk/System/Library/Frameworks/AVFoundation.framework; sourceTree = DEVELOPER_DIR; };
 		EC6E12132A03BD8F004E7BD1 /* clientlogic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = clientlogic.h; path = ../../engine_src/shared/clientlogic.h; sourceTree = "<group>"; };
 		EC6E12142A03BD8F004E7BD1 /* uielement.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = uielement.c; path = ../../engine_src/shared/uielement.c; sourceTree = "<group>"; };
 		EC6E12152A03BD8F004E7BD1 /* uielement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = uielement.h; path = ../../engine_src/shared/uielement.h; sourceTree = "<group>"; };
@@ -268,6 +266,7 @@
 		EC914B7D2B8AD447007FCBFC /* audio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = audio.h; path = ../../engine_src/shared/audio.h; sourceTree = "<group>"; };
 		EC914B822B8AD5AA007FCBFC /* apple_audio.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = apple_audio.h; path = ../../engine_src/shared_apple/apple_audio.h; sourceTree = "<group>"; };
 		EC914B832B8AD5AB007FCBFC /* apple_audio.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = apple_audio.m; path = ../../engine_src/shared_apple/apple_audio.m; sourceTree = "<group>"; };
+		EC914B892B9199A1007FCBFC /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		EC92FDAB2902917500C10865 /* decode_bmp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = decode_bmp.h; path = ../../engine_src/shared/debigulator/src/decode_bmp.h; sourceTree = "<group>"; };
 		EC92FDAC2902917500C10865 /* decode_bmp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = decode_bmp.c; path = ../../engine_src/shared/debigulator/src/decode_bmp.c; sourceTree = "<group>"; };
 		ECB05E46294F8AC200050BD4 /* simd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = simd.h; path = ../../engine_src/shared/simd.h; sourceTree = "<group>"; };
@@ -283,7 +282,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				ECCB08A528DB6FD00038BBAC /* AVFoundation.framework in Frameworks */,
+				EC914B8A2B9199A1007FCBFC /* AudioToolbox.framework in Frameworks */,
 				601128A82862588900F92967 /* AppKit.framework in Frameworks */,
 				601128A2286253FA00F92967 /* MetalKit.framework in Frameworks */,
 				601128A3286253FA00F92967 /* Metal.framework in Frameworks */,
@@ -295,7 +294,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EC6B1F51293CA06200837369 /* AVFoundation.framework in Frameworks */,
 				EC6B1F4F293CA05500837369 /* MetalKit.framework in Frameworks */,
 				EC6B1F4D293CA04F00837369 /* Metal.framework in Frameworks */,
 				EC6B1F4B293CA04800837369 /* Foundation.framework in Frameworks */,
@@ -337,7 +335,7 @@
 		601128432861239600F92967 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				EC6B1F50293CA06200837369 /* AVFoundation.framework */,
+				EC914B892B9199A1007FCBFC /* AudioToolbox.framework */,
 				EC6B1F4E293CA05500837369 /* MetalKit.framework */,
 				EC6B1F4C293CA04F00837369 /* Metal.framework */,
 				EC6B1F4A293CA04800837369 /* Foundation.framework */,

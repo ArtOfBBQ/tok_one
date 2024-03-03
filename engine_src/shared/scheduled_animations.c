@@ -48,6 +48,8 @@ ScheduledAnimation * next_scheduled_animation(void) {
 
 void commit_scheduled_animation(ScheduledAnimation * to_commit) {
     log_assert(!to_commit->committed);
+    log_assert(to_commit->duration_microseconds > 0);
+    log_assert(to_commit->remaining_microseconds == 0);
     
     to_commit->remaining_microseconds = to_commit->duration_microseconds;
     

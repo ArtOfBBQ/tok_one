@@ -9,7 +9,7 @@ extern "C" {
 
 #define MAX_OBJECT_ID 3000
 
-#define FIRST_NONUI_OBJECT_ID 171
+#define FIRST_NONUI_OBJECT_ID 211
 
 #define LAST_UI_TOUCHABLE_ID 100
 #define FIRST_NONUI_TOUCHABLE_ID 101
@@ -26,6 +26,7 @@ int32_t next_ui_element_object_id(void);
 int32_t next_nonui_object_id(void);
 
 int32_t next_ui_element_touchable_id(void);
+void clear_ui_element_touchable_ids(void);
 int32_t next_nonui_touchable_id(void);
 
 #ifdef __cplusplus
