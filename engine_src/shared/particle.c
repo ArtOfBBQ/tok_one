@@ -856,6 +856,7 @@ void delete_particle_effect(int32_t with_object_id) {
     }
 }
 
+/*
 static void adjust_colors_by_random(
     float * out_red,
     float * out_green,
@@ -885,6 +886,7 @@ static void adjust_colors_by_random(
     if (*out_blue < 0.0f) { *out_blue = 0.0f; }
     if (*out_blue > 1.0f) { *out_blue = 1.0f; }
 }
+*/
 
 void add_particle_effects_to_workload(
     GPUDataForSingleFrame * frame_data,

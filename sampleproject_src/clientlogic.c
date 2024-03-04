@@ -96,61 +96,118 @@ static void save_particle_stats(void) {
     
     for (uint32_t stat_i = 0; stat_i < 7; stat_i++) {
         for (uint32_t m = 0; m < 3; m++) {
-            strcat_capped(output, 1000000, "particle->");
-            strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
-            strcat_capped(output, 1000000, ".xyz[");
-            strcat_uint_capped(output, 1000000, m);
-            strcat_capped(output, 1000000, "] = ");
-            strcat_float_capped(
-                output, 1000000, dumpable_stats[stat_i].source->xyz[m]);
-            strcat_capped(output, 1000000, ";\n");
+            if (
+                dumpable_stats[stat_i].source->xyz[m] != 0.0f)
+            {
+                strcat_capped(output, 1000000, "particle->");
+                strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
+                strcat_capped(output, 1000000, ".xyz[");
+                strcat_uint_capped(output, 1000000, m);
+                strcat_capped(output, 1000000, "] = ");
+                strcat_float_capped(
+                    output,
+                    1000000,
+                    dumpable_stats[stat_i].source->xyz[m] *
+                        window_globals->window_height);
+                strcat_capped(output, 1000000, " / window_globals->window_height; // originally ");
+                strcat_float_capped(
+                    output,
+                    1000000,
+                    dumpable_stats[stat_i].source->xyz[m]);
+                strcat_capped(output, 1000000, "\n");
+            }
         }
         for (uint32_t m = 0; m < 3; m++) {
-            strcat_capped(output, 1000000, "particle->");
-            strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
-            strcat_capped(output, 1000000, ".xyz_angle[");
-            strcat_uint_capped(output, 1000000, m);
-            strcat_capped(output, 1000000, "] = ");
-            strcat_float_capped(
-                output, 1000000, dumpable_stats[stat_i].source->xyz_angle[m]);
-            strcat_capped(output, 1000000, ";\n");
+            if (
+                dumpable_stats[stat_i].source->xyz_angle[m] != 0.0f)
+            {
+                strcat_capped(output, 1000000, "particle->");
+                strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
+                strcat_capped(output, 1000000, ".xyz_angle[");
+                strcat_uint_capped(output, 1000000, m);
+                strcat_capped(output, 1000000, "] = ");
+                strcat_float_capped(
+                    output, 1000000, dumpable_stats[stat_i].source->xyz_angle[m]);
+                strcat_capped(output, 1000000, ";\n");
+            }
         }
         for (uint32_t m = 0; m < 3; m++) {
-            strcat_capped(output, 1000000, "particle->");
-            strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
-            strcat_capped(output, 1000000, ".bonus_rgb[");
-            strcat_uint_capped(output, 1000000, m);
-            strcat_capped(output, 1000000, "] = ");
-            strcat_float_capped(
-                output, 1000000, dumpable_stats[stat_i].source->bonus_rgb[m]);
-            strcat_capped(output, 1000000, ";\n");
+            if (dumpable_stats[stat_i].source->bonus_rgb[m] != 0.0f)
+            {
+                strcat_capped(output, 1000000, "particle->");
+                strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
+                strcat_capped(output, 1000000, ".bonus_rgb[");
+                strcat_uint_capped(output, 1000000, m);
+                strcat_capped(output, 1000000, "] = ");
+                strcat_float_capped(
+                    output,
+                    1000000,
+                    dumpable_stats[stat_i].source->bonus_rgb[m]);
+                strcat_capped(output, 1000000, ";\n");
+            }
         }
         for (uint32_t m = 0; m < 3; m++) {
-            strcat_capped(output, 1000000, "particle->");
-            strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
-            strcat_capped(output, 1000000, ".xyz_multiplier[");
-            strcat_uint_capped(output, 1000000, m);
-            strcat_capped(output, 1000000, "] = ");
-            strcat_float_capped(
-                output, 1000000, dumpable_stats[stat_i].source->xyz_multiplier[m]);
-            strcat_capped(output, 1000000, ";\n");
+            if (
+                dumpable_stats[stat_i].source->xyz_multiplier[m] != 0.0f)
+            {
+                strcat_capped(output, 1000000, "particle->");
+                strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
+                strcat_capped(output, 1000000, ".xyz_multiplier[");
+                strcat_uint_capped(output, 1000000, m);
+                strcat_capped(output, 1000000, "] = ");
+                strcat_float_capped(
+                    output,
+                    1000000,
+                    dumpable_stats[stat_i].source->xyz_multiplier[m] *
+                        window_globals->window_height);
+                            strcat_capped(
+                                output,
+                                1000000,
+                                " / window_globals->window_height; // originally ");
+                strcat_float_capped(
+                    output,
+                    1000000,
+                    dumpable_stats[stat_i].source->xyz_multiplier[m]);
+            }
         }
         for (uint32_t m = 0; m < 3; m++) {
+            if (
+                dumpable_stats[stat_i].source->xyz_offset[m] != 0.0f)
+            {
+                strcat_capped(output, 1000000, "particle->");
+                strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
+                strcat_capped(output, 1000000, ".xyz_offset[");
+                strcat_uint_capped(output, 1000000, m);
+                strcat_capped(
+                    output,
+                    1000000,
+                    "] = window_globals->window_height * ");
+                strcat_float_capped(
+                    output,
+                    1000000,
+                    dumpable_stats[stat_i].source->xyz_offset[m] *
+                        window_globals->window_height);
+                            strcat_capped(
+                                output,
+                                1000000,
+                                " / window_globals->window_height; // originally ");
+                strcat_float_capped(
+                    output,
+                    1000000,
+                    dumpable_stats[stat_i].source->xyz_offset[m]);
+            }
+        }
+        if (dumpable_stats[stat_i].source->scale_factor != 0.0f)
+        {
             strcat_capped(output, 1000000, "particle->");
             strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
-            strcat_capped(output, 1000000, ".xyz_offset[");
-            strcat_uint_capped(output, 1000000, m);
-            strcat_capped(output, 1000000, "] = ");
+            strcat_capped(output, 1000000, ".scale_factor = ");
             strcat_float_capped(
-                output, 1000000, dumpable_stats[stat_i].source->xyz_offset[m]);
+                output,
+                1000000,
+                dumpable_stats[stat_i].source->scale_factor);
             strcat_capped(output, 1000000, ";\n");
         }
-        strcat_capped(output, 1000000, "particle->");
-        strcat_capped(output, 1000000, dumpable_stats[stat_i].name);
-        strcat_capped(output, 1000000, ".scale_factor = ");
-        strcat_float_capped(
-            output, 1000000,dumpable_stats[stat_i].source->scale_factor);
-        strcat_capped(output, 1000000, ";\n");
     }
     
     strcat_capped(output, 1000000, "particle->particle_lifespan = ");
@@ -175,7 +232,7 @@ static void save_particle_stats(void) {
         strcat_float_capped(
             output,
             1000000,
-            (uint32_t)particle_effects[0].zpolygon_material.rgba[m]);
+            particle_effects[0].zpolygon_material.rgba[m]);
         strcat_capped(output, 1000000, ";\n");
     }
     
@@ -762,23 +819,23 @@ void client_logic_startup(void) {
         &particle_effects[0].zpolygon_gpu.bonus_rgb[2];
     
     // xyz_multiplier
-    strcpy_capped(slider_requests[87].label, 64, "+Width:");
-    slider_requests[87].min_float_value = -0.25f;
-    slider_requests[87].max_float_value =  0.25f;
+    strcpy_capped(slider_requests[87].label, 64, "Width:");
+    slider_requests[87].min_float_value =  0.01f;
+    slider_requests[87].max_float_value =  0.50f;
     slider_requests[87].linked_float =
         &particle_effects[0].zpolygon_gpu.xyz_multiplier[0];
     
     // xyz_multiplier
-    strcpy_capped(slider_requests[88].label, 64, "+Height:");
-    slider_requests[88].min_float_value = -0.25f;
-    slider_requests[88].max_float_value =  0.25f;
+    strcpy_capped(slider_requests[88].label, 64, "Height:");
+    slider_requests[88].min_float_value =  0.01f;
+    slider_requests[88].max_float_value =  0.50f;
     slider_requests[88].linked_float =
         &particle_effects[0].zpolygon_gpu.xyz_multiplier[1];
     
     // xyz_multiplier
-    strcpy_capped(slider_requests[89].label, 64, "+Depth:");
-    slider_requests[89].min_float_value = -0.25f;
-    slider_requests[89].max_float_value =  0.25f;
+    strcpy_capped(slider_requests[89].label, 64, "Depth:");
+    slider_requests[89].min_float_value =  0.01f;
+    slider_requests[89].max_float_value =  0.50f;
     slider_requests[89].linked_float =
         &particle_effects[0].zpolygon_gpu.xyz_multiplier[2];
     
@@ -792,7 +849,7 @@ void client_logic_startup(void) {
     // scale_factor
     strcpy_capped(slider_requests[91].label, 64, "Lifespan: ");
     slider_requests[91].min_int_value =        1;
-    slider_requests[91].max_int_value =  4500000;
+    slider_requests[91].max_int_value = 10000000;
     slider_requests[91].linked_int    =
         (int32_t *)&particle_effects[0].particle_lifespan;
     

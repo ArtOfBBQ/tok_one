@@ -231,7 +231,7 @@ void float_to_string(
     
     float temp_above_decimal = (float)(int32_t)input;
     int32_t below_decimal =
-        (int32_t)((input - temp_above_decimal) * 10000);
+        (int32_t)((input - temp_above_decimal) * 100000);
     int32_t above_decimal = (int32_t)temp_above_decimal;
     
     int_to_string(
@@ -249,6 +249,16 @@ void float_to_string(
     
     recipient[count] = '.';
     count++;
+    
+    // count the number of leading 0's after the comma
+    uint32_t leading_commas = 0;
+    float mod = 10.0f;
+    while (
+        (uint32_t)((input - temp_above_decimal) * mod) < 1)
+    {
+        mod *= 10.0f;
+        recipient[count++] = '0';
+    }
     
     int_to_string(
         /* const int32_t input: */
