@@ -119,12 +119,6 @@ void scale_zpolygon_multipliers_to_height(
     GPUPolygon * gpu_data,
     const float new_height);
 
-//void center_zpolygon_offsets(
-//    zPolygon * to_center);
-
-//float zpolygon_get_width(
-//    const zPolygon * to_inspect);
-
 float get_avg_z(
     const zTriangle * of_triangle);
 

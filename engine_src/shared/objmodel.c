@@ -652,11 +652,6 @@ int32_t new_mesh_id_from_resource_asserts(
     const uint32_t expected_materials_count,
     const char expected_materials_names[MAX_MATERIALS_SIZE][256])
 {
-    // TODO: remove debug code
-    //    if (are_equal_strings("house1.obj", filename)) {
-    //        log_append("break here\n");
-    //    }
-    
     int32_t new_mesh_head_id = (int32_t)all_mesh_vertices->size;
     log_assert(all_mesh_summaries_size < ALL_MESHES_SIZE);
     
@@ -708,12 +703,16 @@ int32_t new_mesh_id_from_resource_asserts(
     log_assert(all_mesh_vertices->size < ALL_LOCKED_VERTICES_SIZE);
     
     all_mesh_summaries[all_mesh_summaries_size].materials_size =
-        parsed_obj->materials_count;
+        parsed_obj->materials_count < 1 ? 1 : parsed_obj->materials_count;
     for (uint32_t i = 0; i < parsed_obj->materials_count; i++) {
         strcpy_capped(
             all_mesh_summaries[all_mesh_summaries_size].material_names[i],
             OBJ_STRING_SIZE,
             parsed_obj->materials[i].name);
+    }
+    
+    if (parsed_obj->materials_count < 1) {
+        parsed_obj->materials_count = 1;
     }
     
     for (

@@ -213,11 +213,7 @@ void delete_conflicting_animations(ScheduledAnimation * priority_anim)
 void request_shatter_and_destroy(
     const int32_t object_id,
     const uint64_t wait_before_first_run,
-    const uint64_t duration_microseconds,
-    const float exploding_distance_per_second,
-    const float xyz_rotation_per_second[3],
-    const float linear_distance_per_second,
-    const float linear_direction[3])
+    const uint64_t duration_microseconds)
 {
     log_assert(duration_microseconds > 0);
     log_assert(object_id >= 0);
@@ -234,31 +230,15 @@ void request_shatter_and_destroy(
             continue;
         }
         
-        ShatterEffect * shatter = next_shatter_effect();
-        shatter->zpolygon_to_shatter_cpu = zpolygons_to_render->cpu_data[zp_i];
-        shatter->zpolygon_to_shatter_gpu = zpolygons_to_render->gpu_data[zp_i];
-        shatter->zpolygon_to_shatter_material =
-            zpolygons_to_render->gpu_materials[zp_i * MAX_MATERIALS_SIZE];
-        shatter->wait_first = wait_before_first_run;
-        shatter->longest_random_delay_before_launch =
-            (duration_microseconds * 3) / 2;
-        shatter->start_fade_out_at_elapsed = (duration_microseconds / 10) * 8;
-        shatter->finish_fade_out_at_elapsed = duration_microseconds * 2;
-        shatter->linear_direction[0] = linear_direction[0];
-        shatter->linear_direction[1] = linear_direction[1];
-        shatter->linear_direction[2] = linear_direction[2];
-        shatter->linear_distance_per_second = linear_distance_per_second;
-        shatter->exploding_distance_per_second = exploding_distance_per_second;
-        shatter->squared_distance_per_second = 0.0f;
-        
-        shatter->xyz_rotation_per_second[0] = xyz_rotation_per_second[0];
-        shatter->xyz_rotation_per_second[1] = xyz_rotation_per_second[1];
-        shatter->xyz_rotation_per_second[2] = xyz_rotation_per_second[2];
-        
-        shatter->rgb_bonus_per_second[0] = 0.75f;
-        shatter->rgb_bonus_per_second[1] = 0.35f;
-        shatter->rgb_bonus_per_second[2] = 0.35f;
-        commit_shatter_effect(shatter);
+        // TODO: reimplement shatter effects with regular particles
+        ParticleEffect * shatter_effect = next_particle_effect();
+        shatter_effect->zpolygon_cpu = zpolygons_to_render->cpu_data[zp_i];
+        shatter_effect->zpolygon_gpu = zpolygons_to_render->gpu_data[zp_i];
+        shatter_effect->zpolygon_material = zpolygons_to_render->gpu_materials[zp_i * MAX_MATERIALS_SIZE];
+        shatter_effect->particle_spawns_per_second = 2;
+        shatter_effect->vertices_per_particle = 3;
+        shatter_effect->particle_lifespan = 3000000;
+        commit_particle_effect(shatter_effect);
         
         zpolygons_to_render->cpu_data[zp_i].deleted = true;
     }

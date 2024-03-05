@@ -47,6 +47,7 @@ zLightSource * next_zlight(void) {
 
 void commit_zlight(zLightSource * to_request)
 {
+    log_assert(!to_request->deleted);
     to_request->committed = true;
 }
 

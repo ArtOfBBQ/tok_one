@@ -148,11 +148,7 @@ void delete_conflicting_animations(ScheduledAnimation * priority_anim);
 void request_shatter_and_destroy(
     const int32_t object_id,
     const uint64_t wait_before_first_run,
-    const uint64_t duration_microseconds,
-    const float exploding_distance_per_second,
-    const float xyz_rotation_per_second[3],
-    const float linear_distance_per_second,
-    const float linear_direction[3]);
+    const uint64_t duration_microseconds);
 
 void request_fade_and_destroy(
     const int32_t object_id,

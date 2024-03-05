@@ -18,7 +18,6 @@
 		601128872862511700F92967 /* renderer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286C2862511500F92967 /* renderer.c */; };
 		601128882862511800F92967 /* window_size.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286E2862511600F92967 /* window_size.c */; };
 		601128892862511800F92967 /* common.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286F2862511600F92967 /* common.c */; };
-		6011288A2862511800F92967 /* clientlogic.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128702862511600F92967 /* clientlogic.c */; };
 		6011288B2862511800F92967 /* common_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128722862511600F92967 /* common_platform_layer.c */; };
 		6011288D2862511800F92967 /* text.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128742862511600F92967 /* text.c */; };
 		6011288E2862511800F92967 /* tok_random.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128772862511600F92967 /* tok_random.c */; };
@@ -167,6 +166,7 @@
 		ECB05E4F2950868E00050BD4 /* key.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECB05E4C294F8FD300050BD4 /* key.obj */; };
 		ECC47A6029E9111C0082A7C6 /* disk.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECC47A5F29E9111C0082A7C6 /* disk.obj */; };
 		ECC47A6129E9111C0082A7C6 /* disk.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECC47A5F29E9111C0082A7C6 /* disk.obj */; };
+		ECD7D3DD2B9777BC00B47196 /* clientlogic.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128702862511600F92967 /* clientlogic.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -277,6 +277,7 @@
 		ECB05E4C294F8FD300050BD4 /* key.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = key.obj; path = ../../resources/key.obj; sourceTree = "<group>"; };
 		ECC47A5F29E9111C0082A7C6 /* disk.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = disk.obj; path = ../../resources/disk.obj; sourceTree = "<group>"; };
 		ECCB08A428DB6FD00038BBAC /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		ECD7D3DA2B97778500B47196 /* clientlogic_particledesigner.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = clientlogic_particledesigner.c; path = ../../sampleproject_src/clientlogic_particledesigner.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -401,6 +402,7 @@
 			children = (
 				60112896286253C100F92967 /* apple_platform_layer.m */,
 				EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */,
+				ECD7D3DA2B97778500B47196 /* clientlogic_particledesigner.c */,
 				601128702862511600F92967 /* clientlogic.c */,
 				EC6E12132A03BD8F004E7BD1 /* clientlogic.h */,
 				601128722862511600F92967 /* common_platform_layer.c */,
@@ -658,9 +660,9 @@
 				6011288E2862511800F92967 /* tok_random.c in Sources */,
 				6011289E286253DD00F92967 /* macos_platform_layer.m in Sources */,
 				60A998F0287BD4B7003F7159 /* cpu_to_gpu_types.h in Sources */,
+				ECD7D3DD2B9777BC00B47196 /* clientlogic.c in Sources */,
 				60A998E1287BD494003F7159 /* decode_png.h in Sources */,
 				60A998E4287BD494003F7159 /* gpu.h in Sources */,
-				6011288A2862511800F92967 /* clientlogic.c in Sources */,
 				601128942862511800F92967 /* logger.c in Sources */,
 				60A998E3287BD494003F7159 /* logger.h in Sources */,
 				6011283F286122FE00F92967 /* inflate.c in Sources */,

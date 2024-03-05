@@ -59,50 +59,6 @@ void add_lineparticle_effects_to_workload(
     GPUDataForSingleFrame * frame_data,
     uint64_t elapsed_nanoseconds);
 
-typedef struct ShatterEffect {
-    zPolygonCPU zpolygon_to_shatter_cpu;
-    GPUPolygon zpolygon_to_shatter_gpu;
-    GPUPolygonMaterial zpolygon_to_shatter_material;
-    
-    uint64_t random_seed;
-    uint64_t elapsed;
-    uint64_t wait_first;
-    
-    uint64_t longest_random_delay_before_launch;
-    
-    uint64_t start_fade_out_at_elapsed;
-    uint64_t finish_fade_out_at_elapsed;
-    
-    float exploding_distance_per_second;
-    
-    float linear_distance_per_second;
-    float linear_direction[3];
-    
-    float squared_distance_per_second;
-    float squared_direction[3];
-    
-    float xyz_rotation_per_second[3];
-    float rgb_bonus_per_second[3];
-    
-    uint32_t limit_triangles_to; // 0 to render all triangles
-    bool32_t deleted;
-    bool32_t committed;
-} ShatterEffect;
-extern ShatterEffect * shatter_effects;
-extern uint32_t shatter_effects_size;
-
-ShatterEffect * next_shatter_effect(void);
-ShatterEffect * next_shatter_effect_with_zpoly(
-    zPolygonCPU * construct_with_zpolygon,
-    GPUPolygon * construct_with_polygon_gpu,
-    GPUPolygonMaterial * construct_with_polygon_material);
-void commit_shatter_effect(
-    ShatterEffect * to_commit);
-
-void add_shatter_effects_to_workload(
-    GPUDataForSingleFrame * frame_data,
-    uint64_t elapsed_nanoseconds);
-
 typedef struct ParticleEffect {
     GPUPolygon gpustats_initial_random_add_1;
     GPUPolygon gpustats_initial_random_add_2;
@@ -130,13 +86,14 @@ typedef struct ParticleEffect {
     uint64_t random_seed;
     uint64_t elapsed;
     bool32_t deleted;
+    bool32_t committed;
     
     int32_t random_texturearray_i[MAX_PARTICLE_TEXTURES];
     int32_t random_texture_i[MAX_PARTICLE_TEXTURES];
     uint32_t random_textures_size;
     
     uint32_t particle_spawns_per_second;
-    
+    uint32_t vertices_per_particle;
     uint64_t particle_lifespan;
     uint64_t pause_between_spawns;
     
@@ -151,7 +108,8 @@ extern uint32_t particle_effects_size;
 
 void construct_particle_effect(ParticleEffect * to_construct);
 
-void request_particle_effect(ParticleEffect * to_request);
+ParticleEffect * next_particle_effect(void);
+void commit_particle_effect(ParticleEffect * to_commit);
 
 void delete_particle_effect(int32_t with_object_id);
 

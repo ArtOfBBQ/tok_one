@@ -202,8 +202,6 @@ void init_application_before_gpu_init(void)
         sizeof(LineParticle) * LINEPARTICLE_EFFECTS_SIZE);
     particle_effects = (ParticleEffect *)malloc_from_unmanaged(
         sizeof(ParticleEffect) * PARTICLE_EFFECTS_SIZE);
-    shatter_effects = (ShatterEffect *)malloc_from_unmanaged(
-        sizeof(ShatterEffect) * SHATTER_EFFECTS_SIZE);
     
     shared_gameloop_init();
     terminal_init();

@@ -385,9 +385,7 @@ void hardware_render(
     
     if (application_running) {
         add_particle_effects_to_workload(frame_data, elapsed_nanoseconds);
-        
-        add_shatter_effects_to_workload(frame_data, elapsed_nanoseconds);
-        
+                
         add_lineparticle_effects_to_workload(frame_data, elapsed_nanoseconds);
         
         frame_data->first_line_i = frame_data->vertices_size;;
