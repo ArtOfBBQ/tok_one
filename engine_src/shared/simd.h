@@ -15,46 +15,9 @@ because I don't know much about how that works or how reliable it is
 */
 
 // TODO: implement int8 lanes
-/*
-#ifdef __ARM_NEON_
-
-
-#elif defined(__SSE2__)
-
-#include "immintrin.h"
-#define SIMD_INT8_LANES                     16
-#define SIMD_INT8                           __m128i
-#define simd_load_int8s(int8sptr)           _mm_loadu_si128((const __m128i_u *)(int8sptr))
-#define simd_set_int8s(i8)                  _mm_set_epi8(i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8, i8)
-#define simd_store_int8s(recip, from)       _mm_storeu_si128((__m128i_u *)recip, from)
-#define simd_add_int8s(a, b)                _mm_adds_epi8(a, b)
-#define simd_sub_int8s(a, b)                _mm_sub_epi8(a, b)
-
-#define simd_cmpgt_int8s(a, b)              _mm_cmpgt_epi8(a, b)
-#define simd_cmplt_int8s(a, b)              _mm_cmplt_epi8(a, b)
-#define simd_cmpeq_int8s(a, b)              _mm_cmpeq_epi8(a, b)
-#define simd_test_all_ones_int8s(a)         _mm_test_all_ones(a)
-#define simd_testz_int8s(a, b)              _mm_testz_si128(a, b)
-#else
-
-#define SIMD_INT8_LANES                     1
-#define SIMD_INT8                           int8_t
-#define simd_load_int8s(int8sptr)           (int8sptr)[0]
-#define simd_set_int8s(i8)                  i8
-#define simd_store_int8s(recip, from)       (recip)[0] = from
-#define simd_mul_int8s(a, b)                a * b
-#define simd_div_int8s(a, b)                a / b
-#define simd_add_int8s(a, b)                a + b
-#define simd_sub_int8s(a, b)                a - b
-#define simd_max_int16s(a, b)               ((a > b)*a)+((b <= a)*b)
-#define simd_min_int16s(a, b)               ((a > b)*b)+((b <= a)*a)
-
-#endif // int8 lanes
-*/
-
 
 // int16 lanes
-#ifdef __ARM_NEON
+#if defined(__ARM_NEON)
 #include "arm_neon.h"
 #define SIMD_INT16_LANES                    8
 #define SIMD_INT16                          int16x8_t
@@ -135,7 +98,7 @@ because I don't know much about how that works or how reliable it is
 #endif
 
 // Float lanes
-#ifdef __ARM_NEON
+#if defined(__ARM_NEON)
 
 #include "arm_neon.h"
 #define SIMD_FLOAT_LANES                    4

@@ -856,38 +856,6 @@ void delete_particle_effect(int32_t with_object_id) {
     }
 }
 
-/*
-static void adjust_colors_by_random(
-    float * out_red,
-    float * out_green,
-    float * out_blue,
-    const float max_variance,
-    const uint64_t at_random_seed)
-{
-    float red_bonus =
-        (max_variance / 100.0f) * ((uint32_t)tok_rand_at_i(at_random_seed + 0) % 100) -
-        (max_variance / 100.0f) * ((uint32_t)tok_rand_at_i(at_random_seed + 11) % 100);
-    float green_bonus =
-        (max_variance / 100.0f) * ((uint32_t)tok_rand_at_i(at_random_seed + 12) % 100) -
-        (max_variance / 100.0f) * ((uint32_t)tok_rand_at_i(at_random_seed + 3) % 100);
-    float blue_bonus =
-        (max_variance / 100.0f) * ((uint32_t)tok_rand_at_i(at_random_seed + 4) % 100) -
-        (max_variance / 100.0f) * ((uint32_t)tok_rand_at_i(at_random_seed + 15) % 100);
-    
-    *out_red += red_bonus;
-    if (*out_red < 0.0f) { *out_red = 0.0f; }
-    if (*out_red > 1.0f) { *out_red = 1.0f; }
-    
-    *out_green += green_bonus;
-    if (*out_green < 0.0f) { *out_green = 0.0f; }
-    if (*out_green > 1.0f) { *out_green = 1.0f; }
-    
-    *out_blue += blue_bonus;
-    if (*out_blue < 0.0f) { *out_blue = 0.0f; }
-    if (*out_blue > 1.0f) { *out_blue = 1.0f; }
-}
-*/
-
 void add_particle_effects_to_workload(
     GPUDataForSingleFrame * frame_data,
     uint64_t elapsed_nanoseconds)
@@ -1014,8 +982,8 @@ void add_particle_effects_to_workload(
             float exponential_divisor = 1000.0f;
             float one = 1.0f;
             SIMD_FLOAT simdf_one_million = simd_set_float(one_million);
-            SIMD_FLOAT simdf_lifetime = simd_set_float(
-                spawn_lifetime_so_far);
+            float fspawn_lifetime_so_far = (float)spawn_lifetime_so_far;
+            SIMD_FLOAT simdf_lifetime = simd_set_float(fspawn_lifetime_so_far);
             SIMD_FLOAT simdf_lifetime_exp = simd_div_floats(
                 simdf_lifetime, simd_set_float(exponential_divisor));
             simdf_lifetime_exp = simd_max_floats(
@@ -1023,11 +991,6 @@ void add_particle_effects_to_workload(
                 simd_set_float(one));
             simdf_lifetime_exp = simd_mul_floats(
                 simdf_lifetime_exp, simdf_lifetime_exp);
-            
-            // SIMD_FLOAT simdf_ten = simd_set_float(10.0f);
-            // simdf_rand = simd_div_floats(simdf_rand, simdf_ten);
-            // SIMD_FLOAT simdf_one = simd_set_float(0.95f);
-            // simdf_rand = simd_add_floats(simdf_one, simdf_rand);
             
             for (
                 uint32_t j = 0;
@@ -1043,7 +1006,9 @@ void add_particle_effects_to_workload(
                 
                 // Add the '1st random over time' data
                 SIMD_FLOAT simdf_rand = tok_rand_simd_at_i(
-                    (rand_i + ((j/SIMD_FLOAT_LANES) * (SIMD_FLOAT_LANES * 4))) + 0);
+                    (rand_i + ((j/SIMD_FLOAT_LANES) *
+                        (SIMD_FLOAT_LANES * 4)))
+                            + 0);
                 SIMD_FLOAT simdf_pertime_random_add = simd_load_floats(
                     pertime_random_add_1_at + j);
                 simdf_pertime_random_add = simd_mul_floats(
@@ -1055,7 +1020,9 @@ void add_particle_effects_to_workload(
                 
                 // Add the '2nd random over time' data
                 simdf_rand = tok_rand_simd_at_i(
-                    (rand_i + ((j/SIMD_FLOAT_LANES) * (SIMD_FLOAT_LANES * 4))) + (SIMD_FLOAT_LANES * 4));
+                    (rand_i + ((j/SIMD_FLOAT_LANES) *
+                        (SIMD_FLOAT_LANES * 4)))
+                            + 32);
                 simdf_pertime_random_add = simd_load_floats(
                     pertime_random_add_2_at + j);
                 simdf_pertime_random_add = simd_mul_floats(
@@ -1065,10 +1032,10 @@ void add_particle_effects_to_workload(
                     simdf_pertime_add, simdf_pertime_random_add);
                 
                 // Convert per second values to per microsecond effect
-                simdf_pertime_add = simd_div_floats(
-                    simdf_pertime_add, simdf_one_million);
                 simdf_pertime_add = simd_mul_floats(
                     simdf_pertime_add, simdf_lifetime);
+                simdf_pertime_add = simd_div_floats(
+                    simdf_pertime_add, simdf_one_million);
                 
                 SIMD_FLOAT exp_add = simd_load_floats((perexptime_add_at + j));
                 exp_add = simd_mul_floats(exp_add, simdf_lifetime_exp);
@@ -1079,7 +1046,9 @@ void add_particle_effects_to_workload(
                 recip = simd_add_floats(recip, exp_add);
                 
                 simdf_rand = tok_rand_simd_at_i(
-                    (rand_i + ((j/SIMD_FLOAT_LANES) * (SIMD_FLOAT_LANES * 4))) + (SIMD_FLOAT_LANES * 8));
+                    (rand_i + ((j/SIMD_FLOAT_LANES) *
+                        (SIMD_FLOAT_LANES * 4)))
+                            + 64);
                 SIMD_FLOAT simdf_initial_add = simd_load_floats(
                     initial_random_add_1_at + j);
                 simdf_initial_add = simd_mul_floats(
@@ -1087,7 +1056,9 @@ void add_particle_effects_to_workload(
                 recip = simd_add_floats(recip, simdf_initial_add);
                 
                 simdf_rand = tok_rand_simd_at_i(
-                    (rand_i + ((j/SIMD_FLOAT_LANES) * (SIMD_FLOAT_LANES * 4))) + (SIMD_FLOAT_LANES * 12));
+                    (rand_i + ((j/SIMD_FLOAT_LANES) *
+                        (SIMD_FLOAT_LANES * 4)))
+                            + 96);
                 simdf_initial_add = simd_load_floats(
                     initial_random_add_2_at + j);
                 simdf_initial_add = simd_mul_floats(

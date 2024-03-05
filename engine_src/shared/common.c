@@ -251,9 +251,9 @@ void float_to_string(
     count++;
     
     // count the number of leading 0's after the comma
-    uint32_t leading_commas = 0;
     float mod = 10.0f;
     while (
+        (below_decimal > 0) &&
         (uint32_t)((input - temp_above_decimal) * mod) < 1)
     {
         mod *= 10.0f;

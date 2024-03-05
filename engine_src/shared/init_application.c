@@ -20,11 +20,15 @@ static void test_simd_functions(void) {
     log_assert(sizeof(SimdTestStruct) % (SIMD_FLOAT_LANES * 4) == 0);
     SimdTestStruct * structs = malloc_from_managed(
         sizeof(SimdTestStruct) * 10);
+    float * sets = malloc_from_managed(
+        sizeof(float) * 10);
     SimdTestStruct * muls = malloc_from_managed(
         sizeof(SimdTestStruct) * 10);
     SimdTestStruct * divs = malloc_from_managed(
         sizeof(SimdTestStruct) * 10);
     SimdTestStruct * adds = malloc_from_managed(
+        sizeof(SimdTestStruct) * 10);
+    SimdTestStruct * maxs = malloc_from_managed(
         sizeof(SimdTestStruct) * 10);
     SimdTestStruct * double_checks = malloc_from_managed(
         sizeof(SimdTestStruct) * 10);
@@ -32,15 +36,17 @@ static void test_simd_functions(void) {
     for (uint32_t i = 0; i < 10; i++) {
         memset(structs + i, 0, sizeof(SimdTestStruct));
         memset(double_checks + i, 0, sizeof(SimdTestStruct));
+        memset(sets + i, 0, sizeof(float));
         memset(adds + i, 0, sizeof(SimdTestStruct));
+        memset(maxs + i, 0, sizeof(SimdTestStruct));
         memset(muls + i, 0, sizeof(SimdTestStruct));
         memset(divs + i, 0, sizeof(SimdTestStruct));
     }
     
     for (uint32_t i = 0; i < 10; i++) {
-        for (uint32_t j = 0; j < 10; j++) {
-            structs[i].imafloat[j] = (float)j;
-            double_checks[i].imafloat[j] = (float)j;
+        for (uint32_t j = 0; j < sizeof(SimdTestStruct) / sizeof(float); j++) {
+            sets[i]             = (float)i;
+            maxs[i].imafloat[j] = (float)((j % 2) * (i * 2));
             muls[i].imafloat[j] = (float)(i % 4);
             divs[i].imafloat[j] = (float)((i % 2) + 1);
             adds[i].imafloat[j] = (float)((i + 1) % 4);
@@ -49,15 +55,21 @@ static void test_simd_functions(void) {
     
     for (uint32_t j = 0; j < 10; j++) {
         for (uint32_t i = 0; i < sizeof(SimdTestStruct) / sizeof(float); i++) {
+            double_checks[j].imafloat[i]  = sets[j];
             double_checks[j].imafloat[i] *= muls[j].imafloat[i];
             double_checks[j].imafloat[i] += adds[j].imafloat[i];
             double_checks[j].imafloat[i] /= divs[j].imafloat[i];
+            double_checks[j].imafloat[i] =
+                double_checks[j].imafloat[i] > maxs[j].imafloat[i] ?
+                    double_checks[j].imafloat[i] :
+                    maxs[j].imafloat[i];
         }
         
         float * structs_at = (float *)&structs[j];
         float * muls_at = (float *)&muls[j];
         float * adds_at = (float *)&adds[j];
         float * divs_at = (float *)&divs[j];
+        float * maxs_at = (float *)&maxs[j];
         
         for (
             uint32_t i = 0;
@@ -65,13 +77,16 @@ static void test_simd_functions(void) {
             i += SIMD_FLOAT_LANES)
         {
             SIMD_FLOAT cur  = simd_load_floats(structs_at + i);
+            cur = simd_set_float(sets[j]);
             SIMD_FLOAT mul  = simd_load_floats(muls_at + i);
             SIMD_FLOAT add  = simd_load_floats(adds_at + i);
             SIMD_FLOAT div  = simd_load_floats(divs_at + i);
+            SIMD_FLOAT max  = simd_load_floats(maxs_at + i);
             
             cur = simd_mul_floats(cur, mul);
             cur = simd_add_floats(cur, add);
             cur = simd_div_floats(cur, div);
+            cur = simd_max_floats(cur, max);
             
             simd_store_floats(structs_at + i, cur);
         }
