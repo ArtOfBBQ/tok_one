@@ -474,12 +474,7 @@ void construct_particle_effect(
     to_construct->deleted = false;
     to_construct->committed = false;
     
-    to_construct->generate_light = true;
-    to_construct->light_reach = 1.0f;
-    to_construct->light_strength = 1.0f;
-    to_construct->light_rgb[0] = 1.0f;
-    to_construct->light_rgb[1] = 0.5f;
-    to_construct->light_rgb[2] = 0.25f;
+    to_construct->generate_light = false;
 }
 
 ParticleEffect * next_particle_effect(void) {
@@ -516,8 +511,6 @@ void commit_particle_effect(
     
     log_assert(
         (uint32_t)to_request->zpolygon_cpu.mesh_id < all_mesh_summaries_size);
-    log_assert(
-        to_request->random_textures_size > 0);
     log_assert(
         !to_request->deleted);
     
@@ -641,7 +634,7 @@ void add_particle_effects_to_workload(
             
             for (
                 int32_t _ = 0;
-                _ < particle_effects[i].vertices_per_particle;
+                _ < (int32_t)particle_effects[i].vertices_per_particle;
                 _++)
             {
                 int32_t next_vert_i = vert_head_i +
@@ -674,17 +667,19 @@ void add_particle_effects_to_workload(
                 frame_data->polygon_collection->size * MAX_MATERIALS_SIZE]
                     = particle_effects[i].zpolygon_material;
             
-            frame_data->polygon_materials[
-                frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
-                    texturearray_i =
-                        particle_effects[i].random_texturearray_i[spawn_i %
-                            particle_effects[i].random_textures_size];
+            if (particle_effects[i].random_textures_size > 0) {
+                frame_data->polygon_materials[
+                    frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
+                        texturearray_i =
+                            particle_effects[i].random_texturearray_i[spawn_i %
+                                particle_effects[i].random_textures_size];
             
-            frame_data->polygon_materials[
-                frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
-                    texture_i =
-                        particle_effects[i].random_texture_i[spawn_i %
-                            particle_effects[i].random_textures_size];
+                frame_data->polygon_materials[
+                    frame_data->polygon_collection->size * MAX_MATERIALS_SIZE].
+                        texture_i =
+                            particle_effects[i].random_texture_i[spawn_i %
+                                particle_effects[i].random_textures_size];
+            }
             
             float * initial_random_add_1_at = (float *)&particle_effects[i].
                 gpustats_initial_random_add_1;
