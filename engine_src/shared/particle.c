@@ -450,6 +450,9 @@ void construct_particle_effect(
     to_construct->object_id = -1;
     to_construct->zpolygon_cpu.mesh_id = 1;
     
+    to_construct->zpolygon_cpu.committed = true;
+    to_construct->zpolygon_cpu.deleted   = false;
+    
     to_construct->zpolygon_gpu.xyz[0] = 0;
     to_construct->zpolygon_gpu.xyz[1] = 0;
     to_construct->zpolygon_gpu.xyz[2] = 0;
@@ -464,9 +467,12 @@ void construct_particle_effect(
     to_construct->particle_spawns_per_second = 200;
     to_construct->vertices_per_particle = 6;
     to_construct->particle_lifespan = 2000000;
+    to_construct->use_shattered_mesh = false;
     to_construct->pause_between_spawns = 0;
     to_construct->elapsed = 0;
+    to_construct->loops = 0;
     to_construct->deleted = false;
+    to_construct->committed = false;
     
     to_construct->generate_light = true;
     to_construct->light_reach = 1.0f;
@@ -492,7 +498,7 @@ ParticleEffect * next_particle_effect(void) {
         particle_effects_size += 1;
     }
     
-    return_value->committed = false;
+    construct_particle_effect(return_value);
     return return_value;
 }
 
@@ -502,17 +508,33 @@ void commit_particle_effect(
     log_assert(
         to_request->zpolygon_cpu.mesh_id >= 0);
     log_assert(
+        to_request->zpolygon_cpu.visible);
+    
+    // Reminder: The particle effect is not committed, but the zpoly should be
+    log_assert(
+        to_request->zpolygon_cpu.committed);
+    
+    log_assert(
         (uint32_t)to_request->zpolygon_cpu.mesh_id < all_mesh_summaries_size);
     log_assert(
         to_request->random_textures_size > 0);
     log_assert(
         !to_request->deleted);
+    
+    // Reminder: The particle effect is not committed, but the zpoly should be
     log_assert(
         !to_request->committed);
+    
     log_assert(
         to_request->particle_lifespan > 0);
     log_assert(
+        to_request->elapsed == 0);
+    log_assert(
         to_request->particle_spawns_per_second > 0);
+    log_assert(
+        to_request->vertices_per_particle > 0);
+    log_assert(
+        to_request->vertices_per_particle % 3 == 0);
     
     to_request->committed = true;
 }
@@ -545,35 +567,54 @@ void add_particle_effects_to_workload(
         i < particle_effects_size;
         i++)
     {
-        if (particle_effects[i].deleted)
+        if (particle_effects[i].deleted ||
+            !particle_effects[i].committed)
         {
             continue;
         }
         
         particle_effects[i].elapsed += elapsed_nanoseconds;
-        particle_effects[i].elapsed =
-            particle_effects[i].elapsed %
-                (particle_effects[i].particle_lifespan +
-                    particle_effects[i].pause_between_spawns);
+        
+        if (particle_effects[i].elapsed >
+            (particle_effects[i].particle_lifespan +
+                particle_effects[i].pause_between_spawns))
+        {
+            if (particle_effects[i].loops == 1) {
+                particle_effects[i].deleted = true;
+                continue;
+            }
+            
+            if (particle_effects[i].loops > 1) {
+                particle_effects[i].loops -= 1;
+            }
+            
+            particle_effects[i].elapsed = 0;
+        }
         
         spawns_in_duration =
-            (particle_effects[i].particle_lifespan / 1000000) *
-                particle_effects[i].particle_spawns_per_second;
+            (particle_effects[i].particle_lifespan *
+                particle_effects[i].particle_spawns_per_second) /
+                    1000000;
         interval_between_spawns =
-            1000000 / particle_effects[i].particle_spawns_per_second;
+            particle_effects[i].pause_between_spawns;
         
         uint32_t particles_active = 0;
         
-        int32_t vert_head_i = all_mesh_summaries[
-            particle_effects[i].zpolygon_cpu.mesh_id].
-                vertices_head_i;
-        int32_t vert_tail_i = all_mesh_summaries[
-            particle_effects[i].zpolygon_cpu.mesh_id].
-                vertices_head_i +
+        int32_t vert_head_i = particle_effects[i].use_shattered_mesh ?
+            all_mesh_summaries[
+                particle_effects[i].zpolygon_cpu.mesh_id].
+                    shattered_vertices_head_i :
+            all_mesh_summaries[
+                particle_effects[i].zpolygon_cpu.mesh_id].
+                    vertices_head_i;
+        int32_t verts_size = particle_effects[i].use_shattered_mesh ?
+            all_mesh_summaries[
+                particle_effects[i].zpolygon_cpu.mesh_id].
+                    shattered_vertices_size :
             all_mesh_summaries[
                 particle_effects[i].zpolygon_cpu.mesh_id].
                     vertices_size;
-        int32_t next_vert_i = vert_head_i;
+        int32_t queue_vert_i = 0;
         
         for (
             uint32_t spawn_i = 0;
@@ -599,18 +640,19 @@ void add_particle_effects_to_workload(
             particles_active += 1;
             
             for (
-                int32_t vert_i = 0;
-                vert_i < particle_effects[i].vertices_per_particle;
-                vert_i++)
+                int32_t _ = 0;
+                _ < particle_effects[i].vertices_per_particle;
+                _++)
             {
-                log_assert(vert_i >= 0);
-                log_assert(vert_i < (int32_t)all_mesh_vertices->size);
-                int32_t circular_vert_i =
-                    vert_i % particle_effects[i].vertices_per_particle;
-                log_assert(vert_head_i + circular_vert_i <= vert_tail_i);
+                int32_t next_vert_i = vert_head_i +
+                    (queue_vert_i % verts_size);
+                queue_vert_i += 1;
+                
+                log_assert(next_vert_i >= 0);
+                log_assert(next_vert_i < (int32_t)all_mesh_vertices->size);
                 
                 frame_data->vertices[frame_data->vertices_size].
-                    locked_vertex_i = vert_head_i + circular_vert_i;
+                    locked_vertex_i = next_vert_i;
                 frame_data->vertices[frame_data->vertices_size].polygon_i =
                     (int)frame_data->polygon_collection->size;
                 
@@ -758,6 +800,8 @@ void add_particle_effects_to_workload(
                     frame_data->polygon_collection->size].scale_factor = 0.01f;
             }
             frame_data->polygon_collection->size += 1;
+            log_assert(frame_data->polygon_collection->size <
+                MAX_POLYGONS_PER_BUFFER);
         }
         
         if (particles_active < 1) {

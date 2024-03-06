@@ -18,7 +18,7 @@ typedef struct SliderTitle {
     float unoffset_y_screenspace;
 } SliderTitle;
 
-#define SLIDERS_SIZE 98
+#define SLIDERS_SIZE 99
 #define SLIDERTITLES_SIZE (SLIDERS_SIZE / 13)+1
 static SliderRequest * slider_requests = NULL;
 static SliderTitle slider_titles[SLIDERTITLES_SIZE];
@@ -223,6 +223,11 @@ static void save_particle_stats(void) {
     strcat_capped(output, 1000000, "particle->pause_between_spawns = ");
     strcat_uint_capped(
         output, 1000000, (uint32_t)particle_effects[0].pause_between_spawns);
+    strcat_capped(output, 1000000, ";\n");
+    
+    strcat_capped(output, 1000000, "particle->loops = ");
+    strcat_uint_capped(
+        output, 1000000, (uint32_t)particle_effects[0].loops);
     strcat_capped(output, 1000000, ";\n");
     
     for (uint32_t m = 0; m < 4; m++) {
@@ -865,29 +870,35 @@ void client_logic_startup(void) {
     slider_requests[93].linked_int    =
         (int32_t *)&particle_effects[0].pause_between_spawns;
     
-    // Materials
-    strcpy_capped(slider_requests[94].label, 64, "Material R:");
-    slider_requests[94].min_float_value =  0.0f;
-    slider_requests[94].max_float_value =  1.0f;
-    slider_requests[94].linked_float =
-        &particle_effects[0].zpolygon_material.rgba[0];
+    strcpy_capped(slider_requests[94].label, 64, "Loops: ");
+    slider_requests[94].min_int_value =        0;
+    slider_requests[94].max_int_value =       10;
+    slider_requests[94].linked_int    =
+        (int32_t *)&particle_effects[0].loops;
     
-    strcpy_capped(slider_requests[95].label, 64, "Material G:");
+    // Materials
+    strcpy_capped(slider_requests[95].label, 64, "Material R:");
     slider_requests[95].min_float_value =  0.0f;
     slider_requests[95].max_float_value =  1.0f;
     slider_requests[95].linked_float =
-        &particle_effects[0].zpolygon_material.rgba[1];
+        &particle_effects[0].zpolygon_material.rgba[0];
     
-    strcpy_capped(slider_requests[96].label, 64, "Material B:");
+    strcpy_capped(slider_requests[96].label, 64, "Material G:");
     slider_requests[96].min_float_value =  0.0f;
     slider_requests[96].max_float_value =  1.0f;
     slider_requests[96].linked_float =
-        &particle_effects[0].zpolygon_material.rgba[2];
+        &particle_effects[0].zpolygon_material.rgba[1];
     
-    strcpy_capped(slider_requests[97].label, 64, "Material A:");
+    strcpy_capped(slider_requests[97].label, 64, "Material B:");
     slider_requests[97].min_float_value =  0.0f;
     slider_requests[97].max_float_value =  1.0f;
     slider_requests[97].linked_float =
+        &particle_effects[0].zpolygon_material.rgba[2];
+    
+    strcpy_capped(slider_requests[98].label, 64, "Material A:");
+    slider_requests[98].min_float_value =  0.0f;
+    slider_requests[98].max_float_value =  1.0f;
+    slider_requests[98].linked_float =
         &particle_effects[0].zpolygon_material.rgba[3];
     
     init_PNG_decoder(malloc_from_managed, free_from_managed, memset, memcpy);
@@ -1131,41 +1142,43 @@ void client_logic_update(uint64_t microseconds_elapsed)
             }
         }
         
-        ParticleEffect particles;
-        construct_particle_effect(&particles);
+        ParticleEffect * particles = next_particle_effect();
+        particles->zpolygon_material.rgba[0] = 0.3f;
+        particles->zpolygon_material.rgba[1] = 0.3f;
+        particles->zpolygon_material.rgba[2] = 0.3f;
+        particles->zpolygon_material.rgba[3] = 1.0f;
         
-        particles.zpolygon_material.rgba[0] = 0.3f;
-        particles.zpolygon_material.rgba[1] = 0.3f;
-        particles.zpolygon_material.rgba[2] = 0.3f;
-        particles.zpolygon_material.rgba[3] = 1.0f;
+        particles->zpolygon_cpu.mesh_id              =      1; // hardcoded cube
+        particles->zpolygon_cpu.visible              =   true;
+        particles->zpolygon_cpu.committed            =   true;
+        particles->zpolygon_gpu.xyz[0]               =   0.0f;
+        particles->zpolygon_gpu.xyz[1]               =   0.0f;
+        particles->zpolygon_gpu.xyz[2]               =   2.0f;
+        particles->gpustats_pertime_add.xyz[0]       =  0.20f;
+        particles->gpustats_pertime_add.xyz[1]       =  0.20f;
+        particles->gpustats_pertime_add.xyz[2]       =  0.00f;
+        particles->gpustats_pertime_add.xyz_angle[0] =  0.00f;
+        particles->gpustats_pertime_add.xyz_angle[1] =  0.00f;
+        particles->gpustats_pertime_add.xyz_angle[2] =  0.00f;
+        particles->gpustats_pertime_add.bonus_rgb[0] =  0.00f;
+        particles->gpustats_pertime_add.bonus_rgb[1] =  0.00f;
+        particles->gpustats_pertime_add.bonus_rgb[2] =  0.00f;
         
-        particles.zpolygon_cpu.mesh_id              =      1; // hardcoded cube
-        particles.zpolygon_gpu.xyz[0]               =   0.0f;
-        particles.zpolygon_gpu.xyz[1]               =   0.0f;
-        particles.zpolygon_gpu.xyz[2]               =   2.0f;
-        particles.gpustats_pertime_add.xyz[0]       =  0.00f;
-        particles.gpustats_pertime_add.xyz[1]       =  0.00f;
-        particles.gpustats_pertime_add.xyz[2]       =  0.00f;
-        particles.gpustats_pertime_add.xyz_angle[0] =  0.00f;
-        particles.gpustats_pertime_add.xyz_angle[1] =  0.00f;
-        particles.gpustats_pertime_add.xyz_angle[2] =  0.00f;
-        particles.gpustats_pertime_add.bonus_rgb[0] =  0.00f;
-        particles.gpustats_pertime_add.bonus_rgb[1] =  0.00f;
-        particles.gpustats_pertime_add.bonus_rgb[2] =  0.00f;
+        particles->gpustats_pertime_random_add_1.xyz[0] =  0.0f;
+        particles->gpustats_pertime_random_add_1.xyz[1] =  0.0f;
+        particles->gpustats_pertime_random_add_1.xyz[2] =  0.0f;
+        particles->gpustats_pertime_random_add_2.xyz[0] =  0.0f;
+        particles->gpustats_pertime_random_add_2.xyz[1] =  0.0f;
+        particles->gpustats_pertime_random_add_2.xyz[2] =  0.0f;
         
-        particles.gpustats_pertime_random_add_1.xyz[0] =  0.0f;
-        particles.gpustats_pertime_random_add_1.xyz[1] =  0.0f;
-        particles.gpustats_pertime_random_add_1.xyz[2] =  0.0f;
-        particles.gpustats_pertime_random_add_2.xyz[0] =  0.0f;
-        particles.gpustats_pertime_random_add_2.xyz[1] =  0.0f;
-        particles.gpustats_pertime_random_add_2.xyz[2] =  0.0f;
-        
-        particles.particle_spawns_per_second   =    1000;
-        particles.particle_lifespan            = 2500000;
-        particles.random_texturearray_i[0]     =      -1;
-        particles.random_texture_i[0]          =      -1;
-        particles.random_textures_size         =       1;
-        request_particle_effect(&particles);
+        particles->particle_spawns_per_second   =     500;
+        particles->particle_lifespan            = 1500000;
+        particles->vertices_per_particle        =      36;
+        particles->use_shattered_mesh           =   false;
+        particles->random_texturearray_i[0]     =      -1;
+        particles->random_texture_i[0]          =      -1;
+        particles->random_textures_size         =       1;
+        commit_particle_effect(particles);
         
         next_ui_element_settings->slider_width_screenspace         =   200;
         next_ui_element_settings->slider_height_screenspace        =    15;

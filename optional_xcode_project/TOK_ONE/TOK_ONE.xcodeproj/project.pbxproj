@@ -166,7 +166,7 @@
 		ECB05E4F2950868E00050BD4 /* key.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECB05E4C294F8FD300050BD4 /* key.obj */; };
 		ECC47A6029E9111C0082A7C6 /* disk.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECC47A5F29E9111C0082A7C6 /* disk.obj */; };
 		ECC47A6129E9111C0082A7C6 /* disk.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECC47A5F29E9111C0082A7C6 /* disk.obj */; };
-		ECD7D3DD2B9777BC00B47196 /* clientlogic.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128702862511600F92967 /* clientlogic.c */; };
+		ECD7D3E02B985A9600B47196 /* clientlogic_particledesigner.c in Sources */ = {isa = PBXBuildFile; fileRef = ECD7D3DA2B97778500B47196 /* clientlogic_particledesigner.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -660,7 +660,6 @@
 				6011288E2862511800F92967 /* tok_random.c in Sources */,
 				6011289E286253DD00F92967 /* macos_platform_layer.m in Sources */,
 				60A998F0287BD4B7003F7159 /* cpu_to_gpu_types.h in Sources */,
-				ECD7D3DD2B9777BC00B47196 /* clientlogic.c in Sources */,
 				60A998E1287BD494003F7159 /* decode_png.h in Sources */,
 				60A998E4287BD494003F7159 /* gpu.h in Sources */,
 				601128942862511800F92967 /* logger.c in Sources */,
@@ -679,6 +678,7 @@
 				60A998ED287BD4B7003F7159 /* zpolygon.h in Sources */,
 				60A998EF287BD4B7003F7159 /* renderer.h in Sources */,
 				6011288B2862511800F92967 /* common_platform_layer.c in Sources */,
+				ECD7D3E02B985A9600B47196 /* clientlogic_particledesigner.c in Sources */,
 				60A998EE287BD4B7003F7159 /* tok_random.h in Sources */,
 				6011288F2862511800F92967 /* lightsource.c in Sources */,
 			);

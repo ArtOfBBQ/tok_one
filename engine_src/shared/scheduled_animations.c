@@ -230,14 +230,63 @@ void request_shatter_and_destroy(
             continue;
         }
         
-        // TODO: reimplement shatter effects with regular particles
+        float duration_mod = (20000000.0f / (float)duration_microseconds);
+        
         ParticleEffect * shatter_effect = next_particle_effect();
         shatter_effect->zpolygon_cpu = zpolygons_to_render->cpu_data[zp_i];
         shatter_effect->zpolygon_gpu = zpolygons_to_render->gpu_data[zp_i];
-        shatter_effect->zpolygon_material = zpolygons_to_render->gpu_materials[zp_i * MAX_MATERIALS_SIZE];
-        shatter_effect->particle_spawns_per_second = 2;
+        shatter_effect->zpolygon_material =
+            zpolygons_to_render->gpu_materials[zp_i * MAX_MATERIALS_SIZE];
+        uint64_t shattered_verts_size =
+            all_mesh_summaries[shatter_effect->zpolygon_cpu.mesh_id].
+                vertices_size;
+        shatter_effect->particle_spawns_per_second = (uint32_t)((shattered_verts_size *
+            1000000) / (uint64_t)duration_microseconds);
+        shatter_effect->pause_between_spawns = 0;
         shatter_effect->vertices_per_particle = 3;
-        shatter_effect->particle_lifespan = 3000000;
+        shatter_effect->particle_lifespan = duration_microseconds;
+        shatter_effect->use_shattered_mesh = false;
+        
+        shatter_effect->random_textures_size = 1;
+        shatter_effect->random_texturearray_i[0] =
+            shatter_effect->zpolygon_material.texture_i;
+        shatter_effect->random_texturearray_i[0] =
+            shatter_effect->zpolygon_material.texturearray_i;
+        shatter_effect->gpustats_pertime_random_add_1.xyz[0] = -0.05f *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.xyz[1] = -0.05f *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.xyz[2] = -0.05f *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.xyz_angle[0] =  0.05f *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.xyz_angle[1] =  0.05f *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.xyz_angle[2] =  0.05f *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.bonus_rgb[0] =  0.25f *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.bonus_rgb[1] =  0.25f *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.bonus_rgb[2] =  0.25f *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_2.xyz[0] =  0.05f *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_2.xyz[1] =  0.10f *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_2.xyz[2] =  0.05f *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_2.xyz_angle[0] =  -0.05f *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_2.xyz_angle[1] =  -0.05f *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_2.xyz_angle[2] =  -0.05f *
+            duration_mod;
+        shatter_effect->gpustats_perexptime_add.scale_factor = -0.07f *
+            duration_mod;
+        
+        shatter_effect->loops = 1;
+        
         commit_particle_effect(shatter_effect);
         
         zpolygons_to_render->cpu_data[zp_i].deleted = true;

@@ -94,9 +94,11 @@ typedef struct ParticleEffect {
     
     uint32_t particle_spawns_per_second;
     uint32_t vertices_per_particle;
+    uint32_t loops; // 0 for infinite loops
     uint64_t particle_lifespan;
     uint64_t pause_between_spawns;
     
+    bool32_t use_shattered_mesh;
     bool32_t generate_light;
     float light_reach;
     float light_strength;

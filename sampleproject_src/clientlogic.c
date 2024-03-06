@@ -111,7 +111,7 @@ static void client_handle_keypresses(
             /* const uint64_t wait_before_first_run: */
                 0,
             /* const uint64_t duration_microseconds: */
-                2000000);
+                750000);
     }
         
     if (keypress_map[TOK_KEY_LEFTARROW] == true)
