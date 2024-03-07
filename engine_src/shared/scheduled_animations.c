@@ -247,7 +247,7 @@ void request_shatter_and_destroy(
         shatter_effect->particle_lifespan = duration_microseconds;
         shatter_effect->use_shattered_mesh = true;
         
-        float xyz_dist = 0.08f;
+        float xyz_dist = 0.02f;
         float xyz_angle = 0.05f;
         float rgb_delta = 0.05f;
         

@@ -427,13 +427,6 @@ void construct_particle_effect(
             sizeof(GPUPolygon));
     memset(
         /* void * b: */
-            &to_construct->gpustats_perexptime_add,
-        /* int c: */
-            0,
-        /* size_t len: */
-            sizeof(GPUPolygon));
-    memset(
-        /* void * b: */
             &to_construct->gpustats_pertime_random_add_1,
         /* int c: */
             0,
@@ -446,35 +439,46 @@ void construct_particle_effect(
             0,
         /* size_t len: */
             sizeof(GPUPolygon));
+    memset(
+        /* void * b: */
+            &to_construct->gpustats_perexptime_add,
+        /* int c: */
+            0,
+        /* size_t len: */
+            sizeof(GPUPolygon));
+    memset(
+        /* void * b: */
+            &to_construct->zpolygon_gpu,
+        /* int c: */
+            0,
+        /* size_t len: */
+            sizeof(GPUPolygon));
     
-    to_construct->object_id = -1;
-    to_construct->zpolygon_cpu.mesh_id = 1;
+    to_construct->object_id            = -1;
+    to_construct->zpolygon_cpu.mesh_id =  1;
     
     to_construct->zpolygon_cpu.committed = true;
     to_construct->zpolygon_cpu.deleted   = false;
     
-    to_construct->zpolygon_gpu.xyz[0] = 0;
-    to_construct->zpolygon_gpu.xyz[1] = 0;
-    to_construct->zpolygon_gpu.xyz[2] = 0;
-    to_construct->zpolygon_gpu.scale_factor = 1.0f;
+    to_construct->zpolygon_gpu.scale_factor      = 1.0f;
     to_construct->zpolygon_gpu.xyz_multiplier[0] = 0.01f;
     to_construct->zpolygon_gpu.xyz_multiplier[1] = 0.01f;
     to_construct->zpolygon_gpu.xyz_multiplier[2] = 0.01f;
-    to_construct->zpolygon_gpu.ignore_lighting = true;
+    to_construct->zpolygon_gpu.ignore_lighting   = true;
     
     to_construct->random_seed = (uint32_t)
         tok_rand() % (RANDOM_SEQUENCE_SIZE - 100);
     to_construct->particle_spawns_per_second = 200;
-    to_construct->vertices_per_particle = 6;
-    to_construct->particle_lifespan = 2000000;
-    to_construct->use_shattered_mesh = false;
-    to_construct->pause_between_spawns = 0;
-    to_construct->elapsed = 0;
-    to_construct->loops = 0;
-    to_construct->deleted = false;
-    to_construct->committed = false;
+    to_construct->vertices_per_particle      = 6;
+    to_construct->particle_lifespan          = 2000000;
+    to_construct->use_shattered_mesh         = false;
+    to_construct->pause_between_spawns       = 0;
+    to_construct->elapsed                    = 0;
+    to_construct->loops                      = 0;
+    to_construct->deleted                    = false;
+    to_construct->committed                  = false;
     
-    to_construct->generate_light = false;
+    to_construct->generate_light             = false;
 }
 
 ParticleEffect * next_particle_effect(void) {
