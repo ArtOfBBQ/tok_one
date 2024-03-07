@@ -255,9 +255,11 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                                 NULL);
                         *(active_ui_elements[ui_elem_i].slider_linked_int) =
                             active_ui_elements[ui_elem_i].slider_min_int +
-                                ((active_ui_elements[ui_elem_i].slider_max_int -
-                                    active_ui_elements[ui_elem_i].
-                                        slider_min_int) * slider_pct);
+                                (int32_t)(
+                                    (active_ui_elements[ui_elem_i].
+                                        slider_max_int -
+                                            active_ui_elements[ui_elem_i].
+                                                slider_min_int) * slider_pct);
                     }
                     
                     if (active_ui_elements[ui_elem_i].slid_funcptr != NULL) {
