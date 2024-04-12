@@ -14,7 +14,17 @@ overhead of calling a function, and I don't want to rely on compiler inlining
 because I don't know much about how that works or how reliable it is
 */
 
-// TODO: implement int8 lanes
+// TODO: implement int8 lanes, also maybe think about ditching mmx
+// since it doesn't have min/max and SSE onward do have those
+//#if defined(__MMX__)
+//#define SIMD_INT8_LANES                    8
+//#define SIMD_INT8                          __m64
+//#define simd_load_int8s(int16sptr)         _m_from_int64(__int64 a)
+//#define simd_set_int8s(i8)                 _mm_set1_pi8(i8) // MMX
+//#define simd_store_int8s(recip, from)      (recip)[0] = _m_to_int64(from) // MMX
+//#define simd_add_int8s(a, b)               _mm_add_pi8(a, b) // MMX
+//#define simd_sub_int8s(a, b)               _mm_sub_pi8(a, b) // MMX
+//#endif
 
 // int16 lanes
 #if defined(__ARM_NEON)
@@ -111,7 +121,11 @@ because I don't know much about how that works or how reliable it is
 #define simd_add_floats(a, b)               vaddq_f32(a, b)
 #define simd_sub_floats(a, b)               vsubq_f32(a, b)
 #define simd_max_floats(a, b)               vmaxq_f32(a, b)
+#define simd_and_floats(a, b)               vaddq_f32(a, b) // TODO: Fix me!
 #define simd_sqrt_floats(a)                 vsqrtq_f32(a)
+#define simd_cmpeq_floats(a, b)             vaddq_f32(a, b) // TODO: Fix me!
+#define simd_cmpneq_floats(a, b)            vaddq_f32(a, b) // TODO: Fix me!
+#define simd_cmplt_floats(a, b)             vaddq_f32(a, b) // TODO: Fix me!
 
 #elif defined(__AVX__)
 
@@ -128,6 +142,9 @@ because I don't know much about how that works or how reliable it is
 #define simd_max_floats(a, b)               _mm256_max_ps(a, b)
 #define simd_and_floats(a, b)               _mm256_and_ps(a, b)
 #define simd_sqrt_floats(a)                 _mm256_sqrt_ps(a)
+#define simd_cmpeq_floats(a, b)             _mm256_cmp_ps(a, b, _CMP_EQ_UQ)
+#define simd_cmpneq_floats(a, b)            _mm256_cmp_ps(a, b, _CMP_NEQ_UQ)
+#define simd_cmplt_floats(a, b)             _mm256_cmp_ps(a, b, _CMP_LT_OQ)
 
 #elif defined(__SSE__)
 
@@ -157,7 +174,11 @@ because I don't know much about how that works or how reliable it is
 #define simd_add_floats(a, b)               a + b
 #define simd_sub_floats(a, b)               a - b
 #define simd_max_floats(a, b)               tok_fmaxf(a, b)
+#define simd_and_floats(a, b)               a & b
 #define simd_sqrt_floats(a)                 sqrtf(a)
+#define simd_cmpeq_floats(a, b)             a == b
+#define simd_cmpneq_floats(a, b)            a != b
+#define simd_cmplt_floats(a, b)             a < b
 
 #endif // Float lanes
 

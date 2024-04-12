@@ -274,7 +274,11 @@ void shared_gameloop_update(
         
         update_terminal();
         
+        #if 0
         resolve_animation_effects(elapsed);
+        #endif
+        
+        resolve_animationA_effects(elapsed);
         clean_deleted_lights();
         
         copy_lights(frame_data->light_collection);

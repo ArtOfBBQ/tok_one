@@ -1,212 +1,231 @@
 #include "scheduled_animations.h"
 
-ScheduledAnimation * scheduled_animations;
-uint32_t scheduled_animations_size = 0;
+
+ScheduledAnimationA * scheduled_animationAs;
+uint32_t scheduled_animationAs_size = 0;
 
 void init_scheduled_animations(void) {
-    scheduled_animations = (ScheduledAnimation *)malloc_from_unmanaged(
-        sizeof(ScheduledAnimation) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
+    scheduled_animationAs = (ScheduledAnimationA *)malloc_from_unmanaged(
+        sizeof(ScheduledAnimationA) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
 }
 
-static void construct_scheduled_animation(
-    ScheduledAnimation * to_construct)
+static void construct_scheduled_animationA(
+    ScheduledAnimationA * to_construct,
+    const bool32_t final_values_not_adds)
 {
-    memset(to_construct, 0, sizeof(ScheduledAnimation));
+    memset(to_construct, 0, sizeof(ScheduledAnimationA));
     
     to_construct->affected_object_id = -1;
     
+    if (final_values_not_adds) {
+        to_construct->gpu_polygon_vals.xyz[0]       = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.xyz[1]       = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.xyz[2]       = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.xyz_angle[0] = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.xyz_angle[1] = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.xyz_angle[2] = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.bonus_rgb[0] = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.bonus_rgb[1] = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.bonus_rgb[2] = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.xyz_multiplier[0] =
+            FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.xyz_multiplier[1] =
+            FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.xyz_multiplier[2] =
+            FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.xyz_offset[0] = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.xyz_offset[1] = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.xyz_offset[2] = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.scale_factor  = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.ignore_lighting =
+            FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.ignore_camera =
+            FLT_SCHEDULEDANIM_IGNORE;
+        
+        to_construct->gpu_polygon_vals.simd_padding[0] =
+            FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.simd_padding[1] =
+            FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.simd_padding[2] =
+            FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.simd_padding[3] =
+            FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.simd_padding[4] =
+            FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_vals.simd_padding[5] =
+            FLT_SCHEDULEDANIM_IGNORE;
+        
+        to_construct->gpu_polygon_material_vals.rgba[0] =
+            FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_material_vals.rgba[1] =
+            FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_material_vals.rgba[2] =
+            FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_material_vals.rgba[3] =
+            FLT_SCHEDULEDANIM_IGNORE;
+        float scheduledanim_ignore = FLT_SCHEDULEDANIM_IGNORE;
+        memcpy(
+            &to_construct->gpu_polygon_material_vals.texture_i,
+            &scheduledanim_ignore,
+            4);
+        memcpy(
+            &to_construct->gpu_polygon_material_vals.texturearray_i,
+            &scheduledanim_ignore,
+            4);
+        to_construct->gpu_polygon_material_vals.simd_padding[0] =
+            FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->gpu_polygon_material_vals.simd_padding[1] =
+            FLT_SCHEDULEDANIM_IGNORE;
+        
+        to_construct->lightsource_vals.flt_object_id = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->lightsource_vals.flt_deleted   = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->lightsource_vals.flt_committed = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->lightsource_vals.xyz[0]        = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->lightsource_vals.xyz[1]        = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->lightsource_vals.xyz[2]        = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->lightsource_vals.xyz_offset[0] = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->lightsource_vals.xyz_offset[1] = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->lightsource_vals.xyz_offset[2] = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->lightsource_vals.RGBA[0]       = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->lightsource_vals.RGBA[1]       = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->lightsource_vals.RGBA[2]       = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->lightsource_vals.RGBA[3]       = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->lightsource_vals.reach         = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->lightsource_vals.ambient       = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->lightsource_vals.diffuse       = FLT_SCHEDULEDANIM_IGNORE;
+    }
+    
     to_construct->runs = 1;
+    to_construct->final_values_not_adds = final_values_not_adds;
+    
     to_construct->clientlogic_callback_when_finished_id = -1;
+    to_construct->clientlogic_arg_1 = -1;
+    to_construct->clientlogic_arg_2 = -1;
+    to_construct->clientlogic_arg_3 = -1;
 }
 
-ScheduledAnimation * next_scheduled_animation(void) {
+ScheduledAnimationA * next_scheduled_animationA(
+    const bool32_t final_values_not_adds)
+{
     log_assert(
-        scheduled_animations_size < SCHEDULED_ANIMATIONS_ARRAYSIZE);
-    ScheduledAnimation * return_value = NULL;
+        scheduled_animationAs_size < SCHEDULED_ANIMATIONS_ARRAYSIZE);
+    ScheduledAnimationA * return_value = NULL;
     
     for (
         int32_t i = 0;
-        i < (int32_t)scheduled_animations_size;
+        i < (int32_t)scheduled_animationAs_size;
         i++)
     {
-        if (scheduled_animations[i].deleted)
+        if (scheduled_animationAs[i].deleted)
         {
-            return_value = &scheduled_animations[i];
+            return_value = &scheduled_animationAs[i];
         }
     }
     
     if (return_value == NULL) {
         log_assert(
-            scheduled_animations_size + 1 < SCHEDULED_ANIMATIONS_ARRAYSIZE);
-        return_value = &scheduled_animations[scheduled_animations_size++];
+            scheduled_animationAs_size + 1 < SCHEDULED_ANIMATIONS_ARRAYSIZE);
+        return_value = &scheduled_animationAs[scheduled_animationAs_size++];
     }
     
-    construct_scheduled_animation(return_value);
+    construct_scheduled_animationA(return_value, final_values_not_adds);
     
     return return_value;
 }
 
-void commit_scheduled_animation(ScheduledAnimation * to_commit) {
+void commit_scheduled_animationA(ScheduledAnimationA * to_commit) {
     log_assert(!to_commit->committed);
     log_assert(to_commit->duration_microseconds > 0);
     log_assert(to_commit->remaining_microseconds == 0);
     
     to_commit->remaining_microseconds = to_commit->duration_microseconds;
     
-    for (uint32_t col_i = 0; col_i < 4; col_i++) {
-        if (to_commit->final_rgba_known[col_i]) {
-            log_assert(to_commit->final_rgba[col_i] >= 0.0f);
-            log_assert(to_commit->final_rgba[col_i] <= 1.0f);
-        }
-    }
-    
-    if (to_commit->remaining_wait_before_next_run < 1) {
-        delete_conflicting_animations(to_commit);
-    }
-    
     to_commit->committed = true;
 }
 
-void delete_conflicting_animations(ScheduledAnimation * priority_anim)
+void request_evaporate_and_destroy(
+    const int32_t object_id,
+    const uint64_t duration_microseconds)
 {
-    float float_threshold = 0.00001f;
+    log_assert(duration_microseconds > 0);
+    log_assert(object_id >= 0);
     
     for (
-        int32_t i = 0;
-        i < (int32_t)scheduled_animations_size;
-        i++)
+        uint32_t zp_i = 0;
+        zp_i < zpolygons_to_render->size;
+        zp_i++)
     {
-        // candidate for elimination when it conflicts
-        ScheduledAnimation * candidate = &scheduled_animations[i];
-        
-        // never conflict with yourself
-        if (priority_anim == candidate) { continue; }
-        
-        if (
-            (candidate->remaining_wait_before_next_run > 0 &&
-                !priority_anim->destroy_even_waiting_duplicates) ||
-            candidate->deleted ||
-            candidate->clientlogic_callback_when_finished_id
-                != -1 ||
-            (candidate->affected_object_id !=
-                priority_anim->affected_object_id) ||
-            candidate->runs != 1)
+        if (zpolygons_to_render->cpu_data[zp_i].deleted ||
+            !zpolygons_to_render->cpu_data[zp_i].committed ||
+            zpolygons_to_render->cpu_data[zp_i].object_id != object_id)
         {
             continue;
         }
         
-        if (
-            priority_anim->final_z_known &&
-            candidate->final_z_known)
-        {
-            candidate->deleted = true;
-        }
+        float duration_mod = (20000000.0f / (float)duration_microseconds);
         
-        if (
-            (
-            !priority_anim->final_z_known &&
-            (
-                priority_anim->delta_z_per_second < -float_threshold ||
-                priority_anim->delta_z_per_second >  float_threshold
-            )) &&
-            (
-            !candidate->final_z_known &&
-            (
-                candidate->delta_z_per_second < -float_threshold ||
-                candidate->delta_z_per_second >  float_threshold
-            )))
-        {
-            candidate->deleted = true;
-        }
+        ParticleEffect * shatter_effect = next_particle_effect();
+        shatter_effect->zpolygon_cpu = zpolygons_to_render->cpu_data[zp_i];
+        shatter_effect->zpolygon_gpu = zpolygons_to_render->gpu_data[zp_i];
+        shatter_effect->zpolygon_material =
+            zpolygons_to_render->gpu_materials[zp_i * MAX_MATERIALS_SIZE];
+        uint64_t shattered_verts_size =
+            (uint64_t)all_mesh_summaries[shatter_effect->zpolygon_cpu.mesh_id].
+                shattered_vertices_size;
+        shatter_effect->particle_spawns_per_second = (uint32_t)(
+            (shattered_verts_size * 1000000) /
+                (uint64_t)(duration_microseconds + 1));
+        shatter_effect->pause_between_spawns = 0;
+        shatter_effect->vertices_per_particle = 3;
+        shatter_effect->particle_lifespan = duration_microseconds;
+        shatter_effect->use_shattered_mesh = true;
         
-        if (
-            priority_anim->final_x_known &&
-            candidate->final_x_known)
-        {
-            candidate->deleted = true;
-        }
+        float xy_dist   =  0.0020f;
+        float z_dist    = -0.0045f;
+        float xyz_angle =  0.0050f;
+        float rgb_delta =  0.0050f;
         
-        if (
-            (
-            !priority_anim->final_x_known &&
-            (
-                priority_anim->delta_x_per_second < -float_threshold ||
-                priority_anim->delta_x_per_second >  float_threshold
-            )) &&
-            (
-            !candidate->final_x_known &&
-            (
-                candidate->delta_x_per_second < -float_threshold ||
-                candidate->delta_x_per_second >  float_threshold
-            )))
-        {
-            candidate->deleted = true;
-        }
+        shatter_effect->random_textures_size = 0;
         
-        if (
-            (
-            !priority_anim->final_x_angle_known &&
-            (
-                priority_anim->x_rotation_per_second < -float_threshold ||
-                priority_anim->x_rotation_per_second >  float_threshold
-            )) &&
-            (
-            !candidate->final_x_angle_known &&
-            (
-                candidate->x_rotation_per_second < -float_threshold ||
-                candidate->x_rotation_per_second >  float_threshold
-            )))
-        {
-            candidate->deleted = true;
-        }
+        shatter_effect->gpustats_pertime_random_add_1.xyz[0] = -xy_dist *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.xyz[1] = -xy_dist *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.xyz[2] = z_dist *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.xyz_angle[0] = xyz_angle *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.xyz_angle[1] = xyz_angle *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.xyz_angle[2] = xyz_angle *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.bonus_rgb[0] = rgb_delta *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.bonus_rgb[1] = rgb_delta *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.bonus_rgb[2] = rgb_delta *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_2.xyz[0] = xy_dist *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_2.xyz[1] = xy_dist *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_2.xyz[2] = z_dist *
+            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_2.xyz_angle[0] =
+            -xyz_angle * duration_mod;
+        shatter_effect->gpustats_pertime_random_add_2.xyz_angle[1] =
+            -xyz_angle * duration_mod;
+        shatter_effect->gpustats_pertime_random_add_2.xyz_angle[2] =
+            -xyz_angle * duration_mod;
+        shatter_effect->gpustats_perexptime_add.scale_factor = -0.04f *
+            duration_mod;
         
-        if (
-            priority_anim->final_y_known &&
-            candidate->final_y_known)
-        {
-            candidate->deleted = true;
-        }
+        shatter_effect->loops = 1;
+        shatter_effect->generate_light = false;
         
-        if (
-            (
-            !priority_anim->final_y_known &&
-            (
-                priority_anim->delta_y_per_second < -float_threshold ||
-                priority_anim->delta_y_per_second >  float_threshold
-            )) &&
-            (
-            !candidate->final_y_known &&
-            (
-                candidate->delta_y_per_second < -float_threshold ||
-                candidate->delta_y_per_second >  float_threshold
-            )))
-        {
-            candidate->deleted = true;
-        }
+        commit_particle_effect(shatter_effect);
         
-        if (
-            priority_anim->final_y_angle_known &&
-            candidate->final_y_angle_known)
-        {
-            candidate->deleted = true;
-        }
-        
-        if (
-            (
-            !priority_anim->final_y_angle_known &&
-            (
-                priority_anim->y_rotation_per_second < -float_threshold ||
-                priority_anim->y_rotation_per_second >  float_threshold
-            )) &&
-            (
-            !candidate->final_y_angle_known &&
-            (
-                candidate->y_rotation_per_second < -float_threshold ||
-                candidate->y_rotation_per_second >  float_threshold
-            )))
-        {
-            candidate->deleted = true;
-        }
+        zpolygons_to_render->cpu_data[zp_i].deleted = true;
     }
 }
 
@@ -304,17 +323,14 @@ void request_fade_and_destroy(
     log_assert(object_id >= 0);
     
     // register scheduled animation
-    ScheduledAnimation * modify_alpha = next_scheduled_animation();
+    ScheduledAnimationA * modify_alpha = next_scheduled_animationA(true);
     modify_alpha->affected_object_id = object_id;
     modify_alpha->remaining_wait_before_next_run = wait_before_first_run;
     modify_alpha->duration_microseconds = duration_microseconds;
-    modify_alpha->rgba_delta_per_second[1] = -0.05f;
-    modify_alpha->rgba_delta_per_second[2] = -0.05f;
-    modify_alpha->final_rgba_known[3] = true;
-    modify_alpha->final_rgba[3] = 0.0f;
+    modify_alpha->lightsource_vals.reach = 0.0f;
+    modify_alpha->gpu_polygon_material_vals.rgba[3] = 0.0f;
     modify_alpha->delete_object_when_finished = true;
-    modify_alpha->destroy_even_waiting_duplicates = false;
-    commit_scheduled_animation(modify_alpha);
+    commit_scheduled_animationA(modify_alpha);
 }
 
 void request_fade_to(
@@ -326,379 +342,25 @@ void request_fade_to(
     log_assert(object_id >= 0);
     
     // register scheduled animation
-    ScheduledAnimation * modify_alpha = next_scheduled_animation();
+    ScheduledAnimationA * modify_alpha = next_scheduled_animationA(true);
     modify_alpha->affected_object_id = object_id;
     modify_alpha->remaining_wait_before_next_run = wait_before_first_run;
     modify_alpha->duration_microseconds = duration_microseconds;
-    modify_alpha->final_rgba_known[3] = true;
-    modify_alpha->final_rgba[3] = target_alpha;
-    commit_scheduled_animation(modify_alpha);
+    modify_alpha->gpu_polygon_material_vals.rgba[3] = target_alpha;
+    commit_scheduled_animationA(modify_alpha);
 }
 
-static void resolve_single_animation_effects(
-    ScheduledAnimation * anim,
-    const uint64_t elapsed_this_run,
-    const uint64_t remaining_microseconds_at_start_of_run)
-{
-    log_assert(remaining_microseconds_at_start_of_run >= elapsed_this_run);
-    
-    if (anim->deleted) { return; }
-    
-    anim->internal_trigger_count += 1;
-    
-    float time_delta = (float)elapsed_this_run / 1000000.0f;
-    
-    // apply effects
+void resolve_animationA_effects(const uint64_t microseconds_elapsed) {
     for (
-        int32_t l_i = (int32_t)zlights_to_apply_size - 1;
-        l_i >= 0;
-        l_i--)
-    {
-        if (
-            zlights_to_apply[l_i].object_id ==
-                anim->affected_object_id &&
-            !zlights_to_apply[l_i].deleted)
-        {
-            if (!anim->final_x_known) {
-                zlights_to_apply[l_i].x +=
-                    (anim->delta_x_per_second * time_delta);
-            } else {
-                float diff_x = anim->final_mid_x - zlights_to_apply[l_i].x;
-                zlights_to_apply[l_i].x +=
-                    diff_x /
-                        ((float)remaining_microseconds_at_start_of_run /
-                            elapsed_this_run);
-            }
-            
-            if (!anim->final_y_known) {
-                zlights_to_apply[l_i].y +=
-                    (anim->delta_y_per_second * time_delta);
-            } else {
-                float diff_y = anim->final_mid_y - zlights_to_apply[l_i].y;
-                zlights_to_apply[l_i].y +=
-                    diff_y /
-                        ((float)remaining_microseconds_at_start_of_run /
-                            elapsed_this_run);
-            }
-            
-            if (!anim->final_z_known) {
-                zlights_to_apply[l_i].z +=
-                    ((anim->delta_z_per_second
-                        * elapsed_this_run)
-                            / 1000000);
-            } else {
-                float diff_z = anim->final_mid_z - zlights_to_apply[l_i].z;
-                zlights_to_apply[l_i].z +=
-                    diff_z /
-                        ((float)remaining_microseconds_at_start_of_run /
-                            elapsed_this_run);
-            }
-            
-            if (!anim->final_reach_known) {
-                zlights_to_apply[l_i].reach +=
-                    ((anim->delta_reach_per_second
-                        * elapsed_this_run)
-                            / 1000000);
-            } else {
-                float diff_reach = anim->final_reach -
-                    zlights_to_apply[l_i].reach;
-                
-                zlights_to_apply[l_i].reach +=
-                    diff_reach /
-                        ((float)remaining_microseconds_at_start_of_run /
-                            elapsed_this_run);
-            }
-            
-            for (
-                uint32_t c = 0;
-                c < 4;
-                c++)
-            {
-                if (!anim->final_rgba_known[c]) {
-                    float delta =
-                        (anim->rgba_delta_per_second[c]
-                            * elapsed_this_run)
-                                / 1000000;
-                    
-                    if (delta > 0.0001f || delta < 0.0001f) {
-                        zlights_to_apply[l_i].RGBA[c] += delta;
-                    }
-                } else {
-                    float cur_val =
-                        zlights_to_apply[l_i].RGBA[c];
-                    float delta_val =
-                        anim->final_rgba[c] - cur_val;
-                    
-                    if (delta_val > 0.0001f || delta_val < 0.0001f) {
-                        zlights_to_apply[l_i].RGBA[c] +=
-                            delta_val /
-                                ((float)remaining_microseconds_at_start_of_run /
-                                    elapsed_this_run);
-                    }
-                }
-            }
-        }
-    }
-    
-    for (
-        uint32_t zp_i = 0;
-        zp_i < zpolygons_to_render->size;
-        zp_i++)
-    {
-        if (
-            zpolygons_to_render->cpu_data[zp_i].object_id !=
-                anim->affected_object_id ||
-            zpolygons_to_render->cpu_data[zp_i].deleted)
-        {
-            continue;
-        }
-        
-        if (!anim->final_x_known) {
-            zpolygons_to_render->gpu_data[zp_i].xyz[0] +=
-                ((anim->delta_x_per_second *
-                    (float)elapsed_this_run)
-                            / 1000000.0f);
-        } else {
-            float diff_x = anim->final_mid_x -
-                zpolygons_to_render->gpu_data[zp_i].xyz[0];
-            zpolygons_to_render->gpu_data[zp_i].xyz[0] +=
-                diff_x /
-                    ((float)remaining_microseconds_at_start_of_run /
-                        elapsed_this_run);
-        }
-        
-        if (!anim->final_y_known) {
-            zpolygons_to_render->gpu_data[zp_i].xyz[1] +=
-                ((anim->delta_y_per_second *
-                    (float)elapsed_this_run)
-                        / 1000000.0f);
-        } else {
-            float diff_y = anim->final_mid_y -
-                zpolygons_to_render->gpu_data[zp_i].xyz[1];
-            zpolygons_to_render->gpu_data[zp_i].xyz[1] +=
-                diff_y /
-                    ((float)remaining_microseconds_at_start_of_run /
-                        elapsed_this_run);
-        }
-        
-        if (!anim->final_z_known) {
-                zpolygons_to_render->gpu_data[zp_i].xyz[2] +=
-                    ((anim->delta_z_per_second
-                        * elapsed_this_run)
-                            / 1000000);
-        } else {
-            float diff_z = anim->final_mid_z -
-                zpolygons_to_render->gpu_data[zp_i].xyz[2];
-            float pct_of_entire_run =
-                (float)remaining_microseconds_at_start_of_run /
-                    elapsed_this_run;
-            
-            zpolygons_to_render->gpu_data[zp_i].xyz[2] +=
-                diff_z / pct_of_entire_run;
-            if (remaining_microseconds_at_start_of_run == elapsed_this_run) {
-                log_assert(
-                    zpolygons_to_render->gpu_data[zp_i].xyz[2] ==
-                        anim->final_mid_z);
-            }
-        }
-        
-        if (!anim->final_x_angle_known) {
-            zpolygons_to_render->gpu_data[zp_i].xyz_angle[0] +=
-                (anim->x_rotation_per_second
-                    * elapsed_this_run)
-                        / 1000000;
-        } else {
-            float diff_x_angle = anim->final_x_angle -
-                zpolygons_to_render->gpu_data[zp_i].xyz_angle[0];
-            zpolygons_to_render->gpu_data[zp_i].xyz_angle[0] +=
-                diff_x_angle /
-                    ((float)remaining_microseconds_at_start_of_run /
-                        elapsed_this_run);
-        }
-        
-        if (!anim->final_y_angle_known) {
-            if (anim->y_rotation_per_second > 0.1f) {
-                log_assert(1);
-            }
-            zpolygons_to_render->gpu_data[zp_i].xyz_angle[1] +=
-                (anim->y_rotation_per_second
-                    * elapsed_this_run)
-                        / 1000000;
-        } else {
-            if (anim->y_rotation_per_second > 0.1f) {
-                log_assert(1);
-            }
-            
-            float diff_y_angle = anim->final_y_angle -
-                zpolygons_to_render->gpu_data[zp_i].xyz_angle[1];
-            zpolygons_to_render->gpu_data[zp_i].xyz_angle[1] +=
-                diff_y_angle /
-                    ((float)remaining_microseconds_at_start_of_run /
-                        elapsed_this_run);
-        }
-        
-        if (!anim->final_z_angle_known) {
-            zpolygons_to_render->gpu_data[zp_i].xyz_angle[2] +=
-                (anim->z_rotation_per_second
-                    * elapsed_this_run)
-                        / 1000000;
-        } else {
-            float diff_z_angle = anim->final_z_angle -
-                zpolygons_to_render->gpu_data[zp_i].xyz_angle[2];
-            zpolygons_to_render->gpu_data[zp_i].xyz_angle[2] +=
-                diff_z_angle /
-                    ((float)remaining_microseconds_at_start_of_run /
-                        elapsed_this_run);
-        }
-        
-        if (!anim->final_x_multiplier_known) {
-            if (anim->delta_x_multiplier_per_second != 0.0f) {
-                zpolygons_to_render->gpu_data[zp_i].xyz_multiplier[0] +=
-                (anim->delta_x_multiplier_per_second
-                    * elapsed_this_run)
-                        / 1000000;
-            }
-        } else {
-            float diff_x_multiplier = anim->final_x_multiplier -
-                zpolygons_to_render->gpu_data[zp_i].xyz_multiplier[0];
-            zpolygons_to_render->gpu_data[zp_i].xyz_multiplier[0] +=
-                diff_x_multiplier /
-                    ((float)remaining_microseconds_at_start_of_run /
-                        elapsed_this_run);
-        }
-        
-        if (!anim->final_y_multiplier_known) {
-            if (anim->delta_y_multiplier_per_second != 0.0f) {
-                zpolygons_to_render->gpu_data[zp_i].xyz_multiplier[1] +=
-                (anim->delta_y_multiplier_per_second
-                    * elapsed_this_run)
-                        / 1000000;
-            }
-        } else {
-            float diff_y_multiplier = anim->final_y_multiplier -
-                zpolygons_to_render->gpu_data[zp_i].xyz_multiplier[1];
-            zpolygons_to_render->gpu_data[zp_i].xyz_multiplier[1] +=
-                diff_y_multiplier /
-                    ((float)remaining_microseconds_at_start_of_run /
-                        elapsed_this_run);
-        }
-        
-        if (!anim->final_scale_known) {
-            zpolygons_to_render->gpu_data[zp_i].scale_factor +=
-                (anim->delta_scale_per_second *
-                    elapsed_this_run) / 1000000;
-        } else {
-            float diff_scale =
-                anim->final_scale - zpolygons_to_render->gpu_data[zp_i].
-                    scale_factor;
-            zpolygons_to_render->gpu_data[zp_i].scale_factor +=
-                diff_scale
-                    / ((float)remaining_microseconds_at_start_of_run
-                        / elapsed_this_run);
-        }
-        
-        if (anim->set_texture_array_i || anim->set_texture_i) {
-            for (
-                uint32_t mat_i = 0;
-                mat_i < MAX_MATERIALS_SIZE;
-                mat_i++)
-            {
-                if (anim->set_texture_array_i) {
-                    zpolygons_to_render->gpu_materials[
-                        (zp_i * MAX_MATERIALS_SIZE) + mat_i].texturearray_i =
-                            anim->new_texture_array_i;
-                }
-                if (anim->set_texture_i) {
-                    zpolygons_to_render->gpu_materials[
-                        (zp_i * MAX_MATERIALS_SIZE) + mat_i].texture_i =
-                            anim->new_texture_i;
-                }
-            }
-        }
-        
-        for (
-            uint32_t c = 0;
-            c < 4;
-            c++)
-        {
-            if (!anim->final_rgba_known[c]) {
-                float delta = ((anim->rgba_delta_per_second[c]
-                        * elapsed_this_run)
-                    / 1000000);
-                
-                if (delta > 0.0001f || delta < 0.0001f) {
-                    for (
-                        uint32_t mat_i = 0;
-                        mat_i < MAX_MATERIALS_SIZE;
-                        mat_i++)
-                    {
-                        zpolygons_to_render->gpu_materials[
-                            (zp_i * MAX_MATERIALS_SIZE) + mat_i].rgba[c] +=
-                                delta;
-                    }
-                }
-            } else {
-                for (
-                    uint32_t mat_i = 0;
-                    mat_i < MAX_MATERIALS_SIZE;
-                    mat_i++)
-                {
-                    float cur_val =
-                        zpolygons_to_render->gpu_materials[
-                            (zp_i * MAX_MATERIALS_SIZE) + mat_i].rgba[c];
-                    float delta_val = anim->final_rgba[c] - cur_val;
-                    
-                    if (delta_val > 0.0001f || delta_val < 0.0001f) {
-                        zpolygons_to_render->gpu_materials[
-                            (zp_i * MAX_MATERIALS_SIZE) + mat_i].rgba[c] +=
-                                (delta_val /
-                                    ((float)
-                                        remaining_microseconds_at_start_of_run /
-                                            elapsed_this_run));
-                    }
-                }
-            }
-        }
-        
-        for (
-            uint32_t c = 0;
-            c < 3;
-            c++)
-        {
-            if (!anim->final_rgb_bonus_known[c]) {
-                float delta = ((anim->rgb_bonus_delta_per_second[c]
-                        * elapsed_this_run)
-                    / 1000000);
-                    zpolygons_to_render->gpu_data[zp_i].bonus_rgb[c] +=
-                        delta;
-            } else {
-                float cur_val = zpolygons_to_render->
-                    gpu_data[zp_i].bonus_rgb[c];
-                float delta_val = anim->final_rgb_bonus[c] - cur_val;
-                
-                zpolygons_to_render->gpu_data[zp_i].bonus_rgb[c] +=
-                    delta_val /
-                        ((float)remaining_microseconds_at_start_of_run /
-                            elapsed_this_run);
-            }
-        }
-    }    
-}
-
-void resolve_animation_effects(const uint64_t microseconds_elapsed) {
-        
-    ScheduledAnimation * anim;
-    for (
-        int32_t animation_i = (int32_t)(scheduled_animations_size - 1);
+        int32_t animation_i = (int32_t)scheduled_animationAs_size - 1;
         animation_i >= 0;
         animation_i--)
     {
-        // pointer for abbreviation
-        anim = &scheduled_animations[animation_i];
+        ScheduledAnimationA * anim = &scheduled_animationAs[animation_i];
         
         if (anim->deleted) {
-            if (animation_i == (int32_t)scheduled_animations_size - 1) {
-                scheduled_animations_size -= 1;
+            if (animation_i == (int32_t)scheduled_animationAs_size - 1) {
+                scheduled_animationAs_size -= 1;
             }
             continue;
         }
@@ -714,7 +376,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                 actual_elapsed -= anim->remaining_wait_before_next_run;
                 anim->remaining_wait_before_next_run = 0;
                 
-                delete_conflicting_animations(anim);
+                // delete_conflicting_animationAs(anim);
             } else {
                 anim->remaining_wait_before_next_run -= actual_elapsed;
                 continue;
@@ -729,7 +391,6 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
         if (anim->remaining_microseconds > actual_elapsed) {
             anim->remaining_microseconds -= actual_elapsed;
         } else {
-            
             actual_elapsed_this_run = anim->remaining_microseconds;
             
             // delete or set up next run
@@ -751,18 +412,447 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
             }
         }
         
-        if (actual_elapsed_this_run > 0) {
-            resolve_single_animation_effects(
-                anim,
-                actual_elapsed_this_run,
-                remaining_microseconds_at_start_of_run);
+        if (delete_after_this_run) {
+            anim->deleted = true;
+            if (animation_i == (int32_t)scheduled_animationAs_size) {
+                scheduled_animationAs_size -= 1;
+            }
+        }
+        
+        // Apply effects
+        for (
+            uint32_t zp_i = 0;
+            zp_i < zpolygons_to_render->size;
+            zp_i++)
+        {
+            if (
+                zpolygons_to_render->cpu_data[zp_i].object_id !=
+                    anim->affected_object_id ||
+                zpolygons_to_render->cpu_data[zp_i].deleted)
+            {
+                continue;
+            }
+            
+            float flt_actual_elapsed_this_run =
+                (float)actual_elapsed_this_run;
+            float flt_remaining_microseconds_this_run =
+                (float)remaining_microseconds_at_start_of_run;
+            
+            SIMD_FLOAT simd_this_run_modifier =
+                simd_div_floats(
+                    simd_set_float(flt_actual_elapsed_this_run),
+                    simd_set_float(flt_remaining_microseconds_this_run));
+            
+            float * anim_vals_ptr    =
+                (float *)&anim->gpu_polygon_vals;
+            float * target_vals_ptr =
+                (float *)&zpolygons_to_render->gpu_data[zp_i];
+            
+            if (anim->final_values_not_adds) {
+                float scheduled_anim_ignore_below = FLT_SCHEDULEDANIM_IGNORE;
+                
+                SIMD_FLOAT simd_scheduledanim_ignore_constant =
+                    simd_set_float(scheduled_anim_ignore_below);
+                
+                log_assert((sizeof(GPUPolygon) / 4) % SIMD_FLOAT_LANES == 0);
+                for (
+                    uint32_t simd_step_i = 0;
+                    (simd_step_i * sizeof(float)) < sizeof(GPUPolygon);
+                    simd_step_i += SIMD_FLOAT_LANES)
+                {
+                    SIMD_FLOAT simd_anim_vals =
+                        simd_load_floats((anim_vals_ptr + simd_step_i));
+                    SIMD_FLOAT simd_target_vals =
+                        simd_load_floats((target_vals_ptr + simd_step_i));
+                    
+                    SIMD_FLOAT simd_needed_to_goal = simd_sub_floats(
+                        simd_anim_vals,
+                        simd_target_vals);
+                    SIMD_FLOAT simd_active_mask = simd_cmplt_floats(
+                        simd_anim_vals,
+                        simd_scheduledanim_ignore_constant);
+                    
+                    SIMD_FLOAT simd_addition =
+                        simd_mul_floats(
+                            simd_this_run_modifier,
+                            simd_needed_to_goal);
+                    
+                    SIMD_FLOAT simd_masked_addition = simd_and_floats(
+                        simd_addition,
+                        simd_active_mask);
+                    
+                    SIMD_FLOAT simd_new_target_vals = simd_add_floats(
+                        simd_target_vals,
+                        simd_masked_addition);
+                    
+                    log_assert(
+                        (target_vals_ptr + simd_step_i) <
+                            (float *)&zpolygons_to_render[zp_i + 1].gpu_data);
+                    simd_store_floats(
+                        (target_vals_ptr + simd_step_i),
+                        simd_new_target_vals);
+                }
+                #ifndef LOGGER_IGNORE_ASSERTS
+                for (uint32_t i = 0; i < (sizeof(GPUPolygon) / 4); i++) {
+                    // assert not NaN
+                    log_assert((target_vals_ptr[i] == target_vals_ptr[i]));
+                    log_assert(!isinf(target_vals_ptr[i]));
+                    log_assert(!isnan(target_vals_ptr[i]));
+                    log_assert((anim_vals_ptr[i] == anim_vals_ptr[i]));
+                }
+                #endif
+                
+                anim_vals_ptr    =
+                    (float *)&anim->gpu_polygon_material_vals;
+                uint32_t mat1_i = zp_i * MAX_MATERIALS_SIZE;
+                for (
+                    uint32_t mat_i = mat1_i;
+                    mat_i < mat1_i + MAX_MATERIALS_SIZE;
+                    mat_i++)
+                {
+                    target_vals_ptr =
+                        (float *)&zpolygons_to_render->gpu_materials[mat_i];
+                    
+                    log_assert((sizeof(GPUPolygonMaterial) / 4) %
+                        SIMD_FLOAT_LANES == 0);
+                    for (
+                        uint32_t simd_step_i = 0;
+                        (simd_step_i * sizeof(float)) <
+                            sizeof(GPUPolygonMaterial);
+                        simd_step_i += SIMD_FLOAT_LANES)
+                    {
+                        SIMD_FLOAT simd_anim_vals =
+                            simd_load_floats((anim_vals_ptr + simd_step_i));
+                        SIMD_FLOAT simd_target_vals =
+                            simd_load_floats((target_vals_ptr + simd_step_i));
+                        
+                        SIMD_FLOAT simd_needed_to_goal = simd_sub_floats(
+                            simd_anim_vals,
+                            simd_target_vals);
+                        SIMD_FLOAT simd_active_mask = simd_cmplt_floats(
+                            simd_anim_vals,
+                            simd_scheduledanim_ignore_constant);
+                        
+                        SIMD_FLOAT simd_addition =
+                            simd_mul_floats(
+                                simd_this_run_modifier,
+                                simd_needed_to_goal);
+                        
+                        SIMD_FLOAT simd_masked_addition = simd_and_floats(
+                            simd_addition,
+                            simd_active_mask);
+                        
+                        SIMD_FLOAT simd_new_target_vals = simd_add_floats(
+                            simd_target_vals,
+                            simd_masked_addition);
+                        
+                        log_assert(
+                            (target_vals_ptr + simd_step_i) <
+                                (float *)&zpolygons_to_render[zp_i + 1].gpu_data);
+                        simd_store_floats(
+                            (target_vals_ptr + simd_step_i),
+                            simd_new_target_vals);
+                    }
+                }
+            } else {
+                log_assert((sizeof(GPUPolygon) / 4) % SIMD_FLOAT_LANES == 0);
+                float flt_one_million = 1000000.0f;
+                for (
+                    uint32_t simd_step_i = 0;
+                    (simd_step_i * sizeof(float)) < sizeof(GPUPolygon);
+                    simd_step_i += SIMD_FLOAT_LANES)
+                {
+                    SIMD_FLOAT simd_anim_vals =
+                        simd_load_floats((anim_vals_ptr + simd_step_i));
+                    SIMD_FLOAT simd_target_vals =
+                        simd_load_floats((target_vals_ptr + simd_step_i));
+                    
+                    SIMD_FLOAT simd_actual_elapsed =
+                        simd_set_float(flt_actual_elapsed_this_run);
+                    SIMD_FLOAT simd_one_million =
+                        simd_set_float(flt_one_million);
+                    
+                    simd_target_vals = simd_add_floats(
+                        simd_target_vals,
+                        simd_div_floats(
+                            simd_mul_floats(
+                                simd_anim_vals,
+                                simd_actual_elapsed),
+                            simd_one_million));
+                    
+                    simd_store_floats(
+                        (target_vals_ptr + simd_step_i),
+                        simd_target_vals);
+                }
+                
+                anim_vals_ptr = (float *)&anim->gpu_polygon_material_vals;
+                uint32_t mat1_i = zp_i * MAX_MATERIALS_SIZE;
+                for (
+                    uint32_t mat_i = mat1_i;
+                    mat_i < mat1_i + MAX_MATERIALS_SIZE;
+                    mat_i++)
+                {
+                    target_vals_ptr =
+                        (float *)&zpolygons_to_render->gpu_materials[mat_i];
+                    
+                    log_assert((sizeof(GPUPolygonMaterial) / 4) %
+                        SIMD_FLOAT_LANES == 0);
+                    for (
+                        uint32_t simd_step_i = 0;
+                        (simd_step_i * sizeof(float)) <
+                            sizeof(GPUPolygonMaterial);
+                        simd_step_i += SIMD_FLOAT_LANES)
+                    {
+                        SIMD_FLOAT simd_anim_vals =
+                            simd_load_floats((anim_vals_ptr + simd_step_i));
+                        SIMD_FLOAT simd_target_vals =
+                            simd_load_floats((target_vals_ptr + simd_step_i));
+                        
+                        SIMD_FLOAT simd_actual_elapsed =
+                            simd_set_float(flt_actual_elapsed_this_run);
+                        SIMD_FLOAT simd_one_million =
+                            simd_set_float(flt_one_million);
+                        
+                        simd_target_vals = simd_add_floats(
+                            simd_target_vals,
+                            simd_div_floats(
+                                simd_mul_floats(
+                                    simd_anim_vals,
+                                    simd_actual_elapsed),
+                                simd_one_million));
+                        
+                        simd_store_floats(
+                            (target_vals_ptr + simd_step_i),
+                            simd_target_vals);
+                    }
+                }
+            }
+        }
+        
+        for (
+            uint32_t light_i = 0;
+            light_i < zlights_to_apply_size;
+            light_i++)
+        {
+            if (
+                zlights_to_apply[light_i].object_id !=
+                    anim->affected_object_id ||
+                zlights_to_apply[light_i].deleted ||
+                !zlights_to_apply[light_i].committed)
+            {
+                continue;
+            }
+            
+            /*
+                float flt_object_id;
+                float flt_deleted;
+                float flt_committed;
+                float xyz[3];
+                float xyz_offset[3];
+                float RGBA[4];
+                float reach;       // max distance before light intensity 0
+                float ambient;     // how much ambient light does this radiate?
+                float diffuse;     // how much diffuse light does this radiate?
+            */
+            if (anim->final_values_not_adds) {
+                float this_run_modifier =
+                    (float)actual_elapsed_this_run /
+                        (float)remaining_microseconds_at_start_of_run;
+                log_assert(this_run_modifier <= 1.0f);
+                log_assert(this_run_modifier >  0.0f);
+                
+                float needed_to_goal;
+                float active_mod;
+                
+                log_assert(
+                    anim->lightsource_vals.flt_object_id ==
+                        FLT_SCHEDULEDANIM_IGNORE);
+                needed_to_goal = anim->lightsource_vals.flt_object_id -
+                    zlights_to_apply[light_i].flt_object_id;
+                active_mod = (anim->lightsource_vals.flt_object_id !=
+                    FLT_SCHEDULEDANIM_IGNORE);
+                zlights_to_apply[light_i].flt_object_id +=
+                    ((this_run_modifier * needed_to_goal) *
+                        active_mod);
+                
+                log_assert(
+                    anim->lightsource_vals.flt_deleted ==
+                        FLT_SCHEDULEDANIM_IGNORE);
+                needed_to_goal = anim->lightsource_vals.flt_deleted -
+                    zlights_to_apply[light_i].flt_deleted;
+                active_mod = (anim->lightsource_vals.flt_deleted !=
+                    FLT_SCHEDULEDANIM_IGNORE);
+                zlights_to_apply[light_i].flt_deleted +=
+                    ((this_run_modifier * needed_to_goal) *
+                        active_mod);
+                
+                log_assert(
+                    anim->lightsource_vals.flt_committed ==
+                        FLT_SCHEDULEDANIM_IGNORE);
+                needed_to_goal = anim->lightsource_vals.flt_committed -
+                    zlights_to_apply[light_i].flt_committed;
+                active_mod = (anim->lightsource_vals.flt_committed !=
+                    FLT_SCHEDULEDANIM_IGNORE);
+                zlights_to_apply[light_i].flt_committed +=
+                    ((this_run_modifier * needed_to_goal) *
+                        active_mod);
+                
+                needed_to_goal = anim->lightsource_vals.xyz[0] -
+                    zlights_to_apply[light_i].xyz[0];
+                active_mod = (anim->lightsource_vals.xyz[0] !=
+                    FLT_SCHEDULEDANIM_IGNORE);
+                zlights_to_apply[light_i].xyz[0] +=
+                    ((this_run_modifier * needed_to_goal) *
+                        active_mod);
+                needed_to_goal = anim->lightsource_vals.xyz[1] -
+                    zlights_to_apply[light_i].xyz[1];
+                active_mod = (anim->lightsource_vals.xyz[1] !=
+                    FLT_SCHEDULEDANIM_IGNORE);
+                zlights_to_apply[light_i].xyz[1] +=
+                    ((this_run_modifier * needed_to_goal) * active_mod);
+                needed_to_goal = anim->lightsource_vals.xyz[2] -
+                    zlights_to_apply[light_i].xyz[2];
+                active_mod = (anim->lightsource_vals.xyz[2] !=
+                    FLT_SCHEDULEDANIM_IGNORE);
+                zlights_to_apply[light_i].xyz[2] +=
+                    ((this_run_modifier * needed_to_goal) *
+                        active_mod);
+                
+                needed_to_goal = anim->lightsource_vals.xyz_offset[0] -
+                    zlights_to_apply[light_i].xyz_offset[0];
+                active_mod = (anim->lightsource_vals.xyz_offset[0] !=
+                    FLT_SCHEDULEDANIM_IGNORE);
+                zlights_to_apply[light_i].xyz_offset[0] +=
+                    ((this_run_modifier * needed_to_goal) *
+                        active_mod);
+                needed_to_goal = anim->lightsource_vals.xyz_offset[1] -
+                    zlights_to_apply[light_i].xyz_offset[1];
+                active_mod = (anim->lightsource_vals.xyz_offset[1] !=
+                    FLT_SCHEDULEDANIM_IGNORE);
+                zlights_to_apply[light_i].xyz_offset[1] +=
+                    ((this_run_modifier * needed_to_goal) *
+                        active_mod);
+                needed_to_goal = anim->lightsource_vals.xyz_offset[2] -
+                    zlights_to_apply[light_i].xyz_offset[2];
+                active_mod = (anim->lightsource_vals.xyz_offset[2] !=
+                    FLT_SCHEDULEDANIM_IGNORE);
+                zlights_to_apply[light_i].xyz_offset[2] +=
+                    ((this_run_modifier * needed_to_goal) *
+                        active_mod);
+                
+                needed_to_goal = anim->lightsource_vals.RGBA[0] -
+                    zlights_to_apply[light_i].RGBA[0];
+                active_mod = (anim->lightsource_vals.RGBA[0] !=
+                    FLT_SCHEDULEDANIM_IGNORE);
+                zlights_to_apply[light_i].RGBA[0] +=
+                    ((this_run_modifier * needed_to_goal) *
+                        active_mod);
+                needed_to_goal = anim->lightsource_vals.RGBA[1] -
+                    zlights_to_apply[light_i].RGBA[1];
+                active_mod = (anim->lightsource_vals.RGBA[1] !=
+                    FLT_SCHEDULEDANIM_IGNORE);
+                zlights_to_apply[light_i].RGBA[1] +=
+                    ((this_run_modifier * needed_to_goal) *
+                        active_mod);
+                needed_to_goal = anim->lightsource_vals.RGBA[2] -
+                    zlights_to_apply[light_i].RGBA[2];
+                active_mod = (anim->lightsource_vals.RGBA[2] !=
+                    FLT_SCHEDULEDANIM_IGNORE);
+                zlights_to_apply[light_i].RGBA[2] +=
+                    ((this_run_modifier * needed_to_goal) *
+                        active_mod);
+                needed_to_goal = anim->lightsource_vals.RGBA[3] -
+                    zlights_to_apply[light_i].RGBA[3];
+                active_mod = (anim->lightsource_vals.RGBA[3] !=
+                    FLT_SCHEDULEDANIM_IGNORE);
+                zlights_to_apply[light_i].RGBA[3] +=
+                    ((this_run_modifier * needed_to_goal) *
+                        active_mod);
+                
+                needed_to_goal = anim->lightsource_vals.reach -
+                    zlights_to_apply[light_i].reach;
+                active_mod = (anim->lightsource_vals.reach !=
+                    FLT_SCHEDULEDANIM_IGNORE);
+                zlights_to_apply[light_i].reach +=
+                    ((this_run_modifier * needed_to_goal) *
+                        active_mod);
+                needed_to_goal = anim->lightsource_vals.ambient -
+                    zlights_to_apply[light_i].ambient;
+                active_mod = (anim->lightsource_vals.ambient !=
+                    FLT_SCHEDULEDANIM_IGNORE);
+                zlights_to_apply[light_i].ambient +=
+                    ((this_run_modifier * needed_to_goal) *
+                        active_mod);
+                needed_to_goal = anim->lightsource_vals.diffuse -
+                    zlights_to_apply[light_i].diffuse;
+                active_mod = (anim->lightsource_vals.diffuse !=
+                    FLT_SCHEDULEDANIM_IGNORE);
+                zlights_to_apply[light_i].diffuse +=
+                    ((this_run_modifier * needed_to_goal) *
+                        active_mod);
+            } else {
+                log_assert(anim->lightsource_vals.flt_object_id == 0.0f);
+                zlights_to_apply[light_i].flt_object_id +=
+                    (anim->lightsource_vals.flt_object_id *
+                        actual_elapsed_this_run) / 1000000.0f;
+                log_assert(anim->lightsource_vals.flt_deleted == 0.0f);
+                zlights_to_apply[light_i].flt_deleted +=
+                    (anim->lightsource_vals.flt_deleted *
+                        actual_elapsed_this_run) / 1000000.0f;
+                log_assert(anim->lightsource_vals.flt_committed == 0.0f);
+                zlights_to_apply[light_i].flt_committed +=
+                    (anim->lightsource_vals.flt_committed *
+                        actual_elapsed_this_run) / 1000000.0f;
+                
+                zlights_to_apply[light_i].xyz[0] +=
+                    (anim->lightsource_vals.xyz[0] *
+                        actual_elapsed_this_run) / 1000000.0f;
+                zlights_to_apply[light_i].xyz[1] +=
+                    (anim->lightsource_vals.xyz[1] *
+                        actual_elapsed_this_run) / 1000000.0f;
+                zlights_to_apply[light_i].xyz[2] +=
+                    (anim->lightsource_vals.xyz[2] *
+                        actual_elapsed_this_run) / 1000000.0f;
+                
+                zlights_to_apply[light_i].xyz_offset[0] +=
+                    (anim->lightsource_vals.xyz_offset[0] *
+                        actual_elapsed_this_run) / 1000000.0f;
+                zlights_to_apply[light_i].xyz_offset[1] +=
+                    (anim->lightsource_vals.xyz_offset[1] *
+                        actual_elapsed_this_run) / 1000000.0f;
+                zlights_to_apply[light_i].xyz_offset[2] +=
+                    (anim->lightsource_vals.xyz_offset[2] *
+                        actual_elapsed_this_run) / 1000000.0f;
+                
+                zlights_to_apply[light_i].RGBA[0] +=
+                    (anim->lightsource_vals.RGBA[0] *
+                        actual_elapsed_this_run) / 1000000.0f;
+                zlights_to_apply[light_i].RGBA[1] +=
+                    (anim->lightsource_vals.RGBA[1] *
+                        actual_elapsed_this_run) / 1000000.0f;
+                zlights_to_apply[light_i].RGBA[2] +=
+                    (anim->lightsource_vals.RGBA[2] *
+                        actual_elapsed_this_run) / 1000000.0f;
+                zlights_to_apply[light_i].RGBA[3] +=
+                    (anim->lightsource_vals.RGBA[3] *
+                        actual_elapsed_this_run) / 1000000.0f;
+                
+                zlights_to_apply[light_i].reach +=
+                    (anim->lightsource_vals.reach *
+                        actual_elapsed_this_run) / 1000000.0f;
+                zlights_to_apply[light_i].ambient +=
+                    (anim->lightsource_vals.ambient *
+                        actual_elapsed_this_run) / 1000000.0f;
+                zlights_to_apply[light_i].diffuse +=
+                    (anim->lightsource_vals.diffuse *
+                        actual_elapsed_this_run) / 1000000.0f;
+            }
         }
         
         if (delete_after_this_run) {
-            
             anim->deleted = true;
-            if (animation_i == (int32_t)scheduled_animations_size) {
-                scheduled_animations_size -= 1;
+            if (animation_i == (int32_t)scheduled_animationAs_size) {
+                scheduled_animationAs_size -= 1;
             }
             
             if (anim->clientlogic_callback_when_finished_id >= 0)  {
@@ -816,13 +906,14 @@ void request_dud_dance(
     {
         uint64_t wait_extra = step * step_size;
         
-        ScheduledAnimation * move_request = next_scheduled_animation();
+        ScheduledAnimationA * move_request = next_scheduled_animationA(false);
         move_request->affected_object_id = (int32_t)object_id;
         move_request->remaining_wait_before_next_run = wait_extra;
         move_request->duration_microseconds = step_size - 2000;
-        move_request->delta_x_per_second = step % 2 == 0 ? delta : -delta;
-        move_request->delta_y_per_second = move_request->delta_x_per_second;
-        commit_scheduled_animation(move_request);
+        move_request->gpu_polygon_vals.xyz[0] = step % 2 == 0 ? delta : -delta;
+        move_request->gpu_polygon_vals.xyz[1] =
+            move_request->gpu_polygon_vals.xyz[0];
+        commit_scheduled_animationA(move_request);
     }
 }
 
@@ -832,32 +923,47 @@ void request_bump_animation(
 {
     uint64_t duration = 150000;
     
-    ScheduledAnimation * embiggen_request = next_scheduled_animation();
+    ScheduledAnimationA * embiggen_request = next_scheduled_animationA(true);
     embiggen_request->affected_object_id = (int32_t)object_id;
     embiggen_request->remaining_wait_before_next_run = wait;
     embiggen_request->duration_microseconds = duration / 5;
-    embiggen_request->final_scale_known = true;
-    embiggen_request->final_scale = 1.35f;
-    commit_scheduled_animation(embiggen_request);
+    embiggen_request->gpu_polygon_vals.scale_factor = 1.35f;
+    commit_scheduled_animationA(embiggen_request);
     
-    ScheduledAnimation * revert_request = next_scheduled_animation();
+    ScheduledAnimationA * revert_request = next_scheduled_animationA(true);
     revert_request->affected_object_id = (int32_t)object_id;
     revert_request->remaining_wait_before_next_run = wait + duration / 2;
     revert_request->duration_microseconds = (duration / 5) * 4;
-    revert_request->final_scale_known = true;
-    revert_request->final_scale = 1.0f;
-    commit_scheduled_animation(revert_request);
+    revert_request->gpu_polygon_vals.scale_factor = 1.0f;
+    commit_scheduled_animationA(revert_request);
+}
+
+void delete_all_scheduled_animations(void)
+{
+    for (uint32_t i = 0; i < scheduled_animationAs_size; i++) {
+        if (scheduled_animationAs[i].runs == 0) {
+            scheduled_animationAs[i].deleted = true;
+        }
+    }
+    scheduled_animationAs_size = 0;
 }
 
 void delete_all_movement_animations_targeting(
     const int32_t object_id)
 {
-    for (uint32_t i = 0; i < scheduled_animations_size; i++) {
-        if (scheduled_animations[i].affected_object_id == (int32_t)object_id &&
-            (scheduled_animations[i].final_x_known ||
-            scheduled_animations[i].final_y_known))
+    for (uint32_t i = 0; i < scheduled_animationAs_size; i++) {
+        if (scheduled_animationAs[i].affected_object_id == (int32_t)object_id && (
+            (((scheduled_animationAs[i].final_values_not_adds &&
+            scheduled_animationAs[i].gpu_polygon_vals.xyz[0] !=
+                FLT_SCHEDULEDANIM_IGNORE)  ||
+            (scheduled_animationAs[i].gpu_polygon_vals.xyz[0] > 0.01f)))
+            ||
+            ((scheduled_animationAs[i].final_values_not_adds &&
+            scheduled_animationAs[i].gpu_polygon_vals.xyz[1] !=
+                FLT_SCHEDULEDANIM_IGNORE)  ||
+            (scheduled_animationAs[i].gpu_polygon_vals.xyz[1] > 0.01f))))
         {
-            scheduled_animations[i].deleted = true;
+            scheduled_animationAs[i].deleted = true;
         }
     }
 }
@@ -865,30 +971,35 @@ void delete_all_movement_animations_targeting(
 void delete_all_rgba_animations_targeting(
     const int32_t object_id)
 {
-    for (uint32_t i = 0; i < scheduled_animations_size; i++) {
-        if (scheduled_animations[i].affected_object_id == (int32_t)object_id &&
-            (scheduled_animations[i].final_rgba_known[0] ||
-             scheduled_animations[i].final_rgba_known[1] ||
-             scheduled_animations[i].final_rgba_known[2] ||
-             scheduled_animations[i].final_rgba_known[3]))
+    for (uint32_t i = 0; i < scheduled_animationAs_size; i++) {
+        if (scheduled_animationAs[i].affected_object_id == (int32_t)object_id &&
+            scheduled_animationAs[i].final_values_not_adds &&
+            (scheduled_animationAs[i].gpu_polygon_material_vals.rgba[0] !=
+                 FLT_SCHEDULEDANIM_IGNORE ||
+             scheduled_animationAs[i].gpu_polygon_material_vals.rgba[1] !=
+                 FLT_SCHEDULEDANIM_IGNORE ||
+             scheduled_animationAs[i].gpu_polygon_material_vals.rgba[2] !=
+                 FLT_SCHEDULEDANIM_IGNORE ||
+             scheduled_animationAs[i].gpu_polygon_material_vals.rgba[3] !=
+                 FLT_SCHEDULEDANIM_IGNORE))
         {
-            scheduled_animations[i].deleted = true;
+            scheduled_animationAs[i].deleted = true;
         }
     }
 }
 
 void delete_all_animations_targeting(const int32_t object_id) {
-    for (uint32_t i = 0; i < scheduled_animations_size; i++) {
-        if (scheduled_animations[i].affected_object_id == object_id) {
-            scheduled_animations[i].deleted = true;
+    for (uint32_t i = 0; i < scheduled_animationAs_size; i++) {
+        if (scheduled_animationAs[i].affected_object_id == object_id) {
+            scheduled_animationAs[i].deleted = true;
         }
     }
 }
 
 void delete_all_repeatforever_animations(void) {
-    for (uint32_t i = 0; i < scheduled_animations_size; i++) {
-        if (scheduled_animations[i].runs == 0) {
-            scheduled_animations[i].deleted = true;
+    for (uint32_t i = 0; i < scheduled_animationAs_size; i++) {
+        if (scheduled_animationAs[i].runs == 0) {
+            scheduled_animationAs[i].deleted = true;
         }
     }
 }

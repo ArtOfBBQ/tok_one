@@ -50,10 +50,10 @@ typedef struct GPUPolygon {
     float        xyz_multiplier[3]; // determines width/height/depth
     float        xyz_offset[3];
     float        scale_factor;
-    unsigned int ignore_lighting;
-    unsigned int ignore_camera;
+    float        ignore_lighting;
+    float        ignore_camera;
     float        simd_padding[6];
-} GPUPolygon;
+} GPUPolygon; // 24 floats (3 SIMD runs)
 
 typedef struct GPUPolygonCollection {
     GPUPolygon   polygons[MAX_POLYGONS_PER_BUFFER];
@@ -64,6 +64,7 @@ typedef struct GPUPolygonMaterial {
     float rgba[4];
     int   texturearray_i;
     int   texture_i;
+    float simd_padding[2];
 } GPUPolygonMaterial;
 
 typedef struct GPULightCollection {

@@ -9,20 +9,20 @@ zLightSource * zlights_to_apply = NULL;
 uint32_t zlights_to_apply_size = 0;
 
 static void construct_zlight(zLightSource * to_construct) {
-    to_construct->x         = 0.0f;
-    to_construct->y         = 0.0f;
-    to_construct->z         = 0.0f;
-    to_construct->x_offset  = 0.0f;
-    to_construct->y_offset  = 0.0f;
-    to_construct->z_offset  = 0.0f;
-    to_construct->RGBA[0]   = 0.1f;
-    to_construct->RGBA[1]   = 0.1f;
-    to_construct->RGBA[2]   = 0.1f;
-    to_construct->RGBA[3]   = 1.0f;
-    to_construct->ambient   = 1.00f;
-    to_construct->diffuse   = 0.10f;
-    to_construct->deleted   = false;
-    to_construct->committed = false;
+    to_construct->xyz[0]        = 0.0f;
+    to_construct->xyz[1]        = 0.0f;
+    to_construct->xyz[2]        = 0.0f;
+    to_construct->xyz_offset[0] = 0.0f;
+    to_construct->xyz_offset[1] = 0.0f;
+    to_construct->xyz_offset[2] = 0.0f;
+    to_construct->RGBA[0]       = 0.1f;
+    to_construct->RGBA[1]       = 0.1f;
+    to_construct->RGBA[2]       = 0.1f;
+    to_construct->RGBA[3]       = 1.0f;
+    to_construct->ambient       = 1.00f;
+    to_construct->diffuse       = 0.10f;
+    to_construct->deleted       = false;
+    to_construct->committed     = false;
 }
 
 zLightSource * next_zlight(void) {
@@ -275,14 +275,14 @@ void copy_lights(
     {
         if (!zlights_to_apply[i].deleted) {
             lights_for_gpu->light_x[lights_for_gpu->lights_size] =
-                zlights_to_apply[i].x +
-                zlights_to_apply[i].x_offset;
+                zlights_to_apply[i].xyz[0] +
+                zlights_to_apply[i].xyz_offset[0];
             lights_for_gpu->light_y[lights_for_gpu->lights_size] =
-                zlights_to_apply[i].y +
-                zlights_to_apply[i].y_offset;
+                zlights_to_apply[i].xyz[1] +
+                zlights_to_apply[i].xyz_offset[1];
             lights_for_gpu->light_z[lights_for_gpu->lights_size] =
-                zlights_to_apply[i].z +
-                zlights_to_apply[i].z_offset;
+                zlights_to_apply[i].xyz[2] +
+                zlights_to_apply[i].xyz_offset[2];
             lights_for_gpu->red[lights_for_gpu->lights_size] =
                 zlights_to_apply[i].RGBA[0];
             lights_for_gpu->green[lights_for_gpu->lights_size] =
@@ -313,9 +313,9 @@ void translate_lights(
     
     for (uint32_t i = 0; i < zlights_to_apply_size; i++)
     {
-        translated_light_pos.x = zlights_to_apply[i].x - camera.x;
-        translated_light_pos.y = zlights_to_apply[i].y - camera.y;
-        translated_light_pos.z = zlights_to_apply[i].z - camera.z;
+        translated_light_pos.x = zlights_to_apply[i].xyz[0] - camera.x;
+        translated_light_pos.y = zlights_to_apply[i].xyz[1] - camera.y;
+        translated_light_pos.z = zlights_to_apply[i].xyz[2] - camera.z;
         
         translated_light_pos = x_rotate_zvertex(
             &translated_light_pos,
@@ -337,7 +337,6 @@ void translate_lights(
         
         lights_for_gpu->ambient[i]   = zlights_to_apply[i].ambient; 
         lights_for_gpu->diffuse[i]   = zlights_to_apply[i].diffuse;
-        
         lights_for_gpu->reach[i]     = zlights_to_apply[i].reach;
         
         lights_for_gpu->lights_size += 1;

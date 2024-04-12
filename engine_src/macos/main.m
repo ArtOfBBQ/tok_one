@@ -357,7 +357,6 @@ NSWindowWithCustomResponder: NSWindow
     }
 }
 
-
 - (void)keyDown:(NSEvent *)event {
     register_keydown(apple_keycode_to_tokone_keycode(event.keyCode));
 }

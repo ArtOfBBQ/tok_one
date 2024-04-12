@@ -17,6 +17,9 @@ typedef struct SimdTestStruct {
     float imafloat[16];
 } SimdTestStruct;
 static void test_simd_functions(void) {
+    log_assert(sizeof(zLightSource) % (SIMD_FLOAT_LANES * 4) == 0);
+    log_assert(sizeof(GPUPolygon)   % (SIMD_FLOAT_LANES * 4) == 0);
+    
     log_assert(sizeof(SimdTestStruct) % (SIMD_FLOAT_LANES * 4) == 0);
     SimdTestStruct * structs = malloc_from_managed(
         sizeof(SimdTestStruct) * 10);

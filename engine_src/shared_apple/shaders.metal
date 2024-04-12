@@ -64,7 +64,7 @@ float4 z_rotate(float4 vertices, float z_angle) {
 float get_distance(
     float4 a,
     float4 b)
-{    
+{
     float4 squared_diffs = (a-b)*(a-b);
     
     float sum_squares = dot(squared_diffs, float4(1.0f,1.0f,1.0f,1.0f));

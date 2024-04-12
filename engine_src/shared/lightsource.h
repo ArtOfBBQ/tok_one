@@ -56,18 +56,24 @@ void z_rotate_zvertices_inplace(
 extern GPUCamera camera;
 
 typedef struct zLightSource {
-    int32_t object_id; // you can make a group of lights and/or texquads by
-                       // giving them the same positive object_id, then make
-                       // ScheduledAnimations that affect the entire group
-                       // set to -1 to not be a party of any group
-    bool32_t deleted;
-    bool32_t committed;
-    float x;
-    float y;
-    float z;
-    float x_offset;    // these 3 _offset values are unaffected by animations,
-    float y_offset;    // so you can give the light the same object_id as a
-    float z_offset;    // sprite and move them both, keeping the light offset
+    // you can make a group of lights and/or texquads by
+    // giving them the same positive object_id, then make
+    // ScheduledAnimations that affect the entire group
+    // set to -1 to not be a party of any group
+    union {
+        int32_t object_id;
+        float flt_object_id;
+    };
+    union {
+        bool32_t deleted;
+        float flt_deleted;
+    };
+    union {
+        bool32_t committed;
+        float flt_committed;
+    };
+    float xyz[3];
+    float xyz_offset[3];
     float RGBA[4];
     float reach;       // max distance before light intensity 0
     float ambient;     // how much ambient light does this radiate?
