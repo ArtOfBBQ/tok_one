@@ -629,6 +629,7 @@ void resolve_animationA_effects(const uint64_t microseconds_elapsed) {
             }
         }
         
+        log_assert((sizeof(zLightSource) / 4) % SIMD_FLOAT_LANES == 0);
         for (
             uint32_t light_i = 0;
             light_i < zlights_to_apply_size;
@@ -654,198 +655,102 @@ void resolve_animationA_effects(const uint64_t microseconds_elapsed) {
                 float ambient;     // how much ambient light does this radiate?
                 float diffuse;     // how much diffuse light does this radiate?
             */
+            float flt_actual_elapsed_this_run =
+                (float)actual_elapsed_this_run;
+            float flt_remaining_microseconds_this_run =
+                (float)remaining_microseconds_at_start_of_run;
+            
+            SIMD_FLOAT simd_this_run_modifier =
+                simd_div_floats(
+                    simd_set_float(flt_actual_elapsed_this_run),
+                    simd_set_float(flt_remaining_microseconds_this_run));
+            
+            float * anim_vals_ptr    =
+                (float *)&anim->lightsource_vals;
+            float * target_vals_ptr =
+                (float *)&zlights_to_apply[light_i];
+            
             if (anim->final_values_not_adds) {
-                float this_run_modifier =
-                    (float)actual_elapsed_this_run /
-                        (float)remaining_microseconds_at_start_of_run;
-                log_assert(this_run_modifier <= 1.0f);
-                log_assert(this_run_modifier >  0.0f);
+                float scheduled_anim_ignore_below = FLT_SCHEDULEDANIM_IGNORE;
                 
-                float needed_to_goal;
-                float active_mod;
+                SIMD_FLOAT simd_scheduledanim_ignore_constant =
+                    simd_set_float(scheduled_anim_ignore_below);
                 
-                log_assert(
-                    anim->lightsource_vals.flt_object_id ==
-                        FLT_SCHEDULEDANIM_IGNORE);
-                needed_to_goal = anim->lightsource_vals.flt_object_id -
-                    zlights_to_apply[light_i].flt_object_id;
-                active_mod = (anim->lightsource_vals.flt_object_id !=
-                    FLT_SCHEDULEDANIM_IGNORE);
-                zlights_to_apply[light_i].flt_object_id +=
-                    ((this_run_modifier * needed_to_goal) *
-                        active_mod);
+                log_assert((sizeof(zLightSource) / 4) % SIMD_FLOAT_LANES == 0);
+                for (
+                    uint32_t simd_step_i = 0;
+                    (simd_step_i * sizeof(float)) < sizeof(zLightSource);
+                    simd_step_i += SIMD_FLOAT_LANES)
+                {
+                    SIMD_FLOAT simd_anim_vals =
+                        simd_load_floats((anim_vals_ptr + simd_step_i));
+                    SIMD_FLOAT simd_target_vals =
+                        simd_load_floats((target_vals_ptr + simd_step_i));
+                    
+                    SIMD_FLOAT simd_needed_to_goal = simd_sub_floats(
+                        simd_anim_vals,
+                        simd_target_vals);
+                    SIMD_FLOAT simd_active_mask = simd_cmplt_floats(
+                        simd_anim_vals,
+                        simd_scheduledanim_ignore_constant);
+                    
+                    SIMD_FLOAT simd_addition =
+                        simd_mul_floats(
+                            simd_this_run_modifier,
+                            simd_needed_to_goal);
+                    
+                    SIMD_FLOAT simd_masked_addition = simd_and_floats(
+                        simd_addition,
+                        simd_active_mask);
+                    
+                    SIMD_FLOAT simd_new_target_vals = simd_add_floats(
+                        simd_target_vals,
+                        simd_masked_addition);
+                    
+                    simd_store_floats(
+                        (target_vals_ptr + simd_step_i),
+                        simd_new_target_vals);
+                }
+                #ifndef LOGGER_IGNORE_ASSERTS
+                for (uint32_t i = 0; i < (sizeof(zLightSource) / 4); i++) {
+                    // assert not NaN
+                    log_assert((target_vals_ptr[i] == target_vals_ptr[i]));
+                    log_assert(!isinf(target_vals_ptr[i]));
+                    log_assert(!isnan(target_vals_ptr[i]));
+                    log_assert((anim_vals_ptr[i] == anim_vals_ptr[i]));
+                }
+                #endif
                 
-                log_assert(
-                    anim->lightsource_vals.flt_deleted ==
-                        FLT_SCHEDULEDANIM_IGNORE);
-                needed_to_goal = anim->lightsource_vals.flt_deleted -
-                    zlights_to_apply[light_i].flt_deleted;
-                active_mod = (anim->lightsource_vals.flt_deleted !=
-                    FLT_SCHEDULEDANIM_IGNORE);
-                zlights_to_apply[light_i].flt_deleted +=
-                    ((this_run_modifier * needed_to_goal) *
-                        active_mod);
-                
-                log_assert(
-                    anim->lightsource_vals.flt_committed ==
-                        FLT_SCHEDULEDANIM_IGNORE);
-                needed_to_goal = anim->lightsource_vals.flt_committed -
-                    zlights_to_apply[light_i].flt_committed;
-                active_mod = (anim->lightsource_vals.flt_committed !=
-                    FLT_SCHEDULEDANIM_IGNORE);
-                zlights_to_apply[light_i].flt_committed +=
-                    ((this_run_modifier * needed_to_goal) *
-                        active_mod);
-                
-                needed_to_goal = anim->lightsource_vals.xyz[0] -
-                    zlights_to_apply[light_i].xyz[0];
-                active_mod = (anim->lightsource_vals.xyz[0] !=
-                    FLT_SCHEDULEDANIM_IGNORE);
-                zlights_to_apply[light_i].xyz[0] +=
-                    ((this_run_modifier * needed_to_goal) *
-                        active_mod);
-                needed_to_goal = anim->lightsource_vals.xyz[1] -
-                    zlights_to_apply[light_i].xyz[1];
-                active_mod = (anim->lightsource_vals.xyz[1] !=
-                    FLT_SCHEDULEDANIM_IGNORE);
-                zlights_to_apply[light_i].xyz[1] +=
-                    ((this_run_modifier * needed_to_goal) * active_mod);
-                needed_to_goal = anim->lightsource_vals.xyz[2] -
-                    zlights_to_apply[light_i].xyz[2];
-                active_mod = (anim->lightsource_vals.xyz[2] !=
-                    FLT_SCHEDULEDANIM_IGNORE);
-                zlights_to_apply[light_i].xyz[2] +=
-                    ((this_run_modifier * needed_to_goal) *
-                        active_mod);
-                
-                needed_to_goal = anim->lightsource_vals.xyz_offset[0] -
-                    zlights_to_apply[light_i].xyz_offset[0];
-                active_mod = (anim->lightsource_vals.xyz_offset[0] !=
-                    FLT_SCHEDULEDANIM_IGNORE);
-                zlights_to_apply[light_i].xyz_offset[0] +=
-                    ((this_run_modifier * needed_to_goal) *
-                        active_mod);
-                needed_to_goal = anim->lightsource_vals.xyz_offset[1] -
-                    zlights_to_apply[light_i].xyz_offset[1];
-                active_mod = (anim->lightsource_vals.xyz_offset[1] !=
-                    FLT_SCHEDULEDANIM_IGNORE);
-                zlights_to_apply[light_i].xyz_offset[1] +=
-                    ((this_run_modifier * needed_to_goal) *
-                        active_mod);
-                needed_to_goal = anim->lightsource_vals.xyz_offset[2] -
-                    zlights_to_apply[light_i].xyz_offset[2];
-                active_mod = (anim->lightsource_vals.xyz_offset[2] !=
-                    FLT_SCHEDULEDANIM_IGNORE);
-                zlights_to_apply[light_i].xyz_offset[2] +=
-                    ((this_run_modifier * needed_to_goal) *
-                        active_mod);
-                
-                needed_to_goal = anim->lightsource_vals.RGBA[0] -
-                    zlights_to_apply[light_i].RGBA[0];
-                active_mod = (anim->lightsource_vals.RGBA[0] !=
-                    FLT_SCHEDULEDANIM_IGNORE);
-                zlights_to_apply[light_i].RGBA[0] +=
-                    ((this_run_modifier * needed_to_goal) *
-                        active_mod);
-                needed_to_goal = anim->lightsource_vals.RGBA[1] -
-                    zlights_to_apply[light_i].RGBA[1];
-                active_mod = (anim->lightsource_vals.RGBA[1] !=
-                    FLT_SCHEDULEDANIM_IGNORE);
-                zlights_to_apply[light_i].RGBA[1] +=
-                    ((this_run_modifier * needed_to_goal) *
-                        active_mod);
-                needed_to_goal = anim->lightsource_vals.RGBA[2] -
-                    zlights_to_apply[light_i].RGBA[2];
-                active_mod = (anim->lightsource_vals.RGBA[2] !=
-                    FLT_SCHEDULEDANIM_IGNORE);
-                zlights_to_apply[light_i].RGBA[2] +=
-                    ((this_run_modifier * needed_to_goal) *
-                        active_mod);
-                needed_to_goal = anim->lightsource_vals.RGBA[3] -
-                    zlights_to_apply[light_i].RGBA[3];
-                active_mod = (anim->lightsource_vals.RGBA[3] !=
-                    FLT_SCHEDULEDANIM_IGNORE);
-                zlights_to_apply[light_i].RGBA[3] +=
-                    ((this_run_modifier * needed_to_goal) *
-                        active_mod);
-                
-                needed_to_goal = anim->lightsource_vals.reach -
-                    zlights_to_apply[light_i].reach;
-                active_mod = (anim->lightsource_vals.reach !=
-                    FLT_SCHEDULEDANIM_IGNORE);
-                zlights_to_apply[light_i].reach +=
-                    ((this_run_modifier * needed_to_goal) *
-                        active_mod);
-                needed_to_goal = anim->lightsource_vals.ambient -
-                    zlights_to_apply[light_i].ambient;
-                active_mod = (anim->lightsource_vals.ambient !=
-                    FLT_SCHEDULEDANIM_IGNORE);
-                zlights_to_apply[light_i].ambient +=
-                    ((this_run_modifier * needed_to_goal) *
-                        active_mod);
-                needed_to_goal = anim->lightsource_vals.diffuse -
-                    zlights_to_apply[light_i].diffuse;
-                active_mod = (anim->lightsource_vals.diffuse !=
-                    FLT_SCHEDULEDANIM_IGNORE);
-                zlights_to_apply[light_i].diffuse +=
-                    ((this_run_modifier * needed_to_goal) *
-                        active_mod);
             } else {
-                log_assert(anim->lightsource_vals.flt_object_id == 0.0f);
-                zlights_to_apply[light_i].flt_object_id +=
-                    (anim->lightsource_vals.flt_object_id *
-                        actual_elapsed_this_run) / 1000000.0f;
-                log_assert(anim->lightsource_vals.flt_deleted == 0.0f);
-                zlights_to_apply[light_i].flt_deleted +=
-                    (anim->lightsource_vals.flt_deleted *
-                        actual_elapsed_this_run) / 1000000.0f;
-                log_assert(anim->lightsource_vals.flt_committed == 0.0f);
-                zlights_to_apply[light_i].flt_committed +=
-                    (anim->lightsource_vals.flt_committed *
-                        actual_elapsed_this_run) / 1000000.0f;
-                
-                zlights_to_apply[light_i].xyz[0] +=
-                    (anim->lightsource_vals.xyz[0] *
-                        actual_elapsed_this_run) / 1000000.0f;
-                zlights_to_apply[light_i].xyz[1] +=
-                    (anim->lightsource_vals.xyz[1] *
-                        actual_elapsed_this_run) / 1000000.0f;
-                zlights_to_apply[light_i].xyz[2] +=
-                    (anim->lightsource_vals.xyz[2] *
-                        actual_elapsed_this_run) / 1000000.0f;
-                
-                zlights_to_apply[light_i].xyz_offset[0] +=
-                    (anim->lightsource_vals.xyz_offset[0] *
-                        actual_elapsed_this_run) / 1000000.0f;
-                zlights_to_apply[light_i].xyz_offset[1] +=
-                    (anim->lightsource_vals.xyz_offset[1] *
-                        actual_elapsed_this_run) / 1000000.0f;
-                zlights_to_apply[light_i].xyz_offset[2] +=
-                    (anim->lightsource_vals.xyz_offset[2] *
-                        actual_elapsed_this_run) / 1000000.0f;
-                
-                zlights_to_apply[light_i].RGBA[0] +=
-                    (anim->lightsource_vals.RGBA[0] *
-                        actual_elapsed_this_run) / 1000000.0f;
-                zlights_to_apply[light_i].RGBA[1] +=
-                    (anim->lightsource_vals.RGBA[1] *
-                        actual_elapsed_this_run) / 1000000.0f;
-                zlights_to_apply[light_i].RGBA[2] +=
-                    (anim->lightsource_vals.RGBA[2] *
-                        actual_elapsed_this_run) / 1000000.0f;
-                zlights_to_apply[light_i].RGBA[3] +=
-                    (anim->lightsource_vals.RGBA[3] *
-                        actual_elapsed_this_run) / 1000000.0f;
-                
-                zlights_to_apply[light_i].reach +=
-                    (anim->lightsource_vals.reach *
-                        actual_elapsed_this_run) / 1000000.0f;
-                zlights_to_apply[light_i].ambient +=
-                    (anim->lightsource_vals.ambient *
-                        actual_elapsed_this_run) / 1000000.0f;
-                zlights_to_apply[light_i].diffuse +=
-                    (anim->lightsource_vals.diffuse *
-                        actual_elapsed_this_run) / 1000000.0f;
+                log_assert((sizeof(zLightSource) / 4) % SIMD_FLOAT_LANES == 0);
+                float flt_one_million = 1000000.0f;
+                for (
+                    uint32_t simd_step_i = 0;
+                    (simd_step_i * sizeof(float)) < sizeof(zLightSource);
+                    simd_step_i += SIMD_FLOAT_LANES)
+                {
+                    SIMD_FLOAT simd_anim_vals =
+                        simd_load_floats((anim_vals_ptr + simd_step_i));
+                    SIMD_FLOAT simd_target_vals =
+                        simd_load_floats((target_vals_ptr + simd_step_i));
+                    
+                    SIMD_FLOAT simd_actual_elapsed =
+                        simd_set_float(flt_actual_elapsed_this_run);
+                    SIMD_FLOAT simd_one_million =
+                        simd_set_float(flt_one_million);
+                    
+                    simd_target_vals = simd_add_floats(
+                        simd_target_vals,
+                        simd_div_floats(
+                            simd_mul_floats(
+                                simd_anim_vals,
+                                simd_actual_elapsed),
+                            simd_one_million));
+                    
+                    simd_store_floats(
+                        (target_vals_ptr + simd_step_i),
+                        simd_target_vals);
+                }
             }
         }
         

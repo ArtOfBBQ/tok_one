@@ -121,11 +121,10 @@ because I don't know much about how that works or how reliable it is
 #define simd_add_floats(a, b)               vaddq_f32(a, b)
 #define simd_sub_floats(a, b)               vsubq_f32(a, b)
 #define simd_max_floats(a, b)               vmaxq_f32(a, b)
-#define simd_and_floats(a, b)               vaddq_f32(a, b) // TODO: Fix me!
+#define simd_and_floats(a, b)               vandq_u32(a, b) // TODO: uint type?!
 #define simd_sqrt_floats(a)                 vsqrtq_f32(a)
-#define simd_cmpeq_floats(a, b)             vaddq_f32(a, b) // TODO: Fix me!
-#define simd_cmpneq_floats(a, b)            vaddq_f32(a, b) // TODO: Fix me!
-#define simd_cmplt_floats(a, b)             vaddq_f32(a, b) // TODO: Fix me!
+#define simd_cmpeq_floats(a, b)             vceq_f32(a, b)
+#define simd_cmplt_floats(a, b)             vcltq_f32(a, b)
 
 #elif defined(__AVX__)
 
@@ -143,7 +142,6 @@ because I don't know much about how that works or how reliable it is
 #define simd_and_floats(a, b)               _mm256_and_ps(a, b)
 #define simd_sqrt_floats(a)                 _mm256_sqrt_ps(a)
 #define simd_cmpeq_floats(a, b)             _mm256_cmp_ps(a, b, _CMP_EQ_UQ)
-#define simd_cmpneq_floats(a, b)            _mm256_cmp_ps(a, b, _CMP_NEQ_UQ)
 #define simd_cmplt_floats(a, b)             _mm256_cmp_ps(a, b, _CMP_LT_OQ)
 
 #elif defined(__SSE__)
@@ -177,7 +175,6 @@ because I don't know much about how that works or how reliable it is
 #define simd_and_floats(a, b)               a & b
 #define simd_sqrt_floats(a)                 sqrtf(a)
 #define simd_cmpeq_floats(a, b)             a == b
-#define simd_cmpneq_floats(a, b)            a != b
 #define simd_cmplt_floats(a, b)             a < b
 
 #endif // Float lanes
