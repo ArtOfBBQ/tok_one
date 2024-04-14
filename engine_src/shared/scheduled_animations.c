@@ -95,6 +95,12 @@ static void construct_scheduled_animationA(
         to_construct->lightsource_vals.diffuse       = FLT_SCHEDULEDANIM_IGNORE;
     }
     
+    float * onfinish_muls_mats =
+            (float *)&to_construct->onfinish_gpu_polygon_material_muls;
+    for (uint32_t i = 0; i < sizeof(GPUPolygonMaterial) / 4; i++) {
+        onfinish_muls_mats[i] = 1.0f;
+    }
+    
     to_construct->runs = 1;
     to_construct->final_values_not_adds = final_values_not_adds;
     
@@ -387,6 +393,7 @@ void resolve_animationA_effects(const uint64_t microseconds_elapsed) {
         uint64_t remaining_microseconds_at_start_of_run =
             anim->remaining_microseconds;
         bool32_t delete_after_this_run = false;
+        bool32_t apply_muladds_this_frame = false;
         
         if (anim->remaining_microseconds > actual_elapsed) {
             anim->remaining_microseconds -= actual_elapsed;
@@ -410,6 +417,8 @@ void resolve_animationA_effects(const uint64_t microseconds_elapsed) {
             } else {
                 delete_after_this_run = true;
             }
+            
+            apply_muladds_this_frame = true;
         }
         
         if (delete_after_this_run) {
@@ -626,6 +635,51 @@ void resolve_animationA_effects(const uint64_t microseconds_elapsed) {
                             simd_target_vals);
                     }
                 }
+                
+                if (apply_muladds_this_frame) {
+                    float * muls_ptr =
+                        (float *)&anim->onfinish_gpu_polygon_material_muls;
+                    float * adds_ptr =
+                        (float *)&anim->onfinish_gpu_polygon_material_adds;
+                    
+                    mat1_i = zp_i * MAX_MATERIALS_SIZE;
+                    for (
+                        uint32_t mat_i = mat1_i;
+                        mat_i < mat1_i + MAX_MATERIALS_SIZE;
+                        mat_i++)
+                    {
+                        target_vals_ptr =
+                            (float *)&zpolygons_to_render->gpu_materials[mat_i];
+                        
+                        log_assert((sizeof(GPUPolygonMaterial) / 4) %
+                            SIMD_FLOAT_LANES == 0);
+                        for (
+                            uint32_t simd_step_i = 0;
+                            (simd_step_i * sizeof(float)) <
+                                sizeof(GPUPolygonMaterial);
+                            simd_step_i += SIMD_FLOAT_LANES)
+                        {
+                            SIMD_FLOAT simd_muls =
+                                simd_load_floats((muls_ptr + simd_step_i));
+                            SIMD_FLOAT simd_adds =
+                                simd_load_floats((adds_ptr + simd_step_i));
+                            
+                            SIMD_FLOAT simd_target_vals =
+                                simd_load_floats(
+                                    (target_vals_ptr + simd_step_i));
+                            
+                            simd_target_vals = simd_add_floats(
+                                    simd_mul_floats(
+                                        simd_target_vals,
+                                        simd_muls),
+                                    simd_adds);
+                            
+                            simd_store_floats(
+                                (target_vals_ptr + simd_step_i),
+                                simd_target_vals);
+                        }
+                    }
+                }
             }
         }
         
@@ -769,7 +823,6 @@ void resolve_animationA_effects(const uint64_t microseconds_elapsed) {
             }
             
             if (anim->delete_object_when_finished) {
-                
                 for (
                     int32_t l_i = (int32_t)zlights_to_apply_size - 1;
                     l_i >= 0;

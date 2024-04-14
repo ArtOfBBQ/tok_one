@@ -24,6 +24,9 @@ typedef struct ScheduledAnimationA {
     GPUPolygonMaterial gpu_polygon_material_vals;
     zLightSource       lightsource_vals;
     
+    GPUPolygonMaterial onfinish_gpu_polygon_material_muls;
+    GPUPolygonMaterial onfinish_gpu_polygon_material_adds;
+    
     bool32_t           final_values_not_adds;
     
     uint64_t duration_microseconds;          // duration at the start of each
