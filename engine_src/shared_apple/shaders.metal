@@ -207,11 +207,6 @@ vertex_shader(
         locked_vertices[locked_vertex_i].uv[0],
         locked_vertices[locked_vertex_i].uv[1]);
     
-    if (polygon_collection->polygons[polygon_i].ignore_lighting > 0.0f) {
-        out.lighting = float3(1.0f, 1.0f, 1.0f);
-        return out;
-    }
-    
     out.lighting = float3(0.0f, 0.0f, 0.0f);
     for (
         uint32_t i = 0;
@@ -258,6 +253,14 @@ vertex_shader(
     }
     
     out.lighting = clamp(out.lighting, 0.05f, 7.5f);
+    
+    float ignore_light =
+        polygon_collection->polygons[polygon_i].ignore_lighting;
+    
+    float3 all_ones = vector_float3(1.0f, 1.0f, 1.0f);
+    out.lighting =
+        ((1.0f - ignore_light) * out.lighting) +
+        (ignore_light * all_ones);
     
     out.point_size = 40.0f;
     
