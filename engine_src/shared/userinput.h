@@ -85,7 +85,22 @@
 #define TOK_KEY_PIPE 124
 #define TOK_KEY_RIGHTCURLYBRACKET 125
 #define TOK_KEY_TILDE 126
-
+#define TOK_KEY_F1 136
+#define TOK_KEY_F2 137
+#define TOK_KEY_F3 138
+#define TOK_KEY_F4 139
+#define TOK_KEY_F5 140
+#define TOK_KEY_F6 141
+#define TOK_KEY_F7 142
+#define TOK_KEY_F8 143
+#define TOK_KEY_F9 144
+#define TOK_KEY_F10 145
+#define TOK_KEY_F11 146
+#define TOK_KEY_F12 147
+#define TOK_KEY_HOME 148
+#define TOK_KEY_PAGEUP 149
+#define TOK_KEY_END 150
+#define TOK_KEY_PAGEDOWN 151
 
 #ifdef __cplusplus
 extern "C" {

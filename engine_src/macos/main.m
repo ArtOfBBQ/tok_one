@@ -124,6 +124,8 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
             return TOK_KEY_COMMA;
         case (47):
             return TOK_KEY_FULLSTOP;
+        case (48):
+            return TOK_KEY_TAB;
         case (44):
             return TOK_KEY_BACKSLASH;
         case (49):
@@ -136,10 +138,42 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
             return TOK_KEY_YENSIGN;
         case (94):
             return TOK_KEY_UNDERSCORE;
+        case (122):
+            return TOK_KEY_F1;
+        case (120):
+            return TOK_KEY_F2;
+        case (99):
+            return TOK_KEY_F3;
+        case (118):
+            return TOK_KEY_F4;
+        case (96):
+            return TOK_KEY_F5;
+        case (97):
+            return TOK_KEY_F6;
+        case (98):
+            return TOK_KEY_F7;
+        case (100):
+            return TOK_KEY_F8;
+        case (101):
+            return TOK_KEY_F9;
+        case (109):
+            return TOK_KEY_F10;
+        case (103):
+            return TOK_KEY_F11;
+        case (111):
+            return TOK_KEY_F12;
         case (102):
             return TOK_KEY_ROMAJIBUTTON;
         case (104):
             return TOK_KEY_KANABUTTON;
+        case (115):
+            return TOK_KEY_HOME;
+        case (116):
+            return TOK_KEY_PAGEUP;
+        case (119):
+            return TOK_KEY_END;
+        case (121):
+            return TOK_KEY_PAGEDOWN;
         default:
             #ifndef LOGGER_IGNORE_ASSERTS
             strcpy_capped(err_msg, 128, "unhandled apple keycode: ");

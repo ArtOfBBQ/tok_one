@@ -2,7 +2,7 @@
 
 zPolygonCollection * zpolygons_to_render = NULL;
 
-static void set_zpolygon_hitbox(
+void set_zpolygon_hitbox(
     zPolygonCPU * mesh_cpu, GPUPolygon * mesh_gpu)
 {
     log_assert(all_mesh_summaries[mesh_cpu->mesh_id].vertices_size > 0);
@@ -83,7 +83,7 @@ void request_next_zpolygon(PolygonRequest * stack_recipient)
                 &zpolygons_to_render->cpu_data[zp_i];
             stack_recipient->gpu_data     =
                 &zpolygons_to_render->gpu_data[zp_i];
-            stack_recipient->gpu_material =
+            stack_recipient->gpu_materials =
                 zpolygons_to_render->gpu_materials +
                 (zp_i * MAX_MATERIALS_SIZE);
             stack_recipient->cpu_data->committed = false;
@@ -96,7 +96,7 @@ void request_next_zpolygon(PolygonRequest * stack_recipient)
         &zpolygons_to_render->cpu_data[zpolygons_to_render->size];
     stack_recipient->gpu_data     =
         &zpolygons_to_render->gpu_data[zpolygons_to_render->size];
-    stack_recipient->gpu_material =
+    stack_recipient->gpu_materials =
         zpolygons_to_render->gpu_materials +
         (zpolygons_to_render->size * MAX_MATERIALS_SIZE);
     stack_recipient->cpu_data[zpolygons_to_render->size].deleted = false;
@@ -139,21 +139,21 @@ void commit_zpolygon_to_render(PolygonRequest * to_commit)
         mat_i < MAX_MATERIALS_SIZE;
         mat_i++)
     {
-        if (to_commit->gpu_material[mat_i].texturearray_i >= 0) {
-            log_assert(to_commit->gpu_material[mat_i].texture_i >= 0);
+        if (to_commit->gpu_materials[mat_i].texturearray_i >= 0) {
+            log_assert(to_commit->gpu_materials[mat_i].texture_i >= 0);
             register_high_priority_if_unloaded(
-                to_commit->gpu_material[mat_i].texturearray_i,
-                to_commit->gpu_material[mat_i].texture_i);
+                to_commit->gpu_materials[mat_i].texturearray_i,
+                to_commit->gpu_materials[mat_i].texture_i);
         }
         
         log_assert(
-            to_commit->gpu_material[mat_i].texture_i < 5000);
+            to_commit->gpu_materials[mat_i].texture_i < 5000);
         log_assert(
-            to_commit->gpu_material[mat_i].texturearray_i < TEXTUREARRAYS_SIZE);
+            to_commit->gpu_materials[mat_i].texturearray_i < TEXTUREARRAYS_SIZE);
         
         for (uint32_t rgba_i = 0; rgba_i < 4; rgba_i++) {
-            log_assert(to_commit->gpu_material[mat_i].rgba[rgba_i] >= -0.1f);
-            log_assert(to_commit->gpu_material[mat_i].rgba[rgba_i] <=  1.1f);
+            log_assert(to_commit->gpu_materials[mat_i].rgba[rgba_i] >= -0.1f);
+            log_assert(to_commit->gpu_materials[mat_i].rgba[rgba_i] <=  1.1f);
         }
     }
     
@@ -240,7 +240,7 @@ void construct_zpolygon(
 {
     assert(to_construct->cpu_data != NULL);
     assert(to_construct->gpu_data != NULL);
-    assert(to_construct->gpu_material != NULL);
+    assert(to_construct->gpu_materials != NULL);
     assert(
         (to_construct->materials_size == 1 ||
         to_construct->materials_size == MAX_MATERIALS_SIZE));
@@ -250,7 +250,7 @@ void construct_zpolygon(
         0,
         sizeof(zPolygonCPU));
     memset(
-        to_construct->gpu_material,
+        to_construct->gpu_materials,
         0,
         sizeof(GPUPolygonMaterial) *
             to_construct->materials_size);
@@ -269,12 +269,12 @@ void construct_zpolygon(
     to_construct->cpu_data->touchable_id = -1;
     to_construct->cpu_data->visible = true;
     
-    to_construct->gpu_material[0].rgba[0] = 0.75f;
-    to_construct->gpu_material[0].rgba[1] = 0.75f;
-    to_construct->gpu_material[0].rgba[2] = 0.75f;
-    to_construct->gpu_material[0].rgba[3] = 0.75f;
-    to_construct->gpu_material[0].texture_i = -1;
-    to_construct->gpu_material[0].texturearray_i = -1;
+    to_construct->gpu_materials[0].rgba[0] = 0.75f;
+    to_construct->gpu_materials[0].rgba[1] = 0.75f;
+    to_construct->gpu_materials[0].rgba[2] = 0.75f;
+    to_construct->gpu_materials[0].rgba[3] = 0.75f;
+    to_construct->gpu_materials[0].texture_i = -1;
+    to_construct->gpu_materials[0].texturearray_i = -1;
 }
 
 zTriangle
@@ -492,191 +492,6 @@ void zcamera_move_forward(
     to_move->y += final.y;
     to_move->z += final.z;
 }
-
-//bool32_t ray_intersects_triangle(
-//    const zVertex * ray_origin,
-//    const zVertex * ray_direction,
-//    const zTriangle * triangle,
-//    zVertex * recipient_hit_point)
-//{
-//    /*
-//    Reminder: The plane offset is named 'D' in this explanation:
-//    "...and D is the distance from the origin (0, 0, 0) to the
-//    plane (if we trace a line from the origin to the plane,
-//    parallel to the plane's normal)."
-//    "..we know the plane's normal and that the three triangle's
-//    vertices (V0, V1, V2) lie in the plane. It is, therefore,
-//    possible to compute  D. Any of the three vertices can be
-//    chosen. Let's choose V0:
-//    float D = -dotProduct(N, v0);"
-//    (source https://www.scratchapixel.com
-//    */
-//    float plane_offset = -1.0f * dot_of_zvertices(
-//        &triangle->normal,
-//        &triangle->vertices[0]);
-//    
-//    /*
-//    We also know that point P is the intersection point of the ray, and the 
-//    point lies in the plane. Consequently, we can substitute (x, y, z)
-//    for P or O + tR that P is equal to and solve for t:
-//    
-//    float t = - (dot(N, orig) + D) / dot(N, dir);
-//    */
-//    float denominator = dot_of_zvertices(
-//        &triangle->normal,
-//        ray_direction);
-//    if (denominator < 0.0001f && denominator > -0.0001f) {
-//        // the ray doesn't intersect with the triangle's plane,
-//        // I think this is always because the ray travels in parallel with the
-//        // triangle
-//        return false;
-//    }
-//    
-//    float t =
-//        (-1.0f * (
-//            dot_of_zvertices(&triangle->normal, ray_origin) +
-//                plane_offset)) /
-//            denominator;
-//    
-//    // if t is < 0, the triangle's plane must be behind us which counts as
-//    // a miss
-//    if (t <= 0.0f) {
-//        return false;
-//    }
-//    
-//    // We now have computed t, which we can use to calculate the position of P:
-//    // Vec3f Phit = orig + t * dir;
-//    recipient_hit_point->x = ray_origin->x + (t * ray_direction->x);
-//    recipient_hit_point->y = ray_origin->y + (t * ray_direction->y);
-//    recipient_hit_point->z = ray_origin->z + (t * ray_direction->z);
-//    
-//    /*
-//    Now that we have found the point P, which is the point where the ray and
-//    the plane intersect, we still have to find out if P is inside the triangle
-//    (in which case the ray intersects the triangle) or if P is outside (in
-//    which case the rays misses the triangle)
-//    
-//    to find out if P is inside the triangle, we can test if the dot product of
-//    the vector along the edge and the vector defined by the first vertex of the
-//    tested edge and P is positive (meaning P is on the left side of the edge).
-//    If P is on the left of all three edges, then P is inside the triangle.
-//    
-//    pseudocode:
-//    Vec3f edge0 = v1 - v0;
-//    Vec3f edge1 = v2 - v1;
-//    Vec3f edge2 = v0 - v2;
-//    Vec3f C0 = P - v0;
-//    Vec3f C1 = P - v1;
-//    Vec3f C2 = P - v2;
-//    if (
-//        dotProduct(N, crossProduct(edge0, C0)) > 0 && 
-//        dotProduct(N, crossProduct(edge1, C1)) > 0 &&
-//        dotProduct(N, crossProduct(edge2, C2)) > 0)
-//    {
-//        return true; // P is inside the triangle
-//    }
-//    */
-//    zVertex edge0;
-//    edge0.x = triangle->vertices[1].x - triangle->vertices[0].x;
-//    edge0.y = triangle->vertices[1].y - triangle->vertices[0].y;
-//    edge0.z = triangle->vertices[1].z - triangle->vertices[0].z;
-//    
-//    zVertex edge1;
-//    edge1.x = triangle->vertices[2].x - triangle->vertices[1].x;
-//    edge1.y = triangle->vertices[2].y - triangle->vertices[1].y;
-//    edge1.z = triangle->vertices[2].z - triangle->vertices[1].z;
-//    
-//    zVertex edge2;
-//    edge2.x = triangle->vertices[0].x - triangle->vertices[2].x;
-//    edge2.y = triangle->vertices[0].y - triangle->vertices[2].y;
-//    edge2.z = triangle->vertices[0].z - triangle->vertices[2].z;
-//    
-//    zVertex C0;
-//    C0.x = recipient_hit_point->x - triangle->vertices[0].x;
-//    C0.y = recipient_hit_point->y - triangle->vertices[0].y;
-//    C0.z = recipient_hit_point->z - triangle->vertices[0].z;
-//    
-//    zVertex C1;
-//    C1.x = recipient_hit_point->x - triangle->vertices[1].x;
-//    C1.y = recipient_hit_point->y - triangle->vertices[1].y;
-//    C1.z = recipient_hit_point->z - triangle->vertices[1].z;
-//    
-//    zVertex C2;
-//    C2.x = recipient_hit_point->x - triangle->vertices[2].x;
-//    C2.y = recipient_hit_point->y - triangle->vertices[2].y;
-//    C2.z = recipient_hit_point->z - triangle->vertices[2].z;
-//    
-//    zVertex cross0 = crossproduct_of_zvertices(&edge0, &C0);
-//    zVertex cross1 = crossproduct_of_zvertices(&edge1, &C1);
-//    zVertex cross2 = crossproduct_of_zvertices(&edge2, &C2);
-//    
-//    if (
-//        dot_of_zvertices(
-//            &triangle->normal,
-//            &cross0) > 0.0f &&
-//        dot_of_zvertices(
-//            &triangle->normal,
-//            &cross1) > 0.0f &&
-//        dot_of_zvertices(
-//            &triangle->normal,
-//            &cross2) > 0.0f)
-//    {        
-//        return true;
-//    }
-//    
-//    return false;
-//}
-
-//bool32_t ray_intersects_zpolygon_triangles(
-//    const zVertex * ray_origin,
-//    const zVertex * ray_direction,
-//    const zPolygon * mesh,
-//    zVertex * recipient_hit_point)
-//{
-//    for (
-//        uint32_t tri_i = 0;
-//        tri_i < mesh->triangles_size;
-//        tri_i++)
-//    {
-//        zTriangle triangle = mesh->triangles[tri_i];
-//        
-//        x_rotate_ztriangle(&triangle, mesh->x_angle);
-//        y_rotate_ztriangle(&triangle, mesh->y_angle);
-//        z_rotate_ztriangle(&triangle, mesh->z_angle);
-//        
-//        for (uint32_t m = 0; m < 3; m++) {
-//            triangle.vertices[m].x += mesh->x;
-//            triangle.vertices[m].y += mesh->y;
-//            triangle.vertices[m].z += mesh->z;
-//        }
-//        
-//        float dist_to_raypos = get_distance(
-//            *ray_origin,
-//            triangle.vertices[0]);
-//        
-//        float lowest_hit_dist = FLOAT32_MAX;
-//        
-//        if (dist_to_raypos < lowest_hit_dist) {
-//            
-//            bool32_t ray_intersects = ray_intersects_triangle(
-//                /* const zVertex * ray_origin: */
-//                    ray_origin,
-//                /* const zVertex * ray_direction: */
-//                    ray_direction,
-//                /* const zTriangle * triangle: */
-//                    &triangle,
-//                /* collision_point: */
-//                    recipient_hit_point);
-//            
-//            if (ray_intersects) {
-//                lowest_hit_dist = dist_to_raypos;
-//                return true; // no need to check other triangles in this zpoly
-//            }
-//        }
-//    }
-//    
-//    return false;
-//}
 
 bool32_t ray_intersects_zpolygon_hitbox(
     const zVertex * ray_origin,
@@ -966,12 +781,12 @@ void construct_quad(
     stack_recipient->gpu_data->xyz_multiplier[1] = height / current_height;
     stack_recipient->gpu_data->xyz_multiplier[2] = 1.0f;
     
-    stack_recipient->gpu_material[0].rgba[0] = 1.0f;
-    stack_recipient->gpu_material[0].rgba[1] = 1.0f;
-    stack_recipient->gpu_material[0].rgba[2] = 1.0f;
-    stack_recipient->gpu_material[0].rgba[3] = 1.0f;
-    stack_recipient->gpu_material[0].texturearray_i = -1;
-    stack_recipient->gpu_material[0].texture_i = -1;
+    stack_recipient->gpu_materials[0].rgba[0] = 1.0f;
+    stack_recipient->gpu_materials[0].rgba[1] = 1.0f;
+    stack_recipient->gpu_materials[0].rgba[2] = 1.0f;
+    stack_recipient->gpu_materials[0].rgba[3] = 1.0f;
+    stack_recipient->gpu_materials[0].texturearray_i = -1;
+    stack_recipient->gpu_materials[0].texture_i = -1;
 }
 
 void construct_quad_around(
@@ -1000,12 +815,12 @@ void construct_quad_around(
     stack_recipient->gpu_data->xyz_multiplier[2] = 1.0f;
     
     stack_recipient->cpu_data->mesh_id = 0;
-    stack_recipient->gpu_material[0].rgba[0] = 1.0f;
-    stack_recipient->gpu_material[0].rgba[1] = 1.0f;
-    stack_recipient->gpu_material[0].rgba[2] = 1.0f;
-    stack_recipient->gpu_material[0].rgba[3] = 1.0f;
-    stack_recipient->gpu_material[0].texturearray_i = -1;
-    stack_recipient->gpu_material[0].texture_i = -1;
+    stack_recipient->gpu_materials[0].rgba[0] = 1.0f;
+    stack_recipient->gpu_materials[0].rgba[1] = 1.0f;
+    stack_recipient->gpu_materials[0].rgba[2] = 1.0f;
+    stack_recipient->gpu_materials[0].rgba[3] = 1.0f;
+    stack_recipient->gpu_materials[0].texturearray_i = -1;
+    stack_recipient->gpu_materials[0].texture_i = -1;
 }
 
 void construct_cube_around(
@@ -1036,10 +851,10 @@ void construct_cube_around(
     stack_recipient->gpu_data->xyz_multiplier[2] = depth / current_depth;
     
     stack_recipient->cpu_data->mesh_id = 1;
-    stack_recipient->gpu_material[0].rgba[0] = 1.0f;
-    stack_recipient->gpu_material[0].rgba[1] = 1.0f;
-    stack_recipient->gpu_material[0].rgba[2] = 1.0f;
-    stack_recipient->gpu_material[0].rgba[3] = 1.0f;
-    stack_recipient->gpu_material[0].texturearray_i = -1;
-    stack_recipient->gpu_material[0].texture_i = -1;
+    stack_recipient->gpu_materials[0].rgba[0] = 1.0f;
+    stack_recipient->gpu_materials[0].rgba[1] = 1.0f;
+    stack_recipient->gpu_materials[0].rgba[2] = 1.0f;
+    stack_recipient->gpu_materials[0].rgba[3] = 1.0f;
+    stack_recipient->gpu_materials[0].texturearray_i = -1;
+    stack_recipient->gpu_materials[0].texture_i = -1;
 }

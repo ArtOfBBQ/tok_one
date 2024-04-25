@@ -151,29 +151,30 @@ vertex_shader(
     // translate to world position
     float4 translated_pos = z_rotated_vertices + parent_mesh_position;
     
-    if (polygon_collection->polygons[polygon_i].ignore_camera < 1.0f) {
-        float4 camera_position = vector_float4(
-            camera->x,
-            camera->y,
-            camera->z,
-            0.0f);
-        float4 camera_translated_pos = translated_pos - camera_position;
-        
-        // rotate around camera
-        float4 cam_x_rotated = x_rotate(
-            camera_translated_pos,
-            -camera->x_angle);
-        float4 cam_y_rotated = y_rotate(
-            cam_x_rotated,
-            -camera->y_angle);
-        float4 cam_z_rotated = z_rotate(
-            cam_y_rotated,
-            -camera->z_angle);
-        
-        out.position = cam_z_rotated;
-    } else {
-        out.position = translated_pos;
-    }
+    // polygon_collection->polygons[polygon_i].ignore_camera
+    float4 camera_position = vector_float4(
+        camera->x,
+        camera->y,
+        camera->z,
+        0.0f);
+    float4 camera_translated_pos = translated_pos - camera_position;
+    
+    // rotate around camera
+    float4 cam_x_rotated = x_rotate(
+        camera_translated_pos,
+        -camera->x_angle);
+    float4 cam_y_rotated = y_rotate(
+        cam_x_rotated,
+        -camera->y_angle);
+    float4 cam_z_rotated = z_rotate(
+        cam_y_rotated,
+        -camera->z_angle);
+    
+    float ignore_cam =
+        polygon_collection->polygons[polygon_i].ignore_camera;
+    out.position =
+        (cam_z_rotated * (1.0f - ignore_cam)) +
+        (translated_pos * ignore_cam);
     
     // projection
     out.position[0] *= projection_constants->x_multiplier;

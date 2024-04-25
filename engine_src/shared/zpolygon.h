@@ -52,6 +52,9 @@ typedef struct zPolygonCPU {
     bool32_t visible;
 } zPolygonCPU;
 
+void set_zpolygon_hitbox(
+    zPolygonCPU * mesh_cpu, GPUPolygon * mesh_gpu);
+
 typedef struct zPolygonCollection {
     GPUPolygon gpu_data[MAX_POLYGONS_PER_BUFFER];
     GPUPolygonMaterial gpu_materials[
@@ -62,7 +65,7 @@ typedef struct zPolygonCollection {
 
 typedef struct PolygonRequest {
     GPUPolygon * gpu_data;
-    GPUPolygonMaterial * gpu_material;
+    GPUPolygonMaterial * gpu_materials;
     zPolygonCPU * cpu_data;
     uint32_t materials_size;
 } PolygonRequest;

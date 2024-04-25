@@ -292,12 +292,12 @@ void add_lineparticle_effects_to_workload(
                     MAX_MATERIALS_SIZE] =
                         lineparticle_effects[i].zpolygon_material;
             
-            log_assert(frame_data->polygon_collection->polygons[0].
-                bonus_rgb[0] < 0.1f);
-            log_assert(frame_data->polygon_collection->polygons[0].
-                bonus_rgb[1] < 0.1f);
-            log_assert(frame_data->polygon_collection->polygons[0].
-                bonus_rgb[2] < 0.1f);
+            //            log_assert(frame_data->polygon_collection->polygons[0].
+            //                bonus_rgb[0] < 0.1f);
+            //            log_assert(frame_data->polygon_collection->polygons[0].
+            //                bonus_rgb[1] < 0.1f);
+            //            log_assert(frame_data->polygon_collection->polygons[0].
+            //                bonus_rgb[2] < 0.1f);
             
             frame_data->polygon_materials[
                 frame_data->polygon_collection->size *
@@ -397,68 +397,19 @@ uint32_t particle_effects_size;
 void construct_particle_effect(
     ParticleEffect * to_construct)
 {
-    PolygonRequest poly_request;
-    poly_request.cpu_data     = &to_construct->zpolygon_cpu;
-    poly_request.gpu_data     = &to_construct->zpolygon_gpu;
-    poly_request.gpu_material = &to_construct->zpolygon_material;
-    poly_request.materials_size = 1;
-    construct_zpolygon(/* PolygonRequest *to_construct: */ &poly_request);
+    memset(to_construct, 0, sizeof(ParticleEffect));
     
-    memset(
-        /* void * b: */
-            &to_construct->gpustats_initial_random_add_1,
-        /* int c: */
-            0,
-        /* size_t len: */
-            sizeof(GPUPolygon));
-    memset(
-        /* void * b: */
-            &to_construct->gpustats_initial_random_add_2,
-        /* int c: */
-            0,
-        /* size_t len: */
-            sizeof(GPUPolygon));
-    memset(
-        /* void * b: */
-            &to_construct->gpustats_pertime_add,
-        /* int c: */
-            0,
-        /* size_t len: */
-            sizeof(GPUPolygon));
-    memset(
-        /* void * b: */
-            &to_construct->gpustats_pertime_random_add_1,
-        /* int c: */
-            0,
-        /* size_t len: */
-            sizeof(GPUPolygon));
-    memset(
-        /* void * b: */
-            &to_construct->gpustats_pertime_random_add_2,
-        /* int c: */
-            0,
-        /* size_t len: */
-            sizeof(GPUPolygon));
-    memset(
-        /* void * b: */
-            &to_construct->gpustats_perexptime_add,
-        /* int c: */
-            0,
-        /* size_t len: */
-            sizeof(GPUPolygon));
-    memset(
-        /* void * b: */
-            &to_construct->zpolygon_gpu,
-        /* int c: */
-            0,
-        /* size_t len: */
-            sizeof(GPUPolygon));
+    PolygonRequest poly_request;
+    poly_request.cpu_data       = &to_construct->zpolygon_cpu;
+    poly_request.gpu_data       = &to_construct->zpolygon_gpu;
+    poly_request.gpu_materials  = to_construct->zpolygon_materials;
+    poly_request.materials_size = MAX_MATERIALS_SIZE;
+    construct_zpolygon(/* PolygonRequest *to_construct: */ &poly_request);
     
     to_construct->object_id            = -1;
     to_construct->zpolygon_cpu.mesh_id =  1;
     
     to_construct->zpolygon_cpu.committed = true;
-    to_construct->zpolygon_cpu.deleted   = false;
     
     to_construct->zpolygon_gpu.scale_factor      = 1.0f;
     to_construct->zpolygon_gpu.xyz_multiplier[0] = 0.01f;
@@ -471,14 +422,6 @@ void construct_particle_effect(
     to_construct->particle_spawns_per_second = 200;
     to_construct->vertices_per_particle      = 6;
     to_construct->particle_lifespan          = 2000000;
-    to_construct->use_shattered_mesh         = false;
-    to_construct->pause_between_spawns       = 0;
-    to_construct->elapsed                    = 0;
-    to_construct->loops                      = 0;
-    to_construct->deleted                    = false;
-    to_construct->committed                  = false;
-    
-    to_construct->generate_light             = false;
 }
 
 ParticleEffect * next_particle_effect(void) {
@@ -667,9 +610,11 @@ void add_particle_effects_to_workload(
                 /* size_t n: */
                     sizeof(GPUPolygon));
             
-            frame_data->polygon_materials[
-                frame_data->polygon_collection->size * MAX_MATERIALS_SIZE]
-                    = particle_effects[i].zpolygon_material;
+            memcpy(
+                &frame_data->polygon_materials[
+                    frame_data->polygon_collection->size * MAX_MATERIALS_SIZE],
+                particle_effects[i].zpolygon_materials,
+                sizeof(GPUPolygonMaterial) * MAX_MATERIALS_SIZE);
             
             if (particle_effects[i].random_textures_size > 0) {
                 frame_data->polygon_materials[

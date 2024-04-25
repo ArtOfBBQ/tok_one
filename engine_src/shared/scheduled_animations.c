@@ -173,8 +173,11 @@ void request_evaporate_and_destroy(
         ParticleEffect * shatter_effect = next_particle_effect();
         shatter_effect->zpolygon_cpu = zpolygons_to_render->cpu_data[zp_i];
         shatter_effect->zpolygon_gpu = zpolygons_to_render->gpu_data[zp_i];
-        shatter_effect->zpolygon_material =
-            zpolygons_to_render->gpu_materials[zp_i * MAX_MATERIALS_SIZE];
+        memcpy(
+            shatter_effect->zpolygon_materials,
+            &zpolygons_to_render->gpu_materials[zp_i * MAX_MATERIALS_SIZE],
+            sizeof(GPUPolygonMaterial) * MAX_MATERIALS_SIZE);
+        
         uint64_t shattered_verts_size =
             (uint64_t)all_mesh_summaries[shatter_effect->zpolygon_cpu.mesh_id].
                 shattered_vertices_size;
@@ -259,11 +262,14 @@ void request_shatter_and_destroy(
         ParticleEffect * shatter_effect = next_particle_effect();
         shatter_effect->zpolygon_cpu = zpolygons_to_render->cpu_data[zp_i];
         shatter_effect->zpolygon_gpu = zpolygons_to_render->gpu_data[zp_i];
-        shatter_effect->zpolygon_material =
-            zpolygons_to_render->gpu_materials[zp_i * MAX_MATERIALS_SIZE];
+        memcpy(
+            shatter_effect->zpolygon_materials,
+            &zpolygons_to_render->gpu_materials[zp_i * MAX_MATERIALS_SIZE],
+            sizeof(GPUPolygonMaterial) * MAX_MATERIALS_SIZE);
         uint64_t shattered_verts_size =
             (uint64_t)all_mesh_summaries[shatter_effect->zpolygon_cpu.mesh_id].
                 shattered_vertices_size;
+        log_assert(shattered_verts_size > 0);
         shatter_effect->particle_spawns_per_second = (uint32_t)(
             (shattered_verts_size * 1000000) /
                 (uint64_t)(duration_microseconds + 1));
@@ -820,6 +826,22 @@ void resolve_animationA_effects(const uint64_t microseconds_elapsed) {
                     anim->clientlogic_arg_1,
                     anim->clientlogic_arg_2,
                     anim->clientlogic_arg_3);
+            }
+            
+            if (anim->set_hitbox_when_finished) {
+                for (
+                    uint32_t zp_i = 0;
+                    zp_i < zpolygons_to_render->size;
+                    zp_i++)
+                {
+                    if (zpolygons_to_render->cpu_data[zp_i].object_id == anim->affected_object_id) {
+                        set_zpolygon_hitbox(
+                            /* zPolygonCPU * mesh_cpu: */
+                                &zpolygons_to_render->cpu_data[zp_i],
+                            /* GPUPolygon * mesh_gpu: */
+                                &zpolygons_to_render->gpu_data[zp_i]);
+                    }
+                }
             }
             
             if (anim->delete_object_when_finished) {

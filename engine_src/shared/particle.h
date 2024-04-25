@@ -79,7 +79,7 @@ typedef struct ParticleEffect {
     
     zPolygonCPU zpolygon_cpu;
     GPUPolygon zpolygon_gpu;
-    GPUPolygonMaterial zpolygon_material;
+    GPUPolygonMaterial zpolygon_materials[MAX_MATERIALS_SIZE];
     
     int32_t object_id;
     
