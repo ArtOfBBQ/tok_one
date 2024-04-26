@@ -23,7 +23,7 @@ extern "C" {
 #include "userinput.h"
 #include "text.h"
 #include "uielement.h"
-#include "scheduled_animations.h"
+// #include "scheduled_animations.h"
 #include "logger.h"
 #include "terminal.h"
 

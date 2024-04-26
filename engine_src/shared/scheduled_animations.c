@@ -4,9 +4,15 @@
 ScheduledAnimationA * scheduled_animationAs;
 uint32_t scheduled_animationAs_size = 0;
 
-void init_scheduled_animations(void) {
+static void (* callback_function)(int32_t, float, float, int32_t) = NULL;
+
+void init_scheduled_animations(
+    void (* arg_callback_function)(int32_t, float, float, int32_t))
+{
     scheduled_animationAs = (ScheduledAnimationA *)malloc_from_unmanaged(
         sizeof(ScheduledAnimationA) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
+    
+    callback_function = arg_callback_function;
 }
 
 static void construct_scheduled_animationA(
@@ -704,17 +710,6 @@ void resolve_animationA_effects(const uint64_t microseconds_elapsed) {
                 continue;
             }
             
-            /*
-                float flt_object_id;
-                float flt_deleted;
-                float flt_committed;
-                float xyz[3];
-                float xyz_offset[3];
-                float RGBA[4];
-                float reach;       // max distance before light intensity 0
-                float ambient;     // how much ambient light does this radiate?
-                float diffuse;     // how much diffuse light does this radiate?
-            */
             float flt_actual_elapsed_this_run =
                 (float)actual_elapsed_this_run;
             float flt_remaining_microseconds_this_run =
@@ -821,7 +816,7 @@ void resolve_animationA_effects(const uint64_t microseconds_elapsed) {
             }
             
             if (anim->clientlogic_callback_when_finished_id >= 0)  {
-                client_logic_animation_callback(
+                callback_function(
                     anim->clientlogic_callback_when_finished_id,
                     anim->clientlogic_arg_1,
                     anim->clientlogic_arg_2,

@@ -7,6 +7,7 @@
 #include "userinput.h"
 #include "objectid.h"
 #include "zpolygon.h"
+#include "text.h"
 
 #ifdef __cplusplus
 extern "C" {

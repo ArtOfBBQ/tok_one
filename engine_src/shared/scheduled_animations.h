@@ -5,14 +5,16 @@
 #include "simd.h"
 
 #include "zpolygon.h"
-#include "clientlogic.h"
+#include "particle.h"
+// #include "clientlogic.h"
 
 #define FLT_SCHEDULEDANIM_IGNORE 3.402823466e+38F
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void init_scheduled_animations(void);
+void init_scheduled_animations(
+    void (* arg_callback_function)(int32_t, float, float, int32_t));
 
 void resolve_animation_effects(const uint64_t microseconds_elapsed);
 void resolve_animationA_effects(const uint64_t microseconds_elapsed);
