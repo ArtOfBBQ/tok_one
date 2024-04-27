@@ -20,6 +20,7 @@ static void construct_scheduled_animationA(
     const bool32_t final_values_not_adds)
 {
     memset(to_construct, 0, sizeof(ScheduledAnimationA));
+    log_assert(!to_construct->committed);
     
     to_construct->affected_object_id = -1;
     
@@ -114,6 +115,8 @@ static void construct_scheduled_animationA(
     to_construct->clientlogic_arg_1 = -1;
     to_construct->clientlogic_arg_2 = -1;
     to_construct->clientlogic_arg_3 = -1;
+    
+    log_assert(!to_construct->committed);
 }
 
 ScheduledAnimationA * next_scheduled_animationA(
@@ -142,6 +145,8 @@ ScheduledAnimationA * next_scheduled_animationA(
     
     construct_scheduled_animationA(return_value, final_values_not_adds);
     
+    log_assert(!return_value->committed);
+    
     return return_value;
 }
 
@@ -151,6 +156,17 @@ void commit_scheduled_animationA(ScheduledAnimationA * to_commit) {
     log_assert(to_commit->remaining_microseconds == 0);
     
     to_commit->remaining_microseconds = to_commit->duration_microseconds;
+    
+    if (to_commit->delete_other_anims_targeting_same_object_id_on_commit) {
+        for (uint32_t i = 0; i < scheduled_animationAs_size; i++) {
+            if (scheduled_animationAs[i].affected_object_id ==
+                to_commit->affected_object_id &&
+                scheduled_animationAs[i].committed)
+            {
+                scheduled_animationAs[i].deleted = true;
+            }
+        }
+    }
     
     to_commit->committed = true;
 }

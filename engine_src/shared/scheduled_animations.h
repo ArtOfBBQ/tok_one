@@ -56,6 +56,7 @@ typedef struct ScheduledAnimationA {
     uint64_t wait_before_each_run;
     uint64_t remaining_microseconds;  // remaining duration (this run), private
     
+    bool32_t delete_other_anims_targeting_same_object_id_on_commit;
     bool32_t deleted;
     bool32_t committed;
 } ScheduledAnimationA;
