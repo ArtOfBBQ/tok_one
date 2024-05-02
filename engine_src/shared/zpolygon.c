@@ -165,8 +165,6 @@ void commit_zpolygon_to_render(PolygonRequest * to_commit)
 
 void delete_zpolygon_object(const int32_t with_object_id)
 {
-    log_assert(with_object_id >= 0);
-    
     for (uint32_t i = 0; i < zpolygons_to_render->size; i++) {
         if (zpolygons_to_render->cpu_data[i].object_id == with_object_id)
         {

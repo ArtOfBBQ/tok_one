@@ -20,7 +20,7 @@ inline static void add_point_vertex(
     float x,
     float y,
     float z,
-    bool32_t ignore_camera)
+    float ignore_camera)
 {
     if (frame_data->polygon_collection->size >= MAX_POLYGONS_PER_BUFFER) {
         return;

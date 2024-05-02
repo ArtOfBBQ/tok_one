@@ -120,11 +120,11 @@ static int32_t closest_touchable_from_screen_ray(
         GPUPolygon offset_polygon_gpu = zpolygons_to_render->gpu_data[zp_i];
         
         float camera_offset_x = camera.x *
-            !zpolygons_to_render->gpu_data[zp_i].ignore_camera;
+            (1.0f - zpolygons_to_render->gpu_data[zp_i].ignore_camera);
         float camera_offset_y = camera.y *
-            !zpolygons_to_render->gpu_data[zp_i].ignore_camera;
+            (1.0f - zpolygons_to_render->gpu_data[zp_i].ignore_camera);
         float camera_offset_z = camera.z *
-            !zpolygons_to_render->gpu_data[zp_i].ignore_camera;
+            (1.0f - zpolygons_to_render->gpu_data[zp_i].ignore_camera);
         
         offset_polygon_gpu.xyz[0] -= camera_offset_x;
         offset_polygon_gpu.xyz[1] -= camera_offset_y;
@@ -134,9 +134,9 @@ static int32_t closest_touchable_from_screen_ray(
         offset_polygon_gpu.xyz[2] += offset_polygon_gpu.xyz_offset[2];
         
         hit = ray_intersects_zpolygon_hitbox(
-            offset_polygon_gpu.ignore_camera ?
+            offset_polygon_gpu.ignore_camera > 0.5f ?
                 &ray_origin : &ray_origin_rotated,
-            offset_polygon_gpu.ignore_camera ?
+            offset_polygon_gpu.ignore_camera > 0.5f ?
                 &distant_point : &distant_point_rotated,
             &offset_polygon_cpu,
             &offset_polygon_gpu,

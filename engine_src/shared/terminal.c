@@ -33,20 +33,7 @@ static void describe_zpolygon(
 
 void destroy_terminal_objects(void) {
     if (terminal_back_object_id >= 0) {
-        for (uint32_t i = 0; i < zpolygons_to_render->size; i++) {
-            if (zpolygons_to_render->cpu_data[i].object_id ==
-                terminal_back_object_id)
-            {
-                for (
-                    int32_t tri_i = 0;
-                    tri_i < all_mesh_summaries[
-                        zpolygons_to_render->cpu_data[i].mesh_id].vertices_size;
-                    tri_i++)
-                {
-                    zpolygons_to_render->cpu_data[i].visible = terminal_active;
-                }
-            }
-        }
+        delete_zpolygon_object(terminal_back_object_id);
     }
     
     if (terminal_labels_object_id >= 0) {
@@ -552,6 +539,7 @@ static bool32_t evaluate_terminal_command(
 
 void terminal_commit_or_activate(void) {
     
+    destroy_terminal_objects();
     requesting_label_update = true;
     
     if (
@@ -600,6 +588,10 @@ void terminal_commit_or_activate(void) {
     
     terminal_active = !terminal_active;
     
+    if (terminal_active) {
+        terminal_redraw_backgrounds();
+    }
+    
     if (terminal_active &&
         window_globals->visual_debug_last_clicked_touchable_id >= 0)
     {
@@ -635,6 +627,4 @@ void terminal_commit_or_activate(void) {
                 (uint32_t)touched_zp_i);
         }
     }
-    
-    destroy_terminal_objects();    
 }

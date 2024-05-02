@@ -1,8 +1,9 @@
 #include "scheduled_animations.h"
 
-
 ScheduledAnimationA * scheduled_animationAs;
 uint32_t scheduled_animationAs_size = 0;
+
+static uint32_t request_scheduled_anims_mutex_id = UINT32_MAX;
 
 static void (* callback_function)(int32_t, float, float, int32_t) = NULL;
 
@@ -11,6 +12,8 @@ void init_scheduled_animations(
 {
     scheduled_animationAs = (ScheduledAnimationA *)malloc_from_unmanaged(
         sizeof(ScheduledAnimationA) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
+    
+    request_scheduled_anims_mutex_id = platform_init_mutex_and_return_id();
     
     callback_function = arg_callback_function;
 }
@@ -122,6 +125,7 @@ static void construct_scheduled_animationA(
 ScheduledAnimationA * next_scheduled_animationA(
     const bool32_t final_values_not_adds)
 {
+    platform_mutex_lock(request_scheduled_anims_mutex_id);
     log_assert(
         scheduled_animationAs_size < SCHEDULED_ANIMATIONS_ARRAYSIZE);
     ScheduledAnimationA * return_value = NULL;
@@ -147,10 +151,13 @@ ScheduledAnimationA * next_scheduled_animationA(
     
     log_assert(!return_value->committed);
     
+    platform_mutex_unlock(request_scheduled_anims_mutex_id);
+    
     return return_value;
 }
 
 void commit_scheduled_animationA(ScheduledAnimationA * to_commit) {
+    platform_mutex_lock(request_scheduled_anims_mutex_id);
     log_assert(!to_commit->committed);
     log_assert(to_commit->duration_microseconds > 0);
     log_assert(to_commit->remaining_microseconds == 0);
@@ -169,6 +176,7 @@ void commit_scheduled_animationA(ScheduledAnimationA * to_commit) {
     }
     
     to_commit->committed = true;
+    platform_mutex_unlock(request_scheduled_anims_mutex_id);
 }
 
 void request_evaporate_and_destroy(
@@ -354,7 +362,6 @@ void request_fade_and_destroy(
     const uint64_t duration_microseconds)
 {
     log_assert(duration_microseconds > 0);
-    log_assert(object_id >= 0);
     
     // register scheduled animation
     ScheduledAnimationA * modify_alpha = next_scheduled_animationA(true);
