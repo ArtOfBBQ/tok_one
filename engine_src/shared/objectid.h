@@ -7,7 +7,7 @@ extern "C" {
 
 #include "logger.h"
 
-#define MAX_OBJECT_ID 12000
+#define MAX_OBJECT_ID 8000
 
 #define FIRST_NONUI_OBJECT_ID 211
 
@@ -15,7 +15,7 @@ extern "C" {
 #define FIRST_NONUI_TOUCHABLE_ID 101
 
 // retired objects are unaffected by animations
-#define RETIRED_BUT_NOT_DELETED_ID  10501
+#define RETIRED_BUT_NOT_DELETED_ID  7501
 
 extern int32_t retired_object_id;
 

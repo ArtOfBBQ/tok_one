@@ -870,23 +870,7 @@ void resolve_animationA_effects(const uint64_t microseconds_elapsed) {
             }
             
             if (anim->delete_object_when_finished) {
-                for (
-                    int32_t l_i = (int32_t)zlights_to_apply_size - 1;
-                    l_i >= 0;
-                    l_i--)
-                {
-                    if (
-                        zlights_to_apply[l_i].object_id ==
-                            anim->affected_object_id)
-                    {
-                        zlights_to_apply[l_i].deleted = true;
-                        
-                        if (l_i == (int32_t)zlights_to_apply_size - 1)
-                        {
-                            zlights_to_apply_size--;
-                        }
-                    }
-                }
+                delete_zlight(anim->affected_object_id);
                 
                 delete_zpolygon_object(anim->affected_object_id);
                 

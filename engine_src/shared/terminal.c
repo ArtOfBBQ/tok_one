@@ -395,26 +395,6 @@ static bool32_t evaluate_terminal_command(
         return true;
     }
     
-    if (are_equal_strings(command, "ZLIGHTS")) {
-        strcpy_capped(
-            response,
-            SINGLE_LINE_MAX,
-            "# of zLights: ");
-        strcat_uint_capped(
-            response,
-            SINGLE_LINE_MAX,
-            zlights_to_apply_size);
-        strcat_capped(
-            response,
-            SINGLE_LINE_MAX,
-            " of ");
-        strcat_uint_capped(
-            response,
-            SINGLE_LINE_MAX,
-            MAX_LIGHTS_PER_BUFFER);
-        return true;
-    }
-    
     if (
         are_equal_strings(command, "WINDOW"))
     {

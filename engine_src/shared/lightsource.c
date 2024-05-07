@@ -342,3 +342,13 @@ void translate_lights(
         lights_for_gpu->lights_size += 1;
     }
 }
+
+void delete_zlight(const int32_t with_object_id) {
+    for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
+        if (zlights_to_apply[i].object_id == with_object_id)
+        {
+            zlights_to_apply[i].deleted     = true;
+            zlights_to_apply[i].object_id   = -1;
+        }
+    }
+}

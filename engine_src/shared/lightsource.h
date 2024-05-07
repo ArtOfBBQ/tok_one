@@ -86,6 +86,7 @@ typedef struct zLightSource {
 extern zLightSource * zlights_to_apply;
 extern uint32_t zlights_to_apply_size;
 
+
 zLightSource * next_zlight(void);
 void commit_zlight(zLightSource * to_request);
 
@@ -106,6 +107,8 @@ void copy_lights(
 // and then used in both
 void translate_lights(
     GPULightCollection * lights_for_gpu);
+
+void delete_zlight(const int32_t with_object_id);
 
 #ifdef __cplusplus
 }

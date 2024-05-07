@@ -226,7 +226,7 @@ vertex_shader(
         float distance = get_distance(
             light_pos,
             translated_pos);
-        float distance_mod = (light_collection->reach[i] + 0.5f)
+        float distance_mod = (light_collection->reach[i] + 0.05f)
             - (distance * distance);
         distance_mod = clamp(distance_mod, 0.0f, 5.0f);
         
