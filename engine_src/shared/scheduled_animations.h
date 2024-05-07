@@ -19,7 +19,7 @@ void init_scheduled_animations(
 void resolve_animation_effects(const uint64_t microseconds_elapsed);
 void resolve_animationA_effects(const uint64_t microseconds_elapsed);
 
-typedef struct ScheduledAnimationA {
+typedef struct ScheduledAnimation {
     // Public:
     GPUPolygon         gpu_polygon_vals;
     zPolygonCPU        zpolygon_cpu_vals;
@@ -59,11 +59,11 @@ typedef struct ScheduledAnimationA {
     bool32_t delete_other_anims_targeting_same_object_id_on_commit;
     bool32_t deleted;
     bool32_t committed;
-} ScheduledAnimationA;
-ScheduledAnimationA * next_scheduled_animationA(
+} ScheduledAnimation;
+ScheduledAnimation * next_scheduled_animation(
     const bool32_t final_values_not_adds);
-void commit_scheduled_animationA(ScheduledAnimationA * to_commit);
-ScheduledAnimationA * next_scheduled_animationA(
+void commit_scheduled_animation(ScheduledAnimation * to_commit);
+ScheduledAnimation * next_scheduled_animation(
     const bool32_t final_values_not_adds);
 
 void request_evaporate_and_destroy(

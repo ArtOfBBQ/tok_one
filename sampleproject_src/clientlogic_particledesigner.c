@@ -237,7 +237,7 @@ static void save_particle_stats(void) {
         strcat_float_capped(
             output,
             1000000,
-            particle_effects[0].zpolygon_material.rgba[m]);
+            particle_effects[0].zpolygon_materials[0].rgba[m]);
         strcat_capped(output, 1000000, ";\n");
     }
     
@@ -881,25 +881,25 @@ void client_logic_startup(void) {
     slider_requests[95].min_float_value =  0.0f;
     slider_requests[95].max_float_value =  1.0f;
     slider_requests[95].linked_float =
-        &particle_effects[0].zpolygon_material.rgba[0];
+        &particle_effects[0].zpolygon_materials[0].rgba[0];
     
     strcpy_capped(slider_requests[96].label, 64, "Material G:");
     slider_requests[96].min_float_value =  0.0f;
     slider_requests[96].max_float_value =  1.0f;
     slider_requests[96].linked_float =
-        &particle_effects[0].zpolygon_material.rgba[1];
+        &particle_effects[0].zpolygon_materials[0].rgba[1];
     
     strcpy_capped(slider_requests[97].label, 64, "Material B:");
     slider_requests[97].min_float_value =  0.0f;
     slider_requests[97].max_float_value =  1.0f;
     slider_requests[97].linked_float =
-        &particle_effects[0].zpolygon_material.rgba[2];
+        &particle_effects[0].zpolygon_materials[0].rgba[2];
     
     strcpy_capped(slider_requests[98].label, 64, "Material A:");
     slider_requests[98].min_float_value =  0.0f;
     slider_requests[98].max_float_value =  1.0f;
     slider_requests[98].linked_float =
-        &particle_effects[0].zpolygon_material.rgba[3];
+        &particle_effects[0].zpolygon_materials[0].rgba[3];
     
     init_PNG_decoder(malloc_from_managed, free_from_managed, memset, memcpy);
     
@@ -927,9 +927,9 @@ void client_logic_startup(void) {
     light->ambient       =  1.00f;
     light->diffuse       =  1.00f;
     light->reach         =  5.00f;
-    light->x             = -2.00f;
-    light->y             =  0.50f;
-    light->z             =  0.75f;
+    light->xyz[0]        = -2.00f;
+    light->xyz[1]        =  0.50f;
+    light->xyz[2]        =  0.75f;
     commit_zlight(light);
     
     for (uint32_t i = 0; i < SLIDERS_SIZE; i++) {
@@ -1047,7 +1047,7 @@ static void client_handle_keypresses(
         PolygonRequest lines_polygon;
         lines_polygon.cpu_data = &lines->zpolygon_cpu;
         lines_polygon.gpu_data = &lines->zpolygon_gpu;
-        lines_polygon.gpu_material = &lines->zpolygon_material;
+        lines_polygon.gpu_materials = &lines->zpolygon_material;
         construct_quad(
             /* const float left_x: */
                 0.0f,
@@ -1143,10 +1143,10 @@ void client_logic_update(uint64_t microseconds_elapsed)
         }
         
         ParticleEffect * particles = next_particle_effect();
-        particles->zpolygon_material.rgba[0] = 0.3f;
-        particles->zpolygon_material.rgba[1] = 0.3f;
-        particles->zpolygon_material.rgba[2] = 0.3f;
-        particles->zpolygon_material.rgba[3] = 1.0f;
+        particles->zpolygon_materials[0].rgba[0] = 0.3f;
+        particles->zpolygon_materials[0].rgba[1] = 0.3f;
+        particles->zpolygon_materials[0].rgba[2] = 0.3f;
+        particles->zpolygon_materials[0].rgba[3] = 1.0f;
         
         particles->zpolygon_cpu.mesh_id              =      1; // hardcoded cube
         particles->zpolygon_cpu.visible              =   true;
@@ -1296,10 +1296,9 @@ void client_logic_update(uint64_t microseconds_elapsed)
                     /* const uint32_t ignore_camera: */
                         true);
                 
-                ScheduledAnimation * anim = next_scheduled_animation();
+                ScheduledAnimation * anim = next_scheduled_animation(true);
                 anim->affected_object_id = slider_titles[i / 13].object_id;
-                anim->final_z_angle_known = true;
-                anim->final_z_angle = 1.58f;
+                anim->gpu_polygon_vals.xyz_angle[1] = 1.58f;
                 anim->duration_microseconds = 1;
                 commit_scheduled_animation(anim);
             }

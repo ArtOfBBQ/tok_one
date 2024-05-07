@@ -1,7 +1,7 @@
 #include "scheduled_animations.h"
 
-ScheduledAnimationA * scheduled_animationAs;
-uint32_t scheduled_animationAs_size = 0;
+ScheduledAnimation * scheduled_animations;
+uint32_t scheduled_animations_size = 0;
 
 static uint32_t request_scheduled_anims_mutex_id = UINT32_MAX;
 
@@ -10,8 +10,8 @@ static void (* callback_function)(int32_t, float, float, int32_t) = NULL;
 void init_scheduled_animations(
     void (* arg_callback_function)(int32_t, float, float, int32_t))
 {
-    scheduled_animationAs = (ScheduledAnimationA *)malloc_from_unmanaged(
-        sizeof(ScheduledAnimationA) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
+    scheduled_animations = (ScheduledAnimation *)malloc_from_unmanaged(
+        sizeof(ScheduledAnimation) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
     
     request_scheduled_anims_mutex_id = platform_init_mutex_and_return_id();
     
@@ -19,10 +19,10 @@ void init_scheduled_animations(
 }
 
 static void construct_scheduled_animationA(
-    ScheduledAnimationA * to_construct,
+    ScheduledAnimation * to_construct,
     const bool32_t final_values_not_adds)
 {
-    memset(to_construct, 0, sizeof(ScheduledAnimationA));
+    memset(to_construct, 0, sizeof(ScheduledAnimation));
     log_assert(!to_construct->committed);
     
     to_construct->affected_object_id = -1;
@@ -122,29 +122,29 @@ static void construct_scheduled_animationA(
     log_assert(!to_construct->committed);
 }
 
-ScheduledAnimationA * next_scheduled_animationA(
+ScheduledAnimation * next_scheduled_animation(
     const bool32_t final_values_not_adds)
 {
     platform_mutex_lock(request_scheduled_anims_mutex_id);
     log_assert(
-        scheduled_animationAs_size < SCHEDULED_ANIMATIONS_ARRAYSIZE);
-    ScheduledAnimationA * return_value = NULL;
+        scheduled_animations_size < SCHEDULED_ANIMATIONS_ARRAYSIZE);
+    ScheduledAnimation * return_value = NULL;
     
     for (
         uint32_t i = 0;
-        i < scheduled_animationAs_size;
+        i < scheduled_animations_size;
         i++)
     {
-        if (scheduled_animationAs[i].deleted)
+        if (scheduled_animations[i].deleted)
         {
-            return_value = &scheduled_animationAs[i];
+            return_value = &scheduled_animations[i];
         }
     }
     
     if (return_value == NULL) {
         log_assert(
-            scheduled_animationAs_size + 1 < SCHEDULED_ANIMATIONS_ARRAYSIZE);
-        return_value = &scheduled_animationAs[scheduled_animationAs_size++];
+            scheduled_animations_size + 1 < SCHEDULED_ANIMATIONS_ARRAYSIZE);
+        return_value = &scheduled_animations[scheduled_animations_size++];
     }
     
     construct_scheduled_animationA(return_value, final_values_not_adds);
@@ -157,7 +157,7 @@ ScheduledAnimationA * next_scheduled_animationA(
     return return_value;
 }
 
-void commit_scheduled_animationA(ScheduledAnimationA * to_commit) {
+void commit_scheduled_animation(ScheduledAnimation * to_commit) {
     platform_mutex_lock(request_scheduled_anims_mutex_id);
     log_assert(!to_commit->deleted);
     log_assert(!to_commit->committed);
@@ -167,14 +167,14 @@ void commit_scheduled_animationA(ScheduledAnimationA * to_commit) {
     to_commit->remaining_microseconds = to_commit->duration_microseconds;
     
     if (to_commit->delete_other_anims_targeting_same_object_id_on_commit) {
-        for (uint32_t i = 0; i < scheduled_animationAs_size; i++) {
+        for (uint32_t i = 0; i < scheduled_animations_size; i++) {
             if (
-                scheduled_animationAs[i].affected_object_id ==
+                scheduled_animations[i].affected_object_id ==
                     to_commit->affected_object_id &&
-                scheduled_animationAs[i].committed &&
-                !scheduled_animationAs[i].deleted)
+                scheduled_animations[i].committed &&
+                !scheduled_animations[i].deleted)
             {
-                scheduled_animationAs[i].deleted = true;
+                scheduled_animations[i].deleted = true;
             }
         }
     }
@@ -371,14 +371,14 @@ void request_fade_and_destroy(
     log_assert(duration_microseconds > 0);
     
     // register scheduled animation
-    ScheduledAnimationA * modify_alpha = next_scheduled_animationA(true);
+    ScheduledAnimation * modify_alpha = next_scheduled_animation(true);
     modify_alpha->affected_object_id = object_id;
     modify_alpha->remaining_wait_before_next_run = wait_before_first_run;
     modify_alpha->duration_microseconds = duration_microseconds;
     modify_alpha->lightsource_vals.reach = 0.0f;
     modify_alpha->gpu_polygon_material_vals.rgba[3] = 0.0f;
     modify_alpha->delete_object_when_finished = true;
-    commit_scheduled_animationA(modify_alpha);
+    commit_scheduled_animation(modify_alpha);
 }
 
 void request_fade_to(
@@ -390,25 +390,25 @@ void request_fade_to(
     log_assert(object_id >= 0);
     
     // register scheduled animation
-    ScheduledAnimationA * modify_alpha = next_scheduled_animationA(true);
+    ScheduledAnimation * modify_alpha = next_scheduled_animation(true);
     modify_alpha->affected_object_id = object_id;
     modify_alpha->remaining_wait_before_next_run = wait_before_first_run;
     modify_alpha->duration_microseconds = duration_microseconds;
     modify_alpha->gpu_polygon_material_vals.rgba[3] = target_alpha;
-    commit_scheduled_animationA(modify_alpha);
+    commit_scheduled_animation(modify_alpha);
 }
 
 void resolve_animationA_effects(const uint64_t microseconds_elapsed) {
     for (
-        int32_t animation_i = (int32_t)scheduled_animationAs_size - 1;
+        int32_t animation_i = (int32_t)scheduled_animations_size - 1;
         animation_i >= 0;
         animation_i--)
     {
-        ScheduledAnimationA * anim = &scheduled_animationAs[animation_i];
+        ScheduledAnimation * anim = &scheduled_animations[animation_i];
         
         if (anim->deleted) {
-            if (animation_i == (int32_t)scheduled_animationAs_size - 1) {
-                scheduled_animationAs_size -= 1;
+            if (animation_i == (int32_t)scheduled_animations_size - 1) {
+                scheduled_animations_size -= 1;
             }
             continue;
         }
@@ -465,8 +465,8 @@ void resolve_animationA_effects(const uint64_t microseconds_elapsed) {
         
         if (delete_after_this_run) {
             anim->deleted = true;
-            if (animation_i == (int32_t)scheduled_animationAs_size) {
-                scheduled_animationAs_size -= 1;
+            if (animation_i == (int32_t)scheduled_animations_size) {
+                scheduled_animations_size -= 1;
             }
         }
         
@@ -841,8 +841,8 @@ void resolve_animationA_effects(const uint64_t microseconds_elapsed) {
         
         if (delete_after_this_run) {
             anim->deleted = true;
-            if (animation_i == (int32_t)scheduled_animationAs_size) {
-                scheduled_animationAs_size -= 1;
+            if (animation_i == (int32_t)scheduled_animations_size) {
+                scheduled_animations_size -= 1;
             }
             
             if (anim->clientlogic_callback_when_finished_id >= 0)  {
@@ -895,14 +895,14 @@ void request_dud_dance(
     {
         uint64_t wait_extra = step * step_size;
         
-        ScheduledAnimationA * move_request = next_scheduled_animationA(false);
+        ScheduledAnimation * move_request = next_scheduled_animation(false);
         move_request->affected_object_id = (int32_t)object_id;
         move_request->remaining_wait_before_next_run = wait_extra;
         move_request->duration_microseconds = step_size - 2000;
         move_request->gpu_polygon_vals.xyz[0] = step % 2 == 0 ? delta : -delta;
         move_request->gpu_polygon_vals.xyz[1] =
             move_request->gpu_polygon_vals.xyz[0];
-        commit_scheduled_animationA(move_request);
+        commit_scheduled_animation(move_request);
     }
 }
 
@@ -912,30 +912,30 @@ void request_bump_animation(
 {
     uint64_t duration = 150000;
     
-    ScheduledAnimationA * embiggen_request = next_scheduled_animationA(true);
+    ScheduledAnimation * embiggen_request = next_scheduled_animation(true);
     embiggen_request->affected_object_id = (int32_t)object_id;
     embiggen_request->remaining_wait_before_next_run = wait;
     embiggen_request->duration_microseconds = duration / 5;
     embiggen_request->gpu_polygon_vals.scale_factor = 1.35f;
-    commit_scheduled_animationA(embiggen_request);
+    commit_scheduled_animation(embiggen_request);
     
-    ScheduledAnimationA * revert_request = next_scheduled_animationA(true);
+    ScheduledAnimation * revert_request = next_scheduled_animation(true);
     revert_request->affected_object_id = (int32_t)object_id;
     revert_request->remaining_wait_before_next_run = wait + duration / 2;
     revert_request->duration_microseconds = (duration / 5) * 4;
     revert_request->gpu_polygon_vals.scale_factor = 1.0f;
-    commit_scheduled_animationA(revert_request);
+    commit_scheduled_animation(revert_request);
 }
 
 void delete_all_scheduled_animations(void)
 {
     platform_mutex_lock(request_scheduled_anims_mutex_id);
-    for (uint32_t i = 0; i < scheduled_animationAs_size; i++) {
-        if (scheduled_animationAs[i].runs == 0) {
-            scheduled_animationAs[i].deleted = true;
+    for (uint32_t i = 0; i < scheduled_animations_size; i++) {
+        if (scheduled_animations[i].runs == 0) {
+            scheduled_animations[i].deleted = true;
         }
     }
-    scheduled_animationAs_size = 0;
+    scheduled_animations_size = 0;
     platform_mutex_unlock(request_scheduled_anims_mutex_id);
 }
 
@@ -943,19 +943,19 @@ void delete_all_movement_animations_targeting(
     const int32_t object_id)
 {
     platform_mutex_lock(request_scheduled_anims_mutex_id);
-    for (uint32_t i = 0; i < scheduled_animationAs_size; i++) {
-        if (scheduled_animationAs[i].affected_object_id == (int32_t)object_id && (
-            (((scheduled_animationAs[i].final_values_not_adds &&
-            scheduled_animationAs[i].gpu_polygon_vals.xyz[0] !=
+    for (uint32_t i = 0; i < scheduled_animations_size; i++) {
+        if (scheduled_animations[i].affected_object_id == (int32_t)object_id && (
+            (((scheduled_animations[i].final_values_not_adds &&
+            scheduled_animations[i].gpu_polygon_vals.xyz[0] !=
                 FLT_SCHEDULEDANIM_IGNORE)  ||
-            (scheduled_animationAs[i].gpu_polygon_vals.xyz[0] > 0.01f)))
+            (scheduled_animations[i].gpu_polygon_vals.xyz[0] > 0.01f)))
             ||
-            ((scheduled_animationAs[i].final_values_not_adds &&
-            scheduled_animationAs[i].gpu_polygon_vals.xyz[1] !=
+            ((scheduled_animations[i].final_values_not_adds &&
+            scheduled_animations[i].gpu_polygon_vals.xyz[1] !=
                 FLT_SCHEDULEDANIM_IGNORE)  ||
-            (scheduled_animationAs[i].gpu_polygon_vals.xyz[1] > 0.01f))))
+            (scheduled_animations[i].gpu_polygon_vals.xyz[1] > 0.01f))))
         {
-            scheduled_animationAs[i].deleted = true;
+            scheduled_animations[i].deleted = true;
         }
     }
     platform_mutex_unlock(request_scheduled_anims_mutex_id);
@@ -965,19 +965,19 @@ void delete_all_rgba_animations_targeting(
     const int32_t object_id)
 {
     platform_mutex_lock(request_scheduled_anims_mutex_id);
-    for (uint32_t i = 0; i < scheduled_animationAs_size; i++) {
-        if (scheduled_animationAs[i].affected_object_id == (int32_t)object_id &&
-            scheduled_animationAs[i].final_values_not_adds &&
-            (scheduled_animationAs[i].gpu_polygon_material_vals.rgba[0] !=
+    for (uint32_t i = 0; i < scheduled_animations_size; i++) {
+        if (scheduled_animations[i].affected_object_id == (int32_t)object_id &&
+            scheduled_animations[i].final_values_not_adds &&
+            (scheduled_animations[i].gpu_polygon_material_vals.rgba[0] !=
                  FLT_SCHEDULEDANIM_IGNORE ||
-             scheduled_animationAs[i].gpu_polygon_material_vals.rgba[1] !=
+             scheduled_animations[i].gpu_polygon_material_vals.rgba[1] !=
                  FLT_SCHEDULEDANIM_IGNORE ||
-             scheduled_animationAs[i].gpu_polygon_material_vals.rgba[2] !=
+             scheduled_animations[i].gpu_polygon_material_vals.rgba[2] !=
                  FLT_SCHEDULEDANIM_IGNORE ||
-             scheduled_animationAs[i].gpu_polygon_material_vals.rgba[3] !=
+             scheduled_animations[i].gpu_polygon_material_vals.rgba[3] !=
                  FLT_SCHEDULEDANIM_IGNORE))
         {
-            scheduled_animationAs[i].deleted = true;
+            scheduled_animations[i].deleted = true;
         }
     }
     platform_mutex_unlock(request_scheduled_anims_mutex_id);
@@ -985,12 +985,12 @@ void delete_all_rgba_animations_targeting(
 
 void delete_all_animations_targeting(const int32_t object_id) {
     platform_mutex_lock(request_scheduled_anims_mutex_id);
-    for (uint32_t i = 0; i < scheduled_animationAs_size; i++) {
+    for (uint32_t i = 0; i < scheduled_animations_size; i++) {
         if (
-            scheduled_animationAs[i].committed &&
-            scheduled_animationAs[i].affected_object_id == object_id)
+            scheduled_animations[i].committed &&
+            scheduled_animations[i].affected_object_id == object_id)
         {
-            scheduled_animationAs[i].deleted = true;
+            scheduled_animations[i].deleted = true;
         }
     }
     platform_mutex_unlock(request_scheduled_anims_mutex_id);
@@ -998,9 +998,9 @@ void delete_all_animations_targeting(const int32_t object_id) {
 
 void delete_all_repeatforever_animations(void) {
     platform_mutex_lock(request_scheduled_anims_mutex_id);
-    for (uint32_t i = 0; i < scheduled_animationAs_size; i++) {
-        if (scheduled_animationAs[i].runs == 0) {
-            scheduled_animationAs[i].deleted = true;
+    for (uint32_t i = 0; i < scheduled_animations_size; i++) {
+        if (scheduled_animations[i].runs == 0) {
+            scheduled_animations[i].deleted = true;
         }
     }
     platform_mutex_unlock(request_scheduled_anims_mutex_id);

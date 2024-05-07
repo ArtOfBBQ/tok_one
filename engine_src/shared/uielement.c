@@ -123,39 +123,39 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                         }
                     }
                     
-                    ScheduledAnimationA * bump_pin =
-                        next_scheduled_animationA(true);
+                    ScheduledAnimation * bump_pin =
+                        next_scheduled_animation(true);
                     bump_pin->affected_object_id = currently_sliding_object_id;
                     bump_pin->gpu_polygon_vals.scale_factor = 1.20f;
                     bump_pin->duration_microseconds = 20;
-                    commit_scheduled_animationA(bump_pin);
+                    commit_scheduled_animation(bump_pin);
                     
-                    bump_pin = next_scheduled_animationA(true);
+                    bump_pin = next_scheduled_animation(true);
                     bump_pin->affected_object_id = currently_sliding_object_id;
                     bump_pin->gpu_polygon_vals.scale_factor = 1.0f;
                     bump_pin->wait_before_each_run = 20;
                     bump_pin->duration_microseconds = 200000;
-                    commit_scheduled_animationA(bump_pin);
+                    commit_scheduled_animation(bump_pin);
                 }
                 
                 if (active_ui_elements[i].clickable) {
                     currently_clicking_object_id =
                         active_ui_elements[i].object_id;
                     
-                    ScheduledAnimationA * bump =
-                        next_scheduled_animationA(true);
+                    ScheduledAnimation * bump =
+                        next_scheduled_animation(true);
                     bump->affected_object_id = currently_clicking_object_id;
                     bump->gpu_polygon_vals.scale_factor = 1.25f;
                     bump->duration_microseconds = 40;
-                    commit_scheduled_animationA(bump);
+                    commit_scheduled_animation(bump);
                     
-                    ScheduledAnimationA * flatten =
-                        next_scheduled_animationA(true);
+                    ScheduledAnimation * flatten =
+                        next_scheduled_animation(true);
                     flatten->affected_object_id = currently_clicking_object_id;
                     flatten->gpu_polygon_vals.scale_factor = 1.0f;
                     flatten->wait_before_each_run = 50;
                     flatten->duration_microseconds = 250000;
-                    commit_scheduled_animationA(flatten);
+                    commit_scheduled_animation(flatten);
                 }
                 
                 if (
