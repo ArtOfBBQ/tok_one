@@ -193,9 +193,18 @@ void shared_gameloop_update(
     }
     uint64_t elapsed = time - previous_time;
     
+    if (elapsed > 500000) {
+        log_dump_and_crash(
+            "A frame took > 0.5 seconds to render.");
+    }
+    
     if (!application_running) {
         delete_all_ui_elements();
         zpolygons_to_render->size = 0;
+        particle_effects_size = 0;
+        lineparticle_effects_size = 0;
+        zlights_to_apply_size = 0;
+        
         frame_data->camera->x = 0.0f;
         frame_data->camera->y = 0.0f;
         frame_data->camera->z = 0.0f;
@@ -343,6 +352,7 @@ void shared_gameloop_update(
     
     frame_data->vertices_size = 0;
     frame_data->polygon_collection->size = 0;
+    frame_data->first_alphablend_i = 0;
     frame_data->first_line_i = 0;
     hardware_render(
             frame_data,

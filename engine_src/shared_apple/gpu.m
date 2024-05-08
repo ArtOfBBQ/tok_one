@@ -8,6 +8,7 @@ static id polygon_buffers[3];
 static id polygon_material_buffers[3];
 static id light_buffers [3];
 static id vertex_buffers[3];
+static id alphablended_vertex_buffers[3];
 static id camera_buffers[3];
 static id locked_vertex_populator_buffer;
 static id locked_vertex_buffer;
@@ -48,8 +49,7 @@ static dispatch_semaphore_t drawing_semaphore;
             all_mesh_vertices->gpu_data[i].parent_material_i;
     }
     
-    gpu_shared_data_collection.locked_vertices_size =
-        all_mesh_vertices->size;
+    gpu_shared_data_collection.locked_vertices_size = all_mesh_vertices->size;
     
     // Create a command buffer for GPU work.
     id <MTLCommandBuffer> commandBuffer = [command_queue commandBuffer];
@@ -141,39 +141,74 @@ static dispatch_semaphore_t drawing_semaphore;
     id<MTLFunction> fragment_shader =
         [shader_library newFunctionWithName:
             @"fragment_shader"];
+    id<MTLFunction> alphablending_fragment_shader =
+        [shader_library newFunctionWithName:
+            @"alphablending_fragment_shader"];
     
     // Setup combo pipeline that handles
     // both colored & textured triangles
-    MTLRenderPipelineDescriptor * combo_pipeline_descriptor =
+    MTLRenderPipelineDescriptor * diamond_pipeline_descriptor =
         [[MTLRenderPipelineDescriptor alloc] init];
-    [combo_pipeline_descriptor
+    [diamond_pipeline_descriptor
         setVertexFunction: vertex_shader];
-    [combo_pipeline_descriptor
+    [diamond_pipeline_descriptor
         setFragmentFunction: fragment_shader];
-    combo_pipeline_descriptor
+    diamond_pipeline_descriptor
         .colorAttachments[0]
         .pixelFormat = pixel_format;
-    // Mix colors according to alpha channel
-    //    [combo_pipeline_descriptor
-    //        .colorAttachments[0]
-    //        setBlendingEnabled: YES];
-    //    combo_pipeline_descriptor
-    //        .colorAttachments[0].sourceRGBBlendFactor =
-    //            MTLBlendFactorSourceAlpha;
-    //    combo_pipeline_descriptor
-    //        .colorAttachments[0].destinationRGBBlendFactor =
-    //            MTLBlendFactorOneMinusSourceAlpha;
-    
-    // note: this must be the same as the MTKView's pixel format 
-    combo_pipeline_descriptor.depthAttachmentPixelFormat =
+    diamond_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
-    
-    _combo_pipeline_state =
+    _diamond_pipeline_state =
         [with_metal_device
             newRenderPipelineStateWithDescriptor:
-                combo_pipeline_descriptor 
+                diamond_pipeline_descriptor 
             error:
                 &Error];
+    
+    if (Error != NULL)
+    {
+        NSLog(@" error => %@ ", [Error userInfo]);
+        [NSException
+            raise: @"Failed to initialize diamond pipeline"
+            format: @"Pipeline error"];
+    }
+    
+    MTLRenderPipelineDescriptor * alphablend_pipeline_descriptor =
+        [[MTLRenderPipelineDescriptor alloc] init];
+    [alphablend_pipeline_descriptor
+        setVertexFunction: vertex_shader];
+    [alphablend_pipeline_descriptor
+        setFragmentFunction: alphablending_fragment_shader];
+    alphablend_pipeline_descriptor
+        .colorAttachments[0]
+        .pixelFormat = pixel_format;
+    [alphablend_pipeline_descriptor
+        .colorAttachments[0]
+        setBlendingEnabled: YES];
+    alphablend_pipeline_descriptor
+        .colorAttachments[0].sourceRGBBlendFactor =
+            MTLBlendFactorSourceAlpha;
+    alphablend_pipeline_descriptor
+        .colorAttachments[0].destinationRGBBlendFactor =
+            MTLBlendFactorOneMinusSourceAlpha;
+    // TODO: Do we even have to use a depth buffer here? I don't get it but
+    // TODO: it hangs if we don't
+    alphablend_pipeline_descriptor.depthAttachmentPixelFormat =
+        MTLPixelFormatDepth32Float;
+    _alphablend_pipeline_state =
+        [with_metal_device
+            newRenderPipelineStateWithDescriptor:
+                alphablend_pipeline_descriptor
+            error:
+                &Error];
+    
+    if (Error != NULL)
+    {
+        NSLog(@" error => %@ ", [Error userInfo]);
+        [NSException
+            raise: @"Failed to initialize alphablending pipeline"
+            format: @"Pipeline error"];
+    }
     
     MTLDepthStencilDescriptor * depth_descriptor =
         [MTLDepthStencilDescriptor new];
@@ -498,7 +533,7 @@ static dispatch_semaphore_t drawing_semaphore;
     
     RenderPassDescriptor.colorAttachments[0].clearColor =
         MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);;
-        
+    
     id<MTLRenderCommandEncoder> render_encoder =
         [command_buffer
             renderCommandEncoderWithDescriptor:
@@ -509,7 +544,7 @@ static dispatch_semaphore_t drawing_semaphore;
     assert(cached_viewport.width > 0.0f);
     assert(cached_viewport.height > 0.0f);
     
-    [render_encoder setRenderPipelineState: _combo_pipeline_state];
+    [render_encoder setRenderPipelineState: _diamond_pipeline_state];
     assert(_depth_stencil_state != nil);
     [render_encoder setDepthStencilState: _depth_stencil_state];
     [render_encoder setDepthClipMode: MTLDepthClipModeClip];
@@ -592,20 +627,41 @@ static dispatch_semaphore_t drawing_semaphore;
     #endif
     
     [render_encoder
-        drawPrimitives: MTLPrimitiveTypeTriangle
-        vertexStart: 0
-        vertexCount: gpu_shared_data_collection.
-            triple_buffers[current_frame_i].first_line_i];
+        drawPrimitives:
+            MTLPrimitiveTypeTriangle
+        vertexStart:
+            0
+        vertexCount:
+            gpu_shared_data_collection.
+                triple_buffers[current_frame_i].first_alphablend_i];
     
-    uint32_t lines_size = gpu_shared_data_collection.
+    int32_t alphablend_verts_size = gpu_shared_data_collection.
+            triple_buffers[current_frame_i].first_line_i -
+        gpu_shared_data_collection.
+            triple_buffers[current_frame_i].first_alphablend_i;
+    
+    if (alphablend_verts_size > 0) {
+        [render_encoder setRenderPipelineState: _alphablend_pipeline_state];
+        
+        [render_encoder
+            drawPrimitives: MTLPrimitiveTypeTriangle
+            vertexStart: gpu_shared_data_collection.
+                triple_buffers[current_frame_i].first_alphablend_i
+            vertexCount:
+                alphablend_verts_size];
+    }
+    
+    int32_t lines_size = gpu_shared_data_collection.
             triple_buffers[current_frame_i].vertices_size -
         gpu_shared_data_collection.
             triple_buffers[current_frame_i].first_line_i;
-    [render_encoder
-        drawPrimitives: MTLPrimitiveTypeLine
-        vertexStart: gpu_shared_data_collection.
-            triple_buffers[current_frame_i].first_line_i
-        vertexCount: lines_size];
+    if (lines_size > 0) {
+        [render_encoder
+            drawPrimitives: MTLPrimitiveTypeLine
+            vertexStart: gpu_shared_data_collection.
+                triple_buffers[current_frame_i].first_line_i
+            vertexCount: lines_size];
+    }
     
     [render_encoder endEncoding];
     

@@ -303,7 +303,7 @@ NSWindowWithCustomResponder: NSWindow
 {
     @autoreleasepool {
     NSPoint window_location = [event locationInWindow];
-        
+    
     register_interaction(
         /* interaction : */
             &user_interactions[INTR_PREVIOUS_LEFTCLICK_START],
@@ -438,7 +438,7 @@ int main(int argc, const char * argv[]) {
     
     window =
         [[NSWindowWithCustomResponder alloc]
-            initWithContentRect: window_rect 
+            initWithContentRect: window_rect
             styleMask:
                 NSWindowStyleMaskTitled    |
                 NSWindowStyleMaskClosable  |
@@ -447,8 +447,7 @@ int main(int argc, const char * argv[]) {
             defer: NO];
     window.animationBehavior = NSWindowAnimationBehaviorNone;
     
-    GameWindowDelegate * window_delegate =
-        [[GameWindowDelegate alloc] init];
+    GameWindowDelegate * window_delegate = [[GameWindowDelegate alloc] init];
     
     NSString * nsstring_app_name =
         [NSString stringWithUTF8String:APPLICATION_NAME];

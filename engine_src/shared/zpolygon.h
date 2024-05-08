@@ -47,6 +47,7 @@ typedef struct zPolygonCPU {
     float hitbox_height;
     float hitbox_depth;
     
+    bool32_t alpha_blending_enabled;
     bool32_t committed;
     bool32_t deleted;
     bool32_t visible;

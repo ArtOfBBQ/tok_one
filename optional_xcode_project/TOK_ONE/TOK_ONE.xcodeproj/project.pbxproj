@@ -158,6 +158,7 @@
 		EC914B8E2B94B1EF007FCBFC /* terminal.c in Sources */ = {isa = PBXBuildFile; fileRef = EC7C25252980B6A900DB7BC8 /* terminal.c */; };
 		EC92FDAD2902917500C10865 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
 		EC92FDAE2902917500C10865 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
+		EC97BEF62BEB69A40096B354 /* clientlogic.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128702862511600F92967 /* clientlogic.c */; };
 		ECB05E47294F8AC300050BD4 /* simd.h in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E46294F8AC200050BD4 /* simd.h */; };
 		ECB05E49294F8B1300050BD4 /* gpu.m in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E48294F8B1300050BD4 /* gpu.m */; };
 		ECB05E4B294F8B3500050BD4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E4A294F8B3500050BD4 /* main.m */; };
@@ -166,7 +167,6 @@
 		ECB05E4F2950868E00050BD4 /* key.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECB05E4C294F8FD300050BD4 /* key.obj */; };
 		ECC47A6029E9111C0082A7C6 /* disk.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECC47A5F29E9111C0082A7C6 /* disk.obj */; };
 		ECC47A6129E9111C0082A7C6 /* disk.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECC47A5F29E9111C0082A7C6 /* disk.obj */; };
-		ECD7D3E02B985A9600B47196 /* clientlogic_particledesigner.c in Sources */ = {isa = PBXBuildFile; fileRef = ECD7D3DA2B97778500B47196 /* clientlogic_particledesigner.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -668,6 +668,7 @@
 				EC6E12162A03BD90004E7BD1 /* uielement.c in Sources */,
 				601128862862511700F92967 /* userinput.c in Sources */,
 				601128882862511800F92967 /* window_size.c in Sources */,
+				EC97BEF62BEB69A40096B354 /* clientlogic.c in Sources */,
 				601128932862511800F92967 /* zpolygon.c in Sources */,
 				6011288D2862511800F92967 /* text.c in Sources */,
 				601128852862511700F92967 /* texture_array.c in Sources */,
@@ -678,7 +679,6 @@
 				60A998ED287BD4B7003F7159 /* zpolygon.h in Sources */,
 				60A998EF287BD4B7003F7159 /* renderer.h in Sources */,
 				6011288B2862511800F92967 /* common_platform_layer.c in Sources */,
-				ECD7D3E02B985A9600B47196 /* clientlogic_particledesigner.c in Sources */,
 				60A998EE287BD4B7003F7159 /* tok_random.h in Sources */,
 				6011288F2862511800F92967 /* lightsource.c in Sources */,
 			);

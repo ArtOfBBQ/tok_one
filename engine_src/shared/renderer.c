@@ -289,7 +289,51 @@ inline static void zpolygon_hitboxes_to_lines(
     #endif
 }
 
-inline static void zpolygons_to_triangles(
+inline static void add_alphablending_zpolygons_to_workload(
+    GPUDataForSingleFrame * frame_data)
+{
+    frame_data->first_alphablend_i = frame_data->vertices_size;
+    
+    // Copy all vertices that do use alpha blending
+    for (
+        int32_t cpu_zp_i = 0;
+        cpu_zp_i < (int32_t)zpolygons_to_render->size;
+        cpu_zp_i++)
+    {
+        if (
+            zpolygons_to_render->cpu_data[cpu_zp_i].deleted ||
+            !zpolygons_to_render->cpu_data[cpu_zp_i].visible ||
+            !zpolygons_to_render->cpu_data[cpu_zp_i].committed ||
+            !zpolygons_to_render->cpu_data[cpu_zp_i].alpha_blending_enabled)
+        {
+            continue;
+        }
+        
+        int32_t mesh_id = zpolygons_to_render->cpu_data[cpu_zp_i].mesh_id;
+        log_assert(mesh_id >= 0);
+        log_assert(mesh_id < (int32_t)all_mesh_summaries_size);
+        
+        int32_t vert_tail_i =
+            all_mesh_summaries[mesh_id].vertices_head_i +
+                all_mesh_summaries[mesh_id].vertices_size;
+        assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
+        
+        for (
+            int32_t vert_i = all_mesh_summaries[mesh_id].vertices_head_i;
+            vert_i < vert_tail_i;
+            vert_i += 1)
+        {
+            frame_data->vertices[frame_data->vertices_size].locked_vertex_i =
+                vert_i;
+            frame_data->vertices[frame_data->vertices_size].polygon_i =
+                cpu_zp_i;
+            frame_data->vertices_size += 1;
+            log_assert(frame_data->vertices_size < ALL_LOCKED_VERTICES_SIZE);
+        }
+    }
+}
+
+inline static void add_opaque_zpolygons_to_workload(
     GPUDataForSingleFrame * frame_data)
 {
     assert(frame_data->polygon_collection->size == 0);
@@ -329,7 +373,8 @@ inline static void zpolygons_to_triangles(
         if (
             zpolygons_to_render->cpu_data[cpu_zp_i].deleted ||
             !zpolygons_to_render->cpu_data[cpu_zp_i].visible ||
-            !zpolygons_to_render->cpu_data[cpu_zp_i].committed)
+            !zpolygons_to_render->cpu_data[cpu_zp_i].committed ||
+            zpolygons_to_render->cpu_data[cpu_zp_i].alpha_blending_enabled)
         {
             continue;
         }
@@ -356,8 +401,6 @@ inline static void zpolygons_to_triangles(
             log_assert(frame_data->vertices_size < ALL_LOCKED_VERTICES_SIZE);
         }
     }
-    
-    frame_data->first_line_i = frame_data->vertices_size;
 }
 
 void hardware_render(
@@ -381,15 +424,18 @@ void hardware_render(
     
     log_assert(zpolygons_to_render->size < MAX_POLYGONS_PER_BUFFER);
     
-    zpolygons_to_triangles(frame_data);
+    add_opaque_zpolygons_to_workload(frame_data);
     
     if (application_running) {
         add_particle_effects_to_workload(frame_data, elapsed_nanoseconds);
                 
         add_lineparticle_effects_to_workload(frame_data, elapsed_nanoseconds);
-        
+    }
+    
+    add_alphablending_zpolygons_to_workload(frame_data);
+    
+    if (application_running) {
         frame_data->first_line_i = frame_data->vertices_size;;
-        
         zpolygon_hitboxes_to_lines(
             frame_data);
     }

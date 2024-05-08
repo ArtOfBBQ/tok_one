@@ -70,7 +70,7 @@ void terminal_init(void) {
     term_background_color[0] = 0.0f;
     term_background_color[1] = 0.0f;
     term_background_color[2] = 1.0f;
-    term_background_color[3] = 1.0f;
+    term_background_color[3] = 0.5f;
 }
 
 void terminal_redraw_backgrounds(void) {
@@ -92,7 +92,8 @@ void terminal_redraw_backgrounds(void) {
                 TERM_Z),
         /* const float mid_y: */
             screenspace_y_to_y(
-                (TERMINAL_WHITESPACE * 1.5f) + (TERM_FONT_SIZE / 2),
+                (TERMINAL_WHITESPACE * 1.5f) +
+                (TERM_FONT_SIZE / 2),
                 TERM_Z),
         /* const float z: */
             TERM_Z,
@@ -118,6 +119,7 @@ void terminal_redraw_backgrounds(void) {
         term_background_color[3];
     current_command_input.gpu_data->ignore_camera = true;
     current_command_input.gpu_data->ignore_lighting = true;
+    current_command_input.cpu_data->alpha_blending_enabled = true;
     current_command_input.cpu_data->visible = terminal_active;
     current_command_input.cpu_data->object_id = terminal_back_object_id;
     commit_zpolygon_to_render(&current_command_input);
@@ -159,6 +161,7 @@ void terminal_redraw_backgrounds(void) {
     current_command_input.gpu_materials[0].rgba[3] =
         term_background_color[3];
     current_command_input.cpu_data->visible = terminal_active;
+    current_command_input.cpu_data->alpha_blending_enabled = true;
     current_command_input.gpu_data->ignore_camera = true;
     current_command_input.gpu_data->ignore_lighting = true;
     current_command_input.cpu_data->object_id = INT32_MAX;

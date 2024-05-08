@@ -16,6 +16,7 @@ typedef struct GPUDataForSingleFrame
     GPULightCollection *           light_collection;
     uint32_t                          vertices_size;
     uint32_t                           first_line_i;
+    uint32_t                     first_alphablend_i;
 } GPUDataForSingleFrame;
 
 typedef struct GPUSharedDataCollection

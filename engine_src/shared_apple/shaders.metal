@@ -318,3 +318,35 @@ fragment_shader(
     out_color[3] = 1.0f;
     return out_color;
 }
+
+fragment float4
+alphablending_fragment_shader(
+    RasterizerPixel in [[stage_in]],
+    array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
+        color_textures[[ texture(0) ]])
+{
+    float4 out_color = in.color;
+    
+    if (
+        in.texturearray_i < 0 ||
+        in.texture_i < 0)
+    {
+        out_color *= vector_float4(in.lighting, 1.0f);
+    } else {
+        constexpr sampler textureSampler(
+            mag_filter::nearest,
+            min_filter::nearest);
+        
+        // Sample the texture to obtain a color
+        const half4 color_sample =
+        color_textures[in.texturearray_i].sample(
+            textureSampler,
+            in.texture_coordinate, 
+            in.texture_i);
+        float4 texture_sample = float4(color_sample);
+        
+        out_color *= texture_sample * vector_float4(in.lighting, 1.0f);;
+    }
+    
+    return out_color;
+}
