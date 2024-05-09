@@ -1,7 +1,18 @@
 #import "gpu.h"
 
+bool32_t has_retina_screen = false;
+
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
 GPUSharedDataCollection gpu_shared_data_collection;
+
+static void (* funcptr_shared_gameloop_update)(GPUDataForSingleFrame *) = NULL;
+
+void apple_gpu_init(
+    void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *))
+{
+    funcptr_shared_gameloop_update =
+        arg_funcptr_shared_gameloop_update;
+}
 
 // objective-c "id" of the MTLBuffer objects
 static id polygon_buffers[3];
@@ -503,7 +514,7 @@ static dispatch_semaphore_t drawing_semaphore;
         /* dispatch_semaphore_t _Nonnull dsema: */ drawing_semaphore,
         /* dispatch_time_t timeout: */ DISPATCH_TIME_FOREVER);
     
-    shared_gameloop_update(
+    funcptr_shared_gameloop_update(
         &gpu_shared_data_collection.triple_buffers[current_frame_i]);
     
     id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];

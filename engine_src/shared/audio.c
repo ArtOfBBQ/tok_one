@@ -1,7 +1,5 @@
 #include "audio.h"
 
-static void * (* malloc_function)(size_t size) = NULL;
-
 SoundSettings * sound_settings = NULL;
 
 #define PERMASOUND_NAME_MAX 64
@@ -22,8 +20,6 @@ int32_t all_samples_size = 0;
 void init_audio(
     void * (* arg_malloc_function)(size_t size))
 {
-    malloc_function = arg_malloc_function;
-    
     sound_settings                 = arg_malloc_function(sizeof(SoundSettings));
     sound_settings->tone_frequency = 261.6f * 2; // 261.6 ~= Middle C frequency
     sound_settings->volume         = 0.08f;

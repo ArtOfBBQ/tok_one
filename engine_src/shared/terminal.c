@@ -487,11 +487,13 @@ static bool32_t evaluate_terminal_command(
     if (are_equal_strings(command, "FS") ||
         are_equal_strings(command, "FULLSCREEN"))
     {
-        strcpy_capped(
-            response,
-            SINGLE_LINE_MAX,
-            "Entering full screen...");
-        platform_enter_fullscreen();
+        // TODO: reimplement me without breaking unity build!
+        assert(0);
+        //        strcpy_capped(
+        //            response,
+        //            SINGLE_LINE_MAX,
+        //            "Entering full screen...");
+        //        platform_enter_fullscreen();
         return true;
     }
     

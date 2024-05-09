@@ -560,7 +560,7 @@ static void assert_objmodel_validity(int32_t mesh_id) {
 }
 #endif
 
-static float get_vertex_magnitude(float input_xyz[3]) {
+static float objmodel_get_vertex_magnitude(float input_xyz[3]) {
     float x = (input_xyz[0] * input_xyz[0]);
     float y = (input_xyz[1] * input_xyz[1]);
     float z = (input_xyz[2] * input_xyz[2]);
@@ -578,7 +578,7 @@ static float get_vertex_magnitude(float input_xyz[3]) {
 }
 
 static void normalize_gpu_triangle_normals(GPULockedVertex * input) {
-    float magnitude = get_vertex_magnitude(input->xyz);
+    float magnitude = objmodel_get_vertex_magnitude(input->xyz);
     
     if (magnitude < 0.0001f && magnitude > -0.0001f) {
         magnitude = 0.0001f;

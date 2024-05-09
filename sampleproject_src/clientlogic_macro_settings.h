@@ -34,7 +34,7 @@ of the engine for your specific app.
 // the max # of (probably from .obj) meshes/models in your app
 #define ALL_MESHES_SIZE 100
 // the max # of triangles in all of your meshes/models combined
-#define ALL_LOCKED_VERTICES_SIZE 90000
+#define ALL_LOCKED_VERTICES_SIZE 150000
 // The max number of 'materials ids' in 1 of your zpolygons
 // #define MAX_MATERIALS_SIZE 10
 

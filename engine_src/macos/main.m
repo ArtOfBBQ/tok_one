@@ -402,16 +402,18 @@ NSWindowWithCustomResponder: NSWindow
 
 NSWindowWithCustomResponder * window = NULL;
 
-bool32_t application_running = true;
-bool32_t has_retina_screen = true;
-
 int main(int argc, const char * argv[]) {
+    
+    application_running = true;
+    has_retina_screen = true; // TODO: actually query the machine and find out
     
     assert(sizeof(GPUPolygon) % 32 == 0);
     
     init_application_before_gpu_init();
     log_append("initialized application: ");
     log_append(APPLICATION_NAME);
+    
+    apple_gpu_init(shared_gameloop_update);
     
     log_append(
         "\nconfirming we can save debug info - writing log.txt...\n");
@@ -516,9 +518,11 @@ int main(int argc, const char * argv[]) {
     }
 }
 
+/*
 void platform_enter_fullscreen(void) {
     [window toggleFullScreen: window];
 }
+*/
 
 #if __cplusplus
 }

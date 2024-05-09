@@ -158,7 +158,7 @@
 		EC914B8E2B94B1EF007FCBFC /* terminal.c in Sources */ = {isa = PBXBuildFile; fileRef = EC7C25252980B6A900DB7BC8 /* terminal.c */; };
 		EC92FDAD2902917500C10865 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
 		EC92FDAE2902917500C10865 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
-		EC97BEF62BEB69A40096B354 /* clientlogic.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128702862511600F92967 /* clientlogic.c */; };
+		EC97BEF82BEC8F7B0096B354 /* clientlogic_particledesigner.c in Sources */ = {isa = PBXBuildFile; fileRef = ECD7D3DA2B97778500B47196 /* clientlogic_particledesigner.c */; };
 		ECB05E47294F8AC300050BD4 /* simd.h in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E46294F8AC200050BD4 /* simd.h */; };
 		ECB05E49294F8B1300050BD4 /* gpu.m in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E48294F8B1300050BD4 /* gpu.m */; };
 		ECB05E4B294F8B3500050BD4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E4A294F8B3500050BD4 /* main.m */; };
@@ -653,6 +653,7 @@
 				60112842286122FE00F92967 /* decode_png.c in Sources */,
 				6011289A286253C100F92967 /* apple_platform_layer.m in Sources */,
 				60A998EA287BD4B7003F7159 /* text.h in Sources */,
+				EC97BEF82BEC8F7B0096B354 /* clientlogic_particledesigner.c in Sources */,
 				EC78509A29E62CA800E6882A /* objmodel.c in Sources */,
 				EC61E2D52AFB02B7004D316D /* linux_apple_platform_layer.c in Sources */,
 				601128922862511800F92967 /* scheduled_animations.c in Sources */,
@@ -668,7 +669,6 @@
 				EC6E12162A03BD90004E7BD1 /* uielement.c in Sources */,
 				601128862862511700F92967 /* userinput.c in Sources */,
 				601128882862511800F92967 /* window_size.c in Sources */,
-				EC97BEF62BEB69A40096B354 /* clientlogic.c in Sources */,
 				601128932862511800F92967 /* zpolygon.c in Sources */,
 				6011288D2862511800F92967 /* text.c in Sources */,
 				601128852862511700F92967 /* texture_array.c in Sources */,

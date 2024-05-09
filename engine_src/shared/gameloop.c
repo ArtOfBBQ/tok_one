@@ -1,7 +1,7 @@
 #include "gameloop.h"
 
-static uint64_t previous_time = 0;
-static uint64_t frame_no = 0;
+static uint64_t gameloop_previous_time = 0;
+static uint64_t gameloop_frame_no = 0;
 static uint32_t gameloop_mutex_id = UINT32_MAX;
 
 static int32_t closest_touchable_from_screen_ray(
@@ -186,16 +186,19 @@ void shared_gameloop_update(
     // platform_mutex_lock(gameloop_mutex_id);
     
     uint64_t time = platform_get_current_time_microsecs();
-    if (previous_time < 1) {
-        previous_time = time;
+    if (gameloop_previous_time < 1) {
+        gameloop_previous_time = time;
         // platform_mutex_unlock(gameloop_mutex_id);
         return;
     }
-    uint64_t elapsed = time - previous_time;
+    uint64_t elapsed = time - gameloop_previous_time;
     
-    if (elapsed > 500000) {
-        log_dump_and_crash(
-            "A frame took > 0.5 seconds to render.");
+    
+    if (elapsed > 250000) {
+        #ifndef LOGGER_IGNORE_ASSERTS
+        log_dump_and_crash("A frame took > 0.25 seconds to render.");
+        #endif
+        return;
     }
     
     if (!application_running) {
@@ -245,9 +248,9 @@ void shared_gameloop_update(
     window_globals->visual_debug_collision_size =
         ((time % 500000) / 50000) * 0.001f;
     
-    previous_time = time;
+    gameloop_previous_time = time;
     
-    frame_no++;
+    gameloop_frame_no++;
     
     if (time - window_globals->last_resize_request_at < 2000000)
     {

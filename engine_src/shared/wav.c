@@ -16,10 +16,10 @@ All chunks have the following format:
 variable-sized field: the chunk data itself, of the size given in the previous field.
 a pad byte, if the chunk's length is not even
 */
-typedef struct ChunkHeader {
+typedef struct WavChunkHeader {
     char ascii_id[4];
     uint32_t data_size;
-} ChunkHeader;
+} WavChunkHeader;
 
 typedef struct FormatChunkBody {
     uint16_t type; // Type of format (1 is PCM) - 2 byte integer
@@ -105,7 +105,7 @@ void samples_to_wav(
     memcpy(recipient, &riff_header, sizeof(FileHeader));
     recipient += sizeof(FileHeader);
     
-    ChunkHeader format_header;
+    WavChunkHeader format_header;
     format_header.ascii_id[0] = 'f';
     format_header.ascii_id[1] = 'm';
     format_header.ascii_id[2] = 't';
@@ -113,8 +113,8 @@ void samples_to_wav(
     format_header.data_size = sizeof(FormatChunkBody);
     assert(format_header.data_size == 16);
     
-    memcpy(recipient, &format_header, sizeof(ChunkHeader));
-    recipient += sizeof(ChunkHeader);
+    memcpy(recipient, &format_header, sizeof(WavChunkHeader));
+    recipient += sizeof(WavChunkHeader);
     
     FormatChunkBody format_body;
     format_body.type = 1;
@@ -128,16 +128,16 @@ void samples_to_wav(
     memcpy(recipient, &format_body, sizeof(FormatChunkBody));
     recipient += sizeof(FormatChunkBody);
     
-    ChunkHeader data_header;
+    WavChunkHeader data_header;
     data_header.ascii_id[0] = 'd';
     data_header.ascii_id[1] = 'a';
     data_header.ascii_id[2] = 't';
     data_header.ascii_id[3] = 'a';
     data_header.data_size = samples_size * sizeof(int16_t);
-    assert(sizeof(ChunkHeader) % 2 == 0); // no padding needed
+    assert(sizeof(WavChunkHeader) % 2 == 0); // no padding needed
     
-    memcpy(recipient, &data_header, sizeof(ChunkHeader));
-    recipient += sizeof(ChunkHeader);
+    memcpy(recipient, &data_header, sizeof(WavChunkHeader));
+    recipient += sizeof(WavChunkHeader);
     
     if (samples_size % 2 == 1) {
         // add padding byte
@@ -152,8 +152,8 @@ void samples_to_wav(
     recipient[0] = '\0';
     
     uint32_t before_sample_data_size_bytes =
-        sizeof(ChunkHeader) +
-        sizeof(ChunkHeader) +
+        sizeof(WavChunkHeader) +
+        sizeof(WavChunkHeader) +
         sizeof(FileHeader) +
         sizeof(FormatChunkBody);
     assert(before_sample_data_size_bytes == 44);
@@ -212,10 +212,11 @@ void parse_wav(
     while (
         *good &&
         file_header.file_size > (((ptrdiff_t)raw_file_at - (ptrdiff_t)raw_file) +
-            (ptrdiff_t)(sizeof(ChunkHeader) + 2)))
+            (ptrdiff_t)(sizeof(WavChunkHeader) + 2)))
     {
         // assert((ptrdiff_t)(void *)raw_file_at % 32 == 0);
-        ChunkHeader chunk_header = consume_struct(raw_file_at, ChunkHeader);
+        WavChunkHeader chunk_header =
+            consume_struct(raw_file_at, WavChunkHeader);
         
         if (
             strings_are_equal(

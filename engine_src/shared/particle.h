@@ -117,7 +117,8 @@ void delete_particle_effect(int32_t with_object_id);
 
 void add_particle_effects_to_workload(
     GPUDataForSingleFrame * frame_data,
-    uint64_t elapsed_nanoseconds);
+    uint64_t elapsed_nanoseconds,
+    const bool32_t alpha_blending);
 
 #ifdef __cplusplus
 }

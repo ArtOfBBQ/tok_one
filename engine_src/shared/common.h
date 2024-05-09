@@ -10,7 +10,7 @@
 #include <assert.h>
 #endif
 
-#define COMMON_SILENCE
+// #define COMMON_SILENCE
 #ifndef COMMON_SILENCE
 #include <stdio.h>
 #endif

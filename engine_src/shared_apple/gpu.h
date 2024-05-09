@@ -1,19 +1,21 @@
 #ifndef GPU_H
 #define GPU_H
 
-#include "../shared/logger.h"
-#include "../shared/memorystore.h"
-#include "../shared/texture_array.h"
-#include "../shared/cpu_gpu_shared_types.h"
-#include "../shared/cpu_to_gpu_types.h"
-#include "../shared/window_size.h"
-#include "../shared/gameloop.h"
+#include "logger.h"
+#include "memorystore.h"
+#include "cpu_gpu_shared_types.h"
+#include "cpu_to_gpu_types.h"
+#include "window_size.h"
+#include "objmodel.h"
 
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
 #import <mach/mach_time.h>
 
 extern uint64_t last_resize_request_at;
+
+void apple_gpu_init(
+    void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *));
 
 @interface MetalKitViewDelegate: NSObject<MTKViewDelegate>
 @property (retain) NSMutableArray * metal_textures;

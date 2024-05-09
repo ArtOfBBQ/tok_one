@@ -11,7 +11,6 @@
 #include "common.h"
 #include "window_size.h"
 #include "triangle.h"
-#include "memorystore.h"
 
 #ifdef __cplusplus
 extern "C" {

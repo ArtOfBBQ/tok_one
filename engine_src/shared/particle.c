@@ -496,7 +496,8 @@ void delete_particle_effect(int32_t with_object_id) {
 
 void add_particle_effects_to_workload(
     GPUDataForSingleFrame * frame_data,
-    uint64_t elapsed_nanoseconds)
+    uint64_t elapsed_nanoseconds,
+    const bool32_t alpha_blending)
 {
     uint64_t spawns_in_duration;
     uint64_t interval_between_spawns;
@@ -508,7 +509,9 @@ void add_particle_effects_to_workload(
         i++)
     {
         if (particle_effects[i].deleted ||
-            !particle_effects[i].committed)
+            !particle_effects[i].committed ||
+            particle_effects[i].zpolygon_cpu.alpha_blending_enabled !=
+                alpha_blending)
         {
             continue;
         }

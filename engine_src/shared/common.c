@@ -312,7 +312,9 @@ uint_to_string(
         isolated_num /= decimal;
         recipient[i] = (char)('0' + isolated_num);
         i += 1;
+        #ifndef COMMON_IGNORE_ASSERTS
         assert(i < recipient_size);
+        #endif
         
         decimal *= 10;
         input_div_dec = input / decimal;

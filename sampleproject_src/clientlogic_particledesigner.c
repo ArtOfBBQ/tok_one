@@ -1219,14 +1219,14 @@ void client_logic_update(uint64_t microseconds_elapsed)
             next_ui_element_settings->slider_background_rgba[2] =
                 1.0f - ((i / 13) * 0.15f);
             
-            float slider_x_screenspace = window_globals->window_width -
-                next_ui_element_settings->slider_width_screenspace -
-                    (font_height * 3);
-            
-            float slider_y_screenspace = window_globals->window_height -
-                (font_height * 2) -
-                (i * 22) +
-                particle_y_offset;
+            float slider_x_screenspace =
+                window_globals->window_width -
+                    next_ui_element_settings->slider_width_screenspace -
+                        (font_height * 3);
+            float slider_y_screenspace =
+                window_globals->window_height -
+                    (font_height * 2) -
+                        (i * 22) + particle_y_offset;
             
             if (slider_requests[i].linked_float != NULL) {
                 request_float_slider(
@@ -1271,9 +1271,12 @@ void client_logic_update(uint64_t microseconds_elapsed)
             if (i % 13 == 0 && i < 91) {
                 float prev_font_height = 14;
                 font_height = 20;
-                font_color[0] = next_ui_element_settings->slider_background_rgba[0];
-                font_color[1] = next_ui_element_settings->slider_background_rgba[1];
-                font_color[2] = next_ui_element_settings->slider_background_rgba[2];
+                font_color[0] =
+                    next_ui_element_settings->slider_background_rgba[0];
+                font_color[1] =
+                    next_ui_element_settings->slider_background_rgba[1];
+                font_color[2] =
+                    next_ui_element_settings->slider_background_rgba[2];
                 font_color[3] = 1.0f;
                 
                 request_label_renderable(
@@ -1287,20 +1290,13 @@ void client_logic_update(uint64_t microseconds_elapsed)
                             (next_ui_element_settings->slider_width_screenspace / 2) -
                                 ((prev_font_height * 9)/2),
                     /* const float top_pixelspace: */
-                        slider_titles[i / 13].unoffset_y_screenspace +
-                            particle_y_offset,
+                        slider_titles[i / 13].unoffset_y_screenspace,
                     /* const float z: */
                         0.75f,
                     /* const float max_width: */
                         500,
                     /* const uint32_t ignore_camera: */
                         true);
-                
-                ScheduledAnimation * anim = next_scheduled_animation(true);
-                anim->affected_object_id = slider_titles[i / 13].object_id;
-                anim->gpu_polygon_vals.xyz_angle[1] = 1.58f;
-                anim->duration_microseconds = 1;
-                commit_scheduled_animation(anim);
             }
         }
         
@@ -1359,8 +1355,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
                 {
                     zpolygons_to_render->gpu_data[zp_i].xyz[1] =
                         screenspace_y_to_y(
-                            slider_titles[i / 13].unoffset_y_screenspace +
-                                particle_y_offset,
+                            slider_titles[i / 13].unoffset_y_screenspace,
                             0.75f);
                 }
             }

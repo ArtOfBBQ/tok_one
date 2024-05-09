@@ -1,5 +1,6 @@
 #include "logger.h"
 
+bool32_t application_running = false;
 char crashed_top_of_screen_msg[256];
 
 #ifndef IGNORE_LOGGER

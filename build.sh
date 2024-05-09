@@ -11,7 +11,7 @@ exit 0
 fi
 
 if [[ $PLATFORM = "Darwin" ]]; then
-    bash engine_src/macos/build.sh $1
+    bash build_macos.sh $1
     # bash engine_src/macos/buildtests.sh $1
 elif [[ $PLATFORM = "Linux" ]]; then
     bash engine_src/linux/build.sh $1

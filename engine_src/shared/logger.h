@@ -22,6 +22,7 @@
 #define log_assert(condition)
 #else
 #include <stdio.h>
+#include <assert.h>
 #define log_assert(condition) internal_log_assert(condition, #condition, __FILE__, __LINE__, __func__)
 #endif
 
