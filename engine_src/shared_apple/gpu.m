@@ -79,6 +79,7 @@ static dispatch_semaphore_t drawing_semaphore;
     // Add a completion handler and commit the command buffer.
     [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> cb) {
         // Populate private buffer.
+        (void)cb;
     }];
     [commandBuffer commit];
 }
@@ -510,9 +511,9 @@ static dispatch_semaphore_t drawing_semaphore;
 
 - (void)drawInMTKView:(MTKView *)view
 {
-    dispatch_semaphore_wait(
-        /* dispatch_semaphore_t _Nonnull dsema: */ drawing_semaphore,
-        /* dispatch_time_t timeout: */ DISPATCH_TIME_FOREVER);
+    //    dispatch_semaphore_wait(
+    //        /* dispatch_semaphore_t _Nonnull dsema: */ drawing_semaphore,
+    //        /* dispatch_time_t timeout: */ DISPATCH_TIME_FOREVER);
     
     funcptr_shared_gameloop_update(
         &gpu_shared_data_collection.triple_buffers[current_frame_i]);
@@ -637,21 +638,38 @@ static dispatch_semaphore_t drawing_semaphore;
     }
     #endif
     
-    [render_encoder
-        drawPrimitives:
-            MTLPrimitiveTypeTriangle
-        vertexStart:
-            0
-        vertexCount:
-            gpu_shared_data_collection.
-                triple_buffers[current_frame_i].first_alphablend_i];
-    
-    int32_t alphablend_verts_size = gpu_shared_data_collection.
-            triple_buffers[current_frame_i].first_line_i -
+    uint32_t diamond_verts_size =
         gpu_shared_data_collection.
-            triple_buffers[current_frame_i].first_alphablend_i;
+                triple_buffers[current_frame_i].first_alphablend_i;
+    
+    if (diamond_verts_size > 0) {
+        assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);
+        assert(diamond_verts_size % 3 == 0);
+        [render_encoder
+            drawPrimitives:
+                MTLPrimitiveTypeTriangle
+            vertexStart:
+                0
+            vertexCount:
+                gpu_shared_data_collection.
+                    triple_buffers[current_frame_i].first_alphablend_i];
+    }
+    
+    uint32_t alphablend_verts_size =
+        (
+            gpu_shared_data_collection.
+                    triple_buffers[current_frame_i].first_line_i >
+            gpu_shared_data_collection.
+                triple_buffers[current_frame_i].first_alphablend_i) ?
+            gpu_shared_data_collection.
+                triple_buffers[current_frame_i].first_line_i -
+            gpu_shared_data_collection.
+                triple_buffers[current_frame_i].first_alphablend_i
+            : 0;
     
     if (alphablend_verts_size > 0) {
+        assert(alphablend_verts_size < MAX_VERTICES_PER_BUFFER);
+        assert(alphablend_verts_size % 3 == 0);
         [render_encoder setRenderPipelineState: _alphablend_pipeline_state];
         
         [render_encoder
@@ -662,11 +680,19 @@ static dispatch_semaphore_t drawing_semaphore;
                 alphablend_verts_size];
     }
     
-    int32_t lines_size = gpu_shared_data_collection.
-            triple_buffers[current_frame_i].vertices_size -
+    uint32_t lines_size =
         gpu_shared_data_collection.
-            triple_buffers[current_frame_i].first_line_i;
+            triple_buffers[current_frame_i].vertices_size >
+                gpu_shared_data_collection.
+                    triple_buffers[current_frame_i].first_line_i ?
+        gpu_shared_data_collection.
+                triple_buffers[current_frame_i].vertices_size -
+            gpu_shared_data_collection.
+                triple_buffers[current_frame_i].first_line_i
+        : 0;
+    
     if (lines_size > 0) {
+        assert(lines_size < MAX_VERTICES_PER_BUFFER);
         [render_encoder
             drawPrimitives: MTLPrimitiveTypeLine
             vertexStart: gpu_shared_data_collection.
@@ -686,7 +712,7 @@ static dispatch_semaphore_t drawing_semaphore;
     [command_buffer addCompletedHandler:^(id<MTLCommandBuffer> arg_cmd_buffer) {
         (void)arg_cmd_buffer;
         
-        dispatch_semaphore_signal(drawing_semaphore);
+        /* dispatch_semaphore_signal(drawing_semaphore); */
     }];
     
     [command_buffer commit];
