@@ -59,7 +59,7 @@ void set_zpolygon_hitbox(
 typedef struct zPolygonCollection {
     GPUPolygon gpu_data[MAX_POLYGONS_PER_BUFFER];
     GPUPolygonMaterial gpu_materials[
-        MAX_POLYGONS_PER_BUFFER * MAX_MATERIALS_SIZE];
+        MAX_POLYGONS_PER_BUFFER * MAX_MATERIALS_PER_POLYGON];
     zPolygonCPU cpu_data[MAX_POLYGONS_PER_BUFFER];
     uint32_t size;
 } zPolygonCollection;

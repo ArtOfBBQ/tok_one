@@ -1,6 +1,8 @@
 #ifndef OBJMODEL_H
 #define OBJMODEL_H
 
+#include <string.h>
+
 #include "clientlogic_macro_settings.h"
 #include "cpu_gpu_shared_types.h"
 
@@ -27,7 +29,7 @@ typedef struct MeshSummary {
     float base_depth;
     int32_t shattered_vertices_head_i; // -1 if no shattered version
     int32_t shattered_vertices_size; // 0 if no shattered version
-    char material_names[MAX_MATERIALS_SIZE][OBJ_STRING_SIZE];
+    char material_names[MAX_MATERIALS_PER_POLYGON][OBJ_STRING_SIZE];
     uint32_t materials_size;
 } MeshSummary;
 
@@ -46,7 +48,7 @@ void init_all_meshes(void);
 int32_t new_mesh_id_from_resource_asserts(
     const char * filename,
     const uint32_t expected_materials_count,
-    const char expected_materials_names[MAX_MATERIALS_SIZE][256]);
+    const char expected_materials_names[MAX_MATERIALS_PER_POLYGON][256]);
 
 int32_t new_mesh_id_from_resource(
     const char * filename);

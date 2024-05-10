@@ -159,7 +159,8 @@ because I don't know much about how that works or how reliable it is
 #define simd_max_floats(a, b)               _mm_max_ps(a, b)
 #define simd_and_floats(a, b)               _mm_and_ps(a, b)
 #define simd_sqrt_floats(a)                 _mm_sqrt_ps(a)
-
+#define simd_cmpeq_floats(a, b)             _mm_cmp_ps(a, b, _CMP_EQ_UQ)
+#define simd_cmplt_floats(a, b)             _mm_cmp_ps(a, b, _CMP_LT_OQ)
 #else
 
 #define SIMD_FLOAT_LANES                    1

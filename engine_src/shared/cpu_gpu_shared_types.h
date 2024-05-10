@@ -6,7 +6,7 @@
 
 #define MAX_POLYGONS_PER_BUFFER  40000
 #define MAX_LIGHTS_PER_BUFFER       75
-#define MAX_MATERIALS_SIZE          15
+#define MAX_MATERIALS_PER_POLYGON   15
 
 #pragma pack(push, 1)
 typedef struct GPUVertex {

@@ -190,6 +190,9 @@ void request_evaporate_and_destroy(
     const int32_t object_id,
     const uint64_t duration_microseconds)
 {
+    request_shatter_and_destroy(object_id, duration_microseconds);
+    return;
+    
     log_assert(duration_microseconds > 0);
     log_assert(object_id >= 0);
     
@@ -212,8 +215,9 @@ void request_evaporate_and_destroy(
         shatter_effect->zpolygon_gpu = zpolygons_to_render->gpu_data[zp_i];
         memcpy(
             shatter_effect->zpolygon_materials,
-            &zpolygons_to_render->gpu_materials[zp_i * MAX_MATERIALS_SIZE],
-            sizeof(GPUPolygonMaterial) * MAX_MATERIALS_SIZE);
+            &zpolygons_to_render->gpu_materials[
+                zp_i * MAX_MATERIALS_PER_POLYGON],
+            sizeof(GPUPolygonMaterial) * MAX_MATERIALS_PER_POLYGON);
         
         uint64_t shattered_verts_size =
             (uint64_t)all_mesh_summaries[shatter_effect->zpolygon_cpu.mesh_id].
@@ -300,9 +304,37 @@ void request_shatter_and_destroy(
         shatter_effect->zpolygon_cpu = zpolygons_to_render->cpu_data[zp_i];
         shatter_effect->zpolygon_gpu = zpolygons_to_render->gpu_data[zp_i];
         memcpy(
-            shatter_effect->zpolygon_materials,
-            &zpolygons_to_render->gpu_materials[zp_i * MAX_MATERIALS_SIZE],
-            sizeof(GPUPolygonMaterial) * MAX_MATERIALS_SIZE);
+            /* void * dst: */
+                shatter_effect->zpolygon_materials,
+            /* const void * src: */
+                &zpolygons_to_render->gpu_materials[
+                    zp_i * MAX_MATERIALS_PER_POLYGON],
+            /* size_t n: */
+                (sizeof(GPUPolygonMaterial) * MAX_MATERIALS_PER_POLYGON));
+        
+        #ifndef LOGGER_IGNORE_ASSERTS
+        for (uint32_t mat_i = 0; mat_i < MAX_MATERIALS_PER_POLYGON; mat_i++) {
+            log_assert(
+                shatter_effect->zpolygon_materials[mat_i].rgba[0] ==
+                    zpolygons_to_render->gpu_materials[
+                        (zp_i * MAX_MATERIALS_PER_POLYGON)+mat_i].rgba[0]);
+            log_assert(
+                shatter_effect->zpolygon_materials[mat_i].rgba[1] ==
+                    zpolygons_to_render->gpu_materials[
+                        (zp_i * MAX_MATERIALS_PER_POLYGON)+mat_i].rgba[1]);
+            log_assert(
+                shatter_effect->zpolygon_materials[mat_i].texturearray_i ==
+                    zpolygons_to_render->gpu_materials[
+                        (zp_i * MAX_MATERIALS_PER_POLYGON)+mat_i].
+                            texturearray_i);
+            log_assert(
+                shatter_effect->zpolygon_materials[mat_i].texture_i ==
+                    zpolygons_to_render->gpu_materials[
+                        (zp_i * MAX_MATERIALS_PER_POLYGON)+mat_i].
+                            texture_i);
+        }
+        #endif
+        
         uint64_t shattered_verts_size =
             (uint64_t)all_mesh_summaries[shatter_effect->zpolygon_cpu.mesh_id].
                 shattered_vertices_size;
@@ -311,7 +343,7 @@ void request_shatter_and_destroy(
             (shattered_verts_size * 1000000) /
                 (uint64_t)(duration_microseconds + 1));
         shatter_effect->pause_between_spawns = 0;
-        shatter_effect->vertices_per_particle = 3;
+        shatter_effect->vertices_per_particle = 6;
         shatter_effect->particle_lifespan = duration_microseconds;
         shatter_effect->use_shattered_mesh = true;
         
@@ -357,6 +389,7 @@ void request_shatter_and_destroy(
         shatter_effect->loops = 1;
         shatter_effect->generate_light = false;
         
+        log_assert(!shatter_effect->zpolygon_cpu.alpha_blending_enabled);
         commit_particle_effect(shatter_effect);
         
         zpolygons_to_render->cpu_data[zp_i].deleted = true;
@@ -398,7 +431,7 @@ void request_fade_to(
     commit_scheduled_animation(modify_alpha);
 }
 
-void resolve_animationA_effects(const uint64_t microseconds_elapsed) {
+void resolve_animation_effects(const uint64_t microseconds_elapsed) {
     for (
         int32_t animation_i = (int32_t)scheduled_animations_size - 1;
         animation_i >= 0;
@@ -555,10 +588,10 @@ void resolve_animationA_effects(const uint64_t microseconds_elapsed) {
                 
                 anim_vals_ptr    =
                     (float *)&anim->gpu_polygon_material_vals;
-                uint32_t mat1_i = zp_i * MAX_MATERIALS_SIZE;
+                uint32_t mat1_i = zp_i * MAX_MATERIALS_PER_POLYGON;
                 for (
                     uint32_t mat_i = mat1_i;
-                    mat_i < mat1_i + MAX_MATERIALS_SIZE;
+                    mat_i < mat1_i + MAX_MATERIALS_PER_POLYGON;
                     mat_i++)
                 {
                     target_vals_ptr =
@@ -637,10 +670,10 @@ void resolve_animationA_effects(const uint64_t microseconds_elapsed) {
                 }
                 
                 anim_vals_ptr = (float *)&anim->gpu_polygon_material_vals;
-                uint32_t mat1_i = zp_i * MAX_MATERIALS_SIZE;
+                uint32_t mat1_i = zp_i * MAX_MATERIALS_PER_POLYGON;
                 for (
                     uint32_t mat_i = mat1_i;
-                    mat_i < mat1_i + MAX_MATERIALS_SIZE;
+                    mat_i < mat1_i + MAX_MATERIALS_PER_POLYGON;
                     mat_i++)
                 {
                     target_vals_ptr =
@@ -684,10 +717,10 @@ void resolve_animationA_effects(const uint64_t microseconds_elapsed) {
                     float * adds_ptr =
                         (float *)&anim->onfinish_gpu_polygon_material_adds;
                     
-                    mat1_i = zp_i * MAX_MATERIALS_SIZE;
+                    mat1_i = zp_i * MAX_MATERIALS_PER_POLYGON;
                     for (
                         uint32_t mat_i = mat1_i;
-                        mat_i < mat1_i + MAX_MATERIALS_SIZE;
+                        mat_i < mat1_i + MAX_MATERIALS_PER_POLYGON;
                         mat_i++)
                     {
                         target_vals_ptr =

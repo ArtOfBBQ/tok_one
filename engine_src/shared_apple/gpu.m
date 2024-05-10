@@ -39,25 +39,18 @@ static dispatch_semaphore_t drawing_semaphore;
 
 - (void) copyLockedVertices
 {
+    memcpy(
+        /* void * dst: */
+            gpu_shared_data_collection.locked_vertices,
+        /* const void * src: */
+            all_mesh_vertices->gpu_data,
+        /* size_t n: */
+            sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
+    
     for (uint32_t i = 0; i < ALL_LOCKED_VERTICES_SIZE; i++) {
-        gpu_shared_data_collection.locked_vertices[i].xyz[0] =
-            all_mesh_vertices->gpu_data[i].xyz[0];
-        gpu_shared_data_collection.locked_vertices[i].xyz[1] =
-            all_mesh_vertices->gpu_data[i].xyz[1];
-        gpu_shared_data_collection.locked_vertices[i].xyz[2] =
-            all_mesh_vertices->gpu_data[i].xyz[2];
-        gpu_shared_data_collection.locked_vertices[i].normal_xyz[0] =
-            all_mesh_vertices->gpu_data[i].normal_xyz[0];
-        gpu_shared_data_collection.locked_vertices[i].normal_xyz[1] =
-            all_mesh_vertices->gpu_data[i].normal_xyz[1];
-        gpu_shared_data_collection.locked_vertices[i].normal_xyz[2] =
-            all_mesh_vertices->gpu_data[i].normal_xyz[2];
-        gpu_shared_data_collection.locked_vertices[i].uv[0] =
-            all_mesh_vertices->gpu_data[i].uv[0];
-        gpu_shared_data_collection.locked_vertices[i].uv[1] =
-            all_mesh_vertices->gpu_data[i].uv[1];
-        gpu_shared_data_collection.locked_vertices[i].parent_material_i =
-            all_mesh_vertices->gpu_data[i].parent_material_i;
+        assert(
+            gpu_shared_data_collection.locked_vertices[i].parent_material_i <
+                MAX_MATERIALS_PER_POLYGON);
     }
     
     gpu_shared_data_collection.locked_vertices_size = all_mesh_vertices->size;

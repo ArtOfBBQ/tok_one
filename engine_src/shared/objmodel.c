@@ -37,6 +37,13 @@ void init_all_meshes(void) {
     assert(ALL_LOCKED_VERTICES_SIZE > 0);
     all_mesh_vertices = (LockedVertexWithMaterialCollection *)
         malloc_from_unmanaged(sizeof(LockedVertexWithMaterialCollection));
+    memset(
+        all_mesh_vertices,
+        0,
+        sizeof(LockedVertexWithMaterialCollection));
+    log_assert(
+        all_mesh_vertices->gpu_data[135527].parent_material_i == 0);
+    
     
     // Let's hardcode a basic quad since that's a mesh that will be used by
     // even the features inherent to the engine itself (the terminal, any
@@ -59,10 +66,10 @@ void init_all_meshes(void) {
     const float right_vertex    =  1.0f;
     const float top_vertex      =  1.0f;
     const float bottom_vertex   = -1.0f;
-    const float left_uv_coord   = 0.0f;
-    const float right_uv_coord  = 1.0f;
-    const float bottom_uv_coord = 1.0f;
-    const float top_uv_coord    = 0.0f;
+    const float left_uv_coord   =  0.0f;
+    const float right_uv_coord  =  1.0f;
+    const float bottom_uv_coord =  1.0f;
+    const float top_uv_coord    =  0.0f;
     
     // basic quad, triangle 1
     // top left vertex
@@ -650,7 +657,7 @@ static ParsedObj * parsed_obj = NULL;
 int32_t new_mesh_id_from_resource_asserts(
     const char * filename,
     const uint32_t expected_materials_count,
-    const char expected_materials_names[MAX_MATERIALS_SIZE][256])
+    const char expected_materials_names[MAX_MATERIALS_PER_POLYGON][256])
 {
     int32_t new_mesh_head_id = (int32_t)all_mesh_vertices->size;
     log_assert(all_mesh_summaries_size < ALL_MESHES_SIZE);
@@ -741,7 +748,7 @@ int32_t new_mesh_id_from_resource_asserts(
                 parent_material_i =
                     cur_material_i;
             log_assert(cur_material_i >= 0);
-            log_assert(cur_material_i < MAX_MATERIALS_SIZE);
+            log_assert(cur_material_i < MAX_MATERIALS_PER_POLYGON);
             
             if (parsed_obj->normals_count > 0 &&
                 parsed_obj->normals != NULL &&
@@ -1041,6 +1048,10 @@ static float get_squared_distance_from_locked_vertices(
 static float get_squared_triangle_length_from_locked_vertices(
     const GPULockedVertex * vertices)
 {
+    log_assert(vertices[0].parent_material_i < MAX_MATERIALS_PER_POLYGON);
+    log_assert(vertices[1].parent_material_i < MAX_MATERIALS_PER_POLYGON);
+    log_assert(vertices[2].parent_material_i < MAX_MATERIALS_PER_POLYGON);
+    
     float largest_squared_dist = FLOAT32_MIN;
     #ifndef LOGGER_IGNORE_ASSERTS
     int32_t largest_start_vertex_i = -1;
@@ -1098,6 +1109,12 @@ static int32_t find_biggest_area_triangle_head_in(
 {
     log_assert(tail_vertex_i > head_vertex_i);
     log_assert((tail_vertex_i - head_vertex_i) % 3 == 2);
+    log_assert(all_mesh_vertices->gpu_data[tail_vertex_i].parent_material_i <
+        MAX_MATERIALS_PER_POLYGON);
+    log_assert(all_mesh_vertices->gpu_data[tail_vertex_i].parent_material_i <
+        MAX_MATERIALS_PER_POLYGON);
+    log_assert(all_mesh_vertices->gpu_data[tail_vertex_i].parent_material_i <
+        MAX_MATERIALS_PER_POLYGON);
     
     float biggest_area = FLOAT32_MIN;
     int32_t biggest_area_i = -1;
@@ -1316,6 +1333,9 @@ void create_shattered_version_of_mesh(
                 biggest_area_head_i + midline_start_vert_i].uv[1] +
             all_mesh_vertices->gpu_data[
                 biggest_area_head_i + midline_end_vert_i].uv[1]) / 2;
+        mid_of_line.parent_material_i =
+            all_mesh_vertices->gpu_data[
+                biggest_area_head_i + midline_start_vert_i].parent_material_i;
         
         // split the triangle at biggest_area_i into 2
         GPULockedVertex first_tri[3];
@@ -1339,6 +1359,8 @@ void create_shattered_version_of_mesh(
                 first_tri[m] =
                     all_mesh_vertices->gpu_data[
                         biggest_area_head_i + first_new_triangle_vertices[m]];
+                log_assert(first_tri[m].parent_material_i <
+                    MAX_MATERIALS_PER_POLYGON);
             }
             
             if (second_new_triangle_vertices[m] == USE_MIDLINE) {
@@ -1349,6 +1371,8 @@ void create_shattered_version_of_mesh(
                 second_tri[m] =
                     all_mesh_vertices->gpu_data[
                         biggest_area_head_i + second_new_triangle_vertices[m]];
+                log_assert(second_tri[m].parent_material_i <
+                    MAX_MATERIALS_PER_POLYGON);
             }
         }
         
@@ -1366,8 +1390,17 @@ void create_shattered_version_of_mesh(
         #endif
         
         all_mesh_vertices->gpu_data[biggest_area_head_i + 0] = first_tri[0];
+        log_assert(
+            all_mesh_vertices->gpu_data[biggest_area_head_i + 0].
+                parent_material_i < MAX_MATERIALS_PER_POLYGON);
         all_mesh_vertices->gpu_data[biggest_area_head_i + 1] = first_tri[1];
+        log_assert(
+            all_mesh_vertices->gpu_data[biggest_area_head_i + 1].
+                parent_material_i < MAX_MATERIALS_PER_POLYGON);
         all_mesh_vertices->gpu_data[biggest_area_head_i + 2] = first_tri[2];
+        log_assert(
+            all_mesh_vertices->gpu_data[biggest_area_head_i + 2].
+                parent_material_i < MAX_MATERIALS_PER_POLYGON);
         #ifndef LOGGER_IGNORE_ASSERTS
         float overwritten_area =
             get_squared_triangle_length_from_locked_vertices(
@@ -1377,8 +1410,17 @@ void create_shattered_version_of_mesh(
         #endif
         
         all_mesh_vertices->gpu_data[temp_new_tail_i + 1] = second_tri[0];
+        log_assert(
+            all_mesh_vertices->gpu_data[temp_new_tail_i + 1].
+                parent_material_i < MAX_MATERIALS_PER_POLYGON);
         all_mesh_vertices->gpu_data[temp_new_tail_i + 2] = second_tri[1];
+        log_assert(
+            all_mesh_vertices->gpu_data[temp_new_tail_i + 2].
+                parent_material_i < MAX_MATERIALS_PER_POLYGON);
         all_mesh_vertices->gpu_data[temp_new_tail_i + 3] = second_tri[2];
+        log_assert(
+            all_mesh_vertices->gpu_data[temp_new_tail_i + 3].
+                parent_material_i < MAX_MATERIALS_PER_POLYGON);
         #ifndef LOGGER_IGNORE_ASSERTS
         float new_area =
             get_squared_triangle_length_from_locked_vertices(

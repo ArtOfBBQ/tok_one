@@ -17,7 +17,6 @@ void init_scheduled_animations(
     void (* arg_callback_function)(int32_t, float, float, int32_t));
 
 void resolve_animation_effects(const uint64_t microseconds_elapsed);
-void resolve_animationA_effects(const uint64_t microseconds_elapsed);
 
 typedef struct ScheduledAnimation {
     // Public:

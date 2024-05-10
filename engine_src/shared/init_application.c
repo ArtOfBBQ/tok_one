@@ -256,7 +256,7 @@ void init_application_before_gpu_init(void)
     
     gpu_shared_data_collection.polygon_materials_allocation_size =
         sizeof(GPUPolygonMaterial) *
-        MAX_MATERIALS_SIZE *
+        MAX_MATERIALS_PER_POLYGON *
         MAX_POLYGONS_PER_BUFFER;
     gpu_shared_data_collection.polygon_materials_allocation_size +=
         (4096 - (gpu_shared_data_collection.polygon_materials_allocation_size %

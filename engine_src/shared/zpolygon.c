@@ -70,7 +70,7 @@ void set_zpolygon_hitbox(
 
 void request_next_zpolygon(PolygonRequest * stack_recipient)
 {
-    stack_recipient->materials_size = MAX_MATERIALS_SIZE;
+    stack_recipient->materials_size = MAX_MATERIALS_PER_POLYGON;
     
     for (
         uint32_t zp_i = 0;
@@ -85,7 +85,7 @@ void request_next_zpolygon(PolygonRequest * stack_recipient)
                 &zpolygons_to_render->gpu_data[zp_i];
             stack_recipient->gpu_materials =
                 zpolygons_to_render->gpu_materials +
-                (zp_i * MAX_MATERIALS_SIZE);
+                (zp_i * MAX_MATERIALS_PER_POLYGON);
             stack_recipient->cpu_data->committed = false;
             return;
         }
@@ -98,7 +98,7 @@ void request_next_zpolygon(PolygonRequest * stack_recipient)
         &zpolygons_to_render->gpu_data[zpolygons_to_render->size];
     stack_recipient->gpu_materials =
         zpolygons_to_render->gpu_materials +
-        (zpolygons_to_render->size * MAX_MATERIALS_SIZE);
+        (zpolygons_to_render->size * MAX_MATERIALS_PER_POLYGON);
     stack_recipient->cpu_data[zpolygons_to_render->size].deleted = false;
     stack_recipient->cpu_data->committed = false;
     
@@ -129,14 +129,14 @@ void commit_zpolygon_to_render(PolygonRequest * to_commit)
     {
         log_assert(all_mesh_vertices->gpu_data[vert_i].parent_material_i >= 0);
         log_assert(all_mesh_vertices->gpu_data[vert_i].parent_material_i  <
-            MAX_MATERIALS_SIZE);
+            MAX_MATERIALS_PER_POLYGON);
         log_assert(all_mesh_vertices->gpu_data[vert_i].parent_material_i  <
             all_mesh_summaries[to_commit->cpu_data->mesh_id].materials_size);
     }
     
     for (
         int32_t mat_i = 0;
-        mat_i < MAX_MATERIALS_SIZE;
+        mat_i < MAX_MATERIALS_PER_POLYGON;
         mat_i++)
     {
         if (to_commit->gpu_materials[mat_i].texturearray_i >= 0) {
@@ -241,7 +241,7 @@ void construct_zpolygon(
     assert(to_construct->gpu_materials != NULL);
     assert(
         (to_construct->materials_size == 1 ||
-        to_construct->materials_size == MAX_MATERIALS_SIZE));
+        to_construct->materials_size == MAX_MATERIALS_PER_POLYGON));
     
     memset(
         to_construct->cpu_data,

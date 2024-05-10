@@ -70,19 +70,19 @@ inline static void add_point_vertex(
     frame_data->vertices[frame_data->vertices_size].polygon_i =
         (int)frame_data->polygon_collection->size;
     
-    frame_data->polygon_materials[MAX_MATERIALS_SIZE *
+    frame_data->polygon_materials[MAX_MATERIALS_PER_POLYGON *
         frame_data->polygon_collection->size].rgba[0] = 0.0f;
-    frame_data->polygon_materials[MAX_MATERIALS_SIZE *
+    frame_data->polygon_materials[MAX_MATERIALS_PER_POLYGON *
         frame_data->polygon_collection->size].rgba[1] = is_last_clicked ?
             ((platform_get_current_time_microsecs() / 25000) % 80) * 0.01f :
             1.0f;
-    frame_data->polygon_materials[MAX_MATERIALS_SIZE *
+    frame_data->polygon_materials[MAX_MATERIALS_PER_POLYGON *
         frame_data->polygon_collection->size].rgba[2] = 1.0f;
-    frame_data->polygon_materials[MAX_MATERIALS_SIZE *
+    frame_data->polygon_materials[MAX_MATERIALS_PER_POLYGON *
         frame_data->polygon_collection->size].rgba[3] = 1.0f;
-    frame_data->polygon_materials[MAX_MATERIALS_SIZE *
+    frame_data->polygon_materials[MAX_MATERIALS_PER_POLYGON *
         frame_data->polygon_collection->size].texturearray_i = -1;
-    frame_data->polygon_materials[MAX_MATERIALS_SIZE *
+    frame_data->polygon_materials[MAX_MATERIALS_PER_POLYGON *
         frame_data->polygon_collection->size].texture_i = -1;
     
     frame_data->vertices[frame_data->vertices_size].locked_vertex_i =
@@ -362,7 +362,7 @@ inline static void add_opaque_zpolygons_to_workload(
             zpolygons_to_render->gpu_materials,
         /* size_t __n: */
             sizeof(GPUPolygonMaterial) *
-                MAX_MATERIALS_SIZE *
+                MAX_MATERIALS_PER_POLYGON *
                 zpolygons_to_render->size);
     
     for (
@@ -438,6 +438,9 @@ void hardware_render(
         add_lineparticle_effects_to_workload(frame_data, elapsed_nanoseconds);
     }
     
+    frame_data->first_line_i = frame_data->vertices_size;
+    frame_data->first_alphablend_i = frame_data->vertices_size;
+    
     add_alphablending_zpolygons_to_workload(frame_data);
     
     add_particle_effects_to_workload(
@@ -455,6 +458,7 @@ void hardware_render(
     }
     
     if (window_globals->wireframe_mode) {
+        frame_data->first_alphablend_i = 0;
         frame_data->first_line_i = 0;
     }
 }

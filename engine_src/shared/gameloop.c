@@ -193,14 +193,6 @@ void shared_gameloop_update(
     }
     uint64_t elapsed = time - gameloop_previous_time;
     
-    
-    if (elapsed > 250000) {
-        #ifndef LOGGER_IGNORE_ASSERTS
-        log_dump_and_crash("A frame took > 0.25 seconds to render.");
-        #endif
-        return;
-    }
-    
     if (!application_running) {
         delete_all_ui_elements();
         zpolygons_to_render->size = 0;
@@ -290,7 +282,7 @@ void shared_gameloop_update(
         resolve_animation_effects(elapsed);
         #endif
         
-        resolve_animationA_effects(elapsed);
+        resolve_animation_effects(elapsed);
         clean_deleted_lights();
         
         copy_lights(frame_data->light_collection);
