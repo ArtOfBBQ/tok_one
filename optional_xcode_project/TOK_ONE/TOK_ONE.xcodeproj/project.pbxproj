@@ -7,27 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6009B4F428679E7D00F1F279 /* memorystore.h in Sources */ = {isa = PBXBuildFile; fileRef = 6009B4F228679E7D00F1F279 /* memorystore.h */; };
-		6009B4F528679E7D00F1F279 /* memorystore.c in Sources */ = {isa = PBXBuildFile; fileRef = 6009B4F328679E7D00F1F279 /* memorystore.c */; };
 		6009FB642876A47100FC5A60 /* fontmetrics.dat in Resources */ = {isa = PBXBuildFile; fileRef = 6009FB632876A47100FC5A60 /* fontmetrics.dat */; };
-		6011283F286122FE00F92967 /* inflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 60112839286122FE00F92967 /* inflate.c */; };
-		60112842286122FE00F92967 /* decode_png.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011283D286122FE00F92967 /* decode_png.c */; };
 		601128452861239600F92967 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 601128442861239600F92967 /* Foundation.framework */; };
-		601128852862511700F92967 /* texture_array.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128662862511500F92967 /* texture_array.c */; };
-		601128862862511700F92967 /* userinput.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128692862511500F92967 /* userinput.c */; };
-		601128872862511700F92967 /* renderer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286C2862511500F92967 /* renderer.c */; };
-		601128882862511800F92967 /* window_size.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286E2862511600F92967 /* window_size.c */; };
-		601128892862511800F92967 /* common.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286F2862511600F92967 /* common.c */; };
-		6011288B2862511800F92967 /* common_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128722862511600F92967 /* common_platform_layer.c */; };
-		6011288D2862511800F92967 /* text.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128742862511600F92967 /* text.c */; };
-		6011288E2862511800F92967 /* tok_random.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128772862511600F92967 /* tok_random.c */; };
-		6011288F2862511800F92967 /* lightsource.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128782862511600F92967 /* lightsource.c */; };
-		601128922862511800F92967 /* scheduled_animations.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287D2862511700F92967 /* scheduled_animations.c */; };
-		601128932862511800F92967 /* zpolygon.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287E2862511700F92967 /* zpolygon.c */; };
-		601128942862511800F92967 /* logger.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287F2862511700F92967 /* logger.c */; };
-		60112899286253C100F92967 /* shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 60112895286253C100F92967 /* shaders.metal */; };
-		6011289A286253C100F92967 /* apple_platform_layer.m in Sources */ = {isa = PBXBuildFile; fileRef = 60112896286253C100F92967 /* apple_platform_layer.m */; };
-		6011289E286253DD00F92967 /* macos_platform_layer.m in Sources */ = {isa = PBXBuildFile; fileRef = 6011289C286253DD00F92967 /* macos_platform_layer.m */; };
 		601128A2286253FA00F92967 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 601128A0286253FA00F92967 /* MetalKit.framework */; };
 		601128A3286253FA00F92967 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 601128A1286253FA00F92967 /* Metal.framework */; };
 		601128A82862588900F92967 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 601128A72862588900F92967 /* AppKit.framework */; };
@@ -35,33 +16,10 @@
 		601128AE28625BAF00F92967 /* structuredart2.png in Resources */ = {isa = PBXBuildFile; fileRef = 601128AA28625BAE00F92967 /* structuredart2.png */; };
 		601128AF28625BAF00F92967 /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = 601128AB28625BAE00F92967 /* teapot.obj */; };
 		601128B028625BAF00F92967 /* font.png in Resources */ = {isa = PBXBuildFile; fileRef = 601128AC28625BAF00F92967 /* font.png */; };
-		6028DD312886EE36000E1E98 /* init_application.c in Sources */ = {isa = PBXBuildFile; fileRef = 6028DD2F2886EE35000E1E98 /* init_application.c */; };
-		6028DD322886EE36000E1E98 /* init_application.h in Sources */ = {isa = PBXBuildFile; fileRef = 6028DD302886EE36000E1E98 /* init_application.h */; };
 		6028DD332886EE54000E1E98 /* init_application.h in Sources */ = {isa = PBXBuildFile; fileRef = 6028DD302886EE36000E1E98 /* init_application.h */; };
 		6028DD342886EE54000E1E98 /* init_application.c in Sources */ = {isa = PBXBuildFile; fileRef = 6028DD2F2886EE35000E1E98 /* init_application.c */; };
-		6064C0C02892504A00E8B3AD /* gameloop.h in Sources */ = {isa = PBXBuildFile; fileRef = 6064C0BE2892504A00E8B3AD /* gameloop.h */; };
-		6064C0C12892504A00E8B3AD /* gameloop.c in Sources */ = {isa = PBXBuildFile; fileRef = 6064C0BF2892504A00E8B3AD /* gameloop.c */; };
 		6064C0C22892505000E8B3AD /* gameloop.c in Sources */ = {isa = PBXBuildFile; fileRef = 6064C0BF2892504A00E8B3AD /* gameloop.c */; };
 		6080CC46286FFD1E00444118 /* phoebus.png in Resources */ = {isa = PBXBuildFile; fileRef = 6080CC45286FFD1D00444118 /* phoebus.png */; };
-		6080CC492870182700444118 /* common.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC472870182700444118 /* common.h */; };
-		60A998DB287BD333003F7159 /* decodedimage.c in Sources */ = {isa = PBXBuildFile; fileRef = 60A998D9287BD332003F7159 /* decodedimage.c */; };
-		60A998DC287BD333003F7159 /* decodedimage.h in Sources */ = {isa = PBXBuildFile; fileRef = 60A998DA287BD333003F7159 /* decodedimage.h */; };
-		60A998DF287BD494003F7159 /* inflate.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011283E286122FE00F92967 /* inflate.h */; };
-		60A998E1287BD494003F7159 /* decode_png.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011283C286122FE00F92967 /* decode_png.h */; };
-		60A998E2287BD494003F7159 /* lightsource.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128712862511600F92967 /* lightsource.h */; };
-		60A998E3287BD494003F7159 /* logger.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128752862511600F92967 /* logger.h */; };
-		60A998E4287BD494003F7159 /* gpu.h in Sources */ = {isa = PBXBuildFile; fileRef = 60112898286253C100F92967 /* gpu.h */; };
-		60A998E5287BD4AA003F7159 /* platform_layer.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128832862511700F92967 /* platform_layer.h */; };
-		60A998E6287BD4AA003F7159 /* scheduled_animations.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011286A2862511500F92967 /* scheduled_animations.h */; };
-		60A998E8287BD4B7003F7159 /* userinput.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011286B2862511500F92967 /* userinput.h */; };
-		60A998E9287BD4B7003F7159 /* texture_array.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128682862511500F92967 /* texture_array.h */; };
-		60A998EA287BD4B7003F7159 /* text.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128672862511500F92967 /* text.h */; };
-		60A998EB287BD4B7003F7159 /* cpu_gpu_shared_types.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287A2862511600F92967 /* cpu_gpu_shared_types.h */; };
-		60A998EC287BD4B7003F7159 /* window_size.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128822862511700F92967 /* window_size.h */; };
-		60A998ED287BD4B7003F7159 /* zpolygon.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128842862511700F92967 /* zpolygon.h */; };
-		60A998EE287BD4B7003F7159 /* tok_random.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128802862511700F92967 /* tok_random.h */; };
-		60A998EF287BD4B7003F7159 /* renderer.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287B2862511700F92967 /* renderer.h */; };
-		60A998F0287BD4B7003F7159 /* cpu_to_gpu_types.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128762862511600F92967 /* cpu_to_gpu_types.h */; };
 		60A998F1287BD4C3003F7159 /* logger.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128752862511600F92967 /* logger.h */; };
 		60A998F2287BD4C3003F7159 /* renderer.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287B2862511700F92967 /* renderer.h */; };
 		60A998F4287BD4C3003F7159 /* apple_platform_layer.m in Sources */ = {isa = PBXBuildFile; fileRef = 60112896286253C100F92967 /* apple_platform_layer.m */; };
@@ -106,7 +64,6 @@
 		60A99922287BDF31003F7159 /* structuredart2.png in Resources */ = {isa = PBXBuildFile; fileRef = 601128AA28625BAE00F92967 /* structuredart2.png */; };
 		60A99923287BDF31003F7159 /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = 601128AB28625BAE00F92967 /* teapot.obj */; };
 		60A99924287BDF31003F7159 /* phoebus.png in Resources */ = {isa = PBXBuildFile; fileRef = 6080CC45286FFD1D00444118 /* phoebus.png */; };
-		EC083A3A2AFF727900234FE3 /* objparser.c in Sources */ = {isa = PBXBuildFile; fileRef = EC083A392AFF727900234FE3 /* objparser.c */; };
 		EC083A3B2AFF727900234FE3 /* objparser.c in Sources */ = {isa = PBXBuildFile; fileRef = EC083A392AFF727900234FE3 /* objparser.c */; };
 		EC0BFBD929EE71A200E4BC1C /* tree.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC0BFBD729EE71A200E4BC1C /* tree.obj */; };
 		EC0BFBDA29EE71A200E4BC1C /* tree.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC0BFBD729EE71A200E4BC1C /* tree.obj */; };
@@ -120,48 +77,33 @@
 		EC18FF4729E3DD8900ED785C /* blob2.png in Resources */ = {isa = PBXBuildFile; fileRef = EC18FF4429E3DD8900ED785C /* blob2.png */; };
 		EC18FF4829E3DD8900ED785C /* blob3.png in Resources */ = {isa = PBXBuildFile; fileRef = EC18FF4529E3DD8900ED785C /* blob3.png */; };
 		EC18FF4929E3DD8900ED785C /* blob3.png in Resources */ = {isa = PBXBuildFile; fileRef = EC18FF4529E3DD8900ED785C /* blob3.png */; };
-		EC1BD95C297B5DBE00A9BA54 /* clientlogic_macro_settings.h in Sources */ = {isa = PBXBuildFile; fileRef = EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */; };
-		EC31932429DFAAFB00E320CD /* particle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC31932329DFAAFB00E320CD /* particle.c */; };
 		EC31932529DFAAFB00E320CD /* particle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC31932329DFAAFB00E320CD /* particle.c */; };
-		EC61E2D52AFB02B7004D316D /* linux_apple_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC61E2D42AFB02B7004D316D /* linux_apple_platform_layer.c */; };
+		EC493BC92BEDABCC004D957F /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F48293C9FD900837369 /* UIKit.framework */; };
+		EC493BCA2BEDADBB004D957F /* unitybuild_macos.c in Sources */ = {isa = PBXBuildFile; fileRef = EC493BC42BEDA96D004D957F /* unitybuild_macos.c */; };
+		EC493BCB2BEDAE07004D957F /* shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 60112895286253C100F92967 /* shaders.metal */; };
 		EC6441A429318B6D00A0267B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = EC64419F29318B6D00A0267B /* main.m */; };
 		EC6441A529318B6D00A0267B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A029318B6D00A0267B /* AppDelegate.m */; };
 		EC6441A629318B6D00A0267B /* ios_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A129318B6D00A0267B /* ios_platform_layer.c */; };
 		EC6441A729318B6D00A0267B /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A329318B6D00A0267B /* ViewController.m */; };
 		EC67AE162A1B0813002D8380 /* leaves3.png in Resources */ = {isa = PBXBuildFile; fileRef = EC67AE152A1B0813002D8380 /* leaves3.png */; };
 		EC67AE172A1B0813002D8380 /* leaves3.png in Resources */ = {isa = PBXBuildFile; fileRef = EC67AE152A1B0813002D8380 /* leaves3.png */; };
-		EC6A301B29EFA1440071C58F /* triangle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6A301A29EFA1440071C58F /* triangle.c */; };
 		EC6A301C29EFA1440071C58F /* triangle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6A301A29EFA1440071C58F /* triangle.c */; };
-		EC6B1F49293C9FD900837369 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F48293C9FD900837369 /* UIKit.framework */; };
 		EC6B1F4B293CA04800837369 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4A293CA04800837369 /* Foundation.framework */; };
 		EC6B1F4D293CA04F00837369 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4C293CA04F00837369 /* Metal.framework */; };
 		EC6B1F4F293CA05500837369 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4E293CA05500837369 /* MetalKit.framework */; };
-		EC6E12162A03BD90004E7BD1 /* uielement.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12142A03BD8F004E7BD1 /* uielement.c */; };
 		EC6E12172A03BD90004E7BD1 /* uielement.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12142A03BD8F004E7BD1 /* uielement.c */; };
-		EC6E121A2A04CE13004E7BD1 /* objectid.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12182A04CE12004E7BD1 /* objectid.c */; };
 		EC6E121B2A04CE13004E7BD1 /* objectid.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12182A04CE12004E7BD1 /* objectid.c */; };
-		EC78509A29E62CA800E6882A /* objmodel.c in Sources */ = {isa = PBXBuildFile; fileRef = EC78509929E62CA800E6882A /* objmodel.c */; };
 		EC78509B29E62CA800E6882A /* objmodel.c in Sources */ = {isa = PBXBuildFile; fileRef = EC78509929E62CA800E6882A /* objmodel.c */; };
 		EC7B09D4293CAC8B000ED98E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = EC7B09D3293CAC8B000ED98E /* Main.storyboard */; };
 		EC7B171B293A23E400C1D20C /* roundedborder.png in Resources */ = {isa = PBXBuildFile; fileRef = EC7B171A293A23E300C1D20C /* roundedborder.png */; };
 		EC7B171C293A23E400C1D20C /* roundedborder.png in Resources */ = {isa = PBXBuildFile; fileRef = EC7B171A293A23E300C1D20C /* roundedborder.png */; };
-		EC7C25262980B6AA00DB7BC8 /* terminal.h in Sources */ = {isa = PBXBuildFile; fileRef = EC7C25242980B6A900DB7BC8 /* terminal.h */; };
-		EC7C25272980B6AA00DB7BC8 /* terminal.c in Sources */ = {isa = PBXBuildFile; fileRef = EC7C25252980B6A900DB7BC8 /* terminal.c */; };
-		EC914B7E2B8AD447007FCBFC /* audio.c in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7A2B8AD447007FCBFC /* audio.c */; };
 		EC914B7F2B8AD447007FCBFC /* audio.c in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7A2B8AD447007FCBFC /* audio.c */; };
-		EC914B802B8AD447007FCBFC /* wav.c in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7B2B8AD447007FCBFC /* wav.c */; };
 		EC914B812B8AD447007FCBFC /* wav.c in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7B2B8AD447007FCBFC /* wav.c */; };
-		EC914B842B8AD5AB007FCBFC /* apple_audio.m in Sources */ = {isa = PBXBuildFile; fileRef = EC914B832B8AD5AB007FCBFC /* apple_audio.m */; };
 		EC914B852B8AD5AB007FCBFC /* apple_audio.m in Sources */ = {isa = PBXBuildFile; fileRef = EC914B832B8AD5AB007FCBFC /* apple_audio.m */; };
 		EC914B8A2B9199A1007FCBFC /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC914B892B9199A1007FCBFC /* AudioToolbox.framework */; };
 		EC914B8D2B94B193007FCBFC /* linux_apple_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC61E2D42AFB02B7004D316D /* linux_apple_platform_layer.c */; };
 		EC914B8E2B94B1EF007FCBFC /* terminal.c in Sources */ = {isa = PBXBuildFile; fileRef = EC7C25252980B6A900DB7BC8 /* terminal.c */; };
-		EC92FDAD2902917500C10865 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
 		EC92FDAE2902917500C10865 /* decode_bmp.c in Sources */ = {isa = PBXBuildFile; fileRef = EC92FDAC2902917500C10865 /* decode_bmp.c */; };
-		EC97BEF82BEC8F7B0096B354 /* clientlogic_particledesigner.c in Sources */ = {isa = PBXBuildFile; fileRef = ECD7D3DA2B97778500B47196 /* clientlogic_particledesigner.c */; };
-		ECB05E47294F8AC300050BD4 /* simd.h in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E46294F8AC200050BD4 /* simd.h */; };
-		ECB05E49294F8B1300050BD4 /* gpu.m in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E48294F8B1300050BD4 /* gpu.m */; };
-		ECB05E4B294F8B3500050BD4 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E4A294F8B3500050BD4 /* main.m */; };
 		ECB05E4D294F8FD400050BD4 /* key.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECB05E4C294F8FD300050BD4 /* key.obj */; };
 		ECB05E4E2950864000050BD4 /* gpu.m in Sources */ = {isa = PBXBuildFile; fileRef = ECB05E48294F8B1300050BD4 /* gpu.m */; };
 		ECB05E4F2950868E00050BD4 /* key.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECB05E4C294F8FD300050BD4 /* key.obj */; };
@@ -237,6 +179,7 @@
 		EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = clientlogic_macro_settings.h; path = ../../sampleproject_src/clientlogic_macro_settings.h; sourceTree = "<group>"; };
 		EC31932229DFAAFB00E320CD /* particle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = particle.h; path = ../../engine_src/shared/particle.h; sourceTree = "<group>"; };
 		EC31932329DFAAFB00E320CD /* particle.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = particle.c; path = ../../engine_src/shared/particle.c; sourceTree = "<group>"; };
+		EC493BC42BEDA96D004D957F /* unitybuild_macos.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = unitybuild_macos.c; path = ../../unitybuild_macos.c; sourceTree = "<group>"; };
 		EC61E2D42AFB02B7004D316D /* linux_apple_platform_layer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = linux_apple_platform_layer.c; path = ../../engine_src/shared_linux_apple/linux_apple_platform_layer.c; sourceTree = "<group>"; };
 		EC64419E29318B6D00A0267B /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = ../../engine_src/ios/AppDelegate.h; sourceTree = "<group>"; };
 		EC64419F29318B6D00A0267B /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../engine_src/ios/main.m; sourceTree = "<group>"; };
@@ -273,7 +216,7 @@
 		EC92FDAC2902917500C10865 /* decode_bmp.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = decode_bmp.c; path = ../../engine_src/shared/debigulator/src/decode_bmp.c; sourceTree = "<group>"; };
 		ECB05E46294F8AC200050BD4 /* simd.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = simd.h; path = ../../engine_src/shared/simd.h; sourceTree = "<group>"; };
 		ECB05E48294F8B1300050BD4 /* gpu.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = gpu.m; path = ../../engine_src/shared_apple/gpu.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
-		ECB05E4A294F8B3500050BD4 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../engine_src/macos/main.m; sourceTree = "<group>"; };
+		ECB05E4A294F8B3500050BD4 /* macos_main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = macos_main.m; path = ../../engine_src/macos/macos_main.m; sourceTree = "<group>"; };
 		ECB05E4C294F8FD300050BD4 /* key.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = key.obj; path = ../../resources/key.obj; sourceTree = "<group>"; };
 		ECC47A5F29E9111C0082A7C6 /* disk.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = disk.obj; path = ../../resources/disk.obj; sourceTree = "<group>"; };
 		ECCB08A428DB6FD00038BBAC /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
@@ -298,9 +241,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				EC6B1F4F293CA05500837369 /* MetalKit.framework in Frameworks */,
+				EC493BC92BEDABCC004D957F /* UIKit.framework in Frameworks */,
 				EC6B1F4D293CA04F00837369 /* Metal.framework in Frameworks */,
 				EC6B1F4B293CA04800837369 /* Foundation.framework in Frameworks */,
-				EC6B1F49293C9FD900837369 /* UIKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -391,7 +334,7 @@
 		60A998DD287BD459003F7159 /* macos_only */ = {
 			isa = PBXGroup;
 			children = (
-				ECB05E4A294F8B3500050BD4 /* main.m */,
+				ECB05E4A294F8B3500050BD4 /* macos_main.m */,
 				6011289C286253DD00F92967 /* macos_platform_layer.m */,
 			);
 			name = macos_only;
@@ -400,74 +343,75 @@
 		60A998DE287BD468003F7159 /* shared_macos_iphone */ = {
 			isa = PBXGroup;
 			children = (
-				60112896286253C100F92967 /* apple_platform_layer.m */,
-				EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */,
+				EC914B7A2B8AD447007FCBFC /* audio.c */,
 				ECD7D3DA2B97778500B47196 /* clientlogic_particledesigner.c */,
 				601128702862511600F92967 /* clientlogic.c */,
-				EC6E12132A03BD8F004E7BD1 /* clientlogic.h */,
 				601128722862511600F92967 /* common_platform_layer.c */,
 				6011286F2862511600F92967 /* common.c */,
+				EC92FDAC2902917500C10865 /* decode_bmp.c */,
+				6011283D286122FE00F92967 /* decode_png.c */,
+				60A998D9287BD332003F7159 /* decodedimage.c */,
+				6064C0BF2892504A00E8B3AD /* gameloop.c */,
+				60112839286122FE00F92967 /* inflate.c */,
+				6028DD2F2886EE35000E1E98 /* init_application.c */,
+				601128782862511600F92967 /* lightsource.c */,
+				6011287F2862511700F92967 /* logger.c */,
+				6009B4F328679E7D00F1F279 /* memorystore.c */,
+				EC6E12182A04CE12004E7BD1 /* objectid.c */,
+				EC78509929E62CA800E6882A /* objmodel.c */,
+				EC083A392AFF727900234FE3 /* objparser.c */,
+				EC31932329DFAAFB00E320CD /* particle.c */,
+				6011286C2862511500F92967 /* renderer.c */,
+				6011287D2862511700F92967 /* scheduled_animations.c */,
+				EC7C25252980B6A900DB7BC8 /* terminal.c */,
+				601128742862511600F92967 /* text.c */,
+				601128662862511500F92967 /* texture_array.c */,
+				601128772862511600F92967 /* tok_random.c */,
+				EC6A301A29EFA1440071C58F /* triangle.c */,
+				EC6E12142A03BD8F004E7BD1 /* uielement.c */,
+				EC493BC42BEDA96D004D957F /* unitybuild_macos.c */,
+				601128692862511500F92967 /* userinput.c */,
+				EC914B7B2B8AD447007FCBFC /* wav.c */,
+				6011286E2862511600F92967 /* window_size.c */,
+				6011287E2862511700F92967 /* zpolygon.c */,
+				EC914B822B8AD5AA007FCBFC /* apple_audio.h */,
+				EC914B7D2B8AD447007FCBFC /* audio.h */,
+				EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */,
+				EC6E12132A03BD8F004E7BD1 /* clientlogic.h */,
 				6080CC472870182700444118 /* common.h */,
 				6011287A2862511600F92967 /* cpu_gpu_shared_types.h */,
 				601128762862511600F92967 /* cpu_to_gpu_types.h */,
-				EC92FDAC2902917500C10865 /* decode_bmp.c */,
 				EC92FDAB2902917500C10865 /* decode_bmp.h */,
-				6011283D286122FE00F92967 /* decode_png.c */,
 				6011283C286122FE00F92967 /* decode_png.h */,
-				60A998D9287BD332003F7159 /* decodedimage.c */,
 				60A998DA287BD333003F7159 /* decodedimage.h */,
-				6064C0BF2892504A00E8B3AD /* gameloop.c */,
 				6064C0BE2892504A00E8B3AD /* gameloop.h */,
 				60112898286253C100F92967 /* gpu.h */,
-				ECB05E48294F8B1300050BD4 /* gpu.m */,
-				60112839286122FE00F92967 /* inflate.c */,
 				6011283E286122FE00F92967 /* inflate.h */,
-				6028DD2F2886EE35000E1E98 /* init_application.c */,
-				EC914B822B8AD5AA007FCBFC /* apple_audio.h */,
-				EC914B832B8AD5AB007FCBFC /* apple_audio.m */,
 				6028DD302886EE36000E1E98 /* init_application.h */,
-				601128782862511600F92967 /* lightsource.c */,
 				601128712862511600F92967 /* lightsource.h */,
-				6011287F2862511700F92967 /* logger.c */,
 				601128752862511600F92967 /* logger.h */,
-				6009B4F328679E7D00F1F279 /* memorystore.c */,
 				6009B4F228679E7D00F1F279 /* memorystore.h */,
-				EC6E12182A04CE12004E7BD1 /* objectid.c */,
 				EC6E12192A04CE13004E7BD1 /* objectid.h */,
-				EC78509929E62CA800E6882A /* objmodel.c */,
-				EC083A392AFF727900234FE3 /* objparser.c */,
-				EC083A382AFF727900234FE3 /* objparser.h */,
 				EC78509829E62CA800E6882A /* objmodel.h */,
-				EC31932329DFAAFB00E320CD /* particle.c */,
+				EC083A382AFF727900234FE3 /* objparser.h */,
 				EC31932229DFAAFB00E320CD /* particle.h */,
 				601128832862511700F92967 /* platform_layer.h */,
-				6011286C2862511500F92967 /* renderer.c */,
 				6011287B2862511700F92967 /* renderer.h */,
-				6011287D2862511700F92967 /* scheduled_animations.c */,
 				6011286A2862511500F92967 /* scheduled_animations.h */,
 				ECB05E46294F8AC200050BD4 /* simd.h */,
-				EC7C25252980B6A900DB7BC8 /* terminal.c */,
-				EC914B7A2B8AD447007FCBFC /* audio.c */,
-				EC914B7D2B8AD447007FCBFC /* audio.h */,
-				EC914B7B2B8AD447007FCBFC /* wav.c */,
-				EC914B7C2B8AD447007FCBFC /* wav.h */,
 				EC7C25242980B6A900DB7BC8 /* terminal.h */,
-				601128742862511600F92967 /* text.c */,
 				601128672862511500F92967 /* text.h */,
-				601128662862511500F92967 /* texture_array.c */,
 				601128682862511500F92967 /* texture_array.h */,
-				601128772862511600F92967 /* tok_random.c */,
 				601128802862511700F92967 /* tok_random.h */,
-				EC6A301A29EFA1440071C58F /* triangle.c */,
 				EC78509C29E639F900E6882A /* triangle.h */,
-				EC6E12142A03BD8F004E7BD1 /* uielement.c */,
 				EC6E12152A03BD8F004E7BD1 /* uielement.h */,
-				601128692862511500F92967 /* userinput.c */,
 				6011286B2862511500F92967 /* userinput.h */,
-				6011286E2862511600F92967 /* window_size.c */,
+				EC914B7C2B8AD447007FCBFC /* wav.h */,
 				601128822862511700F92967 /* window_size.h */,
-				6011287E2862511700F92967 /* zpolygon.c */,
 				601128842862511700F92967 /* zpolygon.h */,
+				EC914B832B8AD5AB007FCBFC /* apple_audio.m */,
+				60112896286253C100F92967 /* apple_platform_layer.m */,
+				ECB05E48294F8B1300050BD4 /* gpu.m */,
 			);
 			name = shared_macos_iphone;
 			sourceTree = "<group>";
@@ -621,66 +565,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				EC7C25262980B6AA00DB7BC8 /* terminal.h in Sources */,
-				EC7C25272980B6AA00DB7BC8 /* terminal.c in Sources */,
-				EC1BD95C297B5DBE00A9BA54 /* clientlogic_macro_settings.h in Sources */,
-				ECB05E4B294F8B3500050BD4 /* main.m in Sources */,
-				ECB05E49294F8B1300050BD4 /* gpu.m in Sources */,
-				ECB05E47294F8AC300050BD4 /* simd.h in Sources */,
-				EC914B7E2B8AD447007FCBFC /* audio.c in Sources */,
-				6064C0C02892504A00E8B3AD /* gameloop.h in Sources */,
-				6064C0C12892504A00E8B3AD /* gameloop.c in Sources */,
-				6028DD312886EE36000E1E98 /* init_application.c in Sources */,
-				6028DD322886EE36000E1E98 /* init_application.h in Sources */,
-				601128892862511800F92967 /* common.c in Sources */,
-				EC92FDAD2902917500C10865 /* decode_bmp.c in Sources */,
-				60A998E5287BD4AA003F7159 /* platform_layer.h in Sources */,
-				60A998DB287BD333003F7159 /* decodedimage.c in Sources */,
-				60A998E9287BD4B7003F7159 /* texture_array.h in Sources */,
-				EC31932429DFAAFB00E320CD /* particle.c in Sources */,
-				60A998DC287BD333003F7159 /* decodedimage.h in Sources */,
-				EC083A3A2AFF727900234FE3 /* objparser.c in Sources */,
-				6080CC492870182700444118 /* common.h in Sources */,
-				60A998DF287BD494003F7159 /* inflate.h in Sources */,
-				EC6E121A2A04CE13004E7BD1 /* objectid.c in Sources */,
-				60A998EC287BD4B7003F7159 /* window_size.h in Sources */,
-				EC914B842B8AD5AB007FCBFC /* apple_audio.m in Sources */,
-				60A998E8287BD4B7003F7159 /* userinput.h in Sources */,
-				60A998EB287BD4B7003F7159 /* cpu_gpu_shared_types.h in Sources */,
-				EC6A301B29EFA1440071C58F /* triangle.c in Sources */,
-				6009B4F428679E7D00F1F279 /* memorystore.h in Sources */,
-				6009B4F528679E7D00F1F279 /* memorystore.c in Sources */,
-				60112842286122FE00F92967 /* decode_png.c in Sources */,
-				6011289A286253C100F92967 /* apple_platform_layer.m in Sources */,
-				60A998EA287BD4B7003F7159 /* text.h in Sources */,
-				EC97BEF82BEC8F7B0096B354 /* clientlogic_particledesigner.c in Sources */,
-				EC78509A29E62CA800E6882A /* objmodel.c in Sources */,
-				EC61E2D52AFB02B7004D316D /* linux_apple_platform_layer.c in Sources */,
-				601128922862511800F92967 /* scheduled_animations.c in Sources */,
-				60A998E6287BD4AA003F7159 /* scheduled_animations.h in Sources */,
-				6011288E2862511800F92967 /* tok_random.c in Sources */,
-				6011289E286253DD00F92967 /* macos_platform_layer.m in Sources */,
-				60A998F0287BD4B7003F7159 /* cpu_to_gpu_types.h in Sources */,
-				60A998E1287BD494003F7159 /* decode_png.h in Sources */,
-				60A998E4287BD494003F7159 /* gpu.h in Sources */,
-				601128942862511800F92967 /* logger.c in Sources */,
-				60A998E3287BD494003F7159 /* logger.h in Sources */,
-				6011283F286122FE00F92967 /* inflate.c in Sources */,
-				EC6E12162A03BD90004E7BD1 /* uielement.c in Sources */,
-				601128862862511700F92967 /* userinput.c in Sources */,
-				601128882862511800F92967 /* window_size.c in Sources */,
-				601128932862511800F92967 /* zpolygon.c in Sources */,
-				6011288D2862511800F92967 /* text.c in Sources */,
-				601128852862511700F92967 /* texture_array.c in Sources */,
-				60A998E2287BD494003F7159 /* lightsource.h in Sources */,
-				60112899286253C100F92967 /* shaders.metal in Sources */,
-				601128872862511700F92967 /* renderer.c in Sources */,
-				EC914B802B8AD447007FCBFC /* wav.c in Sources */,
-				60A998ED287BD4B7003F7159 /* zpolygon.h in Sources */,
-				60A998EF287BD4B7003F7159 /* renderer.h in Sources */,
-				6011288B2862511800F92967 /* common_platform_layer.c in Sources */,
-				60A998EE287BD4B7003F7159 /* tok_random.h in Sources */,
-				6011288F2862511800F92967 /* lightsource.c in Sources */,
+				EC493BCB2BEDAE07004D957F /* shaders.metal in Sources */,
+				EC493BCA2BEDADBB004D957F /* unitybuild_macos.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

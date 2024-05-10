@@ -67,5 +67,5 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "renderer.c" // requires zpoly & part
 #include "gameloop.c" // requires renderer
 #include "init_application.c" // requires gameloop
-#include "main.m"
+#include "macos_main.m"
 
