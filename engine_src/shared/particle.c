@@ -564,11 +564,15 @@ void add_particle_effects_to_workload(
                     + (spawn_i * 9)) %
                     (FLOAT_SEQUENCE_SIZE - 256);
             
+            if (particle_effects[i].elapsed <
+                (spawn_i * interval_between_spawns))
+            {
+                continue;
+            }
+            
             spawn_lifetime_so_far =
-                (particle_effects[i].elapsed +
-                (spawn_i * interval_between_spawns)) %
-                    (particle_effects[i].particle_lifespan +
-                        particle_effects[i].pause_between_spawns);
+                (particle_effects[i].elapsed -
+                (spawn_i * interval_between_spawns));
             
             if (spawn_lifetime_so_far > particle_effects[i].particle_lifespan)
             {

@@ -222,15 +222,15 @@ void request_evaporate_and_destroy(
         vaporize_effect->particle_spawns_per_second = (uint32_t)(
             (shattered_verts_size * 1000000) /
                 (uint64_t)(duration_microseconds + 1));
-        vaporize_effect->pause_between_spawns = 1;
+        vaporize_effect->pause_between_spawns = 10;
         vaporize_effect->vertices_per_particle = 3;
         vaporize_effect->particle_lifespan = duration_microseconds;
         vaporize_effect->use_shattered_mesh = true;
         
-        float xy_dist   =  0.0000f;
-        float z_dist    = -0.0045f;
-        float xyz_angle =  0.0050f;
-        float rgb_delta =  0.0050f;
+        float xy_dist   =  0.010f;
+        float z_dist    = -0.025f;
+        float xyz_angle =  0.010f;
+        float rgb_delta =  0.002f;
         
         vaporize_effect->random_textures_size = 0;
         
@@ -240,30 +240,31 @@ void request_evaporate_and_destroy(
             duration_mod;
         vaporize_effect->gpustats_pertime_random_add_1.xyz[2] = z_dist *
             duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_1.xyz_angle[0] = xyz_angle *
-            duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_1.xyz_angle[1] = xyz_angle *
-            duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_1.xyz_angle[2] = xyz_angle *
-            duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_1.bonus_rgb[0] = rgb_delta *
-            duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_1.bonus_rgb[1] = rgb_delta *
-            duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_1.bonus_rgb[2] = rgb_delta *
-            duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_2.xyz[0] = xy_dist *
-            duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_2.xyz[1] = xy_dist *
-            duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_2.xyz[2] = z_dist *
-            duration_mod;
+        vaporize_effect->gpustats_pertime_random_add_1.xyz_angle[0] =
+            xyz_angle * duration_mod;
+        vaporize_effect->gpustats_pertime_random_add_1.xyz_angle[1] =
+            xyz_angle * duration_mod;
+        vaporize_effect->gpustats_pertime_random_add_1.xyz_angle[2] =
+            xyz_angle * duration_mod;
+        vaporize_effect->gpustats_pertime_random_add_1.bonus_rgb[0] =
+            rgb_delta * duration_mod;
+        vaporize_effect->gpustats_pertime_random_add_1.bonus_rgb[1] =
+            rgb_delta * duration_mod;
+        vaporize_effect->gpustats_pertime_random_add_1.bonus_rgb[2] =
+            rgb_delta * duration_mod;
+        vaporize_effect->gpustats_pertime_random_add_2.xyz[0] =
+            xy_dist * duration_mod;
+        vaporize_effect->gpustats_pertime_random_add_2.xyz[1] =
+            xy_dist * duration_mod;
+        vaporize_effect->gpustats_pertime_random_add_2.xyz[2] =
+            z_dist * duration_mod;
         vaporize_effect->gpustats_pertime_random_add_2.xyz_angle[0] =
             -xyz_angle * duration_mod;
         vaporize_effect->gpustats_pertime_random_add_2.xyz_angle[1] =
             -xyz_angle * duration_mod;
         vaporize_effect->gpustats_pertime_random_add_2.xyz_angle[2] =
             -xyz_angle * duration_mod;
+        vaporize_effect->gpustats_perexptime_add.scale_factor = -1.0f;
         
         vaporize_effect->loops = 1;
         vaporize_effect->generate_light = false;
