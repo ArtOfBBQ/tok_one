@@ -36,6 +36,11 @@ void platform_mutex_lock(
 {
     log_assert(mutex_id < MUTEXES_SIZE);
     int return_value = pthread_mutex_lock(&(mutexes[mutex_id]));
+    
+    #ifdef LOGGER_IGNORE_ASSERTS
+    (void)return_value;
+    #endif
+    
     log_assert(return_value == 0);
     return;
 }

@@ -27,6 +27,10 @@ static void describe_zpolygon(
     uint32_t cap,
     uint32_t zp_i)
 {
+    #ifdef COMMON_IGNORE_ASSERTS
+    (void)cap;
+    #endif
+    
     strcat_capped(append_to, cap, "\n***Zpolygon: ");
     strcat_uint_capped(append_to, cap, zp_i);
 }

@@ -53,9 +53,7 @@ internal_log_append_uint(
         /* const uint32_t input: */
             to_append,
         /* char * recipient: */
-            converted,
-        /* const uint32_t recipient_size: */
-            1000);
+            converted);
     
     internal_log_append(
         converted,
@@ -86,9 +84,7 @@ internal_log_append_int(
         /* const int32_t input: */
             to_append,
         /* char * recipient: */
-            converted,
-        /* const uint32_t recipient_size: */
-            1000);
+            converted);
     
     internal_log_append(
         converted,

@@ -7,6 +7,10 @@ void platform_get_writables_path(
     char * recipient,
     const uint32_t recipient_size)
 {
+    #ifdef COMMON_IGNORE_ASSERTS
+    (void)recipient_size;
+    #endif
+    
     NSArray * paths = NSSearchPathForDirectoriesInDomains(
         NSApplicationSupportDirectory,
         NSUserDomainMask,
@@ -175,7 +179,7 @@ void platform_mkdir_if_not_exist(const char * dirname) {
     {
         NSError * error = NULL;
         
-        bool success = [[NSFileManager defaultManager]
+        bool32_t success = (bool32_t)[[NSFileManager defaultManager]
             createDirectoryAtPath:directory_path
             withIntermediateDirectories:true
             attributes:NULL 
@@ -351,6 +355,10 @@ void platform_get_filenames_in(
 
 void
 platform_get_application_path(char * recipient, const uint32_t recipient_size) {
+    #ifdef COMMON_IGNORE_ASSERTS
+    (void)recipient_size;
+    #endif
+    
     strcpy_capped(
         recipient,
         recipient_size,
@@ -362,6 +370,10 @@ void platform_get_resources_path(
     char * recipient,
     const uint32_t recipient_size)
 {
+    #ifdef COMMON_IGNORE_ASSERTS
+    (void)recipient_size;
+    #endif
+    
     strcpy_capped(
         recipient,
         recipient_size,

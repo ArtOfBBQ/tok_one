@@ -40,34 +40,71 @@ float tok_fminf(const float x, const float y);
 float tok_fmaxf(const float x, const float y);
 
 
+#ifndef COMMON_IGNORE_ASSERTS
+#define strcat_capped(recip, recipsize, to_append) internal_strcat_capped(recip,recipsize,to_append);
 void
-strcat_capped(
+internal_strcat_capped(
     char * recipient,
     const uint32_t recipient_size,
     const char * to_append);
-    
+#else
+#define strcat_capped(recip, recipsize, to_append) internal_strcat_capped(recip,to_append);
 void
-strcat_int_capped(
+internal_strcat_capped(
+    char * recipient,
+    const char * to_append);
+#endif
+
+#ifndef COMMON_IGNORE_ASSERTS
+#define strcat_int_capped(recip, recipsize, to_append) internal_strcat_int_capped(recip, recipsize, to_append);
+void
+internal_strcat_int_capped(
     char * recipient,
     const uint32_t recipient_size,
     const int32_t to_append);
-
+#else
+#define strcat_int_capped(recip, recipsize, to_append) internal_strcat_int_capped(recip, to_append);
 void
-strcat_uint_capped(
+internal_strcat_int_capped(
+    char * recipient,
+    const int32_t to_append);
+#endif
+
+#ifndef COMMON_IGNORE_ASSERTS
+#define strcat_uint_capped(recip, recipsize, to_append) internal_strcat_uint_capped(recip, recipsize, to_append);
+void
+internal_strcat_uint_capped(
     char * recipient,
     const uint32_t recipient_size,
     const uint32_t to_append);
+#else
+#define strcat_uint_capped(recip, recipsize, to_append) internal_strcat_uint_capped(recip, to_append);
+void
+internal_strcat_uint_capped(
+    char * recipient,
+    const uint32_t to_append);
+#endif
 
 void
 strcat_float_capped(
     char * recipient,
+    #ifndef COMMON_IGNORE_ASSERTS
     const uint32_t recipient_size,
+    #endif
     const float to_append);
 
-void strcpy_capped(
+#ifndef COMMON_IGNORE_ASSERTS
+#define strcpy_capped(recip, recipsize, to_append) internal_strcpy_capped(recip, recipsize, to_append);
+void internal_strcpy_capped(
     char * recipient,
     const uint32_t recipient_size,
     const char * origin);
+#else
+#define strcpy_capped(recip, recipsize, to_append) internal_strcpy_capped(recip, to_append);
+void internal_strcpy_capped(
+    char * recipient,
+    const char * origin);
+#endif
 
 void
 copy_strings(
@@ -97,14 +134,12 @@ bool32_t are_equal_strings_of_length(
 void
 int_to_string(
     const int32_t input,
-    char * recipient,
-    const uint32_t recipient_size);
+    char * recipient);
 
 void
 uint_to_string(
     const uint32_t input,
-    char * recipient,
-    const uint32_t recipient_size);
+    char * recipient);
 
 void
 float_to_string(

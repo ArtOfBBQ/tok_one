@@ -567,6 +567,7 @@ static void assert_objmodel_validity(int32_t mesh_id) {
 }
 #endif
 
+#if 0
 static float objmodel_get_vertex_magnitude(float input_xyz[3]) {
     float x = (input_xyz[0] * input_xyz[0]);
     float y = (input_xyz[1] * input_xyz[1]);
@@ -583,7 +584,9 @@ static float objmodel_get_vertex_magnitude(float input_xyz[3]) {
     
     return return_value;
 }
+#endif
 
+#if 0
 static void normalize_gpu_triangle_normals(GPULockedVertex * input) {
     float magnitude = objmodel_get_vertex_magnitude(input->xyz);
     
@@ -603,6 +606,7 @@ static void normalize_gpu_triangle_normals(GPULockedVertex * input) {
     input->xyz[2] /= magnitude;
     log_assert(!isnan(input->xyz[2]));
 }
+#endif
 
 static void guess_gpu_triangle_normal(GPULockedVertex * to_change) {
     float vec1_x = to_change[1].xyz[0] - to_change[0].xyz[0];
@@ -624,6 +628,7 @@ static void guess_gpu_triangle_normal(GPULockedVertex * to_change) {
     to_change[2].normal_xyz[2] = to_change[0].normal_xyz[2];
 }
 
+#if 0
 static uint32_t chars_till_next_space_or_slash(
     const char * buffer)
 {
@@ -640,7 +645,9 @@ static uint32_t chars_till_next_space_or_slash(
     
     return i;
 }
+#endif
 
+#if 0
 static uint32_t chars_till_next_nonspace(
     const char * buffer)
 {
@@ -652,6 +659,7 @@ static uint32_t chars_till_next_nonspace(
     
     return i;
 }
+#endif
 
 static ParsedObj * parsed_obj = NULL;
 int32_t new_mesh_id_from_resource_asserts(
@@ -659,6 +667,10 @@ int32_t new_mesh_id_from_resource_asserts(
     const uint32_t expected_materials_count,
     const char expected_materials_names[MAX_MATERIALS_PER_POLYGON][256])
 {
+    #ifdef LOGGER_IGNORE_ASSERTS
+    (void)expected_materials_count;
+    #endif
+    
     int32_t new_mesh_head_id = (int32_t)all_mesh_vertices->size;
     log_assert(all_mesh_summaries_size < ALL_MESHES_SIZE);
     

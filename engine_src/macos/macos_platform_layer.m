@@ -33,6 +33,11 @@ void platform_close_application(void) {
 }
 
 void platform_get_cwd(char * recipient, const uint32_t recipient_size) {
+    
+    #ifdef COMMON_IGNORE_ASSERTS
+    (void)recipient_size;
+    #endif
+    
     NSString * cwd = [[NSFileManager defaultManager] currentDirectoryPath];
     
     char * return_value = (char *)[cwd UTF8String];

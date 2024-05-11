@@ -21,6 +21,10 @@ void get_memory_usage_summary_string(
     char * recipient,
     const uint32_t recipient_cap)
 {
+    #ifdef COMMON_IGNORE_ASSERTS
+    (void)recipient_cap;
+    #endif
+    
     strcpy_capped(
         recipient,
         recipient_cap,

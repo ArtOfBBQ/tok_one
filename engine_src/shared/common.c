@@ -21,9 +21,11 @@ int tok_imaxi(const int x, const int y)
 }
 
 void
-strcat_capped(
+internal_strcat_capped(
     char * recipient,
+    #ifndef COMMON_IGNORE_ASSERTS
     const uint32_t recipient_size,
+    #endif
     const char * to_append)
 {
     uint32_t i = 0;
@@ -46,9 +48,11 @@ strcat_capped(
 }
 
 void
-strcat_int_capped(
+internal_strcat_int_capped(
     char * recipient,
+    #ifndef COMMON_IGNORE_ASSERTS
     const uint32_t recipient_size,
+    #endif
     const int32_t to_append)
 {
     uint32_t i = 0;
@@ -59,13 +63,15 @@ strcat_int_capped(
         i++;
     }
     
-    int_to_string(to_append, recipient + i, recipient_size - i);
+    int_to_string(to_append, recipient + i);
 }
 
 void
-strcat_uint_capped(
+internal_strcat_uint_capped(
     char * recipient,
+    #ifndef COMMON_IGNORE_ASSERTS
     const uint32_t recipient_size,
+    #endif
     const uint32_t to_append)
 {
     uint32_t i = 0;
@@ -76,13 +82,15 @@ strcat_uint_capped(
         i++;
     }
     
-    uint_to_string(to_append, recipient + i, recipient_size - i);
+    uint_to_string(to_append, recipient + i);
 }
 
 void
 strcat_float_capped(
     char * recipient,
+    #ifndef COMMON_IGNORE_ASSERTS
     const uint32_t recipient_size,
+    #endif
     const float to_append)
 {
     float positive_append = to_append >= 0.0f ? to_append : -1.0f * to_append;
@@ -91,23 +99,48 @@ strcat_float_capped(
     uint32_t after_comma =
         ((uint32_t)(positive_append * 1000) - (before_comma * 1000));
     if (to_append < 0.0f) {
-        strcat_capped(recipient, recipient_size, "-");
+        internal_strcat_capped(
+            recipient,
+            #ifndef COMMON_IGNORE_ASSERTS
+            recipient_size,
+            #endif
+            "-");
     }
-    strcat_uint_capped(recipient, recipient_size, before_comma);
-    strcat_capped(recipient, recipient_size, ".");
-    strcat_uint_capped(recipient, recipient_size, after_comma);
-    strcat_capped(recipient, recipient_size, "f");
+    internal_strcat_uint_capped(
+        recipient,
+        #ifndef COMMON_IGNORE_ASSERTS
+        recipient_size,
+        #endif
+        before_comma);
+    internal_strcat_capped(
+        recipient,
+        #ifndef COMMON_IGNORE_ASSERTS
+        recipient_size,
+        #endif
+        ".");
+    internal_strcat_uint_capped(
+        recipient,
+        #ifndef COMMON_IGNORE_ASSERTS
+        recipient_size,
+        #endif
+        after_comma);
+    internal_strcat_capped(
+        recipient,
+        #ifndef COMMON_IGNORE_ASSERTS
+        recipient_size,
+        #endif
+        "f");
 }
 
-void strcpy_capped(
+void internal_strcpy_capped(
     char * recipient,
+    #ifndef COMMON_IGNORE_ASSERTS
     const uint32_t recipient_size,
+    #endif
     const char * origin)
 {
     uint32_t i = 0;
-    while (
-        origin[i] != '\0'
-        && i < recipient_size - 1)
+    while (origin[i] != '\0')
     {
         #ifndef COMMON_IGNORE_ASSERTS
         assert(i < recipient_size - 1);
@@ -238,9 +271,7 @@ void float_to_string(
         /* const int32_t input: */
             above_decimal,
         /* char * recipient: */
-            recipient,
-        /* const uint32_t recipient_size: */
-            1000);
+            recipient);
     
     uint32_t count = 0;
     while (recipient[count] != '\0') {
@@ -264,36 +295,30 @@ void float_to_string(
         /* const int32_t input: */
             below_decimal,
         /* char * recipient: */
-            recipient + count,
-        /* const uint32_t recipient_size: */
-            1000);
+            recipient + count);
 }
 
 void int_to_string(
     const int32_t input,
-    char * recipient,
-    const uint32_t recipient_size)
+    char * recipient)
 {
     if (input < 0) {
         recipient[0] = '-';
         int32_t positive_to_append = (input + (input == INT32_MIN)) * -1;
         uint_to_string(
             /* input: */ (uint32_t)positive_to_append,
-            /* recipient: */ recipient + 1,
-            /* recipient_size: */ recipient_size - 1); 
+            /* recipient: */ recipient + 1);
     } else {
         uint_to_string(
             /* input: */ (uint32_t)input,
-            /* recipient: */ recipient,
-            /* recipient_size: */ recipient_size);
+            /* recipient: */ recipient);
     }
 }
 
 void
 uint_to_string(
     const uint32_t input,
-    char * recipient,
-    const uint32_t recipient_size)
+    char * recipient)
 {
     if (input == 0) {
         recipient[0] = '0';
@@ -312,9 +337,6 @@ uint_to_string(
         isolated_num /= decimal;
         recipient[i] = (char)('0' + isolated_num);
         i += 1;
-        #ifndef COMMON_IGNORE_ASSERTS
-        assert(i < recipient_size);
-        #endif
         
         decimal *= 10;
         input_div_dec = input / decimal;

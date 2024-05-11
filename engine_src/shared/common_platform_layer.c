@@ -33,6 +33,10 @@ void resource_filename_to_pathfile(
     char * recipient,
     const uint32_t assert_capacity)
 {
+    #ifdef COMMON_IGNORE_ASSERTS
+    (void)assert_capacity;
+    #endif
+    
     log_assert(filename != NULL);
     log_assert(recipient != NULL);
     
@@ -64,6 +68,10 @@ void writable_filename_to_pathfile(
     char * recipient,
     const uint32_t assert_capacity)
 {
+    #ifdef COMMON_IGNORE_ASSERTS
+    (void)assert_capacity;
+    #endif
+    
     log_assert(filename != NULL);
     log_assert(recipient != NULL);
     

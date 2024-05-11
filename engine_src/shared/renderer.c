@@ -286,6 +286,8 @@ inline static void zpolygon_hitboxes_to_lines(
             }
         }
     }
+    #else
+    (void)frame_data;
     #endif
 }
 
