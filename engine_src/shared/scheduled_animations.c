@@ -227,10 +227,10 @@ void request_evaporate_and_destroy(
         vaporize_effect->particle_lifespan = duration_microseconds;
         vaporize_effect->use_shattered_mesh = true;
         
-        float xy_dist   =  0.010f;
-        float z_dist    = -0.025f;
-        float xyz_angle =  0.010f;
-        float rgb_delta =  0.002f;
+        float xy_dist   =  0.0100f;
+        float z_dist    = -0.0250f;
+        float xyz_angle =  0.0100f;
+        float rgb_delta =  0.0001f;
         
         vaporize_effect->random_textures_size = 0;
         
@@ -247,10 +247,6 @@ void request_evaporate_and_destroy(
         vaporize_effect->gpustats_pertime_random_add_1.xyz_angle[2] =
             xyz_angle * duration_mod;
         vaporize_effect->gpustats_pertime_random_add_1.bonus_rgb[0] =
-            rgb_delta * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_1.bonus_rgb[1] =
-            rgb_delta * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_1.bonus_rgb[2] =
             rgb_delta * duration_mod;
         vaporize_effect->gpustats_pertime_random_add_2.xyz[0] =
             xy_dist * duration_mod;

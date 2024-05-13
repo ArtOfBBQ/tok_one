@@ -363,9 +363,6 @@ string_to_int32_validate(
     bool32_t * good)
 {
     if (input[0] == '\0') {
-        #ifndef COMMON_SILENCE
-        printf("ERROR : string_to_int32 with input_size < 1\n");
-        #endif
         *good = false;
         return 0;
     }
@@ -482,9 +479,6 @@ string_to_float_validate(
     bool32_t * good)
 {
     if (input[0] == '\0') {
-        #ifndef COMMON_SILENCE
-        printf("ERROR: string_to_float but input[0] is nullterminator\n");
-        #endif
         *good = false;
         return 0;
     }
