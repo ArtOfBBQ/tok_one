@@ -349,12 +349,40 @@ NSWindowWithCustomResponder: NSWindow
 
 - (void)rightMouseDown:(NSEvent *)event
 {
-    log_append("unhandled mouse event\n");    
+    @autoreleasepool {
+    NSPoint window_location = [event locationInWindow];
+    
+    register_interaction(
+        /* interaction : */
+            &user_interactions[INTR_PREVIOUS_RIGHTCLICK_START],
+        /* screenspace_x: */
+            (float)window_location.x,
+        /* screenspace_y: */
+            (float)window_location.y);
+    
+    user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
+        user_interactions[INTR_PREVIOUS_RIGHTCLICK_START];
+    
+    user_interactions[INTR_PREVIOUS_RIGHTCLICK_END].handled = true;
+    }
 }
 
 - (void)rightMouseUp:(NSEvent *)event
 {
-    log_append("unhandled mouse event\n");
+    @autoreleasepool {
+    NSPoint window_location = [event locationInWindow];
+    
+    register_interaction(
+        /* interaction : */
+            &user_interactions[INTR_PREVIOUS_RIGHTCLICK_END],
+        /* screenspace_x: */
+            (float)window_location.x,
+        /* screenspace_y: */
+            (float)window_location.y);
+    
+    user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
+        user_interactions[INTR_PREVIOUS_RIGHTCLICK_END];
+    }
 }
 
 - (void)mouseMoved:(NSEvent *)event {
