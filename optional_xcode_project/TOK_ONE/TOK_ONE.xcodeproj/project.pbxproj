@@ -253,6 +253,7 @@
 		601127DF28611D6500F92967 = {
 			isa = PBXGroup;
 			children = (
+				EC493BC42BEDA96D004D957F /* unitybuild_macos.c */,
 				601128B128625BC100F92967 /* resources */,
 				601128A42862540400F92967 /* src */,
 				6011281B28611F5100F92967 /* TOKONE_macos */,
@@ -369,7 +370,6 @@
 				601128772862511600F92967 /* tok_random.c */,
 				EC6A301A29EFA1440071C58F /* triangle.c */,
 				EC6E12142A03BD8F004E7BD1 /* uielement.c */,
-				EC493BC42BEDA96D004D957F /* unitybuild_macos.c */,
 				601128692862511500F92967 /* userinput.c */,
 				EC914B7B2B8AD447007FCBFC /* wav.c */,
 				6011286E2862511600F92967 /* window_size.c */,

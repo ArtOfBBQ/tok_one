@@ -85,13 +85,20 @@ internal_strcat_uint_capped(
     const uint32_t to_append);
 #endif
 
+#ifndef COMMON_IGNORE_ASSERTS
+#define strcat_float_capped(recip, recipsize, to_append) internal_strcat_float_capped(recip, recipsize, to_append);
 void
-strcat_float_capped(
+internal_strcat_float_capped(
     char * recipient,
-    #ifndef COMMON_IGNORE_ASSERTS
     const uint32_t recipient_size,
-    #endif
     const float to_append);
+#else
+#define strcat_float_capped(recip, recipsize, to_append) internal_strcat_float_capped(recip, to_append);
+void
+internal_strcat_float_capped(
+    char * recipient,
+    const float to_append);
+#endif
 
 #ifndef COMMON_IGNORE_ASSERTS
 #define strcpy_capped(recip, recipsize, to_append) internal_strcpy_capped(recip, recipsize, to_append);

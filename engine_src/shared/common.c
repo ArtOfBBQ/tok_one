@@ -86,7 +86,7 @@ internal_strcat_uint_capped(
 }
 
 void
-strcat_float_capped(
+internal_strcat_float_capped(
     char * recipient,
     #ifndef COMMON_IGNORE_ASSERTS
     const uint32_t recipient_size,
