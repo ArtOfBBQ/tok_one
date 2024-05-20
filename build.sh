@@ -15,7 +15,11 @@ if [[ $PLATFORM = "Darwin" ]]; then
     # bash engine_src/macos/buildtests.sh $1
 elif [[ $PLATFORM = "Linux" ]]; then
     bash engine_src/linux/build.sh $1
+elif [[ $PLATFORM = "MINGW64_NT-10.0-19045" ]]; then
+    bash build_windows.sh $1
 else
-    echo "Unknown platform, please add in build.sh"
+    echo "Unknown operating system: $PLATFORM"
+    echo "Please add it in build.sh so it points to the correct OS build script"
+    echo "You can also call build_windows.sh, build_macos.sh or build_linux.sh directly."
 fi
 
