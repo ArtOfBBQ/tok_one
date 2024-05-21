@@ -1,9 +1,9 @@
 // functions for us to use
 #include <windows.h>
-#include "GL/glew.h"
 #include <gl/gl.h>
 
-// #include "opengl.h"
+#include "opengl_extensions.h"
+#include "opengl.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,9 +11,54 @@
 
 #include "common.h"
 
+
 static unsigned int application_running = 1;
 static unsigned int window_width = 200;
 static unsigned int window_height = 200;
+
+static HWND window_handle;
+
+static void fetch_extension_func_address(
+    void ** extptr,
+    char * func_name)
+{
+    if (*extptr != NULL) {
+        MessageBox(
+            /* HWND hWnd: */
+                window_handle,
+            /* LPCSTR lpText: */
+                "Tried to fetch a PROC address that was already non-null",
+            /* LPCSTR lpCaption: */
+                "Error",
+            /* UINT uType: */
+                MB_OK);
+        application_running = 0;
+        return;
+    }
+    
+    *extptr = (void *)wglGetProcAddress(func_name);
+    if (extptr == NULL) {
+        DWORD error = 0;
+        error = GetLastError();
+        char errcode[128];
+        strcpy_capped(
+            errcode,
+            128,
+            "Failed to get pointer to extension function."
+            "Error code: ");
+        strcat_uint_capped(errcode, 128, error);
+        MessageBox(
+            /* HWND hWnd: */
+                window_handle,
+            /* LPCSTR lpText: */
+                errcode,
+            /* LPCSTR lpCaption: */
+                "Error",
+            /* UINT uType: */
+                MB_OK);
+        application_running = 0;
+    }
+}
 
 // Windows will send us messages when something
 // happens to our window
@@ -111,7 +156,6 @@ int CALLBACK WinMain(
             MB_OK);
     #endif
     
-    
     /*
     ATOM RegisterClassA(
       [in] const WNDCLASSA *lpWndClass
@@ -150,17 +194,20 @@ int CALLBACK WinMain(
     if (!reg_class_success) {
         DWORD error = GetLastError();
         char errcode[128];
-        strcpy_capped(errcode, 128, "Failed to RegisterClass() in the win32 API. Error code: ");
+        strcpy_capped(
+            errcode,
+            128,
+            "Failed to RegisterClass() in the win32 API. Error code: ");
         strcat_uint_capped(errcode, 128, error);
         MessageBox(
-        /* HWND hWnd: */
-        0,
-        /* LPCSTR lpText: */
-        errcode,
-        /* LPCSTR lpCaption: */
-        "Error",
-        /* UINT uType: */
-        MB_OK);
+            /* HWND hWnd: */
+                0,
+            /* LPCSTR lpText: */
+                errcode,
+            /* LPCSTR lpCaption: */
+                "Error",
+            /* UINT uType: */
+                MB_OK);
         return 0;
     }
     
@@ -198,17 +245,23 @@ int CALLBACK WinMain(
         DWORD error = GetLastError();
 	assert(error != 54321);
         char errcode[128];
-        strcpy_capped(errcode, 128, "Failed to CreateWindowEx() in the win32 API. Error code: ");
-        strcat_uint_capped(errcode, 128, error);
+        strcpy_capped(
+            errcode,
+            128,
+            "Failed to CreateWindowEx() in the win32 API. Error code: ");
+        strcat_uint_capped(
+            errcode,
+            128,
+            error);
         MessageBox(
-        /* HWND hWnd: */
-        window_handle,
-        /* LPCSTR lpText: */
-        errcode,
-        /* LPCSTR lpCaption: */
-        "Error",
-        /* UINT uType: */
-        MB_OK);
+            /* HWND hWnd: */
+                window_handle,
+            /* LPCSTR lpText: */
+                errcode,
+            /* LPCSTR lpCaption: */
+                "Error",
+            /* UINT uType: */
+                MB_OK);
 	return 0;
     }
     
@@ -218,12 +271,14 @@ int CALLBACK WinMain(
         window_handle,
             &window_rect))
     {
-    window_width =
-            window_rect.right - window_rect.left;
-    window_height =
-        window_rect.bottom - window_rect.top;
+        window_width = window_rect.right - window_rect.left;
+        window_height = window_rect.bottom - window_rect.top;
     } else {
-    MessageBox(window_handle, "Can't deduce window size", "Error", 0);
+        MessageBox(
+            window_handle,
+            "Can't deduce window size",
+            "Error",
+            0);
     return 0;
     }
     
@@ -241,8 +296,12 @@ int CALLBACK WinMain(
     */ 
     HDC device_context = GetDC(window_handle);
     if (!device_context) {
-    MessageBox(0, "Failed to get the device context", "Error", MB_OK);
-    return 0;
+        MessageBox(
+            0,
+            "Failed to get the device context",
+            "Error",
+            MB_OK);
+        return 0;
     }
     
     PIXELFORMATDESCRIPTOR pfd;
@@ -277,8 +336,7 @@ int CALLBACK WinMain(
     /*
     int ChoosePixelFormat(
       HDC                         hdc,
-      const PIXELFORMATDESCRIPTOR *ppfd
-    );
+      const PIXELFORMATDESCRIPTOR *ppfd);
     
     If the function fails, the return value is zero. 
     To get extended error information, call GetLastError. 
@@ -288,23 +346,30 @@ int CALLBACK WinMain(
         DWORD error = 0;
         error = GetLastError();
         char errcode[128];
-        strcpy_capped(errcode, 128, "Failed to ChoosePixelFormat() in the win32 API. Error code: ");
+        strcpy_capped(
+            errcode,
+            128,
+            "Failed to ChoosePixelFormat() in the "
+            "win32 API. Error code: ");
         strcat_uint_capped(errcode, 128, error);
         MessageBox(
-        /* HWND hWnd: */
-            window_handle,
-        /* LPCSTR lpText: */
-            errcode,
-        /* LPCSTR lpCaption: */
-            "Error",
-        /* UINT uType: */
-            MB_OK);
+            /* HWND hWnd: */
+                window_handle,
+            /* LPCSTR lpText: */
+                errcode,
+            /* LPCSTR lpCaption: */
+                "Error",
+            /* UINT uType: */
+                MB_OK);
         
         return 0;
     }
     
     PIXELFORMATDESCRIPTOR spf_actual;
-    memset(&spf_actual, 0, sizeof(PIXELFORMATDESCRIPTOR));
+    memset(
+        &spf_actual,
+        0,
+        sizeof(PIXELFORMATDESCRIPTOR));
     int success = DescribePixelFormat(
         device_context,
         pixel_format_index,
@@ -326,36 +391,52 @@ int CALLBACK WinMain(
         DWORD error = 0;
         error = GetLastError();
         char errcode[128];
-        strcpy_capped(errcode, 128, "Failed to SetPixelFormat() in the win32 API. Error code: ");
-        strcat_uint_capped(errcode, 128, error);
+        strcpy_capped(
+            errcode,
+            128,
+            "Failed to SetPixelFormat() in the win32 "
+            "API. Error code: ");
+        strcat_uint_capped(
+            errcode,
+            128,
+            error);
         MessageBox(
-        /* HWND hWnd: */
-        window_handle,
-        /* LPCSTR lpText: */
-        errcode,
-        /* LPCSTR lpCaption: */
-        "Error",
-        /* UINT uType: */
-        MB_OK);
+            /* HWND hWnd: */
+                window_handle,
+            /* LPCSTR lpText: */
+                errcode,
+            /* LPCSTR lpCaption: */
+                "Error",
+            /* UINT uType: */
+                MB_OK);
         return 0;
     }
     
-    // This is not the rendering context we're hoping to use, but a dummy
-    // one that we make just so we can initialize OpenGL and start adding
-    // extension functions. I comment this everywhere but 'I cant believe this
-    // is actually the API'. Just mindblowing
-    HGLRC rendering_context = wglCreateContext(device_context);
-    if (wglMakeCurrent(device_context, rendering_context)) {
-	
+    // This is not the rendering context we're hoping 
+    // to use, but a dummy one that we make just so we
+    // initialize OpenGL and start adding
+    // extension functions. I comment this everywhere
+    // but 'I cant believe this is actually the API'.
+    // Just mindblowing
+    HGLRC dummy_context = wglCreateContext(device_context);
+    
+    if (
+        wglMakeCurrent(
+            device_context,
+            dummy_context))
+    {
+        fetch_extension_func_address(
+            (void **)&extptr_wglCreateContextAttribsARB,
+            "wglCreateContextAttribsARB");
+        fetch_extension_func_address(
+            (void **)&extptr_glGetUniformLocation,
+            "glGetUniformLocation");
     } else {
-	printf("Failed to wglMakeCurrent() the dummy rendering context\n");
+        printf(
+            "Failed to wglMakeCurrent() the dummy "
+            "rendering context\n");
 	return 0;
     }
-    
-    #if 0
-    wglCreateContextAttribsARB =
-        (FNWGLCREATECONTEXTATTRIBSARBPROC)
-            wglGetProcAddress("wglCreateContextAttribsARB");
     
     /*
     relevant docs:
@@ -381,7 +462,7 @@ int CALLBACK WinMain(
     gl33_attribs[5] = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
     gl33_attribs[6] = 0;
     
-    HGLRC gl33_context = wglCreateContextAttribsARB(
+    HGLRC gl33_context = extptr_wglCreateContextAttribsARB(
         /* HDC hDC */
             device_context,
         /* HGLRC hShareContext */
@@ -395,41 +476,26 @@ int CALLBACK WinMain(
         return 0;
     }
     
-    // glMakeCurrent(gl33_context);
-    
-    //if (!wglMakeCurrent(device_context, gl33_context)) {
-    //    MessageBoxA(0, "Failed to make gl33 context current!\n", "Error", MB_OK);
-    //    application_running = false;
-    //    return 0;
-    //}
-    #endif
-    
-    #if 0
-    // glewInit() must be run AFTER an OpenGL render context (RC) is created
-    GLenum error = glewInit();
-    if (error == GLEW_OK) {
+    if (!wglMakeCurrent(device_context, gl33_context)) {
         MessageBox(
-            /* HWND hWnd: */
-                0,
-            /* LPCSTR lpText: */
-                "Failed to initialize the glew library.",
-            /* LPCSTR lpCaption: */
-                "glewInit() Error",
-            /* UINT uType: */
-                MB_OK);
+            0,
+            "Failed to make gl33 context current!\n",
+            "Error",
+            MB_OK);
+        application_running = false;
         return 0;
     }
     
-    char glewverstr[128];
-    strcpy_capped(glewverstr, 128, "Status: Using glew version: ");
-    strcat_capped(glewverstr, 128, glewGetString(GLEW_VERSION));
-    MessageBox(0, glewverstr, "Info", MB_OK);
-    
-    if (!GLEW_VERSION_3_3) {
-	application_running = 0;
-        MessageBox(0, "OpenGL 3.3 is not supported.\n", "Error", 0);
-	return 0;
-    }
+    #if 0
+    opengl_compile_shaders(
+        /* char * vertex_shader_source: */
+            
+        /* uint32_t vertex_shader_source_size: */
+            
+        /* char * fragment_shader_source: */
+            
+        /* uint32_t fragment_shader_source_size: */
+            );
     #endif
     
     while (application_running)
@@ -438,7 +504,8 @@ int CALLBACK WinMain(
 	for (int i = 0; i < 30; i++)
 	{
 	    /*
-	    If wMsgFilterMin and wMsgFilterMax are both zero, PeekMessage returns all available messages 
+	    If wMsgFilterMin and wMsgFilterMax are both zero,
+            PeekMessage returns all available messages 
             (that is, no range filtering is performed).
 	    */
 	    BOOL got_message =

@@ -1,14 +1,17 @@
+#ifndef OPENGL_H
+#define OPENGL_H
+
 #include <GL/gl.h>
 #include <assert.h>
 #include <stddef.h>
+#include <stdint.h>
 
+#include "opengl_extensions.h"
 #include "cpu_gpu_shared_types.h"
-#include "cpu_to_gpu_types.h"
-#include "common.h"
-#include "window_size.h"
-
-#ifndef OPENGL_H
-#define OPENGL_H
+// #include "clientlogic_macro_settings.h"
+// #include "cpu_to_gpu_types.h"
+// #include "common.h"
+// #include "window_size.h"
 
 #ifndef NULL
 #define NULL 0
@@ -26,7 +29,7 @@ extern unsigned int VAO;
 
 void platform_gpu_copy_locked_vertices(void);
 
-void opengl_render_triangles(GPUDataForSingleFrame * frame_data);
+// void opengl_render_triangles(GPUDataForSingleFrame * frame_data);
 
 void opengl_compile_shaders(
     char * vertex_shader_source,
