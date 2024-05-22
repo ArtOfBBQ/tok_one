@@ -57,7 +57,8 @@ void commit_lineparticle_effect(
     LineParticle * to_commit);
 void add_lineparticle_effects_to_workload(
     GPUDataForSingleFrame * frame_data,
-    uint64_t elapsed_nanoseconds);
+    uint64_t elapsed_nanoseconds,
+    const bool32_t alpha_blending);
 
 typedef struct ParticleEffect {
     GPUPolygon gpustats_initial_random_add_1;

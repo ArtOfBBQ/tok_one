@@ -104,14 +104,17 @@ void commit_lineparticle_effect(
 
 void add_lineparticle_effects_to_workload(
     GPUDataForSingleFrame * frame_data,
-    uint64_t elapsed_nanoseconds)
+    uint64_t elapsed_nanoseconds,
+    const bool32_t alpha_blending)
 {
     for (uint32_t i = 0; i < lineparticle_effects_size; i++) {
         if (
             lineparticle_effects[i].deleted ||
             !lineparticle_effects[i].committed ||
             !lineparticle_effects[i].zpolygon_cpu.committed ||
-            lineparticle_effects[i].zpolygon_cpu.deleted)
+            lineparticle_effects[i].zpolygon_cpu.deleted ||
+            lineparticle_effects[i].zpolygon_cpu.alpha_blending_enabled !=
+                alpha_blending)
         {
             continue;
         }

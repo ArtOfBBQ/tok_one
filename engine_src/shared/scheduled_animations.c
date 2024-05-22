@@ -119,6 +119,7 @@ static void construct_scheduled_animationA(
     to_construct->clientlogic_arg_2 = -1;
     to_construct->clientlogic_arg_3 = -1;
     
+    log_assert(!to_construct->deleted);
     log_assert(!to_construct->committed);
 }
 

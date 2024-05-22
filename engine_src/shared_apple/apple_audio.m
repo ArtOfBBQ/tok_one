@@ -56,7 +56,7 @@ void start_audio_loop(void) {
     audio_stream_basic_description.mBitsPerChannel = 16;
     
     AudioQueueRef audio_queue_ref = 0;
-    AudioQueueBufferRef audio_queue_buffer_refs[2] = {};
+    AudioQueueBufferRef audio_queue_buffer_refs[2];
     
     // most of the 0 and nullptr params here are for compressed sound
     // formats etc.

@@ -437,7 +437,10 @@ void hardware_render(
             /* const uint32_t alpha_blending: */
                 false);
         
-        add_lineparticle_effects_to_workload(frame_data, elapsed_nanoseconds);
+        add_lineparticle_effects_to_workload(
+            frame_data,
+            elapsed_nanoseconds,
+            false);
     }
     
     frame_data->first_line_i = frame_data->vertices_size;
@@ -451,6 +454,11 @@ void hardware_render(
         /* uint64_t elapsed_nanoseconds: */
             elapsed_nanoseconds,
         /* const uint32_t alpha_blending: */
+            true);
+    
+    add_lineparticle_effects_to_workload(
+            frame_data,
+            elapsed_nanoseconds,
             true);
     
     if (application_running) {

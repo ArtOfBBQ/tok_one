@@ -182,7 +182,7 @@ vertex_shader(
     out.position[3]  = out.position[2];
     out.position[2]  =     
         (out.position[2] * projection_constants->q) -
-        (projection_constants->near * projection_constants->q);
+        (projection_constants->znear * projection_constants->q);
     
     out.color = vector_float4(
         polygon_materials[locked_material_i].rgba[0],

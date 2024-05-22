@@ -81,8 +81,8 @@ typedef struct GPULightCollection {
 } GPULightCollection;
 
 typedef struct GPUProjectionConstants {
-    float near;
-    float far;
+    float znear;
+    float zfar;
     float q;
     float field_of_view_rad;
     float field_of_view_modifier;

@@ -16,6 +16,7 @@ MAC_FRAMEWORKS="
 gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/unitybuild;
 */
 
+#define SHARED_APPLE_PLATFORM
 #define INFLATE_SILENCE
 #define INFLATE_IGNORE_ASSERTS
 #define DECODE_PNG_SILENCE
