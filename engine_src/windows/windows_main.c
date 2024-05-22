@@ -138,6 +138,12 @@ int CALLBACK WinMain(
 {
     application_running = 1;
     
+    assert(sizeof(GPUPolygon) % 32 == 0);
+    
+    init_application_before_gpu_init();
+    log_append("initialized application: ");
+    log_append(APPLICATION_NAME);
+    
     FILE * fp = NULL;
     AllocConsole();
     freopen_s(&fp, "CONIN$", "r", stdin);
@@ -267,9 +273,7 @@ int CALLBACK WinMain(
     
     RECT window_rect;
     if (
-        GetWindowRect(
-        window_handle,
-            &window_rect))
+        GetWindowRect(window_handle, &window_rect))
     {
         window_width = window_rect.right - window_rect.left;
         window_height = window_rect.bottom - window_rect.top;
@@ -279,7 +283,7 @@ int CALLBACK WinMain(
             "Can't deduce window size",
             "Error",
             0);
-    return 0;
+        return 0;
     }
     
     /*

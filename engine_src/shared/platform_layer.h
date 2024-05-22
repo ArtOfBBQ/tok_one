@@ -49,6 +49,9 @@ on each platform
 #include <dirent.h> // to list files in a dir
 #endif
 
+#ifdef WINDOWS_PLATFORM
+#include <windows.h>
+#endif
 
 #ifdef __ARM_NEON
 #include "arm_neon.h"
@@ -110,6 +113,7 @@ platform_write_file(
     const char * output,
     const uint32_t output_size,
     bool32_t * good);
+
 void
 platform_write_file_to_writables(
     const char * filepath_inside_writables,

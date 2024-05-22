@@ -1,5 +1,7 @@
 #include "opengl.h"
 
+GPUSharedDataCollection gpu_shared_data_collection;
+
 // We'll need these 2 identifiers while drawing
 GLuint program_id;
 GLuint fragment_shader_id;
@@ -769,236 +771,242 @@ void opengl_compile_shaders(
 }
 
 /* reminder: this is mutex protected */
-//void platform_gpu_init_texture_array(
-//    const int32_t texture_array_i,
-//    const uint32_t num_images,
-//    const uint32_t single_image_width,
-//    const uint32_t single_image_height)
-//{
-//    printf(
-//        "opengl must init texture array: %i with %u images (%ux%u)\n",
-//        texture_array_i,
-//        num_images,
-//        single_image_width,
-//        single_image_height);
-//    
-//    glGenTextures(1, &texture_array_ids[texture_array_i]);
-//    assert(glGetError() == 0);
-//    assert(texture_array_i < 31);
-//    
-//    glActiveTexture(
-//        GL_TEXTURE0 + texture_array_i);
-//    assert(glGetError() == 0);
-//    
-//    glBindTexture(
-//        GL_TEXTURE_2D_ARRAY,
-//        texture_array_ids[texture_array_i]);
-//    assert(glGetError() == 0);
-//    
-//    char name_in_shader[64];
-//    strcpy_capped(name_in_shader, 64, "texture_arrays[");
-//    strcat_uint_capped(name_in_shader, 64, texture_array_i);
-//    strcat_capped(name_in_shader, 64, "]");
-//    GLuint loc = extptr_glGetUniformLocation(
-//        program_id,
-//        name_in_shader);
-//    assert(glGetError() == 0);
-//    
-//    glUniform1iv(loc, 1, &texture_array_i);
-//    assert(glGetError() == 0);
-//    
-//    //There is also glTexStorage3D in openGL 4
-//    glTexImage3D(
-//        /* GLenum target: */
-//            GL_TEXTURE_2D_ARRAY,
-//        /* GLint level (mipmap, 0 is base): */
-//            0,
-//        /* GLint internalFormat: */
-//            GL_RGBA8,
-//        /* GLsizei width: */
-//            single_image_width,
-//        /* GLsizei height: */
-//            single_image_height,
-//        /* GLsizei depth: */
-//            num_images,
-//        /* GLint border (must be 0): */
-//            0,
-//        /* GLenum format: */
-//            GL_RGBA,
-//        /* GLenum type (of input data): */
-//            GL_UNSIGNED_BYTE,
-//        /* const GLvoid * data: */
-//            NULL);
-//    
-//    err_value = glGetError();
-//    if (err_value != GL_NO_ERROR) {
-//        printf("%s\n", "glTexImage3D failed!");
-//        switch (err_value) {
-//            case GL_INVALID_ENUM:
-//                printf("%s\n", "GL_INVALID_ENUM");
-//                break;
-//            default:
-//                printf("%s\n", "Unhandled error");
-//        }
-//        assert(err_value == GL_NO_ERROR);
-//    }
-//    
-//    glTexParameteri(
-//        /* GLenum target: */
-//            GL_TEXTURE_2D_ARRAY,
-//        /* GLenum pname: */
-//            GL_TEXTURE_WRAP_S,
-//        /* GLint param: */
-//            GL_CLAMP_TO_EDGE);
-//    assert(glGetError() == 0);
-//    
-//    glTexParameteri(
-//        /* GLenum target: */
-//            GL_TEXTURE_2D_ARRAY,
-//        /* GLenum pname: */
-//            GL_TEXTURE_WRAP_T,
-//        /* GLint param: */
-//            GL_CLAMP_TO_EDGE);
-//    assert(glGetError() == 0);
-//    
-//    glTexParameteri(
-//        /* GLenum target: */
-//            GL_TEXTURE_2D_ARRAY,
-//        /* GLenum pname: */
-//            GL_TEXTURE_MIN_FILTER,
-//        /* GLint param: */
-//            GL_NEAREST);
-//    assert(glGetError() == 0);
-//    
-//    glTexParameteri(
-//        /* GLenum target: */
-//            GL_TEXTURE_2D_ARRAY,
-//        /* GLenum pname: */
-//            GL_TEXTURE_MAG_FILTER,
-//        /* GLint param: */
-//            GL_NEAREST);
-//    assert(glGetError() == 0);
-//}
+void platform_gpu_init_texture_array(
+    const int32_t texture_array_i,
+    const uint32_t num_images,
+    const uint32_t single_image_width,
+    const uint32_t single_image_height)
+{
+    // TODO: implement me!
+    #if 0
+    printf(
+        "opengl must init texture array: %i with %u images (%ux%u)\n",
+        texture_array_i,
+        num_images,
+        single_image_width,
+        single_image_height);
+    
+    glGenTextures(1, &texture_array_ids[texture_array_i]);
+    assert(glGetError() == 0);
+    assert(texture_array_i < 31);
+    
+    glActiveTexture(
+        GL_TEXTURE0 + texture_array_i);
+    assert(glGetError() == 0);
+    
+    glBindTexture(
+        GL_TEXTURE_2D_ARRAY,
+        texture_array_ids[texture_array_i]);
+    assert(glGetError() == 0);
+    
+    char name_in_shader[64];
+    strcpy_capped(name_in_shader, 64, "texture_arrays[");
+    strcat_uint_capped(name_in_shader, 64, texture_array_i);
+    strcat_capped(name_in_shader, 64, "]");
+    GLuint loc = extptr_glGetUniformLocation(
+        program_id,
+        name_in_shader);
+    assert(glGetError() == 0);
+    
+    glUniform1iv(loc, 1, &texture_array_i);
+    assert(glGetError() == 0);
+    
+    //There is also glTexStorage3D in openGL 4
+    glTexImage3D(
+        /* GLenum target: */
+            GL_TEXTURE_2D_ARRAY,
+        /* GLint level (mipmap, 0 is base): */
+            0,
+        /* GLint internalFormat: */
+            GL_RGBA8,
+        /* GLsizei width: */
+            single_image_width,
+        /* GLsizei height: */
+            single_image_height,
+        /* GLsizei depth: */
+            num_images,
+        /* GLint border (must be 0): */
+            0,
+        /* GLenum format: */
+            GL_RGBA,
+        /* GLenum type (of input data): */
+            GL_UNSIGNED_BYTE,
+        /* const GLvoid * data: */
+            NULL);
+    
+    err_value = glGetError();
+    if (err_value != GL_NO_ERROR) {
+        printf("%s\n", "glTexImage3D failed!");
+        switch (err_value) {
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            default:
+                printf("%s\n", "Unhandled error");
+        }
+        assert(err_value == GL_NO_ERROR);
+    }
+    
+    glTexParameteri(
+        /* GLenum target: */
+            GL_TEXTURE_2D_ARRAY,
+        /* GLenum pname: */
+            GL_TEXTURE_WRAP_S,
+        /* GLint param: */
+            GL_CLAMP_TO_EDGE);
+    assert(glGetError() == 0);
+    
+    glTexParameteri(
+        /* GLenum target: */
+            GL_TEXTURE_2D_ARRAY,
+        /* GLenum pname: */
+            GL_TEXTURE_WRAP_T,
+        /* GLint param: */
+            GL_CLAMP_TO_EDGE);
+    assert(glGetError() == 0);
+    
+    glTexParameteri(
+        /* GLenum target: */
+            GL_TEXTURE_2D_ARRAY,
+        /* GLenum pname: */
+            GL_TEXTURE_MIN_FILTER,
+        /* GLint param: */
+            GL_NEAREST);
+    assert(glGetError() == 0);
+    
+    glTexParameteri(
+        /* GLenum target: */
+            GL_TEXTURE_2D_ARRAY,
+        /* GLenum pname: */
+            GL_TEXTURE_MAG_FILTER,
+        /* GLint param: */
+            GL_NEAREST);
+    assert(glGetError() == 0);
+    #endif
+}
 
 /* reminder: this is mutex protected  */
-//void platform_gpu_push_texture_slice(
-//    const int32_t texture_array_i,
-//    const int32_t texture_i,
-//    const uint32_t parent_texture_array_images_size,
-//    const uint32_t image_width,
-//    const uint32_t image_height,
-//    const uint8_t * rgba_values)
-//{
-//    printf(
-//        "opengl_push_texture(): %u to array: %u\n",
-//        texture_i,
-//        texture_array_i);
-//    assert(image_width > 0);
-//    assert(image_height > 0);
-//    assert(parent_texture_array_images_size > texture_i);
-//    
-//    glActiveTexture(
-//        GL_TEXTURE0 + texture_array_i);
-//    assert(glGetError() == 0);
-//    
-//    glBindTexture(
-//        GL_TEXTURE_2D_ARRAY,
-//        texture_array_ids[texture_array_i]);
-//    assert(glGetError() == 0);
-//   
-//    // GL_UNSIGNED_BYTE is correct, opengl just shows very different results
-//    // from metal when alpha blending / testing is not set up yet and you're
-//    // not discarding any fragments.
-//    glTexSubImage3D(
-//        /*
-//        GLenum target:
-//        Specifies the target texture.
-//        Must be GL_TEXTURE_3D or GL_TEXTURE_2D_ARRAY
-//        */
-//            GL_TEXTURE_2D_ARRAY,
-//        /*
-//        GLint level:
-//        Specifies the level-of-detail number. Level 0 is the base image level.
-//        Level n is the nth mipmap reduction image 
-//        */
-//            0,
-//        /*
-//        GLint xoffset:
-//        Specifies a texel offset in the x direction within the texture array
-//        */
-//            0,
-//        /*
-//        GLint yoffset:
-//        Specifies a texel offset in the y direction within the texture array
-//        */
-//            0,
-//        /*
-//        GLint zoffset:
-//        Specifies a texel offset in the z direction within the texture array.
-//        */
-//            texture_i,
-//        /*
-//        GLsizei width:
-//        Specifies the width of the texture subimage 
-//        */
-//            image_width,
-//        /*
-//        GLsizei height:
-//        Specifies the height of the texture subimage 
-//        */
-//            image_height,
-//        /*
-//        GLsizei depth:
-//        Specifies the depth of the texture subimage 
-//        */
-//            1,
-//        /*
-//        GLenum format:
-//        Specifies the format of the pixel data.
-//        The following symbolic values are accepted:
-//        GL_RED, GL_RG, GL_RGB, GL_BGR, GL_RGBA, and GL_BGRA 
-//        */
-//            GL_RGBA,
-//        /*
-//        GLenum type:
-//        Specifies the data type of the pixel data.
-//        The following symbolic values are accepted:
-//        GL_UNSIGNED_BYTE, GL_BYTE, GL_UNSIGNED_SHORT, GL_SHORT,
-//        GL_UNSIGNED_INT, GL_INT, GL_FLOAT, GL_UNSIGNED_BYTE_3_3_2,
-//        GL_UNSIGNED_BYTE_2_3_3_REV, GL_UNSIGNED_SHORT_5_6_5,
-//        GL_UNSIGNED_SHORT_5_6_5_REV, GL_UNSIGNED_SHORT_4_4_4_4,
-//        GL_UNSIGNED_SHORT_4_4_4_4_REV, GL_UNSIGNED_SHORT_5_5_5_1,
-//        GL_UNSIGNED_SHORT_1_5_5_5_REV, GL_UNSIGNED_INT_8_8_8_8,
-//        GL_UNSIGNED_INT_8_8_8_8_REV, GL_UNSIGNED_INT_10_10_10_2,
-//        GL_UNSIGNED_INT_2_10_10_10_REV
-//        */
-//            GL_UNSIGNED_BYTE,
-//        /*
-//        const GLvoid * data:
-//        Specifies a pointer to the image data in memory.
-//        */
-//            rgba_values);
-//    
-//    err_value = glGetError();
-//    if (err_value != GL_NO_ERROR) {
-//        printf("%s\n", "Error during glTexSubImage3D!");
-//        switch (err_value) {
-//            case GL_INVALID_VALUE:
-//                printf("%s\n", "GL_INVALID_VALUE");
-//                break;
-//            case GL_INVALID_ENUM:
-//                printf("%s\n", "GL_INVALID_ENUM");
-//                break;
-//            case GL_INVALID_OPERATION:
-//                printf("%s\n", "GL_INVALID_OPERATION");
-//                break;
-//            default:
-//                printf("%s\n", "unhandled error at start of frame!");
-//                break;
-//        }
-//        assert(0);
-//    }
-//}
+void platform_gpu_push_texture_slice(
+    const int32_t texture_array_i,
+    const int32_t texture_i,
+    const uint32_t parent_texture_array_images_size,
+    const uint32_t image_width,
+    const uint32_t image_height,
+    const uint8_t * rgba_values)
+{
+    // TODO: implement me!
+    #if 0
+    printf(
+        "opengl_push_texture(): %u to array: %u\n",
+        texture_i,
+        texture_array_i);
+    assert(image_width > 0);
+    assert(image_height > 0);
+    assert(parent_texture_array_images_size > texture_i);
+    
+    glActiveTexture(
+        GL_TEXTURE0 + texture_array_i);
+    assert(glGetError() == 0);
+    
+    glBindTexture(
+        GL_TEXTURE_2D_ARRAY,
+        texture_array_ids[texture_array_i]);
+    assert(glGetError() == 0);
+   
+    // GL_UNSIGNED_BYTE is correct, opengl just shows very different results
+    // from metal when alpha blending / testing is not set up yet and you're
+    // not discarding any fragments.
+    glTexSubImage3D(
+        /*
+        GLenum target:
+        Specifies the target texture.
+        Must be GL_TEXTURE_3D or GL_TEXTURE_2D_ARRAY
+        */
+            GL_TEXTURE_2D_ARRAY,
+        /*
+        GLint level:
+        Specifies the level-of-detail number. Level 0 is the base image level.
+        Level n is the nth mipmap reduction image 
+        */
+            0,
+        /*
+        GLint xoffset:
+        Specifies a texel offset in the x direction within the texture array
+        */
+            0,
+        /*
+        GLint yoffset:
+        Specifies a texel offset in the y direction within the texture array
+        */
+            0,
+        /*
+        GLint zoffset:
+        Specifies a texel offset in the z direction within the texture array.
+        */
+            texture_i,
+        /*
+        GLsizei width:
+        Specifies the width of the texture subimage 
+        */
+            image_width,
+        /*
+        GLsizei height:
+        Specifies the height of the texture subimage 
+        */
+            image_height,
+        /*
+        GLsizei depth:
+        Specifies the depth of the texture subimage 
+        */
+            1,
+        /*
+        GLenum format:
+        Specifies the format of the pixel data.
+        The following symbolic values are accepted:
+        GL_RED, GL_RG, GL_RGB, GL_BGR, GL_RGBA, and GL_BGRA 
+        */
+            GL_RGBA,
+        /*
+        GLenum type:
+        Specifies the data type of the pixel data.
+        The following symbolic values are accepted:
+        GL_UNSIGNED_BYTE, GL_BYTE, GL_UNSIGNED_SHORT, GL_SHORT,
+        GL_UNSIGNED_INT, GL_INT, GL_FLOAT, GL_UNSIGNED_BYTE_3_3_2,
+        GL_UNSIGNED_BYTE_2_3_3_REV, GL_UNSIGNED_SHORT_5_6_5,
+        GL_UNSIGNED_SHORT_5_6_5_REV, GL_UNSIGNED_SHORT_4_4_4_4,
+        GL_UNSIGNED_SHORT_4_4_4_4_REV, GL_UNSIGNED_SHORT_5_5_5_1,
+        GL_UNSIGNED_SHORT_1_5_5_5_REV, GL_UNSIGNED_INT_8_8_8_8,
+        GL_UNSIGNED_INT_8_8_8_8_REV, GL_UNSIGNED_INT_10_10_10_2,
+        GL_UNSIGNED_INT_2_10_10_10_REV
+        */
+            GL_UNSIGNED_BYTE,
+        /*
+        const GLvoid * data:
+        Specifies a pointer to the image data in memory.
+        */
+            rgba_values);
+    
+    err_value = glGetError();
+    if (err_value != GL_NO_ERROR) {
+        printf("%s\n", "Error during glTexSubImage3D!");
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled error at start of frame!");
+                break;
+        }
+        assert(0);
+    }
+    #endif
+}
 
 void opengl_set_projection_constants(
     GPUProjectionConstants * pjc)
@@ -1065,5 +1073,9 @@ void opengl_set_projection_constants(
     glUniform1fv(loc, 1, &pjc->x_multiplier);
     assert(glGetError() == 0);
     #endif
+}
+
+void platform_gpu_update_viewport(void) {
+    // TODO: implement me!
 }
 

@@ -33,6 +33,7 @@ APP_NAME="tok_one"
 # /WX	Treat warnings as errors.
 
 COMPILER_ARGS="
+-arch:AVX
 -options:strict
 -TC
 -std:c11

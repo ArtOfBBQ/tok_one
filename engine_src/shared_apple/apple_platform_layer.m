@@ -38,7 +38,7 @@ void platform_get_directory_separator(char * recipient) {
     recipient[1] = '\0';
 }
 
-uint64_t __attribute__((no_instrument_function))
+uint64_t
 platform_get_current_time_microsecs(void) {
     struct timeval tv;
     gettimeofday(&tv,NULL);
@@ -48,22 +48,6 @@ platform_get_current_time_microsecs(void) {
             (uint64_t)tv.tv_usec;
     
     return result;
-}
-
-/*
-Get a file's size. Returns -1 if no such file
-
-same as platform_get_filesize() except it assumes
-the resources directory
-*/
-uint64_t platform_get_resource_size(const char * filename) {
-    char pathfile[500];
-    resource_filename_to_pathfile(
-        filename,
-        /* recipient: */ pathfile,
-        /* assert_capacity: */ 500);
-    
-    return platform_get_filesize(pathfile);
 }
 
 /*
@@ -281,32 +265,6 @@ platform_write_file(
     *good = true;
 }
 
-void platform_write_file_to_writables(
-    const char * filepath_inside_writables,
-    const char * output,
-    const uint32_t output_size,
-    bool32_t * good)
-{
-    char recipient[500];
-    writable_filename_to_pathfile(
-        /* filename: */
-            filepath_inside_writables,
-        /* recipient: */
-            recipient,
-        /* recipient_capacity: */
-            500);
-    
-    platform_write_file(
-        /* const char * filepath: */
-            recipient,
-        /* const char * output: */
-            output,
-        /* const uint32_t output_size: */
-            output_size,
-        /* bool32_t * good: */
-            good);
-}
-
 void platform_get_filenames_in(
     const char * directory,
     char ** filenames,
@@ -354,7 +312,10 @@ void platform_get_filenames_in(
 }
 
 void
-platform_get_application_path(char * recipient, const uint32_t recipient_size) {
+platform_get_application_path(
+    char * recipient,
+    const uint32_t recipient_size)
+{
     #ifdef COMMON_IGNORE_ASSERTS
     (void)recipient_size;
     #endif
@@ -363,7 +324,8 @@ platform_get_application_path(char * recipient, const uint32_t recipient_size) {
         recipient,
         recipient_size,
         (char *)[[[NSBundle mainBundle] bundlePath]
-            cStringUsingEncoding: NSASCIIStringEncoding]);
+            cStringUsingEncoding:
+                NSASCIIStringEncoding]);
 }
 
 void platform_get_resources_path(

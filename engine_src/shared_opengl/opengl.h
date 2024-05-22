@@ -8,10 +8,7 @@
 
 #include "opengl_extensions.h"
 #include "cpu_gpu_shared_types.h"
-// #include "clientlogic_macro_settings.h"
-// #include "cpu_to_gpu_types.h"
-// #include "common.h"
-// #include "window_size.h"
+#include "cpu_to_gpu_types.h"
 
 #ifndef NULL
 #define NULL 0

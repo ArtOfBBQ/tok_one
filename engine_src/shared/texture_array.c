@@ -395,7 +395,8 @@ void register_new_texturearray_from_files(
     const uint32_t filenames_size)
 {
     uint32_t decoded_images_size = filenames_size;
-    DecodedImage * decoded_images[decoded_images_size];   
+    log_assert(decoded_images_size < MAX_FILES_IN_SINGLE_TEXARRAY);
+    DecodedImage * decoded_images[MAX_FILES_IN_SINGLE_TEXARRAY];   
     
     for (
         uint32_t i = 0;
@@ -552,7 +553,7 @@ static void register_to_texturearray_by_splitting_image(
             log_assert(new_img->good);
             
             if (expected_width == 0 || expected_height == 0) {
-                expected_width = new_img->width;
+                expected_width  = new_img->width;
                 expected_height = new_img->height;
             } else {
                 log_assert(new_img->width == expected_width);

@@ -235,11 +235,11 @@ void request_label_offset_around(
     log_assert(font_color[3] > -0.02f);
     log_assert(font_color[3] < 1.05f);
     
-    uint32_t max_lines = 100;
-    PrefetchedLine lines[max_lines];
+    #define MAX_LINES 100
+    PrefetchedLine lines[MAX_LINES];
     uint32_t lines_size;
     prefetch_label_lines(text_to_draw, max_width, lines, &lines_size);
-    log_assert(lines_size < max_lines);
+    log_assert(lines_size < MAX_LINES);
     
     PolygonRequest letter;
     
@@ -332,11 +332,11 @@ void request_label_around_x_at_top_y(
     const float max_width,
     const bool32_t ignore_camera)
 {
-    uint32_t max_lines = 100;
-    PrefetchedLine lines[max_lines];
+    #define MAX_LINES 100
+    PrefetchedLine lines[MAX_LINES];
     uint32_t lines_size;
     prefetch_label_lines(text_to_draw, max_width, lines, &lines_size);
-    log_assert(lines_size < max_lines);
+    log_assert(lines_size < MAX_LINES);
     
     request_label_offset_around(
         /* const int32_t with_id: */
