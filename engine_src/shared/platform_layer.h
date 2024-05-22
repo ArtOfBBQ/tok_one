@@ -35,10 +35,12 @@ on each platform
 #endif
 
 #ifdef SHARED_APPLE_PLATFORM
+#include <pthread.h>
 #include <sys/time.h>
 #endif
 
 #ifdef LINUX_PLATFORM
+#include <pthread.h>
 #include <sys/time.h>
 #include <sys/mman.h>
 #include <sys/stat.h> // stat function to check if dir exists
@@ -47,7 +49,6 @@ on each platform
 #include <dirent.h> // to list files in a dir
 #endif
 
-#include <pthread.h>
 
 #ifdef __ARM_NEON
 #include "arm_neon.h"

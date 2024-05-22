@@ -257,9 +257,9 @@ void project_float4_to_2d_inplace(
     float x_multiplier =
         window_globals->aspect_ratio * pjc->field_of_view_modifier;
     float y_multiplier = pjc->field_of_view_modifier;
-    float z_multiplier = (pjc->far / (pjc->far - pjc->near));
-    float z_addition = (1.0f * (-pjc->far * pjc->near) /
-        (pjc->far - pjc->near));
+    float z_multiplier = (pjc->zfar / (pjc->zfar - pjc->znear));
+    float z_addition = (1.0f * (-pjc->zfar * pjc->znear) /
+        (pjc->zfar - pjc->znear));
     
     *position_x *= x_multiplier;
     *position_y *= y_multiplier;

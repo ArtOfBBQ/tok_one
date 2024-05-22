@@ -36,7 +36,6 @@ COMPILER_ARGS="
 -options:strict
 -TC
 -std:c11
--WX
 -I"../sampleproject_src/"
 -I"../engine_src/windows/"
 -I"../engine_src/shared/debigulator/src/"

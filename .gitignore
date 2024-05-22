@@ -3,6 +3,9 @@
 # sometimes created by Mac Os X's finder
 .DS_Store
 
+# windows hidden work-in-progress files
+*~
+
 # swap files used by vim
 *.swp
 

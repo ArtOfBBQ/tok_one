@@ -8,10 +8,10 @@ char crashed_top_of_screen_msg[256];
 #endif
 
 // These are function pointers to our injected dependencies
-static void * (* malloc_function)(size_t size) = NULL;
+static void *   (* malloc_function)(size_t) = NULL;
 static uint32_t (* create_mutex_function)(void) = NULL;
-static void (* mutex_lock_function)(const uint32_t mutex_id) = NULL;
-static int32_t (* mutex_unlock_function)(const uint32_t mutex_id) = NULL;
+static void     (* mutex_lock_function)(const uint32_t) = NULL;
+static int32_t  (* mutex_unlock_function)(const uint32_t) = NULL;
 static uint32_t logger_mutex_id = UINT32_MAX;
 
 #define LOG_SIZE 5000000
@@ -23,20 +23,21 @@ extern "C" {
 #endif
 
 void init_logger(
-    void * arg_malloc_function(size_t size),
+    void * (* arg_malloc_function)(size_t size),
     uint32_t (* arg_create_mutex_function)(void),
-    void arg_mutex_lock_function(const uint32_t mutex_id),
-    int32_t arg_mutex_unlock_function(const uint32_t mutex_id))
+    void (* arg_mutex_lock_function)(const uint32_t mutex_id),
+    int32_t (* arg_mutex_unlock_function)(const uint32_t mutex_id))
 {
-    malloc_function = arg_malloc_function;
+    malloc_function       = arg_malloc_function;
     create_mutex_function = arg_create_mutex_function;
-    mutex_lock_function = arg_mutex_lock_function;
+    mutex_lock_function   = arg_mutex_lock_function;
     mutex_unlock_function = arg_mutex_unlock_function;
     
     // create a log for debug text
-    app_log = malloc_function(LOG_SIZE);
+    app_log    = malloc_function(LOG_SIZE);
     app_log[0] = '\0';
-    log_i = 0;
+    log_i      = 0;
+    
     if (create_mutex_function != NULL) {
         logger_mutex_id = create_mutex_function();
     }

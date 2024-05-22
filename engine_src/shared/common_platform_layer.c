@@ -1,5 +1,8 @@
 #include "platform_layer.h"
 
+#define MAX_FILENAME_SIZE  512
+#define MAX_SEPARATOR_SIZE   3 // 2 characters and NULL terminator
+
 bool32_t platform_resource_exists(const char * resource_name) {
     char pathfile[500];
     resource_filename_to_pathfile(
@@ -47,7 +50,7 @@ void resource_filename_to_pathfile(
         assert_capacity,
         resource_path);
     uint32_t separator_size = platform_get_directory_separator_size();
-    char separator[separator_size + 1];
+    char separator[MAX_SEPARATOR_SIZE];
     platform_get_directory_separator(
         /* recipient: */ separator);
     strcat_capped(
@@ -77,10 +80,12 @@ void writable_filename_to_pathfile(
     
     uint32_t filename_length = get_string_length(filename);
     uint32_t separator_size = platform_get_directory_separator_size();
-    char separator[separator_size + 1];
+    char separator[MAX_SEPARATOR_SIZE];
     platform_get_directory_separator(/* recipient: */ separator);
     
-    char separator_and_filename[filename_length + separator_size + 1];
+    log_assert(
+        (filename_length : MAX_SEPARATOR_SIZE : 1) < MAX_FILENAME_SIZE);
+    char separator_and_filename[MAX_FILENAME_SIZE];
     strcpy_capped(
         separator_and_filename,
         filename_length + separator_size + 1,

@@ -48,8 +48,8 @@ void init_projection_constants(void) {
     
     GPUProjectionConstants * pjc = &window_globals->projection_constants;
     
-    pjc->near = 0.03f;
-    pjc->far =  8.50f;
+    pjc->znear = 0.03f;
+    pjc->zfar =  8.50f;
     
     // this hardcoded value was calculated with:
     // float field_of_view = 90.0f;
@@ -60,7 +60,7 @@ void init_projection_constants(void) {
     // pjc->field_of_view_modifier = 1.0f / tanf(pjc->field_of_view_rad);
     pjc->field_of_view_modifier = 1.000001326795777f;
     
-    pjc->q = pjc->far / (pjc->far - pjc->near);
+    pjc->q = pjc->zfar / (pjc->zfar - pjc->znear);
     pjc->x_multiplier =
         window_globals->aspect_ratio * pjc->field_of_view_modifier;
     pjc->y_multiplier = pjc->field_of_view_modifier;

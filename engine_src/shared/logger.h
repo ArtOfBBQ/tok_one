@@ -1,6 +1,7 @@
 #ifndef LOGGER_H
 #define LOGGER_H
 
+#include <stddef.h>
 #include "common.h"
 
 #ifndef LOGGER_SILENCE
@@ -38,10 +39,10 @@ Allocates memory. You need to pass a chunk of memory of LOG_SIZE bytes
 example with c standard library: setup_log(malloc(LOG_SIZE));
 */
 void init_logger(
-    void * malloc_function(size_t size),
+    void * (* malloc_function)(size_t size),
     uint32_t (* create_mutex_function)(void),
-    void mutex_lock_function(const uint32_t mutex_id),
-    int32_t mutex_unlock_function(const uint32_t mutex_id));
+    void (* mutex_lock_function)(const uint32_t mutex_id),
+    int32_t (* mutex_unlock_function)(const uint32_t mutex_id));
 
 #ifndef LOGGER_SILENCE
 /*

@@ -11,8 +11,6 @@
 
 #include "common.h"
 
-
-static unsigned int application_running = 1;
 static unsigned int window_width = 200;
 static unsigned int window_height = 200;
 
@@ -138,6 +136,8 @@ int CALLBACK WinMain(
     LPSTR lpCmdLine,
     int nCmdShow)
 {
+    application_running = 1;
+    
     FILE * fp = NULL;
     AllocConsole();
     freopen_s(&fp, "CONIN$", "r", stdin);
@@ -446,11 +446,11 @@ int CALLBACK WinMain(
     default value specified below is used instead. If an attribute is
     specified more than once, then the last value specified is used.
     */
-    int gl33_attribs[7];
-    gl33_attribs[0] = WGL_CONTEXT_MAJOR_VERSION_ARB;
-    gl33_attribs[1] = 3;
-    gl33_attribs[2] = WGL_CONTEXT_MINOR_VERSION_ARB;
-    gl33_attribs[3] = 3;
+    int gl46_attribs[7];
+    gl46_attribs[0] = WGL_CONTEXT_MAJOR_VERSION_ARB;
+    gl46_attribs[1] = 4;
+    gl46_attribs[2] = WGL_CONTEXT_MINOR_VERSION_ARB;
+    gl46_attribs[3] = 6;
     /*
     The attribute name WGL_CONTEXT_PROFILE_MASK_ARB requests an OpenGL
     context supporting a specific <profile> of the API. If the
@@ -458,33 +458,35 @@ int CALLBACK WinMain(
     then a context implementing the <core> profile of OpenGL is
     returned.
     */
-    gl33_attribs[4] = WGL_CONTEXT_PROFILE_MASK_ARB;
-    gl33_attribs[5] = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
-    gl33_attribs[6] = 0;
+    gl46_attribs[4] = WGL_CONTEXT_PROFILE_MASK_ARB;
+    gl46_attribs[5] = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
+    gl46_attribs[6] = 0;
     
-    HGLRC gl33_context = extptr_wglCreateContextAttribsARB(
+    HGLRC gl46_context = extptr_wglCreateContextAttribsARB(
         /* HDC hDC */
             device_context,
         /* HGLRC hShareContext */
             0,
         /* const int* attribList: */
-            gl33_attribs);
+            gl46_attribs);
     
-    if (gl33_context == 0) {
-        MessageBoxA(0, "Failed to init gl33 context!\n", "Error", MB_OK);
+    if (gl46_context == 0) {
+        MessageBoxA(0, "Failed to init gl46 context!\n", "Error", MB_OK);
         application_running = false;
         return 0;
     }
     
-    if (!wglMakeCurrent(device_context, gl33_context)) {
+    if (!wglMakeCurrent(device_context, gl46_context)) {
         MessageBox(
             0,
-            "Failed to make gl33 context current!\n",
+            "Failed to make gl46 context current!\n",
             "Error",
             MB_OK);
         application_running = false;
         return 0;
     }
+    
+    // init_application_before_gpu_init();
     
     #if 0
     opengl_compile_shaders(
@@ -501,26 +503,26 @@ int CALLBACK WinMain(
     while (application_running)
     {
         MSG message;
-	for (int i = 0; i < 30; i++)
+        for (int i = 0; i < 30; i++)
 	{
-	    /*
-	    If wMsgFilterMin and wMsgFilterMax are both zero,
+            /*
+            If wMsgFilterMin and wMsgFilterMax are both zero,
             PeekMessage returns all available messages 
             (that is, no range filtering is performed).
-	    */
-	    BOOL got_message =
-		PeekMessage(
-		    &message, window_handle, 0, 0, PM_REMOVE);
+            */
+            BOOL got_message =
+                PeekMessage(
+                    &message, window_handle, 0, 0, PM_REMOVE);
 	    if (message.message == WM_QUIT) {
-		application_running = 0;
-		break;
-	    }
-	    if (!got_message || !application_running) {
-		break;
-	    }
-	    
-	    TranslateMessage(&message);
-	    DispatchMessage(&message);
+                application_running = 0;
+                break;
+            }
+            if (!got_message || !application_running) {
+                break;
+            }
+                
+            TranslateMessage(&message);
+            DispatchMessage(&message);
 	}
         
         glClearColor(1.0f, 0.25f, 0.0f, 1.0f);
