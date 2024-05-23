@@ -20,8 +20,6 @@ of the engine for your specific app.
 #define INITIAL_WINDOW_LEFT        0
 #define INITIAL_WINDOW_BOTTOM      0
 
-// TODO: implement simple macro replacements in glsl shaders so this can just
-// TODO: be changed without having to update shaders
 // The maximum number of polygons/lights to send to the GPU each frame
 // The maximum number of triangle vertices to be stored on gpu permanently
 // #define MAX_POLYGONS_PER_BUFFER   1600

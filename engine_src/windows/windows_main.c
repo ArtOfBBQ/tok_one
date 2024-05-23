@@ -73,48 +73,38 @@ MainWindowCallback(
     switch (message_id)
     {
         case WM_QUIT: {
-            printf("got a WM_QUIT message...\n");
             application_running = 0;
             DestroyWindow(window_handle);
             break;
         }
         case WM_CLOSE: {
-            printf("got a WM_CLOSE message...\n");
             application_running = 0;
             DestroyWindow(window_handle);
             break;
         }
         case WM_SIZE: {
-            printf("got a WM_SIZE message...\n");
             break;
         }
         case WM_DESTROY: {
-            printf("got a WM_DESTROY message...\n");
             application_running = 0;
             break;
         }
         case WM_ACTIVATEAPP: {
-            printf("got a WM_ACTIVEATEAPP message...\n");
             break;
         }
         case WM_PAINT: {
-            printf("got a WM_PAINT message...\n");
             break;
         }
         case WM_ENABLE: {
-            printf("got a WM_ENABLE message...\n");
             break;
         }
         case WM_SETFOCUS: {
-            printf("got a WM_SETFOCUS message...\n");
             break;
         }
         case WM_KILLFOCUS: {
-            printf("got a WM_KILLFOCUS message...\n");
             break;
         }
         default: {
-            printf(".");
             // use the default handler
             return_value = DefWindowProc(
                 window_handle,
@@ -144,6 +134,7 @@ int CALLBACK WinMain(
     log_append("initialized application: ");
     log_append(APPLICATION_NAME);
     
+    // TODO: remove console
     FILE * fp = NULL;
     AllocConsole();
     freopen_s(&fp, "CONIN$", "r", stdin);
@@ -435,6 +426,57 @@ int CALLBACK WinMain(
         fetch_extension_func_address(
             (void **)&extptr_glGetUniformLocation,
             "glGetUniformLocation");
+        fetch_extension_func_address(
+            (void **)&extptr_glCreateProgram,
+            "glCreateProgram");
+        fetch_extension_func_address(
+            (void **)&extptr_glCreateShader,
+            "glCreateShader");
+        fetch_extension_func_address(
+            (void **)&extptr_glShaderSource,
+            "glShaderSource");
+        fetch_extension_func_address(
+            (void **)&extptr_glCompileShader,
+            "glCompileShader");
+        fetch_extension_func_address(
+            (void **)&extptr_glGetShaderiv,
+            "glGetShaderiv");
+        fetch_extension_func_address(
+            (void **)&extptr_glGetShaderInfoLog,
+            "glGetShaderInfoLog");
+        fetch_extension_func_address(
+            (void **)&extptr_glAttachShader,
+            "glAttachShader");
+        fetch_extension_func_address(
+            (void **)&extptr_glLinkProgram,
+            "glLinkProgram");
+        fetch_extension_func_address(
+            (void **)&extptr_glGetProgramiv,
+            "glGetProgramiv");
+        fetch_extension_func_address(
+            (void **)&extptr_glUseProgram,
+            "glUseProgram");
+        fetch_extension_func_address(
+            (void **)&extptr_glGenVertexArrays,
+            "glGenVertexArrays");
+        fetch_extension_func_address(
+            (void **)&extptr_glGenBuffers,
+            "glGenBuffers");
+        fetch_extension_func_address(
+            (void **)&extptr_glBindVertexArray,
+            "glBindVertexArray");
+        fetch_extension_func_address(
+            (void **)&extptr_glBindBuffer,
+            "glBindBuffer");
+        fetch_extension_func_address(
+            (void **)&extptr_glVertexAttribIPointer,
+            "glVertexAttribIPointer");
+        fetch_extension_func_address(
+            (void **)&extptr_glVertexAttribPointer,
+            "glVertexAttribPointer");
+        fetch_extension_func_address(
+            (void **)&extptr_glGetProgramInfoLog,
+            "glGetProgramInfoLog");
     } else {
         printf(
             "Failed to wglMakeCurrent() the dummy "
@@ -490,19 +532,72 @@ int CALLBACK WinMain(
         return 0;
     }
     
-    // init_application_before_gpu_init();
     
-    #if 0
+    FileBuffer vertex_shader_file;
+    vertex_shader_file.size_without_terminator =
+        platform_get_resource_size(
+            /* const char * filename: */
+                "vertex_shader.glsl");
+    if (vertex_shader_file.size_without_terminator < 1) {
+        MessageBox(
+            0,
+            "Missing file vertex_shader.glsl!\n",
+            "Error",
+            MB_OK);
+        application_running = false;
+        return 0;
+    }
+    vertex_shader_file.contents = malloc_from_managed(
+        vertex_shader_file.size_without_terminator + 1);
+    memset(
+        vertex_shader_file.contents,
+        0,
+        vertex_shader_file.size_without_terminator + 1);
+    platform_read_resource_file(
+        /* const char * filename: */
+            "vertex_shader.glsl",
+        /* FileBuffer * out_preallocatedbuffer: */
+            &vertex_shader_file);
+    
+    FileBuffer fragment_shader_file;
+    fragment_shader_file.size_without_terminator =
+        platform_get_resource_size(
+            /* const char * filename: */
+                "fragment_shader.glsl");
+    if (fragment_shader_file.size_without_terminator < 1) {
+        MessageBox(
+            0,
+            "Missing file fragment_shader.glsl!\n",
+            "Error",
+            MB_OK);
+        application_running = false;
+        return 0;
+    }
+    fragment_shader_file.contents = malloc_from_managed(
+        fragment_shader_file.size_without_terminator + 1);
+    memset(
+        fragment_shader_file.contents,
+        0,
+        fragment_shader_file.size_without_terminator + 1);
+    platform_read_resource_file(
+        /* const char * filename: */
+            "fragment_shader.glsl",
+        /* FileBuffer * out_preallocatedbuffer: */
+            &fragment_shader_file);
+    
+    printf("vertex shader:\n%s\n", vertex_shader_file.contents);
+    printf("fragment shader:\n%s\n", fragment_shader_file.contents);
     opengl_compile_shaders(
         /* char * vertex_shader_source: */
-            
+            vertex_shader_file.contents,
         /* uint32_t vertex_shader_source_size: */
-            
+            vertex_shader_file.size_without_terminator + 1,
         /* char * fragment_shader_source: */
-            
+            fragment_shader_file.contents,
         /* uint32_t fragment_shader_source_size: */
-            );
-    #endif
+            fragment_shader_file.size_without_terminator + 1);
+    
+    init_application_after_gpu_init();
     
     while (application_running)
     {
@@ -532,6 +627,11 @@ int CALLBACK WinMain(
         glClearColor(1.0f, 0.25f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         SwapBuffers(device_context);
+    }
+    
+    uint64_t start = platform_get_current_time_microsecs();
+    while (platform_get_current_time_microsecs() - start < 50000000) {
+        // Wait
     }
     
     return 0;

@@ -108,5 +108,11 @@ void (* extptr_glEnableVertexAttribArray)(GLuint index);
 
 void (* extptr_glValidateProgram)(GLuint program);
 
+void (* extptr_glGetProgramInfoLog)(
+    GLuint program,
+    GLsizei maxLength,
+    GLsizei *length,
+    char *infoLog);
+
 #endif // TOKONE_OPENGL_EXTENSIONS_H
 

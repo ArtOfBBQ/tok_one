@@ -337,8 +337,8 @@ static void spotcheck_uniform(
 
 void platform_gpu_copy_locked_vertices(void)
 {
+    // TODO: implement me!
     printf("ERROR - copy locked vertices not implemented yet in opengl!");
-    assert(0);
 }
 
 //void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
@@ -491,6 +491,55 @@ static void opengl_compile_given_shader(
     char * shader_source,
     GLint source_length)
 {
+    // First, manually apply macros
+    char replacement[128];
+    replacement[0] = '\0';
+    strcat_uint_capped(replacement, 128, MAX_POLYGONS_PER_BUFFER);
+    shadersource_apply_macro_inplace(
+        /* char * shader_source: */
+            shader_source,
+        /* char * to_replace: */
+            "MAX_POLYGONS_PER_BUFFER",
+        /* char * replacement: */
+            replacement);
+    replacement[0] = '\0';
+    strcat_uint_capped(replacement, 128, MAX_LIGHTS_PER_BUFFER);
+    shadersource_apply_macro_inplace(
+        /* char * shader_source: */
+            shader_source,
+        /* char * to_replace: */
+            "MAX_LIGHTS_PER_BUFFER",
+        /* char * replacement: */
+            replacement);
+    replacement[0] = '\0';
+    strcat_uint_capped(replacement, 128, MAX_VERTICES_PER_BUFFER);
+    shadersource_apply_macro_inplace(
+        /* char * shader_source: */
+            shader_source,
+        /* char * to_replace: */
+            "MAX_VERTICES_PER_BUFFER",
+        /* char * replacement: */
+            replacement);
+    replacement[0] = '\0';
+    strcat_uint_capped(replacement, 128, ALL_LOCKED_VERTICES_SIZE);
+    shadersource_apply_macro_inplace(
+        /* char * shader_source: */
+            shader_source,
+        /* char * to_replace: */
+            "ALL_LOCKED_VERTICES_SIZE",
+        /* char * replacement: */
+            replacement);
+    replacement[0] = '\0';
+    strcat_uint_capped(replacement, 128, MAX_MATERIALS_PER_POLYGON);
+    shadersource_apply_macro_inplace(
+        /* char * shader_source: */
+            shader_source,
+        /* char * to_replace: */
+            "MAX_MATERIALS_PER_POLYGON",
+        /* char * replacement: */
+            replacement);
+    
+    // Next, actually compile the shader
     printf("compile shader with id: %u\n", shader_id);
     extptr_glShaderSource(
         /* GLuint handle: */
@@ -501,8 +550,10 @@ static void opengl_compile_given_shader(
             &shader_source,
         /* const GLint * length: */
             &source_length);
+    assert(glGetError() == 0);
     
     extptr_glCompileShader(shader_id);
+    assert(glGetError() == 0);
     
     GLint is_compiled = INT8_MAX;
     char info_log[512];
@@ -528,7 +579,6 @@ static void opengl_compile_given_shader(
             /* GLchar * infolog: */
                 info_log);
         printf("info_log: %s\n", info_log);
-        assert(0);
     } else if (is_compiled == GL_TRUE) {
         
     } else {
@@ -597,6 +647,11 @@ void opengl_compile_shaders(
     err_value = glGetError();
     assert(err_value == 0);
     
+    /* 
+    GL_LINK_STATUS
+    params returns GL_TRUE if the last link operation on program was
+    successful, and GL_FALSE otherwise.
+    */
     GLint success = -1;
     extptr_glGetProgramiv(
         /* GLuint program id: */
@@ -605,31 +660,54 @@ void opengl_compile_shaders(
             GL_LINK_STATUS,
         /* GLint * params: */
             &success);
-    assert(success);
     
-    err_value = glGetError();
-    if (err_value != 0) {
-        printf("%s\n", "opengl: bad link status");
-        switch (err_value) {
-            case GL_INVALID_VALUE:
-                printf("%s\n", "GL_INVALID_VALUE");
-                break;
-            case GL_INVALID_ENUM:
-                printf("%s\n", "GL_INVALID_ENUM");
-                break;
-            case GL_INVALID_OPERATION:
-                printf("%s\n", "GL_INVALID_OPERATION");
-                break;
-            default:
-                printf("%s\n", "unhandled!");
+    if (!success) {
+        printf("glLinkProgram() failed.\n");
+        err_value = glGetError();
+        if (err_value != 0) {
+            printf("%s\n", "opengl: bad link status");
+            switch (err_value) {
+                case GL_INVALID_VALUE:
+                    printf("%s\n", "GL_INVALID_VALUE");
+                    break;
+                case GL_INVALID_ENUM:
+                    printf("%s\n", "GL_INVALID_ENUM");
+                    break;
+                case GL_INVALID_OPERATION:
+                    printf("%s\n", "GL_INVALID_OPERATION");
+                    break;
+                default:
+                    printf("%s\n", "unhandled!");
+            }
         }
-        assert(0);
+
+        char errorlog[512];
+        uint32_t errorlog_size = 0;
+        memset(errorlog, 0, 512);
+        extptr_glGetProgramInfoLog(
+            /* GLuint program: */
+                program_id,
+            /* GLsizei maxLength: */
+                512,
+            /* GLsizei *length: */
+                &errorlog_size,
+            /* GLchar *infoLog: */
+                errorlog);
+        printf("errorlog: %s\n", errorlog);
+        application_running = false;
+        return;
+    } else {
+        printf("glLinkProgram() succeeded.\n");
     }
     
-    // TODO: Learn exactly when nescessary, I hope we can just set & forget
-    extptr_glUseProgram(program_id); // TODO: can this have averse effects?
+    // TODO: Learn exactly when nescessary, hope to just set & forget
+    extptr_glUseProgram(program_id);
     err_value = glGetError();
-    assert(err_value == 0);
+    if (err_value != 0) {
+        printf("glUseProgram() failed.\n");
+        application_running = false;
+        return;
+    }
     
     extptr_glGenVertexArrays(1, &VAO);
     err_value = glGetError();
@@ -1077,5 +1155,45 @@ void opengl_set_projection_constants(
 
 void platform_gpu_update_viewport(void) {
     // TODO: implement me!
+}
+
+void shadersource_apply_macro_inplace(
+    char * shader_source,
+    char * to_replace,
+    char * replacement)
+{
+    uint32_t i = 0;
+    
+    uint32_t to_replace_len  = get_string_length(to_replace);
+    uint32_t replacement_len = get_string_length(replacement);
+    
+    log_assert(replacement_len <= to_replace_len);
+    
+    uint32_t padding_spaces = to_replace_len - replacement_len;
+    
+    while (shader_source[i] != '\0') {
+        bool32_t match = true;
+        for (uint32_t j = 0; j < to_replace_len; j++) {
+            if (
+                shader_source[i + j] != to_replace[j])
+            {
+                match = false;
+            }
+        }
+    
+        if (match) {
+            for (uint32_t j = 0; j < padding_spaces; j++) {
+                shader_source[i+j] = ' ';
+            }
+            i += padding_spaces;
+            
+            for (uint32_t j = 0; j < replacement_len; j++) {
+                shader_source[i+j] = replacement[j];
+            }
+            i += replacement_len;
+        }
+        
+        i++;
+    }
 }
 

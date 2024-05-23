@@ -1,24 +1,29 @@
 #include "platform_layer.h"
 
-static uint64_t win32_performance_frequency = 0;
+static bool32_t cached = 0;
+static LARGE_INTEGER cached_performance_frequency;
 
 uint64_t
 platform_get_current_time_microsecs(void)
 {
-    if (!win32_performance_frequency) {
-        log_assert(
-           QueryPerformanceFrequency(
-              /* [out] LARGE_INTEGER *lpFrequency: */
-                &win32_performance_frequency));
+    if (!cached) {
+        BOOL result = QueryPerformanceFrequency(
+          /* [out] LARGE_INTEGER *lpFrequency: */
+            &cached_performance_frequency);
+        assert(result > 0);
+        cached = true;
+        assert(cached_performance_frequency.QuadPart > 0);
     }
     
-    uint64_t return_value = 0;
-    log_assert(
+    LARGE_INTEGER current;
+    assert(
         QueryPerformanceCounter(
             /* [out] LARGE_INTEGER *lpPerformanceCount: */
-                &return_value));
+                &current));
     
-    return return_value / win32_performance_frequency;
+    return
+        ((uint64_t)current.QuadPart * 1000000) /
+            (uint64_t)cached_performance_frequency.QuadPart;
 }
 
 uint32_t platform_init_mutex_and_return_id(void) {
@@ -105,7 +110,7 @@ void platform_read_file(
         /* [in]           DWORD                 dwDesiredAccess: */
             GENERIC_READ,
         /* [in]           DWORD                 dwShareMode: */
-            0,
+            FILE_SHARE_READ,
         /* [in, optional] LPSECURITY_ATTRIBUTES lpSecurityAttributes: */
             NULL,
         /* [in]           DWORD                 dwCreationDisposition: */
@@ -116,6 +121,19 @@ void platform_read_file(
             NULL);
     
     if (file_handle == INVALID_HANDLE_VALUE) {
+        out_preallocatedbuffer->size_without_terminator = 0;
+        out_preallocatedbuffer->good = true;
+        return;
+    }
+
+    DWORD bytes_to_read = platform_get_filesize(filepath);
+
+    if (
+        bytes_to_read < 1 ||
+        bytes_to_read > out_preallocatedbuffer->size_without_terminator)
+    {
+        out_preallocatedbuffer->size_without_terminator = 0;
+        out_preallocatedbuffer->good = true;
         return;
     }
     
@@ -125,13 +143,14 @@ void platform_read_file(
         /* [out]           LPVOID     lpBuffer: */
             out_preallocatedbuffer->contents,
         /* [in]            DWORD      nNumberOfBytesToRead: */
-            platform_get_filesize(filepath),
+            bytes_to_read,
         /* [out, optional] LPDWORD    lpNumberOfBytesRead: */
             NULL,
         /* [in, out, optiona LPOVERLAPPED lpOverlapped: */
             NULL);
     
     log_assert(CloseHandle(file_handle));
+    out_preallocatedbuffer->good = true;
 }
 
 uint64_t platform_get_filesize(const char * filepath) {

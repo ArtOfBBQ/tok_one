@@ -453,12 +453,6 @@ int main(int argc, const char * argv[]) {
         return 1;
     }
     
-    #ifdef __AVX__
-    log_append("Platform CPU supports Intel AVX instructions...");
-    #else
-    log_append("Platform CPU does not support Intel AVX instructions...");
-    #endif
-    
     // NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     NSRect window_rect = NSMakeRect(
         /* x: */ window_globals->window_left,

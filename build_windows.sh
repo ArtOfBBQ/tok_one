@@ -73,6 +73,8 @@ rm -r -f build/windows/$APP_NAME/$APP_NAME
 echo "copy resources..."
 
 pushd resources > /dev/null
+cp *.glsl ../build/windows/$APP_NAME/
+
 for extension in png obj dat
 do
     for f in *.$extension;

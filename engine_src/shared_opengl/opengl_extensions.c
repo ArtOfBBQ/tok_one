@@ -72,3 +72,9 @@ void (* extptr_glEnableVertexAttribArray)(GLuint index) = NULL;
 
 void (* extptr_glValidateProgram)(GLuint program) = NULL;
 
+void (* extptr_glGetProgramInfoLog)(
+    GLuint program,
+    GLsizei maxLength,
+    GLsizei *length,
+    GLchar *infoLog) = NULL;
+

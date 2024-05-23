@@ -36,5 +36,10 @@ void opengl_compile_shaders(
 
 void opengl_set_projection_constants(GPUProjectionConstants * pjc);
 
+void shadersource_apply_macro_inplace(
+    char * shader_source,
+    char * to_replace,
+    char * replacement);
+
 #endif
 
