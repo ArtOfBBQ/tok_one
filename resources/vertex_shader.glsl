@@ -1,19 +1,14 @@
 #version 460 core
 
-layout (location = 0) in vec3 xyz;
-layout (location = 1) in vec3 normal;
-layout (location = 2) in vec2 uv;
-layout (location = 3) in vec4 rgba;
-layout (location = 4) in int texturearray_i;
-layout (location = 5) in int texture_i;
-layout (location = 6) in int polygon_i;
-
 struct GPUVertex {
     int locked_vertex_i; // index into GPULockedVertex buffer
     int polygon_i;       // index into GPUPolygonCollection buffer
 };
 
-uniform GPUVertex vertices[MAX_VERTICES_PER_BUFFER];
+layout (std430, binding=0) buffer vertices_buffer
+{
+    GPUVertex vertices[MAX_VERTICES_PER_BUFFER];
+};
 
 struct GPULockedVertex {
     float        xyz       [3];
@@ -21,8 +16,10 @@ struct GPULockedVertex {
     float        uv        [2];
     unsigned int parent_material_i;
 };
-
-uniform GPULockedVertex locked_vertices[ALL_LOCKED_VERTICES_SIZE];
+layout (std430, binding=1) buffer locked_vertices_buffer
+{
+    GPULockedVertex locked_vertices[ALL_LOCKED_VERTICES_SIZE];
+};
 
 struct GPUCamera {
     float x;
@@ -32,8 +29,18 @@ struct GPUCamera {
     float y_angle;
     float z_angle;
 };
-
 uniform GPUCamera camera;
+
+struct GPUProjectionConstants {
+    float znear;
+    float zfar;
+    float q;
+    float field_of_view_rad;
+    float field_of_view_modifier;
+    float x_multiplier;
+    float y_multiplier;
+};
+uniform GPUProjectionConstants projection_constants;
 
 struct GPUPolygon {
     float        xyz[3];
@@ -45,15 +52,11 @@ struct GPUPolygon {
     float        ignore_lighting;
     float        ignore_camera;
     float        simd_padding[6];
-}; // 24 floats (3 SIMD runs)
-
-// This wrapper struct doesn't help in OpenGL, just pass the member
-//struct GPUPolygonCollection {
-//    GPUPolygon   polygons[MAX_POLYGONS_PER_BUFFER];
-//    unsigned int size;
-//};
-
-uniform GPUPolygon polygons[MAX_POLYGONS_PER_BUFFER];
+};
+layout (std430, binding=2) buffer polygons_buffer
+{
+    GPUPolygon polygons[ALL_LOCKED_VERTICES_SIZE];
+};
 
 struct GPUPolygonMaterial {
     float rgba[4];
@@ -61,6 +64,11 @@ struct GPUPolygonMaterial {
     int   texture_i;
     float simd_padding[2];
 };
+layout (std430, binding=2) buffer polygon_materials_buffer
+{
+    GPUPolygonMaterial polygon_materials[MAX_POLYGONS_PER_BUFFER * MAX_MATERIALS_PER_POLYGON];
+};
+
 
 struct GPULightCollection {
     float        light_x[MAX_LIGHTS_PER_BUFFER];
@@ -74,44 +82,16 @@ struct GPULightCollection {
     float        blue   [MAX_LIGHTS_PER_BUFFER];
     unsigned int lights_size;
 };
-
-struct GPUProjectionConstants {
-    float znear;
-    float zfar;
-    float q;
-    float field_of_view_rad;
-    float field_of_view_modifier;
-    float x_multiplier;
-    float y_multiplier;
+layout (std430, binding=3) buffer light_collection_buffer
+{
+    GPULightCollection light_collection;
 };
 
-
-
-//uniform zPolygon zpolygons[800];
-
-//uniform float lights_x      [75];
-//uniform float lights_y      [75];
-//uniform float lights_z      [75];
-//uniform float lights_ambient[75];
-//uniform float lights_diffuse[75];
-//uniform float lights_reach  [75];
-//uniform float lights_red    [75];
-//uniform float lights_green  [75];
-//uniform float lights_blue   [75];
-//uniform int lights_size;
-//
-//uniform vec3  camera_position;
-//uniform vec3  camera_angle;
-//uniform float projection_constants_near;
-//uniform float projection_constants_q;
-//uniform float projection_constants_fov_modifier;
-//uniform float projection_constants_x_multiplier;
-
-out vec2 vert_to_frag_uv;
-out vec4 vert_to_frag_color;
-flat out int vert_to_frag_texturearray_i;
-flat out int vert_to_frag_texture_i;
-out vec4 vert_to_frag_lighting;
+out  vec2 vert_to_frag_uv;
+out  vec4 vert_to_frag_color;
+flat out  int vert_to_frag_texturearray_i;
+flat out  int vert_to_frag_texture_i;
+out  vec4 vert_to_frag_lighting;
 
 vec4 x_rotate(vec4 vertices, float x_angle) {
     vec4 rotated_vertices = vertices;
@@ -255,5 +235,97 @@ void main()
     gl_Position =
         (camera_z_rotated * (1.0f - ignore_cam)) +
         (translated_pos * ignore_cam);
+    
+    // projection
+    gl_Position[0] *= projection_constants.x_multiplier;
+    gl_Position[1] *= projection_constants.field_of_view_modifier;
+    gl_Position[3]  = gl_Position[2];
+    gl_Position[2]  =     
+        (gl_Position[2] * projection_constants.q) -
+        (projection_constants.znear * projection_constants.q);
+    
+    vert_to_frag_color = vec4(
+        polygon_materials[locked_material_i].rgba[0],
+        polygon_materials[locked_material_i].rgba[1],
+        polygon_materials[locked_material_i].rgba[2],
+        polygon_materials[locked_material_i].rgba[3]);
+    
+    vec4 bonus_rgb = vec4(
+        polygons[polygon_i].bonus_rgb[0],
+        polygons[polygon_i].bonus_rgb[1],
+        polygons[polygon_i].bonus_rgb[2],
+        0.0f);
+    
+    vert_to_frag_color += bonus_rgb;
+    
+    vert_to_frag_texturearray_i =
+        polygon_materials[locked_material_i].texturearray_i;
+    
+    vert_to_frag_texture_i =
+        polygon_materials[locked_material_i].texture_i;
+    
+    vert_to_frag_uv = vec2(
+        locked_vertices[locked_vertex_i].uv[0],
+        locked_vertices[locked_vertex_i].uv[1]);
+    
+    vert_to_frag_lighting = vec4(
+        0.0f, 0.0f, 0.0f, 0.0f);
+    for (
+        uint i = 0;
+        i < light_collection.lights_size;
+        i++)
+    {
+        // ambient lighting
+        vec4 light_pos = vec4(
+            light_collection.light_x[i],
+            light_collection.light_y[i],
+            light_collection.light_z[i],
+            1.0f);
+        vec4 light_color = vec4(
+            light_collection.red[i],
+            light_collection.green[i],
+            light_collection.blue[i],
+            1.0f);
+        float distance = get_distance(
+            light_pos,
+            translated_pos);
+        
+        float distance_mod = (light_collection.reach[i] + 0.05f)
+            - (distance * distance);
+        distance_mod = clamp(distance_mod, 0.0f, 5.0f);
+        
+        vert_to_frag_lighting += (
+            distance_mod *
+            light_color *
+            light_collection.ambient[i]);
+        
+        // diffuse lighting
+        normalize(z_rotated_normals);
+        
+        vec4 vec_from_light_to_vertex = normalize(
+            translated_pos - light_pos);
+        
+        float visibility_rating = max(
+            0.0f,
+            -1.0f * dot(
+                z_rotated_normals,
+                vec_from_light_to_vertex));
+        
+        vert_to_frag_lighting += (
+           light_color *
+           distance_mod *
+           (light_collection.diffuse[i] * 3.0f) *
+           visibility_rating);
+    }
+    
+    vert_to_frag_lighting = clamp(vert_to_frag_lighting, 0.05f, 7.5f);
+
+    float ignore_light = polygons[polygon_i].ignore_lighting;
+    
+    vec4 all_ones = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    
+    vert_to_frag_lighting =
+        ((1.0f - ignore_light) * vert_to_frag_lighting) +
+        (ignore_light * all_ones);
 }
 

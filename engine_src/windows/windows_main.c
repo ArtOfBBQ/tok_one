@@ -585,8 +585,6 @@ int CALLBACK WinMain(
         /* FileBuffer * out_preallocatedbuffer: */
             &fragment_shader_file);
     
-    printf("vertex shader:\n%s\n", vertex_shader_file.contents);
-    printf("fragment shader:\n%s\n", fragment_shader_file.contents);
     opengl_compile_shaders(
         /* char * vertex_shader_source: */
             vertex_shader_file.contents,

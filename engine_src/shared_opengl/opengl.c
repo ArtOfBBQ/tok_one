@@ -486,7 +486,7 @@ void platform_gpu_copy_locked_vertices(void)
 //    #endif
 //}
  
-static void opengl_compile_given_shader(
+static bool32_t opengl_compile_given_shader(
     GLuint shader_id,
     char * shader_source,
     GLint source_length)
@@ -567,6 +567,7 @@ static void opengl_compile_given_shader(
             &is_compiled);
     
     if (is_compiled == GL_FALSE) {
+        printf("Failed to compile shader:\n%s\n****\n", shader_source);
         GLenum err_value = glGetError();
         
         extptr_glGetShaderInfoLog(
@@ -579,6 +580,7 @@ static void opengl_compile_given_shader(
             /* GLchar * infolog: */
                 info_log);
         printf("info_log: %s\n", info_log);
+        return false;
     } else if (is_compiled == GL_TRUE) {
         
     } else {
@@ -590,7 +592,10 @@ static void opengl_compile_given_shader(
             GL_FALSE,
             is_compiled);
         assert(0);
+        return false;
     }
+
+    return true;
 }
 
 void opengl_compile_shaders(
@@ -611,7 +616,7 @@ void opengl_compile_shaders(
     assert(vertex_shader_source_size > 0);
     assert(vertex_shader_source != NULL);
     
-    opengl_compile_given_shader(
+    bool32_t shader_success = opengl_compile_given_shader(
         /* GLuint shader_id: */
             vertex_shader_id,
         /* char * shader_source: */
@@ -620,13 +625,14 @@ void opengl_compile_shaders(
             vertex_shader_source_size);
     err_value = glGetError();
     assert(err_value == 0);
+    if (!shader_success) { return; }
     
     fragment_shader_id = extptr_glCreateShader(GL_FRAGMENT_SHADER);
     err_value = glGetError();
     assert(err_value == 0);
     assert(fragment_shader_source_size > 0);
     assert(fragment_shader_source != NULL);
-    opengl_compile_given_shader(
+    shader_success = opengl_compile_given_shader(
         /* GLuint shader_id: */
             fragment_shader_id,
         /* char * shader_source: */
@@ -635,6 +641,7 @@ void opengl_compile_shaders(
             fragment_shader_source_size);
     err_value = glGetError();
     assert(err_value == 0);
+    if (!shader_success) { return; }
     
     // attach compiled shaders to program
     extptr_glAttachShader(program_id, vertex_shader_id);
@@ -709,143 +716,143 @@ void opengl_compile_shaders(
         return;
     }
     
-    extptr_glGenVertexArrays(1, &VAO);
-    err_value = glGetError();
-    assert(err_value == GL_NO_ERROR);
-    
-    extptr_glGenBuffers(1, &VBO);
-    err_value = glGetError();
-    assert(err_value == GL_NO_ERROR);
-    
-    extptr_glBindVertexArray(VAO);
-    err_value = glGetError();
-    assert(err_value == GL_NO_ERROR);
-    
-    extptr_glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    err_value = glGetError();
-    assert(err_value == GL_NO_ERROR);
-    
-    // We didn't use the standard alpha channel in Metal, so it shouldn't
-    // be enabled here
-    // glEnable(GL_BLEND);
-    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    
-    // The depth buffer is so much easier here than with Metal.
-    // On metal, we chose 32-bit floats
-    // for depth, the test is LESS OR EQUAL,
-    // 
-    glEnable(GL_DEPTH_TEST);
-    glClearDepth(50.0f);
-    glDepthFunc(GL_LEQUAL); // on metal: LEQUAL
-    
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);
-    
-    /*
-    Attribute pointers describe the fields of our data
-    sructure (the Vertex struct in shared/cpu_gpu_shared_types.h)
-    */
-    assert(sizeof(int) == sizeof(float));
-    assert(sizeof(GLint) == sizeof(GLfloat));
-    assert(sizeof(GLint) == sizeof(int));
-    uint32_t field_sizes[12]   = { 3, 3, 2, 4,  1,  1, 1  };
-    uint32_t field_offsets[12] = { 0, 3, 6, 8, 12, 13, 14 };
-    uint32_t cur_offset = 0;
-    
-    for (uint32_t _ = 0; _ < 7; _++) {
-        
-        printf("vertex attribute: %u (%u items)\n", _, field_sizes[_]);
-        
-        GLenum current_type = GL_FLOAT;
-        if (_ >= 4 && _ <= 6) {
-            current_type = GL_INT;
-        }
-        assert(cur_offset == field_offsets[_]);
-        
-        if (current_type == GL_INT) {
-            printf("%s\n", "type GL_INT");
-            /*
-            This is another massive trap in OpenGL:
-            You have to use glVertexAttribIPointer, not
-            glVertexAttribPointer, when and only when setting up a
-            vertex input that's an int. The other version also accepts
-            GL_INT and the documentation claims that it can be used for
-            ints, but it silently fails and garbles your int values to
-            some huge value even if you set normalize data to GL_FALSE.
-            */
-            extptr_glVertexAttribIPointer(
-                /* GLuint index (location in shader source): */
-                    _,
-                /* GLint size (number of components per vertex, must be 1-4): */
-                    field_sizes[_],
-                /* GLenum type (of data): */
-                    GL_INT,
-                /* GLsizei stride; */
-                    sizeof(GPUVertex),
-                /* const GLvoid * pointer (offset) : */
-                    (void *)(cur_offset * sizeof(float)));
-        } else {
-            printf("%s\n", "type GL_FLOAT");
-            /*
-            DANGER: this function is part of the trap
-            it bizarrely casts your input to floats, even if you
-            explicitly state they're ints
-            */
-            extptr_glVertexAttribPointer(
-                /* GLuint index (location in shader source): */
-                    _,
-                /* GLint size (no. of components/vertex, must be 1-4): */
-                    field_sizes[_],
-                /* GLenum type (of data): */
-                    GL_FLOAT,
-                /* GLboolean normalize data: */
-                    GL_FALSE,
-                /* GLsizei stride; */
-                    sizeof(GPUVertex),
-                /* const GLvoid * pointer (offset) : */
-                    (void *)(cur_offset * sizeof(float)));
-        }
-        cur_offset += field_sizes[_];
-        
-        err_value = glGetError();
-        if (err_value != GL_NO_ERROR) {
-            switch (err_value) {
-                case GL_INVALID_VALUE:
-                    printf("%s\n", "GL_INVALID_VALUE");
-                    break;
-                case GL_INVALID_ENUM:
-                    printf("%s\n", "GL_INVALID_ENUM");
-                    break;
-                case GL_INVALID_OPERATION:
-                    printf("%s\n", "GL_INVALID_OPERATION");
-                    break;
-                default:
-                    printf("%s\n", "unhandled!");
-            }
-            assert(0);
-        }
-        
-        extptr_glEnableVertexAttribArray(_);
-        assert(glGetError() == 0);
-    }
-    
-    // now that we're done, the offset should be the entirety of a
-    // GPUVertex
-    if (cur_offset != sizeof(GPUVertex) / 4) {
-        printf("cur_offset: %u\n", cur_offset);
-        printf(
-            "sizeof(GPUVertex): %u, which div 4 is: %u\n",
-            (uint32_t)sizeof(GPUVertex),
-            (uint32_t)sizeof(GPUVertex) / 4);
-        assert(0);
-    }
-    
-    // validate program
-    success = 0;
-    extptr_glValidateProgram(program_id);
-    extptr_glGetProgramiv(program_id, GL_VALIDATE_STATUS, &success);
-    assert(success);
-    assert(glGetError() == 0);
+    //extptr_glGenVertexArrays(1, &VAO);
+    //err_value = glGetError();
+    //assert(err_value == GL_NO_ERROR);
+    //
+    //extptr_glGenBuffers(1, &VBO);
+    //err_value = glGetError();
+    //assert(err_value == GL_NO_ERROR);
+    //
+    //extptr_glBindVertexArray(VAO);
+    //err_value = glGetError();
+    //assert(err_value == GL_NO_ERROR);
+    //
+    //extptr_glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    //err_value = glGetError();
+    //assert(err_value == GL_NO_ERROR);
+    //
+    //// We didn't use the standard alpha channel in Metal, so it shouldn't
+    //// be enabled here
+    //// glEnable(GL_BLEND);
+    //// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //
+    //// The depth buffer is so much easier here than with Metal.
+    //// On metal, we chose 32-bit floats
+    //// for depth, the test is LESS OR EQUAL,
+    //// 
+    //glEnable(GL_DEPTH_TEST);
+    //glClearDepth(50.0f);
+    //glDepthFunc(GL_LEQUAL); // on metal: LEQUAL
+    //
+    //glEnable(GL_CULL_FACE);
+    //glCullFace(GL_FRONT);
+    //
+    ///*
+    //Attribute pointers describe the fields of our data
+    //sructure (the Vertex struct in shared/cpu_gpu_shared_types.h)
+    //*/
+    //assert(sizeof(int) == sizeof(float));
+    //assert(sizeof(GLint) == sizeof(GLfloat));
+    //assert(sizeof(GLint) == sizeof(int));
+    //uint32_t field_sizes[12]   = { 3, 3, 2, 4,  1,  1, 1  };
+    //uint32_t field_offsets[12] = { 0, 3, 6, 8, 12, 13, 14 };
+    //uint32_t cur_offset = 0;
+    //
+    //for (uint32_t _ = 0; _ < 7; _++) {
+    //    
+    //    printf("vertex attribute: %u (%u items)\n", _, field_sizes[_]);
+    //    
+    //    GLenum current_type = GL_FLOAT;
+    //    if (_ >= 4 && _ <= 6) {
+    //        current_type = GL_INT;
+    //    }
+    //    assert(cur_offset == field_offsets[_]);
+    //    
+    //    if (current_type == GL_INT) {
+    //        printf("%s\n", "type GL_INT");
+    //        /*
+    //        This is another massive trap in OpenGL:
+    //        You have to use glVertexAttribIPointer, not
+    //        glVertexAttribPointer, when and only when setting up a
+    //        vertex input that's an int. The other version also accepts
+    //        GL_INT and the documentation claims that it can be used for
+    //        ints, but it silently fails and garbles your int values to
+    //        some huge value even if you set normalize data to GL_FALSE.
+    //        */
+    //        extptr_glVertexAttribIPointer(
+    //            /* GLuint index (location in shader source): */
+    //                _,
+    //            /* GLint size (number of components per vertex, must be 1-4): */
+    //                field_sizes[_],
+    //            /* GLenum type (of data): */
+    //                GL_INT,
+    //            /* GLsizei stride; */
+    //                sizeof(GPUVertex),
+    //            /* const GLvoid * pointer (offset) : */
+    //                (void *)(cur_offset * sizeof(float)));
+    //    } else {
+    //        printf("%s\n", "type GL_FLOAT");
+    //        /*
+    //        DANGER: this function is part of the trap
+    //        it bizarrely casts your input to floats, even if you
+    //        explicitly state they're ints
+    //        */
+    //        extptr_glVertexAttribPointer(
+    //            /* GLuint index (location in shader source): */
+    //                _,
+    //            /* GLint size (no. of components/vertex, must be 1-4): */
+    //                field_sizes[_],
+    //            /* GLenum type (of data): */
+    //                GL_FLOAT,
+    //            /* GLboolean normalize data: */
+    //                GL_FALSE,
+    //            /* GLsizei stride; */
+    //                sizeof(GPUVertex),
+    //            /* const GLvoid * pointer (offset) : */
+    //                (void *)(cur_offset * sizeof(float)));
+    //    }
+    //    cur_offset += field_sizes[_];
+    //    
+    //    err_value = glGetError();
+    //    if (err_value != GL_NO_ERROR) {
+    //        switch (err_value) {
+    //            case GL_INVALID_VALUE:
+    //                printf("%s\n", "GL_INVALID_VALUE");
+    //                break;
+    //            case GL_INVALID_ENUM:
+    //                printf("%s\n", "GL_INVALID_ENUM");
+    //                break;
+    //            case GL_INVALID_OPERATION:
+    //                printf("%s\n", "GL_INVALID_OPERATION");
+    //                break;
+    //            default:
+    //                printf("%s\n", "unhandled!");
+    //        }
+    //        assert(0);
+    //    }
+    //    
+    //    extptr_glEnableVertexAttribArray(_);
+    //    assert(glGetError() == 0);
+    //}
+    //
+    //// now that we're done, the offset should be the entirety of a
+    //// GPUVertex
+    //if (cur_offset != sizeof(GPUVertex) / 4) {
+    //    printf("cur_offset: %u\n", cur_offset);
+    //    printf(
+    //        "sizeof(GPUVertex): %u, which div 4 is: %u\n",
+    //        (uint32_t)sizeof(GPUVertex),
+    //        (uint32_t)sizeof(GPUVertex) / 4);
+    //    assert(0);
+    //}
+    //
+    //// validate program
+    //success = 0;
+    //extptr_glValidateProgram(program_id);
+    //extptr_glGetProgramiv(program_id, GL_VALIDATE_STATUS, &success);
+    //assert(success);
+    //assert(glGetError() == 0);
 }
 
 /* reminder: this is mutex protected */
