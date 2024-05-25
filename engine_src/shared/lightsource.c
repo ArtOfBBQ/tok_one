@@ -313,19 +313,22 @@ void translate_lights(
     
     for (uint32_t i = 0; i < zlights_to_apply_size; i++)
     {
-        translated_light_pos.x = zlights_to_apply[i].xyz[0] - camera.x;
-        translated_light_pos.y = zlights_to_apply[i].xyz[1] - camera.y;
-        translated_light_pos.z = zlights_to_apply[i].xyz[2] - camera.z;
+        translated_light_pos.x =
+            zlights_to_apply[i].xyz[0] - camera.xyz[0];
+        translated_light_pos.y =
+            zlights_to_apply[i].xyz[1] - camera.xyz[1];
+        translated_light_pos.z =
+            zlights_to_apply[i].xyz[2] - camera.xyz[2];
         
         translated_light_pos = x_rotate_zvertex(
             &translated_light_pos,
-            -camera.x_angle);
+            -camera.xyz_angle[0]);
         translated_light_pos = y_rotate_zvertex(
             &translated_light_pos,
-            -camera.y_angle);
+            -camera.xyz_angle[1]);
         translated_light_pos = z_rotate_zvertex(
             &translated_light_pos,
-            -camera.z_angle);
+            -camera.xyz_angle[2]);
         
         lights_for_gpu->light_x[i]   = translated_light_pos.x;
         lights_for_gpu->light_y[i]   = translated_light_pos.y;

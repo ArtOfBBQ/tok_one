@@ -477,18 +477,18 @@ void zcamera_move_forward(
     
     zVertex x_rotated = x_rotate_zvertex(
         &forward_if_camera_was_unrotated_at_origin,
-        camera.x_angle);
+        camera.xyz_angle[0]);
     zVertex y_rotated = y_rotate_zvertex(
         &x_rotated,
-        camera.y_angle);
+        camera.xyz_angle[1]);
     zVertex final = z_rotate_zvertex(
         &y_rotated,
-        camera.z_angle);
+        camera.xyz_angle[2]);
     
     // add to the camera's current position
-    to_move->x += final.x;
-    to_move->y += final.y;
-    to_move->z += final.z;
+    to_move->xyz[0] += final.x;
+    to_move->xyz[1] += final.y;
+    to_move->xyz[2] += final.z;
 }
 
 bool32_t ray_intersects_zpolygon_hitbox(
@@ -775,8 +775,10 @@ void construct_quad(
     // so the current width is 2.0f
     float current_width = 2.0f;
     float current_height = 2.0f;
-    stack_recipient->gpu_data->xyz_multiplier[0] = width / current_width;
-    stack_recipient->gpu_data->xyz_multiplier[1] = height / current_height;
+    stack_recipient->gpu_data->xyz_multiplier[0] =
+        width / current_width;
+    stack_recipient->gpu_data->xyz_multiplier[1] =
+        height / current_height;
     stack_recipient->gpu_data->xyz_multiplier[2] = 1.0f;
     
     stack_recipient->gpu_materials[0].rgba[0] = 1.0f;

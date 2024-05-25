@@ -35,12 +35,8 @@ typedef struct GPULockedVertex {
 } GPULockedVertex;
 
 typedef struct GPUCamera {
-    float x;
-    float y;
-    float z;
-    float x_angle;
-    float y_angle;
-    float z_angle;
+    float xyz[3];
+    float xyz_angle[3];
 } GPUCamera;
 
 typedef struct GPUPolygon {

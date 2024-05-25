@@ -78,3 +78,24 @@ void (* extptr_glGetProgramInfoLog)(
     GLsizei *length,
     GLchar *infoLog) = NULL;
 
+void (* extptr_glBufferData)(
+    GLenum target,
+    GLsizeiptr size,
+    const void * data,
+    GLenum usage) = NULL;
+
+void (* extptr_glBindBufferBase)(
+    GLenum target,
+    GLuint index,
+    GLuint buffer) = NULL;
+
+void (* extptr_glUniform3fv)(
+    GLint location,
+    GLsizei count,
+    const GLfloat * value) = NULL;
+
+void (* extptr_glGetUniformfv)(
+    GLuint program,
+    GLint location,
+    GLfloat * params) = NULL;
+

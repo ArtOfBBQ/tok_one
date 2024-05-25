@@ -314,6 +314,7 @@ void init_application_before_gpu_init(void)
                 gpu_shared_data_collection.polygon_materials_allocation_size,
                 4096);
         
+        assert(gpu_shared_data_collection.lights_allocation_size > 0);
         gpu_shared_data_collection.triple_buffers[frame_i].light_collection =
             (GPULightCollection *)malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection.lights_allocation_size,
@@ -324,15 +325,15 @@ void init_application_before_gpu_init(void)
             gpu_shared_data_collection.camera_allocation_size,
             4096);
         
-        gpu_shared_data_collection.triple_buffers[frame_i].camera->x = 0.0f;
-        gpu_shared_data_collection.triple_buffers[frame_i].camera->y = 0.0f;
-        gpu_shared_data_collection.triple_buffers[frame_i].camera->z = 0.0f;
+        gpu_shared_data_collection.triple_buffers[frame_i].camera->xyz[0] = 0.0f;
+        gpu_shared_data_collection.triple_buffers[frame_i].camera->xyz[1] = 0.0f;
+        gpu_shared_data_collection.triple_buffers[frame_i].camera->xyz[2] = 0.0f;
         gpu_shared_data_collection.
-            triple_buffers[frame_i].camera->x_angle = 0.0f;
+            triple_buffers[frame_i].camera->xyz_angle[0] = 0.0f;
         gpu_shared_data_collection.
-            triple_buffers[frame_i].camera->y_angle = 0.0f;
+            triple_buffers[frame_i].camera->xyz_angle[1] = 0.0f;
         gpu_shared_data_collection.
-            triple_buffers[frame_i].camera->z_angle = 0.0f;
+            triple_buffers[frame_i].camera->xyz_angle[2] = 0.0f;
     }
     
     gpu_shared_data_collection.locked_vertices =

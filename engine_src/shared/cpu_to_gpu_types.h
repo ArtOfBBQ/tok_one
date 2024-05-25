@@ -38,3 +38,4 @@ typedef struct GPUSharedDataCollection
 extern GPUSharedDataCollection gpu_shared_data_collection;
 
 #endif // CPU_TO_GPU_TYPES_H
+

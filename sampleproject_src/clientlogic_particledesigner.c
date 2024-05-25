@@ -999,46 +999,46 @@ static void client_handle_keypresses(
     
     if (keypress_map[TOK_KEY_LEFTARROW] == true)
     {
-        camera.x -= cam_speed;
+        camera.xyz[0] -= cam_speed;
     }
     
     if (keypress_map[TOK_KEY_RIGHTARROW] == true)
     {
-        camera.x += cam_speed;
+        camera.xyz[1] += cam_speed;
     }
     
     if (keypress_map[TOK_KEY_DOWNARROW] == true)
     {
-        camera.y -= cam_speed;
+        camera.xyz[2] -= cam_speed;
     }
     
     if (keypress_map[TOK_KEY_UPARROW] == true)
     {
-        camera.y += cam_speed;
+        camera.xyz[1] += cam_speed;
     }
     
     if (keypress_map[TOK_KEY_A] == true) {
-        camera.x_angle += cam_rotation_speed;
+        camera.xyz_angle[0] += cam_rotation_speed;
     }
     
     if (keypress_map[TOK_KEY_Z] == true) {
-        camera.z_angle -= cam_rotation_speed;
+        camera.xyz_angle[2] -= cam_rotation_speed;
     }
     
     if (keypress_map[TOK_KEY_X] == true) {
-        camera.z_angle += cam_rotation_speed;
+        camera.xyz_angle[2] += cam_rotation_speed;
     }
     
     if (keypress_map[TOK_KEY_Q] == true) {
-        camera.x_angle -= cam_rotation_speed;
+        camera.xyz_angle[0] -= cam_rotation_speed;
     }
     
     if (keypress_map[TOK_KEY_W] == true) {
-        camera.y_angle -= cam_rotation_speed;
+        camera.xyz_angle[1] -= cam_rotation_speed;
     }
     
     if (keypress_map[TOK_KEY_S] == true) {
-        camera.y_angle += cam_rotation_speed;
+        camera.xyz_angle[1] += cam_rotation_speed;
     }
     
     if (keypress_map[TOK_KEY_L] == true) {
@@ -1117,11 +1117,11 @@ static void client_handle_keypresses(
     
     if (keypress_map[TOK_KEY_BACKSLASH] == true) {
         // / key
-        camera.z -= 0.01f;
+        camera.xyz[2] -= 0.01f;
     }
     
     if (keypress_map[TOK_KEY_UNDERSCORE] == true) {
-        camera.z += 0.01f;
+        camera.xyz[2] += 0.01f;
     }
 }
 

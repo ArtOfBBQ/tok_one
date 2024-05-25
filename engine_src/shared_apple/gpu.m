@@ -700,7 +700,7 @@ static dispatch_semaphore_t drawing_semaphore;
     [command_buffer presentDrawable: [view currentDrawable]];
     
     current_frame_i += 1;
-    current_frame_i -= ((current_frame_i > 2)*3);
+    current_frame_i %= 3;
     
     [command_buffer addCompletedHandler:^(id<MTLCommandBuffer> arg_cmd_buffer) {
         (void)arg_cmd_buffer;

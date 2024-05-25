@@ -5,9 +5,11 @@ GPUSharedDataCollection gpu_shared_data_collection;
 // We'll need these 2 identifiers while drawing
 GLuint program_id;
 GLuint fragment_shader_id;
-unsigned int VAO = UINT32_MAX;
-unsigned int VBO = UINT32_MAX;
-static GLuint err_value = UINT32_MAX;
+unsigned int VAO                    = UINT32_MAX;
+unsigned int GPUVertex_VBO_id       = UINT32_MAX;
+unsigned int GPUPolygons_VBO_id     = UINT32_MAX;
+unsigned int GPULockedVertex_VBO_id = UINT32_MAX;
+static GLuint err_value             = UINT32_MAX;
 
 static GLuint texture_array_ids[TEXTUREARRAYS_SIZE];
 
@@ -63,23 +65,30 @@ static void spotcheck_uniform(
 }
 #endif
 
-//static void opengl_set_polygons(
-//    GPUPolygonCollection * polygon_collection)
-//{
-//    /*
-//    Reminder: If MAX_POLYGONS_PER_BUFFER gets updated,
-//    you need to update the glsl vertex shader
-//    */
-//    assert(MAX_POLYGONS_PER_BUFFER == 800);
-//    
-//    GLint loc = extptr_glGetUniformLocation(
-//        program_id,
-//        "zpolygons_xyz");
-//    assert(glGetError() == 0);
-//    // glUniform3fv(loc, MAX_POLYGONS_PER_BUFFER, polygon_collection->xyz);
-//    assert(glGetError() == 0);
-//    
-//}
+static void opengl_set_polygons(
+    GPUPolygonCollection * polygon_collection)
+{
+    extptr_glGenBuffers(1, &GPUPolygons_VBO_id);
+    extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, GPUPolygons_VBO_id);
+    extptr_glBufferData(
+        /* GLenum target: */
+            GL_SHADER_STORAGE_BUFFER,
+        /* GLsizeiptr size: */
+            sizeof(GPUPolygon) * MAX_POLYGONS_PER_BUFFER,
+        /* const void * data: */
+            polygon_collection->polygons,
+        /* GLenum usage: */
+            GL_STREAM_DRAW);
+    // TODO: STREAM_DRAW is just my guess after reading docs
+    // need to revisit after being more familiar with OpenGL
+    
+    // binding = 2 in the shader code
+    extptr_glBindBufferBase(
+        GL_SHADER_STORAGE_BUFFER,
+        2,
+        GPUPolygons_VBO_id);
+    assert(glGetError() == 0);
+}
 
 //static void opengl_set_lights(
 //    GPULightCollection * light_collection)
@@ -268,223 +277,272 @@ static void spotcheck_uniform(
 //    #endif
 //}
   
-//static void opengl_set_camera(
-//    GPUCamera * arg_camera)
-//{
-//    GLint loc = -1;
-//    
-//    assert(program_id == 1);
-//    extptr_glUseProgram(program_id);
-//    assert(glGetError() == 0);
-//    
-//    loc = extptr_glGetUniformLocation(
-//        program_id,
-//        "camera_position");
-//    assert(glGetError() == 0);
-//    // there is also glProgramUniform3f, but that's not in OpenGL 3.0
-//    // We are using 'glUseProgram' explicitly here and before this so
-//    // I don't think that can be the problem
-//    float cam_pos[3];
-//    cam_pos[0] = arg_camera->x;
-//    cam_pos[1] = arg_camera->y;
-//    cam_pos[2] = arg_camera->z;
-//    glUniform3fv(
-//        loc,
-//        1,
-//        cam_pos);
-//    
-//    err_value = glGetError();
-//    if (err_value != 0) {
-//        printf("error trying to set arg_camera pos uniform\n");
-//        switch (err_value) {
-//            case GL_INVALID_VALUE:
-//                printf("%s\n", "GL_INVALID_VALUE");
-//                break;
-//            case GL_INVALID_ENUM:
-//                printf("%s\n", "GL_INVALID_ENUM");
-//                break;
-//            case GL_INVALID_OPERATION:
-//                printf("%s\n", "GL_INVALID_OPERATION");
-//                break;
-//            default:
-//                printf("%s\n", "unhandled!");
-//        }
-//        assert(0);
-//    }
-//    
-//    loc = extptr_glGetUniformLocation(
-//        program_id,
-//        "camera_angle");
-//    assert(glGetError() == 0);
-//    float cam_angle[3];
-//    cam_angle[0] = arg_camera->x_angle;
-//    cam_angle[1] = arg_camera->y_angle;
-//    cam_angle[2] = arg_camera->z_angle;
-//    glUniform3fv(
-//        loc,
-//        1,
-//        cam_angle);
-//    assert(glGetError() == 0);
-//    
-//    float doublecheck_cam_angle[3];
-//    doublecheck_cam_angle[2] = 234.12f;
-//    glGetUniformfv(program_id, loc, doublecheck_cam_angle);
-//    assert(glGetError() == 0);
-//    assert(doublecheck_cam_angle[0] == arg_camera->x_angle);
-//    // assert(doublecheck_cam_angle[1] == arg_camera->y_angle);
-//    // assert(doublecheck_cam_angle[2] == arg_camera->z_angle);
-//}
+static bool32_t opengl_set_camera(
+    GPUCamera * arg_camera)
+{
+    GLint loc = -1;
+    
+    assert(program_id == 1);
+    extptr_glUseProgram(program_id);
+    assert(glGetError() == 0);
+    
+    loc = extptr_glGetUniformLocation(
+        program_id,
+        "camera_xyz");
+    if (loc != 30) {
+        printf("camera_xyz uniform is not at location 30!\n");
+        return false;
+    }
+    printf("loc: %u\n", loc);
+    assert(glGetError() == 0);
+    
+    // there is also glProgramUniform3f, but that's not in OpenGL 3.0
+    extptr_glUniform3fv(
+        loc,
+        1,
+        arg_camera->xyz);
+    
+    err_value = glGetError();
+    if (err_value != 0) {
+        printf("error trying to set arg_camera pos uniform\n");
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled!");
+        }
+        assert(0);
+    }
+    
+    loc = extptr_glGetUniformLocation(
+        program_id,
+        "camera_xyz_angle");
+    if (loc != 31) {
+        printf("camera_xyz_angle uniform is not at location 31!\n");
+        return false;
+    }
+    assert(glGetError() == 0);
+    extptr_glUniform3fv(
+        loc,
+        1,
+        camera.xyz_angle);
+    assert(glGetError() == 0);
+    
+    float doublecheck_cam_angle[3];
+    doublecheck_cam_angle[2] = 234.12f;
+    extptr_glGetUniformfv(program_id, loc, doublecheck_cam_angle);
+    assert(glGetError() == 0);
+    assert(doublecheck_cam_angle[0] == arg_camera->xyz_angle[0]);
+    assert(doublecheck_cam_angle[1] == arg_camera->xyz_angle[1]);
+    assert(doublecheck_cam_angle[2] == arg_camera->xyz_angle[2]);
+    
+    return true;
+}
 
 void platform_gpu_copy_locked_vertices(void)
 {
-    // TODO: implement me!
-    printf("ERROR - copy locked vertices not implemented yet in opengl!");
+    printf("%s\n", "Copy locked vertices...\n");
+    
+    extptr_glGenBuffers(1, &GPULockedVertex_VBO_id);
+    extptr_glBindBuffer(
+        GL_SHADER_STORAGE_BUFFER,
+        GPULockedVertex_VBO_id);
+    extptr_glBufferData(
+        /* GLenum target: */
+            GL_SHADER_STORAGE_BUFFER,
+        /* GLsizeiptr size: */
+            sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE,
+        /* const void * data: */
+            gpu_shared_data_collection.locked_vertices,
+        /* GLenum usage: */
+            GL_STATIC_DRAW);
+    // TODO: STATIC_DRAW is just my guess after reading docs
+    // need to revisit after being more familiar with OpenGL
+    
+    // binding = 1 in the shader code
+    extptr_glBindBufferBase(
+        GL_SHADER_STORAGE_BUFFER,
+        1,
+        GPULockedVertex_VBO_id);
+    assert(glGetError() == 0);
 }
 
-//void opengl_render_triangles(GPUDataForSingleFrame * frame_data) {
-//    
-//    assert(VAO < UINT32_MAX);
-//    assert(VBO < UINT32_MAX);
-//    
-//    extptr_glUseProgram(program_id);
-//    
-//    if (frame_data->vertices_size < 1) { return; }
-//
-//    #ifndef LOGGER_IGNORE_ASSERTS
-//    assert(frame_data->vertices != NULL); 
-//    err_value = glGetError();
-//    if (err_value != GL_NO_ERROR) {
-//        switch (err_value) {
-//            case GL_INVALID_VALUE:
-//                printf("%s\n", "GL_INVALID_VALUE");
-//                break;
-//            case GL_INVALID_ENUM:
-//                printf("%s\n", "GL_INVALID_ENUM");
-//                break;
-//            case GL_INVALID_OPERATION:
-//                printf("%s\n", "GL_INVALID_OPERATION");
-//                break;
-//            default:
-//                printf("%s\n", "unhandled error at start of frame!");
-//                break;
-//        }
-//        assert(0);
-//    }
-//    #endif
-//
-//    #ifndef LOGGER_IGNORE_ASSERTS
-//    for (uint32_t i = 0; i < frame_data->vertices_size; i++) {
-//        if (
-//            frame_data->vertices[i].polygon_i < 0 ||
-//            frame_data->vertices[i].polygon_i >=
-//                frame_data->polygon_collection->size)
-//        {
-//            printf(
-//                "invalid polygon_i: %u\n",
-//                frame_data->vertices[i].polygon_i);
-//            assert(frame_data->vertices[i].polygon_i >= 0);
-//            assert(
-//                frame_data->vertices[i].polygon_i <
-//                    frame_data->polygon_collection->size);
-//        }
-//    }
-//    #endif
-//    
-//    glBufferData(
-//        /* target: */
-//            GL_ARRAY_BUFFER,
-//        /* size_in_bytes: */
-//            sizeof(GPUVertex) * frame_data->vertices_size,
-//        /* const GLvoid * data: (to init with, or NULL to copy no data) */
-//            (const GLvoid *)frame_data->vertices,
-//        /* usage: */
-//            GL_DYNAMIC_DRAW);
-//    
-//    #ifndef LOGGER_IGNORE_ASSERTS
-//    err_value = glGetError();
-//    if (err_value != GL_NO_ERROR) {
-//        switch (err_value) {
-//            case GL_INVALID_VALUE:
-//                printf("%s\n", "GL_INVALID_VALUE");
-//                break;
-//            case GL_INVALID_ENUM:
-//                printf("%s\n", "GL_INVALID_ENUM");
-//                break;
-//            case GL_INVALID_OPERATION:
-//                printf("%s\n", "GL_INVALID_OPERATION");
-//                break;
-//            default:
-//                printf("%s\n", "unhandled error when sending buffer data!");
-//                break;
-//        }
-//        assert(0);
-//    }
-//    #endif
-//    
-//    opengl_set_polygons(frame_data->polygon_collection);
-//    #ifndef LOGGER_IGNORE_ASSERTS
-//    err_value = glGetError();
-//    #endif
-//    
-//    opengl_set_lights(frame_data->light_collection);
-//    #ifndef LOGGER_IGNORE_ASSERTS
-//    err_value = glGetError();
-//    #endif
-//    
-//    opengl_set_camera(frame_data->camera);
-//    #ifndef LOGGER_IGNORE_ASSERTS
-//    err_value = glGetError();
-//    if (err_value != GL_NO_ERROR) {
-//        switch (err_value) {
-//            case GL_INVALID_VALUE:
-//                printf("%s\n", "GL_INVALID_VALUE");
-//                break;
-//            case GL_INVALID_ENUM:
-//                printf("%s\n", "GL_INVALID_ENUM");
-//                break;
-//            case GL_INVALID_OPERATION:
-//                printf("%s\n", "GL_INVALID_OPERATION");
-//                break;
-//            default:
-//                printf("%s\n", "unhandled error when sending buffer data!");
-//                break;
-//        }
-//        assert(0);
-//    }
-//    #endif
-//    
-//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//    
-//    // glPointSize(10); // for GL_POINTS
-//    glDrawArrays(
-//        /* GLenum mode: */
-//            GL_TRIANGLES,
-//        /* GLint first: */
-//            0,
-//        /* GLint count (# of vertices to render): */
-//            frame_data->vertices_size);
-//    
-//    #ifndef LOGGER_IGNORE_ASSERTS
-//    err_value = glGetError();
-//    if (err_value != GL_NO_ERROR) {
-//        switch (err_value) {
-//            case GL_INVALID_VALUE:
-//                printf("%s\n", "GL_INVALID_VALUE");
-//                break;
-//            case GL_INVALID_ENUM:
-//                printf("%s\n", "GL_INVALID_ENUM");
-//                break;
-//            case GL_INVALID_OPERATION:
-//                printf("%s\n", "GL_INVALID_OPERATION");
-//                break;
-//            default:
-//                printf("%s\n", "unhandled error when sending buffer data!");
-//                break;
-//        }
-//        assert(0);
-//    }
-//    #endif
-//}
+void opengl_render_triangles(
+    GPUDataForSingleFrame * frame_data)
+{
+    printf("render %u triangles...\n", frame_data->vertices_size);
+    
+    assert(VAO < UINT32_MAX);
+    assert(GPUVertex_VBO_id < UINT32_MAX);
+    
+    extptr_glUseProgram(program_id);
+    assert(glGetError() == GL_NO_ERROR);
+    
+    if (frame_data->vertices_size < 1) { return; }
+    
+    #ifndef LOGGER_IGNORE_ASSERTS
+    assert(frame_data->vertices != NULL); 
+    err_value = glGetError();
+    if (err_value != GL_NO_ERROR) {
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled error at start of frame!");
+                break;
+        }
+        assert(0);
+    }
+    #endif
+    
+    #ifndef LOGGER_IGNORE_ASSERTS
+    for (uint32_t i = 0; i < frame_data->vertices_size; i++) {
+        if (
+            frame_data->vertices[i].polygon_i < 0 ||
+            frame_data->vertices[i].polygon_i >=
+                frame_data->polygon_collection->size)
+        {
+            printf(
+                "invalid polygon_i: %u\n",
+                frame_data->vertices[i].polygon_i);
+            assert(frame_data->vertices[i].polygon_i >= 0);
+            assert(
+                frame_data->vertices[i].polygon_i <
+                    frame_data->polygon_collection->size);
+        }
+    }
+    #endif
+    
+    //glBufferData(
+    //    /* target: */
+    //        GL_ARRAY_BUFFER,
+    //    /* size_in_bytes: */
+    //        sizeof(GPUVertex) * frame_data->vertices_size,
+    //    /* const GLvoid * data: (to init with, or NULL to copy no data) */
+    //        (const GLvoid *)frame_data->vertices,
+    //    /* usage: */
+    //        GL_DYNAMIC_DRAW);
+    
+    #ifndef LOGGER_IGNORE_ASSERTS
+    err_value = glGetError();
+    if (err_value != GL_NO_ERROR) {
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf(
+                    "%s\n",
+                    "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf(
+                    "%s\n",
+                    "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf(
+                    "%s\n",
+                    "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf(
+                    "%s\n",
+                    "unhandled error when sending buffer data!");
+                break;
+        }
+        assert(0);
+    }
+    #endif
+    
+    opengl_set_polygons(frame_data->polygon_collection);
+    #ifndef LOGGER_IGNORE_ASSERTS
+    err_value = glGetError();
+    #endif
+    
+    //opengl_set_lights(frame_data->light_collection);
+    //#ifndef LOGGER_IGNORE_ASSERTS
+    //err_value = glGetError();
+    //#endif
+    
+    bool32_t camera_success = opengl_set_camera(frame_data->camera);
+    if (!camera_success) {
+        return;
+    }
+    #ifndef LOGGER_IGNORE_ASSERTS
+    err_value = glGetError();
+    if (err_value != GL_NO_ERROR) {
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf(
+                    "%s\n",
+                    "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf(
+                    "%s\n",
+                    "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf(
+                    "%s\n",
+                    "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf(
+                    "%s\n",
+                    "unhandled error when sending buffer data!");
+                break;
+        }
+        assert(0);
+    }
+    #endif
+    
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
+    #if 0
+    // glPointSize(10); // for GL_POINTS
+    glDrawArrays(
+        /* GLenum mode: */
+            GL_TRIANGLES,
+        /* GLint first: */
+            0,
+        /* GLint count (# of vertices to render): */
+            frame_data->vertices_size);
+    
+    #ifndef LOGGER_IGNORE_ASSERTS
+    err_value = glGetError();
+    if (err_value != GL_NO_ERROR) {
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled error when sending buffer data!");
+                break;
+        }
+        assert(0);
+    }
+    #endif
+    #endif
+}
  
 static bool32_t opengl_compile_given_shader(
     GLuint shader_id,
@@ -707,7 +765,6 @@ void opengl_compile_shaders(
         printf("glLinkProgram() succeeded.\n");
     }
     
-    // TODO: Learn exactly when nescessary, hope to just set & forget
     extptr_glUseProgram(program_id);
     err_value = glGetError();
     if (err_value != 0) {
@@ -716,143 +773,123 @@ void opengl_compile_shaders(
         return;
     }
     
-    //extptr_glGenVertexArrays(1, &VAO);
-    //err_value = glGetError();
-    //assert(err_value == GL_NO_ERROR);
-    //
-    //extptr_glGenBuffers(1, &VBO);
-    //err_value = glGetError();
-    //assert(err_value == GL_NO_ERROR);
-    //
-    //extptr_glBindVertexArray(VAO);
-    //err_value = glGetError();
-    //assert(err_value == GL_NO_ERROR);
-    //
-    //extptr_glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    //err_value = glGetError();
-    //assert(err_value == GL_NO_ERROR);
-    //
-    //// We didn't use the standard alpha channel in Metal, so it shouldn't
-    //// be enabled here
-    //// glEnable(GL_BLEND);
-    //// glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    //
-    //// The depth buffer is so much easier here than with Metal.
-    //// On metal, we chose 32-bit floats
-    //// for depth, the test is LESS OR EQUAL,
-    //// 
-    //glEnable(GL_DEPTH_TEST);
-    //glClearDepth(50.0f);
-    //glDepthFunc(GL_LEQUAL); // on metal: LEQUAL
-    //
-    //glEnable(GL_CULL_FACE);
-    //glCullFace(GL_FRONT);
-    //
-    ///*
-    //Attribute pointers describe the fields of our data
-    //sructure (the Vertex struct in shared/cpu_gpu_shared_types.h)
-    //*/
-    //assert(sizeof(int) == sizeof(float));
-    //assert(sizeof(GLint) == sizeof(GLfloat));
-    //assert(sizeof(GLint) == sizeof(int));
-    //uint32_t field_sizes[12]   = { 3, 3, 2, 4,  1,  1, 1  };
-    //uint32_t field_offsets[12] = { 0, 3, 6, 8, 12, 13, 14 };
-    //uint32_t cur_offset = 0;
-    //
-    //for (uint32_t _ = 0; _ < 7; _++) {
-    //    
-    //    printf("vertex attribute: %u (%u items)\n", _, field_sizes[_]);
-    //    
-    //    GLenum current_type = GL_FLOAT;
-    //    if (_ >= 4 && _ <= 6) {
-    //        current_type = GL_INT;
-    //    }
-    //    assert(cur_offset == field_offsets[_]);
-    //    
-    //    if (current_type == GL_INT) {
-    //        printf("%s\n", "type GL_INT");
-    //        /*
-    //        This is another massive trap in OpenGL:
-    //        You have to use glVertexAttribIPointer, not
-    //        glVertexAttribPointer, when and only when setting up a
-    //        vertex input that's an int. The other version also accepts
-    //        GL_INT and the documentation claims that it can be used for
-    //        ints, but it silently fails and garbles your int values to
-    //        some huge value even if you set normalize data to GL_FALSE.
-    //        */
-    //        extptr_glVertexAttribIPointer(
-    //            /* GLuint index (location in shader source): */
-    //                _,
-    //            /* GLint size (number of components per vertex, must be 1-4): */
-    //                field_sizes[_],
-    //            /* GLenum type (of data): */
-    //                GL_INT,
-    //            /* GLsizei stride; */
-    //                sizeof(GPUVertex),
-    //            /* const GLvoid * pointer (offset) : */
-    //                (void *)(cur_offset * sizeof(float)));
-    //    } else {
-    //        printf("%s\n", "type GL_FLOAT");
-    //        /*
-    //        DANGER: this function is part of the trap
-    //        it bizarrely casts your input to floats, even if you
-    //        explicitly state they're ints
-    //        */
-    //        extptr_glVertexAttribPointer(
-    //            /* GLuint index (location in shader source): */
-    //                _,
-    //            /* GLint size (no. of components/vertex, must be 1-4): */
-    //                field_sizes[_],
-    //            /* GLenum type (of data): */
-    //                GL_FLOAT,
-    //            /* GLboolean normalize data: */
-    //                GL_FALSE,
-    //            /* GLsizei stride; */
-    //                sizeof(GPUVertex),
-    //            /* const GLvoid * pointer (offset) : */
-    //                (void *)(cur_offset * sizeof(float)));
-    //    }
-    //    cur_offset += field_sizes[_];
-    //    
-    //    err_value = glGetError();
-    //    if (err_value != GL_NO_ERROR) {
-    //        switch (err_value) {
-    //            case GL_INVALID_VALUE:
-    //                printf("%s\n", "GL_INVALID_VALUE");
-    //                break;
-    //            case GL_INVALID_ENUM:
-    //                printf("%s\n", "GL_INVALID_ENUM");
-    //                break;
-    //            case GL_INVALID_OPERATION:
-    //                printf("%s\n", "GL_INVALID_OPERATION");
-    //                break;
-    //            default:
-    //                printf("%s\n", "unhandled!");
-    //        }
-    //        assert(0);
-    //    }
-    //    
-    //    extptr_glEnableVertexAttribArray(_);
-    //    assert(glGetError() == 0);
-    //}
-    //
-    //// now that we're done, the offset should be the entirety of a
-    //// GPUVertex
-    //if (cur_offset != sizeof(GPUVertex) / 4) {
-    //    printf("cur_offset: %u\n", cur_offset);
-    //    printf(
-    //        "sizeof(GPUVertex): %u, which div 4 is: %u\n",
-    //        (uint32_t)sizeof(GPUVertex),
-    //        (uint32_t)sizeof(GPUVertex) / 4);
-    //    assert(0);
-    //}
-    //
-    //// validate program
-    //success = 0;
-    //extptr_glValidateProgram(program_id);
-    //extptr_glGetProgramiv(program_id, GL_VALIDATE_STATUS, &success);
-    //assert(success);
-    //assert(glGetError() == 0);
+    extptr_glGenVertexArrays(1, &VAO);
+    err_value = glGetError();
+    assert(err_value == GL_NO_ERROR);
+    
+    extptr_glGenBuffers(1, &GPUVertex_VBO_id);
+    err_value = glGetError();
+    assert(err_value == GL_NO_ERROR);
+    
+    extptr_glBindVertexArray(VAO);
+    err_value = glGetError();
+    assert(err_value == GL_NO_ERROR);
+    
+    extptr_glBindBuffer(GL_ARRAY_BUFFER, GPUVertex_VBO_id);
+    err_value = glGetError();
+    assert(err_value == GL_NO_ERROR);
+    
+    // We didn't use the standard alpha channel in Metal, so it shouldn't
+    // be enabled here
+    // glEnable(GL_BLEND);
+    // glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // The depth buffer is so much easier here than with Metal.
+    // On metal, we chose 32-bit floats
+    // for depth, the test is LESS OR EQUAL,
+    glEnable(GL_DEPTH_TEST);
+    glClearDepth(50.0f);
+    glDepthFunc(GL_LEQUAL); // on metal: LEQUAL
+    
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+    
+    /*
+    Attribute pointers describe the fields of our data
+    sructure (the Vertex struct in shared/cpu_gpu_shared_types.h)
+    */
+    // GLenum current_type = GL_FLOAT;
+    GLenum current_type = GL_INT;
+    
+    assert(current_type == GL_INT);
+    /*
+    This is another massive trap in OpenGL:
+    You have to use glVertexAttribIPointer, not
+    glVertexAttribPointer, when and only when setting up a
+    vertex input that's an int. The other version also accepts
+    GL_INT and the documentation claims that it can be used for
+    ints, but it silently fails and garbles your int values to
+    some huge value even if you set normalize data to GL_FALSE.
+    */
+    extptr_glVertexAttribIPointer(
+        /* GLuint index (location in shader source): */
+            0,
+        /* GLint size (number of components per vertex, must be 1-4): */
+            1,
+        /* GLenum type (of data): */
+            GL_INT,
+        /* GLsizei stride; */
+            sizeof(GPUVertex),
+        /* const GLvoid * pointer (offset) : */
+            (void *)(0 * sizeof(float)));
+    extptr_glVertexAttribIPointer(
+        /* GLuint index (location in shader source): */
+            1,
+        /* GLint size (number of components per vertex, must be 1-4): */
+            1,
+        /* GLenum type (of data): */
+            GL_INT,
+        /* GLsizei stride; */
+            sizeof(GPUVertex),
+        /* const GLvoid * pointer (offset) : */
+            (void *)(1 * sizeof(float)));
+    
+    err_value = glGetError();
+    if (err_value != GL_NO_ERROR) {
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled!");
+        }
+        assert(0);
+    }
+    
+    extptr_glEnableVertexAttribArray(0);
+    extptr_glEnableVertexAttribArray(1);
+    assert(glGetError() == 0);
+    
+    err_value = glGetError();
+    if (err_value != GL_NO_ERROR) {
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled!");
+        }
+        assert(0);
+    }
+    
+    // validate program
+    success = 0;
+    extptr_glValidateProgram(program_id);
+    extptr_glGetProgramiv(program_id, GL_VALIDATE_STATUS, &success);
+    assert(success);
+    assert(glGetError() == 0);
 }
 
 /* reminder: this is mutex protected */

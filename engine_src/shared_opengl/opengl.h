@@ -26,7 +26,8 @@ extern unsigned int VAO;
 
 void platform_gpu_copy_locked_vertices(void);
 
-// void opengl_render_triangles(GPUDataForSingleFrame * frame_data);
+void opengl_render_triangles(
+    GPUDataForSingleFrame * frame_data);
 
 void opengl_compile_shaders(
     char * vertex_shader_source,

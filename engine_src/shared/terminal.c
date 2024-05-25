@@ -338,12 +338,12 @@ static bool32_t evaluate_terminal_command(
         are_equal_strings(command, "RESET CAMERA") ||
         are_equal_strings(command, "CENTER CAMERA"))
     {
-        camera.x = 0.0f;
-        camera.y = 0.0f;
-        camera.z = 0.0f;
-        camera.x_angle = 0.0f;
-        camera.y_angle = 0.0f;
-        camera.z_angle = 0.0f;
+        camera.xyz[0] = 0.0f;
+        camera.xyz[1] = 0.0f;
+        camera.xyz[2] = 0.0f;
+        camera.xyz_angle[0] = 0.0f;
+        camera.xyz_angle[1] = 0.0f;
+        camera.xyz_angle[2] = 0.0f;
         strcpy_capped(
             response,
             SINGLE_LINE_MAX,

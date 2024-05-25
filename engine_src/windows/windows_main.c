@@ -475,8 +475,27 @@ int CALLBACK WinMain(
             (void **)&extptr_glVertexAttribPointer,
             "glVertexAttribPointer");
         fetch_extension_func_address(
+            (void **)&extptr_glEnableVertexAttribArray,
+            "glEnableVertexAttribArray");
+        fetch_extension_func_address(
+            (void **)&extptr_glValidateProgram,
+            "glValidateProgram");
+        fetch_extension_func_address(
             (void **)&extptr_glGetProgramInfoLog,
             "glGetProgramInfoLog");
+        fetch_extension_func_address(
+            (void **)&extptr_glBufferData,
+            "glBufferData");
+        fetch_extension_func_address(
+            (void **)&extptr_glBindBufferBase,
+            "glBindBufferBase");
+        fetch_extension_func_address(
+            (void **)&extptr_glUniform3fv,
+            "glUniform3fv");
+        fetch_extension_func_address(
+            (void **)&extptr_glGetUniformfv,
+            "glGetUniformfv");
+        
     } else {
         printf(
             "Failed to wglMakeCurrent() the dummy "
@@ -597,33 +616,41 @@ int CALLBACK WinMain(
     
     init_application_after_gpu_init();
     
+    uint32_t frame_i = 0;
     while (application_running)
     {
         MSG message;
-        for (int i = 0; i < 30; i++)
-	{
-            /*
-            If wMsgFilterMin and wMsgFilterMax are both zero,
-            PeekMessage returns all available messages 
-            (that is, no range filtering is performed).
-            */
-            BOOL got_message =
-                PeekMessage(
-                    &message, window_handle, 0, 0, PM_REMOVE);
-	    if (message.message == WM_QUIT) {
-                application_running = 0;
-                break;
-            }
-            if (!got_message || !application_running) {
-                break;
-            }
-                
-            TranslateMessage(&message);
-            DispatchMessage(&message);
-	}
+        /*
+        If wMsgFilterMin and wMsgFilterMax are both zero,
+        PeekMessage returns all available messages 
+        (that is, no range filtering is performed).
+        */
+        BOOL got_message =
+            PeekMessage(
+                &message, window_handle, 0, 0, PM_REMOVE);
+        if (message.message == WM_QUIT) {
+            application_running = 0;
+            break;
+        }
+        if (!got_message || !application_running) {
+            break;
+        }
+            
+        TranslateMessage(&message);
+        DispatchMessage(&message);
         
         glClearColor(1.0f, 0.25f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+        shared_gameloop_update(
+            /* GPUDataForSingleFrame * frame_data: */
+                &gpu_shared_data_collection.triple_buffers[frame_i]);
+        opengl_render_triangles(
+            /* GPUDataForSingleFrame * frame_data: */
+                &gpu_shared_data_collection.triple_buffers[frame_i]);
+        frame_i += 1;
+        frame_i %= 3;
+        
         SwapBuffers(device_context);
     }
     

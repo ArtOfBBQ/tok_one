@@ -5,12 +5,12 @@ static uint32_t renderer_initialized = false;
 void init_renderer(void) {
     renderer_initialized = true;
     
-    camera.x       = 0.0f;
-    camera.y       = 0.0f;
-    camera.z       = 0.0f;
-    camera.x_angle = 0.0f;
-    camera.y_angle = 0.0f;
-    camera.z_angle = 0.0f;
+    camera.xyz[0]       = 0.0f;
+    camera.xyz[1]       = 0.0f;
+    camera.xyz[2]       = 0.0f;
+    camera.xyz_angle[0] = 0.0f;
+    camera.xyz_angle[1] = 0.0f;
+    camera.xyz_angle[2] = 0.0f;
 }
 
 static bool32_t is_last_clicked = false;
@@ -35,7 +35,8 @@ inline static void add_point_vertex(
     frame_data->polygon_collection->polygons[
         frame_data->polygon_collection->size].ignore_lighting = true;
     frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].ignore_camera = ignore_camera;
+        frame_data->polygon_collection->size].ignore_camera =
+            ignore_camera;
     frame_data->polygon_collection->polygons[
         frame_data->polygon_collection->size].bonus_rgb[0] = 0.0f;
     frame_data->polygon_collection->polygons[

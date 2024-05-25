@@ -21,15 +21,8 @@ layout (std430, binding=1) buffer locked_vertices_buffer
     GPULockedVertex locked_vertices[ALL_LOCKED_VERTICES_SIZE];
 };
 
-struct GPUCamera {
-    float x;
-    float y;
-    float z;
-    float x_angle;
-    float y_angle;
-    float z_angle;
-};
-uniform GPUCamera camera;
+layout(location = 30) uniform vec3 camera_xyz;
+layout(location = 31) uniform vec3 camera_xyz_angle;
 
 struct GPUProjectionConstants {
     float znear;
@@ -219,17 +212,21 @@ void main()
     
     // translate to world position
     vec4 camera_translated_pos =
-        translated_pos - vec4(camera.x, camera.y, camera.z, 0.0f);
+        translated_pos - vec4(
+            camera_xyz[0],
+            camera_xyz[1],
+            camera_xyz[2],
+            0.0f);
     
     vec4 camera_x_rotated = x_rotate(
         camera_translated_pos,
-        -camera.x_angle);
+        -camera_xyz_angle[0]);
     vec4 camera_y_rotated = y_rotate(
         camera_x_rotated,
-        -camera.y_angle);
+        -camera_xyz_angle[1]);
     vec4 camera_z_rotated = z_rotate(
         camera_y_rotated,
-        -camera.z_angle);
+        -camera_xyz_angle[2]);
     
     float ignore_cam = polygons[polygon_i].ignore_camera;
     gl_Position =

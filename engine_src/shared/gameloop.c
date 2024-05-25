@@ -11,9 +11,9 @@ static int32_t closest_touchable_from_screen_ray(
 {
     #ifndef LOGGER_IGNORE_ASSERTS
     uint32_t nonzero_camera_angles = 0;
-    if (camera.x_angle != 0.0f) { nonzero_camera_angles += 1; }
-    if (camera.y_angle != 0.0f) { nonzero_camera_angles += 1; }
-    if (camera.z_angle != 0.0f) { nonzero_camera_angles += 1; }
+    if (camera.xyz[0]yz_angle[0] != 0.0f) { nonzero_camera_angles += 1; }
+    if (camera.xyz[0]yz_angle[1] != 0.0f) { nonzero_camera_angles += 1; }
+    if (camera.xyz[0]yz_angle[2] != 0.0f) { nonzero_camera_angles += 1; }
     
     // TODO: study raytracing math and find out why our solution doesn't
     // TODO: support 2 or more camera rotations  
@@ -39,11 +39,11 @@ static int32_t closest_touchable_from_screen_ray(
     
     zVertex ray_origin_rotated = ray_origin;
     ray_origin_rotated = x_rotate_zvertex(
-        &ray_origin_rotated, camera.x_angle);
+        &ray_origin_rotated, camera.xyz_angle[0]);
     ray_origin_rotated = y_rotate_zvertex(
-        &ray_origin_rotated, camera.y_angle);
+        &ray_origin_rotated, camera.xyz_angle[1]);
     ray_origin_rotated = z_rotate_zvertex(
-        &ray_origin_rotated, camera.z_angle);
+        &ray_origin_rotated, camera.xyz_angle[2]);
     
     // we need a point that's distant, but yet also ends up at the same
     // screen position as ray_origin
@@ -71,11 +71,17 @@ static int32_t closest_touchable_from_screen_ray(
     
     zVertex distant_point_rotated = distant_point;
     distant_point_rotated =
-        x_rotate_zvertex(&distant_point_rotated, camera.x_angle);
+        x_rotate_zvertex(
+            &distant_point_rotated,
+            camera.xyz_angle[0]);
     distant_point_rotated =
-        y_rotate_zvertex(&distant_point_rotated, camera.y_angle);
+        y_rotate_zvertex(
+            &distant_point_rotated,
+            camera.xyz_angle[1]);
     distant_point_rotated =
-        z_rotate_zvertex(&distant_point_rotated, camera.z_angle);
+        z_rotate_zvertex(
+            &distant_point_rotated,
+            camera.xyz_angle[2]);
     
     window_globals->visual_debug_ray_origin_direction[0] =
         ray_origin.x;
@@ -119,11 +125,11 @@ static int32_t closest_touchable_from_screen_ray(
         zPolygonCPU offset_polygon_cpu = zpolygons_to_render->cpu_data[zp_i];
         GPUPolygon offset_polygon_gpu = zpolygons_to_render->gpu_data[zp_i];
         
-        float camera_offset_x = camera.x *
+        float camera_offset_x = camera.xyz[0] *
             (1.0f - zpolygons_to_render->gpu_data[zp_i].ignore_camera);
-        float camera_offset_y = camera.y *
+        float camera_offset_y = camera.xyz[1] *
             (1.0f - zpolygons_to_render->gpu_data[zp_i].ignore_camera);
-        float camera_offset_z = camera.z *
+        float camera_offset_z = camera.xyz[2] *
             (1.0f - zpolygons_to_render->gpu_data[zp_i].ignore_camera);
         
         offset_polygon_gpu.xyz[0] -= camera_offset_x;
@@ -200,12 +206,12 @@ void shared_gameloop_update(
         lineparticle_effects_size = 0;
         zlights_to_apply_size = 0;
         
-        frame_data->camera->x = 0.0f;
-        frame_data->camera->y = 0.0f;
-        frame_data->camera->z = 0.0f;
-        frame_data->camera->x_angle = 0.0f;
-        frame_data->camera->y_angle = 0.0f;
-        frame_data->camera->z_angle = 0.0f;
+        frame_data->camera->xyz[0] = 0.0f;
+        frame_data->camera->xyz[1] = 0.0f;
+        frame_data->camera->xyz[2] = 0.0f;
+        frame_data->camera->xyz_angle[0] = 0.0f;
+        frame_data->camera->xyz_angle[1] = 0.0f;
+        frame_data->camera->xyz_angle[2] = 0.0f;
         
         font_height = 28.0f;
         font_ignore_lighting = true;
@@ -338,12 +344,12 @@ void shared_gameloop_update(
         client_logic_update(elapsed);        
     }
     
-    frame_data->camera->x = camera.x;
-    frame_data->camera->y = camera.y;
-    frame_data->camera->z = camera.z;
-    frame_data->camera->x_angle = camera.x_angle;
-    frame_data->camera->y_angle = camera.y_angle;
-    frame_data->camera->z_angle = camera.z_angle;
+    frame_data->camera->xyz[0] = camera.xyz[0];
+    frame_data->camera->xyz[1] = camera.xyz[1];
+    frame_data->camera->xyz[2] = camera.xyz[2];
+    frame_data->camera->xyz_angle[0] = camera.xyz_angle[0];
+    frame_data->camera->xyz_angle[1] = camera.xyz_angle[1];
+    frame_data->camera->xyz_angle[2] = camera.xyz_angle[2];
     
     frame_data->vertices_size = 0;
     frame_data->polygon_collection->size = 0;
