@@ -1,5 +1,6 @@
 // functions for us to use
 #include <windows.h>
+// #include <libloaderapi.h> // for GetProcAddress()
 #include <gl/gl.h>
 
 #include "opengl_extensions.h"
@@ -16,44 +17,52 @@ static unsigned int window_height = 200;
 
 static HWND window_handle;
 
+static void wait_x_microseconds(uint64_t microseconds)
+{
+    uint64_t start = platform_get_current_time_microsecs();
+    while (platform_get_current_time_microsecs() - start < 50000000) {
+        // Wait
+    }
+}
+
 static void fetch_extension_func_address(
     void ** extptr,
     char * func_name)
 {
     if (*extptr != NULL) {
-        MessageBox(
-            /* HWND hWnd: */
-                window_handle,
-            /* LPCSTR lpText: */
-                "Tried to fetch a PROC address that was already non-null",
-            /* LPCSTR lpCaption: */
-                "Error",
-            /* UINT uType: */
-                MB_OK);
+        printf(
+            "%s\n"
+            "Tried to fetch a PROC address that was already non-null");
         application_running = 0;
         return;
     }
     
     *extptr = (void *)wglGetProcAddress(func_name);
-    if (extptr == NULL) {
-        DWORD error = 0;
-        error = GetLastError();
-        char errcode[128];
+    
+    if (*extptr == NULL) {
+        // backup plan: load from windows .dll
+        HMODULE module = LoadLibraryA("opengl32.dll");
+        *extptr = GetProcAddress(module, func_name);
+    }
+    
+    if (*extptr == NULL) {
+        DWORD error = GetLastError();
+        char errmsg[128];
+        errmsg[0] = '\0';
         strcpy_capped(
-            errcode,
+            errmsg,
             128,
-            "Failed to get pointer to extension function."
-            "Error code: ");
-        strcat_uint_capped(errcode, 128, error);
-        MessageBox(
-            /* HWND hWnd: */
-                window_handle,
-            /* LPCSTR lpText: */
-                errcode,
-            /* LPCSTR lpCaption: */
-                "Error",
-            /* UINT uType: */
-                MB_OK);
+            "Failed to get pointer to extension function:\n");
+        strcat_capped(
+            errmsg,
+            128,
+            func_name);
+        strcat_capped(
+            errmsg,
+            128,
+            "\nError code:\n");
+        strcat_uint_capped(errmsg, 128, error);
+        printf("%s\n", errmsg);
         application_running = 0;
     }
 }
@@ -119,7 +128,7 @@ MainWindowCallback(
 }
 
 // This is basically "int main()" for windows
-// applications only
+// GUI applications only
 int CALLBACK WinMain(
     HINSTANCE hInstance,
     HINSTANCE hPrevInstance,
@@ -495,13 +504,29 @@ int CALLBACK WinMain(
         fetch_extension_func_address(
             (void **)&extptr_glGetUniformfv,
             "glGetUniformfv");
+        fetch_extension_func_address(
+            (void **)&extptr_glGetIntegerv,
+            "glGetIntegerv");
+        fetch_extension_func_address(
+            (void **)&extptr_glGetBufferSubData,
+            "glGetBufferSubData");
         
+        if (!application_running) {
+            printf(
+                "%s\n",
+                "1 or more OpenGL extension procedures failed to load, "
+                "exiting...\n");
+            
+            wait_x_microseconds(5000000);
+            return 0;
+        }
     } else {
         printf(
             "Failed to wglMakeCurrent() the dummy "
             "rendering context\n");
 	return 0;
     }
+    
     
     /*
     relevant docs:
@@ -639,8 +664,7 @@ int CALLBACK WinMain(
         TranslateMessage(&message);
         DispatchMessage(&message);
         
-        glClearColor(1.0f, 0.25f, 0.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor(0.0f, 0.0f, 0.1f, 1.0f);
         
         shared_gameloop_update(
             /* GPUDataForSingleFrame * frame_data: */
@@ -654,10 +678,7 @@ int CALLBACK WinMain(
         SwapBuffers(device_context);
     }
     
-    uint64_t start = platform_get_current_time_microsecs();
-    while (platform_get_current_time_microsecs() - start < 50000000) {
-        // Wait
-    }
+    wait_x_microseconds(50000000);
     
     return 0;
 }

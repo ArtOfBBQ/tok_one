@@ -2,13 +2,14 @@
 #define OPENGL_H
 
 #include <GL/gl.h>
-#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 
 #include "opengl_extensions.h"
 #include "cpu_gpu_shared_types.h"
 #include "cpu_to_gpu_types.h"
+
+#define gpu_assert(x) if (!(x)) { printf("assert failed at: %s %u\n", __FILE__, __LINE__); getch(); *(int *)0 = 0; }
 
 #ifndef NULL
 #define NULL 0

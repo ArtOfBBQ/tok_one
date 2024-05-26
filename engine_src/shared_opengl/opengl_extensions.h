@@ -15,6 +15,7 @@
 // */
 
 #define GLsizeiptr ptrdiff_t
+#define GLintptr   ptrdiff_t
 
 // /* Start of constants section */
 #define WGL_CONTEXT_MAJOR_VERSION_ARB     0x2091
@@ -34,6 +35,8 @@
 #define GL_SHADER_STORAGE_BUFFER          0x90D2
 #define GL_STATIC_DRAW                    0x88E4
 #define GL_STREAM_DRAW                    0x88E0
+
+#define GL_MAX_VERTEX_ATTRIBS             0x8869
 
 extern HGLRC (* extptr_wglCreateContextAttribsARB)(
     HDC device_context,
@@ -118,6 +121,31 @@ void (* extptr_glGetUniformfv)(
     GLuint program,
     GLint location,
     GLfloat * params);
+void (* extptr_glGetIntegerv)(
+    GLenum pname,
+    GLint * params);
+
+
+/*
+glGetBufferSubData
+
+offset
+Specifies the offset into the buffer object's data store from
+which data will be returned, measured in bytes.
+
+size
+Specifies the size in bytes of the data store region being
+returned.
+
+data
+Specifies a pointer to the location where buffer object data is
+returned.
+*/ 
+void (* extptr_glGetBufferSubData)(
+    GLenum         target,
+    GLintptr       offset,
+    GLsizeiptr     size,
+    void *         data);
 
 #endif // TOKONE_OPENGL_EXTENSIONS_H
 

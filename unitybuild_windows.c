@@ -9,7 +9,7 @@
 #define COMMON_IGNORE_ASSERTS
 #define COMMON_SILENCE
 #define LOGGER_SILENCE
-#define LOGGER_IGNORE_ASSERTS
+#define LOGGER_IGNORE_ASSERTS // TODO: enable asserts
 
 // 1. Files that don't know about the platform layer
 #include "inflate.c"

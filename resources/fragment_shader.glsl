@@ -14,26 +14,26 @@ uniform sampler2DArray texture_arrays[32];
 
 void main()
 {
-    FragColor = vert_to_frag_color; 
+    //FragColor = vert_to_frag_color; 
+    //
+    //if (
+    //    vert_to_frag_texturearray_i >= 0 &&
+    //    vert_to_frag_texture_i >= 0)
+    //{
+    //    vec4 texture_sample = texture(
+    //        texture_arrays[vert_to_frag_texturearray_i],
+    //        vec3(vert_to_frag_uv, float(vert_to_frag_texture_i)));
+    //    
+    //    FragColor *= texture_sample;
+    //}
+    //
+    //FragColor *= vert_to_frag_lighting;
+    //
+    //if (FragColor[3] < 0.01f) {
+    //    discard;
+    //    return;
+    //}
     
-    if (
-        vert_to_frag_texturearray_i >= 0 &&
-        vert_to_frag_texture_i >= 0)
-    {
-        vec4 texture_sample = texture(
-            texture_arrays[vert_to_frag_texturearray_i],
-            vec3(vert_to_frag_uv, float(vert_to_frag_texture_i)));
-        
-        FragColor *= texture_sample;
-    }
-    
-    FragColor *= vert_to_frag_lighting;
-    
-    if (FragColor[3] < 0.01f) {
-        discard;
-        return;
-    }
-    
-    FragColor[3] = 1.0f;
+    FragColor = vec4(1.0f, 1.0f, 0.5f, 1.0f);
 }
 

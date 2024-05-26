@@ -90,8 +90,9 @@ done
 popd > /dev/null
 ############
 
+# kernel32.lib: for GetProcAddress()
 pushd build
-cl $COMPILER_ARGS $COMPILER_ARGS_EXTRA ../unitybuild_windows.c -Fe"windows/$APP_NAME/$APP_NAME.exe" -link user32.lib gdi32.lib opengl32.lib
+cl $COMPILER_ARGS $COMPILER_ARGS_EXTRA ../unitybuild_windows.c -Fe"windows/$APP_NAME/$APP_NAME.exe" -link kernel32.lib user32.lib gdi32.lib opengl32.lib
 popd
 
 echo "Press any key to run program, ctrl-C to abort..."

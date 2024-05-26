@@ -1,25 +1,7 @@
 #version 460 core
 
-struct GPUVertex {
-    int locked_vertex_i; // index into GPULockedVertex buffer
-    int polygon_i;       // index into GPUPolygonCollection buffer
-};
-
-layout (std430, binding=0) buffer vertices_buffer
-{
-    GPUVertex vertices[MAX_VERTICES_PER_BUFFER];
-};
-
-struct GPULockedVertex {
-    float        xyz       [3];
-    float        normal_xyz[3];
-    float        uv        [2];
-    unsigned int parent_material_i;
-};
-layout (std430, binding=1) buffer locked_vertices_buffer
-{
-    GPULockedVertex locked_vertices[ALL_LOCKED_VERTICES_SIZE];
-};
+layout (location=0) in unsigned int locked_vertex_i;
+layout (location=1) in unsigned int polygon_i;
 
 layout(location = 30) uniform vec3 camera_xyz;
 layout(location = 31) uniform vec3 camera_xyz_angle;
@@ -51,18 +33,6 @@ layout (std430, binding=2) buffer polygons_buffer
     GPUPolygon polygons[ALL_LOCKED_VERTICES_SIZE];
 };
 
-struct GPUPolygonMaterial {
-    float rgba[4];
-    int   texturearray_i;
-    int   texture_i;
-    float simd_padding[2];
-};
-layout (std430, binding=2) buffer polygon_materials_buffer
-{
-    GPUPolygonMaterial polygon_materials[MAX_POLYGONS_PER_BUFFER * MAX_MATERIALS_PER_POLYGON];
-};
-
-
 struct GPULightCollection {
     float        light_x[MAX_LIGHTS_PER_BUFFER];
     float        light_y[MAX_LIGHTS_PER_BUFFER];
@@ -78,6 +48,28 @@ struct GPULightCollection {
 layout (std430, binding=3) buffer light_collection_buffer
 {
     GPULightCollection light_collection;
+};
+
+struct GPULockedVertex {
+    float        xyz       [3];
+    float        normal_xyz[3];
+    float        uv        [2];
+    unsigned int parent_material_i;
+};
+layout (std430, binding=4) buffer locked_vertices_buffer
+{
+    GPULockedVertex locked_vertices[ALL_LOCKED_VERTICES_SIZE];
+};
+
+struct GPUPolygonMaterial {
+    float rgba[4];
+    int   texturearray_i;
+    int   texture_i;
+    float simd_padding[2];
+};
+layout (std430, binding=5) buffer polygon_materials_buffer
+{
+    GPUPolygonMaterial polygon_materials[MAX_POLYGONS_PER_BUFFER * MAX_MATERIALS_PER_POLYGON];
 };
 
 out  vec2 vert_to_frag_uv;
@@ -146,8 +138,6 @@ float get_distance(
 
 void main()
 {
-    uint polygon_i = vertices[gl_VertexID].polygon_i;
-    uint locked_vertex_i = vertices[gl_VertexID].locked_vertex_i;
     uint locked_material_i = (polygon_i * MAX_MATERIALS_PER_POLYGON) +
         locked_vertices[locked_vertex_i].parent_material_i;
     

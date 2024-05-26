@@ -5,71 +5,23 @@ GPUSharedDataCollection gpu_shared_data_collection;
 // We'll need these 2 identifiers while drawing
 GLuint program_id;
 GLuint fragment_shader_id;
-unsigned int VAO                    = UINT32_MAX;
-unsigned int GPUVertex_VBO_id       = UINT32_MAX;
-unsigned int GPUPolygons_VBO_id     = UINT32_MAX;
-unsigned int GPULockedVertex_VBO_id = UINT32_MAX;
-static GLuint err_value             = UINT32_MAX;
+unsigned int VAO                       = UINT32_MAX;
+unsigned int GPUPolygons_VBO_id        = UINT32_MAX;
+unsigned int GPUVertex_VBO_id          = UINT32_MAX;
+unsigned int GPULockedVertex_VBO_id    = UINT32_MAX;
+unsigned int GPULightCollection_VBO_id = UINT32_MAX;
+static GLuint err_value                = UINT32_MAX;
 
 static GLuint texture_array_ids[TEXTUREARRAYS_SIZE];
 
-#ifndef LOGGER_IGNORE_ASSERTS
-static void spotcheck_uniform(
-    char * uniform_name,
-    float expected_value)
-{
-    GLint loc = extptr_glGetUniformLocation(
-        program_id,
-        uniform_name);
-    assert(glGetError() == 0);
-    
-    if (loc < 0) {
-        assert(loc >= 0);
-    }
-    
-    GLfloat actual_gpu_value;
-    actual_gpu_value = 23.555f;
-    glGetUniformfv(
-        program_id,
-        loc,
-        &actual_gpu_value);
-    err_value = glGetError();
-    if (err_value != 0) {
-        switch (err_value) {
-            case GL_INVALID_VALUE:
-                printf("%s\n", "GL_INVALID_VALUE");
-                break;
-            case GL_INVALID_ENUM:
-                printf("%s\n", "GL_INVALID_ENUM");
-                break;
-            case GL_INVALID_OPERATION:
-                printf("%s\n", "GL_INVALID_OPERATION");
-                break;
-            default:
-                printf("%s\n", "unhandled!");
-        }
-        printf(
-            "uniform name: %s, at location: %i\n",
-            uniform_name,
-            loc);
-        assert(0);
-    }
-    if (actual_gpu_value != expected_value) {
-        printf(
-            "uniform %s's actual gpu value was %f, expected: %f\n",
-            uniform_name,
-            actual_gpu_value,
-            expected_value);
-        assert(0);
-    }
-}
-#endif
-
-static void opengl_set_polygons(
+static void opengl_copy_polygons(
     GPUPolygonCollection * polygon_collection)
 {
-    extptr_glGenBuffers(1, &GPUPolygons_VBO_id);
-    extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, GPUPolygons_VBO_id);
+    printf("copy polygons...\n");
+    extptr_glBindBuffer(
+        GL_SHADER_STORAGE_BUFFER,
+        GPUPolygons_VBO_id);
+    
     extptr_glBufferData(
         /* GLenum target: */
             GL_SHADER_STORAGE_BUFFER,
@@ -87,204 +39,45 @@ static void opengl_set_polygons(
         GL_SHADER_STORAGE_BUFFER,
         2,
         GPUPolygons_VBO_id);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
 }
 
-//static void opengl_set_lights(
-//    GPULightCollection * light_collection)
-//{
-//    /*
-//    Reminder: If MAX_LIGHTS_PER_BUFFER gets updated,
-//    you need to update the glsl vertex shader
-//    */
-//    assert(MAX_LIGHTS_PER_BUFFER == 75);
-//    
-//    GLint loc = extptr_glGetUniformLocation(
-//        program_id,
-//        "lights_x");
-//    assert(glGetError() == 0);
-//    glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->light_x);
-//    assert(glGetError() == 0);
-//    #ifndef LOGGER_IGNORE_ASSERTS
-//    spotcheck_uniform(
-//        "lights_x[0]",
-//        light_collection->light_x[0]);
-//    spotcheck_uniform(
-//        "lights_x[8]",
-//        light_collection->light_x[8]);
-//    spotcheck_uniform(
-//        "lights_x[12]",
-//        light_collection->light_x[12]);
-//    #endif
-//    
-//    loc = extptr_glGetUniformLocation(
-//        program_id,
-//        "lights_y");
-//    assert(glGetError() == 0);
-//    glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->light_y);
-//    assert(glGetError() == 0);
-//    #ifndef LOGGER_IGNORE_ASSERTS
-//    spotcheck_uniform(
-//        "lights_y[0]",
-//        light_collection->light_y[0]);
-//    spotcheck_uniform(
-//        "lights_y[1]",
-//        light_collection->light_y[1]);
-//    #endif
-//    
-//    loc = extptr_glGetUniformLocation(
-//        program_id,
-//        "lights_z");
-//    assert(glGetError() == 0);
-//    glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->light_z);
-//    assert(glGetError() == 0);
-//    #ifndef LOGGER_IGNORE_ASSERTS
-//    spotcheck_uniform(
-//        "lights_z[1]",
-//        light_collection->light_z[1]);
-//    #endif
-//    
-//    loc = extptr_glGetUniformLocation(
-//        program_id,
-//        "lights_ambient");
-//    assert(glGetError() == 0);
-//    glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->ambient);
-//    assert(glGetError() == 0);
-//    #ifndef LOGGER_IGNORE_ASSERTS
-//    spotcheck_uniform(
-//        "lights_ambient[5]",
-//        light_collection->ambient[5]);
-//    #endif
-//    
-//    loc = extptr_glGetUniformLocation(
-//        program_id,
-//        "lights_diffuse");
-//    assert(glGetError() == 0);
-//    assert(loc >= 0);
-//    glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->diffuse);
-//    assert(glGetError() == 0);
-//    #ifndef LOGGER_IGNORE_ASSERTS
-//    spotcheck_uniform(
-//        "lights_diffuse[0]",
-//        light_collection->diffuse[0]);
-//    spotcheck_uniform(
-//        "lights_diffuse[7]",
-//        light_collection->diffuse[7]);
-//    #endif
-//    
-//    loc = extptr_glGetUniformLocation(
-//        program_id,
-//        "lights_reach");
-//    assert(glGetError() == 0);
-//    glUniform1fv(loc, MAX_LIGHTS_PER_BUFFER, light_collection->reach);
-//    assert(glGetError() == 0);
-//    #ifndef LOGGER_IGNORE_ASSERTS
-//    spotcheck_uniform(
-//        "lights_reach[4]",
-//        light_collection->reach[4]);
-//    spotcheck_uniform(
-//        "lights_reach[14]",
-//        light_collection->reach[14]);
-//    #endif
-//    
-//    loc = extptr_glGetUniformLocation(
-//        program_id,
-//        "lights_red");
-//    assert(glGetError() == 0);
-//    assert(loc >= 0);
-//    glUniform1fv(
-//        loc,
-//        MAX_LIGHTS_PER_BUFFER,
-//        light_collection->red);
-//    assert(glGetError() == 0);
-//    #ifndef LOGGER_IGNORE_ASSERTS
-//    spotcheck_uniform(
-//        "lights_red[0]",
-//        light_collection->red[0]);
-//    spotcheck_uniform(
-//        "lights_red[4]",
-//        light_collection->red[4]);
-//    #endif
-//    
-//    loc = extptr_glGetUniformLocation(
-//        program_id,
-//        "lights_green");
-//    assert(glGetError() == 0);
-//    assert(loc >= 0);
-//    glUniform1fv(
-//        loc,
-//        MAX_LIGHTS_PER_BUFFER,
-//        light_collection->green);
-//    assert(glGetError() == 0);
-//    #ifndef LOGGER_IGNORE_ASSERTS
-//    spotcheck_uniform(
-//        "lights_green[0]",
-//        light_collection->green[0]);
-//    spotcheck_uniform(
-//        "lights_green[1]",
-//        light_collection->green[1]);
-//    spotcheck_uniform(
-//        "lights_green[4]",
-//        light_collection->green[4]);
-//    spotcheck_uniform(
-//        "lights_green[74]",
-//        light_collection->green[74]);
-//    #endif
-//    
-//    loc = extptr_glGetUniformLocation(
-//        program_id,
-//        "lights_blue");
-//    assert(glGetError() == 0);
-//    assert(loc >= 0);
-//    glUniform1fv(
-//        loc,
-//        MAX_LIGHTS_PER_BUFFER,
-//        light_collection->blue);
-//    assert(glGetError() == 0);
-//    #ifndef LOGGER_IGNORE_ASSERTS
-//    spotcheck_uniform(
-//        "lights_blue[0]",
-//        light_collection->blue[0]);
-//    spotcheck_uniform(
-//        "lights_blue[1]",
-//        light_collection->blue[1]);
-//    spotcheck_uniform(
-//        "lights_blue[4]",
-//        light_collection->blue[4]);
-//    spotcheck_uniform(
-//        "lights_blue[74]",
-//        light_collection->blue[74]);
-//    #endif
-//    
-//    loc = extptr_glGetUniformLocation(
-//        program_id,
-//        "lights_size");
-//    assert(glGetError() == 0);
-//    int size[1];
-//    size[0] = (int32_t)light_collection->lights_size;
-//    glUniform1iv(
-//        loc,
-//        1,
-//        &size);
-//    assert(glGetError() == 0);
-//    
-//    #ifndef LOGGER_IGNORE_ASSERTS
-//    int doublecheck_lights_size;
-//    doublecheck_lights_size = 234;
-//    extptr_glGetUniformiv(program_id, loc, &doublecheck_lights_size);
-//    assert(glGetError() == 0);
-//    assert(doublecheck_lights_size == light_collection->lights_size);
-//    #endif
-//}
-  
+static void opengl_copy_lights(
+    GPULightCollection * light_collection)
+{
+    printf("copy lights...\n");
+    extptr_glBindBuffer(
+        GL_SHADER_STORAGE_BUFFER,
+        GPULightCollection_VBO_id);
+    
+    extptr_glBufferData(
+        /* GLenum target: */
+            GL_SHADER_STORAGE_BUFFER,
+        /* GLsizeiptr size: */
+            sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE,
+        /* const void * data: */
+            gpu_shared_data_collection.locked_vertices,
+        /* GLenum usage: */
+            GL_STATIC_DRAW);
+    // TODO: STATIC_DRAW is just my guess after reading docs
+    // need to revisit after being more familiar with OpenGL
+    
+    // binding = 3 in the shader code
+    extptr_glBindBufferBase(
+        GL_SHADER_STORAGE_BUFFER,
+        3,
+        GPULightCollection_VBO_id);
+    gpu_assert(glGetError() == 0);
+}
+
 static bool32_t opengl_set_camera(
     GPUCamera * arg_camera)
 {
     GLint loc = -1;
     
-    assert(program_id == 1);
+    gpu_assert(program_id == 1);
     extptr_glUseProgram(program_id);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     
     loc = extptr_glGetUniformLocation(
         program_id,
@@ -293,8 +86,7 @@ static bool32_t opengl_set_camera(
         printf("camera_xyz uniform is not at location 30!\n");
         return false;
     }
-    printf("loc: %u\n", loc);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     
     // there is also glProgramUniform3f, but that's not in OpenGL 3.0
     extptr_glUniform3fv(
@@ -318,7 +110,7 @@ static bool32_t opengl_set_camera(
             default:
                 printf("%s\n", "unhandled!");
         }
-        assert(0);
+        gpu_assert(0);
     }
     
     loc = extptr_glGetUniformLocation(
@@ -328,20 +120,20 @@ static bool32_t opengl_set_camera(
         printf("camera_xyz_angle uniform is not at location 31!\n");
         return false;
     }
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     extptr_glUniform3fv(
         loc,
         1,
         camera.xyz_angle);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     
     float doublecheck_cam_angle[3];
     doublecheck_cam_angle[2] = 234.12f;
     extptr_glGetUniformfv(program_id, loc, doublecheck_cam_angle);
-    assert(glGetError() == 0);
-    assert(doublecheck_cam_angle[0] == arg_camera->xyz_angle[0]);
-    assert(doublecheck_cam_angle[1] == arg_camera->xyz_angle[1]);
-    assert(doublecheck_cam_angle[2] == arg_camera->xyz_angle[2]);
+    gpu_assert(glGetError() == 0);
+    gpu_assert(doublecheck_cam_angle[0] == arg_camera->xyz_angle[0]);
+    gpu_assert(doublecheck_cam_angle[1] == arg_camera->xyz_angle[1]);
+    gpu_assert(doublecheck_cam_angle[2] == arg_camera->xyz_angle[2]);
     
     return true;
 }
@@ -350,7 +142,6 @@ void platform_gpu_copy_locked_vertices(void)
 {
     printf("%s\n", "Copy locked vertices...\n");
     
-    extptr_glGenBuffers(1, &GPULockedVertex_VBO_id);
     extptr_glBindBuffer(
         GL_SHADER_STORAGE_BUFFER,
         GPULockedVertex_VBO_id);
@@ -366,29 +157,80 @@ void platform_gpu_copy_locked_vertices(void)
     // TODO: STATIC_DRAW is just my guess after reading docs
     // need to revisit after being more familiar with OpenGL
     
-    // binding = 1 in the shader code
+    // binding = 4 in the shader code
     extptr_glBindBufferBase(
         GL_SHADER_STORAGE_BUFFER,
-        1,
+        4,
         GPULockedVertex_VBO_id);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
+}
+
+static void opengl_copy_vertices(
+    GPUVertex * vertices,
+    uint32_t vertices_size)
+{
+    printf("%s\n", "Copy vertices...\n");
+    
+    extptr_glBindBuffer(
+        GL_ARRAY_BUFFER,
+        GPUVertex_VBO_id);
+    extptr_glBufferData(
+        /* GLenum target: */
+            GL_ARRAY_BUFFER,
+        /* GLsizeiptr size: */
+            sizeof(GPUVertex) * vertices_size,
+        /* const void * data: */
+            vertices,
+        /* GLenum usage: */
+            GL_STATIC_DRAW);
+   
+    #ifndef GPU_IGNORE_ASSERTS
+    unsigned int doublechecks[10];
+    doublechecks[0] = 12345;
+    extptr_glGetBufferSubData(
+        /* GLenum     target: */
+            GL_ARRAY_BUFFER,
+        /* GLintptr  offset: */
+            0,
+        /* size_t     size: */
+            sizeof(float) * 10,
+        /* void *     data: */
+            doublechecks);
+    
+    for (uint32_t vert_i = 0; vert_i < 5; vert_i++)
+    {
+        gpu_assert(
+            doublechecks[(vert_i*2) + 0] ==
+                vertices[vert_i].locked_vertex_i);
+        gpu_assert(
+            doublechecks[(vert_i*2) + 1] ==
+                vertices[vert_i].polygon_i);
+    }
+    
+    gpu_assert(glGetError() == 0);
+    #endif
 }
 
 void opengl_render_triangles(
     GPUDataForSingleFrame * frame_data)
 {
-    printf("render %u triangles...\n", frame_data->vertices_size);
+    printf(
+        "render %u triangles...\n",
+        frame_data->vertices_size);
     
-    assert(VAO < UINT32_MAX);
-    assert(GPUVertex_VBO_id < UINT32_MAX);
+    gpu_assert(program_id < INT32_MAX);
+    gpu_assert(VAO < UINT32_MAX);
     
     extptr_glUseProgram(program_id);
-    assert(glGetError() == GL_NO_ERROR);
+    gpu_assert(glGetError() == GL_NO_ERROR);
+    
+    extptr_glBindVertexArray(VAO);
+    gpu_assert(glGetError() == GL_NO_ERROR);
     
     if (frame_data->vertices_size < 1) { return; }
     
     #ifndef LOGGER_IGNORE_ASSERTS
-    assert(frame_data->vertices != NULL); 
+    gpu_assert(frame_data->vertices != NULL); 
     err_value = glGetError();
     if (err_value != GL_NO_ERROR) {
         switch (err_value) {
@@ -405,7 +247,7 @@ void opengl_render_triangles(
                 printf("%s\n", "unhandled error at start of frame!");
                 break;
         }
-        assert(0);
+        gpu_assert(0);
     }
     #endif
     
@@ -419,24 +261,14 @@ void opengl_render_triangles(
             printf(
                 "invalid polygon_i: %u\n",
                 frame_data->vertices[i].polygon_i);
-            assert(frame_data->vertices[i].polygon_i >= 0);
-            assert(
+            gpu_assert(frame_data->vertices[i].polygon_i >= 0);
+            gpu_assert(
                 frame_data->vertices[i].polygon_i <
                     frame_data->polygon_collection->size);
         }
     }
     #endif
     
-    //glBufferData(
-    //    /* target: */
-    //        GL_ARRAY_BUFFER,
-    //    /* size_in_bytes: */
-    //        sizeof(GPUVertex) * frame_data->vertices_size,
-    //    /* const GLvoid * data: (to init with, or NULL to copy no data) */
-    //        (const GLvoid *)frame_data->vertices,
-    //    /* usage: */
-    //        GL_DYNAMIC_DRAW);
-    
     #ifndef LOGGER_IGNORE_ASSERTS
     err_value = glGetError();
     if (err_value != GL_NO_ERROR) {
@@ -462,24 +294,30 @@ void opengl_render_triangles(
                     "unhandled error when sending buffer data!");
                 break;
         }
-        assert(0);
+        gpu_assert(0);
     }
     #endif
+   
+    opengl_copy_vertices(
+        frame_data->vertices,
+        frame_data->vertices_size); 
     
-    opengl_set_polygons(frame_data->polygon_collection);
+    opengl_copy_polygons(frame_data->polygon_collection);
     #ifndef LOGGER_IGNORE_ASSERTS
     err_value = glGetError();
     #endif
     
-    //opengl_set_lights(frame_data->light_collection);
-    //#ifndef LOGGER_IGNORE_ASSERTS
-    //err_value = glGetError();
-    //#endif
+    opengl_copy_lights(frame_data->light_collection);
+    #ifndef LOGGER_IGNORE_ASSERTS
+    err_value = glGetError();
+    #endif
     
     bool32_t camera_success = opengl_set_camera(frame_data->camera);
     if (!camera_success) {
+        printf("ERROR - camera copy failed!\n");
         return;
     }
+    
     #ifndef LOGGER_IGNORE_ASSERTS
     err_value = glGetError();
     if (err_value != GL_NO_ERROR) {
@@ -505,13 +343,12 @@ void opengl_render_triangles(
                     "unhandled error when sending buffer data!");
                 break;
         }
-        assert(0);
+        gpu_assert(0);
     }
     #endif
     
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    #if 0
     // glPointSize(10); // for GL_POINTS
     glDrawArrays(
         /* GLenum mode: */
@@ -526,21 +363,28 @@ void opengl_render_triangles(
     if (err_value != GL_NO_ERROR) {
         switch (err_value) {
             case GL_INVALID_VALUE:
-                printf("%s\n", "GL_INVALID_VALUE");
+                printf(
+                    "%s\n",
+                    "GL_INVALID_VALUE");
                 break;
             case GL_INVALID_ENUM:
-                printf("%s\n", "GL_INVALID_ENUM");
+                printf(
+                    "%s\n",
+                    "GL_INVALID_ENUM");
                 break;
             case GL_INVALID_OPERATION:
-                printf("%s\n", "GL_INVALID_OPERATION");
+                printf(
+                    "%s\n",
+                    "GL_INVALID_OPERATION");
                 break;
             default:
-                printf("%s\n", "unhandled error when sending buffer data!");
+                printf(
+                    "%s\n",
+                    "unhandled error when sending buffer data!");
                 break;
         }
-        assert(0);
+        gpu_assert(0);
     }
-    #endif
     #endif
 }
  
@@ -608,10 +452,10 @@ static bool32_t opengl_compile_given_shader(
             &shader_source,
         /* const GLint * length: */
             &source_length);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     
     extptr_glCompileShader(shader_id);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     
     GLint is_compiled = INT8_MAX;
     char info_log[512];
@@ -649,7 +493,7 @@ static bool32_t opengl_compile_given_shader(
             GL_TRUE,
             GL_FALSE,
             is_compiled);
-        assert(0);
+        gpu_assert(0);
         return false;
     }
 
@@ -662,17 +506,19 @@ void opengl_compile_shaders(
     char * fragment_shader_source,
     uint32_t fragment_shader_source_size)
 {
+    printf("Compile shaders...\n");
     // allocate buffer memory...
     GLenum err_value;
     
     program_id = extptr_glCreateProgram();
-    assert(program_id == 1);
+    printf("Created program with program_id: %u\n", program_id);
+    gpu_assert(program_id == 1);
     GLuint vertex_shader_id = extptr_glCreateShader(GL_VERTEX_SHADER);
     err_value = glGetError();
-    assert(err_value == 0);
+    gpu_assert(err_value == 0);
     
-    assert(vertex_shader_source_size > 0);
-    assert(vertex_shader_source != NULL);
+    gpu_assert(vertex_shader_source_size > 0);
+    gpu_assert(vertex_shader_source != NULL);
     
     bool32_t shader_success = opengl_compile_given_shader(
         /* GLuint shader_id: */
@@ -682,14 +528,14 @@ void opengl_compile_shaders(
         /* GLint source_length: */
             vertex_shader_source_size);
     err_value = glGetError();
-    assert(err_value == 0);
+    gpu_assert(err_value == 0);
     if (!shader_success) { return; }
     
     fragment_shader_id = extptr_glCreateShader(GL_FRAGMENT_SHADER);
     err_value = glGetError();
-    assert(err_value == 0);
-    assert(fragment_shader_source_size > 0);
-    assert(fragment_shader_source != NULL);
+    gpu_assert(err_value == 0);
+    gpu_assert(fragment_shader_source_size > 0);
+    gpu_assert(fragment_shader_source != NULL);
     shader_success = opengl_compile_given_shader(
         /* GLuint shader_id: */
             fragment_shader_id,
@@ -698,19 +544,19 @@ void opengl_compile_shaders(
         /* GLint source_length: */
             fragment_shader_source_size);
     err_value = glGetError();
-    assert(err_value == 0);
+    gpu_assert(err_value == 0);
     if (!shader_success) { return; }
     
     // attach compiled shaders to program
     extptr_glAttachShader(program_id, vertex_shader_id);
     err_value = glGetError();
-    assert(err_value == 0);
+    gpu_assert(err_value == 0);
     extptr_glAttachShader(program_id, fragment_shader_id);
     err_value = glGetError();
-    assert(err_value == 0);
+    gpu_assert(err_value == 0);
     extptr_glLinkProgram(program_id);
     err_value = glGetError();
-    assert(err_value == 0);
+    gpu_assert(err_value == 0);
     
     /* 
     GL_LINK_STATUS
@@ -775,19 +621,16 @@ void opengl_compile_shaders(
     
     extptr_glGenVertexArrays(1, &VAO);
     err_value = glGetError();
-    assert(err_value == GL_NO_ERROR);
-    
-    extptr_glGenBuffers(1, &GPUVertex_VBO_id);
-    err_value = glGetError();
-    assert(err_value == GL_NO_ERROR);
+    if (VAO >= INT16_MAX) {
+        printf("VAO was not set by glGenVertexArrays\n");
+        application_running = false;
+        return;
+    }
+    gpu_assert(err_value == GL_NO_ERROR);
     
     extptr_glBindVertexArray(VAO);
     err_value = glGetError();
-    assert(err_value == GL_NO_ERROR);
-    
-    extptr_glBindBuffer(GL_ARRAY_BUFFER, GPUVertex_VBO_id);
-    err_value = glGetError();
-    assert(err_value == GL_NO_ERROR);
+    gpu_assert(err_value == GL_NO_ERROR);
     
     // We didn't use the standard alpha channel in Metal, so it shouldn't
     // be enabled here
@@ -804,14 +647,25 @@ void opengl_compile_shaders(
     glEnable(GL_CULL_FACE);
     glCullFace(GL_FRONT);
     
+    extptr_glGenBuffers(1, &GPULightCollection_VBO_id);
+    extptr_glGenBuffers(1, &GPUPolygons_VBO_id);
+    extptr_glGenBuffers(1, &GPULockedVertex_VBO_id);
+    
+    extptr_glGenBuffers(1, &GPUVertex_VBO_id);
+    extptr_glBindBuffer(
+        GL_ARRAY_BUFFER,
+        GPUVertex_VBO_id);
+    
     /*
-    Attribute pointers describe the fields of our data
-    sructure (the Vertex struct in shared/cpu_gpu_shared_types.h)
+    Attribute pointers describe the fields of our 'in' data fields
+    (we use them for the Vertex type in shared/cpu_gpu_shared_types.h)
+    
+    These attributes will be associated to GPUVertex_VBO_id and
+    GL_ARRAY_BUFFER because those are currently bound by glBindBuffer
     */
-    // GLenum current_type = GL_FLOAT;
     GLenum current_type = GL_INT;
     
-    assert(current_type == GL_INT);
+    gpu_assert(current_type == GL_INT);
     /*
     This is another massive trap in OpenGL:
     You have to use glVertexAttribIPointer, not
@@ -832,6 +686,25 @@ void opengl_compile_shaders(
             sizeof(GPUVertex),
         /* const GLvoid * pointer (offset) : */
             (void *)(0 * sizeof(float)));
+    err_value = glGetError();
+    if (err_value != GL_NO_ERROR) {
+        printf("Failed to set VertexAttribIPointer for location 0\n");
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled!");
+        }
+        gpu_assert(0);
+    }
+    
     extptr_glVertexAttribIPointer(
         /* GLuint index (location in shader source): */
             1,
@@ -846,6 +719,7 @@ void opengl_compile_shaders(
     
     err_value = glGetError();
     if (err_value != GL_NO_ERROR) {
+        printf("Failed to set VertexAttribIPointer for location 1\n");
         switch (err_value) {
             case GL_INVALID_VALUE:
                 printf("%s\n", "GL_INVALID_VALUE");
@@ -854,18 +728,25 @@ void opengl_compile_shaders(
                 printf("%s\n", "GL_INVALID_ENUM");
                 break;
             case GL_INVALID_OPERATION:
-                printf("%s\n", "GL_INVALID_OPERATION");
+                printf(
+                    "%s\n",
+                    "GL_INVALID_OPERATION");
+                GLint max_attribs = -1;
+                extptr_glGetIntegerv(
+                    GL_MAX_VERTEX_ATTRIBS,
+                    &max_attribs);
+                printf(
+                    "GL_MAX_ATTRIBS was: %i\n",
+                    max_attribs);
                 break;
             default:
                 printf("%s\n", "unhandled!");
         }
-        assert(0);
+        gpu_assert(0);
     }
     
-    extptr_glEnableVertexAttribArray(0);
-    extptr_glEnableVertexAttribArray(1);
-    assert(glGetError() == 0);
     
+    extptr_glEnableVertexAttribArray(0);
     err_value = glGetError();
     if (err_value != GL_NO_ERROR) {
         switch (err_value) {
@@ -881,15 +762,36 @@ void opengl_compile_shaders(
             default:
                 printf("%s\n", "unhandled!");
         }
-        assert(0);
+        gpu_assert(0);
+    }
+    
+    extptr_glEnableVertexAttribArray(1);
+    err_value = glGetError();
+    if (err_value != GL_NO_ERROR) {
+        switch (err_value) {
+            case GL_INVALID_VALUE:
+                printf("%s\n", "GL_INVALID_VALUE");
+                break;
+            case GL_INVALID_ENUM:
+                printf("%s\n", "GL_INVALID_ENUM");
+                break;
+            case GL_INVALID_OPERATION:
+                printf("%s\n", "GL_INVALID_OPERATION");
+                break;
+            default:
+                printf("%s\n", "unhandled!");
+        }
+        gpu_assert(0);
     }
     
     // validate program
     success = 0;
     extptr_glValidateProgram(program_id);
     extptr_glGetProgramiv(program_id, GL_VALIDATE_STATUS, &success);
-    assert(success);
-    assert(glGetError() == 0);
+    gpu_assert(success);
+    gpu_assert(glGetError() == 0);
+
+    printf("Compiled shaders...\n");
 }
 
 /* reminder: this is mutex protected */
@@ -909,17 +811,17 @@ void platform_gpu_init_texture_array(
         single_image_height);
     
     glGenTextures(1, &texture_array_ids[texture_array_i]);
-    assert(glGetError() == 0);
-    assert(texture_array_i < 31);
+    gpu_assert(glGetError() == 0);
+    gpu_assert(texture_array_i < 31);
     
     glActiveTexture(
         GL_TEXTURE0 + texture_array_i);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     
     glBindTexture(
         GL_TEXTURE_2D_ARRAY,
         texture_array_ids[texture_array_i]);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     
     char name_in_shader[64];
     strcpy_capped(name_in_shader, 64, "texture_arrays[");
@@ -928,10 +830,10 @@ void platform_gpu_init_texture_array(
     GLuint loc = extptr_glGetUniformLocation(
         program_id,
         name_in_shader);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     
     glUniform1iv(loc, 1, &texture_array_i);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     
     //There is also glTexStorage3D in openGL 4
     glTexImage3D(
@@ -966,7 +868,7 @@ void platform_gpu_init_texture_array(
             default:
                 printf("%s\n", "Unhandled error");
         }
-        assert(err_value == GL_NO_ERROR);
+        gpu_assert(err_value == GL_NO_ERROR);
     }
     
     glTexParameteri(
@@ -976,7 +878,7 @@ void platform_gpu_init_texture_array(
             GL_TEXTURE_WRAP_S,
         /* GLint param: */
             GL_CLAMP_TO_EDGE);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     
     glTexParameteri(
         /* GLenum target: */
@@ -985,7 +887,7 @@ void platform_gpu_init_texture_array(
             GL_TEXTURE_WRAP_T,
         /* GLint param: */
             GL_CLAMP_TO_EDGE);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     
     glTexParameteri(
         /* GLenum target: */
@@ -994,7 +896,7 @@ void platform_gpu_init_texture_array(
             GL_TEXTURE_MIN_FILTER,
         /* GLint param: */
             GL_NEAREST);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     
     glTexParameteri(
         /* GLenum target: */
@@ -1003,7 +905,7 @@ void platform_gpu_init_texture_array(
             GL_TEXTURE_MAG_FILTER,
         /* GLint param: */
             GL_NEAREST);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     #endif
 }
 
@@ -1022,18 +924,18 @@ void platform_gpu_push_texture_slice(
         "opengl_push_texture(): %u to array: %u\n",
         texture_i,
         texture_array_i);
-    assert(image_width > 0);
-    assert(image_height > 0);
-    assert(parent_texture_array_images_size > texture_i);
+    gpu_assert(image_width > 0);
+    gpu_assert(image_height > 0);
+    gpu_assert(parent_texture_array_images_size > texture_i);
     
     glActiveTexture(
         GL_TEXTURE0 + texture_array_i);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     
     glBindTexture(
         GL_TEXTURE_2D_ARRAY,
         texture_array_ids[texture_array_i]);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
    
     // GL_UNSIGNED_BYTE is correct, opengl just shows very different results
     // from metal when alpha blending / testing is not set up yet and you're
@@ -1125,7 +1027,7 @@ void platform_gpu_push_texture_slice(
                 printf("%s\n", "unhandled error at start of frame!");
                 break;
         }
-        assert(0);
+        gpu_assert(0);
     }
     #endif
 }
@@ -1134,15 +1036,15 @@ void opengl_set_projection_constants(
     GPUProjectionConstants * pjc)
 {
     #if 0
-    assert(pjc != NULL);
+    gpu_assert(pjc != NULL);
     extptr_glUseProgram(program_id);
     
     // set viewport
     // these args might be getting clamped
     // to 0 - 1, I wish opengl would just
     // throw instead of silently clamping
-    assert(pjc->znear > 0.005f);
-    assert(pjc->zfar < 11.0f);
+    gpu_assert(pjc->znear > 0.005f);
+    gpu_assert(pjc->zfar < 11.0f);
     glDepthRangef(
         /* GLfloat nearVal: */ 
             pjc->znear,
@@ -1160,22 +1062,22 @@ void opengl_set_projection_constants(
     loc = extptr_glGetUniformLocation(
         program_id,
         "projection_constants_near");
-    assert(glGetError() == 0);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     // reminder: don't use glUniform1f, it's buggy on ubuntu with some
     // drivers, use glUniform1fv instead
     glUniform1fv(loc, 1, &pjc->znear);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     
     loc = -1;
     loc = extptr_glGetUniformLocation(
         program_id,
         "projection_constants_q");
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     // reminder: don't use glUniform1f, it's buggy on ubuntu with some
     // drivers, use glUniform1fv instead
     glUniform1fv(loc, 1, &pjc->q);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     
     loc = -1;
     loc = extptr_glGetUniformLocation(
@@ -1184,7 +1086,7 @@ void opengl_set_projection_constants(
     // reminder: don't use glUniform1f, it's buggy on ubuntu with some
     // drivers, use glUniform1fv instead
     glUniform1fv(loc, 1, &pjc->field_of_view_modifier);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     
     loc = -1;
     loc = extptr_glGetUniformLocation(
@@ -1193,7 +1095,7 @@ void opengl_set_projection_constants(
     // reminder: don't use glUniform1f, it's buggy on ubuntu with some
     // drivers, use glUniform1fv instead
     glUniform1fv(loc, 1, &pjc->x_multiplier);
-    assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);
     #endif
 }
 
