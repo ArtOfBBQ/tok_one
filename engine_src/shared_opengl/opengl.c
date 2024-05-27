@@ -26,7 +26,7 @@ static void opengl_copy_polygons(
         /* GLenum target: */
             GL_SHADER_STORAGE_BUFFER,
         /* GLsizeiptr size: */
-            sizeof(GPUPolygon) * MAX_POLYGONS_PER_BUFFER,
+            sizeof(GPUPolygon) * polygon_collection->size,
         /* const void * data: */
             polygon_collection->polygons,
         /* GLenum usage: */
@@ -50,27 +50,50 @@ static void opengl_copy_lights(
         GL_SHADER_STORAGE_BUFFER,
         GPULightCollection_VBO_id);
     
-    extptr_glBufferData(
-        /* GLenum target: */
-            GL_SHADER_STORAGE_BUFFER,
-        /* GLsizeiptr size: */
-            sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE,
-        /* const void * data: */
-            gpu_shared_data_collection.locked_vertices,
-        /* GLenum usage: */
-            GL_STATIC_DRAW);
-    // TODO: STATIC_DRAW is just my guess after reading docs
-    // need to revisit after being more familiar with OpenGL
-    
     // binding = 3 in the shader code
     extptr_glBindBufferBase(
         GL_SHADER_STORAGE_BUFFER,
         3,
         GPULightCollection_VBO_id);
+    
+    extptr_glBufferData(
+        /* GLenum target: */
+            GL_SHADER_STORAGE_BUFFER,
+        /* GLsizeiptr size: */
+            sizeof(GPULightCollection),
+        /* const void * data: */
+            light_collection,
+        /* GLenum usage: */
+            GL_STATIC_DRAW);
+    // TODO: STATIC_DRAW is just my guess after reading docs
+    // need to revisit after being more familiar with OpenGL
+    
+    #ifndef GPU_IGNORE_ASSERTS
+    float doublechecks[10];
+    doublechecks[0] = 12345;
+    extptr_glGetBufferSubData(
+        /* GLenum     target: */
+            GL_SHADER_STORAGE_BUFFER,
+        /* GLintptr  offset: */
+            0,
+        /* size_t     size: */
+            sizeof(float) * 10,
+        /* void *     data: */
+            doublechecks);
+    
+    for (uint32_t light_i = 0; light_i < 10; light_i++)
+    {
+        gpu_assert(
+            doublechecks[light_i] ==
+                light_collection->light_x[light_i]);
+    }
+    gpu_assert(glGetError() == 0);
+    #endif
+    
     gpu_assert(glGetError() == 0);
 }
 
-static bool32_t opengl_set_camera(
+static bool32_t opengl_copy_camera(
     GPUCamera * arg_camera)
 {
     GLint loc = -1;
@@ -94,6 +117,7 @@ static bool32_t opengl_set_camera(
         1,
         arg_camera->xyz);
     
+    #ifndef LOGGER_IGNORE_ASSERTS
     err_value = glGetError();
     if (err_value != 0) {
         printf("error trying to set arg_camera pos uniform\n");
@@ -134,6 +158,7 @@ static bool32_t opengl_set_camera(
     gpu_assert(doublecheck_cam_angle[0] == arg_camera->xyz_angle[0]);
     gpu_assert(doublecheck_cam_angle[1] == arg_camera->xyz_angle[1]);
     gpu_assert(doublecheck_cam_angle[2] == arg_camera->xyz_angle[2]);
+    #endif
     
     return true;
 }
@@ -145,6 +170,13 @@ void platform_gpu_copy_locked_vertices(void)
     extptr_glBindBuffer(
         GL_SHADER_STORAGE_BUFFER,
         GPULockedVertex_VBO_id);
+    
+    // binding = 4 in the shader code
+    extptr_glBindBufferBase(
+        GL_SHADER_STORAGE_BUFFER,
+        4,
+        GPULockedVertex_VBO_id);
+    
     extptr_glBufferData(
         /* GLenum target: */
             GL_SHADER_STORAGE_BUFFER,
@@ -157,12 +189,7 @@ void platform_gpu_copy_locked_vertices(void)
     // TODO: STATIC_DRAW is just my guess after reading docs
     // need to revisit after being more familiar with OpenGL
     
-    // binding = 4 in the shader code
-    extptr_glBindBufferBase(
-        GL_SHADER_STORAGE_BUFFER,
-        4,
-        GPULockedVertex_VBO_id);
-    gpu_assert(glGetError() == 0);
+    gpu_assert(glGetError() == 0);    
 }
 
 static void opengl_copy_vertices(
@@ -174,6 +201,7 @@ static void opengl_copy_vertices(
     extptr_glBindBuffer(
         GL_ARRAY_BUFFER,
         GPUVertex_VBO_id);
+    
     extptr_glBufferData(
         /* GLenum target: */
             GL_ARRAY_BUFFER,
@@ -183,7 +211,7 @@ static void opengl_copy_vertices(
             vertices,
         /* GLenum usage: */
             GL_STATIC_DRAW);
-   
+    
     #ifndef GPU_IGNORE_ASSERTS
     unsigned int doublechecks[10];
     doublechecks[0] = 12345;
@@ -193,11 +221,11 @@ static void opengl_copy_vertices(
         /* GLintptr  offset: */
             0,
         /* size_t     size: */
-            sizeof(float) * 10,
+            sizeof(float) * 6,
         /* void *     data: */
             doublechecks);
     
-    for (uint32_t vert_i = 0; vert_i < 5; vert_i++)
+    for (uint32_t vert_i = 0; vert_i < 3; vert_i++)
     {
         gpu_assert(
             doublechecks[(vert_i*2) + 0] ==
@@ -229,90 +257,15 @@ void opengl_render_triangles(
     
     if (frame_data->vertices_size < 1) { return; }
     
-    #ifndef LOGGER_IGNORE_ASSERTS
-    gpu_assert(frame_data->vertices != NULL); 
-    err_value = glGetError();
-    if (err_value != GL_NO_ERROR) {
-        switch (err_value) {
-            case GL_INVALID_VALUE:
-                printf("%s\n", "GL_INVALID_VALUE");
-                break;
-            case GL_INVALID_ENUM:
-                printf("%s\n", "GL_INVALID_ENUM");
-                break;
-            case GL_INVALID_OPERATION:
-                printf("%s\n", "GL_INVALID_OPERATION");
-                break;
-            default:
-                printf("%s\n", "unhandled error at start of frame!");
-                break;
-        }
-        gpu_assert(0);
-    }
-    #endif
-    
-    #ifndef LOGGER_IGNORE_ASSERTS
-    for (uint32_t i = 0; i < frame_data->vertices_size; i++) {
-        if (
-            frame_data->vertices[i].polygon_i < 0 ||
-            frame_data->vertices[i].polygon_i >=
-                frame_data->polygon_collection->size)
-        {
-            printf(
-                "invalid polygon_i: %u\n",
-                frame_data->vertices[i].polygon_i);
-            gpu_assert(frame_data->vertices[i].polygon_i >= 0);
-            gpu_assert(
-                frame_data->vertices[i].polygon_i <
-                    frame_data->polygon_collection->size);
-        }
-    }
-    #endif
-    
-    #ifndef LOGGER_IGNORE_ASSERTS
-    err_value = glGetError();
-    if (err_value != GL_NO_ERROR) {
-        switch (err_value) {
-            case GL_INVALID_VALUE:
-                printf(
-                    "%s\n",
-                    "GL_INVALID_VALUE");
-                break;
-            case GL_INVALID_ENUM:
-                printf(
-                    "%s\n",
-                    "GL_INVALID_ENUM");
-                break;
-            case GL_INVALID_OPERATION:
-                printf(
-                    "%s\n",
-                    "GL_INVALID_OPERATION");
-                break;
-            default:
-                printf(
-                    "%s\n",
-                    "unhandled error when sending buffer data!");
-                break;
-        }
-        gpu_assert(0);
-    }
-    #endif
-   
     opengl_copy_vertices(
         frame_data->vertices,
         frame_data->vertices_size); 
     
     opengl_copy_polygons(frame_data->polygon_collection);
-    #ifndef LOGGER_IGNORE_ASSERTS
-    err_value = glGetError();
-    #endif
     
     opengl_copy_lights(frame_data->light_collection);
-    #ifndef LOGGER_IGNORE_ASSERTS
-    err_value = glGetError();
-    #endif
     
-    bool32_t camera_success = opengl_set_camera(frame_data->camera);
+    bool32_t camera_success = opengl_copy_camera(frame_data->camera);
     if (!camera_success) {
         printf("ERROR - camera copy failed!\n");
         return;
