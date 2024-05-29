@@ -153,22 +153,22 @@ vertex_shader(
     
     // polygon_collection->polygons[polygon_i].ignore_camera
     float4 camera_position = vector_float4(
-        camera->x,
-        camera->y,
-        camera->z,
+        camera->xyz[0],
+        camera->xyz[1],
+        camera->xyz[2],
         0.0f);
     float4 camera_translated_pos = translated_pos - camera_position;
     
     // rotate around camera
     float4 cam_x_rotated = x_rotate(
         camera_translated_pos,
-        -camera->x_angle);
+        -camera->xyz_angle[0]);
     float4 cam_y_rotated = y_rotate(
         cam_x_rotated,
-        -camera->y_angle);
+        -camera->xyz_angle[1]);
     float4 cam_z_rotated = z_rotate(
         cam_y_rotated,
-        -camera->z_angle);
+        -camera->xyz_angle[2]);
     
     float ignore_cam =
         polygon_collection->polygons[polygon_i].ignore_camera;
