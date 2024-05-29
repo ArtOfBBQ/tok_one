@@ -17,7 +17,6 @@ static GLuint texture_array_ids[TEXTUREARRAYS_SIZE];
 static void opengl_copy_polygons(
     GPUPolygonCollection * polygon_collection)
 {
-    printf("copy polygons...\n");
     extptr_glBindBuffer(
         GL_SHADER_STORAGE_BUFFER,
         GPUPolygons_VBO_id);
@@ -51,50 +50,39 @@ static void opengl_copy_polygons(
 static void opengl_copy_lights(
     GPULightCollection * light_collection)
 {
-    printf("copy lights...\n");
     extptr_glBindBuffer(
         GL_SHADER_STORAGE_BUFFER,
         GPULightCollection_VBO_id);
-    
     // binding = 3 in the shader code
     extptr_glBindBufferBase(
         GL_SHADER_STORAGE_BUFFER,
         3,
         GPULightCollection_VBO_id);
+     
+    void * bufptr = extptr_glMapBuffer(
+        GL_SHADER_STORAGE_BUFFER,
+        GL_WRITE_ONLY);
     
-    extptr_glBufferData(
-        /* GLenum target: */
-            GL_SHADER_STORAGE_BUFFER,
-        /* GLsizeiptr size: */
-            sizeof(GPULightCollection),
-        /* const void * data: */
-            light_collection,
-        /* GLenum usage: */
-            GL_STATIC_DRAW);
-    // TODO: STATIC_DRAW is just my guess after reading docs
-    // need to revisit after being more familiar with OpenGL
-    
-    #ifndef GPU_IGNORE_ASSERTS
-    float doublechecks[10];
-    doublechecks[0] = 12345;
-    extptr_glGetBufferSubData(
-        /* GLenum     target: */
-            GL_SHADER_STORAGE_BUFFER,
-        /* GLintptr  offset: */
-            0,
-        /* size_t     size: */
-            sizeof(float) * 10,
-        /* void *     data: */
-            doublechecks);
-    
-    for (uint32_t light_i = 0; light_i < 10; light_i++)
-    {
-        gpu_assert(
-            doublechecks[light_i] ==
-                light_collection->light_x[light_i]);
+    GLint error = glGetError();
+    if (error || bufptr == NULL) {
+        printf(
+            "Error %i: locked verts glMapBuffer() returned "
+            "ptr: %p...\n:",
+            error,
+            bufptr);
+        getchar();
+        return 0;
     }
-    gpu_assert(glGetError() == 0);
-    #endif
+    memcpy(
+        bufptr,
+        light_collection,
+        sizeof(GPULightCollection));
+    
+    GLboolean unmap_success = extptr_glUnmapBuffer(
+        GL_SHADER_STORAGE_BUFFER); // bufptr now invalid
+    bufptr = NULL;
+    gpu_assert(unmap_success);
+    extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // unbind
     
     gpu_assert(glGetError() == 0);
 }
@@ -171,8 +159,6 @@ static bool32_t opengl_copy_camera(
 
 void platform_gpu_copy_locked_vertices(void)
 {
-    printf("%s\n", "Copy locked vertices...\n");
-    
     extptr_glBindBuffer(
         GL_SHADER_STORAGE_BUFFER,
         GPULockedVertex_VBO_id);
@@ -206,15 +192,13 @@ void platform_gpu_copy_locked_vertices(void)
     bufptr = NULL;
     gpu_assert(unmap_success);
     
-    gpu_assert(glGetError() == 0);    
+    gpu_assert(glGetError() == 0);
 }
 
 static void opengl_copy_vertices(
     GPUVertex * vertices,
     uint32_t vertices_size)
 {
-    printf("%s\n", "Copy vertices...\n");
-    
     extptr_glBindBuffer(
         GL_ARRAY_BUFFER,
         GPUVertex_VBO_id);
@@ -228,41 +212,11 @@ static void opengl_copy_vertices(
             vertices,
         /* GLenum usage: */
             GL_STATIC_DRAW);
-    
-    #ifndef GPU_IGNORE_ASSERTS
-    unsigned int doublechecks[10];
-    doublechecks[0] = 12345;
-    extptr_glGetBufferSubData(
-        /* GLenum     target: */
-            GL_ARRAY_BUFFER,
-        /* GLintptr  offset: */
-            0,
-        /* size_t     size: */
-            sizeof(float) * 6,
-        /* void *     data: */
-            doublechecks);
-    
-    for (uint32_t vert_i = 0; vert_i < 3; vert_i++)
-    {
-        gpu_assert(
-            doublechecks[(vert_i*2) + 0] ==
-                vertices[vert_i].locked_vertex_i);
-        gpu_assert(
-            doublechecks[(vert_i*2) + 1] ==
-                vertices[vert_i].polygon_i);
-    }
-    
-    gpu_assert(glGetError() == 0);
-    #endif
 }
 
 void opengl_render_triangles(
     GPUDataForSingleFrame * frame_data)
 {
-    printf(
-        "render %u triangles...\n",
-        frame_data->vertices_size);
-    
     gpu_assert(program_id < INT32_MAX);
     gpu_assert(VAO < UINT32_MAX);
     
@@ -618,6 +572,24 @@ void opengl_compile_shaders(
     glCullFace(GL_FRONT);
     
     extptr_glGenBuffers(1, &GPULightCollection_VBO_id);
+    extptr_glBindBuffer(
+        GL_SHADER_STORAGE_BUFFER,
+        GPULightCollection_VBO_id);
+    // binding = 3 in the shader code
+    extptr_glBindBufferBase(
+        GL_SHADER_STORAGE_BUFFER,
+        3,
+        GPULightCollection_VBO_id);
+    extptr_glBufferData(
+        /* GLenum target: */
+            GL_SHADER_STORAGE_BUFFER,
+        /* GLsizeiptr size: */
+            sizeof(GPULightCollection),
+        /* const void * data: */
+            0,
+        /* GLenum usage: */
+            GL_STATIC_DRAW);
+    extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // unbind
     
     // Polygons (create empty buffer)
     extptr_glGenBuffers(1, &GPUPolygons_VBO_id);
@@ -659,13 +631,12 @@ void opengl_compile_shaders(
             0,
         /* GLenum usage: */
             GL_STATIC_DRAW);
-    extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // unbind
     
     extptr_glGenBuffers(1, &GPUVertex_VBO_id);
     extptr_glBindBuffer(
         GL_ARRAY_BUFFER,
         GPUVertex_VBO_id);
-    
     /*
     Attribute pointers describe the fields of our 'in' data fields
     (we use them for the Vertex type in shared/cpu_gpu_shared_types.h)
@@ -689,9 +660,9 @@ void opengl_compile_shaders(
         /* GLuint index (location in shader source): */
             0,
         /* GLint size (number of components per vertex, must be 1-4): */
-            1,
+            2,
         /* GLenum type (of data): */
-            GL_INT,
+            GL_UNSIGNED_INT,
         /* GLsizei stride; */
             sizeof(GPUVertex),
         /* const GLvoid * pointer (offset) : */
@@ -715,67 +686,7 @@ void opengl_compile_shaders(
         gpu_assert(0);
     }
     
-    extptr_glVertexAttribIPointer(
-        /* GLuint index (location in shader source): */
-            1,
-        /* GLint size (number of components per vertex, must be 1-4): */
-            1,
-        /* GLenum type (of data): */
-            GL_INT,
-        /* GLsizei stride; */
-            sizeof(GPUVertex),
-        /* const GLvoid * pointer (offset) : */
-            (void *)(1 * sizeof(float)));
-    
-    err_value = glGetError();
-    if (err_value != GL_NO_ERROR) {
-        printf("Failed to set VertexAttribIPointer for location 1\n");
-        switch (err_value) {
-            case GL_INVALID_VALUE:
-                printf("%s\n", "GL_INVALID_VALUE");
-                break;
-            case GL_INVALID_ENUM:
-                printf("%s\n", "GL_INVALID_ENUM");
-                break;
-            case GL_INVALID_OPERATION:
-                printf(
-                    "%s\n",
-                    "GL_INVALID_OPERATION");
-                GLint max_attribs = -1;
-                extptr_glGetIntegerv(
-                    GL_MAX_VERTEX_ATTRIBS,
-                    &max_attribs);
-                printf(
-                    "GL_MAX_ATTRIBS was: %i\n",
-                    max_attribs);
-                break;
-            default:
-                printf("%s\n", "unhandled!");
-        }
-        gpu_assert(0);
-    }
-    
-    
     extptr_glEnableVertexAttribArray(0);
-    err_value = glGetError();
-    if (err_value != GL_NO_ERROR) {
-        switch (err_value) {
-            case GL_INVALID_VALUE:
-                printf("%s\n", "GL_INVALID_VALUE");
-                break;
-            case GL_INVALID_ENUM:
-                printf("%s\n", "GL_INVALID_ENUM");
-                break;
-            case GL_INVALID_OPERATION:
-                printf("%s\n", "GL_INVALID_OPERATION");
-                break;
-            default:
-                printf("%s\n", "unhandled!");
-        }
-        gpu_assert(0);
-    }
-    
-    extptr_glEnableVertexAttribArray(1);
     err_value = glGetError();
     if (err_value != GL_NO_ERROR) {
         switch (err_value) {
@@ -800,7 +711,7 @@ void opengl_compile_shaders(
     extptr_glGetProgramiv(program_id, GL_VALIDATE_STATUS, &success);
     gpu_assert(success);
     gpu_assert(glGetError() == 0);
-
+    
     printf("Compiled shaders...\n");
 }
 

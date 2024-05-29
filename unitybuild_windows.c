@@ -43,7 +43,7 @@
 #include "text.c"
 #include "uielement.c"
 // #include "clientlogic.c" // requires text and uielement
-#include "clientlogic_particledesigner.c" // requires text and uielement
+#include "clientlogic.c" // requires text and uielement
 #include "terminal.c" // requires clientlogic
 #include "renderer.c" // requires zpoly & part
 #include "gameloop.c" // requires renderer

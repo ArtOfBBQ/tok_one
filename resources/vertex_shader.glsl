@@ -1,7 +1,6 @@
 #version 460 core
 
-layout (location=0) in unsigned int locked_vertex_i;
-layout (location=1) in unsigned int polygon_i;
+layout (location=0) in uvec2 invertexids;
 
 layout(location = 30) uniform vec3 camera_xyz;
 layout(location = 31) uniform vec3 camera_xyz_angle;
@@ -31,7 +30,7 @@ struct GPUPolygon {
 }; // 24 floats (3 SIMD runs)
 layout (std430, binding=2) buffer polygons_buffer
 {
-    GPUPolygon polygons[ALL_LOCKED_VERTICES_SIZE];
+    GPUPolygon polygons[MAX_POLYGONS_PER_BUFFER];
 };
 
 struct GPULightCollection {
@@ -140,6 +139,9 @@ float get_distance(
 
 void main()
 {
+    uint locked_vertex_i = invertexids[0];
+    uint polygon_i       = invertexids[1];
+    
     uint locked_material_i = (polygon_i * MAX_MATERIALS_PER_POLYGON) +
         locked_vertices[locked_vertex_i].parent_material_i;
     
