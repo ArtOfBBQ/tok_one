@@ -49,3 +49,4 @@
 #include "gameloop.c" // requires renderer
 #include "init_application.c" // requires gameloop
 #include "windows_main.c"
+

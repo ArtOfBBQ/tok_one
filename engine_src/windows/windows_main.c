@@ -508,6 +508,12 @@ int CALLBACK WinMain(
             (void **)&extptr_glGetIntegerv,
             "glGetIntegerv");
         fetch_extension_func_address(
+            (void **)&extptr_glMapBuffer,
+            "glMapBuffer");
+        fetch_extension_func_address(
+            (void **)&extptr_glUnmapBuffer,
+            "glUnmapBuffer");
+        fetch_extension_func_address(
             (void **)&extptr_glGetBufferSubData,
             "glGetBufferSubData");
         

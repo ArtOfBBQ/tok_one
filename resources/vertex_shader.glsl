@@ -14,6 +14,7 @@ struct GPUProjectionConstants {
     float field_of_view_modifier;
     float x_multiplier;
     float y_multiplier;
+    float padding;
 };
 uniform GPUProjectionConstants projection_constants;
 
@@ -27,7 +28,7 @@ struct GPUPolygon {
     float        ignore_lighting;
     float        ignore_camera;
     float        simd_padding[6];
-};
+}; // 24 floats (3 SIMD runs)
 layout (std430, binding=2) buffer polygons_buffer
 {
     GPUPolygon polygons[ALL_LOCKED_VERTICES_SIZE];
@@ -51,10 +52,11 @@ layout (std430, binding=3) buffer light_collection_buffer
 };
 
 struct GPULockedVertex {
-    float        xyz       [3];
-    float        normal_xyz[3];
-    float        uv        [2];
-    unsigned int parent_material_i;
+    float        xyz       [3];     // 12 bytes
+    float        normal_xyz[3];     // 12 bytes
+    float        uv        [2];     //  8 bytes
+    unsigned int parent_material_i; // 4 bytes
+    float        padding[3];        // 12 bytes
 };
 layout (std430, binding=4) buffer locked_vertices_buffer
 {

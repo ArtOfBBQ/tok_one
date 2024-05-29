@@ -1,6 +1,7 @@
 #ifndef TOKONE_OPENGL_EXTENSIONS_H
 #define TOKONE_OPENGL_EXTENSIONS_H
 
+#include <windows.h>
 #include <GL/gl.h>
 
 // /*
@@ -14,6 +15,7 @@
 // those functions and set them.
 // */
 
+// #define GLchar     char
 #define GLsizeiptr ptrdiff_t
 #define GLintptr   ptrdiff_t
 
@@ -31,12 +33,17 @@
 #define GL_VERTEX_SHADER                  0x8B31
 #define GL_FRAGMENT_SHADER                0x8B30
 #define GL_ARRAY_BUFFER                   0x8892
-
 #define GL_SHADER_STORAGE_BUFFER          0x90D2
+
 #define GL_STATIC_DRAW                    0x88E4
 #define GL_STREAM_DRAW                    0x88E0
 
+#define GL_READ_ONLY                      0x88B8
+#define GL_WRITE_ONLY                     0x88B9
+#define GL_READ_WRITE                     0x88BA
+
 #define GL_MAX_VERTEX_ATTRIBS             0x8869
+
 
 extern HGLRC (* extptr_wglCreateContextAttribsARB)(
     HDC device_context,
@@ -88,6 +95,35 @@ extern void (* extptr_glVertexAttribIPointer)(
     GLenum type,
     GLsizei stride,
     const void * pointer);
+/*
+index
+Specifies the index of the generic vertex attribute to be modified.
+
+size
+Specifies the number of components per generic vertex attribute.
+Must be 1, 2, 3, or 4. The initial value is 4.
+
+type
+Specifies the data type of each component in the array.
+Symbolic constants GL_BYTE, GL_UNSIGNED_BYTE, GL_SHORT,
+GL_UNSIGNED_SHORT, GL_FIXED, or GL_FLOAT are accepted. The initial
+value is GL_FLOAT.
+
+normalized
+Specifies whether fixed-point data values should be normalized
+(GL_TRUE) or converted directly as fixed-point values (GL_FALSE)
+when they are accessed.
+
+stride
+Specifies the byte offset between consecutive generic vertex attributes.
+If stride is 0, the generic vertex attributes are understood to be
+tightly packed in the array.
+The initial value is 0.
+
+pointer
+Specifies a pointer to the first component of the first generic vertex
+attribute in the array. The initial value is 0.
+*/
 void (* extptr_glVertexAttribPointer)(
     GLuint index,
     GLint size,
@@ -124,7 +160,11 @@ void (* extptr_glGetUniformfv)(
 void (* extptr_glGetIntegerv)(
     GLenum pname,
     GLint * params);
-
+void * (* extptr_glMapBuffer)(
+    GLenum target,
+    GLenum access);
+GLboolean (* extptr_glUnmapBuffer)(
+    GLenum target);
 
 /*
 glGetBufferSubData

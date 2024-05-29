@@ -28,15 +28,17 @@ the parents that contain these (see zpolygons_to_render in zpolygon.h),
 not this.
 */
 typedef struct GPULockedVertex {
-    float        xyz       [3];
-    float        normal_xyz[3];
-    float        uv        [2];
-    unsigned int parent_material_i;
+    float        xyz       [3];     // 12 bytes
+    float        normal_xyz[3];     // 12 bytes
+    float        uv        [2];     //  8 bytes
+    unsigned int parent_material_i; // 4 bytes
+    float        padding[3];        // 12 bytes
 } GPULockedVertex;
 
 typedef struct GPUCamera {
-    float xyz[3];
-    float xyz_angle[3];
+    float xyz[3];           // 12 bytes
+    float xyz_angle[3];     // 12 bytes
+    float padding[2];       //  8 bytes
 } GPUCamera;
 
 typedef struct GPUPolygon {
@@ -57,10 +59,10 @@ typedef struct GPUPolygonCollection {
 } GPUPolygonCollection;
 
 typedef struct GPUPolygonMaterial {
-    float rgba[4];
-    int   texturearray_i;
-    int   texture_i;
-    float simd_padding[2];
+    float rgba[4];          // 16 bytes
+    int   texturearray_i;   //  4 bytes
+    int   texture_i;        //  4 bytes
+    float simd_padding[2];  //  8 bytes
 } GPUPolygonMaterial;
 
 typedef struct GPULightCollection {
@@ -84,6 +86,7 @@ typedef struct GPUProjectionConstants {
     float field_of_view_modifier;
     float x_multiplier;
     float y_multiplier;
+    float padding;
 } GPUProjectionConstants;
 #pragma pack(pop)
 

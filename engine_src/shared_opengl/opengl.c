@@ -22,24 +22,30 @@ static void opengl_copy_polygons(
         GL_SHADER_STORAGE_BUFFER,
         GPUPolygons_VBO_id);
     
-    extptr_glBufferData(
-        /* GLenum target: */
-            GL_SHADER_STORAGE_BUFFER,
-        /* GLsizeiptr size: */
-            sizeof(GPUPolygon) * polygon_collection->size,
-        /* const void * data: */
-            polygon_collection->polygons,
-        /* GLenum usage: */
-            GL_STREAM_DRAW);
-    // TODO: STREAM_DRAW is just my guess after reading docs
-    // need to revisit after being more familiar with OpenGL
-    
-    // binding = 2 in the shader code
-    extptr_glBindBufferBase(
+    void * bufptr = extptr_glMapBuffer(
         GL_SHADER_STORAGE_BUFFER,
-        2,
-        GPUPolygons_VBO_id);
-    gpu_assert(glGetError() == 0);
+        GL_WRITE_ONLY);
+    
+    GLint error = glGetError();
+    if (error || bufptr == NULL) {
+        printf(
+            "Error %i: polygons glMapBuffer() returned ptr: %p...\n:",
+            error,
+            bufptr);
+        getchar();
+        return 0;
+    }
+    memcpy(
+        bufptr,
+        polygon_collection->polygons,
+        polygon_collection->size * sizeof(GPUPolygon));
+    
+    GLboolean unmap_success = extptr_glUnmapBuffer(
+        GL_SHADER_STORAGE_BUFFER); // bufptr now invalid
+    bufptr = NULL;
+    gpu_assert(unmap_success);
+    
+    gpu_assert(glGetError() == 0);        
 }
 
 static void opengl_copy_lights(
@@ -170,24 +176,35 @@ void platform_gpu_copy_locked_vertices(void)
     extptr_glBindBuffer(
         GL_SHADER_STORAGE_BUFFER,
         GPULockedVertex_VBO_id);
-    
     // binding = 4 in the shader code
     extptr_glBindBufferBase(
         GL_SHADER_STORAGE_BUFFER,
         4,
         GPULockedVertex_VBO_id);
     
-    extptr_glBufferData(
-        /* GLenum target: */
-            GL_SHADER_STORAGE_BUFFER,
-        /* GLsizeiptr size: */
-            sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE,
-        /* const void * data: */
-            gpu_shared_data_collection.locked_vertices,
-        /* GLenum usage: */
-            GL_STATIC_DRAW);
-    // TODO: STATIC_DRAW is just my guess after reading docs
-    // need to revisit after being more familiar with OpenGL
+    void * bufptr = extptr_glMapBuffer(
+        GL_SHADER_STORAGE_BUFFER,
+        GL_WRITE_ONLY);
+    
+    GLint error = glGetError();
+    if (error || bufptr == NULL) {
+        printf(
+            "Error %i: locked verts glMapBuffer() returned "
+            "ptr: %p...\n:",
+            error,
+            bufptr);
+        getchar();
+        return 0;
+    }
+    memcpy(
+        bufptr,
+        gpu_shared_data_collection.locked_vertices,
+        ALL_LOCKED_VERTICES_SIZE * sizeof(GPULockedVertex));
+    
+    GLboolean unmap_success = extptr_glUnmapBuffer(
+        GL_SHADER_STORAGE_BUFFER); // bufptr now invalid
+    bufptr = NULL;
+    gpu_assert(unmap_success);
     
     gpu_assert(glGetError() == 0);    
 }
@@ -601,8 +618,48 @@ void opengl_compile_shaders(
     glCullFace(GL_FRONT);
     
     extptr_glGenBuffers(1, &GPULightCollection_VBO_id);
+    
+    // Polygons (create empty buffer)
     extptr_glGenBuffers(1, &GPUPolygons_VBO_id);
+    extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, GPUPolygons_VBO_id);
+    // binding = 2 in the shader code
+    extptr_glBindBufferBase(
+        GL_SHADER_STORAGE_BUFFER,
+        2,
+        GPUPolygons_VBO_id);
+    gpu_assert(glGetError() == 0);
+    extptr_glBufferData(
+        /* GLenum target: */
+            GL_SHADER_STORAGE_BUFFER,
+        /* GLsizeiptr size: */
+            sizeof(GPUPolygon) * MAX_POLYGONS_PER_BUFFER,
+        /* const void * data: */
+            0,
+        /* GLenum usage: */
+            GL_STATIC_DRAW);
+    extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    
+    // Locked Vertices (create empty buffer)
     extptr_glGenBuffers(1, &GPULockedVertex_VBO_id);
+    // binding = 4 in the shader code
+    extptr_glBindBuffer(
+        GL_SHADER_STORAGE_BUFFER,
+        GPULockedVertex_VBO_id);
+    extptr_glBindBufferBase(
+        GL_SHADER_STORAGE_BUFFER,
+        4,
+        GPULockedVertex_VBO_id);
+    gpu_assert(glGetError() == 0);
+    extptr_glBufferData(
+        /* GLenum target: */
+            GL_SHADER_STORAGE_BUFFER,
+        /* GLsizeiptr size: */
+            sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE,
+        /* const void * data: */
+            0,
+        /* GLenum usage: */
+            GL_STATIC_DRAW);
+    extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     
     extptr_glGenBuffers(1, &GPUVertex_VBO_id);
     extptr_glBindBuffer(

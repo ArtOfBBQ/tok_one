@@ -1,12 +1,12 @@
 #include "opengl_extensions.h"
 
 HGLRC(* extptr_wglCreateContextAttribsARB)(HDC, HGLRC, const int *) = NULL;
-int (* extptr_glGetUniformLocation)(GLint, const GLchar *) = NULL;
+int (* extptr_glGetUniformLocation)(GLint, const char *) = NULL;
 
 void (* extptr_glShaderSource)(
     GLuint,
     GLsizei,
-    const GLchar **,
+    const char **,
     const GLint *) = NULL;
 
 void (* extptr_glCompileShader)(GLuint shader) = NULL;
@@ -63,7 +63,7 @@ void (* extptr_glGetProgramInfoLog)(
     GLuint program,
     GLsizei maxLength,
     GLsizei *length,
-    GLchar *infoLog) = NULL;
+    char *infoLog) = NULL;
 void (* extptr_glBufferData)(
     GLenum target,
     GLsizeiptr size,
@@ -89,4 +89,9 @@ void (* extptr_glGetBufferSubData)(
     GLintptr   offset,
     GLsizeiptr size,
     void *     data) = NULL;
+void * (* extptr_glMapBuffer)(
+    GLenum target,
+    GLenum access) = NULL;
+GLboolean (* extptr_glUnmapBuffer)(
+    GLenum target) = NULL;
 
