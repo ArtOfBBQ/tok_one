@@ -96,11 +96,20 @@ void platform_open_folder_in_window_if_possible(
     const char * folderpath);
 
 // get current working directory
-void platform_get_application_path(char * recipient, const uint32_t recipient_size);
-void platform_get_resources_path(char * recipient, const uint32_t recipient_size);
-void platform_get_cwd(char * recipient, const uint32_t recipient_size);
+void platform_get_application_path(
+    char * recipient,
+    const uint32_t recipient_size);
+void platform_get_resources_path(
+    char * recipient,
+    const uint32_t recipient_size);
+void platform_get_cwd(
+    char * recipient,
+    const uint32_t recipient_size);
+
 // a root directory where we're allowed to write
-void platform_get_writables_path(char * recipient, const uint32_t recipient_size);
+void platform_get_writables_path(
+    char * recipient,
+    const uint32_t recipient_size);
 
 bool32_t platform_resource_exists(const char * resource_name);
 bool32_t platform_file_exists(const char * filepath);

@@ -15,7 +15,7 @@
 // those functions and set them.
 // */
 
-// #define GLchar     char
+#define GLchar     char
 #define GLsizeiptr ptrdiff_t
 #define GLintptr   ptrdiff_t
 
@@ -44,6 +44,11 @@
 
 #define GL_MAX_VERTEX_ATTRIBS             0x8869
 
+
+void init_opengl_extensions(
+    void (* fetch_extension_func_address_func)(
+        void ** extptr,
+        char * func_name));
 
 extern HGLRC (* extptr_wglCreateContextAttribsARB)(
     HDC device_context,

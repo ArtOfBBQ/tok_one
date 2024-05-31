@@ -25,6 +25,7 @@
 #include "window_size.c"
 #include "triangle.c"
 #include "lightsource.c"
+#include "cpu_to_gpu_types.c"
 // 2. Files that are part of the basic platform layer
 #include "common_platform_layer.c"
 #include "windows_platform_layer.c"

@@ -11,9 +11,9 @@ static int32_t closest_touchable_from_screen_ray(
 {
     #ifndef LOGGER_IGNORE_ASSERTS
     uint32_t nonzero_camera_angles = 0;
-    if (camera.xyz[0]yz_angle[0] != 0.0f) { nonzero_camera_angles += 1; }
-    if (camera.xyz[0]yz_angle[1] != 0.0f) { nonzero_camera_angles += 1; }
-    if (camera.xyz[0]yz_angle[2] != 0.0f) { nonzero_camera_angles += 1; }
+    if (camera.xyz[0] != 0.0f) { nonzero_camera_angles += 1; }
+    if (camera.xyz[1] != 0.0f) { nonzero_camera_angles += 1; }
+    if (camera.xyz[2] != 0.0f) { nonzero_camera_angles += 1; }
     
     // TODO: study raytracing math and find out why our solution doesn't
     // TODO: support 2 or more camera rotations  

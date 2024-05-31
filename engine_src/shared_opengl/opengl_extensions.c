@@ -95,3 +95,97 @@ void * (* extptr_glMapBuffer)(
 GLboolean (* extptr_glUnmapBuffer)(
     GLenum target) = NULL;
 
+void init_opengl_extensions(
+    void (* fetch_extension_func_address)(
+        void ** extptr,
+        char * func_name))
+{
+    fetch_extension_func_address(
+        (void **)&extptr_wglCreateContextAttribsARB,
+        "wglCreateContextAttribsARB");
+    fetch_extension_func_address(
+        (void **)&extptr_glGetUniformLocation,
+        "glGetUniformLocation");
+    fetch_extension_func_address(
+        (void **)&extptr_glCreateProgram,
+        "glCreateProgram");
+    fetch_extension_func_address(
+        (void **)&extptr_glCreateShader,
+        "glCreateShader");
+    fetch_extension_func_address(
+        (void **)&extptr_glShaderSource,
+        "glShaderSource");
+    fetch_extension_func_address(
+        (void **)&extptr_glCompileShader,
+        "glCompileShader");
+    fetch_extension_func_address(
+        (void **)&extptr_glGetShaderiv,
+        "glGetShaderiv");
+    fetch_extension_func_address(
+        (void **)&extptr_glGetShaderInfoLog,
+        "glGetShaderInfoLog");
+    fetch_extension_func_address(
+        (void **)&extptr_glAttachShader,
+        "glAttachShader");
+    fetch_extension_func_address(
+        (void **)&extptr_glLinkProgram,
+        "glLinkProgram");
+    fetch_extension_func_address(
+        (void **)&extptr_glGetProgramiv,
+        "glGetProgramiv");
+    fetch_extension_func_address(
+        (void **)&extptr_glUseProgram,
+        "glUseProgram");
+    fetch_extension_func_address(
+        (void **)&extptr_glGenVertexArrays,
+        "glGenVertexArrays");
+    fetch_extension_func_address(
+        (void **)&extptr_glGenBuffers,
+        "glGenBuffers");
+    fetch_extension_func_address(
+        (void **)&extptr_glBindVertexArray,
+        "glBindVertexArray");
+    fetch_extension_func_address(
+        (void **)&extptr_glBindBuffer,
+        "glBindBuffer");
+    fetch_extension_func_address(
+        (void **)&extptr_glVertexAttribIPointer,
+        "glVertexAttribIPointer");
+    fetch_extension_func_address(
+        (void **)&extptr_glVertexAttribPointer,
+        "glVertexAttribPointer");
+    fetch_extension_func_address(
+        (void **)&extptr_glEnableVertexAttribArray,
+        "glEnableVertexAttribArray");
+    fetch_extension_func_address(
+        (void **)&extptr_glValidateProgram,
+        "glValidateProgram");
+    fetch_extension_func_address(
+        (void **)&extptr_glGetProgramInfoLog,
+        "glGetProgramInfoLog");
+    fetch_extension_func_address(
+        (void **)&extptr_glBufferData,
+        "glBufferData");
+    fetch_extension_func_address(
+        (void **)&extptr_glBindBufferBase,
+        "glBindBufferBase");
+    fetch_extension_func_address(
+        (void **)&extptr_glUniform3fv,
+        "glUniform3fv");
+    fetch_extension_func_address(
+        (void **)&extptr_glGetUniformfv,
+        "glGetUniformfv");
+    fetch_extension_func_address(
+        (void **)&extptr_glGetIntegerv,
+        "glGetIntegerv");
+    fetch_extension_func_address(
+        (void **)&extptr_glGetBufferSubData,
+        "glGetBufferSubData");
+    fetch_extension_func_address(
+        (void **)&extptr_glMapBuffer,
+        "glMapBuffer");
+    fetch_extension_func_address(
+        (void **)&extptr_glUnmapBuffer,
+        "glUnmapBuffer");
+}
+

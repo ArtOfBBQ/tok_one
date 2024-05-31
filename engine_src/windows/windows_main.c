@@ -25,15 +25,49 @@ static void wait_x_microseconds(uint64_t microseconds)
     }
 }
 
+void platform_gpu_update_viewport(void) {
+    *gpu_shared_data_collection.locked_pjc =
+        window_globals->projection_constants;
+    
+    opengl_copy_projection_constants(
+        /* GPUProjectionConstants * projection_constants: */
+            gpu_shared_data_collection.locked_pjc);
+}
+
+void platform_gpu_copy_locked_vertices() {
+    opengl_copy_locked_vertices(
+        gpu_shared_data_collection.locked_vertices);
+}
+
+void platform_gpu_init_texture_array(
+    const int32_t texture_array_i,
+    const uint32_t num_images,
+    const uint32_t single_image_width,
+    const uint32_t single_image_height)
+{
+    // TODO: do stuff
+}
+
+void platform_gpu_push_texture_slice(
+    const int32_t texture_array_i,
+    const int32_t texture_i,
+    const uint32_t parent_texture_array_images_size,
+    const uint32_t image_width,
+    const uint32_t image_height,
+    const uint8_t * rgba_values)
+{
+    // TODO: do stuff
+}
+
 static void fetch_extension_func_address(
     void ** extptr,
     char * func_name)
 {
     if (*extptr != NULL) {
         printf(
-            "%s\n"
+            "%s\n",
             "Tried to fetch a PROC address that was already non-null");
-        application_running = 0;
+        application_running = false;
         return;
     }
     
@@ -63,8 +97,108 @@ static void fetch_extension_func_address(
             "\nError code:\n");
         strcat_uint_capped(errmsg, 128, error);
         printf("%s\n", errmsg);
-        application_running = 0;
+        application_running = false;
     }
+}
+
+static uint32_t microsoft_keycode_to_tokone_keycode(
+    const uint32_t microsoft_key)
+{
+    #ifndef LOGGER_IGNORE_ASSERTS
+    char err_msg[128];
+    #endif
+    
+    switch (microsoft_key) {
+        case 13:
+            return TOK_KEY_ENTER;
+        case 81:
+            return TOK_KEY_Q;
+        case 87:
+            return TOK_KEY_W;
+        case 69:
+            return TOK_KEY_E;
+        case 82:
+            return TOK_KEY_R;
+        case 84:
+            return TOK_KEY_T;
+        case 89:
+            return TOK_KEY_Y;
+        case 85:
+            return TOK_KEY_U;
+        case 73:
+            return TOK_KEY_I;
+        case 79:
+            return TOK_KEY_O;
+        case 80:
+            return TOK_KEY_P;
+        case 65:
+            return TOK_KEY_A;
+        case 83:
+            return TOK_KEY_S;
+        case 68:
+            return TOK_KEY_D;
+        case 70:
+            return TOK_KEY_F;
+        case 71:
+            return TOK_KEY_G;
+        case 72:
+            return TOK_KEY_H;
+        case 74:
+            return TOK_KEY_J;
+        case 75:
+            return TOK_KEY_K;
+        case 76:
+            return TOK_KEY_L;
+        case 186:
+            return TOK_KEY_SEMICOLON;
+        //case 222:
+        //    return TOK_KEY_SINGLEQUOTE;
+        case 90:
+            return TOK_KEY_Z;
+        case 88:
+            return TOK_KEY_X;
+        case 67:
+            return TOK_KEY_C;
+        case 86:
+            return TOK_KEY_V;
+        case 66:
+            return TOK_KEY_B;
+        case 78:
+            return TOK_KEY_N;
+        case 77:
+            return TOK_KEY_M;
+        case 188:
+            return TOK_KEY_COMMA;
+        case 190:
+            return TOK_KEY_FULLSTOP;
+        //case 191:
+        //    // ascii: /
+        //    return TOK_KEY_FORWARDSLASH;
+        case 37:
+            return TOK_KEY_LEFTARROW;
+        case 38:
+            return TOK_KEY_UPARROW;
+        case 39:
+            return TOK_KEY_RIGHTARROW;
+        case 40:
+            return TOK_KEY_DOWNARROW;
+        //case 16:
+        //    return TOK_KEY_RIGHTSHIFT;
+        default:
+            printf("unregistered keycode: %u\n", microsoft_key);
+            #ifndef LOGGER_IGNORE_ASSERTS
+            strcpy_capped(err_msg, 128, "unhandled windows keycode: ");
+            strcat_uint_capped(err_msg, 128, apple_key);
+            strcat_capped(err_msg, 128, "\n");
+            #endif
+            break;
+    }
+    
+    #ifndef LOGGER_IGNORE_ASSERTS
+    log_dump_and_crash(err_msg);
+    #endif
+    
+    return TOK_KEY_ESCAPE;
 }
 
 // Windows will send us messages when something
@@ -81,21 +215,20 @@ MainWindowCallback(
     
     switch (message_id)
     {
-        case WM_QUIT: {
-            application_running = 0;
-            DestroyWindow(window_handle);
-            break;
-        }
+        //case WM_QUIT: {
+        //    application_running = 0;
+        //    DestroyWindow(window_handle);
+        //    break;
+        //}
         case WM_CLOSE: {
-            application_running = 0;
-            DestroyWindow(window_handle);
+            application_running = false;
             break;
         }
         case WM_SIZE: {
             break;
         }
         case WM_DESTROY: {
-            application_running = 0;
+            application_running = false;
             break;
         }
         case WM_ACTIVATEAPP: {
@@ -111,6 +244,26 @@ MainWindowCallback(
             break;
         }
         case WM_KILLFOCUS: {
+            break;
+        }
+        case WM_SYSKEYDOWN: {
+            break;
+        }
+        case WM_SYSKEYUP: {
+            break;
+        }
+        case WM_KEYUP: {
+            uint32_t key_code = w_param;
+            uint32_t tok_key = microsoft_keycode_to_tokone_keycode(
+                key_code);
+            register_keyup(tok_key);
+            break;
+        }
+        case WM_KEYDOWN: {
+            uint32_t key_code = w_param;
+            uint32_t tok_key = microsoft_keycode_to_tokone_keycode(
+                key_code);
+            register_keydown(tok_key);
             break;
         }
         default: {
@@ -429,93 +582,8 @@ int CALLBACK WinMain(
             device_context,
             dummy_context))
     {
-        fetch_extension_func_address(
-            (void **)&extptr_wglCreateContextAttribsARB,
-            "wglCreateContextAttribsARB");
-        fetch_extension_func_address(
-            (void **)&extptr_glGetUniformLocation,
-            "glGetUniformLocation");
-        fetch_extension_func_address(
-            (void **)&extptr_glCreateProgram,
-            "glCreateProgram");
-        fetch_extension_func_address(
-            (void **)&extptr_glCreateShader,
-            "glCreateShader");
-        fetch_extension_func_address(
-            (void **)&extptr_glShaderSource,
-            "glShaderSource");
-        fetch_extension_func_address(
-            (void **)&extptr_glCompileShader,
-            "glCompileShader");
-        fetch_extension_func_address(
-            (void **)&extptr_glGetShaderiv,
-            "glGetShaderiv");
-        fetch_extension_func_address(
-            (void **)&extptr_glGetShaderInfoLog,
-            "glGetShaderInfoLog");
-        fetch_extension_func_address(
-            (void **)&extptr_glAttachShader,
-            "glAttachShader");
-        fetch_extension_func_address(
-            (void **)&extptr_glLinkProgram,
-            "glLinkProgram");
-        fetch_extension_func_address(
-            (void **)&extptr_glGetProgramiv,
-            "glGetProgramiv");
-        fetch_extension_func_address(
-            (void **)&extptr_glUseProgram,
-            "glUseProgram");
-        fetch_extension_func_address(
-            (void **)&extptr_glGenVertexArrays,
-            "glGenVertexArrays");
-        fetch_extension_func_address(
-            (void **)&extptr_glGenBuffers,
-            "glGenBuffers");
-        fetch_extension_func_address(
-            (void **)&extptr_glBindVertexArray,
-            "glBindVertexArray");
-        fetch_extension_func_address(
-            (void **)&extptr_glBindBuffer,
-            "glBindBuffer");
-        fetch_extension_func_address(
-            (void **)&extptr_glVertexAttribIPointer,
-            "glVertexAttribIPointer");
-        fetch_extension_func_address(
-            (void **)&extptr_glVertexAttribPointer,
-            "glVertexAttribPointer");
-        fetch_extension_func_address(
-            (void **)&extptr_glEnableVertexAttribArray,
-            "glEnableVertexAttribArray");
-        fetch_extension_func_address(
-            (void **)&extptr_glValidateProgram,
-            "glValidateProgram");
-        fetch_extension_func_address(
-            (void **)&extptr_glGetProgramInfoLog,
-            "glGetProgramInfoLog");
-        fetch_extension_func_address(
-            (void **)&extptr_glBufferData,
-            "glBufferData");
-        fetch_extension_func_address(
-            (void **)&extptr_glBindBufferBase,
-            "glBindBufferBase");
-        fetch_extension_func_address(
-            (void **)&extptr_glUniform3fv,
-            "glUniform3fv");
-        fetch_extension_func_address(
-            (void **)&extptr_glGetUniformfv,
-            "glGetUniformfv");
-        fetch_extension_func_address(
-            (void **)&extptr_glGetIntegerv,
-            "glGetIntegerv");
-        fetch_extension_func_address(
-            (void **)&extptr_glMapBuffer,
-            "glMapBuffer");
-        fetch_extension_func_address(
-            (void **)&extptr_glUnmapBuffer,
-            "glUnmapBuffer");
-        fetch_extension_func_address(
-            (void **)&extptr_glGetBufferSubData,
-            "glGetBufferSubData");
+        init_opengl_extensions(
+            fetch_extension_func_address);
         
         if (!application_running) {
             printf(
@@ -635,16 +703,10 @@ int CALLBACK WinMain(
         /* FileBuffer * out_preallocatedbuffer: */
             &fragment_shader_file);
     
-    opengl_compile_shaders(
-        /* char * vertex_shader_source: */
-            vertex_shader_file.contents,
-        /* uint32_t vertex_shader_source_size: */
-            vertex_shader_file.size_without_terminator + 1,
-        /* char * fragment_shader_source: */
-            fragment_shader_file.contents,
-        /* uint32_t fragment_shader_source_size: */
-            fragment_shader_file.size_without_terminator + 1);
-    
+    opengl_init(
+        vertex_shader_file.contents,
+        fragment_shader_file.contents);
+     
     init_application_after_gpu_init();
     
     uint32_t frame_i = 0;
@@ -656,35 +718,38 @@ int CALLBACK WinMain(
         PeekMessage returns all available messages 
         (that is, no range filtering is performed).
         */
-        BOOL got_message =
-            PeekMessage(
-                &message, window_handle, 0, 0, PM_REMOVE);
-        if (message.message == WM_QUIT) {
+        BOOL got_message = PeekMessage(
+                &message,
+                window_handle,
+                0,
+                0,
+                PM_REMOVE);
+        
+        if (got_message < 0 || message.message == WM_QUIT) {
             application_running = 0;
-            break;
         }
+        
         if (!got_message || !application_running) {
-            break;
+            continue;
         }
-            
+        
+        log_assert(application_running);
+        
         TranslateMessage(&message);
         DispatchMessage(&message);
-        
-        glClearColor(0.0f, 0.0f, 0.1f, 1.0f);
         
         shared_gameloop_update(
             /* GPUDataForSingleFrame * frame_data: */
                 &gpu_shared_data_collection.triple_buffers[frame_i]);
-        opengl_render_triangles(
-            /* GPUDataForSingleFrame * frame_data: */
-                &gpu_shared_data_collection.triple_buffers[frame_i]);
+        
+        opengl_render_frame(
+            &gpu_shared_data_collection.triple_buffers[frame_i]);
+        
         frame_i += 1;
         frame_i %= 3;
         
         SwapBuffers(device_context);
     }
-    
-    wait_x_microseconds(50000000);
     
     return 0;
 }

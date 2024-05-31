@@ -527,7 +527,6 @@ static bool32_t evaluate_terminal_command(
 }
 
 void terminal_commit_or_activate(void) {
-    
     destroy_terminal_objects();
     requesting_label_update = true;
     

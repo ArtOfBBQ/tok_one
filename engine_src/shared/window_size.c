@@ -93,3 +93,4 @@ void update_window_size(
     
     window_globals->last_resize_request_at = at_timestamp_microseconds;
 }
+

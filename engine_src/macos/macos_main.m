@@ -123,6 +123,7 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
         case (43):
             return TOK_KEY_COMMA;
         case (47):
+            // TODO: rename me to period
             return TOK_KEY_FULLSTOP;
         case (48):
             return TOK_KEY_TAB;

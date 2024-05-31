@@ -62,6 +62,7 @@ mkdir -p build/windows/$APP_NAME
 
 echo "deleting previous build..."
 rm -r -f build/windows/$APP_NAME/*.txt
+rm -r -f build/windows/$APP_NAME/*.glsl
 rm -r -f build/windows/$APP_NAME/$APP_NAME
 # rm -r -f build/windows/$APP_NAME/$APP_NAME.dsym
 

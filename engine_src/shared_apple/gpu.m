@@ -3,7 +3,6 @@
 bool32_t has_retina_screen = false;
 
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
-GPUSharedDataCollection gpu_shared_data_collection;
 
 static void (* funcptr_shared_gameloop_update)(GPUDataForSingleFrame *) = NULL;
 
@@ -91,9 +90,10 @@ static dispatch_semaphore_t drawing_semaphore;
     assert(cached_viewport.height > 0.0f);
     
     /*
-    These near/far values are the final viewport coordinates (after fragment
-    shader), not to be confused with window_globals->projection_constants.near
-    that's in our world space and much larger numbers
+    These near/far values are the final viewport coordinates (after
+    fragment shader), not to be confused with
+    window_globals->projection_constants.near that's in our world space
+    and much larger numbers
     */
     cached_viewport.znear   = 0.001f; 
     cached_viewport.zfar    = 1.0f;
@@ -589,7 +589,7 @@ static dispatch_semaphore_t drawing_semaphore;
             0 
         atIndex:
             4];
-        
+    
     [render_encoder
         setVertexBuffer:
             projection_constants_buffer
