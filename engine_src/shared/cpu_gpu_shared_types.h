@@ -25,10 +25,6 @@
 #define MAX_VERTICES_PER_BUFFER 3000000
 #endif
 
-#ifndef ALL_LOCKED_VERTICES_SIZE
-#define ALL_LOCKED_VERTICES_SIZE 1500000
-#endif
-
 #pragma pack(push, 1)
 typedef struct GPUVertex {
     int locked_vertex_i; // index into GPULockedVertex buffer

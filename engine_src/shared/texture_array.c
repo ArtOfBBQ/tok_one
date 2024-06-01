@@ -1024,3 +1024,5 @@ bool32_t texture_has_alpha_channel(
     
     return texture_arrays[texturearray_i].images[texture_i].has_alpha_channel;
 }
+
+

@@ -4,6 +4,8 @@
 #include <windows.h>
 #include <GL/gl.h>
 
+#include "clientlogic_macro_settings.h"
+
 // /*
 // This header file contains a bunch of definitions that don't come with
 // OpenGL 'out of the box', they are extensions that need to be loaded at
@@ -34,6 +36,9 @@
 #define GL_FRAGMENT_SHADER                0x8B30
 #define GL_ARRAY_BUFFER                   0x8892
 #define GL_SHADER_STORAGE_BUFFER          0x90D2
+
+#define GL_TEXTURE0                       0x84C0
+#define GL_TEXTURE_2D_ARRAY               0x8C1A
 
 #define GL_STATIC_DRAW                    0x88E4
 #define GL_STREAM_DRAW                    0x88E0
@@ -191,6 +196,8 @@ void (* extptr_glGetBufferSubData)(
     GLintptr       offset,
     GLsizeiptr     size,
     void *         data);
+
+void (* extptr_glActiveTexture)(GLenum texture);
 
 #endif // TOKONE_OPENGL_EXTENSIONS_H
 

@@ -48,6 +48,43 @@ COMPILER_ARGS="
 -I"../sampleproject_src/"
 "
 
+SOURCE_FILES="
+../engine_src/shared/debigulator/src/inflate.c
+../engine_src/shared/debigulator/src/decode_png.c
+../engine_src/shared/debigulator/src/decode_bmp.c
+../engine_src/shared/decodedimage.c
+../engine_src/shared/wav.c
+../engine_src/shared/objparser.c
+../engine_src/shared/common.c
+../engine_src/shared/logger.c
+../engine_src/shared/objectid.c
+../engine_src/shared/audio.c
+../engine_src/shared/window_size.c
+../engine_src/shared/triangle.c
+../engine_src/shared/lightsource.c
+../engine_src/shared/cpu_to_gpu_types.c
+../engine_src/shared_opengl/opengl_extensions.c
+../engine_src/shared_opengl/tok_opengl.c
+../engine_src/shared/common_platform_layer.c
+../engine_src/windows/windows_platform_layer.c
+../engine_src/shared/memorystore.c
+../engine_src/shared/objmodel.c
+../engine_src/shared/userinput.c
+../engine_src/shared/tok_random.c
+../engine_src/shared/texture_array.c
+../engine_src/shared/zpolygon.c
+../engine_src/shared/particle.c
+../engine_src/shared/scheduled_animations.c
+../engine_src/shared/text.c
+../engine_src/shared/uielement.c
+../sampleproject_src/clientlogic.c
+../engine_src/shared/terminal.c
+../engine_src/shared/renderer.c
+../engine_src/shared/gameloop.c
+../engine_src/shared/init_application.c
+../engine_src/windows/windows_main.c
+"
+
 if [[ $1 = "DEBUG" ]]; then
 COMPILER_ARGS_EXTRA="-Zi -Od"
 else
@@ -61,11 +98,12 @@ mkdir -p build/windows/$APP_NAME
 # mkdir -p build/windows/$APP_NAME
 
 echo "deleting previous build..."
+rm -r -f build/*.obj
+rm -r -f build/*.pdb
 rm -r -f build/windows/$APP_NAME/*.txt
 rm -r -f build/windows/$APP_NAME/*.glsl
 rm -r -f build/windows/$APP_NAME/$APP_NAME
 # rm -r -f build/windows/$APP_NAME/$APP_NAME.dsym
-
 ############
 
 # do stuff
@@ -93,7 +131,8 @@ popd > /dev/null
 
 # kernel32.lib: for GetProcAddress()
 pushd build
-cl $COMPILER_ARGS $COMPILER_ARGS_EXTRA ../unitybuild_windows.c -Fe"windows/$APP_NAME/$APP_NAME.exe" -link kernel32.lib user32.lib gdi32.lib opengl32.lib
+cl $COMPILER_ARGS $COMPILER_ARGS_EXTRA $SOURCE_FILES -Fe"windows/$APP_NAME/$APP_NAME.exe" -link kernel32.lib user32.lib gdi32.lib opengl32.lib
+# cl $COMPILER_ARGS $COMPILER_ARGS_EXTRA ../unitybuild_windows.c -Fe"windows/$APP_NAME/$APP_NAME.exe" -link kernel32.lib user32.lib gdi32.lib opengl32.lib
 popd
 
 echo "Press any key to run program, ctrl-C to abort..."

@@ -439,8 +439,6 @@ int main(int argc, const char * argv[]) {
     assert(sizeof(GPUPolygon) % 32 == 0);
     
     init_application_before_gpu_init();
-    log_append("initialized application: ");
-    log_append(APPLICATION_NAME);
     
     apple_gpu_init(shared_gameloop_update);
     

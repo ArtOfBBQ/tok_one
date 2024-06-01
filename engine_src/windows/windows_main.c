@@ -11,6 +11,8 @@
 #include "opengl_extensions.h"
 #include "opengl.h"
 #include "common.h"
+// #include "texture_array.h"
+#include "userinput.h"
 
 
 static unsigned int window_width = 200;
@@ -36,28 +38,9 @@ void platform_gpu_update_viewport(void) {
 }
 
 void platform_gpu_copy_locked_vertices() {
+    
     opengl_copy_locked_vertices(
         gpu_shared_data_collection.locked_vertices);
-}
-
-void platform_gpu_init_texture_array(
-    const int32_t texture_array_i,
-    const uint32_t num_images,
-    const uint32_t single_image_width,
-    const uint32_t single_image_height)
-{
-    // TODO: do stuff
-}
-
-void platform_gpu_push_texture_slice(
-    const int32_t texture_array_i,
-    const int32_t texture_i,
-    const uint32_t parent_texture_array_images_size,
-    const uint32_t image_width,
-    const uint32_t image_height,
-    const uint8_t * rgba_values)
-{
-    // TODO: do stuff
 }
 
 static void fetch_extension_func_address(
@@ -189,7 +172,7 @@ static uint32_t microsoft_keycode_to_tokone_keycode(
             printf("unregistered keycode: %u\n", microsoft_key);
             #ifndef LOGGER_IGNORE_ASSERTS
             strcpy_capped(err_msg, 128, "unhandled windows keycode: ");
-            strcat_uint_capped(err_msg, 128, apple_key);
+            strcat_uint_capped(err_msg, 128, microsoft_key);
             strcat_capped(err_msg, 128, "\n");
             #endif
             break;
@@ -294,8 +277,6 @@ int CALLBACK WinMain(
     assert(sizeof(GPUPolygon) % 32 == 0);
     
     init_application_before_gpu_init();
-    log_append("initialized application: ");
-    log_append(APPLICATION_NAME);
     
     // TODO: remove console
     FILE * fp = NULL;
@@ -707,7 +688,7 @@ int CALLBACK WinMain(
     opengl_init(
         vertex_shader_file.contents,
         fragment_shader_file.contents);
-     
+    
     init_application_after_gpu_init();
     
     uint32_t frame_i = 0;

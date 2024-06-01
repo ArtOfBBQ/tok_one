@@ -350,6 +350,7 @@ void init_application_before_gpu_init(void)
 }
 
 void init_application_after_gpu_init(void) {
+    printf("init_application_after_gpu_init()...\n");
     
     #define MIN_VERTICES_FOR_SHATTER_EFFECT 400
     for (uint32_t i = 0; i < all_mesh_summaries_size; i++) {
@@ -375,6 +376,13 @@ void init_application_after_gpu_init(void) {
         }
     }
     
+    memcpy(
+        /* void * dst: */
+            gpu_shared_data_collection.locked_vertices,
+        /* const void * src: */
+            all_mesh_vertices->gpu_data,
+        /* size_t n: */
+            sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
     platform_gpu_copy_locked_vertices();
     platform_gpu_update_viewport();
     

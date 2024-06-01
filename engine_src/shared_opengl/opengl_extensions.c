@@ -95,6 +95,8 @@ void * (* extptr_glMapBuffer)(
 GLboolean (* extptr_glUnmapBuffer)(
     GLenum target) = NULL;
 
+void (* extptr_glActiveTexture)(GLenum texture) = NULL;
+
 void init_opengl_extensions(
     void (* fetch_extension_func_address)(
         void ** extptr,
@@ -187,5 +189,8 @@ void init_opengl_extensions(
     fetch_extension_func_address(
         (void **)&extptr_glUnmapBuffer,
         "glUnmapBuffer");
+    fetch_extension_func_address(
+        (void **)&extptr_glActiveTexture,
+        "glActiveTexture");
 }
 

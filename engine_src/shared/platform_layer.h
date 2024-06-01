@@ -26,6 +26,10 @@ on each platform
 #ifndef PLATFORM_LAYER_H
 #define PLATFORM_LAYER_H
 
+#ifdef _WIN32 
+#include <windows.h>
+#endif
+
 #ifdef PLATFORM_IOS
 #import <UIKit/UIKit.h>
 #endif
@@ -192,6 +196,7 @@ float platform_y_to_y(const float y);
 
 // void platform_enter_fullscreen(void); // TODO: requires object reference on macos
 void platform_gpu_update_viewport(void);
+
 void platform_gpu_copy_locked_vertices(void);
 
 void platform_gpu_init_texture_array(

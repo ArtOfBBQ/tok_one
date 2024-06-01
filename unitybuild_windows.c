@@ -9,7 +9,6 @@
 #define COMMON_IGNORE_ASSERTS
 #define COMMON_SILENCE
 #define LOGGER_SILENCE
-#define LOGGER_IGNORE_ASSERTS // TODO: enable asserts
 
 // 1. Files that don't know about the platform layer
 #include "inflate.c"
@@ -44,7 +43,6 @@
 #include "scheduled_animations.c" // requires zpolygon & parti
 #include "text.c"
 #include "uielement.c"
-// #include "clientlogic.c" // requires text and uielement
 #include "clientlogic.c" // requires text and uielement
 #include "terminal.c" // requires clientlogic
 #include "renderer.c" // requires zpoly & part

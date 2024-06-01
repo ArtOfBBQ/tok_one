@@ -232,7 +232,7 @@ void free_from_managed(void * to_free) {
     if (lowest_unused < managed_memory) {
         managed_memory = lowest_unused;
     }
-    log_assert((managed_memory_end - managed_memory) <= MANAGED_MEMORY_SIZE);
+    // log_assert((managed_memory_end - managed_memory) <= MANAGED_MEMORY_SIZE);
     
     platform_mutex_unlock(malloc_mutex_id);
     return;

@@ -9,8 +9,7 @@ static void (* funcptr_shared_gameloop_update)(GPUDataForSingleFrame *) = NULL;
 void apple_gpu_init(
     void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *))
 {
-    funcptr_shared_gameloop_update =
-        arg_funcptr_shared_gameloop_update;
+    funcptr_shared_gameloop_update = arg_funcptr_shared_gameloop_update;
 }
 
 // objective-c "id" of the MTLBuffer objects
@@ -37,21 +36,7 @@ static dispatch_semaphore_t drawing_semaphore;
 }
 
 - (void) copyLockedVertices
-{
-    memcpy(
-        /* void * dst: */
-            gpu_shared_data_collection.locked_vertices,
-        /* const void * src: */
-            all_mesh_vertices->gpu_data,
-        /* size_t n: */
-            sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
-    
-    for (uint32_t i = 0; i < ALL_LOCKED_VERTICES_SIZE; i++) {
-        assert(
-            gpu_shared_data_collection.locked_vertices[i].parent_material_i <
-                MAX_MATERIALS_PER_POLYGON);
-    }
-    
+{ 
     gpu_shared_data_collection.locked_vertices_size = all_mesh_vertices->size;
     
     // Create a command buffer for GPU work.
@@ -725,6 +710,12 @@ void platform_gpu_update_viewport(void)
 
 void platform_gpu_copy_locked_vertices(void)
 {
+    for (uint32_t i = 0; i < ALL_LOCKED_VERTICES_SIZE; i++) {
+        assert(
+            gpu_shared_data_collection.locked_vertices[i].parent_material_i <
+                MAX_MATERIALS_PER_POLYGON);
+    }
+    
     [apple_gpu_delegate copyLockedVertices];
 }
 
