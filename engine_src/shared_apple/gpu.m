@@ -325,7 +325,7 @@ static dispatch_semaphore_t drawing_semaphore;
                     triple_buffers[frame_i].
                     light_collection);
         light_buffers[frame_i] = MTLBufferFrameLights;
-         
+        
         id<MTLBuffer> MTLBufferFrameCamera =
             [with_metal_device
                 /* the pointer needs to be page aligned */

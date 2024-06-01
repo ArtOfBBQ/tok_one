@@ -43,6 +43,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "window_size.c"
 #include "triangle.c"
 #include "lightsource.c"
+#include "cpu_to_gpu_types.c"
 // 2. Files that are part of the basic platform layer
 #include "apple_audio.m"
 #include "common_platform_layer.c"
@@ -64,7 +65,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "text.c"
 #include "uielement.c"
 // #include "clientlogic.c" // requires text and uielement
-#include "clientlogic_particledesigner.c" // requires text and uielement
+#include "clientlogic.c" // requires text and uielement
 #include "terminal.c" // requires clientlogic
 #include "renderer.c" // requires zpoly & part
 #include "gameloop.c" // requires renderer
