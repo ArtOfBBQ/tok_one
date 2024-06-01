@@ -3,14 +3,15 @@
 // #include <libloaderapi.h> // for GetProcAddress()
 #include <gl/gl.h>
 
-#include "opengl_extensions.h"
-#include "opengl.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 
+#include "opengl_extensions.h"
+#include "opengl.h"
 #include "common.h"
+
 
 static unsigned int window_width = 200;
 static unsigned int window_height = 200;

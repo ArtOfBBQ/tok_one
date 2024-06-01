@@ -1,12 +1,33 @@
 #ifndef CPU_GPU_SHARED_TYPES_H
 #define CPU_GPU_SHARED_TYPES_H
 
+#ifndef TEXTUREARRAYS_SIZE
 #define TEXTUREARRAYS_SIZE 31
-#define MAX_FILES_IN_SINGLE_TEXARRAY 200
+#endif
 
+#ifndef MAX_FILES_IN_SINGLE_TEXARRAY
+#define MAX_FILES_IN_SINGLE_TEXARRAY 200
+#endif
+
+#ifndef MAX_POLYGONS_PER_BUFFER
 #define MAX_POLYGONS_PER_BUFFER  40000
+#endif
+
+#ifndef MAX_LIGHTS_PER_BUFFER
 #define MAX_LIGHTS_PER_BUFFER       75
+#endif
+
+#ifndef MAX_MATERIALS_PER_POLYGON
 #define MAX_MATERIALS_PER_POLYGON   15
+#endif
+
+#ifndef MAX_VERTICES_PER_BUFFER
+#define MAX_VERTICES_PER_BUFFER 3000000
+#endif
+
+#ifndef ALL_LOCKED_VERTICES_SIZE
+#define ALL_LOCKED_VERTICES_SIZE 1500000
+#endif
 
 #pragma pack(push, 1)
 typedef struct GPUVertex {
@@ -91,3 +112,4 @@ typedef struct GPUProjectionConstants {
 #pragma pack(pop)
 
 #endif
+

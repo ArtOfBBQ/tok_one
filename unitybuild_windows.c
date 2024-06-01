@@ -26,11 +26,12 @@
 #include "triangle.c"
 #include "lightsource.c"
 #include "cpu_to_gpu_types.c"
+// #include "cpu_to_gpu_types.c"
 // 2. Files that are part of the basic platform layer
+#include "opengl_extensions.c"
+#include "tok_opengl.c"
 #include "common_platform_layer.c"
 #include "windows_platform_layer.c"
-#include "opengl.c"
-#include "opengl_extensions.c"
 // 3. Files that are dependent on the platform layer
 #include "memorystore.c"
 #include "objmodel.c"

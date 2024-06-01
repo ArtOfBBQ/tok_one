@@ -1,6 +1,9 @@
 #version 460 core
 layout (location=0) in uvec2 invertexids;
 
+out vec4 vertex_to_frag_color;
+out vec4 vertex_to_frag_lighting;
+
 struct GPUCamera {
     float xyz[3];           // 12 bytes
     float xyz_angle[3];     // 12 bytes
@@ -52,6 +55,23 @@ struct GPUProjectionConstants {
 layout (std430, binding=5) buffer projection_constants_buffer
 {
     GPUProjectionConstants projection_constants;
+};
+
+struct GPULightCollection {
+    float        light_x[MAX_LIGHTS_PER_BUFFER];
+    float        light_y[MAX_LIGHTS_PER_BUFFER];
+    float        light_z[MAX_LIGHTS_PER_BUFFER];
+    float        ambient[MAX_LIGHTS_PER_BUFFER];
+    float        diffuse[MAX_LIGHTS_PER_BUFFER];
+    float        reach  [MAX_LIGHTS_PER_BUFFER];
+    float        red    [MAX_LIGHTS_PER_BUFFER];
+    float        green  [MAX_LIGHTS_PER_BUFFER];
+    float        blue   [MAX_LIGHTS_PER_BUFFER];
+    unsigned int lights_size;
+};
+layout (std430, binding=6) buffer lights_buffer
+{
+    GPULightCollection light_collection;
 };
 
 vec4 x_rotate(vec4 vertices, float x_angle) {
@@ -135,7 +155,7 @@ void main()
     
     pos *= vertex_multipliers;
     pos += vertex_offsets;
-
+    
     pos *= polygons[polygon_i].scale_factor;
     pos[3] = 1.0f;
     
@@ -171,6 +191,7 @@ void main()
         0.0);
     
     pos += parent_pos;
+    vec4 translated_pos = pos;
     
     vec4 camera_position = vec4(
         camera.xyz[0],
@@ -204,5 +225,83 @@ void main()
         (projection_constants.znear * projection_constants.q);
     
     gl_Position = pos;
+
+    // Use materials here instead
+    vertex_to_frag_color = vec4(
+        0.4f,
+        0.3f,
+        0.4f,
+        1.0f);
+    
+    vec4 bonus_rgb = vec4(
+        polygons[polygon_i].bonus_rgb[0],
+        polygons[polygon_i].bonus_rgb[1],
+        polygons[polygon_i].bonus_rgb[2],
+        0.0f);
+    
+    vertex_to_frag_color += bonus_rgb;
+    
+    vertex_to_frag_lighting = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+    
+    for (
+        unsigned int i = 0;
+        i < light_collection.lights_size;
+        i++)
+    {
+        // ambient lighting
+        vec4 light_pos = vec4(
+            light_collection.light_x[i],
+            light_collection.light_y[i],
+            light_collection.light_z[i],
+            1.0f);
+        
+        vec4 light_color = vec4(
+            light_collection.red[i],
+            light_collection.green[i],
+            light_collection.blue[i],
+            1.0f);
+        
+        float distance = get_distance(
+            light_pos,
+            translated_pos);
+        
+        float distance_mod = (light_collection.reach[i] + 0.05f)
+            - (distance * distance);
+        distance_mod = clamp(distance_mod, 0.0f, 5.0f);
+        
+        vertex_to_frag_lighting += (
+            distance_mod *
+            light_color *
+            light_collection.ambient[i]);
+
+        // diffuse lighting
+        normals = normalize(normals);
+        
+        vec4 vec_from_light_to_vertex = normalize(
+            translated_pos - light_pos);
+        
+        float visibility_rating = max(
+            0.0f,
+            -1.0f * dot(
+                normals,
+                vec_from_light_to_vertex));
+        
+        vertex_to_frag_lighting += (
+            light_color *
+            distance_mod *
+            (light_collection.diffuse[i] * 3.0f) *
+            visibility_rating);
+    }
+    
+    vertex_to_frag_lighting = clamp(
+        vertex_to_frag_lighting, 0.05f, 7.5f);
+    
+    float ignore_light =
+        polygons[polygon_i].ignore_lighting;
+    
+    vec4 all_ones = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    vertex_to_frag_lighting =
+        ((1.0f - ignore_light) * vertex_to_frag_lighting) +
+        (ignore_light * all_ones);
 };
 

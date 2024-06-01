@@ -3,7 +3,6 @@
 
 #include "cpu_gpu_shared_types.h"
 #include "common.h"
-#include "clientlogic_macro_settings.h"
 
 // This is a bunch of pointers because apple's metal (both ios and macosx)
 // requires shared data to be aligned to page size :(

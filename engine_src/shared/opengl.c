@@ -3,11 +3,10 @@
 static unsigned int VAO;
 static GLuint program_id;
 
-static char info_log[512];
-
 static unsigned int vertex_VBO; // vertex array buffer
 static unsigned int camera_VBO; // binding 2
 static unsigned int polygons_VBO; // binding 3
+static unsigned int lights_VBO;
 static unsigned int locked_vertices_VBO; // binding 4
 static unsigned int projection_constants_VBO; // binding 5
 
@@ -21,7 +20,7 @@ void shadersource_apply_macro_inplace(
     uint32_t to_replace_len  = get_string_length(to_replace);
     uint32_t replacement_len = get_string_length(replacement);
     
-    log_assert(replacement_len <= to_replace_len);
+    tok_assert(replacement_len <= to_replace_len);
     
     uint32_t padding_spaces = to_replace_len - replacement_len;
     
@@ -48,7 +47,7 @@ void shadersource_apply_macro_inplace(
         }
         
         i++;
-    } 
+    }
 }
 
 static void opengl_compile_shader(
@@ -104,9 +103,9 @@ static void opengl_compile_shader(
             replacement);
    
     
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     GLuint shader_id = extptr_glCreateShader(SHADER_ENUM_TYPE);
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     char * shader_source_as_ptr = shader_source;
     extptr_glShaderSource(
         shader_id,
@@ -114,7 +113,7 @@ static void opengl_compile_shader(
         &shader_source_as_ptr,
         NULL);
     
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     extptr_glCompileShader(shader_id);
     GLint is_compiled = INT8_MAX;
     info_log[0] = '\0';
@@ -145,29 +144,29 @@ static void opengl_compile_shader(
         printf("info_log: %s\n", info_log);
     }
     
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     
     extptr_glAttachShader(program_id, shader_id);
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
 }
 
 void opengl_copy_projection_constants(
     GPUProjectionConstants * projection_constants)
 {
-    log_assert(projection_constants.zfar > 5.0f);
-    log_assert(projection_constants.znear < 0.1f);
-    
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     extptr_glGenBuffers(1, &projection_constants_VBO);
-    log_assert(!glGetError());
+    
+    tok_assert(!glGetError());
     extptr_glBindBuffer(
         GL_SHADER_STORAGE_BUFFER,
         projection_constants_VBO);
-    log_assert(!glGetError());
+    
+    tok_assert(!glGetError());
     extptr_glBindBufferBase(
         GL_SHADER_STORAGE_BUFFER,
         5,
         projection_constants_VBO);
+    
     extptr_glBufferData(
         GL_SHADER_STORAGE_BUFFER,
         sizeof(GPUProjectionConstants),
@@ -210,7 +209,7 @@ static void copy_single_frame_data(
         sizeof(GPUCamera),
         frame_data->camera,
         GL_STATIC_DRAW);
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     
     extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, polygons_VBO);
@@ -218,9 +217,18 @@ static void copy_single_frame_data(
     if (polygons_size < 5) { polygons_size = 5; }
     extptr_glBufferData(
         GL_SHADER_STORAGE_BUFFER,
-        sizeof(GPUPolygon) * polygons_size,
+        sizeof(GPUPolygon) * frame_data->polygon_collection->size,
         frame_data->polygon_collection->polygons,
         GL_STATIC_DRAW);
+    extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);    
+
+    extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, lights_VBO);
+    extptr_glBufferData(
+        GL_SHADER_STORAGE_BUFFER,
+        sizeof(GPULightCollection),
+        frame_data->light_collection,
+        GL_STATIC_DRAW);
+    tok_assert(!glGetError());
     extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
@@ -228,22 +236,18 @@ void opengl_init(
     char * vertex_shader_source,
     char * fragment_shader_source)
 {
-    glDepthRange(0.0f, 1.0f);
-    
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     program_id = extptr_glCreateProgram();
     printf("Created program_id: %u\n", program_id);
-    log_assert(program_id > 0);
-    log_assert(!glGetError());
+    tok_assert(program_id > 0);
+    tok_assert(!glGetError());
     
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     extptr_glGenVertexArrays(1, &VAO);
     extptr_glBindVertexArray(VAO);
-    
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     extptr_glGenBuffers(1, &vertex_VBO);
     extptr_glBindBuffer(GL_ARRAY_BUFFER, vertex_VBO);
-    
     extptr_glVertexAttribIPointer(
         /* GLuint index: (of the vertex input) */
             0,
@@ -255,11 +259,11 @@ void opengl_init(
             2 * sizeof(unsigned int),
         /* const void * pointer (offset to 1st element): */
             0);
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     extptr_glEnableVertexAttribArray(0);
     extptr_glBindBuffer(GL_ARRAY_BUFFER, 0);
     
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     extptr_glGenBuffers(1, &camera_VBO);
     extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, camera_VBO);
     extptr_glBindBufferBase(
@@ -273,7 +277,7 @@ void opengl_init(
         GL_STATIC_DRAW);
     extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     extptr_glGenBuffers(1, &polygons_VBO);
     extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, polygons_VBO);
     extptr_glBindBufferBase(
@@ -287,11 +291,11 @@ void opengl_init(
         GL_STATIC_DRAW);
     extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     extptr_glGenBuffers(1, &locked_vertices_VBO);
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, locked_vertices_VBO);
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     extptr_glBindBufferBase(
         GL_SHADER_STORAGE_BUFFER,
         4,
@@ -303,13 +307,13 @@ void opengl_init(
         GL_STATIC_DRAW);
     extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     extptr_glGenBuffers(1, &projection_constants_VBO);
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     extptr_glBindBuffer(
         GL_SHADER_STORAGE_BUFFER,
         projection_constants_VBO);
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     extptr_glBindBufferBase(
         GL_SHADER_STORAGE_BUFFER,
         5,
@@ -317,6 +321,24 @@ void opengl_init(
     extptr_glBufferData(
         GL_SHADER_STORAGE_BUFFER,
         sizeof(GPUProjectionConstants),
+        0,
+        GL_STATIC_DRAW);
+    extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    tok_assert(!glGetError());
+    extptr_glGenBuffers(1, &lights_VBO);
+    tok_assert(!glGetError());
+    extptr_glBindBuffer(
+        GL_SHADER_STORAGE_BUFFER,
+        lights_VBO);
+    tok_assert(!glGetError());
+    extptr_glBindBufferBase(
+        GL_SHADER_STORAGE_BUFFER,
+        6,
+        lights_VBO);
+    extptr_glBufferData(
+        GL_SHADER_STORAGE_BUFFER,
+        sizeof(GPULightCollection),
         0,
         GL_STATIC_DRAW);
     extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
@@ -329,7 +351,7 @@ void opengl_init(
         GL_FRAGMENT_SHADER);
     
     extptr_glLinkProgram(program_id);
-    log_assert(!glGetError());
+    tok_assert(!glGetError());
     
     unsigned int success = 0;
     extptr_glGetProgramiv(program_id, GL_LINK_STATUS, &success);
@@ -338,11 +360,11 @@ void opengl_init(
         printf("ERROR - GL_LINK_STATUS: %s\n", info_log);
         getchar();
         return;
-    }
+    }    
 }
 
 void opengl_render_frame(GPUDataForSingleFrame * frame)
-{
+{ 
     extptr_glUseProgram(program_id);
     // extptr_glBindVertexArray(VAO);
     GLint error = glGetError();
@@ -352,36 +374,22 @@ void opengl_render_frame(GPUDataForSingleFrame * frame)
         return;
     }
     
-    glClearColor(0.0f, 0.05, 0.1f, 1.0f);
+    glClearColor(0.0f, 0.2f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     
-    extptr_glUseProgram(program_id); // TODO: actually nescessary?
-    extptr_glBindVertexArray(VAO);
+    glDepthRange(0.01, 100.0);
     
-    //extptr_glBindBuffer(vertex_VBO);
-    //assert(!glGetError());
-    //extptr_glBindBuffer(camera_VBO);
-    //assert(!glGetError());
-    //extptr_glBindBuffer(polygons_VBO);
-    //assert(!glGetError());
-    
+    // glUseProgram(program_id); // TODO: reactivate if needed?
     copy_single_frame_data(frame);
     
-    if (frame->vertices_size > 0) {
-        log_assert(frame->vertices_size % 3 == 0);
-        //uint32_t triangles_size = frame->vertices_size / 3;
-        //printf(
-        //    "drawing %u triangles in %u meshes\n",
-        //    triangles_size,
-        //    frame->polygon_collection->size);
-        glDrawArrays(
-            /* GLenum	mode : */
-                GL_TRIANGLES,
-            /* GLint	first: */
-                0,
-            /* GLsizei	count: */
-                frame->vertices_size);
-        assert(!glGetError());
-    }
+    glDrawArrays(
+        /* GLenum	mode : */
+            GL_TRIANGLES,
+        /* GLint	first: */
+            0,
+        /* GLsizei	count: */
+            3);
+    
+    assert(!glGetError());
 }
 
