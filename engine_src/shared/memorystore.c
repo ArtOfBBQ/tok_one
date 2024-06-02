@@ -5,6 +5,7 @@
 #define MANAGED_MEMORY_STACK_SIZE 500
 typedef struct ManagedMemoryStack {
     void * pointers[MANAGED_MEMORY_STACK_SIZE];
+    char sources[MANAGED_MEMORY_STACK_SIZE][512];
     bool32_t used[MANAGED_MEMORY_STACK_SIZE];
     uint32_t size;
 } ManagedMemoryStack;
@@ -74,10 +75,15 @@ void get_memory_usage_summary_string(
         "\n");
 }
 
-void init_memory_store(void) {
+
+void init_memory_store(
+    void * ptr_unmanaged_memory_block,
+    void * ptr_managed_memory_block)
+{
     malloc_mutex_id  = platform_init_mutex_and_return_id();
-    unmanaged_memory = platform_malloc_unaligned_block(UNMANAGED_MEMORY_SIZE);
-    managed_memory   = platform_malloc_unaligned_block(MANAGED_MEMORY_SIZE  );
+    unmanaged_memory = ptr_unmanaged_memory_block;
+    managed_memory   = ptr_managed_memory_block;
+        
     managed_memory_end = ((char *)managed_memory + MANAGED_MEMORY_SIZE);
     
     for (uint32_t i = 0; i < UNMANAGED_MEMORY_SIZE; i++) {
@@ -157,11 +163,15 @@ void * malloc_from_unmanaged(size_t size) {
     return return_value;
 }
 
-void * malloc_from_managed(size_t size) {
-    #if ASAN_TEST
-    return malloc(size);
-    #endif
-    
+void * malloc_from_managed_infoless(size_t size) {
+    malloc_from_managed_internal(size, "", "");
+}
+
+void * malloc_from_managed_internal(
+    size_t size,
+    char * called_from_file,
+    char * called_from_func)
+{
     platform_mutex_lock(malloc_mutex_id);
     
     assert(managed_memory != NULL);
@@ -201,20 +211,20 @@ void * malloc_from_managed(size_t size) {
 }
 
 void free_from_managed(void * to_free) {
-    #if ASAN_TEST
-    free(to_free);
-    return;
-    #endif
     
     platform_mutex_lock(malloc_mutex_id);
     
     log_assert(to_free != NULL);
     
+    bool32_t found = false;
     for (uint32_t i = 0; i < managed_stack->size; i++) {
         if (managed_stack->pointers[i] == to_free) {
             managed_stack->used[i] = 0;
+            log_assert(!found);
+            found = true;
         }
     }
+    log_assert(found);
     
     void * lowest_unused = managed_memory;
     while (
@@ -229,11 +239,15 @@ void free_from_managed(void * to_free) {
         managed_stack->size -= 1;
     }
     
+    log_assert(lowest_unused <= managed_memory);
     if (lowest_unused < managed_memory) {
         managed_memory = lowest_unused;
     }
-    // log_assert((managed_memory_end - managed_memory) <= MANAGED_MEMORY_SIZE);
+    log_assert(
+        ((uintptr_t)managed_memory_end - (uintptr_t)managed_memory) <=
+            MANAGED_MEMORY_SIZE);
     
     platform_mutex_unlock(malloc_mutex_id);
     return;
 }
+

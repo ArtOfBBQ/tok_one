@@ -101,20 +101,32 @@ static void test_simd_functions(void) {
         }
     }
     
-    free_from_managed(structs);
     free_from_managed(double_checks);
+    free_from_managed(maxs);
+    free_from_managed(adds);
+    free_from_managed(divs);
+    free_from_managed(muls);
+    free_from_managed(sets);
+    free_from_managed(structs);
 }
 #endif
 
 void init_application_before_gpu_init(void)
 {
-    init_memory_store();
+
+    void * unmanaged_memory_store = platform_malloc_unaligned_block(
+        UNMANAGED_MEMORY_SIZE);
+    void * managed_memory_store = platform_malloc_unaligned_block(
+        MANAGED_MEMORY_SIZE);
+    init_memory_store(
+        unmanaged_memory_store,
+        managed_memory_store);
     
     #ifndef LOGGER_IGNORE_ASSERTS
     test_simd_functions();
     #endif
     
-    init_obj_parser(malloc_from_managed, free_from_managed);
+    init_obj_parser(malloc_from_managed_infoless, free_from_managed);
     
     keypress_map = (bool32_t *)malloc_from_unmanaged(
         sizeof(bool32_t) * KEYPRESS_MAP_SIZE);

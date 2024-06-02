@@ -138,3 +138,4 @@ popd
 echo "Press any key to run program, ctrl-C to abort..."
 read -n 1 -s
 build/windows/$APP_NAME/$APP_NAME.exe
+

@@ -191,7 +191,7 @@ void platform_open_folder_in_window_if_possible(
 void * platform_malloc_unaligned_block(
     const uint64_t size)
 {
-    return VirtualAlloc(
+    void * return_value = VirtualAlloc(
         /* [in, optional] LPVOID lpAddress: */
             0,
         /* [in]           SIZE_T dwSize: */
@@ -200,5 +200,17 @@ void * platform_malloc_unaligned_block(
             MEM_RESERVE | MEM_COMMIT,
         /* [in]           DWORD  flProtect: */
             PAGE_READWRITE);
+    
+    log_assert(return_value != NULL);
+    
+    // virtualalloc returns NULL to signal failure
+    if (return_value != NULL) {
+        memset(
+            return_value,
+            0,
+            size);
+    }
+    
+    return return_value;
 }
 

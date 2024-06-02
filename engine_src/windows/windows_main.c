@@ -8,6 +8,9 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#include "clientlogic_macro_settings.h"
+#include "memorystore.h"
+
 #include "opengl_extensions.h"
 #include "opengl.h"
 #include "common.h"
@@ -22,8 +25,9 @@ static HWND window_handle;
 
 static void wait_x_microseconds(uint64_t microseconds)
 {
+    printf("wait %u microseconds...\n", microseconds);
     uint64_t start = platform_get_current_time_microsecs();
-    while (platform_get_current_time_microsecs() - start < 50000000) {
+    while (platform_get_current_time_microsecs() - start < microseconds) {
         // Wait
     }
 }
@@ -273,8 +277,11 @@ int CALLBACK WinMain(
     int nCmdShow)
 {
     application_running = 1;
-    
+     
     assert(sizeof(GPUPolygon) % 32 == 0);
+
+    assert(MANAGED_MEMORY_SIZE < 500000000);
+    assert(UNMANAGED_MEMORY_SIZE < 700000000);
     
     init_application_before_gpu_init();
     
@@ -573,7 +580,7 @@ int CALLBACK WinMain(
                 "1 or more OpenGL extension procedures failed to load, "
                 "exiting...\n");
             
-            wait_x_microseconds(5000000);
+            wait_x_microseconds(2500000);
             return 0;
         }
     } else {
@@ -638,6 +645,7 @@ int CALLBACK WinMain(
         platform_get_resource_size(
             /* const char * filename: */
                 "vertex_shader.glsl");
+    
     if (vertex_shader_file.size_without_terminator < 1) {
         MessageBox(
             0,
@@ -647,6 +655,8 @@ int CALLBACK WinMain(
         application_running = false;
         return 0;
     }
+    //vertex_shader_file.contents = malloc(
+    //    vertex_shader_file.size_without_terminator + 1);
     vertex_shader_file.contents = malloc_from_managed(
         vertex_shader_file.size_without_terminator + 1);
     memset(

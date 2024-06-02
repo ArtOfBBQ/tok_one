@@ -3,7 +3,11 @@
 static int32_t teapot_object_id = -1;
 void client_logic_startup(void) {
     
-    init_PNG_decoder(malloc_from_managed, free_from_managed, memset, memcpy);
+    init_PNG_decoder(
+        malloc_from_managed_infoless,
+        free_from_managed,
+        memset,
+        memcpy);
     
     const char * fontfile = "font.png";
     if (platform_resource_exists("font.png")) {
