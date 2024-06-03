@@ -1,14 +1,14 @@
 #include "objparser.h"
 
-static void * (* malloc_function)(unsigned long);
-static void   (*   free_function)(void *);
+static void * (* objparser_malloc_func)(unsigned long);
+static void   (*   objparser_free_func)(void *);
 
 void init_obj_parser(
-    void * (* arg_malloc_function)(unsigned long),
-    void (* arg_free_function)(void *))
+    void * (* arg_objparser_malloc_func)(unsigned long),
+    void (* arg_objparser_free_func)(void *))
 {
-    malloc_function = arg_malloc_function;
-    free_function = arg_free_function;
+    objparser_malloc_func = arg_objparser_malloc_func;
+    objparser_free_func   = arg_objparser_free_func;
 }
 
 static unsigned int consume_uint(
@@ -296,7 +296,7 @@ void parse_obj(
     recipient->quad_normals = 0;
     recipient->textures = 0;
     recipient->normals = 0;
-    recipient->materials = malloc_function(sizeof(ParsedMaterial) * 200);
+    recipient->materials = objparser_malloc_func(sizeof(ParsedMaterial) * 200);
     for (unsigned int i = 0; i < 200; i++) {
         recipient->materials[i].name[0] = '\0';
     }
@@ -392,12 +392,15 @@ void parse_obj(
         *success = 0;
         return;
     }
-    free_function(recipient->materials);
+    if (recipient->materials != 0) {
+        objparser_free_func(recipient->materials);
+        recipient->materials = 0;
+    }
     
-    recipient->vertices = malloc_function(
+    recipient->vertices = objparser_malloc_func(
         sizeof(unsigned int[6]) * recipient->vertices_count);
     if (recipient->materials_count > 0) {
-        recipient->materials = malloc_function(
+        recipient->materials = objparser_malloc_func(
             sizeof(ParsedMaterial) * recipient->materials_count);
         for (unsigned int j = 0; j < recipient->materials_count; j++) {
             recipient->materials[j].name[0] = '\0';
@@ -405,7 +408,7 @@ void parse_obj(
     }
     
     if (recipient->normals_count > 0) {
-        recipient->normals = malloc_function(
+        recipient->normals = objparser_malloc_func(
             sizeof(unsigned int[3]) * recipient->normals_count);
         
         #ifndef OBJ_PARSER_IGNORE_ASSERTS
@@ -414,17 +417,17 @@ void parse_obj(
         #endif
         
         if (recipient->triangles_count > 0) {
-            recipient->triangle_normals = malloc_function(
+            recipient->triangle_normals = objparser_malloc_func(
                 sizeof(unsigned int[3]) * recipient->triangles_count);
         }
         
         if (recipient->quads_count > 0) {
-            recipient->quad_normals = malloc_function(
+            recipient->quad_normals = objparser_malloc_func(
                 sizeof(unsigned int[4]) * recipient->quads_count);
         }
     }
     if (recipient->textures_count > 0) {
-        recipient->textures = malloc_function(
+        recipient->textures = objparser_malloc_func(
             sizeof(float[2]) * recipient->textures_count);
         
         #ifndef OBJ_PARSER_IGNORE_ASSERTS
@@ -433,7 +436,7 @@ void parse_obj(
         #endif
         
         if (recipient->triangles_count > 0) {
-            recipient->triangle_textures = malloc_function(
+            recipient->triangle_textures = objparser_malloc_func(
                 sizeof(unsigned int[3]) * recipient->triangles_count);
             for (
                 unsigned int tri_i = 0;
@@ -447,7 +450,7 @@ void parse_obj(
         }
         
         if (recipient->quads_count > 0) {
-            recipient->quad_textures = malloc_function(
+            recipient->quad_textures = objparser_malloc_func(
                 sizeof(unsigned int[4]) * recipient->quads_count);
             for (
                 unsigned int quad_i = 0;
@@ -463,7 +466,7 @@ void parse_obj(
     }
     
     if (recipient->triangles_count > 0) {
-        recipient->triangles = malloc_function(
+        recipient->triangles = objparser_malloc_func(
             sizeof(unsigned int) *
             5 *
             recipient->triangles_count);
@@ -477,7 +480,7 @@ void parse_obj(
     }
     
     if (recipient->quads_count > 0) {
-        recipient->quads = malloc_function(
+        recipient->quads = objparser_malloc_func(
             sizeof(unsigned int) *
             6 *
             recipient->quads_count);
@@ -947,39 +950,41 @@ void parse_obj(
 }
 
 void free_obj(ParsedObj * to_free) {
+    
     if (to_free->quads != 0) {
-        free_function(to_free->quads);
+        objparser_free_func(to_free->quads);
         to_free->quads = 0;
     }
     if (to_free->quad_textures != 0) {
-        free_function(to_free->quad_textures);
+        objparser_free_func(to_free->quad_textures);
         to_free->quad_textures = 0;
     }
     if (to_free->triangle_textures != 0) {
-        free_function(to_free->triangle_textures);
+        objparser_free_func(to_free->triangle_textures);
     }
     if (to_free->textures != 0) {
-        free_function(to_free->textures);
+        objparser_free_func(to_free->textures);
         to_free->textures = 0;
     }
     if (to_free->quad_normals != 0) {
-        free_function(to_free->quad_normals);
+        objparser_free_func(to_free->quad_normals);
         to_free->quad_normals = 0;
     }
     if (to_free->triangle_normals != 0) {
-        free_function(to_free->triangle_normals);
+        objparser_free_func(to_free->triangle_normals);
         to_free->triangle_normals = 0;
     }
     if (to_free->normals != 0) {
-        free_function(to_free->normals);
+        objparser_free_func(to_free->normals);
         to_free->normals = 0;
     }
     if (to_free->materials != 0) {
-        free_function(to_free->materials);
+        objparser_free_func(to_free->materials);
         to_free->materials = 0;
     }
     if (to_free->vertices != 0) {
-        free_function(to_free->vertices);
+        objparser_free_func(to_free->vertices);
         to_free->vertices = 0;
     }
 }
+

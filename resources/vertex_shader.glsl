@@ -1,8 +1,11 @@
 #version 460 core
 layout (location=0) in uvec2 invertexids;
 
-out vec4 vertex_to_frag_color;
-out vec4 vertex_to_frag_lighting;
+out vec2     vert_to_frag_uv;
+out vec4     vert_to_frag_color;
+out vec4     vert_to_frag_lighting;
+flat out int vert_to_frag_texturearray_i;
+flat out int vert_to_frag_texture_i;
 
 struct GPUCamera {
     float xyz[3];           // 12 bytes
@@ -37,6 +40,7 @@ struct GPULockedVertex {
     unsigned int parent_material_i; // 4 bytes
     float padding[3];               // 12 bytes of padding
 };
+
 layout (std430, binding=4) buffer locked_vertices_buffer
 {
     GPULockedVertex locked_vertices[ALL_LOCKED_VERTICES_SIZE];
@@ -72,6 +76,18 @@ struct GPULightCollection {
 layout (std430, binding=6) buffer lights_buffer
 {
     GPULightCollection light_collection;
+};
+
+
+struct GPUPolygonMaterial {
+    float rgba[4];          // 16 bytes
+    int   texturearray_i;   //  4 bytes
+    int   texture_i;        //  4 bytes
+    float simd_padding[2];  //  8 bytes
+};
+layout (std430, binding=7) buffer materials_buffer
+{
+    GPUPolygonMaterial polygon_materials[MAX_POLYGONS_PER_BUFFER * MAX_MATERIALS_PER_POLYGON];
 };
 
 vec4 x_rotate(vec4 vertices, float x_angle) {
@@ -134,7 +150,7 @@ void main()
 {
     unsigned int locked_vertex_i = invertexids[0];
     unsigned int polygon_i = invertexids[1];
-    
+        
     vec4 pos = vec4(
         locked_vertices[locked_vertex_i].xyz[0],
         locked_vertices[locked_vertex_i].xyz[1],
@@ -226,8 +242,13 @@ void main()
     
     gl_Position = pos;
 
+    vert_to_frag_uv[0] = locked_vertices[locked_vertex_i].uv[0];
+    vert_to_frag_uv[1] = locked_vertices[locked_vertex_i].uv[1];
+    vert_to_frag_texturearray_i = -1;
+    vert_to_frag_texture_i = -1;
+    
     // Use materials here instead
-    vertex_to_frag_color = vec4(
+    vert_to_frag_color = vec4(
         0.4f,
         0.3f,
         0.4f,
@@ -239,9 +260,9 @@ void main()
         polygons[polygon_i].bonus_rgb[2],
         0.0f);
     
-    vertex_to_frag_color += bonus_rgb;
+    vert_to_frag_color += bonus_rgb;
     
-    vertex_to_frag_lighting = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+    vert_to_frag_lighting = vec4(0.0f, 0.0f, 0.0f, 0.0f);
     
     for (
         unsigned int i = 0;
@@ -269,7 +290,7 @@ void main()
             - (distance * distance);
         distance_mod = clamp(distance_mod, 0.0f, 5.0f);
         
-        vertex_to_frag_lighting += (
+        vert_to_frag_lighting += (
             distance_mod *
             light_color *
             light_collection.ambient[i]);
@@ -286,22 +307,22 @@ void main()
                 normals,
                 vec_from_light_to_vertex));
         
-        vertex_to_frag_lighting += (
+        vert_to_frag_lighting += (
             light_color *
             distance_mod *
             (light_collection.diffuse[i] * 3.0f) *
             visibility_rating);
     }
     
-    vertex_to_frag_lighting = clamp(
-        vertex_to_frag_lighting, 0.05f, 7.5f);
+    vert_to_frag_lighting = clamp(
+        vert_to_frag_lighting, 0.05f, 7.5f);
     
     float ignore_light =
         polygons[polygon_i].ignore_lighting;
     
     vec4 all_ones = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-    vertex_to_frag_lighting =
-        ((1.0f - ignore_light) * vertex_to_frag_lighting) +
+    vert_to_frag_lighting =
+        ((1.0f - ignore_light) * vert_to_frag_lighting) +
         (ignore_light * all_ones);
 };
 

@@ -101,6 +101,7 @@ static void test_simd_functions(void) {
         }
     }
     
+
     free_from_managed(double_checks);
     free_from_managed(maxs);
     free_from_managed(adds);

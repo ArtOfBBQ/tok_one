@@ -8,10 +8,10 @@ char crashed_top_of_screen_msg[256];
 #endif
 
 // These are function pointers to our injected dependencies
-static void *   (* malloc_function)(size_t) = NULL;
-static uint32_t (* create_mutex_function)(void) = NULL;
-static void     (* mutex_lock_function)(const uint32_t) = NULL;
-static int32_t  (* mutex_unlock_function)(const uint32_t) = NULL;
+static void *   (* logger_malloc_func)(size_t) = NULL;
+static uint32_t (* logger_create_mutex_func)(void) = NULL;
+static void     (* logger_mutex_lock_func)(const uint32_t) = NULL;
+static int32_t  (* logger_mutex_unlock_func)(const uint32_t) = NULL;
 static uint32_t logger_mutex_id = UINT32_MAX;
 
 #define LOG_SIZE 5000000
@@ -23,23 +23,23 @@ extern "C" {
 #endif
 
 void init_logger(
-    void * (* arg_malloc_function)(size_t size),
-    uint32_t (* arg_create_mutex_function)(void),
-    void (* arg_mutex_lock_function)(const uint32_t mutex_id),
-    int32_t (* arg_mutex_unlock_function)(const uint32_t mutex_id))
+    void * (* arg_logger_malloc_func)(size_t size),
+    uint32_t (* arg_logger_create_mutex_func)(void),
+    void (* arg_logger_mutex_lock_func)(const uint32_t mutex_id),
+    int32_t (* arg_logger_mutex_unlock_func)(const uint32_t mutex_id))
 {
-    malloc_function       = arg_malloc_function;
-    create_mutex_function = arg_create_mutex_function;
-    mutex_lock_function   = arg_mutex_lock_function;
-    mutex_unlock_function = arg_mutex_unlock_function;
+    logger_malloc_func       = arg_logger_malloc_func;
+    logger_create_mutex_func = arg_logger_create_mutex_func;
+    logger_mutex_lock_func   = arg_logger_mutex_lock_func;
+    logger_mutex_unlock_func = arg_logger_mutex_unlock_func;
     
     // create a log for debug text
-    app_log    = malloc_function(LOG_SIZE);
+    app_log    = logger_malloc_func(LOG_SIZE);
     app_log[0] = '\0';
     log_i      = 0;
     
-    if (create_mutex_function != NULL) {
-        logger_mutex_id = create_mutex_function();
+    if (logger_create_mutex_func != NULL) {
+        logger_mutex_id = logger_create_mutex_func();
     }
 }
 
@@ -122,7 +122,7 @@ internal_log_append(
     }
     #endif
     
-    // mutex_lock_function(logger_mutex_id);
+    // logger_mutex_lock_func(logger_mutex_id);
     
     if (
         caller_function_name != NULL)
@@ -130,8 +130,8 @@ internal_log_append(
         char * prefix = (char *)"[";
         uint32_t prefix_length = get_string_length(prefix);
         if (log_i + prefix_length >= LOG_SIZE) {
-            if (mutex_unlock_function != NULL) {
-                // mutex_unlock_function(logger_mutex_id);
+            if (logger_mutex_unlock_func != NULL) {
+                // logger_mutex_unlock_func(logger_mutex_id);
             }
             return;
         }
@@ -145,14 +145,14 @@ internal_log_append(
                 prefix);
         log_i += prefix_length;
         if (log_i >= LOG_SIZE) {
-            // mutex_unlock_function(logger_mutex_id);
+            // logger_mutex_unlock_func(logger_mutex_id);
             return;
         }
         
         uint32_t func_length = get_string_length(
         caller_function_name);
         if (log_i + func_length >= LOG_SIZE) {
-            // mutex_unlock_function(logger_mutex_id);
+            // logger_mutex_unlock_func(logger_mutex_id);
             return;
         }
         
@@ -165,8 +165,8 @@ internal_log_append(
                 caller_function_name);
         log_i += func_length;
         if (log_i >= LOG_SIZE) {
-            if (mutex_unlock_function != NULL) {
-                // mutex_unlock_function(logger_mutex_id);
+            if (logger_mutex_unlock_func != NULL) {
+                // logger_mutex_unlock_func(logger_mutex_id);
             }
             return;
         }
@@ -174,8 +174,8 @@ internal_log_append(
         char * glue = (char *)"]: ";
         uint32_t glue_length = get_string_length(glue);
         if (log_i + glue_length >= LOG_SIZE) {
-            if (mutex_unlock_function != NULL) {
-                // mutex_unlock_function(logger_mutex_id);
+            if (logger_mutex_unlock_func != NULL) {
+                // logger_mutex_unlock_func(logger_mutex_id);
             }
             return;
         }
@@ -188,8 +188,8 @@ internal_log_append(
                 glue);
         log_i += glue_length;
         if (log_i >= LOG_SIZE) {
-            if (mutex_unlock_function != NULL) {
-                // mutex_unlock_function(logger_mutex_id);
+            if (logger_mutex_unlock_func != NULL) {
+                // logger_mutex_unlock_func(logger_mutex_id);
             }
             return;
         }
@@ -197,8 +197,8 @@ internal_log_append(
     
     uint32_t to_append_length = get_string_length(to_append);
     if (log_i + to_append_length >= LOG_SIZE) {
-        if (mutex_unlock_function != NULL) {
-            // mutex_unlock_function(logger_mutex_id);
+        if (logger_mutex_unlock_func != NULL) {
+            // logger_mutex_unlock_func(logger_mutex_id);
         }
         return;
     }
@@ -211,8 +211,8 @@ internal_log_append(
             to_append);
     log_i += to_append_length;
     
-    if (mutex_unlock_function != NULL) {
-        // mutex_unlock_function(logger_mutex_id);
+    if (logger_mutex_unlock_func != NULL) {
+        // logger_mutex_unlock_func(logger_mutex_id);
     }
 }
 #endif

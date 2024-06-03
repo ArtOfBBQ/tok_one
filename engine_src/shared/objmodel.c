@@ -679,7 +679,6 @@ int32_t new_mesh_id_from_resource_asserts(
     }
     
     FileBuffer obj_file;
-    
     obj_file.size_without_terminator = platform_get_resource_size(filename);
     log_assert(obj_file.size_without_terminator > 0);
     obj_file.contents = (char *)malloc_from_managed(obj_file.size_without_terminator + 1);
@@ -722,10 +721,13 @@ int32_t new_mesh_id_from_resource_asserts(
     log_assert(all_mesh_vertices->size < ALL_LOCKED_VERTICES_SIZE);
     
     all_mesh_summaries[all_mesh_summaries_size].materials_size =
-        parsed_obj->materials_count < 1 ? 1 : parsed_obj->materials_count;
+        parsed_obj->materials_count < 1 ?
+            1 : parsed_obj->materials_count;
+    
     for (uint32_t i = 0; i < parsed_obj->materials_count; i++) {
         strcpy_capped(
-            all_mesh_summaries[all_mesh_summaries_size].material_names[i],
+            all_mesh_summaries[all_mesh_summaries_size].
+                material_names[i],
             OBJ_STRING_SIZE,
             parsed_obj->materials[i].name);
     }
@@ -747,7 +749,8 @@ int32_t new_mesh_id_from_resource_asserts(
             
             log_assert(vert_i >= 1);
             log_assert(vert_i <= parsed_obj->vertices_count);
-            log_assert(all_mesh_vertices->size < ALL_LOCKED_VERTICES_SIZE);
+            log_assert(
+                all_mesh_vertices->size < ALL_LOCKED_VERTICES_SIZE);
             
             all_mesh_vertices->gpu_data[all_mesh_vertices->size].xyz[0] =
                 parsed_obj->vertices[vert_i - 1][0];

@@ -50,3 +50,4 @@ The max # of simultaneously 'shatter' style particle effects in your app
 #define SHATTER_EFFECTS_SIZE 120
 
 #endif // CLIENTLOGIC_MACRO_SETTINGS
+

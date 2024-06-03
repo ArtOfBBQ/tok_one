@@ -10,10 +10,12 @@ static unsigned int camera_VBO; // binding 2
 static unsigned int polygons_VBO; // binding 3
 static unsigned int locked_vertices_VBO; // binding 4
 static unsigned int projection_constants_VBO; // binding 5
+static unsigned int light_collection_VBO; // binding 6
+static unsigned int materials_VBO; // binding 7
 
 static GLuint texture_array_ids[TEXTUREARRAYS_SIZE];
 
-void shadersource_apply_macro_inplace(
+static void shadersource_apply_macro_inplace(
     char * shader_source,
     char * to_replace,
     char * replacement)
@@ -198,6 +200,7 @@ void opengl_copy_locked_vertices(
 static void copy_single_frame_data(
     GPUDataForSingleFrame * frame_data)
 {
+    // Vertex Array Buffer
     extptr_glBindBuffer(GL_ARRAY_BUFFER, vertex_VBO);
     extptr_glBufferData(
         GL_ARRAY_BUFFER,
@@ -206,6 +209,7 @@ static void copy_single_frame_data(
         GL_STATIC_DRAW);
     extptr_glBindBuffer(GL_ARRAY_BUFFER, 0);
     
+    // binding 2
     extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, camera_VBO);
     extptr_glBufferData(
         GL_SHADER_STORAGE_BUFFER,
@@ -215,6 +219,7 @@ static void copy_single_frame_data(
     log_assert(!glGetError());
     extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     
+    // binding 3
     extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, polygons_VBO);
     uint32_t polygons_size = frame_data->polygon_collection->size;
     if (polygons_size < 5) { polygons_size = 5; }
@@ -223,6 +228,17 @@ static void copy_single_frame_data(
         sizeof(GPUPolygon) * polygons_size,
         frame_data->polygon_collection->polygons,
         GL_STATIC_DRAW);
+    extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    
+    // binding 6
+    extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, light_collection_VBO);
+    log_assert(!glGetError());
+    extptr_glBufferData(
+        GL_SHADER_STORAGE_BUFFER,
+        sizeof(GPULightCollection),
+        frame_data->light_collection,
+        GL_STATIC_DRAW);
+    log_assert(!glGetError());
     extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
@@ -319,6 +335,24 @@ void opengl_init(
     extptr_glBufferData(
         GL_SHADER_STORAGE_BUFFER,
         sizeof(GPUProjectionConstants),
+        0,
+        GL_STATIC_DRAW);
+    extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    
+    log_assert(!glGetError());
+    extptr_glGenBuffers(1, &light_collection_VBO);
+    log_assert(!glGetError());
+    extptr_glBindBuffer(
+        GL_SHADER_STORAGE_BUFFER,
+        light_collection_VBO);
+    log_assert(!glGetError());
+    extptr_glBindBufferBase(
+        GL_SHADER_STORAGE_BUFFER,
+        6,
+        light_collection_VBO);
+    extptr_glBufferData(
+        GL_SHADER_STORAGE_BUFFER,
+        sizeof(GPULightCollection),
         0,
         GL_STATIC_DRAW);
     extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);

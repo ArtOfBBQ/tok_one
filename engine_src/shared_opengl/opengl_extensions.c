@@ -1,6 +1,7 @@
 #include "opengl_extensions.h"
 
 HGLRC(* extptr_wglCreateContextAttribsARB)(HDC, HGLRC, const int *) = NULL;
+
 int (* extptr_glGetUniformLocation)(GLint, const char *) = NULL;
 
 void (* extptr_glShaderSource)(

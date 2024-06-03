@@ -75,15 +75,30 @@ void get_memory_usage_summary_string(
         "\n");
 }
 
+void align_pointer(void ** to_align) {
+    uint32_t leftover = ((uintptr_t)*to_align) % MEM_ALIGNMENT_BYTES;
+    uint32_t padding = 0;
+    if (leftover > 0) {
+        padding = MEM_ALIGNMENT_BYTES - leftover;
+    }
+    
+    *to_align = (void *)((char *)*to_align + padding);
+    log_assert((uintptr_t)*to_align % MEM_ALIGNMENT_BYTES == 0);
+}
+
 
 void init_memory_store(
     void * ptr_unmanaged_memory_block,
     void * ptr_managed_memory_block)
 {
     malloc_mutex_id  = platform_init_mutex_and_return_id();
+    
     unmanaged_memory = ptr_unmanaged_memory_block;
+    align_pointer(&unmanaged_memory);
+    
     managed_memory   = ptr_managed_memory_block;
-        
+    align_pointer(&managed_memory);
+    
     managed_memory_end = ((char *)managed_memory + MANAGED_MEMORY_SIZE);
     
     for (uint32_t i = 0; i < UNMANAGED_MEMORY_SIZE; i++) {
@@ -108,7 +123,7 @@ static void * malloc_from_unmanaged_without_aligning(
         log_append("MB, but you only had: ");
         log_append_uint((uint32_t)(unmanaged_memory_size / 1000000));
         log_append("MB remaining");
-        assert(0);
+        log_assert(0);
         return NULL;
     }
     
@@ -124,37 +139,32 @@ void * malloc_from_unmanaged_aligned(
 {
     platform_mutex_lock(malloc_mutex_id);
     
-    assert(unmanaged_memory != NULL);
-    assert(size > 0);
+    log_assert(unmanaged_memory != NULL);
+    log_assert(size > 0);
     
     uint32_t padding = 0;
-    assert(unmanaged_memory_size >= aligned_to);
+    log_assert(unmanaged_memory_size >= aligned_to);
     while (
         (uintptr_t)(void *)unmanaged_memory % aligned_to != 0)
     {
         unmanaged_memory = ((char *)unmanaged_memory + 1);
         padding += 1;
     }
-    assert(unmanaged_memory_size > padding);
+    log_assert(unmanaged_memory_size > padding);
     unmanaged_memory_size -= padding;
-    assert(padding < aligned_to);
-    assert((uintptr_t)(void *)unmanaged_memory % aligned_to == 0);
+    log_assert(padding < aligned_to);
+    log_assert((uintptr_t)(void *)unmanaged_memory % aligned_to == 0);
     
     void * return_value = malloc_from_unmanaged_without_aligning(size);
     
-    assert((uintptr_t)(void *)return_value % aligned_to == 0);
+    log_assert((uintptr_t)(void *)return_value % aligned_to == 0);
     
     platform_mutex_unlock(malloc_mutex_id);
         
     return return_value;
 }
 
-#define ASAN_TEST 0
 void * malloc_from_unmanaged(size_t size) {
-    #if ASAN_TEST
-    return malloc(size);
-    #endif
-    
     log_assert(size > 0);
     void * return_value = malloc_from_unmanaged_aligned(
         size,
@@ -164,7 +174,7 @@ void * malloc_from_unmanaged(size_t size) {
 }
 
 void * malloc_from_managed_infoless(size_t size) {
-    malloc_from_managed_internal(size, "", "");
+    return malloc_from_managed_internal(size, "", "");
 }
 
 void * malloc_from_managed_internal(
@@ -174,25 +184,21 @@ void * malloc_from_managed_internal(
 {
     platform_mutex_lock(malloc_mutex_id);
     
-    assert(managed_memory != NULL);
-    assert(size > 0);
-    
-    uint32_t padding = 0;
-    while (
-        (uintptr_t)(void *)managed_memory % MEM_ALIGNMENT_BYTES != 0)
-    {
-        managed_memory = ((char *)managed_memory + 1);
-        padding += 1;
-    }
-    assert(padding < MEM_ALIGNMENT_BYTES);
-    assert((uintptr_t)(void *)managed_memory % MEM_ALIGNMENT_BYTES == 0);
-    
+    log_assert(managed_memory != NULL);
+    log_assert(size > 0);
+     
     void * return_value = managed_memory;
+    log_assert((uintptr_t)return_value % MEM_ALIGNMENT_BYTES == 0);
     
-    assert(
-        (ptrdiff_t)managed_memory + (ptrdiff_t)size <
-            (ptrdiff_t)managed_memory_end);
-    managed_memory = ((char *)managed_memory + size);
+    uint32_t leftover = size % MEM_ALIGNMENT_BYTES;
+    uint32_t endpadding = 0;
+    if (leftover > 0) {
+        endpadding = MEM_ALIGNMENT_BYTES - leftover;
+    }
+    
+    managed_memory = (void *)((char *)return_value + size + endpadding);
+    
+    log_assert((ptrdiff_t)managed_memory < (ptrdiff_t)managed_memory_end);
     
     #ifndef LOGGER_IGNORE_ASSERTS
     if (managed_stack->size > 0) {
@@ -202,11 +208,24 @@ void * malloc_from_managed_internal(
     #endif
     log_assert(managed_stack->size < MANAGED_MEMORY_STACK_SIZE);
     managed_stack->pointers[managed_stack->size] = return_value;
+    strcpy_capped(
+        managed_stack->sources[managed_stack->size],
+        512,
+        called_from_file);
+    strcat_capped(
+        managed_stack->sources[managed_stack->size],
+        512,
+        " : ");
+    strcat_capped(
+        managed_stack->sources[managed_stack->size],
+        512,
+        called_from_func);
     managed_stack->used[managed_stack->size] = 1;
     managed_stack->size += 1;
     
     platform_mutex_unlock(malloc_mutex_id);
     
+    log_assert(return_value != NULL);
     return return_value;
 }
 
@@ -215,11 +234,15 @@ void free_from_managed(void * to_free) {
     platform_mutex_lock(malloc_mutex_id);
     
     log_assert(to_free != NULL);
+    log_assert(managed_memory != NULL);
     
     bool32_t found = false;
     for (uint32_t i = 0; i < managed_stack->size; i++) {
-        if (managed_stack->pointers[i] == to_free) {
+        if (managed_stack->used[i] &&
+            managed_stack->pointers[i] == to_free)
+        {
             managed_stack->used[i] = 0;
+            managed_stack->sources[i][0] = '\0';
             log_assert(!found);
             found = true;
         }

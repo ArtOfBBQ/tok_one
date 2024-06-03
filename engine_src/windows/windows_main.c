@@ -12,7 +12,7 @@
 #include "memorystore.h"
 
 #include "opengl_extensions.h"
-#include "opengl.h"
+#include "tok_opengl.h"
 #include "common.h"
 // #include "texture_array.h"
 #include "userinput.h"
@@ -580,7 +580,7 @@ int CALLBACK WinMain(
                 "1 or more OpenGL extension procedures failed to load, "
                 "exiting...\n");
             
-            wait_x_microseconds(2500000);
+            wait_x_microseconds(3500000);
             return 0;
         }
     } else {
@@ -698,6 +698,10 @@ int CALLBACK WinMain(
     opengl_init(
         vertex_shader_file.contents,
         fragment_shader_file.contents);
+
+
+    free_from_managed(vertex_shader_file.contents);
+    free_from_managed(fragment_shader_file.contents);
     
     init_application_after_gpu_init();
     

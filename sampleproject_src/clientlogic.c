@@ -124,7 +124,8 @@ void client_logic_animation_callback(
 static void client_handle_keypresses(
     uint64_t microseconds_elapsed)
 {
-    float elapsed_mod = (float)((double)microseconds_elapsed / (double)16666);
+    float elapsed_mod = (float)(
+        (double)microseconds_elapsed / (double)16666);
     float cam_speed = 0.1f * elapsed_mod;
     float cam_rotation_speed = 0.05f * elapsed_mod;
     
@@ -299,3 +300,4 @@ void client_logic_window_resize(
 void client_logic_shutdown(void) {
     // Your application shutdown code goes here!
 }
+
