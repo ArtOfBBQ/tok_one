@@ -39,6 +39,7 @@
 
 #define GL_TEXTURE0                       0x84C0
 #define GL_TEXTURE_2D_ARRAY               0x8C1A
+#define GL_CLAMP_TO_EDGE                  0x812F
 
 #define GL_STATIC_DRAW                    0x88E4
 #define GL_STREAM_DRAW                    0x88E0
@@ -198,6 +199,36 @@ void (* extptr_glGetBufferSubData)(
     void *         data);
 
 void (* extptr_glActiveTexture)(GLenum texture);
+
+void (* extptr_glUniform1iv)(
+    GLint location,
+    GLsizei count,
+    const GLint * value);
+
+void (* extptr_glTexImage3D)(
+    GLenum target,
+    GLint level,
+    GLint internalformat,
+    GLsizei width,
+    GLsizei height,
+    GLsizei depth,
+    GLint border,
+    GLenum format,
+    GLenum type,
+    const void * data);
+
+void (* extptr_glTexSubImage3D)(
+    GLenum target,
+    GLint level,
+    GLint xoffset,
+    GLint yoffset,
+    GLint zoffset,
+    GLsizei width,
+    GLsizei height,
+    GLsizei depth,
+    GLenum format,
+    GLenum type,
+    const GLvoid * data);
 
 #endif // TOKONE_OPENGL_EXTENSIONS_H
 

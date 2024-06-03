@@ -98,6 +98,36 @@ GLboolean (* extptr_glUnmapBuffer)(
 
 void (* extptr_glActiveTexture)(GLenum texture) = NULL;
 
+void (* glUniform1iv)(
+    GLint location,
+    GLsizei count,
+    const GLint * value) = NULL;
+
+void (* extptr_glTexImage3D)(
+    GLenum target,
+    GLint level,
+    GLint internalformat,
+    GLsizei width,
+    GLsizei height,
+    GLsizei depth,
+    GLint border,
+    GLenum format,
+    GLenum type,
+    const void * data) = NULL;
+
+void (* extptr_glTexSubImage3D)(
+    GLenum target,
+    GLint level,
+    GLint xoffset,
+    GLint yoffset,
+    GLint zoffset,
+    GLsizei width,
+    GLsizei height,
+    GLsizei depth,
+    GLenum format,
+    GLenum type,
+    const GLvoid * data) = NULL;
+
 void init_opengl_extensions(
     void (* fetch_extension_func_address)(
         void ** extptr,
@@ -193,5 +223,14 @@ void init_opengl_extensions(
     fetch_extension_func_address(
         (void **)&extptr_glActiveTexture,
         "glActiveTexture");
+    fetch_extension_func_address(
+        (void **)&extptr_glUniform1iv,
+        "glUniform1iv");
+    fetch_extension_func_address(
+        (void **)&extptr_glTexImage3D,
+        "glTexImage3D");
+    fetch_extension_func_address(
+        (void **)&extptr_glTexSubImage3D,
+        "glTexSubImage3D");
 }
 

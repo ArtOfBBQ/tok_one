@@ -21,6 +21,8 @@
 static unsigned int window_width = 200;
 static unsigned int window_height = 200;
 
+static unsigned int requesting_shutdown = false;
+
 static HWND window_handle;
 
 static void wait_x_microseconds(uint64_t microseconds)
@@ -55,7 +57,7 @@ static void fetch_extension_func_address(
         printf(
             "%s\n",
             "Tried to fetch a PROC address that was already non-null");
-        application_running = false;
+        requesting_shutdown = true;
         return;
     }
     
@@ -85,7 +87,7 @@ static void fetch_extension_func_address(
             "\nError code:\n");
         strcat_uint_capped(errmsg, 128, error);
         printf("%s\n", errmsg);
-        application_running = false;
+        requesting_shutdown = true;
     }
 }
 
@@ -96,6 +98,7 @@ static uint32_t microsoft_keycode_to_tokone_keycode(
     char err_msg[128];
     #endif
     
+    printf("key %u - ", microsoft_key);
     switch (microsoft_key) {
         case 13:
             return TOK_KEY_ENTER;
@@ -159,9 +162,8 @@ static uint32_t microsoft_keycode_to_tokone_keycode(
             return TOK_KEY_COMMA;
         case 190:
             return TOK_KEY_FULLSTOP;
-        //case 191:
-        //    // ascii: /
-        //    return TOK_KEY_FORWARDSLASH;
+        case 191:
+            return TOK_KEY_BACKSLASH;
         case 37:
             return TOK_KEY_LEFTARROW;
         case 38:
@@ -209,14 +211,14 @@ MainWindowCallback(
         //    break;
         //}
         case WM_CLOSE: {
-            application_running = false;
+            requesting_shutdown = true;
             break;
         }
         case WM_SIZE: {
             break;
         }
         case WM_DESTROY: {
-            application_running = false;
+            requesting_shutdown = true;
             break;
         }
         case WM_ACTIVATEAPP: {
@@ -625,7 +627,7 @@ int CALLBACK WinMain(
     
     if (gl46_context == 0) {
         MessageBoxA(0, "Failed to init gl46 context!\n", "Error", MB_OK);
-        application_running = false;
+        requesting_shutdown = true;
         return 0;
     }
     
@@ -635,7 +637,7 @@ int CALLBACK WinMain(
             "Failed to make gl46 context current!\n",
             "Error",
             MB_OK);
-        application_running = false;
+        requesting_shutdown = true;
         return 0;
     }
     
@@ -652,7 +654,7 @@ int CALLBACK WinMain(
             "Missing file vertex_shader.glsl!\n",
             "Error",
             MB_OK);
-        application_running = false;
+        requesting_shutdown = true;
         return 0;
     }
     //vertex_shader_file.contents = malloc(
@@ -680,7 +682,7 @@ int CALLBACK WinMain(
             "Missing file fragment_shader.glsl!\n",
             "Error",
             MB_OK);
-        application_running = false;
+        requesting_shutdown = true;
         return 0;
     }
     fragment_shader_file.contents = malloc_from_managed(
@@ -706,7 +708,7 @@ int CALLBACK WinMain(
     init_application_after_gpu_init();
     
     uint32_t frame_i = 0;
-    while (application_running)
+    while (!requesting_shutdown)
     {
         MSG message;
         /*

@@ -261,7 +261,7 @@ static void client_handle_keypresses(
         camera.xyz[2] -= 0.01f;
     }
     
-    if (keypress_map[TOK_KEY_UNDERSCORE] == true) {
+    if (keypress_map[TOK_KEY_FULLSTOP] == true) {
         camera.xyz[2] += 0.01f;
     }
 }

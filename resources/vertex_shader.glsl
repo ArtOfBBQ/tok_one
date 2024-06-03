@@ -248,8 +248,10 @@ void main()
     vert_to_frag_uv[0] = locked_vertices[locked_vertex_i].uv[0];
     vert_to_frag_uv[1] = locked_vertices[locked_vertex_i].uv[1];
     
-    vert_to_frag_texturearray_i = -1;
-    vert_to_frag_texture_i = -1;
+    vert_to_frag_texturearray_i =
+        polygon_materials[locked_material_i].texturearray_i;
+    vert_to_frag_texture_i =
+        polygon_materials[locked_material_i].texture_i;
     
     vert_to_frag_color = vec4(
         polygon_materials[locked_material_i].rgba[0],
