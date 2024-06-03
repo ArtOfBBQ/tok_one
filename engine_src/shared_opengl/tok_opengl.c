@@ -240,6 +240,19 @@ static void copy_single_frame_data(
         GL_STATIC_DRAW);
     log_assert(!glGetError());
     extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    // binding 7
+    extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, materials_VBO);
+    log_assert(!glGetError());
+    extptr_glBufferData(
+        GL_SHADER_STORAGE_BUFFER,
+        sizeof(GPUPolygonMaterial) *
+            MAX_MATERIALS_PER_POLYGON *
+            MAX_POLYGONS_PER_BUFFER,
+        frame_data->polygon_materials,
+        GL_STATIC_DRAW);
+    log_assert(!glGetError());
+    extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 void opengl_init(
@@ -353,6 +366,26 @@ void opengl_init(
     extptr_glBufferData(
         GL_SHADER_STORAGE_BUFFER,
         sizeof(GPULightCollection),
+        0,
+        GL_STATIC_DRAW);
+    extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    log_assert(!glGetError());
+    extptr_glGenBuffers(1, &materials_VBO);
+    log_assert(!glGetError());
+    extptr_glBindBuffer(
+        GL_SHADER_STORAGE_BUFFER,
+        materials_VBO);
+    log_assert(!glGetError());
+    extptr_glBindBufferBase(
+        GL_SHADER_STORAGE_BUFFER,
+        7,
+        materials_VBO);
+    extptr_glBufferData(
+        GL_SHADER_STORAGE_BUFFER,
+        sizeof(GPUPolygonMaterial) *
+            MAX_MATERIALS_PER_POLYGON *
+            MAX_POLYGONS_PER_BUFFER,
         0,
         GL_STATIC_DRAW);
     extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);

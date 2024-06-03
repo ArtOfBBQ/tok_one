@@ -150,7 +150,10 @@ void main()
 {
     unsigned int locked_vertex_i = invertexids[0];
     unsigned int polygon_i = invertexids[1];
-        
+    unsigned int locked_material_i =
+        (polygon_i * MAX_MATERIALS_PER_POLYGON) +
+            locked_vertices[locked_vertex_i].parent_material_i;
+    
     vec4 pos = vec4(
         locked_vertices[locked_vertex_i].xyz[0],
         locked_vertices[locked_vertex_i].xyz[1],
@@ -244,15 +247,15 @@ void main()
 
     vert_to_frag_uv[0] = locked_vertices[locked_vertex_i].uv[0];
     vert_to_frag_uv[1] = locked_vertices[locked_vertex_i].uv[1];
+    
     vert_to_frag_texturearray_i = -1;
     vert_to_frag_texture_i = -1;
     
-    // Use materials here instead
     vert_to_frag_color = vec4(
-        0.4f,
-        0.3f,
-        0.4f,
-        1.0f);
+        polygon_materials[locked_material_i].rgba[0],
+        polygon_materials[locked_material_i].rgba[1],
+        polygon_materials[locked_material_i].rgba[2],
+        polygon_materials[locked_material_i].rgba[3]);
     
     vec4 bonus_rgb = vec4(
         polygons[polygon_i].bonus_rgb[0],
