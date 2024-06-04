@@ -242,6 +242,72 @@ MainWindowCallback(
         //    DestroyWindow(window_handle);
         //    break;
         //}
+        case WM_LBUTTONDOWN: {
+            register_interaction(
+                /* interaction : */
+                    &user_interactions[INTR_PREVIOUS_LEFTCLICK_START],
+                /* screenspace_x: */
+                    user_interactions[INTR_PREVIOUS_LEFTCLICK_START].
+                        screen_x,
+                /* screenspace_y: */
+                    user_interactions[INTR_PREVIOUS_LEFTCLICK_START].
+                        screen_y);
+
+            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START] =
+                user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
+            
+            user_interactions[INTR_PREVIOUS_TOUCH_END].
+                handled = true;
+            user_interactions[INTR_PREVIOUS_LEFTCLICK_END].
+                handled = true;
+            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
+                handled = true;
+            break;
+        }
+        case WM_RBUTTONDOWN: {
+            register_interaction(
+                /* interaction : */
+                    &user_interactions[INTR_PREVIOUS_RIGHTCLICK_START],
+                /* screenspace_x: */
+                    user_interactions[INTR_PREVIOUS_RIGHTCLICK_START].
+                        screen_x,
+                /* screenspace_y: */
+                    user_interactions[INTR_PREVIOUS_RIGHTCLICK_START].
+                        screen_y);
+            
+            user_interactions[INTR_PREVIOUS_RIGHTCLICK_END].
+                handled = true;
+            break;
+        }
+        case WM_RBUTTONUP: {
+            register_interaction(
+                /* interaction : */
+                    &user_interactions[INTR_PREVIOUS_RIGHTCLICK_END],
+                /* screenspace_x: */
+                    user_interactions[INTR_PREVIOUS_RIGHTCLICK_END].
+                        screen_x,
+                /* screenspace_y: */
+                    user_interactions[INTR_PREVIOUS_RIGHTCLICK_START].
+                        screen_y);
+            
+            break;
+        }
+        case WM_LBUTTONUP: {
+            register_interaction(
+                /* interaction : */
+                    &user_interactions[INTR_PREVIOUS_LEFTCLICK_END],
+                /* screenspace_x: */
+                    user_interactions[INTR_PREVIOUS_LEFTCLICK_END].
+                        screen_x,
+                /* screenspace_y: */
+                    user_interactions[INTR_PREVIOUS_LEFTCLICK_START].
+                        screen_y);
+            
+            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END] =
+                user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
+            
+            break;
+        }
         case WM_CLOSE: {
             requesting_shutdown = true;
             break;
@@ -748,6 +814,31 @@ int CALLBACK WinMain(
     uint32_t frame_i = 0;
     while (!requesting_shutdown)
     {
+        POINT mousepos;
+        if (GetCursorPos(
+          /* [out] LPPOINT lpPoint: */
+            &mousepos))
+        {
+            // now mousepos.x is the screen location x and
+            // mousepos.y is the screen location y of the cursor
+            register_interaction(
+                /* interaction : */
+                    &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],
+                /* screenspace_x: */
+                    (float)mousepos.x - window_globals->window_left,
+                /* screenspace_y: */
+                    (float)
+                       ((window_globals->window_height - mousepos.y) +
+                        (window_globals->window_bottom -
+                            window_globals->window_height)));
+            user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
+                user_interactions[INTR_PREVIOUS_MOUSE_MOVE];
+        } else {
+            log_dump_and_crash(
+                "Fatal: failed to query windows for the mouse location.");
+            return;
+        }
+        
         MSG message;
         /*
         If wMsgFilterMin and wMsgFilterMax are both zero,
@@ -774,28 +865,6 @@ int CALLBACK WinMain(
         TranslateMessage(&message);
         DispatchMessage(&message);
         
-        POINT mousepos;
-        if (GetCursorPos(
-          /* [out] LPPOINT lpPoint: */
-            &mousepos))
-        {
-            // now mousepos.x is the screen location x and
-            // mousepos.y is the screen location y of the cursor
-            register_interaction(
-                /* interaction : */
-                    &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],
-                /* screenspace_x: */
-                    (float)mousepos.x - window_globals->window_left,
-                /* screenspace_y: */
-                    (float)
-                       ((window_globals->window_height - mousepos.y) +
-                        (window_globals->window_bottom -
-                            window_globals->window_height)));
-        } else {
-            log_dump_and_crash(
-                "Fatal: failed to query windows for the mouse location.");
-            return;
-        }
         
         shared_gameloop_update(
             /* GPUDataForSingleFrame * frame_data: */
