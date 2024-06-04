@@ -284,9 +284,22 @@ void shared_gameloop_update(
         
         update_terminal();
         
-        #if 0
-        resolve_animation_effects(elapsed);
-        #endif
+        if (debugmouseptr_id >= 0) {
+            ScheduledAnimation * move_mouseptr =
+                next_scheduled_animation(true);
+            move_mouseptr->affected_object_id = debugmouseptr_id;
+            move_mouseptr->gpu_polygon_vals.xyz[0] =
+                screenspace_x_to_x(
+                    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_x,
+                    1.0f);
+            move_mouseptr->gpu_polygon_vals.xyz[1] =
+                screenspace_y_to_y(
+                    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_y,
+                    1.0f);
+            move_mouseptr->gpu_polygon_vals.xyz[2] = 1.0f;
+            move_mouseptr->duration_microseconds = 1;
+            commit_scheduled_animation(move_mouseptr);
+        }
         
         resolve_animation_effects(elapsed);
         clean_deleted_lights();

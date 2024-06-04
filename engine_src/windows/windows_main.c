@@ -108,6 +108,8 @@ static uint32_t microsoft_keycode_to_tokone_keycode(
             return TOK_KEY_BACKSPACE;
         case 13:
             return TOK_KEY_ENTER;
+        case 16:
+            return TOK_KEY_SHIFT;
         case 32:
             return TOK_KEY_SPACEBAR;
         case 49:
@@ -200,8 +202,10 @@ static uint32_t microsoft_keycode_to_tokone_keycode(
             return TOK_KEY_RIGHTARROW;
         case 40:
             return TOK_KEY_DOWNARROW;
-        //case 16:
-        //    return TOK_KEY_RIGHTSHIFT;
+        case 219:
+            return TOK_KEY_OPENSQUAREBRACKET;
+        case 221:
+            return TOK_KEY_CLOSESQUAREBRACKET;
         default:
             printf("unregistered keycode: %u\n", microsoft_key);
             #ifndef LOGGER_IGNORE_ASSERTS
@@ -457,6 +461,12 @@ int CALLBACK WinMain(
             0);
         return 0;
     }
+
+    window_globals->window_left = window_rect.left;
+    window_globals->window_width = window_width;
+    window_globals->window_bottom = window_rect.bottom;
+    window_globals->window_height = window_height;
+    
     
     /*
     The GetDC function retrieves a handle to a device context (DC) for the 
@@ -755,14 +765,37 @@ int CALLBACK WinMain(
             application_running = 0;
         }
         
-        if (!got_message || !application_running) {
+        if (!got_message || requesting_shutdown) {
             continue;
         }
         
-        log_assert(application_running);
+        log_assert(!requesting_shutdown);
         
         TranslateMessage(&message);
         DispatchMessage(&message);
+        
+        POINT mousepos;
+        if (GetCursorPos(
+          /* [out] LPPOINT lpPoint: */
+            &mousepos))
+        {
+            // now mousepos.x is the screen location x and
+            // mousepos.y is the screen location y of the cursor
+            register_interaction(
+                /* interaction : */
+                    &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],
+                /* screenspace_x: */
+                    (float)mousepos.x - window_globals->window_left,
+                /* screenspace_y: */
+                    (float)
+                       ((window_globals->window_height - mousepos.y) +
+                        (window_globals->window_bottom -
+                            window_globals->window_height)));
+        } else {
+            log_dump_and_crash(
+                "Fatal: failed to query windows for the mouse location.");
+            return;
+        }
         
         shared_gameloop_update(
             /* GPUDataForSingleFrame * frame_data: */

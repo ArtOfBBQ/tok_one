@@ -462,6 +462,7 @@ void hardware_render(
             elapsed_nanoseconds,
             true);
     
+    
     if (application_running) {
         frame_data->first_line_i = frame_data->vertices_size;;
         zpolygon_hitboxes_to_lines(

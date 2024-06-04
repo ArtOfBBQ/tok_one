@@ -4,6 +4,8 @@
 // a bunch of letters that combine to make a button)
 int32_t retired_object_id = RETIRED_BUT_NOT_DELETED_ID + 1;
 
+int32_t debugmouseptr_id = -1; // gets set by terminal on 'DRAW MOUSE'
+
 static int32_t latest_nonui_object_id = FIRST_NONUI_OBJECT_ID;
 static int32_t latest_ui_element_object_id = 1;
 
