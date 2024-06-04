@@ -3,6 +3,13 @@
 static bool32_t cached = 0;
 static LARGE_INTEGER cached_performance_frequency;
 
+static HANDLE mutexes[MUTEXES_SIZE];
+static uint32_t next_mutex_id = 0;
+
+#define THREADARGS_QUEUE_SIZE 20
+static int32_t thread_args[THREADARGS_QUEUE_SIZE];
+static uint32_t thread_args_i = 0;
+
 uint64_t
 platform_get_current_time_microsecs(void)
 {
@@ -27,22 +34,46 @@ platform_get_current_time_microsecs(void)
 }
 
 uint32_t platform_init_mutex_and_return_id(void) {
-    // TODO: implement me!
-    return 0;
+    
+    log_assert(next_mutex_id + 1 < MUTEXES_SIZE);
+    
+    mutexes[next_mutex_id] = CreateMutex( 
+        NULL,              // default security attributes
+        FALSE,             // initially not owned
+        NULL);             // unnamed mutex
+    uint32_t return_value = next_mutex_id;
+    next_mutex_id += 1;
+    
+    return return_value;
 }
 
 bool32_t platform_mutex_trylock(const uint32_t mutex_id) {
-    // TODO: implement me!
-    return true;
+    
+    log_assert(mutex_id < MUTEXES_SIZE);
+    
+    DWORD result = WaitForSingleObject( 
+        mutexes[mutex_id],    // handle to mutex
+        0);  // don't wait at all 
+    
+    return result == WAIT_OBJECT_0;
 }
 
 void platform_mutex_lock(const uint32_t mutex_id) {
-    // TODO: implement me!
+    log_assert(mutex_id < MUTEXES_SIZE);
+    
+    DWORD result = WaitForSingleObject( 
+        mutexes[mutex_id],    // handle to mutex
+        INFINITE);  // no time-out interval
+    
+    log_assert(result == WAIT_OBJECT_0);
 }
 
-int32_t platform_mutex_unlock(const uint32_t mutex_id) {
-    // TODO: implement me!
-    return 0;
+void platform_mutex_unlock(const uint32_t mutex_id) {
+    log_assert(mutex_id < MUTEXES_SIZE);
+    
+    ReleaseMutex(
+        /* [in] HANDLE hMutex: */
+            mutexes[mutex_id]);
 }
 
 uint32_t platform_get_directory_separator_size(void) {
@@ -208,5 +239,57 @@ void * platform_malloc_unaligned_block(
     }
     
     return return_value;
+}
+
+void platform_start_thread(
+    void (*function_to_run)(int32_t),
+    int32_t argument)
+{
+    thread_args[thread_args_i] = argument;
+    
+    CreateThread(
+      /*
+      [in: optional]  LPSECURITY_ATTRIBUTES   lpThreadAttributes:
+      A pointer to a SECURITY_ATTRIBUTES structure that determines
+      whether the returned handle can be inherited by child processes.
+      If lpThreadAttributes is NULL, the handle cannot be inherited. 
+      */
+          NULL,
+      /*
+      [in]            SIZE_T                  dwStackSize:
+      The initial size of the stack, in bytes. The system rounds this
+      value to the nearest page. If this parameter is zero, the new
+      thread uses the default size for the executable. For more
+      information, see Thread Stack Size.
+      */
+          0,
+      /*
+      [in]            LPTHREAD_START_ROUTINE  lpStartAddress:
+      A pointer to the application-defined function to be executed by
+      the thread. This pointer represents the starting address of the
+      thread. For more information on the thread function, see ThreadProc.
+      */
+          function_to_run,
+      /*
+      [in: optional]  __drv_aliasesMem LPVOID lpParameter:
+      A pointer to a variable to be passed to the thread.
+      */
+          &thread_args[thread_args_i],
+      /*
+      [in]            DWORD                   dwCreationFlags:
+      The flags that control the creation of the thread.
+      Value	Meaning
+      0         The thread runs immediately after creation.
+      */
+          0,
+      /*
+      [out: optional] LPDWORD                 lpThreadId:
+      A pointer to a variable that receives the thread identifier.
+      If this parameter is NULL, the thread identifier is not returned.
+      */
+          NULL);
+    
+    thread_args_i += 1;
+    thread_args_i %= THREADARGS_QUEUE_SIZE;
 }
 

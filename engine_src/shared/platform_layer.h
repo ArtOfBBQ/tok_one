@@ -38,6 +38,8 @@ on each platform
 #import <Foundation/Foundation.h>
 #endif
 
+#define MUTEXES_SIZE 200
+
 #ifdef SHARED_APPLE_PLATFORM
 #include <pthread.h>
 #include <sys/time.h>
@@ -223,7 +225,7 @@ bool32_t platform_mutex_trylock(const uint32_t mutex_id);
 
 void platform_mutex_lock(const uint32_t mutex_id);
 
-int32_t platform_mutex_unlock(const uint32_t mutex_id);
+void platform_mutex_unlock(const uint32_t mutex_id);
 
 #ifdef __cplusplus
 }

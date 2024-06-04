@@ -377,7 +377,7 @@ int CALLBACK WinMain(
     int nCmdShow)
 {
     application_running = 1;
-     
+    
     assert(sizeof(GPUPolygon) % 32 == 0);
 
     assert(MANAGED_MEMORY_SIZE < 500000000);
