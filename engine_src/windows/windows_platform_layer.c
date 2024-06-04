@@ -178,10 +178,6 @@ uint64_t platform_get_filesize(const char * filepath) {
     return size.QuadPart;
 }
 
-void platform_close_application(void) {
-    application_running = false;
-}
-
 void platform_open_folder_in_window_if_possible(
     const char * folderpath)
 {

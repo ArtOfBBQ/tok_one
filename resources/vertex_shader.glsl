@@ -148,8 +148,8 @@ float get_distance(
 
 void main()
 {
-    unsigned int locked_vertex_i = invertexids[0];
     unsigned int polygon_i = invertexids[1];
+    unsigned int locked_vertex_i = invertexids[0];
     unsigned int locked_material_i =
         (polygon_i * MAX_MATERIALS_PER_POLYGON) +
             locked_vertices[locked_vertex_i].parent_material_i;
@@ -159,7 +159,7 @@ void main()
         locked_vertices[locked_vertex_i].xyz[1],
         locked_vertices[locked_vertex_i].xyz[2],
         1.0);
-
+    
     vec4 vertex_multipliers = vec4(
         polygons[polygon_i].xyz_multiplier[0],
         polygons[polygon_i].xyz_multiplier[1],
@@ -174,7 +174,6 @@ void main()
     
     pos *= vertex_multipliers;
     pos += vertex_offsets;
-    
     pos *= polygons[polygon_i].scale_factor;
     pos[3] = 1.0f;
     
@@ -190,12 +189,14 @@ void main()
     normals = x_rotate(
         normals,
         polygons[polygon_i].xyz_angle[0]);
+    
     pos = y_rotate(
         pos,
         polygons[polygon_i].xyz_angle[1]);
     normals = y_rotate(
         normals,
         polygons[polygon_i].xyz_angle[1]);
+    
     pos = z_rotate(
         pos,
         polygons[polygon_i].xyz_angle[2]);
@@ -244,7 +245,7 @@ void main()
         (projection_constants.znear * projection_constants.q);
     
     gl_Position = pos;
-
+    
     vert_to_frag_uv[0] = locked_vertices[locked_vertex_i].uv[0];
     vert_to_frag_uv[1] = locked_vertices[locked_vertex_i].uv[1];
     

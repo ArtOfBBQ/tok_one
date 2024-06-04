@@ -25,6 +25,10 @@ static unsigned int requesting_shutdown = false;
 
 static HWND window_handle;
 
+void platform_close_application(void) {
+    requesting_shutdown = true;
+}
+
 static void wait_x_microseconds(uint64_t microseconds)
 {
     printf("wait %u microseconds...\n", microseconds);
@@ -100,8 +104,32 @@ static uint32_t microsoft_keycode_to_tokone_keycode(
     
     printf("key %u - ", microsoft_key);
     switch (microsoft_key) {
+        case 8:
+            return TOK_KEY_BACKSPACE;
         case 13:
             return TOK_KEY_ENTER;
+        case 32:
+            return TOK_KEY_SPACEBAR;
+        case 49:
+            return TOK_KEY_1;
+        case 50:
+            return TOK_KEY_2;
+        case 51:
+            return TOK_KEY_3;
+        case 52:
+            return TOK_KEY_4;
+        case 53:
+            return TOK_KEY_5;
+        case 54:
+            return TOK_KEY_6;
+        case 55:
+            return TOK_KEY_7;
+        case 56:
+            return TOK_KEY_8;
+        case 57:
+            return TOK_KEY_9;
+        case 48:
+            return TOK_KEY_0;
         case 81:
             return TOK_KEY_Q;
         case 87:

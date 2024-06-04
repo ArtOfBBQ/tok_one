@@ -501,22 +501,34 @@ void request_fps_counter(
     uint64_t microseconds_elapsed)
 {
     #ifdef __ARM_NEON
-    char fps_string[12] = "NEONfps: xx";
+    char fps_string[14] = "NEONfps:     ";
     #elif defined(__AVX__)
-    char fps_string[12] = "AVX fps: xx";
+    char fps_string[14] = "AVX fps:     ";
     #else
-    char fps_string[12] = "std fps: xx";
+    char fps_string[14] = "std fps:     ";
     #endif
     
     uint64_t fps = 1000000 / microseconds_elapsed;
     
     if (fps < 100) {
-        fps_string[ 9] = '0' + ((fps / 10) % 10);
-        fps_string[10] = '0' + (fps % 10);
+        fps_string[11] = '0' + ((fps / 10) % 10);
+        fps_string[12] = '0' + (fps % 10);
+    } else if (fps < 1000) {
+        fps_string[10] = '0' + ((fps / 100) % 10);
+        fps_string[11] = '0' + ((fps / 10) % 10);
+        fps_string[12] = '0' + (fps % 10);
+    } else if (fps < 10000) {
+        fps_string[ 9] = '0' + ((fps / 1000) % 10);
+        fps_string[10] = '0' + ((fps / 100) % 10);
+        fps_string[11] = '0' + ((fps / 10) % 10);
+        fps_string[12] = '0' + (fps % 10);
     } else {
         fps_string[ 9] = '9';
         fps_string[10] = '9';
+        fps_string[11] = '9';
+        fps_string[12] = '9';
     }
+    
     delete_zpolygon_object(FPS_COUNTER_OBJECT_ID);
     
     font_height = 16.0f;

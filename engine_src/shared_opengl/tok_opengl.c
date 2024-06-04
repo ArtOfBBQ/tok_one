@@ -261,6 +261,9 @@ void opengl_init(
 {
     glDepthRange(0.0f, 1.0f);
     
+    glEnable(GL_DEPTH_TEST);
+    glClearDepth(10.0f);
+    
     log_assert(!glGetError());
     shader_program_id = extptr_glCreateProgram();
     printf("Created shader_program_id: %u\n", shader_program_id);
@@ -432,7 +435,7 @@ void opengl_render_frame(GPUDataForSingleFrame * frame)
     }
     
     glClearColor(0.0f, 0.05, 0.1f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     extptr_glUseProgram(shader_program_id); // TODO: actually nescessary?
     extptr_glBindVertexArray(VAO);
