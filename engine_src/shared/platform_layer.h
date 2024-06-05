@@ -28,6 +28,9 @@ on each platform
 
 #ifdef _WIN32 
 #include <windows.h>
+#include <Knownfolders.h>
+#include <Libloaderapi.h>
+#include <shlwapi.h>
 #endif
 
 #ifdef PLATFORM_IOS

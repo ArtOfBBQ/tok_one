@@ -90,24 +90,63 @@ void platform_get_resources_path(
     char * recipient,
     const uint32_t recipient_size)
 {
-    // TODO: implement resources path instead of hardcoding
-    strcpy_capped(
-        recipient,
-        recipient_size,
-        "C:\\users\\osora\\documents\\github\\tok_one\\build\\"
-        "windows\\tok_one");
+    // if 1st parameter is NULL, this finds the running .exe's root folder
+    int bytes = GetModuleFileName(NULL, recipient, recipient_size);
+    log_assert(bytes > 0);
+    
+    PathRemoveFileSpecA(recipient);
 }
 
 void platform_get_writables_path(
     char * recipient,
     const uint32_t recipient_size)
 {
-    // TODO: implement writables path instead of hardcoding
-    strcpy_capped(
-        recipient,
-        recipient_size,
-        "C:\\users\\osora\\documents\\github\\tok_one\\build\\"
-        "windows\\writables");
+    //PWSTR path = NULL;
+    //
+    //HRESULT result = SHGetKnownFolderPath(
+    //  /*
+    //  [in]           REFKNOWNFOLDERID rfid:      
+    //  A reference to the KNOWNFOLDERID that identifies the folder.
+    //  */
+    //      FOLDERID_ProgramData,
+    //  /*
+    //  [in]           DWORD            dwFlags:
+    //  Flags that specify special retrieval options. This value can be 0;
+    //  otherwise, one or more of the KNOWN_FOLDER_FLAG values.
+    //  */
+    //      0,
+    //  /*
+    //  [in: optional] HANDLE           hToken:
+    //  An access token that represents a particular user. If this
+    //  parameter is NULL, which is the most common usage, the function
+    //  requests the known folder for the current user.
+    //  */
+    //      0,
+    //  /*
+    //  [out]          PWSTR            *ppszPath:
+    //  When this method returns, contains the address of a pointer to a
+    //  null-terminated Unicode string that specifies the path of the
+    //  known folder. The calling process is responsible for freeing this
+    //  resource once it is no longer needed by calling CoTaskMemFree,
+    //  whether SHGetKnownFolderPath succeeds or not. The returned path
+    //  does not include a trailing backslash. For example, "C:\Users" is
+    //  returned rather than "C:\Users\".
+    //  */
+    //      &path);
+    //PathAppend(path, APPLICATION_NAME);
+    //
+    //strcpy_capped(
+    //    recipient,
+    //    recipient_size,
+    //    path);
+    //
+    //log_assert(result == S_OK);
+    
+    // if 1st parameter is NULL, this finds the running .exe's root folder
+    int bytes = GetModuleFileName(NULL, recipient, recipient_size);
+    log_assert(bytes > 0);
+    
+    PathRemoveFileSpecA(recipient);
 }
 
 bool32_t platform_file_exists(const char * filepath) {
