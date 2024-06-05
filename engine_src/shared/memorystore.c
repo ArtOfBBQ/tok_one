@@ -18,6 +18,9 @@ static void * managed_memory_end = NULL;
 
 static uint32_t malloc_mutex_id;
 
+void (* memstore_mutex_lock)(const uint32_t mutex_id) = NULL;
+void (* memstore_mutex_unlock)(const uint32_t mutex_id) = NULL;
+
 void get_memory_usage_summary_string(
     char * recipient,
     const uint32_t recipient_cap)
@@ -75,7 +78,7 @@ void get_memory_usage_summary_string(
         "\n");
 }
 
-void align_pointer(void ** to_align) {
+static void align_pointer(void ** to_align) {
     uint32_t leftover = ((uintptr_t)*to_align) % MEM_ALIGNMENT_BYTES;
     uint32_t padding = 0;
     if (leftover > 0) {
@@ -89,14 +92,20 @@ void align_pointer(void ** to_align) {
 
 void init_memory_store(
     void * ptr_unmanaged_memory_block,
-    void * ptr_managed_memory_block)
+    void * ptr_managed_memory_block,
+    uint32_t (* memstore_init_mutex_and_return_id)(void),
+    void (* ptr_mutex_lock)(const uint32_t mutex_id),
+    void (* ptr_mutex_unlock)(const uint32_t mutex_id))
 {
-    malloc_mutex_id  = platform_init_mutex_and_return_id();
+    malloc_mutex_id  = memstore_init_mutex_and_return_id();
+    
+    memstore_mutex_lock = ptr_mutex_lock;
+    memstore_mutex_unlock = ptr_mutex_unlock;
     
     unmanaged_memory = ptr_unmanaged_memory_block;
     align_pointer(&unmanaged_memory);
     
-    managed_memory   = ptr_managed_memory_block;
+    managed_memory = ptr_managed_memory_block;
     align_pointer(&managed_memory);
     
     managed_memory_end = ((char *)managed_memory + MANAGED_MEMORY_SIZE);
@@ -137,7 +146,7 @@ void * malloc_from_unmanaged_aligned(
     const uint64_t size,
     const uint32_t aligned_to)
 {
-    platform_mutex_lock(malloc_mutex_id);
+    memstore_mutex_lock(malloc_mutex_id);
     
     log_assert(unmanaged_memory != NULL);
     log_assert(size > 0);
@@ -159,7 +168,7 @@ void * malloc_from_unmanaged_aligned(
     
     log_assert((uintptr_t)(void *)return_value % aligned_to == 0);
     
-    platform_mutex_unlock(malloc_mutex_id);
+    memstore_mutex_unlock(malloc_mutex_id);
         
     return return_value;
 }
@@ -182,7 +191,7 @@ void * malloc_from_managed_internal(
     char * called_from_file,
     char * called_from_func)
 {
-    platform_mutex_lock(malloc_mutex_id);
+    memstore_mutex_lock(malloc_mutex_id);
     
     log_assert(managed_memory != NULL);
     log_assert(size > 0);
@@ -223,7 +232,7 @@ void * malloc_from_managed_internal(
     managed_stack->used[managed_stack->size] = 1;
     managed_stack->size += 1;
     
-    platform_mutex_unlock(malloc_mutex_id);
+    memstore_mutex_unlock(malloc_mutex_id);
     
     log_assert(return_value != NULL);
     return return_value;
@@ -231,7 +240,7 @@ void * malloc_from_managed_internal(
 
 void free_from_managed(void * to_free) {
     
-    platform_mutex_lock(malloc_mutex_id);
+    memstore_mutex_lock(malloc_mutex_id);
     
     log_assert(to_free != NULL);
     log_assert(managed_memory != NULL);
@@ -270,7 +279,6 @@ void free_from_managed(void * to_free) {
         ((uintptr_t)managed_memory_end - (uintptr_t)managed_memory) <=
             MANAGED_MEMORY_SIZE);
     
-    platform_mutex_unlock(malloc_mutex_id);
+    memstore_mutex_unlock(malloc_mutex_id);
     return;
 }
-

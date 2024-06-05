@@ -121,7 +121,10 @@ void init_application_before_gpu_init(void)
         MANAGED_MEMORY_SIZE);
     init_memory_store(
         unmanaged_memory_store,
-        managed_memory_store);
+        managed_memory_store,
+        platform_init_mutex_and_return_id,
+        platform_mutex_lock,
+        platform_mutex_unlock);
     
     #ifndef LOGGER_IGNORE_ASSERTS
     test_simd_functions();

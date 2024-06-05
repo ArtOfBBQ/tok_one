@@ -11,7 +11,7 @@ char crashed_top_of_screen_msg[256];
 static void *   (* logger_malloc_func)(size_t) = NULL;
 static uint32_t (* logger_create_mutex_func)(void) = NULL;
 static void     (* logger_mutex_lock_func)(const uint32_t) = NULL;
-static int32_t  (* logger_mutex_unlock_func)(const uint32_t) = NULL;
+static void     (* logger_mutex_unlock_func)(const uint32_t) = NULL;
 static uint32_t logger_mutex_id = UINT32_MAX;
 
 #define LOG_SIZE 5000000
@@ -26,7 +26,7 @@ void init_logger(
     void * (* arg_logger_malloc_func)(size_t size),
     uint32_t (* arg_logger_create_mutex_func)(void),
     void (* arg_logger_mutex_lock_func)(const uint32_t mutex_id),
-    int32_t (* arg_logger_mutex_unlock_func)(const uint32_t mutex_id))
+    void (* arg_logger_mutex_unlock_func)(const uint32_t mutex_id))
 {
     logger_malloc_func       = arg_logger_malloc_func;
     logger_create_mutex_func = arg_logger_create_mutex_func;

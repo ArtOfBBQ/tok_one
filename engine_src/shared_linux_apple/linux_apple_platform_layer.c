@@ -1,6 +1,5 @@
 #include "platform_layer.h"
 
-#define MUTEXES_SIZE 80
 static pthread_mutex_t mutexes[MUTEXES_SIZE];
 static uint32_t next_mutex_id = 0;
 /*
@@ -45,10 +44,11 @@ void platform_mutex_lock(
     return;
 }
 
-int32_t platform_mutex_unlock(const uint32_t mutex_id) {
+void platform_mutex_unlock(const uint32_t mutex_id) {
     log_assert(mutex_id < MUTEXES_SIZE);
-    int return_value = pthread_mutex_unlock(&(mutexes[mutex_id]));
+    #ifndef LOGGER_IGNORE_ASSERTS
+    int return_value =
+    #endif
+    pthread_mutex_unlock(&(mutexes[mutex_id]));
     log_assert(return_value == 0);
-    
-    return return_value;
 }
