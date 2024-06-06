@@ -97,6 +97,17 @@ void platform_get_resources_path(
     PathRemoveFileSpecA(recipient);
 }
 
+void platform_get_application_path(
+    char * recipient,
+    const uint32_t recipient_size)
+{
+    // if 1st parameter is NULL, this finds the running .exe's root folder
+    int bytes = GetModuleFileName(NULL, recipient, recipient_size);
+    log_assert(bytes > 0);
+    
+    PathRemoveFileSpecA(recipient);
+}
+
 void platform_get_writables_path(
     char * recipient,
     const uint32_t recipient_size)
@@ -330,5 +341,77 @@ void platform_start_thread(
     
     thread_args_i += 1;
     thread_args_i %= THREADARGS_QUEUE_SIZE;
+}
+
+void platform_mkdir_if_not_exist(
+    const char * dirname)
+{
+    BOOL result = CreateDirectoryA(
+        /* [in]           LPCSTR                lpPathName: */
+            dirname,
+        /* [in, optional] LPSECURITY_ATTRIBUTES lpSecurityAttributes: */
+            NULL);
+    log_assert(result != ERROR_PATH_NOT_FOUND);
+}
+
+void platform_copy_file(
+    const char * filepath_source,
+    const char * filepath_destination)
+{
+    BOOL result = CopyFile(
+      /* [in] LPCTSTR lpExistingFileName: */
+          filepath_source,
+      /* [in] LPCTSTR lpNewFileName: */
+          filepath_destination,
+      /* [in] BOOL    bFailIfExists: */
+          false);
+}
+
+void platform_get_filenames_in(
+    const char * directory,
+    char ** filenames,
+    const uint32_t recipient_capacity,
+    uint32_t * recipient_size)
+{
+    log_assert(strlen(directory) <= (MAX_PATH - 3));
+    
+    // Prepare string for use with FindFile functions.  First, copy the
+    // string to a buffer, then append '\*' to the directory name.
+   
+    HANDLE handle = INVALID_HANDLE_VALUE; 
+    char fulldirectory[MAX_PATH];
+    strcpy_capped(fulldirectory, MAX_PATH, directory);
+    strcat_capped(fulldirectory, MAX_PATH, "\\*");
+    
+    // Find the first file in the directory.
+    WIN32_FIND_DATA ffd;
+    handle = FindFirstFile(fulldirectory, &ffd);
+    
+    if (handle == INVALID_HANDLE_VALUE) 
+    {
+        log_assert(0);
+        return;
+    }
+    
+    int32_t filename_i = 0;
+    while (FindNextFile(handle, &ffd) != 0 && filename_i < 1200) {
+       if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+       {
+            // pass
+       }
+       else
+       {
+           strcpy_capped(
+               filenames[filename_i++],
+               recipient_capacity,
+               ffd.cFileName);
+       }
+       log_assert(filename_i < 1000);
+    }
+    
+    log_assert(GetLastError() == ERROR_NO_MORE_FILES);
+    
+    FindClose(handle);
+    return;
 }
 

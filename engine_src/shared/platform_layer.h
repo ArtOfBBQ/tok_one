@@ -58,10 +58,6 @@ on each platform
 #include <dirent.h> // to list files in a dir
 #endif
 
-#ifdef WINDOWS_PLATFORM
-#include <windows.h>
-#endif
-
 #ifdef __ARM_NEON
 #include "arm_neon.h"
 #elif defined(__AVX__)
