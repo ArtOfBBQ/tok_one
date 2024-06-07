@@ -14,16 +14,15 @@
 #include "opengl_extensions.h"
 #include "tok_opengl.h"
 #include "common.h"
+// #include "zpolygon.h"
 // #include "texture_array.h"
 #include "userinput.h"
-
-
-static unsigned int window_width = 200;
-static unsigned int window_height = 200;
 
 static unsigned int requesting_shutdown = false;
 
 static HWND window_handle;
+
+bool32_t startup_complete = false; // dont trigger window resize code at startup
 
 void platform_close_application(void) {
     requesting_shutdown = true;
@@ -39,6 +38,7 @@ static void wait_x_microseconds(uint64_t microseconds)
 }
 
 void platform_gpu_update_viewport(void) {
+    printf("Updating opengl projection constants\n");
     *gpu_shared_data_collection.locked_pjc =
         window_globals->projection_constants;
     
@@ -312,7 +312,46 @@ MainWindowCallback(
             requesting_shutdown = true;
             break;
         }
+        case WM_MOVE: {
+            
+            update_window_position(
+                (float)(short)LOWORD(l_param),
+                (float)(short)HIWORD(l_param));
+            
+            break;
+        }
         case WM_SIZE: {
+            
+            if (!startup_complete) {
+                printf("WM size canceled because startup incomplete\n");
+                return;
+            }
+            
+            RECT window_rect;
+            GetWindowRect(window_handle, &window_rect);
+            
+            float window_width = window_rect.right - window_rect.left;
+            float window_height = window_rect.bottom - window_rect.top;
+            
+            delete_all_ui_elements();
+            zpolygons_to_render->size = 0;
+            particle_effects_size = 0;
+            
+            // sets window_globals->height/width/aspectratio etc
+            update_window_size(
+                /* width: */
+                    window_width,
+                /* height: */
+                    window_height,
+                /* at_timestamp_microsecs: */
+                    platform_get_current_time_microsecs());
+            
+            glViewport(
+                0,
+                0,
+                window_width,
+                window_height);
+            
             break;
         }
         case WM_DESTROY: {
@@ -385,7 +424,7 @@ int CALLBACK WinMain(
     
     init_application_before_gpu_init();
     
-    // TODO: remove console
+    // You can spawn a console with this code snippet 
     FILE * fp = NULL;
     AllocConsole();
     freopen_s(&fp, "CONIN$", "r", stdin);
@@ -513,25 +552,25 @@ int CALLBACK WinMain(
 	return 0;
     }
     
-    RECT window_rect;
-    if (
-        GetWindowRect(window_handle, &window_rect))
-    {
-        window_width = window_rect.right - window_rect.left;
-        window_height = window_rect.bottom - window_rect.top;
-    } else {
-        MessageBox(
-            window_handle,
-            "Can't deduce window size",
-            "Error",
-            0);
-        return 0;
-    }
+    //RECT window_rect;
+    //if (
+    //    GetWindowRect(window_handle, &window_rect))
+    //{
+    //    window_width = window_rect.right - window_rect.left;
+    //    window_height = window_rect.bottom - window_rect.top;
+    //} else {
+    //    MessageBox(
+    //        window_handle,
+    //        "Can't deduce window size",
+    //        "Error",
+    //        0);
+    //    return 0;
+    //}
 
-    window_globals->window_left = window_rect.left;
-    window_globals->window_width = window_width;
-    window_globals->window_bottom = window_rect.bottom;
-    window_globals->window_height = window_height;
+    //window_globals->window_left = window_rect.left;
+    //window_globals->window_width = window_width;
+    //window_globals->window_bottom = window_rect.bottom;
+    //window_globals->window_height = window_height;
     
     
     /*
@@ -810,6 +849,10 @@ int CALLBACK WinMain(
     free_from_managed(fragment_shader_file.contents);
     
     init_application_after_gpu_init();
+    
+    // start_audio_loop();
+    
+    startup_complete = true;
     
     uint32_t frame_i = 0;
     while (!requesting_shutdown)

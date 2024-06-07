@@ -159,7 +159,8 @@ void init_application_before_gpu_init(void)
     FileBuffer engine_save;
     engine_save.contents = NULL;
     if (platform_file_exists(full_writable_pathfile)) {
-        engine_save.size_without_terminator = platform_get_filesize(full_writable_pathfile);
+        engine_save.size_without_terminator = platform_get_filesize(
+            full_writable_pathfile);
         engine_save.contents = (char *)malloc_from_managed(
             engine_save.size_without_terminator + 1);
         platform_read_file(full_writable_pathfile, &engine_save);
