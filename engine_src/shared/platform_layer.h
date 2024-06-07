@@ -140,11 +140,10 @@ void platform_copy_file(
     const char * filepath_destination);
 void platform_mkdir_if_not_exist(
     const char * dirname);
+
 void platform_get_filenames_in(
     const char * directory,
-    char ** filenames,
-    const uint32_t recipient_capacity,
-    uint32_t * recipient_size);
+    char filenames[500][500]);
 
 /*
 Get a file's size. Returns 0 if no such file

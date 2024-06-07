@@ -677,6 +677,7 @@ int32_t new_mesh_id_from_resource_asserts(
     if (parsed_obj == NULL) {
         parsed_obj = malloc_from_unmanaged(sizeof(ParsedObj));
     }
+    memset(parsed_obj, 0, sizeof(ParsedObj));
     
     FileBuffer obj_file;
     obj_file.size_without_terminator = platform_get_resource_size(filename);
@@ -692,7 +693,6 @@ int32_t new_mesh_id_from_resource_asserts(
     
     log_assert(obj_file.good);
     
-    ;
     uint32_t good = 0;
     parse_obj(
         /* ParsedObj * recipient: */

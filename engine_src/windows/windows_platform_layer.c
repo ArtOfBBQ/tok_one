@@ -182,55 +182,59 @@ void platform_write_file(
 }
 
 void platform_read_file(
-    const char * filepath,
-    FileBuffer * out_preallocatedbuffer)
+    const char* filepath,
+    FileBuffer* out_preallocatedbuffer)
 {
+    log_assert(out_preallocatedbuffer->size_without_terminator > 0);
+
     HANDLE file_handle = CreateFileA(
         /* [in]           LPCSTR                lpFileName: */
-            filepath,
+        filepath,
         /* [in]           DWORD                 dwDesiredAccess: */
-            GENERIC_READ,
+        GENERIC_READ,
         /* [in]           DWORD                 dwShareMode: */
-            FILE_SHARE_READ,
+        FILE_SHARE_READ,
         /* [in, optional] LPSECURITY_ATTRIBUTES lpSecurityAttributes: */
-            NULL,
+        NULL,
         /* [in]           DWORD                 dwCreationDisposition: */
-            OPEN_EXISTING,
+        OPEN_EXISTING,
         /* [in]           DWORD                 dwFlagsAndAttributes: */
-            FILE_ATTRIBUTE_NORMAL,
+        FILE_ATTRIBUTE_NORMAL,
         /* [in, optional] HANDLE                hTemplateFile: */
-            NULL);
-    
+        NULL);
+
     if (file_handle == INVALID_HANDLE_VALUE) {
         out_preallocatedbuffer->size_without_terminator = 0;
         out_preallocatedbuffer->good = true;
         return;
     }
 
-    DWORD bytes_to_read = platform_get_filesize(filepath);
+    DWORD bytes_to_read = out_preallocatedbuffer->
+        size_without_terminator;
 
-    if (
-        bytes_to_read < 1 ||
-        bytes_to_read > out_preallocatedbuffer->size_without_terminator)
+    if (bytes_to_read < 1)
     {
         out_preallocatedbuffer->size_without_terminator = 0;
         out_preallocatedbuffer->good = true;
         return;
     }
-    
+
     BOOL read = ReadFile(
         /* [in]            HANDLE     hFile: */
-            file_handle,
+        file_handle,
         /* [out]           LPVOID     lpBuffer: */
-            out_preallocatedbuffer->contents,
+        out_preallocatedbuffer->contents,
         /* [in]            DWORD      nNumberOfBytesToRead: */
-            bytes_to_read,
+        bytes_to_read,
         /* [out, optional] LPDWORD    lpNumberOfBytesRead: */
-            NULL,
+        NULL,
         /* [in, out, optiona LPOVERLAPPED lpOverlapped: */
-            NULL);
-    
+        NULL);
+
     log_assert(CloseHandle(file_handle));
+
+    out_preallocatedbuffer->contents[out_preallocatedbuffer->size_without_terminator] = '\0';
+
     out_preallocatedbuffer->good = true;
 }
 
@@ -369,10 +373,10 @@ void platform_copy_file(
 
 void platform_get_filenames_in(
     const char * directory,
-    char ** filenames,
-    const uint32_t recipient_capacity,
-    uint32_t * recipient_size)
+    char filenames[2000][500])
 {
+    memset(filenames, 0, 2000 * 500);
+    
     log_assert(strlen(directory) <= (MAX_PATH - 3));
     
     // Prepare string for use with FindFile functions.  First, copy the
@@ -401,12 +405,15 @@ void platform_get_filenames_in(
        }
        else
        {
+           uint32_t string_len = get_string_length(ffd.cFileName) + 1;
+           log_assert(string_len < 500);
            strcpy_capped(
-               filenames[filename_i++],
-               recipient_capacity,
+               filenames[filename_i],
+               string_len,
                ffd.cFileName);
+            filename_i += 1;
        }
-       log_assert(filename_i < 1000);
+       log_assert(filename_i < 2000);
     }
     
     log_assert(GetLastError() == ERROR_NO_MORE_FILES);

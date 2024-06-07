@@ -207,12 +207,11 @@ void * malloc_from_managed_internal(
     
     managed_memory = (void *)((char *)return_value + size + endpadding);
     
-    log_assert((ptrdiff_t)managed_memory < (ptrdiff_t)managed_memory_end);
+    log_assert((uintptr_t)managed_memory < (uintptr_t)managed_memory_end);
     
     #ifndef LOGGER_IGNORE_ASSERTS
     if (managed_stack->size > 0) {
-        log_assert(managed_stack->pointers[managed_stack->size - 1] <=
-            return_value);
+        log_assert((uintptr_t)managed_stack->pointers[managed_stack->size - 1] <= (uintptr_t)return_value);
     }
     #endif
     log_assert(managed_stack->size < MANAGED_MEMORY_STACK_SIZE);
