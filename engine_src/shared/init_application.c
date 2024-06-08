@@ -362,7 +362,7 @@ void init_application_before_gpu_init(void)
             gpu_shared_data_collection.projection_constants_allocation_size,
             4096);
     
-    client_logic_startup();
+    client_logic_early_startup();
 }
 
 void init_application_after_gpu_init(void) {
@@ -406,6 +406,8 @@ void init_application_after_gpu_init(void) {
         // TODO: reimplement me!
         // platform_enter_fullscreen();
     }
+    
+    client_logic_late_startup();
 }
 
 void shared_shutdown_application(void)

@@ -37,10 +37,20 @@ will be called once when the app shuts down
 */
 void client_logic_shutdown(void);
 
+
 /*
 will be called once at startup, before rendering frame 1
+
+If you draw objects here they will be deleted by an automatic screen resize
 */
-void client_logic_startup(void);
+void client_logic_early_startup(void);
+
+/*
+will be called once at startup, before rendering frame 1
+
+You can draw initial objects here and they will remain
+*/
+void client_logic_late_startup(void);
 
 /*
 will be called by the platform layer when you start a thread

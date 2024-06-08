@@ -1,7 +1,8 @@
 #include "clientlogic.h"
 
+static int32_t teapot_mesh_id = -1;
 static int32_t teapot_object_id = -1;
-void client_logic_startup(void) {
+void client_logic_early_startup(void) {
     
     init_PNG_decoder(
         malloc_from_managed_infoless,
@@ -23,8 +24,12 @@ void client_logic_startup(void) {
         /* const char ** filenames: */
             (const char **)textures,
         /* const uint32_t filenames_size: */
-            1);
+            1);    
     
+   teapot_mesh_id = new_mesh_id_from_resource("teapot.obj");
+}
+
+void client_logic_late_startup(void) {
     PolygonRequest stack_recipient;
     request_next_zpolygon(&stack_recipient);
     construct_quad_around(
@@ -58,7 +63,6 @@ void client_logic_startup(void) {
     light->xyz[2]        =  1.25f;
     commit_zlight(light);
     
-    int32_t teapot_mesh_id = new_mesh_id_from_resource("teapot.obj");
     teapot_object_id = next_nonui_object_id();
     
     PolygonRequest teapot_request;
