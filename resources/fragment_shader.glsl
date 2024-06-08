@@ -25,11 +25,27 @@ void main() {
         out_color *= texture_sample;
     }
     
-    out_color *= vert_to_frag_lighting;
+
+    int diamond_size = 35;
+    float neghalfdiamond = -1.0f * (diamond_size / 2.0f);
+    float alpha_tresh = (out_color[3] * diamond_size);
+    int pos_x = int(gl_FragCoord.x);
+    int pos_y = int(gl_FragCoord.y);
+    float mod_x = pos_x % diamond_size;
+    float mod_y = pos_y % diamond_size;
     
-    if (out_color[3] < 0.01f) {
+    out_color *= vert_to_frag_lighting;
+    if (
+        out_color[3] < 0.05f ||
+        (
+            out_color[3] < 0.95f &&
+            (
+                abs(neghalfdiamond + mod_x) +
+                abs(neghalfdiamond + mod_y)
+            ) > alpha_tresh
+        ))
+    {
         discard;
-        return;
     }
     
     out_color[3] = 1.0f;
