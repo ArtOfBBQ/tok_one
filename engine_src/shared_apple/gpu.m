@@ -181,8 +181,6 @@ static dispatch_semaphore_t drawing_semaphore;
     alphablend_pipeline_descriptor
         .colorAttachments[0].destinationRGBBlendFactor =
             MTLBlendFactorOneMinusSourceAlpha;
-    // TODO: Do we even have to use a depth buffer here? I don't get it but
-    // TODO: it hangs if we don't
     alphablend_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
     _alphablend_pipeline_state =

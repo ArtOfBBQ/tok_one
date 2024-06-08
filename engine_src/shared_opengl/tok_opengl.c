@@ -462,7 +462,25 @@ void opengl_render_frame(GPUDataForSingleFrame * frame)
             /* GLint	first: */
                 0,
             /* GLsizei	count: */
-                frame->vertices_size);
+                frame->first_alphablend_i);
+        assert(!glGetError());
+
+        glDrawArrays(
+            /* GLenum	mode : */
+                GL_TRIANGLES,
+            /* GLint	first: */
+                frame->first_alphablend_i,
+            /* GLsizei	count: */
+                frame->first_line_i - frame->first_alphablend_i);
+        assert(!glGetError());
+        
+        glDrawArrays(
+            /* GLenum	mode : */
+                GL_LINES,
+            /* GLint	first: */
+                frame->first_line_i,
+            /* GLsizei	count: */
+                frame->vertices_size - frame->first_line_i);
         assert(!glGetError());
     }
 }
