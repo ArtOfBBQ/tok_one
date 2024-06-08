@@ -114,7 +114,6 @@ static void test_simd_functions(void) {
 
 void init_application_before_gpu_init(void)
 {
-
     void * unmanaged_memory_store = platform_malloc_unaligned_block(
         UNMANAGED_MEMORY_SIZE);
     void * managed_memory_store = platform_malloc_unaligned_block(

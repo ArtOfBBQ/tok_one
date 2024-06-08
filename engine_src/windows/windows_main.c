@@ -22,7 +22,12 @@ static unsigned int requesting_shutdown = false;
 
 static HWND window_handle;
 
-bool32_t startup_complete = false; // dont trigger window resize code at startup
+static DWORD window_style = 
+    WS_OVERLAPPEDWINDOW |
+    WS_VISIBLE |
+    WS_SIZEBOX |
+    WS_CLIPCHILDREN |
+    WS_CLIPSIBLINGS;
 
 void platform_close_application(void) {
     requesting_shutdown = true;
@@ -110,6 +115,8 @@ static uint32_t microsoft_keycode_to_tokone_keycode(
             return TOK_KEY_ENTER;
         case 16:
             return TOK_KEY_SHIFT;
+        case 27:
+            return TOK_KEY_ESCAPE;
         case 32:
             return TOK_KEY_SPACEBAR;
         case 49:
@@ -247,12 +254,12 @@ MainWindowCallback(
                 /* interaction : */
                     &user_interactions[INTR_PREVIOUS_LEFTCLICK_START],
                 /* screenspace_x: */
-                    user_interactions[INTR_PREVIOUS_LEFTCLICK_START].
+                    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].
                         screen_x,
                 /* screenspace_y: */
-                    user_interactions[INTR_PREVIOUS_LEFTCLICK_START].
+                    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].
                         screen_y);
-
+            
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START] =
                 user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
             
@@ -269,10 +276,10 @@ MainWindowCallback(
                 /* interaction : */
                     &user_interactions[INTR_PREVIOUS_RIGHTCLICK_START],
                 /* screenspace_x: */
-                    user_interactions[INTR_PREVIOUS_RIGHTCLICK_START].
+                    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].
                         screen_x,
                 /* screenspace_y: */
-                    user_interactions[INTR_PREVIOUS_RIGHTCLICK_START].
+                    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].
                         screen_y);
             
             user_interactions[INTR_PREVIOUS_RIGHTCLICK_END].
@@ -284,10 +291,10 @@ MainWindowCallback(
                 /* interaction : */
                     &user_interactions[INTR_PREVIOUS_RIGHTCLICK_END],
                 /* screenspace_x: */
-                    user_interactions[INTR_PREVIOUS_RIGHTCLICK_END].
+                    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].
                         screen_x,
                 /* screenspace_y: */
-                    user_interactions[INTR_PREVIOUS_RIGHTCLICK_START].
+                    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].
                         screen_y);
             
             break;
@@ -297,10 +304,10 @@ MainWindowCallback(
                 /* interaction : */
                     &user_interactions[INTR_PREVIOUS_LEFTCLICK_END],
                 /* screenspace_x: */
-                    user_interactions[INTR_PREVIOUS_LEFTCLICK_END].
+                    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].
                         screen_x,
                 /* screenspace_y: */
-                    user_interactions[INTR_PREVIOUS_LEFTCLICK_START].
+                    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].
                         screen_y);
             
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END] =
@@ -322,16 +329,27 @@ MainWindowCallback(
         }
         case WM_SIZE: {
             
-            if (!startup_complete) {
-                printf("WM size canceled because startup incomplete\n");
-                return;
-            }
-            
             RECT window_rect;
             GetWindowRect(window_handle, &window_rect);
+            // BOOL adjusted = AdjustWindowRect(
+            //     /* [in: out] LPRECT lpRect: */
+            //         &window_rect,
+            //     /* [in]      DWORD  dwStyle: */
+            //         window_style,
+            //     /* [in]      BOOL   bMenu: */
+            //         false);
+            
+            POINT point = { 0, 0 };
+            ClientToScreen(window_handle, &point);
+            int titlebar_size = point.y - window_rect.top +
+                GetSystemMetrics(SM_CYSIZEFRAME) +
+                GetSystemMetrics(SM_CYEDGE) * 2;
             
             float window_width = window_rect.right - window_rect.left;
-            float window_height = window_rect.bottom - window_rect.top;
+            float window_height =
+                window_rect.bottom -
+                window_rect.top -
+                titlebar_size;
             
             delete_all_ui_elements();
             zpolygons_to_render->size = 0;
@@ -506,11 +524,7 @@ int CALLBACK WinMain(
 	/* LPCTSTR lpWindowName:*/ 
             "tok_one",
 	/* DWORD dwStyle:       */
-            WS_OVERLAPPEDWINDOW |
-            WS_VISIBLE |
-	    WS_SIZEBOX |
-	    WS_CLIPCHILDREN |
-	    WS_CLIPSIBLINGS, 
+            window_style,
 	/* int x:               */ 
             CW_USEDEFAULT,
 	/* int y:               */ 
@@ -551,27 +565,6 @@ int CALLBACK WinMain(
                 MB_OK);
 	return 0;
     }
-    
-    //RECT window_rect;
-    //if (
-    //    GetWindowRect(window_handle, &window_rect))
-    //{
-    //    window_width = window_rect.right - window_rect.left;
-    //    window_height = window_rect.bottom - window_rect.top;
-    //} else {
-    //    MessageBox(
-    //        window_handle,
-    //        "Can't deduce window size",
-    //        "Error",
-    //        0);
-    //    return 0;
-    //}
-
-    //window_globals->window_left = window_rect.left;
-    //window_globals->window_width = window_width;
-    //window_globals->window_bottom = window_rect.bottom;
-    //window_globals->window_height = window_height;
-    
     
     /*
     The GetDC function retrieves a handle to a device context (DC) for the 
@@ -843,16 +836,13 @@ int CALLBACK WinMain(
     opengl_init(
         vertex_shader_file.contents,
         fragment_shader_file.contents);
-
-
+    
     free_from_managed(vertex_shader_file.contents);
     free_from_managed(fragment_shader_file.contents);
     
     init_application_after_gpu_init();
     
     // start_audio_loop();
-    
-    startup_complete = true;
     
     uint32_t frame_i = 0;
     while (!requesting_shutdown)
@@ -864,18 +854,24 @@ int CALLBACK WinMain(
         {
             // now mousepos.x is the screen location x and
             // mousepos.y is the screen location y of the cursor
-            register_interaction(
-                /* interaction : */
-                    &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],
-                /* screenspace_x: */
-                    (float)mousepos.x - window_globals->window_left,
-                /* screenspace_y: */
-                    (float)
-                       ((window_globals->window_height - mousepos.y) +
-                        (window_globals->window_bottom -
-                            window_globals->window_height)));
-            user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
-                user_interactions[INTR_PREVIOUS_MOUSE_MOVE];
+            if (
+                ScreenToClient(
+                  /* [in] HWND    hWnd: */
+                      window_handle,
+                  /* LPPOINT lpPoint: */
+                      &mousepos))
+            {
+                register_interaction(
+                    /* interaction : */
+                        &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],
+                    /* screenspace_x: */
+                        (float)mousepos.x,
+                    /* screenspace_y: */
+                        (float)(window_globals->window_height - mousepos.y));
+                
+                user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
+                    user_interactions[INTR_PREVIOUS_MOUSE_MOVE];
+            }
         } else {
             log_dump_and_crash(
                 "Fatal: failed to query windows for the mouse location.");
