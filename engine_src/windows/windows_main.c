@@ -832,10 +832,37 @@ int CALLBACK WinMain(
             "fragment_shader.glsl",
         /* FileBuffer * out_preallocatedbuffer: */
             &fragment_shader_file);
+
+    FileBuffer alphablending_fragment_shader_file;
+    alphablending_fragment_shader_file.size_without_terminator =
+        platform_get_resource_size(
+            /* const char * filename: */
+                "alphablending_fragment_shader.glsl");
+    if (alphablending_fragment_shader_file.size_without_terminator < 1) {
+        MessageBox(
+            0,
+            "Missing file alphablending_fragment_shader.glsl!\n",
+            "Error",
+            MB_OK);
+        requesting_shutdown = true;
+        return 0;
+    }
+    alphablending_fragment_shader_file.contents = malloc_from_managed(
+        alphablending_fragment_shader_file.size_without_terminator + 1);
+    memset(
+        alphablending_fragment_shader_file.contents,
+        0,
+        alphablending_fragment_shader_file.size_without_terminator + 1);
+    platform_read_resource_file(
+        /* const char * filename: */
+            "alphablending_fragment_shader.glsl",
+        /* FileBuffer * out_preallocatedbuffer: */
+            &alphablending_fragment_shader_file);
     
     opengl_init(
         vertex_shader_file.contents,
-        fragment_shader_file.contents);
+        fragment_shader_file.contents,
+        alphablending_fragment_shader_file.contents);
     
     free_from_managed(vertex_shader_file.contents);
     free_from_managed(fragment_shader_file.contents);

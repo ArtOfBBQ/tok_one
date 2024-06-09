@@ -1,7 +1,8 @@
 #include "tok_opengl.h"
 
 static unsigned int VAO;
-static unsigned int shader_program_id;
+static unsigned int diamond_program_id;
+static unsigned int alphablending_program_id;
 
 static char opengl_info_log[512];
 
@@ -57,7 +58,8 @@ static void shadersource_apply_macro_inplace(
 
 static void opengl_compile_shader(
     char * shader_source,
-    GLenum SHADER_ENUM_TYPE)
+    GLenum SHADER_ENUM_TYPE,
+    GLuint * shader_id)
 {
     // First, manually apply macros
     char replacement[128];
@@ -106,25 +108,24 @@ static void opengl_compile_shader(
             "MAX_MATERIALS_PER_POLYGON",
         /* char * replacement: */
             replacement);
-   
     
     log_assert(!glGetError());
-    GLuint shader_id = extptr_glCreateShader(SHADER_ENUM_TYPE);
+    *shader_id = extptr_glCreateShader(SHADER_ENUM_TYPE);
     log_assert(!glGetError());
     char * shader_source_as_ptr = shader_source;
     extptr_glShaderSource(
-        shader_id,
+        *shader_id,
         1,
         &shader_source_as_ptr,
         NULL);
     
     log_assert(!glGetError());
-    extptr_glCompileShader(shader_id);
+    extptr_glCompileShader(*shader_id);
     GLint is_compiled = INT8_MAX;
     opengl_info_log[0] = '\0';
     extptr_glGetShaderiv(
         /* GLuint id: */
-            shader_id,
+            *shader_id,
         /* GLenum pname: */
             GL_COMPILE_STATUS,
         /* GLint * params: */
@@ -138,7 +139,7 @@ static void opengl_compile_shader(
         
         extptr_glGetShaderInfoLog(
             /* GLuint shader id: */
-                shader_id,
+                *shader_id,
             /* GLsizei max length: */
                 512,
             /* GLsizei * length: */
@@ -149,10 +150,7 @@ static void opengl_compile_shader(
         printf("opengl_info_log: %s\n", opengl_info_log);
     }
     
-    log_assert(!glGetError());
-    
-    extptr_glAttachShader(shader_program_id, shader_id);
-    log_assert(!glGetError());
+    log_assert(!glGetError());    
 }
 
 void opengl_copy_projection_constants(
@@ -257,7 +255,8 @@ static void copy_single_frame_data(
 
 void opengl_init(
     char * vertex_shader_source,
-    char * fragment_shader_source)
+    char * fragment_shader_source,
+    char * alphablending_fragment_shader_source)
 {
     glDepthRange(0.0f, 1.0f);
     
@@ -265,9 +264,9 @@ void opengl_init(
     glClearDepth(10.0f);
     
     log_assert(!glGetError());
-    shader_program_id = extptr_glCreateProgram();
-    printf("Created shader_program_id: %u\n", shader_program_id);
-    log_assert(shader_program_id > 0);
+    diamond_program_id = extptr_glCreateProgram();
+    printf("Created diamond_program_id: %u\n", diamond_program_id);
+    log_assert(diamond_program_id > 0);
     log_assert(!glGetError());
     
     log_assert(!glGetError());
@@ -393,21 +392,68 @@ void opengl_init(
         GL_STATIC_DRAW);
     extptr_glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     
+    GLuint vertex_shader_id;
+    GLuint fragment_shader_id;
+    
     opengl_compile_shader(
         vertex_shader_source,
-        GL_VERTEX_SHADER);
+        GL_VERTEX_SHADER,
+        &vertex_shader_id);
     opengl_compile_shader(
         fragment_shader_source,
-        GL_FRAGMENT_SHADER);
+        GL_FRAGMENT_SHADER,
+        &fragment_shader_id);
     
-    extptr_glLinkProgram(shader_program_id);
+    extptr_glAttachShader(diamond_program_id, vertex_shader_id);
+    log_assert(!glGetError());
+    extptr_glAttachShader(diamond_program_id, fragment_shader_id);
     log_assert(!glGetError());
     
+    extptr_glLinkProgram(diamond_program_id);
+    log_assert(!glGetError());
+
     unsigned int success = 0;
-    extptr_glGetProgramiv(shader_program_id, GL_LINK_STATUS, &success);
+    extptr_glGetProgramiv(diamond_program_id, GL_LINK_STATUS, &success);
     if (!success) {
         extptr_glGetProgramInfoLog(
-            shader_program_id,
+            diamond_program_id,
+            512,
+            NULL,
+            opengl_info_log);
+        printf("ERROR - GL_LINK_STATUS: %s\n", opengl_info_log);
+        getchar();
+        return;
+    }
+    
+    GLuint alphablending_fragment_shader_id;
+    opengl_compile_shader(
+        alphablending_fragment_shader_source,
+        GL_FRAGMENT_SHADER,
+        &alphablending_fragment_shader_id);
+
+    log_assert(!glGetError());
+    alphablending_program_id = extptr_glCreateProgram();
+    log_assert(alphablending_program_id > 0);
+    log_assert(!glGetError());
+    
+    extptr_glAttachShader(alphablending_program_id, vertex_shader_id);
+    log_assert(!glGetError());
+    extptr_glAttachShader(
+        alphablending_program_id,
+        alphablending_fragment_shader_id);
+    log_assert(!glGetError());
+    
+    extptr_glLinkProgram(alphablending_program_id);
+    log_assert(!glGetError());
+    
+    success = 0;
+    extptr_glGetProgramiv(
+        alphablending_program_id,
+        GL_LINK_STATUS,
+        &success);
+    if (!success) {
+        extptr_glGetProgramInfoLog(
+            alphablending_program_id,
             512,
             NULL,
             opengl_info_log);
@@ -425,7 +471,6 @@ void opengl_render_frame(GPUDataForSingleFrame * frame)
     log_assert(frame->camera != NULL);
 
 
-    extptr_glUseProgram(shader_program_id);
     // extptr_glBindVertexArray(VAO);
     GLint error = glGetError();
     if (error != 0) {
@@ -437,7 +482,7 @@ void opengl_render_frame(GPUDataForSingleFrame * frame)
     glClearColor(0.0f, 0.05, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
-    extptr_glUseProgram(shader_program_id); // TODO: actually nescessary?
+    extptr_glUseProgram(diamond_program_id); // TODO: actually nescessary?
     extptr_glBindVertexArray(VAO);
     
     //extptr_glBindBuffer(vertex_VBO);
@@ -456,6 +501,8 @@ void opengl_render_frame(GPUDataForSingleFrame * frame)
         //    "drawing %u triangles in %u meshes\n",
         //    triangles_size,
         //    frame->polygon_collection->size);
+        glDisable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
         glDrawArrays(
             /* GLenum	mode : */
                 GL_TRIANGLES,
@@ -464,7 +511,9 @@ void opengl_render_frame(GPUDataForSingleFrame * frame)
             /* GLsizei	count: */
                 frame->first_alphablend_i);
         assert(!glGetError());
-
+        
+        extptr_glUseProgram(alphablending_program_id);
+        glEnable(GL_BLEND);
         glDrawArrays(
             /* GLenum	mode : */
                 GL_TRIANGLES,
@@ -515,7 +564,7 @@ void platform_gpu_init_texture_array(
     strcat_uint_capped(name_in_shader, 64, texture_array_i);
     strcat_capped(name_in_shader, 64, "]");
     GLuint loc = extptr_glGetUniformLocation(
-        shader_program_id,
+        diamond_program_id,
         name_in_shader);
     assert(glGetError() == 0);
     

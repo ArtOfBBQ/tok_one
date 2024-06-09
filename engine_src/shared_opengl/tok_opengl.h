@@ -15,7 +15,8 @@
 
 void opengl_init(
     char * vertex_shader_source,
-    char * fragment_shader_source);
+    char * fragment_shader_source,
+    char * alphablending_fragment_shader_source);
 
 void opengl_copy_locked_vertices(
     GPULockedVertex * locked_vertices);
