@@ -24,5 +24,7 @@ void main() {
         
         out_color *= texture_sample;
     }
+    
+    out_color *= vert_to_frag_lighting;
 }
 

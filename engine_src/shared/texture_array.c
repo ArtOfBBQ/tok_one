@@ -825,6 +825,11 @@ void decode_null_image_with_memory(
     new_image->rgba_values = (uint8_t *)
         malloc_from_unmanaged(new_image->rgba_values_size);
     
+    if (new_image->rgba_values == NULL || !application_running) {
+        application_running = false;
+        return;
+    }
+
     if (file_buffer.contents[1] == 'P' &&
         file_buffer.contents[2] == 'N')
     {

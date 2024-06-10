@@ -14,8 +14,6 @@
 #include "opengl_extensions.h"
 #include "tok_opengl.h"
 #include "common.h"
-// #include "zpolygon.h"
-// #include "texture_array.h"
 #include "userinput.h"
 
 static unsigned int requesting_shutdown = false;
@@ -42,7 +40,8 @@ static void wait_x_microseconds(uint64_t microseconds)
     }
 }
 
-void platform_gpu_update_viewport(void) {
+void platform_gpu_update_viewport(void)
+{
     printf("Updating opengl projection constants\n");
     *gpu_shared_data_collection.locked_pjc =
         window_globals->projection_constants;
@@ -52,7 +51,8 @@ void platform_gpu_update_viewport(void) {
             gpu_shared_data_collection.locked_pjc);
 }
 
-void platform_gpu_copy_locked_vertices() {
+void platform_gpu_copy_locked_vertices()
+{
     
     opengl_copy_locked_vertices(
         gpu_shared_data_collection.locked_vertices);
@@ -438,7 +438,7 @@ int CALLBACK WinMain(
     assert(sizeof(GPUPolygon) % 32 == 0);
 
     assert(MANAGED_MEMORY_SIZE < 500000000);
-    assert(UNMANAGED_MEMORY_SIZE < 700000000);
+    assert(UNMANAGED_MEMORY_SIZE < 900000000);
     
     init_application_before_gpu_init();
     

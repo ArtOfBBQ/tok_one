@@ -25,7 +25,6 @@ void main() {
         out_color *= texture_sample;
     }
     
-
     int diamond_size = 35;
     float neghalfdiamond = -1.0f * (diamond_size / 2.0f);
     float alpha_tresh = (out_color[3] * diamond_size);
@@ -34,7 +33,6 @@ void main() {
     float mod_x = pos_x % diamond_size;
     float mod_y = pos_y % diamond_size;
     
-    out_color *= vert_to_frag_lighting;
     if (
         out_color[3] < 0.05f ||
         (
@@ -48,6 +46,7 @@ void main() {
         discard;
     }
     
+    out_color *= vert_to_frag_lighting;
     out_color[3] = 1.0f;
 }
 
