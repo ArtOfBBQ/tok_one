@@ -501,6 +501,7 @@ void opengl_render_frame(GPUDataForSingleFrame * frame)
         //    "drawing %u triangles in %u meshes\n",
         //    triangles_size,
         //    frame->polygon_collection->size);
+        extptr_glUseProgram(diamond_program_id);
         glDisable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
         glDrawArrays(
@@ -559,12 +560,30 @@ void platform_gpu_init_texture_array(
         texture_array_ids[texture_array_i]);
     assert(glGetError() == 0);
     
+    // Fragment shader 1
+    extptr_glUseProgram(diamond_program_id); // Required before set uniforms!
+    assert(glGetError() == 0);
     char name_in_shader[64];
     strcpy_capped(name_in_shader, 64, "texture_arrays[");
     strcat_uint_capped(name_in_shader, 64, texture_array_i);
     strcat_capped(name_in_shader, 64, "]");
     GLuint loc = extptr_glGetUniformLocation(
         diamond_program_id,
+        name_in_shader);
+    assert(glGetError() == 0);
+    
+    extptr_glUniform1iv(loc, 1, &texture_array_i);
+    assert(glGetError() == 0);
+    
+    // Fragment shader 2
+    extptr_glUseProgram(alphablending_program_id); // Required before set uni!
+    assert(glGetError() == 0);
+    name_in_shader[64];
+    strcpy_capped(name_in_shader, 64, "texture_arrays[");
+    strcat_uint_capped(name_in_shader, 64, texture_array_i);
+    strcat_capped(name_in_shader, 64, "]");
+    loc = extptr_glGetUniformLocation(
+        alphablending_program_id,
         name_in_shader);
     assert(glGetError() == 0);
     
