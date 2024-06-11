@@ -27,6 +27,9 @@ static DWORD window_style =
     WS_CLIPCHILDREN |
     WS_CLIPSIBLINGS;
 
+
+BOOL (* extptr_wglSwapIntervalEXT)(int interval) = NULL;
+
 void platform_close_application(void) {
     requesting_shutdown = true;
 }
@@ -709,8 +712,15 @@ int CALLBACK WinMain(
             device_context,
             dummy_context))
     {
-        init_opengl_extensions(
-            fetch_extension_func_address);
+        // OpenGL extensions for all platforms
+        init_opengl_extensions(fetch_extension_func_address);
+        
+        // This is more of a windows WGL extension than an opengl one
+        extptr_wglSwapIntervalEXT = wglGetProcAddress(
+            "wglSwapIntervalEXT");
+        if (extptr_wglSwapIntervalEXT) {
+            extptr_wglSwapIntervalEXT(1); // V-SYNC to screen refresh
+        }
         
         if (!application_running) {
             printf(
