@@ -267,13 +267,8 @@ platform_write_file(
 
 void platform_get_filenames_in(
     const char * directory,
-    char ** filenames,
-    const uint32_t recipient_capacity,
-    uint32_t * recipient_size)
+    char filenames[2000][500])
 {
-    log_assert(recipient_capacity > 0);
-    *recipient_size = 0;
-    
     NSString * path = [NSString
         stringWithCString:directory
         encoding:NSASCIIStringEncoding];
@@ -294,9 +289,8 @@ void platform_get_filenames_in(
     
     log_assert([results count] <= recipient_capacity);
     uint32_t storable_results =
-        (uint32_t)[results count] > recipient_capacity ?
-            recipient_capacity
-            : (uint32_t)[results count];
+        (uint32_t)[results count] > 2000 ?
+            2000 : (uint32_t)[results count];
     
     for (
         uint32_t i = 0;
@@ -305,9 +299,11 @@ void platform_get_filenames_in(
     {
         NSString * current_result = [results[i] lastPathComponent];
         
-        filenames[i] = (char *)[current_result
-            cStringUsingEncoding:NSASCIIStringEncoding];
-        *recipient_size += 1;
+       strcpy_capped(
+           filenames[i],
+           500,
+           (char *)[current_result
+               cStringUsingEncoding:NSASCIIStringEncoding]);
     }
 }
 
