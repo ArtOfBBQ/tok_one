@@ -133,7 +133,7 @@ popd > /dev/null
 
 # kernel32.lib: for GetProcAddress()
 pushd build
-cl $COMPILER_ARGS $COMPILER_ARGS_EXTRA $SOURCE_FILES -Fe"windows/$APP_NAME/$APP_NAME.exe" -link Shlwapi.lib shell32.lib kernel32.lib user32.lib gdi32.lib opengl32.lib
+cl $COMPILER_ARGS $COMPILER_ARGS_EXTRA $SOURCE_FILES -Fe"windows/$APP_NAME/$APP_NAME.exe" -link Shlwapi.lib shell32.lib kernel32.lib user32.lib gdi32.lib opengl32.lib dsound.lib
 # cl $COMPILER_ARGS $COMPILER_ARGS_EXTRA ../unitybuild_windows.c -Fe"windows/$APP_NAME/$APP_NAME.exe" -link kernel32.lib user32.lib gdi32.lib opengl32.lib
 popd
 

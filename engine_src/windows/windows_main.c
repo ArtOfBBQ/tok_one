@@ -1,12 +1,12 @@
 // functions for us to use
 #include <windows.h>
-// #include <libloaderapi.h> // for GetProcAddress()
 #include <gl/gl.h>
-
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+
+#include "tok_directsound.h"
 
 #include "clientlogic_macro_settings.h"
 #include "memorystore.h"
@@ -15,6 +15,7 @@
 #include "tok_opengl.h"
 #include "common.h"
 #include "userinput.h"
+#include "audio.h"
 
 static unsigned int requesting_shutdown = false;
 
@@ -36,7 +37,6 @@ void platform_close_application(void) {
 
 static void wait_x_microseconds(uint64_t microseconds)
 {
-    printf("wait %u microseconds...\n", microseconds);
     uint64_t start = platform_get_current_time_microsecs();
     while (platform_get_current_time_microsecs() - start < microseconds) {
         // Wait
@@ -78,6 +78,19 @@ static void fetch_extension_func_address(
     if (*extptr == NULL) {
         // backup plan: load from windows .dll
         HMODULE module = LoadLibraryA("opengl32.dll");
+        if (!module) {
+            MessageBox(
+                /* HWND hWnd: */
+                    0,
+                /* LPCSTR lpText: */
+                    "Couldn't find opengl32.dll",
+                /* LPCSTR lpCaption: */
+                    "Error",
+                /* UINT uType: */
+                    MB_OK);
+            return;
+        }
+        
         *extptr = GetProcAddress(module, func_name);
     }
     
@@ -462,26 +475,9 @@ int CALLBACK WinMain(
             "Compiler error",
         /* UINT uType: */
             MB_OK);
+    return 0;
     #endif
-    
-    /*
-    ATOM RegisterClassA(
-      [in] const WNDCLASSA *lpWndClass
-    );
-    
-    typedef struct {
-    UINT style;
-    WNDPROC lpfnWndProc;
-    int cbClsExtra;
-    int cbWndExtra;
-    HINSTANCE hInstance;
-    HICON hIcon;
-    HCURSOR hCursor;
-    HBRUSH hbrBackground;
-    LPCTSTR lpszMenuName;
-    LPCTSTR lpszClassName;
-    } WNDCLASS, *PWNDCLASS;
-    */ 
+     
     WNDCLASS window_params;
     memset(&window_params, 0, sizeof(WNDCLASSA));
     window_params.style = CS_CLASSDC | CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
@@ -568,7 +564,7 @@ int CALLBACK WinMain(
                 MB_OK);
 	return 0;
     }
-    
+ 
     /*
     The GetDC function retrieves a handle to a device context (DC) for the 
     client area of a specified window or for the entire screen. You can use
@@ -716,7 +712,7 @@ int CALLBACK WinMain(
         init_opengl_extensions(fetch_extension_func_address);
         
         // This is more of a windows WGL extension than an opengl one
-        extptr_wglSwapIntervalEXT = wglGetProcAddress(
+        extptr_wglSwapIntervalEXT = (void *)wglGetProcAddress(
             "wglSwapIntervalEXT");
         if (extptr_wglSwapIntervalEXT) {
             extptr_wglSwapIntervalEXT(1); // V-SYNC to screen refresh
@@ -787,6 +783,23 @@ int CALLBACK WinMain(
         return 0;
     }
     
+    assert(sound_settings->global_buffer_size_bytes > 0);
+    unsigned int ds_success = 0;
+    init_directsound(
+        window_handle,
+        sound_settings->global_buffer_size_bytes,
+        &ds_success);
+    if (!ds_success) {
+        MessageBox(
+            /* HWND hWnd: */
+                0,
+            /* LPCSTR lpText: */
+                "Attempting to continue without sound...",
+            /* LPCSTR lpCaption: */
+                "Error",
+            /* UINT uType: */
+                MB_OK);
+    }
     
     FileBuffer vertex_shader_file;
     vertex_shader_file.size_without_terminator =
@@ -879,6 +892,7 @@ int CALLBACK WinMain(
     
     init_application_after_gpu_init();
     
+    playsquarewave();
     // start_audio_loop();
     
     uint32_t frame_i = 0;
@@ -912,7 +926,7 @@ int CALLBACK WinMain(
         } else {
             log_dump_and_crash(
                 "Fatal: failed to query windows for the mouse location.");
-            return;
+            return 0;
         }
         
         MSG message;

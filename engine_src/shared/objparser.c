@@ -1,10 +1,10 @@
 #include "objparser.h"
 
-static void * (* objparser_malloc_func)(unsigned long);
+static void * (* objparser_malloc_func)(size_t);
 static void   (*   objparser_free_func)(void *);
 
 void init_obj_parser(
-    void * (* arg_objparser_malloc_func)(unsigned long),
+    void * (* arg_objparser_malloc_func)(size_t),
     void (* arg_objparser_free_func)(void *))
 {
     objparser_malloc_func = arg_objparser_malloc_func;

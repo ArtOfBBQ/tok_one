@@ -323,7 +323,7 @@ void platform_start_thread(
       the thread. This pointer represents the starting address of the
       thread. For more information on the thread function, see ThreadProc.
       */
-          function_to_run,
+          (LPTHREAD_START_ROUTINE)function_to_run,
       /*
       [in: optional]  __drv_aliasesMem LPVOID lpParameter:
       A pointer to a variable to be passed to the thread.

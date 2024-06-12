@@ -31,6 +31,7 @@
 #include "tok_opengl.c"
 #include "common_platform_layer.c"
 #include "windows_platform_layer.c"
+#include "tok_directsound.c"
 // 3. Files that are dependent on the platform layer
 #include "memorystore.c"
 #include "objmodel.c"
