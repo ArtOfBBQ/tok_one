@@ -2,6 +2,10 @@
 
 static LPDIRECTSOUNDBUFFER secondary_buffer;
 
+static uint32_t directsound_activated = false;
+static uint32_t secondary_buffer_size = 0;
+static uint32_t safety_padding = (44100 / 15);
+
 long (* extptr_DirectSoundCreate)(
     LPGUID lpGuid,
     LPDIRECTSOUND * ppDS,
@@ -9,9 +13,13 @@ long (* extptr_DirectSoundCreate)(
 
 void init_directsound(
     HWND top_window_handle,
-    const uint32_t audio_buffer_size,
+    const uint32_t audio_buffer_size_bytes,
     unsigned int * success)
 {
+    assert(!directsound_activated);
+    
+    secondary_buffer_size = audio_buffer_size_bytes;
+    
     // DirectSound
     HMODULE module = LoadLibraryA("dsound.dll");
     if (!module) {
@@ -50,7 +58,7 @@ void init_directsound(
     LPDIRECTSOUND direct_sound_handle;
     HRESULT dsound_result = 
         extptr_DirectSoundCreate(0, &direct_sound_handle, 0);
-   
+    
     switch (dsound_result) {
         case DS_OK:
             
@@ -261,7 +269,7 @@ void init_directsound(
     }
        
     // We can finally create a second buffer
-    buffer_description.dwBufferBytes = audio_buffer_size;
+    buffer_description.dwBufferBytes = audio_buffer_size_bytes;
     buffer_description.dwFlags = 0;
     buffer_description.lpwfxFormat = &wave_format;
     
@@ -306,9 +314,132 @@ void init_directsound(
     }
     
     *success = 1;
+    directsound_activated = 1;
 }
 
-void playsquarewave(void) {
+void start_audio_loop(void) {
+    if (!directsound_activated) { return; }
+    
+    secondary_buffer->lpVtbl->Play(
+        secondary_buffer,
+        0,
+        0,
+        DSBPLAY_LOOPING);
+}
+
+static uint32_t previous_play_cursor = 0;
+void consume_some_global_soundbuffer_bytes(void)
+{
+    if (!directsound_activated) { return; }
+    
+    assert(secondary_buffer->lpVtbl != NULL);
+    
+    uint32_t samples_to_copy = secondary_buffer_size / 2;
+    
+    DWORD play_cursor = 0;
+    DWORD write_cursor = 0;
+    
+    HRESULT got_cursors = secondary_buffer->lpVtbl->GetCurrentPosition(
+            secondary_buffer,
+        /* LPDWORD lpdwCurrentPlayCursor: */
+            &play_cursor,
+        /* LPDWORD lpdwCurrentWriteCursor: */
+            &write_cursor);
+    assert(got_cursors == DS_OK);
+
+    // advance global sound buffer by x samples
+    // the play cursor is a byte offset
+    // our own play cursor (sound_settings->play_cursor) is in samples
+    if (
+        (play_cursor % secondary_buffer_size)  <
+        (previous_play_cursor % secondary_buffer_size))
+    {
+        return;
+    }
+    sound_settings->play_cursor += ((
+        (play_cursor % secondary_buffer_size) -
+        (previous_play_cursor % secondary_buffer_size)) / 2);
+    
+    VOID * region_1 = NULL;
+    DWORD region_1_size = 0;
+    VOID * region_2 = NULL;
+    DWORD region_2_size = 0;
+    
+    HRESULT lock_result = secondary_buffer->lpVtbl->Lock(
+            secondary_buffer,
+        /* DWORD dwWriteCursor: */
+            play_cursor,
+        /* DWORD dwWriteBytes: */
+            secondary_buffer_size,
+        /* LPVOID lplpvAudioPtr1: */
+            &region_1,
+        /* LPDWORD lpdwAudioBytes1: */
+            &region_1_size,
+        /* LPVOID lplpvAudioPtr2: */
+            &region_2,
+        /* LPDWORD lpdwAudioBytes2: */
+            &region_2_size,
+        /* DWORD dwFlags: */
+            0);
+    
+    assert(lock_result == DS_OK);
+    
+    uint32_t sound_i = 0;
+    for (
+        uint32_t i = 0;
+        i < (region_1_size / 2) && sound_i < samples_to_copy;
+        i += 2)
+    {
+        int32_t new_val = (int32_t)(
+            (float)sound_settings->samples_buffer[
+                (sound_settings->play_cursor + sound_i) %
+                    sound_settings->global_samples_size] *
+                        sound_settings->volume);
+        new_val = new_val > INT16_MAX ? INT16_MAX : new_val;
+        new_val = new_val < INT16_MIN ? INT16_MIN : new_val;
+        
+        ((int16_t *)region_1)[i  ] = new_val;
+        ((int16_t *)region_1)[i+1] = new_val;
+        sound_i += 1;
+    }
+    for (
+        uint32_t i = 0;
+        i < (region_2_size / 2) && sound_i < samples_to_copy;
+        i += 2)
+    {
+        int32_t new_val = (int32_t)(
+            (float)sound_settings->samples_buffer[
+                (sound_settings->play_cursor + sound_i) %
+                    sound_settings->global_samples_size] *
+                        sound_settings->volume);
+        new_val = new_val > INT16_MAX ? INT16_MAX : new_val;
+        new_val = new_val < INT16_MIN ? INT16_MIN : new_val;
+        
+        ((int16_t *)region_2)[i  ] = new_val;
+        ((int16_t *)region_2)[i+1] = new_val;
+        sound_i += 1;
+    }
+    
+    HRESULT unlock_result = secondary_buffer->lpVtbl->Unlock(
+            secondary_buffer,
+            region_1,
+            region_1_size,
+            region_2,
+            region_2_size);
+    
+    assert(unlock_result == DS_OK);
+    
+    previous_play_cursor = play_cursor;
+}
+
+
+void play_sound_bytes(
+    const int16_t * sound,
+    const uint32_t sound_size)
+{
+    if (!directsound_activated) { return; }
+    
+    assert(secondary_buffer->lpVtbl != NULL);
     
     DWORD play_cursor = 0;
     DWORD write_cursor = 0;
@@ -321,16 +452,10 @@ void playsquarewave(void) {
             &write_cursor);
     assert(got_cursors == DS_OK);
     
-    uint32_t samples_per_second = 48000;
-    uint32_t tone_hz = 256;
-    uint32_t tone_volume = 1000;
-    uint32_t wave_period = samples_per_second / tone_hz;
-    uint32_t bytes_per_sample = sizeof(int16_t) * 2;
-    uint32_t secondary_buffer_size = samples_per_second * bytes_per_sample;
-    uint32_t latency_sample_count = samples_per_second / 2;
-    
-    DWORD byte_to_lock = 0;
-    DWORD bytes_to_write = latency_sample_count * bytes_per_sample;
+    DWORD bytes_to_write = sound_size * 2;
+    if (bytes_to_write > secondary_buffer_size) {
+        bytes_to_write = secondary_buffer_size;
+    }
     
     VOID * region_1 = NULL;
     DWORD region_1_size = 0;
@@ -340,7 +465,7 @@ void playsquarewave(void) {
     HRESULT lock_result = secondary_buffer->lpVtbl->Lock(
             secondary_buffer,
         /* DWORD dwWriteCursor: */
-            byte_to_lock,
+            play_cursor,
         /* DWORD dwWriteBytes: */
             bytes_to_write,
         /* LPVOID lplpvAudioPtr1: */
@@ -418,26 +543,22 @@ void playsquarewave(void) {
             return;
     }
     
-    uint32_t hertz = 256;
-    uint32_t square_wave_i = 0;
-    uint32_t square_wave_len = 41000 / hertz;
-    for (uint32_t i = 0; i < region_1_size; i++) {
-        uint16_t sample = 0;
-        if (square_wave_i % square_wave_len > (square_wave_len / 2)) {
-            sample = 1000;
-        }
-        square_wave_i += 1;
-        ((int16_t *)region_1)[i  ] = sample;
-        ((int16_t *)region_1)[i+1] = sample;
+    uint32_t sound_i = 0;
+    for (
+        uint32_t i = 0;
+        i < (region_1_size / 2) && sound_i < sound_size;
+        i += 2)
+    {
+        ((int16_t *)region_1)[i  ] = sound[sound_i++];
+        ((int16_t *)region_1)[i+1] = sound[sound_i++];
     }
-    for (uint32_t i = 0; i < region_2_size; i++) {
-        uint16_t sample = 0;
-        if (square_wave_i % square_wave_len > (square_wave_len / 2)) {
-            sample = 1000;
-        }
-        square_wave_i += 1;
-        ((int16_t *)region_2)[i  ] = sample;
-        ((int16_t *)region_2)[i+1] = sample;
+    for (
+        uint32_t i = 0;
+        i < (region_2_size / 2) && sound_i < sound_size;
+        i += 2)
+    {
+        ((int16_t *)region_2)[i  ] = sound[sound_i++];
+        ((int16_t *)region_2)[i+1] = sound[sound_i++];
     }
     
     HRESULT unlock_result = secondary_buffer->lpVtbl->Unlock(
@@ -446,6 +567,7 @@ void playsquarewave(void) {
             region_1_size,
             region_2,
             region_2_size);
+    
     switch (unlock_result) {
         case DS_OK:
             break;
@@ -460,12 +582,6 @@ void playsquarewave(void) {
                 /* UINT uType: */
                     MB_OK);
             return;
-    }
-    
-    secondary_buffer->lpVtbl->Play(
-        secondary_buffer,
-        0,
-        0,
-        DSBPLAY_LOOPING);
+    }    
 }
 

@@ -189,8 +189,8 @@ void init_application_before_gpu_init(void)
         window_globals->fullscreen = engine_save_file->window_fullscreen;
         sound_settings->music_volume = engine_save_file->music_volume;
         sound_settings->sfx_volume = engine_save_file->sound_volume;
-        window_globals->last_resize_request_at =
-            platform_get_current_time_microsecs();
+        //window_globals->last_resize_request_at =
+        //    platform_get_current_time_microsecs();
     } else {
         window_globals->fullscreen = false;
         window_globals->window_height = INITIAL_WINDOW_HEIGHT;
@@ -424,6 +424,8 @@ void shared_shutdown_application(void)
     engine_save_file->window_fullscreen = window_globals->fullscreen;
     
     uint32_t good = false;
+    platform_delete_writable("enginestate.dat");
+    
     platform_write_file_to_writables(
         /* const char filepath_inside_writables: */
             "enginestate.dat",
@@ -433,6 +435,10 @@ void shared_shutdown_application(void)
             sizeof(EngineSaveFile),
         /* uint32_t good: */
             &good);
+    
+    if (!good) {
+        log_dump_and_crash("Failed to save the engine state!\n");
+    }
     
     char memory_usage_desc[512];
     get_memory_usage_summary_string(

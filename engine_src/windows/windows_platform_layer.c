@@ -169,7 +169,9 @@ bool32_t platform_file_exists(const char * filepath) {
 }
 
 void platform_delete_file(const char * filepath) {
-    // TODO: implement me!
+    DeleteFile(
+        /* [in] LPCTSTR lpFileName: */
+            filepath);
 }
 
 void platform_write_file(
@@ -178,7 +180,47 @@ void platform_write_file(
     const uint32_t output_size,
     bool32_t * good)
 {
-    // TODO: implement me!
+    HANDLE file_handle = CreateFileA(
+        /* [in]           LPCSTR                lpFileName: */
+            filepath_destination,
+        /* [in]           DWORD                 dwDesiredAccess: */
+            GENERIC_WRITE,
+        /* [in]           DWORD                 dwShareMode: */
+            0,
+        /* [in, optional] LPSECURITY_ATTRIBUTES lpSecurityAttributes: */
+            NULL,
+        /* [in]           DWORD                 dwCreationDisposition: */
+            CREATE_NEW,
+        /* [in]           DWORD                 dwFlagsAndAttributes: */
+            FILE_ATTRIBUTE_NORMAL,
+        /* [in, optional] HANDLE                hTemplateFile: */
+            NULL);
+    
+    if (file_handle == INVALID_HANDLE_VALUE) {
+        *good = false;
+        return;
+    }
+    
+    uint32_t bytes_written = 0;
+    BOOL result = WriteFile(                               
+        /* [in]                HANDLE       hFile: */
+            file_handle,
+        /* [in]                LPCVOID      lpBuffer, */
+            output,
+        /* [in]                DWORD        nNumberOfBytesToWrite, */
+            output_size,
+        /* [out, optional]     LPDWORD      lpNumberOfBytesWritten, */
+            &bytes_written,
+        /* [in, out, optional] LPOVERLAPPED lpOverlapped, */
+            NULL);
+    
+    if (bytes_written != output_size) {
+        *good = false;
+        return;
+    }
+    
+    *good = true;
+    return;
 }
 
 void platform_read_file(
@@ -186,7 +228,7 @@ void platform_read_file(
     FileBuffer* out_preallocatedbuffer)
 {
     log_assert(out_preallocatedbuffer->size_without_terminator > 0);
-
+    
     HANDLE file_handle = CreateFileA(
         /* [in]           LPCSTR                lpFileName: */
         filepath,

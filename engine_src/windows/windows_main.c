@@ -525,13 +525,13 @@ int CALLBACK WinMain(
 	/* DWORD dwStyle:       */
             window_style,
 	/* int x:               */ 
-            CW_USEDEFAULT,
+            window_globals->window_left,
 	/* int y:               */ 
-            CW_USEDEFAULT,
+            0,
 	/* int nWidth:          */ 
-            CW_USEDEFAULT,
+            (int)window_globals->window_width,
 	/* int nHeight:         */ 
-            CW_USEDEFAULT,
+            (int)window_globals->window_height,
 	/* HWND hWndParent:     */ 
             0,
 	/* HMENU hMenu:         */ 
@@ -787,7 +787,7 @@ int CALLBACK WinMain(
     unsigned int ds_success = 0;
     init_directsound(
         window_handle,
-        sound_settings->global_buffer_size_bytes,
+        44100 * 2 * 2,
         &ds_success);
     if (!ds_success) {
         MessageBox(
@@ -892,12 +892,23 @@ int CALLBACK WinMain(
     
     init_application_after_gpu_init();
     
-    playsquarewave();
-    // start_audio_loop();
+    start_audio_loop();
+    
+    //const uint32_t square_wave_size = 44100 * 2;
+    //int16_t * square_wave = malloc_from_unmanaged(
+    //    square_wave_size * sizeof(int16_t));
+    //for (uint32_t i = 0; i < square_wave_size; i += 2) {
+    //    square_wave[i  ] = ((i % 256) > 127) * 150;
+    //    square_wave[i+1] = ((i % 256) > 127) * 150;
+    //}
+    //
+    //play_sound_bytes(
+    //    square_wave,
+    //    square_wave_size);
     
     uint32_t frame_i = 0;
     while (!requesting_shutdown)
-    {
+    { 
         POINT mousepos;
         if (GetCursorPos(
           /* [out] LPPOINT lpPoint: */
@@ -967,7 +978,21 @@ int CALLBACK WinMain(
         frame_i %= 3;
         
         SwapBuffers(device_context);
+        
+        consume_some_global_soundbuffer_bytes();
     }
+    
+    // shutdown
+    shared_shutdown_application();
+    
+    client_logic_shutdown();
+    
+    // bool32_t write_succesful = false;
+    //log_dump(&write_succesful);
+    //
+    //if (!write_succesful) {
+    //    log_append("ERROR - failed to store the log file on app termination..\n");
+    //}
     
     return 0;
 }
