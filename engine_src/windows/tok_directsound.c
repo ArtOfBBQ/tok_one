@@ -270,8 +270,9 @@ void init_directsound(
        
     // We can finally create a second buffer
     buffer_description.dwBufferBytes = audio_buffer_size_bytes;
-    buffer_description.dwFlags = 0;
+    buffer_description.dwFlags = DSBCAPS_GETCURRENTPOSITION2;
     buffer_description.lpwfxFormat = &wave_format;
+    // DSBCAPS_GETCURRENTPOSITION2 
     
     created_result = IDirectSound_CreateSoundBuffer(
             direct_sound_handle,
@@ -327,7 +328,7 @@ void start_audio_loop(void) {
         DSBPLAY_LOOPING);
 }
 
-static uint32_t previous_play_cursor = 0;
+static int32_t previous_write_cursor = 0;
 void consume_some_global_soundbuffer_bytes(void)
 {
     if (!directsound_activated) { return; }
@@ -346,19 +347,26 @@ void consume_some_global_soundbuffer_bytes(void)
         /* LPDWORD lpdwCurrentWriteCursor: */
             &write_cursor);
     assert(got_cursors == DS_OK);
-
+    
     // advance global sound buffer by x samples
-    // the play cursor is a byte offset
-    // our own play cursor (sound_settings->play_cursor) is in samples
-    if (
-        (play_cursor % secondary_buffer_size)  <
-        (previous_play_cursor % secondary_buffer_size))
+    // the play cursor is a byte offset our own play cursor
+    // (sound_settings->play_cursor) is in samples
+
+    if (write_cursor < (secondary_buffer_size / 20) &&
+        (uint32_t)previous_write_cursor >
+            ((secondary_buffer_size / 20) * 19))
+    {
+        previous_write_cursor -= (int32_t)secondary_buffer_size;
+    }
+    
+    if ((int32_t)write_cursor < previous_write_cursor)
     {
         return;
     }
-    sound_settings->play_cursor += ((
-        (play_cursor % secondary_buffer_size) -
-        (previous_play_cursor % secondary_buffer_size)) / 2);
+    
+    uint32_t bytes_to_advance = (uint32_t)(
+        (int32_t)write_cursor - previous_write_cursor);
+    sound_settings->play_cursor += (bytes_to_advance  / 2);
     
     VOID * region_1 = NULL;
     DWORD region_1_size = 0;
@@ -368,9 +376,9 @@ void consume_some_global_soundbuffer_bytes(void)
     HRESULT lock_result = secondary_buffer->lpVtbl->Lock(
             secondary_buffer,
         /* DWORD dwWriteCursor: */
-            play_cursor,
+            write_cursor,
         /* DWORD dwWriteBytes: */
-            secondary_buffer_size,
+            secondary_buffer_size / 2,
         /* LPVOID lplpvAudioPtr1: */
             &region_1,
         /* LPDWORD lpdwAudioBytes1: */
@@ -388,7 +396,7 @@ void consume_some_global_soundbuffer_bytes(void)
     for (
         uint32_t i = 0;
         i < (region_1_size / 2) && sound_i < samples_to_copy;
-        i += 2)
+        i += 1)
     {
         int32_t new_val = (int32_t)(
             (float)sound_settings->samples_buffer[
@@ -398,14 +406,13 @@ void consume_some_global_soundbuffer_bytes(void)
         new_val = new_val > INT16_MAX ? INT16_MAX : new_val;
         new_val = new_val < INT16_MIN ? INT16_MIN : new_val;
         
-        ((int16_t *)region_1)[i  ] = new_val;
-        ((int16_t *)region_1)[i+1] = new_val;
+        ((int16_t *)region_1)[i] = new_val;
         sound_i += 1;
     }
     for (
         uint32_t i = 0;
         i < (region_2_size / 2) && sound_i < samples_to_copy;
-        i += 2)
+        i += 1)
     {
         int32_t new_val = (int32_t)(
             (float)sound_settings->samples_buffer[
@@ -415,8 +422,7 @@ void consume_some_global_soundbuffer_bytes(void)
         new_val = new_val > INT16_MAX ? INT16_MAX : new_val;
         new_val = new_val < INT16_MIN ? INT16_MIN : new_val;
         
-        ((int16_t *)region_2)[i  ] = new_val;
-        ((int16_t *)region_2)[i+1] = new_val;
+        ((int16_t *)region_2)[i] = new_val;
         sound_i += 1;
     }
     
@@ -429,7 +435,7 @@ void consume_some_global_soundbuffer_bytes(void)
     
     assert(unlock_result == DS_OK);
     
-    previous_play_cursor = play_cursor;
+    previous_write_cursor = (int32_t)write_cursor;
 }
 
 
