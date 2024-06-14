@@ -285,7 +285,7 @@ void toggle_fullscreen(HWND hwnd, int x, int y)
 {
     DWORD dwStyle = GetWindowLong(hwnd, GWL_STYLE);
     if (dwStyle & WS_OVERLAPPEDWINDOW) {
-        window_globals->fullscreen = false;
+        window_globals->fullscreen = true;
         MONITORINFO mi = { sizeof(mi) };
         if (GetWindowPlacement(hwnd, &g_wpPrev) &&
             GetMonitorInfo(MonitorFromWindow(hwnd,
@@ -300,7 +300,7 @@ void toggle_fullscreen(HWND hwnd, int x, int y)
                 SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
         }
     } else {
-        window_globals->fullscreen = true;
+        window_globals->fullscreen = false;
         SetWindowLong(
             hwnd,
             GWL_STYLE,
