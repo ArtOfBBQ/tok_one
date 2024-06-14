@@ -437,7 +437,7 @@ void shared_shutdown_application(void)
             &good);
     
     if (!good) {
-        log_dump_and_crash("Failed to save the engine state!\n");
+        return;
     }
     
     char memory_usage_desc[512];
