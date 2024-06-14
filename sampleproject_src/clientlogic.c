@@ -132,6 +132,14 @@ static void client_handle_keypresses(
         (double)microseconds_elapsed / (double)16666);
     float cam_speed = 0.1f * elapsed_mod;
     float cam_rotation_speed = 0.05f * elapsed_mod;
+
+    if (
+        keypress_map[TOK_KEY_ENTER] &&
+        keypress_map[TOK_KEY_CONTROL])
+    {
+        keypress_map[TOK_KEY_ENTER] = false;
+        platform_toggle_fullscreen();
+    }
     
     if (keypress_map[TOK_KEY_T] == true)
     {

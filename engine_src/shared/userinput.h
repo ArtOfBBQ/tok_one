@@ -19,6 +19,10 @@
 #define TOK_KEY_YENSIGN 9
 #define TOK_KEY_KANABUTTON 10
 #define TOK_KEY_ROMAJIBUTTON 11
+#define TOK_KEY_ALT 12
+#define TOK_KEY_WINKEY 13
+#define TOK_KEY_CAPSLOCK 14
+#define TOK_KEY_CONTROL 15
 #define TOK_KEY_SHIFT 16
 #define TOK_KEY_EXCLAM 33
 #define TOK_KEY_DOUBLEQUOTE 34
@@ -148,3 +152,4 @@ void register_keydown(uint32_t key_id);
 #endif
 
 #endif // USERINPUT_H
+

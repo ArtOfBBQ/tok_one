@@ -152,10 +152,16 @@ static uint32_t microsoft_keycode_to_tokone_keycode(
     switch (microsoft_key) {
         case 8:
             return TOK_KEY_BACKSPACE;
+        case 9:
+            return TOK_KEY_TAB;
         case 13:
             return TOK_KEY_ENTER;
         case 16:
             return TOK_KEY_SHIFT;
+        case 17:
+            return TOK_KEY_CONTROL;
+        case 20:
+            return TOK_KEY_CAPSLOCK;
         case 27:
             return TOK_KEY_ESCAPE;
         case 32:
@@ -218,6 +224,8 @@ static uint32_t microsoft_keycode_to_tokone_keycode(
             return TOK_KEY_K;
         case 76:
             return TOK_KEY_L;
+        case 91:
+            return TOK_KEY_WINKEY;
         case 186:
             return TOK_KEY_SEMICOLON;
         //case 222:
@@ -273,10 +281,11 @@ static uint32_t microsoft_keycode_to_tokone_keycode(
 
 // It's tradition to copy-paste Full screen code from Raymond Chen
 WINDOWPLACEMENT g_wpPrev = { sizeof(WINDOWPLACEMENT) };
-void toggle_fullscreen(HWND hwnd, int x, int y, UINT keyFlags)
+void toggle_fullscreen(HWND hwnd, int x, int y)
 {
     DWORD dwStyle = GetWindowLong(hwnd, GWL_STYLE);
     if (dwStyle & WS_OVERLAPPEDWINDOW) {
+        window_globals->fullscreen = false;
         MONITORINFO mi = { sizeof(mi) };
         if (GetWindowPlacement(hwnd, &g_wpPrev) &&
             GetMonitorInfo(MonitorFromWindow(hwnd,
@@ -291,6 +300,7 @@ void toggle_fullscreen(HWND hwnd, int x, int y, UINT keyFlags)
                 SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
         }
     } else {
+        window_globals->fullscreen = true;
         SetWindowLong(
             hwnd,
             GWL_STYLE,
@@ -300,6 +310,17 @@ void toggle_fullscreen(HWND hwnd, int x, int y, UINT keyFlags)
             hwnd, NULL, 0, 0, 0, 0,
             SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
             SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+    }
+}
+
+void platform_toggle_fullscreen() {
+    printf("toggle fullscreen!\n");
+    toggle_fullscreen(window_handle, 0, 0);
+}
+
+void platform_enter_fullscreen(void) {
+    if (window_globals->fullscreen) {
+        platform_toggle_fullscreen();
     }
 }
 
@@ -579,7 +600,7 @@ int CALLBACK WinMain(
     int topleft_y =
         (window_globals->window_bottom + window_globals->window_height);
     
-    HWND window_handle = CreateWindowEx(
+    window_handle = CreateWindowEx(
 	/* DWORD dwExStyle:     */ 
             WS_EX_CONTROLPARENT | WS_EX_WINDOWEDGE,
 	/* LPCTSTR lpClassName: */
