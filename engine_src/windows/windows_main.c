@@ -43,6 +43,31 @@ static void wait_x_microseconds(uint64_t microseconds)
     }
 }
 
+static float win32_screen_height = -1.0f;
+static float flip_y_axis(
+    const float input)
+{
+    if (win32_screen_height < 0.0f) {
+        win32_screen_height = GetSystemMetrics(
+            /* [in] int nIndex: */ SM_CYFULLSCREEN);
+        if (win32_screen_height < 100.0f) {
+            win32_screen_height = 600.0f;
+        }
+    }
+    
+    /*
+    win32 docs:
+    Points on the screen are described by x- and y-coordinate pairs.
+    The x-coordinates increase to the right; y-coordinates increase
+    from top to bottom.
+    
+    So we want to 0 to equal the screen height, and screen height to
+    equal 0.
+    */
+    
+    return (win32_screen_height - input);
+}
+
 void platform_gpu_update_viewport(void)
 {
     printf("Updating opengl projection constants\n");
@@ -370,8 +395,12 @@ MainWindowCallback(
         case WM_MOVE: {
             
             update_window_position(
-                (float)(short)LOWORD(l_param),
-                (float)(short)HIWORD(l_param));
+                /* float left: */
+                    (float)(short)LOWORD(l_param),
+                /* float bottom: */
+                flip_y_axis(
+                    (float)(short)HIWORD(l_param) +
+                        window_globals->window_height));
             
             break;
         }
@@ -546,13 +575,10 @@ int CALLBACK WinMain(
                 MB_OK);
         return 0;
     }
-
-    int entire_screen_height = GetSystemMetrics(
-        /* [in] int nIndex: */ SM_CYFULLSCREEN);
+    
     int topleft_y =
-        entire_screen_height -
         (window_globals->window_bottom + window_globals->window_height);
-
+    
     HWND window_handle = CreateWindowEx(
 	/* DWORD dwExStyle:     */ 
             WS_EX_CONTROLPARENT | WS_EX_WINDOWEDGE,
@@ -565,7 +591,7 @@ int CALLBACK WinMain(
 	/* int x:               */ 
             window_globals->window_left,
 	/* int y:               */ 
-            topleft_y,
+            flip_y_axis(topleft_y),
 	/* int nWidth:          */ 
             (int)window_globals->window_width,
 	/* int nHeight:         */ 
