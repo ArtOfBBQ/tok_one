@@ -246,6 +246,38 @@ static uint32_t microsoft_keycode_to_tokone_keycode(
     return TOK_KEY_ESCAPE;
 }
 
+// It's tradition to copy-paste Full screen code from Raymond Chen
+WINDOWPLACEMENT g_wpPrev = { sizeof(WINDOWPLACEMENT) };
+void toggle_fullscreen(HWND hwnd, int x, int y, UINT keyFlags)
+{
+    DWORD dwStyle = GetWindowLong(hwnd, GWL_STYLE);
+    if (dwStyle & WS_OVERLAPPEDWINDOW) {
+        MONITORINFO mi = { sizeof(mi) };
+        if (GetWindowPlacement(hwnd, &g_wpPrev) &&
+            GetMonitorInfo(MonitorFromWindow(hwnd,
+                MONITOR_DEFAULTTOPRIMARY), &mi))
+        {
+            SetWindowLong(hwnd, GWL_STYLE,
+                dwStyle & ~WS_OVERLAPPEDWINDOW);
+            SetWindowPos(hwnd, HWND_TOP,
+                mi.rcMonitor.left, mi.rcMonitor.top,
+                mi.rcMonitor.right - mi.rcMonitor.left,
+                mi.rcMonitor.bottom - mi.rcMonitor.top,
+                SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+        }
+    } else {
+        SetWindowLong(
+            hwnd,
+            GWL_STYLE,
+            dwStyle | WS_OVERLAPPEDWINDOW);
+        SetWindowPlacement(hwnd, &g_wpPrev);
+        SetWindowPos(
+            hwnd, NULL, 0, 0, 0, 0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
+            SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+    }
+}
+
 // Windows will send us messages when something
 // happens to our window
 LRESULT CALLBACK
@@ -514,7 +546,13 @@ int CALLBACK WinMain(
                 MB_OK);
         return 0;
     }
-    
+
+    int entire_screen_height = GetSystemMetrics(
+        /* [in] int nIndex: */ SM_CYFULLSCREEN);
+    int topleft_y =
+        entire_screen_height -
+        (window_globals->window_bottom + window_globals->window_height);
+
     HWND window_handle = CreateWindowEx(
 	/* DWORD dwExStyle:     */ 
             WS_EX_CONTROLPARENT | WS_EX_WINDOWEDGE,
@@ -527,7 +565,7 @@ int CALLBACK WinMain(
 	/* int x:               */ 
             window_globals->window_left,
 	/* int y:               */ 
-            0,
+            topleft_y,
 	/* int nWidth:          */ 
             (int)window_globals->window_width,
 	/* int nHeight:         */ 
