@@ -6,10 +6,6 @@ static LARGE_INTEGER cached_performance_frequency;
 static HANDLE mutexes[MUTEXES_SIZE];
 static uint32_t next_mutex_id = 0;
 
-#define THREADARGS_QUEUE_SIZE 20
-static int32_t thread_args[THREADARGS_QUEUE_SIZE];
-static uint32_t thread_args_i = 0;
-
 uint64_t
 platform_get_current_time_microsecs(void)
 {
@@ -341,52 +337,49 @@ void platform_start_thread(
     void (*function_to_run)(int32_t),
     int32_t argument)
 {
-    thread_args[thread_args_i] = argument;
+    HANDLE thread_handle = CreateThread(
+        /*
+        [in: optional]  LPSECURITY_ATTRIBUTES   lpThreadAttributes:
+        A pointer to a SECURITY_ATTRIBUTES structure that determines
+        whether the returned handle can be inherited by child processes.
+        If lpThreadAttributes is NULL, the handle cannot be inherited. 
+        */
+            NULL,
+        /*
+        [in]            SIZE_T                  dwStackSize:
+        The initial size of the stack, in bytes. The system rounds this
+        value to the nearest page. If this parameter is zero, the new
+        thread uses the default size for the executable. For more
+        information, see Thread Stack Size.
+        */
+            0,
+        /*
+        [in]            LPTHREAD_START_ROUTINE  lpStartAddress:
+        A pointer to the application-defined function to be executed by
+        the thread. This pointer represents the starting address of the
+        thread. For more information on the thread function, see ThreadProc.
+        */
+            (LPTHREAD_START_ROUTINE)function_to_run,
+        /*
+        [in: optional]  __drv_aliasesMem LPVOID lpParameter:
+        A pointer to a variable to be passed to the thread.
+        */
+            argument,
+        /*
+        [in]            DWORD                   dwCreationFlags:
+        The flags that control the creation of the thread.
+        Value	Meaning
+        0         The thread runs immediately after creation.
+        */
+            0,
+        /*
+        [out: optional] LPDWORD                 lpThreadId:
+        A pointer to a variable that receives the thread identifier.
+        If this parameter is NULL, the thread identifier is not returned.
+        */
+            NULL);
     
-    CreateThread(
-      /*
-      [in: optional]  LPSECURITY_ATTRIBUTES   lpThreadAttributes:
-      A pointer to a SECURITY_ATTRIBUTES structure that determines
-      whether the returned handle can be inherited by child processes.
-      If lpThreadAttributes is NULL, the handle cannot be inherited. 
-      */
-          NULL,
-      /*
-      [in]            SIZE_T                  dwStackSize:
-      The initial size of the stack, in bytes. The system rounds this
-      value to the nearest page. If this parameter is zero, the new
-      thread uses the default size for the executable. For more
-      information, see Thread Stack Size.
-      */
-          0,
-      /*
-      [in]            LPTHREAD_START_ROUTINE  lpStartAddress:
-      A pointer to the application-defined function to be executed by
-      the thread. This pointer represents the starting address of the
-      thread. For more information on the thread function, see ThreadProc.
-      */
-          (LPTHREAD_START_ROUTINE)function_to_run,
-      /*
-      [in: optional]  __drv_aliasesMem LPVOID lpParameter:
-      A pointer to a variable to be passed to the thread.
-      */
-          &thread_args[thread_args_i],
-      /*
-      [in]            DWORD                   dwCreationFlags:
-      The flags that control the creation of the thread.
-      Value	Meaning
-      0         The thread runs immediately after creation.
-      */
-          0,
-      /*
-      [out: optional] LPDWORD                 lpThreadId:
-      A pointer to a variable that receives the thread identifier.
-      If this parameter is NULL, the thread identifier is not returned.
-      */
-          NULL);
-    
-    thread_args_i += 1;
-    thread_args_i %= THREADARGS_QUEUE_SIZE;
+    log_assert(thread_handle);
 }
 
 void platform_mkdir_if_not_exist(
