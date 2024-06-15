@@ -50,7 +50,7 @@ void init_audio(
         sizeof(int16_t) * ALL_AUDIOSAMPLES_SIZE);
 }
 
-#define DEFAULT_WRITING_OFFSET 0
+#define DEFAULT_WRITING_OFFSET 1600
 void add_audio_at_offset(
     int16_t * data,
     const uint32_t data_size,

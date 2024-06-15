@@ -403,8 +403,7 @@ void init_application_after_gpu_init(void) {
     platform_gpu_update_viewport();
     
     if (window_globals->fullscreen) {
-        // TODO: reimplement me!
-        // platform_enter_fullscreen();
+        platform_enter_fullscreen();
     }
     
     client_logic_late_startup();
