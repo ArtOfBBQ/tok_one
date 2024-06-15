@@ -11,8 +11,6 @@
 #include "simd.h"
 #include "clientlogic.h"
 
-#define SHARED_APPLE_PLATFORM
-
 #if __cplusplus
 extern "C" {
 #endif
@@ -539,11 +537,15 @@ int main(int argc, const char * argv[]) {
     }
 }
 
-/*
 void platform_enter_fullscreen(void) {
+    if ((window.styleMask & NSWindowStyleMaskFullScreen) == 0) {
+        [window toggleFullScreen: window];
+    }
+}
+
+void platform_toggle_fullscreen(void) {
     [window toggleFullScreen: window];
 }
-*/
 
 #if __cplusplus
 }

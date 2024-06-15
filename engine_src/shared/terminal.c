@@ -2,6 +2,8 @@
 
 bool32_t terminal_active = false;
 
+static void (* terminal_enter_fullscreen_fnc)(void) = NULL;
+
 #define SINGLE_LINE_MAX 1024
 static char * current_command = NULL;
 
@@ -52,7 +54,11 @@ static void update_terminal_history_size(void) {
     }
 }
 
-void terminal_init(void) {
+void terminal_init(
+    void (* terminal_enter_fullscreen_fncptr)(void))
+{
+    terminal_enter_fullscreen_fnc = terminal_enter_fullscreen_fncptr;
+    
     current_command = (char *)malloc_from_unmanaged(
         SINGLE_LINE_MAX);
     current_command[0] = '\0';
@@ -527,13 +533,11 @@ static bool32_t evaluate_terminal_command(
     if (are_equal_strings(command, "FS") ||
         are_equal_strings(command, "FULLSCREEN"))
     {
-        // TODO: reimplement me without breaking unity build!
-        assert(0);
-        //        strcpy_capped(
-        //            response,
-        //            SINGLE_LINE_MAX,
-        //            "Entering full screen...");
-        //        platform_enter_fullscreen();
+        strcpy_capped(
+            response,
+            SINGLE_LINE_MAX,
+            "Entering full screen...");
+        terminal_enter_fullscreen_fnc();
         return true;
     }
     

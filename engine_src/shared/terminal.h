@@ -16,7 +16,8 @@ extern "C" {
 
 extern bool32_t terminal_active;
 
-void terminal_init(void);
+void terminal_init(
+    void (* terminal_enter_fullscreen_fncptr)(void));
 
 void destroy_terminal_objects(void);
 void terminal_redraw_backgrounds(void);

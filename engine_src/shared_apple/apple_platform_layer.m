@@ -1,6 +1,3 @@
-#define SHARED_APPLE_PLATFORM
-#define PLATFORM_NS_FILEMANAGER
-
 #include "platform_layer.h"
 
 void platform_get_writables_path(
@@ -287,7 +284,6 @@ void platform_get_filenames_in(
         return;
     }
     
-    log_assert([results count] <= recipient_capacity);
     uint32_t storable_results =
         (uint32_t)[results count] > 2000 ?
             2000 : (uint32_t)[results count];

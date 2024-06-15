@@ -120,12 +120,9 @@ void writable_filename_to_pathfile(
     log_assert(filename != NULL);
     log_assert(recipient != NULL);
     
-    #ifndef LOGGER_IGNORE_ASSERTS
-    uint32_t filename_length = get_string_length(filename);
-    #endif
-    
     #ifndef COMMON_IGNORE_ASSERTS
     uint32_t separator_size = platform_get_directory_separator_size();
+    uint32_t filename_length = get_string_length(filename);
     #endif
     
     char separator[MAX_SEPARATOR_SIZE];

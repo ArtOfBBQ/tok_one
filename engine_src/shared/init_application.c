@@ -223,7 +223,7 @@ void init_application_before_gpu_init(void)
         sizeof(ParticleEffect) * PARTICLE_EFFECTS_SIZE);
     
     shared_gameloop_init();
-    terminal_init();
+    terminal_init(platform_enter_fullscreen);
     init_scheduled_animations(client_logic_animation_callback);
     init_texture_arrays();
     
