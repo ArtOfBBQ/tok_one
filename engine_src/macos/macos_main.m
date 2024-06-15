@@ -15,6 +15,8 @@
 extern "C" {
 #endif
 
+void macos_update_window_size(void);
+
 static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 {
     #ifndef LOGGER_IGNORE_ASSERTS
@@ -189,99 +191,8 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
     return TOK_KEY_ESCAPE;
 }
 
-/*
-these variables may not exist on platforms where window resizing is
-impossible
-*/
-bool32_t startup_complete = false; // dont trigger window resize code at startup
-
-MTKView * mtk_view = NULL;
-
-@interface
-GameWindowDelegate: NSObject<NSWindowDelegate>
-@end
-
-@implementation GameWindowDelegate
-
-- (void)windowWillClose:(NSNotification *)notification {
-    log_append("window will close, terminating app..\n");
-    
-    shared_shutdown_application();
-    
-    client_logic_shutdown();
-    
-    bool32_t write_succesful = false;
-    log_dump(&write_succesful);
-    
-    if (!write_succesful) {
-        log_append("ERROR - failed to store the log file on app termination..\n");
-    }
-    
-    platform_close_application();
-}
-
-- (void)
-    windowWillEnterFullScreen:(NSNotification *)notification
-{
-    delete_all_ui_elements();
-    zpolygons_to_render->size = 0;
-    particle_effects_size = 0;
-    window_globals->fullscreen = true;
-}
-
-- (void)
-    windowWillExitFullScreen:(NSNotification *)notification
-{
-    delete_all_ui_elements();
-    zpolygons_to_render->size = 0;
-    particle_effects_size = 0;
-    window_globals->fullscreen = false;
-}
-
-- (void)windowDidMove:(NSNotification *)notification
-{
-    update_window_position(
-        (float)(((NSWindow *)[notification object]).frame.origin.x),
-        (float)(((NSWindow *)[notification object]).frame.origin.y));
-}
-
-- (NSSize)
-    windowWillResize:(NSWindow *)sender
-    toSize:(NSSize)frameSize
-{
-    if (!startup_complete)
-    {
-        return frameSize;
-    }
-    
-    delete_all_ui_elements();
-    zpolygons_to_render->size = 0;
-    particle_effects_size = 0;
-    
-    return frameSize;
-}
-
-- (void)windowDidResize:(NSNotification *)notification {
-    if (!startup_complete) {
-        return;
-    }
-    
-    NSSize size = [mtk_view frame].size;
-    
-    update_window_size(
-        /* width: */
-            (float)size.width,
-        /* height: */
-            (float)size.height,
-        /* at_timestamp_microsecs: */
-            platform_get_current_time_microsecs());
-    
-    [apple_gpu_delegate updateViewport];
-}
-@end
-
-@interface
-NSWindowWithCustomResponder: NSWindow
+@interface NSWindowWithCustomResponder: NSWindow
+// @property (nonatomic, readwrite, retain) NSWindow * baseclass_window;
 @end
 
 @implementation NSWindowWithCustomResponder
@@ -425,9 +336,97 @@ NSWindowWithCustomResponder: NSWindow
 - (void)keyUp:(NSEvent *)event {
     register_keyup(apple_keycode_to_tokone_keycode(event.keyCode));
 }
+
+- (float)getWidth {
+    return (float)[[self contentView] frame].size.width;
+}
+
+- (float)getHeight {
+    return (float)[[self contentView] frame].size.height;
+}
+
 @end
 
 NSWindowWithCustomResponder * window = NULL;
+
+/*
+these variables may not exist on platforms where window resizing is
+impossible
+*/
+MTKView * mtk_view = NULL;
+
+@interface
+GameWindowDelegate: NSObject<NSWindowDelegate>
+@end
+
+@implementation GameWindowDelegate
+
+- (void)windowWillClose:(NSNotification *)notification {
+    log_append("window will close, terminating app..\n");
+    
+    shared_shutdown_application();
+    
+    client_logic_shutdown();
+    
+    bool32_t write_succesful = false;
+    log_dump(&write_succesful);
+    
+    if (!write_succesful) {
+        log_append("ERROR - failed to store the log file on app termination..\n");
+    }
+    
+    platform_close_application();
+}
+
+- (void)
+    windowWillEnterFullScreen:(NSNotification *)notification
+{
+    delete_all_ui_elements();
+    zpolygons_to_render->size = 0;
+    particle_effects_size = 0;
+    window_globals->fullscreen = true;
+}
+
+- (void)
+    windowWillExitFullScreen:(NSNotification *)notification
+{
+    delete_all_ui_elements();
+    zpolygons_to_render->size = 0;
+    particle_effects_size = 0;
+    window_globals->fullscreen = false;
+}
+
+- (void)windowDidMove:(NSNotification *)notification
+{
+    update_window_position(
+        (float)(((NSWindow *)[notification object]).frame.origin.x),
+        (float)(((NSWindow *)[notification object]).frame.origin.y));
+}
+
+- (NSSize)
+    windowWillResize:(NSWindow *)sender
+    toSize:(NSSize)frameSize
+{
+    delete_all_ui_elements();
+    zpolygons_to_render->size = 0;
+    particle_effects_size = 0;
+    
+    return frameSize;
+}
+
+- (void)windowDidResize:(NSNotification *)notification {
+    
+    update_window_size(
+        /* float width: */
+            [window getWidth],
+        /* float height */
+            [window getHeight],
+        /* uint64_t at_timestamp_microseconds: */
+            platform_get_current_time_microsecs());
+    
+    [apple_gpu_delegate updateViewport];
+}
+@end
 
 int main(int argc, const char * argv[]) {
     
@@ -525,12 +524,9 @@ int main(int argc, const char * argv[]) {
         andPixelFormat: mtk_view.colorPixelFormat
         fromFolder: shader_lib_path];
     
-    
     init_application_after_gpu_init();
     
     start_audio_loop();
-    
-    startup_complete = true;
     
     @autoreleasepool {
         return NSApplicationMain(argc, argv);

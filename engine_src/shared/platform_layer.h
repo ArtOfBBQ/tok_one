@@ -143,7 +143,7 @@ void platform_mkdir_if_not_exist(
 
 void platform_get_filenames_in(
     const char * directory,
-    char filenames[500][500]);
+    char filenames[2000][500]);
 
 /*
 Get a file's size. Returns 0 if no such file

@@ -83,8 +83,8 @@ void resource_filename_to_pathfile(
     (void)assert_capacity;
     #endif
     
-    log_assert(filename != NULL);
-    log_assert(recipient != NULL);
+    assert(filename != NULL);
+    assert(recipient != NULL);
     
     char resource_path[256];
     platform_get_resources_path(resource_path, 256);
@@ -105,7 +105,7 @@ void resource_filename_to_pathfile(
         assert_capacity,
         filename);
     
-    log_assert(recipient[0] != '\0');
+    assert(recipient[0] != '\0');
 }
 
 void writable_filename_to_pathfile(
@@ -117,11 +117,14 @@ void writable_filename_to_pathfile(
     (void)assert_capacity;
     #endif
     
-    log_assert(filename != NULL);
-    log_assert(recipient != NULL);
+    assert(filename != NULL);
+    assert(recipient != NULL);
     
     #ifndef COMMON_IGNORE_ASSERTS
     uint32_t separator_size = platform_get_directory_separator_size();
+    #endif
+    
+    #if !defined(LOGGER_IGNORE_ASSERTS) || !defined(COMMON_IGNORE_ASSERTS)
     uint32_t filename_length = get_string_length(filename);
     #endif
     
@@ -143,7 +146,7 @@ void writable_filename_to_pathfile(
     char writables_path[256];
     platform_get_writables_path(writables_path, 256);
     
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #ifndef COMMON_IGNORE_ASSERTS
     uint32_t writables_path_length = get_string_length(writables_path);
     uint32_t full_filename_size =
         (filename_length
@@ -165,7 +168,7 @@ void writable_filename_to_pathfile(
         assert_capacity,
         separator_and_filename);
     
-    log_assert(recipient[0] != '\0');
+    assert(recipient[0] != '\0');
 }
 
 void platform_delete_writable(

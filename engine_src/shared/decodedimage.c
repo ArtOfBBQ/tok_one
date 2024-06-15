@@ -89,7 +89,11 @@ void overwrite_subregion(
     uint32_t start_x = 1 + ((at_column - 1) * slice_width);
     uint32_t start_y = 1 + ((at_row - 1) * slice_height);
     uint32_t end_y = start_y + slice_height - 1;
+    
+    #ifndef NDEBUG
     uint32_t end_x = start_x + slice_width - 1;
+    #endif
+    
     assert(end_x <= whole_image->width);
     assert(end_y <= whole_image->height);
     

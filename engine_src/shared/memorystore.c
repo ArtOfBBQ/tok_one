@@ -244,7 +244,9 @@ void free_from_managed(void * to_free) {
     log_assert(to_free != NULL);
     log_assert(managed_memory != NULL);
     
+    #ifndef LOGGER_IGNORE_ASSERTS
     bool32_t found = false;
+    #endif
     for (uint32_t i = 0; i < managed_stack->size; i++) {
         if (managed_stack->used[i] &&
             managed_stack->pointers[i] == to_free)
@@ -252,7 +254,9 @@ void free_from_managed(void * to_free) {
             managed_stack->used[i] = 0;
             managed_stack->sources[i][0] = '\0';
             log_assert(!found);
+            #ifndef LOGGER_IGNORE_ASSERTS
             found = true;
+            #endif
         }
     }
     log_assert(found);

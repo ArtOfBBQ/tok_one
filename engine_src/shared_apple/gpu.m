@@ -109,13 +109,22 @@ static dispatch_semaphore_t drawing_semaphore;
                 cStringUsingEncoding: NSASCIIStringEncoding]);
         log_append("\n");
         
+        NSURL * shader_lib_url = [NSURL
+            fileURLWithPath: shader_lib_filepath
+            isDirectory: false];
+        
+        if (shader_lib_url == NULL) {
+            log_append("Failed to find the shader file\n");
+            return;
+        }
+        
         shader_library =
             [with_metal_device
-                newLibraryWithFile: shader_lib_filepath 
+                newLibraryWithURL: shader_lib_url
                 error: &Error];
         
         if (shader_library == NULL) {
-            log_append("Failed to find the shader library again\n");
+            log_append("Failed to find the shader library\n");
             if (Error != NULL) {
                 NSLog(@" error => %@ ", [Error userInfo]);
             }

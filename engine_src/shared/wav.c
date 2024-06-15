@@ -151,11 +151,13 @@ void samples_to_wav(
     recipient += sizeof(int16_t) * samples_size;
     recipient[0] = '\0';
     
+    #ifndef NDEBUG
     uint32_t before_sample_data_size_bytes =
         sizeof(WavChunkHeader) +
         sizeof(WavChunkHeader) +
         sizeof(FileHeader) +
         sizeof(FormatChunkBody);
+    #endif
     assert(before_sample_data_size_bytes == 44);
     
     *recipient_size += (samples_size * sizeof(int16_t)) + 44;

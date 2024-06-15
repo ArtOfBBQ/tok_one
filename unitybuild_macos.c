@@ -17,6 +17,12 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 */
 
 #define SHARED_APPLE_PLATFORM
+
+#ifdef NS_BLOCK_ASSERTIONS
+#define NDEBUG
+#endif
+
+#ifdef NDEBUG
 #define INFLATE_SILENCE
 #define INFLATE_IGNORE_ASSERTS
 #define DECODE_PNG_SILENCE
@@ -28,6 +34,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #define COMMON_SILENCE
 #define LOGGER_SILENCE
 #define LOGGER_IGNORE_ASSERTS
+#endif
 
 // 1. Files that don't know about the platform layer
 #include "inflate.c"

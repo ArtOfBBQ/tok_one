@@ -177,9 +177,9 @@ void init_application_before_gpu_init(void)
     
     if (
         engine_save.contents != NULL &&
-        engine_save_file->window_height > 10 &&
+        engine_save_file->window_height > 20 &&
         engine_save_file->window_height < INITIAL_WINDOW_HEIGHT * 3 &&
-        engine_save_file->window_width > 10 &&
+        engine_save_file->window_width > 20 &&
         engine_save_file->window_width < INITIAL_WINDOW_WIDTH * 3)
     {
         window_globals->window_height = engine_save_file->window_height;
