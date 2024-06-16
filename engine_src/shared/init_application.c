@@ -118,6 +118,7 @@ void init_application_before_gpu_init(void)
         UNMANAGED_MEMORY_SIZE);
     void * managed_memory_store = platform_malloc_unaligned_block(
         MANAGED_MEMORY_SIZE);
+    
     init_memory_store(
         unmanaged_memory_store,
         managed_memory_store,
@@ -189,8 +190,6 @@ void init_application_before_gpu_init(void)
         window_globals->fullscreen = engine_save_file->window_fullscreen;
         sound_settings->music_volume = engine_save_file->music_volume;
         sound_settings->sfx_volume = engine_save_file->sound_volume;
-        //window_globals->last_resize_request_at =
-        //    platform_get_current_time_microsecs();
     } else {
         window_globals->fullscreen = false;
         window_globals->window_height = INITIAL_WINDOW_HEIGHT;
@@ -203,11 +202,11 @@ void init_application_before_gpu_init(void)
         free_from_managed(engine_save.contents);
     }
     
-    window_globals->aspect_ratio =
-        window_globals->window_height / window_globals->window_width;
+    window_globals->aspect_ratio = window_globals->window_height /
+        window_globals->window_width;
     
     init_projection_constants();
-        
+    
     init_ui_elements();
     
     zpolygons_to_render = (zPolygonCollection *)malloc_from_unmanaged(
@@ -341,9 +340,12 @@ void init_application_before_gpu_init(void)
             gpu_shared_data_collection.camera_allocation_size,
             4096);
         
-        gpu_shared_data_collection.triple_buffers[frame_i].camera->xyz[0] = 0.0f;
-        gpu_shared_data_collection.triple_buffers[frame_i].camera->xyz[1] = 0.0f;
-        gpu_shared_data_collection.triple_buffers[frame_i].camera->xyz[2] = 0.0f;
+        gpu_shared_data_collection.
+            triple_buffers[frame_i].camera->xyz[0] = 0.0f;
+        gpu_shared_data_collection.
+            triple_buffers[frame_i].camera->xyz[1] = 0.0f;
+        gpu_shared_data_collection.
+            triple_buffers[frame_i].camera->xyz[2] = 0.0f;
         gpu_shared_data_collection.
             triple_buffers[frame_i].camera->xyz_angle[0] = 0.0f;
         gpu_shared_data_collection.

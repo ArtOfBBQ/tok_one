@@ -30,8 +30,6 @@ void request_label_offset_around(
     const char * text_to_draw,
     const float mid_x_pixelspace,
     const float mid_y_pixelspace,
-    const float pixelspace_x_offset_for_each_character,
-    const float pixelspace_y_offset_for_each_character,
     const float z,
     const float max_width,
     const bool32_t ignore_camera);
