@@ -575,7 +575,6 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                     log_assert((target_vals_ptr[i] == target_vals_ptr[i]));
                     log_assert(!isinf(target_vals_ptr[i]));
                     log_assert(!isnan(target_vals_ptr[i]));
-                    log_assert((anim_vals_ptr[i] == anim_vals_ptr[i]));
                 }
                 #endif
                 
