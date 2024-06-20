@@ -177,8 +177,6 @@ void terminal_redraw_backgrounds(void) {
     current_command_input.cpu_data->object_id = INT32_MAX;
     
     commit_zpolygon_to_render(&current_command_input);
-    
-    requesting_label_update = true;
 }
 
 void terminal_render(void) {
@@ -568,7 +566,7 @@ static bool32_t evaluate_terminal_command(
 
 void terminal_commit_or_activate(void) {
     destroy_terminal_objects();
-    requesting_label_update = true;
+    
     
     if (
         terminal_active &&
@@ -592,9 +590,6 @@ void terminal_commit_or_activate(void) {
                 terminal_history,
                 TERMINAL_HISTORY_MAX,
                 "\n");
-            current_command[0] = '\0';
-            update_terminal_history_size();
-            return;
         } else {
             client_logic_evaluate_terminal_command(
                 current_command,
@@ -608,16 +603,20 @@ void terminal_commit_or_activate(void) {
                 terminal_history,
                 TERMINAL_HISTORY_MAX,
                 "\n");
-            current_command[0] = '\0';
-            update_terminal_history_size();
-            return;
         }
+        
+        current_command[0] = '\0';
+        update_terminal_history_size();
+        terminal_redraw_backgrounds();
+        requesting_label_update = true;
+        return;
     }
     
     terminal_active = !terminal_active;
     
     if (terminal_active) {
         terminal_redraw_backgrounds();
+        requesting_label_update = true;
     }
     
     if (terminal_active &&
