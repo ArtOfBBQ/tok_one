@@ -818,12 +818,28 @@ int32_t new_mesh_id_from_resource_asserts(
         quad_i < parsed_obj->quads_count;
         quad_i++)
     {
+        /*
+        The division into two triangles would be one with the first 3 indices,
+        and one with the first, third, and fourth. In this example:
+        
+        0 1 2
+        0 2 3
+        
+        3-------2
+        |      /|
+        |    /  |
+        |  /    |
+        |/      |
+        0-------1
+        */
+        
         uint32_t cur_material_i = parsed_obj->quads[quad_i][5];
         log_assert(cur_material_i < parsed_obj->materials_count);
         
         for (uint32_t offset = 0; offset < 2; offset++) {
             for (uint32_t _ = 0; _ < 3; _++) {
-                uint32_t vert_i = parsed_obj->quads[quad_i][_ + offset];
+                uint32_t vert_i = parsed_obj->quads[quad_i]
+                    [_ + ((_ > 0) * offset)];
                 
                 log_assert(vert_i >= 1);
                 log_assert(vert_i <= parsed_obj->vertices_count);
@@ -842,10 +858,10 @@ int32_t new_mesh_id_from_resource_asserts(
                 if (parsed_obj->normals_count > 0) {
                     uint32_t norm_i = parsed_obj->quad_normals[quad_i]
                         [_ + offset];
-
+                    
                     log_assert(norm_i >= 1);
                     log_assert(norm_i <= parsed_obj->normals_count);
-
+                    
                     all_mesh_vertices->gpu_data[all_mesh_vertices->size].
                         normal_xyz[0] =
                             parsed_obj->normals[norm_i - 1][0];
@@ -858,7 +874,8 @@ int32_t new_mesh_id_from_resource_asserts(
                 } else {
                     guess_gpu_triangle_normal(
                         /* GPULockedVertex * to_change: */
-                            &all_mesh_vertices->gpu_data[all_mesh_vertices->size]);
+                            &all_mesh_vertices->gpu_data[
+                                all_mesh_vertices->size]);
                 }
                 
                 if (parsed_obj->textures_count > 0) {
@@ -870,7 +887,7 @@ int32_t new_mesh_id_from_resource_asserts(
                     
                     all_mesh_vertices->gpu_data[all_mesh_vertices->size].uv[0] =
                         parsed_obj->textures[text_i - 1][0];
-
+                    
                     all_mesh_vertices->gpu_data[all_mesh_vertices->size].uv[1] =
                         parsed_obj->textures[text_i - 1][1];
                 } else {
