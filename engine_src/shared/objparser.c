@@ -315,6 +315,14 @@ void parse_obj(
     */
     unsigned int i = 0;
     while (raw_buffer[i] != '\0') {
+        if (raw_buffer[i] == '#') {
+            // Ignore comment
+            while (raw_buffer[i] != '\n' && raw_buffer[i] != '\0') {
+                i++;
+            }
+            if (raw_buffer[i] == '\n') { i++; };
+            continue;
+        }
         if (raw_buffer[i] == 'v' && raw_buffer[i + 1] == ' ') {
             recipient->vertices_count += 1;
         }
@@ -373,6 +381,8 @@ void parse_obj(
                 recipient->quads_count += 1;
             } else {
                 // We're not supporting faces with more than 4 vertices for now
+                // (we just count spaces, so this can also be triggered by
+                // consecutive spaces)
                 #ifndef OBJ_PARSER_IGNORE_ASSERTS
                 assert(0);
                 #endif

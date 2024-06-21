@@ -567,7 +567,6 @@ static bool32_t evaluate_terminal_command(
 void terminal_commit_or_activate(void) {
     destroy_terminal_objects();
     
-    
     if (
         terminal_active &&
         current_command[0] != '\0')
