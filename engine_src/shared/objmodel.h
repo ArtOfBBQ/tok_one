@@ -18,6 +18,11 @@
 extern "C" {
 #endif
 
+#define BASIC_QUAD_MESH_ID 0
+#define BASIC_CUBE_MESH_ID 1
+#define BASIC_POINT_MESH_ID 2 // There's currently no way to draw points
+#define BASIC_LINE_MESH_ID 3 // Drawing lines is became very expensive
+
 #define OBJ_STRING_SIZE 128
 typedef struct MeshSummary {
     char resource_name[OBJ_STRING_SIZE]; // the resource filename (without path)

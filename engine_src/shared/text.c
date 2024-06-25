@@ -72,7 +72,7 @@ void init_font(
         (FontCodepoint *)buffer_at;
 }
 
-static float get_newline_advance() {
+static float get_newline_advance(void) {
     return font_height * 1.1f;
 }
 

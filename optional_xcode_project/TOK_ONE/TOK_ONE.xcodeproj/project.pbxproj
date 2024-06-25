@@ -64,6 +64,8 @@
 		60A99922287BDF31003F7159 /* structuredart2.png in Resources */ = {isa = PBXBuildFile; fileRef = 601128AA28625BAE00F92967 /* structuredart2.png */; };
 		60A99923287BDF31003F7159 /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = 601128AB28625BAE00F92967 /* teapot.obj */; };
 		60A99924287BDF31003F7159 /* phoebus.png in Resources */ = {isa = PBXBuildFile; fileRef = 6080CC45286FFD1D00444118 /* phoebus.png */; };
+		EC0717F02C29CDD5007A4AFA /* teapot_smooth.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC0717EF2C29CDD5007A4AFA /* teapot_smooth.obj */; };
+		EC0717F12C29CDD5007A4AFA /* teapot_smooth.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC0717EF2C29CDD5007A4AFA /* teapot_smooth.obj */; };
 		EC083A3B2AFF727900234FE3 /* objparser.c in Sources */ = {isa = PBXBuildFile; fileRef = EC083A392AFF727900234FE3 /* objparser.c */; };
 		EC0BFBD929EE71A200E4BC1C /* tree.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC0BFBD729EE71A200E4BC1C /* tree.obj */; };
 		EC0BFBDA29EE71A200E4BC1C /* tree.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC0BFBD729EE71A200E4BC1C /* tree.obj */; };
@@ -168,6 +170,7 @@
 		60A998B4287BCF52003F7159 /* TOKONE_iphone.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TOKONE_iphone.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		60A998D9287BD332003F7159 /* decodedimage.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = decodedimage.c; path = ../../engine_src/shared/decodedimage.c; sourceTree = "<group>"; };
 		60A998DA287BD333003F7159 /* decodedimage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = decodedimage.h; path = ../../engine_src/shared/decodedimage.h; sourceTree = "<group>"; };
+		EC0717EF2C29CDD5007A4AFA /* teapot_smooth.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = teapot_smooth.obj; path = ../../resources/teapot_smooth.obj; sourceTree = "<group>"; };
 		EC083A382AFF727900234FE3 /* objparser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = objparser.h; path = ../../engine_src/shared/objparser.h; sourceTree = "<group>"; };
 		EC083A392AFF727900234FE3 /* objparser.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = objparser.c; path = ../../engine_src/shared/objparser.c; sourceTree = "<group>"; };
 		EC0BFBD729EE71A200E4BC1C /* tree.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = tree.obj; path = ../../resources/tree.obj; sourceTree = "<group>"; };
@@ -317,6 +320,7 @@
 				601128AC28625BAF00F92967 /* font.png */,
 				ECC47A5F29E9111C0082A7C6 /* disk.obj */,
 				EC0BFBD729EE71A200E4BC1C /* tree.obj */,
+				EC0717EF2C29CDD5007A4AFA /* teapot_smooth.obj */,
 				EC0BFBD829EE71A200E4BC1C /* xmas_tree.obj */,
 				EC67AE152A1B0813002D8380 /* leaves3.png */,
 				EC7B171A293A23E300C1D20C /* roundedborder.png */,
@@ -517,6 +521,7 @@
 			files = (
 				ECC47A6029E9111C0082A7C6 /* disk.obj in Resources */,
 				EC67AE162A1B0813002D8380 /* leaves3.png in Resources */,
+				EC0717F02C29CDD5007A4AFA /* teapot_smooth.obj in Resources */,
 				ECB05E4D294F8FD400050BD4 /* key.obj in Resources */,
 				EC1412B12938597400DA0D21 /* cardwithuvcoords.obj in Resources */,
 				6009FB642876A47100FC5A60 /* fontmetrics.dat in Resources */,
@@ -552,6 +557,7 @@
 				60A99923287BDF31003F7159 /* teapot.obj in Resources */,
 				EC18FF4729E3DD8900ED785C /* blob2.png in Resources */,
 				EC18FF4929E3DD8900ED785C /* blob3.png in Resources */,
+				EC0717F12C29CDD5007A4AFA /* teapot_smooth.obj in Resources */,
 				60A99920287BDF31003F7159 /* structuredart1.png in Resources */,
 				EC0BFBDC29EE71A200E4BC1C /* xmas_tree.obj in Resources */,
 				60A99922287BDF31003F7159 /* structuredart2.png in Resources */,

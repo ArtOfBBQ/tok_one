@@ -238,9 +238,10 @@ void log_dump(bool32_t * good) {
 
 #ifndef LOGGER_IGNORE_ASSERTS
 void
-log_dump_and_crash(const char * crash_message) {
+log_dump_and_crash(char * crash_message) {
     bool32_t log_dump_succesful = false;
     log_dump(&log_dump_succesful);
+    crash_message[256] = '\0';
     strcpy_capped(
         crashed_top_of_screen_msg,
         256,

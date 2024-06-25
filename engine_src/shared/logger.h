@@ -106,7 +106,7 @@ then crash the application.
 I use this instead of assert(0).
 */
 void
-log_dump_and_crash(const char * crash_message);
+log_dump_and_crash(char * crash_message);
 
 /*
 Assert something, but use the GUI to report on failure

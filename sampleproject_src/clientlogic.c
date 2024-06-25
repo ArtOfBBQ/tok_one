@@ -24,9 +24,10 @@ void client_logic_early_startup(void) {
         /* const char ** filenames: */
             (const char **)textures,
         /* const uint32_t filenames_size: */
-            1);    
+            1);
     
-   teapot_mesh_id = new_mesh_id_from_resource("teapot.obj");
+    // teapot_mesh_id = BASIC_CUBE_MESH_ID;
+    teapot_mesh_id = new_mesh_id_from_resource("teapot_smooth.obj");
 }
 
 void client_logic_late_startup(void) {
@@ -51,16 +52,29 @@ void client_logic_late_startup(void) {
     commit_zpolygon_to_render(&stack_recipient);
     
     zLightSource * light = next_zlight();
-    light->RGBA[0]       =  0.50f;
-    light->RGBA[1]       =  0.15f;
-    light->RGBA[2]       =  0.15f;
+    light->RGBA[0]       =  0.70f;
+    light->RGBA[1]       =  0.25f;
+    light->RGBA[2]       =  0.25f;
     light->RGBA[3]       =  1.00f;
-    light->ambient       =  1.0f;
-    light->diffuse       =  1.00f;
-    light->reach         =  2.00f;
-    light->xyz[0]        = -0.50f;
-    light->xyz[1]        =  0.50f;
-    light->xyz[2]        =  1.25f;
+    light->ambient       =  0.0f;
+    light->diffuse       =  1.50f;
+    light->reach         =  3.00f;
+    light->xyz[0]        = -1.25f;
+    light->xyz[1]        =  1.00f;
+    light->xyz[2]        =  0.10f;
+    commit_zlight(light);
+    
+    light = next_zlight();
+    light->RGBA[0]       =  0.05f;
+    light->RGBA[1]       =  0.55f;
+    light->RGBA[2]       =  0.05f;
+    light->RGBA[3]       =  1.00f;
+    light->ambient       =  0.0f;
+    light->diffuse       =  1.50f;
+    light->reach         =  3.00f;
+    light->xyz[0]        =  1.55f;
+    light->xyz[1]        =  0.60f;
+    light->xyz[2]        =  0.10f;
     commit_zlight(light);
     
     teapot_object_id = next_nonui_object_id();
@@ -76,7 +90,7 @@ void client_logic_late_startup(void) {
         0.25f);
     teapot_request.gpu_data->xyz[0]                = 0.00f;
     teapot_request.gpu_data->xyz[1]                = 0.00f;
-    teapot_request.gpu_data->xyz[2]                = 0.15f;
+    teapot_request.gpu_data->xyz[2]                = 0.75f;
     teapot_request.cpu_data->object_id             = teapot_object_id;
     teapot_request.cpu_data->visible               = true;
     teapot_request.cpu_data->touchable_id          = -1;
@@ -141,8 +155,10 @@ static void client_handle_keypresses(
         platform_toggle_fullscreen();
     }
     
-    if (keypress_map[TOK_KEY_T] == true)
+    if (keypress_map[TOK_KEY_S] == true)
     {
+        keypress_map[TOK_KEY_S] = false;
+        
         request_shatter_and_destroy(
             /* const int32_t object_id: */
                 teapot_object_id,
@@ -194,80 +210,6 @@ static void client_handle_keypresses(
         camera.xyz_angle[1] += cam_rotation_speed;
     }
     
-    if (keypress_map[TOK_KEY_L] == true) {
-        keypress_map[TOK_KEY_L] = false;
-        LineParticle * lines = next_lineparticle_effect();
-        PolygonRequest lines_polygon;
-        lines_polygon.cpu_data = &lines->zpolygon_cpu;
-        lines_polygon.gpu_data = &lines->zpolygon_gpu;
-        lines_polygon.gpu_materials = &lines->zpolygon_material;
-        construct_quad(
-            /* const float left_x: */
-                0.0f,
-            /* const float bottom_y: */
-                0.0f,
-            /* const float z: */
-                0.5f,
-            /* const float width: */
-                screenspace_width_to_width(75.0f, 0.5f),
-            /* const float height: */
-                screenspace_height_to_height(75.0f, 0.5f),
-            /* PolygonRequest * stack_recipient: */
-                &lines_polygon);
-        lines_polygon.gpu_data->ignore_camera = false;
-        lines_polygon.gpu_data->ignore_lighting = true;
-        
-        lines->zpolygon_material.texturearray_i = 1;
-        lines->zpolygon_material.texture_i = 0;
-        
-        lines_polygon.cpu_data->committed = true;
-        lines->waypoint_duration[0] = 1250000;
-        lines->waypoint_x[0] = screenspace_x_to_x(
-            /* const float screenspace_x: */
-                0,
-            /* const float given_z: */
-                0.5f);
-        lines->waypoint_y[0] = screenspace_y_to_y(
-            /* const float screenspace_y: */
-                0,
-            /* const float given_z: */
-                0.5f);
-        lines->waypoint_z[0] = 0.5f;
-        lines->waypoint_r[0] = 0.8f;
-        lines->waypoint_g[0] = 0.1f;
-        lines->waypoint_b[0] = 0.1f;
-        lines->waypoint_a[0] = 1.0f;
-        lines->waypoint_scalefactor[0] = 1.0f;
-        lines->waypoint_duration[0] = 350000;
-        
-        lines->waypoint_x[1] = screenspace_x_to_x(
-            /* const float screenspace_x: */
-                window_globals->window_width,
-            /* const float given_z: */
-                0.5f);
-        lines->waypoint_y[1] = screenspace_y_to_y(
-            /* const float screenspace_y: */
-                0,
-            /* const float given_z: */
-                0.5f);
-        lines->waypoint_z[1] = 0.5f;
-        
-        lines->waypoint_r[1] = 0.4f;
-        lines->waypoint_g[1] = 0.8f;
-        lines->waypoint_b[1] = 0.2f;
-        lines->waypoint_a[1] = 1.0f;
-        lines->waypoint_scalefactor[1] = 0.85f;
-        lines->waypoint_duration[1] = 350000;
-                
-        lines->trail_delay = 500000;
-        lines->waypoints_size = 2;
-        lines->particle_count = 50;
-        lines->particle_zangle_variance_pct = 15;
-        lines->particle_rgb_variance_pct = 15;
-        lines->particle_scalefactor_variance_pct = 35;
-        commit_lineparticle_effect(lines);
-    }
-    
     if (keypress_map[TOK_KEY_BACKSLASH] == true) {
         // / key
         camera.xyz[2] -= 0.01f;
@@ -281,6 +223,16 @@ static void client_handle_keypresses(
 void client_logic_update(uint64_t microseconds_elapsed)
 {
     request_fps_counter(microseconds_elapsed);
+    
+    if (keypress_map[TOK_KEY_R]) {
+        for (uint32_t i = 0; i < zpolygons_to_render->size; i++) {
+            if (zpolygons_to_render->cpu_data[i].object_id ==
+                teapot_object_id)
+            {
+                zpolygons_to_render->gpu_data[i].xyz_angle[1] += 0.01f;
+            }
+        }
+    }
     
     client_handle_keypresses(microseconds_elapsed);
 }

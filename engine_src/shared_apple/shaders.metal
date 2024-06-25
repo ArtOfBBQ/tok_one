@@ -16,8 +16,8 @@ typedef struct
     float point_size [[point_size]];
 } RasterizerPixel;
 
-float4 x_rotate(float4 vertices, float x_angle) {
-    float4 rotated_vertices = vertices;
+float3 x_rotate(float3 vertices, float x_angle) {
+    float3 rotated_vertices = vertices;
     float cos_angle = cos(x_angle);
     float sin_angle = sin(x_angle);
     
@@ -31,8 +31,8 @@ float4 x_rotate(float4 vertices, float x_angle) {
     return rotated_vertices;
 }
 
-float4 y_rotate(float4 vertices, float y_angle) {
-    float4 rotated_vertices = vertices;
+float3 y_rotate(float3 vertices, float y_angle) {
+    float3 rotated_vertices = vertices;
     float cos_angle = cos(y_angle);
     float sin_angle = sin(y_angle);
     
@@ -46,8 +46,8 @@ float4 y_rotate(float4 vertices, float y_angle) {
     return rotated_vertices;
 }
 
-float4 z_rotate(float4 vertices, float z_angle) {
-    float4 rotated_vertices = vertices;
+float3 z_rotate(float3 vertices, float z_angle) {
+    float3 rotated_vertices = vertices;
     float cos_angle = cos(z_angle);
     float sin_angle = sin(z_angle);
     
@@ -62,12 +62,14 @@ float4 z_rotate(float4 vertices, float z_angle) {
 }
 
 float get_distance(
-    float4 a,
-    float4 b)
+    float3 a,
+    float3 b)
 {
-    float4 squared_diffs = (a-b)*(a-b);
+    float3 squared_diffs = (a-b)*(a-b);
     
-    float sum_squares = dot(squared_diffs, float4(1.0f,1.0f,1.0f,1.0f));
+    float sum_squares = dot(
+        squared_diffs,
+        vector_float3(1.0f,1.0f,1.0f));
     
     return sqrt(sum_squares);
 }
@@ -90,91 +92,85 @@ vertex_shader(
     uint locked_material_i = (polygon_i * MAX_MATERIALS_PER_POLYGON) +
         locked_vertices[locked_vertex_i].parent_material_i;
     
-    float4 parent_mesh_position = vector_float4(
+    float3 parent_mesh_position = vector_float3(
         polygon_collection->polygons[polygon_i].xyz[0],
         polygon_collection->polygons[polygon_i].xyz[1],
-        polygon_collection->polygons[polygon_i].xyz[2],
-        0.0f);
+        polygon_collection->polygons[polygon_i].xyz[2]);
     
-    float4 mesh_vertices = vector_float4(
+    float3 mesh_vertices = vector_float3(
         locked_vertices[locked_vertex_i].xyz[0],
         locked_vertices[locked_vertex_i].xyz[1],
-        locked_vertices[locked_vertex_i].xyz[2],
-        0.0f);
+        locked_vertices[locked_vertex_i].xyz[2]);
     
-    float4 vertex_multipliers = vector_float4(
+    float3 vertex_multipliers = vector_float3(
         polygon_collection->polygons[polygon_i].xyz_multiplier[0],
         polygon_collection->polygons[polygon_i].xyz_multiplier[1],
-        polygon_collection->polygons[polygon_i].xyz_multiplier[2],
-        1.0f);
+        polygon_collection->polygons[polygon_i].xyz_multiplier[2]);
     
-    float4 vertex_offsets = vector_float4(
+    float3 vertex_offsets = vector_float3(
         polygon_collection->polygons[polygon_i].xyz_offset[0],
         polygon_collection->polygons[polygon_i].xyz_offset[1],
-        polygon_collection->polygons[polygon_i].xyz_offset[2],
-        0.0f);
+        polygon_collection->polygons[polygon_i].xyz_offset[2]);
     
     mesh_vertices *= vertex_multipliers;
     mesh_vertices += vertex_offsets;
     
     mesh_vertices *= polygon_collection->polygons[polygon_i].scale_factor;
-    mesh_vertices[3] = 1.0f;
     
-    float4 mesh_normals = vector_float4(
+    float3 mesh_normals = vector_float3(
         locked_vertices[locked_vertex_i].normal_xyz[0],
         locked_vertices[locked_vertex_i].normal_xyz[1],
-        locked_vertices[locked_vertex_i].normal_xyz[2],
-        1.0f);
-     
+        locked_vertices[locked_vertex_i].normal_xyz[2]);
+    
     // rotate vertices
-    float4 x_rotated_vertices = x_rotate(
+    float3 x_rotated_vertices = x_rotate(
         mesh_vertices,
         polygon_collection->polygons[polygon_i].xyz_angle[0]);
-    float4 x_rotated_normals  = x_rotate(
+    float3 x_rotated_normals  = x_rotate(
         mesh_normals,
         polygon_collection->polygons[polygon_i].xyz_angle[0]);
     
-    float4 y_rotated_vertices = y_rotate(
+    float3 y_rotated_vertices = y_rotate(
         x_rotated_vertices,
         polygon_collection->polygons[polygon_i].xyz_angle[1]);
-    float4 y_rotated_normals  = y_rotate(
+    float3 y_rotated_normals  = y_rotate(
         x_rotated_normals,
         polygon_collection->polygons[polygon_i].xyz_angle[1]);
     
-    float4 z_rotated_vertices = z_rotate(
+    float3 z_rotated_vertices = z_rotate(
         y_rotated_vertices,
         polygon_collection->polygons[polygon_i].xyz_angle[2]);
-    float4 z_rotated_normals  = z_rotate(
+    float3 z_rotated_normals  = z_rotate(
         y_rotated_normals,
         polygon_collection->polygons[polygon_i].xyz_angle[2]);
     
     // translate to world position
-    float4 translated_pos = z_rotated_vertices + parent_mesh_position;
+    float3 rotated_pos = z_rotated_vertices + parent_mesh_position;
     
     // polygon_collection->polygons[polygon_i].ignore_camera
-    float4 camera_position = vector_float4(
+    float3 camera_position = vector_float3(
         camera->xyz[0],
         camera->xyz[1],
-        camera->xyz[2],
-        0.0f);
-    float4 camera_translated_pos = translated_pos - camera_position;
+        camera->xyz[2]);
+    float3 camera_translated_pos = rotated_pos - camera_position;
     
     // rotate around camera
-    float4 cam_x_rotated = x_rotate(
+    float3 cam_x_rotated = x_rotate(
         camera_translated_pos,
         -camera->xyz_angle[0]);
-    float4 cam_y_rotated = y_rotate(
+    float3 cam_y_rotated = y_rotate(
         cam_x_rotated,
         -camera->xyz_angle[1]);
-    float4 cam_z_rotated = z_rotate(
+    float3 cam_z_rotated = z_rotate(
         cam_y_rotated,
         -camera->xyz_angle[2]);
     
     float ignore_cam =
         polygon_collection->polygons[polygon_i].ignore_camera;
-    out.position =
+    out.position = vector_float4(
         (cam_z_rotated * (1.0f - ignore_cam)) +
-        (translated_pos * ignore_cam);
+        (rotated_pos * ignore_cam),
+        1.0f);
     
     // projection
     out.position[0] *= projection_constants->x_multiplier;
@@ -214,21 +210,20 @@ vertex_shader(
         i++)
     {
         // ambient lighting
-        float4 light_pos = vector_float4(
+        float3 light_pos = vector_float3(
             light_collection->light_x[i],
             light_collection->light_y[i],
-            light_collection->light_z[i],
-            1.0f);
+            light_collection->light_z[i]);
         float3 light_color = vector_float3(
             light_collection->red[i],
             light_collection->green[i],
             light_collection->blue[i]);
         float distance = get_distance(
             light_pos,
-            translated_pos);
+            rotated_pos);
         float distance_mod = (light_collection->reach[i] + 0.05f)
             - (distance * distance);
-        distance_mod = clamp(distance_mod, 0.0f, 5.0f);
+        distance_mod = clamp(distance_mod, 0.0f, 1.5f);
         
         out.lighting += (
             distance_mod *
@@ -236,20 +231,39 @@ vertex_shader(
             light_collection->ambient[i]);
         
         // diffuse lighting
-        normalize(z_rotated_normals);
+        z_rotated_normals = normalize(z_rotated_normals);
         
-        float4 vec_from_light_to_vertex = normalize(translated_pos - light_pos);
-        float visibility_rating = max(
-            0.0f,
-            -1.0f * dot(
-                z_rotated_normals,
-                vec_from_light_to_vertex));
+        // if light is at 2,2,2 and rotated_pos is at 1,1,1, we need +1/+1/+1
+        // to go from the rotated_pos to the light
+        // if the normal also points to the light, we want more diffuse
+        // brightness
+        float3 object_to_light = normalize(
+            (light_pos - rotated_pos));
+        
+        float diffuse_dot =
+            max(
+                dot(
+                    z_rotated_normals,
+                    object_to_light),
+                0.0f);
         
         out.lighting += (
             light_color *
             distance_mod *
-            (light_collection->diffuse[i] * 3.0f) *
-            visibility_rating);
+            (light_collection->diffuse[i] * 1.25f) *
+            diffuse_dot);
+        
+        // specular lighting
+        float3 object_to_view = normalize(
+            camera_position - rotated_pos);
+        
+        float3 reflection_ray = reflect(
+            -object_to_light,
+            z_rotated_normals);
+        
+        float spec = pow(max(dot(object_to_view, reflection_ray), 0.0), 32);
+        out.lighting += (
+            1.5f * spec * light_color * distance_mod);
     }
     
     out.lighting = clamp(out.lighting, 0.05f, 7.5f);

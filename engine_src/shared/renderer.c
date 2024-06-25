@@ -444,7 +444,6 @@ void hardware_render(
             false);
     }
     
-    frame_data->first_line_i = frame_data->vertices_size;
     frame_data->first_alphablend_i = frame_data->vertices_size;
     
     add_alphablending_zpolygons_to_workload(frame_data);
@@ -462,9 +461,9 @@ void hardware_render(
             elapsed_nanoseconds,
             true);
     
+    frame_data->first_line_i = frame_data->vertices_size;
     
     if (application_running) {
-        frame_data->first_line_i = frame_data->vertices_size;;
         zpolygon_hitboxes_to_lines(
             frame_data);
     }

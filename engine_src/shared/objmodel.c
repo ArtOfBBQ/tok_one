@@ -26,6 +26,56 @@ typedef struct BufferedNormal {
     float z;
 } BufferedNormal;
 
+static float get_vector_magnitude(float input[3]) {
+    float sum_squares =
+        (input[0] * input[0]) +
+        (input[1] * input[1]) +
+        (input[2] * input[2]);
+    
+    sum_squares = isnan(sum_squares) || !isfinite(sum_squares) ?
+        FLOAT32_MAX : sum_squares;
+    
+    float return_value = sqrtf(sum_squares);
+    
+    log_assert(!isnan(return_value));
+    
+    return return_value;
+}
+
+static void normalize_vector_inplace(
+    float vector[3])
+{
+    float magnitude = get_vector_magnitude(vector);
+    if (magnitude < 0.0001f && magnitude > -0.0001f) {
+        magnitude = 0.0001f;
+    }
+    
+    vector[0] /= magnitude;
+    vector[1] /= magnitude;
+    vector[2] /= magnitude;
+}
+
+static void guess_gpu_triangle_normal(GPULockedVertex * to_change) {
+    float vec1_x = to_change[1].xyz[0] - to_change[0].xyz[0];
+    float vec1_y = to_change[1].xyz[1] - to_change[0].xyz[1];
+    float vec1_z = to_change[1].xyz[2] - to_change[0].xyz[2];
+    
+    float vec2_x = to_change[2].xyz[0] - to_change[0].xyz[0];
+    float vec2_y = to_change[2].xyz[1] - to_change[0].xyz[1];
+    float vec2_z = to_change[2].xyz[2] - to_change[0].xyz[2];
+    
+    to_change[0].normal_xyz[0] = (vec1_y * vec2_z) - (vec1_z * vec2_y);
+    to_change[0].normal_xyz[1] = (vec1_z * vec2_x) - (vec1_x * vec2_z);
+    to_change[0].normal_xyz[2] = (vec1_x * vec2_y) - (vec1_y * vec2_x);
+    normalize_vector_inplace(to_change[0].normal_xyz);
+    to_change[1].normal_xyz[0] = to_change[0].normal_xyz[0];
+    to_change[1].normal_xyz[1] = to_change[0].normal_xyz[1];
+    to_change[1].normal_xyz[2] = to_change[0].normal_xyz[2];
+    to_change[2].normal_xyz[0] = to_change[0].normal_xyz[0];
+    to_change[2].normal_xyz[1] = to_change[0].normal_xyz[1];
+    to_change[2].normal_xyz[2] = to_change[0].normal_xyz[2];
+}
+
 void init_all_meshes(void) {
     all_mesh_summaries = (MeshSummary *)malloc_from_unmanaged(
         sizeof(MeshSummary) * ALL_MESHES_SIZE);
@@ -41,9 +91,6 @@ void init_all_meshes(void) {
         all_mesh_vertices,
         0,
         sizeof(LockedVertexWithMaterialCollection));
-    log_assert(
-        all_mesh_vertices->gpu_data[135527].parent_material_i == 0);
-    
     
     // Let's hardcode a basic quad since that's a mesh that will be used by
     // even the features inherent to the engine itself (the terminal, any
@@ -52,7 +99,7 @@ void init_all_meshes(void) {
         all_mesh_summaries[0].resource_name,
         OBJ_STRING_SIZE,
         "basic_quad");
-    all_mesh_summaries[0].mesh_id = 0;
+    all_mesh_summaries[0].mesh_id = BASIC_QUAD_MESH_ID;
     all_mesh_summaries[0].vertices_head_i = 0;
     all_mesh_summaries[0].vertices_size = 6;
     all_mesh_summaries[0].base_width = 2.0f;
@@ -143,7 +190,7 @@ void init_all_meshes(void) {
         "basic_cube");
     all_mesh_summaries[1].vertices_head_i = 6;
     all_mesh_summaries[1].vertices_size = 36;
-    all_mesh_summaries[1].mesh_id = 1;
+    all_mesh_summaries[1].mesh_id = BASIC_CUBE_MESH_ID;
     all_mesh_summaries[1].materials_size = 1;
     all_mesh_summaries[1].base_width = 1.0f;
     all_mesh_summaries[1].base_height = 1.0f;
@@ -528,7 +575,7 @@ void init_all_meshes(void) {
         all_mesh_summaries[2].resource_name,
         OBJ_STRING_SIZE,
         "basic_point");
-    all_mesh_summaries[2].mesh_id = 2;
+    all_mesh_summaries[2].mesh_id = BASIC_POINT_MESH_ID;
     all_mesh_summaries[2].vertices_head_i = 42;
     all_mesh_summaries[2].vertices_size = 1;
     all_mesh_summaries[2].base_width = 1.0f;
@@ -549,8 +596,43 @@ void init_all_meshes(void) {
     all_mesh_vertices->gpu_data[42].normal_xyz[2]     = -1.0f;
     all_mesh_vertices->gpu_data[42].parent_material_i = 0;
     
-    all_mesh_summaries_size = 3;
-    all_mesh_vertices->size = 43;
+    strcpy_capped(
+        all_mesh_summaries[3].resource_name,
+        OBJ_STRING_SIZE,
+        "basic_line");
+    all_mesh_summaries[3].mesh_id = BASIC_LINE_MESH_ID;
+    all_mesh_summaries[3].vertices_head_i = 42;
+    all_mesh_summaries[3].vertices_size = 1;
+    all_mesh_summaries[3].base_width = 1.0f;
+    all_mesh_summaries[3].base_height = 1.0f;
+    all_mesh_summaries[3].base_depth = 1.0f;
+    all_mesh_summaries[3].materials_size = 1;
+    all_mesh_summaries[3].shattered_vertices_head_i = 42;
+    all_mesh_summaries[3].shattered_vertices_size = 1;
+    
+    // basic line (only 2 vertices)
+    all_mesh_vertices->gpu_data[43].xyz[0]            = 0;
+    all_mesh_vertices->gpu_data[43].xyz[1]            = 0;
+    all_mesh_vertices->gpu_data[43].xyz[2]            = 0;
+    all_mesh_vertices->gpu_data[43].uv[0]             = 0;
+    all_mesh_vertices->gpu_data[43].uv[1]             = 0;
+    all_mesh_vertices->gpu_data[43].normal_xyz[0]     =  0.0f;
+    all_mesh_vertices->gpu_data[43].normal_xyz[1]     =  0.0f;
+    all_mesh_vertices->gpu_data[43].normal_xyz[2]     = -1.0f;
+    all_mesh_vertices->gpu_data[43].parent_material_i = 0;
+    
+    all_mesh_vertices->gpu_data[44].xyz[0]            = 0;
+    all_mesh_vertices->gpu_data[44].xyz[1]            = 0;
+    all_mesh_vertices->gpu_data[44].xyz[2]            = 1;
+    all_mesh_vertices->gpu_data[44].uv[0]             = 0;
+    all_mesh_vertices->gpu_data[44].uv[1]             = 0;
+    all_mesh_vertices->gpu_data[44].normal_xyz[0]     =  0.0f;
+    all_mesh_vertices->gpu_data[44].normal_xyz[1]     =  0.0f;
+    all_mesh_vertices->gpu_data[44].normal_xyz[2]     = -1.0f;
+    all_mesh_vertices->gpu_data[44].parent_material_i = 0;
+    
+    all_mesh_summaries_size = 4;
+    all_mesh_vertices->size = 45;
 }
 
 #ifndef LOGGER_IGNORE_ASSERTS
@@ -564,100 +646,6 @@ static void assert_objmodel_validity(int32_t mesh_id) {
         all_mesh_summaries[mesh_id].vertices_head_i +
         all_mesh_summaries[mesh_id].vertices_size;
     log_assert(all_vertices_tail_i <= (int32_t)all_mesh_vertices->size);
-}
-#endif
-
-#if 0
-static float objmodel_get_vertex_magnitude(float input_xyz[3]) {
-    float x = (input_xyz[0] * input_xyz[0]);
-    float y = (input_xyz[1] * input_xyz[1]);
-    float z = (input_xyz[2] * input_xyz[2]);
-    
-    float sum_squares = x + y + z;
-    
-    sum_squares = isnan(sum_squares) || !isfinite(sum_squares) ?
-        FLOAT32_MAX : sum_squares;
-    
-    float return_value = sqrtf(sum_squares);
-    
-    log_assert(!isnan(return_value));
-    
-    return return_value;
-}
-#endif
-
-#if 0
-static void normalize_gpu_triangle_normals(GPULockedVertex * input) {
-    float magnitude = objmodel_get_vertex_magnitude(input->xyz);
-    
-    if (magnitude < 0.0001f && magnitude > -0.0001f) {
-        magnitude = 0.0001f;
-    }
-    
-    log_assert(!isnan(input->xyz[0]));
-    input->xyz[0] /= magnitude;
-    log_assert(!isnan(input->xyz[0]));
-    
-    log_assert(!isnan(input->xyz[1]));
-    input->xyz[1] /= magnitude;
-    log_assert(!isnan(input->xyz[1]));
-    
-    log_assert(!isnan(input->xyz[2]));
-    input->xyz[2] /= magnitude;
-    log_assert(!isnan(input->xyz[2]));
-}
-#endif
-
-static void guess_gpu_triangle_normal(GPULockedVertex * to_change) {
-    float vec1_x = to_change[1].xyz[0] - to_change[0].xyz[0];
-    float vec1_y = to_change[1].xyz[1] - to_change[0].xyz[1];
-    float vec1_z = to_change[1].xyz[2] - to_change[0].xyz[2];
-    
-    float vec2_x = to_change[2].xyz[0] - to_change[0].xyz[0];
-    float vec2_y = to_change[2].xyz[1] - to_change[0].xyz[1];
-    float vec2_z = to_change[2].xyz[2] - to_change[0].xyz[2];
-    
-    to_change[0].normal_xyz[0] = (vec1_y * vec2_z) - (vec1_z * vec2_y);
-    to_change[0].normal_xyz[1] = (vec1_z * vec2_x) - (vec1_x * vec2_z);
-    to_change[0].normal_xyz[2] = (vec1_x * vec2_y) - (vec1_y * vec2_x);
-    to_change[1].normal_xyz[0] = to_change[0].normal_xyz[0];
-    to_change[1].normal_xyz[1] = to_change[0].normal_xyz[1];
-    to_change[1].normal_xyz[2] = to_change[0].normal_xyz[2];
-    to_change[2].normal_xyz[0] = to_change[0].normal_xyz[0];
-    to_change[2].normal_xyz[1] = to_change[0].normal_xyz[1];
-    to_change[2].normal_xyz[2] = to_change[0].normal_xyz[2];
-}
-
-#if 0
-static uint32_t chars_till_next_space_or_slash(
-    const char * buffer)
-{
-    uint32_t i = 0;
-    
-    while (
-        buffer[i] != '\n' &&
-        buffer[i] != ' ' &&
-        buffer[i] != '/' &&
-        buffer[i] != '\r')
-    {
-        i++;
-    }
-    
-    return i;
-}
-#endif
-
-#if 0
-static uint32_t chars_till_next_nonspace(
-    const char * buffer)
-{
-    uint32_t i = 0;
-
-    while (buffer[i] == ' ') {
-        i++;
-    }
-    
-    return i;
 }
 #endif
 
@@ -744,6 +732,8 @@ int32_t new_mesh_id_from_resource_asserts(
         uint32_t cur_material_i = parsed_obj->triangles[triangle_i][4];
         log_assert(cur_material_i < parsed_obj->materials_count);
         
+        // We have to read all 3 positions first because we may need them to
+        // infer the normals if the .obj file has no normals
         for (uint32_t _ = 0; _ < 3; _++) {
             uint32_t vert_i = parsed_obj->triangles[triangle_i][_];
             
@@ -752,13 +742,15 @@ int32_t new_mesh_id_from_resource_asserts(
             log_assert(
                 all_mesh_vertices->size < ALL_LOCKED_VERTICES_SIZE);
             
-            all_mesh_vertices->gpu_data[all_mesh_vertices->size].xyz[0] =
+            all_mesh_vertices->gpu_data[all_mesh_vertices->size + _].xyz[0] =
                 parsed_obj->vertices[vert_i - 1][0];
-            all_mesh_vertices->gpu_data[all_mesh_vertices->size].xyz[1] =
+            all_mesh_vertices->gpu_data[all_mesh_vertices->size + _].xyz[1] =
                 parsed_obj->vertices[vert_i - 1][1];
-            all_mesh_vertices->gpu_data[all_mesh_vertices->size].xyz[2] =
+            all_mesh_vertices->gpu_data[all_mesh_vertices->size + _].xyz[2] =
                 parsed_obj->vertices[vert_i - 1][2];
-            
+        }
+        
+        for (uint32_t _ = 0; _ < 3; _++) {
             all_mesh_vertices->gpu_data[all_mesh_vertices->size].
                 parent_material_i =
                     cur_material_i;
@@ -783,11 +775,20 @@ int32_t new_mesh_id_from_resource_asserts(
                 all_mesh_vertices->gpu_data[all_mesh_vertices->size].
                     normal_xyz[2] =
                         parsed_obj->normals[norm_i - 1][2];
-            } else {
+            } else if (_ == 0) {
                 guess_gpu_triangle_normal(
                     /* GPULockedVertex * to_change: */
                         &all_mesh_vertices->gpu_data[all_mesh_vertices->size]);
             }
+            
+            log_assert((
+                fabs(all_mesh_vertices->gpu_data[
+                    all_mesh_vertices->size].normal_xyz[0]) +
+                fabs(all_mesh_vertices->gpu_data[
+                    all_mesh_vertices->size].normal_xyz[1]) +
+                fabs(all_mesh_vertices->gpu_data[
+                    all_mesh_vertices->size].normal_xyz[2]))
+                        > 0.8f);
             
             if (parsed_obj->textures_count > 0) {
                 uint32_t text_i = parsed_obj->triangle_textures[triangle_i][_];
