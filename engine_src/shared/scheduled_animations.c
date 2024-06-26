@@ -82,10 +82,14 @@ static void construct_scheduled_animationA(
             &to_construct->gpu_polygon_material_vals.texturearray_i,
             &scheduledanim_ignore,
             4);
-        to_construct->gpu_polygon_material_vals.simd_padding[0] =
-            FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_material_vals.simd_padding[1] =
-            FLT_SCHEDULEDANIM_IGNORE;
+        memcpy(
+            &to_construct->gpu_polygon_material_vals.diffuse,
+            &scheduledanim_ignore,
+            4);
+        memcpy(
+            &to_construct->gpu_polygon_material_vals.specular,
+            &scheduledanim_ignore,
+            4);
         
         to_construct->lightsource_vals.flt_object_id = FLT_SCHEDULEDANIM_IGNORE;
         to_construct->lightsource_vals.flt_deleted   = FLT_SCHEDULEDANIM_IGNORE;
@@ -103,6 +107,7 @@ static void construct_scheduled_animationA(
         to_construct->lightsource_vals.reach         = FLT_SCHEDULEDANIM_IGNORE;
         to_construct->lightsource_vals.ambient       = FLT_SCHEDULEDANIM_IGNORE;
         to_construct->lightsource_vals.diffuse       = FLT_SCHEDULEDANIM_IGNORE;
+        to_construct->lightsource_vals.specular      = FLT_SCHEDULEDANIM_IGNORE;
     }
     
     float * onfinish_muls_mats =
@@ -401,7 +406,7 @@ void request_fade_and_destroy(
     modify_alpha->affected_object_id = object_id;
     modify_alpha->remaining_wait_before_next_run = wait_before_first_run;
     modify_alpha->duration_microseconds = duration_microseconds;
-    modify_alpha->lightsource_vals.reach = 0.0f;
+    modify_alpha->lightsource_vals.reach = 0.01f;
     modify_alpha->gpu_polygon_material_vals.rgba[3] = 0.0f;
     modify_alpha->delete_object_when_finished = true;
     commit_scheduled_animation(modify_alpha);

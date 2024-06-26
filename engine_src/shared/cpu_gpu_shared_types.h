@@ -71,23 +71,34 @@ typedef struct GPUPolygonCollection {
     unsigned int size;
 } GPUPolygonCollection;
 
+#define SPECULAR_GLASS 0.5f
+#define SPECULAR_PLASTIC 0.5f
+#define SPECULAR_QUARTZ 0.57f
+#define SPECULAR_ICE 0.224f
+#define SPECULAR_WATER 0.255f
+#define SPECULAR_MILK 0.277f
+#define SPECULAR_SKIN 0.35f
+#define SPECULAR_SILVER 0.508f
+#define SPECULAR_GOLD 0.62f
 typedef struct GPUPolygonMaterial {
     float rgba[4];          // 16 bytes
     int   texturearray_i;   //  4 bytes
     int   texture_i;        //  4 bytes
-    float simd_padding[2];  //  8 bytes
+    float diffuse;          //  4 bytes
+    float specular;         //  4 bytes
 } GPUPolygonMaterial;
 
 typedef struct GPULightCollection {
-    float        light_x[MAX_LIGHTS_PER_BUFFER];
-    float        light_y[MAX_LIGHTS_PER_BUFFER];
-    float        light_z[MAX_LIGHTS_PER_BUFFER];
-    float        ambient[MAX_LIGHTS_PER_BUFFER];
-    float        diffuse[MAX_LIGHTS_PER_BUFFER];
-    float        reach  [MAX_LIGHTS_PER_BUFFER];
-    float        red    [MAX_LIGHTS_PER_BUFFER];
-    float        green  [MAX_LIGHTS_PER_BUFFER];
-    float        blue   [MAX_LIGHTS_PER_BUFFER];
+    float        light_x              [MAX_LIGHTS_PER_BUFFER];
+    float        light_y              [MAX_LIGHTS_PER_BUFFER];
+    float        light_z              [MAX_LIGHTS_PER_BUFFER];
+    float        ambient              [MAX_LIGHTS_PER_BUFFER];
+    float        diffuse              [MAX_LIGHTS_PER_BUFFER];
+    float        specular             [MAX_LIGHTS_PER_BUFFER];
+    float        reach                [MAX_LIGHTS_PER_BUFFER];
+    float        red                  [MAX_LIGHTS_PER_BUFFER];
+    float        green                [MAX_LIGHTS_PER_BUFFER];
+    float        blue                 [MAX_LIGHTS_PER_BUFFER];
     unsigned int lights_size;
 } GPULightCollection;
 

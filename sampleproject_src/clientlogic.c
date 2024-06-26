@@ -100,6 +100,8 @@ void client_logic_late_startup(void) {
     teapot_request.gpu_materials[0].rgba[3]        = 1.0f;
     teapot_request.gpu_materials[0].texturearray_i =   -1;
     teapot_request.gpu_materials[0].texture_i      =   -1;
+    teapot_request.gpu_materials[0].specular       = 1.0f;
+    teapot_request.gpu_materials[0].diffuse        = 1.0f;
     teapot_request.gpu_data->ignore_lighting       = 0.0f;
     teapot_request.gpu_data->ignore_camera         = 0.0f;
     commit_zpolygon_to_render(&teapot_request);

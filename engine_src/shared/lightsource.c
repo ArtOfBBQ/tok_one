@@ -20,7 +20,8 @@ static void construct_zlight(zLightSource * to_construct) {
     to_construct->RGBA[2]       = 0.1f;
     to_construct->RGBA[3]       = 1.0f;
     to_construct->ambient       = 1.00f;
-    to_construct->diffuse       = 0.10f;
+    to_construct->diffuse       = 1.00f;
+    to_construct->specular      = 1.00f;
     to_construct->deleted       = false;
     to_construct->committed     = false;
 }
@@ -294,9 +295,11 @@ void copy_lights(
                 zlights_to_apply[i].ambient; 
             lights_for_gpu->diffuse[lights_for_gpu->lights_size] =
                 zlights_to_apply[i].diffuse;
+            lights_for_gpu->specular[lights_for_gpu->lights_size] =
+                zlights_to_apply[i].specular;
             
             lights_for_gpu->reach[lights_for_gpu->lights_size] =
-                zlights_to_apply[i].reach * zlights_to_apply[i].RGBA[3];
+                zlights_to_apply[i].reach;
             
             lights_for_gpu->lights_size += 1;
         }
@@ -340,7 +343,8 @@ void translate_lights(
         
         lights_for_gpu->ambient[i]   = zlights_to_apply[i].ambient; 
         lights_for_gpu->diffuse[i]   = zlights_to_apply[i].diffuse;
-        lights_for_gpu->reach[i]     = zlights_to_apply[i].reach;
+        lights_for_gpu->reach[i] =
+            zlights_to_apply[i].reach;
         
         lights_for_gpu->lights_size += 1;
     }

@@ -221,12 +221,18 @@ vertex_shader(
         float distance = get_distance(
             light_pos,
             rotated_pos);
-        float distance_mod = (light_collection->reach[i] + 0.05f)
-            - (distance * distance);
-        distance_mod = clamp(distance_mod, 0.0f, 1.5f);
+        
+        float distance_overflow = max(
+            (distance * 0.75f) - light_collection->reach[i], 0.0f);
+        
+        float attenuation = 1.0f /
+            (0.95f +
+            (distance_overflow * distance_overflow));
+        
+        clamp(attenuation, 0.0f, 1.0f);
         
         out.lighting += (
-            distance_mod *
+            attenuation *
             light_color *
             light_collection->ambient[i]);
         
@@ -249,8 +255,9 @@ vertex_shader(
         
         out.lighting += (
             light_color *
-            distance_mod *
-            (light_collection->diffuse[i] * 1.25f) *
+            attenuation *
+            light_collection->diffuse[i] *
+            polygon_materials[locked_material_i].diffuse *
             diffuse_dot);
         
         // specular lighting
@@ -261,9 +268,17 @@ vertex_shader(
             -object_to_light,
             z_rotated_normals);
         
-        float spec = pow(max(dot(object_to_view, reflection_ray), 0.0), 32);
+        float specular_dot = pow(
+            max(
+                dot(object_to_view, reflection_ray),
+                0.0),
+            32);
         out.lighting += (
-            1.5f * spec * light_color * distance_mod);
+            polygon_materials[locked_material_i].specular *
+            specular_dot *
+            light_color *
+            light_collection->specular[i] *
+            attenuation);
     }
     
     out.lighting = clamp(out.lighting, 0.05f, 7.5f);

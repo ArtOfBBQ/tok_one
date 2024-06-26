@@ -74,10 +74,12 @@ typedef struct zLightSource {
     float xyz[3];
     float xyz_offset[3];
     float RGBA[4];
-    float reach;       // max distance before light intensity 0
+    float reach; // light's reach
     float ambient;     // how much ambient light does this radiate?
     float diffuse;     // how much diffuse light does this radiate?
-} zLightSource;
+    float specular;
+    float simd_padding[7];
+} zLightSource; // 17 floats = 68 bytes
 
 // A buffer of zLightSources to light up your scene(s)
 // index 0 to zlights_to_apply_size will be rendered,
