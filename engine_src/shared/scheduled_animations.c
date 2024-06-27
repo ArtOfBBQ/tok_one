@@ -406,7 +406,7 @@ void request_fade_and_destroy(
     modify_alpha->affected_object_id = object_id;
     modify_alpha->remaining_wait_before_next_run = wait_before_first_run;
     modify_alpha->duration_microseconds = duration_microseconds;
-    modify_alpha->lightsource_vals.reach = 0.01f;
+    modify_alpha->lightsource_vals.reach = 0.0f;
     modify_alpha->gpu_polygon_material_vals.rgba[3] = 0.0f;
     modify_alpha->delete_object_when_finished = true;
     commit_scheduled_animation(modify_alpha);

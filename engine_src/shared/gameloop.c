@@ -280,7 +280,7 @@ void shared_gameloop_update(
         init_or_push_one_gpu_texture_array_if_needed();
     }
     
-    if (application_running == true) {
+    if (application_running) {
         
         update_terminal();
         

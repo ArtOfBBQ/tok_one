@@ -509,6 +509,29 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
+        are_equal_strings(command, "LIGHT") ||
+        are_equal_strings(command, "LIGHTS") ||
+        are_equal_strings(command, "LIGHTS MODE") ||
+        are_equal_strings(command, "HIGHLIGHT LIGHTS") ||
+        are_equal_strings(command, "DEBUG LIGHTS"))
+    {
+        window_globals->debug_lights_mode = !window_globals->debug_lights_mode;
+        if (!window_globals->debug_lights_mode) {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Exiting debug lights mode");
+        } else {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Activating debug lights mode");
+        }
+        
+        return true;
+    }
+    
+    if (
         are_equal_strings(command, "WIREFRAME") ||
         are_equal_strings(command, "WIREFRAME MODE"))
     {

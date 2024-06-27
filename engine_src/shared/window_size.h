@@ -36,6 +36,7 @@ platform layer doesn't need to do anything and can just record values directly
 #include "cpu_gpu_shared_types.h"
 
 typedef struct WindowGlobals {
+    bool32_t debug_lights_mode;
     bool32_t wireframe_mode;
     bool32_t visual_debug_mode;
     bool32_t fullscreen;

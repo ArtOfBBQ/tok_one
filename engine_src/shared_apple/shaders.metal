@@ -223,13 +223,14 @@ vertex_shader(
             rotated_pos);
         
         float distance_overflow = max(
-            (distance * 0.75f) - light_collection->reach[i], 0.0f);
+            distance - (light_collection->reach[i] * 0.75f),
+            0.0f);
         
-        float attenuation = 1.0f /
-            (0.95f +
-            (distance_overflow * distance_overflow));
+        float attenuation = 1.0f - (
+            distance_overflow /
+                light_collection->reach[i]);
         
-        clamp(attenuation, 0.0f, 1.0f);
+        attenuation = clamp(attenuation, 0.00f, 1.00f);
         
         out.lighting += (
             attenuation *
