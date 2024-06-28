@@ -92,6 +92,10 @@ void commit_lineparticle_effect(
     log_assert(to_commit->zpolygon_material.rgba[1] > -0.01f);
     log_assert(to_commit->zpolygon_material.rgba[2] > -0.01f);
     log_assert(to_commit->zpolygon_material.rgba[3] > -0.01f);
+    log_assert(to_commit->zpolygon_material.diffuse  > -0.01f);
+    log_assert(to_commit->zpolygon_material.specular > -0.01f);
+    log_assert(to_commit->zpolygon_material.diffuse  <  1.01f);
+    log_assert(to_commit->zpolygon_material.specular <  1.01f);
     log_assert(to_commit->zpolygon_gpu.xyz_multiplier[0] > 0.0f);
     log_assert(to_commit->zpolygon_gpu.xyz_multiplier[1] > 0.0f);
     log_assert(to_commit->zpolygon_gpu.xyz_multiplier[2] > 0.0f);
@@ -295,13 +299,6 @@ void add_lineparticle_effects_to_workload(
                     MAX_MATERIALS_PER_POLYGON] =
                         lineparticle_effects[i].zpolygon_material;
             
-            //            log_assert(frame_data->polygon_collection->polygons[0].
-            //                bonus_rgb[0] < 0.1f);
-            //            log_assert(frame_data->polygon_collection->polygons[0].
-            //                bonus_rgb[1] < 0.1f);
-            //            log_assert(frame_data->polygon_collection->polygons[0].
-            //                bonus_rgb[2] < 0.1f);
-            
             frame_data->polygon_materials[
                 frame_data->polygon_collection->size *
                     MAX_MATERIALS_PER_POLYGON].rgba[0] =
@@ -360,6 +357,13 @@ void add_lineparticle_effects_to_workload(
                 lineparticle_effects[i].particle_zangle_variance_pct,
                 particle_rands[2],
                 particle_rands[4]);
+            
+            frame_data->polygon_materials[
+                frame_data->polygon_collection->size *
+                    MAX_MATERIALS_PER_POLYGON].diffuse = 1.5f;
+            frame_data->polygon_materials[
+                frame_data->polygon_collection->size *
+                    MAX_MATERIALS_PER_POLYGON].specular = 0.75f;
             
             for (
                 int32_t vert_i = head_i;
