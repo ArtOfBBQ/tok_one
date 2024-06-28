@@ -6,25 +6,27 @@ WindowGlobals * window_globals = NULL;
 float screenspace_x_to_x(const float screenspace_x, const float given_z)
 {
     return (
-        ((screenspace_x * 2.0f) / window_globals->window_width) - 1.0f)
-            * given_z
-            / window_globals->aspect_ratio;
+        (((screenspace_x * 2.0f) / window_globals->window_width) - 1.0f)
+            * given_z)
+            / window_globals->projection_constants.x_multiplier;
 }
 
 float screenspace_y_to_y(const float screenspace_y, const float given_z)
 {
     return (
-        ((screenspace_y * 2.0f) / window_globals->window_height) - 1.0f)
-            * given_z;
+        (((screenspace_y * 2.0f) / window_globals->window_height) - 1.0f)
+            * given_z)
+                / window_globals->projection_constants.field_of_view_modifier;
 }
 
 float screenspace_height_to_height(
     const float screenspace_height,
     const float given_z)
 {
-    return (
+    return ((
         (screenspace_height * 2.0f) / window_globals->window_height)
-            * given_z;
+            * given_z)
+                / window_globals->projection_constants.field_of_view_modifier;
 }
 
 float screenspace_width_to_width(
@@ -32,9 +34,9 @@ float screenspace_width_to_width(
     const float given_z)
 {
     return
-        ((screenspace_width * 2.0f) / window_globals->window_width)
-            * given_z
-            / window_globals->aspect_ratio;
+        (((screenspace_width * 2.0f) / window_globals->window_width)
+            * given_z)
+            / window_globals->projection_constants.x_multiplier;
 }
 
 void init_projection_constants(void) {
@@ -51,18 +53,14 @@ void init_projection_constants(void) {
     pjc->znear = 0.03f;
     pjc->zfar =  8.50f;
     
-    // this hardcoded value was calculated with:
-    // float field_of_view = 90.0f;
-    // pjc->field_of_view_rad = ((field_of_view * 0.5f) / 180.0f) * 3.14159f;
-    pjc->field_of_view_rad = 0.7853975f;
+    float field_of_view = 75.0f;
+    pjc->field_of_view_rad = ((field_of_view * 0.5f) / 180.0f) * 3.14159f;
     
-    // this hardcoded value was calculated with:
-    // pjc->field_of_view_modifier = 1.0f / tanf(pjc->field_of_view_rad);
-    pjc->field_of_view_modifier = 1.000001326795777f;
+    pjc->field_of_view_modifier = 1.0f / tanf(pjc->field_of_view_rad);
     
     pjc->q = pjc->zfar / (pjc->zfar - pjc->znear);
-    pjc->x_multiplier =
-        window_globals->aspect_ratio * pjc->field_of_view_modifier;
+    pjc->x_multiplier = window_globals->aspect_ratio *
+        pjc->field_of_view_modifier;
     pjc->y_multiplier = pjc->field_of_view_modifier;
     
     window_globals->visual_debug_highlight_touchable_id = -1;
