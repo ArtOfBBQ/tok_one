@@ -473,9 +473,9 @@ void commit_particle_effect(ParticleEffect * to_request)
         log_assert(
             to_request->zpolygon_materials[i].specular > 0.01f);
         log_assert(
-            to_request->zpolygon_materials[i].diffuse < 1.01f);
+            to_request->zpolygon_materials[i].diffuse < 3.01f);
         log_assert(
-            to_request->zpolygon_materials[i].specular < 1.01f);
+            to_request->zpolygon_materials[i].specular < 3.01f);
     }
     
     // Reminder: The particle effect is not committed, but the zpoly should be
