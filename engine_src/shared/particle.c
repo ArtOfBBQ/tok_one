@@ -1,6 +1,5 @@
 #include "particle.h"
 
-
 LineParticle * lineparticle_effects;
 uint32_t lineparticle_effects_size;
 
@@ -35,12 +34,12 @@ static void construct_lineparticle_effect_no_zpoly(
     to_construct->waypoint_a[1] = 1.0f;
     to_construct->waypoint_scalefactor[1] = 1.0f;
     
-    to_construct->waypoints_size = 2;
-    to_construct->waypoint_duration[0] = 500000;
-    to_construct->trail_delay = 300000;
-    to_construct->particle_count = 500;
-    to_construct->particle_zangle_variance_pct = 314;
-    to_construct->particle_rgb_variance_pct = 15;
+    to_construct->waypoints_size                    = 2;
+    to_construct->waypoint_duration[0]              = 500000;
+    to_construct->trail_delay                       = 300000;
+    to_construct->particle_count                    = 500;
+    to_construct->particle_zangle_variance_pct      = 314;
+    to_construct->particle_rgb_variance_pct         = 15;
     to_construct->particle_scalefactor_variance_pct = 25;
 }
 
@@ -360,7 +359,7 @@ void add_lineparticle_effects_to_workload(
             
             frame_data->polygon_materials[
                 frame_data->polygon_collection->size *
-                    MAX_MATERIALS_PER_POLYGON].diffuse = 1.5f;
+                    MAX_MATERIALS_PER_POLYGON].diffuse = 0.75f;
             frame_data->polygon_materials[
                 frame_data->polygon_collection->size *
                     MAX_MATERIALS_PER_POLYGON].specular = 0.75f;
@@ -451,8 +450,7 @@ ParticleEffect * next_particle_effect(void) {
     return return_value;
 }
 
-void commit_particle_effect(
-    ParticleEffect * to_request)
+void commit_particle_effect(ParticleEffect * to_request)
 {
     log_assert(
         to_request->zpolygon_cpu.mesh_id >= 0);
@@ -460,14 +458,32 @@ void commit_particle_effect(
         to_request->zpolygon_cpu.visible);
     log_assert(
         to_request->zpolygon_materials[0].rgba[3] > 0.05f);
+        
+    log_assert(
+        all_mesh_summaries[to_request->zpolygon_cpu.mesh_id].
+            materials_size > 0);
+    for (
+        uint32_t i = 0;
+        i < all_mesh_summaries[to_request->zpolygon_cpu.mesh_id].
+            materials_size;
+        i++)
+    {
+        log_assert(
+            to_request->zpolygon_materials[i].diffuse > 0.01f);
+        log_assert(
+            to_request->zpolygon_materials[i].specular > 0.01f);
+        log_assert(
+            to_request->zpolygon_materials[i].diffuse < 1.01f);
+        log_assert(
+            to_request->zpolygon_materials[i].specular < 1.01f);
+    }
     
     // Reminder: The particle effect is not committed, but the zpoly should be
     log_assert(to_request->zpolygon_cpu.committed);
     
     log_assert(
         (uint32_t)to_request->zpolygon_cpu.mesh_id < all_mesh_summaries_size);
-    log_assert(
-        !to_request->deleted);
+    log_assert(!to_request->deleted);
     
     // Reminder: The particle effect is not committed, but the zpoly should be
     log_assert(!to_request->committed);
@@ -618,6 +634,11 @@ void add_particle_effects_to_workload(
                     &particle_effects[i].zpolygon_gpu,
                 /* size_t n: */
                     sizeof(GPUPolygon));
+            
+            log_assert(
+                particle_effects[i].zpolygon_materials[0].diffuse > 0.0f);
+            log_assert(
+                particle_effects[i].zpolygon_materials[0].specular > 0.0f);
             
             memcpy(
                 &frame_data->polygon_materials[

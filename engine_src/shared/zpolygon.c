@@ -271,6 +271,8 @@ void construct_zpolygon(
     to_construct->gpu_materials[0].rgba[1] = 0.75f;
     to_construct->gpu_materials[0].rgba[2] = 0.75f;
     to_construct->gpu_materials[0].rgba[3] = 0.75f;
+    to_construct->gpu_materials[0].diffuse = 0.75f;
+    to_construct->gpu_materials[0].specular = 0.75f;
     to_construct->gpu_materials[0].texture_i = -1;
     to_construct->gpu_materials[0].texturearray_i = -1;
 }

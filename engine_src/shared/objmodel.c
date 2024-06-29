@@ -1356,6 +1356,21 @@ void create_shattered_version_of_mesh(
                 biggest_area_head_i + midline_start_vert_i].xyz[2] +
             all_mesh_vertices->gpu_data[
                 biggest_area_head_i + midline_end_vert_i].xyz[2]) / 2;
+        mid_of_line.normal_xyz[0] =
+            (all_mesh_vertices->gpu_data[
+                biggest_area_head_i + midline_start_vert_i].normal_xyz[0] +
+            all_mesh_vertices->gpu_data[
+                biggest_area_head_i + midline_end_vert_i].normal_xyz[0]) / 2;
+        mid_of_line.normal_xyz[1] =
+            (all_mesh_vertices->gpu_data[
+                biggest_area_head_i + midline_start_vert_i].normal_xyz[1] +
+            all_mesh_vertices->gpu_data[
+                biggest_area_head_i + midline_end_vert_i].normal_xyz[1]) / 2;
+        mid_of_line.normal_xyz[2] =
+            (all_mesh_vertices->gpu_data[
+                biggest_area_head_i + midline_start_vert_i].normal_xyz[2] +
+            all_mesh_vertices->gpu_data[
+                biggest_area_head_i + midline_end_vert_i].normal_xyz[2]) / 2;
         mid_of_line.uv[0] =
             (all_mesh_vertices->gpu_data[
                 biggest_area_head_i + midline_start_vert_i].uv[0] +

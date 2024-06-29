@@ -330,6 +330,16 @@ void request_shatter_and_destroy(
                     zpolygons_to_render->gpu_materials[
                         (zp_i * MAX_MATERIALS_PER_POLYGON)+mat_i].
                             texture_i);
+            log_assert(
+                shatter_effect->zpolygon_materials[mat_i].diffuse ==
+                    zpolygons_to_render->gpu_materials[
+                        (zp_i * MAX_MATERIALS_PER_POLYGON)+mat_i].
+                            diffuse);
+            log_assert(
+                shatter_effect->zpolygon_materials[mat_i].specular ==
+                    zpolygons_to_render->gpu_materials[
+                        (zp_i * MAX_MATERIALS_PER_POLYGON)+mat_i].
+                            specular);
         }
         #endif
         
