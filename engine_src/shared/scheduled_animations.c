@@ -149,7 +149,7 @@ ScheduledAnimation * next_scheduled_animation(
     
     if (return_value == NULL) {
         log_assert(
-            scheduled_animations_size + 1 < SCHEDULED_ANIMATIONS_ARRAYSIZE);
+            scheduled_animations_size + 1000 < SCHEDULED_ANIMATIONS_ARRAYSIZE);
         return_value = &scheduled_animations[scheduled_animations_size++];
     }
     
@@ -178,7 +178,8 @@ void commit_scheduled_animation(ScheduledAnimation * to_commit) {
                 scheduled_animations[i].affected_object_id ==
                     to_commit->affected_object_id &&
                 scheduled_animations[i].committed &&
-                !scheduled_animations[i].deleted)
+                !scheduled_animations[i].deleted &&
+                to_commit != &scheduled_animations[i])
             {
                 scheduled_animations[i].deleted = true;
             }

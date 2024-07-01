@@ -458,7 +458,7 @@ void commit_particle_effect(ParticleEffect * to_request)
         to_request->zpolygon_cpu.visible);
     log_assert(
         to_request->zpolygon_materials[0].rgba[3] > 0.05f);
-        
+    
     log_assert(
         all_mesh_summaries[to_request->zpolygon_cpu.mesh_id].
             materials_size > 0);
@@ -559,7 +559,7 @@ void add_particle_effects_to_workload(
         interval_between_spawns =
             particle_effects[i].pause_between_spawns;
         
-        uint32_t particles_active = 0;
+        float particles_active = 0;
         
         int32_t vert_head_i = particle_effects[i].use_shattered_mesh ?
             all_mesh_summaries[
@@ -601,8 +601,6 @@ void add_particle_effects_to_workload(
             {
                 continue;
             }
-            
-            particles_active += 1;
             
             for (
                 int32_t _ = 0;
@@ -685,12 +683,14 @@ void add_particle_effects_to_workload(
             float fspawn_lifetime_so_far = (float)spawn_lifetime_so_far;
             SIMD_FLOAT simdf_lifetime = simd_set_float(fspawn_lifetime_so_far);
             SIMD_FLOAT simdf_lifetime_exp = simd_div_floats(
-                simdf_lifetime, simd_set_float(exponential_divisor));
+                simdf_lifetime,
+                simd_set_float(exponential_divisor));
             simdf_lifetime_exp = simd_max_floats(
                 simdf_lifetime_exp,
                 simd_set_float(one));
             simdf_lifetime_exp = simd_mul_floats(
-                simdf_lifetime_exp, simdf_lifetime_exp);
+                simdf_lifetime_exp,
+                simdf_lifetime_exp);
             
             for (
                 uint32_t j = 0;
@@ -769,12 +769,17 @@ void add_particle_effects_to_workload(
                     (long)(SIMD_FLOAT_LANES * sizeof(float)) == 0);
                 simd_store_floats((recipient_at + j), recip);
             }
+            
             if (frame_data->polygon_collection->polygons[
                 frame_data->polygon_collection->size].scale_factor < 0.01f)
             {
                 frame_data->polygon_collection->polygons[
-                    frame_data->polygon_collection->size].scale_factor = 0.01f;
+                    frame_data->polygon_collection->size].scale_factor = 0.001f;
             }
+            
+            particles_active += (1.0f *
+                frame_data->polygon_collection->polygons[
+                    frame_data->polygon_collection->size].scale_factor);
             
             frame_data->polygon_collection->size += 1;
             log_assert(frame_data->polygon_collection->size <
@@ -784,7 +789,9 @@ void add_particle_effects_to_workload(
         if (particles_active < 1) {
             particle_effects[i].random_seed =
                 (uint32_t)tok_rand() % RANDOM_SEQUENCE_SIZE;
-        } else if (particle_effects[i].generate_light) {
+        }
+        
+        if (particle_effects[i].generate_light) {
             frame_data->light_collection->light_x[
                 frame_data->light_collection->lights_size] =
                     particle_effects[i].zpolygon_gpu.xyz[0];
@@ -810,15 +817,24 @@ void add_particle_effects_to_workload(
                     particle_effects[i].light_reach;
             
             float light_strength =
-                particle_effects[i].light_strength * (
-                    (float)particles_active / (float)spawns_in_duration);
+                particles_active / (float)spawns_in_duration;
+            
+            log_assert(light_strength < 1.25f);
+            log_assert(light_strength >= 0.0f);
             
             frame_data->light_collection->ambient[
                 frame_data->light_collection->lights_size] =
-                        0.05f * light_strength;
+                    0.01f *
+                    light_strength *
+                    particle_effects[i].light_strength;
             frame_data->light_collection->diffuse[
                 frame_data->light_collection->lights_size] =
-                    1.0f * light_strength;
+                    light_strength *
+                    particle_effects[i].light_strength;
+            frame_data->light_collection->reach[
+                frame_data->light_collection->lights_size] =
+                    light_strength *
+                    particle_effects[i].light_reach;
             
             frame_data->light_collection->lights_size += 1;
         }
