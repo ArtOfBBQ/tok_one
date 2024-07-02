@@ -222,6 +222,8 @@ uint32_t platform_init_mutex_and_return_id(void);
 /* returns true if mutex succesfully locked */
 bool32_t platform_mutex_trylock(const uint32_t mutex_id);
 
+void platform_assert_mutex_locked(const uint32_t mutex_id);
+
 void platform_mutex_lock(const uint32_t mutex_id);
 
 void platform_mutex_unlock(const uint32_t mutex_id);
