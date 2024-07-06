@@ -95,170 +95,198 @@ inline static void add_point_vertex(
 
 inline static void draw_hitbox(
     GPUDataForSingleFrame * frame_data,
-    const float x,
-    const float y,
-    const float z,
-    const float width,
-    const float height,
-    const float depth,
-    const float x_angle,
-    const float y_angle,
-    const float z_angle,
+    const float xyz[3],
+    const float xyz_offset[3],
+    const float hitbox_leftbottomfront[3],
+    const float hitbox_righttopback[3],
+    const float xyz_angle[3],
     const float ignore_camera)
 {
-    float left_x   = x - (width / 2);
-    float right_x  = x + (width / 2);
-    float top_y    = y + (height / 2);
-    float bottom_y = y - (height / 2);
-    float front_z  = z - (depth / 2);
-    float back_z   = z + (depth / 2);
+    float leftbottomfront[3];
+    memcpy(leftbottomfront, hitbox_leftbottomfront, sizeof(float) * 3);
     
-    zVertex topleftfront;
-    topleftfront.x = left_x;
-    topleftfront.y = top_y;
-    topleftfront.z = front_z;
-    x_rotate_zvertex(
-        &topleftfront,
-        x_angle);
-    y_rotate_zvertex(
-        &topleftfront,
-        y_angle);
-    z_rotate_zvertex(
-        &topleftfront,
-        z_angle);
+    float righttopback[3];
+    memcpy(righttopback, hitbox_righttopback, sizeof(float) * 3);
     
-    zVertex rightbottomback;
-    rightbottomback.x = right_x;
-    rightbottomback.y = bottom_y;
-    rightbottomback.z = back_z;
-    x_rotate_zvertex(
-        &rightbottomback,
-        x_angle);
-    y_rotate_zvertex(
-        &rightbottomback,
-        y_angle);
-    z_rotate_zvertex(
-        &rightbottomback,
-        z_angle);
+    x_rotate_zvertex_f3(leftbottomfront, -xyz_angle[0]);
+    y_rotate_zvertex_f3(leftbottomfront, -xyz_angle[1]);
+    z_rotate_zvertex_f3(leftbottomfront, -xyz_angle[2]);
+    
+    x_rotate_zvertex_f3(righttopback, -xyz_angle[0]);
+    y_rotate_zvertex_f3(righttopback, -xyz_angle[1]);
+    z_rotate_zvertex_f3(righttopback, -xyz_angle[2]);
+    
+    // TODO: test if offsets work
+    leftbottomfront[0] += xyz_offset[0];
+    leftbottomfront[1] += xyz_offset[1];
+    leftbottomfront[2] += xyz_offset[2];
     
     // left top front -> right top front
     add_point_vertex(
         frame_data,
-        topleftfront.x, topleftfront.y, topleftfront.z,
+        leftbottomfront[0] + xyz[0],
+        righttopback[1] + xyz[1],
+        leftbottomfront[2] + xyz[2],
         ignore_camera);
     add_point_vertex(
         frame_data,
-        rightbottomback.x, topleftfront.y, topleftfront.z,
+        righttopback[0] + xyz[0],
+        righttopback[1] + xyz[1],
+        leftbottomfront[2] + xyz[2],
         ignore_camera);
     
     // left bottom front -> right bottom front
     add_point_vertex(
         frame_data,
-        topleftfront.x, rightbottomback.y, topleftfront.z,
+        leftbottomfront[0] + xyz[0],
+        leftbottomfront[1] + xyz[1],
+        leftbottomfront[2] + xyz[2],
         ignore_camera);
     add_point_vertex(
         frame_data,
-        rightbottomback.x, rightbottomback.y, topleftfront.z,
+        righttopback[0] + xyz[0],
+        leftbottomfront[1] + xyz[1],
+        leftbottomfront[2] + xyz[2],
         ignore_camera);
     
     // left top back -> right top back
     add_point_vertex(
         frame_data,
-        topleftfront.x, topleftfront.y, rightbottomback.z,
+        leftbottomfront[0] + xyz[0],
+        righttopback[1] + xyz[1],
+        righttopback[2] + xyz[2],
         ignore_camera);
     add_point_vertex(
         frame_data,
-        rightbottomback.x, topleftfront.y, rightbottomback.z,
+        righttopback[0] + xyz[0],
+        righttopback[1] + xyz[1],
+        righttopback[2] + xyz[2],
         ignore_camera);
     
     // left bottom back -> right bottom back
     add_point_vertex(
         frame_data,
-        topleftfront.x, rightbottomback.y, rightbottomback.z,
+        leftbottomfront[0] + xyz[0],
+        leftbottomfront[1] + xyz[1],
+        righttopback[2] + xyz[2],
         ignore_camera);
     add_point_vertex(
         frame_data,
-        rightbottomback.x, rightbottomback.y, rightbottomback.z,
+        righttopback[0] + xyz[0],
+        leftbottomfront[1] + xyz[1],
+        righttopback[2] + xyz[2],
         ignore_camera);
     
     // left top front -> left top back
     add_point_vertex(
         frame_data,
-        topleftfront.x, topleftfront.y, topleftfront.z,
+        leftbottomfront[0] + xyz[0],
+        righttopback[1] + xyz[1],
+        leftbottomfront[2] + xyz[2],
         ignore_camera);
     add_point_vertex(
         frame_data,
-        topleftfront.x, topleftfront.y, rightbottomback.z,
+        leftbottomfront[0] + xyz[0],
+        righttopback[1] + xyz[1],
+        righttopback[2] + xyz[2],
         ignore_camera);
     
     // right top front -> right top back
     add_point_vertex(
         frame_data,
-        rightbottomback.x, topleftfront.y, topleftfront.z,
+        righttopback[0] + xyz[0],
+        righttopback[1] + xyz[1],
+        leftbottomfront[2] + xyz[2],
         ignore_camera);
     add_point_vertex(
         frame_data,
-        rightbottomback.x, topleftfront.y, rightbottomback.z,
+        righttopback[0] + xyz[0],
+        righttopback[1] + xyz[1],
+        righttopback[2] + xyz[2],
         ignore_camera);
     
     // left bottom front -> left bottom back
     add_point_vertex(
         frame_data,
-        topleftfront.x, rightbottomback.y, topleftfront.z,
+        leftbottomfront[0] + xyz[0],
+        leftbottomfront[1] + xyz[1],
+        leftbottomfront[2] + xyz[2],
         ignore_camera);
     add_point_vertex(
         frame_data,
-        topleftfront.x, rightbottomback.y, rightbottomback.z,
+        leftbottomfront[0] + xyz[0],
+        leftbottomfront[1] + xyz[1],
+        righttopback[2] + xyz[2],
         ignore_camera);
     
     // right bottom front -> right bottom back
     add_point_vertex(
         frame_data,
-        rightbottomback.x, rightbottomback.y, topleftfront.z,
+        righttopback[0] + xyz[0],
+        leftbottomfront[1] + xyz[1],
+        leftbottomfront[2] + xyz[2],
         ignore_camera);
     add_point_vertex(
         frame_data,
-        rightbottomback.x, rightbottomback.y, rightbottomback.z,
+        righttopback[0] + xyz[0],
+        leftbottomfront[1] + xyz[1],
+        righttopback[2] + xyz[2],
         ignore_camera);
     
     // left top front -> left bottom front
     add_point_vertex(
         frame_data,
-        topleftfront.x, topleftfront.y, topleftfront.z,
+        leftbottomfront[0] + xyz[0],
+        righttopback[1] + xyz[1],
+        leftbottomfront[2] + xyz[2],
         ignore_camera);
     add_point_vertex(
         frame_data,
-        topleftfront.x, rightbottomback.y, topleftfront.z,
+        leftbottomfront[0] + xyz[0],
+        leftbottomfront[1] + xyz[1],
+        leftbottomfront[2] + xyz[2],
         ignore_camera);
     
     // right top front -> right bottom front
     add_point_vertex(
         frame_data,
-        rightbottomback.x, topleftfront.y, topleftfront.z,
+        righttopback[0] + xyz[0],
+        righttopback[1] + xyz[1],
+        leftbottomfront[2] + xyz[2],
         ignore_camera);
     add_point_vertex(
         frame_data,
-        rightbottomback.x, rightbottomback.y, topleftfront.z,
+        righttopback[0] + xyz[0],
+        leftbottomfront[1] + xyz[1],
+        leftbottomfront[2] + xyz[2],
         ignore_camera);
     
     // left top back -> left bottom back
     add_point_vertex(
         frame_data,
-        topleftfront.x, topleftfront.y, rightbottomback.z,
+        leftbottomfront[0] + xyz[0],
+        righttopback[1] + xyz[1],
+        righttopback[2] + xyz[2],
         ignore_camera);
     add_point_vertex(
         frame_data,
-        topleftfront.x, rightbottomback.y, rightbottomback.z,
+        leftbottomfront[0] + xyz[0],
+        leftbottomfront[1] + xyz[1],
+        righttopback[2] + xyz[2],
         ignore_camera);
     
     // right top back -> right bottom back
     add_point_vertex(
         frame_data,
-        rightbottomback.x, topleftfront.y, rightbottomback.z,
+        righttopback[0] + xyz[0],
+        righttopback[1] + xyz[1],
+        righttopback[2] + xyz[2],
         ignore_camera);
     add_point_vertex(
         frame_data,
-        rightbottomback.x, rightbottomback.y, rightbottomback.z,
+        righttopback[0] + xyz[0],
+        leftbottomfront[1] + xyz[1],
+        righttopback[2] + xyz[2],
         ignore_camera);
 }
 
@@ -282,32 +310,21 @@ inline static void zpolygon_hitboxes_to_lines(
                 is_last_clicked)
             {
                 draw_hitbox(
-                    /* frame data: */
+                    /* GPUDataForSingleFrame * frame_data: */
                         frame_data,
-                    /* const float x: */
-                        zpolygons_to_render->gpu_data[zp_i].xyz[0] +
-                            zpolygons_to_render->gpu_data[zp_i].xyz_offset[0],
-                    /* const float y: */
-                        zpolygons_to_render->gpu_data[zp_i].xyz[1] +
-                            zpolygons_to_render->gpu_data[zp_i].xyz_offset[1],
-                    /* const float z: */
-                        zpolygons_to_render->gpu_data[zp_i].xyz[2] +
-                            zpolygons_to_render->gpu_data[zp_i].xyz_offset[2],
-                    /* const float width: */
-                        zpolygons_to_render->cpu_data[zp_i].hitbox_width,
-                    /* const float height: */
-                        zpolygons_to_render->cpu_data[zp_i].hitbox_height,
-                    /* const float depth: */
-                        zpolygons_to_render->cpu_data[zp_i].hitbox_depth,
-                    /* const float x_angle: */
-                        -zpolygons_to_render->gpu_data[zp_i].xyz_angle[0],
-                    /* const float y_angle: */
-                        -zpolygons_to_render->gpu_data[zp_i].xyz_angle[1],
-                    /* const float z_angle: */
-                        -zpolygons_to_render->gpu_data[zp_i].xyz_angle[2],
+                    /* const float xyz[3]: */
+                        zpolygons_to_render->gpu_data[zp_i].xyz,
+                    /* const float xyz_offset[3]: */
+                        zpolygons_to_render->gpu_data[zp_i].xyz_offset,
+                    /* const float *hitbox_leftbottomfront: */
+                        zpolygons_to_render->cpu_data[zp_i].hitbox_leftbottomfront,
+                    /* const float *hitbox_righttopback: */
+                        zpolygons_to_render->cpu_data[zp_i].hitbox_righttopback,
+                    /* const float *xyz_angle: */
+                        zpolygons_to_render->gpu_data[zp_i].xyz_angle,
                     /* const float ignore_camera: */
                         zpolygons_to_render->gpu_data[zp_i].ignore_camera);
-            }
+               }
         }
     }
     #else
@@ -502,18 +519,7 @@ void hardware_render(
             i < frame_data->light_collection->lights_size;
             i++)
         {
-            draw_hitbox(
-                frame_data,
-                frame_data->light_collection->light_x[i],
-                frame_data->light_collection->light_y[i],
-                frame_data->light_collection->light_z[i],
-                0.1f,
-                0.1f,
-                0.1f,
-                /* x_angle: */ 0.0f,
-                /* y_angle: */ 0.0f,
-                /* z_angle: */ 0.0f,
-                /* ignore camera: */ 0.0f);
+            // TODO: draw light hitboxes
         }
     }
 }

@@ -8,6 +8,7 @@
 extern "C" {
 #endif
 
+#if 0
 typedef struct zVertex {
     float x;
     float y;
@@ -20,25 +21,12 @@ typedef struct zTriangle {
     zVertex normal;
     int32_t parent_material_i;
 } zTriangle;
+#endif
 
 void normalize_zvertex_f3(
     float to_normalize_xyz[3]);
 void normalize_vertex(
     float * to_normalize);
-void normalize_zvertex(
-    zVertex * to_normalize);
-
-zVertex crossproduct_of_zvertices(
-    const zVertex * a,
-    const zVertex * b);
-
-float get_squared_distance(
-    const zVertex a,
-    const zVertex b);
-float get_squared_triangle_length(
-    const zTriangle * subject);
-float get_triangle_area(
-    const zTriangle * subject);
 
 #ifdef __cplusplus
 }

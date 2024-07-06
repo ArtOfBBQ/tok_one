@@ -781,15 +781,6 @@ int32_t new_mesh_id_from_resource_asserts(
                         &all_mesh_vertices->gpu_data[all_mesh_vertices->size]);
             }
             
-            log_assert((
-                fabs(all_mesh_vertices->gpu_data[
-                    all_mesh_vertices->size].normal_xyz[0]) +
-                fabs(all_mesh_vertices->gpu_data[
-                    all_mesh_vertices->size].normal_xyz[1]) +
-                fabs(all_mesh_vertices->gpu_data[
-                    all_mesh_vertices->size].normal_xyz[2]))
-                        > 0.8f);
-            
             if (parsed_obj->textures_count > 0) {
                 uint32_t text_i = parsed_obj->triangle_textures[triangle_i][_];
                 

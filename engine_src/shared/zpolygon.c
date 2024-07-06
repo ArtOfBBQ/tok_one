@@ -7,13 +7,6 @@ void set_zpolygon_hitbox(
 {
     log_assert(all_mesh_summaries[mesh_cpu->mesh_id].vertices_size > 0);
     
-    float top    = 0.0f;
-    float bottom = 0.0f;
-    float left   = 0.0f;
-    float right  = 0.0f;
-    float back   = 0.0f;
-    float front  = 0.0f;
-    
     int32_t vertices_tail_i =
         all_mesh_summaries[mesh_cpu->mesh_id].vertices_head_i +
         all_mesh_summaries[mesh_cpu->mesh_id].vertices_size -
@@ -34,38 +27,36 @@ void set_zpolygon_hitbox(
             all_mesh_vertices->gpu_data[vert_i].xyz[2] *
                     mesh_gpu->xyz_multiplier[2];
         
-        if (cur_vertex_x < left) {
-            left = cur_vertex_x;
-        } else if (cur_vertex_x > right) {
-            right = cur_vertex_x;
+        if (cur_vertex_x < mesh_cpu->hitbox_leftbottomfront[0]) {
+            mesh_cpu->hitbox_leftbottomfront[0] = cur_vertex_x;
+        } else if (cur_vertex_x > mesh_cpu->hitbox_righttopback[0]) {
+            mesh_cpu->hitbox_righttopback[0] = cur_vertex_x;
         }
         
-        if (cur_vertex_y < bottom) {
-            bottom = cur_vertex_y;
-        } else if (cur_vertex_y > top) {
-            top = cur_vertex_y;
+        if (cur_vertex_y < mesh_cpu->hitbox_leftbottomfront[1]) {
+            mesh_cpu->hitbox_leftbottomfront[1] = cur_vertex_y;
+        } else if (cur_vertex_y > mesh_cpu->hitbox_righttopback[1]) {
+            mesh_cpu->hitbox_righttopback[1] = cur_vertex_y;
         }
         
-        if (cur_vertex_z < front) {
-            front = cur_vertex_z;
-        } else if (cur_vertex_z > back) {
-            back = cur_vertex_z;
+        if (cur_vertex_z < mesh_cpu->hitbox_leftbottomfront[2]) {
+            mesh_cpu->hitbox_leftbottomfront[2] = cur_vertex_z;
+        } else if (cur_vertex_z > mesh_cpu->hitbox_righttopback[2]) {
+            mesh_cpu->hitbox_righttopback[2] = cur_vertex_z;
         }
     }
     
-    log_assert(bottom <= 0.0f);
-    log_assert(top    >= 0.0f);
+    log_assert(mesh_cpu->hitbox_leftbottomfront[1] <= 0.0f);
+    log_assert(mesh_cpu->hitbox_righttopback[1] >= 0.0f);
     
-    log_assert(left   <= 0.0f);
-    log_assert(right  >= 0.0f);
+    log_assert(mesh_cpu->hitbox_leftbottomfront[0]   <= 0.0f);
+    log_assert(mesh_cpu->hitbox_righttopback[0] >= 0.0f);
     
-    log_assert(back   >= 0.0f);
-    log_assert(front  <= 0.0f);
-    log_assert(back   >= front);
-    
-    mesh_cpu->hitbox_height = (top - bottom) + 0.001f;
-    mesh_cpu->hitbox_width  = (right - left) + 0.001f;
-    mesh_cpu->hitbox_depth  = (back - front) + 0.001f;
+    log_assert(mesh_cpu->hitbox_righttopback[2] >= 0.0f);
+    log_assert(mesh_cpu->hitbox_leftbottomfront[2] <= 0.0f);
+    log_assert(
+        mesh_cpu->hitbox_righttopback[2] >=
+            mesh_cpu->hitbox_leftbottomfront[2]);
 }
 
 void request_next_zpolygon(PolygonRequest * stack_recipient)
@@ -277,185 +268,30 @@ void construct_zpolygon(
     to_construct->gpu_materials[0].texturearray_i = -1;
 }
 
-zTriangle
-x_rotate_ztriangle(
-    const zTriangle * input,
-    const float angle)
-{
-    zTriangle return_value = *input;
-    
-    if (angle == 0.0f) {
-        return return_value;
-    }
-    
-    for (
-        uint32_t i = 0;
-        i < 3;
-        i++)
-    {
-        return_value.vertices[i] = x_rotate_zvertex(
-            &return_value.vertices[i],
-            angle);
-        
-        return_value.normal = x_rotate_zvertex(
-            &return_value.normal,
-            angle);
-    }
-    
-    return return_value;
-}
-
-
-zTriangle
-z_rotate_ztriangle(
-    const zTriangle * input,
-    const float angle)
-{
-    zTriangle return_value = *input;
-    
-    if (angle == 0.0f) {
-        return return_value;
-    }
-    
-    for (
-        uint32_t i = 0;
-        i < 3;
-        i++)
-    {
-        return_value.vertices[i] = z_rotate_zvertex(
-            &return_value.vertices[i],
-            angle);
-        
-        return_value.normal = z_rotate_zvertex(
-            &return_value.normal,
-            angle);
-    }
-    
-    return return_value;
-}
-
-zTriangle
-y_rotate_ztriangle(
-    const zTriangle * input,
-    const float angle)
-{
-    zTriangle return_value = *input;
-    
-    if (angle == 0.0f) {
-        return return_value;
-    }
-    
-    for (
-        uint32_t i = 0;
-        i < 3;
-        i++)
-    {
-        return_value.vertices[i] = y_rotate_zvertex(
-            &return_value.vertices[i],
-            angle);
-        
-        return_value.normal = y_rotate_zvertex(
-            &return_value.normal,
-            angle);
-    }
-    
-    return return_value;
-}
-
-zTriangle translate_ztriangle(
-    const zTriangle * input,
-    const float by_x,
-    const float by_y,
-    const float by_z)
-{
-    zTriangle return_value = *input;
-    
-    for (uint32_t i = 0; i < 3; i++) {
-        return_value.vertices[i].x += by_x;
-        return_value.vertices[i].y += by_y;
-        return_value.vertices[i].z += by_z;
-    }
-    
-    return return_value;
-}
-
-float get_avg_z(
-    const zTriangle * of_triangle)
-{
-    return (
-        of_triangle->vertices[0].z +
-        of_triangle->vertices[1].z +
-        of_triangle->vertices[2].z) / 3.0f;
-}
-
-int sorter_cmpr_lowest_z(
-    const void * a,
-    const void * b)
-{
-    return get_avg_z((zTriangle *)a) < get_avg_z((zTriangle *)b) ? -1 : 1;
-}
-
-float get_distance(
-    const zVertex p1,
-    const zVertex p2)
+float get_distance_f3(
+    const float p1[3],
+    const float p2[3])
 {
     return sqrtf(
-        ((p1.x - p2.x) * (p1.x - p2.x))
-        + ((p1.y - p2.y) * (p1.y - p2.y))
-        + ((p1.z - p2.z) * (p1.z - p2.z)));
+        ((p1[0] - p2[0]) * (p1[0] - p2[0])) +
+        ((p1[1] - p2[1]) * (p1[1] - p2[1])) +
+        ((p1[2] - p2[2]) * (p1[2] - p2[2])));
 }
 
-float distance_to_ztriangle(
-    const zVertex p1,
-    const zTriangle p2)
-{
-    return (
-        get_distance(p1, p2.vertices[0]) +
-        get_distance(p1, p2.vertices[1]) +
-        get_distance(p1, p2.vertices[2])) / 3.0f;
-}
-
-zVertex get_ztriangle_normal(
-    const zTriangle * input)
-{
-    uint32_t vertex_0 = 0;
-    uint32_t vertex_1 = 1;
-    uint32_t vertex_2 = 2;
-    
-    zVertex normal;
-    zVertex vector1;
-    zVertex vector2;
-    
-    vector1.x = input->vertices[vertex_1].x - input->vertices[vertex_0].x;
-    vector1.y = input->vertices[vertex_1].y - input->vertices[vertex_0].y;
-    vector1.z = input->vertices[vertex_1].z - input->vertices[vertex_0].z;
-    
-    vector2.x = input->vertices[vertex_2].x - input->vertices[vertex_0].x;
-    vector2.y = input->vertices[vertex_2].y - input->vertices[vertex_0].y;
-    vector2.z = input->vertices[vertex_2].z - input->vertices[vertex_0].z;
-    
-    normal.x = (vector1.y * vector2.z) - (vector1.z * vector2.y);
-    normal.y = (vector1.z * vector2.x) - (vector1.x * vector2.z);
-    normal.z = (vector1.x * vector2.y) - (vector1.y * vector2.x);
-    
-    return normal;
-}
-
-float dot_of_zvertices(
-    const zVertex * a,
-    const zVertex * b)
+float dot_of_vertices_f3(
+    const float a[3],
+    const float b[3])
 {
     float x =
         (
-            a->x *
-            b->x
+            a[0] * b[0]
         );
     x = (isnan(x) || !isfinite(x)) ? FLOAT32_MAX : x;
     
-    float y = (a->y * b->y);
+    float y = (a[1] * b[1]);
     y = (isnan(y) || !isfinite(y)) ? FLOAT32_MAX : y;
     
-    float z = (a->z * b->z);
+    float z = (a[2] * b[2]);
     z = (isnan(z) || !isfinite(z)) ? FLOAT32_MAX : z;
     
     float return_value = x + y + z;
@@ -465,40 +301,12 @@ float dot_of_zvertices(
     return return_value;
 }
 
-void zcamera_move_forward(
-    GPUCamera * to_move,
-    const float distance)
-{
-    // pick a point that would be in front of the camera
-    // if it was not angled in any way, and if it was at
-    // the origin
-    zVertex forward_if_camera_was_unrotated_at_origin;
-    forward_if_camera_was_unrotated_at_origin.x = 0.0f;
-    forward_if_camera_was_unrotated_at_origin.y = 0.0f;
-    forward_if_camera_was_unrotated_at_origin.z = distance;
-    
-    zVertex x_rotated = x_rotate_zvertex(
-        &forward_if_camera_was_unrotated_at_origin,
-        camera.xyz_angle[0]);
-    zVertex y_rotated = y_rotate_zvertex(
-        &x_rotated,
-        camera.xyz_angle[1]);
-    zVertex final = z_rotate_zvertex(
-        &y_rotated,
-        camera.xyz_angle[2]);
-    
-    // add to the camera's current position
-    to_move->xyz[0] += final.x;
-    to_move->xyz[1] += final.y;
-    to_move->xyz[2] += final.z;
-}
-
 bool32_t ray_intersects_zpolygon_hitbox(
-    const zVertex * ray_origin,
-    const zVertex * ray_direction,
+    const float ray_origin[3],
+    const float ray_direction[3],
     const zPolygonCPU * cpu_data,
     const GPUPolygon  * gpu_data,
-    zVertex * recipient_hit_point)
+    float * recipient_hit_point)
 {
     /*
     Reminder: The plane offset is named 'D' in this explanation:
@@ -512,62 +320,59 @@ bool32_t ray_intersects_zpolygon_hitbox(
     float D = -dotProduct(N, v0);"
     (source https://www.scratchapixel.com
     */
-    zVertex     mesh_center;
-    mesh_center.x = gpu_data->xyz[0];
-    mesh_center.y = gpu_data->xyz[1];
-    mesh_center.z = gpu_data->xyz[2];
+    float mesh_center[3];
+    mesh_center[0] = gpu_data->xyz[0];
+    mesh_center[1] = gpu_data->xyz[1];
+    mesh_center[2] = gpu_data->xyz[2];
     
-    zVertex plane_normals[6];
+    float plane_normals[6][3];
     float plane_offsets[6];
     float t_values[6];
     bool32_t hit_plane[6];
-    zVertex hit_points[6];
+    float hit_points[6][3];
     
     // These are normals, but they're also offsets to turn the mesh center
     // into the plane for that box face
     // Plane facing towards camera
-    plane_normals[0].x =                         0.0f;
-    plane_normals[0].y =                         0.0f;
-    plane_normals[0].z =  -cpu_data->hitbox_depth / 2;
+    plane_normals[0][0] = 0.0f;
+    plane_normals[0][1] = 0.0f;
+    plane_normals[0][2] = cpu_data->hitbox_leftbottomfront[2];
     // Plane facing away from camera
-    plane_normals[1].x =                         0.0f;
-    plane_normals[1].y =                         0.0f;
-    plane_normals[1].z =   cpu_data->hitbox_depth / 2;
+    plane_normals[1][0] = 0.0f;
+    plane_normals[1][1] = 0.0f;
+    plane_normals[1][2] = cpu_data->hitbox_righttopback[2];
     // Plane facing up
-    plane_normals[2].x =                         0.0f;
-    plane_normals[2].y =  cpu_data->hitbox_height / 2;
-    plane_normals[2].z =                         0.0f;
+    plane_normals[2][0] = 0.0f;
+    plane_normals[2][1] = cpu_data->hitbox_righttopback[1];
+    plane_normals[2][2] = 0.0f;
     // Plane facing down
-    plane_normals[3].x =                         0.0f;
-    plane_normals[3].y = -cpu_data->hitbox_height / 2;
-    plane_normals[3].z =                         0.0f;
+    plane_normals[3][0] = 0.0f;
+    plane_normals[3][1] = cpu_data->hitbox_leftbottomfront[1];
+    plane_normals[3][2] = 0.0f;
     // Plane facing left
-    plane_normals[4].x =  -cpu_data->hitbox_width / 2;
-    plane_normals[4].y =                         0.0f;
-    plane_normals[4].z =                         0.0f;
+    plane_normals[4][0] = cpu_data->hitbox_leftbottomfront[0];
+    plane_normals[4][1] = 0.0f;
+    plane_normals[4][2] = 0.0f;
     // Plane facing right
-    plane_normals[5].x =   cpu_data->hitbox_width / 2;
-    plane_normals[5].y =                         0.0f;
-    plane_normals[5].z =                         0.0f;
+    plane_normals[5][0] = cpu_data->hitbox_righttopback[0];
+    plane_normals[5][1] = 0.0f;
+    plane_normals[5][2] = 0.0f;
     
     #define PLANES_TO_CHECK 6
     for (uint32_t p = 0; p < PLANES_TO_CHECK; p++) {
-        log_assert(plane_normals[p].x == plane_normals[p].x);
-        log_assert(plane_normals[p].y == plane_normals[p].y);
-        log_assert(plane_normals[p].z == plane_normals[p].z);
+        log_assert(plane_normals[p][0] == plane_normals[p][0]);
+        log_assert(plane_normals[p][1] == plane_normals[p][1]);
+        log_assert(plane_normals[p][2] == plane_normals[p][2]);
         
-        plane_normals[p]    = x_rotate_zvertex(
-            &plane_normals[p], gpu_data->xyz_angle[0]);
-        log_assert(plane_normals[p].x == plane_normals[p].x);
-        log_assert(plane_normals[p].y == plane_normals[p].y);
-        log_assert(plane_normals[p].z == plane_normals[p].z);
-        plane_normals[p]    = y_rotate_zvertex(
-            &plane_normals[p], gpu_data->xyz_angle[1]);
-        log_assert(plane_normals[p].x == plane_normals[p].x);
-        log_assert(plane_normals[p].y == plane_normals[p].y);
-        log_assert(plane_normals[p].z == plane_normals[p].z);
-        plane_normals[p]    = z_rotate_zvertex(
-            &plane_normals[p], gpu_data->xyz_angle[2]);
+        x_rotate_zvertex_f3(plane_normals[p], gpu_data->xyz_angle[0]);
+        log_assert(plane_normals[p][0] == plane_normals[p][0]);
+        log_assert(plane_normals[p][1] == plane_normals[p][1]);
+        log_assert(plane_normals[p][2] == plane_normals[p][2]);
+        y_rotate_zvertex_f3(plane_normals[p], gpu_data->xyz_angle[1]);
+        log_assert(plane_normals[p][0] == plane_normals[p][0]);
+        log_assert(plane_normals[p][1] == plane_normals[p][1]);
+        log_assert(plane_normals[p][2] == plane_normals[p][2]);
+        z_rotate_zvertex_f3(plane_normals[p], gpu_data->xyz_angle[2]);
     }
     
     for (uint32_t p = 0; p < PLANES_TO_CHECK; p++) {
@@ -575,20 +380,19 @@ bool32_t ray_intersects_zpolygon_hitbox(
         hit_plane[p] = false;
         
         // before normalizing, offset to find the plane we're checking
-        zVertex current_plane_origin;
-        current_plane_origin.x  = gpu_data->xyz[0];
-        current_plane_origin.y  = gpu_data->xyz[1];
-        current_plane_origin.z  = gpu_data->xyz[2];
-        current_plane_origin.x += plane_normals[p].x;
-        current_plane_origin.y += plane_normals[p].y;
-        current_plane_origin.z += plane_normals[p].z;
+        float current_plane_origin[3];
+        memcpy(current_plane_origin, gpu_data->xyz, sizeof(float) * 3);
+        current_plane_origin[0] += plane_normals[p][0];
+        current_plane_origin[1] += plane_normals[p][1];
+        current_plane_origin[2] += plane_normals[p][2];
         
         // now we can normalize the offsets and use them as our normal value
-        zVertex normalized_plane_normal = plane_normals[p];
-        normalize_zvertex(&normalized_plane_normal);
-        log_assert(normalized_plane_normal.x == normalized_plane_normal.x);
-        log_assert(normalized_plane_normal.y == normalized_plane_normal.y);
-        log_assert(normalized_plane_normal.z == normalized_plane_normal.z);
+        float normalized_plane_normal[3];
+        memcpy(normalized_plane_normal, plane_normals, sizeof(float) * 3);
+        normalize_vertex(normalized_plane_normal);
+        log_assert(normalized_plane_normal[0] == normalized_plane_normal[0]);
+        log_assert(normalized_plane_normal[1] == normalized_plane_normal[1]);
+        log_assert(normalized_plane_normal[2] == normalized_plane_normal[2]);
         
         /*
         A plane is defined as:
@@ -606,9 +410,9 @@ bool32_t ray_intersects_zpolygon_hitbox(
         "If the normal vector is normalized (unit length), then the constant
         term of the plane equation, d becomes the distance from the origin."
         */
-        plane_offsets[p] = -dot_of_zvertices(
-            &normalized_plane_normal,
-            &current_plane_origin);
+        plane_offsets[p] = -dot_of_vertices_f3(
+            normalized_plane_normal,
+            current_plane_origin);
         
         /*
         We also know that point P is the intersection point of the ray, and the 
@@ -632,8 +436,8 @@ bool32_t ray_intersects_zpolygon_hitbox(
           ( )
           d.b
         */
-        float denominator = dot_of_zvertices(
-            &normalized_plane_normal,
+        float denominator = dot_of_vertices_f3(
+            normalized_plane_normal,
             ray_direction);
         
         if (
@@ -646,21 +450,25 @@ bool32_t ray_intersects_zpolygon_hitbox(
             continue;
         }
         
-        zVertex plane_offset_minus_ray_origin = current_plane_origin;
-        plane_offset_minus_ray_origin.x -= ray_origin->x;
-        plane_offset_minus_ray_origin.y -= ray_origin->y;
-        plane_offset_minus_ray_origin.z -= ray_origin->z;
+        float plane_offset_minus_ray_origin[3];
+        memcpy(
+            plane_offset_minus_ray_origin,
+            current_plane_origin,
+            sizeof(float) * 3);
+        plane_offset_minus_ray_origin[0] -= ray_origin[0];
+        plane_offset_minus_ray_origin[1] -= ray_origin[1];
+        plane_offset_minus_ray_origin[2] -= ray_origin[2];
         
         t_values[p] = -(
-            dot_of_zvertices(&normalized_plane_normal, ray_origin) +
+            dot_of_vertices_f3(normalized_plane_normal, ray_origin) +
                 plane_offsets[p]);
         t_values[p] /= denominator;
         
         #ifndef LOGGER_IGNORE_ASSERTS
         // This should give about the same result:
-        float t_values_alternative = dot_of_zvertices(
-            &normalized_plane_normal,
-            &plane_offset_minus_ray_origin) /
+        float t_values_alternative = dot_of_vertices_f3(
+            normalized_plane_normal,
+            plane_offset_minus_ray_origin) /
                 denominator;
         
         float diff = t_values[p] - t_values_alternative;
@@ -678,34 +486,35 @@ bool32_t ray_intersects_zpolygon_hitbox(
         
         // We now have computed t, which we can use to calculate the position of P:
         // Vec3f Phit = orig + t * dir;
-        zVertex raw_collision_point;
-        raw_collision_point.x = ray_origin->x +
-            (t_values[p] * ray_direction->x);
-        raw_collision_point.y = ray_origin->y +
-            (t_values[p] * ray_direction->y); 
-        raw_collision_point.z = ray_origin->z +
-            (t_values[p] * ray_direction->z);
+        float raw_collision_point[3];
+        raw_collision_point[0] = ray_origin[0] +
+            (t_values[p] * ray_direction[0]);
+        raw_collision_point[1] = ray_origin[1] +
+            (t_values[p] * ray_direction[1]);
+        raw_collision_point[2] = ray_origin[2] +
+            (t_values[p] * ray_direction[2]);
         
-        hit_points[p] = raw_collision_point;
+        memcpy(hit_points[p], raw_collision_point, sizeof(float) * 3);
         
-        zVertex center_to_hit_ray;
-        center_to_hit_ray.x = raw_collision_point.x - gpu_data->xyz[0];
-        center_to_hit_ray.y = raw_collision_point.y - gpu_data->xyz[1];
-        center_to_hit_ray.z = raw_collision_point.z - gpu_data->xyz[2];
+        float center_to_hit_ray[3];
+        center_to_hit_ray[0] = raw_collision_point[0] - gpu_data->xyz[0];
+        center_to_hit_ray[1] = raw_collision_point[1] - gpu_data->xyz[1];
+        center_to_hit_ray[2] = raw_collision_point[2] - gpu_data->xyz[2];
         
-        zVertex reverse_rotated_center_to_hit = center_to_hit_ray;        
-        reverse_rotated_center_to_hit =
-            x_rotate_zvertex(
-                &reverse_rotated_center_to_hit,
-                -gpu_data->xyz_angle[0]);
-        reverse_rotated_center_to_hit =
-            y_rotate_zvertex(
-                &reverse_rotated_center_to_hit,
-                -gpu_data->xyz_angle[1]);
-        reverse_rotated_center_to_hit =
-            z_rotate_zvertex(
-                &reverse_rotated_center_to_hit,
-                -gpu_data->xyz_angle[2]);
+        float reverse_rotated_center_to_hit[3];
+        memcpy(
+            reverse_rotated_center_to_hit,
+            center_to_hit_ray,
+            sizeof(float) * 3);
+        x_rotate_zvertex_f3(
+            reverse_rotated_center_to_hit,
+            -gpu_data->xyz_angle[0]);
+        y_rotate_zvertex_f3(
+            reverse_rotated_center_to_hit,
+            -gpu_data->xyz_angle[1]);
+        z_rotate_zvertex_f3(
+            reverse_rotated_center_to_hit,
+            -gpu_data->xyz_angle[2]);
         
         // Now I just want to check if this hit is within the zpolygon's
         // hitbox
@@ -713,18 +522,18 @@ bool32_t ray_intersects_zpolygon_hitbox(
         // point and not the hitbox itself), so we can just check the bounds
         float tolerance = 0.002f;
         if (
-            (reverse_rotated_center_to_hit.x - tolerance) <= 
-                 ( cpu_data->hitbox_width  / 2 ) &&
-            (reverse_rotated_center_to_hit.x + tolerance) >=
-                -( cpu_data->hitbox_width  / 2 ) &&
-            (reverse_rotated_center_to_hit.y - tolerance) <=
-                 ( cpu_data->hitbox_height / 2 ) &&
-            (reverse_rotated_center_to_hit.y + tolerance) >=
-                -( cpu_data->hitbox_height / 2 ) &&
-            (reverse_rotated_center_to_hit.z - tolerance) <=
-                 ( cpu_data->hitbox_depth  / 2 ) &&
-            (reverse_rotated_center_to_hit.z + tolerance) >=
-                -( cpu_data->hitbox_depth  / 2 ))
+            (reverse_rotated_center_to_hit[0] - tolerance) <=
+                 cpu_data->hitbox_righttopback[0] &&
+            (reverse_rotated_center_to_hit[0] + tolerance) >=
+                cpu_data->hitbox_leftbottomfront[0] &&
+            (reverse_rotated_center_to_hit[1] - tolerance) <=
+                cpu_data->hitbox_righttopback[1] &&
+            (reverse_rotated_center_to_hit[1] + tolerance) >=
+                cpu_data->hitbox_leftbottomfront[1] &&
+            (reverse_rotated_center_to_hit[2] - tolerance) <=
+                 cpu_data->hitbox_righttopback[2] &&
+            (reverse_rotated_center_to_hit[2] + tolerance) >=
+                cpu_data->hitbox_leftbottomfront[2])
         {
             hit_plane[p] = true;
         }
@@ -739,7 +548,7 @@ bool32_t ray_intersects_zpolygon_hitbox(
             t_values[p] < closest_t)
         {
             return_value = true;
-            *recipient_hit_point = hit_points[p];
+            memcpy(recipient_hit_point, hit_points[p], sizeof(float) * 3);
             closest_t = t_values[p];
         }
     }

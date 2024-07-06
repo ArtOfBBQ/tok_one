@@ -23,10 +23,6 @@
 extern "C" {
 #endif
 
-void zcamera_move_forward(
-    GPUCamera * to_move,
-    const float distance);
-
 typedef struct VertexMaterial {
     float color[4];
     int32_t texturearray_i; /*
@@ -43,9 +39,8 @@ typedef struct zPolygonCPU {
     
     int32_t object_id;
     int32_t touchable_id;
-    float hitbox_width;
-    float hitbox_height;
-    float hitbox_depth;
+    float hitbox_leftbottomfront[3];
+    float hitbox_righttopback[3];
     
     bool32_t alpha_blending_enabled;
     bool32_t committed;
@@ -85,31 +80,9 @@ extern zPolygonCollection * zpolygons_to_render;
 
 void delete_zpolygon_object(const int32_t with_object_id);
 
-zTriangle
-x_rotate_ztriangle(
-    const zTriangle * input,
-    const float angle);
-zTriangle
-y_rotate_ztriangle(
-    const zTriangle * input,
-    const float angle);
-zTriangle 
-z_rotate_ztriangle(
-    const zTriangle * input,
-    const float angle);
-
-zTriangle translate_ztriangle(
-    const zTriangle * input,
-    const float by_x,
-    const float by_y,
-    const float by_z);
-
-float dot_of_zvertices(
-    const zVertex * a,
-    const zVertex * b);
-
-zVertex get_ztriangle_normal(
-    const zTriangle * input);
+float dot_of_vertices_f3(
+    const float a[3],
+    const float b[3]);
 
 float get_y_multiplier_for_height(
     zPolygonCPU * for_poly,
@@ -123,31 +96,16 @@ void scale_zpolygon_multipliers_to_height(
     GPUPolygon * gpu_data,
     const float new_height);
 
-float get_avg_z(
-    const zTriangle * of_triangle);
-
-int sorter_cmpr_lowest_z(
-    const void * a,
-    const void * b);
-
-void z_sort(
-    zTriangle * triangles,
-    const uint32_t triangles_size);
-
-float get_distance(
-    const zVertex p1,
-    const zVertex p2);
-
-float distance_to_ztriangle(
-    const zVertex p1,
-    const zTriangle p2);
+float get_distance_f3(
+    const float p1[3],
+    const float p2[3]);
 
 bool32_t ray_intersects_zpolygon_hitbox(
-    const zVertex * ray_origin,
-    const zVertex * ray_direction,
+    const float ray_origin[3],
+    const float ray_direction[3],
     const zPolygonCPU * cpu_data,
     const GPUPolygon  * gpu_data,
-    zVertex * recipient_hit_point);
+    float * recipient_hit_point);
 
 void construct_quad_around(
     const float mid_x,

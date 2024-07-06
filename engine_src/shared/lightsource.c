@@ -69,34 +69,6 @@ void x_rotate_zvertex_f3(
     return;
 }
 
-zVertex x_rotate_zvertex(
-    const zVertex * input,
-    const float angle)
-{
-    //    float4 rotated_vertices = vertices;
-    //    float cos_angle = cos(x_angle);
-    //    float sin_angle = sin(x_angle);
-    //    
-    //    rotated_vertices[1] =
-    //        vertices[1] * cos_angle -
-    //        vertices[2] * sin_angle;
-    //    rotated_vertices[2] =
-    //        vertices[1] * sin_angle +
-    //        vertices[2] * cos_angle;
-    
-    zVertex return_value = *input;
-    
-    return_value.y =
-        (input->y * cosf(angle)) -
-        (input->z * sinf(angle));
-    
-    return_value.z =
-        (input->y * sinf(angle)) +
-        (input->z * cosf(angle));
-    
-    return return_value;
-}
-
 void x_rotate_zvertices_inplace(
     SIMD_FLOAT * vec_to_rotate_y,
     SIMD_FLOAT * vec_to_rotate_z,
@@ -131,34 +103,6 @@ void y_rotate_zvertex_f3(
     return;
 }
 
-zVertex y_rotate_zvertex(
-    const zVertex * input,
-    const float angle)
-{
-    // float4 rotated_vertices = vertices;
-    // float cos_angle = cos(y_angle);
-    // float sin_angle = sin(y_angle);
-    // 
-    // rotated_vertices[0] =
-    //     vertices[0] * cos_angle +
-    //     vertices[2] * sin_angle;
-    // rotated_vertices[2] =
-    //     vertices[2] * cos_angle -
-    //     vertices[0] * sin_angle;
-    
-    zVertex return_value = *input;
-    
-    return_value.x =
-        (input->x * cosf(angle)) +
-        (input->z * sinf(angle));
-    
-    return_value.z =
-        (input->z * cosf(angle)) -
-        (input->x * sinf(angle));
-    
-    return return_value;
-}
-
 void y_rotate_zvertices_inplace(
     SIMD_FLOAT * vec_to_rotate_x,
     SIMD_FLOAT * vec_to_rotate_z,
@@ -191,34 +135,6 @@ void z_rotate_zvertex_f3(
     inout_xyz[0] = x;
     
     return;
-}
-
-zVertex z_rotate_zvertex(
-    const zVertex * input,
-    const float angle)
-{
-    //    float4 rotated_vertices = vertices;
-    //    float cos_angle = cos(z_angle);
-    //    float sin_angle = sin(z_angle);
-    //    
-    //    rotated_vertices[0] =
-    //        vertices[0] * cos_angle -
-    //        vertices[1] * sin_angle;
-    //    rotated_vertices[1] =
-    //        vertices[1] * cos_angle +
-    //        vertices[0] * sin_angle;
-    
-    zVertex return_value = *input;
-    
-    return_value.x =
-        (input->x * cosf(angle)) -
-        (input->y * sinf(angle));
-    
-    return_value.y =
-        (input->y * cosf(angle)) +
-        (input->x * sinf(angle));
-    
-    return return_value;
 }
 
 void z_rotate_zvertices_inplace(
@@ -312,30 +228,30 @@ void translate_lights(
 {
     assert(zlights_to_apply_size < MAX_LIGHTS_PER_BUFFER);
     
-    zVertex translated_light_pos;
+    float translated_light_pos[3];
     
     for (uint32_t i = 0; i < zlights_to_apply_size; i++)
     {
-        translated_light_pos.x =
+        translated_light_pos[0] =
             zlights_to_apply[i].xyz[0] - camera.xyz[0];
-        translated_light_pos.y =
+        translated_light_pos[1] =
             zlights_to_apply[i].xyz[1] - camera.xyz[1];
-        translated_light_pos.z =
+        translated_light_pos[2] =
             zlights_to_apply[i].xyz[2] - camera.xyz[2];
         
-        translated_light_pos = x_rotate_zvertex(
-            &translated_light_pos,
+        x_rotate_zvertex_f3(
+            translated_light_pos,
             -camera.xyz_angle[0]);
-        translated_light_pos = y_rotate_zvertex(
-            &translated_light_pos,
+        y_rotate_zvertex_f3(
+            translated_light_pos,
             -camera.xyz_angle[1]);
-        translated_light_pos = z_rotate_zvertex(
-            &translated_light_pos,
+        z_rotate_zvertex_f3(
+            translated_light_pos,
             -camera.xyz_angle[2]);
         
-        lights_for_gpu->light_x[i]   = translated_light_pos.x;
-        lights_for_gpu->light_y[i]   = translated_light_pos.y;
-        lights_for_gpu->light_z[i]   = translated_light_pos.z;
+        lights_for_gpu->light_x[i]   = translated_light_pos[0];
+        lights_for_gpu->light_y[i]   = translated_light_pos[1];
+        lights_for_gpu->light_z[i]   = translated_light_pos[2];
         
         lights_for_gpu->red[i]       = zlights_to_apply[i].RGBA[0];
         lights_for_gpu->green[i]     = zlights_to_apply[i].RGBA[1];
