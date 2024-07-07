@@ -41,7 +41,6 @@ typedef struct WindowGlobals {
     bool32_t wireframe_mode;
     bool32_t visual_debug_mode;
     bool32_t fullscreen;
-    int32_t visual_debug_last_clicked_touchable_id;
     int32_t visual_debug_highlight_touchable_id;
     float visual_debug_ray_origin_direction[9];
     float visual_debug_collision[3];

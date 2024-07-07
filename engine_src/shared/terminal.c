@@ -661,39 +661,4 @@ void terminal_commit_or_activate(void) {
         requesting_label_update = true;
     }
     
-    if (terminal_active &&
-        window_globals->visual_debug_last_clicked_touchable_id >= 0)
-    {
-        int32_t touched_zp_i = -1;
-        for (uint32_t zp_i = 0; zp_i < zpolygons_to_render->size; zp_i++) {
-            if (zpolygons_to_render->cpu_data[zp_i].touchable_id ==
-                window_globals->visual_debug_last_clicked_touchable_id)
-            {
-                touched_zp_i = (int32_t)zp_i;
-                break;
-            }
-        }
-        strcat_capped(
-            terminal_history,
-            TERMINAL_HISTORY_MAX,
-            "Last touched touchable_id was: ");
-        strcat_int_capped(
-            terminal_history,
-            TERMINAL_HISTORY_MAX,
-            window_globals->visual_debug_last_clicked_touchable_id);
-        strcat_capped(
-            terminal_history,
-            TERMINAL_HISTORY_MAX,
-            ", belonging to zpolygon_i: ");
-        strcat_int_capped(
-            terminal_history,
-            TERMINAL_HISTORY_MAX,
-            touched_zp_i);
-        if (touched_zp_i >= 0) {
-            describe_zpolygon(
-                terminal_history,
-                TERMINAL_HISTORY_MAX,
-                (uint32_t)touched_zp_i);
-        }
-    }
 }

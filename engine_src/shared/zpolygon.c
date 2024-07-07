@@ -3,7 +3,8 @@
 zPolygonCollection * zpolygons_to_render = NULL;
 
 void set_zpolygon_hitbox(
-    zPolygonCPU * mesh_cpu, GPUPolygon * mesh_gpu)
+    zPolygonCPU * mesh_cpu,
+    GPUPolygon * mesh_gpu)
 {
     log_assert(all_mesh_summaries[mesh_cpu->mesh_id].vertices_size > 0);
     

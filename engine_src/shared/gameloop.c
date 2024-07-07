@@ -327,10 +327,7 @@ void shared_gameloop_update(
                         user_interactions[i].screen_y,
                     /* collision point: */
                         collision_point);
-            
-            window_globals->visual_debug_last_clicked_touchable_id =
-                user_interactions[i].touchable_id;
-            
+                        
             user_interactions[i].checked_touchables = true;
             
             for (uint32_t j = i + 1; j < USER_INTERACTIONS_SIZE; j++) {
