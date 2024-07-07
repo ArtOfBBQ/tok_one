@@ -13,9 +13,12 @@ typedef struct GPUDataForSingleFrame
     GPUPolygonMaterial *          polygon_materials;
     GPUCamera *                              camera;
     GPULightCollection *           light_collection;
+    GPURawVertex *                    line_vertices;
+    GPURawVertex *                   point_vertices;
     uint32_t                          vertices_size;
-    uint32_t                           first_line_i;
     uint32_t                     first_alphablend_i;
+    uint32_t                    point_vertices_size;
+    uint32_t                     line_vertices_size;
 } GPUDataForSingleFrame;
 
 typedef struct GPUSharedDataCollection
@@ -31,6 +34,8 @@ typedef struct GPUSharedDataCollection
     uint32_t lights_allocation_size;
     uint32_t camera_allocation_size;
     uint32_t projection_constants_allocation_size;
+    uint32_t line_vertices_allocation_size;
+    uint32_t point_vertices_allocation_size;
     uint32_t frame_i;
 } GPUSharedDataCollection;
 

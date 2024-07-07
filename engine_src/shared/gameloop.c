@@ -371,7 +371,8 @@ void shared_gameloop_update(
     frame_data->vertices_size = 0;
     frame_data->polygon_collection->size = 0;
     frame_data->first_alphablend_i = 0;
-    frame_data->first_line_i = 0;
+    frame_data->line_vertices_size = 0;
+    frame_data->point_vertices_size = 0;
     hardware_render(
             frame_data,
         /* uint64_t elapsed_microseconds: */

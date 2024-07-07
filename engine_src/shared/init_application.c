@@ -309,6 +309,24 @@ void init_application_before_gpu_init(void)
     assert(gpu_shared_data_collection.projection_constants_allocation_size %
         4096 == 0);
     
+    gpu_shared_data_collection.point_vertices_allocation_size =
+        sizeof(GPURawVertex) * MAX_POINT_VERTICES;
+    gpu_shared_data_collection.point_vertices_allocation_size +=
+        (4096 - (gpu_shared_data_collection.
+            point_vertices_allocation_size % 4096));
+    assert(gpu_shared_data_collection.point_vertices_allocation_size >= 0);
+    assert(gpu_shared_data_collection.point_vertices_allocation_size %
+        4096 == 0);
+    
+    gpu_shared_data_collection.line_vertices_allocation_size =
+        sizeof(GPURawVertex) * MAX_LINE_VERTICES;
+    gpu_shared_data_collection.line_vertices_allocation_size +=
+        (4096 - (gpu_shared_data_collection.
+            line_vertices_allocation_size % 4096));
+    assert(gpu_shared_data_collection.line_vertices_allocation_size >= 0);
+    assert(gpu_shared_data_collection.line_vertices_allocation_size %
+        4096 == 0);
+    
     for (
         uint32_t frame_i = 0;
         frame_i < 3;
@@ -338,6 +356,16 @@ void init_application_before_gpu_init(void)
         gpu_shared_data_collection.triple_buffers[frame_i].camera =
         (GPUCamera *)malloc_from_unmanaged_aligned(
             gpu_shared_data_collection.camera_allocation_size,
+            4096);
+        
+        gpu_shared_data_collection.triple_buffers[frame_i].point_vertices =
+        (GPURawVertex *)malloc_from_unmanaged_aligned(
+            gpu_shared_data_collection.point_vertices_allocation_size,
+            4096);
+        
+        gpu_shared_data_collection.triple_buffers[frame_i].line_vertices =
+        (GPURawVertex *)malloc_from_unmanaged_aligned(
+            gpu_shared_data_collection.line_vertices_allocation_size,
             4096);
         
         gpu_shared_data_collection.

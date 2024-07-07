@@ -19,13 +19,13 @@ void set_zpolygon_hitbox(
     {
         float cur_vertex_x =
             all_mesh_vertices->gpu_data[vert_i].xyz[0] *
-                    mesh_gpu->xyz_multiplier[0];
+            mesh_gpu->xyz_multiplier[0];
         float cur_vertex_y =
             all_mesh_vertices->gpu_data[vert_i].xyz[1] *
-                    mesh_gpu->xyz_multiplier[1];
+            mesh_gpu->xyz_multiplier[1];
         float cur_vertex_z =
             all_mesh_vertices->gpu_data[vert_i].xyz[2] *
-                    mesh_gpu->xyz_multiplier[2];
+            mesh_gpu->xyz_multiplier[2];
         
         if (cur_vertex_x < mesh_cpu->hitbox_leftbottomfront[0]) {
             mesh_cpu->hitbox_leftbottomfront[0] = cur_vertex_x;
@@ -46,11 +46,17 @@ void set_zpolygon_hitbox(
         }
     }
     
+    log_assert(mesh_cpu->hitbox_leftbottomfront[0] <= 0.0f);
+    log_assert(mesh_cpu->hitbox_righttopback[0] >= 0.0f);
+    log_assert(
+        mesh_cpu->hitbox_leftbottomfront[0] <
+            mesh_cpu->hitbox_righttopback[0]);
+    
     log_assert(mesh_cpu->hitbox_leftbottomfront[1] <= 0.0f);
     log_assert(mesh_cpu->hitbox_righttopback[1] >= 0.0f);
-    
-    log_assert(mesh_cpu->hitbox_leftbottomfront[0]   <= 0.0f);
-    log_assert(mesh_cpu->hitbox_righttopback[0] >= 0.0f);
+    log_assert(
+        mesh_cpu->hitbox_leftbottomfront[1] <
+            mesh_cpu->hitbox_righttopback[1]);
     
     log_assert(mesh_cpu->hitbox_righttopback[2] >= 0.0f);
     log_assert(mesh_cpu->hitbox_leftbottomfront[2] <= 0.0f);

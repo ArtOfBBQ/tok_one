@@ -112,6 +112,11 @@ typedef struct GPUProjectionConstants {
     float y_multiplier;
     float padding;
 } GPUProjectionConstants;
+
+typedef struct GPURawVertex {
+    float xyz[3];
+    float ignore_camera;
+} GPURawVertex;
 #pragma pack(pop)
 
 #endif

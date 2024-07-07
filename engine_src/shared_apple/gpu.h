@@ -21,6 +21,7 @@ void apple_gpu_init(
 @property (retain) NSMutableArray * metal_textures;
 @property (retain) id<MTLRenderPipelineState> diamond_pipeline_state;
 @property (retain) id<MTLRenderPipelineState> alphablend_pipeline_state;
+@property (retain) id<MTLRenderPipelineState> raw_pipeline_state;
 @property (retain) id<MTLDepthStencilState>   depth_stencil_state;
 
 - (void)

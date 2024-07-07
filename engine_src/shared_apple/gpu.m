@@ -19,6 +19,8 @@ static id light_buffers [3];
 static id vertex_buffers[3];
 static id alphablended_vertex_buffers[3];
 static id camera_buffers[3];
+static id line_vertex_buffers[3];
+static id point_vertex_buffers[3];
 static id locked_vertex_populator_buffer;
 static id locked_vertex_buffer;
 static id projection_constants_buffer;
@@ -144,6 +146,13 @@ static dispatch_semaphore_t drawing_semaphore;
         [shader_library newFunctionWithName:
             @"alphablending_fragment_shader"];
     
+    id<MTLFunction> raw_vertex_shader =
+        [shader_library newFunctionWithName:
+            @"raw_vertex_shader"];
+    id<MTLFunction> raw_fragment_shader =
+        [shader_library newFunctionWithName:
+            @"raw_fragment_shader"];
+    
     // Setup combo pipeline that handles
     // both colored & textured triangles
     MTLRenderPipelineDescriptor * diamond_pipeline_descriptor =
@@ -206,6 +215,36 @@ static dispatch_semaphore_t drawing_semaphore;
             raise: @"Failed to initialize alphablending pipeline"
             format: @"Pipeline error"];
     }
+    
+    MTLRenderPipelineDescriptor * raw_pipeline_descriptor =
+        [[MTLRenderPipelineDescriptor alloc] init];
+    [raw_pipeline_descriptor
+        setVertexFunction: raw_vertex_shader];
+    [raw_pipeline_descriptor
+        setFragmentFunction: raw_fragment_shader];
+    raw_pipeline_descriptor
+        .colorAttachments[0]
+        .pixelFormat = pixel_format;
+    [raw_pipeline_descriptor
+        .colorAttachments[0]
+        setBlendingEnabled: NO];
+    raw_pipeline_descriptor.depthAttachmentPixelFormat =
+        MTLPixelFormatDepth32Float;
+    _raw_pipeline_state =
+        [with_metal_device
+            newRenderPipelineStateWithDescriptor:
+                raw_pipeline_descriptor
+            error:
+                &Error];
+    
+    if (Error != NULL)
+    {
+        NSLog(@" error => %@ ", [Error userInfo]);
+        [NSException
+            raise: @"Failed to initialize raw vertex pipeline"
+            format: @"Pipeline error"];
+    }
+    
     
     MTLDepthStencilDescriptor * depth_descriptor =
         [MTLDepthStencilDescriptor new];
@@ -296,6 +335,51 @@ static dispatch_semaphore_t drawing_semaphore;
                 gpu_shared_data_collection.triple_buffers[frame_i].vertices);
         vertex_buffers[frame_i] = MTLBufferFrameVertices;
         assert(vertex_buffers[frame_i] != nil);
+        
+        id<MTLBuffer> MTLBufferLineVertices =
+            [with_metal_device
+                /* the pointer needs to be page aligned */
+                    newBufferWithBytesNoCopy:
+                        gpu_shared_data_collection.
+                            triple_buffers[frame_i].line_vertices
+                /* the length weirdly needs to be page aligned also */
+                    length:
+                        gpu_shared_data_collection.line_vertices_allocation_size
+                    options:
+                        MTLResourceStorageModeShared
+                /* deallocator = nil to opt out */
+                    deallocator:
+                        nil];
+        assert(MTLBufferLineVertices != nil);
+        assert(
+            [MTLBufferLineVertices contents] ==
+                gpu_shared_data_collection.triple_buffers[frame_i].
+                    line_vertices);
+        line_vertex_buffers[frame_i] = MTLBufferLineVertices;
+        assert(line_vertex_buffers[frame_i] != nil);
+        
+        id<MTLBuffer> MTLBufferPointVertices =
+            [with_metal_device
+                /* the pointer needs to be page aligned */
+                    newBufferWithBytesNoCopy:
+                        gpu_shared_data_collection.
+                            triple_buffers[frame_i].point_vertices
+                /* the length weirdly needs to be page aligned also */
+                    length:
+                        gpu_shared_data_collection.point_vertices_allocation_size
+                    options:
+                        MTLResourceStorageModeShared
+                /* deallocator = nil to opt out */
+                    deallocator:
+                        nil];
+        assert(MTLBufferPointVertices != nil);
+        assert(
+            [MTLBufferPointVertices contents] ==
+                gpu_shared_data_collection.triple_buffers[frame_i].
+                    point_vertices);
+        point_vertex_buffers[frame_i] = MTLBufferPointVertices;
+        assert(point_vertex_buffers[frame_i] != nil);
+        
         
         id<MTLBuffer> MTLBufferFrameLights =
             [with_metal_device
@@ -640,17 +724,16 @@ static dispatch_semaphore_t drawing_semaphore;
                     triple_buffers[current_frame_i].first_alphablend_i];
     }
     
+    log_assert(
+        gpu_shared_data_collection.triple_buffers[current_frame_i].
+            first_alphablend_i <=
+        gpu_shared_data_collection.triple_buffers[current_frame_i].
+            vertices_size);
     uint32_t alphablend_verts_size =
-        (
-            gpu_shared_data_collection.
-                    triple_buffers[current_frame_i].first_line_i >
-            gpu_shared_data_collection.
-                triple_buffers[current_frame_i].first_alphablend_i) ?
-            gpu_shared_data_collection.
-                triple_buffers[current_frame_i].first_line_i -
-            gpu_shared_data_collection.
-                triple_buffers[current_frame_i].first_alphablend_i
-            : 0;
+        gpu_shared_data_collection.
+            triple_buffers[current_frame_i].vertices_size -
+        gpu_shared_data_collection.
+            triple_buffers[current_frame_i].first_alphablend_i;
     
     if (alphablend_verts_size > 0) {
         assert(alphablend_verts_size < MAX_VERTICES_PER_BUFFER);
@@ -665,24 +748,36 @@ static dispatch_semaphore_t drawing_semaphore;
                 alphablend_verts_size];
     }
     
-    uint32_t lines_size =
-        gpu_shared_data_collection.
-            triple_buffers[current_frame_i].vertices_size >
-                gpu_shared_data_collection.
-                    triple_buffers[current_frame_i].first_line_i ?
-        gpu_shared_data_collection.
-                triple_buffers[current_frame_i].vertices_size -
-            gpu_shared_data_collection.
-                triple_buffers[current_frame_i].first_line_i
-        : 0;
+    if ((
+        gpu_shared_data_collection.triple_buffers[current_frame_i].
+            line_vertices_size +
+        gpu_shared_data_collection.triple_buffers[current_frame_i].
+            point_vertices_size) > 0)
+    {
+        [render_encoder setRenderPipelineState: _raw_pipeline_state];
+        assert(_depth_stencil_state != nil);
+        [render_encoder setDepthStencilState: _depth_stencil_state];
+        [render_encoder setDepthClipMode: MTLDepthClipModeClip];
+    }
     
-    if (lines_size > 0) {
-        assert(lines_size < MAX_VERTICES_PER_BUFFER);
+    if (gpu_shared_data_collection.
+        triple_buffers[current_frame_i].line_vertices_size > 0)
+    {
+        [render_encoder
+            setVertexBuffer:
+                line_vertex_buffers[current_frame_i]
+            offset:
+                0
+            atIndex:
+                0];
+        assert(gpu_shared_data_collection.
+            triple_buffers[current_frame_i].line_vertices_size <
+                MAX_LINE_VERTICES);
         [render_encoder
             drawPrimitives: MTLPrimitiveTypeLine
-            vertexStart: gpu_shared_data_collection.
-                triple_buffers[current_frame_i].first_line_i
-            vertexCount: lines_size];
+            vertexStart: 0
+            vertexCount: gpu_shared_data_collection.
+                triple_buffers[current_frame_i].line_vertices_size];
     }
     
     [render_encoder endEncoding];

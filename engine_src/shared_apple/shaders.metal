@@ -5,17 +5,6 @@
 
 using namespace metal;
 
-typedef struct
-{
-    float4 position [[position]];
-    float4 color;
-    float2 texture_coordinate;
-    float3 lighting;
-    int texturearray_i;
-    int texture_i;
-    float point_size [[point_size]];
-} RasterizerPixel;
-
 float3 x_rotate(float3 vertices, float x_angle) {
     float3 rotated_vertices = vertices;
     float cos_angle = cos(x_angle);
@@ -60,6 +49,78 @@ float3 z_rotate(float3 vertices, float z_angle) {
     
     return rotated_vertices;
 }
+
+typedef struct {
+    float4 position [[position]];
+} RawFragment;
+
+vertex RawFragment
+raw_vertex_shader(
+    uint vertex_i [[ vertex_id ]],
+    const device GPURawVertex * vertices [[ buffer(0) ]],
+    const device GPUCamera * camera [[ buffer(3) ]],
+    const device GPUProjectionConstants * projection_constants [[ buffer(5) ]])
+{
+    RawFragment out;
+    
+    float3 pos = vector_float3(
+        vertices[vertex_i].xyz[0],
+        vertices[vertex_i].xyz[1],
+        vertices[vertex_i].xyz[2]);
+    
+    float3 camera_position = vector_float3(
+        camera->xyz[0],
+        camera->xyz[1],
+        camera->xyz[2]);
+    float3 camera_translated_pos = pos - camera_position;
+    
+    // rotate around camera
+    float3 cam_x_rotated = x_rotate(
+        camera_translated_pos,
+        -camera->xyz_angle[0]);
+    float3 cam_y_rotated = y_rotate(
+        cam_x_rotated,
+        -camera->xyz_angle[1]);
+    float3 cam_z_rotated = z_rotate(
+        cam_y_rotated,
+        -camera->xyz_angle[2]);
+    
+    float ignore_cam = vertices[vertex_i].ignore_camera;
+    
+    out.position = vector_float4(
+        (cam_z_rotated * (1.0f - ignore_cam)) +
+        (pos * ignore_cam),
+        1.0f);
+    
+    // projection
+    out.position[0] *= projection_constants->x_multiplier;
+    out.position[1] *= projection_constants->field_of_view_modifier;
+    out.position[3]  = out.position[2];
+    out.position[2]  =     
+        (out.position[2] * projection_constants->q) -
+        (projection_constants->znear * projection_constants->q);
+    
+    return out;
+}
+
+fragment float4
+raw_fragment_shader(RawFragment in [[stage_in]])
+{
+    float4 out_color = vector_float4(1.0f, 1.0f, 1.0f, 1.0f);
+    
+    return out_color;
+}
+
+typedef struct
+{
+    float4 position [[position]];
+    float4 color;
+    float2 texture_coordinate;
+    float3 lighting;
+    int texturearray_i;
+    int texture_i;
+    float point_size [[point_size]];
+} RasterizerPixel;
 
 float get_distance(
     float3 a,

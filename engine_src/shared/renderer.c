@@ -15,82 +15,48 @@ void init_renderer(void) {
 
 static bool32_t is_last_clicked = false;
 
-inline static void add_point_vertex(
+static void add_line_vertex(
     GPUDataForSingleFrame * frame_data,
-    float x,
-    float y,
-    float z,
-    float ignore_camera)
+    const float xyz[3],
+    const float ignore_camera)
 {
-    if (frame_data->polygon_collection->size >= MAX_POLYGONS_PER_BUFFER) {
+    log_assert(frame_data->line_vertices != NULL);
+    
+    if (frame_data->line_vertices_size >= MAX_LINE_VERTICES) {
         return;
     }
     
-    frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].xyz[0] = x;
-    frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].xyz[1] = y;
-    frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].xyz[2] = z;
-    frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].ignore_lighting = true;
-    frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].ignore_camera =
-            ignore_camera;
-    frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].bonus_rgb[0] = 0.0f;
-    frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].bonus_rgb[1] = 0.0f;
-    frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].bonus_rgb[2] = 0.0f;
+    memcpy(
+        &frame_data->line_vertices[frame_data->line_vertices_size].xyz,
+        xyz,
+        sizeof(float) * 3);
     
-    frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].scale_factor = 1.0f;
+    frame_data->line_vertices[frame_data->line_vertices_size].ignore_camera =
+        ignore_camera;
     
-    frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].xyz_offset[0] = 0.0f;
-    frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].xyz_offset[1] = 0.0f;
-    frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].xyz_offset[2] = 0.0f;
+    frame_data->line_vertices_size += 1;
+}
+
+static void add_point_vertex(
+    GPUDataForSingleFrame * frame_data,
+    const float xyz[3],
+    const float ignore_camera)
+{
+    log_assert(frame_data->point_vertices != NULL);
     
-    frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].xyz_angle[0] = 0.0f;
-    frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].xyz_angle[1] = 0.0f;
-    frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].xyz_angle[2] = 0.0f;
+    if (frame_data->point_vertices_size >= MAX_POINT_VERTICES) {
+        return;
+    }
     
-    frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].xyz_multiplier[0] = 1.0f;
-    frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].xyz_multiplier[1] = 1.0f;
-    frame_data->polygon_collection->polygons[
-        frame_data->polygon_collection->size].xyz_multiplier[2] = 1.0f;
+    memcpy(
+        &frame_data->point_vertices[frame_data->point_vertices_size].xyz,
+        xyz,
+        sizeof(float) * 3);
     
-    frame_data->vertices[frame_data->vertices_size].polygon_i =
-        (int)frame_data->polygon_collection->size;
+    frame_data->point_vertices[frame_data->point_vertices_size].ignore_camera =
+        ignore_camera;
     
-    frame_data->polygon_materials[MAX_MATERIALS_PER_POLYGON *
-        frame_data->polygon_collection->size].rgba[0] = 0.0f;
-    frame_data->polygon_materials[MAX_MATERIALS_PER_POLYGON *
-        frame_data->polygon_collection->size].rgba[1] = is_last_clicked ?
-            ((platform_get_current_time_microsecs() / 25000) % 80) * 0.01f :
-            1.0f;
-    frame_data->polygon_materials[MAX_MATERIALS_PER_POLYGON *
-        frame_data->polygon_collection->size].rgba[2] = 1.0f;
-    frame_data->polygon_materials[MAX_MATERIALS_PER_POLYGON *
-        frame_data->polygon_collection->size].rgba[3] = 1.0f;
-    frame_data->polygon_materials[MAX_MATERIALS_PER_POLYGON *
-        frame_data->polygon_collection->size].texturearray_i = -1;
-    frame_data->polygon_materials[MAX_MATERIALS_PER_POLYGON *
-        frame_data->polygon_collection->size].texture_i = -1;
-    
-    frame_data->vertices[frame_data->vertices_size].locked_vertex_i =
-        all_mesh_summaries[2].vertices_head_i;
-    
-    frame_data->polygon_collection->size += 1;
-    frame_data->vertices_size += 1;
+    frame_data->point_vertices_size += 1;
 }
 
 inline static void draw_hitbox(
@@ -108,185 +74,212 @@ inline static void draw_hitbox(
     float righttopback[3];
     memcpy(righttopback, hitbox_righttopback, sizeof(float) * 3);
     
-    x_rotate_zvertex_f3(leftbottomfront, -xyz_angle[0]);
-    y_rotate_zvertex_f3(leftbottomfront, -xyz_angle[1]);
-    z_rotate_zvertex_f3(leftbottomfront, -xyz_angle[2]);
-    
-    x_rotate_zvertex_f3(righttopback, -xyz_angle[0]);
-    y_rotate_zvertex_f3(righttopback, -xyz_angle[1]);
-    z_rotate_zvertex_f3(righttopback, -xyz_angle[2]);
-    
-    // TODO: test if offsets work
-    leftbottomfront[0] += xyz_offset[0];
-    leftbottomfront[1] += xyz_offset[1];
-    leftbottomfront[2] += xyz_offset[2];
+    // TODO: activate rotation & offsets
+    //    x_rotate_zvertex_f3(leftbottomfront, -xyz_angle[0]);
+    //    y_rotate_zvertex_f3(leftbottomfront, -xyz_angle[1]);
+    //    z_rotate_zvertex_f3(leftbottomfront, -xyz_angle[2]);
+    //
+    //    x_rotate_zvertex_f3(righttopback, -xyz_angle[0]);
+    //    y_rotate_zvertex_f3(righttopback, -xyz_angle[1]);
+    //    z_rotate_zvertex_f3(righttopback, -xyz_angle[2]);
+    //
+    //    // TODO: test if offsets work
+    //    leftbottomfront[0] += xyz_offset[0];
+    //    leftbottomfront[1] += xyz_offset[1];
+    //    leftbottomfront[2] += xyz_offset[2];
     
     // left top front -> right top front
-    add_point_vertex(
+    float linestart_xyz[3];
+    float lineend_xyz[3];
+    linestart_xyz[0] = leftbottomfront[0] + xyz[0];
+    linestart_xyz[1] = righttopback[1] + xyz[1];
+    linestart_xyz[2] = leftbottomfront[2] + xyz[2];
+    lineend_xyz[0] = righttopback[0] + xyz[0];
+    lineend_xyz[1] = righttopback[1] + xyz[1];
+    lineend_xyz[2] = leftbottomfront[2] + xyz[2];
+    add_line_vertex(
         frame_data,
-        leftbottomfront[0] + xyz[0],
-        righttopback[1] + xyz[1],
-        leftbottomfront[2] + xyz[2],
+        linestart_xyz,
         ignore_camera);
-    add_point_vertex(
+    add_line_vertex(
         frame_data,
-        righttopback[0] + xyz[0],
-        righttopback[1] + xyz[1],
-        leftbottomfront[2] + xyz[2],
+        lineend_xyz,
         ignore_camera);
     
     // left bottom front -> right bottom front
-    add_point_vertex(
+    linestart_xyz[0] = leftbottomfront[0] + xyz[0];
+    linestart_xyz[1] = leftbottomfront[1] + xyz[1];
+    linestart_xyz[2] = leftbottomfront[2] + xyz[2];
+    lineend_xyz[0] = righttopback[0] + xyz[0];
+    lineend_xyz[1] = leftbottomfront[1] + xyz[1];
+    lineend_xyz[2] = leftbottomfront[2] + xyz[2];
+    add_line_vertex(
         frame_data,
-        leftbottomfront[0] + xyz[0],
-        leftbottomfront[1] + xyz[1],
-        leftbottomfront[2] + xyz[2],
+        linestart_xyz,
         ignore_camera);
-    add_point_vertex(
+    add_line_vertex(
         frame_data,
-        righttopback[0] + xyz[0],
-        leftbottomfront[1] + xyz[1],
-        leftbottomfront[2] + xyz[2],
+        lineend_xyz,
         ignore_camera);
     
     // left top back -> right top back
-    add_point_vertex(
+    linestart_xyz[0] = leftbottomfront[0] + xyz[0];
+    linestart_xyz[1] = righttopback[1] + xyz[1];
+    linestart_xyz[2] = righttopback[2] + xyz[2];
+    lineend_xyz[0] = righttopback[0] + xyz[0];
+    lineend_xyz[1] = righttopback[1] + xyz[1];
+    lineend_xyz[2] = righttopback[2] + xyz[2];
+    add_line_vertex(
         frame_data,
-        leftbottomfront[0] + xyz[0],
-        righttopback[1] + xyz[1],
-        righttopback[2] + xyz[2],
+        linestart_xyz,
         ignore_camera);
-    add_point_vertex(
+    add_line_vertex(
         frame_data,
-        righttopback[0] + xyz[0],
-        righttopback[1] + xyz[1],
-        righttopback[2] + xyz[2],
+        lineend_xyz,
         ignore_camera);
     
     // left bottom back -> right bottom back
-    add_point_vertex(
+    linestart_xyz[0] = leftbottomfront[0] + xyz[0];
+    linestart_xyz[1] = leftbottomfront[1] + xyz[1];
+    linestart_xyz[2] = righttopback[2] + xyz[2];
+    lineend_xyz[0] = righttopback[0] + xyz[0];
+    lineend_xyz[1] = leftbottomfront[1] + xyz[1];
+    lineend_xyz[2] = righttopback[2] + xyz[2];
+    add_line_vertex(
         frame_data,
-        leftbottomfront[0] + xyz[0],
-        leftbottomfront[1] + xyz[1],
-        righttopback[2] + xyz[2],
+        linestart_xyz,
         ignore_camera);
-    add_point_vertex(
+    add_line_vertex(
         frame_data,
-        righttopback[0] + xyz[0],
-        leftbottomfront[1] + xyz[1],
-        righttopback[2] + xyz[2],
+        lineend_xyz,
         ignore_camera);
     
     // left top front -> left top back
-    add_point_vertex(
+    linestart_xyz[0] = leftbottomfront[0] + xyz[0];
+    linestart_xyz[1] = righttopback[1] + xyz[1];
+    linestart_xyz[2] = leftbottomfront[2] + xyz[2];
+    lineend_xyz[0] = leftbottomfront[0] + xyz[0];
+    lineend_xyz[1] = righttopback[1] + xyz[1];
+    lineend_xyz[2] = righttopback[2] + xyz[2];
+    add_line_vertex(
         frame_data,
-        leftbottomfront[0] + xyz[0],
-        righttopback[1] + xyz[1],
-        leftbottomfront[2] + xyz[2],
+        linestart_xyz,
         ignore_camera);
-    add_point_vertex(
+    add_line_vertex(
         frame_data,
-        leftbottomfront[0] + xyz[0],
-        righttopback[1] + xyz[1],
-        righttopback[2] + xyz[2],
+        lineend_xyz,
         ignore_camera);
     
     // right top front -> right top back
-    add_point_vertex(
+    linestart_xyz[0] = righttopback[0] + xyz[0];
+    linestart_xyz[1] = righttopback[1] + xyz[1];
+    linestart_xyz[2] = leftbottomfront[2] + xyz[2];
+    lineend_xyz[0] = righttopback[0] + xyz[0];
+    lineend_xyz[1] = righttopback[1] + xyz[1];
+    lineend_xyz[2] = righttopback[2] + xyz[2];
+    add_line_vertex(
         frame_data,
-        righttopback[0] + xyz[0],
-        righttopback[1] + xyz[1],
-        leftbottomfront[2] + xyz[2],
+        linestart_xyz,
         ignore_camera);
-    add_point_vertex(
+    add_line_vertex(
         frame_data,
-        righttopback[0] + xyz[0],
-        righttopback[1] + xyz[1],
-        righttopback[2] + xyz[2],
+        lineend_xyz,
         ignore_camera);
     
     // left bottom front -> left bottom back
-    add_point_vertex(
+    linestart_xyz[0] = leftbottomfront[0] + xyz[0];
+    linestart_xyz[1] = leftbottomfront[1] + xyz[1];
+    linestart_xyz[2] = leftbottomfront[2] + xyz[2];
+    lineend_xyz[0] = leftbottomfront[0] + xyz[0];
+    lineend_xyz[1] = leftbottomfront[1] + xyz[1];
+    lineend_xyz[2] = righttopback[2] + xyz[2];
+    add_line_vertex(
         frame_data,
-        leftbottomfront[0] + xyz[0],
-        leftbottomfront[1] + xyz[1],
-        leftbottomfront[2] + xyz[2],
+        linestart_xyz,
         ignore_camera);
-    add_point_vertex(
+    add_line_vertex(
         frame_data,
-        leftbottomfront[0] + xyz[0],
-        leftbottomfront[1] + xyz[1],
-        righttopback[2] + xyz[2],
+        lineend_xyz,
         ignore_camera);
     
     // right bottom front -> right bottom back
-    add_point_vertex(
+    linestart_xyz[0] = righttopback[0] + xyz[0];
+    linestart_xyz[1] = leftbottomfront[1] + xyz[1];
+    linestart_xyz[2] = leftbottomfront[2] + xyz[2];
+    lineend_xyz[0] = righttopback[0] + xyz[0];
+    lineend_xyz[1] = leftbottomfront[1] + xyz[1];
+    lineend_xyz[2] = righttopback[2] + xyz[2];
+    add_line_vertex(
         frame_data,
-        righttopback[0] + xyz[0],
-        leftbottomfront[1] + xyz[1],
-        leftbottomfront[2] + xyz[2],
+        linestart_xyz,
         ignore_camera);
-    add_point_vertex(
+    add_line_vertex(
         frame_data,
-        righttopback[0] + xyz[0],
-        leftbottomfront[1] + xyz[1],
-        righttopback[2] + xyz[2],
+        lineend_xyz,
         ignore_camera);
     
     // left top front -> left bottom front
-    add_point_vertex(
+    linestart_xyz[0] = righttopback[0] + xyz[0];
+    linestart_xyz[1] = leftbottomfront[1] + xyz[1];
+    linestart_xyz[2] = leftbottomfront[2] + xyz[2];
+    lineend_xyz[0] = righttopback[0] + xyz[0];
+    lineend_xyz[1] = leftbottomfront[1] + xyz[1];
+    lineend_xyz[2] = righttopback[2] + xyz[2];
+    add_line_vertex(
         frame_data,
-        leftbottomfront[0] + xyz[0],
-        righttopback[1] + xyz[1],
-        leftbottomfront[2] + xyz[2],
+        linestart_xyz,
         ignore_camera);
-    add_point_vertex(
+    add_line_vertex(
         frame_data,
-        leftbottomfront[0] + xyz[0],
-        leftbottomfront[1] + xyz[1],
-        leftbottomfront[2] + xyz[2],
+        lineend_xyz,
         ignore_camera);
     
     // right top front -> right bottom front
-    add_point_vertex(
+    linestart_xyz[0] = righttopback[0] + xyz[0];
+    linestart_xyz[1] = righttopback[1] + xyz[1];
+    linestart_xyz[2] = leftbottomfront[2] + xyz[2];
+    lineend_xyz[0] = righttopback[0] + xyz[0];
+    lineend_xyz[1] = leftbottomfront[1] + xyz[1];
+    lineend_xyz[2] = leftbottomfront[2] + xyz[2];
+    add_line_vertex(
         frame_data,
-        righttopback[0] + xyz[0],
-        righttopback[1] + xyz[1],
-        leftbottomfront[2] + xyz[2],
+        linestart_xyz,
         ignore_camera);
-    add_point_vertex(
+    add_line_vertex(
         frame_data,
-        righttopback[0] + xyz[0],
-        leftbottomfront[1] + xyz[1],
-        leftbottomfront[2] + xyz[2],
+        lineend_xyz,
         ignore_camera);
     
     // left top back -> left bottom back
-    add_point_vertex(
+    linestart_xyz[0] = leftbottomfront[0] + xyz[0];
+    linestart_xyz[1] = righttopback[1] + xyz[1];
+    linestart_xyz[2] = righttopback[2] + xyz[2];
+    lineend_xyz[0] = leftbottomfront[0] + xyz[0];
+    lineend_xyz[1] = leftbottomfront[1] + xyz[1];
+    lineend_xyz[2] = righttopback[2] + xyz[2];
+    add_line_vertex(
         frame_data,
-        leftbottomfront[0] + xyz[0],
-        righttopback[1] + xyz[1],
-        righttopback[2] + xyz[2],
+        linestart_xyz,
         ignore_camera);
-    add_point_vertex(
+    add_line_vertex(
         frame_data,
-        leftbottomfront[0] + xyz[0],
-        leftbottomfront[1] + xyz[1],
-        righttopback[2] + xyz[2],
+        lineend_xyz,
         ignore_camera);
     
     // right top back -> right bottom back
-    add_point_vertex(
+    linestart_xyz[0] = righttopback[0] + xyz[0];
+    linestart_xyz[1] = righttopback[1] + xyz[1];
+    linestart_xyz[2] = righttopback[2] + xyz[2];
+    lineend_xyz[0] = righttopback[0] + xyz[0];
+    lineend_xyz[1] = leftbottomfront[1] + xyz[1];
+    lineend_xyz[2] = righttopback[2] + xyz[2];
+    add_line_vertex(
         frame_data,
-        righttopback[0] + xyz[0],
-        righttopback[1] + xyz[1],
-        righttopback[2] + xyz[2],
+        linestart_xyz,
         ignore_camera);
-    add_point_vertex(
+    add_line_vertex(
         frame_data,
-        righttopback[0] + xyz[0],
-        leftbottomfront[1] + xyz[1],
-        righttopback[2] + xyz[2],
+        lineend_xyz,
         ignore_camera);
 }
 
@@ -501,8 +494,6 @@ void hardware_render(
             elapsed_nanoseconds,
             true);
     
-    frame_data->first_line_i = frame_data->vertices_size;
-    
     if (application_running) {
         zpolygon_hitboxes_to_lines(
             frame_data);
@@ -510,7 +501,6 @@ void hardware_render(
     
     if (window_globals->wireframe_mode) {
         frame_data->first_alphablend_i = 0;
-        frame_data->first_line_i = 0;
     }
     
     if (window_globals->debug_lights_mode) {
