@@ -484,6 +484,26 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
+        are_equal_strings(command, "DRAW TRIANGLES") ||
+        are_equal_strings(command, "TRIANGLES"))
+    {
+        window_globals->draw_triangles = !window_globals->draw_triangles;
+        
+        if (window_globals->draw_triangles) {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Drawing triangles...");
+        } else {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Stopped drawing triangles...");
+        }
+        return true;
+    }
+    
+    if (
         are_equal_strings(command, "VISUAL DEBUG") ||
         are_equal_strings(command, "DEBUG") ||
         are_equal_strings(command, "DEBUG LINES") ||

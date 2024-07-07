@@ -52,6 +52,7 @@ float3 z_rotate(float3 vertices, float z_angle) {
 
 typedef struct {
     float4 position [[position]];
+    float point_size [[point_size]];
 } RawFragment;
 
 vertex RawFragment
@@ -62,6 +63,8 @@ raw_vertex_shader(
     const device GPUProjectionConstants * projection_constants [[ buffer(5) ]])
 {
     RawFragment out;
+    
+    out.point_size = 10.0;
     
     float3 pos = vector_float3(
         vertices[vertex_i].xyz[0],
@@ -106,7 +109,9 @@ raw_vertex_shader(
 fragment float4
 raw_fragment_shader(RawFragment in [[stage_in]])
 {
-    float4 out_color = vector_float4(1.0f, 1.0f, 1.0f, 1.0f);
+    float4 out_color = vector_float4(0.2f, 1.0f, 1.0f, 1.0f);
+    
+    
     
     return out_color;
 }

@@ -711,7 +711,7 @@ static dispatch_semaphore_t drawing_semaphore;
         gpu_shared_data_collection.
                 triple_buffers[current_frame_i].first_alphablend_i;
     
-    if (diamond_verts_size > 0) {
+    if (window_globals->draw_triangles && diamond_verts_size > 0) {
         assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);
         assert(diamond_verts_size % 3 == 0);
         [render_encoder
@@ -735,7 +735,7 @@ static dispatch_semaphore_t drawing_semaphore;
         gpu_shared_data_collection.
             triple_buffers[current_frame_i].first_alphablend_i;
     
-    if (alphablend_verts_size > 0) {
+    if (window_globals->draw_triangles && alphablend_verts_size > 0) {
         assert(alphablend_verts_size < MAX_VERTICES_PER_BUFFER);
         assert(alphablend_verts_size % 3 == 0);
         [render_encoder setRenderPipelineState: _alphablend_pipeline_state];
@@ -778,6 +778,26 @@ static dispatch_semaphore_t drawing_semaphore;
             vertexStart: 0
             vertexCount: gpu_shared_data_collection.
                 triple_buffers[current_frame_i].line_vertices_size];
+    }
+    
+    if (gpu_shared_data_collection.
+        triple_buffers[current_frame_i].point_vertices_size > 0)
+    {
+        [render_encoder
+            setVertexBuffer:
+                point_vertex_buffers[current_frame_i]
+            offset:
+                0
+            atIndex:
+                0];
+        assert(gpu_shared_data_collection.
+            triple_buffers[current_frame_i].point_vertices_size <
+                MAX_POINT_VERTICES);
+        [render_encoder
+            drawPrimitives: MTLPrimitiveTypePoint
+            vertexStart: 0
+            vertexCount: gpu_shared_data_collection.
+                triple_buffers[current_frame_i].point_vertices_size];
     }
     
     [render_encoder endEncoding];

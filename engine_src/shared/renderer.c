@@ -68,6 +68,8 @@ inline static void draw_hitbox(
     const float xyz_angle[3],
     const float ignore_camera)
 {
+    add_point_vertex(frame_data, xyz, ignore_camera);
+    
     float leftbottomfront[3];
     memcpy(leftbottomfront, hitbox_leftbottomfront, sizeof(float) * 3);
     

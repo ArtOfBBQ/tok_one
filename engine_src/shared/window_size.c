@@ -63,6 +63,7 @@ void init_projection_constants(void) {
         pjc->field_of_view_modifier;
     pjc->y_multiplier = pjc->field_of_view_modifier;
     
+    window_globals->draw_triangles = true;
     window_globals->visual_debug_highlight_touchable_id = -1;
     window_globals->visual_debug_last_clicked_touchable_id = -1;
     
