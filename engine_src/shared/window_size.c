@@ -64,12 +64,7 @@ void init_projection_constants(void) {
     pjc->y_multiplier = pjc->field_of_view_modifier;
     
     window_globals->draw_triangles = true;
-    window_globals->visual_debug_highlight_touchable_id = -1;
-    
-    window_globals->visual_debug_collision[0] =  0.0f;
-    window_globals->visual_debug_collision[1] =  0.0f;
-    window_globals->visual_debug_collision[2] = -5.0f;
-    
+    window_globals->draw_hitboxes = false;
 }
 
 void update_window_position(

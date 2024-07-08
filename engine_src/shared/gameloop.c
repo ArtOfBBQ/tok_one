@@ -80,20 +80,7 @@ static int32_t closest_touchable_from_screen_ray(
     z_rotate_zvertex_f3(
         distant_point_rotated,
         camera.xyz_angle[2]);
-    
-    window_globals->visual_debug_ray_origin_direction[0] = ray_origin[0];
-    window_globals->visual_debug_ray_origin_direction[1] = ray_origin[1];
-    window_globals->visual_debug_ray_origin_direction[2] = ray_origin[2];
-    window_globals->visual_debug_ray_origin_direction[3] = ray_origin[0] + 0.03f;
-    window_globals->visual_debug_ray_origin_direction[4] = ray_origin[1] + 0.03f;
-    window_globals->visual_debug_ray_origin_direction[5] = ray_origin[2] + 0.03f;
-    window_globals->visual_debug_ray_origin_direction[6] = ray_origin[0] +
-        (distant_point_rotated[0] * 1.0f);
-    window_globals->visual_debug_ray_origin_direction[7] =
-        ray_origin[1] + (distant_point_rotated[1] * 1.0f);
-    window_globals->visual_debug_ray_origin_direction[8] =
-        ray_origin[2] + (distant_point_rotated[2] * 1.0f);
-    
+        
     normalize_zvertex_f3(distant_point);
     normalize_zvertex_f3(distant_point_rotated);
     
@@ -246,9 +233,6 @@ void shared_gameloop_update(
             /* const bool32_t ignore_camera: */
                 true);
     }
-    
-    window_globals->visual_debug_collision_size =
-        ((time % 500000) / 50000) * 0.001f;
     
     gameloop_previous_time = time;
     

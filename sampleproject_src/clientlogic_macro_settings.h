@@ -26,6 +26,9 @@ of the engine for your specific app.
 #define MAX_VERTICES_PER_BUFFER   3000000
 // #define MAX_LIGHTS_PER_BUFFER       75
 
+#define MAX_POINT_VERTICES 100000
+#define MAX_LINE_VERTICES  100000
+
 // The maximum number of 'scheduled animations' simultaneously running
 #define SCHEDULED_ANIMATIONS_ARRAYSIZE 3000
 

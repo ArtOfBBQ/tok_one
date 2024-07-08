@@ -169,8 +169,6 @@ void init_application_before_gpu_init(void)
     
     window_globals = (WindowGlobals *)malloc_from_unmanaged(
         sizeof(WindowGlobals));
-    window_globals->visual_debug_mode = false;
-    window_globals->wireframe_mode = false;
     
     init_audio(
         /* void *(*arg_malloc_function)(size_t): */

@@ -2,6 +2,8 @@
 
 static int32_t teapot_mesh_id = -1;
 static int32_t teapot_object_id = -1;
+static int32_t teapot_touchable_id = -1;
+
 void client_logic_early_startup(void) {
     
     init_PNG_decoder(
@@ -93,7 +95,8 @@ void client_logic_late_startup(void) {
     teapot_request.gpu_data->xyz[2]                = 0.75f;
     teapot_request.cpu_data->object_id             = teapot_object_id;
     teapot_request.cpu_data->visible               = true;
-    teapot_request.cpu_data->touchable_id          = -1;
+    teapot_touchable_id = next_nonui_touchable_id();
+    teapot_request.cpu_data->touchable_id          = teapot_touchable_id;
     teapot_request.gpu_materials[0].rgba[0]        = 0.5f;
     teapot_request.gpu_materials[0].rgba[1]        = 0.5f;
     teapot_request.gpu_materials[0].rgba[2]        = 0.5f;

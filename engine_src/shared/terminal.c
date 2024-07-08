@@ -354,7 +354,28 @@ static bool32_t evaluate_terminal_command(
             "Reset camera position and angles to {0,0,0}");
         return true;
     }
-
+    
+    if (
+        are_equal_strings(command, "HITBOX") ||
+        are_equal_strings(command, "HITBOXES") ||
+        are_equal_strings(command, "DRAW HITBOXES"))
+    {
+        window_globals->draw_hitboxes = !window_globals->draw_hitboxes;
+        
+        if (window_globals->draw_hitboxes) {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Drawing hitboxes...");
+        } else {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Stopped drawing hitboxes...");
+        }
+        return true;
+    }
+    
     if (
         are_equal_strings(command, "MOUSE") ||
         are_equal_strings(command, "DRAW MOUSE"))
@@ -500,74 +521,6 @@ static bool32_t evaluate_terminal_command(
                 SINGLE_LINE_MAX,
                 "Stopped drawing triangles...");
         }
-        return true;
-    }
-    
-    if (
-        are_equal_strings(command, "VISUAL DEBUG") ||
-        are_equal_strings(command, "DEBUG") ||
-        are_equal_strings(command, "DEBUG LINES") ||
-        are_equal_strings(command, "SHOW LINES") ||
-        are_equal_strings(command, "OUTLINES") ||
-        are_equal_strings(command, "SHOW OUTLINES"))
-    {
-        window_globals->visual_debug_mode = !window_globals->visual_debug_mode;
-        if (!window_globals->visual_debug_mode) {
-            delete_zpolygon_object(0);
-            strcpy_capped(
-                response,
-                SINGLE_LINE_MAX,
-                "Exiting visual debug mode");
-        } else {
-            strcpy_capped(
-                response,
-                SINGLE_LINE_MAX,
-                "Activating visual debug mode");
-        }
-        
-        return true;
-    }
-    
-    if (
-        are_equal_strings(command, "LIGHT") ||
-        are_equal_strings(command, "LIGHTS") ||
-        are_equal_strings(command, "LIGHTS MODE") ||
-        are_equal_strings(command, "HIGHLIGHT LIGHTS") ||
-        are_equal_strings(command, "DEBUG LIGHTS"))
-    {
-        window_globals->debug_lights_mode = !window_globals->debug_lights_mode;
-        if (!window_globals->debug_lights_mode) {
-            strcpy_capped(
-                response,
-                SINGLE_LINE_MAX,
-                "Exiting debug lights mode");
-        } else {
-            strcpy_capped(
-                response,
-                SINGLE_LINE_MAX,
-                "Activating debug lights mode");
-        }
-        
-        return true;
-    }
-    
-    if (
-        are_equal_strings(command, "WIREFRAME") ||
-        are_equal_strings(command, "WIREFRAME MODE"))
-    {
-        window_globals->wireframe_mode = !window_globals->wireframe_mode;
-        if (!window_globals->wireframe_mode) {
-            strcpy_capped(
-                response,
-                SINGLE_LINE_MAX,
-                "Exiting wireframe mode");
-        } else {
-            strcpy_capped(
-                response,
-                SINGLE_LINE_MAX,
-                "Activating wireframe mode");
-        }
-        
         return true;
     }
     

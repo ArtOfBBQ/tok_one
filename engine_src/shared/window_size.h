@@ -37,14 +37,8 @@ platform layer doesn't need to do anything and can just record values directly
 
 typedef struct WindowGlobals {
     bool32_t draw_triangles;
-    bool32_t debug_lights_mode;
-    bool32_t wireframe_mode;
-    bool32_t visual_debug_mode;
+    bool32_t draw_hitboxes;
     bool32_t fullscreen;
-    int32_t visual_debug_highlight_touchable_id;
-    float visual_debug_ray_origin_direction[9];
-    float visual_debug_collision[3];
-    float visual_debug_collision_size;
     
     float window_height;
     float window_width;

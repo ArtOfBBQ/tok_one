@@ -328,9 +328,10 @@ bool32_t ray_intersects_zpolygon_hitbox(
     (source https://www.scratchapixel.com
     */
     float mesh_center[3];
-    mesh_center[0] = gpu_data->xyz[0];
-    mesh_center[1] = gpu_data->xyz[1];
-    mesh_center[2] = gpu_data->xyz[2];
+    memcpy(mesh_center, gpu_data->xyz, sizeof(float) * 3);
+    mesh_center[0] += gpu_data->xyz_offset[0];
+    mesh_center[1] += gpu_data->xyz_offset[1];
+    mesh_center[2] += gpu_data->xyz_offset[2];
     
     float plane_normals[6][3];
     float plane_offsets[6];
@@ -483,15 +484,14 @@ bool32_t ray_intersects_zpolygon_hitbox(
         log_assert(diff > -0.1f);
         #endif
         
-        // end of debug check
-        
         // if t is < 0, the triangle's plane must be behind us which counts as
         // a miss
         if (t_values[p] < 0.0f) {
             continue;
         }
         
-        // We now have computed t, which we can use to calculate the position of P:
+        // We now have computed t, which we can use to calculate the position
+        // of P:
         // Vec3f Phit = orig + t * dir;
         float raw_collision_point[3];
         raw_collision_point[0] = ray_origin[0] +
