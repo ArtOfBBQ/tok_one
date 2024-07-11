@@ -28,42 +28,42 @@ void set_zpolygon_hitbox(
             all_mesh_vertices->gpu_data[vert_i].xyz[2] *
             mesh_gpu->xyz_multiplier[2];
         
-        if (cur_vertex_x < mesh_cpu->hitbox_leftbottomfront[0]) {
-            mesh_cpu->hitbox_leftbottomfront[0] = cur_vertex_x;
-        } else if (cur_vertex_x > mesh_cpu->hitbox_righttopback[0]) {
-            mesh_cpu->hitbox_righttopback[0] = cur_vertex_x;
+        if (cur_vertex_x < mesh_cpu->boundbox_leftbottomfront[0]) {
+            mesh_cpu->boundbox_leftbottomfront[0] = cur_vertex_x;
+        } else if (cur_vertex_x > mesh_cpu->boundbox_righttopback[0]) {
+            mesh_cpu->boundbox_righttopback[0] = cur_vertex_x;
         }
         
-        if (cur_vertex_y < mesh_cpu->hitbox_leftbottomfront[1]) {
-            mesh_cpu->hitbox_leftbottomfront[1] = cur_vertex_y;
-        } else if (cur_vertex_y > mesh_cpu->hitbox_righttopback[1]) {
-            mesh_cpu->hitbox_righttopback[1] = cur_vertex_y;
+        if (cur_vertex_y < mesh_cpu->boundbox_leftbottomfront[1]) {
+            mesh_cpu->boundbox_leftbottomfront[1] = cur_vertex_y;
+        } else if (cur_vertex_y > mesh_cpu->boundbox_righttopback[1]) {
+            mesh_cpu->boundbox_righttopback[1] = cur_vertex_y;
         }
         
-        if (cur_vertex_z < mesh_cpu->hitbox_leftbottomfront[2]) {
-            mesh_cpu->hitbox_leftbottomfront[2] = cur_vertex_z;
-        } else if (cur_vertex_z > mesh_cpu->hitbox_righttopback[2]) {
-            mesh_cpu->hitbox_righttopback[2] = cur_vertex_z;
+        if (cur_vertex_z < mesh_cpu->boundbox_leftbottomfront[2]) {
+            mesh_cpu->boundbox_leftbottomfront[2] = cur_vertex_z;
+        } else if (cur_vertex_z > mesh_cpu->boundbox_righttopback[2]) {
+            mesh_cpu->boundbox_righttopback[2] = cur_vertex_z;
         }
     }
     
-    log_assert(mesh_cpu->hitbox_leftbottomfront[0] <= 0.0f);
-    log_assert(mesh_cpu->hitbox_righttopback[0] >= 0.0f);
+    log_assert(mesh_cpu->boundbox_leftbottomfront[0] <= 0.0f);
+    log_assert(mesh_cpu->boundbox_righttopback[0] >= 0.0f);
     log_assert(
-        mesh_cpu->hitbox_leftbottomfront[0] <
-            mesh_cpu->hitbox_righttopback[0]);
+        mesh_cpu->boundbox_leftbottomfront[0] <
+            mesh_cpu->boundbox_righttopback[0]);
     
-    log_assert(mesh_cpu->hitbox_leftbottomfront[1] <= 0.0f);
-    log_assert(mesh_cpu->hitbox_righttopback[1] >= 0.0f);
+    log_assert(mesh_cpu->boundbox_leftbottomfront[1] <= 0.0f);
+    log_assert(mesh_cpu->boundbox_righttopback[1] >= 0.0f);
     log_assert(
-        mesh_cpu->hitbox_leftbottomfront[1] <
-            mesh_cpu->hitbox_righttopback[1]);
+        mesh_cpu->boundbox_leftbottomfront[1] <
+            mesh_cpu->boundbox_righttopback[1]);
     
-    log_assert(mesh_cpu->hitbox_righttopback[2] >= 0.0f);
-    log_assert(mesh_cpu->hitbox_leftbottomfront[2] <= 0.0f);
+    log_assert(mesh_cpu->boundbox_righttopback[2] >= 0.0f);
+    log_assert(mesh_cpu->boundbox_leftbottomfront[2] <= 0.0f);
     log_assert(
-        mesh_cpu->hitbox_righttopback[2] >=
-            mesh_cpu->hitbox_leftbottomfront[2]);
+        mesh_cpu->boundbox_righttopback[2] >=
+            mesh_cpu->boundbox_leftbottomfront[2]);
 }
 
 void request_next_zpolygon(PolygonRequest * stack_recipient)
@@ -308,6 +308,241 @@ float dot_of_vertices_f3(
     return return_value;
 }
 
+static bool32_t ray_to_right_from_origin_intersects_zpolygon_boundingbox(
+    const float bb_leftbottomfront[3],
+    const float bb_righttopback[3],
+    float * distance_t)
+{
+    /*
+    We are checking if a ray starting at the origin [0, 0, 0] and moving
+    straight to the right direction [1, 0, 0] will intersect with given
+    GPUPolygon's bounding box.
+    */
+    
+    float left =
+        ((bb_leftbottomfront[0] < bb_righttopback[0]) * bb_leftbottomfront[0]) +
+        ((bb_righttopback[0] < bb_leftbottomfront[0]) * bb_righttopback[0]);
+    float right =
+        ((bb_leftbottomfront[0] > bb_righttopback[0]) * bb_leftbottomfront[0]) +
+        ((bb_righttopback[0] > bb_leftbottomfront[0]) * bb_righttopback[0]);
+    float bottom =
+        ((bb_leftbottomfront[1] < bb_righttopback[1]) * bb_leftbottomfront[1]) +
+        ((bb_righttopback[1] < bb_leftbottomfront[1]) * bb_righttopback[1]);
+    float top =
+        ((bb_leftbottomfront[1] > bb_righttopback[1]) * bb_leftbottomfront[1]) +
+        ((bb_righttopback[1] > bb_leftbottomfront[1]) * bb_righttopback[1]);
+    float front =
+        ((bb_leftbottomfront[2] < bb_righttopback[2]) * bb_leftbottomfront[2]) +
+        ((bb_righttopback[2] < bb_leftbottomfront[2]) * bb_righttopback[2]);
+    float back =
+        ((bb_leftbottomfront[2] > bb_righttopback[2]) * bb_leftbottomfront[2]) +
+        ((bb_righttopback[2] > bb_leftbottomfront[2]) * bb_righttopback[2]);
+    
+    log_assert(left < right);
+    log_assert(bottom < top);
+    log_assert(front < back);
+    
+    if (
+        right < 0.0f ||
+        front > 0.0f ||
+        back < 0.0f ||
+        top < 0.0f ||
+        bottom > 0.0f)
+    {
+        /*
+        This can't possibly be a hit anymore
+        */
+        return false;
+    }
+    
+    /*
+    This can't possibly be a miss anymore, but it becomes difficult to calculate
+    the exact distance.
+    
+    TODO: calculate real distance or abandon this method
+    */
+    *distance_t = left;
+    
+    // set to 0.0 if < 0.0
+    *distance_t += ((*distance_t < 0.0f) * -*distance_t);
+    
+    return true;
+}
+
+#if 1
+bool32_t ray_intersects_zpolygon_hitbox(
+    const float ray_origin[3],
+    const float ray_direction[3],
+    const zPolygonCPU * cpu_data,
+    const GPUPolygon  * gpu_data,
+    float * recipient_hit_point)
+{
+    // Step 1: translate everything so that the origin becomes [0. 0, 0]
+    float translated_ray_dir[3];
+    memcpy(translated_ray_dir, ray_direction, sizeof(float) * 3);
+    
+    float bb_leftbottomfront[3];
+    memcpy(
+        bb_leftbottomfront,
+        cpu_data->boundbox_leftbottomfront,
+        sizeof(float) * 3);
+    
+    float bb_righttopback[3];
+    memcpy(
+        bb_righttopback,
+        cpu_data->boundbox_righttopback,
+        sizeof(float) * 3);
+    
+    bb_leftbottomfront[0] += gpu_data->xyz[0];
+    bb_leftbottomfront[1] += gpu_data->xyz[0];
+    bb_leftbottomfront[2] += gpu_data->xyz[0];
+    bb_righttopback[0] += gpu_data->xyz[0];
+    bb_righttopback[1] += gpu_data->xyz[0];
+    bb_righttopback[2] += gpu_data->xyz[0];
+    
+    translated_ray_dir[0] -= ray_origin[0];
+    translated_ray_dir[1] -= ray_origin[1];
+    translated_ray_dir[2] -= ray_origin[2];
+    
+    bb_leftbottomfront[0] -= ray_origin[0];
+    bb_leftbottomfront[1] -= ray_origin[1];
+    bb_leftbottomfront[2] -= ray_origin[2];
+    bb_righttopback[0] -= ray_origin[0];
+    bb_righttopback[1] -= ray_origin[1];
+    bb_righttopback[2] -= ray_origin[2];
+    
+    // Step 2: rotate everything around the origin so that the direction
+    // becomes [1, 0, 0]
+    
+    /*
+    y
+    |
+   6|  /
+   4| /
+   1|/
+    ----------------x
+     1234
+    
+    In this example, we show a vector [4, 6, 0]. We want to know the angle
+    between this vector and the x-axis.
+    
+    We will then z-rotate (rotate around z-axis) for negative that amount and
+    our new vector's Y will be 0.
+    
+    Depending on which quadrant our ray points in, the math will be different:
+              y
+          ¥  8|   /
+           ¥ 6|  /
+            ¥4| /
+             ¥|/
+     ---------|---------------x
+             ¥|¥
+            ¥ | ¥
+           ¥-6|  ¥
+          ¥ -8|   ¥
+             -y
+         -4321 1234
+    
+    For the top right scenario, we make a TOA triangle. The opposite (8) and the
+    adjacent (4) means tan(angle) = 8 / 4
+    that means angle = arctan(2.0f) = 1.107 radians
+    When we rotate our ray by 1.107 radians, it will be aligned to the x-axis
+    
+    For the bottom right scenario, if we blindly do the same thing again:
+    atan(-8.0 / 4.0f) = atan(-2.0f) = -1.107.
+    If we rotate our ray by -1.107, we again nicely align to the x-axis
+    
+    For the top left scenario, if we calculate the same thing, we're are
+    indeed aligning to the x-axis again, but this time we'll be pointing left,
+    in the wrong direction
+    
+    For the bottom left scenario, again we are finding the angle that rotates
+    us to the x-axis, but again pointing in the left direction
+    
+    So basically we can calculate by:
+    Step 1:
+    atan(ray y / ray x)
+    
+    Step 2:
+    add 3.14159 if and only if the ray was pointing left to begin with
+    
+    
+    Next, we want to repeat the entire process, except we're now rotating
+    around the y-axis. Our goal this time is to set the Z value to 0.
+    
+             +z
+              |   /
+              |  /
+              | /
+              |/
+   -x---------|---------------+x
+              |¥
+              | ¥
+            -6|  ¥
+            -8|   ¥
+             -z
+         -4321 1234
+    
+    You can see on this picture that the opposite and adjacent this time are:
+    opposite -> z -> 8
+    adjacent -> x -> 4
+    
+    So it's exactly the same as the previous step, except we replace y values
+    with z values and we replace z_rotate with y_rotate
+    
+    edit: Actually it's different in that we need to add in the angle, not
+    subtract it. I don't really understand why
+    
+    Note also that I didn't draw the left side, because we forced the vector
+    to point to the right (positive x) in the previous step
+    
+    Since z will be 0 in the end, I don't think it matters if we align to the
+    top or to the bottom
+    */
+    
+    // log_assert(translated_ray_dir[1] > 0.0f); // otherwise it's not arctan!!
+    float angle_around_z_axis_to_x_axis = atanf(
+        translated_ray_dir[1] / translated_ray_dir[0]);
+    angle_around_z_axis_to_x_axis +=
+        (translated_ray_dir[0] < 0.0f) * 3.14159f;
+    z_rotate_zvertex_f3(bb_leftbottomfront, -angle_around_z_axis_to_x_axis);
+    z_rotate_zvertex_f3(bb_righttopback,    -angle_around_z_axis_to_x_axis);
+    z_rotate_zvertex_f3(
+        translated_ray_dir,
+        -angle_around_z_axis_to_x_axis);
+    
+    log_assert(translated_ray_dir[0] >  0.01f); // pointing right
+    log_assert(translated_ray_dir[1] <  0.01f); // y is 0, aligned to x-axis
+    log_assert(translated_ray_dir[1] > -0.01f); // y is 0, aligned to x-axis
+    
+    float angle_around_y_axis_to_x_axis = atanf(
+        translated_ray_dir[2] / translated_ray_dir[0]);
+    // y rotation will leave y at 0
+    y_rotate_zvertex_f3(bb_leftbottomfront, angle_around_y_axis_to_x_axis);
+    y_rotate_zvertex_f3(bb_righttopback,    angle_around_y_axis_to_x_axis);
+    y_rotate_zvertex_f3(
+        translated_ray_dir,
+        angle_around_y_axis_to_x_axis);
+    log_assert(translated_ray_dir[0] >  0.01f); // pointing right
+    log_assert(translated_ray_dir[1] <  0.01f); // aligned to x-axis
+    log_assert(translated_ray_dir[1] > -0.01f); // aligned to x-axis
+    log_assert(translated_ray_dir[2] <  0.01f); // aligned to x-axis
+    log_assert(translated_ray_dir[2] > -0.01f); // aligned to x-axis
+    
+    // Step 2: check for collision
+    float distance_t;
+    bool32_t return_value =
+        ray_to_right_from_origin_intersects_zpolygon_boundingbox(
+            /* const float bb_leftbottomfront[3]: */
+                bb_leftbottomfront,
+            /* const float bb_righttopback[3]: */
+                bb_righttopback,
+            /* float * distance_t: */
+                &distance_t);
+    
+    return return_value;
+}
+#else
 bool32_t ray_intersects_zpolygon_hitbox(
     const float ray_origin[3],
     const float ray_direction[3],
@@ -344,25 +579,25 @@ bool32_t ray_intersects_zpolygon_hitbox(
     // Plane facing towards camera
     plane_normals[0][0] = 0.0f;
     plane_normals[0][1] = 0.0f;
-    plane_normals[0][2] = cpu_data->hitbox_leftbottomfront[2];
+    plane_normals[0][2] = cpu_data->boundbox_leftbottomfront[2];
     // Plane facing away from camera
     plane_normals[1][0] = 0.0f;
     plane_normals[1][1] = 0.0f;
-    plane_normals[1][2] = cpu_data->hitbox_righttopback[2];
+    plane_normals[1][2] = cpu_data->boundbox_righttopback[2];
     // Plane facing up
     plane_normals[2][0] = 0.0f;
-    plane_normals[2][1] = cpu_data->hitbox_righttopback[1];
+    plane_normals[2][1] = cpu_data->boundbox_righttopback[1];
     plane_normals[2][2] = 0.0f;
     // Plane facing down
     plane_normals[3][0] = 0.0f;
-    plane_normals[3][1] = cpu_data->hitbox_leftbottomfront[1];
+    plane_normals[3][1] = cpu_data->boundbox_leftbottomfront[1];
     plane_normals[3][2] = 0.0f;
     // Plane facing left
-    plane_normals[4][0] = cpu_data->hitbox_leftbottomfront[0];
+    plane_normals[4][0] = cpu_data->boundbox_leftbottomfront[0];
     plane_normals[4][1] = 0.0f;
     plane_normals[4][2] = 0.0f;
     // Plane facing right
-    plane_normals[5][0] = cpu_data->hitbox_righttopback[0];
+    plane_normals[5][0] = cpu_data->boundbox_righttopback[0];
     plane_normals[5][1] = 0.0f;
     plane_normals[5][2] = 0.0f;
     
@@ -530,17 +765,17 @@ bool32_t ray_intersects_zpolygon_hitbox(
         float tolerance = 0.002f;
         if (
             (reverse_rotated_center_to_hit[0] - tolerance) <=
-                 cpu_data->hitbox_righttopback[0] &&
+                 cpu_data->boundbox_righttopback[0] &&
             (reverse_rotated_center_to_hit[0] + tolerance) >=
-                cpu_data->hitbox_leftbottomfront[0] &&
+                cpu_data->boundbox_leftbottomfront[0] &&
             (reverse_rotated_center_to_hit[1] - tolerance) <=
-                cpu_data->hitbox_righttopback[1] &&
+                cpu_data->boundbox_righttopback[1] &&
             (reverse_rotated_center_to_hit[1] + tolerance) >=
-                cpu_data->hitbox_leftbottomfront[1] &&
+                cpu_data->boundbox_leftbottomfront[1] &&
             (reverse_rotated_center_to_hit[2] - tolerance) <=
-                 cpu_data->hitbox_righttopback[2] &&
+                 cpu_data->boundbox_righttopback[2] &&
             (reverse_rotated_center_to_hit[2] + tolerance) >=
-                cpu_data->hitbox_leftbottomfront[2])
+                cpu_data->boundbox_leftbottomfront[2])
         {
             hit_plane[p] = true;
         }
@@ -562,6 +797,7 @@ bool32_t ray_intersects_zpolygon_hitbox(
     
     return return_value;
 }
+#endif
 
 void construct_quad(
     const float left_x,

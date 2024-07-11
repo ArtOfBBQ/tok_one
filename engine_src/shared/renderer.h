@@ -10,6 +10,7 @@
 #include "platform_layer.h"
 #include "cpu_gpu_shared_types.h"
 #include "cpu_to_gpu_types.h"
+#include "lines.h"
 #include "zpolygon.h"
 #include "particle.h"
 

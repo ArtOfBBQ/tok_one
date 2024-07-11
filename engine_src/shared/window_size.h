@@ -36,9 +36,14 @@ platform layer doesn't need to do anything and can just record values directly
 #include "cpu_gpu_shared_types.h"
 
 typedef struct WindowGlobals {
+    bool32_t draw_clickray;
     bool32_t draw_triangles;
     bool32_t draw_hitboxes;
+    bool32_t draw_fps;
     bool32_t fullscreen;
+    
+    float last_clickray_origin[3];
+    float last_clickray_direction[3];
     
     float window_height;
     float window_width;

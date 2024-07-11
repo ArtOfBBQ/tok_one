@@ -45,6 +45,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "objparser.c"
 #include "common.c"
 #include "logger.c"
+#include "collision.c"
 #include "objectid.c"
 #include "audio.c"
 #include "window_size.c"
@@ -66,6 +67,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "gpu.m"
 // 5. Files that are dependent on the GPU platform layer
 #include "texture_array.c"
+#include "lines.c"
 #include "zpolygon.c"
 #include "particle.c"
 #include "scheduled_animations.c" // requires zpolygon & parti
@@ -78,4 +80,3 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "gameloop.c" // requires renderer
 #include "init_application.c" // requires gameloop
 #include "macos_main.m"
-

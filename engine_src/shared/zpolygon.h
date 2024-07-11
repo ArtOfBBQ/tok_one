@@ -39,8 +39,8 @@ typedef struct zPolygonCPU {
     
     int32_t object_id;
     int32_t touchable_id;
-    float hitbox_leftbottomfront[3];
-    float hitbox_righttopback[3];
+    float boundbox_leftbottomfront[3];
+    float boundbox_righttopback[3];
     
     bool32_t alpha_blending_enabled;
     bool32_t committed;

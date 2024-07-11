@@ -214,6 +214,8 @@ void platform_gpu_push_texture_slice(
     const uint32_t image_height,
     const uint8_t * rgba_values);
 
+void platform_update_mouse_location(void);
+
 /*
 creates a mutex and return the ID of said mutex for you to store
 */

@@ -246,10 +246,10 @@ inline static void zpolygon_hitboxes_to_lines(
                     zpolygons_to_render->gpu_data[zp_i].xyz_offset,
                 /* const float *hitbox_leftbottomfront: */
                     zpolygons_to_render->cpu_data[zp_i].
-                        hitbox_leftbottomfront,
+                        boundbox_leftbottomfront,
                 /* const float *hitbox_righttopback: */
                     zpolygons_to_render->cpu_data[zp_i].
-                        hitbox_righttopback,
+                        boundbox_righttopback,
                 /* const float *xyz_angle: */
                     zpolygons_to_render->gpu_data[zp_i].xyz_angle,
                 /* const float ignore_camera: */
@@ -430,5 +430,32 @@ void hardware_render(
     if (application_running && window_globals->draw_hitboxes) {
         zpolygon_hitboxes_to_lines(
             frame_data);
+    }
+    
+    add_points_and_lines_to_workload(frame_data);
+    
+    if (application_running && window_globals->draw_clickray) {
+        add_line_vertex(
+            /* GPUDataForSingleFrame * frame_data: */
+                frame_data,
+            /* const float xyz[3]: */
+                window_globals->last_clickray_origin,
+            /* const float ignore_camera: */
+                0.0f);
+        float clickray_end[3];
+        memcpy(
+            clickray_end,
+            window_globals->last_clickray_origin,
+            sizeof(float) * 3);
+        clickray_end[0] += window_globals->last_clickray_direction[0];
+        clickray_end[1] += window_globals->last_clickray_direction[1];
+        clickray_end[2] += window_globals->last_clickray_direction[2];
+        add_line_vertex(
+            /* GPUDataForSingleFrame * frame_data: */
+                frame_data,
+            /* const float xyz[3]: */
+                clickray_end,
+            /* const float ignore_camera: */
+                0.0f);
     }
 }

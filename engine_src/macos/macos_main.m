@@ -295,39 +295,28 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
     }
 }
 
-- (void)mouseMoved:(NSEvent *)event {
-    @autoreleasepool {
-    NSPoint window_location = [event locationInWindow];
+- (void)update_mouse_location {
+    NSPoint mouse_location = [self mouseLocationOutsideOfEventStream];
     
     register_interaction(
         /* interaction : */
             &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],
         /* screenspace_x: */
-            (float)window_location.x,
+            (float)mouse_location.x,
         /* screenspace_y: */
-            (float)window_location.y);
+            (float)mouse_location.y);
     
     user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
         user_interactions[INTR_PREVIOUS_MOUSE_MOVE];
-    }
 }
 
-- (void)mouseDragged:(NSEvent *)event {
-    @autoreleasepool {
-    NSPoint window_location = [event locationInWindow];
-    
-    register_interaction(
-        /* interaction : */
-            &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],
-        /* screenspace_x: */
-            (float)window_location.x,
-        /* screenspace_y: */
-            (float)window_location.y);
-    
-    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
-        user_interactions[INTR_PREVIOUS_MOUSE_MOVE];
-    }
-}
+// I used to use this but the lag is unbearable. Even querying manually every
+// frame is weirdly laggy but not as bad as these 2 methods
+// - (void)mouseMoved:(NSEvent *)event {
+
+// I used to use this but the lag is unbearable. Even querying manually every
+// frame is weirdly laggy but not as bad as these 2 methods
+//- (void)mouseDragged:(NSEvent *)event {
 
 - (void)keyDown:(NSEvent *)event {
     register_keydown(apple_keycode_to_tokone_keycode(event.keyCode));
@@ -348,6 +337,10 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 @end
 
 NSWindowWithCustomResponder * window = NULL;
+
+void platform_update_mouse_location(void) {
+    [window update_mouse_location];
+}
 
 /*
 these variables may not exist on platforms where window resizing is

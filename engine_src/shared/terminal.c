@@ -505,6 +505,50 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
+        are_equal_strings(command, "DRAW FPS") ||
+        are_equal_strings(command, "FPS") ||
+        are_equal_strings(command, "SHOW FPS"))
+    {
+        window_globals->draw_fps = !window_globals->draw_fps;
+        
+        if (window_globals->draw_fps) {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Drawing the fps counter...");
+        } else {
+            delete_zpolygon_object(FPS_COUNTER_OBJECT_ID);
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Stopped drawing the fps counter...");
+        }
+        return true;
+    }
+    
+    if (
+        are_equal_strings(command, "DRAW CLICKRAY") ||
+        are_equal_strings(command, "CLICKRAY") ||
+        are_equal_strings(command, "DRAW CLICKRAYS") ||
+        are_equal_strings(command, "CLICKRAYS"))
+    {
+        window_globals->draw_clickray = !window_globals->draw_clickray;
+        
+        if (window_globals->draw_clickray) {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Drawing the 'click ray' for the last touch...");
+        } else {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Stopped drawing the 'click ray' for the last touch...");
+        }
+        return true;
+    }
+    
+    if (
         are_equal_strings(command, "DRAW TRIANGLES") ||
         are_equal_strings(command, "TRIANGLES"))
     {

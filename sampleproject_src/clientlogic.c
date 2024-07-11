@@ -1,8 +1,16 @@
 #include "clientlogic.h"
 
+#define TEAPOT 0
+#if TEAPOT
 static int32_t teapot_mesh_id = -1;
 static int32_t teapot_object_id = -1;
 static int32_t teapot_touchable_id = -1;
+#endif
+
+// colray stands for 'collision ray' (we're testing collisions with a line)
+static int32_t colray_object_id = -1;
+static int32_t box_object_id = -1;
+static int32_t colpoint_object_id = -1;
 
 void client_logic_early_startup(void) {
     
@@ -20,38 +28,13 @@ void client_logic_early_startup(void) {
             /* columns  : */ 10);
     }
     
-    char * textures[1];
-    textures[0] = "blob1.png";
-    register_new_texturearray_from_files(
-        /* const char ** filenames: */
-            (const char **)textures,
-        /* const uint32_t filenames_size: */
-            1);
-    
+    #if TEAPOT
     // teapot_mesh_id = BASIC_CUBE_MESH_ID;
     teapot_mesh_id = new_mesh_id_from_resource("teapot_smooth.obj");
+    #endif
 }
 
 void client_logic_late_startup(void) {
-    PolygonRequest stack_recipient;
-    request_next_zpolygon(&stack_recipient);
-    construct_quad_around(
-            0.0f,
-            0.0f,
-            1.0f,
-            0.25f,
-            0.25f,
-        /* PolygonRequest *stack_recipient: */
-            &stack_recipient);
-    stack_recipient.cpu_data->object_id = next_nonui_object_id();
-    stack_recipient.cpu_data->alpha_blending_enabled = true;
-    stack_recipient.gpu_data->ignore_camera = true;
-    stack_recipient.gpu_data->ignore_lighting = true;
-    stack_recipient.gpu_materials[0].rgba[0] = 0.0f;
-    stack_recipient.gpu_materials[0].rgba[1] = 0.0f;
-    stack_recipient.gpu_materials[0].rgba[2] = 0.0f;
-    stack_recipient.gpu_materials[0].rgba[3] = 0.5f;
-    commit_zpolygon_to_render(&stack_recipient);
     
     zLightSource * light = next_zlight();
     light->RGBA[0]       =  0.70f;
@@ -79,6 +62,59 @@ void client_logic_late_startup(void) {
     light->xyz[2]        =  0.10f;
     commit_zlight(light);
     
+    box_object_id = next_nonui_object_id();
+    
+    PolygonRequest box_request;
+    box_request.materials_size = 1;
+    request_next_zpolygon(&box_request);
+    construct_quad_around(
+        /* const float mid_x: */
+            0.3f,
+        /* const float mid_y: */
+            0.3f,
+        /* const float z: */
+            1.0f,
+        /* const float width: */
+            0.2f,
+        /* const float height: */
+            0.2f,
+        /* PolygonRequest *stack_recipient: */
+            &box_request);
+    box_request.gpu_data->ignore_lighting       = 1.0f;
+    box_request.gpu_data->ignore_camera         = 0.0f;
+    box_request.cpu_data->object_id = box_object_id;
+    box_request.cpu_data->visible = true;
+    box_request.gpu_materials[0].rgba[0] = 0.1f;
+    box_request.gpu_materials[0].rgba[1] = 0.5f;
+    box_request.gpu_materials[0].rgba[2] = 0.1f;
+    commit_zpolygon_to_render(&box_request);
+    
+    colray_object_id = next_nonui_object_id();
+    LineRequest colray_line_request;
+    fetch_next_line(/* LineRequest * stack_recipient: */ &colray_line_request);
+    colray_line_request.gpu_vertices[0].xyz[0] =   0.2f;
+    colray_line_request.gpu_vertices[0].xyz[1] =   0.2f;
+    colray_line_request.gpu_vertices[0].xyz[2] =   1.0f;
+    colray_line_request.gpu_vertices[0].ignore_camera = false;
+    colray_line_request.gpu_vertices[1].xyz[0] =   3.0f;
+    colray_line_request.gpu_vertices[1].xyz[1] =   3.0f;
+    colray_line_request.gpu_vertices[1].xyz[2] =   1.0f;
+    colray_line_request.gpu_vertices[1].ignore_camera = false;
+    colray_line_request.cpu_data->object_id = colray_object_id;
+    commit_line(&colray_line_request);
+    
+    
+    colpoint_object_id = next_nonui_object_id();
+    PointRequest colpoint_request;
+    fetch_next_point(/* PointRequest * stack_recipient: */ &colpoint_request);
+    colpoint_request.gpu_vertex[0].xyz[0] =   1.0f;
+    colpoint_request.gpu_vertex[0].xyz[1] =   1.0f;
+    colpoint_request.gpu_vertex[0].xyz[2] =   1.0f;
+    colpoint_request.gpu_vertex[0].ignore_camera = false;
+    colpoint_request.cpu_data->object_id = colpoint_object_id;
+    commit_point(&colpoint_request);
+    
+    #if TEAPOT
     teapot_object_id = next_nonui_object_id();
     
     PolygonRequest teapot_request;
@@ -108,6 +144,7 @@ void client_logic_late_startup(void) {
     teapot_request.gpu_data->ignore_lighting       = 0.0f;
     teapot_request.gpu_data->ignore_camera         = 0.0f;
     commit_zpolygon_to_render(&teapot_request);
+    #endif
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -151,7 +188,7 @@ static void client_handle_keypresses(
         (double)microseconds_elapsed / (double)16666);
     float cam_speed = 0.1f * elapsed_mod;
     float cam_rotation_speed = 0.05f * elapsed_mod;
-
+    
     if (
         keypress_map[TOK_KEY_ENTER] &&
         keypress_map[TOK_KEY_CONTROL])
@@ -164,13 +201,15 @@ static void client_handle_keypresses(
     {
         keypress_map[TOK_KEY_S] = false;
         
+        #if TEAPOT
         request_shatter_and_destroy(
             /* const int32_t object_id: */
                 teapot_object_id,
             /* const uint64_t duration_microseconds: */
                 750000);
+        #endif
     }
-        
+    
     if (keypress_map[TOK_KEY_LEFTARROW] == true)
     {
         camera.xyz[0] -= cam_speed;
@@ -225,9 +264,129 @@ static void client_handle_keypresses(
     }
 }
 
+static float box_bounds_min[3];
+static float box_bounds_max[3];
 void client_logic_update(uint64_t microseconds_elapsed)
 {
-    request_fps_counter(microseconds_elapsed);
+    if (
+        !user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].handled)
+    {
+        user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+            handled = true;
+        
+        LineRequest colray;
+        fetch_line_by_object_id(&colray, colray_object_id);
+        colray.gpu_vertices[0].xyz[0] = screenspace_x_to_x(
+            /* const float screenspace_x: */
+                user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+                    screen_x,
+            1.0f);
+        colray.gpu_vertices[0].xyz[1] = screenspace_y_to_y(
+            /* const float screenspace_x: */
+                user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+                    screen_y,
+            1.0f);
+    }
+    
+    if (
+        !user_interactions[INTR_PREVIOUS_RIGHTCLICK_START].handled)
+    {
+        user_interactions[INTR_PREVIOUS_RIGHTCLICK_START].handled = true;
+        
+        ScheduledAnimation * anim = next_scheduled_animation(true);
+        anim->affected_object_id = box_object_id;
+        
+        box_bounds_min[0] =
+            screenspace_x_to_x(
+                /* const float screenspace_x: */
+                    user_interactions[INTR_PREVIOUS_RIGHTCLICK_START].screen_x,
+                1.0f) - 0.1f;
+        box_bounds_min[1] =
+            screenspace_y_to_y(
+                /* const float screenspace_x: */
+                    user_interactions[INTR_PREVIOUS_RIGHTCLICK_START].screen_y,
+                1.0f) - 0.1f;
+        box_bounds_min[2] = 1.0f;
+        box_bounds_max[0] = box_bounds_min[0] + 0.2f;
+        box_bounds_max[1] = box_bounds_min[1] + 0.2f;
+        box_bounds_max[2] = 1.0f;
+        
+        anim->gpu_polygon_vals.xyz[0] = box_bounds_min[0] + 0.1f;
+        anim->gpu_polygon_vals.xyz[1] = box_bounds_min[1] + 0.1f;
+        anim->gpu_polygon_vals.xyz[2] = 1.0f;
+        
+        anim->duration_microseconds = 50000;
+        anim->runs = 1;
+        commit_scheduled_animation(anim);
+    }
+    
+    if (
+        !user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].handled)
+    {
+        user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].handled = true;
+        
+        LineRequest colray;
+        fetch_line_by_object_id(&colray, colray_object_id);
+        colray.gpu_vertices[1].xyz[0] = screenspace_x_to_x(
+            /* const float screenspace_x: */
+                user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_x,
+            1.0f);
+        colray.gpu_vertices[1].xyz[1] = screenspace_y_to_y(
+            /* const float screenspace_x: */
+                user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_y,
+            1.0f);
+        
+        float ray_direction[3];
+        ray_direction[0] = colray.gpu_vertices[1].xyz[0] -
+            colray.gpu_vertices[0].xyz[0];
+        ray_direction[1] = colray.gpu_vertices[1].xyz[1] -
+            colray.gpu_vertices[0].xyz[1];
+        ray_direction[2] = 0.0f;
+        
+        float col_point[3];
+        float hit_at = ray_hits_AArect(
+            /* const float ray_origin[2]: */
+                colray.gpu_vertices[0].xyz,
+            /* const float ray_direction[2]: */
+                ray_direction,
+            /* const float rect_bounds_min[2]: */
+                box_bounds_min,
+            /* const float rect_bounds_max[2]: */
+                box_bounds_max,
+            /* float * collision_recipient: */
+                col_point);
+        
+        if (hit_at >= 0.0f && hit_at < 20.0f) {
+            PointRequest colpoint_request;
+            fetch_point_by_object_id(&colpoint_request, colpoint_object_id);
+            colpoint_request.gpu_vertex->xyz[0] = col_point[0];
+            colpoint_request.gpu_vertex->xyz[1] = col_point[1];
+        }
+    }
+    
+    #if TEAPOT
+    if (
+        !user_interactions[INTR_PREVIOUS_LEFTCLICK_START].handled &&
+        user_interactions[INTR_PREVIOUS_LEFTCLICK_START].touchable_id ==
+            teapot_touchable_id)
+    {
+        user_interactions[INTR_PREVIOUS_LEFTCLICK_START].handled = true;
+        
+        ScheduledAnimation * anim = next_scheduled_animation(true);
+        anim->affected_object_id = teapot_object_id;
+        anim->gpu_polygon_vals.scale_factor = 1.2f;
+        anim->duration_microseconds = 100000;
+        anim->runs = 1;
+        commit_scheduled_animation(anim);
+        
+        anim = next_scheduled_animation(true);
+        anim->affected_object_id = teapot_object_id;
+        anim->gpu_polygon_vals.scale_factor = 1.0f;
+        anim->duration_microseconds = 200000;
+        anim->wait_before_each_run = 100000;
+        anim->runs = 1;
+        commit_scheduled_animation(anim);
+    }
     
     if (keypress_map[TOK_KEY_R]) {
         for (uint32_t i = 0; i < zpolygons_to_render->size; i++) {
@@ -238,6 +397,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
             }
         }
     }
+    #endif
     
     client_handle_keypresses(microseconds_elapsed);
 }
@@ -269,4 +429,3 @@ void client_logic_window_resize(
 void client_logic_shutdown(void) {
     // Your application shutdown code goes here!
 }
-

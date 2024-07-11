@@ -9,6 +9,7 @@ static int32_t closest_touchable_from_screen_ray(
     const float screen_y,
     float * collision_point)
 {
+    #if 0
     #ifndef LOGGER_IGNORE_ASSERTS
     uint32_t nonzero_camera_angles = 0;
     if (camera.xyz_angle[0] != 0.0f) { nonzero_camera_angles += 1; }
@@ -18,6 +19,7 @@ static int32_t closest_touchable_from_screen_ray(
     // TODO: study raytracing math and find out why our solution doesn't
     // TODO: support 2 or more camera rotations  
     log_assert(nonzero_camera_angles < 2);
+    #endif
     #endif
     
     float clicked_viewport_x =
@@ -38,13 +40,19 @@ static int32_t closest_touchable_from_screen_ray(
     ray_origin[2] = z_multiplier;
     
     float ray_origin_rotated[3];
-    memcpy(ray_origin_rotated, ray_origin, sizeof(float) * 3);
+    memcpy(
+        ray_origin_rotated,
+        ray_origin,
+        sizeof(float) * 3);
     x_rotate_zvertex_f3(
-        ray_origin_rotated, camera.xyz_angle[0]);
+        ray_origin_rotated,
+        camera.xyz_angle[0]);
     y_rotate_zvertex_f3(
-        ray_origin_rotated, camera.xyz_angle[1]);
+        ray_origin_rotated,
+        camera.xyz_angle[1]);
     z_rotate_zvertex_f3(
-        ray_origin_rotated, camera.xyz_angle[2]);
+        ray_origin_rotated,
+        camera.xyz_angle[2]);
     
     // we need a point that's distant, but yet also ends up at the same
     // screen position as ray_origin
@@ -57,7 +65,7 @@ static int32_t closest_touchable_from_screen_ray(
     // ray_origin.x = (x * pjc->x_multiplier) / z
     // ray_origin.x * z = x * pjc->x_multi
     // (ray_origin.x * z / pjc->x_multi) = x
-    float distant_z = 10.0f;
+    float distant_z = 50.0f;
     float distant_point[3];
     distant_point[0] =
         (clicked_viewport_x /
@@ -80,9 +88,21 @@ static int32_t closest_touchable_from_screen_ray(
     z_rotate_zvertex_f3(
         distant_point_rotated,
         camera.xyz_angle[2]);
-        
+    
     normalize_zvertex_f3(distant_point);
     normalize_zvertex_f3(distant_point_rotated);
+    
+    memcpy(
+        window_globals->last_clickray_origin,
+        ray_origin,
+        sizeof(float) * 3);
+    window_globals->last_clickray_origin[0] += camera.xyz[0];
+    window_globals->last_clickray_origin[1] += camera.xyz[1];
+    window_globals->last_clickray_origin[2] += camera.xyz[2];
+    memcpy(
+        window_globals->last_clickray_direction,
+        distant_point_rotated,
+        sizeof(float) * 3);
     
     int32_t return_value = -1;
     float smallest_dist = FLOAT32_MAX;
@@ -101,8 +121,9 @@ static int32_t closest_touchable_from_screen_ray(
         
         float current_collision_point[3];
         bool32_t hit = false;
-        zPolygonCPU offset_polygon_cpu = zpolygons_to_render->cpu_data[zp_i];
-        GPUPolygon offset_polygon_gpu = zpolygons_to_render->gpu_data[zp_i];
+        
+        zPolygonCPU poly_cpu = zpolygons_to_render->cpu_data[zp_i];
+        GPUPolygon poly_gpu = zpolygons_to_render->gpu_data[zp_i];
         
         float camera_offset_x = camera.xyz[0] *
             (1.0f - zpolygons_to_render->gpu_data[zp_i].ignore_camera);
@@ -111,24 +132,24 @@ static int32_t closest_touchable_from_screen_ray(
         float camera_offset_z = camera.xyz[2] *
             (1.0f - zpolygons_to_render->gpu_data[zp_i].ignore_camera);
         
-        offset_polygon_gpu.xyz[0] -= camera_offset_x;
-        offset_polygon_gpu.xyz[1] -= camera_offset_y;
-        offset_polygon_gpu.xyz[2] -= camera_offset_z;
-        offset_polygon_gpu.xyz[0] += offset_polygon_gpu.xyz_offset[0];
-        offset_polygon_gpu.xyz[1] += offset_polygon_gpu.xyz_offset[1];
-        offset_polygon_gpu.xyz[2] += offset_polygon_gpu.xyz_offset[2];
+        poly_gpu.xyz[0] -= camera_offset_x;
+        poly_gpu.xyz[1] -= camera_offset_y;
+        poly_gpu.xyz[2] -= camera_offset_z;
+        poly_gpu.xyz[0] += poly_gpu.xyz_offset[0];
+        poly_gpu.xyz[1] += poly_gpu.xyz_offset[1];
+        poly_gpu.xyz[2] += poly_gpu.xyz_offset[2];
         
         hit = ray_intersects_zpolygon_hitbox(
             /* const float * ray_origin: */
-                offset_polygon_gpu.ignore_camera > 0.5f ?
+                poly_gpu.ignore_camera > 0.5f ?
                     ray_origin : ray_origin_rotated,
             /* const float * ray_direction: */
-                offset_polygon_gpu.ignore_camera > 0.5f ?
+                poly_gpu.ignore_camera > 0.5f ?
                     distant_point : distant_point_rotated,
             /* const zPolygonCPU * cpu_data: */
-                &offset_polygon_cpu,
+                &poly_cpu,
             /* const GPUPolygon * gpu_data: */
-                &offset_polygon_gpu,
+                &poly_gpu,
             /* float * recipient_hit_point: */
                 current_collision_point);
         
@@ -144,7 +165,7 @@ static int32_t closest_touchable_from_screen_ray(
         float dist_to_hit = get_distance_f3(offset_collision_point, ray_origin);
         if (hit && dist_to_hit < smallest_dist) {
             smallest_dist = dist_to_hit;
-            return_value = offset_polygon_cpu.touchable_id;
+            return_value = poly_cpu.touchable_id;
             memcpy(
                 collision_point,
                 current_collision_point,
@@ -270,6 +291,8 @@ void shared_gameloop_update(
     
     if (application_running) {
         
+        platform_update_mouse_location();
+        
         update_terminal();
         
         if (debugmouseptr_id >= 0) {
@@ -339,7 +362,7 @@ void shared_gameloop_update(
         
         ui_elements_handle_touches(elapsed);
         
-        client_logic_update(elapsed);        
+        client_logic_update(elapsed);
     }
     
     frame_data->camera->xyz[0] = camera.xyz[0];
@@ -354,6 +377,13 @@ void shared_gameloop_update(
     frame_data->first_alphablend_i = 0;
     frame_data->line_vertices_size = 0;
     frame_data->point_vertices_size = 0;
+    
+    if (window_globals->draw_fps) {
+        request_fps_counter(
+            /* uint64_t microseconds_elapsed: */
+                elapsed);
+    }
+    
     hardware_render(
             frame_data,
         /* uint64_t elapsed_microseconds: */
