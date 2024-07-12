@@ -103,7 +103,6 @@ void client_logic_late_startup(void) {
     colray_line_request.cpu_data->object_id = colray_object_id;
     commit_line(&colray_line_request);
     
-    
     colpoint_object_id = next_nonui_object_id();
     PointRequest colpoint_request;
     fetch_next_point(/* PointRequest * stack_recipient: */ &colpoint_request);
@@ -361,6 +360,11 @@ void client_logic_update(uint64_t microseconds_elapsed)
             fetch_point_by_object_id(&colpoint_request, colpoint_object_id);
             colpoint_request.gpu_vertex->xyz[0] = col_point[0];
             colpoint_request.gpu_vertex->xyz[1] = col_point[1];
+        } else {
+            PointRequest colpoint_request;
+            fetch_point_by_object_id(&colpoint_request, colpoint_object_id);
+            colpoint_request.gpu_vertex->xyz[0] = -1.1f;
+            colpoint_request.gpu_vertex->xyz[1] = -1.1f;
         }
     }
     

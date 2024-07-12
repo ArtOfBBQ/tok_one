@@ -13,10 +13,10 @@ int point_hits_AArect(
     const float rect_bounds_max[2])
 {
     return
-        point[0] >= rect_bounds_min[0] &&
-        point[1] >= rect_bounds_min[1] &&
-        point[0] <= rect_bounds_max[0] &&
-        point[1] <= rect_bounds_max[1];
+        point[0] >= (rect_bounds_min[0] - 0.001f) &&
+        point[1] >= (rect_bounds_min[1] - 0.001f) &&
+        point[0] <= (rect_bounds_max[0] + 0.001f) &&
+        point[1] <= (rect_bounds_max[1] + 0.001f);
 }
 
 // returns distance to collision, or FLT_MAX if no hit, or
@@ -90,7 +90,7 @@ float ray_hits_AArect(
         float axis_diff =
             bounds[axis_i] - ray_origin[axis_i];
         
-        float steps_taken = axis_diff / ray_direction[0];
+        float steps_taken = axis_diff / ray_direction[axis_i];
         col_printf("Plane %i steps taken: %f\n", plane_i,
             steps_taken);
         
@@ -112,11 +112,11 @@ float ray_hits_AArect(
         {
             float dist_ray_to_hit =
                 (
-                (ray_origin[0] - collision_point[0]) *
-                (ray_origin[0] - collision_point[0])) +
+                    (ray_origin[0] - collision_point[0]) *
+                    (ray_origin[0] - collision_point[0])) +
                 (
-                (ray_origin[1] - collision_point[1]) *
-                (ray_origin[1] - collision_point[1]));
+                    (ray_origin[1] - collision_point[1]) *
+                    (ray_origin[1] - collision_point[1]));
             
             if (dist_ray_to_hit <= nearest_dist_found) {
                 nearest_dist_found = dist_ray_to_hit;
