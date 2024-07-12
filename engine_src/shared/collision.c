@@ -138,3 +138,76 @@ float ray_hits_AArect(
     return sqrtf(nearest_dist_found);
 }
 
+int point_hits_AAbox(
+    const float point[3],
+    const float rect_bounds_min[3],
+    const float rect_bounds_max[3])
+{
+    return
+        point[0] >= (rect_bounds_min[0] - 0.001f) &&
+        point[1] >= (rect_bounds_min[1] - 0.001f) &&
+        point[2] >= (rect_bounds_min[2] - 0.001f) &&
+        point[0] <= (rect_bounds_max[0] + 0.001f) &&
+        point[1] <= (rect_bounds_max[1] + 0.001f) &&
+        point[2] <= (rect_bounds_max[2] - 0.001f);
+}
+
+// returns distance to collision, or FLT_MAX if no hit, or
+// a negative float if hit is behind the ray
+float ray_hits_AAbox(
+    const float ray_origin[3],
+    const float ray_direction[3],
+    const float box_bounds_min[3],
+    const float box_bounds_max[3],
+    float * collision_recipient)
+{
+    float nearest_dist_found = FLT_MAX;
+    
+    for (int plane_i = 0; plane_i < 6; plane_i++) {
+        int axis_i = plane_i / 2;
+        
+        const float * bounds = (plane_i % 2 == 1) ?
+            box_bounds_min :
+            box_bounds_max;
+        
+        float axis_diff = bounds[axis_i] - ray_origin[axis_i];
+        
+        float steps_taken = axis_diff / ray_direction[axis_i];
+        
+        float collision_point[3];
+        collision_point[0] = ray_origin[0];
+        collision_point[1] = ray_origin[1];
+        collision_point[2] = ray_origin[2];
+        
+        collision_point[0] += (ray_direction[0] * steps_taken);
+        collision_point[1] += (ray_direction[1] * steps_taken);
+        collision_point[2] += (ray_direction[2] * steps_taken);
+        
+        if (
+            point_hits_AAbox(
+                collision_point,
+                box_bounds_min,
+                box_bounds_max))
+        {
+            float dist_ray_to_hit =
+                (
+                    (ray_origin[0] - collision_point[0]) *
+                    (ray_origin[0] - collision_point[0])) +
+                (
+                    (ray_origin[1] - collision_point[1]) *
+                    (ray_origin[1] - collision_point[1])) +
+                (
+                    (ray_origin[2] - collision_point[2]) *
+                    (ray_origin[2] - collision_point[2]));
+            
+            if (dist_ray_to_hit <= nearest_dist_found) {
+                nearest_dist_found = dist_ray_to_hit;
+                collision_recipient[0] = collision_point[0];
+                collision_recipient[1] = collision_point[1];
+                collision_recipient[2] = collision_point[2];
+            }
+        }
+    }
+    
+    return sqrtf(nearest_dist_found);
+}

@@ -24,5 +24,17 @@ float ray_hits_AArect(
     const float rect_bounds_max[2],
     float * collision_recipient);
 
+int point_hits_AAbox(
+    const float point[3],
+    const float rect_bounds_min[3],
+    const float rect_bounds_max[3]);
+
+float ray_hits_AAbox(
+    const float ray_origin[3],
+    const float ray_direction[3],
+    const float box_bounds_min[3],
+    const float box_bounds_max[3],
+    float * collision_recipient);
+
 #endif // TOK_COLLISION_H
 
