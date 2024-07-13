@@ -211,3 +211,150 @@ float ray_hits_AAbox(
     
     return sqrtf(nearest_dist_found);
 }
+
+float normalized_ray_hits_sphere(
+    const float ray_origin[3],
+    const float normalized_ray_direction[3],
+    const float sphere_origin[3],
+    const float sphere_radius,
+    float * collision_recipient)
+{
+    /*
+    points in the ray (rO means ray origin, rD means ray direction, t means
+    time or distance traversed):
+    rO + (rD * t)
+    
+    points on the outmost layer of the sphere
+    (R means radius of sphere, SO means Sphere Origin):
+    R^2 == (xyz - SO)^2
+    
+    We can save ourselves from learning any math by assuming the Origin is 0,
+    because we can start our algorithm by moving both the sphere and the ray
+    by an amount that sets the sphere at [0, 0, 0]
+    
+    rO -= SO
+    SO = 0
+    
+    now:
+    R^2 == (xyz - SO)^2
+    can be rewritten as:
+    R^2 == (xyz - 0)^2
+    or:
+    R^2 == xyz^2
+    
+    Next, we assume that the point on the outside of the sphere is also a
+    point on the ray. Then it must be true that xyz = rO + (t * rD)
+    
+    R^2 == (rO + t * rD)^2
+    
+    the only unknown in this equation is 't'
+    
+    Next we "simplify" the function with basic algebra rules that we supposedly
+    memorized in school. I can never remember any of these rules, so I write a
+    'School flashback' every time I need one to temporarily buff myself to the
+    level of a 10-year old.
+    
+    //
+    ** School flashback **
+    (rO + (rD*t))^2 is like (x + y)^2
+    
+    which is like (x + y)*(x + y)
+    which is like (x * x)+(x * y)+(y * x)+(y * y)
+    which is like x^2 + y^2 + 2xy
+    ... so (x + y)^2 = x^2 + y^2 + 2xy
+    //
+    
+    R^2 == (rO + t * rD)^2
+    
+    R^2 == rO^2 + (t * rD)^2 + 2*rO*t*rD
+    
+    //
+    ** School flashback **
+    next, note that (rD*t)^2 is like (x * y)^2
+    (x * y)^2 =
+    (x * y) * (x * y) =
+    x * x * y * y =
+    x^2 * y^2
+    
+    so (x * y)^2 = x^2 * y^2
+    //
+    
+    R^2 == rO^2 + (t * rD)^2 + 2*rO*t*rD
+    
+    R^2 == rO^2 + t^2*rD^2 + 2*rO*t*rD
+    
+    0 == rD^2*t^2 + 2*rO*rD*t + rO^2 - R^2
+         [ ax^2 ] + [   bx  ] + [    c   ]
+    
+    x = t
+    a = rD^2
+    b = 2 * rO * rD
+    c = rO^2 - R^2
+    
+    but we know that rD is a normalized normal, so rD^2 = 1
+    
+    x = t
+    a = 1
+    b = 2 * rO * rD
+    c = rO^2 - R^2
+    
+    the quadratic formula:
+    (-b +- sqrt(b^2 - 4ac)) / 4a
+    
+    the b^2 - 4ac part is the 'discriminant' that determines whether we're
+    supposed to add, subtract, or assume no solutions
+    -> discr > 0.0f = 2 solutions, a negative and a positive
+    -> discr is exactly 0 = there is only 1 solution (because +0 and -0 same)
+    -> discr is below 0 = there is no solution
+    
+    From the perspective of programming option 1) and 2) are the same and should
+    be treated as the same to avoid branching
+    */
+    
+    // This translation allows us to pretend the sphere is at [0, 0, 0]
+    float ray_origin_translated[3];
+    ray_origin_translated[0] = ray_origin[0] - sphere_origin[0];
+    ray_origin_translated[1] = ray_origin[1] - sphere_origin[1];
+    ray_origin_translated[2] = ray_origin[2] - sphere_origin[2];
+    
+    float b = (
+        (normalized_ray_direction[0] * ray_origin_translated[0]) +
+        (normalized_ray_direction[1] * ray_origin_translated[1]) +
+        (normalized_ray_direction[2] * ray_origin_translated[2]))
+            * 2.0f;
+    
+    float c = (
+        (ray_origin_translated[0] * ray_origin_translated[0]) +
+        (ray_origin_translated[1] * ray_origin_translated[1]) +
+        (ray_origin_translated[2] * ray_origin_translated[2])) -
+        (sphere_radius * sphere_radius);
+    
+    // float delta = b^2 - 4ac
+    // we know our a is 1, so that can be deleted
+    float discr = (b * b) - (4 * c);
+    
+    float t = FLT_MAX;
+    
+    if (discr >= 0.0f) {
+        // 1 or more collisions exist, we pick the closest one
+        
+        float result_1 = (-b + sqrtf(discr)) / 2.0f;
+        float result_2 = (-b - sqrtf(discr)) / 2.0f;
+        
+        t =
+           ((result_1 <  t) * result_1) +
+           ((result_1 >= t) * t);
+        t =
+           ((result_2 <  t) * result_2) +
+           ((result_2 >= t) * t);
+    }
+    
+    collision_recipient[0] =
+        ray_origin[0] + (normalized_ray_direction[0] * t);
+    collision_recipient[1] =
+        ray_origin[1] + (normalized_ray_direction[1] * t);
+    collision_recipient[2] =
+        ray_origin[2] + (normalized_ray_direction[2] * t);
+    
+    return t;
+}

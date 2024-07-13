@@ -36,5 +36,11 @@ float ray_hits_AAbox(
     const float box_bounds_max[3],
     float * collision_recipient);
 
-#endif // TOK_COLLISION_H
+float normalized_ray_hits_sphere(
+    const float ray_origin[3],
+    const float normalized_ray_direction[3],
+    const float sphere_origin[3],
+    const float sphere_radius,
+    float * collision_recipient);
 
+#endif // TOK_COLLISION_H
