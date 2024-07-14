@@ -161,6 +161,32 @@ void commit_zpolygon_to_render(PolygonRequest * to_commit)
     to_commit->cpu_data->committed = true;
 }
 
+bool32_t fetch_zpolygon_by_object_id(
+    PolygonRequest * recipient,
+    const int32_t object_id)
+{
+    memset(recipient, 0, sizeof(PolygonRequest));
+    
+    for (
+        uint32_t zp_i = 0;
+        zp_i < zpolygons_to_render->size;
+        zp_i++)
+    {
+        if (
+            !zpolygons_to_render->cpu_data[zp_i].deleted &&
+            zpolygons_to_render->cpu_data[zp_i].object_id == object_id)
+        {
+            recipient->cpu_data = &zpolygons_to_render->cpu_data[zp_i];
+            recipient->gpu_data = &zpolygons_to_render->gpu_data[zp_i];
+            return true;
+        }
+    }
+    
+    log_assert(recipient->cpu_data == NULL);
+    log_assert(recipient->gpu_data == NULL);
+    return false;
+}
+
 void delete_zpolygon_object(const int32_t with_object_id)
 {
     for (uint32_t i = 0; i < zpolygons_to_render->size; i++) {

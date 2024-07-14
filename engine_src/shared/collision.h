@@ -43,4 +43,10 @@ float normalized_ray_hits_sphere(
     const float sphere_radius,
     float * collision_recipient);
 
+int point_hits_triangle(
+    const float point_xy[2],
+    const float triangle_vertex_1[2],
+    const float triangle_vertex_2[2],
+    const float triangle_vertex_3[2]);
+
 #endif // TOK_COLLISION_H

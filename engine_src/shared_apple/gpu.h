@@ -36,10 +36,10 @@ void apple_gpu_init(
     withImageOfWidth: (uint32_t)image_width
     andHeight: (uint32_t)image_height
     pixelValues: (uint8_t *)rgba_values;
-- (void)
+- (BOOL)
     configureMetalWithDevice: (id<MTLDevice>)with_metal_device
     andPixelFormat: (MTLPixelFormat)pixel_format
-    fromFolder: (NSString *)shader_lib_filepath;
+    fromFilePath: (NSString *)shader_lib_filepath;
 - (void)
     copyLockedVertices;
 - (void)
@@ -51,4 +51,3 @@ extern uint64_t previous_time;
 extern bool32_t has_retina_screen;
 
 #endif
-

@@ -358,3 +358,27 @@ float normalized_ray_hits_sphere(
     
     return t;
 }
+
+int point_hits_triangle(
+    const float P[2],
+    const float A[2],
+    const float B[2],
+    const float C[2])
+{
+    /*
+    I copied this solution from this excellent video:
+    https://www.youtube.com/watch?v=HYAgJN3x4GA&t=44s
+    highly recommended if you want to learn why this works
+    */
+    
+    float w1 =
+        ((A[0]*(C[1]-A[1])) + ((P[1]-A[1])*(C[0]-A[0])) - (P[0]*(C[1]-A[1]))) /
+            (((B[1] - A[1])*(C[0] - A[0])) - ((B[0]-A[0])*(C[1]-A[1])));
+    
+    float w2 = (P[1]-A[1]-(w1*(B[1]-A[1]))) / (C[1]-A[1]);
+    
+    return
+        w1 >= 0.0f &&
+        w2 >= 0.0f &&
+        (w1 + w2) <= 1.0f;
+}

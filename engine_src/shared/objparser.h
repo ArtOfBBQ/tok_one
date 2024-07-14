@@ -1,7 +1,7 @@
 #ifndef OBJ_PARSER_H
 #define OBJ_PARSER_H
 
-#include <stdint.h>
+#include <stddef.h>
 
 #ifndef OBJ_PARSER_IGNORE_ASSERTS
 #include <assert.h>
@@ -69,7 +69,7 @@ void init_obj_parser(
 */
 void parse_obj(
     ParsedObj * recipient,
-    char * raw_buffer,
+    const char * raw_buffer,
     unsigned int * success);
 
 /*

@@ -1,7 +1,8 @@
 #include "logger.h"
 
 bool32_t application_running = false;
-char crashed_top_of_screen_msg[256];
+#define CRASH_STRING_SIZE 256
+char crashed_top_of_screen_msg[CRASH_STRING_SIZE];
 
 #ifndef IGNORE_LOGGER
 // static bool32_t logger_activated = false;
@@ -241,7 +242,13 @@ void
 log_dump_and_crash(char * crash_message) {
     bool32_t log_dump_succesful = false;
     log_dump(&log_dump_succesful);
-    crash_message[256] = '\0';
+    
+    unsigned int i = 0;
+    while (crash_message[i] != '\0' && i < CRASH_STRING_SIZE) {
+        crashed_top_of_screen_msg[i] = crash_message[i];
+        i++;
+    }
+    
     strcpy_capped(
         crashed_top_of_screen_msg,
         256,

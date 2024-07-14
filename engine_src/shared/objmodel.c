@@ -650,43 +650,23 @@ static void assert_objmodel_validity(int32_t mesh_id) {
 #endif
 
 static ParsedObj * parsed_obj = NULL;
-int32_t new_mesh_id_from_resource_asserts(
-    const char * filename,
+
+int32_t new_mesh_id_from_obj_text(
+    const char * obj_text,
     const uint32_t expected_materials_count,
     const char expected_materials_names[MAX_MATERIALS_PER_POLYGON][256])
 {
-    #ifdef LOGGER_IGNORE_ASSERTS
-    (void)expected_materials_count;
-    #endif
-    
-    int32_t new_mesh_head_id = (int32_t)all_mesh_vertices->size;
-    log_assert(all_mesh_summaries_size < ALL_MESHES_SIZE);
-    
     if (parsed_obj == NULL) {
         parsed_obj = malloc_from_unmanaged(sizeof(ParsedObj));
     }
     memset(parsed_obj, 0, sizeof(ParsedObj));
-    
-    FileBuffer obj_file;
-    obj_file.size_without_terminator = platform_get_resource_size(filename);
-    log_assert(obj_file.size_without_terminator > 0);
-    obj_file.contents = (char *)malloc_from_managed(obj_file.size_without_terminator + 1);
-    obj_file.good = false;
-    
-    platform_read_resource_file(
-        /* char * filename: */
-            filename,
-        /* FileBuffer *out_preallocatedbuffer: */
-            &obj_file);
-    
-    log_assert(obj_file.good);
     
     uint32_t good = 0;
     parse_obj(
         /* ParsedObj * recipient: */
             parsed_obj,
         /* char * raw_buffer: */
-            obj_file.contents,
+            obj_text,
         /* uint32_t * success: */
             &good);
     log_assert(good);
@@ -703,8 +683,9 @@ int32_t new_mesh_id_from_resource_asserts(
         return -1;
     }
     
+    int32_t new_mesh_head_id = (int32_t)all_mesh_vertices->size;
     all_mesh_summaries[all_mesh_summaries_size].vertices_head_i =
-        (int32_t)all_mesh_vertices->size;
+        new_mesh_head_id;
     
     log_assert(all_mesh_vertices->size < ALL_LOCKED_VERTICES_SIZE);
     
@@ -906,8 +887,6 @@ int32_t new_mesh_id_from_resource_asserts(
         }
     }
     free_obj(parsed_obj);
-    free_from_managed(obj_file.contents);
-    obj_file.contents = NULL;
     
     all_mesh_summaries[all_mesh_summaries_size].mesh_id =
         (int32_t)all_mesh_summaries_size;
@@ -969,10 +948,6 @@ int32_t new_mesh_id_from_resource_asserts(
     all_mesh_summaries[all_mesh_summaries_size].base_depth =
         max_z - min_z;
     
-    strcpy_capped(
-        all_mesh_summaries[all_mesh_summaries_size].resource_name,
-        OBJ_STRING_SIZE,
-        filename);
     all_mesh_summaries_size += 1;
     log_assert(all_mesh_summaries_size <= ALL_MESHES_SIZE);
     
@@ -981,6 +956,51 @@ int32_t new_mesh_id_from_resource_asserts(
     #endif
     
     return (int32_t)all_mesh_summaries_size - 1;
+}
+
+int32_t new_mesh_id_from_resource_asserts(
+    const char * filename,
+    const uint32_t expected_materials_count,
+    const char expected_materials_names[MAX_MATERIALS_PER_POLYGON][256])
+{
+    #ifdef LOGGER_IGNORE_ASSERTS
+    (void)expected_materials_count;
+    #endif
+    
+    log_assert(all_mesh_summaries_size < ALL_MESHES_SIZE);
+    
+    FileBuffer obj_file;
+    obj_file.size_without_terminator = platform_get_resource_size(filename);
+    log_assert(obj_file.size_without_terminator > 0);
+    obj_file.contents = (char *)malloc_from_managed(obj_file.size_without_terminator + 1);
+    obj_file.good = false;
+    
+    platform_read_resource_file(
+        /* char * filename: */
+            filename,
+        /* FileBuffer *out_preallocatedbuffer: */
+            &obj_file);
+    
+    log_assert(obj_file.good);
+    
+    int32_t new_mesh_id = new_mesh_id_from_obj_text(
+        /* const char * obj_text: */
+            obj_file.contents,
+        /* const uint32_t expected_materials_count: */
+            expected_materials_count,
+        /* const char expected_materials_names[
+            MAX_MATERIALS_PER_POLYGON][256]: */
+            expected_materials_names);
+    
+    strcpy_capped(
+        all_mesh_summaries[new_mesh_id].resource_name,
+        OBJ_STRING_SIZE,
+        filename);
+    
+    free_from_managed(obj_file.contents);
+    obj_file.contents = NULL;
+    
+    return new_mesh_id;
 }
 
 int32_t new_mesh_id_from_resource(
@@ -1143,7 +1163,7 @@ static int32_t find_biggest_area_triangle_head_in(
     float biggest_area = FLOAT32_MIN;
     int32_t biggest_area_i = -1;
     
-    for (int32_t i = head_vertex_i; i < (tail_vertex_i - 2); i += 3) {
+    for (int32_t i = head_vertex_i; i < (tail_vertex_i - 1); i += 3) {
         float area = get_squared_triangle_length_from_locked_vertices(
             all_mesh_vertices->gpu_data + i);
         log_assert(area > 0.0f);
@@ -1153,6 +1173,7 @@ static int32_t find_biggest_area_triangle_head_in(
         }
     }
     
+    log_assert(biggest_area_i >= 0);
     return biggest_area_i;
 }
 

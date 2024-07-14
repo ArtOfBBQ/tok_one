@@ -278,9 +278,11 @@ static int get_material_i_or_register_new(
 
 void parse_obj(
     ParsedObj * recipient,
-    char * raw_buffer,
+    const char * raw_buf,
     unsigned int * success)
 {
+    char * raw_buffer = (char *)raw_buf;
+    
     #ifndef OBJ_PARSER_IGNORE_ASSERTS
     assert(recipient != 0);
     assert(raw_buffer != 0);

@@ -1,6 +1,7 @@
 #import "gpu.h"
 
 bool32_t has_retina_screen = false;
+bool32_t metal_active = false;
 
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
 
@@ -17,7 +18,6 @@ static id polygon_buffers[3];
 static id polygon_material_buffers[3];
 static id light_buffers [3];
 static id vertex_buffers[3];
-static id alphablended_vertex_buffers[3];
 static id camera_buffers[3];
 static id line_vertex_buffers[3];
 static id point_vertex_buffers[3];
@@ -26,7 +26,7 @@ static id locked_vertex_buffer;
 static id projection_constants_buffer;
 
 // static id projection_constant_buffers[3];
-static dispatch_semaphore_t drawing_semaphore;
+// static dispatch_semaphore_t drawing_semaphore;
 
 @implementation MetalKitViewDelegate
 {
@@ -89,18 +89,18 @@ static dispatch_semaphore_t drawing_semaphore;
         window_globals->projection_constants;
 }
 
-- (void)
+- (BOOL)
     configureMetalWithDevice: (id<MTLDevice>)with_metal_device
     andPixelFormat: (MTLPixelFormat)pixel_format
-    fromFolder: (NSString *)shader_lib_filepath
+    fromFilePath: (NSString *)shader_lib_filepath
 {
     current_frame_i = 0;
     
-    drawing_semaphore = dispatch_semaphore_create(/* initial value: */ 3);
+    // drawing_semaphore = dispatch_semaphore_create(/* initial value: */ 3);
     
     metal_device = with_metal_device;
     
-    NSError *Error = NULL;
+    NSError * Error = NULL;
     id<MTLLibrary> shader_library = [with_metal_device newDefaultLibrary];
     
     if (shader_library == NULL)
@@ -116,8 +116,8 @@ static dispatch_semaphore_t drawing_semaphore;
             isDirectory: false];
         
         if (shader_lib_url == NULL) {
-            log_append("Failed to find the shader file\n");
-            return;
+            log_dump_and_crash("Failed to find the shader file\n");
+            return false;
         }
         
         shader_library =
@@ -127,10 +127,10 @@ static dispatch_semaphore_t drawing_semaphore;
         
         if (shader_library == NULL) {
             log_append("Failed to find the shader library\n");
-            if (Error != NULL) {
-                NSLog(@" error => %@ ", [Error userInfo]);
-            }
-            return;
+            log_dump_and_crash((char *)[
+                [[Error userInfo] descriptionInStringsFileFormat]
+                    cStringUsingEncoding:NSASCIIStringEncoding]);
+            return false;
         } else {
             log_append("Success! Found the shader lib on 2nd try.\n");
         }
@@ -139,19 +139,42 @@ static dispatch_semaphore_t drawing_semaphore;
     id<MTLFunction> vertex_shader =
         [shader_library newFunctionWithName:
             @"vertex_shader"];
+    if (vertex_shader == NULL) {
+        log_append("Missing function: vertex_shader()!");
+        return false;
+    }
+    
     id<MTLFunction> fragment_shader =
         [shader_library newFunctionWithName:
             @"fragment_shader"];
+    if (fragment_shader == NULL) {
+        log_append("Missing function: fragment_shader()!");
+        return false;
+    }
+    
     id<MTLFunction> alphablending_fragment_shader =
         [shader_library newFunctionWithName:
             @"alphablending_fragment_shader"];
+    if (alphablending_fragment_shader == NULL) {
+        log_append("Missing function: alphablending_fragment_shader()!");
+        return false;
+    }
     
     id<MTLFunction> raw_vertex_shader =
         [shader_library newFunctionWithName:
             @"raw_vertex_shader"];
+    if (raw_vertex_shader == NULL) {
+        log_append("Missing function: raw_vertex_shader()!");
+        return false;
+    }
+    
     id<MTLFunction> raw_fragment_shader =
         [shader_library newFunctionWithName:
             @"raw_fragment_shader"];
+    if (raw_fragment_shader == NULL) {
+        log_append("Missing function: raw_fragment_shader()!");
+        return false;
+    }
     
     // Setup combo pipeline that handles
     // both colored & textured triangles
@@ -175,10 +198,8 @@ static dispatch_semaphore_t drawing_semaphore;
     
     if (Error != NULL)
     {
-        NSLog(@" error => %@ ", [Error userInfo]);
-        [NSException
-            raise: @"Failed to initialize diamond pipeline"
-            format: @"Pipeline error"];
+        log_dump_and_crash("Failed to initialize diamond pipeline");
+        return false;
     }
     
     MTLRenderPipelineDescriptor * alphablend_pipeline_descriptor =
@@ -210,10 +231,9 @@ static dispatch_semaphore_t drawing_semaphore;
     
     if (Error != NULL)
     {
-        NSLog(@" error => %@ ", [Error userInfo]);
-        [NSException
-            raise: @"Failed to initialize alphablending pipeline"
-            format: @"Pipeline error"];
+        log_append([[Error localizedDescription] cStringUsingEncoding:kCFStringEncodingASCII]);
+        log_dump_and_crash("Error loading the alphablending shader\n");
+        return false;
     }
     
     MTLRenderPipelineDescriptor * raw_pipeline_descriptor =
@@ -239,12 +259,10 @@ static dispatch_semaphore_t drawing_semaphore;
     
     if (Error != NULL)
     {
-        NSLog(@" error => %@ ", [Error userInfo]);
-        [NSException
-            raise: @"Failed to initialize raw vertex pipeline"
-            format: @"Pipeline error"];
+        log_append([[Error localizedDescription] cStringUsingEncoding:kCFStringEncodingASCII]);
+        log_dump_and_crash("Error loading the raw vertex shader\n");
+        return false;
     }
-    
     
     MTLDepthStencilDescriptor * depth_descriptor =
         [MTLDepthStencilDescriptor new];
@@ -257,10 +275,9 @@ static dispatch_semaphore_t drawing_semaphore;
     
     if (Error != NULL)
     {
-        NSLog(@" error => %@ ", [Error userInfo]);
-        [NSException
-            raise: @"Can't Setup Metal" 
-            format: @"Unable to setup rendering pipeline state"];
+        log_append([[Error localizedDescription] cStringUsingEncoding:kCFStringEncodingASCII]);
+        log_dump_and_crash("Error setting the depth stencil state\n");
+        return false;
     }
     
     // TODO: use the apple-approved page size constant instead of
@@ -467,7 +484,6 @@ static dispatch_semaphore_t drawing_semaphore;
             gpu_shared_data_collection.locked_pjc);
     projection_constants_buffer = MTLBufferProjectionConstants;
     
-    
     _metal_textures = [
         [NSMutableArray alloc]
             initWithCapacity: TEXTUREARRAYS_SIZE];
@@ -487,7 +503,8 @@ static dispatch_semaphore_t drawing_semaphore;
     //    id<MTLSamplerState> ss =
     //        [with_metal_device newSamplerStateWithDescriptor: sampler_desc];
     
-    log_append("finished configureMetalWithDevice\n");
+    metal_active = true;
+    return true;
 }
 
 - (void)
@@ -496,6 +513,7 @@ static dispatch_semaphore_t drawing_semaphore;
     singleImgWidth          : (uint32_t)single_img_width
     singleImgHeight         : (uint32_t)single_img_height
 {
+    if (!metal_active) { return; }
     assert(texturearray_i < 31);
     
     // we always overwrite textures, so pad them to match first
@@ -580,12 +598,10 @@ static dispatch_semaphore_t drawing_semaphore;
 
 - (void)drawInMTKView:(MTKView *)view
 {
-    //    dispatch_semaphore_wait(
-    //        /* dispatch_semaphore_t _Nonnull dsema: */ drawing_semaphore,
-    //        /* dispatch_time_t timeout: */ DISPATCH_TIME_FOREVER);
-    
     funcptr_shared_gameloop_update(
         &gpu_shared_data_collection.triple_buffers[current_frame_i]);
+    
+    if (!metal_active) { return; }
     
     id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
     

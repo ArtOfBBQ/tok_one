@@ -7,12 +7,12 @@ static int32_t teapot_object_id = -1;
 static int32_t teapot_touchable_id = -1;
 #endif
 
+static int32_t triangle_object_id = -1;
+static float triangle_vertices[3][3];
+
 // colray stands for 'collision ray' (we're testing collisions with a line)
 static int32_t colray_object_id = -1;
-static int32_t box_object_id = -1;
 static int32_t colpoint_object_id = -1;
-static float box_bounds_min[3];
-static float box_bounds_max[3];
 
 void client_logic_early_startup(void) {
     
@@ -29,6 +29,16 @@ void client_logic_early_startup(void) {
             /* rows     : */ 10,
             /* columns  : */ 10);
     }
+    
+    triangle_vertices[0][0] = 0.0f;
+    triangle_vertices[0][1] = 0.0f;
+    triangle_vertices[0][2] = 1.0f;
+    triangle_vertices[1][0] = 0.25f;
+    triangle_vertices[1][1] = 0.0f;
+    triangle_vertices[1][2] = 1.0f;
+    triangle_vertices[2][0] = 0.25f;
+    triangle_vertices[2][1] = 0.25f;
+    triangle_vertices[2][2] = 1.0f;
     
     #if TEAPOT
     // teapot_mesh_id = BASIC_CUBE_MESH_ID;
@@ -64,33 +74,6 @@ void client_logic_late_startup(void) {
     light->xyz[2]        =  0.10f;
     commit_zlight(light);
     
-    box_object_id = next_nonui_object_id();
-    
-    box_bounds_min[2] = 0.9f;
-    box_bounds_max[2] = 1.1f;
-    
-    PolygonRequest box_request;
-    request_next_zpolygon(&box_request);
-    construct_zpolygon(&box_request);
-    box_request.materials_size = 1;
-    box_request.cpu_data->mesh_id = BASIC_CUBE_MESH_ID;
-    box_request.gpu_data->ignore_lighting       = 0.0f;
-    box_request.gpu_data->ignore_camera         = 0.0f;
-    box_request.cpu_data->object_id = box_object_id;
-    box_request.cpu_data->visible = true;
-    box_request.gpu_data->xyz[0] = 0.75f;
-    box_request.gpu_data->xyz[1] = 0.75f;
-    box_request.gpu_data->xyz[2] = 1.0f;
-    box_request.gpu_materials[0].rgba[0] = 0.1f;
-    box_request.gpu_materials[0].rgba[1] = 0.5f;
-    box_request.gpu_materials[0].rgba[2] = 0.1f;
-    box_request.gpu_materials[0].rgba[3] = 1.0f;
-    scale_zpolygon_multipliers_to_height(
-        box_request.cpu_data,
-        box_request.gpu_data,
-        0.1f);
-    commit_zpolygon_to_render(&box_request);
-    
     colray_object_id = next_nonui_object_id();
     LineRequest colray_line_request;
     fetch_next_line(/* LineRequest * stack_recipient: */ &colray_line_request);
@@ -114,6 +97,8 @@ void client_logic_late_startup(void) {
     colpoint_request.gpu_vertex[0].ignore_camera = false;
     colpoint_request.cpu_data->object_id = colpoint_object_id;
     commit_point(&colpoint_request);
+    
+    triangle_object_id = next_nonui_object_id();
     
     #if TEAPOT
     teapot_object_id = next_nonui_object_id();
@@ -231,16 +216,6 @@ static void client_handle_keypresses(
         camera.xyz[1] += cam_speed;
     }
     
-    if (keypress_map[TOK_KEY_0] == true) {
-        box_bounds_min[2] += 0.001f;
-        box_bounds_max[2] += 0.001f;
-    }
-    
-    if (keypress_map[TOK_KEY_9] == true) {
-        box_bounds_min[2] -= 0.001f;
-        box_bounds_max[2] -= 0.001f;
-    }
-    
     if (keypress_map[TOK_KEY_A] == true) {
         camera.xyz_angle[0] += cam_rotation_speed;
     }
@@ -301,21 +276,6 @@ void client_logic_update(uint64_t microseconds_elapsed)
         !user_interactions[INTR_PREVIOUS_RIGHTCLICK_START].handled)
     {
         user_interactions[INTR_PREVIOUS_RIGHTCLICK_START].handled = true;
-        
-        
-        box_bounds_min[0] =
-            screenspace_x_to_x(
-                /* const float screenspace_x: */
-                    user_interactions[INTR_PREVIOUS_RIGHTCLICK_START].screen_x,
-                1.0f) - 0.1f;
-        box_bounds_min[1] =
-            screenspace_y_to_y(
-                /* const float screenspace_x: */
-                    user_interactions[INTR_PREVIOUS_RIGHTCLICK_START].screen_y,
-                1.0f) - 0.1f;
-        
-        box_bounds_max[0] = box_bounds_min[0] + 0.2f;
-        box_bounds_max[1] = box_bounds_min[1] + 0.2f;
     }
     
     if (
@@ -341,26 +301,25 @@ void client_logic_update(uint64_t microseconds_elapsed)
             colray.gpu_vertices[0].xyz[1];
         ray_direction[2] = 0.0f;
         
-        float col_point[3];
-        float hit_at = ray_hits_AAbox(
-            /* const float ray_origin[2]: */
-                colray.gpu_vertices[0].xyz,
-            /* const float ray_direction[2]: */
-                ray_direction,
-            /* const float rect_bounds_min[2]: */
-                box_bounds_min,
-            /* const float rect_bounds_max[2]: */
-                box_bounds_max,
-            /* float * collision_recipient: */
-                col_point);
+        // float col_point[3];
         
-        if (hit_at >= 0.0f && hit_at < 20.0f) {
+        float hit_at = FLOAT32_MAX;
+        
+        if (point_hits_triangle(
+            /* const float * point_xy: */
+                colray.gpu_vertices[1].xyz,
+            /* const float * triangle_vertex_1: */
+                triangle_vertices[0],
+            /* const float * triangle_vertex_2: */
+                triangle_vertices[1],
+            /* const float * triangle_vertex_3: */
+                triangle_vertices[2]))
+        {
             PointRequest colpoint_request;
             fetch_point_by_object_id(&colpoint_request, colpoint_object_id);
-            colpoint_request.gpu_vertex->xyz[0] = col_point[0];
-            colpoint_request.gpu_vertex->xyz[1] = col_point[1];
-            colpoint_request.gpu_vertex->xyz[2] = col_point[2];
-            
+            colpoint_request.gpu_vertex->xyz[0] = colray.gpu_vertices[1].xyz[0];
+            colpoint_request.gpu_vertex->xyz[1] = colray.gpu_vertices[1].xyz[1];
+            colpoint_request.gpu_vertex->xyz[2] = colray.gpu_vertices[1].xyz[2];
         } else {
             PointRequest colpoint_request;
             fetch_point_by_object_id(&colpoint_request, colpoint_object_id);
@@ -368,25 +327,35 @@ void client_logic_update(uint64_t microseconds_elapsed)
             colpoint_request.gpu_vertex->xyz[1] = -1.1f;
             colpoint_request.gpu_vertex->xyz[2] = 10.0f;
         }
+        
+        if (hit_at >= 0.0f && hit_at < 20.0f) {
+            //            PointRequest colpoint_request;
+            //            fetch_point_by_object_id(&colpoint_request, colpoint_object_id);
+            //            colpoint_request.gpu_vertex->xyz[0] = col_point[0];
+            //            colpoint_request.gpu_vertex->xyz[1] = col_point[1];
+            //            colpoint_request.gpu_vertex->xyz[2] = col_point[2];
+            
+        } else {
+            //            PointRequest colpoint_request;
+            //            fetch_point_by_object_id(&colpoint_request, colpoint_object_id);
+            //            colpoint_request.gpu_vertex->xyz[0] = -1.1f;
+            //            colpoint_request.gpu_vertex->xyz[1] = -1.1f;
+            //            colpoint_request.gpu_vertex->xyz[2] = 10.0f;
+        }
     }
     
-    ScheduledAnimation * anim = next_scheduled_animation(true);
-    anim->affected_object_id = box_object_id;
-    anim->gpu_polygon_vals.xyz[0] = box_bounds_min[0] + 0.1f;
-    anim->gpu_polygon_vals.xyz[1] = box_bounds_min[1] + 0.1f;
-    anim->gpu_polygon_vals.xyz[2] = box_bounds_min[2] + 0.1f;
-    anim->gpu_polygon_vals.xyz_multiplier[0] =
-        (box_bounds_max[0] - box_bounds_min[0]) /
-            (all_mesh_summaries[BASIC_CUBE_MESH_ID].base_width * 2);
-    anim->gpu_polygon_vals.xyz_multiplier[1] =
-        (box_bounds_max[1] - box_bounds_min[1]) /
-            (all_mesh_summaries[BASIC_CUBE_MESH_ID].base_height * 2);
-    anim->gpu_polygon_vals.xyz_multiplier[2] =
-        (box_bounds_max[2] - box_bounds_min[2]) /
-            (all_mesh_summaries[BASIC_CUBE_MESH_ID].base_depth * 2);
-    anim->duration_microseconds = 50000;
-    anim->runs = 1;
-    commit_scheduled_animation(anim);
+    delete_point_object(triangle_object_id);
+    
+    for (uint32_t vertex_i = 0; vertex_i < 3; vertex_i++) {
+        PointRequest point_request;
+        fetch_next_point(&point_request);
+        point_request.gpu_vertex->xyz[0] = triangle_vertices[vertex_i][0];
+        point_request.gpu_vertex->xyz[1] = triangle_vertices[vertex_i][1];
+        point_request.gpu_vertex->xyz[2] = triangle_vertices[vertex_i][2];
+        point_request.gpu_vertex->ignore_camera = false;
+        point_request.cpu_data->object_id = triangle_object_id;
+        commit_point(&point_request);
+    }
     
     #if TEAPOT
     if (

@@ -9,170 +9,171 @@ static int32_t closest_touchable_from_screen_ray(
     const float screen_y,
     float * collision_point)
 {
-    #if 0
-    #ifndef LOGGER_IGNORE_ASSERTS
-    uint32_t nonzero_camera_angles = 0;
-    if (camera.xyz_angle[0] != 0.0f) { nonzero_camera_angles += 1; }
-    if (camera.xyz_angle[1] != 0.0f) { nonzero_camera_angles += 1; }
-    if (camera.xyz_angle[2] != 0.0f) { nonzero_camera_angles += 1; }
-    
-    // TODO: study raytracing math and find out why our solution doesn't
-    // TODO: support 2 or more camera rotations  
-    log_assert(nonzero_camera_angles < 2);
-    #endif
-    #endif
-    
-    float clicked_viewport_x =
-        -1.0f + ((screen_x / window_globals->window_width) * 2.0f);
-    float clicked_viewport_y =
-        -1.0f + ((screen_y / window_globals->window_height) * 2.0f);
-    
-    float z_multiplier = 0.00001f;
-    float ray_origin[3];
-    ray_origin[0] =
-        (clicked_viewport_x /
-            window_globals->projection_constants.x_multiplier) *
-                z_multiplier;
-    ray_origin[1] =
-        ((clicked_viewport_y) /
-            window_globals->projection_constants.field_of_view_modifier) *
-                z_multiplier;
-    ray_origin[2] = z_multiplier;
-    
-    float ray_origin_rotated[3];
-    memcpy(
-        ray_origin_rotated,
-        ray_origin,
-        sizeof(float) * 3);
-    x_rotate_zvertex_f3(
-        ray_origin_rotated,
-        camera.xyz_angle[0]);
-    y_rotate_zvertex_f3(
-        ray_origin_rotated,
-        camera.xyz_angle[1]);
-    z_rotate_zvertex_f3(
-        ray_origin_rotated,
-        camera.xyz_angle[2]);
-    
-    // we need a point that's distant, but yet also ends up at the same
-    // screen position as ray_origin
+    //    #if 0
+    //    #ifndef LOGGER_IGNORE_ASSERTS
+    //    uint32_t nonzero_camera_angles = 0;
+    //    if (camera.xyz_angle[0] != 0.0f) { nonzero_camera_angles += 1; }
+    //    if (camera.xyz_angle[1] != 0.0f) { nonzero_camera_angles += 1; }
+    //    if (camera.xyz_angle[2] != 0.0f) { nonzero_camera_angles += 1; }
     //
-    // This is also the distant point we draw to for visual debug
+    //    // TODO: study raytracing math and find out why our solution doesn't
+    //    // TODO: support 2 or more camera rotations
+    //    log_assert(nonzero_camera_angles < 2);
+    //    #endif
+    //    #endif
     //
-    // given:
-    // projected_x = x * pjc->x_multiplier / z
-    //     and we want projected_x to be ray_origin.x:
-    // ray_origin.x = (x * pjc->x_multiplier) / z
-    // ray_origin.x * z = x * pjc->x_multi
-    // (ray_origin.x * z / pjc->x_multi) = x
-    float distant_z = 50.0f;
-    float distant_point[3];
-    distant_point[0] =
-        (clicked_viewport_x /
-            window_globals->projection_constants.x_multiplier) *
-                distant_z;
-    distant_point[1] =
-        (clicked_viewport_y /
-            window_globals->projection_constants.field_of_view_modifier) *
-                distant_z;
-    distant_point[2] = distant_z;
+    //    float clicked_viewport_x =
+    //        -1.0f + ((screen_x / window_globals->window_width) * 2.0f);
+    //    float clicked_viewport_y =
+    //        -1.0f + ((screen_y / window_globals->window_height) * 2.0f);
+    //
+    //    float z_multiplier = 0.00001f;
+    //    float ray_origin[3];
+    //    ray_origin[0] =
+    //        (clicked_viewport_x /
+    //            window_globals->projection_constants.x_multiplier) *
+    //                z_multiplier;
+    //    ray_origin[1] =
+    //        ((clicked_viewport_y) /
+    //            window_globals->projection_constants.field_of_view_modifier) *
+    //                z_multiplier;
+    //    ray_origin[2] = z_multiplier;
+    //
+    //    float ray_origin_rotated[3];
+    //    memcpy(
+    //        ray_origin_rotated,
+    //        ray_origin,
+    //        sizeof(float) * 3);
+    //    x_rotate_zvertex_f3(
+    //        ray_origin_rotated,
+    //        camera.xyz_angle[0]);
+    //    y_rotate_zvertex_f3(
+    //        ray_origin_rotated,
+    //        camera.xyz_angle[1]);
+    //    z_rotate_zvertex_f3(
+    //        ray_origin_rotated,
+    //        camera.xyz_angle[2]);
+    //
+    //    // we need a point that's distant, but yet also ends up at the same
+    //    // screen position as ray_origin
+    //    //
+    //    // This is also the distant point we draw to for visual debug
+    //    //
+    //    // given:
+    //    // projected_x = x * pjc->x_multiplier / z
+    //    //     and we want projected_x to be ray_origin.x:
+    //    // ray_origin.x = (x * pjc->x_multiplier) / z
+    //    // ray_origin.x * z = x * pjc->x_multi
+    //    // (ray_origin.x * z / pjc->x_multi) = x
+    //    float distant_z = 50.0f;
+    //    float distant_point[3];
+    //    distant_point[0] =
+    //        (clicked_viewport_x /
+    //            window_globals->projection_constants.x_multiplier) *
+    //                distant_z;
+    //    distant_point[1] =
+    //        (clicked_viewport_y /
+    //            window_globals->projection_constants.field_of_view_modifier) *
+    //                distant_z;
+    //    distant_point[2] = distant_z;
+    //
+    //    float distant_point_rotated[3];
+    //    memcpy(distant_point_rotated, distant_point, sizeof(float) * 3);
+    //    x_rotate_zvertex_f3(
+    //        distant_point_rotated,
+    //        camera.xyz_angle[0]);
+    //    y_rotate_zvertex_f3(
+    //        distant_point_rotated,
+    //        camera.xyz_angle[1]);
+    //    z_rotate_zvertex_f3(
+    //        distant_point_rotated,
+    //        camera.xyz_angle[2]);
+    //
+    //    normalize_zvertex_f3(distant_point);
+    //    normalize_zvertex_f3(distant_point_rotated);
+    //
+    //    memcpy(
+    //        window_globals->last_clickray_origin,
+    //        ray_origin,
+    //        sizeof(float) * 3);
+    //    window_globals->last_clickray_origin[0] += camera.xyz[0];
+    //    window_globals->last_clickray_origin[1] += camera.xyz[1];
+    //    window_globals->last_clickray_origin[2] += camera.xyz[2];
+    //    memcpy(
+    //        window_globals->last_clickray_direction,
+    //        distant_point_rotated,
+    //        sizeof(float) * 3);
+    //
+    //    int32_t return_value = -1;
+    //    float smallest_dist = FLOAT32_MAX;
+    //
+    //    for (
+    //        uint32_t zp_i = 0;
+    //        zp_i < zpolygons_to_render->size;
+    //        zp_i++)
+    //    {
+    //        if (
+    //            zpolygons_to_render->cpu_data[zp_i].deleted ||
+    //            zpolygons_to_render->cpu_data[zp_i].touchable_id < 0)
+    //        {
+    //            continue;
+    //        }
+    //
+    //        float current_collision_point[3];
+    //        bool32_t hit = false;
+    //
+    //        zPolygonCPU poly_cpu = zpolygons_to_render->cpu_data[zp_i];
+    //        GPUPolygon poly_gpu = zpolygons_to_render->gpu_data[zp_i];
+    //
+    //        float camera_offset_x = camera.xyz[0] *
+    //            (1.0f - zpolygons_to_render->gpu_data[zp_i].ignore_camera);
+    //        float camera_offset_y = camera.xyz[1] *
+    //            (1.0f - zpolygons_to_render->gpu_data[zp_i].ignore_camera);
+    //        float camera_offset_z = camera.xyz[2] *
+    //            (1.0f - zpolygons_to_render->gpu_data[zp_i].ignore_camera);
+    //
+    //        poly_gpu.xyz[0] -= camera_offset_x;
+    //        poly_gpu.xyz[1] -= camera_offset_y;
+    //        poly_gpu.xyz[2] -= camera_offset_z;
+    //        poly_gpu.xyz[0] += poly_gpu.xyz_offset[0];
+    //        poly_gpu.xyz[1] += poly_gpu.xyz_offset[1];
+    //        poly_gpu.xyz[2] += poly_gpu.xyz_offset[2];
+    //
+    //        hit = ray_intersects_zpolygon_hitbox(
+    //            /* const float * ray_origin: */
+    //                poly_gpu.ignore_camera > 0.5f ?
+    //                    ray_origin : ray_origin_rotated,
+    //            /* const float * ray_direction: */
+    //                poly_gpu.ignore_camera > 0.5f ?
+    //                    distant_point : distant_point_rotated,
+    //            /* const zPolygonCPU * cpu_data: */
+    //                &poly_cpu,
+    //            /* const GPUPolygon * gpu_data: */
+    //                &poly_gpu,
+    //            /* float * recipient_hit_point: */
+    //                current_collision_point);
+    //
+    //        float offset_collision_point[3];
+    //        memcpy(
+    //            offset_collision_point,
+    //            current_collision_point,
+    //            sizeof(float) * 3);
+    //        offset_collision_point[0] += camera_offset_x;
+    //        offset_collision_point[1] += camera_offset_y;
+    //        offset_collision_point[2] += camera_offset_z;
+    //
+    //        float dist_to_hit = get_distance_f3(offset_collision_point, ray_origin);
+    //        if (hit && dist_to_hit < smallest_dist) {
+    //            smallest_dist = dist_to_hit;
+    //            return_value = poly_cpu.touchable_id;
+    //            memcpy(
+    //                collision_point,
+    //                current_collision_point,
+    //                sizeof(float) * 3);
+    //        }
+    //    }
     
-    float distant_point_rotated[3];
-    memcpy(distant_point_rotated, distant_point, sizeof(float) * 3);
-    x_rotate_zvertex_f3(
-        distant_point_rotated,
-        camera.xyz_angle[0]);
-    y_rotate_zvertex_f3(
-        distant_point_rotated,
-        camera.xyz_angle[1]);
-    z_rotate_zvertex_f3(
-        distant_point_rotated,
-        camera.xyz_angle[2]);
-    
-    normalize_zvertex_f3(distant_point);
-    normalize_zvertex_f3(distant_point_rotated);
-    
-    memcpy(
-        window_globals->last_clickray_origin,
-        ray_origin,
-        sizeof(float) * 3);
-    window_globals->last_clickray_origin[0] += camera.xyz[0];
-    window_globals->last_clickray_origin[1] += camera.xyz[1];
-    window_globals->last_clickray_origin[2] += camera.xyz[2];
-    memcpy(
-        window_globals->last_clickray_direction,
-        distant_point_rotated,
-        sizeof(float) * 3);
-    
-    int32_t return_value = -1;
-    float smallest_dist = FLOAT32_MAX;
-    
-    for (
-        uint32_t zp_i = 0;
-        zp_i < zpolygons_to_render->size;
-        zp_i++)
-    {
-        if (
-            zpolygons_to_render->cpu_data[zp_i].deleted ||
-            zpolygons_to_render->cpu_data[zp_i].touchable_id < 0)
-        {
-            continue;
-        }
-        
-        float current_collision_point[3];
-        bool32_t hit = false;
-        
-        zPolygonCPU poly_cpu = zpolygons_to_render->cpu_data[zp_i];
-        GPUPolygon poly_gpu = zpolygons_to_render->gpu_data[zp_i];
-        
-        float camera_offset_x = camera.xyz[0] *
-            (1.0f - zpolygons_to_render->gpu_data[zp_i].ignore_camera);
-        float camera_offset_y = camera.xyz[1] *
-            (1.0f - zpolygons_to_render->gpu_data[zp_i].ignore_camera);
-        float camera_offset_z = camera.xyz[2] *
-            (1.0f - zpolygons_to_render->gpu_data[zp_i].ignore_camera);
-        
-        poly_gpu.xyz[0] -= camera_offset_x;
-        poly_gpu.xyz[1] -= camera_offset_y;
-        poly_gpu.xyz[2] -= camera_offset_z;
-        poly_gpu.xyz[0] += poly_gpu.xyz_offset[0];
-        poly_gpu.xyz[1] += poly_gpu.xyz_offset[1];
-        poly_gpu.xyz[2] += poly_gpu.xyz_offset[2];
-        
-        hit = ray_intersects_zpolygon_hitbox(
-            /* const float * ray_origin: */
-                poly_gpu.ignore_camera > 0.5f ?
-                    ray_origin : ray_origin_rotated,
-            /* const float * ray_direction: */
-                poly_gpu.ignore_camera > 0.5f ?
-                    distant_point : distant_point_rotated,
-            /* const zPolygonCPU * cpu_data: */
-                &poly_cpu,
-            /* const GPUPolygon * gpu_data: */
-                &poly_gpu,
-            /* float * recipient_hit_point: */
-                current_collision_point);
-        
-        float offset_collision_point[3];
-        memcpy(
-            offset_collision_point,
-            current_collision_point,
-            sizeof(float) * 3);
-        offset_collision_point[0] += camera_offset_x;
-        offset_collision_point[1] += camera_offset_y;
-        offset_collision_point[2] += camera_offset_z;
-        
-        float dist_to_hit = get_distance_f3(offset_collision_point, ray_origin);
-        if (hit && dist_to_hit < smallest_dist) {
-            smallest_dist = dist_to_hit;
-            return_value = poly_cpu.touchable_id;
-            memcpy(
-                collision_point,
-                current_collision_point,
-                sizeof(float) * 3);
-        }
-    }
-    
+    int return_value = -1;
     return return_value;
 }
 
@@ -213,7 +214,6 @@ void shared_gameloop_update(
     
     if (!application_running) {
         delete_all_ui_elements();
-        zpolygons_to_render->size = 0;
         particle_effects_size = 0;
         lineparticle_effects_size = 0;
         zlights_to_apply_size = 0;

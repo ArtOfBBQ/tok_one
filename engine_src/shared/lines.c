@@ -66,6 +66,15 @@ bool32_t fetch_line_by_object_id(
     return false;
 }
 
+void delete_line_object(const int32_t object_id)
+{
+    for (int32_t line_i = 0; line_i < lines_to_render_size; line_i++) {
+        if (lines_cpu_data[line_i].object_id == object_id) {
+            lines_cpu_data[line_i].deleted = true;
+        }
+    }
+}
+
 void commit_line(LineRequest * to_commit)
 {
     to_commit->cpu_data->committed = true;
@@ -127,6 +136,15 @@ bool32_t fetch_point_by_object_id(
     log_assert(recipient->cpu_data == NULL);
     log_assert(recipient->gpu_vertex == NULL);
     return false;
+}
+
+void delete_point_object(const int32_t object_id)
+{
+    for (int32_t point_i = 0; point_i < points_to_render_size; point_i++) {
+        if (points_cpu_data[point_i].object_id == object_id) {
+            points_cpu_data[point_i].deleted = true;
+        }
+    }
 }
 
 void commit_point(PointRequest * to_commit)

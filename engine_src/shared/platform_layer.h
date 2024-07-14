@@ -37,13 +37,10 @@ on each platform
 #import <UIKit/UIKit.h>
 #endif
 
-#ifdef PLATFORM_NS_FILEMANAGER
-#import <Foundation/Foundation.h>
-#endif
-
 #define MUTEXES_SIZE 200
 
 #ifdef SHARED_APPLE_PLATFORM
+#import <Foundation/Foundation.h>
 #include <pthread.h>
 #include <sys/time.h>
 #endif
@@ -215,6 +212,10 @@ void platform_gpu_push_texture_slice(
     const uint8_t * rgba_values);
 
 void platform_update_mouse_location(void);
+
+// This is used to communicate failure after failure to initialize GPU
+// acceleration, so assume no Metal/OpenGL/Vulkan/etc. available
+void platform_request_messagebox(const char * message);
 
 /*
 creates a mutex and return the ID of said mutex for you to store

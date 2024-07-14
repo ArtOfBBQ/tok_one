@@ -59,6 +59,8 @@ typedef struct zPolygonCollection {
     uint32_t size;
 } zPolygonCollection;
 
+extern zPolygonCollection * zpolygons_to_render;
+
 typedef struct PolygonRequest {
     GPUPolygon * gpu_data;
     GPUPolygonMaterial * gpu_materials;
@@ -72,11 +74,18 @@ void construct_zpolygon(
 void request_next_zpolygon(PolygonRequest * stack_recipient);
 void commit_zpolygon_to_render(PolygonRequest * to_commit);
 
-// A buffer of zPolygon objects that should be rendered
-// in your application
-// index 0 to zpolygons_to_render_size will be rendered,
-// the rest of the array will be ignored
-extern zPolygonCollection * zpolygons_to_render;
+/*
+Make a PolygonRequest (on the stack or whatever) and call this with an
+object_id.
+
+If a zPolygon exists with that object_id, the pointers in your LineRequest
+will be set so you can edit its properties. (So you can move your objects etc.)
+
+returns false if no such object_id, else true
+*/
+bool32_t fetch_zpolygon_by_object_id(
+    PolygonRequest * stack_recipient,
+    const int32_t object_id);
 
 void delete_zpolygon_object(const int32_t with_object_id);
 

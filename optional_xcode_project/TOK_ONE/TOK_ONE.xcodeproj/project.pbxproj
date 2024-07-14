@@ -64,6 +64,7 @@
 		60A99922287BDF31003F7159 /* structuredart2.png in Resources */ = {isa = PBXBuildFile; fileRef = 601128AA28625BAE00F92967 /* structuredart2.png */; };
 		60A99923287BDF31003F7159 /* teapot.obj in Resources */ = {isa = PBXBuildFile; fileRef = 601128AB28625BAE00F92967 /* teapot.obj */; };
 		60A99924287BDF31003F7159 /* phoebus.png in Resources */ = {isa = PBXBuildFile; fileRef = 6080CC45286FFD1D00444118 /* phoebus.png */; };
+		EC0531612C43D20F00C6771A /* unitybuild_macos.c in Sources */ = {isa = PBXBuildFile; fileRef = EC493BC42BEDA96D004D957F /* unitybuild_macos.c */; };
 		EC0717F02C29CDD5007A4AFA /* teapot_smooth.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC0717EF2C29CDD5007A4AFA /* teapot_smooth.obj */; };
 		EC0717F12C29CDD5007A4AFA /* teapot_smooth.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC0717EF2C29CDD5007A4AFA /* teapot_smooth.obj */; };
 		EC083A3B2AFF727900234FE3 /* objparser.c in Sources */ = {isa = PBXBuildFile; fileRef = EC083A392AFF727900234FE3 /* objparser.c */; };
@@ -81,7 +82,6 @@
 		EC18FF4929E3DD8900ED785C /* blob3.png in Resources */ = {isa = PBXBuildFile; fileRef = EC18FF4529E3DD8900ED785C /* blob3.png */; };
 		EC31932529DFAAFB00E320CD /* particle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC31932329DFAAFB00E320CD /* particle.c */; };
 		EC493BC92BEDABCC004D957F /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F48293C9FD900837369 /* UIKit.framework */; };
-		EC493BCA2BEDADBB004D957F /* unitybuild_macos.c in Sources */ = {isa = PBXBuildFile; fileRef = EC493BC42BEDA96D004D957F /* unitybuild_macos.c */; };
 		EC493BCB2BEDAE07004D957F /* shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 60112895286253C100F92967 /* shaders.metal */; };
 		EC6441A429318B6D00A0267B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = EC64419F29318B6D00A0267B /* main.m */; };
 		EC6441A529318B6D00A0267B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A029318B6D00A0267B /* AppDelegate.m */; };
@@ -581,8 +581,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EC0531612C43D20F00C6771A /* unitybuild_macos.c in Sources */,
 				EC493BCB2BEDAE07004D957F /* shaders.metal in Sources */,
-				EC493BCA2BEDADBB004D957F /* unitybuild_macos.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -716,8 +716,8 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MTL_LANGUAGE_REVISION = Metal20;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_CFLAGS = "-Wall";
 				STRIP_INSTALLED_PRODUCT = NO;
+				TAPI_VERIFY_MODE = ErrorsOnly;
 			};
 			name = Debug;
 		};
@@ -779,8 +779,8 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				MTL_LANGUAGE_REVISION = Metal20;
-				OTHER_CFLAGS = "-Wall";
 				STRIP_INSTALLED_PRODUCT = NO;
+				TAPI_VERIFY_MODE = ErrorsOnly;
 			};
 			name = Release;
 		};

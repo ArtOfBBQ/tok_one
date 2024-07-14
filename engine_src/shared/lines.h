@@ -63,6 +63,11 @@ bool32_t fetch_line_by_object_id(
     const int32_t object_id);
 
 /*
+Delete all lines with a given object_id
+*/
+void delete_line_object(const int32_t object_id);
+
+/*
 Call this when you want to start rendering the line.
 */
 void commit_line(LineRequest * to_commit);
@@ -72,6 +77,7 @@ void fetch_next_point(PointRequest * stack_recipient);
 bool32_t fetch_point_by_object_id(
     PointRequest * stack_recipient,
     const int32_t object_id);
+void delete_point_object(const int32_t object_id);
 void commit_point(PointRequest * to_commit);
 
 /*

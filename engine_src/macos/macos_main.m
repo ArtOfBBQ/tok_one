@@ -512,18 +512,34 @@ int main(int argc, const char * argv[]) {
             stringWithCString:shader_lib_path_cstr
             encoding:NSASCIIStringEncoding];
     
-    [apple_gpu_delegate
+    BOOL result = [apple_gpu_delegate
         configureMetalWithDevice: metal_device
         andPixelFormat: mtk_view.colorPixelFormat
-        fromFolder: shader_lib_path];
+        fromFilePath: shader_lib_path];
     
-    init_application_after_gpu_init();
+    if (!result || !application_running) {
+        log_dump_and_crash("Can't draw anything to the screen...\n");
+        
+        platform_request_messagebox(
+            "Critical failure: couldn't configure Metal graphics.");
+    } else {
+        init_application_after_gpu_init();
     
-    start_audio_loop();
+        start_audio_loop();
+    }
     
     @autoreleasepool {
         return NSApplicationMain(argc, argv);
     }
+}
+
+void platform_request_messagebox(const char * message) {
+    NSAlert * alert = [[NSAlert alloc] init];
+    NSString * NSmsg = [NSString
+        stringWithCString:message
+        encoding:NSASCIIStringEncoding];
+    [alert setMessageText: NSmsg];
+    [alert runModal];
 }
 
 void platform_enter_fullscreen(void) {
