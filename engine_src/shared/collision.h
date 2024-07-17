@@ -8,8 +8,8 @@
 #include <stdio.h>
 #endif
 
-#ifndef FLT_MAX
-#define FLT_MAX 3.402823466e+38F
+#ifndef COL_FLT_MAX
+#define COL_FLT_MAX 3.402823466e+38F
 #endif
 
 int point_hits_AArect(
@@ -48,5 +48,21 @@ int point_hits_triangle(
     const float triangle_vertex_1[2],
     const float triangle_vertex_2[2],
     const float triangle_vertex_3[2]);
+
+float ray_hits_plane(
+    const float ray_origin[3],
+    const float ray_direction[3],
+    const float plane_point[3],
+    const float plane_normal[3],
+    float * collision_recipient);
+
+float ray_hits_triangle(
+    const float ray_origin[3],
+    const float ray_direction[3],
+    const float triangle_vertex_1[3],
+    const float triangle_vertex_2[3],
+    const float triangle_vertex_3[3],
+    const float triangle_normal[3],
+    float * collision_recipient);
 
 #endif // TOK_COLLISION_H

@@ -78,7 +78,7 @@ float ray_hits_AArect(
         rect_bounds_max[0],
         rect_bounds_max[1]);
     
-    float nearest_dist_found = FLT_MAX;
+    float nearest_dist_found = COL_FLT_MAX;
     
     for (int plane_i = 0; plane_i < 4; plane_i++) {
         int axis_i = plane_i / 2;
@@ -161,7 +161,7 @@ float ray_hits_AAbox(
     const float box_bounds_max[3],
     float * collision_recipient)
 {
-    float nearest_dist_found = FLT_MAX;
+    float nearest_dist_found = COL_FLT_MAX;
     
     for (int plane_i = 0; plane_i < 6; plane_i++) {
         int axis_i = plane_i / 2;
@@ -333,7 +333,7 @@ float normalized_ray_hits_sphere(
     // we know our a is 1, so that can be deleted
     float discr = (b * b) - (4 * c);
     
-    float t = FLT_MAX;
+    float t = COL_FLT_MAX;
     
     if (discr >= 0.0f) {
         // 1 or more collisions exist, we pick the closest one
@@ -372,7 +372,8 @@ int point_hits_triangle(
     */
     
     float w1 =
-        ((A[0]*(C[1]-A[1])) + ((P[1]-A[1])*(C[0]-A[0])) - (P[0]*(C[1]-A[1]))) /
+        (
+        (A[0]*(C[1]-A[1])) + ((P[1]-A[1])*(C[0]-A[0])) - (P[0]*(C[1]-A[1]))) /
             (((B[1] - A[1])*(C[0] - A[0])) - ((B[0]-A[0])*(C[1]-A[1])));
     
     float w2 = (P[1]-A[1]-(w1*(B[1]-A[1]))) / (C[1]-A[1]);
@@ -381,4 +382,118 @@ int point_hits_triangle(
         w1 >= 0.0f &&
         w2 >= 0.0f &&
         (w1 + w2) <= 1.0f;
+}
+
+float ray_hits_plane(
+    const float ray_origin[3],
+    const float ray_direction[3],
+    const float plane_point[3],
+    const float plane_normal[3],
+    float * collision_recipient)
+{
+    /*
+    The plane equation:
+    ((cp - pP) . pN) == 0
+    
+    Our point plugged into the plane equation:
+    (((rO + (rD * t))) - pP) . pN) == 0
+    
+    I'm confused by the rules of moving dot products around, so I decided to
+    write out every vector in full and follow the basic rules of algebra.
+    
+    The plane equation without vectors:
+        ((cp[0] - pP[0]) * pN[0]) +
+        ((cp[1] - pP[1]) * pN[1]) +
+        ((cp[2] - pP[2]) * pN[2]) == 0
+    
+    Plugging in our point:
+        (((rO[0) + (rD[0) * t) - pP[0]) * pN[0]) +
+        (((rO[1) + (rD[1) * t) - pP[1]) * pN[1]) +
+        (((rO[2) + (rD[2) * t) - pP[2]) * pN[2]) == 0
+    
+    (pN[0]*rO[0] + pN[0]*rD[0]*t - pN[0]*pP[0]) +
+    (pN[1]*rO[1] + pN[1]*rD[1]*t - pN[1]*pP[1]) +
+    (pN[2]*rO[2] + pN[2]*rD[2]*t - pN[2]*pP[2]) == 0
+    
+    pN[0]*rO[0] + pN[0]*rD[0]*t +
+        pN[1]*rO[1] + pN[1]*rD[1]*t +
+            pN[2]*rO[2] + pN[2]*rD[2]*t ==
+                pN[0]*pP[0] + pN[1]*pP[1] + pN[2]*pP[2]
+    
+    pN[0]*rD[0]*t + pN[1]*rD[1]*t + pN[2]*rD[2]*t ==
+        pN[0]*pP[0] + pN[1]*pP[1] + pN[2]*pP[2] -
+            pN[0]*rO[0] - pN[1]*rO[1] - pN[2]*rO[2]
+    
+    t * (pN[0]*rD[0] + pN[1]*rD[1] + pN[2]*rD[2]) ==
+        pN[0]*pP[0] + pN[1]*pP[1] + pN[2]*pP[2] -
+            pN[0]*rO[0] - pN[1]*rO[1] - pN[2]*rO[2]
+    
+    t ==
+        pN[0]*pP[0] + pN[1]*pP[1] + pN[2]*pP[2] -
+            pN[0]*rO[0] - pN[1]*rO[1] - pN[2]*rO[2]
+                /
+                (pN[0]*rD[0] + pN[1]*rD[1] + pN[2]*rD[2])
+    */
+    
+    float t = COL_FLT_MAX;
+    
+    float denom =
+        (plane_normal[0] * ray_direction[0]) +
+        (plane_normal[1] * ray_direction[1]) +
+        (plane_normal[2] * ray_direction[2]);
+    
+    if (denom > 0.0001f || denom < 0.0001f) {
+        float divisor =
+            (plane_normal[0] * plane_point[0]) +
+            (plane_normal[1] * plane_point[1]) +
+            (plane_normal[2] * plane_point[2]) -
+            (plane_normal[0] * ray_origin[0]) -
+            (plane_normal[1] * ray_origin[1]) -
+            (plane_normal[2] * ray_origin[2]);
+        
+        t = divisor / denom;
+        
+        collision_recipient[0] = ray_origin[0] + (ray_direction[0] * t);
+        collision_recipient[1] = ray_origin[1] + (ray_direction[1] * t);
+        collision_recipient[2] = ray_origin[2] + (ray_direction[2] * t);
+    }
+    
+    return t;
+}
+
+float ray_hits_triangle(
+    const float ray_origin[3],
+    const float ray_direction[3],
+    const float triangle_vertex_1[3],
+    const float triangle_vertex_2[3],
+    const float triangle_vertex_3[3],
+    const float triangle_normal[3],
+    float * collision_recipient)
+{
+    float nearest_dist_found = ray_hits_plane(
+        /* const float ray_origin[3]: */
+            ray_origin,
+        /* const float ray_direction[3]: */
+            ray_direction,
+        /* const float plane_point[3]: */
+            triangle_vertex_1,
+        /* const float plane_normal[3]: */
+            triangle_normal,
+        /* float * collision_recipient: */
+            collision_recipient);
+    
+    if (point_hits_triangle(
+        /* const float P[2]: */
+            collision_recipient,
+        /* const float A[2]: */
+            triangle_vertex_1,
+        /* const float B[2]: */
+            triangle_vertex_2,
+        /* const float C[2]: */
+            triangle_vertex_3))
+    {
+        return nearest_dist_found;
+    }
+    
+    return COL_FLT_MAX;
 }

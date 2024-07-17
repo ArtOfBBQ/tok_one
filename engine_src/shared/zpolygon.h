@@ -10,6 +10,7 @@
 #include "simd.h"
 #include "logger.h"
 #include "common.h"
+#include "collision.h"
 #include "platform_layer.h"
 #include "cpu_gpu_shared_types.h"
 #include "lightsource.h"
@@ -39,8 +40,7 @@ typedef struct zPolygonCPU {
     
     int32_t object_id;
     int32_t touchable_id;
-    float boundbox_leftbottomfront[3];
-    float boundbox_righttopback[3];
+    float boundsphere_radius;
     
     bool32_t alpha_blending_enabled;
     bool32_t committed;
@@ -109,9 +109,9 @@ float get_distance_f3(
     const float p1[3],
     const float p2[3]);
 
-bool32_t ray_intersects_zpolygon_hitbox(
+float ray_intersects_zpolygon(
     const float ray_origin[3],
-    const float ray_direction[3],
+    float ray_direction[3],
     const zPolygonCPU * cpu_data,
     const GPUPolygon  * gpu_data,
     float * recipient_hit_point);

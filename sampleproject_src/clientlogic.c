@@ -1,18 +1,15 @@
 #include "clientlogic.h"
 
-#define TEAPOT 0
+#define TEAPOT 1
 #if TEAPOT
 static int32_t teapot_mesh_id = -1;
 static int32_t teapot_object_id = -1;
 static int32_t teapot_touchable_id = -1;
 #endif
 
-static int32_t triangle_object_id = -1;
-static float triangle_vertices[3][3];
-
 // colray stands for 'collision ray' (we're testing collisions with a line)
-static int32_t colray_object_id = -1;
-static int32_t colpoint_object_id = -1;
+//static int32_t colray_object_id = -1;
+//static int32_t colpoint_object_id = -1;
 
 void client_logic_early_startup(void) {
     
@@ -29,17 +26,7 @@ void client_logic_early_startup(void) {
             /* rows     : */ 10,
             /* columns  : */ 10);
     }
-    
-    triangle_vertices[0][0] = 0.0f;
-    triangle_vertices[0][1] = 0.0f;
-    triangle_vertices[0][2] = 1.0f;
-    triangle_vertices[1][0] = 0.25f;
-    triangle_vertices[1][1] = 0.0f;
-    triangle_vertices[1][2] = 1.0f;
-    triangle_vertices[2][0] = 0.25f;
-    triangle_vertices[2][1] = 0.25f;
-    triangle_vertices[2][2] = 1.0f;
-    
+        
     #if TEAPOT
     // teapot_mesh_id = BASIC_CUBE_MESH_ID;
     teapot_mesh_id = new_mesh_id_from_resource("teapot_smooth.obj");
@@ -74,32 +61,6 @@ void client_logic_late_startup(void) {
     light->xyz[2]        =  0.10f;
     commit_zlight(light);
     
-    colray_object_id = next_nonui_object_id();
-    LineRequest colray_line_request;
-    fetch_next_line(/* LineRequest * stack_recipient: */ &colray_line_request);
-    colray_line_request.gpu_vertices[0].xyz[0] =   0.2f;
-    colray_line_request.gpu_vertices[0].xyz[1] =   0.2f;
-    colray_line_request.gpu_vertices[0].xyz[2] =   1.0f;
-    colray_line_request.gpu_vertices[0].ignore_camera = false;
-    colray_line_request.gpu_vertices[1].xyz[0] =   3.0f;
-    colray_line_request.gpu_vertices[1].xyz[1] =   3.0f;
-    colray_line_request.gpu_vertices[1].xyz[2] =   1.0f;
-    colray_line_request.gpu_vertices[1].ignore_camera = false;
-    colray_line_request.cpu_data->object_id = colray_object_id;
-    commit_line(&colray_line_request);
-    
-    colpoint_object_id = next_nonui_object_id();
-    PointRequest colpoint_request;
-    fetch_next_point(/* PointRequest * stack_recipient: */ &colpoint_request);
-    colpoint_request.gpu_vertex[0].xyz[0] =   1.0f;
-    colpoint_request.gpu_vertex[0].xyz[1] =   1.0f;
-    colpoint_request.gpu_vertex[0].xyz[2] =   1.0f;
-    colpoint_request.gpu_vertex[0].ignore_camera = false;
-    colpoint_request.cpu_data->object_id = colpoint_object_id;
-    commit_point(&colpoint_request);
-    
-    triangle_object_id = next_nonui_object_id();
-    
     #if TEAPOT
     teapot_object_id = next_nonui_object_id();
     
@@ -119,9 +80,9 @@ void client_logic_late_startup(void) {
     teapot_request.cpu_data->visible               = true;
     teapot_touchable_id = next_nonui_touchable_id();
     teapot_request.cpu_data->touchable_id          = teapot_touchable_id;
-    teapot_request.gpu_materials[0].rgba[0]        = 0.5f;
-    teapot_request.gpu_materials[0].rgba[1]        = 0.5f;
-    teapot_request.gpu_materials[0].rgba[2]        = 0.5f;
+    teapot_request.gpu_materials[0].rgba[0]        = 0.4f;
+    teapot_request.gpu_materials[0].rgba[1]        = 0.4f;
+    teapot_request.gpu_materials[0].rgba[2]        = 0.4f;
     teapot_request.gpu_materials[0].rgba[3]        = 1.0f;
     teapot_request.gpu_materials[0].texturearray_i =   -1;
     teapot_request.gpu_materials[0].texture_i      =   -1;
@@ -258,18 +219,18 @@ void client_logic_update(uint64_t microseconds_elapsed)
         user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
             handled = true;
         
-        LineRequest colray;
-        fetch_line_by_object_id(&colray, colray_object_id);
-        colray.gpu_vertices[0].xyz[0] = screenspace_x_to_x(
-            /* const float screenspace_x: */
-                user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                    screen_x,
-            1.0f);
-        colray.gpu_vertices[0].xyz[1] = screenspace_y_to_y(
-            /* const float screenspace_x: */
-                user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                    screen_y,
-            1.0f);
+        //        LineRequest colray;
+        //        fetch_line_by_object_id(&colray, colray_object_id);
+        //        colray.gpu_vertices[0].xyz[0] = screenspace_x_to_x(
+        //            /* const float screenspace_x: */
+        //                user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+        //                    screen_x,
+        //            1.0f);
+        //        colray.gpu_vertices[0].xyz[1] = screenspace_y_to_y(
+        //            /* const float screenspace_x: */
+        //                user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+        //                    screen_y,
+        //            1.0f);
     }
     
     if (
@@ -282,79 +243,6 @@ void client_logic_update(uint64_t microseconds_elapsed)
         !user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].handled)
     {
         user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].handled = true;
-        
-        LineRequest colray;
-        fetch_line_by_object_id(&colray, colray_object_id);
-        colray.gpu_vertices[1].xyz[0] = screenspace_x_to_x(
-            /* const float screenspace_x: */
-                user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_x,
-            1.0f);
-        colray.gpu_vertices[1].xyz[1] = screenspace_y_to_y(
-            /* const float screenspace_x: */
-                user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_y,
-            1.0f);
-        
-        float ray_direction[3];
-        ray_direction[0] = colray.gpu_vertices[1].xyz[0] -
-            colray.gpu_vertices[0].xyz[0];
-        ray_direction[1] = colray.gpu_vertices[1].xyz[1] -
-            colray.gpu_vertices[0].xyz[1];
-        ray_direction[2] = 0.0f;
-        
-        // float col_point[3];
-        
-        float hit_at = FLOAT32_MAX;
-        
-        if (point_hits_triangle(
-            /* const float * point_xy: */
-                colray.gpu_vertices[1].xyz,
-            /* const float * triangle_vertex_1: */
-                triangle_vertices[0],
-            /* const float * triangle_vertex_2: */
-                triangle_vertices[1],
-            /* const float * triangle_vertex_3: */
-                triangle_vertices[2]))
-        {
-            PointRequest colpoint_request;
-            fetch_point_by_object_id(&colpoint_request, colpoint_object_id);
-            colpoint_request.gpu_vertex->xyz[0] = colray.gpu_vertices[1].xyz[0];
-            colpoint_request.gpu_vertex->xyz[1] = colray.gpu_vertices[1].xyz[1];
-            colpoint_request.gpu_vertex->xyz[2] = colray.gpu_vertices[1].xyz[2];
-        } else {
-            PointRequest colpoint_request;
-            fetch_point_by_object_id(&colpoint_request, colpoint_object_id);
-            colpoint_request.gpu_vertex->xyz[0] = -1.1f;
-            colpoint_request.gpu_vertex->xyz[1] = -1.1f;
-            colpoint_request.gpu_vertex->xyz[2] = 10.0f;
-        }
-        
-        if (hit_at >= 0.0f && hit_at < 20.0f) {
-            //            PointRequest colpoint_request;
-            //            fetch_point_by_object_id(&colpoint_request, colpoint_object_id);
-            //            colpoint_request.gpu_vertex->xyz[0] = col_point[0];
-            //            colpoint_request.gpu_vertex->xyz[1] = col_point[1];
-            //            colpoint_request.gpu_vertex->xyz[2] = col_point[2];
-            
-        } else {
-            //            PointRequest colpoint_request;
-            //            fetch_point_by_object_id(&colpoint_request, colpoint_object_id);
-            //            colpoint_request.gpu_vertex->xyz[0] = -1.1f;
-            //            colpoint_request.gpu_vertex->xyz[1] = -1.1f;
-            //            colpoint_request.gpu_vertex->xyz[2] = 10.0f;
-        }
-    }
-    
-    delete_point_object(triangle_object_id);
-    
-    for (uint32_t vertex_i = 0; vertex_i < 3; vertex_i++) {
-        PointRequest point_request;
-        fetch_next_point(&point_request);
-        point_request.gpu_vertex->xyz[0] = triangle_vertices[vertex_i][0];
-        point_request.gpu_vertex->xyz[1] = triangle_vertices[vertex_i][1];
-        point_request.gpu_vertex->xyz[2] = triangle_vertices[vertex_i][2];
-        point_request.gpu_vertex->ignore_camera = false;
-        point_request.cpu_data->object_id = triangle_object_id;
-        commit_point(&point_request);
     }
     
     #if TEAPOT

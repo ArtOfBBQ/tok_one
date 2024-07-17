@@ -37,6 +37,7 @@ static void add_line_vertex(
     frame_data->line_vertices_size += 1;
 }
 
+#if 0
 static void add_point_vertex(
     GPUDataForSingleFrame * frame_data,
     const float xyz[3],
@@ -58,203 +59,188 @@ static void add_point_vertex(
     
     frame_data->point_vertices_size += 1;
 }
+#endif
 
-inline static void draw_hitbox(
-    GPUDataForSingleFrame * frame_data,
-    const float xyz[3],
-    const float xyz_offset[3],
-    const float hitbox_leftbottomfront[3],
-    const float hitbox_righttopback[3],
-    const float xyz_angle[3],
-    const float ignore_camera)
-{
-    add_point_vertex(frame_data, xyz, ignore_camera);
-    
-    float leftbottomfront[3];
-    memcpy(leftbottomfront, hitbox_leftbottomfront, sizeof(float) * 3);
-    
-    float righttopback[3];
-    memcpy(righttopback, hitbox_righttopback, sizeof(float) * 3);
-    
-    // TODO: activate rotation & offsets
-    x_rotate_zvertex_f3(leftbottomfront, xyz_angle[0]);
-    y_rotate_zvertex_f3(leftbottomfront, xyz_angle[1]);
-    z_rotate_zvertex_f3(leftbottomfront, xyz_angle[2]);
-    
-    x_rotate_zvertex_f3(righttopback, xyz_angle[0]);
-    y_rotate_zvertex_f3(righttopback, xyz_angle[1]);
-    z_rotate_zvertex_f3(righttopback, xyz_angle[2]);
-    
-    float xyz_center[3];
-    memcpy(xyz_center, xyz, sizeof(float) * 3);
-    xyz_center[0] += xyz_offset[0];
-    xyz_center[1] += xyz_offset[1];
-    xyz_center[2] += xyz_offset[2];
-    
-    float linestart_xyz[3];
-    float lineend_xyz[3];
-    
-    for (uint32_t i = 0; i < 2; i++) {
-        if (i == 0) {
-            // Draw the front of the hitbox
-            linestart_xyz[2] = leftbottomfront[2] + xyz_center[2];
-            lineend_xyz[2]   = leftbottomfront[2] + xyz_center[2];
-        } else {
-            // Draw the back of the hitbox
-            linestart_xyz[2] = righttopback[2] + xyz_center[2];
-            lineend_xyz[2]   = righttopback[2] + xyz_center[2];
-        }
-        
-        // Left to right first
-        linestart_xyz[0] = leftbottomfront[0] + xyz_center[0];
-        lineend_xyz[0]   = righttopback[0]    + xyz_center[0];
-        
-        // left top -> right top
-        linestart_xyz[1] = righttopback[1] + xyz_center[1];
-        lineend_xyz[1] = righttopback[1] + xyz_center[1];
-        add_line_vertex(
-            frame_data,
-            linestart_xyz,
-            ignore_camera);
-        add_line_vertex(
-            frame_data,
-            lineend_xyz,
-            ignore_camera);
-        
-        // left bottom -> right bottom
-        linestart_xyz[1] = leftbottomfront[1] + xyz_center[1];
-        lineend_xyz[1]   = leftbottomfront[1] + xyz_center[1];
-        add_line_vertex(
-            frame_data,
-            linestart_xyz,
-            ignore_camera);
-        add_line_vertex(
-            frame_data,
-            lineend_xyz,
-            ignore_camera);
-        
-        // left top -> left bottom
-        linestart_xyz[0] = leftbottomfront[0] + xyz_center[0];
-        linestart_xyz[1] = righttopback[1] + xyz_center[1];
-        lineend_xyz[0]   = leftbottomfront[0] + xyz_center[0];
-        lineend_xyz[1]   = leftbottomfront[1] + xyz_center[1];
-        add_line_vertex(
-            frame_data,
-            linestart_xyz,
-            ignore_camera);
-        add_line_vertex(
-            frame_data,
-            lineend_xyz,
-            ignore_camera);
-        
-        // right top -> right bottom
-        linestart_xyz[0] = righttopback[0]    + xyz_center[0];
-        linestart_xyz[1] = righttopback[1]    + xyz_center[1];
-        lineend_xyz[0]   = righttopback[0]    + xyz_center[0];
-        lineend_xyz[1]   = leftbottomfront[1] + xyz_center[1];
-        add_line_vertex(
-            frame_data,
-            linestart_xyz,
-            ignore_camera);
-        add_line_vertex(
-            frame_data,
-            lineend_xyz,
-            ignore_camera);
-    }
-    
-    /*
-    ***************************************************************
-    Now draw the connection from the front to the back
-    ***************************************************************
-    */
-    linestart_xyz[2] = leftbottomfront[2] + xyz_center[2];
-    lineend_xyz[2]   = righttopback[2]    + xyz_center[2];
-    
-    // top first
-    linestart_xyz[1] = righttopback[1] + xyz_center[1];
-    lineend_xyz[1] = righttopback[1] + xyz_center[1];
-    
-    // left top front -> left top back
-    linestart_xyz[0] = leftbottomfront[0] + xyz_center[0];
-    lineend_xyz[0] = leftbottomfront[0] + xyz_center[0];
-    add_line_vertex(
-        frame_data,
-        linestart_xyz,
-        ignore_camera);
-    add_line_vertex(
-        frame_data,
-        lineend_xyz,
-        ignore_camera);
-    
-    // right top front -> right top back
-    linestart_xyz[0] = righttopback[0] + xyz_center[0];
-    lineend_xyz[0]   = righttopback[0] + xyz_center[0];
-    add_line_vertex(
-        frame_data,
-        linestart_xyz,
-        ignore_camera);
-    add_line_vertex(
-        frame_data,
-        lineend_xyz,
-        ignore_camera);
-    
-    // bottom next
-    linestart_xyz[1] = leftbottomfront[1] + xyz_center[1];
-    lineend_xyz[1]   = leftbottomfront[1] + xyz_center[1];
-    
-    // left bottom front -> left bottom back
-    linestart_xyz[0] = leftbottomfront[0] + xyz_center[0];
-    lineend_xyz[0]   = leftbottomfront[0] + xyz_center[0];
-    add_line_vertex(
-        frame_data,
-        linestart_xyz,
-        ignore_camera);
-    add_line_vertex(
-        frame_data,
-        lineend_xyz,
-        ignore_camera);
-    
-    // right bottom front -> right bottom back
-    linestart_xyz[0] = righttopback[0]    + xyz_center[0];
-    lineend_xyz[0]   = righttopback[0]    + xyz_center[0];
-    add_line_vertex(
-        frame_data,
-        linestart_xyz,
-        ignore_camera);
-    add_line_vertex(
-        frame_data,
-        lineend_xyz,
-        ignore_camera);
-    /*
-    ***************************************************************
-    End of front to back
-    ***************************************************************
-    */
-}
+//inline static void draw_hitbox(
+//    GPUDataForSingleFrame * frame_data,
+//    const float xyz[3],
+//    const float xyz_offset[3],
+//    const float hitbox_leftbottomfront[3],
+//    const float hitbox_righttopback[3],
+//    const float xyz_angle[3],
+//    const float ignore_camera)
+//{
+//    add_point_vertex(frame_data, xyz, ignore_camera);
+//    
+//    float leftbottomfront[3];
+//    memcpy(leftbottomfront, hitbox_leftbottomfront, sizeof(float) * 3);
+//    
+//    float righttopback[3];
+//    memcpy(righttopback, hitbox_righttopback, sizeof(float) * 3);
+//    
+//    // TODO: activate rotation & offsets
+//    x_rotate_zvertex_f3(leftbottomfront, xyz_angle[0]);
+//    y_rotate_zvertex_f3(leftbottomfront, xyz_angle[1]);
+//    z_rotate_zvertex_f3(leftbottomfront, xyz_angle[2]);
+//    
+//    x_rotate_zvertex_f3(righttopback, xyz_angle[0]);
+//    y_rotate_zvertex_f3(righttopback, xyz_angle[1]);
+//    z_rotate_zvertex_f3(righttopback, xyz_angle[2]);
+//    
+//    float xyz_center[3];
+//    memcpy(xyz_center, xyz, sizeof(float) * 3);
+//    xyz_center[0] += xyz_offset[0];
+//    xyz_center[1] += xyz_offset[1];
+//    xyz_center[2] += xyz_offset[2];
+//    
+//    float linestart_xyz[3];
+//    float lineend_xyz[3];
+//    
+//    for (uint32_t i = 0; i < 2; i++) {
+//        if (i == 0) {
+//            // Draw the front of the hitbox
+//            linestart_xyz[2] = leftbottomfront[2] + xyz_center[2];
+//            lineend_xyz[2]   = leftbottomfront[2] + xyz_center[2];
+//        } else {
+//            // Draw the back of the hitbox
+//            linestart_xyz[2] = righttopback[2] + xyz_center[2];
+//            lineend_xyz[2]   = righttopback[2] + xyz_center[2];
+//        }
+//        
+//        // Left to right first
+//        linestart_xyz[0] = leftbottomfront[0] + xyz_center[0];
+//        lineend_xyz[0]   = righttopback[0]    + xyz_center[0];
+//        
+//        // left top -> right top
+//        linestart_xyz[1] = righttopback[1] + xyz_center[1];
+//        lineend_xyz[1] = righttopback[1] + xyz_center[1];
+//        add_line_vertex(
+//            frame_data,
+//            linestart_xyz,
+//            ignore_camera);
+//        add_line_vertex(
+//            frame_data,
+//            lineend_xyz,
+//            ignore_camera);
+//        
+//        // left bottom -> right bottom
+//        linestart_xyz[1] = leftbottomfront[1] + xyz_center[1];
+//        lineend_xyz[1]   = leftbottomfront[1] + xyz_center[1];
+//        add_line_vertex(
+//            frame_data,
+//            linestart_xyz,
+//            ignore_camera);
+//        add_line_vertex(
+//            frame_data,
+//            lineend_xyz,
+//            ignore_camera);
+//        
+//        // left top -> left bottom
+//        linestart_xyz[0] = leftbottomfront[0] + xyz_center[0];
+//        linestart_xyz[1] = righttopback[1] + xyz_center[1];
+//        lineend_xyz[0]   = leftbottomfront[0] + xyz_center[0];
+//        lineend_xyz[1]   = leftbottomfront[1] + xyz_center[1];
+//        add_line_vertex(
+//            frame_data,
+//            linestart_xyz,
+//            ignore_camera);
+//        add_line_vertex(
+//            frame_data,
+//            lineend_xyz,
+//            ignore_camera);
+//        
+//        // right top -> right bottom
+//        linestart_xyz[0] = righttopback[0]    + xyz_center[0];
+//        linestart_xyz[1] = righttopback[1]    + xyz_center[1];
+//        lineend_xyz[0]   = righttopback[0]    + xyz_center[0];
+//        lineend_xyz[1]   = leftbottomfront[1] + xyz_center[1];
+//        add_line_vertex(
+//            frame_data,
+//            linestart_xyz,
+//            ignore_camera);
+//        add_line_vertex(
+//            frame_data,
+//            lineend_xyz,
+//            ignore_camera);
+//    }
+//    
+//    /*
+//    ***************************************************************
+//    Now draw the connection from the front to the back
+//    ***************************************************************
+//    */
+//    linestart_xyz[2] = leftbottomfront[2] + xyz_center[2];
+//    lineend_xyz[2]   = righttopback[2]    + xyz_center[2];
+//    
+//    // top first
+//    linestart_xyz[1] = righttopback[1] + xyz_center[1];
+//    lineend_xyz[1] = righttopback[1] + xyz_center[1];
+//    
+//    // left top front -> left top back
+//    linestart_xyz[0] = leftbottomfront[0] + xyz_center[0];
+//    lineend_xyz[0] = leftbottomfront[0] + xyz_center[0];
+//    add_line_vertex(
+//        frame_data,
+//        linestart_xyz,
+//        ignore_camera);
+//    add_line_vertex(
+//        frame_data,
+//        lineend_xyz,
+//        ignore_camera);
+//    
+//    // right top front -> right top back
+//    linestart_xyz[0] = righttopback[0] + xyz_center[0];
+//    lineend_xyz[0]   = righttopback[0] + xyz_center[0];
+//    add_line_vertex(
+//        frame_data,
+//        linestart_xyz,
+//        ignore_camera);
+//    add_line_vertex(
+//        frame_data,
+//        lineend_xyz,
+//        ignore_camera);
+//    
+//    // bottom next
+//    linestart_xyz[1] = leftbottomfront[1] + xyz_center[1];
+//    lineend_xyz[1]   = leftbottomfront[1] + xyz_center[1];
+//    
+//    // left bottom front -> left bottom back
+//    linestart_xyz[0] = leftbottomfront[0] + xyz_center[0];
+//    lineend_xyz[0]   = leftbottomfront[0] + xyz_center[0];
+//    add_line_vertex(
+//        frame_data,
+//        linestart_xyz,
+//        ignore_camera);
+//    add_line_vertex(
+//        frame_data,
+//        lineend_xyz,
+//        ignore_camera);
+//    
+//    // right bottom front -> right bottom back
+//    linestart_xyz[0] = righttopback[0]    + xyz_center[0];
+//    lineend_xyz[0]   = righttopback[0]    + xyz_center[0];
+//    add_line_vertex(
+//        frame_data,
+//        linestart_xyz,
+//        ignore_camera);
+//    add_line_vertex(
+//        frame_data,
+//        lineend_xyz,
+//        ignore_camera);
+//    /*
+//    ***************************************************************
+//    End of front to back
+//    ***************************************************************
+//    */
+//}
 
 inline static void zpolygon_hitboxes_to_lines(
     GPUDataForSingleFrame * frame_data)
 {
     for (uint32_t zp_i = 0; zp_i < zpolygons_to_render->size; zp_i++) {
-        if (zpolygons_to_render->cpu_data[zp_i].touchable_id >= 0) {
-            draw_hitbox(
-                /* GPUDataForSingleFrame * frame_data: */
-                    frame_data,
-                /* const float xyz[3]: */
-                    zpolygons_to_render->gpu_data[zp_i].xyz,
-                /* const float xyz_offset[3]: */
-                    zpolygons_to_render->gpu_data[zp_i].xyz_offset,
-                /* const float *hitbox_leftbottomfront: */
-                    zpolygons_to_render->cpu_data[zp_i].
-                        boundbox_leftbottomfront,
-                /* const float *hitbox_righttopback: */
-                    zpolygons_to_render->cpu_data[zp_i].
-                        boundbox_righttopback,
-                /* const float *xyz_angle: */
-                    zpolygons_to_render->gpu_data[zp_i].xyz_angle,
-                /* const float ignore_camera: */
-                    zpolygons_to_render->gpu_data[zp_i].ignore_camera);
-        }
+        //        if (zpolygons_to_render->cpu_data[zp_i].touchable_id >= 0) {
+        //
+        //        }
     }
 }
 

@@ -38,7 +38,7 @@ static id projection_constants_buffer;
 }
 
 - (void) copyLockedVertices
-{ 
+{
     gpu_shared_data_collection.locked_vertices_size = all_mesh_vertices->size;
     
     // Create a command buffer for GPU work.

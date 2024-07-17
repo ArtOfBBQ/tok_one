@@ -713,6 +713,8 @@ int32_t new_mesh_id_from_obj_text(
         uint32_t cur_material_i = parsed_obj->triangles[triangle_i][4];
         log_assert(cur_material_i < parsed_obj->materials_count);
         
+        uint32_t locked_vert_i = all_mesh_vertices->size;
+        
         // We have to read all 3 positions first because we may need them to
         // infer the normals if the .obj file has no normals
         for (uint32_t _ = 0; _ < 3; _++) {
@@ -721,24 +723,24 @@ int32_t new_mesh_id_from_obj_text(
             log_assert(vert_i >= 1);
             log_assert(vert_i <= parsed_obj->vertices_count);
             log_assert(
-                all_mesh_vertices->size < ALL_LOCKED_VERTICES_SIZE);
+                locked_vert_i < ALL_LOCKED_VERTICES_SIZE);
             
-            all_mesh_vertices->gpu_data[all_mesh_vertices->size + _].xyz[0] =
+            all_mesh_vertices->gpu_data[locked_vert_i + _].xyz[0] =
                 parsed_obj->vertices[vert_i - 1][0];
-            all_mesh_vertices->gpu_data[all_mesh_vertices->size + _].xyz[1] =
+            all_mesh_vertices->gpu_data[locked_vert_i + _].xyz[1] =
                 parsed_obj->vertices[vert_i - 1][1];
-            all_mesh_vertices->gpu_data[all_mesh_vertices->size + _].xyz[2] =
+            all_mesh_vertices->gpu_data[locked_vert_i + _].xyz[2] =
                 parsed_obj->vertices[vert_i - 1][2];
         }
         
         for (uint32_t _ = 0; _ < 3; _++) {
-            all_mesh_vertices->gpu_data[all_mesh_vertices->size].
-                parent_material_i =
-                    cur_material_i;
+            all_mesh_vertices->gpu_data[locked_vert_i + _].
+                parent_material_i = cur_material_i;
             log_assert(cur_material_i >= 0);
             log_assert(cur_material_i < MAX_MATERIALS_PER_POLYGON);
             
-            if (parsed_obj->normals_count > 0 &&
+            if (
+                parsed_obj->normals_count > 0 &&
                 parsed_obj->normals != NULL &&
                 parsed_obj->triangle_normals != NULL)
             {
@@ -747,20 +749,44 @@ int32_t new_mesh_id_from_obj_text(
                 log_assert(norm_i >= 1);
                 log_assert(norm_i <= parsed_obj->normals_count);
                 
-                all_mesh_vertices->gpu_data[all_mesh_vertices->size].
-                    normal_xyz[0] =
-                        parsed_obj->normals[norm_i - 1][0];
-                all_mesh_vertices->gpu_data[all_mesh_vertices->size].
-                    normal_xyz[1] =
-                        parsed_obj->normals[norm_i - 1][1];
-                all_mesh_vertices->gpu_data[all_mesh_vertices->size].
-                    normal_xyz[2] =
-                        parsed_obj->normals[norm_i - 1][2];
+                all_mesh_vertices->gpu_data[locked_vert_i + _].
+                    normal_xyz[0] = parsed_obj->normals[norm_i - 1][0];
+                all_mesh_vertices->gpu_data[locked_vert_i + _].
+                    normal_xyz[1] = parsed_obj->normals[norm_i - 1][1];
+                all_mesh_vertices->gpu_data[locked_vert_i + _].
+                    normal_xyz[2] = parsed_obj->normals[norm_i - 1][2];
             } else if (_ == 0) {
                 guess_gpu_triangle_normal(
                     /* GPULockedVertex * to_change: */
-                        &all_mesh_vertices->gpu_data[all_mesh_vertices->size]);
+                        &all_mesh_vertices->gpu_data[locked_vert_i]);
+                memcpy(
+                    all_mesh_vertices->gpu_data[locked_vert_i + 1].
+                        normal_xyz,
+                    all_mesh_vertices->gpu_data[locked_vert_i].
+                        normal_xyz,
+                    sizeof(float) * 3);
+                memcpy(
+                    all_mesh_vertices->gpu_data[locked_vert_i + 2].
+                        normal_xyz,
+                    all_mesh_vertices->gpu_data[locked_vert_i].
+                        normal_xyz,
+                    sizeof(float) * 3);
             }
+            
+            #ifndef LOGGER_IGNORE_ASSERTS
+            float check_x = all_mesh_vertices->gpu_data[
+                locked_vert_i + _].normal_xyz[0];
+            float check_y = all_mesh_vertices->gpu_data[
+                locked_vert_i + _].normal_xyz[1];
+            float check_z = all_mesh_vertices->gpu_data[
+                locked_vert_i + _].normal_xyz[2];
+            log_assert(
+                fabs(check_x) + fabs(check_y) + fabs(check_z) > 0.3f);
+            #endif
+            
+            normalize_zvertex_f3(
+                all_mesh_vertices->gpu_data[locked_vert_i + _].
+                    normal_xyz);
             
             if (parsed_obj->textures_count > 0) {
                 uint32_t text_i = parsed_obj->triangle_textures[triangle_i][_];
@@ -768,22 +794,22 @@ int32_t new_mesh_id_from_obj_text(
                 log_assert(text_i >= 1);
                 log_assert(text_i <= parsed_obj->textures_count);
                 
-                all_mesh_vertices->gpu_data[all_mesh_vertices->size].uv[0] =
+                all_mesh_vertices->gpu_data[locked_vert_i + _].uv[0] =
                     parsed_obj->textures[text_i - 1][0];
                 
-                all_mesh_vertices->gpu_data[all_mesh_vertices->size].uv[1] =
+                all_mesh_vertices->gpu_data[locked_vert_i + _].uv[1] =
                     parsed_obj->textures[text_i - 1][1];
             } else {
                 // No uv data in .obj file, gotta guess
                 // TODO: Maybe should be part of the obj parser?
-                all_mesh_vertices->gpu_data[all_mesh_vertices->size].uv[0] =
+                all_mesh_vertices->gpu_data[locked_vert_i + _].uv[0] =
                     all_mesh_vertices->size % 2 == 0 ? 0.0f : 1.0f;
-                all_mesh_vertices->gpu_data[all_mesh_vertices->size].uv[1] =
+                all_mesh_vertices->gpu_data[locked_vert_i + _].uv[1] =
                     all_mesh_vertices->size % 4 == 0 ? 0.0f : 1.0f;
             }
             
-            all_mesh_vertices->size += 1;
         }
+        all_mesh_vertices->size += 3;
     }
     
     for (
