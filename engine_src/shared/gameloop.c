@@ -80,17 +80,15 @@ static int32_t closest_touchable_from_screen_ray(
     normalize_zvertex_f3(distant_point);
     normalize_zvertex_f3(distant_point_rotated);
     
-    memcpy(
-        window_globals->last_clickray_origin,
-        ray_origin,
-        sizeof(float) * 3);
-    window_globals->last_clickray_origin[0] += camera.xyz[0];
-    window_globals->last_clickray_origin[1] += camera.xyz[1];
-    window_globals->last_clickray_origin[2] += camera.xyz[2];
-    memcpy(
-        window_globals->last_clickray_direction,
-        distant_point_rotated,
-        sizeof(float) * 3);
+    
+    float direction_to_distant_point_rotated[3];
+    direction_to_distant_point_rotated[0] =
+        distant_point_rotated[0] - ray_origin[0];
+    direction_to_distant_point_rotated[1] =
+        distant_point_rotated[1] - ray_origin[1];
+    direction_to_distant_point_rotated[2] =
+        distant_point_rotated[2] - ray_origin[2];
+    normalize_zvertex_f3(direction_to_distant_point_rotated);
     
     int32_t return_value = -1;
     float smallest_dist = FLOAT32_MAX;
@@ -110,8 +108,10 @@ static int32_t closest_touchable_from_screen_ray(
         float current_collision_point[3];
         
         float dist = ray_intersects_zpolygon(
-            ray_origin,
-            distant_point_rotated,
+            /* origin: */
+                ray_origin,
+            /* direction: */
+                direction_to_distant_point_rotated,
             /* const zPolygonCPU * cpu_data: */
                 &zpolygons_to_render->cpu_data[zp_i],
             /* const GPUPolygon * gpu_data: */
@@ -124,6 +124,21 @@ static int32_t closest_touchable_from_screen_ray(
             return_value = zpolygons_to_render->cpu_data[zp_i].touchable_id;
             memcpy(collision_point, current_collision_point, sizeof(float) * 3);
         }
+    }
+    
+    if (return_value < FLOAT32_MAX / 2) {
+        memcpy(
+            window_globals->last_clickray_origin,
+            ray_origin,
+            sizeof(float) * 3);
+        memcpy(
+            window_globals->last_clickray_direction,
+            direction_to_distant_point_rotated,
+            sizeof(float) * 3);
+        memcpy(
+            window_globals->last_clickray_collision,
+            collision_point,
+            sizeof(float) * 3);
     }
     
     return return_value;

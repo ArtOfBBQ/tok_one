@@ -332,6 +332,10 @@ float ray_intersects_zpolygon(
             recipient_hit_point);
     
     if (dist_to_hit < (COL_FLT_MAX / 2)) {
+        dist_to_hit = COL_FLT_MAX;
+        
+        float closest_hit_point[3];
+        
         for (
             int32_t vert_i =
                 all_mesh_summaries[cpu_data->mesh_id].vertices_head_i;
@@ -360,25 +364,79 @@ float ray_intersects_zpolygon(
             avg_normal[1] /= 3.0f;
             avg_normal[2] /= 3.0f;
             
+            float tri_vert_1[3];
+            float tri_vert_2[3];
+            float tri_vert_3[3];
+            
+            memcpy(
+                tri_vert_1,
+                all_mesh_vertices->gpu_data[vert_i].xyz,
+                sizeof(float)*3);
+            memcpy(
+                tri_vert_2,
+                all_mesh_vertices->gpu_data[vert_i+1].xyz,
+                sizeof(float)*3);
+            memcpy(
+                tri_vert_3,
+                all_mesh_vertices->gpu_data[vert_i+2].xyz,
+                sizeof(float)*3);
+            tri_vert_1[0] *= gpu_data->xyz_multiplier[0];
+            tri_vert_1[1] *= gpu_data->xyz_multiplier[1];
+            tri_vert_1[2] *= gpu_data->xyz_multiplier[2];
+            tri_vert_2[0] *= gpu_data->xyz_multiplier[0];
+            tri_vert_2[1] *= gpu_data->xyz_multiplier[1];
+            tri_vert_2[2] *= gpu_data->xyz_multiplier[2];
+            tri_vert_3[0] *= gpu_data->xyz_multiplier[0];
+            tri_vert_3[1] *= gpu_data->xyz_multiplier[1];
+            tri_vert_3[2] *= gpu_data->xyz_multiplier[2];
+            tri_vert_1[0] *= gpu_data->scale_factor;
+            tri_vert_1[1] *= gpu_data->scale_factor;
+            tri_vert_1[2] *= gpu_data->scale_factor;
+            tri_vert_2[0] *= gpu_data->scale_factor;
+            tri_vert_2[1] *= gpu_data->scale_factor;
+            tri_vert_2[2] *= gpu_data->scale_factor;
+            tri_vert_3[0] *= gpu_data->scale_factor;
+            tri_vert_3[1] *= gpu_data->scale_factor;
+            tri_vert_3[2] *= gpu_data->scale_factor;
+            tri_vert_1[0] += gpu_data->xyz[0];
+            tri_vert_1[1] += gpu_data->xyz[1];
+            tri_vert_1[2] += gpu_data->xyz[2];
+            tri_vert_2[0] += gpu_data->xyz[0];
+            tri_vert_2[1] += gpu_data->xyz[1];
+            tri_vert_2[2] += gpu_data->xyz[2];
+            tri_vert_3[0] += gpu_data->xyz[0];
+            tri_vert_3[1] += gpu_data->xyz[1];
+            tri_vert_3[2] += gpu_data->xyz[2];
+            tri_vert_1[0] += gpu_data->xyz_offset[0];
+            tri_vert_1[1] += gpu_data->xyz_offset[1];
+            tri_vert_1[2] += gpu_data->xyz_offset[2];
+            tri_vert_2[0] += gpu_data->xyz_offset[0];
+            tri_vert_2[1] += gpu_data->xyz_offset[1];
+            tri_vert_2[2] += gpu_data->xyz_offset[2];
+            tri_vert_3[0] += gpu_data->xyz_offset[0];
+            tri_vert_3[1] += gpu_data->xyz_offset[1];
+            tri_vert_3[2] += gpu_data->xyz_offset[2];
+            
             float dist_to_tri = ray_hits_triangle(
                 /* const float * ray_origin: */
                     ray_origin,
                 /* const float * ray_direction: */
                     ray_direction,
                 /* const float * triangle_vertex_1: */
-                    all_mesh_vertices->gpu_data[vert_i].xyz,
+                    tri_vert_1,
                 /* const float * triangle_vertex_2: */
-                    all_mesh_vertices->gpu_data[vert_i+1].xyz,
+                    tri_vert_2,
                 /* const float * triangle_vertex_3: */
-                    all_mesh_vertices->gpu_data[vert_i+2].xyz,
+                    tri_vert_3,
                 /* const float * triangle_normal: */
-                    all_mesh_vertices->gpu_data[vert_i].normal_xyz,
+                    avg_normal,
                 /* float * collision_recipient: */
-                    recipient_hit_point);
+                    closest_hit_point);
             
             if (dist_to_tri < dist_to_hit)
             {
                 dist_to_hit = dist_to_tri;
+                memcpy(recipient_hit_point, closest_hit_point, sizeof(float)*3);
             }
         }
     }

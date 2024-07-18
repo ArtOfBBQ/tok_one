@@ -44,6 +44,7 @@ typedef struct WindowGlobals {
     
     float last_clickray_origin[3];
     float last_clickray_direction[3];
+    float last_clickray_collision[3];
     
     float window_height;
     float window_width;

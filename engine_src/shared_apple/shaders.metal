@@ -64,7 +64,7 @@ raw_vertex_shader(
 {
     RawFragment out;
     
-    out.point_size = 10.0;
+    out.point_size = 20.0;
     
     float3 pos = vector_float3(
         vertices[vertex_i].xyz[0],

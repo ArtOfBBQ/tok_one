@@ -8,6 +8,11 @@
 #include <stdio.h>
 #endif
 
+// #define COLLISION_IGNORE_ASSERTS
+#ifndef COLLISION_IGNORE_ASSERTS
+#include <assert.h>
+#endif
+
 #ifndef COL_FLT_MAX
 #define COL_FLT_MAX 3.402823466e+38F
 #endif
@@ -45,9 +50,16 @@ float normalized_ray_hits_sphere(
 
 int point_hits_triangle(
     const float point_xy[2],
-    const float triangle_vertex_1[2],
-    const float triangle_vertex_2[2],
-    const float triangle_vertex_3[2]);
+    const float triangle_vertex_1_xy[2],
+    const float triangle_vertex_2_xy[2],
+    const float triangle_vertex_3_xy[2]);
+
+int point_hits_triangle_3D(
+    const float point_xyz[3],
+    const float tri_vertex_1_xyz[3],
+    const float tri_vertex_2_xyz[3],
+    const float tri_vertex_3_xyz[3],
+    const float tri_normal_xyz[3]);
 
 float ray_hits_plane(
     const float ray_origin[3],

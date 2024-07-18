@@ -7,6 +7,20 @@
 #define col_printf(...)
 #endif
 
+static float dot(const float A[3], const float B[3])
+{
+    return (A[0]*B[0])+(A[1]*B[1])+(A[2]*B[2]);
+}
+
+static void cross(const float A[3], const float B[3], float * recipient)
+{
+    recipient[0] = (A[1]*B[2])-(A[2]*B[1]);
+    recipient[1] = (A[2]*B[0])-(A[0]*B[2]);
+    recipient[2] = (A[0]*B[1])-(A[1]*B[0]);
+    
+    return;
+}
+
 int point_hits_AArect(
     const float point[2],
     const float rect_bounds_min[2],
@@ -384,6 +398,73 @@ int point_hits_triangle(
         (w1 + w2) <= 1.0f;
 }
 
+int point_hits_triangle_3D(
+    const float P[3],
+    const float A[3],
+    const float B[3],
+    const float C[3],
+    const float N[3])
+{
+    /*
+    Vec3f edge0 = v1 - v0;
+    Vec3f edge1 = v2 - v1;
+    Vec3f edge2 = v0 - v2;
+    
+    Vec3f C0 = P - v0;
+    Vec3f C1 = P - v1;
+    Vec3f C2 = P - v2;
+    
+    if (dotProduct(N, crossProduct(edge0, C0)) > 0 &&
+        dotProduct(N, crossProduct(edge1, C1)) > 0 &&
+        dotProduct(N, crossProduct(edge2, C2)) > 0) return true; // P is inside the triangle
+    */
+    
+    float edge_0[3];
+    edge_0[0] = B[0] - A[0];
+    edge_0[1] = B[1] - A[1];
+    edge_0[2] = B[2] - A[2];
+    
+    float edge_1[3];
+    edge_1[0] = C[0] - B[0];
+    edge_1[1] = C[1] - B[1];
+    edge_1[2] = C[2] - B[2];
+    
+    float edge_2[3];
+    edge_2[0] = A[0] - C[0];
+    edge_2[1] = A[1] - C[1];
+    edge_2[2] = A[2] - C[2];
+    
+    float C0[3];
+    C0[0] = P[0] - A[0];
+    C0[1] = P[1] - A[1];
+    C0[2] = P[2] - A[2];
+    
+    float C1[3];
+    C1[0] = P[0] - B[0];
+    C1[1] = P[1] - B[1];
+    C1[2] = P[2] - B[2];
+    
+    float C2[3];
+    C2[0] = P[0] - C[0];
+    C2[1] = P[1] - C[1];
+    C2[2] = P[2] - C[2];
+    
+    float cross_edge0_C0[3];
+    cross(edge_0, C0, cross_edge0_C0);
+    
+    float cross_edge1_C1[3];
+    cross(edge_1, C1, cross_edge1_C1);
+    
+    float cross_edge2_C2[3];
+    cross(edge_2, C2, cross_edge2_C2);
+    
+    return (
+        dot(N, cross_edge0_C0) > 0 &&
+        dot(N, cross_edge1_C1) > 0 &&
+        dot(N, cross_edge2_C2) > 0);
+}
+
+
 float ray_hits_plane(
     const float ray_origin[3],
     const float ray_direction[3],
@@ -470,6 +551,12 @@ float ray_hits_triangle(
     const float triangle_normal[3],
     float * collision_recipient)
 {
+    /*
+    float D = -(N.x * v0.x + N.y * v0.y + N.z * v0.z);
+    
+    float t = -(dot(N, orig) + D) / dot(N, dir);
+    */
+    
     float nearest_dist_found = ray_hits_plane(
         /* const float ray_origin[3]: */
             ray_origin,
@@ -482,7 +569,7 @@ float ray_hits_triangle(
         /* float * collision_recipient: */
             collision_recipient);
     
-    if (point_hits_triangle(
+    if (point_hits_triangle_3D(
         /* const float P[2]: */
             collision_recipient,
         /* const float A[2]: */
@@ -490,8 +577,62 @@ float ray_hits_triangle(
         /* const float B[2]: */
             triangle_vertex_2,
         /* const float C[2]: */
-            triangle_vertex_3))
+            triangle_vertex_3,
+        /* const float normal: */
+            triangle_normal))
     {
+        #ifndef COLLISION_IGNORE_ASSERTS
+        float dist_v1_to_v2 =
+            ((triangle_vertex_2[0] - triangle_vertex_1[0])*
+            (triangle_vertex_2[0] - triangle_vertex_1[0]))+
+            ((triangle_vertex_2[1] - triangle_vertex_1[1])*
+            (triangle_vertex_2[1] - triangle_vertex_1[1]))+
+            ((triangle_vertex_2[2] - triangle_vertex_1[2])*
+            (triangle_vertex_2[2] - triangle_vertex_1[2]));
+        float dist_v1_to_v3 =
+            ((triangle_vertex_3[0] - triangle_vertex_1[0])*
+            (triangle_vertex_3[0] - triangle_vertex_1[0]))+
+            ((triangle_vertex_3[1] - triangle_vertex_1[1])*
+            (triangle_vertex_3[1] - triangle_vertex_1[1]))+
+            ((triangle_vertex_3[2] - triangle_vertex_1[2])*
+            (triangle_vertex_3[2] - triangle_vertex_1[2]));
+        float dist_v2_to_v3 =
+            ((triangle_vertex_3[0] - triangle_vertex_2[0])*
+            (triangle_vertex_3[0] - triangle_vertex_2[0]))+
+            ((triangle_vertex_3[1] - triangle_vertex_2[1])*
+            (triangle_vertex_3[1] - triangle_vertex_2[1]))+
+            ((triangle_vertex_3[2] - triangle_vertex_2[2])*
+            (triangle_vertex_3[2] - triangle_vertex_2[2]));
+        
+        float dist_to_v1 =
+            ((collision_recipient[0] - triangle_vertex_1[0])*
+            (collision_recipient[0] - triangle_vertex_1[0]))+
+            ((collision_recipient[1] - triangle_vertex_1[1])*
+            (collision_recipient[1] - triangle_vertex_1[1]))+
+            ((collision_recipient[2] - triangle_vertex_1[2])*
+            (collision_recipient[2] - triangle_vertex_1[2]));
+        
+        float dist_to_v2 =
+            ((collision_recipient[0] - triangle_vertex_2[0])*
+            (collision_recipient[0] - triangle_vertex_2[0]))+
+            ((collision_recipient[1] - triangle_vertex_2[1])*
+            (collision_recipient[1] - triangle_vertex_2[1]))+
+            ((collision_recipient[2] - triangle_vertex_2[2])*
+            (collision_recipient[2] - triangle_vertex_2[2]));
+        
+        float dist_to_v3 =
+            ((collision_recipient[0] - triangle_vertex_3[0])*
+            (collision_recipient[0] - triangle_vertex_3[0]))+
+            ((collision_recipient[1] - triangle_vertex_3[1])*
+            (collision_recipient[1] - triangle_vertex_3[1]))+
+            ((collision_recipient[2] - triangle_vertex_3[2])*
+            (collision_recipient[2] - triangle_vertex_3[2]));
+        
+        assert(dist_to_v1 <= (dist_v1_to_v2 + dist_v1_to_v3 + dist_v2_to_v3));
+        assert(dist_to_v2 <= (dist_v1_to_v2 + dist_v1_to_v3 + dist_v2_to_v3));
+        assert(dist_to_v3 <= (dist_v1_to_v2 + dist_v1_to_v3 + dist_v2_to_v3));
+        #endif
+        
         return nearest_dist_found;
     }
     

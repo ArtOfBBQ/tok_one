@@ -37,7 +37,6 @@ static void add_line_vertex(
     frame_data->line_vertices_size += 1;
 }
 
-#if 0
 static void add_point_vertex(
     GPUDataForSingleFrame * frame_data,
     const float xyz[3],
@@ -59,7 +58,6 @@ static void add_point_vertex(
     
     frame_data->point_vertices_size += 1;
 }
-#endif
 
 //inline static void draw_hitbox(
 //    GPUDataForSingleFrame * frame_data,
@@ -428,6 +426,7 @@ void hardware_render(
                 window_globals->last_clickray_origin,
             /* const float ignore_camera: */
                 0.0f);
+        
         float clickray_end[3];
         memcpy(
             clickray_end,
@@ -443,5 +442,13 @@ void hardware_render(
                 clickray_end,
             /* const float ignore_camera: */
                 0.0f);
+        
+        add_point_vertex(
+            /* GPUDataForSingleFrame * frame_data: */
+                frame_data,
+            /* const float * xyz: */
+                window_globals->last_clickray_collision,
+            /* const float ignore_camera: */
+                false);
     }
 }

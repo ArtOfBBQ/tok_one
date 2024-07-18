@@ -76,20 +76,23 @@ void client_logic_late_startup(void) {
     teapot_request.gpu_data->xyz[0]                = 0.00f;
     teapot_request.gpu_data->xyz[1]                = 0.00f;
     teapot_request.gpu_data->xyz[2]                = 0.75f;
+    teapot_request.gpu_data->xyz_angle[0]          = 0.00f;
+    teapot_request.gpu_data->xyz_angle[1]          = 0.00f;
+    teapot_request.gpu_data->xyz_angle[2]          = 0.00f;
     teapot_request.cpu_data->object_id             = teapot_object_id;
     teapot_request.cpu_data->visible               = true;
     teapot_touchable_id = next_nonui_touchable_id();
     teapot_request.cpu_data->touchable_id          = teapot_touchable_id;
-    teapot_request.gpu_materials[0].rgba[0]        = 0.4f;
-    teapot_request.gpu_materials[0].rgba[1]        = 0.4f;
-    teapot_request.gpu_materials[0].rgba[2]        = 0.4f;
-    teapot_request.gpu_materials[0].rgba[3]        = 1.0f;
-    teapot_request.gpu_materials[0].texturearray_i =   -1;
-    teapot_request.gpu_materials[0].texture_i      =   -1;
-    teapot_request.gpu_materials[0].specular       = 1.0f;
-    teapot_request.gpu_materials[0].diffuse        = 1.0f;
-    teapot_request.gpu_data->ignore_lighting       = 0.0f;
-    teapot_request.gpu_data->ignore_camera         = 0.0f;
+    teapot_request.gpu_materials[0].rgba[0]        =  0.4f;
+    teapot_request.gpu_materials[0].rgba[1]        =  0.4f;
+    teapot_request.gpu_materials[0].rgba[2]        =  0.4f;
+    teapot_request.gpu_materials[0].rgba[3]        =  1.0f;
+    teapot_request.gpu_materials[0].texturearray_i = -1.0f;
+    teapot_request.gpu_materials[0].texture_i      = -1.0f;
+    teapot_request.gpu_materials[0].specular       =  1.0f;
+    teapot_request.gpu_materials[0].diffuse        =  1.0f;
+    teapot_request.gpu_data->ignore_lighting       =  0.0f;
+    teapot_request.gpu_data->ignore_camera         =  0.0f;
     commit_zpolygon_to_render(&teapot_request);
     #endif
 }
