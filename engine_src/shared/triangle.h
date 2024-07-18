@@ -28,6 +28,10 @@ void normalize_zvertex_f3(
 void normalize_vertex(
     float * to_normalize);
 
+void x_rotate_f3(
+    float * vertices,
+    float x_angle);
+
 #ifdef __cplusplus
 }
 #endif

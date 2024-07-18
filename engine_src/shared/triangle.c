@@ -68,3 +68,23 @@ void normalize_zvertex_f3(
     to_normalize_xyz[1] /= magnitude;
     to_normalize_xyz[2] /= magnitude;
 }
+
+void x_rotate_f3(
+    float * xyz,
+    float x_angle)
+{
+    float cos_angle = cosf(x_angle);
+    float sin_angle = sinf(x_angle);
+    
+    float new_y =
+        xyz[1] * cos_angle -
+        xyz[2] * sin_angle;
+    
+    xyz[2] =
+        xyz[1] * sin_angle +
+        xyz[2] * cos_angle;
+    
+    xyz[1] = new_y;
+    
+    return;
+}

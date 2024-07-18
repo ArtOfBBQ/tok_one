@@ -589,6 +589,7 @@ float ray_hits_triangle(
             (triangle_vertex_2[1] - triangle_vertex_1[1]))+
             ((triangle_vertex_2[2] - triangle_vertex_1[2])*
             (triangle_vertex_2[2] - triangle_vertex_1[2]));
+        
         float dist_v1_to_v3 =
             ((triangle_vertex_3[0] - triangle_vertex_1[0])*
             (triangle_vertex_3[0] - triangle_vertex_1[0]))+
@@ -596,6 +597,7 @@ float ray_hits_triangle(
             (triangle_vertex_3[1] - triangle_vertex_1[1]))+
             ((triangle_vertex_3[2] - triangle_vertex_1[2])*
             (triangle_vertex_3[2] - triangle_vertex_1[2]));
+        
         float dist_v2_to_v3 =
             ((triangle_vertex_3[0] - triangle_vertex_2[0])*
             (triangle_vertex_3[0] - triangle_vertex_2[0]))+
