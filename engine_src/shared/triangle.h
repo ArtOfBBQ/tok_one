@@ -31,6 +31,9 @@ void normalize_vertex(
 void x_rotate_f3(
     float * vertices,
     float x_angle);
+void y_rotate_f3(
+    float * xyz,
+    float y_angle);
 
 #ifdef __cplusplus
 }

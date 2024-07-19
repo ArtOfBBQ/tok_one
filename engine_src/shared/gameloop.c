@@ -26,7 +26,7 @@ static int32_t closest_touchable_from_screen_ray(
             window_globals->projection_constants.field_of_view_modifier) *
                 z_multiplier;
     ray_origin[2] = z_multiplier;
-
+    
     float ray_origin_rotated[3];
     memcpy(
         ray_origin_rotated,
@@ -42,10 +42,12 @@ static int32_t closest_touchable_from_screen_ray(
         ray_origin_rotated,
         camera.xyz_angle[2]);
     
+    ray_origin[0] += camera.xyz[0];
+    ray_origin[1] += camera.xyz[1];
+    ray_origin[2] += camera.xyz[2];
+    
     // we need a point that's distant, but yet also ends up at the same
     // screen position as ray_origin
-    //
-    // This is also the distant point we draw to for visual debug
     //
     // given:
     // projected_x = x * pjc->x_multiplier / z
@@ -77,9 +79,9 @@ static int32_t closest_touchable_from_screen_ray(
         distant_point_rotated,
         camera.xyz_angle[2]);
     
-    normalize_zvertex_f3(distant_point);
-    normalize_zvertex_f3(distant_point_rotated);
-    
+    distant_point_rotated[0] += camera.xyz[0];
+    distant_point_rotated[1] += camera.xyz[1];
+    distant_point_rotated[2] += camera.xyz[2];
     
     float direction_to_distant_point_rotated[3];
     direction_to_distant_point_rotated[0] =
@@ -303,28 +305,6 @@ void shared_gameloop_update(
                         collision_point);
             
             user_interactions[i].checked_touchables = true;
-            
-            for (uint32_t j = i + 1; j < USER_INTERACTIONS_SIZE; j++) {
-                if (
-                    user_interactions[j].checked_touchables ||
-                    user_interactions[j].handled)
-                {
-                    continue;
-                }
-                
-                if (
-                    user_interactions[i].screen_x ==
-                        user_interactions[j].screen_x &&
-                    user_interactions[i].screen_y ==
-                        user_interactions[j].screen_y)
-                {
-                    user_interactions[j].touchable_id =
-                        user_interactions[i].touchable_id;
-                    user_interactions[j].checked_touchables = true;
-                }
-            }
-            
-            break; // max 1 ray per frame
         }
         
         ui_elements_handle_touches(elapsed);

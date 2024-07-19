@@ -7,10 +7,6 @@ static int32_t teapot_object_id = -1;
 static int32_t teapot_touchable_id = -1;
 #endif
 
-// colray stands for 'collision ray' (we're testing collisions with a line)
-//static int32_t colray_object_id = -1;
-//static int32_t colpoint_object_id = -1;
-
 void client_logic_early_startup(void) {
     
     init_PNG_decoder(
@@ -116,14 +112,17 @@ void client_logic_late_startup(void) {
             0.2f,
         /* PolygonRequest * stack_recipient: */
             &quad);
+    quad.cpu_data->mesh_id = 4;
+    quad.gpu_data->xyz_multiplier[2] = quad.gpu_data->xyz_multiplier[0];
     quad.gpu_data->ignore_camera = false;
     quad.gpu_materials->texturearray_i = 1;
     quad.gpu_materials->texture_i = 0;
+    quad.cpu_data->object_id = 20;
     quad.cpu_data->touchable_id = 5;
     //    quad.gpu_data->xyz_offset[0] =  0.20f;
     //    quad.gpu_data->xyz_offset[1] = -0.40f;
     //    quad.gpu_data->xyz_offset[2] = -0.20f;
-    quad.gpu_data->xyz_angle[0] = 0.5f;
+    // quad.gpu_data->xyz_angle[0] = 0.2f;
     commit_zpolygon_to_render(&quad);
 }
 
@@ -252,18 +251,16 @@ void client_logic_update(uint64_t microseconds_elapsed)
         user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
             handled = true;
         
-        //        LineRequest colray;
-        //        fetch_line_by_object_id(&colray, colray_object_id);
-        //        colray.gpu_vertices[0].xyz[0] = screenspace_x_to_x(
-        //            /* const float screenspace_x: */
-        //                user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-        //                    screen_x,
-        //            1.0f);
-        //        colray.gpu_vertices[0].xyz[1] = screenspace_y_to_y(
-        //            /* const float screenspace_x: */
-        //                user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-        //                    screen_y,
-        //            1.0f);
+        if (
+            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+                touchable_id == 5)
+        {
+            request_bump_animation(
+                /* const int32_t object_id: */
+                    20,
+                /* const uint32_t wait: */
+                    0);
+        }
     }
     
     if (

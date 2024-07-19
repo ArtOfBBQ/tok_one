@@ -63,7 +63,8 @@ typedef struct GPUPolygon {
     float        scale_factor;
     float        ignore_lighting;
     float        ignore_camera;
-    float        simd_padding[6];
+    float        last_clicked_locked_vertex_id;
+    float        simd_padding[5];
 } GPUPolygon; // 24 floats (3 SIMD runs)
 
 typedef struct GPUPolygonCollection {

@@ -3,7 +3,7 @@
 
 #include <math.h> // sqrtf() if no simd
 
-#define COLLISION_SILENCE
+// #define COLLISION_SILENCE
 #ifndef COLLISION_SILENCE
 #include <stdio.h>
 #endif

@@ -457,11 +457,11 @@ int point_hits_triangle_3D(
     
     float cross_edge2_C2[3];
     cross(edge_2, C2, cross_edge2_C2);
-    
+            
     return (
-        dot(N, cross_edge0_C0) > 0 &&
-        dot(N, cross_edge1_C1) > 0 &&
-        dot(N, cross_edge2_C2) > 0);
+        dot(N, cross_edge0_C0) > 0.0f &&
+        dot(N, cross_edge1_C1) > 0.0f &&
+        dot(N, cross_edge2_C2) > 0.0f);
 }
 
 
@@ -539,7 +539,7 @@ float ray_hits_plane(
         collision_recipient[2] = ray_origin[2] + (ray_direction[2] * t);
     }
     
-    return t;
+    return t > 0.0f ? t : COL_FLT_MAX;
 }
 
 float ray_hits_triangle(
@@ -569,70 +569,20 @@ float ray_hits_triangle(
         /* float * collision_recipient: */
             collision_recipient);
     
-    if (point_hits_triangle_3D(
-        /* const float P[2]: */
-            collision_recipient,
-        /* const float A[2]: */
-            triangle_vertex_1,
-        /* const float B[2]: */
-            triangle_vertex_2,
-        /* const float C[2]: */
-            triangle_vertex_3,
-        /* const float normal: */
-            triangle_normal))
+     if (point_hits_triangle_3D(
+            /* const float P[2]: */
+                collision_recipient,
+            /* const float A[2]: */
+                triangle_vertex_1,
+            /* const float B[2]: */
+                triangle_vertex_2,
+            /* const float C[2]: */
+                triangle_vertex_3,
+            /* const float normal: */
+                triangle_normal))
     {
         #ifndef COLLISION_IGNORE_ASSERTS
-        float dist_v1_to_v2 =
-            ((triangle_vertex_2[0] - triangle_vertex_1[0])*
-            (triangle_vertex_2[0] - triangle_vertex_1[0]))+
-            ((triangle_vertex_2[1] - triangle_vertex_1[1])*
-            (triangle_vertex_2[1] - triangle_vertex_1[1]))+
-            ((triangle_vertex_2[2] - triangle_vertex_1[2])*
-            (triangle_vertex_2[2] - triangle_vertex_1[2]));
-        
-        float dist_v1_to_v3 =
-            ((triangle_vertex_3[0] - triangle_vertex_1[0])*
-            (triangle_vertex_3[0] - triangle_vertex_1[0]))+
-            ((triangle_vertex_3[1] - triangle_vertex_1[1])*
-            (triangle_vertex_3[1] - triangle_vertex_1[1]))+
-            ((triangle_vertex_3[2] - triangle_vertex_1[2])*
-            (triangle_vertex_3[2] - triangle_vertex_1[2]));
-        
-        float dist_v2_to_v3 =
-            ((triangle_vertex_3[0] - triangle_vertex_2[0])*
-            (triangle_vertex_3[0] - triangle_vertex_2[0]))+
-            ((triangle_vertex_3[1] - triangle_vertex_2[1])*
-            (triangle_vertex_3[1] - triangle_vertex_2[1]))+
-            ((triangle_vertex_3[2] - triangle_vertex_2[2])*
-            (triangle_vertex_3[2] - triangle_vertex_2[2]));
-        
-        float dist_to_v1 =
-            ((collision_recipient[0] - triangle_vertex_1[0])*
-            (collision_recipient[0] - triangle_vertex_1[0]))+
-            ((collision_recipient[1] - triangle_vertex_1[1])*
-            (collision_recipient[1] - triangle_vertex_1[1]))+
-            ((collision_recipient[2] - triangle_vertex_1[2])*
-            (collision_recipient[2] - triangle_vertex_1[2]));
-        
-        float dist_to_v2 =
-            ((collision_recipient[0] - triangle_vertex_2[0])*
-            (collision_recipient[0] - triangle_vertex_2[0]))+
-            ((collision_recipient[1] - triangle_vertex_2[1])*
-            (collision_recipient[1] - triangle_vertex_2[1]))+
-            ((collision_recipient[2] - triangle_vertex_2[2])*
-            (collision_recipient[2] - triangle_vertex_2[2]));
-        
-        float dist_to_v3 =
-            ((collision_recipient[0] - triangle_vertex_3[0])*
-            (collision_recipient[0] - triangle_vertex_3[0]))+
-            ((collision_recipient[1] - triangle_vertex_3[1])*
-            (collision_recipient[1] - triangle_vertex_3[1]))+
-            ((collision_recipient[2] - triangle_vertex_3[2])*
-            (collision_recipient[2] - triangle_vertex_3[2]));
-        
-        assert(dist_to_v1 <= (dist_v1_to_v2 + dist_v1_to_v3 + dist_v2_to_v3));
-        assert(dist_to_v2 <= (dist_v1_to_v2 + dist_v1_to_v3 + dist_v2_to_v3));
-        assert(dist_to_v3 <= (dist_v1_to_v2 + dist_v1_to_v3 + dist_v2_to_v3));
+        assert(nearest_dist_found > 0.0f);
         #endif
         
         return nearest_dist_found;

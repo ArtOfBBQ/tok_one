@@ -52,6 +52,9 @@ static void construct_scheduled_animationA(
         to_construct->gpu_polygon_vals.ignore_camera =
             FLT_SCHEDULEDANIM_IGNORE;
         
+        to_construct->gpu_polygon_vals.last_clicked_locked_vertex_id =
+            FLT_SCHEDULEDANIM_IGNORE;
+        
         to_construct->gpu_polygon_vals.simd_padding[0] =
             FLT_SCHEDULEDANIM_IGNORE;
         to_construct->gpu_polygon_vals.simd_padding[1] =
@@ -62,7 +65,7 @@ static void construct_scheduled_animationA(
             FLT_SCHEDULEDANIM_IGNORE;
         to_construct->gpu_polygon_vals.simd_padding[4] =
             FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.simd_padding[5] =
+        to_construct->gpu_polygon_vals.simd_padding[4] =
             FLT_SCHEDULEDANIM_IGNORE;
         
         to_construct->gpu_polygon_material_vals.rgba[0] =

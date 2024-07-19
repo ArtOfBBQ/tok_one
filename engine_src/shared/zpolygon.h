@@ -113,7 +113,7 @@ float ray_intersects_zpolygon(
     const float ray_origin[3],
     float ray_direction[3],
     const zPolygonCPU * cpu_data,
-    const GPUPolygon  * gpu_data,
+    GPUPolygon  * gpu_data,
     float * recipient_hit_point);
 
 void construct_quad_around(

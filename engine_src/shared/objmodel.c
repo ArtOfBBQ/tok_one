@@ -633,6 +633,85 @@ void init_all_meshes(void) {
     
     all_mesh_summaries_size = 4;
     all_mesh_vertices->size = 45;
+    
+    #define COLTEST 1
+    #ifdef COLTEST
+    // Let's hardcode a basic triangle for testing
+    strcpy_capped(
+        all_mesh_summaries[4].resource_name,
+        OBJ_STRING_SIZE,
+        "coltest_triangle");
+    all_mesh_summaries[4].vertices_head_i = 45;
+    all_mesh_summaries[4].vertices_size = 6;
+    all_mesh_summaries[4].mesh_id = 4;
+    all_mesh_summaries[4].materials_size = 1;
+    all_mesh_summaries[4].base_width = 1.0f;
+    all_mesh_summaries[4].base_height = 1.0f;
+    all_mesh_summaries[4].base_depth = 1.0f;
+    
+    all_mesh_vertices->gpu_data[45].xyz[0]            = right_vertex;
+    all_mesh_vertices->gpu_data[45].xyz[1]            = top_vertex;
+    all_mesh_vertices->gpu_data[45].xyz[2]            = front_vertex;
+    all_mesh_vertices->gpu_data[45].uv[0]             = right_uv_coord;
+    all_mesh_vertices->gpu_data[45].uv[1]             = top_uv_coord;
+    all_mesh_vertices->gpu_data[45].normal_xyz[0]     = 1.0f;
+    all_mesh_vertices->gpu_data[45].normal_xyz[1]     = 0.0f;
+    all_mesh_vertices->gpu_data[45].normal_xyz[2]     = 0.0f;
+    all_mesh_vertices->gpu_data[45].parent_material_i = 0;
+    
+    all_mesh_vertices->gpu_data[46].xyz[0]            = right_vertex;
+    all_mesh_vertices->gpu_data[46].xyz[1]            = bottom_vertex;
+    all_mesh_vertices->gpu_data[46].xyz[2]            = front_vertex;
+    all_mesh_vertices->gpu_data[46].uv[0]             = right_uv_coord;
+    all_mesh_vertices->gpu_data[46].uv[1]             = bottom_uv_coord;
+    all_mesh_vertices->gpu_data[46].normal_xyz[0]     = 1.0f;
+    all_mesh_vertices->gpu_data[46].normal_xyz[1]     = 0.0f;
+    all_mesh_vertices->gpu_data[46].normal_xyz[2]     = 0.0f;
+    all_mesh_vertices->gpu_data[46].parent_material_i = 0;
+    
+    all_mesh_vertices->gpu_data[47].xyz[0]            = right_vertex;
+    all_mesh_vertices->gpu_data[47].xyz[1]            = bottom_vertex;
+    all_mesh_vertices->gpu_data[47].xyz[2]            = back_vertex;
+    all_mesh_vertices->gpu_data[47].uv[0]             = left_uv_coord;
+    all_mesh_vertices->gpu_data[47].uv[1]             = bottom_uv_coord;
+    all_mesh_vertices->gpu_data[47].normal_xyz[0]     = 1.0f;
+    all_mesh_vertices->gpu_data[47].normal_xyz[1]     = 0.0f;
+    all_mesh_vertices->gpu_data[47].normal_xyz[2]     = 0.0f;
+    all_mesh_vertices->gpu_data[47].parent_material_i = 0;
+    
+    all_mesh_vertices->gpu_data[48].xyz[0]            = left_vertex;
+    all_mesh_vertices->gpu_data[48].xyz[1]            = top_vertex;
+    all_mesh_vertices->gpu_data[48].xyz[2]            = back_vertex;
+    all_mesh_vertices->gpu_data[48].uv[0]             = left_uv_coord;
+    all_mesh_vertices->gpu_data[48].uv[1]             = top_uv_coord;
+    all_mesh_vertices->gpu_data[48].normal_xyz[0]     = -1.0f;
+    all_mesh_vertices->gpu_data[48].normal_xyz[1]     = 0.0f;
+    all_mesh_vertices->gpu_data[48].normal_xyz[2]     = 0.0f;
+    all_mesh_vertices->gpu_data[48].parent_material_i = 0;
+    
+    all_mesh_vertices->gpu_data[49].xyz[0]            = left_vertex;
+    all_mesh_vertices->gpu_data[49].xyz[1]            = top_vertex;
+    all_mesh_vertices->gpu_data[49].xyz[2]            = front_vertex;
+    all_mesh_vertices->gpu_data[49].uv[0]             = right_uv_coord;
+    all_mesh_vertices->gpu_data[49].uv[1]             = top_uv_coord;
+    all_mesh_vertices->gpu_data[49].normal_xyz[0]     = -1.0f;
+    all_mesh_vertices->gpu_data[49].normal_xyz[1]     = 0.0f;
+    all_mesh_vertices->gpu_data[49].normal_xyz[2]     = 0.0f;
+    all_mesh_vertices->gpu_data[49].parent_material_i = 0;
+    
+    all_mesh_vertices->gpu_data[50].xyz[0]            = left_vertex;
+    all_mesh_vertices->gpu_data[50].xyz[1]            = bottom_vertex;
+    all_mesh_vertices->gpu_data[50].xyz[2]            = back_vertex;
+    all_mesh_vertices->gpu_data[50].uv[0]             = left_uv_coord;
+    all_mesh_vertices->gpu_data[50].uv[1]             = bottom_uv_coord;
+    all_mesh_vertices->gpu_data[50].normal_xyz[0]     = -1.0f;
+    all_mesh_vertices->gpu_data[50].normal_xyz[1]     = 0.0f;
+    all_mesh_vertices->gpu_data[50].normal_xyz[2]     = 0.0f;
+    all_mesh_vertices->gpu_data[50].parent_material_i = 0;
+    
+    all_mesh_summaries_size = 5;
+    all_mesh_vertices->size = 51;
+    #endif
 }
 
 #ifndef LOGGER_IGNORE_ASSERTS
