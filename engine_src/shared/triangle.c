@@ -93,20 +93,6 @@ void y_rotate_f3(
     float * xyz,
     float y_angle)
 {
-    /*
-    float3 rotated_vertices = vertices;
-    float cos_angle = cos(y_angle);
-    float sin_angle = sin(y_angle);
-    
-    rotated_vertices[0] =
-        vertices[0] * cos_angle +
-        vertices[2] * sin_angle;
-    rotated_vertices[2] =
-        vertices[2] * cos_angle -
-        vertices[0] * sin_angle;
-    
-    return rotated_vertices;
-    */
     float cos_angle = cosf(y_angle);
     float sin_angle = sinf(y_angle);
     
@@ -116,6 +102,26 @@ void y_rotate_f3(
     
     xyz[2] =
         xyz[2] * cos_angle -
+        xyz[0] * sin_angle;
+    
+    xyz[0] = new_x;
+    
+    return;
+}
+
+void z_rotate_f3(
+    float * xyz,
+    float z_angle)
+{
+    float cos_angle = cosf(z_angle);
+    float sin_angle = sinf(z_angle);
+    
+    float new_x =
+        xyz[0] * cos_angle -
+        xyz[1] * sin_angle;
+    
+    xyz[1] =
+        xyz[1] * cos_angle +
         xyz[0] * sin_angle;
     
     xyz[0] = new_x;

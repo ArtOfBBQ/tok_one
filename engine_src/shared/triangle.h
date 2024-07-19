@@ -34,6 +34,9 @@ void x_rotate_f3(
 void y_rotate_f3(
     float * xyz,
     float y_angle);
+void z_rotate_f3(
+    float * xyz,
+    float z_angle);
 
 #ifdef __cplusplus
 }

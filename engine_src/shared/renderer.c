@@ -74,9 +74,9 @@ inline static void draw_bounding_sphere(
     center_xyz[2] += xyz_offset[2];
     
     float cur_point[3];
-    for (float x_angle = 0.0f; x_angle < 6.28f; x_angle += 0.55f)
+    for (float x_angle = 0.2f; x_angle < 6.28f; x_angle += 0.75f)
     {
-        for (float y_angle = 0.0f; y_angle < 6.28f; y_angle += 0.55f)
+        for (float y_angle = 0.0f; y_angle < 6.28f; y_angle += 0.75f)
         {
             cur_point[0] = 0.0f;
             cur_point[1] = 0.0f;
@@ -89,6 +89,43 @@ inline static void draw_bounding_sphere(
             cur_point[2] += center_xyz[2];
             
             add_point_vertex(frame_data, cur_point, ignore_camera);
+        }
+    }
+}
+
+inline static void zpolygon_vertices_to_points(
+    GPUDataForSingleFrame * frame_data)
+{
+    for (uint32_t zp_i = 0; zp_i < zpolygons_to_render->size; zp_i++) {
+        if (zpolygons_to_render->cpu_data[zp_i].touchable_id >= 0) {
+            int32_t mesh_id = zpolygons_to_render->cpu_data[zp_i].mesh_id;
+            
+            int32_t tail_i =
+                all_mesh_summaries[mesh_id].vertices_head_i +
+                all_mesh_summaries[mesh_id].vertices_size;
+            
+            float transformed_triangle[9];
+            
+            for (
+                int32_t triangle_lv_i = all_mesh_summaries[mesh_id].
+                    vertices_head_i;
+                triangle_lv_i < tail_i;
+                triangle_lv_i += 3)
+            {
+                zpolygon_get_transformed_triangle_vertices(
+                    /* const zPolygonCPU * cpu_data: */
+                        &zpolygons_to_render->cpu_data[zp_i],
+                    /* const GPUPolygon * gpu_data: */
+                        &zpolygons_to_render->gpu_data[zp_i],
+                    /* const unsigned int locked_vertex_i: */
+                        triangle_lv_i,
+                    /* float * vertices_recipient_f9: */
+                        transformed_triangle);
+                
+                add_point_vertex(frame_data, transformed_triangle, false);
+                add_point_vertex(frame_data, transformed_triangle + 3, false);
+                add_point_vertex(frame_data, transformed_triangle + 6, false);
+            }
         }
     }
 }
@@ -286,6 +323,10 @@ void hardware_render(
     
     if (application_running && window_globals->draw_hitboxes) {
         zpolygon_hitboxes_to_lines(frame_data);
+    }
+    
+    if (application_running && window_globals->draw_vertices) {
+        zpolygon_vertices_to_points(frame_data);
     }
     
     if (application_running && window_globals->draw_clickray) {

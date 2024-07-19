@@ -119,10 +119,13 @@ void client_logic_late_startup(void) {
     quad.gpu_materials->texture_i = 0;
     quad.cpu_data->object_id = 20;
     quad.cpu_data->touchable_id = 5;
-    //    quad.gpu_data->xyz_offset[0] =  0.20f;
-    //    quad.gpu_data->xyz_offset[1] = -0.40f;
-    //    quad.gpu_data->xyz_offset[2] = -0.20f;
-    // quad.gpu_data->xyz_angle[0] = 0.2f;
+    quad.gpu_data->xyz_offset[0] =  0.20f;
+    quad.gpu_data->xyz_offset[1] = -0.40f;
+    quad.gpu_data->xyz_offset[2] = -0.20f;
+    quad.gpu_data->scale_factor = 1.20f;
+    quad.gpu_data->xyz_angle[0] = 0.2f;
+    quad.gpu_data->xyz_angle[1] = 0.3f;
+    quad.gpu_data->xyz_angle[2] = 0.6f;
     commit_zpolygon_to_render(&quad);
 }
 

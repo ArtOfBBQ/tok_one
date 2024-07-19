@@ -109,6 +109,12 @@ float get_distance_f3(
     const float p1[3],
     const float p2[3]);
 
+void zpolygon_get_transformed_triangle_vertices(
+    const zPolygonCPU * cpu_data,
+    const GPUPolygon * gpu_data,
+    const int32_t locked_vertex_i,
+    float * vertices_recipient_f9);
+
 float ray_intersects_zpolygon(
     const float ray_origin[3],
     float ray_direction[3],

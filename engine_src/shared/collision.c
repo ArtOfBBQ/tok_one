@@ -405,20 +405,6 @@ int point_hits_triangle_3D(
     const float C[3],
     const float N[3])
 {
-    /*
-    Vec3f edge0 = v1 - v0;
-    Vec3f edge1 = v2 - v1;
-    Vec3f edge2 = v0 - v2;
-    
-    Vec3f C0 = P - v0;
-    Vec3f C1 = P - v1;
-    Vec3f C2 = P - v2;
-    
-    if (dotProduct(N, crossProduct(edge0, C0)) > 0 &&
-        dotProduct(N, crossProduct(edge1, C1)) > 0 &&
-        dotProduct(N, crossProduct(edge2, C2)) > 0) return true; // P is inside the triangle
-    */
-    
     float edge_0[3];
     edge_0[0] = B[0] - A[0];
     edge_0[1] = B[1] - A[1];
@@ -457,7 +443,7 @@ int point_hits_triangle_3D(
     
     float cross_edge2_C2[3];
     cross(edge_2, C2, cross_edge2_C2);
-            
+    
     return (
         dot(N, cross_edge0_C0) > 0.0f &&
         dot(N, cross_edge1_C1) > 0.0f &&
@@ -473,73 +459,43 @@ float ray_hits_plane(
     float * collision_recipient)
 {
     /*
-    The plane equation:
-    ((cp - pP) . pN) == 0
-    
-    Our point plugged into the plane equation:
-    (((rO + (rD * t))) - pP) . pN) == 0
-    
-    I'm confused by the rules of moving dot products around, so I decided to
-    write out every vector in full and follow the basic rules of algebra.
-    
-    The plane equation without vectors:
-        ((cp[0] - pP[0]) * pN[0]) +
-        ((cp[1] - pP[1]) * pN[1]) +
-        ((cp[2] - pP[2]) * pN[2]) == 0
-    
-    Plugging in our point:
-        (((rO[0) + (rD[0) * t) - pP[0]) * pN[0]) +
-        (((rO[1) + (rD[1) * t) - pP[1]) * pN[1]) +
-        (((rO[2) + (rD[2) * t) - pP[2]) * pN[2]) == 0
-    
-    (pN[0]*rO[0] + pN[0]*rD[0]*t - pN[0]*pP[0]) +
-    (pN[1]*rO[1] + pN[1]*rD[1]*t - pN[1]*pP[1]) +
-    (pN[2]*rO[2] + pN[2]*rD[2]*t - pN[2]*pP[2]) == 0
-    
-    pN[0]*rO[0] + pN[0]*rD[0]*t +
-        pN[1]*rO[1] + pN[1]*rD[1]*t +
-            pN[2]*rO[2] + pN[2]*rD[2]*t ==
-                pN[0]*pP[0] + pN[1]*pP[1] + pN[2]*pP[2]
-    
-    pN[0]*rD[0]*t + pN[1]*rD[1]*t + pN[2]*rD[2]*t ==
-        pN[0]*pP[0] + pN[1]*pP[1] + pN[2]*pP[2] -
-            pN[0]*rO[0] - pN[1]*rO[1] - pN[2]*rO[2]
-    
-    t * (pN[0]*rD[0] + pN[1]*rD[1] + pN[2]*rD[2]) ==
-        pN[0]*pP[0] + pN[1]*pP[1] + pN[2]*pP[2] -
-            pN[0]*rO[0] - pN[1]*rO[1] - pN[2]*rO[2]
-    
-    t ==
-        pN[0]*pP[0] + pN[1]*pP[1] + pN[2]*pP[2] -
-            pN[0]*rO[0] - pN[1]*rO[1] - pN[2]*rO[2]
-                /
-                (pN[0]*rD[0] + pN[1]*rD[1] + pN[2]*rD[2])
-    */
-    
-    float t = COL_FLT_MAX;
-    
-    float denom =
-        (plane_normal[0] * ray_direction[0]) +
-        (plane_normal[1] * ray_direction[1]) +
-        (plane_normal[2] * ray_direction[2]);
-    
-    if (denom > 0.0001f || denom < 0.0001f) {
-        float divisor =
-            (plane_normal[0] * plane_point[0]) +
-            (plane_normal[1] * plane_point[1]) +
-            (plane_normal[2] * plane_point[2]) -
-            (plane_normal[0] * ray_origin[0]) -
-            (plane_normal[1] * ray_origin[1]) -
-            (plane_normal[2] * ray_origin[2]);
-        
-        t = divisor / denom;
-        
-        collision_recipient[0] = ray_origin[0] + (ray_direction[0] * t);
-        collision_recipient[1] = ray_origin[1] + (ray_direction[1] * t);
-        collision_recipient[2] = ray_origin[2] + (ray_direction[2] * t);
+    // Assuming vectors are all normalized
+    float denom = dot(n, raydir);
+    if (denom > 1e-6) {
+        Vec3f to_plane_point = plane_point - rayor;
+        t = dot(to_plane_point, n) / denom;
+        return (t >= 0);
     }
     
-    return t > 0.0f ? t : COL_FLT_MAX;
+    return false;
+    */
+    
+    #ifndef COLLISION_IGNORE_ASSERTS
+    assert(plane_normal[0] + plane_normal[1] + plane_normal[2] < 2.0f);
+    assert(ray_direction[0] + ray_direction[1] + ray_direction[2] < 2.0f);
+    #endif
+    
+    float t;
+    
+    float denom = dot(plane_normal, ray_direction);
+    
+    #define THRESHOLD 1e-6
+    if (denom > THRESHOLD) {
+        float to_plane_point[3];
+        to_plane_point[0] = plane_point[0] - ray_origin[0];
+        to_plane_point[1] = plane_point[1] - ray_origin[1];
+        to_plane_point[2] = plane_point[2] - ray_origin[2];
+        
+        t = dot(to_plane_point, plane_normal) / denom;
+        if (t > 0.0f) {
+            collision_recipient[0] = ray_origin[0] + (ray_direction[0] * t);
+            collision_recipient[1] = ray_origin[1] + (ray_direction[1] * t);
+            collision_recipient[2] = ray_origin[2] + (ray_direction[2] * t);
+            return t;
+        }
+    }
+    
+    return COL_FLT_MAX;
 }
 
 float ray_hits_triangle(
@@ -552,7 +508,7 @@ float ray_hits_triangle(
     float * collision_recipient)
 {
     /*
-    float D = -(N.x * v0.x + N.y * v0.y + N.z * v0.z);
+    float D = -(N.x * A.x + N.y * A.y + N.z * A.z);
     
     float t = -(dot(N, orig) + D) / dot(N, dir);
     */
@@ -568,8 +524,8 @@ float ray_hits_triangle(
             triangle_normal,
         /* float * collision_recipient: */
             collision_recipient);
-    
-     if (point_hits_triangle_3D(
+     
+     if (1 || point_hits_triangle_3D(
             /* const float P[2]: */
                 collision_recipient,
             /* const float A[2]: */

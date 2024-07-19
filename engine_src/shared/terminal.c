@@ -356,6 +356,26 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
+        are_equal_strings(command, "VERTICES") ||
+        are_equal_strings(command, "DRAW VERTICES"))
+    {
+        window_globals->draw_vertices = !window_globals->draw_vertices;
+        
+        if (window_globals->draw_vertices) {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Drawing triangle vertices...");
+        } else {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Stopped drawing triangle vertices...");
+        }
+        return true;
+    }
+    
+    if (
         are_equal_strings(command, "HITBOX") ||
         are_equal_strings(command, "HITBOXES") ||
         are_equal_strings(command, "DRAW HITBOXES"))

@@ -311,6 +311,35 @@ float dot_of_vertices_f3(
     return return_value;
 }
 
+void zpolygon_get_transformed_triangle_vertices(
+    const zPolygonCPU * cpu_data,
+    const GPUPolygon * gpu_data,
+    const int32_t locked_vertex_i,
+    float * vertices_recipient_9f)
+{
+    for (int32_t i = 0; i < 9; i++) {
+        vertices_recipient_9f[i] = all_mesh_vertices->gpu_data[
+            locked_vertex_i + (i / 3)].xyz[i % 3];
+        vertices_recipient_9f[i] *= gpu_data->xyz_multiplier[i % 3];
+        vertices_recipient_9f[i] += gpu_data->xyz_offset[i % 3];
+        vertices_recipient_9f[i] *= gpu_data->scale_factor;
+    }
+    
+    x_rotate_f3(vertices_recipient_9f, gpu_data->xyz_angle[0]);
+    y_rotate_f3(vertices_recipient_9f, gpu_data->xyz_angle[1]);
+    z_rotate_f3(vertices_recipient_9f, gpu_data->xyz_angle[2]);
+    x_rotate_f3(vertices_recipient_9f+3, gpu_data->xyz_angle[0]);
+    y_rotate_f3(vertices_recipient_9f+3, gpu_data->xyz_angle[1]);
+    z_rotate_f3(vertices_recipient_9f+3, gpu_data->xyz_angle[2]);
+    x_rotate_f3(vertices_recipient_9f+6, gpu_data->xyz_angle[0]);
+    y_rotate_f3(vertices_recipient_9f+6, gpu_data->xyz_angle[1]);
+    z_rotate_f3(vertices_recipient_9f+6, gpu_data->xyz_angle[2]);
+    
+    for (uint32_t i = 0; i < 9; i++) {
+        vertices_recipient_9f[i] += gpu_data->xyz[i % 3];
+    }
+}
+
 float ray_intersects_zpolygon(
     const float ray_origin[3],
     float ray_direction[3],
@@ -321,6 +350,7 @@ float ray_intersects_zpolygon(
     gpu_data->last_clicked_locked_vertex_id = -1.0f;
     
     normalize_zvertex_f3(ray_direction);
+    
     float zpoly_parent_xyz[3];
     memcpy(zpoly_parent_xyz, gpu_data->xyz, sizeof(float) * 3);
     zpoly_parent_xyz[0] += gpu_data->xyz_offset[0];
