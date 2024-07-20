@@ -450,6 +450,28 @@ int point_hits_triangle_3D(
         dot(N, cross_edge2_C2) > 0.0f);
 }
 
+//static float intersectPlane(
+//    const float n[3],
+//    const float plane_point[3],
+//    const float rayorig[3],
+//    const float raydir[3])
+//{
+//    // Assuming vectors are all normalized
+//    float denom = dot(n, raydir);
+//    if (denom > 1e-6) {
+//        float p0l0[3];
+//        p0l0[0] = plane_point[0] - rayorig[0];
+//        p0l0[1] = plane_point[1] - rayorig[1];
+//        p0l0[2] = plane_point[2] - rayorig[2];
+//        
+//        float t = dot(p0l0, n) / denom;
+//        if (t >= 0) {
+//            return t;
+//        }
+//    }
+//    
+//    return COL_FLT_MAX;
+//}
 
 float ray_hits_plane(
     const float ray_origin[3],
@@ -480,14 +502,14 @@ float ray_hits_plane(
     float denom = dot(plane_normal, ray_direction);
     
     #define THRESHOLD 1e-6
-    if (denom > THRESHOLD) {
+    if (denom > THRESHOLD || denom < -THRESHOLD) {
         float to_plane_point[3];
         to_plane_point[0] = plane_point[0] - ray_origin[0];
         to_plane_point[1] = plane_point[1] - ray_origin[1];
         to_plane_point[2] = plane_point[2] - ray_origin[2];
         
         t = dot(to_plane_point, plane_normal) / denom;
-        if (t > 0.0f) {
+        if (t >= 0.0f) {
             collision_recipient[0] = ray_origin[0] + (ray_direction[0] * t);
             collision_recipient[1] = ray_origin[1] + (ray_direction[1] * t);
             collision_recipient[2] = ray_origin[2] + (ray_direction[2] * t);
@@ -524,8 +546,8 @@ float ray_hits_triangle(
             triangle_normal,
         /* float * collision_recipient: */
             collision_recipient);
-     
-     if (1 || point_hits_triangle_3D(
+    
+     if (point_hits_triangle_3D(
             /* const float P[2]: */
                 collision_recipient,
             /* const float A[2]: */

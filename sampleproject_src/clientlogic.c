@@ -119,11 +119,12 @@ void client_logic_late_startup(void) {
     quad.gpu_materials->texture_i = 0;
     quad.cpu_data->object_id = 20;
     quad.cpu_data->touchable_id = 5;
-    quad.gpu_data->xyz_offset[0] =  0.20f;
-    quad.gpu_data->xyz_offset[1] = -0.40f;
-    quad.gpu_data->xyz_offset[2] = -0.20f;
+    // quad.gpu_data->xyz_offset[0] =  0.20f;
+    // quad.gpu_data->xyz_offset[1] = -0.40f;
+    // quad.gpu_data->xyz_offset[2] = -0.20f;
     quad.gpu_data->scale_factor = 1.20f;
     quad.gpu_data->xyz_angle[0] = 0.2f;
+    
     quad.gpu_data->xyz_angle[1] = 0.3f;
     quad.gpu_data->xyz_angle[2] = 0.6f;
     commit_zpolygon_to_render(&quad);
@@ -263,6 +264,16 @@ void client_logic_update(uint64_t microseconds_elapsed)
                     20,
                 /* const uint32_t wait: */
                     0);
+        }
+    }
+    if (keypress_map[TOK_KEY_R]) {
+        for (uint32_t i = 0; i < zpolygons_to_render->size; i++) {
+            if (zpolygons_to_render->cpu_data[i].object_id == 20)
+            {
+                zpolygons_to_render->gpu_data[i].xyz_angle[0] += 0.014f;
+                zpolygons_to_render->gpu_data[i].xyz_angle[1] += 0.01f;
+                zpolygons_to_render->gpu_data[i].xyz_angle[2] += 0.003f;
+            }
         }
     }
     

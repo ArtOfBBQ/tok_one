@@ -113,7 +113,8 @@ void zpolygon_get_transformed_triangle_vertices(
     const zPolygonCPU * cpu_data,
     const GPUPolygon * gpu_data,
     const int32_t locked_vertex_i,
-    float * vertices_recipient_f9);
+    float * vertices_recipient_f9,
+    float * normals_recipient_9f);
 
 float ray_intersects_zpolygon(
     const float ray_origin[3],

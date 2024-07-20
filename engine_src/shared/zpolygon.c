@@ -10,8 +10,7 @@ void set_zpolygon_hitbox(
     
     int32_t vertices_tail_i =
         all_mesh_summaries[mesh_cpu->mesh_id].vertices_head_i +
-        all_mesh_summaries[mesh_cpu->mesh_id].vertices_size -
-        1;
+        all_mesh_summaries[mesh_cpu->mesh_id].vertices_size;
     
     mesh_cpu->boundsphere_radius = 0.0f;
     
@@ -315,7 +314,8 @@ void zpolygon_get_transformed_triangle_vertices(
     const zPolygonCPU * cpu_data,
     const GPUPolygon * gpu_data,
     const int32_t locked_vertex_i,
-    float * vertices_recipient_9f)
+    float * vertices_recipient_9f,
+    float * normals_recipient_9f)
 {
     for (int32_t i = 0; i < 9; i++) {
         vertices_recipient_9f[i] = all_mesh_vertices->gpu_data[
@@ -323,7 +323,14 @@ void zpolygon_get_transformed_triangle_vertices(
         vertices_recipient_9f[i] *= gpu_data->xyz_multiplier[i % 3];
         vertices_recipient_9f[i] += gpu_data->xyz_offset[i % 3];
         vertices_recipient_9f[i] *= gpu_data->scale_factor;
+        
+        normals_recipient_9f[i] = all_mesh_vertices->gpu_data[
+            locked_vertex_i + (i / 3)].normal_xyz[i % 3];
     }
+    
+    normalize_zvertex_f3(normals_recipient_9f);
+    normalize_zvertex_f3(normals_recipient_9f+3);
+    normalize_zvertex_f3(normals_recipient_9f+6);
     
     x_rotate_f3(vertices_recipient_9f, gpu_data->xyz_angle[0]);
     y_rotate_f3(vertices_recipient_9f, gpu_data->xyz_angle[1]);
@@ -334,6 +341,18 @@ void zpolygon_get_transformed_triangle_vertices(
     x_rotate_f3(vertices_recipient_9f+6, gpu_data->xyz_angle[0]);
     y_rotate_f3(vertices_recipient_9f+6, gpu_data->xyz_angle[1]);
     z_rotate_f3(vertices_recipient_9f+6, gpu_data->xyz_angle[2]);
+    
+    x_rotate_f3(normals_recipient_9f, gpu_data->xyz_angle[0]);
+    y_rotate_f3(normals_recipient_9f, gpu_data->xyz_angle[1]);
+    z_rotate_f3(normals_recipient_9f, gpu_data->xyz_angle[2]);
+    
+    x_rotate_f3(normals_recipient_9f+3, gpu_data->xyz_angle[0]);
+    y_rotate_f3(normals_recipient_9f+3, gpu_data->xyz_angle[1]);
+    z_rotate_f3(normals_recipient_9f+3, gpu_data->xyz_angle[2]);
+    
+    x_rotate_f3(normals_recipient_9f+6, gpu_data->xyz_angle[0]);
+    y_rotate_f3(normals_recipient_9f+6, gpu_data->xyz_angle[1]);
+    z_rotate_f3(normals_recipient_9f+6, gpu_data->xyz_angle[2]);
     
     for (uint32_t i = 0; i < 9; i++) {
         vertices_recipient_9f[i] += gpu_data->xyz[i % 3];
@@ -347,6 +366,8 @@ float ray_intersects_zpolygon(
     GPUPolygon  * gpu_data,
     float * recipient_hit_point)
 {
+    memset(recipient_hit_point, 0, sizeof(float) * 3);
+    
     gpu_data->last_clicked_locked_vertex_id = -1.0f;
     
     normalize_zvertex_f3(ray_direction);
@@ -383,117 +404,32 @@ float ray_intersects_zpolygon(
                 all_mesh_summaries[cpu_data->mesh_id].vertices_size;
             vert_i += 3)
         {
+            float transformed_triangle[9];
+            float rotated_normals[9];
+            
+            zpolygon_get_transformed_triangle_vertices(
+                /* const zPolygonCPU * cpu_data: */
+                    cpu_data,
+                /* const GPUPolygon * gpu_data: */
+                    gpu_data,
+                /* const unsigned int locked_vertex_i: */
+                    vert_i,
+                /* float * vertices_recipient_f9: */
+                    transformed_triangle,
+                /* float * normals_recipient_f9: */
+                    rotated_normals);
+            
             float avg_normal[3];
-            avg_normal[0] = all_mesh_vertices->gpu_data[vert_i].normal_xyz[0];
-            avg_normal[1] = all_mesh_vertices->gpu_data[vert_i].normal_xyz[1];
-            avg_normal[2] = all_mesh_vertices->gpu_data[vert_i].normal_xyz[2];
-            
-            avg_normal[0] += all_mesh_vertices->gpu_data[vert_i+1].
-                normal_xyz[0];
-            avg_normal[1] += all_mesh_vertices->gpu_data[vert_i+1].
-                normal_xyz[1];
-            avg_normal[2] += all_mesh_vertices->gpu_data[vert_i+1].
-                normal_xyz[2];
-            avg_normal[0] += all_mesh_vertices->gpu_data[vert_i+2].
-                normal_xyz[0];
-            avg_normal[1] += all_mesh_vertices->gpu_data[vert_i+2].
-                normal_xyz[1];
-            avg_normal[2] += all_mesh_vertices->gpu_data[vert_i+2].
-                normal_xyz[2];
-            
-            avg_normal[0] /= 3.0f;
-            avg_normal[1] /= 3.0f;
-            avg_normal[2] /= 3.0f;
-            
-            float tri_vert_1[3];
-            float tri_vert_2[3];
-            float tri_vert_3[3];
-            
-            memcpy(
-                tri_vert_1,
-                all_mesh_vertices->gpu_data[vert_i].xyz,
-                sizeof(float)*3);
-            memcpy(
-                tri_vert_2,
-                all_mesh_vertices->gpu_data[vert_i+1].xyz,
-                sizeof(float)*3);
-            memcpy(
-                tri_vert_3,
-                all_mesh_vertices->gpu_data[vert_i+2].xyz,
-                sizeof(float)*3);
-            
-            tri_vert_1[0] *= gpu_data->xyz_multiplier[0];
-            tri_vert_1[1] *= gpu_data->xyz_multiplier[1];
-            tri_vert_1[2] *= gpu_data->xyz_multiplier[2];
-            
-            tri_vert_2[0] *= gpu_data->xyz_multiplier[0];
-            tri_vert_2[1] *= gpu_data->xyz_multiplier[1];
-            tri_vert_2[2] *= gpu_data->xyz_multiplier[2];
-            
-            tri_vert_3[0] *= gpu_data->xyz_multiplier[0];
-            tri_vert_3[1] *= gpu_data->xyz_multiplier[1];
-            tri_vert_3[2] *= gpu_data->xyz_multiplier[2];
-            
-            
-            tri_vert_1[0] += gpu_data->xyz_offset[0];
-            tri_vert_1[1] += gpu_data->xyz_offset[1];
-            tri_vert_1[2] += gpu_data->xyz_offset[2];
-            
-            tri_vert_2[0] += gpu_data->xyz_offset[0];
-            tri_vert_2[1] += gpu_data->xyz_offset[1];
-            tri_vert_2[2] += gpu_data->xyz_offset[2];
-            
-            tri_vert_3[0] += gpu_data->xyz_offset[0];
-            tri_vert_3[1] += gpu_data->xyz_offset[1];
-            tri_vert_3[2] += gpu_data->xyz_offset[2];
-            
-            
-            tri_vert_1[0] *= gpu_data->scale_factor;
-            tri_vert_1[1] *= gpu_data->scale_factor;
-            tri_vert_1[2] *= gpu_data->scale_factor;
-            tri_vert_2[0] *= gpu_data->scale_factor;
-            tri_vert_2[1] *= gpu_data->scale_factor;
-            tri_vert_2[2] *= gpu_data->scale_factor;
-            tri_vert_3[0] *= gpu_data->scale_factor;
-            tri_vert_3[1] *= gpu_data->scale_factor;
-            tri_vert_3[2] *= gpu_data->scale_factor;
-            
-            x_rotate_f3(
-                /* float * vertices: */
-                    tri_vert_1,
-                /* float x_angle: */
-                    gpu_data->xyz_angle[0]);
-            x_rotate_f3(
-                /* float * vertices: */
-                    tri_vert_2,
-                /* float x_angle: */
-                    gpu_data->xyz_angle[0]);
-            x_rotate_f3(
-                /* float * vertices: */
-                    tri_vert_3,
-                /* float x_angle: */
-                    gpu_data->xyz_angle[0]);
-            
-            log_assert(gpu_data->xyz_angle[1] <  0.00001f);
-            log_assert(gpu_data->xyz_angle[2] <  0.00001f);
-            log_assert(gpu_data->xyz_angle[1] > -0.00001f);
-            log_assert(gpu_data->xyz_angle[2] > -0.00001f);
-            
-            x_rotate_f3(
-                /* float * vertices: */
-                    avg_normal,
-                /* float x_angle: */
-                    gpu_data->xyz_angle[0]);
-            
-            tri_vert_1[0] += gpu_data->xyz[0];
-            tri_vert_1[1] += gpu_data->xyz[1];
-            tri_vert_1[2] += gpu_data->xyz[2];
-            tri_vert_2[0] += gpu_data->xyz[0];
-            tri_vert_2[1] += gpu_data->xyz[1];
-            tri_vert_2[2] += gpu_data->xyz[2];
-            tri_vert_3[0] += gpu_data->xyz[0];
-            tri_vert_3[1] += gpu_data->xyz[1];
-            tri_vert_3[2] += gpu_data->xyz[2];
+            avg_normal[0] =
+                (rotated_normals[0] + rotated_normals[3] + rotated_normals[6]) /
+                    3.0f;
+            avg_normal[1] =
+                (rotated_normals[1] + rotated_normals[4] + rotated_normals[7]) /
+                    3.0f;
+            avg_normal[2] =
+                (rotated_normals[2] + rotated_normals[5] + rotated_normals[8]) /
+                    3.0f;
+            normalize_zvertex_f3(avg_normal);
             
             float dist_to_tri = ray_hits_triangle(
                 /* const float * ray_origin: */
@@ -501,11 +437,11 @@ float ray_intersects_zpolygon(
                 /* const float * ray_direction: */
                     ray_direction,
                 /* const float * triangle_vertex_1: */
-                    tri_vert_1,
+                    transformed_triangle,
                 /* const float * triangle_vertex_2: */
-                    tri_vert_2,
+                    transformed_triangle + 3,
                 /* const float * triangle_vertex_3: */
-                    tri_vert_3,
+                    transformed_triangle + 6,
                 /* const float * triangle_normal: */
                     avg_normal,
                 /* float * collision_recipient: */
