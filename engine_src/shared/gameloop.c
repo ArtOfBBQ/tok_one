@@ -14,33 +14,27 @@ static int32_t closest_touchable_from_screen_ray(
     float clicked_viewport_y =
         -1.0f + ((screen_y / window_globals->window_height) * 2.0f);
     
-    float z_multiplier = 0.00001f;
+    float close_z = 0.0001f;
     float ray_origin[3];
-    
     ray_origin[0] =
         (clicked_viewport_x /
             window_globals->projection_constants.x_multiplier) *
-                z_multiplier;
+                close_z;
     ray_origin[1] =
         ((clicked_viewport_y) /
             window_globals->projection_constants.field_of_view_modifier) *
-                z_multiplier;
-    ray_origin[2] = z_multiplier;
+                close_z;
+    ray_origin[2] = close_z;
     
-    float ray_origin_rotated[3];
-    memcpy(
-        ray_origin_rotated,
-        ray_origin,
-        sizeof(float) * 3);
-    x_rotate_zvertex_f3(
-        ray_origin_rotated,
-        camera.xyz_angle[0]);
-    y_rotate_zvertex_f3(
-        ray_origin_rotated,
-        camera.xyz_angle[1]);
     z_rotate_zvertex_f3(
-        ray_origin_rotated,
+        ray_origin,
         camera.xyz_angle[2]);
+    y_rotate_zvertex_f3(
+        ray_origin,
+        camera.xyz_angle[1]);
+    x_rotate_zvertex_f3(
+        ray_origin,
+        camera.xyz_angle[0]);
     
     ray_origin[0] += camera.xyz[0];
     ray_origin[1] += camera.xyz[1];
@@ -67,30 +61,37 @@ static int32_t closest_touchable_from_screen_ray(
                 distant_z;
     distant_point[2] = distant_z;
     
-    float distant_point_rotated[3];
-    memcpy(distant_point_rotated, distant_point, sizeof(float) * 3);
-    x_rotate_zvertex_f3(
-        distant_point_rotated,
-        camera.xyz_angle[0]);
-    y_rotate_zvertex_f3(
-        distant_point_rotated,
-        camera.xyz_angle[1]);
     z_rotate_zvertex_f3(
-        distant_point_rotated,
+        distant_point,
         camera.xyz_angle[2]);
+    y_rotate_zvertex_f3(
+        distant_point,
+        camera.xyz_angle[1]);
+    x_rotate_zvertex_f3(
+        distant_point,
+        camera.xyz_angle[0]);
     
-    distant_point_rotated[0] += camera.xyz[0];
-    distant_point_rotated[1] += camera.xyz[1];
-    distant_point_rotated[2] += camera.xyz[2];
+    distant_point[0] += camera.xyz[0];
+    distant_point[1] += camera.xyz[1];
+    distant_point[2] += camera.xyz[2];
     
-    float direction_to_distant_point_rotated[3];
-    direction_to_distant_point_rotated[0] =
-        distant_point_rotated[0] - ray_origin[0];
-    direction_to_distant_point_rotated[1] =
-        distant_point_rotated[1] - ray_origin[1];
-    direction_to_distant_point_rotated[2] =
-        distant_point_rotated[2] - ray_origin[2];
-    normalize_zvertex_f3(direction_to_distant_point_rotated);
+    float direction_to_distant[3];
+    direction_to_distant[0] =
+        distant_point[0] - ray_origin[0];
+    direction_to_distant[1] =
+        distant_point[1] - ray_origin[1];
+    direction_to_distant[2] =
+        distant_point[2] - ray_origin[2];
+    normalize_zvertex_f3(direction_to_distant);
+    
+    memcpy(
+        window_globals->last_clickray_origin,
+        ray_origin,
+        sizeof(float)*3);
+    memcpy(
+        window_globals->last_clickray_direction,
+        direction_to_distant,
+        sizeof(float)*3);
     
     int32_t return_value = -1;
     float smallest_dist = FLOAT32_MAX;
@@ -113,7 +114,7 @@ static int32_t closest_touchable_from_screen_ray(
             /* origin: */
                 ray_origin,
             /* direction: */
-                direction_to_distant_point_rotated,
+                direction_to_distant,
             /* const zPolygonCPU * cpu_data: */
                 &zpolygons_to_render->cpu_data[zp_i],
             /* const GPUPolygon * gpu_data: */
@@ -129,14 +130,6 @@ static int32_t closest_touchable_from_screen_ray(
     }
     
     if (return_value < FLOAT32_MAX / 2) {
-        memcpy(
-            window_globals->last_clickray_origin,
-            ray_origin,
-            sizeof(float) * 3);
-        memcpy(
-            window_globals->last_clickray_direction,
-            direction_to_distant_point_rotated,
-            sizeof(float) * 3);
         memcpy(
             window_globals->last_clickray_collision,
             collision_point,

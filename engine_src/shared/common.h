@@ -34,10 +34,10 @@ extern "C" {
 #define FLOAT32_MAX 2147483647
 #define FLOAT32_MIN 1.1754943508222875e-38F
 
-int   tok_imini(const int x, const int y);
-int   tok_imaxi(const int x, const int y);
-float tok_fminf(const float x, const float y);
-float tok_fmaxf(const float x, const float y);
+int   tok_mini(const int x, const int y);
+int   tok_maxi(const int x, const int y);
+float tok_minf(const float x, const float y);
+float tok_maxf(const float x, const float y);
 
 
 #ifndef COMMON_IGNORE_ASSERTS

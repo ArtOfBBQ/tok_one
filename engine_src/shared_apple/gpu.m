@@ -116,7 +116,9 @@ static id projection_constants_buffer;
             isDirectory: false];
         
         if (shader_lib_url == NULL) {
+            #ifndef LOGGER_IGNORE_ASSERTS
             log_dump_and_crash("Failed to find the shader file\n");
+            #endif
             return false;
         }
         
@@ -127,9 +129,12 @@ static id projection_constants_buffer;
         
         if (shader_library == NULL) {
             log_append("Failed to find the shader library\n");
+            #ifndef LOGGER_IGNORE_ASSERTS
             log_dump_and_crash((char *)[
                 [[Error userInfo] descriptionInStringsFileFormat]
                     cStringUsingEncoding:NSASCIIStringEncoding]);
+            #endif
+            
             return false;
         } else {
             log_append("Success! Found the shader lib on 2nd try.\n");
@@ -198,7 +203,9 @@ static id projection_constants_buffer;
     
     if (Error != NULL)
     {
+        #ifndef LOGGER_IGNORE_ASSERTS
         log_dump_and_crash("Failed to initialize diamond pipeline");
+        #endif
         return false;
     }
     
@@ -232,7 +239,10 @@ static id projection_constants_buffer;
     if (Error != NULL)
     {
         log_append([[Error localizedDescription] cStringUsingEncoding:kCFStringEncodingASCII]);
+        #ifndef LOGGER_IGNORE_ASSERTS
         log_dump_and_crash("Error loading the alphablending shader\n");
+        #endif
+        
         return false;
     }
     
@@ -260,7 +270,9 @@ static id projection_constants_buffer;
     if (Error != NULL)
     {
         log_append([[Error localizedDescription] cStringUsingEncoding:kCFStringEncodingASCII]);
+        #ifndef LOGGER_IGNORE_ASSERTS
         log_dump_and_crash("Error loading the raw vertex shader\n");
+        #endif
         return false;
     }
     
@@ -276,7 +288,9 @@ static id projection_constants_buffer;
     if (Error != NULL)
     {
         log_append([[Error localizedDescription] cStringUsingEncoding:kCFStringEncodingASCII]);
+        #ifndef LOGGER_IGNORE_ASSERTS
         log_dump_and_crash("Error setting the depth stencil state\n");
+        #endif
         return false;
     }
     
@@ -787,7 +801,7 @@ static id projection_constants_buffer;
             atIndex:
                 0];
         assert(gpu_shared_data_collection.
-            triple_buffers[current_frame_i].line_vertices_size <
+            triple_buffers[current_frame_i].line_vertices_size <=
                 MAX_LINE_VERTICES);
         [render_encoder
             drawPrimitives: MTLPrimitiveTypeLine
@@ -807,7 +821,7 @@ static id projection_constants_buffer;
             atIndex:
                 0];
         assert(gpu_shared_data_collection.
-            triple_buffers[current_frame_i].point_vertices_size <
+            triple_buffers[current_frame_i].point_vertices_size <=
                 MAX_POINT_VERTICES);
         [render_encoder
             drawPrimitives: MTLPrimitiveTypePoint

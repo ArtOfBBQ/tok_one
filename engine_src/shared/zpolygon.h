@@ -40,12 +40,11 @@ typedef struct zPolygonCPU {
     
     int32_t object_id;
     int32_t touchable_id;
-    float boundsphere_radius;
-    
     bool32_t alpha_blending_enabled;
     bool32_t committed;
     bool32_t deleted;
     bool32_t visible;
+    float furthest_vertex_xyz[3];
 } zPolygonCPU;
 
 void set_zpolygon_hitbox(
@@ -115,6 +114,12 @@ void zpolygon_get_transformed_triangle_vertices(
     const int32_t locked_vertex_i,
     float * vertices_recipient_f9,
     float * normals_recipient_9f);
+
+void zpolygon_get_transformed_boundsphere(
+    const zPolygonCPU * cpu_data,
+    const GPUPolygon * gpu_data,
+    float * recipient_center_xyz,
+    float * recipient_radius);
 
 float ray_intersects_zpolygon(
     const float ray_origin[3],

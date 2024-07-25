@@ -117,12 +117,12 @@ void z_rotate_f3(
     float sin_angle = sinf(z_angle);
     
     float new_x =
-        xyz[0] * cos_angle -
-        xyz[1] * sin_angle;
+        (xyz[0] * cos_angle) -
+        (xyz[1] * sin_angle);
     
     xyz[1] =
-        xyz[1] * cos_angle +
-        xyz[0] * sin_angle;
+        (xyz[1] * cos_angle) +
+        (xyz[0] * sin_angle);
     
     xyz[0] = new_x;
     

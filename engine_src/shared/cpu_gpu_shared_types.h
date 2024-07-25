@@ -116,9 +116,8 @@ typedef struct GPUProjectionConstants {
 
 typedef struct GPURawVertex {
     float xyz[3];
-    float ignore_camera;
+    float color;
 } GPURawVertex;
 #pragma pack(pop)
 
 #endif
-

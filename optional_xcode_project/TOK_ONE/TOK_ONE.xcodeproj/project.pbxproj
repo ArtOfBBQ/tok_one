@@ -83,6 +83,8 @@
 		EC31932529DFAAFB00E320CD /* particle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC31932329DFAAFB00E320CD /* particle.c */; };
 		EC493BC92BEDABCC004D957F /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F48293C9FD900837369 /* UIKit.framework */; };
 		EC493BCB2BEDAE07004D957F /* shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 60112895286253C100F92967 /* shaders.metal */; };
+		EC4DBC142C521B9500A13D2A /* gamedisk.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC4DBC132C521B9500A13D2A /* gamedisk.obj */; };
+		EC4DBC152C521B9500A13D2A /* gamedisk.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC4DBC132C521B9500A13D2A /* gamedisk.obj */; };
 		EC6441A429318B6D00A0267B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = EC64419F29318B6D00A0267B /* main.m */; };
 		EC6441A529318B6D00A0267B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A029318B6D00A0267B /* AppDelegate.m */; };
 		EC6441A629318B6D00A0267B /* ios_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A129318B6D00A0267B /* ios_platform_layer.c */; };
@@ -185,6 +187,7 @@
 		EC31932229DFAAFB00E320CD /* particle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = particle.h; path = ../../engine_src/shared/particle.h; sourceTree = "<group>"; };
 		EC31932329DFAAFB00E320CD /* particle.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = particle.c; path = ../../engine_src/shared/particle.c; sourceTree = "<group>"; };
 		EC493BC42BEDA96D004D957F /* unitybuild_macos.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = unitybuild_macos.c; path = ../../unitybuild_macos.c; sourceTree = "<group>"; };
+		EC4DBC132C521B9500A13D2A /* gamedisk.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = gamedisk.obj; path = ../../resources/gamedisk.obj; sourceTree = "<group>"; };
 		EC61E2D42AFB02B7004D316D /* linux_apple_platform_layer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = linux_apple_platform_layer.c; path = ../../engine_src/shared_linux_apple/linux_apple_platform_layer.c; sourceTree = "<group>"; };
 		EC64419E29318B6D00A0267B /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = ../../engine_src/ios/AppDelegate.h; sourceTree = "<group>"; };
 		EC64419F29318B6D00A0267B /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = ../../engine_src/ios/main.m; sourceTree = "<group>"; };
@@ -330,6 +333,7 @@
 				EC0BFBD829EE71A200E4BC1C /* xmas_tree.obj */,
 				EC67AE152A1B0813002D8380 /* leaves3.png */,
 				EC7B171A293A23E300C1D20C /* roundedborder.png */,
+				EC4DBC132C521B9500A13D2A /* gamedisk.obj */,
 				EC18FF4129E3DC8B00ED785C /* blob1.png */,
 				EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */,
 				6080CC45286FFD1D00444118 /* phoebus.png */,
@@ -529,6 +533,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EC4DBC142C521B9500A13D2A /* gamedisk.obj in Resources */,
 				ECC47A6029E9111C0082A7C6 /* disk.obj in Resources */,
 				EC67AE162A1B0813002D8380 /* leaves3.png in Resources */,
 				EC0717F02C29CDD5007A4AFA /* teapot_smooth.obj in Resources */,
@@ -553,6 +558,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EC4DBC152C521B9500A13D2A /* gamedisk.obj in Resources */,
 				EC7B09D4293CAC8B000ED98E /* Main.storyboard in Resources */,
 				EC1412B22938597400DA0D21 /* cardwithuvcoords.obj in Resources */,
 				ECC47A6129E9111C0082A7C6 /* disk.obj in Resources */,

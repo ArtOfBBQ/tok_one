@@ -1,21 +1,21 @@
 #include "common.h"
 
-float tok_fminf(const float x, const float y)
+float tok_minf(const float x, const float y)
 {
     return ((x <= y) * x) + ((y < x) * y);
 }
 
-float tok_fmaxf(const float x, const float y)
+float tok_maxf(const float x, const float y)
 {
     return ((x >  y) * x) + ((y <= x) * y);
 }
 
-int tok_imini(const int x, const int y)
+int tok_mini(const int x, const int y)
 {
     return ((x <= y) * x) + ((y < x) * y);
 }
 
-int tok_imaxi(const int x, const int y)
+int tok_maxi(const int x, const int y)
 {
     return ((x <= y) * y) + ((x > y) * x);
 }

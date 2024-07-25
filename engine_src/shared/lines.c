@@ -25,9 +25,10 @@ void fetch_next_line(LineRequest * stack_recipient)
         }
     }
     
-    log_assert(lines_to_render_size + 1 < (MAX_LINE_VERTICES / 2));
-    
     if (use_i < 0) {
+        if ((use_i + 1) >= MAX_LINE_VERTICES) {
+            return;
+        }
         use_i = lines_to_render_size;
         lines_to_render_size += 1;
     }

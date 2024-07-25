@@ -518,7 +518,9 @@ int main(int argc, const char * argv[]) {
         fromFilePath: shader_lib_path];
     
     if (!result || !application_running) {
+        #ifndef LOGGER_IGNORE_ASSERTS
         log_dump_and_crash("Can't draw anything to the screen...\n");
+        #endif
         
         platform_request_messagebox(
             "Critical failure: couldn't configure Metal graphics.");

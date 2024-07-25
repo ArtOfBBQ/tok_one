@@ -903,7 +903,9 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                     zp_i < zpolygons_to_render->size;
                     zp_i++)
                 {
-                    if (zpolygons_to_render->cpu_data[zp_i].object_id == anim->affected_object_id) {
+                    if (zpolygons_to_render->cpu_data[zp_i].object_id ==
+                        anim->affected_object_id)
+                    {
                         set_zpolygon_hitbox(
                             /* zPolygonCPU * mesh_cpu: */
                                 &zpolygons_to_render->cpu_data[zp_i],
@@ -946,6 +948,7 @@ void request_dud_dance(
         move_request->gpu_polygon_vals.xyz[0] = step % 2 == 0 ? delta : -delta;
         move_request->gpu_polygon_vals.xyz[1] =
             move_request->gpu_polygon_vals.xyz[0];
+        move_request->set_hitbox_when_finished = true;
         commit_scheduled_animation(move_request);
     }
 }

@@ -17,8 +17,7 @@ static bool32_t is_last_clicked = false;
 
 static void add_line_vertex(
     GPUDataForSingleFrame * frame_data,
-    const float xyz[3],
-    const float ignore_camera)
+    const float xyz[3])
 {
     log_assert(frame_data->line_vertices != NULL);
     
@@ -31,8 +30,8 @@ static void add_line_vertex(
         xyz,
         sizeof(float) * 3);
     
-    frame_data->line_vertices[frame_data->line_vertices_size].ignore_camera =
-        ignore_camera;
+    frame_data->line_vertices[frame_data->line_vertices_size].color =
+        0.0f;
     
     frame_data->line_vertices_size += 1;
 }
@@ -40,7 +39,7 @@ static void add_line_vertex(
 static void add_point_vertex(
     GPUDataForSingleFrame * frame_data,
     const float xyz[3],
-    const float ignore_camera)
+    float color)
 {
     log_assert(frame_data->point_vertices != NULL);
     
@@ -53,8 +52,7 @@ static void add_point_vertex(
         xyz,
         sizeof(float) * 3);
     
-    frame_data->point_vertices[frame_data->point_vertices_size].ignore_camera =
-        ignore_camera;
+    frame_data->point_vertices[frame_data->point_vertices_size].color = color;
     
     frame_data->point_vertices_size += 1;
 }
@@ -62,8 +60,7 @@ static void add_point_vertex(
 inline static void draw_bounding_sphere(
     GPUDataForSingleFrame * frame_data,
     const float center_xyz[3],
-    const float sphere_radius,
-    const float ignore_camera)
+    const float sphere_radius)
 {
     float cur_point[3];
     for (float x_angle = 0.2f; x_angle < 6.28f; x_angle += 0.75f)
@@ -81,7 +78,7 @@ inline static void draw_bounding_sphere(
             cur_point[1] += center_xyz[1];
             cur_point[2] += center_xyz[2];
             
-            add_point_vertex(frame_data, cur_point, ignore_camera);
+            add_point_vertex(frame_data, cur_point, /* color: */ 0.0f);
         }
     }
 }
@@ -98,7 +95,7 @@ inline static void zpolygon_vertices_to_points(
                 all_mesh_summaries[mesh_id].vertices_size;
             
             float transformed_triangle[9];
-            float rotated_normals[9];
+            float transformed_normals[9];
             
             for (
                 int32_t triangle_lv_i = all_mesh_summaries[mesh_id].
@@ -116,25 +113,25 @@ inline static void zpolygon_vertices_to_points(
                     /* float * vertices_recipient_f9: */
                         transformed_triangle,
                     /* float * normals_recipient_f9: */
-                        rotated_normals);
+                        transformed_normals);
                 
                 for (uint32_t i = 0; i < 9; i++) {
-                    rotated_normals[i] *= 0.1f;
-                    rotated_normals[i] += transformed_triangle[i];
+                    transformed_normals[i] *= 0.1f;
+                    transformed_normals[i] += transformed_triangle[i];
                 }
                 
-                add_point_vertex(frame_data, transformed_triangle, false);
-                add_point_vertex(frame_data, transformed_triangle + 3, false);
-                add_point_vertex(frame_data, transformed_triangle + 6, false);
+                add_point_vertex(frame_data, transformed_triangle, 1.0f);
+                add_point_vertex(frame_data, transformed_triangle + 3, 1.0f);
+                add_point_vertex(frame_data, transformed_triangle + 6, 1.0f);
                 
-                add_line_vertex(frame_data, transformed_triangle, false);
-                add_line_vertex(frame_data, rotated_normals, false);
+                add_line_vertex(frame_data, transformed_triangle);
+                add_line_vertex(frame_data, transformed_normals);
                 
-                add_line_vertex(frame_data, transformed_triangle+3, false);
-                add_line_vertex(frame_data, rotated_normals+3, false);
+                add_line_vertex(frame_data, transformed_triangle+3);
+                add_line_vertex(frame_data, transformed_normals+3);
                 
-                add_line_vertex(frame_data, transformed_triangle+6, false);
-                add_line_vertex(frame_data, rotated_normals+6, false);
+                add_line_vertex(frame_data, transformed_triangle+6);
+                add_line_vertex(frame_data, transformed_normals+6);
             }
         }
     }
@@ -143,37 +140,28 @@ inline static void zpolygon_vertices_to_points(
 inline static void zpolygon_hitboxes_to_points(
     GPUDataForSingleFrame * frame_data)
 {
+
+    float sphere_center[3];
+    float sphere_radius;
+    
     for (uint32_t zp_i = 0; zp_i < zpolygons_to_render->size; zp_i++) {
-        float center_xyz[3];
-        memcpy(
-            center_xyz,
-            zpolygons_to_render->gpu_data[zp_i].xyz_offset,
-            sizeof(float)*3);
-        
-        x_rotate_f3(
-            center_xyz,
-            zpolygons_to_render->gpu_data[zp_i].xyz_angle[0]);
-        y_rotate_f3(
-            center_xyz,
-            zpolygons_to_render->gpu_data[zp_i].xyz_angle[1]);
-        z_rotate_f3(
-            center_xyz,
-            zpolygons_to_render->gpu_data[zp_i].xyz_angle[2]);
-        
-        center_xyz[0] += zpolygons_to_render->gpu_data[zp_i].xyz[0];
-        center_xyz[1] += zpolygons_to_render->gpu_data[zp_i].xyz[1];
-        center_xyz[2] += zpolygons_to_render->gpu_data[zp_i].xyz[2];
-        
         if (zpolygons_to_render->cpu_data[zp_i].touchable_id >= 0) {
+            zpolygon_get_transformed_boundsphere(
+                /* const zPolygonCPU * cpu_data: */
+                    &zpolygons_to_render->cpu_data[zp_i],
+                /* const GPUPolygon * gpu_data: */
+                    &zpolygons_to_render->gpu_data[zp_i],
+                /* float * recipient_center_xyz: */
+                    sphere_center,
+                /* float * recipient_radius: */
+                    &sphere_radius);
             draw_bounding_sphere(
                 /* GPUDataForSingleFrame * frame_data: */
                     frame_data,
                 /* const float center_xyz[3] */
-                    center_xyz,
+                    sphere_center,
                 /* const float sphere_radius: */
-                    zpolygons_to_render->cpu_data[zp_i].boundsphere_radius,
-                /* const float ignore_camera: */
-                    zpolygons_to_render->gpu_data[zp_i].ignore_camera);
+                    sphere_radius);
         }
     }
 }
@@ -292,6 +280,7 @@ inline static void add_opaque_zpolygons_to_workload(
     }
 }
 
+static float clickray_elapsed = 0.0f;
 void hardware_render(
     GPUDataForSingleFrame * frame_data,
     uint64_t elapsed_nanoseconds)
@@ -362,9 +351,7 @@ void hardware_render(
             /* GPUDataForSingleFrame * frame_data: */
                 frame_data,
             /* const float xyz[3]: */
-                window_globals->last_clickray_origin,
-            /* const float ignore_camera: */
-                0.0f);
+                window_globals->last_clickray_origin);
         
         float clickray_end[3];
         memcpy(
@@ -378,9 +365,20 @@ void hardware_render(
             /* GPUDataForSingleFrame * frame_data: */
                 frame_data,
             /* const float xyz[3]: */
-                clickray_end,
-            /* const float ignore_camera: */
-                0.0f);
+                clickray_end);
+        
+        // draw a moving point from the start of the clickray to the end
+        clickray_elapsed += (float)elapsed_nanoseconds / 1000000.0f;
+        if (clickray_elapsed > 2.0f) { clickray_elapsed = 0.0f; }
+        float moving_point[3];
+        memcpy(moving_point, window_globals->last_clickray_origin, sizeof(float) * 3);
+        moving_point[0] += window_globals->last_clickray_direction[0] *
+            clickray_elapsed;
+        moving_point[1] += window_globals->last_clickray_direction[1] *
+            clickray_elapsed;
+        moving_point[2] += window_globals->last_clickray_direction[2] *
+            clickray_elapsed;
+        add_point_vertex(frame_data, moving_point, 0.75f);
         
         if (
             (window_globals->last_clickray_collision[0] +
@@ -391,9 +389,7 @@ void hardware_render(
                 /* GPUDataForSingleFrame * frame_data: */
                     frame_data,
                 /* const float * xyz: */
-                    window_globals->last_clickray_collision,
-                /* const float ignore_camera: */
-                    false);
+                    window_globals->last_clickray_collision, 0.33f);
         }
     }
 }

@@ -41,11 +41,11 @@ float3 z_rotate(float3 vertices, float z_angle) {
     float sin_angle = sin(z_angle);
     
     rotated_vertices[0] =
-        vertices[0] * cos_angle -
-        vertices[1] * sin_angle;
+        (vertices[0] * cos_angle) -
+        (vertices[1] * sin_angle);
     rotated_vertices[1] =
-        vertices[1] * cos_angle +
-        vertices[0] * sin_angle;
+        (vertices[1] * cos_angle) +
+        (vertices[0] * sin_angle);
     
     return rotated_vertices;
 }
@@ -53,6 +53,7 @@ float3 z_rotate(float3 vertices, float z_angle) {
 typedef struct {
     float4 position [[position]];
     float point_size [[point_size]];
+    float color;
 } RawFragment;
 
 vertex RawFragment
@@ -73,8 +74,7 @@ raw_vertex_shader(
     
     float3 camera_position = vector_float3(
         camera->xyz[0],
-        camera->xyz[1],
-        camera->xyz[2]);
+        camera->xyz[1], camera->xyz[2]);
     float3 camera_translated_pos = pos - camera_position;
     
     // rotate around camera
@@ -88,20 +88,17 @@ raw_vertex_shader(
         cam_y_rotated,
         -camera->xyz_angle[2]);
     
-    float ignore_cam = vertices[vertex_i].ignore_camera;
-    
-    out.position = vector_float4(
-        (cam_z_rotated * (1.0f - ignore_cam)) +
-        (pos * ignore_cam),
-        1.0f);
+    out.position = vector_float4(cam_z_rotated, 1.0f);
     
     // projection
     out.position[0] *= projection_constants->x_multiplier;
     out.position[1] *= projection_constants->field_of_view_modifier;
     out.position[3]  = out.position[2];
-    out.position[2]  =     
+    out.position[2]  =
         (out.position[2] * projection_constants->q) -
         (projection_constants->znear * projection_constants->q);
+    
+    out.color = vertices[vertex_i].color;
     
     return out;
 }
@@ -109,9 +106,7 @@ raw_vertex_shader(
 fragment float4
 raw_fragment_shader(RawFragment in [[stage_in]])
 {
-    float4 out_color = vector_float4(0.2f, 1.0f, 1.0f, 1.0f);
-    
-    
+    float4 out_color = vector_float4(in.color, 1.0f, 1.0f, 1.0f);
     
     return out_color;
 }
@@ -192,20 +187,19 @@ vertex_shader(
     float3 x_rotated_vertices = x_rotate(
         mesh_vertices,
         polygon_collection->polygons[polygon_i].xyz_angle[0]);
-    float3 x_rotated_normals  = x_rotate(
-        mesh_normals,
-        polygon_collection->polygons[polygon_i].xyz_angle[0]);
-    
     float3 y_rotated_vertices = y_rotate(
         x_rotated_vertices,
         polygon_collection->polygons[polygon_i].xyz_angle[1]);
-    float3 y_rotated_normals  = y_rotate(
-        x_rotated_normals,
-        polygon_collection->polygons[polygon_i].xyz_angle[1]);
-    
     float3 z_rotated_vertices = z_rotate(
         y_rotated_vertices,
         polygon_collection->polygons[polygon_i].xyz_angle[2]);
+    
+    float3 x_rotated_normals  = x_rotate(
+        mesh_normals,
+        polygon_collection->polygons[polygon_i].xyz_angle[0]);
+    float3 y_rotated_normals  = y_rotate(
+        x_rotated_normals,
+        polygon_collection->polygons[polygon_i].xyz_angle[1]);
     float3 z_rotated_normals  = z_rotate(
         y_rotated_normals,
         polygon_collection->polygons[polygon_i].xyz_angle[2]);
@@ -213,7 +207,6 @@ vertex_shader(
     // translate to world position
     float3 rotated_pos = z_rotated_vertices + parent_mesh_position;
     
-    // polygon_collection->polygons[polygon_i].ignore_camera
     float3 camera_position = vector_float3(
         camera->xyz[0],
         camera->xyz[1],
@@ -231,18 +224,24 @@ vertex_shader(
         cam_y_rotated,
         -camera->xyz_angle[2]);
     
-    float ignore_cam =
-        polygon_collection->polygons[polygon_i].ignore_camera;
-    out.position = vector_float4(
-        (cam_z_rotated * (1.0f - ignore_cam)) +
-        (rotated_pos * ignore_cam),
+    float ic = clamp(
+        polygon_collection->polygons[polygon_i].ignore_camera,
+        0.0f,
         1.0f);
+    float3 final_pos =
+        (rotated_pos * ic) +
+        (cam_z_rotated * (1.0f - ic));
+    
+    out.position[0] = final_pos[0];
+    out.position[1] = final_pos[1];
+    out.position[2] = final_pos[2];
+    out.position[3] = 1.0f;
     
     // projection
     out.position[0] *= projection_constants->x_multiplier;
     out.position[1] *= projection_constants->field_of_view_modifier;
     out.position[3]  = out.position[2];
-    out.position[2]  =     
+    out.position[2]  =
         (out.position[2] * projection_constants->q) -
         (projection_constants->znear * projection_constants->q);
     

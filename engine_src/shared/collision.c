@@ -233,6 +233,11 @@ float normalized_ray_hits_sphere(
     const float sphere_radius,
     float * collision_recipient)
 {
+    #ifndef COLLISION_IGNORE_ASSERTS
+    assert(dot(normalized_ray_direction, normalized_ray_direction) < 1.02f);
+    assert(dot(normalized_ray_direction, normalized_ray_direction) > 0.98f);
+    #endif
+    
     /*
     points in the ray (rO means ray origin, rD means ray direction, t means
     time or distance traversed):
@@ -398,80 +403,53 @@ int point_hits_triangle(
         (w1 + w2) <= 1.0f;
 }
 
-int point_hits_triangle_3D(
+static float triangle_get_area(
+    const float A[3],
+    const float B[3],
+    const float C[3])
+{
+    float AB[3];
+    AB[0] = B[0] - A[0];
+    AB[1] = B[1] - A[1];
+    AB[2] = B[2] - A[2];
+    
+    float AC[3];
+    AC[0] = C[0] - A[0];
+    AC[1] = C[1] - A[1];
+    AC[2] = C[2] - A[2];
+    
+    float AB_cross_AC[3];
+    cross(AB, AC, AB_cross_AC);
+    
+    return 0.5f * sqrtf(
+        (AB_cross_AC[0]*AB_cross_AC[0])+
+        (AB_cross_AC[1]*AB_cross_AC[1])+
+        (AB_cross_AC[2]*AB_cross_AC[2]));
+}
+
+static int coplanar_point_hits_triangle_3D(
     const float P[3],
     const float A[3],
     const float B[3],
-    const float C[3],
-    const float N[3])
+    const float C[3])
 {
-    float edge_0[3];
-    edge_0[0] = B[0] - A[0];
-    edge_0[1] = B[1] - A[1];
-    edge_0[2] = B[2] - A[2];
+    /*
+    We're assuming the point P is already determined to share a plane with
+    the triangle ABC
     
-    float edge_1[3];
-    edge_1[0] = C[0] - B[0];
-    edge_1[1] = C[1] - B[1];
-    edge_1[2] = C[2] - B[2];
+    We expect the area of ABP + ACP + BCP to be about equal to the area of
+    ABC
+    */
     
-    float edge_2[3];
-    edge_2[0] = A[0] - C[0];
-    edge_2[1] = A[1] - C[1];
-    edge_2[2] = A[2] - C[2];
+    float entire_area = triangle_get_area(A, B, C);
     
-    float C0[3];
-    C0[0] = P[0] - A[0];
-    C0[1] = P[1] - A[1];
-    C0[2] = P[2] - A[2];
+    float diff = entire_area - (
+        triangle_get_area(A, B, P) +
+        triangle_get_area(A, C, P) +
+        triangle_get_area(B, C, P));
     
-    float C1[3];
-    C1[0] = P[0] - B[0];
-    C1[1] = P[1] - B[1];
-    C1[2] = P[2] - B[2];
-    
-    float C2[3];
-    C2[0] = P[0] - C[0];
-    C2[1] = P[1] - C[1];
-    C2[2] = P[2] - C[2];
-    
-    float cross_edge0_C0[3];
-    cross(edge_0, C0, cross_edge0_C0);
-    
-    float cross_edge1_C1[3];
-    cross(edge_1, C1, cross_edge1_C1);
-    
-    float cross_edge2_C2[3];
-    cross(edge_2, C2, cross_edge2_C2);
-    
-    return (
-        dot(N, cross_edge0_C0) > 0.0f &&
-        dot(N, cross_edge1_C1) > 0.0f &&
-        dot(N, cross_edge2_C2) > 0.0f);
+    return diff < 0.0001f && diff > -0.0001f;
 }
-
-//static float intersectPlane(
-//    const float n[3],
-//    const float plane_point[3],
-//    const float rayorig[3],
-//    const float raydir[3])
-//{
-//    // Assuming vectors are all normalized
-//    float denom = dot(n, raydir);
-//    if (denom > 1e-6) {
-//        float p0l0[3];
-//        p0l0[0] = plane_point[0] - rayorig[0];
-//        p0l0[1] = plane_point[1] - rayorig[1];
-//        p0l0[2] = plane_point[2] - rayorig[2];
-//        
-//        float t = dot(p0l0, n) / denom;
-//        if (t >= 0) {
-//            return t;
-//        }
-//    }
-//    
-//    return COL_FLT_MAX;
-//}
 
 float ray_hits_plane(
     const float ray_origin[3],
@@ -480,8 +458,15 @@ float ray_hits_plane(
     const float plane_normal[3],
     float * collision_recipient)
 {
-    /*
     // Assuming vectors are all normalized
+    #ifndef COLLISION_IGNORE_ASSERTS
+    assert(dot(plane_normal, plane_normal) < 1.05f);
+    assert(dot(plane_normal, plane_normal) > -0.01f);
+    assert(dot(ray_direction, ray_direction) < 1.05f);
+    assert(dot(ray_direction, ray_direction) > -0.01f);
+    #endif
+    
+    /*
     float denom = dot(n, raydir);
     if (denom > 1e-6) {
         Vec3f to_plane_point = plane_point - rayor;
@@ -492,10 +477,6 @@ float ray_hits_plane(
     return false;
     */
     
-    #ifndef COLLISION_IGNORE_ASSERTS
-    assert(plane_normal[0] + plane_normal[1] + plane_normal[2] < 2.0f);
-    assert(ray_direction[0] + ray_direction[1] + ray_direction[2] < 2.0f);
-    #endif
     
     float t;
     
@@ -547,7 +528,7 @@ float ray_hits_triangle(
         /* float * collision_recipient: */
             collision_recipient);
     
-     if (point_hits_triangle_3D(
+     if (coplanar_point_hits_triangle_3D(
             /* const float P[2]: */
                 collision_recipient,
             /* const float A[2]: */
@@ -555,9 +536,7 @@ float ray_hits_triangle(
             /* const float B[2]: */
                 triangle_vertex_2,
             /* const float C[2]: */
-                triangle_vertex_3,
-            /* const float normal: */
-                triangle_normal))
+                triangle_vertex_3))
     {
         #ifndef COLLISION_IGNORE_ASSERTS
         assert(nearest_dist_found > 0.0f);
@@ -565,6 +544,10 @@ float ray_hits_triangle(
         
         return nearest_dist_found;
     }
+    
+    collision_recipient[0] = 0.0f;
+    collision_recipient[1] = 0.0f;
+    collision_recipient[2] = 0.0f;
     
     return COL_FLT_MAX;
 }

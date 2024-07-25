@@ -12,34 +12,45 @@ void set_zpolygon_hitbox(
         all_mesh_summaries[mesh_cpu->mesh_id].vertices_head_i +
         all_mesh_summaries[mesh_cpu->mesh_id].vertices_size;
     
-    mesh_cpu->boundsphere_radius = 0.0f;
+    mesh_cpu->furthest_vertex_xyz[0] = 0.0f;
+    mesh_cpu->furthest_vertex_xyz[1] = 0.0f;
+    mesh_cpu->furthest_vertex_xyz[2] = 0.0f;
+    float furthest_squares = 0.0f;
     
     for (
         int32_t vert_i = all_mesh_summaries[mesh_cpu->mesh_id].vertices_head_i;
-        vert_i <= vertices_tail_i;
+        vert_i < vertices_tail_i;
         vert_i++)
     {
-        float cur_vertex_x =
-            all_mesh_vertices->gpu_data[vert_i].xyz[0] *
-                mesh_gpu->xyz_multiplier[0] * mesh_gpu->scale_factor;
-        float cur_vertex_y =
-            all_mesh_vertices->gpu_data[vert_i].xyz[1] *
-                mesh_gpu->xyz_multiplier[1] * mesh_gpu->scale_factor;
-        float cur_vertex_z =
-            all_mesh_vertices->gpu_data[vert_i].xyz[2] *
-                mesh_gpu->xyz_multiplier[2] * mesh_gpu->scale_factor;
-        
-        float dist_from_center = sqrtf(
-            (cur_vertex_x * cur_vertex_x) +
-            (cur_vertex_y * cur_vertex_y) +
-            (cur_vertex_z * cur_vertex_z));
-        
-        if (dist_from_center > mesh_cpu->boundsphere_radius) {
-            mesh_cpu->boundsphere_radius = dist_from_center;
+        for (uint32_t m = 0; m < 3; m++) {
+            float squares =
+                (all_mesh_vertices->gpu_data[vert_i].xyz[0] *
+                    all_mesh_vertices->gpu_data[vert_i].xyz[0]) +
+                (all_mesh_vertices->gpu_data[vert_i].xyz[1] *
+                    all_mesh_vertices->gpu_data[vert_i].xyz[1]) +
+                (all_mesh_vertices->gpu_data[vert_i].xyz[2] *
+                    all_mesh_vertices->gpu_data[vert_i].xyz[2]);
+            
+            if (squares > furthest_squares) {
+                furthest_squares = squares;
+                mesh_cpu->furthest_vertex_xyz[0] =
+                    all_mesh_vertices->gpu_data[vert_i].xyz[0];
+                mesh_cpu->furthest_vertex_xyz[1] =
+                    all_mesh_vertices->gpu_data[vert_i].xyz[1];
+                mesh_cpu->furthest_vertex_xyz[2] =
+                    all_mesh_vertices->gpu_data[vert_i].xyz[2];
+                
+                #ifndef LOGGER_IGNORE_ASSERTS
+                if (fabs(mesh_cpu->furthest_vertex_xyz[0]) > 250.0f ||
+                    fabs(mesh_cpu->furthest_vertex_xyz[1]) > 250.0f ||
+                    fabs(mesh_cpu->furthest_vertex_xyz[2]) > 250.0f)
+                {
+                    log_assert(0);
+                }
+                #endif
+            }
         }
     }
-    
-    log_assert(mesh_cpu->boundsphere_radius > 0.0f);
 }
 
 void request_next_zpolygon(PolygonRequest * stack_recipient)
@@ -132,7 +143,9 @@ void commit_zpolygon_to_render(PolygonRequest * to_commit)
     }
     
     // set the hitbox height, width, and depth
-    set_zpolygon_hitbox(to_commit->cpu_data, to_commit->gpu_data);
+    if (to_commit->cpu_data->touchable_id >= 0) {
+        set_zpolygon_hitbox(to_commit->cpu_data, to_commit->gpu_data);
+    }
     
     to_commit->cpu_data->committed = true;
 }
@@ -310,6 +323,74 @@ float dot_of_vertices_f3(
     return return_value;
 }
 
+static void normal_undo_camera_rotation(
+    float normal_xyz[3],
+    float ignore_camera)
+{
+    log_assert(ignore_camera >= 0.0f);
+    log_assert(ignore_camera <= 1.0f);
+    
+    float ignore_cam_pos[3];
+    memcpy(ignore_cam_pos, normal_xyz, sizeof(float) * 3);
+    
+    // In the standard shader everything will be rotated by negative the
+    // xyz_angle, so do the opposite
+    z_rotate_f3(
+        ignore_cam_pos,
+        camera.xyz_angle[2]);
+    y_rotate_f3(
+        ignore_cam_pos,
+        camera.xyz_angle[1]);
+    x_rotate_f3(
+        ignore_cam_pos,
+        camera.xyz_angle[0]);
+    
+    normal_xyz[0] =
+        (ignore_camera * ignore_cam_pos[0]) +
+        ((1.0f - ignore_camera) * normal_xyz[0]);
+    normal_xyz[1] =
+        (ignore_camera * ignore_cam_pos[1]) +
+        ((1.0f - ignore_camera) * normal_xyz[1]);
+    normal_xyz[2] =
+        (ignore_camera * ignore_cam_pos[2]) +
+        ((1.0f - ignore_camera) * normal_xyz[2]);
+}
+
+static void undo_camera_translation(
+    float xyz[3],
+    float ignore_camera)
+{
+    float ignore_cam_pos[3];
+    memcpy(ignore_cam_pos, xyz, sizeof(float) * 3);
+    
+    // In the standard shader everything will be rotated by negative the
+    // xyz_angle, so do the opposite
+    z_rotate_f3(
+        ignore_cam_pos,
+        camera.xyz_angle[2]);
+    y_rotate_f3(
+        ignore_cam_pos,
+        camera.xyz_angle[1]);
+    x_rotate_f3(
+        ignore_cam_pos,
+        camera.xyz_angle[0]);
+    
+    // In the standard shader camera xyz will be subbed
+    ignore_cam_pos[0] += camera.xyz[0];
+    ignore_cam_pos[1] += camera.xyz[1];
+    ignore_cam_pos[2] += camera.xyz[2];
+    
+    xyz[0] =
+        (ignore_camera * ignore_cam_pos[0]) +
+        ((1.0f - ignore_camera) * xyz[0]);
+    xyz[1] =
+        (ignore_camera * ignore_cam_pos[1]) +
+        ((1.0f - ignore_camera) * xyz[1]);
+    xyz[2] =
+        (ignore_camera * ignore_cam_pos[2]) +
+        ((1.0f - ignore_camera) * xyz[2]);
+}
+
 void zpolygon_get_transformed_triangle_vertices(
     const zPolygonCPU * cpu_data,
     const GPUPolygon * gpu_data,
@@ -332,9 +413,9 @@ void zpolygon_get_transformed_triangle_vertices(
     normalize_zvertex_f3(normals_recipient_9f+3);
     normalize_zvertex_f3(normals_recipient_9f+6);
     
-    x_rotate_f3(vertices_recipient_9f, gpu_data->xyz_angle[0]);
-    y_rotate_f3(vertices_recipient_9f, gpu_data->xyz_angle[1]);
-    z_rotate_f3(vertices_recipient_9f, gpu_data->xyz_angle[2]);
+    x_rotate_f3(vertices_recipient_9f  , gpu_data->xyz_angle[0]);
+    y_rotate_f3(vertices_recipient_9f  , gpu_data->xyz_angle[1]);
+    z_rotate_f3(vertices_recipient_9f  , gpu_data->xyz_angle[2]);
     x_rotate_f3(vertices_recipient_9f+3, gpu_data->xyz_angle[0]);
     y_rotate_f3(vertices_recipient_9f+3, gpu_data->xyz_angle[1]);
     z_rotate_f3(vertices_recipient_9f+3, gpu_data->xyz_angle[2]);
@@ -342,21 +423,76 @@ void zpolygon_get_transformed_triangle_vertices(
     y_rotate_f3(vertices_recipient_9f+6, gpu_data->xyz_angle[1]);
     z_rotate_f3(vertices_recipient_9f+6, gpu_data->xyz_angle[2]);
     
-    x_rotate_f3(normals_recipient_9f, gpu_data->xyz_angle[0]);
-    y_rotate_f3(normals_recipient_9f, gpu_data->xyz_angle[1]);
-    z_rotate_f3(normals_recipient_9f, gpu_data->xyz_angle[2]);
-    
+    x_rotate_f3(normals_recipient_9f  , gpu_data->xyz_angle[0]);
+    y_rotate_f3(normals_recipient_9f  , gpu_data->xyz_angle[1]);
+    z_rotate_f3(normals_recipient_9f  , gpu_data->xyz_angle[2]);
     x_rotate_f3(normals_recipient_9f+3, gpu_data->xyz_angle[0]);
     y_rotate_f3(normals_recipient_9f+3, gpu_data->xyz_angle[1]);
     z_rotate_f3(normals_recipient_9f+3, gpu_data->xyz_angle[2]);
-    
     x_rotate_f3(normals_recipient_9f+6, gpu_data->xyz_angle[0]);
     y_rotate_f3(normals_recipient_9f+6, gpu_data->xyz_angle[1]);
     z_rotate_f3(normals_recipient_9f+6, gpu_data->xyz_angle[2]);
     
     for (uint32_t i = 0; i < 9; i++) {
-        vertices_recipient_9f[i] += gpu_data->xyz[i % 3];
+        vertices_recipient_9f[i] += gpu_data->xyz[i%3];
     }
+    
+    undo_camera_translation(vertices_recipient_9f,   gpu_data->ignore_camera);
+    undo_camera_translation(vertices_recipient_9f+3, gpu_data->ignore_camera);
+    undo_camera_translation(vertices_recipient_9f+6, gpu_data->ignore_camera);
+    
+    normal_undo_camera_rotation(
+        normals_recipient_9f  ,
+        gpu_data->ignore_camera);
+    normal_undo_camera_rotation(
+        normals_recipient_9f+3,
+        gpu_data->ignore_camera);
+    normal_undo_camera_rotation(
+        normals_recipient_9f+6,
+        gpu_data->ignore_camera);
+}
+
+void zpolygon_get_transformed_boundsphere(
+    const zPolygonCPU * cpu_data,
+    const GPUPolygon * gpu_data,
+    float * recipient_center_xyz,
+    float * recipient_radius)
+{
+    memcpy(
+        recipient_center_xyz,
+        gpu_data->xyz_offset,
+        sizeof(float)*3);
+    
+    recipient_center_xyz[0] *= gpu_data->scale_factor;
+    recipient_center_xyz[1] *= gpu_data->scale_factor;
+    recipient_center_xyz[2] *= gpu_data->scale_factor;
+    
+    x_rotate_f3(recipient_center_xyz, gpu_data->xyz_angle[0]);
+    y_rotate_f3(recipient_center_xyz, gpu_data->xyz_angle[1]);
+    z_rotate_f3(recipient_center_xyz, gpu_data->xyz_angle[2]);
+    
+    recipient_center_xyz[0] += gpu_data->xyz[0];
+    recipient_center_xyz[1] += gpu_data->xyz[1];
+    recipient_center_xyz[2] += gpu_data->xyz[2];
+    
+    // 'ignore camera' can be reframed as undoing the effects of the camera
+    undo_camera_translation(recipient_center_xyz, gpu_data->ignore_camera);
+    
+    float furthest[3];
+    memcpy(furthest, cpu_data->furthest_vertex_xyz, sizeof(float)*3);
+    
+    furthest[0] *= gpu_data->xyz_multiplier[0];
+    furthest[1] *= gpu_data->xyz_multiplier[1];
+    furthest[2] *= gpu_data->xyz_multiplier[2];
+    
+    furthest[0] *= gpu_data->scale_factor;
+    furthest[1] *= gpu_data->scale_factor;
+    furthest[2] *= gpu_data->scale_factor;
+    
+    *recipient_radius = sqrtf(
+        (furthest[0] * furthest[0]) +
+        (furthest[1] * furthest[1]) +
+        (furthest[2] * furthest[2]));
 }
 
 float ray_intersects_zpolygon(
@@ -372,11 +508,17 @@ float ray_intersects_zpolygon(
     
     normalize_zvertex_f3(ray_direction);
     
-    float zpoly_parent_xyz[3];
-    memcpy(zpoly_parent_xyz, gpu_data->xyz, sizeof(float) * 3);
-    zpoly_parent_xyz[0] += gpu_data->xyz_offset[0];
-    zpoly_parent_xyz[1] += gpu_data->xyz_offset[1];
-    zpoly_parent_xyz[2] += gpu_data->xyz_offset[2];
+    float sphere_center[3];
+    float sphere_radius;
+    zpolygon_get_transformed_boundsphere(
+        /* const zPolygonCPU * cpu_data: */
+            cpu_data,
+        /* const GPUPolygon * gpu_data: */
+            gpu_data,
+        /* float * recipient_center_xyz: */
+            sphere_center,
+        /* float * recipient_radius: */
+            &sphere_radius);
     
     float dist_to_hit = normalized_ray_hits_sphere(
         /* const float * ray_origin: */
@@ -384,13 +526,13 @@ float ray_intersects_zpolygon(
         /* const float * normalized_ray_direction: */
             ray_direction,
         /* const float * sphere_origin: */
-            zpoly_parent_xyz,
+            sphere_center,
         /* const float sphere_radius: */
-            cpu_data->boundsphere_radius,
+            sphere_radius,
         /* float * collision_recipient: */
             recipient_hit_point);
     
-    if (dist_to_hit < (COL_FLT_MAX / 2)) {
+    if (dist_to_hit > 0.0f && dist_to_hit < (COL_FLT_MAX / 2)) {
         dist_to_hit = COL_FLT_MAX;
         
         float closest_hit_point[3];
@@ -405,7 +547,7 @@ float ray_intersects_zpolygon(
             vert_i += 3)
         {
             float transformed_triangle[9];
-            float rotated_normals[9];
+            float transformed_normals[9];
             
             zpolygon_get_transformed_triangle_vertices(
                 /* const zPolygonCPU * cpu_data: */
@@ -417,17 +559,23 @@ float ray_intersects_zpolygon(
                 /* float * vertices_recipient_f9: */
                     transformed_triangle,
                 /* float * normals_recipient_f9: */
-                    rotated_normals);
+                    transformed_normals);
             
             float avg_normal[3];
             avg_normal[0] =
-                (rotated_normals[0] + rotated_normals[3] + rotated_normals[6]) /
+                (transformed_normals[0] +
+                    transformed_normals[3] +
+                        transformed_normals[6]) /
                     3.0f;
             avg_normal[1] =
-                (rotated_normals[1] + rotated_normals[4] + rotated_normals[7]) /
+                (transformed_normals[1] +
+                    transformed_normals[4] +
+                        transformed_normals[7]) /
                     3.0f;
             avg_normal[2] =
-                (rotated_normals[2] + rotated_normals[5] + rotated_normals[8]) /
+                (transformed_normals[2] +
+                    transformed_normals[5] +
+                        transformed_normals[8]) /
                     3.0f;
             normalize_zvertex_f3(avg_normal);
             
@@ -529,7 +677,8 @@ void construct_quad_around(
     float current_height = 2.0f;
     stack_recipient->gpu_data->xyz_multiplier[0] = width / current_width;
     stack_recipient->gpu_data->xyz_multiplier[1] = height / current_height;
-    stack_recipient->gpu_data->xyz_multiplier[2] = 1.0f;
+    stack_recipient->gpu_data->xyz_multiplier[2] =
+        stack_recipient->gpu_data->xyz_multiplier[1] / 20.0f;
     
     stack_recipient->cpu_data->mesh_id = 0;
     stack_recipient->gpu_materials[0].rgba[0] = 1.0f;
