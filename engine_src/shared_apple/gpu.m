@@ -569,12 +569,14 @@ static id projection_constants_buffer;
     pixelValues        : (uint8_t *)rgba_values
 {
     log_assert(texture_i >= 0);
+    log_assert(texturearray_i >= 0);
     
     if (texturearray_i >= (int32_t)[_metal_textures count]) {
-        log_append(
-            "Warning: tried to update uninitialized texturearray ");
-        log_append_int(texturearray_i);
-        log_append("\n");
+        char errmsg[256];
+        strcpy_capped(errmsg, 256, "Tried to update uninitialized texturearray")
+        strcat_int_capped(errmsg, 256, texturearray_i);
+        strcat_capped(errmsg, 256, "\n");
+        log_dump_and_crash(errmsg);
         return;
     }
     

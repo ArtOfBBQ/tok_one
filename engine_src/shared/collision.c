@@ -528,15 +528,16 @@ float ray_hits_triangle(
         /* float * collision_recipient: */
             collision_recipient);
     
-     if (coplanar_point_hits_triangle_3D(
-            /* const float P[2]: */
-                collision_recipient,
-            /* const float A[2]: */
-                triangle_vertex_1,
-            /* const float B[2]: */
-                triangle_vertex_2,
-            /* const float C[2]: */
-                triangle_vertex_3))
+     if (
+         coplanar_point_hits_triangle_3D(
+             /* const float P[2]: */
+                 collision_recipient,
+             /* const float A[2]: */
+                 triangle_vertex_1,
+             /* const float B[2]: */
+                 triangle_vertex_2,
+             /* const float C[2]: */
+                 triangle_vertex_3))
     {
         #ifndef COLLISION_IGNORE_ASSERTS
         assert(nearest_dist_found > 0.0f);
