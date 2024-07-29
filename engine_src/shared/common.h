@@ -15,6 +15,8 @@
 #include <stdio.h>
 #endif
 
+#include "simd.h"
+
 #ifndef __cplusplus
 #define true 1
 #define false 0
@@ -33,6 +35,11 @@ extern "C" {
 
 #define FLOAT32_MAX 2147483647
 #define FLOAT32_MIN 1.1754943508222875e-38F
+
+void memset_int16(
+    void * input,
+    int16_t value,
+    unsigned int size_bytes);
 
 int   tok_mini(const int x, const int y);
 int   tok_maxi(const int x, const int y);

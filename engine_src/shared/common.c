@@ -1,5 +1,39 @@
 #include "common.h"
 
+void memset_int16(
+    void * in,
+    int16_t value,
+    unsigned int size_bytes)
+{
+    int16_t * input = (int16_t *)in;
+    
+    uint32_t i = 0;
+    
+    #ifdef __AVX__
+    __m256i avx_preset = _mm256_set1_epi16(value);
+    
+    for (; i+15 < (size_bytes / 2); i += 16) {
+        _mm256_storeu_si256(
+            (__m256i *)(input + i),
+            avx_preset);
+    }
+    #endif
+    
+    #ifdef __SSE2__
+    __m128i sse_preset = _mm_set1_epi16(value);
+    
+    for (; i+7 < (size_bytes / 2); i += 8) {
+        _mm_storeu_si128(
+            (__m128i *)(input + i),
+            sse_preset);
+    }
+    #endif
+    
+    for (; i < (size_bytes / 2); i++) {
+        input[i] = value;
+    }
+}
+
 float tok_minf(const float x, const float y)
 {
     return ((x <= y) * x) + ((y < x) * y);
