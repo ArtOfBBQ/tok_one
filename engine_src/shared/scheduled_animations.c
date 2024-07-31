@@ -416,14 +416,14 @@ void request_fade_and_destroy(
     log_assert(duration_microseconds > 0);
     
     // register scheduled animation
-    ScheduledAnimation * modify_alpha = next_scheduled_animation(true);
-    modify_alpha->affected_object_id = object_id;
-    modify_alpha->remaining_wait_before_next_run = wait_before_first_run;
-    modify_alpha->duration_microseconds = duration_microseconds;
-    modify_alpha->lightsource_vals.reach = 0.0f;
-    modify_alpha->gpu_polygon_material_vals.rgba[3] = 0.0f;
-    modify_alpha->delete_object_when_finished = true;
-    commit_scheduled_animation(modify_alpha);
+    ScheduledAnimation * fade_destroy = next_scheduled_animation(true);
+    fade_destroy->affected_object_id = object_id;
+    fade_destroy->remaining_wait_before_next_run = wait_before_first_run;
+    fade_destroy->duration_microseconds = duration_microseconds;
+    fade_destroy->lightsource_vals.reach = 0.0f;
+    fade_destroy->gpu_polygon_material_vals.rgba[3] = 0.0f;
+    fade_destroy->delete_object_when_finished = true;
+    commit_scheduled_animation(fade_destroy);
 }
 
 void request_fade_to(

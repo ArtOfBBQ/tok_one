@@ -494,6 +494,10 @@ void commit_particle_effect(ParticleEffect * to_request)
     log_assert(to_request->vertices_per_particle > 0);
     log_assert(to_request->vertices_per_particle % 3 == 0);
     
+    log_assert(to_request->zpolygon_gpu.xyz_multiplier[0] > 0.0f);
+    log_assert(to_request->zpolygon_gpu.xyz_multiplier[1] > 0.0f);
+    log_assert(to_request->zpolygon_gpu.xyz_multiplier[2] > 0.0f);
+    
     to_request->committed = true;
 }
 
