@@ -12,6 +12,19 @@ void init_scheduled_animations(
 {
     scheduled_animations = (ScheduledAnimation *)malloc_from_unmanaged(
         sizeof(ScheduledAnimation) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
+    memset(
+        scheduled_animations,
+        0,
+        sizeof(ScheduledAnimation));
+    scheduled_animations[0].deleted = true;
+    
+    for (uint32_t i = 1; i < SCHEDULED_ANIMATIONS_ARRAYSIZE; i++) {
+        memcpy(
+            &scheduled_animations[i],
+            &scheduled_animations[0],
+            sizeof(ScheduledAnimation));
+        log_assert(scheduled_animations[i].deleted);
+    }
     
     request_scheduled_anims_mutex_id = platform_init_mutex_and_return_id();
     
@@ -28,96 +41,30 @@ static void construct_scheduled_animationA(
     to_construct->affected_object_id = -1;
     
     if (final_values_not_adds) {
-        to_construct->gpu_polygon_vals.xyz[0]       = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.xyz[1]       = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.xyz[2]       = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.xyz_angle[0] = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.xyz_angle[1] = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.xyz_angle[2] = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.bonus_rgb[0] = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.bonus_rgb[1] = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.bonus_rgb[2] = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.xyz_multiplier[0] =
-            FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.xyz_multiplier[1] =
-            FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.xyz_multiplier[2] =
-            FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.xyz_offset[0] = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.xyz_offset[1] = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.xyz_offset[2] = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.scale_factor  = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.ignore_lighting =
-            FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.ignore_camera =
-            FLT_SCHEDULEDANIM_IGNORE;
-        
-        to_construct->gpu_polygon_vals.last_clicked_locked_vertex_id =
-            FLT_SCHEDULEDANIM_IGNORE;
-        
-        to_construct->gpu_polygon_vals.simd_padding[0] =
-            FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.simd_padding[1] =
-            FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.simd_padding[2] =
-            FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.simd_padding[3] =
-            FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.simd_padding[4] =
-            FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_vals.simd_padding[4] =
-            FLT_SCHEDULEDANIM_IGNORE;
-        
-        to_construct->gpu_polygon_material_vals.rgba[0] =
-            FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_material_vals.rgba[1] =
-            FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_material_vals.rgba[2] =
-            FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->gpu_polygon_material_vals.rgba[3] =
-            FLT_SCHEDULEDANIM_IGNORE;
-        float scheduledanim_ignore = FLT_SCHEDULEDANIM_IGNORE;
-        memcpy(
-            &to_construct->gpu_polygon_material_vals.texture_i,
-            &scheduledanim_ignore,
-            4);
-        memcpy(
-            &to_construct->gpu_polygon_material_vals.texturearray_i,
-            &scheduledanim_ignore,
-            4);
-        memcpy(
-            &to_construct->gpu_polygon_material_vals.diffuse,
-            &scheduledanim_ignore,
-            4);
-        memcpy(
-            &to_construct->gpu_polygon_material_vals.specular,
-            &scheduledanim_ignore,
-            4);
-        
-        to_construct->lightsource_vals.flt_object_id = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->lightsource_vals.flt_deleted   = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->lightsource_vals.flt_committed = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->lightsource_vals.xyz[0]        = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->lightsource_vals.xyz[1]        = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->lightsource_vals.xyz[2]        = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->lightsource_vals.xyz_offset[0] = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->lightsource_vals.xyz_offset[1] = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->lightsource_vals.xyz_offset[2] = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->lightsource_vals.RGBA[0]       = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->lightsource_vals.RGBA[1]       = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->lightsource_vals.RGBA[2]       = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->lightsource_vals.RGBA[3]       = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->lightsource_vals.reach         = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->lightsource_vals.ambient       = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->lightsource_vals.diffuse       = FLT_SCHEDULEDANIM_IGNORE;
-        to_construct->lightsource_vals.specular      = FLT_SCHEDULEDANIM_IGNORE;
+        /*
+        GPUPolygon         gpu_polygon_vals;
+        zPolygonCPU        zpolygon_cpu_vals;
+        GPUPolygonMaterial gpu_polygon_material_vals;
+        zLightSource       lightsource_vals;
+        */
+        memset_float(
+            &to_construct->gpu_polygon_vals,
+            FLT_SCHEDULEDANIM_IGNORE,
+            sizeof(GPUPolygon));
+        memset_float(
+            &to_construct->gpu_polygon_material_vals,
+            FLT_SCHEDULEDANIM_IGNORE,
+            sizeof(GPUPolygonMaterial));
+        memset_float(
+            &to_construct->lightsource_vals,
+            FLT_SCHEDULEDANIM_IGNORE,
+            sizeof(zLightSource));
     }
     
-    float * onfinish_muls_mats =
-            (float *)&to_construct->onfinish_gpu_polygon_material_muls;
-    for (uint32_t i = 0; i < sizeof(GPUPolygonMaterial) / 4; i++) {
-        onfinish_muls_mats[i] = 1.0f;
-    }
+    memset_float(
+         &to_construct->onfinish_gpu_polygon_material_muls,
+         1.0f,
+         sizeof(GPUPolygonMaterial));
     
     to_construct->runs = 1;
     to_construct->final_values_not_adds = final_values_not_adds;
@@ -152,10 +99,12 @@ ScheduledAnimation * next_scheduled_animation(
     
     if (return_value == NULL) {
         log_assert(
-            scheduled_animations_size + 1000 < SCHEDULED_ANIMATIONS_ARRAYSIZE);
+            scheduled_animations_size + 1 < SCHEDULED_ANIMATIONS_ARRAYSIZE);
         return_value = &scheduled_animations[scheduled_animations_size++];
+        log_assert(return_value->deleted);
     }
     
+    log_assert(return_value->deleted);
     construct_scheduled_animationA(return_value, final_values_not_adds);
     
     log_assert(!return_value->committed);

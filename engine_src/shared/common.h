@@ -40,6 +40,11 @@ void memset_int16(
     void * input,
     int16_t value,
     unsigned int size_bytes);
+void memset_float(
+    void * input,
+    float value,
+    unsigned int size_bytes);
+
 
 int   tok_mini(const int x, const int y);
 int   tok_maxi(const int x, const int y);

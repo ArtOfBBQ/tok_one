@@ -504,8 +504,6 @@ float ray_intersects_zpolygon(
 {
     memset(recipient_hit_point, 0, sizeof(float) * 3);
     
-    gpu_data->last_clicked_locked_vertex_id = -1.0f;
-    
     normalize_zvertex_f3(ray_direction);
     
     float sphere_center[3];
@@ -597,7 +595,6 @@ float ray_intersects_zpolygon(
             
             if (dist_to_tri > 0 && dist_to_tri < dist_to_hit)
             {
-                gpu_data->last_clicked_locked_vertex_id = (float)vert_i;
                 dist_to_hit = dist_to_tri;
                 memcpy(
                     recipient_hit_point,

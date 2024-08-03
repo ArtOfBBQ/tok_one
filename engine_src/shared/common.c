@@ -34,6 +34,40 @@ void memset_int16(
     }
 }
 
+void memset_float(
+    void * in,
+    float value,
+    unsigned int size_bytes)
+{
+    float * input = (float *)in;
+    
+    uint32_t i = 0;
+    
+    #ifdef __AVX__
+    __m256 avx_preset = _mm256_set1_ps(value);
+    
+    for (; i+7 < (size_bytes / 4); i += 8) {
+        _mm256_storeu_ps(
+            (input + i),
+            avx_preset);
+    }
+    #endif
+    
+    #ifdef __SSE2__
+    __m128 sse_preset = _mm_set1_ps(value);
+    
+    for (; i+3 < (size_bytes / 4); i += 4) {
+        _mm_storeu_ps(
+            (input + i),
+            sse_preset);
+    }
+    #endif
+    
+    for (; i < (size_bytes / 4); i++) {
+        input[i] = value;
+    }
+}
+
 float tok_minf(const float x, const float y)
 {
     return ((x <= y) * x) + ((y < x) * y);

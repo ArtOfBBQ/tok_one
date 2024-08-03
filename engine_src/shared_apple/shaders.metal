@@ -347,13 +347,6 @@ vertex_shader(
             attenuation);
     }
     
-    const float diff =
-        fabs(polygon_collection->polygons[polygon_i].
-            last_clicked_locked_vertex_id -
-                (float)locked_vertex_i);
-    out.lighting[1] += ((diff < 0.99f) * 1.0f);
-    out.lighting[2] += ((diff < 0.99f) * 1.0f);
-    
     out.lighting = clamp(out.lighting, 0.05f, 7.5f);
     
     float ignore_light =
