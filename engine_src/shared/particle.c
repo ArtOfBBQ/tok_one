@@ -492,7 +492,6 @@ void commit_particle_effect(ParticleEffect * to_request)
     log_assert(to_request->elapsed == 0);
     log_assert(to_request->particle_spawns_per_second > 0);
     log_assert(to_request->vertices_per_particle > 0);
-    log_assert(to_request->vertices_per_particle % 3 == 0);
     
     log_assert(to_request->zpolygon_gpu.xyz_multiplier[0] > 0.0f);
     log_assert(to_request->zpolygon_gpu.xyz_multiplier[1] > 0.0f);
@@ -540,6 +539,10 @@ void add_particle_effects_to_workload(
         
         particle_effects[i].elapsed += elapsed_nanoseconds;
         
+        while (particle_effects[i].vertices_per_particle % 3 != 0) {
+            particle_effects[i].vertices_per_particle += 1;
+        }
+        
         if (particle_effects[i].elapsed >
             (particle_effects[i].particle_lifespan +
                 particle_effects[i].pause_between_spawns))
@@ -579,6 +582,9 @@ void add_particle_effects_to_workload(
             all_mesh_summaries[
                 particle_effects[i].zpolygon_cpu.mesh_id].
                     vertices_size;
+        if (verts_size < (int32_t)particle_effects[i].vertices_per_particle) {
+            return;
+        }
         int32_t queue_vert_i = 0;
         
         for (

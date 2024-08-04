@@ -9,13 +9,13 @@ extern "C" {
 
 #define MAX_OBJECT_ID 8000
 
-#define FIRST_NONUI_OBJECT_ID 211
+#define FIRST_NONUI_OBJECT_ID 1011
 
-#define LAST_UI_TOUCHABLE_ID 100
-#define FIRST_NONUI_TOUCHABLE_ID 101
+#define LAST_UI_TOUCHABLE_ID 1000
+#define FIRST_NONUI_TOUCHABLE_ID 1001
 
 // retired objects are unaffected by animations
-#define RETIRED_BUT_NOT_DELETED_ID  7501
+#define RETIRED_BUT_NOT_DELETED_ID 20501
 
 extern int32_t retired_object_id;
 

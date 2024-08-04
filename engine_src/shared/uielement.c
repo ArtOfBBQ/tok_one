@@ -32,7 +32,7 @@ typedef struct ActiveUIElement {
 
 NextUIElementSettings * next_ui_element_settings = NULL;
 
-#define ACTIVE_UI_ELEMENTS_SIZE 300
+#define ACTIVE_UI_ELEMENTS_SIZE 5000
 uint32_t active_ui_elements_size = 0;
 ActiveUIElement * active_ui_elements = NULL;
 

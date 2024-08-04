@@ -15,7 +15,7 @@ typedef struct SliderRequest {
 typedef struct SliderTitle {
     char title[64];
     int32_t object_id;
-    float unoffset_y_screenspace;
+    float y_screenspace;
 } SliderTitle;
 
 #define SLIDERS_SIZE 99
@@ -27,6 +27,65 @@ static bool32_t full_redraw_sliders = false;
 
 static void slider_callback_request_update(void) {
     update_slider_positions_and_label_vals = true;
+}
+
+static int32_t base_mesh_id = 1;
+static int32_t example_particles_id = -1;
+
+static void load_obj_btn(void) {
+    char writables_path[256];
+    writables_path[0] = '\0';
+    
+    platform_get_writables_path(
+        /* char * recipient: */
+            writables_path,
+        /* const uint32_t recipient_size: */
+            256);
+    
+    platform_open_folder_in_window_if_possible(writables_path);
+    
+    char dir_sep[4];
+    platform_get_directory_separator(dir_sep);
+    
+    char writables_filepath[256];
+    strcpy_capped(writables_filepath, 256, writables_path);
+    strcat_capped(writables_filepath, 256, dir_sep);
+    strcat_capped(writables_filepath, 256, "basemodel.obj");
+    
+    if (!platform_file_exists(writables_filepath)) {
+        return;
+    }
+    
+    FileBuffer buffer;
+    buffer.good = 0;
+    buffer.size_without_terminator = platform_get_filesize(writables_filepath);
+    buffer.contents = malloc_from_managed(buffer.size_without_terminator);
+    
+    platform_read_file(
+        /* const char * filepath: */
+            writables_filepath,
+        /* FileBuffer *out_preallocatedbuffer: */
+            &buffer);
+    
+    if (buffer.good) {
+        base_mesh_id = new_mesh_id_from_obj_text(
+            /* const char * obj_text: */
+                buffer.contents,
+            /* const uint32_t expected_materials_count: */
+                0,
+            /* const char expected_materials_names
+                [MAX_MATERIALS_PER_POLYGON][256]: */
+                NULL);
+        //        create_shattered_version_of_mesh(
+        //            /* const int32_t mesh_id: */
+        //                base_mesh_id,
+        //            /* const uint32_t triangles_multiplier: */
+        //                2);
+        platform_gpu_copy_locked_vertices();
+        particle_effects[0].zpolygon_cpu.mesh_id = base_mesh_id;
+    }
+    
+    free_from_managed(buffer.contents);
 }
 
 static void save_particle_stats(void) {
@@ -210,24 +269,37 @@ static void save_particle_stats(void) {
         }
     }
     
-    strcat_capped(output, 1000000, "particle->particle_lifespan = ");
-    strcat_uint_capped(
-        output, 1000000, (uint32_t)particle_effects[0].particle_lifespan);
-    strcat_capped(output, 1000000, ";\n");
-    
+    /*
+    Misc layout:
+    uint32_t particle_spawns_per_second;
+    uint32_t vertices_per_particle;
+    uint32_t loops; // 0 for infinite loops
+    uint64_t particle_lifespan;
+    uint64_t pause_between_spawns;
+    */
     strcat_capped(output, 1000000, "particle->particle_spawns_per_second = ");
     strcat_uint_capped(
         output, 1000000, particle_effects[0].particle_spawns_per_second);
     strcat_capped(output, 1000000, ";\n");
     
-    strcat_capped(output, 1000000, "particle->pause_between_spawns = ");
+    strcat_capped(output, 1000000, "particle->vertices_per_particle = ");
     strcat_uint_capped(
-        output, 1000000, (uint32_t)particle_effects[0].pause_between_spawns);
+        output, 1000000, particle_effects[0].vertices_per_particle);
     strcat_capped(output, 1000000, ";\n");
     
     strcat_capped(output, 1000000, "particle->loops = ");
     strcat_uint_capped(
         output, 1000000, (uint32_t)particle_effects[0].loops);
+    strcat_capped(output, 1000000, ";\n");
+    
+    strcat_capped(output, 1000000, "particle->particle_lifespan = ");
+    strcat_uint_capped(
+        output, 1000000, (uint32_t)particle_effects[0].particle_lifespan);
+    strcat_capped(output, 1000000, ";\n");
+    
+    strcat_capped(output, 1000000, "particle->pause_between_spawns = ");
+    strcat_uint_capped(
+        output, 1000000, (uint32_t)particle_effects[0].pause_between_spawns);
     strcat_capped(output, 1000000, ";\n");
     
     for (uint32_t m = 0; m < 4; m++) {
@@ -256,9 +328,30 @@ static void save_particle_stats(void) {
     free_from_managed(output);
 }
 
-static float particle_y_offset = 0;
+void client_logic_early_startup(void) {
+    
+    init_PNG_decoder(
+        malloc_from_managed_infoless,
+        free_from_managed,
+        memset,
+        memcpy);
+    
+    const char * fontfile = "font.png";
+    if (platform_resource_exists("font.png")) {
+        register_new_texturearray_by_splitting_file(
+            /* filename : */ fontfile,
+            /* rows     : */ 10,
+            /* columns  : */ 10);
+    }
+    
+    example_particles_id = next_nonui_object_id();
+    
+    load_obj_btn();
+}
+
+static float scroll_y_offset = 0;
 static int32_t slider_labels_object_id = -1;
-void client_logic_startup(void) {
+void client_logic_late_startup(void) {
     
     slider_labels_object_id = next_nonui_object_id();
     
@@ -851,65 +944,86 @@ void client_logic_startup(void) {
     slider_requests[90].linked_float =
         &particle_effects[0].zpolygon_gpu.scale_factor;
     
-    // scale_factor
-    strcpy_capped(slider_requests[91].label, 64, "Lifespan: ");
-    slider_requests[91].min_int_value =        1;
-    slider_requests[91].max_int_value = 10000000;
-    slider_requests[91].linked_int    =
-        (int32_t *)&particle_effects[0].particle_lifespan;
+    /*
+    uint32_t particle_spawns_per_second;
+    uint32_t vertices_per_particle;
+    uint32_t loops; // 0 for infinite loops
+    uint64_t particle_lifespan;
+    uint64_t pause_between_spawns;
     
-    strcpy_capped(slider_requests[92].label, 64, "Spawns/sec: ");
-    slider_requests[92].min_int_value =        1;
-    slider_requests[92].max_int_value =     3000;
-    slider_requests[92].linked_int    =
+    bool32_t use_shattered_mesh;
+    bool32_t generate_light;
+    float light_reach;
+    float light_strength;
+    float light_rgb[3];
+    */
+    
+    strcpy_capped(slider_requests[91].label, 64, "Spawns/sec: ");
+    slider_requests[91].min_int_value =        1;
+    slider_requests[91].max_int_value =     1000;
+    slider_requests[91].linked_int    =
         (int32_t *)&particle_effects[0].particle_spawns_per_second;
     
-    strcpy_capped(slider_requests[93].label, 64, "Pause: ");
-    slider_requests[93].min_int_value =        1;
-    slider_requests[93].max_int_value =  9000000;
-    slider_requests[93].linked_int    =
-        (int32_t *)&particle_effects[0].pause_between_spawns;
+    strcpy_capped(slider_requests[92].label, 64, "verts/particle: ");
+    slider_requests[92].min_int_value =  3;
+    slider_requests[92].max_int_value = 36;
+    slider_requests[92].linked_int    =
+        (int32_t *)&particle_effects[0].vertices_per_particle;
     
-    strcpy_capped(slider_requests[94].label, 64, "Loops: ");
-    slider_requests[94].min_int_value =        0;
-    slider_requests[94].max_int_value =       10;
-    slider_requests[94].linked_int    =
+    strcpy_capped(slider_requests[93].label, 64, "loops: ");
+    slider_requests[93].min_int_value =  0;
+    slider_requests[93].max_int_value = 10;
+    slider_requests[93].linked_int    =
         (int32_t *)&particle_effects[0].loops;
     
+    strcpy_capped(slider_requests[94].label, 64, "Lifespan: ");
+    slider_requests[94].min_int_value =        1;
+    slider_requests[94].max_int_value =  7000000;
+    slider_requests[94].linked_int    =
+        (int32_t *)&particle_effects[0].particle_lifespan;
+    
+    strcpy_capped(slider_requests[95].label, 64, "Pause: ");
+    slider_requests[95].min_int_value =        1;
+    slider_requests[95].max_int_value =    10000;
+    slider_requests[95].linked_int    =
+        (int32_t *)&particle_effects[0].pause_between_spawns;
+    
+    strcpy_capped(slider_requests[96].label, 64, "shattered: ");
+    slider_requests[96].min_int_value =  0;
+    slider_requests[96].max_int_value =  1;
+    slider_requests[96].linked_int    =
+        (int32_t *)&particle_effects[0].use_shattered_mesh;
+    
+    strcpy_capped(slider_requests[97].label, 64, "light: ");
+    slider_requests[97].min_int_value =  0;
+    slider_requests[97].max_int_value =  1;
+    slider_requests[97].linked_int    =
+        (int32_t *)&particle_effects[0].generate_light;
+    
     // Materials
-    strcpy_capped(slider_requests[95].label, 64, "Material R:");
-    slider_requests[95].min_float_value =  0.0f;
-    slider_requests[95].max_float_value =  1.0f;
-    slider_requests[95].linked_float =
-        &particle_effects[0].zpolygon_materials[0].rgba[0];
-    
-    strcpy_capped(slider_requests[96].label, 64, "Material G:");
-    slider_requests[96].min_float_value =  0.0f;
-    slider_requests[96].max_float_value =  1.0f;
-    slider_requests[96].linked_float =
-        &particle_effects[0].zpolygon_materials[0].rgba[1];
-    
-    strcpy_capped(slider_requests[97].label, 64, "Material B:");
-    slider_requests[97].min_float_value =  0.0f;
-    slider_requests[97].max_float_value =  1.0f;
-    slider_requests[97].linked_float =
-        &particle_effects[0].zpolygon_materials[0].rgba[2];
-    
-    strcpy_capped(slider_requests[98].label, 64, "Material A:");
+    strcpy_capped(slider_requests[98].label, 64, "Material R:");
     slider_requests[98].min_float_value =  0.0f;
     slider_requests[98].max_float_value =  1.0f;
     slider_requests[98].linked_float =
+        &particle_effects[0].zpolygon_materials[0].rgba[0];
+    
+    strcpy_capped(slider_requests[99].label, 64, "Material G:");
+    slider_requests[99].min_float_value =  0.0f;
+    slider_requests[99].max_float_value =  1.0f;
+    slider_requests[99].linked_float =
+        &particle_effects[0].zpolygon_materials[0].rgba[1];
+    
+    strcpy_capped(slider_requests[100].label, 64, "Material B:");
+    slider_requests[100].min_float_value =  0.0f;
+    slider_requests[100].max_float_value =  1.0f;
+    slider_requests[100].linked_float =
+        &particle_effects[0].zpolygon_materials[0].rgba[2];
+    
+    strcpy_capped(slider_requests[101].label, 64, "Material A:");
+    slider_requests[101].min_float_value =  0.0f;
+    slider_requests[101].max_float_value =  1.0f;
+    slider_requests[101].linked_float =
         &particle_effects[0].zpolygon_materials[0].rgba[3];
-    
-    init_PNG_decoder(malloc_from_managed, free_from_managed, memset, memcpy);
-    
-    const char * fontfile = "font.png";
-    if (platform_resource_exists("font.png")) {
-        register_new_texturearray_by_splitting_file(
-            /* filename : */ fontfile,
-            /* rows     : */ 10,
-            /* columns  : */ 10);
-    }
     
     char * textures[1];
     textures[0] = "blob1.png";
@@ -942,6 +1056,45 @@ void client_logic_startup(void) {
     }
     
     full_redraw_sliders = true;
+    
+    ParticleEffect * particles = next_particle_effect();
+    particles->object_id = example_particles_id;
+    particles->zpolygon_materials[0].rgba[0] = 0.3f;
+    particles->zpolygon_materials[0].rgba[1] = 0.3f;
+    particles->zpolygon_materials[0].rgba[2] = 0.3f;
+    particles->zpolygon_materials[0].rgba[3] = 1.0f;
+    
+    particles->zpolygon_cpu.mesh_id              = base_mesh_id;
+    particles->zpolygon_cpu.visible              =   true;
+    particles->zpolygon_cpu.committed            =   true;
+    particles->zpolygon_gpu.xyz[0]               =   0.0f;
+    particles->zpolygon_gpu.xyz[1]               =   0.0f;
+    particles->zpolygon_gpu.xyz[2]               =   2.0f;
+    particles->gpustats_pertime_add.xyz[0]       =  0.20f;
+    particles->gpustats_pertime_add.xyz[1]       =  0.20f;
+    particles->gpustats_pertime_add.xyz[2]       =  0.00f;
+    particles->gpustats_pertime_add.xyz_angle[0] =  0.00f;
+    particles->gpustats_pertime_add.xyz_angle[1] =  0.00f;
+    particles->gpustats_pertime_add.xyz_angle[2] =  0.00f;
+    particles->gpustats_pertime_add.bonus_rgb[0] =  0.00f;
+    particles->gpustats_pertime_add.bonus_rgb[1] =  0.00f;
+    particles->gpustats_pertime_add.bonus_rgb[2] =  0.00f;
+    
+    particles->gpustats_pertime_random_add_1.xyz[0] =  0.0f;
+    particles->gpustats_pertime_random_add_1.xyz[1] =  0.0f;
+    particles->gpustats_pertime_random_add_1.xyz[2] =  0.0f;
+    particles->gpustats_pertime_random_add_2.xyz[0] =  0.0f;
+    particles->gpustats_pertime_random_add_2.xyz[1] =  0.0f;
+    particles->gpustats_pertime_random_add_2.xyz[2] =  0.0f;
+    
+    particles->particle_spawns_per_second   =     500;
+    particles->particle_lifespan            = 1500000;
+    particles->vertices_per_particle        =      36;
+    particles->use_shattered_mesh           =    true;
+    particles->random_texturearray_i[0]     =      -1;
+    particles->random_texture_i[0]          =      -1;
+    particles->random_textures_size         =       1;
+    commit_particle_effect(particles);
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -987,13 +1140,13 @@ static void client_handle_keypresses(
     
     if (keypress_map[TOK_KEY_OPENSQUAREBRACKET] == true)
     {
-        particle_y_offset -= 15.0f;
+        scroll_y_offset -= 15.0f;
         update_slider_positions_and_label_vals = true;
     }
     
     if (keypress_map[TOK_KEY_CLOSESQUAREBRACKET] == true)
     {
-        particle_y_offset += 15.0f;
+        scroll_y_offset += 15.0f;
         update_slider_positions_and_label_vals = true;
     }
     
@@ -1125,6 +1278,17 @@ static void client_handle_keypresses(
     }
 }
 
+static float get_slider_y_screenspace(uint32_t i) {
+    return (window_globals->window_height -
+        ((float)i * 40.0f)) -
+        ((float)(i / 13) * 40.0f) +
+        scroll_y_offset;
+}
+
+static float get_title_y_screenspace(uint32_t i) {
+    return get_slider_y_screenspace(i) + 40.0f;
+}
+
 void client_logic_update(uint64_t microseconds_elapsed)
 {
     request_fps_counter(microseconds_elapsed);
@@ -1132,53 +1296,13 @@ void client_logic_update(uint64_t microseconds_elapsed)
     client_handle_keypresses(microseconds_elapsed);
     
     if (full_redraw_sliders) {
-        font_height = 14;
+        font_height = 14.0f;
         for (uint32_t i = 0; i < SLIDERS_SIZE; i++) {
             if (i % 13 == 0 && i < 91) {
-                slider_titles[i / 13].unoffset_y_screenspace =
-                    window_globals->window_height -
-                        (font_height * 2.0f) -
-                        ((i + 7.0f) * 22.0f);
+                slider_titles[i / 13].y_screenspace =
+                    get_title_y_screenspace(i);
             }
         }
-        
-        ParticleEffect * particles = next_particle_effect();
-        particles->zpolygon_materials[0].rgba[0] = 0.3f;
-        particles->zpolygon_materials[0].rgba[1] = 0.3f;
-        particles->zpolygon_materials[0].rgba[2] = 0.3f;
-        particles->zpolygon_materials[0].rgba[3] = 1.0f;
-        
-        particles->zpolygon_cpu.mesh_id              =      1; // hardcoded cube
-        particles->zpolygon_cpu.visible              =   true;
-        particles->zpolygon_cpu.committed            =   true;
-        particles->zpolygon_gpu.xyz[0]               =   0.0f;
-        particles->zpolygon_gpu.xyz[1]               =   0.0f;
-        particles->zpolygon_gpu.xyz[2]               =   2.0f;
-        particles->gpustats_pertime_add.xyz[0]       =  0.20f;
-        particles->gpustats_pertime_add.xyz[1]       =  0.20f;
-        particles->gpustats_pertime_add.xyz[2]       =  0.00f;
-        particles->gpustats_pertime_add.xyz_angle[0] =  0.00f;
-        particles->gpustats_pertime_add.xyz_angle[1] =  0.00f;
-        particles->gpustats_pertime_add.xyz_angle[2] =  0.00f;
-        particles->gpustats_pertime_add.bonus_rgb[0] =  0.00f;
-        particles->gpustats_pertime_add.bonus_rgb[1] =  0.00f;
-        particles->gpustats_pertime_add.bonus_rgb[2] =  0.00f;
-        
-        particles->gpustats_pertime_random_add_1.xyz[0] =  0.0f;
-        particles->gpustats_pertime_random_add_1.xyz[1] =  0.0f;
-        particles->gpustats_pertime_random_add_1.xyz[2] =  0.0f;
-        particles->gpustats_pertime_random_add_2.xyz[0] =  0.0f;
-        particles->gpustats_pertime_random_add_2.xyz[1] =  0.0f;
-        particles->gpustats_pertime_random_add_2.xyz[2] =  0.0f;
-        
-        particles->particle_spawns_per_second   =     500;
-        particles->particle_lifespan            = 1500000;
-        particles->vertices_per_particle        =      36;
-        particles->use_shattered_mesh           =   false;
-        particles->random_texturearray_i[0]     =      -1;
-        particles->random_texture_i[0]          =      -1;
-        particles->random_textures_size         =       1;
-        commit_particle_effect(particles);
         
         next_ui_element_settings->slider_width_screenspace         =   200;
         next_ui_element_settings->slider_height_screenspace        =    15;
@@ -1200,7 +1324,6 @@ void client_logic_update(uint64_t microseconds_elapsed)
         next_ui_element_settings->slider_pin_rgba[3]               =  1.0f;
         next_ui_element_settings->ignore_camera                    = true;
         next_ui_element_settings->ignore_lighting                  = true;
-        assert(particle_effects_size == 1);
         
         next_ui_element_settings->slider_slid_funcptr =
             slider_callback_request_update;
@@ -1223,10 +1346,6 @@ void client_logic_update(uint64_t microseconds_elapsed)
                 window_globals->window_width -
                     next_ui_element_settings->slider_width_screenspace -
                         (font_height * 3);
-            float slider_y_screenspace =
-                window_globals->window_height -
-                    (font_height * 2) -
-                        (i * 22) + particle_y_offset;
             
             if (slider_requests[i].linked_float != NULL) {
                 request_float_slider(
@@ -1237,7 +1356,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
                     /* const float x_screenspace: */
                         slider_x_screenspace,
                     /* const float y_screenspace: */
-                        slider_y_screenspace,
+                        get_slider_y_screenspace(i),
                     /* const float z: */
                         0.75f,
                     /* const float min_value: */
@@ -1257,7 +1376,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
                     /* const float x_screenspace: */
                         slider_x_screenspace,
                     /* const float y_screenspace: */
-                        slider_y_screenspace,
+                        get_slider_y_screenspace(i),
                     /* const float z: */
                         0.75f,
                     /* const int32_t min_value: */
@@ -1269,7 +1388,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
             }
             
             if (i % 13 == 0 && i < 91) {
-                float prev_font_height = 14;
+                // float prev_font_height = 14;
                 font_height = 20;
                 font_color[0] =
                     next_ui_element_settings->slider_background_rgba[0];
@@ -1286,11 +1405,12 @@ void client_logic_update(uint64_t microseconds_elapsed)
                         slider_titles[i / 13].title,
                     /* const float left_pixelspace: */
                         window_globals->window_width -
-                            next_ui_element_settings->slider_width_screenspace -
-                            (next_ui_element_settings->slider_width_screenspace / 2) -
-                                ((prev_font_height * 9)/2),
+                            next_ui_element_settings->
+                                slider_width_screenspace -
+                            (next_ui_element_settings->
+                                slider_width_screenspace / 2),
                     /* const float top_pixelspace: */
-                        slider_titles[i / 13].unoffset_y_screenspace,
+                        get_title_y_screenspace(i),
                     /* const float z: */
                         0.75f,
                     /* const float max_width: */
@@ -1306,8 +1426,8 @@ void client_logic_update(uint64_t microseconds_elapsed)
         font_height = 14;
         next_ui_element_settings->ignore_camera = true;
         next_ui_element_settings->ignore_lighting = true;
-        next_ui_element_settings->button_width_screenspace = 115.0f;
-        next_ui_element_settings->button_height_screenspace = 40.0f;
+        next_ui_element_settings->button_width_screenspace = 130.0f;
+        next_ui_element_settings->button_height_screenspace = 50.0f;
         next_ui_element_settings->button_background_rgba[0] = 0.2f;
         next_ui_element_settings->button_background_rgba[1] = 0.3f;
         next_ui_element_settings->button_background_rgba[2] = 1.0f;
@@ -1320,13 +1440,40 @@ void client_logic_update(uint64_t microseconds_elapsed)
             /* const char * label: */
                 "Save to .txt",
             /* const float x_screenspace: */
-                (next_ui_element_settings->button_width_screenspace / 2) + 140,
+                (next_ui_element_settings->button_width_screenspace * 2),
             /* const float y_screenspace: */
                 (next_ui_element_settings->button_height_screenspace / 2) + 10,
             /* const float z: */
                 1.00f,
             /* void (* funtion_pointer)(void): */
                 save_particle_stats);
+        
+        // load obj button;
+        font_height = 14;
+        next_ui_element_settings->ignore_camera = true;
+        next_ui_element_settings->ignore_lighting = true;
+        next_ui_element_settings->button_width_screenspace = 130.0f;
+        next_ui_element_settings->button_height_screenspace = 50.0f;
+        next_ui_element_settings->button_background_rgba[0] = 0.2f;
+        next_ui_element_settings->button_background_rgba[1] = 0.3f;
+        next_ui_element_settings->button_background_rgba[2] = 1.0f;
+        next_ui_element_settings->button_background_rgba[3] = 1.0f;
+        next_ui_element_settings->button_background_texturearray_i = -1;
+        next_ui_element_settings->button_background_texture_i = -1;
+        request_button(
+            /* const int32_t button_object_id: */
+                next_ui_element_object_id(),
+            /* const char * label: */
+                "basemodel.obj",
+            /* const float x_screenspace: */
+                (next_ui_element_settings->button_width_screenspace * 3) +
+                (next_ui_element_settings->button_width_screenspace / 3),
+            /* const float y_screenspace: */
+                (next_ui_element_settings->button_height_screenspace / 2) + 10,
+            /* const float z: */
+                1.00f,
+            /* void (* funtion_pointer)(void): */
+                load_obj_btn);
         
         full_redraw_sliders = false;
     }
@@ -1355,7 +1502,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
                 {
                     zpolygons_to_render->gpu_data[zp_i].xyz[1] =
                         screenspace_y_to_y(
-                            slider_titles[i / 13].unoffset_y_screenspace,
+                            get_title_y_screenspace(i),
                             0.75f);
                 }
             }
@@ -1368,10 +1515,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
             {
                 zpolygons_to_render->gpu_data[zp_i].xyz[1] =
                     screenspace_y_to_y(
-                        window_globals->window_height -
-                            (font_height * 2) -
-                            (i * 22) +
-                            particle_y_offset,
+                        get_slider_y_screenspace(i),
                         0.75f);
             }
         }
@@ -1405,11 +1549,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
                     (next_ui_element_settings->slider_width_screenspace / 2) +
                     (font_height / 2),
             /* const float top_pixelspace: */
-                window_globals->window_height -
-                    (font_height * 2) -
-                    (i * 22) +
-                    (font_height / 2) +
-                    particle_y_offset,
+                get_slider_y_screenspace(i),
             /* const float z: */
                 0.75f,
             /* const float max_width: */

@@ -41,12 +41,6 @@ static void construct_scheduled_animationA(
     to_construct->affected_object_id = -1;
     
     if (final_values_not_adds) {
-        /*
-        GPUPolygon         gpu_polygon_vals;
-        zPolygonCPU        zpolygon_cpu_vals;
-        GPUPolygonMaterial gpu_polygon_material_vals;
-        zLightSource       lightsource_vals;
-        */
         memset_float(
             &to_construct->gpu_polygon_vals,
             FLT_SCHEDULEDANIM_IGNORE,
