@@ -397,6 +397,28 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
+        are_equal_strings(command, "AXIS") ||
+        are_equal_strings(command, "AXES") ||
+        are_equal_strings(command, "DRAW AXIS") ||
+        are_equal_strings(command, "DRAW AXES"))
+    {
+        window_globals->draw_axes = !window_globals->draw_axes;
+        
+        if (window_globals->draw_axes) {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Drawing axes...");
+        } else {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Stopped drawing axes...");
+        }
+        return true;
+    }
+    
+    if (
         are_equal_strings(command, "MOUSE") ||
         are_equal_strings(command, "DRAW MOUSE"))
     {

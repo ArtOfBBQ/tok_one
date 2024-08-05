@@ -106,7 +106,7 @@ raw_vertex_shader(
 fragment float4
 raw_fragment_shader(RawFragment in [[stage_in]])
 {
-    float4 out_color = vector_float4(in.color, 1.0f, 1.0f, 1.0f);
+    float4 out_color = vector_float4(in.color, in.color / 3.0f, 1.0f, 1.0f);
     
     return out_color;
 }

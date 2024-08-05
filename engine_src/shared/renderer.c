@@ -346,6 +346,59 @@ void hardware_render(
         zpolygon_vertices_to_points(frame_data);
     }
     
+    if (application_running && window_globals->draw_axes) {
+        // TODO: draw axes
+        float axis_vertices[6];
+        memset_float(axis_vertices, 0.0f, sizeof(float) * 6);
+        
+        #define DISTANT_FLOAT 3.5f
+        
+        add_point_vertex(
+            /* GPUDataForSingleFrame * frame_data: */
+                frame_data,
+            /* const float xyz[3]: */
+                axis_vertices,
+            /* const float color: */
+                3.0f);
+        add_line_vertex(
+            /* GPUDataForSingleFrame * frame_data: */
+                frame_data,
+            /* const float xyz[3]: */
+                axis_vertices);
+        axis_vertices[3] = DISTANT_FLOAT;
+        add_line_vertex(
+            /* GPUDataForSingleFrame * frame_data: */
+                frame_data,
+            /* const float xyz[3]: */
+                axis_vertices + 3);
+        
+        add_line_vertex(
+            /* GPUDataForSingleFrame * frame_data: */
+                frame_data,
+            /* const float xyz[3]: */
+                axis_vertices);
+        axis_vertices[3] =  0.0f;
+        axis_vertices[4] =  DISTANT_FLOAT;
+        add_line_vertex(
+            /* GPUDataForSingleFrame * frame_data: */
+                frame_data,
+            /* const float xyz[3]: */
+                axis_vertices + 3);
+        
+        add_line_vertex(
+            /* GPUDataForSingleFrame * frame_data: */
+                frame_data,
+            /* const float xyz[3]: */
+                axis_vertices);
+        axis_vertices[4] =  0.0f;
+        axis_vertices[5] =  DISTANT_FLOAT;
+        add_line_vertex(
+            /* GPUDataForSingleFrame * frame_data: */
+                frame_data,
+            /* const float xyz[3]: */
+                axis_vertices + 3);
+    }
+    
     if (application_running && window_globals->draw_clickray) {
         add_line_vertex(
             /* GPUDataForSingleFrame * frame_data: */

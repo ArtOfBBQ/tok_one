@@ -32,6 +32,16 @@ static void slider_callback_request_update(void) {
 static int32_t base_mesh_id = 1;
 static int32_t example_particles_id = -1;
 
+static void look_down_btn(void) {
+    camera.xyz[0] = 0.0f;
+    camera.xyz[1] = 0.5f;
+    camera.xyz[2] = 0.0f;
+    
+    camera.xyz_angle[0] = 3.14f / 2.0f;
+    camera.xyz_angle[1] = 0.0f;
+    camera.xyz_angle[2] = 0.0f;
+}
+
 static void load_obj_btn(void) {
     char writables_path[256];
     writables_path[0] = '\0';
@@ -227,6 +237,7 @@ static void save_particle_stats(void) {
                     output,
                     1000000,
                     dumpable_stats[stat_i].source->xyz_multiplier[m]);
+                strcat_capped(output, 1000000, ";\n");
             }
         }
         for (uint32_t m = 0; m < 3; m++) {
@@ -254,6 +265,7 @@ static void save_particle_stats(void) {
                     output,
                     1000000,
                     dumpable_stats[stat_i].source->xyz_offset[m]);
+                strcat_capped(output, 1000000, ";\n");
             }
         }
         if (dumpable_stats[stat_i].source->scale_factor != 0.0f)
@@ -303,7 +315,10 @@ static void save_particle_stats(void) {
     strcat_capped(output, 1000000, ";\n");
     
     for (uint32_t m = 0; m < 4; m++) {
-        strcat_capped(output, 1000000, "particle->zpolygon_material.rgba[");
+        strcat_capped(
+            output,
+            1000000,
+            "particle->zpolygon_materials[0].rgba[");
         strcat_uint_capped(output, 1000000, m);
         strcat_capped(output, 1000000, "] = ");
         strcat_float_capped(
@@ -347,6 +362,12 @@ void client_logic_early_startup(void) {
     example_particles_id = next_nonui_object_id();
     
     load_obj_btn();
+    
+    camera.xyz[0] =  0.0f;
+    camera.xyz[1] =  0.0f;
+    camera.xyz[2] = -0.5f;
+    
+    window_globals->draw_axes = true;
 }
 
 static float scroll_y_offset = 0;
@@ -1069,7 +1090,7 @@ void client_logic_late_startup(void) {
     particles->zpolygon_cpu.committed            =   true;
     particles->zpolygon_gpu.xyz[0]               =   0.0f;
     particles->zpolygon_gpu.xyz[1]               =   0.0f;
-    particles->zpolygon_gpu.xyz[2]               =   2.0f;
+    particles->zpolygon_gpu.xyz[2]               =   0.0f;
     particles->gpustats_pertime_add.xyz[0]       =  0.20f;
     particles->gpustats_pertime_add.xyz[1]       =  0.20f;
     particles->gpustats_pertime_add.xyz[2]       =  0.00f;
@@ -1157,12 +1178,12 @@ static void client_handle_keypresses(
     
     if (keypress_map[TOK_KEY_RIGHTARROW] == true)
     {
-        camera.xyz[1] += cam_speed;
+        camera.xyz[0] += cam_speed;
     }
     
     if (keypress_map[TOK_KEY_DOWNARROW] == true)
     {
-        camera.xyz[2] -= cam_speed;
+        camera.xyz[1] -= cam_speed;
     }
     
     if (keypress_map[TOK_KEY_UPARROW] == true)
@@ -1280,13 +1301,13 @@ static void client_handle_keypresses(
 
 static float get_slider_y_screenspace(uint32_t i) {
     return (window_globals->window_height -
-        ((float)i * 40.0f)) -
-        ((float)(i / 13) * 40.0f) +
+        ((float)i * 30.0f)) -
+        ((float)(i / 13) * 30.0f) +
         scroll_y_offset;
 }
 
 static float get_title_y_screenspace(uint32_t i) {
-    return get_slider_y_screenspace(i) + 40.0f;
+    return get_slider_y_screenspace(i) + 30.0f;
 }
 
 void client_logic_update(uint64_t microseconds_elapsed)
@@ -1449,17 +1470,6 @@ void client_logic_update(uint64_t microseconds_elapsed)
                 save_particle_stats);
         
         // load obj button;
-        font_height = 14;
-        next_ui_element_settings->ignore_camera = true;
-        next_ui_element_settings->ignore_lighting = true;
-        next_ui_element_settings->button_width_screenspace = 130.0f;
-        next_ui_element_settings->button_height_screenspace = 50.0f;
-        next_ui_element_settings->button_background_rgba[0] = 0.2f;
-        next_ui_element_settings->button_background_rgba[1] = 0.3f;
-        next_ui_element_settings->button_background_rgba[2] = 1.0f;
-        next_ui_element_settings->button_background_rgba[3] = 1.0f;
-        next_ui_element_settings->button_background_texturearray_i = -1;
-        next_ui_element_settings->button_background_texture_i = -1;
         request_button(
             /* const int32_t button_object_id: */
                 next_ui_element_object_id(),
@@ -1474,6 +1484,22 @@ void client_logic_update(uint64_t microseconds_elapsed)
                 1.00f,
             /* void (* funtion_pointer)(void): */
                 load_obj_btn);
+        
+        // camera view button;
+        request_button(
+            /* const int32_t button_object_id: */
+                next_ui_element_object_id(),
+            /* const char * label: */
+                "Look down",
+            /* const float x_screenspace: */
+                (next_ui_element_settings->button_width_screenspace * 4) +
+                (next_ui_element_settings->button_width_screenspace / 2),
+            /* const float y_screenspace: */
+                (next_ui_element_settings->button_height_screenspace / 2) + 10,
+            /* const float z: */
+                1.00f,
+            /* void (* funtion_pointer)(void): */
+                look_down_btn);
         
         full_redraw_sliders = false;
     }
