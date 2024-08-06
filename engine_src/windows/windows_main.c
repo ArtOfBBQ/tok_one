@@ -2,8 +2,6 @@
 #include <windows.h>
 #include <gl/gl.h>
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <assert.h>
 
 #include "tok_directsound.h"
@@ -561,7 +559,7 @@ int CALLBACK WinMain(
     #endif
      
     WNDCLASS window_params;
-    memset(&window_params, 0, sizeof(WNDCLASSA));
+    memset_char(&window_params, 0, sizeof(WNDCLASSA));
     window_params.style = CS_CLASSDC | CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
     window_params.lpfnWndProc = MainWindowCallback;
     window_params.cbClsExtra = 0;
@@ -673,7 +671,7 @@ int CALLBACK WinMain(
     }
     
     PIXELFORMATDESCRIPTOR pfd;
-    memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
+    memset_char(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
     pfd.nSize           = sizeof(PIXELFORMATDESCRIPTOR); // How can this ever be useful? Bizarre
     pfd.nVersion        = 1;
     pfd.dwFlags         = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;    // Flags
@@ -734,7 +732,7 @@ int CALLBACK WinMain(
     }
     
     PIXELFORMATDESCRIPTOR spf_actual;
-    memset(
+    memset_char(
         &spf_actual,
         0,
         sizeof(PIXELFORMATDESCRIPTOR));
@@ -905,7 +903,7 @@ int CALLBACK WinMain(
     //    vertex_shader_file.size_without_terminator + 1);
     vertex_shader_file.contents = malloc_from_managed(
         vertex_shader_file.size_without_terminator + 1);
-    memset(
+    memset_char(
         vertex_shader_file.contents,
         0,
         vertex_shader_file.size_without_terminator + 1);
@@ -931,7 +929,7 @@ int CALLBACK WinMain(
     }
     fragment_shader_file.contents = malloc_from_managed(
         fragment_shader_file.size_without_terminator + 1);
-    memset(
+    memset_char(
         fragment_shader_file.contents,
         0,
         fragment_shader_file.size_without_terminator + 1);
@@ -957,7 +955,7 @@ int CALLBACK WinMain(
     }
     alphablending_fragment_shader_file.contents = malloc_from_managed(
         alphablending_fragment_shader_file.size_without_terminator + 1);
-    memset(
+    memset_char(
         alphablending_fragment_shader_file.contents,
         0,
         alphablending_fragment_shader_file.size_without_terminator + 1);

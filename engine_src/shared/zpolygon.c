@@ -2,9 +2,7 @@
 
 zPolygonCollection * zpolygons_to_render = NULL;
 
-void set_zpolygon_hitbox(
-    zPolygonCPU * mesh_cpu,
-    GPUPolygon * mesh_gpu)
+void set_zpolygon_hitbox(zPolygonCPU * mesh_cpu)
 {
     log_assert(all_mesh_summaries[mesh_cpu->mesh_id].vertices_size > 0);
     
@@ -144,7 +142,7 @@ void commit_zpolygon_to_render(PolygonRequest * to_commit)
     
     // set the hitbox height, width, and depth
     if (to_commit->cpu_data->touchable_id >= 0) {
-        set_zpolygon_hitbox(to_commit->cpu_data, to_commit->gpu_data);
+        set_zpolygon_hitbox(to_commit->cpu_data);
     }
     
     to_commit->cpu_data->committed = true;
@@ -154,7 +152,7 @@ bool32_t fetch_zpolygon_by_object_id(
     PolygonRequest * recipient,
     const int32_t object_id)
 {
-    memset(recipient, 0, sizeof(PolygonRequest));
+    memset_char(recipient, 0, sizeof(PolygonRequest));
     
     for (
         uint32_t zp_i = 0;
@@ -256,16 +254,16 @@ void construct_zpolygon(
         (to_construct->materials_size == 1 ||
         to_construct->materials_size == MAX_MATERIALS_PER_POLYGON));
     
-    memset(
+    memset_char(
         to_construct->cpu_data,
         0,
         sizeof(zPolygonCPU));
-    memset(
+    memset_char(
         to_construct->gpu_materials,
         0,
         sizeof(GPUPolygonMaterial) *
             to_construct->materials_size);
-    memset(
+    memset_char(
         to_construct->gpu_data,
         0,
         sizeof(GPUPolygon));
@@ -331,7 +329,7 @@ static void normal_undo_camera_rotation(
     log_assert(ignore_camera <= 1.0f);
     
     float ignore_cam_pos[3];
-    memcpy(ignore_cam_pos, normal_xyz, sizeof(float) * 3);
+    tok_memcpy(ignore_cam_pos, normal_xyz, sizeof(float) * 3);
     
     // In the standard shader everything will be rotated by negative the
     // xyz_angle, so do the opposite
@@ -361,7 +359,7 @@ static void undo_camera_translation(
     float ignore_camera)
 {
     float ignore_cam_pos[3];
-    memcpy(ignore_cam_pos, xyz, sizeof(float) * 3);
+    tok_memcpy(ignore_cam_pos, xyz, sizeof(float) * 3);
     
     // In the standard shader everything will be rotated by negative the
     // xyz_angle, so do the opposite
@@ -458,7 +456,7 @@ void zpolygon_get_transformed_boundsphere(
     float * recipient_center_xyz,
     float * recipient_radius)
 {
-    memcpy(
+    tok_memcpy(
         recipient_center_xyz,
         gpu_data->xyz_offset,
         sizeof(float)*3);
@@ -479,7 +477,7 @@ void zpolygon_get_transformed_boundsphere(
     undo_camera_translation(recipient_center_xyz, gpu_data->ignore_camera);
     
     float furthest[3];
-    memcpy(furthest, cpu_data->furthest_vertex_xyz, sizeof(float)*3);
+    tok_memcpy(furthest, cpu_data->furthest_vertex_xyz, sizeof(float)*3);
     
     furthest[0] *= gpu_data->xyz_multiplier[0];
     furthest[1] *= gpu_data->xyz_multiplier[1];
@@ -502,7 +500,7 @@ float ray_intersects_zpolygon(
     GPUPolygon  * gpu_data,
     float * recipient_hit_point)
 {
-    memset(recipient_hit_point, 0, sizeof(float) * 3);
+    memset_char(recipient_hit_point, 0, sizeof(float) * 3);
     
     normalize_zvertex_f3(ray_direction);
     
@@ -534,7 +532,7 @@ float ray_intersects_zpolygon(
         dist_to_hit = COL_FLT_MAX;
         
         float closest_hit_point[3];
-        memset(closest_hit_point, 0, sizeof(float)*3);
+        memset_char(closest_hit_point, 0, sizeof(float)*3);
         
         for (
             int32_t vert_i =
@@ -596,7 +594,7 @@ float ray_intersects_zpolygon(
             if (dist_to_tri > 0 && dist_to_tri < dist_to_hit)
             {
                 dist_to_hit = dist_to_tri;
-                memcpy(
+                tok_memcpy(
                     recipient_hit_point,
                     closest_hit_point,
                     sizeof(float)*3);

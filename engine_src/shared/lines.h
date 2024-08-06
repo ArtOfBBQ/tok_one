@@ -1,8 +1,6 @@
 #ifndef TOK_LINES
 #define TOK_LINES
 
-#include <string.h> // memset
-
 #include "common.h"
 #include "logger.h"
 #include "clientlogic_macro_settings.h"

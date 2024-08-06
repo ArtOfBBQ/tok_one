@@ -3,7 +3,6 @@
 
 #include <math.h>
 #include <inttypes.h>
-#include <string.h>
 
 #include "clientlogic_macro_settings.h"
 
@@ -47,8 +46,7 @@ typedef struct zPolygonCPU {
     float furthest_vertex_xyz[3];
 } zPolygonCPU;
 
-void set_zpolygon_hitbox(
-    zPolygonCPU * mesh_cpu, GPUPolygon * mesh_gpu);
+void set_zpolygon_hitbox(zPolygonCPU * mesh_cpu);
 
 typedef struct zPolygonCollection {
     GPUPolygon gpu_data[MAX_POLYGONS_PER_BUFFER];

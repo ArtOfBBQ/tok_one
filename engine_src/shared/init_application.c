@@ -37,13 +37,13 @@ static void test_simd_functions(void) {
         sizeof(SimdTestStruct) * 10);
     
     for (uint32_t i = 0; i < 10; i++) {
-        memset(structs + i, 0, sizeof(SimdTestStruct));
-        memset(double_checks + i, 0, sizeof(SimdTestStruct));
-        memset(sets + i, 0, sizeof(float));
-        memset(adds + i, 0, sizeof(SimdTestStruct));
-        memset(maxs + i, 0, sizeof(SimdTestStruct));
-        memset(muls + i, 0, sizeof(SimdTestStruct));
-        memset(divs + i, 0, sizeof(SimdTestStruct));
+        memset_char(structs + i, 0, sizeof(SimdTestStruct));
+        memset_char(double_checks + i, 0, sizeof(SimdTestStruct));
+        memset_char(sets + i, 0, sizeof(float));
+        memset_char(adds + i, 0, sizeof(SimdTestStruct));
+        memset_char(maxs + i, 0, sizeof(SimdTestStruct));
+        memset_char(muls + i, 0, sizeof(SimdTestStruct));
+        memset_char(divs + i, 0, sizeof(SimdTestStruct));
     }
     
     for (uint32_t i = 0; i < 10; i++) {
@@ -420,7 +420,7 @@ void init_application_after_gpu_init(void) {
         }
     }
     
-    memcpy(
+    tok_memcpy(
         /* void * dst: */
             gpu_shared_data_collection.locked_vertices,
         /* const void * src: */

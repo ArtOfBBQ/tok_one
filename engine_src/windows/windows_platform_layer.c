@@ -324,7 +324,7 @@ void * platform_malloc_unaligned_block(
     
     // virtualalloc returns NULL to signal failure
     if (return_value != NULL) {
-        memset(
+        memset_char(
             return_value,
             0,
             size);
@@ -410,7 +410,7 @@ void platform_get_filenames_in(
     const char * directory,
     char filenames[2000][500])
 {
-    memset(filenames, 0, 2000 * 500);
+    memset_char(filenames, 0, 2000 * 500);
     
     log_assert(strlen(directory) <= (MAX_PATH - 3));
     

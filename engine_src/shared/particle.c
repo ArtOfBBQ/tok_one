@@ -403,7 +403,7 @@ uint32_t particle_effects_size;
 void construct_particle_effect(
     ParticleEffect * to_construct)
 {
-    memset(to_construct, 0, sizeof(ParticleEffect));
+    memset_char(to_construct, 0, sizeof(ParticleEffect));
     
     PolygonRequest poly_request;
     poly_request.cpu_data       = &to_construct->zpolygon_cpu;
@@ -634,7 +634,7 @@ void add_particle_effects_to_workload(
                     frame_data->vertices_size < MAX_VERTICES_PER_BUFFER);
             }
             
-            memcpy(
+            tok_memcpy(
                 /* void * dst: */
                     frame_data->polygon_collection->polygons +
                         frame_data->polygon_collection->size,
@@ -648,7 +648,7 @@ void add_particle_effects_to_workload(
             log_assert(
                 particle_effects[i].zpolygon_materials[0].specular > 0.0f);
             
-            memcpy(
+            tok_memcpy(
                 &frame_data->polygon_materials[
                     frame_data->polygon_collection->size *
                         MAX_MATERIALS_PER_POLYGON],

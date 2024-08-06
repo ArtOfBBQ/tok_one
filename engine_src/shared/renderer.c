@@ -25,7 +25,7 @@ static void add_line_vertex(
         return;
     }
     
-    memcpy(
+    tok_memcpy(
         &frame_data->line_vertices[frame_data->line_vertices_size].xyz,
         xyz,
         sizeof(float) * 3);
@@ -47,7 +47,7 @@ static void add_point_vertex(
         return;
     }
     
-    memcpy(
+    tok_memcpy(
         &frame_data->point_vertices[frame_data->point_vertices_size].xyz,
         xyz,
         sizeof(float) * 3);
@@ -216,7 +216,7 @@ inline static void add_opaque_zpolygons_to_workload(
     assert(frame_data->polygon_collection->size == 0);
     assert(frame_data->vertices_size == 0);
     
-    memcpy(
+    tok_memcpy(
         /* void * dest: */
             frame_data->polygon_collection,
         /* const void * src: */
@@ -232,7 +232,7 @@ inline static void add_opaque_zpolygons_to_workload(
     log_assert(
         frame_data->polygon_collection->size < MAX_POLYGONS_PER_BUFFER);
     
-    memcpy(
+    tok_memcpy(
         /* void *__dst: */
             frame_data->polygon_materials,
         /* const void *__src: */
@@ -407,7 +407,7 @@ void hardware_render(
                 window_globals->last_clickray_origin);
         
         float clickray_end[3];
-        memcpy(
+        tok_memcpy(
             clickray_end,
             window_globals->last_clickray_origin,
             sizeof(float) * 3);
@@ -424,7 +424,10 @@ void hardware_render(
         clickray_elapsed += (float)elapsed_nanoseconds / 1000000.0f;
         if (clickray_elapsed > 2.0f) { clickray_elapsed = 0.0f; }
         float moving_point[3];
-        memcpy(moving_point, window_globals->last_clickray_origin, sizeof(float) * 3);
+        tok_memcpy(
+            moving_point,
+            window_globals->last_clickray_origin,
+            sizeof(float) * 3);
         moving_point[0] += window_globals->last_clickray_direction[0] *
             clickray_elapsed;
         moving_point[1] += window_globals->last_clickray_direction[1] *

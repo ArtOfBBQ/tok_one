@@ -1,7 +1,6 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
-#include <string.h>
 #include <inttypes.h>
 
 #include "common.h"

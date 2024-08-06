@@ -102,7 +102,7 @@ void samples_to_wav(
     
     assert(sizeof(FileHeader) % 2 == 0); // no padding needed
     
-    memcpy(recipient, &riff_header, sizeof(FileHeader));
+    tok_memcpy(recipient, &riff_header, sizeof(FileHeader));
     recipient += sizeof(FileHeader);
     
     WavChunkHeader format_header;
@@ -113,7 +113,7 @@ void samples_to_wav(
     format_header.data_size = sizeof(FormatChunkBody);
     assert(format_header.data_size == 16);
     
-    memcpy(recipient, &format_header, sizeof(WavChunkHeader));
+    tok_memcpy(recipient, &format_header, sizeof(WavChunkHeader));
     recipient += sizeof(WavChunkHeader);
     
     FormatChunkBody format_body;
@@ -125,7 +125,7 @@ void samples_to_wav(
     format_body.bits_per_sample = 16;
     assert(sizeof(FormatChunkBody) % 2 == 0); // no padding needed
     
-    memcpy(recipient, &format_body, sizeof(FormatChunkBody));
+    tok_memcpy(recipient, &format_body, sizeof(FormatChunkBody));
     recipient += sizeof(FormatChunkBody);
     
     WavChunkHeader data_header;
@@ -136,7 +136,7 @@ void samples_to_wav(
     data_header.data_size = samples_size * sizeof(int16_t);
     assert(sizeof(WavChunkHeader) % 2 == 0); // no padding needed
     
-    memcpy(recipient, &data_header, sizeof(WavChunkHeader));
+    tok_memcpy(recipient, &data_header, sizeof(WavChunkHeader));
     recipient += sizeof(WavChunkHeader);
     
     if (samples_size % 2 == 1) {
@@ -146,7 +146,7 @@ void samples_to_wav(
         recipient += 1;
     }
     
-    memcpy(recipient, samples, samples_size * sizeof(int16_t));
+    tok_memcpy(recipient, samples, samples_size * sizeof(int16_t));
     
     recipient += sizeof(int16_t) * samples_size;
     recipient[0] = '\0';
@@ -482,7 +482,7 @@ void parse_wav(
             } else if (
                 format_data.bits_per_sample == 16)
             {
-                memcpy(recipient, raw_file_at, chunk_header.data_size);
+                tok_memcpy(recipient, raw_file_at, chunk_header.data_size);
                 *recipient_size = chunk_header.data_size / 2;
                 raw_file_at += chunk_header.data_size;
             }

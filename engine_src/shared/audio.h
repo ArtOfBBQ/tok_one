@@ -1,8 +1,6 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
-#include <string.h>
-
 #include "clientlogic_macro_settings.h"
 #include "logger.h"
 

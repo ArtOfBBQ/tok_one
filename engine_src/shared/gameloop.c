@@ -84,11 +84,11 @@ static int32_t closest_touchable_from_screen_ray(
         distant_point[2] - ray_origin[2];
     normalize_zvertex_f3(direction_to_distant);
     
-    memcpy(
+    tok_memcpy(
         window_globals->last_clickray_origin,
         ray_origin,
         sizeof(float)*3);
-    memcpy(
+    tok_memcpy(
         window_globals->last_clickray_direction,
         direction_to_distant,
         sizeof(float)*3);
@@ -125,12 +125,12 @@ static int32_t closest_touchable_from_screen_ray(
         if (dist < smallest_dist) {
             smallest_dist = dist;
             return_value = zpolygons_to_render->cpu_data[zp_i].touchable_id;
-            memcpy(collision_point, current_collision_point, sizeof(float) * 3);
+            tok_memcpy(collision_point, current_collision_point, sizeof(float) * 3);
         }
     }
     
     if (return_value < FLOAT32_MAX / 2) {
-        memcpy(
+        tok_memcpy(
             window_globals->last_clickray_collision,
             collision_point,
             sizeof(float) * 3);

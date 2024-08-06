@@ -138,7 +138,7 @@ void init_directsound(
     }
     
     DSBUFFERDESC buffer_description;
-    memset(&buffer_description, 0, sizeof(DSBUFFERDESC));
+    memset_char(&buffer_description, 0, sizeof(DSBUFFERDESC));
     buffer_description.dwSize = sizeof(DSBUFFERDESC); // lol msft
     buffer_description.dwFlags = DSBCAPS_PRIMARYBUFFER;
     
@@ -185,7 +185,7 @@ void init_directsound(
     // Primary buffer was created, now we can do the other obligatory
     // dance steps
     WAVEFORMATEX wave_format;
-    memset(&wave_format, 0, sizeof(WAVEFORMATEX));
+    memset_char(&wave_format, 0, sizeof(WAVEFORMATEX));
     wave_format.wFormatTag = WAVE_FORMAT_PCM;
     wave_format.nChannels = 2;
     wave_format.nSamplesPerSec = 44100;

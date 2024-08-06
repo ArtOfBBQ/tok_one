@@ -1,7 +1,8 @@
 #ifndef WAV_H
 #define WAV_H
 
-#include <string.h>
+#include "common.h"
+
 #include <stdint.h>
 #include <stddef.h>
 

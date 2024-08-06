@@ -1,5 +1,38 @@
 #include "common.h"
 
+void memset_char(
+    void * in,
+    char value,
+    unsigned int size_bytes)
+{
+    int8_t * input = (int8_t *)in;
+    
+    uint32_t i = 0;
+    
+    #ifdef __AVX__
+    __m256i avx_preset = _mm256_set1_epi8(value);
+    
+    for (; i+31 < size_bytes; i += 32) {
+        _mm256_storeu_si256(
+            (__m256i *)(input + i),
+            avx_preset);
+    }
+    #endif
+    
+    #ifdef __SSE2__
+    __m128i sse_preset = _mm_set1_epi8(value);
+    
+    for (; i+15 < size_bytes; i += 16) {
+        _mm_storeu_si128(
+            (__m128i *)(input + i),
+            sse_preset);
+    }
+    #endif
+    
+    for (; i < size_bytes; i++) {
+        input[i] = value;
+    }
+}
 void memset_int16(
     void * in,
     int16_t value,
@@ -66,6 +99,40 @@ void memset_float(
     for (; i < (size_bytes / 4); i++) {
         input[i] = value;
     }
+}
+
+void * tok_memcpy(
+    void * dest,
+    const void * src,
+    size_t n_bytes)
+{
+    uint32_t i = 0;
+    char * destination = (char *)dest;
+    char * source = (char *)src;
+    
+    #ifdef __AVX__
+    for (; i+31 < n_bytes; i += 32) {
+        __m256 sse_copy = _mm256_loadu_si256((const __m256i *)(source + i));
+        _mm256_storeu_si256(
+            (__m256i *)(destination + i),
+            sse_copy);
+    }
+    #endif
+    
+    #ifdef __SSE2__
+    for (; i+15 < n_bytes; i += 16) {
+        __m128 sse_copy = _mm_loadu_si128((const __m128i *)(source + i));
+        _mm_storeu_si128(
+            (__m128i *)(destination + i),
+            sse_copy);
+    }
+    #endif
+    
+    for (; i < n_bytes; i++) {
+        destination[i] = source[i];
+    }
+    
+    return dest;
 }
 
 float tok_minf(const float x, const float y)
@@ -443,10 +510,6 @@ string_to_int32_validate(
                 input + 1);
         
         if (temp > 2147483646) {
-            #ifndef COMMON_SILENCE
-            printf(
-                "ERROR : string_to_int32 below than INT_MIN\n");
-            #endif
             *good = false;
             return 0;
         }
@@ -513,10 +576,6 @@ string_to_uint32_validate(
         decimal *= 10;
         
         if (decimal > 1000000000) {
-            #ifndef COMMON_SILENCE
-            printf(
-                "ERROR: overflowing uint32\n");
-            #endif
             *good = false;
             return return_value;
         }
@@ -685,19 +744,6 @@ string_to_float(
         &result_good);
     
     #ifndef COMMON_IGNORE_ASSERTS
-    #ifndef COMMON_SILENCE
-    if (!result_good) {
-        printf(
-            "string_to_float failed to parse input: %c%c%c%c%c%c%c\n",
-            input[0],
-            input[1],
-            input[2],
-            input[3],
-            input[4],
-            input[5],
-            input[6]);
-    }
-    #endif
     assert(result_good);
     #endif
     return result;

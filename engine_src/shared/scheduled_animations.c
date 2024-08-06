@@ -12,14 +12,14 @@ void init_scheduled_animations(
 {
     scheduled_animations = (ScheduledAnimation *)malloc_from_unmanaged(
         sizeof(ScheduledAnimation) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
-    memset(
+    memset_char(
         scheduled_animations,
         0,
         sizeof(ScheduledAnimation));
     scheduled_animations[0].deleted = true;
     
     for (uint32_t i = 1; i < SCHEDULED_ANIMATIONS_ARRAYSIZE; i++) {
-        memcpy(
+        tok_memcpy(
             &scheduled_animations[i],
             &scheduled_animations[0],
             sizeof(ScheduledAnimation));
@@ -35,7 +35,7 @@ static void construct_scheduled_animationA(
     ScheduledAnimation * to_construct,
     const bool32_t final_values_not_adds)
 {
-    memset(to_construct, 0, sizeof(ScheduledAnimation));
+    memset_char(to_construct, 0, sizeof(ScheduledAnimation));
     log_assert(!to_construct->committed);
     
     to_construct->affected_object_id = -1;
@@ -163,7 +163,7 @@ void request_evaporate_and_destroy(
         ParticleEffect * vaporize_effect = next_particle_effect();
         vaporize_effect->zpolygon_cpu = zpolygons_to_render->cpu_data[zp_i];
         vaporize_effect->zpolygon_gpu = zpolygons_to_render->gpu_data[zp_i];
-        memcpy(
+        tok_memcpy(
             vaporize_effect->zpolygon_materials,
             &zpolygons_to_render->gpu_materials[
                 zp_i * MAX_MATERIALS_PER_POLYGON],
@@ -248,7 +248,7 @@ void request_shatter_and_destroy(
         ParticleEffect * shatter_effect = next_particle_effect();
         shatter_effect->zpolygon_cpu = zpolygons_to_render->cpu_data[zp_i];
         shatter_effect->zpolygon_gpu = zpolygons_to_render->gpu_data[zp_i];
-        memcpy(
+        tok_memcpy(
             /* void * dst: */
                 shatter_effect->zpolygon_materials,
             /* const void * src: */
@@ -851,9 +851,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                     {
                         set_zpolygon_hitbox(
                             /* zPolygonCPU * mesh_cpu: */
-                                &zpolygons_to_render->cpu_data[zp_i],
-                            /* GPUPolygon * mesh_gpu: */
-                                &zpolygons_to_render->gpu_data[zp_i]);
+                                &zpolygons_to_render->cpu_data[zp_i]);
                     }
                 }
             }

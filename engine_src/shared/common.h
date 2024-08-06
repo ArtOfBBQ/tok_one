@@ -10,11 +10,6 @@
 #include <assert.h>
 #endif
 
-// #define COMMON_SILENCE
-#ifndef COMMON_SILENCE
-#include <stdio.h>
-#endif
-
 #include "simd.h"
 
 #ifndef __cplusplus
@@ -36,6 +31,10 @@ extern "C" {
 #define FLOAT32_MAX 2147483647
 #define FLOAT32_MIN 1.1754943508222875e-38F
 
+void memset_char(
+    void * input,
+    char value,
+    unsigned int size_bytes);
 void memset_int16(
     void * input,
     int16_t value,
@@ -44,7 +43,10 @@ void memset_float(
     void * input,
     float value,
     unsigned int size_bytes);
-
+void * tok_memcpy(
+    void * dest,
+    const void * src,
+    size_t n_bytes);
 
 int   tok_mini(const int x, const int y);
 int   tok_maxi(const int x, const int y);

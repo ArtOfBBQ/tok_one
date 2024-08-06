@@ -87,7 +87,7 @@ void init_all_meshes(void) {
     assert(ALL_LOCKED_VERTICES_SIZE > 0);
     all_mesh_vertices = (LockedVertexWithMaterialCollection *)
         malloc_from_unmanaged(sizeof(LockedVertexWithMaterialCollection));
-    memset(
+    memset_char(
         all_mesh_vertices,
         0,
         sizeof(LockedVertexWithMaterialCollection));
@@ -738,7 +738,7 @@ int32_t new_mesh_id_from_obj_text(
     if (parsed_obj == NULL) {
         parsed_obj = malloc_from_unmanaged(sizeof(ParsedObj));
     }
-    memset(parsed_obj, 0, sizeof(ParsedObj));
+    memset_char(parsed_obj, 0, sizeof(ParsedObj));
     
     uint32_t good = 0;
     parse_obj(
@@ -838,13 +838,13 @@ int32_t new_mesh_id_from_obj_text(
                 guess_gpu_triangle_normal(
                     /* GPULockedVertex * to_change: */
                         &all_mesh_vertices->gpu_data[locked_vert_i]);
-                memcpy(
+                tok_memcpy(
                     all_mesh_vertices->gpu_data[locked_vert_i + 1].
                         normal_xyz,
                     all_mesh_vertices->gpu_data[locked_vert_i].
                         normal_xyz,
                     sizeof(float) * 3);
-                memcpy(
+                tok_memcpy(
                     all_mesh_vertices->gpu_data[locked_vert_i + 2].
                         normal_xyz,
                     all_mesh_vertices->gpu_data[locked_vert_i].

@@ -1,8 +1,6 @@
 #ifndef OBJMODEL_H
 #define OBJMODEL_H
 
-#include <string.h>
-
 #include "clientlogic_macro_settings.h"
 #include "cpu_gpu_shared_types.h"
 

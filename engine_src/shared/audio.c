@@ -246,7 +246,7 @@ void copy_permasound_to_global_buffer(
 
 void clear_global_soundbuffer(void)
 {
-    memset(
+    memset_char(
         sound_settings->samples_buffer,
         0,
         sound_settings->global_buffer_size_bytes);
@@ -277,7 +277,7 @@ void register_samples_to_permasound(
     log_assert(samples_size + all_samples_size <= ALL_AUDIOSAMPLES_SIZE);
     log_assert(all_permasounds[permasound_id].allsamples_head_i < 0);
     log_assert(all_permasounds[permasound_id].allsamples_tail_i < 0);
-    memcpy(
+    tok_memcpy(
         /* void * dst: */
             all_samples + all_samples_size,
         /* const void * src: :*/
