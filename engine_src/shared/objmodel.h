@@ -1,6 +1,8 @@
 #ifndef OBJMODEL_H
 #define OBJMODEL_H
 
+#include <math.h>
+
 #include "clientlogic_macro_settings.h"
 #include "cpu_gpu_shared_types.h"
 
@@ -61,8 +63,9 @@ int32_t new_mesh_id_from_resource_asserts(
 int32_t new_mesh_id_from_resource(
     const char * filename);
 
-void center_mesh_offsets(
-    const int32_t mesh_id);
+void center_mesh_offsets(const int32_t mesh_id);
+
+void flip_mesh_uvs(const int32_t mesh_id);
 
 /*
 Creates a version of the mesh with (normally needless) extra triangles

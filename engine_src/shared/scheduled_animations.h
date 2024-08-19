@@ -37,6 +37,7 @@ typedef struct ScheduledAnimation {
                                              // can be used as wait before 1st
                                              // run
     int32_t affected_object_id;
+    int32_t affected_touchable_id;
     uint32_t runs; // 0 to repeat forever, 1 to run 1x, 2 to run 2x etc
     bool32_t set_hitbox_when_finished;
     bool32_t delete_object_when_finished;

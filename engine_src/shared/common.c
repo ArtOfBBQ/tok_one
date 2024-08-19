@@ -135,6 +135,18 @@ void * tok_memcpy(
     return dest;
 }
 
+//float tok_sqrtf(const float in) {
+//    float return_value;
+//    
+//    #ifdef __SSE__
+//    __m128 inputs = _mm_load_ss(&in);
+//    inputs = _mm_sqrt_ss(inputs);
+//    _mm_store_ss(&return_value, inputs);
+//    #endif
+//    
+//    return return_value;
+//}
+
 float tok_minf(const float x, const float y)
 {
     return ((x <= y) * x) + ((y < x) * y);

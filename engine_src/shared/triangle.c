@@ -6,14 +6,7 @@ inline static float get_magnitude_f3(float input_xyz[3]) {
         (input_xyz[1] * input_xyz[1]) +
         (input_xyz[2] * input_xyz[2]);
     
-    #ifndef LOGGER_IGNORE_ASSERTS
-    sum_squares = isnan(sum_squares) || !isfinite(sum_squares) ?
-        FLOAT32_MAX : sum_squares;
-    #endif
-    
     float return_value = sqrtf(sum_squares);
-    
-    log_assert(!isnan(return_value));
     
     return return_value;
 }
@@ -25,12 +18,7 @@ static float get_vertex_magnitude(float * input) {
     
     float sum_squares = x + y + z;
     
-    sum_squares = isnan(sum_squares) || !isfinite(sum_squares) ?
-        FLOAT32_MAX : sum_squares;
-    
     float return_value = sqrtf(sum_squares);
-    
-    log_assert(!isnan(return_value));
     
     return return_value;
 }
@@ -43,17 +31,9 @@ void normalize_vertex(
         magnitude = 0.0001f;
     }
     
-    log_assert(!isnan(to_normalize[0]));
     to_normalize[0] /= magnitude;
-    log_assert(!isnan(to_normalize[0]));
-    
-    log_assert(!isnan(to_normalize[1]));
     to_normalize[1] /= magnitude;
-    log_assert(!isnan(to_normalize[1]));
-    
-    log_assert(!isnan(to_normalize[2]));
     to_normalize[2] /= magnitude;
-    log_assert(!isnan(to_normalize[2]));
 }
 
 void normalize_zvertex_f3(

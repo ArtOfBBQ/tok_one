@@ -1,7 +1,7 @@
 #ifndef TOK_COLLISION_H
 #define TOK_COLLISION_H
 
-#include <math.h> // sqrtf() if no simd
+#include <math.h>
 
 // #define COLLISION_SILENCE
 #ifndef COLLISION_SILENCE

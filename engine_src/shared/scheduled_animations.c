@@ -39,6 +39,7 @@ static void construct_scheduled_animationA(
     log_assert(!to_construct->committed);
     
     to_construct->affected_object_id = -1;
+    to_construct->affected_touchable_id = -1;
     
     if (final_values_not_adds) {
         memset_float(
@@ -116,11 +117,27 @@ void commit_scheduled_animation(ScheduledAnimation * to_commit) {
     log_assert(to_commit->duration_microseconds > 0);
     log_assert(to_commit->remaining_microseconds == 0);
     
+    if (to_commit->affected_object_id < 0) {
+        if (to_commit->clientlogic_callback_when_finished_id < 0) {
+            log_assert(to_commit->affected_touchable_id >= 0);
+        }
+    } else {
+        log_assert(to_commit->affected_touchable_id == -1);
+    }
+    if (to_commit->affected_touchable_id < 0) {
+        if (to_commit->clientlogic_callback_when_finished_id < 0) {
+            log_assert(to_commit->affected_object_id >= 0);
+        }
+    } else {
+        log_assert(to_commit->affected_object_id == -1);
+    }
+    
     to_commit->remaining_microseconds = to_commit->duration_microseconds;
     
     if (to_commit->delete_other_anims_targeting_same_object_id_on_commit) {
         for (uint32_t i = 0; i < scheduled_animations_size; i++) {
             if (
+                scheduled_animations[i].affected_object_id >= 0 &&
                 scheduled_animations[i].affected_object_id ==
                     to_commit->affected_object_id &&
                 scheduled_animations[i].committed &&
@@ -151,7 +168,8 @@ void request_evaporate_and_destroy(
         zp_i < zpolygons_to_render->size;
         zp_i++)
     {
-        if (zpolygons_to_render->cpu_data[zp_i].deleted ||
+        if (
+            zpolygons_to_render->cpu_data[zp_i].deleted ||
             !zpolygons_to_render->cpu_data[zp_i].committed ||
             zpolygons_to_render->cpu_data[zp_i].object_id != object_id)
         {
@@ -465,8 +483,13 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
             zp_i++)
         {
             if (
+                (anim->affected_object_id >= 0 &&
                 zpolygons_to_render->cpu_data[zp_i].object_id !=
-                    anim->affected_object_id ||
+                    anim->affected_object_id) ||
+                (anim->affected_touchable_id >= 0 &&
+                zpolygons_to_render->cpu_data[zp_i].touchable_id !=
+                    anim->affected_touchable_id)
+                ||
                 zpolygons_to_render->cpu_data[zp_i].deleted)
             {
                 continue;
@@ -540,8 +563,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                 }
                 #endif
                 
-                anim_vals_ptr    =
-                    (float *)&anim->gpu_polygon_material_vals;
+                anim_vals_ptr = (float *)&anim->gpu_polygon_material_vals;
                 uint32_t mat1_i = zp_i * MAX_MATERIALS_PER_POLYGON;
                 for (
                     uint32_t mat_i = mat1_i;
@@ -846,8 +868,11 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                     zp_i < zpolygons_to_render->size;
                     zp_i++)
                 {
-                    if (zpolygons_to_render->cpu_data[zp_i].object_id ==
-                        anim->affected_object_id)
+                    if (
+                        zpolygons_to_render->cpu_data[zp_i].object_id ==
+                            anim->affected_object_id ||
+                        zpolygons_to_render->cpu_data[zp_i].touchable_id ==
+                            anim->affected_touchable_id)
                     {
                         set_zpolygon_hitbox(
                             /* zPolygonCPU * mesh_cpu: */
@@ -919,11 +944,13 @@ void delete_all_scheduled_animations(void)
 {
     platform_mutex_lock(request_scheduled_anims_mutex_id);
     for (uint32_t i = 0; i < scheduled_animations_size; i++) {
-        if (scheduled_animations[i].runs == 0) {
+        if (
+            !scheduled_animations[i].deleted &&
+            scheduled_animations[i].runs == 0)
+        {
             scheduled_animations[i].deleted = true;
         }
     }
-    scheduled_animations_size = 0;
     platform_mutex_unlock(request_scheduled_anims_mutex_id);
 }
 
@@ -932,15 +959,18 @@ void delete_all_movement_animations_targeting(
 {
     platform_mutex_lock(request_scheduled_anims_mutex_id);
     for (uint32_t i = 0; i < scheduled_animations_size; i++) {
-        if (scheduled_animations[i].affected_object_id == (int32_t)object_id && (
-            (((scheduled_animations[i].final_values_not_adds &&
-            scheduled_animations[i].gpu_polygon_vals.xyz[0] !=
-                FLT_SCHEDULEDANIM_IGNORE)  ||
-            (scheduled_animations[i].gpu_polygon_vals.xyz[0] > 0.01f)))
-            ||
-            ((scheduled_animations[i].final_values_not_adds &&
-            scheduled_animations[i].gpu_polygon_vals.xyz[1] !=
-                FLT_SCHEDULEDANIM_IGNORE)  ||
+        if (
+            !scheduled_animations[i].deleted &&
+            scheduled_animations[i].affected_object_id == (int32_t)object_id &&
+            (
+                (((scheduled_animations[i].final_values_not_adds &&
+                scheduled_animations[i].gpu_polygon_vals.xyz[0] !=
+                    FLT_SCHEDULEDANIM_IGNORE)  ||
+                (scheduled_animations[i].gpu_polygon_vals.xyz[0] > 0.01f)))
+                ||
+                ((scheduled_animations[i].final_values_not_adds &&
+                scheduled_animations[i].gpu_polygon_vals.xyz[1] !=
+                    FLT_SCHEDULEDANIM_IGNORE)  ||
             (scheduled_animations[i].gpu_polygon_vals.xyz[1] > 0.01f))))
         {
             scheduled_animations[i].deleted = true;
@@ -954,7 +984,9 @@ void delete_all_rgba_animations_targeting(
 {
     platform_mutex_lock(request_scheduled_anims_mutex_id);
     for (uint32_t i = 0; i < scheduled_animations_size; i++) {
-        if (scheduled_animations[i].affected_object_id == (int32_t)object_id &&
+        if (
+            !scheduled_animations[i].deleted &&
+            scheduled_animations[i].affected_object_id == (int32_t)object_id &&
             scheduled_animations[i].final_values_not_adds &&
             (scheduled_animations[i].gpu_polygon_material_vals.rgba[0] !=
                  FLT_SCHEDULEDANIM_IGNORE ||
@@ -975,6 +1007,7 @@ void delete_all_animations_targeting(const int32_t object_id) {
     platform_mutex_lock(request_scheduled_anims_mutex_id);
     for (uint32_t i = 0; i < scheduled_animations_size; i++) {
         if (
+            !scheduled_animations[i].deleted &&
             scheduled_animations[i].committed &&
             scheduled_animations[i].affected_object_id == object_id)
         {
@@ -987,7 +1020,11 @@ void delete_all_animations_targeting(const int32_t object_id) {
 void delete_all_repeatforever_animations(void) {
     platform_mutex_lock(request_scheduled_anims_mutex_id);
     for (uint32_t i = 0; i < scheduled_animations_size; i++) {
-        if (scheduled_animations[i].runs == 0) {
+        if (
+            !scheduled_animations[i].deleted &&
+            scheduled_animations[i].runs == 0 &&
+            scheduled_animations[i].committed)
+        {
             scheduled_animations[i].deleted = true;
         }
     }

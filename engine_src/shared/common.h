@@ -3,7 +3,6 @@
 
 #include <inttypes.h>
 #include <stddef.h>
-#include <math.h>
 
 // #define COMMON_IGNORE_ASSERTS
 #ifndef COMMON_IGNORE_ASSERTS
@@ -47,6 +46,8 @@ void * tok_memcpy(
     void * dest,
     const void * src,
     size_t n_bytes);
+
+// float tok_sqrtf(const float in);
 
 int   tok_mini(const int x, const int y);
 int   tok_maxi(const int x, const int y);

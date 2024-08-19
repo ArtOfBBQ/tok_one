@@ -1,6 +1,8 @@
 #ifndef TRIANGLE_H
 #define TRIANGLE_H
 
+#include <math.h>
+
 #include "common.h"
 #include "logger.h"
 

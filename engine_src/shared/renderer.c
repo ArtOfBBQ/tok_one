@@ -213,34 +213,7 @@ inline static void add_alphablending_zpolygons_to_workload(
 inline static void add_opaque_zpolygons_to_workload(
     GPUDataForSingleFrame * frame_data)
 {
-    assert(frame_data->polygon_collection->size == 0);
     assert(frame_data->vertices_size == 0);
-    
-    tok_memcpy(
-        /* void * dest: */
-            frame_data->polygon_collection,
-        /* const void * src: */
-            zpolygons_to_render->gpu_data,
-        /* size_t n: */
-            sizeof(GPUPolygon) * zpolygons_to_render->size);
-    frame_data->polygon_collection->size = zpolygons_to_render->size;
-    
-    log_assert(
-        frame_data->polygon_collection->size <= zpolygons_to_render->size);
-    log_assert(
-        zpolygons_to_render->size < MAX_POLYGONS_PER_BUFFER);
-    log_assert(
-        frame_data->polygon_collection->size < MAX_POLYGONS_PER_BUFFER);
-    
-    tok_memcpy(
-        /* void *__dst: */
-            frame_data->polygon_materials,
-        /* const void *__src: */
-            zpolygons_to_render->gpu_materials,
-        /* size_t __n: */
-            sizeof(GPUPolygonMaterial) *
-                MAX_MATERIALS_PER_POLYGON *
-                zpolygons_to_render->size);
     
     for (
         int32_t cpu_zp_i = 0;
@@ -302,6 +275,32 @@ void hardware_render(
     
     log_assert(zpolygons_to_render->size < MAX_POLYGONS_PER_BUFFER);
     
+    tok_memcpy(
+        /* void * dest: */
+            frame_data->polygon_collection,
+        /* const void * src: */
+            zpolygons_to_render->gpu_data,
+        /* size_t n: */
+            sizeof(GPUPolygon) * zpolygons_to_render->size);
+    frame_data->polygon_collection->size = zpolygons_to_render->size;
+    
+    log_assert(
+        frame_data->polygon_collection->size <= zpolygons_to_render->size);
+    log_assert(
+        zpolygons_to_render->size < MAX_POLYGONS_PER_BUFFER);
+    log_assert(
+        frame_data->polygon_collection->size < MAX_POLYGONS_PER_BUFFER);
+    
+    tok_memcpy(
+        /* void *__dst: */
+            frame_data->polygon_materials,
+        /* const void *__src: */
+            zpolygons_to_render->gpu_materials,
+        /* size_t __n: */
+            sizeof(GPUPolygonMaterial) *
+                MAX_MATERIALS_PER_POLYGON *
+                zpolygons_to_render->size);
+    
     add_opaque_zpolygons_to_workload(frame_data);
     
     if (application_running) {
@@ -318,8 +317,6 @@ void hardware_render(
             elapsed_nanoseconds,
             false);
     }
-    
-    frame_data->first_alphablend_i = frame_data->vertices_size;
     
     add_alphablending_zpolygons_to_workload(frame_data);
     
