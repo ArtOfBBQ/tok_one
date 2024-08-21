@@ -21,8 +21,7 @@ extern "C" {
 
 void shared_gameloop_init(void);
 
-void shared_gameloop_update(
-    GPUDataForSingleFrame * frame_data);
+void shared_gameloop_update(GPUDataForSingleFrame * frame_data);
 
 #ifdef __cplusplus
 }

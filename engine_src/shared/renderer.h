@@ -12,6 +12,7 @@
 #include "lines.h"
 #include "zpolygon.h"
 #include "particle.h"
+#include "userinput.h"
 
 #ifdef __cplusplus
 extern "C" {

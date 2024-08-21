@@ -422,35 +422,19 @@ static bool32_t evaluate_terminal_command(
         are_equal_strings(command, "MOUSE") ||
         are_equal_strings(command, "DRAW MOUSE"))
     {
-        PolygonRequest stack_recipient;
-        request_next_zpolygon(&stack_recipient);
-        construct_quad_around(
-                0.0f,
-                0.0f,
-                1.0f,
-                /* width: */
-                    screenspace_width_to_width(10, 1.0f),
-                /* height: */
-                    screenspace_height_to_height(20, 1.0f),
-            /* PolygonRequest *stack_recipient: */
-                &stack_recipient);
-        if (debugmouseptr_id < 0) {
-            debugmouseptr_id = next_nonui_object_id();
-        }
-        stack_recipient.cpu_data->object_id = debugmouseptr_id;
-        stack_recipient.cpu_data->alpha_blending_enabled = false;
-        stack_recipient.gpu_data->ignore_camera = true;
-        stack_recipient.gpu_data->ignore_lighting = true;
-        stack_recipient.gpu_materials[0].rgba[0] = 1.0f;
-        stack_recipient.gpu_materials[0].rgba[1] = 0.0f;
-        stack_recipient.gpu_materials[0].rgba[2] = 0.0f;
-        stack_recipient.gpu_materials[0].rgba[3] = 1.0f;
-        commit_zpolygon_to_render(&stack_recipient);
+        window_globals->draw_mouseptr = !window_globals->draw_mouseptr;
         
-        strcpy_capped(
-            response,
-            SINGLE_LINE_MAX,
-            "Drawing the mouse pointe for debugging...");
+        if (window_globals->draw_mouseptr) {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Drawing the mouse pointer...");
+        } else {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Stopped drawing the mouse pointer...");
+        }
         return true;
     }
     

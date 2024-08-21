@@ -10,6 +10,8 @@ application.
 extern "C" {
 #endif
 
+#include <string.h>
+
 #include "tok_random.h"
 #include "memorystore.h"
 #include "collision.h"

@@ -4,6 +4,8 @@ bool32_t * keypress_map; //[KEYPRESS_MAP_SIZE];
 
 Interaction * user_interactions = NULL;
 
+float mouse_scroll_pos = 0.0f;
+
 void construct_interaction(Interaction * to_construct) {
     to_construct->touchable_id = -1;
     to_construct->screen_x = 0;
@@ -18,7 +20,7 @@ void register_interaction(
     const float y)
 {
     uint64_t timestamp = platform_get_current_time_microsecs();
-    if (timestamp - touch_record->timestamp < 100000) { return; }
+    //if (timestamp - touch_record->timestamp < 100000) { return; }
     
     touch_record->screen_x           = x;
     touch_record->screen_y           = y;
@@ -39,4 +41,16 @@ void register_keydown(uint32_t key_id)
     log_assert(key_id < KEYPRESS_MAP_SIZE);
     
     keypress_map[key_id] = true;
+}
+
+void register_mousescroll(float amount)
+{
+    mouse_scroll_pos += amount;
+    
+    if (mouse_scroll_pos < -20.0f) {
+        mouse_scroll_pos = -20.0f;
+    }
+    if (mouse_scroll_pos > 20.0f) {
+        mouse_scroll_pos = 20.0f;
+    }
 }

@@ -445,4 +445,22 @@ void hardware_render(
                     window_globals->last_clickray_collision, 0.33f);
         }
     }
+    
+    if (application_running && window_globals->draw_mouseptr) {
+        float xyz[3];
+        xyz[0] = screenspace_x_to_x(
+            user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_x,
+            1.0f);
+        xyz[1] = screenspace_y_to_y(
+            user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_y,
+            1.0f);
+        xyz[2] = 1.0f;
+        add_point_vertex(
+            /* GPUDataForSingleFrame * frame_data: */
+                frame_data,
+            /* const float * xyz: */
+                xyz,
+            /* const float color: */
+                0.33f);
+    }
 }

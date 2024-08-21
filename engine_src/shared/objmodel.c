@@ -848,12 +848,12 @@ int32_t new_mesh_id_from_obj_text(
             }
             
             #ifndef LOGGER_IGNORE_ASSERTS
-            float check_x = all_mesh_vertices->gpu_data[
-                locked_vert_i + _].normal_xyz[0];
-            float check_y = all_mesh_vertices->gpu_data[
-                locked_vert_i + _].normal_xyz[1];
-            float check_z = all_mesh_vertices->gpu_data[
-                locked_vert_i + _].normal_xyz[2];
+            //            float check_x = all_mesh_vertices->gpu_data[
+            //                locked_vert_i + _].normal_xyz[0];
+            //            float check_y = all_mesh_vertices->gpu_data[
+            //                locked_vert_i + _].normal_xyz[1];
+            //            float check_z = all_mesh_vertices->gpu_data[
+            //                locked_vert_i + _].normal_xyz[2];
             // TODO: fix any broken normals
             //            log_assert(
             //                fabs(check_x) + fabs(check_y) + fabs(check_z) > 0.3f);

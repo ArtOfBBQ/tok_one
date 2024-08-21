@@ -257,28 +257,12 @@ void shared_gameloop_update(
         
         update_terminal();
         
-        if (debugmouseptr_id >= 0) {
-            ScheduledAnimation * move_mouseptr =
-                next_scheduled_animation(true);
-            move_mouseptr->affected_object_id = debugmouseptr_id;
-            move_mouseptr->gpu_polygon_vals.xyz[0] =
-                screenspace_x_to_x(
-                    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_x,
-                    1.0f);
-            move_mouseptr->gpu_polygon_vals.xyz[1] =
-                screenspace_y_to_y(
-                    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_y,
-                    1.0f);
-            move_mouseptr->gpu_polygon_vals.xyz[2] = 1.0f;
-            move_mouseptr->duration_microseconds = 1;
-            commit_scheduled_animation(move_mouseptr);
-        }
-        
         resolve_animation_effects(elapsed);
         clean_deleted_lights();
         
         copy_lights(frame_data->light_collection);
         
+        user_interactions[8].checked_touchables = false;
         for (uint32_t i = 0; i < 9; i++) {
             if (
                 user_interactions[i].handled ||
@@ -328,6 +312,24 @@ void shared_gameloop_update(
             frame_data,
         /* uint64_t elapsed_microseconds: */
             elapsed);
+    
+    if (false) {
+        //            ScheduledAnimation * move_mouseptr =
+        //                next_scheduled_animation(true);
+        //            move_mouseptr->affected_object_id = debugmouseptr_id;
+        //            move_mouseptr->gpu_polygon_vals.xyz[0] =
+        //                screenspace_x_to_x(
+        //                    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_x,
+        //                    1.0f);
+        //            move_mouseptr->gpu_polygon_vals.xyz[1] =
+        //                screenspace_y_to_y(
+        //                    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_y,
+        //                    1.0f);
+        //            move_mouseptr->gpu_polygon_vals.xyz[2] = 1.0f;
+        //            move_mouseptr->duration_microseconds = 1;
+        //            commit_scheduled_animation(move_mouseptr);
+        
+    }
     
     uint32_t overflow_vertices = frame_data->vertices_size % 3;
     frame_data->vertices_size -= overflow_vertices;

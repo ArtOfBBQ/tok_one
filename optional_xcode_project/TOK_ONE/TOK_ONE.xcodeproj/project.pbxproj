@@ -83,6 +83,7 @@
 		EC31932529DFAAFB00E320CD /* particle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC31932329DFAAFB00E320CD /* particle.c */; };
 		EC493BC92BEDABCC004D957F /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F48293C9FD900837369 /* UIKit.framework */; };
 		EC493BCB2BEDAE07004D957F /* shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 60112895286253C100F92967 /* shaders.metal */; };
+		EC5BDCAC2C744B7300020D34 /* clientlogic_particledesigner.c in Sources */ = {isa = PBXBuildFile; fileRef = ECD7D3DA2B97778500B47196 /* clientlogic_particledesigner.c */; };
 		EC6441A429318B6D00A0267B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = EC64419F29318B6D00A0267B /* main.m */; };
 		EC6441A529318B6D00A0267B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A029318B6D00A0267B /* AppDelegate.m */; };
 		EC6441A629318B6D00A0267B /* ios_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A129318B6D00A0267B /* ios_platform_layer.c */; };
@@ -308,6 +309,8 @@
 		601128A42862540400F92967 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				ECD7D3DA2B97778500B47196 /* clientlogic_particledesigner.c */,
+				601128702862511600F92967 /* clientlogic.c */,
 				EC61E2D32AFB029F004D316D /* shared_apple_linux */,
 				EC6441A829318B7900A0267B /* iphone_only */,
 				60A998DE287BD468003F7159 /* shared_macos_iphone */,
@@ -360,8 +363,6 @@
 				EC914B7A2B8AD447007FCBFC /* audio.c */,
 				EC914B7D2B8AD447007FCBFC /* audio.h */,
 				EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */,
-				ECD7D3DA2B97778500B47196 /* clientlogic_particledesigner.c */,
-				601128702862511600F92967 /* clientlogic.c */,
 				EC6E12132A03BD8F004E7BD1 /* clientlogic.h */,
 				ECE759CC2C3FF1BE004B0847 /* collision.c */,
 				ECE759CD2C3FF1BE004B0847 /* collision.h */,
@@ -648,6 +649,7 @@
 				EC6441A429318B6D00A0267B /* main.m in Sources */,
 				60A998FA287BD4C3003F7159 /* renderer.c in Sources */,
 				EC914B8E2B94B1EF007FCBFC /* terminal.c in Sources */,
+				EC5BDCAC2C744B7300020D34 /* clientlogic_particledesigner.c in Sources */,
 				60A998F1287BD4C3003F7159 /* logger.h in Sources */,
 				60A998F2287BD4C3003F7159 /* renderer.h in Sources */,
 			);

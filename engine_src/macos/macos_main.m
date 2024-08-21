@@ -296,27 +296,61 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 }
 
 - (void)update_mouse_location {
-    NSPoint mouse_location = [self mouseLocationOutsideOfEventStream];
+    // Currently happens in mouseMoved, so ignore this
+    
+    //    NSPoint mouse_location = [self mouseLocationOutsideOfEventStream];
+    //
+    //    register_interaction(
+    //        /* interaction : */
+    //            &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],
+    //        /* screenspace_x: */
+    //            (float)mouse_location.x,
+    //        /* screenspace_y: */
+    //            (float)mouse_location.y);
+    //
+    //    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
+    //        user_interactions[INTR_PREVIOUS_MOUSE_MOVE];
+}
+
+- (void)mouseMoved:(NSEvent *)event {
+    NSPoint window_location = [event locationInWindow];
     
     register_interaction(
         /* interaction : */
             &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],
         /* screenspace_x: */
-            (float)mouse_location.x,
+            (float)window_location.x,
         /* screenspace_y: */
-            (float)mouse_location.y);
+            (float)window_location.y);
     
-    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
-        user_interactions[INTR_PREVIOUS_MOUSE_MOVE];
+    register_interaction(
+        /* interaction : */
+            &user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE],
+        /* screenspace_x: */
+            (float)window_location.x,
+        /* screenspace_y: */
+            (float)window_location.y);
 }
 
-// I used to use this but the lag is unbearable. Even querying manually every
-// frame is weirdly laggy but not as bad as these 2 methods
-// - (void)mouseMoved:(NSEvent *)event {
-
-// I used to use this but the lag is unbearable. Even querying manually every
-// frame is weirdly laggy but not as bad as these 2 methods
-//- (void)mouseDragged:(NSEvent *)event {
+- (void)mouseDragged:(NSEvent *)event {
+    NSPoint window_location = [event locationInWindow];
+    
+    register_interaction(
+        /* interaction : */
+            &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],
+        /* screenspace_x: */
+            (float)window_location.x,
+        /* screenspace_y: */
+            (float)window_location.y);
+    
+    register_interaction(
+        /* interaction : */
+            &user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE],
+        /* screenspace_x: */
+            (float)window_location.x,
+        /* screenspace_y: */
+            (float)window_location.y);
+}
 
 - (void)keyDown:(NSEvent *)event {
     register_keydown(apple_keycode_to_tokone_keycode(event.keyCode));
@@ -324,6 +358,10 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)keyUp:(NSEvent *)event {
     register_keyup(apple_keycode_to_tokone_keycode(event.keyCode));
+}
+
+- (void)scrollWheel:(NSEvent *)event {
+    register_mousescroll((float)[event deltaY]);
 }
 
 - (float)getWidth {

@@ -36,6 +36,7 @@ platform layer doesn't need to do anything and can just record values directly
 #include "cpu_gpu_shared_types.h"
 
 typedef struct WindowGlobals {
+    bool32_t draw_mouseptr;
     bool32_t draw_clickray;
     bool32_t draw_triangles;
     bool32_t draw_hitboxes;

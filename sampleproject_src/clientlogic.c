@@ -1,6 +1,6 @@
 #include "clientlogic.h"
 
-#define TEAPOT 1
+#define TEAPOT 0
 #if TEAPOT
 static int32_t teapot_mesh_id = -1;
 static int32_t teapot_object_id = -1;

@@ -144,8 +144,11 @@ void register_interaction(
 
 extern bool32_t * keypress_map; //[KEYPRESS_MAP_SIZE];
 
+extern float mouse_scroll_pos;
+
 void register_keyup(uint32_t key_id);
 void register_keydown(uint32_t key_id);
+void register_mousescroll(const float amount);
 
 #ifdef __cplusplus
 }

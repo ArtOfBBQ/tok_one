@@ -19,10 +19,6 @@ extern "C" {
 
 extern int32_t retired_object_id;
 
-// extern int32_t latest_ui_element_object_id;
-// extern int32_t latest_nonui_object_id;
-extern int32_t debugmouseptr_id;
-
 int32_t next_ui_element_object_id(void);
 int32_t next_nonui_object_id(void);
 
