@@ -47,10 +47,10 @@ void register_mousescroll(float amount)
 {
     mouse_scroll_pos += amount;
     
-    if (mouse_scroll_pos < -20.0f) {
-        mouse_scroll_pos = -20.0f;
+    if (mouse_scroll_pos < -40.0f) {
+        mouse_scroll_pos = -40.0f;
     }
-    if (mouse_scroll_pos > 20.0f) {
-        mouse_scroll_pos = 20.0f;
+    if (mouse_scroll_pos > 40.0f) {
+        mouse_scroll_pos = 40.0f;
     }
 }
