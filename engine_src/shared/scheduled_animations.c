@@ -5,6 +5,15 @@ uint32_t scheduled_animations_size = 0;
 
 static uint32_t request_scheduled_anims_mutex_id = UINT32_MAX;
 
+typedef struct PendingCallback {
+    int32_t function_id;
+    float arg_1;
+    float arg_2;
+    int32_t arg_3;
+} PendingCallback;
+#define MAX_PENDING_CALLBACKS 10
+static PendingCallback pending_callbacks[MAX_PENDING_CALLBACKS];
+static uint32_t pending_callbacks_size = 0;
 static void (* callback_function)(int32_t, float, float, int32_t) = NULL;
 
 void init_scheduled_animations(
@@ -405,6 +414,8 @@ void request_fade_to(
 }
 
 void resolve_animation_effects(const uint64_t microseconds_elapsed) {
+    platform_mutex_lock(request_scheduled_anims_mutex_id);
+    pending_callbacks_size = 0;
     for (
         int32_t animation_i = (int32_t)scheduled_animations_size - 1;
         animation_i >= 0;
@@ -855,11 +866,17 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
             }
             
             if (anim->clientlogic_callback_when_finished_id >= 0)  {
-                callback_function(
-                    anim->clientlogic_callback_when_finished_id,
-                    anim->clientlogic_arg_1,
-                    anim->clientlogic_arg_2,
-                    anim->clientlogic_arg_3);
+                // We run these later outside of the mutex
+                log_assert(pending_callbacks_size + 1 <= MAX_PENDING_CALLBACKS);
+                pending_callbacks[pending_callbacks_size].function_id =
+                    anim->clientlogic_callback_when_finished_id;
+                pending_callbacks[pending_callbacks_size].arg_1 =
+                    anim->clientlogic_arg_1;
+                pending_callbacks[pending_callbacks_size].arg_2 =
+                    anim->clientlogic_arg_2;
+                pending_callbacks[pending_callbacks_size].arg_3 =
+                    anim->clientlogic_arg_3;
+                pending_callbacks_size += 1;
             }
             
             if (anim->set_hitbox_when_finished) {
@@ -889,6 +906,15 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                 delete_particle_effect(anim->affected_object_id);
             }
         }
+    }
+    platform_mutex_unlock(request_scheduled_anims_mutex_id);
+    
+    for (uint32_t i = 0; i < pending_callbacks_size; i++) {
+        callback_function(
+            pending_callbacks[i].function_id,
+            pending_callbacks[i].arg_1,
+            pending_callbacks[i].arg_2,
+            pending_callbacks[i].arg_3);
     }
 }
 

@@ -40,7 +40,7 @@ on each platform
 #define MUTEXES_SIZE 200
 
 #ifdef SHARED_APPLE_PLATFORM
-#import <Foundation/Foundation.h>
+// #import <Foundation/Foundation.h>
 #include <pthread.h>
 #include <sys/time.h>
 #endif
