@@ -297,19 +297,6 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)update_mouse_location {
     // Currently happens in mouseMoved, so ignore this
-    
-    //    NSPoint mouse_location = [self mouseLocationOutsideOfEventStream];
-    //
-    //    register_interaction(
-    //        /* interaction : */
-    //            &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],
-    //        /* screenspace_x: */
-    //            (float)mouse_location.x,
-    //        /* screenspace_y: */
-    //            (float)mouse_location.y);
-    //
-    //    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
-    //        user_interactions[INTR_PREVIOUS_MOUSE_MOVE];
 }
 
 - (void)mouseMoved:(NSEvent *)event {

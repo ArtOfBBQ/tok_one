@@ -334,6 +334,37 @@ get_string_length(
 }
 
 bool32_t
+string_ends_with(
+    const char * str_to_check,
+    const char * ending)
+{
+    if (str_to_check == NULL || ending == NULL) {
+        return false;
+    }
+    
+    uint32_t str_to_check_len = get_string_length(str_to_check);
+    uint32_t ending_len = get_string_length(ending);
+    
+    if (ending_len > str_to_check_len || ending_len < 1) {
+        return false;
+    }
+    
+    uint32_t i = str_to_check_len;
+    uint32_t j = ending_len;
+    
+    while (j > 0) {
+        j--;
+        i--;
+        
+        if (str_to_check[i] != ending[j]) {
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+bool32_t
 are_equal_strings(
     const char * str1,
     const char * str2)

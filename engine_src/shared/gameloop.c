@@ -248,7 +248,7 @@ void shared_gameloop_update(
                 (uint32_t)window_globals->window_width);
        }
     } else {
-        init_or_push_one_gpu_texture_array_if_needed();
+        // init_or_push_one_gpu_texture_array_if_needed();
     }
     
     if (application_running) {

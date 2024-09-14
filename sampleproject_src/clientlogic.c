@@ -97,17 +97,16 @@ void client_logic_late_startup(void) {
     commit_zpolygon_to_render(&teapot_request);
     #endif
     
-    #if 0
+    #if 1
     PolygonRequest quad;
     request_next_zpolygon(&quad);
     construct_quad(
         /* const float left_x: */ 0.0f,
         /* const float bottom_y: */ 0.0f,
         /* const float z: */ 0.75f,
-        /* const float width: */ 0.2f,
+        /* const float width: */ 0.8f,
         /* const float height: */ 0.2f,
         /* PolygonRequest * stack_recipient: */ &quad);
-    quad.cpu_data->mesh_id             = 4;
     quad.gpu_data->xyz_multiplier[2]   = quad.gpu_data->xyz_multiplier[0];
     quad.gpu_materials->texturearray_i = 1;
     quad.gpu_materials->texture_i      = 0;

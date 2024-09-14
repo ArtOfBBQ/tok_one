@@ -205,7 +205,7 @@ inline static void add_alphablending_zpolygons_to_workload(
             frame_data->vertices[frame_data->vertices_size].polygon_i =
                 cpu_zp_i;
             frame_data->vertices_size += 1;
-            log_assert(frame_data->vertices_size < ALL_LOCKED_VERTICES_SIZE);
+            log_assert(frame_data->vertices_size < MAX_VERTICES_PER_BUFFER);
         }
     }
 }
@@ -248,7 +248,7 @@ inline static void add_opaque_zpolygons_to_workload(
             frame_data->vertices[frame_data->vertices_size].polygon_i =
                 cpu_zp_i;
             frame_data->vertices_size += 1;
-            log_assert(frame_data->vertices_size < ALL_LOCKED_VERTICES_SIZE);
+            log_assert(frame_data->vertices_size < MAX_VERTICES_PER_BUFFER);
         }
     }
 }

@@ -1,31 +1,5 @@
 #include "platform_layer.h"
 
-void platform_get_writables_path(
-    char * recipient,
-    const uint32_t recipient_size)
-{
-    #ifdef COMMON_IGNORE_ASSERTS
-    (void)recipient_size;
-    #endif
-    
-    NSArray * paths = NSSearchPathForDirectoriesInDomains(
-        NSApplicationSupportDirectory,
-        NSUserDomainMask,
-        YES);
-    
-    NSString * libraryDirectory = [paths objectAtIndex:0];
-    
-    char * library_dir =
-        (char *)[libraryDirectory
-            cStringUsingEncoding: NSUTF8StringEncoding];
-    
-    strcpy_capped(recipient, recipient_size, library_dir);
-    strcat_capped(recipient, recipient_size, "/");
-    strcat_capped(recipient, recipient_size, APPLICATION_NAME);
-    
-    platform_mkdir_if_not_exist(recipient);
-}
-
 uint32_t platform_get_directory_separator_size(void) {
     return 1;
 }

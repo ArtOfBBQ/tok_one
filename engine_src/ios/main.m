@@ -14,9 +14,6 @@
  // definitions of functions we need to implement
 #include "platform_layer.h"
 
-bool32_t application_running = true;
-bool32_t has_retina_screen = false;
-
 
 int main(int argc, char * argv[]) {
     

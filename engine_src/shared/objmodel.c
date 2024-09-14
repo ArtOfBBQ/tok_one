@@ -918,6 +918,8 @@ int32_t new_mesh_id_from_obj_text(
                 log_assert(vert_i >= 1);
                 log_assert(vert_i <= parsed_obj->vertices_count);
                 
+                log_assert(all_mesh_vertices->size < ALL_LOCKED_VERTICES_SIZE);
+                
                 all_mesh_vertices->gpu_data[all_mesh_vertices->size].xyz[0] =
                     parsed_obj->vertices[vert_i - 1][0];
                 all_mesh_vertices->gpu_data[all_mesh_vertices->size].xyz[1] =

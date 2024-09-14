@@ -32,6 +32,8 @@ platform layer doesn't need to do anything and can just record values directly
 
 #define CLEARDEPTH 1.0f
 
+#include <math.h>
+
 #include "common.h"
 #include "cpu_gpu_shared_types.h"
 

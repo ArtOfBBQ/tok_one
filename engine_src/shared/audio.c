@@ -27,10 +27,10 @@ void init_audio(
     sound_settings->play_cursor    = 0;
     sound_settings->callback_runs  = 0;
     // sound_settings->platform_buffer_size_bytes = platform_buffer_size;
-    sound_settings->global_buffer_size_bytes = 41000 * 180 * 2;
+    sound_settings->global_buffer_size_bytes = 41000 * 45 * 2;
     log_assert(sound_settings->global_buffer_size_bytes % 2 == 0);
-    sound_settings->global_samples_size =
-        sound_settings->global_buffer_size_bytes / 2;
+    sound_settings->global_samples_size = sound_settings->
+        global_buffer_size_bytes / 2;
     
     sound_settings->samples_buffer = arg_malloc_function(
         sound_settings->global_buffer_size_bytes);

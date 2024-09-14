@@ -2,6 +2,40 @@
 
 #include "../shared/platform_layer.h"
 
+void platform_update_mouse_location(void) {
+    // do nothing on iOS
+}
+
+void platform_toggle_fullscreen(void) {
+    // do nothing on iOS
+}
+
+void platform_get_writables_path(
+    char * recipient,
+    const uint32_t recipient_size)
+{
+    #ifdef COMMON_IGNORE_ASSERTS
+    (void)recipient_size;
+    #endif
+    
+    NSArray * paths = NSSearchPathForDirectoriesInDomains(
+        NSApplicationSupportDirectory,
+        NSUserDomainMask,
+        YES);
+    
+    NSString * libraryDirectory = [paths objectAtIndex:0];
+    
+    char * library_dir =
+        (char *)[libraryDirectory
+            cStringUsingEncoding: NSUTF8StringEncoding];
+    
+    strcpy_capped(recipient, recipient_size, library_dir);
+    strcat_capped(recipient, recipient_size, "/");
+    strcat_capped(recipient, recipient_size, APPLICATION_NAME);
+    
+    platform_mkdir_if_not_exist(recipient);
+}
+
 void * platform_malloc_unaligned_block(
     const uint64_t size)
 {

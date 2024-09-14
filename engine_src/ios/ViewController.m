@@ -142,10 +142,10 @@ TouchableMTKView * _my_mtk_view;
     apple_gpu_delegate = [[MetalKitViewDelegate alloc] init];
     
     _my_mtk_view.delegate = apple_gpu_delegate;
-    [apple_gpu_delegate
+    BOOL result = [apple_gpu_delegate
         configureMetalWithDevice: _metal_device
         andPixelFormat: _my_mtk_view.colorPixelFormat
-        fromFolder: shader_lib_filepath];
+        fromFilePath: shader_lib_filepath];
     
     init_application_after_gpu_init();
     

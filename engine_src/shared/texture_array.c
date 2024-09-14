@@ -81,7 +81,7 @@ static void set_unallocated_to_error_image(
     to_replace->rgba_values_size = to_replace->pixel_count * 4;
     
     to_replace->rgba_values =
-        malloc_from_unmanaged(to_replace->rgba_values_size);
+        malloc_from_managed(to_replace->rgba_values_size);
     
     set_allocated_to_error_image(to_replace);
 }
@@ -99,7 +99,8 @@ static DecodedImage * malloc_img_from_filename(
     
     log_assert(file_buffer.size_without_terminator > 1);
     file_buffer.contents =
-        (char *)malloc_from_managed(sizeof(char) * file_buffer.size_without_terminator + 1);
+        (char *)malloc_from_managed(sizeof(char) *
+            file_buffer.size_without_terminator + 1);
     
     platform_read_resource_file(
         filename,
@@ -142,7 +143,7 @@ static DecodedImage * malloc_img_from_filename(
         new_image->good = false;
         new_image->pixel_count = new_image->width * new_image->height;
         new_image->rgba_values_size = new_image->pixel_count * 4;
-        new_image->rgba_values = malloc_from_unmanaged(
+        new_image->rgba_values = malloc_from_managed(
             new_image->rgba_values_size);
         
         decode_PNG(
@@ -181,7 +182,7 @@ static DecodedImage * malloc_img_from_filename(
         new_image->good = false;
         new_image->pixel_count = new_image->width * new_image->height;
         new_image->rgba_values_size = new_image->pixel_count * 4;
-        new_image->rgba_values = malloc_from_unmanaged(
+        new_image->rgba_values = malloc_from_managed(
             new_image->rgba_values_size);
         
         decode_BMP(
@@ -256,7 +257,7 @@ static DecodedImage * extract_image(
                 original->rgba_values_size);
     
     new_image->rgba_values_size = slice_size_bytes;
-    new_image->rgba_values = malloc_from_unmanaged(slice_size_bytes);
+    new_image->rgba_values = malloc_from_managed(slice_size_bytes);
     log_assert(new_image->rgba_values != NULL);
     
     new_image->width = slice_width_pixels;
@@ -464,6 +465,7 @@ void init_or_push_one_gpu_texture_array_if_needed(void) {
                     texture_arrays[i].images_size,
                     texture_arrays[i].single_img_width,
                     texture_arrays[i].single_img_height);
+                
                 platform_mutex_unlock(texture_arrays_mutex_ids[i]);
                 break;
             } else {
@@ -503,6 +505,10 @@ void init_or_push_one_gpu_texture_array_if_needed(void) {
                                 texture_arrays[i]
                                     .images[j]
                                     .image->rgba_values);
+                        
+                        free_from_managed(
+                            texture_arrays[i].images[j].image->rgba_values);
+                        
                         platform_mutex_unlock(texture_arrays_mutex_ids[i]);
                         break;
                     }
@@ -823,7 +829,7 @@ void decode_null_image_with_memory(
         new_image->height * new_image->width * 4;
     log_assert(new_image->rgba_values_size > 0);
     new_image->rgba_values = (uint8_t *)
-        malloc_from_unmanaged(new_image->rgba_values_size);
+        malloc_from_managed(new_image->rgba_values_size);
     
     if (new_image->rgba_values == NULL || !application_running) {
         application_running = false;
@@ -975,6 +981,8 @@ void decode_all_null_images_with_memory(void)
                 i,
             /* const int32_t texture_i: */
                 j);
+        
+        init_or_push_one_gpu_texture_array_if_needed();
     }
 }
 
@@ -1029,5 +1037,3 @@ bool32_t texture_has_alpha_channel(
     
     return texture_arrays[texturearray_i].images[texture_i].has_alpha_channel;
 }
-
-
