@@ -36,15 +36,13 @@ static void test_simd_functions(void) {
     SimdTestStruct * double_checks = malloc_from_managed(
         sizeof(SimdTestStruct) * 10);
     
-    for (uint32_t i = 0; i < 10; i++) {
-        memset_char(structs + i, 0, sizeof(SimdTestStruct));
-        memset_char(double_checks + i, 0, sizeof(SimdTestStruct));
-        memset_char(sets + i, 0, sizeof(float));
-        memset_char(adds + i, 0, sizeof(SimdTestStruct));
-        memset_char(maxs + i, 0, sizeof(SimdTestStruct));
-        memset_char(muls + i, 0, sizeof(SimdTestStruct));
-        memset_char(divs + i, 0, sizeof(SimdTestStruct));
-    }
+    memset_char(structs, 0, sizeof(SimdTestStruct)*10);
+    memset_char(double_checks, 0, sizeof(SimdTestStruct)*10);
+    memset_char(sets, 0, sizeof(float));
+    memset_char(adds, 0, sizeof(SimdTestStruct)*10);
+    memset_char(maxs, 0, sizeof(SimdTestStruct)*10);
+    memset_char(muls, 0, sizeof(SimdTestStruct)*10);
+    memset_char(divs, 0, sizeof(SimdTestStruct)*10);
     
     for (uint32_t i = 0; i < 10; i++) {
         for (uint32_t j = 0; j < sizeof(SimdTestStruct) / sizeof(float); j++) {
@@ -114,6 +112,8 @@ static void test_simd_functions(void) {
 
 void init_application_before_gpu_init(void)
 {
+    log_assert(application_running);
+    
     void * unmanaged_memory_store = platform_malloc_unaligned_block(
         UNMANAGED_MEMORY_SIZE);
     void * managed_memory_store = platform_malloc_unaligned_block(

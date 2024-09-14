@@ -29,8 +29,16 @@ void platform_get_writables_path(
         (char *)[libraryDirectory
             cStringUsingEncoding: NSUTF8StringEncoding];
     
+    #ifndef LOGGER_IGNORE_ASSERTS
+    uint32_t len = get_string_length(library_dir);
+    log_assert(len < recipient_size);
+    #endif
+    
+    char sep[32];
+    platform_get_directory_separator(sep);
+    
     strcpy_capped(recipient, recipient_size, library_dir);
-    strcat_capped(recipient, recipient_size, "/");
+    strcat_capped(recipient, recipient_size, sep);
     strcat_capped(recipient, recipient_size, APPLICATION_NAME);
     
     platform_mkdir_if_not_exist(recipient);

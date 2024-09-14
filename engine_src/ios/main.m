@@ -11,12 +11,15 @@
 #include "window_size.h"
 #include "clientlogic.h"
 
+#include "apple_audio.h"
+
  // definitions of functions we need to implement
 #include "platform_layer.h"
 
 
 int main(int argc, char * argv[]) {
     
+    application_running = true;
     has_retina_screen = ([[UIScreen mainScreen]
         respondsToSelector:@selector(displayLinkWithTarget:selector:)]
         && ([UIScreen mainScreen].scale >= 2.0));

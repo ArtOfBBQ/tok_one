@@ -58,7 +58,7 @@
 {
     UITouch * touch       = [touches anyObject];
     CGPoint touchLocation = [touch locationInView:self];
-        
+    
     register_interaction(
         /* interaction : */
             &user_interactions[INTR_PREVIOUS_TOUCH_MOVE],
@@ -146,6 +146,9 @@ TouchableMTKView * _my_mtk_view;
         configureMetalWithDevice: _metal_device
         andPixelFormat: _my_mtk_view.colorPixelFormat
         fromFilePath: shader_lib_filepath];
+    log_assert(result);
+    
+    apple_gpu_init(shared_gameloop_update);
     
     init_application_after_gpu_init();
     
