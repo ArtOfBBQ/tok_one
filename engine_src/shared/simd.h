@@ -38,14 +38,15 @@ because I don't know much about how that works or how reliable it is
 #define simd_add_int16s(a, b)               vaddq_s16(a, b)
 #define simd_sub_int16s(a, b)               vsubq_s16(a, b)
 #define simd_max_int16s(a, b)               vmaxq_s16(a, b)
+#define simd_and_int16s(a, b)               vandq_s16(a, b)
 #define simd_min_int16s(a, b)               vminq_s16(a, b)
 
 // cmpgt stands for "Compare Greater". This returns 255 when true, not 1.
 #define simd_cmpgt_int16s(a, b)             vcgtq_s16(a, b)
 #define simd_cmplt_int16s(a, b)             vcltq_s16(a, b)
-#define simd_cmpeq_int16s(a, b)             vcleq_s16(a, b)
+#define simd_cmpeq_int16s(a, b)             vandq_s16(vcgtq_s16(a, b), vcltq_s16(a, b))
 #define simd_testz_int16s(a, b)             (vmaxvq_s16(a) == 0 && vmaxvq_s16(b) == 0)
-#define simd_test_all_ones_int16s(a)        (vmaxvq_s16(a) != 0)
+#define simd_test_all_bitsset_int16s(a)        (vmaxvq_s16(a) != 0)
 
 /*
 // TODO: implement AVX2 when we're on a CPU that supports it
@@ -67,7 +68,7 @@ because I don't know much about how that works or how reliable it is
 #define simd_cmplt_int16s(a, b)             _mm256_cmplt_epi16(a, b) // Annoyingly doesn't exist :/
 #define simd_cmpeq_int16s(a, b)             _mm256_cmpeq_epi16(a, b) // AVX2
 #define simd_testz_int16s(a, b)             // annoyingly doesn't exist
-#define simd_test_all_ones_int16s(a)        // annoyingly doesn't exist
+#define simd_test_all_bitsset_int16s(a)        // annoyingly doesn't exist
 */
 #elif defined(__SSE2__) && defined(__SSE4_1__)
 
@@ -81,6 +82,7 @@ because I don't know much about how that works or how reliable it is
 #define simd_add_int16s(a, b)               _mm_add_epi16(a, b) // SSE2
 #define simd_sub_int16s(a, b)               _mm_sub_epi16(a, b) // SSE2
 #define simd_max_int16s(a, b)               _mm_max_epi16(a, b) // SSE2
+#define simd_and_int16s(a, b)               _mm_and_si128(a, b)
 #define simd_min_int16s(a, b)               _mm_min_epi16(a, b) // SSE2
 
 // cmpgt stands for "Compare Greater". This returns 255 when true, not 1.
@@ -88,7 +90,7 @@ because I don't know much about how that works or how reliable it is
 #define simd_cmplt_int16s(a, b)             _mm_cmplt_epi16(a, b) // SSE2
 #define simd_cmpeq_int16s(a, b)             _mm_cmpeq_epi16(a, b) // SSE2
 #define simd_testz_int16s(a, b)             _mm_testz_si128(a, b) // SSE4.1
-#define simd_test_all_ones_int16s(a)        _mm_test_all_ones(a)  // SSE4.1
+#define simd_test_all_bitsset_int16s(a)     _mm_test_all_ones(a)  // SSE4.1
 #else
 
 #define SIMD_INT16_LANES                    1
@@ -96,14 +98,15 @@ because I don't know much about how that works or how reliable it is
 #define simd_load_int16s(int16sptr)         (int16sptr)[0]
 #define simd_set_int16s(i16)                i16
 #define simd_store_int16s(recip, from)      (recip)[0] = from
-#define simd_cmpgt_int16s(a, b)             a > b
-#define simd_cmplt_int16s(a, b)             a < b
-#define simd_cmpeq_int16s(a, b)             a == b
+#define simd_cmpgt_int16s(a, b)             (a > b ? &FFFF : 0)
+#define simd_cmplt_int16s(a, b)             (a < b ? &FFFF : 0)
+#define simd_cmpeq_int16s(a, b)             (a == b ? &FFFF : 0)
 #define simd_mul_int16s(a, b)               a * b
 #define simd_add_int16s(a, b)               a + b
 #define simd_sub_int16s(a, b)               a - b
-#define simd_test_all_ones_int16s(a)        a == 1
+#define simd_test_all_bitsset_int16s(a)        a == 1
 #define simd_max_int16s(a, b)               ((a>b)*a)+((a<=b)*b)
+#define simd_and_int16s(a, b)               a & b
 #define simd_min_int16s(a, b)               ((a>b)*b)+((a<=b)*a)
 #endif
 
@@ -121,7 +124,12 @@ because I don't know much about how that works or how reliable it is
 #define simd_add_floats(a, b)               vaddq_f32(a, b)
 #define simd_sub_floats(a, b)               vsubq_f32(a, b)
 #define simd_max_floats(a, b)               vmaxq_f32(a, b)
-#define simd_and_floats(a, b)               vandq_u32(a, b) // TODO: uint type?!
+// The arm comparison functions (like cmpeq) all return unsigned ints
+// we don't use the bitwise and with floats except immediately after passing
+// the result of a logical comparison, so this will be OK
+// TODO: maybe consider rewriting all logical comparisons to just return 1 or 0
+// TODO: and bypass the 255 values alltogether
+#define simd_and_floats(a, b)               (float32x4_t)(vandq_u32(a, b))
 #define simd_sqrt_floats(a)                 vsqrtq_f32(a)
 #define simd_cmpeq_floats(a, b)             vceq_f32(a, b)
 #define simd_cmplt_floats(a, b)             vcltq_f32(a, b)

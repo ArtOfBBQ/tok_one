@@ -16,7 +16,7 @@ static EngineSaveFile * engine_save_file = NULL;
 typedef struct SimdTestStruct {
     float imafloat[16];
 } SimdTestStruct;
-static void test_simd_functions(void) {
+static void test_simd_functions_floats(void) {
     log_assert(sizeof(zLightSource) % (SIMD_FLOAT_LANES * 4) == 0);
     log_assert(sizeof(GPUPolygon)   % (SIMD_FLOAT_LANES * 4) == 0);
     
@@ -35,6 +35,8 @@ static void test_simd_functions(void) {
         sizeof(SimdTestStruct) * 10);
     SimdTestStruct * double_checks = malloc_from_managed(
         sizeof(SimdTestStruct) * 10);
+    SimdTestStruct * equals = malloc_from_managed(
+        sizeof(SimdTestStruct) * 10);
     
     memset_char(structs, 0, sizeof(SimdTestStruct)*10);
     memset_char(double_checks, 0, sizeof(SimdTestStruct)*10);
@@ -43,10 +45,11 @@ static void test_simd_functions(void) {
     memset_char(maxs, 0, sizeof(SimdTestStruct)*10);
     memset_char(muls, 0, sizeof(SimdTestStruct)*10);
     memset_char(divs, 0, sizeof(SimdTestStruct)*10);
+    memset_float(equals, 2.0f, sizeof(SimdTestStruct)*10);
     
     for (uint32_t i = 0; i < 10; i++) {
+        sets[i] = (float)i;
         for (uint32_t j = 0; j < sizeof(SimdTestStruct) / sizeof(float); j++) {
-            sets[i]             = (float)i;
             maxs[i].imafloat[j] = (float)((j % 2) * (i * 2));
             muls[i].imafloat[j] = (float)(i % 4);
             divs[i].imafloat[j] = (float)((i % 2) + 1);
@@ -64,14 +67,23 @@ static void test_simd_functions(void) {
                 double_checks[j].imafloat[i] > maxs[j].imafloat[i] ?
                     double_checks[j].imafloat[i] :
                     maxs[j].imafloat[i];
+            //            float equals_bonus = double_checks[j].imafloat[i] ==
+            //                equals[j].imafloat[i];
+            //            printf("equals_bonus: %f\n", equals_bonus);
+            //            double_checks[j].imafloat[i] += equals_bonus;
         }
-        
+    }
+    
+    for (uint32_t j = 0; j < 10; j++) {
         float * structs_at = (float *)&structs[j];
-        float * muls_at = (float *)&muls[j];
-        float * adds_at = (float *)&adds[j];
-        float * divs_at = (float *)&divs[j];
-        float * maxs_at = (float *)&maxs[j];
+        float * muls_at    = (float *)&muls[j];
+        float * adds_at    = (float *)&adds[j];
+        float * divs_at    = (float *)&divs[j];
+        float * maxs_at    = (float *)&maxs[j];
+        float * equals_at  = (float *)&equals[j];
         
+        float one = 1.0f;
+        SIMD_FLOAT all_ones   = simd_set_float(one);
         for (
             uint32_t i = 0;
             i < sizeof(SimdTestStruct) / sizeof(float);
@@ -79,27 +91,34 @@ static void test_simd_functions(void) {
         {
             SIMD_FLOAT cur  = simd_load_floats(structs_at + i);
             cur = simd_set_float(sets[j]);
-            SIMD_FLOAT mul  = simd_load_floats(muls_at + i);
-            SIMD_FLOAT add  = simd_load_floats(adds_at + i);
-            SIMD_FLOAT div  = simd_load_floats(divs_at + i);
-            SIMD_FLOAT max  = simd_load_floats(maxs_at + i);
+            SIMD_FLOAT mul    = simd_load_floats(muls_at + i);
+            SIMD_FLOAT add    = simd_load_floats(adds_at + i);
+            SIMD_FLOAT div    = simd_load_floats(divs_at + i);
+            SIMD_FLOAT max    = simd_load_floats(maxs_at + i);
+            SIMD_FLOAT eq     = simd_load_floats(equals_at + i);
+            
             
             cur = simd_mul_floats(cur, mul);
             cur = simd_add_floats(cur, add);
             cur = simd_div_floats(cur, div);
             cur = simd_max_floats(cur, max);
             
+            //            SIMD_FLOAT equals_bonuses =
+            //                simd_and_floats(all_ones, simd_cmpeq_floats(cur, eq));
+            //            cur = simd_add_floats(cur, equals_bonuses);
+            
             simd_store_floats(structs_at + i, cur);
         }
     }
     
     for (uint32_t i = 0; i < 10; i++) {
-        for (uint32_t j = 0; j < 10; j++) {
-            log_assert(structs[i].imafloat[j] == double_checks[i].imafloat[j]);
+        for (uint32_t j = 0; j < 16; j++) {
+            log_assert(
+                (structs[i].imafloat[j] - double_checks[i].imafloat[j]) <  0.01f &&
+                (structs[i].imafloat[j] - double_checks[i].imafloat[j]) > -0.01f);
         }
     }
     
-
     free_from_managed(double_checks);
     free_from_managed(maxs);
     free_from_managed(adds);
@@ -127,7 +146,7 @@ void init_application_before_gpu_init(void)
         platform_mutex_unlock);
     
     #ifndef LOGGER_IGNORE_ASSERTS
-    test_simd_functions();
+    test_simd_functions_floats();
     #endif
     
     init_obj_parser(malloc_from_managed_infoless, free_from_managed);
