@@ -139,6 +139,10 @@ uint32_t
 get_string_length(   
     const char * null_terminated_string);
 
+bool32_t string_starts_with(
+    const char * str_to_check,
+    const char * start);
+
 bool32_t string_ends_with(
     const char * str_to_check,
     const char * ending);

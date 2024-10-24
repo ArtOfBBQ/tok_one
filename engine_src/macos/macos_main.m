@@ -416,7 +416,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 
 - (void)windowDidMove:(NSNotification *)notification
 {
-    update_window_position(
+    windowsize_update_window_position(
         (float)(((NSWindow *)[notification object]).frame.origin.x),
         (float)(((NSWindow *)[notification object]).frame.origin.y));
 }
@@ -434,7 +434,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 
 - (void)windowDidResize:(NSNotification *)notification {
     
-    update_window_size(
+    windowsize_update_window_size(
         /* float width: */
             [window getWidth],
         /* float height */
@@ -448,6 +448,8 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 
 int main(int argc, const char * argv[]) {
     
+    metal_active = false;
+    gameloop_active = false;
     application_running = true;
     has_retina_screen = true; // TODO: actually query the machine and find out
     
@@ -455,7 +457,7 @@ int main(int argc, const char * argv[]) {
     
     init_application_before_gpu_init();
     
-    apple_gpu_init(shared_gameloop_update);
+    apple_gpu_init(gameloop_update);
     
     log_append(
         "\nconfirming we can save debug info - writing log.txt...\n");
@@ -554,6 +556,8 @@ int main(int argc, const char * argv[]) {
     
         start_audio_loop();
     }
+    
+    metal_active = true;
     
     @autoreleasepool {
         return NSApplicationMain(argc, argv);

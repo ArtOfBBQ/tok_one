@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "logger.h"
+#include "profiler.h"
 #include "tok_random.h"
 #include "audio.h"
 #include "lightsource.h"

@@ -334,6 +334,27 @@ get_string_length(
 }
 
 bool32_t
+string_starts_with(
+    const char * str_to_check,
+    const char * start)
+{
+    if (str_to_check == NULL || start == NULL) {
+        return false;
+    }
+    
+    int32_t i = 0;
+    
+    while (start[i] != '\0') {
+        if (str_to_check[i] != start[i]) {
+            return false;
+        }
+        i++;
+    }
+    
+    return true;
+}
+
+bool32_t
 string_ends_with(
     const char * str_to_check,
     const char * ending)

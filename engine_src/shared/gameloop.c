@@ -1,5 +1,7 @@
 #include "gameloop.h"
 
+bool32_t gameloop_active = false;
+
 static uint64_t gameloop_previous_time = 0;
 static uint64_t gameloop_frame_no = 0;
 static uint32_t gameloop_mutex_id = UINT32_MAX;
@@ -157,14 +159,23 @@ static void update_terminal(void) {
     terminal_render();
 }
 
-void shared_gameloop_init(void) {
+void gameloop_init(void) {
     gameloop_mutex_id = platform_init_mutex_and_return_id();
 }
 
-void shared_gameloop_update(
+void gameloop_update(
     GPUDataForSingleFrame * frame_data)
 {
-    // platform_mutex_lock(gameloop_mutex_id);
+    #ifdef PROFILER_ACTIVE
+    profiler_new_frame();
+    #endif
+    
+    if (!gameloop_active) {
+        return;
+    }
+    
+    log_assert(frame_data->light_collection != NULL);
+    log_assert(frame_data->camera != NULL);
     
     uint64_t time = platform_get_current_time_microsecs();
     if (gameloop_previous_time < 1) {
@@ -173,6 +184,11 @@ void shared_gameloop_update(
         return;
     }
     uint64_t elapsed = time - gameloop_previous_time;
+    gameloop_previous_time = time;
+    
+    if (elapsed > 500000) {
+        log_append("extremely slow frame");
+    }
     
     if (!application_running) {
         delete_all_ui_elements();
@@ -200,7 +216,7 @@ void shared_gameloop_update(
             "Failed assert, and also failed to retrieve an error message");
         }
         
-        request_label_renderable(
+        text_request_label_renderable(
             /* const uint32_t with_object_id: */
                 0,
             /* const char * text_to_draw: */
@@ -216,8 +232,6 @@ void shared_gameloop_update(
             /* const bool32_t ignore_camera: */
                 true);
     }
-    
-    gameloop_previous_time = time;
     
     gameloop_frame_no++;
     
@@ -237,7 +251,7 @@ void shared_gameloop_update(
             window_globals->last_resize_request_at = 0;
             log_append("\nOK, resize window\n");
             
-            init_projection_constants();
+            windowsize_init();
             
             platform_gpu_update_viewport();
             
@@ -247,12 +261,7 @@ void shared_gameloop_update(
                 (uint32_t)window_globals->window_height,
                 (uint32_t)window_globals->window_width);
        }
-    } else {
-        // init_or_push_one_gpu_texture_array_if_needed();
-    }
-    
-    if (application_running) {
-        
+    } else if (application_running) {
         platform_update_mouse_location();
         
         update_terminal();
@@ -286,15 +295,19 @@ void shared_gameloop_update(
         
         ui_elements_handle_touches(elapsed);
         
+        #ifdef PROFILER_ACTIVE
+        profiler_handle_touches();
+        profiler_start("client_logic_update");
+        #endif
         client_logic_update(elapsed);
+        #ifdef PROFILER_ACTIVE
+        profiler_end("client_logic_update");
+        #endif
     }
     
-    frame_data->camera->xyz[0] = camera.xyz[0];
-    frame_data->camera->xyz[1] = camera.xyz[1];
-    frame_data->camera->xyz[2] = camera.xyz[2];
-    frame_data->camera->xyz_angle[0] = camera.xyz_angle[0];
-    frame_data->camera->xyz_angle[1] = camera.xyz_angle[1];
-    frame_data->camera->xyz_angle[2] = camera.xyz_angle[2];
+    log_assert(frame_data->light_collection != NULL);
+    tok_memcpy(frame_data->camera, &camera, sizeof(GPUCamera));
+    log_assert(frame_data->light_collection != NULL);
     
     frame_data->vertices_size = 0;
     frame_data->polygon_collection->size = 0;
@@ -303,36 +316,20 @@ void shared_gameloop_update(
     frame_data->point_vertices_size = 0;
     
     if (window_globals->draw_fps) {
-        request_fps_counter(
+        text_request_fps_counter(
             /* uint64_t microseconds_elapsed: */
                 elapsed);
     }
     
-    hardware_render(
+    renderer_hardware_render(
             frame_data,
         /* uint64_t elapsed_microseconds: */
             elapsed);
     
-    if (false) {
-        //            ScheduledAnimation * move_mouseptr =
-        //                next_scheduled_animation(true);
-        //            move_mouseptr->affected_object_id = debugmouseptr_id;
-        //            move_mouseptr->gpu_polygon_vals.xyz[0] =
-        //                screenspace_x_to_x(
-        //                    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_x,
-        //                    1.0f);
-        //            move_mouseptr->gpu_polygon_vals.xyz[1] =
-        //                screenspace_y_to_y(
-        //                    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_y,
-        //                    1.0f);
-        //            move_mouseptr->gpu_polygon_vals.xyz[2] = 1.0f;
-        //            move_mouseptr->duration_microseconds = 1;
-        //            commit_scheduled_animation(move_mouseptr);
-        
-    }
+    #ifdef PROFILER_ACTIVE
+    profiler_draw_labels();
+    #endif
     
     uint32_t overflow_vertices = frame_data->vertices_size % 3;
     frame_data->vertices_size -= overflow_vertices;
-    
-    // platform_mutex_unlock(gameloop_mutex_id);
 }

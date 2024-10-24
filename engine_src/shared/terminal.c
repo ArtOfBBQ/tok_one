@@ -97,23 +97,23 @@ void terminal_redraw_backgrounds(void) {
     request_next_zpolygon(&current_command_input);
     construct_quad_around(
         /* const float mid_x: */
-            screenspace_x_to_x(
+            windowsize_screenspace_x_to_x(
                 window_globals->window_width / 2,
                 TERM_Z),
         /* const float mid_y: */
-            screenspace_y_to_y(
+            windowsize_screenspace_y_to_y(
                 (TERMINAL_WHITESPACE * 1.5f) +
                 (TERM_FONT_SIZE / 2),
                 TERM_Z),
         /* const float z: */
             TERM_Z,
         /* const float width: */
-            screenspace_width_to_width(
+            windowsize_screenspace_width_to_width(
                 window_globals->window_width -
                     (TERMINAL_WHITESPACE * 2),
                 TERM_Z),
         /* const float height: */
-            screenspace_height_to_height(
+            windowsize_screenspace_height_to_height(
                 current_input_height,
                 TERM_Z),
         /* zPolygon * recipien: */
@@ -139,11 +139,11 @@ void terminal_redraw_backgrounds(void) {
     construct_zpolygon(&current_command_input);
     construct_quad_around(
        /* const float mid_x: */
-           screenspace_x_to_x(
+           windowsize_screenspace_x_to_x(
                window_globals->window_width / 2,
                TERM_Z),
        /* const float mid_y: */
-           screenspace_y_to_y(
+           windowsize_screenspace_y_to_y(
                (command_history_height / 2) +
                    current_input_height +
                    (TERMINAL_WHITESPACE * 2),
@@ -151,12 +151,12 @@ void terminal_redraw_backgrounds(void) {
        /* const float z: */
            TERM_Z,
        /* const float width: */
-           screenspace_width_to_width(
+           windowsize_screenspace_width_to_width(
                 window_globals->window_width -
                     (TERMINAL_WHITESPACE * 2),
                 TERM_Z),
        /* const float height: */
-           screenspace_height_to_height(
+           windowsize_screenspace_height_to_height(
                command_history_height,
                TERM_Z),
        /* zPolygon * recipien: */
@@ -242,7 +242,7 @@ void terminal_render(void) {
         font_color[2] = term_font_color[2];
         font_color[3] = term_font_color[3];
         
-        request_label_renderable(
+        text_request_label_renderable(
             /* const int32_t with_object_id: */
                 terminal_labels_object_id,
             /* const char * text_to_draw: */
@@ -266,7 +266,7 @@ void terminal_render(void) {
         }
         
         // the terminal's current input as a label
-        request_label_renderable(
+        text_request_label_renderable(
             /* with_object_id: */
                 terminal_labels_object_id,
             /* const char * text_to_draw: */
@@ -338,6 +338,35 @@ static bool32_t evaluate_terminal_command(
     char * command,
     char * response)
 {
+    if (
+        are_equal_strings(command, "PROFILE") ||
+        are_equal_strings(command, "PROFILER") ||
+        are_equal_strings(command, "PROFILE TREE"))
+    {
+        #ifdef PROFILER_ACTIVE
+        window_globals->show_profiler = !window_globals->show_profiler;
+        
+        if (window_globals->show_profiler) {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Showing profiler results...");
+        } else {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Stopped showing profiler results...");
+        }
+        #else
+        strcpy_capped(
+            response,
+            SINGLE_LINE_MAX,
+            "PROFILER_ACTIVE was undefined at compile time, no profiler data "
+            "is available.");
+        #endif
+        return true;
+    }
+    
     if (
         are_equal_strings(command, "RESET CAMERA") ||
         are_equal_strings(command, "CENTER CAMERA"))

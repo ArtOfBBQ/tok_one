@@ -51,7 +51,7 @@ static ActiveUIElement * next_active_ui_element(void) {
     return &active_ui_elements[active_ui_elements_size - 1];
 }
 
-void init_ui_elements(void) {
+void uielement_init(void) {
     next_ui_element_settings = (NextUIElementSettings *)
         malloc_from_unmanaged(sizeof(NextUIElementSettings));
     memset_char(next_ui_element_settings, 0, sizeof(NextUIElementSettings));
@@ -210,7 +210,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                 {
                     // set slider value
                     float new_x_offset =
-                        screenspace_x_to_x(
+                        windowsize_screenspace_x_to_x(
                             user_interactions[
                                 INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_x,
                             zpolygons_to_render->gpu_data[zp_i].xyz[2]) -
@@ -328,17 +328,17 @@ static void request_slider_shared(
     request_next_zpolygon(&slider_back);
     construct_quad_around(
         /* const float mid_x: */
-            screenspace_x_to_x(x_screenspace, z),
+            windowsize_screenspace_x_to_x(x_screenspace, z),
         /* const float mid_y: */
-            screenspace_y_to_y(y_screenspace, z),
+            windowsize_screenspace_y_to_y(y_screenspace, z),
         /* const float z: */
             z,
         /* const float width: */
-            screenspace_width_to_width(
+            windowsize_screenspace_width_to_width(
                 next_ui_element_settings->slider_width_screenspace,
                 z),
         /* const float height: */
-            screenspace_height_to_height(
+            windowsize_screenspace_height_to_height(
                 next_ui_element_settings->slider_height_screenspace,
                 z),
         /* zPolygon * recipient: */
@@ -373,17 +373,17 @@ static void request_slider_shared(
     float pin_z = z - 0.002f;
     construct_quad_around(
         /* const float mid_x: */
-            screenspace_x_to_x(x_screenspace, pin_z),
+            windowsize_screenspace_x_to_x(x_screenspace, pin_z),
         /* const float mid_y: */
-            screenspace_y_to_y(y_screenspace, pin_z),
+            windowsize_screenspace_y_to_y(y_screenspace, pin_z),
         /* const float z: */
             pin_z,
         /* const float width: */
-            screenspace_width_to_width(
+            windowsize_screenspace_width_to_width(
                 next_ui_element_settings->pin_width_screenspace,
                 pin_z),
         /* const float height: */
-            screenspace_height_to_height(
+            windowsize_screenspace_height_to_height(
                 next_ui_element_settings->pin_height_screenspace,
                 pin_z),
         /* zPolygon * recipient: */
@@ -392,7 +392,9 @@ static void request_slider_shared(
     slider_pin.cpu_data->object_id = pin_object_id;
     
     slider_pin.gpu_data->xyz_offset[0] =
-        screenspace_width_to_width(initial_x_offset_screenspace, pin_z);
+        windowsize_screenspace_width_to_width(
+            initial_x_offset_screenspace,
+            pin_z);
     
     slider_pin.gpu_data->xyz_offset[1] = 0.0f;
     
@@ -423,7 +425,7 @@ static void request_slider_shared(
         next_ui_element_settings->slider_slid_funcptr;
     
     next_active_element->slider_width =
-        screenspace_width_to_width(
+        windowsize_screenspace_width_to_width(
             next_ui_element_settings->slider_width_screenspace,
             z);
     next_active_element->slideable = true;
@@ -546,17 +548,17 @@ void request_button(
     request_next_zpolygon(&button_request);
     construct_quad_around(
         /* const float mid_x: */
-            screenspace_x_to_x(x_screenspace, z),
+            windowsize_screenspace_x_to_x(x_screenspace, z),
         /* const float mid_y: */
-            screenspace_y_to_y(y_screenspace, z),
+            windowsize_screenspace_y_to_y(y_screenspace, z),
         /* const float z: */
             z,
         /* const float width: */
-            screenspace_width_to_width(
+            windowsize_screenspace_width_to_width(
                 next_ui_element_settings->button_width_screenspace,
                 z),
         /* const float height: */
-            screenspace_height_to_height(
+            windowsize_screenspace_height_to_height(
                 next_ui_element_settings->button_height_screenspace,
                 z),
         /* PolygonRequest * stack_recipient: */
@@ -583,7 +585,7 @@ void request_button(
     button_request.gpu_materials[0].texture_i =
         next_ui_element_settings->button_background_texture_i;
     
-    request_label_around(
+    text_request_label_around(
         /* const int32_t with_object_id: */
             button_object_id,
         /* const char * text_to_draw: */

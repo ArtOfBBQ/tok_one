@@ -17,7 +17,7 @@ void get_memory_usage_summary_string(
     char * recipient,
     const uint32_t recipient_cap);
 
-void init_memory_store(
+void memorystore_init(
     void * funcptr_unmanaged_memory_block,
     void * funcptr_managed_memory_block,
     uint32_t (* funcptr_init_mutex_and_return_id)(void),

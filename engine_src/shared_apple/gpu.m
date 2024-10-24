@@ -527,7 +527,6 @@ static id projection_constants_buffer;
     singleImgWidth          : (uint32_t)single_img_width
     singleImgHeight         : (uint32_t)single_img_height
 {
-    if (!metal_active) { return; }
     assert(texturearray_i < 31);
     
     // we always overwrite textures, so pad them to match first
@@ -893,6 +892,8 @@ void platform_gpu_init_texture_array(
     log_append("\n");
     
     log_assert(apple_gpu_delegate != NULL);
+    
+    log_assert(metal_active);
     
     [apple_gpu_delegate
         initializeTextureArray : texture_array_i

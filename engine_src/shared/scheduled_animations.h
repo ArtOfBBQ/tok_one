@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-void init_scheduled_animations(
+void scheduled_animations_init(
     void (* arg_callback_function)(int32_t, float, float, int32_t));
 
 void resolve_animation_effects(const uint64_t microseconds_elapsed);

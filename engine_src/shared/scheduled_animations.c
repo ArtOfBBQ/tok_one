@@ -16,7 +16,7 @@ static PendingCallback pending_callbacks[MAX_PENDING_CALLBACKS];
 static uint32_t pending_callbacks_size = 0;
 static void (* callback_function)(int32_t, float, float, int32_t) = NULL;
 
-void init_scheduled_animations(
+void scheduled_animations_init(
     void (* arg_callback_function)(int32_t, float, float, int32_t))
 {
     scheduled_animations = (ScheduledAnimation *)malloc_from_unmanaged(

@@ -25,7 +25,7 @@ to a new location later with a ScheduledAnimation. It will then
 retain the offsets. If you don't care about this just use the
 function below which keeps all offsets at 0
 */
-void request_label_offset_around(
+void text_request_label_offset_around(
     const int32_t with_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
@@ -34,7 +34,7 @@ void request_label_offset_around(
     const float max_width,
     const bool32_t ignore_camera);
 
-void request_label_around_x_at_top_y(
+void text_request_label_around_x_at_top_y(
     const int32_t with_object_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
@@ -43,7 +43,7 @@ void request_label_around_x_at_top_y(
     const float max_width,
     const bool32_t ignore_camera);
 
-void request_label_around(
+void text_request_label_around(
     const int32_t with_object_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
@@ -52,7 +52,7 @@ void request_label_around(
     const float max_width,
     const bool32_t ignore_camera);
 
-void request_label_renderable(
+void text_request_label_renderable(
     const int32_t with_object_id,
     const char * text_to_draw,
     const float left_pixelspace,
@@ -61,7 +61,7 @@ void request_label_renderable(
     const float max_width,
     const bool32_t ignore_camera);
 
-void request_fps_counter(uint64_t microseconds_elapsed);
+void text_request_fps_counter(uint64_t microseconds_elapsed);
 
 #ifdef __cplusplus
 }

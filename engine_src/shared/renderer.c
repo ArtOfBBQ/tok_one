@@ -2,7 +2,7 @@
 
 static uint32_t renderer_initialized = false;
 
-void init_renderer(void) {
+void renderer_init(void) {
     renderer_initialized = true;
     
     camera.xyz[0]       = 0.0f;
@@ -254,7 +254,7 @@ inline static void add_opaque_zpolygons_to_workload(
 }
 
 static float clickray_elapsed = 0.0f;
-void hardware_render(
+void renderer_hardware_render(
     GPUDataForSingleFrame * frame_data,
     uint64_t elapsed_nanoseconds)
 {
@@ -448,10 +448,10 @@ void hardware_render(
     
     if (application_running && window_globals->draw_mouseptr) {
         float xyz[3];
-        xyz[0] = screenspace_x_to_x(
+        xyz[0] = windowsize_screenspace_x_to_x(
             user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_x,
             1.0f);
-        xyz[1] = screenspace_y_to_y(
+        xyz[1] = windowsize_screenspace_y_to_y(
             user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_y,
             1.0f);
         xyz[2] = 1.0f;

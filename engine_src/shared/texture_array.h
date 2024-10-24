@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-void init_texture_arrays(void);
+void texture_array_init(void);
 void init_or_push_one_gpu_texture_array_if_needed(void);
 
 void register_new_texturearray_from_files(

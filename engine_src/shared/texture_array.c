@@ -23,6 +23,7 @@ typedef struct TextureArray {
     uint32_t images_size;
     uint32_t single_img_width;
     uint32_t single_img_height;
+    bool32_t gpu_initted;
     bool32_t request_init;
 } TextureArray;
 
@@ -334,7 +335,7 @@ static void register_to_texturearray_from_images(
 
     log_append("register to texturearray ");
     log_append_int(target_texture_array_i);
-    log_append("by from ");
+    log_append(" from ");
     log_append_uint(new_images_size);
     log_append(" images\n");
     
@@ -429,7 +430,7 @@ void register_new_texturearray_from_files(
             decoded_images_size);
 }
 
-void init_texture_arrays(void) {
+void texture_array_init(void) {
     
     // initialize texture arrays
     texture_arrays = (TextureArray *)malloc_from_unmanaged(
@@ -441,6 +442,7 @@ void init_texture_arrays(void) {
         texture_arrays[i].single_img_width = 0;
         texture_arrays[i].single_img_height = 0;
         texture_arrays[i].request_init = false;
+        texture_arrays[i].gpu_initted = false;
         for (uint32_t j = 0; j < MAX_FILES_IN_SINGLE_TEXARRAY; j++) {
             texture_arrays[i].images[j].request_update = false;
             texture_arrays[i].images[j].prioritize_asset_load = false;
@@ -453,22 +455,27 @@ void init_texture_arrays(void) {
 }
 
 void init_or_push_one_gpu_texture_array_if_needed(void) {
-    for (int32_t i = 0; (uint32_t)i < texture_arrays_size; i++) {
+    for (
+        int32_t i = 0;
+        (uint32_t)i < texture_arrays_size;
+        i++)
+    {
         if (platform_mutex_trylock(texture_arrays_mutex_ids[i])) {
             if (texture_arrays[i].request_init) {
+                log_assert(!texture_arrays[i].gpu_initted);
                 log_append("init texture array: ");
                 log_append_int(i);
                 log_append_char('\n');
                 texture_arrays[i].request_init = false;
+                texture_arrays[i].gpu_initted = true;
                 platform_gpu_init_texture_array(
                     i,
                     texture_arrays[i].images_size,
                     texture_arrays[i].single_img_width,
                     texture_arrays[i].single_img_height);
-                
-                platform_mutex_unlock(texture_arrays_mutex_ids[i]);
-                break;
-            } else {
+            }
+            
+            if (texture_arrays[i].gpu_initted) {
                 log_assert(texture_arrays[i].images_size < 2000);
                 for (
                     int32_t j = 0;
@@ -508,9 +515,6 @@ void init_or_push_one_gpu_texture_array_if_needed(void) {
                         
                         free_from_managed(
                             texture_arrays[i].images[j].image->rgba_values);
-                        
-                        platform_mutex_unlock(texture_arrays_mutex_ids[i]);
-                        break;
                     }
                 }
             }

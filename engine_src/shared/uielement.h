@@ -47,7 +47,7 @@ typedef struct NextUIElementSettings {
 extern NextUIElementSettings * next_ui_element_settings;
 
 // allocates memory for state
-void init_ui_elements(void);
+void uielement_init(void);
 
 void ui_elements_handle_touches(uint64_t ms_elapsed);
 

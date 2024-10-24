@@ -90,7 +90,7 @@ static void align_pointer(void ** to_align) {
 }
 
 
-void init_memory_store(
+void memorystore_init(
     void * ptr_unmanaged_memory_block,
     void * ptr_managed_memory_block,
     uint32_t (* memstore_init_mutex_and_return_id)(void),
@@ -110,13 +110,9 @@ void init_memory_store(
     
     managed_memory_end = ((char *)managed_memory + MANAGED_MEMORY_SIZE);
     
-    for (uint32_t i = 0; i < UNMANAGED_MEMORY_SIZE; i++) {
-        ((uint8_t *)unmanaged_memory)[i] = 0;
-    }
+    memset_char(unmanaged_memory, 0, UNMANAGED_MEMORY_SIZE);
     
-    for (uint32_t i = 0; i < MANAGED_MEMORY_SIZE; i++) {
-        ((uint8_t *)managed_memory)[i] = 0;
-    }
+    memset_char(managed_memory, 0, MANAGED_MEMORY_SIZE);
     
     managed_stack = malloc_from_unmanaged(sizeof(ManagedMemoryStack));
     managed_stack->size = 0;

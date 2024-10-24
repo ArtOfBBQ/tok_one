@@ -223,7 +223,7 @@ static void prefetch_label_lines(
     log_assert(widest_line_width > 0.0f);
 }
 
-void request_label_offset_around(
+void text_request_label_offset_around(
     const int32_t with_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
@@ -274,19 +274,19 @@ void request_label_offset_around(
             request_next_zpolygon(&letter);
             construct_quad_around(
                 /* const float left_x: */
-                    screenspace_x_to_x(
+                    windowsize_screenspace_x_to_x(
                         mid_x_pixelspace,
                         z),
                 /* const float bottom_y */
-                    screenspace_y_to_y(
+                    windowsize_screenspace_y_to_y(
                         mid_y_pixelspace,
                         z),
                 /* const float z: */
                     z,
                 /* const float width: */
-                    screenspace_width_to_width(font_height, z),
+                    windowsize_screenspace_width_to_width(font_height, z),
                 /* const float height: */
-                    screenspace_height_to_height(font_height, z),
+                    windowsize_screenspace_height_to_height(font_height, z),
                 /* recipient: */
                     &letter);
             
@@ -311,12 +311,12 @@ void request_label_offset_around(
             }
             
             letter.gpu_data->xyz_offset[0] =
-                screenspace_width_to_width(
+                windowsize_screenspace_width_to_width(
                     (cur_x_offset_pixelspace +
                         get_left_side_bearing(text_to_draw[j])),
                     z);
             letter.gpu_data->xyz_offset[1] =
-                screenspace_height_to_height(
+                windowsize_screenspace_height_to_height(
                     (cur_y_offset_pixelspace -
                         get_y_offset(text_to_draw[j]) -
                         (font_height * 0.5f)),
@@ -335,7 +335,7 @@ void request_label_offset_around(
     }
 }
 
-void request_label_around_x_at_top_y(
+void text_request_label_around_x_at_top_y(
     const int32_t with_object_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
@@ -350,7 +350,7 @@ void request_label_around_x_at_top_y(
     prefetch_label_lines(text_to_draw, max_width, lines, &lines_size);
     log_assert(lines_size < MAX_LINES);
     
-    request_label_offset_around(
+    text_request_label_offset_around(
         /* const int32_t with_id: */
             with_object_id,
         /* const char * text_to_draw: */
@@ -368,7 +368,7 @@ void request_label_around_x_at_top_y(
             ignore_camera);
 }
 
-void request_label_around(
+void text_request_label_around(
     const int32_t with_id,
     const char * text_to_draw,
     const float mid_x_pixelspace,
@@ -377,7 +377,7 @@ void request_label_around(
     const float max_width,
     const bool32_t ignore_camera)
 {
-    request_label_offset_around(
+    text_request_label_offset_around(
         /* const int32_t with_id: */
             with_id,
         /* const char * text_to_draw: */
@@ -394,7 +394,7 @@ void request_label_around(
             ignore_camera);
 }
 
-void request_label_renderable(
+void text_request_label_renderable(
     const int32_t with_id,
     const char * text_to_draw,
     const float left_pixelspace,
@@ -415,9 +415,9 @@ void request_label_renderable(
     
     PolygonRequest letter;
     
-    float letter_width = screenspace_width_to_width(
+    float letter_width = windowsize_screenspace_width_to_width(
         font_height, z);
-    float letter_height = screenspace_height_to_height(
+    float letter_height = windowsize_screenspace_height_to_height(
         font_height, z);
     
     while (text_to_draw[i] != '\0') {
@@ -452,9 +452,9 @@ void request_label_renderable(
         request_next_zpolygon(&letter);
         construct_quad(
             /* const float left_x: */
-                screenspace_x_to_x(left_pixelspace, z),
+                windowsize_screenspace_x_to_x(left_pixelspace, z),
             /* const float bottom_y: */
-                screenspace_y_to_y(
+                windowsize_screenspace_y_to_y(
                     top_pixelspace - font_height, z),
             /* const flota z: */
                 z,
@@ -486,11 +486,11 @@ void request_label_renderable(
         }
         
         letter.gpu_data->xyz_offset[0] =
-            screenspace_width_to_width(
+            windowsize_screenspace_width_to_width(
                 cur_x_offset + get_left_side_bearing(
                     text_to_draw[i]), z);
         letter.gpu_data->xyz_offset[1] =
-            screenspace_height_to_height(
+            windowsize_screenspace_height_to_height(
                 cur_y_offset - get_y_offset(
                     text_to_draw[i]), z);
         
@@ -506,7 +506,7 @@ void request_label_renderable(
     }
 }
 
-void request_fps_counter(
+void text_request_fps_counter(
     uint64_t microseconds_elapsed)
 {
     #ifdef __ARM_NEON
@@ -546,7 +546,7 @@ void request_fps_counter(
     font_color[2] = 1.0f;
     font_color[3] = 1.0f;
     font_ignore_lighting = true;
-    request_label_renderable(
+    text_request_label_renderable(
         /* with_id               : */
             FPS_COUNTER_OBJECT_ID,
         /* char * text_to_draw   : */

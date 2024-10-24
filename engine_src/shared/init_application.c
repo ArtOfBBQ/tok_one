@@ -138,7 +138,7 @@ void init_application_before_gpu_init(void)
     void * managed_memory_store = platform_malloc_unaligned_block(
         MANAGED_MEMORY_SIZE);
     
-    init_memory_store(
+    memorystore_init(
         unmanaged_memory_store,
         managed_memory_store,
         platform_init_mutex_and_return_id,
@@ -149,7 +149,7 @@ void init_application_before_gpu_init(void)
     test_simd_functions_floats();
     #endif
     
-    init_obj_parser(malloc_from_managed_infoless, free_from_managed);
+    objparser_init(malloc_from_managed_infoless, free_from_managed);
     
     keypress_map = (bool32_t *)malloc_from_unmanaged(
         sizeof(bool32_t) * KEYPRESS_MAP_SIZE);
@@ -157,7 +157,7 @@ void init_application_before_gpu_init(void)
         keypress_map[i] = false;
     }
     
-    init_logger(
+    logger_init(
         /* void * arg_malloc_function(size_t size): */
             malloc_from_unmanaged,
         /* uint32_t (* arg_create_mutex_function)(void): */
@@ -166,6 +166,10 @@ void init_application_before_gpu_init(void)
             platform_mutex_lock,
         /* int32_t arg_mutex_unlock_function(const uint32_t mutex_id): */
             platform_mutex_unlock);
+    
+    #ifdef PROFILER_ACTIVE
+    profiler_init(malloc_from_unmanaged);
+    #endif
     
     engine_save_file = (EngineSaveFile *)malloc_from_unmanaged(
         sizeof(EngineSaveFile));
@@ -189,7 +193,7 @@ void init_application_before_gpu_init(void)
     window_globals = (WindowGlobals *)malloc_from_unmanaged(
         sizeof(WindowGlobals));
     
-    init_audio(
+    audio_init(
         /* void *(*arg_malloc_function)(size_t): */
             malloc_from_unmanaged);
     
@@ -222,15 +226,15 @@ void init_application_before_gpu_init(void)
     window_globals->aspect_ratio = window_globals->window_height /
         window_globals->window_width;
     
-    init_projection_constants();
+    windowsize_init();
     
-    init_ui_elements();
+    uielement_init();
     
     zpolygons_to_render = (zPolygonCollection *)malloc_from_unmanaged(
         sizeof(zPolygonCollection));
     zpolygons_to_render->size = 0;
     
-    init_all_meshes();
+    objmodel_init();
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
         sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
     lineparticle_effects = (LineParticle *)malloc_from_unmanaged(
@@ -238,10 +242,10 @@ void init_application_before_gpu_init(void)
     particle_effects = (ParticleEffect *)malloc_from_unmanaged(
         sizeof(ParticleEffect) * PARTICLE_EFFECTS_SIZE);
     
-    shared_gameloop_init();
+    gameloop_init();
     terminal_init(platform_enter_fullscreen);
-    init_scheduled_animations(client_logic_animation_callback);
-    init_texture_arrays();
+    scheduled_animations_init(client_logic_animation_callback);
+    texture_array_init();
     
     // initialize font with fontmetrics.dat
     FileBuffer font_metrics_file;
@@ -270,7 +274,7 @@ void init_application_before_gpu_init(void)
         construct_interaction(&user_interactions[m]);
     }
     
-    init_renderer();
+    renderer_init();
     
     // init the buffers that contain our vertices to send to the GPU
     gpu_shared_data_collection.vertices_allocation_size =
@@ -369,6 +373,9 @@ void init_application_before_gpu_init(void)
             (GPULightCollection *)malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection.lights_allocation_size,
                 4096);
+        assert(
+            gpu_shared_data_collection.triple_buffers[frame_i].light_collection
+                != NULL);
         
         gpu_shared_data_collection.triple_buffers[frame_i].camera =
         (GPUCamera *)malloc_from_unmanaged_aligned(
@@ -385,18 +392,10 @@ void init_application_before_gpu_init(void)
             gpu_shared_data_collection.line_vertices_allocation_size,
             4096);
         
-        gpu_shared_data_collection.
-            triple_buffers[frame_i].camera->xyz[0] = 0.0f;
-        gpu_shared_data_collection.
-            triple_buffers[frame_i].camera->xyz[1] = 0.0f;
-        gpu_shared_data_collection.
-            triple_buffers[frame_i].camera->xyz[2] = 0.0f;
-        gpu_shared_data_collection.
-            triple_buffers[frame_i].camera->xyz_angle[0] = 0.0f;
-        gpu_shared_data_collection.
-            triple_buffers[frame_i].camera->xyz_angle[1] = 0.0f;
-        gpu_shared_data_collection.
-            triple_buffers[frame_i].camera->xyz_angle[2] = 0.0f;
+        memset_float(
+            gpu_shared_data_collection.triple_buffers[frame_i].camera,
+            0.0f,
+            sizeof(GPUCamera));
     }
     
     gpu_shared_data_collection.locked_vertices =
@@ -454,6 +453,8 @@ void init_application_after_gpu_init(void) {
     }
     
     client_logic_late_startup();
+    
+    gameloop_active = true;
 }
 
 void shared_shutdown_application(void)

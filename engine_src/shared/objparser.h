@@ -56,7 +56,7 @@ init_obj_parser(
     malloc,
     free);
 */
-void init_obj_parser(
+void objparser_init(
     void * (* malloc_function)       (size_t),
     void   (* optional_free_function)(void *));
 

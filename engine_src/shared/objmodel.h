@@ -48,7 +48,7 @@ extern uint32_t all_mesh_summaries_size;
 
 extern LockedVertexWithMaterialCollection * all_mesh_vertices;
 
-void init_all_meshes(void);
+void objmodel_init(void);
 
 int32_t new_mesh_id_from_obj_text(
     const char * obj_text,

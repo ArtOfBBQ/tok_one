@@ -3,7 +3,9 @@
 WindowGlobals * window_globals = NULL;
 
 
-float screenspace_x_to_x(const float screenspace_x, const float given_z)
+float windowsize_screenspace_x_to_x(
+    const float screenspace_x,
+    const float given_z)
 {
     return (
         (((screenspace_x * 2.0f) / window_globals->window_width) - 1.0f)
@@ -11,7 +13,9 @@ float screenspace_x_to_x(const float screenspace_x, const float given_z)
             / window_globals->projection_constants.x_multiplier;
 }
 
-float screenspace_y_to_y(const float screenspace_y, const float given_z)
+float windowsize_screenspace_y_to_y(
+    const float screenspace_y,
+    const float given_z)
 {
     return (
         (((screenspace_y * 2.0f) / window_globals->window_height) - 1.0f)
@@ -19,7 +23,7 @@ float screenspace_y_to_y(const float screenspace_y, const float given_z)
                 / window_globals->projection_constants.field_of_view_modifier;
 }
 
-float screenspace_height_to_height(
+float windowsize_screenspace_height_to_height(
     const float screenspace_height,
     const float given_z)
 {
@@ -29,7 +33,7 @@ float screenspace_height_to_height(
                 / window_globals->projection_constants.field_of_view_modifier;
 }
 
-float screenspace_width_to_width(
+float windowsize_screenspace_width_to_width(
     const float screenspace_width,
     const float given_z)
 {
@@ -39,7 +43,7 @@ float screenspace_width_to_width(
             / window_globals->projection_constants.x_multiplier;
 }
 
-void init_projection_constants(void) {
+void windowsize_init(void) {
     
     if (
         window_globals->window_height < 50.0f ||
@@ -76,7 +80,7 @@ void init_projection_constants(void) {
     window_globals->last_clickray_direction[2] = 1.0f;
 }
 
-void update_window_position(
+void windowsize_update_window_position(
     float left,
     float bottom)
 {
@@ -84,7 +88,7 @@ void update_window_position(
     window_globals->window_bottom = bottom;
 }
 
-void update_window_size(
+void windowsize_update_window_size(
     float width,
     float height,
     uint64_t at_timestamp_microseconds)
@@ -96,4 +100,3 @@ void update_window_size(
     
     window_globals->last_resize_request_at = at_timestamp_microseconds;
 }
-

@@ -23,7 +23,7 @@ static uint32_t log_i = 0;
 extern "C" {
 #endif
 
-void init_logger(
+void logger_init(
     void * (* arg_logger_malloc_func)(size_t size),
     uint32_t (* arg_logger_create_mutex_func)(void),
     void (* arg_logger_mutex_lock_func)(const uint32_t mutex_id),

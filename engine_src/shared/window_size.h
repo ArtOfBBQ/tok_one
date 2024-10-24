@@ -43,6 +43,7 @@ typedef struct WindowGlobals {
     bool32_t draw_triangles;
     bool32_t draw_hitboxes;
     bool32_t draw_vertices;
+    bool32_t show_profiler;
     bool32_t draw_axes;
     bool32_t draw_fps;
     bool32_t fullscreen;
@@ -65,23 +66,23 @@ extern WindowGlobals * window_globals;
 
 // To convert from our screenspace system to 'world x' that is used for
 // the position of zpolygons
-float screenspace_x_to_x(const float screenspace_x, const float given_z);
+float windowsize_screenspace_x_to_x(const float screenspace_x, const float given_z);
 
 // To convert from our screenspace system to 'world y' that is used for
 // the position of zpolygons
-float screenspace_y_to_y(const float screenspace_y, const float given_z);
+float windowsize_screenspace_y_to_y(const float screenspace_y, const float given_z);
 
-float screenspace_height_to_height(
+float windowsize_screenspace_height_to_height(
     const float screenspace_height, const float given_z);
-float screenspace_width_to_width(
+float windowsize_screenspace_width_to_width(
     const float screenspace_width, const float given_z);
 
-void init_projection_constants(void);
+void windowsize_init(void);
 
-void update_window_position(
+void windowsize_update_window_position(
     float left,
     float bottom);
-void update_window_size(
+void windowsize_update_window_size(
     float width,
     float height,
     uint64_t at_timestamp_microseconds);

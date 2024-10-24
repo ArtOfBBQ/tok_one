@@ -98,13 +98,13 @@ because I don't know much about how that works or how reliable it is
 #define simd_load_int16s(int16sptr)         (int16sptr)[0]
 #define simd_set_int16s(i16)                i16
 #define simd_store_int16s(recip, from)      (recip)[0] = from
-#define simd_cmpgt_int16s(a, b)             (a > b ? &FFFF : 0)
-#define simd_cmplt_int16s(a, b)             (a < b ? &FFFF : 0)
-#define simd_cmpeq_int16s(a, b)             (a == b ? &FFFF : 0)
+#define simd_cmpgt_int16s(a, b)             (a > b ? ((int16_t)0xFFFF) : 0)
+#define simd_cmplt_int16s(a, b)             (a < b ? ((int16_t)0xFFFF) : 0)
+#define simd_cmpeq_int16s(a, b)             (a == b ? ((int16_t)0xFFFF) : 0)
 #define simd_mul_int16s(a, b)               a * b
 #define simd_add_int16s(a, b)               a + b
 #define simd_sub_int16s(a, b)               a - b
-#define simd_test_all_bitsset_int16s(a)        a == 1
+#define simd_test_all_bitsset_int16s(a)     a == 1
 #define simd_max_int16s(a, b)               ((a>b)*a)+((a<=b)*b)
 #define simd_and_int16s(a, b)               a & b
 #define simd_min_int16s(a, b)               ((a>b)*b)+((a<=b)*a)

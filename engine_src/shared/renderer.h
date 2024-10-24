@@ -18,10 +18,10 @@
 extern "C" {
 #endif
 
-void init_renderer(void);
-void free_renderer(void);
+void renderer_init(void);
+// void free_renderer(void);
 
-void hardware_render(
+void renderer_hardware_render(
     GPUDataForSingleFrame * frame_data,
     uint64_t elapsed_nanoseconds);
 

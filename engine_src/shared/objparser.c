@@ -3,7 +3,7 @@
 static void * (* objparser_malloc_func)(size_t);
 static void   (*   objparser_free_func)(void *);
 
-void init_obj_parser(
+void objparser_init(
     void * (* arg_objparser_malloc_func)(size_t),
     void (* arg_objparser_free_func)(void *))
 {

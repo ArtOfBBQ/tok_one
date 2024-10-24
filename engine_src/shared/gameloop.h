@@ -19,9 +19,11 @@
 extern "C" {
 #endif
 
-void shared_gameloop_init(void);
+extern bool32_t gameloop_active;
 
-void shared_gameloop_update(GPUDataForSingleFrame * frame_data);
+void gameloop_init(void);
+
+void gameloop_update(GPUDataForSingleFrame * frame_data);
 
 #ifdef __cplusplus
 }

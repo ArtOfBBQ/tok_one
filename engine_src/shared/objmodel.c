@@ -71,7 +71,7 @@ static void guess_gpu_triangle_normal(GPULockedVertex * to_change) {
     to_change[2].normal_xyz[2] = to_change[0].normal_xyz[2];
 }
 
-void init_all_meshes(void) {
+void objmodel_init(void) {
     all_mesh_summaries = (MeshSummary *)malloc_from_unmanaged(
         sizeof(MeshSummary) * ALL_MESHES_SIZE);
     
