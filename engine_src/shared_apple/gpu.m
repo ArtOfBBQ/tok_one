@@ -616,10 +616,24 @@ static id projection_constants_buffer;
 
 - (void)drawInMTKView:(MTKView *)view
 {
+    #ifdef PROFILER_ACTIVE
+    profiler_new_frame();
+    profiler_start("drawInMTKView");
+    #endif
+    
     funcptr_shared_gameloop_update(
         &gpu_shared_data_collection.triple_buffers[current_frame_i]);
     
-    if (!metal_active) { return; }
+    if (!metal_active) {
+        #ifdef PROFILER_ACTIVE
+        profiler_end("drawInMTKView");
+        #endif
+        return;
+    }
+    
+    #ifdef PROFILER_ACTIVE
+    profiler_start("command buffer setup");
+    #endif
     
     id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
     
@@ -627,6 +641,10 @@ static id projection_constants_buffer;
         log_append("error - failed to get metal command buffer\n");
         #ifndef LOGGER_IGNORE_ASSERTS
         log_dump_and_crash("error - failed to get metal command buffer\n");
+        #endif
+        
+        #ifdef PROFILER_ACTIVE
+        profiler_end("drawInMTKView");
         #endif
         return;
     }
@@ -850,6 +868,14 @@ static id projection_constants_buffer;
     }];
     
     [command_buffer commit];
+    
+    #ifdef PROFILER_ACTIVE
+    profiler_end("command buffer setup");
+    #endif
+    
+    #ifdef PROFILER_ACTIVE
+    profiler_end("drawInMTKView");
+    #endif
 }
 
 - (void)mtkView:(MTKView *)view

@@ -166,10 +166,6 @@ void gameloop_init(void) {
 void gameloop_update(
     GPUDataForSingleFrame * frame_data)
 {
-    #ifdef PROFILER_ACTIVE
-    profiler_new_frame();
-    #endif
-    
     if (!gameloop_active) {
         return;
     }
@@ -183,6 +179,11 @@ void gameloop_update(
         // platform_mutex_unlock(gameloop_mutex_id);
         return;
     }
+    
+    #ifdef PROFILER_ACTIVE
+    profiler_start("gameloop_update()");
+    #endif
+    
     uint64_t elapsed = time - gameloop_previous_time;
     gameloop_previous_time = time;
     
@@ -245,6 +246,9 @@ void gameloop_update(
             // empty screen
             log_append("w82RZ - ");
             // platform_mutex_unlock(gameloop_mutex_id);
+            #ifdef PROFILER_ACTIVE
+            profiler_end("gameloop_update()");
+            #endif
             return;
         } else {
             
@@ -321,12 +325,20 @@ void gameloop_update(
                 elapsed);
     }
     
+    #ifdef PROFILER_ACTIVE
+    profiler_start("renderer_hardware_render()");
+    #endif
     renderer_hardware_render(
             frame_data,
         /* uint64_t elapsed_microseconds: */
             elapsed);
+    #ifdef PROFILER_ACTIVE
+    profiler_end("renderer_hardware_render()");
+    #endif
+    
     
     #ifdef PROFILER_ACTIVE
+    profiler_end("gameloop_update()");
     profiler_draw_labels();
     #endif
     

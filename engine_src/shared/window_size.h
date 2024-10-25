@@ -44,6 +44,7 @@ typedef struct WindowGlobals {
     bool32_t draw_hitboxes;
     bool32_t draw_vertices;
     bool32_t show_profiler;
+    bool32_t pause_profiler;
     bool32_t draw_axes;
     bool32_t draw_fps;
     bool32_t fullscreen;

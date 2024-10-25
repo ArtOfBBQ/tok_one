@@ -368,6 +368,44 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
+        are_equal_strings(command, "PAUSE PROFILER"))
+    {
+        if (!window_globals->pause_profiler) {
+            window_globals->pause_profiler = true;
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Paused profiler...");
+        } else {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Profiler was already paused...");
+        }
+        return true;
+    }
+    
+    if (
+        are_equal_strings(command, "RESUME PROFILER") ||
+        are_equal_strings(command, "RUN PROFILER") ||
+        are_equal_strings(command, "UNPAUSE PROFILER"))
+    {
+        if (window_globals->pause_profiler) {
+            window_globals->pause_profiler = false;
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Resuming profiler...");
+        } else {
+            strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Profiler was already running...");
+        }
+        return true;
+    }
+    
+    if (
         are_equal_strings(command, "RESET CAMERA") ||
         are_equal_strings(command, "CENTER CAMERA"))
     {

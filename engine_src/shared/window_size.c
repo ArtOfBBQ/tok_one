@@ -67,10 +67,12 @@ void windowsize_init(void) {
         pjc->field_of_view_modifier;
     pjc->y_multiplier = pjc->field_of_view_modifier;
     
-    window_globals->draw_clickray  = false;
-    window_globals->draw_fps       = false;
-    window_globals->draw_triangles =  true;
-    window_globals->draw_hitboxes  = false;
+    window_globals->draw_clickray   = false;
+    window_globals->draw_fps        = false;
+    window_globals->draw_triangles  =  true;
+    window_globals->draw_hitboxes   = false;
+    window_globals->show_profiler   = false;
+    window_globals->pause_profiler  = false;
     
     window_globals->last_clickray_origin[0] = 0.0f;
     window_globals->last_clickray_origin[1] = 0.0f;

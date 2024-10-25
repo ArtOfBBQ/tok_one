@@ -2,15 +2,20 @@
 
 #ifdef PROFILER_ACTIVE
 
+#define GUI_TOP_MESSAGE_MAX 128
+static char gui_top_message[GUI_TOP_MESSAGE_MAX];
+
+static bool32_t profiler_paused = false;
+
 int32_t profiler_object_id = INT32_MAX;
 int32_t profiler_touchable_id = INT32_MAX;
 
 int32_t gui_selected_frames[2];
 
-#define PROFILER_Z 0.12f
+#define PROFILER_Z 0.13f
 
 #define MAX_DESCRIPTION_SIZE 256
-#define MAX_CHILDREN_PER_NODE 3
+#define MAX_CHILDREN_PER_NODE 8
 typedef struct ProfiledNode {
     char description[MAX_DESCRIPTION_SIZE];
     uint64_t elapsed_min;
@@ -26,17 +31,21 @@ typedef struct ProfiledNode {
 
 #define PROFILE_TREE_MAX 1000
 
-#define FUNCTION_STACK_MAX 50000
+#define FUNCTION_STACK_MAX 10000
 static uint32_t * function_stack = NULL;
 static uint16_t function_stack_size = 0;
 
+static uint32_t * gui_function_stack = NULL;
+static uint16_t gui_function_stack_size = 0;
 
 #define FRAMES_MAX 10
 typedef struct Frame {
     ProfiledNode profiles[PROFILE_TREE_MAX];
+    uint64_t started_at;
+    uint64_t elapsed;
     uint8_t hit[PROFILE_TREE_MAX];
     uint16_t profiles_size;
-    uint8_t simd_padding[16];
+    /* uint8_t simd_padding[8]; */
 } Frame;
 
 static Frame * frames = NULL;
@@ -55,22 +64,63 @@ void profiler_init(
         sizeof(uint32_t) * FUNCTION_STACK_MAX);
     memset_char(function_stack, 0, sizeof(uint32_t) * FUNCTION_STACK_MAX);
     
+    gui_function_stack = profiler_malloc_function(
+        sizeof(uint32_t) * FUNCTION_STACK_MAX);
+    memset_char(gui_function_stack, 0, sizeof(uint32_t) * FUNCTION_STACK_MAX);
+    
     profiler_object_id = next_nonui_object_id();
     profiler_touchable_id = next_nonui_touchable_id();
     
     gui_selected_frames[0] = 0;
     gui_selected_frames[1] = 1;
+    
+    strcpy_capped(
+        gui_top_message,
+        GUI_TOP_MESSAGE_MAX,
+        "Profiler intialized...");
 }
 
 void profiler_new_frame(void) {
+    if (profiler_paused && !window_globals->pause_profiler) {
+        frames[frame_i].started_at = 0;
+    }
+    
+    profiler_paused = window_globals->pause_profiler;
+    
+    if (profiler_paused) {
+        return;
+    }
+    
+    frames[frame_i].elapsed = __rdtsc() - frames[frame_i].started_at;
+    if (
+        frames[frame_i].elapsed > 250000000 &&
+        frames[frame_i].started_at != 0)
+    {
+        strcpy_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, "PAUSED - frame ");
+        strcat_uint_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, frame_i);
+        strcat_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, " took ");
+        strcat_uint_capped(
+            gui_top_message,
+            GUI_TOP_MESSAGE_MAX,
+            (uint32_t)frames[frame_i].elapsed);
+        strcat_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, " cycles.");
+        window_globals->pause_profiler = true;
+        return;
+    }
+    
     frame_i += 1;
     frame_i %= FRAMES_MAX;
     
     memset_char(&frames[frame_i], 0, sizeof(Frame));
+    frames[frame_i].started_at = __rdtsc();
 }
 
 void profiler_start(const char * function_name)
 {
+    if (profiler_paused) {
+        return;
+    }
+    
     function_stack[function_stack_size] = frames[frame_i].profiles_size;
     
     if (function_stack_size > 0) {
@@ -104,6 +154,10 @@ void profiler_start(const char * function_name)
 
 void profiler_end(const char * function_name)
 {
+    if (profiler_paused) {
+        return;
+    }
+    
     log_assert(function_stack_size > 0);
     uint32_t prof_i = function_stack[function_stack_size - 1];
     function_stack_size -= 1;
@@ -174,7 +228,23 @@ void profiler_draw_labels(void) {
         font_color[1] = 0.1f;
         font_color[2] = 0.1f;
         font_color[3] = 1.0f;
-        font_height = 22.0f;
+        font_height = 18.0f;
+        
+        text_request_label_renderable(
+            /* const int32_t with_object_id: */
+                profiler_object_id,
+            /* const char * text_to_draw: */
+                gui_top_message,
+            /* const float left_pixelspace: */
+                20,
+            /* const float top_pixelspace: */
+                window_globals->window_height - 20,
+            /* const float z: */
+                PROFILER_Z - 0.02f,
+            /* const float max_width: */
+                window_globals->window_width,
+            /* const bool32_t ignore_camera: */
+                true);
         
         for (int32_t gui_frame_i = 0; gui_frame_i < 2; gui_frame_i++) {
             float gui_frame_left = 20 +
@@ -182,7 +252,9 @@ void profiler_draw_labels(void) {
             
             int32_t f_i = gui_selected_frames[gui_frame_i];
             
-            float cur_top = window_globals->window_height - 20;
+            float cur_top = window_globals->window_height -
+                20 -
+                (font_height + 2.0f);
             
             char line_text[128];
             strcpy_capped(line_text, 128, "Selected frame: ");
@@ -206,16 +278,37 @@ void profiler_draw_labels(void) {
                 /* const bool32_t ignore_camera: */
                     true);
             
+            cur_top -= (font_height + 2.0f);
+            strcpy_capped(line_text, 128, "Cycles: ");
+            strcat_uint_capped(
+                line_text,
+                128,
+                (uint32_t)frames[f_i].elapsed);
+            text_request_label_renderable(
+                /* const int32_t with_object_id: */
+                    profiler_object_id,
+                /* const char * text_to_draw: */
+                    line_text,
+                /* const float left_pixelspace: */
+                    gui_frame_left,
+                /* const float top_pixelspace: */
+                    cur_top,
+                /* const float z: */
+                    PROFILER_Z - 0.02f,
+                /* const float max_width: */
+                    window_globals->window_width,
+                /* const bool32_t ignore_camera: */
+                    true);
+            
             if (frames[f_i].profiles_size > 0) {
-                
-                function_stack_size = 0;
-                function_stack[function_stack_size++] = 0;
+                gui_function_stack_size = 0;
+                gui_function_stack[gui_function_stack_size++] = 0;
             }
             
-            while (function_stack_size > 0) {
-                
-                uint32_t func_i = function_stack[function_stack_size - 1];
-                function_stack_size -= 1;
+            while (gui_function_stack_size > 0 && frames[f_i].elapsed > 0) {
+                uint32_t func_i = gui_function_stack[
+                    gui_function_stack_size - 1];
+                gui_function_stack_size -= 1;
                 
                 // push all child nodes onto the stack
                 for (
@@ -224,13 +317,13 @@ void profiler_draw_labels(void) {
                         profiles[func_i].children_size;
                     child_i++)
                 {
-                    function_stack[function_stack_size] =
+                    gui_function_stack[gui_function_stack_size] =
                         frames[f_i].profiles[func_i].children[child_i];
                     log_assert(
                         frames[f_i].profiles[
-                            function_stack[function_stack_size]].
+                            gui_function_stack[gui_function_stack_size]].
                                 parents_size > 0);
-                    function_stack_size += 1;
+                    gui_function_stack_size += 1;
                 }
                 
                 strcpy_capped(
@@ -246,6 +339,25 @@ void profiler_draw_labels(void) {
                     128,
                     (uint32_t)frames[f_i].
                         profiles[func_i].elapsed_total);
+                strcat_capped(
+                    line_text,
+                    128,
+                    " (");
+                float pct_elapsed =
+                    (float)frames[f_i].profiles[func_i].elapsed_total /
+                        (float)frames[f_i].elapsed;
+                
+                log_assert(pct_elapsed <= 1.0f);
+                log_assert(pct_elapsed >= 0.0f);
+                strcat_int_capped(
+                    line_text,
+                    128,
+                    (int)(pct_elapsed * 100.0f));
+                strcat_capped(
+                    line_text,
+                    128,
+                    "%)");
+                
                 cur_top -= (font_height + 2.0f);
                 text_request_label_renderable(
                     /* const int32_t with_object_id: */
