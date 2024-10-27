@@ -21,6 +21,22 @@ platform_get_current_time_microsecs(void) {
     return result;
 }
 
+uint64_t
+platform_get_clock_frequency(void) {
+    //    int mib[2];
+    //    size_t len;
+    //    mib[0] = CTL_KERN;
+    //    mib[1] = KERN_CLOCKRATE;
+    //    struct clockinfo clockinfo;
+    //    len = sizeof(clockinfo);
+    //    int result = sysctl(mib, 2, &clockinfo, &len, NULL, 0);
+    //    assert(result != -1);
+    // log_trace("clockinfo.hz: %d\n", clockinfo.hz);
+    // log_trace("clockinfo.tick: %d\n", clockinfo.tick);
+    // return (uint64_t)clockinfo.tick;
+    return 3600000000; // my pc's clock frequency
+}
+
 /*
 Get a file's size. Returns 0 if no such file
 */

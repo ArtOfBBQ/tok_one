@@ -9,6 +9,7 @@ extern "C" {
 #endif
 
 extern int32_t font_texturearray_i;
+extern int32_t font_touchable_id;
 extern float font_height;
 extern float font_color[4];
 extern bool32_t font_ignore_lighting;

@@ -15,7 +15,10 @@
 
 #ifdef PROFILER_ACTIVE
 
+// #include <>
+
 void profiler_init(
+    const uint64_t clock_frequency,
     void * (* profiler_malloc_function)(size_t));
 
 void profiler_new_frame(void);

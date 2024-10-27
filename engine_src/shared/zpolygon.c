@@ -500,6 +500,9 @@ float ray_intersects_zpolygon(
     GPUPolygon  * gpu_data,
     float * recipient_hit_point)
 {
+    #ifdef PROFILER_ACTIVE
+    profiler_start("zpolygon_get_transformed_boundsphere()");
+    #endif
     memset_char(recipient_hit_point, 0, sizeof(float) * 3);
     
     normalize_zvertex_f3(ray_direction);
@@ -515,7 +518,13 @@ float ray_intersects_zpolygon(
             sphere_center,
         /* float * recipient_radius: */
             &sphere_radius);
+    #ifdef PROFILER_ACTIVE
+    profiler_end("zpolygon_get_transformed_boundsphere()");
+    #endif
     
+    #ifdef PROFILER_ACTIVE
+    profiler_start("normalized_ray_hits_sphere()");
+    #endif
     float dist_to_hit = normalized_ray_hits_sphere(
         /* const float * ray_origin: */
             ray_origin,
@@ -527,6 +536,9 @@ float ray_intersects_zpolygon(
             sphere_radius,
         /* float * collision_recipient: */
             recipient_hit_point);
+    #ifdef PROFILER_ACTIVE
+    profiler_end("normalized_ray_hits_sphere()");
+    #endif
     
     if (dist_to_hit > 0.0f && dist_to_hit < (COL_FLT_MAX / 2)) {
         dist_to_hit = COL_FLT_MAX;
@@ -545,6 +557,9 @@ float ray_intersects_zpolygon(
             float transformed_triangle[9];
             float transformed_normals[9];
             
+            #ifdef PROFILER_ACTIVE
+            profiler_start("zpolygon_get_transformed_triangle_vertices()");
+            #endif
             zpolygon_get_transformed_triangle_vertices(
                 /* const zPolygonCPU * cpu_data: */
                     cpu_data,
@@ -556,7 +571,13 @@ float ray_intersects_zpolygon(
                     transformed_triangle,
                 /* float * normals_recipient_f9: */
                     transformed_normals);
+            #ifdef PROFILER_ACTIVE
+            profiler_end("zpolygon_get_transformed_triangle_vertices()");
+            #endif
             
+            #ifdef PROFILER_ACTIVE
+            profiler_start("set up avg_normal");
+            #endif
             float avg_normal[3];
             avg_normal[0] =
                 (transformed_normals[0] +
@@ -574,7 +595,13 @@ float ray_intersects_zpolygon(
                         transformed_normals[8]) /
                     3.0f;
             normalize_zvertex_f3(avg_normal);
+            #ifdef PROFILER_ACTIVE
+            profiler_end("set up avg_normal");
+            #endif
             
+            #ifdef PROFILER_ACTIVE
+            profiler_start("ray_hits_triangle()");
+            #endif
             float dist_to_tri = ray_hits_triangle(
                 /* const float * ray_origin: */
                     ray_origin,
@@ -590,6 +617,9 @@ float ray_intersects_zpolygon(
                     avg_normal,
                 /* float * collision_recipient: */
                     closest_hit_point);
+            #ifdef PROFILER_ACTIVE
+            profiler_end("ray_hits_triangle()");
+            #endif
             
             if (dist_to_tri > 0 && dist_to_tri < dist_to_hit)
             {

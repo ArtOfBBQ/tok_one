@@ -30,6 +30,7 @@ typedef struct FontCodepoint {
 #pragma pack(pop)
 
 int32_t font_texturearray_i = 0;
+int32_t font_touchable_id = -1;
 float font_height = 30.0;
 float font_color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 bool32_t font_ignore_lighting = true;
@@ -294,6 +295,7 @@ void text_request_label_offset_around(
                 font_ignore_lighting;
             letter.gpu_data->ignore_camera = ignore_camera;
             letter.cpu_data->object_id = with_id;
+            letter.cpu_data->touchable_id = font_touchable_id;
             
             if ((text_to_draw[j] - '!') < 0) {
                 cur_x_offset_pixelspace +=
@@ -466,6 +468,7 @@ void text_request_label_renderable(
                 &letter);
         
         letter.cpu_data->object_id = with_id;
+        letter.cpu_data->touchable_id = font_touchable_id;
         letter.gpu_data->ignore_lighting = font_ignore_lighting;
         letter.gpu_data->ignore_camera = ignore_camera;
         
@@ -473,8 +476,13 @@ void text_request_label_renderable(
             font_texturearray_i;
         letter.gpu_materials[0].texture_i =
             (int32_t)(text_to_draw[i] - '!');
-        log_assert(letter.gpu_materials[0].texture_i >=    0);
-        log_assert(letter.gpu_materials[0].texture_i <  1000);
+        
+        if (
+            letter.gpu_materials[0].texture_i < 0 ||
+            letter.gpu_materials[0].texture_i > 100)
+        {
+            letter.gpu_materials[0].texture_i = ' ' - '!';
+        }
         
         for (
             uint32_t rgba_i = 0;

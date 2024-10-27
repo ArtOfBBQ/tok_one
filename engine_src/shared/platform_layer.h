@@ -43,6 +43,7 @@ on each platform
 #import <Foundation/Foundation.h>
 #include <pthread.h>
 #include <sys/time.h>
+#include <sys/sysctl.h> // for sysctl to get clock frequency
 #endif
 
 #ifdef LINUX_PLATFORM
@@ -187,6 +188,8 @@ void platform_start_thread(
     int32_t argument);
 
 uint64_t platform_get_current_time_microsecs(void);
+
+uint64_t platform_get_clock_frequency(void);
 
 float platform_x_to_x(const float x);
 float platform_y_to_y(const float y);

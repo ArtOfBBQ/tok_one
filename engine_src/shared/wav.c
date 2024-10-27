@@ -33,8 +33,8 @@ typedef struct FormatChunkBody {
 #define consume_struct(from_ptr, StructName) *(StructName *)from_ptr; from_ptr += sizeof(StructName);
 
 static uint32_t strings_are_equal(
-    char * string_1,
-    char * string_2)
+    const char * string_1,
+    const char * string_2)
 {
     uint32_t i = 0;
     while (string_2[i] != '\0')

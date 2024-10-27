@@ -168,7 +168,7 @@ void init_application_before_gpu_init(void)
             platform_mutex_unlock);
     
     #ifdef PROFILER_ACTIVE
-    profiler_init(malloc_from_unmanaged);
+    profiler_init(platform_get_clock_frequency(), malloc_from_unmanaged);
     #endif
     
     engine_save_file = (EngineSaveFile *)malloc_from_unmanaged(

@@ -112,6 +112,9 @@ static int32_t closest_touchable_from_screen_ray(
         
         float current_collision_point[3];
         
+        #ifdef PROFILER_ACTIVE
+        profiler_start("ray_intersects_zpolygon()");
+        #endif
         float dist = ray_intersects_zpolygon(
             /* origin: */
                 ray_origin,
@@ -123,6 +126,9 @@ static int32_t closest_touchable_from_screen_ray(
                 &zpolygons_to_render->gpu_data[zp_i],
             /* float * recipient_hit_point: */
                 current_collision_point);
+        #ifdef PROFILER_ACTIVE
+        profiler_end("ray_intersects_zpolygon()");
+        #endif
         
         if (dist < smallest_dist) {
             smallest_dist = dist;
@@ -179,10 +185,6 @@ void gameloop_update(
         // platform_mutex_unlock(gameloop_mutex_id);
         return;
     }
-    
-    #ifdef PROFILER_ACTIVE
-    profiler_start("gameloop_update()");
-    #endif
     
     uint64_t elapsed = time - gameloop_previous_time;
     gameloop_previous_time = time;
@@ -246,9 +248,6 @@ void gameloop_update(
             // empty screen
             log_append("w82RZ - ");
             // platform_mutex_unlock(gameloop_mutex_id);
-            #ifdef PROFILER_ACTIVE
-            profiler_end("gameloop_update()");
-            #endif
             return;
         } else {
             
@@ -270,11 +269,21 @@ void gameloop_update(
         
         update_terminal();
         
+        #ifdef PROFILER_ACTIVE
+        profiler_start("resolve_animation_effects()");
+        #endif
         resolve_animation_effects(elapsed);
+        #ifdef PROFILER_ACTIVE
+        profiler_end("resolve_animation_effects()");
+        #endif
+        
         clean_deleted_lights();
         
         copy_lights(frame_data->light_collection);
         
+        #ifdef PROFILER_ACTIVE
+        profiler_start("check touchables for user_interactions");
+        #endif
         user_interactions[8].checked_touchables = false;
         for (uint32_t i = 0; i < 9; i++) {
             if (
@@ -295,7 +304,26 @@ void gameloop_update(
                         collision_point);
             
             user_interactions[i].checked_touchables = true;
+            
+            for (uint32_t j = i+1; j<9; j++) {
+                if (
+                    !user_interactions[j].handled &&
+                    !user_interactions[j].checked_touchables &&
+                    user_interactions[j].screen_x ==
+                        user_interactions[i].screen_x &&
+                    user_interactions[j].screen_y ==
+                        user_interactions[i].screen_y)
+                {
+                    user_interactions[j].checked_touchables = true;
+                    user_interactions[j].touchable_id =
+                        user_interactions[i].touchable_id;
+                }
+            }
+            break;
         }
+        #ifdef PROFILER_ACTIVE
+        profiler_end("check touchables for user_interactions");
+        #endif
         
         ui_elements_handle_touches(elapsed);
         
@@ -336,9 +364,7 @@ void gameloop_update(
     profiler_end("renderer_hardware_render()");
     #endif
     
-    
     #ifdef PROFILER_ACTIVE
-    profiler_end("gameloop_update()");
     profiler_draw_labels();
     #endif
     

@@ -621,8 +621,14 @@ static id projection_constants_buffer;
     profiler_start("drawInMTKView");
     #endif
     
+    #ifdef PROFILER_ACTIVE
+    profiler_start("gameloop_update()");
+    #endif
     funcptr_shared_gameloop_update(
         &gpu_shared_data_collection.triple_buffers[current_frame_i]);
+    #ifdef PROFILER_ACTIVE
+    profiler_end("gameloop_update()");
+    #endif
     
     if (!metal_active) {
         #ifdef PROFILER_ACTIVE
@@ -644,11 +650,17 @@ static id projection_constants_buffer;
         #endif
         
         #ifdef PROFILER_ACTIVE
+        profiler_end("command buffer setup");
+        #endif
+        #ifdef PROFILER_ACTIVE
         profiler_end("drawInMTKView");
         #endif
         return;
     }
     
+    #ifdef PROFILER_ACTIVE
+    profiler_start("Create MTLRenderPassDescriptor etc.");
+    #endif
     MTLRenderPassDescriptor * RenderPassDescriptor =
         [view currentRenderPassDescriptor];
     
@@ -671,17 +683,39 @@ static id projection_constants_buffer;
         [command_buffer
             renderCommandEncoderWithDescriptor:
                 RenderPassDescriptor];
+    #ifdef PROFILER_ACTIVE
+    profiler_end("Create MTLRenderPassDescriptor etc.");
+    #endif
     
+    #ifdef PROFILER_ACTIVE
+    profiler_start("setViewport");
+    #endif
     assert(cached_viewport.zfar > cached_viewport.znear);
     [render_encoder setViewport: cached_viewport];
     assert(cached_viewport.width > 0.0f);
     assert(cached_viewport.height > 0.0f);
+    #ifdef PROFILER_ACTIVE
+    profiler_end("setViewport");
+    #endif
     
+    #ifdef PROFILER_ACTIVE
+    profiler_start("set RenderPipeline, Stencil, ClipMode");
+    #endif
     [render_encoder setRenderPipelineState: _diamond_pipeline_state];
     assert(_depth_stencil_state != nil);
     [render_encoder setDepthStencilState: _depth_stencil_state];
     [render_encoder setDepthClipMode: MTLDepthClipModeClip];
+    #ifdef PROFILER_ACTIVE
+    profiler_end("set RenderPipeline, Stencil, ClipMode");
+    #endif
+    #ifdef PROFILER_ACTIVE
+    profiler_end("command buffer setup");
+    #endif
     
+    
+    #ifdef PROFILER_ACTIVE
+    profiler_start("setVertexBuffers");
+    #endif
     [render_encoder
         setVertexBuffer:
             vertex_buffers[current_frame_i]
@@ -733,7 +767,13 @@ static id projection_constants_buffer;
             0
         atIndex:
             6];
+    #ifdef PROFILER_ACTIVE
+    profiler_end("setVertexBuffers");
+    #endif
     
+    #ifdef PROFILER_ACTIVE
+    profiler_start("setFragmentTexture");
+    #endif
     for (
         uint32_t i = 0;
         i < [_metal_textures count];
@@ -743,8 +783,14 @@ static id projection_constants_buffer;
             setFragmentTexture: _metal_textures[i]
             atIndex: i];
     }
+    #ifdef PROFILER_ACTIVE
+    profiler_end("setFragmentTexture");
+    #endif
     
     #ifndef IGNORE_LOGGER_ASSERTS
+    #ifdef PROFILER_ACTIVE
+    profiler_start("debug-only assertions");
+    #endif
     for (
         uint32_t i = 0;
         i < gpu_shared_data_collection.
@@ -757,8 +803,14 @@ static id projection_constants_buffer;
                 triple_buffers[current_frame_i].
                 vertices[i].locked_vertex_i < ALL_LOCKED_VERTICES_SIZE);
     }
+    #ifdef PROFILER_ACTIVE
+    profiler_end("debug-only assertions");
+    #endif
     #endif
     
+    #ifdef PROFILER_ACTIVE
+    profiler_start("drawPrimitives(diamonds)");
+    #endif
     uint32_t diamond_verts_size =
         gpu_shared_data_collection.
                 triple_buffers[current_frame_i].first_alphablend_i;
@@ -772,10 +824,15 @@ static id projection_constants_buffer;
             vertexStart:
                 0
             vertexCount:
-                gpu_shared_data_collection.
-                    triple_buffers[current_frame_i].first_alphablend_i];
+                diamond_verts_size];
     }
+    #ifdef PROFILER_ACTIVE
+    profiler_end("drawPrimitives(diamonds)");
+    #endif
     
+    #ifdef PROFILER_ACTIVE
+    profiler_start("drawPrimitives(first_alphablend_i)");
+    #endif
     log_assert(
         gpu_shared_data_collection.triple_buffers[current_frame_i].
             first_alphablend_i <=
@@ -799,7 +856,13 @@ static id projection_constants_buffer;
             vertexCount:
                 alphablend_verts_size];
     }
+    #ifdef PROFILER_ACTIVE
+    profiler_end("drawPrimitives(first_alphablend_i)");
+    #endif
     
+    #ifdef PROFILER_ACTIVE
+    profiler_start("Line & point raw vertices");
+    #endif
     if ((
         gpu_shared_data_collection.triple_buffers[current_frame_i].
             line_vertices_size +
@@ -851,7 +914,13 @@ static id projection_constants_buffer;
             vertexCount: gpu_shared_data_collection.
                 triple_buffers[current_frame_i].point_vertices_size];
     }
+    #ifdef PROFILER_ACTIVE
+    profiler_end("Line & point raw vertices");
+    #endif
     
+    #ifdef PROFILER_ACTIVE
+    profiler_start("Commit & present");
+    #endif
     [render_encoder endEncoding];
     
     // Schedule a present once the framebuffer is complete
@@ -870,7 +939,7 @@ static id projection_constants_buffer;
     [command_buffer commit];
     
     #ifdef PROFILER_ACTIVE
-    profiler_end("command buffer setup");
+    profiler_end("Commit & present");
     #endif
     
     #ifdef PROFILER_ACTIVE
