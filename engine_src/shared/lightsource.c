@@ -52,19 +52,33 @@ void commit_zlight(zLightSource * to_request)
     to_request->committed = true;
 }
 
+void x_rotate_zvertex_f3_known_cossin(
+    float inout_xyz[3],
+    const float cosf_angle,
+    const float sinf_angle)
+{
+    float y =
+        (inout_xyz[1] * cosf_angle) -
+        (inout_xyz[2] * sinf_angle);
+    
+    inout_xyz[2] =
+        (inout_xyz[1] * sinf_angle) +
+        (inout_xyz[2] * cosf_angle);
+    
+    inout_xyz[1] = y;
+}
+
 void x_rotate_zvertex_f3(
     float inout_xyz[3],
     const float angle)
 {
-    float y =
-        (inout_xyz[1] * cosf(angle)) -
-        (inout_xyz[2] * sinf(angle));
-    
-    inout_xyz[2] =
-        (inout_xyz[1] * sinf(angle)) +
-        (inout_xyz[2] * cosf(angle));
-    
-    inout_xyz[1] = y;
+    x_rotate_zvertex_f3_known_cossin(
+        /* float input_xyz[3]: */
+            inout_xyz,
+        /* const float cosf_angle: */
+            cosf(angle),
+        /* const float sinf_angle: */
+            sinf(angle));
     
     return;
 }
@@ -86,21 +100,35 @@ void x_rotate_zvertices_inplace(
     *vec_to_rotate_y = rotated_y;
 }
 
-void y_rotate_zvertex_f3(
+void y_rotate_zvertex_known_cossin(
     float inout_xyz[3],
-    const float angle)
+    const float cos_angle,
+    const float sin_angle)
 {
     float x =
-        (inout_xyz[0] * cosf(angle)) +
-        (inout_xyz[2] * sinf(angle));
+        (inout_xyz[0] * cos_angle) +
+        (inout_xyz[2] * sin_angle);
     
     inout_xyz[2] =
-        (inout_xyz[2] * cosf(angle)) -
-        (inout_xyz[0] * sinf(angle));
+        (inout_xyz[2] * cos_angle) -
+        (inout_xyz[0] * sin_angle);
     
     inout_xyz[0] = x;
     
     return;
+}
+
+void y_rotate_zvertex_f3(
+    float inout_xyz[3],
+    const float angle)
+{
+    y_rotate_zvertex_known_cossin(
+        /* float inout_xyz[3]: */
+            inout_xyz,
+        /* const float cos_angle: */
+            cosf(angle),
+        /* const float sin_angle: */
+            sinf(angle));
 }
 
 void y_rotate_zvertices_inplace(
@@ -120,19 +148,35 @@ void y_rotate_zvertices_inplace(
     *vec_to_rotate_x = rotated_x;
 }
 
+void z_rotate_zvertex_f3_known_cossin(
+    float inout_xyz[3],
+    const float angle_cos,
+    const float angle_sin)
+{
+    float x =
+        (inout_xyz[0] * angle_cos) -
+        (inout_xyz[1] * angle_sin);
+    
+    inout_xyz[1] =
+        (inout_xyz[1] * angle_cos) +
+        (inout_xyz[0] * angle_sin);
+    
+    inout_xyz[0] = x;
+    
+    return;
+}
+
 void z_rotate_zvertex_f3(
     float inout_xyz[3],
     const float angle)
 {
-    float x =
-        (inout_xyz[0] * cosf(angle)) -
-        (inout_xyz[1] * sinf(angle));
-    
-    inout_xyz[1] =
-        (inout_xyz[1] * cosf(angle)) +
-        (inout_xyz[0] * sinf(angle));
-    
-    inout_xyz[0] = x;
+    z_rotate_zvertex_f3_known_cossin(
+       /* float inout_xyz[3]: */
+           inout_xyz,
+       /* const float angle_cos: */
+           cosf(angle),
+       /* const float angle_sin: */
+           sinf(angle));
     
     return;
 }

@@ -106,6 +106,13 @@ float get_distance_f3(
     const float p1[3],
     const float p2[3]);
 
+void simd_zpolygon_get_transformed_triangle_vertices(
+    const zPolygonCPU * cpu_data,
+    const GPUPolygon * gpu_data,
+    const int32_t locked_vertex_i,
+    float * vertices_recipient_10f,
+    float * normals_recipient_10f);
+
 void zpolygon_get_transformed_triangle_vertices(
     const zPolygonCPU * cpu_data,
     const GPUPolygon * gpu_data,

@@ -77,6 +77,10 @@ void uielement_init(void) {
 
 void ui_elements_handle_touches(uint64_t ms_elapsed)
 {
+    #ifdef PROFILER_ACTIVE
+    profiler_start("ui_elements_handle_touches()");
+    #endif
+    
     (void)ms_elapsed;
     
     if (
@@ -306,6 +310,10 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
             currently_sliding_object_id = -1;
         }
     }
+    
+    #ifdef PROFILER_ACTIVE
+    profiler_end("ui_elements_handle_touches()");
+    #endif
 }
 
 static void request_slider_shared(

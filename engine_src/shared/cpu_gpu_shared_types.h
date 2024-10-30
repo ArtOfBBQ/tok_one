@@ -51,6 +51,8 @@ typedef struct GPULockedVertex {
 typedef struct GPUCamera {
     float xyz[3];           // 12 bytes
     float xyz_angle[3];     // 12 bytes
+    float xyz_cosangle[3];  // 12 bytes
+    float xyz_sinangle[3];  // 12 bytes
     float padding[2];       //  8 bytes
 } GPUCamera;
 

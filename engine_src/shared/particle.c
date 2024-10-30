@@ -689,15 +689,15 @@ void add_particle_effects_to_workload(
             float one_million = 1000000.0f;
             float exponential_divisor = 1000.0f;
             float one = 1.0f;
-            SIMD_FLOAT simdf_one_million = simd_set_float(one_million);
+            SIMD_FLOAT simdf_one_million = simd_set1_float(one_million);
             float fspawn_lifetime_so_far = (float)spawn_lifetime_so_far;
-            SIMD_FLOAT simdf_lifetime = simd_set_float(fspawn_lifetime_so_far);
+            SIMD_FLOAT simdf_lifetime = simd_set1_float(fspawn_lifetime_so_far);
             SIMD_FLOAT simdf_lifetime_exp = simd_div_floats(
                 simdf_lifetime,
-                simd_set_float(exponential_divisor));
+                simd_set1_float(exponential_divisor));
             simdf_lifetime_exp = simd_max_floats(
                 simdf_lifetime_exp,
-                simd_set_float(one));
+                simd_set1_float(one));
             simdf_lifetime_exp = simd_mul_floats(
                 simdf_lifetime_exp,
                 simdf_lifetime_exp);

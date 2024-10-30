@@ -25,6 +25,10 @@ void x_rotate_zvertices_inplace(
     const SIMD_FLOAT cos_angles,
     const SIMD_FLOAT sin_angles);
 
+void y_rotate_zvertex_known_cossin(
+    float inout_xyz[3],
+    const float cos_angle,
+    const float sin_angle);
 void y_rotate_zvertex_f3(
     float inout_xyz[3],
     const float angle);

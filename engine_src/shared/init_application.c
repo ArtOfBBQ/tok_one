@@ -83,14 +83,14 @@ static void test_simd_functions_floats(void) {
         float * equals_at  = (float *)&equals[j];
         
         float one = 1.0f;
-        SIMD_FLOAT all_ones   = simd_set_float(one);
+        SIMD_FLOAT all_ones   = simd_set1_float(one);
         for (
             uint32_t i = 0;
             i < sizeof(SimdTestStruct) / sizeof(float);
             i += SIMD_FLOAT_LANES)
         {
             SIMD_FLOAT cur  = simd_load_floats(structs_at + i);
-            cur = simd_set_float(sets[j]);
+            cur = simd_set1_float(sets[j]);
             SIMD_FLOAT mul    = simd_load_floats(muls_at + i);
             SIMD_FLOAT add    = simd_load_floats(adds_at + i);
             SIMD_FLOAT div    = simd_load_floats(divs_at + i);

@@ -321,6 +321,30 @@ float dot_of_vertices_f3(
     return return_value;
 }
 
+static SIMD_VEC4F normal_vec4f_undo_camera_rotation(
+    SIMD_VEC4F normal_xyz,
+    float ignore_camera)
+{
+    SIMD_VEC4F ignore_cam_pos = normal_xyz;
+    
+    ignore_cam_pos = z_rotate_vec4f_known_cossin(
+        ignore_cam_pos,
+        camera.xyz_cosangle[2],
+        camera.xyz_sinangle[2]);
+    ignore_cam_pos = y_rotate_vec4f_known_cossin(
+        ignore_cam_pos,
+        camera.xyz_cosangle[1],
+        camera.xyz_sinangle[1]);
+    ignore_cam_pos = x_rotate_vec4f_known_cossin(
+        ignore_cam_pos,
+        camera.xyz_cosangle[0],
+        camera.xyz_sinangle[0]);
+    
+    return simd_add_vec4f(
+        simd_mul_vec4f(simd_set1_vec4f(ignore_camera), ignore_cam_pos),
+        simd_mul_vec4f(simd_set1_vec4f(1.0f - ignore_camera), normal_xyz));
+}
+
 static void normal_undo_camera_rotation(
     float normal_xyz[3],
     float ignore_camera)
@@ -354,24 +378,59 @@ static void normal_undo_camera_rotation(
         ((1.0f - ignore_camera) * normal_xyz[2]);
 }
 
+static SIMD_VEC4F undo_camera_translation_vec4f(
+    SIMD_VEC4F xyz,
+    float ignore_camera)
+{
+    SIMD_VEC4F ignore_cam_pos = xyz;
+    
+    ignore_cam_pos = z_rotate_vec4f_known_cossin(
+        ignore_cam_pos,
+        camera.xyz_cosangle[2],
+        camera.xyz_sinangle[2]);
+    ignore_cam_pos = y_rotate_vec4f_known_cossin(
+        ignore_cam_pos,
+        camera.xyz_cosangle[1],
+        camera.xyz_sinangle[1]);
+    ignore_cam_pos = x_rotate_vec4f_known_cossin(
+        ignore_cam_pos,
+        camera.xyz_cosangle[0],
+        camera.xyz_sinangle[0]);
+    
+    ignore_cam_pos = simd_add_vec4f(
+        ignore_cam_pos,
+        simd_load_vec4f(camera.xyz));
+    
+    return simd_add_vec4f(
+        simd_mul_vec4f(simd_set1_vec4f(ignore_camera), ignore_cam_pos),
+        simd_mul_vec4f(simd_set1_vec4f(1.0f - ignore_camera), xyz));
+}
+
 static void undo_camera_translation(
     float xyz[3],
     float ignore_camera)
 {
+    #ifdef PROFILER_ACTIVE
+    profiler_start("undo_camera_translation()");
+    #endif
+    
     float ignore_cam_pos[3];
     tok_memcpy(ignore_cam_pos, xyz, sizeof(float) * 3);
     
     // In the standard shader everything will be rotated by negative the
     // xyz_angle, so do the opposite
-    z_rotate_f3(
+    z_rotate_f3_known_cossin(
         ignore_cam_pos,
-        camera.xyz_angle[2]);
-    y_rotate_f3(
+        /* cos_z_angle: */ camera.xyz_cosangle[2],
+        /* sin_z_angle: */ camera.xyz_sinangle[2]);
+    y_rotate_f3_known_cossin(
         ignore_cam_pos,
-        camera.xyz_angle[1]);
-    x_rotate_f3(
+        /* cos_y_angle: */ camera.xyz_cosangle[1],
+        /* sin_y_angle: */ camera.xyz_sinangle[1]);
+    x_rotate_f3_known_cossin(
         ignore_cam_pos,
-        camera.xyz_angle[0]);
+        /* cos_x_angle: */ camera.xyz_cosangle[0],
+        /* sin_x_angle: */ camera.xyz_sinangle[0]);
     
     // In the standard shader camera xyz will be subbed
     ignore_cam_pos[0] += camera.xyz[0];
@@ -387,6 +446,93 @@ static void undo_camera_translation(
     xyz[2] =
         (ignore_camera * ignore_cam_pos[2]) +
         ((1.0f - ignore_camera) * xyz[2]);
+    
+    #ifdef PROFILER_ACTIVE
+    profiler_end("undo_camera_translation()");
+    #endif
+}
+
+void simd_zpolygon_get_transformed_triangle_vertices(
+    const zPolygonCPU * cpu_data,
+    const GPUPolygon * gpu_data,
+    const int32_t locked_vertex_i,
+    float * vertices_recipient_10f,
+    float * normals_recipient_10f)
+{
+    #ifdef PROFILER_ACTIVE
+    profiler_start("simd_zpolygon_get_transformed_triangle_vertices()");
+    #endif
+    
+    float xyz_cosangle[3];
+    xyz_cosangle[0] = cosf(gpu_data->xyz_angle[0]);
+    xyz_cosangle[1] = cosf(gpu_data->xyz_angle[1]);
+    xyz_cosangle[2] = cosf(gpu_data->xyz_angle[2]);
+    float xyz_sinangle[3];
+    xyz_sinangle[0] = sinf(gpu_data->xyz_angle[0]);
+    xyz_sinangle[1] = sinf(gpu_data->xyz_angle[1]);
+    xyz_sinangle[2] = sinf(gpu_data->xyz_angle[2]);
+    
+    for (int32_t i = 0; i < 3; i++) {
+        SIMD_VEC4F vertex = simd_load_vec4f(all_mesh_vertices->gpu_data[
+            locked_vertex_i + i].xyz);
+        vertex = simd_mul_vec4f(
+            vertex,
+            simd_load_vec4f(gpu_data->xyz_multiplier));
+        vertex = simd_add_vec4f(
+            vertex,
+            simd_load_vec4f(gpu_data->xyz_offset));
+        vertex = simd_mul_vec4f(
+            vertex,
+            simd_set1_vec4f(gpu_data->scale_factor));
+        
+        SIMD_VEC4F normal = simd_load_vec4f(all_mesh_vertices->gpu_data[
+            locked_vertex_i + i].normal_xyz);
+        
+        normal = normalize_vertex_vec4f(normal);
+        
+        vertex = x_rotate_vec4f_known_cossin(
+            vertex,
+            xyz_cosangle[0],
+            xyz_sinangle[0]);
+        vertex = y_rotate_vec4f_known_cossin(
+            vertex,
+            xyz_cosangle[1],
+            xyz_sinangle[1]);
+        vertex = z_rotate_vec4f_known_cossin(
+            vertex,
+            xyz_cosangle[2],
+            xyz_sinangle[2]);
+        
+        normal = x_rotate_vec4f_known_cossin(
+            normal,
+            xyz_cosangle[0],
+            xyz_sinangle[0]);
+        normal = y_rotate_vec4f_known_cossin(
+            normal,
+            xyz_cosangle[1],
+            xyz_sinangle[1]);
+        normal = z_rotate_vec4f_known_cossin(
+            normal,
+            xyz_cosangle[2],
+            xyz_sinangle[2]);
+        
+        vertex = simd_add_vec4f(vertex, simd_load_vec4f(gpu_data->xyz));
+        
+        vertex = undo_camera_translation_vec4f(
+            vertex,
+            gpu_data->ignore_camera);
+        
+        normal = normal_vec4f_undo_camera_rotation(
+            normal,
+            gpu_data->ignore_camera);
+        
+        simd_store_vec4f(vertices_recipient_10f + (i * 3), vertex);
+        simd_store_vec4f(normals_recipient_10f + (i * 3), normal);
+    }
+    
+    #ifdef PROFILER_ACTIVE
+    profiler_end("simd_zpolygon_get_transformed_triangle_vertices()");
+    #endif
 }
 
 void zpolygon_get_transformed_triangle_vertices(
@@ -396,40 +542,54 @@ void zpolygon_get_transformed_triangle_vertices(
     float * vertices_recipient_9f,
     float * normals_recipient_9f)
 {
+    #ifdef PROFILER_ACTIVE
+    profiler_start("zpolygon_get_transformed_triangle_vertices()");
+    #endif
+    
     for (int32_t i = 0; i < 9; i++) {
+        int32_t imod3 = i % 3;
         vertices_recipient_9f[i] = all_mesh_vertices->gpu_data[
-            locked_vertex_i + (i / 3)].xyz[i % 3];
-        vertices_recipient_9f[i] *= gpu_data->xyz_multiplier[i % 3];
-        vertices_recipient_9f[i] += gpu_data->xyz_offset[i % 3];
+            locked_vertex_i + (i / 3)].xyz[imod3];
+        vertices_recipient_9f[i] *= gpu_data->xyz_multiplier[imod3];
+        vertices_recipient_9f[i] += gpu_data->xyz_offset[imod3];
         vertices_recipient_9f[i] *= gpu_data->scale_factor;
         
         normals_recipient_9f[i] = all_mesh_vertices->gpu_data[
-            locked_vertex_i + (i / 3)].normal_xyz[i % 3];
+            locked_vertex_i + (i / 3)].normal_xyz[imod3];
     }
     
     normalize_zvertex_f3(normals_recipient_9f);
     normalize_zvertex_f3(normals_recipient_9f+3);
     normalize_zvertex_f3(normals_recipient_9f+6);
     
-    x_rotate_f3(vertices_recipient_9f  , gpu_data->xyz_angle[0]);
-    y_rotate_f3(vertices_recipient_9f  , gpu_data->xyz_angle[1]);
-    z_rotate_f3(vertices_recipient_9f  , gpu_data->xyz_angle[2]);
-    x_rotate_f3(vertices_recipient_9f+3, gpu_data->xyz_angle[0]);
-    y_rotate_f3(vertices_recipient_9f+3, gpu_data->xyz_angle[1]);
-    z_rotate_f3(vertices_recipient_9f+3, gpu_data->xyz_angle[2]);
-    x_rotate_f3(vertices_recipient_9f+6, gpu_data->xyz_angle[0]);
-    y_rotate_f3(vertices_recipient_9f+6, gpu_data->xyz_angle[1]);
-    z_rotate_f3(vertices_recipient_9f+6, gpu_data->xyz_angle[2]);
+    float xyz_cosangle[3];
+    xyz_cosangle[0] = cosf(gpu_data->xyz_angle[0]);
+    xyz_cosangle[1] = cosf(gpu_data->xyz_angle[1]);
+    xyz_cosangle[2] = cosf(gpu_data->xyz_angle[2]);
+    float xyz_sinangle[3];
+    xyz_sinangle[0] = sinf(gpu_data->xyz_angle[0]);
+    xyz_sinangle[1] = sinf(gpu_data->xyz_angle[1]);
+    xyz_sinangle[2] = sinf(gpu_data->xyz_angle[2]);
     
-    x_rotate_f3(normals_recipient_9f  , gpu_data->xyz_angle[0]);
-    y_rotate_f3(normals_recipient_9f  , gpu_data->xyz_angle[1]);
-    z_rotate_f3(normals_recipient_9f  , gpu_data->xyz_angle[2]);
-    x_rotate_f3(normals_recipient_9f+3, gpu_data->xyz_angle[0]);
-    y_rotate_f3(normals_recipient_9f+3, gpu_data->xyz_angle[1]);
-    z_rotate_f3(normals_recipient_9f+3, gpu_data->xyz_angle[2]);
-    x_rotate_f3(normals_recipient_9f+6, gpu_data->xyz_angle[0]);
-    y_rotate_f3(normals_recipient_9f+6, gpu_data->xyz_angle[1]);
-    z_rotate_f3(normals_recipient_9f+6, gpu_data->xyz_angle[2]);
+    x_rotate_f3_known_cossin(vertices_recipient_9f  , xyz_cosangle[0], xyz_sinangle[0]);
+    y_rotate_f3_known_cossin(vertices_recipient_9f  , xyz_cosangle[1], xyz_sinangle[1]);
+    z_rotate_f3_known_cossin(vertices_recipient_9f  , xyz_cosangle[2], xyz_sinangle[2]);
+    x_rotate_f3_known_cossin(vertices_recipient_9f+3, xyz_cosangle[0], xyz_sinangle[0]);
+    y_rotate_f3_known_cossin(vertices_recipient_9f+3, xyz_cosangle[1], xyz_sinangle[1]);
+    z_rotate_f3_known_cossin(vertices_recipient_9f+3, xyz_cosangle[2], xyz_sinangle[2]);
+    x_rotate_f3_known_cossin(vertices_recipient_9f+6, xyz_cosangle[0], xyz_sinangle[0]);
+    y_rotate_f3_known_cossin(vertices_recipient_9f+6, xyz_cosangle[1], xyz_sinangle[1]);
+    z_rotate_f3_known_cossin(vertices_recipient_9f+6, xyz_cosangle[2], xyz_sinangle[2]);
+    
+    x_rotate_f3_known_cossin(normals_recipient_9f  , xyz_cosangle[0], xyz_sinangle[0]);
+    y_rotate_f3_known_cossin(normals_recipient_9f  , xyz_cosangle[1], xyz_sinangle[1]);
+    z_rotate_f3_known_cossin(normals_recipient_9f  , xyz_cosangle[2], xyz_sinangle[2]);
+    x_rotate_f3_known_cossin(normals_recipient_9f+3, xyz_cosangle[0], xyz_sinangle[0]);
+    y_rotate_f3_known_cossin(normals_recipient_9f+3, xyz_cosangle[1], xyz_sinangle[1]);
+    z_rotate_f3_known_cossin(normals_recipient_9f+3, xyz_cosangle[2], xyz_sinangle[2]);
+    x_rotate_f3_known_cossin(normals_recipient_9f+6, xyz_cosangle[0], xyz_sinangle[0]);
+    y_rotate_f3_known_cossin(normals_recipient_9f+6, xyz_cosangle[1], xyz_sinangle[1]);
+    z_rotate_f3_known_cossin(normals_recipient_9f+6, xyz_cosangle[2], xyz_sinangle[2]);
     
     for (uint32_t i = 0; i < 9; i++) {
         vertices_recipient_9f[i] += gpu_data->xyz[i%3];
@@ -448,6 +608,10 @@ void zpolygon_get_transformed_triangle_vertices(
     normal_undo_camera_rotation(
         normals_recipient_9f+6,
         gpu_data->ignore_camera);
+    
+    #ifdef PROFILER_ACTIVE
+    profiler_end("zpolygon_get_transformed_triangle_vertices()");
+    #endif
 }
 
 void zpolygon_get_transformed_boundsphere(
@@ -554,12 +718,10 @@ float ray_intersects_zpolygon(
                 all_mesh_summaries[cpu_data->mesh_id].vertices_size;
             vert_i += 3)
         {
+            #if LEGACY_SLOW_VERSION
             float transformed_triangle[9];
             float transformed_normals[9];
             
-            #ifdef PROFILER_ACTIVE
-            profiler_start("zpolygon_get_transformed_triangle_vertices()");
-            #endif
             zpolygon_get_transformed_triangle_vertices(
                 /* const zPolygonCPU * cpu_data: */
                     cpu_data,
@@ -571,9 +733,21 @@ float ray_intersects_zpolygon(
                     transformed_triangle,
                 /* float * normals_recipient_f9: */
                     transformed_normals);
-            #ifdef PROFILER_ACTIVE
-            profiler_end("zpolygon_get_transformed_triangle_vertices()");
             #endif
+            
+            float transformed_triangle[10];
+            float transformed_normals[10];
+            simd_zpolygon_get_transformed_triangle_vertices(
+                /* const zPolygonCPU * cpu_data: */
+                    cpu_data,
+                /* const GPUPolygon * gpu_data: */
+                    gpu_data,
+                /* const int32_t locked_vertex_i: */
+                    vert_i,
+                /* float *vertices_recipient_10f: */
+                    transformed_triangle,
+                /* float *normals_recipient_10f: */
+                    transformed_normals);
             
             #ifdef PROFILER_ACTIVE
             profiler_start("set up avg_normal");

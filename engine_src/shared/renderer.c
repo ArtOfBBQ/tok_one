@@ -258,6 +258,10 @@ void renderer_hardware_render(
     GPUDataForSingleFrame * frame_data,
     uint64_t elapsed_nanoseconds)
 {
+    #ifdef PROFILER_ACTIVE
+    profiler_start("renderer_hardware_render()");
+    #endif
+    
     (void)elapsed_nanoseconds;
     
     if (renderer_initialized != true) {
@@ -380,7 +384,7 @@ void renderer_hardware_render(
     #ifdef PROFILER_ACTIVE
     profiler_end("add_lineparticle_effects_to_workload(true)");
     #endif
-        
+    
     add_points_and_lines_to_workload(frame_data);
     
     if (application_running && window_globals->draw_hitboxes) {
@@ -511,4 +515,8 @@ void renderer_hardware_render(
             /* const float color: */
                 0.33f);
     }
+    
+    #ifdef PROFILER_ACTIVE
+    profiler_end("renderer_hardware_render()");
+    #endif
 }

@@ -481,7 +481,7 @@ void text_request_label_renderable(
             letter.gpu_materials[0].texture_i < 0 ||
             letter.gpu_materials[0].texture_i > 100)
         {
-            letter.gpu_materials[0].texture_i = ' ' - '!';
+            continue;
         }
         
         for (

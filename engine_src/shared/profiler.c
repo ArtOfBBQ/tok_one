@@ -10,9 +10,9 @@ static uint64_t __rdtsc(void)
 #endif
 
 #ifdef NDEBUG
-#define SLOW_FRAME_CYCLES 600000000
+#define SLOW_FRAME_CYCLES  60000000
 #else
-#define SLOW_FRAME_CYCLES 6000000000
+#define SLOW_FRAME_CYCLES 150000000
 #endif
 
 #define GUI_TOP_MESSAGE_MAX 128
@@ -46,7 +46,7 @@ typedef struct ProfiledNode {
     uint8_t parents_size;
 } ProfiledNode;
 
-#define PROFILE_TREE_MAX 1000
+#define PROFILE_TREE_MAX 15000
 
 #define FUNCTION_STACK_MAX 10000
 static uint32_t * function_stack = NULL;
@@ -62,7 +62,7 @@ typedef struct Frame {
     uint64_t elapsed;
     uint8_t hit[PROFILE_TREE_MAX];
     uint16_t profiles_size;
-    /* uint8_t simd_padding[8]; */
+    uint8_t simd_padding[16];
 } Frame;
 
 static Frame * frames = NULL;
@@ -114,6 +114,8 @@ void profiler_new_frame(void) {
         return;
     } else {
         strcpy_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, "Running...");
+        function_stack_size = 0;
+        gui_function_stack_size = 0;
     }
     
     frames[frame_i].elapsed = (uint64_t)__rdtsc() - frames[frame_i].started_at;
@@ -168,37 +170,62 @@ void profiler_start(const char * function_name)
                     /* char *string_2: */
                         function_name))
             {
-                new_node = &frames[frame_i].profiles[
-                    frames[frame_i].profiles[parent_prof_i].children[i]];
-                function_stack[function_stack_size] =
-                    frames[frame_i].profiles[parent_prof_i].children[i];
+                uint16_t new_i = frames[frame_i].profiles[parent_prof_i].
+                    children[i];
+                new_node = &frames[frame_i].profiles[new_i];
+                log_assert(new_node->elapsed_count > 0);
+                function_stack[function_stack_size] = new_i;
                 log_assert(new_node != NULL);
-                log_assert(new_node->parents_size > 0);
+                log_assert(new_node->parents_size > 0); log_assert(new_node->elapsed_count > 0);
                 break;
             }
         }
         
         if (new_node == NULL) {
-            function_stack[function_stack_size] =
-                frames[frame_i].profiles_size;
+            uint16_t new_i = frames[frame_i].profiles_size;
+            function_stack[function_stack_size] = new_i;
             
-            new_node = &frames[frame_i].profiles[frames[frame_i].profiles_size];
+            new_node = &frames[frame_i].profiles[new_i];
             log_assert(new_node != NULL);
+            log_assert(frames[frame_i].profiles[parent_prof_i].children_size <
+                MAX_CHILDREN_PER_NODE);
             frames[frame_i].profiles[parent_prof_i].children[frames[frame_i].
-                profiles[parent_prof_i].children_size] =
-                    frames[frame_i].profiles_size;
-            new_node->parents_size =
-                frames[frame_i].profiles[parent_prof_i].parents_size + 1;
-                new_node->children_size = 0;
+                profiles[parent_prof_i].children_size] = new_i;
+            frames[frame_i].profiles[parent_prof_i].children_size += 1;
+            log_assert(frames[frame_i].profiles[parent_prof_i].children_size <
+                MAX_CHILDREN_PER_NODE);
+            
+            new_node->parents_size = frames[frame_i].profiles[parent_prof_i].
+                parents_size + 1;
+            new_node->children_size = 0;
             new_node->elapsed_count = 0;
             new_node->elapsed_max = 0;
             new_node->elapsed_min = UINT64_MAX;
             new_node->elapsed_total = 0;
             new_node->elapsed_mostrecent = 0;
-            frames[frame_i].profiles[parent_prof_i].children_size += 1;
+            
+            strcpy_capped(
+                new_node->description,
+                MAX_DESCRIPTION_SIZE,
+                function_name);
+            
+            log_assert(frames[frame_i].profiles_size < PROFILE_TREE_MAX);
+            frames[frame_i].profiles_size += 1;
         }
     } else {
-        new_node = &frames[frame_i].profiles[0];
+        uint16_t new_i = frames[frame_i].profiles_size;
+        function_stack[function_stack_size] = new_i;
+        new_node = &frames[frame_i].profiles[new_i];
+        strcpy_capped(
+            new_node->description,
+            MAX_DESCRIPTION_SIZE,
+            function_name);
+        log_assert(new_node->parents_size == 0);
+        log_assert(new_node->children_size == 0);
+        log_assert(new_node->elapsed_total == 0);
+        log_assert(new_node->elapsed_count == 0);
+        log_assert(frames[frame_i].profiles_size < PROFILE_TREE_MAX);
+        frames[frame_i].profiles_size += 1;
     }
     
     log_assert(new_node != NULL);
@@ -206,11 +233,6 @@ void profiler_start(const char * function_name)
     function_stack_size += 1;
     
     new_node->last_start = __rdtsc();
-    strcpy_capped(
-        new_node->description,
-        MAX_DESCRIPTION_SIZE,
-        function_name);
-    frames[frame_i].profiles_size += 1;
 }
 
 void profiler_end(const char * function_name)
@@ -224,8 +246,9 @@ void profiler_end(const char * function_name)
     function_stack_size -= 1;
     
     log_assert(
-        are_equal_strings(frames[frame_i].profiles[prof_i].description,
-        function_name));
+        are_equal_strings(
+            frames[frame_i].profiles[prof_i].description,
+            function_name));
     
     uint64_t elapsed = __rdtsc() - frames[frame_i].profiles[prof_i].last_start;
     frames[frame_i].profiles[prof_i].elapsed_count += 1;
@@ -396,8 +419,10 @@ void profiler_draw_labels(void) {
                     true);
             
             if (frames[f_i].profiles_size > 0) {
+                gui_function_stack[0] = 0;
+                gui_function_stack_size = 1;
+            } else {
                 gui_function_stack_size = 0;
-                gui_function_stack[gui_function_stack_size++] = 0;
             }
             
             while (gui_function_stack_size > 0 && frames[f_i].elapsed > 0) {
@@ -415,16 +440,15 @@ void profiler_draw_labels(void) {
                     // push all child nodes onto the stack
                     for (
                          uint32_t child_i = 0;
-                         child_i < frames[f_i].
-                         profiles[func_i].children_size;
+                         child_i < frames[f_i].profiles[func_i].children_size;
                          child_i++)
                     {
+                        uint16_t child_prof_i = frames[f_i].profiles[func_i].
+                            children[child_i];
                         gui_function_stack[gui_function_stack_size] =
-                        frames[f_i].profiles[func_i].children[child_i];
+                            child_prof_i;
                         log_assert(
-                           frames[f_i].profiles[
-                               gui_function_stack[gui_function_stack_size]].
-                                   parents_size > 0);
+                           frames[f_i].profiles[child_prof_i].parents_size > 0);
                         gui_function_stack_size += 1;
                     }
                 }

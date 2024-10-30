@@ -513,8 +513,8 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
             
             SIMD_FLOAT simd_this_run_modifier =
                 simd_div_floats(
-                    simd_set_float(flt_actual_elapsed_this_run),
-                    simd_set_float(flt_remaining_microseconds_this_run));
+                    simd_set1_float(flt_actual_elapsed_this_run),
+                    simd_set1_float(flt_remaining_microseconds_this_run));
             
             float * anim_vals_ptr    =
                 (float *)&anim->gpu_polygon_vals;
@@ -525,7 +525,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                 float scheduled_anim_ignore_below = FLT_SCHEDULEDANIM_IGNORE;
                 
                 SIMD_FLOAT simd_scheduledanim_ignore_constant =
-                    simd_set_float(scheduled_anim_ignore_below);
+                    simd_set1_float(scheduled_anim_ignore_below);
                 
                 log_assert((sizeof(GPUPolygon) / 4) % SIMD_FLOAT_LANES == 0);
                 for (
@@ -639,9 +639,9 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                         simd_load_floats((target_vals_ptr + simd_step_i));
                     
                     SIMD_FLOAT simd_actual_elapsed =
-                        simd_set_float(flt_actual_elapsed_this_run);
+                        simd_set1_float(flt_actual_elapsed_this_run);
                     SIMD_FLOAT simd_one_million =
-                        simd_set_float(flt_one_million);
+                        simd_set1_float(flt_one_million);
                     
                     simd_target_vals = simd_add_floats(
                         simd_target_vals,
@@ -680,9 +680,9 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                             simd_load_floats((target_vals_ptr + simd_step_i));
                         
                         SIMD_FLOAT simd_actual_elapsed =
-                            simd_set_float(flt_actual_elapsed_this_run);
+                            simd_set1_float(flt_actual_elapsed_this_run);
                         SIMD_FLOAT simd_one_million =
-                            simd_set_float(flt_one_million);
+                            simd_set1_float(flt_one_million);
                         
                         simd_target_vals = simd_add_floats(
                             simd_target_vals,
@@ -767,8 +767,8 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
             
             SIMD_FLOAT simd_this_run_modifier =
                 simd_div_floats(
-                    simd_set_float(flt_actual_elapsed_this_run),
-                    simd_set_float(flt_remaining_microseconds_this_run));
+                    simd_set1_float(flt_actual_elapsed_this_run),
+                    simd_set1_float(flt_remaining_microseconds_this_run));
             
             float * anim_vals_ptr    =
                 (float *)&anim->lightsource_vals;
@@ -779,7 +779,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                 float scheduled_anim_ignore_below = FLT_SCHEDULEDANIM_IGNORE;
                 
                 SIMD_FLOAT simd_scheduledanim_ignore_constant =
-                    simd_set_float(scheduled_anim_ignore_below);
+                    simd_set1_float(scheduled_anim_ignore_below);
                 
                 log_assert((sizeof(zLightSource) / 4) % SIMD_FLOAT_LANES == 0);
                 for (
@@ -840,9 +840,9 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                         simd_load_floats((target_vals_ptr + simd_step_i));
                     
                     SIMD_FLOAT simd_actual_elapsed =
-                        simd_set_float(flt_actual_elapsed_this_run);
+                        simd_set1_float(flt_actual_elapsed_this_run);
                     SIMD_FLOAT simd_one_million =
-                        simd_set_float(flt_one_million);
+                        simd_set1_float(flt_one_million);
                     
                     simd_target_vals = simd_add_floats(
                         simd_target_vals,

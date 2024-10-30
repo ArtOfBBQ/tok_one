@@ -621,14 +621,8 @@ static id projection_constants_buffer;
     profiler_start("drawInMTKView");
     #endif
     
-    #ifdef PROFILER_ACTIVE
-    profiler_start("gameloop_update()");
-    #endif
     funcptr_shared_gameloop_update(
         &gpu_shared_data_collection.triple_buffers[current_frame_i]);
-    #ifdef PROFILER_ACTIVE
-    profiler_end("gameloop_update()");
-    #endif
     
     if (!metal_active) {
         #ifdef PROFILER_ACTIVE

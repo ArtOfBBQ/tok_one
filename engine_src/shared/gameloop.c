@@ -176,6 +176,10 @@ void gameloop_update(
         return;
     }
     
+    #ifdef PROFILER_ACTIVE
+    profiler_start("gameloop_update()");
+    #endif
+    
     log_assert(frame_data->light_collection != NULL);
     log_assert(frame_data->camera != NULL);
     
@@ -183,15 +187,15 @@ void gameloop_update(
     if (gameloop_previous_time < 1) {
         gameloop_previous_time = time;
         // platform_mutex_unlock(gameloop_mutex_id);
+        
+        #ifdef PROFILER_ACTIVE
+        profiler_end("gameloop_update()");
+        #endif
         return;
     }
     
     uint64_t elapsed = time - gameloop_previous_time;
     gameloop_previous_time = time;
-    
-    if (elapsed > 500000) {
-        log_append("extremely slow frame");
-    }
     
     if (!application_running) {
         delete_all_ui_elements();
@@ -248,6 +252,10 @@ void gameloop_update(
             // empty screen
             log_append("w82RZ - ");
             // platform_mutex_unlock(gameloop_mutex_id);
+            
+            #ifdef PROFILER_ACTIVE
+            profiler_end("gameloop_update()");
+            #endif
             return;
         } else {
             
@@ -265,6 +273,14 @@ void gameloop_update(
                 (uint32_t)window_globals->window_width);
        }
     } else if (application_running) {
+        
+        camera.xyz_cosangle[0] = cosf(camera.xyz_angle[0]);
+        camera.xyz_cosangle[1] = cosf(camera.xyz_angle[1]);
+        camera.xyz_cosangle[2] = cosf(camera.xyz_angle[2]);
+        camera.xyz_sinangle[0] = sinf(camera.xyz_angle[0]);
+        camera.xyz_sinangle[1] = sinf(camera.xyz_angle[1]);
+        camera.xyz_sinangle[2] = sinf(camera.xyz_angle[2]);
+        
         platform_update_mouse_location();
         
         update_terminal();
@@ -353,21 +369,19 @@ void gameloop_update(
                 elapsed);
     }
     
-    #ifdef PROFILER_ACTIVE
-    profiler_start("renderer_hardware_render()");
-    #endif
     renderer_hardware_render(
             frame_data,
         /* uint64_t elapsed_microseconds: */
             elapsed);
+    
+    uint32_t overflow_vertices = frame_data->vertices_size % 3;
+    frame_data->vertices_size -= overflow_vertices;
+    
     #ifdef PROFILER_ACTIVE
-    profiler_end("renderer_hardware_render()");
+    profiler_end("gameloop_update()");
     #endif
     
     #ifdef PROFILER_ACTIVE
     profiler_draw_labels();
     #endif
-    
-    uint32_t overflow_vertices = frame_data->vertices_size % 3;
-    frame_data->vertices_size -= overflow_vertices;
 }
