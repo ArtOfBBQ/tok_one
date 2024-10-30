@@ -230,4 +230,46 @@ because I don't know much about how that works or how reliable it is
 #define simd_cmplt_vec4f(a, b)             vcltq_f32(a, b)
 #endif
 
+// ***********************************
+// **    Exactly 4 ints (vec4i)     **
+// ***********************************
+#if defined(__SSE__)
+#include "immintrin.h"
+#define SIMD_VEC4I                         __m128i
+#define simd_load_vec4i(intsptr)           _mm_loadu_si128((const __m128i *)(intsptr))
+#define simd_set1_vec4i(int)               _mm_set1_epi32(float)
+#define simd_set_vec4i(a,b,c,d)            _mm_set_epi32(d,c,b,a)
+#define simd_store_vec4i(intsptr, from)    _mm_storeu_si128((__m128i *)(intsptr), from)
+#define simd_mul_vec4i(a, b)               _mm_mul_epi32(a, b)
+#define simd_div_vec4i(a, b)               _mm_div_epi32(a, b)
+#define simd_add_vec4i(a, b)               _mm_add_epi32(a, b)
+#define simd_sub_vec4i(a, b)               _mm_sub_epi32(a, b)
+#define simd_max_vec4i(a, b)               _mm_max_epi32(a, b)
+#define simd_and_vec4i(a, b)               _mm_and_epi32(a, b)
+#define simd_sqrt_vec4i(a)                 _mm_sqrt_epi32(a)
+#define simd_cmpeq_vec4i(a, b)             _mm_cmp_epi32(a, b, _CMP_EQ_UQ)
+#define simd_cmplt_vec4i(a, b)             _mm_cmp_epi32(a, b, _CMP_LT_OQ)
+#define simd_extract_vec4i(a, lane)        _mm_cvtss_f32(_mm_shuffle_epi32(a, a, _MM_SHUFFLE(0, 0, 0, lane)))
+#elif defined(__ARM_NEON)
+#include "arm_neon.h"
+#define SIMD_VEC4F                         float32x4_t
+#define simd_load_vec4i(floatsptr)         vld1q_f32(floatsptr)
+#define simd_set1_vec4i(float)             vld1q_dup_f32(&float)
+#define simd_store_vec4i(to_ptr, from)     vst1q_f32(to_ptr, from)
+#define simd_mul_vec4i(a, b)               vmulq_f32(a, b)
+#define simd_div_vec4i(a, b)               vdivq_f32(a, b)
+#define simd_add_vec4i(a, b)               vaddq_f32(a, b)
+#define simd_sub_vec4i(a, b)               vsubq_f32(a, b)
+#define simd_max_vec4i(a, b)               vmaxq_f32(a, b)
+// The arm comparison functions (like cmpeq) all return unsigned ints
+// we don't use the bitwise and with floats except immediately after passing
+// the result of a logical comparison, so this will be OK
+// TODO: maybe consider rewriting all logical comparisons to just return 1 or 0
+// TODO: and bypass the 255 values alltogether
+#define simd_and_vec4f(a, b)               (float32x4_t)(vandq_u32(a, b))
+#define simd_sqrt_vec4f(a)                 vsqrtq_f32(a)
+#define simd_cmpeq_vec4f(a, b)             vceq_f32(a, b)
+#define simd_cmplt_vec4f(a, b)             vcltq_f32(a, b)
+#endif
+
 #endif // TOKONE_SIMD_H

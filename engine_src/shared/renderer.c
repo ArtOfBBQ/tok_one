@@ -238,6 +238,7 @@ inline static void add_opaque_zpolygons_to_workload(
                 all_mesh_summaries[mesh_id].vertices_size;
         assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
         
+        #if DEPRECATED_SLOW_VERSION
         for (
             int32_t vert_i = all_mesh_summaries[mesh_id].vertices_head_i;
             vert_i < vert_tail_i;
@@ -248,8 +249,48 @@ inline static void add_opaque_zpolygons_to_workload(
             frame_data->vertices[frame_data->vertices_size].polygon_i =
                 cpu_zp_i;
             frame_data->vertices_size += 1;
-            log_assert(frame_data->vertices_size < MAX_VERTICES_PER_BUFFER);
         }
+        #endif
+        
+        /*
+        We are free to overflow the vertices buffer, since its end is not
+        in use yet anyway.
+        
+        
+        */
+        int32_t vert_i = all_mesh_summaries[mesh_id].vertices_head_i;
+        SIMD_VEC4I cur  = simd_set_vec4i(vert_i-2, cpu_zp_i, vert_i-1, cpu_zp_i);
+        SIMD_VEC4I incr = simd_set_vec4i(2,0,2,0);
+        
+        int32_t verts_to_copy = vert_tail_i - vert_i;
+        #ifndef LOGGER_IGNORE_ASSERTS
+        uint32_t previous_verts_size = frame_data->vertices_size;
+        #endif
+        
+        for (int32_t i = 0; i < verts_to_copy; i += 2) {
+            cur = simd_add_vec4i(cur, incr);
+            simd_store_vec4i(
+                (frame_data->vertices + frame_data->vertices_size),
+                cur);
+            frame_data->vertices_size += 2;
+            #ifndef LOGGER_IGNORE_ASSERTS
+            log_assert(
+                frame_data->vertices_size < MAX_VERTICES_PER_BUFFER);
+            log_assert(
+                frame_data->vertices[frame_data->vertices_size-2].
+                    locked_vertex_i == (vert_i + i));
+            log_assert(
+                frame_data->vertices[frame_data->vertices_size-1].
+                    locked_vertex_i == (vert_i + i + 1));
+            #endif
+        }
+        if (verts_to_copy % 2 == 1) {
+            frame_data->vertices_size -= 1;
+        }
+        #ifndef LOGGER_IGNORE_ASSERTS
+        log_assert(frame_data->vertices_size ==
+            (previous_verts_size + (uint32_t)verts_to_copy));
+        #endif
     }
 }
 

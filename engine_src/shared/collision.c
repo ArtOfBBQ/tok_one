@@ -542,7 +542,6 @@ float ray_hits_triangle(
         #ifndef COLLISION_IGNORE_ASSERTS
         assert(nearest_dist_found > 0.0f);
         #endif
-        
         return nearest_dist_found;
     }
     

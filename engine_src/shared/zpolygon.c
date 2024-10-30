@@ -710,6 +710,9 @@ float ray_intersects_zpolygon(
         float closest_hit_point[3];
         memset_char(closest_hit_point, 0, sizeof(float)*3);
         
+        float transformed_triangle[10];
+        float transformed_normals[10];
+        
         for (
             int32_t vert_i =
                 all_mesh_summaries[cpu_data->mesh_id].vertices_head_i;
@@ -718,25 +721,6 @@ float ray_intersects_zpolygon(
                 all_mesh_summaries[cpu_data->mesh_id].vertices_size;
             vert_i += 3)
         {
-            #if LEGACY_SLOW_VERSION
-            float transformed_triangle[9];
-            float transformed_normals[9];
-            
-            zpolygon_get_transformed_triangle_vertices(
-                /* const zPolygonCPU * cpu_data: */
-                    cpu_data,
-                /* const GPUPolygon * gpu_data: */
-                    gpu_data,
-                /* const unsigned int locked_vertex_i: */
-                    vert_i,
-                /* float * vertices_recipient_f9: */
-                    transformed_triangle,
-                /* float * normals_recipient_f9: */
-                    transformed_normals);
-            #endif
-            
-            float transformed_triangle[10];
-            float transformed_normals[10];
             simd_zpolygon_get_transformed_triangle_vertices(
                 /* const zPolygonCPU * cpu_data: */
                     cpu_data,
@@ -773,9 +757,6 @@ float ray_intersects_zpolygon(
             profiler_end("set up avg_normal");
             #endif
             
-            #ifdef PROFILER_ACTIVE
-            profiler_start("ray_hits_triangle()");
-            #endif
             float dist_to_tri = ray_hits_triangle(
                 /* const float * ray_origin: */
                     ray_origin,
@@ -791,9 +772,6 @@ float ray_intersects_zpolygon(
                     avg_normal,
                 /* float * collision_recipient: */
                     closest_hit_point);
-            #ifdef PROFILER_ACTIVE
-            profiler_end("ray_hits_triangle()");
-            #endif
             
             if (dist_to_tri > 0 && dist_to_tri < dist_to_hit)
             {
