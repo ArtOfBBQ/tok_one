@@ -148,7 +148,7 @@ TouchableMTKView * _my_mtk_view;
         fromFilePath: shader_lib_filepath];
     log_assert(result);
     
-    apple_gpu_init(shared_gameloop_update);
+    apple_gpu_init(gameloop_update);
     
     init_application_after_gpu_init();
     

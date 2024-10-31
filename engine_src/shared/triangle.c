@@ -89,19 +89,17 @@ SIMD_VEC4F x_rotate_vec4f_known_cossin(
     xyz[1] = new_y;
     */
     
-    float new_y =
+    float new_vals[4];
+    new_vals[0] = simd_extract_vec4f(xyz, 0);
+    new_vals[1] =
         simd_extract_vec4f(xyz, 1) * cos_x_angle -
         simd_extract_vec4f(xyz, 2) * sin_x_angle;
-    
-    float new_z =
+    new_vals[2] =
         simd_extract_vec4f(xyz, 2) * cos_x_angle +
         simd_extract_vec4f(xyz, 1) * sin_x_angle;
+    new_vals[3] = 0.0f;
     
-    SIMD_VEC4F return_value = simd_set_vec4f(
-        simd_extract_vec4f(xyz, 0),
-        new_y,
-        new_z,
-        0.0f);
+    SIMD_VEC4F return_value = simd_load_vec4f(new_vals);
     
     return return_value;
 }
@@ -142,19 +140,17 @@ SIMD_VEC4F y_rotate_vec4f_known_cossin(
     float cos_y_angle,
     float sin_y_angle)
 {
-    float new_x =
+    float new_vals[4];
+    new_vals[0] =
         (simd_extract_vec4f(xyz, 0) * cos_y_angle) +
         (simd_extract_vec4f(xyz, 2) * sin_y_angle);
-    
-    float new_z =
+    new_vals[1] = simd_extract_vec4f(xyz, 1);
+    new_vals[2] =
         (simd_extract_vec4f(xyz, 2) * cos_y_angle) -
-        (simd_extract_vec4f(xyz, 0) * sin_y_angle);
+        (simd_extract_vec4f(xyz, 0) * sin_y_angle);;
+    new_vals[3] = 0.0f;
     
-    SIMD_VEC4F return_value = simd_set_vec4f(
-        new_x,
-        simd_extract_vec4f(xyz, 1),
-        new_z,
-        0.0f);
+    SIMD_VEC4F return_value = simd_load_vec4f(new_vals);
     
     return return_value;
 }
@@ -195,19 +191,17 @@ SIMD_VEC4F z_rotate_vec4f_known_cossin(
     float cos_z_angle,
     float sin_z_angle)
 {
-    float new_x =
+    float new_vals[4];
+    new_vals[0] =
         (simd_extract_vec4f(xyz, 0) * cos_z_angle) -
         (simd_extract_vec4f(xyz, 1) * sin_z_angle);
-    
-    float new_y =
+    new_vals[1] =
         (simd_extract_vec4f(xyz, 1) * cos_z_angle) +
-        (simd_extract_vec4f(xyz, 0) * sin_z_angle);
+        (simd_extract_vec4f(xyz, 0) * sin_z_angle);;
+    new_vals[2] = simd_extract_vec4f(xyz, 2);
+    new_vals[3] = 0.0f;
     
-    SIMD_VEC4F return_value = simd_set_vec4f(
-        new_x,
-        new_y,
-        simd_extract_vec4f(xyz, 2),
-        0.0f);
+    SIMD_VEC4F return_value = simd_load_vec4f(new_vals);
     
     return return_value;
 }

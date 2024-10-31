@@ -340,9 +340,10 @@ static SIMD_VEC4F normal_vec4f_undo_camera_rotation(
         camera.xyz_cosangle[0],
         camera.xyz_sinangle[0]);
     
+    float one_minus_ignore_camera = 1.0f - ignore_camera;
     return simd_add_vec4f(
         simd_mul_vec4f(simd_set1_vec4f(ignore_camera), ignore_cam_pos),
-        simd_mul_vec4f(simd_set1_vec4f(1.0f - ignore_camera), normal_xyz));
+        simd_mul_vec4f(simd_set1_vec4f(one_minus_ignore_camera), normal_xyz));
 }
 
 static void normal_undo_camera_rotation(
@@ -401,9 +402,10 @@ static SIMD_VEC4F undo_camera_translation_vec4f(
         ignore_cam_pos,
         simd_load_vec4f(camera.xyz));
     
+    float one_minus_ignore_cam = 1.0f - ignore_camera;
     return simd_add_vec4f(
         simd_mul_vec4f(simd_set1_vec4f(ignore_camera), ignore_cam_pos),
-        simd_mul_vec4f(simd_set1_vec4f(1.0f - ignore_camera), xyz));
+        simd_mul_vec4f(simd_set1_vec4f(one_minus_ignore_cam), xyz));
 }
 
 static void undo_camera_translation(

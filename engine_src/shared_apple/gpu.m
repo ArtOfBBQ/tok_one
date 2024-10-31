@@ -10,6 +10,10 @@ static void (* funcptr_shared_gameloop_update)(GPUDataForSingleFrame *) = NULL;
 void apple_gpu_init(
     void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *))
 {
+    //    RenderPassDescriptors[0] = NULL;
+    //    RenderPassDescriptors[1] = NULL;
+    //    RenderPassDescriptors[2] = NULL;
+    
     funcptr_shared_gameloop_update = arg_funcptr_shared_gameloop_update;
 }
 
@@ -631,10 +635,6 @@ static id projection_constants_buffer;
         return;
     }
     
-    #ifdef PROFILER_ACTIVE
-    profiler_start("command buffer setup");
-    #endif
-    
     id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
     
     if (command_buffer == nil) {
@@ -643,9 +643,6 @@ static id projection_constants_buffer;
         log_dump_and_crash("error - failed to get metal command buffer\n");
         #endif
         
-        #ifdef PROFILER_ACTIVE
-        profiler_end("command buffer setup");
-        #endif
         #ifdef PROFILER_ACTIVE
         profiler_end("drawInMTKView");
         #endif
@@ -658,25 +655,25 @@ static id projection_constants_buffer;
     MTLRenderPassDescriptor * RenderPassDescriptor =
         [view currentRenderPassDescriptor];
     
-    RenderPassDescriptor.
-        depthAttachment.
-        loadAction = MTLLoadActionClear;
+    RenderPassDescriptor.depthAttachment.loadAction =
+        MTLLoadActionClear;
+        
+    RenderPassDescriptor
+        .colorAttachments[0]
+        .loadAction = MTLLoadActionClear;
+        
+    RenderPassDescriptor.colorAttachments[0].clearColor =
+        MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);;
     
     // this inherits from the view's cleardepth (in macos/main.m for mac os),
     // don't set it here
     // assert(RenderPassDescriptor.depthAttachment.clearDepth == CLEARDEPTH);
     
-    RenderPassDescriptor
-        .colorAttachments[0]
-        .loadAction = MTLLoadActionClear;
-    
-    RenderPassDescriptor.colorAttachments[0].clearColor =
-        MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);;
-    
     id<MTLRenderCommandEncoder> render_encoder =
-        [command_buffer
-            renderCommandEncoderWithDescriptor:
-                RenderPassDescriptor];
+            [command_buffer
+                renderCommandEncoderWithDescriptor:
+                    RenderPassDescriptor];
+    
     #ifdef PROFILER_ACTIVE
     profiler_end("Create MTLRenderPassDescriptor etc.");
     #endif
@@ -702,10 +699,6 @@ static id projection_constants_buffer;
     #ifdef PROFILER_ACTIVE
     profiler_end("set RenderPipeline, Stencil, ClipMode");
     #endif
-    #ifdef PROFILER_ACTIVE
-    profiler_end("command buffer setup");
-    #endif
-    
     
     #ifdef PROFILER_ACTIVE
     profiler_start("setVertexBuffers");
@@ -803,7 +796,7 @@ static id projection_constants_buffer;
     #endif
     
     #ifdef PROFILER_ACTIVE
-    profiler_start("drawPrimitives(diamonds)");
+    profiler_start("draw calls");
     #endif
     uint32_t diamond_verts_size =
         gpu_shared_data_collection.
@@ -820,13 +813,7 @@ static id projection_constants_buffer;
             vertexCount:
                 diamond_verts_size];
     }
-    #ifdef PROFILER_ACTIVE
-    profiler_end("drawPrimitives(diamonds)");
-    #endif
-    
-    #ifdef PROFILER_ACTIVE
-    profiler_start("drawPrimitives(first_alphablend_i)");
-    #endif
+
     log_assert(
         gpu_shared_data_collection.triple_buffers[current_frame_i].
             first_alphablend_i <=
@@ -841,7 +828,8 @@ static id projection_constants_buffer;
     if (window_globals->draw_triangles && alphablend_verts_size > 0) {
         assert(alphablend_verts_size < MAX_VERTICES_PER_BUFFER);
         assert(alphablend_verts_size % 3 == 0);
-        [render_encoder setRenderPipelineState: _alphablend_pipeline_state];
+        [render_encoder setRenderPipelineState:
+            _alphablend_pipeline_state];
         
         [render_encoder
             drawPrimitives: MTLPrimitiveTypeTriangle
@@ -850,23 +838,20 @@ static id projection_constants_buffer;
             vertexCount:
                 alphablend_verts_size];
     }
-    #ifdef PROFILER_ACTIVE
-    profiler_end("drawPrimitives(first_alphablend_i)");
-    #endif
     
-    #ifdef PROFILER_ACTIVE
-    profiler_start("Line & point raw vertices");
-    #endif
     if ((
         gpu_shared_data_collection.triple_buffers[current_frame_i].
             line_vertices_size +
         gpu_shared_data_collection.triple_buffers[current_frame_i].
             point_vertices_size) > 0)
     {
-        [render_encoder setRenderPipelineState: _raw_pipeline_state];
+        [render_encoder setRenderPipelineState:
+            _raw_pipeline_state];
         assert(_depth_stencil_state != nil);
-        [render_encoder setDepthStencilState: _depth_stencil_state];
-        [render_encoder setDepthClipMode: MTLDepthClipModeClip];
+        [render_encoder setDepthStencilState:
+            _depth_stencil_state];
+        [render_encoder setDepthClipMode:
+            MTLDepthClipModeClip];
     }
     
     if (gpu_shared_data_collection.
@@ -909,7 +894,7 @@ static id projection_constants_buffer;
                 triple_buffers[current_frame_i].point_vertices_size];
     }
     #ifdef PROFILER_ACTIVE
-    profiler_end("Line & point raw vertices");
+    profiler_end("draw calls");
     #endif
     
     #ifdef PROFILER_ACTIVE
@@ -944,7 +929,6 @@ static id projection_constants_buffer;
 - (void)mtkView:(MTKView *)view
     drawableSizeWillChange:(CGSize)size
 {
-    //[self updateViewport];
 }
 @end
 

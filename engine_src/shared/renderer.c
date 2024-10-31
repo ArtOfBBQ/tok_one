@@ -215,6 +215,14 @@ inline static void add_opaque_zpolygons_to_workload(
 {
     assert(frame_data->vertices_size == 0);
     
+    int32_t cur_vals[4];
+    int32_t incr_vals[4];
+    incr_vals[0] = 2;
+    incr_vals[1] = 0;
+    incr_vals[2] = 2;
+    incr_vals[3] = 0;
+    SIMD_VEC4I incr = simd_load_vec4i(incr_vals);
+    
     for (
         int32_t cpu_zp_i = 0;
         cpu_zp_i < (int32_t)zpolygons_to_render->size;
@@ -238,20 +246,6 @@ inline static void add_opaque_zpolygons_to_workload(
                 all_mesh_summaries[mesh_id].vertices_size;
         assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
         
-        #if DEPRECATED_SLOW_VERSION
-        for (
-            int32_t vert_i = all_mesh_summaries[mesh_id].vertices_head_i;
-            vert_i < vert_tail_i;
-            vert_i += 1)
-        {
-            frame_data->vertices[frame_data->vertices_size].locked_vertex_i =
-                vert_i;
-            frame_data->vertices[frame_data->vertices_size].polygon_i =
-                cpu_zp_i;
-            frame_data->vertices_size += 1;
-        }
-        #endif
-        
         /*
         We are free to overflow the vertices buffer, since its end is not
         in use yet anyway.
@@ -259,8 +253,11 @@ inline static void add_opaque_zpolygons_to_workload(
         
         */
         int32_t vert_i = all_mesh_summaries[mesh_id].vertices_head_i;
-        SIMD_VEC4I cur  = simd_set_vec4i(vert_i-2, cpu_zp_i, vert_i-1, cpu_zp_i);
-        SIMD_VEC4I incr = simd_set_vec4i(2,0,2,0);
+        cur_vals[0] = vert_i-2;
+        cur_vals[1] = cpu_zp_i;
+        cur_vals[2] = vert_i-1;
+        cur_vals[3] = cpu_zp_i;
+        SIMD_VEC4I cur  = simd_load_vec4i(cur_vals);
         
         int32_t verts_to_copy = vert_tail_i - vert_i;
         #ifndef LOGGER_IGNORE_ASSERTS

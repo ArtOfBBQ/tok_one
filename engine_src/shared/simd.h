@@ -196,7 +196,6 @@ because I don't know much about how that works or how reliable it is
 #define SIMD_VEC4F                         __m128
 #define simd_load_vec4f(floatsptr)         _mm_loadu_ps(floatsptr)
 #define simd_set1_vec4f(float)             _mm_set1_ps(float)
-#define simd_set_vec4f(a,b,c,d)            _mm_set_ps(d,c,b,a)
 #define simd_store_vec4f(floatsptr, from)  _mm_storeu_ps(floatsptr, from)
 #define simd_mul_vec4f(a, b)               _mm_mul_ps(a, b)
 #define simd_div_vec4f(a, b)               _mm_div_ps(a, b)
@@ -212,7 +211,7 @@ because I don't know much about how that works or how reliable it is
 #include "arm_neon.h"
 #define SIMD_VEC4F                         float32x4_t
 #define simd_load_vec4f(floatsptr)         vld1q_f32(floatsptr)
-#define simd_set1_float(float)             vld1q_dup_f32(&float)
+#define simd_set1_vec4f(float)             vld1q_dup_f32(&float)
 #define simd_store_vec4f(to_ptr, from)     vst1q_f32(to_ptr, from)
 #define simd_mul_vec4f(a, b)               vmulq_f32(a, b)
 #define simd_div_vec4f(a, b)               vdivq_f32(a, b)
@@ -228,6 +227,7 @@ because I don't know much about how that works or how reliable it is
 #define simd_sqrt_vec4f(a)                 vsqrtq_f32(a)
 #define simd_cmpeq_vec4f(a, b)             vceq_f32(a, b)
 #define simd_cmplt_vec4f(a, b)             vcltq_f32(a, b)
+#define simd_extract_vec4f(a, lane)        vdups_laneq_f32(a, lane)
 #endif
 
 // ***********************************
@@ -238,7 +238,6 @@ because I don't know much about how that works or how reliable it is
 #define SIMD_VEC4I                         __m128i
 #define simd_load_vec4i(intsptr)           _mm_loadu_si128((const __m128i *)(intsptr))
 #define simd_set1_vec4i(int)               _mm_set1_epi32(float)
-#define simd_set_vec4i(a,b,c,d)            _mm_set_epi32(d,c,b,a)
 #define simd_store_vec4i(intsptr, from)    _mm_storeu_si128((__m128i *)(intsptr), from)
 #define simd_mul_vec4i(a, b)               _mm_mul_epi32(a, b)
 #define simd_div_vec4i(a, b)               _mm_div_epi32(a, b)
@@ -252,24 +251,25 @@ because I don't know much about how that works or how reliable it is
 #define simd_extract_vec4i(a, lane)        _mm_cvtss_f32(_mm_shuffle_epi32(a, a, _MM_SHUFFLE(0, 0, 0, lane)))
 #elif defined(__ARM_NEON)
 #include "arm_neon.h"
-#define SIMD_VEC4F                         float32x4_t
-#define simd_load_vec4i(floatsptr)         vld1q_f32(floatsptr)
-#define simd_set1_vec4i(float)             vld1q_dup_f32(&float)
-#define simd_store_vec4i(to_ptr, from)     vst1q_f32(to_ptr, from)
-#define simd_mul_vec4i(a, b)               vmulq_f32(a, b)
-#define simd_div_vec4i(a, b)               vdivq_f32(a, b)
-#define simd_add_vec4i(a, b)               vaddq_f32(a, b)
-#define simd_sub_vec4i(a, b)               vsubq_f32(a, b)
-#define simd_max_vec4i(a, b)               vmaxq_f32(a, b)
+#define SIMD_VEC4I                         int32x4_t
+#define simd_load_vec4i(floatsptr)         vld1q_s32(floatsptr)
+#define simd_set1_vec4i(float)             vld1q_dup_s32(&float)
+#define simd_store_vec4i(to_ptr, from)     vst1q_s32((int32_t *)(to_ptr), from)
+#define simd_mul_vec4i(a, b)               vmulq_s32(a, b)
+#define simd_div_vec4i(a, b)               vdivq_s32(a, b)
+#define simd_add_vec4i(a, b)               vaddq_s32(a, b)
+#define simd_sub_vec4i(a, b)               vsubq_s32(a, b)
+#define simd_max_vec4i(a, b)               vmaxq_s32(a, b)
 // The arm comparison functions (like cmpeq) all return unsigned ints
 // we don't use the bitwise and with floats except immediately after passing
 // the result of a logical comparison, so this will be OK
 // TODO: maybe consider rewriting all logical comparisons to just return 1 or 0
 // TODO: and bypass the 255 values alltogether
-#define simd_and_vec4f(a, b)               (float32x4_t)(vandq_u32(a, b))
-#define simd_sqrt_vec4f(a)                 vsqrtq_f32(a)
-#define simd_cmpeq_vec4f(a, b)             vceq_f32(a, b)
-#define simd_cmplt_vec4f(a, b)             vcltq_f32(a, b)
+#define simd_and_vec4i(a, b)               (int32x4_t)(vandq_u32(a, b))
+#define simd_sqrt_vec4i(a)                 vsqrtq_s32(a)
+#define simd_cmpeq_vec4i(a, b)             vceq_s32(a, b)
+#define simd_cmplt_vec4i(a, b)             vcltq_s32(a, b)
+#define simd_extract_vec4i(a, lane)        vdups_laneq_s32(a, lane)
 #endif
 
 #endif // TOKONE_SIMD_H
