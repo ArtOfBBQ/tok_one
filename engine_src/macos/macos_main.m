@@ -508,7 +508,7 @@ int main(int argc, const char * argv[]) {
     
     // [mtk_view setOpaque: NO];
     // mtk_view.opaque = false;
-    // mtk_view.preferredFramesPerSecond = 60;
+    mtk_view.preferredFramesPerSecond = 120;
     mtk_view.enableSetNeedsDisplay = false;
     
     // Indicate that each pixel in the depth buffer is a 32-bit floating point

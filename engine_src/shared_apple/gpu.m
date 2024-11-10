@@ -7,6 +7,8 @@ MetalKitViewDelegate * apple_gpu_delegate = NULL;
 
 static void (* funcptr_shared_gameloop_update)(GPUDataForSingleFrame *) = NULL;
 
+static dispatch_semaphore_t drawing_semaphore;
+
 void apple_gpu_init(
     void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *))
 {
@@ -15,6 +17,8 @@ void apple_gpu_init(
     //    RenderPassDescriptors[2] = NULL;
     
     funcptr_shared_gameloop_update = arg_funcptr_shared_gameloop_update;
+    
+    drawing_semaphore = dispatch_semaphore_create(3);
 }
 
 // objective-c "id" of the MTLBuffer objects
@@ -28,9 +32,6 @@ static id point_vertex_buffers[3];
 static id locked_vertex_populator_buffer;
 static id locked_vertex_buffer;
 static id projection_constants_buffer;
-
-// static id projection_constant_buffers[3];
-// static dispatch_semaphore_t drawing_semaphore;
 
 @implementation MetalKitViewDelegate
 {
@@ -625,6 +626,8 @@ static id projection_constants_buffer;
     profiler_start("drawInMTKView");
     #endif
     
+    dispatch_semaphore_wait(drawing_semaphore, DISPATCH_TIME_FOREVER);
+    
     funcptr_shared_gameloop_update(
         &gpu_shared_data_collection.triple_buffers[current_frame_i]);
     
@@ -668,36 +671,35 @@ static id projection_constants_buffer;
     // this inherits from the view's cleardepth (in macos/main.m for mac os),
     // don't set it here
     // assert(RenderPassDescriptor.depthAttachment.clearDepth == CLEARDEPTH);
-    
-    id<MTLRenderCommandEncoder> render_encoder =
-            [command_buffer
-                renderCommandEncoderWithDescriptor:
-                    RenderPassDescriptor];
-    
     #ifdef PROFILER_ACTIVE
     profiler_end("Create MTLRenderPassDescriptor etc.");
     #endif
     
     #ifdef PROFILER_ACTIVE
-    profiler_start("setViewport");
+    profiler_start("Create MTLRenderCommandEncoder");
+    #endif
+    id<MTLRenderCommandEncoder> render_encoder =
+            [command_buffer
+                renderCommandEncoderWithDescriptor:
+                    RenderPassDescriptor];
+    #ifdef PROFILER_ACTIVE
+    profiler_end("Create MTLRenderCommandEncoder");
+    #endif
+    
+    #ifdef PROFILER_ACTIVE
+    profiler_start("setViewport, RenderPipeline, Stencil, ClipMode");
     #endif
     assert(cached_viewport.zfar > cached_viewport.znear);
     [render_encoder setViewport: cached_viewport];
     assert(cached_viewport.width > 0.0f);
     assert(cached_viewport.height > 0.0f);
-    #ifdef PROFILER_ACTIVE
-    profiler_end("setViewport");
-    #endif
     
-    #ifdef PROFILER_ACTIVE
-    profiler_start("set RenderPipeline, Stencil, ClipMode");
-    #endif
     [render_encoder setRenderPipelineState: _diamond_pipeline_state];
     assert(_depth_stencil_state != nil);
     [render_encoder setDepthStencilState: _depth_stencil_state];
     [render_encoder setDepthClipMode: MTLDepthClipModeClip];
     #ifdef PROFILER_ACTIVE
-    profiler_end("set RenderPipeline, Stencil, ClipMode");
+    profiler_end("setViewport, RenderPipeline, Stencil, ClipMode");
     #endif
     
     #ifdef PROFILER_ACTIVE
@@ -912,7 +914,7 @@ static id projection_constants_buffer;
     [command_buffer addCompletedHandler:^(id<MTLCommandBuffer> arg_cmd_buffer) {
         (void)arg_cmd_buffer;
         
-        /* dispatch_semaphore_signal(drawing_semaphore); */
+        dispatch_semaphore_signal(drawing_semaphore);
     }];
     
     [command_buffer commit];

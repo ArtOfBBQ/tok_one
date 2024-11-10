@@ -10,7 +10,7 @@ static uint64_t __rdtsc(void)
 #endif
 
 #ifdef NDEBUG
-#define SLOW_FRAME_CYCLES  60000000
+#define SLOW_FRAME_CYCLES 120000000
 #else
 #define SLOW_FRAME_CYCLES 150000000
 #endif
@@ -119,9 +119,10 @@ void profiler_new_frame(void) {
     }
     
     frames[frame_i].elapsed = (uint64_t)__rdtsc() - frames[frame_i].started_at;
-    if (
-        frames[frame_i].elapsed > SLOW_FRAME_CYCLES &&
-        frames[frame_i].started_at != 0)
+    if (frames[frame_i].started_at == 0) {
+        frames[frame_i].elapsed = SLOW_FRAME_CYCLES - 1;
+    } else if (
+        frames[frame_i].elapsed > SLOW_FRAME_CYCLES)
     {
         strcpy_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, "PAUSED - frame ");
         strcat_uint_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, frame_i);
@@ -430,13 +431,15 @@ void profiler_draw_labels(void) {
                     gui_function_stack_size - 1];
                 gui_function_stack_size -= 1;
                 
+                log_assert(frames[f_i].profiles[func_i].elapsed_total > 0);
+                
                 float pct_elapsed =
                     (float)frames[f_i].profiles[func_i].elapsed_total /
                         (float)acceptable_frame_clock_cycles;
                 font_color[0] = 0.1f + (pct_elapsed * 2);
                 if (font_color[0] > 1.0f) { font_color[0] = 1.0f; }
                 
-                if (pct_elapsed >= 0.05f) {
+                if (pct_elapsed >= 0.0f) {
                     // push all child nodes onto the stack
                     for (
                          uint32_t child_i = 0;

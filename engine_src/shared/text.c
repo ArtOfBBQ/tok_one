@@ -514,6 +514,8 @@ void text_request_label_renderable(
     }
 }
 
+#define FPS_FRAMES_MAX 10
+uint64_t ms_last_n_frames[FPS_FRAMES_MAX];
 void text_request_fps_counter(
     uint64_t microseconds_elapsed)
 {
@@ -525,7 +527,17 @@ void text_request_fps_counter(
     char fps_string[14] = "std fps:     ";
     #endif
     
-    uint64_t fps = 1000000 / microseconds_elapsed;
+    for (int32_t i = FPS_FRAMES_MAX-1; i >= 1; i--) {
+        ms_last_n_frames[i] = ms_last_n_frames[i-1];
+    }
+    ms_last_n_frames[0] = microseconds_elapsed;
+    
+    uint64_t ms_last_n_frames_total = 0;
+    for (uint32_t i = 0; i < FPS_FRAMES_MAX; i++) {
+        ms_last_n_frames_total += ms_last_n_frames[i];
+    }
+    
+    uint64_t fps = (1000000 * FPS_FRAMES_MAX) / (ms_last_n_frames_total);
     
     if (fps < 100) {
         fps_string[11] = '0' + ((fps / 10) % 10);
