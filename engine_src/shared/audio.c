@@ -50,6 +50,29 @@ void audio_init(
         sizeof(int16_t) * ALL_AUDIOSAMPLES_SIZE);
 }
 
+void audio_consume_int16_samples(
+    int16_t * recipient,
+    const uint32_t samples_to_copy)
+{
+    for (uint32_t _ = 0; _ < samples_to_copy; _++) {
+        uint32_t next_i = (sound_settings->play_cursor) %
+            sound_settings->global_samples_size;
+        
+        int32_t new_val = (int32_t)(
+            (float)sound_settings->samples_buffer[next_i] *
+                sound_settings->volume);
+        
+        sound_settings->samples_buffer[next_i] = 0;
+        
+        new_val = new_val > INT16_MAX ? INT16_MAX : new_val;
+        new_val = new_val < INT16_MIN ? INT16_MIN : new_val;
+        *recipient++ = (int16_t)new_val;
+        sound_settings->play_cursor += 1;
+    }
+    
+    log_assert(sound_settings->play_cursor < UINT32_MAX * 10);
+}
+
 #define DEFAULT_WRITING_OFFSET 1600
 void audio_add_at_offset(
     int16_t * data,

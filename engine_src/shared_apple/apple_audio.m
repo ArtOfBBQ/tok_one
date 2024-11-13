@@ -19,20 +19,11 @@ static void audio_callback(
     
     int16_t * platform_buffer_at = (int16_t *)buffer->mAudioData;
     
-    for (uint32_t _ = 0; _ < samples_to_copy; _++) {
-        int32_t new_val = (int32_t)(
-            (float)sound_settings->samples_buffer[
-                (sound_settings->play_cursor) %
-                    sound_settings->global_samples_size] *
-                        sound_settings->volume);
-        new_val = new_val > INT16_MAX ? INT16_MAX : new_val;
-        new_val = new_val < INT16_MIN ? INT16_MIN : new_val;
-        *platform_buffer_at++ = (int16_t)new_val;
-        sound_settings->play_cursor += 1;
-    }
-    
-    log_assert(sound_settings->play_cursor < UINT32_MAX * 10);
-    // sound_settings->play_cursor %= sound_settings->global_samples_size;
+    audio_consume_int16_samples(
+        /* int16_t * recipient: */
+            platform_buffer_at,
+        /* const uint32_t samples_to_copy: */
+            samples_to_copy);
     
     OSStatus err = AudioQueueEnqueueBuffer(queue, buffer, 0, NULL);
     assert(!err);

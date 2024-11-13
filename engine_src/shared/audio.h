@@ -23,6 +23,10 @@ extern SoundSettings * sound_settings;
 void audio_init(
     void * (* arg_malloc_function)(size_t size));
 
+void audio_consume_int16_samples(
+    int16_t * recipient,
+    const uint32_t samples_to_copy);
+
 void audio_add(
     int16_t * data,
     const uint32_t data_size);
