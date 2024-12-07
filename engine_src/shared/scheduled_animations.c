@@ -21,14 +21,14 @@ void scheduled_animations_init(
 {
     scheduled_animations = (ScheduledAnimation *)malloc_from_unmanaged(
         sizeof(ScheduledAnimation) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
-    memset_char(
+    common_memset_char(
         scheduled_animations,
         0,
         sizeof(ScheduledAnimation));
     scheduled_animations[0].deleted = true;
     
     for (uint32_t i = 1; i < SCHEDULED_ANIMATIONS_ARRAYSIZE; i++) {
-        tok_memcpy(
+        common_memcpy(
             &scheduled_animations[i],
             &scheduled_animations[0],
             sizeof(ScheduledAnimation));
@@ -44,28 +44,28 @@ static void construct_scheduled_animationA(
     ScheduledAnimation * to_construct,
     const bool32_t final_values_not_adds)
 {
-    memset_char(to_construct, 0, sizeof(ScheduledAnimation));
+    common_memset_char(to_construct, 0, sizeof(ScheduledAnimation));
     log_assert(!to_construct->committed);
     
     to_construct->affected_object_id = -1;
     to_construct->affected_touchable_id = -1;
     
     if (final_values_not_adds) {
-        memset_float(
+        common_memset_float(
             &to_construct->gpu_polygon_vals,
             FLT_SCHEDULEDANIM_IGNORE,
             sizeof(GPUPolygon));
-        memset_float(
+        common_memset_float(
             &to_construct->gpu_polygon_material_vals,
             FLT_SCHEDULEDANIM_IGNORE,
             sizeof(GPUPolygonMaterial));
-        memset_float(
+        common_memset_float(
             &to_construct->lightsource_vals,
             FLT_SCHEDULEDANIM_IGNORE,
             sizeof(zLightSource));
     }
     
-    memset_float(
+    common_memset_float(
          &to_construct->onfinish_gpu_polygon_material_muls,
          1.0f,
          sizeof(GPUPolygonMaterial));
@@ -190,7 +190,7 @@ void request_evaporate_and_destroy(
         ParticleEffect * vaporize_effect = next_particle_effect();
         vaporize_effect->zpolygon_cpu = zpolygons_to_render->cpu_data[zp_i];
         vaporize_effect->zpolygon_gpu = zpolygons_to_render->gpu_data[zp_i];
-        tok_memcpy(
+        common_memcpy(
             vaporize_effect->zpolygon_materials,
             &zpolygons_to_render->gpu_materials[
                 zp_i * MAX_MATERIALS_PER_POLYGON],
@@ -275,7 +275,7 @@ void request_shatter_and_destroy(
         ParticleEffect * shatter_effect = next_particle_effect();
         shatter_effect->zpolygon_cpu = zpolygons_to_render->cpu_data[zp_i];
         shatter_effect->zpolygon_gpu = zpolygons_to_render->gpu_data[zp_i];
-        tok_memcpy(
+        common_memcpy(
             /* void * dst: */
                 shatter_effect->zpolygon_materials,
             /* const void * src: */

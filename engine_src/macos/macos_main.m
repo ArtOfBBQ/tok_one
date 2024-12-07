@@ -177,9 +177,9 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
             return TOK_KEY_PAGEDOWN;
         default:
             #ifndef LOGGER_IGNORE_ASSERTS
-            strcpy_capped(err_msg, 128, "unhandled apple keycode: ");
-            strcat_uint_capped(err_msg, 128, apple_key);
-            strcat_capped(err_msg, 128, "\n");
+            common_strcpy_capped(err_msg, 128, "unhandled apple keycode: ");
+            common_strcat_uint_capped(err_msg, 128, apple_key);
+            common_strcat_capped(err_msg, 128, "\n");
             #endif
             break;
     }
@@ -529,7 +529,7 @@ int main(int argc, const char * argv[]) {
     
     char shader_lib_path_cstr[1000];
     platform_get_resources_path(shader_lib_path_cstr, 1000);
-    strcat_capped(
+    common_strcat_capped(
         shader_lib_path_cstr,
         1000,
         "/Shaders.metallib");

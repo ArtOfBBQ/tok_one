@@ -38,14 +38,14 @@ static void test_simd_functions_floats(void) {
     SimdTestStruct * equals = malloc_from_managed(
         sizeof(SimdTestStruct) * 10);
     
-    memset_char(structs, 0, sizeof(SimdTestStruct)*10);
-    memset_char(double_checks, 0, sizeof(SimdTestStruct)*10);
-    memset_char(sets, 0, sizeof(float));
-    memset_char(adds, 0, sizeof(SimdTestStruct)*10);
-    memset_char(maxs, 0, sizeof(SimdTestStruct)*10);
-    memset_char(muls, 0, sizeof(SimdTestStruct)*10);
-    memset_char(divs, 0, sizeof(SimdTestStruct)*10);
-    memset_float(equals, 2.0f, sizeof(SimdTestStruct)*10);
+    common_memset_char(structs, 0, sizeof(SimdTestStruct)*10);
+    common_memset_char(double_checks, 0, sizeof(SimdTestStruct)*10);
+    common_memset_char(sets, 0, sizeof(float));
+    common_memset_char(adds, 0, sizeof(SimdTestStruct)*10);
+    common_memset_char(maxs, 0, sizeof(SimdTestStruct)*10);
+    common_memset_char(muls, 0, sizeof(SimdTestStruct)*10);
+    common_memset_char(divs, 0, sizeof(SimdTestStruct)*10);
+    common_memset_float(equals, 2.0f, sizeof(SimdTestStruct)*10);
     
     for (uint32_t i = 0; i < 10; i++) {
         sets[i] = (float)i;
@@ -392,7 +392,7 @@ void init_application_before_gpu_init(void)
             gpu_shared_data_collection.line_vertices_allocation_size,
             4096);
         
-        memset_float(
+        common_memset_float(
             gpu_shared_data_collection.triple_buffers[frame_i].camera,
             0.0f,
             sizeof(GPUCamera));
@@ -438,7 +438,7 @@ void init_application_after_gpu_init(void) {
         }
     }
     
-    tok_memcpy(
+    common_memcpy(
         /* void * dst: */
             gpu_shared_data_collection.locked_vertices,
         /* const void * src: */

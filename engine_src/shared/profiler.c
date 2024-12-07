@@ -78,15 +78,15 @@ void profiler_init(
     
     frames = profiler_malloc_function(
         sizeof(Frame) * FRAMES_MAX);
-    memset_char(frames, 0, sizeof(Frame) * FRAMES_MAX);
+    common_memset_char(frames, 0, sizeof(Frame) * FRAMES_MAX);
     
     function_stack = profiler_malloc_function(
         sizeof(uint32_t) * FUNCTION_STACK_MAX);
-    memset_char(function_stack, 0, sizeof(uint32_t) * FUNCTION_STACK_MAX);
+    common_memset_char(function_stack, 0, sizeof(uint32_t) * FUNCTION_STACK_MAX);
     
     gui_function_stack = profiler_malloc_function(
         sizeof(uint32_t) * FUNCTION_STACK_MAX);
-    memset_char(gui_function_stack, 0, sizeof(uint32_t) * FUNCTION_STACK_MAX);
+    common_memset_char(gui_function_stack, 0, sizeof(uint32_t) * FUNCTION_STACK_MAX);
     
     profiler_object_id = next_nonui_object_id();
     profiler_touchable_id = next_nonui_touchable_id();
@@ -94,7 +94,7 @@ void profiler_init(
     gui_selected_frames[0] = 0;
     gui_selected_frames[1] = 1;
     
-    strcpy_capped(
+    common_strcpy_capped(
         gui_top_message,
         GUI_TOP_MESSAGE_MAX,
         "Profiler intialized...");
@@ -113,7 +113,7 @@ void profiler_new_frame(void) {
     if (profiler_paused) {
         return;
     } else {
-        strcpy_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, "Running...");
+        common_strcpy_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, "Running...");
         function_stack_size = 0;
         gui_function_stack_size = 0;
     }
@@ -124,14 +124,14 @@ void profiler_new_frame(void) {
     } else if (
         frames[frame_i].elapsed > SLOW_FRAME_CYCLES)
     {
-        strcpy_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, "PAUSED - frame ");
-        strcat_uint_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, frame_i);
-        strcat_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, " took ");
-        strcat_uint_capped(
+        common_strcpy_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, "PAUSED - frame ");
+        common_strcat_uint_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, frame_i);
+        common_strcat_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, " took ");
+        common_strcat_uint_capped(
             gui_top_message,
             GUI_TOP_MESSAGE_MAX,
             (uint32_t)frames[frame_i].elapsed);
-        strcat_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, " cycles.");
+        common_strcat_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, " cycles.");
         window_globals->pause_profiler = true;
         return;
     }
@@ -139,7 +139,7 @@ void profiler_new_frame(void) {
     frame_i += 1;
     frame_i %= FRAMES_MAX;
     
-    memset_char(&frames[frame_i], 0, sizeof(Frame));
+    common_memset_char(&frames[frame_i], 0, sizeof(Frame));
     frames[frame_i].started_at = __rdtsc();
 }
 
@@ -205,7 +205,7 @@ void profiler_start(const char * function_name)
             new_node->elapsed_total = 0;
             new_node->elapsed_mostrecent = 0;
             
-            strcpy_capped(
+            common_strcpy_capped(
                 new_node->description,
                 MAX_DESCRIPTION_SIZE,
                 function_name);
@@ -217,7 +217,7 @@ void profiler_start(const char * function_name)
         uint16_t new_i = frames[frame_i].profiles_size;
         function_stack[function_stack_size] = new_i;
         new_node = &frames[frame_i].profiles[new_i];
-        strcpy_capped(
+        common_strcpy_capped(
             new_node->description,
             MAX_DESCRIPTION_SIZE,
             function_name);
@@ -247,7 +247,7 @@ void profiler_end(const char * function_name)
     function_stack_size -= 1;
     
     log_assert(
-        are_equal_strings(
+        common_are_equal_strings(
             frames[frame_i].profiles[prof_i].description,
             function_name));
     
@@ -365,8 +365,8 @@ void profiler_draw_labels(void) {
                 (font_height + 2.0f);
             
             char line_text[128];
-            strcpy_capped(line_text, 128, "Selected frame: ");
-            strcat_int_capped(
+            common_strcpy_capped(line_text, 128, "Selected frame: ");
+            common_strcat_int_capped(
                 line_text,
                 128,
                 f_i);
@@ -390,19 +390,19 @@ void profiler_draw_labels(void) {
             font_touchable_id = -1;
             
             cur_top -= (font_height + 2.0f);
-            strcpy_capped(line_text, 128, "Cycles: ");
-            strcat_uint_capped(
+            common_strcpy_capped(line_text, 128, "Cycles: ");
+            common_strcat_uint_capped(
                 line_text,
                 128,
                 (uint32_t)frames[f_i].elapsed);
-            strcat_capped(line_text, 128, " (");
+            common_strcat_capped(line_text, 128, " (");
             float pct_of_acceptable = (float)frames[f_i].elapsed /
                 (float)acceptable_frame_clock_cycles;
-            strcat_float_capped(
+            common_strcat_float_capped(
                 line_text,
                 128,
                 pct_of_acceptable);
-            strcat_capped(line_text, 128, ")");
+            common_strcat_capped(line_text, 128, ")");
             text_request_label_renderable(
                 /* const int32_t with_object_id: */
                     profiler_object_id,
@@ -456,30 +456,30 @@ void profiler_draw_labels(void) {
                     }
                 }
                 
-                strcpy_capped(
+                common_strcpy_capped(
                     line_text,
                     128,
                     frames[f_i].profiles[func_i].description);
-                strcat_capped(
+                common_strcat_capped(
                     line_text,
                     128,
                     " ");
-                strcat_uint_capped(
+                common_strcat_uint_capped(
                     line_text,
                     128,
                     (uint32_t)frames[f_i].
                         profiles[func_i].elapsed_total);
-                strcat_capped(
+                common_strcat_capped(
                     line_text,
                     128,
                     " (");
                 
                 log_assert(pct_elapsed >= 0.0f);
-                strcat_int_capped(
+                common_strcat_int_capped(
                     line_text,
                     128,
                     (int)(pct_elapsed * 100.0f));
-                strcat_capped(
+                common_strcat_capped(
                     line_text,
                     128,
                     "%)");

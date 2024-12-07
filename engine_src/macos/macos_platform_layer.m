@@ -23,9 +23,9 @@ void platform_get_writables_path(
         (char *)[libraryDirectory
             cStringUsingEncoding: NSUTF8StringEncoding];
     
-    strcpy_capped(recipient, recipient_size, library_dir);
-    strcat_capped(recipient, recipient_size, "/");
-    strcat_capped(recipient, recipient_size, APPLICATION_NAME);
+    common_strcpy_capped(recipient, recipient_size, library_dir);
+    common_strcat_capped(recipient, recipient_size, "/");
+    common_strcat_capped(recipient, recipient_size, APPLICATION_NAME);
     
     platform_mkdir_if_not_exist(recipient);
 }
@@ -68,7 +68,7 @@ void platform_get_cwd(char * recipient, const uint32_t recipient_size) {
     
     char * return_value = (char *)[cwd UTF8String];
     
-    strcpy_capped(recipient, recipient_size, return_value);
+    common_strcpy_capped(recipient, recipient_size, return_value);
 }
 
 float platform_x_to_x(const float x) {

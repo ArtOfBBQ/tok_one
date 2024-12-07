@@ -29,50 +29,50 @@ void get_memory_usage_summary_string(
     (void)recipient_cap;
     #endif
     
-    strcpy_capped(
+    common_strcpy_capped(
         recipient,
         recipient_cap,
         "Unmanaged memory use: ");
-    strcat_uint_capped(
+    common_strcat_uint_capped(
         recipient,
         recipient_cap,
         UNMANAGED_MEMORY_SIZE - (uint32_t)unmanaged_memory_size);
-    strcat_capped(
+    common_strcat_capped(
         recipient,
         recipient_cap,
         " of: ");
-    strcat_uint_capped(
+    common_strcat_uint_capped(
         recipient,
         recipient_cap,
         UNMANAGED_MEMORY_SIZE);
-    strcat_capped(
+    common_strcat_capped(
         recipient,
         recipient_cap,
         " (");
-    strcat_uint_capped(
+    common_strcat_uint_capped(
         recipient,
         recipient_cap,
         (uint32_t)(
             (float)(UNMANAGED_MEMORY_SIZE - (uint32_t)unmanaged_memory_size)
                 / (float)UNMANAGED_MEMORY_SIZE * 100.0f));
     
-    strcat_capped(
+    common_strcat_capped(
         recipient,
         recipient_cap,
         "%)\nManaged memory free: ");
-    strcat_uint_capped(
+    common_strcat_uint_capped(
         recipient,
         recipient_cap,
         (uint32_t)((ptrdiff_t)managed_memory_end - (ptrdiff_t)managed_memory));
-    strcat_capped(
+    common_strcat_capped(
         recipient,
         recipient_cap,
         " of: ");
-    strcat_uint_capped(
+    common_strcat_uint_capped(
         recipient,
         recipient_cap,
         MANAGED_MEMORY_SIZE);
-    strcat_capped(
+    common_strcat_capped(
         recipient,
         recipient_cap,
         "\n");
@@ -110,9 +110,9 @@ void memorystore_init(
     
     managed_memory_end = ((char *)managed_memory + MANAGED_MEMORY_SIZE);
     
-    memset_char(unmanaged_memory, 0, UNMANAGED_MEMORY_SIZE);
+    common_memset_char(unmanaged_memory, 0, UNMANAGED_MEMORY_SIZE);
     
-    memset_char(managed_memory, 0, MANAGED_MEMORY_SIZE);
+    common_memset_char(managed_memory, 0, MANAGED_MEMORY_SIZE);
     
     managed_stack = malloc_from_unmanaged(sizeof(ManagedMemoryStack));
     managed_stack->size = 0;
@@ -212,15 +212,15 @@ void * malloc_from_managed_internal(
     #endif
     log_assert(managed_stack->size < MANAGED_MEMORY_STACK_SIZE);
     managed_stack->pointers[managed_stack->size] = return_value;
-    strcpy_capped(
+    common_strcpy_capped(
         managed_stack->sources[managed_stack->size],
         512,
         called_from_file);
-    strcat_capped(
+    common_strcat_capped(
         managed_stack->sources[managed_stack->size],
         512,
         " : ");
-    strcat_capped(
+    common_strcat_capped(
         managed_stack->sources[managed_stack->size],
         512,
         called_from_func);

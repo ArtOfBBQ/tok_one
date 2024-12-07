@@ -88,7 +88,7 @@ void resource_filename_to_pathfile(
     
     char resource_path[256];
     platform_get_resources_path(resource_path, 256);
-    strcpy_capped(
+    common_strcpy_capped(
         recipient,
         assert_capacity,
         resource_path);
@@ -96,11 +96,11 @@ void resource_filename_to_pathfile(
     char separator[MAX_SEPARATOR_SIZE];
     platform_get_directory_separator(
         /* recipient: */ separator);
-    strcat_capped(
+    common_strcat_capped(
         recipient,
         assert_capacity,
         separator);
-    strcat_capped(
+    common_strcat_capped(
         recipient,
         assert_capacity,
         filename);
@@ -125,7 +125,7 @@ void writable_filename_to_pathfile(
     #endif
     
     #if !defined(LOGGER_IGNORE_ASSERTS) || !defined(COMMON_IGNORE_ASSERTS)
-    uint32_t filename_length = get_string_length(filename);
+    uint32_t filename_length = common_get_string_length(filename);
     #endif
     
     char separator[MAX_SEPARATOR_SIZE];
@@ -134,11 +134,11 @@ void writable_filename_to_pathfile(
     log_assert(
         (filename_length + MAX_SEPARATOR_SIZE + 1) < MAX_FILENAME_SIZE);
     char separator_and_filename[MAX_FILENAME_SIZE];
-    strcpy_capped(
+    common_strcpy_capped(
         separator_and_filename,
         filename_length + separator_size + 1,
         separator);
-    strcat_capped(
+    common_strcat_capped(
         separator_and_filename,
         filename_length + separator_size + 1,
         filename);
@@ -147,7 +147,7 @@ void writable_filename_to_pathfile(
     platform_get_writables_path(writables_path, 256);
     
     #ifndef COMMON_IGNORE_ASSERTS
-    uint32_t writables_path_length = get_string_length(writables_path);
+    uint32_t writables_path_length = common_get_string_length(writables_path);
     uint32_t full_filename_size =
         (filename_length
             + writables_path_length
@@ -159,11 +159,11 @@ void writable_filename_to_pathfile(
     }
     #endif
     
-    strcpy_capped(
+    common_strcpy_capped(
         recipient,
         assert_capacity,
         writables_path);
-    strcat_capped(
+    common_strcat_capped(
         recipient,
         assert_capacity,
         separator_and_filename);

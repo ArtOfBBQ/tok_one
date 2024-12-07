@@ -365,7 +365,7 @@ static void register_to_texturearray_from_images(
             new_img_filenames[i] != NULL)
         {
             log_assert(new_img_filenames[i] != NULL);
-            strcpy_capped(
+            common_strcpy_capped(
                 texture_arrays[target_texture_array_i].images[i].filename,
                 128,
                 new_img_filenames[i]);
@@ -736,7 +736,7 @@ void preregister_null_image(
         texture_arrays[new_texturearray_i].single_img_height = height;
     }
     
-    strcpy_capped(
+    common_strcpy_capped(
         texture_arrays[new_texturearray_i].images[new_texture_i].filename,
         TEXTUREARRAY_FILENAME_SIZE,
         filename);
@@ -784,7 +784,7 @@ void get_texture_location(
     for (uint32_t i = 0; i < texture_arrays_size; i++) {
         log_assert(texture_arrays[i].images_size < 2000);
         for (uint32_t j = 0; j < texture_arrays[i].images_size; j++) {
-            if (are_equal_strings(
+            if (common_are_equal_strings(
                 texture_arrays[i].images[j].filename,
                 for_filename))
             {
@@ -797,8 +797,8 @@ void get_texture_location(
     
     #ifndef LOGGER_IGNORE_ASSERTS
     char err_msg[128];
-    strcpy_capped(err_msg, 128, "Couldn't find filename in texture_arrays: ");
-    strcat_capped(err_msg, 128, for_filename);
+    common_strcpy_capped(err_msg, 128, "Couldn't find filename in texture_arrays: ");
+    common_strcat_capped(err_msg, 128, for_filename);
     log_dump_and_crash(err_msg);
     #endif
 }
@@ -911,7 +911,7 @@ void decode_all_null_images_with_memory(void)
                     texture_arrays[i].images[j].image == NULL &&
                     texture_arrays[i].images[j].filename[0] != '\0')
                 {
-                    uint32_t strlen = get_string_length(
+                    uint32_t strlen = common_get_string_length(
                         texture_arrays[i].images[j].filename);
                     
                     if (texture_arrays[i].images[j].prioritize_asset_load &&

@@ -25,7 +25,7 @@ static void add_line_vertex(
         return;
     }
     
-    tok_memcpy(
+    common_memcpy(
         &frame_data->line_vertices[frame_data->line_vertices_size].xyz,
         xyz,
         sizeof(float) * 3);
@@ -47,7 +47,7 @@ static void add_point_vertex(
         return;
     }
     
-    tok_memcpy(
+    common_memcpy(
         &frame_data->point_vertices[frame_data->point_vertices_size].xyz,
         xyz,
         sizeof(float) * 3);
@@ -320,7 +320,7 @@ void renderer_hardware_render(
     #ifdef PROFILER_ACTIVE
     profiler_start("tok_memcpy(frame_data->polygon_collection)");
     #endif
-    tok_memcpy(
+    common_memcpy(
         /* void * dest: */
             frame_data->polygon_collection,
         /* const void * src: */
@@ -342,7 +342,7 @@ void renderer_hardware_render(
     #ifdef PROFILER_ACTIVE
     profiler_start("tok_memcpy(frame_data->polygon_materials)");
     #endif
-    tok_memcpy(
+    common_memcpy(
         /* void *__dst: */
             frame_data->polygon_materials,
         /* const void *__src: */
@@ -436,7 +436,7 @@ void renderer_hardware_render(
     if (application_running && window_globals->draw_axes) {
         // TODO: draw axes
         float axis_vertices[6];
-        memset_float(axis_vertices, 0.0f, sizeof(float) * 6);
+        common_memset_float(axis_vertices, 0.0f, sizeof(float) * 6);
         
         #define DISTANT_FLOAT 3.5f
         
@@ -494,7 +494,7 @@ void renderer_hardware_render(
                 window_globals->last_clickray_origin);
         
         float clickray_end[3];
-        tok_memcpy(
+        common_memcpy(
             clickray_end,
             window_globals->last_clickray_origin,
             sizeof(float) * 3);
@@ -511,7 +511,7 @@ void renderer_hardware_render(
         clickray_elapsed += (float)elapsed_nanoseconds / 1000000.0f;
         if (clickray_elapsed > 2.0f) { clickray_elapsed = 0.0f; }
         float moving_point[3];
-        tok_memcpy(
+        common_memcpy(
             moving_point,
             window_globals->last_clickray_origin,
             sizeof(float) * 3);

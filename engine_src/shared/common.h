@@ -30,179 +30,179 @@ extern "C" {
 #define FLOAT32_MAX 2147483647
 #define FLOAT32_MIN 1.1754943508222875e-38F
 
-void memset_char(
+void common_memset_char(
     void * input,
     char value,
     unsigned int size_bytes);
-void memset_int16(
+void common_memset_int16(
     void * input,
     int16_t value,
     unsigned int size_bytes);
-void memset_float(
+void common_memset_float(
     void * input,
     float value,
     unsigned int size_bytes);
-void * tok_memcpy(
+void * common_memcpy(
     void * dest,
     const void * src,
     size_t n_bytes);
 
-// float tok_sqrtf(const float in);
+// float common__sqrtf(const float in);
 
-int   tok_mini(const int x, const int y);
-int   tok_maxi(const int x, const int y);
-float tok_minf(const float x, const float y);
-float tok_maxf(const float x, const float y);
+int   common_mini(const int x, const int y);
+int   common_maxi(const int x, const int y);
+float common_minf(const float x, const float y);
+float common_maxf(const float x, const float y);
 
 
 #ifndef COMMON_IGNORE_ASSERTS
-#define strcat_capped(recip, recipsize, to_append) internal_strcat_capped(recip,recipsize,to_append);
+#define common_strcat_capped(recip, recipsize, to_append) common_internal_strcat_capped(recip,recipsize,to_append);
 void
-internal_strcat_capped(
+common_internal_strcat_capped(
     char * recipient,
     const uint32_t recipient_size,
     const char * to_append);
 #else
-#define strcat_capped(recip, recipsize, to_append) internal_strcat_capped(recip,to_append);
+#define common_strcat_capped(recip, recipsize, to_append) common_internal_strcat_capped(recip,to_append);
 void
-internal_strcat_capped(
+common_internal_strcat_capped(
     char * recipient,
     const char * to_append);
 #endif
 
 #ifndef COMMON_IGNORE_ASSERTS
-#define strcat_int_capped(recip, recipsize, to_append) internal_strcat_int_capped(recip, recipsize, to_append);
+#define common_strcat_int_capped(recip, recipsize, to_append) common_internal_strcat_int_capped(recip, recipsize, to_append);
 void
-internal_strcat_int_capped(
+common_internal_strcat_int_capped(
     char * recipient,
     const uint32_t recipient_size,
     const int32_t to_append);
 #else
-#define strcat_int_capped(recip, recipsize, to_append) internal_strcat_int_capped(recip, to_append);
+#define common_strcat_int_capped(recip, recipsize, to_append) common_internal_strcat_int_capped(recip, to_append);
 void
-internal_strcat_int_capped(
+common_internal_strcat_int_capped(
     char * recipient,
     const int32_t to_append);
 #endif
 
 #ifndef COMMON_IGNORE_ASSERTS
-#define strcat_uint_capped(recip, recipsize, to_append) internal_strcat_uint_capped(recip, recipsize, to_append);
+#define common_strcat_uint_capped(recip, recipsize, to_append) common_internal_strcat_uint_capped(recip, recipsize, to_append);
 void
-internal_strcat_uint_capped(
+common_internal_strcat_uint_capped(
     char * recipient,
     const uint32_t recipient_size,
     const uint32_t to_append);
 #else
-#define strcat_uint_capped(recip, recipsize, to_append) internal_strcat_uint_capped(recip, to_append);
+#define common_strcat_uint_capped(recip, recipsize, to_append) common_internal_strcat_uint_capped(recip, to_append);
 void
-internal_strcat_uint_capped(
+common_internal_strcat_uint_capped(
     char * recipient,
     const uint32_t to_append);
 #endif
 
 #ifndef COMMON_IGNORE_ASSERTS
-#define strcat_float_capped(recip, recipsize, to_append) internal_strcat_float_capped(recip, recipsize, to_append);
+#define common_strcat_float_capped(recip, recipsize, to_append) common_internal_strcat_float_capped(recip, recipsize, to_append);
 void
-internal_strcat_float_capped(
+common_internal_strcat_float_capped(
     char * recipient,
     const uint32_t recipient_size,
     const float to_append);
 #else
-#define strcat_float_capped(recip, recipsize, to_append) internal_strcat_float_capped(recip, to_append);
+#define common_strcat_float_capped(recip, recipsize, to_append) common_internal_strcat_float_capped(recip, to_append);
 void
-internal_strcat_float_capped(
+common_internal_strcat_float_capped(
     char * recipient,
     const float to_append);
 #endif
 
 #ifndef COMMON_IGNORE_ASSERTS
-#define strcpy_capped(recip, recipsize, to_append) internal_strcpy_capped(recip, recipsize, to_append);
-void internal_strcpy_capped(
+#define common_strcpy_capped(recip, recipsize, to_append) common_internal_strcpy_capped(recip, recipsize, to_append);
+void common_internal_strcpy_capped(
     char * recipient,
     const uint32_t recipient_size,
     const char * origin);
 #else
-#define strcpy_capped(recip, recipsize, to_append) internal_strcpy_capped(recip, to_append);
-void internal_strcpy_capped(
+#define common_strcpy_capped(recip, recipsize, to_append) common_internal_strcpy_capped(recip, to_append);
+void common_internal_strcpy_capped(
     char * recipient,
     const char * origin);
 #endif
 
 void
-copy_strings(
+common_copy_strings(
     char * recipient,
     const uint32_t recipient_size,
     const char * origin,
     const uint32_t origin_size);
 
 uint32_t
-get_string_length(   
+common_get_string_length(   
     const char * null_terminated_string);
 
-bool32_t string_starts_with(
+bool32_t common_string_starts_with(
     const char * str_to_check,
     const char * start);
 
-bool32_t string_ends_with(
+bool32_t common_string_ends_with(
     const char * str_to_check,
     const char * ending);
 
-bool32_t are_equal_strings(
+bool32_t common_are_equal_strings(
     const char * str1,
     const char * str2);
 
 bool32_t
-are_equal_until_nullterminator(
+common_are_equal_until_nullterminator(
     const char * str1,
     const char * str2);
 
-bool32_t are_equal_strings_of_length(
+bool32_t common_are_equal_strings_of_length(
     const char * str1,
     const char * str2,
     const uint64_t length);
 
 void
-int_to_string(
+common_int_to_string(
     const int32_t input,
     char * recipient);
 
 void
-uint_to_string(
+common_uint_to_string(
     const uint32_t input,
     char * recipient);
 
 void
-float_to_string(
+common_float_to_string(
     const float input,
     char * recipient,
     const uint32_t recipient_size);
 
 int32_t
-string_to_int32_validate(
+common_string_to_int32_validate(
     const char * input,
     bool32_t * good);
 
 int32_t
-string_to_int32(const char * input);
+common_string_to_int32(const char * input);
 
 uint32_t
-string_to_uint32_validate(
+common_string_to_uint32_validate(
     const char * input,
     bool32_t * good);
 
 uint32_t
-string_to_uint32(const char * input);
+common_string_to_uint32(const char * input);
 
 float
-string_to_float_validate(
+common_string_to_float_validate(
     const char * input,
     bool32_t * good);
 
 float
-string_to_float(const char * input);
+common_string_to_float(const char * input);
 
 void
-float_to_string(
+common_float_to_string(
     const float input,
     char * recipient,
     const uint32_t recipient_size);

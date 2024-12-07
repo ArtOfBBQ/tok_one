@@ -82,7 +82,7 @@ void objmodel_init(void) {
     assert(ALL_LOCKED_VERTICES_SIZE > 0);
     all_mesh_vertices = (LockedVertexWithMaterialCollection *)
         malloc_from_unmanaged(sizeof(LockedVertexWithMaterialCollection));
-    memset_char(
+    common_memset_char(
         all_mesh_vertices,
         0,
         sizeof(LockedVertexWithMaterialCollection));
@@ -90,7 +90,7 @@ void objmodel_init(void) {
     // Let's hardcode a basic quad since that's a mesh that will be used by
     // even the features inherent to the engine itself (the terminal, any
     // text labels, the FPS label, etc)
-    strcpy_capped(
+    common_strcpy_capped(
         all_mesh_summaries[0].resource_name,
         OBJ_STRING_SIZE,
         "basic_quad");
@@ -179,7 +179,7 @@ void objmodel_init(void) {
     
     // Let's hardcode a basic cube since that will be used by the particle
     // effects system
-    strcpy_capped(
+    common_strcpy_capped(
         all_mesh_summaries[1].resource_name,
         OBJ_STRING_SIZE,
         "basic_cube");
@@ -566,7 +566,7 @@ void objmodel_init(void) {
     all_mesh_vertices->gpu_data[41].normal_xyz[2]     = 0.0f;
     all_mesh_vertices->gpu_data[41].parent_material_i = 0;
     
-    strcpy_capped(
+    common_strcpy_capped(
         all_mesh_summaries[2].resource_name,
         OBJ_STRING_SIZE,
         "basic_point");
@@ -591,7 +591,7 @@ void objmodel_init(void) {
     all_mesh_vertices->gpu_data[42].normal_xyz[2]     = -1.0f;
     all_mesh_vertices->gpu_data[42].parent_material_i = 0;
     
-    strcpy_capped(
+    common_strcpy_capped(
         all_mesh_summaries[3].resource_name,
         OBJ_STRING_SIZE,
         "basic_line");
@@ -632,7 +632,7 @@ void objmodel_init(void) {
     #define COLTEST 1
     #ifdef COLTEST
     // Let's hardcode a basic triangle for testing
-    strcpy_capped(
+    common_strcpy_capped(
         all_mesh_summaries[4].resource_name,
         OBJ_STRING_SIZE,
         "coltest_triangle");
@@ -733,7 +733,7 @@ int32_t new_mesh_id_from_obj_text(
     if (parsed_obj == NULL) {
         parsed_obj = malloc_from_unmanaged(sizeof(ParsedObj));
     }
-    memset_char(parsed_obj, 0, sizeof(ParsedObj));
+    common_memset_char(parsed_obj, 0, sizeof(ParsedObj));
     
     uint32_t good = 0;
     parse_obj(
@@ -768,7 +768,7 @@ int32_t new_mesh_id_from_obj_text(
             1 : parsed_obj->materials_count;
     
     for (uint32_t i = 0; i < parsed_obj->materials_count; i++) {
-        strcpy_capped(
+        common_strcpy_capped(
             all_mesh_summaries[all_mesh_summaries_size].
                 material_names[i],
             OBJ_STRING_SIZE,
@@ -833,13 +833,13 @@ int32_t new_mesh_id_from_obj_text(
                 guess_gpu_triangle_normal(
                     /* GPULockedVertex * to_change: */
                         &all_mesh_vertices->gpu_data[locked_vert_i]);
-                tok_memcpy(
+                common_memcpy(
                     all_mesh_vertices->gpu_data[locked_vert_i + 1].
                         normal_xyz,
                     all_mesh_vertices->gpu_data[locked_vert_i].
                         normal_xyz,
                     sizeof(float) * 3);
-                tok_memcpy(
+                common_memcpy(
                     all_mesh_vertices->gpu_data[locked_vert_i + 2].
                         normal_xyz,
                     all_mesh_vertices->gpu_data[locked_vert_i].
@@ -984,7 +984,7 @@ int32_t new_mesh_id_from_obj_text(
         log_assert(parsed_obj->materials_count == expected_materials_count);
         for (uint32_t i = 0; i < parsed_obj->materials_count; i++) {
             log_assert(
-                are_equal_strings(
+                common_are_equal_strings(
                     parsed_obj->materials[i].name,
                     expected_materials_names[i]));
         }
@@ -1095,7 +1095,7 @@ int32_t new_mesh_id_from_resource_asserts(
             MAX_MATERIALS_PER_POLYGON][256]: */
             expected_materials_names);
     
-    strcpy_capped(
+    common_strcpy_capped(
         all_mesh_summaries[new_mesh_id].resource_name,
         OBJ_STRING_SIZE,
         filename);

@@ -86,11 +86,11 @@ static int32_t closest_touchable_from_screen_ray(
         distant_point[2] - ray_origin[2];
     normalize_zvertex_f3(direction_to_distant);
     
-    tok_memcpy(
+    common_memcpy(
         window_globals->last_clickray_origin,
         ray_origin,
         sizeof(float)*3);
-    tok_memcpy(
+    common_memcpy(
         window_globals->last_clickray_direction,
         direction_to_distant,
         sizeof(float)*3);
@@ -133,12 +133,12 @@ static int32_t closest_touchable_from_screen_ray(
         if (dist < smallest_dist) {
             smallest_dist = dist;
             return_value = zpolygons_to_render->cpu_data[zp_i].touchable_id;
-            tok_memcpy(collision_point, current_collision_point, sizeof(float) * 3);
+            common_memcpy(collision_point, current_collision_point, sizeof(float) * 3);
         }
     }
     
     if (return_value < FLOAT32_MAX / 2) {
-        tok_memcpy(
+        common_memcpy(
             window_globals->last_clickray_collision,
             collision_point,
             sizeof(float) * 3);
@@ -218,7 +218,7 @@ void gameloop_update(
         font_color[3] = 1.0f;
         
         if (crashed_top_of_screen_msg[0] == '\0') {
-            strcpy_capped(crashed_top_of_screen_msg,
+            common_strcpy_capped(crashed_top_of_screen_msg,
             256,
             "Failed assert, and also failed to retrieve an error message");
         }
@@ -354,7 +354,7 @@ void gameloop_update(
     }
     
     log_assert(frame_data->light_collection != NULL);
-    tok_memcpy(frame_data->camera, &camera, sizeof(GPUCamera));
+    common_memcpy(frame_data->camera, &camera, sizeof(GPUCamera));
     log_assert(frame_data->light_collection != NULL);
     
     frame_data->vertices_size = 0;

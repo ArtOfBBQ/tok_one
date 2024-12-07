@@ -51,7 +51,7 @@ internal_log_append_uint(
     const char * caller_function_name)
 {
     char converted[1000];
-    uint_to_string(
+    common_uint_to_string(
         /* const uint32_t input: */
             to_append,
         /* char * recipient: */
@@ -82,7 +82,7 @@ internal_log_append_int(
     const char * caller_function_name)
 {
     char converted[1000];
-    int_to_string(
+    common_int_to_string(
         /* const int32_t input: */
             to_append,
         /* char * recipient: */
@@ -99,7 +99,7 @@ internal_log_append_float(
     const char * caller_function_name)
 {
     char float_str[1000];
-    float_to_string(
+    common_float_to_string(
         /* const int32_t input: */
             to_append,
         /* char * recipient: */
@@ -129,7 +129,7 @@ internal_log_append(
         caller_function_name != NULL)
     {
         char * prefix = (char *)"[";
-        uint32_t prefix_length = get_string_length(prefix);
+        uint32_t prefix_length = common_get_string_length(prefix);
         if (log_i + prefix_length >= LOG_SIZE) {
             if (logger_mutex_unlock_func != NULL) {
                 // logger_mutex_unlock_func(logger_mutex_id);
@@ -137,7 +137,7 @@ internal_log_append(
             return;
         }
         
-        strcpy_capped(
+        common_strcpy_capped(
             /* recipient: */
                 app_log + log_i,
             /* recipient_size: */
@@ -150,14 +150,14 @@ internal_log_append(
             return;
         }
         
-        uint32_t func_length = get_string_length(
+        uint32_t func_length = common_get_string_length(
         caller_function_name);
         if (log_i + func_length >= LOG_SIZE) {
             // logger_mutex_unlock_func(logger_mutex_id);
             return;
         }
         
-        strcpy_capped(
+        common_strcpy_capped(
             /* recipient: */
                 app_log + log_i,
             /* recipient_size: */
@@ -173,14 +173,14 @@ internal_log_append(
         }
         
         char * glue = (char *)"]: ";
-        uint32_t glue_length = get_string_length(glue);
+        uint32_t glue_length = common_get_string_length(glue);
         if (log_i + glue_length >= LOG_SIZE) {
             if (logger_mutex_unlock_func != NULL) {
                 // logger_mutex_unlock_func(logger_mutex_id);
             }
             return;
         }
-        strcpy_capped(
+        common_strcpy_capped(
             /* recipient: */
                 app_log + log_i,
             /* recipient_size: */
@@ -196,14 +196,14 @@ internal_log_append(
         }
     }
     
-    uint32_t to_append_length = get_string_length(to_append);
+    uint32_t to_append_length = common_get_string_length(to_append);
     if (log_i + to_append_length >= LOG_SIZE) {
         if (logger_mutex_unlock_func != NULL) {
             // logger_mutex_unlock_func(logger_mutex_id);
         }
         return;
     }
-    strcpy_capped(
+    common_strcpy_capped(
         /* recipient: */
             app_log + log_i,
         /* recipient_size: */
@@ -249,7 +249,7 @@ log_dump_and_crash(char * crash_message) {
         i++;
     }
     
-    strcpy_capped(
+    common_strcpy_capped(
         crashed_top_of_screen_msg,
         256,
         crash_message);
@@ -292,35 +292,35 @@ internal_log_assert(
     //Assertion failed: (0), function main, file test.c, line 6.
     char assert_failed_msg[512];
     
-    strcpy_capped(
+    common_strcpy_capped(
         assert_failed_msg,
         512,
         "Assertion failed: (");
-    strcat_capped(
+    common_strcat_capped(
         assert_failed_msg,
         512,
         str_condition);
-    strcat_capped(
+    common_strcat_capped(
         assert_failed_msg,
         256,
         "), function ");
-    strcat_capped(
+    common_strcat_capped(
         assert_failed_msg,
         512,
         func_name);
-    strcat_capped(
+    common_strcat_capped(
         assert_failed_msg,
         512,
         ", file ");
-    strcat_capped(
+    common_strcat_capped(
         assert_failed_msg,
         512,
         file_name);
-    strcat_capped(
+    common_strcat_capped(
         assert_failed_msg,
         512,
         ", line ");
-    strcat_int_capped(
+    common_strcat_int_capped(
         assert_failed_msg,
         512,
         line_number);

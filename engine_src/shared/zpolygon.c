@@ -152,7 +152,7 @@ bool32_t fetch_zpolygon_by_object_id(
     PolygonRequest * recipient,
     const int32_t object_id)
 {
-    memset_char(recipient, 0, sizeof(PolygonRequest));
+    common_memset_char(recipient, 0, sizeof(PolygonRequest));
     
     for (
         uint32_t zp_i = 0;
@@ -254,16 +254,16 @@ void construct_zpolygon(
         (to_construct->materials_size == 1 ||
         to_construct->materials_size == MAX_MATERIALS_PER_POLYGON));
     
-    memset_char(
+    common_memset_char(
         to_construct->cpu_data,
         0,
         sizeof(zPolygonCPU));
-    memset_char(
+    common_memset_char(
         to_construct->gpu_materials,
         0,
         sizeof(GPUPolygonMaterial) *
             to_construct->materials_size);
-    memset_char(
+    common_memset_char(
         to_construct->gpu_data,
         0,
         sizeof(GPUPolygon));
@@ -354,7 +354,7 @@ static void normal_undo_camera_rotation(
     log_assert(ignore_camera <= 1.0f);
     
     float ignore_cam_pos[3];
-    tok_memcpy(ignore_cam_pos, normal_xyz, sizeof(float) * 3);
+    common_memcpy(ignore_cam_pos, normal_xyz, sizeof(float) * 3);
     
     // In the standard shader everything will be rotated by negative the
     // xyz_angle, so do the opposite
@@ -417,7 +417,7 @@ static void undo_camera_translation(
     #endif
     
     float ignore_cam_pos[3];
-    tok_memcpy(ignore_cam_pos, xyz, sizeof(float) * 3);
+    common_memcpy(ignore_cam_pos, xyz, sizeof(float) * 3);
     
     // In the standard shader everything will be rotated by negative the
     // xyz_angle, so do the opposite
@@ -622,7 +622,7 @@ void zpolygon_get_transformed_boundsphere(
     float * recipient_center_xyz,
     float * recipient_radius)
 {
-    tok_memcpy(
+    common_memcpy(
         recipient_center_xyz,
         gpu_data->xyz_offset,
         sizeof(float)*3);
@@ -643,7 +643,7 @@ void zpolygon_get_transformed_boundsphere(
     undo_camera_translation(recipient_center_xyz, gpu_data->ignore_camera);
     
     float furthest[3];
-    tok_memcpy(furthest, cpu_data->furthest_vertex_xyz, sizeof(float)*3);
+    common_memcpy(furthest, cpu_data->furthest_vertex_xyz, sizeof(float)*3);
     
     furthest[0] *= gpu_data->xyz_multiplier[0];
     furthest[1] *= gpu_data->xyz_multiplier[1];
@@ -669,7 +669,7 @@ float ray_intersects_zpolygon(
     #ifdef PROFILER_ACTIVE
     profiler_start("zpolygon_get_transformed_boundsphere()");
     #endif
-    memset_char(recipient_hit_point, 0, sizeof(float) * 3);
+    common_memset_char(recipient_hit_point, 0, sizeof(float) * 3);
     
     normalize_zvertex_f3(ray_direction);
     
@@ -710,7 +710,7 @@ float ray_intersects_zpolygon(
         dist_to_hit = COL_FLT_MAX;
         
         float closest_hit_point[3];
-        memset_char(closest_hit_point, 0, sizeof(float)*3);
+        common_memset_char(closest_hit_point, 0, sizeof(float)*3);
         
         float transformed_triangle[10];
         float transformed_normals[10];
@@ -778,7 +778,7 @@ float ray_intersects_zpolygon(
             if (dist_to_tri > 0 && dist_to_tri < dist_to_hit)
             {
                 dist_to_hit = dist_to_tri;
-                tok_memcpy(
+                common_memcpy(
                     recipient_hit_point,
                     closest_hit_point,
                     sizeof(float)*3);

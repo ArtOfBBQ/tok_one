@@ -285,11 +285,11 @@ void platform_get_filenames_in(
     {
         NSString * current_result = [results[i] lastPathComponent];
         
-       strcpy_capped(
-           filenames[i],
-           500,
-           (char *)[current_result
-               cStringUsingEncoding:NSASCIIStringEncoding]);
+        common_strcpy_capped(
+            filenames[i],
+            500,
+            (char *)[current_result
+                cStringUsingEncoding:NSASCIIStringEncoding]);
     }
 }
 
@@ -302,7 +302,7 @@ platform_get_application_path(
     (void)recipient_size;
     #endif
     
-    strcpy_capped(
+    common_strcpy_capped(
         recipient,
         recipient_size,
         (char *)[[[NSBundle mainBundle] bundlePath]
@@ -318,7 +318,7 @@ void platform_get_resources_path(
     (void)recipient_size;
     #endif
     
-    strcpy_capped(
+    common_strcpy_capped(
         recipient,
         recipient_size,
         (char *)[

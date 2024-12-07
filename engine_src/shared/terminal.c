@@ -33,8 +33,8 @@ static void describe_zpolygon(
     (void)cap;
     #endif
     
-    strcat_capped(append_to, cap, "\n***Zpolygon: ");
-    strcat_uint_capped(append_to, cap, zp_i);
+    common_strcat_capped(append_to, cap, "\n***Zpolygon: ");
+    common_strcat_uint_capped(append_to, cap, zp_i);
 }
 
 void destroy_terminal_objects(void) {
@@ -65,7 +65,7 @@ void terminal_init(
     
     terminal_history = (char *)malloc_from_unmanaged(
         TERMINAL_HISTORY_MAX);
-    strcpy_capped(
+    common_strcpy_capped(
         terminal_history,
         TERMINAL_HISTORY_MAX,
         "TOK ONE embedded debugging terminal v1.0\n");
@@ -339,26 +339,26 @@ static bool32_t evaluate_terminal_command(
     char * response)
 {
     if (
-        are_equal_strings(command, "PROFILE") ||
-        are_equal_strings(command, "PROFILER") ||
-        are_equal_strings(command, "PROFILE TREE"))
+        common_are_equal_strings(command, "PROFILE") ||
+        common_are_equal_strings(command, "PROFILER") ||
+        common_are_equal_strings(command, "PROFILE TREE"))
     {
         #ifdef PROFILER_ACTIVE
         window_globals->show_profiler = !window_globals->show_profiler;
         
         if (window_globals->show_profiler) {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Showing profiler results...");
         } else {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Stopped showing profiler results...");
         }
         #else
-        strcpy_capped(
+        common_strcpy_capped(
             response,
             SINGLE_LINE_MAX,
             "PROFILER_ACTIVE was undefined at compile time, no profiler data "
@@ -368,16 +368,16 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
-        are_equal_strings(command, "PAUSE PROFILER"))
+        common_are_equal_strings(command, "PAUSE PROFILER"))
     {
         if (!window_globals->pause_profiler) {
             window_globals->pause_profiler = true;
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Paused profiler...");
         } else {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Profiler was already paused...");
@@ -386,18 +386,18 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
-        are_equal_strings(command, "RESUME PROFILER") ||
-        are_equal_strings(command, "RUN PROFILER") ||
-        are_equal_strings(command, "UNPAUSE PROFILER"))
+        common_are_equal_strings(command, "RESUME PROFILER") ||
+        common_are_equal_strings(command, "RUN PROFILER") ||
+        common_are_equal_strings(command, "UNPAUSE PROFILER"))
     {
         if (window_globals->pause_profiler) {
             window_globals->pause_profiler = false;
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Resuming profiler...");
         } else {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Profiler was already running...");
@@ -406,8 +406,8 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
-        are_equal_strings(command, "RESET CAMERA") ||
-        are_equal_strings(command, "CENTER CAMERA"))
+        common_are_equal_strings(command, "RESET CAMERA") ||
+        common_are_equal_strings(command, "CENTER CAMERA"))
     {
         camera.xyz[0] = 0.0f;
         camera.xyz[1] = 0.0f;
@@ -415,7 +415,7 @@ static bool32_t evaluate_terminal_command(
         camera.xyz_angle[0] = 0.0f;
         camera.xyz_angle[1] = 0.0f;
         camera.xyz_angle[2] = 0.0f;
-        strcpy_capped(
+        common_strcpy_capped(
             response,
             SINGLE_LINE_MAX,
             "Reset camera position and angles to {0,0,0}");
@@ -423,18 +423,18 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
-        are_equal_strings(command, "VERTICES") ||
-        are_equal_strings(command, "DRAW VERTICES"))
+        common_are_equal_strings(command, "VERTICES") ||
+        common_are_equal_strings(command, "DRAW VERTICES"))
     {
         window_globals->draw_vertices = !window_globals->draw_vertices;
         
         if (window_globals->draw_vertices) {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Drawing triangle vertices...");
         } else {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Stopped drawing triangle vertices...");
@@ -443,19 +443,19 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
-        are_equal_strings(command, "HITBOX") ||
-        are_equal_strings(command, "HITBOXES") ||
-        are_equal_strings(command, "DRAW HITBOXES"))
+        common_are_equal_strings(command, "HITBOX") ||
+        common_are_equal_strings(command, "HITBOXES") ||
+        common_are_equal_strings(command, "DRAW HITBOXES"))
     {
         window_globals->draw_hitboxes = !window_globals->draw_hitboxes;
         
         if (window_globals->draw_hitboxes) {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Drawing hitboxes...");
         } else {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Stopped drawing hitboxes...");
@@ -464,20 +464,20 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
-        are_equal_strings(command, "AXIS") ||
-        are_equal_strings(command, "AXES") ||
-        are_equal_strings(command, "DRAW AXIS") ||
-        are_equal_strings(command, "DRAW AXES"))
+        common_are_equal_strings(command, "AXIS") ||
+        common_are_equal_strings(command, "AXES") ||
+        common_are_equal_strings(command, "DRAW AXIS") ||
+        common_are_equal_strings(command, "DRAW AXES"))
     {
         window_globals->draw_axes = !window_globals->draw_axes;
         
         if (window_globals->draw_axes) {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Drawing axes...");
         } else {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Stopped drawing axes...");
@@ -486,18 +486,18 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
-        are_equal_strings(command, "MOUSE") ||
-        are_equal_strings(command, "DRAW MOUSE"))
+        common_are_equal_strings(command, "MOUSE") ||
+        common_are_equal_strings(command, "DRAW MOUSE"))
     {
         window_globals->draw_mouseptr = !window_globals->draw_mouseptr;
         
         if (window_globals->draw_mouseptr) {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Drawing the mouse pointer...");
         } else {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Stopped drawing the mouse pointer...");
@@ -506,8 +506,8 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
-        are_equal_strings(command, "DUMP SOUND") ||
-        are_equal_strings(command, "DUMP SOUND BUFFER"))
+        common_are_equal_strings(command, "DUMP SOUND") ||
+        common_are_equal_strings(command, "DUMP SOUND BUFFER"))
     {
         unsigned char * recipient =
             malloc_from_managed(sound_settings->global_buffer_size_bytes + 100);
@@ -525,7 +525,7 @@ static bool32_t evaluate_terminal_command(
             /* const uint32_t samples_size: */
                 sound_settings->global_samples_size);
         
-        strcpy_capped(
+        common_strcpy_capped(
             response,
             SINGLE_LINE_MAX,
             "Dumping global sound buffer to disk...");
@@ -542,12 +542,12 @@ static bool32_t evaluate_terminal_command(
                 &good);
         
         if (good) {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "\nSuccess!");
         } else {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "\nFailed to write to disk :(");
@@ -557,21 +557,21 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
-        are_equal_strings(command, "WINDOW"))
+        common_are_equal_strings(command, "WINDOW"))
     {
-        strcpy_capped(
+        common_strcpy_capped(
             response,
             SINGLE_LINE_MAX,
             "window height: ");
-        strcat_uint_capped(
+        common_strcat_uint_capped(
             response,
             SINGLE_LINE_MAX,
             (uint32_t)window_globals->window_height);
-        strcat_capped(
+        common_strcat_capped(
             response,
             SINGLE_LINE_MAX,
             ", width: ");
-        strcat_uint_capped(
+        common_strcat_uint_capped(
             response,
             SINGLE_LINE_MAX,
             (uint32_t)window_globals->window_width);
@@ -590,7 +590,7 @@ static bool32_t evaluate_terminal_command(
         command[8] == ' ' &&
         command[9] >= '0' && command[9] <= '9')
     {
-        uint32_t zp_i = string_to_uint32(command + 9);
+        uint32_t zp_i = common_string_to_uint32(command + 9);
         
         response[0] = '\0';
         describe_zpolygon(response, SINGLE_LINE_MAX, zp_i);
@@ -598,20 +598,20 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
-        are_equal_strings(command, "DRAW FPS") ||
-        are_equal_strings(command, "FPS") ||
-        are_equal_strings(command, "SHOW FPS"))
+        common_are_equal_strings(command, "DRAW FPS") ||
+        common_are_equal_strings(command, "FPS") ||
+        common_are_equal_strings(command, "SHOW FPS"))
     {
         window_globals->draw_fps = !window_globals->draw_fps;
         
         if (window_globals->draw_fps) {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Drawing the fps counter...");
         } else {
             delete_zpolygon_object(FPS_COUNTER_OBJECT_ID);
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Stopped drawing the fps counter...");
@@ -620,20 +620,20 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
-        are_equal_strings(command, "DRAW CLICKRAY") ||
-        are_equal_strings(command, "CLICKRAY") ||
-        are_equal_strings(command, "DRAW CLICKRAYS") ||
-        are_equal_strings(command, "CLICKRAYS"))
+        common_are_equal_strings(command, "DRAW CLICKRAY") ||
+        common_are_equal_strings(command, "CLICKRAY") ||
+        common_are_equal_strings(command, "DRAW CLICKRAYS") ||
+        common_are_equal_strings(command, "CLICKRAYS"))
     {
         window_globals->draw_clickray = !window_globals->draw_clickray;
         
         if (window_globals->draw_clickray) {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Drawing the 'click ray' for the last touch...");
         } else {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Stopped drawing the 'click ray' for the last touch...");
@@ -642,18 +642,18 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
-        are_equal_strings(command, "DRAW TRIANGLES") ||
-        are_equal_strings(command, "TRIANGLES"))
+        common_are_equal_strings(command, "DRAW TRIANGLES") ||
+        common_are_equal_strings(command, "TRIANGLES"))
     {
         window_globals->draw_triangles = !window_globals->draw_triangles;
         
         if (window_globals->draw_triangles) {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Drawing triangles...");
         } else {
-            strcpy_capped(
+            common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
                 "Stopped drawing triangles...");
@@ -661,10 +661,10 @@ static bool32_t evaluate_terminal_command(
         return true;
     }
     
-    if (are_equal_strings(command, "FS") ||
-        are_equal_strings(command, "FULLSCREEN"))
+    if (common_are_equal_strings(command, "FS") ||
+        common_are_equal_strings(command, "FULLSCREEN"))
     {
-        strcpy_capped(
+        common_strcpy_capped(
             response,
             SINGLE_LINE_MAX,
             "Entering full screen...");
@@ -672,20 +672,20 @@ static bool32_t evaluate_terminal_command(
         return true;
     }
     
-    if (are_equal_strings(command, "quit") ||
-        are_equal_strings(command, "Quit") ||
-        are_equal_strings(command, "QUIT") ||
-        are_equal_strings(command, "exit") ||
-        are_equal_strings(command, "Exit") ||
-        are_equal_strings(command, "EXIT"))
+    if (common_are_equal_strings(command, "quit") ||
+        common_are_equal_strings(command, "Quit") ||
+        common_are_equal_strings(command, "QUIT") ||
+        common_are_equal_strings(command, "exit") ||
+        common_are_equal_strings(command, "Exit") ||
+        common_are_equal_strings(command, "EXIT"))
     {
         platform_close_application();
         return true;
     }
     
     #ifndef LOGGER_IGNORE_ASSERTS
-    if (are_equal_strings(command, "CRASH")) {
-        strcpy_capped(
+    if (common_are_equal_strings(command, "CRASH")) {
+        common_strcpy_capped(
             response,
             SINGLE_LINE_MAX,
             "Forcing the app to crash...");
@@ -704,8 +704,8 @@ void terminal_commit_or_activate(void) {
         terminal_active &&
         current_command[0] != '\0')
     {
-        strcat_capped(terminal_history, TERMINAL_HISTORY_MAX, current_command);
-        strcat_capped(terminal_history, TERMINAL_HISTORY_MAX, "\n");
+        common_strcat_capped(terminal_history, TERMINAL_HISTORY_MAX, current_command);
+        common_strcat_capped(terminal_history, TERMINAL_HISTORY_MAX, "\n");
         char client_response[SINGLE_LINE_MAX];
         client_response[0] = '\0';
         
@@ -714,11 +714,11 @@ void terminal_commit_or_activate(void) {
                 current_command,
                 client_response))
         {
-            strcat_capped(
+            common_strcat_capped(
                 terminal_history,
                 TERMINAL_HISTORY_MAX,
                 client_response);
-            strcat_capped(
+            common_strcat_capped(
                 terminal_history,
                 TERMINAL_HISTORY_MAX,
                 "\n");
@@ -727,11 +727,11 @@ void terminal_commit_or_activate(void) {
                 current_command,
                 client_response,
                 SINGLE_LINE_MAX);
-            strcat_capped(
+            common_strcat_capped(
                 terminal_history,
                 TERMINAL_HISTORY_MAX,
                 client_response);
-            strcat_capped(
+            common_strcat_capped(
                 terminal_history,
                 TERMINAL_HISTORY_MAX,
                 "\n");

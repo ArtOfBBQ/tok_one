@@ -578,9 +578,9 @@ static id projection_constants_buffer;
     if (texturearray_i >= (int32_t)[_metal_textures count]) {
         #ifndef LOGGER_IGNORE_ASSERTS
         char errmsg[256];
-        strcpy_capped(errmsg, 256, "Tried to update uninitialized texturearray")
-        strcat_int_capped(errmsg, 256, texturearray_i);
-        strcat_capped(errmsg, 256, "\n");
+        common_strcpy_capped(errmsg, 256, "Tried to update uninitialized texturearray")
+        common_strcat_int_capped(errmsg, 256, texturearray_i);
+        common_strcat_capped(errmsg, 256, "\n");
         
         log_dump_and_crash(errmsg);
         #endif

@@ -10,7 +10,7 @@ static int32_t points_to_render_size = 0;
 
 void fetch_next_line(LineRequest * stack_recipient)
 {
-    memset_char(stack_recipient, 0, sizeof(LineRequest));
+    common_memset_char(stack_recipient, 0, sizeof(LineRequest));
     
     int32_t use_i = -1;
     for (
@@ -46,7 +46,7 @@ bool32_t fetch_line_by_object_id(
     LineRequest * recipient,
     const int32_t object_id)
 {
-    memset_char(recipient, 0, sizeof(LineRequest));
+    common_memset_char(recipient, 0, sizeof(LineRequest));
     
     for (
         int32_t l_i = 0;
@@ -83,7 +83,7 @@ void commit_line(LineRequest * to_commit)
 
 void fetch_next_point(PointRequest * stack_recipient)
 {
-    memset_char(stack_recipient, 0, sizeof(PointRequest));
+    common_memset_char(stack_recipient, 0, sizeof(PointRequest));
     
     int32_t use_i = -1;
     for (
@@ -118,7 +118,7 @@ bool32_t fetch_point_by_object_id(
     PointRequest * recipient,
     const int32_t object_id)
 {
-    memset_char(recipient, 0, sizeof(PointRequest));
+    common_memset_char(recipient, 0, sizeof(PointRequest));
     
     for (
         int32_t l_i = 0;
@@ -173,7 +173,7 @@ void add_points_and_lines_to_workload(
         int32_t vertices_to_copy = (next_skip_or_end - next_start) * 2;
         if (vertices_to_copy > 0) {
             log_assert(vertices_to_copy % 2 == 0);
-            tok_memcpy(
+            common_memcpy(
                 frame_data->line_vertices,
                 line_vertices + (next_start * 2),
                 sizeof(GPURawVertex) * (uint32_t)vertices_to_copy);
@@ -200,7 +200,7 @@ void add_points_and_lines_to_workload(
         
         int32_t vertices_to_copy = (next_skip_or_end - next_start);
         if (vertices_to_copy > 0) {
-            tok_memcpy(
+            common_memcpy(
                 frame_data->point_vertices,
                 point_vertices + next_start,
                 sizeof(GPURawVertex) * (uint32_t)vertices_to_copy);
