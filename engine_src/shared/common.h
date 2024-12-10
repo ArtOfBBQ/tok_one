@@ -30,6 +30,9 @@ extern "C" {
 #define FLOAT32_MAX 2147483647
 #define FLOAT32_MIN 1.1754943508222875e-38F
 
+#define common_abs(a) ((((a) > 0)*(a))+(((a) < 0)*-(a)))
+#define common_fabs(a) ((((a) > 0.0f)*(a))+(((a) < 0.0f)*-(a)))
+
 void common_memset_char(
     void * input,
     char value,
