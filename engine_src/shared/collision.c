@@ -448,7 +448,7 @@ static int coplanar_point_hits_triangle_3D(
         triangle_get_area(A, C, P) +
         triangle_get_area(B, C, P));
     
-    return diff < 0.0001f && diff > -0.0001f;
+    return diff < 0.001f && diff > -0.001f;
 }
 
 float ray_hits_plane(

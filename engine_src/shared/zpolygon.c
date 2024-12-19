@@ -272,6 +272,7 @@ void construct_zpolygon(
     to_construct->gpu_data->xyz_multiplier[1] = 1.0f;
     to_construct->gpu_data->xyz_multiplier[2] = 1.0f;
     to_construct->gpu_data->scale_factor = 1.0f;
+    to_construct->gpu_data->highlight_triangle_vert_i = INT32_MAX;
     
     to_construct->cpu_data->mesh_id = -1;
     to_construct->cpu_data->object_id = -1;
@@ -282,8 +283,8 @@ void construct_zpolygon(
     to_construct->gpu_materials[0].rgba[1] = 0.75f;
     to_construct->gpu_materials[0].rgba[2] = 0.75f;
     to_construct->gpu_materials[0].rgba[3] = 0.75f;
-    to_construct->gpu_materials[0].diffuse = 0.75f;
-    to_construct->gpu_materials[0].specular = 0.75f;
+    to_construct->gpu_materials[0].diffuse = 0.50f;
+    to_construct->gpu_materials[0].specular = 0.50f;
     to_construct->gpu_materials[0].texture_i = -1;
     to_construct->gpu_materials[0].texturearray_i = -1;
 }
@@ -664,8 +665,11 @@ float ray_intersects_zpolygon(
     float ray_direction[3],
     const zPolygonCPU * cpu_data,
     GPUPolygon  * gpu_data,
-    float * recipient_hit_point)
+    float * recipient_hit_point,
+    uint32_t * recipient_triangle_vert_i)
 {
+    *recipient_triangle_vert_i = UINT32_MAX;
+    
     #ifdef PROFILER_ACTIVE
     profiler_start("zpolygon_get_transformed_boundsphere()");
     #endif
@@ -691,7 +695,7 @@ float ray_intersects_zpolygon(
     #ifdef PROFILER_ACTIVE
     profiler_start("normalized_ray_hits_sphere()");
     #endif
-    float dist_to_hit = normalized_ray_hits_sphere(
+    float t_along_ray_to_hit = normalized_ray_hits_sphere(
         /* const float * ray_origin: */
             ray_origin,
         /* const float * normalized_ray_direction: */
@@ -706,8 +710,11 @@ float ray_intersects_zpolygon(
     profiler_end("normalized_ray_hits_sphere()");
     #endif
     
-    if (dist_to_hit > 0.0f && dist_to_hit < (COL_FLT_MAX / 2)) {
-        dist_to_hit = COL_FLT_MAX;
+    if (
+        t_along_ray_to_hit > 0.0f &&
+        t_along_ray_to_hit < (COL_FLT_MAX / 2))
+    {
+        t_along_ray_to_hit = COL_FLT_MAX;
         
         float closest_hit_point[3];
         common_memset_char(closest_hit_point, 0, sizeof(float)*3);
@@ -738,7 +745,10 @@ float ray_intersects_zpolygon(
             #ifdef PROFILER_ACTIVE
             profiler_start("set up avg_normal");
             #endif
+            
+            
             float avg_normal[3];
+            #if 0
             avg_normal[0] =
                 (transformed_normals[0] +
                     transformed_normals[3] +
@@ -755,11 +765,36 @@ float ray_intersects_zpolygon(
                         transformed_normals[8]) /
                     3.0f;
             normalize_zvertex_f3(avg_normal);
+            #else
+            // cross product
+            // Nx = Ay * Bz - Az * By
+            // Ny = Az * Bx - Ax * Bz
+            // Nz = Ax * By - Ay * Bx
+            float a[3];
+            float b[3];
+            a[0] = transformed_triangle[3] - transformed_triangle[0];
+            a[1] = transformed_triangle[4] - transformed_triangle[1];
+            a[2] = transformed_triangle[5] - transformed_triangle[2];
+            b[0] = transformed_triangle[6] - transformed_triangle[0];
+            b[1] = transformed_triangle[7] - transformed_triangle[1];
+            b[2] = transformed_triangle[8] - transformed_triangle[2];
+            avg_normal[0] =
+                (a[1] * b[2]) -
+                (a[2] * b[1]);
+            avg_normal[1] =
+                (a[2] * b[0]) -
+                (a[0] * b[2]);
+            avg_normal[2] =
+                (a[0] * b[1]) -
+                (a[1] * b[0]);
+            #endif
+            
+            normalize_zvertex_f3(avg_normal);
             #ifdef PROFILER_ACTIVE
             profiler_end("set up avg_normal");
             #endif
             
-            float dist_to_tri = ray_hits_triangle(
+            float t_along_ray_to_tri = ray_hits_triangle(
                 /* const float * ray_origin: */
                     ray_origin,
                 /* const float * ray_direction: */
@@ -775,18 +810,22 @@ float ray_intersects_zpolygon(
                 /* float * collision_recipient: */
                     closest_hit_point);
             
-            if (dist_to_tri > 0 && dist_to_tri < dist_to_hit)
+            if (
+                t_along_ray_to_tri > 0 &&
+                t_along_ray_to_tri < t_along_ray_to_hit &&
+                t_along_ray_to_tri < (COL_FLT_MAX / 2))
             {
-                dist_to_hit = dist_to_tri;
+                t_along_ray_to_hit = t_along_ray_to_tri;
                 common_memcpy(
                     recipient_hit_point,
                     closest_hit_point,
                     sizeof(float)*3);
+                *recipient_triangle_vert_i = (uint32_t)vert_i;
             }
         }
     }
     
-    return dist_to_hit;
+    return t_along_ray_to_hit;
 }
 
 void construct_quad(

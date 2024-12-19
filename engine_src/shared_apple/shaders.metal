@@ -259,6 +259,10 @@ vertex_shader(
     
     out.color += bonus_rgb;
     
+    out.color +=
+        (polygon_collection->polygons[polygon_i].highlight_triangle_vert_i ==
+            locked_vertex_i) * 50.0f;
+    
     /* out.texturearray_i = vertices[vertex_i].texturearray_i; */
     out.texturearray_i = polygon_materials[locked_material_i].texturearray_i;
     /* out.texture_i = vertices[vertex_i].texture_i; */

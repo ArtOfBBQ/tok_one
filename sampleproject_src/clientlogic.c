@@ -1,10 +1,10 @@
 #include "clientlogic.h"
 
-#define TEAPOT 0
+#define TEAPOT 1
 #if TEAPOT
 static int32_t teapot_mesh_id = -1;
-static int32_t teapot_object_id = -1;
-static int32_t teapot_touchable_id = -1;
+static int32_t teapot_object_ids[2];
+static int32_t teapot_touchable_ids[2];
 #endif
 
 void client_logic_early_startup(void) {
@@ -21,16 +21,18 @@ void client_logic_early_startup(void) {
             /* filename : */ fontfile,
             /* rows     : */ 10,
             /* columns  : */ 10);
+    } else {
+        log_assert(0);
     }
     
     char * filenames[5];
     filenames[0] = malloc_from_unmanaged(64);
-    strcpy_capped(filenames[0], 64, "structuredart1.png");
+    common_strcpy_capped(filenames[0], 64, "structuredart1.png");
     register_new_texturearray_from_files((const char **)filenames, 1);
     
     #if TEAPOT
     // teapot_mesh_id = BASIC_CUBE_MESH_ID;
-    teapot_mesh_id = new_mesh_id_from_resource("gamedisk.obj");
+    teapot_mesh_id = new_mesh_id_from_resource("cardstand.obj");
     #endif
 }
 
@@ -63,62 +65,76 @@ void client_logic_late_startup(void) {
     commit_zlight(light);
     
     #if TEAPOT
-    teapot_object_id = next_nonui_object_id();
+    teapot_object_ids[0] = next_nonui_object_id();
+    teapot_object_ids[1] = next_nonui_object_id();
     
+    for (uint32_t i = 0; i < 2; i++) {
     PolygonRequest teapot_request;
     teapot_request.materials_size = 1;
     request_next_zpolygon(&teapot_request);
     construct_zpolygon(&teapot_request);
     teapot_request.cpu_data->mesh_id = teapot_mesh_id;
-    scale_zpolygon_multipliers_to_height(
-        teapot_request.cpu_data,
-        teapot_request.gpu_data,
-        0.25f);
-    teapot_request.gpu_data->xyz[0]                = 0.00f;
-    teapot_request.gpu_data->xyz[1]                = 0.00f;
-    teapot_request.gpu_data->xyz[2]                = 0.75f;
+    //    scale_zpolygon_multipliers_to_height(
+    //        teapot_request.cpu_data,
+    //        teapot_request.gpu_data,
+    //        0.25f);
+    teapot_request.gpu_data->xyz_multiplier[0] = 1.0f;
+    teapot_request.gpu_data->xyz_multiplier[1] = 1.0f;
+    teapot_request.gpu_data->xyz_multiplier[2] = 1.0f;
+    teapot_request.gpu_data->xyz[0]                = 0.00f + (i * 0.20f);
+    teapot_request.gpu_data->xyz[1]                = 0.00f + (i * 0.10f);
+    teapot_request.gpu_data->xyz[2]                = 5.00f - (i * 0.25f);
     teapot_request.gpu_data->xyz_angle[0]          = 0.00f;
     teapot_request.gpu_data->xyz_angle[1]          = 0.00f;
     teapot_request.gpu_data->xyz_angle[2]          = 0.00f;
-    teapot_request.cpu_data->object_id             = teapot_object_id;
+    teapot_request.cpu_data->object_id             = teapot_object_ids[i];
     teapot_request.cpu_data->visible               = true;
-    teapot_touchable_id = next_nonui_touchable_id();
-    teapot_request.cpu_data->touchable_id          = teapot_touchable_id;
-    teapot_request.gpu_materials[0].rgba[0]        =  0.4f;
-    teapot_request.gpu_materials[0].rgba[1]        =  0.4f;
-    teapot_request.gpu_materials[0].rgba[2]        =  0.4f;
-    teapot_request.gpu_materials[0].rgba[3]        =  1.0f;
-    teapot_request.gpu_materials[0].texturearray_i = -1.0f;
-    teapot_request.gpu_materials[0].texture_i      = -1.0f;
-    teapot_request.gpu_materials[0].specular       =  1.0f;
-    teapot_request.gpu_materials[0].diffuse        =  1.0f;
+    teapot_touchable_ids[i]                        = next_nonui_touchable_id();
+    teapot_request.cpu_data->touchable_id          = teapot_touchable_ids[i];
+    for (uint32_t mat_i = 0; mat_i < MAX_MATERIALS_PER_POLYGON; mat_i++) {
+        teapot_request.gpu_materials[mat_i].rgba[0]        =  0.4f;
+        teapot_request.gpu_materials[mat_i].rgba[1]        =  0.4f;
+        teapot_request.gpu_materials[mat_i].rgba[2]        =  0.4f;
+        teapot_request.gpu_materials[mat_i].rgba[3]        =  1.0f;
+        teapot_request.gpu_materials[mat_i].texturearray_i = -1.0f;
+        teapot_request.gpu_materials[mat_i].texture_i      = -1.0f;
+        teapot_request.gpu_materials[mat_i].specular       =  1.0f;
+        teapot_request.gpu_materials[mat_i].diffuse        =  1.0f;
+    }
     teapot_request.gpu_data->ignore_lighting       =  0.0f;
     teapot_request.gpu_data->ignore_camera         =  0.0f;
+    log_assert(teapot_request.gpu_data->xyz_offset[0] == 0.0f);
+    log_assert(teapot_request.gpu_data->xyz_offset[1] == 0.0f);
+    log_assert(teapot_request.gpu_data->xyz_offset[2] == 0.0f);
+    log_assert(teapot_request.gpu_data->xyz_angle[0] == 0.0f);
+    log_assert(teapot_request.gpu_data->xyz_angle[1] == 0.0f);
+    log_assert(teapot_request.gpu_data->xyz_angle[2] == 0.0f);
     commit_zpolygon_to_render(&teapot_request);
+    }
     #endif
     
-    #if 1
+    #if 0
     PolygonRequest quad;
     request_next_zpolygon(&quad);
     construct_quad(
         /* const float left_x: */ 0.0f,
         /* const float bottom_y: */ 0.0f,
-        /* const float z: */ 0.75f,
+        /* const float z: */ 0.65f,
         /* const float width: */ 0.8f,
-        /* const float height: */ 0.2f,
+        /* const float height: */ 0.4f,
         /* PolygonRequest * stack_recipient: */ &quad);
     quad.gpu_data->xyz_multiplier[2]   = quad.gpu_data->xyz_multiplier[0];
     quad.gpu_materials->texturearray_i = 1;
     quad.gpu_materials->texture_i      = 0;
     quad.cpu_data->object_id           = 20;
     quad.cpu_data->touchable_id        = 5;
-    quad.gpu_data->xyz_offset[0]       = 0.2f;
+    quad.gpu_data->xyz_offset[0]       = 0.0f;
     quad.gpu_data->xyz_offset[1]       = 0.0f;
     quad.gpu_data->xyz_offset[2]       = 0.0f;
-    quad.gpu_data->scale_factor        = 1.1f;
-    quad.gpu_data->xyz_angle[0]        = 0.0f;
-    quad.gpu_data->xyz_angle[1]        = 0.0f;
-    quad.gpu_data->xyz_angle[2]        = 0.0f;
+    quad.gpu_data->scale_factor        = 1.0f;
+    quad.gpu_data->xyz_angle[0]        = 0.55f;
+    quad.gpu_data->xyz_angle[1]        = 0.2f;
+    quad.gpu_data->xyz_angle[2]        = 1.2f;
     quad.gpu_data->ignore_camera       = 0.0f;
     commit_zpolygon_to_render(&quad);
     #endif
@@ -141,15 +157,15 @@ void client_logic_animation_callback(
 {
     #ifndef LOGGER_IGNORE_ASSERTS
     char unhandled_callback_id[256];
-    strcpy_capped(
+    common_strcpy_capped(
         unhandled_callback_id,
         256,
         "unhandled client_logic_animation_callback: ");
-    strcat_int_capped(
+    common_strcat_int_capped(
         unhandled_callback_id,
         256,
         callback_id);
-    strcat_capped(
+    common_strcat_capped(
         unhandled_callback_id,
         256,
         ". Find in clientlogic.c -> client_logic_animation_callback\n");
@@ -181,7 +197,7 @@ static void client_handle_keypresses(
         #if TEAPOT
         request_shatter_and_destroy(
             /* const int32_t object_id: */
-                teapot_object_id,
+                teapot_object_ids[1],
             /* const uint64_t duration_microseconds: */
                 750000);
         #endif
@@ -284,33 +300,35 @@ void client_logic_update(uint64_t microseconds_elapsed)
     }
     
     #if TEAPOT
+    for (uint32_t i = 0; i < 2; i++) {
     if (
         !user_interactions[INTR_PREVIOUS_LEFTCLICK_START].handled &&
         user_interactions[INTR_PREVIOUS_LEFTCLICK_START].touchable_id ==
-            teapot_touchable_id)
+            teapot_touchable_ids[i])
     {
         user_interactions[INTR_PREVIOUS_LEFTCLICK_START].handled = true;
         
         ScheduledAnimation * anim = next_scheduled_animation(true);
-        anim->affected_object_id = teapot_object_id;
+        anim->affected_object_id = teapot_object_ids[i];
         anim->gpu_polygon_vals.scale_factor = 1.2f;
         anim->duration_microseconds = 100000;
         anim->runs = 1;
         commit_scheduled_animation(anim);
         
         anim = next_scheduled_animation(true);
-        anim->affected_object_id = teapot_object_id;
+        anim->affected_object_id = teapot_object_ids[i];
         anim->gpu_polygon_vals.scale_factor = 1.0f;
         anim->duration_microseconds = 200000;
         anim->wait_before_each_run = 100000;
         anim->runs = 1;
         commit_scheduled_animation(anim);
     }
+    }
     
     if (keypress_map[TOK_KEY_R]) {
         for (uint32_t i = 0; i < zpolygons_to_render->size; i++) {
             if (zpolygons_to_render->cpu_data[i].object_id ==
-                teapot_object_id)
+                teapot_object_ids[0])
             {
                 zpolygons_to_render->gpu_data[i].xyz_angle[1] += 0.01f;
             }
@@ -326,12 +344,12 @@ void client_logic_evaluate_terminal_command(
     char * response,
     const uint32_t response_cap)
 {
-    if (are_equal_strings(command, "EXAMPLE COMMAND")) {
-        strcpy_capped(response, response_cap, "Hello from clientlogic!");
+    if (common_are_equal_strings(command, "EXAMPLE COMMAND")) {
+        common_strcpy_capped(response, response_cap, "Hello from clientlogic!");
         return;
     }
     
-    strcpy_capped(
+    common_strcpy_capped(
         response,
         response_cap,
         "Unrecognized command - see client_logic_evaluate_terminal_command() "

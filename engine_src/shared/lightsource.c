@@ -3,7 +3,7 @@
 // The global camera
 // In a 2D game, move the x to the left to move all of your
 // sprites to the right
-GPUCamera camera = {{0.0f, 0.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, {0.0f, 0.0f}};
+GPUCamera camera;
 
 zLightSource * zlights_to_apply = NULL;
 uint32_t zlights_to_apply_size = 0;

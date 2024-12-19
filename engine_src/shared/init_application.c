@@ -80,10 +80,10 @@ static void test_simd_functions_floats(void) {
         float * adds_at    = (float *)&adds[j];
         float * divs_at    = (float *)&divs[j];
         float * maxs_at    = (float *)&maxs[j];
-        float * equals_at  = (float *)&equals[j];
+        // float * equals_at  = (float *)&equals[j];
         
-        float one = 1.0f;
-        SIMD_FLOAT all_ones   = simd_set1_float(one);
+        // float one = 1.0f;
+        // SIMD_FLOAT all_ones   = simd_set1_float(one);
         for (
             uint32_t i = 0;
             i < sizeof(SimdTestStruct) / sizeof(float);
@@ -95,7 +95,7 @@ static void test_simd_functions_floats(void) {
             SIMD_FLOAT add    = simd_load_floats(adds_at + i);
             SIMD_FLOAT div    = simd_load_floats(divs_at + i);
             SIMD_FLOAT max    = simd_load_floats(maxs_at + i);
-            SIMD_FLOAT eq     = simd_load_floats(equals_at + i);
+            // SIMD_FLOAT eq     = simd_load_floats(equals_at + i);
             
             
             cur = simd_mul_floats(cur, mul);

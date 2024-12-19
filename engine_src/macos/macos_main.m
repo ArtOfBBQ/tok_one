@@ -302,6 +302,7 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 - (void)mouseMoved:(NSEvent *)event {
     NSPoint window_location = [event locationInWindow];
     
+    return; // TODO: delete debug return
     register_interaction(
         /* interaction : */
             &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],
@@ -322,6 +323,7 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 - (void)mouseDragged:(NSEvent *)event {
     NSPoint window_location = [event locationInWindow];
     
+    return; // TODO: delete debug return
     register_interaction(
         /* interaction : */
             &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],

@@ -16,6 +16,10 @@
 extern "C" {
 #endif
 
+void x_rotate_zvertex_f3_known_cossin(
+    float inout_xyz[3],
+    const float cosf_angle,
+    const float sinf_angle);
 void x_rotate_zvertex_f3(
     float inout_xyz[3],
     const float angle);
@@ -38,6 +42,10 @@ void y_rotate_zvertices_inplace(
     const SIMD_FLOAT cos_angles,
     const SIMD_FLOAT sin_angles);
 
+void z_rotate_zvertex_f3_known_cossin(
+    float inout_xyz[3],
+    const float angle_cos,
+    const float angle_sin);
 void z_rotate_zvertex_f3(
     float inout_xyz[3],
     const float angle);

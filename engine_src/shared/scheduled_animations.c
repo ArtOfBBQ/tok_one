@@ -568,9 +568,11 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                 #ifndef LOGGER_IGNORE_ASSERTS
                 for (uint32_t i = 0; i < (sizeof(GPUPolygon) / 4); i++) {
                     // assert not NaN
-                    log_assert((target_vals_ptr[i] == target_vals_ptr[i]));
-                    log_assert(!isinf(target_vals_ptr[i]));
-                    log_assert(!isnan(target_vals_ptr[i]));
+                    if ((uint32_t)target_vals_ptr[i] != 0) {
+                        log_assert((target_vals_ptr[i] == target_vals_ptr[i]));
+                        log_assert(!isinf(target_vals_ptr[i]));
+                        log_assert(!isnan(target_vals_ptr[i]));
+                    }
                 }
                 #endif
                 

@@ -5,12 +5,7 @@ static uint32_t renderer_initialized = false;
 void renderer_init(void) {
     renderer_initialized = true;
     
-    camera.xyz[0]       = 0.0f;
-    camera.xyz[1]       = 0.0f;
-    camera.xyz[2]       = 0.0f;
-    camera.xyz_angle[0] = 0.0f;
-    camera.xyz_angle[1] = 0.0f;
-    camera.xyz_angle[2] = 0.0f;
+    common_memset_char(&camera, 0, sizeof(GPUCamera));
 }
 
 static bool32_t is_last_clicked = false;
@@ -523,10 +518,7 @@ void renderer_hardware_render(
             clickray_elapsed;
         add_point_vertex(frame_data, moving_point, 0.75f);
         
-        if (
-            (window_globals->last_clickray_collision[0] +
-            window_globals->last_clickray_collision[1] +
-            window_globals->last_clickray_collision[2]) > 0.0f)
+        if (window_globals->draw_clickray)
         {
             add_point_vertex(
                 /* GPUDataForSingleFrame * frame_data: */
