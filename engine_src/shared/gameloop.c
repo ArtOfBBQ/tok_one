@@ -100,7 +100,6 @@ static int32_t closest_touchable_from_screen_ray(
     
     int32_t return_value = -1;
     float smallest_t_along_ray = COL_FLT_MAX;
-    uint32_t smallest_triangle_vert_i = UINT32_MAX;
     uint32_t smallest_zpolygon_i = MAX_POLYGONS_PER_BUFFER-1;
     
     for (
@@ -142,22 +141,12 @@ static int32_t closest_touchable_from_screen_ray(
             t_along_ray_to_zpolygon < (COL_FLT_MAX / 2))
         {
             smallest_t_along_ray = t_along_ray_to_zpolygon;
-            smallest_triangle_vert_i = current_tri_vert_i;
             smallest_zpolygon_i = zp_i;
             return_value = zpolygons_to_render->cpu_data[zp_i].touchable_id;
-            #if 1
             common_memcpy(
                 collision_point,
                 current_collision_point,
                 sizeof(float) * 3);
-            #else
-            collision_point[0] = ray_origin[0] +
-                (t_along_ray_to_zpolygon * direction_to_distant[0]);
-            collision_point[1] = ray_origin[1] +
-                (t_along_ray_to_zpolygon * direction_to_distant[1]);
-            collision_point[2] = ray_origin[2] +
-                (t_along_ray_to_zpolygon * direction_to_distant[2]);
-            #endif
         }
     }
     
@@ -166,8 +155,6 @@ static int32_t closest_touchable_from_screen_ray(
             window_globals->last_clickray_collision,
             collision_point,
             sizeof(float) * 3);
-        zpolygons_to_render->gpu_data[smallest_zpolygon_i].
-            highlight_triangle_vert_i = smallest_triangle_vert_i;
     }
     
     return return_value;
@@ -326,7 +313,6 @@ void gameloop_update(
         #ifdef PROFILER_ACTIVE
         profiler_start("check touchables for user_interactions");
         #endif
-        user_interactions[8].checked_touchables = false;
         for (uint32_t i = 0; i < 9; i++) {
             if (
                 user_interactions[i].handled ||

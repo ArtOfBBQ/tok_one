@@ -375,7 +375,7 @@ float normalized_ray_hits_sphere(
     collision_recipient[2] =
         ray_origin[2] + (normalized_ray_direction[2] * t);
     
-    return t;
+    return t > -sphere_radius && t < 0.0f ? 0.01f : t;
 }
 
 int point_hits_triangle(
@@ -448,7 +448,11 @@ static int coplanar_point_hits_triangle_3D(
         triangle_get_area(A, C, P) +
         triangle_get_area(B, C, P));
     
-    return diff < 0.001f && diff > -0.001f;
+    float threshold = entire_area * 0.00001f;
+    
+    return
+        diff < threshold &&
+        diff > -threshold;
 }
 
 float ray_hits_plane(

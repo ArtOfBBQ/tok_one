@@ -272,7 +272,6 @@ void construct_zpolygon(
     to_construct->gpu_data->xyz_multiplier[1] = 1.0f;
     to_construct->gpu_data->xyz_multiplier[2] = 1.0f;
     to_construct->gpu_data->scale_factor = 1.0f;
-    to_construct->gpu_data->highlight_triangle_vert_i = INT32_MAX;
     
     to_construct->cpu_data->mesh_id = -1;
     to_construct->cpu_data->object_id = -1;
@@ -322,6 +321,7 @@ float dot_of_vertices_f3(
     return return_value;
 }
 
+#if 0
 static SIMD_VEC4F normal_vec4f_undo_camera_rotation(
     SIMD_VEC4F normal_xyz,
     float ignore_camera)
@@ -346,6 +346,7 @@ static SIMD_VEC4F normal_vec4f_undo_camera_rotation(
         simd_mul_vec4f(simd_set1_vec4f(ignore_camera), ignore_cam_pos),
         simd_mul_vec4f(simd_set1_vec4f(one_minus_ignore_camera), normal_xyz));
 }
+#endif
 
 static void normal_undo_camera_rotation(
     float normal_xyz[3],
@@ -459,6 +460,63 @@ void simd_zpolygon_get_transformed_triangle_vertices(
     const zPolygonCPU * cpu_data,
     const GPUPolygon * gpu_data,
     const int32_t locked_vertex_i,
+    float * vertices_recipient_10f)
+{
+    #ifdef PROFILER_ACTIVE
+    profiler_start("simd_zpolygon_get_transformed_triangle_vertices()");
+    #endif
+    
+    float xyz_cosangle[3];
+    xyz_cosangle[0] = cosf(gpu_data->xyz_angle[0]);
+    xyz_cosangle[1] = cosf(gpu_data->xyz_angle[1]);
+    xyz_cosangle[2] = cosf(gpu_data->xyz_angle[2]);
+    float xyz_sinangle[3];
+    xyz_sinangle[0] = sinf(gpu_data->xyz_angle[0]);
+    xyz_sinangle[1] = sinf(gpu_data->xyz_angle[1]);
+    xyz_sinangle[2] = sinf(gpu_data->xyz_angle[2]);
+    
+    for (int32_t i = 0; i < 3; i++) {
+        SIMD_VEC4F vertex = simd_load_vec4f(all_mesh_vertices->gpu_data[
+            locked_vertex_i + i].xyz);
+        SIMD_VEC4F multipliers = simd_load_vec4f(gpu_data->xyz_multiplier);
+        vertex = simd_mul_vec4f(vertex, multipliers);
+        vertex = simd_add_vec4f(vertex, simd_load_vec4f(gpu_data->xyz_offset));
+        vertex = simd_mul_vec4f(
+            vertex,
+            simd_set1_vec4f(gpu_data->scale_factor));
+        
+        vertex = x_rotate_vec4f_known_cossin(
+            vertex,
+            xyz_cosangle[0],
+            xyz_sinangle[0]);
+        vertex = y_rotate_vec4f_known_cossin(
+            vertex,
+            xyz_cosangle[1],
+            xyz_sinangle[1]);
+        vertex = z_rotate_vec4f_known_cossin(
+            vertex,
+            xyz_cosangle[2],
+            xyz_sinangle[2]);
+        
+        vertex = simd_add_vec4f(vertex, simd_load_vec4f(gpu_data->xyz));
+        
+        vertex = undo_camera_translation_vec4f(
+            vertex,
+            gpu_data->ignore_camera);
+        
+        simd_store_vec4f(vertices_recipient_10f + (i * 3), vertex);
+    }
+    
+    #ifdef PROFILER_ACTIVE
+    profiler_end("simd_zpolygon_get_transformed_triangle_vertices()");
+    #endif
+}
+
+#if 0
+void legacy_simd_zpolygon_get_transformed_triangle_vertices(
+    const zPolygonCPU * cpu_data,
+    const GPUPolygon * gpu_data,
+    const int32_t locked_vertex_i,
     float * vertices_recipient_10f,
     float * normals_recipient_10f)
 {
@@ -537,6 +595,7 @@ void simd_zpolygon_get_transformed_triangle_vertices(
     profiler_end("simd_zpolygon_get_transformed_triangle_vertices()");
     #endif
 }
+#endif
 
 void zpolygon_get_transformed_triangle_vertices(
     const zPolygonCPU * cpu_data,
@@ -720,7 +779,7 @@ float ray_intersects_zpolygon(
         common_memset_char(closest_hit_point, 0, sizeof(float)*3);
         
         float transformed_triangle[10];
-        float transformed_normals[10];
+        // float transformed_normals[10];
         
         for (
             int32_t vert_i =
@@ -738,9 +797,7 @@ float ray_intersects_zpolygon(
                 /* const int32_t locked_vertex_i: */
                     vert_i,
                 /* float *vertices_recipient_10f: */
-                    transformed_triangle,
-                /* float *normals_recipient_10f: */
-                    transformed_normals);
+                    transformed_triangle);
             
             #ifdef PROFILER_ACTIVE
             profiler_start("set up avg_normal");

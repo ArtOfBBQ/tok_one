@@ -110,8 +110,16 @@ void simd_zpolygon_get_transformed_triangle_vertices(
     const zPolygonCPU * cpu_data,
     const GPUPolygon * gpu_data,
     const int32_t locked_vertex_i,
+    float * vertices_recipient_10f);
+
+#if 0
+void legacy_simd_zpolygon_get_transformed_triangle_vertices(
+    const zPolygonCPU * cpu_data,
+    const GPUPolygon * gpu_data,
+    const int32_t locked_vertex_i,
     float * vertices_recipient_10f,
     float * normals_recipient_10f);
+#endif
 
 void zpolygon_get_transformed_triangle_vertices(
     const zPolygonCPU * cpu_data,
