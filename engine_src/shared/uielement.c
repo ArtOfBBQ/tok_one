@@ -88,9 +88,9 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
     {
         if (
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                touchable_id >= 0 &&
+                touchable_id_top >= 0 &&
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                touchable_id < LAST_UI_TOUCHABLE_ID)
+                touchable_id_top < LAST_UI_TOUCHABLE_ID)
         {
             for (
                 uint32_t i = 0;
@@ -100,7 +100,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                 if (
                     active_ui_elements[i].deleted ||
                     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                        touchable_id !=
+                        touchable_id_top !=
                     active_ui_elements[i].touchable_id)
                 {
                     continue;
@@ -191,7 +191,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                 !active_ui_elements[ui_elem_i].deleted &&
                 active_ui_elements[ui_elem_i].slideable &&
                 user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                    touchable_id ==
+                    touchable_id_top ==
                 active_ui_elements[ui_elem_i].touchable_id)
             {
                 user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
@@ -297,7 +297,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                     !active_ui_elements[ui_elem_i].deleted &&
                     active_ui_elements[ui_elem_i].clickable &&
                     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
-                        touchable_id ==
+                        touchable_id_top ==
                     active_ui_elements[ui_elem_i].touchable_id)
                 {
                     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
@@ -607,7 +607,9 @@ void request_button(
         /* const float max_width: */
             next_ui_element_settings->button_width_screenspace,
         /* const uint32_t ignore_camera: */
-            next_ui_element_settings->ignore_camera);
+            next_ui_element_settings->ignore_camera,
+        /* const bool8_t remove_hitbox: */
+            false);
     
     ActiveUIElement * next_element = next_active_ui_element();
     next_element->clickable = true;

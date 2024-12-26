@@ -269,7 +269,7 @@ void profiler_handle_touches(void) {
     {
         if (
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                touchable_id == profiler_touchable_id)
+                touchable_id_top == profiler_touchable_id)
         {
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
                 handled = true;
@@ -279,7 +279,7 @@ void profiler_handle_touches(void) {
         
         if (
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                touchable_id == frame_selection_touchable_ids[0])
+                touchable_id_top == frame_selection_touchable_ids[0])
         {
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
                 handled = true;
@@ -289,7 +289,7 @@ void profiler_handle_touches(void) {
         }
         if (
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                touchable_id == frame_selection_touchable_ids[1])
+                touchable_id_top == frame_selection_touchable_ids[1])
         {
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
                 handled = true;
@@ -329,6 +329,7 @@ void profiler_draw_labels(void) {
         profiler_backdrop.gpu_materials[0].rgba[3] = 0.75f;
         profiler_backdrop.cpu_data->alpha_blending_enabled = true;
         profiler_backdrop.cpu_data->touchable_id = -1;
+        profiler_backdrop.cpu_data->remove_hitbox = true;
         commit_zpolygon_to_render(&profiler_backdrop);
         
         font_color[0] = 0.1f;
@@ -351,6 +352,8 @@ void profiler_draw_labels(void) {
             /* const float max_width: */
                 window_globals->window_width,
             /* const bool32_t ignore_camera: */
+                true,
+            /* remove_hitbox: */
                 true);
         
         for (int32_t gui_frame_i = 0; gui_frame_i < 2; gui_frame_i++) {
@@ -385,6 +388,8 @@ void profiler_draw_labels(void) {
                 /* const float max_width: */
                     window_globals->window_width,
                 /* const bool32_t ignore_camera: */
+                    true,
+                /* remove_hitbox: */
                     true);
             
             font_touchable_id = -1;
@@ -417,6 +422,8 @@ void profiler_draw_labels(void) {
                 /* const float max_width: */
                     window_globals->window_width,
                 /* const bool32_t ignore_camera: */
+                    true,
+                /* remove_hitbox: */
                     true);
             
             if (frames[f_i].profiles_size > 0) {
@@ -500,6 +507,8 @@ void profiler_draw_labels(void) {
                     /* const float max_width: */
                         window_globals->window_width,
                     /* const bool32_t ignore_camera: */
+                        true,
+                    /* remove_hitbox: */
                         true);
             }
         }

@@ -503,20 +503,20 @@ void renderer_hardware_render(
                 clickray_end);
         
         // draw a moving point from the start of the clickray to the end
-        clickray_elapsed += (float)elapsed_nanoseconds / 1000000.0f;
-        if (clickray_elapsed > 2.0f) { clickray_elapsed = 0.0f; }
-        float moving_point[3];
-        common_memcpy(
-            moving_point,
-            window_globals->last_clickray_origin,
-            sizeof(float) * 3);
-        moving_point[0] += window_globals->last_clickray_direction[0] *
-            clickray_elapsed;
-        moving_point[1] += window_globals->last_clickray_direction[1] *
-            clickray_elapsed;
-        moving_point[2] += window_globals->last_clickray_direction[2] *
-            clickray_elapsed;
-        add_point_vertex(frame_data, moving_point, 0.75f);
+        // clickray_elapsed += (float)elapsed_nanoseconds / 1000000.0f;
+        // if (clickray_elapsed > 2.0f) { clickray_elapsed = 0.0f; }
+        //        float moving_point[3];
+        //        common_memcpy(
+        //            moving_point,
+        //            window_globals->last_clickray_origin,
+        //            sizeof(float) * 3);
+        //        moving_point[0] += window_globals->last_clickray_direction[0] *
+        //            clickray_elapsed;
+        //        moving_point[1] += window_globals->last_clickray_direction[1] *
+        //            clickray_elapsed;
+        //        moving_point[2] += window_globals->last_clickray_direction[2] *
+        //            clickray_elapsed;
+        //        add_point_vertex(frame_data, moving_point, 0.75f);
         
         if (window_globals->draw_clickray)
         {
@@ -530,13 +530,14 @@ void renderer_hardware_render(
     
     if (application_running && window_globals->draw_mouseptr) {
         float xyz[3];
+        float z = 0.05f;
         xyz[0] = windowsize_screenspace_x_to_x(
-            user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_x,
-            1.0f);
+            user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_x,
+            z) + camera.xyz[0];
         xyz[1] = windowsize_screenspace_y_to_y(
-            user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_y,
-            1.0f);
-        xyz[2] = 1.0f;
+            user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_y,
+            z) + camera.xyz[1];
+        xyz[2] = z + camera.xyz[2];
         add_point_vertex(
             /* GPUDataForSingleFrame * frame_data: */
                 frame_data,
@@ -544,6 +545,22 @@ void renderer_hardware_render(
                 xyz,
             /* const float color: */
                 0.33f);
+    }
+    
+    if (application_running && window_globals->draw_imputed_normals) {
+        for (
+            uint32_t norm_i = 0;
+            norm_i < window_globals->next_transformed_imputed_normal_i;
+            norm_i += 6)
+        {
+            add_line_vertex(
+                frame_data,
+                window_globals->transformed_imputed_normals + norm_i);
+            
+            add_line_vertex(
+                frame_data,
+                window_globals->transformed_imputed_normals + norm_i + 3);
+        }
     }
     
     #ifdef PROFILER_ACTIVE

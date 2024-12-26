@@ -43,6 +43,7 @@ typedef struct zPolygonCPU {
     bool32_t committed;
     bool32_t deleted;
     bool32_t visible;
+    bool32_t remove_hitbox;
     float furthest_vertex_xyz[3];
 } zPolygonCPU;
 

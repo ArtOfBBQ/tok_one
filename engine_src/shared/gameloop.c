@@ -6,12 +6,17 @@ static uint64_t gameloop_previous_time = 0;
 static uint64_t gameloop_frame_no = 0;
 static uint32_t gameloop_mutex_id = UINT32_MAX;
 
-static int32_t closest_touchable_from_screen_ray(
+static void closest_touchable_from_screen_ray(
+    int32_t * touchable_id_top,
+    int32_t * touchable_id_pierce,
     const float screen_x,
     const float screen_y,
     float * collision_point,
     const bool8_t update_clickray)
 {
+    *touchable_id_top    = -1;
+    *touchable_id_pierce = -1;
+    
     float clicked_viewport_x =
         -1.0f + ((screen_x / window_globals->window_width) * 2.0f);
     float clicked_viewport_y =
@@ -79,12 +84,9 @@ static int32_t closest_touchable_from_screen_ray(
     distant_point[2] += camera.xyz[2];
     
     float direction_to_distant[3];
-    direction_to_distant[0] =
-        distant_point[0] - ray_origin[0];
-    direction_to_distant[1] =
-        distant_point[1] - ray_origin[1];
-    direction_to_distant[2] =
-        distant_point[2] - ray_origin[2];
+    direction_to_distant[0] = distant_point[0] - ray_origin[0];
+    direction_to_distant[1] = distant_point[1] - ray_origin[1];
+    direction_to_distant[2] = distant_point[2] - ray_origin[2];
     normalize_zvertex_f3(direction_to_distant);
     
     if (update_clickray) {
@@ -98,8 +100,8 @@ static int32_t closest_touchable_from_screen_ray(
             sizeof(float)*3);
     }
     
-    int32_t return_value = -1;
-    float smallest_t_along_ray = COL_FLT_MAX;
+    float smallest_t_to_piercing = COL_FLT_MAX;
+    float smallest_t_to_top = COL_FLT_MAX;
     uint32_t smallest_zpolygon_i = MAX_POLYGONS_PER_BUFFER-1;
     
     for (
@@ -107,9 +109,7 @@ static int32_t closest_touchable_from_screen_ray(
         zp_i < zpolygons_to_render->size;
         zp_i++)
     {
-        if (
-            zpolygons_to_render->cpu_data[zp_i].deleted ||
-            zpolygons_to_render->cpu_data[zp_i].touchable_id < 0)
+        if (zpolygons_to_render->cpu_data[zp_i].deleted)
         {
             continue;
         }
@@ -120,6 +120,19 @@ static int32_t closest_touchable_from_screen_ray(
         #ifdef PROFILER_ACTIVE
         profiler_start("ray_intersects_zpolygon()");
         #endif
+        // TODO: this is bad and duplicate
+        float sphere_xyz[3];
+        float sphere_radius;
+        zpolygon_get_transformed_boundsphere(
+            /* const zPolygonCPU * cpu_data: */
+                &zpolygons_to_render->cpu_data[zp_i],
+            /* const GPUPolygon * gpu_data: */
+                &zpolygons_to_render->gpu_data[zp_i],
+            /* float * recipient_center_xyz: */
+                sphere_xyz,
+            /* float * recipient_radius: */
+                &sphere_radius);
+        
         float t_along_ray_to_zpolygon = ray_intersects_zpolygon(
             /* origin: */
                 ray_origin,
@@ -137,27 +150,38 @@ static int32_t closest_touchable_from_screen_ray(
         profiler_end("ray_intersects_zpolygon()");
         #endif
         
-        if (t_along_ray_to_zpolygon < smallest_t_along_ray &&
+        if (t_along_ray_to_zpolygon < smallest_t_to_top &&
+            t_along_ray_to_zpolygon > -sphere_radius &&
             t_along_ray_to_zpolygon < (COL_FLT_MAX / 2))
         {
-            smallest_t_along_ray = t_along_ray_to_zpolygon;
-            smallest_zpolygon_i = zp_i;
-            return_value = zpolygons_to_render->cpu_data[zp_i].touchable_id;
-            common_memcpy(
-                collision_point,
-                current_collision_point,
-                sizeof(float) * 3);
+            smallest_t_to_top = t_along_ray_to_zpolygon;
+            *touchable_id_top = zpolygons_to_render->cpu_data[zp_i].
+                touchable_id;
+        }
+        
+        if (t_along_ray_to_zpolygon < smallest_t_to_piercing &&
+            t_along_ray_to_zpolygon > -sphere_radius &&
+            t_along_ray_to_zpolygon < (COL_FLT_MAX / 2))
+        {
+            if (zpolygons_to_render->cpu_data[zp_i].touchable_id >= 0) {
+                smallest_t_to_piercing = t_along_ray_to_zpolygon;
+                smallest_zpolygon_i = zp_i;
+                *touchable_id_pierce = zpolygons_to_render->cpu_data[zp_i].
+                    touchable_id;
+                common_memcpy(
+                    collision_point,
+                    current_collision_point,
+                    sizeof(float) * 3);
+            }
         }
     }
     
-    if (update_clickray && return_value < FLOAT32_MAX / 2) {
+    if (update_clickray && *touchable_id_pierce >= 0) {
         common_memcpy(
             window_globals->last_clickray_collision,
             collision_point,
             sizeof(float) * 3);
     }
-    
-    return return_value;
 }
 
 static void update_terminal(void) {
@@ -188,6 +212,8 @@ void gameloop_update(
     if (!gameloop_active) {
         return;
     }
+    
+    window_globals->next_transformed_imputed_normal_i = 0;
     
     #ifdef PROFILER_ACTIVE
     profiler_start("gameloop_update()");
@@ -250,6 +276,8 @@ void gameloop_update(
             /* const float max_width: */
                 window_globals->window_width - 30,
             /* const bool32_t ignore_camera: */
+                true,
+            /* remove_hitbox: */
                 true);
     }
     
@@ -313,44 +341,32 @@ void gameloop_update(
         #ifdef PROFILER_ACTIVE
         profiler_start("check touchables for user_interactions");
         #endif
-        for (uint32_t i = 0; i < 9; i++) {
-            if (
-                user_interactions[i].handled ||
-                user_interactions[i].checked_touchables)
-            {
-                continue;
-            }
-            
-            float collision_point[3];
-            user_interactions[i].touchable_id =
-                closest_touchable_from_screen_ray(
-                    /* screen_x: */
-                        user_interactions[i].screen_x,
-                    /* screen_y: */
-                        user_interactions[i].screen_y,
-                    /* collision point: */
-                        collision_point,
-                    /* update_clickray: */
-                        i < 8);
-            
-            user_interactions[i].checked_touchables = true;
-            
-            for (uint32_t j = i+1; j<9; j++) {
-                if (
-                    !user_interactions[j].handled &&
-                    !user_interactions[j].checked_touchables &&
-                    user_interactions[j].screen_x ==
-                        user_interactions[i].screen_x &&
-                    user_interactions[j].screen_y ==
-                        user_interactions[i].screen_y)
-                {
-                    user_interactions[j].checked_touchables = true;
-                    user_interactions[j].touchable_id =
-                        user_interactions[i].touchable_id;
-                }
-            }
-            break;
-        }
+        float collision_point[3];
+        closest_touchable_from_screen_ray(
+            /* int32_t * touchable_id_top: */
+                &user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].
+                    touchable_id_top,
+            /* int32_t * touchable_id_pierce: */
+                &user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].
+                    touchable_id_pierce,
+            /* screen_x: */
+                user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_x,
+            /* screen_y: */
+                user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_y,
+            /* collision point: */
+                collision_point,
+            /* update_clickray: */
+                true);
+        user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].handled = false;
+        user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].
+            checked_touchables = true;
+        
+        // always copy
+        user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
+            user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE];
+        user_interactions[INTR_PREVIOUS_TOUCH_MOVE] =
+            user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE];
+        
         #ifdef PROFILER_ACTIVE
         profiler_end("check touchables for user_interactions");
         #endif
@@ -373,11 +389,11 @@ void gameloop_update(
     common_memcpy(frame_data->camera, &camera, sizeof(GPUCamera));
     log_assert(frame_data->light_collection != NULL);
     
-    frame_data->vertices_size = 0;
+    frame_data->vertices_size            = 0;
     frame_data->polygon_collection->size = 0;
-    frame_data->first_alphablend_i = 0;
-    frame_data->line_vertices_size = 0;
-    frame_data->point_vertices_size = 0;
+    frame_data->first_alphablend_i       = 0;
+    frame_data->line_vertices_size       = 0;
+    frame_data->point_vertices_size      = 0;
     
     if (window_globals->draw_fps) {
         text_request_fps_counter(

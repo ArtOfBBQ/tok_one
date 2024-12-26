@@ -13,6 +13,11 @@ void set_zpolygon_hitbox(zPolygonCPU * mesh_cpu)
     mesh_cpu->furthest_vertex_xyz[0] = 0.0f;
     mesh_cpu->furthest_vertex_xyz[1] = 0.0f;
     mesh_cpu->furthest_vertex_xyz[2] = 0.0f;
+    
+    if (mesh_cpu->remove_hitbox) {
+        return;
+    }
+    
     float furthest_squares = 0.0f;
     
     for (
@@ -20,35 +25,41 @@ void set_zpolygon_hitbox(zPolygonCPU * mesh_cpu)
         vert_i < vertices_tail_i;
         vert_i++)
     {
-        for (uint32_t m = 0; m < 3; m++) {
-            float squares =
-                (all_mesh_vertices->gpu_data[vert_i].xyz[0] *
-                    all_mesh_vertices->gpu_data[vert_i].xyz[0]) +
-                (all_mesh_vertices->gpu_data[vert_i].xyz[1] *
-                    all_mesh_vertices->gpu_data[vert_i].xyz[1]) +
-                (all_mesh_vertices->gpu_data[vert_i].xyz[2] *
-                    all_mesh_vertices->gpu_data[vert_i].xyz[2]);
+        float squares =
+            (all_mesh_vertices->gpu_data[vert_i].xyz[0] *
+                all_mesh_vertices->gpu_data[vert_i].xyz[0]) +
+            (all_mesh_vertices->gpu_data[vert_i].xyz[1] *
+                all_mesh_vertices->gpu_data[vert_i].xyz[1]) +
+            (all_mesh_vertices->gpu_data[vert_i].xyz[2] *
+                all_mesh_vertices->gpu_data[vert_i].xyz[2]);
+        
+        if (squares > furthest_squares) {
+            furthest_squares = squares;
+            mesh_cpu->furthest_vertex_xyz[0] =
+                all_mesh_vertices->gpu_data[vert_i].xyz[0];
+            mesh_cpu->furthest_vertex_xyz[1] =
+                all_mesh_vertices->gpu_data[vert_i].xyz[1];
+            mesh_cpu->furthest_vertex_xyz[2] =
+                all_mesh_vertices->gpu_data[vert_i].xyz[2];
             
-            if (squares > furthest_squares) {
-                furthest_squares = squares;
-                mesh_cpu->furthest_vertex_xyz[0] =
-                    all_mesh_vertices->gpu_data[vert_i].xyz[0];
-                mesh_cpu->furthest_vertex_xyz[1] =
-                    all_mesh_vertices->gpu_data[vert_i].xyz[1];
-                mesh_cpu->furthest_vertex_xyz[2] =
-                    all_mesh_vertices->gpu_data[vert_i].xyz[2];
-                
-                #ifndef LOGGER_IGNORE_ASSERTS
-                if (fabs(mesh_cpu->furthest_vertex_xyz[0]) > 250.0f ||
-                    fabs(mesh_cpu->furthest_vertex_xyz[1]) > 250.0f ||
-                    fabs(mesh_cpu->furthest_vertex_xyz[2]) > 250.0f)
-                {
-                    log_assert(0);
-                }
-                #endif
+            #ifndef LOGGER_IGNORE_ASSERTS
+            if (fabs(mesh_cpu->furthest_vertex_xyz[0]) > 250.0f ||
+                fabs(mesh_cpu->furthest_vertex_xyz[1]) > 250.0f ||
+                fabs(mesh_cpu->furthest_vertex_xyz[2]) > 250.0f)
+            {
+                log_assert(0);
             }
+            #endif
         }
     }
+    
+    #ifndef LOGGER_IGNORE_ASSERTS
+    float total_dist =
+        common_fabs(mesh_cpu->furthest_vertex_xyz[0]) +
+        common_fabs(mesh_cpu->furthest_vertex_xyz[1]) +
+        common_fabs(mesh_cpu->furthest_vertex_xyz[2]);
+    log_assert(total_dist > 0.0f);
+    #endif
 }
 
 void request_next_zpolygon(PolygonRequest * stack_recipient)
@@ -90,7 +101,8 @@ void request_next_zpolygon(PolygonRequest * stack_recipient)
     return;
 }
 
-void commit_zpolygon_to_render(PolygonRequest * to_commit)
+void commit_zpolygon_to_render(
+    PolygonRequest * to_commit)
 {
     log_assert(to_commit->cpu_data->mesh_id >= 0);
     log_assert(to_commit->cpu_data->mesh_id < (int32_t)all_mesh_summaries_size);
@@ -141,9 +153,7 @@ void commit_zpolygon_to_render(PolygonRequest * to_commit)
     }
     
     // set the hitbox height, width, and depth
-    if (to_commit->cpu_data->touchable_id >= 0) {
-        set_zpolygon_hitbox(to_commit->cpu_data);
-    }
+    set_zpolygon_hitbox(to_commit->cpu_data);
     
     to_commit->cpu_data->committed = true;
 }
@@ -770,7 +780,7 @@ float ray_intersects_zpolygon(
     #endif
     
     if (
-        t_along_ray_to_hit > 0.0f &&
+        t_along_ray_to_hit > -sphere_radius &&
         t_along_ray_to_hit < (COL_FLT_MAX / 2))
     {
         t_along_ray_to_hit = COL_FLT_MAX;
@@ -821,7 +831,6 @@ float ray_intersects_zpolygon(
                     transformed_normals[5] +
                         transformed_normals[8]) /
                     3.0f;
-            normalize_zvertex_f3(avg_normal);
             #else
             // cross product
             // Nx = Ay * Bz - Az * By
@@ -836,17 +845,32 @@ float ray_intersects_zpolygon(
             b[1] = transformed_triangle[7] - transformed_triangle[1];
             b[2] = transformed_triangle[8] - transformed_triangle[2];
             avg_normal[0] =
-                (a[1] * b[2]) -
-                (a[2] * b[1]);
+                (a[1] * b[2]) - (a[2] * b[1]);
             avg_normal[1] =
-                (a[2] * b[0]) -
-                (a[0] * b[2]);
+                (a[2] * b[0]) - (a[0] * b[2]);
             avg_normal[2] =
-                (a[0] * b[1]) -
-                (a[1] * b[0]);
+                (a[0] * b[1]) - (a[1] * b[0]);
             #endif
-            
             normalize_zvertex_f3(avg_normal);
+            
+            float avg_origin[3];
+            avg_origin[0] = (
+                transformed_triangle[0] +
+                transformed_triangle[3] +
+                transformed_triangle[6]) / 3.0f;
+            avg_origin[1] = (
+                transformed_triangle[1] +
+                transformed_triangle[4] +
+                transformed_triangle[7]) / 3.0f;
+            avg_origin[2] = (
+                transformed_triangle[2] +
+                transformed_triangle[5] +
+                transformed_triangle[8]) / 3.0f;
+            normalize_zvertex_f3(avg_normal);
+            windowsize_register_transformed_imputed_normal_for_debugging(
+                avg_origin,
+                avg_normal);
+            
             #ifdef PROFILER_ACTIVE
             profiler_end("set up avg_normal");
             #endif
@@ -868,7 +892,7 @@ float ray_intersects_zpolygon(
                     closest_hit_point);
             
             if (
-                t_along_ray_to_tri > 0 &&
+                t_along_ray_to_tri > 0.0f &&
                 t_along_ray_to_tri < t_along_ray_to_hit &&
                 t_along_ray_to_tri < (COL_FLT_MAX / 2))
             {

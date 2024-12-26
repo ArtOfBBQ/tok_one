@@ -113,12 +113,12 @@ void client_logic_late_startup(void) {
     }
     #endif
     
-    #if 1
+    #if 0
     PolygonRequest quad;
     request_next_zpolygon(&quad);
     construct_quad(
         /* const float left_x: */ -0.5f,
-        /* const float bottom_y: */ 0.0f,
+        /* const float bottom_y: */ 0.25f,
         /* const float z: */ 1.5f,
         /* const float width: */ 1.8f,
         /* const float height: */ 0.4f,
@@ -130,14 +130,35 @@ void client_logic_late_startup(void) {
     quad.gpu_data->xyz_offset[0]       = 0.0f;
     quad.gpu_data->xyz_offset[1]       = 0.0f;
     quad.gpu_data->xyz_offset[2]       = 0.0f;
-    quad.gpu_data->scale_factor        = 2.0f;
+    quad.gpu_data->scale_factor        = 1.0f;
     quad.gpu_data->xyz_angle[0]        = 0.0f;
     quad.gpu_data->xyz_angle[1]        = 0.0f;
     quad.gpu_data->xyz_angle[2]        = 0.0f;
-    quad.gpu_data->ignore_camera       = 0.0f;
-    quad.gpu_materials[0].rgba[3]      = 0.5f;
+    quad.gpu_data->ignore_camera       = 1.0f;
+    quad.gpu_materials[0].rgba[3]      = 1.0f;
     commit_zpolygon_to_render(&quad);
     #endif
+    
+    font_height = 60;
+    text_request_label_renderable(
+        /* const int32_t with_object_id: */
+            21,
+        /* const char * text_to_draw: */
+            "Hello!",
+        /* const float left_pixelspace: */
+            250.0f,
+        /* const float top_pixelspace: */
+            500.0f,
+        /* const float z: */
+            3.0f,
+        /* const float max_width: */
+            500.0f,
+        /* const uint32_t ignore_camera: */
+            false);
+    log_assert(
+        zpolygons_to_render->cpu_data[zpolygons_to_render->size-1].
+            object_id == 21);
+    zpolygons_to_render->cpu_data[zpolygons_to_render->size-1].touchable_id = 6;
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -267,15 +288,31 @@ void client_logic_update(uint64_t microseconds_elapsed)
         
         if (
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                touchable_id == 5)
+                touchable_id_top == 5 ||
+            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+                touchable_id_pierce == 5)
         {
-            //            request_bump_animation(
-            //                /* const int32_t object_id: */
-            //                    20,
-            //                /* const uint32_t wait: */
-            //                    0);
+            request_bump_animation(
+                /* const int32_t object_id: */
+                    20,
+                /* const uint32_t wait: */
+                    0);
+        }
+        
+        if (
+            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+                touchable_id_top == 6 ||
+            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+                touchable_id_pierce == 6)
+        {
+            request_bump_animation(
+                /* const int32_t object_id: */
+                    21,
+                /* const uint32_t wait: */
+                    0);
         }
     }
+    
     if (keypress_map[TOK_KEY_R]) {
         for (uint32_t i = 0; i < zpolygons_to_render->size; i++) {
             if (zpolygons_to_render->cpu_data[i].object_id == 20)
@@ -303,7 +340,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
     for (uint32_t i = 0; i < 2; i++) {
     if (
         !user_interactions[INTR_PREVIOUS_LEFTCLICK_START].handled &&
-        user_interactions[INTR_PREVIOUS_LEFTCLICK_START].touchable_id ==
+        user_interactions[INTR_PREVIOUS_LEFTCLICK_START].touchable_id_top ==
             teapot_touchable_ids[i])
     {
         user_interactions[INTR_PREVIOUS_LEFTCLICK_START].handled = true;

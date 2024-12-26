@@ -112,7 +112,8 @@ extern "C" {
 #endif
 
 typedef struct Interaction {
-    int32_t touchable_id;
+    int32_t touchable_id_pierce;
+    int32_t touchable_id_top;
     bool32_t checked_touchables;
     float screen_x;
     float screen_y;
@@ -137,10 +138,7 @@ void construct_interaction(Interaction * to_construct);
 #define USER_INTERACTIONS_SIZE                 11
 extern Interaction * user_interactions;
 
-void register_interaction(
-    Interaction * touch_record,
-    const float x,
-    const float y);
+void register_interaction(Interaction * touch_record);
 
 extern bool32_t * keypress_map; //[KEYPRESS_MAP_SIZE];
 

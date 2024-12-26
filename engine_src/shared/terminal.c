@@ -132,6 +132,7 @@ void terminal_redraw_backgrounds(void) {
     current_command_input.cpu_data->alpha_blending_enabled = true;
     current_command_input.cpu_data->visible = terminal_active;
     current_command_input.cpu_data->object_id = terminal_back_object_id;
+    current_command_input.cpu_data->remove_hitbox = true;
     commit_zpolygon_to_render(&current_command_input);
     
     // The console history area
@@ -175,6 +176,7 @@ void terminal_redraw_backgrounds(void) {
     current_command_input.gpu_data->ignore_camera = true;
     current_command_input.gpu_data->ignore_lighting = true;
     current_command_input.cpu_data->object_id = INT32_MAX;
+    current_command_input.cpu_data->remove_hitbox = true;
     
     commit_zpolygon_to_render(&current_command_input);
 }
@@ -257,6 +259,8 @@ void terminal_render(void) {
                 window_globals->window_width -
                     (TERMINAL_WHITESPACE * 2),
             /* const bool32_t ignore_camera: */
+                true,
+            /* remove_hitbox: */
                 true);
         
         if (current_command[0] == '\0') {
@@ -280,6 +284,8 @@ void terminal_render(void) {
             /* const float max_width: */
                 window_globals->window_width - (TERMINAL_WHITESPACE * 2),
             /* const uint32_t ignore_camera: */
+                true,
+            /* remove_hitbox: */
                 true);
         
         font_height = previous_font_height;
@@ -618,6 +624,30 @@ static bool32_t evaluate_terminal_command(
         }
         return true;
     }
+    
+    if (
+        common_are_equal_strings(command, "DRAW IMPUTED NORMALS") ||
+        common_are_equal_strings(command, "IMPUTED NORMALS") ||
+        common_are_equal_strings(command, "GUESS NORMALS") ||
+        common_are_equal_strings(command, "DEDUCE NORMALS"))
+   {
+       window_globals->draw_imputed_normals =
+           !window_globals->draw_imputed_normals;
+        
+       if (window_globals->draw_imputed_normals) {
+            common_strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Drawing the 'imputed normals' for for each triangle...");
+        } else {
+            common_strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Stopped drawing the 'imputed normals' for the last touch...");
+        }
+        return true;
+   }
+    
     
     if (
         common_are_equal_strings(command, "DRAW CLICKRAY") ||

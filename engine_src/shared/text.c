@@ -231,7 +231,8 @@ void text_request_label_offset_around(
     const float mid_y_pixelspace,
     const float z,
     const float max_width,
-    const bool32_t ignore_camera)
+    const bool32_t ignore_camera,
+    const bool8_t remove_hitbox)
 {
     log_assert(max_width > 0.0f);
     log_assert(font_height > 0);
@@ -331,6 +332,7 @@ void text_request_label_offset_around(
             
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
+            letter.cpu_data->remove_hitbox = remove_hitbox;
             commit_zpolygon_to_render(&letter);
         }
         cur_y_offset_pixelspace -= get_newline_advance();
@@ -344,7 +346,8 @@ void text_request_label_around_x_at_top_y(
     const float top_y_pixelspace,
     const float z,
     const float max_width,
-    const bool32_t ignore_camera)
+    const bool32_t ignore_camera,
+    const bool8_t remove_hitbox)
 {
     #define MAX_LINES 100
     PrefetchedLine lines[MAX_LINES];
@@ -367,7 +370,9 @@ void text_request_label_around_x_at_top_y(
         /* const float max_width: */
             max_width,
         /* const bool32_t ignore_camera: */
-            ignore_camera);
+            ignore_camera,
+        /* remove_hitbox: */
+            remove_hitbox);
 }
 
 void text_request_label_around(
@@ -377,7 +382,8 @@ void text_request_label_around(
     const float mid_y_pixelspace,
     const float z,
     const float max_width,
-    const bool32_t ignore_camera)
+    const bool32_t ignore_camera,
+    const bool8_t remove_hitbox)
 {
     text_request_label_offset_around(
         /* const int32_t with_id: */
@@ -393,7 +399,9 @@ void text_request_label_around(
         /* const float max_width: */
             max_width,
         /* const bool32_t ignore_camera: */
-            ignore_camera);
+            ignore_camera,
+        /* remove_hitbox: */
+            remove_hitbox);
 }
 
 void text_request_label_renderable(
@@ -403,7 +411,8 @@ void text_request_label_renderable(
     const float top_pixelspace,
     const float z,
     const float max_width,
-    const bool32_t ignore_camera)
+    const bool32_t ignore_camera,
+    const bool8_t remove_hitbox)
 {
     log_assert(text_to_draw[0] != '\0');
     float cur_x_offset = 0;
@@ -510,6 +519,7 @@ void text_request_label_renderable(
         }
         
         i++;
+        letter.cpu_data->remove_hitbox = remove_hitbox;
         commit_zpolygon_to_render(&letter);
     }
 }
@@ -580,5 +590,7 @@ void text_request_fps_counter(
         /* float max_width       : */
             window_globals->window_width,
         /* bool32_t ignore_camera: */
+            true,
+        /* remove_hitbox: */
             true);
 }

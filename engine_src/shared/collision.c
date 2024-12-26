@@ -375,7 +375,7 @@ float normalized_ray_hits_sphere(
     collision_recipient[2] =
         ray_origin[2] + (normalized_ray_direction[2] * t);
     
-    return t > -sphere_radius && t < 0.0f ? 0.01f : t;
+    return t;
 }
 
 int point_hits_triangle(

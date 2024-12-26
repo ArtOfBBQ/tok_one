@@ -33,7 +33,8 @@ void text_request_label_offset_around(
     const float mid_y_pixelspace,
     const float z,
     const float max_width,
-    const bool32_t ignore_camera);
+    const bool32_t ignore_camera,
+    const bool8_t remove_hitbox);
 
 void text_request_label_around_x_at_top_y(
     const int32_t with_object_id,
@@ -42,7 +43,8 @@ void text_request_label_around_x_at_top_y(
     const float top_y_pixelspace,
     const float z,
     const float max_width,
-    const bool32_t ignore_camera);
+    const bool32_t ignore_camera,
+    const bool8_t remove_hitbox);
 
 void text_request_label_around(
     const int32_t with_object_id,
@@ -51,7 +53,8 @@ void text_request_label_around(
     const float mid_y_pixelspace,
     const float z,
     const float max_width,
-    const bool32_t ignore_camera);
+    const bool32_t ignore_camera,
+    const bool8_t remove_hitbox);
 
 void text_request_label_renderable(
     const int32_t with_object_id,
@@ -60,7 +63,8 @@ void text_request_label_renderable(
     const float top_pixelspace,
     const float z,
     const float max_width,
-    const bool32_t ignore_camera);
+    const bool32_t ignore_camera,
+    const bool8_t remove_hitbox);
 
 void text_request_fps_counter(uint64_t microseconds_elapsed);
 

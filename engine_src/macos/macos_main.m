@@ -209,134 +209,66 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
     return YES;
 }
 
-- (void)mouseDown:(NSEvent *)event
+- (void)mouseMoved:(NSEvent *)event
 {
-    @autoreleasepool {
     NSPoint window_location = [event locationInWindow];
     
-    register_interaction(
-        /* interaction : */
-            &user_interactions[INTR_PREVIOUS_LEFTCLICK_START],
-        /* screenspace_x: */
-            (float)window_location.x,
-        /* screenspace_y: */
-            (float)window_location.y);
+    register_interaction(&user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
+    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_x =
+        (float)window_location.x;
+    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_y =
+        (float)window_location.y;
     
+    register_interaction(&user_interactions[INTR_PREVIOUS_MOUSE_MOVE]);
+    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_x =
+        (float)window_location.x;
+    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_y =
+        (float)window_location.y;
+}
+
+- (void)mouseDragged:(NSEvent *)event
+{
+    NSPoint window_location = [event locationInWindow];
+    
+    register_interaction(&user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
+    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_x =
+        (float)window_location.x;
+    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_y =
+        (float)window_location.y;
+    
+    register_interaction(&user_interactions[INTR_PREVIOUS_MOUSE_MOVE]);
+    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_x =
+        (float)window_location.x;
+    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_y =
+        (float)window_location.y;
+}
+
+- (void)mouseDown:(NSEvent *)event
+{
+    register_interaction(&user_interactions[INTR_PREVIOUS_LEFTCLICK_START]);
     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START] =
         user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
-    user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
-        user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
-    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
-        user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
-    
-    user_interactions[INTR_PREVIOUS_TOUCH_END].handled = true;
-    user_interactions[INTR_PREVIOUS_LEFTCLICK_END].handled = true;
-    user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].handled = true;
-    }
 }
 
 - (void)mouseUp:(NSEvent *)event
 {
-    @autoreleasepool {
-    NSPoint window_location = [event locationInWindow];
-    
-    register_interaction(
-        /* interaction : */
-            &user_interactions[INTR_PREVIOUS_LEFTCLICK_END],
-        /* screenspace_x: */
-            (float)window_location.x,
-        /* screenspace_y: */
-            (float)window_location.y);
-    
+    register_interaction(&user_interactions[INTR_PREVIOUS_LEFTCLICK_END]);
     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END] =
         user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
-    user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
-        user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
-    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE] =
-        user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
-    }
 }
 
 - (void)rightMouseDown:(NSEvent *)event
 {
-    @autoreleasepool {
-    NSPoint window_location = [event locationInWindow];
-    
-    register_interaction(
-        /* interaction : */
-            &user_interactions[INTR_PREVIOUS_RIGHTCLICK_START],
-        /* screenspace_x: */
-            (float)window_location.x,
-        /* screenspace_y: */
-            (float)window_location.y);
-    
-    user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
-        user_interactions[INTR_PREVIOUS_RIGHTCLICK_START];
-    
-    user_interactions[INTR_PREVIOUS_RIGHTCLICK_END].handled = true;
-    }
+    register_interaction(&user_interactions[INTR_PREVIOUS_RIGHTCLICK_START]);
 }
 
 - (void)rightMouseUp:(NSEvent *)event
 {
-    @autoreleasepool {
-    NSPoint window_location = [event locationInWindow];
-    
-    register_interaction(
-        /* interaction : */
-            &user_interactions[INTR_PREVIOUS_RIGHTCLICK_END],
-        /* screenspace_x: */
-            (float)window_location.x,
-        /* screenspace_y: */
-            (float)window_location.y);
-    
-    user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
-        user_interactions[INTR_PREVIOUS_RIGHTCLICK_END];
-    }
+    register_interaction(&user_interactions[INTR_PREVIOUS_RIGHTCLICK_END]);
 }
 
 - (void)update_mouse_location {
     // Currently happens in mouseMoved, so ignore this
-}
-
-- (void)mouseMoved:(NSEvent *)event {
-    NSPoint window_location = [event locationInWindow];
-    
-    register_interaction(
-        /* interaction : */
-            &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],
-        /* screenspace_x: */
-            (float)window_location.x,
-        /* screenspace_y: */
-            (float)window_location.y);
-    
-    register_interaction(
-        /* interaction : */
-            &user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE],
-        /* screenspace_x: */
-            (float)window_location.x,
-        /* screenspace_y: */
-            (float)window_location.y);
-}
-
-- (void)mouseDragged:(NSEvent *)event {
-    NSPoint window_location = [event locationInWindow];
-    
-    register_interaction(
-        /* interaction : */
-            &user_interactions[INTR_PREVIOUS_MOUSE_MOVE],
-        /* screenspace_x: */
-            (float)window_location.x,
-        /* screenspace_y: */
-            (float)window_location.y);
-    
-    register_interaction(
-        /* interaction : */
-            &user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE],
-        /* screenspace_x: */
-            (float)window_location.x,
-        /* screenspace_y: */
-            (float)window_location.y);
 }
 
 - (void)keyDown:(NSEvent *)event {
@@ -390,7 +322,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     log_dump(&write_succesful);
     
     if (!write_succesful) {
-        log_append("ERROR - failed to store the log file on app termination..\n");
+        log_append("ERROR - failed to store the log file on app close..\n");
     }
     
     platform_close_application();
