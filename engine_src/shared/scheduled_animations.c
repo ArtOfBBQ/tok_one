@@ -772,10 +772,8 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                     simd_set1_float(flt_actual_elapsed_this_run),
                     simd_set1_float(flt_remaining_microseconds_this_run));
             
-            float * anim_vals_ptr    =
-                (float *)&anim->lightsource_vals;
-            float * target_vals_ptr =
-                (float *)&zlights_to_apply[light_i];
+            float * anim_vals_ptr = (float *)&anim->lightsource_vals;
+            float * target_vals_ptr = (float *)&zlights_to_apply[light_i];
             
             if (anim->final_values_not_adds) {
                 float scheduled_anim_ignore_below = FLT_SCHEDULEDANIM_IGNORE;
@@ -801,10 +799,9 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                         simd_anim_vals,
                         simd_scheduledanim_ignore_constant);
                     
-                    SIMD_FLOAT simd_addition =
-                        simd_mul_floats(
-                            simd_this_run_modifier,
-                            simd_needed_to_goal);
+                    SIMD_FLOAT simd_addition = simd_mul_floats(
+                        simd_this_run_modifier,
+                        simd_needed_to_goal);
                     
                     SIMD_FLOAT simd_masked_addition = simd_and_floats(
                         simd_addition,

@@ -21,7 +21,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed);
 typedef struct ScheduledAnimation {
     // Public:
     GPUPolygon         gpu_polygon_vals;
-    zPolygonCPU        zpolygon_cpu_vals;
+    // zPolygonCPU        zpolygon_cpu_vals;
     GPUPolygonMaterial gpu_polygon_material_vals;
     zLightSource       lightsource_vals;
     
