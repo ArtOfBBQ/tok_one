@@ -196,8 +196,8 @@ void terminal_render(void) {
             /* const int32_t with_object_id: */
                 terminal_labels_object_id);
         
-        float previous_font_height = font_height;
-        font_height = TERM_FONT_SIZE;
+        float previous_font_height = font_settings->font_height;
+        font_settings->font_height = TERM_FONT_SIZE;
         
         // draw the terminal's history as a label
         float history_label_top =
@@ -239,10 +239,12 @@ void terminal_render(void) {
         log_append(terminal_history + char_offset);
         log_append_char('\n');
         
-        font_color[0] = term_font_color[0];
-        font_color[1] = term_font_color[1];
-        font_color[2] = term_font_color[2];
-        font_color[3] = term_font_color[3];
+        font_settings->font_color[0] = term_font_color[0];
+        font_settings->font_color[1] = term_font_color[1];
+        font_settings->font_color[2] = term_font_color[2];
+        font_settings->font_color[3] = term_font_color[3];
+        font_settings->ignore_camera = true;
+        font_settings->remove_hitbox = true;
         
         text_request_label_renderable(
             /* const int32_t with_object_id: */
@@ -257,18 +259,16 @@ void terminal_render(void) {
                 TERM_LABELS_Z,
             /* const float max_width: */
                 window_globals->window_width -
-                    (TERMINAL_WHITESPACE * 2),
-            /* const bool32_t ignore_camera: */
-                true,
-            /* remove_hitbox: */
-                true);
+                    (TERMINAL_WHITESPACE * 2));
         
         if (current_command[0] == '\0') {
-            font_height = previous_font_height;
+            font_settings->font_height = previous_font_height;
             requesting_label_update = false;
             return;
         }
         
+        font_settings->ignore_camera = true;
+        font_settings->remove_hitbox = true;
         // the terminal's current input as a label
         text_request_label_renderable(
             /* with_object_id: */
@@ -282,13 +282,9 @@ void terminal_render(void) {
             /* const float z: */
                 TERM_LABELS_Z,
             /* const float max_width: */
-                window_globals->window_width - (TERMINAL_WHITESPACE * 2),
-            /* const uint32_t ignore_camera: */
-                true,
-            /* remove_hitbox: */
-                true);
+                window_globals->window_width - (TERMINAL_WHITESPACE * 2));
         
-        font_height = previous_font_height;
+        font_settings->font_height = previous_font_height;
         
         requesting_label_update = false;
     }

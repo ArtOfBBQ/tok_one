@@ -332,12 +332,14 @@ void profiler_draw_labels(void) {
         profiler_backdrop.cpu_data->remove_hitbox = true;
         commit_zpolygon_to_render(&profiler_backdrop);
         
-        font_color[0] = 0.1f;
-        font_color[1] = 0.1f;
-        font_color[2] = 0.1f;
-        font_color[3] = 1.0f;
-        font_height = 18.0f;
+        font_settings->font_color[0] = 0.1f;
+        font_settings->font_color[1] = 0.1f;
+        font_settings->font_color[2] = 0.1f;
+        font_settings->font_color[3] = 1.0f;
+        font_settings->font_height = 18.0f;
         
+        font_settings->ignore_camera = true;
+        font_settings->remove_hitbox = true;
         text_request_label_renderable(
             /* const int32_t with_object_id: */
                 profiler_object_id,
@@ -350,14 +352,10 @@ void profiler_draw_labels(void) {
             /* const float z: */
                 PROFILER_Z - 0.02f,
             /* const float max_width: */
-                window_globals->window_width,
-            /* const bool32_t ignore_camera: */
-                true,
-            /* remove_hitbox: */
-                true);
+                window_globals->window_width);
         
         for (int32_t gui_frame_i = 0; gui_frame_i < 2; gui_frame_i++) {
-            font_color[0] = 0.1f;
+            font_settings->font_color[0] = 0.1f;
             float gui_frame_left = 20 +
                 (gui_frame_i * window_globals->window_width / 2);
             
@@ -365,7 +363,7 @@ void profiler_draw_labels(void) {
             
             float cur_top = window_globals->window_height -
                 20 -
-                (font_height + 2.0f);
+                (font_settings->font_height + 2.0f);
             
             char line_text[128];
             common_strcpy_capped(line_text, 128, "Selected frame: ");
@@ -373,7 +371,11 @@ void profiler_draw_labels(void) {
                 line_text,
                 128,
                 f_i);
-            font_touchable_id = frame_selection_touchable_ids[gui_frame_i];
+            font_settings->font_touchable_id = frame_selection_touchable_ids[
+                gui_frame_i];
+            
+            font_settings->ignore_camera = true;
+            font_settings->remove_hitbox = true;
             text_request_label_renderable(
                 /* const int32_t with_object_id: */
                     profiler_object_id,
@@ -386,15 +388,11 @@ void profiler_draw_labels(void) {
                 /* const float z: */
                     PROFILER_Z - 0.02f,
                 /* const float max_width: */
-                    window_globals->window_width,
-                /* const bool32_t ignore_camera: */
-                    true,
-                /* remove_hitbox: */
-                    true);
+                    window_globals->window_width);
             
-            font_touchable_id = -1;
+            font_settings->font_touchable_id = -1;
             
-            cur_top -= (font_height + 2.0f);
+            cur_top -= (font_settings->font_height + 2.0f);
             common_strcpy_capped(line_text, 128, "Cycles: ");
             common_strcat_uint_capped(
                 line_text,
@@ -420,11 +418,7 @@ void profiler_draw_labels(void) {
                 /* const float z: */
                     PROFILER_Z - 0.02f,
                 /* const float max_width: */
-                    window_globals->window_width,
-                /* const bool32_t ignore_camera: */
-                    true,
-                /* remove_hitbox: */
-                    true);
+                    window_globals->window_width);
             
             if (frames[f_i].profiles_size > 0) {
                 gui_function_stack[0] = 0;
@@ -443,8 +437,10 @@ void profiler_draw_labels(void) {
                 float pct_elapsed =
                     (float)frames[f_i].profiles[func_i].elapsed_total /
                         (float)acceptable_frame_clock_cycles;
-                font_color[0] = 0.1f + (pct_elapsed * 2);
-                if (font_color[0] > 1.0f) { font_color[0] = 1.0f; }
+                font_settings->font_color[0] = 0.1f + (pct_elapsed * 2);
+                if (font_settings->font_color[0] > 1.0f) {
+                    font_settings->font_color[0] = 1.0f;
+                }
                 
                 if (pct_elapsed >= 0.0f) {
                     // push all child nodes onto the stack
@@ -491,7 +487,9 @@ void profiler_draw_labels(void) {
                     128,
                     "%)");
                 
-                cur_top -= (font_height + 2.0f);
+                cur_top -= (font_settings->font_height + 2.0f);
+                font_settings->ignore_camera = true;
+                font_settings->remove_hitbox = true;
                 text_request_label_renderable(
                     /* const int32_t with_object_id: */
                         profiler_object_id,
@@ -505,11 +503,7 @@ void profiler_draw_labels(void) {
                     /* const float z: */
                         PROFILER_Z - 0.02f,
                     /* const float max_width: */
-                        window_globals->window_width,
-                    /* const bool32_t ignore_camera: */
-                        true,
-                    /* remove_hitbox: */
-                        true);
+                        window_globals->window_width);
             }
         }
     }

@@ -249,12 +249,12 @@ void gameloop_update(
         frame_data->camera->xyz_angle[1] = 0.0f;
         frame_data->camera->xyz_angle[2] = 0.0f;
         
-        font_height = 28.0f;
-        font_ignore_lighting = true;
-        font_color[0] = 0.8f;
-        font_color[1] = 0.8f;
-        font_color[2] = 1.0f;
-        font_color[3] = 1.0f;
+        font_settings->font_height = 28.0f;
+        font_settings->font_ignore_lighting = true;
+        font_settings->font_color[0] = 0.8f;
+        font_settings->font_color[1] = 0.8f;
+        font_settings->font_color[2] = 1.0f;
+        font_settings->font_color[3] = 1.0f;
         
         if (crashed_top_of_screen_msg[0] == '\0') {
             common_strcpy_capped(crashed_top_of_screen_msg,
@@ -262,6 +262,8 @@ void gameloop_update(
             "Failed assert, and also failed to retrieve an error message");
         }
         
+        font_settings->ignore_camera = true;
+        font_settings->remove_hitbox = true;
         text_request_label_renderable(
             /* const uint32_t with_object_id: */
                 0,
@@ -274,11 +276,7 @@ void gameloop_update(
             /* const float z: */
                 1.0f,
             /* const float max_width: */
-                window_globals->window_width - 30,
-            /* const bool32_t ignore_camera: */
-                true,
-            /* remove_hitbox: */
-                true);
+                window_globals->window_width - 30);
     }
     
     gameloop_frame_no++;

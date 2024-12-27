@@ -8,13 +8,20 @@
 extern "C" {
 #endif
 
-extern int32_t font_texturearray_i;
-extern int32_t font_touchable_id;
-extern float font_height;
-extern float font_color[4];
-extern bool32_t font_ignore_lighting;
+typedef struct FontSettings {
+    int32_t font_texturearray_i; // = 0;
+    int32_t font_touchable_id; // = -1;
+    float font_height; // = 30.0;
+    float font_color[4]; // = {1.0f, 1.0f, 1.0f, 1.0f};
+    bool32_t font_ignore_lighting;
+    bool32_t ignore_camera;
+    bool32_t remove_hitbox;
+} FontSettings;
 
-void init_font(
+extern FontSettings * font_settings;
+
+void text_init(
+    void * (* arg_text_malloc_func)(size_t size),
     const char * raw_fontmetrics_file_contents,
     const uint64_t raw_fontmetrics_file_size);
 
@@ -32,9 +39,7 @@ void text_request_label_offset_around(
     const float mid_x_pixelspace,
     const float mid_y_pixelspace,
     const float z,
-    const float max_width,
-    const bool32_t ignore_camera,
-    const bool8_t remove_hitbox);
+    const float max_width);
 
 void text_request_label_around_x_at_top_y(
     const int32_t with_object_id,
@@ -42,9 +47,7 @@ void text_request_label_around_x_at_top_y(
     const float mid_x_pixelspace,
     const float top_y_pixelspace,
     const float z,
-    const float max_width,
-    const bool32_t ignore_camera,
-    const bool8_t remove_hitbox);
+    const float max_width);
 
 void text_request_label_around(
     const int32_t with_object_id,
@@ -52,9 +55,7 @@ void text_request_label_around(
     const float mid_x_pixelspace,
     const float mid_y_pixelspace,
     const float z,
-    const float max_width,
-    const bool32_t ignore_camera,
-    const bool8_t remove_hitbox);
+    const float max_width);
 
 void text_request_label_renderable(
     const int32_t with_object_id,
@@ -62,9 +63,7 @@ void text_request_label_renderable(
     const float left_pixelspace,
     const float top_pixelspace,
     const float z,
-    const float max_width,
-    const bool32_t ignore_camera,
-    const bool8_t remove_hitbox);
+    const float max_width);
 
 void text_request_fps_counter(uint64_t microseconds_elapsed);
 

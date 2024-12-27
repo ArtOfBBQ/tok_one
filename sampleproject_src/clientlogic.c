@@ -139,7 +139,10 @@ void client_logic_late_startup(void) {
     commit_zpolygon_to_render(&quad);
     #endif
     
-    font_height = 60;
+    font_settings->font_height = 60;
+    font_settings->font_touchable_id = 6;
+    font_settings->remove_hitbox = false;
+    font_settings->ignore_camera = false;
     text_request_label_renderable(
         /* const int32_t with_object_id: */
             21,
@@ -152,13 +155,11 @@ void client_logic_late_startup(void) {
         /* const float z: */
             3.0f,
         /* const float max_width: */
-            500.0f,
-        /* const uint32_t ignore_camera: */
-            false);
+            500.0f);
+    font_settings->font_touchable_id = -1;
     log_assert(
         zpolygons_to_render->cpu_data[zpolygons_to_render->size-1].
             object_id == 21);
-    zpolygons_to_render->cpu_data[zpolygons_to_render->size-1].touchable_id = 6;
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {

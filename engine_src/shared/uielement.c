@@ -593,6 +593,8 @@ void request_button(
     button_request.gpu_materials[0].texture_i =
         next_ui_element_settings->button_background_texture_i;
     
+    font_settings->ignore_camera = next_ui_element_settings->ignore_camera;
+    font_settings->remove_hitbox = true;
     text_request_label_around(
         /* const int32_t with_object_id: */
             button_object_id,
@@ -605,11 +607,7 @@ void request_button(
         /* const float z: */
             z,
         /* const float max_width: */
-            next_ui_element_settings->button_width_screenspace,
-        /* const uint32_t ignore_camera: */
-            next_ui_element_settings->ignore_camera,
-        /* const bool8_t remove_hitbox: */
-            false);
+            next_ui_element_settings->button_width_screenspace);
     
     ActiveUIElement * next_element = next_active_ui_element();
     next_element->clickable = true;

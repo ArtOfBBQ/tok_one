@@ -261,7 +261,8 @@ void init_application_before_gpu_init(void)
             /* FileBuffer * out_preallocatedbuffer: */
                 &font_metrics_file);
         log_assert(font_metrics_file.good);
-        init_font(
+        text_init(
+                malloc_from_unmanaged,
             /* raw_fontmetrics_file_contents: */
                 font_metrics_file.contents,
             /* raw_fontmetrics_file_size: */

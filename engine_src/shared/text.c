@@ -29,12 +29,6 @@ typedef struct FontCodepoint {
 } FontCodepoint;
 #pragma pack(pop)
 
-int32_t font_texturearray_i = 0;
-int32_t font_touchable_id = -1;
-float font_height = 30.0;
-float font_color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-bool32_t font_ignore_lighting = true;
-
 FontMetrics * global_font_metrics = NULL;
 FontCodepoint * codepoint_metrics = NULL;
 uint32_t codepoint_metrics_size = 0;
@@ -45,13 +39,29 @@ typedef struct PrefetchedLine {
     int32_t end_i;
 } PrefetchedLine;
 
-void init_font(
+FontSettings * font_settings = NULL;
+
+void text_init(
+    void * (* arg_text_malloc_func)(size_t size),
     const char * raw_fontmetrics_file_contents,
     const uint64_t raw_fontmetrics_file_size)
 {
     #ifdef LOGGER_IGNORE_ASSERTS
     (void)raw_fontmetrics_file_size;
     #endif
+    
+    if (!font_settings) {
+        font_settings = arg_text_malloc_func(sizeof(FontSettings));
+        font_settings->font_texturearray_i = 0;
+        font_settings->font_touchable_id = -1;
+        font_settings->font_height = 30.0;
+        font_settings->font_color[0] = 1.0f;
+        font_settings->font_color[1] = 1.0f;
+        font_settings->font_color[2] = 1.0f;
+        font_settings->font_color[3] = 1.0f;
+        font_settings->font_ignore_lighting = true;
+        font_settings->remove_hitbox = false;
+    }
     
     char * buffer_at = (char *)raw_fontmetrics_file_contents;
     log_assert(sizeof(FontMetrics) < raw_fontmetrics_file_size);
@@ -74,12 +84,12 @@ void init_font(
 }
 
 static float get_newline_advance(void) {
-    return font_height * 1.1f;
+    return font_settings->font_height * 1.1f;
 }
 
 static float get_advance_width(const char input) {
     if (input == ' ') {
-        return font_height * 0.5f;
+        return font_settings->font_height * 0.5f;
     }
     
     if (input == '\0' || input == '\n') { return 0.0f; }
@@ -95,7 +105,7 @@ static float get_advance_width(const char input) {
     return
         (codepoint_metrics[i].advance_width *
             global_font_metrics->scale_factor *
-                font_height) /
+                font_settings->font_height) /
                     global_font_metrics->font_size;
 }
 
@@ -113,7 +123,7 @@ static float get_left_side_bearing(const char input) {
     return
         (codepoint_metrics[i].left_side_bearing *
             global_font_metrics->scale_factor *
-                font_height) /
+                font_settings->font_height) /
                     global_font_metrics->font_size;
 }
 
@@ -133,9 +143,9 @@ static float get_y_offset(const char input) {
     return
         ((-codepoint_metrics[i].y1 *
             global_font_metrics->scale_factor *
-                font_height) /
+                font_settings->font_height) /
                     global_font_metrics->font_size) +
-        (font_height * 0.75f);
+        (font_settings->font_height * 0.75f);
 }
 
 static float get_next_word_width(const char * text) {
@@ -230,14 +240,12 @@ void text_request_label_offset_around(
     const float mid_x_pixelspace,
     const float mid_y_pixelspace,
     const float z,
-    const float max_width,
-    const bool32_t ignore_camera,
-    const bool8_t remove_hitbox)
+    const float max_width)
 {
     log_assert(max_width > 0.0f);
-    log_assert(font_height > 0);
-    log_assert(font_color[3] > -0.02f);
-    log_assert(font_color[3] < 1.05f);
+    log_assert(font_settings->font_height > 0);
+    log_assert(font_settings->font_color[3] > -0.02f);
+    log_assert(font_settings->font_color[3] < 1.05f);
     
     #define MAX_LINES 100
     PrefetchedLine lines[MAX_LINES];
@@ -252,12 +260,12 @@ void text_request_label_offset_around(
     PolygonRequest letter;
     
     float cur_y_offset_pixelspace =
-        (font_height * 0.42f) +
-        ((lines_size - 1) * font_height * 0.5f);
+        (font_settings->font_height * 0.42f) +
+        ((lines_size - 1) * font_settings->font_height * 0.5f);
     
     for (uint32_t line_i = 0; line_i < lines_size; line_i++) {
         float cur_x_offset_pixelspace =
-            (font_height * 0.5f) -
+            (font_settings->font_height * 0.5f) -
             (lines[line_i].width * 0.5f);
         
         for (
@@ -286,17 +294,20 @@ void text_request_label_offset_around(
                 /* const float z: */
                     z,
                 /* const float width: */
-                    windowsize_screenspace_width_to_width(font_height, z),
+                    windowsize_screenspace_width_to_width(
+                        font_settings->font_height,
+                        z),
                 /* const float height: */
-                    windowsize_screenspace_height_to_height(font_height, z),
+                    windowsize_screenspace_height_to_height(
+                        font_settings->font_height,
+                        z),
                 /* recipient: */
                     &letter);
             
-            letter.gpu_data->ignore_lighting =
-                font_ignore_lighting;
-            letter.gpu_data->ignore_camera = ignore_camera;
+            letter.gpu_data->ignore_lighting = font_settings->font_ignore_lighting;
+            letter.gpu_data->ignore_camera = font_settings->ignore_camera;
             letter.cpu_data->object_id = with_id;
-            letter.cpu_data->touchable_id = font_touchable_id;
+            letter.cpu_data->touchable_id = font_settings->font_touchable_id;
             
             if ((text_to_draw[j] - '!') < 0) {
                 cur_x_offset_pixelspace +=
@@ -310,7 +321,7 @@ void text_request_label_offset_around(
                 rgba_i++)
             {
                 letter.gpu_materials[0].rgba[rgba_i] =
-                    font_color[rgba_i];
+                    font_settings->font_color[rgba_i];
             }
             
             letter.gpu_data->xyz_offset[0] =
@@ -322,17 +333,17 @@ void text_request_label_offset_around(
                 windowsize_screenspace_height_to_height(
                     (cur_y_offset_pixelspace -
                         get_y_offset(text_to_draw[j]) -
-                        (font_height * 0.5f)),
+                        (font_settings->font_height * 0.5f)),
                     z);
             
             letter.gpu_materials[0].texturearray_i =
-                font_texturearray_i;
+                font_settings->font_texturearray_i;
             letter.gpu_materials[0].texture_i      =
                 text_to_draw[j] - '!';
             
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
-            letter.cpu_data->remove_hitbox = remove_hitbox;
+            letter.cpu_data->remove_hitbox = font_settings->remove_hitbox;
             commit_zpolygon_to_render(&letter);
         }
         cur_y_offset_pixelspace -= get_newline_advance();
@@ -345,9 +356,7 @@ void text_request_label_around_x_at_top_y(
     const float mid_x_pixelspace,
     const float top_y_pixelspace,
     const float z,
-    const float max_width,
-    const bool32_t ignore_camera,
-    const bool8_t remove_hitbox)
+    const float max_width)
 {
     #define MAX_LINES 100
     PrefetchedLine lines[MAX_LINES];
@@ -368,11 +377,7 @@ void text_request_label_around_x_at_top_y(
         /* const float z: */
             z,
         /* const float max_width: */
-            max_width,
-        /* const bool32_t ignore_camera: */
-            ignore_camera,
-        /* remove_hitbox: */
-            remove_hitbox);
+            max_width);
 }
 
 void text_request_label_around(
@@ -381,9 +386,7 @@ void text_request_label_around(
     const float mid_x_pixelspace,
     const float mid_y_pixelspace,
     const float z,
-    const float max_width,
-    const bool32_t ignore_camera,
-    const bool8_t remove_hitbox)
+    const float max_width)
 {
     text_request_label_offset_around(
         /* const int32_t with_id: */
@@ -397,11 +400,7 @@ void text_request_label_around(
         /* const float z: */
             z,
         /* const float max_width: */
-            max_width,
-        /* const bool32_t ignore_camera: */
-            ignore_camera,
-        /* remove_hitbox: */
-            remove_hitbox);
+            max_width);
 }
 
 void text_request_label_renderable(
@@ -410,9 +409,7 @@ void text_request_label_renderable(
     const float left_pixelspace,
     const float top_pixelspace,
     const float z,
-    const float max_width,
-    const bool32_t ignore_camera,
-    const bool8_t remove_hitbox)
+    const float max_width)
 {
     log_assert(text_to_draw[0] != '\0');
     float cur_x_offset = 0;
@@ -427,13 +424,13 @@ void text_request_label_renderable(
     PolygonRequest letter;
     
     float letter_width = windowsize_screenspace_width_to_width(
-        font_height, z);
+        font_settings->font_height, z);
     float letter_height = windowsize_screenspace_height_to_height(
-        font_height, z);
+        font_settings->font_height, z);
     
     while (text_to_draw[i] != '\0') {
         if (text_to_draw[i] == ' ') {
-            cur_x_offset += font_height / 2;
+            cur_x_offset += font_settings->font_height / 2;
             i++;
             
             float next_word_width = get_next_word_width(
@@ -466,7 +463,7 @@ void text_request_label_renderable(
                 windowsize_screenspace_x_to_x(left_pixelspace, z),
             /* const float bottom_y: */
                 windowsize_screenspace_y_to_y(
-                    top_pixelspace - font_height, z),
+                    top_pixelspace - font_settings->font_height, z),
             /* const flota z: */
                 z,
             /* const float width: */
@@ -477,12 +474,12 @@ void text_request_label_renderable(
                 &letter);
         
         letter.cpu_data->object_id = with_id;
-        letter.cpu_data->touchable_id = font_touchable_id;
-        letter.gpu_data->ignore_lighting = font_ignore_lighting;
-        letter.gpu_data->ignore_camera = ignore_camera;
+        letter.cpu_data->touchable_id = font_settings->font_touchable_id;
+        letter.gpu_data->ignore_lighting = font_settings->font_ignore_lighting;
+        letter.gpu_data->ignore_camera = font_settings->ignore_camera;
         
         letter.gpu_materials[0].texturearray_i =
-            font_texturearray_i;
+            font_settings->font_texturearray_i;
         letter.gpu_materials[0].texture_i =
             (int32_t)(text_to_draw[i] - '!');
         
@@ -499,7 +496,7 @@ void text_request_label_renderable(
             rgba_i++)
         {
             letter.gpu_materials[0].rgba[rgba_i] =
-                font_color[rgba_i];
+                font_settings->font_color[rgba_i];
         }
         
         letter.gpu_data->xyz_offset[0] =
@@ -519,7 +516,7 @@ void text_request_label_renderable(
         }
         
         i++;
-        letter.cpu_data->remove_hitbox = remove_hitbox;
+        letter.cpu_data->remove_hitbox = font_settings->remove_hitbox;
         commit_zpolygon_to_render(&letter);
     }
 }
@@ -570,12 +567,14 @@ void text_request_fps_counter(
     
     delete_zpolygon_object(FPS_COUNTER_OBJECT_ID);
     
-    font_height = 16.0f;
-    font_color[0] = 1.0f;
-    font_color[1] = 1.0f;
-    font_color[2] = 1.0f;
-    font_color[3] = 1.0f;
-    font_ignore_lighting = true;
+    font_settings->font_height = 16.0f;
+    font_settings->font_color[0] = 1.0f;
+    font_settings->font_color[1] = 1.0f;
+    font_settings->font_color[2] = 1.0f;
+    font_settings->font_color[3] = 1.0f;
+    font_settings->font_ignore_lighting = true;
+    font_settings->ignore_camera = true;
+    font_settings->remove_hitbox = true;
     text_request_label_renderable(
         /* with_id               : */
             FPS_COUNTER_OBJECT_ID,
@@ -588,9 +587,5 @@ void text_request_fps_counter(
         /* z                     : */
             0.05f,
         /* float max_width       : */
-            window_globals->window_width,
-        /* bool32_t ignore_camera: */
-            true,
-        /* remove_hitbox: */
-            true);
+            window_globals->window_width);
 }
