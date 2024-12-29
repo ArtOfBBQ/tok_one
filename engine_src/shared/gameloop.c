@@ -4,7 +4,6 @@ bool32_t gameloop_active = false;
 
 static uint64_t gameloop_previous_time = 0;
 static uint64_t gameloop_frame_no = 0;
-static uint32_t gameloop_mutex_id = UINT32_MAX;
 
 static void closest_touchable_from_screen_ray(
     int32_t * touchable_id_top,
@@ -203,7 +202,6 @@ static void update_terminal(void) {
 }
 
 void gameloop_init(void) {
-    gameloop_mutex_id = platform_init_mutex_and_return_id();
 }
 
 void gameloop_update(
@@ -225,7 +223,6 @@ void gameloop_update(
     uint64_t time = platform_get_current_time_microsecs();
     if (gameloop_previous_time < 1) {
         gameloop_previous_time = time;
-        // platform_mutex_unlock(gameloop_mutex_id);
         
         #ifdef PROFILER_ACTIVE
         profiler_end("gameloop_update()");
@@ -290,7 +287,6 @@ void gameloop_update(
             // we break, not return, because we do want to render an
             // empty screen
             log_append("w82RZ - ");
-            // platform_mutex_unlock(gameloop_mutex_id);
             
             #ifdef PROFILER_ACTIVE
             profiler_end("gameloop_update()");

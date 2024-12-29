@@ -124,9 +124,18 @@ void profiler_new_frame(void) {
     } else if (
         frames[frame_i].elapsed > SLOW_FRAME_CYCLES)
     {
-        common_strcpy_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, "PAUSED - frame ");
-        common_strcat_uint_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, frame_i);
-        common_strcat_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, " took ");
+        common_strcpy_capped(
+            gui_top_message,
+            GUI_TOP_MESSAGE_MAX,
+            "PAUSED - frame ");
+        common_strcat_uint_capped(
+            gui_top_message,
+            GUI_TOP_MESSAGE_MAX,
+            frame_i);
+        common_strcat_capped(
+            gui_top_message,
+            GUI_TOP_MESSAGE_MAX,
+            " took ");
         common_strcat_uint_capped(
             gui_top_message,
             GUI_TOP_MESSAGE_MAX,
@@ -375,7 +384,7 @@ void profiler_draw_labels(void) {
                 gui_frame_i];
             
             font_settings->ignore_camera = true;
-            font_settings->remove_hitbox = true;
+            font_settings->remove_hitbox = false;
             text_request_label_renderable(
                 /* const int32_t with_object_id: */
                     profiler_object_id,

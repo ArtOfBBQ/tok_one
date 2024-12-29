@@ -208,7 +208,7 @@ inline static void add_alphablending_zpolygons_to_workload(
 inline static void add_opaque_zpolygons_to_workload(
     GPUDataForSingleFrame * frame_data)
 {
-    assert(frame_data->vertices_size == 0);
+    log_assert(frame_data->vertices_size == 0);
     
     int32_t cur_vals[4];
     int32_t incr_vals[4];
@@ -239,7 +239,7 @@ inline static void add_opaque_zpolygons_to_workload(
         int32_t vert_tail_i =
             all_mesh_summaries[mesh_id].vertices_head_i +
                 all_mesh_summaries[mesh_id].vertices_size;
-        assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
+        log_assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
         
         /*
         We are free to overflow the vertices buffer, since its end is not
@@ -265,20 +265,20 @@ inline static void add_opaque_zpolygons_to_workload(
                 (frame_data->vertices + frame_data->vertices_size),
                 cur);
             frame_data->vertices_size += 2;
+            
             #ifndef LOGGER_IGNORE_ASSERTS
-            log_assert(
-                frame_data->vertices_size < MAX_VERTICES_PER_BUFFER);
-            log_assert(
-                frame_data->vertices[frame_data->vertices_size-2].
-                    locked_vertex_i == (vert_i + i));
-            log_assert(
-                frame_data->vertices[frame_data->vertices_size-1].
-                    locked_vertex_i == (vert_i + i + 1));
+            log_assert(frame_data->vertices_size < MAX_VERTICES_PER_BUFFER);
+            log_assert(frame_data->vertices[frame_data->vertices_size-2].
+                locked_vertex_i == (vert_i + i));
+            log_assert(frame_data->vertices[frame_data->vertices_size-1].
+                locked_vertex_i == (vert_i + i + 1));
             #endif
         }
+        
         if (verts_to_copy % 2 == 1) {
             frame_data->vertices_size -= 1;
         }
+        
         #ifndef LOGGER_IGNORE_ASSERTS
         log_assert(frame_data->vertices_size ==
             (previous_verts_size + (uint32_t)verts_to_copy));

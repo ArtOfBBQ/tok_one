@@ -33,6 +33,10 @@ was unlocked
 void platform_mutex_lock(
     const uint32_t mutex_id)
 {
+    //    #ifdef PROFILER_ACTIVE
+    //    profiler_start("platform_mutex_lock()");
+    //    #endif
+    
     log_assert(mutex_id < MUTEXES_SIZE);
     int return_value = pthread_mutex_lock(&(mutexes[mutex_id]));
     
@@ -41,6 +45,10 @@ void platform_mutex_lock(
     #endif
     
     log_assert(return_value == 0);
+    
+    //    #ifdef PROFILER_ACTIVE
+    //    profiler_end("platform_mutex_lock()");
+    //    #endif
     return;
 }
 
