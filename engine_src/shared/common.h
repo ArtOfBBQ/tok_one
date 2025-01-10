@@ -41,6 +41,10 @@ void common_memset_int16(
     void * input,
     int16_t value,
     unsigned int size_bytes);
+void common_memset_int32(
+    void * input,
+    int32_t value,
+    unsigned int size_bytes);
 void common_memset_float(
     void * input,
     float value,

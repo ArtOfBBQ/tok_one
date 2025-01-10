@@ -66,6 +66,39 @@ void common_memset_int16(
         input[i] = value;
     }
 }
+void common_memset_int32(
+    void * in,
+    int32_t value,
+    unsigned int size_bytes)
+{
+    int32_t * input = (int32_t *)in;
+    
+    uint32_t i = 0;
+    
+    #ifdef __AVX__
+    __m256i avx_preset = _mm256_set1_epi32(value);
+    
+    for (; i+7 < (size_bytes / 4); i += 8) {
+        _mm256_storeu_si256(
+            (__m256i *)(input + i),
+            avx_preset);
+    }
+    #endif
+    
+    #ifdef __SSE2__
+    __m128i sse_preset = _mm_set1_epi32(value);
+    
+    for (; i+3 < (size_bytes / 4); i += 4) {
+        _mm_storeu_si128(
+            (__m128i *)(input + i),
+            sse_preset);
+    }
+    #endif
+    
+    for (; i < (size_bytes / 4); i++) {
+        input[i] = value;
+    }
+}
 
 void common_memset_float(
     void * in,
