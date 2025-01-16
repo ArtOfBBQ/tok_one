@@ -332,12 +332,6 @@ static void register_to_texturearray_from_images(
     log_assert(current_height > 0);
     log_assert(current_width < 100000);
     log_assert(current_height < 100000);
-
-    log_append("register to texturearray ");
-    log_append_int(target_texture_array_i);
-    log_append(" from ");
-    log_append_uint(new_images_size);
-    log_append(" images\n");
     
     // set up a new texturearray that's big enough to hold
     // x images
@@ -598,6 +592,17 @@ void register_to_texturearray_by_splitting_file(
         texture_array_i,
         rows,
         columns);
+    
+    for (
+        uint32_t i = 0;
+        i < texture_arrays[texture_array_i].images_size;
+        i++)
+    {
+        common_strcpy_capped(
+            texture_arrays[texture_array_i].images[i].filename,
+            256,
+            filename);
+    }
 }
 
 static void register_new_texturearray_by_splitting_image(
@@ -795,15 +800,11 @@ void get_texture_location(
         }
     }
     
-    #ifndef LOGGER_IGNORE_ASSERTS
-    char err_msg[128];
-    common_strcpy_capped(err_msg, 128, "Couldn't find filename in texture_arrays: ");
-    common_strcat_capped(err_msg, 128, for_filename);
-    log_dump_and_crash(err_msg);
-    #endif
+    *texture_array_i_recipient = -1;
+    *texture_i_recipient       = -1;
 }
 
-void decode_null_image_with_memory(
+void decode_null_image_at(
     const int32_t texture_array_i,
     const int32_t texture_i)
 {
@@ -886,9 +887,49 @@ void decode_null_image_with_memory(
     platform_mutex_unlock(texture_arrays_mutex_ids[i]);
 }
 
-void decode_all_null_images_with_memory(void)
+void load_font_images(void) {
+    
+    // Don't call this, the engine should call it
+    assert(texture_arrays_size == 0);
+    const char * fontfile = "font.png";
+    register_new_texturearray_by_splitting_file(
+        /* filename : */ fontfile,
+        /* rows     : */ 10,
+        /* columns  : */ 10);
+    
+    platform_gpu_init_texture_array(
+        0,
+        texture_arrays[0].images_size,
+        texture_arrays[0].single_img_width,
+        texture_arrays[0].single_img_height);
+    
+    for (
+        int32_t i = 0;
+        i < (int32_t)texture_arrays[0].images_size;
+        i++)
+    {
+        platform_gpu_push_texture_slice(
+            /* const int32_t texture_array_i: */
+                0,
+            /* const int32_t texture_i: */
+                i,
+            /* const uint32_t parent_texture_array_images_size: */
+                texture_arrays[0].images_size,
+            /* const uint32_t image_width: */
+                texture_arrays[0].single_img_width,
+            /* const uint32_t image_height: */
+                texture_arrays[0].single_img_height,
+            /* const uint8_t *rgba_values: */
+                texture_arrays[0].images[i].image->rgba_values);
+        texture_arrays[0].images[i].request_update = false;
+    }
+    
+    texture_arrays[0].request_init = false;
+}
+
+void decode_all_null_images(void)
 {
-    while (true) {
+    while (application_running) {
         int32_t priority_png_texturearray_i = -1;
         int32_t priority_png_texture_i = -1;
         int32_t nonpriority_texturearray_i = -1;
@@ -927,7 +968,7 @@ void decode_all_null_images_with_memory(void)
                             log_append("decoding image: ");
                             log_append(texture_arrays[i].images[j].filename);
                             log_append_char('\n');
-                            decode_null_image_with_memory(
+                            decode_null_image_at(
                                 /* const int32_t texture_array_i: */ i,
                                 /* const int32_t texture_i: */ j);
                             continue;
@@ -980,7 +1021,7 @@ void decode_all_null_images_with_memory(void)
         log_assert(i < TEXTUREARRAYS_SIZE);
         log_assert(j < MAX_FILES_IN_SINGLE_TEXARRAY);
         
-        decode_null_image_with_memory(
+        decode_null_image_at(
             /* const int32_t texture_array_i: */
                 i,
             /* const int32_t texture_i: */
@@ -991,7 +1032,7 @@ void decode_all_null_images_with_memory(void)
 }
 
 void flag_all_texture_arrays_to_request_gpu_init(void) {
-    for (uint32_t i = 0; i < texture_arrays_size; i++) {
+    for (uint32_t i = 1; i < texture_arrays_size; i++) {
         texture_arrays[i].request_init = true;
     }
 }

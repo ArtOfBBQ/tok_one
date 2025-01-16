@@ -386,13 +386,6 @@ int main(int argc, const char * argv[]) {
     has_retina_screen = true; // TODO: actually query the machine and find out
     
     assert(sizeof(GPUPolygon) % 32 == 0);
-
-    if (!application_running) {
-        printf(
-            "Application crashed before "
-            "init_application_before_gpu_init()");
-        return 1;
-    }
     
     char errmsg[512];
     uint32_t success = 1;
@@ -400,25 +393,14 @@ int main(int argc, const char * argv[]) {
         &success,
         errmsg);
     
-    if (!success) {
-        printf(
-            "Application crashed before window creation: %s\n",
-            errmsg);
+    bool32_t initial_log_dump_succesful = false;
+    log_dump(&initial_log_dump_succesful);
+    if (!initial_log_dump_succesful) {
+        printf("%s\n", "initial log dump unsuccesful, exiting app");
         return 1;
     }
     
     apple_gpu_init(gameloop_update);
-    
-    log_append(
-        "\nconfirming we can save debug info - "
-        "writing log.txt...\n");
-    bool32_t initial_log_dump_succesful = false;
-    log_dump(&initial_log_dump_succesful);
-    if (!initial_log_dump_succesful) {
-        log_append(
-            "Error - can't write to log.txt, terminating app...\n");
-        return 1;
-    }
     
     // NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     NSRect window_rect = NSMakeRect(
@@ -478,11 +460,6 @@ int main(int argc, const char * argv[]) {
     apple_gpu_delegate = [[MetalKitViewDelegate alloc] init];
     [mtk_view setDelegate: apple_gpu_delegate];
     
-    if (!application_running) {
-        printf("Application crashed before loading shaders");
-        return 1;
-    }
-    
     char shader_lib_path_cstr[2000];
     platform_get_resources_path(shader_lib_path_cstr, 2000);
     common_strcat_capped(
@@ -527,12 +504,20 @@ int main(int argc, const char * argv[]) {
         
         platform_request_messagebox(errmsg2);
     } else {
+        load_font_images();
+        
+        client_logic_early_startup(&success, errmsg);
+        
         init_application_after_gpu_init();
-    
+        
         start_audio_loop();
     }
     
     metal_active = true;
+    
+    if (!success && application_running) {
+        log_dump_and_crash(errmsg);
+    }
     
     @autoreleasepool {
         return NSApplicationMain(argc, argv);

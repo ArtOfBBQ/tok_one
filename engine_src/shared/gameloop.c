@@ -233,25 +233,35 @@ void gameloop_update(
     uint64_t elapsed = time - gameloop_previous_time;
     gameloop_previous_time = time;
     
+    log_assert(frame_data->light_collection != NULL);
+    common_memcpy(frame_data->camera, &camera, sizeof(GPUCamera));
+    log_assert(frame_data->light_collection != NULL);
+    
+    frame_data->vertices_size            = 0;
+    frame_data->polygon_collection->size = 0;
+    frame_data->first_alphablend_i       = 0;
+    frame_data->line_vertices_size       = 0;
+    frame_data->point_vertices_size      = 0;
+    
     if (!application_running) {
         delete_all_ui_elements();
         particle_effects_size = 0;
         lineparticle_effects_size = 0;
         zlights_to_apply_size = 0;
+        zpolygons_to_render->size = 0;
         
-        frame_data->camera->xyz[0] = 0.0f;
-        frame_data->camera->xyz[1] = 0.0f;
-        frame_data->camera->xyz[2] = 0.0f;
-        frame_data->camera->xyz_angle[0] = 0.0f;
-        frame_data->camera->xyz_angle[1] = 0.0f;
-        frame_data->camera->xyz_angle[2] = 0.0f;
-        
-        font_settings->font_height = 28.0f;
-        font_settings->font_ignore_lighting = true;
-        font_settings->font_color[0] = 0.8f;
-        font_settings->font_color[1] = 0.8f;
-        font_settings->font_color[2] = 1.0f;
-        font_settings->font_color[3] = 1.0f;
+        camera.xyz[0] = 0.0f;
+        camera.xyz[1] = 0.0f;
+        camera.xyz[2] = 0.0f;
+        camera.xyz_angle[0] = 0.0f;
+        camera.xyz_angle[1] = 0.0f;
+        camera.xyz_angle[2] = 0.0f;
+        camera.xyz_cosangle[0] = 0.0f;
+        camera.xyz_cosangle[1] = 0.0f;
+        camera.xyz_cosangle[2] = 0.0f;
+        camera.xyz_sinangle[0] = 0.0f;
+        camera.xyz_sinangle[1] = 0.0f;
+        camera.xyz_sinangle[2] = 0.0f;
         
         if (crashed_top_of_screen_msg[0] == '\0') {
             common_strcpy_capped(crashed_top_of_screen_msg,
@@ -259,8 +269,25 @@ void gameloop_update(
             "Failed assert, and also failed to retrieve an error message");
         }
         
-        font_settings->ignore_camera = true;
-        font_settings->remove_hitbox = true;
+        font_settings->font_height          = 14.0f;
+        font_settings->font_color[0]        = 1.0f;
+        font_settings->font_color[1]        = 1.0f;
+        font_settings->font_color[2]        = 1.0f;
+        font_settings->font_color[3]        = 1.0f;
+        font_settings->ignore_camera        = false; // we set camera to 0,0,0
+        font_settings->font_ignore_lighting = true;
+        font_settings->remove_hitbox        = true;
+        
+        PointRequest point_request;
+        fetch_next_point(&point_request);
+        point_request.cpu_data->object_id = -1;
+        point_request.gpu_vertex->color   = 1.0f;
+        point_request.gpu_vertex->xyz[0]  = 0.0f;
+        point_request.gpu_vertex->xyz[1]  = 0.0f;
+        point_request.gpu_vertex->xyz[2]  = 0.8f;
+        commit_point(&point_request);
+        
+        assert(font_settings->font_texturearray_i == 0);
         text_request_label_renderable(
             /* const uint32_t with_object_id: */
                 0,
@@ -274,6 +301,12 @@ void gameloop_update(
                 1.0f,
             /* const float max_width: */
                 window_globals->window_width - 30);
+        
+        renderer_hardware_render(
+                frame_data,
+            /* uint64_t elapsed_microseconds: */
+                elapsed);
+        return;
     }
     
     gameloop_frame_no++;
@@ -378,17 +411,7 @@ void gameloop_update(
         
         init_or_push_one_gpu_texture_array_if_needed();
     }
-    
-    log_assert(frame_data->light_collection != NULL);
-    common_memcpy(frame_data->camera, &camera, sizeof(GPUCamera));
-    log_assert(frame_data->light_collection != NULL);
-    
-    frame_data->vertices_size            = 0;
-    frame_data->polygon_collection->size = 0;
-    frame_data->first_alphablend_i       = 0;
-    frame_data->line_vertices_size       = 0;
-    frame_data->point_vertices_size      = 0;
-    
+        
     if (window_globals->draw_fps) {
         text_request_fps_counter(
             /* uint64_t microseconds_elapsed: */

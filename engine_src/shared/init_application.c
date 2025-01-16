@@ -148,6 +148,16 @@ void init_application_before_gpu_init(
         platform_mutex_lock,
         platform_mutex_unlock);
     
+    init_PNG_decoder(
+        /* void *(*malloc_funcptr)(size_t): */
+            malloc_from_managed_infoless,
+        /* free_function: */
+            free_from_managed,
+        /* memset_function: */
+            common_memset_char,
+        /* memcpy_function: */
+            common_memcpy);
+       
     #ifndef LOGGER_IGNORE_ASSERTS
     test_simd_functions_floats();
     #endif
@@ -419,14 +429,9 @@ void init_application_before_gpu_init(
         (GPUProjectionConstants *)malloc_from_unmanaged_aligned(
             gpu_shared_data_collection.projection_constants_allocation_size,
             4096);
-    
-    if (success) {
-        client_logic_early_startup(success, error_message);
-    }
 }
 
 void init_application_after_gpu_init(void) {
-    printf("init_application_after_gpu_init()...\n");
     
     #define MIN_VERTICES_FOR_SHATTER_EFFECT 400
     for (uint32_t i = 0; i < all_mesh_summaries_size; i++) {

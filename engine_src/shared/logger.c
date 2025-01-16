@@ -241,16 +241,15 @@ log_dump_and_crash(char * crash_message) {
     bool32_t log_dump_succesful = false;
     log_dump(&log_dump_succesful);
     
-    unsigned int i = 0;
-    while (crash_message[i] != '\0' && i < CRASH_STRING_SIZE) {
-        crashed_top_of_screen_msg[i] = crash_message[i];
-        i++;
-    }
     
-    common_strcpy_capped(
-        crashed_top_of_screen_msg,
-        256,
-        crash_message);
+    if (application_running) {
+        unsigned int i = 0;
+        while (crash_message[i] != '\0' && i < (CRASH_STRING_SIZE-1)) {
+            crashed_top_of_screen_msg[i] = crash_message[i];
+            i++;
+        }
+        crashed_top_of_screen_msg[i] = '\0';
+    }
     
     application_running = false;
     

@@ -1,9 +1,10 @@
 #include "common.h"
 
-void common_memset_char(
+// void *(*)(void *, int, size_t
+void * common_memset_char(
     void * in,
-    char value,
-    unsigned int size_bytes)
+    int value,
+    size_t size_bytes)
 {
     int8_t * input = (int8_t *)in;
     
@@ -20,7 +21,7 @@ void common_memset_char(
     #endif
     
     #ifdef __SSE2__
-    __m128i sse_preset = _mm_set1_epi8(value);
+    __m128i sse_preset = _mm_set1_epi8((char)value);
     
     for (; i+15 < size_bytes; i += 16) {
         _mm_storeu_si128(
@@ -30,8 +31,10 @@ void common_memset_char(
     #endif
     
     for (; i < size_bytes; i++) {
-        input[i] = value;
+        input[i] = (char)value;
     }
+    
+    return in;
 }
 void common_memset_int16(
     void * in,

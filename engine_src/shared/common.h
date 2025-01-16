@@ -33,10 +33,12 @@ extern "C" {
 #define common_abs(a) ((((a) > 0)*(a))+(((a) < 0)*-(a)))
 #define common_fabs(a) ((((a) > 0.0f)*(a))+(((a) < 0.0f)*-(a)))
 
-void common_memset_char(
+// The common_memset_char signature matches libc's,
+// the others are my preference
+void * common_memset_char(
     void * input,
-    char value,
-    unsigned int size_bytes);
+    int value,
+    size_t size_bytes);
 void common_memset_int16(
     void * input,
     int16_t value,

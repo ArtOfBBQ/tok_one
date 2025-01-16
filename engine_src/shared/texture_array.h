@@ -57,11 +57,12 @@ void get_texture_location(
     int32_t * texture_array_i_recipient,
     int32_t * texture_i_recipient);
 
-void decode_null_image_with_memory(
+void decode_null_image_at(
     const int32_t texture_array_i,
     const int32_t texture_i);
 
-void decode_all_null_images_with_memory(void);
+void load_font_images(void);
+void decode_all_null_images(void);
 
 void flag_all_texture_arrays_to_request_gpu_init(void);
 

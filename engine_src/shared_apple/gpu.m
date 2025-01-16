@@ -133,8 +133,8 @@ static id projection_constants_buffer;
             
             NSString * errorstr = [Error localizedDescription];
             
-            char * errorcstr = [errorstr cStringUsingEncoding:
-                NSASCIIStringEncoding];
+            const char * errorcstr = [errorstr
+                cStringUsingEncoding: NSASCIIStringEncoding];
             
             common_strcpy_capped(
                 errmsg,
@@ -158,8 +158,8 @@ static id projection_constants_buffer;
         
             NSString * errorstr = [Error localizedDescription];
             
-            char * errorcstr = [errorstr cStringUsingEncoding:
-                NSASCIIStringEncoding];
+            const char * errorcstr = [errorstr
+                cStringUsingEncoding: NSASCIIStringEncoding];
             
             if (errorcstr != NULL && errorcstr[0] != '\0') {
                 common_strcpy_capped(
@@ -639,6 +639,7 @@ static id projection_constants_buffer;
         withObject: texture];
 }
 
+static bool32_t font_already_pushed = 0;
 - (void)
     updateTextureArray : (int32_t)texturearray_i
     atTexture          : (int32_t)texture_i
@@ -649,6 +650,11 @@ static id projection_constants_buffer;
 {
     log_assert(texture_i >= 0);
     log_assert(texturearray_i >= 0);
+    
+    if (texturearray_i == 0 && texture_i == 0) {
+        assert(!font_already_pushed);
+        font_already_pushed = true;
+    }
     
     if (texturearray_i >= (int32_t)[_metal_textures count]) {
         #ifndef LOGGER_IGNORE_ASSERTS
@@ -716,7 +722,6 @@ static id projection_constants_buffer;
     id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
     
     if (command_buffer == nil) {
-        log_append("error - failed to get metal command buffer\n");
         #ifndef LOGGER_IGNORE_ASSERTS
         log_dump_and_crash("error - failed to get metal command buffer\n");
         #endif
@@ -1063,7 +1068,7 @@ void platform_gpu_push_texture_slice(
     if (rgba_values == NULL) {
         return;
     }
-    
+        
     [apple_gpu_delegate
         updateTextureArray : (int32_t)texture_array_i
         atTexture          : (int32_t)texture_i
