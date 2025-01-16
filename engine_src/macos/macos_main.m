@@ -386,13 +386,32 @@ int main(int argc, const char * argv[]) {
     has_retina_screen = true; // TODO: actually query the machine and find out
     
     assert(sizeof(GPUPolygon) % 32 == 0);
+
+    if (!application_running) {
+        printf(
+            "Application crashed before "
+            "init_application_before_gpu_init()");
+        return 1;
+    }
     
-    init_application_before_gpu_init();
+    char errmsg[512];
+    uint32_t success = 1;
+    init_application_before_gpu_init(
+        &success,
+        errmsg);
+    
+    if (!success) {
+        printf(
+            "Application crashed before window creation: %s\n",
+            errmsg);
+        return 1;
+    }
     
     apple_gpu_init(gameloop_update);
     
     log_append(
-        "\nconfirming we can save debug info - writing log.txt...\n");
+        "\nconfirming we can save debug info - "
+        "writing log.txt...\n");
     bool32_t initial_log_dump_succesful = false;
     log_dump(&initial_log_dump_succesful);
     if (!initial_log_dump_succesful) {
@@ -459,8 +478,13 @@ int main(int argc, const char * argv[]) {
     apple_gpu_delegate = [[MetalKitViewDelegate alloc] init];
     [mtk_view setDelegate: apple_gpu_delegate];
     
-    char shader_lib_path_cstr[1000];
-    platform_get_resources_path(shader_lib_path_cstr, 1000);
+    if (!application_running) {
+        printf("Application crashed before loading shaders");
+        return 1;
+    }
+    
+    char shader_lib_path_cstr[2000];
+    platform_get_resources_path(shader_lib_path_cstr, 2000);
     common_strcat_capped(
         shader_lib_path_cstr,
         1000,
@@ -470,19 +494,38 @@ int main(int argc, const char * argv[]) {
         [NSString
             stringWithCString:shader_lib_path_cstr
             encoding:NSASCIIStringEncoding];
-    
+     
     BOOL result = [apple_gpu_delegate
         configureMetalWithDevice: metal_device
         andPixelFormat: mtk_view.colorPixelFormat
-        fromFilePath: shader_lib_path];
+        fromFilePath: shader_lib_path
+        errMsgCStr: errmsg];
     
     if (!result || !application_running) {
         #ifndef LOGGER_IGNORE_ASSERTS
         log_dump_and_crash("Can't draw anything to the screen...\n");
         #endif
         
-        platform_request_messagebox(
-            "Critical failure: couldn't configure Metal graphics.");
+        char errmsg2[512];
+        common_strcpy_capped(
+            errmsg2,
+            512,
+            "Critical failure: couldn't configure Metal graphics."
+            " Looked for shader in: ");
+        common_strcat_capped(
+            errmsg2,
+            512,
+            shader_lib_path_cstr);
+        common_strcat_capped(
+            errmsg2,
+            512,
+            " Metal error description: ");
+        common_strcat_capped(
+            errmsg2,
+            512,
+            errmsg);
+        
+        platform_request_messagebox(errmsg2);
     } else {
         init_application_after_gpu_init();
     

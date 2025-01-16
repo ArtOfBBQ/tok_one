@@ -47,7 +47,9 @@ will be called once at startup, before rendering frame 1
 
 If you draw objects here they will be deleted by an automatic screen resize
 */
-void client_logic_early_startup(void);
+void client_logic_early_startup(
+    bool32_t * success,
+    char * error_message);
 
 /*
 will be called once at startup, before rendering frame 1

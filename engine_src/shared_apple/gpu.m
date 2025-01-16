@@ -98,8 +98,14 @@ static id projection_constants_buffer;
     configureMetalWithDevice: (id<MTLDevice>)with_metal_device
     andPixelFormat: (MTLPixelFormat)pixel_format
     fromFilePath: (NSString *)shader_lib_filepath
+    errMsgCStr: (char *)errmsg
 {
     current_frame_i = 0;
+        
+    common_strcpy_capped(
+        errmsg,
+        512,
+        "");
     
     // drawing_semaphore = dispatch_semaphore_create(/* initial value: */ 3);
     
@@ -122,8 +128,18 @@ static id projection_constants_buffer;
         
         if (shader_lib_url == NULL) {
             #ifndef LOGGER_IGNORE_ASSERTS
-            log_dump_and_crash("Failed to find the shader file\n");
+            log_dump_and_crash("Failed to find the shader lib\n");
             #endif
+            
+            NSString * errorstr = [Error localizedDescription];
+            
+            char * errorcstr = [errorstr cStringUsingEncoding:
+                NSASCIIStringEncoding];
+            
+            common_strcpy_capped(
+                errmsg,
+                512,
+                errorcstr);
             return false;
         }
         
@@ -139,10 +155,28 @@ static id projection_constants_buffer;
                 [[Error userInfo] descriptionInStringsFileFormat]
                     cStringUsingEncoding:NSASCIIStringEncoding]);
             #endif
+        
+            NSString * errorstr = [Error localizedDescription];
+            
+            char * errorcstr = [errorstr cStringUsingEncoding:
+                NSASCIIStringEncoding];
+            
+            if (errorcstr != NULL && errorcstr[0] != '\0') {
+                common_strcpy_capped(
+                    errmsg,
+                    512,
+                    errorcstr);
+            } else {
+                common_strcpy_capped(
+                    errmsg,
+                    512,
+                    "Failed to find shaders file");
+            }
             
             return false;
         } else {
-            log_append("Success! Found the shader lib on 2nd try.\n");
+            log_append(
+                "Success! Found the shader lib on 2nd try.\n");
         }
     }
     
@@ -151,6 +185,11 @@ static id projection_constants_buffer;
             @"vertex_shader"];
     if (vertex_shader == NULL) {
         log_append("Missing function: vertex_shader()!");
+        
+        common_strcpy_capped(
+            errmsg,
+            512,
+            "Missing function: vertex_shader()");
         return false;
     }
     
@@ -159,6 +198,10 @@ static id projection_constants_buffer;
             @"fragment_shader"];
     if (fragment_shader == NULL) {
         log_append("Missing function: fragment_shader()!");
+        common_strcpy_capped(
+            errmsg,
+            512,
+            "Missing function: fragment_shader()");
         return false;
     }
     
@@ -167,6 +210,10 @@ static id projection_constants_buffer;
             @"alphablending_fragment_shader"];
     if (alphablending_fragment_shader == NULL) {
         log_append("Missing function: alphablending_fragment_shader()!");
+        common_strcpy_capped(
+            errmsg,
+            512,
+            "Missing function: vertex_shader()");
         return false;
     }
     
@@ -175,6 +222,11 @@ static id projection_constants_buffer;
             @"raw_vertex_shader"];
     if (raw_vertex_shader == NULL) {
         log_append("Missing function: raw_vertex_shader()!");
+
+        common_strcpy_capped(
+            errmsg,
+            512,
+            "Missing function: raw_vertex_shader()");
         return false;
     }
     
@@ -183,6 +235,10 @@ static id projection_constants_buffer;
             @"raw_fragment_shader"];
     if (raw_fragment_shader == NULL) {
         log_append("Missing function: raw_fragment_shader()!");
+        common_strcpy_capped(
+            errmsg,
+            512,
+            "Missing function: vertex_shader()");
         return false;
     }
     
@@ -211,6 +267,10 @@ static id projection_constants_buffer;
         #ifndef LOGGER_IGNORE_ASSERTS
         log_dump_and_crash("Failed to initialize diamond pipeline");
         #endif
+        common_strcpy_capped(
+            errmsg,
+            512,
+            "Failed to initialize diamond pipeline");
         return false;
     }
     
@@ -248,6 +308,10 @@ static id projection_constants_buffer;
         log_dump_and_crash("Error loading the alphablending shader\n");
         #endif
         
+        common_strcpy_capped(
+            errmsg,
+            512,
+            "Failed to load the alphablending shader");
         return false;
     }
     
@@ -278,6 +342,12 @@ static id projection_constants_buffer;
         #ifndef LOGGER_IGNORE_ASSERTS
         log_dump_and_crash("Error loading the raw vertex shader\n");
         #endif
+        
+        
+        common_strcpy_capped(
+            errmsg,
+            512,
+            "Failed to load the raw vertex shader");
         return false;
     }
     
@@ -296,6 +366,11 @@ static id projection_constants_buffer;
         #ifndef LOGGER_IGNORE_ASSERTS
         log_dump_and_crash("Error setting the depth stencil state\n");
         #endif
+
+        common_strcpy_capped(
+            errmsg,
+            512,
+            "Failed to load the depth stencil shader");
         return false;
     }
     

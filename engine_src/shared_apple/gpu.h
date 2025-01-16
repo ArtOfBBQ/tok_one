@@ -39,7 +39,8 @@ void apple_gpu_init(
 - (BOOL)
     configureMetalWithDevice: (id<MTLDevice>)with_metal_device
     andPixelFormat: (MTLPixelFormat)pixel_format
-    fromFilePath: (NSString *)shader_lib_filepath;
+    fromFilePath: (NSString *)shader_lib_filepath
+    errMsgCStr: (char *)errmsg;
 - (void)
     copyLockedVertices;
 - (void)

@@ -129,9 +129,12 @@ static void test_simd_functions_floats(void) {
 }
 #endif
 
-void init_application_before_gpu_init(void)
+void init_application_before_gpu_init(
+    bool32_t * success,
+    char * error_message)
 {
-    log_assert(application_running);
+    *success = true;
+    error_message[0] = '\0';
     
     void * unmanaged_memory_store = platform_malloc_unaligned_block(
         UNMANAGED_MEMORY_SIZE);
@@ -260,7 +263,15 @@ void init_application_before_gpu_init(void)
                 "fontmetrics.dat",
             /* FileBuffer * out_preallocatedbuffer: */
                 &font_metrics_file);
-        log_assert(font_metrics_file.good);
+        
+        if (!font_metrics_file.good) {
+            common_strcpy_capped(
+                error_message,
+                256, "fontmetrics.dat was corrupted\n");
+            *success = false;
+            return;
+        }
+        
         text_init(
                 malloc_from_unmanaged,
             /* raw_fontmetrics_file_contents: */
@@ -409,7 +420,9 @@ void init_application_before_gpu_init(void)
             gpu_shared_data_collection.projection_constants_allocation_size,
             4096);
     
-    client_logic_early_startup();
+    if (success) {
+        client_logic_early_startup(success, error_message);
+    }
 }
 
 void init_application_after_gpu_init(void) {
