@@ -148,7 +148,9 @@ static float get_y_offset(const char input) {
         (font_settings->font_height * 0.75f);
 }
 
-static float get_next_word_width(const char * text) {
+static float get_next_word_width(
+    const char * text)
+{
     float return_value = 0.0f;
     
     uint32_t i = 0;
@@ -187,11 +189,18 @@ static void prefetch_label_lines(
     uint32_t cur_line_i = 0;
     int32_t i = 0;
     recipient[cur_line_i].start_i = 0;
-    while (text_to_draw[i] != '\0') {
+    while (text_to_draw[i] != '\0')
+    {
         recipient[cur_line_i].width += get_advance_width(text_to_draw[i]);
         i++;
         
-        if (text_to_draw[i] == '\n') {
+        if (
+            text_to_draw[i] == '\n' ||
+            (
+                recipient[cur_line_i].width > 0.0f &&
+                (recipient[cur_line_i].width +
+                    get_advance_width(text_to_draw[i])) >= max_width))
+        {
             recipient[cur_line_i].end_i = i;
             *recipient_size += 1;
             cur_line_i += 1;

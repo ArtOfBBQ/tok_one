@@ -378,6 +378,8 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 }
 @end
 
+extern bool32_t metal_active;
+
 int main(int argc, const char * argv[]) {
     
     metal_active = false;
