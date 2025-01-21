@@ -241,7 +241,6 @@ log_dump_and_crash(char * crash_message) {
     bool32_t log_dump_succesful = false;
     log_dump(&log_dump_succesful);
     
-    
     if (application_running) {
         unsigned int i = 0;
         while (crash_message[i] != '\0' && i < (CRASH_STRING_SIZE-1)) {

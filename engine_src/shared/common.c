@@ -11,7 +11,7 @@ void * common_memset_char(
     uint32_t i = 0;
     
     #ifdef __AVX__
-    __m256i avx_preset = _mm256_set1_epi8(value);
+    __m256i avx_preset = _mm256_set1_epi8((char)value);
     
     for (; i+31 < size_bytes; i += 32) {
         _mm256_storeu_si256(

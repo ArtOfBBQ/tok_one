@@ -371,51 +371,52 @@ void init_application_before_gpu_init(
         4096 == 0);
     
     for (
-        uint32_t frame_i = 0;
-        frame_i < 3;
-        frame_i++)
+        uint32_t cur_frame_i = 0;
+        cur_frame_i < 3;
+        cur_frame_i++)
     {
-        gpu_shared_data_collection.triple_buffers[frame_i].vertices =
+        gpu_shared_data_collection.triple_buffers[cur_frame_i].vertices =
             (GPUVertex *)malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection.vertices_allocation_size,
                 4096);
         
-        gpu_shared_data_collection.triple_buffers[frame_i].polygon_collection =
+        gpu_shared_data_collection.triple_buffers[cur_frame_i].polygon_collection =
             (GPUPolygonCollection *)malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection.polygons_allocation_size,
                 4096);
         
-        gpu_shared_data_collection.triple_buffers[frame_i].polygon_materials =
+        gpu_shared_data_collection.triple_buffers[cur_frame_i].polygon_materials =
             (GPUPolygonMaterial *)malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection.polygon_materials_allocation_size,
                 4096);
         
         assert(gpu_shared_data_collection.lights_allocation_size > 0);
-        gpu_shared_data_collection.triple_buffers[frame_i].light_collection =
-            (GPULightCollection *)malloc_from_unmanaged_aligned(
-                gpu_shared_data_collection.lights_allocation_size,
-                4096);
+        gpu_shared_data_collection.triple_buffers[cur_frame_i].
+            light_collection =
+                (GPULightCollection *)malloc_from_unmanaged_aligned(
+                    gpu_shared_data_collection.lights_allocation_size,
+                    4096);
         assert(
-            gpu_shared_data_collection.triple_buffers[frame_i].light_collection
-                != NULL);
+            gpu_shared_data_collection.triple_buffers[cur_frame_i].
+                light_collection != NULL);
         
-        gpu_shared_data_collection.triple_buffers[frame_i].camera =
+        gpu_shared_data_collection.triple_buffers[cur_frame_i].camera =
         (GPUCamera *)malloc_from_unmanaged_aligned(
             gpu_shared_data_collection.camera_allocation_size,
             4096);
         
-        gpu_shared_data_collection.triple_buffers[frame_i].point_vertices =
+        gpu_shared_data_collection.triple_buffers[cur_frame_i].point_vertices =
         (GPURawVertex *)malloc_from_unmanaged_aligned(
             gpu_shared_data_collection.point_vertices_allocation_size,
             4096);
         
-        gpu_shared_data_collection.triple_buffers[frame_i].line_vertices =
+        gpu_shared_data_collection.triple_buffers[cur_frame_i].line_vertices =
         (GPURawVertex *)malloc_from_unmanaged_aligned(
             gpu_shared_data_collection.line_vertices_allocation_size,
             4096);
         
         common_memset_float(
-            gpu_shared_data_collection.triple_buffers[frame_i].camera,
+            gpu_shared_data_collection.triple_buffers[cur_frame_i].camera,
             0.0f,
             sizeof(GPUCamera));
     }

@@ -317,6 +317,8 @@ void text_request_label_offset_around(
             letter.gpu_data->ignore_camera = font_settings->ignore_camera;
             letter.cpu_data->object_id = with_id;
             letter.cpu_data->touchable_id = font_settings->font_touchable_id;
+            letter.cpu_data->alpha_blending_enabled =
+                font_settings->alphablending;
             
             if ((text_to_draw[j] - '!') < 0) {
                 cur_x_offset_pixelspace +=
@@ -484,6 +486,8 @@ void text_request_label_renderable(
         
         letter.cpu_data->object_id = with_id;
         letter.cpu_data->touchable_id = font_settings->font_touchable_id;
+        letter.cpu_data->alpha_blending_enabled =
+            font_settings->alphablending;
         letter.gpu_data->ignore_lighting = font_settings->font_ignore_lighting;
         letter.gpu_data->ignore_camera = font_settings->ignore_camera;
         

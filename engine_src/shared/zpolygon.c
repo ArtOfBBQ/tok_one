@@ -472,6 +472,8 @@ void simd_zpolygon_get_transformed_triangle_vertices(
     const int32_t locked_vertex_i,
     float * vertices_recipient_10f)
 {
+    (void)cpu_data;
+    
     #ifdef PROFILER_ACTIVE
     profiler_start("simd_zpolygon_get_transformed_triangle_vertices()");
     #endif
@@ -614,6 +616,8 @@ void zpolygon_get_transformed_triangle_vertices(
     float * vertices_recipient_9f,
     float * normals_recipient_9f)
 {
+    (void)cpu_data;
+    
     #ifdef PROFILER_ACTIVE
     profiler_start("zpolygon_get_transformed_triangle_vertices()");
     #endif
