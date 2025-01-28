@@ -517,9 +517,11 @@ int main(int argc, const char * argv[]) {
     
     metal_active = true;
     
+    #ifndef LOGGER_IGNORE_ASSERTS
     if (!success && application_running) {
         log_dump_and_crash(errmsg);
     }
+    #endif
     
     @autoreleasepool {
         return NSApplicationMain(argc, argv);

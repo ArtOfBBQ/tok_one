@@ -298,6 +298,8 @@ void init_application_before_gpu_init(
     
     renderer_init();
     
+    client_logic_init();
+    
     // init the buffers that contain our vertices to send to the GPU
     gpu_shared_data_collection.vertices_allocation_size =
             sizeof(GPUVertex) * MAX_VERTICES_PER_BUFFER;

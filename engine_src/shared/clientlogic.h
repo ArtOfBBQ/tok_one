@@ -36,6 +36,10 @@ extern "C" {
 
 extern bool32_t application_running;
 
+
+
+void client_logic_init(void);
+
 /*
 will be called once when the app shuts down
 */
