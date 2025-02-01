@@ -115,10 +115,22 @@ typedef struct GPUProjectionConstants {
     float padding;
 } GPUProjectionConstants;
 
+typedef struct GPUPostProcessingConstants
+{
+    unsigned int timestamp;
+} GPUPostProcessingConstants;
+
 typedef struct GPURawVertex {
     float xyz[3];
     float color;
 } GPURawVertex;
+
+typedef struct PostProcessingVertex
+{
+    float position[2];
+    float texcoord[2];
+} PostProcessingVertex;
+
 #pragma pack(pop)
 
 #endif

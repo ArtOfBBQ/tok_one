@@ -372,6 +372,12 @@ void init_application_before_gpu_init(
     assert(gpu_shared_data_collection.line_vertices_allocation_size %
         4096 == 0);
     
+    gpu_shared_data_collection.postprocessing_constants_allocation_size =
+            sizeof(GPUVertex) * MAX_VERTICES_PER_BUFFER;
+    gpu_shared_data_collection.postprocessing_constants_allocation_size +=
+        (4096 - (gpu_shared_data_collection.postprocessing_constants_allocation_size % 4096));
+    assert(gpu_shared_data_collection.postprocessing_constants_allocation_size % 4096 == 0);
+    
     for (
         uint32_t cur_frame_i = 0;
         cur_frame_i < 3;
@@ -416,6 +422,12 @@ void init_application_before_gpu_init(
         (GPURawVertex *)malloc_from_unmanaged_aligned(
             gpu_shared_data_collection.line_vertices_allocation_size,
             4096);
+        
+        gpu_shared_data_collection.triple_buffers[cur_frame_i].
+            postprocessing_constants =
+                (GPUPostProcessingConstants *)malloc_from_unmanaged_aligned(
+                    gpu_shared_data_collection.line_vertices_allocation_size,
+                    4096);
         
         common_memset_float(
             gpu_shared_data_collection.triple_buffers[cur_frame_i].camera,

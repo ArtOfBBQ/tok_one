@@ -7,14 +7,14 @@ static int32_t teapot_object_ids[2];
 static int32_t teapot_touchable_ids[2];
 #endif
 
-void client_logic_early_startup(void) {
+void client_logic_init(void) {
     
-    init_PNG_decoder(
-        malloc_from_managed_infoless,
-        free_from_managed,
-        memset,
-        memcpy);
-    
+}
+
+void client_logic_early_startup(
+    bool32_t * success,
+    char * error_message)
+{
     const char * fontfile = "font.png";
     if (platform_resource_exists("font.png")) {
         register_new_texturearray_by_splitting_file(
@@ -149,9 +149,9 @@ void client_logic_late_startup(void) {
         /* const char * text_to_draw: */
             "Hello!",
         /* const float left_pixelspace: */
-            250.0f,
+             50.0f,
         /* const float top_pixelspace: */
-            500.0f,
+            900.0f,
         /* const float z: */
             3.0f,
         /* const float max_width: */

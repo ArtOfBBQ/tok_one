@@ -3,6 +3,8 @@
 bool32_t has_retina_screen = false;
 bool32_t metal_active = false;
 
+static MTLPixelFormat cached_pixel_format;
+
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
 
 static void (* funcptr_shared_gameloop_update)(GPUDataForSingleFrame *) = NULL;
@@ -29,6 +31,7 @@ static id vertex_buffers[3];
 static id camera_buffers[3];
 static id line_vertex_buffers[3];
 static id point_vertex_buffers[3];
+static id postprocessing_constants_buffers[3];
 static id locked_vertex_populator_buffer;
 static id locked_vertex_buffer;
 static id projection_constants_buffer;
@@ -40,6 +43,7 @@ static id projection_constants_buffer;
     
     id<MTLDevice> metal_device;
     id<MTLCommandQueue> command_queue;
+    id<MTLTexture> render_target_texture;
 }
 
 - (void) copyLockedVertices
@@ -92,6 +96,19 @@ static id projection_constants_buffer;
     
     *gpu_shared_data_collection.locked_pjc =
         window_globals->projection_constants;
+    
+    // Set up a texture for rendering to and apply post-processing to
+    MTLTextureDescriptor * texture_descriptor = [MTLTextureDescriptor new];
+    texture_descriptor.textureType = MTLTextureType2D;
+    texture_descriptor.width = (unsigned long)cached_viewport.width;
+    texture_descriptor.height = (unsigned long)cached_viewport.height;
+    texture_descriptor.pixelFormat = cached_pixel_format;
+    texture_descriptor.usage =
+        MTLTextureUsageRenderTarget |
+        MTLTextureUsageShaderRead;
+    
+    render_target_texture = [metal_device
+        newTextureWithDescriptor: texture_descriptor];
 }
 
 - (BOOL)
@@ -100,6 +117,8 @@ static id projection_constants_buffer;
     fromFilePath: (NSString *)shader_lib_filepath
     errMsgCStr: (char *)errmsg
 {
+    cached_pixel_format = pixel_format;
+    
     current_frame_i = 0;
         
     common_strcpy_capped(
@@ -366,7 +385,7 @@ static id projection_constants_buffer;
         #ifndef LOGGER_IGNORE_ASSERTS
         log_dump_and_crash("Error setting the depth stencil state\n");
         #endif
-
+        
         common_strcpy_capped(
             errmsg,
             512,
@@ -491,6 +510,29 @@ static id projection_constants_buffer;
         point_vertex_buffers[frame_i] = MTLBufferPointVertices;
         assert(point_vertex_buffers[frame_i] != nil);
         
+        id<MTLBuffer> MTLBufferPostProcessingConstants =
+            [with_metal_device
+                /* the pointer needs to be page aligned */
+                    newBufferWithBytesNoCopy:
+                        gpu_shared_data_collection.
+                            triple_buffers[frame_i].postprocessing_constants
+                /* the length weirdly needs to be page aligned also */
+                    length:
+                        gpu_shared_data_collection.
+                            postprocessing_constants_allocation_size
+                    options:
+                        MTLResourceStorageModeShared
+                /* deallocator = nil to opt out */
+                    deallocator:
+                        nil];
+        assert(MTLBufferPostProcessingConstants != nil);
+        assert(
+            [MTLBufferPostProcessingConstants contents] ==
+                gpu_shared_data_collection.triple_buffers[frame_i].
+                    postprocessing_constants);
+        postprocessing_constants_buffers[frame_i] =
+            MTLBufferPostProcessingConstants;
+        assert(postprocessing_constants_buffers[frame_i] != nil);
         
         id<MTLBuffer> MTLBufferFrameLights =
             [with_metal_device
@@ -582,22 +624,63 @@ static id projection_constants_buffer;
         [NSMutableArray alloc]
             initWithCapacity: TEXTUREARRAYS_SIZE];
     
+    MTLRenderPipelineDescriptor * postprocess_pipeline_descriptor =
+        [[MTLRenderPipelineDescriptor alloc] init];
+    id<MTLFunction> postprocess_vertex_shader =
+        [shader_library newFunctionWithName:
+            @"postprocess_vertex_shader"];
+    if (postprocess_vertex_shader == NULL) {
+        log_append("Missing function: postprocess_vertex_shader()!");
+        
+        common_strcpy_capped(
+            errmsg,
+            512,
+            "Missing function: postprocess_vertex_shader()");
+        return false;
+    }
+    
+    id<MTLFunction> postprocess_fragment_shader =
+        [shader_library newFunctionWithName: @"postprocess_fragment_shader"];
+    if (postprocess_fragment_shader == NULL) {
+        log_append("Missing function: postprocess_fragment_shader()!");
+        common_strcpy_capped(
+            errmsg,
+            512,
+            "Missing function: postprocess_fragment_shader()");
+        return false;
+    }
+    
+    // Set up pipeline for rendering the texture to the screen with a simple
+    // quad
+    postprocess_pipeline_descriptor.label = @"Postprocessing Pipeline";
+    postprocess_pipeline_descriptor.sampleCount = 1;
+    [postprocess_pipeline_descriptor
+        setVertexFunction: postprocess_vertex_shader];
+    [postprocess_pipeline_descriptor
+        setFragmentFunction: postprocess_fragment_shader];
+    postprocess_pipeline_descriptor.colorAttachments[0].pixelFormat =
+        pixel_format;
+    //    postprocess_pipeline_descriptor.colorAttachments[0].loadAction =
+    //        MTLStoreActionClear;
+    //    postprocess_pipeline_descriptor.colorAttachments[0].storeAction =
+    //        MTLStoreActionStore;
+    //    postprocess_pipeline_descriptor.depthAttachment.loadAction =
+    //        MTLLoadActionClear;
+    postprocess_pipeline_descriptor.depthAttachmentPixelFormat =
+        MTLPixelFormatDepth32Float;
+    postprocess_pipeline_descriptor.vertexBuffers[0].mutability =
+        MTLMutabilityImmutable;
+    _postprocess_pipeline_state = [
+        with_metal_device
+        newRenderPipelineStateWithDescriptor:postprocess_pipeline_descriptor
+        error:NULL];
+    
     [self updateViewport];
     
     command_queue = [with_metal_device newCommandQueue];
     
-    // https://stackoverflow.com/questions/59002795/how-to-use-mtlsamplerstate-instead-of-declaring-a-sampler-in-my-fragment-shader
-    //    MTLSamplerDescriptor * sampler_desc = [MTLSamplerDescriptor new];
-    //    sampler_desc.rAddressMode = MTLSamplerAddressModeRepeat;
-    //    sampler_desc.sAddressMode = MTLSamplerAddressModeRepeat;
-    //    sampler_desc.tAddressMode = MTLSamplerAddressModeRepeat;
-    //    sampler_desc.minFilter = MTLSamplerMinMagFilterLinear;
-    //    sampler_desc.magFilter = MTLSamplerMinMagFilterLinear;
-    //    sampler_desc.mipFilter = MTLSamplerMipFilterNotMipmapped;
-    //    id<MTLSamplerState> ss =
-    //        [with_metal_device newSamplerStateWithDescriptor: sampler_desc];
-    
     metal_active = true;
+    
     return true;
 }
 
@@ -735,17 +818,24 @@ static bool32_t font_already_pushed = 0;
     #ifdef PROFILER_ACTIVE
     profiler_start("Create MTLRenderPassDescriptor etc.");
     #endif
-    MTLRenderPassDescriptor * RenderPassDescriptor =
+    MTLRenderPassDescriptor * render_pass_1_descriptor =
         [view currentRenderPassDescriptor];
     
-    RenderPassDescriptor.depthAttachment.loadAction =
+    render_pass_1_descriptor.depthAttachment.loadAction =
         MTLLoadActionClear;
-        
-    RenderPassDescriptor
+    
+    #if 0
+    render_pass_1_descriptor
         .colorAttachments[0]
         .loadAction = MTLLoadActionClear;
-        
-    RenderPassDescriptor.colorAttachments[0].clearColor =
+    #else
+    render_pass_1_descriptor.colorAttachments[0].texture =
+        render_target_texture;
+    render_pass_1_descriptor.colorAttachments[0].storeAction =
+        MTLStoreActionStore;
+    #endif
+    
+    render_pass_1_descriptor.colorAttachments[0].clearColor =
         MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);;
     
     // this inherits from the view's cleardepth (in macos/main.m for mac os),
@@ -758,10 +848,10 @@ static bool32_t font_already_pushed = 0;
     #ifdef PROFILER_ACTIVE
     profiler_start("Create MTLRenderCommandEncoder");
     #endif
-    id<MTLRenderCommandEncoder> render_encoder =
+    id<MTLRenderCommandEncoder> render_pass_1_encoder =
             [command_buffer
                 renderCommandEncoderWithDescriptor:
-                    RenderPassDescriptor];
+                    render_pass_1_descriptor];
     #ifdef PROFILER_ACTIVE
     profiler_end("Create MTLRenderCommandEncoder");
     #endif
@@ -770,14 +860,14 @@ static bool32_t font_already_pushed = 0;
     profiler_start("setViewport, RenderPipeline, Stencil, ClipMode");
     #endif
     assert(cached_viewport.zfar > cached_viewport.znear);
-    [render_encoder setViewport: cached_viewport];
+    [render_pass_1_encoder setViewport: cached_viewport];
     assert(cached_viewport.width > 0.0f);
     assert(cached_viewport.height > 0.0f);
     
-    [render_encoder setRenderPipelineState: _diamond_pipeline_state];
+    [render_pass_1_encoder setRenderPipelineState: _diamond_pipeline_state];
     assert(_depth_stencil_state != nil);
-    [render_encoder setDepthStencilState: _depth_stencil_state];
-    [render_encoder setDepthClipMode: MTLDepthClipModeClip];
+    [render_pass_1_encoder setDepthStencilState: _depth_stencil_state];
+    [render_pass_1_encoder setDepthClipMode: MTLDepthClipModeClip];
     #ifdef PROFILER_ACTIVE
     profiler_end("setViewport, RenderPipeline, Stencil, ClipMode");
     #endif
@@ -785,7 +875,7 @@ static bool32_t font_already_pushed = 0;
     #ifdef PROFILER_ACTIVE
     profiler_start("setVertexBuffers");
     #endif
-    [render_encoder
+    [render_pass_1_encoder
         setVertexBuffer:
             vertex_buffers[current_frame_i]
         offset:
@@ -793,7 +883,7 @@ static bool32_t font_already_pushed = 0;
         atIndex:
             0];
     
-    [render_encoder
+    [render_pass_1_encoder
         setVertexBuffer:
             polygon_buffers[current_frame_i]
         offset:
@@ -801,19 +891,19 @@ static bool32_t font_already_pushed = 0;
         atIndex:
             1];
     
-    [render_encoder
+    [render_pass_1_encoder
         setVertexBuffer:
             light_buffers[current_frame_i]
         offset: 0
         atIndex: 2];
     
-    [render_encoder
+    [render_pass_1_encoder
         setVertexBuffer:
             camera_buffers[current_frame_i]
         offset: 0
         atIndex: 3];
     
-    [render_encoder
+    [render_pass_1_encoder
         setVertexBuffer:
             locked_vertex_buffer
         offset:
@@ -821,7 +911,7 @@ static bool32_t font_already_pushed = 0;
         atIndex:
             4];
     
-    [render_encoder
+    [render_pass_1_encoder
         setVertexBuffer:
             projection_constants_buffer
         offset:
@@ -829,7 +919,7 @@ static bool32_t font_already_pushed = 0;
         atIndex:
             5];
     
-    [render_encoder
+    [render_pass_1_encoder
         setVertexBuffer:
             polygon_material_buffers[current_frame_i]
         offset:
@@ -848,7 +938,7 @@ static bool32_t font_already_pushed = 0;
         i < [_metal_textures count];
         i++)
     {
-        [render_encoder
+        [render_pass_1_encoder
             setFragmentTexture: _metal_textures[i]
             atIndex: i];
     }
@@ -887,7 +977,7 @@ static bool32_t font_already_pushed = 0;
     if (window_globals->draw_triangles && diamond_verts_size > 0) {
         assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);
         assert(diamond_verts_size % 3 == 0);
-        [render_encoder
+        [render_pass_1_encoder
             drawPrimitives:
                 MTLPrimitiveTypeTriangle
             vertexStart:
@@ -895,7 +985,7 @@ static bool32_t font_already_pushed = 0;
             vertexCount:
                 diamond_verts_size];
     }
-
+    
     log_assert(
         gpu_shared_data_collection.triple_buffers[current_frame_i].
             first_alphablend_i <=
@@ -910,10 +1000,10 @@ static bool32_t font_already_pushed = 0;
     if (window_globals->draw_triangles && alphablend_verts_size > 0) {
         assert(alphablend_verts_size < MAX_VERTICES_PER_BUFFER);
         assert(alphablend_verts_size % 3 == 0);
-        [render_encoder setRenderPipelineState:
+        [render_pass_1_encoder setRenderPipelineState:
             _alphablend_pipeline_state];
         
-        [render_encoder
+        [render_pass_1_encoder
             drawPrimitives: MTLPrimitiveTypeTriangle
             vertexStart: gpu_shared_data_collection.
                 triple_buffers[current_frame_i].first_alphablend_i
@@ -927,19 +1017,19 @@ static bool32_t font_already_pushed = 0;
         gpu_shared_data_collection.triple_buffers[current_frame_i].
             point_vertices_size) > 0)
     {
-        [render_encoder setRenderPipelineState:
+        [render_pass_1_encoder setRenderPipelineState:
             _raw_pipeline_state];
         assert(_depth_stencil_state != nil);
-        [render_encoder setDepthStencilState:
+        [render_pass_1_encoder setDepthStencilState:
             _depth_stencil_state];
-        [render_encoder setDepthClipMode:
+        [render_pass_1_encoder setDepthClipMode:
             MTLDepthClipModeClip];
     }
     
     if (gpu_shared_data_collection.
         triple_buffers[current_frame_i].line_vertices_size > 0)
     {
-        [render_encoder
+        [render_pass_1_encoder
             setVertexBuffer:
                 line_vertex_buffers[current_frame_i]
             offset:
@@ -949,7 +1039,7 @@ static bool32_t font_already_pushed = 0;
         assert(gpu_shared_data_collection.
             triple_buffers[current_frame_i].line_vertices_size <=
                 MAX_LINE_VERTICES);
-        [render_encoder
+        [render_pass_1_encoder
             drawPrimitives: MTLPrimitiveTypeLine
             vertexStart: 0
             vertexCount: gpu_shared_data_collection.
@@ -959,7 +1049,7 @@ static bool32_t font_already_pushed = 0;
     if (gpu_shared_data_collection.
         triple_buffers[current_frame_i].point_vertices_size > 0)
     {
-        [render_encoder
+        [render_pass_1_encoder
             setVertexBuffer:
                 point_vertex_buffers[current_frame_i]
             offset:
@@ -969,7 +1059,7 @@ static bool32_t font_already_pushed = 0;
         assert(gpu_shared_data_collection.
             triple_buffers[current_frame_i].point_vertices_size <=
                 MAX_POINT_VERTICES);
-        [render_encoder
+        [render_pass_1_encoder
             drawPrimitives: MTLPrimitiveTypePoint
             vertexStart: 0
             vertexCount: gpu_shared_data_collection.
@@ -979,10 +1069,72 @@ static bool32_t font_already_pushed = 0;
     profiler_end("draw calls");
     #endif
     
+    [render_pass_1_encoder endEncoding];
+    
+    // TODO: add post processing pipeline
+    MTLRenderPassDescriptor * render_pass_2_descriptor =
+        [view currentRenderPassDescriptor];
+    
+    render_pass_2_descriptor.colorAttachments[0].clearColor =
+        MTLClearColorMake(0.08f, 0.0f, 0.0f, 1.0f);;
+    render_pass_2_descriptor.depthAttachment.loadAction =
+        MTLLoadActionClear;
+    
+    id<MTLRenderCommandEncoder> render_pass_2_encoder =
+        [command_buffer
+            renderCommandEncoderWithDescriptor:
+                render_pass_2_descriptor];
+    
+    [render_pass_2_encoder setViewport: cached_viewport];
+    
+    [render_pass_2_encoder setCullMode:MTLCullModeNone];
+    
+    [render_pass_2_encoder
+        setRenderPipelineState: _postprocess_pipeline_state];
+    // assert(_depth_stencil_state != nil);
+    // [render_encoder setDepthStencilState: _depth_stencil_state];
+    //    [render_pass_2_encoder
+    //        setDepthClipMode: MTLDepthClipModeClip];
+    
+    #define FLVERT 1.0f
+    static const PostProcessingVertex quad_vertices[] =
+    {
+        // Positions     , Texture coordinates
+        { {  FLVERT,  -FLVERT },  { 1.0f, 1.0f } },
+        { { -FLVERT,  -FLVERT },  { 0.0f, 1.0f } },
+        { { -FLVERT,   FLVERT },  { 0.0f, 0.0f } },
+        
+        { {  FLVERT,  -FLVERT },  { 1.0f, 1.0f } },
+        { { -FLVERT,   FLVERT },  { 0.0f, 0.0f } },
+        { {  FLVERT,   FLVERT },  { 1.0f, 0.0f } },
+    };
+    
+    [render_pass_2_encoder
+        setVertexBytes:&quad_vertices
+        length:sizeof(quad_vertices)
+        atIndex:0];
+    
+    [render_pass_2_encoder
+        setVertexBuffer:
+            postprocessing_constants_buffers[current_frame_i]
+        offset:
+            0
+        atIndex:
+            1];
+    
+    [render_pass_2_encoder
+        setFragmentTexture: render_target_texture
+        atIndex:0];
+    
+    [render_pass_2_encoder
+        drawPrimitives:MTLPrimitiveTypeTriangle
+        vertexStart:0
+        vertexCount:6];
+    
     #ifdef PROFILER_ACTIVE
     profiler_start("Commit & present");
     #endif
-    [render_encoder endEncoding];
+    [render_pass_2_encoder endEncoding];
     
     // Schedule a present once the framebuffer is complete
     // using the current drawable

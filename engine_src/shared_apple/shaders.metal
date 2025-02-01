@@ -445,3 +445,78 @@ alphablending_fragment_shader(
     
     return out_color;
 }
+
+struct PostProcessingFragment
+{
+    float4 position [[position]];
+    float2 texcoord;
+    unsigned int curtime;
+};
+
+// Vertex shader which passes position and color through to rasterizer.
+vertex PostProcessingFragment
+postprocess_vertex_shader(
+    const uint vertexID [[ vertex_id ]],
+    const device PostProcessingVertex * vertices [[ buffer(0) ]],
+    const constant GPUPostProcessingConstants * constants [[ buffer(1) ]])
+{
+    PostProcessingFragment out;
+    
+    out.position = vector_float4(
+        vertices[vertexID].position[0],
+        vertices[vertexID].position[1],
+        1.0,
+        1.0);
+    
+    out.texcoord = vector_float2(
+        vertices[vertexID].texcoord[0],
+        vertices[vertexID].texcoord[1]);
+    
+    out.curtime = constants->timestamp;
+    
+    return out;
+}
+
+// Fragment shader that just outputs color passed from rasterizer.
+fragment float4
+postprocess_fragment_shader(
+    PostProcessingFragment in [[stage_in]],
+    texture2d<float> texture [[texture(0)]])
+{
+    float time_adjust = ((float)(in.curtime % 10000001)) * 0.0000001f;
+    
+    float dist_to_50 = fabs(0.5f - time_adjust);
+    
+    sampler simple_sampler;
+    
+    float2 texcoord = in.texcoord;
+    
+    texcoord.x =
+        ((1.0f - dist_to_50) * texcoord.x) +
+        (dist_to_50 * (texcoord.x + 0.03f));
+    texcoord.y =
+        ((1.0f - dist_to_50) * texcoord.y) +
+        (dist_to_50 * (texcoord.y + 0.02f));
+    
+    
+    // Sample data from the texture.
+    float4 color_sample = texture.sample(simple_sampler, texcoord);
+    //    float4 colorSample = vector_float4(0.0f, 1.0f, 0.0f, 1.0f);
+    
+    
+    
+    float4 black_white =
+        (color_sample[0] + color_sample[1] + color_sample[2]) / 3.0f;
+    black_white[2] = color_sample[2];
+    
+    
+    //    color_sample =
+    //        (0.25f * color_sample) +
+    //        (0.75f * black_white);
+    color_sample =
+        ((1.0f - dist_to_50) * color_sample) +
+        (dist_to_50 * black_white);
+    
+    // Return the color sample as the final color.
+    return color_sample;
+}

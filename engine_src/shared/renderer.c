@@ -334,9 +334,6 @@ void renderer_hardware_render(
     log_assert(
         frame_data->polygon_collection->size < MAX_POLYGONS_PER_BUFFER);
     
-    #ifdef PROFILER_ACTIVE
-    profiler_start("tok_memcpy(frame_data->polygon_materials)");
-    #endif
     common_memcpy(
         /* void *__dst: */
             frame_data->polygon_materials,
@@ -346,9 +343,9 @@ void renderer_hardware_render(
             sizeof(GPUPolygonMaterial) *
                 MAX_MATERIALS_PER_POLYGON *
                 zpolygons_to_render->size);
-    #ifdef PROFILER_ACTIVE
-    profiler_end("tok_memcpy(frame_data->polygon_materials)");
-    #endif
+    
+    frame_data->postprocessing_constants->timestamp =
+        (uint32_t)platform_get_current_time_microsecs();
     
     #ifdef PROFILER_ACTIVE
     profiler_start("add_opaque_zpolygons_to_workload()");
