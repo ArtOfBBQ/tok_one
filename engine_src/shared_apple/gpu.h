@@ -22,7 +22,9 @@ void apple_gpu_init(
 @property (retain) id<MTLRenderPipelineState> diamond_pipeline_state;
 @property (retain) id<MTLRenderPipelineState> alphablend_pipeline_state;
 @property (retain) id<MTLRenderPipelineState> raw_pipeline_state;
+#if POSTPROCESSING_ACTIVE
 @property (retain) id<MTLRenderPipelineState> postprocess_pipeline_state;
+#endif
 @property (retain) id<MTLDepthStencilState>   depth_stencil_state;
 
 - (void)

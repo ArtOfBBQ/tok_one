@@ -147,8 +147,8 @@ void commit_zpolygon_to_render(
             to_commit->gpu_materials[mat_i].texturearray_i < TEXTUREARRAYS_SIZE);
         
         for (uint32_t rgba_i = 0; rgba_i < 4; rgba_i++) {
-            log_assert(to_commit->gpu_materials[mat_i].rgba[rgba_i] >= -0.1f);
-            log_assert(to_commit->gpu_materials[mat_i].rgba[rgba_i] <=  1.1f);
+            log_assert(to_commit->gpu_materials[mat_i].rgba[rgba_i] >= - 0.1f);
+            log_assert(to_commit->gpu_materials[mat_i].rgba[rgba_i] <=  15.0f);
         }
     }
     

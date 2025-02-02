@@ -450,10 +450,11 @@ struct PostProcessingFragment
 {
     float4 position [[position]];
     float2 texcoord;
+    float2 screen_width_height;
+    float bloom_threshold;
     unsigned int curtime;
 };
 
-// Vertex shader which passes position and color through to rasterizer.
 vertex PostProcessingFragment
 postprocess_vertex_shader(
     const uint vertexID [[ vertex_id ]],
@@ -472,50 +473,79 @@ postprocess_vertex_shader(
         vertices[vertexID].texcoord[0],
         vertices[vertexID].texcoord[1]);
     
+    out.screen_width_height = vector_float2(
+        constants->screen_width * 2.0f,
+        constants->screen_height * 2.0f);
+    
     out.curtime = constants->timestamp;
+    
+    out.bloom_threshold = vertices[vertexID].bloom_threshold;
     
     return out;
 }
 
-// Fragment shader that just outputs color passed from rasterizer.
 fragment float4
 postprocess_fragment_shader(
     PostProcessingFragment in [[stage_in]],
     texture2d<float> texture [[texture(0)]])
 {
-    float time_adjust = ((float)(in.curtime % 10000001)) * 0.0000001f;
+    float time_adjust = ((((in.curtime / 20000) % 1001)) * 0.001f);
     
-    float dist_to_50 = fabs(0.5f - time_adjust);
+    float timedist = fabs(0.5f - time_adjust) * 2.0f;
+    timedist = clamp(timedist, 0.0f, 1.0f);
+    
+    float dist_to_center = sqrt(
+        (
+        ((in.screen_width_height.x / 2) - in.position.x) *
+        ((in.screen_width_height.x / 2) - in.position.x)
+        ) +
+        (
+        ((in.screen_width_height.y / 2) - in.position.y) *
+        ((in.screen_width_height.y / 2) - in.position.y)
+        ));
+    float dist_to_center_veryhigh = sqrt(
+        (
+            ((in.screen_width_height.x / 2)) *
+            ((in.screen_width_height.x / 2))
+        ) +
+        (
+            ((in.screen_width_height.y / 2)) *
+            ((in.screen_width_height.y / 2))
+        ));
+    
+    float centeredness = 1.4f - (dist_to_center / dist_to_center_veryhigh);
+    centeredness = clamp(centeredness, 0.0f, 1.0f);
+    
+    
+    // float centeredness_time_combo = timedist * (1.0f - centeredness);
     
     sampler simple_sampler;
     
     float2 texcoord = in.texcoord;
     
-    texcoord.x =
-        ((1.0f - dist_to_50) * texcoord.x) +
-        (dist_to_50 * (texcoord.x + 0.03f));
-    texcoord.y =
-        ((1.0f - dist_to_50) * texcoord.y) +
-        (dist_to_50 * (texcoord.y + 0.02f));
-    
-    
     // Sample data from the texture.
     float4 color_sample = texture.sample(simple_sampler, texcoord);
-    //    float4 colorSample = vector_float4(0.0f, 1.0f, 0.0f, 1.0f);
     
+    color_sample = color_sample - in.bloom_threshold;
+    color_sample = clamp(color_sample, 0.0f, 5.0f);
     
+    color_sample[3] =
+        (((float)in.bloom_threshold >= 0.01f) * 0.25f) +
+        (((float)in.bloom_threshold <  0.01f) * 1.00f);
     
-    float4 black_white =
-        (color_sample[0] + color_sample[1] + color_sample[2]) / 3.0f;
-    black_white[2] = color_sample[2];
-    
+    //    float4 black_white =
+    //        (color_sample[0] + color_sample[1] + color_sample[2]) / 3.0f;
+    //
+    //    black_white[0] -= 0.20f;
+    //    black_white[1] -= 0.15f;
+    //    black_white[2]  = color_sample[2] - 0.1f;
     
     //    color_sample =
     //        (0.25f * color_sample) +
     //        (0.75f * black_white);
-    color_sample =
-        ((1.0f - dist_to_50) * color_sample) +
-        (dist_to_50 * black_white);
+    //    color_sample =
+    //        ((1.0f - centeredness_time_combo) * color_sample) +
+    //        ((       centeredness_time_combo) * black_white);
     
     // Return the color sample as the final color.
     return color_sample;

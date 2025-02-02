@@ -43,7 +43,9 @@ static id projection_constants_buffer;
     
     id<MTLDevice> metal_device;
     id<MTLCommandQueue> command_queue;
+    #if POSTPROCESSING_ACTIVE
     id<MTLTexture> render_target_texture;
+    #endif
 }
 
 - (void) copyLockedVertices
@@ -97,6 +99,7 @@ static id projection_constants_buffer;
     *gpu_shared_data_collection.locked_pjc =
         window_globals->projection_constants;
     
+    #if POSTPROCESSING_ACTIVE
     // Set up a texture for rendering to and apply post-processing to
     MTLTextureDescriptor * texture_descriptor = [MTLTextureDescriptor new];
     texture_descriptor.textureType = MTLTextureType2D;
@@ -109,6 +112,7 @@ static id projection_constants_buffer;
     
     render_target_texture = [metal_device
         newTextureWithDescriptor: texture_descriptor];
+    #endif
 }
 
 - (BOOL)
@@ -624,6 +628,7 @@ static id projection_constants_buffer;
         [NSMutableArray alloc]
             initWithCapacity: TEXTUREARRAYS_SIZE];
     
+    #if POSTPROCESSING_ACTIVE
     MTLRenderPipelineDescriptor * postprocess_pipeline_descriptor =
         [[MTLRenderPipelineDescriptor alloc] init];
     id<MTLFunction> postprocess_vertex_shader =
@@ -660,12 +665,15 @@ static id projection_constants_buffer;
         setFragmentFunction: postprocess_fragment_shader];
     postprocess_pipeline_descriptor.colorAttachments[0].pixelFormat =
         pixel_format;
-    //    postprocess_pipeline_descriptor.colorAttachments[0].loadAction =
-    //        MTLStoreActionClear;
-    //    postprocess_pipeline_descriptor.colorAttachments[0].storeAction =
-    //        MTLStoreActionStore;
-    //    postprocess_pipeline_descriptor.depthAttachment.loadAction =
-    //        MTLLoadActionClear;
+    [postprocess_pipeline_descriptor
+        .colorAttachments[0]
+        setBlendingEnabled: YES];
+    postprocess_pipeline_descriptor
+        .colorAttachments[0].sourceRGBBlendFactor =
+            MTLBlendFactorOne;
+    postprocess_pipeline_descriptor
+        .colorAttachments[0].destinationRGBBlendFactor =
+            MTLBlendFactorOne;
     postprocess_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
     postprocess_pipeline_descriptor.vertexBuffers[0].mutability =
@@ -674,6 +682,7 @@ static id projection_constants_buffer;
         with_metal_device
         newRenderPipelineStateWithDescriptor:postprocess_pipeline_descriptor
         error:NULL];
+    #endif
     
     [self updateViewport];
     
@@ -824,15 +833,15 @@ static bool32_t font_already_pushed = 0;
     render_pass_1_descriptor.depthAttachment.loadAction =
         MTLLoadActionClear;
     
-    #if 0
-    render_pass_1_descriptor
-        .colorAttachments[0]
-        .loadAction = MTLLoadActionClear;
-    #else
+    #if POSTPROCESSING_ACTIVE
     render_pass_1_descriptor.colorAttachments[0].texture =
         render_target_texture;
     render_pass_1_descriptor.colorAttachments[0].storeAction =
         MTLStoreActionStore;
+    #else
+    render_pass_1_descriptor
+        .colorAttachments[0]
+        .loadAction = MTLLoadActionClear;
     #endif
     
     render_pass_1_descriptor.colorAttachments[0].clearColor =
@@ -1071,12 +1080,13 @@ static bool32_t font_already_pushed = 0;
     
     [render_pass_1_encoder endEncoding];
     
+    #if POSTPROCESSING_ACTIVE
     // TODO: add post processing pipeline
     MTLRenderPassDescriptor * render_pass_2_descriptor =
         [view currentRenderPassDescriptor];
     
     render_pass_2_descriptor.colorAttachments[0].clearColor =
-        MTLClearColorMake(0.08f, 0.0f, 0.0f, 1.0f);;
+        MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);;
     render_pass_2_descriptor.depthAttachment.loadAction =
         MTLLoadActionClear;
     
@@ -1099,14 +1109,41 @@ static bool32_t font_already_pushed = 0;
     #define FLVERT 1.0f
     static const PostProcessingVertex quad_vertices[] =
     {
-        // Positions     , Texture coordinates
-        { {  FLVERT,  -FLVERT },  { 1.0f, 1.0f } },
-        { { -FLVERT,  -FLVERT },  { 0.0f, 1.0f } },
-        { { -FLVERT,   FLVERT },  { 0.0f, 0.0f } },
+        // Positions     , Texture coordinates,   bloom threshold
+        #define F1_TEX_MAX 1.0f
+        #define F1_TEX_MIN 0.0f
+        #define F1_BLOOM 0.0f
+        { {  FLVERT,  -FLVERT },  { F1_TEX_MAX, F1_TEX_MAX }, F1_BLOOM },
+        { { -FLVERT,  -FLVERT },  { F1_TEX_MIN, F1_TEX_MAX }, F1_BLOOM },
+        { { -FLVERT,   FLVERT },  { F1_TEX_MIN, F1_TEX_MIN }, F1_BLOOM },
         
-        { {  FLVERT,  -FLVERT },  { 1.0f, 1.0f } },
-        { { -FLVERT,   FLVERT },  { 0.0f, 0.0f } },
-        { {  FLVERT,   FLVERT },  { 1.0f, 0.0f } },
+        { {  FLVERT,  -FLVERT },  { F1_TEX_MAX, F1_TEX_MAX }, F1_BLOOM },
+        { { -FLVERT,   FLVERT },  { F1_TEX_MIN, F1_TEX_MIN }, F1_BLOOM },
+        { {  FLVERT,   FLVERT },  { F1_TEX_MAX, F1_TEX_MIN }, F1_BLOOM },
+        
+        // frame 2
+        #define F2_TEX_MAX 0.995f
+        #define F2_TEX_MIN 0.005f
+        #define F2_BLOOM 0.6f
+        { {  FLVERT,  -FLVERT },  { F2_TEX_MAX, F2_TEX_MAX }, F2_BLOOM },
+        { { -FLVERT,  -FLVERT },  { F2_TEX_MIN, F2_TEX_MAX }, F2_BLOOM },
+        { { -FLVERT,   FLVERT },  { F2_TEX_MIN, F2_TEX_MIN }, F2_BLOOM },
+        
+        { {  FLVERT,  -FLVERT },  { F2_TEX_MAX, F2_TEX_MAX }, F2_BLOOM },
+        { { -FLVERT,   FLVERT },  { F2_TEX_MIN, F2_TEX_MIN }, F2_BLOOM },
+        { {  FLVERT,   FLVERT },  { F2_TEX_MAX, F2_TEX_MIN }, F2_BLOOM },
+        
+        // frame 3
+        #define F3_TEX_MAX 0.990f
+        #define F3_TEX_MIN 0.010f
+        #define F3_BLOOM 0.75f
+        { {  FLVERT,  -FLVERT },  { F3_TEX_MAX, F3_TEX_MAX }, F3_BLOOM },
+        { { -FLVERT,  -FLVERT },  { F3_TEX_MIN, F3_TEX_MAX }, F3_BLOOM },
+        { { -FLVERT,   FLVERT },  { F3_TEX_MIN, F3_TEX_MIN }, F3_BLOOM },
+        
+        { {  FLVERT,  -FLVERT },  { F3_TEX_MAX, F3_TEX_MAX }, F3_BLOOM },
+        { { -FLVERT,   FLVERT },  { F3_TEX_MIN, F3_TEX_MIN }, F3_BLOOM },
+        { {  FLVERT,   FLVERT },  { F3_TEX_MAX, F3_TEX_MIN }, F3_BLOOM },
     };
     
     [render_pass_2_encoder
@@ -1135,6 +1172,7 @@ static bool32_t font_already_pushed = 0;
     profiler_start("Commit & present");
     #endif
     [render_pass_2_encoder endEncoding];
+    #endif
     
     // Schedule a present once the framebuffer is complete
     // using the current drawable
