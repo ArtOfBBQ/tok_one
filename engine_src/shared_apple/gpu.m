@@ -1168,9 +1168,6 @@ static bool32_t font_already_pushed = 0;
         vertexStart:0
         vertexCount:6];
     
-    #ifdef PROFILER_ACTIVE
-    profiler_start("Commit & present");
-    #endif
     [render_pass_2_encoder endEncoding];
     #endif
     
@@ -1188,10 +1185,6 @@ static bool32_t font_already_pushed = 0;
     }];
     
     [command_buffer commit];
-    
-    #ifdef PROFILER_ACTIVE
-    profiler_end("Commit & present");
-    #endif
     
     #ifdef PROFILER_ACTIVE
     profiler_end("drawInMTKView");
