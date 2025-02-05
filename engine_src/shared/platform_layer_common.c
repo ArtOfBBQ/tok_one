@@ -186,7 +186,3 @@ void platform_delete_writable(
     
     platform_delete_file(writable_filename);
 }
-
-void platform_assert_mutex_locked(const uint32_t mutex_id) {
-    log_assert(!platform_mutex_trylock(mutex_id));
-}

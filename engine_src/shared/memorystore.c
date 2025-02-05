@@ -2,7 +2,7 @@
 
 #define MEM_ALIGNMENT_BYTES 256
 
-#define MANAGED_MEMORY_STACK_SIZE 500
+#define MANAGED_MEMORY_STACK_SIZE 1000
 typedef struct ManagedMemoryStack {
     void * pointers[MANAGED_MEMORY_STACK_SIZE];
     char sources[MANAGED_MEMORY_STACK_SIZE][512];
@@ -16,7 +16,7 @@ static uint64_t unmanaged_memory_size = UNMANAGED_MEMORY_SIZE;
 static void * managed_memory = NULL;
 static void * managed_memory_end = NULL;
 
-static uint32_t malloc_mutex_id;
+static uint32_t malloc_mutex_id = UINT32_MAX;
 
 void (* memstore_mutex_lock)(const uint32_t mutex_id) = NULL;
 void (* memstore_mutex_unlock)(const uint32_t mutex_id) = NULL;

@@ -13,16 +13,16 @@
 extern "C" {
 #endif
 
+void memorystore_init(
+    void * ptr_unmanaged_memory_block,
+    void * ptr_managed_memory_block,
+    uint32_t (* memstore_init_mutex_and_return_id)(void),
+    void (* ptr_mutex_lock)(const uint32_t mutex_id),
+    void (* ptr_mutex_unlock)(const uint32_t mutex_id));
+
 void get_memory_usage_summary_string(
     char * recipient,
     const uint32_t recipient_cap);
-
-void memorystore_init(
-    void * funcptr_unmanaged_memory_block,
-    void * funcptr_managed_memory_block,
-    uint32_t (* funcptr_init_mutex_and_return_id)(void),
-    void (* funcptr_mutex_lock)(const uint32_t mutex_id),
-    void (* funcptr_mutex_unlock)(const uint32_t mutex_id));
 
 void * malloc_from_unmanaged_aligned(
     const uint64_t size,

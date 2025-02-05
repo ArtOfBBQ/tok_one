@@ -141,6 +141,8 @@ void init_application_before_gpu_init(
     void * managed_memory_store = platform_malloc_unaligned_block(
         MANAGED_MEMORY_SIZE);
     
+    platform_layer_init(&unmanaged_memory_store, 32);
+    
     memorystore_init(
         unmanaged_memory_store,
         managed_memory_store,

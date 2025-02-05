@@ -37,7 +37,7 @@ on each platform
 #import <UIKit/UIKit.h>
 #endif
 
-#define MUTEXES_SIZE 200
+#define MUTEXES_SIZE 100
 
 #ifdef SHARED_APPLE_PLATFORM
 #import <Foundation/Foundation.h>
@@ -72,6 +72,10 @@ extern "C" {
 #include "logger.h"
 #include "decodedimage.h"
 #include "window_size.h"
+
+void platform_layer_init(
+    void ** unmanaged_memory_store,
+    const uint32_t aligned_to);
 
 typedef struct FileBuffer {
     uint64_t size_without_terminator;
