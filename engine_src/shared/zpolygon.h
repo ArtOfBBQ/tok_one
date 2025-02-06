@@ -40,6 +40,7 @@ typedef struct zPolygonCPU {
     int32_t object_id;
     int32_t touchable_id;
     bool32_t alpha_blending_enabled;
+    bool32_t bloom_copies;
     bool32_t committed;
     bool32_t deleted;
     bool32_t visible;
@@ -63,14 +64,15 @@ typedef struct PolygonRequest {
     GPUPolygon * gpu_data;
     GPUPolygonMaterial * gpu_materials;
     zPolygonCPU * cpu_data;
+    uint32_t gpu_data_size;
     uint32_t materials_size;
 } PolygonRequest;
 
-void construct_zpolygon(
-    PolygonRequest * to_construct);
+void construct_zpolygon(PolygonRequest * to_construct);
 // Allocate a PolygonRequest on the stack, then call this
 void request_next_zpolygon(PolygonRequest * stack_recipient);
 void commit_zpolygon_to_render(PolygonRequest * to_commit);
+
 
 /*
 Make a PolygonRequest (on the stack or whatever) and call this with an

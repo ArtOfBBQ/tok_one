@@ -287,6 +287,7 @@ void construct_zpolygon(
     to_construct->cpu_data->object_id = -1;
     to_construct->cpu_data->touchable_id = -1;
     to_construct->cpu_data->visible = true;
+    to_construct->cpu_data->bloom_copies = 1;
     
     to_construct->gpu_materials[0].rgba[0] = 0.75f;
     to_construct->gpu_materials[0].rgba[1] = 0.75f;

@@ -54,7 +54,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "cpu_to_gpu_types.c"
 // 2. Files that are part of the basic platform layer
 #include "apple_audio.m"
-#include "common_platform_layer.c"
+#include "platform_layer_common.c"
 #include "macos_platform_layer.m"
 #include "apple_platform_layer.m"
 #include "linux_apple_platform_layer.c"

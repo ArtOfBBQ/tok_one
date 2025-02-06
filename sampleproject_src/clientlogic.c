@@ -1,6 +1,6 @@
 #include "clientlogic.h"
 
-#define TEAPOT 0
+#define TEAPOT 1
 #if TEAPOT
 static int32_t teapot_mesh_id = -1;
 static int32_t teapot_object_ids[2];
@@ -43,12 +43,12 @@ void client_logic_late_startup(void) {
     light->RGBA[1]       =  0.25f;
     light->RGBA[2]       =  0.25f;
     light->RGBA[3]       =  1.00f;
-    light->ambient       =  0.0f;
+    light->ambient       =  0.25f;
     light->diffuse       =  1.50f;
-    light->reach         =  3.00f;
+    light->reach         =  5.00f;
     light->xyz[0]        = -1.25f;
     light->xyz[1]        =  1.00f;
-    light->xyz[2]        =  0.10f;
+    light->xyz[2]        =  1.50f;
     commit_zlight(light);
     
     light = next_zlight();
@@ -56,9 +56,9 @@ void client_logic_late_startup(void) {
     light->RGBA[1]       =  0.55f;
     light->RGBA[2]       =  0.05f;
     light->RGBA[3]       =  1.00f;
-    light->ambient       =  0.0f;
+    light->ambient       =  0.25f;
     light->diffuse       =  1.50f;
-    light->reach         =  3.00f;
+    light->reach         =  5.00f;
     light->xyz[0]        =  1.55f;
     light->xyz[1]        =  0.60f;
     light->xyz[2]        =  0.10f;
@@ -68,7 +68,7 @@ void client_logic_late_startup(void) {
     teapot_object_ids[0] = next_nonui_object_id();
     teapot_object_ids[1] = next_nonui_object_id();
     
-    for (uint32_t i = 0; i < 2; i++) {
+    for (uint32_t i = 0; i < 1; i++) {
         PolygonRequest teapot_request;
         teapot_request.materials_size = 1;
         request_next_zpolygon(&teapot_request);
@@ -83,7 +83,7 @@ void client_logic_late_startup(void) {
         teapot_request.gpu_data->xyz_multiplier[2] = 0.35f;
         teapot_request.gpu_data->xyz[0]            = 0.00f + (i * 0.20f);
         teapot_request.gpu_data->xyz[1]            = 0.00f + (i * 0.10f);
-        teapot_request.gpu_data->xyz[2]            = 5.00f - (i * 0.25f);
+        teapot_request.gpu_data->xyz[2]            = 1.00f - (i * 0.25f);
         teapot_request.gpu_data->xyz_angle[0]      = 0.00f;
         teapot_request.gpu_data->xyz_angle[1]      = 0.00f;
         teapot_request.gpu_data->xyz_angle[2]      = 0.00f;
@@ -92,16 +92,16 @@ void client_logic_late_startup(void) {
         teapot_touchable_ids[i]                    = next_nonui_touchable_id();
         teapot_request.cpu_data->touchable_id      = teapot_touchable_ids[i];
         for (uint32_t mat_i = 0; mat_i < MAX_MATERIALS_PER_POLYGON; mat_i++) {
-            teapot_request.gpu_materials[mat_i].rgba[0]        =  0.4f;
-            teapot_request.gpu_materials[mat_i].rgba[1]        =  0.4f;
-            teapot_request.gpu_materials[mat_i].rgba[2]        =  0.4f;
+            teapot_request.gpu_materials[mat_i].rgba[0]        =  4.3f;
+            teapot_request.gpu_materials[mat_i].rgba[1]        =  2.7f;
+            teapot_request.gpu_materials[mat_i].rgba[2]        =  2.7f;
             teapot_request.gpu_materials[mat_i].rgba[3]        =  1.0f;
             teapot_request.gpu_materials[mat_i].texturearray_i = -1.0f;
             teapot_request.gpu_materials[mat_i].texture_i      = -1.0f;
             teapot_request.gpu_materials[mat_i].specular       =  1.0f;
             teapot_request.gpu_materials[mat_i].diffuse        =  1.0f;
         }
-        teapot_request.gpu_data->ignore_lighting =  0.0f;
+        teapot_request.gpu_data->ignore_lighting =  1.0f;
         teapot_request.gpu_data->ignore_camera =  0.0f;
         log_assert(teapot_request.gpu_data->xyz_offset[0] == 0.0f);
         log_assert(teapot_request.gpu_data->xyz_offset[1] == 0.0f);
@@ -114,52 +114,66 @@ void client_logic_late_startup(void) {
     #endif
     
     #if 0
-    PolygonRequest quad;
-    request_next_zpolygon(&quad);
-    construct_quad(
-        /* const float left_x: */ -0.5f,
-        /* const float bottom_y: */ 0.25f,
-        /* const float z: */ 1.5f,
-        /* const float width: */ 1.8f,
-        /* const float height: */ 0.4f,
-        /* PolygonRequest * stack_recipient: */ &quad);
-    quad.gpu_materials->texturearray_i = 1;
-    quad.gpu_materials->texture_i      = 0;
-    quad.cpu_data->object_id           = 20;
-    quad.cpu_data->touchable_id        = 5;
-    quad.gpu_data->xyz_offset[0]       = 0.0f;
-    quad.gpu_data->xyz_offset[1]       = 0.0f;
-    quad.gpu_data->xyz_offset[2]       = 0.0f;
-    quad.gpu_data->scale_factor        = 1.0f;
-    quad.gpu_data->xyz_angle[0]        = 0.0f;
-    quad.gpu_data->xyz_angle[1]        = 0.0f;
-    quad.gpu_data->xyz_angle[2]        = 0.0f;
-    quad.gpu_data->ignore_camera       = 1.0f;
-    quad.gpu_materials[0].rgba[3]      = 1.0f;
-    commit_zpolygon_to_render(&quad);
+    PolygonRequest quad[1];
+    for (uint32_t i = 0; i < 1; i++) {
+        request_next_zpolygon(&quad[i]);
+        construct_quad(
+            /* const float left_x: */ -0.5f,
+            /* const float bottom_y: */ 0.25f,
+            /* const float z: */ 1.5f,
+            /* const float width: */ 1.8f,
+            /* const float height: */ 0.4f,
+            /* PolygonRequest * stack_recipient: */ &quad[i]);
+        quad[i].gpu_materials->texturearray_i    = 1;
+        quad[i].gpu_materials->texture_i         = 3;
+        quad[i].gpu_materials->rgba[0]          += (i * 0.31f);
+        quad[i].gpu_materials->rgba[3]           = 1.0f - ((float)i * 0.25f);
+        quad[i].cpu_data->object_id              = 20;
+        quad[i].cpu_data->touchable_id           = 5;
+        quad[i].cpu_data->alpha_blending_enabled = true;
+        quad[i].gpu_data->xyz_offset[0]          = 0.0f;
+        quad[i].gpu_data->xyz_offset[1]          = 0.0f;
+        quad[i].gpu_data->xyz_offset[2]          = 0.0f;
+        quad[i].gpu_data->scale_factor           = 1.0f;
+        quad[i].gpu_data->xyz_angle[0]           = 0.0f;
+        quad[i].gpu_data->xyz_angle[1]           = 0.0f;
+        quad[i].gpu_data->xyz_angle[2]           = 0.0f;
+        quad[i].gpu_data->xyz_multiplier[0]     *= (1.0f + (0.035f * i));
+        quad[i].gpu_data->xyz_multiplier[1]     *= (1.0f + (0.035f * i));
+        quad[i].gpu_data->xyz_multiplier[2]     *= (1.0f + (0.035f * i));
+        quad[i].gpu_data->ignore_camera          = 0.0f;
+        quad[i].gpu_materials[0].rgba[3]         = 1.0f;
+        commit_zpolygon_to_render(&quad[i]);
+    }
     #endif
     
-    font_settings->font_height = 60;
+    #if 0
+    font_settings->font_height = 280;
     font_settings->font_touchable_id = 6;
+    font_settings->font_color[0] = 2.2f;
+    font_settings->font_color[1] = 1.7f;
+    font_settings->font_color[2] = 1.7f;
+    font_settings->font_color[3] = 1.0f;
     font_settings->remove_hitbox = false;
-    font_settings->ignore_camera = false;
+    font_settings->ignore_camera = true;
     text_request_label_renderable(
         /* const int32_t with_object_id: */
             21,
         /* const char * text_to_draw: */
-            "Hello!",
+            "Bloom",
         /* const float left_pixelspace: */
-             50.0f,
+            50.0f,
         /* const float top_pixelspace: */
-            900.0f,
+            300.0f,
         /* const float z: */
-            3.0f,
+            3.5f,
         /* const float max_width: */
-            500.0f);
+            1500.0f);
     font_settings->font_touchable_id = -1;
     log_assert(
         zpolygons_to_render->cpu_data[zpolygons_to_render->size-1].
             object_id == 21);
+    #endif
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {

@@ -20,6 +20,9 @@ of the engine for your specific app.
 #define INITIAL_WINDOW_LEFT        0
 #define INITIAL_WINDOW_BOTTOM      0
 
+
+#define POSTPROCESSING_ACTIVE 1
+
 // The maximum number of polygons/lights to send to the GPU each frame
 // The maximum number of triangle vertices to be stored on gpu permanently
 // #define MAX_POLYGONS_PER_BUFFER   1600

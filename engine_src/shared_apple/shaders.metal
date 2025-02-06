@@ -489,48 +489,50 @@ postprocess_fragment_shader(
     PostProcessingFragment in [[stage_in]],
     texture2d<float> texture [[texture(0)]])
 {
-    float time_adjust = ((((in.curtime / 20000) % 1001)) * 0.001f);
+    //    float time_adjust = ((((in.curtime / 20000) % 1001)) * 0.001f);
+    //
+    //    float timedist = fabs(0.5f - time_adjust) * 2.0f;
+    //    timedist = clamp(timedist, 0.0f, 1.0f);
+    //
+    //    float dist_to_center = sqrt(
+    //        (
+    //        ((in.screen_width_height.x / 2) - in.position.x) *
+    //        ((in.screen_width_height.x / 2) - in.position.x)
+    //        ) +
+    //        (
+    //        ((in.screen_width_height.y / 2) - in.position.y) *
+    //        ((in.screen_width_height.y / 2) - in.position.y)
+    //        ));
+    //    float dist_to_center_veryhigh = sqrt(
+    //        (
+    //            ((in.screen_width_height.x / 2)) *
+    //            ((in.screen_width_height.x / 2))
+    //        ) +
+    //        (
+    //            ((in.screen_width_height.y / 2)) *
+    //            ((in.screen_width_height.y / 2))
+    //        ));
     
-    float timedist = fabs(0.5f - time_adjust) * 2.0f;
-    timedist = clamp(timedist, 0.0f, 1.0f);
-    
-    float dist_to_center = sqrt(
-        (
-        ((in.screen_width_height.x / 2) - in.position.x) *
-        ((in.screen_width_height.x / 2) - in.position.x)
-        ) +
-        (
-        ((in.screen_width_height.y / 2) - in.position.y) *
-        ((in.screen_width_height.y / 2) - in.position.y)
-        ));
-    float dist_to_center_veryhigh = sqrt(
-        (
-            ((in.screen_width_height.x / 2)) *
-            ((in.screen_width_height.x / 2))
-        ) +
-        (
-            ((in.screen_width_height.y / 2)) *
-            ((in.screen_width_height.y / 2))
-        ));
-    
-    float centeredness = 1.4f - (dist_to_center / dist_to_center_veryhigh);
-    centeredness = clamp(centeredness, 0.0f, 1.0f);
+    //    float centeredness = 1.4f - (dist_to_center / dist_to_center_veryhigh);
+    //    centeredness = clamp(centeredness, 0.0f, 1.0f);
     
     
     // float centeredness_time_combo = timedist * (1.0f - centeredness);
     
-    sampler simple_sampler;
+    constexpr sampler sampler(
+        mag_filter::nearest,
+        min_filter::nearest);
     
     float2 texcoord = in.texcoord;
     
     // Sample data from the texture.
-    float4 color_sample = texture.sample(simple_sampler, texcoord);
+    float4 color_sample = texture.sample(sampler, texcoord);
     
     color_sample = color_sample - in.bloom_threshold;
     color_sample = clamp(color_sample, 0.0f, 5.0f);
     
     color_sample[3] =
-        (((float)in.bloom_threshold >= 0.01f) * 0.25f) +
+        (((float)in.bloom_threshold >= 0.01f) * 0.15f) +
         (((float)in.bloom_threshold <  0.01f) * 1.00f);
     
     //    float4 black_white =

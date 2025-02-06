@@ -3,7 +3,7 @@
 bool32_t has_retina_screen = false;
 bool32_t metal_active = false;
 
-static MTLPixelFormat cached_pixel_format;
+static MTLPixelFormat cached_pixel_format_renderpass1;
 
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
 
@@ -105,7 +105,7 @@ static id projection_constants_buffer;
     texture_descriptor.textureType = MTLTextureType2D;
     texture_descriptor.width = (unsigned long)cached_viewport.width;
     texture_descriptor.height = (unsigned long)cached_viewport.height;
-    texture_descriptor.pixelFormat = cached_pixel_format;
+    texture_descriptor.pixelFormat = MTLPixelFormatRGBA16Float;
     texture_descriptor.usage =
         MTLTextureUsageRenderTarget |
         MTLTextureUsageShaderRead;
@@ -117,11 +117,15 @@ static id projection_constants_buffer;
 
 - (BOOL)
     configureMetalWithDevice: (id<MTLDevice>)with_metal_device
-    andPixelFormat: (MTLPixelFormat)pixel_format
     fromFilePath: (NSString *)shader_lib_filepath
     errMsgCStr: (char *)errmsg
 {
-    cached_pixel_format = pixel_format;
+    #if POSTPROCESSING_ACTIVE
+    MTLPixelFormat render_pass_1_format = MTLPixelFormatRGBA16Float;
+    #else
+    MTLPixelFormat render_pass_1_format = MTLPixelFormatRGBA
+    #endif
+    cached_pixel_format_renderpass1 = render_pass_1_format;
     
     current_frame_i = 0;
         
@@ -275,7 +279,7 @@ static id projection_constants_buffer;
         setFragmentFunction: fragment_shader];
     diamond_pipeline_descriptor
         .colorAttachments[0]
-        .pixelFormat = pixel_format;
+        .pixelFormat = render_pass_1_format;
     diamond_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
     _diamond_pipeline_state =
@@ -305,7 +309,7 @@ static id projection_constants_buffer;
         setFragmentFunction: alphablending_fragment_shader];
     alphablend_pipeline_descriptor
         .colorAttachments[0]
-        .pixelFormat = pixel_format;
+        .pixelFormat = render_pass_1_format;
     [alphablend_pipeline_descriptor
         .colorAttachments[0]
         setBlendingEnabled: YES];
@@ -346,7 +350,7 @@ static id projection_constants_buffer;
         setFragmentFunction: raw_fragment_shader];
     raw_pipeline_descriptor
         .colorAttachments[0]
-        .pixelFormat = pixel_format;
+        .pixelFormat = render_pass_1_format;
     [raw_pipeline_descriptor
         .colorAttachments[0]
         setBlendingEnabled: NO];
@@ -664,16 +668,16 @@ static id projection_constants_buffer;
     [postprocess_pipeline_descriptor
         setFragmentFunction: postprocess_fragment_shader];
     postprocess_pipeline_descriptor.colorAttachments[0].pixelFormat =
-        pixel_format;
+        MTLPixelFormatBGRA8Unorm;
     [postprocess_pipeline_descriptor
         .colorAttachments[0]
         setBlendingEnabled: YES];
     postprocess_pipeline_descriptor
         .colorAttachments[0].sourceRGBBlendFactor =
-            MTLBlendFactorOne;
+            MTLBlendFactorSourceAlpha;
     postprocess_pipeline_descriptor
         .colorAttachments[0].destinationRGBBlendFactor =
-            MTLBlendFactorOne;
+            MTLBlendFactorOneMinusSourceAlpha;
     postprocess_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
     postprocess_pipeline_descriptor.vertexBuffers[0].mutability =
@@ -1122,9 +1126,9 @@ static bool32_t font_already_pushed = 0;
         { {  FLVERT,   FLVERT },  { F1_TEX_MAX, F1_TEX_MIN }, F1_BLOOM },
         
         // frame 2
-        #define F2_TEX_MAX 0.995f
-        #define F2_TEX_MIN 0.005f
-        #define F2_BLOOM 0.6f
+        #define F2_TEX_MAX 0.990f
+        #define F2_TEX_MIN 0.010f
+        #define F2_BLOOM 1.0f
         { {  FLVERT,  -FLVERT },  { F2_TEX_MAX, F2_TEX_MAX }, F2_BLOOM },
         { { -FLVERT,  -FLVERT },  { F2_TEX_MIN, F2_TEX_MAX }, F2_BLOOM },
         { { -FLVERT,   FLVERT },  { F2_TEX_MIN, F2_TEX_MIN }, F2_BLOOM },
@@ -1134,9 +1138,9 @@ static bool32_t font_already_pushed = 0;
         { {  FLVERT,   FLVERT },  { F2_TEX_MAX, F2_TEX_MIN }, F2_BLOOM },
         
         // frame 3
-        #define F3_TEX_MAX 0.990f
-        #define F3_TEX_MIN 0.010f
-        #define F3_BLOOM 0.75f
+        #define F3_TEX_MAX 0.980f
+        #define F3_TEX_MIN 0.020f
+        #define F3_BLOOM 1.25f
         { {  FLVERT,  -FLVERT },  { F3_TEX_MAX, F3_TEX_MAX }, F3_BLOOM },
         { { -FLVERT,  -FLVERT },  { F3_TEX_MIN, F3_TEX_MAX }, F3_BLOOM },
         { { -FLVERT,   FLVERT },  { F3_TEX_MIN, F3_TEX_MIN }, F3_BLOOM },
@@ -1144,6 +1148,18 @@ static bool32_t font_already_pushed = 0;
         { {  FLVERT,  -FLVERT },  { F3_TEX_MAX, F3_TEX_MAX }, F3_BLOOM },
         { { -FLVERT,   FLVERT },  { F3_TEX_MIN, F3_TEX_MIN }, F3_BLOOM },
         { {  FLVERT,   FLVERT },  { F3_TEX_MAX, F3_TEX_MIN }, F3_BLOOM },
+        
+        // frame 4
+        #define F4_TEX_MAX 0.970f
+        #define F4_TEX_MIN 0.030f
+        #define F4_BLOOM 1.5f
+        { {  FLVERT,  -FLVERT },  { F4_TEX_MAX, F4_TEX_MAX }, F4_BLOOM },
+        { { -FLVERT,  -FLVERT },  { F4_TEX_MIN, F4_TEX_MAX }, F4_BLOOM },
+        { { -FLVERT,   FLVERT },  { F4_TEX_MIN, F4_TEX_MIN }, F4_BLOOM },
+        
+        { {  FLVERT,  -FLVERT },  { F4_TEX_MAX, F4_TEX_MAX }, F4_BLOOM },
+        { { -FLVERT,   FLVERT },  { F4_TEX_MIN, F4_TEX_MIN }, F4_BLOOM },
+        { {  FLVERT,   FLVERT },  { F4_TEX_MAX, F4_TEX_MIN }, F4_BLOOM },
     };
     
     [render_pass_2_encoder
@@ -1166,7 +1182,7 @@ static bool32_t font_already_pushed = 0;
     [render_pass_2_encoder
         drawPrimitives:MTLPrimitiveTypeTriangle
         vertexStart:0
-        vertexCount:6];
+        vertexCount:24];
     
     [render_pass_2_encoder endEncoding];
     #endif

@@ -19,7 +19,8 @@ void platform_layer_init(
         size += 1;
     }
     
-    *unmanaged_memory_store += size;
+    *unmanaged_memory_store = (void *)(
+        ((char *)*unmanaged_memory_store) + size);
 }
 
 uint32_t platform_init_mutex_and_return_id(void) {

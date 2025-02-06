@@ -476,7 +476,6 @@ int main(int argc, const char * argv[]) {
      
     BOOL result = [apple_gpu_delegate
         configureMetalWithDevice: metal_device
-        andPixelFormat: mtk_view.colorPixelFormat
         fromFilePath: shader_lib_path
         errMsgCStr: errmsg];
     

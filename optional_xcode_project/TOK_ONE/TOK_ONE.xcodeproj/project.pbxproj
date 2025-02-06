@@ -24,7 +24,6 @@
 		60A998F2287BD4C3003F7159 /* renderer.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287B2862511700F92967 /* renderer.h */; };
 		60A998F4287BD4C3003F7159 /* apple_platform_layer.m in Sources */ = {isa = PBXBuildFile; fileRef = 60112896286253C100F92967 /* apple_platform_layer.m */; };
 		60A998F5287BD4C3003F7159 /* texture_array.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128682862511500F92967 /* texture_array.h */; };
-		60A998F6287BD4C3003F7159 /* common_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128722862511600F92967 /* common_platform_layer.c */; };
 		60A998F7287BD4C3003F7159 /* logger.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287F2862511700F92967 /* logger.c */; };
 		60A998F8287BD4C3003F7159 /* common.h in Sources */ = {isa = PBXBuildFile; fileRef = 6080CC472870182700444118 /* common.h */; };
 		60A998FA287BD4C3003F7159 /* renderer.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011286C2862511500F92967 /* renderer.c */; };
@@ -116,6 +115,8 @@
 		ECC47A6129E9111C0082A7C6 /* disk.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECC47A5F29E9111C0082A7C6 /* disk.obj */; };
 		ECE759CE2C3FF1BE004B0847 /* collision.c in Sources */ = {isa = PBXBuildFile; fileRef = ECE759CC2C3FF1BE004B0847 /* collision.c */; };
 		ECE759D12C400175004B0847 /* lines.c in Sources */ = {isa = PBXBuildFile; fileRef = ECE759D02C400175004B0847 /* lines.c */; };
+		ECF7CB172D53ADA400623C60 /* platform_layer_common.c in Sources */ = {isa = PBXBuildFile; fileRef = ECF7CB142D53ADA400623C60 /* platform_layer_common.c */; };
+		ECF7CB182D53ADA400623C60 /* profiler.c in Sources */ = {isa = PBXBuildFile; fileRef = ECF7CB152D53ADA400623C60 /* profiler.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -140,7 +141,6 @@
 		6011286F2862511600F92967 /* common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = common.c; path = ../../engine_src/shared/common.c; sourceTree = "<group>"; };
 		601128702862511600F92967 /* clientlogic.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = clientlogic.c; path = ../../sampleproject_src/clientlogic.c; sourceTree = "<group>"; };
 		601128712862511600F92967 /* lightsource.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lightsource.h; path = ../../engine_src/shared/lightsource.h; sourceTree = "<group>"; };
-		601128722862511600F92967 /* common_platform_layer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = common_platform_layer.c; path = ../../engine_src/shared/common_platform_layer.c; sourceTree = "<group>"; };
 		601128742862511600F92967 /* text.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = text.c; path = ../../engine_src/shared/text.c; sourceTree = "<group>"; };
 		601128752862511600F92967 /* logger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = logger.h; path = ../../engine_src/shared/logger.h; sourceTree = "<group>"; };
 		601128762862511600F92967 /* cpu_to_gpu_types.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = cpu_to_gpu_types.h; path = ../../engine_src/shared/cpu_to_gpu_types.h; sourceTree = "<group>"; };
@@ -234,6 +234,9 @@
 		ECE759CD2C3FF1BE004B0847 /* collision.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = collision.h; path = ../../engine_src/shared/collision.h; sourceTree = "<group>"; };
 		ECE759CF2C400174004B0847 /* lines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lines.h; path = ../../engine_src/shared/lines.h; sourceTree = "<group>"; };
 		ECE759D02C400175004B0847 /* lines.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lines.c; path = ../../engine_src/shared/lines.c; sourceTree = "<group>"; };
+		ECF7CB142D53ADA400623C60 /* platform_layer_common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = platform_layer_common.c; path = ../../engine_src/shared/platform_layer_common.c; sourceTree = "<group>"; };
+		ECF7CB152D53ADA400623C60 /* profiler.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = profiler.c; path = ../../engine_src/shared/profiler.c; sourceTree = "<group>"; };
+		ECF7CB162D53ADA400623C60 /* profiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = profiler.h; path = ../../engine_src/shared/profiler.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -370,7 +373,6 @@
 				EC6E12132A03BD8F004E7BD1 /* clientlogic.h */,
 				ECE759CC2C3FF1BE004B0847 /* collision.c */,
 				ECE759CD2C3FF1BE004B0847 /* collision.h */,
-				601128722862511600F92967 /* common_platform_layer.c */,
 				6011286F2862511600F92967 /* common.c */,
 				6080CC472870182700444118 /* common.h */,
 				6011287A2862511600F92967 /* cpu_gpu_shared_types.h */,
@@ -405,7 +407,10 @@
 				EC083A382AFF727900234FE3 /* objparser.h */,
 				EC31932329DFAAFB00E320CD /* particle.c */,
 				EC31932229DFAAFB00E320CD /* particle.h */,
+				ECF7CB142D53ADA400623C60 /* platform_layer_common.c */,
 				601128832862511700F92967 /* platform_layer.h */,
+				ECF7CB152D53ADA400623C60 /* profiler.c */,
+				ECF7CB162D53ADA400623C60 /* profiler.h */,
 				6011286C2862511500F92967 /* renderer.c */,
 				6011287B2862511700F92967 /* renderer.h */,
 				6011287D2862511700F92967 /* scheduled_animations.c */,
@@ -597,6 +602,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ECF7CB172D53ADA400623C60 /* platform_layer_common.c in Sources */,
 				ECB05E4E2950864000050BD4 /* gpu.m in Sources */,
 				60A99919287BD4C4003F7159 /* memorystore.h in Sources */,
 				60A998FE287BD4C3003F7159 /* memorystore.c in Sources */,
@@ -626,6 +632,7 @@
 				6028DD342886EE54000E1E98 /* init_application.c in Sources */,
 				EC083A3B2AFF727900234FE3 /* objparser.c in Sources */,
 				60A99903287BD4C3003F7159 /* userinput.c in Sources */,
+				ECF7CB182D53ADA400623C60 /* profiler.c in Sources */,
 				EC78509B29E62CA800E6882A /* objmodel.c in Sources */,
 				60A9990B287BD4C3003F7159 /* decodedimage.h in Sources */,
 				EC914B7F2B8AD447007FCBFC /* audio.c in Sources */,
@@ -639,7 +646,6 @@
 				ECE759D12C400175004B0847 /* lines.c in Sources */,
 				60A99902287BD4C3003F7159 /* decode_png.h in Sources */,
 				60A998F7287BD4C3003F7159 /* logger.c in Sources */,
-				60A998F6287BD4C3003F7159 /* common_platform_layer.c in Sources */,
 				60A99912287BD4C4003F7159 /* userinput.h in Sources */,
 				60A998FD287BD4C3003F7159 /* decodedimage.c in Sources */,
 				60A998F5287BD4C3003F7159 /* texture_array.h in Sources */,
@@ -1028,6 +1034,7 @@
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				OTHER_CFLAGS = "\"-D SHARED_APPLE_PLATFORM\"";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.TOK.TOKONE-iphone";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -1104,6 +1111,7 @@
 				MARKETING_VERSION = 1.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
+				OTHER_CFLAGS = "\"-D SHARED_APPLE_PLATFORM\"";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.TOK.TOKONE-iphone";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;

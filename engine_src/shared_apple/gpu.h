@@ -41,7 +41,6 @@ void apple_gpu_init(
     pixelValues: (uint8_t *)rgba_values;
 - (BOOL)
     configureMetalWithDevice: (id<MTLDevice>)with_metal_device
-    andPixelFormat: (MTLPixelFormat)pixel_format
     fromFilePath: (NSString *)shader_lib_filepath
     errMsgCStr: (char *)errmsg;
 - (void)
