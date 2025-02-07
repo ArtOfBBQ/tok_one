@@ -344,12 +344,8 @@ void renderer_hardware_render(
                 MAX_MATERIALS_PER_POLYGON *
                 zpolygons_to_render->size);
     
-    frame_data->postprocessing_constants->timestamp =
-        (uint32_t)platform_get_current_time_microsecs();
-    frame_data->postprocessing_constants->screen_width =
-        window_globals->window_width;
-    frame_data->postprocessing_constants->screen_height =
-        window_globals->window_height;
+    *frame_data->postprocessing_constants =
+        window_globals->postprocessing_constants;
     
     #ifdef PROFILER_ACTIVE
     profiler_start("add_opaque_zpolygons_to_workload()");

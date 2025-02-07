@@ -45,6 +45,7 @@ static id projection_constants_buffer;
     id<MTLCommandQueue> command_queue;
     #if POSTPROCESSING_ACTIVE
     id<MTLTexture> render_target_texture;
+    id<MTLTexture> downsampled_target_texture;
     #endif
 }
 
@@ -109,9 +110,28 @@ static id projection_constants_buffer;
     texture_descriptor.usage =
         MTLTextureUsageRenderTarget |
         MTLTextureUsageShaderRead;
+    texture_descriptor.mipmapLevelCount = 1;
     
     render_target_texture = [metal_device
         newTextureWithDescriptor: texture_descriptor];
+    
+    MTLTextureDescriptor * downsampled_target_texture_desc =
+        [MTLTextureDescriptor new];
+    downsampled_target_texture_desc.textureType = MTLTextureType2D;
+    downsampled_target_texture_desc.width =
+        (unsigned long)cached_viewport.width /
+            window_globals->pixelation_div;
+    downsampled_target_texture_desc.height =
+        (unsigned long)cached_viewport.height /
+            window_globals->pixelation_div;
+    downsampled_target_texture_desc.pixelFormat = MTLPixelFormatRGBA16Float;
+    downsampled_target_texture_desc.mipmapLevelCount = 1;
+    downsampled_target_texture_desc.usage =
+        MTLTextureUsageRenderTarget |
+        MTLTextureUsageShaderRead;
+    
+    downsampled_target_texture = [metal_device
+        newTextureWithDescriptor: downsampled_target_texture_desc];
     #endif
 }
 
@@ -123,7 +143,7 @@ static id projection_constants_buffer;
     #if POSTPROCESSING_ACTIVE
     MTLPixelFormat render_pass_1_format = MTLPixelFormatRGBA16Float;
     #else
-    MTLPixelFormat render_pass_1_format = MTLPixelFormatRGBA
+    MTLPixelFormat render_pass_1_format = MTLPixelFormatBGRA8Unorm;
     #endif
     cached_pixel_format_renderpass1 = render_pass_1_format;
     
@@ -633,8 +653,8 @@ static id projection_constants_buffer;
             initWithCapacity: TEXTUREARRAYS_SIZE];
     
     #if POSTPROCESSING_ACTIVE
-    MTLRenderPipelineDescriptor * postprocess_pipeline_descriptor =
-        [[MTLRenderPipelineDescriptor alloc] init];
+    // TODO: rename this to "quad_to_texture_vertex_shader"?
+    // TODO: it's not only used in postprocessing
     id<MTLFunction> postprocess_vertex_shader =
         [shader_library newFunctionWithName:
             @"postprocess_vertex_shader"];
@@ -648,6 +668,48 @@ static id projection_constants_buffer;
         return false;
     }
     
+    id<MTLFunction> downsampling_fragment_shader =
+        [shader_library newFunctionWithName: @"downsampling_fragment_shader"];
+    if (downsampling_fragment_shader == NULL) {
+        log_append("Missing function: downsampling_fragment_shader()!");
+        common_strcpy_capped(
+            errmsg,
+            512,
+            "Missing function: downsampling_fragment_shader()");
+        return false;
+    }
+    
+    
+    // Downsampling
+    MTLRenderPipelineDescriptor * downsampling_pipeline_descriptor =
+        [[MTLRenderPipelineDescriptor alloc] init];
+    downsampling_pipeline_descriptor.label = @"Downsampling Pipeline";
+    downsampling_pipeline_descriptor.sampleCount = 1;
+    [downsampling_pipeline_descriptor
+        setVertexFunction: postprocess_vertex_shader];
+    [downsampling_pipeline_descriptor
+        setFragmentFunction: downsampling_fragment_shader];
+    downsampling_pipeline_descriptor.colorAttachments[0].pixelFormat =
+        MTLPixelFormatRGBA16Float;
+    [downsampling_pipeline_descriptor
+        .colorAttachments[0]
+        setBlendingEnabled: YES];
+    downsampling_pipeline_descriptor
+        .colorAttachments[0].sourceRGBBlendFactor =
+            MTLBlendFactorSourceAlpha;
+    downsampling_pipeline_descriptor
+        .colorAttachments[0].destinationRGBBlendFactor =
+            MTLBlendFactorOneMinusSourceAlpha;
+    downsampling_pipeline_descriptor.depthAttachmentPixelFormat =
+        MTLPixelFormatDepth32Float;
+    downsampling_pipeline_descriptor.vertexBuffers[0].mutability =
+        MTLMutabilityImmutable;
+    _downsampler_pipeline_state = [
+        with_metal_device
+        newRenderPipelineStateWithDescriptor:downsampling_pipeline_descriptor
+        error:NULL];
+    
+    // Post processing
     id<MTLFunction> postprocess_fragment_shader =
         [shader_library newFunctionWithName: @"postprocess_fragment_shader"];
     if (postprocess_fragment_shader == NULL) {
@@ -658,6 +720,9 @@ static id projection_constants_buffer;
             "Missing function: postprocess_fragment_shader()");
         return false;
     }
+    
+    MTLRenderPipelineDescriptor * postprocess_pipeline_descriptor =
+        [[MTLRenderPipelineDescriptor alloc] init];
     
     // Set up pipeline for rendering the texture to the screen with a simple
     // quad
@@ -849,7 +914,7 @@ static bool32_t font_already_pushed = 0;
     #endif
     
     render_pass_1_descriptor.colorAttachments[0].clearColor =
-        MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);;
+        MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);
     
     // this inherits from the view's cleardepth (in macos/main.m for mac os),
     // don't set it here
@@ -985,7 +1050,7 @@ static bool32_t font_already_pushed = 0;
     #endif
     uint32_t diamond_verts_size =
         gpu_shared_data_collection.
-                triple_buffers[current_frame_i].first_alphablend_i;
+            triple_buffers[current_frame_i].first_alphablend_i;
     
     if (window_globals->draw_triangles && diamond_verts_size > 0) {
         assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);
@@ -1084,89 +1149,52 @@ static bool32_t font_already_pushed = 0;
     
     [render_pass_1_encoder endEncoding];
     
+    
+    
+    
+    
     #if POSTPROCESSING_ACTIVE
-    // TODO: add post processing pipeline
+    #define FLVERT 1.0f
+    #define TEX_MAX 1.0f
+    #define TEX_MIN 0.0f
+    static const PostProcessingVertex quad_vertices[] =
+    {
+        // Positions     , Texture coordinates,   bloom threshold
+        {{  FLVERT,  -FLVERT },  { TEX_MAX, TEX_MAX }},
+        {{ -FLVERT,  -FLVERT },  { TEX_MIN, TEX_MAX }},
+        {{ -FLVERT,   FLVERT },  { TEX_MIN, TEX_MIN }},
+        
+        {{  FLVERT,  -FLVERT },  { TEX_MAX, TEX_MAX }},
+        {{ -FLVERT,   FLVERT },  { TEX_MIN, TEX_MIN }},
+        {{  FLVERT,   FLVERT },  { TEX_MAX, TEX_MIN }},
+    };
+    
+    // Render pass 2 downsamples the original texture
     MTLRenderPassDescriptor * render_pass_2_descriptor =
         [view currentRenderPassDescriptor];
-    
-    render_pass_2_descriptor.colorAttachments[0].clearColor =
-        MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);;
+    render_pass_2_descriptor.colorAttachments[0].texture =
+        downsampled_target_texture;
     render_pass_2_descriptor.depthAttachment.loadAction =
         MTLLoadActionClear;
-    
     id<MTLRenderCommandEncoder> render_pass_2_encoder =
         [command_buffer
             renderCommandEncoderWithDescriptor:
                 render_pass_2_descriptor];
-    
-    [render_pass_2_encoder setViewport: cached_viewport];
-    
+    MTLViewport smaller_viewport = cached_viewport;
+    smaller_viewport.width /= window_globals->pixelation_div;
+    smaller_viewport.height /= window_globals->pixelation_div;
+    [render_pass_2_encoder setViewport: smaller_viewport];
     [render_pass_2_encoder setCullMode:MTLCullModeNone];
-    
     [render_pass_2_encoder
-        setRenderPipelineState: _postprocess_pipeline_state];
-    // assert(_depth_stencil_state != nil);
-    // [render_encoder setDepthStencilState: _depth_stencil_state];
-    //    [render_pass_2_encoder
-    //        setDepthClipMode: MTLDepthClipModeClip];
-    
-    #define FLVERT 1.0f
-    static const PostProcessingVertex quad_vertices[] =
-    {
-        // Positions     , Texture coordinates,   bloom threshold
-        #define F1_TEX_MAX 1.0f
-        #define F1_TEX_MIN 0.0f
-        #define F1_BLOOM 0.0f
-        { {  FLVERT,  -FLVERT },  { F1_TEX_MAX, F1_TEX_MAX }, F1_BLOOM },
-        { { -FLVERT,  -FLVERT },  { F1_TEX_MIN, F1_TEX_MAX }, F1_BLOOM },
-        { { -FLVERT,   FLVERT },  { F1_TEX_MIN, F1_TEX_MIN }, F1_BLOOM },
-        
-        { {  FLVERT,  -FLVERT },  { F1_TEX_MAX, F1_TEX_MAX }, F1_BLOOM },
-        { { -FLVERT,   FLVERT },  { F1_TEX_MIN, F1_TEX_MIN }, F1_BLOOM },
-        { {  FLVERT,   FLVERT },  { F1_TEX_MAX, F1_TEX_MIN }, F1_BLOOM },
-        
-        // frame 2
-        #define F2_TEX_MAX 0.990f
-        #define F2_TEX_MIN 0.010f
-        #define F2_BLOOM 1.0f
-        { {  FLVERT,  -FLVERT },  { F2_TEX_MAX, F2_TEX_MAX }, F2_BLOOM },
-        { { -FLVERT,  -FLVERT },  { F2_TEX_MIN, F2_TEX_MAX }, F2_BLOOM },
-        { { -FLVERT,   FLVERT },  { F2_TEX_MIN, F2_TEX_MIN }, F2_BLOOM },
-        
-        { {  FLVERT,  -FLVERT },  { F2_TEX_MAX, F2_TEX_MAX }, F2_BLOOM },
-        { { -FLVERT,   FLVERT },  { F2_TEX_MIN, F2_TEX_MIN }, F2_BLOOM },
-        { {  FLVERT,   FLVERT },  { F2_TEX_MAX, F2_TEX_MIN }, F2_BLOOM },
-        
-        // frame 3
-        #define F3_TEX_MAX 0.980f
-        #define F3_TEX_MIN 0.020f
-        #define F3_BLOOM 1.25f
-        { {  FLVERT,  -FLVERT },  { F3_TEX_MAX, F3_TEX_MAX }, F3_BLOOM },
-        { { -FLVERT,  -FLVERT },  { F3_TEX_MIN, F3_TEX_MAX }, F3_BLOOM },
-        { { -FLVERT,   FLVERT },  { F3_TEX_MIN, F3_TEX_MIN }, F3_BLOOM },
-        
-        { {  FLVERT,  -FLVERT },  { F3_TEX_MAX, F3_TEX_MAX }, F3_BLOOM },
-        { { -FLVERT,   FLVERT },  { F3_TEX_MIN, F3_TEX_MIN }, F3_BLOOM },
-        { {  FLVERT,   FLVERT },  { F3_TEX_MAX, F3_TEX_MIN }, F3_BLOOM },
-        
-        // frame 4
-        #define F4_TEX_MAX 0.970f
-        #define F4_TEX_MIN 0.030f
-        #define F4_BLOOM 1.5f
-        { {  FLVERT,  -FLVERT },  { F4_TEX_MAX, F4_TEX_MAX }, F4_BLOOM },
-        { { -FLVERT,  -FLVERT },  { F4_TEX_MIN, F4_TEX_MAX }, F4_BLOOM },
-        { { -FLVERT,   FLVERT },  { F4_TEX_MIN, F4_TEX_MIN }, F4_BLOOM },
-        
-        { {  FLVERT,  -FLVERT },  { F4_TEX_MAX, F4_TEX_MAX }, F4_BLOOM },
-        { { -FLVERT,   FLVERT },  { F4_TEX_MIN, F4_TEX_MIN }, F4_BLOOM },
-        { {  FLVERT,   FLVERT },  { F4_TEX_MAX, F4_TEX_MIN }, F4_BLOOM },
-    };
-    
+        setRenderPipelineState: _downsampler_pipeline_state];
     [render_pass_2_encoder
         setVertexBytes:&quad_vertices
         length:sizeof(quad_vertices)
         atIndex:0];
-    
+    [render_pass_2_encoder
+        setVertexBytes:&quad_vertices
+        length:sizeof(quad_vertices)
+        atIndex:0];
     [render_pass_2_encoder
         setVertexBuffer:
             postprocessing_constants_buffers[current_frame_i]
@@ -1174,17 +1202,65 @@ static bool32_t font_already_pushed = 0;
             0
         atIndex:
             1];
-    
     [render_pass_2_encoder
         setFragmentTexture: render_target_texture
         atIndex:0];
-    
     [render_pass_2_encoder
         drawPrimitives:MTLPrimitiveTypeTriangle
         vertexStart:0
         vertexCount:6];
-    
     [render_pass_2_encoder endEncoding];
+    
+    // Render pass 3 blends the downsampled texture & the original texture
+    MTLRenderPassDescriptor * render_pass_3_descriptor =
+        [view currentRenderPassDescriptor];
+    
+    render_pass_3_descriptor.colorAttachments[0].clearColor =
+        MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);;
+    render_pass_3_descriptor.depthAttachment.loadAction =
+        MTLLoadActionClear;
+    id<MTLRenderCommandEncoder> render_pass_3_encoder =
+        [command_buffer
+            renderCommandEncoderWithDescriptor:
+                render_pass_3_descriptor];
+    
+    [render_pass_3_encoder setViewport: cached_viewport];
+    
+    [render_pass_3_encoder setCullMode:MTLCullModeNone];
+    
+    [render_pass_3_encoder
+        setRenderPipelineState: _postprocess_pipeline_state];
+    // assert(_depth_stencil_state != nil);
+    // [render_encoder setDepthStencilState: _depth_stencil_state];
+    //    [render_pass_2_encoder
+    //        setDepthClipMode: MTLDepthClipModeClip];
+    
+    [render_pass_3_encoder
+        setVertexBytes:&quad_vertices
+        length:sizeof(quad_vertices)
+        atIndex:0];
+    
+    [render_pass_3_encoder
+        setVertexBuffer:
+            postprocessing_constants_buffers[current_frame_i]
+        offset:
+            0
+        atIndex:
+            1];
+    
+    [render_pass_3_encoder
+        setFragmentTexture: render_target_texture
+        atIndex:0];
+    [render_pass_3_encoder
+        setFragmentTexture: downsampled_target_texture
+        atIndex:1];
+    
+    [render_pass_3_encoder
+        drawPrimitives:MTLPrimitiveTypeTriangle
+        vertexStart:0
+        vertexCount:6];
+    
+    [render_pass_3_encoder endEncoding];
     #endif
     
     // Schedule a present once the framebuffer is complete

@@ -57,6 +57,8 @@ typedef struct WindowGlobals {
     float last_clickray_direction[3];
     float last_clickray_collision[3];
     
+    uint32_t pixelation_div;
+    
     float window_height;
     float window_width;
     float window_left;
@@ -64,6 +66,7 @@ typedef struct WindowGlobals {
     float aspect_ratio;
     
     uint64_t last_resize_request_at;
+    GPUPostProcessingConstants postprocessing_constants;
     GPUProjectionConstants projection_constants;
 } WindowGlobals;
 

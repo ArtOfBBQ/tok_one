@@ -559,6 +559,43 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
+        common_are_equal_strings(command, "BLUR BUFFER"))
+    {
+        common_strcpy_capped(
+            response,
+            SINGLE_LINE_MAX,
+            "Inspect the blur buffer... use 'STANDARD BUFFERS' to undo");
+        window_globals->postprocessing_constants.nonblur_pct = 0.02f;
+        window_globals->postprocessing_constants.blur_pct = 1.0f;
+        return true;
+    }
+    
+    if (
+        common_are_equal_strings(command, "NONBLUR BUFFER"))
+    {
+        common_strcpy_capped(
+            response,
+            SINGLE_LINE_MAX,
+            "Inspect the non-blur buffer... use 'STANDARD BUFFERS' to undo");
+        window_globals->postprocessing_constants.nonblur_pct = 1.0f;
+        window_globals->postprocessing_constants.blur_pct = 0.0f;
+        return true;
+    }
+    
+    if (
+        common_are_equal_strings(command, "STANDARD BUFFER") ||
+        common_are_equal_strings(command, "STANDARD BUFFERS"))
+    {
+        common_strcpy_capped(
+            response,
+            SINGLE_LINE_MAX,
+            "Reverted to standard blur+non-blur composite...");
+        window_globals->postprocessing_constants.nonblur_pct = 1.0f;
+        window_globals->postprocessing_constants.blur_pct = 1.0f;
+        return true;
+    }
+    
+    if (
         common_are_equal_strings(command, "WINDOW"))
     {
         common_strcpy_capped(

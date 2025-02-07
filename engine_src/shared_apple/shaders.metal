@@ -451,7 +451,8 @@ struct PostProcessingFragment
     float4 position [[position]];
     float2 texcoord;
     float2 screen_width_height;
-    float bloom_threshold;
+    float blur_pct;
+    float nonblur_pct;
     unsigned int curtime;
 };
 
@@ -479,15 +480,45 @@ postprocess_vertex_shader(
     
     out.curtime = constants->timestamp;
     
-    out.bloom_threshold = vertices[vertexID].bloom_threshold;
+    out.blur_pct = constants->blur_pct;
+    
+    out.nonblur_pct = constants->nonblur_pct;
     
     return out;
 }
 
 fragment float4
-postprocess_fragment_shader(
+downsampling_fragment_shader(
     PostProcessingFragment in [[stage_in]],
     texture2d<float> texture [[texture(0)]])
+{
+    float2 texcoord = in.texcoord;
+    
+    constexpr sampler sampler(
+        mag_filter::nearest,
+        min_filter::nearest);
+    
+    float texel_size = 0.003f;
+    float4 color_sample = vector_float4(0.0f, 0.0f, 0.0f, 0.0f);
+    for (float x = -1.0f; x < 1.1f; x += 1.0f) {
+        for (float y = -1.0f; y < 1.1f; y+= 1.0f) {
+            color_sample += texture.sample(
+                sampler,
+                texcoord + (vector_float2(x, y)*texel_size));
+        }
+    }
+    color_sample /= 9.0f;
+    
+    color_sample[3] = 1.0f;
+    
+    return color_sample;
+}
+
+fragment float4
+postprocess_fragment_shader(
+    PostProcessingFragment in [[stage_in]],
+    texture2d<float> texture [[texture(0)]],
+    texture2d<float> downsampled_texture [[texture(1)]])
 {
     constexpr sampler sampler(
         mag_filter::nearest,
@@ -495,34 +526,19 @@ postprocess_fragment_shader(
     
     float2 texcoord = in.texcoord;
     
-    // Sample data from the texture.
-    // float4 blurred_sample = vector_float4(0.0f, 0.0f, 0.0f, 0.0f);
-    
-    //    float2 texel_width_height = vector_float2(
-    //        1.0 / in.screen_width_height.x,
-    //        1.0 / in.screen_width_height.y);
-    
-    //    int kernel_size = 1;
-    //    for (int x = -kernel_size; x < kernel_size; x++) {
-    //        for (int y = -kernel_size; y < kernel_size; y++) {
-    //            float2 xy = vector_float2(x, y);
-    //            blurred_sample += texture.sample(
-    //                sampler,
-    //                texcoord + (xy * texel_width_height));
-    //        }
-    //    }
-    //    blurred_sample /= ((kernel_size * 2) + 1)*((kernel_size * 2) + 1);
-    
     float4 color_sample = texture.sample(sampler, texcoord);
+    color_sample[3] = 1.0f;
+    float4 blur_sample  = downsampled_texture.sample(sampler, texcoord);
+    blur_sample -= 0.9f;
+    blur_sample = clamp(blur_sample, 0.0, 5.0f);
+    
+    color_sample =
+        (color_sample * in.nonblur_pct) +
+        (blur_sample * in.blur_pct);
     
     color_sample = clamp(color_sample, 0.0f, 5.0f);
-    // color_sample = color_sample - in.bloom_threshold;
     
-    // blurred_sample[3] = 1.0f;
     color_sample[3] = 1.0f;
-    //    color_sample[3] =
-    //        (((float)in.bloom_threshold >= 0.01f) * 0.15f) +
-    //        (((float)in.bloom_threshold <  0.01f) * 1.00f);
     
     return color_sample;
 }

@@ -120,6 +120,8 @@ typedef struct GPUPostProcessingConstants
     unsigned int timestamp;
     float screen_width;
     float screen_height;
+    float nonblur_pct;
+    float blur_pct;
 } GPUPostProcessingConstants;
 
 typedef struct GPURawVertex {
@@ -131,8 +133,6 @@ typedef struct PostProcessingVertex
 {
     float position[2];
     float texcoord[2];
-    float bloom_threshold; // set to 0.0 for base (show all pixels),
-                           // 1.0 to filter everything below 1.0
 } PostProcessingVertex;
 
 #pragma pack(pop)
