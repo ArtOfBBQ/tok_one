@@ -1182,7 +1182,7 @@ static bool32_t font_already_pushed = 0;
     [render_pass_2_encoder
         drawPrimitives:MTLPrimitiveTypeTriangle
         vertexStart:0
-        vertexCount:24];
+        vertexCount:6];
     
     [render_pass_2_encoder endEncoding];
     #endif
