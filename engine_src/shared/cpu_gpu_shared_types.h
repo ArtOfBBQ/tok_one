@@ -115,6 +115,14 @@ typedef struct GPUProjectionConstants {
     float padding;
 } GPUProjectionConstants;
 
+typedef struct GPUDownsamplingConstants
+{
+    float texture_width;
+    float texture_height;
+    float brightness_threshold;
+    float brightness_reduction;
+} GPUDownsamplingConstants;
+
 typedef struct GPUPostProcessingConstants
 {
     unsigned int timestamp;

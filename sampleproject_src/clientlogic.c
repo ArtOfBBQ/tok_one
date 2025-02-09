@@ -113,7 +113,7 @@ void client_logic_late_startup(void) {
     }
     #endif
     
-    #if 1
+    #if 0
     // phoebus.png
     PolygonRequest quad[1];
     for (uint32_t i = 0; i < 1; i++) {
@@ -152,7 +152,7 @@ void client_logic_late_startup(void) {
     }
     #endif
     
-    #if 0
+    #if 1
     font_settings->font_height = 280;
     font_settings->font_touchable_id = 6;
     font_settings->font_color[0] = 2.2f;
@@ -161,6 +161,7 @@ void client_logic_late_startup(void) {
     font_settings->font_color[3] = 1.0f;
     font_settings->remove_hitbox = false;
     font_settings->ignore_camera = true;
+    font_settings->font_ignore_lighting = 1.0f;
     text_request_label_renderable(
         /* const int32_t with_object_id: */
             21,

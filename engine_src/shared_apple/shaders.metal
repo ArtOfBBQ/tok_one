@@ -490,7 +490,8 @@ postprocess_vertex_shader(
 fragment float4
 downsampling_fragment_shader(
     PostProcessingFragment in [[stage_in]],
-    texture2d<float> texture [[texture(0)]])
+    texture2d<float> texture [[texture(0)]],
+    constant GPUDownsamplingConstants &ds_constants [[buffer(0)]])
 {
     float2 texcoord = in.texcoord;
     
@@ -498,13 +499,20 @@ downsampling_fragment_shader(
         mag_filter::nearest,
         min_filter::nearest);
     
-    float texel_size = 0.003f;
+    float2 texel_width_height = 1.0f / vector_float2(
+        ds_constants.texture_width,
+        ds_constants.texture_height);
+    
     float4 color_sample = vector_float4(0.0f, 0.0f, 0.0f, 0.0f);
     for (float x = -1.0f; x < 1.1f; x += 1.0f) {
         for (float y = -1.0f; y < 1.1f; y+= 1.0f) {
-            color_sample += texture.sample(
+            float4 orig_sample = texture.sample(
                 sampler,
-                texcoord + (vector_float2(x, y)*texel_size));
+                texcoord + (vector_float2(x, y)*texel_width_height));
+            float multip = (orig_sample[0] + orig_sample[1] + orig_sample[2]) >
+                ds_constants.brightness_threshold;
+            orig_sample *= multip;
+            color_sample += orig_sample;
         }
     }
     color_sample /= 9.0f;
@@ -518,7 +526,12 @@ fragment float4
 postprocess_fragment_shader(
     PostProcessingFragment in [[stage_in]],
     texture2d<float> texture [[texture(0)]],
-    texture2d<float> downsampled_texture [[texture(1)]])
+    texture2d<float> downsampled_texture [[texture(1)]],
+    texture2d<float> downsampled_texture_2 [[texture(2)]],
+    texture2d<float> downsampled_texture_3 [[texture(3)]],
+    texture2d<float> downsampled_texture_4 [[texture(4)]]/*,
+    texture2d<float> downsampled_texture_5 [[texture(5)]]
+    */)
 {
     constexpr sampler sampler(
         mag_filter::nearest,
@@ -529,14 +542,27 @@ postprocess_fragment_shader(
     float4 color_sample = texture.sample(sampler, texcoord);
     color_sample[3] = 1.0f;
     float4 blur_sample  = downsampled_texture.sample(sampler, texcoord);
-    blur_sample -= 0.9f;
-    blur_sample = clamp(blur_sample, 0.0, 5.0f);
+    float4 blur_sample_2  = downsampled_texture_2.sample(sampler, texcoord);
+    float4 blur_sample_3  = downsampled_texture_3.sample(sampler, texcoord);
+    float4 blur_sample_4  = downsampled_texture_4.sample(sampler, texcoord);
+    // float4 blur_sample_5  = downsampled_texture_5.sample(sampler, texcoord);
     
     color_sample =
         (color_sample * in.nonblur_pct) +
-        (blur_sample * in.blur_pct);
+        (blur_sample * in.blur_pct) +
+        (blur_sample_2 * in.blur_pct) +
+        (blur_sample_3 * (in.blur_pct - 0.1f)) +
+        (blur_sample_4 * (in.blur_pct - 0.2f)) /* +
+        (blur_sample_5 * in.blur_pct )*/;
     
-    color_sample = clamp(color_sample, 0.0f, 5.0f);
+    float cutoff = 0.7f;
+    float4 color_sample_overflow = color_sample - cutoff;
+    color_sample_overflow = clamp(color_sample_overflow, 0.0f, 5.0f);
+    
+    color_sample_overflow = color_sample_overflow / 3.0f;
+    
+    color_sample = clamp(color_sample, 0.0f, cutoff);
+    color_sample += color_sample_overflow;
     
     color_sample[3] = 1.0f;
     

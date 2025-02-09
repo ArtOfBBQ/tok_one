@@ -45,7 +45,8 @@ static id projection_constants_buffer;
     id<MTLCommandQueue> command_queue;
     #if POSTPROCESSING_ACTIVE
     id<MTLTexture> render_target_texture;
-    id<MTLTexture> downsampled_target_texture;
+    #define DOWNSAMPLES_SIZE 0
+    id<MTLTexture> downsampled_target_textures[DOWNSAMPLES_SIZE];
     #endif
 }
 
@@ -115,23 +116,25 @@ static id projection_constants_buffer;
     render_target_texture = [metal_device
         newTextureWithDescriptor: texture_descriptor];
     
-    MTLTextureDescriptor * downsampled_target_texture_desc =
-        [MTLTextureDescriptor new];
-    downsampled_target_texture_desc.textureType = MTLTextureType2D;
-    downsampled_target_texture_desc.width =
-        (unsigned long)cached_viewport.width /
-            window_globals->pixelation_div;
-    downsampled_target_texture_desc.height =
-        (unsigned long)cached_viewport.height /
-            window_globals->pixelation_div;
-    downsampled_target_texture_desc.pixelFormat = MTLPixelFormatRGBA16Float;
-    downsampled_target_texture_desc.mipmapLevelCount = 1;
-    downsampled_target_texture_desc.usage =
-        MTLTextureUsageRenderTarget |
-        MTLTextureUsageShaderRead;
-    
-    downsampled_target_texture = [metal_device
-        newTextureWithDescriptor: downsampled_target_texture_desc];
+    for (uint32_t i = 0; i < DOWNSAMPLES_SIZE; i++) {
+        
+        MTLTextureDescriptor * downsampled_target_texture_desc =
+            [MTLTextureDescriptor new];
+        downsampled_target_texture_desc.textureType = MTLTextureType2D;
+        downsampled_target_texture_desc.width =
+            (unsigned long)cached_viewport.width /
+                (window_globals->pixelation_div * (i+1));
+        downsampled_target_texture_desc.height =
+            (unsigned long)cached_viewport.height /
+                (window_globals->pixelation_div * (i+1));
+        downsampled_target_texture_desc.pixelFormat = MTLPixelFormatRGBA16Float;
+        downsampled_target_texture_desc.mipmapLevelCount = 1;
+        downsampled_target_texture_desc.usage =
+            MTLTextureUsageRenderTarget |
+            MTLTextureUsageShaderRead;
+        downsampled_target_textures[i] = [metal_device
+            newTextureWithDescriptor: downsampled_target_texture_desc];
+    }
     #endif
 }
 
@@ -1149,10 +1152,6 @@ static bool32_t font_already_pushed = 0;
     
     [render_pass_1_encoder endEncoding];
     
-    
-    
-    
-    
     #if POSTPROCESSING_ACTIVE
     #define FLVERT 1.0f
     #define TEX_MAX 1.0f
@@ -1169,47 +1168,60 @@ static bool32_t font_already_pushed = 0;
         {{  FLVERT,   FLVERT },  { TEX_MAX, TEX_MIN }},
     };
     
-    // Render pass 2 downsamples the original texture
-    MTLRenderPassDescriptor * render_pass_2_descriptor =
-        [view currentRenderPassDescriptor];
-    render_pass_2_descriptor.colorAttachments[0].texture =
-        downsampled_target_texture;
-    render_pass_2_descriptor.depthAttachment.loadAction =
-        MTLLoadActionClear;
-    id<MTLRenderCommandEncoder> render_pass_2_encoder =
-        [command_buffer
-            renderCommandEncoderWithDescriptor:
-                render_pass_2_descriptor];
-    MTLViewport smaller_viewport = cached_viewport;
-    smaller_viewport.width /= window_globals->pixelation_div;
-    smaller_viewport.height /= window_globals->pixelation_div;
-    [render_pass_2_encoder setViewport: smaller_viewport];
-    [render_pass_2_encoder setCullMode:MTLCullModeNone];
-    [render_pass_2_encoder
-        setRenderPipelineState: _downsampler_pipeline_state];
-    [render_pass_2_encoder
-        setVertexBytes:&quad_vertices
-        length:sizeof(quad_vertices)
-        atIndex:0];
-    [render_pass_2_encoder
-        setVertexBytes:&quad_vertices
-        length:sizeof(quad_vertices)
-        atIndex:0];
-    [render_pass_2_encoder
-        setVertexBuffer:
-            postprocessing_constants_buffers[current_frame_i]
-        offset:
-            0
-        atIndex:
-            1];
-    [render_pass_2_encoder
-        setFragmentTexture: render_target_texture
-        atIndex:0];
-    [render_pass_2_encoder
-        drawPrimitives:MTLPrimitiveTypeTriangle
-        vertexStart:0
-        vertexCount:6];
-    [render_pass_2_encoder endEncoding];
+    for (uint32_t ds_i = 0; ds_i < DOWNSAMPLES_SIZE; ds_i++) {
+        // Render pass 2 downsamples the original texture
+        MTLRenderPassDescriptor * render_pass_2_descriptor =
+            [view currentRenderPassDescriptor];
+        render_pass_2_descriptor.colorAttachments[0].texture =
+            downsampled_target_textures[ds_i];
+        render_pass_2_descriptor.depthAttachment.loadAction =
+            MTLLoadActionClear;
+        id<MTLRenderCommandEncoder> render_pass_2_encoder =
+            [command_buffer
+                renderCommandEncoderWithDescriptor: render_pass_2_descriptor];
+        MTLViewport smaller_viewport = cached_viewport;
+        smaller_viewport.width /= (window_globals->pixelation_div * (ds_i+1));
+        smaller_viewport.height /= (window_globals->pixelation_div * (ds_i+1));
+        [render_pass_2_encoder setViewport: smaller_viewport];
+        [render_pass_2_encoder setCullMode:MTLCullModeNone];
+        [render_pass_2_encoder
+            setRenderPipelineState: _downsampler_pipeline_state];
+        [render_pass_2_encoder
+            setVertexBytes:&quad_vertices
+            length:sizeof(quad_vertices)
+            atIndex:0];
+        [render_pass_2_encoder
+            setVertexBytes:&quad_vertices
+            length:sizeof(quad_vertices)
+            atIndex:0];
+        [render_pass_2_encoder
+            setVertexBuffer:
+                postprocessing_constants_buffers[current_frame_i]
+            offset:
+                0
+            atIndex:
+                1];
+        [render_pass_2_encoder
+            setFragmentTexture: ds_i > 0 ?
+                downsampled_target_textures[ds_i-1] :
+                render_target_texture
+            atIndex:0];
+        const GPUDownsamplingConstants ds_constants = {
+            (float)smaller_viewport.width,
+            (float)smaller_viewport.height,
+            ds_i < 1 ? 3.0f : 0.0f,
+            ds_i < 3 ? 0.02f : 0.08f
+        };
+        [render_pass_2_encoder
+            setFragmentBytes:&ds_constants
+            length:sizeof(GPUDownsamplingConstants)
+            atIndex:0];
+        [render_pass_2_encoder
+            drawPrimitives:MTLPrimitiveTypeTriangle
+            vertexStart:0
+            vertexCount:6];
+        [render_pass_2_encoder endEncoding];
+    }
     
     // Render pass 3 blends the downsampled texture & the original texture
     MTLRenderPassDescriptor * render_pass_3_descriptor =
@@ -1252,9 +1264,28 @@ static bool32_t font_already_pushed = 0;
         setFragmentTexture: render_target_texture
         atIndex:0];
     [render_pass_3_encoder
-        setFragmentTexture: downsampled_target_texture
+        setFragmentTexture: downsampled_target_textures[0]
         atIndex:1];
-    
+    #if DOWNSAMPLES_SIZE > 1
+    [render_pass_3_encoder
+        setFragmentTexture: downsampled_target_textures[1]
+        atIndex:2];
+    #endif
+    #if DOWNSAMPLES_SIZE > 2
+    [render_pass_3_encoder
+        setFragmentTexture: downsampled_target_textures[2]
+        atIndex:3];
+    #endif
+    #if DOWNSAMPLES_SIZE > 3
+    [render_pass_3_encoder
+        setFragmentTexture: downsampled_target_textures[3]
+        atIndex:4];
+    #endif
+    #if DOWNSAMPLES_SIZE > 4
+    [render_pass_3_encoder
+        setFragmentTexture: downsampled_target_textures[4]
+        atIndex:5];
+    #endif
     [render_pass_3_encoder
         drawPrimitives:MTLPrimitiveTypeTriangle
         vertexStart:0
