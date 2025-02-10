@@ -36,6 +36,20 @@ static id locked_vertex_populator_buffer;
 static id locked_vertex_buffer;
 static id projection_constants_buffer;
 
+static float get_ds_width(
+    const uint32_t ds_i)
+{
+    return (float)(window_globals->window_width /
+        (window_globals->pixelation_div + (2 * ds_i)));
+}
+
+static float get_ds_height(
+    const uint32_t ds_i)
+{
+    return (float)(window_globals->window_height /
+        (window_globals->pixelation_div + (2 * ds_i)));
+}
+
 @implementation MetalKitViewDelegate
 {
     NSUInteger current_frame_i;
@@ -45,7 +59,7 @@ static id projection_constants_buffer;
     id<MTLCommandQueue> command_queue;
     #if POSTPROCESSING_ACTIVE
     id<MTLTexture> render_target_texture;
-    #define DOWNSAMPLES_SIZE 0
+    #define DOWNSAMPLES_SIZE 3
     id<MTLTexture> downsampled_target_textures[DOWNSAMPLES_SIZE];
     #endif
 }
@@ -121,12 +135,8 @@ static id projection_constants_buffer;
         MTLTextureDescriptor * downsampled_target_texture_desc =
             [MTLTextureDescriptor new];
         downsampled_target_texture_desc.textureType = MTLTextureType2D;
-        downsampled_target_texture_desc.width =
-            (unsigned long)cached_viewport.width /
-                (window_globals->pixelation_div * (i+1));
-        downsampled_target_texture_desc.height =
-            (unsigned long)cached_viewport.height /
-                (window_globals->pixelation_div * (i+1));
+        downsampled_target_texture_desc.width = (NSUInteger)get_ds_width(i);
+        downsampled_target_texture_desc.height = (NSUInteger)get_ds_height(i);
         downsampled_target_texture_desc.pixelFormat = MTLPixelFormatRGBA16Float;
         downsampled_target_texture_desc.mipmapLevelCount = 1;
         downsampled_target_texture_desc.usage =
@@ -1180,8 +1190,8 @@ static bool32_t font_already_pushed = 0;
             [command_buffer
                 renderCommandEncoderWithDescriptor: render_pass_2_descriptor];
         MTLViewport smaller_viewport = cached_viewport;
-        smaller_viewport.width /= (window_globals->pixelation_div * (ds_i+1));
-        smaller_viewport.height /= (window_globals->pixelation_div * (ds_i+1));
+        smaller_viewport.width = get_ds_width(ds_i);
+        smaller_viewport.height = get_ds_height(ds_i);
         [render_pass_2_encoder setViewport: smaller_viewport];
         [render_pass_2_encoder setCullMode:MTLCullModeNone];
         [render_pass_2_encoder
@@ -1209,8 +1219,8 @@ static bool32_t font_already_pushed = 0;
         const GPUDownsamplingConstants ds_constants = {
             (float)smaller_viewport.width,
             (float)smaller_viewport.height,
-            ds_i < 1 ? 3.0f : 0.0f,
-            ds_i < 3 ? 0.02f : 0.08f
+            ds_i < 1 ? 5.0f : 0.0f,
+            ds_i < 3 ? 0.0f : 0.05f
         };
         [render_pass_2_encoder
             setFragmentBytes:&ds_constants

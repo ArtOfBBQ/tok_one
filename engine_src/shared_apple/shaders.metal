@@ -524,14 +524,13 @@ downsampling_fragment_shader(
 
 fragment float4
 postprocess_fragment_shader(
-    PostProcessingFragment in [[stage_in]],
-    texture2d<float> texture [[texture(0)]],
-    texture2d<float> downsampled_texture [[texture(1)]],
+    PostProcessingFragment in              [[stage_in]],
+    texture2d<float> texture               [[texture(0)]],
+    texture2d<float> downsampled_texture   [[texture(1)]],
     texture2d<float> downsampled_texture_2 [[texture(2)]],
-    texture2d<float> downsampled_texture_3 [[texture(3)]],
-    texture2d<float> downsampled_texture_4 [[texture(4)]]/*,
-    texture2d<float> downsampled_texture_5 [[texture(5)]]
-    */)
+    texture2d<float> downsampled_texture_3 [[texture(3)]] /*,
+    texture2d<float> downsampled_texture_4 [[texture(4)]],
+    texture2d<float> downsampled_texture_5 [[texture(5)]] */)
 {
     constexpr sampler sampler(
         mag_filter::nearest,
@@ -544,26 +543,18 @@ postprocess_fragment_shader(
     float4 blur_sample  = downsampled_texture.sample(sampler, texcoord);
     float4 blur_sample_2  = downsampled_texture_2.sample(sampler, texcoord);
     float4 blur_sample_3  = downsampled_texture_3.sample(sampler, texcoord);
-    float4 blur_sample_4  = downsampled_texture_4.sample(sampler, texcoord);
+    // float4 blur_sample_4  = downsampled_texture_4.sample(sampler, texcoord);
     // float4 blur_sample_5  = downsampled_texture_5.sample(sampler, texcoord);
     
     color_sample =
-        (color_sample * in.nonblur_pct) +
-        (blur_sample * in.blur_pct) +
+        (color_sample  * in.nonblur_pct) +
+        (blur_sample   * in.blur_pct) +
         (blur_sample_2 * in.blur_pct) +
-        (blur_sample_3 * (in.blur_pct - 0.1f)) +
-        (blur_sample_4 * (in.blur_pct - 0.2f)) /* +
-        (blur_sample_5 * in.blur_pct )*/;
+        (blur_sample_3 * in.blur_pct);
     
-    float cutoff = 0.7f;
-    float4 color_sample_overflow = color_sample - cutoff;
-    color_sample_overflow = clamp(color_sample_overflow, 0.0f, 5.0f);
-    
-    color_sample_overflow = color_sample_overflow / 3.0f;
-    
-    color_sample = clamp(color_sample, 0.0f, cutoff);
-    color_sample += color_sample_overflow;
-    
+    // reinhard tone mapping
+    color_sample = color_sample / (color_sample + 0.5f);
+    color_sample = clamp(color_sample, 0.0f, 1.0f);
     color_sample[3] = 1.0f;
     
     return color_sample;

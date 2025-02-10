@@ -156,8 +156,8 @@ void client_logic_late_startup(void) {
     font_settings->font_height = 280;
     font_settings->font_touchable_id = 6;
     font_settings->font_color[0] = 2.2f;
-    font_settings->font_color[1] = 1.7f;
-    font_settings->font_color[2] = 1.7f;
+    font_settings->font_color[1] = 0.9f;
+    font_settings->font_color[2] = 1.2f;
     font_settings->font_color[3] = 1.0f;
     font_settings->remove_hitbox = false;
     font_settings->ignore_camera = true;

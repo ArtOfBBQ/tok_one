@@ -103,10 +103,10 @@ void windowsize_init(void) {
     window_globals->show_profiler        = false;
     window_globals->pause_profiler       = false;
     
-    window_globals->pixelation_div = 2;
+    window_globals->pixelation_div = 4;
     
     window_globals->postprocessing_constants.timestamp = 0;
-    window_globals->postprocessing_constants.blur_pct = 1.0f;
+    window_globals->postprocessing_constants.blur_pct = 0.18f;
     window_globals->postprocessing_constants.nonblur_pct = 1.0f;
     window_globals->postprocessing_constants.screen_height =
         window_globals->window_height;
