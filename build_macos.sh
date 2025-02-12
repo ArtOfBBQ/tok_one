@@ -10,7 +10,7 @@ COMPILER_PATHS="
 -I sampleproject_src/
 "
 
-COMPILER_ARGS="-march=native -Wall -x objective-c -std=c99 -O0 -objC"
+COMPILER_ARGS="-march=native -Wall -x objective-c -std=c11 -O0 -objC"
 
 if [[ $1 = "DEBUG" ]]; then
 COMPILER_ARGS_EXTRA="-g"

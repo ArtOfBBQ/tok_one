@@ -1,175 +1,85 @@
 #import "gpu.h"
 
-bool32_t has_retina_screen = false;
+bool32_t has_retina_screen = true;
 bool32_t metal_active = false;
 
-static MTLPixelFormat cached_pixel_format_renderpass1;
-
-MetalKitViewDelegate * apple_gpu_delegate = NULL;
-
-static void (* funcptr_shared_gameloop_update)(GPUDataForSingleFrame *) = NULL;
-
-static dispatch_semaphore_t drawing_semaphore;
-
-void apple_gpu_init(
-    void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *))
-{
-    //    RenderPassDescriptors[0] = NULL;
-    //    RenderPassDescriptors[1] = NULL;
-    //    RenderPassDescriptors[2] = NULL;
-    
-    funcptr_shared_gameloop_update = arg_funcptr_shared_gameloop_update;
-    
-    drawing_semaphore = dispatch_semaphore_create(3);
-}
-
-// objective-c "id" of the MTLBuffer objects
-static id polygon_buffers[3];
-static id polygon_material_buffers[3];
-static id light_buffers [3];
-static id vertex_buffers[3];
-static id camera_buffers[3];
-static id line_vertex_buffers[3];
-static id point_vertex_buffers[3];
-static id postprocessing_constants_buffers[3];
-static id locked_vertex_populator_buffer;
-static id locked_vertex_buffer;
-static id projection_constants_buffer;
-
-static float get_ds_width(
-    const uint32_t ds_i)
-{
-    return (float)(window_globals->window_width /
-        (window_globals->pixelation_div + (2 * ds_i)));
-}
-
-static float get_ds_height(
-    const uint32_t ds_i)
-{
-    return (float)(window_globals->window_height /
-        (window_globals->pixelation_div + (2 * ds_i)));
-}
-
-@implementation MetalKitViewDelegate
-{
-    NSUInteger current_frame_i;
+typedef struct AppleGPUState {
+    MTLPixelFormat cached_pixel_format_renderpass1;
+    dispatch_semaphore_t drawing_semaphore;
+    NSUInteger frame_i;
     MTLViewport cached_viewport;
-    
     id<MTLDevice> metal_device;
     id<MTLCommandQueue> command_queue;
+    id polygon_buffers[3];
+    id polygon_material_buffers[3];
+    id light_buffers [3];
+    id vertex_buffers[3];
+    id camera_buffers[3];
+    id line_vertex_buffers[3];
+    id point_vertex_buffers[3];
+    id postprocessing_constants_buffers[3];
+    id locked_vertex_populator_buffer;
+    id locked_vertex_buffer;
+    id projection_constants_buffer;
+
+    id<MTLRenderPipelineState> diamond_pipeline_state;
+    id<MTLRenderPipelineState> alphablend_pipeline_state;
+    id<MTLRenderPipelineState> raw_pipeline_state;
+    #if POSTPROCESSING_ACTIVE
+    id<MTLRenderPipelineState> downsampler_pipeline_state;
+    id<MTLRenderPipelineState> postprocess_pipeline_state;
+    #endif
+    id<MTLDepthStencilState>   depth_stencil_state;
+
+    NSMutableArray * metal_textures;
     #if POSTPROCESSING_ACTIVE
     id<MTLTexture> render_target_texture;
     #define DOWNSAMPLES_SIZE 3
     id<MTLTexture> downsampled_target_textures[DOWNSAMPLES_SIZE];
     #endif
-}
+} AppleGPUState;
 
-- (void) copyLockedVertices
-{
-    gpu_shared_data_collection.locked_vertices_size = all_mesh_vertices->size;
-    
-    // Create a command buffer for GPU work.
-    id <MTLCommandBuffer> commandBuffer = [command_queue commandBuffer];
-    
-    // Encode a blit pass to copy data from the source buffer to the private buffer.
-    id <MTLBlitCommandEncoder> blitCommandEncoder =
-        [commandBuffer blitCommandEncoder];
-    [blitCommandEncoder
-        copyFromBuffer:locked_vertex_populator_buffer
-        sourceOffset:0
-        toBuffer:locked_vertex_buffer
-        destinationOffset:0
-        size:gpu_shared_data_collection.locked_vertices_allocation_size];
-    [blitCommandEncoder endEncoding];
-    
-    // Add a completion handler and commit the command buffer.
-    [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> cb) {
-        // Populate private buffer.
-        (void)cb;
-    }];
-    [commandBuffer commit];
-}
+static AppleGPUState * ags = NULL;
 
-- (void) updateViewport
-{
-    cached_viewport.originX = 0;
-    cached_viewport.originY = 0;
-    cached_viewport.width   =
-        window_globals->window_width *
-        (has_retina_screen ? 2.0f : 1.0f);
-    cached_viewport.height  =
-        window_globals->window_height *
-        (has_retina_screen ? 2.0f : 1.0f);
-    assert(cached_viewport.width > 0.0f);
-    assert(cached_viewport.height > 0.0f);
-    
-    /*
-    These near/far values are the final viewport coordinates (after
-    fragment shader), not to be confused with
-    window_globals->projection_constants.near that's in our world space
-    and much larger numbers
-    */
-    cached_viewport.znear   = 0.001f; 
-    cached_viewport.zfar    = 1.0f;
-    
-    *gpu_shared_data_collection.locked_pjc =
-        window_globals->projection_constants;
-    
-    #if POSTPROCESSING_ACTIVE
-    // Set up a texture for rendering to and apply post-processing to
-    MTLTextureDescriptor * texture_descriptor = [MTLTextureDescriptor new];
-    texture_descriptor.textureType = MTLTextureType2D;
-    texture_descriptor.width = (unsigned long)cached_viewport.width;
-    texture_descriptor.height = (unsigned long)cached_viewport.height;
-    texture_descriptor.pixelFormat = MTLPixelFormatRGBA16Float;
-    texture_descriptor.usage =
-        MTLTextureUsageRenderTarget |
-        MTLTextureUsageShaderRead;
-    texture_descriptor.mipmapLevelCount = 1;
-    
-    render_target_texture = [metal_device
-        newTextureWithDescriptor: texture_descriptor];
-    
-    for (uint32_t i = 0; i < DOWNSAMPLES_SIZE; i++) {
-        
-        MTLTextureDescriptor * downsampled_target_texture_desc =
-            [MTLTextureDescriptor new];
-        downsampled_target_texture_desc.textureType = MTLTextureType2D;
-        downsampled_target_texture_desc.width = (NSUInteger)get_ds_width(i);
-        downsampled_target_texture_desc.height = (NSUInteger)get_ds_height(i);
-        downsampled_target_texture_desc.pixelFormat = MTLPixelFormatRGBA16Float;
-        downsampled_target_texture_desc.mipmapLevelCount = 1;
-        downsampled_target_texture_desc.usage =
-            MTLTextureUsageRenderTarget |
-            MTLTextureUsageShaderRead;
-        downsampled_target_textures[i] = [metal_device
-            newTextureWithDescriptor: downsampled_target_texture_desc];
-    }
-    #endif
-}
 
-- (BOOL)
-    configureMetalWithDevice: (id<MTLDevice>)with_metal_device
-    fromFilePath: (NSString *)shader_lib_filepath
-    errMsgCStr: (char *)errmsg
+MetalKitViewDelegate * apple_gpu_delegate = NULL;
+
+static void (* funcptr_shared_gameloop_update)(GPUDataForSingleFrame *) = NULL;
+
+bool32_t apple_gpu_init(
+    void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *),
+    id<MTLDevice> with_metal_device,
+    NSString * shader_lib_filepath,
+    char * error_msg_string)
 {
+    //    RenderPassDescriptors[0] = NULL;
+    //    RenderPassDescriptors[1] = NULL;
+    //    RenderPassDescriptors[2] = NULL;
+    
+    ags = malloc_from_unmanaged(sizeof(AppleGPUState));
+    log_assert(ags != NULL);
+    
+    funcptr_shared_gameloop_update = arg_funcptr_shared_gameloop_update;
+    
+    ags->drawing_semaphore = dispatch_semaphore_create(3);
+    
     #if POSTPROCESSING_ACTIVE
     MTLPixelFormat render_pass_1_format = MTLPixelFormatRGBA16Float;
     #else
     MTLPixelFormat render_pass_1_format = MTLPixelFormatBGRA8Unorm;
     #endif
-    cached_pixel_format_renderpass1 = render_pass_1_format;
+    ags->cached_pixel_format_renderpass1 = render_pass_1_format;
     
-    current_frame_i = 0;
+    ags->frame_i = 0;
         
     common_strcpy_capped(
-        errmsg,
+        error_msg_string,
         512,
         "");
     
     // drawing_semaphore = dispatch_semaphore_create(/* initial value: */ 3);
     
-    metal_device = with_metal_device;
+    ags->metal_device = with_metal_device;
     
     NSError * Error = NULL;
     id<MTLLibrary> shader_library = [with_metal_device newDefaultLibrary];
@@ -197,7 +107,7 @@ static float get_ds_height(
                 cStringUsingEncoding: NSASCIIStringEncoding];
             
             common_strcpy_capped(
-                errmsg,
+                error_msg_string,
                 512,
                 errorcstr);
             return false;
@@ -223,12 +133,12 @@ static float get_ds_height(
             
             if (errorcstr != NULL && errorcstr[0] != '\0') {
                 common_strcpy_capped(
-                    errmsg,
+                    error_msg_string,
                     512,
                     errorcstr);
             } else {
                 common_strcpy_capped(
-                    errmsg,
+                    error_msg_string,
                     512,
                     "Failed to find shaders file");
             }
@@ -247,7 +157,7 @@ static float get_ds_height(
         log_append("Missing function: vertex_shader()!");
         
         common_strcpy_capped(
-            errmsg,
+            error_msg_string,
             512,
             "Missing function: vertex_shader()");
         return false;
@@ -259,7 +169,7 @@ static float get_ds_height(
     if (fragment_shader == NULL) {
         log_append("Missing function: fragment_shader()!");
         common_strcpy_capped(
-            errmsg,
+            error_msg_string,
             512,
             "Missing function: fragment_shader()");
         return false;
@@ -271,7 +181,7 @@ static float get_ds_height(
     if (alphablending_fragment_shader == NULL) {
         log_append("Missing function: alphablending_fragment_shader()!");
         common_strcpy_capped(
-            errmsg,
+            error_msg_string,
             512,
             "Missing function: vertex_shader()");
         return false;
@@ -284,7 +194,7 @@ static float get_ds_height(
         log_append("Missing function: raw_vertex_shader()!");
 
         common_strcpy_capped(
-            errmsg,
+            error_msg_string,
             512,
             "Missing function: raw_vertex_shader()");
         return false;
@@ -296,7 +206,7 @@ static float get_ds_height(
     if (raw_fragment_shader == NULL) {
         log_append("Missing function: raw_fragment_shader()!");
         common_strcpy_capped(
-            errmsg,
+            error_msg_string,
             512,
             "Missing function: vertex_shader()");
         return false;
@@ -315,7 +225,7 @@ static float get_ds_height(
         .pixelFormat = render_pass_1_format;
     diamond_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
-    _diamond_pipeline_state =
+    ags->diamond_pipeline_state =
         [with_metal_device
             newRenderPipelineStateWithDescriptor:
                 diamond_pipeline_descriptor 
@@ -328,7 +238,7 @@ static float get_ds_height(
         log_dump_and_crash("Failed to initialize diamond pipeline");
         #endif
         common_strcpy_capped(
-            errmsg,
+            error_msg_string,
             512,
             "Failed to initialize diamond pipeline");
         return false;
@@ -354,7 +264,7 @@ static float get_ds_height(
             MTLBlendFactorOneMinusSourceAlpha;
     alphablend_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
-    _alphablend_pipeline_state =
+    ags->alphablend_pipeline_state =
         [with_metal_device
             newRenderPipelineStateWithDescriptor:
                 alphablend_pipeline_descriptor
@@ -369,7 +279,7 @@ static float get_ds_height(
         #endif
         
         common_strcpy_capped(
-            errmsg,
+            error_msg_string,
             512,
             "Failed to load the alphablending shader");
         return false;
@@ -389,7 +299,7 @@ static float get_ds_height(
         setBlendingEnabled: NO];
     raw_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
-    _raw_pipeline_state =
+    ags->raw_pipeline_state =
         [with_metal_device
             newRenderPipelineStateWithDescriptor:
                 raw_pipeline_descriptor
@@ -403,9 +313,8 @@ static float get_ds_height(
         log_dump_and_crash("Error loading the raw vertex shader\n");
         #endif
         
-        
         common_strcpy_capped(
-            errmsg,
+            error_msg_string,
             512,
             "Failed to load the raw vertex shader");
         return false;
@@ -417,7 +326,7 @@ static float get_ds_height(
     [depth_descriptor setDepthCompareFunction:MTLCompareFunctionLessEqual];
     // [depth_descriptor setDepthCompareFunction:MTLCompareFunctionAlways];
     assert(depth_descriptor.depthWriteEnabled == true);
-    _depth_stencil_state = [with_metal_device
+    ags->depth_stencil_state = [with_metal_device
         newDepthStencilStateWithDescriptor:depth_descriptor];
     
     if (Error != NULL)
@@ -428,7 +337,7 @@ static float get_ds_height(
         #endif
         
         common_strcpy_capped(
-            errmsg,
+            error_msg_string,
             512,
             "Failed to load the depth stencil shader");
         return false;
@@ -460,8 +369,8 @@ static float get_ds_height(
             [MTLBufferFramePolygons contents] ==
                 gpu_shared_data_collection.triple_buffers[frame_i].
                     polygon_collection);
-        polygon_buffers[frame_i] = MTLBufferFramePolygons;
-        assert(polygon_buffers[frame_i] != nil);
+        ags->polygon_buffers[frame_i] = MTLBufferFramePolygons;
+        assert(ags->polygon_buffers[frame_i] != nil);
         
         id<MTLBuffer> MTLBufferFramePolygonMaterials =
             [with_metal_device
@@ -483,8 +392,8 @@ static float get_ds_height(
             [MTLBufferFramePolygonMaterials contents] ==
                 gpu_shared_data_collection.triple_buffers[frame_i].
                     polygon_materials);
-        polygon_material_buffers[frame_i] = MTLBufferFramePolygonMaterials;
-        assert(polygon_material_buffers[frame_i] != nil);
+        ags->polygon_material_buffers[frame_i] = MTLBufferFramePolygonMaterials;
+        assert(ags->polygon_material_buffers[frame_i] != nil);
         
         id<MTLBuffer> MTLBufferFrameVertices =
             [with_metal_device
@@ -504,8 +413,8 @@ static float get_ds_height(
         assert(
             [MTLBufferFrameVertices contents] ==
                 gpu_shared_data_collection.triple_buffers[frame_i].vertices);
-        vertex_buffers[frame_i] = MTLBufferFrameVertices;
-        assert(vertex_buffers[frame_i] != nil);
+        ags->vertex_buffers[frame_i] = MTLBufferFrameVertices;
+        assert(ags->vertex_buffers[frame_i] != nil);
         
         id<MTLBuffer> MTLBufferLineVertices =
             [with_metal_device
@@ -526,8 +435,8 @@ static float get_ds_height(
             [MTLBufferLineVertices contents] ==
                 gpu_shared_data_collection.triple_buffers[frame_i].
                     line_vertices);
-        line_vertex_buffers[frame_i] = MTLBufferLineVertices;
-        assert(line_vertex_buffers[frame_i] != nil);
+        ags->line_vertex_buffers[frame_i] = MTLBufferLineVertices;
+        assert(ags->line_vertex_buffers[frame_i] != nil);
         
         id<MTLBuffer> MTLBufferPointVertices =
             [with_metal_device
@@ -548,8 +457,8 @@ static float get_ds_height(
             [MTLBufferPointVertices contents] ==
                 gpu_shared_data_collection.triple_buffers[frame_i].
                     point_vertices);
-        point_vertex_buffers[frame_i] = MTLBufferPointVertices;
-        assert(point_vertex_buffers[frame_i] != nil);
+        ags->point_vertex_buffers[frame_i] = MTLBufferPointVertices;
+        assert(ags->point_vertex_buffers[frame_i] != nil);
         
         id<MTLBuffer> MTLBufferPostProcessingConstants =
             [with_metal_device
@@ -571,9 +480,9 @@ static float get_ds_height(
             [MTLBufferPostProcessingConstants contents] ==
                 gpu_shared_data_collection.triple_buffers[frame_i].
                     postprocessing_constants);
-        postprocessing_constants_buffers[frame_i] =
+        ags->postprocessing_constants_buffers[frame_i] =
             MTLBufferPostProcessingConstants;
-        assert(postprocessing_constants_buffers[frame_i] != nil);
+        assert(ags->postprocessing_constants_buffers[frame_i] != nil);
         
         id<MTLBuffer> MTLBufferFrameLights =
             [with_metal_device
@@ -594,7 +503,7 @@ static float get_ds_height(
                 gpu_shared_data_collection.
                     triple_buffers[frame_i].
                     light_collection);
-        light_buffers[frame_i] = MTLBufferFrameLights;
+        ags->light_buffers[frame_i] = MTLBufferFrameLights;
         
         id<MTLBuffer> MTLBufferFrameCamera =
             [with_metal_device
@@ -613,7 +522,7 @@ static float get_ds_height(
         assert(
             [MTLBufferFrameCamera contents] ==
                 gpu_shared_data_collection.triple_buffers[frame_i].camera);
-        camera_buffers[frame_i] = MTLBufferFrameCamera;
+        ags->camera_buffers[frame_i] = MTLBufferFrameCamera;
     }
     
     id<MTLBuffer> MTLBufferLockedVerticesPopulator =
@@ -632,7 +541,7 @@ static float get_ds_height(
     assert(
         [MTLBufferLockedVerticesPopulator contents] ==
             gpu_shared_data_collection.locked_vertices);
-    locked_vertex_populator_buffer = MTLBufferLockedVerticesPopulator;
+    ags->locked_vertex_populator_buffer = MTLBufferLockedVerticesPopulator;
     
     id<MTLBuffer> MTLBufferLockedVertices =
         [with_metal_device
@@ -640,7 +549,7 @@ static float get_ds_height(
                 gpu_shared_data_collection.locked_vertices_allocation_size
             options:
                 MTLResourceStorageModePrivate];
-    locked_vertex_buffer = MTLBufferLockedVertices;
+    ags->locked_vertex_buffer = MTLBufferLockedVertices;
     
     id<MTLBuffer> MTLBufferProjectionConstants =
         [with_metal_device
@@ -659,9 +568,9 @@ static float get_ds_height(
     assert(
         [MTLBufferProjectionConstants contents] ==
             gpu_shared_data_collection.locked_pjc);
-    projection_constants_buffer = MTLBufferProjectionConstants;
+    ags->projection_constants_buffer = MTLBufferProjectionConstants;
     
-    _metal_textures = [
+    ags->metal_textures = [
         [NSMutableArray alloc]
             initWithCapacity: TEXTUREARRAYS_SIZE];
     
@@ -675,7 +584,7 @@ static float get_ds_height(
         log_append("Missing function: postprocess_vertex_shader()!");
         
         common_strcpy_capped(
-            errmsg,
+            error_msg_string,
             512,
             "Missing function: postprocess_vertex_shader()");
         return false;
@@ -686,7 +595,7 @@ static float get_ds_height(
     if (downsampling_fragment_shader == NULL) {
         log_append("Missing function: downsampling_fragment_shader()!");
         common_strcpy_capped(
-            errmsg,
+            error_msg_string,
             512,
             "Missing function: downsampling_fragment_shader()");
         return false;
@@ -717,7 +626,7 @@ static float get_ds_height(
         MTLPixelFormatDepth32Float;
     downsampling_pipeline_descriptor.vertexBuffers[0].mutability =
         MTLMutabilityImmutable;
-    _downsampler_pipeline_state = [
+    ags->downsampler_pipeline_state = [
         with_metal_device
         newRenderPipelineStateWithDescriptor:downsampling_pipeline_descriptor
         error:NULL];
@@ -728,7 +637,7 @@ static float get_ds_height(
     if (postprocess_fragment_shader == NULL) {
         log_append("Missing function: postprocess_fragment_shader()!");
         common_strcpy_capped(
-            errmsg,
+            error_msg_string,
             512,
             "Missing function: postprocess_fragment_shader()");
         return false;
@@ -760,31 +669,46 @@ static float get_ds_height(
         MTLPixelFormatDepth32Float;
     postprocess_pipeline_descriptor.vertexBuffers[0].mutability =
         MTLMutabilityImmutable;
-    _postprocess_pipeline_state = [
+    ags->postprocess_pipeline_state = [
         with_metal_device
         newRenderPipelineStateWithDescriptor:postprocess_pipeline_descriptor
         error:NULL];
     #endif
     
-    [self updateViewport];
+    // TODO:
+    // [self updateViewport];
     
-    command_queue = [with_metal_device newCommandQueue];
+    ags->command_queue = [with_metal_device newCommandQueue];
     
     metal_active = true;
     
     return true;
 }
 
-- (void)
-    initializeTextureArray  : ( int32_t)texturearray_i
-    textureCount            : (uint32_t)texture_count
-    singleImgWidth          : (uint32_t)single_img_width
-    singleImgHeight         : (uint32_t)single_img_height
+static float get_ds_width(
+    const uint32_t ds_i)
 {
-    assert(texturearray_i < 31);
+    return (float)(window_globals->window_width /
+        (window_globals->pixelation_div + (2 * ds_i)));
+}
+
+static float get_ds_height(
+    const uint32_t ds_i)
+{
+    return (float)(window_globals->window_height /
+        (window_globals->pixelation_div + (2 * ds_i)));
+}
+
+void platform_gpu_init_texture_array(
+    const int32_t texture_array_i,
+    const uint32_t num_images,
+    const uint32_t single_image_width,
+    const uint32_t single_image_height)
+{
+    assert(texture_array_i < 31);
     
     // we always overwrite textures, so pad them to match first
-    while ((int32_t)[_metal_textures count] <= texturearray_i) {
+    while ((int32_t)[ags->metal_textures count] <= texture_array_i) {
         MTLTextureDescriptor * texture_descriptor =
             [[MTLTextureDescriptor alloc] init];
         texture_descriptor.textureType = MTLTextureType2DArray;
@@ -793,48 +717,52 @@ static float get_ds_height(
         texture_descriptor.width = 10;
         texture_descriptor.height = 10;
         id<MTLTexture> texture =
-            [metal_device newTextureWithDescriptor:texture_descriptor];
-        [_metal_textures addObject: texture];
+            [ags->metal_device newTextureWithDescriptor:texture_descriptor];
+        [ags->metal_textures addObject: texture];
     }
     
     MTLTextureDescriptor * texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
     texture_descriptor.textureType = MTLTextureType2DArray;
-    texture_descriptor.arrayLength = texture_count;
+    texture_descriptor.arrayLength = num_images;
     texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
-    texture_descriptor.width = single_img_width;
-    texture_descriptor.height = single_img_height;
+    texture_descriptor.width = single_image_width;
+    texture_descriptor.height = single_image_height;
     
-    id<MTLTexture> texture = [metal_device
+    id<MTLTexture> texture = [ags->metal_device
         newTextureWithDescriptor:texture_descriptor];
     
-    [_metal_textures
-        replaceObjectAtIndex:(uint32_t)texturearray_i
+    [ags->metal_textures
+        replaceObjectAtIndex:(uint32_t)texture_array_i
         withObject: texture];
 }
 
 static bool32_t font_already_pushed = 0;
-- (void)
-    updateTextureArray : (int32_t)texturearray_i
-    atTexture          : (int32_t)texture_i
-    ofTextureArraySize : (uint32_t)texture_array_images_size
-    withImageOfWidth   : (uint32_t)image_width
-    andHeight          : (uint32_t)image_height
-    pixelValues        : (uint8_t *)rgba_values
+void platform_gpu_push_texture_slice(
+    const int32_t texture_array_i,
+    const int32_t texture_i,
+    const uint32_t parent_texture_array_images_size,
+    const uint32_t image_width,
+    const uint32_t image_height,
+    const uint8_t * rgba_values)
 {
-    log_assert(texture_i >= 0);
-    log_assert(texturearray_i >= 0);
+    if (rgba_values == NULL) {
+        return;
+    }
     
-    if (texturearray_i == 0 && texture_i == 0) {
+    log_assert(texture_i >= 0);
+    log_assert(texture_array_i >= 0);
+    
+    if (texture_array_i == 0 && texture_i == 0) {
         assert(!font_already_pushed);
         font_already_pushed = true;
     }
     
-    if (texturearray_i >= (int32_t)[_metal_textures count]) {
+    if (texture_array_i >= (int32_t)[ags->metal_textures count]) {
         #ifndef LOGGER_IGNORE_ASSERTS
         char errmsg[256];
         common_strcpy_capped(errmsg, 256, "Tried to update uninitialized texturearray")
-        common_strcat_int_capped(errmsg, 256, texturearray_i);
+        common_strcat_int_capped(errmsg, 256, texture_array_i);
         common_strcat_capped(errmsg, 256, "\n");
         
         log_dump_and_crash(errmsg);
@@ -845,7 +773,7 @@ static bool32_t font_already_pushed = 0;
     MTLTextureDescriptor * texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
     texture_descriptor.textureType = MTLTextureType2DArray;
-    texture_descriptor.arrayLength = texture_array_images_size;
+    texture_descriptor.arrayLength = parent_texture_array_images_size;
     texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
     texture_descriptor.width = image_width;
     texture_descriptor.height = image_height;
@@ -855,9 +783,9 @@ static bool32_t font_already_pushed = 0;
         { image_width, image_height, 1 }
     };
     
-    [[_metal_textures
+    [[ags->metal_textures
         objectAtIndex:
-            (NSUInteger)texturearray_i]
+            (NSUInteger)texture_array_i]
         replaceRegion:
             region
         mipmapLevel:
@@ -874,6 +802,99 @@ static bool32_t font_already_pushed = 0;
             0];
 }
 
+void platform_gpu_copy_locked_vertices(void)
+{
+    for (uint32_t i = 0; i < ALL_LOCKED_VERTICES_SIZE; i++) {
+        assert(
+            gpu_shared_data_collection.locked_vertices[i].parent_material_i <
+                MAX_MATERIALS_PER_POLYGON);
+    }
+    
+    gpu_shared_data_collection.locked_vertices_size = all_mesh_vertices->size;
+    
+    id <MTLCommandBuffer> commandBuffer = [ags->command_queue commandBuffer];
+    
+    // Encode a blit pass to copy data from the source buffer to the private
+    // buffer.
+    id <MTLBlitCommandEncoder> blitCommandEncoder =
+        [commandBuffer blitCommandEncoder];
+    [blitCommandEncoder
+        copyFromBuffer:ags->locked_vertex_populator_buffer
+        sourceOffset:0
+        toBuffer:ags->locked_vertex_buffer
+        destinationOffset:0
+        size:gpu_shared_data_collection.locked_vertices_allocation_size];
+    [blitCommandEncoder endEncoding];
+    
+    // Add a completion handler and commit the command buffer.
+    [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> cb) {
+        // Populate private buffer.
+        (void)cb;
+    }];
+    [commandBuffer commit];
+}
+
+@implementation MetalKitViewDelegate
+{
+}
+- (void) updateViewport
+{
+    ags->cached_viewport.originX = 0;
+    ags->cached_viewport.originY = 0;
+    ags->cached_viewport.width   =
+        window_globals->window_width *
+        (has_retina_screen ? 2.0f : 1.0f);
+    ags->cached_viewport.height  =
+        window_globals->window_height *
+        (has_retina_screen ? 2.0f : 1.0f);
+    assert(ags->cached_viewport.width > 0.0f);
+    assert(ags->cached_viewport.height > 0.0f);
+    
+    /*
+    These near/far values are the final viewport coordinates (after
+    fragment shader), not to be confused with
+    window_globals->projection_constants.near that's in our world space
+    and much larger numbers
+    */
+    ags->cached_viewport.znear   = 0.001f; 
+    ags->cached_viewport.zfar    = 1.0f;
+    
+    *gpu_shared_data_collection.locked_pjc =
+        window_globals->projection_constants;
+    
+    #if POSTPROCESSING_ACTIVE
+    // Set up a texture for rendering to and apply post-processing to
+    MTLTextureDescriptor * texture_descriptor = [MTLTextureDescriptor new];
+    texture_descriptor.textureType = MTLTextureType2D;
+    texture_descriptor.width = (unsigned long)ags->cached_viewport.width;
+    texture_descriptor.height = (unsigned long)ags->cached_viewport.height;
+    texture_descriptor.pixelFormat = MTLPixelFormatRGBA16Float;
+    texture_descriptor.usage =
+        MTLTextureUsageRenderTarget |
+        MTLTextureUsageShaderRead;
+    texture_descriptor.mipmapLevelCount = 1;
+    
+    ags->render_target_texture = [ags->metal_device
+        newTextureWithDescriptor: texture_descriptor];
+    
+    for (uint32_t i = 0; i < DOWNSAMPLES_SIZE; i++) {
+        
+        MTLTextureDescriptor * downsampled_target_texture_desc =
+            [MTLTextureDescriptor new];
+        downsampled_target_texture_desc.textureType = MTLTextureType2D;
+        downsampled_target_texture_desc.width = (NSUInteger)get_ds_width(i);
+        downsampled_target_texture_desc.height = (NSUInteger)get_ds_height(i);
+        downsampled_target_texture_desc.pixelFormat = MTLPixelFormatRGBA16Float;
+        downsampled_target_texture_desc.mipmapLevelCount = 1;
+        downsampled_target_texture_desc.usage =
+            MTLTextureUsageRenderTarget |
+            MTLTextureUsageShaderRead;
+        ags->downsampled_target_textures[i] = [ags->metal_device
+            newTextureWithDescriptor: downsampled_target_texture_desc];
+    }
+    #endif
+}
+
 - (void)drawInMTKView:(MTKView *)view
 {
     #ifdef PROFILER_ACTIVE
@@ -881,10 +902,10 @@ static bool32_t font_already_pushed = 0;
     profiler_start("drawInMTKView");
     #endif
     
-    dispatch_semaphore_wait(drawing_semaphore, DISPATCH_TIME_FOREVER);
+    dispatch_semaphore_wait(ags->drawing_semaphore, DISPATCH_TIME_FOREVER);
     
     funcptr_shared_gameloop_update(
-        &gpu_shared_data_collection.triple_buffers[current_frame_i]);
+        &gpu_shared_data_collection.triple_buffers[ags->frame_i]);
     
     if (!metal_active) {
         #ifdef PROFILER_ACTIVE
@@ -893,7 +914,7 @@ static bool32_t font_already_pushed = 0;
         return;
     }
     
-    id<MTLCommandBuffer> command_buffer = [command_queue commandBuffer];
+    id<MTLCommandBuffer> command_buffer = [ags->command_queue commandBuffer];
     
     if (command_buffer == nil) {
         #ifndef LOGGER_IGNORE_ASSERTS
@@ -917,7 +938,7 @@ static bool32_t font_already_pushed = 0;
     
     #if POSTPROCESSING_ACTIVE
     render_pass_1_descriptor.colorAttachments[0].texture =
-        render_target_texture;
+        ags->render_target_texture;
     render_pass_1_descriptor.colorAttachments[0].storeAction =
         MTLStoreActionStore;
     #else
@@ -950,14 +971,14 @@ static bool32_t font_already_pushed = 0;
     #ifdef PROFILER_ACTIVE
     profiler_start("setViewport, RenderPipeline, Stencil, ClipMode");
     #endif
-    assert(cached_viewport.zfar > cached_viewport.znear);
-    [render_pass_1_encoder setViewport: cached_viewport];
-    assert(cached_viewport.width > 0.0f);
-    assert(cached_viewport.height > 0.0f);
+    assert(ags->cached_viewport.zfar > ags->cached_viewport.znear);
+    [render_pass_1_encoder setViewport: ags->cached_viewport];
+    assert(ags->cached_viewport.width > 0.0f);
+    assert(ags->cached_viewport.height > 0.0f);
     
-    [render_pass_1_encoder setRenderPipelineState: _diamond_pipeline_state];
-    assert(_depth_stencil_state != nil);
-    [render_pass_1_encoder setDepthStencilState: _depth_stencil_state];
+    [render_pass_1_encoder setRenderPipelineState: ags->diamond_pipeline_state];
+    assert(ags->depth_stencil_state != nil);
+    [render_pass_1_encoder setDepthStencilState: ags->depth_stencil_state];
     [render_pass_1_encoder setDepthClipMode: MTLDepthClipModeClip];
     #ifdef PROFILER_ACTIVE
     profiler_end("setViewport, RenderPipeline, Stencil, ClipMode");
@@ -968,7 +989,7 @@ static bool32_t font_already_pushed = 0;
     #endif
     [render_pass_1_encoder
         setVertexBuffer:
-            vertex_buffers[current_frame_i]
+            ags->vertex_buffers[ags->frame_i]
         offset:
             0
         atIndex:
@@ -976,7 +997,7 @@ static bool32_t font_already_pushed = 0;
     
     [render_pass_1_encoder
         setVertexBuffer:
-            polygon_buffers[current_frame_i]
+            ags->polygon_buffers[ags->frame_i]
         offset:
             0
         atIndex:
@@ -984,19 +1005,19 @@ static bool32_t font_already_pushed = 0;
     
     [render_pass_1_encoder
         setVertexBuffer:
-            light_buffers[current_frame_i]
+            ags->light_buffers[ags->frame_i]
         offset: 0
         atIndex: 2];
     
     [render_pass_1_encoder
         setVertexBuffer:
-            camera_buffers[current_frame_i]
+            ags->camera_buffers[ags->frame_i]
         offset: 0
         atIndex: 3];
     
     [render_pass_1_encoder
         setVertexBuffer:
-            locked_vertex_buffer
+            ags->locked_vertex_buffer
         offset:
             0 
         atIndex:
@@ -1004,7 +1025,7 @@ static bool32_t font_already_pushed = 0;
     
     [render_pass_1_encoder
         setVertexBuffer:
-            projection_constants_buffer
+            ags->projection_constants_buffer
         offset:
             0
         atIndex:
@@ -1012,7 +1033,7 @@ static bool32_t font_already_pushed = 0;
     
     [render_pass_1_encoder
         setVertexBuffer:
-            polygon_material_buffers[current_frame_i]
+            ags->polygon_material_buffers[ags->frame_i]
         offset:
             0
         atIndex:
@@ -1026,11 +1047,11 @@ static bool32_t font_already_pushed = 0;
     #endif
     for (
         uint32_t i = 0;
-        i < [_metal_textures count];
+        i < [ags->metal_textures count];
         i++)
     {
         [render_pass_1_encoder
-            setFragmentTexture: _metal_textures[i]
+            setFragmentTexture: ags->metal_textures[i]
             atIndex: i];
     }
     #ifdef PROFILER_ACTIVE
@@ -1044,13 +1065,13 @@ static bool32_t font_already_pushed = 0;
     for (
         uint32_t i = 0;
         i < gpu_shared_data_collection.
-            triple_buffers[current_frame_i].
+            triple_buffers[ags->frame_i].
             vertices_size;
         i++)
     {
         assert(
             gpu_shared_data_collection.
-                triple_buffers[current_frame_i].
+                triple_buffers[ags->frame_i].
                 vertices[i].locked_vertex_i < ALL_LOCKED_VERTICES_SIZE);
     }
     #ifdef PROFILER_ACTIVE
@@ -1063,7 +1084,7 @@ static bool32_t font_already_pushed = 0;
     #endif
     uint32_t diamond_verts_size =
         gpu_shared_data_collection.
-            triple_buffers[current_frame_i].first_alphablend_i;
+            triple_buffers[ags->frame_i].first_alphablend_i;
     
     if (window_globals->draw_triangles && diamond_verts_size > 0) {
         assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);
@@ -1078,83 +1099,80 @@ static bool32_t font_already_pushed = 0;
     }
     
     log_assert(
-        gpu_shared_data_collection.triple_buffers[current_frame_i].
+        gpu_shared_data_collection.triple_buffers[ags->frame_i].
             first_alphablend_i <=
-        gpu_shared_data_collection.triple_buffers[current_frame_i].
+        gpu_shared_data_collection.triple_buffers[ags->frame_i].
             vertices_size);
     uint32_t alphablend_verts_size =
         gpu_shared_data_collection.
-            triple_buffers[current_frame_i].vertices_size -
+            triple_buffers[ags->frame_i].vertices_size -
         gpu_shared_data_collection.
-            triple_buffers[current_frame_i].first_alphablend_i;
+            triple_buffers[ags->frame_i].first_alphablend_i;
     
     if (window_globals->draw_triangles && alphablend_verts_size > 0) {
         assert(alphablend_verts_size < MAX_VERTICES_PER_BUFFER);
         assert(alphablend_verts_size % 3 == 0);
         [render_pass_1_encoder setRenderPipelineState:
-            _alphablend_pipeline_state];
+            ags->alphablend_pipeline_state];
         
         [render_pass_1_encoder
             drawPrimitives: MTLPrimitiveTypeTriangle
             vertexStart: gpu_shared_data_collection.
-                triple_buffers[current_frame_i].first_alphablend_i
+                triple_buffers[ags->frame_i].first_alphablend_i
             vertexCount:
                 alphablend_verts_size];
     }
     
     if ((
-        gpu_shared_data_collection.triple_buffers[current_frame_i].
+        gpu_shared_data_collection.triple_buffers[ags->frame_i].
             line_vertices_size +
-        gpu_shared_data_collection.triple_buffers[current_frame_i].
+        gpu_shared_data_collection.triple_buffers[ags->frame_i].
             point_vertices_size) > 0)
     {
-        [render_pass_1_encoder setRenderPipelineState:
-            _raw_pipeline_state];
-        assert(_depth_stencil_state != nil);
-        [render_pass_1_encoder setDepthStencilState:
-            _depth_stencil_state];
-        [render_pass_1_encoder setDepthClipMode:
-            MTLDepthClipModeClip];
+        [render_pass_1_encoder setRenderPipelineState: ags->raw_pipeline_state];
+        assert(ags->depth_stencil_state != nil);
+        [render_pass_1_encoder setDepthStencilState: ags->depth_stencil_state];
+        [render_pass_1_encoder setDepthClipMode: MTLDepthClipModeClip];
     }
     
     if (gpu_shared_data_collection.
-        triple_buffers[current_frame_i].line_vertices_size > 0)
+        triple_buffers[ags->frame_i].line_vertices_size > 0)
     {
         [render_pass_1_encoder
             setVertexBuffer:
-                line_vertex_buffers[current_frame_i]
+                ags->line_vertex_buffers[ags->frame_i]
             offset:
                 0
             atIndex:
                 0];
         assert(gpu_shared_data_collection.
-            triple_buffers[current_frame_i].line_vertices_size <=
+            triple_buffers[ags->frame_i].line_vertices_size <=
                 MAX_LINE_VERTICES);
         [render_pass_1_encoder
             drawPrimitives: MTLPrimitiveTypeLine
             vertexStart: 0
             vertexCount: gpu_shared_data_collection.
-                triple_buffers[current_frame_i].line_vertices_size];
+                triple_buffers[ags->frame_i].line_vertices_size];
     }
     
     if (gpu_shared_data_collection.
-        triple_buffers[current_frame_i].point_vertices_size > 0)
+        triple_buffers[ags->frame_i].point_vertices_size > 0)
     {
         [render_pass_1_encoder
             setVertexBuffer:
-                point_vertex_buffers[current_frame_i]
+                ags->point_vertex_buffers[ags->frame_i]
             offset:
                 0
             atIndex:
                 0];
         assert(gpu_shared_data_collection.
-            triple_buffers[current_frame_i].point_vertices_size <=
+            triple_buffers[ags->frame_i].point_vertices_size <=
                 MAX_POINT_VERTICES);
         [render_pass_1_encoder
             drawPrimitives: MTLPrimitiveTypePoint
             vertexStart: 0
             vertexCount: gpu_shared_data_collection.
-                triple_buffers[current_frame_i].point_vertices_size];
+                triple_buffers[ags->frame_i].point_vertices_size];
     }
     #ifdef PROFILER_ACTIVE
     profiler_end("draw calls");
@@ -1183,19 +1201,19 @@ static bool32_t font_already_pushed = 0;
         MTLRenderPassDescriptor * render_pass_2_descriptor =
             [view currentRenderPassDescriptor];
         render_pass_2_descriptor.colorAttachments[0].texture =
-            downsampled_target_textures[ds_i];
+            ags->downsampled_target_textures[ds_i];
         render_pass_2_descriptor.depthAttachment.loadAction =
             MTLLoadActionClear;
         id<MTLRenderCommandEncoder> render_pass_2_encoder =
             [command_buffer
                 renderCommandEncoderWithDescriptor: render_pass_2_descriptor];
-        MTLViewport smaller_viewport = cached_viewport;
+        MTLViewport smaller_viewport = ags->cached_viewport;
         smaller_viewport.width = get_ds_width(ds_i);
         smaller_viewport.height = get_ds_height(ds_i);
         [render_pass_2_encoder setViewport: smaller_viewport];
         [render_pass_2_encoder setCullMode:MTLCullModeNone];
         [render_pass_2_encoder
-            setRenderPipelineState: _downsampler_pipeline_state];
+            setRenderPipelineState: ags->downsampler_pipeline_state];
         [render_pass_2_encoder
             setVertexBytes:&quad_vertices
             length:sizeof(quad_vertices)
@@ -1206,15 +1224,15 @@ static bool32_t font_already_pushed = 0;
             atIndex:0];
         [render_pass_2_encoder
             setVertexBuffer:
-                postprocessing_constants_buffers[current_frame_i]
+                ags->postprocessing_constants_buffers[ags->frame_i]
             offset:
                 0
             atIndex:
                 1];
         [render_pass_2_encoder
             setFragmentTexture: ds_i > 0 ?
-                downsampled_target_textures[ds_i-1] :
-                render_target_texture
+                ags->downsampled_target_textures[ds_i-1] :
+                ags->render_target_texture
             atIndex:0];
         const GPUDownsamplingConstants ds_constants = {
             (float)smaller_viewport.width,
@@ -1246,12 +1264,12 @@ static bool32_t font_already_pushed = 0;
             renderCommandEncoderWithDescriptor:
                 render_pass_3_descriptor];
     
-    [render_pass_3_encoder setViewport: cached_viewport];
+    [render_pass_3_encoder setViewport: ags->cached_viewport];
     
     [render_pass_3_encoder setCullMode:MTLCullModeNone];
     
     [render_pass_3_encoder
-        setRenderPipelineState: _postprocess_pipeline_state];
+        setRenderPipelineState: ags->postprocess_pipeline_state];
     // assert(_depth_stencil_state != nil);
     // [render_encoder setDepthStencilState: _depth_stencil_state];
     //    [render_pass_2_encoder
@@ -1264,26 +1282,26 @@ static bool32_t font_already_pushed = 0;
     
     [render_pass_3_encoder
         setVertexBuffer:
-            postprocessing_constants_buffers[current_frame_i]
+            ags->postprocessing_constants_buffers[ags->frame_i]
         offset:
             0
         atIndex:
             1];
     
     [render_pass_3_encoder
-        setFragmentTexture: render_target_texture
+        setFragmentTexture: ags->render_target_texture
         atIndex:0];
     [render_pass_3_encoder
-        setFragmentTexture: downsampled_target_textures[0]
+        setFragmentTexture: ags->downsampled_target_textures[0]
         atIndex:1];
     #if DOWNSAMPLES_SIZE > 1
     [render_pass_3_encoder
-        setFragmentTexture: downsampled_target_textures[1]
+        setFragmentTexture: ags->downsampled_target_textures[1]
         atIndex:2];
     #endif
     #if DOWNSAMPLES_SIZE > 2
     [render_pass_3_encoder
-        setFragmentTexture: downsampled_target_textures[2]
+        setFragmentTexture: ags->downsampled_target_textures[2]
         atIndex:3];
     #endif
     #if DOWNSAMPLES_SIZE > 3
@@ -1308,13 +1326,13 @@ static bool32_t font_already_pushed = 0;
     // using the current drawable
     [command_buffer presentDrawable: [view currentDrawable]];
     
-    current_frame_i += 1;
-    current_frame_i %= 3;
+    ags->frame_i += 1;
+    ags->frame_i %= 3;
     
     [command_buffer addCompletedHandler:^(id<MTLCommandBuffer> arg_cmd_buffer) {
         (void)arg_cmd_buffer;
         
-        dispatch_semaphore_signal(drawing_semaphore);
+        dispatch_semaphore_signal(ags->drawing_semaphore);
     }];
     
     [command_buffer commit];
@@ -1333,63 +1351,4 @@ static bool32_t font_already_pushed = 0;
 void platform_gpu_update_viewport(void)
 {
     [apple_gpu_delegate updateViewport];
-}
-
-void platform_gpu_copy_locked_vertices(void)
-{
-    for (uint32_t i = 0; i < ALL_LOCKED_VERTICES_SIZE; i++) {
-        assert(
-            gpu_shared_data_collection.locked_vertices[i].parent_material_i <
-                MAX_MATERIALS_PER_POLYGON);
-    }
-    
-    [apple_gpu_delegate copyLockedVertices];
-}
-
-void platform_gpu_init_texture_array(
-    const int32_t texture_array_i,
-    const uint32_t num_images,
-    const uint32_t single_image_width,
-    const uint32_t single_image_height)
-{
-    log_append("platform_gpu_init_texture_array texture_array_i: ");
-    log_append_int(texture_array_i);
-    log_append(", num_images: ");
-    log_append_uint(num_images);
-    log_append(", single_image_width: ");
-    log_append_uint(single_image_width);
-    log_append(", single_image_height: ");
-    log_append_uint(single_image_height);
-    log_append("\n");
-    
-    log_assert(apple_gpu_delegate != NULL);
-    
-    log_assert(metal_active);
-    
-    [apple_gpu_delegate
-        initializeTextureArray : texture_array_i
-        textureCount           : num_images
-        singleImgWidth         : single_image_width
-        singleImgHeight        : single_image_height];    
-}
-
-void platform_gpu_push_texture_slice(
-    const int32_t texture_array_i,
-    const int32_t texture_i,
-    const uint32_t parent_texture_array_images_size,
-    const uint32_t image_width,
-    const uint32_t image_height,
-    const uint8_t * rgba_values)
-{
-    if (rgba_values == NULL) {
-        return;
-    }
-        
-    [apple_gpu_delegate
-        updateTextureArray : (int32_t)texture_array_i
-        atTexture          : (int32_t)texture_i
-        ofTextureArraySize : (uint32_t)parent_texture_array_images_size
-        withImageOfWidth   : (uint32_t)image_width
-        andHeight          : (uint32_t)image_height
-        pixelValues        : (uint8_t *)rgba_values];
 }

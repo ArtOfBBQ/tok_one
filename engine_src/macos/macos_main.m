@@ -402,7 +402,8 @@ int main(int argc, const char * argv[]) {
         return 1;
     }
     
-    apple_gpu_init(gameloop_update);
+    // TODO: check if possible to postpone
+    // apple_gpu_init(gameloop_update);
     
     // NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     NSRect window_rect = NSMakeRect(
@@ -433,11 +434,11 @@ int main(int argc, const char * argv[]) {
     [window setOrderedIndex:0];
     [window makeKeyAndOrderFront: nil];
     
-    id<MTLDevice> metal_device = MTLCreateSystemDefaultDevice();
+    id<MTLDevice> metal_device_for_window = MTLCreateSystemDefaultDevice();
     
     mtk_view = [[MTKView alloc]
         initWithFrame: window_rect
-        device: metal_device];
+        device: metal_device_for_window];
     
     mtk_view.autoResizeDrawable = true;
     
@@ -473,11 +474,16 @@ int main(int argc, const char * argv[]) {
         [NSString
             stringWithCString:shader_lib_path_cstr
             encoding:NSASCIIStringEncoding];
-     
-    BOOL result = [apple_gpu_delegate
-        configureMetalWithDevice: metal_device
-        fromFilePath: shader_lib_path
-        errMsgCStr: errmsg];
+    
+    bool32_t result = apple_gpu_init(
+        /* void (*arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *): */
+            gameloop_update,
+        /* id<MTLDevice> with_metal_device: */
+            metal_device_for_window,
+        /* NSString *shader_lib_filepath: */
+            shader_lib_path,
+        /* char * error_msg_string: */
+            errmsg);
     
     if (!result || !application_running) {
         #ifndef LOGGER_IGNORE_ASSERTS

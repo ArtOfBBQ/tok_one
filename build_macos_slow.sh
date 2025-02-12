@@ -15,7 +15,7 @@ COMPILER_ARGS="
 -ferror-limit=2 
 -march=native 
 -Wall 
--x objective-c -std=c99 
+-x objective-c -std=c11 
 -O0 
 -objC"
 

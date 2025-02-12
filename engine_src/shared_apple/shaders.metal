@@ -528,9 +528,7 @@ postprocess_fragment_shader(
     texture2d<float> texture               [[texture(0)]],
     texture2d<float> downsampled_texture   [[texture(1)]],
     texture2d<float> downsampled_texture_2 [[texture(2)]],
-    texture2d<float> downsampled_texture_3 [[texture(3)]] /*,
-    texture2d<float> downsampled_texture_4 [[texture(4)]],
-    texture2d<float> downsampled_texture_5 [[texture(5)]] */)
+    texture2d<float> downsampled_texture_3 [[texture(3)]])
 {
     constexpr sampler sampler(
         mag_filter::nearest,

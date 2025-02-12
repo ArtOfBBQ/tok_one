@@ -14,38 +14,19 @@
 
 extern uint64_t last_resize_request_at;
 
-void apple_gpu_init(
-    void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *));
+bool32_t apple_gpu_init(
+    void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *),
+    id<MTLDevice> with_metal_device,
+    NSString * shader_lib_filepath,
+    char * error_msg_string);
+
+void apple_gpu_initialize_texture_array(
+    int32_t texturearray_i,
+    uint32_t textures_count,
+    uint32_t single_img_width,
+    uint32_t single_img_height);
 
 @interface MetalKitViewDelegate: NSObject<MTKViewDelegate>
-@property (retain) NSMutableArray * metal_textures;
-@property (retain) id<MTLRenderPipelineState> diamond_pipeline_state;
-@property (retain) id<MTLRenderPipelineState> alphablend_pipeline_state;
-@property (retain) id<MTLRenderPipelineState> raw_pipeline_state;
-#if POSTPROCESSING_ACTIVE
-@property (retain) id<MTLRenderPipelineState> downsampler_pipeline_state;
-@property (retain) id<MTLRenderPipelineState> postprocess_pipeline_state;
-#endif
-@property (retain) id<MTLDepthStencilState>   depth_stencil_state;
-
-- (void)
-    initializeTextureArray:(int32_t)texturearray_i
-    textureCount:(uint32_t)texture_count
-    singleImgWidth: (uint32_t)single_img_width
-    singleImgHeight: (uint32_t)single_img_height;
-- (void)
-    updateTextureArray: (int32_t)texturearray_i
-    atTexture: (int32_t)texture_i
-    ofTextureArraySize: (uint32_t)texture_array_images_size
-    withImageOfWidth: (uint32_t)image_width
-    andHeight: (uint32_t)image_height
-    pixelValues: (uint8_t *)rgba_values;
-- (BOOL)
-    configureMetalWithDevice: (id<MTLDevice>)with_metal_device
-    fromFilePath: (NSString *)shader_lib_filepath
-    errMsgCStr: (char *)errmsg;
-- (void)
-    copyLockedVertices;
 - (void)
     updateViewport;
 @end
