@@ -557,3 +557,13 @@ postprocess_fragment_shader(
     
     return color_sample;
 }
+
+kernel void grayen_texture(
+    texture2d<float, access::read> inTexture[[texture(0)]],
+    texture2d<float, access::write> outTexture [[texture(1)]],
+    uint2 gid [[thread_position_in_grid]])
+{
+    float4 in_color = inTexture.read(gid);
+    float  gray     = (in_color[0] + in_color[1] + in_color[2]) * 0.33f;
+    outTexture.write(float4(gray, gray, gray, 1.0), gid);
+}

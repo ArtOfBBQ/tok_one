@@ -9,6 +9,7 @@ typedef struct AppleGPUState {
     NSUInteger frame_i;
     MTLViewport cached_viewport;
     id<MTLDevice> metal_device;
+    id<MTLLibrary> shader_library;
     id<MTLCommandQueue> command_queue;
     id polygon_buffers[3];
     id polygon_material_buffers[3];
@@ -30,7 +31,7 @@ typedef struct AppleGPUState {
     id<MTLRenderPipelineState> postprocess_pipeline_state;
     #endif
     id<MTLDepthStencilState>   depth_stencil_state;
-
+    
     NSMutableArray * metal_textures;
     #if POSTPROCESSING_ACTIVE
     id<MTLTexture> render_target_texture;
@@ -82,9 +83,9 @@ bool32_t apple_gpu_init(
     ags->metal_device = with_metal_device;
     
     NSError * Error = NULL;
-    id<MTLLibrary> shader_library = [with_metal_device newDefaultLibrary];
+    ags->shader_library = [with_metal_device newDefaultLibrary];
     
-    if (shader_library == NULL)
+    if (ags->shader_library == NULL)
     {
         log_append("failed to load default shader lib, trying ");
         log_append(
@@ -113,12 +114,12 @@ bool32_t apple_gpu_init(
             return false;
         }
         
-        shader_library =
+        ags->shader_library =
             [with_metal_device
                 newLibraryWithURL: shader_lib_url
                 error: &Error];
         
-        if (shader_library == NULL) {
+        if (ags->shader_library == NULL) {
             log_append("Failed to find the shader library\n");
             #ifndef LOGGER_IGNORE_ASSERTS
             log_dump_and_crash((char *)[
@@ -151,7 +152,7 @@ bool32_t apple_gpu_init(
     }
     
     id<MTLFunction> vertex_shader =
-        [shader_library newFunctionWithName:
+        [ags->shader_library newFunctionWithName:
             @"vertex_shader"];
     if (vertex_shader == NULL) {
         log_append("Missing function: vertex_shader()!");
@@ -164,7 +165,7 @@ bool32_t apple_gpu_init(
     }
     
     id<MTLFunction> fragment_shader =
-        [shader_library newFunctionWithName:
+        [ags->shader_library newFunctionWithName:
             @"fragment_shader"];
     if (fragment_shader == NULL) {
         log_append("Missing function: fragment_shader()!");
@@ -176,7 +177,7 @@ bool32_t apple_gpu_init(
     }
     
     id<MTLFunction> alphablending_fragment_shader =
-        [shader_library newFunctionWithName:
+        [ags->shader_library newFunctionWithName:
             @"alphablending_fragment_shader"];
     if (alphablending_fragment_shader == NULL) {
         log_append("Missing function: alphablending_fragment_shader()!");
@@ -188,7 +189,7 @@ bool32_t apple_gpu_init(
     }
     
     id<MTLFunction> raw_vertex_shader =
-        [shader_library newFunctionWithName:
+        [ags->shader_library newFunctionWithName:
             @"raw_vertex_shader"];
     if (raw_vertex_shader == NULL) {
         log_append("Missing function: raw_vertex_shader()!");
@@ -201,7 +202,7 @@ bool32_t apple_gpu_init(
     }
     
     id<MTLFunction> raw_fragment_shader =
-        [shader_library newFunctionWithName:
+        [ags->shader_library newFunctionWithName:
             @"raw_fragment_shader"];
     if (raw_fragment_shader == NULL) {
         log_append("Missing function: raw_fragment_shader()!");
@@ -578,7 +579,7 @@ bool32_t apple_gpu_init(
     // TODO: rename this to "quad_to_texture_vertex_shader"?
     // TODO: it's not only used in postprocessing
     id<MTLFunction> postprocess_vertex_shader =
-        [shader_library newFunctionWithName:
+        [ags->shader_library newFunctionWithName:
             @"postprocess_vertex_shader"];
     if (postprocess_vertex_shader == NULL) {
         log_append("Missing function: postprocess_vertex_shader()!");
@@ -591,7 +592,9 @@ bool32_t apple_gpu_init(
     }
     
     id<MTLFunction> downsampling_fragment_shader =
-        [shader_library newFunctionWithName: @"downsampling_fragment_shader"];
+        [ags->shader_library
+            newFunctionWithName: @"downsampling_fragment_shader"];
+    
     if (downsampling_fragment_shader == NULL) {
         log_append("Missing function: downsampling_fragment_shader()!");
         common_strcpy_capped(
@@ -633,7 +636,8 @@ bool32_t apple_gpu_init(
     
     // Post processing
     id<MTLFunction> postprocess_fragment_shader =
-        [shader_library newFunctionWithName: @"postprocess_fragment_shader"];
+        [ags->shader_library
+            newFunctionWithName: @"postprocess_fragment_shader"];
     if (postprocess_fragment_shader == NULL) {
         log_append("Missing function: postprocess_fragment_shader()!");
         common_strcpy_capped(
@@ -887,7 +891,7 @@ void platform_gpu_copy_locked_vertices(void)
         downsampled_target_texture_desc.pixelFormat = MTLPixelFormatRGBA16Float;
         downsampled_target_texture_desc.mipmapLevelCount = 1;
         downsampled_target_texture_desc.usage =
-            MTLTextureUsageRenderTarget |
+            MTLTextureUsageShaderWrite |
             MTLTextureUsageShaderRead;
         ags->downsampled_target_textures[i] = [ags->metal_device
             newTextureWithDescriptor: downsampled_target_texture_desc];
@@ -1197,7 +1201,13 @@ void platform_gpu_copy_locked_vertices(void)
     };
     
     for (uint32_t ds_i = 0; ds_i < DOWNSAMPLES_SIZE; ds_i++) {
+        
         // Render pass 2 downsamples the original texture
+        MTLViewport smaller_viewport = ags->cached_viewport;
+        smaller_viewport.width = get_ds_width(ds_i);
+        smaller_viewport.height = get_ds_height(ds_i);
+        
+        #if 0
         MTLRenderPassDescriptor * render_pass_2_descriptor =
             [view currentRenderPassDescriptor];
         render_pass_2_descriptor.colorAttachments[0].texture =
@@ -1207,9 +1217,6 @@ void platform_gpu_copy_locked_vertices(void)
         id<MTLRenderCommandEncoder> render_pass_2_encoder =
             [command_buffer
                 renderCommandEncoderWithDescriptor: render_pass_2_descriptor];
-        MTLViewport smaller_viewport = ags->cached_viewport;
-        smaller_viewport.width = get_ds_width(ds_i);
-        smaller_viewport.height = get_ds_height(ds_i);
         [render_pass_2_encoder setViewport: smaller_viewport];
         [render_pass_2_encoder setCullMode:MTLCullModeNone];
         [render_pass_2_encoder
@@ -1249,6 +1256,44 @@ void platform_gpu_copy_locked_vertices(void)
             vertexStart:0
             vertexCount:6];
         [render_pass_2_encoder endEncoding];
+        #else
+        
+        id<MTLFunction> grayen_func =
+            [ags->shader_library newFunctionWithName: @"grayen_texture"];
+        log_assert(grayen_func != nil);
+        
+        id<MTLComputePipelineState> compute_pls =
+            [ags->metal_device
+                newComputePipelineStateWithFunction:grayen_func
+                error:nil];
+        
+        id<MTLComputeCommandEncoder> compute_encoder =
+            [command_buffer computeCommandEncoder];
+        
+        [compute_encoder setComputePipelineState:compute_pls];
+        [compute_encoder
+            setTexture:ds_i > 0 ?
+                ags->downsampled_target_textures[ds_i-1] :
+                ags->render_target_texture
+            atIndex:0];
+        [compute_encoder
+            setTexture:ags->downsampled_target_textures[ds_i]
+            atIndex:1];
+        
+        MTLSize grid = MTLSizeMake(1000, 1, 1);
+        MTLSize threadgroup = MTLSizeMake(1024, 1, 1);
+        [compute_encoder
+            dispatchThreads:grid
+            threadsPerThreadgroup:threadgroup];
+        
+        [compute_encoder endEncoding];
+        
+        
+        log_assert(compute_pls != nil);
+        
+        
+        
+        #endif
     }
     
     // Render pass 3 blends the downsampled texture & the original texture
