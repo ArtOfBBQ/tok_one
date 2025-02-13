@@ -457,7 +457,7 @@ struct PostProcessingFragment
 };
 
 vertex PostProcessingFragment
-postprocess_vertex_shader(
+single_quad_vertex_shader(
     const uint vertexID [[ vertex_id ]],
     const device PostProcessingVertex * vertices [[ buffer(0) ]],
     const constant GPUPostProcessingConstants * constants [[ buffer(1) ]])
@@ -488,47 +488,9 @@ postprocess_vertex_shader(
 }
 
 fragment float4
-downsampling_fragment_shader(
+single_quad_fragment_shader(
     PostProcessingFragment in [[stage_in]],
-    texture2d<float> texture [[texture(0)]],
-    constant GPUDownsamplingConstants &ds_constants [[buffer(0)]])
-{
-    float2 texcoord = in.texcoord;
-    
-    constexpr sampler sampler(
-        mag_filter::nearest,
-        min_filter::nearest);
-    
-    float2 texel_width_height = 1.0f / vector_float2(
-        ds_constants.texture_width,
-        ds_constants.texture_height);
-    
-    float4 color_sample = vector_float4(0.0f, 0.0f, 0.0f, 0.0f);
-    for (float x = -1.0f; x < 1.1f; x += 1.0f) {
-        for (float y = -1.0f; y < 1.1f; y+= 1.0f) {
-            float4 orig_sample = texture.sample(
-                sampler,
-                texcoord + (vector_float2(x, y)*texel_width_height));
-            float multip = (orig_sample[0] + orig_sample[1] + orig_sample[2]) >
-                ds_constants.brightness_threshold;
-            orig_sample *= multip;
-            color_sample += orig_sample;
-        }
-    }
-    color_sample /= 9.0f;
-    
-    color_sample[3] = 1.0f;
-    
-    return color_sample;
-}
-
-fragment float4
-postprocess_fragment_shader(
-    PostProcessingFragment in              [[stage_in]],
-    texture2d<float> texture               [[texture(0)]],
-    texture2d<float> downsampled_texture   [[texture(1)]],
-    texture2d<float> downsampled_texture_2 [[texture(2)]],
-    texture2d<float> downsampled_texture_3 [[texture(3)]])
+    texture2d<half> texture  [[texture(0)]])
 {
     constexpr sampler sampler(
         mag_filter::nearest,
@@ -536,34 +498,66 @@ postprocess_fragment_shader(
     
     float2 texcoord = in.texcoord;
     
-    float4 color_sample = texture.sample(sampler, texcoord);
+    half4 color_sample = texture.sample(sampler, texcoord);
     color_sample[3] = 1.0f;
-    float4 blur_sample  = downsampled_texture.sample(sampler, texcoord);
-    float4 blur_sample_2  = downsampled_texture_2.sample(sampler, texcoord);
-    float4 blur_sample_3  = downsampled_texture_3.sample(sampler, texcoord);
-    // float4 blur_sample_4  = downsampled_texture_4.sample(sampler, texcoord);
-    // float4 blur_sample_5  = downsampled_texture_5.sample(sampler, texcoord);
-    
-    color_sample =
-        (color_sample  * in.nonblur_pct) +
-        (blur_sample   * in.blur_pct) +
-        (blur_sample_2 * in.blur_pct) +
-        (blur_sample_3 * in.blur_pct);
     
     // reinhard tone mapping
     color_sample = color_sample / (color_sample + 0.5f);
     color_sample = clamp(color_sample, 0.0f, 1.0f);
     color_sample[3] = 1.0f;
     
-    return color_sample;
+    return vector_float4(color_sample);
 }
 
-kernel void grayen_texture(
-    texture2d<float, access::read> inTexture[[texture(0)]],
-    texture2d<float, access::write> outTexture [[texture(1)]],
-    uint2 gid [[thread_position_in_grid]])
+kernel void downsample_texture(
+    texture2d<half, access::read> in_texture[[texture(0)]],
+    texture2d<half, access::write> out_texture[[texture(1)]],
+    uint2 out_pos [[thread_position_in_grid]])
 {
-    float4 in_color = inTexture.read(gid);
-    float  gray     = (in_color[0] + in_color[1] + in_color[2]) * 0.33f;
-    outTexture.write(float4(gray, gray, gray, 1.0), gid);
+    if (
+        out_pos.x >= out_texture.get_width() ||
+        out_pos.y >= out_texture.get_height())
+    {
+        return;
+    }
+    
+    uint2  input_pos = out_pos * 2;
+    half4  in_color  = in_texture.read(input_pos);
+    
+    out_texture.write(in_color, out_pos);
+}
+
+kernel void additive_blend_textures(
+    texture2d<half, access::read_write> main_texture[[texture(0)]],
+    texture2d<half, access::read>       ds_1 [[texture(1)]],
+    texture2d<half, access::read>       ds_2 [[texture(2)]],
+    texture2d<half, access::read>       ds_3 [[texture(3)]],
+    uint2 main_pos [[thread_position_in_grid]])
+{
+    if (
+        main_pos.x >= main_texture.get_width() ||
+        main_pos.y >= main_texture.get_height())
+    {
+        return;
+    }
+    
+    uint2 ds_pos = main_pos / 2;
+    half4 main_color  = main_texture.read(main_pos);
+    half4 ds_1_color = ds_1.read(ds_pos);
+    ds_1_color = clamp(ds_1_color, 1.0f, 3.0f);
+    ds_1_color -= 1.0f;
+    
+    ds_pos = main_pos / 4;
+    half4 ds_2_color = ds_2.read(ds_pos);
+    ds_2_color = clamp(ds_2_color, 1.0f, 3.0f);
+    ds_2_color -= 1.0f;
+    
+    ds_pos = main_pos / 8;
+    half4 ds_3_color = ds_3.read(ds_pos);
+    ds_3_color = clamp(ds_3_color, 1.0f, 3.0f);
+    ds_3_color -= 1.0f;
+    
+    main_texture.write(
+        main_color + ds_1_color + ds_2_color + ds_3_color,
+        main_pos);
 }

@@ -113,17 +113,17 @@ void client_logic_late_startup(void) {
     }
     #endif
     
-    #if 0
+    #if 1
     // phoebus.png
     PolygonRequest quad[1];
     for (uint32_t i = 0; i < 1; i++) {
         request_next_zpolygon(&quad[i]);
         construct_quad(
-            /* const float left_x: */ windowsize_screenspace_x_to_x(0, 1.0f),
-            /* const float bottom_y: */ windowsize_screenspace_y_to_y(0, 1.0f),
+            /* const float left_x: */ 0.5f,
+            /* const float bottom_y: */ 0.5f,
             /* const float z: */ 1.0f,
-            /* const float width: */ windowsize_screenspace_width_to_width(window_globals->window_width, 1.0f),
-            /* const float height: */ windowsize_screenspace_height_to_height(window_globals->window_height, 1.0f),
+            /* const float width: */ windowsize_screenspace_width_to_width(window_globals->window_width / 5, 1.0f),
+            /* const float height: */ windowsize_screenspace_height_to_height(window_globals->window_height / 5, 1.0f),
             /* PolygonRequest * stack_recipient: */ &quad[i]);
         quad[i].gpu_materials->texturearray_i    = 2;
         quad[i].gpu_materials->texture_i         = 0;
@@ -156,8 +156,8 @@ void client_logic_late_startup(void) {
     font_settings->font_height = 280;
     font_settings->font_touchable_id = 6;
     font_settings->font_color[0] = 2.2f;
-    font_settings->font_color[1] = 0.9f;
-    font_settings->font_color[2] = 1.2f;
+    font_settings->font_color[1] = 2.9f;
+    font_settings->font_color[2] = 2.2f;
     font_settings->font_color[3] = 1.0f;
     font_settings->remove_hitbox = false;
     font_settings->ignore_camera = true;
