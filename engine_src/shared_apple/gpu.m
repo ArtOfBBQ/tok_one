@@ -23,7 +23,7 @@ typedef struct AppleGPUState {
     id locked_vertex_populator_buffer;
     id locked_vertex_buffer;
     id projection_constants_buffer;
-
+    
     id<MTLRenderPipelineState> diamond_pipeline_state;
     id<MTLRenderPipelineState> alphablend_pipeline_state;
     id<MTLRenderPipelineState> raw_pipeline_state;
@@ -36,7 +36,6 @@ typedef struct AppleGPUState {
     NSMutableArray * metal_textures;
     #if POSTPROCESSING_ACTIVE
     id<MTLTexture> render_target_texture;
-    #define DOWNSAMPLES_SIZE 3
     id<MTLTexture> downsampled_target_textures[DOWNSAMPLES_SIZE];
     #endif
 } AppleGPUState;
@@ -1256,6 +1255,28 @@ void platform_gpu_copy_locked_vertices(void)
         
         [compute_encoder endEncoding];
         
+        // Mask only the brightest values
+        if (ds_i == 0) {
+            id<MTLComputeCommandEncoder> thres_encoder =
+                [command_buffer computeCommandEncoder];
+            id<MTLFunction> threshold_func =
+                [ags->shader_library newFunctionWithName: @"threshold_texture"];
+            log_assert(threshold_func != nil);
+            id<MTLComputePipelineState> thres_pls =
+                [ags->metal_device
+                    newComputePipelineStateWithFunction:threshold_func
+                    error:nil];
+            [thres_encoder setComputePipelineState:thres_pls];
+            [thres_encoder
+                setTexture: ags->downsampled_target_textures[0]
+                atIndex:0];
+            [thres_encoder
+                dispatchThreads:grid
+                threadsPerThreadgroup:threadgroup];
+            
+            [thres_encoder endEncoding];
+        }
+        
         log_assert(compute_pls != nil);
         
         #endif
@@ -1281,12 +1302,26 @@ void platform_gpu_copy_locked_vertices(void)
     [compute_encoder
         setTexture: ags->downsampled_target_textures[0]
         atIndex:1];
+    #if DOWNSAMPLES_SIZE > 1
     [compute_encoder
         setTexture: ags->downsampled_target_textures[1]
         atIndex:2];
+    #endif
+    #if DOWNSAMPLES_SIZE > 2
     [compute_encoder
         setTexture: ags->downsampled_target_textures[2]
         atIndex:3];
+    #endif
+    #if DOWNSAMPLES_SIZE > 3
+    [compute_encoder
+        setTexture: ags->downsampled_target_textures[3]
+        atIndex:4];
+    #endif
+    #if DOWNSAMPLES_SIZE > 4
+    [compute_encoder
+        setTexture: ags->downsampled_target_textures[4]
+        atIndex:5];
+    #endif
     
     MTLSize grid = MTLSizeMake(
         (uint32_t)ags->render_target_texture.width,

@@ -509,6 +509,19 @@ single_quad_fragment_shader(
     return vector_float4(color_sample);
 }
 
+kernel void threshold_texture(
+    texture2d<half, access::read_write> texture[[texture(0)]],
+    uint2 grid_pos [[thread_position_in_grid]])
+{
+    half4 in_color = texture.read(grid_pos);
+    
+    half4 thresholded =
+        in_color * ((in_color[0] + in_color[1] + in_color[2]) > (0.85f * 3));
+    
+    texture.write(thresholded, grid_pos);
+}
+
+
 kernel void downsample_texture(
     texture2d<half, access::read> in_texture[[texture(0)]],
     texture2d<half, access::write> out_texture[[texture(1)]],
@@ -521,8 +534,19 @@ kernel void downsample_texture(
         return;
     }
     
-    uint2  input_pos = out_pos * 2;
-    half4  in_color  = in_texture.read(input_pos);
+    uint2 input_pos = out_pos * 2;
+    uint2 input_pos_minus_one = input_pos - vector_uint2(1, 1);
+    
+    half4 in_color = (
+        in_texture.read(input_pos_minus_one) +
+        in_texture.read(input_pos_minus_one + vector_uint2(2, 0)) +
+        in_texture.read(input_pos_minus_one + vector_uint2(0, 2)) +
+        (in_texture.read(input_pos - vector_uint2(1, 0)) * 2.0h) +
+        (in_texture.read(input_pos - vector_uint2(0, 1)) * 2.0h) +
+        (in_texture.read(input_pos) * 4.0h) +
+        in_texture.read(input_pos + vector_uint2(1, 1)) +
+        (in_texture.read(input_pos + vector_uint2(1, 0)) * 2.0h) +
+        (in_texture.read(input_pos + vector_uint2(0, 1)) * 2.0h)) / 24.0h;
     
     out_texture.write(in_color, out_pos);
 }
@@ -531,7 +555,15 @@ kernel void additive_blend_textures(
     texture2d<half, access::read_write> main_texture[[texture(0)]],
     texture2d<half, access::read>       ds_1 [[texture(1)]],
     texture2d<half, access::read>       ds_2 [[texture(2)]],
+    #if DOWNSAMPLES_SIZE > 2
     texture2d<half, access::read>       ds_3 [[texture(3)]],
+    #endif
+    #if DOWNSAMPLES_SIZE > 3
+    texture2d<half, access::read>       ds_4 [[texture(4)]],
+    #endif
+    #if DOWNSAMPLES_SIZE > 4
+    texture2d<half, access::read>       ds_5 [[texture(5)]],
+    #endif
     uint2 main_pos [[thread_position_in_grid]])
 {
     if (
@@ -541,23 +573,50 @@ kernel void additive_blend_textures(
         return;
     }
     
-    uint2 ds_pos = main_pos / 2;
     half4 main_color  = main_texture.read(main_pos);
+    
+    uint2 ds_pos = main_pos / 2;
     half4 ds_1_color = ds_1.read(ds_pos);
-    ds_1_color = clamp(ds_1_color, 1.0f, 3.0f);
-    ds_1_color -= 1.0f;
+    // ds_1_color = clamp(ds_1_color, 1.0f, 3.0f);
+    // ds_1_color -= 1.0f;
     
     ds_pos = main_pos / 4;
     half4 ds_2_color = ds_2.read(ds_pos);
-    ds_2_color = clamp(ds_2_color, 1.0f, 3.0f);
-    ds_2_color -= 1.0f;
+    // ds_2_color = clamp(ds_2_color, 1.0f, 3.0f);
+    // ds_2_color -= 1.0f;
     
     ds_pos = main_pos / 8;
     half4 ds_3_color = ds_3.read(ds_pos);
-    ds_3_color = clamp(ds_3_color, 1.0f, 3.0f);
-    ds_3_color -= 1.0f;
+    // ds_3_color = clamp(ds_3_color, 1.0f, 3.0f);
+    // ds_3_color -= 1.0f;
+    
+    ds_pos = main_pos / 16;
+    half4 ds_4_color = ds_4.read(ds_pos);
+    // ds_4_color = clamp(ds_4_color, 1.0f, 3.0f);
+    // ds_4_color -= 1.0f;
+    
+    #if DOWNSAMPLES_SIZE > 4
+    ds_pos = main_pos / 32;
+    half4 ds_5_color = ds_5.read(ds_pos);
+    // ds_5_color = clamp(ds_5_color, 1.0f, 3.0f);
+    // ds_5_color -= 1.0f;
+    #endif
     
     main_texture.write(
-        main_color + ds_1_color + ds_2_color + ds_3_color,
+        main_color
+            + (ds_1_color * 0.5f)
+            #if DOWNSAMPLES_SIZE > 1
+            + (ds_2_color * 0.5f)
+            #endif
+            #if DOWNSAMPLES_SIZE > 2
+            + (ds_3_color * 0.5f)
+            #endif
+            #if DOWNSAMPLES_SIZE > 3
+            + (ds_4_color * 0.5f)
+            #endif
+            #if DOWNSAMPLES_SIZE > 4
+            + (ds_5_color * 0.5f)
+            #endif
+            ,
         main_pos);
 }
