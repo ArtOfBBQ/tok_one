@@ -71,7 +71,8 @@ void platform_read_file(
     const char * filepath,
     FileBuffer * out_preallocatedbuffer)
 {
-    @autoreleasepool {
+    printf("about to read file: %s\n", filepath);
+    //@autoreleasepool {
     NSString * nsfilepath =
         [NSString
             stringWithCString:filepath
@@ -84,7 +85,12 @@ void platform_read_file(
             options: NSDataReadingUncached
             error: &error];
     
-    if (error) {
+    if (
+        error ||
+        file_data == nil ||
+        out_preallocatedbuffer->size_without_terminator < 1 ||
+        [file_data length] < out_preallocatedbuffer->size_without_terminator)
+    {
         log_append("Error - failed [NSData initWithContentsOfFile:]\n");
         out_preallocatedbuffer->size_without_terminator = 0;
         out_preallocatedbuffer->good = false;
@@ -99,7 +105,7 @@ void platform_read_file(
         out_preallocatedbuffer->size_without_terminator] = '\0';
     
     out_preallocatedbuffer->good = true;
-    }
+    printf("Succesfully read file: %s\n", filepath);
 }
 
 bool32_t platform_file_exists(

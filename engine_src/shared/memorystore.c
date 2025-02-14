@@ -104,15 +104,17 @@ void memorystore_init(
     
     unmanaged_memory = ptr_unmanaged_memory_block;
     align_pointer(&unmanaged_memory);
-    
-    managed_memory = ptr_managed_memory_block;
-    align_pointer(&managed_memory);
-    
-    managed_memory_end = ((char *)managed_memory + MANAGED_MEMORY_SIZE);
-    
     common_memset_char(unmanaged_memory, 0, UNMANAGED_MEMORY_SIZE);
     
-    common_memset_char(managed_memory, 0, MANAGED_MEMORY_SIZE);
+    if (MANAGED_MEMORY_SIZE > 0) {
+        managed_memory = ptr_managed_memory_block;
+        align_pointer(&managed_memory);
+        
+        managed_memory_end = ((char *)managed_memory + MANAGED_MEMORY_SIZE);
+        
+        common_memset_char(managed_memory, 0, MANAGED_MEMORY_SIZE);
+    }
+    
     
     managed_stack = malloc_from_unmanaged(sizeof(ManagedMemoryStack));
     managed_stack->size = 0;
@@ -187,6 +189,12 @@ void * malloc_from_managed_internal(
     char * called_from_file,
     char * called_from_func)
 {
+    #if 1
+    (void)called_from_file;
+    (void)called_from_func;
+    
+    return malloc(size);
+    #else
     memstore_mutex_lock(malloc_mutex_id);
     
     log_assert(managed_memory != NULL);
@@ -231,9 +239,14 @@ void * malloc_from_managed_internal(
     
     log_assert(return_value != NULL);
     return return_value;
+    #endif
 }
 
 void free_from_managed(void * to_free) {
+    
+    #if 1
+    free(to_free);
+    #else
     
     memstore_mutex_lock(malloc_mutex_id);
     
@@ -279,5 +292,6 @@ void free_from_managed(void * to_free) {
             MANAGED_MEMORY_SIZE);
     
     memstore_mutex_unlock(malloc_mutex_id);
+    #endif
     return;
 }

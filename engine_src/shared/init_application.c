@@ -137,9 +137,13 @@ void init_application_before_gpu_init(
     error_message[0] = '\0';
     
     void * unmanaged_memory_store = platform_malloc_unaligned_block(
-        UNMANAGED_MEMORY_SIZE);
-    void * managed_memory_store = platform_malloc_unaligned_block(
-        MANAGED_MEMORY_SIZE);
+        UNMANAGED_MEMORY_SIZE + 7232);
+    
+    void * managed_memory_store = NULL;
+    if (MANAGED_MEMORY_SIZE > 0) {
+        managed_memory_store = platform_malloc_unaligned_block(
+            MANAGED_MEMORY_SIZE + 32);
+    }
     
     platform_layer_init(&unmanaged_memory_store, 32);
     

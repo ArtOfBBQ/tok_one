@@ -123,7 +123,9 @@ internal_log_append(
     
     // logger_mutex_lock_func(logger_mutex_id);
     
-    #if 0
+    #if 1
+    (void)caller_function_name;
+    #else
     if (
         caller_function_name != NULL)
     {

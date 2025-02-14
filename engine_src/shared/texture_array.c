@@ -818,6 +818,7 @@ void decode_null_image_at(
     file_buffer.contents =
         (char *)malloc_from_managed(sizeof(char)
             * file_buffer.size_without_terminator + 1);
+    
     platform_read_resource_file(
         texture_arrays[i].images[j].filename,
         &file_buffer);
@@ -942,6 +943,7 @@ void decode_all_null_images(void)
             (uint32_t)i < texture_arrays_size;
             i++)
         {
+            // platform_mutex_lock(texture_arrays_mutex_ids[i]);
             log_assert(texture_arrays[i].images_size <= MAX_FILES_IN_SINGLE_TEXARRAY);
             for (
                 int32_t j = 0;
