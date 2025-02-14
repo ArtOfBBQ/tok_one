@@ -1026,8 +1026,6 @@ void decode_all_null_images(void)
                 i,
             /* const int32_t texture_i: */
                 j);
-        
-        init_or_push_one_gpu_texture_array_if_needed();
     }
 }
 

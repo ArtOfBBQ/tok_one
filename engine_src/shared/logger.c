@@ -123,6 +123,7 @@ internal_log_append(
     
     // logger_mutex_lock_func(logger_mutex_id);
     
+    #if 0
     if (
         caller_function_name != NULL)
     {
@@ -213,6 +214,7 @@ internal_log_append(
     if (logger_mutex_unlock_func != NULL) {
         // logger_mutex_unlock_func(logger_mutex_id);
     }
+    #endif
 }
 #endif
 
