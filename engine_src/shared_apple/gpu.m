@@ -693,7 +693,7 @@ static float get_ds_width(
 {
     float return_value = (float)ags->render_target_texture.width * 0.5f;
     
-    for (uint32_t i = 0; i < ds_i; i++) {
+    for (uint32_t i = 0; i < ds_i && i < DOWNSAMPLES_CUTOFF; i++) {
         return_value *= 0.5f;
     }
     
@@ -705,7 +705,7 @@ static float get_ds_height(
 {
     float return_value = (float)ags->render_target_texture.height * 0.5f;
     
-    for (uint32_t i = 0; i < ds_i; i++) {
+    for (uint32_t i = 0; i < ds_i && i < DOWNSAMPLES_CUTOFF; i++) {
         return_value *= 0.5f;
     }
     
@@ -1221,119 +1221,84 @@ void platform_gpu_copy_locked_vertices(void)
         smaller_viewport.width = ags->downsampled_target_textures[ds_i].width;
         smaller_viewport.height = ags->downsampled_target_textures[ds_i].height;
         
-        id<MTLFunction> downsample_func =
-            [ags->shader_library newFunctionWithName: @"downsample_texture"];
-        log_assert(downsample_func != nil);
-        
-        id<MTLComputePipelineState> compute_pls =
-            [ags->metal_device
-                newComputePipelineStateWithFunction:downsample_func
-                error:nil];
-        
-        id<MTLComputeCommandEncoder> compute_encoder =
-            [command_buffer computeCommandEncoder];
-        
-        [compute_encoder setComputePipelineState:compute_pls];
-        [compute_encoder
-            setTexture:ds_i > 0 ?
-                ags->downsampled_target_textures[ds_i-1] :
-                ags->render_target_texture
-            atIndex:0];
-        [compute_encoder
-            setTexture:ags->downsampled_target_textures[ds_i]
-            atIndex:1];
-        
         MTLSize grid = MTLSizeMake(
             (uint32_t)smaller_viewport.width,
             (uint32_t)smaller_viewport.height,
             1);
         
         MTLSize threadgroup = MTLSizeMake(16, 16, 1);
-        [compute_encoder
-            dispatchThreads:grid
-            threadsPerThreadgroup:threadgroup];
         
-        [compute_encoder endEncoding];
-        
-        // Mask only the brightest values
-        if (ds_i == 0) {
-            id<MTLComputeCommandEncoder> thres_encoder =
-                [command_buffer computeCommandEncoder];
-            id<MTLFunction> threshold_func =
-                [ags->shader_library newFunctionWithName: @"threshold_texture"];
-            log_assert(threshold_func != nil);
-            id<MTLComputePipelineState> thres_pls =
-                [ags->metal_device
-                    newComputePipelineStateWithFunction:threshold_func
-                    error:nil];
-            [thres_encoder setComputePipelineState:thres_pls];
-            [thres_encoder
-                setTexture: ags->downsampled_target_textures[0]
-                atIndex:0];
-            [thres_encoder
-                dispatchThreads:grid
-                threadsPerThreadgroup:threadgroup];
+        if (ds_i < DOWNSAMPLES_CUTOFF) {
+            id<MTLFunction> downsample_func =
+            [ags->shader_library newFunctionWithName: @"downsample_texture"];
+            log_assert(downsample_func != nil);
             
-            [thres_encoder endEncoding];
+            id<MTLComputePipelineState> compute_pls =
+            [ags->metal_device
+             newComputePipelineStateWithFunction:downsample_func
+             error:nil];
+            
+            id<MTLComputeCommandEncoder> compute_encoder =
+            [command_buffer computeCommandEncoder];
+            
+            [compute_encoder setComputePipelineState:compute_pls];
+            [compute_encoder
+             setTexture:ds_i > 0 ?
+             ags->downsampled_target_textures[ds_i-1] :
+                 ags->render_target_texture
+             atIndex:0];
+            [compute_encoder
+             setTexture:ags->downsampled_target_textures[ds_i]
+             atIndex:1];
+            
+            [compute_encoder
+             dispatchThreads:grid
+             threadsPerThreadgroup:threadgroup];
+            
+            [compute_encoder endEncoding];
+            
+            // Mask only the brightest values
+            if (ds_i == 0) {
+                id<MTLComputeCommandEncoder> thres_encoder =
+                [command_buffer computeCommandEncoder];
+                id<MTLFunction> threshold_func =
+                [ags->shader_library newFunctionWithName: @"threshold_texture"];
+                log_assert(threshold_func != nil);
+                id<MTLComputePipelineState> thres_pls =
+                [ags->metal_device
+                 newComputePipelineStateWithFunction:threshold_func
+                 error:nil];
+                [thres_encoder setComputePipelineState:thres_pls];
+                [thres_encoder
+                 setTexture: ags->downsampled_target_textures[0]
+                 atIndex:0];
+                [thres_encoder
+                 dispatchThreads:grid
+                 threadsPerThreadgroup:threadgroup];
+                
+                [thres_encoder endEncoding];
+            }
         }
         
-        log_assert(compute_pls != nil);
-        
+        id<MTLComputeCommandEncoder> boxblur_encoder =
+            [command_buffer computeCommandEncoder];
+        id<MTLFunction> boxblur_func =
+            [ags->shader_library newFunctionWithName: @"boxblur_texture"];
+        log_assert(boxblur_func != nil);
+        id<MTLComputePipelineState> boxblur_pls =
+            [ags->metal_device
+                newComputePipelineStateWithFunction:boxblur_func
+                error:nil];
+        [boxblur_encoder setComputePipelineState:boxblur_pls];
+        [boxblur_encoder
+            setTexture: ags->downsampled_target_textures[ds_i]
+            atIndex:0];
+        [boxblur_encoder
+            dispatchThreads:grid
+            threadsPerThreadgroup:threadgroup];
+        [boxblur_encoder endEncoding];
         #endif
     }
-    
-    // Render pass 3 blends the downsampled textures & the original texture
-    id<MTLFunction> additive_bend_func =
-        [ags->shader_library newFunctionWithName: @"additive_blend_textures"];
-    log_assert(additive_bend_func != nil);
-    
-    id<MTLComputePipelineState> compute_pls =
-        [ags->metal_device
-            newComputePipelineStateWithFunction:additive_bend_func
-            error:nil];
-    
-    id<MTLComputeCommandEncoder> compute_encoder =
-        [command_buffer computeCommandEncoder];
-    
-    [compute_encoder setComputePipelineState:compute_pls];
-    [compute_encoder
-        setTexture: ags->render_target_texture
-        atIndex:0];
-    [compute_encoder
-        setTexture: ags->downsampled_target_textures[0]
-        atIndex:1];
-    #if DOWNSAMPLES_SIZE > 1
-    [compute_encoder
-        setTexture: ags->downsampled_target_textures[1]
-        atIndex:2];
-    #endif
-    #if DOWNSAMPLES_SIZE > 2
-    [compute_encoder
-        setTexture: ags->downsampled_target_textures[2]
-        atIndex:3];
-    #endif
-    #if DOWNSAMPLES_SIZE > 3
-    [compute_encoder
-        setTexture: ags->downsampled_target_textures[3]
-        atIndex:4];
-    #endif
-    #if DOWNSAMPLES_SIZE > 4
-    [compute_encoder
-        setTexture: ags->downsampled_target_textures[4]
-        atIndex:5];
-    #endif
-    
-    MTLSize grid = MTLSizeMake(
-        (uint32_t)ags->render_target_texture.width,
-        (uint32_t)ags->render_target_texture.height,
-        1);
-    
-    MTLSize threadgroup = MTLSizeMake(16, 16, 1);
-    [compute_encoder
-        dispatchThreads:grid
-        threadsPerThreadgroup:threadgroup];
-    
-    [compute_encoder endEncoding];
     
     // Render pass 4 puts a quad on the full screen
     MTLRenderPassDescriptor * render_pass_4_descriptor =
@@ -1368,6 +1333,23 @@ void platform_gpu_copy_locked_vertices(void)
     [render_pass_4_encoder
         setFragmentTexture: ags->render_target_texture
         atIndex:0];
+    
+    [render_pass_4_encoder
+        setFragmentTexture: ags->downsampled_target_textures[0]
+        atIndex:1];
+    [render_pass_4_encoder
+        setFragmentTexture: ags->downsampled_target_textures[1]
+        atIndex:2];
+    [render_pass_4_encoder
+        setFragmentTexture: ags->downsampled_target_textures[2]
+        atIndex:3];
+    [render_pass_4_encoder
+        setFragmentTexture: ags->downsampled_target_textures[3]
+        atIndex:4];
+    [render_pass_4_encoder
+        setFragmentTexture: ags->downsampled_target_textures[4]
+        atIndex:5];
+    
     [render_pass_4_encoder
         drawPrimitives:MTLPrimitiveTypeTriangle
         vertexStart:0

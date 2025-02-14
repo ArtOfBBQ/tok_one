@@ -490,15 +490,25 @@ single_quad_vertex_shader(
 fragment float4
 single_quad_fragment_shader(
     PostProcessingFragment in [[stage_in]],
-    texture2d<half> texture  [[texture(0)]])
+    texture2d<half> texture  [[texture(0)]],
+    texture2d<half> downsampled_1  [[texture(1)]],
+    texture2d<half> downsampled_2  [[texture(2)]],
+    texture2d<half> downsampled_3  [[texture(3)]],
+    texture2d<half> downsampled_4  [[texture(4)]],
+    texture2d<half> downsampled_5  [[texture(5)]])
 {
     constexpr sampler sampler(
-        mag_filter::nearest,
-        min_filter::nearest);
+        mag_filter::linear,
+        min_filter::linear);
     
     float2 texcoord = in.texcoord;
     
     half4 color_sample = texture.sample(sampler, texcoord);
+    color_sample += downsampled_1.sample(sampler, texcoord);
+    color_sample += downsampled_2.sample(sampler, texcoord);
+    color_sample += downsampled_3.sample(sampler, texcoord);
+    color_sample += downsampled_4.sample(sampler, texcoord);
+    color_sample += downsampled_5.sample(sampler, texcoord);
     color_sample[3] = 1.0f;
     
     // reinhard tone mapping
@@ -516,7 +526,7 @@ kernel void threshold_texture(
     half4 in_color = texture.read(grid_pos);
     
     half4 thresholded =
-        in_color * ((in_color[0] + in_color[1] + in_color[2]) > (0.85f * 3));
+        in_color * ((in_color[0] + in_color[1] + in_color[2]) > (1.0f * 3));
     
     texture.write(thresholded, grid_pos);
 }
@@ -540,77 +550,27 @@ kernel void downsample_texture(
         in_texture.read(input_pos) +
         in_texture.read(input_pos + vector_uint2(1, 1)) +
         in_texture.read(input_pos + vector_uint2(1, 0)) +
-        in_texture.read(input_pos + vector_uint2(0, 1))) / 5.0h;
+        in_texture.read(input_pos + vector_uint2(0, 1))) / 4.0h;
     
     out_texture.write(in_color, out_pos);
 }
 
-kernel void additive_blend_textures(
-    texture2d<half, access::read_write> main_texture[[texture(0)]],
-    texture2d<half, access::read>       ds_1 [[texture(1)]],
-    texture2d<half, access::read>       ds_2 [[texture(2)]],
-    #if DOWNSAMPLES_SIZE > 2
-    texture2d<half, access::read>       ds_3 [[texture(3)]],
-    #endif
-    #if DOWNSAMPLES_SIZE > 3
-    texture2d<half, access::read>       ds_4 [[texture(4)]],
-    #endif
-    #if DOWNSAMPLES_SIZE > 4
-    texture2d<half, access::read>       ds_5 [[texture(5)]],
-    #endif
-    uint2 main_pos [[thread_position_in_grid]])
+kernel void boxblur_texture(
+    texture2d<half, access::read_write> texture[[texture(0)]],
+    uint2 pos [[thread_position_in_grid]])
 {
-    if (
-        main_pos.x >= main_texture.get_width() ||
-        main_pos.y >= main_texture.get_height())
-    {
-        return;
-    }
+    uint2 prev_pos = pos - vector_uint2(1, 1);
     
-    half4 main_color  = main_texture.read(main_pos);
+    half4 in_color = (
+        texture.read(pos + vector_uint2(1, 1)) +
+        texture.read(pos + vector_uint2(1, 0)) +
+        texture.read(pos + vector_uint2(0, 1)) +
+        texture.read(pos) +
+        texture.read(prev_pos + vector_uint2(1, 1)) +
+        texture.read(prev_pos + vector_uint2(1, 0)) +
+        texture.read(prev_pos + vector_uint2(0, 1)) +
+        texture.read(prev_pos + vector_uint2(0, 2)) +
+        texture.read(prev_pos + vector_uint2(2, 0))) / 10.0f;
     
-    uint2 ds_pos = main_pos / 2;
-    half4 ds_1_color = ds_1.read(ds_pos);
-    // ds_1_color = clamp(ds_1_color, 1.0f, 3.0f);
-    // ds_1_color -= 1.0f;
-    
-    ds_pos = main_pos / 4;
-    half4 ds_2_color = ds_2.read(ds_pos);
-    // ds_2_color = clamp(ds_2_color, 1.0f, 3.0f);
-    // ds_2_color -= 1.0f;
-    
-    ds_pos = main_pos / 8;
-    half4 ds_3_color = ds_3.read(ds_pos);
-    // ds_3_color = clamp(ds_3_color, 1.0f, 3.0f);
-    // ds_3_color -= 1.0f;
-    
-    ds_pos = main_pos / 16;
-    half4 ds_4_color = ds_4.read(ds_pos);
-    // ds_4_color = clamp(ds_4_color, 1.0f, 3.0f);
-    // ds_4_color -= 1.0f;
-    
-    #if DOWNSAMPLES_SIZE > 4
-    ds_pos = main_pos / 32;
-    half4 ds_5_color = ds_5.read(ds_pos);
-    // ds_5_color = clamp(ds_5_color, 1.0f, 3.0f);
-    // ds_5_color -= 1.0f;
-    #endif
-    
-    main_texture.write(
-        main_color
-            + (ds_1_color * 0.5f)
-            #if DOWNSAMPLES_SIZE > 1
-            + (ds_2_color * 0.5f)
-            #endif
-            #if DOWNSAMPLES_SIZE > 2
-            + (ds_3_color * 0.5f)
-            #endif
-            #if DOWNSAMPLES_SIZE > 3
-            + (ds_4_color * 0.5f)
-            #endif
-            #if DOWNSAMPLES_SIZE > 4
-            + (ds_5_color * 0.5f)
-            #endif
-            ,
-        main_pos);
+    texture.write(in_color, pos);
 }
