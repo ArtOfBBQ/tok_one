@@ -28,7 +28,9 @@ typedef struct AppleGPUState {
     id<MTLRenderPipelineState> alphablend_pipeline_state;
     id<MTLRenderPipelineState> raw_pipeline_state;
     #if POSTPROCESSING_ACTIVE
-    id<MTLRenderPipelineState> downsampler_pipeline_state;
+    id<MTLComputePipelineState> downsample_compute_pls;
+    id<MTLComputePipelineState> boxblur_compute_pls;
+    id<MTLComputePipelineState> thres_compute_pls;
     id<MTLRenderPipelineState> singlequad_pipeline_state;
     #endif
     id<MTLDepthStencilState>   depth_stencil_state;
@@ -575,8 +577,33 @@ bool32_t apple_gpu_init(
             initWithCapacity: TEXTUREARRAYS_SIZE];
     
     #if POSTPROCESSING_ACTIVE
-    // TODO: rename this to "quad_to_texture_vertex_shader"?
-    // TODO: it's not only used in postprocessing
+    
+    id<MTLFunction> downsample_func =
+        [ags->shader_library newFunctionWithName: @"downsample_texture"];
+        log_assert(downsample_func != nil);
+    
+    ags->downsample_compute_pls =
+        [ags->metal_device
+            newComputePipelineStateWithFunction:downsample_func
+            error:nil];
+    
+    id<MTLFunction> boxblur_func =
+        [ags->shader_library newFunctionWithName: @"boxblur_texture"];
+    log_assert(boxblur_func != nil);
+    ags->boxblur_compute_pls =
+        [ags->metal_device
+            newComputePipelineStateWithFunction:boxblur_func
+            error:nil];
+    
+    id<MTLFunction> threshold_func =
+        [ags->shader_library newFunctionWithName: @"threshold_texture"];
+        log_assert(threshold_func != nil);
+    
+    ags->thres_compute_pls =
+        [ags->metal_device
+            newComputePipelineStateWithFunction:threshold_func
+            error:nil];
+    
     id<MTLFunction> singlequad_vertex_shader =
         [ags->shader_library newFunctionWithName:
             @"single_quad_vertex_shader"];
@@ -602,49 +629,6 @@ bool32_t apple_gpu_init(
             "Missing function: downsampling_fragment_shader()");
         return false;
     }
-    
-    
-    //    // Downsampling
-    //    MTLRenderPipelineDescriptor * downsampling_pipeline_descriptor =
-    //        [[MTLRenderPipelineDescriptor alloc] init];
-    //    downsampling_pipeline_descriptor.label = @"Downsampling Pipeline";
-    //    downsampling_pipeline_descriptor.sampleCount = 1;
-    //    [downsampling_pipeline_descriptor
-    //        setVertexFunction: singlequad_vertex_shader];
-    //    [downsampling_pipeline_descriptor
-    //        setFragmentFunction: singlequad_fragment_shader];
-    //    downsampling_pipeline_descriptor.colorAttachments[0].pixelFormat =
-    //        MTLPixelFormatRGBA16Float;
-    //    [downsampling_pipeline_descriptor
-    //        .colorAttachments[0]
-    //        setBlendingEnabled: YES];
-    //    downsampling_pipeline_descriptor
-    //        .colorAttachments[0].sourceRGBBlendFactor =
-    //            MTLBlendFactorSourceAlpha;
-    //    downsampling_pipeline_descriptor
-    //        .colorAttachments[0].destinationRGBBlendFactor =
-    //            MTLBlendFactorOneMinusSourceAlpha;
-    //    downsampling_pipeline_descriptor.depthAttachmentPixelFormat =
-    //        MTLPixelFormatDepth32Float;
-    //    downsampling_pipeline_descriptor.vertexBuffers[0].mutability =
-    //        MTLMutabilityImmutable;
-    //    ags->downsampler_pipeline_state = [
-    //        with_metal_device
-    //        newRenderPipelineStateWithDescriptor:downsampling_pipeline_descriptor
-    //        error:NULL];
-    //
-    //    // Post processing
-    //    id<MTLFunction> postprocess_fragment_shader =
-    //        [ags->shader_library
-    //            newFunctionWithName: @"postprocess_fragment_shader"];
-    //    if (postprocess_fragment_shader == NULL) {
-    //        log_append("Missing function: postprocess_fragment_shader()!");
-    //        common_strcpy_capped(
-    //            error_msg_string,
-    //            512,
-    //            "Missing function: postprocess_fragment_shader()");
-    //        return false;
-    //    }
     
     MTLRenderPipelineDescriptor * singlequad_pipeline_descriptor =
         [[MTLRenderPipelineDescriptor alloc] init];
@@ -1229,19 +1213,11 @@ void platform_gpu_copy_locked_vertices(void)
         MTLSize threadgroup = MTLSizeMake(16, 16, 1);
         
         if (ds_i < DOWNSAMPLES_CUTOFF) {
-            id<MTLFunction> downsample_func =
-            [ags->shader_library newFunctionWithName: @"downsample_texture"];
-            log_assert(downsample_func != nil);
-            
-            id<MTLComputePipelineState> compute_pls =
-            [ags->metal_device
-             newComputePipelineStateWithFunction:downsample_func
-             error:nil];
-            
             id<MTLComputeCommandEncoder> compute_encoder =
             [command_buffer computeCommandEncoder];
             
-            [compute_encoder setComputePipelineState:compute_pls];
+            [compute_encoder
+                setComputePipelineState: ags->downsample_compute_pls];
             [compute_encoder
              setTexture:ds_i > 0 ?
              ags->downsampled_target_textures[ds_i-1] :
@@ -1252,29 +1228,23 @@ void platform_gpu_copy_locked_vertices(void)
              atIndex:1];
             
             [compute_encoder
-             dispatchThreads:grid
-             threadsPerThreadgroup:threadgroup];
+                dispatchThreads:grid
+                threadsPerThreadgroup:threadgroup];
             
             [compute_encoder endEncoding];
             
             // Mask only the brightest values
             if (ds_i == 0) {
                 id<MTLComputeCommandEncoder> thres_encoder =
-                [command_buffer computeCommandEncoder];
-                id<MTLFunction> threshold_func =
-                [ags->shader_library newFunctionWithName: @"threshold_texture"];
-                log_assert(threshold_func != nil);
-                id<MTLComputePipelineState> thres_pls =
-                [ags->metal_device
-                 newComputePipelineStateWithFunction:threshold_func
-                 error:nil];
-                [thres_encoder setComputePipelineState:thres_pls];
+                    [command_buffer computeCommandEncoder];
+                
+                [thres_encoder setComputePipelineState:ags->thres_compute_pls];
                 [thres_encoder
-                 setTexture: ags->downsampled_target_textures[0]
-                 atIndex:0];
+                    setTexture: ags->downsampled_target_textures[0]
+                    atIndex:0];
                 [thres_encoder
-                 dispatchThreads:grid
-                 threadsPerThreadgroup:threadgroup];
+                    dispatchThreads:grid
+                    threadsPerThreadgroup:threadgroup];
                 
                 [thres_encoder endEncoding];
             }
@@ -1282,14 +1252,8 @@ void platform_gpu_copy_locked_vertices(void)
         
         id<MTLComputeCommandEncoder> boxblur_encoder =
             [command_buffer computeCommandEncoder];
-        id<MTLFunction> boxblur_func =
-            [ags->shader_library newFunctionWithName: @"boxblur_texture"];
-        log_assert(boxblur_func != nil);
-        id<MTLComputePipelineState> boxblur_pls =
-            [ags->metal_device
-                newComputePipelineStateWithFunction:boxblur_func
-                error:nil];
-        [boxblur_encoder setComputePipelineState:boxblur_pls];
+        
+        [boxblur_encoder setComputePipelineState:ags->boxblur_compute_pls];
         [boxblur_encoder
             setTexture: ags->downsampled_target_textures[ds_i]
             atIndex:0];
