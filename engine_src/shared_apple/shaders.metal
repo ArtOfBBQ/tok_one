@@ -535,18 +535,12 @@ kernel void downsample_texture(
     }
     
     uint2 input_pos = out_pos * 2;
-    uint2 input_pos_minus_one = input_pos - vector_uint2(1, 1);
     
     half4 in_color = (
-        in_texture.read(input_pos_minus_one) +
-        in_texture.read(input_pos_minus_one + vector_uint2(2, 0)) +
-        in_texture.read(input_pos_minus_one + vector_uint2(0, 2)) +
-        (in_texture.read(input_pos - vector_uint2(1, 0)) * 2.0h) +
-        (in_texture.read(input_pos - vector_uint2(0, 1)) * 2.0h) +
-        (in_texture.read(input_pos) * 4.0h) +
+        in_texture.read(input_pos) +
         in_texture.read(input_pos + vector_uint2(1, 1)) +
-        (in_texture.read(input_pos + vector_uint2(1, 0)) * 2.0h) +
-        (in_texture.read(input_pos + vector_uint2(0, 1)) * 2.0h)) / 24.0h;
+        in_texture.read(input_pos + vector_uint2(1, 0)) +
+        in_texture.read(input_pos + vector_uint2(0, 1))) / 5.0h;
     
     out_texture.write(in_color, out_pos);
 }
