@@ -767,14 +767,6 @@ void platform_gpu_push_texture_slice(
         return;
     }
     
-    MTLTextureDescriptor * texture_descriptor =
-        [[MTLTextureDescriptor alloc] init];
-    texture_descriptor.textureType = MTLTextureType2DArray;
-    texture_descriptor.arrayLength = parent_texture_array_images_size;
-    texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
-    texture_descriptor.width = image_width;
-    texture_descriptor.height = image_height;
-    
     MTLRegion region = {
         { 0,0,0 },
         { image_width, image_height, 1 }
@@ -866,6 +858,7 @@ void platform_gpu_copy_locked_vertices(void)
     texture_descriptor.width = (unsigned long)ags->cached_viewport.width / 2;
     texture_descriptor.height = (unsigned long)ags->cached_viewport.height / 2;
     texture_descriptor.pixelFormat = MTLPixelFormatRGBA16Float;
+    texture_descriptor.storageMode = MTLStorageModePrivate;
     texture_descriptor.usage =
         MTLTextureUsageRenderTarget |
         MTLTextureUsageShaderWrite |
@@ -888,6 +881,7 @@ void platform_gpu_copy_locked_vertices(void)
         downsampled_target_texture_desc.height = (NSUInteger)get_ds_height(i);
         downsampled_target_texture_desc.pixelFormat = MTLPixelFormatRGBA16Float;
         downsampled_target_texture_desc.mipmapLevelCount = 1;
+        downsampled_target_texture_desc.storageMode = MTLStorageModePrivate;
         downsampled_target_texture_desc.usage =
             MTLTextureUsageShaderWrite |
             MTLTextureUsageShaderRead;
