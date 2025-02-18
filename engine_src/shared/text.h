@@ -12,6 +12,9 @@ typedef struct FontSettings {
     int32_t font_texturearray_i; // = 0;
     int32_t font_touchable_id; // = -1;
     float font_height; // = 30.0;
+    float scale_factor;
+    float extra_x_offset;
+    float extra_y_offset;
     float font_color[4]; // = {1.0f, 1.0f, 1.0f, 1.0f};
     bool32_t font_ignore_lighting;
     bool32_t ignore_camera;

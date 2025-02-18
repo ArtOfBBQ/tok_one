@@ -315,6 +315,7 @@ void text_request_label_offset_around(
             
             letter.gpu_data->ignore_lighting = font_settings->font_ignore_lighting;
             letter.gpu_data->ignore_camera = font_settings->ignore_camera;
+            letter.gpu_data->scale_factor = font_settings->scale_factor;
             letter.cpu_data->object_id = with_id;
             letter.cpu_data->touchable_id = font_settings->font_touchable_id;
             letter.cpu_data->alpha_blending_enabled =
@@ -338,13 +339,15 @@ void text_request_label_offset_around(
             letter.gpu_data->xyz_offset[0] =
                 windowsize_screenspace_width_to_width(
                     (cur_x_offset_pixelspace +
-                        get_left_side_bearing(text_to_draw[j])),
+                        font_settings->extra_x_offset +
+                            get_left_side_bearing(text_to_draw[j])),
                     z);
             letter.gpu_data->xyz_offset[1] =
                 windowsize_screenspace_height_to_height(
                     (cur_y_offset_pixelspace -
                         get_y_offset(text_to_draw[j]) -
-                        (font_settings->font_height * 0.5f)),
+                        (font_settings->font_height * 0.5f)) +
+                            font_settings->extra_y_offset,
                     z);
             
             letter.gpu_materials[0].texturearray_i =
@@ -359,6 +362,9 @@ void text_request_label_offset_around(
         }
         cur_y_offset_pixelspace -= get_newline_advance();
     }
+    
+    font_settings->extra_x_offset = 0;
+    font_settings->extra_y_offset = 0;
 }
 
 void text_request_label_around_x_at_top_y(
