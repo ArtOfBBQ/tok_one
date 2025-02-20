@@ -211,6 +211,10 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)mouseMoved:(NSEvent *)event
 {
+    if (window_globals->block_mouse) {
+        return;
+    }
+    
     NSPoint window_location = [event locationInWindow];
     
     register_interaction(&user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
@@ -228,6 +232,10 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)mouseDragged:(NSEvent *)event
 {
+    if (window_globals->block_mouse) {
+        return;
+    }
+    
     NSPoint window_location = [event locationInWindow];
     
     register_interaction(&user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
@@ -245,6 +253,10 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)mouseDown:(NSEvent *)event
 {
+    if (window_globals->block_mouse) {
+        return;
+    }
+    
     register_interaction(&user_interactions[INTR_PREVIOUS_LEFTCLICK_START]);
     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START] =
         user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
@@ -252,6 +264,10 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)mouseUp:(NSEvent *)event
 {
+    if (window_globals->block_mouse) {
+        return;
+    }
+    
     register_interaction(&user_interactions[INTR_PREVIOUS_LEFTCLICK_END]);
     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END] =
         user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
@@ -259,11 +275,19 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)rightMouseDown:(NSEvent *)event
 {
+    if (window_globals->block_mouse) {
+        return;
+    }
+    
     register_interaction(&user_interactions[INTR_PREVIOUS_RIGHTCLICK_START]);
 }
 
 - (void)rightMouseUp:(NSEvent *)event
 {
+    if (window_globals->block_mouse) {
+        return;
+    }
+    
     register_interaction(&user_interactions[INTR_PREVIOUS_RIGHTCLICK_END]);
 }
 

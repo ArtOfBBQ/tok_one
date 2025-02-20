@@ -95,13 +95,15 @@ void windowsize_init(void) {
         pjc->field_of_view_modifier;
     pjc->y_multiplier = pjc->field_of_view_modifier;
     
-    window_globals->draw_clickray        = false;
-    window_globals->draw_imputed_normals = false;
-    window_globals->draw_fps             = false;
-    window_globals->draw_triangles       =  true;
-    window_globals->draw_hitboxes        = false;
-    window_globals->show_profiler        = false;
-    window_globals->pause_profiler       = false;
+    window_globals->draw_clickray         = false;
+    window_globals->draw_imputed_normals  = false;
+    window_globals->draw_fps              = false;
+    window_globals->draw_top_touchable_id = false;
+    window_globals->draw_triangles        =  true;
+    window_globals->draw_hitboxes         = false;
+    window_globals->show_profiler         = false;
+    window_globals->pause_profiler        = false;
+    window_globals->block_mouse           = false;
     
     window_globals->pixelation_div = 2;
     

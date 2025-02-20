@@ -71,6 +71,9 @@ void text_request_label_renderable(
 
 void text_request_fps_counter(uint64_t microseconds_elapsed);
 
+void text_request_top_touchable_id(
+    int32_t top_touchable_id);
+
 #ifdef __cplusplus
 }
 #endif

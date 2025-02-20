@@ -317,6 +317,7 @@ void text_request_label_offset_around(
             letter.gpu_data->ignore_camera = font_settings->ignore_camera;
             letter.gpu_data->scale_factor = font_settings->scale_factor;
             letter.cpu_data->object_id = with_id;
+            letter.cpu_data->remove_hitbox = font_settings->remove_hitbox;
             letter.cpu_data->touchable_id = font_settings->font_touchable_id;
             letter.cpu_data->alpha_blending_enabled =
                 font_settings->alphablending;
@@ -357,7 +358,6 @@ void text_request_label_offset_around(
             
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
-            letter.cpu_data->remove_hitbox = font_settings->remove_hitbox;
             commit_zpolygon_to_render(&letter);
         }
         cur_y_offset_pixelspace -= get_newline_advance();
@@ -585,6 +585,44 @@ void text_request_fps_counter(
     }
     
     delete_zpolygon_object(FPS_COUNTER_OBJECT_ID);
+    
+    font_settings->font_height = 16.0f;
+    font_settings->font_color[0] = 1.0f;
+    font_settings->font_color[1] = 1.0f;
+    font_settings->font_color[2] = 1.0f;
+    font_settings->font_color[3] = 1.0f;
+    font_settings->font_ignore_lighting = true;
+    font_settings->ignore_camera = true;
+    font_settings->remove_hitbox = true;
+    text_request_label_renderable(
+        /* with_id               : */
+            FPS_COUNTER_OBJECT_ID,
+        /* char * text_to_draw   : */
+            fps_string,
+        /* float left_pixelspace : */
+            20.0f,
+        /* float top_pixelspace  : */
+            30.0f,
+        /* z                     : */
+            0.05f,
+        /* float max_width       : */
+            window_globals->window_width);
+}
+
+void text_request_top_touchable_id(
+    int32_t top_touchable_id)
+{
+    delete_zpolygon_object(FPS_COUNTER_OBJECT_ID);
+    
+    char fps_string[512];
+    common_strcpy_capped(fps_string, 512, "Top touchable id: ");
+    common_strcat_int_capped(fps_string, 512, top_touchable_id);
+    
+    common_strcat_capped(fps_string, 512, ", camera xyz: [");
+    common_strcat_float_capped(fps_string, 512, camera.xyz[0]);
+    common_strcat_float_capped(fps_string, 512, camera.xyz[1]);
+    common_strcat_float_capped(fps_string, 512, camera.xyz[2]);
+    common_strcat_capped(fps_string, 512, "]");
     
     font_settings->font_height = 16.0f;
     font_settings->font_color[0] = 1.0f;

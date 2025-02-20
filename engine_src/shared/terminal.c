@@ -637,6 +637,43 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
+        common_are_equal_strings(command, "BLOCK MOUSE") ||
+        common_are_equal_strings(command, "STOP MOUSE") ||
+        common_are_equal_strings(command, "TOGGLE MOUSE"))
+    {
+        window_globals->block_mouse = !window_globals->block_mouse;
+        
+        common_strcpy_capped(
+            response,
+            SINGLE_LINE_MAX,
+            "Toggled mouse block");
+        return true;
+    }
+    
+    if (
+        common_are_equal_strings(command, "DRAW TOP TOUCHABLE") ||
+        common_are_equal_strings(command, "DRAW TOP") ||
+        common_are_equal_strings(command, "SHOW TOP"))
+    {
+        window_globals->draw_top_touchable_id =
+            !window_globals->draw_top_touchable_id;
+        
+        if (window_globals->draw_top_touchable_id) {
+            common_strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Drawing the top touchable_id...");
+        } else {
+            delete_zpolygon_object(FPS_COUNTER_OBJECT_ID);
+            common_strcpy_capped(
+                response,
+                SINGLE_LINE_MAX,
+                "Stopped drawing the top touchable_id...");
+        }
+        return true;
+    }
+    
+    if (
         common_are_equal_strings(command, "DRAW FPS") ||
         common_are_equal_strings(command, "FPS") ||
         common_are_equal_strings(command, "SHOW FPS"))

@@ -416,6 +416,10 @@ void gameloop_update(
         text_request_fps_counter(
             /* uint64_t microseconds_elapsed: */
                 elapsed);
+    } else if (window_globals->draw_top_touchable_id) {
+        text_request_top_touchable_id(
+            user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].
+                touchable_id_top);
     }
     
     renderer_hardware_render(

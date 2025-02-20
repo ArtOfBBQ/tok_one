@@ -49,6 +49,8 @@ typedef struct WindowGlobals {
     bool32_t pause_profiler;
     bool32_t draw_axes;
     bool32_t draw_fps;
+    bool32_t draw_top_touchable_id;
+    bool32_t block_mouse;
     bool32_t fullscreen;
     
     float transformed_imputed_normals[TRANSFORMED_IMPUTED_NORMALS_MAX];
