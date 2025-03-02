@@ -56,6 +56,106 @@ typedef struct {
     float color;
 } RawFragment;
 
+vertex float4 shadows_vertex_shader(
+    uint vertex_i [[ vertex_id ]],
+    const device GPUVertex * vertices [[ buffer(0) ]],
+    const device GPUPolygonCollection * polygon_collection [[ buffer(1) ]],
+    const device GPULightCollection * light_collection [[ buffer(2) ]],
+    const device GPULockedVertex * locked_vertices [[ buffer(4) ]],
+    const device GPUProjectionConstants * projection_constants [[ buffer(5) ]])
+{
+    unsigned int light_i = 0; // parameterize later
+    
+    float4 out;
+    
+    uint polygon_i = vertices[vertex_i].polygon_i;
+    uint locked_vertex_i = vertices[vertex_i].locked_vertex_i;
+    
+    float3 parent_mesh_position = vector_float3(
+        polygon_collection->polygons[polygon_i].xyz[0],
+        polygon_collection->polygons[polygon_i].xyz[1],
+        polygon_collection->polygons[polygon_i].xyz[2]);
+    
+    float3 mesh_vertices = vector_float3(
+        locked_vertices[locked_vertex_i].xyz[0],
+        locked_vertices[locked_vertex_i].xyz[1],
+        locked_vertices[locked_vertex_i].xyz[2]);
+    
+    float3 vertex_multipliers = vector_float3(
+        polygon_collection->polygons[polygon_i].xyz_multiplier[0],
+        polygon_collection->polygons[polygon_i].xyz_multiplier[1],
+        polygon_collection->polygons[polygon_i].xyz_multiplier[2]);
+    
+    float3 vertex_offsets = vector_float3(
+        polygon_collection->polygons[polygon_i].xyz_offset[0],
+        polygon_collection->polygons[polygon_i].xyz_offset[1],
+        polygon_collection->polygons[polygon_i].xyz_offset[2]);
+    
+    mesh_vertices *= vertex_multipliers;
+    mesh_vertices += vertex_offsets;
+    
+    mesh_vertices *= polygon_collection->polygons[polygon_i].scale_factor;
+    
+    // rotate vertices
+    float3 x_rotated_vertices = x_rotate(
+        mesh_vertices,
+        polygon_collection->polygons[polygon_i].xyz_angle[0]);
+    float3 y_rotated_vertices = y_rotate(
+        x_rotated_vertices,
+        polygon_collection->polygons[polygon_i].xyz_angle[1]);
+    float3 z_rotated_vertices = z_rotate(
+        y_rotated_vertices,
+        polygon_collection->polygons[polygon_i].xyz_angle[2]);
+    
+    // translate to world position
+    float3 rotated_pos = z_rotated_vertices + parent_mesh_position;
+    
+    float3 camera_position = vector_float3(
+        light_collection->light_x[light_i],
+        light_collection->light_y[light_i],
+        light_collection->light_z[light_i]);
+    float3 camera_translated_pos = rotated_pos - camera_position;
+    
+    // vector from the 'camera' (the light) to our vertex
+    float3 camera_angle_xyz = normalize(rotated_pos - camera_position);
+    
+    // rotate around camera
+    float3 cam_x_rotated = x_rotate(
+        camera_translated_pos,
+        -camera_angle_xyz[0]);
+    float3 cam_y_rotated = y_rotate(
+        cam_x_rotated,
+        -camera_angle_xyz[1]);
+    float3 cam_z_rotated = z_rotate(
+        cam_y_rotated,
+        -camera_angle_xyz[2]);
+    
+    float ic = clamp(
+        polygon_collection->polygons[polygon_i].ignore_camera,
+        0.0f,
+        1.0f);
+    float3 final_pos =
+        (rotated_pos * ic) +
+        (cam_z_rotated * (1.0f - ic));
+    
+    out[0] = final_pos[0];
+    out[1] = final_pos[1];
+    out[2] = final_pos[2];
+    out[3] = 1.0f;
+    
+    // projection
+    out[0] *= projection_constants->x_multiplier;
+    out[1] *= projection_constants->field_of_view_modifier;
+    out[3]  = out[2];
+    out[2]  =
+        (out[2] * projection_constants->q) -
+        (projection_constants->znear * projection_constants->q);
+    
+    return out;
+}
+
+fragment void shadows_fragment_shader() {}
+
 vertex RawFragment
 raw_vertex_shader(
     uint vertex_i [[ vertex_id ]],
@@ -115,6 +215,7 @@ typedef struct
 {
     float4 position [[position]];
     float4 color;
+    float3 rgb_cap;
     float2 texture_coordinate;
     float3 lighting;
     int texturearray_i;
@@ -358,6 +459,10 @@ vertex_shader(
         (ignore_light * all_ones);
     
     out.point_size = 40.0f;
+    out.rgb_cap = vector_float3(
+        polygon_materials[locked_material_i].rgb_cap[0],
+        polygon_materials[locked_material_i].rgb_cap[1],
+        polygon_materials[locked_material_i].rgb_cap[2]);
     
     return out;
 }
@@ -407,10 +512,11 @@ fragment_shader(
         ))
     {
         discard_fragment();
-        return out_color;
     }
     
     out_color[3] = 1.0f;
+    float4 rgba_cap = vector_float4(in.rgb_cap, 1.0f);
+    out_color = clamp(out_color, 0.0f, rgba_cap);
     return out_color;
 }
 
@@ -443,6 +549,8 @@ alphablending_fragment_shader(
         out_color *= texture_sample * vector_float4(in.lighting, 1.0f);;
     }
     
+    float4 rgba_cap = vector_float4(in.rgb_cap, 1.0f);
+    out_color = clamp(out_color, 0.0f, rgba_cap);
     return out_color;
 }
 
@@ -526,7 +634,8 @@ kernel void threshold_texture(
     half4 in_color = texture.read(grid_pos);
     
     half4 thresholded =
-        in_color * ((in_color[0] + in_color[1] + in_color[2]) > (1.0f * 3));
+        in_color *
+        ((in_color[0] + in_color[1] + in_color[2]) > (1.05h * 3.0h));
     
     texture.write(thresholded, grid_pos);
 }

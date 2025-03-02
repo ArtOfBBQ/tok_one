@@ -87,10 +87,12 @@ typedef struct GPUPolygonCollection {
 #define SPECULAR_GOLD 0.62f
 typedef struct GPUPolygonMaterial {
     float rgba[4];          // 16 bytes
+    float rgb_cap[3];       // 12 bytes // capped by default to avoid bloom
     int   texturearray_i;   //  4 bytes
     int   texture_i;        //  4 bytes
     float diffuse;          //  4 bytes
     float specular;         //  4 bytes
+    float padding[5];       //  4 bytes
 } GPUPolygonMaterial;
 
 typedef struct GPULightCollection {

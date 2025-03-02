@@ -4,14 +4,16 @@ bool32_t has_retina_screen = true;
 bool32_t metal_active = false;
 
 typedef struct AppleGPUState {
-    MTLPixelFormat cached_pixel_format_renderpass1;
+    id<MTLDevice> device;
+    id<MTLLibrary> lib;
+    id<MTLCommandQueue> command_queue;
+    
+    MTLPixelFormat pixel_format_renderpass1;
     dispatch_semaphore_t drawing_semaphore;
     NSUInteger frame_i;
     MTLViewport render_target_viewport;
     MTLViewport cached_viewport;
-    id<MTLDevice> metal_device;
-    id<MTLLibrary> shader_library;
-    id<MTLCommandQueue> command_queue;
+    
     id polygon_buffers[3];
     id polygon_material_buffers[3];
     id light_buffers [3];
@@ -24,17 +26,21 @@ typedef struct AppleGPUState {
     id locked_vertex_buffer;
     id projection_constants_buffer;
     
-    id<MTLRenderPipelineState> diamond_pipeline_state;
-    id<MTLRenderPipelineState> alphablend_pipeline_state;
-    id<MTLRenderPipelineState> raw_pipeline_state;
+    // Pipeline states (pls)
+    id<MTLRenderPipelineState> shadows_pls;
+    id<MTLRenderPipelineState> diamond_pls;
+    id<MTLRenderPipelineState> alphablend_pls;
+    id<MTLRenderPipelineState> raw_pls;
     #if POSTPROCESSING_ACTIVE
     id<MTLComputePipelineState> downsample_compute_pls;
     id<MTLComputePipelineState> boxblur_compute_pls;
     id<MTLComputePipelineState> thres_compute_pls;
-    id<MTLRenderPipelineState> singlequad_pipeline_state;
+    id<MTLRenderPipelineState> singlequad_pls;
     #endif
-    id<MTLDepthStencilState>   depth_stencil_state;
     
+    id<MTLDepthStencilState> depth_stencil_state;
+    
+    // Textures
     NSMutableArray * metal_textures;
     #if POSTPROCESSING_ACTIVE
     id<MTLTexture> render_target_texture;
@@ -55,10 +61,6 @@ bool32_t apple_gpu_init(
     NSString * shader_lib_filepath,
     char * error_msg_string)
 {
-    //    RenderPassDescriptors[0] = NULL;
-    //    RenderPassDescriptors[1] = NULL;
-    //    RenderPassDescriptors[2] = NULL;
-    
     ags = malloc_from_unmanaged(sizeof(AppleGPUState));
     log_assert(ags != NULL);
     
@@ -71,7 +73,7 @@ bool32_t apple_gpu_init(
     #else
     MTLPixelFormat render_pass_1_format = MTLPixelFormatBGRA8Unorm;
     #endif
-    ags->cached_pixel_format_renderpass1 = render_pass_1_format;
+    ags->pixel_format_renderpass1 = render_pass_1_format;
     
     ags->frame_i = 0;
         
@@ -80,14 +82,12 @@ bool32_t apple_gpu_init(
         512,
         "");
     
-    // drawing_semaphore = dispatch_semaphore_create(/* initial value: */ 3);
-    
-    ags->metal_device = with_metal_device;
+    ags->device = with_metal_device;
     
     NSError * Error = NULL;
-    ags->shader_library = [with_metal_device newDefaultLibrary];
+    ags->lib = [with_metal_device newDefaultLibrary];
     
-    if (ags->shader_library == NULL)
+    if (ags->lib == NULL)
     {
         log_append("failed to load default shader lib, trying ");
         log_append(
@@ -116,12 +116,12 @@ bool32_t apple_gpu_init(
             return false;
         }
         
-        ags->shader_library =
+        ags->lib =
             [with_metal_device
                 newLibraryWithURL: shader_lib_url
                 error: &Error];
         
-        if (ags->shader_library == NULL) {
+        if (ags->lib == NULL) {
             log_append("Failed to find the shader library\n");
             #ifndef LOGGER_IGNORE_ASSERTS
             log_dump_and_crash((char *)[
@@ -153,8 +153,31 @@ bool32_t apple_gpu_init(
         }
     }
     
+    id<MTLFunction> shadows_vertex_shader =
+        [ags->lib newFunctionWithName:
+            @"shadows_vertex_shader"];
+    if (shadows_vertex_shader == NULL) {
+        common_strcpy_capped(
+            error_msg_string,
+            512,
+            "Missing function: shadows_vertex_shader()");
+        return false;
+    }
+    id<MTLFunction> shadows_fragment_shader =
+        [ags->lib newFunctionWithName:
+            @"shadows_fragment_shader"];
+    if (shadows_vertex_shader == NULL) {
+        log_append("Missing function: shadows_fragment_shader()!");
+        
+        common_strcpy_capped(
+            error_msg_string,
+            512,
+            "Missing function: shadows_fragment_shader()");
+        return false;
+    }
+    
     id<MTLFunction> vertex_shader =
-        [ags->shader_library newFunctionWithName:
+        [ags->lib newFunctionWithName:
             @"vertex_shader"];
     if (vertex_shader == NULL) {
         log_append("Missing function: vertex_shader()!");
@@ -167,35 +190,31 @@ bool32_t apple_gpu_init(
     }
     
     id<MTLFunction> fragment_shader =
-        [ags->shader_library newFunctionWithName:
+        [ags->lib newFunctionWithName:
             @"fragment_shader"];
     if (fragment_shader == NULL) {
-        log_append("Missing function: fragment_shader()!");
         common_strcpy_capped(
             error_msg_string,
             512,
-            "Missing function: fragment_shader()");
+            "Missing function: alphablending_fragment_shader()");
         return false;
     }
     
     id<MTLFunction> alphablending_fragment_shader =
-        [ags->shader_library newFunctionWithName:
+        [ags->lib newFunctionWithName:
             @"alphablending_fragment_shader"];
     if (alphablending_fragment_shader == NULL) {
-        log_append("Missing function: alphablending_fragment_shader()!");
         common_strcpy_capped(
             error_msg_string,
             512,
-            "Missing function: vertex_shader()");
+            "Missing function: alphablending_vertex_shader()");
         return false;
     }
     
     id<MTLFunction> raw_vertex_shader =
-        [ags->shader_library newFunctionWithName:
+        [ags->lib newFunctionWithName:
             @"raw_vertex_shader"];
     if (raw_vertex_shader == NULL) {
-        log_append("Missing function: raw_vertex_shader()!");
-
         common_strcpy_capped(
             error_msg_string,
             512,
@@ -204,20 +223,32 @@ bool32_t apple_gpu_init(
     }
     
     id<MTLFunction> raw_fragment_shader =
-        [ags->shader_library newFunctionWithName:
+        [ags->lib newFunctionWithName:
             @"raw_fragment_shader"];
     if (raw_fragment_shader == NULL) {
-        log_append("Missing function: raw_fragment_shader()!");
         common_strcpy_capped(
             error_msg_string,
             512,
-            "Missing function: vertex_shader()");
+            "Missing function: raw_fragment_shader()");
         return false;
     }
     
+    MTLRenderPipelineDescriptor * shadows_pipeline_descriptor =
+        [MTLRenderPipelineDescriptor new];
+    [shadows_pipeline_descriptor
+        setVertexFunction: shadows_vertex_shader];
+    [shadows_pipeline_descriptor
+        setFragmentFunction: shadows_fragment_shader];
+    ags->shadows_pls =
+       [with_metal_device
+            newRenderPipelineStateWithDescriptor:
+                shadows_pipeline_descriptor
+            error:
+                &Error];
+    
     // Setup pipeline that uses diamonds instaed of alphablending
     MTLRenderPipelineDescriptor * diamond_pipeline_descriptor =
-        [[MTLRenderPipelineDescriptor alloc] init];
+        [MTLRenderPipelineDescriptor new];
     [diamond_pipeline_descriptor
         setVertexFunction: vertex_shader];
     [diamond_pipeline_descriptor
@@ -227,7 +258,7 @@ bool32_t apple_gpu_init(
         .pixelFormat = render_pass_1_format;
     diamond_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
-    ags->diamond_pipeline_state =
+    ags->diamond_pls =
         [with_metal_device
             newRenderPipelineStateWithDescriptor:
                 diamond_pipeline_descriptor 
@@ -266,7 +297,7 @@ bool32_t apple_gpu_init(
             MTLBlendFactorOneMinusSourceAlpha;
     alphablend_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
-    ags->alphablend_pipeline_state =
+    ags->alphablend_pls =
         [with_metal_device
             newRenderPipelineStateWithDescriptor:
                 alphablend_pipeline_descriptor
@@ -275,7 +306,10 @@ bool32_t apple_gpu_init(
     
     if (Error != NULL)
     {
-        log_append([[Error localizedDescription] cStringUsingEncoding:kCFStringEncodingASCII]);
+        log_append(
+            [[Error localizedDescription]
+                cStringUsingEncoding:kCFStringEncodingASCII]);
+        
         #ifndef LOGGER_IGNORE_ASSERTS
         log_dump_and_crash("Error loading the alphablending shader\n");
         #endif
@@ -301,7 +335,7 @@ bool32_t apple_gpu_init(
         setBlendingEnabled: NO];
     raw_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
-    ags->raw_pipeline_state =
+    ags->raw_pls =
         [with_metal_device
             newRenderPipelineStateWithDescriptor:
                 raw_pipeline_descriptor
@@ -579,33 +613,33 @@ bool32_t apple_gpu_init(
     #if POSTPROCESSING_ACTIVE
     
     id<MTLFunction> downsample_func =
-        [ags->shader_library newFunctionWithName: @"downsample_texture"];
+        [ags->lib newFunctionWithName: @"downsample_texture"];
         log_assert(downsample_func != nil);
     
     ags->downsample_compute_pls =
-        [ags->metal_device
+        [ags->device
             newComputePipelineStateWithFunction:downsample_func
             error:nil];
     
     id<MTLFunction> boxblur_func =
-        [ags->shader_library newFunctionWithName: @"boxblur_texture"];
+        [ags->lib newFunctionWithName: @"boxblur_texture"];
     log_assert(boxblur_func != nil);
     ags->boxblur_compute_pls =
-        [ags->metal_device
+        [ags->device
             newComputePipelineStateWithFunction:boxblur_func
             error:nil];
     
     id<MTLFunction> threshold_func =
-        [ags->shader_library newFunctionWithName: @"threshold_texture"];
+        [ags->lib newFunctionWithName: @"threshold_texture"];
         log_assert(threshold_func != nil);
     
     ags->thres_compute_pls =
-        [ags->metal_device
+        [ags->device
             newComputePipelineStateWithFunction:threshold_func
             error:nil];
     
     id<MTLFunction> singlequad_vertex_shader =
-        [ags->shader_library newFunctionWithName:
+        [ags->lib newFunctionWithName:
             @"single_quad_vertex_shader"];
     if (singlequad_vertex_shader == NULL) {
         log_append("Missing function: postprocess_vertex_shader()!");
@@ -618,7 +652,7 @@ bool32_t apple_gpu_init(
     }
     
     id<MTLFunction> singlequad_fragment_shader =
-        [ags->shader_library
+        [ags->lib
             newFunctionWithName: @"single_quad_fragment_shader"];
     
     if (singlequad_fragment_shader == NULL) {
@@ -656,7 +690,7 @@ bool32_t apple_gpu_init(
         MTLPixelFormatDepth32Float;
     singlequad_pipeline_descriptor.vertexBuffers[0].mutability =
         MTLMutabilityImmutable;
-    ags->singlequad_pipeline_state = [
+    ags->singlequad_pls = [
         with_metal_device
         newRenderPipelineStateWithDescriptor:singlequad_pipeline_descriptor
         error:NULL];
@@ -714,7 +748,7 @@ void platform_gpu_init_texture_array(
         texture_descriptor.width = 10;
         texture_descriptor.height = 10;
         id<MTLTexture> texture =
-            [ags->metal_device newTextureWithDescriptor:texture_descriptor];
+            [ags->device newTextureWithDescriptor:texture_descriptor];
         [ags->metal_textures addObject: texture];
     }
     
@@ -726,7 +760,7 @@ void platform_gpu_init_texture_array(
     texture_descriptor.width = single_image_width;
     texture_descriptor.height = single_image_height;
     
-    id<MTLTexture> texture = [ags->metal_device
+    id<MTLTexture> texture = [ags->device
         newTextureWithDescriptor:texture_descriptor];
     
     [ags->metal_textures
@@ -865,7 +899,7 @@ void platform_gpu_copy_locked_vertices(void)
         MTLTextureUsageShaderRead;
     texture_descriptor.mipmapLevelCount = 1;
     
-    ags->render_target_texture = [ags->metal_device
+    ags->render_target_texture = [ags->device
         newTextureWithDescriptor: texture_descriptor];
     
     ags->render_target_viewport = ags->cached_viewport;
@@ -885,7 +919,7 @@ void platform_gpu_copy_locked_vertices(void)
         downsampled_target_texture_desc.usage =
             MTLTextureUsageShaderWrite |
             MTLTextureUsageShaderRead;
-        ags->downsampled_target_textures[i] = [ags->metal_device
+        ags->downsampled_target_textures[i] = [ags->device
             newTextureWithDescriptor: downsampled_target_texture_desc];
     }
     #endif
@@ -957,9 +991,9 @@ void platform_gpu_copy_locked_vertices(void)
     profiler_start("Create MTLRenderCommandEncoder");
     #endif
     id<MTLRenderCommandEncoder> render_pass_1_encoder =
-            [command_buffer
-                renderCommandEncoderWithDescriptor:
-                    render_pass_1_descriptor];
+        [command_buffer
+            renderCommandEncoderWithDescriptor:
+                render_pass_1_descriptor];
     #ifdef PROFILER_ACTIVE
     profiler_end("Create MTLRenderCommandEncoder");
     #endif
@@ -972,10 +1006,13 @@ void platform_gpu_copy_locked_vertices(void)
     assert(ags->cached_viewport.width > 0.0f);
     assert(ags->cached_viewport.height > 0.0f);
     
-    [render_pass_1_encoder setRenderPipelineState: ags->diamond_pipeline_state];
+    [render_pass_1_encoder
+        setRenderPipelineState: ags->diamond_pls];
     assert(ags->depth_stencil_state != nil);
-    [render_pass_1_encoder setDepthStencilState: ags->depth_stencil_state];
-    [render_pass_1_encoder setDepthClipMode: MTLDepthClipModeClip];
+    [render_pass_1_encoder
+        setDepthStencilState: ags->depth_stencil_state];
+    [render_pass_1_encoder
+        setDepthClipMode: MTLDepthClipModeClip];
     #ifdef PROFILER_ACTIVE
     profiler_end("setViewport, RenderPipeline, Stencil, ClipMode");
     #endif
@@ -1109,7 +1146,7 @@ void platform_gpu_copy_locked_vertices(void)
         assert(alphablend_verts_size < MAX_VERTICES_PER_BUFFER);
         assert(alphablend_verts_size % 3 == 0);
         [render_pass_1_encoder setRenderPipelineState:
-            ags->alphablend_pipeline_state];
+            ags->alphablend_pls];
         
         [render_pass_1_encoder
             drawPrimitives: MTLPrimitiveTypeTriangle
@@ -1125,7 +1162,7 @@ void platform_gpu_copy_locked_vertices(void)
         gpu_shared_data_collection.triple_buffers[ags->frame_i].
             point_vertices_size) > 0)
     {
-        [render_pass_1_encoder setRenderPipelineState: ags->raw_pipeline_state];
+        [render_pass_1_encoder setRenderPipelineState: ags->raw_pls];
         assert(ags->depth_stencil_state != nil);
         [render_pass_1_encoder setDepthStencilState: ags->depth_stencil_state];
         [render_pass_1_encoder setDepthClipMode: MTLDepthClipModeClip];
@@ -1213,13 +1250,13 @@ void platform_gpu_copy_locked_vertices(void)
             [compute_encoder
                 setComputePipelineState: ags->downsample_compute_pls];
             [compute_encoder
-             setTexture:ds_i > 0 ?
-             ags->downsampled_target_textures[ds_i-1] :
-                 ags->render_target_texture
-             atIndex:0];
+                setTexture:ds_i > 0 ?
+                    ags->downsampled_target_textures[ds_i-1] :
+                    ags->render_target_texture
+                atIndex:0];
             [compute_encoder
-             setTexture:ags->downsampled_target_textures[ds_i]
-             atIndex:1];
+                setTexture:ags->downsampled_target_textures[ds_i]
+                atIndex:1];
             
             [compute_encoder
                 dispatchThreads:grid
@@ -1276,7 +1313,7 @@ void platform_gpu_copy_locked_vertices(void)
     [render_pass_4_encoder setCullMode:MTLCullModeNone];
     
     [render_pass_4_encoder
-        setRenderPipelineState: ags->singlequad_pipeline_state];
+        setRenderPipelineState: ags->singlequad_pls];
     
     [render_pass_4_encoder
         setVertexBytes:&quad_vertices

@@ -289,14 +289,19 @@ void construct_zpolygon(
     to_construct->cpu_data->visible = true;
     to_construct->cpu_data->bloom_copies = 1;
     
-    to_construct->gpu_materials[0].rgba[0] = 0.75f;
-    to_construct->gpu_materials[0].rgba[1] = 0.75f;
-    to_construct->gpu_materials[0].rgba[2] = 0.75f;
-    to_construct->gpu_materials[0].rgba[3] = 0.75f;
-    to_construct->gpu_materials[0].diffuse = 0.50f;
-    to_construct->gpu_materials[0].specular = 0.50f;
-    to_construct->gpu_materials[0].texture_i = -1;
-    to_construct->gpu_materials[0].texturearray_i = -1;
+    for (uint32_t i = 0; i < MAX_MATERIALS_PER_POLYGON; i++) {
+        to_construct->gpu_materials[i].rgba[0]        = 0.75f;
+        to_construct->gpu_materials[i].rgba[1]        = 0.75f;
+        to_construct->gpu_materials[i].rgba[2]        = 0.75f;
+        to_construct->gpu_materials[i].rgba[3]        = 0.75f;
+        to_construct->gpu_materials[i].rgb_cap[0]     = 1.0f;
+        to_construct->gpu_materials[i].rgb_cap[1]     = 1.0f;
+        to_construct->gpu_materials[i].rgb_cap[2]     = 1.0f;
+        to_construct->gpu_materials[i].diffuse        = 0.50f;
+        to_construct->gpu_materials[i].specular       = 0.50f;
+        to_construct->gpu_materials[i].texture_i      = -1;
+        to_construct->gpu_materials[i].texturearray_i = -1;
+    }
 }
 
 float get_distance_f3(

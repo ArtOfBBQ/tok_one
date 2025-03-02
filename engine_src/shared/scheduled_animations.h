@@ -33,6 +33,7 @@ typedef struct ScheduledAnimation {
     uint64_t duration_microseconds;          // duration at the start of each
                                              // run
     
+    uint64_t wait_before_each_run;
     uint64_t remaining_wait_before_next_run; // gets reset by above each run
                                              // can be used as wait before 1st
                                              // run
@@ -53,7 +54,6 @@ typedef struct ScheduledAnimation {
     // ****
     
     // Private:
-    uint64_t wait_before_each_run;
     uint64_t remaining_microseconds;  // remaining duration (this run), private
     
     bool32_t delete_other_anims_targeting_same_object_id_on_commit;
