@@ -282,10 +282,10 @@ void construct_zpolygon(
     to_construct->gpu_data->xyz_multiplier[1] = 1.0f;
     to_construct->gpu_data->xyz_multiplier[2] = 1.0f;
     to_construct->gpu_data->scale_factor = 1.0f;
+    to_construct->gpu_data->touchable_id = -1;
     
     to_construct->cpu_data->mesh_id = -1;
     to_construct->cpu_data->object_id = -1;
-    to_construct->cpu_data->touchable_id = -1;
     to_construct->cpu_data->visible = true;
     to_construct->cpu_data->bloom_copies = 1;
     
@@ -971,7 +971,7 @@ void construct_quad_around(
     const float height,
     PolygonRequest * stack_recipient)
 {
-    log_assert(z > 0.0f);
+    // log_assert(z > 0.0f);
     
     construct_zpolygon(stack_recipient);
     

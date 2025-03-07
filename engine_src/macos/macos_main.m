@@ -217,17 +217,13 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
     
     NSPoint window_location = [event locationInWindow];
     
-    register_interaction(&user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
     user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_x =
         (float)window_location.x;
     user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_y =
         (float)window_location.y;
     
     register_interaction(&user_interactions[INTR_PREVIOUS_MOUSE_MOVE]);
-    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_x =
-        (float)window_location.x;
-    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_y =
-        (float)window_location.y;
+    register_interaction(&user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
 }
 
 - (void)mouseDragged:(NSEvent *)event
@@ -236,19 +232,8 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
         return;
     }
     
-    NSPoint window_location = [event locationInWindow];
+    // NSPoint window_location = [event locationInWindow];
     
-    register_interaction(&user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
-    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_x =
-        (float)window_location.x;
-    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_y =
-        (float)window_location.y;
-    
-    register_interaction(&user_interactions[INTR_PREVIOUS_MOUSE_MOVE]);
-    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_x =
-        (float)window_location.x;
-    user_interactions[INTR_PREVIOUS_MOUSE_MOVE].screen_y =
-        (float)window_location.y;
 }
 
 - (void)mouseDown:(NSEvent *)event
@@ -501,7 +486,7 @@ int main(int argc, const char * argv[]) {
     
     bool32_t result = apple_gpu_init(
         /* void (*arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *): */
-            gameloop_update,
+            gameloop_update_before_render_pass,
         /* id<MTLDevice> with_metal_device: */
             metal_device_for_window,
         /* NSString *shader_lib_filepath: */

@@ -15,7 +15,7 @@ extern "C" {
 #include "tok_random.h"
 #include "zpolygon.h"
 
-#define LINEPARTICLE_EFFECTS_SIZE 100
+#define LINEPARTICLE_EFFECTS_SIZE 2
 #define MAX_LINEPARTICLE_DIRECTIONS 5
 typedef struct LineParticle {
     zPolygonCPU zpolygon_cpu;

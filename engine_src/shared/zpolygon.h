@@ -38,7 +38,7 @@ typedef struct zPolygonCPU {
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
     
     int32_t object_id;
-    int32_t touchable_id;
+    int32_t deprecated;
     bool32_t alpha_blending_enabled;
     bool32_t bloom_copies;
     bool32_t committed;

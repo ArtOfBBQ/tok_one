@@ -27,7 +27,9 @@ typedef struct AppleGPUState {
     id projection_constants_buffer;
     
     // Pipeline states (pls)
+    #if SHADOWS_ACTIVE
     id<MTLRenderPipelineState> shadows_pls;
+    #endif
     id<MTLRenderPipelineState> diamond_pls;
     id<MTLRenderPipelineState> alphablend_pls;
     id<MTLRenderPipelineState> raw_pls;
@@ -46,6 +48,8 @@ typedef struct AppleGPUState {
     id<MTLTexture> render_target_texture;
     id<MTLTexture> downsampled_target_textures[DOWNSAMPLES_SIZE];
     #endif
+    id<MTLTexture> touch_id_texture;
+    id<MTLBuffer> touch_id_buffer;
 } AppleGPUState;
 
 static AppleGPUState * ags = NULL;
@@ -68,12 +72,7 @@ bool32_t apple_gpu_init(
     
     ags->drawing_semaphore = dispatch_semaphore_create(3);
     
-    #if POSTPROCESSING_ACTIVE
-    MTLPixelFormat render_pass_1_format = MTLPixelFormatRGBA16Float;
-    #else
-    MTLPixelFormat render_pass_1_format = MTLPixelFormatBGRA8Unorm;
-    #endif
-    ags->pixel_format_renderpass1 = render_pass_1_format;
+    ags->pixel_format_renderpass1 = MTLPixelFormatRGBA16Float;
     
     ags->frame_i = 0;
         
@@ -153,6 +152,7 @@ bool32_t apple_gpu_init(
         }
     }
     
+    #if SHADOWS_ACTIVE
     id<MTLFunction> shadows_vertex_shader =
         [ags->lib newFunctionWithName:
             @"shadows_vertex_shader"];
@@ -175,6 +175,7 @@ bool32_t apple_gpu_init(
             "Missing function: shadows_fragment_shader()");
         return false;
     }
+    #endif
     
     id<MTLFunction> vertex_shader =
         [ags->lib newFunctionWithName:
@@ -233,6 +234,7 @@ bool32_t apple_gpu_init(
         return false;
     }
     
+    #if SHADOWS_ACTIVE
     MTLRenderPipelineDescriptor * shadows_pipeline_descriptor =
         [MTLRenderPipelineDescriptor new];
     [shadows_pipeline_descriptor
@@ -245,6 +247,7 @@ bool32_t apple_gpu_init(
                 shadows_pipeline_descriptor
             error:
                 &Error];
+    #endif
     
     // Setup pipeline that uses diamonds instaed of alphablending
     MTLRenderPipelineDescriptor * diamond_pipeline_descriptor =
@@ -255,7 +258,9 @@ bool32_t apple_gpu_init(
         setFragmentFunction: fragment_shader];
     diamond_pipeline_descriptor
         .colorAttachments[0]
-        .pixelFormat = render_pass_1_format;
+        .pixelFormat = ags->pixel_format_renderpass1;
+    diamond_pipeline_descriptor.colorAttachments[1].pixelFormat =
+        ags->pixel_format_renderpass1;
     diamond_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
     ags->diamond_pls =
@@ -285,7 +290,7 @@ bool32_t apple_gpu_init(
         setFragmentFunction: alphablending_fragment_shader];
     alphablend_pipeline_descriptor
         .colorAttachments[0]
-        .pixelFormat = render_pass_1_format;
+        .pixelFormat = ags->pixel_format_renderpass1;
     [alphablend_pipeline_descriptor
         .colorAttachments[0]
         setBlendingEnabled: YES];
@@ -295,6 +300,8 @@ bool32_t apple_gpu_init(
     alphablend_pipeline_descriptor
         .colorAttachments[0].destinationRGBBlendFactor =
             MTLBlendFactorOneMinusSourceAlpha;
+    alphablend_pipeline_descriptor.colorAttachments[1].
+        pixelFormat = ags->pixel_format_renderpass1;
     alphablend_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
     ags->alphablend_pls =
@@ -329,7 +336,7 @@ bool32_t apple_gpu_init(
         setFragmentFunction: raw_fragment_shader];
     raw_pipeline_descriptor
         .colorAttachments[0]
-        .pixelFormat = render_pass_1_format;
+        .pixelFormat = ags->pixel_format_renderpass1;
     [raw_pipeline_descriptor
         .colorAttachments[0]
         setBlendingEnabled: NO];
@@ -670,7 +677,7 @@ bool32_t apple_gpu_init(
     // Set up pipeline for rendering the texture to the screen with a simple
     // quad
     singlequad_pipeline_descriptor.label = @"SingleQuad Pipeline";
-    singlequad_pipeline_descriptor.sampleCount = 1;
+    // singlequad_pipeline_descriptor.sampleCount = 1;
     [singlequad_pipeline_descriptor
         setVertexFunction: singlequad_vertex_shader];
     [singlequad_pipeline_descriptor
@@ -728,6 +735,58 @@ static float get_ds_height(
     }
     
     return return_value;
+}
+
+static int32_t platform_gpu_get_touchable_id_at_screen_pos(
+    const float screen_x,
+    const float screen_y)
+{
+    if (
+        screen_x < 0 ||
+        screen_y < 0 ||
+        screen_x >= (window_globals->window_width) ||
+        screen_y >= (window_globals->window_height))
+    {
+        return -1;
+    }
+    
+    uint32_t rtt_width  = (uint32_t)ags->render_target_texture.width;
+    uint32_t rtt_height = (uint32_t)ags->render_target_texture.height;
+    log_assert(rtt_width  > 10);
+    log_assert(rtt_height > 10);
+    
+    uint32_t screen_x_adj = (uint32_t)(
+        (screen_x / window_globals->window_width) *
+            rtt_width);
+    uint32_t screen_y_adj = (uint32_t)(
+        (screen_y / window_globals->window_height) *
+            rtt_height);
+    
+    log_assert(screen_x_adj >= 0);
+    log_assert(screen_y_adj >= 0);
+    
+    if (screen_x_adj >= rtt_width ) { screen_x_adj = rtt_width;  }
+    if (screen_y_adj >= rtt_height) { screen_y_adj = rtt_height; }
+    
+    screen_y_adj = rtt_height - screen_y_adj;
+    
+    uint16_t * data = (uint16_t *)[ags->touch_id_buffer contents];
+    uint64_t size = [ags->touch_id_buffer allocatedSize];
+    
+    uint32_t pixel_i = (screen_y_adj * rtt_width) + screen_x_adj;
+    if (
+        (pixel_i * 4) + 3 < size)
+    {
+        return -1;
+    }
+    
+    uint32_t low  = data[(pixel_i*4)+0];
+    uint32_t high = data[(pixel_i*4)+1];
+    
+    uint32_t uid = (high << 16) | low;
+    int32_t id = *(int32_t *)&uid; // Direct reinterpretation
+    
+    return id;
 }
 
 void platform_gpu_init_texture_array(
@@ -792,7 +851,10 @@ void platform_gpu_push_texture_slice(
     if (texture_array_i >= (int32_t)[ags->metal_textures count]) {
         #ifndef LOGGER_IGNORE_ASSERTS
         char errmsg[256];
-        common_strcpy_capped(errmsg, 256, "Tried to update uninitialized texturearray")
+        common_strcpy_capped(
+            errmsg,
+            256,
+            "Tried to update uninitialized texturearray")
         common_strcat_int_capped(errmsg, 256, texture_array_i);
         common_strcat_capped(errmsg, 256, "\n");
         
@@ -835,26 +897,29 @@ void platform_gpu_copy_locked_vertices(void)
     
     gpu_shared_data_collection.locked_vertices_size = all_mesh_vertices->size;
     
-    id <MTLCommandBuffer> commandBuffer = [ags->command_queue commandBuffer];
+    id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
     
-    // Encode a blit pass to copy data from the source buffer to the private
-    // buffer.
-    id <MTLBlitCommandEncoder> blitCommandEncoder =
-        [commandBuffer blitCommandEncoder];
-    [blitCommandEncoder
-        copyFromBuffer:ags->locked_vertex_populator_buffer
-        sourceOffset:0
-        toBuffer:ags->locked_vertex_buffer
-        destinationOffset:0
-        size:gpu_shared_data_collection.locked_vertices_allocation_size];
-    [blitCommandEncoder endEncoding];
+    id <MTLBlitCommandEncoder> blit_copy_encoder =
+        [combuf blitCommandEncoder];
+    [blit_copy_encoder
+        copyFromBuffer:
+            ags->locked_vertex_populator_buffer
+        sourceOffset:
+            0
+        toBuffer:
+            ags->locked_vertex_buffer
+        destinationOffset:
+            0
+        size:
+            gpu_shared_data_collection.locked_vertices_allocation_size];
+    [blit_copy_encoder endEncoding];
     
     // Add a completion handler and commit the command buffer.
-    [commandBuffer addCompletedHandler:^(id<MTLCommandBuffer> cb) {
+    [combuf addCompletedHandler:^(id<MTLCommandBuffer> cb) {
         // Populate private buffer.
         (void)cb;
     }];
-    [commandBuffer commit];
+    [combuf commit];
 }
 
 @implementation MetalKitViewDelegate
@@ -884,6 +949,30 @@ void platform_gpu_copy_locked_vertices(void)
     
     *gpu_shared_data_collection.locked_pjc =
         window_globals->projection_constants;
+    
+    MTLTextureDescriptor * touch_id_texture_descriptor =
+        [MTLTextureDescriptor new];
+    touch_id_texture_descriptor.width =
+        (unsigned long)ags->cached_viewport.width / 2;
+    touch_id_texture_descriptor.height =
+        (unsigned long)ags->cached_viewport.height / 2;
+    touch_id_texture_descriptor.pixelFormat = ags->pixel_format_renderpass1;
+    touch_id_texture_descriptor.mipmapLevelCount = 1;
+    touch_id_texture_descriptor.storageMode = MTLStorageModePrivate;
+    touch_id_texture_descriptor.usage =
+        MTLTextureUsageRenderTarget |
+        MTLTextureUsageShaderRead;
+    ags->touch_id_texture =
+        [ags->device
+            newTextureWithDescriptor: touch_id_texture_descriptor];
+    
+    ags->touch_id_buffer = [ags->device
+        newBufferWithLength:
+            touch_id_texture_descriptor.width *
+            touch_id_texture_descriptor.height *
+            8
+        options:
+            MTLResourceStorageModeShared];
     
     #if POSTPROCESSING_ACTIVE
     // Set up a texture for rendering to and apply post-processing to
@@ -929,7 +1018,6 @@ void platform_gpu_copy_locked_vertices(void)
 {
     #ifdef PROFILER_ACTIVE
     profiler_new_frame();
-    profiler_start("drawInMTKView");
     #endif
     
     dispatch_semaphore_wait(ags->drawing_semaphore, DISPATCH_TIME_FOREVER);
@@ -938,9 +1026,6 @@ void platform_gpu_copy_locked_vertices(void)
         &gpu_shared_data_collection.triple_buffers[ags->frame_i]);
     
     if (!metal_active) {
-        #ifdef PROFILER_ACTIVE
-        profiler_end("drawInMTKView");
-        #endif
         return;
     }
     
@@ -951,15 +1036,9 @@ void platform_gpu_copy_locked_vertices(void)
         log_dump_and_crash("error - failed to get metal command buffer\n");
         #endif
         
-        #ifdef PROFILER_ACTIVE
-        profiler_end("drawInMTKView");
-        #endif
         return;
     }
     
-    #ifdef PROFILER_ACTIVE
-    profiler_start("Create MTLRenderPassDescriptor etc.");
-    #endif
     MTLRenderPassDescriptor * render_pass_1_descriptor =
         [view currentRenderPassDescriptor];
     
@@ -980,31 +1059,59 @@ void platform_gpu_copy_locked_vertices(void)
     render_pass_1_descriptor.colorAttachments[0].clearColor =
         MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);
     
+    // ID Buffer for touchables
+    render_pass_1_descriptor.colorAttachments[1].texture =
+        ags->touch_id_texture;
+    render_pass_1_descriptor.colorAttachments[1].loadAction =
+        MTLLoadActionLoad; // We clear manually with a blit before this pass
+    render_pass_1_descriptor.colorAttachments[1].storeAction =
+        MTLStoreActionStore;
+    
+    
+    // To kick off our render loop, we blit to clear the touch id buffer
+    uint32_t size_bytes = (uint32_t)(
+        [ags->touch_id_texture height] *
+        [ags->touch_id_texture width] *
+        8);
+    
+    int16_t * buf = ags->touch_id_buffer.contents;
+    
+    int32_t fill_value = -1;
+    
+    common_memset_int32(buf, fill_value, size_bytes);
+    id <MTLBlitCommandEncoder> blit_clear_encoder =
+        [command_buffer blitCommandEncoder];
+    
+    [blit_clear_encoder
+        copyFromBuffer: ags->touch_id_buffer
+        sourceOffset: 0
+        sourceBytesPerRow: [ags->touch_id_texture width] * 8
+        sourceBytesPerImage: size_bytes
+        sourceSize:
+            MTLSizeMake(
+                [ags->touch_id_texture width],
+                [ags->touch_id_texture height],
+                1)
+        toTexture: ags->touch_id_texture
+        destinationSlice: 0
+        destinationLevel: 0
+        destinationOrigin: MTLOriginMake(0, 0, 0)];
+    [blit_clear_encoder endEncoding];
+    
+    
     // this inherits from the view's cleardepth (in macos/main.m for mac os),
     // don't set it here
     // assert(RenderPassDescriptor.depthAttachment.clearDepth == CLEARDEPTH);
-    #ifdef PROFILER_ACTIVE
-    profiler_end("Create MTLRenderPassDescriptor etc.");
-    #endif
-    
-    #ifdef PROFILER_ACTIVE
-    profiler_start("Create MTLRenderCommandEncoder");
-    #endif
     id<MTLRenderCommandEncoder> render_pass_1_encoder =
         [command_buffer
             renderCommandEncoderWithDescriptor:
                 render_pass_1_descriptor];
-    #ifdef PROFILER_ACTIVE
-    profiler_end("Create MTLRenderCommandEncoder");
-    #endif
     
-    #ifdef PROFILER_ACTIVE
-    profiler_start("setViewport, RenderPipeline, Stencil, ClipMode");
-    #endif
     assert(ags->cached_viewport.zfar > ags->cached_viewport.znear);
     [render_pass_1_encoder setViewport: ags->render_target_viewport];
     assert(ags->cached_viewport.width > 0.0f);
     assert(ags->cached_viewport.height > 0.0f);
+    
     
     [render_pass_1_encoder
         setRenderPipelineState: ags->diamond_pls];
@@ -1013,13 +1120,7 @@ void platform_gpu_copy_locked_vertices(void)
         setDepthStencilState: ags->depth_stencil_state];
     [render_pass_1_encoder
         setDepthClipMode: MTLDepthClipModeClip];
-    #ifdef PROFILER_ACTIVE
-    profiler_end("setViewport, RenderPipeline, Stencil, ClipMode");
-    #endif
     
-    #ifdef PROFILER_ACTIVE
-    profiler_start("setVertexBuffers");
-    #endif
     [render_pass_1_encoder
         setVertexBuffer:
             ags->vertex_buffers[ags->frame_i]
@@ -1071,13 +1172,7 @@ void platform_gpu_copy_locked_vertices(void)
             0
         atIndex:
             6];
-    #ifdef PROFILER_ACTIVE
-    profiler_end("setVertexBuffers");
-    #endif
     
-    #ifdef PROFILER_ACTIVE
-    profiler_start("setFragmentTexture");
-    #endif
     for (
         uint32_t i = 0;
         i < [ags->metal_textures count];
@@ -1087,14 +1182,8 @@ void platform_gpu_copy_locked_vertices(void)
             setFragmentTexture: ags->metal_textures[i]
             atIndex: i];
     }
-    #ifdef PROFILER_ACTIVE
-    profiler_end("setFragmentTexture");
-    #endif
     
     #ifndef IGNORE_LOGGER_ASSERTS
-    #ifdef PROFILER_ACTIVE
-    profiler_start("debug-only assertions");
-    #endif
     for (
         uint32_t i = 0;
         i < gpu_shared_data_collection.
@@ -1107,14 +1196,8 @@ void platform_gpu_copy_locked_vertices(void)
                 triple_buffers[ags->frame_i].
                 vertices[i].locked_vertex_i < ALL_LOCKED_VERTICES_SIZE);
     }
-    #ifdef PROFILER_ACTIVE
-    profiler_end("debug-only assertions");
-    #endif
     #endif
     
-    #ifdef PROFILER_ACTIVE
-    profiler_start("draw calls");
-    #endif
     uint32_t diamond_verts_size =
         gpu_shared_data_collection.
             triple_buffers[ags->frame_i].first_alphablend_i;
@@ -1164,7 +1247,8 @@ void platform_gpu_copy_locked_vertices(void)
     {
         [render_pass_1_encoder setRenderPipelineState: ags->raw_pls];
         assert(ags->depth_stencil_state != nil);
-        [render_pass_1_encoder setDepthStencilState: ags->depth_stencil_state];
+        [render_pass_1_encoder
+            setDepthStencilState: ags->depth_stencil_state];
         [render_pass_1_encoder setDepthClipMode: MTLDepthClipModeClip];
     }
     
@@ -1207,11 +1291,29 @@ void platform_gpu_copy_locked_vertices(void)
             vertexCount: gpu_shared_data_collection.
                 triple_buffers[ags->frame_i].point_vertices_size];
     }
-    #ifdef PROFILER_ACTIVE
-    profiler_end("draw calls");
-    #endif
     
     [render_pass_1_encoder endEncoding];
+    
+    // copy the touch id buffer to a CPU buffer so we can query
+    // what the top touchable_id is
+    id <MTLBlitCommandEncoder> blit_encoder =
+        [command_buffer blitCommandEncoder];
+    [blit_encoder
+        copyFromTexture: ags->touch_id_texture
+        sourceSlice: 0
+        sourceLevel: 0
+        sourceOrigin: MTLOriginMake(0, 0, 0)
+        sourceSize:
+            MTLSizeMake(
+                [ags->touch_id_texture width],
+                [ags->touch_id_texture height],
+                1)
+        toBuffer: ags->touch_id_buffer
+        destinationOffset: 0
+        destinationBytesPerRow: [ags->touch_id_texture width] * 8
+        destinationBytesPerImage:
+            [ags->touch_id_texture width] * [ags->touch_id_texture height] * 8];
+    [blit_encoder endEncoding];
     
     #if POSTPROCESSING_ACTIVE
     #define FLVERT 1.0f
@@ -1366,10 +1468,19 @@ void platform_gpu_copy_locked_vertices(void)
     }];
     
     [command_buffer commit];
+    [command_buffer waitUntilCompleted];
     
-    #ifdef PROFILER_ACTIVE
-    profiler_end("drawInMTKView");
-    #endif
+    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].touchable_id_top =
+        platform_gpu_get_touchable_id_at_screen_pos(
+            /* const int screen_x: */
+                user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].
+                    screen_x,
+            /* const int screen_y: */
+                user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].
+                    screen_y);
+    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].touchable_id_pierce =
+        user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].touchable_id_top;
+    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].handled = false;
 }
 
 - (void)mtkView:(MTKView *)view

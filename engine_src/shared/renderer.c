@@ -82,7 +82,7 @@ inline static void zpolygon_vertices_to_points(
     GPUDataForSingleFrame * frame_data)
 {
     for (uint32_t zp_i = 0; zp_i < zpolygons_to_render->size; zp_i++) {
-        if (zpolygons_to_render->cpu_data[zp_i].touchable_id >= 0) {
+        if (zpolygons_to_render->gpu_data[zp_i].touchable_id >= 0) {
             int32_t mesh_id = zpolygons_to_render->cpu_data[zp_i].mesh_id;
             
             int32_t tail_i =
@@ -140,7 +140,7 @@ inline static void zpolygon_hitboxes_to_points(
     float sphere_radius;
     
     for (uint32_t zp_i = 0; zp_i < zpolygons_to_render->size; zp_i++) {
-        if (zpolygons_to_render->cpu_data[zp_i].touchable_id >= 0) {
+        if (zpolygons_to_render->gpu_data[zp_i].touchable_id >= 0) {
             zpolygon_get_transformed_boundsphere(
                 /* const zPolygonCPU * cpu_data: */
                     &zpolygons_to_render->cpu_data[zp_i],

@@ -423,12 +423,12 @@ static void request_slider_shared(
         next_ui_element_settings->ignore_lighting;
     slider_pin.gpu_data->ignore_camera =
         next_ui_element_settings->ignore_camera;
-    slider_pin.cpu_data->touchable_id = next_ui_element_touchable_id();
+    slider_pin.gpu_data->touchable_id = next_ui_element_touchable_id();
     commit_zpolygon_to_render(&slider_pin);
     
     next_active_element->object_id = background_object_id;
     next_active_element->object_id_2 = pin_object_id;
-    next_active_element->touchable_id = slider_pin.cpu_data->touchable_id;
+    next_active_element->touchable_id = slider_pin.gpu_data->touchable_id;
     next_active_element->slid_funcptr =
         next_ui_element_settings->slider_slid_funcptr;
     
@@ -573,7 +573,7 @@ void request_button(
             &button_request);
     
     button_request.cpu_data->object_id = button_object_id;
-    button_request.cpu_data->touchable_id = next_ui_element_touchable_id();
+    button_request.gpu_data->touchable_id = next_ui_element_touchable_id();
     button_request.gpu_data->ignore_camera =
         next_ui_element_settings->ignore_camera;
     button_request.gpu_data->ignore_lighting =
@@ -612,7 +612,7 @@ void request_button(
     ActiveUIElement * next_element = next_active_ui_element();
     next_element->clickable = true;
     next_element->clicked_funcptr = funtion_pointer;
-    next_element->touchable_id = button_request.cpu_data->touchable_id;
+    next_element->touchable_id = button_request.gpu_data->touchable_id;
     next_element->object_id = button_object_id;
     next_element->deleted = false;
 }

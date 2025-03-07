@@ -318,7 +318,7 @@ void text_request_label_offset_around(
             letter.gpu_data->scale_factor = font_settings->scale_factor;
             letter.cpu_data->object_id = with_id;
             letter.cpu_data->remove_hitbox = font_settings->remove_hitbox;
-            letter.cpu_data->touchable_id = font_settings->font_touchable_id;
+            letter.gpu_data->touchable_id = font_settings->font_touchable_id;
             letter.cpu_data->alpha_blending_enabled =
                 font_settings->alphablending;
             
@@ -491,7 +491,7 @@ void text_request_label_renderable(
                 &letter);
         
         letter.cpu_data->object_id = with_id;
-        letter.cpu_data->touchable_id = font_settings->font_touchable_id;
+        letter.gpu_data->touchable_id = font_settings->font_touchable_id;
         letter.cpu_data->alpha_blending_enabled =
             font_settings->alphablending;
         letter.gpu_data->ignore_lighting = font_settings->font_ignore_lighting;

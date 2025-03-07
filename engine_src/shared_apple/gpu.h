@@ -7,6 +7,7 @@
 #include "cpu_to_gpu_types.h"
 #include "window_size.h"
 #include "objmodel.h"
+#include "userinput.h"
 
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>

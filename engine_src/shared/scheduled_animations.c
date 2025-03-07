@@ -498,7 +498,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                 zpolygons_to_render->cpu_data[zp_i].object_id !=
                     anim->affected_object_id) ||
                 (anim->affected_touchable_id >= 0 &&
-                zpolygons_to_render->cpu_data[zp_i].touchable_id !=
+                zpolygons_to_render->gpu_data[zp_i].touchable_id !=
                     anim->affected_touchable_id)
                 ||
                 zpolygons_to_render->cpu_data[zp_i].deleted)
@@ -530,7 +530,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                 log_assert((sizeof(GPUPolygon) / 4) % SIMD_FLOAT_LANES == 0);
                 for (
                     uint32_t simd_step_i = 0;
-                    (simd_step_i * sizeof(float)) < sizeof(GPUPolygon);
+                    ((simd_step_i+1) * sizeof(float)) < sizeof(GPUPolygon);
                     simd_step_i += SIMD_FLOAT_LANES)
                 {
                     SIMD_FLOAT simd_anim_vals =
@@ -566,7 +566,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                         simd_new_target_vals);
                 }
                 #ifndef LOGGER_IGNORE_ASSERTS
-                for (uint32_t i = 0; i < (sizeof(GPUPolygon) / 4); i++) {
+                for (uint32_t i = 0; i < (sizeof(GPUPolygon) / 4)-1; i++) {
                     // assert not NaN
                     if (target_vals_ptr[i] != 0) {
                         log_assert((target_vals_ptr[i] == target_vals_ptr[i]));
@@ -887,7 +887,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                     if (
                         zpolygons_to_render->cpu_data[zp_i].object_id ==
                             anim->affected_object_id ||
-                        zpolygons_to_render->cpu_data[zp_i].touchable_id ==
+                        zpolygons_to_render->gpu_data[zp_i].touchable_id ==
                             anim->affected_touchable_id)
                     {
                         set_zpolygon_hitbox(

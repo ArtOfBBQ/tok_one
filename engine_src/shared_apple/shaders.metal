@@ -218,8 +218,9 @@ typedef struct
     float3 rgb_cap;
     float2 texture_coordinate;
     float3 lighting;
-    int texturearray_i;
-    int texture_i;
+    int32_t texturearray_i;
+    int32_t texture_i;
+    int32_t touchable_id;
     float point_size [[point_size]];
 } RasterizerPixel;
 
@@ -365,6 +366,8 @@ vertex_shader(
     /* out.texture_i = vertices[vertex_i].texture_i; */
     out.texture_i = polygon_materials[locked_material_i].texture_i;
     
+    out.touchable_id = polygon_collection->polygons[polygon_i].touchable_id;
+    
     out.texture_coordinate = vector_float2(
         locked_vertices[locked_vertex_i].uv[0],
         locked_vertices[locked_vertex_i].uv[1]);
@@ -467,7 +470,39 @@ vertex_shader(
     return out;
 }
 
-fragment float4
+struct FragmentAndTouchableOut {
+    half4 color [[color(0)]];       // Output to screen
+    half4 touchable_id [[color(1)]];  // Output to ID buffer
+};
+
+static FragmentAndTouchableOut pack_color_and_touchable_id(
+    float4 color,
+    int32_t touchable_id)
+{
+    FragmentAndTouchableOut return_value;
+    return_value.color = vector_half4(color[0], color[1], color[2], color[3]);
+    
+    // Convert signed int32_t to uint32_t (0 to 2^32-1)
+    uint uid = uint(touchable_id);
+    
+    // Split into two 16-bit chunks
+    uint16_t high = ((uid >> 16) & 0xFFFF); // Upper 16 bits
+    uint16_t low  = (uid & 0xFFFF);         // Lower 16 bits
+    
+    half high_adj = as_type<half>(high);
+    half low_adj = as_type<half>(low);
+    
+    // Pack into R and G channels (B and A unused)
+    return_value.touchable_id = vector_half4(
+        low_adj,
+        high_adj,
+        0.25h,
+        1.0h);
+    
+    return return_value;
+}
+
+fragment FragmentAndTouchableOut
 fragment_shader(
     RasterizerPixel in [[stage_in]],
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
@@ -517,10 +552,11 @@ fragment_shader(
     out_color[3] = 1.0f;
     float4 rgba_cap = vector_float4(in.rgb_cap, 1.0f);
     out_color = clamp(out_color, 0.0f, rgba_cap);
-    return out_color;
+    
+    return pack_color_and_touchable_id(out_color, in.touchable_id);
 }
 
-fragment float4
+fragment FragmentAndTouchableOut
 alphablending_fragment_shader(
     RasterizerPixel in [[stage_in]],
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
@@ -551,7 +587,8 @@ alphablending_fragment_shader(
     
     float4 rgba_cap = vector_float4(in.rgb_cap, 1.0f);
     out_color = clamp(out_color, 0.0f, rgba_cap);
-    return out_color;
+    
+    return pack_color_and_touchable_id(out_color, in.touchable_id);
 }
 
 struct PostProcessingFragment

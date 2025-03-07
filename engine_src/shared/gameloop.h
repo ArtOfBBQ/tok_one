@@ -23,7 +23,7 @@ extern bool32_t gameloop_active;
 
 void gameloop_init(void);
 
-void gameloop_update(GPUDataForSingleFrame * frame_data);
+void gameloop_update_before_render_pass(GPUDataForSingleFrame * frame_data);
 
 #ifdef __cplusplus
 }

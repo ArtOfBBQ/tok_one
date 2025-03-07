@@ -337,7 +337,7 @@ void profiler_draw_labels(void) {
         profiler_backdrop.gpu_materials[0].rgba[2] = 0.50f;
         profiler_backdrop.gpu_materials[0].rgba[3] = 0.75f;
         profiler_backdrop.cpu_data->alpha_blending_enabled = true;
-        profiler_backdrop.cpu_data->touchable_id = -1;
+        profiler_backdrop.gpu_data->touchable_id = -1;
         profiler_backdrop.cpu_data->remove_hitbox = true;
         commit_zpolygon_to_render(&profiler_backdrop);
         

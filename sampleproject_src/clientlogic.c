@@ -130,7 +130,7 @@ void client_logic_late_startup(void) {
         // quad[i].gpu_materials->rgba[0]          += (i * 0.31f);
         // quad[i].gpu_materials->rgba[3]           = 1.0f - ((float)i * 0.25f);
         quad[i].cpu_data->object_id              = 20;
-        quad[i].cpu_data->touchable_id           = 5;
+        quad[i].gpu_data->touchable_id           = 5;
         quad[i].cpu_data->alpha_blending_enabled = true;
         
         quad[i].gpu_data->xyz_offset[0]          = 0.0f;
@@ -154,7 +154,7 @@ void client_logic_late_startup(void) {
     
     #if 1
     font_settings->font_height = 280;
-    font_settings->font_touchable_id = 6;
+    font_settings->font_touchable_id = 2120000;
     font_settings->font_color[0] =  2.2f;
     font_settings->font_color[1] =  2.9f;
     font_settings->font_color[2] =  1.8f;
@@ -322,7 +322,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
         
         if (
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                touchable_id_top == 6 ||
+                touchable_id_top == 2120000 ||
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
                 touchable_id_pierce == 6)
         {

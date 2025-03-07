@@ -6,6 +6,8 @@ void * common_memset_char(
     int value,
     size_t size_bytes)
 {
+    assert(in != NULL);
+    
     int8_t * input = (int8_t *)in;
     
     uint32_t i = 0;
