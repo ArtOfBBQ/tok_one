@@ -123,19 +123,20 @@ typedef struct Interaction {
 void construct_interaction(Interaction * to_construct);
 
 // indexes in the interactions array
-#define INTR_PREVIOUS_TOUCH_START               0
-#define INTR_PREVIOUS_TOUCH_END                 1
-#define INTR_PREVIOUS_LEFTCLICK_START           2
-#define INTR_PREVIOUS_LEFTCLICK_END             3
-#define INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START  4
-#define INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END    5
-#define INTR_PREVIOUS_RIGHTCLICK_START          6
-#define INTR_PREVIOUS_RIGHTCLICK_END            7
-#define INTR_PREVIOUS_MOUSE_MOVE                8
-#define INTR_PREVIOUS_TOUCH_MOVE                9
-#define INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE      10
+#define INTR_LAST_GPU_DATA                      0
+#define INTR_PREVIOUS_TOUCH_START               1
+#define INTR_PREVIOUS_TOUCH_END                 2
+#define INTR_PREVIOUS_LEFTCLICK_START           3
+#define INTR_PREVIOUS_LEFTCLICK_END             4
+#define INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START  5
+#define INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END    6
+#define INTR_PREVIOUS_RIGHTCLICK_START          7
+#define INTR_PREVIOUS_RIGHTCLICK_END            8
+#define INTR_PREVIOUS_MOUSE_MOVE                9
+#define INTR_PREVIOUS_TOUCH_MOVE               10
+#define INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE      11
 // permanent size of the interactions array
-#define USER_INTERACTIONS_SIZE                 11
+#define USER_INTERACTIONS_SIZE                 12
 extern Interaction * user_interactions;
 
 void register_interaction(Interaction * touch_record);

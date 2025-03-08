@@ -28,7 +28,9 @@ void * malloc_from_unmanaged_aligned(
     const uint64_t size,
     const uint32_t aligned_to);
 
+// __attribute__((used, noinline))
 void * malloc_from_unmanaged(size_t size);
+
 #define malloc_from_managed(size) malloc_from_managed_internal(size, (char *)__FILE__, (char *)__func__);
 void * malloc_from_managed_internal(
     size_t size,

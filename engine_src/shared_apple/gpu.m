@@ -66,7 +66,6 @@ bool32_t apple_gpu_init(
     char * error_msg_string)
 {
     ags = malloc_from_unmanaged(sizeof(AppleGPUState));
-    log_assert(ags != NULL);
     
     funcptr_shared_gameloop_update = arg_funcptr_shared_gameloop_update;
     
@@ -368,7 +367,6 @@ bool32_t apple_gpu_init(
     depth_descriptor.depthWriteEnabled = YES;
     [depth_descriptor setDepthCompareFunction:MTLCompareFunctionLessEqual];
     // [depth_descriptor setDepthCompareFunction:MTLCompareFunctionAlways];
-    assert(depth_descriptor.depthWriteEnabled == true);
     ags->depth_stencil_state = [with_metal_device
         newDepthStencilStateWithDescriptor:depth_descriptor];
     
@@ -407,13 +405,7 @@ bool32_t apple_gpu_init(
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
-        assert(MTLBufferFramePolygons != nil);
-        assert(
-            [MTLBufferFramePolygons contents] ==
-                gpu_shared_data_collection.triple_buffers[frame_i].
-                    polygon_collection);
         ags->polygon_buffers[frame_i] = MTLBufferFramePolygons;
-        assert(ags->polygon_buffers[frame_i] != nil);
         
         id<MTLBuffer> MTLBufferFramePolygonMaterials =
             [with_metal_device
@@ -430,13 +422,8 @@ bool32_t apple_gpu_init(
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
-        assert(MTLBufferFramePolygonMaterials != nil);
-        assert(
-            [MTLBufferFramePolygonMaterials contents] ==
-                gpu_shared_data_collection.triple_buffers[frame_i].
-                    polygon_materials);
+        
         ags->polygon_material_buffers[frame_i] = MTLBufferFramePolygonMaterials;
-        assert(ags->polygon_material_buffers[frame_i] != nil);
         
         id<MTLBuffer> MTLBufferFrameVertices =
             [with_metal_device
@@ -452,12 +439,8 @@ bool32_t apple_gpu_init(
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
-        assert(MTLBufferFrameVertices != nil);
-        assert(
-            [MTLBufferFrameVertices contents] ==
-                gpu_shared_data_collection.triple_buffers[frame_i].vertices);
+        
         ags->vertex_buffers[frame_i] = MTLBufferFrameVertices;
-        assert(ags->vertex_buffers[frame_i] != nil);
         
         id<MTLBuffer> MTLBufferLineVertices =
             [with_metal_device
@@ -473,13 +456,8 @@ bool32_t apple_gpu_init(
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
-        assert(MTLBufferLineVertices != nil);
-        assert(
-            [MTLBufferLineVertices contents] ==
-                gpu_shared_data_collection.triple_buffers[frame_i].
-                    line_vertices);
+        
         ags->line_vertex_buffers[frame_i] = MTLBufferLineVertices;
-        assert(ags->line_vertex_buffers[frame_i] != nil);
         
         id<MTLBuffer> MTLBufferPointVertices =
             [with_metal_device
@@ -495,13 +473,8 @@ bool32_t apple_gpu_init(
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
-        assert(MTLBufferPointVertices != nil);
-        assert(
-            [MTLBufferPointVertices contents] ==
-                gpu_shared_data_collection.triple_buffers[frame_i].
-                    point_vertices);
+        
         ags->point_vertex_buffers[frame_i] = MTLBufferPointVertices;
-        assert(ags->point_vertex_buffers[frame_i] != nil);
         
         id<MTLBuffer> MTLBufferPostProcessingConstants =
             [with_metal_device
@@ -518,14 +491,9 @@ bool32_t apple_gpu_init(
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
-        assert(MTLBufferPostProcessingConstants != nil);
-        assert(
-            [MTLBufferPostProcessingConstants contents] ==
-                gpu_shared_data_collection.triple_buffers[frame_i].
-                    postprocessing_constants);
+        
         ags->postprocessing_constants_buffers[frame_i] =
             MTLBufferPostProcessingConstants;
-        assert(ags->postprocessing_constants_buffers[frame_i] != nil);
         
         id<MTLBuffer> MTLBufferFrameLights =
             [with_metal_device
@@ -541,11 +509,7 @@ bool32_t apple_gpu_init(
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
-        assert(
-            [MTLBufferFrameLights contents] ==
-                gpu_shared_data_collection.
-                    triple_buffers[frame_i].
-                    light_collection);
+        
         ags->light_buffers[frame_i] = MTLBufferFrameLights;
         
         id<MTLBuffer> MTLBufferFrameCamera =
@@ -562,9 +526,7 @@ bool32_t apple_gpu_init(
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
-        assert(
-            [MTLBufferFrameCamera contents] ==
-                gpu_shared_data_collection.triple_buffers[frame_i].camera);
+        
         ags->camera_buffers[frame_i] = MTLBufferFrameCamera;
     }
     
@@ -581,9 +543,7 @@ bool32_t apple_gpu_init(
             /* deallocator = nil to opt out */
                 deallocator:
                     nil];
-    assert(
-        [MTLBufferLockedVerticesPopulator contents] ==
-            gpu_shared_data_collection.locked_vertices);
+    
     ags->locked_vertex_populator_buffer = MTLBufferLockedVerticesPopulator;
     
     id<MTLBuffer> MTLBufferLockedVertices =
@@ -608,9 +568,7 @@ bool32_t apple_gpu_init(
             /* deallocator = nil to opt out */
                 deallocator:
                     nil];
-    assert(
-        [MTLBufferProjectionConstants contents] ==
-            gpu_shared_data_collection.locked_pjc);
+    
     ags->projection_constants_buffer = MTLBufferProjectionConstants;
     
     ags->metal_textures = [
@@ -621,7 +579,6 @@ bool32_t apple_gpu_init(
     
     id<MTLFunction> downsample_func =
         [ags->lib newFunctionWithName: @"downsample_texture"];
-        log_assert(downsample_func != nil);
     
     ags->downsample_compute_pls =
         [ags->device
@@ -630,7 +587,6 @@ bool32_t apple_gpu_init(
     
     id<MTLFunction> boxblur_func =
         [ags->lib newFunctionWithName: @"boxblur_texture"];
-    log_assert(boxblur_func != nil);
     ags->boxblur_compute_pls =
         [ags->device
             newComputePipelineStateWithFunction:boxblur_func
@@ -638,7 +594,6 @@ bool32_t apple_gpu_init(
     
     id<MTLFunction> threshold_func =
         [ags->lib newFunctionWithName: @"threshold_texture"];
-        log_assert(threshold_func != nil);
     
     ags->thres_compute_pls =
         [ags->device
@@ -752,8 +707,6 @@ static int32_t platform_gpu_get_touchable_id_at_screen_pos(
     
     uint32_t rtt_width  = (uint32_t)ags->render_target_texture.width;
     uint32_t rtt_height = (uint32_t)ags->render_target_texture.height;
-    log_assert(rtt_width  > 10);
-    log_assert(rtt_height > 10);
     
     uint32_t screen_x_adj = (uint32_t)(
         (screen_x / window_globals->window_width) *
@@ -761,9 +714,6 @@ static int32_t platform_gpu_get_touchable_id_at_screen_pos(
     uint32_t screen_y_adj = (uint32_t)(
         (screen_y / window_globals->window_height) *
             rtt_height);
-    
-    log_assert(screen_x_adj >= 0);
-    log_assert(screen_y_adj >= 0);
     
     if (screen_x_adj >= rtt_width ) { screen_x_adj = rtt_width;  }
     if (screen_y_adj >= rtt_height) { screen_y_adj = rtt_height; }
@@ -775,7 +725,7 @@ static int32_t platform_gpu_get_touchable_id_at_screen_pos(
     
     uint32_t pixel_i = (screen_y_adj * rtt_width) + screen_x_adj;
     if (
-        (pixel_i * 4) + 3 < size)
+        ((pixel_i * 4) + 3) >= (size / 2))
     {
         return -1;
     }
@@ -784,9 +734,10 @@ static int32_t platform_gpu_get_touchable_id_at_screen_pos(
     uint32_t high = data[(pixel_i*4)+1];
     
     uint32_t uid = (high << 16) | low;
-    int32_t id = *(int32_t *)&uid; // Direct reinterpretation
+    int32_t final_id = *(int32_t *)&uid; // Direct reinterpretation
     
-    return id;
+    if (final_id < -1) { final_id = -1; }
+    return final_id;
 }
 
 void platform_gpu_init_texture_array(
@@ -1016,10 +967,6 @@ void platform_gpu_copy_locked_vertices(void)
 
 - (void)drawInMTKView:(MTKView *)view
 {
-    #ifdef PROFILER_ACTIVE
-    profiler_new_frame();
-    #endif
-    
     dispatch_semaphore_wait(ags->drawing_semaphore, DISPATCH_TIME_FOREVER);
     
     funcptr_shared_gameloop_update(
@@ -1067,7 +1014,6 @@ void platform_gpu_copy_locked_vertices(void)
     render_pass_1_descriptor.colorAttachments[1].storeAction =
         MTLStoreActionStore;
     
-    
     // To kick off our render loop, we blit to clear the touch id buffer
     uint32_t size_bytes = (uint32_t)(
         [ags->touch_id_texture height] *
@@ -1097,7 +1043,6 @@ void platform_gpu_copy_locked_vertices(void)
         destinationLevel: 0
         destinationOrigin: MTLOriginMake(0, 0, 0)];
     [blit_clear_encoder endEncoding];
-    
     
     // this inherits from the view's cleardepth (in macos/main.m for mac os),
     // don't set it here
@@ -1470,17 +1415,16 @@ void platform_gpu_copy_locked_vertices(void)
     [command_buffer commit];
     [command_buffer waitUntilCompleted];
     
-    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].touchable_id_top =
+    user_interactions[INTR_LAST_GPU_DATA].touchable_id_top =
         platform_gpu_get_touchable_id_at_screen_pos(
             /* const int screen_x: */
-                user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].
+                user_interactions[INTR_LAST_GPU_DATA].
                     screen_x,
             /* const int screen_y: */
-                user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].
+                user_interactions[INTR_LAST_GPU_DATA].
                     screen_y);
-    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].touchable_id_pierce =
-        user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].touchable_id_top;
-    user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].handled = false;
+    user_interactions[INTR_LAST_GPU_DATA].touchable_id_pierce =
+        user_interactions[INTR_LAST_GPU_DATA].touchable_id_top;
 }
 
 - (void)mtkView:(MTKView *)view

@@ -20,13 +20,13 @@ void register_interaction(Interaction * touch_record)
     uint64_t timestamp = platform_get_current_time_microsecs();
     
     touch_record->screen_x =
-        user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_x;
+        user_interactions[INTR_LAST_GPU_DATA].screen_x;
     touch_record->screen_y =
-        user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_y;
+        user_interactions[INTR_LAST_GPU_DATA].screen_y;
     touch_record->touchable_id_top =
-        user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].touchable_id_top;
+        user_interactions[INTR_LAST_GPU_DATA].touchable_id_top;
     touch_record->touchable_id_pierce =
-        user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].
+        user_interactions[INTR_LAST_GPU_DATA].
             touchable_id_pierce;
     touch_record->timestamp = timestamp;
     touch_record->checked_touchables = false;
