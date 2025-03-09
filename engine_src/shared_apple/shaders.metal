@@ -214,14 +214,14 @@ raw_fragment_shader(RawFragment in [[stage_in]])
 typedef struct
 {
     float4 position [[position]];
-    float4 color;
-    float3 rgb_cap;
     float2 texture_coordinate;
-    float3 lighting;
-    int32_t texturearray_i;
-    int32_t texture_i;
-    int32_t touchable_id;
-    float point_size [[point_size]];
+    float3 worldpos;
+    float3 normal;
+    float3 bonus_rgb [[ flat ]];
+    int32_t material_i [[ flat ]];
+    int32_t touchable_id [[ flat ]];
+    float ignore_lighting [[ flat ]];
+    float point_size [[ point_size ]];
 } RasterizerPixel;
 
 float get_distance(
@@ -242,11 +242,9 @@ vertex_shader(
     uint vertex_i [[ vertex_id ]],
     const device GPUVertex * vertices [[ buffer(0) ]],
     const device GPUPolygonCollection * polygon_collection [[ buffer(1) ]],
-    const device GPULightCollection * light_collection [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPULockedVertex * locked_vertices [[ buffer(4) ]],
-    const device GPUProjectionConstants * projection_constants [[ buffer(5) ]],
-    const device GPUPolygonMaterial * polygon_materials [[ buffer(6) ]])
+    const device GPUProjectionConstants * projection_constants [[ buffer(5) ]])
 {
     RasterizerPixel out;
     
@@ -298,24 +296,24 @@ vertex_shader(
         y_rotated_vertices,
         polygon_collection->polygons[polygon_i].xyz_angle[2]);
     
-    float3 x_rotated_normals  = x_rotate(
+    float3 x_rotated_normal  = x_rotate(
         mesh_normals,
         polygon_collection->polygons[polygon_i].xyz_angle[0]);
-    float3 y_rotated_normals  = y_rotate(
-        x_rotated_normals,
+    float3 y_rotated_normal  = y_rotate(
+        x_rotated_normal,
         polygon_collection->polygons[polygon_i].xyz_angle[1]);
-    float3 z_rotated_normals  = z_rotate(
-        y_rotated_normals,
+    out.normal = z_rotate(
+        y_rotated_normal,
         polygon_collection->polygons[polygon_i].xyz_angle[2]);
     
     // translate to world position
-    float3 rotated_pos = z_rotated_vertices + parent_mesh_position;
+    out.worldpos = z_rotated_vertices + parent_mesh_position;
     
     float3 camera_position = vector_float3(
         camera->xyz[0],
         camera->xyz[1],
         camera->xyz[2]);
-    float3 camera_translated_pos = rotated_pos - camera_position;
+    float3 camera_translated_pos = out.worldpos - camera_position;
     
     // rotate around camera
     float3 cam_x_rotated = x_rotate(
@@ -333,7 +331,7 @@ vertex_shader(
         0.0f,
         1.0f);
     float3 final_pos =
-        (rotated_pos * ic) +
+        (out.worldpos * ic) +
         (cam_z_rotated * (1.0f - ic));
     
     out.position[0] = final_pos[0];
@@ -349,24 +347,12 @@ vertex_shader(
         (out.position[2] * projection_constants->q) -
         (projection_constants->znear * projection_constants->q);
     
-    out.color = vector_float4(
-        polygon_materials[locked_material_i].rgba[0],
-        polygon_materials[locked_material_i].rgba[1],
-        polygon_materials[locked_material_i].rgba[2],
-        polygon_materials[locked_material_i].rgba[3]);
-    
-    float4 bonus_rgb = vector_float4(
+    out.bonus_rgb = vector_float3(
         polygon_collection->polygons[polygon_i].bonus_rgb[0],
         polygon_collection->polygons[polygon_i].bonus_rgb[1],
-        polygon_collection->polygons[polygon_i].bonus_rgb[2],
-        0.0f);
+        polygon_collection->polygons[polygon_i].bonus_rgb[2]);
     
-    out.color += bonus_rgb;
-    
-    /* out.texturearray_i = vertices[vertex_i].texturearray_i; */
-    out.texturearray_i = polygon_materials[locked_material_i].texturearray_i;
-    /* out.texture_i = vertices[vertex_i].texture_i; */
-    out.texture_i = polygon_materials[locked_material_i].texture_i;
+    out.material_i = locked_material_i;
     
     out.touchable_id = polygon_collection->polygons[polygon_i].touchable_id;
     
@@ -374,100 +360,7 @@ vertex_shader(
         locked_vertices[locked_vertex_i].uv[0],
         locked_vertices[locked_vertex_i].uv[1]);
     
-    out.lighting = float3(0.0f, 0.0f, 0.0f);
-    for (
-        uint32_t i = 0;
-        i < light_collection->lights_size;
-        i++)
-    {
-        // ambient lighting
-        float3 light_pos = vector_float3(
-            light_collection->light_x[i],
-            light_collection->light_y[i],
-            light_collection->light_z[i]);
-        float3 light_color = vector_float3(
-            light_collection->red[i],
-            light_collection->green[i],
-            light_collection->blue[i]);
-        float distance = get_distance(
-            light_pos,
-            rotated_pos);
-        
-        float distance_overflow = max(
-            distance - (light_collection->reach[i] * 0.75f),
-            0.0f);
-        
-        float attenuation = 1.0f - (
-            distance_overflow /
-                light_collection->reach[i]);
-        
-        attenuation = clamp(attenuation, 0.00f, 1.00f);
-        
-        out.lighting += (
-            attenuation *
-            light_color *
-            light_collection->ambient[i]);
-        
-        // diffuse lighting
-        z_rotated_normals = normalize(z_rotated_normals);
-        
-        // if light is at 2,2,2 and rotated_pos is at 1,1,1, we need +1/+1/+1
-        // to go from the rotated_pos to the light
-        // if the normal also points to the light, we want more diffuse
-        // brightness
-        float3 object_to_light = normalize(
-            (light_pos - rotated_pos));
-        
-        float diffuse_dot =
-            max(
-                dot(
-                    z_rotated_normals,
-                    object_to_light),
-                0.0f);
-        
-        out.lighting += (
-            light_color *
-            attenuation *
-            light_collection->diffuse[i] *
-            polygon_materials[locked_material_i].diffuse *
-            diffuse_dot);
-        
-        // specular lighting
-        float3 object_to_view = normalize(
-            camera_position - rotated_pos);
-        
-        float3 reflection_ray = reflect(
-            -object_to_light,
-            z_rotated_normals);
-        
-        float specular_dot = pow(
-            max(
-                dot(object_to_view, reflection_ray),
-                0.0),
-            32);
-        out.lighting += (
-            polygon_materials[locked_material_i].specular *
-            specular_dot *
-            light_color *
-            light_collection->specular[i] *
-            attenuation);
-    }
-    
-    out.lighting = clamp(out.lighting, 0.05f, 7.5f);
-    
-    float ignore_light =
-        polygon_collection->polygons[polygon_i].ignore_lighting;
-    
-    float3 all_ones = vector_float3(1.0f, 1.0f, 1.0f);
-    out.lighting =
-        ((1.0f - ignore_light) * out.lighting) +
-        (ignore_light * all_ones);
-    
     out.point_size = 40.0f;
-    out.rgb_cap = vector_float3(
-        polygon_materials[locked_material_i].rgb_cap[0],
-        polygon_materials[locked_material_i].rgb_cap[1],
-        polygon_materials[locked_material_i].rgb_cap[2]);
     
     return out;
 }
@@ -482,6 +375,7 @@ static FragmentAndTouchableOut pack_color_and_touchable_id(
     int32_t touchable_id)
 {
     FragmentAndTouchableOut return_value;
+    
     return_value.color = vector_half4(color[0], color[1], color[2], color[3]);
     
     // Convert signed int32_t to uint32_t (0 to 2^32-1)
@@ -508,15 +402,112 @@ fragment FragmentAndTouchableOut
 fragment_shader(
     RasterizerPixel in [[stage_in]],
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
-        color_textures[[ texture(0) ]])
+        color_textures[[ texture(0) ]],
+    const device GPULightCollection * light_collection [[ buffer(2) ]],
+    const device GPUCamera * camera [[ buffer(3) ]],
+    const device GPUPolygonMaterial * polygon_materials [[ buffer(6) ]])
 {
-    float4 out_color = in.color;
+    float3 lighting = float3(0.0f, 0.0f, 0.0f);
+    
+    for (
+        uint32_t i = 0;
+        i < light_collection->lights_size;
+        i++)
+    {
+        // ambient lighting
+        float3 light_pos = vector_float3(
+            light_collection->light_x[i],
+            light_collection->light_y[i],
+            light_collection->light_z[i]);
+        float3 light_color = vector_float3(
+            light_collection->red[i],
+            light_collection->green[i],
+            light_collection->blue[i]);
+        
+        // TODO: restore distance
+        //        float distance = get_distance(
+        //            light_pos,
+        //            rotated_pos);
+        float distance = 1.0f;
+        
+        float distance_overflow = max(
+            distance - (light_collection->reach[i] * 0.75f),
+            0.0f);
+        
+        float attenuation = 1.0f - (
+            distance_overflow /
+                light_collection->reach[i]);
+        
+        attenuation = clamp(attenuation, 0.00f, 1.00f);
+        
+        lighting += (
+            attenuation *
+            light_color *
+            light_collection->ambient[i]);
+        
+        // if light is at 2,2,2 and rotated_pos is at 1,1,1, we need +1/+1/+1
+        // to go from the rotated_pos to the light
+        // if the normal also points to the light, we want more diffuse
+        // brightness
+        float3 object_to_light = normalize(
+            (light_pos - in.worldpos));
+        
+        float diffuse_dot =
+            max(
+                dot(
+                    in.normal,
+                    object_to_light),
+                0.0f);
+        
+        lighting += (
+            light_color *
+            attenuation *
+            light_collection->diffuse[i] *
+            polygon_materials[in.material_i].diffuse *
+            diffuse_dot);
+        
+        // specular lighting
+        float3 object_to_view = normalize(
+            float3(
+                camera->xyz[0],
+                camera->xyz[1],
+                camera->xyz[2]) - in.worldpos);
+        
+        float3 reflection_ray = reflect(
+            -object_to_light,
+            in.normal);
+        
+        float specular_dot = pow(
+            max(
+                dot(object_to_view, reflection_ray),
+                0.0),
+            32);
+        lighting += (
+            polygon_materials[in.material_i].specular *
+            specular_dot *
+            light_color *
+            light_collection->specular[i] *
+            attenuation);
+    }
+    
+    lighting = clamp(lighting, 0.05f, 7.5f);
+    
+    float3 all_ones = vector_float3(1.0f, 1.0f, 1.0f);
+    lighting =
+        ((1.0f - in.ignore_lighting) * lighting) +
+        (in.ignore_lighting * all_ones);
+    
+    float4 out_color = vector_float4(
+        polygon_materials[in.material_i].rgba[0],
+        polygon_materials[in.material_i].rgba[1],
+        polygon_materials[in.material_i].rgba[2],
+        polygon_materials[in.material_i].rgba[3]);
     
     if (
-        in.texturearray_i < 0 ||
-        in.texture_i < 0)
+        polygon_materials[in.material_i].texturearray_i < 0 ||
+        polygon_materials[in.material_i].texture_i < 0)
     {
-        out_color *= vector_float4(in.lighting, 1.0f);
+        out_color *= vector_float4(lighting, 1.0f);
     } else {
         constexpr sampler textureSampler(
             mag_filter::nearest,
@@ -524,13 +515,13 @@ fragment_shader(
         
         // Sample the texture to obtain a color
         const half4 color_sample =
-        color_textures[in.texturearray_i].sample(
+        color_textures[polygon_materials[in.material_i].texturearray_i].sample(
             textureSampler,
-            in.texture_coordinate, 
-            in.texture_i);
+            in.texture_coordinate,
+            polygon_materials[in.material_i].texture_i);
         float4 texture_sample = float4(color_sample);
         
-        out_color *= texture_sample * vector_float4(in.lighting, 1.0f);;
+        out_color *= texture_sample * vector_float4(lighting, 1.0f);;
     }
     
     int diamond_size = 35.0f;
@@ -552,7 +543,11 @@ fragment_shader(
     }
     
     out_color[3] = 1.0f;
-    float4 rgba_cap = vector_float4(in.rgb_cap, 1.0f);
+    float4 rgba_cap = vector_float4(
+        polygon_materials[in.material_i].rgb_cap[0],
+        polygon_materials[in.material_i].rgb_cap[1],
+        polygon_materials[in.material_i].rgb_cap[2],
+        1.0f);
     out_color = clamp(out_color, 0.0f, rgba_cap);
     
     return pack_color_and_touchable_id(out_color, in.touchable_id);
@@ -564,31 +559,33 @@ alphablending_fragment_shader(
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
         color_textures[[ texture(0) ]])
 {
-    float4 out_color = in.color;
+    // TODO: restore alphablending shader
     
-    if (
-        in.texturearray_i < 0 ||
-        in.texture_i < 0)
-    {
-        out_color *= vector_float4(in.lighting, 1.0f);
-    } else {
-        constexpr sampler textureSampler(
-            mag_filter::nearest,
-            min_filter::nearest);
-        
-        // Sample the texture to obtain a color
-        const half4 color_sample =
-        color_textures[in.texturearray_i].sample(
-            textureSampler,
-            in.texture_coordinate, 
-            in.texture_i);
-        float4 texture_sample = float4(color_sample);
-        
-        out_color *= texture_sample * vector_float4(in.lighting, 1.0f);;
-    }
-    
-    float4 rgba_cap = vector_float4(in.rgb_cap, 1.0f);
-    out_color = clamp(out_color, 0.0f, rgba_cap);
+    float4 out_color = vector_float4(1);
+    //
+    //    if (
+    //        in.texturearray_i < 0 ||
+    //        in.texture_i < 0)
+    //    {
+    //        out_color *= vector_float4(in.lighting, 1.0f);
+    //    } else {
+    //        constexpr sampler textureSampler(
+    //            mag_filter::nearest,
+    //            min_filter::nearest);
+    //
+    //        // Sample the texture to obtain a color
+    //        const half4 color_sample =
+    //        color_textures[in.texturearray_i].sample(
+    //            textureSampler,
+    //            in.texture_coordinate,
+    //            in.texture_i);
+    //        float4 texture_sample = float4(color_sample);
+    //
+    //        out_color *= texture_sample * vector_float4(in.lighting, 1.0f);;
+    //    }
+    //
+    //    float4 rgba_cap = vector_float4(in.rgb_cap, 1.0f);
+    //    out_color = clamp(out_color, 0.0f, rgba_cap);
     
     return pack_color_and_touchable_id(out_color, in.touchable_id);
 }

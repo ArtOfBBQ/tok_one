@@ -1085,12 +1085,6 @@ void platform_gpu_copy_locked_vertices(void)
     
     [render_pass_1_encoder
         setVertexBuffer:
-            ags->light_buffers[ags->frame_i]
-        offset: 0
-        atIndex: 2];
-    
-    [render_pass_1_encoder
-        setVertexBuffer:
             ags->camera_buffers[ags->frame_i]
         offset: 0
         atIndex: 3];
@@ -1112,7 +1106,23 @@ void platform_gpu_copy_locked_vertices(void)
             5];
     
     [render_pass_1_encoder
-        setVertexBuffer:
+        setFragmentBuffer:
+            ags->light_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            2];
+    
+    [render_pass_1_encoder
+        setFragmentBuffer:
+            ags->camera_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            3];
+    
+    [render_pass_1_encoder
+        setFragmentBuffer:
             ags->polygon_material_buffers[ags->frame_i]
         offset:
             0
