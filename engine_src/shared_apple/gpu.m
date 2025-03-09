@@ -1020,13 +1020,13 @@ void platform_gpu_copy_locked_vertices(void)
         [ags->touch_id_texture width] *
         8);
     
-    int16_t * buf = ags->touch_id_buffer.contents;
-    
-    int32_t fill_value = -1;
-    
-    common_memset_int32(buf, fill_value, size_bytes);
     id <MTLBlitCommandEncoder> blit_clear_encoder =
         [command_buffer blitCommandEncoder];
+    
+    [blit_clear_encoder
+        fillBuffer: ags->touch_id_buffer
+        range: NSMakeRange(0, size_bytes)
+        value:0xFF];
     
     [blit_clear_encoder
         copyFromBuffer: ags->touch_id_buffer
@@ -1042,6 +1042,7 @@ void platform_gpu_copy_locked_vertices(void)
         destinationSlice: 0
         destinationLevel: 0
         destinationOrigin: MTLOriginMake(0, 0, 0)];
+    
     [blit_clear_encoder endEncoding];
     
     // this inherits from the view's cleardepth (in macos/main.m for mac os),

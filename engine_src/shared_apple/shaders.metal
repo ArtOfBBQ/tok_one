@@ -251,7 +251,9 @@ vertex_shader(
     RasterizerPixel out;
     
     uint polygon_i = vertices[vertex_i].polygon_i;
+    
     uint locked_vertex_i = vertices[vertex_i].locked_vertex_i;
+    
     uint locked_material_i = (polygon_i * MAX_MATERIALS_PER_POLYGON) +
         locked_vertices[locked_vertex_i].parent_material_i;
     

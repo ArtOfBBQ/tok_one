@@ -244,8 +244,6 @@ inline static void add_opaque_zpolygons_to_workload(
         /*
         We are free to overflow the vertices buffer, since its end is not
         in use yet anyway.
-        
-        
         */
         int32_t vert_i = all_mesh_summaries[mesh_id].vertices_head_i;
         cur_vals[0] = vert_i-2;
