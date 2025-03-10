@@ -99,12 +99,6 @@
 		EC7B09D4293CAC8B000ED98E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = EC7B09D3293CAC8B000ED98E /* Main.storyboard */; };
 		EC7B171B293A23E400C1D20C /* roundedborder.png in Resources */ = {isa = PBXBuildFile; fileRef = EC7B171A293A23E300C1D20C /* roundedborder.png */; };
 		EC7B171C293A23E400C1D20C /* roundedborder.png in Resources */ = {isa = PBXBuildFile; fileRef = EC7B171A293A23E300C1D20C /* roundedborder.png */; };
-		EC81DF4C2D7EAC970015DAAC /* gianthead.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC81DF4B2D7EAC970015DAAC /* gianthead.obj */; };
-		EC81DF4D2D7EAC970015DAAC /* gianthead.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC81DF4B2D7EAC970015DAAC /* gianthead.obj */; };
-		EC81DF4F2D7EADD80015DAAC /* giant_head_texture.png in Resources */ = {isa = PBXBuildFile; fileRef = EC81DF4E2D7EADD80015DAAC /* giant_head_texture.png */; };
-		EC81DF502D7EADD80015DAAC /* giant_head_texture.png in Resources */ = {isa = PBXBuildFile; fileRef = EC81DF4E2D7EADD80015DAAC /* giant_head_texture.png */; };
-		EC81DF522D7EBE5F0015DAAC /* uvtest.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC81DF512D7EBE5F0015DAAC /* uvtest.obj */; };
-		EC81DF532D7EBE5F0015DAAC /* uvtest.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC81DF512D7EBE5F0015DAAC /* uvtest.obj */; };
 		EC843EA82D1401F3001AD2E9 /* cardstand.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC843EA72D1401F3001AD2E9 /* cardstand.obj */; };
 		EC843EA92D1401F3001AD2E9 /* cardstand.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC843EA72D1401F3001AD2E9 /* cardstand.obj */; };
 		EC914B7F2B8AD447007FCBFC /* audio.c in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7A2B8AD447007FCBFC /* audio.c */; };
@@ -219,9 +213,6 @@
 		EC7B171A293A23E300C1D20C /* roundedborder.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = roundedborder.png; path = ../../resources/roundedborder.png; sourceTree = "<group>"; };
 		EC7C25242980B6A900DB7BC8 /* terminal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = terminal.h; path = ../../engine_src/shared/terminal.h; sourceTree = "<group>"; };
 		EC7C25252980B6A900DB7BC8 /* terminal.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = terminal.c; path = ../../engine_src/shared/terminal.c; sourceTree = "<group>"; };
-		EC81DF4B2D7EAC970015DAAC /* gianthead.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = gianthead.obj; path = ../../resources/gianthead.obj; sourceTree = "<group>"; };
-		EC81DF4E2D7EADD80015DAAC /* giant_head_texture.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = giant_head_texture.png; path = ../../resources/giant_head_texture.png; sourceTree = "<group>"; };
-		EC81DF512D7EBE5F0015DAAC /* uvtest.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = uvtest.obj; path = ../../resources/uvtest.obj; sourceTree = "<group>"; };
 		EC843EA72D1401F3001AD2E9 /* cardstand.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = cardstand.obj; path = ../../resources/cardstand.obj; sourceTree = "<group>"; };
 		EC914B7A2B8AD447007FCBFC /* audio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = audio.c; path = ../../engine_src/shared/audio.c; sourceTree = "<group>"; };
 		EC914B7B2B8AD447007FCBFC /* wav.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = wav.c; path = ../../engine_src/shared/wav.c; sourceTree = "<group>"; };
@@ -345,10 +336,7 @@
 				ECC47A5F29E9111C0082A7C6 /* disk.obj */,
 				EC843EA72D1401F3001AD2E9 /* cardstand.obj */,
 				EC0BFBD729EE71A200E4BC1C /* tree.obj */,
-				EC81DF4E2D7EADD80015DAAC /* giant_head_texture.png */,
-				EC81DF4B2D7EAC970015DAAC /* gianthead.obj */,
 				EC0717EF2C29CDD5007A4AFA /* teapot_smooth.obj */,
-				EC81DF512D7EBE5F0015DAAC /* uvtest.obj */,
 				EC0BFBD829EE71A200E4BC1C /* xmas_tree.obj */,
 				EC67AE152A1B0813002D8380 /* leaves3.png */,
 				EC7B171A293A23E300C1D20C /* roundedborder.png */,
@@ -558,14 +546,11 @@
 				EC1412B12938597400DA0D21 /* cardwithuvcoords.obj in Resources */,
 				6009FB642876A47100FC5A60 /* fontmetrics.dat in Resources */,
 				6080CC46286FFD1E00444118 /* phoebus.png in Resources */,
-				EC81DF4C2D7EAC970015DAAC /* gianthead.obj in Resources */,
 				EC7B171B293A23E400C1D20C /* roundedborder.png in Resources */,
 				EC18FF4229E3DC8B00ED785C /* blob1.png in Resources */,
 				EC0BFBDB29EE71A200E4BC1C /* xmas_tree.obj in Resources */,
 				EC843EA82D1401F3001AD2E9 /* cardstand.obj in Resources */,
 				601128AD28625BAF00F92967 /* structuredart1.png in Resources */,
-				EC81DF522D7EBE5F0015DAAC /* uvtest.obj in Resources */,
-				EC81DF4F2D7EADD80015DAAC /* giant_head_texture.png in Resources */,
 				EC18FF4629E3DD8900ED785C /* blob2.png in Resources */,
 				601128AE28625BAF00F92967 /* structuredart2.png in Resources */,
 				601128B028625BAF00F92967 /* font.png in Resources */,
@@ -590,8 +575,6 @@
 				EC0BFBDA29EE71A200E4BC1C /* tree.obj in Resources */,
 				EC7B171C293A23E400C1D20C /* roundedborder.png in Resources */,
 				ECB05E4F2950868E00050BD4 /* key.obj in Resources */,
-				EC81DF502D7EADD80015DAAC /* giant_head_texture.png in Resources */,
-				EC81DF532D7EBE5F0015DAAC /* uvtest.obj in Resources */,
 				60A9991F287BDF31003F7159 /* font.png in Resources */,
 				60A99923287BDF31003F7159 /* teapot.obj in Resources */,
 				EC18FF4729E3DD8900ED785C /* blob2.png in Resources */,
@@ -600,7 +583,6 @@
 				60A99920287BDF31003F7159 /* structuredart1.png in Resources */,
 				EC0BFBDC29EE71A200E4BC1C /* xmas_tree.obj in Resources */,
 				60A99922287BDF31003F7159 /* structuredart2.png in Resources */,
-				EC81DF4D2D7EAC970015DAAC /* gianthead.obj in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

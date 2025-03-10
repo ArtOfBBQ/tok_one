@@ -25,17 +25,9 @@ void client_logic_early_startup(
         log_assert(0);
     }
     
-    #if 1
-    char * filenames[5];
-    filenames[0] = malloc_from_unmanaged(64);
-    common_strcpy_capped(filenames[0], 64, "giant_head_texture.png");
-    register_new_texturearray_from_files((const char **)filenames, 1);
-    #endif
-    
-    
     #if TEAPOT
     // teapot_mesh_id = BASIC_CUBE_MESH_ID;
-    teapot_mesh_id = new_mesh_id_from_resource("uvtest.obj");
+    teapot_mesh_id = new_mesh_id_from_resource("teapot.obj");
     #endif
 }
 
@@ -105,8 +97,8 @@ void client_logic_late_startup(void) {
             teapot_request.gpu_materials[mat_i].texture_i      = -1.0f;
             teapot_request.gpu_materials[mat_i].specular       =  1.0f;
             teapot_request.gpu_materials[mat_i].diffuse        =  1.0f;
-            teapot_request.gpu_materials[mat_i].texturearray_i =     2;
-            teapot_request.gpu_materials[mat_i].texture_i      =     0;
+            teapot_request.gpu_materials[mat_i].texturearray_i =    -1;
+            teapot_request.gpu_materials[mat_i].texture_i      =    -1;
         }
         teapot_request.gpu_data->ignore_lighting =  0.0f;
         teapot_request.gpu_data->ignore_camera =  0.0f;
