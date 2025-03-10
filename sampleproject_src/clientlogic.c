@@ -1,6 +1,6 @@
 #include "clientlogic.h"
 
-#define TEAPOT 0
+#define TEAPOT 1
 #if TEAPOT
 static int32_t teapot_mesh_id = -1;
 static int32_t teapot_object_ids[2];
@@ -25,23 +25,26 @@ void client_logic_early_startup(
         log_assert(0);
     }
     
+    #if 1
     char * filenames[5];
     filenames[0] = malloc_from_unmanaged(64);
-    common_strcpy_capped(filenames[0], 64, "phoebus.png");
+    common_strcpy_capped(filenames[0], 64, "giant_head_texture.png");
     register_new_texturearray_from_files((const char **)filenames, 1);
+    #endif
+    
     
     #if TEAPOT
     // teapot_mesh_id = BASIC_CUBE_MESH_ID;
-    teapot_mesh_id = new_mesh_id_from_resource("cardstand.obj");
+    teapot_mesh_id = new_mesh_id_from_resource("uvtest.obj");
     #endif
 }
 
 void client_logic_late_startup(void) {
     
     zLightSource * light = next_zlight();
-    light->RGBA[0]       =  0.70f;
-    light->RGBA[1]       =  0.25f;
-    light->RGBA[2]       =  0.25f;
+    light->RGBA[0]       =  0.45f;
+    light->RGBA[1]       =  0.35f;
+    light->RGBA[2]       =  0.35f;
     light->RGBA[3]       =  1.00f;
     light->ambient       =  0.25f;
     light->diffuse       =  1.50f;
@@ -52,9 +55,9 @@ void client_logic_late_startup(void) {
     commit_zlight(light);
     
     light = next_zlight();
-    light->RGBA[0]       =  0.05f;
-    light->RGBA[1]       =  0.55f;
-    light->RGBA[2]       =  0.05f;
+    light->RGBA[0]       =  0.25f;
+    light->RGBA[1]       =  0.35f;
+    light->RGBA[2]       =  0.25f;
     light->RGBA[3]       =  1.00f;
     light->ambient       =  0.25f;
     light->diffuse       =  1.50f;
@@ -65,6 +68,8 @@ void client_logic_late_startup(void) {
     commit_zlight(light);
     
     #if TEAPOT
+    // register_new_texturearray_from_files("giant_head_texture.png", 1);
+    
     teapot_object_ids[0] = next_nonui_object_id();
     teapot_object_ids[1] = next_nonui_object_id();
     
@@ -85,12 +90,12 @@ void client_logic_late_startup(void) {
         teapot_request.gpu_data->xyz[1]            = 0.00f + (i * 0.10f);
         teapot_request.gpu_data->xyz[2]            = 1.00f - (i * 0.25f);
         teapot_request.gpu_data->xyz_angle[0]      = 0.00f;
-        teapot_request.gpu_data->xyz_angle[1]      = 0.00f;
-        teapot_request.gpu_data->xyz_angle[2]      = 0.00f;
+        teapot_request.gpu_data->xyz_angle[1]      = 3.2f;
+        teapot_request.gpu_data->xyz_angle[2]      = 0.0f;
         teapot_request.cpu_data->object_id         = teapot_object_ids[i];
         teapot_request.cpu_data->visible           = true;
         teapot_touchable_ids[i]                    = next_nonui_touchable_id();
-        teapot_request.cpu_data->touchable_id      = teapot_touchable_ids[i];
+        teapot_request.gpu_data->touchable_id      = teapot_touchable_ids[i];
         for (uint32_t mat_i = 0; mat_i < MAX_MATERIALS_PER_POLYGON; mat_i++) {
             teapot_request.gpu_materials[mat_i].rgba[0]        =  1.3f;
             teapot_request.gpu_materials[mat_i].rgba[1]        =  1.3f;
@@ -100,21 +105,19 @@ void client_logic_late_startup(void) {
             teapot_request.gpu_materials[mat_i].texture_i      = -1.0f;
             teapot_request.gpu_materials[mat_i].specular       =  1.0f;
             teapot_request.gpu_materials[mat_i].diffuse        =  1.0f;
+            teapot_request.gpu_materials[mat_i].texturearray_i =     2;
+            teapot_request.gpu_materials[mat_i].texture_i      =     0;
         }
         teapot_request.gpu_data->ignore_lighting =  0.0f;
         teapot_request.gpu_data->ignore_camera =  0.0f;
         log_assert(teapot_request.gpu_data->xyz_offset[0] == 0.0f);
         log_assert(teapot_request.gpu_data->xyz_offset[1] == 0.0f);
         log_assert(teapot_request.gpu_data->xyz_offset[2] == 0.0f);
-        log_assert(teapot_request.gpu_data->xyz_angle[0] == 0.0f);
-        log_assert(teapot_request.gpu_data->xyz_angle[1] == 0.0f);
-        log_assert(teapot_request.gpu_data->xyz_angle[2] == 0.0f);
         commit_zpolygon_to_render(&teapot_request);
     }
     #endif
     
-    #if 1
-    // phoebus.png
+    #if 0
     PolygonRequest quad[1];
     for (uint32_t i = 0; i < 1; i++) {
         request_next_zpolygon(&quad[i]);
@@ -152,7 +155,7 @@ void client_logic_late_startup(void) {
     }
     #endif
     
-    #if 1
+    #if 0
     font_settings->font_height = 280;
     font_settings->font_touchable_id = 2120000;
     font_settings->font_color[0] =  2.2f;

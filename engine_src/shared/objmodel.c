@@ -815,7 +815,7 @@ int32_t new_mesh_id_from_obj_text(
             
             if (
                 parsed_obj->normals_count > 0 &&
-                parsed_obj->normals != NULL &&
+                parsed_obj->normals_vn != NULL &&
                 parsed_obj->triangle_normals != NULL)
             {
                 uint32_t norm_i = parsed_obj->triangle_normals[triangle_i][_];
@@ -824,11 +824,11 @@ int32_t new_mesh_id_from_obj_text(
                 log_assert(norm_i <= parsed_obj->normals_count);
                 
                 all_mesh_vertices->gpu_data[locked_vert_i + _].
-                    normal_xyz[0] = parsed_obj->normals[norm_i - 1][0];
+                    normal_xyz[0] = parsed_obj->normals_vn[norm_i - 1][0];
                 all_mesh_vertices->gpu_data[locked_vert_i + _].
-                    normal_xyz[1] = parsed_obj->normals[norm_i - 1][1];
+                    normal_xyz[1] = parsed_obj->normals_vn[norm_i - 1][1];
                 all_mesh_vertices->gpu_data[locked_vert_i + _].
-                    normal_xyz[2] = parsed_obj->normals[norm_i - 1][2];
+                    normal_xyz[2] = parsed_obj->normals_vn[norm_i - 1][2];
             } else if (_ == 0) {
                 guess_gpu_triangle_normal(
                     /* GPULockedVertex * to_change: */
@@ -870,10 +870,10 @@ int32_t new_mesh_id_from_obj_text(
                 log_assert(text_i <= parsed_obj->textures_count);
                 
                 all_mesh_vertices->gpu_data[locked_vert_i + _].uv[0] =
-                    parsed_obj->textures[text_i - 1][0];
+                    parsed_obj->textures_vt_uv[text_i - 1][0];
                 
                 all_mesh_vertices->gpu_data[locked_vert_i + _].uv[1] =
-                    parsed_obj->textures[text_i - 1][1];
+                    parsed_obj->textures_vt_uv[text_i - 1][1];
             } else {
                 // No uv data in .obj file, gotta guess
                 // TODO: Maybe should be part of the obj parser?
@@ -940,13 +940,13 @@ int32_t new_mesh_id_from_obj_text(
                     
                     all_mesh_vertices->gpu_data[all_mesh_vertices->size].
                         normal_xyz[0] =
-                            parsed_obj->normals[norm_i - 1][0];
+                            parsed_obj->normals_vn[norm_i - 1][0];
                     all_mesh_vertices->gpu_data[all_mesh_vertices->size].
                         normal_xyz[1] =
-                            parsed_obj->normals[norm_i - 1][1];
+                            parsed_obj->normals_vn[norm_i - 1][1];
                     all_mesh_vertices->gpu_data[all_mesh_vertices->size].
                         normal_xyz[2] =
-                            parsed_obj->normals[norm_i - 1][2];
+                            parsed_obj->normals_vn[norm_i - 1][2];
                 } else {
                     guess_gpu_triangle_normal(
                         /* GPULockedVertex * to_change: */
@@ -962,10 +962,10 @@ int32_t new_mesh_id_from_obj_text(
                     log_assert(text_i <= parsed_obj->textures_count);
                     
                     all_mesh_vertices->gpu_data[all_mesh_vertices->size].uv[0] =
-                        parsed_obj->textures[text_i - 1][0];
+                        parsed_obj->textures_vt_uv[text_i - 1][0];
                     
                     all_mesh_vertices->gpu_data[all_mesh_vertices->size].uv[1] =
-                        parsed_obj->textures[text_i - 1][1];
+                        parsed_obj->textures_vt_uv[text_i - 1][1];
                 } else {
                     // No uv data in .obj file, gotta guess
                     // TODO: Maybe should be part of the obj parser?
@@ -983,10 +983,12 @@ int32_t new_mesh_id_from_obj_text(
     if (expected_materials_names != NULL) {
         log_assert(parsed_obj->materials_count == expected_materials_count);
         for (uint32_t i = 0; i < parsed_obj->materials_count; i++) {
-            log_assert(
-                common_are_equal_strings(
-                    parsed_obj->materials[i].name,
-                    expected_materials_names[i]));
+            if (parsed_obj->materials != NULL) {
+                log_assert(
+                    common_are_equal_strings(
+                        parsed_obj->materials[i].name,
+                        expected_materials_names[i]));
+            }
         }
     }
     free_obj(parsed_obj);
@@ -1192,8 +1194,30 @@ void flip_mesh_uvs(const int32_t mesh_id)
         vert_i < tail_i;
         vert_i++)
     {
+        log_assert(all_mesh_vertices->gpu_data[vert_i].uv[0] >= -0.01f);
+        log_assert(all_mesh_vertices->gpu_data[vert_i].uv[0] <= 1.01f);
+        log_assert(all_mesh_vertices->gpu_data[vert_i].uv[1] >= -0.01f);
+        log_assert(all_mesh_vertices->gpu_data[vert_i].uv[1] <= 1.01f);
         all_mesh_vertices->gpu_data[vert_i].uv[0] = 1.0f -
             all_mesh_vertices->gpu_data[vert_i].uv[0];
+        all_mesh_vertices->gpu_data[vert_i].uv[1] = 1.0f -
+            all_mesh_vertices->gpu_data[vert_i].uv[1];
+    }
+}
+
+void flip_mesh_uvs_v(const int32_t mesh_id)
+{
+    int32_t tail_i =
+        all_mesh_summaries[mesh_id].vertices_head_i +
+            all_mesh_summaries[mesh_id].vertices_size;
+    
+    for (
+        int32_t vert_i = all_mesh_summaries[mesh_id].vertices_head_i;
+        vert_i < tail_i;
+        vert_i++)
+    {
+        log_assert(all_mesh_vertices->gpu_data[vert_i].uv[1] >= -0.01f);
+        log_assert(all_mesh_vertices->gpu_data[vert_i].uv[1] <= 1.01f);
         all_mesh_vertices->gpu_data[vert_i].uv[1] = 1.0f -
             all_mesh_vertices->gpu_data[vert_i].uv[1];
     }
