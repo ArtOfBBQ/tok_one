@@ -289,10 +289,6 @@ void renderer_hardware_render(
     GPUDataForSingleFrame * frame_data,
     uint64_t elapsed_nanoseconds)
 {
-    #ifdef PROFILER_ACTIVE
-    profiler_start("renderer_hardware_render()");
-    #endif
-    
     (void)elapsed_nanoseconds;
     
     if (renderer_initialized != true) {
@@ -310,9 +306,6 @@ void renderer_hardware_render(
     
     log_assert(zpolygons_to_render->size < MAX_POLYGONS_PER_BUFFER);
     
-    #ifdef PROFILER_ACTIVE
-    profiler_start("tok_memcpy(frame_data->polygon_collection)");
-    #endif
     common_memcpy(
         /* void * dest: */
             frame_data->polygon_collection,
@@ -321,9 +314,6 @@ void renderer_hardware_render(
         /* size_t n: */
             sizeof(GPUPolygon) * zpolygons_to_render->size);
     frame_data->polygon_collection->size = zpolygons_to_render->size;
-    #ifdef PROFILER_ACTIVE
-    profiler_end("tok_memcpy(frame_data->polygon_collection)");
-    #endif
     
     log_assert(
         frame_data->polygon_collection->size <= zpolygons_to_render->size);
@@ -345,18 +335,9 @@ void renderer_hardware_render(
     *frame_data->postprocessing_constants =
         window_globals->postprocessing_constants;
     
-    #ifdef PROFILER_ACTIVE
-    profiler_start("add_opaque_zpolygons_to_workload()");
-    #endif
     add_opaque_zpolygons_to_workload(frame_data);
-    #ifdef PROFILER_ACTIVE
-    profiler_end("add_opaque_zpolygons_to_workload()");
-    #endif
     
     if (application_running) {
-        #ifdef PROFILER_ACTIVE
-        profiler_start("add_particle_effects_to_workload(false)");
-        #endif
         add_particle_effects_to_workload(
             /* GPUDataForSingleFrame * frame_data: */
                 frame_data,
@@ -364,33 +345,15 @@ void renderer_hardware_render(
                 elapsed_nanoseconds,
             /* const uint32_t alpha_blending: */
                 false);
-        #ifdef PROFILER_ACTIVE
-        profiler_end("add_particle_effects_to_workload(false)");
-        #endif
         
-        #ifdef PROFILER_ACTIVE
-        profiler_start("add_lineparticle_effects_to_workload(false)");
-        #endif
         add_lineparticle_effects_to_workload(
             frame_data,
             elapsed_nanoseconds,
             false);
-        #ifdef PROFILER_ACTIVE
-        profiler_end("add_lineparticle_effects_to_workload(false)");
-        #endif
     }
     
-    #ifdef PROFILER_ACTIVE
-    profiler_start("add_alphablending_zpolygons_to_workload()");
-    #endif
     add_alphablending_zpolygons_to_workload(frame_data);
-    #ifdef PROFILER_ACTIVE
-    profiler_end("add_alphablending_zpolygons_to_workload()");
-    #endif
     
-    #ifdef PROFILER_ACTIVE
-    profiler_start("add_particle_effects_to_workload(true)");
-    #endif
     add_particle_effects_to_workload(
         /* GPUDataForSingleFrame * frame_data: */
             frame_data,
@@ -398,20 +361,11 @@ void renderer_hardware_render(
             elapsed_nanoseconds,
         /* const uint32_t alpha_blending: */
             true);
-    #ifdef PROFILER_ACTIVE
-    profiler_end("add_particle_effects_to_workload(true)");
-    #endif
     
-    #ifdef PROFILER_ACTIVE
-    profiler_start("add_lineparticle_effects_to_workload(true)");
-    #endif
     add_lineparticle_effects_to_workload(
             frame_data,
             elapsed_nanoseconds,
             true);
-    #ifdef PROFILER_ACTIVE
-    profiler_end("add_lineparticle_effects_to_workload(true)");
-    #endif
     
     add_points_and_lines_to_workload(frame_data);
     
@@ -557,8 +511,4 @@ void renderer_hardware_render(
                 window_globals->transformed_imputed_normals + norm_i + 3);
         }
     }
-    
-    #ifdef PROFILER_ACTIVE
-    profiler_end("renderer_hardware_render()");
-    #endif
 }

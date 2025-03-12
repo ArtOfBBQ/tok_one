@@ -50,25 +50,41 @@ float3 z_rotate(float3 vertices, float z_angle) {
     return rotated_vertices;
 }
 
-typedef struct {
-    float4 position [[position]];
-    float point_size [[point_size]];
-    float color;
-} RawFragment;
+float4 project_float3_to_float4_perspective(
+    const float3 in_xyz,
+    const device GPUProjectionConstants * pjc)
+{
+    float4 out;
+    
+    out[0] = in_xyz[0];
+    out[1] = in_xyz[1];
+    
+    out[0] *= pjc->x_multiplier;
+    out[1] *= pjc->field_of_view_modifier;
+    out[3] = in_xyz[2];  // Positive Z in view space
+    
+    // clipspace z
+    out[2] =
+        pjc->zfar *
+            (out[3] - pjc->znear) /
+                (pjc->zfar - pjc->znear);
+    
+    return out;
+}
 
 vertex float4 shadows_vertex_shader(
     uint vertex_i [[ vertex_id ]],
     const device GPUVertex * vertices [[ buffer(0) ]],
     const device GPUPolygonCollection * polygon_collection [[ buffer(1) ]],
     const device GPULightCollection * light_collection [[ buffer(2) ]],
+    const device GPUCamera * camera [[ buffer(3) ]],
     const device GPULockedVertex * locked_vertices [[ buffer(4) ]],
     const device GPUProjectionConstants * projection_constants [[ buffer(5) ]])
 {
-    unsigned int light_i = 0; // parameterize later
-    
-    float4 out;
+    float3 out_pos;
     
     uint polygon_i = vertices[vertex_i].polygon_i;
+    
     uint locked_vertex_i = vertices[vertex_i].locked_vertex_i;
     
     float3 parent_mesh_position = vector_float3(
@@ -107,109 +123,41 @@ vertex float4 shadows_vertex_shader(
         y_rotated_vertices,
         polygon_collection->polygons[polygon_i].xyz_angle[2]);
     
+    
     // translate to world position
-    float3 rotated_pos = z_rotated_vertices + parent_mesh_position;
+    out_pos = z_rotated_vertices + parent_mesh_position;
     
     float3 camera_position = vector_float3(
-        light_collection->light_x[light_i],
-        light_collection->light_y[light_i],
-        light_collection->light_z[light_i]);
-    float3 camera_translated_pos = rotated_pos - camera_position;
-    
-    // vector from the 'camera' (the light) to our vertex
-    float3 camera_angle_xyz = normalize(rotated_pos - camera_position);
+        light_collection->light_x[light_collection->shadowcaster_i],
+        light_collection->light_y[light_collection->shadowcaster_i],
+        light_collection->light_z[light_collection->shadowcaster_i]);
+    float3 camera_translated_pos = out_pos - camera_position;
     
     // rotate around camera
     float3 cam_x_rotated = x_rotate(
         camera_translated_pos,
-        -camera_angle_xyz[0]);
+        light_collection->angle_x[light_collection->shadowcaster_i]);
     float3 cam_y_rotated = y_rotate(
         cam_x_rotated,
-        -camera_angle_xyz[1]);
+        light_collection->angle_y[light_collection->shadowcaster_i]);
     float3 cam_z_rotated = z_rotate(
         cam_y_rotated,
-        -camera_angle_xyz[2]);
+        light_collection->angle_z[light_collection->shadowcaster_i]);
     
     float ic = clamp(
         polygon_collection->polygons[polygon_i].ignore_camera,
         0.0f,
         1.0f);
     float3 final_pos =
-        (rotated_pos * ic) +
+        (out_pos * ic) +
         (cam_z_rotated * (1.0f - ic));
     
-    out[0] = final_pos[0];
-    out[1] = final_pos[1];
-    out[2] = final_pos[2];
-    out[3] = 1.0f;
-    
-    // projection
-    out[0] *= projection_constants->x_multiplier;
-    out[1] *= projection_constants->field_of_view_modifier;
-    out[3]  = out[2];
-    out[2]  =
-        (out[2] * projection_constants->q) -
-        (projection_constants->znear * projection_constants->q);
-    
-    return out;
+    return project_float3_to_float4_perspective(
+        final_pos,
+        projection_constants);
 }
 
 fragment void shadows_fragment_shader() {}
-
-vertex RawFragment
-raw_vertex_shader(
-    uint vertex_i [[ vertex_id ]],
-    const device GPURawVertex * vertices [[ buffer(0) ]],
-    const device GPUCamera * camera [[ buffer(3) ]],
-    const device GPUProjectionConstants * projection_constants [[ buffer(5) ]])
-{
-    RawFragment out;
-    
-    out.point_size = 20.0;
-    
-    float3 pos = vector_float3(
-        vertices[vertex_i].xyz[0],
-        vertices[vertex_i].xyz[1],
-        vertices[vertex_i].xyz[2]);
-    
-    float3 camera_position = vector_float3(
-        camera->xyz[0],
-        camera->xyz[1], camera->xyz[2]);
-    float3 camera_translated_pos = pos - camera_position;
-    
-    // rotate around camera
-    float3 cam_x_rotated = x_rotate(
-        camera_translated_pos,
-        -camera->xyz_angle[0]);
-    float3 cam_y_rotated = y_rotate(
-        cam_x_rotated,
-        -camera->xyz_angle[1]);
-    float3 cam_z_rotated = z_rotate(
-        cam_y_rotated,
-        -camera->xyz_angle[2]);
-    
-    out.position = vector_float4(cam_z_rotated, 1.0f);
-    
-    // projection
-    out.position[0] *= projection_constants->x_multiplier;
-    out.position[1] *= projection_constants->field_of_view_modifier;
-    out.position[3]  = out.position[2];
-    out.position[2]  =
-        (out.position[2] * projection_constants->q) -
-        (projection_constants->znear * projection_constants->q);
-    
-    out.color = vertices[vertex_i].color;
-    
-    return out;
-}
-
-fragment float4
-raw_fragment_shader(RawFragment in [[stage_in]])
-{
-    float4 out_color = vector_float4(in.color, in.color / 3.0f, 1.0f, 1.0f);
-    
-    return out_color;
-}
 
 typedef struct
 {
@@ -334,23 +282,10 @@ vertex_shader(
         (out.worldpos * ic) +
         (cam_z_rotated * (1.0f - ic));
     
-    out.position[0] = final_pos[0];
-    out.position[1] = final_pos[1];
-    out.position[2] = final_pos[2];
-    out.position[3] = 1.0f;
-    
-    // projection
-    out.position[0] *= projection_constants->x_multiplier;
-    out.position[1] *= projection_constants->field_of_view_modifier;
-    out.position[3]  = out.position[2];
-    out.position[2]  =
-        (out.position[2] * projection_constants->q) -
-        (projection_constants->znear * projection_constants->q);
-    
     out.bonus_rgb = vector_float3(
-        polygon_collection->polygons[polygon_i].bonus_rgb[0],
-        polygon_collection->polygons[polygon_i].bonus_rgb[1],
-        polygon_collection->polygons[polygon_i].bonus_rgb[2]);
+    polygon_collection->polygons[polygon_i].bonus_rgb[0],
+    polygon_collection->polygons[polygon_i].bonus_rgb[1],
+    polygon_collection->polygons[polygon_i].bonus_rgb[2]);
     
     out.material_i = locked_material_i;
     
@@ -361,6 +296,10 @@ vertex_shader(
         locked_vertices[locked_vertex_i].uv[1]);
     
     out.point_size = 40.0f;
+    
+    out.position = project_float3_to_float4_perspective(
+        final_pos,
+        projection_constants);
     
     return out;
 }
@@ -403,8 +342,10 @@ fragment_shader(
     RasterizerPixel in [[stage_in]],
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
         color_textures[[ texture(0) ]],
+    texture2d<float> shadow_map [[texture(31)]],
     const device GPULightCollection * light_collection [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
+    const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
     const device GPUPolygonMaterial * polygon_materials [[ buffer(6) ]])
 {
     float3 lighting = float3(0.0f, 0.0f, 0.0f);
@@ -423,12 +364,49 @@ fragment_shader(
             light_collection->red[i],
             light_collection->green[i],
             light_collection->blue[i]);
+        float3 light_angle_xyz = vector_float3(
+            light_collection->angle_x[i],
+            light_collection->angle_y[i],
+            light_collection->angle_z[i]);
         
-        // TODO: restore distance
-        //        float distance = get_distance(
-        //            light_pos,
-        //            rotated_pos);
-        float distance = 1.0f;
+        float shadow_factor = 1.0f;
+        float3 worldpos = in.worldpos;
+        if (light_collection->shadowcaster_i == i) {
+            constexpr sampler shadow_sampler(
+                mag_filter::nearest,
+                min_filter::nearest);
+            
+            float3 light_translated_pos = worldpos - light_pos;
+            float3 light_x_rotated = x_rotate(
+                light_translated_pos,
+                light_angle_xyz[0]);
+            float3 light_y_rotated = y_rotate(
+                light_x_rotated,
+                light_angle_xyz[1]);
+            float3 light_z_rotated = z_rotate(
+                light_y_rotated,
+                light_angle_xyz[2]); // [0, 0, 1]
+            
+            float4 light_clip_pos = project_float3_to_float4_perspective(
+                light_z_rotated,
+                projection_constants);
+            
+            float2 shadow_uv =
+                ((light_clip_pos.xy / light_clip_pos.w) * 0.5f) + 0.5f;
+            shadow_uv[1] = 1.0f - shadow_uv[1];
+            float shadow_depth = shadow_map.sample(
+                shadow_sampler,
+                shadow_uv).r;
+            
+            float frag_depth = light_clip_pos.z / light_clip_pos.w;
+            
+            shadow_factor = (frag_depth <= shadow_depth + 0.00002f) ?
+                1.0f : 0.35f;
+        }
+        
+        float distance = get_distance(
+            light_pos,
+            worldpos);
         
         float distance_overflow = max(
             distance - (light_collection->reach[i] * 0.75f),
@@ -443,7 +421,8 @@ fragment_shader(
         lighting += (
             attenuation *
             light_color *
-            light_collection->ambient[i]);
+            light_collection->ambient[i] *
+            shadow_factor);
         
         // if light is at 2,2,2 and rotated_pos is at 1,1,1, we need +1/+1/+1
         // to go from the rotated_pos to the light
@@ -461,10 +440,11 @@ fragment_shader(
         
         lighting += (
             light_color *
-            attenuation *
+            /* attenuation * */
             light_collection->diffuse[i] *
             polygon_materials[in.material_i].diffuse *
-            diffuse_dot);
+            diffuse_dot *
+            shadow_factor);
         
         // specular lighting
         float3 object_to_view = normalize(
@@ -487,7 +467,8 @@ fragment_shader(
             specular_dot *
             light_color *
             light_collection->specular[i] *
-            attenuation);
+            attenuation *
+            shadow_factor);
     }
     
     lighting = clamp(lighting, 0.05f, 7.5f);
@@ -580,10 +561,9 @@ alphablending_fragment_shader(
             light_collection->blue[i]);
         
         // TODO: restore distance
-        //        float distance = get_distance(
-        //            light_pos,
-        //            rotated_pos);
-        float distance = 1.0f;
+        float distance = get_distance(
+            light_pos,
+            in.worldpos);
         
         float distance_overflow = max(
             distance - (light_collection->reach[i] * 0.75f),
@@ -817,4 +797,68 @@ kernel void boxblur_texture(
         texture.read(prev_pos + vector_uint2(2, 0))) / 10.0f;
     
     texture.write(in_color, pos);
+}
+
+
+
+typedef struct {
+    float4 position [[position]];
+    float point_size [[point_size]];
+    float color;
+} RawFragment;
+
+vertex RawFragment
+raw_vertex_shader(
+    uint vertex_i [[ vertex_id ]],
+    const device GPURawVertex * vertices [[ buffer(0) ]],
+    const device GPUCamera * camera [[ buffer(3) ]],
+    const device GPUProjectionConstants * projection_constants [[ buffer(5) ]])
+{
+    RawFragment out;
+    
+    out.point_size = 20.0;
+    
+    float3 pos = vector_float3(
+        vertices[vertex_i].xyz[0],
+        vertices[vertex_i].xyz[1],
+        vertices[vertex_i].xyz[2]);
+    
+    float3 camera_position = vector_float3(
+        camera->xyz[0],
+        camera->xyz[1], camera->xyz[2]);
+    float3 camera_translated_pos = pos - camera_position;
+    
+    // rotate around camera
+    float3 cam_x_rotated = x_rotate(
+        camera_translated_pos,
+        -camera->xyz_angle[0]);
+    float3 cam_y_rotated = y_rotate(
+        cam_x_rotated,
+        -camera->xyz_angle[1]);
+    float3 cam_z_rotated = z_rotate(
+        cam_y_rotated,
+        -camera->xyz_angle[2]);
+    
+    out.position = vector_float4(cam_z_rotated, 1.0f);
+    
+    // projection
+    out.position[0] *= projection_constants->x_multiplier;
+    out.position[1] *= projection_constants->field_of_view_modifier;
+    out.position[3]  = out.position[2];
+    out.position[2]  =
+        projection_constants->zfar *
+            (out.position[3] - projection_constants->znear) /
+                (projection_constants->zfar - projection_constants->znear);
+    
+    out.color = vertices[vertex_i].color;
+    
+    return out;
+}
+
+fragment float4
+raw_fragment_shader(RawFragment in [[stage_in]])
+{
+    float4 out_color = vector_float4(in.color, in.color / 3.0f, 1.0f, 1.0f);
+    
+    return out_color;
 }

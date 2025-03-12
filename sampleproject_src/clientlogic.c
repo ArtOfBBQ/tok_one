@@ -33,6 +33,10 @@ void client_logic_early_startup(
 
 void client_logic_late_startup(void) {
     
+    #define TEAPOT_X -0.25f
+    #define TEAPOT_Y  0.1f
+    #define TEAPOT_Z  0.32f
+    
     zLightSource * light = next_zlight();
     light->RGBA[0]       =  0.45f;
     light->RGBA[1]       =  0.35f;
@@ -41,23 +45,37 @@ void client_logic_late_startup(void) {
     light->ambient       =  0.25f;
     light->diffuse       =  1.50f;
     light->reach         =  5.00f;
-    light->xyz[0]        = -1.25f;
-    light->xyz[1]        =  1.00f;
-    light->xyz[2]        =  1.50f;
+    light->xyz[0]        =  TEAPOT_X;
+    light->xyz[1]        =  TEAPOT_Y + 4.0f;
+    light->xyz[2]        =  TEAPOT_Z;
+    light->xyz_angle[0]  =  -1.5708f; // rotate around the x axis because light is looking at +z right now but needs to look down
+    light->xyz_angle[1]  =  0.00f;
+    light->xyz_angle[2]  =  0.00f;
     commit_zlight(light);
     
-    light = next_zlight();
-    light->RGBA[0]       =  0.25f;
-    light->RGBA[1]       =  0.35f;
-    light->RGBA[2]       =  0.25f;
-    light->RGBA[3]       =  1.00f;
-    light->ambient       =  0.25f;
-    light->diffuse       =  1.50f;
-    light->reach         =  5.00f;
-    light->xyz[0]        =  1.55f;
-    light->xyz[1]        =  0.60f;
-    light->xyz[2]        =  0.10f;
-    commit_zlight(light);
+    shadowcaster_light_i = 0;
+    camera.xyz[0] = 0.0f;
+    camera.xyz[1] = 0.0f;
+    camera.xyz[2] = TEAPOT_Z - 0.45f;
+    camera.xyz_angle[0] = 0.0f;
+    camera.xyz_angle[1] = 0.0f;
+    camera.xyz_angle[2] = 0.0f;
+    
+    //    light = next_zlight();
+    //    light->RGBA[0]       =  0.25f;
+    //    light->RGBA[1]       =  0.35f;
+    //    light->RGBA[2]       =  0.25f;
+    //    light->RGBA[3]       =  1.00f;
+    //    light->ambient       =  0.25f;
+    //    light->diffuse       =  1.50f;
+    //    light->reach         =  5.00f;
+    //    light->xyz[0]        =  1.55f;
+    //    light->xyz[1]        =  0.60f;
+    //    light->xyz[2]        =  1.00f;
+    //    light->xyz_angle[0]  = -1.00f;
+    //    light->xyz_angle[1]  =  0.00f;
+    //    light->xyz_angle[2]  =  0.00f;
+    //    commit_zlight(light);
     
     #if TEAPOT
     // register_new_texturearray_from_files("giant_head_texture.png", 1);
@@ -75,12 +93,12 @@ void client_logic_late_startup(void) {
         //        teapot_request.cpu_data,
         //        teapot_request.gpu_data,
         //        0.25f);
-        teapot_request.gpu_data->xyz_multiplier[0] = 0.35f;
-        teapot_request.gpu_data->xyz_multiplier[1] = 0.35f;
-        teapot_request.gpu_data->xyz_multiplier[2] = 0.35f;
-        teapot_request.gpu_data->xyz[0]            = 0.00f + (i * 0.20f);
-        teapot_request.gpu_data->xyz[1]            = 0.00f + (i * 0.10f);
-        teapot_request.gpu_data->xyz[2]            = 1.00f - (i * 0.25f);
+        teapot_request.gpu_data->xyz_multiplier[0] = 0.15f;
+        teapot_request.gpu_data->xyz_multiplier[1] = 0.15f;
+        teapot_request.gpu_data->xyz_multiplier[2] = 0.15f;
+        teapot_request.gpu_data->xyz[0]            = TEAPOT_X + (i * 0.20f);
+        teapot_request.gpu_data->xyz[1]            = TEAPOT_Y + (i * 0.10f);
+        teapot_request.gpu_data->xyz[2]            = TEAPOT_Z - (i * 0.25f);
         teapot_request.gpu_data->xyz_angle[0]      = 0.00f;
         teapot_request.gpu_data->xyz_angle[1]      = 3.2f;
         teapot_request.gpu_data->xyz_angle[2]      = 0.0f;
@@ -109,45 +127,51 @@ void client_logic_late_startup(void) {
     }
     #endif
     
-    #if 0
+    #if 1
     PolygonRequest quad[1];
     for (uint32_t i = 0; i < 1; i++) {
         request_next_zpolygon(&quad[i]);
         construct_quad(
-            /* const float left_x: */ 0.5f,
-            /* const float bottom_y: */ 0.5f,
-            /* const float z: */ 1.0f,
-            /* const float width: */ windowsize_screenspace_width_to_width(window_globals->window_width / 5, 1.0f),
-            /* const float height: */ windowsize_screenspace_height_to_height(window_globals->window_height / 5, 1.0f),
-            /* PolygonRequest * stack_recipient: */ &quad[i]);
-        quad[i].gpu_materials->texturearray_i    = 2;
-        quad[i].gpu_materials->texture_i         = 0;
-        // quad[i].gpu_materials->rgba[0]          += (i * 0.31f);
-        // quad[i].gpu_materials->rgba[3]           = 1.0f - ((float)i * 0.25f);
-        quad[i].cpu_data->object_id              = 20;
-        quad[i].gpu_data->touchable_id           = 5;
-        quad[i].cpu_data->alpha_blending_enabled = true;
+            /* const float left_x: */
+                TEAPOT_X - 0.75f,
+            /* const float bottom_y: */
+                TEAPOT_Y - 1.25f,
+            /* const float z: */
+                TEAPOT_Z - 0.08f,
+            /* const float width: */
+                windowsize_screenspace_width_to_width(
+                    window_globals->window_width, 1.0f),
+            /* const float height: */
+                windowsize_screenspace_height_to_height(
+                    window_globals->window_height, 1.0f),
+            /* PolygonRequest * stack_recipient: */
+                &quad[i]);
+        quad[i].gpu_materials->texturearray_i    = -1;
+        quad[i].gpu_materials->texture_i         = -1;
+        quad[i].cpu_data->object_id              = -1;
+        quad[i].gpu_data->touchable_id           = -1;
+        quad[i].cpu_data->alpha_blending_enabled = false;
         
         quad[i].gpu_data->xyz_offset[0]          = 0.0f;
         quad[i].gpu_data->xyz_offset[1]          = 0.0f;
         quad[i].gpu_data->xyz_offset[2]          = 0.0f;
         quad[i].gpu_data->scale_factor           = 1.0f;
-        quad[i].gpu_data->xyz_angle[0]           = 0.0f;
+        quad[i].gpu_data->xyz_angle[0]           = 1.8f;
         quad[i].gpu_data->xyz_angle[1]           = 0.0f;
         quad[i].gpu_data->xyz_angle[2]           = 0.0f;
-        quad[i].gpu_data->xyz_multiplier[0]     *= (1.0f + (0.035f * i));
-        quad[i].gpu_data->xyz_multiplier[1]     *= (1.0f + (0.035f * i));
-        quad[i].gpu_data->xyz_multiplier[2]     *= (1.0f + (0.035f * i));
         quad[i].gpu_data->ignore_camera          = 0.0f;
-        quad[i].gpu_data->ignore_lighting        = 1.0f;
+        quad[i].gpu_data->ignore_lighting        = 0.0f;
         
+        quad[i].gpu_materials[0].rgba[0]         = 0.6f;
+        quad[i].gpu_materials[0].rgba[1]         = 0.4f;
+        quad[i].gpu_materials[0].rgba[2]         = 0.3f;
         quad[i].gpu_materials[0].rgba[3]         = 1.0f;
         
         commit_zpolygon_to_render(&quad[i]);
     }
     #endif
     
-    #if 0
+    #if 1
     font_settings->font_height = 280;
     font_settings->font_touchable_id = 2120000;
     font_settings->font_color[0] =  2.2f;
@@ -327,6 +351,32 @@ void client_logic_update(uint64_t microseconds_elapsed)
                 /* const uint32_t wait: */
                     0);
         }
+    }
+    
+    if (keypress_map[TOK_KEY_T]) {
+        #if TEAPOT
+        for (uint32_t i = 0; i < zpolygons_to_render->size; i++) {
+            if (
+                zpolygons_to_render->cpu_data[i].object_id ==
+                    teapot_object_ids[0])
+            {
+                zpolygons_to_render->gpu_data[i].xyz[1] -= 0.01f;
+            }
+        }
+        #endif
+    }
+    
+    if (keypress_map[TOK_KEY_E]) {
+        #if TEAPOT
+        for (uint32_t i = 0; i < zpolygons_to_render->size; i++) {
+            if (
+                zpolygons_to_render->cpu_data[i].object_id ==
+                    teapot_object_ids[0])
+            {
+                zpolygons_to_render->gpu_data[i].xyz[1] += 0.01f;
+            }
+        }
+        #endif
     }
     
     if (keypress_map[TOK_KEY_R]) {

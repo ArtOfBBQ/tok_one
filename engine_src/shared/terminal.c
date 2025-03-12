@@ -11,12 +11,13 @@ static char * current_command = NULL;
 #define TERMINAL_WHITESPACE    7.0f
 
 #define TERM_FONT_SIZE        14.0f
-#define TERM_Z                0.11001f
-#define TERM_LABELS_Z         0.11000f
+#define TERM_Z                0.111f
+#define TERM_LABELS_Z         0.110f
 static char * terminal_history = NULL;
 static uint32_t terminal_history_size = 0;
 
 static float term_font_color[4];
+static float term_font_rgb_cap[3];
 static float term_background_color[4];
 
 static int32_t terminal_back_object_id = -1;
@@ -72,10 +73,14 @@ void terminal_init(
     
     update_terminal_history_size();
     
-    term_font_color[0] = 1.0f;
-    term_font_color[1] = 1.0f;
-    term_font_color[2] = 1.0f;
+    term_font_color[0] = 10.0f;
+    term_font_color[1] = 10.0f;
+    term_font_color[2] = 10.0f;
     term_font_color[3] = 1.0f;
+    
+    term_font_rgb_cap[0] = 1.0f;
+    term_font_rgb_cap[1] = 1.0f;
+    term_font_rgb_cap[2] = 1.0f;
     
     term_background_color[0] = 0.0f;
     term_background_color[1] = 0.0f;
@@ -243,7 +248,11 @@ void terminal_render(void) {
         font_settings->font_color[1] = term_font_color[1];
         font_settings->font_color[2] = term_font_color[2];
         font_settings->font_color[3] = term_font_color[3];
+        font_settings->rgb_cap[0] = term_font_rgb_cap[0];
+        font_settings->rgb_cap[1] = term_font_rgb_cap[1];
+        font_settings->rgb_cap[2] = term_font_rgb_cap[2];
         font_settings->ignore_camera = true;
+        font_settings->font_ignore_lighting = 1.0f;
         font_settings->remove_hitbox = true;
         
         text_request_label_renderable(
@@ -421,6 +430,67 @@ static bool32_t evaluate_terminal_command(
             response,
             SINGLE_LINE_MAX,
             "Reset camera position and angles to {0,0,0}");
+        return true;
+    }
+    
+    if (
+        common_are_equal_strings(command, "CAMERA POS") ||
+        common_are_equal_strings(command, "CAMERA POSITION") ||
+        common_are_equal_strings(command, "CAMERA INFO") ||
+        common_are_equal_strings(command, "INFO CAMERA"))
+    {
+        common_strcpy_capped(
+            response,
+            SINGLE_LINE_MAX,
+            "Camera is at: [");
+        common_strcat_float_capped(
+            response,
+            SINGLE_LINE_MAX,
+            camera.xyz[0]);
+        common_strcat_capped(
+            response,
+            SINGLE_LINE_MAX,
+            ", ");
+        common_strcat_float_capped(
+            response,
+            SINGLE_LINE_MAX,
+            camera.xyz[1]);
+        common_strcat_capped(
+            response,
+            SINGLE_LINE_MAX,
+            ", ");
+        common_strcat_float_capped(
+            response,
+            SINGLE_LINE_MAX,
+            camera.xyz[2]);
+        common_strcat_capped(
+            response,
+            SINGLE_LINE_MAX,
+            "], xyz_angles: [");
+        common_strcat_float_capped(
+            response,
+            SINGLE_LINE_MAX,
+            camera.xyz_angle[0]);
+        common_strcat_capped(
+            response,
+            SINGLE_LINE_MAX,
+            ", ");
+        common_strcat_float_capped(
+            response,
+            SINGLE_LINE_MAX,
+            camera.xyz_angle[1]);
+        common_strcat_capped(
+            response,
+            SINGLE_LINE_MAX,
+            ", ");
+        common_strcat_float_capped(
+            response,
+            SINGLE_LINE_MAX,
+            camera.xyz_angle[2]);
+        common_strcat_capped(
+            response,
+            SINGLE_LINE_MAX,
+            "].");
         return true;
     }
     
@@ -647,6 +717,60 @@ static bool32_t evaluate_terminal_command(
             response,
             SINGLE_LINE_MAX,
             "Toggled mouse block");
+        return true;
+    }
+    
+    if (
+        common_are_equal_strings(command, "SET SHADOWCASTER 0"))
+    {
+        
+        shadowcaster_light_i = 0;
+        return true;
+    }
+    
+    if (
+        common_are_equal_strings(command, "SHADOWCASTER OFF"))
+    {
+        
+        shadowcaster_light_i = UINT32_MAX;
+        return true;
+    }
+    
+    if (common_are_equal_strings(command, "CAMERA TO SHADOWCASTER")) {
+        for (uint32_t i = 0; i < zlights_to_apply_size; i++) {
+            if (
+                shadowcaster_light_i >= 0 &&
+                shadowcaster_light_i < zlights_to_apply_size)
+            {
+                common_strcpy_capped(
+                    response,
+                    SINGLE_LINE_MAX,
+                    "Setting camera to match shadowcaster (light ");
+                common_strcat_uint_capped(
+                    response,
+                    SINGLE_LINE_MAX,
+                    shadowcaster_light_i);
+                common_strcat_capped(
+                    response,
+                    SINGLE_LINE_MAX,
+                    ")");
+                camera.xyz[0] = zlights_to_apply[shadowcaster_light_i].xyz[0];
+                camera.xyz[1] = zlights_to_apply[shadowcaster_light_i].xyz[1];
+                camera.xyz[2] = zlights_to_apply[shadowcaster_light_i].xyz[2];
+                camera.xyz_angle[0] =
+                    zlights_to_apply[shadowcaster_light_i].xyz_angle[0];
+                camera.xyz_angle[1] =
+                    zlights_to_apply[shadowcaster_light_i].xyz_angle[1];
+                camera.xyz_angle[2] =
+                    zlights_to_apply[shadowcaster_light_i].xyz_angle[2];
+            } else {
+                common_strcpy_capped(
+                    response,
+                    SINGLE_LINE_MAX,
+                    "The shadowcaster light is not set...");
+            }
+        }
+        
         return true;
     }
     

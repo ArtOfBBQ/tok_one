@@ -7,6 +7,7 @@ GPUCamera camera;
 
 zLightSource * zlights_to_apply = NULL;
 uint32_t zlights_to_apply_size = 0;
+uint32_t shadowcaster_light_i = 0;
 
 static void construct_zlight(zLightSource * to_construct) {
     to_construct->xyz[0]        = 0.0f;
@@ -232,6 +233,7 @@ void copy_lights(
     GPULightCollection * lights_for_gpu)
 {
     lights_for_gpu->lights_size = 0;
+    lights_for_gpu->shadowcaster_i = shadowcaster_light_i;
     for (uint32_t i = 0; i < zlights_to_apply_size; i++)
     {
         if (!zlights_to_apply[i].deleted) {
@@ -244,6 +246,14 @@ void copy_lights(
             lights_for_gpu->light_z[lights_for_gpu->lights_size] =
                 zlights_to_apply[i].xyz[2] +
                 zlights_to_apply[i].xyz_offset[2];
+            
+            lights_for_gpu->angle_x[lights_for_gpu->lights_size] =
+                zlights_to_apply[i].xyz_angle[0];
+            lights_for_gpu->angle_y[lights_for_gpu->lights_size] =
+                zlights_to_apply[i].xyz_angle[1];
+            lights_for_gpu->angle_z[lights_for_gpu->lights_size] =
+                zlights_to_apply[i].xyz_angle[2];
+            
             lights_for_gpu->red[lights_for_gpu->lights_size] =
                 zlights_to_apply[i].RGBA[0];
             lights_for_gpu->green[lights_for_gpu->lights_size] =

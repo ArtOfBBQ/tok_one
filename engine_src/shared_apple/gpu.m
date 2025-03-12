@@ -29,7 +29,9 @@ typedef struct AppleGPUState {
     // Pipeline states (pls)
     #if SHADOWS_ACTIVE
     id<MTLRenderPipelineState> shadows_pls;
+    id<MTLTexture> shadows_texture;
     #endif
+    
     id<MTLRenderPipelineState> diamond_pls;
     id<MTLRenderPipelineState> alphablend_pls;
     id<MTLRenderPipelineState> raw_pls;
@@ -151,31 +153,6 @@ bool32_t apple_gpu_init(
         }
     }
     
-    #if SHADOWS_ACTIVE
-    id<MTLFunction> shadows_vertex_shader =
-        [ags->lib newFunctionWithName:
-            @"shadows_vertex_shader"];
-    if (shadows_vertex_shader == NULL) {
-        common_strcpy_capped(
-            error_msg_string,
-            512,
-            "Missing function: shadows_vertex_shader()");
-        return false;
-    }
-    id<MTLFunction> shadows_fragment_shader =
-        [ags->lib newFunctionWithName:
-            @"shadows_fragment_shader"];
-    if (shadows_vertex_shader == NULL) {
-        log_append("Missing function: shadows_fragment_shader()!");
-        
-        common_strcpy_capped(
-            error_msg_string,
-            512,
-            "Missing function: shadows_fragment_shader()");
-        return false;
-    }
-    #endif
-    
     id<MTLFunction> vertex_shader =
         [ags->lib newFunctionWithName:
             @"vertex_shader"];
@@ -234,12 +211,39 @@ bool32_t apple_gpu_init(
     }
     
     #if SHADOWS_ACTIVE
+    id<MTLFunction> shadows_vertex_shader =
+        [ags->lib newFunctionWithName:
+            @"shadows_vertex_shader"];
+    if (shadows_vertex_shader == NULL) {
+        common_strcpy_capped(
+            error_msg_string,
+            512,
+            "Missing function: shadows_vertex_shader()");
+        return false;
+    }
+    
+    id<MTLFunction> shadows_fragment_shader =
+        [ags->lib newFunctionWithName:
+            @"shadows_fragment_shader"];
+    if (shadows_fragment_shader == NULL) {
+        log_append("Missing function: shadows_fragment_shader()!");
+        
+        common_strcpy_capped(
+            error_msg_string,
+            512,
+            "Missing function: shadows_fragment_shader()");
+        return false;
+    }
+    
     MTLRenderPipelineDescriptor * shadows_pipeline_descriptor =
         [MTLRenderPipelineDescriptor new];
     [shadows_pipeline_descriptor
         setVertexFunction: shadows_vertex_shader];
     [shadows_pipeline_descriptor
-        setFragmentFunction: shadows_fragment_shader];
+        setFragmentFunction: nil];
+    shadows_pipeline_descriptor.depthAttachmentPixelFormat =
+        MTLPixelFormatDepth32Float;
+    
     ags->shadows_pls =
        [with_metal_device
             newRenderPipelineStateWithDescriptor:
@@ -372,7 +376,9 @@ bool32_t apple_gpu_init(
     
     if (Error != NULL)
     {
-        log_append([[Error localizedDescription] cStringUsingEncoding:kCFStringEncodingASCII]);
+        log_append(
+            [[Error localizedDescription]
+                cStringUsingEncoding:kCFStringEncodingASCII]);
         #ifndef LOGGER_IGNORE_ASSERTS
         log_dump_and_crash("Error setting the depth stencil state\n");
         #endif
@@ -917,6 +923,22 @@ void platform_gpu_copy_locked_vertices(void)
         [ags->device
             newTextureWithDescriptor: touch_id_texture_descriptor];
     
+    MTLTextureDescriptor * shadows_texture_descriptor =
+        [[MTLTextureDescriptor alloc] init];
+    shadows_texture_descriptor.textureType = MTLTextureType2D;
+    shadows_texture_descriptor.pixelFormat = MTLPixelFormatDepth32Float;
+    shadows_texture_descriptor.width =
+        (unsigned long)ags->cached_viewport.width / 2;
+    shadows_texture_descriptor.height =
+        (unsigned long)ags->cached_viewport.height / 2;
+    shadows_texture_descriptor.storageMode = MTLStorageModePrivate;
+    shadows_texture_descriptor.usage =
+        MTLTextureUsageRenderTarget |
+        MTLTextureUsageShaderRead;
+    
+    ags->shadows_texture =
+        [ags->device newTextureWithDescriptor: shadows_texture_descriptor];
+    
     ags->touch_id_buffer = [ags->device
         newBufferWithLength:
             touch_id_texture_descriptor.width *
@@ -985,6 +1007,91 @@ void platform_gpu_copy_locked_vertices(void)
         
         return;
     }
+    
+    uint32_t diamond_verts_size =
+        gpu_shared_data_collection.
+            triple_buffers[ags->frame_i].first_alphablend_i;
+    #if SHADOWS_ACTIVE
+    if (
+        window_globals->draw_triangles &&
+        diamond_verts_size > 0 &&
+        gpu_shared_data_collection.triple_buffers[ags->frame_i].
+            light_collection->shadowcaster_i <
+            gpu_shared_data_collection.triple_buffers[ags->frame_i].
+                light_collection->lights_size)
+    {
+        MTLRenderPassDescriptor * render_pass_shadows =
+            [MTLRenderPassDescriptor new];
+        
+        render_pass_shadows.depthAttachment.loadAction = MTLLoadActionClear;
+        render_pass_shadows.depthAttachment.storeAction = MTLStoreActionStore;
+        render_pass_shadows.depthAttachment.clearDepth = 1.0f;
+        render_pass_shadows.depthAttachment.texture = ags->shadows_texture;
+        id<MTLRenderCommandEncoder> shadow_pass_encoder =
+            [command_buffer
+                renderCommandEncoderWithDescriptor:
+                    render_pass_shadows];
+        
+        [shadow_pass_encoder
+            setViewport:ags->render_target_viewport];
+        
+        [shadow_pass_encoder
+            setVertexBuffer:
+                ags->vertex_buffers[ags->frame_i]
+            offset:
+                0
+            atIndex:
+                0];
+        
+        [shadow_pass_encoder
+            setVertexBuffer:
+                ags->polygon_buffers[ags->frame_i]
+            offset:
+                0
+            atIndex:
+                1];
+        
+        [shadow_pass_encoder
+            setVertexBuffer:
+                ags->light_buffers[ags->frame_i]
+            offset:
+                0
+            atIndex:
+                2];
+        
+        [shadow_pass_encoder
+            setVertexBuffer:
+                ags->camera_buffers[ags->frame_i]
+            offset: 0
+            atIndex: 3];
+        
+        [shadow_pass_encoder
+            setVertexBuffer:
+                ags->locked_vertex_buffer
+            offset:
+                0
+            atIndex:
+                4];
+        
+        [shadow_pass_encoder
+            setVertexBuffer:
+                ags->projection_constants_buffer
+            offset:
+                0
+            atIndex:
+                5];
+        
+        [shadow_pass_encoder setRenderPipelineState:ags->shadows_pls];
+        [shadow_pass_encoder
+            setDepthStencilState: ags->depth_stencil_state];
+        [shadow_pass_encoder
+            drawPrimitives: MTLPrimitiveTypeTriangle
+            vertexStart: 0
+            vertexCount: diamond_verts_size];
+        
+        [shadow_pass_encoder endEncoding];
+    }
+    #endif
     
     MTLRenderPassDescriptor * render_pass_1_descriptor =
         [view currentRenderPassDescriptor];
@@ -1123,6 +1230,14 @@ void platform_gpu_copy_locked_vertices(void)
     
     [render_pass_1_encoder
         setFragmentBuffer:
+            ags->projection_constants_buffer
+        offset:
+            0
+        atIndex:
+            4];
+    
+    [render_pass_1_encoder
+        setFragmentBuffer:
             ags->polygon_material_buffers[ags->frame_i]
         offset:
             0
@@ -1139,6 +1254,12 @@ void platform_gpu_copy_locked_vertices(void)
             atIndex: i];
     }
     
+    #if SHADOWS_ACTIVE
+    [render_pass_1_encoder
+        setFragmentTexture: ags->shadows_texture
+        atIndex: TEXTUREARRAYS_SIZE];
+    #endif
+    
     #ifndef IGNORE_LOGGER_ASSERTS
     for (
         uint32_t i = 0;
@@ -1153,10 +1274,6 @@ void platform_gpu_copy_locked_vertices(void)
                 vertices[i].locked_vertex_i < ALL_LOCKED_VERTICES_SIZE);
     }
     #endif
-    
-    uint32_t diamond_verts_size =
-        gpu_shared_data_collection.
-            triple_buffers[ags->frame_i].first_alphablend_i;
     
     if (window_globals->draw_triangles && diamond_verts_size > 0) {
         assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);

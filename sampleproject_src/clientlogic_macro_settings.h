@@ -22,6 +22,7 @@ of the engine for your specific app.
 
 
 #define POSTPROCESSING_ACTIVE 1
+#define SHADOWS_ACTIVE 1
 
 // The maximum number of polygons/lights to send to the GPU each frame
 // The maximum number of triangle vertices to be stored on gpu permanently

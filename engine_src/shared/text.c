@@ -59,6 +59,9 @@ void text_init(
         font_settings->font_color[1] = 1.0f;
         font_settings->font_color[2] = 1.0f;
         font_settings->font_color[3] = 1.0f;
+        font_settings->rgb_cap[0] = 1.5f;
+        font_settings->rgb_cap[1] = 1.5f;
+        font_settings->rgb_cap[2] = 1.5f;
         font_settings->font_ignore_lighting = true;
         font_settings->remove_hitbox = false;
     }
@@ -328,15 +331,6 @@ void text_request_label_offset_around(
                 continue;
             }
             
-            for (
-                uint32_t rgba_i = 0;
-                rgba_i < 4;
-                rgba_i++)
-            {
-                letter.gpu_materials[0].rgba[rgba_i] =
-                    font_settings->font_color[rgba_i];
-            }
-            
             letter.gpu_data->xyz_offset[0] =
                 windowsize_screenspace_width_to_width(
                     (cur_x_offset_pixelspace +
@@ -355,6 +349,20 @@ void text_request_label_offset_around(
                 font_settings->font_texturearray_i;
             letter.gpu_materials[0].texture_i      =
                 text_to_draw[j] - '!';
+            letter.gpu_materials[0].rgb_cap[0] =
+                font_settings->rgb_cap[0];
+            letter.gpu_materials[0].rgb_cap[1] =
+                font_settings->rgb_cap[1];
+            letter.gpu_materials[0].rgb_cap[2] =
+                font_settings->rgb_cap[2];
+            for (
+                uint32_t rgba_i = 0;
+                rgba_i < 4;
+                rgba_i++)
+            {
+                letter.gpu_materials[0].rgba[rgba_i] =
+                    font_settings->font_color[rgba_i];
+            }
             
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
@@ -517,6 +525,13 @@ void text_request_label_renderable(
             letter.gpu_materials[0].rgba[rgba_i] =
                 font_settings->font_color[rgba_i];
         }
+        letter.gpu_materials[0].rgb_cap[0] =
+            font_settings->rgb_cap[0];
+        letter.gpu_materials[0].rgb_cap[1] =
+            font_settings->rgb_cap[1];
+        letter.gpu_materials[0].rgb_cap[2] =
+            font_settings->rgb_cap[2];
+        
         
         letter.gpu_data->xyz_offset[0] =
             windowsize_screenspace_width_to_width(
