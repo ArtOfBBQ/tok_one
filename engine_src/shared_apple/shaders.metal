@@ -401,7 +401,7 @@ fragment_shader(
             float frag_depth = light_clip_pos.z / light_clip_pos.w;
             
             shadow_factor = (frag_depth <= shadow_depth + 0.00002f) ?
-                1.0f : 0.35f;
+                1.0f : 0.25f;
         }
         
         float distance = get_distance(
@@ -642,7 +642,7 @@ alphablending_fragment_shader(
         polygon_materials[in.material_i].texturearray_i < 0 ||
         polygon_materials[in.material_i].texture_i < 0)
     {
-        out_color *= vector_float4(lighting, 1.0f);
+        
     } else {
         constexpr sampler textureSampler(
             mag_filter::nearest,
@@ -656,8 +656,10 @@ alphablending_fragment_shader(
             polygon_materials[in.material_i].texture_i);
         float4 texture_sample = float4(color_sample);
         
-        out_color *= texture_sample * vector_float4(lighting, 1.0f);;
+        out_color *= texture_sample;
     }
+    
+    out_color *= vector_float4(lighting, 1.0f);
     
     float4 rgba_cap = vector_float4(
         polygon_materials[in.material_i].rgb_cap[0],
