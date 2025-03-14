@@ -337,18 +337,17 @@ static FragmentAndTouchableOut pack_color_and_touchable_id(
     return return_value;
 }
 
-fragment FragmentAndTouchableOut
-fragment_shader(
-    RasterizerPixel in [[stage_in]],
-    array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
-        color_textures[[ texture(0) ]],
-    texture2d<float> shadow_map [[texture(31)]],
-    const device GPULightCollection * light_collection [[ buffer(2) ]],
-    const device GPUCamera * camera [[ buffer(3) ]],
-    const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
-    const device GPUPolygonMaterial * polygon_materials [[ buffer(6) ]])
+float3 get_lighting(
+    texture2d<float> shadow_map,
+    const device GPUCamera * camera,
+    const device GPULightCollection * light_collection,
+    const device GPUProjectionConstants * projection_constants,
+    const device GPUPolygonMaterial * fragment_material,
+    float3 fragment_worldpos,
+    float3 fragment_normal,
+    float ignore_lighting)
 {
-    float3 lighting = float3(0.0f, 0.0f, 0.0f);
+    float3 return_value = float3(0.0f, 0.0f, 0.0f);
     
     for (
         uint32_t i = 0;
@@ -370,13 +369,12 @@ fragment_shader(
             light_collection->angle_z[i]);
         
         float shadow_factor = 1.0f;
-        float3 worldpos = in.worldpos;
         if (light_collection->shadowcaster_i == i) {
             constexpr sampler shadow_sampler(
                 mag_filter::nearest,
                 min_filter::nearest);
             
-            float3 light_translated_pos = worldpos - light_pos;
+            float3 light_translated_pos = fragment_worldpos - light_pos;
             float3 light_x_rotated = x_rotate(
                 light_translated_pos,
                 light_angle_xyz[0]);
@@ -406,7 +404,7 @@ fragment_shader(
         
         float distance = get_distance(
             light_pos,
-            worldpos);
+            fragment_worldpos);
         
         float distance_overflow = max(
             distance - (light_collection->reach[i] * 0.75f),
@@ -418,7 +416,7 @@ fragment_shader(
         
         attenuation = clamp(attenuation, 0.00f, 1.00f);
         
-        lighting += (
+        return_value += (
             attenuation *
             light_color *
             light_collection->ambient[i] *
@@ -429,20 +427,20 @@ fragment_shader(
         // if the normal also points to the light, we want more diffuse
         // brightness
         float3 object_to_light = normalize(
-            (light_pos - in.worldpos));
+            (light_pos - fragment_worldpos));
         
         float diffuse_dot =
             max(
                 dot(
-                    in.normal,
+                    fragment_normal,
                     object_to_light),
                 0.0f);
         
-        lighting += (
+        return_value += (
             light_color *
-            /* attenuation * */
+            attenuation *
             light_collection->diffuse[i] *
-            polygon_materials[in.material_i].diffuse *
+            fragment_material->diffuse *
             diffuse_dot *
             shadow_factor);
         
@@ -451,19 +449,19 @@ fragment_shader(
             float3(
                 camera->xyz[0],
                 camera->xyz[1],
-                camera->xyz[2]) - in.worldpos);
+                camera->xyz[2]) - fragment_worldpos);
         
         float3 reflection_ray = reflect(
             -object_to_light,
-            in.normal);
+            fragment_normal);
         
         float specular_dot = pow(
             max(
                 dot(object_to_view, reflection_ray),
                 0.0),
             32);
-        lighting += (
-            polygon_materials[in.material_i].specular *
+        return_value += (
+            fragment_material->specular *
             specular_dot *
             light_color *
             light_collection->specular[i] *
@@ -471,12 +469,44 @@ fragment_shader(
             shadow_factor);
     }
     
-    lighting = clamp(lighting, 0.05f, 7.5f);
+    return_value = clamp(return_value, 0.05f, 7.5f);
     
     float3 all_ones = vector_float3(1.0f, 1.0f, 1.0f);
-    lighting =
-        ((1.0f - in.ignore_lighting) * lighting) +
-        (in.ignore_lighting * all_ones);
+    return_value =
+        ((1.0f - ignore_lighting) * return_value) +
+        (ignore_lighting * all_ones);
+    
+    return return_value;
+}
+
+fragment FragmentAndTouchableOut
+fragment_shader(
+    RasterizerPixel in [[stage_in]],
+    array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
+        color_textures[[ texture(0) ]],
+    texture2d<float> shadow_map [[texture(31)]],
+    const device GPULightCollection * light_collection [[ buffer(2) ]],
+    const device GPUCamera * camera [[ buffer(3) ]],
+    const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
+    const device GPUPolygonMaterial * polygon_materials [[ buffer(6) ]])
+{
+    float3 lighting = get_lighting(
+        /* */
+            shadow_map,
+        /* const device GPUCamera * camera: */
+            camera,
+        /* const device GPULightCollection * light_collection: */
+            light_collection,
+        /* const device GPUProjectionConstants * projection_constants: */
+            projection_constants,
+        /* const device GPUPolygonMaterial * fragment_material: */
+            &polygon_materials[in.material_i],
+        /* float3 fragment_worldpos: */
+            in.worldpos,
+        /* float3 fragment_normal: */
+            in.normal,
+        /* float ignore_lighting: */
+            in.ignore_lighting);
     
     float4 out_color = vector_float4(
         polygon_materials[in.material_i].rgba[0],
@@ -484,12 +514,10 @@ fragment_shader(
         polygon_materials[in.material_i].rgba[2],
         polygon_materials[in.material_i].rgba[3]);
     
-    if (
-        polygon_materials[in.material_i].texturearray_i < 0 ||
-        polygon_materials[in.material_i].texture_i < 0)
+    float4 texture_sample = vector_float4(1.0f, 1.0f, 1.0f, 1.0f);
+    
+    if (polygon_materials[in.material_i].texturearray_i >= 0)
     {
-        out_color *= vector_float4(lighting, 1.0f);
-    } else {
         constexpr sampler textureSampler(
             mag_filter::nearest,
             min_filter::nearest);
@@ -500,10 +528,10 @@ fragment_shader(
             textureSampler,
             in.texture_coordinate,
             polygon_materials[in.material_i].texture_i);
-        float4 texture_sample = float4(color_sample);
-        
-        out_color *= texture_sample * vector_float4(lighting, 1.0f);;
+        texture_sample = float4(color_sample);
     }
+    
+    out_color = out_color * texture_sample * vector_float4(lighting, 1.0f);
     
     int diamond_size = 35.0f;
     int neghalfdiamond = -1.0f * (diamond_size / 2);
@@ -539,98 +567,29 @@ alphablending_fragment_shader(
     RasterizerPixel in [[stage_in]],
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
         color_textures[[ texture(0) ]],
+    texture2d<float> shadow_map [[texture(31)]],
     const device GPULightCollection * light_collection [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
+    const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
     const device GPUPolygonMaterial * polygon_materials [[ buffer(6) ]])
 {
-    float3 lighting = float3(0.0f, 0.0f, 0.0f);
-    
-    for (
-        uint32_t i = 0;
-        i < light_collection->lights_size;
-        i++)
-    {
-        // ambient lighting
-        float3 light_pos = vector_float3(
-            light_collection->light_x[i],
-            light_collection->light_y[i],
-            light_collection->light_z[i]);
-        float3 light_color = vector_float3(
-            light_collection->red[i],
-            light_collection->green[i],
-            light_collection->blue[i]);
-        
-        // TODO: restore distance
-        float distance = get_distance(
-            light_pos,
-            in.worldpos);
-        
-        float distance_overflow = max(
-            distance - (light_collection->reach[i] * 0.75f),
-            0.0f);
-        
-        float attenuation = 1.0f - (
-            distance_overflow /
-                light_collection->reach[i]);
-        
-        attenuation = clamp(attenuation, 0.00f, 1.00f);
-        
-        lighting += (
-            attenuation *
-            light_color *
-            light_collection->ambient[i]);
-        
-        // if light is at 2,2,2 and rotated_pos is at 1,1,1, we need +1/+1/+1
-        // to go from the rotated_pos to the light
-        // if the normal also points to the light, we want more diffuse
-        // brightness
-        float3 object_to_light = normalize(
-            (light_pos - in.worldpos));
-        
-        float diffuse_dot =
-            max(
-                dot(
-                    in.normal,
-                    object_to_light),
-                0.0f);
-        
-        lighting += (
-            light_color *
-            attenuation *
-            light_collection->diffuse[i] *
-            polygon_materials[in.material_i].diffuse *
-            diffuse_dot);
-        
-        // specular lighting
-        float3 object_to_view = normalize(
-            float3(
-                camera->xyz[0],
-                camera->xyz[1],
-                camera->xyz[2]) - in.worldpos);
-        
-        float3 reflection_ray = reflect(
-            -object_to_light,
-            in.normal);
-        
-        float specular_dot = pow(
-            max(
-                dot(object_to_view, reflection_ray),
-                0.0),
-            32);
-        lighting += (
-            polygon_materials[in.material_i].specular *
-            specular_dot *
-            light_color *
-            light_collection->specular[i] *
-            attenuation);
-    }
-    
-    lighting = clamp(lighting, 0.05f, 7.5f);
-    
-    float3 all_ones = vector_float3(1.0f, 1.0f, 1.0f);
-    lighting =
-        ((1.0f - in.ignore_lighting) * lighting) +
-        (in.ignore_lighting * all_ones);
+    float3 lighting = get_lighting(
+        /* texture2d<float> shadow_map: */
+            shadow_map,
+        /* const device GPUCamera * camera: */
+            camera,
+        /* const device GPULightCollection * light_collection: */
+            light_collection,
+        /* const device GPUProjectionConstants * projection_constants: */
+            projection_constants,
+        /* const device GPUPolygonMaterial * fragment_material: */
+            &polygon_materials[in.material_i],
+        /* float3 fragment_worldpos: */
+            in.worldpos,
+        /* float3 fragment_normal: */
+            in.normal,
+        /* float ignore_lighting: */
+            in.ignore_lighting);
     
     float4 out_color = vector_float4(
         polygon_materials[in.material_i].rgba[0],
