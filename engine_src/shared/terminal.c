@@ -495,47 +495,6 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
-        common_are_equal_strings(command, "VERTICES") ||
-        common_are_equal_strings(command, "DRAW VERTICES"))
-    {
-        window_globals->draw_vertices = !window_globals->draw_vertices;
-        
-        if (window_globals->draw_vertices) {
-            common_strcpy_capped(
-                response,
-                SINGLE_LINE_MAX,
-                "Drawing triangle vertices...");
-        } else {
-            common_strcpy_capped(
-                response,
-                SINGLE_LINE_MAX,
-                "Stopped drawing triangle vertices...");
-        }
-        return true;
-    }
-    
-    if (
-        common_are_equal_strings(command, "HITBOX") ||
-        common_are_equal_strings(command, "HITBOXES") ||
-        common_are_equal_strings(command, "DRAW HITBOXES"))
-    {
-        window_globals->draw_hitboxes = !window_globals->draw_hitboxes;
-        
-        if (window_globals->draw_hitboxes) {
-            common_strcpy_capped(
-                response,
-                SINGLE_LINE_MAX,
-                "Drawing hitboxes...");
-        } else {
-            common_strcpy_capped(
-                response,
-                SINGLE_LINE_MAX,
-                "Stopped drawing hitboxes...");
-        }
-        return true;
-    }
-    
-    if (
         common_are_equal_strings(command, "AXIS") ||
         common_are_equal_strings(command, "AXES") ||
         common_are_equal_strings(command, "DRAW AXIS") ||

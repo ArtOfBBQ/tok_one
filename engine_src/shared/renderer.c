@@ -78,89 +78,6 @@ inline static void draw_bounding_sphere(
     }
 }
 
-inline static void zpolygon_vertices_to_points(
-    GPUDataForSingleFrame * frame_data)
-{
-    for (uint32_t zp_i = 0; zp_i < zpolygons_to_render->size; zp_i++) {
-        if (zpolygons_to_render->gpu_data[zp_i].touchable_id >= 0) {
-            int32_t mesh_id = zpolygons_to_render->cpu_data[zp_i].mesh_id;
-            
-            int32_t tail_i =
-                all_mesh_summaries[mesh_id].vertices_head_i +
-                all_mesh_summaries[mesh_id].vertices_size;
-            
-            float transformed_triangle[9];
-            float transformed_normals[9];
-            
-            for (
-                int32_t triangle_lv_i = all_mesh_summaries[mesh_id].
-                    vertices_head_i;
-                triangle_lv_i < tail_i;
-                triangle_lv_i += 3)
-            {
-                zpolygon_get_transformed_triangle_vertices(
-                    /* const zPolygonCPU * cpu_data: */
-                        &zpolygons_to_render->cpu_data[zp_i],
-                    /* const GPUPolygon * gpu_data: */
-                        &zpolygons_to_render->gpu_data[zp_i],
-                    /* const unsigned int locked_vertex_i: */
-                        triangle_lv_i,
-                    /* float * vertices_recipient_f9: */
-                        transformed_triangle,
-                    /* float * normals_recipient_f9: */
-                        transformed_normals);
-                
-                for (uint32_t i = 0; i < 9; i++) {
-                    transformed_normals[i] *= 0.1f;
-                    transformed_normals[i] += transformed_triangle[i];
-                }
-                
-                add_point_vertex(frame_data, transformed_triangle, 1.0f);
-                add_point_vertex(frame_data, transformed_triangle + 3, 1.0f);
-                add_point_vertex(frame_data, transformed_triangle + 6, 1.0f);
-                
-                add_line_vertex(frame_data, transformed_triangle);
-                add_line_vertex(frame_data, transformed_normals);
-                
-                add_line_vertex(frame_data, transformed_triangle+3);
-                add_line_vertex(frame_data, transformed_normals+3);
-                
-                add_line_vertex(frame_data, transformed_triangle+6);
-                add_line_vertex(frame_data, transformed_normals+6);
-            }
-        }
-    }
-}
-
-inline static void zpolygon_hitboxes_to_points(
-    GPUDataForSingleFrame * frame_data)
-{
-
-    float sphere_center[3];
-    float sphere_radius;
-    
-    for (uint32_t zp_i = 0; zp_i < zpolygons_to_render->size; zp_i++) {
-        if (zpolygons_to_render->gpu_data[zp_i].touchable_id >= 0) {
-            zpolygon_get_transformed_boundsphere(
-                /* const zPolygonCPU * cpu_data: */
-                    &zpolygons_to_render->cpu_data[zp_i],
-                /* const GPUPolygon * gpu_data: */
-                    &zpolygons_to_render->gpu_data[zp_i],
-                /* float * recipient_center_xyz: */
-                    sphere_center,
-                /* float * recipient_radius: */
-                    &sphere_radius);
-            draw_bounding_sphere(
-                /* GPUDataForSingleFrame * frame_data: */
-                    frame_data,
-                /* const float center_xyz[3] */
-                    sphere_center,
-                /* const float sphere_radius: */
-                    sphere_radius);
-        }
-    }
-}
-
 inline static void add_alphablending_zpolygons_to_workload(
     GPUDataForSingleFrame * frame_data)
 {
@@ -368,14 +285,6 @@ void renderer_hardware_render(
             true);
     
     add_points_and_lines_to_workload(frame_data);
-    
-    if (application_running && window_globals->draw_hitboxes) {
-        zpolygon_hitboxes_to_points(frame_data);
-    }
-    
-    if (application_running && window_globals->draw_vertices) {
-        zpolygon_vertices_to_points(frame_data);
-    }
     
     if (application_running && window_globals->draw_axes) {
         // TODO: draw axes

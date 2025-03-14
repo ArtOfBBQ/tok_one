@@ -38,17 +38,12 @@ typedef struct zPolygonCPU {
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
     
     int32_t object_id;
-    int32_t deprecated;
     bool32_t alpha_blending_enabled;
-    bool32_t bloom_copies;
     bool32_t committed;
     bool32_t deleted;
     bool32_t visible;
     bool32_t remove_hitbox;
-    float furthest_vertex_xyz[3];
 } zPolygonCPU;
-
-void set_zpolygon_hitbox(zPolygonCPU * mesh_cpu);
 
 typedef struct zPolygonCollection {
     GPUPolygon gpu_data[MAX_POLYGONS_PER_BUFFER];
@@ -108,42 +103,6 @@ void scale_zpolygon_multipliers_to_height(
 float get_distance_f3(
     const float p1[3],
     const float p2[3]);
-
-void simd_zpolygon_get_transformed_triangle_vertices(
-    const zPolygonCPU * cpu_data,
-    const GPUPolygon * gpu_data,
-    const int32_t locked_vertex_i,
-    float * vertices_recipient_10f);
-
-#if 0
-void legacy_simd_zpolygon_get_transformed_triangle_vertices(
-    const zPolygonCPU * cpu_data,
-    const GPUPolygon * gpu_data,
-    const int32_t locked_vertex_i,
-    float * vertices_recipient_10f,
-    float * normals_recipient_10f);
-#endif
-
-void zpolygon_get_transformed_triangle_vertices(
-    const zPolygonCPU * cpu_data,
-    const GPUPolygon * gpu_data,
-    const int32_t locked_vertex_i,
-    float * vertices_recipient_f9,
-    float * normals_recipient_9f);
-
-void zpolygon_get_transformed_boundsphere(
-    const zPolygonCPU * cpu_data,
-    const GPUPolygon * gpu_data,
-    float * recipient_center_xyz,
-    float * recipient_radius);
-
-float ray_intersects_zpolygon(
-    const float ray_origin[3],
-    float ray_direction[3],
-    const zPolygonCPU * cpu_data,
-    GPUPolygon  * gpu_data,
-    float * recipient_hit_point,
-    uint32_t * recipient_triangle_vert_i);
 
 void construct_quad_around(
     const float mid_x,

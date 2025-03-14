@@ -878,25 +878,6 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
                 pending_callbacks_size += 1;
             }
             
-            if (anim->set_hitbox_when_finished) {
-                for (
-                    uint32_t zp_i = 0;
-                    zp_i < zpolygons_to_render->size;
-                    zp_i++)
-                {
-                    if (
-                        zpolygons_to_render->cpu_data[zp_i].object_id ==
-                            anim->affected_object_id ||
-                        zpolygons_to_render->gpu_data[zp_i].touchable_id ==
-                            anim->affected_touchable_id)
-                    {
-                        set_zpolygon_hitbox(
-                            /* zPolygonCPU * mesh_cpu: */
-                                &zpolygons_to_render->cpu_data[zp_i]);
-                    }
-                }
-            }
-            
             if (anim->delete_object_when_finished) {
                 delete_zlight(anim->affected_object_id);
                 
@@ -939,7 +920,6 @@ void request_dud_dance(
         move_request->gpu_polygon_vals.xyz[0] = step % 2 == 0 ? delta : -delta;
         move_request->gpu_polygon_vals.xyz[1] =
             move_request->gpu_polygon_vals.xyz[0];
-        move_request->set_hitbox_when_finished = true;
         commit_scheduled_animation(move_request);
     }
 }
