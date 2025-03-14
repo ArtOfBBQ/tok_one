@@ -295,6 +295,9 @@ vertex_shader(
         locked_vertices[locked_vertex_i].uv[0],
         locked_vertices[locked_vertex_i].uv[1]);
     
+    out.ignore_lighting =
+        polygon_collection->polygons[polygon_i].ignore_lighting;
+    
     out.point_size = 40.0f;
     
     out.position = project_float3_to_float4_perspective(

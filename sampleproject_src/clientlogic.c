@@ -1,6 +1,6 @@
 #include "clientlogic.h"
 
-#define TEAPOT 1
+#define TEAPOT 0
 #if TEAPOT
 static int32_t teapot_mesh_id = -1;
 static int32_t teapot_object_ids[2];
@@ -127,7 +127,7 @@ void client_logic_late_startup(void) {
     }
     #endif
     
-    #if 1
+    #if 0
     PolygonRequest quad[1];
     for (uint32_t i = 0; i < 1; i++) {
         request_next_zpolygon(&quad[i]);
