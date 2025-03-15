@@ -283,9 +283,9 @@ vertex_shader(
         (cam_z_rotated * (1.0f - ic));
     
     out.bonus_rgb = vector_float3(
-    polygon_collection->polygons[polygon_i].bonus_rgb[0],
-    polygon_collection->polygons[polygon_i].bonus_rgb[1],
-    polygon_collection->polygons[polygon_i].bonus_rgb[2]);
+        polygon_collection->polygons[polygon_i].bonus_rgb[0],
+        polygon_collection->polygons[polygon_i].bonus_rgb[1],
+        polygon_collection->polygons[polygon_i].bonus_rgb[2]);
     
     out.material_i = locked_material_i;
     
@@ -511,7 +511,6 @@ fragment_shader(
     const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
     const device GPUPolygonMaterial * polygon_materials [[ buffer(6) ]])
 {
-    
     if (
         in.material_i < 0 ||
         in.material_i >= MAX_POLYGONS_PER_BUFFER * MAX_MATERIALS_PER_POLYGON)
@@ -589,12 +588,15 @@ fragment_shader(
         discard_fragment();
     }
     
+    out_color += vector_float4(in.bonus_rgb, 0.0f);
+    
     out_color[3] = 1.0f;
     float4 rgba_cap = vector_float4(
         polygon_materials[in.material_i].rgb_cap[0],
         polygon_materials[in.material_i].rgb_cap[1],
         polygon_materials[in.material_i].rgb_cap[2],
         1.0f);
+    
     out_color = clamp(out_color, 0.0f, rgba_cap);
     
     FragmentAndTouchableOut packed_out =
@@ -660,6 +662,8 @@ alphablending_fragment_shader(
     }
     
     out_color *= vector_float4(lighting, 1.0f);
+    
+    out_color += vector_float4(in.bonus_rgb, 0.0f);
     
     float4 rgba_cap = vector_float4(
         polygon_materials[in.material_i].rgb_cap[0],
