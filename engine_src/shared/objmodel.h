@@ -66,6 +66,7 @@ int32_t new_mesh_id_from_resource(
 void center_mesh_offsets(const int32_t mesh_id);
 
 void flip_mesh_uvs(const int32_t mesh_id);
+void flip_mesh_uvs_v(const int32_t mesh_id);
 
 /*
 Creates a version of the mesh with (normally needless) extra triangles

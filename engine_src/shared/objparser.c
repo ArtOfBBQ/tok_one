@@ -296,8 +296,8 @@ void parse_obj(
     recipient->quads = 0;
     recipient->quad_textures = 0;
     recipient->quad_normals = 0;
-    recipient->textures = 0;
-    recipient->normals = 0;
+    recipient->textures_vt_uv = 0;
+    recipient->normals_vn = 0;
     recipient->materials = objparser_malloc_func(sizeof(ParsedMaterial) * 200);
     for (unsigned int i = 0; i < 200; i++) {
         recipient->materials[i].name[0] = '\0';
@@ -420,7 +420,7 @@ void parse_obj(
     }
     
     if (recipient->normals_count > 0) {
-        recipient->normals = objparser_malloc_func(
+        recipient->normals_vn = objparser_malloc_func(
             sizeof(unsigned int[3]) * recipient->normals_count);
         
         #ifndef OBJ_PARSER_IGNORE_ASSERTS
@@ -439,7 +439,7 @@ void parse_obj(
         }
     }
     if (recipient->textures_count > 0) {
-        recipient->textures = objparser_malloc_func(
+        recipient->textures_vt_uv = objparser_malloc_func(
             sizeof(float[2]) * recipient->textures_count);
         
         #ifndef OBJ_PARSER_IGNORE_ASSERTS
@@ -819,7 +819,7 @@ void parse_obj(
             }
             
             for (unsigned int uv_i = 0; uv_i < 2; uv_i++) {
-                recipient->textures[cur_texture_i][uv_i] =
+                recipient->textures_vt_uv[cur_texture_i][uv_i] =
                     consume_float(&raw_buffer, success);
                 if (!*success) { return; }
                 
@@ -860,7 +860,7 @@ void parse_obj(
             }
             
             for (unsigned int axis_i = 0; axis_i < 3; axis_i++) {
-                recipient->normals[cur_normal_i][axis_i] =
+                recipient->normals_vn[cur_normal_i][axis_i] =
                     consume_float(&raw_buffer, success);
                 if (!*success) { return; }
                 
@@ -974,9 +974,9 @@ void free_obj(ParsedObj * to_free) {
     if (to_free->triangle_textures != 0) {
         objparser_free_func(to_free->triangle_textures);
     }
-    if (to_free->textures != 0) {
-        objparser_free_func(to_free->textures);
-        to_free->textures = 0;
+    if (to_free->textures_vt_uv != 0) {
+        objparser_free_func(to_free->textures_vt_uv);
+        to_free->textures_vt_uv = 0;
     }
     if (to_free->quad_normals != 0) {
         objparser_free_func(to_free->quad_normals);
@@ -986,9 +986,9 @@ void free_obj(ParsedObj * to_free) {
         objparser_free_func(to_free->triangle_normals);
         to_free->triangle_normals = 0;
     }
-    if (to_free->normals != 0) {
-        objparser_free_func(to_free->normals);
-        to_free->normals = 0;
+    if (to_free->normals_vn != 0) {
+        objparser_free_func(to_free->normals_vn);
+        to_free->normals_vn = 0;
     }
     if (to_free->materials != 0) {
         objparser_free_func(to_free->materials);

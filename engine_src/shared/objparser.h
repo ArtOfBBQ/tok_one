@@ -22,8 +22,8 @@ typedef struct ParsedMaterial {
 typedef struct ParsedObj {
     ParsedMaterial * materials;
     float (* vertices)[6]; // contains either xyzw,, or xyzrgb (, means unused)
-    float (* textures)[2]; // contains u and v
-    float (* normals)[3];  // xyz
+    float (* textures_vt_uv)[2]; // 'vt' in .obj files, 'uv' in 3d graphics
+    float (* normals_vn)[3];  // xyz, 'vn' in .obj files
     
     // vert1, vert2, vert3, smooth, material_i
     unsigned int (* triangles)[5];

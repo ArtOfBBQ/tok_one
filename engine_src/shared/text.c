@@ -59,8 +59,10 @@ void text_init(
         font_settings->font_color[1] = 1.0f;
         font_settings->font_color[2] = 1.0f;
         font_settings->font_color[3] = 1.0f;
+        font_settings->rgb_cap[0] = 1.5f;
+        font_settings->rgb_cap[1] = 1.5f;
+        font_settings->rgb_cap[2] = 1.5f;
         font_settings->font_ignore_lighting = true;
-        font_settings->remove_hitbox = false;
     }
     
     char * buffer_at = (char *)raw_fontmetrics_file_contents;
@@ -317,7 +319,6 @@ void text_request_label_offset_around(
             letter.gpu_data->ignore_camera = font_settings->ignore_camera;
             letter.gpu_data->scale_factor = font_settings->scale_factor;
             letter.cpu_data->object_id = with_id;
-            letter.cpu_data->remove_hitbox = font_settings->remove_hitbox;
             letter.gpu_data->touchable_id = font_settings->font_touchable_id;
             letter.cpu_data->alpha_blending_enabled =
                 font_settings->alphablending;
@@ -326,15 +327,6 @@ void text_request_label_offset_around(
                 cur_x_offset_pixelspace +=
                     get_advance_width(text_to_draw[j]);
                 continue;
-            }
-            
-            for (
-                uint32_t rgba_i = 0;
-                rgba_i < 4;
-                rgba_i++)
-            {
-                letter.gpu_materials[0].rgba[rgba_i] =
-                    font_settings->font_color[rgba_i];
             }
             
             letter.gpu_data->xyz_offset[0] =
@@ -355,6 +347,20 @@ void text_request_label_offset_around(
                 font_settings->font_texturearray_i;
             letter.gpu_materials[0].texture_i      =
                 text_to_draw[j] - '!';
+            letter.gpu_materials[0].rgb_cap[0] =
+                font_settings->rgb_cap[0];
+            letter.gpu_materials[0].rgb_cap[1] =
+                font_settings->rgb_cap[1];
+            letter.gpu_materials[0].rgb_cap[2] =
+                font_settings->rgb_cap[2];
+            for (
+                uint32_t rgba_i = 0;
+                rgba_i < 4;
+                rgba_i++)
+            {
+                letter.gpu_materials[0].rgba[rgba_i] =
+                    font_settings->font_color[rgba_i];
+            }
             
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
@@ -517,6 +523,13 @@ void text_request_label_renderable(
             letter.gpu_materials[0].rgba[rgba_i] =
                 font_settings->font_color[rgba_i];
         }
+        letter.gpu_materials[0].rgb_cap[0] =
+            font_settings->rgb_cap[0];
+        letter.gpu_materials[0].rgb_cap[1] =
+            font_settings->rgb_cap[1];
+        letter.gpu_materials[0].rgb_cap[2] =
+            font_settings->rgb_cap[2];
+        
         
         letter.gpu_data->xyz_offset[0] =
             windowsize_screenspace_width_to_width(
@@ -534,8 +547,8 @@ void text_request_label_renderable(
             cur_y_offset  -= get_newline_advance();
         }
         
+        
         i++;
-        letter.cpu_data->remove_hitbox = font_settings->remove_hitbox;
         commit_zpolygon_to_render(&letter);
     }
 }
@@ -593,7 +606,7 @@ void text_request_fps_counter(
     font_settings->font_color[3] = 1.0f;
     font_settings->font_ignore_lighting = true;
     font_settings->ignore_camera = true;
-    font_settings->remove_hitbox = true;
+    font_settings->font_touchable_id = -1;
     text_request_label_renderable(
         /* with_id               : */
             FPS_COUNTER_OBJECT_ID,
@@ -631,7 +644,7 @@ void text_request_top_touchable_id(
     font_settings->font_color[3] = 1.0f;
     font_settings->font_ignore_lighting = true;
     font_settings->ignore_camera = true;
-    font_settings->remove_hitbox = true;
+    font_settings->font_touchable_id = -1;
     text_request_label_renderable(
         /* with_id               : */
             FPS_COUNTER_OBJECT_ID,

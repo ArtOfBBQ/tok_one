@@ -17,7 +17,7 @@
 #endif
 
 #ifndef MAX_LIGHTS_PER_BUFFER
-#define MAX_LIGHTS_PER_BUFFER       75
+#define MAX_LIGHTS_PER_BUFFER       5
 #endif
 
 #ifndef MAX_MATERIALS_PER_POLYGON
@@ -68,7 +68,7 @@ typedef struct GPUPolygon {
     float        scale_factor;
     float        ignore_lighting;
     float        ignore_camera;
-    float        simd_padding[5];
+    float        simd_padding[5]; // make sure touchable_id is behind this
     int          touchable_id;
 } GPUPolygon; // 24 floats (3 SIMD runs)
 
@@ -100,6 +100,9 @@ typedef struct GPULightCollection {
     float        light_x              [MAX_LIGHTS_PER_BUFFER];
     float        light_y              [MAX_LIGHTS_PER_BUFFER];
     float        light_z              [MAX_LIGHTS_PER_BUFFER];
+    float        angle_x              [MAX_LIGHTS_PER_BUFFER];
+    float        angle_y              [MAX_LIGHTS_PER_BUFFER];
+    float        angle_z              [MAX_LIGHTS_PER_BUFFER];
     float        ambient              [MAX_LIGHTS_PER_BUFFER];
     float        diffuse              [MAX_LIGHTS_PER_BUFFER];
     float        specular             [MAX_LIGHTS_PER_BUFFER];
@@ -107,18 +110,18 @@ typedef struct GPULightCollection {
     float        red                  [MAX_LIGHTS_PER_BUFFER];
     float        green                [MAX_LIGHTS_PER_BUFFER];
     float        blue                 [MAX_LIGHTS_PER_BUFFER];
+    unsigned int shadowcaster_i;
     unsigned int lights_size;
 } GPULightCollection;
 
 typedef struct GPUProjectionConstants {
     float znear;
     float zfar;
-    float q;
     float field_of_view_rad;
     float field_of_view_modifier;
     float x_multiplier;
     float y_multiplier;
-    float padding;
+    float padding[2];
 } GPUProjectionConstants;
 
 typedef struct GPUDownsamplingConstants

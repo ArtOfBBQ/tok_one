@@ -82,15 +82,15 @@ void windowsize_init(void) {
     
     GPUProjectionConstants * pjc = &window_globals->projection_constants;
     
-    pjc->znear = 0.03f;
-    pjc->zfar =  8.50f;
+    pjc->znear =  0.03f;
+    pjc->zfar  =  25.0f;
     
     float field_of_view = 75.0f;
     pjc->field_of_view_rad = ((field_of_view * 0.5f) / 180.0f) * 3.14159f;
     
     pjc->field_of_view_modifier = 1.0f / tanf(pjc->field_of_view_rad);
     
-    pjc->q = pjc->zfar / (pjc->zfar - pjc->znear);
+    // pjc->q = pjc->zfar / (pjc->zfar - pjc->znear);
     pjc->x_multiplier = window_globals->aspect_ratio *
         pjc->field_of_view_modifier;
     pjc->y_multiplier = pjc->field_of_view_modifier;
@@ -100,7 +100,6 @@ void windowsize_init(void) {
     window_globals->draw_fps              = false;
     window_globals->draw_top_touchable_id = false;
     window_globals->draw_triangles        =  true;
-    window_globals->draw_hitboxes         = false;
     window_globals->show_profiler         = false;
     window_globals->pause_profiler        = false;
     window_globals->block_mouse           = false;

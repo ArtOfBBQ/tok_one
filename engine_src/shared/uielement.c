@@ -594,7 +594,6 @@ void request_button(
         next_ui_element_settings->button_background_texture_i;
     
     font_settings->ignore_camera = next_ui_element_settings->ignore_camera;
-    font_settings->remove_hitbox = true;
     text_request_label_around(
         /* const int32_t with_object_id: */
             button_object_id,

@@ -278,7 +278,6 @@ void gameloop_update_before_render_pass(
         font_settings->font_color[3]        = 1.0f;
         font_settings->ignore_camera        = false; // we set camera to 0,0,0
         font_settings->font_ignore_lighting = true;
-        font_settings->remove_hitbox        = true;
         
         PointRequest point_request;
         fetch_next_point(&point_request);

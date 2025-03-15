@@ -43,8 +43,6 @@ typedef struct WindowGlobals {
     bool32_t draw_clickray;
     bool32_t draw_imputed_normals;
     bool32_t draw_triangles;
-    bool32_t draw_hitboxes;
-    bool32_t draw_vertices;
     bool32_t show_profiler;
     bool32_t pause_profiler;
     bool32_t draw_axes;

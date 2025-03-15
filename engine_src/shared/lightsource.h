@@ -16,6 +16,8 @@
 extern "C" {
 #endif
 
+
+
 void x_rotate_zvertex_f3_known_cossin(
     float inout_xyz[3],
     const float cosf_angle,
@@ -75,13 +77,14 @@ typedef struct zLightSource {
         float flt_committed;
     };
     float xyz[3];
+    float xyz_angle[3];
     float xyz_offset[3];
     float RGBA[4];
     float reach; // light's reach
     float ambient;     // how much ambient light does this radiate?
     float diffuse;     // how much diffuse light does this radiate?
     float specular;
-    float simd_padding[7];
+    float simd_padding[4];
 } zLightSource; // 17 floats = 68 bytes
 
 // A buffer of zLightSources to light up your scene(s)
@@ -89,7 +92,7 @@ typedef struct zLightSource {
 // the rest of the array will be ignored
 extern zLightSource * zlights_to_apply;
 extern uint32_t zlights_to_apply_size;
-
+extern uint32_t shadowcaster_light_i;
 
 zLightSource * next_zlight(void);
 void commit_zlight(zLightSource * to_request);

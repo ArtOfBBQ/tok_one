@@ -338,7 +338,6 @@ void profiler_draw_labels(void) {
         profiler_backdrop.gpu_materials[0].rgba[3] = 0.75f;
         profiler_backdrop.cpu_data->alpha_blending_enabled = true;
         profiler_backdrop.gpu_data->touchable_id = -1;
-        profiler_backdrop.cpu_data->remove_hitbox = true;
         commit_zpolygon_to_render(&profiler_backdrop);
         
         font_settings->font_color[0] = 0.1f;
@@ -348,7 +347,6 @@ void profiler_draw_labels(void) {
         font_settings->font_height = 18.0f;
         
         font_settings->ignore_camera = true;
-        font_settings->remove_hitbox = true;
         text_request_label_renderable(
             /* const int32_t with_object_id: */
                 profiler_object_id,
@@ -384,7 +382,6 @@ void profiler_draw_labels(void) {
                 gui_frame_i];
             
             font_settings->ignore_camera = true;
-            font_settings->remove_hitbox = false;
             text_request_label_renderable(
                 /* const int32_t with_object_id: */
                     profiler_object_id,
@@ -498,7 +495,6 @@ void profiler_draw_labels(void) {
                 
                 cur_top -= (font_settings->font_height + 2.0f);
                 font_settings->ignore_camera = true;
-                font_settings->remove_hitbox = true;
                 text_request_label_renderable(
                     /* const int32_t with_object_id: */
                         profiler_object_id,
