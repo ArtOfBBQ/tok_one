@@ -736,13 +736,21 @@ static int32_t platform_gpu_get_touchable_id_at_screen_pos(
         return -1;
     }
     
-    uint32_t low  = data[(pixel_i*4)+0];
-    uint32_t high = data[(pixel_i*4)+1];
+    uint16_t first_8bits = data[(pixel_i*4)+0] & 0xFF;
+    uint16_t second_8bits = data[(pixel_i*4)+1] & 0xFF;
+    uint16_t third_8bits = data[(pixel_i*4)+2] & 0xFF;
+    uint16_t fourth_8bits = data[(pixel_i*4)+3] & 0xFF;
     
-    uint32_t uid = (high << 16) | low;
+    uint32_t first_8  = first_8bits; // red channel, see shaders
+    uint32_t second_8 = second_8bits; // green channel
+    uint32_t third_8 = third_8bits; // blue channel
+    uint32_t fourth_8 = fourth_8bits; // alpha channel
+    
+    uint32_t uid = (fourth_8 << 24) | (third_8 << 16) | (second_8 << 8) | first_8;
     int32_t final_id = *(int32_t *)&uid; // Direct reinterpretation
     
     if (final_id < -1) { final_id = -1; }
+    
     return final_id;
 }
 
@@ -923,6 +931,7 @@ void platform_gpu_copy_locked_vertices(void)
         [ags->device
             newTextureWithDescriptor: touch_id_texture_descriptor];
     
+    #if SHADOWS_ACTIVE
     MTLTextureDescriptor * shadows_texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
     shadows_texture_descriptor.textureType = MTLTextureType2D;
@@ -938,6 +947,7 @@ void platform_gpu_copy_locked_vertices(void)
     
     ags->shadows_texture =
         [ags->device newTextureWithDescriptor: shadows_texture_descriptor];
+    #endif
     
     ags->touch_id_buffer = [ags->device
         newBufferWithLength:

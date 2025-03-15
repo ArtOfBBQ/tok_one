@@ -19,7 +19,6 @@ typedef struct FontSettings {
     float rgb_cap[3];
     bool32_t font_ignore_lighting;
     bool32_t ignore_camera;
-    bool32_t remove_hitbox;
     bool32_t alphablending;
 } FontSettings;
 

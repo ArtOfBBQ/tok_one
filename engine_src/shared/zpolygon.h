@@ -42,7 +42,6 @@ typedef struct zPolygonCPU {
     bool32_t committed;
     bool32_t deleted;
     bool32_t visible;
-    bool32_t remove_hitbox;
 } zPolygonCPU;
 
 typedef struct zPolygonCollection {

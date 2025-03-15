@@ -137,7 +137,7 @@ void terminal_redraw_backgrounds(void) {
     current_command_input.cpu_data->alpha_blending_enabled = true;
     current_command_input.cpu_data->visible = terminal_active;
     current_command_input.cpu_data->object_id = terminal_back_object_id;
-    current_command_input.cpu_data->remove_hitbox = true;
+    current_command_input.gpu_data->touchable_id = -1;
     commit_zpolygon_to_render(&current_command_input);
     
     // The console history area
@@ -181,7 +181,7 @@ void terminal_redraw_backgrounds(void) {
     current_command_input.gpu_data->ignore_camera = true;
     current_command_input.gpu_data->ignore_lighting = true;
     current_command_input.cpu_data->object_id = INT32_MAX;
-    current_command_input.cpu_data->remove_hitbox = true;
+    current_command_input.gpu_data->touchable_id = -1;
     
     commit_zpolygon_to_render(&current_command_input);
 }
@@ -253,7 +253,7 @@ void terminal_render(void) {
         font_settings->rgb_cap[2] = term_font_rgb_cap[2];
         font_settings->ignore_camera = true;
         font_settings->font_ignore_lighting = 1.0f;
-        font_settings->remove_hitbox = true;
+        font_settings->font_touchable_id = -1;
         
         text_request_label_renderable(
             /* const int32_t with_object_id: */
@@ -277,7 +277,7 @@ void terminal_render(void) {
         }
         
         font_settings->ignore_camera = true;
-        font_settings->remove_hitbox = true;
+        font_settings->font_touchable_id = -1;
         // the terminal's current input as a label
         text_request_label_renderable(
             /* with_object_id: */

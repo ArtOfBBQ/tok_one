@@ -63,7 +63,6 @@ void text_init(
         font_settings->rgb_cap[1] = 1.5f;
         font_settings->rgb_cap[2] = 1.5f;
         font_settings->font_ignore_lighting = true;
-        font_settings->remove_hitbox = false;
     }
     
     char * buffer_at = (char *)raw_fontmetrics_file_contents;
@@ -320,7 +319,6 @@ void text_request_label_offset_around(
             letter.gpu_data->ignore_camera = font_settings->ignore_camera;
             letter.gpu_data->scale_factor = font_settings->scale_factor;
             letter.cpu_data->object_id = with_id;
-            letter.cpu_data->remove_hitbox = font_settings->remove_hitbox;
             letter.gpu_data->touchable_id = font_settings->font_touchable_id;
             letter.cpu_data->alpha_blending_enabled =
                 font_settings->alphablending;
@@ -549,8 +547,8 @@ void text_request_label_renderable(
             cur_y_offset  -= get_newline_advance();
         }
         
+        
         i++;
-        letter.cpu_data->remove_hitbox = font_settings->remove_hitbox;
         commit_zpolygon_to_render(&letter);
     }
 }
@@ -608,7 +606,7 @@ void text_request_fps_counter(
     font_settings->font_color[3] = 1.0f;
     font_settings->font_ignore_lighting = true;
     font_settings->ignore_camera = true;
-    font_settings->remove_hitbox = true;
+    font_settings->font_touchable_id = -1;
     text_request_label_renderable(
         /* with_id               : */
             FPS_COUNTER_OBJECT_ID,
@@ -646,7 +644,7 @@ void text_request_top_touchable_id(
     font_settings->font_color[3] = 1.0f;
     font_settings->font_ignore_lighting = true;
     font_settings->ignore_camera = true;
-    font_settings->remove_hitbox = true;
+    font_settings->font_touchable_id = -1;
     text_request_label_renderable(
         /* with_id               : */
             FPS_COUNTER_OBJECT_ID,

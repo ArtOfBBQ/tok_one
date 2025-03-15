@@ -1,6 +1,6 @@
 #include "clientlogic.h"
 
-#define TEAPOT 0
+#define TEAPOT 1
 #if TEAPOT
 static int32_t teapot_mesh_id = -1;
 static int32_t teapot_object_ids[2];
@@ -127,7 +127,7 @@ void client_logic_late_startup(void) {
     }
     #endif
     
-    #if 0
+    #if 1
     PolygonRequest quad[1];
     for (uint32_t i = 0; i < 1; i++) {
         request_next_zpolygon(&quad[i]);
@@ -172,13 +172,13 @@ void client_logic_late_startup(void) {
     #endif
     
     #if 1
+    #define BOOM_LABEL_TOCUHABLE_ID 1441003
     font_settings->font_height = 280;
-    font_settings->font_touchable_id = 2120000;
+    font_settings->font_touchable_id = BOOM_LABEL_TOCUHABLE_ID;
     font_settings->font_color[0] =  2.2f;
     font_settings->font_color[1] =  2.9f;
     font_settings->font_color[2] =  1.8f;
     font_settings->font_color[3] =  1.0f;
-    font_settings->remove_hitbox = false;
     font_settings->ignore_camera = false;
     font_settings->font_ignore_lighting = 1.0f;
     text_request_label_renderable(
@@ -341,7 +341,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
         
         if (
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                touchable_id_top == 2120000 ||
+                touchable_id_top == BOOM_LABEL_TOCUHABLE_ID ||
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
                 touchable_id_pierce == 6)
         {
