@@ -63,6 +63,7 @@ void text_init(
         font_settings->rgb_cap[1] = 1.5f;
         font_settings->rgb_cap[2] = 1.5f;
         font_settings->font_ignore_lighting = true;
+        font_settings->remove_shadow = true;
     }
     
     char * buffer_at = (char *)raw_fontmetrics_file_contents;
@@ -343,6 +344,8 @@ void text_request_label_offset_around(
                             font_settings->extra_y_offset,
                     z);
             
+            letter.gpu_data->remove_shadow = font_settings->remove_shadow;
+            
             letter.gpu_materials[0].texturearray_i =
                 font_settings->font_texturearray_i;
             letter.gpu_materials[0].texture_i      =
@@ -353,6 +356,7 @@ void text_request_label_offset_around(
                 font_settings->rgb_cap[1];
             letter.gpu_materials[0].rgb_cap[2] =
                 font_settings->rgb_cap[2];
+            
             for (
                 uint32_t rgba_i = 0;
                 rgba_i < 4;
@@ -502,6 +506,7 @@ void text_request_label_renderable(
             font_settings->alphablending;
         letter.gpu_data->ignore_lighting = font_settings->font_ignore_lighting;
         letter.gpu_data->ignore_camera = font_settings->ignore_camera;
+        letter.gpu_data->remove_shadow = font_settings->remove_shadow;
         
         letter.gpu_materials[0].texturearray_i =
             font_settings->font_texturearray_i;

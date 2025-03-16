@@ -458,8 +458,6 @@ int main(int argc, const char * argv[]) {
     
     mtk_view.autoResizeDrawable = true;
     
-    // [mtk_view setOpaque: NO];
-    // mtk_view.opaque = false;
     mtk_view.preferredFramesPerSecond = 120;
     mtk_view.enableSetNeedsDisplay = false;
     

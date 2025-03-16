@@ -181,6 +181,10 @@ void platform_read_file(
     const char * filepath,
     FileBuffer * out_preallocatedbuffer);
 
+void platform_gpu_get_device_name(
+    char * recipient,
+    const uint32_t recipient_cap);
+
 /*
 Run a task in the background I only use this to pass clientlogic.c's
 client_logic_threadmain() passing the threadmain_id to it you have to
@@ -203,10 +207,6 @@ void platform_toggle_fullscreen(void);
 void platform_gpu_update_viewport(void);
 
 void platform_gpu_copy_locked_vertices(void);
-
-//int32_t platform_gpu_get_touchable_id_at_screen_pos(
-//    const float screen_x,
-//    const float screen_y);
 
 void platform_gpu_init_texture_array(
     const int32_t texture_array_i,

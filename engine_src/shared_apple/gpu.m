@@ -52,6 +52,7 @@ typedef struct AppleGPUState {
     #endif
     id<MTLTexture> touch_id_texture;
     id<MTLBuffer> touch_id_buffer;
+    id<MTLBuffer> touch_id_buffer_all_zeros;
 } AppleGPUState;
 
 static AppleGPUState * ags = NULL;
@@ -698,6 +699,18 @@ static float get_ds_height(
     return return_value;
 }
 
+void platform_gpu_get_device_name(
+    char * recipient,
+    const uint32_t recipient_cap)
+{
+    const char * device_name_cstr =
+        [[ags->device name] cStringUsingEncoding:NSASCIIStringEncoding];
+    common_strcpy_capped(
+        recipient,
+        recipient_cap,
+        device_name_cstr);
+}
+
 static int32_t platform_gpu_get_touchable_id_at_screen_pos(
     const float screen_x,
     const float screen_y)
@@ -949,13 +962,26 @@ void platform_gpu_copy_locked_vertices(void)
         [ags->device newTextureWithDescriptor: shadows_texture_descriptor];
     #endif
     
+    uint64_t touch_buffer_size_bytes =
+        touch_id_texture_descriptor.width *
+            touch_id_texture_descriptor.height *
+            8;
+    
     ags->touch_id_buffer = [ags->device
         newBufferWithLength:
-            touch_id_texture_descriptor.width *
-            touch_id_texture_descriptor.height *
-            8
+            touch_buffer_size_bytes
         options:
             MTLResourceStorageModeShared];
+    
+    ags->touch_id_buffer_all_zeros = [ags->device
+        newBufferWithLength:
+            touch_buffer_size_bytes
+        options:
+            MTLResourceStorageModeShared];
+    common_memset_char(
+        ags->touch_id_buffer_all_zeros.contents,
+        0,
+        touch_buffer_size_bytes);
     
     #if POSTPROCESSING_ACTIVE
     // Set up a texture for rendering to and apply post-processing to
@@ -1103,16 +1129,16 @@ void platform_gpu_copy_locked_vertices(void)
     }
     #endif
     
-    MTLRenderPassDescriptor * render_pass_1_descriptor =
+    MTLRenderPassDescriptor * render_pass_1_draw_triangles_descriptor =
         [view currentRenderPassDescriptor];
     
-    render_pass_1_descriptor.depthAttachment.loadAction =
+    render_pass_1_draw_triangles_descriptor.depthAttachment.loadAction =
         MTLLoadActionClear;
     
     #if POSTPROCESSING_ACTIVE
-    render_pass_1_descriptor.colorAttachments[0].texture =
+    render_pass_1_draw_triangles_descriptor.colorAttachments[0].texture =
         ags->render_target_texture;
-    render_pass_1_descriptor.colorAttachments[0].storeAction =
+    render_pass_1_draw_triangles_descriptor.colorAttachments[0].storeAction =
         MTLStoreActionStore;
     #else
     render_pass_1_descriptor
@@ -1120,15 +1146,15 @@ void platform_gpu_copy_locked_vertices(void)
         .loadAction = MTLLoadActionClear;
     #endif
     
-    render_pass_1_descriptor.colorAttachments[0].clearColor =
+    render_pass_1_draw_triangles_descriptor.colorAttachments[0].clearColor =
         MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);
     
     // ID Buffer for touchables
-    render_pass_1_descriptor.colorAttachments[1].texture =
+    render_pass_1_draw_triangles_descriptor.colorAttachments[1].texture =
         ags->touch_id_texture;
-    render_pass_1_descriptor.colorAttachments[1].loadAction =
+    render_pass_1_draw_triangles_descriptor.colorAttachments[1].loadAction =
         MTLLoadActionLoad; // We clear manually with a blit before this pass
-    render_pass_1_descriptor.colorAttachments[1].storeAction =
+    render_pass_1_draw_triangles_descriptor.colorAttachments[1].storeAction =
         MTLStoreActionStore;
     
     // To kick off our render loop, we blit to clear the touch id buffer
@@ -1137,16 +1163,11 @@ void platform_gpu_copy_locked_vertices(void)
         [ags->touch_id_texture width] *
         8);
     
-    id <MTLBlitCommandEncoder> blit_clear_encoder =
+    id <MTLBlitCommandEncoder> clear_touch_texture_blit_encoder =
         [command_buffer blitCommandEncoder];
     
-    [blit_clear_encoder
-        fillBuffer: ags->touch_id_buffer
-        range: NSMakeRange(0, size_bytes)
-        value:0xFF];
-    
-    [blit_clear_encoder
-        copyFromBuffer: ags->touch_id_buffer
+    [clear_touch_texture_blit_encoder
+        copyFromBuffer: ags->touch_id_buffer_all_zeros
         sourceOffset: 0
         sourceBytesPerRow: [ags->touch_id_texture width] * 8
         sourceBytesPerImage: size_bytes
@@ -1160,31 +1181,31 @@ void platform_gpu_copy_locked_vertices(void)
         destinationLevel: 0
         destinationOrigin: MTLOriginMake(0, 0, 0)];
     
-    [blit_clear_encoder endEncoding];
+    [clear_touch_texture_blit_encoder endEncoding];
     
     // this inherits from the view's cleardepth (in macos/main.m for mac os),
     // don't set it here
     // assert(RenderPassDescriptor.depthAttachment.clearDepth == CLEARDEPTH);
-    id<MTLRenderCommandEncoder> render_pass_1_encoder =
+    id<MTLRenderCommandEncoder> render_pass_1_draw_triangles_encoder =
         [command_buffer
             renderCommandEncoderWithDescriptor:
-                render_pass_1_descriptor];
+                render_pass_1_draw_triangles_descriptor];
     
     assert(ags->cached_viewport.zfar > ags->cached_viewport.znear);
-    [render_pass_1_encoder setViewport: ags->render_target_viewport];
+    [render_pass_1_draw_triangles_encoder setViewport: ags->render_target_viewport];
     assert(ags->cached_viewport.width > 0.0f);
     assert(ags->cached_viewport.height > 0.0f);
     
     
-    [render_pass_1_encoder
+    [render_pass_1_draw_triangles_encoder
         setRenderPipelineState: ags->diamond_pls];
     assert(ags->depth_stencil_state != nil);
-    [render_pass_1_encoder
+    [render_pass_1_draw_triangles_encoder
         setDepthStencilState: ags->depth_stencil_state];
-    [render_pass_1_encoder
+    [render_pass_1_draw_triangles_encoder
         setDepthClipMode: MTLDepthClipModeClip];
     
-    [render_pass_1_encoder
+    [render_pass_1_draw_triangles_encoder
         setVertexBuffer:
             ags->vertex_buffers[ags->frame_i]
         offset:
@@ -1192,7 +1213,7 @@ void platform_gpu_copy_locked_vertices(void)
         atIndex:
             0];
     
-    [render_pass_1_encoder
+    [render_pass_1_draw_triangles_encoder
         setVertexBuffer:
             ags->polygon_buffers[ags->frame_i]
         offset:
@@ -1200,13 +1221,13 @@ void platform_gpu_copy_locked_vertices(void)
         atIndex:
             1];
     
-    [render_pass_1_encoder
+    [render_pass_1_draw_triangles_encoder
         setVertexBuffer:
             ags->camera_buffers[ags->frame_i]
         offset: 0
         atIndex: 3];
     
-    [render_pass_1_encoder
+    [render_pass_1_draw_triangles_encoder
         setVertexBuffer:
             ags->locked_vertex_buffer
         offset:
@@ -1214,7 +1235,7 @@ void platform_gpu_copy_locked_vertices(void)
         atIndex:
             4];
     
-    [render_pass_1_encoder
+    [render_pass_1_draw_triangles_encoder
         setVertexBuffer:
             ags->projection_constants_buffer
         offset:
@@ -1222,7 +1243,7 @@ void platform_gpu_copy_locked_vertices(void)
         atIndex:
             5];
     
-    [render_pass_1_encoder
+    [render_pass_1_draw_triangles_encoder
         setFragmentBuffer:
             ags->light_buffers[ags->frame_i]
         offset:
@@ -1230,7 +1251,7 @@ void platform_gpu_copy_locked_vertices(void)
         atIndex:
             2];
     
-    [render_pass_1_encoder
+    [render_pass_1_draw_triangles_encoder
         setFragmentBuffer:
             ags->camera_buffers[ags->frame_i]
         offset:
@@ -1238,7 +1259,7 @@ void platform_gpu_copy_locked_vertices(void)
         atIndex:
             3];
     
-    [render_pass_1_encoder
+    [render_pass_1_draw_triangles_encoder
         setFragmentBuffer:
             ags->projection_constants_buffer
         offset:
@@ -1246,7 +1267,7 @@ void platform_gpu_copy_locked_vertices(void)
         atIndex:
             4];
     
-    [render_pass_1_encoder
+    [render_pass_1_draw_triangles_encoder
         setFragmentBuffer:
             ags->polygon_material_buffers[ags->frame_i]
         offset:
@@ -1259,13 +1280,13 @@ void platform_gpu_copy_locked_vertices(void)
         i < [ags->metal_textures count];
         i++)
     {
-        [render_pass_1_encoder
+        [render_pass_1_draw_triangles_encoder
             setFragmentTexture: ags->metal_textures[i]
             atIndex: i];
     }
     
     #if SHADOWS_ACTIVE
-    [render_pass_1_encoder
+    [render_pass_1_draw_triangles_encoder
         setFragmentTexture: ags->shadows_texture
         atIndex: TEXTUREARRAYS_SIZE];
     #endif
@@ -1288,7 +1309,7 @@ void platform_gpu_copy_locked_vertices(void)
     if (window_globals->draw_triangles && diamond_verts_size > 0) {
         assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);
         assert(diamond_verts_size % 3 == 0);
-        [render_pass_1_encoder
+        [render_pass_1_draw_triangles_encoder
             drawPrimitives:
                 MTLPrimitiveTypeTriangle
             vertexStart:
@@ -1311,10 +1332,10 @@ void platform_gpu_copy_locked_vertices(void)
     if (window_globals->draw_triangles && alphablend_verts_size > 0) {
         assert(alphablend_verts_size < MAX_VERTICES_PER_BUFFER);
         assert(alphablend_verts_size % 3 == 0);
-        [render_pass_1_encoder setRenderPipelineState:
+        [render_pass_1_draw_triangles_encoder setRenderPipelineState:
             ags->alphablend_pls];
         
-        [render_pass_1_encoder
+        [render_pass_1_draw_triangles_encoder
             drawPrimitives: MTLPrimitiveTypeTriangle
             vertexStart: gpu_shared_data_collection.
                 triple_buffers[ags->frame_i].first_alphablend_i
@@ -1328,17 +1349,17 @@ void platform_gpu_copy_locked_vertices(void)
         gpu_shared_data_collection.triple_buffers[ags->frame_i].
             point_vertices_size) > 0)
     {
-        [render_pass_1_encoder setRenderPipelineState: ags->raw_pls];
+        [render_pass_1_draw_triangles_encoder setRenderPipelineState: ags->raw_pls];
         assert(ags->depth_stencil_state != nil);
-        [render_pass_1_encoder
+        [render_pass_1_draw_triangles_encoder
             setDepthStencilState: ags->depth_stencil_state];
-        [render_pass_1_encoder setDepthClipMode: MTLDepthClipModeClip];
+        [render_pass_1_draw_triangles_encoder setDepthClipMode: MTLDepthClipModeClip];
     }
     
     if (gpu_shared_data_collection.
         triple_buffers[ags->frame_i].line_vertices_size > 0)
     {
-        [render_pass_1_encoder
+        [render_pass_1_draw_triangles_encoder
             setVertexBuffer:
                 ags->line_vertex_buffers[ags->frame_i]
             offset:
@@ -1348,7 +1369,7 @@ void platform_gpu_copy_locked_vertices(void)
         assert(gpu_shared_data_collection.
             triple_buffers[ags->frame_i].line_vertices_size <=
                 MAX_LINE_VERTICES);
-        [render_pass_1_encoder
+        [render_pass_1_draw_triangles_encoder
             drawPrimitives: MTLPrimitiveTypeLine
             vertexStart: 0
             vertexCount: gpu_shared_data_collection.
@@ -1358,7 +1379,7 @@ void platform_gpu_copy_locked_vertices(void)
     if (gpu_shared_data_collection.
         triple_buffers[ags->frame_i].point_vertices_size > 0)
     {
-        [render_pass_1_encoder
+        [render_pass_1_draw_triangles_encoder
             setVertexBuffer:
                 ags->point_vertex_buffers[ags->frame_i]
             offset:
@@ -1368,20 +1389,20 @@ void platform_gpu_copy_locked_vertices(void)
         assert(gpu_shared_data_collection.
             triple_buffers[ags->frame_i].point_vertices_size <=
                 MAX_POINT_VERTICES);
-        [render_pass_1_encoder
+        [render_pass_1_draw_triangles_encoder
             drawPrimitives: MTLPrimitiveTypePoint
             vertexStart: 0
             vertexCount: gpu_shared_data_collection.
                 triple_buffers[ags->frame_i].point_vertices_size];
     }
     
-    [render_pass_1_encoder endEncoding];
+    [render_pass_1_draw_triangles_encoder endEncoding];
     
     // copy the touch id buffer to a CPU buffer so we can query
     // what the top touchable_id is
-    id <MTLBlitCommandEncoder> blit_encoder =
+    id <MTLBlitCommandEncoder> blit_touch_texture_to_cpu_buffer_encoder =
         [command_buffer blitCommandEncoder];
-    [blit_encoder
+    [blit_touch_texture_to_cpu_buffer_encoder
         copyFromTexture: ags->touch_id_texture
         sourceSlice: 0
         sourceLevel: 0
@@ -1396,7 +1417,7 @@ void platform_gpu_copy_locked_vertices(void)
         destinationBytesPerRow: [ags->touch_id_texture width] * 8
         destinationBytesPerImage:
             [ags->touch_id_texture width] * [ags->touch_id_texture height] * 8];
-    [blit_encoder endEncoding];
+    [blit_touch_texture_to_cpu_buffer_encoder endEncoding];
     
     #if POSTPROCESSING_ACTIVE
     #define FLVERT 1.0f
@@ -1481,61 +1502,61 @@ void platform_gpu_copy_locked_vertices(void)
     }
     
     // Render pass 4 puts a quad on the full screen
-    MTLRenderPassDescriptor * render_pass_4_descriptor =
+    MTLRenderPassDescriptor * render_pass_4_composition_descriptor =
         [view currentRenderPassDescriptor];
     
-    render_pass_4_descriptor.colorAttachments[0].clearColor =
+    render_pass_4_composition_descriptor.colorAttachments[0].clearColor =
         MTLClearColorMake(0.0f, 0.0f, 0.0f, 1.0f);;
-    render_pass_4_descriptor.depthAttachment.loadAction =
+    render_pass_4_composition_descriptor.depthAttachment.loadAction =
         MTLLoadActionClear;
-    id<MTLRenderCommandEncoder> render_pass_4_encoder =
+    id<MTLRenderCommandEncoder> render_pass_4_composition =
         [command_buffer
             renderCommandEncoderWithDescriptor:
-                render_pass_4_descriptor];
+                render_pass_4_composition_descriptor];
     
-    [render_pass_4_encoder setViewport: ags->cached_viewport];
+    [render_pass_4_composition setViewport: ags->cached_viewport];
     
-    [render_pass_4_encoder setCullMode:MTLCullModeNone];
+    [render_pass_4_composition setCullMode:MTLCullModeNone];
     
-    [render_pass_4_encoder
+    [render_pass_4_composition
         setRenderPipelineState: ags->singlequad_pls];
     
-    [render_pass_4_encoder
+    [render_pass_4_composition
         setVertexBytes:&quad_vertices
         length:sizeof(quad_vertices)
         atIndex:0];
     
-    [render_pass_4_encoder
+    [render_pass_4_composition
         setVertexBuffer:ags->postprocessing_constants_buffers[ags->frame_i]
         offset:0
         atIndex:1];
     
-    [render_pass_4_encoder
+    [render_pass_4_composition
         setFragmentTexture: ags->render_target_texture
         atIndex:0];
     
-    [render_pass_4_encoder
+    [render_pass_4_composition
         setFragmentTexture: ags->downsampled_target_textures[0]
         atIndex:1];
-    [render_pass_4_encoder
+    [render_pass_4_composition
         setFragmentTexture: ags->downsampled_target_textures[1]
         atIndex:2];
-    [render_pass_4_encoder
+    [render_pass_4_composition
         setFragmentTexture: ags->downsampled_target_textures[2]
         atIndex:3];
-    [render_pass_4_encoder
+    [render_pass_4_composition
         setFragmentTexture: ags->downsampled_target_textures[3]
         atIndex:4];
-    [render_pass_4_encoder
+    [render_pass_4_composition
         setFragmentTexture: ags->downsampled_target_textures[4]
         atIndex:5];
     
-    [render_pass_4_encoder
+    [render_pass_4_composition
         drawPrimitives:MTLPrimitiveTypeTriangle
         vertexStart:0
         vertexCount:6];
     
-    [render_pass_4_encoder endEncoding];
+    [render_pass_4_composition endEncoding];
     
     // Schedule a present once the framebuffer is complete
     // using the current drawable
@@ -1551,7 +1572,7 @@ void platform_gpu_copy_locked_vertices(void)
     }];
     
     [command_buffer commit];
-    [command_buffer waitUntilCompleted];
+    // [command_buffer waitUntilCompleted];
     
     user_interactions[INTR_LAST_GPU_DATA].touchable_id_top =
         platform_gpu_get_touchable_id_at_screen_pos(

@@ -3,6 +3,7 @@
 
 #include "logger.h"
 #include "memorystore.h"
+#include "common.h"
 #include "cpu_gpu_shared_types.h"
 #include "cpu_to_gpu_types.h"
 #include "window_size.h"

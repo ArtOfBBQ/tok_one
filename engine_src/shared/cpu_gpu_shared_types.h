@@ -68,7 +68,8 @@ typedef struct GPUPolygon {
     float        scale_factor;
     float        ignore_lighting;
     float        ignore_camera;
-    float        simd_padding[5]; // make sure touchable_id is behind this
+    float        simd_padding[4]; // make sure touchable_id is behind this
+    uint32_t     remove_shadow;
     int          touchable_id;
 } GPUPolygon; // 24 floats (3 SIMD runs)
 

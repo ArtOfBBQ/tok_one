@@ -85,6 +85,15 @@ vertex float4 shadows_vertex_shader(
     
     uint polygon_i = vertices[vertex_i].polygon_i;
     
+    if (polygon_collection->polygons[polygon_i].remove_shadow) {
+        // early out by failing the depth test
+        return vector_float4(
+            0.0f,
+            0.0f,
+            projection_constants->zfar + 10.0f,
+            1.0f);
+    }
+    
     uint locked_vertex_i = vertices[vertex_i].locked_vertex_i;
     
     float3 parent_mesh_position = vector_float3(

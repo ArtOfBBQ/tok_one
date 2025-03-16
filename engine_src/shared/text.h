@@ -20,6 +20,7 @@ typedef struct FontSettings {
     bool32_t font_ignore_lighting;
     bool32_t ignore_camera;
     bool32_t alphablending;
+    bool32_t remove_shadow;
 } FontSettings;
 
 extern FontSettings * font_settings;
