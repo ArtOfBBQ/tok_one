@@ -771,19 +771,22 @@ void platform_gpu_init_texture_array(
     const int32_t texture_array_i,
     const uint32_t num_images,
     const uint32_t single_image_width,
-    const uint32_t single_image_height)
+    const uint32_t single_image_height,
+    const bool32_t use_bc1_compression)
 {
     assert(texture_array_i < 31);
     
     // we always overwrite textures, so pad them to match first
-    while ((int32_t)[ags->metal_textures count] <= texture_array_i) {
+    while ([ags->metal_textures count] <= texture_array_i) {
         MTLTextureDescriptor * texture_descriptor =
             [[MTLTextureDescriptor alloc] init];
         texture_descriptor.textureType = MTLTextureType2DArray;
         texture_descriptor.arrayLength = 1;
-        texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
-        texture_descriptor.width = 10;
-        texture_descriptor.height = 10;
+        texture_descriptor.pixelFormat = use_bc1_compression ?
+            MTLPixelFormatBC1_RGBA :
+            MTLPixelFormatRGBA8Unorm;
+        texture_descriptor.width = single_image_width;
+        texture_descriptor.height = single_image_height;
         id<MTLTexture> texture =
             [ags->device newTextureWithDescriptor:texture_descriptor];
         [ags->metal_textures addObject: texture];
@@ -793,7 +796,9 @@ void platform_gpu_init_texture_array(
         [[MTLTextureDescriptor alloc] init];
     texture_descriptor.textureType = MTLTextureType2DArray;
     texture_descriptor.arrayLength = num_images;
-    texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
+    texture_descriptor.pixelFormat = use_bc1_compression ?
+        MTLPixelFormatBC1_RGBA :
+        MTLPixelFormatRGBA8Unorm;
     texture_descriptor.width = single_image_width;
     texture_descriptor.height = single_image_height;
     
@@ -814,9 +819,12 @@ void platform_gpu_push_texture_slice(
     const uint32_t image_height,
     const uint8_t * rgba_values)
 {
-    if (rgba_values == NULL) {
-        return;
+    if (texture_array_i == 1 && texture_i == 113) {
+        printf("break here, should be fs_javelineer.png");
     }
+    
+    log_assert(rgba_values != NULL);
+    
     
     log_assert(texture_i >= 0);
     log_assert(texture_array_i >= 0);
@@ -846,6 +854,21 @@ void platform_gpu_push_texture_slice(
         { image_width, image_height, 1 }
     };
     
+    #ifndef LOGGER_IGNORE_ASSERTS
+    uint32_t total = 0;
+    uint32_t rgba_values_size = (image_width * image_height * 4);
+    for (uint32_t i = 0; i < rgba_values_size; i += 4) {
+        total +=
+            rgba_values[i + 0] +
+            rgba_values[i + 1] +
+            rgba_values[i + 2];
+        if (total > 0) {
+            break;
+        }
+    }
+    log_assert(texture_array_i == 0 || texture_array_i == 22 || texture_array_i == 25 || total > 0);
+    #endif
+    
     [[ags->metal_textures
         objectAtIndex:
             (NSUInteger)texture_array_i]
@@ -859,6 +882,44 @@ void platform_gpu_push_texture_slice(
             rgba_values
         bytesPerRow:
             image_width * 4
+        bytesPerImage:
+            /* docs: use 0 for anything other than
+               MTLTextureType3D textures */
+            0];
+}
+
+void platform_gpu_push_bc1_texture_slice(
+    const int32_t texture_array_i,
+    const int32_t texture_i,
+    const uint32_t parent_texture_array_images_size,
+    const uint32_t image_width,
+    const uint32_t image_height,
+    const uint8_t * bc1_values)
+{
+    (void)parent_texture_array_images_size;
+    
+    log_assert(texture_array_i != 0);
+    
+    uint32_t block_size = 8;
+    
+    MTLRegion region = {
+        { 0,0,0 },
+        { image_width, image_height, 1 }
+    };
+    
+    [[ags->metal_textures
+        objectAtIndex:
+            (NSUInteger)texture_array_i]
+        replaceRegion:
+            region
+        mipmapLevel:
+            0
+        slice:
+            (NSUInteger)texture_i
+        withBytes:
+            bc1_values
+        bytesPerRow:
+            ((image_width + 3) / 4) * block_size
         bytesPerImage:
             /* docs: use 0 for anything other than
                MTLTextureType3D textures */
@@ -1288,7 +1349,7 @@ void platform_gpu_copy_locked_vertices(void)
     #if SHADOWS_ACTIVE
     [render_pass_1_draw_triangles_encoder
         setFragmentTexture: ags->shadows_texture
-        atIndex: TEXTUREARRAYS_SIZE];
+        atIndex: SHADOWMAP_TEXTUREARRAY_I];
     #endif
     
     #ifndef IGNORE_LOGGER_ASSERTS

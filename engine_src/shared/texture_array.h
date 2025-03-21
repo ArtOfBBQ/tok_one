@@ -14,6 +14,18 @@ extern "C" {
 #endif
 
 void texture_array_init(void);
+
+int32_t texture_array_preinit_new_with_known_dimensions(
+    const uint32_t single_img_width,
+    const uint32_t single_img_height,
+    const uint32_t image_count,
+    const bool32_t use_bc1_compression);
+
+void texture_array_push_dds_image_to_preinitted(
+    const int32_t to_texturearray_i,
+    const int32_t to_texture_i,
+    const char * filename);
+
 void init_or_push_one_gpu_texture_array_if_needed(void);
 
 void register_new_texturearray_from_files(

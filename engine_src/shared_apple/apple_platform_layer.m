@@ -145,10 +145,13 @@ void platform_mkdir_if_not_exist(const char * dirname) {
     NSString * directory_path = [NSString
         stringWithCString:dirname
         encoding:NSASCIIStringEncoding];
+    
+    #ifndef NDEBUG
     NSURL * directory_url = [NSURL
         fileURLWithPath: directory_path
         isDirectory: true];
     assert(directory_url != NULL);
+    #endif
     
     if (
         ![[NSFileManager defaultManager]

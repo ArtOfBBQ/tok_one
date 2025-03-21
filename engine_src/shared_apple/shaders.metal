@@ -415,12 +415,15 @@ float3 get_lighting(
                 light_y_rotated,
                 light_angle_xyz[2]); // [0, 0, 1]
             
-            float4 light_clip_pos = project_float3_to_float4_perspective(
-                light_z_rotated,
-                projection_constants);
+            float4 light_clip_pos =
+                project_float3_to_float4_perspective(
+                    light_z_rotated,
+                    projection_constants);
             
             float2 shadow_uv =
-                ((light_clip_pos.xy / light_clip_pos.w) * 0.5f) + 0.5f;
+                ((light_clip_pos.xy / light_clip_pos.w) * 0.5f) +
+                    0.5f;
+            
             shadow_uv[1] = 1.0f - shadow_uv[1];
             float shadow_depth = shadow_map.sample(
                 shadow_sampler,
@@ -428,8 +431,9 @@ float3 get_lighting(
             
             float frag_depth = light_clip_pos.z / light_clip_pos.w;
             
-            shadow_factor = (frag_depth <= shadow_depth + 0.00002f) ?
-                1.0f : 0.25f;
+            shadow_factor =
+                (frag_depth <= shadow_depth + 0.00002f) ?
+                    1.0f : 0.25f;
         }
         
         float distance = get_distance(
@@ -514,7 +518,7 @@ fragment_shader(
     RasterizerPixel in [[stage_in]],
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
         color_textures[[ texture(0) ]],
-    texture2d<float> shadow_map [[texture(31)]],
+    texture2d<float> shadow_map [[texture(SHADOWMAP_TEXTUREARRAY_I)]],
     const device GPULightCollection * light_collection [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
@@ -558,8 +562,7 @@ fragment_shader(
     {
         if (
             polygon_materials[in.material_i].texturearray_i >= 31 ||
-            polygon_materials[in.material_i].texture_i < 0 ||
-            polygon_materials[in.material_i].texture_i > 100)
+            polygon_materials[in.material_i].texture_i < 0)
         {
             discard_fragment();
         }
@@ -619,7 +622,7 @@ alphablending_fragment_shader(
     RasterizerPixel in [[stage_in]],
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
         color_textures[[ texture(0) ]],
-    texture2d<float> shadow_map [[texture(31)]],
+    texture2d<float> shadow_map [[texture(SHADOWMAP_TEXTUREARRAY_I)]],
     const device GPULightCollection * light_collection [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
@@ -750,7 +753,7 @@ single_quad_fragment_shader(
     color_sample[3] = 1.0f;
     
     // reinhard tone mapping
-    color_sample = color_sample / (color_sample + 0.5f);
+    color_sample = color_sample / (color_sample + 0.20f);
     color_sample = clamp(color_sample, 0.0f, 1.0f);
     color_sample[3] = 1.0f;
     

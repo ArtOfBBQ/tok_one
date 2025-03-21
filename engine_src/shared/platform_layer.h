@@ -212,7 +212,8 @@ void platform_gpu_init_texture_array(
     const int32_t texture_array_i,
     const uint32_t num_images,
     const uint32_t single_image_width,
-    const uint32_t single_image_height);
+    const uint32_t single_image_height,
+    const bool32_t use_bc1_compression);
 
 void platform_gpu_push_texture_slice(
     const int32_t texture_array_i,
@@ -221,6 +222,14 @@ void platform_gpu_push_texture_slice(
     const uint32_t image_width,
     const uint32_t image_height,
     const uint8_t * rgba_values);
+
+void platform_gpu_push_bc1_texture_slice(
+    const int32_t texture_array_i,
+    const int32_t texture_i,
+    const uint32_t parent_texture_array_images_size,
+    const uint32_t image_width,
+    const uint32_t image_height,
+    const uint8_t * bc1_values);
 
 void platform_update_mouse_location(void);
 

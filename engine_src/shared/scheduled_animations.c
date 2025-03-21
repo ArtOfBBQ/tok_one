@@ -341,24 +341,24 @@ void request_shatter_and_destroy(
             duration_mod;
         shatter_effect->gpustats_pertime_random_add_1.xyz[2] = -xyz_dist *
             duration_mod;
-        shatter_effect->gpustats_pertime_random_add_1.xyz_angle[0] = xyz_angle *
-            duration_mod;
-        shatter_effect->gpustats_pertime_random_add_1.xyz_angle[1] = xyz_angle *
-            duration_mod;
-        shatter_effect->gpustats_pertime_random_add_1.xyz_angle[2] = xyz_angle *
-            duration_mod;
-        shatter_effect->gpustats_pertime_random_add_1.bonus_rgb[0] = rgb_delta *
-            duration_mod;
-        shatter_effect->gpustats_pertime_random_add_1.bonus_rgb[1] = rgb_delta *
-            duration_mod;
-        shatter_effect->gpustats_pertime_random_add_1.bonus_rgb[2] = rgb_delta *
-            duration_mod;
-        shatter_effect->gpustats_pertime_random_add_2.xyz[0] = xyz_dist *
-            duration_mod;
-        shatter_effect->gpustats_pertime_random_add_2.xyz[1] = xyz_dist *
-            duration_mod;
-        shatter_effect->gpustats_pertime_random_add_2.xyz[2] = xyz_dist *
-            duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.xyz_angle[0] =
+            xyz_angle * duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.xyz_angle[1] =
+            xyz_angle * duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.xyz_angle[2] =
+            xyz_angle * duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.bonus_rgb[0] =
+            rgb_delta * duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.bonus_rgb[1] =
+            rgb_delta * duration_mod;
+        shatter_effect->gpustats_pertime_random_add_1.bonus_rgb[2] =
+            rgb_delta * duration_mod;
+        shatter_effect->gpustats_pertime_random_add_2.xyz[0] =
+            xyz_dist * duration_mod;
+        shatter_effect->gpustats_pertime_random_add_2.xyz[1] =
+            xyz_dist * duration_mod;
+        shatter_effect->gpustats_pertime_random_add_2.xyz[2] =
+            xyz_dist * duration_mod;
         shatter_effect->gpustats_pertime_random_add_2.xyz_angle[0] =
             -xyz_angle * duration_mod;
         shatter_effect->gpustats_pertime_random_add_2.xyz_angle[1] =
@@ -372,6 +372,7 @@ void request_shatter_and_destroy(
         shatter_effect->generate_light = false;
         
         log_assert(!shatter_effect->zpolygon_cpu.alpha_blending_enabled);
+        
         commit_particle_effect(shatter_effect);
         
         zpolygons_to_render->cpu_data[zp_i].deleted = true;
