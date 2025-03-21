@@ -25,8 +25,12 @@ static void audio_callback(
         /* const uint32_t samples_to_copy: */
             samples_to_copy);
     
+    #ifndef NDEBUG
     OSStatus err = AudioQueueEnqueueBuffer(queue, buffer, 0, NULL);
     assert(!err);
+    #else
+    (void)queue;
+    #endif
 }
 
 void start_audio_loop(void) {
