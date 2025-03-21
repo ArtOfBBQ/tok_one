@@ -505,10 +505,13 @@ float3 get_lighting(
     
     return_value = clamp(return_value, 0.05f, 7.5f);
     
-    float3 all_ones = vector_float3(1.0f, 1.0f, 1.0f);
+    // float3 all_ones = vector_float3(1.0f, 1.0f, 1.0f);
     return_value =
         ((1.0f - ignore_lighting) * return_value) +
-        (ignore_lighting * all_ones);
+        (ignore_lighting * vector_float3(
+            fragment_material->rgba[0],
+            fragment_material->rgba[1],
+            fragment_material->rgba[2]));
     
     return return_value;
 }
