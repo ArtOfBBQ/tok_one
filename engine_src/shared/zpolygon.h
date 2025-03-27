@@ -37,7 +37,7 @@ typedef struct VertexMaterial {
 typedef struct zPolygonCPU {
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
     
-    int32_t object_id;
+    int32_t  sprite_id;
     bool32_t alpha_blending_enabled;
     bool32_t committed;
     bool32_t deleted;

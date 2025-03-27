@@ -136,7 +136,7 @@ void terminal_redraw_backgrounds(void) {
     current_command_input.gpu_data->ignore_lighting = true;
     current_command_input.cpu_data->alpha_blending_enabled = true;
     current_command_input.cpu_data->visible = terminal_active;
-    current_command_input.cpu_data->object_id = terminal_back_object_id;
+    current_command_input.cpu_data->sprite_id = terminal_back_object_id;
     current_command_input.gpu_data->touchable_id = -1;
     commit_zpolygon_to_render(&current_command_input);
     
@@ -180,7 +180,7 @@ void terminal_redraw_backgrounds(void) {
     current_command_input.cpu_data->alpha_blending_enabled = true;
     current_command_input.gpu_data->ignore_camera = true;
     current_command_input.gpu_data->ignore_lighting = true;
-    current_command_input.cpu_data->object_id = INT32_MAX;
+    current_command_input.cpu_data->sprite_id = INT32_MAX;
     current_command_input.gpu_data->touchable_id = -1;
     
     commit_zpolygon_to_render(&current_command_input);

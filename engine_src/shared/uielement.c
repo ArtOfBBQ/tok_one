@@ -119,7 +119,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                         zp_i < zpolygons_to_render->size;
                         zp_i++)
                     {
-                        if (zpolygons_to_render->cpu_data[zp_i].object_id ==
+                        if (zpolygons_to_render->cpu_data[zp_i].sprite_id ==
                             currently_sliding_object_id)
                         {
                             zpolygons_to_render->gpu_data[zp_i].scale_factor =
@@ -129,13 +129,13 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                     
                     ScheduledAnimation * bump_pin =
                         next_scheduled_animation(true);
-                    bump_pin->affected_object_id = currently_sliding_object_id;
+                    bump_pin->affected_sprite_id = currently_sliding_object_id;
                     bump_pin->gpu_polygon_vals.scale_factor = 1.20f;
                     bump_pin->duration_microseconds = 20;
                     commit_scheduled_animation(bump_pin);
                     
                     bump_pin = next_scheduled_animation(true);
-                    bump_pin->affected_object_id = currently_sliding_object_id;
+                    bump_pin->affected_sprite_id = currently_sliding_object_id;
                     bump_pin->gpu_polygon_vals.scale_factor = 1.0f;
                     bump_pin->wait_before_each_run = 20;
                     bump_pin->duration_microseconds = 200000;
@@ -148,14 +148,14 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                     
                     ScheduledAnimation * bump =
                         next_scheduled_animation(true);
-                    bump->affected_object_id = currently_clicking_object_id;
+                    bump->affected_sprite_id = currently_clicking_object_id;
                     bump->gpu_polygon_vals.scale_factor = 1.25f;
                     bump->duration_microseconds = 40;
                     commit_scheduled_animation(bump);
                     
                     ScheduledAnimation * flatten =
                         next_scheduled_animation(true);
-                    flatten->affected_object_id = currently_clicking_object_id;
+                    flatten->affected_sprite_id = currently_clicking_object_id;
                     flatten->gpu_polygon_vals.scale_factor = 1.0f;
                     flatten->wait_before_each_run = 50;
                     flatten->duration_microseconds = 250000;
@@ -209,7 +209,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
             {
                 if (
                     active_ui_elements[ui_elem_i].slideable &&
-                    zpolygons_to_render->cpu_data[zp_i].object_id ==
+                    zpolygons_to_render->cpu_data[zp_i].sprite_id ==
                         currently_sliding_object_id)
                 {
                     // set slider value
@@ -352,7 +352,7 @@ static void request_slider_shared(
         /* zPolygon * recipient: */
             &slider_back);
     
-    slider_back.cpu_data->object_id = background_object_id;
+    slider_back.cpu_data->sprite_id = background_object_id;
     
     slider_back.gpu_materials[0].texturearray_i =
         next_ui_element_settings->slider_background_texturearray_i;
@@ -397,7 +397,7 @@ static void request_slider_shared(
         /* zPolygon * recipient: */
             &slider_pin);
     
-    slider_pin.cpu_data->object_id = pin_object_id;
+    slider_pin.cpu_data->sprite_id = pin_object_id;
     
     slider_pin.gpu_data->xyz_offset[0] =
         windowsize_screenspace_width_to_width(
@@ -572,7 +572,7 @@ void request_button(
         /* PolygonRequest * stack_recipient: */
             &button_request);
     
-    button_request.cpu_data->object_id = button_object_id;
+    button_request.cpu_data->sprite_id = button_object_id;
     button_request.gpu_data->touchable_id = next_ui_element_touchable_id();
     button_request.gpu_data->ignore_camera =
         next_ui_element_settings->ignore_camera;

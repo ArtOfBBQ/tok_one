@@ -47,7 +47,7 @@ static void construct_scheduled_animationA(
     common_memset_char(to_construct, 0, sizeof(ScheduledAnimation));
     log_assert(!to_construct->committed);
     
-    to_construct->affected_object_id = -1;
+    to_construct->affected_sprite_id = -1;
     to_construct->affected_touchable_id = -1;
     
     if (final_values_not_adds) {
@@ -126,7 +126,7 @@ void commit_scheduled_animation(ScheduledAnimation * to_commit) {
     log_assert(to_commit->duration_microseconds > 0);
     log_assert(to_commit->remaining_microseconds == 0);
     
-    if (to_commit->affected_object_id < 0) {
+    if (to_commit->affected_sprite_id < 0) {
         if (to_commit->clientlogic_callback_when_finished_id < 0) {
             log_assert(to_commit->affected_touchable_id >= 0);
         }
@@ -135,10 +135,10 @@ void commit_scheduled_animation(ScheduledAnimation * to_commit) {
     }
     if (to_commit->affected_touchable_id < 0) {
         if (to_commit->clientlogic_callback_when_finished_id < 0) {
-            log_assert(to_commit->affected_object_id >= 0);
+            log_assert(to_commit->affected_sprite_id >= 0);
         }
     } else {
-        log_assert(to_commit->affected_object_id == -1);
+        log_assert(to_commit->affected_sprite_id == -1);
     }
     
     to_commit->remaining_microseconds = to_commit->duration_microseconds;
@@ -146,9 +146,9 @@ void commit_scheduled_animation(ScheduledAnimation * to_commit) {
     if (to_commit->delete_other_anims_targeting_same_object_id_on_commit) {
         for (uint32_t i = 0; i < scheduled_animations_size; i++) {
             if (
-                scheduled_animations[i].affected_object_id >= 0 &&
-                scheduled_animations[i].affected_object_id ==
-                    to_commit->affected_object_id &&
+                scheduled_animations[i].affected_sprite_id >= 0 &&
+                scheduled_animations[i].affected_sprite_id ==
+                    to_commit->affected_sprite_id &&
                 scheduled_animations[i].committed &&
                 !scheduled_animations[i].deleted &&
                 to_commit != &scheduled_animations[i])
@@ -180,7 +180,7 @@ void request_evaporate_and_destroy(
         if (
             zpolygons_to_render->cpu_data[zp_i].deleted ||
             !zpolygons_to_render->cpu_data[zp_i].committed ||
-            zpolygons_to_render->cpu_data[zp_i].object_id != object_id)
+            zpolygons_to_render->cpu_data[zp_i].sprite_id != object_id)
         {
             continue;
         }
@@ -265,7 +265,7 @@ void request_shatter_and_destroy(
     {
         if (zpolygons_to_render->cpu_data[zp_i].deleted ||
             !zpolygons_to_render->cpu_data[zp_i].committed ||
-            zpolygons_to_render->cpu_data[zp_i].object_id != object_id)
+            zpolygons_to_render->cpu_data[zp_i].sprite_id != object_id)
         {
             continue;
         }
@@ -388,7 +388,7 @@ void request_fade_and_destroy(
     
     // register scheduled animation
     ScheduledAnimation * fade_destroy = next_scheduled_animation(true);
-    fade_destroy->affected_object_id = object_id;
+    fade_destroy->affected_sprite_id = object_id;
     fade_destroy->remaining_wait_before_next_run = wait_before_first_run;
     fade_destroy->duration_microseconds = duration_microseconds;
     fade_destroy->lightsource_vals.reach = 0.0f;
@@ -407,7 +407,7 @@ void request_fade_to(
     
     // register scheduled animation
     ScheduledAnimation * modify_alpha = next_scheduled_animation(true);
-    modify_alpha->affected_object_id = object_id;
+    modify_alpha->affected_sprite_id = object_id;
     modify_alpha->remaining_wait_before_next_run = wait_before_first_run;
     modify_alpha->duration_microseconds = duration_microseconds;
     modify_alpha->gpu_polygon_material_vals.rgba[3] = target_alpha;
@@ -495,9 +495,9 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
             zp_i++)
         {
             if (
-                (anim->affected_object_id >= 0 &&
-                zpolygons_to_render->cpu_data[zp_i].object_id !=
-                    anim->affected_object_id) ||
+                (anim->affected_sprite_id >= 0 &&
+                zpolygons_to_render->cpu_data[zp_i].sprite_id !=
+                    anim->affected_sprite_id) ||
                 (anim->affected_touchable_id >= 0 &&
                 zpolygons_to_render->gpu_data[zp_i].touchable_id !=
                     anim->affected_touchable_id)
@@ -756,7 +756,7 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
         {
             if (
                 zlights_to_apply[light_i].object_id !=
-                    anim->affected_object_id ||
+                    anim->affected_sprite_id ||
                 zlights_to_apply[light_i].deleted ||
                 !zlights_to_apply[light_i].committed)
             {
@@ -880,11 +880,11 @@ void resolve_animation_effects(const uint64_t microseconds_elapsed) {
             }
             
             if (anim->delete_object_when_finished) {
-                delete_zlight(anim->affected_object_id);
+                delete_zlight(anim->affected_sprite_id);
                 
-                delete_zpolygon_object(anim->affected_object_id);
+                delete_zpolygon_object(anim->affected_sprite_id);
                 
-                delete_particle_effect(anim->affected_object_id);
+                delete_particle_effect(anim->affected_sprite_id);
             }
         }
     }
@@ -915,7 +915,7 @@ void request_dud_dance(
         uint64_t wait_extra = step * step_size;
         
         ScheduledAnimation * move_request = next_scheduled_animation(false);
-        move_request->affected_object_id = (int32_t)object_id;
+        move_request->affected_sprite_id = (int32_t)object_id;
         move_request->remaining_wait_before_next_run = wait_extra;
         move_request->duration_microseconds = step_size - 2000;
         move_request->gpu_polygon_vals.xyz[0] = step % 2 == 0 ? delta : -delta;
@@ -932,14 +932,14 @@ void request_bump_animation(
     uint64_t duration = 150000;
     
     ScheduledAnimation * embiggen_request = next_scheduled_animation(true);
-    embiggen_request->affected_object_id = (int32_t)object_id;
+    embiggen_request->affected_sprite_id = (int32_t)object_id;
     embiggen_request->remaining_wait_before_next_run = wait;
     embiggen_request->duration_microseconds = duration / 5;
     embiggen_request->gpu_polygon_vals.scale_factor = 1.35f;
     commit_scheduled_animation(embiggen_request);
     
     ScheduledAnimation * revert_request = next_scheduled_animation(true);
-    revert_request->affected_object_id = (int32_t)object_id;
+    revert_request->affected_sprite_id = (int32_t)object_id;
     revert_request->remaining_wait_before_next_run = wait + duration / 2;
     revert_request->duration_microseconds = (duration / 5) * 4;
     revert_request->gpu_polygon_vals.scale_factor = 1.0f;
@@ -967,7 +967,7 @@ void delete_all_movement_animations_targeting(
     for (uint32_t i = 0; i < scheduled_animations_size; i++) {
         if (
             !scheduled_animations[i].deleted &&
-            scheduled_animations[i].affected_object_id == (int32_t)object_id &&
+            scheduled_animations[i].affected_sprite_id == (int32_t)object_id &&
             (
                 (((scheduled_animations[i].final_values_not_adds &&
                 scheduled_animations[i].gpu_polygon_vals.xyz[0] !=
@@ -992,7 +992,7 @@ void delete_all_rgba_animations_targeting(
     for (uint32_t i = 0; i < scheduled_animations_size; i++) {
         if (
             !scheduled_animations[i].deleted &&
-            scheduled_animations[i].affected_object_id == (int32_t)object_id &&
+            scheduled_animations[i].affected_sprite_id == (int32_t)object_id &&
             scheduled_animations[i].final_values_not_adds &&
             (scheduled_animations[i].gpu_polygon_material_vals.rgba[0] !=
                  FLT_SCHEDULEDANIM_IGNORE ||
@@ -1015,7 +1015,7 @@ void delete_all_animations_targeting(const int32_t object_id) {
         if (
             !scheduled_animations[i].deleted &&
             scheduled_animations[i].committed &&
-            scheduled_animations[i].affected_object_id == object_id)
+            scheduled_animations[i].affected_sprite_id == object_id)
         {
             scheduled_animations[i].deleted = true;
         }

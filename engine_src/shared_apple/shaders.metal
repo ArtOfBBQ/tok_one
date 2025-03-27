@@ -377,7 +377,14 @@ float3 get_lighting(
     float3 fragment_normal,
     float ignore_lighting)
 {
-    float3 return_value = float3(0.0f, 0.0f, 0.0f);
+    float3 return_value = vector_float3(
+        fragment_material->rgba[0],
+        fragment_material->rgba[1],
+        fragment_material->rgba[2]);
+    
+    if (ignore_lighting >= 0.95f) { return return_value; }
+    
+    float3 light_multiplier = vector_float3(0.0f, 0.0f, 0.0f);
     
     for (
         uint32_t i = 0;
@@ -450,7 +457,7 @@ float3 get_lighting(
         
         attenuation = clamp(attenuation, 0.00f, 1.00f);
         
-        return_value += (
+        light_multiplier += (
             attenuation *
             light_color *
             light_collection->ambient[i] *
@@ -470,7 +477,7 @@ float3 get_lighting(
                     object_to_light),
                 0.0f);
         
-        return_value += (
+        light_multiplier += (
             light_color *
             attenuation *
             light_collection->diffuse[i] *
@@ -494,7 +501,7 @@ float3 get_lighting(
                 dot(object_to_view, reflection_ray),
                 0.0),
             32);
-        return_value += (
+        light_multiplier += (
             fragment_material->specular *
             specular_dot *
             light_color *
@@ -503,15 +510,12 @@ float3 get_lighting(
             shadow_factor);
     }
     
-    return_value = clamp(return_value, 0.05f, 7.5f);
+    light_multiplier = clamp(light_multiplier, 0.05f, 7.5f);
     
     // float3 all_ones = vector_float3(1.0f, 1.0f, 1.0f);
-    return_value =
-        ((1.0f - ignore_lighting) * return_value) +
-        (ignore_lighting * vector_float3(
-            fragment_material->rgba[0],
-            fragment_material->rgba[1],
-            fragment_material->rgba[2]));
+    return_value *=
+        ((1.0f - ignore_lighting) * light_multiplier) +
+        (ignore_lighting * vector_float3(0.75f, 0.75f, 0.75f));
     
     return return_value;
 }

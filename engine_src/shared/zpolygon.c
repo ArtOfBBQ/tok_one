@@ -108,7 +108,7 @@ bool32_t fetch_zpolygon_by_object_id(
     {
         if (
             !zpolygons_to_render->cpu_data[zp_i].deleted &&
-            zpolygons_to_render->cpu_data[zp_i].object_id == object_id)
+            zpolygons_to_render->cpu_data[zp_i].sprite_id == object_id)
         {
             recipient->cpu_data = &zpolygons_to_render->cpu_data[zp_i];
             recipient->gpu_data = &zpolygons_to_render->gpu_data[zp_i];
@@ -124,10 +124,10 @@ bool32_t fetch_zpolygon_by_object_id(
 void delete_zpolygon_object(const int32_t with_object_id)
 {
     for (uint32_t i = 0; i < zpolygons_to_render->size; i++) {
-        if (zpolygons_to_render->cpu_data[i].object_id == with_object_id)
+        if (zpolygons_to_render->cpu_data[i].sprite_id == with_object_id)
         {
             zpolygons_to_render->cpu_data[i].deleted   = true;
-            zpolygons_to_render->cpu_data[i].object_id = -1;
+            zpolygons_to_render->cpu_data[i].sprite_id = -1;
         }
     }
 }
@@ -222,7 +222,7 @@ void construct_zpolygon(
     to_construct->gpu_data->touchable_id = -1;
     
     to_construct->cpu_data->mesh_id = -1;
-    to_construct->cpu_data->object_id = -1;
+    to_construct->cpu_data->sprite_id = -1;
     to_construct->cpu_data->visible = true;
     
     for (uint32_t i = 0; i < MAX_MATERIALS_PER_POLYGON; i++) {

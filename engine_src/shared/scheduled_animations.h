@@ -37,7 +37,7 @@ typedef struct ScheduledAnimation {
     uint64_t remaining_wait_before_next_run; // gets reset by above each run
                                              // can be used as wait before 1st
                                              // run
-    int32_t affected_object_id;
+    int32_t affected_sprite_id;
     int32_t affected_touchable_id;
     uint32_t runs; // 0 to repeat forever, 1 to run 1x, 2 to run 2x etc
     bool32_t delete_object_when_finished;
