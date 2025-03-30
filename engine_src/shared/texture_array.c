@@ -988,11 +988,6 @@ void texture_array_decode_all_null_images(void)
         
         log_assert(texture_arrays[i].images[j].image != NULL);
         log_assert(texture_arrays[i].images[j].filename[0] != '\0');
-        
-        if (i == 1 && j == 113) {
-            printf("break here and watch request_update");
-            printf("kk");
-        }
     }
 }
 
