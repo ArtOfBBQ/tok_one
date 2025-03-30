@@ -820,12 +820,7 @@ void platform_gpu_push_texture_slice(
     const uint32_t image_height,
     const uint8_t * rgba_values)
 {
-    if (texture_array_i == 1 && texture_i == 113) {
-        printf("break here, should be fs_javelineer.png");
-    }
-    
     log_assert(rgba_values != NULL);
-    
     
     log_assert(texture_i >= 0);
     log_assert(texture_array_i >= 0);

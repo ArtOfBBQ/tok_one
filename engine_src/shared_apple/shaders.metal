@@ -701,6 +701,7 @@ struct PostProcessingFragment
     float2 screen_width_height;
     float blur_pct;
     float nonblur_pct;
+    float color_quantization;
     unsigned int curtime;
 };
 
@@ -732,6 +733,8 @@ single_quad_vertex_shader(
     
     out.nonblur_pct = constants->nonblur_pct;
     
+    out.color_quantization = constants->color_quantization;
+    
     return out;
 }
 
@@ -762,6 +765,12 @@ single_quad_fragment_shader(
     // reinhard tone mapping
     color_sample = color_sample / (color_sample + 0.20f);
     color_sample = clamp(color_sample, 0.0f, 1.0f);
+    
+    if (in.color_quantization > 1.0f) {
+        color_sample = floor(color_sample * in.color_quantization) /
+            (in.color_quantization - 1.0h);
+    }
+    
     color_sample[3] = 1.0f;
     
     return vector_float4(color_sample);

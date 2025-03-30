@@ -24,7 +24,7 @@ void texture_array_push_dds_image_to_preinitted(
 
 void texture_array_gpu_try_push(void);
 
-void register_new_texturearray_by_splitting_file(
+void texture_array_register_new_by_splitting_file(
     const char * filename,
     const uint32_t rows,
     const uint32_t columns);

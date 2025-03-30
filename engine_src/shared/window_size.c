@@ -104,7 +104,7 @@ void windowsize_init(void) {
     window_globals->pause_profiler        = false;
     window_globals->block_mouse           = false;
     
-    window_globals->pixelation_div = 2;
+    window_globals->pixelation_div = 8;
     
     window_globals->postprocessing_constants.timestamp = 0;
     window_globals->postprocessing_constants.blur_pct = 0.18f;
@@ -113,6 +113,7 @@ void windowsize_init(void) {
         window_globals->window_height;
     window_globals->postprocessing_constants.screen_width =
         window_globals->window_width;
+    window_globals->postprocessing_constants.color_quantization = 1.0f;
     
     window_globals->last_clickray_origin[0]    = 0.0f;
     window_globals->last_clickray_origin[1]    = 0.0f;

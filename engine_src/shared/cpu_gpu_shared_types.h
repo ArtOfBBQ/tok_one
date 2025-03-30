@@ -142,6 +142,7 @@ typedef struct GPUPostProcessingConstants
     float screen_height;
     float nonblur_pct;
     float blur_pct;
+    float color_quantization;
 } GPUPostProcessingConstants;
 
 typedef struct GPURawVertex {
