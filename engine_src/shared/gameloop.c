@@ -199,7 +199,7 @@ void gameloop_update_before_render_pass(
         
         client_logic_update(elapsed);
         
-        init_or_push_one_gpu_texture_array_if_needed();
+        texture_array_gpu_try_push();
     }
     
     if (window_globals->draw_fps) {

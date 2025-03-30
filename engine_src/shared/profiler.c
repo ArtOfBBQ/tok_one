@@ -328,7 +328,7 @@ void profiler_draw_labels(void) {
                 window_globals->window_height,
             /* PolygonRequest *stack_recipient: */
                 &profiler_backdrop);
-        profiler_backdrop.cpu_data->object_id = profiler_object_id;
+        profiler_backdrop.cpu_data->sprite_id = profiler_object_id;
         profiler_backdrop.gpu_data->ignore_camera = 1.0f;
         profiler_backdrop.gpu_data->ignore_lighting = 1.0f;
         profiler_backdrop.materials_size = 1;

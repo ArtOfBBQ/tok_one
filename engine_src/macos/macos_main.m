@@ -525,7 +525,9 @@ int main(int argc, const char * argv[]) {
         
         platform_request_messagebox(errmsg2);
     } else {
-        load_font_images();
+        // TODO: why is this here again? load font images on each platform
+        // think about startup cases where we fail to load the font or gpu
+        texture_array_load_font_images();
         
         client_logic_early_startup(&success, errmsg);
         

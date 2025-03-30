@@ -465,62 +465,6 @@ static void register_to_texturearray_from_images(
     platform_mutex_unlock(texture_arrays_mutex_ids[target_texture_array_i]);
 }
 
-static void register_new_texturearray_from_images(
-    DecodedImage ** new_images,
-    const char ** new_img_filenames,
-    const uint32_t new_images_size)
-{
-    int32_t new_i = (int32_t)texture_arrays_size;
-    log_assert(new_i < TEXTUREARRAYS_SIZE);
-    texture_arrays_size++;
-    log_assert(texture_arrays_size <= TEXTUREARRAYS_SIZE);
-    
-    register_to_texturearray_from_images(
-        new_i,
-        new_images,
-        new_img_filenames,
-        new_images_size);
-}
-
-// returns new_texture_array_i (index in texture_arrays)
-void register_new_texturearray_from_files(
-    const char ** filenames,
-    const uint32_t filenames_size)
-{
-    uint32_t decoded_images_size = filenames_size;
-    log_assert(decoded_images_size < MAX_FILES_IN_SINGLE_TEXARRAY);
-    DecodedImage * decoded_images[MAX_FILES_IN_SINGLE_TEXARRAY];   
-    
-    for (
-        uint32_t i = 0;
-        i < filenames_size;
-        i++)
-    {
-        DecodedImage * new_image;
-        if (platform_resource_exists(filenames[i])) {
-            new_image =
-                malloc_img_from_filename(filenames[i]);
-        } else {
-            new_image = (DecodedImage *)
-                malloc_from_unmanaged(sizeof(DecodedImage));
-            new_image->good = false;
-            set_unallocated_to_error_image(new_image);
-        }
-        
-        log_assert(new_image->good);
-        decoded_images[i] = new_image;
-    }
-    
-    DecodedImage ** decoded_images_dblptr = decoded_images;
-    register_new_texturearray_from_images(
-        /* DecodedImage ** new_images : */
-            decoded_images_dblptr,
-        /* new_img_filenames: */
-            filenames,
-        /* new_images_size            : */
-            decoded_images_size);
-}
-
 void texture_array_init(void) {
     
     // initialize texture arrays
@@ -545,7 +489,7 @@ void texture_array_init(void) {
     }
 }
 
-void init_or_push_one_gpu_texture_array_if_needed(void) {
+void texture_array_gpu_try_push(void) {
     for (
         int32_t i = 0;
         (uint32_t)i < texture_arrays_size;
@@ -677,32 +621,6 @@ static void register_to_texturearray_by_splitting_image(
             rows * columns);
 }
 
-void register_to_texturearray_by_splitting_file(
-    const char * filename,
-    const int32_t texture_array_i,
-    const uint32_t rows,
-    const uint32_t columns)
-{
-    DecodedImage * img = malloc_img_from_filename(filename);
-    
-    register_to_texturearray_by_splitting_image(
-        img,
-        texture_array_i,
-        rows,
-        columns);
-    
-    for (
-        uint32_t i = 0;
-        i < texture_arrays[texture_array_i].images_size;
-        i++)
-    {
-        common_strcpy_capped(
-            texture_arrays[texture_array_i].images[i].filename,
-            256,
-            filename);
-    }
-}
-
 static void register_new_texturearray_by_splitting_image(
     DecodedImage * new_image,
     const uint32_t rows,
@@ -736,44 +654,7 @@ void register_new_texturearray_by_splitting_file(
         columns);
 }
 
-void update_texture_slice_from_file_with_memory(
-    const char * filename,
-    const int32_t at_texture_array_i,
-    const int32_t at_texture_i)
-{
-    DecodedImage * img =
-        malloc_img_from_filename(
-            filename);
-    
-    update_texture_slice(
-        img,
-        at_texture_array_i,
-        at_texture_i);
-}
-
-void update_texture_slice(
-    DecodedImage * new_image,
-    const int32_t at_texture_array_i,
-    const int32_t at_texture_i)
-{
-    log_assert(
-        at_texture_array_i >= 0);
-    log_assert(
-        at_texture_array_i < (int)texture_arrays_size);
-    log_assert(
-        at_texture_i >= 0);
-    log_assert(
-        at_texture_i < (int)texture_arrays[at_texture_array_i].images_size);
-    
-    texture_arrays[at_texture_array_i].images[at_texture_i].image =
-        new_image;
-    texture_arrays[at_texture_array_i]
-        .images[at_texture_i].request_update = true;
-    texture_arrays[at_texture_array_i]
-        .images[at_texture_i].prioritize_asset_load = false;
-}
-
-void register_high_priority_if_unloaded(
+void texture_array_register_high_priority_if_unloaded(
     const int32_t texture_array_i,
     const int32_t texture_i)
 {
@@ -793,7 +674,7 @@ void register_high_priority_if_unloaded(
     }
 }
 
-void preregister_null_image(
+void texture_array_preregister_null_image(
     char * filename,
     const uint32_t height,
     const uint32_t width)
@@ -845,38 +726,7 @@ void preregister_null_image(
         filename);
 }
 
-void preregister_file_as_null_image(char * filename) {
-    FileBuffer png_file;
-    png_file.size_without_terminator = 40; // read first 40 bytes only
-    char png_file_contents[40];
-    png_file.contents = (char *)&png_file_contents;
-    platform_read_resource_file(
-        /* filename: */ filename,
-        /* out_preallocatedbuffer: */ &png_file);
-    
-    uint32_t width;
-    uint32_t height;
-    uint32_t png_width_height_success = false;
-    get_PNG_width_height(
-        /* compressed_bytes: */
-            (uint8_t *)png_file.contents,
-        /* compressed_bytes_size: */
-            40,
-        /* out_width: */
-            &width,
-        /* out_height: */
-            &height,
-        /* out_good: */
-            &png_width_height_success);
-    
-    log_assert(png_width_height_success);
-    log_assert(width > 0);
-    log_assert(height > 0);
-    
-    preregister_null_image(filename, height, width);
-}
-
-void get_texture_location(
+void texture_array_get_filename_location(
     char * for_filename,
     int32_t * texture_array_i_recipient,
     int32_t * texture_i_recipient)
@@ -902,7 +752,7 @@ void get_texture_location(
     *texture_i_recipient       = -1;
 }
 
-void decode_null_image_at(
+void texture_array_decode_null_image_at(
     const int32_t texture_array_i,
     const int32_t texture_i)
 {
@@ -985,7 +835,7 @@ void decode_null_image_at(
     platform_mutex_unlock(texture_arrays_mutex_ids[i]);
 }
 
-void load_font_images(void) {
+void texture_array_load_font_images(void) {
     
     // Don't call this, the engine should call it
     assert(texture_arrays_size == 0);
@@ -1026,7 +876,7 @@ void load_font_images(void) {
     texture_arrays[0].request_init = false;
 }
 
-void decode_all_null_images(void)
+void texture_array_decode_all_null_images(void)
 {
     while (application_running) {
         int32_t priority_png_texturearray_i = -1;
@@ -1070,7 +920,7 @@ void decode_all_null_images(void)
                             log_append("decoding image: ");
                             log_append(texture_arrays[i].images[j].filename);
                             log_append_char('\n');
-                            decode_null_image_at(
+                            texture_array_decode_null_image_at(
                                 /* const int32_t texture_array_i: */ i,
                                 /* const int32_t texture_i: */ j);
                             continue;
@@ -1130,7 +980,7 @@ void decode_all_null_images(void)
             printf("break here");
         }
         
-        decode_null_image_at(
+        texture_array_decode_null_image_at(
             /* const int32_t texture_array_i: */
                 i,
             /* const int32_t texture_i: */
@@ -1146,54 +996,8 @@ void decode_all_null_images(void)
     }
 }
 
-void flag_all_texture_arrays_to_request_gpu_init(void) {
+void texture_array_flag_all_to_request_gpu_init(void) {
     for (uint32_t i = 1; i < texture_arrays_size; i++) {
         texture_arrays[i].request_init = true;
     }
-}
-
-bool32_t texture_has_alpha_channel(
-    const int32_t texturearray_i,
-    const int32_t texture_i)
-{
-    if (texturearray_i < 0 || texture_i < 0) {
-        log_assert(texturearray_i < 0 && texture_i < 0);
-        return HAS_ALPHA_NO;
-    }
-    
-    log_assert(texturearray_i < (int32_t)texture_arrays_size);
-    
-    if (
-        texture_arrays[texturearray_i].images[texture_i].has_alpha_channel ==
-            HAS_ALPHA_UNCHECKED)
-    {
-        log_assert(
-            texture_i < (int32_t)texture_arrays[texturearray_i].images_size);
-        
-        if (texture_arrays[texturearray_i].images[texture_i].image == NULL) {
-            return HAS_ALPHA_NO;
-        }
-        
-        texture_arrays[texturearray_i].
-            images[texture_i].
-            has_alpha_channel = HAS_ALPHA_NO;
-        
-        for (
-            uint32_t i = 3;
-            i < texture_arrays[texturearray_i].
-                images[texture_i].image->rgba_values_size;
-            i += 4)
-        {
-            if (texture_arrays[texturearray_i].
-                images[texture_i].
-                image->rgba_values[i] < 255)
-            {
-                texture_arrays[texturearray_i].
-                    images[texture_i].has_alpha_channel = HAS_ALPHA_YES;
-                break;
-            }
-        }
-    }
-    
-    return texture_arrays[texturearray_i].images[texture_i].has_alpha_channel;
 }

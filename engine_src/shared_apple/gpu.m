@@ -774,10 +774,11 @@ void platform_gpu_init_texture_array(
     const uint32_t single_image_height,
     const bool32_t use_bc1_compression)
 {
+    assert(texture_array_i >= 0);
     assert(texture_array_i < 31);
     
     // we always overwrite textures, so pad them to match first
-    while ([ags->metal_textures count] <= texture_array_i) {
+    while ([ags->metal_textures count] <= (uint32_t)texture_array_i) {
         MTLTextureDescriptor * texture_descriptor =
             [[MTLTextureDescriptor alloc] init];
         texture_descriptor.textureType = MTLTextureType2DArray;
@@ -853,21 +854,6 @@ void platform_gpu_push_texture_slice(
         { 0,0,0 },
         { image_width, image_height, 1 }
     };
-    
-    #ifndef LOGGER_IGNORE_ASSERTS
-    uint32_t total = 0;
-    uint32_t rgba_values_size = (image_width * image_height * 4);
-    for (uint32_t i = 0; i < rgba_values_size; i += 4) {
-        total +=
-            rgba_values[i + 0] +
-            rgba_values[i + 1] +
-            rgba_values[i + 2];
-        if (total > 0) {
-            break;
-        }
-    }
-    log_assert(texture_array_i == 0 || texture_array_i == 22 || texture_array_i == 25 || total > 0);
-    #endif
     
     [[ags->metal_textures
         objectAtIndex:

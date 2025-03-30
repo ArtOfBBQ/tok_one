@@ -76,7 +76,7 @@ void commit_zpolygon_to_render(
     {
         if (to_commit->gpu_materials[mat_i].texturearray_i >= 0) {
             log_assert(to_commit->gpu_materials[mat_i].texture_i >= 0);
-            register_high_priority_if_unloaded(
+            texture_array_register_high_priority_if_unloaded(
                 to_commit->gpu_materials[mat_i].texturearray_i,
                 to_commit->gpu_materials[mat_i].texture_i);
         }
