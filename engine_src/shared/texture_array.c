@@ -199,6 +199,10 @@ static DecodedImage * malloc_img_from_filename(
     file_buffer.contents =
         (char *)malloc_from_managed(sizeof(char) *
             file_buffer.size_without_terminator + 1);
+    common_memset_char(
+        file_buffer.contents,
+        0,
+        file_buffer.size_without_terminator + 1);
     
     platform_read_resource_file(
         filename,
@@ -286,6 +290,10 @@ static DecodedImage * malloc_img_from_filename(
         new_image->rgba_values_size = new_image->pixel_count * 4;
         new_image->rgba_values = malloc_from_managed(
             new_image->rgba_values_size);
+        common_memset_char(
+            new_image->rgba_values,
+            0,
+            new_image->rgba_values_size);
         
         decode_BMP(
             /* raw_input: */ (uint8_t *)file_buffer.contents,
@@ -332,8 +340,7 @@ static DecodedImage * extract_image(
     log_assert(y <= sprite_rows);
     if (!application_running) { return NULL; }
     
-    DecodedImage * new_image = malloc_from_unmanaged(
-        sizeof(DecodedImage));
+    DecodedImage * new_image = malloc_from_unmanaged(sizeof(DecodedImage));
     log_assert(new_image != NULL);
     
     #ifndef LOGGER_IGNORE_ASSERTS
@@ -360,6 +367,7 @@ static DecodedImage * extract_image(
     
     new_image->rgba_values_size = slice_size_bytes;
     new_image->rgba_values = malloc_from_managed(slice_size_bytes);
+    common_memset_char(new_image->rgba_values, 0, new_image->rgba_values_size);
     log_assert(new_image->rgba_values != NULL);
     
     new_image->width = slice_width_pixels;
@@ -391,12 +399,9 @@ static DecodedImage * extract_image(
             _ < (slice_width_pixels * 4);
             _++)
         {
-            log_assert(
-                (rgba_value_i + _)
-                    < original->rgba_values_size);
+            log_assert((rgba_value_i + _) < original->rgba_values_size);
             log_assert(i < new_image->rgba_values_size);
-            new_image->rgba_values[i] =
-                original->rgba_values[rgba_value_i + _];
+            new_image->rgba_values[i] = original->rgba_values[rgba_value_i + _];
             i++;
         }
     }
@@ -626,7 +631,10 @@ static void register_to_texturearray_by_splitting_image(
                 /* const uint32_t y: */
                     row_i + 1);
             
-            if (new_img == NULL) { continue; }
+            if (new_img == NULL) {
+                log_assert(0);
+                continue;
+            }
             log_assert(new_img->good);
             
             if (expected_width == 0 || expected_height == 0) {
@@ -649,7 +657,7 @@ static void register_to_texturearray_by_splitting_image(
             common_strcat_uint_capped(
                 filenames[(row_i*columns)+col_i],
                 256,
-                row_i);
+                col_i);
             common_strcat_capped(
                 filenames[(row_i*columns)+col_i],
                 256,
@@ -657,7 +665,7 @@ static void register_to_texturearray_by_splitting_image(
             common_strcat_uint_capped(
                 filenames[(row_i*columns)+col_i],
                 256,
-                col_i);
+                row_i);
         }
     }
     
@@ -702,6 +710,7 @@ static void register_new_texturearray_by_splitting_image(
     
     if (new_texture_array_i < 0) {
         new_texture_array_i = (int)texture_arrays_size;
+        texture_arrays[new_texture_array_i].request_init = true;
         texture_arrays_size++;
         log_assert(texture_arrays_size <= TEXTUREARRAYS_SIZE);
     }
@@ -709,6 +718,7 @@ static void register_new_texturearray_by_splitting_image(
     register_to_texturearray_by_splitting_image(
         /* DecodedImage * new_image: */
             new_image,
+        /* filename_prefix: */
             filename_prefix,
         /* const int32_t texture_array_i: */
             new_texture_array_i,
@@ -813,7 +823,7 @@ void texture_array_preregister_null_image(
 }
 
 void texture_array_get_filename_location(
-    char * for_filename,
+    const char * for_filename,
     int32_t * texture_array_i_recipient,
     int32_t * texture_i_recipient)
 {

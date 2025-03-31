@@ -39,7 +39,7 @@ void texture_array_register_high_priority_if_unloaded(
     const int32_t texture_i);
 
 void texture_array_get_filename_location(
-    char * for_filename,
+    const char * for_filename,
     int32_t * texture_array_i_recipient,
     int32_t * texture_i_recipient);
 
