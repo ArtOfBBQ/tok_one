@@ -973,9 +973,11 @@ void platform_gpu_copy_locked_vertices(void)
     MTLTextureDescriptor * touch_id_texture_descriptor =
         [MTLTextureDescriptor new];
     touch_id_texture_descriptor.width =
-        (unsigned long)ags->cached_viewport.width / 2;
+        (unsigned long)ags->cached_viewport.width /
+            window_globals->pixelation_div;
     touch_id_texture_descriptor.height =
-        (unsigned long)ags->cached_viewport.height / 2;
+        (unsigned long)ags->cached_viewport.height /
+            window_globals->pixelation_div;
     touch_id_texture_descriptor.pixelFormat = ags->pixel_format_renderpass1;
     touch_id_texture_descriptor.mipmapLevelCount = 1;
     touch_id_texture_descriptor.storageMode = MTLStorageModePrivate;
@@ -1029,8 +1031,10 @@ void platform_gpu_copy_locked_vertices(void)
     // Set up a texture for rendering to and apply post-processing to
     MTLTextureDescriptor * texture_descriptor = [MTLTextureDescriptor new];
     texture_descriptor.textureType = MTLTextureType2D;
-    texture_descriptor.width = (unsigned long)ags->cached_viewport.width / 2;
-    texture_descriptor.height = (unsigned long)ags->cached_viewport.height / 2;
+    texture_descriptor.width =
+        (unsigned long)ags->cached_viewport.width / window_globals->pixelation_div;
+    texture_descriptor.height =
+        (unsigned long)ags->cached_viewport.height / window_globals->pixelation_div;
     texture_descriptor.pixelFormat = MTLPixelFormatRGBA16Float;
     texture_descriptor.storageMode = MTLStorageModePrivate;
     texture_descriptor.usage =

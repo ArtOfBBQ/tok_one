@@ -14,11 +14,14 @@ void windowsize_register_transformed_imputed_normal_for_debugging(
     }
     
     window_globals->transformed_imputed_normals[
-        window_globals->next_transformed_imputed_normal_i + 0] = origin[0];
+        window_globals->next_transformed_imputed_normal_i + 0] =
+            origin[0];
     window_globals->transformed_imputed_normals[
-        window_globals->next_transformed_imputed_normal_i + 1] = origin[1];
+        window_globals->next_transformed_imputed_normal_i + 1] =
+            origin[1];
     window_globals->transformed_imputed_normals[
-        window_globals->next_transformed_imputed_normal_i + 2] = origin[2];
+        window_globals->next_transformed_imputed_normal_i + 2] =
+            origin[2];
     window_globals->transformed_imputed_normals[
         window_globals->next_transformed_imputed_normal_i + 3] =
             origin[0] + (normal[0] / 3);
@@ -104,7 +107,7 @@ void windowsize_init(void) {
     window_globals->pause_profiler        = false;
     window_globals->block_mouse           = false;
     
-    window_globals->pixelation_div = 8;
+    window_globals->pixelation_div = 2;
     
     window_globals->postprocessing_constants.timestamp = 0;
     window_globals->postprocessing_constants.blur_pct = 0.18f;
