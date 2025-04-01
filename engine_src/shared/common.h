@@ -79,6 +79,10 @@ common_internal_strcat_capped(
     const char * to_append);
 #endif
 
+void common_strcat_char_capped(
+    char * recipient,
+    char to_append);
+
 #ifndef COMMON_IGNORE_ASSERTS
 #define common_strcat_int_capped(recip, recipsize, to_append) common_internal_strcat_int_capped(recip, recipsize, to_append);
 void

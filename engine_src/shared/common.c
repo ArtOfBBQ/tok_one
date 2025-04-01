@@ -232,6 +232,23 @@ common_internal_strcat_capped(
     recipient[i] = '\0';
 }
 
+void common_strcat_char_capped(
+    char * recipient,
+    char to_append)
+{
+    uint32_t i = 0;
+    while (recipient[i] != '\0') {
+        //#ifndef COMMON_IGNORE_ASSERTS
+        //assert(i < recipient_size);
+        //#endif
+        i++;
+    }
+    
+    recipient[i++] = to_append;
+    
+    recipient[i] = '\0';
+}
+
 void
 common_internal_strcat_int_capped(
     char * recipient,
