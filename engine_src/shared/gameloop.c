@@ -193,7 +193,7 @@ void gameloop_update_before_render_pass(
         
         update_terminal();
         
-        resolve_animation_effects(elapsed);
+        scheduled_animations_resolve(elapsed);
         
         ui_elements_handle_touches(elapsed);
         

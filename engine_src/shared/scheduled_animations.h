@@ -16,7 +16,7 @@ extern "C" {
 void scheduled_animations_init(
     void (* arg_callback_function)(int32_t, float, float, int32_t));
 
-void resolve_animation_effects(const uint64_t microseconds_elapsed);
+void scheduled_animations_resolve(const uint64_t microseconds_elapsed);
 
 typedef struct ScheduledAnimation {
     // Public:
@@ -59,44 +59,44 @@ typedef struct ScheduledAnimation {
     bool32_t deleted;
     bool32_t committed;
 } ScheduledAnimation;
-ScheduledAnimation * next_scheduled_animation(
-    const bool32_t final_values_not_adds);
-void commit_scheduled_animation(ScheduledAnimation * to_commit);
-ScheduledAnimation * next_scheduled_animation(
+
+ScheduledAnimation * scheduled_animations_request_next(
     const bool32_t final_values_not_adds);
 
-void request_evaporate_and_destroy(
+void scheduled_animations_commit(ScheduledAnimation * to_commit);
+
+void scheduled_animations_request_evaporate_and_destroy(
     const int32_t object_id,
     const uint64_t duration_microseconds);
 
-void request_shatter_and_destroy(
+void scheduled_animations_request_shatter_and_destroy(
     const int32_t object_id,
     const uint64_t duration_microseconds);
 
-void request_fade_and_destroy(
+void scheduled_animations_request_fade_and_destroy(
     const int32_t object_id,
     const uint64_t wait_first_microseconds,
     const uint64_t duration_microseconds);
 
-void request_fade_to(
+void scheduled_animations_request_fade_to(
     const int32_t object_id,
     const uint64_t wait_first_microseconds,
     const uint64_t duration_microseconds,
     const float target_alpha);
 
-void request_dud_dance(
+void scheduled_animations_request_dud_dance(
     const int32_t object_id,
     const float magnitude);
 
-void request_bump_animation(
+void scheduled_animations_request_bump(
     const int32_t object_id,
     const uint32_t wait);
 
-void delete_all_scheduled_animations(void);
-void delete_all_movement_animations_targeting(const int32_t object_id);
-void delete_all_rgba_animations_targeting(const int32_t object_id);
-void delete_all_animations_targeting(const int32_t object_id);
-void delete_all_repeatforever_animations(void);
+void scheduled_animations_delete_all(void);
+void scheduled_animations_delete_movement_anims_targeting(const int32_t object_id);
+void scheduled_animations_delete_rgba_anims_targeting(const int32_t object_id);
+void scheduled_animations_delete_all_anims_targeting(const int32_t object_id);
+void scheduled_animations_delete_all_repeatforever_anims(void);
 
 #ifdef __cplusplus
 }

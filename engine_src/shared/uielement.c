@@ -128,18 +128,18 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                     }
                     
                     ScheduledAnimation * bump_pin =
-                        next_scheduled_animation(true);
+                        scheduled_animations_request_next(true);
                     bump_pin->affected_sprite_id = currently_sliding_object_id;
                     bump_pin->gpu_polygon_vals.scale_factor = 1.20f;
                     bump_pin->duration_microseconds = 20;
-                    commit_scheduled_animation(bump_pin);
+                    scheduled_animations_commit(bump_pin);
                     
-                    bump_pin = next_scheduled_animation(true);
+                    bump_pin = scheduled_animations_request_next(true);
                     bump_pin->affected_sprite_id = currently_sliding_object_id;
                     bump_pin->gpu_polygon_vals.scale_factor = 1.0f;
                     bump_pin->wait_before_each_run = 20;
                     bump_pin->duration_microseconds = 200000;
-                    commit_scheduled_animation(bump_pin);
+                    scheduled_animations_commit(bump_pin);
                 }
                 
                 if (active_ui_elements[i].clickable) {
@@ -147,19 +147,19 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                         active_ui_elements[i].object_id;
                     
                     ScheduledAnimation * bump =
-                        next_scheduled_animation(true);
+                        scheduled_animations_request_next(true);
                     bump->affected_sprite_id = currently_clicking_object_id;
                     bump->gpu_polygon_vals.scale_factor = 1.25f;
                     bump->duration_microseconds = 40;
-                    commit_scheduled_animation(bump);
+                    scheduled_animations_commit(bump);
                     
                     ScheduledAnimation * flatten =
-                        next_scheduled_animation(true);
+                        scheduled_animations_request_next(true);
                     flatten->affected_sprite_id = currently_clicking_object_id;
                     flatten->gpu_polygon_vals.scale_factor = 1.0f;
                     flatten->wait_before_each_run = 50;
                     flatten->duration_microseconds = 250000;
-                    commit_scheduled_animation(flatten);
+                    scheduled_animations_commit(flatten);
                 }
                 
                 if (

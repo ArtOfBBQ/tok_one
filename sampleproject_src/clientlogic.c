@@ -17,7 +17,7 @@ void client_logic_early_startup(
 {
     const char * fontfile = "font.png";
     if (platform_resource_exists("font.png")) {
-        register_new_texturearray_by_splitting_file(
+        texture_array_register_new_by_splitting_file(
             /* filename : */ fontfile,
             /* rows     : */ 10,
             /* columns  : */ 10);
@@ -256,7 +256,7 @@ static void client_handle_keypresses(
         keypress_map[TOK_KEY_S] = false;
         
         #if TEAPOT
-        request_shatter_and_destroy(
+        scheduled_animations_request_shatter_and_destroy(
             /* const int32_t object_id: */
                 teapot_object_ids[1],
             /* const uint64_t duration_microseconds: */
@@ -332,7 +332,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
                 touchable_id_pierce == 5)
         {
-            request_bump_animation(
+            scheduled_animations_request_bump(
                 /* const int32_t object_id: */
                     20,
                 /* const uint32_t wait: */
@@ -345,7 +345,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
                 touchable_id_pierce == 6)
         {
-            request_bump_animation(
+            scheduled_animations_request_bump(
                 /* const int32_t object_id: */
                     21,
                 /* const uint32_t wait: */
@@ -411,20 +411,20 @@ void client_logic_update(uint64_t microseconds_elapsed)
     {
         user_interactions[INTR_PREVIOUS_LEFTCLICK_START].handled = true;
         
-        ScheduledAnimation * anim = next_scheduled_animation(true);
+        ScheduledAnimation * anim = scheduled_animations_request_next(true);
         anim->affected_sprite_id = teapot_object_ids[i];
         anim->gpu_polygon_vals.scale_factor = 1.2f;
         anim->duration_microseconds = 100000;
         anim->runs = 1;
-        commit_scheduled_animation(anim);
+        scheduled_animations_commit(anim);
         
-        anim = next_scheduled_animation(true);
+        anim = scheduled_animations_request_next(true);
         anim->affected_sprite_id = teapot_object_ids[i];
         anim->gpu_polygon_vals.scale_factor = 1.0f;
         anim->duration_microseconds = 200000;
         anim->wait_before_each_run = 100000;
         anim->runs = 1;
-        commit_scheduled_animation(anim);
+        scheduled_animations_commit(anim);
     }
     }
     
