@@ -84,7 +84,8 @@ void commit_zpolygon_to_render(
         log_assert(
             to_commit->gpu_materials[mat_i].texture_i < 5000);
         log_assert(
-            to_commit->gpu_materials[mat_i].texturearray_i < TEXTUREARRAYS_SIZE);
+            to_commit->gpu_materials[mat_i].texturearray_i <
+                TEXTUREARRAYS_SIZE);
         
         for (uint32_t rgba_i = 0; rgba_i < 4; rgba_i++) {
             log_assert(to_commit->gpu_materials[mat_i].rgba[rgba_i] >= - 0.1f);

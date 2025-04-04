@@ -54,6 +54,7 @@ void gameloop_update_before_render_pass(
     }
     
     uint64_t elapsed = time - gameloop_previous_time;
+    // elapsed /= 4;
     gameloop_previous_time = time;
     
     log_assert(frame_data->light_collection != NULL);
