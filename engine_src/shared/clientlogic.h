@@ -81,6 +81,10 @@ void client_logic_animation_callback(
 will be called once per frame, before rendering that frame
 */
 void client_logic_update(uint64_t microseconds_elapsed);
+/*
+will be called once per frame, after rendering that frame
+*/
+void client_logic_update_after_render_pass(void);
 
 /*
 Will be called when the debugging terminal receives a command, so you can make

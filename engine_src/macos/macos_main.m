@@ -492,6 +492,7 @@ int main(int argc, const char * argv[]) {
     bool32_t result = apple_gpu_init(
         /* void (*arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *): */
             gameloop_update_before_render_pass,
+            gameloop_update_after_render_pass,
         /* id<MTLDevice> with_metal_device: */
             metal_device_for_window,
         /* NSString *shader_lib_filepath: */

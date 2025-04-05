@@ -165,6 +165,22 @@ void gameloop_update_before_render_pass(
        }
     } else if (application_running) {
         
+        scheduled_animations_resolve(elapsed);
+        
+        platform_update_mouse_location();
+        
+        // always copy
+        user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
+            user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE];
+        user_interactions[INTR_PREVIOUS_TOUCH_MOVE] =
+            user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE];
+        
+        ui_elements_handle_touches(elapsed);
+        
+        update_terminal();
+        
+        client_logic_update(elapsed);
+        
         camera.xyz_cosangle[0] = cosf(camera.xyz_angle[0]);
         camera.xyz_cosangle[1] = cosf(camera.xyz_angle[1]);
         camera.xyz_cosangle[2] = cosf(camera.xyz_angle[2]);
@@ -183,22 +199,6 @@ void gameloop_update_before_render_pass(
         
         uint32_t overflow_vertices = frame_data->vertices_size % 3;
         frame_data->vertices_size -= overflow_vertices;
-        
-        platform_update_mouse_location();
-        
-        // always copy
-        user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
-            user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE];
-        user_interactions[INTR_PREVIOUS_TOUCH_MOVE] =
-            user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE];
-        
-        update_terminal();
-        
-        scheduled_animations_resolve(elapsed);
-        
-        ui_elements_handle_touches(elapsed);
-        
-        client_logic_update(elapsed);
         
         texture_array_gpu_try_push();
     }
@@ -220,4 +220,21 @@ void gameloop_update_before_render_pass(
     #ifdef PROFILER_ACTIVE
     profiler_draw_labels();
     #endif
+}
+
+void gameloop_update_after_render_pass(void) {
+    if (application_running) {
+        client_logic_update_after_render_pass();
+    }
+    
+    user_interactions[INTR_LAST_GPU_DATA].touchable_id_top =
+        platform_gpu_get_touchable_id_at_screen_pos(
+            /* const int screen_x: */
+                user_interactions[INTR_LAST_GPU_DATA].
+                    screen_x,
+            /* const int screen_y: */
+                user_interactions[INTR_LAST_GPU_DATA].
+                    screen_y);
+    user_interactions[INTR_LAST_GPU_DATA].touchable_id_pierce =
+        user_interactions[INTR_LAST_GPU_DATA].touchable_id_top;
 }

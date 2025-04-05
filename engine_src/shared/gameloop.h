@@ -5,6 +5,7 @@
 #include "logger.h"
 #include "window_size.h"
 #include "cpu_gpu_shared_types.h"
+#include "userinput.h"
 #include "platform_layer.h"
 #include "texture_array.h"
 #include "text.h"
@@ -24,6 +25,8 @@ extern bool32_t gameloop_active;
 void gameloop_init(void);
 
 void gameloop_update_before_render_pass(GPUDataForSingleFrame * frame_data);
+void gameloop_update_after_render_pass(void);
+// client_logic_after_copy
 
 #ifdef __cplusplus
 }

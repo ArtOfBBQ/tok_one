@@ -61,16 +61,21 @@ static AppleGPUState * ags = NULL;
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
 
 static void (* funcptr_shared_gameloop_update)(GPUDataForSingleFrame *) = NULL;
+static void (* funcptr_shared_gameloop_update_after_render_pass)(void) = NULL;
 
 bool32_t apple_gpu_init(
     void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *),
+    void (* arg_funcptr_shared_gameloop_update_after_render_pass)(void),
     id<MTLDevice> with_metal_device,
     NSString * shader_lib_filepath,
     char * error_msg_string)
 {
     ags = malloc_from_unmanaged(sizeof(AppleGPUState));
     
-    funcptr_shared_gameloop_update = arg_funcptr_shared_gameloop_update;
+    funcptr_shared_gameloop_update =
+        arg_funcptr_shared_gameloop_update;
+    funcptr_shared_gameloop_update_after_render_pass =
+        arg_funcptr_shared_gameloop_update_after_render_pass;
     
     ags->drawing_semaphore = dispatch_semaphore_create(3);
     
@@ -711,7 +716,7 @@ void platform_gpu_get_device_name(
         device_name_cstr);
 }
 
-static int32_t platform_gpu_get_touchable_id_at_screen_pos(
+int32_t platform_gpu_get_touchable_id_at_screen_pos(
     const float screen_x,
     const float screen_y)
 {
@@ -1620,16 +1625,7 @@ void platform_gpu_copy_locked_vertices(void)
     [command_buffer commit];
     // [command_buffer waitUntilCompleted];
     
-    user_interactions[INTR_LAST_GPU_DATA].touchable_id_top =
-        platform_gpu_get_touchable_id_at_screen_pos(
-            /* const int screen_x: */
-                user_interactions[INTR_LAST_GPU_DATA].
-                    screen_x,
-            /* const int screen_y: */
-                user_interactions[INTR_LAST_GPU_DATA].
-                    screen_y);
-    user_interactions[INTR_LAST_GPU_DATA].touchable_id_pierce =
-        user_interactions[INTR_LAST_GPU_DATA].touchable_id_top;
+    funcptr_shared_gameloop_update_after_render_pass();
 }
 
 - (void)mtkView:(MTKView *)view
