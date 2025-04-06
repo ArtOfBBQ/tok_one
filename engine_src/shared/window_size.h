@@ -65,6 +65,7 @@ typedef struct WindowGlobals {
     float window_bottom;
     float aspect_ratio;
     
+    uint64_t this_frame_timestamp;
     uint64_t last_resize_request_at;
     GPUPostProcessingConstants postprocessing_constants;
     GPUProjectionConstants projection_constants;

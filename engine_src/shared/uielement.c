@@ -127,6 +127,8 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                         }
                     }
                     
+                    // TODO: reimplement
+                    #if 0
                     ScheduledAnimation * bump_pin =
                         scheduled_animations_request_next(true);
                     bump_pin->affected_sprite_id = currently_sliding_object_id;
@@ -140,12 +142,15 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                     bump_pin->wait_before_each_run = 20;
                     bump_pin->duration_microseconds = 200000;
                     scheduled_animations_commit(bump_pin);
+                    #endif
                 }
                 
                 if (active_ui_elements[i].clickable) {
                     currently_clicking_object_id =
                         active_ui_elements[i].object_id;
                     
+                    // TODO: reimplement
+                    #if 0
                     ScheduledAnimation * bump =
                         scheduled_animations_request_next(true);
                     bump->affected_sprite_id = currently_clicking_object_id;
@@ -160,6 +165,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                     flatten->wait_before_each_run = 50;
                     flatten->duration_microseconds = 250000;
                     scheduled_animations_commit(flatten);
+                    #endif
                 }
                 
                 if (

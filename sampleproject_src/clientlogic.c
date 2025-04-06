@@ -318,8 +318,50 @@ static void client_handle_keypresses(
     }
 }
 
+static uint64_t last_anim_start = 0;
+static uint64_t last_anim_end   = 0;
 void client_logic_update(uint64_t microseconds_elapsed)
 {
+    #if TEAPOT
+    int32_t first_teapot_zp_i = -1;
+    for (int32_t i = 0; i < (int32_t)zpolygons_to_render->size; i++) {
+        if (
+            zpolygons_to_render->cpu_data[i].sprite_id ==
+                teapot_object_ids[0])
+        {
+            first_teapot_zp_i = i;
+        }
+    }
+    
+    char teapotpos[256];
+    common_strcpy_capped(teapotpos, 256, "Teapot y position: ");
+    common_strcat_float_capped(
+        teapotpos,
+        256,
+        zpolygons_to_render->gpu_data[first_teapot_zp_i].xyz[1]);
+    common_strcat_capped(
+        teapotpos,
+        256,
+        " - [");
+    common_strcat_uint_capped(
+        teapotpos,
+        256,
+        (uint32_t)(last_anim_start / 1000000) % 100);
+    common_strcat_capped(
+        teapotpos,
+        256,
+        " - ");
+    common_strcat_uint_capped(
+        teapotpos,
+        256,
+        (uint32_t)(last_anim_end / 1000000) % 100);
+    common_strcat_capped(
+        teapotpos,
+        256,
+        " ] ");
+    text_request_debug_text(teapotpos);
+    #endif
+    
     if (
         !user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].handled)
     {
@@ -355,14 +397,23 @@ void client_logic_update(uint64_t microseconds_elapsed)
     
     if (keypress_map[TOK_KEY_T]) {
         #if TEAPOT
-        for (uint32_t i = 0; i < zpolygons_to_render->size; i++) {
-            if (
-                zpolygons_to_render->cpu_data[i].sprite_id ==
-                    teapot_object_ids[0])
-            {
-                zpolygons_to_render->gpu_data[i].xyz[1] -= 0.01f;
-            }
-        }
+        zpolygons_to_render->gpu_data[first_teapot_zp_i].xyz[1] = 1.5f;
+        #endif
+    }
+    
+    if (keypress_map[TOK_KEY_Y]) {
+        keypress_map[TOK_KEY_Y] = false;
+        
+        #if TEAPOT
+        ScheduledAnimation * test_delta = scheduled_animations_request_next(false);
+        test_delta->affected_sprite_id = teapot_object_ids[0];
+        test_delta->start_timestamp = window_globals->this_frame_timestamp;
+        test_delta->end_timestamp =
+            test_delta->start_timestamp + 2000000;
+        test_delta->gpu_polygon_vals.xyz[1] = -1.0f;
+        scheduled_animations_commit(test_delta);
+        last_anim_start = test_delta->start_timestamp;
+        last_anim_end   = test_delta->end_timestamp;
         #endif
     }
     
@@ -411,20 +462,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
     {
         user_interactions[INTR_PREVIOUS_LEFTCLICK_START].handled = true;
         
-        ScheduledAnimation * anim = scheduled_animations_request_next(true);
-        anim->affected_sprite_id = teapot_object_ids[i];
-        anim->gpu_polygon_vals.scale_factor = 1.2f;
-        anim->duration_microseconds = 100000;
-        anim->runs = 1;
-        scheduled_animations_commit(anim);
-        
-        anim = scheduled_animations_request_next(true);
-        anim->affected_sprite_id = teapot_object_ids[i];
-        anim->gpu_polygon_vals.scale_factor = 1.0f;
-        anim->duration_microseconds = 200000;
-        anim->wait_before_each_run = 100000;
-        anim->runs = 1;
-        scheduled_animations_commit(anim);
+        scheduled_animations_request_bump(teapot_object_ids[0], 0.0f);
     }
     }
     
@@ -440,6 +478,11 @@ void client_logic_update(uint64_t microseconds_elapsed)
     #endif
     
     client_handle_keypresses(microseconds_elapsed);
+}
+
+void client_logic_update_after_render_pass(void) {
+    // you can make edits after the objects are copied to the framebuffer
+    // and rendered
 }
 
 void client_logic_evaluate_terminal_command(

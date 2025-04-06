@@ -43,9 +43,11 @@ void gameloop_update_before_render_pass(
     log_assert(frame_data->light_collection != NULL);
     log_assert(frame_data->camera != NULL);
     
-    uint64_t time = platform_get_current_time_microsecs();
+    window_globals->this_frame_timestamp =
+        platform_get_current_time_microsecs();
+    
     if (gameloop_previous_time < 1) {
-        gameloop_previous_time = time;
+        gameloop_previous_time = window_globals->this_frame_timestamp;
         
         #ifdef PROFILER_ACTIVE
         profiler_end("gameloop_update()");
@@ -53,9 +55,9 @@ void gameloop_update_before_render_pass(
         return;
     }
     
-    uint64_t elapsed = time - gameloop_previous_time;
+    uint64_t elapsed = window_globals->this_frame_timestamp - gameloop_previous_time;
     // elapsed /= 4;
-    gameloop_previous_time = time;
+    gameloop_previous_time = window_globals->this_frame_timestamp;
     
     log_assert(frame_data->light_collection != NULL);
     common_memcpy(frame_data->camera, &camera, sizeof(GPUCamera));
@@ -134,9 +136,13 @@ void gameloop_update_before_render_pass(
     
     gameloop_frame_no++;
     
-    if (time - window_globals->last_resize_request_at < 2000000)
+    if (
+        window_globals->this_frame_timestamp -
+            window_globals->last_resize_request_at < 2000000)
     {
-        if (time - window_globals->last_resize_request_at < 350000)
+        if (
+            window_globals->this_frame_timestamp -
+                window_globals->last_resize_request_at < 350000)
         {
             // possibly a request we already handled, or not the final
             // request, wait...
@@ -165,7 +171,7 @@ void gameloop_update_before_render_pass(
        }
     } else if (application_running) {
         
-        scheduled_animations_resolve(elapsed);
+        scheduled_animations_resolve();
         
         platform_update_mouse_location();
         

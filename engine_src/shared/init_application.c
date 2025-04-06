@@ -275,7 +275,7 @@ void init_application_before_gpu_init(
     
     gameloop_init();
     terminal_init(platform_enter_fullscreen);
-    scheduled_animations_init(client_logic_animation_callback);
+    scheduled_animations_init();
     texture_array_init();
     
     // initialize font with fontmetrics.dat
