@@ -2,6 +2,7 @@
 #define TEXT_H
 
 #include "platform_layer.h"
+#include "objectid.h"
 #include "zpolygon.h"
 
 #ifdef __cplusplus
@@ -70,6 +71,7 @@ void text_request_label_renderable(
     const float z,
     const float max_width);
 
+void text_request_debug_text(const char * text);
 void text_request_fps_counter(uint64_t microseconds_elapsed);
 
 void text_request_top_touchable_id(

@@ -17,8 +17,6 @@
 #include "texture_array.h"
 #include "objmodel.h"
 
-#define FPS_COUNTER_OBJECT_ID 0
-
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -414,6 +414,10 @@ void scheduled_animations_request_fade_to(
     scheduled_animations_commit(modify_alpha);
 }
 
+float scheduled_animations_easing_revert(const float t) {
+    return 2.0f * t * (1.0f - t); // Peaks at 0.5f instead of 1.0f
+}
+
 void scheduled_animations_resolve(const uint64_t microseconds_elapsed) {
     platform_mutex_lock(request_scheduled_anims_mutex_id);
     pending_callbacks_size = 0;

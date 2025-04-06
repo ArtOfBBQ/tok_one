@@ -7,6 +7,9 @@ extern "C" {
 
 #include "logger.h"
 
+#define FPS_COUNTER_OBJECT_ID 0
+#define DEBUG_TEXT_OBJECT_ID 1
+
 #define MAX_OBJECT_ID 8000
 
 #define FIRST_NONUI_OBJECT_ID 1011

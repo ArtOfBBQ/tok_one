@@ -16,6 +16,8 @@ extern "C" {
 void scheduled_animations_init(
     void (* arg_callback_function)(int32_t, float, float, int32_t));
 
+float scheduled_animations_easing_revert(const float t);
+
 void scheduled_animations_resolve(const uint64_t microseconds_elapsed);
 
 typedef struct ScheduledAnimation {

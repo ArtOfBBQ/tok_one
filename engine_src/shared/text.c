@@ -558,6 +558,33 @@ void text_request_label_renderable(
     }
 }
 
+void text_request_debug_text(const char * text)
+{
+    delete_zpolygon_object(DEBUG_TEXT_OBJECT_ID);
+    
+    font_settings->font_height = 16.0f;
+    font_settings->font_color[0] = 1.0f;
+    font_settings->font_color[1] = 1.0f;
+    font_settings->font_color[2] = 1.0f;
+    font_settings->font_color[3] = 1.0f;
+    font_settings->font_ignore_lighting = true;
+    font_settings->ignore_camera = true;
+    font_settings->font_touchable_id = -1;
+    text_request_label_renderable(
+        /* with_id               : */
+            DEBUG_TEXT_OBJECT_ID,
+        /* char * text_to_draw   : */
+            text,
+        /* float left_pixelspace : */
+            20.0f,
+        /* float top_pixelspace  : */
+            40.0f + font_settings->font_height,
+        /* z                     : */
+            0.05f,
+        /* float max_width       : */
+            window_globals->window_width);
+}
+
 #define FPS_FRAMES_MAX 10
 uint64_t ms_last_n_frames[FPS_FRAMES_MAX];
 void text_request_fps_counter(
