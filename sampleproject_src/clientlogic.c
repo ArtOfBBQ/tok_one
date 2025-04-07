@@ -407,11 +407,16 @@ void client_logic_update(uint64_t microseconds_elapsed)
         keypress_map[TOK_KEY_G] = false;
         
         #if TEAPOT
+        #if 1
+        scheduled_animations_request_dud_dance(
+            teapot_object_ids[0],
+            2.0f);
+        #else
         ScheduledAnimation * test_delta = scheduled_animations_request_next(false);
         test_delta->affected_sprite_id = teapot_object_ids[0];
         test_delta->start_timestamp = window_globals->this_frame_timestamp;
         test_delta->end_timestamp =
-            test_delta->start_timestamp + 3000000;
+            test_delta->start_timestamp + 750000;
         test_delta->gpu_polygon_vals.xyz[1] = -0.2f;
         test_delta->gpu_polygon_vals.xyz_angle[2] = -1.5f;
         test_delta->gpu_polygon_vals.xyz_angle[1] = -1.25f;
@@ -419,6 +424,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
         scheduled_animations_commit(test_delta);
         last_anim_start = test_delta->start_timestamp;
         last_anim_end   = test_delta->end_timestamp;
+        #endif
         #endif
     }
     
