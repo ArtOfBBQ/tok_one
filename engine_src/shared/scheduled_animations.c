@@ -101,11 +101,8 @@ ScheduledAnimation * scheduled_animations_request_next(
 void scheduled_animations_commit(ScheduledAnimation * to_commit) {
     platform_mutex_lock(request_scheduled_anims_mutex_id);
     
-    #if 0
+    #if 1
     if (to_commit->endpoints_not_deltas) {
-        uint64_t anim_duration = to_commit->end_timestamp -
-            to_commit->start_timestamp;
-        
         int32_t first_zp_i = 0;
         for (
             int32_t zp_i = 0;
@@ -129,7 +126,7 @@ void scheduled_animations_commit(ScheduledAnimation * to_commit) {
         float * orig_gpu_vals = (float *)&zpolygons_to_render->
             gpu_data[first_zp_i];
         float * orig_mat_vals = (float *)&zpolygons_to_render->
-            gpu_materials[first_zp_i];
+            gpu_materials[first_zp_i * MAX_MATERIALS_PER_POLYGON];
         
         for (
             uint32_t i = 0;
@@ -141,8 +138,7 @@ void scheduled_animations_commit(ScheduledAnimation * to_commit) {
             } else {
                 // fetch the current value
                 float delta_to_target = anim_gpu_vals[i] - orig_gpu_vals[i];
-                anim_gpu_vals[i] = (delta_to_target /
-                    (float)anim_duration) / 1000000.0f;
+                anim_gpu_vals[i] = delta_to_target;
             }
         }
         
@@ -156,8 +152,7 @@ void scheduled_animations_commit(ScheduledAnimation * to_commit) {
             } else {
                 // fetch the current value
                 float delta_to_target = (anim_mat_vals[i] - orig_mat_vals[i]);
-                anim_mat_vals[i] = (delta_to_target /
-                    (float)anim_duration) / 1000000.0f;
+                anim_mat_vals[i] = delta_to_target;
             }
         }
     }
@@ -457,7 +452,26 @@ void scheduled_animations_request_fade_to(
     scheduled_animations_commit(modify_alpha);
 }
 
-float scheduled_animations_easing_revert(const float t) {
+float scheduled_animations_ease_out_elastic(const float t) {
+    const float c4 = (2.0f * (float)M_PI) / 3.0f;
+    
+    #if 0
+    if (t == 0.0f || t == 1.0f) { return t; }
+    #else
+    if (fabsf(t) < 0.00001f) return 0.0f;
+    if (fabsf(t - 1.0f) < 0.00001f) return 1.0f;
+    #endif
+    
+    return
+        powf(2, -10.0f * t) *
+        sinf((t * 10.0f - 0.75f) * c4) + 1.0f;
+}
+
+float scheduled_animations_ease_out_quart(const float t) {
+    return 1 - ((1 - t) * (1 - t) * (1 - t) * (1 - t));
+}
+
+float scheduled_animations_ease_lin_revert(const float t) {
     return 2.0f * t * (1.0f - t); // Peaks at 0.5f instead of 1.0f
 }
 
@@ -499,17 +513,53 @@ void scheduled_animations_resolve(void)
             continue;
         }
         
+        log_assert(anim->end_timestamp > anim->start_timestamp);
+        log_assert(
+            window_globals->this_frame_timestamp >= anim->start_timestamp);
+        
         uint64_t duration = anim->end_timestamp - anim->start_timestamp;
         uint64_t now =
             window_globals->this_frame_timestamp > anim->end_timestamp ?
                 anim->end_timestamp :
                 window_globals->this_frame_timestamp;
-        uint64_t elapsed_so_far = duration - (anim->end_timestamp - now);
+        log_assert(now >= anim->start_timestamp);
+        log_assert(now <= anim->end_timestamp);
+        log_assert(duration >= (anim->end_timestamp - now));
+        
+        uint64_t time_to_end = anim->end_timestamp - now;
+        uint64_t elapsed_so_far = duration - time_to_end;
         
         float t_now = (float)elapsed_so_far / (float)duration;
-        printf("anim_i: %i, t_now: %f, t_previous: %f\n", animation_i, t_now, anim->already_applied_t);
         log_assert(t_now <= 1.0f);
         log_assert(t_now >= 0.0f);
+        log_assert(t_now >= anim->already_applied_t);
+        
+        float t_eased = FLOAT32_MAX;
+        float t_eased_already_applied = FLOAT32_MAX;
+        
+        switch (anim->easing_type) {
+            case EASINGTYPE_NONE:
+                t_eased = t_now;
+                t_eased_already_applied = anim->already_applied_t;
+                break;
+            case EASINGTYPE_EASEOUT_ELASTIC:
+                t_eased = scheduled_animations_ease_out_elastic(t_now);
+                t_eased_already_applied =
+                    scheduled_animations_ease_out_elastic(
+                        anim->already_applied_t);
+                break;
+            default:
+                log_assert(0);
+        }
+        
+        printf(
+            "anim_i: %i, t_now: %f, t_eased: %f, t_previous: %f",
+            animation_i,
+            t_now,
+            t_eased,
+            anim->already_applied_t);
+        
+        anim->already_applied_t = t_now;
         
         // Apply effects
         for (
@@ -535,6 +585,11 @@ void scheduled_animations_resolve(void)
             float * target_vals_ptr =
                 (float *)&zpolygons_to_render->gpu_data[zp_i];
             
+            SIMD_FLOAT simd_t_now =
+                simd_set1_float(t_eased);
+            SIMD_FLOAT simd_t_b4  =
+                simd_set1_float(t_eased_already_applied);
+            
             log_assert((sizeof(GPUPolygon) / 4) % SIMD_FLOAT_LANES == 0);
             for (
                 uint32_t simd_step_i = 0;
@@ -545,11 +600,6 @@ void scheduled_animations_resolve(void)
                     simd_load_floats((anim_vals_ptr + simd_step_i));
                 SIMD_FLOAT simd_target_vals =
                     simd_load_floats((target_vals_ptr + simd_step_i));
-                
-                SIMD_FLOAT simd_t_now =
-                    simd_set1_float(t_now);
-                SIMD_FLOAT simd_t_b4  =
-                    simd_set1_float(anim->already_applied_t);
                 
                 SIMD_FLOAT simd_t_now_deltas =
                     simd_mul_floats(
@@ -571,7 +621,6 @@ void scheduled_animations_resolve(void)
                         simd_t_now_deltas));
             }
             
-            #if 0
             anim_vals_ptr = (float *)&anim->gpu_polygon_material_vals;
             uint32_t mat1_i = zp_i * MAX_MATERIALS_PER_POLYGON;
             for (
@@ -595,25 +644,28 @@ void scheduled_animations_resolve(void)
                     SIMD_FLOAT simd_target_vals =
                         simd_load_floats((target_vals_ptr + simd_step_i));
                     
-                    SIMD_FLOAT simd_actual_elapsed =
-                        simd_set1_float(flt_actual_elapsed_this_run);
-                    SIMD_FLOAT simd_one_million =
-                        simd_set1_float(flt_one_million);
+                    SIMD_FLOAT simd_t_now_deltas =
+                        simd_mul_floats(
+                            simd_anim_vals,
+                            simd_t_now);
+                    SIMD_FLOAT simd_t_previous_deltas =
+                        simd_mul_floats(
+                            simd_anim_vals,
+                            simd_t_b4);
                     
-                    simd_target_vals = simd_add_floats(
-                        simd_target_vals,
-                        simd_div_floats(
-                            simd_mul_floats(
-                                simd_anim_vals,
-                                simd_actual_elapsed),
-                            simd_one_million));
+                    simd_t_now_deltas = simd_sub_floats(
+                        simd_t_now_deltas,
+                        simd_t_previous_deltas);
                     
                     simd_store_floats(
                         (target_vals_ptr + simd_step_i),
-                        simd_target_vals);
+                        simd_add_floats(
+                            simd_target_vals,
+                            simd_t_now_deltas));
                 }
             }
             
+            #if 0
             if (apply_muladds_this_frame) {
                 float * muls_ptr =
                     (float *)&anim->onfinish_gpu_polygon_material_muls;
@@ -725,8 +777,6 @@ void scheduled_animations_resolve(void)
             }
         }
         #endif
-        
-        anim->already_applied_t = t_now;
     }
     
     platform_mutex_unlock(request_scheduled_anims_mutex_id);

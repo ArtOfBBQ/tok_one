@@ -14,9 +14,16 @@ extern "C" {
 
 void scheduled_animations_init(void);
 
-float scheduled_animations_easing_revert(const float t);
+float scheduled_animations_ease_out_elastic(const float t);
+float scheduled_animations_ease_out_quart(const float t);
+float scheduled_animations_ease_lin_revert(const float t);
 
 void scheduled_animations_resolve(void);
+
+typedef enum EasingType {
+    EASINGTYPE_NONE = 0,
+    EASINGTYPE_EASEOUT_ELASTIC,
+} EasingType;
 
 typedef struct ScheduledAnimation {
     // Public:
@@ -27,6 +34,8 @@ typedef struct ScheduledAnimation {
     
     GPUPolygonMaterial onfinish_gpu_polygon_material_muls;
     GPUPolygonMaterial onfinish_gpu_polygon_material_adds;
+    
+    EasingType easing_type;
     
     uint64_t start_timestamp;
     uint64_t end_timestamp;

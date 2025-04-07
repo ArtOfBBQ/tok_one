@@ -398,6 +398,45 @@ void client_logic_update(uint64_t microseconds_elapsed)
     if (keypress_map[TOK_KEY_T]) {
         #if TEAPOT
         zpolygons_to_render->gpu_data[first_teapot_zp_i].xyz[1] = 1.5f;
+        zpolygons_to_render->gpu_materials[
+            first_teapot_zp_i * MAX_MATERIALS_PER_POLYGON].rgba[3] = 0.0f;
+        #endif
+    }
+    
+    if (keypress_map[TOK_KEY_G]) {
+        keypress_map[TOK_KEY_G] = false;
+        
+        #if TEAPOT
+        ScheduledAnimation * test_delta = scheduled_animations_request_next(false);
+        test_delta->affected_sprite_id = teapot_object_ids[0];
+        test_delta->start_timestamp = window_globals->this_frame_timestamp;
+        test_delta->end_timestamp =
+            test_delta->start_timestamp + 3000000;
+        test_delta->gpu_polygon_vals.xyz[1] = -0.2f;
+        test_delta->gpu_polygon_vals.xyz_angle[2] = -1.5f;
+        test_delta->gpu_polygon_vals.xyz_angle[1] = -1.25f;
+        test_delta->gpu_polygon_material_vals.rgba[3] = 0.25f;
+        scheduled_animations_commit(test_delta);
+        last_anim_start = test_delta->start_timestamp;
+        last_anim_end   = test_delta->end_timestamp;
+        #endif
+    }
+    
+    if (keypress_map[TOK_KEY_H]) {
+        keypress_map[TOK_KEY_H] = false;
+        
+        #if TEAPOT
+        ScheduledAnimation * test_delta = scheduled_animations_request_next(true);
+        test_delta->affected_sprite_id = teapot_object_ids[0];
+        test_delta->start_timestamp = window_globals->this_frame_timestamp;
+        test_delta->end_timestamp =
+            test_delta->start_timestamp + 5000000;
+        test_delta->gpu_polygon_vals.xyz[1] =  0.3f;
+        test_delta->gpu_polygon_vals.xyz_angle[2] = 0.0f;
+        test_delta->gpu_polygon_vals.xyz_angle[1] = 0.0f;
+        scheduled_animations_commit(test_delta);
+        last_anim_start = test_delta->start_timestamp;
+        last_anim_end   = test_delta->end_timestamp;
         #endif
     }
     
@@ -407,10 +446,11 @@ void client_logic_update(uint64_t microseconds_elapsed)
         #if TEAPOT
         ScheduledAnimation * test_delta = scheduled_animations_request_next(false);
         test_delta->affected_sprite_id = teapot_object_ids[0];
-        test_delta->start_timestamp = window_globals->this_frame_timestamp;
+        test_delta->start_timestamp =
+            window_globals->this_frame_timestamp;
         test_delta->end_timestamp =
-            test_delta->start_timestamp + 2000000;
-        test_delta->gpu_polygon_vals.xyz[1] = -1.0f;
+            test_delta->start_timestamp + 300000;
+        test_delta->gpu_polygon_vals.xyz[1] = -0.35f;
         scheduled_animations_commit(test_delta);
         last_anim_start = test_delta->start_timestamp;
         last_anim_end   = test_delta->end_timestamp;
