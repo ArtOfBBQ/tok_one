@@ -113,6 +113,7 @@ void scheduled_animations_commit(ScheduledAnimation * to_commit) {
                     to_commit->affected_sprite_id)
             {
                 first_zp_i = zp_i;
+                break;
             }
         }
         
@@ -590,13 +591,6 @@ void scheduled_animations_resolve(void)
                 log_assert(0);
         }
         
-        printf(
-            "anim_i: %i, t_now: %f, t_eased: %f, t_previous: %f",
-            animation_i,
-            t_now,
-            t_eased,
-            anim->already_applied_t);
-        
         anim->already_applied_t = t_now;
         
         // Apply effects
@@ -852,59 +846,26 @@ void scheduled_animations_request_bump(
 
 void scheduled_animations_delete_all(void)
 {
-    // TODO: reimplement
-    #if 0
     platform_mutex_lock(request_scheduled_anims_mutex_id);
     for (uint32_t i = 0; i < scheduled_animations_size; i++) {
-        if (
-            !scheduled_animations[i].deleted &&
-            scheduled_animations[i].runs == 0)
-        {
-            scheduled_animations[i].deleted = true;
-        }
+        scheduled_animations[i].deleted = true;
     }
     platform_mutex_unlock(request_scheduled_anims_mutex_id);
-    #endif
 }
 
-void scheduled_animations_delete_movement_anims_targeting(
+void scheduled_animations_delete_endpoint_anims_targeting(
     const int32_t object_id)
 {
     platform_mutex_lock(request_scheduled_anims_mutex_id);
     for (uint32_t i = 0; i < scheduled_animations_size; i++) {
         if (
             !scheduled_animations[i].deleted &&
+            scheduled_animations[i].endpoints_not_deltas &&
             scheduled_animations[i].affected_sprite_id == (int32_t)object_id)
         {
             scheduled_animations[i].deleted = true;
         }
     }
-    platform_mutex_unlock(request_scheduled_anims_mutex_id);
-}
-
-void scheduled_animations_delete_rgba_anims_targeting(
-    const int32_t object_id)
-{
-    platform_mutex_lock(request_scheduled_anims_mutex_id);
-    // TODO: maybe deprecate this, i think it was only hit by "endpoint"
-    // TODO: animations
-    
-    //    for (uint32_t i = 0; i < scheduled_animations_size; i++) {
-    //        if (
-    //            !scheduled_animations[i].deleted &&
-    //            scheduled_animations[i].affected_sprite_id == (int32_t)object_id &&
-    //            (scheduled_animations[i].gpu_polygon_material_vals.rgba[0] !=
-    //                 FLT_SCHEDULEDANIM_IGNORE ||
-    //             scheduled_animations[i].gpu_polygon_material_vals.rgba[1] !=
-    //                 FLT_SCHEDULEDANIM_IGNORE ||
-    //             scheduled_animations[i].gpu_polygon_material_vals.rgba[2] !=
-    //                 FLT_SCHEDULEDANIM_IGNORE ||
-    //             scheduled_animations[i].gpu_polygon_material_vals.rgba[3] !=
-    //                 FLT_SCHEDULEDANIM_IGNORE))
-    //        {
-    //            scheduled_animations[i].deleted = true;
-    //        }
-    //    }
     platform_mutex_unlock(request_scheduled_anims_mutex_id);
 }
 
@@ -920,21 +881,4 @@ void scheduled_animations_delete_all_anims_targeting(const int32_t object_id) {
         }
     }
     platform_mutex_unlock(request_scheduled_anims_mutex_id);
-}
-
-void scheduled_animations_delete_all_repeatforever_anims(void) {
-    // TODO: reimplement
-    #if 0
-    platform_mutex_lock(request_scheduled_anims_mutex_id);
-    for (uint32_t i = 0; i < scheduled_animations_size; i++) {
-        if (
-            !scheduled_animations[i].deleted &&
-            scheduled_animations[i].runs == 0 &&
-            scheduled_animations[i].committed)
-        {
-            scheduled_animations[i].deleted = true;
-        }
-    }
-    platform_mutex_unlock(request_scheduled_anims_mutex_id);
-    #endif
 }

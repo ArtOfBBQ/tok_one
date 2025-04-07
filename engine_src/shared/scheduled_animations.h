@@ -109,10 +109,9 @@ void scheduled_animations_request_bump(
     const uint32_t wait);
 
 void scheduled_animations_delete_all(void);
-void scheduled_animations_delete_movement_anims_targeting(const int32_t object_id);
-void scheduled_animations_delete_rgba_anims_targeting(const int32_t object_id);
+void scheduled_animations_delete_endpoint_anims_targeting(
+    const int32_t object_id);
 void scheduled_animations_delete_all_anims_targeting(const int32_t object_id);
-void scheduled_animations_delete_all_repeatforever_anims(void);
 
 #ifdef __cplusplus
 }
