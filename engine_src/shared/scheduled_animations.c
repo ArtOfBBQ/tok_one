@@ -155,6 +155,24 @@ void scheduled_animations_commit(ScheduledAnimation * to_commit) {
                 anim_mat_vals[i] = delta_to_target;
             }
         }
+        
+        if (to_commit->delete_other_anims_targeting_same_object_id_on_commit) {
+            for (
+                uint32_t anim_i = 0;
+                anim_i < scheduled_animations_size;
+                anim_i++)
+            {
+                if (
+                    scheduled_animations[anim_i].affected_sprite_id ==
+                        to_commit->affected_sprite_id &&
+                    scheduled_animations[anim_i].affected_touchable_id ==
+                        to_commit->affected_touchable_id &&
+                    scheduled_animations[anim_i].endpoints_not_deltas)
+                {
+                    scheduled_animations[anim_i].deleted = true;
+                }
+            }    
+        }
     }
     
     log_assert(!to_commit->deleted);
