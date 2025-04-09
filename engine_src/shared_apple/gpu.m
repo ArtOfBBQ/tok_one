@@ -825,6 +825,8 @@ void platform_gpu_push_texture_slice(
     const uint32_t image_height,
     const uint8_t * rgba_values)
 {
+    (void)parent_texture_array_images_size;
+    
     log_assert(rgba_values != NULL);
     
     log_assert(texture_i >= 0);
@@ -855,23 +857,28 @@ void platform_gpu_push_texture_slice(
         { image_width, image_height, 1 }
     };
     
-    [[ags->metal_textures
-        objectAtIndex:
-            (NSUInteger)texture_array_i]
-        replaceRegion:
-            region
-        mipmapLevel:
-            0
-        slice:
-            (NSUInteger)texture_i
-        withBytes:
-            rgba_values
-        bytesPerRow:
-            image_width * 4
-        bytesPerImage:
-            /* docs: use 0 for anything other than
-               MTLTextureType3D textures */
+    if (
+        texture_i >= 0 &&
+        (NSUInteger)texture_i <
+            [[ags->metal_textures objectAtIndex: (NSUInteger)texture_array_i]
+                arrayLength])
+    {
+        [[ags->metal_textures objectAtIndex: (NSUInteger)texture_array_i]
+            replaceRegion:
+                region
+            mipmapLevel:
+                0
+            slice:
+                (NSUInteger)texture_i
+            withBytes:
+                rgba_values
+            bytesPerRow:
+                image_width * 4
+            bytesPerImage:
+                /* docs: use 0 for anything other than
+                 MTLTextureType3D textures */
             0];
+    }
 }
 
 void platform_gpu_push_bc1_texture_slice(

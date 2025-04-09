@@ -167,11 +167,12 @@ void scheduled_animations_commit(ScheduledAnimation * to_commit) {
                         to_commit->affected_sprite_id &&
                     scheduled_animations[anim_i].affected_touchable_id ==
                         to_commit->affected_touchable_id &&
+                    scheduled_animations[anim_i].committed &&
                     scheduled_animations[anim_i].endpoints_not_deltas)
                 {
                     scheduled_animations[anim_i].deleted = true;
                 }
-            }    
+            }
         }
     }
     
@@ -469,6 +470,13 @@ void scheduled_animations_request_fade_to(
     scheduled_animations_commit(modify_alpha);
 }
 
+float scheduled_animations_easing_pulse_zero_to_one(const float t) {
+    if (t <= 0.0f) return 0.0f;
+    if (t >= 1.0f) return 0.0f;
+
+    return 1.0f - 4.0f * (t - 0.5f) * (t - 0.5f); // Parabolic peak at 1
+}
+
 float scheduled_animations_ease_bounce(const float t, const float bounces) {
     // Ensure t is clamped between 0.0f and 1.0f
     if (t <= 0.0f) return 0.0f;
@@ -605,10 +613,18 @@ void scheduled_animations_resolve(void)
                     scheduled_animations_ease_bounce(
                         anim->already_applied_t, 4.0f);
                 break;
+            case EASINGTYPE_PULSE_ZERO_TO_ONE:
+                t_eased =
+                    scheduled_animations_easing_pulse_zero_to_one(t_now);
+                t_eased_already_applied =
+                    scheduled_animations_easing_pulse_zero_to_one(
+                        anim->already_applied_t);
+                break;
             default:
                 log_assert(0);
         }
         
+        log_assert(anim->already_applied_t <= t_now);
         anim->already_applied_t = t_now;
         
         // Apply effects
@@ -852,6 +868,12 @@ void scheduled_animations_request_bump(
     const int32_t object_id,
     const uint32_t wait)
 {
+    #ifndef LOGGER_IGNORE_ASSERTS
+    log_assert(wait == 0.0f);
+    #else
+    (void)wait;
+    #endif
+    
     ScheduledAnimation * move_request =
         scheduled_animations_request_next(false);
     move_request->easing_type = EASINGTYPE_DOUBLE_BOUNCE;

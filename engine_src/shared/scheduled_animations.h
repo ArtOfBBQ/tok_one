@@ -14,6 +14,7 @@ extern "C" {
 
 void scheduled_animations_init(void);
 
+float scheduled_animations_easing_pulse_zero_to_one(const float t);
 float scheduled_animations_ease_bounce(const float t, const float bounces);
 float scheduled_animations_ease_out_elastic(const float t);
 float scheduled_animations_ease_out_quart(const float t);
@@ -27,6 +28,7 @@ typedef enum EasingType {
     EASINGTYPE_SINGLE_BOUNCE,
     EASINGTYPE_DOUBLE_BOUNCE,
     EASINGTYPE_QUADRUPLE_BOUNCE,
+    EASINGTYPE_PULSE_ZERO_TO_ONE,
 } EasingType;
 
 typedef struct ScheduledAnimation {
