@@ -459,10 +459,10 @@ void scheduled_animations_request_fade_to(
     scheduled_animations_commit(modify_alpha);
 }
 
-float scheduled_animations_easing_pulse_zero_to_one(const float t) {
+float scheduled_animations_easing_pulse_zero_to_zero(const float t) {
     if (t <= 0.0f) return 0.0f;
     if (t >= 1.0f) return 0.0f;
-
+    
     return 1.0f - 4.0f * (t - 0.5f) * (t - 0.5f); // Parabolic peak at 1
 }
 
@@ -597,11 +597,11 @@ void scheduled_animations_resolve(void)
                     scheduled_animations_easing_bounce_zero_to_zero(
                         anim->already_applied_t, 4.0f);
                 break;
-            case EASINGTYPE_PULSE_ZERO_TO_ONE:
+            case EASINGTYPE_PULSE_ZERO_TO_ZERO:
                 t_eased =
-                    scheduled_animations_easing_pulse_zero_to_one(t_now);
+                    scheduled_animations_easing_pulse_zero_to_zero(t_now);
                 t_eased_already_applied =
-                    scheduled_animations_easing_pulse_zero_to_one(
+                    scheduled_animations_easing_pulse_zero_to_zero(
                         anim->already_applied_t);
                 break;
             default:
