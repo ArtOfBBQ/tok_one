@@ -101,6 +101,13 @@ ScheduledAnimation * scheduled_animations_request_next(
 void scheduled_animations_commit(ScheduledAnimation * to_commit) {
     platform_mutex_lock(request_scheduled_anims_mutex_id);
     
+    log_assert(to_commit->start_timestamp == 0);
+    log_assert(to_commit->end_timestamp == 0);
+    log_assert(to_commit->duration_microseconds > 0);
+    to_commit->start_timestamp = window_globals->this_frame_timestamp;
+    to_commit->end_timestamp =
+        to_commit->start_timestamp + to_commit->duration_microseconds;
+    
     if (to_commit->endpoints_not_deltas) {
         int32_t first_zp_i = 0;
         for (
@@ -156,7 +163,9 @@ void scheduled_animations_commit(ScheduledAnimation * to_commit) {
             }
         }
         
-        if (to_commit->delete_other_anims_targeting_same_object_id_on_commit) {
+        if (
+            to_commit->delete_other_anims_targeting_same_object_id_on_commit)
+        {
             for (
                 uint32_t anim_i = 0;
                 anim_i < scheduled_animations_size;
@@ -193,21 +202,6 @@ void scheduled_animations_commit(ScheduledAnimation * to_commit) {
     }
     
     log_assert(to_commit->already_applied_t == 0.0f);
-    
-    if (to_commit->delete_other_anims_targeting_same_object_id_on_commit) {
-        for (uint32_t i = 0; i < scheduled_animations_size; i++) {
-            if (
-                scheduled_animations[i].affected_sprite_id >= 0 &&
-                scheduled_animations[i].affected_sprite_id ==
-                    to_commit->affected_sprite_id &&
-                scheduled_animations[i].committed &&
-                !scheduled_animations[i].deleted &&
-                to_commit != &scheduled_animations[i])
-            {
-                scheduled_animations[i].deleted = true;
-            }
-        }
-    }
     
     to_commit->committed = true;
     
@@ -441,10 +435,7 @@ void scheduled_animations_request_fade_and_destroy(
     ScheduledAnimation * fade_destroy = scheduled_animations_request_next(true);
     fade_destroy->endpoints_not_deltas = true;
     fade_destroy->affected_sprite_id = object_id;
-    fade_destroy->start_timestamp =
-        window_globals->this_frame_timestamp + wait_before_first_run;
-    fade_destroy->end_timestamp =
-        fade_destroy->start_timestamp + duration_microseconds;
+    fade_destroy->duration_microseconds = duration_microseconds;
     fade_destroy->lightsource_vals.reach = 0.0f;
     fade_destroy->gpu_polygon_material_vals.rgba[3] = 0.0f;
     fade_destroy->delete_object_when_finished = true;
@@ -458,14 +449,12 @@ void scheduled_animations_request_fade_to(
     const float target_alpha)
 {
     log_assert(object_id >= 0);
+    log_assert(wait_before_first_run == 0);
     
     // register scheduled animation
     ScheduledAnimation * modify_alpha = scheduled_animations_request_next(true);
     modify_alpha->affected_sprite_id = object_id;
-    modify_alpha->start_timestamp =
-        window_globals->this_frame_timestamp + wait_before_first_run;
-    modify_alpha->end_timestamp =
-        modify_alpha->start_timestamp + duration_microseconds;
+    modify_alpha->duration_microseconds = duration_microseconds;
     modify_alpha->gpu_polygon_material_vals.rgba[3] = target_alpha;
     scheduled_animations_commit(modify_alpha);
 }
@@ -477,17 +466,17 @@ float scheduled_animations_easing_pulse_zero_to_one(const float t) {
     return 1.0f - 4.0f * (t - 0.5f) * (t - 0.5f); // Parabolic peak at 1
 }
 
-float scheduled_animations_ease_bounce(const float t, const float bounces) {
+float scheduled_animations_easing_bounce_zero_to_zero(const float t, const float bounces) {
     // Ensure t is clamped between 0.0f and 1.0f
     if (t <= 0.0f) return 0.0f;
     if (t >= 1.0f) return 0.0f;
-
+    
     // Base oscillation using sine for smooth bouncing
     float oscillation = sinf(3.14159265359f * bounces * t); // 4 half-cycles for multiple bounces
     
     // Amplitude envelope to control bounce height and ensure 0 at endpoints
-    float envelope = 4.0f * t * (1.0f - t); // Parabolic shape: peaks at t=0.5, zero at t=0 and t=1
-
+    float envelope = bounces * t * (1.0f - t); // Parabolic shape: peaks at t=0.5, zero at t=0 and t=1
+    
     // Combine to get the bouncing effect
     float result = oscillation * envelope;
 
@@ -495,26 +484,21 @@ float scheduled_animations_ease_bounce(const float t, const float bounces) {
     return result * 0.5f;
 }
 
-float scheduled_animations_ease_out_elastic(const float t) {
+float scheduled_animations_easing_out_elastic_zero_to_one(const float t) {
     const float c4 = (2.0f * (float)M_PI) / 3.0f;
     
-    #if 0
     if (t == 0.0f || t == 1.0f) { return t; }
-    #else
-    if (fabsf(t) < 0.00001f) return 0.0f;
-    if (fabsf(t - 1.0f) < 0.00001f) return 1.0f;
-    #endif
     
     return
         powf(2, -10.0f * t) *
         sinf((t * 10.0f - 0.75f) * c4) + 1.0f;
 }
 
-float scheduled_animations_ease_out_quart(const float t) {
+float scheduled_animations_easing_out_quart(const float t) {
     return 1 - ((1 - t) * (1 - t) * (1 - t) * (1 - t));
 }
 
-float scheduled_animations_ease_lin_revert(const float t) {
+float scheduled_animations_easing_lin_revert(const float t) {
     return 2.0f * t * (1.0f - t); // Peaks at 0.5f instead of 1.0f
 }
 
@@ -585,32 +569,32 @@ void scheduled_animations_resolve(void)
                 t_eased = t_now;
                 t_eased_already_applied = anim->already_applied_t;
                 break;
-            case EASINGTYPE_EASEOUT_ELASTIC:
+            case EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE:
                 t_eased =
-                    scheduled_animations_ease_out_elastic(t_now);
+                    scheduled_animations_easing_out_elastic_zero_to_one(t_now);
                 t_eased_already_applied =
-                    scheduled_animations_ease_out_elastic(
+                    scheduled_animations_easing_out_elastic_zero_to_one(
                         anim->already_applied_t);
                 break;
-            case EASINGTYPE_SINGLE_BOUNCE:
+            case EASINGTYPE_SINGLE_BOUNCE_ZERO_TO_ZERO:
                 t_eased =
-                    scheduled_animations_ease_bounce(t_now, 1.0f);
+                    scheduled_animations_easing_bounce_zero_to_zero(t_now, 1.0f);
                 t_eased_already_applied =
-                    scheduled_animations_ease_bounce(
+                    scheduled_animations_easing_bounce_zero_to_zero(
                         anim->already_applied_t, 1.0f);
                 break;
-            case EASINGTYPE_DOUBLE_BOUNCE:
+            case EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO:
                 t_eased =
-                    scheduled_animations_ease_bounce(t_now, 2.0f);
+                    scheduled_animations_easing_bounce_zero_to_zero(t_now, 2.0f);
                 t_eased_already_applied =
-                    scheduled_animations_ease_bounce(
+                    scheduled_animations_easing_bounce_zero_to_zero(
                         anim->already_applied_t, 2.0f);
                 break;
-            case EASINGTYPE_QUADRUPLE_BOUNCE:
+            case EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO:
                 t_eased =
-                    scheduled_animations_ease_bounce(t_now, 4.0f);
+                    scheduled_animations_easing_bounce_zero_to_zero(t_now, 4.0f);
                 t_eased_already_applied =
-                    scheduled_animations_ease_bounce(
+                    scheduled_animations_easing_bounce_zero_to_zero(
                         anim->already_applied_t, 4.0f);
                 break;
             case EASINGTYPE_PULSE_ZERO_TO_ONE:
@@ -854,13 +838,12 @@ void scheduled_animations_request_dud_dance(
 {
     ScheduledAnimation * move_request =
         scheduled_animations_request_next(false);
-    move_request->easing_type = EASINGTYPE_QUADRUPLE_BOUNCE;
+    move_request->easing_type = EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO;
     move_request->affected_sprite_id = (int32_t)object_id;
     move_request->gpu_polygon_vals.xyz[0] = magnitude * 0.10f;
     move_request->gpu_polygon_vals.xyz[1] = magnitude * 0.07f;
     move_request->gpu_polygon_vals.xyz[2] = magnitude * 0.01f;
-    move_request->start_timestamp = window_globals->this_frame_timestamp;
-    move_request->end_timestamp = move_request->start_timestamp + 300000;
+    move_request->duration_microseconds = 300000;
     scheduled_animations_commit(move_request);
 }
 
@@ -876,7 +859,7 @@ void scheduled_animations_request_bump(
     
     ScheduledAnimation * move_request =
         scheduled_animations_request_next(false);
-    move_request->easing_type = EASINGTYPE_DOUBLE_BOUNCE;
+    move_request->easing_type = EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO;
     move_request->affected_sprite_id = (int32_t)object_id;
     move_request->gpu_polygon_vals.scale_factor = 0.25f;
     move_request->start_timestamp = window_globals->this_frame_timestamp;

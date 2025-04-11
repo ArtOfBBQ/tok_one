@@ -15,19 +15,19 @@ extern "C" {
 void scheduled_animations_init(void);
 
 float scheduled_animations_easing_pulse_zero_to_one(const float t);
-float scheduled_animations_ease_bounce(const float t, const float bounces);
-float scheduled_animations_ease_out_elastic(const float t);
-float scheduled_animations_ease_out_quart(const float t);
-float scheduled_animations_ease_lin_revert(const float t);
+float scheduled_animations_easing_bounce_zero_to_zero(const float t, const float bounces);
+float scheduled_animations_easing_out_elastic_zero_to_one(const float t);
+float scheduled_animations_easing_out_quart(const float t);
+float scheduled_animations_easing_lin_revert(const float t);
 
 void scheduled_animations_resolve(void);
 
 typedef enum EasingType {
     EASINGTYPE_NONE = 0,
-    EASINGTYPE_EASEOUT_ELASTIC,
-    EASINGTYPE_SINGLE_BOUNCE,
-    EASINGTYPE_DOUBLE_BOUNCE,
-    EASINGTYPE_QUADRUPLE_BOUNCE,
+    EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE,
+    EASINGTYPE_SINGLE_BOUNCE_ZERO_TO_ZERO,
+    EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO,
+    EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO,
     EASINGTYPE_PULSE_ZERO_TO_ONE,
 } EasingType;
 
@@ -43,8 +43,7 @@ typedef struct ScheduledAnimation {
     
     EasingType easing_type;
     
-    uint64_t start_timestamp;
-    uint64_t end_timestamp;
+    uint64_t duration_microseconds;
     
     int32_t affected_sprite_id;
     int32_t affected_touchable_id;
@@ -71,6 +70,9 @@ typedef struct ScheduledAnimation {
     values will be converted to normal delta values, and the animation will
     be treated just like any other animation
     */
+    uint64_t start_timestamp;
+    uint64_t end_timestamp;
+    
     bool32_t endpoints_not_deltas;
     
     bool32_t delete_other_anims_targeting_same_object_id_on_commit;
