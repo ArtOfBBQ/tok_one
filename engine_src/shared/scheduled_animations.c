@@ -459,14 +459,10 @@ void scheduled_animations_request_fade_to(
     scheduled_animations_commit(modify_alpha);
 }
 
-float scheduled_animations_easing_pulse_zero_to_zero(const float t) {
-    if (t <= 0.0f) return 0.0f;
-    if (t >= 1.0f) return 0.0f;
-    
-    return 1.0f - 4.0f * (t - 0.5f) * (t - 0.5f); // Parabolic peak at 1
-}
-
-float scheduled_animations_easing_bounce_zero_to_zero(const float t, const float bounces) {
+float scheduled_animations_easing_bounce_zero_to_zero(
+    const float t,
+    const float bounces)
+{
     // Ensure t is clamped between 0.0f and 1.0f
     if (t <= 0.0f) return 0.0f;
     if (t >= 1.0f) return 0.0f;
@@ -479,8 +475,29 @@ float scheduled_animations_easing_bounce_zero_to_zero(const float t, const float
     
     // Combine to get the bouncing effect
     float result = oscillation * envelope;
-
+    
     // Scale to desired amplitude (adjust 0.5f for more/less extreme bounces)
+    return result * 0.5f;
+}
+
+float scheduled_animations_easing_pulse_zero_to_zero(
+    const float t,
+    const float pulses)
+{
+    // Ensure t is clamped between 0.0f and 1.0f
+    if (t <= 0.0f) return 0.0f;
+    if (t >= 1.0f) return 0.0f;
+    
+    // Base oscillation using absolute sine for non-negative pulsing
+    float oscillation = fabsf(sinf(3.14159265359f * pulses * t)); // Non-negative, bounces half-cycles
+    
+    // Amplitude envelope to ensure 0 at endpoints
+    float envelope = pulses * t * (1.0f - t); // Parabolic shape: peaks at t=0.5, zero at t=0 and t=1
+    
+    // Combine for pulsing effect
+    float result = oscillation * envelope;
+    
+    // Scale to match original amplitude feel (adjust 0.5f for intensity)
     return result * 0.5f;
 }
 
@@ -597,12 +614,28 @@ void scheduled_animations_resolve(void)
                     scheduled_animations_easing_bounce_zero_to_zero(
                         anim->already_applied_t, 4.0f);
                 break;
-            case EASINGTYPE_PULSE_ZERO_TO_ZERO:
+            case EASINGTYPE_OCTUPLE_BOUNCE_ZERO_TO_ZERO:
                 t_eased =
-                    scheduled_animations_easing_pulse_zero_to_zero(t_now);
+                    scheduled_animations_easing_bounce_zero_to_zero(
+                        t_now, 8.0f);
+                t_eased_already_applied =
+                    scheduled_animations_easing_bounce_zero_to_zero(
+                        anim->already_applied_t, 8.0f);
+                break;
+            case EASINGTYPE_SINGLE_PULSE_ZERO_TO_ZERO:
+                t_eased =
+                    scheduled_animations_easing_pulse_zero_to_zero(t_now, 1.0f);
                 t_eased_already_applied =
                     scheduled_animations_easing_pulse_zero_to_zero(
-                        anim->already_applied_t);
+                        anim->already_applied_t, 1.0f);
+                break;
+            case EASINGTYPE_OCTUPLE_PULSE_ZERO_TO_ZERO:
+                t_eased =
+                    scheduled_animations_easing_pulse_zero_to_zero(
+                        t_now, 8.0f);
+                t_eased_already_applied =
+                    scheduled_animations_easing_pulse_zero_to_zero(
+                        anim->already_applied_t, 8.0f);
                 break;
             default:
                 log_assert(0);
@@ -840,9 +873,9 @@ void scheduled_animations_request_dud_dance(
         scheduled_animations_request_next(false);
     move_request->easing_type = EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO;
     move_request->affected_sprite_id = (int32_t)object_id;
-    move_request->gpu_polygon_vals.xyz[0] = magnitude * 0.10f;
-    move_request->gpu_polygon_vals.xyz[1] = magnitude * 0.07f;
-    move_request->gpu_polygon_vals.xyz[2] = magnitude * 0.01f;
+    move_request->gpu_polygon_vals.xyz[0] = magnitude * 0.05f;
+    move_request->gpu_polygon_vals.xyz[1] = magnitude * 0.035f;
+    move_request->gpu_polygon_vals.xyz[2] = magnitude * 0.005f;
     move_request->duration_microseconds = 300000;
     scheduled_animations_commit(move_request);
 }
