@@ -36,6 +36,7 @@ static void construct_scheduled_animationA(
     
     to_construct->affected_sprite_id = -1;
     to_construct->affected_touchable_id = -1;
+    to_construct->runs = 1;
     
     common_memset_float(
          &to_construct->onfinish_gpu_polygon_material_muls,
@@ -540,18 +541,33 @@ void scheduled_animations_resolve(void)
         }
         
         if (anim->already_applied_t >= 1.0f) {
-            anim->deleted = true;
-            anim->already_applied_t = 0.0f;
-            if (animation_i == (int32_t)scheduled_animations_size - 1) {
-                scheduled_animations_size -= 1;
+            bool32_t delete = anim->runs == 1;
+            bool32_t reduce_runs = anim->runs > 0;
+            
+            if (delete) {
+                anim->deleted = true;
+                anim->already_applied_t = 0.0f;
+                if (animation_i == (int32_t)scheduled_animations_size - 1) {
+                    scheduled_animations_size -= 1;
+                }
+                
+                if (anim->delete_object_when_finished) {
+                    delete_zlight(anim->affected_sprite_id);
+                    
+                    delete_zpolygon_object(anim->affected_sprite_id);
+                    
+                    delete_particle_effect(anim->affected_sprite_id);
+                }
+            } else {
+                anim->already_applied_t = 0.0f;
+                anim->start_timestamp = window_globals->this_frame_timestamp;
+                anim->end_timestamp =
+                    anim->start_timestamp +
+                    anim->duration_microseconds;
             }
             
-            if (anim->delete_object_when_finished) {
-                delete_zlight(anim->affected_sprite_id);
-                
-                delete_zpolygon_object(anim->affected_sprite_id);
-                
-                delete_particle_effect(anim->affected_sprite_id);
+            if (reduce_runs) {
+                anim->runs -= 1;
             }
             
             continue;
