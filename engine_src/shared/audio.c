@@ -73,7 +73,7 @@ void audio_consume_int16_samples(
     log_assert(sound_settings->play_cursor < UINT64_MAX - 1000000);
 }
 
-#define DEFAULT_WRITING_OFFSET 1600
+#define DEFAULT_WRITING_OFFSET 400
 void audio_add_at_offset(
     int16_t * data,
     const uint32_t data_size,

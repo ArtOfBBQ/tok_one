@@ -546,7 +546,6 @@ void scheduled_animations_resolve(void)
             
             if (delete) {
                 anim->deleted = true;
-                anim->already_applied_t = 0.0f;
                 if (animation_i == (int32_t)scheduled_animations_size - 1) {
                     scheduled_animations_size -= 1;
                 }
@@ -559,7 +558,6 @@ void scheduled_animations_resolve(void)
                     delete_particle_effect(anim->affected_sprite_id);
                 }
             } else {
-                anim->already_applied_t = 0.0f;
                 anim->start_timestamp = window_globals->this_frame_timestamp;
                 anim->end_timestamp =
                     anim->start_timestamp +
@@ -569,6 +567,8 @@ void scheduled_animations_resolve(void)
             if (reduce_runs) {
                 anim->runs -= 1;
             }
+            
+            anim->already_applied_t = 0.0f;
             
             continue;
         }
