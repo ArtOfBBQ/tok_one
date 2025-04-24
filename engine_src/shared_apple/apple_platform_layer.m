@@ -71,7 +71,6 @@ void platform_read_file(
     const char * filepath,
     FileBuffer * out_preallocatedbuffer)
 {
-    printf("about to read file: %s\n", filepath);
     //@autoreleasepool {
     NSString * nsfilepath =
         [NSString
@@ -105,7 +104,6 @@ void platform_read_file(
         out_preallocatedbuffer->size_without_terminator] = '\0';
     
     out_preallocatedbuffer->good = true;
-    printf("Succesfully read file: %s\n", filepath);
 }
 
 bool32_t platform_file_exists(

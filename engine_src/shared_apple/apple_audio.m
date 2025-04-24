@@ -1,5 +1,6 @@
 #import "apple_audio.h"
 
+
 static void audio_callback(
     void * in_user_data,
     AudioQueueRef queue,
@@ -10,10 +11,8 @@ static void audio_callback(
     assert(
         buffer->mAudioDataByteSize == buffer->mAudioDataBytesCapacity);
     
-    // we're just filling the entire buffer here
-    // In a real game we might only fill part of the buffer and set the
-    // mAudioDataBytes accordingly.
-    uint32_t samples_to_copy = buffer->mAudioDataBytesCapacity / 2;
+    uint32_t audio_data_cap = buffer->mAudioDataBytesCapacity;
+    uint32_t samples_to_copy = audio_data_cap / 2;
     // uint32_t frames_to_copy_both_runs = bytes_to_copy_both_runs / 4;
     // buffer->mAudioDataByteSize = bytes_to_copy_both_runs;
     
@@ -25,16 +24,15 @@ static void audio_callback(
         /* const uint32_t samples_to_copy: */
             samples_to_copy);
     
-    #ifndef NDEBUG
     OSStatus err = AudioQueueEnqueueBuffer(queue, buffer, 0, NULL);
-    assert(!err);
-    #else
-    (void)queue;
-    #endif
+    if (err != noErr) {
+        assert(0);
+        return;
+    }
 }
 
 void start_audio_loop(void) {
-    uint32_t platform_buffer_size_bytes = 12000; // (44100 / 60) * 4;
+    uint32_t platform_buffer_size_bytes = 3000;
     
     // stereo 16-bit interleaved linear PCM audio data at 48kHz in SNORM format
     AudioStreamBasicDescription audio_stream_basic_description;
@@ -70,7 +68,11 @@ void start_audio_loop(void) {
             0,
         /* AudioQueueRef  _Nullable * _Nonnull outAQ: */
             &audio_queue_ref);
-    assert(!err);
+    
+    if (err != noErr) {
+        assert(0);
+        return;
+    }
     
     err = AudioQueueAllocateBuffer(
         /* AudioQueueRef  _Nonnull inAQ: */
@@ -79,7 +81,12 @@ void start_audio_loop(void) {
             platform_buffer_size_bytes,
         /* AudioQueueBufferRef  _Nullable * _Nonnull outBuffer: */
             &audio_queue_buffer_refs[0]);
-    assert(!err);
+    
+    if (err != noErr) {
+        assert(0);
+        return;
+    }
+    
     AudioQueueBuffer * buf;
     buf = audio_queue_buffer_refs[0];
     buf->mAudioDataByteSize = platform_buffer_size_bytes;
@@ -91,7 +98,12 @@ void start_audio_loop(void) {
             platform_buffer_size_bytes,
         /* AudioQueueBufferRef  _Nullable * _Nonnull outBuffer: */
             &audio_queue_buffer_refs[1]);
-    assert(!err);
+    
+    if (err != noErr) {
+        assert(0);
+        return;
+    }
+    
     buf = audio_queue_buffer_refs[1];
     buf->mAudioDataByteSize = platform_buffer_size_bytes;
     
@@ -118,7 +130,6 @@ void start_audio_loop(void) {
         /* const AudioStreamPacketDescription * _Nullable inPacketDescs: :*/
             NULL);
     
-    // go!
     AudioQueueStart(
         /* AudioQueueRef  _Nonnull inAQ: */
             audio_queue_ref,

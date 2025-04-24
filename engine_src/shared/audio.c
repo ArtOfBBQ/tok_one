@@ -50,6 +50,7 @@ void audio_init(
         sizeof(int16_t) * ALL_AUDIOSAMPLES_SIZE);
 }
 
+__attribute__((noinline))
 void audio_consume_int16_samples(
     int16_t * recipient,
     const uint32_t samples_to_copy)
@@ -73,13 +74,13 @@ void audio_consume_int16_samples(
     log_assert(sound_settings->play_cursor < UINT64_MAX - 1000000);
 }
 
-#define DEFAULT_WRITING_OFFSET 400
+#define DEFAULT_WRITING_OFFSET 24
 void audio_add_at_offset(
     int16_t * data,
     const uint32_t data_size,
     const uint64_t play_cursor_offset)
 {
-    assert(data_size < sound_settings->global_buffer_size_bytes);
+    assert(data_size < (sound_settings->global_buffer_size_bytes / 2));
     
     for (uint32_t i = 0; i < data_size; i++) {
         int32_t new_value = sound_settings->samples_buffer[
