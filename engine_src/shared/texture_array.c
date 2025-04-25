@@ -525,7 +525,10 @@ void texture_array_gpu_try_push(void) {
         i++)
     {
         if (platform_mutex_trylock(texture_arrays_mutex_ids[i])) {
-            if (texture_arrays[i].request_init) {
+            if (texture_arrays[i].request_init)
+            {
+                log_assert(texture_arrays[i].images_size < 1240);
+                
                 log_assert(!texture_arrays[i].gpu_initted);
                 log_append("init texture array: ");
                 log_append_int(i);
@@ -541,7 +544,7 @@ void texture_array_gpu_try_push(void) {
             }
             
             if (texture_arrays[i].gpu_initted) {
-                log_assert(texture_arrays[i].images_size < 2000);
+                log_assert(texture_arrays[i].images_size < 1240);
                 for (
                     int32_t j = 0;
                     (uint32_t)j < texture_arrays[i].images_size;
@@ -564,7 +567,7 @@ void texture_array_gpu_try_push(void) {
                             return;
                         }
                         
-                        platform_gpu_push_texture_slice(
+                        platform_gpu_push_texture_slice_and_free_rgba_values(
                             i,
                             j,
                             /* parent_texture_array_images_size: */
@@ -577,9 +580,6 @@ void texture_array_gpu_try_push(void) {
                                 texture_arrays[i]
                                     .images[j]
                                     .image->rgba_values);
-                        
-                        free_from_managed(
-                            texture_arrays[i].images[j].image->rgba_values);
                     }
                 }
             }
@@ -954,7 +954,7 @@ void texture_array_load_font_images(void) {
         i < (int32_t)texture_arrays[0].images_size;
         i++)
     {
-        platform_gpu_push_texture_slice(
+        platform_gpu_push_texture_slice_and_free_rgba_values(
             /* const int32_t texture_array_i: */
                 0,
             /* const int32_t texture_i: */

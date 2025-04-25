@@ -247,6 +247,10 @@ void profiler_start(const char * function_name)
 
 void profiler_end(const char * function_name)
 {
+    #ifdef LOGGER_IGNORE_ASSERTS
+    (void)function_name;
+    #endif
+    
     if (profiler_paused) {
         return;
     }

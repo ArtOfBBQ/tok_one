@@ -8,48 +8,32 @@
     UITouch * touch       = [touches anyObject];
     CGPoint touchLocation = [touch locationInView:self];
     
-    register_interaction(
-        /* interaction : */
-            &user_interactions[INTR_PREVIOUS_TOUCH_START],
-        /* screenspace_x: */
-            platform_x_to_x((float)touchLocation.x -
-                window_globals->window_left),
-        /* screenspace_y: */
-            platform_y_to_y((float)touchLocation.y
-                - window_globals->window_bottom));
+    /*
+    platform_x_to_x((float)touchLocation.x -
+        window_globals->window_left),
+    
+    platform_y_to_y((float)touchLocation.y
+        - window_globals->window_bottom)
+    */
     
     register_interaction(
         /* interaction : */
-            &user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START],
-        /* screenspace_x: */
-            platform_x_to_x((float)touchLocation.x
-                - window_globals->window_left),
-        /* screenspace_y: */
-            platform_y_to_y((float)touchLocation.y
-                - window_globals->window_bottom));
+            &user_interactions[INTR_PREVIOUS_TOUCH_START]);
+    
+    register_interaction(
+        /* interaction : */
+            &user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START]);
     
     // TODO: remove if this doesn't work out
     // TODO: was trying out move as well to combat some weird UI touch bug
     // TODO: that only happens on ios
     register_interaction(
         /* interaction : */
-            &user_interactions[INTR_PREVIOUS_TOUCH_MOVE],
-        /* screenspace_x: */
-            platform_x_to_x((float)touchLocation.x
-                - window_globals->window_left),
-        /* screenspace_y: */
-            platform_y_to_y((float)touchLocation.y
-                - window_globals->window_bottom));
+            &user_interactions[INTR_PREVIOUS_TOUCH_MOVE]);
     
     register_interaction(
         /* interaction : */
-            &user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE],
-        /* screenspace_x: */
-            platform_x_to_x((float)touchLocation.x
-                - window_globals->window_left),
-        /* screenspace_y: */
-            platform_y_to_y((float)touchLocation.y
-                - window_globals->window_bottom));
+            &user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
 }
 
 - (void)
@@ -61,23 +45,11 @@
     
     register_interaction(
         /* interaction : */
-            &user_interactions[INTR_PREVIOUS_TOUCH_MOVE],
-        /* screenspace_x: */
-            platform_x_to_x((float)touchLocation.x
-                - window_globals->window_left),
-        /* screenspace_y: */
-            platform_y_to_y((float)touchLocation.y
-                - window_globals->window_bottom));
+            &user_interactions[INTR_PREVIOUS_TOUCH_MOVE]);
     
     register_interaction(
         /* interaction : */
-            &user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE],
-        /* screenspace_x: */
-            platform_x_to_x((float)touchLocation.x
-                - window_globals->window_left),
-        /* screenspace_y: */
-            platform_y_to_y((float)touchLocation.y
-                - window_globals->window_bottom));
+            &user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
 }
 
 - (void)
@@ -86,26 +58,14 @@
 {
     UITouch * touch       = [touches anyObject];
     CGPoint touchLocation = [touch locationInView:self];
-        
-    register_interaction(
-        /* interaction : */
-            &user_interactions[INTR_PREVIOUS_TOUCH_END],
-        /* screenspace_x: */
-            platform_x_to_x((float)touchLocation.x
-                - window_globals->window_left),
-        /* screenspace_y: */
-            platform_y_to_y((float)touchLocation.y
-                - window_globals->window_bottom));
     
     register_interaction(
         /* interaction : */
-            &user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END],
-        /* screenspace_x: */
-            platform_x_to_x((float)touchLocation.x
-                - window_globals->window_left),
-        /* screenspace_y: */
-            platform_y_to_y((float)touchLocation.y
-                - window_globals->window_bottom));
+            &user_interactions[INTR_PREVIOUS_TOUCH_END]);
+    
+    register_interaction(
+        /* interaction : */
+            &user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END]);
 }
 @end
 
@@ -142,14 +102,20 @@ TouchableMTKView * _my_mtk_view;
     apple_gpu_delegate = [[MetalKitViewDelegate alloc] init];
     
     _my_mtk_view.delegate = apple_gpu_delegate;
-    BOOL result = [apple_gpu_delegate
-        configureMetalWithDevice: _metal_device
-        andPixelFormat: _my_mtk_view.colorPixelFormat
-        fromFilePath: shader_lib_filepath];
+    
+    char errmsg[256];
+    bool32_t result = apple_gpu_init(
+        /* void (*arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *): */
+            gameloop_update_before_render_pass,
+            gameloop_update_after_render_pass,
+        /* id<MTLDevice> with_metal_device: */
+            _metal_device,
+        /* NSString *shader_lib_filepath: */
+            shader_lib_filepath,
+        /* char * error_msg_string: */
+            errmsg);
     log_assert(result);
-    
-    apple_gpu_init(gameloop_update);
-    
+        
     init_application_after_gpu_init();
     
     start_audio_loop();

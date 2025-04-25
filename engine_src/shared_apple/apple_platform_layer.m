@@ -50,10 +50,16 @@ uint64_t platform_get_filesize(const char * filepath) {
     
     NSError * error_value = nil;
     
-    uint64_t file_size = (uint64_t)[
-        [[NSFileManager defaultManager]
+    NSFileManager * file_manager = [NSFileManager defaultManager];
+    
+    if (file_manager == nil) {
+        log_append("ERROR - failed to get default NSFileManager\n");
+        return 0;
+    }
+    
+    NSDictionary<NSString *,id> * attrib_dict = [file_manager
         attributesOfItemAtPath:nsfilepath
-        error:&error_value] fileSize];
+        error:&error_value];
     
     if (error_value != nil) {
         log_append("ERROR - failed to get size of file: ");
@@ -61,6 +67,8 @@ uint64_t platform_get_filesize(const char * filepath) {
         log_append("\n");
         return 0;
     }
+    
+    uint64_t file_size = (uint64_t)[attrib_dict fileSize];
     
     return_value = file_size;
     

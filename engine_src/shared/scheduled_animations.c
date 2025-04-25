@@ -426,8 +426,7 @@ void scheduled_animations_request_shatter_and_destroy(
 }
 
 void scheduled_animations_request_fade_and_destroy(
-    const int32_t object_id,
-    const uint64_t wait_before_first_run,
+    const int32_t  object_id,
     const uint64_t duration_microseconds)
 {
     log_assert(duration_microseconds > 0);
@@ -445,12 +444,10 @@ void scheduled_animations_request_fade_and_destroy(
 
 void scheduled_animations_request_fade_to(
     const int32_t object_id,
-    const uint64_t wait_before_first_run,
     const uint64_t duration_microseconds,
     const float target_alpha)
 {
     log_assert(object_id >= 0);
-    log_assert(wait_before_first_run == 0);
     
     // register scheduled animation
     ScheduledAnimation * modify_alpha = scheduled_animations_request_next(true);

@@ -14,14 +14,14 @@ typedef struct AppleGPUState {
     MTLViewport render_target_viewport;
     MTLViewport cached_viewport;
     
-    id polygon_buffers[3];
-    id polygon_material_buffers[3];
-    id light_buffers [3];
-    id vertex_buffers[3];
-    id camera_buffers[3];
-    id line_vertex_buffers[3];
-    id point_vertex_buffers[3];
-    id postprocessing_constants_buffers[3];
+    id polygon_buffers[MAX_RENDERING_FRAME_BUFFERS];
+    id polygon_material_buffers[MAX_RENDERING_FRAME_BUFFERS];
+    id light_buffers [MAX_RENDERING_FRAME_BUFFERS];
+    id vertex_buffers[MAX_RENDERING_FRAME_BUFFERS];
+    id camera_buffers[MAX_RENDERING_FRAME_BUFFERS];
+    id line_vertex_buffers[MAX_RENDERING_FRAME_BUFFERS];
+    id point_vertex_buffers[MAX_RENDERING_FRAME_BUFFERS];
+    id postprocessing_constants_buffers[MAX_RENDERING_FRAME_BUFFERS];
     id locked_vertex_populator_buffer;
     id locked_vertex_buffer;
     id projection_constants_buffer;
@@ -399,16 +399,16 @@ bool32_t apple_gpu_init(
     // TODO: use the apple-approved page size constant instead of
     // hardcoding 4096, and verify it returns 4096
     for (
-        uint32_t frame_i = 0;
-        frame_i < 3;
-        frame_i++)
+        uint32_t loop_frame_i = 0;
+        loop_frame_i < MAX_RENDERING_FRAME_BUFFERS;
+        loop_frame_i++)
     {
         id<MTLBuffer> MTLBufferFramePolygons =
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         gpu_shared_data_collection.
-                            triple_buffers[frame_i].polygon_collection
+                            triple_buffers[loop_frame_i].polygon_collection
                 /* the length weirdly needs to be page aligned also */
                     length:
                         gpu_shared_data_collection.polygons_allocation_size
@@ -417,14 +417,14 @@ bool32_t apple_gpu_init(
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
-        ags->polygon_buffers[frame_i] = MTLBufferFramePolygons;
+        ags->polygon_buffers[loop_frame_i] = MTLBufferFramePolygons;
         
         id<MTLBuffer> MTLBufferFramePolygonMaterials =
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         gpu_shared_data_collection.
-                            triple_buffers[frame_i].polygon_materials
+                            triple_buffers[loop_frame_i].polygon_materials
                 /* the length weirdly needs to be page aligned also */
                     length:
                         gpu_shared_data_collection.
@@ -435,14 +435,15 @@ bool32_t apple_gpu_init(
                     deallocator:
                         nil];
         
-        ags->polygon_material_buffers[frame_i] = MTLBufferFramePolygonMaterials;
+        ags->polygon_material_buffers[loop_frame_i] =
+            MTLBufferFramePolygonMaterials;
         
         id<MTLBuffer> MTLBufferFrameVertices =
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         gpu_shared_data_collection.
-                            triple_buffers[frame_i].vertices
+                            triple_buffers[loop_frame_i].vertices
                 /* the length weirdly needs to be page aligned also */
                     length:
                         gpu_shared_data_collection.vertices_allocation_size
@@ -452,14 +453,14 @@ bool32_t apple_gpu_init(
                     deallocator:
                         nil];
         
-        ags->vertex_buffers[frame_i] = MTLBufferFrameVertices;
+        ags->vertex_buffers[loop_frame_i] = MTLBufferFrameVertices;
         
         id<MTLBuffer> MTLBufferLineVertices =
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         gpu_shared_data_collection.
-                            triple_buffers[frame_i].line_vertices
+                            triple_buffers[loop_frame_i].line_vertices
                 /* the length weirdly needs to be page aligned also */
                     length:
                         gpu_shared_data_collection.line_vertices_allocation_size
@@ -469,14 +470,14 @@ bool32_t apple_gpu_init(
                     deallocator:
                         nil];
         
-        ags->line_vertex_buffers[frame_i] = MTLBufferLineVertices;
+        ags->line_vertex_buffers[loop_frame_i] = MTLBufferLineVertices;
         
         id<MTLBuffer> MTLBufferPointVertices =
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         gpu_shared_data_collection.
-                            triple_buffers[frame_i].point_vertices
+                            triple_buffers[loop_frame_i].point_vertices
                 /* the length weirdly needs to be page aligned also */
                     length:
                         gpu_shared_data_collection.point_vertices_allocation_size
@@ -486,14 +487,14 @@ bool32_t apple_gpu_init(
                     deallocator:
                         nil];
         
-        ags->point_vertex_buffers[frame_i] = MTLBufferPointVertices;
+        ags->point_vertex_buffers[loop_frame_i] = MTLBufferPointVertices;
         
         id<MTLBuffer> MTLBufferPostProcessingConstants =
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         gpu_shared_data_collection.
-                            triple_buffers[frame_i].postprocessing_constants
+                            triple_buffers[loop_frame_i].postprocessing_constants
                 /* the length weirdly needs to be page aligned also */
                     length:
                         gpu_shared_data_collection.
@@ -504,7 +505,7 @@ bool32_t apple_gpu_init(
                     deallocator:
                         nil];
         
-        ags->postprocessing_constants_buffers[frame_i] =
+        ags->postprocessing_constants_buffers[loop_frame_i] =
             MTLBufferPostProcessingConstants;
         
         id<MTLBuffer> MTLBufferFrameLights =
@@ -512,7 +513,7 @@ bool32_t apple_gpu_init(
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         gpu_shared_data_collection.
-                            triple_buffers[frame_i].light_collection
+                            triple_buffers[loop_frame_i].light_collection
                 /* the length weirdly needs to be page aligned also */
                     length:
                         gpu_shared_data_collection.lights_allocation_size
@@ -522,14 +523,14 @@ bool32_t apple_gpu_init(
                     deallocator:
                         nil];
         
-        ags->light_buffers[frame_i] = MTLBufferFrameLights;
+        ags->light_buffers[loop_frame_i] = MTLBufferFrameLights;
         
         id<MTLBuffer> MTLBufferFrameCamera =
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         gpu_shared_data_collection.
-                            triple_buffers[frame_i].camera
+                            triple_buffers[loop_frame_i].camera
                 /* the length weirdly needs to be page aligned also */
                     length:
                         gpu_shared_data_collection.camera_allocation_size
@@ -539,7 +540,7 @@ bool32_t apple_gpu_init(
                     deallocator:
                         nil];
         
-        ags->camera_buffers[frame_i] = MTLBufferFrameCamera;
+        ags->camera_buffers[loop_frame_i] = MTLBufferFrameCamera;
     }
     
     id<MTLBuffer> MTLBufferLockedVerticesPopulator =
@@ -708,6 +709,10 @@ void platform_gpu_get_device_name(
     char * recipient,
     const uint32_t recipient_cap)
 {
+    #ifdef LOGGER_IGNORE_ASSERTS
+    (void)recipient_cap;
+    #endif
+    
     const char * device_name_cstr =
         [[ags->device name] cStringUsingEncoding:NSASCIIStringEncoding];
     common_strcpy_capped(
@@ -817,13 +822,13 @@ void platform_gpu_init_texture_array(
 }
 
 static bool32_t font_already_pushed = 0;
-void platform_gpu_push_texture_slice(
+void platform_gpu_push_texture_slice_and_free_rgba_values(
     const int32_t texture_array_i,
     const int32_t texture_i,
     const uint32_t parent_texture_array_images_size,
     const uint32_t image_width,
     const uint32_t image_height,
-    const uint8_t * rgba_values)
+    uint8_t * rgba_values)
 {
     (void)parent_texture_array_images_size;
     
@@ -879,6 +884,8 @@ void platform_gpu_push_texture_slice(
                  MTLTextureType3D textures */
             0];
     }
+    
+    free_from_managed(rgba_values);
 }
 
 void platform_gpu_push_bc1_texture_slice(
@@ -1621,7 +1628,7 @@ void platform_gpu_copy_locked_vertices(void)
     [command_buffer presentDrawable: [view currentDrawable]];
     
     ags->frame_i += 1;
-    ags->frame_i %= 3;
+    ags->frame_i %= MAX_RENDERING_FRAME_BUFFERS;
     
     [command_buffer addCompletedHandler:^(id<MTLCommandBuffer> arg_cmd_buffer) {
         (void)arg_cmd_buffer;

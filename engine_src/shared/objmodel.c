@@ -981,7 +981,12 @@ int32_t new_mesh_id_from_obj_text(
     }
     
     if (expected_materials_names != NULL) {
+        #ifndef LOGGER_IGNORE_ASSERTS
         log_assert(parsed_obj->materials_count == expected_materials_count);
+        #else
+        (void)expected_materials_count;
+        #endif
+        
         for (uint32_t i = 0; i < parsed_obj->materials_count; i++) {
             if (parsed_obj->materials != NULL) {
                 log_assert(

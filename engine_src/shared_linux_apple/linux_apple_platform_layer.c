@@ -19,6 +19,8 @@ void platform_layer_init(
         size += 1;
     }
     
+    common_memset_char(mutexes, 0, sizeof(OSMutexID) * MUTEXES_SIZE);
+    
     *unmanaged_memory_store = (void *)(
         ((char *)*unmanaged_memory_store) + size);
 }
@@ -27,11 +29,16 @@ uint32_t platform_init_mutex_and_return_id(void) {
     
     log_assert(next_mutex_id + 1 < MUTEXES_SIZE);
     log_assert(!mutexes[next_mutex_id].initialized);
+    
     int mutex_init_error_value = pthread_mutex_init(
         &(mutexes[next_mutex_id].mutex),
         NULL);
     
+    #ifndef LOGGER_IGNORE_ASSERTS
     log_assert(mutex_init_error_value == 0);
+    #else
+    (void)mutex_init_error_value;
+    #endif
     
     uint32_t return_value = next_mutex_id;
     
@@ -75,6 +82,8 @@ void platform_assert_mutex_locked(const uint32_t mutex_id) {
     #ifndef LOGGER_IGNORE_ASSERTS
     int return_val = pthread_mutex_trylock(&mutexes[mutex_id].mutex);
     log_assert(return_val == EBUSY);
+    #else
+    (void)mutex_id;
     #endif
 }
 

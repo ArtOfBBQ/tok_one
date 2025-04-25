@@ -1,6 +1,7 @@
 #ifndef CPU_TO_GPU_TYPES_H
 #define CPU_TO_GPU_TYPES_H
 
+#include "clientlogic_macro_settings.h"
 #include "cpu_gpu_shared_types.h"
 #include "common.h"
 
@@ -24,7 +25,7 @@ typedef struct GPUDataForSingleFrame
 
 typedef struct GPUSharedDataCollection
 {
-    GPUDataForSingleFrame triple_buffers[3];
+    GPUDataForSingleFrame triple_buffers[MAX_RENDERING_FRAME_BUFFERS];
     GPUProjectionConstants * locked_pjc;
     GPULockedVertex * locked_vertices;
     uint32_t locked_vertices_size;

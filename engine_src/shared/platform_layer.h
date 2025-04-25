@@ -219,13 +219,13 @@ void platform_gpu_init_texture_array(
     const uint32_t single_image_height,
     const bool32_t use_bc1_compression);
 
-void platform_gpu_push_texture_slice(
+void platform_gpu_push_texture_slice_and_free_rgba_values(
     const int32_t texture_array_i,
     const int32_t texture_i,
     const uint32_t parent_texture_array_images_size,
     const uint32_t image_width,
     const uint32_t image_height,
-    const uint8_t * rgba_values);
+    uint8_t * rgba_values_to_use_and_free);
 
 void platform_gpu_push_bc1_texture_slice(
     const int32_t texture_array_i,

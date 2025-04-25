@@ -530,8 +530,6 @@ int main(int argc, const char * argv[]) {
         // think about startup cases where we fail to load the font or gpu
         texture_array_load_font_images();
         
-        client_logic_early_startup(&success, errmsg);
-        
         init_application_after_gpu_init();
         
         start_audio_loop();

@@ -102,12 +102,10 @@ void scheduled_animations_request_shatter_and_destroy(
 
 void scheduled_animations_request_fade_and_destroy(
     const int32_t object_id,
-    const uint64_t wait_first_microseconds,
     const uint64_t duration_microseconds);
 
 void scheduled_animations_request_fade_to(
     const int32_t object_id,
-    const uint64_t wait_first_microseconds,
     const uint64_t duration_microseconds,
     const float target_alpha);
 

@@ -15,7 +15,7 @@
 #endif
 
 #ifndef MAX_POLYGONS_PER_BUFFER
-#define MAX_POLYGONS_PER_BUFFER  75000
+#define MAX_POLYGONS_PER_BUFFER  5500
 #endif
 
 #ifndef MAX_LIGHTS_PER_BUFFER
@@ -71,7 +71,7 @@ typedef struct GPUPolygon {
     float        ignore_lighting;
     float        ignore_camera;
     float        simd_padding[4]; // make sure touchable_id is behind this
-    uint32_t     remove_shadow;
+    unsigned int remove_shadow;
     int          touchable_id;
 } GPUPolygon; // 24 floats (3 SIMD runs)
 
