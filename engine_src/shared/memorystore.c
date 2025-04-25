@@ -2,14 +2,16 @@
 
 #define MEM_ALIGNMENT_BYTES 256
 
-#define MANAGED_MEMORY_STACK_SIZE 1000
-typedef struct ManagedMemoryStack {
-    void * pointers[MANAGED_MEMORY_STACK_SIZE];
-    char sources[MANAGED_MEMORY_STACK_SIZE][512];
-    bool32_t used[MANAGED_MEMORY_STACK_SIZE];
-    uint32_t size;
-} ManagedMemoryStack;
-static ManagedMemoryStack * managed_stack = NULL;
+//#define MANAGED_MEMORY_STACK_SIZE 1000
+//typedef struct ManagedMemoryStack {
+//    void * pointers[MANAGED_MEMORY_STACK_SIZE];
+//    char sources[MANAGED_MEMORY_STACK_SIZE][512];
+//    bool32_t used[MANAGED_MEMORY_STACK_SIZE];
+//    uint32_t size;
+//} ManagedMemoryStack;
+//static ManagedMemoryStack * managed_stack = NULL;
+
+uint32_t memorystore_page_size = 4000;
 
 static void * unmanaged_memory = NULL;
 static uint64_t unmanaged_memory_size = UNMANAGED_MEMORY_SIZE;
@@ -116,8 +118,8 @@ void memorystore_init(
     }
     
     
-    managed_stack = malloc_from_unmanaged(sizeof(ManagedMemoryStack));
-    managed_stack->size = 0;
+    //    managed_stack = malloc_from_unmanaged(sizeof(ManagedMemoryStack));
+    //    managed_stack->size = 0;
 }
 
 static void * malloc_from_unmanaged_without_aligning(

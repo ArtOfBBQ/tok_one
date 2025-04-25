@@ -151,11 +151,11 @@ static void set_allocated_to_error_image(
         log_assert(
             ((pixel_i * 4) + 3) < to_replace->rgba_values_size);
         
-        to_replace->rgba_values[(pixel_i * 4) + 0] =
+        to_replace->rgba_values_page_aligned[(pixel_i * 4) + 0] =
             black ? 0 : 255;
-        to_replace->rgba_values[(pixel_i * 4) + 1] = 0;
-        to_replace->rgba_values[(pixel_i * 4) + 2] = 0;
-        to_replace->rgba_values[(pixel_i * 4) + 3] = 255;
+        to_replace->rgba_values_page_aligned[(pixel_i * 4) + 1] = 0;
+        to_replace->rgba_values_page_aligned[(pixel_i * 4) + 2] = 0;
+        to_replace->rgba_values_page_aligned[(pixel_i * 4) + 3] = 255;
         black = !black;
     }
 }
@@ -168,7 +168,8 @@ rather than crashing the application
 static void set_unallocated_to_error_image(
     DecodedImage * to_replace)
 {
-    log_assert(to_replace->rgba_values == NULL);
+    log_assert(to_replace->rgba_values_freeable == NULL);
+    log_assert(to_replace->rgba_values_page_aligned == NULL);
     
     to_replace->width = 30;
     to_replace->height = 30;
@@ -176,8 +177,16 @@ static void set_unallocated_to_error_image(
         to_replace->width * to_replace->height;
     to_replace->rgba_values_size = to_replace->pixel_count * 4;
     
-    to_replace->rgba_values =
-        malloc_from_managed(to_replace->rgba_values_size);
+    to_replace->rgba_values_freeable =
+        malloc_from_managed(
+            to_replace->rgba_values_size + memorystore_page_size);
+    to_replace->rgba_values_page_aligned = to_replace->rgba_values_freeable;
+    while (
+        ((ptrdiff_t)to_replace->rgba_values_page_aligned %
+            memorystore_page_size) != 0)
+    {
+        to_replace->rgba_values_page_aligned += 1;
+    }
     
     set_allocated_to_error_image(to_replace);
 }
@@ -243,10 +252,18 @@ static DecodedImage * malloc_img_from_filename(
         new_image->good = false;
         new_image->pixel_count = new_image->width * new_image->height;
         new_image->rgba_values_size = new_image->pixel_count * 4;
-        new_image->rgba_values = malloc_from_managed(
-            new_image->rgba_values_size);
+        new_image->rgba_values_freeable =
+        malloc_from_managed(
+            new_image->rgba_values_size + memorystore_page_size);
+        new_image->rgba_values_page_aligned = new_image->rgba_values_freeable;
+        while (
+            ((ptrdiff_t)new_image->rgba_values_page_aligned %
+            memorystore_page_size) != 0)
+        {
+            new_image->rgba_values_page_aligned += 1;
+        }
         common_memset_char(
-            new_image->rgba_values,
+            new_image->rgba_values_page_aligned,
             0,
             new_image->rgba_values_size);
         
@@ -256,7 +273,7 @@ static DecodedImage * malloc_img_from_filename(
             /* const uint64_t compressed_input_size: */
                 file_buffer.size_without_terminator - 1,
             /* out_rgba_values: */
-                new_image->rgba_values,
+                new_image->rgba_values_page_aligned,
             /* rgba_values_size: */
                 new_image->rgba_values_size,
             /* uint32_t * out_good: */
@@ -286,17 +303,25 @@ static DecodedImage * malloc_img_from_filename(
         new_image->good = false;
         new_image->pixel_count = new_image->width * new_image->height;
         new_image->rgba_values_size = new_image->pixel_count * 4;
-        new_image->rgba_values = malloc_from_managed(
-            new_image->rgba_values_size);
+        new_image->rgba_values_freeable =
+        malloc_from_managed(
+            new_image->rgba_values_size + memorystore_page_size);
+        new_image->rgba_values_page_aligned = new_image->rgba_values_freeable;
+        while (
+            ((ptrdiff_t)new_image->rgba_values_page_aligned %
+            memorystore_page_size) != 0)
+        {
+            new_image->rgba_values_page_aligned += 1;
+        }
         common_memset_char(
-            new_image->rgba_values,
+            new_image->rgba_values_page_aligned,
             0,
             new_image->rgba_values_size);
         
         decode_BMP(
             /* raw_input: */ (uint8_t *)file_buffer.contents,
             /* raw_input_size: */ file_buffer.size_without_terminator - 1,
-            /* out_rgba_values: */ new_image->rgba_values,
+            /* out_rgba_values: */ new_image->rgba_values_page_aligned,
             /* out_rgba_values_size: */ new_image->rgba_values_size,
             /* out_good: */ &new_image->good);
     } else {
@@ -329,7 +354,8 @@ static DecodedImage * extract_image(
     log_assert(x > 0);
     log_assert(y > 0);
     log_assert(original != NULL);
-    log_assert(original->rgba_values != NULL);
+    log_assert(original->rgba_values_freeable != NULL);
+    log_assert(original->rgba_values_page_aligned != NULL);
     
     if (!application_running) { return NULL; }
     log_assert(sprite_columns > 0);
@@ -364,9 +390,20 @@ static DecodedImage * extract_image(
                 original->rgba_values_size);
     
     new_image->rgba_values_size = slice_size_bytes;
-    new_image->rgba_values = malloc_from_managed(slice_size_bytes);
-    common_memset_char(new_image->rgba_values, 0, new_image->rgba_values_size);
-    log_assert(new_image->rgba_values != NULL);
+    new_image->rgba_values_freeable =
+        malloc_from_managed(
+            new_image->rgba_values_size + memorystore_page_size);
+    new_image->rgba_values_page_aligned = new_image->rgba_values_freeable;
+    while (
+        ((ptrdiff_t)new_image->rgba_values_page_aligned %
+            memorystore_page_size) != 0)
+    {
+        new_image->rgba_values_page_aligned += 1;
+    }
+    common_memset_char(
+        new_image->rgba_values_page_aligned,
+        0,
+        new_image->rgba_values_size);
     
     new_image->width = slice_width_pixels;
     new_image->height = slice_height_pixels;
@@ -399,7 +436,8 @@ static DecodedImage * extract_image(
         {
             log_assert((rgba_value_i + _) < original->rgba_values_size);
             log_assert(i < new_image->rgba_values_size);
-            new_image->rgba_values[i] = original->rgba_values[rgba_value_i + _];
+            new_image->rgba_values_page_aligned[i] =
+                original->rgba_values_page_aligned[rgba_value_i + _];
             i++;
         }
     }
@@ -427,7 +465,8 @@ static void register_to_texturearray_from_images(
         log_assert(new_images[i]->width > 0);
         log_assert(new_images[i]->height > 0);
         log_assert(new_images[i]->rgba_values_size > 0);
-        log_assert(new_images[i]->rgba_values != NULL);
+        log_assert(new_images[i]->rgba_values_freeable != NULL);
+        log_assert(new_images[i]->rgba_values_page_aligned != NULL);
     }
     
     uint32_t current_width = new_images[0]->width;
@@ -557,7 +596,11 @@ void texture_array_gpu_try_push(void) {
                         log_assert(
                             texture_arrays[i]
                                     .images[j]
-                                    .image->rgba_values != NULL);
+                                    .image->rgba_values_freeable != NULL);
+                        log_assert(
+                            texture_arrays[i]
+                                    .images[j]
+                                    .image->rgba_values_page_aligned != NULL);
                         #endif
                         
                         if (!application_running) {
@@ -574,10 +617,16 @@ void texture_array_gpu_try_push(void) {
                                 texture_arrays[i].single_img_width,
                             /* image_height: */
                                 texture_arrays[i].single_img_height,
-                            /* rgba_values: */
+                            /* uint8_t * rgba_values_freeable: */
                                 texture_arrays[i]
                                     .images[j]
-                                    .image->rgba_values);
+                                    .image->rgba_values_freeable,
+                            /* uint8_t * rgba_values_page_aligned: */
+                                texture_arrays[i]
+                                    .images[j]
+                                    .image->rgba_values_page_aligned);
+                        texture_arrays[i].images[j].image->
+                            rgba_values_page_aligned = NULL;
                     }
                 }
             }
@@ -595,7 +644,7 @@ static void register_to_texturearray_by_splitting_image(
 {
     log_assert(new_image != NULL);
     if (new_image == NULL) { return; }
-    log_assert(new_image->rgba_values != NULL);
+    log_assert(new_image->rgba_values_freeable != NULL);
     log_assert(new_image->rgba_values_size > 0);
     log_assert(rows >= 1);
     log_assert(columns >= 1);
@@ -876,10 +925,18 @@ void texture_array_decode_null_image_at(
     new_image->rgba_values_size =
         new_image->height * new_image->width * 4;
     log_assert(new_image->rgba_values_size > 0);
-    new_image->rgba_values = (uint8_t *)
-        malloc_from_managed(new_image->rgba_values_size);
+    new_image->rgba_values_freeable =
+        malloc_from_managed(
+            new_image->rgba_values_size + memorystore_page_size);
+    new_image->rgba_values_page_aligned = new_image->rgba_values_freeable;
+    while (
+        ((ptrdiff_t)new_image->rgba_values_page_aligned %
+            memorystore_page_size) != 0)
+    {
+        new_image->rgba_values_page_aligned += 1;
+    }
     
-    if (new_image->rgba_values == NULL || !application_running) {
+    if (new_image->rgba_values_freeable == NULL || !application_running) {
         application_running = false;
         return;
     }
@@ -893,7 +950,7 @@ void texture_array_decode_null_image_at(
             /* const uint64_t compressed_input_size: */
                 file_buffer.size_without_terminator,
             /* out_rgba_values: */
-                new_image->rgba_values,
+                new_image->rgba_values_page_aligned,
             /* rgba_values_size: */
                 new_image->rgba_values_size,
             /* uint32_t * out_good: */
@@ -908,7 +965,7 @@ void texture_array_decode_null_image_at(
             /* const uint64_t raw_input_size: */
                 file_buffer.size_without_terminator,
             /* out_rgba_values: */
-                new_image->rgba_values,
+                new_image->rgba_values_page_aligned,
             /* out_rgba_values_size: */
                 new_image->rgba_values_size,
             /* uint32_t * out_good: */
@@ -964,7 +1021,9 @@ void texture_array_load_font_images(void) {
             /* const uint32_t image_height: */
                 texture_arrays[0].single_img_height,
             /* const uint8_t *rgba_values: */
-                texture_arrays[0].images[i].image->rgba_values);
+                texture_arrays[0].images[i].image->rgba_values_freeable,
+                texture_arrays[0].images[i].image->rgba_values_page_aligned);
+        texture_arrays[0].images[i].image->rgba_values_page_aligned = NULL;
         texture_arrays[0].images[i].request_update = false;
     }
     

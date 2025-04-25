@@ -225,7 +225,8 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
     const uint32_t parent_texture_array_images_size,
     const uint32_t image_width,
     const uint32_t image_height,
-    uint8_t * rgba_values_to_use_and_free);
+    uint8_t * rgba_values_freeable,
+    uint8_t * rgba_values_page_aligned);
 
 void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     const int32_t texture_array_i,

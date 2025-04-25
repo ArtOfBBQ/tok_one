@@ -811,11 +811,13 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
     const uint32_t parent_texture_array_images_size,
     const uint32_t image_width,
     const uint32_t image_height,
-    uint8_t * rgba_values)
+    uint8_t * rgba_values_freeable,
+    uint8_t * rgba_values_page_aligned)
 {
     (void)parent_texture_array_images_size;
     
-    log_assert(rgba_values != NULL);
+    log_assert(rgba_values_freeable != NULL);
+    log_assert(rgba_values_page_aligned != NULL);
     
     log_assert(texture_i >= 0);
     log_assert(texture_array_i >= 0);
@@ -843,16 +845,20 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
     id<MTLBuffer> temp_buf =
         [ags->device
             /* the pointer needs to be page aligned */
-        newBufferWithBytesNoCopy:
-            rgba_values
+            newBufferWithBytesNoCopy:
+                rgba_values_page_aligned
             /* the length weirdly needs to be page aligned also */
-        length:
-            image_width * image_height * 4
-        options:
-            MTLResourceStorageModeShared
-        /* deallocator = nil to opt out */
-        deallocator:
-            nil];
+            length:
+                image_width * image_height * 4
+            options:
+                MTLResourceStorageModeShared
+            /* deallocator = nil to opt out */
+            deallocator:
+                nil];
+    
+    if (temp_buf == NULL) {
+        return;
+    }
     
     id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
     
@@ -888,7 +894,7 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
     }];
     [combuf commit];
     
-    free_from_managed(rgba_values);
+    free_from_managed(rgba_values_freeable);
 }
 
 void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(

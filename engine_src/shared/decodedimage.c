@@ -7,7 +7,7 @@ uint64_t get_sum_rgba(
     
     uint64_t return_value = 0;
     for (uint32_t i = 0; i < input->rgba_values_size; i++) {
-        return_value += input->rgba_values[i];
+        return_value += input->rgba_values_page_aligned[i];
     }
     
     return return_value;
@@ -112,8 +112,8 @@ void overwrite_subregion(
             if (i >= whole_image->rgba_values_size) {
                 break;
             }
-            whole_image->rgba_values[pixel_i + _] =
-                new_image->rgba_values[i];
+            whole_image->rgba_values_page_aligned[pixel_i + _] =
+                new_image->rgba_values_page_aligned[i];
             i++;
         }
     }

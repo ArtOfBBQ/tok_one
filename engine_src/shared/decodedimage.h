@@ -20,7 +20,8 @@ to play with it.
 #endif
 
 typedef struct DecodedImage {
-    uint8_t * rgba_values;
+    uint8_t * rgba_values_freeable;
+    uint8_t * rgba_values_page_aligned;
     uint32_t rgba_values_size;
     uint32_t width;
     uint32_t height;

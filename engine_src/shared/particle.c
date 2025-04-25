@@ -636,6 +636,8 @@ void add_particle_effects_to_workload(
                     frame_data->vertices_size < MAX_VERTICES_PER_BUFFER);
             }
             
+            log_assert(
+                frame_data->polygon_collection->size < MAX_POLYGONS_PER_BUFFER);
             common_memcpy(
                 /* void * dst: */
                     frame_data->polygon_collection->polygons +
@@ -650,6 +652,8 @@ void add_particle_effects_to_workload(
             log_assert(
                 particle_effects[i].zpolygon_materials[0].specular > 0.0f);
             
+            log_assert(
+                frame_data->polygon_collection->size < MAX_POLYGONS_PER_BUFFER);
             common_memcpy(
                 &frame_data->polygon_materials[
                     frame_data->polygon_collection->size *
