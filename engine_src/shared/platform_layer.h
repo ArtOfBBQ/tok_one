@@ -227,13 +227,13 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
     const uint32_t image_height,
     uint8_t * rgba_values_to_use_and_free);
 
-void platform_gpu_push_bc1_texture_slice(
+void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     const int32_t texture_array_i,
     const int32_t texture_i,
     const uint32_t parent_texture_array_images_size,
     const uint32_t image_width,
     const uint32_t image_height,
-    const uint8_t * bc1_values);
+    uint8_t * bc1_values);
 
 void platform_update_mouse_location(void);
 

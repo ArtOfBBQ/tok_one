@@ -105,7 +105,7 @@ void texture_array_push_dds_image_to_preinitted(
     
     log_assert(file_buffer.good);
     
-    platform_gpu_push_bc1_texture_slice(
+    platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
         /* texture_array_i: */
             to_texturearray_i,
         /* texture_i: */
@@ -117,9 +117,7 @@ void texture_array_push_dds_image_to_preinitted(
         /* const uint32_t image_height: */
             texture_arrays[to_texturearray_i].single_img_height,
         /* const uint8_t * bc1_values: */
-            (uint8_t *)file_buffer.contents + 128);
-    
-    free_from_managed(file_buffer.contents);
+            (uint8_t *)file_buffer.contents);
     
     texture_arrays[to_texturearray_i].images[to_texture_i].
         request_update = false;

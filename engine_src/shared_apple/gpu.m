@@ -45,7 +45,8 @@ typedef struct AppleGPUState {
     id<MTLDepthStencilState> depth_stencil_state;
     
     // Textures
-    NSMutableArray * metal_textures;
+    // id<MTLBuffer> texture_populator_buffer;
+    id<MTLTexture> metal_textures[TEXTUREARRAYS_SIZE];
     #if POSTPROCESSING_ACTIVE
     id<MTLTexture> render_target_texture;
     id<MTLTexture> downsampled_target_textures[DOWNSAMPLES_SIZE];
@@ -584,9 +585,7 @@ bool32_t apple_gpu_init(
     
     ags->projection_constants_buffer = MTLBufferProjectionConstants;
     
-    ags->metal_textures = [
-        [NSMutableArray alloc]
-            initWithCapacity: TEXTUREARRAYS_SIZE];
+    common_memset_char(ags->metal_textures, 0, sizeof(ags->metal_textures));
     
     #if POSTPROCESSING_ACTIVE
     
@@ -784,24 +783,8 @@ void platform_gpu_init_texture_array(
     const uint32_t single_image_height,
     const bool32_t use_bc1_compression)
 {
-    assert(texture_array_i >= 0);
-    assert(texture_array_i < 31);
-    
-    // we always overwrite textures, so pad them to match first
-    while ([ags->metal_textures count] <= (uint32_t)texture_array_i) {
-        MTLTextureDescriptor * texture_descriptor =
-            [[MTLTextureDescriptor alloc] init];
-        texture_descriptor.textureType = MTLTextureType2DArray;
-        texture_descriptor.arrayLength = 1;
-        texture_descriptor.pixelFormat = use_bc1_compression ?
-            MTLPixelFormatBC1_RGBA :
-            MTLPixelFormatRGBA8Unorm;
-        texture_descriptor.width = single_image_width;
-        texture_descriptor.height = single_image_height;
-        id<MTLTexture> texture =
-            [ags->device newTextureWithDescriptor:texture_descriptor];
-        [ags->metal_textures addObject: texture];
-    }
+    assert(texture_array_i >=  0);
+    assert(texture_array_i <  31);
     
     MTLTextureDescriptor * texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
@@ -810,15 +793,15 @@ void platform_gpu_init_texture_array(
     texture_descriptor.pixelFormat = use_bc1_compression ?
         MTLPixelFormatBC1_RGBA :
         MTLPixelFormatRGBA8Unorm;
+    texture_descriptor.storageMode = MTLStorageModePrivate;
     texture_descriptor.width = single_image_width;
     texture_descriptor.height = single_image_height;
     
     id<MTLTexture> texture = [ags->device
         newTextureWithDescriptor:texture_descriptor];
     
-    [ags->metal_textures
-        replaceObjectAtIndex:(uint32_t)texture_array_i
-        withObject: texture];
+    log_assert(ags->metal_textures[texture_array_i] == NULL);
+    ags->metal_textures[texture_array_i] = texture;
 }
 
 static bool32_t font_already_pushed = 0;
@@ -842,7 +825,7 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
         font_already_pushed = true;
     }
     
-    if (texture_array_i >= (int32_t)[ags->metal_textures count]) {
+    if (ags->metal_textures[texture_array_i] == NULL) {
         #ifndef LOGGER_IGNORE_ASSERTS
         char errmsg[256];
         common_strcpy_capped(
@@ -857,73 +840,141 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
         return;
     }
     
-    MTLRegion region = {
-        { 0,0,0 },
-        { image_width, image_height, 1 }
-    };
+    id<MTLBuffer> temp_buf =
+        [ags->device
+            /* the pointer needs to be page aligned */
+        newBufferWithBytesNoCopy:
+            rgba_values
+            /* the length weirdly needs to be page aligned also */
+        length:
+            image_width * image_height * 4
+        options:
+            MTLResourceStorageModeShared
+        /* deallocator = nil to opt out */
+        deallocator:
+            nil];
     
-    if (
-        texture_i >= 0 &&
-        (NSUInteger)texture_i <
-            [[ags->metal_textures objectAtIndex: (NSUInteger)texture_array_i]
-                arrayLength])
-    {
-        [[ags->metal_textures objectAtIndex: (NSUInteger)texture_array_i]
-            replaceRegion:
-                region
-            mipmapLevel:
-                0
-            slice:
-                (NSUInteger)texture_i
-            withBytes:
-                rgba_values
-            bytesPerRow:
-                image_width * 4
-            bytesPerImage:
-                /* docs: use 0 for anything other than
-                 MTLTextureType3D textures */
-            0];
-    }
+    id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
+    
+    id <MTLBlitCommandEncoder> blit_copy_encoder =
+        [combuf blitCommandEncoder];
+    
+    [blit_copy_encoder
+        copyFromBuffer:
+            temp_buf
+        sourceOffset:
+            0
+        sourceBytesPerRow:
+            image_width * 4
+        sourceBytesPerImage:
+            image_width * image_height * 4
+        sourceSize:
+            MTLSizeMake(image_width, image_height, 1)
+        toTexture:
+            ags->metal_textures[texture_array_i]
+        destinationSlice:
+            (NSUInteger)texture_i
+        destinationLevel:
+            0
+        destinationOrigin:
+            MTLOriginMake(0, 0, 0)];
+    
+    [blit_copy_encoder endEncoding];
+    
+    // Add a completion handler and commit the command buffer.
+    [combuf addCompletedHandler:^(id<MTLCommandBuffer> cb) {
+        // Populate private buffer.
+        (void)cb;
+    }];
+    [combuf commit];
     
     free_from_managed(rgba_values);
 }
 
-void platform_gpu_push_bc1_texture_slice(
+void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     const int32_t texture_array_i,
     const int32_t texture_i,
     const uint32_t parent_texture_array_images_size,
     const uint32_t image_width,
     const uint32_t image_height,
-    const uint8_t * bc1_values)
+    uint8_t * raw_bc1_file)
 {
     (void)parent_texture_array_images_size;
     
-    log_assert(texture_array_i != 0);
+    log_assert(raw_bc1_file != NULL);
     
-    uint32_t block_size = 8;
+    log_assert(texture_i >= 0);
+    log_assert(texture_array_i >= 0);
     
-    MTLRegion region = {
-        { 0,0,0 },
-        { image_width, image_height, 1 }
-    };
+    if (texture_array_i == 0 && texture_i == 0) {
+        assert(!font_already_pushed);
+        font_already_pushed = true;
+    }
     
-    [[ags->metal_textures
-        objectAtIndex:
-            (NSUInteger)texture_array_i]
-        replaceRegion:
-            region
-        mipmapLevel:
+    if (ags->metal_textures[texture_array_i] == NULL) {
+        #ifndef LOGGER_IGNORE_ASSERTS
+        char errmsg[256];
+        common_strcpy_capped(
+            errmsg,
+            256,
+            "Tried to update uninitialized texturearray")
+        common_strcat_int_capped(errmsg, 256, texture_array_i);
+        common_strcat_capped(errmsg, 256, "\n");
+        
+        log_dump_and_crash(errmsg);
+        #endif
+        return;
+    }
+    
+    id<MTLBuffer> temp_buf =
+        [ags->device
+            /* the pointer needs to be page aligned */
+        newBufferWithBytesNoCopy:
+            raw_bc1_file + 128
+            /* the length weirdly needs to be page aligned also */
+        length:
+            ((image_width + 3) / 4) * ((image_height + 3) / 4) * 8
+        options:
+            MTLResourceStorageModeShared
+            /* deallocator = nil to opt out */
+            deallocator:
+        nil];
+    
+    id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
+    
+    id <MTLBlitCommandEncoder> blit_copy_encoder =
+        [combuf blitCommandEncoder];
+    
+    [blit_copy_encoder
+        copyFromBuffer:
+            temp_buf
+        sourceOffset:
             0
-        slice:
+        sourceBytesPerRow:
+            ((image_width + 3) / 4) * 8
+        sourceBytesPerImage:
+            ((image_width + 3) / 4) * ((image_height + 3) / 4) * 8
+        sourceSize:
+            MTLSizeMake(image_width, image_height, 1)
+        toTexture:
+            ags->metal_textures[texture_array_i]
+        destinationSlice:
             (NSUInteger)texture_i
-        withBytes:
-            bc1_values
-        bytesPerRow:
-            ((image_width + 3) / 4) * block_size
-        bytesPerImage:
-            /* docs: use 0 for anything other than
-               MTLTextureType3D textures */
-            0];
+        destinationLevel:
+            0
+        destinationOrigin:
+            MTLOriginMake(0, 0, 0)];
+    
+    [blit_copy_encoder endEncoding];
+    
+    // Add a completion handler and commit the command buffer.
+    [combuf addCompletedHandler:^(id<MTLCommandBuffer> cb) {
+        // Populate private buffer.
+        (void)cb;
+    }];
+    [combuf commit];
+    
+    free_from_managed(raw_bc1_file);
 }
 
 void platform_gpu_copy_locked_vertices(void)
@@ -1342,12 +1393,14 @@ void platform_gpu_copy_locked_vertices(void)
     
     for (
         uint32_t i = 0;
-        i < [ags->metal_textures count];
+        i < TEXTUREARRAYS_SIZE;
         i++)
     {
-        [render_pass_1_draw_triangles_encoder
-            setFragmentTexture: ags->metal_textures[i]
-            atIndex: i];
+        if (ags->metal_textures[i] != NULL) {
+            [render_pass_1_draw_triangles_encoder
+                setFragmentTexture: ags->metal_textures[i]
+                atIndex: i];
+        }
     }
     
     #if SHADOWS_ACTIVE
