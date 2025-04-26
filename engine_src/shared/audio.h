@@ -29,11 +29,13 @@ void audio_consume_int16_samples(
 
 void audio_add(
     int16_t * data,
-    const uint32_t data_size);
+    const uint32_t data_size,
+    const float volume_mult);
 void audio_add_at_offset(
     int16_t * data,
     const uint32_t data_size,
-    const uint64_t play_cursor_offset);
+    const uint64_t play_cursor_offset,
+    const float volume_mult);
 
 void audio_copy(
     int16_t * data,
@@ -47,13 +49,16 @@ void audio_copy_at_offset(
 
 void audio_add_permasound_to_global_buffer_at_offset(
     const int32_t permasound_id,
-    const uint64_t play_cursor_offset);
+    const uint64_t play_cursor_offset,
+    const float volume_mult);
 void audio_add_offset_permasound_to_global_buffer_at_offset(
     const int32_t permasound_id,
     const uint64_t permasound_offset,
-    const uint64_t play_cursor_offset);
+    const uint64_t play_cursor_offset,
+    const float volume_mult);
 void audio_add_permasound_to_global_buffer(
-    const int32_t permasound_id);
+    const int32_t permasound_id,
+    const float volume_float);
 
 void audio_copy_permasound_to_global_buffer_at_offset(
     const int32_t permasound_id,
@@ -66,7 +71,8 @@ void audio_copy_offset_permasound_to_global_buffer_at_offset(
     const uint32_t samples_to_copy_size,
     const bool32_t is_music);
 void audio_copy_permasound_to_global_buffer(
-    const int32_t permasound_id);
+    const int32_t permasound_id,
+    const float volume_mult);
 
 void audio_clear_global_buffer(void);
 

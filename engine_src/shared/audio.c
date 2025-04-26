@@ -74,18 +74,21 @@ void audio_consume_int16_samples(
     log_assert(sound_settings->play_cursor < UINT64_MAX - 1000000);
 }
 
-#define DEFAULT_WRITING_OFFSET 24
+#define DEFAULT_WRITING_OFFSET 12
 void audio_add_at_offset(
     int16_t * data,
     const uint32_t data_size,
-    const uint64_t play_cursor_offset)
+    const uint64_t play_cursor_offset,
+    const float volume_mult)
 {
     assert(data_size < (sound_settings->global_buffer_size_bytes / 2));
     
     for (uint32_t i = 0; i < data_size; i++) {
-        int32_t new_value = sound_settings->samples_buffer[
+        float new_value = data[i];
+        new_value = new_value * volume_mult;
+        new_value += sound_settings->samples_buffer[
             (sound_settings->play_cursor + i + play_cursor_offset) %
-                    sound_settings->global_samples_size] + data[i];
+                    sound_settings->global_samples_size];
         new_value = new_value > INT16_MAX ? INT16_MAX : new_value;
         new_value = new_value < INT16_MIN ? INT16_MIN : new_value;
         sound_settings->samples_buffer[
@@ -96,7 +99,8 @@ void audio_add_at_offset(
 
 void audio_add(
     int16_t * data,
-    const uint32_t data_size)
+    const uint32_t data_size,
+    const float volume_mult)
 {
     audio_add_at_offset(
         /* int16_t * data: */
@@ -104,7 +108,9 @@ void audio_add(
         /* const uint32_t data_size: */
             data_size,
         /* const uint64_t play_cursor_offset: */
-            DEFAULT_WRITING_OFFSET);
+            DEFAULT_WRITING_OFFSET,
+        /* const float volume_mult: */
+            volume_mult);
 }
 
 void audio_copy(
@@ -148,7 +154,8 @@ void audio_copy_at_offset(
 
 void audio_add_permasound_to_global_buffer_at_offset(
     const int32_t permasound_id,
-    const uint64_t play_cursor_offset)
+    const uint64_t play_cursor_offset,
+    const float volume_mult)
 {
     log_assert(permasound_id >= 0);
     log_assert(all_permasounds[permasound_id].allsamples_tail_i >
@@ -165,13 +172,16 @@ void audio_add_permasound_to_global_buffer_at_offset(
             (uint32_t)all_permasounds[permasound_id].allsamples_tail_i -
                 (uint32_t)all_permasounds[permasound_id].allsamples_head_i,
         /* const uint32_t play_cursor_offset: */
-            play_cursor_offset);
+            play_cursor_offset,
+        /* volume_mult: */
+            volume_mult);
 }
 
 void audio_add_offset_permasound_to_global_buffer_at_offset(
     const int32_t permasound_id,
     const uint64_t permasound_offset,
-    const uint64_t play_cursor_offset)
+    const uint64_t play_cursor_offset,
+    const float volume_mult)
 {
     log_assert(permasound_id >= 0);
     log_assert(all_permasounds[permasound_id].allsamples_tail_i >
@@ -191,17 +201,22 @@ void audio_add_offset_permasound_to_global_buffer_at_offset(
                 (uint32_t)all_permasounds[permasound_id].allsamples_head_i -
                     (uint32_t)permasound_offset,
         /* const uint32_t play_cursor_offset: */
-            play_cursor_offset);
+            play_cursor_offset,
+        /* const float volume_mult: */
+            volume_mult);
 }
 
 void audio_add_permasound_to_global_buffer(
-    const int32_t permasound_id)
+    const int32_t permasound_id,
+    const float volume_mult)
 {
     audio_add_permasound_to_global_buffer_at_offset(
         /* const int32_t permasound_id: */
             permasound_id,
         /* const uint64_t play_cursor_offset: */
-            DEFAULT_WRITING_OFFSET);
+            DEFAULT_WRITING_OFFSET,
+        /* const float volume_mult: */
+            volume_mult);
 }
 
 void audio_copy_permasound_to_global_buffer_at_offset(
@@ -259,13 +274,16 @@ void audio_copy_offset_permasound_to_global_buffer_at_offset(
 }
 
 void audio_copy_permasound_to_global_buffer(
-    const int32_t permasound_id)
+    const int32_t permasound_id,
+    const float volume_mult)
 {
     audio_add_permasound_to_global_buffer_at_offset(
         /* const int32_t permasound_id: */
             permasound_id,
         /* const uint64_t play_cursor_offset: */
-            DEFAULT_WRITING_OFFSET);
+            DEFAULT_WRITING_OFFSET,
+        /* const float volume_mult: */
+            volume_mult);
 }
 
 void audio_clear_global_buffer(void)
