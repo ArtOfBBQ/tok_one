@@ -11,6 +11,7 @@ COMPILER_PATHS="
 "
 
 COMPILER_ARGS="
+-include clientlogic_macro_settings.h
 -D SHARED_APPLE_PLATFORM
 -ferror-limit=2 
 -march=native 
@@ -88,7 +89,7 @@ engine_src/shared/triangle.c
 engine_src/shared/lightsource.c
 engine_src/shared/cpu_to_gpu_types.c
 engine_src/shared_apple/apple_audio.m
-engine_src/shared/common_platform_layer.c
+engine_src/shared/platform_layer_common.c
 engine_src/macos/macos_platform_layer.m
 engine_src/shared_apple/apple_platform_layer.m
 engine_src/shared_linux_apple/linux_apple_platform_layer.c

@@ -536,10 +536,12 @@ static bool32_t evaluate_terminal_command(
         return true;
     }
     
+    
     if (
         common_are_equal_strings(command, "DUMP SOUND") ||
         common_are_equal_strings(command, "DUMP SOUND BUFFER"))
     {
+        #if AUDIO_ACTIVE
         unsigned char * recipient =
             malloc_from_managed(sound_settings->global_buffer_size_bytes + 100);
         uint32_t recipient_size = 0;
@@ -583,9 +585,16 @@ static bool32_t evaluate_terminal_command(
                 SINGLE_LINE_MAX,
                 "\nFailed to write to disk :(");
         }
-        
+        #else
+        common_strcpy_capped(
+            response,
+            SINGLE_LINE_MAX,
+            "Audio code is disabled! set AUDIO_CODE_ACTIVE to 1 in "
+            "clientlogic_macro_settings.h to enable it.");
+        #endif
         return true;
     }
+    
     
     if (
         common_are_equal_strings(command, "BLUR BUFFER"))

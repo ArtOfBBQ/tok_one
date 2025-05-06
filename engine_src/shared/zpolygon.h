@@ -4,8 +4,6 @@
 #include <math.h>
 #include <inttypes.h>
 
-#include "clientlogic_macro_settings.h"
-
 #include "simd.h"
 #include "logger.h"
 #include "common.h"

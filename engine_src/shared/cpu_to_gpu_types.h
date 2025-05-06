@@ -1,7 +1,6 @@
 #ifndef CPU_TO_GPU_TYPES_H
 #define CPU_TO_GPU_TYPES_H
 
-#include "clientlogic_macro_settings.h"
 #include "cpu_gpu_shared_types.h"
 #include "common.h"
 
@@ -42,7 +41,7 @@ typedef struct GPUSharedDataCollection
     uint32_t frame_i;
 } GPUSharedDataCollection;
 
-extern GPUSharedDataCollection gpu_shared_data_collection;
+extern GPUSharedDataCollection * gpu_shared_data_collection;
 
 #endif // CPU_TO_GPU_TYPES_H
 

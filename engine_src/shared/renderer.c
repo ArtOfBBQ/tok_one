@@ -287,6 +287,7 @@ void renderer_hardware_render(
     add_points_and_lines_to_workload(frame_data);
     
     if (application_running && window_globals->draw_axes) {
+        assert(0);
         // TODO: draw axes
         float axis_vertices[6];
         common_memset_float(axis_vertices, 0.0f, sizeof(float) * 6);

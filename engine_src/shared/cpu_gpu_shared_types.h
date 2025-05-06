@@ -14,17 +14,6 @@
 #define MAX_FILES_IN_SINGLE_TEXARRAY 200
 #endif
 
-#ifndef MAX_POLYGONS_PER_BUFFER
-#define MAX_POLYGONS_PER_BUFFER  8500
-#endif
-
-#ifndef MAX_LIGHTS_PER_BUFFER
-#define MAX_LIGHTS_PER_BUFFER       5
-#endif
-
-#ifndef MAX_MATERIALS_PER_POLYGON
-#define MAX_MATERIALS_PER_POLYGON   15
-#endif
 
 #pragma pack(push, 1)
 typedef struct GPUVertex {

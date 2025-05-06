@@ -1,8 +1,9 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 
-#include "clientlogic_macro_settings.h"
 #include "logger.h"
+
+#if AUDIO_ACTIVE
 
 typedef struct SoundSettings {
     int16_t * samples_buffer;
@@ -83,5 +84,7 @@ void audio_register_samples_to_permasound(
     const int32_t permasound_id,
     int16_t * samples,
     const int32_t samples_size);
+
+#endif // AUDIO_ACTIVE
 
 #endif // AUDIO_H

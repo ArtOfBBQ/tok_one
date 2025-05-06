@@ -302,6 +302,7 @@ void scheduled_animations_request_shatter_and_destroy(
     const uint64_t duration_microseconds)
 {
     log_assert(duration_microseconds > 0);
+    log_assert(duration_microseconds < 1000000000);
     log_assert(object_id >= 0);
     
     for (
@@ -421,6 +422,7 @@ void scheduled_animations_request_shatter_and_destroy(
         
         commit_particle_effect(shatter_effect);
         
+        zpolygons_to_render->cpu_data[zp_i].sprite_id = -1;
         zpolygons_to_render->cpu_data[zp_i].deleted = true;
     }
 }
@@ -908,8 +910,7 @@ void scheduled_animations_request_bump(
     move_request->easing_type = EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO;
     move_request->affected_sprite_id = (int32_t)object_id;
     move_request->gpu_polygon_vals.scale_factor = 0.25f;
-    move_request->start_timestamp = window_globals->this_frame_timestamp;
-    move_request->end_timestamp = move_request->start_timestamp + 200000;
+    move_request->duration_microseconds = 200000;
     scheduled_animations_commit(move_request);
 }
 

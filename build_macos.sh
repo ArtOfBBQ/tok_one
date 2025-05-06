@@ -8,6 +8,7 @@ COMPILER_PATHS="
 -I engine_src/shared_linux_apple/
 -I engine_src/shared_windows_macos/
 -I sampleproject_src/
+-include clientlogic_macro_settings.h
 "
 
 COMPILER_ARGS="-march=native -Wall -x objective-c -std=c11 -O0 -objC"

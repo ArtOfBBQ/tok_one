@@ -3,7 +3,6 @@
 
 #include <math.h>
 
-#include "clientlogic_macro_settings.h"
 #include "cpu_gpu_shared_types.h"
 
 #include "common.h"

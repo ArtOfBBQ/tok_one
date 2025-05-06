@@ -144,23 +144,35 @@ static void * malloc_from_unmanaged_without_aligning(
 
 void * malloc_from_unmanaged_aligned(
     const uint64_t size,
-    const uint32_t aligned_to)
+    const uint32_t arg_aligned_to)
 {
     memstore_mutex_lock(malloc_mutex_id);
+    
+    if (
+        arg_aligned_to < sizeof(void*) ||
+        (arg_aligned_to & (arg_aligned_to - 1)) != 0)
+    {
+        assert(0); // this alignment is not allowed!
+        return NULL;
+    }
+    
+    // TODO: we're temporarily aligning all memory to page size, to battle a
+    // TODO: a bug, let's undo this in the future
+    uint32_t aligned_to = arg_aligned_to;
+    if (arg_aligned_to < 4096) {
+        aligned_to = 4096;
+    }
+    assert(aligned_to == 4096); // checking if we ever align to more than 4096
     
     log_assert(unmanaged_memory != NULL);
     log_assert(size > 0);
     
-    uint32_t padding = 0;
-    log_assert(unmanaged_memory_size >= aligned_to);
-    while (
-        (uintptr_t)(void *)unmanaged_memory % aligned_to != 0)
-    {
-        unmanaged_memory = ((char *)unmanaged_memory + 1);
-        padding += 1;
-    }
-    log_assert(unmanaged_memory_size > padding);
+    uint32_t padding = aligned_to - ((uintptr_t)unmanaged_memory % aligned_to);
+    if (padding == aligned_to) padding = 0;
+    
+    unmanaged_memory = ((char *)unmanaged_memory + padding);
     unmanaged_memory_size -= padding;
+    
     log_assert(padding < aligned_to);
     log_assert((uintptr_t)(void *)unmanaged_memory % aligned_to == 0);
     
@@ -175,6 +187,8 @@ void * malloc_from_unmanaged_aligned(
 
 // __attribute__((used, noinline))
 void * malloc_from_unmanaged(size_t size) {
+    return malloc(size); // TODO: remove me
+    
     log_assert(size > 0);
     void * return_value = malloc_from_unmanaged_aligned(
         size,

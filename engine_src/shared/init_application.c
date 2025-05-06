@@ -1,5 +1,6 @@
 #include "init_application.h"
 
+#if ENGINE_SAVEFILE_ACTIVE
 typedef struct EngineSaveFile {
     bool32_t window_fullscreen;
     float window_left;
@@ -11,6 +12,7 @@ typedef struct EngineSaveFile {
 } EngineSaveFile;
 
 static EngineSaveFile * engine_save_file = NULL;
+#endif
 
 #ifndef LOGGER_IGNORE_ASSERTS
 typedef struct SimdTestStruct {
@@ -190,6 +192,7 @@ void init_application_before_gpu_init(
     profiler_init(platform_get_clock_frequency(), malloc_from_unmanaged);
     #endif
     
+    #if ENGINE_SAVEFILE_ACTIVE
     engine_save_file = (EngineSaveFile *)malloc_from_unmanaged(
         sizeof(EngineSaveFile));
     
@@ -208,14 +211,19 @@ void init_application_before_gpu_init(
         platform_read_file(full_writable_pathfile, &engine_save);
         *engine_save_file = *(EngineSaveFile *)engine_save.contents;
     }
+    #endif
     
     window_globals = (WindowGlobals *)malloc_from_unmanaged(
         sizeof(WindowGlobals));
+    common_memset_char(window_globals, 0, sizeof(WindowGlobals));
     
+    #if AUDIO_ACTIVE
     audio_init(
         /* void *(*arg_malloc_function)(size_t): */
             malloc_from_unmanaged);
+    #endif
     
+    #if ENGINE_SAVEFILE_ACTIVE
     if (
         engine_save.contents != NULL &&
         engine_save_file->window_height > 20 &&
@@ -228,8 +236,10 @@ void init_application_before_gpu_init(
         window_globals->window_left   = engine_save_file->window_left;
         window_globals->window_bottom = engine_save_file->window_bottom;
         window_globals->fullscreen = engine_save_file->window_fullscreen;
+        #if AUDIO_ACTIVE
         sound_settings->music_volume = engine_save_file->music_volume;
         sound_settings->sfx_volume = engine_save_file->sound_volume;
+        #endif
     } else {
         window_globals->fullscreen = false;
         window_globals->window_height = INITIAL_WINDOW_HEIGHT;
@@ -241,6 +251,13 @@ void init_application_before_gpu_init(
     if (engine_save.contents != NULL) {
         free_from_managed(engine_save.contents);
     }
+    #else
+    window_globals->fullscreen = false;
+    window_globals->window_height = INITIAL_WINDOW_HEIGHT;
+    window_globals->window_width  = INITIAL_WINDOW_WIDTH;
+    window_globals->window_left   = INITIAL_WINDOW_LEFT;
+    window_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
+    #endif
     
     window_globals->aspect_ratio = window_globals->window_height /
         window_globals->window_width;
@@ -318,149 +335,164 @@ void init_application_before_gpu_init(
     
     client_logic_init();
     
+    gpu_shared_data_collection = malloc_from_unmanaged(
+        sizeof(GPUSharedDataCollection));
+    common_memset_char(
+        gpu_shared_data_collection,
+        0,
+        sizeof(GPUSharedDataCollection));
+    
     // init the buffers that contain our vertices to send to the GPU
-    gpu_shared_data_collection.vertices_allocation_size =
+    gpu_shared_data_collection->vertices_allocation_size =
             sizeof(GPUVertex) * MAX_VERTICES_PER_BUFFER;
-    gpu_shared_data_collection.vertices_allocation_size +=
-        (4096 - (gpu_shared_data_collection.vertices_allocation_size % 4096));
-    assert(gpu_shared_data_collection.vertices_allocation_size % 4096 == 0);
+    gpu_shared_data_collection->vertices_allocation_size +=
+        (4096 - (gpu_shared_data_collection->vertices_allocation_size % 4096));
+    assert(gpu_shared_data_collection->vertices_allocation_size % 4096 == 0);
     
-    gpu_shared_data_collection.polygons_allocation_size =
+    gpu_shared_data_collection->polygons_allocation_size =
         sizeof(GPUPolygonCollection);
-    gpu_shared_data_collection.polygons_allocation_size +=
-        (4096 - (gpu_shared_data_collection.polygons_allocation_size % 4096));
-    assert(gpu_shared_data_collection.polygons_allocation_size > 0);
-    assert(gpu_shared_data_collection.polygons_allocation_size % 4096 == 0);
+    gpu_shared_data_collection->polygons_allocation_size +=
+        (4096 - (gpu_shared_data_collection->polygons_allocation_size % 4096));
+    assert(gpu_shared_data_collection->polygons_allocation_size > 0);
+    assert(gpu_shared_data_collection->polygons_allocation_size % 4096 == 0);
     
-    gpu_shared_data_collection.polygon_materials_allocation_size =
+    gpu_shared_data_collection->polygon_materials_allocation_size =
         sizeof(GPUPolygonMaterial) *
         MAX_MATERIALS_PER_POLYGON *
         MAX_POLYGONS_PER_BUFFER;
-    gpu_shared_data_collection.polygon_materials_allocation_size +=
-        (4096 - (gpu_shared_data_collection.polygon_materials_allocation_size %
+    gpu_shared_data_collection->polygon_materials_allocation_size +=
+        (4096 - (gpu_shared_data_collection->polygon_materials_allocation_size %
             4096));
-    assert(gpu_shared_data_collection.polygon_materials_allocation_size
+    assert(gpu_shared_data_collection->polygon_materials_allocation_size
         % 4096 == 0);
     
-    gpu_shared_data_collection.lights_allocation_size =
+    gpu_shared_data_collection->lights_allocation_size =
         sizeof(GPULightCollection);
-    gpu_shared_data_collection.lights_allocation_size +=
-        (4096 - (gpu_shared_data_collection.lights_allocation_size % 4096));
-    assert(gpu_shared_data_collection.lights_allocation_size > 0);
-    assert(gpu_shared_data_collection.lights_allocation_size % 4096 == 0);
+    gpu_shared_data_collection->lights_allocation_size +=
+        (4096 - (gpu_shared_data_collection->lights_allocation_size % 4096));
+    assert(gpu_shared_data_collection->lights_allocation_size > 0);
+    assert(gpu_shared_data_collection->lights_allocation_size % 4096 == 0);
     
-    gpu_shared_data_collection.camera_allocation_size = sizeof(GPUCamera);
-    gpu_shared_data_collection.camera_allocation_size +=
-        (4096 - (gpu_shared_data_collection.camera_allocation_size % 4096));
-    assert(gpu_shared_data_collection.camera_allocation_size % 4096 == 0);
+    gpu_shared_data_collection->camera_allocation_size = sizeof(GPUCamera);
+    gpu_shared_data_collection->camera_allocation_size +=
+        (4096 - (gpu_shared_data_collection->camera_allocation_size % 4096));
+    assert(gpu_shared_data_collection->camera_allocation_size % 4096 == 0);
     
-    gpu_shared_data_collection.locked_vertices_allocation_size =
+    gpu_shared_data_collection->locked_vertices_allocation_size =
         (sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
-    gpu_shared_data_collection.locked_vertices_allocation_size +=
-        (4096 - (gpu_shared_data_collection.
+    gpu_shared_data_collection->locked_vertices_allocation_size +=
+        (4096 - (gpu_shared_data_collection->
             locked_vertices_allocation_size % 4096));
-    assert(gpu_shared_data_collection.locked_vertices_allocation_size > 0);
-    assert(gpu_shared_data_collection.locked_vertices_allocation_size %
+    assert(gpu_shared_data_collection->locked_vertices_allocation_size > 0);
+    assert(gpu_shared_data_collection->locked_vertices_allocation_size %
         4096 == 0);
     
-    gpu_shared_data_collection.projection_constants_allocation_size =
+    gpu_shared_data_collection->projection_constants_allocation_size =
         sizeof(GPUProjectionConstants);
-    gpu_shared_data_collection.projection_constants_allocation_size +=
-        (4096 - (gpu_shared_data_collection.
+    gpu_shared_data_collection->projection_constants_allocation_size +=
+        (4096 - (gpu_shared_data_collection->
             projection_constants_allocation_size % 4096));
-    assert(gpu_shared_data_collection.projection_constants_allocation_size > 0);
-    assert(gpu_shared_data_collection.projection_constants_allocation_size %
+    assert(gpu_shared_data_collection->projection_constants_allocation_size > 0);
+    assert(gpu_shared_data_collection->projection_constants_allocation_size %
         4096 == 0);
     
-    gpu_shared_data_collection.point_vertices_allocation_size =
+    gpu_shared_data_collection->point_vertices_allocation_size =
         sizeof(GPURawVertex) * MAX_POINT_VERTICES;
-    gpu_shared_data_collection.point_vertices_allocation_size +=
-        (4096 - (gpu_shared_data_collection.
+    gpu_shared_data_collection->point_vertices_allocation_size +=
+        (4096 - (gpu_shared_data_collection->
             point_vertices_allocation_size % 4096));
-    assert(gpu_shared_data_collection.point_vertices_allocation_size >= 0);
-    assert(gpu_shared_data_collection.point_vertices_allocation_size %
+    assert(gpu_shared_data_collection->point_vertices_allocation_size >= 0);
+    assert(gpu_shared_data_collection->point_vertices_allocation_size %
         4096 == 0);
     
-    gpu_shared_data_collection.line_vertices_allocation_size =
+    gpu_shared_data_collection->line_vertices_allocation_size =
         sizeof(GPURawVertex) * MAX_LINE_VERTICES;
-    gpu_shared_data_collection.line_vertices_allocation_size +=
-        (4096 - (gpu_shared_data_collection.
+    gpu_shared_data_collection->line_vertices_allocation_size +=
+        (4096 - (gpu_shared_data_collection->
             line_vertices_allocation_size % 4096));
-    assert(gpu_shared_data_collection.line_vertices_allocation_size >= 0);
-    assert(gpu_shared_data_collection.line_vertices_allocation_size %
+    assert(gpu_shared_data_collection->line_vertices_allocation_size >= 0);
+    assert(gpu_shared_data_collection->line_vertices_allocation_size %
         4096 == 0);
     
-    gpu_shared_data_collection.postprocessing_constants_allocation_size =
+    gpu_shared_data_collection->postprocessing_constants_allocation_size =
             sizeof(GPUVertex) * MAX_VERTICES_PER_BUFFER;
-    gpu_shared_data_collection.postprocessing_constants_allocation_size +=
-        (4096 - (gpu_shared_data_collection.postprocessing_constants_allocation_size % 4096));
-    assert(gpu_shared_data_collection.postprocessing_constants_allocation_size % 4096 == 0);
+    gpu_shared_data_collection->postprocessing_constants_allocation_size +=
+        (4096 -
+            (gpu_shared_data_collection->
+                postprocessing_constants_allocation_size % 4096));
+    assert(
+        gpu_shared_data_collection->
+            postprocessing_constants_allocation_size % 4096 == 0);
     
     for (
         uint32_t cur_frame_i = 0;
         cur_frame_i < MAX_RENDERING_FRAME_BUFFERS;
         cur_frame_i++)
     {
-        gpu_shared_data_collection.triple_buffers[cur_frame_i].vertices =
+        gpu_shared_data_collection->triple_buffers[cur_frame_i].vertices =
             (GPUVertex *)malloc_from_unmanaged_aligned(
-                gpu_shared_data_collection.vertices_allocation_size,
+                gpu_shared_data_collection->vertices_allocation_size,
                 4096);
         
-        gpu_shared_data_collection.triple_buffers[cur_frame_i].polygon_collection =
-            (GPUPolygonCollection *)malloc_from_unmanaged_aligned(
-                gpu_shared_data_collection.polygons_allocation_size,
-                4096);
+        gpu_shared_data_collection->triple_buffers[cur_frame_i].
+            polygon_collection =
+                (GPUPolygonCollection *)malloc_from_unmanaged_aligned(
+                    gpu_shared_data_collection->polygons_allocation_size,
+                    4096);
         
-        gpu_shared_data_collection.triple_buffers[cur_frame_i].polygon_materials =
-            (GPUPolygonMaterial *)malloc_from_unmanaged_aligned(
-                gpu_shared_data_collection.polygon_materials_allocation_size,
-                4096);
+        gpu_shared_data_collection->triple_buffers[cur_frame_i].
+            polygon_materials =
+                (GPUPolygonMaterial *)malloc_from_unmanaged_aligned(
+                    gpu_shared_data_collection->
+                        polygon_materials_allocation_size,
+                    4096);
         
-        assert(gpu_shared_data_collection.lights_allocation_size > 0);
-        gpu_shared_data_collection.triple_buffers[cur_frame_i].
+        assert(gpu_shared_data_collection->lights_allocation_size > 0);
+        gpu_shared_data_collection->triple_buffers[cur_frame_i].
             light_collection =
                 (GPULightCollection *)malloc_from_unmanaged_aligned(
-                    gpu_shared_data_collection.lights_allocation_size,
+                    gpu_shared_data_collection->lights_allocation_size,
                     4096);
         assert(
-            gpu_shared_data_collection.triple_buffers[cur_frame_i].
+            gpu_shared_data_collection->triple_buffers[cur_frame_i].
                 light_collection != NULL);
         
-        gpu_shared_data_collection.triple_buffers[cur_frame_i].camera =
+        gpu_shared_data_collection->triple_buffers[cur_frame_i].camera =
         (GPUCamera *)malloc_from_unmanaged_aligned(
-            gpu_shared_data_collection.camera_allocation_size,
+            gpu_shared_data_collection->camera_allocation_size,
             4096);
         
-        gpu_shared_data_collection.triple_buffers[cur_frame_i].point_vertices =
+        gpu_shared_data_collection->triple_buffers[cur_frame_i].point_vertices =
         (GPURawVertex *)malloc_from_unmanaged_aligned(
-            gpu_shared_data_collection.point_vertices_allocation_size,
+            gpu_shared_data_collection->point_vertices_allocation_size,
             4096);
         
-        gpu_shared_data_collection.triple_buffers[cur_frame_i].line_vertices =
+        gpu_shared_data_collection->triple_buffers[cur_frame_i].line_vertices =
         (GPURawVertex *)malloc_from_unmanaged_aligned(
-            gpu_shared_data_collection.line_vertices_allocation_size,
+            gpu_shared_data_collection->line_vertices_allocation_size,
             4096);
         
-        gpu_shared_data_collection.triple_buffers[cur_frame_i].
+        gpu_shared_data_collection->triple_buffers[cur_frame_i].
             postprocessing_constants =
                 (GPUPostProcessingConstants *)malloc_from_unmanaged_aligned(
-                    gpu_shared_data_collection.line_vertices_allocation_size,
+                    gpu_shared_data_collection->
+                        postprocessing_constants_allocation_size,
                     4096);
         
         common_memset_float(
-            gpu_shared_data_collection.triple_buffers[cur_frame_i].camera,
+            gpu_shared_data_collection->triple_buffers[cur_frame_i].camera,
             0.0f,
             sizeof(GPUCamera));
     }
     
-    gpu_shared_data_collection.locked_vertices =
+    gpu_shared_data_collection->locked_vertices =
         (GPULockedVertex *)malloc_from_unmanaged_aligned(
-            gpu_shared_data_collection.locked_vertices_allocation_size,
+            gpu_shared_data_collection->locked_vertices_allocation_size,
             4096);
     
-    gpu_shared_data_collection.locked_pjc =
+    gpu_shared_data_collection->locked_pjc =
         (GPUProjectionConstants *)malloc_from_unmanaged_aligned(
-            gpu_shared_data_collection.projection_constants_allocation_size,
+            gpu_shared_data_collection->projection_constants_allocation_size,
             4096);
 }
 
@@ -496,7 +528,7 @@ void init_application_after_gpu_init(void) {
     
     common_memcpy(
         /* void * dst: */
-            gpu_shared_data_collection.locked_vertices,
+            gpu_shared_data_collection->locked_vertices,
         /* const void * src: */
             all_mesh_vertices->gpu_data,
         /* size_t n: */
@@ -515,11 +547,18 @@ void init_application_after_gpu_init(void) {
 
 void shared_shutdown_application(void)
 {
-    log_assert(engine_save_file != NULL);
-    
+    #if ENGINE_SAVEFILE_ACTIVE
+    #if AUDIO_ACTIVE
     engine_save_file->music_volume = sound_settings->music_volume;
     engine_save_file->sound_volume = sound_settings->sfx_volume;
+    #else
+    engine_save_file->music_volume = 0.5f;
+    engine_save_file->sound_volume = 0.5f;
+    #endif
+    #endif
     
+    #if ENGINE_SAVEFILE_ACTIVE
+    log_assert(engine_save_file != NULL);
     engine_save_file->window_bottom = window_globals->window_bottom;
     engine_save_file->window_height = window_globals->window_height;
     engine_save_file->window_left = window_globals->window_left;
@@ -538,16 +577,11 @@ void shared_shutdown_application(void)
             sizeof(EngineSaveFile),
         /* uint32_t good: */
             &good);
+    #else
+    uint32_t good = true;
+    #endif
     
     if (!good) {
         return;
     }
-    
-    char memory_usage_desc[512];
-    get_memory_usage_summary_string(
-        /* char * recipient: */
-            memory_usage_desc,
-        /* const uint32_t recipient_cap: */
-            512);
-    log_append(memory_usage_desc);
 }

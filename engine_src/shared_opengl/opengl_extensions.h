@@ -4,8 +4,6 @@
 #include <windows.h>
 #include <GL/gl.h>
 
-#include "clientlogic_macro_settings.h"
-
 // /*
 // This header file contains a bunch of definitions that don't come with
 // OpenGL 'out of the box', they are extensions that need to be loaded at

@@ -15,16 +15,6 @@ void client_logic_early_startup(
     bool32_t * success,
     char * error_message)
 {
-    const char * fontfile = "font.png";
-    if (platform_resource_exists("font.png")) {
-        texture_array_register_new_by_splitting_file(
-            /* filename : */ fontfile,
-            /* rows     : */ 10,
-            /* columns  : */ 10);
-    } else {
-        log_assert(0);
-    }
-    
     #if TEAPOT
     // teapot_mesh_id = BASIC_CUBE_MESH_ID;
     teapot_mesh_id = new_mesh_id_from_resource("teapot.obj");
@@ -332,6 +322,8 @@ void client_logic_update(uint64_t microseconds_elapsed)
             first_teapot_zp_i = i;
         }
     }
+    
+    if (first_teapot_zp_i < 0) { return; }
     
     char teapotpos[256];
     common_strcpy_capped(teapotpos, 256, "Teapot y position: ");

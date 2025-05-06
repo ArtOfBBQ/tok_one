@@ -6,37 +6,48 @@ This header should only contain macro definitions that modify the behavior
 of the engine for your specific app.
 */
 
-// The 2 pools of memory your app allocates on startup
-// 600mb ->                    600...000
-#define UNMANAGED_MEMORY_SIZE  600000000
-// 50 mb ->                     50...000
-#define MANAGED_MEMORY_SIZE     50000000
-
 #define APPLICATION_NAME "TOK ONE"
 
-// These startup window settings have no effect on tablets/smartphones
-#define INITIAL_WINDOW_HEIGHT    800
-#define INITIAL_WINDOW_WIDTH    1000
-#define INITIAL_WINDOW_LEFT        0
-#define INITIAL_WINDOW_BOTTOM      0
+// The 2 pools of memory your app allocates on startup
+// 150 mb ->                    125...000
+#define UNMANAGED_MEMORY_SIZE   125000000
+// 50 mb ->                      20...000
+#define MANAGED_MEMORY_SIZE      20000000
 
 
-#define POSTPROCESSING_ACTIVE 1
-#define SHADOWS_ACTIVE 1
+// these will be ignored on platforms where window size/position
+// can't be selected
+#define INITIAL_WINDOW_HEIGHT  667.0f
+#define INITIAL_WINDOW_WIDTH   875.0f // 800.0f// 375.0f
+#define INITIAL_WINDOW_LEFT   1650.0f
+#define INITIAL_WINDOW_BOTTOM  430.0f
 
-// The maximum number of polygons/lights to send to the GPU each frame
-// The maximum number of triangle vertices to be stored on gpu permanently
-// #define MAX_POLYGONS_PER_BUFFER   1600
-#define MAX_VERTICES_PER_BUFFER   3000000
-// #define MAX_LIGHTS_PER_BUFFER       75
 
-#define MAX_POINT_VERTICES 100000
-#define MAX_LINE_VERTICES  100000
+#define TEXTURES_ACTIVE 1
+#define BLOOM_ACTIVE 0
+#define SHADOWS_ACTIVE 0
+#define AUDIO_ACTIVE 0
+#define ENGINE_SAVEFILE_ACTIVE 0
 
-// The maximum number of 'scheduled animations' simultaneously running
-#define SCHEDULED_ANIMATIONS_ARRAYSIZE 3000
+#define MAX_RENDERING_FRAME_BUFFERS 2 // 3 for triple-buffering
 
-// the max # of (probably from .obj) meshes/models in your app
+#define MAX_VERTICES_PER_BUFFER  1500000
+#define MAX_LIGHTS_PER_BUFFER 100
+
+/*
+The maximum number of sprites in your app.
+*/
+#define MAX_POLYGONS_PER_BUFFER  6500
+#define MAX_MATERIALS_PER_POLYGON 15
+#define MAX_LINE_VERTICES 10
+#define MAX_POINT_VERTICES 30
+
+/*
+The maximum number of 'scheduled animations' simultaneously running
+*/
+#define SCHEDULED_ANIMATIONS_ARRAYSIZE 100
+
+
 #define ALL_MESHES_SIZE 100
 // the max # of triangles in all of your meshes/models combined
 #define ALL_LOCKED_VERTICES_SIZE 150000

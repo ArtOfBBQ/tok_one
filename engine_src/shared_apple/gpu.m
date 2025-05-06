@@ -4,15 +4,15 @@ bool32_t has_retina_screen = true;
 bool32_t metal_active = false;
 
 typedef struct AppleGPUState {
-    id<MTLDevice> device;
-    id<MTLLibrary> lib;
-    id<MTLCommandQueue> command_queue;
-    
     MTLPixelFormat pixel_format_renderpass1;
     dispatch_semaphore_t drawing_semaphore;
     NSUInteger frame_i;
     MTLViewport render_target_viewport;
     MTLViewport cached_viewport;
+    
+    id<MTLDevice> device;
+    id<MTLLibrary> lib;
+    id<MTLCommandQueue> command_queue;
     
     id polygon_buffers[MAX_RENDERING_FRAME_BUFFERS];
     id polygon_material_buffers[MAX_RENDERING_FRAME_BUFFERS];
@@ -35,25 +35,28 @@ typedef struct AppleGPUState {
     id<MTLRenderPipelineState> diamond_pls;
     id<MTLRenderPipelineState> alphablend_pls;
     id<MTLRenderPipelineState> raw_pls;
-    #if POSTPROCESSING_ACTIVE
+    #if BLOOM_ACTIVE
     id<MTLComputePipelineState> downsample_compute_pls;
     id<MTLComputePipelineState> boxblur_compute_pls;
     id<MTLComputePipelineState> thres_compute_pls;
-    id<MTLRenderPipelineState> singlequad_pls;
     #endif
+    id<MTLRenderPipelineState> singlequad_pls;
     
     id<MTLDepthStencilState> depth_stencil_state;
     
     // Textures
     // id<MTLBuffer> texture_populator_buffer;
+    #if TEXTURES_ACTIVE
     id<MTLTexture> metal_textures[TEXTUREARRAYS_SIZE];
-    #if POSTPROCESSING_ACTIVE
+    #endif
     id<MTLTexture> render_target_texture;
+    #if BLOOM_ACTIVE
     id<MTLTexture> downsampled_target_textures[DOWNSAMPLES_SIZE];
     #endif
     id<MTLTexture> touch_id_texture;
     id<MTLBuffer> touch_id_buffer;
     id<MTLBuffer> touch_id_buffer_all_zeros;
+    PostProcessingVertex quad_vertices[6];
 } AppleGPUState;
 
 static AppleGPUState * ags = NULL;
@@ -71,19 +74,20 @@ bool32_t apple_gpu_init(
     NSString * shader_lib_filepath,
     char * error_msg_string)
 {
-    ags = malloc_from_unmanaged(sizeof(AppleGPUState));
+    ags = malloc_from_unmanaged(sizeof(AppleGPUState)); // TODO: use malloc_from_unmanaged again
+    ags->pixel_format_renderpass1 = 0;
+    ags->drawing_semaphore = NULL; // TODO: remove me
+    ags->drawing_semaphore = dispatch_semaphore_create(3);
     
     funcptr_shared_gameloop_update =
         arg_funcptr_shared_gameloop_update;
     funcptr_shared_gameloop_update_after_render_pass =
         arg_funcptr_shared_gameloop_update_after_render_pass;
     
-    ags->drawing_semaphore = dispatch_semaphore_create(3);
-    
     ags->pixel_format_renderpass1 = MTLPixelFormatRGBA16Float;
     
     ags->frame_i = 0;
-        
+    
     common_strcpy_capped(
         error_msg_string,
         512,
@@ -266,6 +270,7 @@ bool32_t apple_gpu_init(
         setVertexFunction: vertex_shader];
     [diamond_pipeline_descriptor
         setFragmentFunction: fragment_shader];
+    assert(ags->pixel_format_renderpass1 == MTLPixelFormatRGBA16Float);
     diamond_pipeline_descriptor
         .colorAttachments[0]
         .pixelFormat = ags->pixel_format_renderpass1;
@@ -344,6 +349,7 @@ bool32_t apple_gpu_init(
         setVertexFunction: raw_vertex_shader];
     [raw_pipeline_descriptor
         setFragmentFunction: raw_fragment_shader];
+    assert(ags->pixel_format_renderpass1 == MTLPixelFormatRGBA16Float);
     raw_pipeline_descriptor
         .colorAttachments[0]
         .pixelFormat = ags->pixel_format_renderpass1;
@@ -358,8 +364,7 @@ bool32_t apple_gpu_init(
                 raw_pipeline_descriptor
             error:
                 &Error];
-    
-    if (Error != NULL)
+    if (Error != NULL || ags->raw_pls == NULL)
     {
         log_append([[Error localizedDescription] cStringUsingEncoding:kCFStringEncodingASCII]);
         #ifndef LOGGER_IGNORE_ASSERTS
@@ -408,11 +413,11 @@ bool32_t apple_gpu_init(
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
-                        gpu_shared_data_collection.
+                        gpu_shared_data_collection->
                             triple_buffers[loop_frame_i].polygon_collection
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        gpu_shared_data_collection.polygons_allocation_size
+                        gpu_shared_data_collection->polygons_allocation_size
                     options:
                         MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
@@ -424,11 +429,11 @@ bool32_t apple_gpu_init(
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
-                        gpu_shared_data_collection.
+                        gpu_shared_data_collection->
                             triple_buffers[loop_frame_i].polygon_materials
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        gpu_shared_data_collection.
+                        gpu_shared_data_collection->
                             polygon_materials_allocation_size
                     options:
                         MTLResourceStorageModeShared
@@ -443,11 +448,11 @@ bool32_t apple_gpu_init(
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
-                        gpu_shared_data_collection.
+                        gpu_shared_data_collection->
                             triple_buffers[loop_frame_i].vertices
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        gpu_shared_data_collection.vertices_allocation_size
+                        gpu_shared_data_collection->vertices_allocation_size
                     options:
                         MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
@@ -460,11 +465,12 @@ bool32_t apple_gpu_init(
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
-                        gpu_shared_data_collection.
+                        gpu_shared_data_collection->
                             triple_buffers[loop_frame_i].line_vertices
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        gpu_shared_data_collection.line_vertices_allocation_size
+                        gpu_shared_data_collection->
+                            line_vertices_allocation_size
                     options:
                         MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
@@ -477,11 +483,11 @@ bool32_t apple_gpu_init(
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
-                        gpu_shared_data_collection.
+                        gpu_shared_data_collection->
                             triple_buffers[loop_frame_i].point_vertices
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        gpu_shared_data_collection.point_vertices_allocation_size
+                        gpu_shared_data_collection->point_vertices_allocation_size
                     options:
                         MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
@@ -494,17 +500,18 @@ bool32_t apple_gpu_init(
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
-                        gpu_shared_data_collection.
+                        gpu_shared_data_collection->
                             triple_buffers[loop_frame_i].postprocessing_constants
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        gpu_shared_data_collection.
+                        gpu_shared_data_collection->
                             postprocessing_constants_allocation_size
                     options:
                         MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
+        assert(MTLBufferPostProcessingConstants != nil);
         
         ags->postprocessing_constants_buffers[loop_frame_i] =
             MTLBufferPostProcessingConstants;
@@ -513,11 +520,11 @@ bool32_t apple_gpu_init(
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
-                        gpu_shared_data_collection.
+                        gpu_shared_data_collection->
                             triple_buffers[loop_frame_i].light_collection
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        gpu_shared_data_collection.lights_allocation_size
+                        gpu_shared_data_collection->lights_allocation_size
                     options:
                         MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
@@ -530,11 +537,11 @@ bool32_t apple_gpu_init(
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
-                        gpu_shared_data_collection.
+                        gpu_shared_data_collection->
                             triple_buffers[loop_frame_i].camera
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        gpu_shared_data_collection.camera_allocation_size
+                        gpu_shared_data_collection->camera_allocation_size
                     options:
                         MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
@@ -548,10 +555,10 @@ bool32_t apple_gpu_init(
         [with_metal_device
             /* the pointer needs to be page aligned */
                 newBufferWithBytesNoCopy:
-                    gpu_shared_data_collection.locked_vertices
+                    gpu_shared_data_collection->locked_vertices
             /* the length weirdly needs to be page aligned also */
                 length:
-                    gpu_shared_data_collection.locked_vertices_allocation_size
+                    gpu_shared_data_collection->locked_vertices_allocation_size
                 options:
                     MTLResourceStorageModeShared
             /* deallocator = nil to opt out */
@@ -563,7 +570,7 @@ bool32_t apple_gpu_init(
     id<MTLBuffer> MTLBufferLockedVertices =
         [with_metal_device
             newBufferWithLength:
-                gpu_shared_data_collection.locked_vertices_allocation_size
+                gpu_shared_data_collection->locked_vertices_allocation_size
             options:
                 MTLResourceStorageModePrivate];
     ags->locked_vertex_buffer = MTLBufferLockedVertices;
@@ -572,10 +579,10 @@ bool32_t apple_gpu_init(
         [with_metal_device
             /* the pointer needs to be page aligned */
                  newBufferWithBytesNoCopy:
-                     gpu_shared_data_collection.locked_pjc
+                     gpu_shared_data_collection->locked_pjc
             /* the length weirdly needs to be page aligned also */
                 length:
-                    gpu_shared_data_collection.
+                    gpu_shared_data_collection->
                         projection_constants_allocation_size
                 options:
                     MTLResourceStorageModeShared
@@ -585,10 +592,44 @@ bool32_t apple_gpu_init(
     
     ags->projection_constants_buffer = MTLBufferProjectionConstants;
     
-    common_memset_char(ags->metal_textures, 0, sizeof(ags->metal_textures));
+    // TODO: check this again
+    // common_memset_char(ags->metal_textures, 0, sizeof(ags->metal_textures));
     
-    #if POSTPROCESSING_ACTIVE
     
+    #define FLVERT 1.0f
+    #define TEX_MAX 1.0f
+    #define TEX_MIN 0.0f
+    ags->quad_vertices[0].position[0] =   FLVERT;
+    ags->quad_vertices[0].position[1] =  -FLVERT;
+    ags->quad_vertices[0].texcoord[0] =  TEX_MAX;
+    ags->quad_vertices[0].texcoord[1] =  TEX_MAX;
+    
+    ags->quad_vertices[1].position[0] =  -FLVERT;
+    ags->quad_vertices[1].position[1] =  -FLVERT;
+    ags->quad_vertices[1].texcoord[0] =  TEX_MIN;
+    ags->quad_vertices[1].texcoord[1] =  TEX_MAX;
+    
+    ags->quad_vertices[2].position[0] =  -FLVERT;
+    ags->quad_vertices[2].position[1] =   FLVERT;
+    ags->quad_vertices[2].texcoord[0] =  TEX_MIN;
+    ags->quad_vertices[2].texcoord[1] =  TEX_MIN;
+    
+    ags->quad_vertices[3].position[0] =   FLVERT;
+    ags->quad_vertices[3].position[1] =  -FLVERT;
+    ags->quad_vertices[3].texcoord[0] =  TEX_MAX;
+    ags->quad_vertices[3].texcoord[1] =  TEX_MAX;
+    
+    ags->quad_vertices[4].position[0] =  -FLVERT;
+    ags->quad_vertices[4].position[1] =   FLVERT;
+    ags->quad_vertices[4].texcoord[0] =  TEX_MIN;
+    ags->quad_vertices[4].texcoord[1] =  TEX_MIN;
+    
+    ags->quad_vertices[5].position[0] =   FLVERT;
+    ags->quad_vertices[5].position[1] =   FLVERT;
+    ags->quad_vertices[5].texcoord[0] =  TEX_MAX;
+    ags->quad_vertices[5].texcoord[1] =  TEX_MIN;
+    
+    #if BLOOM_ACTIVE
     id<MTLFunction> downsample_func =
         [ags->lib newFunctionWithName: @"downsample_texture"];
     
@@ -611,6 +652,7 @@ bool32_t apple_gpu_init(
         [ags->device
             newComputePipelineStateWithFunction:threshold_func
             error:nil];
+    #endif
     
     id<MTLFunction> singlequad_vertex_shader =
         [ags->lib newFunctionWithName:
@@ -668,7 +710,6 @@ bool32_t apple_gpu_init(
         with_metal_device
         newRenderPipelineStateWithDescriptor:singlequad_pipeline_descriptor
         error:NULL];
-    #endif
     
     // TODO:
     // [self updateViewport];
@@ -680,6 +721,7 @@ bool32_t apple_gpu_init(
     return true;
 }
 
+#if BLOOM_ACTIVE
 static float get_ds_width(
     const uint32_t ds_i)
 {
@@ -703,6 +745,7 @@ static float get_ds_height(
     
     return return_value;
 }
+#endif
 
 void platform_gpu_get_device_name(
     char * recipient,
@@ -776,6 +819,7 @@ int32_t platform_gpu_get_touchable_id_at_screen_pos(
     return final_id;
 }
 
+#if TEXTURES_ACTIVE
 void platform_gpu_init_texture_array(
     const int32_t texture_array_i,
     const uint32_t num_images,
@@ -982,16 +1026,17 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     
     free_from_managed(raw_bc1_file);
 }
+#endif
 
 void platform_gpu_copy_locked_vertices(void)
 {
     for (uint32_t i = 0; i < ALL_LOCKED_VERTICES_SIZE; i++) {
         assert(
-            gpu_shared_data_collection.locked_vertices[i].parent_material_i <
+            gpu_shared_data_collection->locked_vertices[i].parent_material_i <
                 MAX_MATERIALS_PER_POLYGON);
     }
     
-    gpu_shared_data_collection.locked_vertices_size = all_mesh_vertices->size;
+    gpu_shared_data_collection->locked_vertices_size = all_mesh_vertices->size;
     
     id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
     
@@ -1007,7 +1052,7 @@ void platform_gpu_copy_locked_vertices(void)
         destinationOffset:
             0
         size:
-            gpu_shared_data_collection.locked_vertices_allocation_size];
+            gpu_shared_data_collection->locked_vertices_allocation_size];
     [blit_copy_encoder endEncoding];
     
     // Add a completion handler and commit the command buffer.
@@ -1043,7 +1088,7 @@ void platform_gpu_copy_locked_vertices(void)
     ags->cached_viewport.znear   = 0.001f; 
     ags->cached_viewport.zfar    = 1.0f;
     
-    *gpu_shared_data_collection.locked_pjc =
+    *gpu_shared_data_collection->locked_pjc =
         window_globals->projection_constants;
     
     MTLTextureDescriptor * touch_id_texture_descriptor =
@@ -1103,7 +1148,6 @@ void platform_gpu_copy_locked_vertices(void)
         0,
         touch_buffer_size_bytes);
     
-    #if POSTPROCESSING_ACTIVE
     // Set up a texture for rendering to and apply post-processing to
     MTLTextureDescriptor * texture_descriptor = [MTLTextureDescriptor new];
     texture_descriptor.textureType = MTLTextureType2D;
@@ -1126,6 +1170,7 @@ void platform_gpu_copy_locked_vertices(void)
     ags->render_target_viewport.width = texture_descriptor.width;
     ags->render_target_viewport.height = texture_descriptor.height;
     
+    #if BLOOM_ACTIVE
     for (uint32_t i = 0; i < DOWNSAMPLES_SIZE; i++) {
         
         MTLTextureDescriptor * downsampled_target_texture_desc =
@@ -1150,7 +1195,7 @@ void platform_gpu_copy_locked_vertices(void)
     dispatch_semaphore_wait(ags->drawing_semaphore, DISPATCH_TIME_FOREVER);
     
     funcptr_shared_gameloop_update(
-        &gpu_shared_data_collection.triple_buffers[ags->frame_i]);
+        &gpu_shared_data_collection->triple_buffers[ags->frame_i]);
     
     if (!metal_active) {
         return;
@@ -1167,15 +1212,15 @@ void platform_gpu_copy_locked_vertices(void)
     }
     
     uint32_t diamond_verts_size =
-        gpu_shared_data_collection.
+        gpu_shared_data_collection->
             triple_buffers[ags->frame_i].first_alphablend_i;
     #if SHADOWS_ACTIVE
     if (
         window_globals->draw_triangles &&
         diamond_verts_size > 0 &&
-        gpu_shared_data_collection.triple_buffers[ags->frame_i].
+        gpu_shared_data_collection->triple_buffers[ags->frame_i].
             light_collection->shadowcaster_i <
-            gpu_shared_data_collection.triple_buffers[ags->frame_i].
+            gpu_shared_data_collection->triple_buffers[ags->frame_i].
                 light_collection->lights_size)
     {
         MTLRenderPassDescriptor * render_pass_shadows =
@@ -1257,16 +1302,11 @@ void platform_gpu_copy_locked_vertices(void)
     render_pass_1_draw_triangles_descriptor.depthAttachment.loadAction =
         MTLLoadActionClear;
     
-    #if POSTPROCESSING_ACTIVE
+    assert(ags->render_target_texture != NULL);
     render_pass_1_draw_triangles_descriptor.colorAttachments[0].texture =
         ags->render_target_texture;
     render_pass_1_draw_triangles_descriptor.colorAttachments[0].storeAction =
         MTLStoreActionStore;
-    #else
-    render_pass_1_descriptor
-        .colorAttachments[0]
-        .loadAction = MTLLoadActionClear;
-    #endif
     
     render_pass_1_draw_triangles_descriptor.colorAttachments[0].clearColor =
         MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);
@@ -1397,6 +1437,7 @@ void platform_gpu_copy_locked_vertices(void)
         atIndex:
             6];
     
+    #if TEXTURES_ACTIVE
     for (
         uint32_t i = 0;
         i < TEXTUREARRAYS_SIZE;
@@ -1408,6 +1449,7 @@ void platform_gpu_copy_locked_vertices(void)
                 atIndex: i];
         }
     }
+    #endif
     
     #if SHADOWS_ACTIVE
     [render_pass_1_draw_triangles_encoder
@@ -1418,13 +1460,13 @@ void platform_gpu_copy_locked_vertices(void)
     #ifndef IGNORE_LOGGER_ASSERTS
     for (
         uint32_t i = 0;
-        i < gpu_shared_data_collection.
+        i < gpu_shared_data_collection->
             triple_buffers[ags->frame_i].
             vertices_size;
         i++)
     {
         assert(
-            gpu_shared_data_collection.
+            gpu_shared_data_collection->
                 triple_buffers[ags->frame_i].
                 vertices[i].locked_vertex_i < ALL_LOCKED_VERTICES_SIZE);
     }
@@ -1443,14 +1485,14 @@ void platform_gpu_copy_locked_vertices(void)
     }
     
     log_assert(
-        gpu_shared_data_collection.triple_buffers[ags->frame_i].
+        gpu_shared_data_collection->triple_buffers[ags->frame_i].
             first_alphablend_i <=
-        gpu_shared_data_collection.triple_buffers[ags->frame_i].
+        gpu_shared_data_collection->triple_buffers[ags->frame_i].
             vertices_size);
     uint32_t alphablend_verts_size =
-        gpu_shared_data_collection.
+        gpu_shared_data_collection->
             triple_buffers[ags->frame_i].vertices_size -
-        gpu_shared_data_collection.
+        gpu_shared_data_collection->
             triple_buffers[ags->frame_i].first_alphablend_i;
     
     if (window_globals->draw_triangles && alphablend_verts_size > 0) {
@@ -1461,26 +1503,28 @@ void platform_gpu_copy_locked_vertices(void)
         
         [render_pass_1_draw_triangles_encoder
             drawPrimitives: MTLPrimitiveTypeTriangle
-            vertexStart: gpu_shared_data_collection.
+            vertexStart: gpu_shared_data_collection->
                 triple_buffers[ags->frame_i].first_alphablend_i
             vertexCount:
                 alphablend_verts_size];
     }
     
     if ((
-        gpu_shared_data_collection.triple_buffers[ags->frame_i].
+        gpu_shared_data_collection->triple_buffers[ags->frame_i].
             line_vertices_size +
-        gpu_shared_data_collection.triple_buffers[ags->frame_i].
+        gpu_shared_data_collection->triple_buffers[ags->frame_i].
             point_vertices_size) > 0)
     {
-        [render_pass_1_draw_triangles_encoder setRenderPipelineState: ags->raw_pls];
+        [render_pass_1_draw_triangles_encoder
+            setRenderPipelineState: ags->raw_pls];
+        
         assert(ags->depth_stencil_state != nil);
         [render_pass_1_draw_triangles_encoder
             setDepthStencilState: ags->depth_stencil_state];
         [render_pass_1_draw_triangles_encoder setDepthClipMode: MTLDepthClipModeClip];
     }
     
-    if (gpu_shared_data_collection.
+    if (gpu_shared_data_collection->
         triple_buffers[ags->frame_i].line_vertices_size > 0)
     {
         [render_pass_1_draw_triangles_encoder
@@ -1490,17 +1534,17 @@ void platform_gpu_copy_locked_vertices(void)
                 0
             atIndex:
                 0];
-        assert(gpu_shared_data_collection.
+        assert(gpu_shared_data_collection->
             triple_buffers[ags->frame_i].line_vertices_size <=
                 MAX_LINE_VERTICES);
         [render_pass_1_draw_triangles_encoder
             drawPrimitives: MTLPrimitiveTypeLine
             vertexStart: 0
-            vertexCount: gpu_shared_data_collection.
+            vertexCount: gpu_shared_data_collection->
                 triple_buffers[ags->frame_i].line_vertices_size];
     }
     
-    if (gpu_shared_data_collection.
+    if (gpu_shared_data_collection->
         triple_buffers[ags->frame_i].point_vertices_size > 0)
     {
         [render_pass_1_draw_triangles_encoder
@@ -1510,13 +1554,14 @@ void platform_gpu_copy_locked_vertices(void)
                 0
             atIndex:
                 0];
-        assert(gpu_shared_data_collection.
+        assert(gpu_shared_data_collection->
             triple_buffers[ags->frame_i].point_vertices_size <=
                 MAX_POINT_VERTICES);
+        
         [render_pass_1_draw_triangles_encoder
             drawPrimitives: MTLPrimitiveTypePoint
             vertexStart: 0
-            vertexCount: gpu_shared_data_collection.
+            vertexCount: gpu_shared_data_collection->
                 triple_buffers[ags->frame_i].point_vertices_size];
     }
     
@@ -1543,22 +1588,7 @@ void platform_gpu_copy_locked_vertices(void)
             [ags->touch_id_texture width] * [ags->touch_id_texture height] * 8];
     [blit_touch_texture_to_cpu_buffer_encoder endEncoding];
     
-    #if POSTPROCESSING_ACTIVE
-    #define FLVERT 1.0f
-    #define TEX_MAX 1.0f
-    #define TEX_MIN 0.0f
-    static const PostProcessingVertex quad_vertices[] =
-    {
-        // Positions     , Texture coordinates,   bloom threshold
-        {{  FLVERT,  -FLVERT },  { TEX_MAX, TEX_MAX }},
-        {{ -FLVERT,  -FLVERT },  { TEX_MIN, TEX_MAX }},
-        {{ -FLVERT,   FLVERT },  { TEX_MIN, TEX_MIN }},
-        
-        {{  FLVERT,  -FLVERT },  { TEX_MAX, TEX_MAX }},
-        {{ -FLVERT,   FLVERT },  { TEX_MIN, TEX_MIN }},
-        {{  FLVERT,   FLVERT },  { TEX_MAX, TEX_MIN }},
-    };
-    
+    #if BLOOM_ACTIVE
     // Render pass 2 downsamples the original texture
     for (uint32_t ds_i = 0; ds_i < DOWNSAMPLES_SIZE; ds_i++) {
         
@@ -1622,8 +1652,8 @@ void platform_gpu_copy_locked_vertices(void)
             dispatchThreads:grid
             threadsPerThreadgroup:threadgroup];
         [boxblur_encoder endEncoding];
-        #endif
     }
+    #endif
     
     // Render pass 4 puts a quad on the full screen
     MTLRenderPassDescriptor * render_pass_4_composition_descriptor =
@@ -1645,9 +1675,10 @@ void platform_gpu_copy_locked_vertices(void)
     [render_pass_4_composition
         setRenderPipelineState: ags->singlequad_pls];
     
+    assert(ags->quad_vertices != NULL);
     [render_pass_4_composition
-        setVertexBytes:&quad_vertices
-        length:sizeof(quad_vertices)
+        setVertexBytes:ags->quad_vertices
+        length:sizeof(PostProcessingVertex)*6
         atIndex:0];
     
     [render_pass_4_composition
@@ -1659,6 +1690,7 @@ void platform_gpu_copy_locked_vertices(void)
         setFragmentTexture: ags->render_target_texture
         atIndex:0];
     
+    #if BLOOM_ACTIVE
     [render_pass_4_composition
         setFragmentTexture: ags->downsampled_target_textures[0]
         atIndex:1];
@@ -1674,6 +1706,7 @@ void platform_gpu_copy_locked_vertices(void)
     [render_pass_4_composition
         setFragmentTexture: ags->downsampled_target_textures[4]
         atIndex:5];
+    #endif
     
     [render_pass_4_composition
         drawPrimitives:MTLPrimitiveTypeTriangle
@@ -1688,6 +1721,7 @@ void platform_gpu_copy_locked_vertices(void)
     
     ags->frame_i += 1;
     ags->frame_i %= MAX_RENDERING_FRAME_BUFFERS;
+    assert(ags->frame_i < MAX_RENDERING_FRAME_BUFFERS);
     
     [command_buffer addCompletedHandler:^(id<MTLCommandBuffer> arg_cmd_buffer) {
         (void)arg_cmd_buffer;

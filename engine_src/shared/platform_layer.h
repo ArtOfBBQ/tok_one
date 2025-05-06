@@ -67,7 +67,6 @@ extern "C" {
 #endif
 
 // #include "audio.h"
-#include "clientlogic_macro_settings.h"
 #include "common.h"
 #include "logger.h"
 #include "decodedimage.h"
@@ -212,6 +211,7 @@ int32_t platform_gpu_get_touchable_id_at_screen_pos(
     const float screen_x,
     const float screen_y);
 
+#if TEXTURES_ACTIVE
 void platform_gpu_init_texture_array(
     const int32_t texture_array_i,
     const uint32_t num_images,
@@ -235,6 +235,7 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     const uint32_t image_width,
     const uint32_t image_height,
     uint8_t * bc1_values);
+#endif
 
 void platform_update_mouse_location(void);
 

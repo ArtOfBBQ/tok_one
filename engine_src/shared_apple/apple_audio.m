@@ -1,6 +1,6 @@
 #import "apple_audio.h"
 
-
+#if AUDIO_ACTIVE
 static void audio_callback(
     void * in_user_data,
     AudioQueueRef queue,
@@ -136,3 +136,4 @@ void start_audio_loop(void) {
         /* const AudioTimeStamp * _Nullable inStartTime: */
             0);
 }
+#endif // AUDIO_ACTIVE

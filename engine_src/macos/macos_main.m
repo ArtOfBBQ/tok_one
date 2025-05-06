@@ -532,10 +532,10 @@ int main(int argc, const char * argv[]) {
         
         init_application_after_gpu_init();
         
+        #if AUDIO_ENABLED
         start_audio_loop();
+        #endif
     }
-    
-    metal_active = true;
     
     #ifndef LOGGER_IGNORE_ASSERTS
     if (!success && application_running) {

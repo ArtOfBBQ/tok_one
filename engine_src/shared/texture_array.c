@@ -57,6 +57,7 @@ int32_t texture_array_preinit_new_with_known_dimensions(
     
     texture_arrays_size += 1;
     
+    #if TEXTURES_ACTIVE
     platform_gpu_init_texture_array(
         /* const int32_t texture_array_i: */
             retval,
@@ -68,6 +69,7 @@ int32_t texture_array_preinit_new_with_known_dimensions(
             single_img_height,
         /* const uint32_t use_bc1_compression: */
             use_bc1_compression);
+    #endif
     
     return retval;
 }
@@ -105,6 +107,7 @@ void texture_array_push_dds_image_to_preinitted(
     
     log_assert(file_buffer.good);
     
+    #if TEXTURES_ACTIVE
     platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
         /* texture_array_i: */
             to_texturearray_i,
@@ -118,6 +121,7 @@ void texture_array_push_dds_image_to_preinitted(
             texture_arrays[to_texturearray_i].single_img_height,
         /* const uint8_t * bc1_values: */
             (uint8_t *)file_buffer.contents);
+    #endif
     
     texture_arrays[to_texturearray_i].images[to_texture_i].
         request_update = false;
@@ -572,12 +576,15 @@ void texture_array_gpu_try_push(void) {
                 log_append_char('\n');
                 texture_arrays[i].request_init = false;
                 texture_arrays[i].gpu_initted = true;
+                
+                #if TEXTURES_ACTIVE
                 platform_gpu_init_texture_array(
                     i,
                     texture_arrays[i].images_size,
                     texture_arrays[i].single_img_width,
                     texture_arrays[i].single_img_height,
                     /* bc1_compression: */ false);
+                #endif
             }
             
             if (texture_arrays[i].gpu_initted) {
@@ -608,6 +615,7 @@ void texture_array_gpu_try_push(void) {
                             return;
                         }
                         
+                        #if TEXTURES_ACTIVE
                         platform_gpu_push_texture_slice_and_free_rgba_values(
                             i,
                             j,
@@ -625,6 +633,8 @@ void texture_array_gpu_try_push(void) {
                                 texture_arrays[i]
                                     .images[j]
                                     .image->rgba_values_page_aligned);
+                        #endif
+                        
                         texture_arrays[i].images[j].image->
                             rgba_values_page_aligned = NULL;
                     }
@@ -997,18 +1007,21 @@ void texture_array_load_font_images(void) {
         /* rows     : */ 10,
         /* columns  : */ 10);
     
+    #if TEXTURES_ACTIVE
     platform_gpu_init_texture_array(
         0,
         texture_arrays[0].images_size,
         texture_arrays[0].single_img_width,
         texture_arrays[0].single_img_height,
         /* bc1_compression: */ false);
+    #endif
     
     for (
         int32_t i = 0;
         i < (int32_t)texture_arrays[0].images_size;
         i++)
     {
+        #if TEXTURES_ACTIVE
         platform_gpu_push_texture_slice_and_free_rgba_values(
             /* const int32_t texture_array_i: */
                 0,
@@ -1023,6 +1036,7 @@ void texture_array_load_font_images(void) {
             /* const uint8_t *rgba_values: */
                 texture_arrays[0].images[i].image->rgba_values_freeable,
                 texture_arrays[0].images[i].image->rgba_values_page_aligned);
+        #endif
         texture_arrays[0].images[i].image->rgba_values_page_aligned = NULL;
         texture_arrays[0].images[i].request_update = false;
     }

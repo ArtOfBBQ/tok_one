@@ -3,7 +3,6 @@
 
 #include "common.h"
 #include "logger.h"
-#include "clientlogic_macro_settings.h"
 #include "cpu_to_gpu_types.h"
 
 /*

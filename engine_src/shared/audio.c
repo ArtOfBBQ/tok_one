@@ -1,5 +1,7 @@
 #include "audio.h"
 
+#if AUDIO_ACTIVE
+
 SoundSettings * sound_settings = NULL;
 
 #define PERMASOUND_NAME_MAX 64
@@ -339,3 +341,5 @@ void audio_register_samples_to_permasound(
             all_permasounds[permasound_id].allsamples_head_i) + 1 ==
                 samples_size);
 }
+
+#endif // AUDIO_ACTIVE

@@ -6,7 +6,6 @@
 
 #include "tok_directsound.h"
 
-#include "clientlogic_macro_settings.h"
 #include "memorystore.h"
 
 #include "opengl_extensions.h"

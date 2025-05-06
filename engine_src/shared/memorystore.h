@@ -7,7 +7,6 @@
 
 #include <stdlib.h>
 
-#include "clientlogic_macro_settings.h"
 #include "common.h"
 #include "logger.h"
 

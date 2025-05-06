@@ -9,7 +9,6 @@ extern "C" {
 #define PARTICLE_RGBA_PROGRESSION_MAX 10
 
 #include "cpu_to_gpu_types.h"
-#include "clientlogic_macro_settings.h"
 #include "common.h"
 #include "logger.h"
 #include "tok_random.h"

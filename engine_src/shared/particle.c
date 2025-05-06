@@ -534,7 +534,8 @@ void add_particle_effects_to_workload(
         if (particle_effects[i].deleted ||
             !particle_effects[i].committed ||
             particle_effects[i].zpolygon_cpu.alpha_blending_enabled !=
-                alpha_blending)
+                alpha_blending ||
+            frame_data->polygon_collection->size >= MAX_POLYGONS_PER_BUFFER)
         {
             continue;
         }

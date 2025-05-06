@@ -15,7 +15,6 @@
 #include "renderer.h"
 #include "gameloop.h"
 #include "objparser.h"
-#include "clientlogic_macro_settings.h"
 
 #include "clientlogic.h"
 
