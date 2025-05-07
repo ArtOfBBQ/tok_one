@@ -402,8 +402,6 @@ bool32_t apple_gpu_init(
         return false;
     }
     
-    // TODO: use the apple-approved page size constant instead of
-    // hardcoding 4096, and verify it returns 4096
     for (
         uint32_t loop_frame_i = 0;
         loop_frame_i < MAX_RENDERING_FRAME_BUFFERS;

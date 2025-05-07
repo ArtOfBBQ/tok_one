@@ -50,9 +50,10 @@ void audio_init(
     
     all_samples = arg_malloc_function(
         sizeof(int16_t) * ALL_AUDIOSAMPLES_SIZE);
+    common_memset_char(all_samples, 0, sizeof(int16_t) * ALL_AUDIOSAMPLES_SIZE);
 }
 
-__attribute__((noinline))
+//__attribute__((noinline))
 void audio_consume_int16_samples(
     int16_t * recipient,
     const uint32_t samples_to_copy)

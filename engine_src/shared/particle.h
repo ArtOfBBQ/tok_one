@@ -1,6 +1,8 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
+#if PARTICLES_ACTIVE
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -123,5 +125,7 @@ void add_particle_effects_to_workload(
 #ifdef __cplusplus
 }
 #endif
+
+#endif // PARTICLES_ACTIVE
 
 #endif // PARTICLE_H

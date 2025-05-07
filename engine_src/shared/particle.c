@@ -1,5 +1,7 @@
 #include "particle.h"
 
+#if PARTICLES_ACTIVE
+
 LineParticle * lineparticle_effects;
 uint32_t lineparticle_effects_size;
 
@@ -857,3 +859,5 @@ void add_particle_effects_to_workload(
         }
     }
 }
+
+#endif // PARTICLES_ACTIVE

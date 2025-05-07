@@ -1,6 +1,6 @@
 #include "memorystore.h"
 
-#define MEM_ALIGNMENT_BYTES 256
+#define MEM_ALIGNMENT_BYTES 64
 
 //#define MANAGED_MEMORY_STACK_SIZE 1000
 //typedef struct ManagedMemoryStack {
@@ -11,7 +11,9 @@
 //} ManagedMemoryStack;
 //static ManagedMemoryStack * managed_stack = NULL;
 
-uint32_t memorystore_page_size = 4000;
+// uint32_t memorystore_page_size = 4000;
+
+uint32_t page_size = 4096;
 
 static void * unmanaged_memory = NULL;
 static uint64_t unmanaged_memory_size = UNMANAGED_MEMORY_SIZE;
@@ -22,6 +24,16 @@ static uint32_t malloc_mutex_id = UINT32_MAX;
 
 void (* memstore_mutex_lock)(const uint32_t mutex_id) = NULL;
 void (* memstore_mutex_unlock)(const uint32_t mutex_id) = NULL;
+
+static void set_pagesize(void) {
+    long query_result = sysconf(_SC_PAGESIZE);
+    if (query_result < 0 || query_result > UINT32_MAX) {
+        assert(0);
+        page_size = 4096;
+    } else {
+        page_size = (uint32_t)query_result;
+    }
+}
 
 void get_memory_usage_summary_string(
     char * recipient,
@@ -108,6 +120,8 @@ void memorystore_init(
     align_pointer(&unmanaged_memory);
     common_memset_char(unmanaged_memory, 0, UNMANAGED_MEMORY_SIZE);
     
+    set_pagesize();
+    
     if (MANAGED_MEMORY_SIZE > 0) {
         managed_memory = ptr_managed_memory_block;
         align_pointer(&managed_memory);
@@ -144,25 +158,17 @@ static void * malloc_from_unmanaged_without_aligning(
 
 void * malloc_from_unmanaged_aligned(
     const uint64_t size,
-    const uint32_t arg_aligned_to)
+    const uint32_t aligned_to)
 {
     memstore_mutex_lock(malloc_mutex_id);
     
     if (
-        arg_aligned_to < sizeof(void*) ||
-        (arg_aligned_to & (arg_aligned_to - 1)) != 0)
+        aligned_to < sizeof(void*) ||
+        (aligned_to & (aligned_to - 1)) != 0)
     {
         assert(0); // this alignment is not allowed!
         return NULL;
     }
-    
-    // TODO: we're temporarily aligning all memory to page size, to battle a
-    // TODO: a bug, let's undo this in the future
-    uint32_t aligned_to = arg_aligned_to;
-    if (arg_aligned_to < 4096) {
-        aligned_to = 4096;
-    }
-    assert(aligned_to == 4096); // checking if we ever align to more than 4096
     
     log_assert(unmanaged_memory != NULL);
     log_assert(size > 0);
@@ -181,20 +187,44 @@ void * malloc_from_unmanaged_aligned(
     log_assert((uintptr_t)(void *)return_value % aligned_to == 0);
     
     memstore_mutex_unlock(malloc_mutex_id);
-        
+    
     return return_value;
 }
 
 // __attribute__((used, noinline))
 void * malloc_from_unmanaged(size_t size) {
-    return malloc(size); // TODO: remove me
-    
     log_assert(size > 0);
     void * return_value = malloc_from_unmanaged_aligned(
         size,
         MEM_ALIGNMENT_BYTES);
     
     return return_value;
+}
+
+void malloc_from_managed_page_aligned(
+    void ** base_pointer_for_freeing,
+    void ** aligned_subptr,
+    const size_t subptr_size)
+{
+    uint32_t aligned_to = page_size;
+    
+    *base_pointer_for_freeing = malloc_from_managed(subptr_size + aligned_to);
+    
+    uint32_t padding = aligned_to -
+        (((uintptr_t)*base_pointer_for_freeing) % aligned_to);
+    
+    if (padding == aligned_to) { padding = 0; }
+    
+    *aligned_subptr = ((char *)*base_pointer_for_freeing) + padding;
+    
+    log_assert(*base_pointer_for_freeing != NULL);
+    log_assert(*aligned_subptr != NULL);
+    
+    #ifndef LOGGER_IGNORE_ASSERTS
+    uint32_t alignment_miss =
+        (uintptr_t)(*aligned_subptr) % aligned_to;
+    log_assert(alignment_miss == 0);
+    #endif
 }
 
 void * malloc_from_managed_infoless(size_t size) {

@@ -349,7 +349,9 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 {
     delete_all_ui_elements();
     zpolygons_to_render->size = 0;
+    #if PARTICLES_ACTIVE
     particle_effects_size = 0;
+    #endif
     window_globals->fullscreen = true;
 }
 
@@ -358,7 +360,9 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 {
     delete_all_ui_elements();
     zpolygons_to_render->size = 0;
+    #if PARTICLES_ACTIVE
     particle_effects_size = 0;
+    #endif
     window_globals->fullscreen = false;
 }
 
@@ -375,7 +379,9 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 {
     delete_all_ui_elements();
     zpolygons_to_render->size = 0;
+    #if PARTICLES_ACTIVE
     particle_effects_size = 0;
+    #endif
     
     return frameSize;
 }

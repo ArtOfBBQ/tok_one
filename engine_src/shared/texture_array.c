@@ -181,16 +181,13 @@ static void set_unallocated_to_error_image(
         to_replace->width * to_replace->height;
     to_replace->rgba_values_size = to_replace->pixel_count * 4;
     
-    to_replace->rgba_values_freeable =
-        malloc_from_managed(
-            to_replace->rgba_values_size + memorystore_page_size);
-    to_replace->rgba_values_page_aligned = to_replace->rgba_values_freeable;
-    while (
-        ((ptrdiff_t)to_replace->rgba_values_page_aligned %
-            memorystore_page_size) != 0)
-    {
-        to_replace->rgba_values_page_aligned += 1;
-    }
+    malloc_from_managed_page_aligned(
+        /* void * base_pointer_for_freeing: */
+            (void *)&to_replace->rgba_values_freeable,
+        /* void * aligned_subptr: */
+            (void *)&to_replace->rgba_values_page_aligned,
+        /* const size_t subptr_size: */
+            to_replace->rgba_values_size);
     
     set_allocated_to_error_image(to_replace);
 }
@@ -256,16 +253,14 @@ static DecodedImage * malloc_img_from_filename(
         new_image->good = false;
         new_image->pixel_count = new_image->width * new_image->height;
         new_image->rgba_values_size = new_image->pixel_count * 4;
-        new_image->rgba_values_freeable =
-        malloc_from_managed(
-            new_image->rgba_values_size + memorystore_page_size);
-        new_image->rgba_values_page_aligned = new_image->rgba_values_freeable;
-        while (
-            ((ptrdiff_t)new_image->rgba_values_page_aligned %
-            memorystore_page_size) != 0)
-        {
-            new_image->rgba_values_page_aligned += 1;
-        }
+        malloc_from_managed_page_aligned(
+            /* void *base_pointer_for_freeing: */
+                (void *)&new_image->rgba_values_freeable,
+            /* void *aligned_subptr: */
+                (void *)&new_image->rgba_values_page_aligned,
+            /* const size_t subptr_size: */
+                new_image->rgba_values_size);
+        
         common_memset_char(
             new_image->rgba_values_page_aligned,
             0,
@@ -307,16 +302,13 @@ static DecodedImage * malloc_img_from_filename(
         new_image->good = false;
         new_image->pixel_count = new_image->width * new_image->height;
         new_image->rgba_values_size = new_image->pixel_count * 4;
-        new_image->rgba_values_freeable =
-        malloc_from_managed(
-            new_image->rgba_values_size + memorystore_page_size);
-        new_image->rgba_values_page_aligned = new_image->rgba_values_freeable;
-        while (
-            ((ptrdiff_t)new_image->rgba_values_page_aligned %
-            memorystore_page_size) != 0)
-        {
-            new_image->rgba_values_page_aligned += 1;
-        }
+        malloc_from_managed_page_aligned(
+            /* void * base_pointer_for_freeing: */
+                (void *)&new_image->rgba_values_freeable,
+            /* void * aligned_subptr: */
+                (void *)&new_image->rgba_values_page_aligned,
+            /* const size_t subptr_size: */
+                new_image->rgba_values_size);
         common_memset_char(
             new_image->rgba_values_page_aligned,
             0,
@@ -394,16 +386,13 @@ static DecodedImage * extract_image(
                 original->rgba_values_size);
     
     new_image->rgba_values_size = slice_size_bytes;
-    new_image->rgba_values_freeable =
-        malloc_from_managed(
-            new_image->rgba_values_size + memorystore_page_size);
-    new_image->rgba_values_page_aligned = new_image->rgba_values_freeable;
-    while (
-        ((ptrdiff_t)new_image->rgba_values_page_aligned %
-            memorystore_page_size) != 0)
-    {
-        new_image->rgba_values_page_aligned += 1;
-    }
+    malloc_from_managed_page_aligned(
+        /* void * base_pointer_for_freeing: */
+            (void *)&new_image->rgba_values_freeable,
+        /* void * aligned_subptr: */
+            (void *)&new_image->rgba_values_page_aligned,
+        /* const size_t subptr_size: */
+            new_image->rgba_values_size);
     common_memset_char(
         new_image->rgba_values_page_aligned,
         0,
@@ -935,16 +924,13 @@ void texture_array_decode_null_image_at(
     new_image->rgba_values_size =
         new_image->height * new_image->width * 4;
     log_assert(new_image->rgba_values_size > 0);
-    new_image->rgba_values_freeable =
-        malloc_from_managed(
-            new_image->rgba_values_size + memorystore_page_size);
-    new_image->rgba_values_page_aligned = new_image->rgba_values_freeable;
-    while (
-        ((ptrdiff_t)new_image->rgba_values_page_aligned %
-            memorystore_page_size) != 0)
-    {
-        new_image->rgba_values_page_aligned += 1;
-    }
+    malloc_from_managed_page_aligned(
+        /* void * base_pointer_for_freeing: */
+            (void *)&new_image->rgba_values_freeable,
+        /* void * aligned_subptr: */
+            (void *)&new_image->rgba_values_page_aligned,
+        /* const size_t subptr_size: */
+            new_image->rgba_values_size);
     
     if (new_image->rgba_values_freeable == NULL || !application_running) {
         application_running = false;

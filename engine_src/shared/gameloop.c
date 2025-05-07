@@ -71,8 +71,10 @@ void gameloop_update_before_render_pass(
     
     if (!application_running) {
         delete_all_ui_elements();
+        #if PARTICLES_ACTIVE
         particle_effects_size = 0;
         lineparticle_effects_size = 0;
+        #endif
         zlights_to_apply_size = 0;
         zpolygons_to_render->size = 0;
         

@@ -6,6 +6,7 @@
 #endif
 
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "common.h"
 #include "logger.h"
@@ -14,7 +15,7 @@
 extern "C" {
 #endif
 
-extern uint32_t memorystore_page_size;
+extern uint32_t page_size;
 
 void memorystore_init(
     void * ptr_unmanaged_memory_block,
@@ -35,8 +36,8 @@ void * malloc_from_unmanaged_aligned(
 void * malloc_from_unmanaged(size_t size);
 
 void malloc_from_managed_page_aligned(
-    void * base_pointer_for_freeing,
-    void * aligned_subptr,
+    void ** base_pointer_for_freeing,
+    void ** aligned_subptr,
     const size_t subptr_size);
 
 #define malloc_from_managed(size) malloc_from_managed_internal(size, (char *)__FILE__, (char *)__func__);

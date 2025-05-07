@@ -231,6 +231,7 @@ void scheduled_animations_request_evaporate_and_destroy(
             continue;
         }
         
+        #if PARTICLES_ACTIVE
         float duration_mod = (20000000.0f / (float)duration_microseconds);
         
         ParticleEffect * vaporize_effect = next_particle_effect();
@@ -292,6 +293,7 @@ void scheduled_animations_request_evaporate_and_destroy(
         vaporize_effect->generate_light = false;
         
         commit_particle_effect(vaporize_effect);
+        #endif
         
         zpolygons_to_render->cpu_data[zp_i].deleted = true;
     }
@@ -317,6 +319,7 @@ void scheduled_animations_request_shatter_and_destroy(
             continue;
         }
         
+        #if PARTICLES_ACTIVE
         float duration_mod = (20000000.0f / (float)duration_microseconds);
         
         ParticleEffect * shatter_effect = next_particle_effect();
@@ -421,6 +424,7 @@ void scheduled_animations_request_shatter_and_destroy(
         log_assert(!shatter_effect->zpolygon_cpu.alpha_blending_enabled);
         
         commit_particle_effect(shatter_effect);
+        #endif
         
         zpolygons_to_render->cpu_data[zp_i].sprite_id = -1;
         zpolygons_to_render->cpu_data[zp_i].deleted = true;
@@ -554,7 +558,9 @@ void scheduled_animations_resolve(void)
                     
                     delete_zpolygon_object(anim->affected_sprite_id);
                     
+                    #if PARTICLES_ACTIVE
                     delete_particle_effect(anim->affected_sprite_id);
+                    #endif
                 }
             } else {
                 anim->start_timestamp = window_globals->this_frame_timestamp;

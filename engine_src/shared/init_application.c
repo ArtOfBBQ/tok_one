@@ -217,11 +217,9 @@ void init_application_before_gpu_init(
         sizeof(WindowGlobals));
     common_memset_char(window_globals, 0, sizeof(WindowGlobals));
     
-    #if AUDIO_ACTIVE
     audio_init(
         /* void *(*arg_malloc_function)(size_t): */
             malloc_from_unmanaged);
-    #endif
     
     #if ENGINE_SAVEFILE_ACTIVE
     if (
@@ -257,6 +255,10 @@ void init_application_before_gpu_init(
     window_globals->window_width  = INITIAL_WINDOW_WIDTH;
     window_globals->window_left   = INITIAL_WINDOW_LEFT;
     window_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
+    #if AUDIO_ACTIVE
+    sound_settings->music_volume  = 0.5f;
+    sound_settings->sfx_volume    = 0.5f;
+    #endif
     #endif
     
     window_globals->aspect_ratio = window_globals->window_height /
@@ -277,6 +279,8 @@ void init_application_before_gpu_init(
         zlights_to_apply,
         0,
         sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
+    
+    #if PARTICLES_ACTIVE
     lineparticle_effects = (LineParticle *)malloc_from_unmanaged(
         sizeof(LineParticle) * LINEPARTICLE_EFFECTS_SIZE);
     common_memset_char(
@@ -289,6 +293,7 @@ void init_application_before_gpu_init(
         particle_effects,
         0,
         sizeof(ParticleEffect) * PARTICLE_EFFECTS_SIZE);
+    #endif
     
     gameloop_init();
     terminal_init(platform_enter_fullscreen);
@@ -346,83 +351,83 @@ void init_application_before_gpu_init(
     gpu_shared_data_collection->vertices_allocation_size =
             sizeof(GPUVertex) * MAX_VERTICES_PER_BUFFER;
     gpu_shared_data_collection->vertices_allocation_size +=
-        (4096 - (gpu_shared_data_collection->vertices_allocation_size % 4096));
-    assert(gpu_shared_data_collection->vertices_allocation_size % 4096 == 0);
+        (page_size - (gpu_shared_data_collection->vertices_allocation_size % page_size));
+    assert(gpu_shared_data_collection->vertices_allocation_size % page_size == 0);
     
     gpu_shared_data_collection->polygons_allocation_size =
         sizeof(GPUPolygonCollection);
     gpu_shared_data_collection->polygons_allocation_size +=
-        (4096 - (gpu_shared_data_collection->polygons_allocation_size % 4096));
+        (page_size - (gpu_shared_data_collection->polygons_allocation_size % page_size));
     assert(gpu_shared_data_collection->polygons_allocation_size > 0);
-    assert(gpu_shared_data_collection->polygons_allocation_size % 4096 == 0);
+    assert(gpu_shared_data_collection->polygons_allocation_size % page_size == 0);
     
     gpu_shared_data_collection->polygon_materials_allocation_size =
         sizeof(GPUPolygonMaterial) *
         MAX_MATERIALS_PER_POLYGON *
         MAX_POLYGONS_PER_BUFFER;
     gpu_shared_data_collection->polygon_materials_allocation_size +=
-        (4096 - (gpu_shared_data_collection->polygon_materials_allocation_size %
-            4096));
+        (page_size - (gpu_shared_data_collection->polygon_materials_allocation_size %
+            page_size));
     assert(gpu_shared_data_collection->polygon_materials_allocation_size
-        % 4096 == 0);
+        % page_size == 0);
     
     gpu_shared_data_collection->lights_allocation_size =
         sizeof(GPULightCollection);
     gpu_shared_data_collection->lights_allocation_size +=
-        (4096 - (gpu_shared_data_collection->lights_allocation_size % 4096));
+        (page_size - (gpu_shared_data_collection->lights_allocation_size % page_size));
     assert(gpu_shared_data_collection->lights_allocation_size > 0);
-    assert(gpu_shared_data_collection->lights_allocation_size % 4096 == 0);
+    assert(gpu_shared_data_collection->lights_allocation_size % page_size == 0);
     
     gpu_shared_data_collection->camera_allocation_size = sizeof(GPUCamera);
     gpu_shared_data_collection->camera_allocation_size +=
-        (4096 - (gpu_shared_data_collection->camera_allocation_size % 4096));
-    assert(gpu_shared_data_collection->camera_allocation_size % 4096 == 0);
+        (page_size - (gpu_shared_data_collection->camera_allocation_size % page_size));
+    assert(gpu_shared_data_collection->camera_allocation_size % page_size == 0);
     
     gpu_shared_data_collection->locked_vertices_allocation_size =
         (sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
     gpu_shared_data_collection->locked_vertices_allocation_size +=
-        (4096 - (gpu_shared_data_collection->
-            locked_vertices_allocation_size % 4096));
+        (page_size - (gpu_shared_data_collection->
+            locked_vertices_allocation_size % page_size));
     assert(gpu_shared_data_collection->locked_vertices_allocation_size > 0);
     assert(gpu_shared_data_collection->locked_vertices_allocation_size %
-        4096 == 0);
+        page_size == 0);
     
     gpu_shared_data_collection->projection_constants_allocation_size =
         sizeof(GPUProjectionConstants);
     gpu_shared_data_collection->projection_constants_allocation_size +=
-        (4096 - (gpu_shared_data_collection->
-            projection_constants_allocation_size % 4096));
+        (page_size - (gpu_shared_data_collection->
+            projection_constants_allocation_size % page_size));
     assert(gpu_shared_data_collection->projection_constants_allocation_size > 0);
     assert(gpu_shared_data_collection->projection_constants_allocation_size %
-        4096 == 0);
+        page_size == 0);
     
     gpu_shared_data_collection->point_vertices_allocation_size =
         sizeof(GPURawVertex) * MAX_POINT_VERTICES;
     gpu_shared_data_collection->point_vertices_allocation_size +=
-        (4096 - (gpu_shared_data_collection->
-            point_vertices_allocation_size % 4096));
+        (page_size - (gpu_shared_data_collection->
+            point_vertices_allocation_size % page_size));
     assert(gpu_shared_data_collection->point_vertices_allocation_size >= 0);
     assert(gpu_shared_data_collection->point_vertices_allocation_size %
-        4096 == 0);
+        page_size == 0);
     
     gpu_shared_data_collection->line_vertices_allocation_size =
         sizeof(GPURawVertex) * MAX_LINE_VERTICES;
     gpu_shared_data_collection->line_vertices_allocation_size +=
-        (4096 - (gpu_shared_data_collection->
-            line_vertices_allocation_size % 4096));
+        (page_size - (gpu_shared_data_collection->
+            line_vertices_allocation_size % page_size));
     assert(gpu_shared_data_collection->line_vertices_allocation_size >= 0);
     assert(gpu_shared_data_collection->line_vertices_allocation_size %
-        4096 == 0);
+        page_size == 0);
     
     gpu_shared_data_collection->postprocessing_constants_allocation_size =
             sizeof(GPUVertex) * MAX_VERTICES_PER_BUFFER;
     gpu_shared_data_collection->postprocessing_constants_allocation_size +=
-        (4096 -
+        (page_size -
             (gpu_shared_data_collection->
-                postprocessing_constants_allocation_size % 4096));
+                postprocessing_constants_allocation_size % page_size));
     assert(
         gpu_shared_data_collection->
-            postprocessing_constants_allocation_size % 4096 == 0);
+            postprocessing_constants_allocation_size % page_size == 0);
     
     for (
         uint32_t cur_frame_i = 0;
@@ -432,27 +437,27 @@ void init_application_before_gpu_init(
         gpu_shared_data_collection->triple_buffers[cur_frame_i].vertices =
             (GPUVertex *)malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection->vertices_allocation_size,
-                4096);
+                page_size);
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].
             polygon_collection =
                 (GPUPolygonCollection *)malloc_from_unmanaged_aligned(
                     gpu_shared_data_collection->polygons_allocation_size,
-                    4096);
+                    page_size);
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].
             polygon_materials =
                 (GPUPolygonMaterial *)malloc_from_unmanaged_aligned(
                     gpu_shared_data_collection->
                         polygon_materials_allocation_size,
-                    4096);
+                    page_size);
         
         assert(gpu_shared_data_collection->lights_allocation_size > 0);
         gpu_shared_data_collection->triple_buffers[cur_frame_i].
             light_collection =
                 (GPULightCollection *)malloc_from_unmanaged_aligned(
                     gpu_shared_data_collection->lights_allocation_size,
-                    4096);
+                    page_size);
         assert(
             gpu_shared_data_collection->triple_buffers[cur_frame_i].
                 light_collection != NULL);
@@ -460,24 +465,24 @@ void init_application_before_gpu_init(
         gpu_shared_data_collection->triple_buffers[cur_frame_i].camera =
         (GPUCamera *)malloc_from_unmanaged_aligned(
             gpu_shared_data_collection->camera_allocation_size,
-            4096);
+            page_size);
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].point_vertices =
         (GPURawVertex *)malloc_from_unmanaged_aligned(
             gpu_shared_data_collection->point_vertices_allocation_size,
-            4096);
+            page_size);
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].line_vertices =
         (GPURawVertex *)malloc_from_unmanaged_aligned(
             gpu_shared_data_collection->line_vertices_allocation_size,
-            4096);
+            page_size);
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].
             postprocessing_constants =
                 (GPUPostProcessingConstants *)malloc_from_unmanaged_aligned(
                     gpu_shared_data_collection->
                         postprocessing_constants_allocation_size,
-                    4096);
+                    page_size);
         
         common_memset_float(
             gpu_shared_data_collection->triple_buffers[cur_frame_i].camera,
@@ -488,12 +493,12 @@ void init_application_before_gpu_init(
     gpu_shared_data_collection->locked_vertices =
         (GPULockedVertex *)malloc_from_unmanaged_aligned(
             gpu_shared_data_collection->locked_vertices_allocation_size,
-            4096);
+            page_size);
     
     gpu_shared_data_collection->locked_pjc =
         (GPUProjectionConstants *)malloc_from_unmanaged_aligned(
             gpu_shared_data_collection->projection_constants_allocation_size,
-            4096);
+            page_size);
 }
 
 void init_application_after_gpu_init(void) {

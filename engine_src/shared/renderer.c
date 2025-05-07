@@ -255,6 +255,7 @@ void renderer_hardware_render(
     add_opaque_zpolygons_to_workload(frame_data);
     
     if (application_running) {
+        #if PARTICLES_ACTIVE
         add_particle_effects_to_workload(
             /* GPUDataForSingleFrame * frame_data: */
                 frame_data,
@@ -267,10 +268,12 @@ void renderer_hardware_render(
             frame_data,
             elapsed_nanoseconds,
             false);
+        #endif
     }
     
     add_alphablending_zpolygons_to_workload(frame_data);
     
+    #if PARTICLES_ACTIVE
     add_particle_effects_to_workload(
         /* GPUDataForSingleFrame * frame_data: */
             frame_data,
@@ -283,6 +286,7 @@ void renderer_hardware_render(
             frame_data,
             elapsed_nanoseconds,
             true);
+    #endif
     
     add_points_and_lines_to_workload(frame_data);
     
