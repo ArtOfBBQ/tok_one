@@ -1,6 +1,6 @@
 #include "profiler.h"
 
-#ifdef PROFILER_ACTIVE
+#if PROFILER_ACTIVE
 
 #ifndef __x86_64__
 static uint64_t __rdtsc(void)

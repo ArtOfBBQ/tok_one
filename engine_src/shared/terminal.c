@@ -354,7 +354,7 @@ static bool32_t evaluate_terminal_command(
         common_are_equal_strings(command, "PROFILER") ||
         common_are_equal_strings(command, "PROFILE TREE"))
     {
-        #ifdef PROFILER_ACTIVE
+        #if PROFILER_ACTIVE
         window_globals->show_profiler = !window_globals->show_profiler;
         
         if (window_globals->show_profiler) {

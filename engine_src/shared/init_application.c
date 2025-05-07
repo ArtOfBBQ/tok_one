@@ -188,7 +188,7 @@ void init_application_before_gpu_init(
         /* int32_t arg_mutex_unlock_function(const uint32_t mutex_id): */
             platform_mutex_unlock);
     
-    #ifdef PROFILER_ACTIVE
+    #if PROFILER_ACTIVE
     profiler_init(platform_get_clock_frequency(), malloc_from_unmanaged);
     #endif
     

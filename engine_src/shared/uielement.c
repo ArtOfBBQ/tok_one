@@ -77,7 +77,7 @@ void uielement_init(void) {
 
 void ui_elements_handle_touches(uint64_t ms_elapsed)
 {
-    #ifdef PROFILER_ACTIVE
+    #if PROFILER_ACTIVE
     profiler_start("ui_elements_handle_touches()");
     #endif
     
@@ -317,7 +317,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
         }
     }
     
-    #ifdef PROFILER_ACTIVE
+    #if PROFILER_ACTIVE
     profiler_end("ui_elements_handle_touches()");
     #endif
 }

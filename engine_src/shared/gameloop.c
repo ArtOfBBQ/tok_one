@@ -36,7 +36,7 @@ void gameloop_update_before_render_pass(
     
     window_globals->next_transformed_imputed_normal_i = 0;
     
-    #ifdef PROFILER_ACTIVE
+    #if PROFILER_ACTIVE
     profiler_start("gameloop_update()");
     #endif
     
@@ -49,7 +49,7 @@ void gameloop_update_before_render_pass(
     if (gameloop_previous_time < 1) {
         gameloop_previous_time = window_globals->this_frame_timestamp;
         
-        #ifdef PROFILER_ACTIVE
+        #if PROFILER_ACTIVE
         profiler_end("gameloop_update()");
         #endif
         return;
@@ -152,7 +152,7 @@ void gameloop_update_before_render_pass(
             // empty screen
             log_append("w82RZ - ");
             
-            #ifdef PROFILER_ACTIVE
+            #if PROFILER_ACTIVE
             profiler_end("gameloop_update()");
             #endif
             return;
@@ -221,11 +221,11 @@ void gameloop_update_before_render_pass(
                 touchable_id_top);
     }
     
-    #ifdef PROFILER_ACTIVE
+    #if PROFILER_ACTIVE
     profiler_end("gameloop_update()");
     #endif
     
-    #ifdef PROFILER_ACTIVE
+    #if PROFILER_ACTIVE
     profiler_draw_labels();
     #endif
 }

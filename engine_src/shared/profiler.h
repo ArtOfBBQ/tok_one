@@ -13,7 +13,7 @@
 #include "text.h"
 
 
-#ifdef PROFILER_ACTIVE
+#if PROFILER_ACTIVE
 
 // #include <>
 
@@ -34,6 +34,6 @@ void profiler_handle_touches(void);
 
 void profiler_draw_labels(void);
 
-#endif
+#endif // PROFILER_ACTIVE
 
 #endif // TOKONE_PROFILER_H
