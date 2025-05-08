@@ -531,7 +531,7 @@ int main(int argc, const char * argv[]) {
         
         init_application_after_gpu_init();
         
-        #if AUDIO_ENABLED
+        #if AUDIO_ACTIVE
         start_audio_loop();
         #endif
     }
