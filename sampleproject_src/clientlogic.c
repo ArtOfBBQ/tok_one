@@ -186,7 +186,7 @@ void client_logic_late_startup(void) {
             1500.0f);
     font_settings->font_touchable_id = -1;
     log_assert(
-        zpolygons_to_render->cpu_data[zpolygons_to_render->size-1].
+        zsprites_to_render->cpu_data[zsprites_to_render->size-1].
             sprite_id == 21);
     #endif
 }
@@ -314,9 +314,9 @@ void client_logic_update(uint64_t microseconds_elapsed)
 {
     #if TEAPOT
     int32_t first_teapot_zp_i = -1;
-    for (int32_t i = 0; i < (int32_t)zpolygons_to_render->size; i++) {
+    for (int32_t i = 0; i < (int32_t)zsprites_to_render->size; i++) {
         if (
-            zpolygons_to_render->cpu_data[i].sprite_id ==
+            zsprites_to_render->cpu_data[i].sprite_id ==
                 teapot_object_ids[0])
         {
             first_teapot_zp_i = i;
@@ -330,7 +330,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
     common_strcat_float_capped(
         teapotpos,
         256,
-        zpolygons_to_render->gpu_data[first_teapot_zp_i].xyz[1]);
+        zsprites_to_render->gpu_data[first_teapot_zp_i].xyz[1]);
     common_strcat_capped(
         teapotpos,
         256,
@@ -389,8 +389,8 @@ void client_logic_update(uint64_t microseconds_elapsed)
     
     if (keypress_map[TOK_KEY_T]) {
         #if TEAPOT
-        zpolygons_to_render->gpu_data[first_teapot_zp_i].xyz[1] = 1.5f;
-        zpolygons_to_render->gpu_materials[
+        zsprites_to_render->gpu_data[first_teapot_zp_i].xyz[1] = 1.5f;
+        zsprites_to_render->gpu_materials[
             first_teapot_zp_i * MAX_MATERIALS_PER_POLYGON].rgba[3] = 0.0f;
         #endif
     }
@@ -457,24 +457,24 @@ void client_logic_update(uint64_t microseconds_elapsed)
     
     if (keypress_map[TOK_KEY_E]) {
         #if TEAPOT
-        for (uint32_t i = 0; i < zpolygons_to_render->size; i++) {
+        for (uint32_t i = 0; i < zsprites_to_render->size; i++) {
             if (
-                zpolygons_to_render->cpu_data[i].sprite_id ==
+                zsprites_to_render->cpu_data[i].sprite_id ==
                     teapot_object_ids[0])
             {
-                zpolygons_to_render->gpu_data[i].xyz[1] += 0.01f;
+                zsprites_to_render->gpu_data[i].xyz[1] += 0.01f;
             }
         }
         #endif
     }
     
     if (keypress_map[TOK_KEY_R]) {
-        for (uint32_t i = 0; i < zpolygons_to_render->size; i++) {
-            if (zpolygons_to_render->cpu_data[i].sprite_id == 20)
+        for (uint32_t i = 0; i < zsprites_to_render->size; i++) {
+            if (zsprites_to_render->cpu_data[i].sprite_id == 20)
             {
-                zpolygons_to_render->gpu_data[i].xyz_angle[0] += 0.014f;
-                zpolygons_to_render->gpu_data[i].xyz_angle[1] += 0.01f;
-                zpolygons_to_render->gpu_data[i].xyz_angle[2] += 0.003f;
+                zsprites_to_render->gpu_data[i].xyz_angle[0] += 0.014f;
+                zsprites_to_render->gpu_data[i].xyz_angle[1] += 0.01f;
+                zsprites_to_render->gpu_data[i].xyz_angle[2] += 0.003f;
             }
         }
     }
@@ -505,11 +505,11 @@ void client_logic_update(uint64_t microseconds_elapsed)
     }
     
     if (keypress_map[TOK_KEY_R]) {
-        for (uint32_t i = 0; i < zpolygons_to_render->size; i++) {
-            if (zpolygons_to_render->cpu_data[i].sprite_id ==
+        for (uint32_t i = 0; i < zsprites_to_render->size; i++) {
+            if (zsprites_to_render->cpu_data[i].sprite_id ==
                 teapot_object_ids[0])
             {
-                zpolygons_to_render->gpu_data[i].xyz_angle[1] += 0.01f;
+                zsprites_to_render->gpu_data[i].xyz_angle[1] += 0.01f;
             }
         }
     }

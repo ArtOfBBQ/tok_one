@@ -348,7 +348,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     windowWillEnterFullScreen:(NSNotification *)notification
 {
     delete_all_ui_elements();
-    zpolygons_to_render->size = 0;
+    zsprites_to_render->size = 0;
     #if PARTICLES_ACTIVE
     particle_effects_size = 0;
     #endif
@@ -359,7 +359,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     windowWillExitFullScreen:(NSNotification *)notification
 {
     delete_all_ui_elements();
-    zpolygons_to_render->size = 0;
+    zsprites_to_render->size = 0;
     #if PARTICLES_ACTIVE
     particle_effects_size = 0;
     #endif
@@ -378,7 +378,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     toSize:(NSSize)frameSize
 {
     delete_all_ui_elements();
-    zpolygons_to_render->size = 0;
+    zsprites_to_render->size = 0;
     #if PARTICLES_ACTIVE
     particle_effects_size = 0;
     #endif
@@ -400,16 +400,12 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 }
 @end
 
-extern bool32_t metal_active;
-
 int main(int argc, const char * argv[]) {
     
-    metal_active = false;
     gameloop_active = false;
     application_running = true;
-    has_retina_screen = true; // TODO: actually query the machine and find out
     
-    assert(sizeof(GPUPolygon) % 32 == 0);
+    assert(sizeof(GPUzSprite) % 32 == 0);
     
     char errmsg[512];
     uint32_t success = 1;
@@ -423,9 +419,6 @@ int main(int argc, const char * argv[]) {
         printf("%s\n", "initial log dump unsuccesful, exiting app");
         return 1;
     }
-    
-    // TODO: check if possible to postpone
-    // apple_gpu_init(gameloop_update);
     
     // NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     NSRect window_rect = NSMakeRect(

@@ -9,8 +9,8 @@
 typedef struct GPUDataForSingleFrame
 {
     GPUVertex *                                  vertices;
-    GPUPolygonCollection *             polygon_collection;
-    GPUPolygonMaterial *                polygon_materials;
+    GPUSpriteCollection *             polygon_collection;
+    GPUzSpriteMaterial *                polygon_materials;
     GPUCamera *                                    camera;
     GPULightCollection *                 light_collection;
     GPURawVertex *                          line_vertices;
@@ -27,6 +27,7 @@ typedef struct GPUSharedDataCollection
     GPUDataForSingleFrame triple_buffers[MAX_RENDERING_FRAME_BUFFERS];
     GPUProjectionConstants * locked_pjc;
     GPULockedVertex * locked_vertices;
+    int32_t  last_frames_first_dirty_sprite_i[MAX_RENDERING_FRAME_BUFFERS];
     uint32_t locked_vertices_size;
     uint32_t vertices_allocation_size;
     uint32_t locked_vertices_allocation_size;

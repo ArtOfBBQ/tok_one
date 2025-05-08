@@ -69,27 +69,6 @@ void get_memory_usage_summary_string(
         (uint32_t)(
             (float)(UNMANAGED_MEMORY_SIZE - (uint32_t)unmanaged_memory_size)
                 / (float)UNMANAGED_MEMORY_SIZE * 100.0f));
-    
-    common_strcat_capped(
-        recipient,
-        recipient_cap,
-        "%)\nManaged memory free: ");
-    common_strcat_uint_capped(
-        recipient,
-        recipient_cap,
-        (uint32_t)((ptrdiff_t)managed_memory_end - (ptrdiff_t)managed_memory));
-    common_strcat_capped(
-        recipient,
-        recipient_cap,
-        " of: ");
-    common_strcat_uint_capped(
-        recipient,
-        recipient_cap,
-        MANAGED_MEMORY_SIZE);
-    common_strcat_capped(
-        recipient,
-        recipient_cap,
-        "\n");
 }
 
 static void align_pointer(void ** to_align) {
@@ -106,7 +85,6 @@ static void align_pointer(void ** to_align) {
 
 void memorystore_init(
     void * ptr_unmanaged_memory_block,
-    void * ptr_managed_memory_block,
     uint32_t (* memstore_init_mutex_and_return_id)(void),
     void (* ptr_mutex_lock)(const uint32_t mutex_id),
     void (* ptr_mutex_unlock)(const uint32_t mutex_id))
@@ -121,19 +99,6 @@ void memorystore_init(
     common_memset_char(unmanaged_memory, 0, UNMANAGED_MEMORY_SIZE);
     
     set_pagesize();
-    
-    if (MANAGED_MEMORY_SIZE > 0) {
-        managed_memory = ptr_managed_memory_block;
-        align_pointer(&managed_memory);
-        
-        managed_memory_end = ((char *)managed_memory + MANAGED_MEMORY_SIZE);
-        
-        common_memset_char(managed_memory, 0, MANAGED_MEMORY_SIZE);
-    }
-    
-    
-    //    managed_stack = malloc_from_unmanaged(sizeof(ManagedMemoryStack));
-    //    managed_stack->size = 0;
 }
 
 static void * malloc_from_unmanaged_without_aligning(

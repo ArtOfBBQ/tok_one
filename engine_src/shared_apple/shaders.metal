@@ -76,7 +76,7 @@ float4 project_float3_to_float4_perspective(
 vertex float4 shadows_vertex_shader(
     uint vertex_i [[ vertex_id ]],
     const device GPUVertex * vertices [[ buffer(0) ]],
-    const device GPUPolygonCollection * polygon_collection [[ buffer(1) ]],
+    const device GPUzSprite * polygons [[ buffer(1) ]],
     const device GPULightCollection * light_collection [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPULockedVertex * locked_vertices [[ buffer(4) ]],
@@ -86,7 +86,7 @@ vertex float4 shadows_vertex_shader(
     
     uint polygon_i = vertices[vertex_i].polygon_i;
     
-    if (polygon_collection->polygons[polygon_i].remove_shadow) {
+    if (polygons[polygon_i].remove_shadow) {
         // early out by failing the depth test
         return vector_float4(
             0.0f,
@@ -98,9 +98,9 @@ vertex float4 shadows_vertex_shader(
     uint locked_vertex_i = vertices[vertex_i].locked_vertex_i;
     
     float3 parent_mesh_position = vector_float3(
-        polygon_collection->polygons[polygon_i].xyz[0],
-        polygon_collection->polygons[polygon_i].xyz[1],
-        polygon_collection->polygons[polygon_i].xyz[2]);
+        polygons[polygon_i].xyz[0],
+        polygons[polygon_i].xyz[1],
+        polygons[polygon_i].xyz[2]);
     
     float3 mesh_vertices = vector_float3(
         locked_vertices[locked_vertex_i].xyz[0],
@@ -108,31 +108,30 @@ vertex float4 shadows_vertex_shader(
         locked_vertices[locked_vertex_i].xyz[2]);
     
     float3 vertex_multipliers = vector_float3(
-        polygon_collection->polygons[polygon_i].xyz_multiplier[0],
-        polygon_collection->polygons[polygon_i].xyz_multiplier[1],
-        polygon_collection->polygons[polygon_i].xyz_multiplier[2]);
+        polygons[polygon_i].xyz_multiplier[0],
+        polygons[polygon_i].xyz_multiplier[1],
+        polygons[polygon_i].xyz_multiplier[2]);
     
     float3 vertex_offsets = vector_float3(
-        polygon_collection->polygons[polygon_i].xyz_offset[0],
-        polygon_collection->polygons[polygon_i].xyz_offset[1],
-        polygon_collection->polygons[polygon_i].xyz_offset[2]);
+        polygons[polygon_i].xyz_offset[0],
+        polygons[polygon_i].xyz_offset[1],
+        polygons[polygon_i].xyz_offset[2]);
     
     mesh_vertices *= vertex_multipliers;
     mesh_vertices += vertex_offsets;
     
-    mesh_vertices *= polygon_collection->polygons[polygon_i].scale_factor;
+    mesh_vertices *= polygons[polygon_i].scale_factor;
     
     // rotate vertices
     float3 x_rotated_vertices = x_rotate(
         mesh_vertices,
-        polygon_collection->polygons[polygon_i].xyz_angle[0]);
+        polygons[polygon_i].xyz_angle[0]);
     float3 y_rotated_vertices = y_rotate(
         x_rotated_vertices,
-        polygon_collection->polygons[polygon_i].xyz_angle[1]);
+        polygons[polygon_i].xyz_angle[1]);
     float3 z_rotated_vertices = z_rotate(
         y_rotated_vertices,
-        polygon_collection->polygons[polygon_i].xyz_angle[2]);
-    
+        polygons[polygon_i].xyz_angle[2]);
     
     // translate to world position
     out_pos = z_rotated_vertices + parent_mesh_position;
@@ -155,7 +154,7 @@ vertex float4 shadows_vertex_shader(
         light_collection->angle_z[light_collection->shadowcaster_i]);
     
     float ic = clamp(
-        polygon_collection->polygons[polygon_i].ignore_camera,
+        polygons[polygon_i].ignore_camera,
         0.0f,
         1.0f);
     float3 final_pos =
@@ -199,7 +198,7 @@ vertex RasterizerPixel
 vertex_shader(
     uint vertex_i [[ vertex_id ]],
     const device GPUVertex * vertices [[ buffer(0) ]],
-    const device GPUPolygonCollection * polygon_collection [[ buffer(1) ]],
+    const device GPUzSprite * polygons [[ buffer(1) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPULockedVertex * locked_vertices [[ buffer(4) ]],
     const device GPUProjectionConstants * projection_constants [[ buffer(5) ]])
@@ -214,9 +213,9 @@ vertex_shader(
         locked_vertices[locked_vertex_i].parent_material_i;
     
     float3 parent_mesh_position = vector_float3(
-        polygon_collection->polygons[polygon_i].xyz[0],
-        polygon_collection->polygons[polygon_i].xyz[1],
-        polygon_collection->polygons[polygon_i].xyz[2]);
+        polygons[polygon_i].xyz[0],
+        polygons[polygon_i].xyz[1],
+        polygons[polygon_i].xyz[2]);
     
     float3 mesh_vertices = vector_float3(
         locked_vertices[locked_vertex_i].xyz[0],
@@ -224,19 +223,19 @@ vertex_shader(
         locked_vertices[locked_vertex_i].xyz[2]);
     
     float3 vertex_multipliers = vector_float3(
-        polygon_collection->polygons[polygon_i].xyz_multiplier[0],
-        polygon_collection->polygons[polygon_i].xyz_multiplier[1],
-        polygon_collection->polygons[polygon_i].xyz_multiplier[2]);
+        polygons[polygon_i].xyz_multiplier[0],
+        polygons[polygon_i].xyz_multiplier[1],
+        polygons[polygon_i].xyz_multiplier[2]);
     
     float3 vertex_offsets = vector_float3(
-        polygon_collection->polygons[polygon_i].xyz_offset[0],
-        polygon_collection->polygons[polygon_i].xyz_offset[1],
-        polygon_collection->polygons[polygon_i].xyz_offset[2]);
+        polygons[polygon_i].xyz_offset[0],
+        polygons[polygon_i].xyz_offset[1],
+        polygons[polygon_i].xyz_offset[2]);
     
     mesh_vertices *= vertex_multipliers;
     mesh_vertices += vertex_offsets;
     
-    mesh_vertices *= polygon_collection->polygons[polygon_i].scale_factor;
+    mesh_vertices *= polygons[polygon_i].scale_factor;
     
     float3 mesh_normals = vector_float3(
         locked_vertices[locked_vertex_i].normal_xyz[0],
@@ -246,23 +245,23 @@ vertex_shader(
     // rotate vertices
     float3 x_rotated_vertices = x_rotate(
         mesh_vertices,
-        polygon_collection->polygons[polygon_i].xyz_angle[0]);
+        polygons[polygon_i].xyz_angle[0]);
     float3 y_rotated_vertices = y_rotate(
         x_rotated_vertices,
-        polygon_collection->polygons[polygon_i].xyz_angle[1]);
+        polygons[polygon_i].xyz_angle[1]);
     float3 z_rotated_vertices = z_rotate(
         y_rotated_vertices,
-        polygon_collection->polygons[polygon_i].xyz_angle[2]);
+        polygons[polygon_i].xyz_angle[2]);
     
     float3 x_rotated_normal  = x_rotate(
         mesh_normals,
-        polygon_collection->polygons[polygon_i].xyz_angle[0]);
+        polygons[polygon_i].xyz_angle[0]);
     float3 y_rotated_normal  = y_rotate(
         x_rotated_normal,
-        polygon_collection->polygons[polygon_i].xyz_angle[1]);
+        polygons[polygon_i].xyz_angle[1]);
     out.normal = z_rotate(
         y_rotated_normal,
-        polygon_collection->polygons[polygon_i].xyz_angle[2]);
+        polygons[polygon_i].xyz_angle[2]);
     
     // translate to world position
     out.worldpos = z_rotated_vertices + parent_mesh_position;
@@ -285,7 +284,7 @@ vertex_shader(
         -camera->xyz_angle[2]);
     
     float ic = clamp(
-        polygon_collection->polygons[polygon_i].ignore_camera,
+        polygons[polygon_i].ignore_camera,
         0.0f,
         1.0f);
     float3 final_pos =
@@ -293,20 +292,19 @@ vertex_shader(
         (cam_z_rotated * (1.0f - ic));
     
     out.bonus_rgb = vector_float3(
-        polygon_collection->polygons[polygon_i].bonus_rgb[0],
-        polygon_collection->polygons[polygon_i].bonus_rgb[1],
-        polygon_collection->polygons[polygon_i].bonus_rgb[2]);
+        polygons[polygon_i].bonus_rgb[0],
+        polygons[polygon_i].bonus_rgb[1],
+        polygons[polygon_i].bonus_rgb[2]);
     
     out.material_i = locked_material_i;
     
-    out.touchable_id = polygon_collection->polygons[polygon_i].touchable_id;
+    out.touchable_id = polygons[polygon_i].touchable_id;
     
     out.texture_coordinate = vector_float2(
         locked_vertices[locked_vertex_i].uv[0],
         locked_vertices[locked_vertex_i].uv[1]);
     
-    out.ignore_lighting =
-        polygon_collection->polygons[polygon_i].ignore_lighting;
+    out.ignore_lighting = polygons[polygon_i].ignore_lighting;
     
     out.point_size = 40.0f;
     
@@ -373,7 +371,7 @@ float3 get_lighting(
     const device GPUCamera * camera,
     const device GPULightCollection * light_collection,
     const device GPUProjectionConstants * projection_constants,
-    const device GPUPolygonMaterial * fragment_material,
+    const device GPUzSpriteMaterial * fragment_material,
     float3 fragment_worldpos,
     float3 fragment_normal,
     float ignore_lighting)
@@ -530,7 +528,7 @@ fragment_shader(
     const device GPULightCollection * light_collection [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
-    const device GPUPolygonMaterial * polygon_materials [[ buffer(6) ]])
+    const device GPUzSpriteMaterial * polygon_materials [[ buffer(6) ]])
 {
     if (
         in.material_i < 0 ||
@@ -634,7 +632,7 @@ alphablending_fragment_shader(
     const device GPULightCollection * light_collection [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
-    const device GPUPolygonMaterial * polygon_materials [[ buffer(6) ]])
+    const device GPUzSpriteMaterial * polygon_materials [[ buffer(6) ]])
 {
     float3 lighting = get_lighting(
         /* texture2d<float> shadow_map: */

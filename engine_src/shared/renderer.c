@@ -86,19 +86,19 @@ inline static void add_alphablending_zpolygons_to_workload(
     // Copy all vertices that do use alpha blending
     for (
         int32_t cpu_zp_i = 0;
-        cpu_zp_i < (int32_t)zpolygons_to_render->size;
+        cpu_zp_i < (int32_t)zsprites_to_render->size;
         cpu_zp_i++)
     {
         if (
-            zpolygons_to_render->cpu_data[cpu_zp_i].deleted ||
-            !zpolygons_to_render->cpu_data[cpu_zp_i].visible ||
-            !zpolygons_to_render->cpu_data[cpu_zp_i].committed ||
-            !zpolygons_to_render->cpu_data[cpu_zp_i].alpha_blending_enabled)
+            zsprites_to_render->cpu_data[cpu_zp_i].deleted ||
+            !zsprites_to_render->cpu_data[cpu_zp_i].visible ||
+            !zsprites_to_render->cpu_data[cpu_zp_i].committed ||
+            !zsprites_to_render->cpu_data[cpu_zp_i].alpha_blending_enabled)
         {
             continue;
         }
         
-        int32_t mesh_id = zpolygons_to_render->cpu_data[cpu_zp_i].mesh_id;
+        int32_t mesh_id = zsprites_to_render->cpu_data[cpu_zp_i].mesh_id;
         log_assert(mesh_id >= 0);
         log_assert(mesh_id < (int32_t)all_mesh_summaries_size);
         
@@ -137,19 +137,19 @@ inline static void add_opaque_zpolygons_to_workload(
     
     for (
         int32_t cpu_zp_i = 0;
-        cpu_zp_i < (int32_t)zpolygons_to_render->size;
+        cpu_zp_i < (int32_t)zsprites_to_render->size;
         cpu_zp_i++)
     {
         if (
-            zpolygons_to_render->cpu_data[cpu_zp_i].deleted ||
-            !zpolygons_to_render->cpu_data[cpu_zp_i].visible ||
-            !zpolygons_to_render->cpu_data[cpu_zp_i].committed ||
-            zpolygons_to_render->cpu_data[cpu_zp_i].alpha_blending_enabled)
+            zsprites_to_render->cpu_data[cpu_zp_i].deleted ||
+            !zsprites_to_render->cpu_data[cpu_zp_i].visible ||
+            !zsprites_to_render->cpu_data[cpu_zp_i].committed ||
+            zsprites_to_render->cpu_data[cpu_zp_i].alpha_blending_enabled)
         {
             continue;
         }
         
-        int32_t mesh_id = zpolygons_to_render->cpu_data[cpu_zp_i].mesh_id;
+        int32_t mesh_id = zsprites_to_render->cpu_data[cpu_zp_i].mesh_id;
         log_assert(mesh_id >= 0);
         log_assert(mesh_id < (int32_t)all_mesh_summaries_size);
         
@@ -221,21 +221,21 @@ void renderer_hardware_render(
         return;
     }
     
-    log_assert(zpolygons_to_render->size < MAX_POLYGONS_PER_BUFFER);
+    log_assert(zsprites_to_render->size < MAX_POLYGONS_PER_BUFFER);
     
     common_memcpy(
         /* void * dest: */
-            frame_data->polygon_collection,
+            frame_data->polygon_collection->polygons,
         /* const void * src: */
-            zpolygons_to_render->gpu_data,
+            zsprites_to_render->gpu_data,
         /* size_t n: */
-            sizeof(GPUPolygon) * zpolygons_to_render->size);
-    frame_data->polygon_collection->size = zpolygons_to_render->size;
+            sizeof(GPUzSprite) * zsprites_to_render->size);
+    frame_data->polygon_collection->size = zsprites_to_render->size;
     
     log_assert(
-        frame_data->polygon_collection->size <= zpolygons_to_render->size);
+        frame_data->polygon_collection->size <= zsprites_to_render->size);
     log_assert(
-        zpolygons_to_render->size < MAX_POLYGONS_PER_BUFFER);
+        zsprites_to_render->size < MAX_POLYGONS_PER_BUFFER);
     log_assert(
         frame_data->polygon_collection->size < MAX_POLYGONS_PER_BUFFER);
     
@@ -243,11 +243,12 @@ void renderer_hardware_render(
         /* void *__dst: */
             frame_data->polygon_materials,
         /* const void *__src: */
-            zpolygons_to_render->gpu_materials,
+            zsprites_to_render->gpu_materials,
         /* size_t __n: */
-            sizeof(GPUPolygonMaterial) *
+            sizeof(GPUzSpriteMaterial) *
                 MAX_MATERIALS_PER_POLYGON *
-                zpolygons_to_render->size);
+                zsprites_to_render->size);
+    frame_data->polygon_collection->size = zsprites_to_render->size;
     
     *frame_data->postprocessing_constants =
         window_globals->postprocessing_constants;
@@ -364,22 +365,6 @@ void renderer_hardware_render(
                 frame_data,
             /* const float xyz[3]: */
                 clickray_end);
-        
-        // draw a moving point from the start of the clickray to the end
-        // clickray_elapsed += (float)elapsed_nanoseconds / 1000000.0f;
-        // if (clickray_elapsed > 2.0f) { clickray_elapsed = 0.0f; }
-        //        float moving_point[3];
-        //        common_memcpy(
-        //            moving_point,
-        //            window_globals->last_clickray_origin,
-        //            sizeof(float) * 3);
-        //        moving_point[0] += window_globals->last_clickray_direction[0] *
-        //            clickray_elapsed;
-        //        moving_point[1] += window_globals->last_clickray_direction[1] *
-        //            clickray_elapsed;
-        //        moving_point[2] += window_globals->last_clickray_direction[2] *
-        //            clickray_elapsed;
-        //        add_point_vertex(frame_data, moving_point, 0.75f);
         
         if (window_globals->draw_clickray)
         {

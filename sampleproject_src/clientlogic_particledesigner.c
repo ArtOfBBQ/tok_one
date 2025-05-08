@@ -142,7 +142,7 @@ static void save_particle_stats(void) {
     
     typedef struct DumpableStat {
         char name[128];
-        GPUPolygon * source;
+        GPUzSprite * source;
     } DumpableStat;
     
     DumpableStat * dumpable_stats = malloc_from_managed(
@@ -1519,14 +1519,14 @@ void client_logic_update(uint64_t microseconds_elapsed)
         
         for (
             uint32_t zp_i = 0;
-            zp_i < zpolygons_to_render->size;
+            zp_i < zsprites_to_render->size;
             zp_i++)
         {
             if (i % 13 == 0) {
                 if (slider_titles[i / 13].object_id ==
-                    zpolygons_to_render->cpu_data[zp_i].object_id)
+                    zsprites_to_render->cpu_data[zp_i].object_id)
                 {
-                    zpolygons_to_render->gpu_data[zp_i].xyz[1] =
+                    zsprites_to_render->gpu_data[zp_i].xyz[1] =
                         screenspace_y_to_y(
                             get_title_y_screenspace(i),
                             0.75f);
@@ -1534,12 +1534,12 @@ void client_logic_update(uint64_t microseconds_elapsed)
             }
             
             if (
-                (zpolygons_to_render->cpu_data[zp_i].object_id ==
+                (zsprites_to_render->cpu_data[zp_i].object_id ==
                     slider_requests[i].pin_object_id) ||
-                (zpolygons_to_render->cpu_data[zp_i].object_id ==
+                (zsprites_to_render->cpu_data[zp_i].object_id ==
                     slider_requests[i].sliderback_object_id))
             {
-                zpolygons_to_render->gpu_data[zp_i].xyz[1] =
+                zsprites_to_render->gpu_data[zp_i].xyz[1] =
                     screenspace_y_to_y(
                         get_slider_y_screenspace(i),
                         0.75f);

@@ -55,7 +55,8 @@ void gameloop_update_before_render_pass(
         return;
     }
     
-    uint64_t elapsed = window_globals->this_frame_timestamp - gameloop_previous_time;
+    uint64_t elapsed =
+        window_globals->this_frame_timestamp - gameloop_previous_time;
     // elapsed /= 4;
     gameloop_previous_time = window_globals->this_frame_timestamp;
     
@@ -76,7 +77,7 @@ void gameloop_update_before_render_pass(
         lineparticle_effects_size = 0;
         #endif
         zlights_to_apply_size = 0;
-        zpolygons_to_render->size = 0;
+        zsprites_to_render->size = 0;
         
         camera.xyz[0] = 0.0f;
         camera.xyz[1] = 0.0f;

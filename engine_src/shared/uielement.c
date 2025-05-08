@@ -116,13 +116,13 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                     
                     for (
                         uint32_t zp_i = 0;
-                        zp_i < zpolygons_to_render->size;
+                        zp_i < zsprites_to_render->size;
                         zp_i++)
                     {
-                        if (zpolygons_to_render->cpu_data[zp_i].sprite_id ==
+                        if (zsprites_to_render->cpu_data[zp_i].sprite_id ==
                             currently_sliding_object_id)
                         {
-                            zpolygons_to_render->gpu_data[zp_i].scale_factor =
+                            zsprites_to_render->gpu_data[zp_i].scale_factor =
                                 1.05f;
                         }
                     }
@@ -210,12 +210,12 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
             
             for (
                 uint32_t zp_i = 0;
-                zp_i < zpolygons_to_render->size;
+                zp_i < zsprites_to_render->size;
                 zp_i++)
             {
                 if (
                     active_ui_elements[ui_elem_i].slideable &&
-                    zpolygons_to_render->cpu_data[zp_i].sprite_id ==
+                    zsprites_to_render->cpu_data[zp_i].sprite_id ==
                         currently_sliding_object_id)
                 {
                     // set slider value
@@ -223,8 +223,8 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                         windowsize_screenspace_x_to_x(
                             user_interactions[
                                 INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_x,
-                            zpolygons_to_render->gpu_data[zp_i].xyz[2]) -
-                        zpolygons_to_render->gpu_data[zp_i].xyz[0];
+                            zsprites_to_render->gpu_data[zp_i].xyz[2]) -
+                        zsprites_to_render->gpu_data[zp_i].xyz[0];
                     
                     if (
                         new_x_offset <
@@ -242,7 +242,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                             active_ui_elements[ui_elem_i].slider_width / 2;
                     }
                     
-                    zpolygons_to_render->gpu_data[zp_i].xyz_offset[0] =
+                    zsprites_to_render->gpu_data[zp_i].xyz_offset[0] =
                         new_x_offset;
                     
                     float slider_pct = (new_x_offset /

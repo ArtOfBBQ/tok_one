@@ -39,13 +39,13 @@ typedef enum EasingType {
 
 typedef struct ScheduledAnimation {
     // Public:
-    GPUPolygon         gpu_polygon_vals;
+    GPUzSprite         gpu_polygon_vals;
     // zPolygonCPU        zpolygon_cpu_vals;
-    GPUPolygonMaterial gpu_polygon_material_vals;
+    GPUzSpriteMaterial gpu_polygon_material_vals;
     zLightSource       lightsource_vals;
     
-    GPUPolygonMaterial onfinish_gpu_polygon_material_muls;
-    GPUPolygonMaterial onfinish_gpu_polygon_material_adds;
+    GPUzSpriteMaterial onfinish_gpu_polygon_material_muls;
+    GPUzSpriteMaterial onfinish_gpu_polygon_material_adds;
     
     EasingType easing_type;
     

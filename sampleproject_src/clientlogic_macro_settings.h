@@ -24,8 +24,8 @@ of the engine for your specific app.
 
 
 #define TEXTURES_ACTIVE 1
-#define BLOOM_ACTIVE 0
-#define SHADOWS_ACTIVE 0
+#define BLOOM_ACTIVE 1
+#define SHADOWS_ACTIVE 1
 #define AUDIO_ACTIVE 0
 #define ENGINE_SAVEFILE_ACTIVE 0
 

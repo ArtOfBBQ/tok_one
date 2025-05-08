@@ -1,6 +1,6 @@
 #include "zpolygon.h"
 
-zPolygonCollection * zpolygons_to_render = NULL;
+zSpriteCollection * zsprites_to_render = NULL;
 
 void request_next_zpolygon(PolygonRequest * stack_recipient)
 {
@@ -8,35 +8,35 @@ void request_next_zpolygon(PolygonRequest * stack_recipient)
     
     for (
         uint32_t zp_i = 0;
-        zp_i < zpolygons_to_render->size;
+        zp_i < zsprites_to_render->size;
         zp_i++)
     {
-        if (zpolygons_to_render->cpu_data[zp_i].deleted)
+        if (zsprites_to_render->cpu_data[zp_i].deleted)
         {
             stack_recipient->cpu_data     =
-                &zpolygons_to_render->cpu_data[zp_i];
+                &zsprites_to_render->cpu_data[zp_i];
             stack_recipient->gpu_data     =
-                &zpolygons_to_render->gpu_data[zp_i];
+                &zsprites_to_render->gpu_data[zp_i];
             stack_recipient->gpu_materials =
-                zpolygons_to_render->gpu_materials +
+                zsprites_to_render->gpu_materials +
                 (zp_i * MAX_MATERIALS_PER_POLYGON);
             stack_recipient->cpu_data->committed = false;
             return;
         }
     }
     
-    log_assert(zpolygons_to_render->size + 1 < MAX_POLYGONS_PER_BUFFER);
+    log_assert(zsprites_to_render->size + 1 < MAX_POLYGONS_PER_BUFFER);
     stack_recipient->cpu_data     =
-        &zpolygons_to_render->cpu_data[zpolygons_to_render->size];
+        &zsprites_to_render->cpu_data[zsprites_to_render->size];
     stack_recipient->gpu_data     =
-        &zpolygons_to_render->gpu_data[zpolygons_to_render->size];
+        &zsprites_to_render->gpu_data[zsprites_to_render->size];
     stack_recipient->gpu_materials =
-        zpolygons_to_render->gpu_materials +
-        (zpolygons_to_render->size * MAX_MATERIALS_PER_POLYGON);
-    stack_recipient->cpu_data[zpolygons_to_render->size].deleted = false;
+        zsprites_to_render->gpu_materials +
+        (zsprites_to_render->size * MAX_MATERIALS_PER_POLYGON);
+    stack_recipient->cpu_data[zsprites_to_render->size].deleted = false;
     stack_recipient->cpu_data->committed = false;
     
-    zpolygons_to_render->size += 1;
+    zsprites_to_render->size += 1;
     
     return;
 }
@@ -104,15 +104,15 @@ bool32_t fetch_zpolygon_by_object_id(
     
     for (
         uint32_t zp_i = 0;
-        zp_i < zpolygons_to_render->size;
+        zp_i < zsprites_to_render->size;
         zp_i++)
     {
         if (
-            !zpolygons_to_render->cpu_data[zp_i].deleted &&
-            zpolygons_to_render->cpu_data[zp_i].sprite_id == object_id)
+            !zsprites_to_render->cpu_data[zp_i].deleted &&
+            zsprites_to_render->cpu_data[zp_i].sprite_id == object_id)
         {
-            recipient->cpu_data = &zpolygons_to_render->cpu_data[zp_i];
-            recipient->gpu_data = &zpolygons_to_render->gpu_data[zp_i];
+            recipient->cpu_data = &zsprites_to_render->cpu_data[zp_i];
+            recipient->gpu_data = &zsprites_to_render->gpu_data[zp_i];
             return true;
         }
     }
@@ -124,17 +124,17 @@ bool32_t fetch_zpolygon_by_object_id(
 
 void delete_zpolygon_object(const int32_t with_object_id)
 {
-    for (uint32_t i = 0; i < zpolygons_to_render->size; i++) {
-        if (zpolygons_to_render->cpu_data[i].sprite_id == with_object_id)
+    for (uint32_t i = 0; i < zsprites_to_render->size; i++) {
+        if (zsprites_to_render->cpu_data[i].sprite_id == with_object_id)
         {
-            zpolygons_to_render->cpu_data[i].deleted   = true;
-            zpolygons_to_render->cpu_data[i].sprite_id = -1;
+            zsprites_to_render->cpu_data[i].deleted   = true;
+            zsprites_to_render->cpu_data[i].sprite_id = -1;
         }
     }
 }
 
 float get_x_multiplier_for_width(
-    zPolygonCPU * for_poly,
+    zSpriteCPU * for_poly,
     const float for_width)
 {
     log_assert(for_poly != NULL);
@@ -157,7 +157,7 @@ float get_x_multiplier_for_width(
 }
 
 float get_y_multiplier_for_height(
-    zPolygonCPU * for_poly,
+    zSpriteCPU * for_poly,
     const float for_height)
 {
     log_assert(for_poly != NULL);
@@ -177,8 +177,8 @@ float get_y_multiplier_for_height(
 }
 
 void scale_zpolygon_multipliers_to_height(
-    zPolygonCPU * cpu_data,
-    GPUPolygon * gpu_data,
+    zSpriteCPU * cpu_data,
+    GPUzSprite * gpu_data,
     const float new_height)
 {
     float new_multiplier = get_y_multiplier_for_height(
@@ -205,16 +205,16 @@ void construct_zpolygon(
     common_memset_char(
         to_construct->cpu_data,
         0,
-        sizeof(zPolygonCPU));
+        sizeof(zSpriteCPU));
     common_memset_char(
         to_construct->gpu_materials,
         0,
-        sizeof(GPUPolygonMaterial) *
+        sizeof(GPUzSpriteMaterial) *
             to_construct->materials_size);
     common_memset_char(
         to_construct->gpu_data,
         0,
-        sizeof(GPUPolygon));
+        sizeof(GPUzSprite));
     
     to_construct->gpu_data->xyz_multiplier[0] = 1.0f;
     to_construct->gpu_data->xyz_multiplier[1] = 1.0f;

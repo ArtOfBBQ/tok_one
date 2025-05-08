@@ -62,11 +62,11 @@ void add_lineparticle_effects_to_workload(
     const bool32_t alpha_blending);
 
 typedef struct ParticleEffect {
-    GPUPolygon gpustats_initial_random_add_1;
-    GPUPolygon gpustats_initial_random_add_2;
-    GPUPolygon gpustats_pertime_add;
-    GPUPolygon gpustats_pertime_random_add_1;
-    GPUPolygon gpustats_pertime_random_add_2;
+    zSpriteGPU gpustats_initial_random_add_1;
+    zSpriteGPU gpustats_initial_random_add_2;
+    zSpriteGPU gpustats_pertime_add;
+    zSpriteGPU gpustats_pertime_random_add_1;
+    zSpriteGPU gpustats_pertime_random_add_2;
     GPUPolygon gpustats_perexptime_add;
     
     // Reminder on the way the linear variance multipliers work:

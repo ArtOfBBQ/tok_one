@@ -19,7 +19,6 @@ extern uint32_t page_size;
 
 void memorystore_init(
     void * ptr_unmanaged_memory_block,
-    void * ptr_managed_memory_block,
     uint32_t (* memstore_init_mutex_and_return_id)(void),
     void (* ptr_mutex_lock)(const uint32_t mutex_id),
     void (* ptr_mutex_unlock)(const uint32_t mutex_id));

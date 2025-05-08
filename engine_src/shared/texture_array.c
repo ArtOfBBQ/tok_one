@@ -560,9 +560,6 @@ void texture_array_gpu_try_push(void) {
                 log_assert(texture_arrays[i].images_size < 1240);
                 
                 log_assert(!texture_arrays[i].gpu_initted);
-                log_append("init texture array: ");
-                log_append_int(i);
-                log_append_char('\n');
                 texture_arrays[i].request_init = false;
                 texture_arrays[i].gpu_initted = true;
                 

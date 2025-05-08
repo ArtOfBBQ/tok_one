@@ -132,7 +132,7 @@ TouchableMTKView * _my_mtk_view;
     
     // _my_mtk_view.drawableSize = size;
     
-    zpolygons_to_render->size = 0;
+    zsprites_to_render->size = 0;
     zlights_to_apply_size = 0;
 }
 

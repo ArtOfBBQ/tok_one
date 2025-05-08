@@ -20,7 +20,7 @@ typedef struct SimdTestStruct {
 } SimdTestStruct;
 static void test_simd_functions_floats(void) {
     log_assert(sizeof(zLightSource) % (SIMD_FLOAT_LANES * 4) == 0);
-    log_assert(sizeof(GPUPolygon)   % (SIMD_FLOAT_LANES * 4) == 0);
+    log_assert(sizeof(GPUzSprite)   % (SIMD_FLOAT_LANES * 4) == 0);
     
     log_assert(sizeof(SimdTestStruct) % (SIMD_FLOAT_LANES * 4) == 0);
     SimdTestStruct * structs = malloc_from_managed(
@@ -141,17 +141,10 @@ void init_application_before_gpu_init(
     void * unmanaged_memory_store = platform_malloc_unaligned_block(
         UNMANAGED_MEMORY_SIZE + 7232);
     
-    void * managed_memory_store = NULL;
-    if (MANAGED_MEMORY_SIZE > 0) {
-        managed_memory_store = platform_malloc_unaligned_block(
-            MANAGED_MEMORY_SIZE + 32);
-    }
-    
     platform_layer_init(&unmanaged_memory_store, 32);
     
     memorystore_init(
         unmanaged_memory_store,
-        managed_memory_store,
         platform_init_mutex_and_return_id,
         platform_mutex_lock,
         platform_mutex_unlock);
@@ -217,9 +210,11 @@ void init_application_before_gpu_init(
         sizeof(WindowGlobals));
     common_memset_char(window_globals, 0, sizeof(WindowGlobals));
     
+    #if AUDIO_ACTIVE
     audio_init(
         /* void *(*arg_malloc_function)(size_t): */
             malloc_from_unmanaged);
+    #endif
     
     #if ENGINE_SAVEFILE_ACTIVE
     if (
@@ -268,9 +263,9 @@ void init_application_before_gpu_init(
     
     uielement_init();
     
-    zpolygons_to_render = (zPolygonCollection *)malloc_from_unmanaged(
-        sizeof(zPolygonCollection));
-    zpolygons_to_render->size = 0;
+    zsprites_to_render = (zSpriteCollection *)malloc_from_unmanaged(
+        sizeof(zSpriteCollection));
+    zsprites_to_render->size = 0;
     
     objmodel_init();
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
@@ -355,14 +350,14 @@ void init_application_before_gpu_init(
     assert(gpu_shared_data_collection->vertices_allocation_size % page_size == 0);
     
     gpu_shared_data_collection->polygons_allocation_size =
-        sizeof(GPUPolygonCollection);
+        sizeof(GPUzSprite) * MAX_POLYGONS_PER_BUFFER;
     gpu_shared_data_collection->polygons_allocation_size +=
         (page_size - (gpu_shared_data_collection->polygons_allocation_size % page_size));
     assert(gpu_shared_data_collection->polygons_allocation_size > 0);
     assert(gpu_shared_data_collection->polygons_allocation_size % page_size == 0);
     
     gpu_shared_data_collection->polygon_materials_allocation_size =
-        sizeof(GPUPolygonMaterial) *
+        sizeof(GPUzSpriteMaterial) *
         MAX_MATERIALS_PER_POLYGON *
         MAX_POLYGONS_PER_BUFFER;
     gpu_shared_data_collection->polygon_materials_allocation_size +=
@@ -441,13 +436,13 @@ void init_application_before_gpu_init(
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].
             polygon_collection =
-                (GPUPolygonCollection *)malloc_from_unmanaged_aligned(
+                (GPUSpriteCollection *)malloc_from_unmanaged_aligned(
                     gpu_shared_data_collection->polygons_allocation_size,
                     page_size);
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].
             polygon_materials =
-                (GPUPolygonMaterial *)malloc_from_unmanaged_aligned(
+                (GPUzSpriteMaterial *)malloc_from_unmanaged_aligned(
                     gpu_shared_data_collection->
                         polygon_materials_allocation_size,
                     page_size);

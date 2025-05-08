@@ -41,7 +41,7 @@ static void construct_scheduled_animationA(
     common_memset_float(
          &to_construct->onfinish_gpu_polygon_material_muls,
          1.0f,
-         sizeof(GPUPolygonMaterial));
+         sizeof(GPUzSpriteMaterial));
     
     log_assert(!to_construct->deleted);
     log_assert(!to_construct->committed);
@@ -82,11 +82,11 @@ ScheduledAnimation * scheduled_animations_request_next(
         common_memset_float(
             &return_value->gpu_polygon_vals,
             FLT_SCHEDULEDANIM_IGNORE,
-            sizeof(GPUPolygon));
+            sizeof(GPUzSprite));
         common_memset_float(
             &return_value->gpu_polygon_material_vals,
             FLT_SCHEDULEDANIM_IGNORE,
-            sizeof(GPUPolygonMaterial));
+            sizeof(GPUzSpriteMaterial));
         common_memset_float(
             &return_value->lightsource_vals,
             FLT_SCHEDULEDANIM_IGNORE,
@@ -113,11 +113,11 @@ void scheduled_animations_commit(ScheduledAnimation * to_commit) {
         int32_t first_zp_i = 0;
         for (
             int32_t zp_i = 0;
-            zp_i < (int32_t)zpolygons_to_render->size;
+            zp_i < (int32_t)zsprites_to_render->size;
             zp_i++)
         {
             if (
-                zpolygons_to_render->cpu_data[zp_i].sprite_id ==
+                zsprites_to_render->cpu_data[zp_i].sprite_id ==
                     to_commit->affected_sprite_id)
             {
                 first_zp_i = zp_i;
@@ -126,19 +126,19 @@ void scheduled_animations_commit(ScheduledAnimation * to_commit) {
         }
         
         log_assert(first_zp_i >= 0);
-        log_assert(first_zp_i < (int32_t)zpolygons_to_render->size);
+        log_assert(first_zp_i < (int32_t)zsprites_to_render->size);
         
         float * anim_gpu_vals = (float *)&to_commit->gpu_polygon_vals;
         float * anim_mat_vals = (float *)&to_commit->gpu_polygon_material_vals;
         
-        float * orig_gpu_vals = (float *)&zpolygons_to_render->
+        float * orig_gpu_vals = (float *)&zsprites_to_render->
             gpu_data[first_zp_i];
-        float * orig_mat_vals = (float *)&zpolygons_to_render->
+        float * orig_mat_vals = (float *)&zsprites_to_render->
             gpu_materials[first_zp_i * MAX_MATERIALS_PER_POLYGON];
         
         for (
             uint32_t i = 0;
-            i < (sizeof(GPUPolygon) / sizeof(float));
+            i < (sizeof(GPUzSprite) / sizeof(float));
             i++)
         {
             if (anim_gpu_vals[i] == FLT_SCHEDULEDANIM_IGNORE) {
@@ -152,7 +152,7 @@ void scheduled_animations_commit(ScheduledAnimation * to_commit) {
         
         for (
             uint32_t i = 0;
-            i < (sizeof(GPUPolygonMaterial) / sizeof(float));
+            i < (sizeof(GPUzSpriteMaterial) / sizeof(float));
             i++)
         {
             if (anim_mat_vals[i] == FLT_SCHEDULEDANIM_IGNORE) {
@@ -220,13 +220,13 @@ void scheduled_animations_request_evaporate_and_destroy(
     
     for (
         uint32_t zp_i = 0;
-        zp_i < zpolygons_to_render->size;
+        zp_i < zsprites_to_render->size;
         zp_i++)
     {
         if (
-            zpolygons_to_render->cpu_data[zp_i].deleted ||
-            !zpolygons_to_render->cpu_data[zp_i].committed ||
-            zpolygons_to_render->cpu_data[zp_i].sprite_id != object_id)
+            zsprites_to_render->cpu_data[zp_i].deleted ||
+            !zsprites_to_render->cpu_data[zp_i].committed ||
+            zsprites_to_render->cpu_data[zp_i].sprite_id != object_id)
         {
             continue;
         }
@@ -295,7 +295,7 @@ void scheduled_animations_request_evaporate_and_destroy(
         commit_particle_effect(vaporize_effect);
         #endif
         
-        zpolygons_to_render->cpu_data[zp_i].deleted = true;
+        zsprites_to_render->cpu_data[zp_i].deleted = true;
     }
 }
 
@@ -309,12 +309,12 @@ void scheduled_animations_request_shatter_and_destroy(
     
     for (
         uint32_t zp_i = 0;
-        zp_i < zpolygons_to_render->size;
+        zp_i < zsprites_to_render->size;
         zp_i++)
     {
-        if (zpolygons_to_render->cpu_data[zp_i].deleted ||
-            !zpolygons_to_render->cpu_data[zp_i].committed ||
-            zpolygons_to_render->cpu_data[zp_i].sprite_id != object_id)
+        if (zsprites_to_render->cpu_data[zp_i].deleted ||
+            !zsprites_to_render->cpu_data[zp_i].committed ||
+            zsprites_to_render->cpu_data[zp_i].sprite_id != object_id)
         {
             continue;
         }
@@ -426,8 +426,8 @@ void scheduled_animations_request_shatter_and_destroy(
         commit_particle_effect(shatter_effect);
         #endif
         
-        zpolygons_to_render->cpu_data[zp_i].sprite_id = -1;
-        zpolygons_to_render->cpu_data[zp_i].deleted = true;
+        zsprites_to_render->cpu_data[zp_i].sprite_id = -1;
+        zsprites_to_render->cpu_data[zp_i].deleted = true;
     }
 }
 
@@ -667,19 +667,19 @@ void scheduled_animations_resolve(void)
         
         // Apply effects
         for (
-            uint32_t zp_i = 0;
-            zp_i < zpolygons_to_render->size;
+            int32_t zp_i = 0;
+            zp_i < (int32_t)zsprites_to_render->size;
             zp_i++)
         {
             if (
                 (anim->affected_sprite_id >= 0 &&
-                zpolygons_to_render->cpu_data[zp_i].sprite_id !=
+                zsprites_to_render->cpu_data[zp_i].sprite_id !=
                     anim->affected_sprite_id) ||
                 (anim->affected_touchable_id >= 0 &&
-                zpolygons_to_render->gpu_data[zp_i].touchable_id !=
+                zsprites_to_render->gpu_data[zp_i].touchable_id !=
                     anim->affected_touchable_id)
                 ||
-                zpolygons_to_render->cpu_data[zp_i].deleted)
+                zsprites_to_render->cpu_data[zp_i].deleted)
             {
                 continue;
             }
@@ -687,17 +687,17 @@ void scheduled_animations_resolve(void)
             float * anim_vals_ptr    =
                 (float *)&anim->gpu_polygon_vals;
             float * target_vals_ptr =
-                (float *)&zpolygons_to_render->gpu_data[zp_i];
+                (float *)&zsprites_to_render->gpu_data[zp_i];
             
             SIMD_FLOAT simd_t_now =
                 simd_set1_float(t_eased);
             SIMD_FLOAT simd_t_b4  =
                 simd_set1_float(t_eased_already_applied);
             
-            log_assert((sizeof(GPUPolygon) / 4) % SIMD_FLOAT_LANES == 0);
+            log_assert((sizeof(GPUzSprite) / 4) % SIMD_FLOAT_LANES == 0);
             for (
                 uint32_t simd_step_i = 0;
-                (simd_step_i * sizeof(float)) < sizeof(GPUPolygon);
+                (simd_step_i * sizeof(float)) < sizeof(GPUzSprite);
                 simd_step_i += SIMD_FLOAT_LANES)
             {
                 SIMD_FLOAT simd_anim_vals =
@@ -726,21 +726,21 @@ void scheduled_animations_resolve(void)
             }
             
             anim_vals_ptr = (float *)&anim->gpu_polygon_material_vals;
-            uint32_t mat1_i = zp_i * MAX_MATERIALS_PER_POLYGON;
+            int32_t mat1_i = zp_i * MAX_MATERIALS_PER_POLYGON;
             for (
-                uint32_t mat_i = mat1_i;
+                int32_t mat_i = mat1_i;
                 mat_i < mat1_i + MAX_MATERIALS_PER_POLYGON;
                 mat_i++)
             {
                 target_vals_ptr =
-                    (float *)&zpolygons_to_render->gpu_materials[mat_i];
+                    (float *)&zsprites_to_render->gpu_materials[mat_i];
                 
-                log_assert((sizeof(GPUPolygonMaterial) / 4) %
+                log_assert((sizeof(GPUzSpriteMaterial) / 4) %
                     SIMD_FLOAT_LANES == 0);
                 for (
                     uint32_t simd_step_i = 0;
                     (simd_step_i * sizeof(float)) <
-                        sizeof(GPUPolygonMaterial);
+                        sizeof(GPUzSpriteMaterial);
                     simd_step_i += SIMD_FLOAT_LANES)
                 {
                     SIMD_FLOAT simd_anim_vals =

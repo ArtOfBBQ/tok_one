@@ -50,7 +50,7 @@ typedef struct GPUCamera {
     float padding[2];       //  8 bytes
 } GPUCamera;
 
-typedef struct GPUPolygon {
+typedef struct GPUzSprite {
     float        xyz[3];
     float        xyz_angle[3];
     float        bonus_rgb[3];
@@ -62,12 +62,12 @@ typedef struct GPUPolygon {
     float        simd_padding[4]; // make sure touchable_id is behind this
     unsigned int remove_shadow;
     int          touchable_id;
-} GPUPolygon; // 24 floats (3 SIMD runs)
+} GPUzSprite; // 24 floats (3 SIMD runs)
 
-typedef struct GPUPolygonCollection {
-    GPUPolygon   polygons[MAX_POLYGONS_PER_BUFFER];
+typedef struct GPUSpriteCollection {
+    GPUzSprite   polygons[MAX_POLYGONS_PER_BUFFER];
     unsigned int size;
-} GPUPolygonCollection;
+} GPUSpriteCollection;
 
 #define SPECULAR_GLASS 0.5f
 #define SPECULAR_PLASTIC 0.5f
@@ -78,7 +78,7 @@ typedef struct GPUPolygonCollection {
 #define SPECULAR_SKIN 0.35f
 #define SPECULAR_SILVER 0.508f
 #define SPECULAR_GOLD 0.62f
-typedef struct GPUPolygonMaterial {
+typedef struct GPUzSpriteMaterial {
     float rgba[4];          // 16 bytes
     float rgb_cap[3];       // 12 bytes // capped by default to avoid bloom
     int   texturearray_i;   //  4 bytes
@@ -86,7 +86,7 @@ typedef struct GPUPolygonMaterial {
     float diffuse;          //  4 bytes
     float specular;         //  4 bytes
     float padding[5];       //  4 bytes
-} GPUPolygonMaterial;
+} GPUzSpriteMaterial;
 
 typedef struct GPULightCollection {
     float        light_x              [MAX_LIGHTS_PER_BUFFER];

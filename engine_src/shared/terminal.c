@@ -896,8 +896,14 @@ void terminal_commit_or_activate(void) {
         terminal_active &&
         current_command[0] != '\0')
     {
-        common_strcat_capped(terminal_history, TERMINAL_HISTORY_MAX, current_command);
-        common_strcat_capped(terminal_history, TERMINAL_HISTORY_MAX, "\n");
+        common_strcat_capped(
+            terminal_history,
+            TERMINAL_HISTORY_MAX,
+            current_command);
+        common_strcat_capped(
+            terminal_history,
+            TERMINAL_HISTORY_MAX,
+            "\n");
         char client_response[SINGLE_LINE_MAX];
         client_response[0] = '\0';
         
@@ -942,5 +948,4 @@ void terminal_commit_or_activate(void) {
         terminal_redraw_backgrounds();
         requesting_label_update = true;
     }
-    
 }
