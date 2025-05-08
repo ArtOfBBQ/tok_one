@@ -30,7 +30,7 @@ typedef struct VertexMaterial {
     int32_t texture_i;     // index in texturearray
 } VertexMaterial;
 
-typedef struct zSpriteCPU {
+typedef struct CPUzSprite {
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
     
     int32_t  sprite_id;
@@ -38,13 +38,13 @@ typedef struct zSpriteCPU {
     bool32_t committed;
     bool32_t deleted;
     bool32_t visible;
-} zSpriteCPU;
+} CPUzSprite;
 
 typedef struct zPolygonCollection {
     GPUzSprite gpu_data[MAX_POLYGONS_PER_BUFFER];
     GPUzSpriteMaterial gpu_materials[
         MAX_POLYGONS_PER_BUFFER * MAX_MATERIALS_PER_POLYGON];
-    zSpriteCPU cpu_data[MAX_POLYGONS_PER_BUFFER];
+    CPUzSprite cpu_data[MAX_POLYGONS_PER_BUFFER];
     uint32_t size;
 } zSpriteCollection;
 
@@ -53,7 +53,7 @@ extern zSpriteCollection * zsprites_to_render;
 typedef struct PolygonRequest {
     GPUzSprite * gpu_data;
     GPUzSpriteMaterial * gpu_materials;
-    zSpriteCPU * cpu_data;
+    CPUzSprite * cpu_data;
     uint32_t gpu_data_size;
     uint32_t materials_size;
 } PolygonRequest;
@@ -84,14 +84,14 @@ float dot_of_vertices_f3(
     const float b[3]);
 
 float get_y_multiplier_for_height(
-    zSpriteCPU * for_poly,
+    CPUzSprite * for_poly,
     const float for_height);
 float get_x_multiplier_for_width(
-    zSpriteCPU * for_poly,
+    CPUzSprite * for_poly,
     const float for_width);
 
 void scale_zpolygon_multipliers_to_height(
-    zSpriteCPU * cpu_data,
+    CPUzSprite * cpu_data,
     GPUzSprite * gpu_data,
     const float new_height);
 

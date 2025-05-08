@@ -64,9 +64,9 @@ LineParticle * next_lineparticle_effect(void)
 }
 
 LineParticle * next_lineparticle_effect_with_zpoly(
-    zPolygonCPU * construct_with_zpolygon,
-    GPUPolygon * construct_with_polygon_gpu,
-    GPUPolygonMaterial * construct_with_polygon_material)
+    CPUzSprite * construct_with_zpolygon,
+    GPUzSprite * construct_with_polygon_gpu,
+    GPUzSpriteMaterial * construct_with_polygon_material)
 {
     LineParticle * return_value = next_lineparticle_effect();
     
@@ -648,7 +648,7 @@ void add_particle_effects_to_workload(
                 /* const void * src: */
                     &particle_effects[i].zpolygon_gpu,
                 /* size_t n: */
-                    sizeof(GPUPolygon));
+                    sizeof(GPUzSprite));
             
             log_assert(
                 particle_effects[i].zpolygon_materials[0].diffuse > 0.0f);
@@ -662,7 +662,7 @@ void add_particle_effects_to_workload(
                     frame_data->polygon_collection->size *
                         MAX_MATERIALS_PER_POLYGON],
                 particle_effects[i].zpolygon_materials,
-                sizeof(GPUPolygonMaterial) * MAX_MATERIALS_PER_POLYGON);
+                sizeof(GPUzSpriteMaterial) * MAX_MATERIALS_PER_POLYGON);
             
             if (particle_effects[i].random_textures_size > 0) {
                 frame_data->polygon_materials[
@@ -713,12 +713,12 @@ void add_particle_effects_to_workload(
             
             for (
                 uint32_t j = 0;
-                j < (sizeof(GPUPolygon) / sizeof(float));
+                j < (sizeof(GPUzSprite) / sizeof(float));
                 j += SIMD_FLOAT_LANES)
             {
                 // We expect padding to prevent out of bounds ops
                 log_assert((j + SIMD_FLOAT_LANES) * sizeof(float) <=
-                    sizeof(GPUPolygon));
+                    sizeof(GPUzSprite));
                 
                 SIMD_FLOAT simdf_pertime_add = simd_load_floats(
                     (pertime_add_at + j));

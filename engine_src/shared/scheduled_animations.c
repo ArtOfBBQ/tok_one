@@ -235,13 +235,13 @@ void scheduled_animations_request_evaporate_and_destroy(
         float duration_mod = (20000000.0f / (float)duration_microseconds);
         
         ParticleEffect * vaporize_effect = next_particle_effect();
-        vaporize_effect->zpolygon_cpu = zpolygons_to_render->cpu_data[zp_i];
-        vaporize_effect->zpolygon_gpu = zpolygons_to_render->gpu_data[zp_i];
+        vaporize_effect->zpolygon_cpu = zsprites_to_render->cpu_data[zp_i];
+        vaporize_effect->zpolygon_gpu = zsprites_to_render->gpu_data[zp_i];
         common_memcpy(
             vaporize_effect->zpolygon_materials,
-            &zpolygons_to_render->gpu_materials[
+            &zsprites_to_render->gpu_materials[
                 zp_i * MAX_MATERIALS_PER_POLYGON],
-            sizeof(GPUPolygonMaterial) * MAX_MATERIALS_PER_POLYGON);
+            sizeof(GPUzSpriteMaterial) * MAX_MATERIALS_PER_POLYGON);
         
         uint64_t shattered_verts_size =
             (uint64_t)all_mesh_summaries[vaporize_effect->zpolygon_cpu.mesh_id].
@@ -323,45 +323,45 @@ void scheduled_animations_request_shatter_and_destroy(
         float duration_mod = (20000000.0f / (float)duration_microseconds);
         
         ParticleEffect * shatter_effect = next_particle_effect();
-        shatter_effect->zpolygon_cpu = zpolygons_to_render->cpu_data[zp_i];
-        shatter_effect->zpolygon_gpu = zpolygons_to_render->gpu_data[zp_i];
+        shatter_effect->zpolygon_cpu = zsprites_to_render->cpu_data[zp_i];
+        shatter_effect->zpolygon_gpu = zsprites_to_render->gpu_data[zp_i];
         common_memcpy(
             /* void * dst: */
                 shatter_effect->zpolygon_materials,
             /* const void * src: */
-                &zpolygons_to_render->gpu_materials[
+                &zsprites_to_render->gpu_materials[
                     zp_i * MAX_MATERIALS_PER_POLYGON],
             /* size_t n: */
-                (sizeof(GPUPolygonMaterial) * MAX_MATERIALS_PER_POLYGON));
+                (sizeof(GPUzSpriteMaterial) * MAX_MATERIALS_PER_POLYGON));
         
         #ifndef LOGGER_IGNORE_ASSERTS
         for (uint32_t mat_i = 0; mat_i < MAX_MATERIALS_PER_POLYGON; mat_i++) {
             log_assert(
                 shatter_effect->zpolygon_materials[mat_i].rgba[0] ==
-                    zpolygons_to_render->gpu_materials[
+                    zsprites_to_render->gpu_materials[
                         (zp_i * MAX_MATERIALS_PER_POLYGON)+mat_i].rgba[0]);
             log_assert(
                 shatter_effect->zpolygon_materials[mat_i].rgba[1] ==
-                    zpolygons_to_render->gpu_materials[
+                    zsprites_to_render->gpu_materials[
                         (zp_i * MAX_MATERIALS_PER_POLYGON)+mat_i].rgba[1]);
             log_assert(
                 shatter_effect->zpolygon_materials[mat_i].texturearray_i ==
-                    zpolygons_to_render->gpu_materials[
+                    zsprites_to_render->gpu_materials[
                         (zp_i * MAX_MATERIALS_PER_POLYGON)+mat_i].
                             texturearray_i);
             log_assert(
                 shatter_effect->zpolygon_materials[mat_i].texture_i ==
-                    zpolygons_to_render->gpu_materials[
+                    zsprites_to_render->gpu_materials[
                         (zp_i * MAX_MATERIALS_PER_POLYGON)+mat_i].
                             texture_i);
             log_assert(
                 shatter_effect->zpolygon_materials[mat_i].diffuse ==
-                    zpolygons_to_render->gpu_materials[
+                    zsprites_to_render->gpu_materials[
                         (zp_i * MAX_MATERIALS_PER_POLYGON)+mat_i].
                             diffuse);
             log_assert(
                 shatter_effect->zpolygon_materials[mat_i].specular ==
-                    zpolygons_to_render->gpu_materials[
+                    zsprites_to_render->gpu_materials[
                         (zp_i * MAX_MATERIALS_PER_POLYGON)+mat_i].
                             specular);
         }
@@ -783,7 +783,7 @@ void scheduled_animations_resolve(void)
                     mat_i++)
                 {
                     target_vals_ptr =
-                        (float *)&zpolygons_to_render->gpu_materials[mat_i];
+                        (float *)&zsprites_to_render->gpu_materials[mat_i];
                     
                     log_assert((sizeof(GPUPolygonMaterial) / 4) %
                         SIMD_FLOAT_LANES == 0);

@@ -19,9 +19,9 @@ extern "C" {
 #define LINEPARTICLE_EFFECTS_SIZE 2
 #define MAX_LINEPARTICLE_DIRECTIONS 5
 typedef struct LineParticle {
-    zPolygonCPU zpolygon_cpu;
-    GPUPolygon zpolygon_gpu;
-    GPUPolygonMaterial zpolygon_material;
+    CPUzSprite zpolygon_cpu;
+    GPUzSprite zpolygon_gpu;
+    GPUzSpriteMaterial zpolygon_material;
     
     uint64_t random_seed;
     uint64_t elapsed;
@@ -51,9 +51,9 @@ extern LineParticle * lineparticle_effects;
 extern uint32_t lineparticle_effects_size;
 LineParticle * next_lineparticle_effect(void);
 LineParticle * next_lineparticle_effect_with_zpoly(
-    zPolygonCPU * construct_with_zpolygon,
-    GPUPolygon * construct_with_polygon_gpu,
-    GPUPolygonMaterial * construct_with_polygon_material);
+    CPUzSprite * construct_with_zpolygon,
+    GPUzSprite * construct_with_polygon_gpu,
+    GPUzSpriteMaterial * construct_with_polygon_material);
 void commit_lineparticle_effect(
     LineParticle * to_commit);
 void add_lineparticle_effects_to_workload(
@@ -62,12 +62,12 @@ void add_lineparticle_effects_to_workload(
     const bool32_t alpha_blending);
 
 typedef struct ParticleEffect {
-    zSpriteGPU gpustats_initial_random_add_1;
-    zSpriteGPU gpustats_initial_random_add_2;
-    zSpriteGPU gpustats_pertime_add;
-    zSpriteGPU gpustats_pertime_random_add_1;
-    zSpriteGPU gpustats_pertime_random_add_2;
-    GPUPolygon gpustats_perexptime_add;
+    GPUzSprite gpustats_initial_random_add_1;
+    GPUzSprite gpustats_initial_random_add_2;
+    GPUzSprite gpustats_pertime_add;
+    GPUzSprite gpustats_pertime_random_add_1;
+    GPUzSprite gpustats_pertime_random_add_2;
+    GPUzSprite gpustats_perexptime_add;
     
     // Reminder on the way the linear variance multipliers work:
     // -> random floats are generated from 0.0f to 1.0f
@@ -79,9 +79,9 @@ typedef struct ParticleEffect {
     // around the original value and the exceedingly rare case will be
     // (linear_variance_multiplier * self) below or above its original value
     
-    zPolygonCPU zpolygon_cpu;
-    GPUPolygon zpolygon_gpu;
-    GPUPolygonMaterial zpolygon_materials[MAX_MATERIALS_PER_POLYGON];
+    CPUzSprite zpolygon_cpu;
+    GPUzSprite zpolygon_gpu;
+    GPUzSpriteMaterial zpolygon_materials[MAX_MATERIALS_PER_POLYGON];
     
     int32_t object_id;
     

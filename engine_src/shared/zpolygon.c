@@ -134,7 +134,7 @@ void delete_zpolygon_object(const int32_t with_object_id)
 }
 
 float get_x_multiplier_for_width(
-    zSpriteCPU * for_poly,
+    CPUzSprite * for_poly,
     const float for_width)
 {
     log_assert(for_poly != NULL);
@@ -157,7 +157,7 @@ float get_x_multiplier_for_width(
 }
 
 float get_y_multiplier_for_height(
-    zSpriteCPU * for_poly,
+    CPUzSprite * for_poly,
     const float for_height)
 {
     log_assert(for_poly != NULL);
@@ -177,7 +177,7 @@ float get_y_multiplier_for_height(
 }
 
 void scale_zpolygon_multipliers_to_height(
-    zSpriteCPU * cpu_data,
+    CPUzSprite * cpu_data,
     GPUzSprite * gpu_data,
     const float new_height)
 {
@@ -205,7 +205,7 @@ void construct_zpolygon(
     common_memset_char(
         to_construct->cpu_data,
         0,
-        sizeof(zSpriteCPU));
+        sizeof(CPUzSprite));
     common_memset_char(
         to_construct->gpu_materials,
         0,
