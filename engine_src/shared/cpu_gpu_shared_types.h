@@ -1,6 +1,7 @@
 #ifndef CPU_GPU_SHARED_TYPES_H
 #define CPU_GPU_SHARED_TYPES_H
 
+#define CAMERADEPTH_TEXTUREARRAY_I 119
 #define SHADOWMAP_TEXTUREARRAY_I 120
 
 #ifndef TEXTUREARRAYS_SIZE
@@ -127,11 +128,15 @@ typedef struct GPUDownsamplingConstants
 typedef struct GPUPostProcessingConstants
 {
     unsigned int timestamp;
+    float rgb_add[3];
+    float fog_color[3];
     float screen_width;
     float screen_height;
     float nonblur_pct;
     float blur_pct;
     float color_quantization;
+    float fog_factor;
+    float padding[3];
 } GPUPostProcessingConstants;
 
 typedef struct GPURawVertex {

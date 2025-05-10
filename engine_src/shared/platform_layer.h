@@ -219,6 +219,12 @@ void platform_gpu_init_texture_array(
     const uint32_t single_image_height,
     const bool32_t use_bc1_compression);
 
+void platform_gpu_push_perlin_texture_and_free_rgba_values(
+    const uint32_t image_width,
+    const uint32_t image_height,
+    uint8_t * rgba_values_freeable,
+    uint8_t * rgba_values_page_aligned);
+
 void platform_gpu_push_texture_slice_and_free_rgba_values(
     const int32_t texture_array_i,
     const int32_t texture_i,

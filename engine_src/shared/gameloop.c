@@ -55,9 +55,8 @@ void gameloop_update_before_render_pass(
         return;
     }
     
-    uint64_t elapsed =
-        window_globals->this_frame_timestamp - gameloop_previous_time;
-    // elapsed /= 4;
+    uint64_t elapsed = window_globals->this_frame_timestamp -
+        gameloop_previous_time;
     gameloop_previous_time = window_globals->this_frame_timestamp;
     
     log_assert(frame_data->light_collection != NULL);
@@ -221,6 +220,9 @@ void gameloop_update_before_render_pass(
             user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].
                 touchable_id_top);
     }
+    
+    frame_data->postprocessing_constants->timestamp =
+        (uint32_t)window_globals->this_frame_timestamp;
     
     #if PROFILER_ACTIVE
     profiler_end("gameloop_update()");

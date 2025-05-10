@@ -693,14 +693,18 @@ alphablending_fragment_shader(
     return pack_color_and_touchable_id(out_color, in.touchable_id);
 }
 
+// TODO: just pass this directly to fragment shader
 struct PostProcessingFragment
 {
     float4 position [[position]];
+    half4 bonus_rgb;
+    half4 fog_rgb;
     float2 texcoord;
     float2 screen_width_height;
     float blur_pct;
     float nonblur_pct;
     float color_quantization;
+    float fog_factor;
     unsigned int curtime;
 };
 
@@ -732,12 +736,25 @@ single_quad_vertex_shader(
     
     out.nonblur_pct = constants->nonblur_pct;
     
+    out.bonus_rgb = vector_half4(
+        constants->rgb_add[0],
+        constants->rgb_add[1],
+        constants->rgb_add[2],
+        1.0h);
+    
     out.color_quantization = constants->color_quantization;
+    
+    out.fog_factor = constants->fog_factor;
+    out.fog_rgb = vector_half4(
+        constants->fog_color[0],
+        constants->fog_color[1],
+        constants->fog_color[2],
+        1.0h);
     
     return out;
 }
 
-fragment float4
+fragment half4
 single_quad_fragment_shader(
     PostProcessingFragment in [[stage_in]],
     texture2d<half> texture  [[texture(0)]],
@@ -745,9 +762,14 @@ single_quad_fragment_shader(
     texture2d<half> downsampled_2  [[texture(2)]],
     texture2d<half> downsampled_3  [[texture(3)]],
     texture2d<half> downsampled_4  [[texture(4)]],
-    texture2d<half> downsampled_5  [[texture(5)]])
+    texture2d<half> downsampled_5  [[texture(5)]],
+    texture2d<half> perlin_texture  [[texture(6)]],
+    depth2d<float> camera_depth_map
+        [[texture(CAMERADEPTH_TEXTUREARRAY_I)]])
 {
     constexpr sampler sampler(
+        s_address::repeat,
+        t_address::repeat,
         mag_filter::linear,
         min_filter::linear);
     
@@ -761,18 +783,40 @@ single_quad_fragment_shader(
     color_sample += downsampled_5.sample(sampler, texcoord);
     color_sample[3] = 1.0f;
     
-    // reinhard tone mapping
-    color_sample = color_sample / (color_sample + 0.20f);
-    color_sample = clamp(color_sample, 0.0f, 1.0f);
+    color_sample += clamp(in.bonus_rgb, 0.0h, 0.25h);
     
-    if (in.color_quantization > 1.0f) {
+    float dist = camera_depth_map.sample(sampler, texcoord);
+    dist = clamp(dist - 0.98f, 0.0f, 0.02f) * 50.0f;
+    dist = pow(dist, 2.0f);
+    dist *= in.fog_factor;
+    
+    float progress = sin(float(in.curtime) * 0.0000001f);
+    progress = (progress + 1.0) * 0.5;
+    
+    dist *= perlin_texture.sample(
+        sampler,
+        ((vector_float2(
+            (float)progress * 1.1f,
+            (float)progress * 0.7f)) * 0.2f) +
+        texcoord / 8).r;
+    
+    color_sample =
+        (vector_half4(
+            in.fog_rgb[0], in.fog_rgb[1], in.fog_rgb[2], 1.0h) * dist) +
+        (color_sample * (1.0h - dist));
+    
+    // reinhard tone mapping
+    color_sample = color_sample / (color_sample + 0.20h);
+    color_sample = clamp(color_sample, 0.0h, 1.0h);
+    
+    if (in.color_quantization > 1.0h) {
         color_sample = floor(color_sample * in.color_quantization) /
             (in.color_quantization - 1.0h);
     }
     
-    color_sample[3] = 1.0f;
+    color_sample[3] = 1.0h;
     
-    return vector_float4(color_sample);
+    return vector_half4(color_sample);
 }
 
 kernel void threshold_texture(
@@ -831,8 +875,6 @@ kernel void boxblur_texture(
     
     texture.write(in_color, pos);
 }
-
-
 
 typedef struct {
     float4 position [[position]];

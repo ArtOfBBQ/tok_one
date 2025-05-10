@@ -28,6 +28,8 @@ typedef struct AppleGPUState {
     id<MTLRenderPipelineState> shadows_pls;
     id<MTLTexture> shadows_texture;
     #endif
+    id<MTLTexture> perlin_texture;
+    id<MTLTexture> camera_depth_texture;
     
     id<MTLRenderPipelineState> diamond_pls;
     id<MTLRenderPipelineState> alphablend_pls;
@@ -710,9 +712,6 @@ bool32_t apple_gpu_init(
         newRenderPipelineStateWithDescriptor:singlequad_pipeline_descriptor
         error:NULL];
     
-    // TODO:
-    // [self updateViewport];
-    
     ags->command_queue = [with_metal_device newCommandQueue];
     
     ags->metal_active = true;
@@ -1027,6 +1026,94 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
 }
 #endif
 
+void platform_gpu_push_perlin_texture_and_free_rgba_values(
+    const uint32_t image_width,
+    const uint32_t image_height,
+    uint8_t * rgba_values_freeable,
+    uint8_t * rgba_values_page_aligned)
+{
+    log_assert(rgba_values_freeable != NULL);
+    log_assert(rgba_values_page_aligned != NULL);
+    
+    if (ags->perlin_texture != NULL) {
+        #ifndef LOGGER_IGNORE_ASSERTS
+        char errmsg[256];
+        common_strcpy_capped(
+            errmsg,
+            256,
+            "Tried to re-initialize perlin texture\n")
+        log_dump_and_crash(errmsg);
+        #endif
+        return;
+    }
+    
+    MTLTextureDescriptor * perlin_texture_descriptor =
+        [[MTLTextureDescriptor alloc] init];
+    perlin_texture_descriptor.textureType = MTLTextureType2D;
+    perlin_texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
+    perlin_texture_descriptor.width =
+        image_width;
+    perlin_texture_descriptor.height =
+        image_height;
+    perlin_texture_descriptor.storageMode = MTLStorageModePrivate;
+    ags->perlin_texture =
+        [ags->device newTextureWithDescriptor: perlin_texture_descriptor];
+    
+    id<MTLBuffer> temp_buf =
+        [ags->device
+            /* the pointer needs to be page aligned */
+            newBufferWithBytesNoCopy:
+                rgba_values_page_aligned
+            /* the length weirdly needs to be page aligned also */
+            length:
+                image_width * image_height * 4
+            options:
+                MTLResourceStorageModeShared
+            /* deallocator = nil to opt out */
+            deallocator:
+                nil];
+    
+    if (temp_buf == NULL) {
+        return;
+    }
+    
+    id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
+    
+    id <MTLBlitCommandEncoder> blit_copy_encoder =
+        [combuf blitCommandEncoder];
+    
+    [blit_copy_encoder
+        copyFromBuffer:
+            temp_buf
+        sourceOffset:
+            0
+        sourceBytesPerRow:
+            image_width * 4
+        sourceBytesPerImage:
+            image_width * image_height * 4
+        sourceSize:
+            MTLSizeMake(image_width, image_height, 1)
+        toTexture:
+            ags->perlin_texture
+        destinationSlice:
+            0
+        destinationLevel:
+            0
+        destinationOrigin:
+            MTLOriginMake(0, 0, 0)];
+    
+    [blit_copy_encoder endEncoding];
+    
+    // Add a completion handler and commit the command buffer.
+    [combuf addCompletedHandler:^(id<MTLCommandBuffer> cb) {
+        // Populate private buffer.
+        (void)cb;
+    }];
+    [combuf commit];
+    
+    free_from_managed(rgba_values_freeable);
+}
+
 void platform_gpu_copy_locked_vertices(void)
 {
     for (uint32_t i = 0; i < ALL_LOCKED_VERTICES_SIZE; i++) {
@@ -1126,6 +1213,22 @@ void platform_gpu_copy_locked_vertices(void)
         [ags->device newTextureWithDescriptor: shadows_texture_descriptor];
     #endif
     
+    MTLTextureDescriptor * camera_depth_texture_descriptor =
+        [[MTLTextureDescriptor alloc] init];
+    camera_depth_texture_descriptor.textureType = MTLTextureType2D;
+    camera_depth_texture_descriptor.pixelFormat = MTLPixelFormatDepth32Float;
+    camera_depth_texture_descriptor.width =
+        (unsigned long)ags->cached_viewport.width / 2;
+    camera_depth_texture_descriptor.height =
+        (unsigned long)ags->cached_viewport.height / 2;
+    camera_depth_texture_descriptor.storageMode = MTLStorageModePrivate;
+    camera_depth_texture_descriptor.usage =
+        MTLTextureUsageRenderTarget |
+        MTLTextureUsageShaderRead;
+    
+    ags->camera_depth_texture =
+        [ags->device newTextureWithDescriptor: camera_depth_texture_descriptor];
+    
     uint64_t touch_buffer_size_bytes =
         touch_id_texture_descriptor.width *
             touch_id_texture_descriptor.height *
@@ -1151,9 +1254,11 @@ void platform_gpu_copy_locked_vertices(void)
     MTLTextureDescriptor * texture_descriptor = [MTLTextureDescriptor new];
     texture_descriptor.textureType = MTLTextureType2D;
     texture_descriptor.width =
-        (unsigned long)ags->cached_viewport.width / window_globals->pixelation_div;
+        (unsigned long)ags->cached_viewport.width /
+            window_globals->pixelation_div;
     texture_descriptor.height =
-        (unsigned long)ags->cached_viewport.height / window_globals->pixelation_div;
+        (unsigned long)ags->cached_viewport.height /
+            window_globals->pixelation_div;
     texture_descriptor.pixelFormat = MTLPixelFormatRGBA16Float;
     texture_descriptor.storageMode = MTLStorageModePrivate;
     texture_descriptor.usage =
@@ -1304,6 +1409,11 @@ void platform_gpu_copy_locked_vertices(void)
     
     render_pass_1_draw_triangles_descriptor.depthAttachment.loadAction =
         MTLLoadActionClear;
+    render_pass_1_draw_triangles_descriptor.depthAttachment.clearDepth = 1.0f;
+    render_pass_1_draw_triangles_descriptor.depthAttachment.storeAction =
+        MTLStoreActionStore;
+    render_pass_1_draw_triangles_descriptor.depthAttachment.texture =
+        ags->camera_depth_texture;
     
     assert(ags->render_target_texture != NULL);
     render_pass_1_draw_triangles_descriptor.colorAttachments[0].texture =
@@ -1524,7 +1634,8 @@ void platform_gpu_copy_locked_vertices(void)
         assert(ags->depth_stencil_state != nil);
         [render_pass_1_draw_triangles_encoder
             setDepthStencilState: ags->depth_stencil_state];
-        [render_pass_1_draw_triangles_encoder setDepthClipMode: MTLDepthClipModeClip];
+        [render_pass_1_draw_triangles_encoder
+            setDepthClipMode: MTLDepthClipModeClip];
     }
     
     if (gpu_shared_data_collection->
@@ -1710,6 +1821,14 @@ void platform_gpu_copy_locked_vertices(void)
         setFragmentTexture: ags->downsampled_target_textures[4]
         atIndex:5];
     #endif
+    
+    [render_pass_4_composition
+        setFragmentTexture: ags->perlin_texture
+        atIndex:6];
+    
+    [render_pass_4_composition
+        setFragmentTexture: ags->camera_depth_texture
+        atIndex:CAMERADEPTH_TEXTUREARRAY_I];
     
     [render_pass_4_composition
         drawPrimitives:MTLPrimitiveTypeTriangle
