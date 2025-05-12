@@ -989,42 +989,31 @@ void texture_array_load_font_images(void) {
         /* filename : */ fontfile,
         /* rows     : */ 10,
         /* columns  : */ 10);
-    
-    #if TEXTURES_ACTIVE
-    platform_gpu_init_texture_array(
-        0,
-        texture_arrays[0].images_size,
-        texture_arrays[0].single_img_width,
-        texture_arrays[0].single_img_height,
-        /* bc1_compression: */ false);
-    #endif
+    texture_arrays[0].request_init = false;
     
     for (
-        int32_t i = 0;
-        i < (int32_t)texture_arrays[0].images_size;
+        uint32_t i = 0;
+        i < texture_arrays[0].images_size;
         i++)
     {
-        #if TEXTURES_ACTIVE
-        platform_gpu_push_texture_slice_and_free_rgba_values(
-            /* const int32_t texture_array_i: */
-                0,
-            /* const int32_t texture_i: */
-                i,
+        platform_gpu_push_special_engine_texture_and_free_rgba_values(
+            /* const SpecialEngineTexture type: */
+                ENGINESPECIALTEXTURE_FONT,
             /* const uint32_t parent_texture_array_images_size: */
                 texture_arrays[0].images_size,
+            /* const uint32_t texture_i: */
+                i,
             /* const uint32_t image_width: */
                 texture_arrays[0].single_img_width,
             /* const uint32_t image_height: */
                 texture_arrays[0].single_img_height,
-            /* const uint8_t *rgba_values: */
+            /* uint8_t * rgba_values_freeable: */
                 texture_arrays[0].images[i].image->rgba_values_freeable,
+            /* uint8_t * rgba_values_page_aligned: */
                 texture_arrays[0].images[i].image->rgba_values_page_aligned);
-        #endif
         texture_arrays[0].images[i].image->rgba_values_page_aligned = NULL;
         texture_arrays[0].images[i].request_update = false;
     }
-    
-    texture_arrays[0].request_init = false;
 }
 
 void texture_array_decode_all_null_images(void)

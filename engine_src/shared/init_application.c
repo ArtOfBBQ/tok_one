@@ -554,7 +554,13 @@ void init_application_after_gpu_init(void) {
         /* uint32_t *out_good: */
             &perlin_good);
     log_assert(perlin_good);
-    platform_gpu_push_perlin_texture_and_free_rgba_values(
+    platform_gpu_push_special_engine_texture_and_free_rgba_values(
+        /* const SpecialEngineTexture type: */
+            ENGINESPECIALTEXTURE_PERLINNOISE,
+        /* const uint32_t parent_texture_array_images_size: */
+            1,
+        /* const uint32_t texture_i: */
+            0,
         /* const uint32_t image_width: */
             perlin_width,
         /* const uint32_t image_height: */

@@ -47,6 +47,8 @@ typedef struct AppleGPUState {
     // id<MTLBuffer> texture_populator_buffer;
     #if TEXTURES_ACTIVE
     id<MTLTexture> metal_textures[TEXTUREARRAYS_SIZE];
+    #else
+    id<MTLTexture> metal_textures[1]; // for font only
     #endif
     id<MTLTexture> render_target_texture;
     #if BLOOM_ACTIVE
@@ -846,7 +848,6 @@ void platform_gpu_init_texture_array(
     ags->metal_textures[texture_array_i] = texture;
 }
 
-static bool32_t font_already_pushed = 0;
 void platform_gpu_push_texture_slice_and_free_rgba_values(
     const int32_t texture_array_i,
     const int32_t texture_i,
@@ -862,12 +863,7 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
     log_assert(rgba_values_page_aligned != NULL);
     
     log_assert(texture_i >= 0);
-    log_assert(texture_array_i >= 0);
-    
-    if (texture_array_i == 0 && texture_i == 0) {
-        assert(!font_already_pushed);
-        font_already_pushed = true;
-    }
+    log_assert(texture_array_i >= 1); // 0 is reserved for the font
     
     if (ags->metal_textures[texture_array_i] == NULL) {
         #ifndef LOGGER_IGNORE_ASSERTS
@@ -952,12 +948,7 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     log_assert(raw_bc1_file != NULL);
     
     log_assert(texture_i >= 0);
-    log_assert(texture_array_i >= 0);
-    
-    if (texture_array_i == 0 && texture_i == 0) {
-        assert(!font_already_pushed);
-        font_already_pushed = true;
-    }
+    log_assert(texture_array_i >= 1); // 0 is resered for font
     
     if (ags->metal_textures[texture_array_i] == NULL) {
         #ifndef LOGGER_IGNORE_ASSERTS
@@ -1026,7 +1017,10 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
 }
 #endif
 
-void platform_gpu_push_perlin_texture_and_free_rgba_values(
+void platform_gpu_push_special_engine_texture_and_free_rgba_values(
+    const SpecialEngineTexture type,
+    const uint32_t parent_texture_array_images_size,
+    const uint32_t texture_i,
     const uint32_t image_width,
     const uint32_t image_height,
     uint8_t * rgba_values_freeable,
@@ -1035,29 +1029,75 @@ void platform_gpu_push_perlin_texture_and_free_rgba_values(
     log_assert(rgba_values_freeable != NULL);
     log_assert(rgba_values_page_aligned != NULL);
     
-    if (ags->perlin_texture != NULL) {
-        #ifndef LOGGER_IGNORE_ASSERTS
-        char errmsg[256];
-        common_strcpy_capped(
-            errmsg,
-            256,
-            "Tried to re-initialize perlin texture\n")
-        log_dump_and_crash(errmsg);
-        #endif
-        return;
+    id<MTLTexture> target = NULL;
+    
+    bool32_t requires_init = false;
+    switch (type) {
+        case ENGINESPECIALTEXTURE_FONT:
+            if (ags->metal_textures[0] == NULL) {
+                requires_init = true;
+            } else {
+                target = ags->metal_textures[0];
+            }
+            break;
+        case ENGINESPECIALTEXTURE_PERLINNOISE:
+            if (ags->perlin_texture == NULL) {
+                requires_init = true;
+            } else {
+                target = ags->perlin_texture;
+            }
+            break;
+        default:
+            log_assert(0);
     }
     
-    MTLTextureDescriptor * perlin_texture_descriptor =
-        [[MTLTextureDescriptor alloc] init];
-    perlin_texture_descriptor.textureType = MTLTextureType2D;
-    perlin_texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
-    perlin_texture_descriptor.width =
-        image_width;
-    perlin_texture_descriptor.height =
-        image_height;
-    perlin_texture_descriptor.storageMode = MTLStorageModePrivate;
-    ags->perlin_texture =
-        [ags->device newTextureWithDescriptor: perlin_texture_descriptor];
+    #ifndef LOGGER_IGNORE_ASSERTS
+    if (!requires_init) {
+        // Check texture type
+        if (parent_texture_array_images_size > 1 && target.textureType != MTLTextureType2DArray) {
+            log_dump_and_crash("Existing texture is not MTLTextureType2DArray");
+            return;
+        }
+        if (parent_texture_array_images_size == 1 && target.textureType != MTLTextureType2D) {
+            log_dump_and_crash(
+                "Existing texture is not MTLTextureType2D");
+            return;
+        }
+        if (target.textureType == MTLTextureType2DArray && target.arrayLength < parent_texture_array_images_size) {
+            printf(
+                "Texture array length (%lu) is less than required (%u)",
+                (unsigned long)target.arrayLength,
+                parent_texture_array_images_size);
+            return;
+        }
+        if (target.width != image_width || target.height != image_height) {
+            printf(
+                "Texture dimensions (%lu, %lu) do not match required (%u, %u)",
+                (unsigned long)target.width,
+                (unsigned long)target.height,
+                image_width,
+                image_height);
+            return;
+        }
+    }
+    #endif
+    
+    if (requires_init) {
+        MTLTextureDescriptor * new_texture_descriptor =
+            [[MTLTextureDescriptor alloc] init];
+        new_texture_descriptor.textureType =
+            parent_texture_array_images_size > 1 ?
+                MTLTextureType2DArray :
+                MTLTextureType2D;
+        new_texture_descriptor.arrayLength = parent_texture_array_images_size;
+        new_texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
+        new_texture_descriptor.width =
+            image_width;
+        new_texture_descriptor.height =
+            image_height;
+        new_texture_descriptor.storageMode = MTLStorageModePrivate;
+        target = [ags->device newTextureWithDescriptor: new_texture_descriptor];
+    }
     
     id<MTLBuffer> temp_buf =
         [ags->device
@@ -1094,14 +1134,13 @@ void platform_gpu_push_perlin_texture_and_free_rgba_values(
         sourceSize:
             MTLSizeMake(image_width, image_height, 1)
         toTexture:
-            ags->perlin_texture
+            target
         destinationSlice:
-            0
+            texture_i
         destinationLevel:
             0
         destinationOrigin:
             MTLOriginMake(0, 0, 0)];
-    
     [blit_copy_encoder endEncoding];
     
     // Add a completion handler and commit the command buffer.
@@ -1112,6 +1151,19 @@ void platform_gpu_push_perlin_texture_and_free_rgba_values(
     [combuf commit];
     
     free_from_managed(rgba_values_freeable);
+    
+    if (requires_init) {
+        switch (type) {
+            case ENGINESPECIALTEXTURE_FONT:
+                ags->metal_textures[0] = target;
+                break;
+            case ENGINESPECIALTEXTURE_PERLINNOISE:
+                ags->perlin_texture = target;
+                break;
+            default:
+                log_assert(0);
+        }
+    }
 }
 
 void platform_gpu_copy_locked_vertices(void)
@@ -1562,6 +1614,10 @@ void platform_gpu_copy_locked_vertices(void)
                 atIndex: i];
         }
     }
+    #else
+    [render_pass_1_draw_triangles_encoder
+        setFragmentTexture: ags->metal_textures[0]
+        atIndex: 0];
     #endif
     
     #if SHADOWS_ACTIVE

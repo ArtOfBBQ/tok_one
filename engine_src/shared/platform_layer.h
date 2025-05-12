@@ -219,12 +219,6 @@ void platform_gpu_init_texture_array(
     const uint32_t single_image_height,
     const bool32_t use_bc1_compression);
 
-void platform_gpu_push_perlin_texture_and_free_rgba_values(
-    const uint32_t image_width,
-    const uint32_t image_height,
-    uint8_t * rgba_values_freeable,
-    uint8_t * rgba_values_page_aligned);
-
 void platform_gpu_push_texture_slice_and_free_rgba_values(
     const int32_t texture_array_i,
     const int32_t texture_i,
@@ -242,6 +236,21 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     const uint32_t image_height,
     uint8_t * bc1_values);
 #endif
+
+// Some textures are not treated as textures but play a special role
+// these are available when TEXTURES_ACTIVE is set to 0
+typedef enum SpecialEngineTexture {
+    ENGINESPECIALTEXTURE_FONT,
+    ENGINESPECIALTEXTURE_PERLINNOISE,
+} SpecialEngineTexture;
+void platform_gpu_push_special_engine_texture_and_free_rgba_values(
+    const SpecialEngineTexture type,
+    const uint32_t parent_texture_array_images_size,
+    const uint32_t texture_i,
+    const uint32_t image_width,
+    const uint32_t image_height,
+    uint8_t * rgba_values_freeable,
+    uint8_t * rgba_values_page_aligned);
 
 void platform_update_mouse_location(void);
 
