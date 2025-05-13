@@ -786,7 +786,7 @@ single_quad_fragment_shader(
     color_sample += clamp(in.bonus_rgb, 0.0h, 0.25h);
     
     float dist = camera_depth_map.sample(sampler, texcoord);
-    dist = clamp(dist - 0.98f, 0.0f, 0.02f) * 50.0f;
+    dist = clamp(dist - 0.96f, 0.0f, 0.04f) * 50.0f;
     dist = pow(dist, 2.0f);
     dist *= in.fog_factor;
     
