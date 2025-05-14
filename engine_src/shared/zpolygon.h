@@ -90,6 +90,10 @@ float get_x_multiplier_for_width(
     CPUzSprite * for_poly,
     const float for_width);
 
+void scale_zpolygon_multipliers_to_width(
+    CPUzSprite * cpu_data,
+    GPUzSprite * gpu_data,
+    const float new_width);
 void scale_zpolygon_multipliers_to_height(
     CPUzSprite * cpu_data,
     GPUzSprite * gpu_data,

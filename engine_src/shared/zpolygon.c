@@ -176,6 +176,22 @@ float get_y_multiplier_for_height(
     return return_value;
 }
 
+void scale_zpolygon_multipliers_to_width(
+    CPUzSprite * cpu_data,
+    GPUzSprite * gpu_data,
+    const float new_height)
+{
+    float new_multiplier = get_x_multiplier_for_width(
+        /* zPolygonCPU * for_poly: */
+            cpu_data,
+        /* const float for_height: */
+            new_height);
+    
+    gpu_data->xyz_multiplier[0] = new_multiplier;
+    gpu_data->xyz_multiplier[1] = new_multiplier;
+    gpu_data->xyz_multiplier[2] = new_multiplier;
+}
+
 void scale_zpolygon_multipliers_to_height(
     CPUzSprite * cpu_data,
     GPUzSprite * gpu_data,
