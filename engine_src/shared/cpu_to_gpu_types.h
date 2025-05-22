@@ -12,7 +12,7 @@ typedef struct GPUDataForSingleFrame
     GPUSpriteCollection *             polygon_collection;
     GPUzSpriteMaterial *                polygon_materials;
     GPUCamera *                                    camera;
-    GPULightCollection *                 light_collection;
+    GPULight *                                     lights;
     GPURawVertex *                          line_vertices;
     GPURawVertex *                         point_vertices;
     GPUPostProcessingConstants * postprocessing_constants;

@@ -367,7 +367,7 @@ void init_application_before_gpu_init(
         % page_size == 0);
     
     gpu_shared_data_collection->lights_allocation_size =
-        sizeof(GPULightCollection);
+        sizeof(GPULight) * MAX_LIGHTS_PER_BUFFER;
     gpu_shared_data_collection->lights_allocation_size +=
         (page_size - (gpu_shared_data_collection->lights_allocation_size % page_size));
     assert(gpu_shared_data_collection->lights_allocation_size > 0);
@@ -448,14 +448,12 @@ void init_application_before_gpu_init(
                     page_size);
         
         assert(gpu_shared_data_collection->lights_allocation_size > 0);
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].
-            light_collection =
-                (GPULightCollection *)malloc_from_unmanaged_aligned(
-                    gpu_shared_data_collection->lights_allocation_size,
-                    page_size);
-        assert(
-            gpu_shared_data_collection->triple_buffers[cur_frame_i].
-                light_collection != NULL);
+        gpu_shared_data_collection->triple_buffers[cur_frame_i].lights =
+            (GPULight *)malloc_from_unmanaged_aligned(
+                gpu_shared_data_collection->lights_allocation_size,
+                page_size);
+        assert(gpu_shared_data_collection->triple_buffers[cur_frame_i].
+            lights != NULL);
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].camera =
         (GPUCamera *)malloc_from_unmanaged_aligned(

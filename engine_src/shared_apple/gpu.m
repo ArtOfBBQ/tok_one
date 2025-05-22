@@ -524,7 +524,7 @@ bool32_t apple_gpu_init(
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         gpu_shared_data_collection->
-                            triple_buffers[buf_i].light_collection
+                            triple_buffers[buf_i].lights
                 /* the length weirdly needs to be page aligned also */
                     length:
                         gpu_shared_data_collection->lights_allocation_size
@@ -1601,6 +1601,14 @@ void platform_gpu_copy_locked_vertices(void)
             0
         atIndex:
             6];
+    
+    [render_pass_1_draw_triangles_encoder
+        setFragmentBuffer:
+            ags->postprocessing_constants_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            7];
     
     #if TEXTURES_ACTIVE
     for (

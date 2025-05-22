@@ -103,7 +103,7 @@ mtlparser_uint_to_string(
     }
 }
 
-void parse_single_string_stat(
+static void parse_single_string_stat(
     uint32_t * i,
     TokToken * token,
     const char * material_name,
@@ -164,7 +164,7 @@ void parse_single_string_stat(
     *good = 1;
 }
 
-void parse_single_float_stat(
+static void parse_single_float_stat(
     uint32_t * i,
     TokToken * token,
     const char * material_name,
@@ -226,7 +226,7 @@ void parse_single_float_stat(
     *good = 1;
 }
 
-void parse_rgb_token(
+static void parse_rgb_token(
     uint32_t * i,
     TokToken * token,
     const char * material_name,
@@ -315,7 +315,7 @@ void parse_rgb_token(
             !toktoken_fits_double(token))
         {
             *good = 0;
-            stack_string_64bytes[0] = ('0' + rgb_i);
+            stack_string_64bytes[0] = (char)('0' + rgb_i);
             stack_string_64bytes[1] = '\0';
             mtlparser_uint_to_string(
                 rgb_i,
@@ -834,4 +834,3 @@ void mtlparser_parse(
     
     *good = 1;
 }
-

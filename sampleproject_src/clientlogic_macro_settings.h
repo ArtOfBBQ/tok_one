@@ -23,14 +23,14 @@ of the engine for your specific app.
 #define INITIAL_WINDOW_BOTTOM  430.0f
 
 
-#define TEXTURES_ACTIVE 1
-#define BLOOM_ACTIVE 1
-#define PARTICLES_ACTIVE 1
-#define SHADOWS_ACTIVE 1
+#define TEXTURES_ACTIVE 0
+#define BLOOM_ACTIVE 0
+#define PARTICLES_ACTIVE 0
+#define SHADOWS_ACTIVE 0
 #define AUDIO_ACTIVE 0
 #define ENGINE_SAVEFILE_ACTIVE 0
 
-#define MAX_RENDERING_FRAME_BUFFERS 2 // 3 for triple-buffering
+#define MAX_RENDERING_FRAME_BUFFERS 3 // 3 for triple-buffering
 
 #define MAX_VERTICES_PER_BUFFER  1500000
 #define MAX_LIGHTS_PER_BUFFER 100
@@ -69,4 +69,3 @@ The max # of simultaneously 'shatter' style particle effects in your app
 #define SHATTER_EFFECTS_SIZE 120
 
 #endif // CLIENTLOGIC_MACRO_SETTINGS
-

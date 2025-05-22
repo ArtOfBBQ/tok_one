@@ -89,23 +89,31 @@ typedef struct GPUzSpriteMaterial {
     float padding[5];       //  4 bytes
 } GPUzSpriteMaterial;
 
-typedef struct GPULightCollection {
-    float        light_x              [MAX_LIGHTS_PER_BUFFER];
-    float        light_y              [MAX_LIGHTS_PER_BUFFER];
-    float        light_z              [MAX_LIGHTS_PER_BUFFER];
-    float        angle_x              [MAX_LIGHTS_PER_BUFFER];
-    float        angle_y              [MAX_LIGHTS_PER_BUFFER];
-    float        angle_z              [MAX_LIGHTS_PER_BUFFER];
-    float        ambient              [MAX_LIGHTS_PER_BUFFER];
-    float        diffuse              [MAX_LIGHTS_PER_BUFFER];
-    float        specular             [MAX_LIGHTS_PER_BUFFER];
-    float        reach                [MAX_LIGHTS_PER_BUFFER];
-    float        red                  [MAX_LIGHTS_PER_BUFFER];
-    float        green                [MAX_LIGHTS_PER_BUFFER];
-    float        blue                 [MAX_LIGHTS_PER_BUFFER];
-    unsigned int shadowcaster_i;
-    unsigned int lights_size;
-} GPULightCollection;
+typedef struct GPULight {
+    float xyz[3];
+    float angle_xyz[3];
+    float ambient;
+    float diffuse;
+    float specular;
+    float reach;
+    float rgb[3];
+} GPULight;
+
+//typedef struct GPULightCollection {
+//    float        light_x              [MAX_LIGHTS_PER_BUFFER];
+//    float        light_y              [MAX_LIGHTS_PER_BUFFER];
+//    float        light_z              [MAX_LIGHTS_PER_BUFFER];
+//    float        angle_x              [MAX_LIGHTS_PER_BUFFER];
+//    float        angle_y              [MAX_LIGHTS_PER_BUFFER];
+//    float        angle_z              [MAX_LIGHTS_PER_BUFFER];
+//    float        ambient              [MAX_LIGHTS_PER_BUFFER];
+//    float        diffuse              [MAX_LIGHTS_PER_BUFFER];
+//    float        specular             [MAX_LIGHTS_PER_BUFFER];
+//    float        reach                [MAX_LIGHTS_PER_BUFFER];
+//    float        red                  [MAX_LIGHTS_PER_BUFFER];
+//    float        green                [MAX_LIGHTS_PER_BUFFER];
+//    float        blue                 [MAX_LIGHTS_PER_BUFFER];
+//} GPULightCollection;
 
 typedef struct GPUProjectionConstants {
     float znear;
@@ -114,7 +122,6 @@ typedef struct GPUProjectionConstants {
     float field_of_view_modifier;
     float x_multiplier;
     float y_multiplier;
-    float padding[2];
 } GPUProjectionConstants;
 
 typedef struct GPUDownsamplingConstants
@@ -127,7 +134,6 @@ typedef struct GPUDownsamplingConstants
 
 typedef struct GPUPostProcessingConstants
 {
-    unsigned int timestamp;
     float rgb_add[3];
     float fog_color[3];
     float screen_width;
@@ -136,7 +142,10 @@ typedef struct GPUPostProcessingConstants
     float blur_pct;
     float color_quantization;
     float fog_factor;
-    float padding[3];
+    unsigned int timestamp;
+    unsigned int lights_size;
+    unsigned int shadowcaster_i;
+    float padding[1];
 } GPUPostProcessingConstants;
 
 typedef struct GPURawVertex {

@@ -77,10 +77,11 @@ vertex float4 shadows_vertex_shader(
     uint vertex_i [[ vertex_id ]],
     const device GPUVertex * vertices [[ buffer(0) ]],
     const device GPUzSprite * polygons [[ buffer(1) ]],
-    const device GPULightCollection * light_collection [[ buffer(2) ]],
+    const device GPULight * lights [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPULockedVertex * locked_vertices [[ buffer(4) ]],
-    const device GPUProjectionConstants * projection_constants [[ buffer(5) ]])
+    const device GPUProjectionConstants * projection_constants [[ buffer(5) ]],
+    const device GPUPostProcessingConstants * updating_globals [[ buffer (6) ]])
 {
     float3 out_pos;
     
@@ -137,21 +138,21 @@ vertex float4 shadows_vertex_shader(
     out_pos = z_rotated_vertices + parent_mesh_position;
     
     float3 camera_position = vector_float3(
-        light_collection->light_x[light_collection->shadowcaster_i],
-        light_collection->light_y[light_collection->shadowcaster_i],
-        light_collection->light_z[light_collection->shadowcaster_i]);
+        lights[updating_globals->shadowcaster_i].xyz[0],
+        lights[updating_globals->shadowcaster_i].xyz[1],
+        lights[updating_globals->shadowcaster_i].xyz[2]);
     float3 camera_translated_pos = out_pos - camera_position;
     
     // rotate around camera
     float3 cam_x_rotated = x_rotate(
         camera_translated_pos,
-        light_collection->angle_x[light_collection->shadowcaster_i]);
+        lights[updating_globals->shadowcaster_i].angle_xyz[0]);
     float3 cam_y_rotated = y_rotate(
         cam_x_rotated,
-        light_collection->angle_y[light_collection->shadowcaster_i]);
+        lights[updating_globals->shadowcaster_i].angle_xyz[1]);
     float3 cam_z_rotated = z_rotate(
         cam_y_rotated,
-        light_collection->angle_z[light_collection->shadowcaster_i]);
+        lights[updating_globals->shadowcaster_i].angle_xyz[2]);
     
     float ic = clamp(
         polygons[polygon_i].ignore_camera,
@@ -369,9 +370,10 @@ static FragmentAndTouchableOut pack_color_and_touchable_id(
 float3 get_lighting(
     texture2d<float> shadow_map,
     const device GPUCamera * camera,
-    const device GPULightCollection * light_collection,
+    const device GPULight * lights,
     const device GPUProjectionConstants * projection_constants,
     const device GPUzSpriteMaterial * fragment_material,
+    const device GPUPostProcessingConstants * updating_globals,
     float3 fragment_worldpos,
     float3 fragment_normal,
     float ignore_lighting)
@@ -387,25 +389,25 @@ float3 get_lighting(
     
     for (
         uint32_t i = 0;
-        i < light_collection->lights_size;
+        i < updating_globals->lights_size;
         i++)
     {
         // ambient lighting
         float3 light_pos = vector_float3(
-            light_collection->light_x[i],
-            light_collection->light_y[i],
-            light_collection->light_z[i]);
+            lights[i].xyz[0],
+            lights[i].xyz[1],
+            lights[i].xyz[2]);
         float3 light_color = vector_float3(
-            light_collection->red[i],
-            light_collection->green[i],
-            light_collection->blue[i]);
+            lights[i].rgb[0],
+            lights[i].rgb[1],
+            lights[i].rgb[2]);
         float3 light_angle_xyz = vector_float3(
-            light_collection->angle_x[i],
-            light_collection->angle_y[i],
-            light_collection->angle_z[i]);
+            lights[i].angle_xyz[0],
+            lights[i].angle_xyz[1],
+            lights[i].angle_xyz[2]);
         
         float shadow_factor = 1.0f;
-        if (light_collection->shadowcaster_i == i) {
+        if (updating_globals->shadowcaster_i == i) {
             constexpr sampler shadow_sampler(
                 mag_filter::nearest,
                 min_filter::nearest);
@@ -447,19 +449,18 @@ float3 get_lighting(
             fragment_worldpos);
         
         float distance_overflow = max(
-            distance - (light_collection->reach[i] * 0.75f),
+            distance - (lights[i].reach * 0.75f),
             0.0f);
         
         float attenuation = 1.0f - (
-            distance_overflow /
-                light_collection->reach[i]);
+            distance_overflow / lights[i].reach);
         
         attenuation = clamp(attenuation, 0.00f, 1.00f);
         
         light_multiplier += (
             attenuation *
             light_color *
-            light_collection->ambient[i] *
+            lights[i].ambient *
             shadow_factor);
         
         // if light is at 2,2,2 and rotated_pos is at 1,1,1, we need +1/+1/+1
@@ -479,7 +480,7 @@ float3 get_lighting(
         light_multiplier += (
             light_color *
             attenuation *
-            light_collection->diffuse[i] *
+            lights[i].diffuse *
             fragment_material->diffuse *
             diffuse_dot *
             shadow_factor);
@@ -504,7 +505,7 @@ float3 get_lighting(
             fragment_material->specular *
             specular_dot *
             light_color *
-            light_collection->specular[i] *
+            lights[i].specular *
             attenuation *
             shadow_factor);
     }
@@ -525,10 +526,11 @@ fragment_shader(
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
         color_textures[[ texture(0) ]],
     texture2d<float> shadow_map [[texture(SHADOWMAP_TEXTUREARRAY_I)]],
-    const device GPULightCollection * light_collection [[ buffer(2) ]],
+    const device GPULight * lights [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
-    const device GPUzSpriteMaterial * polygon_materials [[ buffer(6) ]])
+    const device GPUzSpriteMaterial * polygon_materials [[ buffer(6) ]],
+    const device GPUPostProcessingConstants * updating_globals [[ buffer(7) ]])
 {
     if (
         in.material_i < 0 ||
@@ -542,12 +544,14 @@ fragment_shader(
             shadow_map,
         /* const device GPUCamera * camera: */
             camera,
-        /* const device GPULightCollection * light_collection: */
-            light_collection,
+        /* const device GPULight * lights: */
+            lights,
         /* const device GPUProjectionConstants * projection_constants: */
             projection_constants,
         /* const device GPUPolygonMaterial * fragment_material: */
             &polygon_materials[in.material_i],
+        /* const device GPUPostProcessingConstants * updating_globals: */
+            updating_globals,
         /* float3 fragment_worldpos: */
             in.worldpos,
         /* float3 fragment_normal: */
@@ -629,22 +633,25 @@ alphablending_fragment_shader(
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
         color_textures[[ texture(0) ]],
     texture2d<float> shadow_map [[texture(SHADOWMAP_TEXTUREARRAY_I)]],
-    const device GPULightCollection * light_collection [[ buffer(2) ]],
+    const device GPULight * lights [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
-    const device GPUzSpriteMaterial * polygon_materials [[ buffer(6) ]])
+    const device GPUzSpriteMaterial * polygon_materials [[ buffer(6) ]],
+    const device GPUPostProcessingConstants * updating_globals [[ buffer(7) ]])
 {
     float3 lighting = get_lighting(
         /* texture2d<float> shadow_map: */
             shadow_map,
         /* const device GPUCamera * camera: */
             camera,
-        /* const device GPULightCollection * light_collection: */
-            light_collection,
+        /* const device GPULight * lights: */
+            lights,
         /* const device GPUProjectionConstants * projection_constants: */
             projection_constants,
         /* const device GPUPolygonMaterial * fragment_material: */
             &polygon_materials[in.material_i],
+        /* const device GPUPostProcessingConstants * updating_globals: */
+            updating_globals,
         /* float3 fragment_worldpos: */
             in.worldpos,
         /* float3 fragment_normal: */

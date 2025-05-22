@@ -113,6 +113,10 @@
 		ECB05E4F2950868E00050BD4 /* key.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECB05E4C294F8FD300050BD4 /* key.obj */; };
 		ECC47A6029E9111C0082A7C6 /* disk.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECC47A5F29E9111C0082A7C6 /* disk.obj */; };
 		ECC47A6129E9111C0082A7C6 /* disk.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECC47A5F29E9111C0082A7C6 /* disk.obj */; };
+		ECDCFF4D2DDE0F2B002AA399 /* mtlparser.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDCFF4B2DDE0F2A002AA399 /* mtlparser.c */; };
+		ECDCFF502DDE0F52002AA399 /* toktokenizer.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDCFF4F2DDE0F52002AA399 /* toktokenizer.c */; };
+		ECDCFF522DDE12EF002AA399 /* perlin_noise.png in Resources */ = {isa = PBXBuildFile; fileRef = ECDCFF512DDE12EF002AA399 /* perlin_noise.png */; };
+		ECDCFF532DDE13CB002AA399 /* perlin_noise.png in Resources */ = {isa = PBXBuildFile; fileRef = ECDCFF512DDE12EF002AA399 /* perlin_noise.png */; };
 		ECE759CE2C3FF1BE004B0847 /* collision.c in Sources */ = {isa = PBXBuildFile; fileRef = ECE759CC2C3FF1BE004B0847 /* collision.c */; };
 		ECE759D12C400175004B0847 /* lines.c in Sources */ = {isa = PBXBuildFile; fileRef = ECE759D02C400175004B0847 /* lines.c */; };
 		ECF7CB172D53ADA400623C60 /* platform_layer_common.c in Sources */ = {isa = PBXBuildFile; fileRef = ECF7CB142D53ADA400623C60 /* platform_layer_common.c */; };
@@ -230,6 +234,11 @@
 		ECC47A5F29E9111C0082A7C6 /* disk.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = disk.obj; path = ../../resources/disk.obj; sourceTree = "<group>"; };
 		ECCB08A428DB6FD00038BBAC /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		ECD7D3DA2B97778500B47196 /* clientlogic_particledesigner.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = clientlogic_particledesigner.c; path = ../../sampleproject_src/clientlogic_particledesigner.c; sourceTree = "<group>"; };
+		ECDCFF4B2DDE0F2A002AA399 /* mtlparser.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = mtlparser.c; path = ../../engine_src/shared/mtlparser.c; sourceTree = "<group>"; };
+		ECDCFF4C2DDE0F2A002AA399 /* mtlparser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mtlparser.h; path = ../../engine_src/shared/mtlparser.h; sourceTree = "<group>"; };
+		ECDCFF4E2DDE0F52002AA399 /* toktokenizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = toktokenizer.h; path = ../../engine_src/shared/toktokenizer.h; sourceTree = "<group>"; };
+		ECDCFF4F2DDE0F52002AA399 /* toktokenizer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = toktokenizer.c; path = ../../engine_src/shared/toktokenizer.c; sourceTree = "<group>"; };
+		ECDCFF512DDE12EF002AA399 /* perlin_noise.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = perlin_noise.png; path = ../../resources/perlin_noise.png; sourceTree = "<group>"; };
 		ECE759CC2C3FF1BE004B0847 /* collision.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = collision.c; path = ../../engine_src/shared/collision.c; sourceTree = "<group>"; };
 		ECE759CD2C3FF1BE004B0847 /* collision.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = collision.h; path = ../../engine_src/shared/collision.h; sourceTree = "<group>"; };
 		ECE759CF2C400174004B0847 /* lines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lines.h; path = ../../engine_src/shared/lines.h; sourceTree = "<group>"; };
@@ -334,6 +343,7 @@
 				6009FB632876A47100FC5A60 /* fontmetrics.dat */,
 				601128AC28625BAF00F92967 /* font.png */,
 				ECC47A5F29E9111C0082A7C6 /* disk.obj */,
+				ECDCFF512DDE12EF002AA399 /* perlin_noise.png */,
 				EC843EA72D1401F3001AD2E9 /* cardstand.obj */,
 				EC0BFBD729EE71A200E4BC1C /* tree.obj */,
 				EC0717EF2C29CDD5007A4AFA /* teapot_smooth.obj */,
@@ -399,6 +409,8 @@
 				601128752862511600F92967 /* logger.h */,
 				6009B4F328679E7D00F1F279 /* memorystore.c */,
 				6009B4F228679E7D00F1F279 /* memorystore.h */,
+				ECDCFF4B2DDE0F2A002AA399 /* mtlparser.c */,
+				ECDCFF4C2DDE0F2A002AA399 /* mtlparser.h */,
 				EC6E12182A04CE12004E7BD1 /* objectid.c */,
 				EC6E12192A04CE13004E7BD1 /* objectid.h */,
 				EC78509929E62CA800E6882A /* objmodel.c */,
@@ -424,6 +436,8 @@
 				601128682862511500F92967 /* texture_array.h */,
 				601128772862511600F92967 /* tok_random.c */,
 				601128802862511700F92967 /* tok_random.h */,
+				ECDCFF4F2DDE0F52002AA399 /* toktokenizer.c */,
+				ECDCFF4E2DDE0F52002AA399 /* toktokenizer.h */,
 				EC6A301A29EFA1440071C58F /* triangle.c */,
 				EC78509C29E639F900E6882A /* triangle.h */,
 				EC6E12142A03BD8F004E7BD1 /* uielement.c */,
@@ -549,6 +563,7 @@
 				EC7B171B293A23E400C1D20C /* roundedborder.png in Resources */,
 				EC18FF4229E3DC8B00ED785C /* blob1.png in Resources */,
 				EC0BFBDB29EE71A200E4BC1C /* xmas_tree.obj in Resources */,
+				ECDCFF532DDE13CB002AA399 /* perlin_noise.png in Resources */,
 				EC843EA82D1401F3001AD2E9 /* cardstand.obj in Resources */,
 				601128AD28625BAF00F92967 /* structuredart1.png in Resources */,
 				EC18FF4629E3DD8900ED785C /* blob2.png in Resources */,
@@ -582,6 +597,7 @@
 				EC0717F12C29CDD5007A4AFA /* teapot_smooth.obj in Resources */,
 				60A99920287BDF31003F7159 /* structuredart1.png in Resources */,
 				EC0BFBDC29EE71A200E4BC1C /* xmas_tree.obj in Resources */,
+				ECDCFF522DDE12EF002AA399 /* perlin_noise.png in Resources */,
 				60A99922287BDF31003F7159 /* structuredart2.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -610,6 +626,7 @@
 				60A998FB287BD4C3003F7159 /* lightsource.h in Sources */,
 				60A99916287BD4C4003F7159 /* scheduled_animations.c in Sources */,
 				60A99908287BD4C3003F7159 /* tok_random.h in Sources */,
+				ECDCFF502DDE0F52002AA399 /* toktokenizer.c in Sources */,
 				60A9990F287BD4C4003F7159 /* text.c in Sources */,
 				60A9991A287BD4C4003F7159 /* window_size.c in Sources */,
 				EC31932529DFAAFB00E320CD /* particle.c in Sources */,
@@ -638,6 +655,7 @@
 				EC914B7F2B8AD447007FCBFC /* audio.c in Sources */,
 				EC92FDAE2902917500C10865 /* decode_bmp.c in Sources */,
 				60A99910287BD4C4003F7159 /* texture_array.c in Sources */,
+				ECDCFF4D2DDE0F2B002AA399 /* mtlparser.c in Sources */,
 				EC6E12172A03BD90004E7BD1 /* uielement.c in Sources */,
 				6064C0C22892505000E8B3AD /* gameloop.c in Sources */,
 				60A9991E287BD4D6003F7159 /* shaders.metal in Sources */,

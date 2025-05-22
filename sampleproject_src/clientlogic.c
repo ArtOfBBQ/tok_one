@@ -28,44 +28,44 @@ void client_logic_late_startup(void) {
     #define TEAPOT_Z  0.32f
     
     zLightSource * light = next_zlight();
-    light->RGBA[0]       =  0.45f;
-    light->RGBA[1]       =  0.35f;
-    light->RGBA[2]       =  0.35f;
+    light->RGBA[0]       =  0.85f;
+    light->RGBA[1]       =  0.25f;
+    light->RGBA[2]       =  0.25f;
     light->RGBA[3]       =  1.00f;
     light->ambient       =  0.25f;
-    light->diffuse       =  1.50f;
+    light->diffuse       =  1.00f;
     light->reach         =  5.00f;
     light->xyz[0]        =  TEAPOT_X;
-    light->xyz[1]        =  TEAPOT_Y + 4.0f;
+    light->xyz[1]        =  TEAPOT_Y + 3.0f;
     light->xyz[2]        =  TEAPOT_Z;
-    light->xyz_angle[0]  =  -1.5708f; // rotate around the x axis because light is looking at +z right now but needs to look down
+    light->xyz_angle[0]  =  1.5708f; // rotate around the x axis because light is looking at +z right now but needs to look down
     light->xyz_angle[1]  =  0.00f;
     light->xyz_angle[2]  =  0.00f;
     commit_zlight(light);
     
-    shadowcaster_light_i = 0;
+    shadowcaster_light_i = UINT32_MAX;
     camera.xyz[0] = 0.0f;
     camera.xyz[1] = 0.0f;
     camera.xyz[2] = TEAPOT_Z - 0.45f;
-    camera.xyz_angle[0] = 0.0f;
-    camera.xyz_angle[1] = 0.0f;
-    camera.xyz_angle[2] = 0.0f;
+    camera.xyz_angle[0] =  0.0f;
+    camera.xyz_angle[1] =  0.0f;
+    camera.xyz_angle[2] =  0.0f;
     
-    //    light = next_zlight();
-    //    light->RGBA[0]       =  0.25f;
-    //    light->RGBA[1]       =  0.35f;
-    //    light->RGBA[2]       =  0.25f;
-    //    light->RGBA[3]       =  1.00f;
-    //    light->ambient       =  0.25f;
-    //    light->diffuse       =  1.50f;
-    //    light->reach         =  5.00f;
-    //    light->xyz[0]        =  1.55f;
-    //    light->xyz[1]        =  0.60f;
-    //    light->xyz[2]        =  1.00f;
-    //    light->xyz_angle[0]  = -1.00f;
-    //    light->xyz_angle[1]  =  0.00f;
-    //    light->xyz_angle[2]  =  0.00f;
-    //    commit_zlight(light);
+    light = next_zlight();
+    light->RGBA[0]       =  0.25f;
+    light->RGBA[1]       =  0.35f;
+    light->RGBA[2]       =  0.25f;
+    light->RGBA[3]       =  1.00f;
+    light->ambient       =  0.25f;
+    light->diffuse       =  1.00f;
+    light->reach         =  1.00f;
+    light->xyz[0]        =  1.55f;
+    light->xyz[1]        =  0.60f;
+    light->xyz[2]        =  1.00f;
+    light->xyz_angle[0]  = -1.00f;
+    light->xyz_angle[1]  =  0.00f;
+    light->xyz_angle[2]  =  0.00f;
+    commit_zlight(light);
     
     #if TEAPOT
     // register_new_texturearray_from_files("giant_head_texture.png", 1);
@@ -99,7 +99,7 @@ void client_logic_late_startup(void) {
         for (uint32_t mat_i = 0; mat_i < MAX_MATERIALS_PER_POLYGON; mat_i++) {
             teapot_request.gpu_materials[mat_i].rgba[0]        =  1.3f;
             teapot_request.gpu_materials[mat_i].rgba[1]        =  1.3f;
-            teapot_request.gpu_materials[mat_i].rgba[2]        =  1.3f;
+            teapot_request.gpu_materials[mat_i].rgba[2]        =  0.9f;
             teapot_request.gpu_materials[mat_i].rgba[3]        =  1.0f;
             teapot_request.gpu_materials[mat_i].texturearray_i = -1.0f;
             teapot_request.gpu_materials[mat_i].texture_i      = -1.0f;
@@ -167,7 +167,7 @@ void client_logic_late_startup(void) {
     font_settings->font_touchable_id = BOOM_LABEL_TOCUHABLE_ID;
     font_settings->font_color[0] =  2.2f;
     font_settings->font_color[1] =  2.9f;
-    font_settings->font_color[2] =  1.8f;
+    font_settings->font_color[2] =  0.8f;
     font_settings->font_color[3] =  1.0f;
     font_settings->ignore_camera = false;
     font_settings->font_ignore_lighting = 1.0f;

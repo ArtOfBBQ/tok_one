@@ -124,7 +124,7 @@ void windowsize_init(void) {
     window_globals->postprocessing_constants.fog_color[0] = 0.35f;
     window_globals->postprocessing_constants.fog_color[1] = 0.35f;
     window_globals->postprocessing_constants.fog_color[2] = 0.35f;
-    window_globals->postprocessing_constants.fog_factor = 0.75f;
+    window_globals->postprocessing_constants.fog_factor = 0.0f;
     
     window_globals->last_clickray_origin[0]    = 0.0f;
     window_globals->last_clickray_origin[1]    = 0.0f;

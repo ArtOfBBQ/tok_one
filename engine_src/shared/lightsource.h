@@ -106,14 +106,17 @@ void project_float4_to_2d_inplace(
 
 // just copy the lights without translation, for hardware renderer
 void copy_lights(
-    GPULightCollection * lights_for_gpu);
+    GPULight * lights,
+    uint32_t * lights_size,
+    uint32_t * shadowcaster_i);
 
 // move each light around the camera (e.g. when the camera moves
 // right, we move all lights etc. to the left instead)
 // reminder: this is calculated once before 2d and 3d renderer
 // and then used in both
 void translate_lights(
-    GPULightCollection * lights_for_gpu);
+    GPULight * lights,
+    uint32_t * lights_size);
 
 void delete_zlight(const int32_t with_object_id);
 

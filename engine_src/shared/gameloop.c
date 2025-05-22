@@ -40,7 +40,7 @@ void gameloop_update_before_render_pass(
     profiler_start("gameloop_update()");
     #endif
     
-    log_assert(frame_data->light_collection != NULL);
+    log_assert(frame_data->lights != NULL);
     log_assert(frame_data->camera != NULL);
     
     window_globals->this_frame_timestamp =
@@ -59,9 +59,7 @@ void gameloop_update_before_render_pass(
         gameloop_previous_time;
     gameloop_previous_time = window_globals->this_frame_timestamp;
     
-    log_assert(frame_data->light_collection != NULL);
     common_memcpy(frame_data->camera, &camera, sizeof(GPUCamera));
-    log_assert(frame_data->light_collection != NULL);
     
     frame_data->vertices_size            = 0;
     frame_data->polygon_collection->size = 0;
@@ -198,12 +196,17 @@ void gameloop_update_before_render_pass(
         
         clean_deleted_lights();
         
-        copy_lights(frame_data->light_collection);
+        copy_lights(
+            frame_data->lights,
+            &window_globals->postprocessing_constants.lights_size,
+            &window_globals->postprocessing_constants.shadowcaster_i);
         
         renderer_hardware_render(
                 frame_data,
             /* uint64_t elapsed_microseconds: */
                 elapsed);
+        
+        assert(frame_data->postprocessing_constants->lights_size > 0);
         
         uint32_t overflow_vertices = frame_data->vertices_size % 3;
         frame_data->vertices_size -= overflow_vertices;
