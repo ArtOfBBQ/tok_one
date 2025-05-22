@@ -326,10 +326,12 @@ void construct_quad(
         height / current_height;
     stack_recipient->gpu_data->xyz_multiplier[2] = 1.0f;
     
-    stack_recipient->gpu_materials[0].rgba[0] = 1.0f;
-    stack_recipient->gpu_materials[0].rgba[1] = 1.0f;
-    stack_recipient->gpu_materials[0].rgba[2] = 1.0f;
-    stack_recipient->gpu_materials[0].rgba[3] = 1.0f;
+    stack_recipient->gpu_materials[0].rgba[0]  = 1.0f;
+    stack_recipient->gpu_materials[0].rgba[1]  = 1.0f;
+    stack_recipient->gpu_materials[0].rgba[2]  = 1.0f;
+    stack_recipient->gpu_materials[0].rgba[3]  = 1.0f;
+    stack_recipient->gpu_materials[0].diffuse  = 1.0f;
+    stack_recipient->gpu_materials[0].specular = 0.2f;
     stack_recipient->gpu_materials[0].texturearray_i = -1;
     stack_recipient->gpu_materials[0].texture_i = -1;
 }

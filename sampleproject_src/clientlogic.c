@@ -27,23 +27,24 @@ void client_logic_late_startup(void) {
     #define TEAPOT_Y  0.1f
     #define TEAPOT_Z  0.32f
     
+    shadowcaster_light_i = 0;
     zLightSource * light = next_zlight();
     light->RGBA[0]       =  0.85f;
-    light->RGBA[1]       =  0.25f;
-    light->RGBA[2]       =  0.25f;
+    light->RGBA[1]       =  0.00f;
+    light->RGBA[2]       =  0.00f;
     light->RGBA[3]       =  1.00f;
-    light->ambient       =  0.25f;
+    light->ambient       =  0.00f;
     light->diffuse       =  1.00f;
-    light->reach         =  5.00f;
+    light->specular      =  0.00f;
+    light->reach         =  8.00f;
     light->xyz[0]        =  TEAPOT_X;
-    light->xyz[1]        =  TEAPOT_Y + 3.0f;
+    light->xyz[1]        =  TEAPOT_Y + 1.5f;
     light->xyz[2]        =  TEAPOT_Z;
     light->xyz_angle[0]  =  1.5708f; // rotate around the x axis because light is looking at +z right now but needs to look down
     light->xyz_angle[1]  =  0.00f;
     light->xyz_angle[2]  =  0.00f;
     commit_zlight(light);
     
-    shadowcaster_light_i = UINT32_MAX;
     camera.xyz[0] = 0.0f;
     camera.xyz[1] = 0.0f;
     camera.xyz[2] = TEAPOT_Z - 0.45f;
@@ -52,17 +53,34 @@ void client_logic_late_startup(void) {
     camera.xyz_angle[2] =  0.0f;
     
     light = next_zlight();
-    light->RGBA[0]       =  0.25f;
+    light->RGBA[0]       =  0.0f;
     light->RGBA[1]       =  0.35f;
-    light->RGBA[2]       =  0.25f;
+    light->RGBA[2]       =  0.00f;
     light->RGBA[3]       =  1.00f;
-    light->ambient       =  0.25f;
+    light->ambient       =  0.00f;
     light->diffuse       =  1.00f;
-    light->reach         =  1.00f;
-    light->xyz[0]        =  1.55f;
-    light->xyz[1]        =  0.60f;
-    light->xyz[2]        =  1.00f;
-    light->xyz_angle[0]  = -1.00f;
+    light->specular      =  0.00f;
+    light->reach         =  8.00f;
+    light->xyz[0]        =  TEAPOT_X + 1.0f;
+    light->xyz[1]        =  TEAPOT_Y - 0.1f;
+    light->xyz[2]        =  TEAPOT_Z - 0.05f;
+    light->xyz_angle[0]  =  1.00f;
+    light->xyz_angle[1]  =  0.00f;
+    light->xyz_angle[2]  =  0.00f;
+    commit_zlight(light);
+    
+    light->RGBA[0]       =  0.00f;
+    light->RGBA[1]       =  0.00f;
+    light->RGBA[2]       =  0.80f;
+    light->RGBA[3]       =  1.00f;
+    light->ambient       =  0.00f;
+    light->diffuse       =  1.00f;
+    light->specular      =  0.00f;
+    light->reach         =  8.00f;
+    light->xyz[0]        =  TEAPOT_X;
+    light->xyz[1]        =  TEAPOT_Y - 1.5f;
+    light->xyz[2]        =  TEAPOT_Z;
+    light->xyz_angle[0]  =  1.5708f; // rotate around the x axis because light is looking at +z right now but needs to look down
     light->xyz_angle[1]  =  0.00f;
     light->xyz_angle[2]  =  0.00f;
     commit_zlight(light);
@@ -73,16 +91,12 @@ void client_logic_late_startup(void) {
     teapot_object_ids[0] = next_nonui_object_id();
     teapot_object_ids[1] = next_nonui_object_id();
     
-    for (uint32_t i = 0; i < 1; i++) {
+    for (uint32_t i = 0; i < 2; i++) {
         PolygonRequest teapot_request;
         teapot_request.materials_size = 1;
         request_next_zpolygon(&teapot_request);
         construct_zpolygon(&teapot_request);
         teapot_request.cpu_data->mesh_id = teapot_mesh_id;
-        //    scale_zpolygon_multipliers_to_height(
-        //        teapot_request.cpu_data,
-        //        teapot_request.gpu_data,
-        //        0.25f);
         teapot_request.gpu_data->xyz_multiplier[0] = 0.15f;
         teapot_request.gpu_data->xyz_multiplier[1] = 0.15f;
         teapot_request.gpu_data->xyz_multiplier[2] = 0.15f;
@@ -117,7 +131,6 @@ void client_logic_late_startup(void) {
     }
     #endif
     
-    #if 1
     PolygonRequest quad[1];
     for (uint32_t i = 0; i < 1; i++) {
         request_next_zpolygon(&quad[i]);
@@ -152,19 +165,20 @@ void client_logic_late_startup(void) {
         quad[i].gpu_data->ignore_camera          = 0.0f;
         quad[i].gpu_data->ignore_lighting        = 0.0f;
         
-        quad[i].gpu_materials[0].rgba[0]         = 0.6f;
-        quad[i].gpu_materials[0].rgba[1]         = 0.4f;
-        quad[i].gpu_materials[0].rgba[2]         = 0.3f;
+        quad[i].gpu_materials[0].rgba[0]         = 0.5f;
+        quad[i].gpu_materials[0].rgba[1]         = 0.5f;
+        quad[i].gpu_materials[0].rgba[2]         = 0.5f;
         quad[i].gpu_materials[0].rgba[3]         = 1.0f;
+        quad[i].gpu_materials[0].diffuse         = 1.0f;
+        quad[i].gpu_materials[0].specular        = 1.0f;
         
         commit_zpolygon_to_render(&quad[i]);
     }
-    #endif
     
     #if 1
-    #define BOOM_LABEL_TOCUHABLE_ID 1441003
+    #define BLOOM_LABEL_TOCUHABLE_ID 1441003
     font_settings->font_height = 280;
-    font_settings->font_touchable_id = BOOM_LABEL_TOCUHABLE_ID;
+    font_settings->font_touchable_id = BLOOM_LABEL_TOCUHABLE_ID;
     font_settings->font_color[0] =  2.2f;
     font_settings->font_color[1] =  2.9f;
     font_settings->font_color[2] =  0.8f;
@@ -310,8 +324,17 @@ static void client_handle_keypresses(
 
 static uint64_t last_anim_start = 0;
 static uint64_t last_anim_end   = 0;
+static float light_zero_mod = 1.0f;
 void client_logic_update(uint64_t microseconds_elapsed)
 {
+    zlights_to_apply[0].RGBA[0] += (0.01f * light_zero_mod);
+    if (zlights_to_apply[0].RGBA[0] > 2.0f) {
+        light_zero_mod = -1.0f;
+    }
+    if (zlights_to_apply[0].RGBA[0] < 0.3f) {
+        light_zero_mod =  1.0f;
+    }
+    
     #if TEAPOT
     int32_t first_teapot_zp_i = -1;
     for (int32_t i = 0; i < (int32_t)zsprites_to_render->size; i++) {
@@ -375,7 +398,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
         
         if (
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                touchable_id_top == BOOM_LABEL_TOCUHABLE_ID ||
+                touchable_id_top == BLOOM_LABEL_TOCUHABLE_ID ||
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
                 touchable_id_pierce == 6)
         {

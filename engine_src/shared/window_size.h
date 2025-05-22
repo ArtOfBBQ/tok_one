@@ -37,22 +37,19 @@ platform layer doesn't need to do anything and can just record values directly
 #include "common.h"
 #include "cpu_gpu_shared_types.h"
 
-#define TRANSFORMED_IMPUTED_NORMALS_MAX 900
 typedef struct WindowGlobals {
     bool32_t draw_mouseptr;
     bool32_t draw_clickray;
     bool32_t draw_imputed_normals;
     bool32_t draw_triangles;
-    bool32_t show_profiler;
-    bool32_t pause_profiler;
     bool32_t draw_axes;
     bool32_t draw_fps;
     bool32_t draw_top_touchable_id;
+    bool32_t show_profiler;
+    bool32_t pause_profiler;
     bool32_t block_mouse;
     bool32_t fullscreen;
     
-    float transformed_imputed_normals[TRANSFORMED_IMPUTED_NORMALS_MAX];
-    uint32_t next_transformed_imputed_normal_i;
     float last_clickray_origin[3];
     float last_clickray_direction[3];
     float last_clickray_collision[3];

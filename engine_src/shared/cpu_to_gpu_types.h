@@ -13,8 +13,10 @@ typedef struct GPUDataForSingleFrame
     GPUzSpriteMaterial *                polygon_materials;
     GPUCamera *                                    camera;
     GPULight *                                     lights;
+    #if RAW_SHADER_ACTIVE
     GPURawVertex *                          line_vertices;
     GPURawVertex *                         point_vertices;
+    #endif
     GPUPostProcessingConstants * postprocessing_constants;
     uint32_t                                vertices_size;
     uint32_t                           first_alphablend_i;

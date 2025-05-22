@@ -33,7 +33,9 @@ typedef struct AppleGPUState {
     
     id<MTLRenderPipelineState> diamond_pls;
     id<MTLRenderPipelineState> alphablend_pls;
+    #if RAW_SHADER_ACTIVE
     id<MTLRenderPipelineState> raw_pls;
+    #endif
     #if BLOOM_ACTIVE
     id<MTLComputePipelineState> downsample_compute_pls;
     id<MTLComputePipelineState> boxblur_compute_pls;
@@ -203,28 +205,6 @@ bool32_t apple_gpu_init(
         return false;
     }
     
-    id<MTLFunction> raw_vertex_shader =
-        [ags->lib newFunctionWithName:
-            @"raw_vertex_shader"];
-    if (raw_vertex_shader == NULL) {
-        common_strcpy_capped(
-            error_msg_string,
-            512,
-            "Missing function: raw_vertex_shader()");
-        return false;
-    }
-    
-    id<MTLFunction> raw_fragment_shader =
-        [ags->lib newFunctionWithName:
-            @"raw_fragment_shader"];
-    if (raw_fragment_shader == NULL) {
-        common_strcpy_capped(
-            error_msg_string,
-            512,
-            "Missing function: raw_fragment_shader()");
-        return false;
-    }
-    
     #if SHADOWS_ACTIVE
     id<MTLFunction> shadows_vertex_shader =
         [ags->lib newFunctionWithName:
@@ -347,6 +327,29 @@ bool32_t apple_gpu_init(
         return false;
     }
     
+    #if RAW_SHADER_ACTIVE
+    id<MTLFunction> raw_vertex_shader =
+        [ags->lib newFunctionWithName:
+            @"raw_vertex_shader"];
+    if (raw_vertex_shader == NULL) {
+        common_strcpy_capped(
+            error_msg_string,
+            512,
+            "Missing function: raw_vertex_shader()");
+        return false;
+    }
+    
+    id<MTLFunction> raw_fragment_shader =
+        [ags->lib newFunctionWithName:
+            @"raw_fragment_shader"];
+    if (raw_fragment_shader == NULL) {
+        common_strcpy_capped(
+            error_msg_string,
+            512,
+            "Missing function: raw_fragment_shader()");
+        return false;
+    }
+    
     MTLRenderPipelineDescriptor * raw_pipeline_descriptor =
         [[MTLRenderPipelineDescriptor alloc] init];
     [raw_pipeline_descriptor
@@ -381,6 +384,7 @@ bool32_t apple_gpu_init(
             "Failed to load the raw vertex shader");
         return false;
     }
+    #endif
     
     MTLDepthStencilDescriptor * depth_descriptor =
         [MTLDepthStencilDescriptor new];
@@ -464,6 +468,7 @@ bool32_t apple_gpu_init(
         
         ags->vertex_buffers[buf_i] = MTLBufferFrameVertices;
         
+        #if RAW_SHADER_ACTIVE
         id<MTLBuffer> MTLBufferLineVertices =
             [with_metal_device
                 /* the pointer needs to be page aligned */
@@ -490,7 +495,8 @@ bool32_t apple_gpu_init(
                             triple_buffers[buf_i].point_vertices
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        gpu_shared_data_collection->point_vertices_allocation_size
+                        gpu_shared_data_collection->
+                            point_vertices_allocation_size
                     options:
                         MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
@@ -498,6 +504,7 @@ bool32_t apple_gpu_init(
                         nil];
         
         ags->point_vertex_buffers[buf_i] = MTLBufferPointVertices;
+        #endif
         
         id<MTLBuffer> MTLBufferPostProcessingConstants =
             [with_metal_device
@@ -1379,9 +1386,9 @@ void platform_gpu_copy_locked_vertices(void)
         window_globals->draw_triangles &&
         diamond_verts_size > 0 &&
         gpu_shared_data_collection->triple_buffers[ags->frame_i].
-            light_collection->shadowcaster_i <
-            gpu_shared_data_collection->triple_buffers[ags->frame_i].
-                light_collection->lights_size)
+            postprocessing_constants->shadowcaster_i <
+                gpu_shared_data_collection->triple_buffers[ags->frame_i].
+                    postprocessing_constants->lights_size)
     {
         MTLRenderPassDescriptor * render_pass_shadows =
             [MTLRenderPassDescriptor new];
@@ -1443,6 +1450,14 @@ void platform_gpu_copy_locked_vertices(void)
                 0
             atIndex:
                 5];
+        
+        [shadow_pass_encoder
+            setVertexBuffer:
+                ags->postprocessing_constants_buffers[ags->frame_i]
+            offset:
+                0
+            atIndex:
+                6];
         
         [shadow_pass_encoder setRenderPipelineState:ags->shadows_pls];
         [shadow_pass_encoder
@@ -1686,6 +1701,7 @@ void platform_gpu_copy_locked_vertices(void)
                 alphablend_verts_size];
     }
     
+    #if RAW_SHADER_ACTIVE
     if ((
         gpu_shared_data_collection->triple_buffers[ags->frame_i].
             line_vertices_size +
@@ -1712,6 +1728,23 @@ void platform_gpu_copy_locked_vertices(void)
                 0
             atIndex:
                 0];
+        
+        [render_pass_1_draw_triangles_encoder
+            setVertexBuffer:
+                ags->camera_buffers[ags->frame_i]
+            offset:
+                0
+            atIndex:
+                3];
+        
+        [render_pass_1_draw_triangles_encoder
+            setVertexBuffer:
+                ags->projection_constants_buffer
+            offset:
+                0
+            atIndex:
+                5];
+        
         assert(gpu_shared_data_collection->
             triple_buffers[ags->frame_i].line_vertices_size <=
                 MAX_LINE_VERTICES);
@@ -1742,6 +1775,7 @@ void platform_gpu_copy_locked_vertices(void)
             vertexCount: gpu_shared_data_collection->
                 triple_buffers[ags->frame_i].point_vertices_size];
     }
+    #endif
     
     [render_pass_1_draw_triangles_encoder endEncoding];
     

@@ -146,13 +146,13 @@ vertex float4 shadows_vertex_shader(
     // rotate around camera
     float3 cam_x_rotated = x_rotate(
         camera_translated_pos,
-        lights[updating_globals->shadowcaster_i].angle_xyz[0]);
+        -lights[updating_globals->shadowcaster_i].angle_xyz[0]);
     float3 cam_y_rotated = y_rotate(
         cam_x_rotated,
-        lights[updating_globals->shadowcaster_i].angle_xyz[1]);
+        -lights[updating_globals->shadowcaster_i].angle_xyz[1]);
     float3 cam_z_rotated = z_rotate(
         cam_y_rotated,
-        lights[updating_globals->shadowcaster_i].angle_xyz[2]);
+        -lights[updating_globals->shadowcaster_i].angle_xyz[2]);
     
     float ic = clamp(
         polygons[polygon_i].ignore_camera,
@@ -907,7 +907,8 @@ raw_vertex_shader(
     
     float3 camera_position = vector_float3(
         camera->xyz[0],
-        camera->xyz[1], camera->xyz[2]);
+        camera->xyz[1],
+        camera->xyz[2]);
     float3 camera_translated_pos = pos - camera_position;
     
     // rotate around camera

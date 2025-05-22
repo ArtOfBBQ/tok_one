@@ -23,6 +23,7 @@ of the engine for your specific app.
 #define INITIAL_WINDOW_BOTTOM  430.0f
 
 
+#define RAW_SHADER_ACTIVE 1
 #define TEXTURES_ACTIVE 0
 #define BLOOM_ACTIVE 0
 #define PARTICLES_ACTIVE 0
@@ -32,7 +33,7 @@ of the engine for your specific app.
 
 #define MAX_RENDERING_FRAME_BUFFERS 3 // 3 for triple-buffering
 
-#define MAX_VERTICES_PER_BUFFER  1500000
+#define MAX_VERTICES_PER_BUFFER 1500000
 #define MAX_LIGHTS_PER_BUFFER 100
 
 /*
@@ -40,7 +41,7 @@ The maximum number of sprites in your app.
 */
 #define MAX_POLYGONS_PER_BUFFER  6500
 #define MAX_MATERIALS_PER_POLYGON 15
-#define MAX_LINE_VERTICES 10
+#define MAX_LINE_VERTICES 100
 #define MAX_POINT_VERTICES 30
 
 /*

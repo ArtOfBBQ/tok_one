@@ -153,6 +153,7 @@ void commit_point(PointRequest * to_commit)
     to_commit->cpu_data->committed = true;
 }
 
+#if RAW_SHADER_ACTIVE
 void add_points_and_lines_to_workload(
     GPUDataForSingleFrame * frame_data)
 {
@@ -211,3 +212,4 @@ void add_points_and_lines_to_workload(
         }
     }
 }
+#endif

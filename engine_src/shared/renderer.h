@@ -19,16 +19,10 @@ extern "C" {
 #endif
 
 void renderer_init(void);
-// void free_renderer(void);
 
 void renderer_hardware_render(
     GPUDataForSingleFrame * frame_data,
     uint64_t elapsed_nanoseconds);
-
-//void software_render(
-//    Vertex * next_gpu_workload,
-//    uint32_t * next_gpu_workload_size,
-//    uint64_t elapsed_nanoseconds);
 
 #ifdef __cplusplus
 }

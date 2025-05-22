@@ -131,6 +131,13 @@ static void test_simd_functions_floats(void) {
 }
 #endif
 
+static uint32_t pad_to_page_size(uint32_t base_allocation) {
+    uint32_t return_value = base_allocation +
+        (page_size - (base_allocation % page_size));
+    assert(return_value % page_size == 0);
+    return return_value;
+}
+
 void init_application_before_gpu_init(
     bool32_t * success,
     char * error_message)
@@ -344,85 +351,38 @@ void init_application_before_gpu_init(
     
     // init the buffers that contain our vertices to send to the GPU
     gpu_shared_data_collection->vertices_allocation_size =
-            sizeof(GPUVertex) * MAX_VERTICES_PER_BUFFER;
-    gpu_shared_data_collection->vertices_allocation_size +=
-        (page_size - (gpu_shared_data_collection->vertices_allocation_size % page_size));
-    assert(gpu_shared_data_collection->vertices_allocation_size % page_size == 0);
+        pad_to_page_size(sizeof(GPUVertex) * MAX_VERTICES_PER_BUFFER);
     
     gpu_shared_data_collection->polygons_allocation_size =
-        sizeof(GPUzSprite) * MAX_POLYGONS_PER_BUFFER;
-    gpu_shared_data_collection->polygons_allocation_size +=
-        (page_size - (gpu_shared_data_collection->polygons_allocation_size % page_size));
-    assert(gpu_shared_data_collection->polygons_allocation_size > 0);
-    assert(gpu_shared_data_collection->polygons_allocation_size % page_size == 0);
+        pad_to_page_size(sizeof(GPUzSprite) * MAX_POLYGONS_PER_BUFFER);
     
     gpu_shared_data_collection->polygon_materials_allocation_size =
-        sizeof(GPUzSpriteMaterial) *
-        MAX_MATERIALS_PER_POLYGON *
-        MAX_POLYGONS_PER_BUFFER;
-    gpu_shared_data_collection->polygon_materials_allocation_size +=
-        (page_size - (gpu_shared_data_collection->polygon_materials_allocation_size %
-            page_size));
-    assert(gpu_shared_data_collection->polygon_materials_allocation_size
-        % page_size == 0);
+        pad_to_page_size(
+            sizeof(GPUzSpriteMaterial) *
+            MAX_MATERIALS_PER_POLYGON *
+            MAX_POLYGONS_PER_BUFFER);
     
     gpu_shared_data_collection->lights_allocation_size =
-        sizeof(GPULight) * MAX_LIGHTS_PER_BUFFER;
-    gpu_shared_data_collection->lights_allocation_size +=
-        (page_size - (gpu_shared_data_collection->lights_allocation_size % page_size));
-    assert(gpu_shared_data_collection->lights_allocation_size > 0);
-    assert(gpu_shared_data_collection->lights_allocation_size % page_size == 0);
+        pad_to_page_size(sizeof(GPULight) * MAX_LIGHTS_PER_BUFFER);
     
-    gpu_shared_data_collection->camera_allocation_size = sizeof(GPUCamera);
-    gpu_shared_data_collection->camera_allocation_size +=
-        (page_size - (gpu_shared_data_collection->camera_allocation_size % page_size));
-    assert(gpu_shared_data_collection->camera_allocation_size % page_size == 0);
+    gpu_shared_data_collection->camera_allocation_size =
+        pad_to_page_size(sizeof(GPUCamera));
     
     gpu_shared_data_collection->locked_vertices_allocation_size =
-        (sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
-    gpu_shared_data_collection->locked_vertices_allocation_size +=
-        (page_size - (gpu_shared_data_collection->
-            locked_vertices_allocation_size % page_size));
-    assert(gpu_shared_data_collection->locked_vertices_allocation_size > 0);
-    assert(gpu_shared_data_collection->locked_vertices_allocation_size %
-        page_size == 0);
+        pad_to_page_size(
+            sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
     
     gpu_shared_data_collection->projection_constants_allocation_size =
-        sizeof(GPUProjectionConstants);
-    gpu_shared_data_collection->projection_constants_allocation_size +=
-        (page_size - (gpu_shared_data_collection->
-            projection_constants_allocation_size % page_size));
-    assert(gpu_shared_data_collection->projection_constants_allocation_size > 0);
-    assert(gpu_shared_data_collection->projection_constants_allocation_size %
-        page_size == 0);
+        pad_to_page_size(sizeof(GPUProjectionConstants));
     
     gpu_shared_data_collection->point_vertices_allocation_size =
-        sizeof(GPURawVertex) * MAX_POINT_VERTICES;
-    gpu_shared_data_collection->point_vertices_allocation_size +=
-        (page_size - (gpu_shared_data_collection->
-            point_vertices_allocation_size % page_size));
-    assert(gpu_shared_data_collection->point_vertices_allocation_size >= 0);
-    assert(gpu_shared_data_collection->point_vertices_allocation_size %
-        page_size == 0);
+        pad_to_page_size(sizeof(GPURawVertex) * MAX_POINT_VERTICES);
     
     gpu_shared_data_collection->line_vertices_allocation_size =
-        sizeof(GPURawVertex) * MAX_LINE_VERTICES;
-    gpu_shared_data_collection->line_vertices_allocation_size +=
-        (page_size - (gpu_shared_data_collection->
-            line_vertices_allocation_size % page_size));
-    assert(gpu_shared_data_collection->line_vertices_allocation_size >= 0);
-    assert(gpu_shared_data_collection->line_vertices_allocation_size %
-        page_size == 0);
+        pad_to_page_size(sizeof(GPURawVertex) * MAX_LINE_VERTICES);
     
     gpu_shared_data_collection->postprocessing_constants_allocation_size =
-            sizeof(GPUVertex) * MAX_VERTICES_PER_BUFFER;
-    gpu_shared_data_collection->postprocessing_constants_allocation_size +=
-        (page_size -
-            (gpu_shared_data_collection->
-                postprocessing_constants_allocation_size % page_size));
-    assert(
-        gpu_shared_data_collection->
-            postprocessing_constants_allocation_size % page_size == 0);
+        pad_to_page_size(sizeof(GPUVertex) * MAX_VERTICES_PER_BUFFER);
     
     for (
         uint32_t cur_frame_i = 0;
@@ -456,19 +416,21 @@ void init_application_before_gpu_init(
             lights != NULL);
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].camera =
-        (GPUCamera *)malloc_from_unmanaged_aligned(
-            gpu_shared_data_collection->camera_allocation_size,
-            page_size);
+            (GPUCamera *)malloc_from_unmanaged_aligned(
+                gpu_shared_data_collection->camera_allocation_size,
+                page_size);
         
+        #if RAW_SHADER_ACTIVE
         gpu_shared_data_collection->triple_buffers[cur_frame_i].point_vertices =
-        (GPURawVertex *)malloc_from_unmanaged_aligned(
-            gpu_shared_data_collection->point_vertices_allocation_size,
-            page_size);
+            (GPURawVertex *)malloc_from_unmanaged_aligned(
+                gpu_shared_data_collection->point_vertices_allocation_size,
+                page_size);
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].line_vertices =
-        (GPURawVertex *)malloc_from_unmanaged_aligned(
-            gpu_shared_data_collection->line_vertices_allocation_size,
-            page_size);
+            (GPURawVertex *)malloc_from_unmanaged_aligned(
+                gpu_shared_data_collection->line_vertices_allocation_size,
+                page_size);
+        #endif
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].
             postprocessing_constants =

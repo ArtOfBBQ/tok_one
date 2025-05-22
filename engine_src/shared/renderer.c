@@ -10,6 +10,7 @@ void renderer_init(void) {
 
 static bool32_t is_last_clicked = false;
 
+#if RAW_SHADER_ACTIVE
 static void add_line_vertex(
     GPUDataForSingleFrame * frame_data,
     const float xyz[3])
@@ -77,6 +78,7 @@ inline static void draw_bounding_sphere(
         }
     }
 }
+#endif
 
 inline static void add_alphablending_zpolygons_to_workload(
     GPUDataForSingleFrame * frame_data)
@@ -289,10 +291,10 @@ void renderer_hardware_render(
             true);
     #endif
     
+    #if RAW_SHADER_ACTIVE
     add_points_and_lines_to_workload(frame_data);
     
     if (application_running && window_globals->draw_axes) {
-        assert(0);
         // TODO: draw axes
         float axis_vertices[6];
         common_memset_float(axis_vertices, 0.0f, sizeof(float) * 6);
@@ -345,6 +347,10 @@ void renderer_hardware_render(
                 axis_vertices + 3);
     }
     
+    if (application_running && window_globals->draw_imputed_normals) {
+        assert(0);
+    }
+    
     if (application_running && window_globals->draw_clickray) {
         add_line_vertex(
             /* GPUDataForSingleFrame * frame_data: */
@@ -395,19 +401,5 @@ void renderer_hardware_render(
                 0.33f);
     }
     
-    if (application_running && window_globals->draw_imputed_normals) {
-        for (
-            uint32_t norm_i = 0;
-            norm_i < window_globals->next_transformed_imputed_normal_i;
-            norm_i += 6)
-        {
-            add_line_vertex(
-                frame_data,
-                window_globals->transformed_imputed_normals + norm_i);
-            
-            add_line_vertex(
-                frame_data,
-                window_globals->transformed_imputed_normals + norm_i + 3);
-        }
-    }
+    #endif
 }

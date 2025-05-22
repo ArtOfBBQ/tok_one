@@ -500,6 +500,7 @@ static bool32_t evaluate_terminal_command(
         common_are_equal_strings(command, "DRAW AXIS") ||
         common_are_equal_strings(command, "DRAW AXES"))
     {
+        #if RAW_SHADER_ACTIVE
         window_globals->draw_axes = !window_globals->draw_axes;
         
         if (window_globals->draw_axes) {
@@ -513,6 +514,12 @@ static bool32_t evaluate_terminal_command(
                 SINGLE_LINE_MAX,
                 "Stopped drawing axes...");
         }
+        #else
+        common_strcpy_capped(
+            response,
+            SINGLE_LINE_MAX,
+            "Can't draw axes because raw shader (points & lines) is disabled");
+        #endif
         return true;
     }
     
@@ -722,9 +729,11 @@ static bool32_t evaluate_terminal_command(
                     response,
                     SINGLE_LINE_MAX,
                     ")");
+                
                 camera.xyz[0] = zlights_to_apply[shadowcaster_light_i].xyz[0];
                 camera.xyz[1] = zlights_to_apply[shadowcaster_light_i].xyz[1];
                 camera.xyz[2] = zlights_to_apply[shadowcaster_light_i].xyz[2];
+                
                 camera.xyz_angle[0] =
                     zlights_to_apply[shadowcaster_light_i].xyz_angle[0];
                 camera.xyz_angle[1] =
@@ -788,6 +797,7 @@ static bool32_t evaluate_terminal_command(
     }
     
     if (
+        common_are_equal_strings(command, "DRAW NORMALS") ||
         common_are_equal_strings(command, "DRAW IMPUTED NORMALS") ||
         common_are_equal_strings(command, "IMPUTED NORMALS") ||
         common_are_equal_strings(command, "GUESS NORMALS") ||

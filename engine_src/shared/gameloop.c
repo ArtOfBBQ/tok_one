@@ -34,8 +34,6 @@ void gameloop_update_before_render_pass(
         return;
     }
     
-    window_globals->next_transformed_imputed_normal_i = 0;
-    
     #if PROFILER_ACTIVE
     profiler_start("gameloop_update()");
     #endif
@@ -226,6 +224,8 @@ void gameloop_update_before_render_pass(
     
     frame_data->postprocessing_constants->timestamp =
         (uint32_t)window_globals->this_frame_timestamp;
+    frame_data->postprocessing_constants->shadowcaster_i =
+        shadowcaster_light_i;
     
     #if PROFILER_ACTIVE
     profiler_end("gameloop_update()");
