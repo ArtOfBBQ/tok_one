@@ -1396,6 +1396,7 @@ void platform_gpu_copy_locked_vertices(void)
                 gpu_shared_data_collection->triple_buffers[ags->frame_i].
                     postprocessing_constants->lights_size)
     {
+        assert(ags->shadows_texture != NULL);
         MTLRenderPassDescriptor * render_pass_shadows =
             [MTLRenderPassDescriptor new];
         render_pass_shadows.depthAttachment.loadAction = MTLLoadActionClear;
@@ -1464,7 +1465,8 @@ void platform_gpu_copy_locked_vertices(void)
             atIndex:
                 6];
         
-        [shadow_pass_encoder setRenderPipelineState:ags->shadows_pls];
+        [shadow_pass_encoder
+            setRenderPipelineState:ags->shadows_pls];
         [shadow_pass_encoder
             setDepthStencilState: ags->depth_stencil_state];
         [shadow_pass_encoder

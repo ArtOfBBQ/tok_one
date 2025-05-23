@@ -37,7 +37,7 @@ void client_logic_late_startup(void) {
     light->diffuse       =  1.00f;
     light->specular      =  0.00f;
     light->reach         =  8.00f;
-    light->xyz[0]        =  TEAPOT_X;
+    light->xyz[0]        =  TEAPOT_X - 0.5f;
     light->xyz[1]        =  TEAPOT_Y + 2.0f;
     light->xyz[2]        =  TEAPOT_Z;
     light->xyz_angle[0]  =  1.5708f; // rotate around the x axis because light is looking at +z right now but needs to look down
@@ -89,7 +89,7 @@ void client_logic_late_startup(void) {
     teapot_object_ids[0] = next_nonui_object_id();
     teapot_object_ids[1] = next_nonui_object_id();
     
-    for (uint32_t i = 0; i < 2; i++) {
+    for (uint32_t i = 0; i < 1; i++) {
         PolygonRequest teapot_request;
         teapot_request.materials_size = 1;
         request_next_zpolygon(&teapot_request);
@@ -99,7 +99,7 @@ void client_logic_late_startup(void) {
         teapot_request.gpu_data->xyz_multiplier[1] = 0.15f;
         teapot_request.gpu_data->xyz_multiplier[2] = 0.15f;
         teapot_request.gpu_data->xyz[0]            = TEAPOT_X + (i * 0.20f);
-        teapot_request.gpu_data->xyz[1]            = TEAPOT_Y + (i * 0.10f);
+        teapot_request.gpu_data->xyz[1]            = TEAPOT_Y - (i * 1.0f);
         teapot_request.gpu_data->xyz[2]            = TEAPOT_Z - (i * 0.25f);
         teapot_request.gpu_data->xyz_angle[0]      = 0.00f;
         teapot_request.gpu_data->xyz_angle[1]      = 3.2f;
@@ -122,6 +122,7 @@ void client_logic_late_startup(void) {
         }
         teapot_request.gpu_data->ignore_lighting =  0.0f;
         teapot_request.gpu_data->ignore_camera =  0.0f;
+        
         log_assert(teapot_request.gpu_data->xyz_offset[0] == 0.0f);
         log_assert(teapot_request.gpu_data->xyz_offset[1] == 0.0f);
         log_assert(teapot_request.gpu_data->xyz_offset[2] == 0.0f);
@@ -140,7 +141,7 @@ void client_logic_late_startup(void) {
         request_next_zpolygon(&quad[i]);
         construct_quad(
             /* const float left_x: */
-                TEAPOT_X - 0.75f,
+                TEAPOT_X + 0.25f,
             /* const float bottom_y: */
                 TEAPOT_Y - 1.25f,
             /* const float z: */

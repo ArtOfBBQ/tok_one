@@ -353,7 +353,7 @@ static FragmentAndTouchableOut pack_color_and_touchable_id(
     
     // Split into two 16-bit chunks
     uint16_t fourth_8 = ((uid >> 24) & 0xFF);
-    uint16_t third_8 = ((uid >> 16) & 0xFF);
+    uint16_t third_8  = ((uid >> 16) & 0xFF);
     uint16_t second_8 = ((uid >> 8) & 0xFF);
     uint16_t first_8  = (uid & 0xFF);
     
@@ -418,13 +418,13 @@ float3 get_lighting(
             float3 light_translated_pos = fragment_worldpos - light_pos;
             float3 light_x_rotated = x_rotate(
                 light_translated_pos,
-                light_angle_xyz[0]);
+                -light_angle_xyz[0]);
             float3 light_y_rotated = y_rotate(
                 light_x_rotated,
-                light_angle_xyz[1]);
+                -light_angle_xyz[1]);
             float3 light_z_rotated = z_rotate(
                 light_y_rotated,
-                light_angle_xyz[2]); // [0, 0, 1]
+                -light_angle_xyz[2]); // [0, 0, 1]
             
             float4 light_clip_pos =
                 project_float3_to_float4_perspective(
