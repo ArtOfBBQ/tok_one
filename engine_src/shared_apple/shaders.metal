@@ -1,8 +1,8 @@
 #include <metal_stdlib>
 #include <simd/simd.h>
 
-#include "../../../src/clientlogic_macro_settings.h"
-#include "../shared/cpu_gpu_shared_types.h"
+#include "clientlogic_macro_settings.h"
+#include "cpu_gpu_shared_types.h"
 
 using namespace metal;
 
@@ -368,7 +368,9 @@ static FragmentAndTouchableOut pack_color_and_touchable_id(
 }
 
 float3 get_lighting(
+    #if SHADOWS_ACTIVE
     texture2d<float> shadow_map,
+    #endif
     const device GPUCamera * camera,
     const device GPULight * lights,
     const device GPUProjectionConstants * projection_constants,
@@ -407,6 +409,7 @@ float3 get_lighting(
             lights[i].angle_xyz[2]);
         
         float shadow_factor = 1.0f;
+        #if SHADOWS_ACTIVE
         if (updating_globals->shadowcaster_i == i) {
             constexpr sampler shadow_sampler(
                 mag_filter::nearest,
@@ -443,6 +446,7 @@ float3 get_lighting(
                 (frag_depth <= shadow_depth + 0.00002f) ?
                     1.0f : 0.25f;
         }
+        #endif
         
         float distance = get_distance(
             light_pos,
@@ -525,7 +529,9 @@ fragment_shader(
     RasterizerPixel in [[stage_in]],
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
         color_textures[[ texture(0) ]],
+    #if SHADOWS_ACTIVE
     texture2d<float> shadow_map [[texture(SHADOWMAP_TEXTUREARRAY_I)]],
+    #endif
     const device GPULight * lights [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
@@ -540,8 +546,9 @@ fragment_shader(
     }
     
     float3 lighting = get_lighting(
-        /* */
+        #if SHADOWS_ACTIVE
             shadow_map,
+        #endif
         /* const device GPUCamera * camera: */
             camera,
         /* const device GPULight * lights: */
@@ -567,9 +574,15 @@ fragment_shader(
     
     float4 texture_sample = vector_float4(1.0f, 1.0f, 1.0f, 1.0f);
     
+    #if TEXTURES_ACTIVE
     if (
         polygon_materials[in.material_i].texturearray_i >= 0)
     {
+    #else
+    if (
+        polygon_materials[in.material_i].texturearray_i == 0)
+    {
+    #endif
         if (
             polygon_materials[in.material_i].texturearray_i >= 31 ||
             polygon_materials[in.material_i].texture_i < 0)
@@ -594,7 +607,7 @@ fragment_shader(
     
     int diamond_size = 35.0f;
     int neghalfdiamond = -1.0f * (diamond_size / 2);
-
+    
     int alpha_tresh = (int)(out_color[3] * diamond_size);
     
     if (
@@ -631,8 +644,10 @@ fragment FragmentAndTouchableOut
 alphablending_fragment_shader(
     RasterizerPixel in [[stage_in]],
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
-        color_textures[[ texture(0) ]],
+        color_textures[[ texture(0), maybe_unused ]],
+    #if SHADOWS_ACTIVE
     texture2d<float> shadow_map [[texture(SHADOWMAP_TEXTUREARRAY_I)]],
+    #endif
     const device GPULight * lights [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
@@ -640,8 +655,10 @@ alphablending_fragment_shader(
     const device GPUPostProcessingConstants * updating_globals [[ buffer(7) ]])
 {
     float3 lighting = get_lighting(
+        #if SHADOWS_ACTIVE
         /* texture2d<float> shadow_map: */
             shadow_map,
+        #endif
         /* const device GPUCamera * camera: */
             camera,
         /* const device GPULight * lights: */
@@ -665,10 +682,17 @@ alphablending_fragment_shader(
         polygon_materials[in.material_i].rgba[2],
         polygon_materials[in.material_i].rgba[3]);
     
+    #if TEXTURES_ACTIVE
     if (
         polygon_materials[in.material_i].texturearray_i < 0 ||
         polygon_materials[in.material_i].texture_i < 0)
     {
+    #else
+    if (
+        polygon_materials[in.material_i].texturearray_i != 0 ||
+        polygon_materials[in.material_i].texture_i < 0)
+    {
+    #endif
         
     } else {
         constexpr sampler textureSampler(
@@ -765,11 +789,13 @@ fragment half4
 single_quad_fragment_shader(
     PostProcessingFragment in [[stage_in]],
     texture2d<half> texture  [[texture(0)]],
+    #if BLOOM_ACTIVE
     texture2d<half> downsampled_1  [[texture(1)]],
     texture2d<half> downsampled_2  [[texture(2)]],
     texture2d<half> downsampled_3  [[texture(3)]],
     texture2d<half> downsampled_4  [[texture(4)]],
     texture2d<half> downsampled_5  [[texture(5)]],
+    #endif
     texture2d<half> perlin_texture  [[texture(6)]],
     depth2d<float> camera_depth_map
         [[texture(CAMERADEPTH_TEXTUREARRAY_I)]])
@@ -783,13 +809,15 @@ single_quad_fragment_shader(
     float2 texcoord = in.texcoord;
     
     half4 color_sample = texture.sample(sampler, texcoord);
+    #if BLOOM_ACTIVE
     color_sample += downsampled_1.sample(sampler, texcoord);
     color_sample += downsampled_2.sample(sampler, texcoord);
     color_sample += downsampled_3.sample(sampler, texcoord);
     color_sample += downsampled_4.sample(sampler, texcoord);
     color_sample += downsampled_5.sample(sampler, texcoord);
-    color_sample[3] = 1.0f;
+    #endif
     
+    color_sample[3] = 1.0f;
     color_sample += clamp(in.bonus_rgb, 0.0h, 0.25h);
     
     float dist = camera_depth_map.sample(sampler, texcoord);

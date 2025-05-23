@@ -525,10 +525,6 @@ int main(int argc, const char * argv[]) {
         
         platform_request_messagebox(errmsg2);
     } else {
-        // TODO: why is this here again? load font images on each platform
-        // think about startup cases where we fail to load the font or gpu
-        texture_array_load_font_images();
-        
         init_application_after_gpu_init();
         
         #if AUDIO_ACTIVE

@@ -458,6 +458,8 @@ void init_application_before_gpu_init(
 
 void init_application_after_gpu_init(void) {
     
+    texture_array_load_font_images();
+    
     FileBuffer perlin_buf;
     perlin_buf.good = false;
     perlin_buf.size_without_terminator = platform_get_resource_size(

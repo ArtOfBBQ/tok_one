@@ -38,7 +38,7 @@ void client_logic_late_startup(void) {
     light->specular      =  0.00f;
     light->reach         =  8.00f;
     light->xyz[0]        =  TEAPOT_X;
-    light->xyz[1]        =  TEAPOT_Y + 1.5f;
+    light->xyz[1]        =  TEAPOT_Y + 2.0f;
     light->xyz[2]        =  TEAPOT_Z;
     light->xyz_angle[0]  =  1.5708f; // rotate around the x axis because light is looking at +z right now but needs to look down
     light->xyz_angle[1]  =  0.00f;
@@ -86,8 +86,6 @@ void client_logic_late_startup(void) {
     commit_zlight(light);
     
     #if TEAPOT
-    // register_new_texturearray_from_files("giant_head_texture.png", 1);
-    
     teapot_object_ids[0] = next_nonui_object_id();
     teapot_object_ids[1] = next_nonui_object_id();
     
@@ -131,6 +129,12 @@ void client_logic_late_startup(void) {
     }
     #endif
     
+    char * quad_texture_filename = "structuredart2.png";
+    int32_t quad_texture_array_i = 1;
+    int32_t quad_texture_i = 0;
+    texture_array_register_new_by_splitting_file(
+        quad_texture_filename, 1, 1);
+        
     PolygonRequest quad[1];
     for (uint32_t i = 0; i < 1; i++) {
         request_next_zpolygon(&quad[i]);
@@ -149,8 +153,8 @@ void client_logic_late_startup(void) {
                     window_globals->window_height, 1.0f),
             /* PolygonRequest * stack_recipient: */
                 &quad[i]);
-        quad[i].gpu_materials->texturearray_i    = -1;
-        quad[i].gpu_materials->texture_i         = -1;
+        quad[i].gpu_materials->texturearray_i    = quad_texture_array_i;
+        quad[i].gpu_materials->texture_i         = quad_texture_i;
         quad[i].cpu_data->sprite_id              = -1;
         quad[i].gpu_data->touchable_id           = -1;
         quad[i].cpu_data->alpha_blending_enabled = false;
@@ -331,7 +335,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
     if (zlights_to_apply[0].RGBA[0] > 2.0f) {
         light_zero_mod = -1.0f;
     }
-    if (zlights_to_apply[0].RGBA[0] < 0.3f) {
+    if (zlights_to_apply[0].RGBA[0] < 1.2f) {
         light_zero_mod =  1.0f;
     }
     

@@ -23,7 +23,7 @@ of the engine for your specific app.
 #define INITIAL_WINDOW_BOTTOM  430.0f
 
 
-#define RAW_SHADER_ACTIVE 1
+#define RAW_SHADER_ACTIVE 1 // for points and lines
 #define TEXTURES_ACTIVE 0
 #define BLOOM_ACTIVE 0
 #define PARTICLES_ACTIVE 0

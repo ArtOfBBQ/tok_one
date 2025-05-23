@@ -238,6 +238,7 @@ bool32_t apple_gpu_init(
         setFragmentFunction: nil];
     shadows_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
+    shadows_pipeline_descriptor.label = @"shadow pipeline state";
     
     ags->shadows_pls =
        [with_metal_device
@@ -262,6 +263,7 @@ bool32_t apple_gpu_init(
         ags->pixel_format_renderpass1;
     diamond_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
+    diamond_pipeline_descriptor.label = @"diamond pipeline state";
     ags->diamond_pls =
         [with_metal_device
             newRenderPipelineStateWithDescriptor:
@@ -303,6 +305,7 @@ bool32_t apple_gpu_init(
         pixelFormat = ags->pixel_format_renderpass1;
     alphablend_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
+    alphablend_pipeline_descriptor.label = @"Alphablending pipeline";
     ags->alphablend_pls =
         [with_metal_device
             newRenderPipelineStateWithDescriptor:
@@ -360,11 +363,15 @@ bool32_t apple_gpu_init(
     raw_pipeline_descriptor
         .colorAttachments[0]
         .pixelFormat = ags->pixel_format_renderpass1;
+    raw_pipeline_descriptor
+        .colorAttachments[1]
+        .pixelFormat = ags->pixel_format_renderpass1;
     [raw_pipeline_descriptor
         .colorAttachments[0]
         setBlendingEnabled: NO];
     raw_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
+    raw_pipeline_descriptor.label = @"raw pipeline state";
     ags->raw_pls =
         [with_metal_device
             newRenderPipelineStateWithDescriptor:
@@ -695,7 +702,7 @@ bool32_t apple_gpu_init(
     
     // Set up pipeline for rendering the texture to the screen with a simple
     // quad
-    singlequad_pipeline_descriptor.label = @"SingleQuad Pipeline";
+    singlequad_pipeline_descriptor.label = @"single-quad pipeline";
     // singlequad_pipeline_descriptor.sampleCount = 1;
     [singlequad_pipeline_descriptor
         setVertexFunction: singlequad_vertex_shader];
@@ -847,7 +854,6 @@ void platform_gpu_init_texture_array(
     texture_descriptor.storageMode = MTLStorageModePrivate;
     texture_descriptor.width = single_image_width;
     texture_descriptor.height = single_image_height;
-    
     id<MTLTexture> texture = [ags->device
         newTextureWithDescriptor:texture_descriptor];
     
@@ -1392,7 +1398,6 @@ void platform_gpu_copy_locked_vertices(void)
     {
         MTLRenderPassDescriptor * render_pass_shadows =
             [MTLRenderPassDescriptor new];
-        
         render_pass_shadows.depthAttachment.loadAction = MTLLoadActionClear;
         render_pass_shadows.depthAttachment.storeAction = MTLStoreActionStore;
         render_pass_shadows.depthAttachment.clearDepth = 1.0f;
@@ -1729,21 +1734,21 @@ void platform_gpu_copy_locked_vertices(void)
             atIndex:
                 0];
         
-        [render_pass_1_draw_triangles_encoder
-            setVertexBuffer:
-                ags->camera_buffers[ags->frame_i]
-            offset:
-                0
-            atIndex:
-                3];
-        
-        [render_pass_1_draw_triangles_encoder
-            setVertexBuffer:
-                ags->projection_constants_buffer
-            offset:
-                0
-            atIndex:
-                5];
+        //        [render_pass_1_draw_triangles_encoder
+        //            setVertexBuffer:
+        //                ags->camera_buffers[ags->frame_i]
+        //            offset:
+        //                0
+        //            atIndex:
+        //                3];
+        //
+        //        [render_pass_1_draw_triangles_encoder
+        //            setVertexBuffer:
+        //                ags->projection_constants_buffer
+        //            offset:
+        //                0
+        //            atIndex:
+        //                5];
         
         assert(gpu_shared_data_collection->
             triple_buffers[ags->frame_i].line_vertices_size <=
