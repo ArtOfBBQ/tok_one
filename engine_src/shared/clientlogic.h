@@ -15,7 +15,7 @@ extern "C" {
 #include "tok_random.h"
 #include "memorystore.h"
 #include "collision.h"
-#include "texture_array.h"
+#include "texture_files.h"
 #include "lines.h"
 #include "zpolygon.h"
 #include "lightsource.h"

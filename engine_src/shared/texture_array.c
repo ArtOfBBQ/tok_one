@@ -813,8 +813,14 @@ void texture_array_register_high_priority_if_unloaded(
     }
 }
 
+void texture_array_preregister_null_png_from_disk(
+    const char * filename)
+{
+    
+}
+
 void texture_array_preregister_null_image(
-    char * filename,
+    const char * filename,
     const uint32_t height,
     const uint32_t width)
 {
@@ -966,7 +972,7 @@ void texture_array_decode_null_image_at(
     }
     
     // TODO: reinstate this assert
-    // log_assert(new_image->good);
+    log_assert(new_image->good);
     log_assert(new_image->height == texture_arrays[i].single_img_height);
     log_assert(new_image->width == texture_arrays[i].single_img_width);
     new_image->pixel_count = new_image->height * new_image->width;
@@ -1126,6 +1132,8 @@ void texture_array_decode_all_null_images(void)
 
 void texture_array_flag_all_to_request_gpu_init(void) {
     for (uint32_t i = 1; i < texture_arrays_size; i++) {
-        texture_arrays[i].request_init = true;
+        if (texture_arrays[i].images_size > 0) {
+            texture_arrays[i].request_init = true;
+        }
     }
 }

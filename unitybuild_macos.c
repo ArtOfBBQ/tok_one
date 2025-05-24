@@ -67,6 +67,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "gpu.m"
 // 5. Files that are dependent on the GPU platform layer
 #include "texture_array.c"
+#include "texture_files.c"
 #include "lines.c"
 #include "zpolygon.c"
 #include "particle.c"

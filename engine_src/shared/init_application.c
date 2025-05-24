@@ -574,6 +574,8 @@ void init_application_after_gpu_init(void) {
         platform_enter_fullscreen();
     }
     
+    texture_array_flag_all_to_request_gpu_init();
+    
     client_logic_late_startup();
     
     gameloop_active = true;

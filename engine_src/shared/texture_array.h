@@ -30,9 +30,11 @@ void texture_array_register_new_by_splitting_file(
     const uint32_t columns);
 
 void texture_array_preregister_null_image(
-    char * filename,
+    const char * filename,
     const uint32_t height,
     const uint32_t width);
+void texture_array_preregister_null_png_from_disk(
+    const char * filename);
 
 void texture_array_register_high_priority_if_unloaded(
     const int32_t texture_array_i,

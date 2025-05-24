@@ -11,6 +11,7 @@ void client_logic_init(void) {
     
 }
 
+static const char * texture_filename = "structuredart2.png";
 void client_logic_early_startup(
     bool32_t * success,
     char * error_message)
@@ -19,6 +20,10 @@ void client_logic_early_startup(
     // teapot_mesh_id = BASIC_CUBE_MESH_ID;
     teapot_mesh_id = new_mesh_id_from_resource("teapot.obj");
     #endif
+    
+    uint32_t good;
+    texture_files_preregister_png(texture_filename, &good);
+    assert(good);
 }
 
 void client_logic_late_startup(void) {
@@ -130,18 +135,24 @@ void client_logic_late_startup(void) {
     }
     #endif
     
-    char * quad_texture_filename = "structuredart2.png";
-    int32_t quad_texture_array_i = 1;
-    int32_t quad_texture_i = 0;
-    texture_array_register_new_by_splitting_file(
-        quad_texture_filename, 1, 1);
-        
+    int32_t quad_texture_array_i = -1;
+    int32_t quad_texture_i = -1;
+    uint32_t texture_push_good = 0;
+    texture_files_push_png(texture_filename, &texture_push_good);
+    assert(texture_push_good);
+    texture_array_get_filename_location(
+        texture_filename,
+        &quad_texture_array_i,
+        &quad_texture_i);
+    assert(quad_texture_array_i != -1);
+    assert(quad_texture_i != -1);
+    
     PolygonRequest quad[1];
     for (uint32_t i = 0; i < 1; i++) {
         request_next_zpolygon(&quad[i]);
         construct_quad(
             /* const float left_x: */
-                TEAPOT_X + 0.25f,
+                TEAPOT_X - 0.15f,
             /* const float bottom_y: */
                 TEAPOT_Y - 1.25f,
             /* const float z: */
@@ -170,9 +181,9 @@ void client_logic_late_startup(void) {
         quad[i].gpu_data->ignore_camera          = 0.0f;
         quad[i].gpu_data->ignore_lighting        = 0.0f;
         
-        quad[i].gpu_materials[0].rgba[0]         = 0.5f;
-        quad[i].gpu_materials[0].rgba[1]         = 0.5f;
-        quad[i].gpu_materials[0].rgba[2]         = 0.5f;
+        quad[i].gpu_materials[0].rgba[0]         = 0.75f;
+        quad[i].gpu_materials[0].rgba[1]         = 0.75f;
+        quad[i].gpu_materials[0].rgba[2]         = 0.85f;
         quad[i].gpu_materials[0].rgba[3]         = 1.0f;
         quad[i].gpu_materials[0].diffuse         = 1.0f;
         quad[i].gpu_materials[0].specular        = 1.0f;

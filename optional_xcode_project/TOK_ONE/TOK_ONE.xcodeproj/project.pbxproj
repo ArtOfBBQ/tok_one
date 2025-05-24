@@ -117,6 +117,7 @@
 		ECDCFF502DDE0F52002AA399 /* toktokenizer.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDCFF4F2DDE0F52002AA399 /* toktokenizer.c */; };
 		ECDCFF522DDE12EF002AA399 /* perlin_noise.png in Resources */ = {isa = PBXBuildFile; fileRef = ECDCFF512DDE12EF002AA399 /* perlin_noise.png */; };
 		ECDCFF532DDE13CB002AA399 /* perlin_noise.png in Resources */ = {isa = PBXBuildFile; fileRef = ECDCFF512DDE12EF002AA399 /* perlin_noise.png */; };
+		ECDD9C232DE2157500721A48 /* texture_files.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDD9C212DE2157400721A48 /* texture_files.c */; };
 		ECE759CE2C3FF1BE004B0847 /* collision.c in Sources */ = {isa = PBXBuildFile; fileRef = ECE759CC2C3FF1BE004B0847 /* collision.c */; };
 		ECE759D12C400175004B0847 /* lines.c in Sources */ = {isa = PBXBuildFile; fileRef = ECE759D02C400175004B0847 /* lines.c */; };
 		ECF7CB172D53ADA400623C60 /* platform_layer_common.c in Sources */ = {isa = PBXBuildFile; fileRef = ECF7CB142D53ADA400623C60 /* platform_layer_common.c */; };
@@ -239,6 +240,8 @@
 		ECDCFF4E2DDE0F52002AA399 /* toktokenizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = toktokenizer.h; path = ../../engine_src/shared/toktokenizer.h; sourceTree = "<group>"; };
 		ECDCFF4F2DDE0F52002AA399 /* toktokenizer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = toktokenizer.c; path = ../../engine_src/shared/toktokenizer.c; sourceTree = "<group>"; };
 		ECDCFF512DDE12EF002AA399 /* perlin_noise.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = perlin_noise.png; path = ../../resources/perlin_noise.png; sourceTree = "<group>"; };
+		ECDD9C212DE2157400721A48 /* texture_files.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = texture_files.c; path = ../../engine_src/shared/texture_files.c; sourceTree = "<group>"; };
+		ECDD9C222DE2157500721A48 /* texture_files.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = texture_files.h; path = ../../engine_src/shared/texture_files.h; sourceTree = "<group>"; };
 		ECE759CC2C3FF1BE004B0847 /* collision.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = collision.c; path = ../../engine_src/shared/collision.c; sourceTree = "<group>"; };
 		ECE759CD2C3FF1BE004B0847 /* collision.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = collision.h; path = ../../engine_src/shared/collision.h; sourceTree = "<group>"; };
 		ECE759CF2C400174004B0847 /* lines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lines.h; path = ../../engine_src/shared/lines.h; sourceTree = "<group>"; };
@@ -434,6 +437,8 @@
 				601128672862511500F92967 /* text.h */,
 				601128662862511500F92967 /* texture_array.c */,
 				601128682862511500F92967 /* texture_array.h */,
+				ECDD9C212DE2157400721A48 /* texture_files.c */,
+				ECDD9C222DE2157500721A48 /* texture_files.h */,
 				601128772862511600F92967 /* tok_random.c */,
 				601128802862511700F92967 /* tok_random.h */,
 				ECDCFF4F2DDE0F52002AA399 /* toktokenizer.c */,
@@ -661,6 +666,7 @@
 				60A9991E287BD4D6003F7159 /* shaders.metal in Sources */,
 				EC6441A729318B6D00A0267B /* ViewController.m in Sources */,
 				60A99907287BD4C3003F7159 /* clientlogic.c in Sources */,
+				ECDD9C232DE2157500721A48 /* texture_files.c in Sources */,
 				ECE759D12C400175004B0847 /* lines.c in Sources */,
 				60A99902287BD4C3003F7159 /* decode_png.h in Sources */,
 				60A998F7287BD4C3003F7159 /* logger.c in Sources */,
