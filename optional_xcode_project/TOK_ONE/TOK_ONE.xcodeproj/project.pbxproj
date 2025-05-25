@@ -97,18 +97,10 @@
 		EC6E121B2A04CE13004E7BD1 /* objectid.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12182A04CE12004E7BD1 /* objectid.c */; };
 		EC74B5212DE3BC070033206F /* guitar_simplified.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51A2DE3BC070033206F /* guitar_simplified.mtl */; };
 		EC74B5222DE3BC070033206F /* guitar_simplified.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51A2DE3BC070033206F /* guitar_simplified.mtl */; };
-		EC74B5232DE3BC070033206F /* 1001_AO.jpg in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51B2DE3BC070033206F /* 1001_AO.jpg */; };
-		EC74B5242DE3BC070033206F /* 1001_AO.jpg in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51B2DE3BC070033206F /* 1001_AO.jpg */; };
 		EC74B5252DE3BC070033206F /* 1001_normal.png in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51C2DE3BC070033206F /* 1001_normal.png */; };
 		EC74B5262DE3BC070033206F /* 1001_normal.png in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51C2DE3BC070033206F /* 1001_normal.png */; };
-		EC74B5272DE3BC070033206F /* 1001_albedo.jpg in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51D2DE3BC070033206F /* 1001_albedo.jpg */; };
-		EC74B5282DE3BC070033206F /* 1001_albedo.jpg in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51D2DE3BC070033206F /* 1001_albedo.jpg */; };
-		EC74B5292DE3BC070033206F /* 1001_metallic.jpg in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51E2DE3BC070033206F /* 1001_metallic.jpg */; };
-		EC74B52A2DE3BC070033206F /* 1001_metallic.jpg in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51E2DE3BC070033206F /* 1001_metallic.jpg */; };
 		EC74B52B2DE3BC070033206F /* guitar_simplified.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51F2DE3BC070033206F /* guitar_simplified.obj */; };
 		EC74B52C2DE3BC070033206F /* guitar_simplified.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51F2DE3BC070033206F /* guitar_simplified.obj */; };
-		EC74B52D2DE3BC070033206F /* 1001_roughness.jpg in Resources */ = {isa = PBXBuildFile; fileRef = EC74B5202DE3BC070033206F /* 1001_roughness.jpg */; };
-		EC74B52E2DE3BC070033206F /* 1001_roughness.jpg in Resources */ = {isa = PBXBuildFile; fileRef = EC74B5202DE3BC070033206F /* 1001_roughness.jpg */; };
 		EC78509B29E62CA800E6882A /* objmodel.c in Sources */ = {isa = PBXBuildFile; fileRef = EC78509929E62CA800E6882A /* objmodel.c */; };
 		EC7B09D4293CAC8B000ED98E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = EC7B09D3293CAC8B000ED98E /* Main.storyboard */; };
 		EC7B171B293A23E400C1D20C /* roundedborder.png in Resources */ = {isa = PBXBuildFile; fileRef = EC7B171A293A23E300C1D20C /* roundedborder.png */; };
@@ -226,12 +218,8 @@
 		EC6E12182A04CE12004E7BD1 /* objectid.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = objectid.c; path = ../../engine_src/shared/objectid.c; sourceTree = "<group>"; };
 		EC6E12192A04CE13004E7BD1 /* objectid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = objectid.h; path = ../../engine_src/shared/objectid.h; sourceTree = "<group>"; };
 		EC74B51A2DE3BC070033206F /* guitar_simplified.mtl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = guitar_simplified.mtl; path = ../../resources/guitar_simplified.mtl; sourceTree = "<group>"; };
-		EC74B51B2DE3BC070033206F /* 1001_AO.jpg */ = {isa = PBXFileReference; explicitFileType = compiled; name = 1001_AO.jpg; path = ../../resources/1001_AO.jpg; sourceTree = "<group>"; };
 		EC74B51C2DE3BC070033206F /* 1001_normal.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = 1001_normal.png; path = ../../resources/1001_normal.png; sourceTree = "<group>"; };
-		EC74B51D2DE3BC070033206F /* 1001_albedo.jpg */ = {isa = PBXFileReference; explicitFileType = compiled; name = 1001_albedo.jpg; path = ../../resources/1001_albedo.jpg; sourceTree = "<group>"; };
-		EC74B51E2DE3BC070033206F /* 1001_metallic.jpg */ = {isa = PBXFileReference; explicitFileType = compiled; name = 1001_metallic.jpg; path = ../../resources/1001_metallic.jpg; sourceTree = "<group>"; };
 		EC74B51F2DE3BC070033206F /* guitar_simplified.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = guitar_simplified.obj; path = ../../resources/guitar_simplified.obj; sourceTree = "<group>"; };
-		EC74B5202DE3BC070033206F /* 1001_roughness.jpg */ = {isa = PBXFileReference; explicitFileType = compiled; name = 1001_roughness.jpg; path = ../../resources/1001_roughness.jpg; sourceTree = "<group>"; };
 		EC78509829E62CA800E6882A /* objmodel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = objmodel.h; path = ../../engine_src/shared/objmodel.h; sourceTree = "<group>"; };
 		EC78509929E62CA800E6882A /* objmodel.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = objmodel.c; path = ../../engine_src/shared/objmodel.c; sourceTree = "<group>"; };
 		EC78509C29E639F900E6882A /* triangle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = triangle.h; path = ../../engine_src/shared/triangle.h; sourceTree = "<group>"; };
@@ -376,11 +364,7 @@
 				EC7B171A293A23E300C1D20C /* roundedborder.png */,
 				EC18FF4129E3DC8B00ED785C /* blob1.png */,
 				EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */,
-				EC74B51D2DE3BC070033206F /* 1001_albedo.jpg */,
-				EC74B51B2DE3BC070033206F /* 1001_AO.jpg */,
-				EC74B51E2DE3BC070033206F /* 1001_metallic.jpg */,
 				EC74B51C2DE3BC070033206F /* 1001_normal.png */,
-				EC74B5202DE3BC070033206F /* 1001_roughness.jpg */,
 				EC74B51A2DE3BC070033206F /* guitar_simplified.mtl */,
 				EC74B51F2DE3BC070033206F /* guitar_simplified.obj */,
 				6080CC45286FFD1D00444118 /* phoebus.png */,
@@ -587,14 +571,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				ECC47A6029E9111C0082A7C6 /* disk.obj in Resources */,
-				EC74B5272DE3BC070033206F /* 1001_albedo.jpg in Resources */,
 				EC74B5212DE3BC070033206F /* guitar_simplified.mtl in Resources */,
 				EC67AE162A1B0813002D8380 /* leaves3.png in Resources */,
-				EC74B5292DE3BC070033206F /* 1001_metallic.jpg in Resources */,
 				EC0717F02C29CDD5007A4AFA /* teapot_smooth.obj in Resources */,
 				EC74B52B2DE3BC070033206F /* guitar_simplified.obj in Resources */,
 				ECB05E4D294F8FD400050BD4 /* key.obj in Resources */,
-				EC74B52D2DE3BC070033206F /* 1001_roughness.jpg in Resources */,
 				EC1412B12938597400DA0D21 /* cardwithuvcoords.obj in Resources */,
 				6009FB642876A47100FC5A60 /* fontmetrics.dat in Resources */,
 				6080CC46286FFD1E00444118 /* phoebus.png in Resources */,
@@ -602,7 +583,6 @@
 				EC18FF4229E3DC8B00ED785C /* blob1.png in Resources */,
 				EC0BFBDB29EE71A200E4BC1C /* xmas_tree.obj in Resources */,
 				ECDCFF532DDE13CB002AA399 /* perlin_noise.png in Resources */,
-				EC74B5232DE3BC070033206F /* 1001_AO.jpg in Resources */,
 				EC843EA82D1401F3001AD2E9 /* cardstand.obj in Resources */,
 				601128AD28625BAF00F92967 /* structuredart1.png in Resources */,
 				EC18FF4629E3DD8900ED785C /* blob2.png in Resources */,
@@ -622,11 +602,8 @@
 				EC7B09D4293CAC8B000ED98E /* Main.storyboard in Resources */,
 				EC1412B22938597400DA0D21 /* cardwithuvcoords.obj in Resources */,
 				ECC47A6129E9111C0082A7C6 /* disk.obj in Resources */,
-				EC74B5242DE3BC070033206F /* 1001_AO.jpg in Resources */,
 				60A99921287BDF31003F7159 /* fontmetrics.dat in Resources */,
 				EC74B5222DE3BC070033206F /* guitar_simplified.mtl in Resources */,
-				EC74B5282DE3BC070033206F /* 1001_albedo.jpg in Resources */,
-				EC74B52A2DE3BC070033206F /* 1001_metallic.jpg in Resources */,
 				60A99924287BDF31003F7159 /* phoebus.png in Resources */,
 				EC18FF4329E3DC8B00ED785C /* blob1.png in Resources */,
 				EC843EA92D1401F3001AD2E9 /* cardstand.obj in Resources */,
@@ -637,7 +614,6 @@
 				EC74B52C2DE3BC070033206F /* guitar_simplified.obj in Resources */,
 				60A9991F287BDF31003F7159 /* font.png in Resources */,
 				EC74B5262DE3BC070033206F /* 1001_normal.png in Resources */,
-				EC74B52E2DE3BC070033206F /* 1001_roughness.jpg in Resources */,
 				60A99923287BDF31003F7159 /* teapot.obj in Resources */,
 				EC18FF4729E3DD8900ED785C /* blob2.png in Resources */,
 				EC18FF4929E3DD8900ED785C /* blob3.png in Resources */,

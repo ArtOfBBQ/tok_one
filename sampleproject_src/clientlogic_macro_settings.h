@@ -35,7 +35,7 @@ of the engine for your specific app.
 
 #define MAX_RENDERING_FRAME_BUFFERS 3 // 3 for triple-buffering
 
-#define MAX_VERTICES_PER_BUFFER 40000
+#define MAX_VERTICES_PER_BUFFER 240000
 #define MAX_LIGHTS_PER_BUFFER 3
 
 /*
@@ -54,7 +54,7 @@ The maximum number of 'scheduled animations' simultaneously running
 
 #define ALL_MESHES_SIZE 20
 // the max # of triangles in all of your meshes/models combined
-#define ALL_LOCKED_VERTICES_SIZE 40000
+#define ALL_LOCKED_VERTICES_SIZE 240000
 // The max number of 'materials ids' in 1 of your zpolygons
 // #define MAX_MATERIALS_SIZE 10
 
