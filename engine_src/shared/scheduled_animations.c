@@ -1,5 +1,7 @@
 #include "scheduled_animations.h"
 
+#if SCHEDULED_ANIMS_ACTIVE
+
 #define FLT_SCHEDULEDANIM_IGNORE 0xFFFF
 
 ScheduledAnimation * scheduled_animations;
@@ -958,3 +960,5 @@ void scheduled_animations_delete_all_anims_targeting(const int32_t object_id) {
     }
     platform_mutex_unlock(request_scheduled_anims_mutex_id);
 }
+
+#endif // SCHEDULED_ANIMS_ACTIVE

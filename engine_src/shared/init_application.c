@@ -298,8 +298,12 @@ void init_application_before_gpu_init(
     #endif
     
     gameloop_init();
+    #if TERMINAL_ACTIVE
     terminal_init(platform_enter_fullscreen);
+    #endif
+    #if SCHEDULED_ANIMS_ACTIVE
     scheduled_animations_init();
+    #endif
     texture_array_init();
     
     // initialize font with fontmetrics.dat

@@ -9,10 +9,10 @@ of the engine for your specific app.
 #define APPLICATION_NAME "TOK ONE"
 
 // The 2 pools of memory your app allocates on startup
-// 150 mb ->                    125...000
-#define UNMANAGED_MEMORY_SIZE   125000000
-// 50 mb ->                      20...000
-#define MANAGED_MEMORY_SIZE      20000000
+// 55 mb ->                      55...000
+#define UNMANAGED_MEMORY_SIZE    55000000
+// 10 mb ->                      10...000
+// #define MANAGED_MEMORY_SIZE      10000000
 
 
 // these will be ignored on platforms where window size/position
@@ -23,7 +23,9 @@ of the engine for your specific app.
 #define INITIAL_WINDOW_BOTTOM  430.0f
 
 
-#define RAW_SHADER_ACTIVE 1 // for points and lines
+#define SCHEDULED_ANIMS_ACTIVE 1
+#define TERMINAL_ACTIVE 0
+#define RAW_SHADER_ACTIVE 0 // for points and lines
 #define TEXTURES_ACTIVE 1
 #define BLOOM_ACTIVE 1
 #define PARTICLES_ACTIVE 0
@@ -33,26 +35,26 @@ of the engine for your specific app.
 
 #define MAX_RENDERING_FRAME_BUFFERS 3 // 3 for triple-buffering
 
-#define MAX_VERTICES_PER_BUFFER 1500000
-#define MAX_LIGHTS_PER_BUFFER 100
+#define MAX_VERTICES_PER_BUFFER 40000
+#define MAX_LIGHTS_PER_BUFFER 3
 
 /*
 The maximum number of sprites in your app.
 */
-#define MAX_POLYGONS_PER_BUFFER  6500
-#define MAX_MATERIALS_PER_POLYGON 15
+#define MAX_POLYGONS_PER_BUFFER  500
+#define MAX_MATERIALS_PER_POLYGON 2
 #define MAX_LINE_VERTICES 100
 #define MAX_POINT_VERTICES 30
 
 /*
 The maximum number of 'scheduled animations' simultaneously running
 */
-#define SCHEDULED_ANIMATIONS_ARRAYSIZE 100
+#define SCHEDULED_ANIMATIONS_ARRAYSIZE 10
 
 
-#define ALL_MESHES_SIZE 100
+#define ALL_MESHES_SIZE 20
 // the max # of triangles in all of your meshes/models combined
-#define ALL_LOCKED_VERTICES_SIZE 150000
+#define ALL_LOCKED_VERTICES_SIZE 40000
 // The max number of 'materials ids' in 1 of your zpolygons
 // #define MAX_MATERIALS_SIZE 10
 

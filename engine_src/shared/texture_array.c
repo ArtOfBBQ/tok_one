@@ -897,29 +897,17 @@ void texture_array_get_filename_location(
     *texture_i_recipient       = -1;
 }
 
-void texture_array_decode_null_image_at(
+void texture_array_decode_null_png_at(
+    uint8_t * freeable_rgba_values,
+    const uint32_t rgba_values_size,
     const int32_t texture_array_i,
     const int32_t texture_i)
 {
     int32_t i = texture_array_i;
     int32_t j = texture_i;
     
-    FileBuffer file_buffer;
-    file_buffer.size_without_terminator = platform_get_resource_size(
-        texture_arrays[i].images[j].filename);
-    
-    file_buffer.contents =
-        (char *)malloc_from_managed(sizeof(char)
-            * file_buffer.size_without_terminator + 1);
-    
-    platform_read_resource_file(
-        texture_arrays[i].images[j].filename,
-        &file_buffer);
-    
-    log_assert(file_buffer.good);
-    
     DecodedImage * new_image =
-        malloc_from_unmanaged(sizeof(DecodedImage));
+    malloc_from_unmanaged(sizeof(DecodedImage));
     new_image->height = texture_arrays[i].single_img_height;
     new_image->width = texture_arrays[i].single_img_width;
     log_assert(new_image->height > 0);
@@ -940,36 +928,34 @@ void texture_array_decode_null_image_at(
         return;
     }
     
-    if (file_buffer.contents[1] == 'P' &&
-        file_buffer.contents[2] == 'N')
-    {
-        decode_PNG(
-            /* const uint8_t * compressed_input: */
-                (uint8_t *)file_buffer.contents,
-            /* const uint64_t compressed_input_size: */
-                file_buffer.size_without_terminator,
-            /* out_rgba_values: */
-                new_image->rgba_values_page_aligned,
-            /* rgba_values_size: */
-                new_image->rgba_values_size,
-            /* uint32_t * out_good: */
-                &new_image->good);
-    } else if (
-        file_buffer.contents[0] == 'B' &&
-        file_buffer.contents[1] == 'M')
-    {
-        decode_BMP(
-            /* const uint8_t * raw_input: */
-                (uint8_t *)file_buffer.contents,
-            /* const uint64_t raw_input_size: */
-                file_buffer.size_without_terminator,
-            /* out_rgba_values: */
-                new_image->rgba_values_page_aligned,
-            /* out_rgba_values_size: */
-                new_image->rgba_values_size,
-            /* uint32_t * out_good: */
-                &new_image->good);
-    }
+    decode_PNG(
+        /* const uint8_t * compressed_input: */
+            freeable_rgba_values,
+        /* const uint64_t compressed_input_size: */
+            rgba_values_size,
+        /* out_rgba_values: */
+            new_image->rgba_values_page_aligned,
+        /* rgba_values_size: */
+            new_image->rgba_values_size,
+        /* uint32_t * out_good: */
+            &new_image->good);
+    
+    //    } else if (
+    //        file_buffer.contents[0] == 'B' &&
+    //        file_buffer.contents[1] == 'M')
+    //    {
+    //        decode_BMP(
+    //            /* const uint8_t * raw_input: */
+    //                (uint8_t *)file_buffer.contents,
+    //            /* const uint64_t raw_input_size: */
+    //                file_buffer.size_without_terminator,
+    //            /* out_rgba_values: */
+    //                new_image->rgba_values_page_aligned,
+    //            /* out_rgba_values_size: */
+    //                new_image->rgba_values_size,
+    //            /* uint32_t * out_good: */
+    //                &new_image->good);
+    //    }
     
     // TODO: reinstate this assert
     log_assert(new_image->good);
@@ -977,7 +963,7 @@ void texture_array_decode_null_image_at(
     log_assert(new_image->width == texture_arrays[i].single_img_width);
     new_image->pixel_count = new_image->height * new_image->width;
     
-    free_from_managed(file_buffer.contents);
+    free_from_managed(freeable_rgba_values);
     
     platform_mutex_lock(texture_arrays_mutex_ids[i]);
     texture_arrays[i].images[j].image = new_image;
@@ -1066,9 +1052,10 @@ void texture_array_decode_all_null_images(void)
                             log_append("decoding image: ");
                             log_append(texture_arrays[i].images[j].filename);
                             log_append_char('\n');
-                            texture_array_decode_null_image_at(
-                                /* const int32_t texture_array_i: */ i,
-                                /* const int32_t texture_i: */ j);
+                            log_assert(0); // TODO: reimplement BMP path
+                            //                            texture_array_decode_null_image_at(
+                            //                                /* const int32_t texture_array_i: */ i,
+                            //                                /* const int32_t texture_i: */ j);
                             continue;
                         }
                         
@@ -1119,11 +1106,12 @@ void texture_array_decode_all_null_images(void)
         log_assert(i < TEXTUREARRAYS_SIZE);
         log_assert(j < MAX_FILES_IN_SINGLE_TEXARRAY);
         
-        texture_array_decode_null_image_at(
-            /* const int32_t texture_array_i: */
-                i,
-            /* const int32_t texture_i: */
-                j);
+        // TODO: reinstate this path or just rewrite this entire function
+        //        texture_array_decode_null_image_at(
+        //            /* const int32_t texture_array_i: */
+        //                i,
+        //            /* const int32_t texture_i: */
+        //                j);
         
         log_assert(texture_arrays[i].images[j].image != NULL);
         log_assert(texture_arrays[i].images[j].filename[0] != '\0');

@@ -5,7 +5,7 @@ bool32_t gameloop_active = false;
 static uint64_t gameloop_previous_time = 0;
 static uint64_t gameloop_frame_no = 0;
 
-
+#if TERMINAL_ACTIVE
 static void update_terminal(void) {
     if (keypress_map[TOK_KEY_ENTER] && !keypress_map[TOK_KEY_CONTROL]) {
         keypress_map[TOK_KEY_ENTER] = false;
@@ -23,6 +23,7 @@ static void update_terminal(void) {
     
     terminal_render();
 }
+#endif
 
 void gameloop_init(void) {
 }
@@ -161,7 +162,9 @@ void gameloop_update_before_render_pass(
             
             platform_gpu_update_viewport();
             
+            #if TERMINAL_ACTIVE
             terminal_redraw_backgrounds();
+            #endif
             
             client_logic_window_resize(
                 (uint32_t)window_globals->window_height,
@@ -169,7 +172,9 @@ void gameloop_update_before_render_pass(
        }
     } else if (application_running) {
         
+        #if SCHEDULED_ANIMS_ACTIVE
         scheduled_animations_resolve();
+        #endif
         
         platform_update_mouse_location();
         
@@ -181,7 +186,9 @@ void gameloop_update_before_render_pass(
         
         ui_elements_handle_touches(elapsed);
         
+        #if TERMINAL_ACTIVE
         update_terminal();
+        #endif
         
         client_logic_update(elapsed);
         

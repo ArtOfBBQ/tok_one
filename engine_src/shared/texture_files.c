@@ -1,6 +1,6 @@
 #include "texture_files.h"
 
-void texture_files_preregister_png(
+void texture_files_preregister_png_resource(
     const char * filename,
     uint32_t * good)
 {
@@ -46,7 +46,7 @@ void texture_files_preregister_png(
     *good = 1;
 }
 
-void texture_files_push_png(
+void texture_files_decode_png_resource(
     const char * filename,
     uint32_t * good)
 {
@@ -65,7 +65,25 @@ void texture_files_push_png(
         return;
     }
     
-    texture_array_decode_null_image_at(
+    FileBuffer file_buffer;
+    file_buffer.size_without_terminator = platform_get_resource_size(
+        filename);
+    
+    file_buffer.contents =
+        (char *)malloc_from_managed(sizeof(char)
+            * file_buffer.size_without_terminator + 1);
+    
+    platform_read_resource_file(
+        filename,
+        &file_buffer);
+    
+    log_assert(file_buffer.good);
+    
+    texture_array_decode_null_png_at(
+        /* const uint8_t * rgba_values: */
+            (uint8_t *)file_buffer.contents,
+        /* const uint32_t rgba_values_size: */
+            (uint32_t)file_buffer.size_without_terminator,
         /* const int32_t texture_array_i: */
             texture_array_i,
         /* const int32_t texture_i: */
@@ -73,4 +91,3 @@ void texture_files_push_png(
     
     *good = 1;
 }
-

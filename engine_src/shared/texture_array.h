@@ -1,8 +1,6 @@
 #ifndef TEXTURE_ARRAY_H
 #define TEXTURE_ARRAY_H
 
-#include "memorystore.h"
-#include "platform_layer.h"
 #include "logger.h"
 #include "decodedimage.h"
 #include "debigulator/src/decode_png.h"
@@ -45,7 +43,9 @@ void texture_array_get_filename_location(
     int32_t * texture_array_i_recipient,
     int32_t * texture_i_recipient);
 
-void texture_array_decode_null_image_at(
+void texture_array_decode_null_png_at(
+    uint8_t * freeable_rgba_values,
+    const uint32_t rgba_values_size,
     const int32_t texture_array_i,
     const int32_t texture_i);
 

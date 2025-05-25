@@ -1,3 +1,5 @@
+#if SCHEDULED_ANIMS_ACTIVE
+
 #ifndef SCHEDULED_ANIMATION_H
 #define SCHEDULED_ANIMATION_H
 
@@ -126,4 +128,6 @@ void scheduled_animations_delete_all_anims_targeting(const int32_t object_id);
 }
 #endif
 
-#endif
+#endif // SCHEDULED_ANIMATION_H
+
+#endif // SCHEDULED_ANIMS_ACTIVE

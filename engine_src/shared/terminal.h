@@ -1,3 +1,5 @@
+#if TERMINAL_ACTIVE
+
 #ifndef TERMINAL_H
 #define TERMINAL_H
 
@@ -30,3 +32,5 @@ void terminal_commit_or_activate(void);
 #endif
 
 #endif // TERMINAL_H
+
+#endif // TERMINAL_ACTIVE

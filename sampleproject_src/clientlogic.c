@@ -22,7 +22,7 @@ void client_logic_early_startup(
     #endif
     
     uint32_t good;
-    texture_files_preregister_png(texture_filename, &good);
+    texture_files_preregister_png_resource(texture_filename, &good);
     assert(good);
 }
 
@@ -50,10 +50,10 @@ void client_logic_late_startup(void) {
     light->xyz_angle[2]  =  0.00f;
     commit_zlight(light);
     
-    camera.xyz[0] = 0.0f;
-    camera.xyz[1] = 0.0f;
-    camera.xyz[2] = TEAPOT_Z - 0.45f;
-    camera.xyz_angle[0] =  0.0f;
+    camera.xyz[0] = 0.5f;
+    camera.xyz[1] = 1.6f;
+    camera.xyz[2] = -1.3f;
+    camera.xyz_angle[0] =  0.7f;
     camera.xyz_angle[1] =  0.0f;
     camera.xyz_angle[2] =  0.0f;
     
@@ -138,7 +138,9 @@ void client_logic_late_startup(void) {
     int32_t quad_texture_array_i = -1;
     int32_t quad_texture_i = -1;
     uint32_t texture_push_good = 0;
-    texture_files_push_png(texture_filename, &texture_push_good);
+    texture_files_decode_png_resource(
+        texture_filename,
+        &texture_push_good);
     assert(texture_push_good);
     texture_array_get_filename_location(
         texture_filename,
@@ -263,24 +265,18 @@ static void client_handle_keypresses(
     float cam_speed = 0.1f * elapsed_mod;
     float cam_rotation_speed = 0.05f * elapsed_mod;
     
-    if (
-        keypress_map[TOK_KEY_ENTER] &&
-        keypress_map[TOK_KEY_CONTROL])
-    {
-        keypress_map[TOK_KEY_ENTER] = false;
-        platform_toggle_fullscreen();
-    }
-    
     if (keypress_map[TOK_KEY_S] == true)
     {
         keypress_map[TOK_KEY_S] = false;
         
         #if TEAPOT
+        #if SCHEDULED_ANIMS_ACTIVE
         scheduled_animations_request_shatter_and_destroy(
             /* const int32_t object_id: */
                 teapot_object_ids[1],
             /* const uint64_t duration_microseconds: */
                 750000);
+        #endif
         #endif
     }
     
@@ -338,8 +334,6 @@ static void client_handle_keypresses(
     }
 }
 
-static uint64_t last_anim_start = 0;
-static uint64_t last_anim_end   = 0;
 static float light_zero_mod = 1.0f;
 void client_logic_update(uint64_t microseconds_elapsed)
 {
@@ -350,48 +344,6 @@ void client_logic_update(uint64_t microseconds_elapsed)
     if (zlights_to_apply[0].RGBA[0] < 1.2f) {
         light_zero_mod =  1.0f;
     }
-    
-    #if TEAPOT
-    int32_t first_teapot_zp_i = -1;
-    for (int32_t i = 0; i < (int32_t)zsprites_to_render->size; i++) {
-        if (
-            zsprites_to_render->cpu_data[i].sprite_id ==
-                teapot_object_ids[0])
-        {
-            first_teapot_zp_i = i;
-        }
-    }
-    
-    if (first_teapot_zp_i < 0) { return; }
-    
-    char teapotpos[256];
-    common_strcpy_capped(teapotpos, 256, "Teapot y position: ");
-    common_strcat_float_capped(
-        teapotpos,
-        256,
-        zsprites_to_render->gpu_data[first_teapot_zp_i].xyz[1]);
-    common_strcat_capped(
-        teapotpos,
-        256,
-        " - [");
-    common_strcat_uint_capped(
-        teapotpos,
-        256,
-        (uint32_t)(last_anim_start / 1000000) % 100);
-    common_strcat_capped(
-        teapotpos,
-        256,
-        " - ");
-    common_strcat_uint_capped(
-        teapotpos,
-        256,
-        (uint32_t)(last_anim_end / 1000000) % 100);
-    common_strcat_capped(
-        teapotpos,
-        256,
-        " ] ");
-    text_request_debug_text(teapotpos);
-    #endif
     
     if (
         !user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].handled)
@@ -405,11 +357,13 @@ void client_logic_update(uint64_t microseconds_elapsed)
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
                 touchable_id_pierce == 5)
         {
+            #if SCHEDULED_ANIMS_ACTIVE
             scheduled_animations_request_bump(
                 /* const int32_t object_id: */
                     20,
                 /* const uint32_t wait: */
                     0);
+            #endif
         }
         
         if (
@@ -418,93 +372,14 @@ void client_logic_update(uint64_t microseconds_elapsed)
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
                 touchable_id_pierce == 6)
         {
+            #if SCHEDULED_ANIMS_ACTIVE
             scheduled_animations_request_bump(
                 /* const int32_t object_id: */
                     21,
                 /* const uint32_t wait: */
                     0);
+            #endif
         }
-    }
-    
-    if (keypress_map[TOK_KEY_T]) {
-        #if TEAPOT
-        zsprites_to_render->gpu_data[first_teapot_zp_i].xyz[1] = 1.5f;
-        zsprites_to_render->gpu_materials[
-            first_teapot_zp_i * MAX_MATERIALS_PER_POLYGON].rgba[3] = 0.0f;
-        #endif
-    }
-    
-    if (keypress_map[TOK_KEY_G]) {
-        keypress_map[TOK_KEY_G] = false;
-        
-        #if TEAPOT
-        #if 1
-        scheduled_animations_request_dud_dance(
-            teapot_object_ids[0],
-            2.0f);
-        #else
-        ScheduledAnimation * test_delta = scheduled_animations_request_next(false);
-        test_delta->affected_sprite_id = teapot_object_ids[0];
-        test_delta->start_timestamp = window_globals->this_frame_timestamp;
-        test_delta->end_timestamp =
-            test_delta->start_timestamp + 750000;
-        test_delta->gpu_polygon_vals.xyz[1] = -0.2f;
-        test_delta->gpu_polygon_vals.xyz_angle[2] = -1.5f;
-        test_delta->gpu_polygon_vals.xyz_angle[1] = -1.25f;
-        test_delta->gpu_polygon_material_vals.rgba[3] = 0.25f;
-        scheduled_animations_commit(test_delta);
-        last_anim_start = test_delta->start_timestamp;
-        last_anim_end   = test_delta->end_timestamp;
-        #endif
-        #endif
-    }
-    
-    if (keypress_map[TOK_KEY_H]) {
-        keypress_map[TOK_KEY_H] = false;
-        
-        #if TEAPOT
-        ScheduledAnimation * test_delta = scheduled_animations_request_next(true);
-        test_delta->affected_sprite_id = teapot_object_ids[0];
-        test_delta->start_timestamp = window_globals->this_frame_timestamp;
-        test_delta->end_timestamp =
-            test_delta->start_timestamp + 5000000;
-        test_delta->gpu_polygon_vals.xyz[1] =  0.3f;
-        test_delta->gpu_polygon_vals.xyz_angle[2] = 0.0f;
-        test_delta->gpu_polygon_vals.xyz_angle[1] = 0.0f;
-        scheduled_animations_commit(test_delta);
-        last_anim_start = test_delta->start_timestamp;
-        last_anim_end   = test_delta->end_timestamp;
-        #endif
-    }
-    
-    if (keypress_map[TOK_KEY_Y]) {
-        keypress_map[TOK_KEY_Y] = false;
-        
-        #if TEAPOT
-        ScheduledAnimation * test_delta = scheduled_animations_request_next(false);
-        test_delta->affected_sprite_id = teapot_object_ids[0];
-        test_delta->start_timestamp =
-            window_globals->this_frame_timestamp;
-        test_delta->end_timestamp =
-            test_delta->start_timestamp + 300000;
-        test_delta->gpu_polygon_vals.xyz[1] = -0.35f;
-        scheduled_animations_commit(test_delta);
-        last_anim_start = test_delta->start_timestamp;
-        last_anim_end   = test_delta->end_timestamp;
-        #endif
-    }
-    
-    if (keypress_map[TOK_KEY_E]) {
-        #if TEAPOT
-        for (uint32_t i = 0; i < zsprites_to_render->size; i++) {
-            if (
-                zsprites_to_render->cpu_data[i].sprite_id ==
-                    teapot_object_ids[0])
-            {
-                zsprites_to_render->gpu_data[i].xyz[1] += 0.01f;
-            }
-        }
-        #endif
     }
     
     if (keypress_map[TOK_KEY_R]) {
@@ -539,7 +414,9 @@ void client_logic_update(uint64_t microseconds_elapsed)
     {
         user_interactions[INTR_PREVIOUS_LEFTCLICK_START].handled = true;
         
+        #if SCHEDULED_ANIMS_ACTIVE
         scheduled_animations_request_bump(teapot_object_ids[0], 0.0f);
+        #endif
     }
     }
     
@@ -587,5 +464,5 @@ void client_logic_window_resize(
 }
 
 void client_logic_shutdown(void) {
-    // Your application shutdown code goes here!
+    // You're notified that your application is about to shut down
 }

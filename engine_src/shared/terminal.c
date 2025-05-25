@@ -1,5 +1,7 @@
 #include "terminal.h"
 
+#if TERMINAL_ACTIVE
+
 bool32_t terminal_active = false;
 
 static void (* terminal_enter_fullscreen_fnc)(void) = NULL;
@@ -959,3 +961,5 @@ void terminal_commit_or_activate(void) {
         requesting_label_update = true;
     }
 }
+
+#endif // TERMINAL_ACTIVE
