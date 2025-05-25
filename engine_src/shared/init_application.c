@@ -362,7 +362,7 @@ void init_application_before_gpu_init(
     
     gpu_shared_data_collection->polygon_materials_allocation_size =
         pad_to_page_size(
-            sizeof(GPUzSpriteMaterial) *
+            sizeof(GPUSpriteMaterial) *
             MAX_MATERIALS_PER_POLYGON *
             MAX_POLYGONS_PER_BUFFER);
     
@@ -406,7 +406,7 @@ void init_application_before_gpu_init(
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].
             polygon_materials =
-                (GPUzSpriteMaterial *)malloc_from_unmanaged_aligned(
+                (GPUSpriteMaterial *)malloc_from_unmanaged_aligned(
                     gpu_shared_data_collection->
                         polygon_materials_allocation_size,
                     page_size);

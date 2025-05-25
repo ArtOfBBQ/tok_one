@@ -19,6 +19,7 @@ void client_logic_early_startup(
     #if TEAPOT
     // teapot_mesh_id = BASIC_CUBE_MESH_ID;
     teapot_mesh_id = new_mesh_id_from_resource("teapot.obj");
+    log_assert(teapot_mesh_id >= 0);
     #endif
     
     uint32_t good;
@@ -95,6 +96,7 @@ void client_logic_late_startup(void) {
     teapot_object_ids[1] = next_nonui_object_id();
     
     for (uint32_t i = 0; i < 1; i++) {
+        log_assert(teapot_mesh_id >= 0);
         PolygonRequest teapot_request;
         teapot_request.materials_size = 1;
         request_next_zpolygon(&teapot_request);
@@ -114,10 +116,10 @@ void client_logic_late_startup(void) {
         teapot_touchable_ids[i]                    = next_nonui_touchable_id();
         teapot_request.gpu_data->touchable_id      = teapot_touchable_ids[i];
         for (uint32_t mat_i = 0; mat_i < MAX_MATERIALS_PER_POLYGON; mat_i++) {
-            teapot_request.gpu_materials[mat_i].rgba[0]        =  1.3f;
-            teapot_request.gpu_materials[mat_i].rgba[1]        =  1.3f;
-            teapot_request.gpu_materials[mat_i].rgba[2]        =  0.9f;
-            teapot_request.gpu_materials[mat_i].rgba[3]        =  1.0f;
+            teapot_request.gpu_materials[mat_i].ambient_rgb[0] =  1.3f;
+            teapot_request.gpu_materials[mat_i].ambient_rgb[1] =  1.3f;
+            teapot_request.gpu_materials[mat_i].ambient_rgb[2] =  0.9f;
+            teapot_request.gpu_materials[mat_i].alpha          =  1.0f;
             teapot_request.gpu_materials[mat_i].texturearray_i = -1.0f;
             teapot_request.gpu_materials[mat_i].texture_i      = -1.0f;
             teapot_request.gpu_materials[mat_i].specular       =  1.0f;
@@ -183,10 +185,10 @@ void client_logic_late_startup(void) {
         quad[i].gpu_data->ignore_camera          = 0.0f;
         quad[i].gpu_data->ignore_lighting        = 0.0f;
         
-        quad[i].gpu_materials[0].rgba[0]         = 0.75f;
-        quad[i].gpu_materials[0].rgba[1]         = 0.75f;
-        quad[i].gpu_materials[0].rgba[2]         = 0.85f;
-        quad[i].gpu_materials[0].rgba[3]         = 1.0f;
+        quad[i].gpu_materials[0].ambient_rgb[0]  = 0.75f;
+        quad[i].gpu_materials[0].ambient_rgb[1]  = 0.75f;
+        quad[i].gpu_materials[0].ambient_rgb[2]  = 0.85f;
+        quad[i].gpu_materials[0].alpha           = 1.0f;
         quad[i].gpu_materials[0].diffuse         = 1.0f;
         quad[i].gpu_materials[0].specular        = 1.0f;
         

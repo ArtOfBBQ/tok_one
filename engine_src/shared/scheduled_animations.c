@@ -43,7 +43,7 @@ static void construct_scheduled_animationA(
     common_memset_float(
          &to_construct->onfinish_gpu_polygon_material_muls,
          1.0f,
-         sizeof(GPUzSpriteMaterial));
+         sizeof(GPUSpriteMaterial));
     
     log_assert(!to_construct->deleted);
     log_assert(!to_construct->committed);
@@ -88,7 +88,7 @@ ScheduledAnimation * scheduled_animations_request_next(
         common_memset_float(
             &return_value->gpu_polygon_material_vals,
             FLT_SCHEDULEDANIM_IGNORE,
-            sizeof(GPUzSpriteMaterial));
+            sizeof(GPUSpriteMaterial));
         common_memset_float(
             &return_value->lightsource_vals,
             FLT_SCHEDULEDANIM_IGNORE,
@@ -154,7 +154,7 @@ void scheduled_animations_commit(ScheduledAnimation * to_commit) {
         
         for (
             uint32_t i = 0;
-            i < (sizeof(GPUzSpriteMaterial) / sizeof(float));
+            i < (sizeof(GPUSpriteMaterial) / sizeof(float));
             i++)
         {
             if (anim_mat_vals[i] == FLT_SCHEDULEDANIM_IGNORE) {
@@ -445,7 +445,7 @@ void scheduled_animations_request_fade_and_destroy(
     fade_destroy->affected_sprite_id = object_id;
     fade_destroy->duration_microseconds = duration_microseconds;
     fade_destroy->lightsource_vals.reach = 0.0f;
-    fade_destroy->gpu_polygon_material_vals.rgba[3] = 0.0f;
+    fade_destroy->gpu_polygon_material_vals.alpha = 0.0f;
     fade_destroy->delete_object_when_finished = true;
     scheduled_animations_commit(fade_destroy);
 }
@@ -461,7 +461,7 @@ void scheduled_animations_request_fade_to(
     ScheduledAnimation * modify_alpha = scheduled_animations_request_next(true);
     modify_alpha->affected_sprite_id = object_id;
     modify_alpha->duration_microseconds = duration_microseconds;
-    modify_alpha->gpu_polygon_material_vals.rgba[3] = target_alpha;
+    modify_alpha->gpu_polygon_material_vals.alpha = target_alpha;
     scheduled_animations_commit(modify_alpha);
 }
 
@@ -737,12 +737,12 @@ void scheduled_animations_resolve(void)
                 target_vals_ptr =
                     (float *)&zsprites_to_render->gpu_materials[mat_i];
                 
-                log_assert((sizeof(GPUzSpriteMaterial) / 4) %
+                log_assert((sizeof(GPUSpriteMaterial) / 4) %
                     SIMD_FLOAT_LANES == 0);
                 for (
                     uint32_t simd_step_i = 0;
                     (simd_step_i * sizeof(float)) <
-                        sizeof(GPUzSpriteMaterial);
+                        sizeof(GPUSpriteMaterial);
                     simd_step_i += SIMD_FLOAT_LANES)
                 {
                     SIMD_FLOAT simd_anim_vals =

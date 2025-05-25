@@ -71,7 +71,12 @@ static void guess_gpu_triangle_normal(GPULockedVertex * to_change) {
     to_change[2].normal_xyz[2] = to_change[0].normal_xyz[2];
 }
 
+static ParsedObj * parsed_obj = NULL;
+
 void objmodel_init(void) {
+    parsed_obj = malloc_from_unmanaged(sizeof(ParsedObj));
+    common_memset_char(parsed_obj, 0, sizeof(ParsedObj));
+    
     all_mesh_summaries = (MeshSummary *)malloc_from_unmanaged(
         sizeof(MeshSummary) * ALL_MESHES_SIZE);
     
@@ -723,17 +728,10 @@ static void assert_objmodel_validity(int32_t mesh_id) {
 }
 #endif
 
-static ParsedObj * parsed_obj = NULL;
-
 int32_t new_mesh_id_from_obj_text(
-    const char * obj_text,
-    const uint32_t expected_materials_count,
-    const char expected_materials_names[MAX_MATERIALS_PER_POLYGON][256])
+    const char * obj_text)
 {
-    if (parsed_obj == NULL) {
-        parsed_obj = malloc_from_unmanaged(sizeof(ParsedObj));
-    }
-    common_memset_char(parsed_obj, 0, sizeof(ParsedObj));
+    log_assert(parsed_obj != NULL);
     
     uint32_t good = 0;
     parse_obj(
@@ -980,22 +978,6 @@ int32_t new_mesh_id_from_obj_text(
         }
     }
     
-    if (expected_materials_names != NULL) {
-        #ifndef LOGGER_IGNORE_ASSERTS
-        log_assert(parsed_obj->materials_count == expected_materials_count);
-        #else
-        (void)expected_materials_count;
-        #endif
-        
-        for (uint32_t i = 0; i < parsed_obj->materials_count; i++) {
-            if (parsed_obj->materials != NULL) {
-                log_assert(
-                    common_are_equal_strings(
-                        parsed_obj->materials[i].name,
-                        expected_materials_names[i]));
-            }
-        }
-    }
     free_obj(parsed_obj);
     
     all_mesh_summaries[all_mesh_summaries_size].mesh_id =
@@ -1068,10 +1050,8 @@ int32_t new_mesh_id_from_obj_text(
     return (int32_t)all_mesh_summaries_size - 1;
 }
 
-int32_t new_mesh_id_from_resource_asserts(
-    const char * filename,
-    const uint32_t expected_materials_count,
-    const char expected_materials_names[MAX_MATERIALS_PER_POLYGON][256])
+int32_t new_mesh_id_from_resource(
+    const char * filename)
 {
     #ifdef LOGGER_IGNORE_ASSERTS
     (void)expected_materials_count;
@@ -1079,44 +1059,27 @@ int32_t new_mesh_id_from_resource_asserts(
     
     log_assert(all_mesh_summaries_size < ALL_MESHES_SIZE);
     
-    FileBuffer obj_file;
-    obj_file.size_without_terminator = platform_get_resource_size(filename);
-    log_assert(obj_file.size_without_terminator > 0);
-    obj_file.contents = (char *)malloc_from_managed(obj_file.size_without_terminator + 1);
-    obj_file.good = false;
+    FileBuffer obj_file_buf;
+    obj_file_buf.size_without_terminator =
+        platform_get_resource_size(filename);
+    log_assert(obj_file_buf.size_without_terminator > 0);
+    obj_file_buf.contents = (char *)malloc_from_managed(
+        obj_file_buf.size_without_terminator + 1);
+    obj_file_buf.good = false;
     
     platform_read_resource_file(
         /* char * filename: */
             filename,
         /* FileBuffer *out_preallocatedbuffer: */
-            &obj_file);
+            &obj_file_buf);
     
-    log_assert(obj_file.good);
+    if (!obj_file_buf.good) {
+        return -1;
+    }
     
-    int32_t new_mesh_id = new_mesh_id_from_obj_text(
+    return new_mesh_id_from_obj_text(
         /* const char * obj_text: */
-            obj_file.contents,
-        /* const uint32_t expected_materials_count: */
-            expected_materials_count,
-        /* const char expected_materials_names[
-            MAX_MATERIALS_PER_POLYGON][256]: */
-            expected_materials_names);
-    
-    common_strcpy_capped(
-        all_mesh_summaries[new_mesh_id].resource_name,
-        OBJ_STRING_SIZE,
-        filename);
-    
-    free_from_managed(obj_file.contents);
-    obj_file.contents = NULL;
-    
-    return new_mesh_id;
-}
-
-int32_t new_mesh_id_from_resource(
-    const char * filename)
-{
-    return new_mesh_id_from_resource_asserts(filename, 0, NULL);
+            obj_file_buf.contents);
 }
 
 void center_mesh_offsets(

@@ -10,7 +10,7 @@ typedef struct GPUDataForSingleFrame
 {
     GPUVertex *                                  vertices;
     GPUSpriteCollection *             polygon_collection;
-    GPUzSpriteMaterial *                polygon_materials;
+    GPUSpriteMaterial *                polygon_materials;
     GPUCamera *                                    camera;
     GPULight *                                     lights;
     #if RAW_SHADER_ACTIVE

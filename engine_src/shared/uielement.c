@@ -364,13 +364,13 @@ static void request_slider_shared(
         next_ui_element_settings->slider_background_texturearray_i;
     slider_back.gpu_materials[0].texture_i =
         next_ui_element_settings->slider_background_texture_i;
-    slider_back.gpu_materials[0].rgba[0] =
+    slider_back.gpu_materials[0].ambient_rgb[0] =
         next_ui_element_settings->slider_background_rgba[0];
-    slider_back.gpu_materials[0].rgba[1] =
+    slider_back.gpu_materials[0].ambient_rgb[1] =
         next_ui_element_settings->slider_background_rgba[1];
-    slider_back.gpu_materials[0].rgba[2] =
+    slider_back.gpu_materials[0].ambient_rgb[2] =
         next_ui_element_settings->slider_background_rgba[2];
-    slider_back.gpu_materials[0].rgba[3] =
+    slider_back.gpu_materials[0].alpha =
         next_ui_element_settings->slider_background_rgba[3];
     
     slider_back.gpu_data->ignore_lighting =
@@ -416,13 +416,13 @@ static void request_slider_shared(
         next_ui_element_settings->slider_pin_texturearray_i;
     slider_pin.gpu_materials[0].texture_i =
         next_ui_element_settings->slider_pin_texture_i;
-    slider_pin.gpu_materials[0].rgba[0] =
+    slider_pin.gpu_materials[0].ambient_rgb[0] =
         next_ui_element_settings->slider_pin_rgba[0];
-    slider_pin.gpu_materials[0].rgba[1] =
+    slider_pin.gpu_materials[0].ambient_rgb[1] =
         next_ui_element_settings->slider_pin_rgba[1];
-    slider_pin.gpu_materials[0].rgba[2] =
+    slider_pin.gpu_materials[0].ambient_rgb[2] =
         next_ui_element_settings->slider_pin_rgba[2];
-    slider_pin.gpu_materials[0].rgba[3] =
+    slider_pin.gpu_materials[0].alpha =
         next_ui_element_settings->slider_pin_rgba[3];
     
     slider_pin.gpu_data->ignore_lighting =
@@ -586,13 +586,13 @@ void request_button(
         next_ui_element_settings->ignore_lighting;
     commit_zpolygon_to_render(&button_request);
     
-    button_request.gpu_materials[0].rgba[0] =
+    button_request.gpu_materials[0].ambient_rgb[0] =
         next_ui_element_settings->button_background_rgba[0];
-    button_request.gpu_materials[0].rgba[1] =
+    button_request.gpu_materials[0].ambient_rgb[1] =
         next_ui_element_settings->button_background_rgba[1];
-    button_request.gpu_materials[0].rgba[2] =
+    button_request.gpu_materials[0].ambient_rgb[2] =
         next_ui_element_settings->button_background_rgba[2];
-    button_request.gpu_materials[0].rgba[3] =
+    button_request.gpu_materials[0].alpha =
         next_ui_element_settings->button_background_rgba[3];
     button_request.gpu_materials[0].texturearray_i =
         next_ui_element_settings->button_background_texturearray_i;

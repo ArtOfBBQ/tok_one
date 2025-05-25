@@ -87,9 +87,11 @@ void commit_zpolygon_to_render(
             to_commit->gpu_materials[mat_i].texturearray_i <
                 TEXTUREARRAYS_SIZE);
         
-        for (uint32_t rgba_i = 0; rgba_i < 4; rgba_i++) {
-            log_assert(to_commit->gpu_materials[mat_i].rgba[rgba_i] >= - 0.1f);
-            log_assert(to_commit->gpu_materials[mat_i].rgba[rgba_i] <=  15.0f);
+        for (uint32_t rgb_i = 0; rgb_i < 3; rgb_i++) {
+            log_assert(
+                to_commit->gpu_materials[mat_i].ambient_rgb[rgb_i] >= - 0.1f);
+            log_assert(
+                to_commit->gpu_materials[mat_i].ambient_rgb[rgb_i] <=  15.0f);
         }
     }
     
@@ -225,7 +227,7 @@ void construct_zpolygon(
     common_memset_char(
         to_construct->gpu_materials,
         0,
-        sizeof(GPUzSpriteMaterial) *
+        sizeof(GPUSpriteMaterial) *
             to_construct->materials_size);
     common_memset_char(
         to_construct->gpu_data,
@@ -243,10 +245,10 @@ void construct_zpolygon(
     to_construct->cpu_data->visible = true;
     
     for (uint32_t i = 0; i < MAX_MATERIALS_PER_POLYGON; i++) {
-        to_construct->gpu_materials[i].rgba[0]        = 0.75f;
-        to_construct->gpu_materials[i].rgba[1]        = 0.75f;
-        to_construct->gpu_materials[i].rgba[2]        = 0.75f;
-        to_construct->gpu_materials[i].rgba[3]        = 0.75f;
+        to_construct->gpu_materials[i].ambient_rgb[0] = 0.75f;
+        to_construct->gpu_materials[i].ambient_rgb[1] = 0.75f;
+        to_construct->gpu_materials[i].ambient_rgb[2] = 0.75f;
+        to_construct->gpu_materials[i].alpha          = 1.0f;
         to_construct->gpu_materials[i].rgb_cap[0]     = 1.0f;
         to_construct->gpu_materials[i].rgb_cap[1]     = 1.0f;
         to_construct->gpu_materials[i].rgb_cap[2]     = 1.0f;
@@ -326,10 +328,10 @@ void construct_quad(
         height / current_height;
     stack_recipient->gpu_data->xyz_multiplier[2] = 1.0f;
     
-    stack_recipient->gpu_materials[0].rgba[0]  = 1.0f;
-    stack_recipient->gpu_materials[0].rgba[1]  = 1.0f;
-    stack_recipient->gpu_materials[0].rgba[2]  = 1.0f;
-    stack_recipient->gpu_materials[0].rgba[3]  = 1.0f;
+    stack_recipient->gpu_materials[0].ambient_rgb[0] = 1.0f;
+    stack_recipient->gpu_materials[0].ambient_rgb[1] = 1.0f;
+    stack_recipient->gpu_materials[0].ambient_rgb[2] = 1.0f;
+    stack_recipient->gpu_materials[0].alpha    = 1.0f;
     stack_recipient->gpu_materials[0].diffuse  = 1.0f;
     stack_recipient->gpu_materials[0].specular = 0.2f;
     stack_recipient->gpu_materials[0].texturearray_i = -1;
@@ -363,10 +365,10 @@ void construct_quad_around(
         stack_recipient->gpu_data->xyz_multiplier[1] / 20.0f;
     
     stack_recipient->cpu_data->mesh_id = 0;
-    stack_recipient->gpu_materials[0].rgba[0] = 1.0f;
-    stack_recipient->gpu_materials[0].rgba[1] = 1.0f;
-    stack_recipient->gpu_materials[0].rgba[2] = 1.0f;
-    stack_recipient->gpu_materials[0].rgba[3] = 1.0f;
+    stack_recipient->gpu_materials[0].ambient_rgb[0] = 1.0f;
+    stack_recipient->gpu_materials[0].ambient_rgb[1] = 1.0f;
+    stack_recipient->gpu_materials[0].ambient_rgb[2] = 1.0f;
+    stack_recipient->gpu_materials[0].alpha = 1.0f;
     stack_recipient->gpu_materials[0].texturearray_i = -1;
     stack_recipient->gpu_materials[0].texture_i = -1;
 }
@@ -399,10 +401,10 @@ void construct_cube_around(
     stack_recipient->gpu_data->xyz_multiplier[2] = depth / current_depth;
     
     stack_recipient->cpu_data->mesh_id = 1;
-    stack_recipient->gpu_materials[0].rgba[0] = 1.0f;
-    stack_recipient->gpu_materials[0].rgba[1] = 1.0f;
-    stack_recipient->gpu_materials[0].rgba[2] = 1.0f;
-    stack_recipient->gpu_materials[0].rgba[3] = 1.0f;
+    stack_recipient->gpu_materials[0].ambient_rgb[0] = 1.0f;
+    stack_recipient->gpu_materials[0].ambient_rgb[1] = 1.0f;
+    stack_recipient->gpu_materials[0].ambient_rgb[2] = 1.0f;
+    stack_recipient->gpu_materials[0].alpha = 1.0f;
     stack_recipient->gpu_materials[0].texturearray_i = -1;
     stack_recipient->gpu_materials[0].texture_i = -1;
 }

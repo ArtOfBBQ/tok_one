@@ -42,7 +42,7 @@ typedef struct CPUzSprite {
 
 typedef struct zPolygonCollection {
     GPUzSprite gpu_data[MAX_POLYGONS_PER_BUFFER];
-    GPUzSpriteMaterial gpu_materials[
+    GPUSpriteMaterial gpu_materials[
         MAX_POLYGONS_PER_BUFFER * MAX_MATERIALS_PER_POLYGON];
     CPUzSprite cpu_data[MAX_POLYGONS_PER_BUFFER];
     uint32_t size;
@@ -52,7 +52,7 @@ extern zSpriteCollection * zsprites_to_render;
 
 typedef struct PolygonRequest {
     GPUzSprite * gpu_data;
-    GPUzSpriteMaterial * gpu_materials;
+    GPUSpriteMaterial * gpu_materials;
     CPUzSprite * cpu_data;
     uint32_t gpu_data_size;
     uint32_t materials_size;

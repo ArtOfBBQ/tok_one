@@ -247,7 +247,7 @@ void renderer_hardware_render(
         /* const void *__src: */
             zsprites_to_render->gpu_materials,
         /* size_t __n: */
-            sizeof(GPUzSpriteMaterial) *
+            sizeof(GPUSpriteMaterial) *
                 MAX_MATERIALS_PER_POLYGON *
                 zsprites_to_render->size);
     frame_data->polygon_collection->size = zsprites_to_render->size;

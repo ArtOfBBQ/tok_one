@@ -363,12 +363,13 @@ void text_request_label_offset_around(
             
             for (
                 uint32_t rgba_i = 0;
-                rgba_i < 4;
+                rgba_i < 3;
                 rgba_i++)
             {
-                letter.gpu_materials[0].rgba[rgba_i] =
+                letter.gpu_materials[0].ambient_rgb[rgba_i] =
                     font_settings->font_color[rgba_i];
             }
+            letter.gpu_materials[0].alpha = font_settings->font_color[3];
             
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
@@ -526,12 +527,13 @@ void text_request_label_renderable(
         
         for (
             uint32_t rgba_i = 0;
-            rgba_i < 4;
+            rgba_i < 3;
             rgba_i++)
         {
-            letter.gpu_materials[0].rgba[rgba_i] =
+            letter.gpu_materials[0].ambient_rgb[rgba_i] =
                 font_settings->font_color[rgba_i];
         }
+        letter.gpu_materials[0].alpha = font_settings->font_color[3];
         letter.gpu_materials[0].rgb_cap[0] =
             font_settings->rgb_cap[0];
         letter.gpu_materials[0].rgb_cap[1] =

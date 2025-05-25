@@ -79,15 +79,20 @@ typedef struct GPUSpriteCollection {
 #define SPECULAR_SKIN 0.35f
 #define SPECULAR_SILVER 0.508f
 #define SPECULAR_GOLD 0.62f
-typedef struct GPUzSpriteMaterial {
-    float rgba[4];          // 16 bytes
-    float rgb_cap[3];       // 12 bytes // capped by default to avoid bloom
-    int   texturearray_i;   //  4 bytes
-    int   texture_i;        //  4 bytes
-    float diffuse;          //  4 bytes
-    float specular;         //  4 bytes
-    float padding[5];       //  4 bytes
-} GPUzSpriteMaterial;
+typedef struct GPUSpriteMaterial {
+    float ambient_rgb[3];
+    float rgb_cap[3];
+    int   texturearray_i;
+    int   texture_i;
+    int   normalmap_texturearray_i;
+    int   normalmap_texture_i;
+    float diffuse;
+    float specular;
+    float specular_exponent;
+    float refraction;
+    float alpha;
+    float illum;
+} GPUSpriteMaterial;
 
 typedef struct GPULight {
     float xyz[3];

@@ -50,14 +50,7 @@ extern LockedVertexWithMaterialCollection * all_mesh_vertices;
 void objmodel_init(void);
 
 int32_t new_mesh_id_from_obj_text(
-    const char * obj_text,
-    const uint32_t expected_materials_count,
-    const char expected_materials_names[MAX_MATERIALS_PER_POLYGON][256]);
-
-int32_t new_mesh_id_from_resource_asserts(
-    const char * filename,
-    const uint32_t expected_materials_count,
-    const char expected_materials_names[MAX_MATERIALS_PER_POLYGON][256]);
+    const char * obj_text);
 
 int32_t new_mesh_id_from_resource(
     const char * filename);
