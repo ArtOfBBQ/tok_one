@@ -18,7 +18,7 @@ void client_logic_early_startup(
 {
     #if TEAPOT
     // teapot_mesh_id = BASIC_CUBE_MESH_ID;
-    teapot_mesh_id = new_mesh_id_from_resource("teapot.obj");
+    teapot_mesh_id = new_mesh_id_from_resource(".obj");
     log_assert(teapot_mesh_id >= 0);
     #endif
     
