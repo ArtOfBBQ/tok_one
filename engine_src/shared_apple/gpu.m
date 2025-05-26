@@ -77,10 +77,11 @@ bool32_t apple_gpu_init(
     void (* arg_funcptr_shared_gameloop_update_after_render_pass)(void),
     id<MTLDevice> with_metal_device,
     NSString * shader_lib_filepath,
+    float backing_scale_factor,
     char * error_msg_string)
 {
     ags = malloc_from_unmanaged(sizeof(AppleGPUState)); // TODO: use malloc_from_unmanaged again
-    ags->has_retina_screen = true;// TODO: query OS instead of hardcoding
+    ags->has_retina_screen = backing_scale_factor > 1.49f;
     ags->pixel_format_renderpass1 = 0;
     ags->drawing_semaphore = NULL; // TODO: remove me
     ags->drawing_semaphore = dispatch_semaphore_create(3);

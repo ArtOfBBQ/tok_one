@@ -496,6 +496,8 @@ int main(int argc, const char * argv[]) {
             metal_device_for_window,
         /* NSString *shader_lib_filepath: */
             shader_lib_path,
+        /* bool32_t has_retina_screen: */
+            (float)[[window screen] backingScaleFactor],
         /* char * error_msg_string: */
             errmsg);
     

@@ -1053,10 +1053,6 @@ int32_t new_mesh_id_from_obj_text(
 int32_t new_mesh_id_from_resource(
     const char * filename)
 {
-    #ifdef LOGGER_IGNORE_ASSERTS
-    (void)expected_materials_count;
-    #endif
-    
     log_assert(all_mesh_summaries_size < ALL_MESHES_SIZE);
     
     FileBuffer obj_file_buf;

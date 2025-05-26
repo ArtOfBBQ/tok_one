@@ -21,6 +21,7 @@ bool32_t apple_gpu_init(
     void (* arg_funcptr_shared_gameloop_update_after_render_pass)(void),
     id<MTLDevice> with_metal_device,
     NSString * shader_lib_filepath,
+    float backing_scale_factor,
     char * error_msg_string);
 
 void apple_gpu_initialize_texture_array(

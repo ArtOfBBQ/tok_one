@@ -24,7 +24,7 @@ of the engine for your specific app.
 
 
 #define SCHEDULED_ANIMS_ACTIVE 1
-#define TERMINAL_ACTIVE 0
+#define TERMINAL_ACTIVE 1
 #define RAW_SHADER_ACTIVE 0 // for points and lines
 #define TEXTURES_ACTIVE 1
 #define BLOOM_ACTIVE 1
