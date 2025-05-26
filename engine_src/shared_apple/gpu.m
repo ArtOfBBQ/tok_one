@@ -60,7 +60,7 @@ typedef struct AppleGPUState {
     id<MTLBuffer> touch_id_buffer;
     id<MTLBuffer> touch_id_buffer_all_zeros;
     PostProcessingVertex quad_vertices[6];
-    bool32_t has_retina_screen;
+    float retina_scaling_factor;
     bool32_t metal_active;
 } AppleGPUState;
 
@@ -81,7 +81,7 @@ bool32_t apple_gpu_init(
     char * error_msg_string)
 {
     ags = malloc_from_unmanaged(sizeof(AppleGPUState)); // TODO: use malloc_from_unmanaged again
-    ags->has_retina_screen = backing_scale_factor > 1.49f;
+    ags->retina_scaling_factor = backing_scale_factor;
     ags->pixel_format_renderpass1 = 0;
     ags->drawing_semaphore = NULL; // TODO: remove me
     ags->drawing_semaphore = dispatch_semaphore_create(3);
@@ -1224,10 +1224,10 @@ void platform_gpu_copy_locked_vertices(void)
     ags->cached_viewport.originY = 0;
     ags->cached_viewport.width   =
         window_globals->window_width *
-        (ags->has_retina_screen ? 2.0f : 1.0f);
+            ags->retina_scaling_factor;
     ags->cached_viewport.height  =
         window_globals->window_height *
-        (ags->has_retina_screen ? 2.0f : 1.0f);
+            ags->retina_scaling_factor;
     assert(ags->cached_viewport.width > 0.0f);
     assert(ags->cached_viewport.height > 0.0f);
     
