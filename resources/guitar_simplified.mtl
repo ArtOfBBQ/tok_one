@@ -11,5 +11,5 @@ Pc 0.000000
 Pcr 0.030000
 aniso 0.000000
 anisor 0.000000
-# map_Kd 1001_albedo.jpg
+map_Kd 1001_albedo.jpg
 map_Bump -bm 1.000000 1001_normal.png

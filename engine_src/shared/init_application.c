@@ -170,7 +170,14 @@ void init_application_before_gpu_init(
     test_simd_functions_floats();
     #endif
     
+    uint32_t good = 0;
+    toktoken_init(malloc_from_managed_infoless, &good);
+    log_assert(good);
+    
     objparser_init(malloc_from_managed_infoless, free_from_managed);
+    mtlparser_init(
+        malloc_from_managed_infoless,
+        strlcat);
     
     keypress_map = (bool32_t *)malloc_from_unmanaged(
         sizeof(bool32_t) * KEYPRESS_MAP_SIZE);

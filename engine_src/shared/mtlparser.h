@@ -14,10 +14,18 @@ typedef struct ParsedMaterial {
     char specular_map[MATERIAL_NAME_CAP];
     char bump_map[MATERIAL_NAME_CAP];
     char normal_map[MATERIAL_NAME_CAP];
+    float bump_map_intensity;
     float specular_exponent;
     float refraction;
     float alpha;
     float illum;
+    float roughness; // Pr in mtl files
+    float metallic; // Pm in mtl files
+    float sheen; // Ps in mtl files
+    float clearcoat; // Pc in mtl files
+    float clearcoat_roughness; // Pcr in mtl files
+    float anisotropy; // aniso in mtl files
+    float anisotropy_rotation; // anisor in mtl files
     float ambient_rgb[3];
     float diffuse_rgb[3];
     float specular_rgb[3];

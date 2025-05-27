@@ -5,6 +5,8 @@ TokTokenClientSettings * toktoken_client_settings = NULL;
 typedef struct RegisteredToken {
     uint32_t enum_value;
     char * ascii_value;
+    uint8_t ignores_case;
+    uint8_t requires_trailing_whitespace;
 } RegisteredToken;
 
 #define ASCII_STORE_CAP 1000000
@@ -25,7 +27,7 @@ typedef struct TokTokenState {
     uint32_t good;
 } TokTokenState;
 
-static TokTokenState * state = NULL;
+static TokTokenState * toktoken_state = NULL;
 
 #ifndef NDEBUG
 void toktoken_debug_print_state(
@@ -34,7 +36,11 @@ void toktoken_debug_print_state(
     arg_printf("%s\n", "*****");
     arg_printf("%s\n", "toktokenizer state (debug-only):");
     arg_printf("%s\n", "*****");
-    if (!toktoken_client_settings || !state || !state->ascii_store) {
+    if (
+        !toktoken_client_settings ||
+        !toktoken_state ||
+        !toktoken_state->ascii_store)
+    {
         arg_printf(
             "%s\n",
             "Not initialized - the tokenizer has no memory to work with.\n\n"
@@ -49,7 +55,7 @@ void toktoken_debug_print_state(
         "%s\n\n",
         "Initialized - the tokenizer has memory to work with.");
     
-    if (state->good) {
+    if (toktoken_state->good) {
         arg_printf(
             "%s\n\n",
             "The tokenizer's 'good' flag is set (no errors encountered).");
@@ -62,10 +68,10 @@ void toktoken_debug_print_state(
             " return 1!");
     }
     
-    if (state->string_literal_enum_value < UINT32_MAX) {
+    if (toktoken_state->string_literal_enum_value < UINT32_MAX) {
         arg_printf(
             "String literals will be assigned to enum value: %u\n",
-            state->string_literal_enum_value);
+            toktoken_state->string_literal_enum_value);
     } else {
         arg_printf(
             "%s\n\n",
@@ -76,13 +82,13 @@ void toktoken_debug_print_state(
             "literals.");
     }
     
-    if (state->registered_tokens_size > 0) {
-        for (uint32_t i = 0; i < state->registered_tokens_size; i++) {
+    if (toktoken_state->registered_tokens_size > 0) {
+        for (uint32_t i = 0; i < toktoken_state->registered_tokens_size; i++) {
             arg_printf(
                 "Token %u's ASCII value: \"%s\", enum value: %u\n",
                 i,
-                state->registered_tokens[i].ascii_value,
-                state->registered_tokens[i].enum_value);
+                toktoken_state->registered_tokens[i].ascii_value,
+                toktoken_state->registered_tokens[i].enum_value);
         }
     } else {
         arg_printf(
@@ -105,37 +111,36 @@ void toktoken_init(
     
     toktoken_client_settings = arg_malloc_func(sizeof(TokTokenClientSettings));
     if (!toktoken_client_settings) {
-        state->good = 0;
+        toktoken_state->good = 0;
         return;
     }
     
-    state = arg_malloc_func(sizeof(TokTokenState));
-    if (!state) {
-        state->good = 0;
+    toktoken_state = arg_malloc_func(sizeof(TokTokenState));
+    if (!toktoken_state) {
+        toktoken_state->good = 0;
         return;
     }
     
-    state->ascii_store = arg_malloc_func(ASCII_STORE_CAP);
-    if (state->ascii_store == NULL) {
-        state->good = 0;
+    toktoken_state->ascii_store = arg_malloc_func(ASCII_STORE_CAP);
+    if (toktoken_state->ascii_store == NULL) {
+        toktoken_state->good = 0;
         return;
     }
     
     toktoken_reset(good);
     if (!*good) {
-        state->good = 0;
+        toktoken_state->good = 0;
         return;
     }
     
     *good = 1;
-    state->good = 1;
+    toktoken_state->good = 1;
 }
 
 void toktoken_reset(uint32_t * good) {
     *good = 0;
-    if (toktoken_client_settings == NULL || state == NULL) {
+    if (toktoken_client_settings == NULL || toktoken_state == NULL) {
         // init() failed or wasn't called yet
-        state->good = 0;
         return;
     }
     
@@ -145,10 +150,10 @@ void toktoken_reset(uint32_t * good) {
     toktoken_client_settings->allow_leading_dot = 1;
     toktoken_client_settings->allow_high_precision = 1;
     
-    state->string_literal_enum_value = UINT32_MAX;
-    state->newline_enum_value = UINT32_MAX;
-    state->registered_tokens_size = 0;
-    state->good = 1;
+    toktoken_state->string_literal_enum_value = UINT32_MAX;
+    toktoken_state->newline_enum_value = UINT32_MAX;
+    toktoken_state->registered_tokens_size = 0;
+    toktoken_state->good = 1;
     
     *good = 1;
 }
@@ -160,14 +165,14 @@ void toktoken_register_newline_enum(
     *good = 0;
     if (
         toktoken_client_settings == NULL ||
-        state == NULL ||
-        !state->good ||
+        toktoken_state == NULL ||
+        !toktoken_state->good ||
         enum_value == UINT32_MAX)
     {
         return;
     }
     
-    state->newline_enum_value = enum_value;
+    toktoken_state->newline_enum_value = enum_value;
     
     *good = 1;
 }
@@ -179,14 +184,14 @@ void toktoken_register_string_literal_enum(
     *good = 0;
     if (
         toktoken_client_settings == NULL ||
-        state == NULL ||
-        !state->good ||
+        toktoken_state == NULL ||
+        !toktoken_state->good ||
         enum_value == UINT32_MAX)
     {
         return;
     }
     
-    state->string_literal_enum_value = enum_value;
+    toktoken_state->string_literal_enum_value = enum_value;
     
     *good = 1;
 }
@@ -199,8 +204,8 @@ void toktoken_register_token(
     *good = 0;
     if (
         toktoken_client_settings == NULL ||
-        state == NULL ||
-        !state->good ||
+        toktoken_state == NULL ||
+        !toktoken_state->good ||
         ascii_value == NULL ||
         ascii_value[0] == '\0')
     {
@@ -208,30 +213,39 @@ void toktoken_register_token(
     }
     
     // keep the token's data
-    if (state->registered_tokens_size + 1 >= REGISTERED_TOKENS_CAP) {
-        state->good = 0;
+    if (toktoken_state->registered_tokens_size + 1 >= REGISTERED_TOKENS_CAP) {
+        toktoken_state->good = 0;
         return;
     }
-    RegisteredToken * new = &state->
-        registered_tokens[state->registered_tokens_size];
-    state->registered_tokens_size += 1;
-    new->ascii_value = state->ascii_store + state->ascii_store_next_i;
+    RegisteredToken * new = &toktoken_state->
+        registered_tokens[toktoken_state->registered_tokens_size];
+    toktoken_state->registered_tokens_size += 1;
+    new->ascii_value = toktoken_state->ascii_store + toktoken_state->ascii_store_next_i;
     new->enum_value = enum_value;
+    new->requires_trailing_whitespace = !toktoken_client_settings->next_token_ignore_whitespace;
+    new->ignores_case =
+        toktoken_client_settings->next_token_ignore_case;
+    
+    if (new->ignores_case) {
+        // TODO: implement ignore case tokens
+        *good = 0;
+        return;
+    }
     
     // keep the ascii value in our persistent local store
     uint32_t i = 0;
     while (
         ascii_value[i] != '\0' &&
-        state->ascii_store_next_i < ASCII_STORE_CAP)
+        toktoken_state->ascii_store_next_i < ASCII_STORE_CAP)
     {
-        state->ascii_store[state->ascii_store_next_i++] = ascii_value[i];
+        toktoken_state->ascii_store[toktoken_state->ascii_store_next_i++] = ascii_value[i];
         i += 1;
     }
-    if (state->ascii_store_next_i + 1 >= ASCII_STORE_CAP) {
-        state->good = 0;
+    if (toktoken_state->ascii_store_next_i + 1 >= ASCII_STORE_CAP) {
+        toktoken_state->good = 0;
         return;
     }
-    state->ascii_store[state->ascii_store_next_i++] = '\0';
+    toktoken_state->ascii_store[toktoken_state->ascii_store_next_i++] = '\0';
     
     
     *good = 1;
@@ -260,17 +274,28 @@ static void toktoken_string_match_tokens(
     *matching_token_i = UINT32_MAX;
     *data_len = 0;
     
-    for (uint32_t i = 0; i < state->registered_tokens_size; i++) {
+    for (uint32_t i = 0; i < toktoken_state->registered_tokens_size; i++) {
         uint32_t matching_chars =
             toktoken_strmatch(
                 input,
-                state->registered_tokens[i].ascii_value);
+                toktoken_state->registered_tokens[i].ascii_value);
         
         if (matching_chars > 0)
         {
-            *matching_token_i = i;
-            *data_len = matching_chars;
-            return;
+            if (
+                !toktoken_state->registered_tokens[i].
+                    requires_trailing_whitespace ||
+                input[matching_chars] == '\0' ||
+                input[matching_chars] == '\n' ||
+                input[matching_chars] == ' ' ||
+                input[matching_chars] == '\t')
+            {
+                *matching_token_i = i;
+                *data_len = matching_chars;
+                return;
+            } else {
+                // matched a token, but it's a substring
+            }
         }
     }
     
@@ -282,7 +307,7 @@ static void toktoken_set_number_flags(TokToken *token) {
     
     if (
         token->string_value_size == 0 ||
-        state->numbers_size + 1 >= NUMBERS_CAP)
+        toktoken_state->numbers_size + 1 >= NUMBERS_CAP)
     {
         return;
     }
@@ -362,7 +387,7 @@ static void toktoken_set_number_flags(TokToken *token) {
         }
         
         leading_num_u64 *= mult;
-        leading_num_u64 += token->string_value[i] - '0';
+        leading_num_u64 += (uint64_t)(token->string_value[i] - '0');
         mult = 10;
         leading_digit_count++;
         i++;
@@ -390,7 +415,7 @@ static void toktoken_set_number_flags(TokToken *token) {
         {
             has_trailing_nums = 1;
             trailing_num_u64 *= mult;
-            trailing_num_u64 += token->string_value[i] - '0';
+            trailing_num_u64 += (uint64_t)(token->string_value[i] - '0');
             mult = 10;
             trailing_digit_count++;
             i++;
@@ -441,12 +466,12 @@ static void toktoken_set_number_flags(TokToken *token) {
     if (has_leading_nums || has_trailing_nums || has_exponent)
     {
         token->castable_flags |= 1; // is number
-        token->number_value = &state->numbers[state->numbers_size];
-        state->numbers_size += 1;
+        token->number_value = &toktoken_state->numbers[toktoken_state->numbers_size];
+        toktoken_state->numbers_size += 1;
         token->number_value->unsigned_int     = leading_num_u64;
         token->number_value->signed_int       =
-            (leading_num_u64) * (has_leading_minus ? -1 : 1);
-        token->number_value->double_precision = 
+            ((int)leading_num_u64) * (has_leading_minus ? -1 : 1);
+        token->number_value->double_precision =
             (double)leading_num_u64 * (has_leading_minus ? -1.0 : 1.0);
         if (has_dot) {
             double divisor = 1.0;
@@ -557,10 +582,10 @@ void toktoken_run(
     if (
         input == NULL ||
         toktoken_client_settings == NULL ||
-        state == NULL ||
-        !state->good ||
-        state->string_literal_enum_value == UINT32_MAX ||
-        state->string_literal_enum_value == UINT32_MAX)
+        toktoken_state == NULL ||
+        !toktoken_state->good ||
+        toktoken_state->string_literal_enum_value == UINT32_MAX ||
+        toktoken_state->string_literal_enum_value == UINT32_MAX)
     {
         return;
     }
@@ -579,21 +604,21 @@ void toktoken_run(
         {
             if (input[i] == '\n') {
                 line_number += 1;
-                if (state->newline_enum_value != UINT32_MAX) {
-                    if (state->tokens_size + 1 >= TOKENS_CAP) {
+                if (toktoken_state->newline_enum_value != UINT32_MAX) {
+                    if (toktoken_state->tokens_size + 1 >= TOKENS_CAP) {
                         *good = 0;
-                        state->good = 0;
+                        toktoken_state->good = 0;
                         return;
                     }
-                    state->tokens[state->tokens_size].enum_value =
-                        state->newline_enum_value;
-                    state->tokens[state->tokens_size].line_number =
+                    toktoken_state->tokens[toktoken_state->tokens_size].enum_value =
+                        toktoken_state->newline_enum_value;
+                    toktoken_state->tokens[toktoken_state->tokens_size].line_number =
                         line_number;
-                    state->tokens[state->tokens_size].castable_flags = 0;
-                    state->tokens[state->tokens_size].number_value = NULL;
-                    state->tokens[state->tokens_size].string_value = NULL;
-                    state->tokens[state->tokens_size].string_value_size = 0;
-                    state->tokens_size += 1;
+                    toktoken_state->tokens[toktoken_state->tokens_size].castable_flags = 0;
+                    toktoken_state->tokens[toktoken_state->tokens_size].number_value = NULL;
+                    toktoken_state->tokens[toktoken_state->tokens_size].string_value = NULL;
+                    toktoken_state->tokens[toktoken_state->tokens_size].string_value_size = 0;
+                    toktoken_state->tokens_size += 1;
                 }
             }
             i++;
@@ -606,19 +631,19 @@ void toktoken_run(
             &matching_token_i,
             &data_len);
         
-        TokToken * new = &state->tokens[state->tokens_size];
-        state->tokens_size += 1;
-        if (state->tokens_size + 1 >= TOKENS_CAP) {
+        TokToken * new = &toktoken_state->tokens[toktoken_state->tokens_size];
+        toktoken_state->tokens_size += 1;
+        if (toktoken_state->tokens_size + 1 >= TOKENS_CAP) {
             *good = 0;
-            state->good = 0;
+            toktoken_state->good = 0;
             return;
         }
         new->line_number = line_number;
         
         if (matching_token_i == UINT32_MAX) {
-            new->enum_value = state->string_literal_enum_value;
+            new->enum_value = toktoken_state->string_literal_enum_value;
             new->string_value =
-                state->ascii_store + state->ascii_store_next_i;
+                toktoken_state->ascii_store + toktoken_state->ascii_store_next_i;
             
             uint32_t j = i;
             new->string_value[0] = input[j];
@@ -634,34 +659,34 @@ void toktoken_run(
             }
             new->string_value[j-i] = '\0';
             
-            new->string_value_size = j-i;
-            state->ascii_store_next_i += (j-i) + 1;
+            new->string_value_size = (uint16_t)(j-i);
+            toktoken_state->ascii_store_next_i += (j-i) + 1;
             
             i = j;
         } else {
-            new->enum_value = state->
+            new->enum_value = toktoken_state->
                 registered_tokens[matching_token_i].enum_value;
             new->string_value =
-                state->registered_tokens[matching_token_i].ascii_value;
-            new->string_value_size = data_len;
+                toktoken_state->registered_tokens[matching_token_i].ascii_value;
+            new->string_value_size = (uint16_t)data_len;
             
             i += data_len;
         }
         
         toktoken_set_number_flags(new);
-        if (!state->good) { return; }
+        if (!toktoken_state->good) { return; }
     }
     
     *good = 1;
 }
 
 uint32_t toktoken_get_token_count(void) {
-    return state->tokens_size;
+    return toktoken_state->tokens_size;
 }
 
 TokToken * toktoken_get_token_at(
     const uint32_t token_i)
 {
-    return &state->tokens[token_i];
+    return &toktoken_state->tokens[token_i];
 }
 

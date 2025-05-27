@@ -9,6 +9,7 @@
 #include "logger.h"
 #include "triangle.h"
 #include "objparser.h"
+#include "mtlparser.h"
 #include "platform_layer.h"
 #include "memorystore.h"
 
@@ -49,11 +50,13 @@ extern LockedVertexWithMaterialCollection * all_mesh_vertices;
 
 void objmodel_init(void);
 
-int32_t new_mesh_id_from_obj_text(
-    const char * obj_text);
+int32_t new_mesh_id_from_obj_mtl_text(
+    const char * obj_text,
+    const char * mtl_text);
 
-int32_t new_mesh_id_from_resource(
-    const char * filename);
+int32_t new_mesh_id_from_resources(
+    const char * filename,
+    const char * mtl_filename);
 
 void center_mesh_offsets(const int32_t mesh_id);
 

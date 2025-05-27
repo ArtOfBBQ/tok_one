@@ -18,7 +18,9 @@ void client_logic_early_startup(
 {
     #if TEAPOT
     // teapot_mesh_id = BASIC_CUBE_MESH_ID;
-    teapot_mesh_id = new_mesh_id_from_resource("guitar_simplified.obj");
+    teapot_mesh_id = new_mesh_id_from_resources(
+        "guitar_simplified.obj",
+        "guitar_simplified.mtl");
     log_assert(teapot_mesh_id >= 0);
     #endif
     
@@ -35,9 +37,9 @@ void client_logic_late_startup(void) {
     
     shadowcaster_light_i = 0;
     zLightSource * light = next_zlight();
-    light->RGBA[0]       =  0.85f;
-    light->RGBA[1]       =  0.00f;
-    light->RGBA[2]       =  0.00f;
+    light->RGBA[0]       =  0.33f;
+    light->RGBA[1]       =  0.33f;
+    light->RGBA[2]       =  0.33f;
     light->RGBA[3]       =  1.00f;
     light->ambient       =  0.00f;
     light->diffuse       =  1.00f;
@@ -59,9 +61,9 @@ void client_logic_late_startup(void) {
     camera.xyz_angle[2] =  0.0f;
     
     light = next_zlight();
-    light->RGBA[0]       =  0.0f;
-    light->RGBA[1]       =  0.35f;
-    light->RGBA[2]       =  0.00f;
+    light->RGBA[0]       =  0.33f;
+    light->RGBA[1]       =  0.33f;
+    light->RGBA[2]       =  0.33f;
     light->RGBA[3]       =  1.00f;
     light->ambient       =  0.00f;
     light->diffuse       =  1.00f;
@@ -71,22 +73,6 @@ void client_logic_late_startup(void) {
     light->xyz[1]        =  TEAPOT_Y - 0.1f;
     light->xyz[2]        =  TEAPOT_Z - 0.05f;
     light->xyz_angle[0]  =  1.00f;
-    light->xyz_angle[1]  =  0.00f;
-    light->xyz_angle[2]  =  0.00f;
-    commit_zlight(light);
-    
-    light->RGBA[0]       =  0.00f;
-    light->RGBA[1]       =  0.00f;
-    light->RGBA[2]       =  0.80f;
-    light->RGBA[3]       =  1.00f;
-    light->ambient       =  0.00f;
-    light->diffuse       =  1.00f;
-    light->specular      =  0.00f;
-    light->reach         =  8.00f;
-    light->xyz[0]        =  TEAPOT_X;
-    light->xyz[1]        =  TEAPOT_Y - 1.5f;
-    light->xyz[2]        =  TEAPOT_Z;
-    light->xyz_angle[0]  =  1.5708f; // rotate around the x axis because light is looking at +z right now but needs to look down
     light->xyz_angle[1]  =  0.00f;
     light->xyz_angle[2]  =  0.00f;
     commit_zlight(light);

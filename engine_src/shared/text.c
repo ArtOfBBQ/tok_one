@@ -373,6 +373,7 @@ void text_request_label_offset_around(
             
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
+            log_assert(letter.gpu_materials[0].alpha > 0.99f);
             commit_zpolygon_to_render(&letter);
         }
         cur_y_offset_pixelspace -= get_newline_advance();
@@ -560,6 +561,7 @@ void text_request_label_renderable(
         
         
         i++;
+        log_assert(letter.gpu_materials[0].alpha > 0.99f);
         commit_zpolygon_to_render(&letter);
     }
 }

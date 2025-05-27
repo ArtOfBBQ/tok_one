@@ -78,7 +78,7 @@ static void load_obj_btn(void) {
             &buffer);
     
     if (buffer.good) {
-        base_mesh_id = new_mesh_id_from_obj_text(
+        base_mesh_id = new_mesh_id_from_obj_mtl_text(
             /* const char * obj_text: */
                 buffer.contents,
             /* const uint32_t expected_materials_count: */

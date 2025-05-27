@@ -15,12 +15,12 @@ vertices which build a polyline.
 l v1 v2 v3 v4 v5 v6 ...
 */
 
-typedef struct ParsedMaterial {
+typedef struct MaterialName {
     char name[64];
-} ParsedMaterial;
+} MaterialName;
 
 typedef struct ParsedObj {
-    ParsedMaterial * materials;
+    MaterialName * material_names;
     float (* vertices)[6]; // contains either xyzw,, or xyzrgb (, means unused)
     float (* textures_vt_uv)[2]; // 'vt' in .obj files, 'uv' in 3d graphics
     float (* normals_vn)[3];  // xyz, 'vn' in .obj files

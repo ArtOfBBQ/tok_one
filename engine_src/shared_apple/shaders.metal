@@ -583,13 +583,6 @@ fragment_shader(
         polygon_materials[in.material_i].texturearray_i == 0)
     {
     #endif
-        if (
-            polygon_materials[in.material_i].texturearray_i >= 31 ||
-            polygon_materials[in.material_i].texture_i < 0)
-        {
-            discard_fragment();
-        }
-        
         constexpr sampler textureSampler(
             mag_filter::linear,
             min_filter::linear);

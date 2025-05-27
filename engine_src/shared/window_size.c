@@ -76,7 +76,7 @@ void windowsize_init(void) {
     window_globals->pause_profiler        = false;
     window_globals->block_mouse           = false;
     
-    window_globals->pixelation_div = 2;
+    window_globals->pixelation_div = 1;
     
     window_globals->postprocessing_constants.timestamp = 0;
     window_globals->postprocessing_constants.blur_pct = 0.18f;

@@ -1240,6 +1240,10 @@ void platform_gpu_copy_locked_vertices(void)
     ags->cached_viewport.znear   = 0.001f; 
     ags->cached_viewport.zfar    = 1.0f;
     
+    ags->render_target_viewport = ags->cached_viewport;
+    ags->render_target_viewport.width /= window_globals->pixelation_div;
+    ags->render_target_viewport.height /= window_globals->pixelation_div;
+    
     *gpu_shared_data_collection->locked_pjc =
         window_globals->projection_constants;
     
@@ -1267,9 +1271,9 @@ void platform_gpu_copy_locked_vertices(void)
     shadows_texture_descriptor.textureType = MTLTextureType2D;
     shadows_texture_descriptor.pixelFormat = MTLPixelFormatDepth32Float;
     shadows_texture_descriptor.width =
-        (unsigned long)ags->cached_viewport.width / 2;
+        (unsigned long)ags->render_target_viewport.width;
     shadows_texture_descriptor.height =
-        (unsigned long)ags->cached_viewport.height / 2;
+        (unsigned long)ags->render_target_viewport.height;
     shadows_texture_descriptor.storageMode = MTLStorageModePrivate;
     shadows_texture_descriptor.usage =
         MTLTextureUsageRenderTarget |
@@ -1284,9 +1288,9 @@ void platform_gpu_copy_locked_vertices(void)
     camera_depth_texture_descriptor.textureType = MTLTextureType2D;
     camera_depth_texture_descriptor.pixelFormat = MTLPixelFormatDepth32Float;
     camera_depth_texture_descriptor.width =
-        (unsigned long)ags->cached_viewport.width / 2;
+        (unsigned long)ags->render_target_viewport.width;
     camera_depth_texture_descriptor.height =
-        (unsigned long)ags->cached_viewport.height / 2;
+        (unsigned long)ags->render_target_viewport.height;
     camera_depth_texture_descriptor.storageMode = MTLStorageModePrivate;
     camera_depth_texture_descriptor.usage =
         MTLTextureUsageRenderTarget |
@@ -1317,28 +1321,23 @@ void platform_gpu_copy_locked_vertices(void)
         touch_buffer_size_bytes);
     
     // Set up a texture for rendering to and apply post-processing to
-    MTLTextureDescriptor * texture_descriptor = [MTLTextureDescriptor new];
-    texture_descriptor.textureType = MTLTextureType2D;
-    texture_descriptor.width =
-        (unsigned long)ags->cached_viewport.width /
-            window_globals->pixelation_div;
-    texture_descriptor.height =
-        (unsigned long)ags->cached_viewport.height /
-            window_globals->pixelation_div;
-    texture_descriptor.pixelFormat = MTLPixelFormatRGBA16Float;
-    texture_descriptor.storageMode = MTLStorageModePrivate;
-    texture_descriptor.usage =
+    MTLTextureDescriptor * render_target_texture_desc =
+        [MTLTextureDescriptor new];
+    render_target_texture_desc.textureType = MTLTextureType2D;
+    render_target_texture_desc.width =
+        (unsigned long)ags->render_target_viewport.width;
+    render_target_texture_desc.height =
+        (unsigned long)ags->render_target_viewport.height;
+    render_target_texture_desc.pixelFormat = MTLPixelFormatRGBA16Float;
+    render_target_texture_desc.storageMode = MTLStorageModePrivate;
+    render_target_texture_desc.usage =
         MTLTextureUsageRenderTarget |
         MTLTextureUsageShaderWrite |
         MTLTextureUsageShaderRead;
-    texture_descriptor.mipmapLevelCount = 1;
+    render_target_texture_desc.mipmapLevelCount = 1;
     
     ags->render_target_texture = [ags->device
-        newTextureWithDescriptor: texture_descriptor];
-    
-    ags->render_target_viewport = ags->cached_viewport;
-    ags->render_target_viewport.width = texture_descriptor.width;
-    ags->render_target_viewport.height = texture_descriptor.height;
+        newTextureWithDescriptor: render_target_texture_desc];
     
     #if BLOOM_ACTIVE
     for (uint32_t i = 0; i < DOWNSAMPLES_SIZE; i++) {
@@ -1542,7 +1541,8 @@ void platform_gpu_copy_locked_vertices(void)
                 render_pass_1_draw_triangles_descriptor];
     
     assert(ags->cached_viewport.zfar > ags->cached_viewport.znear);
-    [render_pass_1_draw_triangles_encoder setViewport: ags->render_target_viewport];
+    [render_pass_1_draw_triangles_encoder
+        setViewport: ags->render_target_viewport];
     assert(ags->cached_viewport.width > 0.0f);
     assert(ags->cached_viewport.height > 0.0f);
     

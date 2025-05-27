@@ -1,6 +1,8 @@
 #ifndef INIT_APPLICATION_H
 #define INIT_APPLICATION_H
 
+#include <string.h> // strlcat
+
 #include "common.h"
 #include "logger.h"
 #include "profiler.h"
@@ -14,6 +16,8 @@
 #include "scheduled_animations.h"
 #include "renderer.h"
 #include "gameloop.h"
+#include "toktokenizer.h"
+#include "mtlparser.h"
 #include "objparser.h"
 
 #include "clientlogic.h"

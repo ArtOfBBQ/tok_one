@@ -230,7 +230,7 @@ static int get_material_i_or_register_new(
         char_i = 0;
         unsigned int match = 1;
         while (name[char_i] != '\0') {
-            if (in_obj->materials[mat_i].name[char_i] !=
+            if (in_obj->material_names[mat_i].name[char_i] !=
                 name[char_i])
             {
                 match = 0;
@@ -253,7 +253,7 @@ static int get_material_i_or_register_new(
     
     int first_unused_material = -1;
     for (int _ = 0; _ <= (int)in_obj->materials_count; _++) {
-        if (in_obj->materials[_].name[0] == '\0') {
+        if (in_obj->material_names[_].name[0] == '\0') {
             first_unused_material = _;
             break;
         }
@@ -266,12 +266,12 @@ static int get_material_i_or_register_new(
     
     char_i = 0;
     while (name[char_i] != '\0') {
-        in_obj->materials[first_unused_material].
+        in_obj->material_names[first_unused_material].
             name[char_i] =
                 name[char_i];
         char_i++;
     }
-    in_obj->materials[first_unused_material].name[char_i] = '\0';
+    in_obj->material_names[first_unused_material].name[char_i] = '\0';
     
     return first_unused_material;
 }
@@ -298,9 +298,10 @@ void parse_obj(
     recipient->quad_normals = 0;
     recipient->textures_vt_uv = 0;
     recipient->normals_vn = 0;
-    recipient->materials = objparser_malloc_func(sizeof(ParsedMaterial) * 200);
+    recipient->material_names = objparser_malloc_func(
+        sizeof(MaterialName) * 200);
     for (unsigned int i = 0; i < 200; i++) {
-        recipient->materials[i].name[0] = '\0';
+        recipient->material_names[i].name[0] = '\0';
     }
     
     recipient->vertices_count = 0;
@@ -404,18 +405,18 @@ void parse_obj(
         *success = 0;
         return;
     }
-    if (recipient->materials != 0) {
-        objparser_free_func(recipient->materials);
-        recipient->materials = 0;
+    if (recipient->material_names != 0) {
+        objparser_free_func(recipient->material_names);
+        recipient->material_names = 0;
     }
     
     recipient->vertices = objparser_malloc_func(
         sizeof(unsigned int[6]) * recipient->vertices_count);
     if (recipient->materials_count > 0) {
-        recipient->materials = objparser_malloc_func(
-            sizeof(ParsedMaterial) * recipient->materials_count);
+        recipient->material_names = objparser_malloc_func(
+            sizeof(MaterialName) * recipient->materials_count);
         for (unsigned int j = 0; j < recipient->materials_count; j++) {
-            recipient->materials[j].name[0] = '\0';
+            recipient->material_names[j].name[0] = '\0';
         }
     }
     
@@ -990,9 +991,9 @@ void free_obj(ParsedObj * to_free) {
         objparser_free_func(to_free->normals_vn);
         to_free->normals_vn = 0;
     }
-    if (to_free->materials != 0) {
-        objparser_free_func(to_free->materials);
-        to_free->materials = 0;
+    if (to_free->material_names != 0) {
+        objparser_free_func(to_free->material_names);
+        to_free->material_names = 0;
     }
     if (to_free->vertices != 0) {
         objparser_free_func(to_free->vertices);
