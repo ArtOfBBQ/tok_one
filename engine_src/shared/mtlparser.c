@@ -863,7 +863,7 @@ void mtlparser_parse(
                     /* const char * material_name: */
                         current_material->name,
                     /* float * float_stat: */
-                        &current_material->roughness,
+                        &current_material->metallic,
                     /* uint32_t * good: */
                         good);
                 
@@ -926,7 +926,7 @@ void mtlparser_parse(
                     /* const char * material_name: */
                         current_material->name,
                     /* float * float_stat: */
-                        &current_material->clearcoat,
+                        &current_material->clearcoat_roughness,
                     /* uint32_t * good: */
                         good);
                 

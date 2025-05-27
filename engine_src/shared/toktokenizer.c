@@ -315,11 +315,11 @@ static void toktoken_set_number_flags(TokToken *token) {
     uint32_t i = 0;
     uint32_t has_leading_minus = 0;
     uint32_t has_leading_nums = 0;
-    uint32_t first_leading_num_was_0 = 0;
     uint64_t leading_num_u64 = 0;
     uint32_t has_dot = 0;
-    uint32_t has_trailing_nums = 0;
     uint64_t trailing_num_u64 = 0;
+    uint32_t trailing_digit_count = 0;
+    uint32_t trailing_num_leading_zeros = 0;
     uint32_t has_exponent = 0;
     
     // UINT64_MAX as string (20 digits)
@@ -360,7 +360,7 @@ static void toktoken_set_number_flags(TokToken *token) {
         if (!has_leading_nums) {
             has_leading_nums = 1;
             if (token->string_value[i] == '0') {
-                first_leading_num_was_0 = 1;
+                trailing_num_leading_zeros += 1;
             }
             
             if (
@@ -393,12 +393,11 @@ static void toktoken_set_number_flags(TokToken *token) {
         i++;
     }
     
-    if (first_leading_num_was_0 && leading_num_u64 != 0) {
+    if (trailing_num_leading_zeros > 0 && leading_num_u64 != 0) {
         return; // Reject "-01" but allow "-0"
     }
     
     // Decimal point and trailing digits
-    uint32_t trailing_digit_count = 0;
     if (i < token->string_value_size && token->string_value[i] == '.')
     {
         if (has_dot) {
@@ -413,15 +412,14 @@ static void toktoken_set_number_flags(TokToken *token) {
             token->string_value[i] >= '0' &&
             token->string_value[i] <= '9')
         {
-            has_trailing_nums = 1;
             trailing_num_u64 *= mult;
             trailing_num_u64 += (uint64_t)(token->string_value[i] - '0');
             mult = 10;
-            trailing_digit_count++;
+            trailing_digit_count += 1;
             i++;
         }
     }
-
+    
     // Exponent (e.g., e-4, E+05)
     if (
         i < token->string_value_size && (token->string_value[i] == 'e' ||
@@ -457,13 +455,13 @@ static void toktoken_set_number_flags(TokToken *token) {
     // Ensure all characters consumed
     if (
         i != token->string_value_size ||
-        (has_dot && !has_trailing_nums && !has_exponent))
+        (has_dot && trailing_digit_count == 0 && !has_exponent))
     {
         return; // Invalid trailing characters or lone dot
     }
     
     // Finally, set flags
-    if (has_leading_nums || has_trailing_nums || has_exponent)
+    if (has_leading_nums || trailing_digit_count || has_exponent)
     {
         token->castable_flags |= 1; // is number
         token->number_value = &toktoken_state->numbers[toktoken_state->numbers_size];
@@ -475,9 +473,12 @@ static void toktoken_set_number_flags(TokToken *token) {
             (double)leading_num_u64 * (has_leading_minus ? -1.0 : 1.0);
         if (has_dot) {
             double divisor = 1.0;
-            while ((double)trailing_num_u64 / divisor > 1.0) {
+            for (uint32_t _ = 0; _ < trailing_digit_count; _++) {
                 divisor *= 10.0;
             }
+            //            while ((double)trailing_num_u64 / divisor > 1.0) {
+            //                divisor *= 10.0;
+            //            }
             token->number_value->double_precision +=
                 ((double)trailing_num_u64 / divisor);
         }
