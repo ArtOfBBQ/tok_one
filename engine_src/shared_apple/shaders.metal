@@ -2,7 +2,7 @@
 #include <simd/simd.h>
 
 #include "clientlogic_macro_settings.h"
-#include "cpu_gpu_shared_types.h"
+#include "T1_cpu_gpu_shared_types.h"
 
 using namespace metal;
 
@@ -374,7 +374,7 @@ float3 get_lighting(
     const device GPUCamera * camera,
     const device GPULight * lights,
     const device GPUProjectionConstants * projection_constants,
-    const device GPUSpriteMaterial * fragment_material,
+    const device GPUzSpriteMaterial * fragment_material,
     const device GPUPostProcessingConstants * updating_globals,
     float3 fragment_worldpos,
     float3 fragment_normal,
@@ -535,7 +535,7 @@ fragment_shader(
     const device GPULight * lights [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
-    const device GPUSpriteMaterial * polygon_materials [[ buffer(6) ]],
+    const device GPUzSpriteMaterial * polygon_materials [[ buffer(6) ]],
     const device GPUPostProcessingConstants * updating_globals [[ buffer(7) ]])
 {
     if (
@@ -644,7 +644,7 @@ alphablending_fragment_shader(
     const device GPULight * lights [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
-    const device GPUSpriteMaterial * polygon_materials [[ buffer(6) ]],
+    const device GPUzSpriteMaterial * polygon_materials [[ buffer(6) ]],
     const device GPUPostProcessingConstants * updating_globals [[ buffer(7) ]])
 {
     float3 lighting = get_lighting(

@@ -127,7 +127,7 @@ TouchableMTKView * _my_mtk_view;
     withTransitionCoordinator:
         (id<UIViewControllerTransitionCoordinator>)coordinator
 {
-    window_globals->last_resize_request_at =
+    engine_globals->last_resize_request_at =
         platform_get_current_time_microsecs();
     
     // _my_mtk_view.drawableSize = size;

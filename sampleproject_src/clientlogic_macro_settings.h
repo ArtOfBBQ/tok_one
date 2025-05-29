@@ -9,10 +9,8 @@ of the engine for your specific app.
 #define APPLICATION_NAME "TOK ONE"
 
 // The 2 pools of memory your app allocates on startup
-// 55 mb ->                      55...000
-#define UNMANAGED_MEMORY_SIZE    55000000
-// 10 mb ->                      10...000
-// #define MANAGED_MEMORY_SIZE      10000000
+// 55 mb ->                      450...000
+#define UNMANAGED_MEMORY_SIZE    450000000
 
 
 // these will be ignored on platforms where window size/position
@@ -25,13 +23,14 @@ of the engine for your specific app.
 
 #define SCHEDULED_ANIMS_ACTIVE 1
 #define TERMINAL_ACTIVE 1
-#define RAW_SHADER_ACTIVE 0 // for points and lines
+#define RAW_SHADER_ACTIVE 1 // for points and lines
 #define TEXTURES_ACTIVE 1
 #define BLOOM_ACTIVE 1
-#define PARTICLES_ACTIVE 0
+#define PARTICLES_ACTIVE 1
 #define SHADOWS_ACTIVE 1
-#define AUDIO_ACTIVE 0
-#define ENGINE_SAVEFILE_ACTIVE 0
+#define AUDIO_ACTIVE 1
+#define ENGINE_SAVEFILE_ACTIVE 1
+#define PROFILER_ACTIVE 0
 
 #define MAX_RENDERING_FRAME_BUFFERS 3 // 3 for triple-buffering
 

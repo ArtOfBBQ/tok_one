@@ -1,4 +1,4 @@
-#include "clientlogic.h"
+#include "T1_clientlogic.h"
 
 typedef struct SliderRequest {
     char label[64];
@@ -78,11 +78,9 @@ static void load_obj_btn(void) {
             &buffer);
     
     if (buffer.good) {
-        base_mesh_id = new_mesh_id_from_obj_mtl_text(
+        base_mesh_id = objmodel_new_mesh_id_from_obj_mtl_text(
             /* const char * obj_text: */
                 buffer.contents,
-            /* const uint32_t expected_materials_count: */
-                0,
             /* const char expected_materials_names
                 [MAX_MATERIALS_PER_POLYGON][256]: */
                 NULL);
@@ -177,8 +175,8 @@ static void save_particle_stats(void) {
                     output,
                     1000000,
                     dumpable_stats[stat_i].source->xyz[m] *
-                        window_globals->window_height);
-                common_strcat_capped(output, 1000000, " / window_globals->window_height; // originally ");
+                        engine_globals->window_height);
+                common_strcat_capped(output, 1000000, " / engine_globals->window_height; // originally ");
                 common_strcat_float_capped(
                     output,
                     1000000,
@@ -228,11 +226,11 @@ static void save_particle_stats(void) {
                     output,
                     1000000,
                     dumpable_stats[stat_i].source->xyz_multiplier[m] *
-                        window_globals->window_height);
+                        engine_globals->window_height);
                             common_strcat_capped(
                                 output,
                                 1000000,
-                                " / window_globals->window_height; // originally ");
+                                " / engine_globals->window_height; // originally ");
                 common_strcat_float_capped(
                     output,
                     1000000,
@@ -251,16 +249,16 @@ static void save_particle_stats(void) {
                 common_strcat_capped(
                     output,
                     1000000,
-                    "] = window_globals->window_height * ");
+                    "] = engine_globals->window_height * ");
                 common_strcat_float_capped(
                     output,
                     1000000,
                     dumpable_stats[stat_i].source->xyz_offset[m] *
-                        window_globals->window_height);
+                        engine_globals->window_height);
                             common_strcat_capped(
                                 output,
                                 1000000,
-                                " / window_globals->window_height; // originally ");
+                                " / engine_globals->window_height; // originally ");
                 common_strcat_float_capped(
                     output,
                     1000000,
@@ -314,7 +312,7 @@ static void save_particle_stats(void) {
         output, 1000000, (uint32_t)particle_effects[0].pause_between_spawns);
     common_strcat_capped(output, 1000000, ";\n");
     
-    for (uint32_t m = 0; m < 4; m++) {
+    for (uint32_t m = 0; m < 3; m++) {
         common_strcat_capped(
             output,
             1000000,
@@ -324,9 +322,18 @@ static void save_particle_stats(void) {
         common_strcat_float_capped(
             output,
             1000000,
-            particle_effects[0].zpolygon_materials[0].rgba[m]);
+            particle_effects[0].zpolygon_materials[0].ambient_rgb[m]);
         common_strcat_capped(output, 1000000, ";\n");
     }
+    common_strcat_capped(
+        output,
+        1000000,
+        "particle->zpolygon_materials[0].alpha = ");
+    common_strcat_float_capped(
+        output,
+        1000000,
+        particle_effects[0].zpolygon_materials[0].alpha);
+    common_strcat_capped(output, 1000000, ";\n");
     
     platform_write_file(
         /* const char * filepath_destination: */
@@ -371,7 +378,7 @@ void client_logic_early_startup(
     camera.xyz[1] =  0.0f;
     camera.xyz[2] = -0.5f;
     
-    window_globals->draw_axes = true;
+    engine_globals->draw_axes = true;
     
     *success = 1;
 }
@@ -1032,25 +1039,25 @@ void client_logic_late_startup(void) {
     slider_requests[98].min_float_value =  0.0f;
     slider_requests[98].max_float_value =  1.0f;
     slider_requests[98].linked_float =
-        &particle_effects[0].zpolygon_materials[0].rgba[0];
+        &particle_effects[0].zpolygon_materials[0].ambient_rgb[0];
     
     common_strcpy_capped(slider_requests[99].label, 64, "Material G:");
     slider_requests[99].min_float_value =  0.0f;
     slider_requests[99].max_float_value =  1.0f;
     slider_requests[99].linked_float =
-        &particle_effects[0].zpolygon_materials[0].rgba[1];
+        &particle_effects[0].zpolygon_materials[0].ambient_rgb[1];
     
     common_strcpy_capped(slider_requests[100].label, 64, "Material B:");
     slider_requests[100].min_float_value =  0.0f;
     slider_requests[100].max_float_value =  1.0f;
     slider_requests[100].linked_float =
-        &particle_effects[0].zpolygon_materials[0].rgba[2];
+        &particle_effects[0].zpolygon_materials[0].ambient_rgb[2];
     
     common_strcpy_capped(slider_requests[101].label, 64, "Material A:");
     slider_requests[101].min_float_value =  0.0f;
     slider_requests[101].max_float_value =  1.0f;
     slider_requests[101].linked_float =
-        &particle_effects[0].zpolygon_materials[0].rgba[3];
+        &particle_effects[0].zpolygon_materials[0].alpha;
     
     // TODO: register a texture array
     //    char * textures[1];
@@ -1087,10 +1094,10 @@ void client_logic_late_startup(void) {
     
     ParticleEffect * particles = next_particle_effect();
     particles->object_id = example_particles_id;
-    particles->zpolygon_materials[0].rgba[0] = 0.3f;
-    particles->zpolygon_materials[0].rgba[1] = 0.3f;
-    particles->zpolygon_materials[0].rgba[2] = 0.3f;
-    particles->zpolygon_materials[0].rgba[3] = 1.0f;
+    particles->zpolygon_materials[0].ambient_rgb[0] = 0.3f;
+    particles->zpolygon_materials[0].ambient_rgb[1] = 0.3f;
+    particles->zpolygon_materials[0].ambient_rgb[2] = 0.3f;
+    particles->zpolygon_materials[0].alpha = 1.0f;
     
     particles->zpolygon_cpu.mesh_id              = base_mesh_id;
     particles->zpolygon_cpu.visible              =   true;
@@ -1225,11 +1232,11 @@ static void client_handle_keypresses(
     if (keypress_map[TOK_KEY_L] == true) {
         keypress_map[TOK_KEY_L] = false;
         LineParticle * lines = next_lineparticle_effect();
-        PolygonRequest lines_polygon;
+        zSpriteRequest lines_polygon;
         lines_polygon.cpu_data = &lines->zpolygon_cpu;
         lines_polygon.gpu_data = &lines->zpolygon_gpu;
         lines_polygon.gpu_materials = &lines->zpolygon_material;
-        construct_quad(
+        zsprite_construct_quad(
             /* const float left_x: */
                 0.0f,
             /* const float bottom_y: */
@@ -1237,9 +1244,9 @@ static void client_handle_keypresses(
             /* const float z: */
                 0.5f,
             /* const float width: */
-                windowsize_screenspace_width_to_width(75.0f, 0.5f),
+                engineglobals_screenspace_width_to_width(75.0f, 0.5f),
             /* const float height: */
-                windowsize_screenspace_height_to_height(75.0f, 0.5f),
+                engineglobals_screenspace_height_to_height(75.0f, 0.5f),
             /* PolygonRequest * stack_recipient: */
                 &lines_polygon);
         lines_polygon.gpu_data->ignore_camera = false;
@@ -1250,12 +1257,12 @@ static void client_handle_keypresses(
         
         lines_polygon.cpu_data->committed = true;
         lines->waypoint_duration[0] = 1250000;
-        lines->waypoint_x[0] = windowsize_screenspace_x_to_x(
+        lines->waypoint_x[0] = engineglobals_screenspace_x_to_x(
             /* const float screenspace_x: */
                 0,
             /* const float given_z: */
                 0.5f);
-        lines->waypoint_y[0] = windowsize_screenspace_y_to_y(
+        lines->waypoint_y[0] = engineglobals_screenspace_y_to_y(
             /* const float screenspace_y: */
                 0,
             /* const float given_z: */
@@ -1268,12 +1275,12 @@ static void client_handle_keypresses(
         lines->waypoint_scalefactor[0] = 1.0f;
         lines->waypoint_duration[0] = 350000;
         
-        lines->waypoint_x[1] = windowsize_screenspace_x_to_x(
+        lines->waypoint_x[1] = engineglobals_screenspace_x_to_x(
             /* const float screenspace_x: */
-                window_globals->window_width,
+                engine_globals->window_width,
             /* const float given_z: */
                 0.5f);
-        lines->waypoint_y[1] = windowsize_screenspace_y_to_y(
+        lines->waypoint_y[1] = engineglobals_screenspace_y_to_y(
             /* const float screenspace_y: */
                 0,
             /* const float given_z: */
@@ -1307,7 +1314,7 @@ static void client_handle_keypresses(
 }
 
 static float get_slider_y_screenspace(uint32_t i) {
-    return (window_globals->window_height -
+    return (engine_globals->window_height -
         ((float)i * 30.0f)) -
         ((float)(i / 13) * 30.0f) +
         scroll_y_offset;
@@ -1371,7 +1378,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
                 1.0f - ((i / 13) * 0.15f);
             
             float slider_x_screenspace =
-                window_globals->window_width -
+                engine_globals->window_width -
                     next_ui_element_settings->slider_width_screenspace -
                         (font_settings->font_height * 3);
             
@@ -1433,7 +1440,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
                     /* const char *text_to_draw: */
                         slider_titles[i / 13].title,
                     /* const float left_pixelspace: */
-                        window_globals->window_width -
+                        engine_globals->window_width -
                             next_ui_element_settings->
                                 slider_width_screenspace -
                             (next_ui_element_settings->
@@ -1512,7 +1519,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
     
     if (!update_slider_positions_and_label_vals) { return; }
     
-    delete_zpolygon_object(slider_labels_object_id);
+    zsprite_delete(slider_labels_object_id);
     update_slider_positions_and_label_vals = false;
     next_ui_element_settings->ignore_camera = true;
     next_ui_element_settings->ignore_lighting = true;
@@ -1530,23 +1537,23 @@ void client_logic_update(uint64_t microseconds_elapsed)
         {
             if (i % 13 == 0) {
                 if (slider_titles[i / 13].object_id ==
-                    zsprites_to_render->cpu_data[zp_i].sprite_id)
+                    zsprites_to_render->cpu_data[zp_i].zsprite_id)
                 {
                     zsprites_to_render->gpu_data[zp_i].xyz[1] =
-                        windowsize_screenspace_y_to_y(
+                        engineglobals_screenspace_y_to_y(
                             get_title_y_screenspace(i),
                             0.75f);
                 }
             }
             
             if (
-                (zsprites_to_render->cpu_data[zp_i].sprite_id ==
+                (zsprites_to_render->cpu_data[zp_i].zsprite_id ==
                     slider_requests[i].pin_object_id) ||
-                (zsprites_to_render->cpu_data[zp_i].sprite_id ==
+                (zsprites_to_render->cpu_data[zp_i].zsprite_id ==
                     slider_requests[i].sliderback_object_id))
             {
                 zsprites_to_render->gpu_data[zp_i].xyz[1] =
-                    windowsize_screenspace_y_to_y(
+                    engineglobals_screenspace_y_to_y(
                         get_slider_y_screenspace(i),
                         0.75f);
             }
@@ -1577,7 +1584,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
             /* const char * text_to_draw: */
                 label_and_num,
             /* const float left_pixelspace: */
-                (window_globals->window_width -
+                (engine_globals->window_width -
                     next_ui_element_settings->slider_width_screenspace) -
                     (font_settings->font_height * 3) +
                     (next_ui_element_settings->slider_width_screenspace / 2) +

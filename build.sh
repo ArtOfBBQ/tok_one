@@ -1,5 +1,8 @@
 PLATFORM="$(uname -s)"
 
+bash build_macos_slow.sh
+exit 0
+
 if test -f "engine_src/shared/debigulator/src/decode_png.c";
 then
 echo "."

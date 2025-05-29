@@ -40,46 +40,48 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "inflate.c"
 #include "decode_png.c"
 #include "decode_bmp.c"
-#include "decodedimage.c"
-#include "wav.c"
-#include "toktokenizer.c"
-#include "objparser.c"
-#include "mtlparser.c"
-#include "common.c"
-#include "logger.c"
-#include "collision.c"
-#include "objectid.c"
-#include "audio.c"
-#include "window_size.c"
-#include "triangle.c"
-#include "lightsource.c"
-#include "cpu_to_gpu_types.c"
+#include "T1_decodedimage.c"
+#include "T1_wav.c"
+#include "T1_tokenizer.c"
+#include "T1_objparser.c"
+#include "T1_mtlparser.c"
+#include "T1_common.c"
+#include "T1_logger.c"
+#include "T1_collision.c"
+#include "T1_zspriteid.c"
+#include "T1_audio.c"
+#include "T1_engine_globals.c"
+#include "T1_triangle.c"
+#include "T1_material.c"
+#include "T1_lightsource.c"
+#include "T1_cpu_to_gpu_types.c"
 // 2. Files that are part of the basic platform layer
-#include "apple_audio.m"
-#include "platform_layer_common.c"
-#include "macos_platform_layer.m"
-#include "apple_platform_layer.m"
-#include "linux_apple_platform_layer.c"
+#include "T1_apple_audio.m"
+#include "T1_platform_layer_common.c"
+#include "T1_linux_apple_platform_layer.c"
+#include "T1_macos_platform_layer.m"
+#include "T1_apple_platform_layer.m"
 // 3. Files that are dependent on the platform layer
-#include "memorystore.c"
-#include "objmodel.c"
-#include "userinput.c"
-#include "tok_random.c"
+#include "T1_memorystore.c"
+#include "T1_objmodel.c"
+#include "T1_userinput.c"
+#include "T1_random.c"
 // 4. Platform layer part 2: metal
-#include "gpu.m"
+#include "T1_gpu.m"
 // 5. Files that are dependent on the GPU platform layer
-#include "texture_array.c"
-#include "texture_files.c"
-#include "lines.c"
-#include "zpolygon.c"
-#include "particle.c"
-#include "scheduled_animations.c" // requires zpolygon & parti
-#include "text.c"
-#include "uielement.c"
+#include "T1_texture_array.c"
+#include "T1_texture_files.c"
+#include "T1_lines.c"
+#include "T1_zsprite.c"
+#include "T1_particle.c"
+#include "T1_scheduled_animations.c" // requires zpolygon & parti
+#include "T1_text.c"
+#include "T1_uielement.c"
+#include "T1_profiler.c"
 #include "clientlogic.c" // requires text and uielement
 // #include "clientlogic_particledesigner.c" // requires text and uielement
-#include "terminal.c" // requires clientlogic
-#include "renderer.c" // requires zpoly & part
-#include "gameloop.c" // requires renderer
-#include "init_application.c" // requires gameloop
-#include "macos_main.m"
+#include "T1_terminal.c" // requires clientlogic
+#include "T1_renderer.c" // requires zpoly & part
+#include "T1_gameloop.c" // requires renderer
+#include "T1_init_application.c" // requires gameloop
+#include "T1_macos_main.m"

@@ -34,11 +34,11 @@ int main(int argc, char * argv[]) {
     
     // These can't be chosen on smartphones, so overwrite our preferred values
     // with the values the phone forces on us
-    window_globals->window_bottom = 0;
-    window_globals->window_left = 0;
-    window_globals->window_width =
+    engine_globals->window_bottom = 0;
+    engine_globals->window_left = 0;
+    engine_globals->window_width =
         (float)[UIScreen mainScreen].bounds.size.width;
-    window_globals->window_height =
+    engine_globals->window_height =
         (float)[UIScreen mainScreen].bounds.size.height;
     
     NSString * appDelegateClassName;

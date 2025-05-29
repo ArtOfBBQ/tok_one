@@ -1,4 +1,4 @@
-#include "clientlogic.h"
+#include "T1_clientlogic.h"
 
 #define TEAPOT 1
 #if TEAPOT
@@ -18,7 +18,7 @@ void client_logic_early_startup(
 {
     #if TEAPOT
     // teapot_mesh_id = BASIC_CUBE_MESH_ID;
-    teapot_mesh_id = new_mesh_id_from_resources(
+    teapot_mesh_id = objmodel_new_mesh_id_from_resources(
         "guitar_simplified.obj",
         "guitar_simplified.mtl");
     log_assert(teapot_mesh_id >= 0);
@@ -83,10 +83,10 @@ void client_logic_late_startup(void) {
     
     for (uint32_t i = 0; i < 1; i++) {
         log_assert(teapot_mesh_id >= 0);
-        PolygonRequest teapot_request;
+        zSpriteRequest teapot_request;
         teapot_request.materials_size = 1;
-        request_next_zpolygon(&teapot_request);
-        construct_zpolygon(&teapot_request);
+        zsprite_request_next(&teapot_request);
+        zsprite_construct(&teapot_request);
         teapot_request.cpu_data->mesh_id = teapot_mesh_id;
         teapot_request.gpu_data->xyz_multiplier[0] = 0.15f;
         teapot_request.gpu_data->xyz_multiplier[1] = 0.15f;
@@ -97,7 +97,7 @@ void client_logic_late_startup(void) {
         teapot_request.gpu_data->xyz_angle[0]      = 0.00f;
         teapot_request.gpu_data->xyz_angle[1]      = 3.2f;
         teapot_request.gpu_data->xyz_angle[2]      = 0.0f;
-        teapot_request.cpu_data->sprite_id         = teapot_object_ids[i];
+        teapot_request.cpu_data->zsprite_id         = teapot_object_ids[i];
         teapot_request.cpu_data->visible           = true;
         teapot_touchable_ids[i]                    = next_nonui_touchable_id();
         teapot_request.gpu_data->touchable_id      = teapot_touchable_ids[i];
@@ -119,7 +119,7 @@ void client_logic_late_startup(void) {
         log_assert(teapot_request.gpu_data->xyz_offset[0] == 0.0f);
         log_assert(teapot_request.gpu_data->xyz_offset[1] == 0.0f);
         log_assert(teapot_request.gpu_data->xyz_offset[2] == 0.0f);
-        commit_zpolygon_to_render(&teapot_request);
+        zsprite_commit(&teapot_request);
     }
     #endif
     
@@ -137,10 +137,10 @@ void client_logic_late_startup(void) {
     assert(quad_texture_array_i != -1);
     assert(quad_texture_i != -1);
     
-    PolygonRequest quad[1];
+    zSpriteRequest quad[1];
     for (uint32_t i = 0; i < 1; i++) {
-        request_next_zpolygon(&quad[i]);
-        construct_quad(
+        zsprite_request_next(&quad[i]);
+        zsprite_construct_quad(
             /* const float left_x: */
                 TEAPOT_X - 0.15f,
             /* const float bottom_y: */
@@ -148,16 +148,16 @@ void client_logic_late_startup(void) {
             /* const float z: */
                 TEAPOT_Z - 0.08f,
             /* const float width: */
-                windowsize_screenspace_width_to_width(
-                    window_globals->window_width, 1.0f),
+                engineglobals_screenspace_width_to_width(
+                    engine_globals->window_width, 1.0f),
             /* const float height: */
-                windowsize_screenspace_height_to_height(
-                    window_globals->window_height, 1.0f),
+                engineglobals_screenspace_height_to_height(
+                    engine_globals->window_height, 1.0f),
             /* PolygonRequest * stack_recipient: */
                 &quad[i]);
         quad[i].gpu_materials->texturearray_i    = quad_texture_array_i;
         quad[i].gpu_materials->texture_i         = quad_texture_i;
-        quad[i].cpu_data->sprite_id              = -1;
+        quad[i].cpu_data->zsprite_id              = -1;
         quad[i].gpu_data->touchable_id           = -1;
         quad[i].cpu_data->alpha_blending_enabled = false;
         
@@ -178,7 +178,7 @@ void client_logic_late_startup(void) {
         quad[i].gpu_materials[0].diffuse         = 1.0f;
         quad[i].gpu_materials[0].specular        = 1.0f;
         
-        commit_zpolygon_to_render(&quad[i]);
+        zsprite_commit(&quad[i]);
     }
     
     #if 1
@@ -207,7 +207,7 @@ void client_logic_late_startup(void) {
     font_settings->font_touchable_id = -1;
     log_assert(
         zsprites_to_render->cpu_data[zsprites_to_render->size-1].
-            sprite_id == 21);
+            zsprite_id == 21);
     #endif
 }
 
@@ -372,7 +372,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
     
     if (keypress_map[TOK_KEY_R]) {
         for (uint32_t i = 0; i < zsprites_to_render->size; i++) {
-            if (zsprites_to_render->cpu_data[i].sprite_id == 20)
+            if (zsprites_to_render->cpu_data[i].zsprite_id == 20)
             {
                 zsprites_to_render->gpu_data[i].xyz_angle[0] += 0.014f;
                 zsprites_to_render->gpu_data[i].xyz_angle[1] += 0.01f;
@@ -410,7 +410,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
     
     if (keypress_map[TOK_KEY_R]) {
         for (uint32_t i = 0; i < zsprites_to_render->size; i++) {
-            if (zsprites_to_render->cpu_data[i].sprite_id ==
+            if (zsprites_to_render->cpu_data[i].zsprite_id ==
                 teapot_object_ids[0])
             {
                 zsprites_to_render->gpu_data[i].xyz_angle[1] += 0.01f;
