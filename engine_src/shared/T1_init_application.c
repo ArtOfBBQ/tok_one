@@ -545,7 +545,10 @@ void init_application_after_gpu_init(void) {
     
     bool32_t success = false;
     char errmsg[256];
-    client_logic_early_startup(&success, errmsg);
+    
+    if (application_running) {
+        client_logic_early_startup(&success, errmsg);
+    }
     
     #define MIN_VERTICES_FOR_SHATTER_EFFECT 400
     for (uint32_t i = 0; i < all_mesh_summaries_size; i++) {
@@ -587,7 +590,9 @@ void init_application_after_gpu_init(void) {
     
     texture_array_flag_all_to_request_gpu_init();
     
-    client_logic_late_startup();
+    if (application_running) {
+        client_logic_late_startup();
+    }
     
     gameloop_active = true;
 }

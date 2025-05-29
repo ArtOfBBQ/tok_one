@@ -65,7 +65,7 @@ fi
 echo "copy resources..."
 
 pushd resources > /dev/null
-for extension in png obj dat
+for extension in png obj mtl dat
 do
     for f in *.$extension;
     do

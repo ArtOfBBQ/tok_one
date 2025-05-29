@@ -75,6 +75,8 @@ void gameloop_update_before_render_pass(
         zlights_to_apply_size = 0;
         zsprites_to_render->size = 0;
         
+        engine_globals->postprocessing_constants.fog_factor = 0.0f;
+        
         camera.xyz[0] = 0.0f;
         camera.xyz[1] = 0.0f;
         camera.xyz[2] = 0.0f;
@@ -90,8 +92,8 @@ void gameloop_update_before_render_pass(
         
         if (crashed_top_of_screen_msg[0] == '\0') {
             common_strcpy_capped(crashed_top_of_screen_msg,
-            256,
-            "Failed assert, and also failed to retrieve an error message");
+                256,
+                "Failed assert, and also failed to retrieve an error message");
         }
         
         font_settings->font_height          = 14.0f;
@@ -101,15 +103,6 @@ void gameloop_update_before_render_pass(
         font_settings->font_color[3]        = 1.0f;
         font_settings->ignore_camera        = false; // we set camera to 0,0,0
         font_settings->font_ignore_lighting = true;
-        
-        PointRequest point_request;
-        fetch_next_point(&point_request);
-        point_request.cpu_data->object_id = -1;
-        point_request.gpu_vertex->color   = 1.0f;
-        point_request.gpu_vertex->xyz[0]  = 0.0f;
-        point_request.gpu_vertex->xyz[1]  = 0.0f;
-        point_request.gpu_vertex->xyz[2]  = 0.8f;
-        commit_point(&point_request);
         
         assert(font_settings->font_texturearray_i == 0);
         text_request_label_renderable(

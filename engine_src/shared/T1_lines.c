@@ -98,14 +98,14 @@ void fetch_next_point(PointRequest * stack_recipient)
         }
     }
     
-    log_assert(points_to_render_size + 1 < (MAX_POINT_VERTICES / 2));
+    assert(points_to_render_size <= MAX_POINT_VERTICES);
     
     if (use_i < 0) {
         use_i = points_to_render_size;
         points_to_render_size += 1;
     }
     
-    log_assert(use_i < MAX_POINT_VERTICES);
+    assert(use_i < MAX_POINT_VERTICES);
     
     stack_recipient->cpu_data = &points_cpu_data[use_i];
     stack_recipient->gpu_vertex = &point_vertices[use_i];

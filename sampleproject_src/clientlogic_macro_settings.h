@@ -43,7 +43,7 @@ The maximum number of sprites in your app.
 #define MAX_POLYGONS_PER_BUFFER  500
 #define MAX_MATERIALS_PER_POLYGON 2
 #define MAX_LINE_VERTICES 100
-#define MAX_POINT_VERTICES 30
+#define MAX_POINT_VERTICES 300
 
 /*
 The maximum number of 'scheduled animations' simultaneously running

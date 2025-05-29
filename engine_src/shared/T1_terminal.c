@@ -12,7 +12,7 @@ static char * current_command = NULL;
 #define TERMINAL_HISTORY_MAX 500000
 #define TERMINAL_WHITESPACE    7.0f
 
-#define TERM_FONT_SIZE        14.0f
+#define TERM_FONT_SIZE        18.0f
 #define TERM_Z                0.111f
 #define TERM_LABELS_Z         0.110f
 static char * terminal_history = NULL;

@@ -12,7 +12,6 @@ COMPILER_PATHS="
 
 COMPILER_ARGS="
 -include clientlogic_macro_settings.h
--D SHARED_APPLE_PLATFORM
 -ferror-limit=2 
 -march=native 
 -Wall 
@@ -71,7 +70,7 @@ fi
 echo "copy resources..."
 
 pushd resources > /dev/null
-for extension in png obj dat
+for extension in png obj mtl dat
 do
     for f in *.$extension;
     do

@@ -21,7 +21,12 @@ void client_logic_early_startup(
     teapot_mesh_id = objmodel_new_mesh_id_from_resources(
         "guitar_simplified.obj",
         "guitar_simplified.mtl");
-    log_assert(teapot_mesh_id >= 0);
+    if (teapot_mesh_id < 0) {
+        log_dump_and_crash(
+            "Failed to register the guitar_simplified model, "
+            " maybe the .mtl or .obj file is missing?");
+        return;
+    }
     #endif
     
     uint32_t good;

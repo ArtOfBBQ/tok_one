@@ -89,6 +89,7 @@
 		EC6441A729318B6D00A0267B /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A329318B6D00A0267B /* ViewController.m */; };
 		EC676A3A2DE6D667001FD4DE /* T1_material.c in Sources */ = {isa = PBXBuildFile; fileRef = EC676A392DE6D667001FD4DE /* T1_material.c */; };
 		EC676A3C2DE85210001FD4DE /* T1_cpu_to_gpu_types.c in Sources */ = {isa = PBXBuildFile; fileRef = EC676A3B2DE85210001FD4DE /* T1_cpu_to_gpu_types.c */; };
+		EC676A3D2DE8D41D001FD4DE /* guitar_simplified.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51A2DE3BC070033206F /* guitar_simplified.mtl */; };
 		EC67AE162A1B0813002D8380 /* leaves3.png in Resources */ = {isa = PBXBuildFile; fileRef = EC67AE152A1B0813002D8380 /* leaves3.png */; };
 		EC67AE172A1B0813002D8380 /* leaves3.png in Resources */ = {isa = PBXBuildFile; fileRef = EC67AE152A1B0813002D8380 /* leaves3.png */; };
 		EC6A301C29EFA1440071C58F /* T1_triangle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6A301A29EFA1440071C58F /* T1_triangle.c */; };
@@ -97,7 +98,6 @@
 		EC6B1F4F293CA05500837369 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F4E293CA05500837369 /* MetalKit.framework */; };
 		EC6E12172A03BD90004E7BD1 /* T1_uielement.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12142A03BD8F004E7BD1 /* T1_uielement.c */; };
 		EC6E121B2A04CE13004E7BD1 /* T1_zspriteid.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6E12182A04CE12004E7BD1 /* T1_zspriteid.c */; };
-		EC74B5212DE3BC070033206F /* guitar_simplified.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51A2DE3BC070033206F /* guitar_simplified.mtl */; };
 		EC74B5222DE3BC070033206F /* guitar_simplified.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51A2DE3BC070033206F /* guitar_simplified.mtl */; };
 		EC74B5252DE3BC070033206F /* 1001_normal.png in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51C2DE3BC070033206F /* 1001_normal.png */; };
 		EC74B5262DE3BC070033206F /* 1001_normal.png in Resources */ = {isa = PBXBuildFile; fileRef = EC74B51C2DE3BC070033206F /* 1001_normal.png */; };
@@ -579,13 +579,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				ECC47A6029E9111C0082A7C6 /* disk.obj in Resources */,
-				EC74B5212DE3BC070033206F /* guitar_simplified.mtl in Resources */,
 				EC67AE162A1B0813002D8380 /* leaves3.png in Resources */,
 				EC0717F02C29CDD5007A4AFA /* teapot_smooth.obj in Resources */,
 				EC74B52B2DE3BC070033206F /* guitar_simplified.obj in Resources */,
 				ECB05E4D294F8FD400050BD4 /* key.obj in Resources */,
 				EC1412B12938597400DA0D21 /* cardwithuvcoords.obj in Resources */,
 				6009FB642876A47100FC5A60 /* fontmetrics.dat in Resources */,
+				EC676A3D2DE8D41D001FD4DE /* guitar_simplified.mtl in Resources */,
 				6080CC46286FFD1E00444118 /* phoebus.png in Resources */,
 				EC7B171B293A23E400C1D20C /* roundedborder.png in Resources */,
 				EC18FF4229E3DC8B00ED785C /* blob1.png in Resources */,
