@@ -1088,11 +1088,20 @@ int32_t objmodel_new_mesh_id_from_resources(
     const char * mtl_filename)
 {
     log_assert(all_mesh_summaries_size < ALL_MESHES_SIZE);
+    if (!application_running) {
+        log_append("Early exit from objmodel_new_mesh_id_from_resources(), application not running...\n");
+        return -1;
+    }
     
     FileBuffer obj_file_buf;
     obj_file_buf.size_without_terminator =
         platform_get_resource_size(obj_filename);
-    log_assert(obj_file_buf.size_without_terminator > 0);
+    if (obj_file_buf.size_without_terminator < 1) {
+        log_append("Early exit from objmodel_new_mesh_id_from_resources(), obj resource: ");
+        log_append(obj_filename);
+        log_append(" doesn't exist...\n");
+        return -1;
+    }
     obj_file_buf.contents = (char *)malloc_from_managed(
         obj_file_buf.size_without_terminator + 1);
     obj_file_buf.good = false;
@@ -1105,17 +1114,27 @@ int32_t objmodel_new_mesh_id_from_resources(
     
     if (!obj_file_buf.good) {
         free_from_managed(obj_file_buf.contents);
+        log_append("Early exit from objmodel_new_mesh_id_from_resources(), resource: ");
+        log_append(obj_filename);
+        log_append(" exists but failed to read...\n");
         return -1;
     }
     
     FileBuffer mtl_file_buf;
-    log_assert(mtl_file_buf.size_without_terminator > 0);
     if (mtl_filename == NULL || mtl_filename[0] == '\0') {
         mtl_file_buf.contents = NULL;
         mtl_file_buf.size_without_terminator = 0;
     } else {
         mtl_file_buf.size_without_terminator =
             platform_get_resource_size(mtl_filename);
+        
+        if (mtl_file_buf.size_without_terminator < 1) {
+            log_append("Early exit from objmodel_new_mesh_id_from_resources(), mtl resource: ");
+            log_append(mtl_filename);
+            log_append(" doesn't exist...\n");
+            return -1;
+        }
+        
         mtl_file_buf.contents = (char *)malloc_from_managed(
             mtl_file_buf.size_without_terminator + 1);
         mtl_file_buf.good = false;
@@ -1129,6 +1148,10 @@ int32_t objmodel_new_mesh_id_from_resources(
         if (!mtl_file_buf.good) {
             free_from_managed(obj_file_buf.contents);
             free_from_managed(mtl_file_buf.contents);
+            
+            log_append("Early exit from objmodel_new_mesh_id_from_resources(), resource: ");
+            log_append(mtl_filename);
+            log_append(" exists but failed to read...\n");
             
             return -1;
         }
