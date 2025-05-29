@@ -1,8 +1,12 @@
 #import "T1_gpu.h"
 
+#define DRAWING_SEMAPHORE_ACTIVE 0
+
 typedef struct AppleGPUState {
     MTLPixelFormat pixel_format_renderpass1;
+    #if DRAWING_SEMAPHORE_ACTIVE
     dispatch_semaphore_t drawing_semaphore;
+    #endif
     NSUInteger frame_i;
     MTLViewport render_target_viewport;
     MTLViewport cached_viewport;
@@ -83,8 +87,10 @@ bool32_t apple_gpu_init(
     ags = malloc_from_unmanaged(sizeof(AppleGPUState)); // TODO: use malloc_from_unmanaged again
     ags->retina_scaling_factor = backing_scale_factor;
     ags->pixel_format_renderpass1 = 0;
+    #if DRAWING_SEMAPHORE_ACTIVE
     ags->drawing_semaphore = NULL; // TODO: remove me
     ags->drawing_semaphore = dispatch_semaphore_create(3);
+    #endif
     
     funcptr_shared_gameloop_update =
         arg_funcptr_shared_gameloop_update;
@@ -1361,7 +1367,9 @@ void platform_gpu_copy_locked_vertices(void)
 
 - (void)drawInMTKView:(MTKView *)view
 {
+    #if DRAWING_SEMAPHORE_ACTIVE
     dispatch_semaphore_wait(ags->drawing_semaphore, DISPATCH_TIME_FOREVER);
+    #endif
     
     funcptr_shared_gameloop_update(
         &gpu_shared_data_collection->triple_buffers[ags->frame_i]);
@@ -1954,7 +1962,9 @@ void platform_gpu_copy_locked_vertices(void)
     [command_buffer addCompletedHandler:^(id<MTLCommandBuffer> arg_cmd_buffer) {
         (void)arg_cmd_buffer;
         
+        #if DRAWING_SEMAPHORE_ACTIVE
         dispatch_semaphore_signal(ags->drawing_semaphore);
+        #endif
     }];
     
     [command_buffer commit];

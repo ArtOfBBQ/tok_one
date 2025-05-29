@@ -36,6 +36,12 @@ void texture_array_preregister_null_image(
 void texture_array_preregister_null_png_from_disk(
     const char * filename);
 
+void texture_array_register_new_by_splitting_image(
+    DecodedImage * new_image,
+    const char * filename_prefix,
+    const uint32_t rows,
+    const uint32_t columns);
+
 void texture_array_register_high_priority_if_unloaded(
     const int32_t texture_array_i,
     const int32_t texture_i);

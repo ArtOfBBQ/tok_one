@@ -1,8 +1,5 @@
 PLATFORM="$(uname -s)"
 
-bash build_macos_slow.sh
-exit 0
-
 if test -f "engine_src/shared/debigulator/src/decode_png.c";
 then
 echo "."
@@ -14,6 +11,7 @@ exit 0
 fi
 
 if [[ $PLATFORM = "Darwin" ]]; then
+    # bash build_macos_slow.sh
     bash build_macos.sh $1
     # bash engine_src/macos/buildtests.sh $1
 elif [[ $PLATFORM = "Linux" ]]; then

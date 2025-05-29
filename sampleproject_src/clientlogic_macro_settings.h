@@ -9,8 +9,8 @@ of the engine for your specific app.
 #define APPLICATION_NAME "TOK ONE"
 
 // The 2 pools of memory your app allocates on startup
-// 55 mb ->                      450...000
-#define UNMANAGED_MEMORY_SIZE    450000000
+// 55 mb ->                      650...000
+#define UNMANAGED_MEMORY_SIZE    650000000
 
 
 // these will be ignored on platforms where window size/position

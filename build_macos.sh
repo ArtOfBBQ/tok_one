@@ -11,7 +11,8 @@ COMPILER_PATHS="
 -include clientlogic_macro_settings.h
 "
 
-COMPILER_ARGS="-march=native -Wall -x objective-c -std=c11 -O0 -objC"
+COMPILER_ARGS="-march=native -Wall -x objective-c -std=c11 -g -O2 -objC"
+# COMPILER_ARGS="-march=native -Wall -x objective-c -std=c11 -O0 -objC"
 
 if [[ $1 = "DEBUG" ]]; then
 COMPILER_ARGS_EXTRA="-g"
@@ -39,9 +40,24 @@ if test -f "build/macos/$APP_NAME.app/shaders.metallib"; then
     echo "shaders.metallib already in build folder, skip metal compilation...."
 else
     echo "shaders.metallib not in build folder, compiling new metal library..."
-    sudo xcrun -sdk macosx metal -gline-tables-only -MO -g -c "engine_src/shared_apple/Shaders.metal" -o resources/Shaders.air
-    sudo xcrun -sdk macosx metal -c "engine_src/shared_apple/shaders.metal" -o Shaders.air
+    sudo xcrun -sdk macosx metal -gline-tables-only -MO -g -c "engine_src/shared_apple/Shaders.metal" -I sampleproject_src -I engine_src/shared -o resources/Shaders.air 
+    sudo xcrun -sdk macosx metal -c "engine_src/shared_apple/shaders.metal" -I sampleproject_src -I engine_src/shared -o Shaders.air
     sudo xcrun -sdk macosx metallib resources/Shaders.air -o build/macos/$APP_NAME.app/Shaders.metallib
+    if test -f "build/macos/$APP_NAME.app/shaders.metallib"; then
+	echo "shaders.metallib created! Please compile again."
+    else
+	echo "Failed to create shaders.metallib. Please check if xcode "
+	echo "command line tools and Metal are installed. Try these commands:"
+	echo "> xcrun -- version"
+	echo "> xcode-select --print-path"
+	echo "ls /Application/Xcode.app/Contents/Developer <- xcode is probably here"
+	echo "If that path exists but print-path shows a different directory,"
+	echo "you may have installed xcode command line tools 1st and xcode "
+	echo "itself later. Try pointing xcode-select to the xcode directory: "
+	echo "sudo xcode-select -s /Applications/Xcode.app/Contents/Developer"
+	echo "Or google for: how to compile metal shader files command line"
+	exit 0
+    fi
 fi
 ############
 
