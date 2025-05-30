@@ -177,9 +177,7 @@ typedef struct
     float3 normal;
     unsigned int locked_vertex_i [[ flat ]];
     unsigned int polygon_i [[ flat ]];
-    float3 bonus_rgb [[ flat ]];
     int32_t touchable_id [[ flat ]];
-    float ignore_lighting [[ flat ]];
     float point_size [[ point_size ]];
 } RasterizerPixel;
 
@@ -289,18 +287,11 @@ vertex_shader(
         (out.worldpos * ic) +
         (cam_z_rotated * (1.0f - ic));
     
-    out.bonus_rgb = vector_float3(
-        polygons[out.polygon_i].bonus_rgb[0],
-        polygons[out.polygon_i].bonus_rgb[1],
-        polygons[out.polygon_i].bonus_rgb[2]);
-    
     out.touchable_id = polygons[out.polygon_i].touchable_id;
     
     out.texture_coordinate = vector_float2(
         locked_vertices[out.locked_vertex_i].uv[0],
         locked_vertices[out.locked_vertex_i].uv[1]);
-    
-    out.ignore_lighting = polygons[out.polygon_i].ignore_lighting;
     
     out.point_size = 40.0f;
     
@@ -398,13 +389,14 @@ float3 get_lighting(
             lights[i].rgb[0],
             lights[i].rgb[1],
             lights[i].rgb[2]);
+        
+        float shadow_factor = 1.0f;
+        #if SHADOWS_ACTIVE
         float3 light_angle_xyz = vector_float3(
             lights[i].angle_xyz[0],
             lights[i].angle_xyz[1],
             lights[i].angle_xyz[2]);
         
-        float shadow_factor = 1.0f;
-        #if SHADOWS_ACTIVE
         if (updating_globals->shadowcaster_i == i) {
             constexpr sampler shadow_sampler(
                 mag_filter::nearest,
@@ -561,7 +553,7 @@ fragment_shader(
         /* float3 fragment_normal: */
             in.normal,
         /* float ignore_lighting: */
-            in.ignore_lighting);
+            polygons[in.polygon_i].ignore_lighting);
     
     float4 out_color = vector_float4(
         material->ambient_rgb[0],
@@ -613,7 +605,11 @@ fragment_shader(
         discard_fragment();
     }
     
-    out_color += vector_float4(in.bonus_rgb, 0.0f);
+    out_color += vector_float4(
+        polygons[in.polygon_i].bonus_rgb[0],
+        polygons[in.polygon_i].bonus_rgb[1],
+        polygons[in.polygon_i].bonus_rgb[2],
+        0.0f);
     
     out_color[3] = 1.0f;
     float4 rgba_cap = vector_float4(
@@ -673,13 +669,13 @@ alphablending_fragment_shader(
         /* float3 fragment_normal: */
             in.normal,
         /* float ignore_lighting: */
-            in.ignore_lighting);
+            polygons[in.polygon_i].ignore_lighting);
     
     // locked_materials[in.material_i].ambient_rgb[?]
     float4 out_color = vector_float4(
-        1.0f,
-        1.0f,
-        1.0f,
+        material->ambient_rgb[0],
+        material->ambient_rgb[1],
+        material->ambient_rgb[2],
         1.0f);
     
     #if TEXTURES_ACTIVE
@@ -712,7 +708,11 @@ alphablending_fragment_shader(
     
     out_color *= vector_float4(lighting, 1.0f);
     
-    out_color += vector_float4(in.bonus_rgb, 0.0f);
+    out_color += vector_float4(
+        polygons[in.polygon_i].bonus_rgb[0],
+        polygons[in.polygon_i].bonus_rgb[1],
+        polygons[in.polygon_i].bonus_rgb[2],
+        0.0f);
     
     float4 rgba_cap = vector_float4(
         material->rgb_cap[0],
