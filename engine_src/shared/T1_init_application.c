@@ -281,6 +281,8 @@ void init_application_before_gpu_init(
         sizeof(zSpriteCollection));
     zsprites_to_render->size = 0;
     
+    T1_material_init(malloc_from_unmanaged);
+    
     objmodel_init();
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
         sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
@@ -578,6 +580,16 @@ void init_application_after_gpu_init(void) {
         /* size_t n: */
             sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
     platform_gpu_copy_locked_vertices();
+    
+    common_memcpy(
+        /* void * dst: */
+            gpu_shared_data_collection->locked_materials,
+        /* const void * src: */
+            all_mesh_materials->gpu_data,
+        /* size_t n: */
+            sizeof(GPULockedMaterial) * ALL_LOCKED_MATERIALS_SIZE);
+    platform_gpu_copy_locked_materials();
+    
     platform_gpu_update_viewport();
     
     if (engine_globals->fullscreen) {

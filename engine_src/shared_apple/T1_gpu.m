@@ -1633,6 +1633,22 @@ void platform_gpu_copy_locked_materials(void)
     
     [render_pass_1_draw_triangles_encoder
         setFragmentBuffer:
+            ags->locked_vertex_buffer
+        offset:
+            0
+        atIndex:
+            0];
+    
+    [render_pass_1_draw_triangles_encoder
+        setFragmentBuffer:
+            ags->polygon_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            1];
+    
+    [render_pass_1_draw_triangles_encoder
+        setFragmentBuffer:
             ags->light_buffers[ags->frame_i]
         offset:
             0

@@ -30,7 +30,6 @@ typedef struct GPUSharedDataCollection
     GPUProjectionConstants * locked_pjc;
     GPULockedVertex * locked_vertices;
     GPULockedMaterial * locked_materials;
-    int32_t  last_frames_first_dirty_sprite_i[MAX_RENDERING_FRAME_BUFFERS];
     uint32_t locked_vertices_size;
     uint32_t locked_materials_size;
     uint32_t locked_materials_allocation_size;

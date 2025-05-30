@@ -35,11 +35,12 @@ To manipulate the location, direction, size etc. of our objects, we manipulate
 the parents that contain these (see zpolygons_to_render in zpolygon.h),
 not this.
 */
+#define PARENT_MATERIAL_BASE 12345
 typedef struct GPULockedVertex {
     float        xyz       [3];     // 12 bytes
     float        normal_xyz[3];     // 12 bytes
     float        uv        [2];     //  8 bytes
-    unsigned int locked_material_i; //  4 bytes
+    unsigned int parent_material_i; //  4 bytes
     float        padding[3];        // 12 bytes
 } __attribute__((aligned(32))) GPULockedVertex;
 
@@ -51,36 +52,6 @@ typedef struct GPUCamera {
     float padding[2];       //  8 bytes
 } GPUCamera;
 
-typedef struct GPUzSprite {
-    float        xyz[3];
-    float        xyz_angle[3];
-    float        bonus_rgb[3];
-    float        xyz_multiplier[3]; // determines width/height/depth
-    float        xyz_offset[3];
-    float        scale_factor;
-    float        ignore_lighting;
-    float        ignore_camera;
-    float        base_rgba[4];
-    int          base_texturearray_i;
-    int          base_texture_i;
-    unsigned int remove_shadow;
-    int          touchable_id;
-} __attribute__((aligned(32))) GPUzSprite; // 26 floats (? SIMD runs)
-
-typedef struct GPUSpriteCollection {
-    GPUzSprite   polygons[MAX_POLYGONS_PER_BUFFER];
-    unsigned int size;
-} GPUSpriteCollection;
-
-#define SPECULAR_GLASS 0.5f
-#define SPECULAR_PLASTIC 0.5f
-#define SPECULAR_QUARTZ 0.57f
-#define SPECULAR_ICE 0.224f
-#define SPECULAR_WATER 0.255f
-#define SPECULAR_MILK 0.277f
-#define SPECULAR_SKIN 0.35f
-#define SPECULAR_SILVER 0.508f
-#define SPECULAR_GOLD 0.62f
 typedef struct GPULockedMaterial {
     float ambient_rgb[3];
     float rgb_cap[3];
@@ -95,6 +66,25 @@ typedef struct GPULockedMaterial {
     float alpha;
     float illum;
 } GPULockedMaterial;
+
+typedef struct GPUzSprite {
+    float             xyz[3];
+    float             xyz_angle[3];
+    float             bonus_rgb[3];
+    float             xyz_multiplier[3]; // determines width/height/depth
+    float             xyz_offset[3];
+    float             scale_factor;
+    float             ignore_lighting;
+    float             ignore_camera;
+    unsigned int      remove_shadow;
+    int               touchable_id;
+    GPULockedMaterial base_material;
+} __attribute__((aligned(32))) GPUzSprite; // 26 floats (? SIMD runs)
+
+typedef struct GPUSpriteCollection {
+    GPUzSprite   polygons[MAX_POLYGONS_PER_BUFFER];
+    unsigned int size;
+} GPUSpriteCollection;
 
 typedef struct GPULight {
     float xyz[3];

@@ -48,18 +48,6 @@ void zsprite_commit(
             all_mesh_summaries[to_commit->cpu_data->mesh_id].vertices_size -
             1);
     log_assert(all_mesh_vertices_tail_i < all_mesh_vertices->size);
-    for (
-        uint32_t vert_i = (uint32_t)
-            all_mesh_summaries[to_commit->cpu_data->mesh_id].vertices_head_i;
-        vert_i <= all_mesh_vertices_tail_i;
-        vert_i++)
-    {
-        log_assert(all_mesh_vertices->gpu_data[vert_i].locked_material_i >= 0);
-        log_assert(all_mesh_vertices->gpu_data[vert_i].locked_material_i  <
-            ALL_LOCKED_MATERIALS_SIZE);
-        log_assert(all_mesh_vertices->gpu_data[vert_i].locked_material_i  <
-            all_mesh_summaries[to_commit->cpu_data->mesh_id].materials_size);
-    }
     
     to_commit->cpu_data->committed = true;
 }
