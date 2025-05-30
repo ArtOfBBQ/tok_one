@@ -10,7 +10,6 @@ typedef struct GPUDataForSingleFrame
 {
     GPUVertex *                                  vertices;
     GPUSpriteCollection *              polygon_collection;
-    GPUzSpriteMaterial *                polygon_materials;
     GPULight *                                     lights;
     GPUCamera *                                    camera;
     #if RAW_SHADER_ACTIVE
@@ -30,8 +29,11 @@ typedef struct GPUSharedDataCollection
     GPUDataForSingleFrame triple_buffers[MAX_RENDERING_FRAME_BUFFERS];
     GPUProjectionConstants * locked_pjc;
     GPULockedVertex * locked_vertices;
+    GPULockedMaterial * locked_materials;
     int32_t  last_frames_first_dirty_sprite_i[MAX_RENDERING_FRAME_BUFFERS];
     uint32_t locked_vertices_size;
+    uint32_t locked_materials_size;
+    uint32_t locked_materials_allocation_size;
     uint32_t vertices_allocation_size;
     uint32_t locked_vertices_allocation_size;
     uint32_t polygons_allocation_size;

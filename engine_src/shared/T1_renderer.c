@@ -242,15 +242,6 @@ void renderer_hardware_render(
     log_assert(
         frame_data->polygon_collection->size < MAX_POLYGONS_PER_BUFFER);
     
-    common_memcpy(
-        /* void *__dst: */
-            frame_data->polygon_materials,
-        /* const void *__src: */
-            zsprites_to_render->gpu_materials,
-        /* size_t __n: */
-            sizeof(GPUzSpriteMaterial) *
-                MAX_MATERIALS_PER_POLYGON *
-                zsprites_to_render->size);
     frame_data->polygon_collection->size = zsprites_to_render->size;
     
     *frame_data->postprocessing_constants =

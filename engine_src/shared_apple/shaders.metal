@@ -210,8 +210,7 @@ vertex_shader(
     
     uint locked_vertex_i = vertices[vertex_i].locked_vertex_i;
     
-    uint locked_material_i = (polygon_i * MAX_MATERIALS_PER_POLYGON) +
-        locked_vertices[locked_vertex_i].parent_material_i;
+    uint locked_material_i = 0;
     
     float3 parent_mesh_position = vector_float3(
         polygons[polygon_i].xyz[0],
@@ -374,16 +373,16 @@ float3 get_lighting(
     const device GPUCamera * camera,
     const device GPULight * lights,
     const device GPUProjectionConstants * projection_constants,
-    const device GPUzSpriteMaterial * fragment_material,
+    const device GPULockedMaterial * material,
     const device GPUPostProcessingConstants * updating_globals,
     float3 fragment_worldpos,
     float3 fragment_normal,
     float ignore_lighting)
 {
     float3 return_value = vector_float3(
-        fragment_material->ambient_rgb[0],
-        fragment_material->ambient_rgb[1],
-        fragment_material->ambient_rgb[2]);
+        material->ambient_rgb[0],
+        material->ambient_rgb[1],
+        material->ambient_rgb[2]);
     
     if (ignore_lighting >= 0.95f) { return return_value; }
     
@@ -485,7 +484,7 @@ float3 get_lighting(
             light_color *
             attenuation *
             lights[i].diffuse *
-            fragment_material->diffuse *
+            material->diffuse *
             diffuse_dot *
             shadow_factor);
         
@@ -506,7 +505,7 @@ float3 get_lighting(
                 0.0),
             32);
         light_multiplier += (
-            fragment_material->specular *
+            material->specular *
             specular_dot *
             light_color *
             lights[i].specular *
@@ -535,16 +534,9 @@ fragment_shader(
     const device GPULight * lights [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
-    const device GPUzSpriteMaterial * polygon_materials [[ buffer(6) ]],
+    const device GPULockedMaterial * locked_materials [[ buffer(6) ]],
     const device GPUPostProcessingConstants * updating_globals [[ buffer(7) ]])
 {
-    if (
-        in.material_i < 0 ||
-        in.material_i >= MAX_POLYGONS_PER_BUFFER * MAX_MATERIALS_PER_POLYGON)
-    {
-        discard_fragment();
-    }
-    
     float3 lighting = get_lighting(
         #if SHADOWS_ACTIVE
             shadow_map,
@@ -556,7 +548,7 @@ fragment_shader(
         /* const device GPUProjectionConstants * projection_constants: */
             projection_constants,
         /* const device GPUPolygonMaterial * fragment_material: */
-            &polygon_materials[in.material_i],
+            &locked_materials[in.material_i],
         /* const device GPUPostProcessingConstants * updating_globals: */
             updating_globals,
         /* float3 fragment_worldpos: */
@@ -567,20 +559,20 @@ fragment_shader(
             in.ignore_lighting);
     
     float4 out_color = vector_float4(
-        polygon_materials[in.material_i].ambient_rgb[0],
-        polygon_materials[in.material_i].ambient_rgb[1],
-        polygon_materials[in.material_i].ambient_rgb[2],
-        polygon_materials[in.material_i].alpha);
+        locked_materials[in.material_i].ambient_rgb[0],
+        locked_materials[in.material_i].ambient_rgb[1],
+        locked_materials[in.material_i].ambient_rgb[2],
+        locked_materials[in.material_i].alpha);
     
     float4 texture_sample = vector_float4(1.0f, 1.0f, 1.0f, 1.0f);
     
     #if TEXTURES_ACTIVE
     if (
-        polygon_materials[in.material_i].texturearray_i >= 0)
+        locked_materials[in.material_i].texturearray_i >= 0)
     {
     #else
     if (
-        polygon_materials[in.material_i].texturearray_i == 0)
+        locked_materials[in.material_i].texturearray_i == 0)
     {
     #endif
         constexpr sampler textureSampler(
@@ -589,10 +581,10 @@ fragment_shader(
         
         // Sample the texture to obtain a color
         const half4 color_sample =
-        color_textures[polygon_materials[in.material_i].texturearray_i].sample(
+        color_textures[locked_materials[in.material_i].texturearray_i].sample(
             textureSampler,
             in.texture_coordinate,
-            polygon_materials[in.material_i].texture_i);
+            locked_materials[in.material_i].texture_i);
         texture_sample = float4(color_sample);
     }
     
@@ -620,9 +612,9 @@ fragment_shader(
     
     out_color[3] = 1.0f;
     float4 rgba_cap = vector_float4(
-        polygon_materials[in.material_i].rgb_cap[0],
-        polygon_materials[in.material_i].rgb_cap[1],
-        polygon_materials[in.material_i].rgb_cap[2],
+        locked_materials[in.material_i].rgb_cap[0],
+        locked_materials[in.material_i].rgb_cap[1],
+        locked_materials[in.material_i].rgb_cap[2],
         1.0f);
     
     out_color = clamp(out_color, 0.0f, rgba_cap);
@@ -644,7 +636,7 @@ alphablending_fragment_shader(
     const device GPULight * lights [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
-    const device GPUzSpriteMaterial * polygon_materials [[ buffer(6) ]],
+    const device GPULockedMaterial * locked_materials [[ buffer(6) ]],
     const device GPUPostProcessingConstants * updating_globals [[ buffer(7) ]])
 {
     float3 lighting = get_lighting(
@@ -659,7 +651,7 @@ alphablending_fragment_shader(
         /* const device GPUProjectionConstants * projection_constants: */
             projection_constants,
         /* const device GPUPolygonMaterial * fragment_material: */
-            &polygon_materials[in.material_i],
+            &locked_materials[in.material_i],
         /* const device GPUPostProcessingConstants * updating_globals: */
             updating_globals,
         /* float3 fragment_worldpos: */
@@ -669,21 +661,22 @@ alphablending_fragment_shader(
         /* float ignore_lighting: */
             in.ignore_lighting);
     
+    // locked_materials[in.material_i].ambient_rgb[?]
     float4 out_color = vector_float4(
-        polygon_materials[in.material_i].ambient_rgb[0],
-        polygon_materials[in.material_i].ambient_rgb[1],
-        polygon_materials[in.material_i].ambient_rgb[2],
-        polygon_materials[in.material_i].alpha);
+        1.0f,
+        1.0f,
+        1.0f,
+        1.0f);
     
     #if TEXTURES_ACTIVE
     if (
-        polygon_materials[in.material_i].texturearray_i < 0 ||
-        polygon_materials[in.material_i].texture_i < 0)
+        locked_materials[in.material_i].texturearray_i < 0 ||
+        locked_materials[in.material_i].texture_i < 0)
     {
     #else
     if (
-        polygon_materials[in.material_i].texturearray_i != 0 ||
-        polygon_materials[in.material_i].texture_i < 0)
+        locked_materials[in.material_i].texturearray_i != 0 ||
+        locked_materials[in.material_i].texture_i < 0)
     {
     #endif
         
@@ -694,10 +687,10 @@ alphablending_fragment_shader(
         
         // Sample the texture to obtain a color
         const half4 color_sample =
-        color_textures[polygon_materials[in.material_i].texturearray_i].sample(
+        color_textures[locked_materials[in.material_i].texturearray_i].sample(
             textureSampler,
             in.texture_coordinate,
-            polygon_materials[in.material_i].texture_i);
+            locked_materials[in.material_i].texture_i);
         float4 texture_sample = float4(color_sample);
         
         out_color *= texture_sample;
@@ -708,9 +701,9 @@ alphablending_fragment_shader(
     out_color += vector_float4(in.bonus_rgb, 0.0f);
     
     float4 rgba_cap = vector_float4(
-        polygon_materials[in.material_i].rgb_cap[0],
-        polygon_materials[in.material_i].rgb_cap[1],
-        polygon_materials[in.material_i].rgb_cap[2],
+        locked_materials[in.material_i].rgb_cap[0],
+        locked_materials[in.material_i].rgb_cap[1],
+        locked_materials[in.material_i].rgb_cap[2],
         1.0f);
     out_color = clamp(out_color, 0.0f, rgba_cap);
     

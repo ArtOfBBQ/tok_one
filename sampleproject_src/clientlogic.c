@@ -89,7 +89,6 @@ void client_logic_late_startup(void) {
     for (uint32_t i = 0; i < 1; i++) {
         log_assert(teapot_mesh_id >= 0);
         zSpriteRequest teapot_request;
-        teapot_request.materials_size = 1;
         zsprite_request_next(&teapot_request);
         zsprite_construct(&teapot_request);
         teapot_request.cpu_data->mesh_id = teapot_mesh_id;
@@ -106,18 +105,6 @@ void client_logic_late_startup(void) {
         teapot_request.cpu_data->visible           = true;
         teapot_touchable_ids[i]                    = next_nonui_touchable_id();
         teapot_request.gpu_data->touchable_id      = teapot_touchable_ids[i];
-        for (uint32_t mat_i = 0; mat_i < MAX_MATERIALS_PER_POLYGON; mat_i++) {
-            teapot_request.gpu_materials[mat_i].ambient_rgb[0] =  1.3f;
-            teapot_request.gpu_materials[mat_i].ambient_rgb[1] =  1.3f;
-            teapot_request.gpu_materials[mat_i].ambient_rgb[2] =  0.9f;
-            teapot_request.gpu_materials[mat_i].alpha          =  1.0f;
-            teapot_request.gpu_materials[mat_i].texturearray_i = -1.0f;
-            teapot_request.gpu_materials[mat_i].texture_i      = -1.0f;
-            teapot_request.gpu_materials[mat_i].specular       =  1.0f;
-            teapot_request.gpu_materials[mat_i].diffuse        =  1.0f;
-            teapot_request.gpu_materials[mat_i].texturearray_i =    -1;
-            teapot_request.gpu_materials[mat_i].texture_i      =    -1;
-        }
         teapot_request.gpu_data->ignore_lighting =  0.0f;
         teapot_request.gpu_data->ignore_camera =  0.0f;
         
@@ -160,9 +147,9 @@ void client_logic_late_startup(void) {
                     engine_globals->window_height, 1.0f),
             /* PolygonRequest * stack_recipient: */
                 &quad[i]);
-        quad[i].gpu_materials->texturearray_i    = quad_texture_array_i;
-        quad[i].gpu_materials->texture_i         = quad_texture_i;
-        quad[i].cpu_data->zsprite_id              = -1;
+        quad[i].gpu_data->base_texturearray_i    = quad_texture_array_i;
+        quad[i].gpu_data->base_texture_i         = quad_texture_i;
+        quad[i].cpu_data->zsprite_id             = -1;
         quad[i].gpu_data->touchable_id           = -1;
         quad[i].cpu_data->alpha_blending_enabled = false;
         
@@ -176,12 +163,10 @@ void client_logic_late_startup(void) {
         quad[i].gpu_data->ignore_camera          = 0.0f;
         quad[i].gpu_data->ignore_lighting        = 0.0f;
         
-        quad[i].gpu_materials[0].ambient_rgb[0]  = 0.75f;
-        quad[i].gpu_materials[0].ambient_rgb[1]  = 0.75f;
-        quad[i].gpu_materials[0].ambient_rgb[2]  = 0.85f;
-        quad[i].gpu_materials[0].alpha           = 1.0f;
-        quad[i].gpu_materials[0].diffuse         = 1.0f;
-        quad[i].gpu_materials[0].specular        = 1.0f;
+        quad[i].gpu_data->base_rgba[0]  = 0.75f;
+        quad[i].gpu_data->base_rgba[1]  = 0.75f;
+        quad[i].gpu_data->base_rgba[2]  = 0.85f;
+        quad[i].gpu_data->base_rgba[3]  = 1.0f;
         
         zsprite_commit(&quad[i]);
     }

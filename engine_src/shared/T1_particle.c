@@ -65,15 +65,13 @@ LineParticle * next_lineparticle_effect(void)
 
 LineParticle * next_lineparticle_effect_with_zpoly(
     CPUzSprite * construct_with_zpolygon,
-    GPUzSprite * construct_with_polygon_gpu,
-    GPUzSpriteMaterial * construct_with_polygon_material)
+    GPUzSprite * construct_with_polygon_gpu)
 {
     LineParticle * return_value = next_lineparticle_effect();
     
     log_assert(lineparticle_effects_size < LINEPARTICLE_EFFECTS_SIZE);
     return_value->zpolygon_cpu = *construct_with_zpolygon;
     return_value->zpolygon_gpu = *construct_with_polygon_gpu;
-    return_value->zpolygon_material = *construct_with_polygon_material;
     
     return return_value;
 }
@@ -85,10 +83,6 @@ void commit_lineparticle_effect(
     log_assert(to_commit->waypoints_size > 1);
     log_assert(to_commit->zpolygon_cpu.committed);
     log_assert(!to_commit->zpolygon_cpu.deleted);
-    log_assert(to_commit->zpolygon_material.diffuse  > -0.01f);
-    log_assert(to_commit->zpolygon_material.specular > -0.01f);
-    log_assert(to_commit->zpolygon_material.diffuse  <  1.01f);
-    log_assert(to_commit->zpolygon_material.specular <  1.01f);
     log_assert(to_commit->zpolygon_gpu.xyz_multiplier[0] > 0.0f);
     log_assert(to_commit->zpolygon_gpu.xyz_multiplier[1] > 0.0f);
     log_assert(to_commit->zpolygon_gpu.xyz_multiplier[2] > 0.0f);
@@ -287,76 +281,12 @@ void add_lineparticle_effects_to_workload(
                 frame_data->polygon_collection->size].xyz_multiplier[2] =
                     lineparticle_effects[i].zpolygon_gpu.xyz_multiplier[2];
             
-            frame_data->polygon_materials[
-                frame_data->polygon_collection->size *
-                    MAX_MATERIALS_PER_POLYGON] =
-                        lineparticle_effects[i].zpolygon_material;
-            
-            frame_data->polygon_materials[
-                frame_data->polygon_collection->size *
-                    MAX_MATERIALS_PER_POLYGON].ambient_rgb[0] =
-                        (lineparticle_effects[i].waypoint_r[prev_i] *
-                            prev_multiplier) +
-                        (lineparticle_effects[i].waypoint_r[next_i] *
-                            next_multiplier);
-            add_variance(
-                frame_data->polygon_materials[
-                    frame_data->polygon_collection->size *
-                        MAX_MATERIALS_PER_POLYGON].ambient_rgb[0],
-                lineparticle_effects[i].particle_rgb_variance_pct,
-                particle_rands[2],
-                particle_rands[3]);
-            
-            frame_data->polygon_materials[
-                frame_data->polygon_collection->size *
-                    MAX_MATERIALS_PER_POLYGON].ambient_rgb[1] =
-                        (lineparticle_effects[i].waypoint_g[prev_i] *
-                            prev_multiplier) +
-                        (lineparticle_effects[i].waypoint_g[next_i] *
-                            next_multiplier);
-            add_variance(
-                frame_data->polygon_materials[
-                    frame_data->polygon_collection->size *
-                        MAX_MATERIALS_PER_POLYGON].ambient_rgb[1],
-                lineparticle_effects[i].particle_rgb_variance_pct,
-                particle_rands[3],
-                particle_rands[4]);
-            
-            frame_data->polygon_materials[
-                frame_data->polygon_collection->size *
-                    MAX_MATERIALS_PER_POLYGON].ambient_rgb[2] =
-                        (lineparticle_effects[i].waypoint_b[prev_i] *
-                            prev_multiplier) +
-                        (lineparticle_effects[i].waypoint_b[next_i] *
-                            next_multiplier);
-            add_variance(
-                frame_data->polygon_materials[
-                    frame_data->polygon_collection->size *
-                        MAX_MATERIALS_PER_POLYGON].ambient_rgb[2],
-                lineparticle_effects[i].particle_rgb_variance_pct,
-                particle_rands[1],
-                particle_rands[3]);
-            
-            frame_data->polygon_materials[
-                frame_data->polygon_collection->size *
-                    MAX_MATERIALS_PER_POLYGON].alpha =
-                        ((lineparticle_effects[i].waypoint_a[prev_i] *
-                            prev_multiplier) +
-                        (lineparticle_effects[i].waypoint_a[next_i] *
-                            next_multiplier));
             add_variance(
                 frame_data->polygon_collection->polygons[
                     frame_data->polygon_collection->size].xyz_angle[2],
                 lineparticle_effects[i].particle_zangle_variance_pct,
                 particle_rands[2],
                 particle_rands[4]);
-            
-            frame_data->polygon_materials[
-                frame_data->polygon_collection->size *
-                    MAX_MATERIALS_PER_POLYGON].diffuse = 0.75f;
-            frame_data->polygon_materials[
-                frame_data->polygon_collection->size *
-                    MAX_MATERIALS_PER_POLYGON].specular = 0.75f;
             
             for (
                 int32_t vert_i = head_i;
@@ -402,8 +332,6 @@ void construct_particle_effect(
     zSpriteRequest poly_request;
     poly_request.cpu_data       = &to_construct->zpolygon_cpu;
     poly_request.gpu_data       = &to_construct->zpolygon_gpu;
-    poly_request.gpu_materials  = to_construct->zpolygon_materials;
-    poly_request.materials_size = MAX_MATERIALS_PER_POLYGON;
     zsprite_construct(/* PolygonRequest *to_construct: */ &poly_request);
     
     to_construct->object_id            = -1;
@@ -450,27 +378,10 @@ void commit_particle_effect(ParticleEffect * to_request)
         to_request->zpolygon_cpu.mesh_id >= 0);
     log_assert(
         to_request->zpolygon_cpu.visible);
-    log_assert(
-        to_request->zpolygon_materials[0].alpha > 0.05f);
     
     log_assert(
         all_mesh_summaries[to_request->zpolygon_cpu.mesh_id].
             materials_size > 0);
-    for (
-        uint32_t i = 0;
-        i < all_mesh_summaries[to_request->zpolygon_cpu.mesh_id].
-            materials_size;
-        i++)
-    {
-        log_assert(
-            to_request->zpolygon_materials[i].diffuse > 0.01f);
-        log_assert(
-            to_request->zpolygon_materials[i].specular > 0.01f);
-        log_assert(
-            to_request->zpolygon_materials[i].diffuse < 3.01f);
-        log_assert(
-            to_request->zpolygon_materials[i].specular < 3.01f);
-    }
     
     // Reminder: The particle effect is not committed, but the zpoly should be
     log_assert(to_request->zpolygon_cpu.committed);
@@ -643,33 +554,7 @@ void add_particle_effects_to_workload(
                     sizeof(GPUzSprite));
             
             log_assert(
-                particle_effects[i].zpolygon_materials[0].diffuse > 0.0f);
-            log_assert(
-                particle_effects[i].zpolygon_materials[0].specular > 0.0f);
-            
-            log_assert(
                 frame_data->polygon_collection->size < MAX_POLYGONS_PER_BUFFER);
-            common_memcpy(
-                &frame_data->polygon_materials[
-                    frame_data->polygon_collection->size *
-                        MAX_MATERIALS_PER_POLYGON],
-                particle_effects[i].zpolygon_materials,
-                sizeof(GPUzSpriteMaterial) * MAX_MATERIALS_PER_POLYGON);
-            
-            if (particle_effects[i].random_textures_size > 0) {
-                frame_data->polygon_materials[
-                    frame_data->polygon_collection->size *
-                        MAX_MATERIALS_PER_POLYGON].texturearray_i =
-                            particle_effects[i].random_texturearray_i[
-                                spawn_i % particle_effects[i].
-                                    random_textures_size];
-                
-                frame_data->polygon_materials[
-                    frame_data->polygon_collection->size *
-                        MAX_MATERIALS_PER_POLYGON].texture_i =
-                            particle_effects[i].random_texture_i[spawn_i %
-                                particle_effects[i].random_textures_size];
-            }
             
             float * initial_random_add_1_at = (float *)&particle_effects[i].
                 gpustats_initial_random_add_1;

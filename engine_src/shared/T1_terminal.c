@@ -126,13 +126,13 @@ void terminal_redraw_backgrounds(void) {
         /* zPolygon * recipien: */
             &current_command_input);
     
-    current_command_input.gpu_materials[0].ambient_rgb[0] =
+    current_command_input.gpu_data->base_rgba[0] =
         term_background_color[0];
-    current_command_input.gpu_materials[0].ambient_rgb[1] =
+    current_command_input.gpu_data->base_rgba[1] =
         term_background_color[1];
-    current_command_input.gpu_materials[0].ambient_rgb[2] =
+    current_command_input.gpu_data->base_rgba[2] =
         term_background_color[2];
-    current_command_input.gpu_materials[0].alpha =
+    current_command_input.gpu_data->base_rgba[3] =
         term_background_color[3];
     current_command_input.gpu_data->ignore_camera = true;
     current_command_input.gpu_data->ignore_lighting = true;
@@ -170,13 +170,13 @@ void terminal_redraw_backgrounds(void) {
        /* zPolygon * recipien: */
            &current_command_input);
     
-    current_command_input.gpu_materials[0].ambient_rgb[0] =
+    current_command_input.gpu_data->base_rgba[0] =
         term_background_color[0];
-    current_command_input.gpu_materials[0].ambient_rgb[1] =
+    current_command_input.gpu_data->base_rgba[1] =
         term_background_color[1];
-    current_command_input.gpu_materials[0].ambient_rgb[2] =
+    current_command_input.gpu_data->base_rgba[2] =
         term_background_color[2];
-    current_command_input.gpu_materials[0].alpha =
+    current_command_input.gpu_data->base_rgba[3] =
         term_background_color[3];
     current_command_input.cpu_data->visible = terminal_active;
     current_command_input.cpu_data->alpha_blending_enabled = true;

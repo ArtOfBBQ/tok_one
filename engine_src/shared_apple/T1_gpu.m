@@ -16,7 +16,6 @@ typedef struct AppleGPUState {
     id<MTLCommandQueue> command_queue;
     
     id polygon_buffers[MAX_RENDERING_FRAME_BUFFERS];
-    id polygon_material_buffers[MAX_RENDERING_FRAME_BUFFERS];
     id light_buffers [MAX_RENDERING_FRAME_BUFFERS];
     id vertex_buffers[MAX_RENDERING_FRAME_BUFFERS];
     id camera_buffers[MAX_RENDERING_FRAME_BUFFERS];
@@ -25,6 +24,8 @@ typedef struct AppleGPUState {
     id postprocessing_constants_buffers[MAX_RENDERING_FRAME_BUFFERS];
     id locked_vertex_populator_buffer;
     id locked_vertex_buffer;
+    id locked_materials_populator_buffer;
+    id locked_materials_buffer;
     id projection_constants_buffer;
     
     // Pipeline states (pls)
@@ -445,26 +446,7 @@ bool32_t apple_gpu_init(
                     deallocator:
                         nil];
         ags->polygon_buffers[buf_i] = MTLBufferFramePolygons;
-        
-        id<MTLBuffer> MTLBufferFramePolygonMaterials =
-            [with_metal_device
-                /* the pointer needs to be page aligned */
-                    newBufferWithBytesNoCopy:
-                        gpu_shared_data_collection->
-                            triple_buffers[buf_i].polygon_materials
-                /* the length weirdly needs to be page aligned also */
-                    length:
-                        gpu_shared_data_collection->
-                            polygon_materials_allocation_size
-                    options:
-                        MTLResourceStorageModeShared
-                /* deallocator = nil to opt out */
-                    deallocator:
-                        nil];
-        
-        ags->polygon_material_buffers[buf_i] =
-            MTLBufferFramePolygonMaterials;
-        
+                
         id<MTLBuffer> MTLBufferFrameVertices =
             [with_metal_device
                 /* the pointer needs to be page aligned */
@@ -598,6 +580,32 @@ bool32_t apple_gpu_init(
             options:
                 MTLResourceStorageModePrivate];
     ags->locked_vertex_buffer = MTLBufferLockedVertices;
+    
+    
+    id<MTLBuffer> MTLBufferLockedMaterialsPopulator =
+        [with_metal_device
+            /* the pointer needs to be page aligned */
+                newBufferWithBytesNoCopy:
+                    gpu_shared_data_collection->locked_materials
+            /* the length weirdly needs to be page aligned also */
+                length:
+                    gpu_shared_data_collection->locked_materials_allocation_size
+                options:
+                    MTLResourceStorageModeShared
+            /* deallocator = nil to opt out */
+                deallocator:
+                    nil];
+    
+    ags->locked_materials_populator_buffer = MTLBufferLockedMaterialsPopulator;
+    
+    id<MTLBuffer> MTLBufferLockedMaterials =
+        [with_metal_device
+            newBufferWithLength:
+                gpu_shared_data_collection->locked_materials_allocation_size
+            options:
+                MTLResourceStorageModePrivate];
+    ags->locked_materials_buffer = MTLBufferLockedMaterials;
+    
     
     id<MTLBuffer> MTLBufferProjectionConstants =
         [with_metal_device
@@ -1188,12 +1196,6 @@ void platform_gpu_push_special_engine_texture_and_free_rgba_values(
 
 void platform_gpu_copy_locked_vertices(void)
 {
-    for (uint32_t i = 0; i < ALL_LOCKED_VERTICES_SIZE; i++) {
-        assert(
-            gpu_shared_data_collection->locked_vertices[i].parent_material_i <
-                MAX_MATERIALS_PER_POLYGON);
-    }
-    
     gpu_shared_data_collection->locked_vertices_size = all_mesh_vertices->size;
     
     id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
@@ -1211,6 +1213,34 @@ void platform_gpu_copy_locked_vertices(void)
             0
         size:
             gpu_shared_data_collection->locked_vertices_allocation_size];
+    [blit_copy_encoder endEncoding];
+    
+    // Add a completion handler and commit the command buffer.
+    [combuf addCompletedHandler:^(id<MTLCommandBuffer> cb) {
+        // Populate private buffer.
+        (void)cb;
+    }];
+    [combuf commit];
+}
+
+void platform_gpu_copy_locked_materials(void)
+{
+    gpu_shared_data_collection->locked_materials_size = all_mesh_materials->size;
+    
+    id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
+    
+    id <MTLBlitCommandEncoder> blit_copy_encoder = [combuf blitCommandEncoder];
+    [blit_copy_encoder
+        copyFromBuffer:
+            ags->locked_materials_populator_buffer
+        sourceOffset:
+            0
+        toBuffer:
+            ags->locked_materials_buffer
+        destinationOffset:
+            0
+        size:
+            gpu_shared_data_collection->locked_materials_allocation_size];
     [blit_copy_encoder endEncoding];
     
     // Add a completion handler and commit the command buffer.
@@ -1627,7 +1657,7 @@ void platform_gpu_copy_locked_vertices(void)
     
     [render_pass_1_draw_triangles_encoder
         setFragmentBuffer:
-            ags->polygon_material_buffers[ags->frame_i]
+            ags->locked_materials_buffer
         offset:
             0
         atIndex:

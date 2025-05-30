@@ -350,30 +350,23 @@ void text_request_label_offset_around(
             
             letter.gpu_data->remove_shadow = font_settings->remove_shadow;
             
-            letter.gpu_materials[0].texturearray_i =
+            letter.gpu_data->base_texturearray_i =
                 font_settings->font_texturearray_i;
-            letter.gpu_materials[0].texture_i      =
+            letter.gpu_data->base_texture_i      =
                 text_to_draw[j] - '!';
-            letter.gpu_materials[0].rgb_cap[0] =
-                font_settings->rgb_cap[0];
-            letter.gpu_materials[0].rgb_cap[1] =
-                font_settings->rgb_cap[1];
-            letter.gpu_materials[0].rgb_cap[2] =
-                font_settings->rgb_cap[2];
             
             for (
                 uint32_t rgba_i = 0;
-                rgba_i < 3;
+                rgba_i < 4;
                 rgba_i++)
             {
-                letter.gpu_materials[0].ambient_rgb[rgba_i] =
+                letter.gpu_data->base_rgba[rgba_i] =
                     font_settings->font_color[rgba_i];
             }
-            letter.gpu_materials[0].alpha = font_settings->font_color[3];
             
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
-            log_assert(letter.gpu_materials[0].alpha > 0.99f);
+            log_assert(letter.gpu_data->base_rgba[3] > 0.99f);
             zsprite_commit(&letter);
         }
         cur_y_offset_pixelspace -= get_newline_advance();
@@ -514,34 +507,26 @@ void text_request_label_renderable(
         letter.gpu_data->ignore_camera = font_settings->ignore_camera;
         letter.gpu_data->remove_shadow = font_settings->remove_shadow;
         
-        letter.gpu_materials[0].texturearray_i =
+        letter.gpu_data->base_texturearray_i =
             font_settings->font_texturearray_i;
-        letter.gpu_materials[0].texture_i =
+        letter.gpu_data->base_texture_i =
             (int32_t)(text_to_draw[i] - '!');
         
         if (
-            letter.gpu_materials[0].texture_i < 0 ||
-            letter.gpu_materials[0].texture_i > 100)
+            letter.gpu_data->base_texture_i < 0 ||
+            letter.gpu_data->base_texture_i > 100)
         {
             continue;
         }
         
         for (
             uint32_t rgba_i = 0;
-            rgba_i < 3;
+            rgba_i < 4;
             rgba_i++)
         {
-            letter.gpu_materials[0].ambient_rgb[rgba_i] =
+            letter.gpu_data->base_rgba[rgba_i] =
                 font_settings->font_color[rgba_i];
         }
-        letter.gpu_materials[0].alpha = font_settings->font_color[3];
-        letter.gpu_materials[0].rgb_cap[0] =
-            font_settings->rgb_cap[0];
-        letter.gpu_materials[0].rgb_cap[1] =
-            font_settings->rgb_cap[1];
-        letter.gpu_materials[0].rgb_cap[2] =
-            font_settings->rgb_cap[2];
-        
         
         letter.gpu_data->xyz_offset[0] =
             engineglobals_screenspace_width_to_width(
@@ -561,7 +546,7 @@ void text_request_label_renderable(
         
         
         i++;
-        log_assert(letter.gpu_materials[0].alpha > 0.99f);
+        log_assert(letter.gpu_data->base_rgba[3] > 0.99f);
         zsprite_commit(&letter);
     }
 }

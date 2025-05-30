@@ -4,8 +4,6 @@ zSpriteCollection * zsprites_to_render = NULL;
 
 void zsprite_request_next(zSpriteRequest * stack_recipient)
 {
-    stack_recipient->materials_size = MAX_MATERIALS_PER_POLYGON;
-    
     for (
         uint32_t zp_i = 0;
         zp_i < zsprites_to_render->size;
@@ -17,9 +15,6 @@ void zsprite_request_next(zSpriteRequest * stack_recipient)
                 &zsprites_to_render->cpu_data[zp_i];
             stack_recipient->gpu_data     =
                 &zsprites_to_render->gpu_data[zp_i];
-            stack_recipient->gpu_materials =
-                zsprites_to_render->gpu_materials +
-                (zp_i * MAX_MATERIALS_PER_POLYGON);
             stack_recipient->cpu_data->committed = false;
             return;
         }
@@ -30,9 +25,6 @@ void zsprite_request_next(zSpriteRequest * stack_recipient)
         &zsprites_to_render->cpu_data[zsprites_to_render->size];
     stack_recipient->gpu_data     =
         &zsprites_to_render->gpu_data[zsprites_to_render->size];
-    stack_recipient->gpu_materials =
-        zsprites_to_render->gpu_materials +
-        (zsprites_to_render->size * MAX_MATERIALS_PER_POLYGON);
     stack_recipient->cpu_data[zsprites_to_render->size].deleted = false;
     stack_recipient->cpu_data->committed = false;
     
@@ -62,37 +54,11 @@ void zsprite_commit(
         vert_i <= all_mesh_vertices_tail_i;
         vert_i++)
     {
-        log_assert(all_mesh_vertices->gpu_data[vert_i].parent_material_i >= 0);
-        log_assert(all_mesh_vertices->gpu_data[vert_i].parent_material_i  <
-            MAX_MATERIALS_PER_POLYGON);
-        log_assert(all_mesh_vertices->gpu_data[vert_i].parent_material_i  <
+        log_assert(all_mesh_vertices->gpu_data[vert_i].locked_material_i >= 0);
+        log_assert(all_mesh_vertices->gpu_data[vert_i].locked_material_i  <
+            ALL_LOCKED_MATERIALS_SIZE);
+        log_assert(all_mesh_vertices->gpu_data[vert_i].locked_material_i  <
             all_mesh_summaries[to_commit->cpu_data->mesh_id].materials_size);
-    }
-    
-    for (
-        int32_t mat_i = 0;
-        mat_i < MAX_MATERIALS_PER_POLYGON;
-        mat_i++)
-    {
-        if (to_commit->gpu_materials[mat_i].texturearray_i >= 0) {
-            log_assert(to_commit->gpu_materials[mat_i].texture_i >= 0);
-            texture_array_register_high_priority_if_unloaded(
-                to_commit->gpu_materials[mat_i].texturearray_i,
-                to_commit->gpu_materials[mat_i].texture_i);
-        }
-        
-        log_assert(
-            to_commit->gpu_materials[mat_i].texture_i < 5000);
-        log_assert(
-            to_commit->gpu_materials[mat_i].texturearray_i <
-                TEXTUREARRAYS_SIZE);
-        
-        for (uint32_t rgb_i = 0; rgb_i < 3; rgb_i++) {
-            log_assert(
-                to_commit->gpu_materials[mat_i].ambient_rgb[rgb_i] >= - 0.1f);
-            log_assert(
-                to_commit->gpu_materials[mat_i].ambient_rgb[rgb_i] <=  15.0f);
-        }
     }
     
     to_commit->cpu_data->committed = true;
@@ -215,20 +181,11 @@ void zsprite_construct(
 {
     assert(to_construct->cpu_data != NULL);
     assert(to_construct->gpu_data != NULL);
-    assert(to_construct->gpu_materials != NULL);
-    assert(
-        (to_construct->materials_size == 1 ||
-        to_construct->materials_size == MAX_MATERIALS_PER_POLYGON));
     
     common_memset_char(
         to_construct->cpu_data,
         0,
         sizeof(CPUzSprite));
-    common_memset_char(
-        to_construct->gpu_materials,
-        0,
-        sizeof(GPUzSpriteMaterial) *
-            to_construct->materials_size);
     common_memset_char(
         to_construct->gpu_data,
         0,
@@ -243,20 +200,6 @@ void zsprite_construct(
     to_construct->cpu_data->mesh_id = -1;
     to_construct->cpu_data->zsprite_id = -1;
     to_construct->cpu_data->visible = true;
-    
-    for (uint32_t i = 0; i < MAX_MATERIALS_PER_POLYGON; i++) {
-        to_construct->gpu_materials[i].ambient_rgb[0] = 0.75f;
-        to_construct->gpu_materials[i].ambient_rgb[1] = 0.75f;
-        to_construct->gpu_materials[i].ambient_rgb[2] = 0.75f;
-        to_construct->gpu_materials[i].alpha          = 1.0f;
-        to_construct->gpu_materials[i].rgb_cap[0]     = 1.0f;
-        to_construct->gpu_materials[i].rgb_cap[1]     = 1.0f;
-        to_construct->gpu_materials[i].rgb_cap[2]     = 1.0f;
-        to_construct->gpu_materials[i].diffuse        = 0.50f;
-        to_construct->gpu_materials[i].specular       = 0.50f;
-        to_construct->gpu_materials[i].texture_i      = -1;
-        to_construct->gpu_materials[i].texturearray_i = -1;
-    }
 }
 
 float zsprite_get_distance_f3(
@@ -327,15 +270,6 @@ void zsprite_construct_quad(
     stack_recipient->gpu_data->xyz_multiplier[1] =
         height / current_height;
     stack_recipient->gpu_data->xyz_multiplier[2] = 1.0f;
-    
-    stack_recipient->gpu_materials[0].ambient_rgb[0] = 1.0f;
-    stack_recipient->gpu_materials[0].ambient_rgb[1] = 1.0f;
-    stack_recipient->gpu_materials[0].ambient_rgb[2] = 1.0f;
-    stack_recipient->gpu_materials[0].alpha    = 1.0f;
-    stack_recipient->gpu_materials[0].diffuse  = 1.0f;
-    stack_recipient->gpu_materials[0].specular = 0.2f;
-    stack_recipient->gpu_materials[0].texturearray_i = -1;
-    stack_recipient->gpu_materials[0].texture_i = -1;
 }
 
 void zsprite_construct_quad_around(
@@ -365,12 +299,6 @@ void zsprite_construct_quad_around(
         stack_recipient->gpu_data->xyz_multiplier[1] / 20.0f;
     
     stack_recipient->cpu_data->mesh_id = 0;
-    stack_recipient->gpu_materials[0].ambient_rgb[0] = 1.0f;
-    stack_recipient->gpu_materials[0].ambient_rgb[1] = 1.0f;
-    stack_recipient->gpu_materials[0].ambient_rgb[2] = 1.0f;
-    stack_recipient->gpu_materials[0].alpha = 1.0f;
-    stack_recipient->gpu_materials[0].texturearray_i = -1;
-    stack_recipient->gpu_materials[0].texture_i = -1;
 }
 
 void zsprite_construct_cube_around(
@@ -401,10 +329,4 @@ void zsprite_construct_cube_around(
     stack_recipient->gpu_data->xyz_multiplier[2] = depth / current_depth;
     
     stack_recipient->cpu_data->mesh_id = 1;
-    stack_recipient->gpu_materials[0].ambient_rgb[0] = 1.0f;
-    stack_recipient->gpu_materials[0].ambient_rgb[1] = 1.0f;
-    stack_recipient->gpu_materials[0].ambient_rgb[2] = 1.0f;
-    stack_recipient->gpu_materials[0].alpha = 1.0f;
-    stack_recipient->gpu_materials[0].texturearray_i = -1;
-    stack_recipient->gpu_materials[0].texture_i = -1;
 }

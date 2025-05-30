@@ -206,6 +206,7 @@ void platform_toggle_fullscreen(void);
 void platform_gpu_update_viewport(void);
 
 void platform_gpu_copy_locked_vertices(void);
+void platform_gpu_copy_locked_materials(void);
 
 int32_t platform_gpu_get_touchable_id_at_screen_pos(
     const float screen_x,

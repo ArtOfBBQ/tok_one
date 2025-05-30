@@ -43,11 +43,7 @@ typedef struct ScheduledAnimation {
     // Public:
     GPUzSprite         gpu_polygon_vals;
     // zPolygonCPU        zpolygon_cpu_vals;
-    GPUzSpriteMaterial gpu_polygon_material_vals;
     zLightSource       lightsource_vals;
-    
-    GPUzSpriteMaterial onfinish_gpu_polygon_material_muls;
-    GPUzSpriteMaterial onfinish_gpu_polygon_material_adds;
     
     EasingType easing_type;
     

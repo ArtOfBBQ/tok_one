@@ -360,17 +360,17 @@ static void request_slider_shared(
     
     slider_back.cpu_data->zsprite_id = background_object_id;
     
-    slider_back.gpu_materials[0].texturearray_i =
+    slider_back.gpu_data->base_texturearray_i =
         next_ui_element_settings->slider_background_texturearray_i;
-    slider_back.gpu_materials[0].texture_i =
+    slider_back.gpu_data->base_texture_i =
         next_ui_element_settings->slider_background_texture_i;
-    slider_back.gpu_materials[0].ambient_rgb[0] =
+    slider_back.gpu_data->base_rgba[0] =
         next_ui_element_settings->slider_background_rgba[0];
-    slider_back.gpu_materials[0].ambient_rgb[1] =
+    slider_back.gpu_data->base_rgba[1] =
         next_ui_element_settings->slider_background_rgba[1];
-    slider_back.gpu_materials[0].ambient_rgb[2] =
+    slider_back.gpu_data->base_rgba[2] =
         next_ui_element_settings->slider_background_rgba[2];
-    slider_back.gpu_materials[0].alpha =
+    slider_back.gpu_data->base_rgba[3] =
         next_ui_element_settings->slider_background_rgba[3];
     
     slider_back.gpu_data->ignore_lighting =
@@ -412,17 +412,17 @@ static void request_slider_shared(
     
     slider_pin.gpu_data->xyz_offset[1] = 0.0f;
     
-    slider_pin.gpu_materials[0].texturearray_i =
+    slider_pin.gpu_data->base_texturearray_i =
         next_ui_element_settings->slider_pin_texturearray_i;
-    slider_pin.gpu_materials[0].texture_i =
+    slider_pin.gpu_data->base_texture_i =
         next_ui_element_settings->slider_pin_texture_i;
-    slider_pin.gpu_materials[0].ambient_rgb[0] =
+    slider_pin.gpu_data->base_rgba[0] =
         next_ui_element_settings->slider_pin_rgba[0];
-    slider_pin.gpu_materials[0].ambient_rgb[1] =
+    slider_pin.gpu_data->base_rgba[1] =
         next_ui_element_settings->slider_pin_rgba[1];
-    slider_pin.gpu_materials[0].ambient_rgb[2] =
+    slider_pin.gpu_data->base_rgba[2] =
         next_ui_element_settings->slider_pin_rgba[2];
-    slider_pin.gpu_materials[0].alpha =
+    slider_pin.gpu_data->base_rgba[3] =
         next_ui_element_settings->slider_pin_rgba[3];
     
     slider_pin.gpu_data->ignore_lighting =
@@ -558,7 +558,6 @@ void request_button(
     log_assert(next_ui_element_settings->button_height_screenspace > 5.0f);
     
     zSpriteRequest button_request;
-    button_request.materials_size = 1;
     zsprite_request_next(&button_request);
     zsprite_construct_quad_around(
         /* const float mid_x: */
@@ -586,17 +585,17 @@ void request_button(
         next_ui_element_settings->ignore_lighting;
     zsprite_commit(&button_request);
     
-    button_request.gpu_materials[0].ambient_rgb[0] =
+    button_request.gpu_data->base_rgba[0] =
         next_ui_element_settings->button_background_rgba[0];
-    button_request.gpu_materials[0].ambient_rgb[1] =
+    button_request.gpu_data->base_rgba[1] =
         next_ui_element_settings->button_background_rgba[1];
-    button_request.gpu_materials[0].ambient_rgb[2] =
+    button_request.gpu_data->base_rgba[2] =
         next_ui_element_settings->button_background_rgba[2];
-    button_request.gpu_materials[0].alpha =
+    button_request.gpu_data->base_rgba[3] =
         next_ui_element_settings->button_background_rgba[3];
-    button_request.gpu_materials[0].texturearray_i =
+    button_request.gpu_data->base_texturearray_i =
         next_ui_element_settings->button_background_texturearray_i;
-    button_request.gpu_materials[0].texture_i =
+    button_request.gpu_data->base_texture_i =
         next_ui_element_settings->button_background_texture_i;
     
     font_settings->ignore_camera = next_ui_element_settings->ignore_camera;

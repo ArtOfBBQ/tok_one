@@ -24,6 +24,8 @@ extern "C" {
 #define BASIC_POINT_MESH_ID 2 // There's currently no way to draw points
 #define BASIC_LINE_MESH_ID 3 // Drawing lines is became very expensive
 
+#define MATERIAL_NAMES_MAX 20
+
 #define OBJ_STRING_SIZE 128
 typedef struct MeshSummary {
     char resource_name[OBJ_STRING_SIZE]; // the resource filename (without path)
@@ -35,7 +37,7 @@ typedef struct MeshSummary {
     float base_depth;
     int32_t shattered_vertices_head_i; // -1 if no shattered version
     int32_t shattered_vertices_size; // 0 if no shattered version
-    char material_names[MAX_MATERIALS_PER_POLYGON][OBJ_STRING_SIZE];
+    char material_names[MATERIAL_NAMES_MAX][OBJ_STRING_SIZE];
     uint32_t materials_size;
 } MeshSummary;
 

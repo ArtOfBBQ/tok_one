@@ -367,12 +367,6 @@ void init_application_before_gpu_init(
     gpu_shared_data_collection->polygons_allocation_size =
         pad_to_page_size(sizeof(GPUzSprite) * MAX_POLYGONS_PER_BUFFER);
     
-    gpu_shared_data_collection->polygon_materials_allocation_size =
-        pad_to_page_size(
-            sizeof(GPUzSpriteMaterial) *
-            MAX_MATERIALS_PER_POLYGON *
-            MAX_POLYGONS_PER_BUFFER);
-    
     gpu_shared_data_collection->lights_allocation_size =
         pad_to_page_size(sizeof(GPULight) * MAX_LIGHTS_PER_BUFFER);
     
@@ -382,6 +376,10 @@ void init_application_before_gpu_init(
     gpu_shared_data_collection->locked_vertices_allocation_size =
         pad_to_page_size(
             sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
+    
+    gpu_shared_data_collection->locked_materials_allocation_size =
+        pad_to_page_size(
+            sizeof(GPULockedMaterial) * ALL_LOCKED_MATERIALS_SIZE);
     
     gpu_shared_data_collection->projection_constants_allocation_size =
         pad_to_page_size(sizeof(GPUProjectionConstants));
@@ -409,13 +407,6 @@ void init_application_before_gpu_init(
             polygon_collection =
                 (GPUSpriteCollection *)malloc_from_unmanaged_aligned(
                     gpu_shared_data_collection->polygons_allocation_size,
-                    page_size);
-        
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].
-            polygon_materials =
-                (GPUzSpriteMaterial *)malloc_from_unmanaged_aligned(
-                    gpu_shared_data_collection->
-                        polygon_materials_allocation_size,
                     page_size);
         
         assert(gpu_shared_data_collection->lights_allocation_size > 0);
@@ -459,6 +450,11 @@ void init_application_before_gpu_init(
     gpu_shared_data_collection->locked_vertices =
         (GPULockedVertex *)malloc_from_unmanaged_aligned(
             gpu_shared_data_collection->locked_vertices_allocation_size,
+            page_size);
+    
+    gpu_shared_data_collection->locked_materials =
+        (GPULockedMaterial *)malloc_from_unmanaged_aligned(
+            gpu_shared_data_collection->locked_materials_allocation_size,
             page_size);
     
     gpu_shared_data_collection->locked_pjc =

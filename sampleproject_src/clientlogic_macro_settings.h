@@ -29,7 +29,7 @@ of the engine for your specific app.
 #define PARTICLES_ACTIVE 1
 #define SHADOWS_ACTIVE 1
 #define AUDIO_ACTIVE 1
-#define ENGINE_SAVEFILE_ACTIVE 1
+#define ENGINE_SAVEFILE_ACTIVE 0
 #define PROFILER_ACTIVE 0
 
 #define MAX_RENDERING_FRAME_BUFFERS 3 // 3 for triple-buffering
@@ -41,7 +41,6 @@ of the engine for your specific app.
 The maximum number of sprites in your app.
 */
 #define MAX_POLYGONS_PER_BUFFER  500
-#define MAX_MATERIALS_PER_POLYGON 2
 #define MAX_LINE_VERTICES 100
 #define MAX_POINT_VERTICES 300
 
@@ -54,8 +53,9 @@ The maximum number of 'scheduled animations' simultaneously running
 #define ALL_MESHES_SIZE 20
 // the max # of triangles in all of your meshes/models combined
 #define ALL_LOCKED_VERTICES_SIZE 240000
-// The max number of 'materials ids' in 1 of your zpolygons
-// #define MAX_MATERIALS_SIZE 10
+
+// The max number of materials in all of your meshes/models combined
+#define ALL_LOCKED_MATERIALS_SIZE 10000
 
 // the max # of permanently stored sounds in your app
 #define ALL_PERMASOUNDS_SIZE 100

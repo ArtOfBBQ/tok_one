@@ -39,9 +39,9 @@ typedef struct GPULockedVertex {
     float        xyz       [3];     // 12 bytes
     float        normal_xyz[3];     // 12 bytes
     float        uv        [2];     //  8 bytes
-    unsigned int parent_material_i; // 4 bytes
+    unsigned int locked_material_i; //  4 bytes
     float        padding[3];        // 12 bytes
-} GPULockedVertex;
+} __attribute__((aligned(32))) GPULockedVertex;
 
 typedef struct GPUCamera {
     float xyz[3];           // 12 bytes
@@ -60,10 +60,12 @@ typedef struct GPUzSprite {
     float        scale_factor;
     float        ignore_lighting;
     float        ignore_camera;
-    float        simd_padding[4]; // make sure touchable_id is behind this
+    float        base_rgba[4];
+    int          base_texturearray_i;
+    int          base_texture_i;
     unsigned int remove_shadow;
     int          touchable_id;
-} GPUzSprite; // 24 floats (3 SIMD runs)
+} __attribute__((aligned(32))) GPUzSprite; // 26 floats (? SIMD runs)
 
 typedef struct GPUSpriteCollection {
     GPUzSprite   polygons[MAX_POLYGONS_PER_BUFFER];
@@ -79,7 +81,7 @@ typedef struct GPUSpriteCollection {
 #define SPECULAR_SKIN 0.35f
 #define SPECULAR_SILVER 0.508f
 #define SPECULAR_GOLD 0.62f
-typedef struct GPUzSpriteMaterial {
+typedef struct GPULockedMaterial {
     float ambient_rgb[3];
     float rgb_cap[3];
     int   texturearray_i;
@@ -92,7 +94,7 @@ typedef struct GPUzSpriteMaterial {
     float refraction;
     float alpha;
     float illum;
-} GPUzSpriteMaterial;
+} GPULockedMaterial;
 
 typedef struct GPULight {
     float xyz[3];
