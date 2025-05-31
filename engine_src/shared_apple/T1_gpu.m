@@ -1056,6 +1056,7 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
         (void)cb;
     }];
     [combuf commit];
+    [combuf waitUntilCompleted];
     
     free_from_managed(rgba_values_freeable);
 }
