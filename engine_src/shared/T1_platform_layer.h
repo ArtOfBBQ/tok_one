@@ -67,7 +67,9 @@ extern "C" {
 #endif
 
 // #include "audio.h"
+#include "decode_bmp.h"
 #include "T1_common.h"
+#include "T1_memorystore.h"
 #include "T1_logger.h"
 #include "T1_decodedimage.h"
 #include "T1_engine_globals.h"
@@ -134,6 +136,15 @@ platform_write_file_to_writables(
     const char * filepath_inside_writables,
     const char * output,
     const uint32_t output_size,
+    bool32_t * good);
+
+void
+platform_write_rgba_to_writables(
+    const char * local_filename,
+    uint8_t * rgba,
+    const uint32_t rgba_size,
+    const uint32_t width,
+    const uint32_t height,
     bool32_t * good);
 
 void platform_copy_file(

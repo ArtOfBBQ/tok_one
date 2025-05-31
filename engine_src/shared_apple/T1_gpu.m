@@ -859,6 +859,8 @@ void platform_gpu_init_texture_array(
     assert(texture_array_i >=  0);
     assert(texture_array_i <  31);
     
+    log_assert(ags->metal_textures[texture_array_i] == NULL);
+    
     MTLTextureDescriptor * texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
     texture_descriptor.textureType = MTLTextureType2DArray;
@@ -1151,6 +1153,8 @@ void platform_gpu_push_special_engine_texture_and_free_rgba_values(
 {
     log_assert(rgba_values_freeable != NULL);
     log_assert(rgba_values_page_aligned != NULL);
+    log_assert(image_width > 0);
+    log_assert(image_height > 0);
     
     id<MTLTexture> target = NULL;
     
@@ -1214,10 +1218,8 @@ void platform_gpu_push_special_engine_texture_and_free_rgba_values(
                 MTLTextureType2D;
         new_texture_descriptor.arrayLength = parent_texture_array_images_size;
         new_texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
-        new_texture_descriptor.width =
-            image_width;
-        new_texture_descriptor.height =
-            image_height;
+        new_texture_descriptor.width = image_width;
+        new_texture_descriptor.height = image_height;
         new_texture_descriptor.storageMode = MTLStorageModePrivate;
         target = [ags->device newTextureWithDescriptor: new_texture_descriptor];
     }
@@ -1242,8 +1244,7 @@ void platform_gpu_push_special_engine_texture_and_free_rgba_values(
     
     id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
     
-    id <MTLBlitCommandEncoder> blit_copy_encoder =
-        [combuf blitCommandEncoder];
+    id <MTLBlitCommandEncoder> blit_copy_encoder = [combuf blitCommandEncoder];
     
     [blit_copy_encoder
         copyFromBuffer:
@@ -1272,8 +1273,7 @@ void platform_gpu_push_special_engine_texture_and_free_rgba_values(
         (void)cb;
     }];
     [combuf commit];
-    
-    free_from_managed(rgba_values_freeable);
+    [combuf waitUntilCompleted];
     
     if (requires_init) {
         switch (type) {
@@ -1287,6 +1287,8 @@ void platform_gpu_push_special_engine_texture_and_free_rgba_values(
                 log_assert(0);
         }
     }
+    
+    free_from_managed(rgba_values_freeable);
 }
 
 void platform_gpu_copy_locked_vertices(void)

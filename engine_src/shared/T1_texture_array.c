@@ -541,6 +541,11 @@ static void register_to_texturearray_by_splitting_image(
             }
             log_assert(new_img->good);
             
+            #if 1
+            // TODO: remove debugging code
+            #endif
+            
+            
             if (expected_width == 0 || expected_height == 0) {
                 expected_width  = new_img->width;
                 expected_height = new_img->height;
@@ -830,6 +835,30 @@ void texture_array_load_font_images(void) {
         i < texture_arrays[0].images_size;
         i++)
     {
+        #if 0
+        // TODO: delete this debug code
+        char debug_filename[128];
+        common_strcpy_capped(debug_filename, 128, "to_gpu_font_");
+        common_strcat_uint_capped(debug_filename, 128, i);
+        common_strcat_capped(debug_filename, 128, ".bmp");
+        
+        uint32_t success = 0;
+        platform_write_rgba_to_writables(
+            /* const char * local_filename: */
+                debug_filename,
+            /* uint8_t * rgba: */
+                texture_arrays[0].images[i].image->rgba_values_page_aligned,
+            /* const uint32_t rgba_size: */
+                texture_arrays[0].images[i].image->rgba_values_size,
+            /* const uint32_t width: */
+                texture_arrays[0].images[i].image->width,
+            /* const uint32_t height: */
+                texture_arrays[0].images[i].image->height,
+            /* uint32_t * good: */
+                &success);
+        log_assert(success);
+        #endif
+        
         platform_gpu_push_special_engine_texture_and_free_rgba_values(
             /* const SpecialEngineTexture type: */
                 ENGINESPECIALTEXTURE_FONT,
@@ -845,6 +874,7 @@ void texture_array_load_font_images(void) {
                 texture_arrays[0].images[i].image->rgba_values_freeable,
             /* uint8_t * rgba_values_page_aligned: */
                 texture_arrays[0].images[i].image->rgba_values_page_aligned);
+        
         texture_arrays[0].images[i].image->rgba_values_page_aligned = NULL;
         texture_arrays[0].images[i].request_update = false;
     }
@@ -966,4 +996,81 @@ void texture_array_flag_all_to_request_gpu_init(void) {
             texture_arrays[i].request_init = true;
         }
     }
+}
+
+void texture_array_debug_dump_texturearray_to_writables(
+    const int32_t texture_array_i,
+    uint32_t * success)
+{
+    for (int32_t texture_i = 0; texture_i < 100; texture_i++) {
+        uint32_t fetched = 0;
+        
+        uint32_t rgba_cap = 30000000;
+        uint8_t * rgba = malloc_from_managed(rgba_cap);
+        uint32_t rgba_size = 0;
+        uint32_t width = 0;
+        uint32_t height = 0;
+        
+        platform_gpu_fetch_rgba_at(
+            /* const int32_t texture_array_i: */
+                texture_array_i,
+            /* const int32_t texture_i: */
+                texture_i,
+            /* uint8_t *rgba_recipient: */
+                rgba,
+            /* uint32_t * recipient_size: */
+                &rgba_size,
+            /* uint32_t * recipient_width: */
+                &width,
+            /* uint32_t * recipient_height: */
+                &height,
+            /* uint32_t recipient_cap: */
+                rgba_cap,
+            /* uint32_t *good: */
+                &fetched);
+        
+        if (!fetched) {
+            if (texture_i == 0) {
+                *success = false;
+                return;
+            }
+            continue;
+        }
+        
+        if (rgba_size < 4) {
+            *success = false;
+            return;
+        }
+        
+        char filename[128];
+        common_strcpy_capped(filename, 128, "dumped_texturearray_");
+        common_strcat_int_capped(filename, 128, texture_array_i);
+        common_strcat_capped(filename, 128, "_");
+        common_strcat_int_capped(filename, 128, texture_i);
+        common_strcat_capped(filename, 128, ".bmp");
+        
+        uint32_t write_good = 0;
+        platform_write_rgba_to_writables(
+            /* const char * local_filename: */
+                filename,
+            /* uint8_t * rgba: */
+                rgba,
+            /* const uint32_t rgba_size: */
+                rgba_size,
+            /* const uint32_t width: */
+                width,
+            /* const uint32_t height: */
+                height,
+            /* uint32_t * good: */
+                &write_good);
+        
+        free_from_managed(rgba);
+        
+        if (!write_good) {
+            *success = false;
+            return;
+        }
+    }
+    
+    *success = 1;
 }

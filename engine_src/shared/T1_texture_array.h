@@ -63,4 +63,8 @@ void texture_array_decode_all_null_images(void);
 
 void texture_array_flag_all_to_request_gpu_init(void);
 
+void texture_array_debug_dump_texturearray_to_writables(
+    const int32_t texture_array_i,
+    uint32_t * success);
+
 #endif // TEXTURE_ARRAY_H
