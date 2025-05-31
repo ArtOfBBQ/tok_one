@@ -132,13 +132,17 @@ typedef struct GPUDownsamplingConstants
 typedef struct GPUPostProcessingConstants
 {
     float rgb_add[3];
+    #if FOG_ACTIVE
     float fog_color[3];
+    #endif
     float screen_width;
     float screen_height;
     float nonblur_pct;
     float blur_pct;
     float color_quantization;
+    #if FOG_ACTIVE
     float fog_factor;
+    #endif
     unsigned int timestamp;
     unsigned int lights_size;
     unsigned int shadowcaster_i;

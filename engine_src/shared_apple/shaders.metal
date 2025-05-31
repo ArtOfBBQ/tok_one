@@ -775,12 +775,14 @@ single_quad_vertex_shader(
     
     out.color_quantization = constants->color_quantization;
     
+    #if FOG_ACTIVE
     out.fog_factor = constants->fog_factor;
     out.fog_rgb = vector_half4(
         constants->fog_color[0],
         constants->fog_color[1],
         constants->fog_color[2],
         1.0h);
+    #endif
     
     return out;
 }

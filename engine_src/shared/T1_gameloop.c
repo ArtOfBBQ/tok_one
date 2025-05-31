@@ -75,7 +75,9 @@ void gameloop_update_before_render_pass(
         zlights_to_apply_size = 0;
         zsprites_to_render->size = 0;
         
+        #if FOG_ACTIVE
         engine_globals->postprocessing_constants.fog_factor = 0.0f;
+        #endif
         
         camera.xyz[0] = 0.0f;
         camera.xyz[1] = 0.0f;

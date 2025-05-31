@@ -229,8 +229,8 @@ static DecodedImage * extract_image(
     #endif
     
     uint32_t slice_size_bytes =
-        original->rgba_values_size
-            / sprite_columns
+        (original->rgba_values_size
+            / sprite_columns)
             / sprite_rows;
     uint32_t slice_width_pixels =
         original->width / sprite_columns;
@@ -449,12 +449,12 @@ void texture_array_gpu_try_push(void) {
                                 .image != NULL);
                         log_assert(
                             texture_arrays[i]
-                                    .images[j]
-                                    .image->rgba_values_freeable != NULL);
+                                .images[j]
+                                .image->rgba_values_freeable != NULL);
                         log_assert(
                             texture_arrays[i]
-                                    .images[j]
-                                    .image->rgba_values_page_aligned != NULL);
+                                .images[j]
+                                .image->rgba_values_page_aligned != NULL);
                         #endif
                         
                         if (!application_running) {
@@ -464,8 +464,8 @@ void texture_array_gpu_try_push(void) {
                         
                         #if TEXTURES_ACTIVE
                         platform_gpu_push_texture_slice_and_free_rgba_values(
-                            i,
-                            j,
+                                i,
+                                j,
                             /* parent_texture_array_images_size: */
                                 texture_arrays[i].images_size,
                             /* image_width: */

@@ -824,24 +824,181 @@ static bool32_t evaluate_terminal_command(
     
     
     if (
-        common_are_equal_strings(command, "DRAW CLICKRAY") ||
-        common_are_equal_strings(command, "CLICKRAY") ||
-        common_are_equal_strings(command, "DRAW CLICKRAYS") ||
-        common_are_equal_strings(command, "CLICKRAYS"))
+        common_string_starts_with(command, "DUMP TEXTUREARRAY "))
     {
-        engine_globals->draw_clickray = !engine_globals->draw_clickray;
-        
-        if (engine_globals->draw_clickray) {
+        if (command[18] < '0' || command[18] > '9') {
             common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
-                "Drawing the 'click ray' for the last touch...");
+                "Can't dump texture array, TEXTUREARRAYS_SIZE was: ");
+            common_strcat_uint_capped(
+                response,
+                SINGLE_LINE_MAX,
+                TEXTUREARRAYS_SIZE);
+            common_strcat_capped(
+                response,
+                SINGLE_LINE_MAX,
+                ", but you didn't pass an index.");
         } else {
+            int32_t texture_array_i = common_string_to_int32(command + 18);
+            
+            if (texture_array_i >= TEXTUREARRAYS_SIZE) {
+                common_strcpy_capped(
+                    response,
+                    SINGLE_LINE_MAX,
+                    "Can't dump texture array, TEXTUREARRAYS_SIZE was: ");
+                common_strcat_uint_capped(
+                    response,
+                    SINGLE_LINE_MAX,
+                    TEXTUREARRAYS_SIZE);
+                common_strcat_capped(
+                    response,
+                    SINGLE_LINE_MAX,
+                    ", so please pass a number below that.");
+                return true;
+            }
+            
             common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
-                "Stopped drawing the 'click ray' for the last touch...");
+                "Attempting to dump texture array: ");
+            common_strcat_int_capped(
+                response,
+                SINGLE_LINE_MAX,
+                texture_array_i);
+            common_strcat_capped(
+                response,
+                SINGLE_LINE_MAX,
+                " to disk...\n");
+            
+            for (int32_t texture_i = 0; texture_i < 100; texture_i++) {
+                uint32_t fetched = 0;
+                
+                uint32_t rgba_cap = 30000000;
+                uint8_t * rgba = malloc_from_managed(rgba_cap);
+                uint32_t rgba_size = 0;
+                uint32_t width = 0;
+                uint32_t height = 0;
+                
+                platform_gpu_fetch_rgba_at(
+                    /* const int32_t texture_array_i: */
+                        texture_array_i,
+                    /* const int32_t texture_i: */
+                        texture_i,
+                    /* uint8_t *rgba_recipient: */
+                        rgba,
+                    /* uint32_t * recipient_size: */
+                        &rgba_size,
+                    /* uint32_t * recipient_width: */
+                        &width,
+                    /* uint32_t * recipient_height: */
+                        &height,
+                    /* uint32_t recipient_cap: */
+                        rgba_cap,
+                    /* uint32_t *good: */
+                        &fetched);
+                
+                if (texture_i == 0) {
+                    if (!fetched) {
+                        common_strcpy_capped(
+                            response,
+                            SINGLE_LINE_MAX,
+                            "Failed...\n");
+                    } else {
+                        common_strcpy_capped(
+                            response,
+                            SINGLE_LINE_MAX,
+                            "Success\n");
+                    }
+                }
+                
+                if (!fetched) { continue; }
+                
+                if (rgba_size < 4) {
+                    common_strcpy_capped(
+                        response,
+                        SINGLE_LINE_MAX,
+                        "ERROR: Fetched successfully, but rgba size is < 4?\n");
+                    return true;
+                }
+                
+                uint32_t bmp_cap = rgba_cap + 10000;
+                uint8_t * bmp = malloc_from_managed(bmp_cap);
+                uint32_t bmp_size = 0;
+                
+                for (
+                    uint32_t rgba_i = 0;
+                    rgba_i < (width * height * 4);
+                    rgba_i += 4)
+                {
+                    if (
+                        rgba[rgba_i+3] == 0)
+                    {
+                        // Ugly purple debug color
+                        rgba[rgba_i+0] = 125;
+                        rgba[rgba_i+1] =   0;
+                        rgba[rgba_i+2] = 125;
+                    }
+                }
+                
+                encode_BMP(
+                    /* const uint8_t * rgba :*/
+                        rgba,
+                    /* const uint64_t rgba_size: */
+                        rgba_size,
+                    /* const uint32_t width: */
+                        width,
+                    /* const uint32_t height: */
+                        height,
+                    /* char * recipient: */
+                        (char *)bmp,
+                    /* uint32_t * recipient_size: */
+                        &bmp_size,
+                    /* const int64_t recipient_capacity: */
+                        bmp_cap);
+                
+                char filename[128];
+                uint32_t write_good = 0;
+                common_strcpy_capped(filename, 128, "texturedump_");
+                common_strcat_int_capped(filename, 128, texture_array_i);
+                common_strcat_capped(filename, 128, "_");
+                common_strcat_int_capped(filename, 128, texture_i);
+                common_strcat_capped(filename, 128, ".bmp");
+                platform_write_file_to_writables(
+                    /* const char * filepath_inside_writables: */
+                        filename,
+                    /* const char * output: */
+                        (const char *)bmp,
+                    /* const uint32_t output_size: */
+                        bmp_size,
+                    /* uint32_t * good: */
+                        &write_good);
+                
+                if (!write_good) {
+                    common_strcpy_capped(
+                        response,
+                        SINGLE_LINE_MAX,
+                        "Fetched & encoded succesfully, but failed to "
+                        "write to disk\n");
+                    free_from_managed(rgba);
+                    free_from_managed(bmp);
+                    return true;
+                }
+                
+                free_from_managed(rgba);
+                free_from_managed(bmp);
+            }
         }
+    }
+    
+    if (
+        common_are_equal_strings(command, "WRITABLES") ||
+        common_are_equal_strings(command, "OPEN WRITABLES"))
+    {
+        char writables_path[512];
+        platform_get_writables_path(writables_path, 512);
+        platform_open_folder_in_window_if_possible(writables_path);
+        
         return true;
     }
     

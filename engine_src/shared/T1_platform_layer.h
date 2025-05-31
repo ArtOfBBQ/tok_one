@@ -236,6 +236,16 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     const uint32_t image_width,
     const uint32_t image_height,
     uint8_t * bc1_values);
+
+void platform_gpu_fetch_rgba_at(
+    const int32_t texture_array_i,
+    const int32_t texture_i,
+    uint8_t * rgba_recipient,
+    uint32_t * recipient_size,
+    uint32_t * recipient_width,
+    uint32_t * recipient_height,
+    const uint32_t recipient_cap,
+    uint32_t * good);
 #endif
 
 // Some textures are not treated as textures but play a special role

@@ -31,6 +31,7 @@ of the engine for your specific app.
 #define AUDIO_ACTIVE 0
 #define ENGINE_SAVEFILE_ACTIVE 0
 #define PROFILER_ACTIVE 0
+#define FOG_ACTIVE 0
 
 #define MAX_RENDERING_FRAME_BUFFERS 3 // 3 for triple-buffering
 
@@ -40,7 +41,7 @@ of the engine for your specific app.
 /*
 The maximum number of sprites in your app.
 */
-#define MAX_POLYGONS_PER_BUFFER  500
+#define MAX_POLYGONS_PER_BUFFER  1000
 #define MAX_LINE_VERTICES 100
 #define MAX_POINT_VERTICES 300
 

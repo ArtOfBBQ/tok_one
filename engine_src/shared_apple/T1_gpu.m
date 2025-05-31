@@ -876,6 +876,101 @@ void platform_gpu_init_texture_array(
     ags->metal_textures[texture_array_i] = texture;
 }
 
+void platform_gpu_fetch_rgba_at(
+    const int32_t texture_array_i,
+    const int32_t texture_i,
+    uint8_t * rgba_recipient,
+    uint32_t * recipient_size,
+    uint32_t * recipient_width,
+    uint32_t * recipient_height,
+    const uint32_t recipient_cap,
+    uint32_t * good)
+{
+    // Validate inputs
+    log_assert(texture_i >= 0);
+    log_assert(texture_array_i >= 0);
+    log_assert(rgba_recipient != NULL);
+    log_assert(recipient_size != NULL);
+    log_assert(good != NULL);
+    
+    *good = false;
+    
+    // Check if the texture array exists
+    id<MTLTexture> texture = ags->metal_textures[texture_array_i];
+    if (texture == nil || texture.textureType != MTLTextureType2DArray) {
+        return;
+    }
+
+    if (texture.pixelFormat != MTLPixelFormatRGBA8Unorm) {
+        // Ensure the texture format is RGBA8Unorm for direct copying to uint8_t RGBA
+        return;
+    }
+    
+    *recipient_width = (uint32_t)texture.width;
+    *recipient_height = (uint32_t)texture.height;
+    if (*recipient_width < 1 || *recipient_height < 1) {
+        return;
+    }
+    
+    // Calculate required buffer size
+    NSUInteger bytes_per_row = texture.width * 4; // 4 bytes per pixel (RGBA)
+    NSUInteger bytes_per_image = bytes_per_row * texture.height;
+    if (recipient_cap < bytes_per_image) {
+        *recipient_size = 0;
+        return;
+    }
+    
+    // Create a temporary buffer for the copy
+    id<MTLBuffer> temp_buffer = [ags->device
+        newBufferWithLength: bytes_per_image
+        options: MTLResourceStorageModeShared];
+    
+    if (temp_buffer == nil) {
+        return;
+    }
+    
+    if (texture_i >= (int32_t)texture.arrayLength) {
+        return;
+    }
+    
+    // Create command buffer and blit encoder
+    id<MTLCommandBuffer> command_buffer = [ags->command_queue commandBuffer];
+    id<MTLBlitCommandEncoder> blit_encoder = [command_buffer blitCommandEncoder];
+    
+    // Copy from texture to buffer
+    [blit_encoder
+        copyFromTexture: texture
+        sourceSlice: (NSUInteger)texture_i
+        sourceLevel: 0
+        sourceOrigin: MTLOriginMake(0, 0, 0)
+        sourceSize: MTLSizeMake(texture.width, texture.height, 1)
+        toBuffer: temp_buffer
+        destinationOffset: 0
+        destinationBytesPerRow: bytes_per_row
+        destinationBytesPerImage: bytes_per_image];
+    
+    [blit_encoder endEncoding];
+
+    // Add completion handler to copy data to rgba_recipient
+    [command_buffer addCompletedHandler:^(id<MTLCommandBuffer> cb) {
+        if (cb.error == nil) {
+            // Copy buffer contents to rgba_recipient
+            memcpy(rgba_recipient, [temp_buffer contents], bytes_per_image);
+            *good = true;
+        }
+        // Release the temporary buffer
+        [temp_buffer setPurgeableState:MTLPurgeableStateEmpty];
+    }];
+    
+    // Commit the command buffer
+    [command_buffer commit];
+    [command_buffer waitUntilCompleted];
+    
+    *recipient_size = (uint32_t)bytes_per_image;
+    
+    *good = true;
+}
+
 void platform_gpu_push_texture_slice_and_free_rgba_values(
     const int32_t texture_array_i,
     const int32_t texture_i,
