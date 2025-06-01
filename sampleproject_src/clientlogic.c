@@ -11,7 +11,6 @@ void client_logic_init(void) {
     
 }
 
-static const char * texture_filename = "structuredart2.png";
 void client_logic_early_startup(
     bool32_t * success,
     char * error_message)
@@ -30,7 +29,15 @@ void client_logic_early_startup(
     #endif
     
     uint32_t good;
-    texture_files_preregister_png_resource(texture_filename, &good);
+    texture_files_preregister_png_resource("1001_normal.png", &good);
+    texture_files_preregister_png_resource("1001_albedo.png", &good);
+    texture_files_preregister_png_resource("blob1.png", &good);
+    texture_files_preregister_png_resource("blob2.png", &good);
+    texture_files_preregister_png_resource("blob3.png", &good);
+    texture_files_preregister_png_resource("phoebus.png", &good);
+    texture_files_preregister_png_resource("structuredart1.png", &good);
+    texture_files_preregister_png_resource("structuredart2.png", &good);
+    
     assert(good);
 }
 
@@ -119,11 +126,11 @@ void client_logic_late_startup(void) {
     int32_t quad_texture_i = -1;
     uint32_t texture_push_good = 0;
     texture_files_decode_png_resource(
-        texture_filename,
+        "1001_albedo.png",
         &texture_push_good);
     assert(texture_push_good);
     texture_array_get_filename_location(
-        texture_filename,
+        "1001_albedo.png",
         &quad_texture_array_i,
         &quad_texture_i);
     assert(quad_texture_array_i != -1);

@@ -236,6 +236,7 @@ void texture_files_decode_png_resource(
     }
     
     FileBuffer file_buffer;
+    file_buffer.good = 0;
     file_buffer.size_without_terminator = platform_get_resource_size(
         filename);
     

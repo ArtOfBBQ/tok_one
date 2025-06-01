@@ -164,7 +164,9 @@ void init_application_before_gpu_init(
         /* memset_function: */
             common_memset_char,
         /* memcpy_function: */
-            common_memcpy);
+            common_memcpy,
+        /* dpng_working_memory_size: */
+            80000000);
     
     #ifndef LOGGER_IGNORE_ASSERTS
     test_simd_functions_floats();
