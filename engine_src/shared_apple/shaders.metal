@@ -676,7 +676,7 @@ alphablending_fragment_shader(
         material->ambient_rgb[0],
         material->ambient_rgb[1],
         material->ambient_rgb[2],
-        1.0f);
+        material->alpha);
     
     #if TEXTURES_ACTIVE
     if (
