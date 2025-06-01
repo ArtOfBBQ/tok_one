@@ -181,6 +181,9 @@ void client_logic_late_startup(void) {
     font_settings->font_color[3] =  1.0f;
     font_settings->ignore_camera = false;
     font_settings->font_ignore_lighting = 1.0f;
+    font_settings->rgb_cap[0] = 5.0f;
+    font_settings->rgb_cap[1] = 5.0f;
+    font_settings->rgb_cap[2] = 5.0f;
     text_request_label_renderable(
         /* const int32_t with_object_id: */
             21,

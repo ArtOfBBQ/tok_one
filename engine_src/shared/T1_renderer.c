@@ -346,40 +346,6 @@ void renderer_hardware_render(
         assert(0);
     }
     
-    if (
-        application_running &&
-        engine_globals->draw_clickray)
-    {
-        add_line_vertex(
-            /* GPUDataForSingleFrame * frame_data: */
-                frame_data,
-            /* const float xyz[3]: */
-                engine_globals->last_clickray_origin);
-        
-        float clickray_end[3];
-        common_memcpy(
-            clickray_end,
-            engine_globals->last_clickray_origin,
-            sizeof(float) * 3);
-        clickray_end[0] += engine_globals->last_clickray_direction[0];
-        clickray_end[1] += engine_globals->last_clickray_direction[1];
-        clickray_end[2] += engine_globals->last_clickray_direction[2];
-        add_line_vertex(
-            /* GPUDataForSingleFrame * frame_data: */
-                frame_data,
-            /* const float xyz[3]: */
-                clickray_end);
-        
-        if (engine_globals->draw_clickray)
-        {
-            add_point_vertex(
-                /* GPUDataForSingleFrame * frame_data: */
-                    frame_data,
-                /* const float * xyz: */
-                    engine_globals->last_clickray_collision, 0.33f);
-        }
-    }
-    
     if (application_running && engine_globals->draw_mouseptr) {
         float xyz[3];
         float z = 0.05f;

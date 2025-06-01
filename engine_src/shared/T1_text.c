@@ -59,9 +59,9 @@ void text_init(
         font_settings->font_color[1] = 1.0f;
         font_settings->font_color[2] = 1.0f;
         font_settings->font_color[3] = 1.0f;
-        font_settings->rgb_cap[0] = 1.5f;
-        font_settings->rgb_cap[1] = 1.5f;
-        font_settings->rgb_cap[2] = 1.5f;
+        font_settings->rgb_cap[0] = 1.0f;
+        font_settings->rgb_cap[1] = 1.0f;
+        font_settings->rgb_cap[2] = 1.0f;
         font_settings->font_ignore_lighting = true;
         font_settings->remove_shadow = true;
     }
@@ -364,6 +364,13 @@ void text_request_label_offset_around(
                     font_settings->font_color[rgba_i];
             }
             
+            letter.gpu_data->base_material.rgb_cap[0] =
+                font_settings->rgb_cap[0];
+            letter.gpu_data->base_material.rgb_cap[1] =
+                font_settings->rgb_cap[1];
+            letter.gpu_data->base_material.rgb_cap[2] =
+                font_settings->rgb_cap[2];
+            
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
             log_assert(letter.gpu_data->base_material.alpha > 0.99f);
@@ -528,6 +535,10 @@ void text_request_label_renderable(
                 font_settings->font_color[rgba_i];
         }
         letter.gpu_data->base_material.alpha = font_settings->font_color[3];
+        
+        letter.gpu_data->base_material.rgb_cap[0] = font_settings->rgb_cap[0];
+        letter.gpu_data->base_material.rgb_cap[1] = font_settings->rgb_cap[1];
+        letter.gpu_data->base_material.rgb_cap[2] = font_settings->rgb_cap[2];
         
         letter.gpu_data->xyz_offset[0] =
             engineglobals_screenspace_width_to_width(
