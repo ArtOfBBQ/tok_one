@@ -99,14 +99,14 @@ void gameloop_update_before_render_pass(
         }
         
         font_settings->font_height          = 14.0f;
-        font_settings->font_color[0]        = 1.0f;
-        font_settings->font_color[1]        = 1.0f;
-        font_settings->font_color[2]        = 1.0f;
-        font_settings->font_color[3]        = 1.0f;
+        font_settings->mat.ambient_rgb[0]   = 1.0f;
+        font_settings->mat.ambient_rgb[1]   = 1.0f;
+        font_settings->mat.ambient_rgb[2]   = 1.0f;
+        font_settings->mat.alpha            = 1.0f;
         font_settings->ignore_camera        = false; // we set camera to 0,0,0
-        font_settings->font_ignore_lighting = true;
+        font_settings->ignore_lighting      = true;
         
-        assert(font_settings->font_texturearray_i == 0);
+        assert(font_settings->mat.texturearray_i == 0);
         text_request_label_renderable(
             /* const uint32_t with_object_id: */
                 0,

@@ -174,16 +174,16 @@ void client_logic_late_startup(void) {
     #if 1
     #define BLOOM_LABEL_TOCUHABLE_ID 1441003
     font_settings->font_height = 280;
-    font_settings->font_touchable_id = BLOOM_LABEL_TOCUHABLE_ID;
-    font_settings->font_color[0] =  2.2f;
-    font_settings->font_color[1] =  2.9f;
-    font_settings->font_color[2] =  0.8f;
-    font_settings->font_color[3] =  1.0f;
+    font_settings->touchable_id = BLOOM_LABEL_TOCUHABLE_ID;
+    font_settings->mat.ambient_rgb[0] =  2.2f;
+    font_settings->mat.ambient_rgb[1] =  2.9f;
+    font_settings->mat.ambient_rgb[2] =  0.8f;
+    font_settings->mat.alpha =  1.0f;
     font_settings->ignore_camera = false;
-    font_settings->font_ignore_lighting = 1.0f;
-    font_settings->rgb_cap[0] = 5.0f;
-    font_settings->rgb_cap[1] = 5.0f;
-    font_settings->rgb_cap[2] = 5.0f;
+    font_settings->ignore_lighting = 1.0f;
+    font_settings->mat.rgb_cap[0] = 5.0f;
+    font_settings->mat.rgb_cap[1] = 5.0f;
+    font_settings->mat.rgb_cap[2] = 5.0f;
     text_request_label_renderable(
         /* const int32_t with_object_id: */
             21,
@@ -197,7 +197,7 @@ void client_logic_late_startup(void) {
             3.5f,
         /* const float max_width: */
             1500.0f);
-    font_settings->font_touchable_id = -1;
+    font_settings->touchable_id = -1;
     log_assert(
         zsprites_to_render->cpu_data[zsprites_to_render->size-1].
             zsprite_id == 21);
