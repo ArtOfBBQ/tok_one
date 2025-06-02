@@ -739,21 +739,19 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
         new_mesh_head_id;
     
     log_assert(all_mesh_vertices->size < ALL_LOCKED_VERTICES_SIZE);
-    
+        
     all_mesh_summaries[all_mesh_summaries_size].materials_size =
-        arg_parsed_obj->materials_count < 1 ?
-            1 : arg_parsed_obj->materials_count;
-    
-    all_mesh_summaries[all_mesh_summaries_size].
-        materials_size =
             arg_parsed_obj->materials_count;
+    
+    uint32_t first_material_head_i =
+        T1_material_preappend_locked_material_i(
+            parsed_obj->material_names[0].name);
     
     if (parsed_obj->materials_count > 0) {
         // Preregister all materials, starting with the index of the head
         all_mesh_summaries[all_mesh_summaries_size].
-            locked_material_head_i =
-                T1_material_preappend_locked_material_i(
-                    parsed_obj->material_names[0].name);
+            locked_material_head_i = first_material_head_i;
+        
         for (uint32_t i = 1; i < arg_parsed_obj->materials_count; i++) {
             uint32_t _ = T1_material_preappend_locked_material_i(
                 parsed_obj->material_names[i].name);
@@ -854,6 +852,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
         for (uint32_t _ = 0; _ < 3; _++) {
             all_mesh_vertices->gpu_data[locked_vert_i + _].
                 parent_material_i = cur_material_i;
+            all_mesh_vertices->gpu_data[locked_vert_i + _].locked_materials_head_i = first_material_head_i;
             // log_assert(cur_material_i >= 0);
             // log_assert(cur_material_i < MAX_MATERIALS_PER_POLYGON);
             
@@ -962,6 +961,9 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 all_mesh_vertices->gpu_data[all_mesh_vertices->size].
                     parent_material_i =
                         cur_material_i;
+                all_mesh_vertices->gpu_data[all_mesh_vertices->size].
+                    locked_materials_head_i =
+                        first_material_head_i;
                 
                 if (arg_parsed_obj->normals_count > 0) {
                     uint32_t norm_i = arg_parsed_obj->quad_normals[quad_i]

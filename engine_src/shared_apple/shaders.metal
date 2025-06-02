@@ -353,7 +353,8 @@ static FragmentAndTouchableOut pack_color_and_touchable_id(
     return return_value;
 }
 
-float3 get_lighting(
+// Gets the color given a material and lighting setup
+float3 get_lit(
     #if SHADOWS_ACTIVE
     texture2d<float> shadow_map,
     #endif
@@ -367,13 +368,22 @@ float3 get_lighting(
     float ignore_lighting)
 {
     float3 return_value = vector_float3(
+        0.0f,
+        0.0f,
+        0.0f);
+    
+    float3 ambient_base = vector_float3(
         material->ambient_rgb[0],
         material->ambient_rgb[1],
         material->ambient_rgb[2]);
-    
-    if (ignore_lighting >= 0.95f) { return return_value; }
-    
-    float3 light_multiplier = vector_float3(0.0f, 0.0f, 0.0f);
+    float3 diffuse_base = vector_float3(
+        material->diffuse_rgb[0],
+        material->diffuse_rgb[1],
+        material->diffuse_rgb[2]);
+    float3 specular_base = vector_float3(
+        material->specular_rgb[0],
+        material->specular_rgb[1],
+        material->specular_rgb[2]);
     
     for (
         uint32_t i = 0;
@@ -448,7 +458,8 @@ float3 get_lighting(
         
         attenuation = clamp(attenuation, 0.00f, 1.00f);
         
-        light_multiplier += (
+        return_value += (
+            ambient_base *
             attenuation *
             light_color *
             lights[i].ambient *
@@ -468,14 +479,12 @@ float3 get_lighting(
                     object_to_light),
                 0.0f);
         
-        light_multiplier += (
-            light_color *
+        return_value += (
+            diffuse_base *
             attenuation *
-            vector_float3(
-                material->diffuse_rgb[0],
-                material->diffuse_rgb[1],
-                material->diffuse_rgb[2]) *
+            light_color *
             diffuse_dot *
+            lights[i].diffuse *
             shadow_factor);
         
         // specular lighting
@@ -494,20 +503,22 @@ float3 get_lighting(
                 dot(object_to_view, reflection_ray),
                 0.0),
             32);
-        light_multiplier += (
-            material->specular *
-            specular_dot *
-            light_color *
-            lights[i].specular *
+        
+        return_value += (
+            specular_base *
             attenuation *
+            light_color *
+            specular_dot *
+            lights[i].specular *
+            material->specular *
             shadow_factor);
     }
     
-    light_multiplier = clamp(light_multiplier, 0.05f, 7.5f);
+    return_value = clamp(return_value, 0.05f, 7.5f);
     
     // float3 all_ones = vector_float3(1.0f, 1.0f, 1.0f);
-    return_value *=
-        ((1.0f - ignore_lighting) * light_multiplier) +
+    return_value =
+        ((1.0f - ignore_lighting) * return_value) +
         (ignore_lighting * vector_float3(0.75f, 0.75f, 0.75f));
     
     return return_value;
@@ -534,9 +545,9 @@ fragment_shader(
     const device GPULockedMaterial * material =
         material_i == PARENT_MATERIAL_BASE ?
             &polygons[in.polygon_i].base_material :
-            &locked_materials[material_i];
+            &locked_materials[locked_vertices[in.locked_vertex_i].locked_materials_head_i + material_i];
     
-    float3 lighting = get_lighting(
+    float3 lit_color = get_lit(
         #if SHADOWS_ACTIVE
             shadow_map,
         #endif
@@ -558,9 +569,9 @@ fragment_shader(
             polygons[in.polygon_i].ignore_lighting);
     
     float4 out_color = vector_float4(
-        material->ambient_rgb[0],
-        material->ambient_rgb[1],
-        material->ambient_rgb[2],
+        lit_color[0],
+        lit_color[1],
+        lit_color[2],
         material->alpha);
     
     float4 texture_sample = vector_float4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -587,7 +598,7 @@ fragment_shader(
         texture_sample = float4(color_sample);
     }
     
-    out_color = out_color * texture_sample * vector_float4(lighting, 1.0f);
+    out_color = out_color * texture_sample;
     
     int diamond_size = 35.0f;
     int neghalfdiamond = -1.0f * (diamond_size / 2);
@@ -646,12 +657,13 @@ alphablending_fragment_shader(
 {
     unsigned int material_i =
         locked_vertices[in.locked_vertex_i].parent_material_i;
+    
     const device GPULockedMaterial * material =
         material_i == PARENT_MATERIAL_BASE ?
             &polygons[in.polygon_i].base_material :
-            &locked_materials[material_i];
+            &locked_materials[locked_vertices[in.locked_vertex_i].locked_materials_head_i + material_i];
     
-    float3 lighting = get_lighting(
+    float3 lighting = get_lit(
         #if SHADOWS_ACTIVE
         /* texture2d<float> shadow_map: */
             shadow_map,

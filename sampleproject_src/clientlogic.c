@@ -125,12 +125,12 @@ void client_logic_late_startup(void) {
     int32_t quad_texture_array_i = -1;
     int32_t quad_texture_i = -1;
     uint32_t texture_push_good = 0;
-    texture_files_decode_png_resource(
-        "1001_albedo.png",
-        &texture_push_good);
-    assert(texture_push_good);
+        texture_files_decode_png_resource(
+            "1001_albedo.png",
+            &texture_push_good);
+        assert(texture_push_good);
     T1_texture_array_get_filename_location(
-        "1001_albedo.png",
+        "structuredart2.png",
         &quad_texture_array_i,
         &quad_texture_i);
     assert(quad_texture_array_i != -1);
@@ -170,9 +170,9 @@ void client_logic_late_startup(void) {
         quad[i].gpu_data->ignore_camera          = 0.0f;
         quad[i].gpu_data->ignore_lighting        = 0.0f;
         
-        quad[i].gpu_data->base_material.ambient_rgb[0]  = 0.75f;
-        quad[i].gpu_data->base_material.ambient_rgb[1]  = 0.75f;
-        quad[i].gpu_data->base_material.ambient_rgb[2]  = 0.85f;
+        quad[i].gpu_data->base_material.ambient_rgb[0]  = 0.05f;
+        quad[i].gpu_data->base_material.ambient_rgb[1]  = 0.05f;
+        quad[i].gpu_data->base_material.ambient_rgb[2]  = 0.05f;
         quad[i].gpu_data->base_material.alpha           = 1.0f;
         
         zsprite_commit(&quad[i]);

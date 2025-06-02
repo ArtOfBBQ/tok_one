@@ -35,13 +35,14 @@ To manipulate the location, direction, size etc. of our objects, we manipulate
 the parents that contain these (see zpolygons_to_render in zpolygon.h),
 not this.
 */
-#define PARENT_MATERIAL_BASE 12345
+#define PARENT_MATERIAL_BASE 4294967295
 typedef struct GPULockedVertex {
-    float        xyz       [3];     // 12 bytes
-    float        normal_xyz[3];     // 12 bytes
-    float        uv        [2];     //  8 bytes
-    unsigned int parent_material_i; //  4 bytes
-    float        padding[3];        // 12 bytes
+    float        xyz       [3];           // 12 bytes
+    float        normal_xyz[3];           // 12 bytes
+    float        uv        [2];           //  8 bytes
+    unsigned int locked_materials_head_i; //  4 bytes
+    unsigned int parent_material_i;       //  4 bytes
+    float        padding[2];              // 12 bytes
 } __attribute__((aligned(32))) GPULockedVertex;
 
 typedef struct GPUCamera {
@@ -55,6 +56,7 @@ typedef struct GPUCamera {
 typedef struct GPULockedMaterial {
     float ambient_rgb[3];
     float diffuse_rgb[3];
+    float specular_rgb[3];
     float rgb_cap[3];
     int   texturearray_i;
     int   texture_i;
