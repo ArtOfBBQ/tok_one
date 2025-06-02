@@ -15,6 +15,18 @@ void client_logic_early_startup(
     bool32_t * success,
     char * error_message)
 {
+    uint32_t good;
+    texture_files_preregister_png_resource("1001_normal.png", &good);
+    texture_files_preregister_png_resource("1001_albedo.png", &good);
+    texture_files_preregister_png_resource("blob1.png", &good);
+    texture_files_preregister_png_resource("blob2.png", &good);
+    texture_files_preregister_png_resource("blob3.png", &good);
+    texture_files_preregister_png_resource("phoebus.png", &good);
+    texture_files_preregister_png_resource("structuredart1.png", &good);
+    texture_files_preregister_png_resource("structuredart2.png", &good);
+    
+    assert(good);
+    
     #if TEAPOT
     // teapot_mesh_id = BASIC_CUBE_MESH_ID;
     teapot_mesh_id = objmodel_new_mesh_id_from_resources(
@@ -27,18 +39,6 @@ void client_logic_early_startup(
         return;
     }
     #endif
-    
-    uint32_t good;
-    texture_files_preregister_png_resource("1001_normal.png", &good);
-    texture_files_preregister_png_resource("1001_albedo.png", &good);
-    texture_files_preregister_png_resource("blob1.png", &good);
-    texture_files_preregister_png_resource("blob2.png", &good);
-    texture_files_preregister_png_resource("blob3.png", &good);
-    texture_files_preregister_png_resource("phoebus.png", &good);
-    texture_files_preregister_png_resource("structuredart1.png", &good);
-    texture_files_preregister_png_resource("structuredart2.png", &good);
-    
-    assert(good);
 }
 
 void client_logic_late_startup(void) {
@@ -129,7 +129,7 @@ void client_logic_late_startup(void) {
         "1001_albedo.png",
         &texture_push_good);
     assert(texture_push_good);
-    texture_array_get_filename_location(
+    T1_texture_array_get_filename_location(
         "1001_albedo.png",
         &quad_texture_array_i,
         &quad_texture_i);

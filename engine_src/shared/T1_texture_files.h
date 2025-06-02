@@ -9,7 +9,7 @@
 DecodedImage * malloc_img_from_filename(
     const char * filename);
 
-void texture_array_register_new_by_splitting_file(
+void T1_texture_array_register_new_by_splitting_file(
     const char * filename,
     const uint32_t rows,
     const uint32_t columns);

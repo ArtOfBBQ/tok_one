@@ -6,7 +6,6 @@
 
 #include "T1_tokenizer.h"
 
-#define MATERIAL_NAME_CAP 256
 typedef struct ParsedMaterial {
     char name[MATERIAL_NAME_CAP];
     char ambient_map[MATERIAL_NAME_CAP];

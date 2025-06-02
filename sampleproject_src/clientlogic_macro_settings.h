@@ -41,7 +41,7 @@ of the engine for your specific app.
 /*
 The maximum number of sprites in your app.
 */
-#define MAX_POLYGONS_PER_BUFFER  1000
+#define MAX_ZSPRITES_PER_BUFFER  1000
 #define MAX_LINE_VERTICES 100
 #define MAX_POINT_VERTICES 300
 
@@ -56,6 +56,7 @@ The maximum number of 'scheduled animations' simultaneously running
 #define ALL_LOCKED_VERTICES_SIZE 240000
 
 // The max number of materials in all of your meshes/models combined
+#define MATERIAL_NAME_CAP 256
 #define ALL_LOCKED_MATERIALS_SIZE 10000
 
 // the max # of permanently stored sounds in your app

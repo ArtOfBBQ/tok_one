@@ -471,8 +471,10 @@ float3 get_lighting(
         light_multiplier += (
             light_color *
             attenuation *
-            lights[i].diffuse *
-            material->diffuse *
+            vector_float3(
+                material->diffuse_rgb[0],
+                material->diffuse_rgb[1],
+                material->diffuse_rgb[2]) *
             diffuse_dot *
             shadow_factor);
         

@@ -871,7 +871,7 @@ static bool32_t evaluate_terminal_command(
                 " to disk...\n");
             
             uint32_t success = 0;
-            texture_array_debug_dump_texturearray_to_writables(
+            T1_texture_array_debug_dump_texturearray_to_writables(
                 /* const int32_t texture_array_i: */
                     texture_array_i,
                 /* uint32_t * success: */

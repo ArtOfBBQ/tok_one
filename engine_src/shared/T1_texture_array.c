@@ -32,7 +32,7 @@ static TextureArray * texture_arrays = NULL;
 static uint32_t texture_arrays_size = 0;
 
 /* returns texturearray_i */
-int32_t texture_array_preinit_new_with_known_dimensions(
+int32_t T1_texture_array_preinit_new_with_known_dimensions(
     const uint32_t single_img_width,
     const uint32_t single_img_height,
     const uint32_t image_count,
@@ -74,7 +74,7 @@ int32_t texture_array_preinit_new_with_known_dimensions(
     return retval;
 }
 
-void texture_array_push_dds_image_to_preinitted(
+void T1_texture_array_push_dds_image_to_preinitted(
     const int32_t to_texturearray_i,
     const int32_t to_texture_i,
     const char * filename)
@@ -385,7 +385,7 @@ static void register_to_texturearray_from_images(
     platform_mutex_unlock(texture_arrays_mutex_ids[target_texture_array_i]);
 }
 
-void texture_array_init(void) {
+void T1_texture_array_init(void) {
     
     // initialize texture arrays
     texture_arrays = (TextureArray *)malloc_from_unmanaged(
@@ -409,7 +409,7 @@ void texture_array_init(void) {
     }
 }
 
-void texture_array_gpu_try_push(void) {
+void T1_texture_array_gpu_try_push(void) {
     for (
         int32_t i = 0;
         (uint32_t)i < texture_arrays_size;
@@ -594,7 +594,7 @@ static void register_to_texturearray_by_splitting_image(
     }
 }
 
-void texture_array_register_new_by_splitting_image(
+void T1_texture_array_register_new_by_splitting_image(
     DecodedImage * new_image,
     const char * filename_prefix,
     const uint32_t rows,
@@ -640,7 +640,7 @@ void texture_array_register_new_by_splitting_image(
             columns);
 }
 
-void texture_array_register_high_priority_if_unloaded(
+void T1_texture_array_register_high_priority_if_unloaded(
     const int32_t texture_array_i,
     const int32_t texture_i)
 {
@@ -660,13 +660,13 @@ void texture_array_register_high_priority_if_unloaded(
     }
 }
 
-void texture_array_preregister_null_png_from_disk(
+void T1_texture_array_preregister_null_png_from_disk(
     const char * filename)
 {
     
 }
 
-void texture_array_preregister_null_image(
+void T1_texture_array_preregister_null_image(
     const char * filename,
     const uint32_t height,
     const uint32_t width)
@@ -718,7 +718,7 @@ void texture_array_preregister_null_image(
         filename);
 }
 
-void texture_array_get_filename_location(
+void T1_texture_array_get_filename_location(
     const char * for_filename,
     int32_t * texture_array_i_recipient,
     int32_t * texture_i_recipient)
@@ -744,7 +744,7 @@ void texture_array_get_filename_location(
     *texture_i_recipient       = -1;
 }
 
-void texture_array_decode_null_png_at(
+void T1_texture_array_decode_null_png_at(
     uint8_t * freeable_rgba_values,
     const uint32_t rgba_values_size,
     const int32_t texture_array_i,
@@ -819,12 +819,12 @@ void texture_array_decode_null_png_at(
     platform_mutex_unlock(texture_arrays_mutex_ids[i]);
 }
 
-void texture_array_load_font_images(void) {
+void T1_texture_array_load_font_images(void) {
     
     // Don't call this, the engine should call it
     assert(texture_arrays_size == 0);
     const char * fontfile = "font.png";
-    texture_array_register_new_by_splitting_file(
+    T1_texture_array_register_new_by_splitting_file(
         /* filename : */ fontfile,
         /* rows     : */ 10,
         /* columns  : */ 10);
@@ -880,7 +880,7 @@ void texture_array_load_font_images(void) {
     }
 }
 
-void texture_array_decode_all_null_images(void)
+void T1_texture_array_decode_all_null_images(void)
 {
     while (application_running) {
         int32_t priority_png_texturearray_i = -1;
@@ -990,7 +990,7 @@ void texture_array_decode_all_null_images(void)
     }
 }
 
-void texture_array_flag_all_to_request_gpu_init(void) {
+void T1_texture_array_flag_all_to_request_gpu_init(void) {
     for (uint32_t i = 1; i < texture_arrays_size; i++) {
         if (texture_arrays[i].images_size > 0) {
             texture_arrays[i].request_init = true;
@@ -998,7 +998,7 @@ void texture_array_flag_all_to_request_gpu_init(void) {
     }
 }
 
-void texture_array_debug_dump_texturearray_to_writables(
+void T1_texture_array_debug_dump_texturearray_to_writables(
     const int32_t texture_array_i,
     uint32_t * success)
 {

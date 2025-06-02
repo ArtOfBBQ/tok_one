@@ -20,7 +20,7 @@ void zsprite_request_next(zSpriteRequest * stack_recipient)
         }
     }
     
-    log_assert(zsprites_to_render->size + 1 < MAX_POLYGONS_PER_BUFFER);
+    log_assert(zsprites_to_render->size + 1 < MAX_ZSPRITES_PER_BUFFER);
     stack_recipient->cpu_data     =
         &zsprites_to_render->cpu_data[zsprites_to_render->size];
     stack_recipient->gpu_data     =
@@ -193,7 +193,9 @@ void zsprite_construct(
     to_construct->gpu_data->base_material.ambient_rgb[0] = 1.0f;
     to_construct->gpu_data->base_material.ambient_rgb[1] = 1.0f;
     to_construct->gpu_data->base_material.ambient_rgb[2] = 1.0f;
-    to_construct->gpu_data->base_material.diffuse= 1.0f;
+    to_construct->gpu_data->base_material.diffuse_rgb[0] = 1.0f;
+    to_construct->gpu_data->base_material.diffuse_rgb[1] = 1.0f;
+    to_construct->gpu_data->base_material.diffuse_rgb[2] = 1.0f;
     to_construct->gpu_data->base_material.illum = 1.0f;
     to_construct->gpu_data->base_material.normalmap_texturearray_i = -1;
     to_construct->gpu_data->base_material.normalmap_texture_i = -1;

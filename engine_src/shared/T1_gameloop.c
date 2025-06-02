@@ -211,7 +211,7 @@ void gameloop_update_before_render_pass(
         uint32_t overflow_vertices = frame_data->vertices_size % 3;
         frame_data->vertices_size -= overflow_vertices;
         
-        texture_array_gpu_try_push();
+        T1_texture_array_gpu_try_push();
     }
     
     if (engine_globals->draw_fps) {

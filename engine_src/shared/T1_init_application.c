@@ -315,7 +315,7 @@ void init_application_before_gpu_init(
     #if SCHEDULED_ANIMS_ACTIVE
     scheduled_animations_init();
     #endif
-    texture_array_init();
+    T1_texture_array_init();
     
     // initialize font with fontmetrics.dat
     FileBuffer font_metrics_file;
@@ -369,7 +369,7 @@ void init_application_before_gpu_init(
         pad_to_page_size(sizeof(GPUVertex) * MAX_VERTICES_PER_BUFFER);
     
     gpu_shared_data_collection->polygons_allocation_size =
-        pad_to_page_size(sizeof(GPUzSprite) * MAX_POLYGONS_PER_BUFFER);
+        pad_to_page_size(sizeof(GPUzSprite) * MAX_ZSPRITES_PER_BUFFER);
     
     gpu_shared_data_collection->lights_allocation_size =
         pad_to_page_size(sizeof(GPULight) * MAX_LIGHTS_PER_BUFFER);
@@ -469,7 +469,7 @@ void init_application_before_gpu_init(
 
 void init_application_after_gpu_init(void) {
     
-    texture_array_load_font_images();
+    T1_texture_array_load_font_images();
     
     FileBuffer perlin_buf;
     perlin_buf.good = false;
@@ -598,7 +598,7 @@ void init_application_after_gpu_init(void) {
         platform_enter_fullscreen();
     }
     
-    texture_array_flag_all_to_request_gpu_init();
+    T1_texture_array_flag_all_to_request_gpu_init();
     
     if (application_running) {
         client_logic_late_startup();

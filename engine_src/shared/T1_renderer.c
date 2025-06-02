@@ -224,7 +224,7 @@ void renderer_hardware_render(
         return;
     }
     
-    log_assert(zsprites_to_render->size < MAX_POLYGONS_PER_BUFFER);
+    log_assert(zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
     
     common_memcpy(
         /* void * dest: */
@@ -238,9 +238,9 @@ void renderer_hardware_render(
     log_assert(
         frame_data->polygon_collection->size <= zsprites_to_render->size);
     log_assert(
-        zsprites_to_render->size < MAX_POLYGONS_PER_BUFFER);
+        zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
     log_assert(
-        frame_data->polygon_collection->size < MAX_POLYGONS_PER_BUFFER);
+        frame_data->polygon_collection->size < MAX_ZSPRITES_PER_BUFFER);
     
     frame_data->polygon_collection->size = zsprites_to_render->size;
     

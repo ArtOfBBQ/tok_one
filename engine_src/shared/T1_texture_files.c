@@ -146,7 +146,7 @@ DecodedImage * malloc_img_from_filename(
     return new_image;
 }
 
-void texture_array_register_new_by_splitting_file(
+void T1_texture_array_register_new_by_splitting_file(
     const char * filename,
     const uint32_t rows,
     const uint32_t columns)
@@ -163,7 +163,7 @@ void texture_array_register_new_by_splitting_file(
     }
     filename_prefix[i] = '\0';
     
-    texture_array_register_new_by_splitting_image(
+    T1_texture_array_register_new_by_splitting_image(
         img,
         filename_prefix,
         rows,
@@ -204,7 +204,7 @@ void texture_files_preregister_png_resource(
         free_from_managed(buf.contents);
         return;
     }
-    texture_array_preregister_null_image(
+    T1_texture_array_preregister_null_image(
         /* const char * filename: */
             filename,
         /* const uint32_t height: */
@@ -224,7 +224,7 @@ void texture_files_decode_png_resource(
     
     int32_t texture_array_i = -1;
     int32_t texture_i = -1;
-    texture_array_get_filename_location(
+    T1_texture_array_get_filename_location(
             filename,
         /* int32_t * texture_array_i_recipient: */
             &texture_array_i,
@@ -250,7 +250,7 @@ void texture_files_decode_png_resource(
     
     log_assert(file_buffer.good);
     
-    texture_array_decode_null_png_at(
+    T1_texture_array_decode_null_png_at(
         /* const uint8_t * rgba_values: */
             (uint8_t *)file_buffer.contents,
         /* const uint32_t rgba_values_size: */

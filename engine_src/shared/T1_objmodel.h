@@ -8,6 +8,7 @@
 #include "T1_common.h"
 #include "T1_logger.h"
 #include "T1_triangle.h"
+#include "T1_texture_array.h"
 #include "T1_objparser.h"
 #include "T1_mtlparser.h"
 #include "T1_platform_layer.h"
@@ -37,7 +38,7 @@ typedef struct MeshSummary {
     float base_depth;
     int32_t shattered_vertices_head_i; // -1 if no shattered version
     int32_t shattered_vertices_size; // 0 if no shattered version
-    char material_names[MATERIAL_NAMES_MAX][OBJ_STRING_SIZE];
+    uint32_t locked_material_head_i;
     uint32_t materials_size;
 } MeshSummary;
 

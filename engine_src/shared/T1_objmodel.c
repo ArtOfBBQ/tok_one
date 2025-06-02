@@ -728,8 +728,10 @@ static void assert_objmodel_validity(int32_t mesh_id) {
 }
 #endif
 
-static int32_t new_mesh_id_from_parsed_obj(
-     ParsedObj * arg_parsed_obj)
+static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
+     ParsedObj * arg_parsed_obj,
+     ParsedMaterial * parsed_materials,
+     const uint32_t parsed_materials_size)
 {
     int32_t new_mesh_head_id =
         (int32_t)all_mesh_vertices->size;
@@ -742,16 +744,83 @@ static int32_t new_mesh_id_from_parsed_obj(
         arg_parsed_obj->materials_count < 1 ?
             1 : arg_parsed_obj->materials_count;
     
-    for (uint32_t i = 0; i < arg_parsed_obj->materials_count; i++) {
-        common_strcpy_capped(
-            all_mesh_summaries[all_mesh_summaries_size].
-                material_names[i],
-            OBJ_STRING_SIZE,
-            arg_parsed_obj->material_names[i].name);
-    }
+    all_mesh_summaries[all_mesh_summaries_size].
+        materials_size =
+            arg_parsed_obj->materials_count;
     
-    if (arg_parsed_obj->materials_count < 1) {
-        arg_parsed_obj->materials_count = 1;
+    if (parsed_obj->materials_count > 0) {
+        // Preregister all materials, starting with the index of the head
+        all_mesh_summaries[all_mesh_summaries_size].
+            locked_material_head_i =
+                T1_material_preappend_locked_material_i(
+                    parsed_obj->material_names[0].name);
+        for (uint32_t i = 1; i < arg_parsed_obj->materials_count; i++) {
+            uint32_t _ = T1_material_preappend_locked_material_i(
+                parsed_obj->material_names[i].name);
+            (void)_;
+        }
+        
+        // Fill in data for each material
+        for (uint32_t i = 0; i < arg_parsed_obj->materials_count; i++) {
+            int32_t matching_parsed_materials_i = -1;
+            for (int32_t j = 0; j < (int32_t)parsed_materials_size; j++) {
+                if (
+                    common_are_equal_strings(
+                        arg_parsed_obj->material_names[i].name,
+                        parsed_materials[j].name))
+                {
+                    matching_parsed_materials_i = j;
+                }
+                log_assert(matching_parsed_materials_i >= 0);
+                log_assert(
+                    matching_parsed_materials_i  < (int32_t)parsed_materials_size);
+            }
+            
+            GPULockedMaterial * locked_mat = T1_material_fetch_ptr(
+                /* const uint32_t locked_material_i: */
+                    all_mesh_summaries[all_mesh_summaries_size].
+                        locked_material_head_i + i);
+            
+            locked_mat->ambient_rgb[0] =
+                parsed_materials[matching_parsed_materials_i].ambient_rgb[0];
+            locked_mat->ambient_rgb[1] =
+                parsed_materials[matching_parsed_materials_i].ambient_rgb[1];
+            locked_mat->ambient_rgb[2] =
+                parsed_materials[matching_parsed_materials_i].ambient_rgb[2];
+            
+            locked_mat->alpha =
+                parsed_materials[matching_parsed_materials_i].alpha;
+            
+            locked_mat->diffuse_rgb[0] =
+                parsed_materials[matching_parsed_materials_i].diffuse_rgb[0];
+            locked_mat->diffuse_rgb[1] =
+                parsed_materials[matching_parsed_materials_i].diffuse_rgb[1];
+            locked_mat->diffuse_rgb[2] =
+                parsed_materials[matching_parsed_materials_i].diffuse_rgb[2];
+            
+            locked_mat->illum = 1.0f;
+            
+            T1_texture_array_get_filename_location(
+                /* const char * for_filename: */
+                    parsed_materials[matching_parsed_materials_i].diffuse_map,
+                /* int32_t * texture_array_i_recipient: */
+                    &locked_mat->texturearray_i,
+                /* int32_t * texture_i_recipient: */
+                    &locked_mat->texture_i);
+            T1_texture_array_get_filename_location(
+                /* const char * for_filename: */
+                    parsed_materials[matching_parsed_materials_i].normal_map,
+                /* int32_t * texture_array_i_recipient: */
+                    &locked_mat->normalmap_texturearray_i,
+                /* int32_t * texture_i_recipient: */
+                    &locked_mat->normalmap_texture_i);
+            locked_mat->refraction = 0.0f;
+            locked_mat->rgb_cap[0] = 1.0f;
+            locked_mat->rgb_cap[1] = 1.0f;
+            locked_mat->rgb_cap[2] = 1.0f;
+            locked_mat->specular = 1.0f;
+            locked_mat->specular_exponent = 0.0f;
+        }
     }
     
     for (
@@ -1044,7 +1113,8 @@ int32_t objmodel_new_mesh_id_from_obj_mtl_text(
     }
     
     if (mtl_text == NULL || mtl_text[0] == '\0') {
-        return new_mesh_id_from_parsed_obj(parsed_obj);
+        return new_mesh_id_from_parsed_obj_and_parsed_materials(
+            parsed_obj, NULL, 0);
     }
     
     good = 0;
@@ -1075,12 +1145,15 @@ int32_t objmodel_new_mesh_id_from_obj_mtl_text(
         // register_material(parsed_materials + i);
     }
     
-    // check that materials described in the .obj match the ones in the .mtl
+    // check that each texture file in the .mtl is a preregistered resource
     for (uint32_t i = 0; i < parsed_obj->materials_count; i++) {
         printf("material %u: %s\n", i, parsed_obj->material_names[i].name);
     }
     
-    return new_mesh_id_from_parsed_obj(parsed_obj);
+    return new_mesh_id_from_parsed_obj_and_parsed_materials(
+        parsed_obj,
+        parsed_materials,
+        parsed_materials_size);
 }
 
 int32_t objmodel_new_mesh_id_from_resources(

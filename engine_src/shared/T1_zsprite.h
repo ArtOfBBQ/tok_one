@@ -30,9 +30,9 @@ typedef struct CPUzSprite {
 } CPUzSprite;
 
 typedef struct zSpriteCollection {
-    GPUzSprite gpu_data[MAX_POLYGONS_PER_BUFFER];
+    GPUzSprite gpu_data[MAX_ZSPRITES_PER_BUFFER];
     GPULockedMaterial gpu_materials[ALL_LOCKED_MATERIALS_SIZE];
-    CPUzSprite cpu_data[MAX_POLYGONS_PER_BUFFER];
+    CPUzSprite cpu_data[MAX_ZSPRITES_PER_BUFFER];
     uint32_t size;
 } zSpriteCollection;
 

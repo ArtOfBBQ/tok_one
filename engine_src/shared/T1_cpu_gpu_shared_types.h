@@ -54,12 +54,12 @@ typedef struct GPUCamera {
 
 typedef struct GPULockedMaterial {
     float ambient_rgb[3];
+    float diffuse_rgb[3];
     float rgb_cap[3];
     int   texturearray_i;
     int   texture_i;
     int   normalmap_texturearray_i;
     int   normalmap_texture_i;
-    float diffuse;
     float specular;
     float specular_exponent;
     float refraction;
@@ -82,7 +82,7 @@ typedef struct GPUzSprite {
 } __attribute__((aligned(32))) GPUzSprite; // 26 floats (? SIMD runs)
 
 typedef struct GPUSpriteCollection {
-    GPUzSprite   polygons[MAX_POLYGONS_PER_BUFFER];
+    GPUzSprite   polygons[MAX_ZSPRITES_PER_BUFFER];
     unsigned int size;
 } GPUSpriteCollection;
 
