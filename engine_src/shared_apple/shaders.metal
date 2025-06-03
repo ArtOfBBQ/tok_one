@@ -354,36 +354,66 @@ static FragmentAndTouchableOut pack_color_and_touchable_id(
 }
 
 // Gets the color given a material and lighting setup
-float3 get_lit(
+float4 get_lit(
     #if SHADOWS_ACTIVE
     texture2d<float> shadow_map,
     #endif
+    array<texture2d_array<half>, TEXTUREARRAYS_SIZE> color_textures,
     const device GPUCamera * camera,
     const device GPULight * lights,
     const device GPUProjectionConstants * projection_constants,
+    const device GPUzSprite * zsprite,
     const device GPULockedMaterial * material,
     const device GPUPostProcessingConstants * updating_globals,
     float3 fragment_worldpos,
     float3 fragment_normal,
-    float ignore_lighting)
+    float2 texture_coordinate)
 {
-    float3 return_value = vector_float3(
+    float4 lit_color = vector_float4(
         0.0f,
         0.0f,
-        0.0f);
+        0.0f,
+        1.0f);
     
-    float3 ambient_base = vector_float3(
+    float4 ambient_base = vector_float4(
         material->ambient_rgb[0],
         material->ambient_rgb[1],
-        material->ambient_rgb[2]);
-    float3 diffuse_base = vector_float3(
+        material->ambient_rgb[2],
+        1.0f);
+    float4 diffuse_base = vector_float4(
         material->diffuse_rgb[0],
         material->diffuse_rgb[1],
-        material->diffuse_rgb[2]);
-    float3 specular_base = vector_float3(
+        material->diffuse_rgb[2],
+        1.0f);
+    float4 specular_base = vector_float4(
         material->specular_rgb[0],
         material->specular_rgb[1],
-        material->specular_rgb[2]);
+        material->specular_rgb[2],
+        1.0f);
+    
+    float4 diffuse_texture_sample = vector_float4(1.0f, 1.0f, 1.0f, 1.0f);
+    
+    #if TEXTURES_ACTIVE
+    if (material->texturearray_i >= 0)
+    {
+    #else
+    if (material->texturearray_i == 0)
+    {
+    #endif
+        constexpr sampler texture_sampler(
+            mag_filter::linear,
+            min_filter::linear);
+        
+        // Sample the texture to obtain a color
+        const half4 color_sample =
+            color_textures[material->texturearray_i].sample(
+                texture_sampler,
+                texture_coordinate,
+                material->texture_i);
+        diffuse_texture_sample = float4(color_sample);
+    }
+    
+    float4 ignore_lighting_color = diffuse_texture_sample * diffuse_base;
     
     for (
         uint32_t i = 0;
@@ -395,10 +425,11 @@ float3 get_lit(
             lights[i].xyz[0],
             lights[i].xyz[1],
             lights[i].xyz[2]);
-        float3 light_color = vector_float3(
+        float4 light_color = vector_float4(
             lights[i].rgb[0],
             lights[i].rgb[1],
-            lights[i].rgb[2]);
+            lights[i].rgb[2],
+            1.0f);
         
         float shadow_factor = 1.0f;
         #if SHADOWS_ACTIVE
@@ -458,12 +489,11 @@ float3 get_lit(
         
         attenuation = clamp(attenuation, 0.00f, 1.00f);
         
-        return_value += (
-            ambient_base *
+        float4 light_ambient_multiplier =
             attenuation *
             light_color *
             lights[i].ambient *
-            shadow_factor);
+            shadow_factor;
         
         // if light is at 2,2,2 and rotated_pos is at 1,1,1, we need +1/+1/+1
         // to go from the rotated_pos to the light
@@ -479,13 +509,22 @@ float3 get_lit(
                     object_to_light),
                 0.0f);
         
-        return_value += (
-            diffuse_base *
+        
+        lit_color += (
+            ambient_base *
+            light_ambient_multiplier);
+        
+        float4 light_diffuse_multiplier =
             attenuation *
             light_color *
             diffuse_dot *
             lights[i].diffuse *
-            shadow_factor);
+            shadow_factor;
+        
+        lit_color += (
+            diffuse_base *
+            diffuse_texture_sample *
+            light_diffuse_multiplier);
         
         // specular lighting
         float3 object_to_view = normalize(
@@ -504,7 +543,7 @@ float3 get_lit(
                 0.0),
             32);
         
-        return_value += (
+        lit_color += (
             specular_base *
             attenuation *
             light_color *
@@ -514,14 +553,31 @@ float3 get_lit(
             shadow_factor);
     }
     
-    return_value = clamp(return_value, 0.05f, 7.5f);
+    lit_color = clamp(lit_color, 0.05f, 7.5f);
     
-    // float3 all_ones = vector_float3(1.0f, 1.0f, 1.0f);
-    return_value =
-        ((1.0f - ignore_lighting) * return_value) +
-        (ignore_lighting * vector_float3(0.75f, 0.75f, 0.75f));
+    lit_color += vector_float4(
+        zsprite->bonus_rgb[0],
+        zsprite->bonus_rgb[1],
+        zsprite->bonus_rgb[2],
+        0.0f);
     
-    return return_value;
+    lit_color =
+        ((1.0f - zsprite->ignore_lighting) * lit_color) +
+        (zsprite->ignore_lighting * ignore_lighting_color);
+    
+    float4 rgba_cap = vector_float4(
+        material->rgb_cap[0],
+        material->rgb_cap[1],
+        material->rgb_cap[2],
+        1.0f);
+    
+    lit_color = clamp(lit_color, 0.0f, rgba_cap);
+    
+    return vector_float4(
+        lit_color[0],
+        lit_color[1],
+        lit_color[2],
+        material->alpha * ignore_lighting_color[3]);;
 }
 
 fragment FragmentAndTouchableOut
@@ -547,16 +603,19 @@ fragment_shader(
             &polygons[in.polygon_i].base_material :
             &locked_materials[locked_vertices[in.locked_vertex_i].locked_materials_head_i + material_i];
     
-    float3 lit_color = get_lit(
+    float4 lit_color = get_lit(
         #if SHADOWS_ACTIVE
             shadow_map,
         #endif
+            color_textures,
         /* const device GPUCamera * camera: */
             camera,
         /* const device GPULight * lights: */
             lights,
         /* const device GPUProjectionConstants * projection_constants: */
             projection_constants,
+        /* const device zSprite * zsprite: */
+            &polygons[in.polygon_i],
         /* const device GPUPolygonMaterial * fragment_material: */
             material,
         /* const device GPUPostProcessingConstants * updating_globals: */
@@ -565,50 +624,18 @@ fragment_shader(
             in.worldpos,
         /* float3 fragment_normal: */
             in.normal,
-        /* float ignore_lighting: */
-            polygons[in.polygon_i].ignore_lighting);
-    
-    float4 out_color = vector_float4(
-        lit_color[0],
-        lit_color[1],
-        lit_color[2],
-        material->alpha);
-    
-    float4 texture_sample = vector_float4(1.0f, 1.0f, 1.0f, 1.0f);
-    
-    #if TEXTURES_ACTIVE
-    if (
-        material->texturearray_i >= 0)
-    {
-    #else
-    if (
-        material->texturearray_i == 0)
-    {
-    #endif
-        constexpr sampler textureSampler(
-            mag_filter::linear,
-            min_filter::linear);
-        
-        // Sample the texture to obtain a color
-        const half4 color_sample =
-        color_textures[material->texturearray_i].sample(
-            textureSampler,
-            in.texture_coordinate,
-            material->texture_i);
-        texture_sample = float4(color_sample);
-    }
-    
-    out_color = out_color * texture_sample;
+        /* float2 texture_coordinate: */
+            in.texture_coordinate);
     
     int diamond_size = 35.0f;
     int neghalfdiamond = -1.0f * (diamond_size / 2);
     
-    int alpha_tresh = (int)(out_color[3] * diamond_size);
+    int alpha_tresh = (int)(lit_color[3] * diamond_size);
     
     if (
-        out_color[3] < 0.05f ||
+        lit_color[3] < 0.05f ||
         (
-            out_color[3] < 0.95f &&
+            lit_color[3] < 0.95f &&
             (
                 abs((neghalfdiamond + (int)in.position.x % diamond_size)) +
                 abs((neghalfdiamond + (int)in.position.y % diamond_size))
@@ -618,23 +645,8 @@ fragment_shader(
         discard_fragment();
     }
     
-    out_color += vector_float4(
-        polygons[in.polygon_i].bonus_rgb[0],
-        polygons[in.polygon_i].bonus_rgb[1],
-        polygons[in.polygon_i].bonus_rgb[2],
-        0.0f);
-    
-    out_color[3] = 1.0f;
-    float4 rgba_cap = vector_float4(
-        material->rgb_cap[0],
-        material->rgb_cap[1],
-        material->rgb_cap[2],
-        1.0f);
-    
-    out_color = clamp(out_color, 0.0f, rgba_cap);
-    
     FragmentAndTouchableOut packed_out =
-        pack_color_and_touchable_id(out_color, in.touchable_id);
+        pack_color_and_touchable_id(lit_color, in.touchable_id);
     
     return packed_out;
 }
@@ -663,17 +675,20 @@ alphablending_fragment_shader(
             &polygons[in.polygon_i].base_material :
             &locked_materials[locked_vertices[in.locked_vertex_i].locked_materials_head_i + material_i];
     
-    float3 lighting = get_lit(
+    float4 lit_color = get_lit(
         #if SHADOWS_ACTIVE
         /* texture2d<float> shadow_map: */
             shadow_map,
         #endif
+            color_textures,
         /* const device GPUCamera * camera: */
             camera,
         /* const device GPULight * lights: */
             lights,
         /* const device GPUProjectionConstants * projection_constants: */
             projection_constants,
+        /* const device GPUzSprite zsprite: */
+            &polygons[in.polygon_i],
         /* const device GPUPolygonMaterial * fragment_material: */
             material,
         /* const device GPUPostProcessingConstants * updating_globals: */
@@ -682,60 +697,10 @@ alphablending_fragment_shader(
             in.worldpos,
         /* float3 fragment_normal: */
             in.normal,
-        /* float ignore_lighting: */
-            polygons[in.polygon_i].ignore_lighting);
+        /* float2 texture_coordinate: */
+            in.texture_coordinate);
     
-    // locked_materials[in.material_i].ambient_rgb[?]
-    float4 out_color = vector_float4(
-        material->ambient_rgb[0],
-        material->ambient_rgb[1],
-        material->ambient_rgb[2],
-        material->alpha);
-    
-    #if TEXTURES_ACTIVE
-    if (
-        material->texturearray_i < 0 ||
-        material->texture_i < 0)
-    {
-    #else
-    if (
-        material->texturearray_i != 0 ||
-        material->texture_i < 0)
-    {
-    #endif
-        
-    } else {
-        constexpr sampler textureSampler(
-            mag_filter::nearest,
-            min_filter::nearest);
-        
-        // Sample the texture to obtain a color
-        const half4 color_sample =
-        color_textures[material->texturearray_i].sample(
-            textureSampler,
-            in.texture_coordinate,
-            material->texture_i);
-        float4 texture_sample = float4(color_sample);
-        
-        out_color *= texture_sample;
-    }
-    
-    out_color *= vector_float4(lighting, 1.0f);
-    
-    out_color += vector_float4(
-        polygons[in.polygon_i].bonus_rgb[0],
-        polygons[in.polygon_i].bonus_rgb[1],
-        polygons[in.polygon_i].bonus_rgb[2],
-        0.0f);
-    
-    float4 rgba_cap = vector_float4(
-        material->rgb_cap[0],
-        material->rgb_cap[1],
-        material->rgb_cap[2],
-        1.0f);
-    out_color = clamp(out_color, 0.0f, rgba_cap);
-    
-    return pack_color_and_touchable_id(out_color, in.touchable_id);
+    return pack_color_and_touchable_id(lit_color, in.touchable_id);
 }
 
 // TODO: just pass this directly to fragment shader

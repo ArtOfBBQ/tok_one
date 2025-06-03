@@ -358,9 +358,9 @@ static void parse_rgb_token(
 }
 
 static void construct_material(ParsedMaterial * to_construct) {
-    to_construct->ambient_rgb[0] = 1.0f;
-    to_construct->ambient_rgb[1] = 1.0f;
-    to_construct->ambient_rgb[2] = 1.0f;
+    to_construct->ambient_rgb[0] = 0.1f;
+    to_construct->ambient_rgb[1] = 0.1f;
+    to_construct->ambient_rgb[2] = 0.1f;
     to_construct->diffuse_rgb[0] = 1.0f;
     to_construct->diffuse_rgb[1] = 1.0f;
     to_construct->diffuse_rgb[2] = 1.0f;

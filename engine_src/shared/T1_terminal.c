@@ -126,11 +126,14 @@ void terminal_redraw_backgrounds(void) {
         /* zPolygon * recipien: */
             &current_command_input);
     
-    current_command_input.gpu_data->base_material.ambient_rgb[0] =
+    current_command_input.gpu_data->base_material.ambient_rgb[0] = 0.0f;
+    current_command_input.gpu_data->base_material.ambient_rgb[1] = 0.0f;
+    current_command_input.gpu_data->base_material.ambient_rgb[2] = 0.0f;
+    current_command_input.gpu_data->base_material.diffuse_rgb[0] =
         term_background_color[0];
-    current_command_input.gpu_data->base_material.ambient_rgb[1] =
+    current_command_input.gpu_data->base_material.diffuse_rgb[1] =
         term_background_color[1];
-    current_command_input.gpu_data->base_material.ambient_rgb[2] =
+    current_command_input.gpu_data->base_material.diffuse_rgb[2] =
         term_background_color[2];
     current_command_input.gpu_data->base_material.alpha =
         term_background_color[3];
@@ -170,11 +173,14 @@ void terminal_redraw_backgrounds(void) {
        /* zPolygon * recipien: */
            &current_command_input);
     
-    current_command_input.gpu_data->base_material.ambient_rgb[0] =
+    current_command_input.gpu_data->base_material.ambient_rgb[0] = 0.0f;
+    current_command_input.gpu_data->base_material.ambient_rgb[1] = 0.0f;
+    current_command_input.gpu_data->base_material.ambient_rgb[2] = 0.0f;
+    current_command_input.gpu_data->base_material.diffuse_rgb[0] =
         term_background_color[0];
-    current_command_input.gpu_data->base_material.ambient_rgb[1] =
+    current_command_input.gpu_data->base_material.diffuse_rgb[1] =
         term_background_color[1];
-    current_command_input.gpu_data->base_material.ambient_rgb[2] =
+    current_command_input.gpu_data->base_material.diffuse_rgb[2] =
         term_background_color[2];
     current_command_input.gpu_data->base_material.alpha =
         term_background_color[3];
