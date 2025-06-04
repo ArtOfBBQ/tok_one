@@ -16,14 +16,14 @@ void client_logic_early_startup(
     char * error_message)
 {
     uint32_t good;
-    texture_files_preregister_png_resource("1001_normal.png", &good);
-    texture_files_preregister_png_resource("1001_albedo.png", &good);
-    texture_files_preregister_png_resource("blob1.png", &good);
-    texture_files_preregister_png_resource("blob2.png", &good);
-    texture_files_preregister_png_resource("blob3.png", &good);
-    texture_files_preregister_png_resource("phoebus.png", &good);
-    texture_files_preregister_png_resource("structuredart1.png", &good);
-    texture_files_preregister_png_resource("structuredart2.png", &good);
+    T1_texture_files_preregister_png_resource("1001_normal.png", &good);
+    T1_texture_files_preregister_png_resource("1001_albedo.png", &good);
+    T1_texture_files_preregister_png_resource("blob1.png", &good);
+    T1_texture_files_preregister_png_resource("blob2.png", &good);
+    T1_texture_files_preregister_png_resource("blob3.png", &good);
+    T1_texture_files_preregister_png_resource("phoebus.png", &good);
+    T1_texture_files_preregister_png_resource("structuredart1.png", &good);
+    T1_texture_files_preregister_png_resource("structuredart2.png", &good);
     
     assert(good);
     
@@ -48,14 +48,14 @@ void client_logic_late_startup(void) {
     
     shadowcaster_light_i = 0;
     zLightSource * light = next_zlight();
-    light->RGBA[0]       =  1.00f;
-    light->RGBA[1]       =  1.00f;
-    light->RGBA[2]       =  1.00f;
+    light->RGBA[0]       =  0.30f;
+    light->RGBA[1]       =  0.30f;
+    light->RGBA[2]       =  0.30f;
     light->RGBA[3]       =  1.00f;
-    light->ambient       =  1.00f;
+    light->ambient       =  0.10f;
     light->diffuse       =  1.00f;
     light->specular      =  1.00f;
-    light->reach         =  8.00f;
+    light->reach         =  3.00f;
     light->xyz[0]        =  TEAPOT_X - 0.5f;
     light->xyz[1]        =  TEAPOT_Y + 2.0f;
     light->xyz[2]        =  TEAPOT_Z;
@@ -88,13 +88,7 @@ void client_logic_late_startup(void) {
     //    light->xyz_angle[2]  =  0.00f;
     //    commit_zlight(light);
     
-    uint32_t texture_push_good = 0;
     #if TEAPOT
-    texture_files_decode_png_resource(
-        "1001_albedo.png",
-        &texture_push_good);
-    assert(texture_push_good);
-    
     teapot_object_ids[0] = next_nonui_object_id();
     teapot_object_ids[1] = next_nonui_object_id();
     
@@ -129,10 +123,6 @@ void client_logic_late_startup(void) {
     
     int32_t quad_texture_array_i = -1;
     int32_t quad_texture_i = -1;
-    texture_files_decode_png_resource(
-        "structuredart2.png",
-        &texture_push_good);
-    assert(texture_push_good);
     T1_texture_array_get_filename_location(
         "structuredart2.png",
         &quad_texture_array_i,

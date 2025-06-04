@@ -17,6 +17,8 @@ int32_t T1_texture_array_preinit_new_with_known_dimensions(
     const uint32_t image_count,
     const bool32_t use_bc1_compression);
 
+void T1_texture_array_push_all_preregistered(void);
+
 void T1_texture_array_push_dds_image_to_preinitted(
     const int32_t to_texturearray_i,
     const int32_t to_texture_i,
@@ -24,7 +26,7 @@ void T1_texture_array_push_dds_image_to_preinitted(
 
 void T1_texture_array_gpu_try_push(void);
 
-void T1_texture_array_register_new_by_splitting_file(
+void T1_texture_files_register_new_by_splitting_file(
     const char * filename,
     const uint32_t rows,
     const uint32_t columns);

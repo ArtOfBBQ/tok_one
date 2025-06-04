@@ -548,6 +548,8 @@ void init_application_after_gpu_init(void) {
     
     if (application_running) {
         client_logic_early_startup(&success, errmsg);
+        
+        T1_texture_array_push_all_preregistered();
     }
     
     #define MIN_VERTICES_FOR_SHATTER_EFFECT 400

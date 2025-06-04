@@ -74,6 +74,106 @@ int32_t T1_texture_array_preinit_new_with_known_dimensions(
     return retval;
 }
 
+void T1_texture_array_push_all_preregistered(void) {
+    for (
+        int32_t ta_i = 1;
+        ta_i < (int32_t)texture_arrays_size;
+        ta_i++)
+    {
+        log_assert(!texture_arrays[ta_i].gpu_initted);
+        
+        platform_gpu_init_texture_array(
+            /* const int32_t texture_array_i: */
+                ta_i,
+            /* const uint32_t num_images: */
+                texture_arrays[ta_i].images_size,
+            /* const uint32_t single_image_width: */
+                texture_arrays[ta_i].single_img_width,
+            /* const uint32_t single_image_height: */
+                texture_arrays[ta_i].single_img_height,
+            /* const bool32_t use_bc1_compression: */
+                texture_arrays[ta_i].bc1_compressed);
+        
+        for (
+            int32_t t_i = 0;
+            t_i < (int32_t)texture_arrays[ta_i].images_size;
+            t_i++)
+        {
+            uint8_t * rgba_values_freeable = NULL;
+            uint8_t * rgba_values_page_aligned = NULL;
+            
+            if (
+                texture_arrays[ta_i].images[t_i].image == NULL ||
+                texture_arrays[ta_i].images[t_i].image->
+                    rgba_values_freeable == NULL ||
+                texture_arrays[ta_i].images[t_i].image->
+                    rgba_values_page_aligned == NULL)
+            {
+                uint32_t rgba_size =
+                    texture_arrays[ta_i].single_img_width *
+                        texture_arrays[ta_i].single_img_height * 4;
+                malloc_from_managed_page_aligned(
+                    /* void ** base_pointer_for_freeing: */
+                       (void **)&rgba_values_freeable,
+                    /* void ** aligned_subptr: */
+                       (void **)&rgba_values_page_aligned,
+                    /* const size_t subptr_size: */
+                        rgba_size);
+                
+                int32_t packed_rgba_red =
+                    (255 << 24) | // Alpha
+                    (  5 << 16) | // Blue
+                    (  5 <<  8) | // Green
+                    255;          // Red
+                int32_t packed_rgba_blue =
+                    (255 << 24) | // Alpha
+                    (255 << 16) | // Blue
+                    (255 <<  8) | // Green
+                    0;            // Red
+                
+                uint32_t one_third = (rgba_size / 3);
+                while (one_third % 4 != 0) {
+                    one_third -= 1;
+                }
+                
+                common_memset_int32(
+                    rgba_values_page_aligned,
+                    packed_rgba_red,
+                    one_third);
+                common_memset_int32(
+                    rgba_values_page_aligned + (one_third),
+                    packed_rgba_blue,
+                    one_third);
+                common_memset_int32(
+                    rgba_values_page_aligned + (one_third * 2),
+                    packed_rgba_red,
+                    rgba_size - (one_third * 2));
+            } else {
+                rgba_values_freeable = texture_arrays[ta_i].images[t_i].
+                    image->rgba_values_freeable;
+                rgba_values_page_aligned = texture_arrays[ta_i].images[t_i].
+                    image->rgba_values_page_aligned;
+            }
+            
+            platform_gpu_push_texture_slice_and_free_rgba_values(
+                /* const int32_t texture_array_i: */
+                    ta_i,
+                /* const int32_t texture_i: */
+                    t_i,
+                /* const uint32_t parent_texture_array_images_size: */
+                    texture_arrays[ta_i].images_size,
+                /* const uint32_t image_width: */
+                    texture_arrays[ta_i].single_img_width,
+                /* const uint32_t image_height: */
+                    texture_arrays[ta_i].single_img_height,
+                /* uint8_t * rgba_values_freeable: */
+                    rgba_values_freeable,
+                /* uint8_t * rgba_values_page_aligned: */
+                    rgba_values_page_aligned);
+        }
+    }
+}
+
 void T1_texture_array_push_dds_image_to_preinitted(
     const int32_t to_texturearray_i,
     const int32_t to_texture_i,
@@ -824,7 +924,7 @@ void T1_texture_array_load_font_images(void) {
     // Don't call this, the engine should call it
     assert(texture_arrays_size == 0);
     const char * fontfile = "font.png";
-    T1_texture_array_register_new_by_splitting_file(
+    T1_texture_files_register_new_by_splitting_file(
         /* filename : */ fontfile,
         /* rows     : */ 10,
         /* columns  : */ 10);

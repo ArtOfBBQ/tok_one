@@ -146,7 +146,7 @@ DecodedImage * malloc_img_from_filename(
     return new_image;
 }
 
-void T1_texture_array_register_new_by_splitting_file(
+void T1_texture_files_register_new_by_splitting_file(
     const char * filename,
     const uint32_t rows,
     const uint32_t columns)
@@ -170,7 +170,7 @@ void T1_texture_array_register_new_by_splitting_file(
         columns);
 }
 
-void texture_files_preregister_png_resource(
+void T1_texture_files_preregister_png_resource(
     const char * filename,
     uint32_t * good)
 {
@@ -216,7 +216,11 @@ void texture_files_preregister_png_resource(
     *good = 1;
 }
 
-void texture_files_decode_png_resource(
+void T1_texture_files_push_all_preregistered(void) {
+    T1_texture_array_push_all_preregistered();
+}
+
+void T1_texture_files_decode_png_resource(
     const char * filename,
     uint32_t * good)
 {

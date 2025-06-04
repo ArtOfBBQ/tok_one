@@ -82,7 +82,6 @@
 		EC31932529DFAAFB00E320CD /* T1_particle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC31932329DFAAFB00E320CD /* T1_particle.c */; };
 		EC493BC92BEDABCC004D957F /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F48293C9FD900837369 /* UIKit.framework */; };
 		EC493BCB2BEDAE07004D957F /* shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 60112895286253C100F92967 /* shaders.metal */; };
-		EC5BDCAC2C744B7300020D34 /* clientlogic_particledesigner.c in Sources */ = {isa = PBXBuildFile; fileRef = ECD7D3DA2B97778500B47196 /* clientlogic_particledesigner.c */; };
 		EC6441A429318B6D00A0267B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = EC64419F29318B6D00A0267B /* main.m */; };
 		EC6441A529318B6D00A0267B /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A029318B6D00A0267B /* AppDelegate.m */; };
 		EC6441A629318B6D00A0267B /* ios_platform_layer.c in Sources */ = {isa = PBXBuildFile; fileRef = EC6441A129318B6D00A0267B /* ios_platform_layer.c */; };
@@ -251,7 +250,6 @@
 		ECB05E4C294F8FD300050BD4 /* key.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = key.obj; path = ../../resources/key.obj; sourceTree = "<group>"; };
 		ECC47A5F29E9111C0082A7C6 /* disk.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = disk.obj; path = ../../resources/disk.obj; sourceTree = "<group>"; };
 		ECCB08A428DB6FD00038BBAC /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
-		ECD7D3DA2B97778500B47196 /* clientlogic_particledesigner.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = clientlogic_particledesigner.c; path = ../../sampleproject_src/clientlogic_particledesigner.c; sourceTree = "<group>"; };
 		ECDCFF4B2DDE0F2A002AA399 /* T1_mtlparser.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_mtlparser.c; path = ../../engine_src/shared/T1_mtlparser.c; sourceTree = "<group>"; };
 		ECDCFF4C2DDE0F2A002AA399 /* T1_mtlparser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_mtlparser.h; path = ../../engine_src/shared/T1_mtlparser.h; sourceTree = "<group>"; };
 		ECDCFF4E2DDE0F52002AA399 /* T1_tokenizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_tokenizer.h; path = ../../engine_src/shared/T1_tokenizer.h; sourceTree = "<group>"; };
@@ -345,7 +343,6 @@
 		601128A42862540400F92967 /* src */ = {
 			isa = PBXGroup;
 			children = (
-				ECD7D3DA2B97778500B47196 /* clientlogic_particledesigner.c */,
 				601128702862511600F92967 /* clientlogic.c */,
 				EC61E2D32AFB029F004D316D /* shared_apple_linux */,
 				EC6441A829318B7900A0267B /* iphone_only */,
@@ -359,30 +356,30 @@
 		601128B128625BC100F92967 /* resources */ = {
 			isa = PBXGroup;
 			children = (
-				6009FB632876A47100FC5A60 /* fontmetrics.dat */,
-				EC74B51A2DE3BC070033206F /* guitar_simplified.mtl */,
+				EC7FBC3F2DECE93000A679A7 /* 1001_albedo.png */,
+				EC74B51C2DE3BC070033206F /* 1001_normal.png */,
+				EC18FF4129E3DC8B00ED785C /* blob1.png */,
+				EC18FF4429E3DD8900ED785C /* blob2.png */,
+				EC18FF4529E3DD8900ED785C /* blob3.png */,
 				EC843EA72D1401F3001AD2E9 /* cardstand.obj */,
 				EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */,
 				ECC47A5F29E9111C0082A7C6 /* disk.obj */,
+				601128AC28625BAF00F92967 /* font.png */,
+				6009FB632876A47100FC5A60 /* fontmetrics.dat */,
+				EC74B51A2DE3BC070033206F /* guitar_simplified.mtl */,
 				EC74B51F2DE3BC070033206F /* guitar_simplified.obj */,
 				ECB05E4C294F8FD300050BD4 /* key.obj */,
-				EC0717EF2C29CDD5007A4AFA /* teapot_smooth.obj */,
-				601128AB28625BAE00F92967 /* teapot.obj */,
-				EC0BFBD729EE71A200E4BC1C /* tree.obj */,
-				EC0BFBD829EE71A200E4BC1C /* xmas_tree.obj */,
-				EC74B51C2DE3BC070033206F /* 1001_normal.png */,
-				EC18FF4129E3DC8B00ED785C /* blob1.png */,
-				EC7FBC3F2DECE93000A679A7 /* 1001_albedo.png */,
-				EC18FF4429E3DD8900ED785C /* blob2.png */,
-				EC18FF4529E3DD8900ED785C /* blob3.png */,
-				601128AC28625BAF00F92967 /* font.png */,
 				EC67AE152A1B0813002D8380 /* leaves3.png */,
+				EC7B09D3293CAC8B000ED98E /* Main.storyboard */,
 				ECDCFF512DDE12EF002AA399 /* perlin_noise.png */,
 				6080CC45286FFD1D00444118 /* phoebus.png */,
 				EC7B171A293A23E300C1D20C /* roundedborder.png */,
 				601128A928625BAE00F92967 /* structuredart1.png */,
 				601128AA28625BAE00F92967 /* structuredart2.png */,
-				EC7B09D3293CAC8B000ED98E /* Main.storyboard */,
+				601128AB28625BAE00F92967 /* teapot.obj */,
+				EC0717EF2C29CDD5007A4AFA /* teapot_smooth.obj */,
+				EC0BFBD729EE71A200E4BC1C /* tree.obj */,
+				EC0BFBD829EE71A200E4BC1C /* xmas_tree.obj */,
 			);
 			name = resources;
 			sourceTree = "<group>";
@@ -719,7 +716,6 @@
 				EC6441A429318B6D00A0267B /* main.m in Sources */,
 				60A998FA287BD4C3003F7159 /* T1_renderer.c in Sources */,
 				EC914B8E2B94B1EF007FCBFC /* T1_terminal.c in Sources */,
-				EC5BDCAC2C744B7300020D34 /* clientlogic_particledesigner.c in Sources */,
 				60A998F1287BD4C3003F7159 /* T1_logger.h in Sources */,
 				60A998F2287BD4C3003F7159 /* T1_renderer.h in Sources */,
 			);
