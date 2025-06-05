@@ -16,13 +16,13 @@ static void construct_zlight(zLightSource * to_construct) {
     to_construct->xyz_offset[0] = 0.0f;
     to_construct->xyz_offset[1] = 0.0f;
     to_construct->xyz_offset[2] = 0.0f;
-    to_construct->RGBA[0]       = 0.1f;
-    to_construct->RGBA[1]       = 0.1f;
-    to_construct->RGBA[2]       = 0.1f;
+    to_construct->RGBA[0]       = 1.0f;
+    to_construct->RGBA[1]       = 1.0f;
+    to_construct->RGBA[2]       = 1.0f;
     to_construct->RGBA[3]       = 1.0f;
-    to_construct->ambient       = 1.00f;
+    to_construct->ambient       = 0.05f; // mimics blender, very low ambient
     to_construct->diffuse       = 1.00f;
-    to_construct->specular      = 1.00f;
+    to_construct->specular      = 0.50f; // mimics blender's behavior
     to_construct->deleted       = false;
     to_construct->committed     = false;
 }
@@ -328,4 +328,55 @@ void delete_zlight(const int32_t with_object_id) {
             zlights_to_apply[i].object_id   = -1;
         }
     }
+}
+
+/*
+All 3 arguments to this function are a pointer to 3 floats
+Lights by default point to negative Z, this function points them
+to look at point_to_xyz instead
+
+from_pos_xyz is the current position of the light
+*/
+void zlight_point_light_to_location(
+    float * recipient_xyz_angle,
+    const float * from_pos_xyz,
+    const float * point_to_xyz)
+{
+    // Compute direction vector: point_to_xyz - from_pos_xyz
+    float dir_x = point_to_xyz[0] - from_pos_xyz[0];
+    float dir_y = point_to_xyz[1] - from_pos_xyz[1];
+    float dir_z = point_to_xyz[2] - from_pos_xyz[2];
+    
+    // Compute length of direction vector
+    float length = sqrtf(dir_x * dir_x + dir_y * dir_y + dir_z * dir_z);
+    
+    // Handle edge case: if positions are the same, keep default orientation (0, 0, 0)
+    if (length < 1e-6f) {
+        recipient_xyz_angle[0] = 0.0f; // X rotation (pitch)
+        recipient_xyz_angle[1] = 0.0f; // Y rotation (yaw)
+        recipient_xyz_angle[2] = 0.0f; // Z rotation (roll)
+        return;
+    }
+    
+    // Normalize direction vector
+    float inv_length = 1.0f / length;
+    dir_x *= inv_length;
+    dir_y *= inv_length;
+    dir_z *= inv_length;
+    
+    // Compute Euler angles for XYZ order to rotate (0, 0, -1) to (dir_x, dir_y, dir_z)
+    // Yaw (Y-axis rotation): align in XZ plane
+    float yaw = atan2f(dir_x, -dir_z); // atan2(x, -z) for default (0, 0, -1)
+    
+    // Pitch (X-axis rotation): align Y component
+    float xz_length = sqrtf(dir_x * dir_x + dir_z * dir_z);
+    float pitch = (xz_length > 1e-6f) ? atan2f(dir_y, xz_length) : (dir_y > 0.0f ? 1.57079632679489661923f : -1.57079632679489661923f);
+    
+    // Roll (Z-axis rotation): set to 0, as light direction doesn't require roll
+    float roll = 0.0f;
+    
+    // Store angles in recipient_xyz_angle (X, Y, Z order)
+    recipient_xyz_angle[0] = pitch; // X rotation (pitch)
+    recipient_xyz_angle[1] = yaw;   // Y rotation (yaw)
+    recipient_xyz_angle[2] = roll;  // Z rotation (roll)
 }

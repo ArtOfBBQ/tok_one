@@ -23,20 +23,24 @@ of the engine for your specific app.
 
 #define SCHEDULED_ANIMS_ACTIVE 0
 #define TERMINAL_ACTIVE 1
-#define RAW_SHADER_ACTIVE 1 // for points and lines
+#define RAW_SHADER_ACTIVE 0 // for points and lines
 #define TEXTURES_ACTIVE 1
 #define BLOOM_ACTIVE 1
 #define PARTICLES_ACTIVE 0
-#define SHADOWS_ACTIVE 0
+#define SHADOWS_ACTIVE 1
 #define AUDIO_ACTIVE 0
 #define ENGINE_SAVEFILE_ACTIVE 0
 #define PROFILER_ACTIVE 0
+#define TONE_MAPPING_ACTIVE 0
+#define COLOR_QUANTIZATION_ACTIVE 0
 #define FOG_ACTIVE 1
 
 #define MAX_RENDERING_FRAME_BUFFERS 3 // 3 for triple-buffering
 
 #define MAX_VERTICES_PER_BUFFER 240000
 #define MAX_LIGHTS_PER_BUFFER 3
+
+#define SHADOW_BIAS 0.0001f
 
 /*
 The maximum number of sprites in your app.

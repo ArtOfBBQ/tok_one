@@ -391,7 +391,7 @@ float4 get_lit(
         material->specular_rgb[2],
         1.0f);
     
-    float4 diffuse_texture_sample = vector_float4(1.0f, 1.0f, 1.0f, 1.0f);
+    float4 diffuse_texture_sample = vector_float4(0.75f, 0.75f, 0.75f, 1.0f);
     
     #if TEXTURES_ACTIVE
     if (material->texturearray_i >= 0)
@@ -471,7 +471,7 @@ float4 get_lit(
             float frag_depth = light_clip_pos.z / light_clip_pos.w;
             
             shadow_factor =
-                (frag_depth <= shadow_depth + 0.00002f) ?
+                (frag_depth <= shadow_depth + SHADOW_BIAS) ?
                     1.0f : 0.25f;
         }
         #endif
@@ -507,8 +507,7 @@ float4 get_lit(
                 dot(
                     fragment_normal,
                     object_to_light),
-                0.0f);
-        
+                0.0f) * 0.9f + 0.1f;
         
         lit_color += (
             ambient_base *
@@ -541,7 +540,7 @@ float4 get_lit(
             max(
                 dot(object_to_view, reflection_ray),
                 0.0),
-            32);
+            material->specular_exponent);
         
         lit_color += (
             specular_base *
@@ -552,8 +551,6 @@ float4 get_lit(
             material->specular *
             shadow_factor);
     }
-    
-    lit_color = clamp(lit_color, 0.05f, 7.5f);
     
     lit_color += vector_float4(
         zsprite->bonus_rgb[0],
@@ -822,13 +819,17 @@ single_quad_fragment_shader(
         (color_sample * (1.0h - dist));
     
     // reinhard tone mapping
-    color_sample = color_sample / (color_sample + 0.20h);
+    #if TONE_MAPPING_ACTIVE
+    color_sample = color_sample / (color_sample + 0.30h);
+    #endif
     color_sample = clamp(color_sample, 0.0h, 1.0h);
     
+    #if COLOR_QUANTIZATION_ACTIVE
     if (in.color_quantization > 1.0h) {
         color_sample = floor(color_sample * in.color_quantization) /
             (in.color_quantization - 1.0h);
     }
+    #endif
     
     color_sample[3] = 1.0h;
     

@@ -532,7 +532,7 @@ bool32_t apple_gpu_init(
                     length:
                         gpu_shared_data_collection->lights_allocation_size
                     options:
-                        MTLResourceStorageModeShared
+                        MTLResourceStorageModeShared | MTLResourceUsageRead
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];

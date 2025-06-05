@@ -42,27 +42,59 @@ void client_logic_early_startup(
 
 void client_logic_late_startup(void) {
     
-    #define TEAPOT_X -0.25f
+    #define TEAPOT_X  0.2f
     #define TEAPOT_Y  0.1f
     #define TEAPOT_Z  0.32f
+    float teapot_xyz[3];
+    teapot_xyz[0] = TEAPOT_X;
+    teapot_xyz[1] = TEAPOT_Y;
+    teapot_xyz[2] = TEAPOT_Z;
     
     shadowcaster_light_i = 0;
     zLightSource * light = next_zlight();
-    light->RGBA[0]       =  0.30f;
-    light->RGBA[1]       =  0.30f;
-    light->RGBA[2]       =  0.30f;
-    light->RGBA[3]       =  1.00f;
-    light->ambient       =  0.00f;
-    light->diffuse       =  1.00f;
-    light->specular      =  1.00f;
-    light->reach         =  3.00f;
-    light->xyz[0]        =  TEAPOT_X - 0.5f;
-    light->xyz[1]        =  TEAPOT_Y + 2.0f;
-    light->xyz[2]        =  TEAPOT_Z;
-    light->xyz_angle[0]  =  1.5708f; // rotate around the x axis because light is looking at +z right now but needs to look down
-    light->xyz_angle[1]  =  0.00f;
-    light->xyz_angle[2]  =  0.00f;
+    light->RGBA[0]       =  1.0f;
+    light->RGBA[1]       =  1.0f;
+    light->RGBA[2]       =  1.0f;
+    light->RGBA[3]       =  0.30f;
+    light->reach         =  100.0f;
+    light->xyz[0]        =  TEAPOT_X - 1.20f;
+    light->xyz[1]        =  TEAPOT_Y + 0.50f;
+    light->xyz[2]        =  TEAPOT_Z - 0.15f;
+    zlight_point_light_to_location(
+        light->xyz_angle,
+        light->xyz,
+        teapot_xyz);
     commit_zlight(light);
+    
+    zSpriteRequest lightcube_request;
+    zsprite_request_next(&lightcube_request);
+    zsprite_construct(&lightcube_request);
+    lightcube_request.cpu_data->mesh_id = BASIC_CUBE_MESH_ID;
+    lightcube_request.gpu_data->xyz_multiplier[0] = 0.05f;
+    lightcube_request.gpu_data->xyz_multiplier[1] = 0.05f;
+    lightcube_request.gpu_data->xyz_multiplier[2] = 0.05f;
+    lightcube_request.gpu_data->xyz[0]            = light->xyz[0];
+    lightcube_request.gpu_data->xyz[1]            = light->xyz[1];
+    lightcube_request.gpu_data->xyz[2]            = light->xyz[2];
+    lightcube_request.gpu_data->xyz_angle[0]      = 0.0f;
+    lightcube_request.gpu_data->xyz_angle[1]      = 0.0f;
+    lightcube_request.gpu_data->xyz_angle[2]      = 0.0f;
+    lightcube_request.cpu_data->zsprite_id        = light->object_id;
+    lightcube_request.cpu_data->visible           = true;
+    lightcube_request.gpu_data->ignore_lighting   = 1.0f;
+    lightcube_request.gpu_data->ignore_camera     = 0.0f;
+    lightcube_request.gpu_data->base_material.alpha = 1.0f;
+    lightcube_request.gpu_data->base_material.diffuse_rgb[0] =
+        light->RGBA[0] * 2.5f;
+    lightcube_request.gpu_data->base_material.diffuse_rgb[1] =
+        light->RGBA[1] * 2.5f;
+    lightcube_request.gpu_data->base_material.diffuse_rgb[2] =
+        light->RGBA[2] * 2.5f;
+    lightcube_request.gpu_data->base_material.rgb_cap[0] = 5.0f;
+    lightcube_request.gpu_data->base_material.rgb_cap[1] = 5.0f;
+    lightcube_request.gpu_data->base_material.rgb_cap[2] = 5.0f;
+    lightcube_request.gpu_data->remove_shadow = true;
+    zsprite_commit(&lightcube_request);
     
     camera.xyz[0] =  0.5f;
     camera.xyz[1] =  1.6f;
@@ -70,23 +102,6 @@ void client_logic_late_startup(void) {
     camera.xyz_angle[0] =  0.7f;
     camera.xyz_angle[1] =  0.0f;
     camera.xyz_angle[2] =  0.0f;
-    
-    //    light = next_zlight();
-    //    light->RGBA[0]       =  0.33f;
-    //    light->RGBA[1]       =  0.33f;
-    //    light->RGBA[2]       =  0.33f;
-    //    light->RGBA[3]       =  1.00f;
-    //    light->ambient       =  1.00f;
-    //    light->diffuse       =  1.00f;
-    //    light->specular      =  0.00f;
-    //    light->reach         =  8.00f;
-    //    light->xyz[0]        =  TEAPOT_X + 1.0f;
-    //    light->xyz[1]        =  TEAPOT_Y - 0.1f;
-    //    light->xyz[2]        =  TEAPOT_Z - 0.05f;
-    //    light->xyz_angle[0]  =  1.00f;
-    //    light->xyz_angle[1]  =  0.00f;
-    //    light->xyz_angle[2]  =  0.00f;
-    //    commit_zlight(light);
     
     #if TEAPOT
     teapot_object_ids[0] = next_nonui_object_id();
@@ -123,28 +138,26 @@ void client_logic_late_startup(void) {
     
     int32_t quad_texture_array_i = -1;
     int32_t quad_texture_i = -1;
-    T1_texture_array_get_filename_location(
-        "1001_albedo.png",
-        &quad_texture_array_i,
-        &quad_texture_i);
-    assert(quad_texture_array_i != -1);
-    assert(quad_texture_i != -1);
+    //    T1_texture_array_get_filename_location(
+    //        "structuredart1.png",
+    //        &quad_texture_array_i,
+    //        &quad_texture_i);
     
     zSpriteRequest quad;
     zsprite_request_next(&quad);
     zsprite_construct_quad(
         /* const float left_x: */
-            TEAPOT_X - 0.15f,
+            TEAPOT_X + 0.75f,
         /* const float bottom_y: */
             TEAPOT_Y - 1.25f,
         /* const float z: */
-            TEAPOT_Z - 0.08f,
+            TEAPOT_Z + 0.2f,
         /* const float width: */
             engineglobals_screenspace_width_to_width(
-                engine_globals->window_width, 1.0f),
+                engine_globals->window_width * 2, 1.0f),
         /* const float height: */
             engineglobals_screenspace_height_to_height(
-                engine_globals->window_height, 1.0f),
+                engine_globals->window_height * 2, 1.0f),
         /* PolygonRequest * stack_recipient: */
             &quad);
     quad.gpu_data->base_material.texturearray_i = quad_texture_array_i;
@@ -159,21 +172,19 @@ void client_logic_late_startup(void) {
     quad.gpu_data->scale_factor           = 1.0f;
     quad.gpu_data->xyz_angle[0]           = 1.8f;
     quad.gpu_data->xyz_angle[1]           = 0.0f;
-    quad.gpu_data->xyz_angle[2]           = 0.0f;
+    quad.gpu_data->xyz_angle[2]           = 0.65f;
     quad.gpu_data->ignore_camera          = 0.0f;
     quad.gpu_data->ignore_lighting        = 0.0f;
     
     quad.gpu_data->base_material.ambient_rgb[0]  = 0.05f;
     quad.gpu_data->base_material.ambient_rgb[1]  = 0.05f;
-    quad.gpu_data->base_material.ambient_rgb[2]  = 0.05f;
+    quad.gpu_data->base_material.ambient_rgb[2]  = 0.50f;
     quad.gpu_data->base_material.alpha           = 1.0f;
     
     zsprite_commit(&quad);
     
-    #if 1
-    #define BLOOM_LABEL_TOCUHABLE_ID 1441003
-    font_settings->font_height = 280;
-    font_settings->touchable_id = BLOOM_LABEL_TOCUHABLE_ID;
+    font_settings->font_height = 50;
+    font_settings->touchable_id = -1;
     font_settings->mat.ambient_rgb[0] =  0.1f;
     font_settings->mat.ambient_rgb[1] =  0.1f;
     font_settings->mat.ambient_rgb[2] =  0.1f;
@@ -190,9 +201,9 @@ void client_logic_late_startup(void) {
         /* const int32_t with_object_id: */
             21,
         /* const char * text_to_draw: */
-            "Bloom",
+            "Welcome",
         /* const float left_pixelspace: */
-            50.0f,
+            250.0f,
         /* const float top_pixelspace: */
             300.0f,
         /* const float z: */
@@ -203,7 +214,6 @@ void client_logic_late_startup(void) {
     log_assert(
         zsprites_to_render->cpu_data[zsprites_to_render->size-1].
             zsprite_id == 21);
-    #endif
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -317,17 +327,8 @@ static void client_handle_keypresses(
     }
 }
 
-static float light_zero_mod = 1.0f;
 void client_logic_update(uint64_t microseconds_elapsed)
 {
-    zlights_to_apply[0].RGBA[0] += (0.01f * light_zero_mod);
-    if (zlights_to_apply[0].RGBA[0] > 2.0f) {
-        light_zero_mod = -1.0f;
-    }
-    if (zlights_to_apply[0].RGBA[0] < 1.2f) {
-        light_zero_mod =  1.0f;
-    }
-    
     if (
         !user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].handled)
     {
@@ -344,21 +345,6 @@ void client_logic_update(uint64_t microseconds_elapsed)
             scheduled_animations_request_bump(
                 /* const int32_t object_id: */
                     20,
-                /* const uint32_t wait: */
-                    0);
-            #endif
-        }
-        
-        if (
-            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                touchable_id_top == BLOOM_LABEL_TOCUHABLE_ID ||
-            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                touchable_id_pierce == 6)
-        {
-            #if SCHEDULED_ANIMS_ACTIVE
-            scheduled_animations_request_bump(
-                /* const int32_t object_id: */
-                    21,
                 /* const uint32_t wait: */
                     0);
             #endif

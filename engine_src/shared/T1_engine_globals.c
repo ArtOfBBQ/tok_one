@@ -90,10 +90,10 @@ void engineglobals_init(void) {
     engine_globals->postprocessing_constants.rgb_add[2] = 0.0f;
     
     #if FOG_ACTIVE
-    engine_globals->postprocessing_constants.fog_color[0] = 0.25f;
-    engine_globals->postprocessing_constants.fog_color[1] = 0.45f;
-    engine_globals->postprocessing_constants.fog_color[2] = 0.25f;
-    engine_globals->postprocessing_constants.fog_factor = 0.05f;
+    engine_globals->postprocessing_constants.fog_color[0] = 1.0f;
+    engine_globals->postprocessing_constants.fog_color[1] = 1.0f;
+    engine_globals->postprocessing_constants.fog_color[2] = 1.0f;
+    engine_globals->postprocessing_constants.fog_factor = 0.0f;
     #endif
     
     engine_globals->last_clickray_origin[0]    = 0.0f;
