@@ -9,6 +9,32 @@
 #include "debigulator/src/decode_bmp.h"
 #include "T1_cpu_gpu_shared_types.h"
 
+
+#define MAX_ASSET_FILENAME_SIZE 30
+#define MAX_ASSET_FILES 1500
+
+#define TEXTUREARRAY_FILENAME_SIZE 128
+typedef struct TextureArrayImage {
+    DecodedImage image;
+    char filename[TEXTUREARRAY_FILENAME_SIZE];
+    bool32_t request_update;
+    bool32_t prioritize_asset_load;
+} TextureArrayImage;
+
+typedef struct TextureArray {
+    TextureArrayImage images[MAX_FILES_IN_SINGLE_TEXARRAY];
+    uint32_t images_size;
+    uint32_t single_img_width;
+    uint32_t single_img_height;
+    bool32_t gpu_initted;
+    bool32_t request_init;
+    bool32_t bc1_compressed;
+} TextureArray;
+
+extern TextureArray * texture_arrays;
+extern uint32_t texture_arrays_size;
+
+
 void T1_texture_array_init(void);
 
 int32_t T1_texture_array_preinit_new_with_known_dimensions(

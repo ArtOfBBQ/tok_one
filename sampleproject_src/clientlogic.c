@@ -28,7 +28,7 @@ void client_logic_early_startup(
     assert(good);
     
     #if TEAPOT
-    teapot_mesh_id = objmodel_new_mesh_id_from_resources(
+    teapot_mesh_id = T1_objmodel_new_mesh_id_from_resources(
         "guitar_simplified.obj",
         "guitar_simplified.mtl");
     if (teapot_mesh_id < 0) {
@@ -52,7 +52,7 @@ void client_logic_late_startup(void) {
     light->RGBA[1]       =  0.30f;
     light->RGBA[2]       =  0.30f;
     light->RGBA[3]       =  1.00f;
-    light->ambient       =  0.10f;
+    light->ambient       =  0.00f;
     light->diffuse       =  1.00f;
     light->specular      =  1.00f;
     light->reach         =  3.00f;
@@ -124,7 +124,7 @@ void client_logic_late_startup(void) {
     int32_t quad_texture_array_i = -1;
     int32_t quad_texture_i = -1;
     T1_texture_array_get_filename_location(
-        "structuredart2.png",
+        "1001_albedo.png",
         &quad_texture_array_i,
         &quad_texture_i);
     assert(quad_texture_array_i != -1);

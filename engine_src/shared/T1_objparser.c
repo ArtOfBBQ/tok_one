@@ -3,7 +3,7 @@
 static void * (* objparser_malloc_func)(size_t);
 static void   (*   objparser_free_func)(void *);
 
-void objparser_init(
+void T1_objparser_init(
     void * (* arg_objparser_malloc_func)(size_t),
     void (* arg_objparser_free_func)(void *))
 {
@@ -276,7 +276,7 @@ static int get_material_i_or_register_new(
     return first_unused_material;
 }
 
-void parse_obj(
+void T1_objparser_parse(
     ParsedObj * recipient,
     const char * raw_buf,
     unsigned int * success)
@@ -962,7 +962,7 @@ void parse_obj(
     return;
 }
 
-void free_obj(ParsedObj * to_free) {
+void T1_objparser_deinit(ParsedObj * to_free) {
     
     if (to_free->quads != 0) {
         objparser_free_func(to_free->quads);

@@ -73,7 +73,7 @@ static void guess_gpu_triangle_normal(GPULockedVertex * to_change) {
 
 static ParsedObj * parsed_obj = NULL;
 
-void objmodel_init(void) {
+void T1_objmodel_init(void) {
     parsed_obj = malloc_from_unmanaged(sizeof(ParsedObj));
     common_memset_char(parsed_obj, 0, sizeof(ParsedObj));
     
@@ -1014,7 +1014,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
         }
     }
     
-    free_obj(arg_parsed_obj);
+    T1_objparser_deinit(arg_parsed_obj);
     
     all_mesh_summaries[all_mesh_summaries_size].mesh_id =
         (int32_t)all_mesh_summaries_size;
@@ -1086,14 +1086,14 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
     return (int32_t)all_mesh_summaries_size - 1;
 }
 
-int32_t objmodel_new_mesh_id_from_obj_mtl_text(
+int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
     const char * obj_text,
     const char * mtl_text)
 {
     log_assert(parsed_obj != NULL);
     
     uint32_t good = 0;
-    parse_obj(
+    T1_objparser_parse(
         /* ParsedObj * recipient: */
             parsed_obj,
         /* char * raw_buffer: */
@@ -1158,7 +1158,7 @@ int32_t objmodel_new_mesh_id_from_obj_mtl_text(
         parsed_materials_size);
 }
 
-int32_t objmodel_new_mesh_id_from_resources(
+int32_t T1_objmodel_new_mesh_id_from_resources(
     const char * obj_filename,
     const char * mtl_filename)
 {
@@ -1232,7 +1232,7 @@ int32_t objmodel_new_mesh_id_from_resources(
         }
     }
     
-    int32_t return_value = objmodel_new_mesh_id_from_obj_mtl_text(
+    int32_t return_value = T1_objmodel_new_mesh_id_from_obj_mtl_text(
         /* const char * obj_text: */
             obj_file_buf.contents,
         /* const char * mtl_text: */
@@ -1246,7 +1246,7 @@ int32_t objmodel_new_mesh_id_from_resources(
     return return_value;
 }
 
-void objmodel_center_mesh_offsets(
+void T1_objmodel_center_mesh_offsets(
     const int32_t mesh_id)
 {
     log_assert(mesh_id < (int32_t)all_mesh_summaries_size);
@@ -1315,7 +1315,7 @@ void objmodel_center_mesh_offsets(
     }
 }
 
-void objmodel_flip_mesh_uvs(const int32_t mesh_id)
+void T1_objmodel_flip_mesh_uvs(const int32_t mesh_id)
 {
     int32_t tail_i =
         all_mesh_summaries[mesh_id].vertices_head_i +
@@ -1337,7 +1337,7 @@ void objmodel_flip_mesh_uvs(const int32_t mesh_id)
     }
 }
 
-void objmodel_flip_mesh_uvs_v(const int32_t mesh_id)
+void T1_objmodel_flip_mesh_uvs_v(const int32_t mesh_id)
 {
     int32_t tail_i =
         all_mesh_summaries[mesh_id].vertices_head_i +
@@ -1444,7 +1444,7 @@ static int32_t find_biggest_area_triangle_head_in(
     return biggest_area_i;
 }
 
-void objmodel_create_shattered_version_of_mesh(
+void T1_objmodel_create_shattered_version_of_mesh(
     const int32_t mesh_id,
     const uint32_t triangles_multiplier)
 {

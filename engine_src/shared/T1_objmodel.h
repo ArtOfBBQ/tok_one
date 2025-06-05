@@ -52,20 +52,20 @@ extern uint32_t all_mesh_summaries_size;
 
 extern LockedVertexWithMaterialCollection * all_mesh_vertices;
 
-void objmodel_init(void);
+void T1_objmodel_init(void);
 
-int32_t objmodel_new_mesh_id_from_obj_mtl_text(
+int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
     const char * obj_text,
     const char * mtl_text);
 
-int32_t objmodel_new_mesh_id_from_resources(
+int32_t T1_objmodel_new_mesh_id_from_resources(
     const char * filename,
     const char * mtl_filename);
 
-void objmodel_center_mesh_offsets(const int32_t mesh_id);
+void T1_objmodel_center_mesh_offsets(const int32_t mesh_id);
 
-void objmodel_flip_mesh_uvs(const int32_t mesh_id);
-void objmodel_flip_mesh_uvs_v(const int32_t mesh_id);
+void T1_objmodel_flip_mesh_uvs(const int32_t mesh_id);
+void T1_objmodel_flip_mesh_uvs_v(const int32_t mesh_id);
 
 /*
 Creates a version of the mesh with (normally needless) extra triangles
@@ -78,7 +78,7 @@ After running this function, the new triangles can be found in:
 all_mesh_summaries[your_mesh_id].shattered_triangles_head_i;
 all_mesh_summaries[your_mesh_id].shattered_triangles_size;
 */
-void objmodel_create_shattered_version_of_mesh(
+void T1_objmodel_create_shattered_version_of_mesh(
     const int32_t mesh_id,
     const uint32_t triangles_mulfiplier);
 

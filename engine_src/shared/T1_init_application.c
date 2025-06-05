@@ -176,7 +176,7 @@ void init_application_before_gpu_init(
     toktoken_init(malloc_from_managed_infoless, &good);
     log_assert(good);
     
-    objparser_init(malloc_from_managed_infoless, free_from_managed);
+    T1_objparser_init(malloc_from_managed_infoless, free_from_managed);
     mtlparser_init(
         malloc_from_managed_infoless,
         strlcat);
@@ -285,7 +285,7 @@ void init_application_before_gpu_init(
     
     T1_material_init(malloc_from_unmanaged);
     
-    objmodel_init();
+    T1_objmodel_init();
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
         sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
     common_memset_char(
@@ -549,7 +549,7 @@ void init_application_after_gpu_init(void) {
     if (application_running) {
         client_logic_early_startup(&success, errmsg);
         
-        T1_texture_array_push_all_preregistered();
+        T1_texture_files_push_all_preregistered();
     }
     
     #define MIN_VERTICES_FOR_SHATTER_EFFECT 400
@@ -559,7 +559,7 @@ void init_application_after_gpu_init(void) {
                 all_mesh_summaries[i].shattered_vertices_size <
                     MIN_VERTICES_FOR_SHATTER_EFFECT)
             {
-                objmodel_create_shattered_version_of_mesh(
+                T1_objmodel_create_shattered_version_of_mesh(
                     /* const int32_t mesh_id: */
                         all_mesh_summaries[i].mesh_id,
                     /* const uint32_t triangles_mulfiplier: */

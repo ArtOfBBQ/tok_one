@@ -10,8 +10,8 @@
 For "client" use in clientlogic.c or similar
 */
 
-DecodedImage * malloc_img_from_filename(
-    const char * filename);
+//DecodedImage * malloc_img_from_filename(
+//    const char * filename);
 
 void T1_texture_files_register_new_by_splitting_file(
     const char * filename,

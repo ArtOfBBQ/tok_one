@@ -988,7 +988,7 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
     log_assert(rgba_values_page_aligned != NULL);
     
     log_assert(texture_i >= 0);
-    log_assert(texture_array_i >= 1); // 0 is reserved for the font
+    log_assert(texture_array_i >= 0);
     
     if (ags->metal_textures[texture_array_i] == NULL) {
         #ifndef LOGGER_IGNORE_ASSERTS

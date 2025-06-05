@@ -1,35 +1,11 @@
 #include "T1_texture_array.h"
 
+
 static uint32_t texture_arrays_mutex_ids[TEXTUREARRAYS_SIZE];
 
-#define MAX_ASSET_FILENAME_SIZE 30
-#define MAX_ASSET_FILES 1500
+TextureArray * texture_arrays = NULL;
+uint32_t texture_arrays_size = 0;
 
-#define HAS_ALPHA_NO 0
-#define HAS_ALPHA_YES 1
-#define HAS_ALPHA_UNCHECKED 2
-
-#define TEXTUREARRAY_FILENAME_SIZE 128
-typedef struct TextureArrayImage {
-    DecodedImage * image;
-    char filename[TEXTUREARRAY_FILENAME_SIZE];
-    bool32_t has_alpha_channel;
-    bool32_t request_update;
-    bool32_t prioritize_asset_load;
-} TextureArrayImage;
-
-typedef struct TextureArray {
-    TextureArrayImage images[MAX_FILES_IN_SINGLE_TEXARRAY];
-    uint32_t images_size;
-    uint32_t single_img_width;
-    uint32_t single_img_height;
-    bool32_t gpu_initted;
-    bool32_t request_init;
-    bool32_t bc1_compressed;
-} TextureArray;
-
-static TextureArray * texture_arrays = NULL;
-static uint32_t texture_arrays_size = 0;
 
 /* returns texturearray_i */
 int32_t T1_texture_array_preinit_new_with_known_dimensions(
@@ -48,9 +24,8 @@ int32_t T1_texture_array_preinit_new_with_known_dimensions(
     texture_arrays[retval].bc1_compressed = true;
     
     for (uint32_t i = 0; i < image_count; i++) {
-        texture_arrays[retval].images[i].image = NULL;
+        texture_arrays[retval].images[i].image.good = 0;
         texture_arrays[retval].images[i].filename[0] = '\0';
-        texture_arrays[retval].images[i].has_alpha_channel = false;
         texture_arrays[retval].images[i].request_update = false;
         texture_arrays[retval].images[i].prioritize_asset_load = false;
     }
@@ -103,10 +78,10 @@ void T1_texture_array_push_all_preregistered(void) {
             uint8_t * rgba_values_page_aligned = NULL;
             
             if (
-                texture_arrays[ta_i].images[t_i].image == NULL ||
-                texture_arrays[ta_i].images[t_i].image->
+                !texture_arrays[ta_i].images[t_i].image.good ||
+                texture_arrays[ta_i].images[t_i].image.
                     rgba_values_freeable == NULL ||
-                texture_arrays[ta_i].images[t_i].image->
+                texture_arrays[ta_i].images[t_i].image.
                     rgba_values_page_aligned == NULL)
             {
                 uint32_t rgba_size =
@@ -150,9 +125,9 @@ void T1_texture_array_push_all_preregistered(void) {
                     rgba_size - (one_third * 2));
             } else {
                 rgba_values_freeable = texture_arrays[ta_i].images[t_i].
-                    image->rgba_values_freeable;
+                    image.rgba_values_freeable;
                 rgba_values_page_aligned = texture_arrays[ta_i].images[t_i].
-                    image->rgba_values_page_aligned;
+                    image.rgba_values_page_aligned;
             }
             
             platform_gpu_push_texture_slice_and_free_rgba_values(
@@ -400,91 +375,6 @@ static DecodedImage * extract_image(
     return new_image;
 }
 
-static void register_to_texturearray_from_images(
-    const int32_t target_texture_array_i,
-    DecodedImage ** new_images,
-    const char ** new_img_filenames,
-    const uint32_t new_images_size)
-{
-    log_assert(target_texture_array_i < TEXTUREARRAYS_SIZE);
-    platform_mutex_lock(texture_arrays_mutex_ids[target_texture_array_i]);
-    log_assert(new_images_size > 0);
-    for (uint32_t i = 0; i < new_images_size; i++) {
-        log_assert(new_images[i] != NULL);
-        if (new_images[i] == NULL) {
-            platform_mutex_unlock(
-                texture_arrays_mutex_ids[target_texture_array_i]);
-            return;
-        }
-        log_assert(new_images[i]->width > 0);
-        log_assert(new_images[i]->height > 0);
-        log_assert(new_images[i]->rgba_values_size > 0);
-        log_assert(new_images[i]->rgba_values_freeable != NULL);
-        log_assert(new_images[i]->rgba_values_page_aligned != NULL);
-    }
-    
-    uint32_t current_width = new_images[0]->width;
-    uint32_t current_height = new_images[0]->height;
-    log_assert(current_width > 0);
-    log_assert(current_height > 0);
-    log_assert(current_width < 100000);
-    log_assert(current_height < 100000);
-    
-    if (texture_arrays[target_texture_array_i].images_size == 0) {
-        // set up a new texturearray that's big enough to hold
-        // x images
-        texture_arrays[target_texture_array_i].single_img_width = current_width;
-        texture_arrays[target_texture_array_i].single_img_height = current_height;
-        // texture_arrays[target_texture_array_i].images_size = 0;
-        texture_arrays[target_texture_array_i].request_init = true;
-    } else {
-        log_assert(
-            texture_arrays[target_texture_array_i].single_img_width ==
-                current_width);
-        log_assert(
-            texture_arrays[target_texture_array_i].single_img_height ==
-                current_height);
-        log_assert(
-            (texture_arrays[target_texture_array_i].images_size +
-                new_images_size) < MAX_FILES_IN_SINGLE_TEXARRAY);
-    }
-    
-    for (
-        uint32_t i = 0;
-        i < new_images_size;
-        i++)
-    {
-        uint32_t texture_i = texture_arrays[target_texture_array_i].images_size;
-        
-        log_assert(new_images[i] != NULL);
-        log_assert(new_images[i]->good);
-        log_assert(new_images[i]->rgba_values_size > 0);
-        log_assert(new_images[i]->width == current_width);
-        log_assert(new_images[i]->height == current_height);
-        texture_arrays[target_texture_array_i].images[texture_i].
-            has_alpha_channel = HAS_ALPHA_UNCHECKED;
-        texture_arrays[target_texture_array_i].images[texture_i].image =
-            new_images[i];
-        texture_arrays[target_texture_array_i].images[texture_i].
-            request_update = true;
-        
-        if (
-            new_img_filenames != NULL &&
-            new_img_filenames[i] != NULL)
-        {
-            log_assert(new_img_filenames[i] != NULL);
-            common_strcpy_capped(
-                texture_arrays[target_texture_array_i].images[texture_i].
-                    filename,
-                128,
-                new_img_filenames[i]);
-        }
-        
-        texture_arrays[target_texture_array_i].images_size += 1;
-    }
-    platform_mutex_unlock(texture_arrays_mutex_ids[target_texture_array_i]);
-}
-
 void T1_texture_array_init(void) {
     
     // initialize texture arrays
@@ -502,9 +392,7 @@ void T1_texture_array_init(void) {
             texture_arrays[i].images[j].request_update = false;
             texture_arrays[i].images[j].prioritize_asset_load = false;
             texture_arrays[i].images[j].filename[0] = '\0';
-            texture_arrays[i].images[j].has_alpha_channel =
-                HAS_ALPHA_UNCHECKED;
-            texture_arrays[i].images[j].image = NULL;
+            texture_arrays[i].images[j].image.good = 0;
         }
     }
 }
@@ -544,17 +432,14 @@ void T1_texture_array_gpu_try_push(void) {
                     if (texture_arrays[i].images[j].request_update) {
                         texture_arrays[i].images[j].request_update = false;
                         #ifndef LOGGER_IGNORE_ASSERTS
-                        log_assert(texture_arrays[i]
-                                .images[j]
-                                .image != NULL);
                         log_assert(
                             texture_arrays[i]
                                 .images[j]
-                                .image->rgba_values_freeable != NULL);
+                                .image.rgba_values_freeable != NULL);
                         log_assert(
                             texture_arrays[i]
                                 .images[j]
-                                .image->rgba_values_page_aligned != NULL);
+                                .image.rgba_values_page_aligned != NULL);
                         #endif
                         
                         if (!application_running) {
@@ -575,14 +460,14 @@ void T1_texture_array_gpu_try_push(void) {
                             /* uint8_t * rgba_values_freeable: */
                                 texture_arrays[i]
                                     .images[j]
-                                    .image->rgba_values_freeable,
+                                    .image.rgba_values_freeable,
                             /* uint8_t * rgba_values_page_aligned: */
                                 texture_arrays[i]
                                     .images[j]
-                                    .image->rgba_values_page_aligned);
+                                    .image.rgba_values_page_aligned);
                         #endif
                         
-                        texture_arrays[i].images[j].image->
+                        texture_arrays[i].images[j].image.
                             rgba_values_page_aligned = NULL;
                     }
                 }
@@ -595,7 +480,7 @@ void T1_texture_array_gpu_try_push(void) {
 static void register_to_texturearray_by_splitting_image(
     DecodedImage * new_image,
     const char * filename_prefix,
-    const int32_t texture_array_i,
+    const int32_t ta_i,
     const uint32_t rows,
     const uint32_t columns)
 {
@@ -607,10 +492,7 @@ static void register_to_texturearray_by_splitting_image(
     log_assert(columns >= 1);
     
     if (new_image->rgba_values_size < 1) { return; }
-    
-    DecodedImage ** subimages = (DecodedImage **)
-        malloc_from_unmanaged(sizeof(DecodedImage *) * rows * columns);
-    
+        
     char * filenames[256];
     for (uint32_t i = 0; i < 256; i++) {
         filenames[i] = malloc_from_managed(256);
@@ -618,12 +500,29 @@ static void register_to_texturearray_by_splitting_image(
     }
     
     // each image should have the exact same dimensions
-    uint32_t expected_width = 0;
-    uint32_t expected_height = 0;
+    uint32_t expected_width = new_image->width / columns;
+    uint32_t expected_height = new_image->height / rows;
+    texture_arrays[ta_i].single_img_width  = expected_width;
+    texture_arrays[ta_i].single_img_height = expected_height;
     
-    for (uint32_t col_i = 0; col_i < columns; col_i++) {
-        for (uint32_t row_i = 0; row_i < rows; row_i++) {
-            DecodedImage * new_img = extract_image(
+    platform_gpu_init_texture_array(
+        /* const int32_t texture_array_i: */
+            ta_i,
+        /* const uint32_t num_images: */
+            rows * columns,
+        /* const uint32_t single_image_width: */
+            texture_arrays[ta_i].single_img_width,
+        /* const uint32_t single_image_height: */
+            texture_arrays[ta_i].single_img_height,
+        /* const uint32_t use_bc1_compression: */
+            false);
+    
+    for (int32_t col_i = 0; col_i < (int32_t)columns; col_i++) {
+        for (int32_t row_i = 0; row_i < (int32_t)rows; row_i++) {
+            
+            int32_t t_i = (row_i * ((int32_t)columns)) + col_i;
+            
+            DecodedImage * split_img = extract_image(
                 /* const DecodedImage * original: */
                     new_image,
                 /* const uint32_t sprite_columns: */
@@ -631,63 +530,60 @@ static void register_to_texturearray_by_splitting_image(
                 /* const uint32_t sprite_rows: */
                     rows,
                 /* const uint32_t x: */
-                    col_i + 1,
+                    (uint32_t)col_i + 1,
                 /* const uint32_t y: */
-                    row_i + 1);
+                    (uint32_t)row_i + 1);
             
-            if (new_img == NULL) {
+            if (split_img == NULL ||
+                split_img->rgba_values_freeable == NULL ||
+                split_img->rgba_values_page_aligned == NULL)
+            {
                 log_assert(0);
                 continue;
             }
-            log_assert(new_img->good);
+            log_assert(split_img->good);
             
-            #if 1
-            // TODO: remove debugging code
-            #endif
-            
-            
-            if (expected_width == 0 || expected_height == 0) {
-                expected_width  = new_img->width;
-                expected_height = new_img->height;
-            } else {
-                log_assert(new_img->width == expected_width);
-                log_assert(new_img->height == expected_height);
-            }
-            subimages[(row_i * columns) + col_i] = new_img;
+            log_assert(split_img->width  == expected_width);
+            log_assert(split_img->height == expected_height);
             
             common_strcpy_capped(
-                filenames[(row_i*columns)+col_i],
+                filenames[(row_i*(int32_t)columns)+col_i],
                 256,
                 filename_prefix);
             common_strcat_capped(
-                filenames[(row_i*columns)+col_i],
+                filenames[(row_i*(int32_t)columns)+col_i],
                 256,
                 "_");
-            common_strcat_uint_capped(
-                filenames[(row_i*columns)+col_i],
+            common_strcat_int_capped(
+                filenames[(row_i*(int32_t)columns)+col_i],
                 256,
                 col_i);
             common_strcat_capped(
-                filenames[(row_i*columns)+col_i],
+                filenames[(row_i*(int32_t)columns)+col_i],
                 256,
                 "_");
-            common_strcat_uint_capped(
-                filenames[(row_i*columns)+col_i],
+            common_strcat_int_capped(
+                filenames[(row_i*(int32_t)columns)+col_i],
                 256,
                 row_i);
+            
+            platform_gpu_push_texture_slice_and_free_rgba_values(
+                /* const int32_t texture_array_i: */
+                    ta_i,
+                /* const int32_t texture_i: */
+                    t_i,
+                /* const uint32_t parent_texture_array_images_size: */
+                    texture_arrays[ta_i].images_size,
+                /* const uint32_t image_width: */
+                    texture_arrays[ta_i].single_img_width,
+                /* const uint32_t image_height: */
+                    texture_arrays[ta_i].single_img_height,
+                /* uint8_t * rgba_values_freeable: */
+                    split_img->rgba_values_freeable,
+                /* uint8_t * rgba_values_page_aligned: */
+                    split_img->rgba_values_page_aligned);
         }
     }
-    
-    DecodedImage ** subimages_dblptr = subimages;
-    register_to_texturearray_from_images(
-        /* target_texture_array_i: */
-            texture_array_i,
-        /* DecodedImage ** new_images : */
-            subimages_dblptr,
-        /* new_img_filenames: */
-            (const char **)filenames,
-        /* new_images_size: */
-            rows * columns);
     
     for (uint32_t i = 0; i < 256; i++) {
         free(filenames[i]);
@@ -703,29 +599,10 @@ void T1_texture_array_register_new_by_splitting_image(
     log_assert(new_image != NULL);
     if (new_image == NULL) { return; }
     
-    int32_t new_texture_array_i = -1;
-    
-    uint32_t expected_width = new_image->width / columns;
-    uint32_t expected_height = new_image->height / rows;
-    
-    for (int32_t i = 0; i < (int32_t)texture_arrays_size; i++) {
-        if (
-            texture_arrays[i].single_img_width == expected_width &&
-            texture_arrays[i].single_img_height == expected_height &&
-            texture_arrays[i].images_size + (rows * columns) <
-                MAX_FILES_IN_SINGLE_TEXARRAY)
-        {
-            new_texture_array_i = i;
-            break;
-        }
-    }
-    
-    if (new_texture_array_i < 0) {
-        new_texture_array_i = (int)texture_arrays_size;
-        texture_arrays[new_texture_array_i].request_init = true;
-        texture_arrays_size++;
-        log_assert(texture_arrays_size <= TEXTUREARRAYS_SIZE);
-    }
+    int32_t new_texture_array_i = (int)texture_arrays_size;
+    texture_arrays[new_texture_array_i].request_init = true;
+    texture_arrays_size++;
+    log_assert(texture_arrays_size <= TEXTUREARRAYS_SIZE);
     
     register_to_texturearray_by_splitting_image(
         /* DecodedImage * new_image: */
@@ -740,25 +617,26 @@ void T1_texture_array_register_new_by_splitting_image(
             columns);
 }
 
-void T1_texture_array_register_high_priority_if_unloaded(
-    const int32_t texture_array_i,
-    const int32_t texture_i)
-{
-    log_assert(texture_array_i >= 0 && texture_i >= 0);
-    
-    if (
-        texture_array_i >= 0
-        && texture_i >= 0
-        && texture_arrays[texture_array_i].images[texture_i].image == NULL
-        && !texture_arrays[texture_array_i]
-            .images[texture_i].prioritize_asset_load)
-    {
-        // asset is needed to go onscreen already but not available,
-        // mark as high priority
-        texture_arrays[texture_array_i].images[texture_i]
-            .prioritize_asset_load = true;
-    }
-}
+// TODO: deprecated
+//void T1_texture_array_register_high_priority_if_unloaded(
+//    const int32_t texture_array_i,
+//    const int32_t texture_i)
+//{
+//    log_assert(texture_array_i >= 0 && texture_i >= 0);
+//    
+//    if (
+//        texture_array_i >= 0
+//        && texture_i >= 0
+//        && texture_arrays[texture_array_i].images[texture_i].image == NULL
+//        && !texture_arrays[texture_array_i]
+//            .images[texture_i].prioritize_asset_load)
+//    {
+//        // asset is needed to go onscreen already but not available,
+//        // mark as high priority
+//        texture_arrays[texture_array_i].images[texture_i]
+//            .prioritize_asset_load = true;
+//    }
+//}
 
 void T1_texture_array_preregister_null_png_from_disk(
     const char * filename)
@@ -854,7 +732,7 @@ void T1_texture_array_decode_null_png_at(
     int32_t j = texture_i;
     
     DecodedImage * new_image =
-    malloc_from_unmanaged(sizeof(DecodedImage));
+        &texture_arrays[texture_array_i].images[texture_i].image;
     new_image->height = texture_arrays[i].single_img_height;
     new_image->width = texture_arrays[i].single_img_width;
     log_assert(new_image->height > 0);
@@ -913,7 +791,6 @@ void T1_texture_array_decode_null_png_at(
     free_from_managed(freeable_rgba_values);
     
     platform_mutex_lock(texture_arrays_mutex_ids[i]);
-    texture_arrays[i].images[j].image = new_image;
     texture_arrays[i].images[j].request_update = true;
     texture_arrays[i].images[j].prioritize_asset_load = false;
     platform_mutex_unlock(texture_arrays_mutex_ids[i]);
@@ -971,11 +848,11 @@ void T1_texture_array_load_font_images(void) {
             /* const uint32_t image_height: */
                 texture_arrays[0].single_img_height,
             /* uint8_t * rgba_values_freeable: */
-                texture_arrays[0].images[i].image->rgba_values_freeable,
+                texture_arrays[0].images[i].image.rgba_values_freeable,
             /* uint8_t * rgba_values_page_aligned: */
-                texture_arrays[0].images[i].image->rgba_values_page_aligned);
+                texture_arrays[0].images[i].image.rgba_values_page_aligned);
         
-        texture_arrays[0].images[i].image->rgba_values_page_aligned = NULL;
+        texture_arrays[0].images[i].image.rgba_values_page_aligned = NULL;
         texture_arrays[0].images[i].request_update = false;
     }
 }
@@ -1004,7 +881,6 @@ void T1_texture_array_decode_all_null_images(void)
                 j++)
             {
                 if (
-                    texture_arrays[i].images[j].image == NULL &&
                     texture_arrays[i].images[j].filename[0] != '\0' &&
                     !texture_arrays[i].bc1_compressed)
                 {
@@ -1085,7 +961,6 @@ void T1_texture_array_decode_all_null_images(void)
         //            /* const int32_t texture_i: */
         //                j);
         
-        log_assert(texture_arrays[i].images[j].image != NULL);
         log_assert(texture_arrays[i].images[j].filename[0] != '\0');
     }
 }
