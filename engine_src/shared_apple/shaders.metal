@@ -1,8 +1,8 @@
 #include <metal_stdlib>
 #include <simd/simd.h>
 
-#include "clientlogic_macro_settings.h"
 #include "T1_cpu_gpu_shared_types.h"
+#include "clientlogic_macro_settings.h"
 
 using namespace metal;
 

@@ -1,6 +1,8 @@
 #ifndef CPU_GPU_SHARED_TYPES_H
 #define CPU_GPU_SHARED_TYPES_H
 
+#include "clientlogic_macro_settings.h"
+
 #define CAMERADEPTH_TEXTUREARRAY_I 30
 #define SHADOWMAP_TEXTUREARRAY_I 31
 

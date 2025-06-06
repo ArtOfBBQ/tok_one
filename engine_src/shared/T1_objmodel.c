@@ -606,7 +606,9 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
     
     uint32_t first_material_head_i =
         T1_material_preappend_locked_material_i(
-            parsed_obj->material_names[0].name);
+            parsed_obj->material_names == NULL ?
+                "default" :
+                parsed_obj->material_names[0].name);
     
     if (parsed_obj->materials_count > 0) {
         // Preregister all materials, starting with the index of the head
