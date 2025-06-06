@@ -120,6 +120,11 @@ void translate_lights(
 
 void delete_zlight(const int32_t with_object_id);
 
+void zlight_point_light_to_location(
+    float * recipient_xyz_angle,
+    const float * from_pos_xyz,
+    const float * point_to_xyz);
+
 #ifdef __cplusplus
 }
 #endif

@@ -27,6 +27,10 @@ run.sh
 # ctags file
 tags
 
+# example textures for future stuff
+resources/1001_metallic.png
+resources/1001_roughness.png
+
 build/*
 test/*
 assetprep/build/*

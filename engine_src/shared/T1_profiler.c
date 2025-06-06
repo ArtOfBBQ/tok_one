@@ -335,11 +335,10 @@ void profiler_draw_labels(void) {
         profiler_backdrop.cpu_data->zsprite_id = profiler_object_id;
         profiler_backdrop.gpu_data->ignore_camera = 1.0f;
         profiler_backdrop.gpu_data->ignore_lighting = 1.0f;
-        profiler_backdrop.materials_size = 1;
-        profiler_backdrop.gpu_materials[0].ambient_rgb[0] = 0.50f;
-        profiler_backdrop.gpu_materials[0].ambient_rgb[1] = 0.50f;
-        profiler_backdrop.gpu_materials[0].ambient_rgb[2] = 0.50f;
-        profiler_backdrop.gpu_materials[0].alpha = 0.75f;
+        profiler_backdrop.gpu_data->base_rgba[0] = 0.50f;
+        profiler_backdrop.gpu_data->base_rgba[1] = 0.50f;
+        profiler_backdrop.gpu_data->base_rgba[2] = 0.50f;
+        profiler_backdrop.gpu_data->base_rgba[3] = 0.75f;
         profiler_backdrop.cpu_data->alpha_blending_enabled = true;
         profiler_backdrop.gpu_data->touchable_id = -1;
         zsprite_commit(&profiler_backdrop);

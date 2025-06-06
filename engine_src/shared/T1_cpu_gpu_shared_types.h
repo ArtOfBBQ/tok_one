@@ -1,6 +1,8 @@
 #ifndef CPU_GPU_SHARED_TYPES_H
 #define CPU_GPU_SHARED_TYPES_H
 
+#include "clientlogic_macro_settings.h"
+
 #define CAMERADEPTH_TEXTUREARRAY_I 30
 #define SHADOWMAP_TEXTUREARRAY_I 31
 
@@ -35,13 +37,15 @@ To manipulate the location, direction, size etc. of our objects, we manipulate
 the parents that contain these (see zpolygons_to_render in zpolygon.h),
 not this.
 */
+#define PARENT_MATERIAL_BASE 4294967295
 typedef struct GPULockedVertex {
-    float        xyz       [3];     // 12 bytes
-    float        normal_xyz[3];     // 12 bytes
-    float        uv        [2];     //  8 bytes
-    unsigned int parent_material_i; // 4 bytes
-    float        padding[3];        // 12 bytes
-} GPULockedVertex;
+    float        xyz       [3];           // 12 bytes
+    float        normal_xyz[3];           // 12 bytes
+    float        uv        [2];           //  8 bytes
+    unsigned int locked_materials_head_i; //  4 bytes
+    unsigned int parent_material_i;       //  4 bytes
+    float        padding[2];              // 12 bytes
+} __attribute__((aligned(32))) GPULockedVertex;
 
 typedef struct GPUCamera {
     float xyz[3];           // 12 bytes
@@ -51,48 +55,40 @@ typedef struct GPUCamera {
     float padding[2];       //  8 bytes
 } GPUCamera;
 
-typedef struct GPUzSprite {
-    float        xyz[3];
-    float        xyz_angle[3];
-    float        bonus_rgb[3];
-    float        xyz_multiplier[3]; // determines width/height/depth
-    float        xyz_offset[3];
-    float        scale_factor;
-    float        ignore_lighting;
-    float        ignore_camera;
-    float        simd_padding[4]; // make sure touchable_id is behind this
-    unsigned int remove_shadow;
-    int          touchable_id;
-} GPUzSprite; // 24 floats (3 SIMD runs)
-
-typedef struct GPUSpriteCollection {
-    GPUzSprite   polygons[MAX_POLYGONS_PER_BUFFER];
-    unsigned int size;
-} GPUSpriteCollection;
-
-#define SPECULAR_GLASS 0.5f
-#define SPECULAR_PLASTIC 0.5f
-#define SPECULAR_QUARTZ 0.57f
-#define SPECULAR_ICE 0.224f
-#define SPECULAR_WATER 0.255f
-#define SPECULAR_MILK 0.277f
-#define SPECULAR_SKIN 0.35f
-#define SPECULAR_SILVER 0.508f
-#define SPECULAR_GOLD 0.62f
-typedef struct GPUzSpriteMaterial {
+typedef struct GPULockedMaterial {
     float ambient_rgb[3];
+    float diffuse_rgb[3];
+    float specular_rgb[3];
     float rgb_cap[3];
     int   texturearray_i;
     int   texture_i;
     int   normalmap_texturearray_i;
     int   normalmap_texture_i;
-    float diffuse;
     float specular;
     float specular_exponent;
     float refraction;
     float alpha;
     float illum;
-} GPUzSpriteMaterial;
+} GPULockedMaterial;
+
+typedef struct GPUzSprite {
+    float             xyz[3];
+    float             xyz_angle[3];
+    float             bonus_rgb[3];
+    float             xyz_multiplier[3]; // determines width/height/depth
+    float             xyz_offset[3];
+    float             scale_factor;
+    float             ignore_lighting;
+    float             ignore_camera;
+    unsigned int      remove_shadow;
+    int               touchable_id;
+    GPULockedMaterial base_material;
+} __attribute__((aligned(32))) GPUzSprite; // 26 floats (? SIMD runs)
+
+typedef struct GPUSpriteCollection {
+    GPUzSprite   polygons[MAX_ZSPRITES_PER_BUFFER];
+    unsigned int size;
+} GPUSpriteCollection;
 
 typedef struct GPULight {
     float xyz[3];
@@ -140,13 +136,17 @@ typedef struct GPUDownsamplingConstants
 typedef struct GPUPostProcessingConstants
 {
     float rgb_add[3];
+    #if FOG_ACTIVE
     float fog_color[3];
+    #endif
     float screen_width;
     float screen_height;
     float nonblur_pct;
     float blur_pct;
     float color_quantization;
+    #if FOG_ACTIVE
     float fog_factor;
+    #endif
     unsigned int timestamp;
     unsigned int lights_size;
     unsigned int shadowcaster_i;

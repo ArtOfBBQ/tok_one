@@ -15,33 +15,37 @@ of the engine for your specific app.
 
 // these will be ignored on platforms where window size/position
 // can't be selected
-#define INITIAL_WINDOW_HEIGHT  667.0f
-#define INITIAL_WINDOW_WIDTH   875.0f // 800.0f// 375.0f
+#define INITIAL_WINDOW_HEIGHT  800.0f
+#define INITIAL_WINDOW_WIDTH  1200.0f // 800.0f// 375.0f
 #define INITIAL_WINDOW_LEFT   1650.0f
 #define INITIAL_WINDOW_BOTTOM  430.0f
 
 
-#define SCHEDULED_ANIMS_ACTIVE 1
+#define SCHEDULED_ANIMS_ACTIVE 0
 #define TERMINAL_ACTIVE 1
-#define RAW_SHADER_ACTIVE 1 // for points and lines
+#define RAW_SHADER_ACTIVE 0 // for points and lines
 #define TEXTURES_ACTIVE 1
 #define BLOOM_ACTIVE 1
-#define PARTICLES_ACTIVE 1
+#define PARTICLES_ACTIVE 0
 #define SHADOWS_ACTIVE 1
-#define AUDIO_ACTIVE 1
-#define ENGINE_SAVEFILE_ACTIVE 1
+#define AUDIO_ACTIVE 0
+#define ENGINE_SAVEFILE_ACTIVE 0
 #define PROFILER_ACTIVE 0
+#define TONE_MAPPING_ACTIVE 0
+#define COLOR_QUANTIZATION_ACTIVE 0
+#define FOG_ACTIVE 1
 
 #define MAX_RENDERING_FRAME_BUFFERS 3 // 3 for triple-buffering
 
 #define MAX_VERTICES_PER_BUFFER 240000
 #define MAX_LIGHTS_PER_BUFFER 3
 
+#define SHADOW_BIAS 0.0001f
+
 /*
 The maximum number of sprites in your app.
 */
-#define MAX_POLYGONS_PER_BUFFER  500
-#define MAX_MATERIALS_PER_POLYGON 2
+#define MAX_ZSPRITES_PER_BUFFER  1000
 #define MAX_LINE_VERTICES 100
 #define MAX_POINT_VERTICES 300
 
@@ -54,8 +58,10 @@ The maximum number of 'scheduled animations' simultaneously running
 #define ALL_MESHES_SIZE 20
 // the max # of triangles in all of your meshes/models combined
 #define ALL_LOCKED_VERTICES_SIZE 240000
-// The max number of 'materials ids' in 1 of your zpolygons
-// #define MAX_MATERIALS_SIZE 10
+
+// The max number of materials in all of your meshes/models combined
+#define MATERIAL_NAME_CAP 256
+#define ALL_LOCKED_MATERIALS_SIZE 10000
 
 // the max # of permanently stored sounds in your app
 #define ALL_PERMASOUNDS_SIZE 100

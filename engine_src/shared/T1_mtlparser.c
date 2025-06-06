@@ -357,6 +357,28 @@ static void parse_rgb_token(
     *good = 1;
 }
 
+static void construct_material(ParsedMaterial * to_construct) {
+    to_construct->name[0] = '\0';
+    to_construct->alpha = 1.0f;
+    to_construct->ambient_map[0] = '\0';
+    to_construct->ambient_rgb[0] = 0.1f;
+    to_construct->ambient_rgb[1] = 0.1f;
+    to_construct->ambient_rgb[2] = 0.1f;
+    to_construct->anisotropy = 0.0f;
+    to_construct->anisotropy_rotation = 0.0f;
+    to_construct->bump_map[0] = '\0';
+    to_construct->bump_map_intensity = 1.0f;
+    to_construct->clearcoat = 0.0f;
+    to_construct->clearcoat_roughness = 0.0f;
+    to_construct->diffuse_map[0] = '\0';
+    to_construct->diffuse_rgb[0] = 1.0f;
+    to_construct->diffuse_rgb[1] = 1.0f;
+    to_construct->diffuse_rgb[2] = 1.0f;
+    to_construct->specular_rgb[0] = 0.1f;
+    to_construct->specular_rgb[1] = 0.1f;
+    to_construct->specular_rgb[2] = 0.1f;
+}
+
 void mtlparser_parse(
     ParsedMaterial * recipient,
     uint32_t * recipient_size,
@@ -515,6 +537,7 @@ void mtlparser_parse(
                     return;
                 }
                 current_material = recipient + *recipient_size;
+                construct_material(current_material);
                 *recipient_size += 1;
                 
                 i++;

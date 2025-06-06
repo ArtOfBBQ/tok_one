@@ -164,7 +164,9 @@ void init_application_before_gpu_init(
         /* memset_function: */
             common_memset_char,
         /* memcpy_function: */
-            common_memcpy);
+            common_memcpy,
+        /* dpng_working_memory_size: */
+            80000000);
     
     #ifndef LOGGER_IGNORE_ASSERTS
     test_simd_functions_floats();
@@ -174,7 +176,7 @@ void init_application_before_gpu_init(
     toktoken_init(malloc_from_managed_infoless, &good);
     log_assert(good);
     
-    objparser_init(malloc_from_managed_infoless, free_from_managed);
+    T1_objparser_init(malloc_from_managed_infoless, free_from_managed);
     mtlparser_init(
         malloc_from_managed_infoless,
         strlcat);
@@ -281,7 +283,9 @@ void init_application_before_gpu_init(
         sizeof(zSpriteCollection));
     zsprites_to_render->size = 0;
     
-    objmodel_init();
+    T1_material_init(malloc_from_unmanaged);
+    
+    T1_objmodel_init();
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
         sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
     common_memset_char(
@@ -311,7 +315,7 @@ void init_application_before_gpu_init(
     #if SCHEDULED_ANIMS_ACTIVE
     scheduled_animations_init();
     #endif
-    texture_array_init();
+    T1_texture_array_init();
     
     // initialize font with fontmetrics.dat
     FileBuffer font_metrics_file;
@@ -365,13 +369,7 @@ void init_application_before_gpu_init(
         pad_to_page_size(sizeof(GPUVertex) * MAX_VERTICES_PER_BUFFER);
     
     gpu_shared_data_collection->polygons_allocation_size =
-        pad_to_page_size(sizeof(GPUzSprite) * MAX_POLYGONS_PER_BUFFER);
-    
-    gpu_shared_data_collection->polygon_materials_allocation_size =
-        pad_to_page_size(
-            sizeof(GPUzSpriteMaterial) *
-            MAX_MATERIALS_PER_POLYGON *
-            MAX_POLYGONS_PER_BUFFER);
+        pad_to_page_size(sizeof(GPUzSprite) * MAX_ZSPRITES_PER_BUFFER);
     
     gpu_shared_data_collection->lights_allocation_size =
         pad_to_page_size(sizeof(GPULight) * MAX_LIGHTS_PER_BUFFER);
@@ -382,6 +380,10 @@ void init_application_before_gpu_init(
     gpu_shared_data_collection->locked_vertices_allocation_size =
         pad_to_page_size(
             sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
+    
+    gpu_shared_data_collection->locked_materials_allocation_size =
+        pad_to_page_size(
+            sizeof(GPULockedMaterial) * ALL_LOCKED_MATERIALS_SIZE);
     
     gpu_shared_data_collection->projection_constants_allocation_size =
         pad_to_page_size(sizeof(GPUProjectionConstants));
@@ -409,13 +411,6 @@ void init_application_before_gpu_init(
             polygon_collection =
                 (GPUSpriteCollection *)malloc_from_unmanaged_aligned(
                     gpu_shared_data_collection->polygons_allocation_size,
-                    page_size);
-        
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].
-            polygon_materials =
-                (GPUzSpriteMaterial *)malloc_from_unmanaged_aligned(
-                    gpu_shared_data_collection->
-                        polygon_materials_allocation_size,
                     page_size);
         
         assert(gpu_shared_data_collection->lights_allocation_size > 0);
@@ -461,6 +456,11 @@ void init_application_before_gpu_init(
             gpu_shared_data_collection->locked_vertices_allocation_size,
             page_size);
     
+    gpu_shared_data_collection->locked_materials =
+        (GPULockedMaterial *)malloc_from_unmanaged_aligned(
+            gpu_shared_data_collection->locked_materials_allocation_size,
+            page_size);
+    
     gpu_shared_data_collection->locked_pjc =
         (GPUProjectionConstants *)malloc_from_unmanaged_aligned(
             gpu_shared_data_collection->projection_constants_allocation_size,
@@ -469,7 +469,7 @@ void init_application_before_gpu_init(
 
 void init_application_after_gpu_init(void) {
     
-    texture_array_load_font_images();
+    T1_texture_array_load_font_images();
     
     FileBuffer perlin_buf;
     perlin_buf.good = false;
@@ -548,6 +548,8 @@ void init_application_after_gpu_init(void) {
     
     if (application_running) {
         client_logic_early_startup(&success, errmsg);
+        
+        T1_texture_files_push_all_preregistered();
     }
     
     #define MIN_VERTICES_FOR_SHATTER_EFFECT 400
@@ -557,7 +559,7 @@ void init_application_after_gpu_init(void) {
                 all_mesh_summaries[i].shattered_vertices_size <
                     MIN_VERTICES_FOR_SHATTER_EFFECT)
             {
-                objmodel_create_shattered_version_of_mesh(
+                T1_objmodel_create_shattered_version_of_mesh(
                     /* const int32_t mesh_id: */
                         all_mesh_summaries[i].mesh_id,
                     /* const uint32_t triangles_mulfiplier: */
@@ -582,13 +584,23 @@ void init_application_after_gpu_init(void) {
         /* size_t n: */
             sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
     platform_gpu_copy_locked_vertices();
+    
+    common_memcpy(
+        /* void * dst: */
+            gpu_shared_data_collection->locked_materials,
+        /* const void * src: */
+            all_mesh_materials->gpu_data,
+        /* size_t n: */
+            sizeof(GPULockedMaterial) * ALL_LOCKED_MATERIALS_SIZE);
+    platform_gpu_copy_locked_materials();
+    
     platform_gpu_update_viewport();
     
     if (engine_globals->fullscreen) {
         platform_enter_fullscreen();
     }
     
-    texture_array_flag_all_to_request_gpu_init();
+    T1_texture_array_flag_all_to_request_gpu_init();
     
     if (application_running) {
         client_logic_late_startup();

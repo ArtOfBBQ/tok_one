@@ -39,7 +39,6 @@ platform layer doesn't need to do anything and can just record values directly
 
 typedef struct EngineGlobals {
     bool32_t draw_mouseptr;
-    bool32_t draw_clickray;
     bool32_t draw_imputed_normals;
     bool32_t draw_triangles;
     bool32_t draw_axes;

@@ -8,6 +8,7 @@
 #include "T1_common.h"
 #include "T1_logger.h"
 #include "T1_triangle.h"
+#include "T1_texture_array.h"
 #include "T1_objparser.h"
 #include "T1_mtlparser.h"
 #include "T1_platform_layer.h"
@@ -19,10 +20,28 @@
 extern "C" {
 #endif
 
+// **********************************************************************
+// **                    Client functions                              **
+// **********************************************************************
+
+// Basic quads and cubes are predefined, they can be used without registering
+// an .obj file.
 #define BASIC_QUAD_MESH_ID 0
 #define BASIC_CUBE_MESH_ID 1
-#define BASIC_POINT_MESH_ID 2 // There's currently no way to draw points
-#define BASIC_LINE_MESH_ID 3 // Drawing lines is became very expensive
+
+// This functions returns a mesh_id
+// Use it in clientlogic_early_startup()
+int32_t T1_objmodel_new_mesh_id_from_resources(
+    const char * filename,
+    const char * mtl_filename,
+    const bool32_t flip_uv_v);
+
+
+// **********************************************************************
+// **                    Internal functions (ignore)                   **
+// **********************************************************************
+
+#define MATERIAL_NAMES_MAX 20
 
 #define OBJ_STRING_SIZE 128
 typedef struct MeshSummary {
@@ -35,7 +54,7 @@ typedef struct MeshSummary {
     float base_depth;
     int32_t shattered_vertices_head_i; // -1 if no shattered version
     int32_t shattered_vertices_size; // 0 if no shattered version
-    char material_names[MAX_MATERIALS_PER_POLYGON][OBJ_STRING_SIZE];
+    uint32_t locked_material_head_i;
     uint32_t materials_size;
 } MeshSummary;
 
@@ -49,20 +68,16 @@ extern uint32_t all_mesh_summaries_size;
 
 extern LockedVertexWithMaterialCollection * all_mesh_vertices;
 
-void objmodel_init(void);
+void T1_objmodel_init(void);
 
-int32_t objmodel_new_mesh_id_from_obj_mtl_text(
+int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
     const char * obj_text,
     const char * mtl_text);
 
-int32_t objmodel_new_mesh_id_from_resources(
-    const char * filename,
-    const char * mtl_filename);
+void T1_objmodel_center_mesh_offsets(const int32_t mesh_id);
 
-void objmodel_center_mesh_offsets(const int32_t mesh_id);
-
-void objmodel_flip_mesh_uvs(const int32_t mesh_id);
-void objmodel_flip_mesh_uvs_v(const int32_t mesh_id);
+void T1_objmodel_flip_mesh_uvs(const int32_t mesh_id);
+void T1_objmodel_flip_mesh_uvs_v(const int32_t mesh_id);
 
 /*
 Creates a version of the mesh with (normally needless) extra triangles
@@ -75,7 +90,7 @@ After running this function, the new triangles can be found in:
 all_mesh_summaries[your_mesh_id].shattered_triangles_head_i;
 all_mesh_summaries[your_mesh_id].shattered_triangles_size;
 */
-void objmodel_create_shattered_version_of_mesh(
+void T1_objmodel_create_shattered_version_of_mesh(
     const int32_t mesh_id,
     const uint32_t triangles_mulfiplier);
 

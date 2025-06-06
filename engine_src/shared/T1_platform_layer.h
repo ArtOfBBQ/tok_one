@@ -67,7 +67,9 @@ extern "C" {
 #endif
 
 // #include "audio.h"
+#include "decode_bmp.h"
 #include "T1_common.h"
+#include "T1_memorystore.h"
 #include "T1_logger.h"
 #include "T1_decodedimage.h"
 #include "T1_engine_globals.h"
@@ -134,6 +136,15 @@ platform_write_file_to_writables(
     const char * filepath_inside_writables,
     const char * output,
     const uint32_t output_size,
+    bool32_t * good);
+
+void
+platform_write_rgba_to_writables(
+    const char * local_filename,
+    uint8_t * rgba,
+    const uint32_t rgba_size,
+    const uint32_t width,
+    const uint32_t height,
     bool32_t * good);
 
 void platform_copy_file(
@@ -206,6 +217,7 @@ void platform_toggle_fullscreen(void);
 void platform_gpu_update_viewport(void);
 
 void platform_gpu_copy_locked_vertices(void);
+void platform_gpu_copy_locked_materials(void);
 
 int32_t platform_gpu_get_touchable_id_at_screen_pos(
     const float screen_x,
@@ -235,6 +247,16 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     const uint32_t image_width,
     const uint32_t image_height,
     uint8_t * bc1_values);
+
+void platform_gpu_fetch_rgba_at(
+    const int32_t texture_array_i,
+    const int32_t texture_i,
+    uint8_t * rgba_recipient,
+    uint32_t * recipient_size,
+    uint32_t * recipient_width,
+    uint32_t * recipient_height,
+    const uint32_t recipient_cap,
+    uint32_t * good);
 #endif
 
 // Some textures are not treated as textures but play a special role

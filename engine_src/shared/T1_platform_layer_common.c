@@ -45,6 +45,61 @@ void platform_write_file_to_writables(
             good);
 }
 
+void
+platform_write_rgba_to_writables(
+    const char * local_filename,
+    uint8_t * rgba,
+    const uint32_t rgba_size,
+    const uint32_t width,
+    const uint32_t height,
+    bool32_t * good)
+{
+    uint32_t bmp_cap = rgba_size + 10000;
+    uint8_t * bmp = malloc_from_managed(bmp_cap);
+    uint32_t bmp_size = 0;
+    
+    for (
+        uint32_t rgba_i = 0;
+        rgba_i < (width * height * 4);
+        rgba_i += 4)
+    {
+        if (
+            rgba[rgba_i+3] == 0)
+        {
+            // Use an ugly purple debug color for transparent pixels
+            rgba[rgba_i+0] = 125;
+            rgba[rgba_i+1] =   0;
+            rgba[rgba_i+2] = 125;
+        }
+    }
+    
+    encode_BMP(
+        /* const uint8_t * rgba :*/
+            rgba,
+        /* const uint64_t rgba_size: */
+            rgba_size,
+        /* const uint32_t width: */
+            width,
+        /* const uint32_t height: */
+            height,
+        /* char * recipient: */
+            (char *)bmp,
+        /* uint32_t * recipient_size: */
+            &bmp_size,
+        /* const int64_t recipient_capacity: */
+            bmp_cap);
+    
+    platform_write_file_to_writables(
+        /* const char * filepath_inside_writables: */
+            local_filename,
+        /* const char * output: */
+            (const char *)bmp,
+        /* const uint32_t output_size: */
+            bmp_size,
+        /* uint32_t * good: */
+            good);
+}
+
 
 bool32_t platform_resource_exists(const char * resource_name) {
     char pathfile[500];

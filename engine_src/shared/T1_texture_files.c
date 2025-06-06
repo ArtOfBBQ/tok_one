@@ -1,12 +1,16 @@
 #include "T1_texture_files.h"
 
-DecodedImage * malloc_img_from_filename(
+static void malloc_img_from_filename(
+    DecodedImage * recipient,
     const char * filename)
 {
     FileBuffer file_buffer;
     file_buffer.size_without_terminator = platform_get_resource_size(filename);
     
-    log_assert(file_buffer.size_without_terminator > 1);
+    if (file_buffer.size_without_terminator < 1) {
+        return;
+    }
+    
     file_buffer.contents =
         (char *)malloc_from_managed(sizeof(char) *
             file_buffer.size_without_terminator + 1);
@@ -20,15 +24,9 @@ DecodedImage * malloc_img_from_filename(
         &file_buffer);
     
     if (!file_buffer.good) {
-        log_append("platform failed to read file: ");
-        log_append(filename);
-        log_append("\n");
         free_from_managed((uint8_t *)file_buffer.contents);
-        return NULL;
+        return;
     }
-    log_assert(file_buffer.good);
-    
-    DecodedImage * new_image = malloc_from_unmanaged(sizeof(DecodedImage));
     
     if (
         file_buffer.contents[1] == 'P' &&
@@ -41,34 +39,33 @@ DecodedImage * malloc_img_from_filename(
             /* const uint64_t compressed_input_size: */
                 file_buffer.size_without_terminator - 1,
             /* uint32_t * out_width: */
-                &new_image->width,
+                &recipient->width,
             /* uint32_t * out_height: */
-                &new_image->height,
+                &recipient->height,
             /* uint32_t * out_good: */
-                &new_image->good);
+                &recipient->good);
         
-        if (!new_image->good) {
+        if (!recipient->good) {
             log_assert(0);
-            // set_unallocated_to_error_image(new_image);
             free_from_managed((uint8_t *)file_buffer.contents);
-            return new_image;
+            return;
         }
         
-        new_image->good = false;
-        new_image->pixel_count = new_image->width * new_image->height;
-        new_image->rgba_values_size = new_image->pixel_count * 4;
+        recipient->good = false;
+        recipient->pixel_count = recipient->width * recipient->height;
+        recipient->rgba_values_size = recipient->pixel_count * 4;
         malloc_from_managed_page_aligned(
             /* void *base_pointer_for_freeing: */
-                (void *)&new_image->rgba_values_freeable,
+                (void *)&recipient->rgba_values_freeable,
             /* void *aligned_subptr: */
-                (void *)&new_image->rgba_values_page_aligned,
+                (void *)&recipient->rgba_values_page_aligned,
             /* const size_t subptr_size: */
-                new_image->rgba_values_size);
+                recipient->rgba_values_size);
         
         common_memset_char(
-            new_image->rgba_values_page_aligned,
+            recipient->rgba_values_page_aligned,
             0,
-            new_image->rgba_values_size);
+            recipient->rgba_values_size);
         
         decode_PNG(
             /* const uint8_t * compressed_input: */
@@ -76,11 +73,11 @@ DecodedImage * malloc_img_from_filename(
             /* const uint64_t compressed_input_size: */
                 file_buffer.size_without_terminator - 1,
             /* out_rgba_values: */
-                new_image->rgba_values_page_aligned,
+                recipient->rgba_values_page_aligned,
             /* rgba_values_size: */
-                new_image->rgba_values_size,
+                recipient->rgba_values_size,
             /* uint32_t * out_good: */
-                &new_image->good);
+                &recipient->good);
     } else if (
         file_buffer.contents[0] == 'B' &&
         file_buffer.contents[1] == 'M')
@@ -91,69 +88,69 @@ DecodedImage * malloc_img_from_filename(
             /* const uint64_t compressed_input_size: */
                 file_buffer.size_without_terminator - 1,
             /* uint32_t * out_width: */
-                &new_image->width,
+                &recipient->width,
             /* uint32_t * out_height: */
-                &new_image->height,
+                &recipient->height,
             /* uint32_t * out_good: */
-                &new_image->good);
+                &recipient->good);
         
-        if (!new_image->good) {
+        if (!recipient->good) {
             log_assert(0);
-            // set_unallocated_to_error_image(new_image);
             free_from_managed((uint8_t *)file_buffer.contents);
-            return new_image;
+            return;
         }
         
-        new_image->good = false;
-        new_image->pixel_count = new_image->width * new_image->height;
-        new_image->rgba_values_size = new_image->pixel_count * 4;
+        recipient->good = false;
+        recipient->pixel_count = recipient->width * recipient->height;
+        recipient->rgba_values_size = recipient->pixel_count * 4;
         malloc_from_managed_page_aligned(
             /* void * base_pointer_for_freeing: */
-                (void *)&new_image->rgba_values_freeable,
+                (void *)&recipient->rgba_values_freeable,
             /* void * aligned_subptr: */
-                (void *)&new_image->rgba_values_page_aligned,
+                (void *)&recipient->rgba_values_page_aligned,
             /* const size_t subptr_size: */
-                new_image->rgba_values_size);
+                recipient->rgba_values_size);
         common_memset_char(
-            new_image->rgba_values_page_aligned,
+            recipient->rgba_values_page_aligned,
             0,
-            new_image->rgba_values_size);
+            recipient->rgba_values_size);
         
         decode_BMP(
             /* raw_input: */ (uint8_t *)file_buffer.contents,
             /* raw_input_size: */ file_buffer.size_without_terminator - 1,
-            /* out_rgba_values: */ new_image->rgba_values_page_aligned,
-            /* out_rgba_values_size: */ new_image->rgba_values_size,
-            /* out_good: */ &new_image->good);
+            /* out_rgba_values: */ recipient->rgba_values_page_aligned,
+            /* out_rgba_values_size: */ recipient->rgba_values_size,
+            /* out_good: */ &recipient->good);
     } else {
         log_append("unrecognized file format in: ");
         log_append(filename);
         log_append_char('\n');
-        new_image->good = false;
+        recipient->good = false;
     }
     free_from_managed(file_buffer.contents);
     
-    if (!new_image->good) {
-        log_assert(0);
-        // set_allocated_to_error_image(new_image);
-        return new_image;
+    if (!recipient->good) {
+        return;
     }
     
-    log_assert(new_image->pixel_count * 4 == new_image->rgba_values_size);
-    log_assert(new_image->pixel_count == new_image->width * new_image->height);
+    log_assert(recipient->pixel_count * 4 == recipient->rgba_values_size);
+    log_assert(recipient->pixel_count == recipient->width * recipient->height);
         
-    log_assert(new_image->good);
-    return new_image;
+    log_assert(recipient->good);
+    return;
 }
 
-void texture_array_register_new_by_splitting_file(
+void T1_texture_files_register_new_by_splitting_file(
     const char * filename,
     const uint32_t rows,
     const uint32_t columns)
 {
-    DecodedImage * img = malloc_img_from_filename(filename);
-    log_assert(img != NULL);
-    if (img == NULL) { return; }
+    DecodedImage stack_img;
+    DecodedImage * img = &stack_img;
+    malloc_img_from_filename(img, filename);
+    
+    log_assert(img->good);
+    if (!img->good) { return; }
     
     char filename_prefix[256];
     common_strcpy_capped(filename_prefix, 256, filename);
@@ -163,14 +160,14 @@ void texture_array_register_new_by_splitting_file(
     }
     filename_prefix[i] = '\0';
     
-    texture_array_register_new_by_splitting_image(
+    T1_texture_array_register_new_by_splitting_image(
         img,
         filename_prefix,
         rows,
         columns);
 }
 
-void texture_files_preregister_png_resource(
+void T1_texture_files_preregister_png_resource(
     const char * filename,
     uint32_t * good)
 {
@@ -204,7 +201,7 @@ void texture_files_preregister_png_resource(
         free_from_managed(buf.contents);
         return;
     }
-    texture_array_preregister_null_image(
+    T1_texture_array_preregister_null_image(
         /* const char * filename: */
             filename,
         /* const uint32_t height: */
@@ -216,7 +213,38 @@ void texture_files_preregister_png_resource(
     *good = 1;
 }
 
-void texture_files_decode_png_resource(
+void T1_texture_files_push_all_preregistered(void) {
+    
+    for (uint32_t ta_i = 1; ta_i < texture_arrays_size; ta_i++) {
+        log_assert(texture_arrays[ta_i].images_size > 0);
+        log_assert(texture_arrays[ta_i].images_size < MAX_FILES_IN_SINGLE_TEXARRAY);
+        log_assert(texture_arrays[ta_i].single_img_width > 0);
+        log_assert(texture_arrays[ta_i].single_img_height > 0);
+        
+        for (
+            uint32_t t_i = 0;
+            t_i < texture_arrays[ta_i].images_size;
+            t_i++)
+        {
+            log_assert(texture_arrays[ta_i].images[t_i].filename[0] != '\0');
+            log_assert(!texture_arrays[ta_i].images[t_i].image.good);
+            log_assert(texture_arrays[ta_i].images[t_i].image.rgba_values_freeable == NULL);
+            log_assert(texture_arrays[ta_i].images[t_i].image.rgba_values_page_aligned == NULL);
+            log_assert(texture_arrays[ta_i].images[t_i].image.rgba_values_size == 0);
+            
+            // texture_arrays[ta_i].images[t_i].image
+            malloc_img_from_filename(
+                /* DecodedImage * recipient: */
+                    &texture_arrays[ta_i].images[t_i].image,
+                /* const char * filename: */
+                    texture_arrays[ta_i].images[t_i].filename);
+        }
+    }
+    
+    T1_texture_array_push_all_preregistered();
+}
+
+void T1_texture_files_decode_png_resource(
     const char * filename,
     uint32_t * good)
 {
@@ -224,7 +252,7 @@ void texture_files_decode_png_resource(
     
     int32_t texture_array_i = -1;
     int32_t texture_i = -1;
-    texture_array_get_filename_location(
+    T1_texture_array_get_filename_location(
             filename,
         /* int32_t * texture_array_i_recipient: */
             &texture_array_i,
@@ -236,6 +264,7 @@ void texture_files_decode_png_resource(
     }
     
     FileBuffer file_buffer;
+    file_buffer.good = 0;
     file_buffer.size_without_terminator = platform_get_resource_size(
         filename);
     
@@ -249,7 +278,7 @@ void texture_files_decode_png_resource(
     
     log_assert(file_buffer.good);
     
-    texture_array_decode_null_png_at(
+    T1_texture_array_decode_null_png_at(
         /* const uint8_t * rgba_values: */
             (uint8_t *)file_buffer.contents,
         /* const uint32_t rgba_values_size: */

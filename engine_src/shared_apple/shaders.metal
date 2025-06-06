@@ -1,8 +1,8 @@
 #include <metal_stdlib>
 #include <simd/simd.h>
 
-#include "clientlogic_macro_settings.h"
 #include "T1_cpu_gpu_shared_types.h"
+#include "clientlogic_macro_settings.h"
 
 using namespace metal;
 
@@ -175,10 +175,9 @@ typedef struct
     float2 texture_coordinate;
     float3 worldpos;
     float3 normal;
-    float3 bonus_rgb [[ flat ]];
-    int32_t material_i [[ flat ]];
+    unsigned int locked_vertex_i [[ flat ]];
+    unsigned int polygon_i [[ flat ]];
     int32_t touchable_id [[ flat ]];
-    float ignore_lighting [[ flat ]];
     float point_size [[ point_size ]];
 } RasterizerPixel;
 
@@ -206,63 +205,59 @@ vertex_shader(
 {
     RasterizerPixel out;
     
-    uint polygon_i = vertices[vertex_i].polygon_i;
-    
-    uint locked_vertex_i = vertices[vertex_i].locked_vertex_i;
-    
-    uint locked_material_i = (polygon_i * MAX_MATERIALS_PER_POLYGON) +
-        locked_vertices[locked_vertex_i].parent_material_i;
+    out.polygon_i = vertices[vertex_i].polygon_i;
+    out.locked_vertex_i = vertices[vertex_i].locked_vertex_i;
     
     float3 parent_mesh_position = vector_float3(
-        polygons[polygon_i].xyz[0],
-        polygons[polygon_i].xyz[1],
-        polygons[polygon_i].xyz[2]);
+        polygons[out.polygon_i].xyz[0],
+        polygons[out.polygon_i].xyz[1],
+        polygons[out.polygon_i].xyz[2]);
     
     float3 mesh_vertices = vector_float3(
-        locked_vertices[locked_vertex_i].xyz[0],
-        locked_vertices[locked_vertex_i].xyz[1],
-        locked_vertices[locked_vertex_i].xyz[2]);
+        locked_vertices[out.locked_vertex_i].xyz[0],
+        locked_vertices[out.locked_vertex_i].xyz[1],
+        locked_vertices[out.locked_vertex_i].xyz[2]);
     
     float3 vertex_multipliers = vector_float3(
-        polygons[polygon_i].xyz_multiplier[0],
-        polygons[polygon_i].xyz_multiplier[1],
-        polygons[polygon_i].xyz_multiplier[2]);
+        polygons[out.polygon_i].xyz_multiplier[0],
+        polygons[out.polygon_i].xyz_multiplier[1],
+        polygons[out.polygon_i].xyz_multiplier[2]);
     
     float3 vertex_offsets = vector_float3(
-        polygons[polygon_i].xyz_offset[0],
-        polygons[polygon_i].xyz_offset[1],
-        polygons[polygon_i].xyz_offset[2]);
+        polygons[out.polygon_i].xyz_offset[0],
+        polygons[out.polygon_i].xyz_offset[1],
+        polygons[out.polygon_i].xyz_offset[2]);
     
     mesh_vertices *= vertex_multipliers;
     mesh_vertices += vertex_offsets;
     
-    mesh_vertices *= polygons[polygon_i].scale_factor;
+    mesh_vertices *= polygons[out.polygon_i].scale_factor;
     
     float3 mesh_normals = vector_float3(
-        locked_vertices[locked_vertex_i].normal_xyz[0],
-        locked_vertices[locked_vertex_i].normal_xyz[1],
-        locked_vertices[locked_vertex_i].normal_xyz[2]);
+        locked_vertices[out.locked_vertex_i].normal_xyz[0],
+        locked_vertices[out.locked_vertex_i].normal_xyz[1],
+        locked_vertices[out.locked_vertex_i].normal_xyz[2]);
     
     // rotate vertices
     float3 x_rotated_vertices = x_rotate(
         mesh_vertices,
-        polygons[polygon_i].xyz_angle[0]);
+        polygons[out.polygon_i].xyz_angle[0]);
     float3 y_rotated_vertices = y_rotate(
         x_rotated_vertices,
-        polygons[polygon_i].xyz_angle[1]);
+        polygons[out.polygon_i].xyz_angle[1]);
     float3 z_rotated_vertices = z_rotate(
         y_rotated_vertices,
-        polygons[polygon_i].xyz_angle[2]);
+        polygons[out.polygon_i].xyz_angle[2]);
     
     float3 x_rotated_normal  = x_rotate(
         mesh_normals,
-        polygons[polygon_i].xyz_angle[0]);
+        polygons[out.polygon_i].xyz_angle[0]);
     float3 y_rotated_normal  = y_rotate(
         x_rotated_normal,
-        polygons[polygon_i].xyz_angle[1]);
+        polygons[out.polygon_i].xyz_angle[1]);
     out.normal = z_rotate(
         y_rotated_normal,
-        polygons[polygon_i].xyz_angle[2]);
+        polygons[out.polygon_i].xyz_angle[2]);
     
     // translate to world position
     out.worldpos = z_rotated_vertices + parent_mesh_position;
@@ -285,27 +280,18 @@ vertex_shader(
         -camera->xyz_angle[2]);
     
     float ic = clamp(
-        polygons[polygon_i].ignore_camera,
+        polygons[out.polygon_i].ignore_camera,
         0.0f,
         1.0f);
     float3 final_pos =
         (out.worldpos * ic) +
         (cam_z_rotated * (1.0f - ic));
     
-    out.bonus_rgb = vector_float3(
-        polygons[polygon_i].bonus_rgb[0],
-        polygons[polygon_i].bonus_rgb[1],
-        polygons[polygon_i].bonus_rgb[2]);
-    
-    out.material_i = locked_material_i;
-    
-    out.touchable_id = polygons[polygon_i].touchable_id;
+    out.touchable_id = polygons[out.polygon_i].touchable_id;
     
     out.texture_coordinate = vector_float2(
-        locked_vertices[locked_vertex_i].uv[0],
-        locked_vertices[locked_vertex_i].uv[1]);
-    
-    out.ignore_lighting = polygons[polygon_i].ignore_lighting;
+        locked_vertices[out.locked_vertex_i].uv[0],
+        locked_vertices[out.locked_vertex_i].uv[1]);
     
     out.point_size = 40.0f;
     
@@ -367,27 +353,67 @@ static FragmentAndTouchableOut pack_color_and_touchable_id(
     return return_value;
 }
 
-float3 get_lighting(
+// Gets the color given a material and lighting setup
+float4 get_lit(
     #if SHADOWS_ACTIVE
     texture2d<float> shadow_map,
     #endif
+    array<texture2d_array<half>, TEXTUREARRAYS_SIZE> color_textures,
     const device GPUCamera * camera,
     const device GPULight * lights,
     const device GPUProjectionConstants * projection_constants,
-    const device GPUzSpriteMaterial * fragment_material,
+    const device GPUzSprite * zsprite,
+    const device GPULockedMaterial * material,
     const device GPUPostProcessingConstants * updating_globals,
     float3 fragment_worldpos,
     float3 fragment_normal,
-    float ignore_lighting)
+    float2 texture_coordinate)
 {
-    float3 return_value = vector_float3(
-        fragment_material->ambient_rgb[0],
-        fragment_material->ambient_rgb[1],
-        fragment_material->ambient_rgb[2]);
+    float4 lit_color = vector_float4(
+        0.0f,
+        0.0f,
+        0.0f,
+        1.0f);
     
-    if (ignore_lighting >= 0.95f) { return return_value; }
+    float4 ambient_base = vector_float4(
+        material->ambient_rgb[0],
+        material->ambient_rgb[1],
+        material->ambient_rgb[2],
+        1.0f);
+    float4 diffuse_base = vector_float4(
+        material->diffuse_rgb[0],
+        material->diffuse_rgb[1],
+        material->diffuse_rgb[2],
+        1.0f);
+    float4 specular_base = vector_float4(
+        material->specular_rgb[0],
+        material->specular_rgb[1],
+        material->specular_rgb[2],
+        1.0f);
     
-    float3 light_multiplier = vector_float3(0.0f, 0.0f, 0.0f);
+    float4 diffuse_texture_sample = vector_float4(0.75f, 0.75f, 0.75f, 1.0f);
+    
+    #if TEXTURES_ACTIVE
+    if (material->texturearray_i >= 0)
+    {
+    #else
+    if (material->texturearray_i == 0)
+    {
+    #endif
+        constexpr sampler texture_sampler(
+            mag_filter::linear,
+            min_filter::linear);
+        
+        // Sample the texture to obtain a color
+        const half4 color_sample =
+            color_textures[material->texturearray_i].sample(
+                texture_sampler,
+                texture_coordinate,
+                material->texture_i);
+        diffuse_texture_sample = float4(color_sample);
+    }
+    
+    float4 ignore_lighting_color = diffuse_texture_sample * diffuse_base;
     
     for (
         uint32_t i = 0;
@@ -399,17 +425,19 @@ float3 get_lighting(
             lights[i].xyz[0],
             lights[i].xyz[1],
             lights[i].xyz[2]);
-        float3 light_color = vector_float3(
+        float4 light_color = vector_float4(
             lights[i].rgb[0],
             lights[i].rgb[1],
-            lights[i].rgb[2]);
+            lights[i].rgb[2],
+            1.0f);
+        
+        float shadow_factor = 1.0f;
+        #if SHADOWS_ACTIVE
         float3 light_angle_xyz = vector_float3(
             lights[i].angle_xyz[0],
             lights[i].angle_xyz[1],
             lights[i].angle_xyz[2]);
         
-        float shadow_factor = 1.0f;
-        #if SHADOWS_ACTIVE
         if (updating_globals->shadowcaster_i == i) {
             constexpr sampler shadow_sampler(
                 mag_filter::nearest,
@@ -443,7 +471,7 @@ float3 get_lighting(
             float frag_depth = light_clip_pos.z / light_clip_pos.w;
             
             shadow_factor =
-                (frag_depth <= shadow_depth + 0.00002f) ?
+                (frag_depth <= shadow_depth + SHADOW_BIAS) ?
                     1.0f : 0.25f;
         }
         #endif
@@ -461,11 +489,11 @@ float3 get_lighting(
         
         attenuation = clamp(attenuation, 0.00f, 1.00f);
         
-        light_multiplier += (
+        float4 light_ambient_multiplier =
             attenuation *
             light_color *
             lights[i].ambient *
-            shadow_factor);
+            shadow_factor;
         
         // if light is at 2,2,2 and rotated_pos is at 1,1,1, we need +1/+1/+1
         // to go from the rotated_pos to the light
@@ -479,15 +507,23 @@ float3 get_lighting(
                 dot(
                     fragment_normal,
                     object_to_light),
-                0.0f);
+                0.0f) * 0.85f + 0.15f;
         
-        light_multiplier += (
-            light_color *
+        lit_color += (
+            ambient_base *
+            light_ambient_multiplier);
+        
+        float4 light_diffuse_multiplier =
             attenuation *
-            lights[i].diffuse *
-            fragment_material->diffuse *
+            light_color *
             diffuse_dot *
-            shadow_factor);
+            lights[i].diffuse *
+            shadow_factor;
+        
+        lit_color += (
+            diffuse_base *
+            diffuse_texture_sample *
+            light_diffuse_multiplier);
         
         // specular lighting
         float3 object_to_view = normalize(
@@ -504,24 +540,41 @@ float3 get_lighting(
             max(
                 dot(object_to_view, reflection_ray),
                 0.0),
-            32);
-        light_multiplier += (
-            fragment_material->specular *
-            specular_dot *
-            light_color *
-            lights[i].specular *
+            material->specular_exponent);
+        
+        lit_color += (
+            specular_base *
             attenuation *
+            light_color *
+            specular_dot *
+            lights[i].specular *
+            material->specular *
             shadow_factor);
     }
     
-    light_multiplier = clamp(light_multiplier, 0.05f, 7.5f);
+    lit_color += vector_float4(
+        zsprite->bonus_rgb[0],
+        zsprite->bonus_rgb[1],
+        zsprite->bonus_rgb[2],
+        0.0f);
     
-    // float3 all_ones = vector_float3(1.0f, 1.0f, 1.0f);
-    return_value *=
-        ((1.0f - ignore_lighting) * light_multiplier) +
-        (ignore_lighting * vector_float3(0.75f, 0.75f, 0.75f));
+    lit_color =
+        ((1.0f - zsprite->ignore_lighting) * lit_color) +
+        (zsprite->ignore_lighting * ignore_lighting_color);
     
-    return return_value;
+    float4 rgba_cap = vector_float4(
+        material->rgb_cap[0],
+        material->rgb_cap[1],
+        material->rgb_cap[2],
+        1.0f);
+    
+    lit_color = clamp(lit_color, 0.0f, rgba_cap);
+    
+    return vector_float4(
+        lit_color[0],
+        lit_color[1],
+        lit_color[2],
+        material->alpha * ignore_lighting_color[3]);;
 }
 
 fragment FragmentAndTouchableOut
@@ -532,81 +585,54 @@ fragment_shader(
     #if SHADOWS_ACTIVE
     texture2d<float> shadow_map [[texture(SHADOWMAP_TEXTUREARRAY_I)]],
     #endif
+    const device GPULockedVertex * locked_vertices [[ buffer(0) ]],
+    const device GPUzSprite * polygons [[ buffer(1) ]],
     const device GPULight * lights [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
-    const device GPUzSpriteMaterial * polygon_materials [[ buffer(6) ]],
+    const device GPULockedMaterial * locked_materials [[ buffer(6) ]],
     const device GPUPostProcessingConstants * updating_globals [[ buffer(7) ]])
 {
-    if (
-        in.material_i < 0 ||
-        in.material_i >= MAX_POLYGONS_PER_BUFFER * MAX_MATERIALS_PER_POLYGON)
-    {
-        discard_fragment();
-    }
+    unsigned int material_i =
+        locked_vertices[in.locked_vertex_i].parent_material_i;
+    const device GPULockedMaterial * material =
+        material_i == PARENT_MATERIAL_BASE ?
+            &polygons[in.polygon_i].base_material :
+            &locked_materials[locked_vertices[in.locked_vertex_i].locked_materials_head_i + material_i];
     
-    float3 lighting = get_lighting(
+    float4 lit_color = get_lit(
         #if SHADOWS_ACTIVE
             shadow_map,
         #endif
+            color_textures,
         /* const device GPUCamera * camera: */
             camera,
         /* const device GPULight * lights: */
             lights,
         /* const device GPUProjectionConstants * projection_constants: */
             projection_constants,
+        /* const device zSprite * zsprite: */
+            &polygons[in.polygon_i],
         /* const device GPUPolygonMaterial * fragment_material: */
-            &polygon_materials[in.material_i],
+            material,
         /* const device GPUPostProcessingConstants * updating_globals: */
             updating_globals,
         /* float3 fragment_worldpos: */
             in.worldpos,
         /* float3 fragment_normal: */
             in.normal,
-        /* float ignore_lighting: */
-            in.ignore_lighting);
-    
-    float4 out_color = vector_float4(
-        polygon_materials[in.material_i].ambient_rgb[0],
-        polygon_materials[in.material_i].ambient_rgb[1],
-        polygon_materials[in.material_i].ambient_rgb[2],
-        polygon_materials[in.material_i].alpha);
-    
-    float4 texture_sample = vector_float4(1.0f, 1.0f, 1.0f, 1.0f);
-    
-    #if TEXTURES_ACTIVE
-    if (
-        polygon_materials[in.material_i].texturearray_i >= 0)
-    {
-    #else
-    if (
-        polygon_materials[in.material_i].texturearray_i == 0)
-    {
-    #endif
-        constexpr sampler textureSampler(
-            mag_filter::linear,
-            min_filter::linear);
-        
-        // Sample the texture to obtain a color
-        const half4 color_sample =
-        color_textures[polygon_materials[in.material_i].texturearray_i].sample(
-            textureSampler,
-            in.texture_coordinate,
-            polygon_materials[in.material_i].texture_i);
-        texture_sample = float4(color_sample);
-    }
-    
-    out_color = out_color * texture_sample * vector_float4(lighting, 1.0f);
+        /* float2 texture_coordinate: */
+            in.texture_coordinate);
     
     int diamond_size = 35.0f;
     int neghalfdiamond = -1.0f * (diamond_size / 2);
     
-    int alpha_tresh = (int)(out_color[3] * diamond_size);
+    int alpha_tresh = (int)(lit_color[3] * diamond_size);
     
     if (
-        out_color[3] < 0.05f ||
+        lit_color[3] < 0.05f ||
         (
-            out_color[3] < 0.95f &&
+            lit_color[3] < 0.95f &&
             (
                 abs((neghalfdiamond + (int)in.position.x % diamond_size)) +
                 abs((neghalfdiamond + (int)in.position.y % diamond_size))
@@ -616,19 +642,8 @@ fragment_shader(
         discard_fragment();
     }
     
-    out_color += vector_float4(in.bonus_rgb, 0.0f);
-    
-    out_color[3] = 1.0f;
-    float4 rgba_cap = vector_float4(
-        polygon_materials[in.material_i].rgb_cap[0],
-        polygon_materials[in.material_i].rgb_cap[1],
-        polygon_materials[in.material_i].rgb_cap[2],
-        1.0f);
-    
-    out_color = clamp(out_color, 0.0f, rgba_cap);
-    
     FragmentAndTouchableOut packed_out =
-        pack_color_and_touchable_id(out_color, in.touchable_id);
+        pack_color_and_touchable_id(lit_color, in.touchable_id);
     
     return packed_out;
 }
@@ -641,80 +656,48 @@ alphablending_fragment_shader(
     #if SHADOWS_ACTIVE
     texture2d<float> shadow_map [[texture(SHADOWMAP_TEXTUREARRAY_I)]],
     #endif
+    const device GPULockedVertex * locked_vertices [[ buffer(0) ]],
+    const device GPUzSprite * polygons [[ buffer(1) ]],
     const device GPULight * lights [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
-    const device GPUzSpriteMaterial * polygon_materials [[ buffer(6) ]],
+    const device GPULockedMaterial * locked_materials [[ buffer(6) ]],
     const device GPUPostProcessingConstants * updating_globals [[ buffer(7) ]])
 {
-    float3 lighting = get_lighting(
+    unsigned int material_i =
+        locked_vertices[in.locked_vertex_i].parent_material_i;
+    
+    const device GPULockedMaterial * material =
+        material_i == PARENT_MATERIAL_BASE ?
+            &polygons[in.polygon_i].base_material :
+            &locked_materials[locked_vertices[in.locked_vertex_i].locked_materials_head_i + material_i];
+    
+    float4 lit_color = get_lit(
         #if SHADOWS_ACTIVE
         /* texture2d<float> shadow_map: */
             shadow_map,
         #endif
+            color_textures,
         /* const device GPUCamera * camera: */
             camera,
         /* const device GPULight * lights: */
             lights,
         /* const device GPUProjectionConstants * projection_constants: */
             projection_constants,
+        /* const device GPUzSprite zsprite: */
+            &polygons[in.polygon_i],
         /* const device GPUPolygonMaterial * fragment_material: */
-            &polygon_materials[in.material_i],
+            material,
         /* const device GPUPostProcessingConstants * updating_globals: */
             updating_globals,
         /* float3 fragment_worldpos: */
             in.worldpos,
         /* float3 fragment_normal: */
             in.normal,
-        /* float ignore_lighting: */
-            in.ignore_lighting);
+        /* float2 texture_coordinate: */
+            in.texture_coordinate);
     
-    float4 out_color = vector_float4(
-        polygon_materials[in.material_i].ambient_rgb[0],
-        polygon_materials[in.material_i].ambient_rgb[1],
-        polygon_materials[in.material_i].ambient_rgb[2],
-        polygon_materials[in.material_i].alpha);
-    
-    #if TEXTURES_ACTIVE
-    if (
-        polygon_materials[in.material_i].texturearray_i < 0 ||
-        polygon_materials[in.material_i].texture_i < 0)
-    {
-    #else
-    if (
-        polygon_materials[in.material_i].texturearray_i != 0 ||
-        polygon_materials[in.material_i].texture_i < 0)
-    {
-    #endif
-        
-    } else {
-        constexpr sampler textureSampler(
-            mag_filter::nearest,
-            min_filter::nearest);
-        
-        // Sample the texture to obtain a color
-        const half4 color_sample =
-        color_textures[polygon_materials[in.material_i].texturearray_i].sample(
-            textureSampler,
-            in.texture_coordinate,
-            polygon_materials[in.material_i].texture_i);
-        float4 texture_sample = float4(color_sample);
-        
-        out_color *= texture_sample;
-    }
-    
-    out_color *= vector_float4(lighting, 1.0f);
-    
-    out_color += vector_float4(in.bonus_rgb, 0.0f);
-    
-    float4 rgba_cap = vector_float4(
-        polygon_materials[in.material_i].rgb_cap[0],
-        polygon_materials[in.material_i].rgb_cap[1],
-        polygon_materials[in.material_i].rgb_cap[2],
-        1.0f);
-    out_color = clamp(out_color, 0.0f, rgba_cap);
-    
-    return pack_color_and_touchable_id(out_color, in.touchable_id);
+    return pack_color_and_touchable_id(lit_color, in.touchable_id);
 }
 
 // TODO: just pass this directly to fragment shader
@@ -768,12 +751,14 @@ single_quad_vertex_shader(
     
     out.color_quantization = constants->color_quantization;
     
+    #if FOG_ACTIVE
     out.fog_factor = constants->fog_factor;
     out.fog_rgb = vector_half4(
         constants->fog_color[0],
         constants->fog_color[1],
         constants->fog_color[2],
         1.0h);
+    #endif
     
     return out;
 }
@@ -834,13 +819,17 @@ single_quad_fragment_shader(
         (color_sample * (1.0h - dist));
     
     // reinhard tone mapping
-    color_sample = color_sample / (color_sample + 0.20h);
+    #if TONE_MAPPING_ACTIVE
+    color_sample = color_sample / (color_sample + 0.30h);
+    #endif
     color_sample = clamp(color_sample, 0.0h, 1.0h);
     
+    #if COLOR_QUANTIZATION_ACTIVE
     if (in.color_quantization > 1.0h) {
         color_sample = floor(color_sample * in.color_quantization) /
             (in.color_quantization - 1.0h);
     }
+    #endif
     
     color_sample[3] = 1.0h;
     

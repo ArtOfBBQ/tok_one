@@ -364,7 +364,7 @@ void client_logic_early_startup(
     
     const char * fontfile = "font.png";
     if (platform_resource_exists("font.png")) {
-        texture_array_register_new_by_splitting_file(
+        T1_texture_files_register_new_by_splitting_file(
             /* filename : */ fontfile,
             /* rows     : */ 10,
             /* columns  : */ 10);

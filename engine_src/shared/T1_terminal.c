@@ -126,13 +126,16 @@ void terminal_redraw_backgrounds(void) {
         /* zPolygon * recipien: */
             &current_command_input);
     
-    current_command_input.gpu_materials[0].ambient_rgb[0] =
+    current_command_input.gpu_data->base_material.ambient_rgb[0] = 0.0f;
+    current_command_input.gpu_data->base_material.ambient_rgb[1] = 0.0f;
+    current_command_input.gpu_data->base_material.ambient_rgb[2] = 0.0f;
+    current_command_input.gpu_data->base_material.diffuse_rgb[0] =
         term_background_color[0];
-    current_command_input.gpu_materials[0].ambient_rgb[1] =
+    current_command_input.gpu_data->base_material.diffuse_rgb[1] =
         term_background_color[1];
-    current_command_input.gpu_materials[0].ambient_rgb[2] =
+    current_command_input.gpu_data->base_material.diffuse_rgb[2] =
         term_background_color[2];
-    current_command_input.gpu_materials[0].alpha =
+    current_command_input.gpu_data->base_material.alpha =
         term_background_color[3];
     current_command_input.gpu_data->ignore_camera = true;
     current_command_input.gpu_data->ignore_lighting = true;
@@ -170,13 +173,16 @@ void terminal_redraw_backgrounds(void) {
        /* zPolygon * recipien: */
            &current_command_input);
     
-    current_command_input.gpu_materials[0].ambient_rgb[0] =
+    current_command_input.gpu_data->base_material.ambient_rgb[0] = 0.0f;
+    current_command_input.gpu_data->base_material.ambient_rgb[1] = 0.0f;
+    current_command_input.gpu_data->base_material.ambient_rgb[2] = 0.0f;
+    current_command_input.gpu_data->base_material.diffuse_rgb[0] =
         term_background_color[0];
-    current_command_input.gpu_materials[0].ambient_rgb[1] =
+    current_command_input.gpu_data->base_material.diffuse_rgb[1] =
         term_background_color[1];
-    current_command_input.gpu_materials[0].ambient_rgb[2] =
+    current_command_input.gpu_data->base_material.diffuse_rgb[2] =
         term_background_color[2];
-    current_command_input.gpu_materials[0].alpha =
+    current_command_input.gpu_data->base_material.alpha =
         term_background_color[3];
     current_command_input.cpu_data->visible = terminal_active;
     current_command_input.cpu_data->alpha_blending_enabled = true;
@@ -246,16 +252,16 @@ void terminal_render(void) {
         log_append(terminal_history + char_offset);
         log_append_char('\n');
         
-        font_settings->font_color[0] = term_font_color[0];
-        font_settings->font_color[1] = term_font_color[1];
-        font_settings->font_color[2] = term_font_color[2];
-        font_settings->font_color[3] = term_font_color[3];
-        font_settings->rgb_cap[0] = term_font_rgb_cap[0];
-        font_settings->rgb_cap[1] = term_font_rgb_cap[1];
-        font_settings->rgb_cap[2] = term_font_rgb_cap[2];
+        font_settings->mat.ambient_rgb[0] = term_font_color[0];
+        font_settings->mat.ambient_rgb[1] = term_font_color[1];
+        font_settings->mat.ambient_rgb[2] = term_font_color[2];
+        font_settings->mat.alpha = term_font_color[3];
+        font_settings->mat.rgb_cap[0] = term_font_rgb_cap[0];
+        font_settings->mat.rgb_cap[1] = term_font_rgb_cap[1];
+        font_settings->mat.rgb_cap[2] = term_font_rgb_cap[2];
         font_settings->ignore_camera = true;
-        font_settings->font_ignore_lighting = 1.0f;
-        font_settings->font_touchable_id = -1;
+        font_settings->ignore_lighting = 1.0f;
+        font_settings->touchable_id = -1;
         
         text_request_label_renderable(
             /* const int32_t with_object_id: */
@@ -279,7 +285,7 @@ void terminal_render(void) {
         }
         
         font_settings->ignore_camera = true;
-        font_settings->font_touchable_id = -1;
+        font_settings->touchable_id = -1;
         // the terminal's current input as a label
         text_request_label_renderable(
             /* with_object_id: */
@@ -804,11 +810,11 @@ static bool32_t evaluate_terminal_command(
         common_are_equal_strings(command, "IMPUTED NORMALS") ||
         common_are_equal_strings(command, "GUESS NORMALS") ||
         common_are_equal_strings(command, "DEDUCE NORMALS"))
-   {
-       engine_globals->draw_imputed_normals =
-           !engine_globals->draw_imputed_normals;
+    {
+        engine_globals->draw_imputed_normals =
+            !engine_globals->draw_imputed_normals;
         
-       if (engine_globals->draw_imputed_normals) {
+        if (engine_globals->draw_imputed_normals) {
             common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
@@ -820,28 +826,82 @@ static bool32_t evaluate_terminal_command(
                 "Stopped drawing the 'imputed normals' for the last touch...");
         }
         return true;
-   }
-    
+    }
     
     if (
-        common_are_equal_strings(command, "DRAW CLICKRAY") ||
-        common_are_equal_strings(command, "CLICKRAY") ||
-        common_are_equal_strings(command, "DRAW CLICKRAYS") ||
-        common_are_equal_strings(command, "CLICKRAYS"))
+        common_string_starts_with(command, "DUMP TEXTUREARRAY "))
     {
-        engine_globals->draw_clickray = !engine_globals->draw_clickray;
-        
-        if (engine_globals->draw_clickray) {
+        if (command[18] < '0' || command[18] > '9') {
             common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
-                "Drawing the 'click ray' for the last touch...");
+                "Can't dump texture array, TEXTUREARRAYS_SIZE was: ");
+            common_strcat_uint_capped(
+                response,
+                SINGLE_LINE_MAX,
+                TEXTUREARRAYS_SIZE);
+            common_strcat_capped(
+                response,
+                SINGLE_LINE_MAX,
+                ", but you didn't pass an index.");
         } else {
+            int32_t texture_array_i = common_string_to_int32(command + 18);
+            
+            if (texture_array_i >= TEXTUREARRAYS_SIZE) {
+                common_strcpy_capped(
+                    response,
+                    SINGLE_LINE_MAX,
+                    "Can't dump texture array, TEXTUREARRAYS_SIZE was: ");
+                common_strcat_uint_capped(
+                    response,
+                    SINGLE_LINE_MAX,
+                    TEXTUREARRAYS_SIZE);
+                common_strcat_capped(
+                    response,
+                    SINGLE_LINE_MAX,
+                    ", so please pass a number below that.");
+                return true;
+            }
+            
             common_strcpy_capped(
                 response,
                 SINGLE_LINE_MAX,
-                "Stopped drawing the 'click ray' for the last touch...");
+                "Attempting to dump texture array: ");
+            common_strcat_int_capped(
+                response,
+                SINGLE_LINE_MAX,
+                texture_array_i);
+            common_strcat_capped(
+                response,
+                SINGLE_LINE_MAX,
+                " to disk...\n");
+            
+            uint32_t success = 0;
+            T1_texture_array_debug_dump_texturearray_to_writables(
+                /* const int32_t texture_array_i: */
+                    texture_array_i,
+                /* uint32_t * success: */
+                    &success);
+            
+            common_strcat_capped(
+                response,
+                SINGLE_LINE_MAX,
+                success ?
+                    "Succesfully dumped texturearray\n" :
+                    "Failed to dump texturearray\n");
         }
+        
+        return true;
+    }
+    
+    if (
+        common_are_equal_strings(command, "WRITABLES") ||
+        common_are_equal_strings(command, "OPEN WRITABLES"))
+    {
+        char writables_path[512];
+        platform_get_writables_path(writables_path, 512);
+        platform_open_folder_in_window_if_possible(writables_path);
+        
         return true;
     }
     

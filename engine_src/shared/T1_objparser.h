@@ -56,7 +56,7 @@ init_obj_parser(
     malloc,
     free);
 */
-void objparser_init(
+void T1_objparser_init(
     void * (* malloc_function)       (size_t),
     void   (* optional_free_function)(void *));
 
@@ -67,7 +67,7 @@ void objparser_init(
 -> raw_buffer must be a null-terminated string containing your .obj file
 -> 'success' will be set to 0 on failure, 1 on success
 */
-void parse_obj(
+void T1_objparser_parse(
     ParsedObj * recipient,
     const char * raw_buffer,
     unsigned int * success);
@@ -77,7 +77,7 @@ void parse_obj(
 -> this is just a convenience function to free all pointers in the struct,
    you don't need to use it if you don't want to
 */
-void free_obj(ParsedObj * to_free);
+void T1_objparser_deinit(ParsedObj * to_free);
 
 #endif // OBJ_PARSER_H
 

@@ -224,7 +224,7 @@ void renderer_hardware_render(
         return;
     }
     
-    log_assert(zsprites_to_render->size < MAX_POLYGONS_PER_BUFFER);
+    log_assert(zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
     
     common_memcpy(
         /* void * dest: */
@@ -238,19 +238,10 @@ void renderer_hardware_render(
     log_assert(
         frame_data->polygon_collection->size <= zsprites_to_render->size);
     log_assert(
-        zsprites_to_render->size < MAX_POLYGONS_PER_BUFFER);
+        zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
     log_assert(
-        frame_data->polygon_collection->size < MAX_POLYGONS_PER_BUFFER);
+        frame_data->polygon_collection->size < MAX_ZSPRITES_PER_BUFFER);
     
-    common_memcpy(
-        /* void *__dst: */
-            frame_data->polygon_materials,
-        /* const void *__src: */
-            zsprites_to_render->gpu_materials,
-        /* size_t __n: */
-            sizeof(GPUzSpriteMaterial) *
-                MAX_MATERIALS_PER_POLYGON *
-                zsprites_to_render->size);
     frame_data->polygon_collection->size = zsprites_to_render->size;
     
     *frame_data->postprocessing_constants =
@@ -353,40 +344,6 @@ void renderer_hardware_render(
         engine_globals->draw_imputed_normals)
     {
         assert(0);
-    }
-    
-    if (
-        application_running &&
-        engine_globals->draw_clickray)
-    {
-        add_line_vertex(
-            /* GPUDataForSingleFrame * frame_data: */
-                frame_data,
-            /* const float xyz[3]: */
-                engine_globals->last_clickray_origin);
-        
-        float clickray_end[3];
-        common_memcpy(
-            clickray_end,
-            engine_globals->last_clickray_origin,
-            sizeof(float) * 3);
-        clickray_end[0] += engine_globals->last_clickray_direction[0];
-        clickray_end[1] += engine_globals->last_clickray_direction[1];
-        clickray_end[2] += engine_globals->last_clickray_direction[2];
-        add_line_vertex(
-            /* GPUDataForSingleFrame * frame_data: */
-                frame_data,
-            /* const float xyz[3]: */
-                clickray_end);
-        
-        if (engine_globals->draw_clickray)
-        {
-            add_point_vertex(
-                /* GPUDataForSingleFrame * frame_data: */
-                    frame_data,
-                /* const float * xyz: */
-                    engine_globals->last_clickray_collision, 0.33f);
-        }
     }
     
     if (application_running && engine_globals->draw_mouseptr) {

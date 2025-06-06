@@ -21,7 +21,6 @@ extern "C" {
 typedef struct LineParticle {
     CPUzSprite zpolygon_cpu;
     GPUzSprite zpolygon_gpu;
-    GPUzSpriteMaterial zpolygon_material;
     
     uint64_t random_seed;
     uint64_t elapsed;
@@ -52,8 +51,7 @@ extern uint32_t lineparticle_effects_size;
 LineParticle * next_lineparticle_effect(void);
 LineParticle * next_lineparticle_effect_with_zpoly(
     CPUzSprite * construct_with_zpolygon,
-    GPUzSprite * construct_with_polygon_gpu,
-    GPUzSpriteMaterial * construct_with_polygon_material);
+    GPUzSprite * construct_with_polygon_gpu);
 void commit_lineparticle_effect(
     LineParticle * to_commit);
 void add_lineparticle_effects_to_workload(
@@ -81,7 +79,6 @@ typedef struct ParticleEffect {
     
     CPUzSprite zpolygon_cpu;
     GPUzSprite zpolygon_gpu;
-    GPUzSpriteMaterial zpolygon_materials[MAX_MATERIALS_PER_POLYGON];
     
     int32_t object_id;
     
@@ -89,10 +86,6 @@ typedef struct ParticleEffect {
     uint64_t elapsed;
     bool32_t deleted;
     bool32_t committed;
-    
-    int32_t random_texturearray_i[MAX_PARTICLE_TEXTURES];
-    int32_t random_texture_i[MAX_PARTICLE_TEXTURES];
-    uint32_t random_textures_size;
     
     uint32_t particle_spawns_per_second;
     uint32_t vertices_per_particle;

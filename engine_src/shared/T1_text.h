@@ -10,18 +10,15 @@ extern "C" {
 #endif
 
 typedef struct FontSettings {
-    int32_t font_texturearray_i; // = 0;
-    int32_t font_touchable_id; // = -1;
-    float font_height; // = 30.0;
+    GPULockedMaterial mat;
+    int32_t touchable_id;
+    uint32_t remove_shadow;
+    uint32_t alpha_blending_enabled;
+    float extra_offset_xy[2];
     float scale_factor;
-    float extra_x_offset;
-    float extra_y_offset;
-    float font_color[4]; // = {1.0f, 1.0f, 1.0f, 1.0f};
-    float rgb_cap[3];
-    bool32_t font_ignore_lighting;
-    bool32_t ignore_camera;
-    bool32_t alphablending;
-    bool32_t remove_shadow;
+    float ignore_lighting;
+    float ignore_camera;
+    float font_height; // = 30.0;
 } FontSettings;
 
 extern FontSettings * font_settings;

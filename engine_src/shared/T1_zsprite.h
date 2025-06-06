@@ -19,17 +19,6 @@
 extern "C" {
 #endif
 
-typedef struct VertexMaterial {
-    float color[4];
-    int32_t texturearray_i; /*
-                            the index in the global var
-                            'texture_arrays' of the texturearray
-                             -1 for "untextured, use color
-                            instead"
-                            */
-    int32_t texture_i;     // index in texturearray
-} VertexMaterial;
-
 typedef struct CPUzSprite {
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
     
@@ -41,10 +30,9 @@ typedef struct CPUzSprite {
 } CPUzSprite;
 
 typedef struct zSpriteCollection {
-    GPUzSprite gpu_data[MAX_POLYGONS_PER_BUFFER];
-    GPUzSpriteMaterial gpu_materials[
-        MAX_POLYGONS_PER_BUFFER * MAX_MATERIALS_PER_POLYGON];
-    CPUzSprite cpu_data[MAX_POLYGONS_PER_BUFFER];
+    GPUzSprite gpu_data[MAX_ZSPRITES_PER_BUFFER];
+    GPULockedMaterial gpu_materials[ALL_LOCKED_MATERIALS_SIZE];
+    CPUzSprite cpu_data[MAX_ZSPRITES_PER_BUFFER];
     uint32_t size;
 } zSpriteCollection;
 
@@ -52,10 +40,8 @@ extern zSpriteCollection * zsprites_to_render;
 
 typedef struct zSpriteRequest {
     GPUzSprite * gpu_data;
-    GPUzSpriteMaterial * gpu_materials;
     CPUzSprite * cpu_data;
     uint32_t gpu_data_size;
-    uint32_t materials_size;
 } zSpriteRequest;
 
 void zsprite_construct(zSpriteRequest * to_construct);
