@@ -110,6 +110,10 @@
 		EC7FBC412DECE93000A679A7 /* 1001_albedo.png in Resources */ = {isa = PBXBuildFile; fileRef = EC7FBC3F2DECE93000A679A7 /* 1001_albedo.png */; };
 		EC843EA82D1401F3001AD2E9 /* cardstand.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC843EA72D1401F3001AD2E9 /* cardstand.obj */; };
 		EC843EA92D1401F3001AD2E9 /* cardstand.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC843EA72D1401F3001AD2E9 /* cardstand.obj */; };
+		EC8E828C2DF25F9E00E2D97A /* open_cube.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC8E828B2DF25F9E00E2D97A /* open_cube.obj */; };
+		EC8E828D2DF25F9E00E2D97A /* open_cube.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC8E828A2DF25F9E00E2D97A /* open_cube.mtl */; };
+		EC8E828E2DF25F9E00E2D97A /* open_cube.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC8E828B2DF25F9E00E2D97A /* open_cube.obj */; };
+		EC8E828F2DF25F9E00E2D97A /* open_cube.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC8E828A2DF25F9E00E2D97A /* open_cube.mtl */; };
 		EC914B7F2B8AD447007FCBFC /* T1_audio.c in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7A2B8AD447007FCBFC /* T1_audio.c */; };
 		EC914B812B8AD447007FCBFC /* T1_wav.c in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7B2B8AD447007FCBFC /* T1_wav.c */; };
 		EC914B852B8AD5AB007FCBFC /* T1_apple_audio.m in Sources */ = {isa = PBXBuildFile; fileRef = EC914B832B8AD5AB007FCBFC /* T1_apple_audio.m */; };
@@ -235,6 +239,8 @@
 		EC7C25252980B6A900DB7BC8 /* T1_terminal.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_terminal.c; path = ../../engine_src/shared/T1_terminal.c; sourceTree = "<group>"; };
 		EC7FBC3F2DECE93000A679A7 /* 1001_albedo.png */ = {isa = PBXFileReference; explicitFileType = compiled; path = 1001_albedo.png; sourceTree = "<group>"; };
 		EC843EA72D1401F3001AD2E9 /* cardstand.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = cardstand.obj; path = ../../resources/cardstand.obj; sourceTree = "<group>"; };
+		EC8E828A2DF25F9E00E2D97A /* open_cube.mtl */ = {isa = PBXFileReference; lastKnownFileType = text; name = open_cube.mtl; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/resources/open_cube.mtl; sourceTree = "<absolute>"; };
+		EC8E828B2DF25F9E00E2D97A /* open_cube.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = open_cube.obj; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/resources/open_cube.obj; sourceTree = "<absolute>"; };
 		EC914B7A2B8AD447007FCBFC /* T1_audio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_audio.c; path = ../../engine_src/shared/T1_audio.c; sourceTree = "<group>"; };
 		EC914B7B2B8AD447007FCBFC /* T1_wav.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_wav.c; path = ../../engine_src/shared/T1_wav.c; sourceTree = "<group>"; };
 		EC914B7C2B8AD447007FCBFC /* T1_wav.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_wav.h; path = ../../engine_src/shared/T1_wav.h; sourceTree = "<group>"; };
@@ -359,6 +365,8 @@
 				EC7FBC3F2DECE93000A679A7 /* 1001_albedo.png */,
 				EC74B51C2DE3BC070033206F /* 1001_normal.png */,
 				EC18FF4129E3DC8B00ED785C /* blob1.png */,
+				EC8E828A2DF25F9E00E2D97A /* open_cube.mtl */,
+				EC8E828B2DF25F9E00E2D97A /* open_cube.obj */,
 				EC18FF4429E3DD8900ED785C /* blob2.png */,
 				EC18FF4529E3DD8900ED785C /* blob3.png */,
 				EC843EA72D1401F3001AD2E9 /* cardstand.obj */,
@@ -593,6 +601,8 @@
 				EC18FF4229E3DC8B00ED785C /* blob1.png in Resources */,
 				EC0BFBDB29EE71A200E4BC1C /* xmas_tree.obj in Resources */,
 				ECDCFF532DDE13CB002AA399 /* perlin_noise.png in Resources */,
+				EC8E828C2DF25F9E00E2D97A /* open_cube.obj in Resources */,
+				EC8E828D2DF25F9E00E2D97A /* open_cube.mtl in Resources */,
 				EC843EA82D1401F3001AD2E9 /* cardstand.obj in Resources */,
 				601128AD28625BAF00F92967 /* structuredart1.png in Resources */,
 				EC18FF4629E3DD8900ED785C /* blob2.png in Resources */,
@@ -626,6 +636,8 @@
 				EC74B5262DE3BC070033206F /* 1001_normal.png in Resources */,
 				60A99923287BDF31003F7159 /* teapot.obj in Resources */,
 				EC18FF4729E3DD8900ED785C /* blob2.png in Resources */,
+				EC8E828E2DF25F9E00E2D97A /* open_cube.obj in Resources */,
+				EC8E828F2DF25F9E00E2D97A /* open_cube.mtl in Resources */,
 				EC18FF4929E3DD8900ED785C /* blob3.png in Resources */,
 				EC7FBC412DECE93000A679A7 /* 1001_albedo.png in Resources */,
 				EC0717F12C29CDD5007A4AFA /* teapot_smooth.obj in Resources */,

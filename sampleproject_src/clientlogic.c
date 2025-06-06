@@ -28,9 +28,14 @@ void client_logic_early_startup(
     assert(good);
     
     #if TEAPOT
+    //    teapot_mesh_id = T1_objmodel_new_mesh_id_from_resources(
+    //        "open_cube.obj",
+    //        "open_cube.mtl");
     teapot_mesh_id = T1_objmodel_new_mesh_id_from_resources(
         "guitar_simplified.obj",
-        "guitar_simplified.mtl");
+        "guitar_simplified.mtl",
+        /* flip_uv_v: */ true);
+    
     if (teapot_mesh_id < 0) {
         log_dump_and_crash(
             "Failed to register the guitar_simplified model, "

@@ -507,7 +507,7 @@ float4 get_lit(
                 dot(
                     fragment_normal,
                     object_to_light),
-                0.0f) * 0.9f + 0.1f;
+                0.0f) * 0.85f + 0.15f;
         
         lit_color += (
             ambient_base *

@@ -15,8 +15,8 @@ of the engine for your specific app.
 
 // these will be ignored on platforms where window size/position
 // can't be selected
-#define INITIAL_WINDOW_HEIGHT  667.0f
-#define INITIAL_WINDOW_WIDTH   875.0f // 800.0f// 375.0f
+#define INITIAL_WINDOW_HEIGHT  800.0f
+#define INITIAL_WINDOW_WIDTH  1200.0f // 800.0f// 375.0f
 #define INITIAL_WINDOW_LEFT   1650.0f
 #define INITIAL_WINDOW_BOTTOM  430.0f
 

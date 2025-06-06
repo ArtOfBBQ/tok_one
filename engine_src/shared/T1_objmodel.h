@@ -20,10 +20,26 @@
 extern "C" {
 #endif
 
+// **********************************************************************
+// **                    Client functions                              **
+// **********************************************************************
+
+// Basic quads and cubes are predefined, they can be used without registering
+// an .obj file.
 #define BASIC_QUAD_MESH_ID 0
 #define BASIC_CUBE_MESH_ID 1
-#define BASIC_POINT_MESH_ID 2 // There's currently no way to draw points
-#define BASIC_LINE_MESH_ID 3 // Drawing lines is became very expensive
+
+// This functions returns a mesh_id
+// Use it in clientlogic_early_startup()
+int32_t T1_objmodel_new_mesh_id_from_resources(
+    const char * filename,
+    const char * mtl_filename,
+    const bool32_t flip_uv_v);
+
+
+// **********************************************************************
+// **                    Internal functions (ignore)                   **
+// **********************************************************************
 
 #define MATERIAL_NAMES_MAX 20
 
@@ -57,10 +73,6 @@ void T1_objmodel_init(void);
 int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
     const char * obj_text,
     const char * mtl_text);
-
-int32_t T1_objmodel_new_mesh_id_from_resources(
-    const char * filename,
-    const char * mtl_filename);
 
 void T1_objmodel_center_mesh_offsets(const int32_t mesh_id);
 
