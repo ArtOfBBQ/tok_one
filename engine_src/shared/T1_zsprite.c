@@ -42,12 +42,14 @@ void zsprite_commit(
     log_assert(
         all_mesh_summaries[to_commit->cpu_data->mesh_id].vertices_size > 0);
     
+    #ifndef LOGGER_IGNORE_ASSERTS
     uint32_t all_mesh_vertices_tail_i =
         (uint32_t)(
             all_mesh_summaries[to_commit->cpu_data->mesh_id].vertices_head_i +
             all_mesh_summaries[to_commit->cpu_data->mesh_id].vertices_size -
             1);
     log_assert(all_mesh_vertices_tail_i < all_mesh_vertices->size);
+    #endif
     
     to_commit->cpu_data->committed = true;
 }

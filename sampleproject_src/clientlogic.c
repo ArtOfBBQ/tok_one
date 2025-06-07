@@ -37,9 +37,11 @@ void client_logic_early_startup(
         /* flip_uv_v: */ true);
     
     if (teapot_mesh_id < 0) {
+        #ifndef LOGGER_IGNORE_ASSERTS
         log_dump_and_crash(
             "Failed to register the guitar_simplified model, "
             " maybe the .mtl or .obj file is missing?");
+        #endif
         return;
     }
     #endif

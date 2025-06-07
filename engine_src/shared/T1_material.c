@@ -9,6 +9,7 @@ void T1_material_init(
     all_mesh_materials->size = 0;
 }
 
+#ifndef LOGGER_IGNORE_ASSERTS
 static uint32_t T1_material_fetch_locked_material_i(
     const char * material_name)
 {
@@ -24,6 +25,7 @@ static uint32_t T1_material_fetch_locked_material_i(
     
     return UINT32_MAX;
 }
+#endif
 
 uint32_t T1_material_preappend_locked_material_i(
     const char * material_name)
