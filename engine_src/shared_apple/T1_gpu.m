@@ -859,7 +859,9 @@ void platform_gpu_init_texture_array(
     assert(texture_array_i >=  0);
     assert(texture_array_i <  31);
     
-    log_assert(ags->metal_textures[texture_array_i] == NULL);
+    if (ags->metal_textures[texture_array_i] != NULL) {
+        return;
+    }
     
     MTLTextureDescriptor * texture_descriptor =
         [[MTLTextureDescriptor alloc] init];

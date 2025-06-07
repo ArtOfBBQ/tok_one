@@ -602,7 +602,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
     log_assert(all_mesh_vertices->size < ALL_LOCKED_VERTICES_SIZE);
         
     all_mesh_summaries[all_mesh_summaries_size].materials_size =
-            arg_parsed_obj->materials_count;
+        arg_parsed_obj->materials_count;
     
     uint32_t first_material_head_i =
         T1_material_preappend_locked_material_i(
@@ -633,7 +633,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                     matching_parsed_materials_i = j;
                 }
             }
-            log_assert(matching_parsed_materials_i >= 0);
+            
             log_assert(
                 matching_parsed_materials_i  < (int32_t)parsed_materials_size);
             
@@ -642,39 +642,60 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                     all_mesh_summaries[all_mesh_summaries_size].
                         locked_material_head_i + i);
             
-            locked_mat->ambient_rgb[0] =
-                parsed_materials[matching_parsed_materials_i].ambient_rgb[0];
-            locked_mat->ambient_rgb[1] =
-                parsed_materials[matching_parsed_materials_i].ambient_rgb[1];
-            locked_mat->ambient_rgb[2] =
-                parsed_materials[matching_parsed_materials_i].ambient_rgb[2];
+            if (matching_parsed_materials_i >= 0) {
+                locked_mat->ambient_rgb[0] =
+                    parsed_materials[matching_parsed_materials_i].ambient_rgb[0];
+                locked_mat->ambient_rgb[1] =
+                    parsed_materials[matching_parsed_materials_i].ambient_rgb[1];
+                locked_mat->ambient_rgb[2] =
+                    parsed_materials[matching_parsed_materials_i].ambient_rgb[2];
+                
+                locked_mat->alpha =
+                    parsed_materials[matching_parsed_materials_i].alpha;
+                
+                locked_mat->diffuse_rgb[0] =
+                    parsed_materials[matching_parsed_materials_i].diffuse_rgb[0];
+                locked_mat->diffuse_rgb[1] =
+                    parsed_materials[matching_parsed_materials_i].diffuse_rgb[1];
+                locked_mat->diffuse_rgb[2] =
+                    parsed_materials[matching_parsed_materials_i].diffuse_rgb[2];
+                
+                locked_mat->illum = 1.0f;
+                
+                T1_texture_array_get_filename_location(
+                    /* const char * for_filename: */
+                        parsed_materials[matching_parsed_materials_i].diffuse_map,
+                    /* int32_t * texture_array_i_recipient: */
+                        &locked_mat->texturearray_i,
+                    /* int32_t * texture_i_recipient: */
+                        &locked_mat->texture_i);
+                T1_texture_array_get_filename_location(
+                    /* const char * for_filename: */
+                        parsed_materials[matching_parsed_materials_i].normal_map,
+                    /* int32_t * texture_array_i_recipient: */
+                        &locked_mat->normalmap_texturearray_i,
+                    /* int32_t * texture_i_recipient: */
+                        &locked_mat->normalmap_texture_i);
+            } else {
+                log_append("Warning: missing material in obj file\n");
+                locked_mat->ambient_rgb[0] = 0.5f;
+                locked_mat->ambient_rgb[1] = 0.5f;
+                locked_mat->ambient_rgb[2] = 0.5f;
+                locked_mat->diffuse_rgb[0] = 0.5f;
+                locked_mat->diffuse_rgb[1] = 0.5f;
+                locked_mat->diffuse_rgb[2] = ((i % 20)*0.05f);
+                locked_mat->specular_rgb[0] = 0.5f;
+                locked_mat->specular_rgb[1] = 0.5f;
+                locked_mat->specular_rgb[2] = 0.5f;
+                locked_mat->alpha = 1.0f;
+                
+                locked_mat->texturearray_i = -1;
+                locked_mat->texture_i = -1;
+                locked_mat->rgb_cap[0] = 1.0f;
+                locked_mat->rgb_cap[1] = 1.0f;
+                locked_mat->rgb_cap[2] = 1.0f;
+            }
             
-            locked_mat->alpha =
-                parsed_materials[matching_parsed_materials_i].alpha;
-            
-            locked_mat->diffuse_rgb[0] =
-                parsed_materials[matching_parsed_materials_i].diffuse_rgb[0];
-            locked_mat->diffuse_rgb[1] =
-                parsed_materials[matching_parsed_materials_i].diffuse_rgb[1];
-            locked_mat->diffuse_rgb[2] =
-                parsed_materials[matching_parsed_materials_i].diffuse_rgb[2];
-            
-            locked_mat->illum = 1.0f;
-            
-            T1_texture_array_get_filename_location(
-                /* const char * for_filename: */
-                    parsed_materials[matching_parsed_materials_i].diffuse_map,
-                /* int32_t * texture_array_i_recipient: */
-                    &locked_mat->texturearray_i,
-                /* int32_t * texture_i_recipient: */
-                    &locked_mat->texture_i);
-            T1_texture_array_get_filename_location(
-                /* const char * for_filename: */
-                    parsed_materials[matching_parsed_materials_i].normal_map,
-                /* int32_t * texture_array_i_recipient: */
-                    &locked_mat->normalmap_texturearray_i,
-                /* int32_t * texture_i_recipient: */
-                    &locked_mat->normalmap_texture_i);
             locked_mat->refraction = 0.0f;
             locked_mat->rgb_cap[0] = 1.0f;
             locked_mat->rgb_cap[1] = 1.0f;
@@ -690,7 +711,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
         triangle_i++)
     {
         uint32_t cur_material_i = arg_parsed_obj->triangles[triangle_i][4];
-        log_assert(cur_material_i < arg_parsed_obj->materials_count);
+        // log_assert(cur_material_i < arg_parsed_obj->materials_count);
         
         uint32_t locked_vert_i = all_mesh_vertices->size;
         
@@ -1114,6 +1135,48 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     return return_value;
 }
 
+int32_t T1_objmodel_obj_resource_name_to_mesh_id(
+    const char * obj_filename)
+{
+    for (int32_t i = 0; i < (int32_t)all_mesh_summaries_size; i++) {
+        if (
+            common_are_equal_strings(
+                 all_mesh_summaries[i].resource_name,
+                 obj_filename))
+        {
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
+float T1_objmodel_get_x_multiplier_for_width(
+    const int32_t mesh_id,
+    const float screenspace_width,
+    const float given_z)
+{
+    return engineglobals_screenspace_width_to_width(
+        /* const float screenspace_width: */
+            screenspace_width /
+                all_mesh_summaries[mesh_id].base_width,
+        /* const float given_z: */
+            given_z);
+}
+
+float T1_objmodel_get_y_multiplier_for_height(
+    const int32_t mesh_id,
+    const float screenspace_height,
+    const float given_z)
+{
+    return engineglobals_screenspace_height_to_height(
+        /* const float screenspace_width: */
+            screenspace_height /
+                all_mesh_summaries[mesh_id].base_height,
+        /* const float given_z: */
+            given_z);
+}
+
 void T1_objmodel_center_mesh_offsets(
     const int32_t mesh_id)
 {
@@ -1216,8 +1279,6 @@ void T1_objmodel_flip_mesh_uvs_v(const int32_t mesh_id)
         vert_i < tail_i;
         vert_i++)
     {
-        log_assert(all_mesh_vertices->gpu_data[vert_i].uv[1] >= -0.01f);
-        log_assert(all_mesh_vertices->gpu_data[vert_i].uv[1] <= 1.01f);
         all_mesh_vertices->gpu_data[vert_i].uv[1] = 1.0f -
             all_mesh_vertices->gpu_data[vert_i].uv[1];
     }

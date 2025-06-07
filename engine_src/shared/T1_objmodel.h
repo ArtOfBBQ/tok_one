@@ -6,6 +6,7 @@
 #include "T1_cpu_gpu_shared_types.h"
 
 #include "T1_common.h"
+#include "T1_engine_globals.h"
 #include "T1_logger.h"
 #include "T1_triangle.h"
 #include "T1_texture_array.h"
@@ -36,6 +37,16 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     const char * mtl_filename,
     const bool32_t flip_uv_v);
 
+int32_t T1_objmodel_obj_resource_name_to_mesh_id(
+    const char * obj_filename);
+float T1_objmodel_get_x_multiplier_for_width(
+    const int32_t mesh_id,
+    const float screenspace_width,
+    const float given_z);
+float T1_objmodel_get_y_multiplier_for_height(
+    const int32_t mesh_id,
+    const float screenspace_height,
+    const float given_z);
 
 // **********************************************************************
 // **                    Internal functions (ignore)                   **

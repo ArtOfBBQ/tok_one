@@ -30,7 +30,9 @@ uint32_t T1_material_preappend_locked_material_i(
 {
     #ifndef LOGGER_IGNORE_ASSERTS
     uint32_t existing_i = T1_material_fetch_locked_material_i(material_name);
-    log_assert(existing_i == UINT32_MAX); // doesn't exist
+    if (!common_are_equal_strings(material_name, "default")) {
+        log_assert(existing_i == UINT32_MAX); // doesn't exist
+    }
     #endif
     
     common_strcpy_capped(

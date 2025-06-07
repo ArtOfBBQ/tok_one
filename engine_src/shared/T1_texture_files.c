@@ -226,7 +226,10 @@ void T1_texture_files_push_all_preregistered(void) {
             t_i < texture_arrays[ta_i].images_size;
             t_i++)
         {
-            log_assert(texture_arrays[ta_i].images[t_i].filename[0] != '\0');
+            if (texture_arrays[ta_i].images[t_i].filename[0] == '\0') {
+                continue;
+            }
+            
             log_assert(!texture_arrays[ta_i].images[t_i].image.good);
             log_assert(texture_arrays[ta_i].images[t_i].image.rgba_values_freeable == NULL);
             log_assert(texture_arrays[ta_i].images[t_i].image.rgba_values_page_aligned == NULL);
