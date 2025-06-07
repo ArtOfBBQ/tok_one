@@ -12,6 +12,13 @@ void * common_memset_char(
     
     uint32_t i = 0;
     
+    #ifdef __ARM_NEON
+    int8x16_t neon_preset = vld1q_dup_s8(&value);
+    for (; i+15 < size_bytes; i += 16) {
+	    vst1q_s8(input + i, neon_preset);
+    }
+    #endif
+    
     #ifdef __AVX__
     __m256i avx_preset = _mm256_set1_epi8((char)value);
     
@@ -47,6 +54,13 @@ void common_memset_int16(
     
     uint32_t i = 0;
     
+    #ifdef __ARM_NEON
+    int16x8_t neon_preset = vld1q_dup_s16(&value);
+    for (; i+7 < (size_bytes / 2); i += 8) {
+        vst1q_s16(input + i, neon_preset);
+    }
+    #endif
+    
     #ifdef __AVX__
     __m256i avx_preset = _mm256_set1_epi16(value);
     
@@ -79,6 +93,13 @@ void common_memset_int32(
     int32_t * input = (int32_t *)in;
     
     uint32_t i = 0;
+    
+    #ifdef __ARM_NEON
+    int16x8_t neon_preset = vld1q_dup_s32(&value);
+    for (; i+3 < (size_bytes / 4); i += 4) {
+        vst1q_s32(input + i, neon_preset);
+    }
+    #endif
     
     #ifdef __AVX__
     __m256i avx_preset = _mm256_set1_epi32(value);
@@ -114,6 +135,13 @@ void common_memset_float(
     
     uint32_t i = 0;
     
+    #ifdef __ARM_NEON
+    float32x4_t neon_preset = vld1q_dup_f32(&value);
+    for (; i+3 < (size_bytes / 4); i += 4) {
+        vst1q_f32(input + i, neon_preset);
+    }
+    #endif
+    
     #ifdef __AVX__
     __m256 avx_preset = _mm256_set1_ps(value);
     
@@ -148,6 +176,13 @@ void * common_memcpy(
     char * destination = (char *)dest;
     char * source = (char *)src;
     
+    #ifdef __ARM_NEON
+    for (; i+15 < n_bytes; i += 16) {
+        int8x16_t neon_copy = vld1q_s8(src + i);
+        vst1q_s8(dest + i, neon_copy);
+    }
+    #endif
+    
     #ifdef __AVX__
     for (; i+31 < n_bytes; i += 32) {
         __m256 sse_copy = _mm256_loadu_si256((const __m256i *)(source + i));
@@ -172,18 +207,6 @@ void * common_memcpy(
     
     return dest;
 }
-
-//float tok_sqrtf(const float in) {
-//    float return_value;
-//    
-//    #ifdef __SSE__
-//    __m128 inputs = _mm_load_ss(&in);
-//    inputs = _mm_sqrt_ss(inputs);
-//    _mm_store_ss(&return_value, inputs);
-//    #endif
-//    
-//    return return_value;
-//}
 
 float common_minf(const float x, const float y)
 {
@@ -238,9 +261,6 @@ void common_strcat_char_capped(
 {
     uint32_t i = 0;
     while (recipient[i] != '\0') {
-        //#ifndef COMMON_IGNORE_ASSERTS
-        //assert(i < recipient_size);
-        //#endif
         i++;
     }
     
