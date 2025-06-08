@@ -357,7 +357,6 @@ void text_request_label_offset_around(
             
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
-            log_assert(letter.gpu_data->base_material.alpha > 0.99f);
             zsprite_commit(&letter);
         }
         cur_y_offset_pixelspace -= get_newline_advance();
