@@ -303,8 +303,10 @@ void zsprite_construct_quad_around(
     // so the current width is 2.0f
     float current_width = 2.0f;
     float current_height = 2.0f;
-    stack_recipient->gpu_data->xyz_multiplier[0] = width / current_width;
-    stack_recipient->gpu_data->xyz_multiplier[1] = height / current_height;
+    stack_recipient->gpu_data->xyz_multiplier[0] =
+        width / current_width;
+    stack_recipient->gpu_data->xyz_multiplier[1] =
+        height / current_height;
     stack_recipient->gpu_data->xyz_multiplier[2] =
         stack_recipient->gpu_data->xyz_multiplier[1] / 20.0f;
     

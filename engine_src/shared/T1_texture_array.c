@@ -626,32 +626,11 @@ void T1_texture_array_register_new_by_splitting_image(
             columns);
 }
 
-// TODO: deprecated
-//void T1_texture_array_register_high_priority_if_unloaded(
-//    const int32_t texture_array_i,
-//    const int32_t texture_i)
+//void T1_texture_array_preregister_null_png_from_disk(
+//    const char * filename)
 //{
-//    log_assert(texture_array_i >= 0 && texture_i >= 0);
 //    
-//    if (
-//        texture_array_i >= 0
-//        && texture_i >= 0
-//        && texture_arrays[texture_array_i].images[texture_i].image == NULL
-//        && !texture_arrays[texture_array_i]
-//            .images[texture_i].prioritize_asset_load)
-//    {
-//        // asset is needed to go onscreen already but not available,
-//        // mark as high priority
-//        texture_arrays[texture_array_i].images[texture_i]
-//            .prioritize_asset_load = true;
-//    }
 //}
-
-void T1_texture_array_preregister_null_png_from_disk(
-    const char * filename)
-{
-    
-}
 
 void T1_texture_array_preregister_null_image(
     const char * filename,
