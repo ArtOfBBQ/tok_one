@@ -1123,6 +1123,11 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
         /* const char * mtl_text: */
             mtl_file_buf.contents);
     
+    common_strcpy_capped(
+        all_mesh_summaries[return_value].resource_name,
+        OBJ_STRING_SIZE,
+        obj_filename);
+    
     free_from_managed(obj_file_buf.contents);
     if (mtl_file_buf.contents != NULL) {
        free_from_managed(mtl_file_buf.contents);

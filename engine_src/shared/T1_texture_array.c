@@ -567,6 +567,15 @@ static void register_to_texturearray_by_splitting_image(
                 256,
                 row_i);
             
+            // TODO: we need to preregister to a known location, not auto
+            //            T1_texture_array_preregister_null_image(
+            //                /* const char * filename: */
+            //                    filenames[(row_i*(int32_t)columns)+col_i],
+            //                /* const uint32_t height: */
+            //                    texture_arrays[ta_i].single_img_height,
+            //                /* const uint32_t width: */
+            //                    texture_arrays[ta_i].single_img_width);
+            
             platform_gpu_push_texture_slice_and_free_rgba_values(
                 /* const int32_t texture_array_i: */
                     ta_i,

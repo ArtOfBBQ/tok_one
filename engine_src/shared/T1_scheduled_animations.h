@@ -103,7 +103,7 @@ void scheduled_animations_request_fade_and_destroy(
     const uint64_t duration_microseconds);
 
 void scheduled_animations_request_fade_to(
-    const int32_t object_id,
+    const int32_t zsprite_id,
     const uint64_t duration_microseconds,
     const float target_alpha);
 

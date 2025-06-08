@@ -374,16 +374,17 @@ void scheduled_animations_request_fade_and_destroy(
 }
 
 void scheduled_animations_request_fade_to(
-    const int32_t object_id,
+    const int32_t zsprite_id,
     const uint64_t duration_microseconds,
     const float target_alpha)
 {
-    log_assert(object_id >= 0);
+    log_assert(zsprite_id >= 0);
     
     // register scheduled animation
     ScheduledAnimation * modify_alpha = scheduled_animations_request_next(true);
-    modify_alpha->affected_sprite_id = object_id;
+    modify_alpha->affected_sprite_id = zsprite_id;
     modify_alpha->duration_microseconds = duration_microseconds;
+    modify_alpha->gpu_polygon_vals.base_material.alpha = target_alpha;
     scheduled_animations_commit(modify_alpha);
 }
 

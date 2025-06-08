@@ -252,9 +252,9 @@ void terminal_render(void) {
         log_append(terminal_history + char_offset);
         log_append_char('\n');
         
-        font_settings->mat.ambient_rgb[0] = term_font_color[0];
-        font_settings->mat.ambient_rgb[1] = term_font_color[1];
-        font_settings->mat.ambient_rgb[2] = term_font_color[2];
+        font_settings->mat.diffuse_rgb[0] = term_font_color[0];
+        font_settings->mat.diffuse_rgb[1] = term_font_color[1];
+        font_settings->mat.diffuse_rgb[2] = term_font_color[2];
         font_settings->mat.alpha = term_font_color[3];
         font_settings->mat.rgb_cap[0] = term_font_rgb_cap[0];
         font_settings->mat.rgb_cap[1] = term_font_rgb_cap[1];

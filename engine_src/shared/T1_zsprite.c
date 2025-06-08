@@ -109,7 +109,8 @@ float zsprite_get_x_multiplier_for_width(
     log_assert(for_poly->mesh_id < (int32_t)all_mesh_summaries_size);
     
     float return_value =
-        for_width / all_mesh_summaries[for_poly->mesh_id].base_width;
+        engineglobals_screenspace_width_to_width(for_width, 1.0f) /
+            all_mesh_summaries[for_poly->mesh_id].base_width;
     
     return return_value;
 }
@@ -307,7 +308,7 @@ void zsprite_construct_quad_around(
     stack_recipient->gpu_data->xyz_multiplier[2] =
         stack_recipient->gpu_data->xyz_multiplier[1] / 20.0f;
     
-    stack_recipient->cpu_data->mesh_id = 0;
+    stack_recipient->cpu_data->mesh_id = BASIC_QUAD_MESH_ID;
 }
 
 void zsprite_construct_cube_around(
