@@ -1023,7 +1023,7 @@ int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
             &good);
     
     if (!good) {
-        log_append(mtlparser_get_last_error_msg());
+        log_dump_and_crash(mtlparser_get_last_error_msg());
         return -1;
     }
     

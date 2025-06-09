@@ -204,6 +204,10 @@ void T1_texture_array_push_dds_image_to_preinitted(
         request_update = false;
     texture_arrays[to_texturearray_i].images[to_texture_i].
         prioritize_asset_load = false;
+    #else
+    (void)to_texturearray_i;
+    (void)to_texture_i;
+    (void)filename;
     #endif
 }
 

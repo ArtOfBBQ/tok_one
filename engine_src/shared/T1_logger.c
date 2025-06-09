@@ -241,7 +241,7 @@ void log_dump(bool32_t * good) {
 
 #ifndef LOGGER_IGNORE_ASSERTS
 void
-log_dump_and_crash(char * crash_message) {
+log_dump_and_crash(const char * crash_message) {
     bool32_t log_dump_succesful = false;
     log_dump(&log_dump_succesful);
     

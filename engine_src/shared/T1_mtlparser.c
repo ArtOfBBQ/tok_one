@@ -25,6 +25,7 @@ typedef enum MTLToken {
     MTLTOKEN_AMBIENT_MAP,
     MTLTOKEN_DIFFUSE_MAP,
     MTLTOKEN_SPECULAR_MAP,
+    MTLTOKEN_ALPHA_MAP, // useless in our model
     MTLTOKEN_BUMP_MAP,
     MTLTOKEN_BUMP_MAP_ARG_INTENSITY,
     MTLTOKEN_NORMAL_MAP,
@@ -414,6 +415,9 @@ void mtlparser_parse(
     if (!*good) { return; }
     
     toktoken_register_token("map_Ks", MTLTOKEN_SPECULAR_MAP, good);
+    if (!*good) { return; }
+    
+    toktoken_register_token("map_d", MTLTOKEN_ALPHA_MAP, good);
     if (!*good) { return; }
     
     toktoken_register_token("bump", MTLTOKEN_BUMP_MAP, good);
@@ -809,6 +813,26 @@ void mtlparser_parse(
             }
             case MTLTOKEN_SPECULAR_MAP: {
                 assert(0);
+                
+                break;
+            }
+            case MTLTOKEN_ALPHA_MAP: {
+                // We use the alpha in textures as our alpha and ignore this
+                i++;
+                TokToken * ignored = toktoken_get_token_at(i);
+                
+                if (ignored->enum_value != MTLTOKEN_STRINGLITERAL) {
+                    mtlparser_state->mtlparser_strlcat(
+                        mtlparser_state->last_error_msg,
+                        "Unexpected token type after map_d: ",
+                        ERROR_MSG_CAP);
+                    mtlparser_state->mtlparser_strlcat(
+                        mtlparser_state->last_error_msg,
+                        ignored->string_value,
+                        ERROR_MSG_CAP);
+                    *good = 0;
+                    return;
+                }
                 
                 break;
             }
