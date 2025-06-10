@@ -642,6 +642,11 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                     all_mesh_summaries[all_mesh_summaries_size].
                         locked_material_head_i + i);
             
+            locked_mat->rgb_cap[0] = 1.0f;
+            locked_mat->rgb_cap[1] = 1.0f;
+            locked_mat->rgb_cap[2] = 1.0f;
+            locked_mat->specular = 1.0f;
+            
             if (matching_parsed_materials_i >= 0) {
                 locked_mat->ambient_rgb[0] =
                     parsed_materials[matching_parsed_materials_i].ambient_rgb[0];
@@ -659,6 +664,17 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                     parsed_materials[matching_parsed_materials_i].diffuse_rgb[1];
                 locked_mat->diffuse_rgb[2] =
                     parsed_materials[matching_parsed_materials_i].diffuse_rgb[2];
+                
+                locked_mat->specular_rgb[0] =
+                    parsed_materials[matching_parsed_materials_i].specular_rgb[0];
+                locked_mat->specular_rgb[1] =
+                    parsed_materials[matching_parsed_materials_i].specular_rgb[1];
+                locked_mat->specular_rgb[2] =
+                    parsed_materials[matching_parsed_materials_i].specular_rgb[2];
+                
+                locked_mat->specular_exponent =
+                    parsed_materials[matching_parsed_materials_i].
+                        specular_exponent;
                 
                 locked_mat->illum = 1.0f;
                 
@@ -709,13 +725,6 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 locked_mat->rgb_cap[1] = 1.0f;
                 locked_mat->rgb_cap[2] = 1.0f;
             }
-            
-            locked_mat->refraction = 0.0f;
-            locked_mat->rgb_cap[0] = 1.0f;
-            locked_mat->rgb_cap[1] = 1.0f;
-            locked_mat->rgb_cap[2] = 1.0f;
-            locked_mat->specular = 1.0f;
-            locked_mat->specular_exponent = 0.0f;
         }
     }
     
@@ -1041,7 +1050,9 @@ int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
             &good);
     
     if (!good) {
+        #ifndef LOGGER_IGNORE_ASSERTS
         log_dump_and_crash(mtlparser_get_last_error_msg());
+        #endif
         return -1;
     }
     
