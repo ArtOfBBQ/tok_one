@@ -95,7 +95,8 @@ The tokenizer uses memory, so you need to initialize it (with malloc or your
 own malloc function) before doing anything else.
 */
 void toktoken_init(
-    void*(*arg_malloc_func)(size_t),
+    void * (*arg_memset_func)(void *, int, size_t),
+    void * (*arg_malloc_func)(size_t),
     uint32_t * good);
 
 /*

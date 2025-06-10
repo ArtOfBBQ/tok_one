@@ -173,11 +173,15 @@ void init_application_before_gpu_init(
     #endif
     
     uint32_t good = 0;
-    toktoken_init(malloc_from_managed_infoless, &good);
+    toktoken_init(
+        common_memset_char,
+        malloc_from_managed_infoless,
+        &good);
     log_assert(good);
     
     T1_objparser_init(malloc_from_managed_infoless, free_from_managed);
     mtlparser_init(
+        common_memset_char,
         malloc_from_managed_infoless,
         strlcat);
     

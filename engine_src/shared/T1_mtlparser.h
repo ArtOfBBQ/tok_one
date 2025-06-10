@@ -11,6 +11,7 @@ typedef struct ParsedMaterial {
     char ambient_map[MATERIAL_NAME_CAP];
     char diffuse_map[MATERIAL_NAME_CAP];
     char specular_map[MATERIAL_NAME_CAP];
+    char specular_exponent_map[MATERIAL_NAME_CAP];
     char bump_map[MATERIAL_NAME_CAP];
     char normal_map[MATERIAL_NAME_CAP];
     float bump_map_intensity;
@@ -32,6 +33,7 @@ typedef struct ParsedMaterial {
 } ParsedMaterial;
 
 void mtlparser_init(
+    void * (* memset_func)(void *, int, size_t),
     void * (* malloc_func)(size_t),
     size_t (* strlcat)(char *, const char *, size_t));
 

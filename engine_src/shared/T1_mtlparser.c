@@ -7,6 +7,7 @@ typedef struct MTLParserState {
     ParsedMaterial materials[PARSED_MATERIALS_CAP];
     uint32_t materials_size;
     char last_error_msg[ERROR_MSG_CAP];
+    void * (* mtlparser_memset)(void *, int, size_t);
     size_t (* mtlparser_strlcat)(char *, const char *, size_t);
     uint32_t ambient_set_for_current_mtl;
     uint32_t diffuse_set_for_current_mtl;
@@ -25,6 +26,7 @@ typedef enum MTLToken {
     MTLTOKEN_AMBIENT_MAP,
     MTLTOKEN_DIFFUSE_MAP,
     MTLTOKEN_SPECULAR_MAP,
+    MTLTOKEN_SPECULAR_EXPONENT_MAP,
     MTLTOKEN_ALPHA_MAP, // useless in our model
     MTLTOKEN_BUMP_MAP,
     MTLTOKEN_BUMP_MAP_ARG_INTENSITY,
@@ -43,7 +45,7 @@ typedef enum MTLToken {
     MTLTOKEN_CLEARCOAT_ROUGHNESS,
     MTLTOKEN_ANISOTROPY,
     MTLTOKEN_ANISOTROPY_ROTATION,
-    MTLTOKEN_STRINGLITERAL,
+    MTLTOKEN_STRINGLITERAL = 26,
 } MTLToken;
 
 static void mtlparser_reset(void) {
@@ -55,6 +57,7 @@ static void mtlparser_reset(void) {
 }
 
 void mtlparser_init(
+    void * (* arg_memset_func)(void *, int, size_t),
     void * (* arg_malloc_func)(size_t),
     size_t (* arg_strlcat_func)(char *, const char *, size_t))
 {
@@ -62,6 +65,7 @@ void mtlparser_init(
     mtlparser_state->last_error_msg[0] = '\0';
     
     mtlparser_state->mtlparser_strlcat = arg_strlcat_func;
+    mtlparser_state->mtlparser_memset = arg_memset_func;
     
     mtlparser_reset();
 }
@@ -359,19 +363,13 @@ static void parse_rgb_token(
 }
 
 static void construct_material(ParsedMaterial * to_construct) {
-    to_construct->name[0] = '\0';
+    mtlparser_state->mtlparser_memset(to_construct, 0, sizeof(ParsedMaterial));
+    
     to_construct->alpha = 1.0f;
-    to_construct->ambient_map[0] = '\0';
     to_construct->ambient_rgb[0] = 0.1f;
     to_construct->ambient_rgb[1] = 0.1f;
     to_construct->ambient_rgb[2] = 0.1f;
-    to_construct->anisotropy = 0.0f;
-    to_construct->anisotropy_rotation = 0.0f;
-    to_construct->bump_map[0] = '\0';
     to_construct->bump_map_intensity = 1.0f;
-    to_construct->clearcoat = 0.0f;
-    to_construct->clearcoat_roughness = 0.0f;
-    to_construct->diffuse_map[0] = '\0';
     to_construct->diffuse_rgb[0] = 1.0f;
     to_construct->diffuse_rgb[1] = 1.0f;
     to_construct->diffuse_rgb[2] = 1.0f;
@@ -432,7 +430,7 @@ void mtlparser_parse(
     toktoken_register_token("-bm", MTLTOKEN_BUMP_MAP_ARG_INTENSITY, good);
     if (!*good) { return; }
     
-    toktoken_register_token("map_Ns", MTLTOKEN_NORMAL_MAP, good);
+    toktoken_register_token("map_Ns", MTLTOKEN_SPECULAR_EXPONENT_MAP, good);
     if (!*good) { return; }
     
     toktoken_register_token("Ka", MTLTOKEN_AMBIENT_KA, good);
@@ -813,6 +811,29 @@ void mtlparser_parse(
             }
             case MTLTOKEN_SPECULAR_MAP: {
                 assert(0);
+                
+                break;
+            }
+            case MTLTOKEN_SPECULAR_EXPONENT_MAP: {
+                parse_single_string_stat(
+                    /* uint32_t * i: */
+                        &i,
+                    /* TokToken * token: */
+                        token,
+                    /* const char * material_name: */
+                        current_material->name,
+                    /* char * string_stat: */
+                        current_material->specular_exponent_map,
+                    /* uint32_t * good: */
+                        good);
+                
+                if (!*good) {
+                    *good = 0;
+                } else {
+                    return;
+                }
+                
+                break;
                 
                 break;
             }

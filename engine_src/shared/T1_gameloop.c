@@ -102,6 +102,9 @@ void gameloop_update_before_render_pass(
         font_settings->mat.ambient_rgb[0]   = 1.0f;
         font_settings->mat.ambient_rgb[1]   = 1.0f;
         font_settings->mat.ambient_rgb[2]   = 1.0f;
+        font_settings->mat.diffuse_rgb[0]   = 1.0f;
+        font_settings->mat.diffuse_rgb[1]   = 1.0f;
+        font_settings->mat.diffuse_rgb[2]   = 1.0f;
         font_settings->mat.alpha            = 1.0f;
         font_settings->ignore_camera        = false; // we set camera to 0,0,0
         font_settings->ignore_lighting      = true;

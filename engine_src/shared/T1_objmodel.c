@@ -669,6 +669,20 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                         &locked_mat->texturearray_i,
                     /* int32_t * texture_i_recipient: */
                         &locked_mat->texture_i);
+                if (
+                    parsed_materials[matching_parsed_materials_i].
+                        diffuse_map[0] != '\0')
+                {
+                    log_append("WARNING: missing material texture: ");
+                    log_append(parsed_materials[matching_parsed_materials_i].diffuse_map);
+                    log_append("\n");
+                    assert(locked_mat->texturearray_i >= 0);
+                    assert(locked_mat->texture_i >= 0);
+                } else {
+                    assert(locked_mat->texturearray_i == -1);
+                    assert(locked_mat->texture_i == -1);
+                }
+                
                 T1_texture_array_get_filename_location(
                     /* const char * for_filename: */
                         parsed_materials[matching_parsed_materials_i].normal_map,
@@ -834,6 +848,10 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 log_assert(vert_i <= arg_parsed_obj->vertices_count);
                 
                 log_assert(all_mesh_vertices->size < ALL_LOCKED_VERTICES_SIZE);
+                
+                if (all_mesh_vertices->size >= ALL_LOCKED_VERTICES_SIZE) {
+                    return -1;
+                }
                 
                 all_mesh_vertices->gpu_data[all_mesh_vertices->size].xyz[0] =
                     arg_parsed_obj->vertices[vert_i - 1][0];
@@ -1027,15 +1045,6 @@ int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
         return -1;
     }
     
-    for (uint32_t i = 0; i < parsed_materials_size; i++) {
-        // register_material(parsed_materials + i);
-    }
-    
-    // check that each texture file in the .mtl is a preregistered resource
-    for (uint32_t i = 0; i < parsed_obj->materials_count; i++) {
-        printf("material %u: %s\n", i, parsed_obj->material_names[i].name);
-    }
-    
     return new_mesh_id_from_parsed_obj_and_parsed_materials(
         parsed_obj,
         parsed_materials,
@@ -1122,6 +1131,10 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
             obj_file_buf.contents,
         /* const char * mtl_text: */
             mtl_file_buf.contents);
+    
+    if (return_value < 0) {
+        return -1;
+    }
     
     common_strcpy_capped(
         all_mesh_summaries[return_value].resource_name,

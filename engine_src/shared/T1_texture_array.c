@@ -696,12 +696,15 @@ void T1_texture_array_get_filename_location(
     *texture_array_i_recipient = -1;
     *texture_i_recipient = -1;
     
+    if (for_filename[0] == '\0') { return; }
+    
     for (uint32_t i = 0; i < texture_arrays_size; i++) {
         log_assert(texture_arrays[i].images_size < 2000);
         for (uint32_t j = 0; j < texture_arrays[i].images_size; j++) {
-            if (common_are_equal_strings(
-                texture_arrays[i].images[j].filename,
-                for_filename))
+            if (
+                common_are_equal_strings(
+                    texture_arrays[i].images[j].filename,
+                    for_filename))
             {
                 *texture_array_i_recipient = (int32_t)i;
                 *texture_i_recipient = (int32_t)j;

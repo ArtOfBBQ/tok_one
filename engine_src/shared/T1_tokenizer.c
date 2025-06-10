@@ -1,5 +1,7 @@
 #include "T1_tokenizer.h"
 
+static void * (* ttkn_memset_char_func)(void *, int, size_t);
+
 TokTokenClientSettings * toktoken_client_settings = NULL;
 
 typedef struct RegisteredToken {
@@ -14,6 +16,7 @@ typedef struct RegisteredToken {
 #define TOKENS_CAP 10000
 #define NUMBERS_CAP 10000
 typedef struct TokTokenState {
+    char * ascii_store;
     RegisteredToken registered_tokens[REGISTERED_TOKENS_CAP];
     TokToken tokens[TOKENS_CAP];
     TokTokenNumber numbers[NUMBERS_CAP];
@@ -22,7 +25,6 @@ typedef struct TokTokenState {
     uint32_t registered_tokens_size;
     uint32_t tokens_size;
     uint32_t numbers_size;
-    char * ascii_store;
     uint32_t ascii_store_next_i; // index to write the next string at
     uint32_t good;
 } TokTokenState;
@@ -104,10 +106,13 @@ void toktoken_debug_print_state(
 #endif
 
 void toktoken_init(
-    void*(*arg_malloc_func)(size_t),
+    void * (*arg_memset_func)(void *, int, size_t),
+    void * (*arg_malloc_func)(size_t),
     uint32_t * good)
 {
     *good = 0;
+    
+    ttkn_memset_char_func = arg_memset_func;
     
     toktoken_client_settings = arg_malloc_func(sizeof(TokTokenClientSettings));
     if (!toktoken_client_settings) {
@@ -144,15 +149,27 @@ void toktoken_reset(uint32_t * good) {
         return;
     }
     
-    toktoken_client_settings->next_token_ignore_case = 0;
-    toktoken_client_settings->next_token_ignore_whitespace = 0;
+    if (toktoken_state->ascii_store) {
+        ttkn_memset_char_func(
+            toktoken_state->ascii_store,
+            0,
+            ASCII_STORE_CAP);
+    }
+    ttkn_memset_char_func(
+        toktoken_state->registered_tokens,
+        0,
+        sizeof(TokTokenState) - offsetof(TokTokenState, registered_tokens));
+    ttkn_memset_char_func(
+        toktoken_client_settings,
+        0,
+        sizeof(TokTokenClientSettings));
+    
     toktoken_client_settings->allow_scientific_notation = 1;
     toktoken_client_settings->allow_leading_dot = 1;
     toktoken_client_settings->allow_high_precision = 1;
     
     toktoken_state->string_literal_enum_value = UINT32_MAX;
     toktoken_state->newline_enum_value = UINT32_MAX;
-    toktoken_state->registered_tokens_size = 0;
     toktoken_state->good = 1;
     
     *good = 1;
