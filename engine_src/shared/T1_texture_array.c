@@ -521,8 +521,8 @@ static void register_to_texturearray_by_splitting_image(
         /* const uint32_t use_bc1_compression: */
             false);
     
-    for (int32_t col_i = 0; col_i < (int32_t)columns; col_i++) {
-        for (int32_t row_i = 0; row_i < (int32_t)rows; row_i++) {
+    for (int32_t row_i = 0; row_i < (int32_t)rows; row_i++) {
+        for (int32_t col_i = 0; col_i < (int32_t)columns; col_i++) {
             
             int32_t t_i = (row_i * ((int32_t)columns)) + col_i;
             
@@ -571,14 +571,11 @@ static void register_to_texturearray_by_splitting_image(
                 256,
                 row_i);
             
-            // TODO: we need to preregister to a known location, not auto
-            //            T1_texture_array_preregister_null_image(
-            //                /* const char * filename: */
-            //                    filenames[(row_i*(int32_t)columns)+col_i],
-            //                /* const uint32_t height: */
-            //                    texture_arrays[ta_i].single_img_height,
-            //                /* const uint32_t width: */
-            //                    texture_arrays[ta_i].single_img_width);
+            common_strcpy_capped(
+                texture_arrays[ta_i].images[t_i].filename,
+                FILENAME_MAX,
+                filenames[(row_i*(int32_t)columns)+col_i]);
+            texture_arrays[ta_i].images_size += 1;
             
             platform_gpu_push_texture_slice_and_free_rgba_values(
                 /* const int32_t texture_array_i: */
@@ -629,12 +626,6 @@ void T1_texture_array_register_new_by_splitting_image(
         /* const uint32_t columns: */
             columns);
 }
-
-//void T1_texture_array_preregister_null_png_from_disk(
-//    const char * filename)
-//{
-//    
-//}
 
 void T1_texture_array_preregister_null_image(
     const char * filename,
@@ -760,24 +751,6 @@ void T1_texture_array_decode_null_png_at(
         /* uint32_t * out_good: */
             &new_image->good);
     
-    //    } else if (
-    //        file_buffer.contents[0] == 'B' &&
-    //        file_buffer.contents[1] == 'M')
-    //    {
-    //        decode_BMP(
-    //            /* const uint8_t * raw_input: */
-    //                (uint8_t *)file_buffer.contents,
-    //            /* const uint64_t raw_input_size: */
-    //                file_buffer.size_without_terminator,
-    //            /* out_rgba_values: */
-    //                new_image->rgba_values_page_aligned,
-    //            /* out_rgba_values_size: */
-    //                new_image->rgba_values_size,
-    //            /* uint32_t * out_good: */
-    //                &new_image->good);
-    //    }
-    
-    // TODO: reinstate this assert
     log_assert(new_image->good);
     log_assert(new_image->height == texture_arrays[i].single_img_height);
     log_assert(new_image->width == texture_arrays[i].single_img_width);
@@ -801,55 +774,6 @@ void T1_texture_array_load_font_images(void) {
         /* rows     : */ 10,
         /* columns  : */ 10);
     texture_arrays[0].request_init = false;
-    
-    for (
-        uint32_t i = 0;
-        i < texture_arrays[0].images_size;
-        i++)
-    {
-        #if 0
-        // TODO: delete this debug code
-        char debug_filename[128];
-        common_strcpy_capped(debug_filename, 128, "to_gpu_font_");
-        common_strcat_uint_capped(debug_filename, 128, i);
-        common_strcat_capped(debug_filename, 128, ".bmp");
-        
-        uint32_t success = 0;
-        platform_write_rgba_to_writables(
-            /* const char * local_filename: */
-                debug_filename,
-            /* uint8_t * rgba: */
-                texture_arrays[0].images[i].image->rgba_values_page_aligned,
-            /* const uint32_t rgba_size: */
-                texture_arrays[0].images[i].image->rgba_values_size,
-            /* const uint32_t width: */
-                texture_arrays[0].images[i].image->width,
-            /* const uint32_t height: */
-                texture_arrays[0].images[i].image->height,
-            /* uint32_t * good: */
-                &success);
-        log_assert(success);
-        #endif
-        
-        platform_gpu_push_special_engine_texture_and_free_rgba_values(
-            /* const SpecialEngineTexture type: */
-                ENGINESPECIALTEXTURE_FONT,
-            /* const uint32_t parent_texture_array_images_size: */
-                texture_arrays[0].images_size,
-            /* const uint32_t texture_i: */
-                i,
-            /* const uint32_t image_width: */
-                texture_arrays[0].single_img_width,
-            /* const uint32_t image_height: */
-                texture_arrays[0].single_img_height,
-            /* uint8_t * rgba_values_freeable: */
-                texture_arrays[0].images[i].image.rgba_values_freeable,
-            /* uint8_t * rgba_values_page_aligned: */
-                texture_arrays[0].images[i].image.rgba_values_page_aligned);
-        
-        texture_arrays[0].images[i].image.rgba_values_page_aligned = NULL;
-        texture_arrays[0].images[i].request_update = false;
-    }
 }
 
 void T1_texture_array_decode_all_null_images(void)
