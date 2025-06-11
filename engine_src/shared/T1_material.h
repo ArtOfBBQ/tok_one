@@ -18,6 +18,9 @@ extern LockedMaterialCollection * all_mesh_materials;
 void T1_material_init(
     void * (* arg_malloc_function)(size_t size));
 
+void T1_material_construct(
+    GPULockedMaterial * to_construct);
+
 uint32_t T1_material_preappend_locked_material_i(
     const char * material_name);
 

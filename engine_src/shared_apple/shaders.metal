@@ -6,7 +6,7 @@
 
 using namespace metal;
 
-float3 x_rotate(float3 vertices, float x_angle) {
+float3 x_rotate(const float3 vertices, const float x_angle) {
     float3 rotated_vertices = vertices;
     float cos_angle = cos(x_angle);
     float sin_angle = sin(x_angle);
@@ -21,7 +21,7 @@ float3 x_rotate(float3 vertices, float x_angle) {
     return rotated_vertices;
 }
 
-float3 y_rotate(float3 vertices, float y_angle) {
+float3 y_rotate(const float3 vertices, const float y_angle) {
     float3 rotated_vertices = vertices;
     float cos_angle = cos(y_angle);
     float sin_angle = sin(y_angle);
@@ -36,7 +36,7 @@ float3 y_rotate(float3 vertices, float y_angle) {
     return rotated_vertices;
 }
 
-float3 z_rotate(float3 vertices, float z_angle) {
+float3 z_rotate(const float3 vertices, const float z_angle) {
     float3 rotated_vertices = vertices;
     float cos_angle = cos(z_angle);
     float sin_angle = sin(z_angle);
@@ -49,6 +49,14 @@ float3 z_rotate(float3 vertices, float z_angle) {
         (vertices[0] * sin_angle);
     
     return rotated_vertices;
+}
+
+float3 xyz_rotate(const float3 vertices, const float3 xyz_angle) {
+    float3 return_value = x_rotate(vertices,     xyz_angle[0]);
+    return_value        = y_rotate(return_value, xyz_angle[1]);
+    return_value        = z_rotate(return_value, xyz_angle[2]);
+    
+    return return_value;
 }
 
 float4 project_float3_to_float4_perspective(
@@ -124,16 +132,12 @@ vertex float4 shadows_vertex_shader(
     mesh_vertices *= polygons[polygon_i].scale_factor;
     
     // rotate vertices
-    float3 x_rotated_vertices = x_rotate(
+    float3 z_rotated_vertices = xyz_rotate(
         mesh_vertices,
-        polygons[polygon_i].xyz_angle[0]);
-    float3 y_rotated_vertices = y_rotate(
-        x_rotated_vertices,
-        polygons[polygon_i].xyz_angle[1]);
-    float3 z_rotated_vertices = z_rotate(
-        y_rotated_vertices,
-        polygons[polygon_i].xyz_angle[2]);
-    
+        vector_float3(
+            polygons[polygon_i].xyz_angle[0],
+            polygons[polygon_i].xyz_angle[1],
+            polygons[polygon_i].xyz_angle[2]));
     // translate to world position
     out_pos = z_rotated_vertices + parent_mesh_position;
     
@@ -144,15 +148,12 @@ vertex float4 shadows_vertex_shader(
     float3 camera_translated_pos = out_pos - camera_position;
     
     // rotate around camera
-    float3 cam_x_rotated = x_rotate(
+    float3 cam_z_rotated = xyz_rotate(
         camera_translated_pos,
-        -lights[updating_globals->shadowcaster_i].angle_xyz[0]);
-    float3 cam_y_rotated = y_rotate(
-        cam_x_rotated,
-        -lights[updating_globals->shadowcaster_i].angle_xyz[1]);
-    float3 cam_z_rotated = z_rotate(
-        cam_y_rotated,
-        -lights[updating_globals->shadowcaster_i].angle_xyz[2]);
+        vector_float3(
+            -lights[updating_globals->shadowcaster_i].angle_xyz[0],
+            -lights[updating_globals->shadowcaster_i].angle_xyz[1],
+            -lights[updating_globals->shadowcaster_i].angle_xyz[2]));
     
     float ic = clamp(
         polygons[polygon_i].ignore_camera,
@@ -175,6 +176,8 @@ typedef struct
     float2 texture_coordinate;
     float3 worldpos;
     float3 normal;
+    float3 tangent;
+    float3 bitangent;
     unsigned int locked_vertex_i [[ flat ]];
     unsigned int polygon_i [[ flat ]];
     int32_t touchable_id [[ flat ]];
@@ -238,26 +241,34 @@ vertex_shader(
         locked_vertices[out.locked_vertex_i].normal_xyz[1],
         locked_vertices[out.locked_vertex_i].normal_xyz[2]);
     
-    // rotate vertices
-    float3 x_rotated_vertices = x_rotate(
-        mesh_vertices,
-        polygons[out.polygon_i].xyz_angle[0]);
-    float3 y_rotated_vertices = y_rotate(
-        x_rotated_vertices,
-        polygons[out.polygon_i].xyz_angle[1]);
-    float3 z_rotated_vertices = z_rotate(
-        y_rotated_vertices,
+    float3 mesh_tangent = vector_float3(
+        locked_vertices[out.locked_vertex_i].tangent_xyz[0],
+        locked_vertices[out.locked_vertex_i].tangent_xyz[1],
+        locked_vertices[out.locked_vertex_i].tangent_xyz[2]);
+    
+    float3 mesh_bitangent = vector_float3(
+        locked_vertices[out.locked_vertex_i].bitangent_xyz[0],
+        locked_vertices[out.locked_vertex_i].bitangent_xyz[1],
+        locked_vertices[out.locked_vertex_i].bitangent_xyz[2]);
+    
+    float3 parent_xyz_angle = vector_float3(
+        polygons[out.polygon_i].xyz_angle[0],
+        polygons[out.polygon_i].xyz_angle[1],
         polygons[out.polygon_i].xyz_angle[2]);
     
-    float3 x_rotated_normal  = x_rotate(
+    float3 z_rotated_vertices = xyz_rotate(
+        mesh_vertices,
+        parent_xyz_angle);
+    
+    out.normal = xyz_rotate(
         mesh_normals,
-        polygons[out.polygon_i].xyz_angle[0]);
-    float3 y_rotated_normal  = y_rotate(
-        x_rotated_normal,
-        polygons[out.polygon_i].xyz_angle[1]);
-    out.normal = z_rotate(
-        y_rotated_normal,
-        polygons[out.polygon_i].xyz_angle[2]);
+        parent_xyz_angle);
+    out.tangent = xyz_rotate(
+        mesh_tangent,
+        parent_xyz_angle);
+    out.bitangent = xyz_rotate(
+        mesh_bitangent,
+        parent_xyz_angle);
     
     // translate to world position
     out.worldpos = z_rotated_vertices + parent_mesh_position;
@@ -269,15 +280,12 @@ vertex_shader(
     float3 camera_translated_pos = out.worldpos - camera_position;
     
     // rotate around camera
-    float3 cam_x_rotated = x_rotate(
+    float3 cam_z_rotated = xyz_rotate(
         camera_translated_pos,
-        -camera->xyz_angle[0]);
-    float3 cam_y_rotated = y_rotate(
-        cam_x_rotated,
-        -camera->xyz_angle[1]);
-    float3 cam_z_rotated = z_rotate(
-        cam_y_rotated,
-        -camera->xyz_angle[2]);
+        vector_float3(
+            -camera->xyz_angle[0],
+            -camera->xyz_angle[1],
+            -camera->xyz_angle[2]));
     
     float ic = clamp(
         polygons[out.polygon_i].ignore_camera,
@@ -365,9 +373,7 @@ float4 get_lit(
     const device GPUzSprite * zsprite,
     const device GPULockedMaterial * material,
     const device GPUPostProcessingConstants * updating_globals,
-    float3 fragment_worldpos,
-    float3 fragment_normal,
-    float2 texture_coordinate)
+    const RasterizerPixel in)
 {
     float4 lit_color = vector_float4(
         0.0f,
@@ -393,6 +399,10 @@ float4 get_lit(
     
     float4 diffuse_texture_sample = vector_float4(0.75f, 0.75f, 0.75f, 1.0f);
     
+    constexpr sampler texture_sampler(
+        mag_filter::linear,
+        min_filter::linear);
+    
     #if TEXTURES_ACTIVE
     if (material->texturearray_i >= 0)
     {
@@ -400,15 +410,11 @@ float4 get_lit(
     if (material->texturearray_i == 0)
     {
     #endif
-        constexpr sampler texture_sampler(
-            mag_filter::linear,
-            min_filter::linear);
-        
         // Sample the texture to obtain a color
         const half4 color_sample =
             color_textures[material->texturearray_i].sample(
                 texture_sampler,
-                texture_coordinate,
+                in.texture_coordinate,
                 material->texture_i);
         diffuse_texture_sample = float4(color_sample);
     }
@@ -443,16 +449,13 @@ float4 get_lit(
                 mag_filter::nearest,
                 min_filter::nearest);
             
-            float3 light_translated_pos = fragment_worldpos - light_pos;
-            float3 light_x_rotated = x_rotate(
+            float3 light_translated_pos = in.worldpos - light_pos;
+            float3 light_z_rotated = xyz_rotate(
                 light_translated_pos,
-                -light_angle_xyz[0]);
-            float3 light_y_rotated = y_rotate(
-                light_x_rotated,
-                -light_angle_xyz[1]);
-            float3 light_z_rotated = z_rotate(
-                light_y_rotated,
-                -light_angle_xyz[2]); // [0, 0, 1]
+                vector_float3(
+                    -light_angle_xyz[0],
+                    -light_angle_xyz[1],
+                    -light_angle_xyz[2]));
             
             float4 light_clip_pos =
                 project_float3_to_float4_perspective(
@@ -478,7 +481,7 @@ float4 get_lit(
         
         float distance = get_distance(
             light_pos,
-            fragment_worldpos);
+            in.worldpos);
         
         float distance_overflow = max(
             distance - (lights[i].reach * 0.75f),
@@ -500,12 +503,26 @@ float4 get_lit(
         // if the normal also points to the light, we want more diffuse
         // brightness
         float3 object_to_light = normalize(
-            (light_pos - fragment_worldpos));
+            (light_pos - in.worldpos));
+        
+        if (material->normalmap_texturearray_i >= 0) {
+            //            half4 normal_map_sample =
+            //                color_textures[material->normalmap_texturearray_i].sample(
+            //                    texture_sampler,
+            //                    in.texture_coordinate,
+            //                    material->normalmap_texture_i);
+            //
+            //            normal_map_sample = normalize((normal_map_sample * 2.0h) - 1.0h);
+            
+            // TODO: perturb in.normal using TBN (later)
+            float4 vector = vector_float4(in.bitangent, 1.0f); // Switch to in.bitangent to visualize
+            return vector * 0.5f + 0.5f; // Return for visualization
+        }
         
         float diffuse_dot =
             max(
                 dot(
-                    fragment_normal,
+                    in.normal,
                     object_to_light),
                 0.0f) * 0.85f + 0.15f;
         
@@ -530,11 +547,11 @@ float4 get_lit(
             float3(
                 camera->xyz[0],
                 camera->xyz[1],
-                camera->xyz[2]) - fragment_worldpos);
+                camera->xyz[2]) - in.worldpos);
         
         float3 reflection_ray = reflect(
             -object_to_light,
-            fragment_normal);
+            in.normal);
         
         float specular_dot = pow(
             max(
@@ -548,7 +565,6 @@ float4 get_lit(
             light_color *
             specular_dot *
             lights[i].specular *
-            material->specular *
             shadow_factor);
     }
     
@@ -579,7 +595,7 @@ float4 get_lit(
 
 fragment FragmentAndTouchableOut
 fragment_shader(
-    RasterizerPixel in [[stage_in]],
+    const RasterizerPixel in [[stage_in]],
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
         color_textures[[ texture(0) ]],
     #if SHADOWS_ACTIVE
@@ -617,12 +633,8 @@ fragment_shader(
             material,
         /* const device GPUPostProcessingConstants * updating_globals: */
             updating_globals,
-        /* float3 fragment_worldpos: */
-            in.worldpos,
-        /* float3 fragment_normal: */
-            in.normal,
-        /* float2 texture_coordinate: */
-            in.texture_coordinate);
+        /* const device RasterizerPixel * in: */
+            in);
     
     int diamond_size = 35.0f;
     int neghalfdiamond = -1.0f * (diamond_size / 2);
@@ -690,12 +702,8 @@ alphablending_fragment_shader(
             material,
         /* const device GPUPostProcessingConstants * updating_globals: */
             updating_globals,
-        /* float3 fragment_worldpos: */
-            in.worldpos,
-        /* float3 fragment_normal: */
-            in.normal,
-        /* float2 texture_coordinate: */
-            in.texture_coordinate);
+        /* ???: */
+            in);
     
     return pack_color_and_touchable_id(lit_color, in.touchable_id);
 }
@@ -922,15 +930,12 @@ raw_vertex_shader(
     float3 camera_translated_pos = pos - camera_position;
     
     // rotate around camera
-    float3 cam_x_rotated = x_rotate(
+    float3 cam_z_rotated = xyz_rotate(
         camera_translated_pos,
-        -camera->xyz_angle[0]);
-    float3 cam_y_rotated = y_rotate(
-        cam_x_rotated,
-        -camera->xyz_angle[1]);
-    float3 cam_z_rotated = z_rotate(
-        cam_y_rotated,
-        -camera->xyz_angle[2]);
+        vector_float3(
+            -camera->xyz_angle[0],
+            -camera->xyz_angle[1],
+            -camera->xyz_angle[2]));
     
     out.position = vector_float4(cam_z_rotated, 1.0f);
     

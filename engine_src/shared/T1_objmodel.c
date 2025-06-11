@@ -642,10 +642,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                     all_mesh_summaries[all_mesh_summaries_size].
                         locked_material_head_i + i);
             
-            locked_mat->rgb_cap[0] = 1.0f;
-            locked_mat->rgb_cap[1] = 1.0f;
-            locked_mat->rgb_cap[2] = 1.0f;
-            locked_mat->specular = 1.0f;
+            T1_material_construct(locked_mat);
             
             if (matching_parsed_materials_i >= 0) {
                 locked_mat->ambient_rgb[0] =
@@ -701,29 +698,11 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 
                 T1_texture_array_get_filename_location(
                     /* const char * for_filename: */
-                        parsed_materials[matching_parsed_materials_i].normal_map,
+                        parsed_materials[matching_parsed_materials_i].bump_or_normal_map,
                     /* int32_t * texture_array_i_recipient: */
                         &locked_mat->normalmap_texturearray_i,
                     /* int32_t * texture_i_recipient: */
                         &locked_mat->normalmap_texture_i);
-            } else {
-                log_append("Warning: missing material in obj file\n");
-                locked_mat->ambient_rgb[0] = 0.5f;
-                locked_mat->ambient_rgb[1] = 0.5f;
-                locked_mat->ambient_rgb[2] = 0.5f;
-                locked_mat->diffuse_rgb[0] = 0.5f;
-                locked_mat->diffuse_rgb[1] = 0.5f;
-                locked_mat->diffuse_rgb[2] = ((i % 20)*0.05f);
-                locked_mat->specular_rgb[0] = 0.5f;
-                locked_mat->specular_rgb[1] = 0.5f;
-                locked_mat->specular_rgb[2] = 0.5f;
-                locked_mat->alpha = 1.0f;
-                
-                locked_mat->texturearray_i = -1;
-                locked_mat->texture_i = -1;
-                locked_mat->rgb_cap[0] = 1.0f;
-                locked_mat->rgb_cap[1] = 1.0f;
-                locked_mat->rgb_cap[2] = 1.0f;
             }
         }
     }
@@ -1062,6 +1041,104 @@ int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
         parsed_materials_size);
 }
 
+static void T1_objmodel_deduce_tangents_and_bitangents(
+    const int32_t mesh_id)
+{
+    int32_t tail_i =
+        all_mesh_summaries[mesh_id].vertices_head_i +
+            all_mesh_summaries[mesh_id].vertices_size;
+    
+    for (
+        int32_t vert_i = all_mesh_summaries[mesh_id].vertices_head_i;
+        vert_i < tail_i;
+        vert_i += 3)
+    {
+        for (int32_t offset = 0; offset < 3; offset++) {
+        
+        GPULockedVertex * v1 = &all_mesh_vertices->
+            gpu_data[vert_i+((offset+0) % 3)];
+        GPULockedVertex * v2 = &all_mesh_vertices->
+            gpu_data[vert_i+((offset+1) % 3)];
+        GPULockedVertex * v3 = &all_mesh_vertices->
+            gpu_data[vert_i+((offset+2) % 3)];
+        
+        /*
+        Compute edge vectors in world space and UV space:
+        ΔP12 = P2 - P1, ΔP13 = P3 - P1.
+        ΔUV12 = uv2 - uv1, ΔUV13 = uv3 - uv1.
+        */
+        float vec_1_to_2[3];
+        vec_1_to_2[0] = v2->xyz[0] - v1->xyz[0];
+        vec_1_to_2[1] = v2->xyz[1] - v1->xyz[1];
+        vec_1_to_2[2] = v2->xyz[2] - v1->xyz[2];
+        
+        float uv_1_to_2[2];
+        uv_1_to_2[0] = v2->uv[0] - v1->uv[0];
+        uv_1_to_2[1] = v2->uv[1] - v1->uv[1];
+        
+        float vec_1_to_3[3];
+        vec_1_to_3[0] = v3->xyz[0] - v1->xyz[0];
+        vec_1_to_3[1] = v3->xyz[1] - v1->xyz[1];
+        vec_1_to_3[2] = v3->xyz[2] - v1->xyz[2];
+        
+        float uv_1_to_3[2];
+        uv_1_to_3[0] = v3->uv[0] - v1->uv[0];
+        uv_1_to_3[1] = v3->uv[1] - v1->uv[1];
+        
+        // T = (ΔP12 * ΔUV13.v - ΔP13 * ΔUV12.v) /
+        //     (ΔUV12.u * ΔUV13.v - ΔUV13.u * ΔUV12.v)
+        // B = (ΔP13 * ΔUV12.u - ΔP12 * ΔUV13.u) /
+        //     (ΔUV12.u * ΔUV13.v - ΔUV13.u * ΔUV12.v)
+        
+        float denom =
+            ((uv_1_to_2[0] * uv_1_to_3[1]) - uv_1_to_3[0] * uv_1_to_2[1]);
+        // Avoid division by zero
+        if (common_fabs(denom) < 0.00001f) { denom = 0.00001f; };
+        
+        float T[3] = {
+            (vec_1_to_2[0] * uv_1_to_3[1] - vec_1_to_3[0] * uv_1_to_2[1]) / denom,
+            (vec_1_to_2[1] * uv_1_to_3[1] - vec_1_to_3[1] * uv_1_to_2[1]) / denom,
+            (vec_1_to_2[2] * uv_1_to_3[1] - vec_1_to_3[2] * uv_1_to_2[1]) / denom
+        };
+        
+        // Orthogonalize
+        float N[3] = {
+            v1->normal_xyz[0],
+            v1->normal_xyz[1],
+            v1->normal_xyz[2]
+        };
+        float dot_TN = T[0] * N[0] + T[1] * N[1] + T[2] * N[2];
+        T[0] -= dot_TN * N[0];
+        T[1] -= dot_TN * N[1];
+        T[2] -= dot_TN * N[2];
+        
+        normalize_zvertex_f3(T);
+        v1->tangent_xyz[0] = T[0];
+        v1->tangent_xyz[1] = T[1];
+        v1->tangent_xyz[2] = T[2];
+        
+        float B[3] = {
+            N[1] * T[2] - N[2] * T[1],
+            N[2] * T[0] - N[0] * T[2],
+            N[0] * T[1] - N[1] * T[0]
+        };
+        normalize_zvertex_f3(B);
+        v1->bitangent_xyz[0] = B[0];
+        v1->bitangent_xyz[1] = B[1];
+        v1->bitangent_xyz[2] = B[2];
+        
+        // Zero check
+        #ifndef LOGGER_IGNORE_ASSERTS
+        float T_len = sqrtf(T[0] * T[0] + T[1] * T[1] + T[2] * T[2]);
+        float B_len = sqrtf(B[0] * B[0] + B[1] * B[1] + B[2] * B[2]);
+        log_assert(T_len > 1e-6);
+        log_assert(B_len > 1e-6);
+        #endif
+        
+        }
+    }
+}
+
 int32_t T1_objmodel_new_mesh_id_from_resources(
     const char * obj_filename,
     const char * mtl_filename,
@@ -1160,6 +1237,8 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     if (flip_uv_v) {
         T1_objmodel_flip_mesh_uvs_v(return_value);
     }
+    
+    T1_objmodel_deduce_tangents_and_bitangents(return_value);
     
     return return_value;
 }

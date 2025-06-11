@@ -12,8 +12,7 @@ typedef struct ParsedMaterial {
     char diffuse_map[MATERIAL_NAME_CAP];
     char specular_map[MATERIAL_NAME_CAP];
     char specular_exponent_map[MATERIAL_NAME_CAP];
-    char bump_map[MATERIAL_NAME_CAP];
-    char normal_map[MATERIAL_NAME_CAP];
+    char bump_or_normal_map[MATERIAL_NAME_CAP];
     float bump_map_intensity;
     float specular_exponent;
     float refraction;

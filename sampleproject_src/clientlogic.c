@@ -24,17 +24,22 @@ void client_logic_early_startup(
     T1_texture_files_preregister_png_resource("phoebus.png", &good);
     T1_texture_files_preregister_png_resource("structuredart1.png", &good);
     T1_texture_files_preregister_png_resource("structuredart2.png", &good);
+    T1_texture_files_preregister_png_resource("normalmap_rectangles.png", &good);
     
     assert(good);
     
     #if TEAPOT
-    //    teapot_mesh_id = T1_objmodel_new_mesh_id_from_resources(
-    //        "open_cube.obj",
-    //        "open_cube.mtl");
+    #if 1
+    teapot_mesh_id = T1_objmodel_new_mesh_id_from_resources(
+        "open_cube.obj",
+        "open_cube.mtl",
+        false);
+    #else
     teapot_mesh_id = T1_objmodel_new_mesh_id_from_resources(
         "guitar_simplified.obj",
         "guitar_simplified.mtl",
         /* flip_uv_v: */ true);
+    #endif
     
     if (teapot_mesh_id < 0) {
         #ifndef LOGGER_IGNORE_ASSERTS

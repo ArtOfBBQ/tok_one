@@ -192,24 +192,7 @@ void zsprite_construct(
     to_construct->cpu_data->zsprite_id = -1;
     to_construct->cpu_data->visible = true;
     
-    to_construct->gpu_data->base_material.alpha = 1.0f;
-    to_construct->gpu_data->base_material.ambient_rgb[0] = 1.0f;
-    to_construct->gpu_data->base_material.ambient_rgb[1] = 1.0f;
-    to_construct->gpu_data->base_material.ambient_rgb[2] = 1.0f;
-    to_construct->gpu_data->base_material.diffuse_rgb[0] = 1.0f;
-    to_construct->gpu_data->base_material.diffuse_rgb[1] = 1.0f;
-    to_construct->gpu_data->base_material.diffuse_rgb[2] = 1.0f;
-    to_construct->gpu_data->base_material.illum = 1.0f;
-    to_construct->gpu_data->base_material.normalmap_texturearray_i = -1;
-    to_construct->gpu_data->base_material.normalmap_texture_i = -1;
-    to_construct->gpu_data->base_material.refraction = 0.0f;
-    to_construct->gpu_data->base_material.rgb_cap[0] = 1.0f;
-    to_construct->gpu_data->base_material.rgb_cap[1] = 1.0f;
-    to_construct->gpu_data->base_material.rgb_cap[2] = 1.0f;
-    to_construct->gpu_data->base_material.specular = 1.0f;
-    to_construct->gpu_data->base_material.specular_exponent = 0.0f;
-    to_construct->gpu_data->base_material.texturearray_i = -1;
-    to_construct->gpu_data->base_material.texture_i = -1;
+    T1_material_construct(&to_construct->gpu_data->base_material);
 }
 
 float zsprite_get_distance_f3(

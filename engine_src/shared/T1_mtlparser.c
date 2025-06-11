@@ -28,9 +28,8 @@ typedef enum MTLToken {
     MTLTOKEN_SPECULAR_MAP,
     MTLTOKEN_SPECULAR_EXPONENT_MAP,
     MTLTOKEN_ALPHA_MAP, // useless in our model
-    MTLTOKEN_BUMP_MAP,
+    MTLTOKEN_BUMP_OR_NORMAL_MAP,
     MTLTOKEN_BUMP_MAP_ARG_INTENSITY,
-    MTLTOKEN_NORMAL_MAP,
     MTLTOKEN_AMBIENT_KA,
     MTLTOKEN_DIFFUSE_KD,
     MTLTOKEN_SPECULAR_KS,
@@ -418,17 +417,18 @@ void mtlparser_parse(
     toktoken_register_token("map_d", MTLTOKEN_ALPHA_MAP, good);
     if (!*good) { return; }
     
-    toktoken_register_token("bump", MTLTOKEN_BUMP_MAP, good);
+    toktoken_register_token("bump", MTLTOKEN_BUMP_OR_NORMAL_MAP, good);
     if (!*good) { return; }
     
-    toktoken_register_token("map_bump", MTLTOKEN_BUMP_MAP, good);
+    toktoken_register_token("map_bump", MTLTOKEN_BUMP_OR_NORMAL_MAP, good);
     if (!*good) { return; }
     
-    toktoken_register_token("map_Bump", MTLTOKEN_BUMP_MAP, good);
+    toktoken_register_token("map_Bump", MTLTOKEN_BUMP_OR_NORMAL_MAP, good);
     if (!*good) { return; }
     
     toktoken_register_token("-bm", MTLTOKEN_BUMP_MAP_ARG_INTENSITY, good);
     if (!*good) { return; }
+    
     
     toktoken_register_token("map_Ns", MTLTOKEN_SPECULAR_EXPONENT_MAP, good);
     if (!*good) { return; }
@@ -857,7 +857,7 @@ void mtlparser_parse(
                 
                 break;
             }
-            case MTLTOKEN_BUMP_MAP: {
+            case MTLTOKEN_BUMP_OR_NORMAL_MAP: {
                 TokToken * peek = toktoken_get_token_at(i+1);
                 if (peek->enum_value == MTLTOKEN_BUMP_MAP_ARG_INTENSITY) {
                     i++;
@@ -885,7 +885,7 @@ void mtlparser_parse(
                     /* const char * material_name: */
                         current_material->name,
                     /* char * string_stat: */
-                        current_material->bump_map,
+                        current_material->bump_or_normal_map,
                     /* uint32_t * good: */
                         good);
                 
@@ -895,10 +895,6 @@ void mtlparser_parse(
                     return;
                 }
                 
-                break;
-            }
-            case MTLTOKEN_NORMAL_MAP: {
-                assert(0); // TODO: implement me
                 break;
             }
             case MTLTOKEN_ROUGHNESS: {

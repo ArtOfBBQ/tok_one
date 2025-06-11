@@ -71,6 +71,12 @@
 		EC0BFBDA29EE71A200E4BC1C /* tree.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC0BFBD729EE71A200E4BC1C /* tree.obj */; };
 		EC0BFBDB29EE71A200E4BC1C /* xmas_tree.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC0BFBD829EE71A200E4BC1C /* xmas_tree.obj */; };
 		EC0BFBDC29EE71A200E4BC1C /* xmas_tree.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC0BFBD829EE71A200E4BC1C /* xmas_tree.obj */; };
+		EC1402882DF8F3D100697AF4 /* chalice03.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC1402872DF8F3D100697AF4 /* chalice03.obj */; };
+		EC1402892DF8F3D100697AF4 /* chalice03.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC1402862DF8F3D100697AF4 /* chalice03.mtl */; };
+		EC14028A2DF8F3D100697AF4 /* chalice03.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC1402872DF8F3D100697AF4 /* chalice03.obj */; };
+		EC14028B2DF8F3D100697AF4 /* chalice03.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC1402862DF8F3D100697AF4 /* chalice03.mtl */; };
+		EC14028D2DF8FDA400697AF4 /* normalmap_rectangles.png in Resources */ = {isa = PBXBuildFile; fileRef = EC14028C2DF8FDA400697AF4 /* normalmap_rectangles.png */; };
+		EC14028E2DF8FDA400697AF4 /* normalmap_rectangles.png in Resources */ = {isa = PBXBuildFile; fileRef = EC14028C2DF8FDA400697AF4 /* normalmap_rectangles.png */; };
 		EC1412B12938597400DA0D21 /* cardwithuvcoords.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */; };
 		EC1412B22938597400DA0D21 /* cardwithuvcoords.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */; };
 		EC18FF4229E3DC8B00ED785C /* blob1.png in Resources */ = {isa = PBXBuildFile; fileRef = EC18FF4129E3DC8B00ED785C /* blob1.png */; };
@@ -198,6 +204,9 @@
 		EC083A392AFF727900234FE3 /* T1_objparser.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_objparser.c; path = ../../engine_src/shared/T1_objparser.c; sourceTree = "<group>"; };
 		EC0BFBD729EE71A200E4BC1C /* tree.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = tree.obj; path = ../../resources/tree.obj; sourceTree = "<group>"; };
 		EC0BFBD829EE71A200E4BC1C /* xmas_tree.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = xmas_tree.obj; path = ../../resources/xmas_tree.obj; sourceTree = "<group>"; };
+		EC1402862DF8F3D100697AF4 /* chalice03.mtl */ = {isa = PBXFileReference; lastKnownFileType = text; name = chalice03.mtl; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/resources/chalice03.mtl; sourceTree = "<absolute>"; };
+		EC1402872DF8F3D100697AF4 /* chalice03.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = chalice03.obj; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/resources/chalice03.obj; sourceTree = "<absolute>"; };
+		EC14028C2DF8FDA400697AF4 /* normalmap_rectangles.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = normalmap_rectangles.png; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/resources/normalmap_rectangles.png; sourceTree = "<absolute>"; };
 		EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */ = {isa = PBXFileReference; explicitFileType = compiled; fileEncoding = 4; name = cardwithuvcoords.obj; path = ../../resources/cardwithuvcoords.obj; sourceTree = "<group>"; };
 		EC18FF4129E3DC8B00ED785C /* blob1.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = blob1.png; path = ../../resources/blob1.png; sourceTree = "<group>"; };
 		EC18FF4429E3DD8900ED785C /* blob2.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = blob2.png; path = ../../resources/blob2.png; sourceTree = "<group>"; };
@@ -370,11 +379,14 @@
 				EC18FF4429E3DD8900ED785C /* blob2.png */,
 				EC18FF4529E3DD8900ED785C /* blob3.png */,
 				EC843EA72D1401F3001AD2E9 /* cardstand.obj */,
+				EC1402862DF8F3D100697AF4 /* chalice03.mtl */,
+				EC1402872DF8F3D100697AF4 /* chalice03.obj */,
 				EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */,
 				ECC47A5F29E9111C0082A7C6 /* disk.obj */,
 				601128AC28625BAF00F92967 /* font.png */,
 				6009FB632876A47100FC5A60 /* fontmetrics.dat */,
 				EC74B51A2DE3BC070033206F /* guitar_simplified.mtl */,
+				EC14028C2DF8FDA400697AF4 /* normalmap_rectangles.png */,
 				EC74B51F2DE3BC070033206F /* guitar_simplified.obj */,
 				ECB05E4C294F8FD300050BD4 /* key.obj */,
 				EC67AE152A1B0813002D8380 /* leaves3.png */,
@@ -608,9 +620,12 @@
 				EC18FF4629E3DD8900ED785C /* blob2.png in Resources */,
 				601128AE28625BAF00F92967 /* structuredart2.png in Resources */,
 				601128B028625BAF00F92967 /* font.png in Resources */,
+				EC14028E2DF8FDA400697AF4 /* normalmap_rectangles.png in Resources */,
 				EC74B5252DE3BC070033206F /* 1001_normal.png in Resources */,
 				601128AF28625BAF00F92967 /* teapot.obj in Resources */,
 				EC18FF4829E3DD8900ED785C /* blob3.png in Resources */,
+				EC14028A2DF8F3D100697AF4 /* chalice03.obj in Resources */,
+				EC14028B2DF8F3D100697AF4 /* chalice03.mtl in Resources */,
 				EC0BFBD929EE71A200E4BC1C /* tree.obj in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -619,6 +634,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				EC14028D2DF8FDA400697AF4 /* normalmap_rectangles.png in Resources */,
 				EC7B09D4293CAC8B000ED98E /* Main.storyboard in Resources */,
 				EC1412B22938597400DA0D21 /* cardwithuvcoords.obj in Resources */,
 				ECC47A6129E9111C0082A7C6 /* disk.obj in Resources */,
@@ -635,6 +651,8 @@
 				60A9991F287BDF31003F7159 /* font.png in Resources */,
 				EC74B5262DE3BC070033206F /* 1001_normal.png in Resources */,
 				60A99923287BDF31003F7159 /* teapot.obj in Resources */,
+				EC1402882DF8F3D100697AF4 /* chalice03.obj in Resources */,
+				EC1402892DF8F3D100697AF4 /* chalice03.mtl in Resources */,
 				EC18FF4729E3DD8900ED785C /* blob2.png in Resources */,
 				EC8E828E2DF25F9E00E2D97A /* open_cube.obj in Resources */,
 				EC8E828F2DF25F9E00E2D97A /* open_cube.mtl in Resources */,

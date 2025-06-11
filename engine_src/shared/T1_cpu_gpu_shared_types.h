@@ -39,9 +39,11 @@ not this.
 */
 #define PARENT_MATERIAL_BASE 4294967295
 typedef struct GPULockedVertex {
-    float        xyz       [3];           // 12 bytes
-    float        normal_xyz[3];           // 12 bytes
-    float        uv        [2];           //  8 bytes
+    float        xyz          [3];        // 12 bytes
+    float        normal_xyz   [3];        // 12 bytes
+    float        tangent_xyz  [3];        // 12 bytes
+    float        bitangent_xyz[3];        // 12 bytes
+    float        uv           [2];        //  8 bytes
     unsigned int locked_materials_head_i; //  4 bytes
     unsigned int parent_material_i;       //  4 bytes
     float        padding[2];              // 12 bytes
@@ -64,7 +66,6 @@ typedef struct GPULockedMaterial {
     int   texture_i;
     int   normalmap_texturearray_i;
     int   normalmap_texture_i;
-    float specular;
     float specular_exponent;
     float refraction;
     float alpha;

@@ -52,16 +52,11 @@ void text_init(
     
     if (!font_settings) {
         font_settings = arg_text_malloc_func(sizeof(FontSettings));
-        font_settings->mat.texturearray_i = 0;
+        T1_material_construct(&font_settings->mat);
+        
         font_settings->touchable_id = -1;
         font_settings->font_height = 30.0;
-        font_settings->mat.ambient_rgb[0] = 1.0f;
-        font_settings->mat.ambient_rgb[1] = 1.0f;
-        font_settings->mat.ambient_rgb[2] = 1.0f;
-        font_settings->mat.alpha = 1.0f;
-        font_settings->mat.rgb_cap[0] = 1.0f;
-        font_settings->mat.rgb_cap[1] = 1.0f;
-        font_settings->mat.rgb_cap[2] = 1.0f;
+        font_settings->mat.texturearray_i = 0;
         font_settings->ignore_lighting = 1.0f;
         font_settings->remove_shadow = true;
     }
