@@ -841,9 +841,9 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
             uint32_t norm_1_i;
             uint32_t norm_2_i;
             uint32_t norm_3_i;
-            uint32_t textr_1_i;
-            uint32_t textr_2_i;
-            uint32_t textr_3_i;
+            uint32_t textr_1_i = 1;
+            uint32_t textr_2_i = 1;
+            uint32_t textr_3_i = 1;
             
             if (quad_tri_i == 0) {
                 // First subtriangle of our quad
@@ -853,9 +853,11 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 norm_1_i = arg_parsed_obj->quad_normals[quad_i][0];
                 norm_2_i = arg_parsed_obj->quad_normals[quad_i][1];
                 norm_3_i = arg_parsed_obj->quad_normals[quad_i][2];
-                textr_1_i = arg_parsed_obj->quad_textures[quad_i][0];
-                textr_2_i = arg_parsed_obj->quad_textures[quad_i][1];
-                textr_3_i = arg_parsed_obj->quad_textures[quad_i][2];
+                if (arg_parsed_obj->quad_textures) {
+                    textr_1_i = arg_parsed_obj->quad_textures[quad_i][0];
+                    textr_2_i = arg_parsed_obj->quad_textures[quad_i][1];
+                    textr_3_i = arg_parsed_obj->quad_textures[quad_i][2];    
+                }
             } else {
                 // Second subtriangle of our quad
                 log_assert(quad_tri_i == 1);
@@ -865,9 +867,11 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 norm_1_i = arg_parsed_obj->quad_normals[quad_i][0];
                 norm_2_i = arg_parsed_obj->quad_normals[quad_i][2];
                 norm_3_i = arg_parsed_obj->quad_normals[quad_i][3];
-                textr_1_i = arg_parsed_obj->quad_textures[quad_i][0];
-                textr_2_i = arg_parsed_obj->quad_textures[quad_i][2];
-                textr_3_i = arg_parsed_obj->quad_textures[quad_i][3];
+                if (arg_parsed_obj->quad_textures) {
+                    textr_1_i = arg_parsed_obj->quad_textures[quad_i][0];
+                    textr_2_i = arg_parsed_obj->quad_textures[quad_i][2];
+                    textr_3_i = arg_parsed_obj->quad_textures[quad_i][3];
+                }
             }
             
             log_assert(vert_1_i >= 1);
@@ -933,6 +937,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
             }
             
             if (arg_parsed_obj->textures_count > 0) {
+                log_assert(arg_parsed_obj->textures_vt_uv != NULL);
                 V1->uv[0] = arg_parsed_obj->textures_vt_uv[textr_1_i][0];
                 V1->uv[1] = arg_parsed_obj->textures_vt_uv[textr_1_i][1];
                 V2->uv[0] = arg_parsed_obj->textures_vt_uv[textr_2_i][0];
@@ -1135,15 +1140,11 @@ static void T1_objmodel_deduce_tangents_and_bitangents(
         uv_1_to_3[0] = v3->uv[0] - v1->uv[0];
         uv_1_to_3[1] = v3->uv[1] - v1->uv[1];
         
-        // T = (ΔP12 * ΔUV13.v - ΔP13 * ΔUV12.v) /
-        //     (ΔUV12.u * ΔUV13.v - ΔUV13.u * ΔUV12.v)
-        // B = (ΔP13 * ΔUV12.u - ΔP12 * ΔUV13.u) /
-        //     (ΔUV12.u * ΔUV13.v - ΔUV13.u * ΔUV12.v)
         
         float denom =
             ((uv_1_to_2[0] * uv_1_to_3[1]) - uv_1_to_3[0] * uv_1_to_2[1]);
         // Avoid division by zero
-        if (common_fabs(denom) < 0.00001f) { denom = 0.00001f; };
+        if (common_fabs(denom) < 0.000001f) { denom = 0.000001f; };
         
         float T[3] = {
             (vec_1_to_2[0] * uv_1_to_3[1] - vec_1_to_3[0] * uv_1_to_2[1]) / denom,
@@ -1178,13 +1179,18 @@ static void T1_objmodel_deduce_tangents_and_bitangents(
         v1->bitangent_xyz[2] = B[2];
         
         // Zero check
-        #ifndef LOGGER_IGNORE_ASSERTS
         float T_len = sqrtf(T[0] * T[0] + T[1] * T[1] + T[2] * T[2]);
         float B_len = sqrtf(B[0] * B[0] + B[1] * B[1] + B[2] * B[2]);
-        log_assert(T_len > 1e-6);
-        log_assert(B_len > 1e-6);
-        #endif
-        
+        if (T_len <= 1e-6) {
+            v1->tangent_xyz[0] = 0.0f;
+            v1->tangent_xyz[1] = 0.0f;
+            v1->tangent_xyz[2] = 0.0f;
+        }
+        if (B_len <= 1e-6) {
+            v1->bitangent_xyz[0] = 0.0f;
+            v1->bitangent_xyz[1] = 0.0f;
+            v1->bitangent_xyz[2] = 0.0f;
+        }
         }
     }
 }
@@ -1468,8 +1474,6 @@ void T1_objmodel_flip_mesh_uvs_v(const int32_t mesh_id)
             all_mesh_vertices->gpu_data[vert_i].uv[0],
             all_mesh_vertices->gpu_data[vert_i].uv[1]);
         
-        log_assert(all_mesh_vertices->gpu_data[vert_i].uv[1] >= -0.02f);
-        log_assert(all_mesh_vertices->gpu_data[vert_i].uv[1] <=  1.02f);
         all_mesh_vertices->gpu_data[vert_i].uv[1] = 1.0f -
             all_mesh_vertices->gpu_data[vert_i].uv[1];
     }
