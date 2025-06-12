@@ -498,6 +498,10 @@ float4 get_lit(
             lights[i].ambient *
             shadow_factor;
         
+        // This normal may be perturbed if a normal map is active,
+        // or it may be used as-is
+        float3 adjusted_normal = in.normal;
+        
         // if light is at 2,2,2 and rotated_pos is at 1,1,1, we need +1/+1/+1
         // to go from the rotated_pos to the light
         // if the normal also points to the light, we want more diffuse
@@ -505,24 +509,36 @@ float4 get_lit(
         float3 object_to_light = normalize(
             (light_pos - in.worldpos));
         
+        #if NORMAL_MAPPING_ACTIVE
         if (material->normalmap_texturearray_i >= 0) {
-            //            half4 normal_map_sample =
-            //                color_textures[material->normalmap_texturearray_i].sample(
-            //                    texture_sampler,
-            //                    in.texture_coordinate,
-            //                    material->normalmap_texture_i);
-            //
-            //            normal_map_sample = normalize((normal_map_sample * 2.0h) - 1.0h);
+            half4 normal_map_sample =
+                color_textures[material->normalmap_texturearray_i].sample(
+                    texture_sampler,
+                    in.texture_coordinate,
+                    material->normalmap_texture_i);
             
-            // TODO: perturb in.normal using TBN (later)
-            float4 vector = vector_float4(in.bitangent, 1.0f); // Switch to in.bitangent to visualize
-            return vector * 0.5f + 0.5f; // Return for visualization
+            float3 normal_map_sample_f3 = vector_float3(
+                normal_map_sample[0],
+                normal_map_sample[1],
+                normal_map_sample[2]);
+            
+            normal_map_sample_f3 = (normal_map_sample_f3 * 2.0f) - 1.0f;
+            
+            // TODO: transform from local tangent space to world space
+            adjusted_normal =
+                normal_map_sample[0] * in.tangent +
+                normal_map_sample[1] * in.bitangent +
+                normal_map_sample[2] * in.normal;
+            
+            // normalize again
+            adjusted_normal = normalize(adjusted_normal);
         }
+        #endif
         
         float diffuse_dot =
             max(
                 dot(
-                    in.normal,
+                    adjusted_normal,
                     object_to_light),
                 0.0f) * 0.85f + 0.15f;
         
@@ -551,7 +567,7 @@ float4 get_lit(
         
         float3 reflection_ray = reflect(
             -object_to_light,
-            in.normal);
+            adjusted_normal);
         
         float specular_dot = pow(
             max(

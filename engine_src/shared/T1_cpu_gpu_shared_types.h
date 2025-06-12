@@ -64,8 +64,10 @@ typedef struct GPULockedMaterial {
     float rgb_cap[3];
     int   texturearray_i;
     int   texture_i;
+    #if NORMAL_MAPPING_ACTIVE
     int   normalmap_texturearray_i;
     int   normalmap_texture_i;
+    #endif
     float specular_exponent;
     float refraction;
     float alpha;

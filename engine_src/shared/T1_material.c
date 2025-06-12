@@ -25,8 +25,10 @@ void T1_material_construct(
     to_construct->specular_rgb[1] = 0.10f;
     to_construct->specular_rgb[2] = 0.10f;
     to_construct->specular_exponent = 25.0f;
+    #if NORMAL_MAPPING_ACTIVE
     to_construct->normalmap_texture_i = -1;
     to_construct->normalmap_texturearray_i = -1;
+    #endif
     to_construct->rgb_cap[0] = 1.0f;
     to_construct->rgb_cap[1] = 1.0f;
     to_construct->rgb_cap[2] = 1.0f;

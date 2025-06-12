@@ -33,11 +33,13 @@ void client_logic_early_startup(
     teapot_mesh_id = T1_objmodel_new_mesh_id_from_resources(
         "open_cube.obj",
         "open_cube.mtl",
-        false);
+        false,
+        true);
     #else
     teapot_mesh_id = T1_objmodel_new_mesh_id_from_resources(
         "guitar_simplified.obj",
         "guitar_simplified.mtl",
+        /* flip_uv_u: */ false,
         /* flip_uv_v: */ true);
     #endif
     

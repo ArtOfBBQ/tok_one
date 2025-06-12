@@ -696,6 +696,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                     assert(locked_mat->texture_i == -1);
                 }
                 
+                #if NORMAL_MAPPING_ACTIVE
                 T1_texture_array_get_filename_location(
                     /* const char * for_filename: */
                         parsed_materials[matching_parsed_materials_i].bump_or_normal_map,
@@ -703,6 +704,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                         &locked_mat->normalmap_texturearray_i,
                     /* int32_t * texture_i_recipient: */
                         &locked_mat->normalmap_texture_i);
+                #endif
             }
         }
     }
@@ -1142,6 +1144,7 @@ static void T1_objmodel_deduce_tangents_and_bitangents(
 int32_t T1_objmodel_new_mesh_id_from_resources(
     const char * obj_filename,
     const char * mtl_filename,
+    const bool32_t flip_uv_u,
     const bool32_t flip_uv_v)
 {
     log_assert(all_mesh_summaries_size < ALL_MESHES_SIZE);
@@ -1236,6 +1239,10 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     
     if (flip_uv_v) {
         T1_objmodel_flip_mesh_uvs_v(return_value);
+    }
+    
+    if (flip_uv_u) {
+        T1_objmodel_flip_mesh_uvs_u(return_value);
     }
     
     T1_objmodel_deduce_tangents_and_bitangents(return_value);
@@ -1376,6 +1383,22 @@ void T1_objmodel_flip_mesh_uvs(const int32_t mesh_id)
     }
 }
 
+void T1_objmodel_flip_mesh_uvs_u(const int32_t mesh_id)
+{
+    int32_t tail_i =
+        all_mesh_summaries[mesh_id].vertices_head_i +
+            all_mesh_summaries[mesh_id].vertices_size;
+    
+    for (
+        int32_t vert_i = all_mesh_summaries[mesh_id].vertices_head_i;
+        vert_i < tail_i;
+        vert_i++)
+    {
+        all_mesh_vertices->gpu_data[vert_i].uv[0] = 1.0f -
+            all_mesh_vertices->gpu_data[vert_i].uv[0];
+    }
+}
+
 void T1_objmodel_flip_mesh_uvs_v(const int32_t mesh_id)
 {
     int32_t tail_i =
@@ -1387,6 +1410,18 @@ void T1_objmodel_flip_mesh_uvs_v(const int32_t mesh_id)
         vert_i < tail_i;
         vert_i++)
     {
+        printf(
+            "Vertex %i - Before flipping xyz [%f, %f, %f], "
+            "uv coordinate [%f, %f]\n",
+            vert_i - all_mesh_summaries[mesh_id].vertices_head_i,
+            all_mesh_vertices->gpu_data[vert_i].xyz[0],
+            all_mesh_vertices->gpu_data[vert_i].xyz[1],
+            all_mesh_vertices->gpu_data[vert_i].xyz[2],
+            all_mesh_vertices->gpu_data[vert_i].uv[0],
+            all_mesh_vertices->gpu_data[vert_i].uv[1]);
+        
+        log_assert(all_mesh_vertices->gpu_data[vert_i].uv[1] >= -0.02f);
+        log_assert(all_mesh_vertices->gpu_data[vert_i].uv[1] <=  1.02f);
         all_mesh_vertices->gpu_data[vert_i].uv[1] = 1.0f -
             all_mesh_vertices->gpu_data[vert_i].uv[1];
     }

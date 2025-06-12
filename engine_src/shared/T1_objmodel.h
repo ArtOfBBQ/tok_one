@@ -35,6 +35,7 @@ extern "C" {
 int32_t T1_objmodel_new_mesh_id_from_resources(
     const char * filename,
     const char * mtl_filename,
+    const bool32_t flip_uv_u,
     const bool32_t flip_uv_v);
 
 int32_t T1_objmodel_obj_resource_name_to_mesh_id(
@@ -88,6 +89,7 @@ int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
 void T1_objmodel_center_mesh_offsets(const int32_t mesh_id);
 
 void T1_objmodel_flip_mesh_uvs(const int32_t mesh_id);
+void T1_objmodel_flip_mesh_uvs_u(const int32_t mesh_id);
 void T1_objmodel_flip_mesh_uvs_v(const int32_t mesh_id);
 
 /*
