@@ -792,6 +792,12 @@ void platform_gpu_get_device_name(
         device_name_cstr);
 }
 
+uint32_t platform_get_cpu_logical_core_count(void) {
+    NSUInteger core_count = [
+        [NSProcessInfo processInfo] activeProcessorCount];
+    return (core_count > 0) ? (unsigned int)core_count : 1;
+}
+
 int32_t platform_gpu_get_touchable_id_at_screen_pos(
     const float screen_x,
     const float screen_y)

@@ -195,6 +195,8 @@ void platform_gpu_get_device_name(
     char * recipient,
     const uint32_t recipient_cap);
 
+uint32_t platform_get_cpu_logical_core_count(void);
+
 /*
 Run a task in the background I only use this to pass clientlogic.c's
 client_logic_threadmain() passing the threadmain_id to it you have to

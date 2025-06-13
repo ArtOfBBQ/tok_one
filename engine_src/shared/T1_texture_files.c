@@ -2,7 +2,8 @@
 
 static void malloc_img_from_filename(
     DecodedImage * recipient,
-    const char * filename)
+    const char * filename,
+    const uint32_t thread_id)
 {
     FileBuffer file_buffer;
     file_buffer.size_without_terminator = platform_get_resource_size(filename);
@@ -77,7 +78,9 @@ static void malloc_img_from_filename(
             /* rgba_values_size: */
                 recipient->rgba_values_size,
             /* uint32_t * out_good: */
-                &recipient->good);
+                &recipient->good,
+            /* const uint32_t thread_id: */
+                thread_id);
     } else if (
         file_buffer.contents[0] == 'B' &&
         file_buffer.contents[1] == 'M')
@@ -147,7 +150,7 @@ void T1_texture_files_register_new_by_splitting_file(
 {
     DecodedImage stack_img;
     DecodedImage * img = &stack_img;
-    malloc_img_from_filename(img, filename);
+    malloc_img_from_filename(img, filename, /* thread_id: */ 0);
     
     log_assert(img->good);
     if (!img->good) { return; }
@@ -213,9 +216,24 @@ void T1_texture_files_preregister_png_resource(
     *good = 1;
 }
 
-void T1_texture_files_push_all_preregistered(void) {
+void T1_texture_files_decode_all_preregistered(
+    const uint32_t thread_id,
+    const uint32_t using_num_threads)
+{
+    int32_t texture_arrays_to_init = (int32_t)texture_arrays_size - 1;
+    int32_t texture_arrays_per_thread =
+        texture_arrays_to_init / (int32_t)using_num_threads;
     
-    for (uint32_t ta_i = 1; ta_i < texture_arrays_size; ta_i++) {
+    int32_t start_ta_i = 1 + ((int32_t)thread_id * texture_arrays_per_thread);
+    int32_t end_ta_i =
+        thread_id + 1 >= using_num_threads ?
+            (int32_t)texture_arrays_size :
+            start_ta_i + texture_arrays_per_thread;
+    
+    log_assert(using_num_threads > 0);
+    log_assert(using_num_threads < 7);
+    
+    for (int32_t ta_i = start_ta_i; ta_i < end_ta_i; ta_i++) {
         log_assert(texture_arrays[ta_i].images_size > 0);
         log_assert(texture_arrays[ta_i].images_size < MAX_FILES_IN_SINGLE_TEXARRAY);
         log_assert(texture_arrays[ta_i].single_img_width > 0);
@@ -240,11 +258,11 @@ void T1_texture_files_push_all_preregistered(void) {
                 /* DecodedImage * recipient: */
                     &texture_arrays[ta_i].images[t_i].image,
                 /* const char * filename: */
-                    texture_arrays[ta_i].images[t_i].filename);
+                    texture_arrays[ta_i].images[t_i].filename,
+                /* const uint32_t thread_id: */
+                    thread_id);
         }
     }
-    
-    T1_texture_array_push_all_preregistered();
 }
 
 void T1_texture_files_decode_png_resource(

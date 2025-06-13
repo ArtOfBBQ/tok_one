@@ -1464,16 +1464,6 @@ void T1_objmodel_flip_mesh_uvs_v(const int32_t mesh_id)
         vert_i < tail_i;
         vert_i++)
     {
-        printf(
-            "Vertex %i - Before flipping xyz [%f, %f, %f], "
-            "uv coordinate [%f, %f]\n",
-            vert_i - all_mesh_summaries[mesh_id].vertices_head_i,
-            all_mesh_vertices->gpu_data[vert_i].xyz[0],
-            all_mesh_vertices->gpu_data[vert_i].xyz[1],
-            all_mesh_vertices->gpu_data[vert_i].xyz[2],
-            all_mesh_vertices->gpu_data[vert_i].uv[0],
-            all_mesh_vertices->gpu_data[vert_i].uv[1]);
-        
         all_mesh_vertices->gpu_data[vert_i].uv[1] = 1.0f -
             all_mesh_vertices->gpu_data[vert_i].uv[1];
     }

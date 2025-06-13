@@ -43,7 +43,7 @@ int32_t T1_texture_array_preinit_new_with_known_dimensions(
     const uint32_t image_count,
     const bool32_t use_bc1_compression);
 
-void T1_texture_array_push_all_preregistered(void);
+void T1_texture_array_push_all_predecoded(void);
 
 void T1_texture_array_push_dds_image_to_preinitted(
     const int32_t to_texturearray_i,

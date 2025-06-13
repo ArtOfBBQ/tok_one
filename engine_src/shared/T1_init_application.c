@@ -1,5 +1,16 @@
 #include "T1_init_application.h"
 
+#define IMAGE_DECODING_THREADS_MAX 10
+typedef struct InitApplicationState {
+    uint32_t image_decoding_threads;
+    uint32_t all_finished;
+    uint32_t thread_finished[IMAGE_DECODING_THREADS_MAX];
+} InitApplicationState;
+
+static InitApplicationState * ias;
+
+#define DPNG_WORKING_MEMORY_SIZE 35000000
+
 #if ENGINE_SAVEFILE_ACTIVE
 typedef struct EngineSaveFile {
     bool32_t window_fullscreen;
@@ -156,6 +167,8 @@ void init_application_before_gpu_init(
         platform_mutex_lock,
         platform_mutex_unlock);
     
+    ias = malloc_from_unmanaged(sizeof(InitApplicationState));
+    
     init_PNG_decoder(
         /* void *(*malloc_funcptr)(size_t): */
             malloc_from_managed_infoless,
@@ -166,7 +179,9 @@ void init_application_before_gpu_init(
         /* memcpy_function: */
             common_memcpy,
         /* dpng_working_memory_size: */
-            80000000);
+            DPNG_WORKING_MEMORY_SIZE,
+        /* const uint32_t thread_id: */
+            0);
     
     #ifndef LOGGER_IGNORE_ASSERTS
     test_simd_functions_floats();
@@ -471,6 +486,24 @@ void init_application_before_gpu_init(
             page_size);
 }
 
+static void asset_loading_thread(int32_t asset_thread_id) {
+    init_PNG_decoder(
+        malloc,
+        free,
+        common_memset_char,
+        common_memcpy,
+        DPNG_WORKING_MEMORY_SIZE,
+        (uint32_t)asset_thread_id);
+    T1_texture_files_decode_all_preregistered(
+        (uint32_t)asset_thread_id,
+        ias->image_decoding_threads);
+    
+    deinit_PNG_decoder((uint32_t)asset_thread_id);
+    
+    ias->thread_finished[asset_thread_id] = 1;
+    printf("thread exiting: %i\n", asset_thread_id);
+}
+
 void init_application_after_gpu_init(void) {
     
     T1_texture_array_load_font_images();
@@ -529,7 +562,9 @@ void init_application_after_gpu_init(void) {
         /* const uint64_t rgba_values_size: */
             rgba_values_size,
         /* uint32_t *out_good: */
-            &perlin_good);
+            &perlin_good,
+        /* const uint32_t thread_id: */
+            0);
     log_assert(perlin_good);
     platform_gpu_push_special_engine_texture_and_free_rgba_values(
         /* const SpecialEngineTexture type: */
@@ -553,8 +588,39 @@ void init_application_after_gpu_init(void) {
     if (application_running) {
         client_logic_early_startup(&success, errmsg);
         
-        T1_texture_files_push_all_preregistered();
+        uint32_t core_count = platform_get_cpu_logical_core_count();
+        log_assert(core_count > 0);
+        ias->image_decoding_threads = core_count > 6 ? 6 : core_count;
+        
+        common_memset_char(
+            ias->thread_finished,
+            0,
+            sizeof(uint32_t) * IMAGE_DECODING_THREADS_MAX);
+        ias->thread_finished[0] = true;
+        
+        for (int32_t i = 1; i < (int32_t)ias->image_decoding_threads; i++) {
+            platform_start_thread(
+                /* void (*function_to_run)(int32_t): */
+                    asset_loading_thread,
+                /* int32_t argument: */
+                    i);
+        }
+        T1_texture_files_decode_all_preregistered(
+            0,
+            ias->image_decoding_threads);
+        printf("%s\n", "main thread (0) done with assets");
+    } else {
+        return;
     }
+    
+    /*
+    If this was a single-threaded sequence, the next logical step
+    would be to run:
+        > T1_texture_array_push_all_predecoded();
+    
+    We'll do a bunch of other work first, because that gives us something
+    to do while we wait the other threads to finish.
+    */
     
     #define MIN_VERTICES_FOR_SHATTER_EFFECT 400
     for (uint32_t i = 0; i < all_mesh_summaries_size; i++) {
@@ -603,6 +669,18 @@ void init_application_after_gpu_init(void) {
     if (engine_globals->fullscreen) {
         platform_enter_fullscreen();
     }
+    
+    // Wait until all worker threads are finished
+    while (!ias->all_finished) {
+        ias->all_finished = true;
+        for (uint32_t i = 1; i < ias->image_decoding_threads; i++) {
+            if (!ias->thread_finished[i]) {
+                ias->all_finished = false;
+            }
+        }
+    }
+    
+    T1_texture_array_push_all_predecoded();
     
     T1_texture_array_flag_all_to_request_gpu_init();
     

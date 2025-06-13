@@ -26,8 +26,9 @@ void T1_texture_files_preregister_png_resource(
 /*
 Internal engine use
 */
-
-void T1_texture_files_push_all_preregistered(void);
+void T1_texture_files_decode_all_preregistered(
+    const uint32_t thread_id,
+    const uint32_t using_num_threads);
 
 void T1_texture_files_decode_png_resource(
     const char * filename,

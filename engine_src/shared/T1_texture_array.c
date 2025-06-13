@@ -49,7 +49,8 @@ int32_t T1_texture_array_preinit_new_with_known_dimensions(
     return retval;
 }
 
-void T1_texture_array_push_all_preregistered(void) {
+void T1_texture_array_push_all_predecoded(void)
+{
     for (
         int32_t ta_i = 1;
         ta_i < (int32_t)texture_arrays_size;
@@ -648,11 +649,6 @@ void T1_texture_array_preregister_null_image(
             new_texturearray_i = (int)i;
             new_texture_i = (int32_t)texture_arrays[i].images_size;
             texture_arrays[i].images_size++;
-            log_append("texture_arrays[");
-            log_append_uint(i);
-            log_append("].images_size is now: ");
-            log_append_uint(texture_arrays[i].images_size);
-            log_append("\n");
             
             log_assert(new_texture_i >= 1);
             log_assert(new_texture_i < MAX_FILES_IN_SINGLE_TEXARRAY);
@@ -739,6 +735,7 @@ void T1_texture_array_decode_null_png_at(
         return;
     }
     
+    uint32_t thread_id = 0;
     decode_PNG(
         /* const uint8_t * compressed_input: */
             freeable_rgba_values,
@@ -749,7 +746,9 @@ void T1_texture_array_decode_null_png_at(
         /* rgba_values_size: */
             new_image->rgba_values_size,
         /* uint32_t * out_good: */
-            &new_image->good);
+            &new_image->good,
+        /* const uint32_t thread_id: */
+            thread_id);
     
     log_assert(new_image->good);
     log_assert(new_image->height == texture_arrays[i].single_img_height);
