@@ -487,24 +487,30 @@ void init_application_before_gpu_init(
 }
 
 static void asset_loading_thread(int32_t asset_thread_id) {
-    init_PNG_decoder(
-        malloc,
-        free,
-        common_memset_char,
-        common_memcpy,
-        DPNG_WORKING_MEMORY_SIZE,
-        (uint32_t)asset_thread_id);
+    if (asset_thread_id > 0) {
+        init_PNG_decoder(
+            malloc,
+            free,
+            common_memset_char,
+            common_memcpy,
+            DPNG_WORKING_MEMORY_SIZE,
+            (uint32_t)asset_thread_id);    
+    }
+    
     T1_texture_files_decode_all_preregistered(
         (uint32_t)asset_thread_id,
         ias->image_decoding_threads);
     
-    deinit_PNG_decoder((uint32_t)asset_thread_id);
+    if (asset_thread_id > 0) {
+        deinit_PNG_decoder((uint32_t)asset_thread_id);
+    }
     
     ias->thread_finished[asset_thread_id] = 1;
     printf("thread exiting: %i\n", asset_thread_id);
 }
 
-void init_application_after_gpu_init(void) {
+void init_application_after_gpu_init(int32_t throwaway_threadarg) {
+    (void)throwaway_threadarg;
     
     T1_texture_array_load_font_images();
     
@@ -605,10 +611,6 @@ void init_application_after_gpu_init(void) {
                 /* int32_t argument: */
                     i);
         }
-        T1_texture_files_decode_all_preregistered(
-            0,
-            ias->image_decoding_threads);
-        printf("%s\n", "main thread (0) done with assets");
     } else {
         return;
     }
@@ -621,6 +623,8 @@ void init_application_after_gpu_init(void) {
     We'll do a bunch of other work first, because that gives us something
     to do while we wait the other threads to finish.
     */
+    
+    platform_gpu_update_viewport(); // kicks off loading screen
     
     #define MIN_VERTICES_FOR_SHATTER_EFFECT 400
     for (uint32_t i = 0; i < all_mesh_summaries_size; i++) {
@@ -664,11 +668,11 @@ void init_application_after_gpu_init(void) {
             sizeof(GPULockedMaterial) * ALL_LOCKED_MATERIALS_SIZE);
     platform_gpu_copy_locked_materials();
     
-    platform_gpu_update_viewport();
-    
     if (engine_globals->fullscreen) {
         platform_enter_fullscreen();
     }
+    
+    asset_loading_thread(0);
     
     // Wait until all worker threads are finished
     while (!ias->all_finished) {
@@ -687,6 +691,10 @@ void init_application_after_gpu_init(void) {
     if (application_running) {
         client_logic_late_startup();
     }
+    
+    #if AUDIO_ACTIVE
+    start_audio_loop();
+    #endif
     
     gameloop_active = true;
 }

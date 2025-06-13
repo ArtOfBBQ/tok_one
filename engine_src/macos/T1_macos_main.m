@@ -527,11 +527,9 @@ int main(int argc, const char * argv[]) {
         
         platform_request_messagebox(errmsg2);
     } else {
-        init_application_after_gpu_init();
-        
-        #if AUDIO_ACTIVE
-        start_audio_loop();
-        #endif
+        platform_start_thread(
+            init_application_after_gpu_init,
+            0);
     }
     
     #ifndef LOGGER_IGNORE_ASSERTS

@@ -49,6 +49,9 @@ typedef struct EngineGlobals {
     bool32_t block_mouse;
     bool32_t fullscreen;
     
+    uint32_t startup_bytes_to_load;
+    uint32_t startup_bytes_loaded;
+    
     float last_clickray_origin[3];
     float last_clickray_direction[3];
     float last_clickray_collision[3];

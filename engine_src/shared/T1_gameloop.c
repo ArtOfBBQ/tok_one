@@ -4,6 +4,7 @@ bool32_t gameloop_active = false;
 
 static uint64_t gameloop_previous_time = 0;
 static uint64_t gameloop_frame_no = 0;
+static int32_t  loading_text_sprite_id = -1;
 
 #if TERMINAL_ACTIVE
 static void update_terminal(void) {
@@ -28,10 +29,104 @@ static void update_terminal(void) {
 void gameloop_init(void) {
 }
 
+static void show_dead_simple_text(
+    GPUDataForSingleFrame * frame_data,
+    const char * text_message,
+    const uint64_t elapsed)
+{
+    delete_all_ui_elements();
+    #if PARTICLES_ACTIVE
+    particle_effects_size = 0;
+    lineparticle_effects_size = 0;
+    #endif
+    zlights_to_apply_size = 0;
+    zsprites_to_render->size = 0;
+    
+    #if FOG_ACTIVE
+    engine_globals->postprocessing_constants.fog_factor = 0.0f;
+    #endif
+    
+    camera.xyz[0] = 0.0f;
+    camera.xyz[1] = 0.0f;
+    camera.xyz[2] = 0.0f;
+    camera.xyz_angle[0] = 0.0f;
+    camera.xyz_angle[1] = 0.0f;
+    camera.xyz_angle[2] = 0.0f;
+    camera.xyz_cosangle[0] = 0.0f;
+    camera.xyz_cosangle[1] = 0.0f;
+    camera.xyz_cosangle[2] = 0.0f;
+    camera.xyz_sinangle[0] = 0.0f;
+    camera.xyz_sinangle[1] = 0.0f;
+    camera.xyz_sinangle[2] = 0.0f;
+    
+    font_settings->font_height          = 20.0f;
+    font_settings->mat.ambient_rgb[0]   = 1.0f;
+    font_settings->mat.ambient_rgb[1]   = 1.0f;
+    font_settings->mat.ambient_rgb[2]   = 1.0f;
+    font_settings->mat.diffuse_rgb[0]   = 1.0f;
+    font_settings->mat.diffuse_rgb[1]   = 1.0f;
+    font_settings->mat.diffuse_rgb[2]   = 1.0f;
+    font_settings->mat.alpha            = 1.0f;
+    font_settings->ignore_camera        = false; // we set camera to 0,0,0
+    font_settings->ignore_lighting      = true;
+    
+    assert(font_settings->mat.texturearray_i == 0);
+    text_request_label_renderable(
+        /* const uint32_t with_object_id: */
+            0,
+        /* const char * text_to_draw: */
+            text_message,
+        /* const float left_pixelspace: */
+            30,
+        /* const float top_pixelspace: */
+            engine_globals->window_height - 30,
+        /* const float z: */
+            1.0f,
+        /* const float max_width: */
+            engine_globals->window_width - 30);
+    
+    renderer_hardware_render(
+            frame_data,
+        /* uint64_t elapsed_microseconds: */
+            elapsed);
+}
+
 void gameloop_update_before_render_pass(
     GPUDataForSingleFrame * frame_data)
 {
+    uint64_t elapsed = engine_globals->this_frame_timestamp -
+    gameloop_previous_time;
+    gameloop_previous_time = engine_globals->this_frame_timestamp;
+    
+    common_memcpy(frame_data->camera, &camera, sizeof(GPUCamera));
+    
+    frame_data->vertices_size            = 0;
+    frame_data->polygon_collection->size = 0;
+    frame_data->first_alphablend_i       = 0;
+    frame_data->line_vertices_size       = 0;
+    frame_data->point_vertices_size      = 0;
+    
     if (!gameloop_active) {
+        if (loading_text_sprite_id < 0) {
+            loading_text_sprite_id = next_ui_element_object_id();
+        }
+        
+        float pct_progress = (float)engine_globals->startup_bytes_loaded /
+            (float)engine_globals->startup_bytes_to_load;
+        pct_progress *= 100.0f;
+        
+        char loading_text[256];
+        common_strcpy_capped(loading_text, 256, "Loading textures - ");
+        common_strcat_float_capped(
+            loading_text,
+            256,
+            pct_progress);
+        common_strcat_capped(
+            loading_text,
+            256,
+            "%");
+        show_dead_simple_text(frame_data, loading_text, 1);
+        
         return;
     }
     
@@ -54,80 +149,18 @@ void gameloop_update_before_render_pass(
         return;
     }
     
-    uint64_t elapsed = engine_globals->this_frame_timestamp -
-        gameloop_previous_time;
-    gameloop_previous_time = engine_globals->this_frame_timestamp;
-    
-    common_memcpy(frame_data->camera, &camera, sizeof(GPUCamera));
-    
-    frame_data->vertices_size            = 0;
-    frame_data->polygon_collection->size = 0;
-    frame_data->first_alphablend_i       = 0;
-    frame_data->line_vertices_size       = 0;
-    frame_data->point_vertices_size      = 0;
-    
     if (!application_running) {
-        delete_all_ui_elements();
-        #if PARTICLES_ACTIVE
-        particle_effects_size = 0;
-        lineparticle_effects_size = 0;
-        #endif
-        zlights_to_apply_size = 0;
-        zsprites_to_render->size = 0;
-        
-        #if FOG_ACTIVE
-        engine_globals->postprocessing_constants.fog_factor = 0.0f;
-        #endif
-        
-        camera.xyz[0] = 0.0f;
-        camera.xyz[1] = 0.0f;
-        camera.xyz[2] = 0.0f;
-        camera.xyz_angle[0] = 0.0f;
-        camera.xyz_angle[1] = 0.0f;
-        camera.xyz_angle[2] = 0.0f;
-        camera.xyz_cosangle[0] = 0.0f;
-        camera.xyz_cosangle[1] = 0.0f;
-        camera.xyz_cosangle[2] = 0.0f;
-        camera.xyz_sinangle[0] = 0.0f;
-        camera.xyz_sinangle[1] = 0.0f;
-        camera.xyz_sinangle[2] = 0.0f;
-        
         if (crashed_top_of_screen_msg[0] == '\0') {
-            common_strcpy_capped(crashed_top_of_screen_msg,
+            common_strcpy_capped(
+                crashed_top_of_screen_msg,
                 256,
                 "Failed assert, and also failed to retrieve an error message");
         }
         
-        font_settings->font_height          = 14.0f;
-        font_settings->mat.ambient_rgb[0]   = 1.0f;
-        font_settings->mat.ambient_rgb[1]   = 1.0f;
-        font_settings->mat.ambient_rgb[2]   = 1.0f;
-        font_settings->mat.diffuse_rgb[0]   = 1.0f;
-        font_settings->mat.diffuse_rgb[1]   = 1.0f;
-        font_settings->mat.diffuse_rgb[2]   = 1.0f;
-        font_settings->mat.alpha            = 1.0f;
-        font_settings->ignore_camera        = false; // we set camera to 0,0,0
-        font_settings->ignore_lighting      = true;
-        
-        assert(font_settings->mat.texturearray_i == 0);
-        text_request_label_renderable(
-            /* const uint32_t with_object_id: */
-                0,
-            /* const char * text_to_draw: */
-                crashed_top_of_screen_msg,
-            /* const float left_pixelspace: */
-                30,
-            /* const float top_pixelspace: */
-                engine_globals->window_height - 30,
-            /* const float z: */
-                1.0f,
-            /* const float max_width: */
-                engine_globals->window_width - 30);
-        
-        renderer_hardware_render(
-                frame_data,
-            /* uint64_t elapsed_microseconds: */
-                elapsed);
+        show_dead_simple_text(
+            frame_data,
+            crashed_top_of_screen_msg,
+            elapsed);
         return;
     }
     
@@ -208,8 +241,6 @@ void gameloop_update_before_render_pass(
                 frame_data,
             /* uint64_t elapsed_microseconds: */
                 elapsed);
-        
-        assert(frame_data->postprocessing_constants->lights_size > 0);
         
         uint32_t overflow_vertices = frame_data->vertices_size % 3;
         frame_data->vertices_size -= overflow_vertices;

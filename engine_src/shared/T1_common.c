@@ -346,12 +346,6 @@ common_internal_strcat_float_capped(
         recipient_size,
         #endif
         after_comma);
-    common_internal_strcat_capped(
-        recipient,
-        #ifndef COMMON_IGNORE_ASSERTS
-        recipient_size,
-        #endif
-        "f");
 }
 
 void common_internal_strcpy_capped(

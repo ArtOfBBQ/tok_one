@@ -1,5 +1,6 @@
 #include "T1_texture_files.h"
 
+
 static void malloc_img_from_filename(
     DecodedImage * recipient,
     const char * filename,
@@ -234,6 +235,14 @@ void T1_texture_files_decode_all_preregistered(
     log_assert(using_num_threads < 7);
     
     for (int32_t ta_i = start_ta_i; ta_i < end_ta_i; ta_i++) {
+        engine_globals->startup_bytes_to_load +=
+            texture_arrays[ta_i].single_img_width *
+            texture_arrays[ta_i].single_img_height *
+            4 *
+            texture_arrays[ta_i].images_size;
+    }
+    
+    for (int32_t ta_i = start_ta_i; ta_i < end_ta_i; ta_i++) {
         log_assert(texture_arrays[ta_i].images_size > 0);
         log_assert(texture_arrays[ta_i].images_size < MAX_FILES_IN_SINGLE_TEXARRAY);
         log_assert(texture_arrays[ta_i].single_img_width > 0);
@@ -253,7 +262,6 @@ void T1_texture_files_decode_all_preregistered(
             log_assert(texture_arrays[ta_i].images[t_i].image.rgba_values_page_aligned == NULL);
             log_assert(texture_arrays[ta_i].images[t_i].image.rgba_values_size == 0);
             
-            // texture_arrays[ta_i].images[t_i].image
             malloc_img_from_filename(
                 /* DecodedImage * recipient: */
                     &texture_arrays[ta_i].images[t_i].image,
@@ -261,6 +269,8 @@ void T1_texture_files_decode_all_preregistered(
                     texture_arrays[ta_i].images[t_i].filename,
                 /* const uint32_t thread_id: */
                     thread_id);
+            engine_globals->startup_bytes_loaded +=
+                texture_arrays[ta_i].images[t_i].image.rgba_values_size;
         }
     }
 }

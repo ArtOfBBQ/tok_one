@@ -31,7 +31,7 @@ extern uint32_t block_drawinmtkview;
 void init_application_before_gpu_init(
     bool32_t * success,
     char * error_message);
-void init_application_after_gpu_init(void);
+void init_application_after_gpu_init(int32_t throwaway_threadarg);
 
 void shared_shutdown_application(void);
 

@@ -67,6 +67,7 @@ typedef struct AppleGPUState {
     PostProcessingVertex quad_vertices[6];
     float retina_scaling_factor;
     bool32_t metal_active;
+    bool32_t viewport_set;
 } AppleGPUState;
 
 static AppleGPUState * ags = NULL;
@@ -1499,6 +1500,8 @@ void platform_gpu_copy_locked_materials(void)
             newTextureWithDescriptor: downsampled_target_texture_desc];
     }
     #endif
+    
+    ags->viewport_set = true;
 }
 
 - (void)drawInMTKView:(MTKView *)view
@@ -1510,7 +1513,7 @@ void platform_gpu_copy_locked_materials(void)
     funcptr_shared_gameloop_update(
         &gpu_shared_data_collection->triple_buffers[ags->frame_i]);
     
-    if (!ags->metal_active) {
+    if (!ags || !ags->metal_active || !ags->viewport_set) {
         return;
     }
     
@@ -2133,5 +2136,6 @@ void platform_gpu_copy_locked_materials(void)
 
 void platform_gpu_update_viewport(void)
 {
+    ags->viewport_set = false;
     [apple_gpu_delegate updateViewport];
 }
