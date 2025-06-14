@@ -125,6 +125,37 @@ static void malloc_img_from_filename(
             /* out_rgba_values: */ recipient->rgba_values_page_aligned,
             /* out_rgba_values_size: */ recipient->rgba_values_size,
             /* out_good: */ &recipient->good);
+    } else if (
+        file_buffer.contents[0] == 'D' &&
+        file_buffer.contents[1] == 'D' &&
+        file_buffer.contents[2] == 'S' &&
+        file_buffer.contents[3] == ' ')
+    {
+        recipient->good = false;
+        recipient->rgba_values_size =
+            (uint32_t)file_buffer.size_without_terminator + 1;
+        malloc_from_managed_page_aligned(
+            /* void *base_pointer_for_freeing: */
+                (void *)&recipient->rgba_values_freeable,
+            /* void *aligned_subptr: */
+                (void *)&recipient->rgba_values_page_aligned,
+            /* const size_t subptr_size: */
+                recipient->rgba_values_size);
+        
+        common_memset_char(
+            recipient->rgba_values_page_aligned,
+            0,
+            recipient->rgba_values_size);
+        
+        common_memcpy(
+            /* void * dest: */
+                recipient->rgba_values_page_aligned,
+            /* const void * src: */
+                file_buffer.contents,
+            /* size_t n_bytes: */
+                recipient->rgba_values_size);
+        
+        recipient->good = true;
     } else {
         log_append("unrecognized file format in: ");
         log_append(filename);
@@ -137,10 +168,6 @@ static void malloc_img_from_filename(
         return;
     }
     
-    log_assert(recipient->pixel_count * 4 == recipient->rgba_values_size);
-    log_assert(recipient->pixel_count == recipient->width * recipient->height);
-        
-    log_assert(recipient->good);
     return;
 }
 
@@ -211,7 +238,76 @@ void T1_texture_files_preregister_png_resource(
         /* const uint32_t height: */
             height,
         /* const uint32_t width: */
-            width);
+            width,
+        /* const uint32_t is_dds_image: */
+            false);
+    
+    free_from_managed(buf.contents);
+    *good = 1;
+}
+
+typedef struct {
+    char     magic_number_dds[4];
+    uint32_t size;          // Size of the header (must be 124)
+    uint32_t flags;         // Header flags
+    uint32_t height;        // Image height in pixels
+    uint32_t width;         // Image width in pixels
+    uint32_t pitchOrLinearSize; // Pitch or linear size
+    uint32_t depth;         // Depth (for volume textures)
+    uint32_t mipMapCount;   // Number of mip levels
+    uint32_t reserved1[11]; // Reserved
+    // ... other fields (pixel format, caps, etc.)
+} DDS_Header;
+
+void T1_texture_files_preregister_dds_resource(
+    const char * filename,
+    uint32_t * good)
+{
+    *good = 0;
+    
+    FileBuffer buf;
+    buf.size_without_terminator = platform_get_resource_size(filename);
+    if (buf.size_without_terminator > 28) {
+        buf.size_without_terminator = 28;
+    } else {
+        return;
+    }
+    buf.contents = malloc_from_managed(buf.size_without_terminator+1);
+    buf.good = 0;
+    
+    platform_read_resource_file(filename, &buf);
+    
+    if (!buf.good) {
+        return;
+    }
+    
+    DDS_Header * header = (DDS_Header *)buf.contents;
+    log_assert(header->magic_number_dds[0] == 'D');
+    log_assert(header->magic_number_dds[1] == 'D');
+    log_assert(header->magic_number_dds[2] == 'S');
+    log_assert(header->magic_number_dds[3] == ' ');
+    log_assert(header->size == 124);
+    
+    if (
+        header->magic_number_dds[0] != 'D' ||
+        header->magic_number_dds[1] != 'D' ||
+        header->magic_number_dds[2] != 'S' ||
+        header->magic_number_dds[3] != ' ' ||
+        header->size != 124)
+    {
+        *good = 0;
+        return;
+    }
+    
+    T1_texture_array_preregister_null_image(
+        /* const char * filename: */
+            filename,
+        /* const uint32_t height: */
+            header->height,
+        /* const uint32_t width: */
+            header->width,
+        /* const uint32_t is_dds_image: */
+            true);
     
     free_from_managed(buf.contents);
     *good = 1;
@@ -235,11 +331,13 @@ void T1_texture_files_decode_all_preregistered(
     log_assert(using_num_threads < 7);
     
     for (int32_t ta_i = start_ta_i; ta_i < end_ta_i; ta_i++) {
-        engine_globals->startup_bytes_to_load +=
-            texture_arrays[ta_i].single_img_width *
-            texture_arrays[ta_i].single_img_height *
-            4 *
-            texture_arrays[ta_i].images_size;
+        if (!texture_arrays[ta_i].bc1_compressed) {
+            engine_globals->startup_bytes_to_load +=
+                texture_arrays[ta_i].single_img_width *
+                texture_arrays[ta_i].single_img_height *
+                4 *
+                texture_arrays[ta_i].images_size;
+        }
     }
     
     for (int32_t ta_i = start_ta_i; ta_i < end_ta_i; ta_i++) {
@@ -269,55 +367,13 @@ void T1_texture_files_decode_all_preregistered(
                     texture_arrays[ta_i].images[t_i].filename,
                 /* const uint32_t thread_id: */
                     thread_id);
-            engine_globals->startup_bytes_loaded +=
-                texture_arrays[ta_i].images[t_i].image.rgba_values_size;
+            
+            if (!texture_arrays[ta_i].bc1_compressed) {
+                engine_globals->startup_bytes_loaded += (
+                    texture_arrays[ta_i].single_img_height *
+                    texture_arrays[ta_i].single_img_width *
+                    4);
+            }
         }
     }
-}
-
-void T1_texture_files_decode_png_resource(
-    const char * filename,
-    uint32_t * good)
-{
-    *good = 0;
-    
-    int32_t texture_array_i = -1;
-    int32_t texture_i = -1;
-    T1_texture_array_get_filename_location(
-            filename,
-        /* int32_t * texture_array_i_recipient: */
-            &texture_array_i,
-        /* int32_t *texture_i_recipient: */
-            &texture_i);
-    
-    if (texture_array_i < 0) {
-        return;
-    }
-    
-    FileBuffer file_buffer;
-    file_buffer.good = 0;
-    file_buffer.size_without_terminator = platform_get_resource_size(
-        filename);
-    
-    file_buffer.contents =
-        (char *)malloc_from_managed(sizeof(char)
-            * file_buffer.size_without_terminator + 1);
-    
-    platform_read_resource_file(
-        filename,
-        &file_buffer);
-    
-    log_assert(file_buffer.good);
-    
-    T1_texture_array_decode_null_png_at(
-        /* const uint8_t * rgba_values: */
-            (uint8_t *)file_buffer.contents,
-        /* const uint32_t rgba_values_size: */
-            (uint32_t)file_buffer.size_without_terminator,
-        /* const int32_t texture_array_i: */
-            texture_array_i,
-        /* const int32_t texture_i: */
-            texture_i);
-    
-    *good = 1;
 }

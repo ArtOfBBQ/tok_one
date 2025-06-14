@@ -111,7 +111,8 @@ void gameloop_update_before_render_pass(
             loading_text_sprite_id = next_ui_element_object_id();
         }
         
-        float pct_progress = (float)engine_globals->startup_bytes_loaded /
+        float pct_progress =
+            (float)engine_globals->startup_bytes_loaded /
             (float)engine_globals->startup_bytes_to_load;
         pct_progress *= 100.0f;
         

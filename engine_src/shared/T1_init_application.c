@@ -506,7 +506,6 @@ static void asset_loading_thread(int32_t asset_thread_id) {
     }
     
     ias->thread_finished[asset_thread_id] = 1;
-    printf("thread exiting: %i\n", asset_thread_id);
 }
 
 void init_application_after_gpu_init(int32_t throwaway_threadarg) {
@@ -604,6 +603,8 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
             sizeof(uint32_t) * IMAGE_DECODING_THREADS_MAX);
         ias->thread_finished[0] = true;
         
+        log_assert(engine_globals->startup_bytes_to_load == 0);
+        log_assert(engine_globals->startup_bytes_loaded == 0);
         for (int32_t i = 1; i < (int32_t)ias->image_decoding_threads; i++) {
             platform_start_thread(
                 /* void (*function_to_run)(int32_t): */
@@ -685,8 +686,6 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     }
     
     T1_texture_array_push_all_predecoded();
-    
-    T1_texture_array_flag_all_to_request_gpu_init();
     
     if (application_running) {
         client_logic_late_startup();

@@ -10,10 +10,6 @@
 /*
 For "client" use in clientlogic.c or similar
 */
-
-//DecodedImage * malloc_img_from_filename(
-//    const char * filename);
-
 void T1_texture_files_register_new_by_splitting_file(
     const char * filename,
     const uint32_t rows,
@@ -23,6 +19,9 @@ void T1_texture_files_preregister_png_resource(
     const char * filename,
     uint32_t * good);
 
+void T1_texture_files_preregister_dds_resource(
+    const char * filename,
+    uint32_t * good);
 
 /*
 Internal engine use
@@ -30,9 +29,5 @@ Internal engine use
 void T1_texture_files_decode_all_preregistered(
     const uint32_t thread_id,
     const uint32_t using_num_threads);
-
-void T1_texture_files_decode_png_resource(
-    const char * filename,
-    uint32_t * good);
 
 #endif // TEXTURE_FILES_H

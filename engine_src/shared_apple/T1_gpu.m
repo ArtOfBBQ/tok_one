@@ -1076,11 +1076,12 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     const uint32_t parent_texture_array_images_size,
     const uint32_t image_width,
     const uint32_t image_height,
-    uint8_t * raw_bc1_file)
+    uint8_t * raw_bc1_file_freeable,
+    uint8_t * raw_bc1_file_page_aligned)
 {
     (void)parent_texture_array_images_size;
     
-    log_assert(raw_bc1_file != NULL);
+    log_assert(raw_bc1_file_page_aligned != NULL);
     
     log_assert(texture_i >= 0);
     log_assert(texture_array_i >= 1); // 0 is resered for font
@@ -1104,7 +1105,7 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
         [ags->device
             /* the pointer needs to be page aligned */
         newBufferWithBytesNoCopy:
-            raw_bc1_file + 128
+            raw_bc1_file_page_aligned + 128
             /* the length weirdly needs to be page aligned also */
         length:
             ((image_width + 3) / 4) * ((image_height + 3) / 4) * 8
@@ -1148,7 +1149,7 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     }];
     [combuf commit];
     
-    free_from_managed(raw_bc1_file);
+    free_from_managed(raw_bc1_file_freeable);
 }
 #endif
 
