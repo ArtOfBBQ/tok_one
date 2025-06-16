@@ -20,7 +20,7 @@ static void construct_zlight(zLightSource * to_construct) {
     to_construct->RGBA[1]       = 1.0f;
     to_construct->RGBA[2]       = 1.0f;
     to_construct->RGBA[3]       = 1.0f;
-    to_construct->ambient       = 0.05f; // mimics blender, very low ambient
+    to_construct->ambient       = 0.50f; // mimics blender, very low ambient
     to_construct->diffuse       = 1.00f;
     to_construct->specular      = 0.50f; // mimics blender's behavior
     to_construct->deleted       = false;

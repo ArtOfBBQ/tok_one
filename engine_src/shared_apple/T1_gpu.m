@@ -855,7 +855,6 @@ int32_t platform_gpu_get_touchable_id_at_screen_pos(
     return final_id;
 }
 
-#if TEXTURES_ACTIVE
 void platform_gpu_init_texture_array(
     const int32_t texture_array_i,
     const uint32_t num_images,
@@ -1070,6 +1069,7 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
     free_from_managed(rgba_values_freeable);
 }
 
+#if TEXTURES_ACTIVE
 void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     const int32_t texture_array_i,
     const int32_t texture_i,

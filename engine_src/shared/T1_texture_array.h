@@ -1,12 +1,13 @@
 #ifndef TEXTURE_ARRAY_H
 #define TEXTURE_ARRAY_H
 
+#include "debigulator/src/decode_png.h"
+#include "debigulator/src/decode_bmp.h"
+
 #include "T1_platform_layer.h"
 #include "T1_logger.h"
 #include "T1_memorystore.h"
 #include "T1_decodedimage.h"
-#include "debigulator/src/decode_png.h"
-#include "debigulator/src/decode_bmp.h"
 #include "T1_cpu_gpu_shared_types.h"
 
 

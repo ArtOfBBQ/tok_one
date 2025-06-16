@@ -225,7 +225,6 @@ int32_t platform_gpu_get_touchable_id_at_screen_pos(
     const float screen_x,
     const float screen_y);
 
-#if TEXTURES_ACTIVE
 void platform_gpu_init_texture_array(
     const int32_t texture_array_i,
     const uint32_t num_images,
@@ -242,6 +241,7 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
     uint8_t * rgba_values_freeable,
     uint8_t * rgba_values_page_aligned);
 
+#if TEXTURES_ACTIVE
 void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     const int32_t texture_array_i,
     const int32_t texture_i,

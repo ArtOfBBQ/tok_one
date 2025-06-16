@@ -844,7 +844,8 @@ single_quad_fragment_shader(
     
     // reinhard tone mapping
     #if TONE_MAPPING_ACTIVE
-    color_sample = color_sample / (color_sample + 0.30h);
+    color_sample = clamp(color_sample, 0.0h, 1.20h);
+    color_sample = color_sample / 1.20h;
     #endif
     color_sample = clamp(color_sample, 0.0h, 1.0h);
     

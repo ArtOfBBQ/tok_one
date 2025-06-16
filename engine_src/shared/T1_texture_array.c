@@ -8,6 +8,7 @@ uint32_t texture_arrays_size = 0;
 
 void T1_texture_array_push_all_predecoded(void)
 {
+    #if TEXTURES_ACTIVE
     for (
         int32_t ta_i = 1;
         ta_i < (int32_t)texture_arrays_size;
@@ -146,6 +147,7 @@ void T1_texture_array_push_all_predecoded(void)
             }
         }
     }
+    #endif
 }
 
 static DecodedImage * extract_image(
@@ -505,6 +507,7 @@ void T1_texture_array_debug_dump_texturearray_to_writables(
     const int32_t texture_array_i,
     uint32_t * success)
 {
+    #if TEXTURES_ACTIVE
     for (int32_t texture_i = 0; texture_i < 100; texture_i++) {
         uint32_t fetched = 0;
         
@@ -576,4 +579,5 @@ void T1_texture_array_debug_dump_texturearray_to_writables(
     }
     
     *success = 1;
+    #endif
 }

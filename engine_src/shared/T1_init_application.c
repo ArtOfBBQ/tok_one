@@ -486,6 +486,7 @@ void init_application_before_gpu_init(
             page_size);
 }
 
+#if TEXTURES_ACTIVE
 static void asset_loading_thread(int32_t asset_thread_id) {
     if (asset_thread_id > 0) {
         init_PNG_decoder(
@@ -507,11 +508,14 @@ static void asset_loading_thread(int32_t asset_thread_id) {
     
     ias->thread_finished[asset_thread_id] = 1;
 }
+#endif
 
 void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     (void)throwaway_threadarg;
     
     T1_texture_array_load_font_images();
+    
+    platform_gpu_update_viewport(); // kicks off loading screen
     
     FileBuffer perlin_buf;
     perlin_buf.good = false;
@@ -605,6 +609,8 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         
         log_assert(engine_globals->startup_bytes_to_load == 0);
         log_assert(engine_globals->startup_bytes_loaded == 0);
+        
+        #if TEXTURES_ACTIVE
         for (int32_t i = 1; i < (int32_t)ias->image_decoding_threads; i++) {
             platform_start_thread(
                 /* void (*function_to_run)(int32_t): */
@@ -612,6 +618,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
                 /* int32_t argument: */
                     i);
         }
+        #endif
     } else {
         return;
     }
@@ -624,9 +631,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     We'll do a bunch of other work first, because that gives us something
     to do while we wait the other threads to finish.
     */
-    
-    platform_gpu_update_viewport(); // kicks off loading screen
-    
+        
     #define MIN_VERTICES_FOR_SHATTER_EFFECT 400
     for (uint32_t i = 0; i < all_mesh_summaries_size; i++) {
         if (all_mesh_summaries[i].shattered_vertices_head_i < 0) {
@@ -673,6 +678,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         platform_enter_fullscreen();
     }
     
+    #if TEXTURES_ACTIVE
     asset_loading_thread(0);
     
     // Wait until all worker threads are finished
@@ -684,6 +690,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
             }
         }
     }
+    #endif
     
     T1_texture_array_push_all_predecoded();
     
