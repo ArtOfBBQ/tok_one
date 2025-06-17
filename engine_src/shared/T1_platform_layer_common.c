@@ -245,7 +245,7 @@ void platform_delete_writable(
 void platform_layer_start_window_resize(
     const uint64_t timestamp)
 {
-    (void)timestamp;
+    engine_globals->last_resize_request_at = timestamp;
     
     delete_all_ui_elements();
     zsprites_to_render->size = 0;

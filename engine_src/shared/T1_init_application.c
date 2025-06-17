@@ -703,6 +703,9 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     #endif
     
     gameloop_active = true;
+    
+    platform_layer_start_window_resize(
+        platform_get_current_time_microsecs());
 }
 
 void shared_shutdown_application(void)
