@@ -73,6 +73,7 @@ extern "C" {
 #include "T1_logger.h"
 #include "T1_decodedimage.h"
 #include "T1_engine_globals.h"
+#include "T1_uielement.h"
 
 void platform_layer_init(
     void ** unmanaged_memory_store,
@@ -296,6 +297,9 @@ void platform_assert_mutex_locked(const uint32_t mutex_id);
 void platform_mutex_lock(const uint32_t mutex_id);
 
 void platform_mutex_unlock(const uint32_t mutex_id);
+
+void platform_layer_start_window_resize(
+    const uint64_t timestamp);
 
 #ifdef __cplusplus
 }

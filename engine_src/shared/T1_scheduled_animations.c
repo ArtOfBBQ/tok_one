@@ -36,7 +36,7 @@ static void construct_scheduled_animationA(
     common_memset_char(to_construct, 0, sizeof(ScheduledAnimation));
     log_assert(!to_construct->committed);
     
-    to_construct->affected_sprite_id = -1;
+    to_construct->affected_zsprite_id = -1;
     to_construct->affected_touchable_id = -1;
     to_construct->runs = 1;
     
@@ -111,7 +111,7 @@ void scheduled_animations_commit(ScheduledAnimation * to_commit) {
         {
             if (
                 zsprites_to_render->cpu_data[zp_i].zsprite_id ==
-                    to_commit->affected_sprite_id)
+                    to_commit->affected_zsprite_id)
             {
                 first_zp_i = zp_i;
                 break;
@@ -149,8 +149,8 @@ void scheduled_animations_commit(ScheduledAnimation * to_commit) {
                 anim_i++)
             {
                 if (
-                    scheduled_animations[anim_i].affected_sprite_id ==
-                        to_commit->affected_sprite_id &&
+                    scheduled_animations[anim_i].affected_zsprite_id ==
+                        to_commit->affected_zsprite_id &&
                     scheduled_animations[anim_i].affected_touchable_id ==
                         to_commit->affected_touchable_id &&
                     scheduled_animations[anim_i].committed &&
@@ -166,16 +166,16 @@ void scheduled_animations_commit(ScheduledAnimation * to_commit) {
     log_assert(!to_commit->committed);
     log_assert(to_commit->end_timestamp > to_commit->start_timestamp);
     
-    if (to_commit->affected_sprite_id < 0) {
+    if (to_commit->affected_zsprite_id < 0) {
         log_assert(to_commit->affected_touchable_id >= 0);
     } else {
         log_assert(to_commit->affected_touchable_id == -1);
     }
     
     if (to_commit->affected_touchable_id < 0) {
-        log_assert(to_commit->affected_sprite_id >= 0);
+        log_assert(to_commit->affected_zsprite_id >= 0);
     } else {
-        log_assert(to_commit->affected_sprite_id == -1);
+        log_assert(to_commit->affected_zsprite_id == -1);
     }
     
     log_assert(to_commit->already_applied_t == 0.0f);
@@ -366,7 +366,7 @@ void scheduled_animations_request_fade_and_destroy(
     // register scheduled animation
     ScheduledAnimation * fade_destroy = scheduled_animations_request_next(true);
     fade_destroy->endpoints_not_deltas = true;
-    fade_destroy->affected_sprite_id = object_id;
+    fade_destroy->affected_zsprite_id = object_id;
     fade_destroy->duration_microseconds = duration_microseconds;
     fade_destroy->lightsource_vals.reach = 0.0f;
     fade_destroy->delete_object_when_finished = true;
@@ -382,7 +382,7 @@ void scheduled_animations_request_fade_to(
     
     // register scheduled animation
     ScheduledAnimation * modify_alpha = scheduled_animations_request_next(true);
-    modify_alpha->affected_sprite_id = zsprite_id;
+    modify_alpha->affected_zsprite_id = zsprite_id;
     modify_alpha->duration_microseconds = duration_microseconds;
     modify_alpha->gpu_polygon_vals.base_material.alpha = target_alpha;
     scheduled_animations_commit(modify_alpha);
@@ -479,9 +479,9 @@ void scheduled_animations_resolve(void)
                 }
                 
                 if (anim->delete_object_when_finished) {
-                    delete_zlight(anim->affected_sprite_id);
+                    delete_zlight(anim->affected_zsprite_id);
                     
-                    zsprite_delete(anim->affected_sprite_id);
+                    zsprite_delete(anim->affected_zsprite_id);
                     
                     #if PARTICLES_ACTIVE
                     delete_particle_effect(anim->affected_sprite_id);
@@ -597,9 +597,9 @@ void scheduled_animations_resolve(void)
             zp_i++)
         {
             if (
-                (anim->affected_sprite_id >= 0 &&
+                (anim->affected_zsprite_id >= 0 &&
                 zsprites_to_render->cpu_data[zp_i].zsprite_id !=
-                    anim->affected_sprite_id) ||
+                    anim->affected_zsprite_id) ||
                 (anim->affected_touchable_id >= 0 &&
                 zsprites_to_render->gpu_data[zp_i].touchable_id !=
                     anim->affected_touchable_id)
@@ -725,7 +725,7 @@ void scheduled_animations_request_dud_dance(
     ScheduledAnimation * move_request =
         scheduled_animations_request_next(false);
     move_request->easing_type = EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO;
-    move_request->affected_sprite_id = (int32_t)object_id;
+    move_request->affected_zsprite_id = (int32_t)object_id;
     move_request->gpu_polygon_vals.xyz[0] = magnitude * 0.05f;
     move_request->gpu_polygon_vals.xyz[1] = magnitude * 0.035f;
     move_request->gpu_polygon_vals.xyz[2] = magnitude * 0.005f;
@@ -746,7 +746,7 @@ void scheduled_animations_request_bump(
     ScheduledAnimation * move_request =
         scheduled_animations_request_next(false);
     move_request->easing_type = EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO;
-    move_request->affected_sprite_id = (int32_t)object_id;
+    move_request->affected_zsprite_id = (int32_t)object_id;
     move_request->gpu_polygon_vals.scale_factor = 0.25f;
     move_request->duration_microseconds = 200000;
     scheduled_animations_commit(move_request);
@@ -769,7 +769,7 @@ void scheduled_animations_delete_endpoint_anims_targeting(
         if (
             !scheduled_animations[i].deleted &&
             scheduled_animations[i].endpoints_not_deltas &&
-            scheduled_animations[i].affected_sprite_id == (int32_t)object_id)
+            scheduled_animations[i].affected_zsprite_id == (int32_t)object_id)
         {
             scheduled_animations[i].deleted = true;
         }
@@ -783,7 +783,7 @@ void scheduled_animations_delete_all_anims_targeting(const int32_t object_id) {
         if (
             !scheduled_animations[i].deleted &&
             scheduled_animations[i].committed &&
-            scheduled_animations[i].affected_sprite_id == object_id)
+            scheduled_animations[i].affected_zsprite_id == object_id)
         {
             scheduled_animations[i].deleted = true;
         }

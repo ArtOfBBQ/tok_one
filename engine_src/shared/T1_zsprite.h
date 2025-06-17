@@ -69,6 +69,9 @@ float zsprite_dot_of_vertices_f3(
     const float a[3],
     const float b[3]);
 
+float zsprite_get_z_multiplier_for_depth(
+    CPUzSprite * for_poly,
+    const float for_depth);
 float zsprite_get_y_multiplier_for_height(
     CPUzSprite * for_poly,
     const float for_height);

@@ -241,3 +241,19 @@ void platform_delete_writable(
     
     platform_delete_file(writable_filename);
 }
+
+void platform_layer_start_window_resize(
+    const uint64_t timestamp)
+{
+    (void)timestamp;
+    
+    delete_all_ui_elements();
+    zsprites_to_render->size = 0;
+    #if PARTICLES_ACTIVE
+    particle_effects_size = 0;
+    #endif
+    engine_globals->postprocessing_constants.fog_factor = 0.0f;
+    engine_globals->postprocessing_constants.fog_color[0] = 0.0f;
+    engine_globals->postprocessing_constants.fog_color[1] = 0.0f;
+    engine_globals->postprocessing_constants.fog_color[2] = 0.0f;
+}

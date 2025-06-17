@@ -115,6 +115,26 @@ float zsprite_get_x_multiplier_for_width(
     return return_value;
 }
 
+float zsprite_get_z_multiplier_for_depth(
+    CPUzSprite * for_poly,
+    const float for_depth)
+{
+    log_assert(for_poly != NULL);
+    #ifndef LOGGER_IGNORE_ASSERTS
+    if (for_poly == NULL) {
+        return 0.0f;
+    }
+    #endif
+    
+    log_assert(for_poly->mesh_id >= 0);
+    log_assert(for_poly->mesh_id < (int32_t)all_mesh_summaries_size);
+    
+    float return_value =
+        for_depth / all_mesh_summaries[for_poly->mesh_id].base_depth;
+    
+    return return_value;
+}
+
 float zsprite_get_y_multiplier_for_height(
     CPUzSprite * for_poly,
     const float for_height)

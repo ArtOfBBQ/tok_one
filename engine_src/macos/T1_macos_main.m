@@ -377,11 +377,11 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     windowWillResize:(NSWindow *)sender
     toSize:(NSSize)frameSize
 {
-    delete_all_ui_elements();
-    zsprites_to_render->size = 0;
-    #if PARTICLES_ACTIVE
-    particle_effects_size = 0;
-    #endif
+    //    engineglobals_started_window_resize(
+    //        platform_get_current_time_microsecs());
+    
+    platform_layer_start_window_resize(
+        platform_get_current_time_microsecs());
     
     return frameSize;
 }

@@ -41,16 +41,16 @@ typedef enum EasingType {
 
 typedef struct ScheduledAnimation {
     // Public:
-    GPUzSprite         gpu_polygon_vals;
-    // zPolygonCPU        zpolygon_cpu_vals;
-    zLightSource       lightsource_vals;
+    GPUzSprite gpu_polygon_vals;
+    // zPolygonCPU zpolygon_cpu_vals;
+    zLightSource lightsource_vals;
     
     EasingType easing_type;
     
     uint64_t duration_microseconds;
     
     uint32_t runs;
-    int32_t affected_sprite_id;
+    int32_t affected_zsprite_id;
     int32_t affected_touchable_id;
     bool32_t delete_object_when_finished;
     

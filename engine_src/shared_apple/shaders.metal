@@ -475,7 +475,7 @@ float4 get_lit(
             
             shadow_factor =
                 (frag_depth <= shadow_depth + SHADOW_BIAS) ?
-                    1.0f : 0.25f;
+                    1.0f : 0.20f;
         }
         #endif
         

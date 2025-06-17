@@ -94,6 +94,7 @@ void engineglobals_init(void);
 void engineglobals_update_window_position(
     float left,
     float bottom);
+
 void engineglobals_update_window_size(
     float width,
     float height,
