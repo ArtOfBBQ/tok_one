@@ -22,6 +22,7 @@ extern "C" {
 #endif
 
 extern bool32_t gameloop_active;
+extern bool32_t loading_textures;
 
 void gameloop_init(void);
 

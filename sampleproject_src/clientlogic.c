@@ -31,8 +31,8 @@ void client_logic_early_startup(
     #if TEAPOT
     #if 1
     teapot_mesh_id = T1_objmodel_new_mesh_id_from_resources(
-        "open_cube.obj",
-        "open_cube.mtl",
+        "crack_1.obj",
+        "crack_1.mtl",
         false,
         true);
     #else

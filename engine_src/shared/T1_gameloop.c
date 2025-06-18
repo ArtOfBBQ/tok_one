@@ -1,6 +1,7 @@
 #include "T1_gameloop.h"
 
 bool32_t gameloop_active = false;
+bool32_t loading_textures = false;
 
 static uint64_t gameloop_previous_time = 0;
 static uint64_t gameloop_frame_no = 0;
@@ -106,7 +107,7 @@ void gameloop_update_before_render_pass(
     frame_data->line_vertices_size       = 0;
     frame_data->point_vertices_size      = 0;
     
-    if (!gameloop_active) {
+    if (!gameloop_active && loading_textures) {
         if (loading_text_sprite_id < 0) {
             loading_text_sprite_id = next_ui_element_object_id();
         }

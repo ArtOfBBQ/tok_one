@@ -116,6 +116,10 @@
 		EC8E828D2DF25F9E00E2D97A /* open_cube.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC8E828A2DF25F9E00E2D97A /* open_cube.mtl */; };
 		EC8E828E2DF25F9E00E2D97A /* open_cube.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC8E828B2DF25F9E00E2D97A /* open_cube.obj */; };
 		EC8E828F2DF25F9E00E2D97A /* open_cube.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC8E828A2DF25F9E00E2D97A /* open_cube.mtl */; };
+		EC90BD982E03266700773769 /* crack_1.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC90BD962E03266700773769 /* crack_1.mtl */; };
+		EC90BD992E03266700773769 /* crack_1.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC90BD972E03266700773769 /* crack_1.obj */; };
+		EC90BD9A2E03266700773769 /* crack_1.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC90BD962E03266700773769 /* crack_1.mtl */; };
+		EC90BD9B2E03266700773769 /* crack_1.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC90BD972E03266700773769 /* crack_1.obj */; };
 		EC914B7F2B8AD447007FCBFC /* T1_audio.c in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7A2B8AD447007FCBFC /* T1_audio.c */; };
 		EC914B812B8AD447007FCBFC /* T1_wav.c in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7B2B8AD447007FCBFC /* T1_wav.c */; };
 		EC914B852B8AD5AB007FCBFC /* T1_apple_audio.m in Sources */ = {isa = PBXBuildFile; fileRef = EC914B832B8AD5AB007FCBFC /* T1_apple_audio.m */; };
@@ -244,6 +248,8 @@
 		EC843EA72D1401F3001AD2E9 /* cardstand.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = cardstand.obj; path = ../../resources/cardstand.obj; sourceTree = "<group>"; };
 		EC8E828A2DF25F9E00E2D97A /* open_cube.mtl */ = {isa = PBXFileReference; lastKnownFileType = text; name = open_cube.mtl; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/resources/open_cube.mtl; sourceTree = "<absolute>"; };
 		EC8E828B2DF25F9E00E2D97A /* open_cube.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = open_cube.obj; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/resources/open_cube.obj; sourceTree = "<absolute>"; };
+		EC90BD962E03266700773769 /* crack_1.mtl */ = {isa = PBXFileReference; lastKnownFileType = text; name = crack_1.mtl; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/resources/crack_1.mtl; sourceTree = "<absolute>"; };
+		EC90BD972E03266700773769 /* crack_1.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = crack_1.obj; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/resources/crack_1.obj; sourceTree = "<absolute>"; };
 		EC914B7A2B8AD447007FCBFC /* T1_audio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_audio.c; path = ../../engine_src/shared/T1_audio.c; sourceTree = "<group>"; };
 		EC914B7B2B8AD447007FCBFC /* T1_wav.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_wav.c; path = ../../engine_src/shared/T1_wav.c; sourceTree = "<group>"; };
 		EC914B7C2B8AD447007FCBFC /* T1_wav.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_wav.h; path = ../../engine_src/shared/T1_wav.h; sourceTree = "<group>"; };
@@ -368,21 +374,23 @@
 				EC7FBC3F2DECE93000A679A7 /* 1001_albedo.png */,
 				EC74B51C2DE3BC070033206F /* 1001_normal.png */,
 				EC18FF4129E3DC8B00ED785C /* blob1.png */,
-				EC8E828A2DF25F9E00E2D97A /* open_cube.mtl */,
-				EC8E828B2DF25F9E00E2D97A /* open_cube.obj */,
 				EC18FF4429E3DD8900ED785C /* blob2.png */,
 				EC18FF4529E3DD8900ED785C /* blob3.png */,
 				EC843EA72D1401F3001AD2E9 /* cardstand.obj */,
 				EC1412AE2938597400DA0D21 /* cardwithuvcoords.obj */,
+				EC90BD962E03266700773769 /* crack_1.mtl */,
+				EC90BD972E03266700773769 /* crack_1.obj */,
 				ECC47A5F29E9111C0082A7C6 /* disk.obj */,
 				601128AC28625BAF00F92967 /* font.png */,
 				6009FB632876A47100FC5A60 /* fontmetrics.dat */,
 				EC74B51A2DE3BC070033206F /* guitar_simplified.mtl */,
-				EC14028C2DF8FDA400697AF4 /* normalmap_rectangles.png */,
 				EC74B51F2DE3BC070033206F /* guitar_simplified.obj */,
 				ECB05E4C294F8FD300050BD4 /* key.obj */,
 				EC67AE152A1B0813002D8380 /* leaves3.png */,
 				EC7B09D3293CAC8B000ED98E /* Main.storyboard */,
+				EC14028C2DF8FDA400697AF4 /* normalmap_rectangles.png */,
+				EC8E828A2DF25F9E00E2D97A /* open_cube.mtl */,
+				EC8E828B2DF25F9E00E2D97A /* open_cube.obj */,
 				ECDCFF512DDE12EF002AA399 /* perlin_noise.png */,
 				6080CC45286FFD1D00444118 /* phoebus.png */,
 				EC7B171A293A23E300C1D20C /* roundedborder.png */,
@@ -597,6 +605,8 @@
 				EC0717F02C29CDD5007A4AFA /* teapot_smooth.obj in Resources */,
 				EC74B52B2DE3BC070033206F /* guitar_simplified.obj in Resources */,
 				ECB05E4D294F8FD400050BD4 /* key.obj in Resources */,
+				EC90BD982E03266700773769 /* crack_1.mtl in Resources */,
+				EC90BD992E03266700773769 /* crack_1.obj in Resources */,
 				EC1412B12938597400DA0D21 /* cardwithuvcoords.obj in Resources */,
 				6009FB642876A47100FC5A60 /* fontmetrics.dat in Resources */,
 				EC676A3D2DE8D41D001FD4DE /* guitar_simplified.mtl in Resources */,
@@ -630,6 +640,8 @@
 				ECC47A6129E9111C0082A7C6 /* disk.obj in Resources */,
 				60A99921287BDF31003F7159 /* fontmetrics.dat in Resources */,
 				EC74B5222DE3BC070033206F /* guitar_simplified.mtl in Resources */,
+				EC90BD9A2E03266700773769 /* crack_1.mtl in Resources */,
+				EC90BD9B2E03266700773769 /* crack_1.obj in Resources */,
 				60A99924287BDF31003F7159 /* phoebus.png in Resources */,
 				EC18FF4329E3DC8B00ED785C /* blob1.png in Resources */,
 				EC843EA92D1401F3001AD2E9 /* cardstand.obj in Resources */,

@@ -611,6 +611,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         log_assert(engine_globals->startup_bytes_loaded == 0);
         
         #if TEXTURES_ACTIVE
+        loading_textures = true;
         for (int32_t i = 1; i < (int32_t)ias->image_decoding_threads; i++) {
             platform_start_thread(
                 /* void (*function_to_run)(int32_t): */
@@ -690,9 +691,13 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
             }
         }
     }
+    loading_textures = false;
     #endif
     
     T1_texture_array_push_all_predecoded();
+    
+    platform_layer_start_window_resize(
+        platform_get_current_time_microsecs());
     
     if (application_running) {
         client_logic_late_startup();
@@ -703,9 +708,6 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     #endif
     
     gameloop_active = true;
-    
-    platform_layer_start_window_resize(
-        platform_get_current_time_microsecs());
 }
 
 void shared_shutdown_application(void)

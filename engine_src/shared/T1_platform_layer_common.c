@@ -252,8 +252,11 @@ void platform_layer_start_window_resize(
     #if PARTICLES_ACTIVE
     particle_effects_size = 0;
     #endif
+    
+    #if FOG_ACTIVE
     engine_globals->postprocessing_constants.fog_factor = 0.0f;
     engine_globals->postprocessing_constants.fog_color[0] = 0.0f;
     engine_globals->postprocessing_constants.fog_color[1] = 0.0f;
     engine_globals->postprocessing_constants.fog_color[2] = 0.0f;
+    #endif
 }

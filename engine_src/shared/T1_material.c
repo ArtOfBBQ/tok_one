@@ -69,6 +69,8 @@ uint32_t T1_material_preappend_locked_material_i(
         MATERIAL_NAME_CAP,
         material_name);
     
+    log_assert(all_mesh_materials->size < ALL_LOCKED_MATERIALS_SIZE);
+    
     all_mesh_materials->size += 1;
     return all_mesh_materials->size - 1;
 }

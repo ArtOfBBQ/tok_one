@@ -618,6 +618,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
         for (uint32_t i = 1; i < arg_parsed_obj->materials_count; i++) {
             uint32_t _ = T1_material_preappend_locked_material_i(
                 parsed_obj->material_names[i].name);
+            log_assert(first_material_head_i + i == _);
             (void)_;
         }
         
