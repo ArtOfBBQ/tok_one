@@ -153,7 +153,9 @@ typedef struct GPUPostProcessingConstants
     unsigned int timestamp;
     unsigned int lights_size;
     unsigned int shadowcaster_i;
-    float padding[1];
+    int perlin_texturearray_i;
+    int perlin_texture_i;
+    float padding[7];
 } GPUPostProcessingConstants;
 
 typedef struct GPURawVertex {

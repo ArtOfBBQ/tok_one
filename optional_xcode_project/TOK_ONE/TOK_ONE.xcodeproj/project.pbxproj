@@ -120,6 +120,8 @@
 		EC90BD992E03266700773769 /* crack_1.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC90BD972E03266700773769 /* crack_1.obj */; };
 		EC90BD9A2E03266700773769 /* crack_1.mtl in Resources */ = {isa = PBXBuildFile; fileRef = EC90BD962E03266700773769 /* crack_1.mtl */; };
 		EC90BD9B2E03266700773769 /* crack_1.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC90BD972E03266700773769 /* crack_1.obj */; };
+		EC90BDC22E040D5200773769 /* perlin_noise.dds in Resources */ = {isa = PBXBuildFile; fileRef = EC90BDC12E040D5200773769 /* perlin_noise.dds */; };
+		EC90BDC32E040D5200773769 /* perlin_noise.dds in Resources */ = {isa = PBXBuildFile; fileRef = EC90BDC12E040D5200773769 /* perlin_noise.dds */; };
 		EC914B7F2B8AD447007FCBFC /* T1_audio.c in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7A2B8AD447007FCBFC /* T1_audio.c */; };
 		EC914B812B8AD447007FCBFC /* T1_wav.c in Sources */ = {isa = PBXBuildFile; fileRef = EC914B7B2B8AD447007FCBFC /* T1_wav.c */; };
 		EC914B852B8AD5AB007FCBFC /* T1_apple_audio.m in Sources */ = {isa = PBXBuildFile; fileRef = EC914B832B8AD5AB007FCBFC /* T1_apple_audio.m */; };
@@ -134,8 +136,6 @@
 		ECC47A6129E9111C0082A7C6 /* disk.obj in Resources */ = {isa = PBXBuildFile; fileRef = ECC47A5F29E9111C0082A7C6 /* disk.obj */; };
 		ECDCFF4D2DDE0F2B002AA399 /* T1_mtlparser.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDCFF4B2DDE0F2A002AA399 /* T1_mtlparser.c */; };
 		ECDCFF502DDE0F52002AA399 /* T1_tokenizer.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDCFF4F2DDE0F52002AA399 /* T1_tokenizer.c */; };
-		ECDCFF522DDE12EF002AA399 /* perlin_noise.png in Resources */ = {isa = PBXBuildFile; fileRef = ECDCFF512DDE12EF002AA399 /* perlin_noise.png */; };
-		ECDCFF532DDE13CB002AA399 /* perlin_noise.png in Resources */ = {isa = PBXBuildFile; fileRef = ECDCFF512DDE12EF002AA399 /* perlin_noise.png */; };
 		ECDD9C232DE2157500721A48 /* T1_texture_files.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDD9C212DE2157400721A48 /* T1_texture_files.c */; };
 		ECE759CE2C3FF1BE004B0847 /* T1_collision.c in Sources */ = {isa = PBXBuildFile; fileRef = ECE759CC2C3FF1BE004B0847 /* T1_collision.c */; };
 		ECE759D12C400175004B0847 /* T1_lines.c in Sources */ = {isa = PBXBuildFile; fileRef = ECE759D02C400175004B0847 /* T1_lines.c */; };
@@ -250,6 +250,7 @@
 		EC8E828B2DF25F9E00E2D97A /* open_cube.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = open_cube.obj; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/resources/open_cube.obj; sourceTree = "<absolute>"; };
 		EC90BD962E03266700773769 /* crack_1.mtl */ = {isa = PBXFileReference; lastKnownFileType = text; name = crack_1.mtl; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/resources/crack_1.mtl; sourceTree = "<absolute>"; };
 		EC90BD972E03266700773769 /* crack_1.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = crack_1.obj; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/resources/crack_1.obj; sourceTree = "<absolute>"; };
+		EC90BDC12E040D5200773769 /* perlin_noise.dds */ = {isa = PBXFileReference; explicitFileType = compiled; name = perlin_noise.dds; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/resources/perlin_noise.dds; sourceTree = "<absolute>"; };
 		EC914B7A2B8AD447007FCBFC /* T1_audio.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_audio.c; path = ../../engine_src/shared/T1_audio.c; sourceTree = "<group>"; };
 		EC914B7B2B8AD447007FCBFC /* T1_wav.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_wav.c; path = ../../engine_src/shared/T1_wav.c; sourceTree = "<group>"; };
 		EC914B7C2B8AD447007FCBFC /* T1_wav.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_wav.h; path = ../../engine_src/shared/T1_wav.h; sourceTree = "<group>"; };
@@ -269,7 +270,6 @@
 		ECDCFF4C2DDE0F2A002AA399 /* T1_mtlparser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_mtlparser.h; path = ../../engine_src/shared/T1_mtlparser.h; sourceTree = "<group>"; };
 		ECDCFF4E2DDE0F52002AA399 /* T1_tokenizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_tokenizer.h; path = ../../engine_src/shared/T1_tokenizer.h; sourceTree = "<group>"; };
 		ECDCFF4F2DDE0F52002AA399 /* T1_tokenizer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_tokenizer.c; path = ../../engine_src/shared/T1_tokenizer.c; sourceTree = "<group>"; };
-		ECDCFF512DDE12EF002AA399 /* perlin_noise.png */ = {isa = PBXFileReference; explicitFileType = compiled; name = perlin_noise.png; path = ../../resources/perlin_noise.png; sourceTree = "<group>"; };
 		ECDD9C212DE2157400721A48 /* T1_texture_files.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_texture_files.c; path = ../../engine_src/shared/T1_texture_files.c; sourceTree = "<group>"; };
 		ECDD9C222DE2157500721A48 /* T1_texture_files.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_texture_files.h; path = ../../engine_src/shared/T1_texture_files.h; sourceTree = "<group>"; };
 		ECE759CC2C3FF1BE004B0847 /* T1_collision.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_collision.c; path = ../../engine_src/shared/T1_collision.c; sourceTree = "<group>"; };
@@ -390,8 +390,8 @@
 				EC7B09D3293CAC8B000ED98E /* Main.storyboard */,
 				EC14028C2DF8FDA400697AF4 /* normalmap_rectangles.png */,
 				EC8E828A2DF25F9E00E2D97A /* open_cube.mtl */,
+				EC90BDC12E040D5200773769 /* perlin_noise.dds */,
 				EC8E828B2DF25F9E00E2D97A /* open_cube.obj */,
-				ECDCFF512DDE12EF002AA399 /* perlin_noise.png */,
 				6080CC45286FFD1D00444118 /* phoebus.png */,
 				EC7B171A293A23E300C1D20C /* roundedborder.png */,
 				601128A928625BAE00F92967 /* structuredart1.png */,
@@ -603,6 +603,7 @@
 				EC67AE162A1B0813002D8380 /* leaves3.png in Resources */,
 				EC7FBC402DECE93000A679A7 /* 1001_albedo.png in Resources */,
 				EC0717F02C29CDD5007A4AFA /* teapot_smooth.obj in Resources */,
+				EC90BDC22E040D5200773769 /* perlin_noise.dds in Resources */,
 				EC74B52B2DE3BC070033206F /* guitar_simplified.obj in Resources */,
 				ECB05E4D294F8FD400050BD4 /* key.obj in Resources */,
 				EC90BD982E03266700773769 /* crack_1.mtl in Resources */,
@@ -614,7 +615,6 @@
 				EC7B171B293A23E400C1D20C /* roundedborder.png in Resources */,
 				EC18FF4229E3DC8B00ED785C /* blob1.png in Resources */,
 				EC0BFBDB29EE71A200E4BC1C /* xmas_tree.obj in Resources */,
-				ECDCFF532DDE13CB002AA399 /* perlin_noise.png in Resources */,
 				EC8E828C2DF25F9E00E2D97A /* open_cube.obj in Resources */,
 				EC8E828D2DF25F9E00E2D97A /* open_cube.mtl in Resources */,
 				EC843EA82D1401F3001AD2E9 /* cardstand.obj in Resources */,
@@ -652,6 +652,7 @@
 				EC74B52C2DE3BC070033206F /* guitar_simplified.obj in Resources */,
 				60A9991F287BDF31003F7159 /* font.png in Resources */,
 				EC74B5262DE3BC070033206F /* 1001_normal.png in Resources */,
+				EC90BDC32E040D5200773769 /* perlin_noise.dds in Resources */,
 				60A99923287BDF31003F7159 /* teapot.obj in Resources */,
 				EC18FF4729E3DD8900ED785C /* blob2.png in Resources */,
 				EC8E828E2DF25F9E00E2D97A /* open_cube.obj in Resources */,
@@ -661,7 +662,6 @@
 				EC0717F12C29CDD5007A4AFA /* teapot_smooth.obj in Resources */,
 				60A99920287BDF31003F7159 /* structuredart1.png in Resources */,
 				EC0BFBDC29EE71A200E4BC1C /* xmas_tree.obj in Resources */,
-				ECDCFF522DDE12EF002AA399 /* perlin_noise.png in Resources */,
 				60A99922287BDF31003F7159 /* structuredart2.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -798,7 +798,7 @@ single_quad_fragment_shader(
     texture2d<half> downsampled_4  [[texture(4)]],
     texture2d<half> downsampled_5  [[texture(5)]],
     #endif
-    texture2d<half> perlin_texture  [[texture(6)]],
+    texture2d_array<half> perlin_texture [[ texture(6) ]],
     depth2d<float> camera_depth_map
         [[texture(CAMERADEPTH_TEXTUREARRAY_I)]])
 {
@@ -835,7 +835,8 @@ single_quad_fragment_shader(
         ((vector_float2(
             (float)progress * 1.1f,
             (float)progress * 0.7f)) * 0.2f) +
-        texcoord / 8).r;
+        texcoord / 8,
+        /* texture index: */ 0).r;
     
     color_sample =
         (vector_half4(

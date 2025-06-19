@@ -132,6 +132,10 @@ void gameloop_update_before_render_pass(
         return;
     }
     
+    if (!gameloop_active) {
+        return;
+    }
+    
     #if PROFILER_ACTIVE
     profiler_start("gameloop_update()");
     #endif

@@ -263,21 +263,6 @@ void platform_gpu_fetch_rgba_at(
     uint32_t * good);
 #endif
 
-// Some textures are not treated as textures but play a special role
-// these are available when TEXTURES_ACTIVE is set to 0
-typedef enum SpecialEngineTexture {
-    ENGINESPECIALTEXTURE_FONT,
-    ENGINESPECIALTEXTURE_PERLINNOISE,
-} SpecialEngineTexture;
-void platform_gpu_push_special_engine_texture_and_free_rgba_values(
-    const SpecialEngineTexture type,
-    const uint32_t parent_texture_array_images_size,
-    const uint32_t texture_i,
-    const uint32_t image_width,
-    const uint32_t image_height,
-    uint8_t * rgba_values_freeable,
-    uint8_t * rgba_values_page_aligned);
-
 void platform_update_mouse_location(void);
 
 // This is used to communicate failure after failure to initialize GPU

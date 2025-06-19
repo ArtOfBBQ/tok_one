@@ -24,6 +24,8 @@ typedef struct TextureArrayImage {
 
 typedef struct TextureArray {
     TextureArrayImage images[MAX_FILES_IN_SINGLE_TEXARRAY];
+    uint64_t started_decoding;
+    uint64_t ended_decoding;
     uint32_t images_size;
     uint32_t single_img_width;
     uint32_t single_img_height;

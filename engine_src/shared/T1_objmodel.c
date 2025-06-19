@@ -594,6 +594,8 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
      ParsedMaterial * parsed_materials,
      const uint32_t parsed_materials_size)
 {
+    float invert_z_axis_modifier = -1.0f;
+    
     int32_t new_mesh_head_id =
         (int32_t)all_mesh_vertices->size;
     all_mesh_summaries[all_mesh_summaries_size].vertices_head_i =
@@ -735,7 +737,8 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
             all_mesh_vertices->gpu_data[locked_vert_i + _].xyz[1] =
                 arg_parsed_obj->vertices[vert_i - 1][1];
             all_mesh_vertices->gpu_data[locked_vert_i + _].xyz[2] =
-                arg_parsed_obj->vertices[vert_i - 1][2];
+                arg_parsed_obj->vertices[vert_i - 1][2] *
+                invert_z_axis_modifier;
         }
         
         for (uint32_t _ = 0; _ < 3; _++) {
@@ -760,8 +763,11 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 all_mesh_vertices->gpu_data[locked_vert_i + _].
                     normal_xyz[1] = arg_parsed_obj->normals_vn[norm_i - 1][1];
                 all_mesh_vertices->gpu_data[locked_vert_i + _].
-                    normal_xyz[2] = arg_parsed_obj->normals_vn[norm_i - 1][2];
+                    normal_xyz[2] =
+                        arg_parsed_obj->normals_vn[norm_i - 1][2] *
+                        invert_z_axis_modifier;
             } else if (_ == 0) {
+                log_assert(0); // check if deduced normals need to invert z
                 guess_gpu_triangle_normal(
                     /* GPULockedVertex * to_change: */
                         &all_mesh_vertices->gpu_data[locked_vert_i]);
@@ -900,13 +906,19 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
             
             V1->xyz[0] = arg_parsed_obj->vertices[vert_1_i][0];
             V1->xyz[1] = arg_parsed_obj->vertices[vert_1_i][1];
-            V1->xyz[2] = arg_parsed_obj->vertices[vert_1_i][2];
+            V1->xyz[2] =
+                arg_parsed_obj->vertices[vert_1_i][2] *
+                invert_z_axis_modifier;
             V2->xyz[0] = arg_parsed_obj->vertices[vert_2_i][0];
             V2->xyz[1] = arg_parsed_obj->vertices[vert_2_i][1];
-            V2->xyz[2] = arg_parsed_obj->vertices[vert_2_i][2];
+            V2->xyz[2] =
+                arg_parsed_obj->vertices[vert_2_i][2] *
+                invert_z_axis_modifier;
             V3->xyz[0] = arg_parsed_obj->vertices[vert_3_i][0];
             V3->xyz[1] = arg_parsed_obj->vertices[vert_3_i][1];
-            V3->xyz[2] = arg_parsed_obj->vertices[vert_3_i][2];
+            V3->xyz[2] =
+                arg_parsed_obj->vertices[vert_3_i][2] *
+                invert_z_axis_modifier;
             
             V1->parent_material_i       = cur_material_i;
             V1->locked_materials_head_i = first_material_head_i;
@@ -924,13 +936,16 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 
                 V1->normal_xyz[0] = arg_parsed_obj->normals_vn[norm_1_i][0];
                 V1->normal_xyz[1] = arg_parsed_obj->normals_vn[norm_1_i][1];
-                V1->normal_xyz[2] = arg_parsed_obj->normals_vn[norm_1_i][2];
+                V1->normal_xyz[2] = arg_parsed_obj->normals_vn[norm_1_i][2] *
+                    invert_z_axis_modifier;
                 V2->normal_xyz[0] = arg_parsed_obj->normals_vn[norm_2_i][0];
                 V2->normal_xyz[1] = arg_parsed_obj->normals_vn[norm_2_i][1];
-                V2->normal_xyz[2] = arg_parsed_obj->normals_vn[norm_2_i][2];
+                V2->normal_xyz[2] = arg_parsed_obj->normals_vn[norm_2_i][2] *
+                    invert_z_axis_modifier;
                 V3->normal_xyz[0] = arg_parsed_obj->normals_vn[norm_3_i][0];
                 V3->normal_xyz[1] = arg_parsed_obj->normals_vn[norm_3_i][1];
-                V3->normal_xyz[2] = arg_parsed_obj->normals_vn[norm_3_i][2];
+                V3->normal_xyz[2] = arg_parsed_obj->normals_vn[norm_3_i][2] *
+                    invert_z_axis_modifier;
             } else {
                 guess_gpu_triangle_normal(V1);
                 guess_gpu_triangle_normal(V2);

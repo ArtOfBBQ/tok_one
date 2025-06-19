@@ -515,82 +515,22 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     
     T1_texture_array_load_font_images();
     
+    uint32_t perlin_good = 0;
+    T1_texture_files_preregister_dds_resource(
+        "perlin_noise.dds",
+        &perlin_good);
+    log_assert(perlin_good);
+    
+    T1_texture_array_get_filename_location(
+        "perlin_noise.dds",
+        &engine_globals->postprocessing_constants.perlin_texturearray_i,
+        &engine_globals->postprocessing_constants.perlin_texture_i);
+    
+    log_assert(engine_globals->postprocessing_constants.perlin_texturearray_i >= 1);
+    log_assert(engine_globals->postprocessing_constants.perlin_texture_i == 0);
+    
     platform_gpu_update_viewport(); // kicks off loading screen
-    
-    FileBuffer perlin_buf;
-    perlin_buf.good = false;
-    perlin_buf.size_without_terminator = platform_get_resource_size(
-        "perlin_noise.png");
-    log_assert(perlin_buf.size_without_terminator > 0);
-    
-    perlin_buf.contents = malloc_from_managed(
-        perlin_buf.size_without_terminator + 1);
-    
-    platform_read_resource_file(
-        /* const char * filename: */
-            "perlin_noise.png",
-        /* FileBuffer * out_preallocatedbuffer: */
-            &perlin_buf);
-    log_assert(perlin_buf.good);
-    uint8_t * rgba_values_base = NULL;
-    uint8_t * rgba_values_aligned = NULL;
-    malloc_from_managed_page_aligned(
-        /* void **base_pointer_for_freeing: */
-            (void **)&rgba_values_base,
-        /* void ** aligned_subptr: */
-            (void **)&rgba_values_aligned,
-        /* const size_t subptr_size: */
-            perlin_buf.size_without_terminator * 3);
-    log_assert(rgba_values_base != NULL);
-    log_assert(rgba_values_aligned != NULL);
-    uint32_t rgba_values_size = 0;
-    uint32_t perlin_width = 0;
-    uint32_t perlin_height = 0;
-    uint32_t perlin_good = false;
-    get_PNG_width_height(
-        /* const uint8_t *compressed_input: */
-            (uint8_t *)perlin_buf.contents,
-        /* const uint64_t compressed_input_size: */
-            perlin_buf.size_without_terminator + 1,
-        /* uint32_t * out_width: */
-            &perlin_width,
-        /* uint32_t * out_height: */
-            &perlin_height,
-        /* uint32_t * out_good: */
-            &perlin_good);
-    log_assert(perlin_good);
-    perlin_good = false;
-    rgba_values_size = perlin_width * perlin_height * 4;
-    decode_PNG(
-        /* const uint8_t * compressed_input: */
-            (uint8_t *)perlin_buf.contents,
-        /* const uint64_t compressed_input_size: */
-            perlin_buf.size_without_terminator,
-        /* const uint8_t *out_rgba_values: */
-            rgba_values_aligned,
-        /* const uint64_t rgba_values_size: */
-            rgba_values_size,
-        /* uint32_t *out_good: */
-            &perlin_good,
-        /* const uint32_t thread_id: */
-            0);
-    log_assert(perlin_good);
-    platform_gpu_push_special_engine_texture_and_free_rgba_values(
-        /* const SpecialEngineTexture type: */
-            ENGINESPECIALTEXTURE_PERLINNOISE,
-        /* const uint32_t parent_texture_array_images_size: */
-            1,
-        /* const uint32_t texture_i: */
-            0,
-        /* const uint32_t image_width: */
-            perlin_width,
-        /* const uint32_t image_height: */
-            perlin_height,
-        /* uint8_t * rgba_values_freeable: */
-            rgba_values_base,
-        /* uint8_t * rgba_values_page_aligned: */
-            rgba_values_aligned);
-    
+        
     bool32_t success = false;
     char errmsg[256];
     
@@ -693,6 +633,30 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     }
     loading_textures = false;
     #endif
+    
+    uint64_t longest_taken = 0;
+    int32_t longest_ta_i = -1;
+    for (int32_t i = 0; i < (int32_t)texture_arrays_size; i++) {
+        uint64_t taken =
+            texture_arrays[i].ended_decoding -
+            texture_arrays[i].started_decoding;
+        if (taken > longest_taken) {
+            longest_taken = taken;
+            longest_ta_i = i;
+        }
+    }
+    log_append("Slowest texture array: ");
+    log_append_int(longest_ta_i);
+    log_append("\nIncludes images: ");
+    log_append(texture_arrays[longest_ta_i].images[0].filename);
+    for (
+        int32_t t_i = 1;
+        t_i < (int32_t)texture_arrays[longest_ta_i].images_size;
+        t_i++)
+    {
+        log_append(", ");
+        log_append(texture_arrays[longest_ta_i].images[t_i].filename);
+    }
     
     T1_texture_array_push_all_predecoded();
     

@@ -341,6 +341,7 @@ void T1_texture_files_decode_all_preregistered(
     }
     
     for (int32_t ta_i = start_ta_i; ta_i < end_ta_i; ta_i++) {
+        texture_arrays[ta_i].started_decoding = platform_get_current_time_microsecs();
         log_assert(texture_arrays[ta_i].images_size > 0);
         log_assert(texture_arrays[ta_i].images_size < MAX_FILES_IN_SINGLE_TEXARRAY);
         log_assert(texture_arrays[ta_i].single_img_width > 0);
@@ -375,5 +376,7 @@ void T1_texture_files_decode_all_preregistered(
                     4);
             }
         }
+        
+        texture_arrays[ta_i].ended_decoding = platform_get_current_time_microsecs();
     }
 }

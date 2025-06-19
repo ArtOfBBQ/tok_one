@@ -33,7 +33,6 @@ typedef struct AppleGPUState {
     id<MTLRenderPipelineState> shadows_pls;
     id<MTLTexture> shadows_texture;
     #endif
-    id<MTLTexture> perlin_texture;
     id<MTLTexture> camera_depth_texture;
     
     id<MTLRenderPipelineState> diamond_pls;
@@ -1153,155 +1152,6 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
 }
 #endif
 
-void platform_gpu_push_special_engine_texture_and_free_rgba_values(
-    const SpecialEngineTexture type,
-    const uint32_t parent_texture_array_images_size,
-    const uint32_t texture_i,
-    const uint32_t image_width,
-    const uint32_t image_height,
-    uint8_t * rgba_values_freeable,
-    uint8_t * rgba_values_page_aligned)
-{
-    log_assert(rgba_values_freeable != NULL);
-    log_assert(rgba_values_page_aligned != NULL);
-    log_assert(image_width > 0);
-    log_assert(image_height > 0);
-    
-    id<MTLTexture> target = NULL;
-    
-    bool32_t requires_init = false;
-    switch (type) {
-        case ENGINESPECIALTEXTURE_FONT:
-            if (ags->metal_textures[0] == NULL) {
-                requires_init = true;
-            } else {
-                target = ags->metal_textures[0];
-            }
-            break;
-        case ENGINESPECIALTEXTURE_PERLINNOISE:
-            if (ags->perlin_texture == NULL) {
-                requires_init = true;
-            } else {
-                target = ags->perlin_texture;
-            }
-            break;
-        default:
-            log_assert(0);
-    }
-    
-    #ifndef LOGGER_IGNORE_ASSERTS
-    if (!requires_init) {
-        // Check texture type
-        if (parent_texture_array_images_size > 1 && target.textureType != MTLTextureType2DArray) {
-            log_dump_and_crash("Existing texture is not MTLTextureType2DArray");
-            return;
-        }
-        if (parent_texture_array_images_size == 1 && target.textureType != MTLTextureType2D) {
-            log_dump_and_crash(
-                "Existing texture is not MTLTextureType2D");
-            return;
-        }
-        if (target.textureType == MTLTextureType2DArray && target.arrayLength < parent_texture_array_images_size) {
-            printf(
-                "Texture array length (%lu) is less than required (%u)",
-                (unsigned long)target.arrayLength,
-                parent_texture_array_images_size);
-            return;
-        }
-        if (target.width != image_width || target.height != image_height) {
-            printf(
-                "Texture dimensions (%lu, %lu) do not match required (%u, %u)",
-                (unsigned long)target.width,
-                (unsigned long)target.height,
-                image_width,
-                image_height);
-            return;
-        }
-    }
-    #endif
-    
-    if (requires_init) {
-        MTLTextureDescriptor * new_texture_descriptor =
-            [[MTLTextureDescriptor alloc] init];
-        new_texture_descriptor.textureType =
-            parent_texture_array_images_size > 1 ?
-                MTLTextureType2DArray :
-                MTLTextureType2D;
-        new_texture_descriptor.arrayLength = parent_texture_array_images_size;
-        new_texture_descriptor.pixelFormat = MTLPixelFormatRGBA8Unorm;
-        new_texture_descriptor.width = image_width;
-        new_texture_descriptor.height = image_height;
-        new_texture_descriptor.storageMode = MTLStorageModePrivate;
-        target = [ags->device newTextureWithDescriptor: new_texture_descriptor];
-    }
-    
-    id<MTLBuffer> temp_buf =
-        [ags->device
-            /* the pointer needs to be page aligned */
-            newBufferWithBytesNoCopy:
-                rgba_values_page_aligned
-            /* the length weirdly needs to be page aligned also */
-            length:
-                image_width * image_height * 4
-            options:
-                MTLResourceStorageModeShared
-            /* deallocator = nil to opt out */
-            deallocator:
-                nil];
-    
-    if (temp_buf == NULL) {
-        return;
-    }
-    
-    id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
-    
-    id <MTLBlitCommandEncoder> blit_copy_encoder = [combuf blitCommandEncoder];
-    
-    [blit_copy_encoder
-        copyFromBuffer:
-            temp_buf
-        sourceOffset:
-            0
-        sourceBytesPerRow:
-            image_width * 4
-        sourceBytesPerImage:
-            image_width * image_height * 4
-        sourceSize:
-            MTLSizeMake(image_width, image_height, 1)
-        toTexture:
-            target
-        destinationSlice:
-            texture_i
-        destinationLevel:
-            0
-        destinationOrigin:
-            MTLOriginMake(0, 0, 0)];
-    [blit_copy_encoder endEncoding];
-    
-    // Add a completion handler and commit the command buffer.
-    [combuf addCompletedHandler:^(id<MTLCommandBuffer> cb) {
-        // Populate private buffer.
-        (void)cb;
-    }];
-    [combuf commit];
-    [combuf waitUntilCompleted];
-    
-    if (requires_init) {
-        switch (type) {
-            case ENGINESPECIALTEXTURE_FONT:
-                ags->metal_textures[0] = target;
-                break;
-            case ENGINESPECIALTEXTURE_PERLINNOISE:
-                ags->perlin_texture = target;
-                break;
-            default:
-                log_assert(0);
-        }
-    }
-    
-    free_from_managed(rgba_values_freeable);
-}
-
 void platform_gpu_copy_locked_vertices(void)
 {
     gpu_shared_data_collection->locked_vertices_size = all_mesh_vertices->size;
@@ -2092,8 +1942,14 @@ void platform_gpu_copy_locked_materials(void)
         atIndex:5];
     #endif
     
+    int32_t perlin_ta_i = gpu_shared_data_collection->triple_buffers[ags->frame_i].postprocessing_constants->perlin_texturearray_i;
+    int32_t perlin_t_i =
+        gpu_shared_data_collection->triple_buffers[ags->frame_i].postprocessing_constants->perlin_texture_i;
+    // log_assert(perlin_ta_i >= 1);
+    log_assert(perlin_t_i == 0);
+    
     [render_pass_4_composition
-        setFragmentTexture: ags->perlin_texture
+        setFragmentTexture: ags->metal_textures[perlin_ta_i]
         atIndex:6];
     
     [render_pass_4_composition
