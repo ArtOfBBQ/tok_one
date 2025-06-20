@@ -83,6 +83,7 @@ extern LockedVertexWithMaterialCollection * all_mesh_vertices;
 void T1_objmodel_init(void);
 
 int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
+    const char * original_obj_filename,
     const char * obj_text,
     const char * mtl_text);
 

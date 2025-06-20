@@ -55,6 +55,7 @@ static uint32_t T1_material_fetch_locked_material_i(
 #endif
 
 uint32_t T1_material_preappend_locked_material_i(
+    const char * obj_resource_name,
     const char * material_name)
 {
     #ifndef LOGGER_IGNORE_ASSERTS
@@ -65,6 +66,14 @@ uint32_t T1_material_preappend_locked_material_i(
     #endif
     
     common_strcpy_capped(
+        all_mesh_materials->material_names[all_mesh_materials->size],
+        MATERIAL_NAME_CAP,
+        obj_resource_name);
+    common_strcat_capped(
+        all_mesh_materials->material_names[all_mesh_materials->size],
+        MATERIAL_NAME_CAP,
+        "_");
+    common_strcat_capped(
         all_mesh_materials->material_names[all_mesh_materials->size],
         MATERIAL_NAME_CAP,
         material_name);

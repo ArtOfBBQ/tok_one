@@ -22,6 +22,7 @@ void T1_material_construct(
     GPULockedMaterial * to_construct);
 
 uint32_t T1_material_preappend_locked_material_i(
+    const char * obj_resource_name,
     const char * material_name);
 
 GPULockedMaterial * T1_material_fetch_ptr(

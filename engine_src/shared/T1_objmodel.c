@@ -590,6 +590,7 @@ static void assert_objmodel_validity(int32_t mesh_id) {
 #endif
 
 static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
+     const char * original_obj_filename,
      ParsedObj * arg_parsed_obj,
      ParsedMaterial * parsed_materials,
      const uint32_t parsed_materials_size)
@@ -608,6 +609,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
     
     uint32_t first_material_head_i =
         T1_material_preappend_locked_material_i(
+            original_obj_filename,
             parsed_obj->material_names == NULL ?
                 "default" :
                 parsed_obj->material_names[0].name);
@@ -619,7 +621,9 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
         
         for (uint32_t i = 1; i < arg_parsed_obj->materials_count; i++) {
             uint32_t _ = T1_material_preappend_locked_material_i(
+                original_obj_filename,
                 parsed_obj->material_names[i].name);
+            
             log_assert(first_material_head_i + i == _);
             (void)_;
         }
@@ -928,11 +932,13 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
             V3->locked_materials_head_i = first_material_head_i;
             
             if (arg_parsed_obj->normals_count > 0) {
+                #ifndef LOGGER_IGNORE_ASSERTS
                 uint32_t norm_i = arg_parsed_obj->quad_normals[quad_i]
                     [quad_tri_i];
                 
                 log_assert(norm_i >= 1);
                 log_assert(norm_i <= arg_parsed_obj->normals_count);
+                #endif
                 
                 V1->normal_xyz[0] = arg_parsed_obj->normals_vn[norm_1_i][0];
                 V1->normal_xyz[1] = arg_parsed_obj->normals_vn[norm_1_i][1];
@@ -1048,6 +1054,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
 }
 
 int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
+    const char * original_obj_filename,
     const char * obj_text,
     const char * mtl_text)
 {
@@ -1077,7 +1084,10 @@ int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
     
     if (mtl_text == NULL || mtl_text[0] == '\0') {
         return new_mesh_id_from_parsed_obj_and_parsed_materials(
-            parsed_obj, NULL, 0);
+            original_obj_filename,
+            parsed_obj,
+            NULL,
+            0);
     }
     
     good = 0;
@@ -1107,6 +1117,7 @@ int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
     }
     
     return new_mesh_id_from_parsed_obj_and_parsed_materials(
+        original_obj_filename,
         parsed_obj,
         parsed_materials,
         parsed_materials_size);
@@ -1288,6 +1299,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     }
     
     int32_t return_value = T1_objmodel_new_mesh_id_from_obj_mtl_text(
+            obj_filename,
         /* const char * obj_text: */
             obj_file_buf.contents,
         /* const char * mtl_text: */
