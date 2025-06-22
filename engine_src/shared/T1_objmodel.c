@@ -695,6 +695,8 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 {
                     log_append("WARNING: missing material texture: ");
                     log_append(parsed_materials[matching_parsed_materials_i].diffuse_map);
+                    log_append(" in object: ");
+                    log_append(original_obj_filename);
                     log_append("\n");
                     assert(locked_mat->texturearray_i >= 0);
                     assert(locked_mat->texture_i >= 0);
