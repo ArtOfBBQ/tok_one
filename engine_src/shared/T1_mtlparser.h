@@ -29,6 +29,7 @@ typedef struct ParsedMaterial {
     float diffuse_rgb[3];
     float specular_rgb[3];
     float emissive_rgb[3];
+    uint8_t use_base_mtl_flag;
 } ParsedMaterial;
 
 void mtlparser_init(

@@ -603,7 +603,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
         new_mesh_head_id;
     
     log_assert(all_mesh_vertices->size < ALL_LOCKED_VERTICES_SIZE);
-        
+    
     all_mesh_summaries[all_mesh_summaries_size].materials_size =
         arg_parsed_obj->materials_count;
     
@@ -724,7 +724,26 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
         triangle_i++)
     {
         uint32_t cur_material_i = arg_parsed_obj->triangles[triangle_i][4];
-        // log_assert(cur_material_i < arg_parsed_obj->materials_count);
+        
+        if (parsed_materials != NULL) {
+            // check if the cur_material_i is the "use base material"
+            // material
+            int32_t parsed_mtls_matching_i = -1;
+            for (int32_t i = 0; i < (int32_t)parsed_materials_size; i++) {
+                if (
+                    common_are_equal_strings(
+                        arg_parsed_obj->material_names[cur_material_i].name,
+                        parsed_materials[i].name))
+                {
+                    parsed_mtls_matching_i = i;
+                }
+            }
+        
+            if (parsed_materials[parsed_mtls_matching_i].use_base_mtl_flag)
+            {
+                cur_material_i = PARENT_MATERIAL_BASE;
+            }
+        }
         
         uint32_t locked_vert_i = all_mesh_vertices->size;
         
@@ -751,8 +770,6 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
             all_mesh_vertices->gpu_data[locked_vert_i + _].
                 parent_material_i = cur_material_i;
             all_mesh_vertices->gpu_data[locked_vert_i + _].locked_materials_head_i = first_material_head_i;
-            // log_assert(cur_material_i >= 0);
-            // log_assert(cur_material_i < MAX_MATERIALS_PER_POLYGON);
             
             if (
                 arg_parsed_obj->normals_count > 0 &&

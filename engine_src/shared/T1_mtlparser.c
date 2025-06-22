@@ -21,6 +21,7 @@ static MTLParserState * mtlparser_state = NULL;
 typedef enum MTLToken {
     MTLTOKEN_NEWLINE,
     MTLTOKEN_NEWMTL,
+    MTLTOKEN_USEBASEMTL,
     MTLTOKEN_COMMENT,
     MTLTOKEN_NS, // Specular Exponent
     MTLTOKEN_AMBIENT_MAP,
@@ -398,6 +399,9 @@ void mtlparser_parse(
     toktoken_register_token("newmtl", MTLTOKEN_NEWMTL, good);
     if (!*good) { return; }
     
+    toktoken_register_token("USE_BASE_MATERIAL", MTLTOKEN_USEBASEMTL, good);
+    if (!*good) { return; }
+    
     toktoken_register_token("#", MTLTOKEN_COMMENT, good);
     if (!*good) { return; }
     
@@ -557,6 +561,13 @@ void mtlparser_parse(
                     current_material->name,
                     token->string_value,
                     MATERIAL_NAME_CAP);
+                
+                token = toktoken_get_token_at(i + 1);
+                if (token->enum_value == MTLTOKEN_USEBASEMTL) {
+                    current_material->use_base_mtl_flag = 1;
+                    i++;
+                }
+                
                 break;
             }
             case MTLTOKEN_NS: {
