@@ -515,27 +515,70 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     
     T1_texture_array_load_font_images();
     
+    if (!application_running) {
+        return;
+    }
+    
+    // This needs to happen as early as possible, because we can't show
+    // log_dump_and_crash or log_assert() errors before this.
+    // It also allows us to draw "loading textures x%".
+    platform_gpu_update_viewport();
+    
+    // We copy the basic quad vertices immediately, again to show debugging
+    // text (see above comment)
+    common_memcpy(
+        /* void * dst: */
+            gpu_shared_data_collection->locked_vertices,
+        /* const void * src: */
+            all_mesh_vertices->gpu_data,
+        /* size_t n: */
+            sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
+    platform_gpu_copy_locked_vertices();
+    
     uint32_t perlin_good = 0;
     T1_texture_files_preregister_dds_resource(
         "perlin_noise.dds",
         &perlin_good);
-    log_assert(perlin_good);
+    
+    if (!perlin_good) {
+        gameloop_active = true;
+        log_dump_and_crash("Missing engine file: perlin_noise.dds");
+        return;
+    }
     
     T1_texture_array_get_filename_location(
         "perlin_noise.dds",
         &engine_globals->postprocessing_constants.perlin_texturearray_i,
         &engine_globals->postprocessing_constants.perlin_texture_i);
     
-    log_assert(engine_globals->postprocessing_constants.perlin_texturearray_i >= 1);
-    log_assert(engine_globals->postprocessing_constants.perlin_texture_i == 0);
+    if (
+        engine_globals->postprocessing_constants.perlin_texturearray_i < 1 ||
+        engine_globals->postprocessing_constants.perlin_texture_i != 0)
+    {
+        gameloop_active = true;
+        log_dump_and_crash("Failed to read engine file: perlin_noise.dds");
+        return;
+    }
     
-    platform_gpu_update_viewport(); // kicks off loading screen
-        
     bool32_t success = false;
     char errmsg[256];
+    errmsg[0] = '\0';
     
     if (application_running) {
         client_logic_early_startup(&success, errmsg);
+        
+        if (!success) {
+            gameloop_active = true;
+            if (errmsg[0] == '\0') {
+                common_strcpy_capped(
+                    errmsg,
+                    256,
+                    "client_logic_early_startup() returned failure without "
+                    "an error message");
+            }
+            log_dump_and_crash(errmsg);
+            return;
+        }
         
         uint32_t core_count = platform_get_cpu_logical_core_count();
         log_assert(core_count > 0);
@@ -549,6 +592,11 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         
         log_assert(engine_globals->startup_bytes_to_load == 0);
         log_assert(engine_globals->startup_bytes_loaded == 0);
+        
+        if (!application_running) {
+            gameloop_active = true;
+            return;
+        }
         
         #if TEXTURES_ACTIVE
         loading_textures = true;
@@ -597,6 +645,11 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         }
     }
     
+    if (!application_running) {
+        gameloop_active = true;
+        return;
+    }
+    
     common_memcpy(
         /* void * dst: */
             gpu_shared_data_collection->locked_vertices,
@@ -619,8 +672,18 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         platform_enter_fullscreen();
     }
     
+    if (!application_running) {
+        gameloop_active = true;
+        return;
+    }
+    
     #if TEXTURES_ACTIVE
     asset_loading_thread(0);
+    
+    if (!application_running) {
+        gameloop_active = true;
+        return;
+    }
     
     // Wait until all worker threads are finished
     while (!ias->all_finished) {
@@ -660,11 +723,24 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     
     T1_texture_array_push_all_predecoded();
     
+    if (!application_running) {
+        gameloop_active = true;
+        return;
+    }
+    
     platform_layer_start_window_resize(
         platform_get_current_time_microsecs());
     
     if (application_running) {
         client_logic_late_startup();
+    } else {
+        gameloop_active = true;
+        return;
+    }
+    
+    if (!application_running) {
+        gameloop_active = true;
+        return;
     }
     
     #if AUDIO_ACTIVE

@@ -52,6 +52,8 @@ void client_logic_early_startup(
         return;
     }
     #endif
+    
+    *success = true;
 }
 
 void client_logic_late_startup(void) {

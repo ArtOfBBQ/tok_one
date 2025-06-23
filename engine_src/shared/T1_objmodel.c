@@ -698,11 +698,24 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                     log_append(" in object: ");
                     log_append(original_obj_filename);
                     log_append("\n");
-                    assert(locked_mat->texturearray_i >= 0);
-                    assert(locked_mat->texture_i >= 0);
+                    
+                    if (
+                        locked_mat->texturearray_i < 0 ||
+                        locked_mat->texture_i < 0)
+                    {
+                        char errmsg[128];
+                        common_strcpy_capped(errmsg, 128, "Missing material texture: ");
+                        common_strcat_capped(
+                            errmsg,
+                            128,
+                            parsed_materials[matching_parsed_materials_i].
+                                diffuse_map);
+                        log_dump_and_crash(errmsg);
+                        return -1;
+                    }
                 } else {
-                    assert(locked_mat->texturearray_i == -1);
-                    assert(locked_mat->texture_i == -1);
+                    log_assert(locked_mat->texturearray_i < 0);
+                    log_assert(locked_mat->texture_i < 0);
                 }
                 
                 #if NORMAL_MAPPING_ACTIVE
