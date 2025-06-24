@@ -1943,8 +1943,10 @@ void platform_gpu_copy_locked_materials(void)
     #endif
     
     int32_t perlin_ta_i = gpu_shared_data_collection->triple_buffers[ags->frame_i].postprocessing_constants->perlin_texturearray_i;
+    #ifndef LOGGER_IGNORE_ASSERTS
     int32_t perlin_t_i =
         gpu_shared_data_collection->triple_buffers[ags->frame_i].postprocessing_constants->perlin_texture_i;
+    #endif
     // log_assert(perlin_ta_i >= 1);
     log_assert(perlin_t_i == 0);
     

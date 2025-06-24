@@ -191,6 +191,10 @@ void scheduled_animations_request_evaporate_and_destroy(
     const int32_t object_id,
     const uint64_t duration_microseconds)
 {
+    #ifdef LOGGER_IGNORE_ASSERTS
+    (void)duration_microseconds;
+    #endif
+    
     log_assert(duration_microseconds > 0);
     log_assert(object_id >= 0);
     
@@ -272,6 +276,10 @@ void scheduled_animations_request_shatter_and_destroy(
     const int32_t object_id,
     const uint64_t duration_microseconds)
 {
+    #ifdef LOGGER_IGNORE_ASSERTS
+    (void)duration_microseconds;
+    #endif
+    
     log_assert(duration_microseconds > 0);
     log_assert(duration_microseconds < 1000000000);
     log_assert(object_id >= 0);

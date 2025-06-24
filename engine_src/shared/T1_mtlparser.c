@@ -186,6 +186,8 @@ static void parse_single_float_stat(
     float * float_stat,
     uint32_t * good)
 {
+    (void)material_name;
+    
     char initial_token_name[64];
     initial_token_name[0] = '\0';
     mtlparser_state->mtlparser_strlcat(
