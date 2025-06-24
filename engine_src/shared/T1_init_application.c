@@ -169,6 +169,8 @@ void init_application_before_gpu_init(
     
     ias = malloc_from_unmanaged(sizeof(InitApplicationState));
     
+    settings_init(malloc_from_unmanaged);
+    
     init_PNG_decoder(
         /* void *(*malloc_funcptr)(size_t): */
             malloc_from_managed_infoless,

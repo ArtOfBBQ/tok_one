@@ -99,15 +99,15 @@ dump the entire debug log to debuglog.txt
 */
 void log_dump(bool32_t * good);
 
-#ifndef LOGGER_IGNORE_ASSERTS
 /*
 Dump the entire debug log to debuglog.txt,
-then crash the application.
-I use this instead of assert(0).
+then crash the application. This can be used even in release mode.
 */
 void
 log_dump_and_crash(const char * crash_message);
 
+
+#ifndef LOGGER_IGNORE_ASSERTS
 /*
 Assert something, but use the GUI to report on failure
 instead of crashing the app
