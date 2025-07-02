@@ -148,8 +148,8 @@ common_copy_strings(
     const char * origin,
     const uint32_t origin_size);
 
-uint32_t
-common_get_string_length(   
+size_t
+common_get_string_length(
     const char * null_terminated_string);
 
 bool32_t common_string_starts_with(

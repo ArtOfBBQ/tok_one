@@ -388,8 +388,8 @@ common_copy_strings(
     }
 }
 
-uint32_t
-common_get_string_length(   
+size_t
+common_get_string_length(
     const char * null_terminated_string)
 {
     uint32_t return_value = 0;

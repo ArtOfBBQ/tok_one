@@ -190,8 +190,9 @@ void init_application_before_gpu_init(
     #endif
     
     uint32_t good = 0;
-    toktoken_init(
+    T1_token_init(
         common_memset_char,
+        common_get_string_length,
         malloc_from_managed_infoless,
         &good);
     log_assert(good);

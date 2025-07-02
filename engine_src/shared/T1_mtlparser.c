@@ -20,6 +20,7 @@ static MTLParserState * mtlparser_state = NULL;
 
 typedef enum MTLToken {
     MTLTOKEN_NEWLINE,
+    MTLTOKEN_SPACE,
     MTLTOKEN_NEWMTL,
     MTLTOKEN_USEBASEMTL,
     MTLTOKEN_COMMENT,
@@ -45,7 +46,7 @@ typedef enum MTLToken {
     MTLTOKEN_CLEARCOAT_ROUGHNESS,
     MTLTOKEN_ANISOTROPY,
     MTLTOKEN_ANISOTROPY_ROTATION,
-    MTLTOKEN_STRINGLITERAL = 26,
+    MTLTOKEN_STRINGLITERAL = 27,
 } MTLToken;
 
 static void mtlparser_reset(void) {
@@ -153,7 +154,16 @@ static void parse_single_string_stat(
     }
     
     (*i)++;
-    token = toktoken_get_token_at(*i);
+    token = T1_token_get_token_at(*i);
+    
+    while (
+        token->enum_value == MTLTOKEN_SPACE &&
+        *i + 1 < T1_token_get_token_count())
+    {
+        (*i)++;
+        token = T1_token_get_token_at(*i);
+    }
+    
     if (
         token->enum_value != MTLTOKEN_STRINGLITERAL ||
         !token->string_value ||
@@ -216,7 +226,13 @@ static void parse_single_float_stat(
     }
     
     (*i)++;
-    token = toktoken_get_token_at(*i);
+    token = T1_token_get_token_at(*i);
+    
+    while (token->enum_value == MTLTOKEN_SPACE) {
+        *i += 1;
+        token = T1_token_get_token_at(*i);
+    }
+    
     if (
         token->enum_value != MTLTOKEN_STRINGLITERAL ||
         !toktoken_is_number(token) ||
@@ -305,7 +321,7 @@ static void parse_rgb_token(
     *already_set_flag = 1;
     
     // we expect 3 float tokens to follow
-    if (*i + 3 >= toktoken_get_token_count()) {
+    if (*i + 3 >= T1_token_get_token_count()) {
         *good = 0;
         mtlparser_state->mtlparser_strlcat(
             mtlparser_state->last_error_msg,
@@ -324,7 +340,15 @@ static void parse_rgb_token(
     
     for (uint32_t rgb_i = 0; rgb_i < 3; rgb_i++) {
         (*i) = *i + 1;
-        token = toktoken_get_token_at(*i);
+        token = T1_token_get_token_at(*i);
+        
+        while (
+            token->enum_value == MTLTOKEN_SPACE &&
+            *i + 1 < T1_token_get_token_count())
+        {
+            *i += 1;
+            token = T1_token_get_token_at(*i);
+        }
         
         if (
             token->enum_value != MTLTOKEN_STRINGLITERAL ||
@@ -392,122 +416,245 @@ void mtlparser_parse(
     *good = 0;
     *recipient_size = 0;
     
-    toktoken_reset(good);
+    T1_token_reset(good);
     if (!*good) {
         return;
     }
     *good = 0;
     
-    toktoken_register_token("newmtl", MTLTOKEN_NEWMTL, good);
+    T1_token_set_reg_bitflags(
+        T1_TOKEN_FLAG_LEAD_DOT_OK |
+        T1_TOKEN_FLAG_SCIENTIFIC_OK |
+        T1_TOKEN_FLAG_PRECISE);
+    
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("newmtl ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_NEWMTL, good);
     if (!*good) { return; }
     
-    toktoken_register_token("USE_BASE_MATERIAL", MTLTOKEN_USEBASEMTL, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("USE_BASE_MATERIAL");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_USEBASEMTL, good);
     if (!*good) { return; }
     
-    toktoken_register_token("#", MTLTOKEN_COMMENT, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("#");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_COMMENT, good);
     if (!*good) { return; }
     
-    toktoken_register_token("\n", MTLTOKEN_NEWLINE, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("\n");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_NEWLINE, good);
     if (!*good) { return; }
     
-    toktoken_register_token("Ns", MTLTOKEN_NS, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern(" ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_SPACE, good);
     if (!*good) { return; }
     
-    toktoken_register_token("map_Ka", MTLTOKEN_AMBIENT_MAP, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("Ns ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_NS, good);
     if (!*good) { return; }
     
-    toktoken_register_token("map_Kd", MTLTOKEN_DIFFUSE_MAP, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("map_Ka ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_AMBIENT_MAP, good);
     if (!*good) { return; }
     
-    toktoken_register_token("map_Ks", MTLTOKEN_SPECULAR_MAP, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("map_Kd ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_DIFFUSE_MAP, good);
     if (!*good) { return; }
     
-    toktoken_register_token("map_d", MTLTOKEN_ALPHA_MAP, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("map_Ks ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_SPECULAR_MAP, good);
     if (!*good) { return; }
     
-    toktoken_register_token("bump", MTLTOKEN_BUMP_OR_NORMAL_MAP, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("map_d ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_ALPHA_MAP, good);
     if (!*good) { return; }
     
-    toktoken_register_token("map_bump", MTLTOKEN_BUMP_OR_NORMAL_MAP, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("bump ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_BUMP_OR_NORMAL_MAP, good);
     if (!*good) { return; }
     
-    toktoken_register_token("map_Bump", MTLTOKEN_BUMP_OR_NORMAL_MAP, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("map_bump ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_BUMP_OR_NORMAL_MAP, good);
     if (!*good) { return; }
     
-    toktoken_register_token("-bm", MTLTOKEN_BUMP_MAP_ARG_INTENSITY, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("map_Bump ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_BUMP_OR_NORMAL_MAP, good);
     if (!*good) { return; }
     
-    
-    toktoken_register_token("map_Ns", MTLTOKEN_SPECULAR_EXPONENT_MAP, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("-bm ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_BUMP_MAP_ARG_INTENSITY, good);
     if (!*good) { return; }
     
-    toktoken_register_token("Ka", MTLTOKEN_AMBIENT_KA, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("map_Ns ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_SPECULAR_EXPONENT_MAP, good);
     if (!*good) { return; }
     
-    toktoken_register_token("Kd", MTLTOKEN_DIFFUSE_KD, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("Ka ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_AMBIENT_KA, good);
+    if (!*good) { return; }
+    
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("Kd ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_DIFFUSE_KD, good);
+    if (!*good) { return; }
+    
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("Ks ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_SPECULAR_KS, good);
+    if (!*good) { return; }
+    
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("Ke ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_EMISSIVE_KE, good);
     if (!*good) { return; }
 
-    toktoken_register_token("Ks", MTLTOKEN_SPECULAR_KS, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("Ni ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_REFRACTION_NI, good);
     if (!*good) { return; }
     
-    toktoken_register_token("Ke", MTLTOKEN_EMISSIVE_KE, good);
-    if (!*good) { return; }
-
-    toktoken_register_token("Ni", MTLTOKEN_REFRACTION_NI, good);
-    if (!*good) { return; }
-    
-    toktoken_register_token("d", MTLTOKEN_ALPHA_d, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("d ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_ALPHA_d, good);
     if (!*good) { return; }
     
-    toktoken_register_token("illum", MTLTOKEN_ILLUM, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("illum ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_ILLUM, good);
     if (!*good) { return; }
     
-    toktoken_register_token("Pr", MTLTOKEN_ROUGHNESS, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("Pr ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_ROUGHNESS, good);
     if (!*good) { return; }
     
-    toktoken_register_token("Pm", MTLTOKEN_METALLIC, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("Pm ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_METALLIC, good);
     if (!*good) { return; }
     
-    toktoken_register_token("Ps", MTLTOKEN_SHEEN, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("Ps ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_SHEEN, good);
     if (!*good) { return; }
     
-    toktoken_register_token("Pc", MTLTOKEN_CLEARCOAT, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("Pc ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_CLEARCOAT, good);
     if (!*good) { return; }
     
-    toktoken_register_token("Pcr", MTLTOKEN_CLEARCOAT_ROUGHNESS, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("Pcr ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_CLEARCOAT_ROUGHNESS, good);
     if (!*good) { return; }
     
-    toktoken_register_token("aniso", MTLTOKEN_ANISOTROPY, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("aniso ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_ANISOTROPY, good);
     if (!*good) { return; }
     
-    toktoken_register_token("anisor", MTLTOKEN_ANISOTROPY_ROTATION, good);
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("anisor ");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_ANISOTROPY_ROTATION, good);
     if (!*good) { return; }
     
-    toktoken_register_newline_enum(MTLTOKEN_NEWLINE, good);
-    if (!*good) { return; }
-    
-    toktoken_register_string_literal_enum(MTLTOKEN_STRINGLITERAL, good);
+    T1_token_set_string_literal(MTLTOKEN_STRINGLITERAL, good);
     if (!*good) { return; }
     
     
     *good = 0;
-    toktoken_client_settings->allow_scientific_notation = 0;
-    
-    toktoken_run(
+    T1_token_run(
         /* const char * input: */
             input,
         /* uint32_t * good: */
             good);
     if (!*good) {
+        mtlparser_state->last_error_msg[0] = '\0';
+        mtlparser_state->mtlparser_strlcat(
+            mtlparser_state->last_error_msg,
+            "The tokenizer crashed in T1_token_run()!",
+            ERROR_MSG_CAP);
         return;
     }
     *good = 0;
     
     ParsedMaterial * current_material = NULL;
     
-    uint32_t tokens_count = toktoken_get_token_count();
+    uint32_t tokens_count = T1_token_get_token_count();
     for (uint32_t i = 0; i < tokens_count; i++) {
-        TokToken * token = toktoken_get_token_at(i);
+        TokToken * token = T1_token_get_token_at(i);
         mtlparser_state->last_error_msg[0] = '\0';
         char stack_string_64bytes[64];
         mtlparser_uint_to_string(
@@ -525,9 +672,12 @@ void mtlparser_parse(
         switch (token->enum_value) {
             case MTLTOKEN_COMMENT: {
                 TokToken * ignored = NULL;
-                while (!ignored || ignored->enum_value != MTLTOKEN_NEWLINE) {
+                while (
+                    !ignored ||
+                    ignored->enum_value != MTLTOKEN_NEWLINE)
+                {
                     i++;
-                    ignored = toktoken_get_token_at(i);
+                    ignored = T1_token_get_token_at(i);
                 }
                 break;
             }
@@ -544,6 +694,11 @@ void mtlparser_parse(
                 
                 if (*recipient_size + 1 >= recipient_cap) {
                     *good = 0;
+                    mtlparser_state->last_error_msg[0] = '\0';
+                    mtlparser_state->mtlparser_strlcat(
+                    mtlparser_state->last_error_msg,
+                    "A newmtl's name is too long",
+                    ERROR_MSG_CAP);
                     return;
                 }
                 current_material = recipient + *recipient_size;
@@ -551,12 +706,23 @@ void mtlparser_parse(
                 *recipient_size += 1;
                 
                 i++;
-                token = toktoken_get_token_at(i);
+                token = T1_token_get_token_at(i);
+                
+                while (token->enum_value == MTLTOKEN_SPACE) {
+                    i++;
+                    token = T1_token_get_token_at(i);
+                }
+                
                 if (
                     token->enum_value != MTLTOKEN_STRINGLITERAL ||
                     token->string_value_size < 1)
                 {
                     *good = 0;
+                    mtlparser_state->last_error_msg[0] = '\0';
+                    mtlparser_state->mtlparser_strlcat(
+                    mtlparser_state->last_error_msg,
+                    "Expected a material name after newmtl",
+                    ERROR_MSG_CAP);
                     return;
                 }
                 mtlparser_state->mtlparser_strlcat(
@@ -564,7 +730,16 @@ void mtlparser_parse(
                     token->string_value,
                     MATERIAL_NAME_CAP);
                 
-                token = toktoken_get_token_at(i + 1);
+                token = T1_token_get_token_at(i + 1);
+                
+                while (
+                    token->enum_value == MTLTOKEN_SPACE &&
+                    (i + 2) < T1_token_get_token_count())
+                {
+                    i += 1;
+                    token = T1_token_get_token_at(i + 1);
+                }
+                
                 if (token->enum_value == MTLTOKEN_USEBASEMTL) {
                     current_material->use_base_mtl_flag = 1;
                     i++;
@@ -849,13 +1024,11 @@ void mtlparser_parse(
                 }
                 
                 break;
-                
-                break;
             }
             case MTLTOKEN_ALPHA_MAP: {
                 // We use the alpha in textures as our alpha and ignore this
                 i++;
-                TokToken * ignored = toktoken_get_token_at(i);
+                TokToken * ignored = T1_token_get_token_at(i);
                 
                 if (ignored->enum_value != MTLTOKEN_STRINGLITERAL) {
                     mtlparser_state->mtlparser_strlcat(
@@ -873,7 +1046,7 @@ void mtlparser_parse(
                 break;
             }
             case MTLTOKEN_BUMP_OR_NORMAL_MAP: {
-                TokToken * peek = toktoken_get_token_at(i+1);
+                TokToken * peek = T1_token_get_token_at(i+1);
                 if (peek->enum_value == MTLTOKEN_BUMP_MAP_ARG_INTENSITY) {
                     i++;
                     
@@ -1059,6 +1232,8 @@ void mtlparser_parse(
                 
                 break;
             }
+            case MTLTOKEN_SPACE:
+                break;
             default:
                 *good = 0;
                 mtlparser_state->mtlparser_strlcat(

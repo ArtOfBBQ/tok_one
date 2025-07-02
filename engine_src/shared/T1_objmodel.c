@@ -1127,6 +1127,10 @@ int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
     uint32_t parsed_materials_cap = 20;
     ParsedMaterial * parsed_materials = malloc_from_managed(
         sizeof(ParsedMaterial) * parsed_materials_cap);
+    common_memset_char(
+        parsed_materials,
+        0,
+        sizeof(ParsedMaterial) * parsed_materials_cap);
     uint32_t parsed_materials_size = 0;
     
     mtlparser_parse(
