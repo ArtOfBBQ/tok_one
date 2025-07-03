@@ -44,7 +44,7 @@ typedef struct RegisteredToken {
     uint8_t bitflags;
 } RegisteredToken;
 
-#define ASCII_STORE_CAP 1000000
+#define ASCII_STORE_CAP 5000000
 #define REGISTERED_TOKENS_CAP 2000
 #define TOKENS_CAP 10000
 #define NUMBERS_CAP 10000
@@ -491,25 +491,34 @@ static void toktoken_string_match_tokens(
         }
         
         // look for the first ending match
+        assert(tts->strlen(input) >= i);
+        uint32_t if_hit_entire_file = (uint32_t)tts->strlen(input) -  *data_len;
+        if_hit_entire_file -= tts->strlen(tts->regs[i].stop_patterns[0]);
+        uint32_t middle_max =
+            tts->regs[i].middle_cap <= if_hit_entire_file
+                 ?
+                    tts->regs[i].middle_cap :
+                    if_hit_entire_file;
+        
         for (
             uint32_t middle_chars = 0;
-            middle_chars <= tts->regs[i].middle_cap;
+            middle_chars <= middle_max;
             middle_chars++)
         {
             for (uint32_t pat_i = 0; pat_i < PATTERNS_CAP; pat_i++) {
                 if (tts->regs[i].stop_patterns[pat_i] == NULL) { continue; }
                 
-                uint32_t matching_chars =
+                uint32_t end_matching_chars =
                     T1_token_strmatch(
                         input + *data_len + middle_chars,
                         tts->regs[i].stop_patterns[pat_i]);
                 
                 if (
-                    matching_chars > 0 &&
-                    tts->regs[i].stop_patterns[pat_i][matching_chars] == '\0')
+                    end_matching_chars > 0 &&
+                    tts->regs[i].stop_patterns[pat_i][end_matching_chars] == '\0')
                 {
                     *data_len += middle_chars;
-                    *data_len += matching_chars;
+                    *data_len += end_matching_chars;
                     return;
                 }
             }
