@@ -306,6 +306,7 @@ void T1_token_set_reg_middle_cap(
     tts->next_reg.middle_cap = middle_cap;
 }
 
+#if 0
 void toktoken_register_string_literal_enum(
     const uint32_t enum_value,
     uint32_t * good)
@@ -324,6 +325,7 @@ void toktoken_register_string_literal_enum(
     
     *good = 1;
 }
+#endif
 
 void T1_token_set_string_literal(
     const uint32_t enum_value,
@@ -491,7 +493,7 @@ static void toktoken_string_match_tokens(
         }
         
         // look for the first ending match
-        assert(tts->strlen(input) >= i);
+        assert(tts->strlen(input) >= *data_len);
         uint32_t if_hit_entire_file = (uint32_t)tts->strlen(input) -  *data_len;
         if_hit_entire_file -= tts->strlen(tts->regs[i].stop_patterns[0]);
         uint32_t middle_max =
@@ -914,12 +916,12 @@ void T1_token_run(
         if (!tts->good) { return; }
     }
     
-    for (uint32_t i = 0; i < tts->tokens_size; i++) {
-        if (tts->tokens[i].enum_value == tts->string_literal_enum_value) {
-            tts->tokens[i].string_value_size =
-                tts->strlen(tts->tokens[i].string_value);
+    for (uint32_t tok_i = 0; tok_i < tts->tokens_size; tok_i++) {
+        if (tts->tokens[tok_i].enum_value == tts->string_literal_enum_value) {
+            tts->tokens[tok_i].string_value_size =
+                (uint16_t)tts->strlen(tts->tokens[tok_i].string_value);
             T1_token_set_number_flags(
-                &tts->tokens[i],
+                &tts->tokens[tok_i],
                 tts->string_literal_bitflags);
         }
     }

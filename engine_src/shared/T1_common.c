@@ -432,8 +432,8 @@ common_string_ends_with(
         return false;
     }
     
-    uint32_t str_to_check_len = common_get_string_length(str_to_check);
-    uint32_t ending_len = common_get_string_length(ending);
+    uint32_t str_to_check_len = (uint32_t)common_get_string_length(str_to_check);
+    uint32_t ending_len = (uint32_t)common_get_string_length(ending);
     
     if (ending_len > str_to_check_len || ending_len < 1) {
         return false;

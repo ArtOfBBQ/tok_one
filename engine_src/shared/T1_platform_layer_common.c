@@ -180,7 +180,7 @@ void writable_filename_to_pathfile(
     #endif
     
     #if !defined(LOGGER_IGNORE_ASSERTS) || !defined(COMMON_IGNORE_ASSERTS)
-    uint32_t filename_length = common_get_string_length(filename);
+    uint32_t filename_length = (uint32_t)common_get_string_length(filename);
     #endif
     
     char separator[MAX_SEPARATOR_SIZE];
@@ -202,7 +202,8 @@ void writable_filename_to_pathfile(
     platform_get_writables_path(writables_path, 256);
     
     #ifndef COMMON_IGNORE_ASSERTS
-    uint32_t writables_path_length = common_get_string_length(writables_path);
+    uint32_t writables_path_length =
+        (uint32_t)common_get_string_length(writables_path);
     uint32_t full_filename_size =
         (filename_length
             + writables_path_length
