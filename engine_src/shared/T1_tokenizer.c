@@ -535,6 +535,8 @@ static void T1_token_set_number_flags(
     TokToken * token,
     const uint8_t bitflags)
 {
+    (void)bitflags;
+    
     //    const uint8_t scientific_ok =
     //        (bitflags & T1_TOKEN_FLAG_SCIENTIFIC_OK) > 0;
     //    const uint8_t lead_dot_ok =

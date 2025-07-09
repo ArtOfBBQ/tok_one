@@ -13,6 +13,7 @@
 #include "T1_lightsource.h"
 #include "T1_engine_globals.h"
 #include "T1_texture_array.h"
+#include "T1_material.h"
 #include "T1_objmodel.h"
 
 #ifdef __cplusplus
@@ -44,9 +45,13 @@ typedef struct zSpriteRequest {
     uint32_t gpu_data_size;
 } zSpriteRequest;
 
+void zsprite_construct_with_mesh_id(
+    zSpriteRequest * to_construct,
+    const int32_t mesh_id);
 void zsprite_construct(zSpriteRequest * to_construct);
 // Allocate a PolygonRequest on the stack, then call this
-void zsprite_request_next(zSpriteRequest * stack_recipient);
+void zsprite_request_next(
+    zSpriteRequest * stack_recipient);
 void zsprite_commit(zSpriteRequest * to_commit);
 
 

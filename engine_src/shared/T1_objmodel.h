@@ -67,6 +67,7 @@ typedef struct MeshSummary {
     int32_t shattered_vertices_head_i; // -1 if no shattered version
     int32_t shattered_vertices_size; // 0 if no shattered version
     uint32_t locked_material_head_i;
+    uint32_t locked_material_base_offset; // UINT32_MAX if there's no base mat
     uint32_t materials_size;
 } MeshSummary;
 

@@ -7,15 +7,17 @@ static void construct_mesh_summary(
     MeshSummary * to_construct,
     const int32_t id)
 {
-    to_construct->resource_name[0]          = '\0';
-    to_construct->mesh_id                   =   id;
-    to_construct->vertices_head_i           =   -1; // index @ all_mesh_vertices
-    to_construct->vertices_size             =    0;
-    to_construct->base_width                = 0.0f;
-    to_construct->base_height               = 0.0f;
-    to_construct->base_depth                = 0.0f;
-    to_construct->shattered_vertices_head_i =   -1;
-    to_construct->shattered_vertices_size   =    0;
+    to_construct->resource_name[0]            = '\0';
+    to_construct->mesh_id                     =   id;
+    to_construct->vertices_head_i             =   -1; // index @ all_mesh_vertices
+    to_construct->vertices_size               =    0;
+    to_construct->base_width                  = 0.0f;
+    to_construct->base_height                 = 0.0f;
+    to_construct->base_depth                  = 0.0f;
+    to_construct->shattered_vertices_head_i   =   -1;
+    to_construct->shattered_vertices_size     =    0;
+    to_construct->locked_material_base_offset = UINT32_MAX;
+    to_construct->materials_size              =    0;
 }
 
 LockedVertexWithMaterialCollection * all_mesh_vertices;
@@ -755,6 +757,12 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
             if (parsed_materials[parsed_mtls_matching_i].use_base_mtl_flag)
             {
                 cur_material_i = PARENT_MATERIAL_BASE;
+                #ifndef LOGGER_IGNORE_ASSERTS
+                
+                #endif
+                all_mesh_summaries[all_mesh_summaries_size].
+                    locked_material_base_offset =
+                        (uint32_t)parsed_mtls_matching_i;
             }
         }
         
@@ -782,7 +790,9 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
         for (uint32_t _ = 0; _ < 3; _++) {
             all_mesh_vertices->gpu_data[locked_vert_i + _].
                 parent_material_i = cur_material_i;
-            all_mesh_vertices->gpu_data[locked_vert_i + _].locked_materials_head_i = first_material_head_i;
+            all_mesh_vertices->gpu_data[locked_vert_i + _].
+                locked_materials_head_i =
+                    first_material_head_i;
             
             if (
                 arg_parsed_obj->normals_count > 0 &&

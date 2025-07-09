@@ -2,8 +2,12 @@
 
 zSpriteCollection * zsprites_to_render = NULL;
 
-void zsprite_request_next(zSpriteRequest * stack_recipient)
+void zsprite_request_next(
+    zSpriteRequest * stack_recipient)
 {
+    stack_recipient->cpu_data = NULL;
+    stack_recipient->gpu_data = NULL;
+    
     for (
         uint32_t zp_i = 0;
         zp_i < zsprites_to_render->size;
@@ -16,19 +20,24 @@ void zsprite_request_next(zSpriteRequest * stack_recipient)
             stack_recipient->gpu_data     =
                 &zsprites_to_render->gpu_data[zp_i];
             stack_recipient->cpu_data->committed = false;
-            return;
+            break;
         }
     }
     
-    log_assert(zsprites_to_render->size + 1 < MAX_ZSPRITES_PER_BUFFER);
-    stack_recipient->cpu_data     =
-        &zsprites_to_render->cpu_data[zsprites_to_render->size];
-    stack_recipient->gpu_data     =
-        &zsprites_to_render->gpu_data[zsprites_to_render->size];
-    stack_recipient->cpu_data[zsprites_to_render->size].deleted = false;
-    stack_recipient->cpu_data->committed = false;
-    
-    zsprites_to_render->size += 1;
+    if (
+        stack_recipient->cpu_data == NULL &&
+        stack_recipient->gpu_data == NULL)
+    {
+        stack_recipient->cpu_data =
+            &zsprites_to_render->cpu_data[zsprites_to_render->size];
+        stack_recipient->gpu_data =
+            &zsprites_to_render->gpu_data[zsprites_to_render->size];
+        stack_recipient->cpu_data[zsprites_to_render->size].deleted = false;
+        stack_recipient->cpu_data->committed = false;
+        
+        zsprites_to_render->size += 1;
+        log_assert(zsprites_to_render->size + 1 < MAX_ZSPRITES_PER_BUFFER);
+    }
     
     return;
 }
@@ -184,6 +193,26 @@ void zsprite_scale_multipliers_to_height(
     gpu_data->xyz_multiplier[0] = new_multiplier;
     gpu_data->xyz_multiplier[1] = new_multiplier;
     gpu_data->xyz_multiplier[2] = new_multiplier;
+}
+
+void zsprite_construct_with_mesh_id(
+    zSpriteRequest * to_construct,
+    const int32_t mesh_id)
+{
+    zsprite_construct(to_construct);
+    
+    to_construct->cpu_data->mesh_id = mesh_id;
+    
+    if (mesh_id >= 0 &&
+        all_mesh_summaries[mesh_id].locked_material_base_offset != UINT32_MAX)
+    {
+        uint32_t base_mat_i =
+            all_mesh_summaries[mesh_id].locked_material_head_i +
+            all_mesh_summaries[mesh_id].locked_material_base_offset;
+        
+        to_construct->gpu_data->base_material =
+            all_mesh_materials->gpu_data[base_mat_i];
+    }
 }
 
 void zsprite_construct(
