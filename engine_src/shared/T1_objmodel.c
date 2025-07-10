@@ -762,7 +762,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 #endif
                 all_mesh_summaries[all_mesh_summaries_size].
                     locked_material_base_offset =
-                        (uint32_t)parsed_mtls_matching_i;
+                        (uint32_t)cur_material_i;
             }
         }
         

@@ -99,7 +99,7 @@ void client_logic_late_startup(void) {
     lightcube_request.cpu_data->visible           = true;
     lightcube_request.gpu_data->ignore_lighting   = 1.0f;
     lightcube_request.gpu_data->ignore_camera     = 0.0f;
-    lightcube_request.gpu_data->base_material.alpha = 1.0f;
+    lightcube_request.gpu_data->alpha = 1.0f;
     lightcube_request.gpu_data->base_material.diffuse_rgb[0] =
         light->RGBA[0] * 2.5f;
     lightcube_request.gpu_data->base_material.diffuse_rgb[1] =
@@ -195,7 +195,7 @@ void client_logic_late_startup(void) {
     quad.gpu_data->base_material.ambient_rgb[0]  = 0.05f;
     quad.gpu_data->base_material.ambient_rgb[1]  = 0.05f;
     quad.gpu_data->base_material.ambient_rgb[2]  = 0.50f;
-    quad.gpu_data->base_material.alpha           = 1.0f;
+    quad.gpu_data->alpha = 1.0f;
     
     zsprite_commit(&quad);
     
@@ -266,6 +266,7 @@ void client_logic_animation_callback(
     #endif
 }
 
+static uint32_t testswitch = 1;
 static void client_handle_keypresses(
     uint64_t microseconds_elapsed)
 {
@@ -331,6 +332,19 @@ static void client_handle_keypresses(
     
     if (keypress_map[TOK_KEY_S] == true) {
         camera.xyz_angle[1] += cam_rotation_speed;
+    }
+    
+    if (keypress_map[TOK_KEY_T] == true) {
+        keypress_map[TOK_KEY_T] = false;
+        ScheduledAnimation * test = scheduled_animations_request_next(false);
+        test->affected_zsprite_id = teapot_object_ids[0];
+        test->gpu_polygon_vals.xyz[0] =
+            testswitch ? -0.45f : 0.45f;
+        test->gpu_polygon_vals.alpha =
+            testswitch ? -0.45f : 0.45f;
+        testswitch = !testswitch;
+        test->duration_microseconds = 1000000;
+        scheduled_animations_commit(test);
     }
     
     if (keypress_map[TOK_KEY_BACKSLASH] == true) {

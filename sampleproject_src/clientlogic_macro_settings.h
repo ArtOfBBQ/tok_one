@@ -53,7 +53,7 @@ The maximum number of sprites in your app.
 /*
 The maximum number of 'scheduled animations' simultaneously running
 */
-#define SCHEDULED_ANIMATIONS_ARRAYSIZE 10
+#define SCHEDULED_ANIMATIONS_ARRAYSIZE 30
 
 
 #define ALL_MESHES_SIZE 20

@@ -606,7 +606,7 @@ float4 get_lit(
         lit_color[0],
         lit_color[1],
         lit_color[2],
-        material->alpha * ignore_lighting_color[3]);;
+        zsprite->alpha * material->alpha * ignore_lighting_color[3]);;
 }
 
 fragment FragmentAndTouchableOut

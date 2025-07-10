@@ -57,16 +57,21 @@ void T1_texture_array_push_all_predecoded(void)
                     /* const size_t subptr_size: */
                         rgba_size);
                 
-                int32_t packed_rgba_red =
-                    (255 << 24) | // Alpha
-                    (  5 << 16) | // Blue
-                    (  5 <<  8) | // Green
+                uint32_t packed_rgba_red_u32 =
+                    ((uint32_t)255 << 24) | // Alpha
+                    ((uint32_t)  5 << 16) | // Blue
+                    ((uint32_t)  5 <<  8) | // Green
                     255;          // Red
-                int32_t packed_rgba_blue =
-                    (255 << 24) | // Alpha
-                    (255 << 16) | // Blue
-                    (255 <<  8) | // Green
+                uint32_t packed_rgba_blue_u32 =
+                    ((uint32_t)255 << 24) | // Alpha
+                    ((uint32_t)255 << 16) | // Blue
+                    ((uint32_t)255 <<  8) | // Green
                     0;            // Red
+                
+                int32_t packed_rgba_red;
+                common_memcpy(&packed_rgba_red, &packed_rgba_red_u32, 4);
+                int32_t packed_rgba_blue;
+                common_memcpy(&packed_rgba_blue, &packed_rgba_blue_u32, 4);
                 
                 uint32_t one_third = (rgba_size / 3);
                 while (one_third % 4 != 0) {

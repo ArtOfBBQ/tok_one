@@ -392,7 +392,7 @@ void scheduled_animations_request_fade_to(
     ScheduledAnimation * modify_alpha = scheduled_animations_request_next(true);
     modify_alpha->affected_zsprite_id = zsprite_id;
     modify_alpha->duration_microseconds = duration_microseconds;
-    modify_alpha->gpu_polygon_vals.base_material.alpha = target_alpha;
+    modify_alpha->gpu_polygon_vals.alpha = target_alpha;
     scheduled_animations_commit(modify_alpha);
 }
 
