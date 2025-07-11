@@ -64,8 +64,8 @@ typedef struct EngineGlobals {
     float window_bottom;
     float aspect_ratio;
     
-    uint64_t this_frame_timestamp;
-    uint64_t last_resize_request_at;
+    uint64_t this_frame_timestamp_us;
+    uint64_t last_resize_request_us;
     GPUPostProcessingConstants postprocessing_constants;
     GPUProjectionConstants projection_constants;
 } EngineGlobals;
@@ -98,6 +98,6 @@ void engineglobals_update_window_position(
 void engineglobals_update_window_size(
     float width,
     float height,
-    uint64_t at_timestamp_microseconds);
+    uint64_t at_timestamp_us);
 
 #endif // ENGINE_GLOBALS_H

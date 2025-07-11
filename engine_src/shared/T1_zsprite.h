@@ -21,6 +21,7 @@ extern "C" {
 #endif
 
 typedef struct CPUzSprite {
+    uint64_t next_occlusion_in_us;
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
     
     int32_t  zsprite_id;

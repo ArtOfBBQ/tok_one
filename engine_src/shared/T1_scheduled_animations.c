@@ -97,10 +97,10 @@ void scheduled_animations_commit(ScheduledAnimation * to_commit) {
     
     log_assert(to_commit->start_timestamp == 0);
     log_assert(to_commit->end_timestamp == 0);
-    log_assert(to_commit->duration_microseconds > 0);
-    to_commit->start_timestamp = engine_globals->this_frame_timestamp;
+    log_assert(to_commit->duration_us > 0);
+    to_commit->start_timestamp = engine_globals->this_frame_timestamp_us;
     to_commit->end_timestamp =
-        to_commit->start_timestamp + to_commit->duration_microseconds;
+        to_commit->start_timestamp + to_commit->duration_us;
     
     if (to_commit->endpoints_not_deltas) {
         int32_t first_zp_i = 0;
@@ -189,13 +189,13 @@ void scheduled_animations_commit(ScheduledAnimation * to_commit) {
 
 void scheduled_animations_request_evaporate_and_destroy(
     const int32_t object_id,
-    const uint64_t duration_microseconds)
+    const uint64_t duration_us)
 {
     #ifdef LOGGER_IGNORE_ASSERTS
-    (void)duration_microseconds;
+    (void)duration_us;
     #endif
     
-    log_assert(duration_microseconds > 0);
+    log_assert(duration_us > 0);
     log_assert(object_id >= 0);
     
     for (
@@ -212,7 +212,7 @@ void scheduled_animations_request_evaporate_and_destroy(
         }
         
         #if PARTICLES_ACTIVE
-        float duration_mod = (20000000.0f / (float)duration_microseconds);
+        float duration_mod = (20000000.0f / (float)duration_us);
         
         ParticleEffect * vaporize_effect = next_particle_effect();
         vaporize_effect->zpolygon_cpu = zsprites_to_render->cpu_data[zp_i];
@@ -223,10 +223,10 @@ void scheduled_animations_request_evaporate_and_destroy(
                 shattered_vertices_size;
         vaporize_effect->particle_spawns_per_second = (uint32_t)(
             (shattered_verts_size * 1000000) /
-                (uint64_t)(duration_microseconds + 1));
+                (uint64_t)(duration_us + 1));
         vaporize_effect->pause_between_spawns = 10;
         vaporize_effect->vertices_per_particle = 3;
-        vaporize_effect->particle_lifespan = duration_microseconds;
+        vaporize_effect->particle_lifespan = duration_us;
         vaporize_effect->use_shattered_mesh = true;
         
         float xy_dist   =  0.0100f;
@@ -274,14 +274,14 @@ void scheduled_animations_request_evaporate_and_destroy(
 
 void scheduled_animations_request_shatter_and_destroy(
     const int32_t object_id,
-    const uint64_t duration_microseconds)
+    const uint64_t duration_us)
 {
     #ifdef LOGGER_IGNORE_ASSERTS
-    (void)duration_microseconds;
+    (void)duration_us;
     #endif
     
-    log_assert(duration_microseconds > 0);
-    log_assert(duration_microseconds < 1000000000);
+    log_assert(duration_us > 0);
+    log_assert(duration_us < 1000000000);
     log_assert(object_id >= 0);
     
     for (
@@ -297,7 +297,7 @@ void scheduled_animations_request_shatter_and_destroy(
         }
         
         #if PARTICLES_ACTIVE
-        float duration_mod = (20000000.0f / (float)duration_microseconds);
+        float duration_mod = (20000000.0f / (float)duration_us);
         
         ParticleEffect * shatter_effect = next_particle_effect();
         shatter_effect->zpolygon_cpu = zsprites_to_render->cpu_data[zp_i];
@@ -309,10 +309,10 @@ void scheduled_animations_request_shatter_and_destroy(
         log_assert(shattered_verts_size > 0);
         shatter_effect->particle_spawns_per_second = (uint32_t)(
             (shattered_verts_size * 1000000) /
-                (uint64_t)(duration_microseconds + 1));
+                (uint64_t)(duration_us + 1));
         shatter_effect->pause_between_spawns = 0;
         shatter_effect->vertices_per_particle = 6;
-        shatter_effect->particle_lifespan = duration_microseconds;
+        shatter_effect->particle_lifespan = duration_us;
         shatter_effect->use_shattered_mesh = true;
         
         float xyz_dist = 0.02f;
@@ -367,15 +367,15 @@ void scheduled_animations_request_shatter_and_destroy(
 
 void scheduled_animations_request_fade_and_destroy(
     const int32_t  object_id,
-    const uint64_t duration_microseconds)
+    const uint64_t duration_us)
 {
-    log_assert(duration_microseconds > 0);
+    log_assert(duration_us > 0);
     
     // register scheduled animation
     ScheduledAnimation * fade_destroy = scheduled_animations_request_next(true);
     fade_destroy->endpoints_not_deltas = true;
     fade_destroy->affected_zsprite_id = object_id;
-    fade_destroy->duration_microseconds = duration_microseconds;
+    fade_destroy->duration_us = duration_us;
     fade_destroy->lightsource_vals.reach = 0.0f;
     fade_destroy->delete_object_when_finished = true;
     scheduled_animations_commit(fade_destroy);
@@ -383,7 +383,7 @@ void scheduled_animations_request_fade_and_destroy(
 
 void scheduled_animations_request_fade_to(
     const int32_t zsprite_id,
-    const uint64_t duration_microseconds,
+    const uint64_t duration_us,
     const float target_alpha)
 {
     log_assert(zsprite_id >= 0);
@@ -391,7 +391,7 @@ void scheduled_animations_request_fade_to(
     // register scheduled animation
     ScheduledAnimation * modify_alpha = scheduled_animations_request_next(true);
     modify_alpha->affected_zsprite_id = zsprite_id;
-    modify_alpha->duration_microseconds = duration_microseconds;
+    modify_alpha->duration_us = duration_us;
     modify_alpha->gpu_polygon_vals.alpha = target_alpha;
     scheduled_animations_commit(modify_alpha);
 }
@@ -470,7 +470,7 @@ void scheduled_animations_resolve(void)
         if (
             anim->deleted ||
             !anim->committed ||
-            engine_globals->this_frame_timestamp <
+            engine_globals->this_frame_timestamp_us <
                 anim->start_timestamp)
         {
             continue;
@@ -496,10 +496,10 @@ void scheduled_animations_resolve(void)
                     #endif
                 }
             } else {
-                anim->start_timestamp = engine_globals->this_frame_timestamp;
+                anim->start_timestamp = engine_globals->this_frame_timestamp_us;
                 anim->end_timestamp =
                     anim->start_timestamp +
-                    anim->duration_microseconds;
+                    anim->duration_us;
             }
             
             if (reduce_runs) {
@@ -513,13 +513,13 @@ void scheduled_animations_resolve(void)
         
         log_assert(anim->end_timestamp > anim->start_timestamp);
         log_assert(
-            engine_globals->this_frame_timestamp >= anim->start_timestamp);
+            engine_globals->this_frame_timestamp_us >= anim->start_timestamp);
         
         uint64_t duration = anim->end_timestamp - anim->start_timestamp;
         uint64_t now =
-            engine_globals->this_frame_timestamp > anim->end_timestamp ?
+            engine_globals->this_frame_timestamp_us > anim->end_timestamp ?
                 anim->end_timestamp :
-                engine_globals->this_frame_timestamp;
+                engine_globals->this_frame_timestamp_us;
         log_assert(now >= anim->start_timestamp);
         log_assert(now <= anim->end_timestamp);
         log_assert(duration >= (anim->end_timestamp - now));
@@ -678,16 +678,6 @@ void scheduled_animations_resolve(void)
             float flt_actual_elapsed_this_run =
                 (float)actual_elapsed_this_run;
             
-            #if 0
-            float flt_remaining_microseconds_this_run =
-                (float)remaining_microseconds_at_start_of_run;
-            
-            SIMD_FLOAT simd_this_run_modifier =
-                simd_div_floats(
-                    simd_set1_float(flt_actual_elapsed_this_run),
-                    simd_set1_float(flt_remaining_microseconds_this_run));
-            #endif
-            
             float * anim_vals_ptr = (float *)&anim->lightsource_vals;
             float * target_vals_ptr = (float *)&zlights_to_apply[light_i];
                             log_assert((sizeof(zLightSource) / 4) % SIMD_FLOAT_LANES == 0);
@@ -737,7 +727,7 @@ void scheduled_animations_request_dud_dance(
     move_request->gpu_polygon_vals.xyz[0] = magnitude * 0.05f;
     move_request->gpu_polygon_vals.xyz[1] = magnitude * 0.035f;
     move_request->gpu_polygon_vals.xyz[2] = magnitude * 0.005f;
-    move_request->duration_microseconds = 300000;
+    move_request->duration_us = 300000;
     scheduled_animations_commit(move_request);
 }
 
@@ -756,7 +746,7 @@ void scheduled_animations_request_bump(
     move_request->easing_type = EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO;
     move_request->affected_zsprite_id = (int32_t)object_id;
     move_request->gpu_polygon_vals.scale_factor = 0.25f;
-    move_request->duration_microseconds = 200000;
+    move_request->duration_us = 200000;
     scheduled_animations_commit(move_request);
 }
 

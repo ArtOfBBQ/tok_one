@@ -88,16 +88,16 @@ static void show_dead_simple_text(
     
     renderer_hardware_render(
             frame_data,
-        /* uint64_t elapsed_microseconds: */
+        /* uint64_t elapsed_us: */
             elapsed);
 }
 
 void gameloop_update_before_render_pass(
     GPUDataForSingleFrame * frame_data)
 {
-    uint64_t elapsed = engine_globals->this_frame_timestamp -
+    uint64_t elapsed = engine_globals->this_frame_timestamp_us -
     gameloop_previous_time;
-    gameloop_previous_time = engine_globals->this_frame_timestamp;
+    gameloop_previous_time = engine_globals->this_frame_timestamp_us;
     
     common_memcpy(frame_data->camera, &camera, sizeof(GPUCamera));
     
@@ -143,11 +143,11 @@ void gameloop_update_before_render_pass(
     log_assert(frame_data->lights != NULL);
     log_assert(frame_data->camera != NULL);
     
-    engine_globals->this_frame_timestamp =
-        platform_get_current_time_microsecs();
+    engine_globals->this_frame_timestamp_us =
+        platform_get_current_time_us();
     
     if (gameloop_previous_time < 1) {
-        gameloop_previous_time = engine_globals->this_frame_timestamp;
+        gameloop_previous_time = engine_globals->this_frame_timestamp_us;
         
         #if PROFILER_ACTIVE
         profiler_end("gameloop_update()");
@@ -173,12 +173,12 @@ void gameloop_update_before_render_pass(
     gameloop_frame_no++;
     
     if (
-        engine_globals->this_frame_timestamp -
-            engine_globals->last_resize_request_at < 2000000)
+        engine_globals->this_frame_timestamp_us -
+            engine_globals->last_resize_request_us < 2000000)
     {
         if (
-            engine_globals->this_frame_timestamp -
-                engine_globals->last_resize_request_at < 350000)
+            engine_globals->this_frame_timestamp_us -
+                engine_globals->last_resize_request_us < 350000)
         {
             // possibly a request we already handled, or not the final
             // request, wait...
@@ -192,7 +192,7 @@ void gameloop_update_before_render_pass(
             return;
         } else {
             
-            engine_globals->last_resize_request_at = 0;
+            engine_globals->last_resize_request_us = 0;
             log_append("\nOK, resize window\n");
             
             engineglobals_init();
@@ -214,6 +214,22 @@ void gameloop_update_before_render_pass(
         #endif
         
         platform_update_mouse_location();
+        
+        // handle timed occlusions
+        for (uint32_t zs_i = 0; zs_i < zsprites_to_render->size; zs_i++) {
+            if (
+                zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us >
+                    elapsed)
+            {
+                zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us -=
+                    elapsed;
+            } else if (
+                zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us > 0)
+            {
+                zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us = 0;
+                zsprites_to_render->cpu_data[zs_i].visible = 0;
+            }
+        }
         
         // always copy
         user_interactions[INTR_PREVIOUS_MOUSE_MOVE] =
@@ -245,7 +261,7 @@ void gameloop_update_before_render_pass(
         
         renderer_hardware_render(
                 frame_data,
-            /* uint64_t elapsed_microseconds: */
+            /* uint64_t elapsed_us: */
                 elapsed);
         
         uint32_t overflow_vertices = frame_data->vertices_size % 3;
@@ -254,7 +270,7 @@ void gameloop_update_before_render_pass(
     
     if (engine_globals->draw_fps) {
         text_request_fps_counter(
-            /* uint64_t microseconds_elapsed: */
+            /* uint64_t elapsed_us: */
                 elapsed);
     } else if (engine_globals->draw_top_touchable_id) {
         text_request_top_touchable_id(
@@ -263,7 +279,7 @@ void gameloop_update_before_render_pass(
     }
     
     frame_data->postprocessing_constants->timestamp =
-        (uint32_t)engine_globals->this_frame_timestamp;
+        (uint32_t)engine_globals->this_frame_timestamp_us;
     frame_data->postprocessing_constants->shadowcaster_i =
         shadowcaster_light_i;
     

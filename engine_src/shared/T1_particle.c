@@ -95,7 +95,7 @@ void commit_lineparticle_effect(
 
 void add_lineparticle_effects_to_workload(
     GPUDataForSingleFrame * frame_data,
-    uint64_t elapsed_nanoseconds,
+    uint64_t elapsed_us,
     const bool32_t alpha_blending)
 {
     for (uint32_t i = 0; i < lineparticle_effects_size; i++) {
@@ -110,15 +110,15 @@ void add_lineparticle_effects_to_workload(
             continue;
         }
         
-        if (lineparticle_effects[i].wait_first > elapsed_nanoseconds) {
-            lineparticle_effects[i].wait_first -= elapsed_nanoseconds;
+        if (lineparticle_effects[i].wait_first > elapsed_us) {
+            lineparticle_effects[i].wait_first -= elapsed_us;
             continue;
         } else if (lineparticle_effects[i].wait_first > 0) {
             lineparticle_effects[i].wait_first = 0;
-            elapsed_nanoseconds -= lineparticle_effects[i].wait_first;
+            elapsed_us -= lineparticle_effects[i].wait_first;
         }
         
-        lineparticle_effects[i].elapsed += elapsed_nanoseconds;
+        lineparticle_effects[i].elapsed += elapsed_us;
         
         int32_t head_i =
             all_mesh_summaries[
@@ -424,7 +424,7 @@ void delete_particle_effect(int32_t with_object_id) {
 
 void add_particle_effects_to_workload(
     GPUDataForSingleFrame * frame_data,
-    uint64_t elapsed_nanoseconds,
+    uint64_t elapsed_us,
     const bool32_t alpha_blending)
 {
     uint64_t spawns_in_duration;
@@ -445,7 +445,7 @@ void add_particle_effects_to_workload(
             continue;
         }
         
-        particle_effects[i].elapsed += elapsed_nanoseconds;
+        particle_effects[i].elapsed += elapsed_us;
         
         while (particle_effects[i].vertices_per_particle % 3 != 0) {
             particle_effects[i].vertices_per_particle += 1;
@@ -627,7 +627,7 @@ void add_particle_effects_to_workload(
                 simdf_pertime_add = simd_add_floats(
                     simdf_pertime_add, simdf_pertime_random_add);
                 
-                // Convert per second values to per microsecond effect
+                // Convert per second values to per microsecond (us) effect
                 simdf_pertime_add = simd_mul_floats(
                     simdf_pertime_add, simdf_lifetime);
                 simdf_pertime_add = simd_div_floats(

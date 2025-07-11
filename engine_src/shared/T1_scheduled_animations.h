@@ -47,7 +47,7 @@ typedef struct ScheduledAnimation {
     
     EasingType easing_type;
     
-    uint64_t duration_microseconds;
+    uint64_t duration_us;
     
     uint32_t runs;
     int32_t affected_zsprite_id;
@@ -92,19 +92,19 @@ void scheduled_animations_commit(ScheduledAnimation * to_commit);
 
 void scheduled_animations_request_evaporate_and_destroy(
     const int32_t object_id,
-    const uint64_t duration_microseconds);
+    const uint64_t duration_us);
 
 void scheduled_animations_request_shatter_and_destroy(
     const int32_t object_id,
-    const uint64_t duration_microseconds);
+    const uint64_t duration_us);
 
 void scheduled_animations_request_fade_and_destroy(
     const int32_t object_id,
-    const uint64_t duration_microseconds);
+    const uint64_t duration_us);
 
 void scheduled_animations_request_fade_to(
     const int32_t zsprite_id,
-    const uint64_t duration_microseconds,
+    const uint64_t duration_us,
     const float target_alpha);
 
 void scheduled_animations_request_dud_dance(

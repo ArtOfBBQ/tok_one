@@ -207,9 +207,9 @@ inline static void add_opaque_zpolygons_to_workload(
 // static float clickray_elapsed = 0.0f;
 void renderer_hardware_render(
     GPUDataForSingleFrame * frame_data,
-    uint64_t elapsed_nanoseconds)
+    uint64_t elapsed_us)
 {
-    (void)elapsed_nanoseconds;
+    (void)elapsed_us;
     
     if (renderer_initialized != true) {
         log_append("renderer not initialized, aborting...\n");
@@ -254,14 +254,14 @@ void renderer_hardware_render(
         add_particle_effects_to_workload(
             /* GPUDataForSingleFrame * frame_data: */
                 frame_data,
-            /* uint64_t elapsed_nanoseconds: */
-                elapsed_nanoseconds,
+            /* uint64_t elapsed_us: */
+                elapsed_us,
             /* const uint32_t alpha_blending: */
                 false);
         
         add_lineparticle_effects_to_workload(
             frame_data,
-            elapsed_nanoseconds,
+            elapsed_us,
             false);
         #endif
     }
@@ -272,14 +272,14 @@ void renderer_hardware_render(
     add_particle_effects_to_workload(
         /* GPUDataForSingleFrame * frame_data: */
             frame_data,
-        /* uint64_t elapsed_nanoseconds: */
-            elapsed_nanoseconds,
+        /* uint64_t elapsed_us: */
+            elapsed_us,
         /* const uint32_t alpha_blending: */
             true);
     
     add_lineparticle_effects_to_workload(
             frame_data,
-            elapsed_nanoseconds,
+            elapsed_us,
             true);
     #endif
     

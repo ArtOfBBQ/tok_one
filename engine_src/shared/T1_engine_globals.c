@@ -115,12 +115,12 @@ void engineglobals_update_window_position(
 void engineglobals_update_window_size(
     float width,
     float height,
-    uint64_t at_timestamp_microseconds)
+    uint64_t at_timestamp_us)
 {
     engine_globals->window_height = height;
     engine_globals->window_width = width;
     
     engine_globals->aspect_ratio = height / width;
     
-    engine_globals->last_resize_request_at = at_timestamp_microseconds;
+    engine_globals->last_resize_request_us = at_timestamp_us;
 }

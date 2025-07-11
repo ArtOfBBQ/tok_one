@@ -732,7 +732,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     }
     
     platform_layer_start_window_resize(
-        platform_get_current_time_microsecs());
+        platform_get_current_time_us());
     
     if (application_running) {
         client_logic_late_startup();

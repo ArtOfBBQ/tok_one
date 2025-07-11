@@ -10,7 +10,7 @@ void platform_get_directory_separator(char * recipient) {
 }
 
 uint64_t
-platform_get_current_time_microsecs(void) {
+platform_get_current_time_us(void) {
     struct timeval tv;
     gettimeofday(&tv,NULL);
     uint64_t result =

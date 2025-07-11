@@ -133,14 +133,14 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                         scheduled_animations_request_next(true);
                     bump_pin->affected_sprite_id = currently_sliding_object_id;
                     bump_pin->gpu_polygon_vals.scale_factor = 1.20f;
-                    bump_pin->duration_microseconds = 20;
+                    bump_pin->duration_us = 20;
                     scheduled_animations_commit(bump_pin);
                     
                     bump_pin = scheduled_animations_request_next(true);
                     bump_pin->affected_sprite_id = currently_sliding_object_id;
                     bump_pin->gpu_polygon_vals.scale_factor = 1.0f;
                     bump_pin->wait_before_each_run = 20;
-                    bump_pin->duration_microseconds = 200000;
+                    bump_pin->duration_us = 200000;
                     scheduled_animations_commit(bump_pin);
                     #endif
                 }
@@ -155,7 +155,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                         scheduled_animations_request_next(true);
                     bump->affected_sprite_id = currently_clicking_object_id;
                     bump->gpu_polygon_vals.scale_factor = 1.25f;
-                    bump->duration_microseconds = 40;
+                    bump->duration_us = 40;
                     scheduled_animations_commit(bump);
                     
                     ScheduledAnimation * flatten =
@@ -163,7 +163,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                     flatten->affected_sprite_id = currently_clicking_object_id;
                     flatten->gpu_polygon_vals.scale_factor = 1.0f;
                     flatten->wait_before_each_run = 50;
-                    flatten->duration_microseconds = 250000;
+                    flatten->duration_us = 250000;
                     scheduled_animations_commit(flatten);
                     #endif
                 }

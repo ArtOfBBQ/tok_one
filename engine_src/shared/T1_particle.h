@@ -56,7 +56,7 @@ void commit_lineparticle_effect(
     LineParticle * to_commit);
 void add_lineparticle_effects_to_workload(
     GPUDataForSingleFrame * frame_data,
-    uint64_t elapsed_nanoseconds,
+    uint64_t elapsed_us,
     const bool32_t alpha_blending);
 
 typedef struct ParticleEffect {
@@ -112,7 +112,7 @@ void delete_particle_effect(int32_t with_object_id);
 
 void add_particle_effects_to_workload(
     GPUDataForSingleFrame * frame_data,
-    uint64_t elapsed_nanoseconds,
+    uint64_t elapsed_us,
     const bool32_t alpha_blending);
 
 #ifdef __cplusplus

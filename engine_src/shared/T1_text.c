@@ -556,7 +556,7 @@ void text_request_debug_text(const char * text)
 #define FPS_FRAMES_MAX 10
 uint64_t ms_last_n_frames[FPS_FRAMES_MAX];
 void text_request_fps_counter(
-    uint64_t microseconds_elapsed)
+    uint64_t elapsed_us)
 {
     #ifdef __ARM_NEON
     char fps_string[14] = "NEONfps:     ";
@@ -569,7 +569,7 @@ void text_request_fps_counter(
     for (int32_t i = FPS_FRAMES_MAX-1; i >= 1; i--) {
         ms_last_n_frames[i] = ms_last_n_frames[i-1];
     }
-    ms_last_n_frames[0] = microseconds_elapsed;
+    ms_last_n_frames[0] = elapsed_us;
     
     uint64_t ms_last_n_frames_total = 0;
     for (uint32_t i = 0; i < FPS_FRAMES_MAX; i++) {

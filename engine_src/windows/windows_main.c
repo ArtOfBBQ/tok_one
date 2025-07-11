@@ -32,10 +32,10 @@ void platform_close_application(void) {
     requesting_shutdown = true;
 }
 
-static void wait_x_microseconds(uint64_t microseconds)
+static void wait_x_us(uint64_t us)
 {
-    uint64_t start = platform_get_current_time_microsecs();
-    while (platform_get_current_time_microsecs() - start < microseconds) {
+    uint64_t start = platform_get_current_time_us();
+    while (platform_get_current_time_us() - start < us) {
         // Wait
     }
 }
@@ -457,7 +457,7 @@ MainWindowCallback(
                 /* height: */
                     window_height,
                 /* at_timestamp_microsecs: */
-                    platform_get_current_time_microsecs());
+                    platform_get_current_time_us());
             
             glViewport(
                 0,
@@ -806,7 +806,7 @@ int CALLBACK WinMain(
                 "1 or more OpenGL extension procedures failed to load, "
                 "exiting...\n");
             
-            wait_x_microseconds(3500000);
+            wait_x_us(3500000);
             return 0;
         }
     } else {

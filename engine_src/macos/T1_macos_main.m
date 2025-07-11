@@ -381,7 +381,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     //        platform_get_current_time_microsecs());
     
     platform_layer_start_window_resize(
-        platform_get_current_time_microsecs());
+        platform_get_current_time_us());
     
     return frameSize;
 }
@@ -393,8 +393,8 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
             [window getWidth],
         /* float height */
             [window getHeight],
-        /* uint64_t at_timestamp_microseconds: */
-            platform_get_current_time_microsecs());
+        /* uint64_t at_timestamp_us: */
+            platform_get_current_time_us());
     
     [apple_gpu_delegate updateViewport];
 }
