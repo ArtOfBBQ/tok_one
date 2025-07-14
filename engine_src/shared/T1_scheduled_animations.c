@@ -470,8 +470,7 @@ void scheduled_animations_resolve(void)
         if (
             anim->deleted ||
             !anim->committed ||
-            engine_globals->this_frame_timestamp_us <
-                anim->start_timestamp)
+            engine_globals->this_frame_timestamp_us < anim->start_timestamp)
         {
             continue;
         }
@@ -598,6 +597,7 @@ void scheduled_animations_resolve(void)
         log_assert(anim->already_applied_t <= t_now);
         anim->already_applied_t = t_now;
         
+                
         // Apply effects
         for (
             int32_t zp_i = 0;

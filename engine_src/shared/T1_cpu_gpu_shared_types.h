@@ -80,6 +80,7 @@ typedef struct GPUzSprite {
     float             bonus_rgb[3];
     float             xyz_multiplier[3]; // determines width/height/depth
     float             xyz_offset[3];
+    float             base_mat_uv_offsets[2];
     float             scale_factor;
     float             alpha;
     float             ignore_lighting;

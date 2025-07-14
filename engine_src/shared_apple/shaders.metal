@@ -373,7 +373,8 @@ float4 get_lit(
     const device GPUzSprite * zsprite,
     const device GPULockedMaterial * material,
     const device GPUPostProcessingConstants * updating_globals,
-    const RasterizerPixel in)
+    const RasterizerPixel in,
+    const bool is_base_mtl)
 {
     float4 lit_color = vector_float4(
         0.0f,
@@ -399,6 +400,14 @@ float4 get_lit(
     
     float4 diffuse_texture_sample = vector_float4(0.75f, 0.75f, 0.75f, 1.0f);
     
+    float2 uv_adjusted = fmod(
+        in.texture_coordinate + (
+        is_base_mtl *
+        vector_float2(
+            zsprite->base_mat_uv_offsets[0],
+            zsprite->base_mat_uv_offsets[1])),
+        1.0f);
+    
     constexpr sampler texture_sampler(
         mag_filter::linear,
         min_filter::linear);
@@ -414,7 +423,7 @@ float4 get_lit(
         const half4 color_sample =
             color_textures[material->texturearray_i].sample(
                 texture_sampler,
-                in.texture_coordinate,
+                uv_adjusted,
                 material->texture_i);
         diffuse_texture_sample = float4(color_sample);
     }
@@ -514,7 +523,7 @@ float4 get_lit(
             half4 normal_map_sample =
                 color_textures[material->normalmap_texturearray_i].sample(
                     texture_sampler,
-                    in.texture_coordinate,
+                    uv_adjusted,
                     material->normalmap_texture_i);
             
             float3 normal_map_sample_f3 = vector_float3(
@@ -650,7 +659,9 @@ fragment_shader(
         /* const device GPUPostProcessingConstants * updating_globals: */
             updating_globals,
         /* const device RasterizerPixel * in: */
-            in);
+            in,
+        /* const bool is_base_mtl: */
+            material_i == PARENT_MATERIAL_BASE);
     
     int diamond_size = 35.0f;
     int neghalfdiamond = -1.0f * (diamond_size / 2);
@@ -718,8 +729,10 @@ alphablending_fragment_shader(
             material,
         /* const device GPUPostProcessingConstants * updating_globals: */
             updating_globals,
-        /* ???: */
-            in);
+        /* const RasterizerPixel in: */
+            in,
+        /* const bool is_base_mtl: */
+            material_i == PARENT_MATERIAL_BASE);
     
     return pack_color_and_touchable_id(lit_color, in.touchable_id);
 }
