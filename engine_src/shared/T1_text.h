@@ -19,6 +19,7 @@ typedef struct FontSettings {
     float ignore_lighting;
     float ignore_camera;
     float font_height; // = 30.0;
+    float alpha;
 } FontSettings;
 
 extern FontSettings * font_settings;

@@ -59,6 +59,8 @@ void text_init(
         font_settings->mat.texturearray_i = 0;
         font_settings->ignore_lighting = 1.0f;
         font_settings->remove_shadow = true;
+        font_settings->mat.alpha = 1.0f;
+        font_settings->alpha = 1.0f;
     }
     
     char * buffer_at = (char *)raw_fontmetrics_file_contents;
@@ -346,6 +348,7 @@ void text_request_label_offset_around(
             letter.gpu_data->remove_shadow = font_settings->remove_shadow;
             
             letter.gpu_data->base_material = font_settings->mat;
+            letter.gpu_data->alpha = font_settings->alpha;
             
             letter.gpu_data->base_material.texture_i      =
                 text_to_draw[j] - '!';
@@ -604,6 +607,7 @@ void text_request_fps_counter(
     font_settings->mat.ambient_rgb[1] = 1.0f;
     font_settings->mat.ambient_rgb[2] = 1.0f;
     font_settings->mat.alpha = 1.0f;
+    font_settings->alpha = 1.0f;
     font_settings->ignore_lighting = true;
     font_settings->ignore_camera = true;
     font_settings->touchable_id = -1;
