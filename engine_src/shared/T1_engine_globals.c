@@ -96,6 +96,10 @@ void engineglobals_init(void) {
     engine_globals->postprocessing_constants.fog_factor = 0.0f;
     #endif
     
+    #if SHADOWS_ACTIVE
+    engine_globals->postprocessing_constants.in_shadow_multiplier = 0.5f;
+    #endif
+    
     engine_globals->last_clickray_origin[0]    = 0.0f;
     engine_globals->last_clickray_origin[1]    = 0.0f;
     engine_globals->last_clickray_origin[2]    = 0.0f;
