@@ -44,7 +44,7 @@ typedef struct RegisteredToken {
     uint8_t bitflags;
 } RegisteredToken;
 
-#define ASCII_STORE_CAP 5000000
+#define ASCII_STORE_CAP 9000000
 #define REGISTERED_TOKENS_CAP 2000
 #define TOKENS_CAP 10000
 #define NUMBERS_CAP 10000
