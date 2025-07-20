@@ -230,6 +230,53 @@ void client_logic_late_startup(void) {
     log_assert(
         zsprites_to_render->cpu_data[zsprites_to_render->size-1].
             zsprite_id == 21);
+    
+    for (uint32_t i = 0; i < 3; i++) {
+        zsprite_request_next(&quad);
+        zsprite_construct_quad(
+            /* const float left_x: */
+                TEAPOT_X - 3.0f,
+            /* const float bottom_y: */
+                TEAPOT_Y - 1.25f,
+            /* const float z: */
+                TEAPOT_Z + 0.2f + (i * 0.75f),
+            /* const float width: */
+                engineglobals_screenspace_width_to_width(
+                    engine_globals->window_width * 2, 1.0f),
+            /* const float height: */
+                engineglobals_screenspace_height_to_height(
+                    engine_globals->window_height * 2, 1.0f),
+            /* PolygonRequest * stack_recipient: */
+                &quad);
+        T1_texture_array_get_filename_location(
+            /* const char * for_filename: */
+                "phoebus.png",
+            /* int32_t * texture_array_i_recipient: */
+                &quad.gpu_data->base_material.texturearray_i,
+            /* int32_t * texture_i_recipient: */
+                &quad.gpu_data->base_material.texture_i);
+        quad.cpu_data->zsprite_id                   = -1;
+        quad.gpu_data->touchable_id                 = -1;
+        quad.cpu_data->alpha_blending_enabled       = true;
+        
+        quad.gpu_data->xyz_offset[0]          = 0.0f;
+        quad.gpu_data->xyz_offset[1]          = 0.0f;
+        quad.gpu_data->xyz_offset[2]          = 0.0f;
+        quad.gpu_data->scale_factor           = 1.0f;
+        quad.gpu_data->xyz_angle[0]           = 1.8f;
+        quad.gpu_data->xyz_angle[1]           = 0.0f;
+        quad.gpu_data->xyz_angle[2]           = 0.65f;
+        quad.gpu_data->ignore_camera          = 0.0f;
+        quad.gpu_data->ignore_lighting        = 0.0f;
+        
+        quad.gpu_data->base_material.ambient_rgb[0]  = 0.05f;
+        quad.gpu_data->base_material.ambient_rgb[1]  = 0.05f;
+        quad.gpu_data->base_material.ambient_rgb[2]  = 0.50f;
+        quad.gpu_data->alpha = 0.25f;
+        
+        zsprite_commit(&quad);
+    
+    }
 }
 
 void client_logic_threadmain(int32_t threadmain_id) {
@@ -343,7 +390,7 @@ static void client_handle_keypresses(
         test->gpu_polygon_vals.alpha =
             testswitch ? -0.45f : 0.45f;
         testswitch = !testswitch;
-        test->duration_microseconds = 1000000;
+        test->duration_us = 1000000;
         scheduled_animations_commit(test);
     }
     

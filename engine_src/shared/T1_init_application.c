@@ -623,7 +623,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     We'll do a bunch of other work first, because that gives us something
     to do while we wait the other threads to finish.
     */
-        
+    #if PARTICLES_ACTIVE
     #define MIN_VERTICES_FOR_SHATTER_EFFECT 400
     for (uint32_t i = 0; i < all_mesh_summaries_size; i++) {
         if (all_mesh_summaries[i].shattered_vertices_head_i < 0) {
@@ -647,6 +647,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
             }
         }
     }
+    #endif
     
     if (!application_running) {
         gameloop_active = true;

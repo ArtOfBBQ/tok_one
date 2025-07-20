@@ -81,6 +81,51 @@ inline static void draw_bounding_sphere(
 
 #endif
 
+static int compare_triangles_furthest_camera_dist(
+    const void * a,
+    const void * b)
+{
+    GPUVertex * tris[2];
+    tris[0] = (GPUVertex *)a;
+    tris[1] = (GPUVertex *)b;
+    
+    float dists[2];
+    dists[0] = 0.0f;
+    dists[1] = 0.0f;
+    
+    for (uint32_t i = 0; i < 2; i++) {
+        float avg_xyz[3];
+        
+        for (uint32_t vert_i = 0; vert_i < 3; vert_i++) {
+            avg_xyz[0] += all_mesh_vertices->gpu_data[
+                tris[i][vert_i].locked_vertex_i].xyz[0];
+            avg_xyz[1] += all_mesh_vertices->gpu_data[
+                tris[i][vert_i].locked_vertex_i].xyz[1];
+            avg_xyz[2] += all_mesh_vertices->gpu_data[
+                tris[i][vert_i].locked_vertex_i].xyz[2];
+        }
+        
+        avg_xyz[0] /= 3.0f;
+        avg_xyz[1] /= 3.0f;
+        avg_xyz[2] /= 3.0f;
+        
+        avg_xyz[0] += zsprites_to_render->gpu_data[tris[i]->polygon_i].xyz[0];
+        avg_xyz[1] += zsprites_to_render->gpu_data[tris[i]->polygon_i].xyz[1];
+        avg_xyz[2] += zsprites_to_render->gpu_data[tris[i]->polygon_i].xyz[2];
+        #ifndef LOGGER_IGNORE_ASSERTS
+        log_assert(tris[i][0].polygon_i == tris[i][1].polygon_i);
+        log_assert(tris[i][0].polygon_i == tris[i][2].polygon_i);
+        #endif
+        
+        dists[i] =
+            ((camera.xyz[0] - avg_xyz[0]) * (camera.xyz[0] - avg_xyz[0])) +
+            ((camera.xyz[1] - avg_xyz[1]) * (camera.xyz[1] - avg_xyz[1])) +
+            ((camera.xyz[2] - avg_xyz[2]) * (camera.xyz[2] - avg_xyz[2]));
+    }
+    
+    return dists[0] > dists[1];
+}
+
 inline static void add_alphablending_zpolygons_to_workload(
     GPUDataForSingleFrame * frame_data)
 {
@@ -122,6 +167,23 @@ inline static void add_alphablending_zpolygons_to_workload(
             frame_data->vertices_size += 1;
             log_assert(frame_data->vertices_size < MAX_VERTICES_PER_BUFFER);
         }
+    }
+    
+    if (
+        frame_data->vertices_size > frame_data->first_alphablend_i)
+    {
+        log_assert(
+            (frame_data->vertices_size - frame_data->first_alphablend_i) % 3 == 0);
+        
+        qsort(
+            /* base: */
+                frame_data->vertices + frame_data->first_alphablend_i,
+            /* size_t nel: */
+                (frame_data->vertices_size - frame_data->first_alphablend_i) / 3,
+            /* size_t width: */
+                sizeof(GPUVertex) * 3,
+            /* int (* _Nonnull compar)(const void *, const void *): */
+                compare_triangles_furthest_camera_dist);
     }
 }
 
