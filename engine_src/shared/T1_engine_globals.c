@@ -54,8 +54,8 @@ void engineglobals_init(void) {
     
     GPUProjectionConstants * pjc = &engine_globals->projection_constants;
     
-    pjc->znear =  0.03f;
-    pjc->zfar  =  25.0f;
+    pjc->znear =  0.1f;
+    pjc->zfar  =  6.0f;
     
     float field_of_view = 75.0f;
     pjc->field_of_view_rad = ((field_of_view * 0.5f) / 180.0f) * 3.14159f;

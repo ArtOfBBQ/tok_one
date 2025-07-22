@@ -47,7 +47,8 @@ typedef struct AppleGPUState {
     #endif
     id<MTLRenderPipelineState> singlequad_pls;
     
-    id<MTLDepthStencilState> depth_stencil_state;
+    id<MTLDepthStencilState> opaque_depth_stencil_state;
+    id<MTLDepthStencilState> alpha_depth_stencil_state;
     
     // Textures
     // id<MTLBuffer> texture_populator_buffer;
@@ -309,6 +310,9 @@ bool32_t apple_gpu_init(
     alphablend_pipeline_descriptor
         .colorAttachments[0].destinationRGBBlendFactor =
             MTLBlendFactorOneMinusSourceAlpha;
+    alphablend_pipeline_descriptor
+        .colorAttachments[0].rgbBlendOperation =
+            MTLBlendOperationAdd;
     alphablend_pipeline_descriptor.colorAttachments[1].
         pixelFormat = ags->pixel_format_renderpass1;
     alphablend_pipeline_descriptor.depthAttachmentPixelFormat =
@@ -406,8 +410,32 @@ bool32_t apple_gpu_init(
     depth_descriptor.depthWriteEnabled = YES;
     [depth_descriptor setDepthCompareFunction:MTLCompareFunctionLessEqual];
     // [depth_descriptor setDepthCompareFunction:MTLCompareFunctionAlways];
-    ags->depth_stencil_state = [with_metal_device
+    ags->opaque_depth_stencil_state = [with_metal_device
         newDepthStencilStateWithDescriptor:depth_descriptor];
+    
+    if (Error != NULL)
+    {
+        log_append(
+            [[Error localizedDescription]
+                cStringUsingEncoding:kCFStringEncodingASCII]);
+        #ifndef LOGGER_IGNORE_ASSERTS
+        log_dump_and_crash("Error setting the depth stencil state\n");
+        #endif
+        
+        common_strcpy_capped(
+            error_msg_string,
+            512,
+            "Failed to load the depth stencil shader");
+        return false;
+    }
+    
+    MTLDepthStencilDescriptor * alpha_depth_descriptor =
+        [MTLDepthStencilDescriptor new];
+    alpha_depth_descriptor.depthWriteEnabled = YES; // TODO: test with NO
+    [alpha_depth_descriptor setDepthCompareFunction:MTLCompareFunctionLessEqual];
+    // [depth_descriptor setDepthCompareFunction:MTLCompareFunctionAlways];
+    ags->alpha_depth_stencil_state = [with_metal_device
+        newDepthStencilStateWithDescriptor:alpha_depth_descriptor];
     
     if (Error != NULL)
     {
@@ -1466,7 +1494,7 @@ void platform_gpu_copy_locked_materials(void)
         [shadow_pass_encoder
             setRenderPipelineState:ags->shadows_pls];
         [shadow_pass_encoder
-            setDepthStencilState: ags->depth_stencil_state];
+            setDepthStencilState: ags->opaque_depth_stencil_state];
         [shadow_pass_encoder
             drawPrimitives: MTLPrimitiveTypeTriangle
             vertexStart: 0
@@ -1475,35 +1503,7 @@ void platform_gpu_copy_locked_materials(void)
         [shadow_pass_encoder endEncoding];
     }
     #endif
-    
-    MTLRenderPassDescriptor * render_pass_1_draw_triangles_descriptor =
-        [view currentRenderPassDescriptor];
-    
-    render_pass_1_draw_triangles_descriptor.depthAttachment.loadAction =
-        MTLLoadActionClear;
-    render_pass_1_draw_triangles_descriptor.depthAttachment.clearDepth = 1.0f;
-    render_pass_1_draw_triangles_descriptor.depthAttachment.storeAction =
-        MTLStoreActionStore;
-    render_pass_1_draw_triangles_descriptor.depthAttachment.texture =
-        ags->camera_depth_texture;
-    
-    assert(ags->render_target_texture != NULL);
-    render_pass_1_draw_triangles_descriptor.colorAttachments[0].texture =
-        ags->render_target_texture;
-    render_pass_1_draw_triangles_descriptor.colorAttachments[0].storeAction =
-        MTLStoreActionStore;
-    
-    render_pass_1_draw_triangles_descriptor.colorAttachments[0].clearColor =
-        MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);
-    
-    // ID Buffer for touchables
-    render_pass_1_draw_triangles_descriptor.colorAttachments[1].texture =
-        ags->touch_id_texture;
-    render_pass_1_draw_triangles_descriptor.colorAttachments[1].loadAction =
-        MTLLoadActionLoad; // We clear manually with a blit before this pass
-    render_pass_1_draw_triangles_descriptor.colorAttachments[1].storeAction =
-        MTLStoreActionStore;
-    
+        
     // To kick off our render loop, we blit to clear the touch id buffer
     uint32_t size_bytes = (uint32_t)(
         [ags->touch_id_texture height] *
@@ -1530,13 +1530,40 @@ void platform_gpu_copy_locked_materials(void)
     
     [clear_touch_texture_blit_encoder endEncoding];
     
-    // this inherits from the view's cleardepth (in macos/main.m for mac os),
-    // don't set it here
-    // assert(RenderPassDescriptor.depthAttachment.clearDepth == CLEARDEPTH);
+    
+    MTLRenderPassDescriptor * all_triangles_descriptor =
+    [view currentRenderPassDescriptor];
+    
+    all_triangles_descriptor.depthAttachment.loadAction =
+        MTLLoadActionClear;
+    all_triangles_descriptor.depthAttachment.clearDepth = 1.0f;
+    all_triangles_descriptor.depthAttachment.storeAction =
+        MTLStoreActionStore;
+    all_triangles_descriptor.depthAttachment.texture =
+        ags->camera_depth_texture;
+    
+    assert(ags->render_target_texture != NULL);
+    all_triangles_descriptor.colorAttachments[0].texture =
+        ags->render_target_texture;
+    all_triangles_descriptor.colorAttachments[0].storeAction =
+        MTLStoreActionStore;
+    
+    all_triangles_descriptor.colorAttachments[0].clearColor =
+        MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);
+    
+    // ID Buffer for touchables
+    all_triangles_descriptor.colorAttachments[1].texture =
+        ags->touch_id_texture;
+    all_triangles_descriptor.colorAttachments[1].loadAction =
+        MTLLoadActionLoad; // We clear manually with a blit before this pass
+    all_triangles_descriptor.colorAttachments[1].storeAction =
+        MTLStoreActionStore;
+    
     id<MTLRenderCommandEncoder> render_pass_1_draw_triangles_encoder =
         [command_buffer
             renderCommandEncoderWithDescriptor:
-                render_pass_1_draw_triangles_descriptor];
+                all_triangles_descriptor];
+
     
     assert(ags->cached_viewport.zfar > ags->cached_viewport.znear);
     [render_pass_1_draw_triangles_encoder
@@ -1547,9 +1574,9 @@ void platform_gpu_copy_locked_materials(void)
     
     [render_pass_1_draw_triangles_encoder
         setRenderPipelineState: ags->diamond_pls];
-    assert(ags->depth_stencil_state != nil);
+    assert(ags->opaque_depth_stencil_state != nil);
     [render_pass_1_draw_triangles_encoder
-        setDepthStencilState: ags->depth_stencil_state];
+        setDepthStencilState: ags->opaque_depth_stencil_state];
     [render_pass_1_draw_triangles_encoder
         setDepthClipMode: MTLDepthClipModeClip];
     
@@ -1710,10 +1737,12 @@ void platform_gpu_copy_locked_materials(void)
             triple_buffers[ags->frame_i].first_alphablend_i;
     
     if (engine_globals->draw_triangles && alphablend_verts_size > 0) {
-        assert(alphablend_verts_size < MAX_VERTICES_PER_BUFFER);
-        assert(alphablend_verts_size % 3 == 0);
+        //        assert(alphablend_verts_size < MAX_VERTICES_PER_BUFFER);
+        //        assert(alphablend_verts_size % 3 == 0);
         [render_pass_1_draw_triangles_encoder setRenderPipelineState:
             ags->alphablend_pls];
+        [render_pass_1_draw_triangles_encoder setDepthStencilState:
+            ags->alpha_depth_stencil_state];
         
         [render_pass_1_draw_triangles_encoder
             drawPrimitives: MTLPrimitiveTypeTriangle

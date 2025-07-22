@@ -81,22 +81,31 @@ inline static void draw_bounding_sphere(
 
 #endif
 
+// TODO: transform triangles (rotate etc.), then compare
+// This might not be nescessary at all for our purposes
+#if 0
 static int compare_triangles_furthest_camera_dist(
     const void * a,
     const void * b)
 {
-    GPUVertex * tris[2];
-    tris[0] = (GPUVertex *)a;
-    tris[1] = (GPUVertex *)b;
+    GPUVertexIndices * tris[2];
+    tris[0] = (GPUVertexIndices *)a;
+    tris[1] = (GPUVertexIndices *)b;
     
     float dists[2];
+    float avg_xyz[3];
+    float cur_cam[3];
+    
     dists[0] = 0.0f;
     dists[1] = 0.0f;
     
     for (uint32_t i = 0; i < 2; i++) {
-        float avg_xyz[3];
+        avg_xyz[0] = 0.0f;
+        avg_xyz[1] = 0.0f;
+        avg_xyz[2] = 0.0f;
         
         for (uint32_t vert_i = 0; vert_i < 3; vert_i++) {
+            log_assert(tris[i][vert_i].locked_vertex_i < (int32_t)all_mesh_vertices->size);
             avg_xyz[0] += all_mesh_vertices->gpu_data[
                 tris[i][vert_i].locked_vertex_i].xyz[0];
             avg_xyz[1] += all_mesh_vertices->gpu_data[
@@ -105,26 +114,63 @@ static int compare_triangles_furthest_camera_dist(
                 tris[i][vert_i].locked_vertex_i].xyz[2];
         }
         
-        avg_xyz[0] /= 3.0f;
-        avg_xyz[1] /= 3.0f;
-        avg_xyz[2] /= 3.0f;
-        
-        avg_xyz[0] += zsprites_to_render->gpu_data[tris[i]->polygon_i].xyz[0];
-        avg_xyz[1] += zsprites_to_render->gpu_data[tris[i]->polygon_i].xyz[1];
-        avg_xyz[2] += zsprites_to_render->gpu_data[tris[i]->polygon_i].xyz[2];
         #ifndef LOGGER_IGNORE_ASSERTS
+        log_assert(tris[i][0].polygon_i < (int32_t)all_mesh_vertices->size);
         log_assert(tris[i][0].polygon_i == tris[i][1].polygon_i);
         log_assert(tris[i][0].polygon_i == tris[i][2].polygon_i);
         #endif
         
+        avg_xyz[0] *=
+            zsprites_to_render->gpu_data[tris[i][0].polygon_i].xyz_multiplier[0];
+        avg_xyz[1] *=
+            zsprites_to_render->gpu_data[tris[i][0].polygon_i].xyz_multiplier[1];
+        avg_xyz[2] *=
+            zsprites_to_render->gpu_data[tris[i][0].polygon_i].xyz_multiplier[2];
+        avg_xyz[0] *= zsprites_to_render->gpu_data[tris[i][0].polygon_i].
+            scale_factor;
+        avg_xyz[1] *= zsprites_to_render->gpu_data[tris[i][0].polygon_i].
+            scale_factor;
+        avg_xyz[2] *= zsprites_to_render->gpu_data[tris[i][0].polygon_i].
+            scale_factor;
+        avg_xyz[0] /= 3.0f;
+        avg_xyz[1] /= 3.0f;
+        avg_xyz[2] /= 3.0f;
+        
+        avg_xyz[0] += zsprites_to_render->
+            gpu_data[tris[i][0].polygon_i].xyz[0];
+        avg_xyz[1] += zsprites_to_render->
+            gpu_data[tris[i][0].polygon_i].xyz[1];
+        avg_xyz[2] += zsprites_to_render->
+            gpu_data[tris[i][0].polygon_i].xyz[2];
+        
+        avg_xyz[0] += zsprites_to_render->gpu_data[tris[i][0].polygon_i].xyz_offset[0];
+        avg_xyz[1] += zsprites_to_render->gpu_data[tris[i][0].polygon_i].xyz_offset[1];
+        avg_xyz[2] += zsprites_to_render->gpu_data[tris[i][0].polygon_i].xyz_offset[2];
+        
+        float ign_cam = zsprites_to_render->gpu_data[tris[i][0].polygon_i].
+            ignore_camera;
+        
+        cur_cam[0] = camera.xyz[0] * (1.0f - ign_cam);
+        cur_cam[1] = camera.xyz[1] * (1.0f - ign_cam);
+        cur_cam[2] = camera.xyz[2] * (1.0f - ign_cam);
+        
         dists[i] =
-            ((camera.xyz[0] - avg_xyz[0]) * (camera.xyz[0] - avg_xyz[0])) +
-            ((camera.xyz[1] - avg_xyz[1]) * (camera.xyz[1] - avg_xyz[1])) +
-            ((camera.xyz[2] - avg_xyz[2]) * (camera.xyz[2] - avg_xyz[2]));
+            ((cur_cam[0] - avg_xyz[0]) * (cur_cam[0] - avg_xyz[0])) +
+            ((cur_cam[1] - avg_xyz[1]) * (cur_cam[1] - avg_xyz[1])) +
+            ((cur_cam[2] - avg_xyz[2]) * (cur_cam[2] - avg_xyz[2]));
     }
     
-    return dists[0] > dists[1];
+    if (dists[0] < dists[1]) {
+        return 1;
+    } else if (dists[0] > dists[1]) {
+        return -1;
+    } else {
+        return
+            (int)(tris[0][0].polygon_i + tris[0][0].locked_vertex_i) -
+            (int)(tris[1][0].polygon_i + tris[1][0].locked_vertex_i);
+    }
 }
+#endif
 
 inline static void add_alphablending_zpolygons_to_workload(
     GPUDataForSingleFrame * frame_data)
@@ -169,22 +215,80 @@ inline static void add_alphablending_zpolygons_to_workload(
         }
     }
     
+    #if 0
     if (
         frame_data->vertices_size > frame_data->first_alphablend_i)
     {
         log_assert(
             (frame_data->vertices_size - frame_data->first_alphablend_i) % 3 == 0);
+        log_assert(frame_data->first_alphablend_i % 3 == 0);
+        
+        #ifndef LOGGER_IGNORE_ASSERTS
+        uint32_t initial_first_alphablend_i = frame_data->first_alphablend_i;
+        uint32_t initial_vertices_size = frame_data->vertices_size;
+        
+        for (
+            int32_t i = (int)frame_data->first_alphablend_i;
+            i < (int)frame_data->vertices_size;
+            i += 3)
+        {
+            log_assert(
+                frame_data->vertices[i+0].polygon_i ==
+                frame_data->vertices[i+1].polygon_i);
+            log_assert(
+                frame_data->vertices[i+0].polygon_i ==
+                frame_data->vertices[i+2].polygon_i);
+            log_assert(
+                frame_data->vertices[i+0].locked_vertex_i !=
+                frame_data->vertices[i+1].locked_vertex_i);
+            log_assert(
+                frame_data->vertices[i+0].locked_vertex_i !=
+                frame_data->vertices[i+2].locked_vertex_i);
+            log_assert(
+                frame_data->vertices[i+1].locked_vertex_i !=
+                frame_data->vertices[i+2].locked_vertex_i);
+        }
+        #endif
         
         qsort(
             /* base: */
                 frame_data->vertices + frame_data->first_alphablend_i,
             /* size_t nel: */
-                (frame_data->vertices_size - frame_data->first_alphablend_i) / 3,
+                (frame_data->vertices_size -
+                    frame_data->first_alphablend_i) / 3,
             /* size_t width: */
-                sizeof(GPUVertex) * 3,
+                sizeof(GPUVertexIndices) * 3,
             /* int (* _Nonnull compar)(const void *, const void *): */
                 compare_triangles_furthest_camera_dist);
+        
+        #ifndef LOGGER_IGNORE_ASSERTS
+        log_assert(
+            frame_data->first_alphablend_i == initial_first_alphablend_i);
+        log_assert(frame_data->vertices_size == initial_vertices_size);
+        for (
+            int32_t i = (int)frame_data->first_alphablend_i;
+            i < (int)frame_data->vertices_size;
+            i += 3)
+        {
+            log_assert(
+                frame_data->vertices[i+0].polygon_i ==
+                frame_data->vertices[i+1].polygon_i);
+            log_assert(
+                frame_data->vertices[i+0].polygon_i ==
+                frame_data->vertices[i+2].polygon_i);
+            log_assert(
+                frame_data->vertices[i+0].locked_vertex_i !=
+                frame_data->vertices[i+1].locked_vertex_i);
+            log_assert(
+                frame_data->vertices[i+0].locked_vertex_i !=
+                frame_data->vertices[i+2].locked_vertex_i);
+            log_assert(
+                frame_data->vertices[i+1].locked_vertex_i !=
+                frame_data->vertices[i+2].locked_vertex_i);
+        }
+        #endif
     }
+    #endif
 }
 
 inline static void add_opaque_zpolygons_to_workload(

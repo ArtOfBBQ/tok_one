@@ -8,7 +8,7 @@
 // requires shared data to be aligned to page size :(
 typedef struct GPUDataForSingleFrame
 {
-    GPUVertex *                                  vertices;
+    GPUVertexIndices *                                  vertices;
     GPUSpriteCollection *              polygon_collection;
     GPULight *                                     lights;
     GPUCamera *                                    camera;

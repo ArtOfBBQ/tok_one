@@ -388,7 +388,7 @@ void init_application_before_gpu_init(
     
     // init the buffers that contain our vertices to send to the GPU
     gpu_shared_data_collection->vertices_allocation_size =
-        pad_to_page_size(sizeof(GPUVertex) * MAX_VERTICES_PER_BUFFER);
+        pad_to_page_size(sizeof(GPUVertexIndices) * MAX_VERTICES_PER_BUFFER);
     
     gpu_shared_data_collection->polygons_allocation_size =
         pad_to_page_size(sizeof(GPUzSprite) * MAX_ZSPRITES_PER_BUFFER);
@@ -417,7 +417,7 @@ void init_application_before_gpu_init(
         pad_to_page_size(sizeof(GPURawVertex) * MAX_LINE_VERTICES);
     
     gpu_shared_data_collection->postprocessing_constants_allocation_size =
-        pad_to_page_size(sizeof(GPUVertex) * MAX_VERTICES_PER_BUFFER);
+        pad_to_page_size(sizeof(GPUVertexIndices) * MAX_VERTICES_PER_BUFFER);
     
     for (
         uint32_t cur_frame_i = 0;
@@ -425,7 +425,7 @@ void init_application_before_gpu_init(
         cur_frame_i++)
     {
         gpu_shared_data_collection->triple_buffers[cur_frame_i].vertices =
-            (GPUVertex *)malloc_from_unmanaged_aligned(
+            (GPUVertexIndices *)malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection->vertices_allocation_size,
                 page_size);
         

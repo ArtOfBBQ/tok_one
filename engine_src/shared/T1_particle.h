@@ -80,7 +80,7 @@ typedef struct ParticleEffect {
     CPUzSprite zpolygon_cpu;
     GPUzSprite zpolygon_gpu;
     
-    int32_t object_id;
+    int32_t zsprite_id;
     
     uint64_t random_seed;
     uint64_t elapsed;

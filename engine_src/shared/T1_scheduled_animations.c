@@ -491,7 +491,7 @@ void scheduled_animations_resolve(void)
                     zsprite_delete(anim->affected_zsprite_id);
                     
                     #if PARTICLES_ACTIVE
-                    delete_particle_effect(anim->affected_sprite_id);
+                    delete_particle_effect(anim->affected_zsprite_id);
                     #endif
                 }
             } else {

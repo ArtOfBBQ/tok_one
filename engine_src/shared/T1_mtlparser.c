@@ -24,6 +24,7 @@ typedef enum MTLToken {
     MTLTOKEN_NEWMTL,
     MTLTOKEN_USEBASEMTL,
     MTLTOKEN_COMMENT,
+    MTLTOKEN_T1_COMMENT,
     MTLTOKEN_NS, // Specular Exponent
     MTLTOKEN_AMBIENT_MAP,
     MTLTOKEN_DIFFUSE_MAP,
@@ -46,7 +47,7 @@ typedef enum MTLToken {
     MTLTOKEN_CLEARCOAT_ROUGHNESS,
     MTLTOKEN_ANISOTROPY,
     MTLTOKEN_ANISOTROPY_ROTATION,
-    MTLTOKEN_STRINGLITERAL = 27,
+    MTLTOKEN_STRINGLITERAL = 100,
 } MTLToken;
 
 static void mtlparser_reset(void) {
@@ -443,6 +444,13 @@ void mtlparser_parse(
     
     T1_token_clear_start_pattern();
     T1_token_clear_stop_patterns();
+    T1_token_set_reg_start_pattern("#T1");
+    T1_token_set_reg_middle_cap(0);
+    T1_token_register(MTLTOKEN_T1_COMMENT, good);
+    if (!*good) { return; }
+    
+    T1_token_clear_start_pattern();
+    T1_token_clear_stop_patterns();
     T1_token_set_reg_start_pattern("#");
     T1_token_set_reg_middle_cap(0);
     T1_token_register(MTLTOKEN_COMMENT, good);
@@ -743,6 +751,84 @@ void mtlparser_parse(
                 if (token->enum_value == MTLTOKEN_USEBASEMTL) {
                     current_material->use_base_mtl_flag = 1;
                     i++;
+                }
+                
+                break;
+            }
+            case MTLTOKEN_T1_COMMENT: {
+                
+                i++;
+                token = T1_token_get_token_at(i);
+                if (token->enum_value != MTLTOKEN_SPACE) {
+                    *good = 0;
+                    mtlparser_state->last_error_msg[0] = '\0';
+                    mtlparser_state->mtlparser_strlcat(
+                    mtlparser_state->last_error_msg,
+                    "Expected a space after special comment #T1",
+                    ERROR_MSG_CAP);
+                    return;
+                }
+                
+                i++;
+                token = T1_token_get_token_at(i);
+                if (token->enum_value != MTLTOKEN_STRINGLITERAL) {
+                    *good = 0;
+                    mtlparser_state->last_error_msg[0] = '\0';
+                    mtlparser_state->mtlparser_strlcat(
+                        mtlparser_state->last_error_msg,
+                        "Expected a string literal describing a special "
+                        "property after special comment #T1, got: ",
+                        ERROR_MSG_CAP);
+                    mtlparser_state->mtlparser_strlcat(
+                        mtlparser_state->last_error_msg,
+                        token->string_value,
+                        ERROR_MSG_CAP);
+                    return;
+                }
+                
+                float * target_float = NULL;
+                if (
+                    common_are_equal_strings(
+                        token->string_value,
+                        "uv_scroll[0]"))
+                {
+                    target_float = &current_material->T1_uv_scroll[0];
+                } else if (
+                    common_are_equal_strings(
+                        token->string_value,
+                        "uv_scroll[1]"))
+                {
+                    target_float = &current_material->T1_uv_scroll[1];
+                } else {
+                    *good = 0;
+                    mtlparser_state->last_error_msg[0] = '\0';
+                    mtlparser_state->mtlparser_strlcat(
+                        mtlparser_state->last_error_msg,
+                        "Unrecognized special embedded comment property: ",
+                        ERROR_MSG_CAP);
+                    mtlparser_state->mtlparser_strlcat(
+                        mtlparser_state->last_error_msg,
+                        token->string_value,
+                        ERROR_MSG_CAP);
+                    return;
+                }
+                
+                parse_single_float_stat(
+                    /* uint32_t * i: */
+                        &i,
+                    /* TokToken * token: */
+                        token,
+                    /* const char * material_name: */
+                        current_material->name,
+                    /* float * float_stat: */
+                        target_float,
+                    /* uint32_t * good: */
+                        good);
+                
+                if (*good) {
+                    *good = 0;
+                } else {
+                    return;
                 }
                 
                 break;

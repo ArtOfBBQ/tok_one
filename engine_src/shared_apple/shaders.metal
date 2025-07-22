@@ -83,7 +83,7 @@ float4 project_float3_to_float4_perspective(
 
 vertex float4 shadows_vertex_shader(
     uint vertex_i [[ vertex_id ]],
-    const device GPUVertex * vertices [[ buffer(0) ]],
+    const device GPUVertexIndices * vertices [[ buffer(0) ]],
     const device GPUzSprite * polygons [[ buffer(1) ]],
     const device GPULight * lights [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
@@ -200,7 +200,7 @@ float get_distance(
 vertex RasterizerPixel
 vertex_shader(
     uint vertex_i [[ vertex_id ]],
-    const device GPUVertex * vertices [[ buffer(0) ]],
+    const device GPUVertexIndices * vertices [[ buffer(0) ]],
     const device GPUzSprite * polygons [[ buffer(1) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPULockedVertex * locked_vertices [[ buffer(4) ]],
@@ -400,13 +400,20 @@ float4 get_lit(
     
     float4 diffuse_texture_sample = vector_float4(0.75f, 0.75f, 0.75f, 1.0f);
     
-    float2 uv_adjusted = fmod(
+    float2 uv_adjusted =
         in.texture_coordinate + (
         is_base_mtl *
         vector_float2(
             zsprite->base_mat_uv_offsets[0],
-            zsprite->base_mat_uv_offsets[1])),
-        1.0f);
+            zsprite->base_mat_uv_offsets[1]));
+    
+    float2 uv_scroll = vector_float2(
+        material->uv_scroll[0],
+        material->uv_scroll[1]);
+    
+    uv_adjusted += (updating_globals->timestamp / 1000000.0f) * uv_scroll;
+    
+    uv_adjusted = fmod(uv_adjusted, 1.0f);
     
     constexpr sampler texture_sampler(
         mag_filter::linear,
@@ -681,6 +688,8 @@ fragment_shader(
         discard_fragment();
     }
     
+    lit_color[3] = clamp(lit_color[3], 0.0f, 1.0f);
+    
     FragmentAndTouchableOut packed_out =
         pack_color_and_touchable_id(lit_color, in.touchable_id);
     
@@ -734,6 +743,12 @@ alphablending_fragment_shader(
         /* const bool is_base_mtl: */
             material_i == PARENT_MATERIAL_BASE);
     
+    if (lit_color[3] < 0.05f)
+    {
+        discard_fragment();
+    }
+    
+    lit_color[3] = clamp(lit_color[3], 0.0f, 1.0f);
     return pack_color_and_touchable_id(lit_color, in.touchable_id);
 }
 

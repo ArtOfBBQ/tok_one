@@ -4,6 +4,7 @@
 #include <stdio.h> // TODO: delete me
 #include <assert.h> // TODO: delete me
 
+#include "T1_common.h"
 #include "T1_tokenizer.h"
 
 typedef struct ParsedMaterial {
@@ -29,6 +30,7 @@ typedef struct ParsedMaterial {
     float diffuse_rgb[3];
     float specular_rgb[3];
     float emissive_rgb[3];
+    float T1_uv_scroll[2];
     uint8_t use_base_mtl_flag;
 } ParsedMaterial;
 

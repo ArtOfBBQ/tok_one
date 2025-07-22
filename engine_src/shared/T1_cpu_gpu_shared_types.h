@@ -19,10 +19,10 @@
 
 
 #pragma pack(push, 1)
-typedef struct GPUVertex {
+typedef struct GPUVertexIndices {
     int locked_vertex_i; // index into GPULockedVertex buffer
     int polygon_i;       // index into GPUPolygonCollection buffer
-} GPUVertex;
+} GPUVertexIndices;
 
 /*
 A 'set and forget' description of a triangle vertex, intended to stay static
@@ -62,6 +62,7 @@ typedef struct GPULockedMaterial {
     float diffuse_rgb[3];
     float specular_rgb[3];
     float rgb_cap[3];
+    float uv_scroll[2];
     int   texturearray_i;
     int   texture_i;
     #if NORMAL_MAPPING_ACTIVE

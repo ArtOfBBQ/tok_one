@@ -10,7 +10,7 @@ static void construct_lineparticle_effect_no_zpoly(
 {
     to_construct->random_seed =
         (uint64_t)tok_rand_at_i(
-            platform_get_current_time_microsecs() %
+            platform_get_current_time_us() %
                 RANDOM_SEQUENCE_SIZE) % 75;
     to_construct->elapsed = 0;
     to_construct->wait_first = 0;
@@ -311,7 +311,7 @@ void add_lineparticle_effects_to_workload(
                 
             if (
                 frame_data->polygon_collection->size + 1 <
-                    MAX_POLYGONS_PER_BUFFER)
+                    MAX_ZSPRITES_PER_BUFFER)
             {
                 frame_data->polygon_collection->size += 1;
             } else {
@@ -334,7 +334,7 @@ void construct_particle_effect(
     poly_request.gpu_data       = &to_construct->zpolygon_gpu;
     zsprite_construct(/* PolygonRequest *to_construct: */ &poly_request);
     
-    to_construct->object_id            = -1;
+    to_construct->zsprite_id            = -1;
     to_construct->zpolygon_cpu.mesh_id =  1;
     
     to_construct->zpolygon_cpu.committed = true;
@@ -409,7 +409,7 @@ void commit_particle_effect(ParticleEffect * to_request)
 
 void delete_particle_effect(int32_t with_object_id) {
     for (uint32_t i = 0; i < particle_effects_size; i++) {
-        if (particle_effects[i].object_id == with_object_id) {
+        if (particle_effects[i].zsprite_id == with_object_id) {
             particle_effects[i].deleted = true;
         }
     }
@@ -440,7 +440,7 @@ void add_particle_effects_to_workload(
             !particle_effects[i].committed ||
             particle_effects[i].zpolygon_cpu.alpha_blending_enabled !=
                 alpha_blending ||
-            frame_data->polygon_collection->size >= MAX_POLYGONS_PER_BUFFER)
+            frame_data->polygon_collection->size >= MAX_ZSPRITES_PER_BUFFER)
         {
             continue;
         }
@@ -543,7 +543,7 @@ void add_particle_effects_to_workload(
             }
             
             log_assert(
-                frame_data->polygon_collection->size < MAX_POLYGONS_PER_BUFFER);
+                frame_data->polygon_collection->size < MAX_ZSPRITES_PER_BUFFER);
             common_memcpy(
                 /* void * dst: */
                     frame_data->polygon_collection->polygons +
@@ -554,7 +554,7 @@ void add_particle_effects_to_workload(
                     sizeof(GPUzSprite));
             
             log_assert(
-                frame_data->polygon_collection->size < MAX_POLYGONS_PER_BUFFER);
+                frame_data->polygon_collection->size < MAX_ZSPRITES_PER_BUFFER);
             
             float * initial_random_add_1_at = (float *)&particle_effects[i].
                 gpustats_initial_random_add_1;
@@ -679,7 +679,7 @@ void add_particle_effects_to_workload(
             
             frame_data->polygon_collection->size += 1;
             log_assert(frame_data->polygon_collection->size <
-                MAX_POLYGONS_PER_BUFFER);
+                MAX_ZSPRITES_PER_BUFFER);
         }
         
         if (particles_active < 1) {

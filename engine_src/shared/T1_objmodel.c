@@ -684,6 +684,11 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 
                 locked_mat->illum = 1.0f;
                 
+                locked_mat->uv_scroll[0] = parsed_materials[matching_parsed_materials_i].
+                        T1_uv_scroll[0];
+                locked_mat->uv_scroll[1] = parsed_materials[matching_parsed_materials_i].
+                        T1_uv_scroll[1];
+                
                 T1_texture_array_get_filename_location(
                     /* const char * for_filename: */
                         parsed_materials[matching_parsed_materials_i].diffuse_map,
