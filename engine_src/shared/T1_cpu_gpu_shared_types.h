@@ -99,7 +99,6 @@ typedef struct GPUSpriteCollection {
 typedef struct GPULight {
     float xyz[3];
     float angle_xyz[3];
-    float ambient;
     float diffuse;
     float specular;
     float reach;

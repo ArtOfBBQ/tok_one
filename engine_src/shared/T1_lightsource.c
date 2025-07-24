@@ -20,7 +20,6 @@ static void construct_zlight(zLightSource * to_construct) {
     to_construct->RGBA[1]       = 1.0f;
     to_construct->RGBA[2]       = 1.0f;
     to_construct->RGBA[3]       = 1.0f;
-    to_construct->ambient       = 0.50f; // mimics blender, very low ambient
     to_construct->diffuse       = 1.00f;
     to_construct->specular      = 0.50f; // mimics blender's behavior
     to_construct->deleted       = false;
@@ -263,8 +262,6 @@ void copy_lights(
             lights[*lights_size].rgb[2] =
                 zlights_to_apply[i].RGBA[2];
             
-            lights[*lights_size].ambient =
-                zlights_to_apply[i].ambient;
             lights[*lights_size].diffuse =
                 zlights_to_apply[i].diffuse;
             lights[*lights_size].specular =
@@ -313,7 +310,6 @@ void translate_lights(
         lights[i].rgb[1] = zlights_to_apply[i].RGBA[1];
         lights[i].rgb[2] = zlights_to_apply[i].RGBA[2];
         
-        lights[i].ambient = zlights_to_apply[i].ambient;
         lights[i].diffuse = zlights_to_apply[i].diffuse;
         lights[i].reach = zlights_to_apply[i].reach;
     }

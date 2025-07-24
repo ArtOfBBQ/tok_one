@@ -377,16 +377,12 @@ float4 get_lit(
     const bool is_base_mtl)
 {
     float4 lit_color = vector_float4(
-        0.0f,
-        0.0f,
-        0.0f,
-        1.0f);
-    
-    float4 ambient_base = vector_float4(
         material->ambient_rgb[0],
         material->ambient_rgb[1],
         material->ambient_rgb[2],
-        1.0f);
+        0.0f);
+    lit_color *= 0.10f;
+    
     float4 diffuse_base = vector_float4(
         material->diffuse_rgb[0],
         material->diffuse_rgb[1],
@@ -508,12 +504,6 @@ float4 get_lit(
         
         attenuation = clamp(attenuation, 0.00f, 1.00f);
         
-        float4 light_ambient_multiplier =
-            attenuation *
-            light_color *
-            lights[i].ambient *
-            shadow_factor;
-        
         // This normal may be perturbed if a normal map is active,
         // or it may be used as-is
         float3 adjusted_normal = in.normal;
@@ -557,10 +547,6 @@ float4 get_lit(
                     adjusted_normal,
                     object_to_light),
                 0.0f) * 0.85f + 0.15f;
-        
-        lit_color += (
-            ambient_base *
-            light_ambient_multiplier);
         
         float4 light_diffuse_multiplier =
             attenuation *

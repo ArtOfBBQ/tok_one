@@ -958,6 +958,28 @@ static bool32_t evaluate_terminal_command(
     }
     #endif
     
+    if (
+        common_are_equal_strings(command, "INFO LIGHTS") ||
+        common_are_equal_strings(command, "LIGHTS") ||
+        common_are_equal_strings(command, "INFO LIGHT") ||
+        common_are_equal_strings(command, "LIGHT") ||
+        common_are_equal_strings(command, "LIGHTING"))
+    {
+        common_strcpy_capped(
+            response,
+            SINGLE_LINE_MAX,
+            "There are ");
+        common_strcat_uint_capped(
+            response,
+            SINGLE_LINE_MAX,
+            zlights_to_apply_size);
+        common_strcat_capped(
+            response,
+            SINGLE_LINE_MAX,
+            " lights in this scene.\n");
+        return true;
+    }
+    
     return false;
 }
 
