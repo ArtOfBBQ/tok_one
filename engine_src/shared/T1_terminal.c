@@ -445,7 +445,8 @@ static bool32_t evaluate_terminal_command(
         common_are_equal_strings(command, "CAMERA POS") ||
         common_are_equal_strings(command, "CAMERA POSITION") ||
         common_are_equal_strings(command, "CAMERA INFO") ||
-        common_are_equal_strings(command, "INFO CAMERA"))
+        common_are_equal_strings(command, "INFO CAMERA") ||
+        common_are_equal_strings(command, "CAMERA"))
     {
         common_strcpy_capped(
             response,
