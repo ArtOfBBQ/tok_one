@@ -909,7 +909,7 @@ void platform_gpu_init_texture_array(
     texture_descriptor.mipmapLevelCount =
         use_bc1_compression || texture_array_i == 0 ?
         1 :
-        (NSUInteger)floor(
+        floor(
             log2((double)MAX(
                 single_image_width,
                 single_image_height))) + 1;

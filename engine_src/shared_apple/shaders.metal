@@ -412,8 +412,8 @@ float4 get_lit(
     uv_adjusted = fmod(uv_adjusted, 1.0f);
     
     constexpr sampler texture_sampler(
-        mag_filter::nearest,
-        min_filter::nearest
+        mag_filter::linear,
+        min_filter::linear
         #if MIPMAPS_ACTIVE
         ,mip_filter::nearest
         #endif

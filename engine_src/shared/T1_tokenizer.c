@@ -44,7 +44,7 @@ typedef struct RegisteredToken {
     uint8_t bitflags;
 } RegisteredToken;
 
-#define ASCII_STORE_CAP 9500000
+#define ASCII_STORE_CAP 20000000
 #define REGISTERED_TOKENS_CAP 2000
 #define TOKENS_CAP 10000
 #define NUMBERS_CAP 10000
@@ -904,7 +904,7 @@ void T1_token_run(
             new->line_number = line_number;
             new->enum_value = tts->regs[matching_token_i].enum_value;
             new->string_value = copy_string_to_ascii_store(input + i, good);
-            assert(*good); // TODO: don't copy huge strings, copy what's needed
+            assert(*good); // not engouh ASCII store size
             new->string_value[data_len] = '\0';
             new->string_value_size = (uint16_t)data_len;
             
