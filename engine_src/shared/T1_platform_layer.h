@@ -233,6 +233,11 @@ void platform_gpu_init_texture_array(
     const uint32_t single_image_height,
     const bool32_t use_bc1_compression);
 
+#if MIPMAPS_ACTIVE
+void platform_gpu_generate_mipmaps_for_texture_array(
+    const int32_t texture_array_i);
+#endif
+
 void platform_gpu_push_texture_slice_and_free_rgba_values(
     const int32_t texture_array_i,
     const int32_t texture_i,

@@ -412,8 +412,12 @@ float4 get_lit(
     uv_adjusted = fmod(uv_adjusted, 1.0f);
     
     constexpr sampler texture_sampler(
-        mag_filter::linear,
-        min_filter::linear);
+        mag_filter::nearest,
+        min_filter::nearest
+        #if MIPMAPS_ACTIVE
+        ,mip_filter::nearest
+        #endif
+        );
     
     #if TEXTURES_ACTIVE
     if (material->texturearray_i >= 0)

@@ -727,6 +727,18 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     
     T1_texture_array_push_all_predecoded();
     
+    #if MIPMAPS_ACTIVE
+    for (
+        int32_t i = 1;
+        i < (int32_t)texture_arrays_size;
+        i++)
+    {
+        if (!texture_arrays[i].bc1_compressed) {
+            platform_gpu_generate_mipmaps_for_texture_array(i);
+        }
+    }
+    #endif
+    
     if (!application_running) {
         gameloop_active = true;
         return;

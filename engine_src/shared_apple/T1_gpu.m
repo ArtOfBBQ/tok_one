@@ -906,6 +906,13 @@ void platform_gpu_init_texture_array(
     texture_descriptor.storageMode = MTLStorageModePrivate;
     texture_descriptor.width = single_image_width;
     texture_descriptor.height = single_image_height;
+    texture_descriptor.mipmapLevelCount =
+        use_bc1_compression || texture_array_i == 0 ?
+        1 :
+        (NSUInteger)floor(
+            log2((double)MAX(
+                single_image_width,
+                single_image_height))) + 1;
     id<MTLTexture> texture = [ags->device
         newTextureWithDescriptor:texture_descriptor];
     
@@ -1007,6 +1014,38 @@ void platform_gpu_fetch_rgba_at(
     
     *good = true;
 }
+
+#if MIPMAPS_ACTIVE
+void platform_gpu_generate_mipmaps_for_texture_array(
+    const int32_t texture_array_i)
+{
+    // no mipmaps for font
+    log_assert(texture_array_i != 0);
+    // no mipmaps for bc1 compressed arrays
+    log_assert(!texture_arrays[texture_array_i].bc1_compressed);
+    
+    id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
+    
+    // Create a blit command encoder
+    id<MTLBlitCommandEncoder> blit_mipmap_encoder = [combuf blitCommandEncoder];
+    
+    // Generate mipmaps
+    [blit_mipmap_encoder
+        generateMipmapsForTexture:
+            ags->metal_textures[texture_array_i]
+        ];
+    
+    [blit_mipmap_encoder endEncoding];
+    
+    // Add a completion handler and commit the command buffer.
+    [combuf addCompletedHandler:^(id<MTLCommandBuffer> cb) {
+        // Populate private buffer.
+        (void)cb;
+    }];
+    [combuf commit];
+    [combuf waitUntilCompleted];
+}
+#endif
 
 void platform_gpu_push_texture_slice_and_free_rgba_values(
     const int32_t texture_array_i,
