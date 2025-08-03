@@ -377,6 +377,7 @@ void scheduled_animations_request_fade_and_destroy(
     fade_destroy->affected_zsprite_id = object_id;
     fade_destroy->duration_us = duration_us;
     fade_destroy->lightsource_vals.reach = 0.0f;
+    fade_destroy->gpu_polygon_vals.alpha = 0.0f;
     fade_destroy->delete_object_when_finished = true;
     scheduled_animations_commit(fade_destroy);
 }
