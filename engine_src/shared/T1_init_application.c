@@ -549,10 +549,12 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         return;
     }
     
-    T1_texture_array_get_filename_location(
-        "perlin_noise.dds",
-        &engine_globals->postprocessing_constants.perlin_texturearray_i,
-        &engine_globals->postprocessing_constants.perlin_texture_i);
+    T1Tex perlin_tex = T1_texture_array_get_filename_location(
+        "perlin_noise.dds");
+    engine_globals->postprocessing_constants.perlin_texturearray_i =
+        perlin_tex.array_i;
+    engine_globals->postprocessing_constants.perlin_texture_i =
+        perlin_tex.slice_i;
     
     if (
         engine_globals->postprocessing_constants.perlin_texturearray_i < 1 ||

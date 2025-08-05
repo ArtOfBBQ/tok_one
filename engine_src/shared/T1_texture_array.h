@@ -59,10 +59,13 @@ void T1_texture_array_register_new_by_splitting_image(
     const uint32_t rows,
     const uint32_t columns);
 
-void T1_texture_array_get_filename_location(
-    const char * for_filename,
-    int32_t * texture_array_i_recipient,
-    int32_t * texture_i_recipient);
+typedef struct T1Tex {
+    int16_t array_i;
+    int16_t slice_i;
+} T1Tex;
+
+T1Tex T1_texture_array_get_filename_location(
+    const char * for_filename);
 
 void T1_texture_array_load_font_images(void);
 

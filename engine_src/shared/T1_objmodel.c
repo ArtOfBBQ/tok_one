@@ -689,13 +689,13 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 locked_mat->uv_scroll[1] = parsed_materials[matching_parsed_materials_i].
                         T1_uv_scroll[1];
                 
-                T1_texture_array_get_filename_location(
+                T1Tex lmat = T1_texture_array_get_filename_location(
                     /* const char * for_filename: */
-                        parsed_materials[matching_parsed_materials_i].diffuse_map,
-                    /* int32_t * texture_array_i_recipient: */
-                        &locked_mat->texturearray_i,
-                    /* int32_t * texture_i_recipient: */
-                        &locked_mat->texture_i);
+                        parsed_materials[matching_parsed_materials_i].
+                            diffuse_map);
+                locked_mat->texturearray_i = lmat.array_i;
+                locked_mat->texture_i = lmat.slice_i;
+                
                 if (
                     parsed_materials[matching_parsed_materials_i].
                         diffuse_map[0] != '\0')

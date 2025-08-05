@@ -467,33 +467,32 @@ void T1_texture_array_preregister_null_image(
         filename);
 }
 
-void T1_texture_array_get_filename_location(
-    const char * for_filename,
-    int32_t * texture_array_i_recipient,
-    int32_t * texture_i_recipient)
+T1Tex T1_texture_array_get_filename_location(
+    const char * for_filename)
 {
-    *texture_array_i_recipient = -1;
-    *texture_i_recipient = -1;
+    T1Tex return_value;
     
-    if (for_filename[0] == '\0') { return; }
+    return_value.array_i = -1;
+    return_value.slice_i = -1;
     
-    for (uint32_t i = 0; i < texture_arrays_size; i++) {
+    if (for_filename[0] == '\0') { return return_value; }
+    
+    for (int16_t i = 0; i < (int16_t)texture_arrays_size; i++) {
         log_assert(texture_arrays[i].images_size < 2000);
-        for (uint32_t j = 0; j < texture_arrays[i].images_size; j++) {
+        for (int16_t j = 0; j < (int16_t)texture_arrays[i].images_size; j++) {
             if (
                 common_are_equal_strings(
                     texture_arrays[i].images[j].filename,
                     for_filename))
             {
-                *texture_array_i_recipient = (int32_t)i;
-                *texture_i_recipient = (int32_t)j;
-                return;
+                return_value.array_i = i;
+                return_value.slice_i = j;
+                break;
             }
         }
     }
     
-    *texture_array_i_recipient = -1;
-    *texture_i_recipient       = -1;
+    return return_value;
 }
 
 void T1_texture_array_load_font_images(void) {
