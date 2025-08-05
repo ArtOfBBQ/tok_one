@@ -470,12 +470,17 @@ void T1_texture_array_preregister_null_image(
 T1Tex T1_texture_array_get_filename_location(
     const char * for_filename)
 {
+    // log_assert(for_filename != NULL);
+    // log_assert(for_filename[0] != '\0');
+    
     T1Tex return_value;
     
     return_value.array_i = -1;
     return_value.slice_i = -1;
     
-    if (for_filename[0] == '\0') { return return_value; }
+    if (for_filename == NULL || for_filename[0] == '\0') {
+        return return_value;
+    }
     
     for (int16_t i = 0; i < (int16_t)texture_arrays_size; i++) {
         log_assert(texture_arrays[i].images_size < 2000);
