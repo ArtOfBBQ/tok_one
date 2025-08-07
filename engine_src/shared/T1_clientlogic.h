@@ -71,11 +71,13 @@ void client_logic_threadmain(int32_t threadmain_id);
 /*
 will be called when a ScheduledAmimation (see scheduled_animations.h) runs out
 */
+#if 0
 void client_logic_animation_callback(
     const int32_t callback_id,
     const float arg_1,
     const float arg_2,
     const int32_t arg_3);
+#endif
 
 /*
 will be called once per frame, before rendering that frame
