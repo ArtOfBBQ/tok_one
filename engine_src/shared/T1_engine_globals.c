@@ -77,6 +77,8 @@ void engineglobals_init(void) {
     
     engine_globals->pixelation_div = 1;
     
+    engine_globals->timedelta_mult = 1.0f;
+    
     engine_globals->postprocessing_constants.timestamp = 0;
     engine_globals->postprocessing_constants.blur_pct = 0.18f;
     engine_globals->postprocessing_constants.nonblur_pct = 1.0f;
@@ -94,10 +96,6 @@ void engineglobals_init(void) {
     engine_globals->postprocessing_constants.fog_color[1] = 1.0f;
     engine_globals->postprocessing_constants.fog_color[2] = 1.0f;
     engine_globals->postprocessing_constants.fog_factor = 0.0f;
-    #endif
-    
-    #if SHADOWS_ACTIVE
-    engine_globals->postprocessing_constants.in_shadow_multiplier = 0.5f;
     #endif
     
     engine_globals->last_clickray_origin[0]    = 0.0f;

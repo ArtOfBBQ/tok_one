@@ -95,8 +95,14 @@ static void show_dead_simple_text(
 void gameloop_update_before_render_pass(
     GPUDataForSingleFrame * frame_data)
 {
-    uint64_t elapsed = engine_globals->this_frame_timestamp_us -
-    gameloop_previous_time;
+    engine_globals->elapsed = engine_globals->this_frame_timestamp_us -
+        gameloop_previous_time;
+    
+    // TODO: set the frame timestamp to an adjusted value also
+    engine_globals->elapsed = (uint64_t)(
+        (double)engine_globals->elapsed *
+        (double)engine_globals->timedelta_mult);
+    
     gameloop_previous_time = engine_globals->this_frame_timestamp_us;
     
     common_memcpy(frame_data->camera, &camera, sizeof(GPUCamera));
@@ -166,7 +172,7 @@ void gameloop_update_before_render_pass(
         show_dead_simple_text(
             frame_data,
             crashed_top_of_screen_msg,
-            elapsed);
+            engine_globals->elapsed);
         return;
     }
     
@@ -219,10 +225,10 @@ void gameloop_update_before_render_pass(
         for (uint32_t zs_i = 0; zs_i < zsprites_to_render->size; zs_i++) {
             if (
                 zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us >
-                    elapsed)
+                    engine_globals->elapsed)
             {
                 zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us -=
-                    elapsed;
+                    engine_globals->elapsed;
             } else if (
                 zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us > 0)
             {
@@ -237,13 +243,13 @@ void gameloop_update_before_render_pass(
         user_interactions[INTR_PREVIOUS_TOUCH_MOVE] =
             user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE];
         
-        ui_elements_handle_touches(elapsed);
+        ui_elements_handle_touches(engine_globals->elapsed);
         
         #if TERMINAL_ACTIVE
         update_terminal();
         #endif
         
-        client_logic_update(elapsed);
+        client_logic_update(engine_globals->elapsed);
         
         camera.xyz_cosangle[0] = cosf(camera.xyz_angle[0]);
         camera.xyz_cosangle[1] = cosf(camera.xyz_angle[1]);
@@ -262,7 +268,7 @@ void gameloop_update_before_render_pass(
         renderer_hardware_render(
                 frame_data,
             /* uint64_t elapsed_us: */
-                elapsed);
+                engine_globals->elapsed);
         
         uint32_t overflow_vertices = frame_data->vertices_size % 3;
         frame_data->vertices_size -= overflow_vertices;
@@ -271,7 +277,7 @@ void gameloop_update_before_render_pass(
     if (engine_globals->draw_fps) {
         text_request_fps_counter(
             /* uint64_t elapsed_us: */
-                elapsed);
+                engine_globals->elapsed);
     } else if (engine_globals->draw_top_touchable_id) {
         text_request_top_touchable_id(
             user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].

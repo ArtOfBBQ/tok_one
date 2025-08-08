@@ -565,6 +565,12 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         return;
     }
     
+    #if SHADOWS_ACTIVE
+    engine_globals->postprocessing_constants.in_shadow_multipliers[0] = 1.8f;
+    engine_globals->postprocessing_constants.in_shadow_multipliers[1] = 0.0f;
+    engine_globals->postprocessing_constants.in_shadow_multipliers[2] = 0.0f;
+    #endif
+    
     bool32_t success = false;
     char errmsg[256];
     errmsg[0] = '\0';

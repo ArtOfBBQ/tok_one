@@ -453,7 +453,7 @@ float4 get_lit(
             lights[i].rgb[2],
             1.0f);
         
-        float shadow_factor = 1.0f;
+        float4 shadow_factors = vector_float4(1.0f, 1.0f, 1.0f, 1.0f);
         #if SHADOWS_ACTIVE
         float3 light_angle_xyz = vector_float3(
             lights[i].angle_xyz[0],
@@ -489,9 +489,14 @@ float4 get_lit(
             
             float frag_depth = light_clip_pos.z / light_clip_pos.w;
             
-            shadow_factor =
+            shadow_factors =
                 (frag_depth <= shadow_depth + SHADOW_BIAS) ?
-                    1.0f : updating_globals->in_shadow_multiplier;
+                    1.0f :
+                    vector_float4(
+                        updating_globals->in_shadow_multipliers[0],
+                        updating_globals->in_shadow_multipliers[1],
+                        updating_globals->in_shadow_multipliers[2],
+                        1.0f);
         }
         #endif
         
@@ -557,7 +562,7 @@ float4 get_lit(
             light_color *
             diffuse_dot *
             lights[i].diffuse *
-            shadow_factor;
+            shadow_factors;
         
         lit_color += (
             diffuse_base *
@@ -587,7 +592,7 @@ float4 get_lit(
             light_color *
             specular_dot *
             lights[i].specular *
-            shadow_factor);
+            shadow_factors);
     }
     
     lit_color += vector_float4(

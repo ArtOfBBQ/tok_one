@@ -153,7 +153,7 @@ typedef struct GPUPostProcessingConstants
     float fog_factor;
     #endif
     #if SHADOWS_ACTIVE
-    float in_shadow_multiplier;
+    float in_shadow_multipliers[3];
     #endif
     unsigned int timestamp;
     unsigned int lights_size;

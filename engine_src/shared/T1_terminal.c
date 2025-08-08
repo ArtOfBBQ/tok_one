@@ -981,6 +981,31 @@ static bool32_t evaluate_terminal_command(
         return true;
     }
     
+    if (
+        common_are_equal_strings(command, "FASTER") ||
+        common_are_equal_strings(command, "SLOWER"))
+    {
+        if (command[0] == 'F') {
+            engine_globals->timedelta_mult += 0.15f;
+        } else {
+            engine_globals->timedelta_mult -= 0.15f;
+        }
+        
+        if (engine_globals->timedelta_mult < 0.05f) {
+            engine_globals->timedelta_mult = 0.01f;
+        }
+        
+        common_strcpy_capped(
+            response,
+            SINGLE_LINE_MAX,
+            "Multiplying all delta time by: ");
+        common_strcat_float_capped(
+            response,
+            SINGLE_LINE_MAX,
+            engine_globals->timedelta_mult);
+        return true;
+    }
+    
     return false;
 }
 

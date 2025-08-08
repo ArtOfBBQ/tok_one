@@ -58,12 +58,14 @@ typedef struct EngineGlobals {
     
     uint32_t pixelation_div;
     
+    float timedelta_mult;
     float window_height;
     float window_width;
     float window_left;
     float window_bottom;
     float aspect_ratio;
     
+    uint64_t elapsed;
     uint64_t this_frame_timestamp_us;
     uint64_t last_resize_request_us;
     GPUPostProcessingConstants postprocessing_constants;
