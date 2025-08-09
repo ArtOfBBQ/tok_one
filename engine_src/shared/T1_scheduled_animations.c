@@ -335,6 +335,26 @@ void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
     
     log_assert(to_commit->duration_us > 0);
     
+    if (to_commit->delete_other_anims_targeting_same_object_id_on_commit)
+    {
+        for (
+            uint32_t anim_i = 0;
+            anim_i < scheduled_animations_size;
+            anim_i++)
+        {
+            if (
+                scheduled_animations[anim_i].affected_zsprite_id ==
+                    to_commit->affected_zsprite_id &&
+                scheduled_animations[anim_i].affected_touchable_id ==
+                    to_commit->affected_touchable_id &&
+                scheduled_animations[anim_i].committed &&
+                scheduled_animations[anim_i].endpoints_not_deltas)
+            {
+                scheduled_animations[anim_i].deleted = true;
+            }
+        }
+    }
+    
     if (to_commit->endpoints_not_deltas) {
         int32_t first_zp_i = -1;
         for (
@@ -377,27 +397,6 @@ void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
                 // fetch the current value
                 float delta_to_target = anim_gpu_vals[i] - orig_gpu_vals[i];
                 anim_gpu_vals[i] = delta_to_target;
-            }
-        }
-        
-        if (
-            to_commit->delete_other_anims_targeting_same_object_id_on_commit)
-        {
-            for (
-                uint32_t anim_i = 0;
-                anim_i < scheduled_animations_size;
-                anim_i++)
-            {
-                if (
-                    scheduled_animations[anim_i].affected_zsprite_id ==
-                        to_commit->affected_zsprite_id &&
-                    scheduled_animations[anim_i].affected_touchable_id ==
-                        to_commit->affected_touchable_id &&
-                    scheduled_animations[anim_i].committed &&
-                    scheduled_animations[anim_i].endpoints_not_deltas)
-                {
-                    scheduled_animations[anim_i].deleted = true;
-                }
             }
         }
     }
