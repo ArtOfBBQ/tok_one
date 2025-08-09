@@ -248,13 +248,12 @@ void client_logic_late_startup(void) {
                     engine_globals->window_height * 2, 1.0f),
             /* PolygonRequest * stack_recipient: */
                 &quad);
-        T1_texture_array_get_filename_location(
+        
+        T1Tex phoebus_tex = T1_texture_array_get_filename_location(
             /* const char * for_filename: */
-                "phoebus.png",
-            /* int32_t * texture_array_i_recipient: */
-                &quad.gpu_data->base_material.texturearray_i,
-            /* int32_t * texture_i_recipient: */
-                &quad.gpu_data->base_material.texture_i);
+                "phoebus.png");
+        quad.gpu_data->base_material.texturearray_i = phoebus_tex.array_i;
+        quad.gpu_data->base_material.texture_i = phoebus_tex.slice_i;
         quad.cpu_data->zsprite_id                   = -1;
         quad.gpu_data->touchable_id                 = -1;
         quad.cpu_data->alpha_blending_enabled       = true;
@@ -288,31 +287,6 @@ void client_logic_threadmain(int32_t threadmain_id) {
     }
 }
 
-void client_logic_animation_callback(
-    const int32_t callback_id,
-    const float arg_1,
-    const float arg_2,
-    const int32_t arg_3)
-{
-    #ifndef LOGGER_IGNORE_ASSERTS
-    char unhandled_callback_id[256];
-    common_strcpy_capped(
-        unhandled_callback_id,
-        256,
-        "unhandled client_logic_animation_callback: ");
-    common_strcat_int_capped(
-        unhandled_callback_id,
-        256,
-        callback_id);
-    common_strcat_capped(
-        unhandled_callback_id,
-        256,
-        ". Find in clientlogic.c -> client_logic_animation_callback\n");
-    log_append(unhandled_callback_id);
-    log_dump_and_crash(unhandled_callback_id);
-    #endif
-}
-
 static uint32_t testswitch = 1;
 static void client_handle_keypresses(
     uint64_t microseconds_elapsed)
@@ -328,7 +302,7 @@ static void client_handle_keypresses(
         
         #if TEAPOT
         #if SCHEDULED_ANIMS_ACTIVE
-        scheduled_animations_request_shatter_and_destroy(
+        T1_scheduled_animations_request_shatter_and_destroy(
             /* const int32_t object_id: */
                 teapot_object_ids[1],
             /* const uint64_t duration_microseconds: */
@@ -383,7 +357,7 @@ static void client_handle_keypresses(
     
     if (keypress_map[TOK_KEY_T] == true) {
         keypress_map[TOK_KEY_T] = false;
-        ScheduledAnimation * test = scheduled_animations_request_next(false);
+        T1ScheduledAnimation * test = scheduled_animations_request_next(false);
         test->affected_zsprite_id = teapot_object_ids[0];
         test->gpu_polygon_vals.xyz[0] =
             testswitch ? -0.45f : 0.45f;
@@ -391,7 +365,35 @@ static void client_handle_keypresses(
             testswitch ? -0.45f : 0.45f;
         testswitch = !testswitch;
         test->duration_us = 1000000;
-        scheduled_animations_commit(test);
+        T1_scheduled_animations_commit(test);
+    }
+    
+    if (keypress_map[TOK_KEY_P] == true) {
+        keypress_map[TOK_KEY_P] = false;
+        
+        if (testswitch) {
+            testswitch = 0;
+            
+            T1ScheduledAnimation * anim = scheduled_animations_request_next(true);
+            anim->affected_zsprite_id = teapot_object_ids[0];
+            anim->gpu_polygon_vals.xyz[0] = -0.25f;
+            anim->gpu_polygon_vals.xyz[1] = 0.25f;
+            anim->gpu_polygon_vals.xyz[2] = 0.75f;
+            anim->gpu_polygon_vals.ignore_camera = 0.0f;
+            anim->duration_us = 500000;
+            T1_scheduled_animations_commit(anim);
+        } else {
+            testswitch = 1;
+            
+            T1ScheduledAnimation * anim = scheduled_animations_request_next(true);
+            anim->affected_zsprite_id = teapot_object_ids[0];
+            anim->gpu_polygon_vals.xyz[0] = 0.0f;
+            anim->gpu_polygon_vals.xyz[1] = 0.0f;
+            anim->gpu_polygon_vals.xyz[2] = 0.25f;
+            anim->gpu_polygon_vals.ignore_camera = 1.0f;
+            anim->duration_us = 500000;
+            T1_scheduled_animations_commit(anim);
+        }
     }
     
     if (keypress_map[TOK_KEY_BACKSLASH] == true) {
@@ -419,7 +421,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
                 touchable_id_pierce == 5)
         {
             #if SCHEDULED_ANIMS_ACTIVE
-            scheduled_animations_request_bump(
+            T1_scheduled_animations_request_bump(
                 /* const int32_t object_id: */
                     20,
                 /* const uint32_t wait: */
@@ -461,7 +463,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
         user_interactions[INTR_PREVIOUS_LEFTCLICK_START].handled = true;
         
         #if SCHEDULED_ANIMS_ACTIVE
-        scheduled_animations_request_bump(teapot_object_ids[0], 0.0f);
+        T1_scheduled_animations_request_bump(teapot_object_ids[0], 0.0f);
         #endif
     }
     }

@@ -14,19 +14,9 @@
 extern "C" {
 #endif
 
-void scheduled_animations_init(void);
+void T1_scheduled_animations_init(void);
 
-float scheduled_animations_easing_bounce_zero_to_zero(
-    const float t,
-    const float bounces);
-float scheduled_animations_easing_pulse_zero_to_zero(
-    const float t,
-    const float pulses);
-float scheduled_animations_easing_out_elastic_zero_to_one(const float t);
-float scheduled_animations_easing_out_quart(const float t);
-float scheduled_animations_easing_lin_revert(const float t);
-
-void scheduled_animations_resolve(void);
+void T1_scheduled_animations_resolve(void);
 
 typedef enum EasingType {
     EASINGTYPE_NONE = 0,
@@ -39,7 +29,17 @@ typedef enum EasingType {
     EASINGTYPE_OCTUPLE_PULSE_ZERO_TO_ZERO,
 } EasingType;
 
-typedef struct ScheduledAnimation {
+/*
+if t.now is 0.9f and t.applied is 0.25f, that means we're currently
+at the 90% point of the animation and we already previously applied the
+effects of the animation up until the 25% point
+*/
+typedef struct T1TPair {
+    float now;
+    float applied;
+} T1TPair;
+
+typedef struct T1ScheduledAnimation {
     // Public:
     GPUzSprite gpu_polygon_vals;
     // zPolygonCPU zpolygon_cpu_vals;
@@ -48,6 +48,7 @@ typedef struct ScheduledAnimation {
     EasingType easing_type;
     
     uint64_t duration_us;
+    uint64_t pause_us;
     
     uint32_t runs;
     int32_t affected_zsprite_id;
@@ -67,6 +68,8 @@ typedef struct ScheduledAnimation {
     may have to suddenly apply 90% of an animation that was supposed to run
     over a whole second.
     */
+    uint64_t remaining_duration_us;
+    uint64_t remaining_pause_us;
     float already_applied_t;
     
     /*
@@ -75,50 +78,48 @@ typedef struct ScheduledAnimation {
     values will be converted to normal delta values, and the animation will
     be treated just like any other animation
     */
-    uint64_t start_timestamp;
-    uint64_t end_timestamp;
     
     bool32_t endpoints_not_deltas;
     
     bool32_t delete_other_anims_targeting_same_object_id_on_commit;
     bool32_t deleted;
     bool32_t committed;
-} ScheduledAnimation;
+} T1ScheduledAnimation;
 
-ScheduledAnimation * scheduled_animations_request_next(
+T1ScheduledAnimation * scheduled_animations_request_next(
     bool32_t endpoints_not_deltas);
 
-void scheduled_animations_commit(ScheduledAnimation * to_commit);
+void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit);
 
-void scheduled_animations_request_evaporate_and_destroy(
+void T1_scheduled_animations_request_evaporate_and_destroy(
     const int32_t object_id,
     const uint64_t duration_us);
 
-void scheduled_animations_request_shatter_and_destroy(
+void T1_scheduled_animations_request_shatter_and_destroy(
     const int32_t object_id,
     const uint64_t duration_us);
 
-void scheduled_animations_request_fade_and_destroy(
+void T1_scheduled_animations_request_fade_and_destroy(
     const int32_t object_id,
     const uint64_t duration_us);
 
-void scheduled_animations_request_fade_to(
+void T1_scheduled_animations_request_fade_to(
     const int32_t zsprite_id,
     const uint64_t duration_us,
     const float target_alpha);
 
-void scheduled_animations_request_dud_dance(
+void T1_scheduled_animations_request_dud_dance(
     const int32_t object_id,
     const float magnitude);
 
-void scheduled_animations_request_bump(
+void T1_scheduled_animations_request_bump(
     const int32_t object_id,
     const uint32_t wait);
 
-void scheduled_animations_delete_all(void);
-void scheduled_animations_delete_endpoint_anims_targeting(
+void T1_scheduled_animations_delete_all(void);
+void T1_scheduled_animations_delete_endpoint_anims_targeting(
     const int32_t object_id);
-void scheduled_animations_delete_all_anims_targeting(const int32_t object_id);
+void T1_scheduled_animations_delete_all_anims_targeting(const int32_t object_id);
 
 #ifdef __cplusplus
 }

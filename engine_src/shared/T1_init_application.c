@@ -335,7 +335,7 @@ void init_application_before_gpu_init(
     terminal_init(platform_enter_fullscreen);
     #endif
     #if SCHEDULED_ANIMS_ACTIVE
-    scheduled_animations_init();
+    T1_scheduled_animations_init();
     #endif
     T1_texture_array_init();
     
@@ -566,9 +566,9 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     }
     
     #if SHADOWS_ACTIVE
-    engine_globals->postprocessing_constants.in_shadow_multipliers[0] = 1.8f;
-    engine_globals->postprocessing_constants.in_shadow_multipliers[1] = 0.0f;
-    engine_globals->postprocessing_constants.in_shadow_multipliers[2] = 0.0f;
+    engine_globals->postprocessing_constants.in_shadow_multipliers[0] = 0.5f;
+    engine_globals->postprocessing_constants.in_shadow_multipliers[1] = 0.5f;
+    engine_globals->postprocessing_constants.in_shadow_multipliers[2] = 0.5f;
     #endif
     
     bool32_t success = false;

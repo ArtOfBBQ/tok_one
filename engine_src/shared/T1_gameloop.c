@@ -216,7 +216,7 @@ void gameloop_update_before_render_pass(
     } else if (application_running) {
         
         #if SCHEDULED_ANIMS_ACTIVE
-        scheduled_animations_resolve();
+        T1_scheduled_animations_resolve();
         #endif
         
         platform_update_mouse_location();

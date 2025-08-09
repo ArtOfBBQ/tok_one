@@ -159,9 +159,7 @@ vertex float4 shadows_vertex_shader(
         polygons[polygon_i].ignore_camera,
         0.0f,
         1.0f);
-    float3 final_pos =
-        (out_pos * ic) +
-        (cam_z_rotated * (1.0f - ic));
+    float3 final_pos = (out_pos * ic) + (cam_z_rotated * (1.0f - ic));
     
     return project_float3_to_float4_perspective(
         final_pos,
