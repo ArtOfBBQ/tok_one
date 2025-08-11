@@ -86,7 +86,7 @@ typedef struct T1ScheduledAnimation {
     bool32_t committed;
 } T1ScheduledAnimation;
 
-T1ScheduledAnimation * scheduled_animations_request_next(
+T1ScheduledAnimation * T1_scheduled_animations_request_next(
     bool32_t endpoints_not_deltas);
 
 void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit);

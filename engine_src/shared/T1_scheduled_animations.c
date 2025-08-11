@@ -58,7 +58,7 @@ static void construct_scheduled_animationA(
     log_assert(!to_construct->committed);
 }
 
-T1ScheduledAnimation * scheduled_animations_request_next(
+T1ScheduledAnimation * T1_scheduled_animations_request_next(
     bool32_t endpoints_not_deltas)
 {
     platform_mutex_lock(request_scheduled_anims_mutex_id);
@@ -617,7 +617,7 @@ void T1_scheduled_animations_request_fade_and_destroy(
     log_assert(duration_us > 0);
     
     // register scheduled animation
-    T1ScheduledAnimation * fade_destroy = scheduled_animations_request_next(true);
+    T1ScheduledAnimation * fade_destroy = T1_scheduled_animations_request_next(true);
     fade_destroy->endpoints_not_deltas = true;
     fade_destroy->affected_zsprite_id = object_id;
     fade_destroy->duration_us = duration_us;
@@ -635,7 +635,7 @@ void T1_scheduled_animations_request_fade_to(
     log_assert(zsprite_id >= 0);
     
     // register scheduled animation
-    T1ScheduledAnimation * modify_alpha = scheduled_animations_request_next(true);
+    T1ScheduledAnimation * modify_alpha = T1_scheduled_animations_request_next(true);
     modify_alpha->affected_zsprite_id = zsprite_id;
     modify_alpha->duration_us = duration_us;
     modify_alpha->gpu_polygon_vals.alpha = target_alpha;
@@ -771,7 +771,7 @@ void T1_scheduled_animations_request_dud_dance(
     const float magnitude)
 {
     T1ScheduledAnimation * move_request =
-        scheduled_animations_request_next(false);
+        T1_scheduled_animations_request_next(false);
     move_request->easing_type = EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO;
     move_request->affected_zsprite_id = (int32_t)object_id;
     move_request->gpu_polygon_vals.xyz[0] = magnitude * 0.05f;
@@ -792,7 +792,7 @@ void T1_scheduled_animations_request_bump(
     #endif
     
     T1ScheduledAnimation * move_request =
-        scheduled_animations_request_next(false);
+        T1_scheduled_animations_request_next(false);
     move_request->easing_type = EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO;
     move_request->affected_zsprite_id = (int32_t)object_id;
     move_request->gpu_polygon_vals.scale_factor = 0.25f;

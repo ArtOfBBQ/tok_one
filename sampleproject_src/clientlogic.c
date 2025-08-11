@@ -357,7 +357,7 @@ static void client_handle_keypresses(
     
     if (keypress_map[TOK_KEY_T] == true) {
         keypress_map[TOK_KEY_T] = false;
-        T1ScheduledAnimation * test = scheduled_animations_request_next(false);
+        T1ScheduledAnimation * test = T1_scheduled_animations_request_next(false);
         test->affected_zsprite_id = teapot_object_ids[0];
         test->gpu_polygon_vals.xyz[0] =
             testswitch ? -0.45f : 0.45f;
