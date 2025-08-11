@@ -58,9 +58,9 @@ void client_logic_early_startup(
 
 void client_logic_late_startup(void) {
     
-    #define TEAPOT_X  0.2f
-    #define TEAPOT_Y  0.1f
-    #define TEAPOT_Z  0.32f
+    #define TEAPOT_X  -5.0f
+    #define TEAPOT_Y  10.0f
+    #define TEAPOT_Z  1.0f
     float teapot_xyz[3];
     teapot_xyz[0] = TEAPOT_X;
     teapot_xyz[1] = TEAPOT_Y;
@@ -112,11 +112,11 @@ void client_logic_late_startup(void) {
     lightcube_request.gpu_data->remove_shadow = true;
     zsprite_commit(&lightcube_request);
     
-    camera.xyz[0] =  0.5f;
-    camera.xyz[1] =  1.6f;
-    camera.xyz[2] = -1.3f;
-    camera.xyz_angle[0] =  0.7f;
-    camera.xyz_angle[1] =  0.0f;
+    camera.xyz[0] = -4.50f;
+    camera.xyz[1] =  9.50f;
+    camera.xyz[2] = -0.5f;
+    camera.xyz_angle[0] =  0.1f;
+    camera.xyz_angle[1] =  0.2f;
     camera.xyz_angle[2] =  0.0f;
     
     #if TEAPOT
@@ -371,29 +371,8 @@ static void client_handle_keypresses(
     if (keypress_map[TOK_KEY_P] == true) {
         keypress_map[TOK_KEY_P] = false;
         
-        if (testswitch) {
-            testswitch = 0;
-            
-            T1ScheduledAnimation * anim = scheduled_animations_request_next(true);
-            anim->affected_zsprite_id = teapot_object_ids[0];
-            anim->gpu_polygon_vals.xyz[0] = -0.25f;
-            anim->gpu_polygon_vals.xyz[1] = 0.25f;
-            anim->gpu_polygon_vals.xyz[2] = 0.75f;
-            anim->gpu_polygon_vals.ignore_camera = 0.0f;
-            anim->duration_us = 500000;
-            T1_scheduled_animations_commit(anim);
-        } else {
-            testswitch = 1;
-            
-            T1ScheduledAnimation * anim = scheduled_animations_request_next(true);
-            anim->affected_zsprite_id = teapot_object_ids[0];
-            anim->gpu_polygon_vals.xyz[0] = 0.0f;
-            anim->gpu_polygon_vals.xyz[1] = 0.0f;
-            anim->gpu_polygon_vals.xyz[2] = 0.25f;
-            anim->gpu_polygon_vals.ignore_camera = 1.0f;
-            anim->duration_us = 500000;
-            T1_scheduled_animations_commit(anim);
-        }
+        T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(teapot_object_ids[0], testswitch ? 1.0f : 0.0f);
+        testswitch = !testswitch;
     }
     
     if (keypress_map[TOK_KEY_BACKSLASH] == true) {

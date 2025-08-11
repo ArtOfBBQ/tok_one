@@ -62,10 +62,10 @@ void uielement_init(void) {
     next_ui_element_settings->ignore_camera                    = false;
     next_ui_element_settings->button_background_texturearray_i = -1;
     next_ui_element_settings->button_background_texture_i      = -1;
-    next_ui_element_settings->slider_background_texturearray_i = -1;
-    next_ui_element_settings->slider_background_texture_i      = -1;
-    next_ui_element_settings->slider_pin_texturearray_i        = -1;
-    next_ui_element_settings->slider_pin_texture_i             = -1;
+    next_ui_element_settings->slider_background_tex.array_i    = -1;
+    next_ui_element_settings->slider_background_tex.slice_i    = -1;
+    next_ui_element_settings->slider_pin_tex.array_i           = -1;
+    next_ui_element_settings->slider_pin_tex.slice_i           = -1;
     
     active_ui_elements = (ActiveUIElement *)malloc_from_unmanaged(
         sizeof(ActiveUIElement) * ACTIVE_UI_ELEMENTS_SIZE);
@@ -361,9 +361,9 @@ static void request_slider_shared(
     slider_back.cpu_data->zsprite_id = background_object_id;
     
     slider_back.gpu_data->base_material.texturearray_i =
-        next_ui_element_settings->slider_background_texturearray_i;
+        next_ui_element_settings->slider_background_tex.array_i;
     slider_back.gpu_data->base_material.texture_i =
-        next_ui_element_settings->slider_background_texture_i;
+        next_ui_element_settings->slider_background_tex.slice_i;
     slider_back.gpu_data->base_material.ambient_rgb[0] =
         next_ui_element_settings->slider_background_rgba[0];
     slider_back.gpu_data->base_material.ambient_rgb[1] =
@@ -413,9 +413,9 @@ static void request_slider_shared(
     slider_pin.gpu_data->xyz_offset[1] = 0.0f;
     
     slider_pin.gpu_data->base_material.texturearray_i =
-        next_ui_element_settings->slider_pin_texturearray_i;
+        next_ui_element_settings->slider_pin_tex.array_i;
     slider_pin.gpu_data->base_material.texture_i =
-        next_ui_element_settings->slider_pin_texture_i;
+        next_ui_element_settings->slider_pin_tex.slice_i;
     slider_pin.gpu_data->base_material.ambient_rgb[0] =
         next_ui_element_settings->slider_pin_rgba[0];
     slider_pin.gpu_data->base_material.ambient_rgb[1] =

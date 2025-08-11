@@ -7,7 +7,12 @@
 T1ScheduledAnimation * scheduled_animations;
 uint32_t scheduled_animations_size = 0;
 
-static GPUzSprite * zsprite_final_pos = NULL;
+typedef struct ScheduledAnimationState {
+    GPUzSprite zsprite_final_pos;
+    GPUzSprite zsprite_deltas[2];
+} ScheduledAnimationState;
+
+static ScheduledAnimationState * sas = NULL;
 
 static uint32_t request_scheduled_anims_mutex_id = UINT32_MAX;
 
@@ -21,12 +26,12 @@ void T1_scheduled_animations_init(void)
         sizeof(T1ScheduledAnimation));
     scheduled_animations[0].deleted = true;
     
-    zsprite_final_pos = (GPUzSprite *)malloc_from_unmanaged(
-        sizeof(GPUzSprite));
+    sas = (ScheduledAnimationState *)malloc_from_unmanaged(
+        sizeof(ScheduledAnimationState));
     common_memset_char(
-        zsprite_final_pos,
+        sas,
         0,
-        sizeof(GPUzSprite));
+        sizeof(ScheduledAnimationState));
     
     for (uint32_t i = 1; i < SCHEDULED_ANIMATIONS_ARRAYSIZE; i++) {
         common_memcpy(
@@ -241,10 +246,8 @@ static void apply_animation_effects_for_given_eased_t(
     T1ScheduledAnimation * anim,
     GPUzSprite * recip)
 {
-    float * anim_vals_ptr    =
-        (float *)&anim->gpu_polygon_vals;
-    float * target_vals_ptr =
-        (float *)recip;
+    float * anim_vals_ptr    = (float *)&anim->gpu_polygon_vals;
+    float * target_vals_ptr = (float *)recip;
     
     SIMD_FLOAT simd_t_now =
         simd_set1_float(t.now);
@@ -382,9 +385,9 @@ void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
         
         T1_scheduled_animations_get_projected_final_position_for(
             first_zp_i,
-            zsprite_final_pos);
+            &sas->zsprite_final_pos);
         
-        float * orig_gpu_vals = (float *)zsprite_final_pos;
+        float * orig_gpu_vals = (float *)&sas->zsprite_final_pos;
         
         for (
             uint32_t i = 0;
@@ -726,6 +729,12 @@ void T1_scheduled_animations_resolve(void)
         log_assert(anim->already_applied_t <= t.now);
         anim->already_applied_t = t.now;
         
+        #if 0
+        if (anim->affected_zsprite_id == 1125) {
+            printf("debug me!\n");
+        }
+        #endif
+        
         t = t_to_eased_t(t, anim->easing_type);
         
         // Apply effects
@@ -830,6 +839,80 @@ void T1_scheduled_animations_delete_all_anims_targeting(
         }
     }
     platform_mutex_unlock(request_scheduled_anims_mutex_id);
+}
+
+void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
+    const int32_t zsprite_id,
+    const float new_ignore_camera)
+{
+    GPUzSprite * zs = NULL;
+    
+    for (uint32_t i = 0; i < zsprites_to_render->size; i++)
+    {
+        if (zsprites_to_render->cpu_data[i].zsprite_id == zsprite_id) {
+            zs = zsprites_to_render->gpu_data + i;
+        }
+    }
+    
+    if (zs->ignore_camera == new_ignore_camera) {
+        printf("already correct, doing nothing\n");
+        return;
+    }
+    
+    // For now we're only supporting the easy case of a full toggle
+    bool32_t is_near_zero =
+        zs->ignore_camera > -0.01f &&
+        zs->ignore_camera <  0.01f;
+    bool32_t is_near_one =
+        zs->ignore_camera >  0.99f &&
+        zs->ignore_camera <  1.01f;
+    log_assert(is_near_zero || is_near_one);
+    
+    if (is_near_zero) {
+        log_assert(new_ignore_camera == 1.0f);
+        
+        zs->xyz[0] -= camera.xyz[0];
+        zs->xyz[1] -= camera.xyz[1];
+        zs->xyz[2] -= camera.xyz[2];
+        x_rotate_f3(zs->xyz, -camera.xyz_angle[0]);
+        y_rotate_f3(zs->xyz, -camera.xyz_angle[1]);
+        z_rotate_f3(zs->xyz, -camera.xyz_angle[2]);
+        
+        #if 1
+        // This is a hack, an approximation
+        zs->xyz_angle[0] -= camera.xyz_angle[0];
+        zs->xyz_angle[1] -= camera.xyz_angle[1];
+        zs->xyz_angle[2] -= camera.xyz_angle[2];
+        #endif
+        
+        zs->ignore_camera = 1.0f;
+    } else {
+        log_assert(is_near_one);
+        
+        z_rotate_f3(zs->xyz, camera.xyz_angle[2]);
+        y_rotate_f3(zs->xyz, camera.xyz_angle[1]);
+        x_rotate_f3(zs->xyz, camera.xyz_angle[0]);
+        
+        zs->xyz[0] += camera.xyz[0];
+        zs->xyz[1] += camera.xyz[1];
+        zs->xyz[2] += camera.xyz[2];
+        
+        #if 1
+        // This is a hack, an approximation
+        zs->xyz_angle[0] += camera.xyz_angle[0];
+        zs->xyz_angle[1] += camera.xyz_angle[1];
+        zs->xyz_angle[2] += camera.xyz_angle[2];
+        #endif
+        
+        zs->ignore_camera = 0.0f;
+    }
+    
+    printf(
+        "new position: [%.2f, %.2f, %.2f], new ignore_cam: %f\n",
+        zs->xyz[0],
+        zs->xyz[1],
+        zs->xyz[2],
+        zs->ignore_camera);
 }
 
 #endif // SCHEDULED_ANIMS_ACTIVE

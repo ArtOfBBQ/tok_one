@@ -59,6 +59,14 @@ float3 xyz_rotate(const float3 vertices, const float3 xyz_angle) {
     return return_value;
 }
 
+float3 zyx_rotate(const float3 vertices, const float3 xyz_angle) {
+    float3 return_value = z_rotate(vertices,     xyz_angle[2]);
+    return_value        = y_rotate(return_value, xyz_angle[1]);
+    return_value        = x_rotate(return_value, xyz_angle[0]);
+    
+    return return_value;
+}
+
 float4 project_float3_to_float4_perspective(
     const float3 in_xyz,
     const device GPUProjectionConstants * pjc)
@@ -141,28 +149,46 @@ vertex float4 shadows_vertex_shader(
     // translate to world position
     out_pos = z_rotated_vertices + parent_mesh_position;
     
-    float3 camera_position = vector_float3(
-        lights[updating_globals->shadowcaster_i].xyz[0],
-        lights[updating_globals->shadowcaster_i].xyz[1],
-        lights[updating_globals->shadowcaster_i].xyz[2]);
-    float3 camera_translated_pos = out_pos - camera_position;
+    // for an "ignore camera" object, we need to know where that object is
+    // in world space
+    float3 nonshadow_cam_pos = vector_float3(
+        camera->xyz[0],
+        camera->xyz[1],
+        camera->xyz[2]);
+    float3 nonshadow_cam_angle = vector_float3(
+        camera->xyz_angle[0],
+        camera->xyz_angle[1],
+        camera->xyz_angle[2]);
     
-    // rotate around camera
-    float3 cam_z_rotated = xyz_rotate(
-        camera_translated_pos,
-        vector_float3(
-            -lights[updating_globals->shadowcaster_i].angle_xyz[0],
-            -lights[updating_globals->shadowcaster_i].angle_xyz[1],
-            -lights[updating_globals->shadowcaster_i].angle_xyz[2]));
+    float3 ic_pos = out_pos + nonshadow_cam_pos;
+    
+    ic_pos = zyx_rotate(
+        ic_pos,
+        nonshadow_cam_angle);
     
     float ic = clamp(
         polygons[polygon_i].ignore_camera,
         0.0f,
         1.0f);
-    float3 final_pos = (out_pos * ic) + (cam_z_rotated * (1.0f - ic));
+    out_pos = (ic_pos * ic) + (out_pos * (1.0f - ic));
+    
+    
+    float3 lightcam_pos = vector_float3(
+        lights[updating_globals->shadowcaster_i].xyz[0],
+        lights[updating_globals->shadowcaster_i].xyz[1],
+        lights[updating_globals->shadowcaster_i].xyz[2]);
+    float3 lightcam_translated_pos = out_pos - lightcam_pos;
+    
+    // rotate around 'camera' (actually the light)
+    float3 lightcam_z_rotated = xyz_rotate(
+        lightcam_translated_pos,
+        vector_float3(
+            -lights[updating_globals->shadowcaster_i].angle_xyz[0],
+            -lights[updating_globals->shadowcaster_i].angle_xyz[1],
+            -lights[updating_globals->shadowcaster_i].angle_xyz[2]));
     
     return project_float3_to_float4_perspective(
-        final_pos,
+        lightcam_z_rotated,
         projection_constants);
 }
 

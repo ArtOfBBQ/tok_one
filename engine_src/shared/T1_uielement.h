@@ -28,10 +28,8 @@ typedef struct NextUIElementSettings {
     float    slider_pin_rgba[4];
     bool32_t ignore_lighting;
     bool32_t ignore_camera;
-    int32_t  slider_background_texturearray_i;
-    int32_t  slider_background_texture_i;
-    int32_t  slider_pin_texturearray_i;
-    int32_t  slider_pin_texture_i;
+    T1Tex    slider_background_tex;
+    T1Tex    slider_pin_tex;
     float    slider_width_screenspace;
     float    slider_height_screenspace;
     float    pin_width_screenspace;

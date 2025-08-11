@@ -121,6 +121,10 @@ void T1_scheduled_animations_delete_endpoint_anims_targeting(
     const int32_t object_id);
 void T1_scheduled_animations_delete_all_anims_targeting(const int32_t object_id);
 
+void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
+    const int32_t zsprite_id,
+    const float new_ignore_camera);
+
 #ifdef __cplusplus
 }
 #endif
