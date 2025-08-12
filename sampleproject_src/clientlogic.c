@@ -56,11 +56,48 @@ void client_logic_early_startup(
     *success = true;
 }
 
-void client_logic_late_startup(void) {
-    
+static void request_teapots(void) {
+        
     #define TEAPOT_X  -5.0f
     #define TEAPOT_Y  10.0f
     #define TEAPOT_Z  1.0f
+    
+    #if TEAPOT
+    teapot_object_ids[0] = next_nonui_object_id();
+    teapot_object_ids[1] = next_nonui_object_id();
+    
+    for (uint32_t i = 0; i < 1; i++) {
+        log_assert(teapot_mesh_id >= 0);
+        zSpriteRequest teapot_request;
+        zsprite_request_next(&teapot_request);
+        zsprite_construct(&teapot_request);
+        teapot_request.cpu_data->mesh_id = teapot_mesh_id;
+        teapot_request.gpu_data->xyz_multiplier[0] = 0.15f;
+        teapot_request.gpu_data->xyz_multiplier[1] = 0.15f;
+        teapot_request.gpu_data->xyz_multiplier[2] = 0.15f;
+        teapot_request.gpu_data->xyz[0]            = TEAPOT_X + (i * 0.20f);
+        teapot_request.gpu_data->xyz[1]            = TEAPOT_Y - (i * 1.0f);
+        teapot_request.gpu_data->xyz[2]            = TEAPOT_Z - (i * 0.25f);
+        teapot_request.gpu_data->xyz_angle[0]      = 0.00f;
+        teapot_request.gpu_data->xyz_angle[1]      = 3.2f;
+        teapot_request.gpu_data->xyz_angle[2]      = 0.0f;
+        teapot_request.cpu_data->zsprite_id         = teapot_object_ids[i];
+        teapot_request.cpu_data->visible           = true;
+        teapot_touchable_ids[i]                    = next_nonui_touchable_id();
+        teapot_request.gpu_data->touchable_id      = teapot_touchable_ids[i];
+        teapot_request.gpu_data->ignore_lighting =  0.0f;
+        teapot_request.gpu_data->ignore_camera =  0.0f;
+        
+        log_assert(teapot_request.gpu_data->xyz_offset[0] == 0.0f);
+        log_assert(teapot_request.gpu_data->xyz_offset[1] == 0.0f);
+        log_assert(teapot_request.gpu_data->xyz_offset[2] == 0.0f);
+        zsprite_commit(&teapot_request);
+    }
+    #endif
+}
+
+void client_logic_late_startup(void) {
+    
     float teapot_xyz[3];
     teapot_xyz[0] = TEAPOT_X;
     teapot_xyz[1] = TEAPOT_Y;
@@ -119,38 +156,7 @@ void client_logic_late_startup(void) {
     camera.xyz_angle[1] =  0.2f;
     camera.xyz_angle[2] =  0.0f;
     
-    #if TEAPOT
-    teapot_object_ids[0] = next_nonui_object_id();
-    teapot_object_ids[1] = next_nonui_object_id();
-    
-    for (uint32_t i = 0; i < 1; i++) {
-        log_assert(teapot_mesh_id >= 0);
-        zSpriteRequest teapot_request;
-        zsprite_request_next(&teapot_request);
-        zsprite_construct(&teapot_request);
-        teapot_request.cpu_data->mesh_id = teapot_mesh_id;
-        teapot_request.gpu_data->xyz_multiplier[0] = 0.15f;
-        teapot_request.gpu_data->xyz_multiplier[1] = 0.15f;
-        teapot_request.gpu_data->xyz_multiplier[2] = 0.15f;
-        teapot_request.gpu_data->xyz[0]            = TEAPOT_X + (i * 0.20f);
-        teapot_request.gpu_data->xyz[1]            = TEAPOT_Y - (i * 1.0f);
-        teapot_request.gpu_data->xyz[2]            = TEAPOT_Z - (i * 0.25f);
-        teapot_request.gpu_data->xyz_angle[0]      = 0.00f;
-        teapot_request.gpu_data->xyz_angle[1]      = 3.2f;
-        teapot_request.gpu_data->xyz_angle[2]      = 0.0f;
-        teapot_request.cpu_data->zsprite_id         = teapot_object_ids[i];
-        teapot_request.cpu_data->visible           = true;
-        teapot_touchable_ids[i]                    = next_nonui_touchable_id();
-        teapot_request.gpu_data->touchable_id      = teapot_touchable_ids[i];
-        teapot_request.gpu_data->ignore_lighting =  0.0f;
-        teapot_request.gpu_data->ignore_camera =  0.0f;
-        
-        log_assert(teapot_request.gpu_data->xyz_offset[0] == 0.0f);
-        log_assert(teapot_request.gpu_data->xyz_offset[1] == 0.0f);
-        log_assert(teapot_request.gpu_data->xyz_offset[2] == 0.0f);
-        zsprite_commit(&teapot_request);
-    }
-    #endif
+    request_teapots();
     
     int32_t quad_texture_array_i = -1;
     int32_t quad_texture_i = -1;
@@ -357,15 +363,15 @@ static void client_handle_keypresses(
     
     if (keypress_map[TOK_KEY_T] == true) {
         keypress_map[TOK_KEY_T] = false;
-        T1ScheduledAnimation * test = T1_scheduled_animations_request_next(false);
-        test->affected_zsprite_id = teapot_object_ids[0];
-        test->gpu_polygon_vals.xyz[0] =
-            testswitch ? -0.45f : 0.45f;
-        test->gpu_polygon_vals.alpha =
-            testswitch ? -0.45f : 0.45f;
+        
+        if (testswitch) {
+            T1_scheduled_animations_request_evaporate_and_destroy(
+                teapot_object_ids[0],
+                900000);
+        } else {
+            request_teapots();
+        }
         testswitch = !testswitch;
-        test->duration_us = 1000000;
-        T1_scheduled_animations_commit(test);
     }
     
     if (keypress_map[TOK_KEY_P] == true) {

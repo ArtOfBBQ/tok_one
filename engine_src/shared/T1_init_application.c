@@ -632,7 +632,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     to do while we wait the other threads to finish.
     */
     #if PARTICLES_ACTIVE
-    #define MIN_VERTICES_FOR_SHATTER_EFFECT 400
+    #define MIN_VERTICES_FOR_SHATTER_EFFECT 250
     for (uint32_t i = 0; i < all_mesh_summaries_size; i++) {
         if (all_mesh_summaries[i].shattered_vertices_head_i < 0) {
             if (

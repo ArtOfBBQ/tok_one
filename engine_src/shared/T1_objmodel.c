@@ -1600,7 +1600,7 @@ static float get_squared_triangle_length_from_locked_vertices(
             squared_y +
             squared_z;
         
-        log_assert(new_squared_dist > 0.0f);
+        log_assert(new_squared_dist > 0.0001f);
         
         if (new_squared_dist > largest_squared_dist) {
             largest_squared_dist = new_squared_dist;

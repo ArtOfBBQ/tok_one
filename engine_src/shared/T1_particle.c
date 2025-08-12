@@ -652,9 +652,9 @@ void add_particle_effects_to_workload(
                 recip = simd_add_floats(recip, simdf_initial_add);
                 
                 simdf_rand = tok_rand_simd_at_i(
-                    (rand_i + ((j/SIMD_FLOAT_LANES) *
+                    ((rand_i + ((j/SIMD_FLOAT_LANES) *
                         (SIMD_FLOAT_LANES * 4)))
-                            + 96);
+                            + 96)% (RANDOM_SEQUENCE_SIZE-3));
                 simdf_initial_add = simd_load_floats(
                     initial_random_add_2_at + j);
                 simdf_initial_add = simd_mul_floats(
@@ -719,10 +719,20 @@ void add_particle_effects_to_workload(
             log_assert(light_strength >= 0.0f);
             
             frame_data->lights[
-                frame_data->lights_size].ambient =
+                frame_data->lights_size].rgb[0] =
                     0.01f *
                     light_strength *
-                    particle_effects[i].light_strength;
+                    particle_effects[i].light_rgb[0];
+            frame_data->lights[
+                frame_data->lights_size].rgb[1] =
+                    0.01f *
+                    light_strength *
+                    particle_effects[i].light_rgb[1];
+            frame_data->lights[
+                frame_data->lights_size].rgb[2] =
+                    0.01f *
+                    light_strength *
+                    particle_effects[i].light_rgb[2];
             frame_data->lights[
                 frame_data->lights_size].diffuse =
                     light_strength *

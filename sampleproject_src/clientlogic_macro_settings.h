@@ -26,7 +26,7 @@ of the engine for your specific app.
 #define RAW_SHADER_ACTIVE 0 // for points and lines
 #define TEXTURES_ACTIVE 1
 #define BLOOM_ACTIVE 1
-#define PARTICLES_ACTIVE 0
+#define PARTICLES_ACTIVE 1
 #define SHADOWS_ACTIVE 1
 #define NORMAL_MAPPING_ACTIVE 0
 #define AUDIO_ACTIVE 0
