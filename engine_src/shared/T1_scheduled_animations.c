@@ -729,12 +729,6 @@ void T1_scheduled_animations_resolve(void)
         log_assert(anim->already_applied_t <= t.now);
         anim->already_applied_t = t.now;
         
-        #if 0
-        if (anim->affected_zsprite_id == 1125) {
-            printf("debug me!\n");
-        }
-        #endif
-        
         t = t_to_eased_t(t, anim->easing_type);
         
         // Apply effects
@@ -855,7 +849,6 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
     }
     
     if (zs->ignore_camera == new_ignore_camera) {
-        printf("already correct, doing nothing\n");
         return;
     }
     
@@ -906,13 +899,6 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
         
         zs->ignore_camera = 0.0f;
     }
-    
-    printf(
-        "new position: [%.2f, %.2f, %.2f], new ignore_cam: %f\n",
-        zs->xyz[0],
-        zs->xyz[1],
-        zs->xyz[2],
-        zs->ignore_camera);
 }
 
 #endif // SCHEDULED_ANIMS_ACTIVE
