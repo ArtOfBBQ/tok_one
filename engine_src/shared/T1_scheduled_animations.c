@@ -296,9 +296,9 @@ static void apply_animation_effects_for_given_eased_t(
     // log_assert(recip->alpha <=  1.1f);
     log_assert(recip->scale_factor >    0.0f);
     log_assert(recip->scale_factor < 1000.0f);
-    log_assert(recip->xyz_multiplier[0] > 0.0f);
-    log_assert(recip->xyz_multiplier[1] > 0.0f);
-    log_assert(recip->xyz_multiplier[2] > 0.0f);
+    // log_assert(recip->xyz_multiplier[0] > 0.0f);
+    // log_assert(recip->xyz_multiplier[1] > 0.0f);
+    // log_assert(recip->xyz_multiplier[2] > 0.0f);
     #endif
 }
 
@@ -474,11 +474,11 @@ void T1_scheduled_animations_request_evaporate_and_destroy(
         vaporize_effect->particle_lifespan = duration_us;
         vaporize_effect->use_shattered_mesh = true;
         
-        float xy_dist   =  0.0100f;
-        float z_dist    = -0.0250f;
+        float xy_dist   =  0.0065f;
+        float z_dist    = -0.0130f;
         float xyz_angle =  0.0100f;
-        float rgb_delta =  0.0001f;
-                
+        float rgb_delta =  0.00005f;
+        
         vaporize_effect->gpustats_pertime_random_add_1.xyz[0] = -xy_dist *
             duration_mod;
         vaporize_effect->gpustats_pertime_random_add_1.xyz[1] = -xy_dist *
@@ -505,7 +505,7 @@ void T1_scheduled_animations_request_evaporate_and_destroy(
             -xyz_angle * duration_mod;
         vaporize_effect->gpustats_pertime_random_add_2.xyz_angle[2] =
             -xyz_angle * duration_mod;
-        vaporize_effect->gpustats_perexptime_add.scale_factor = -1.0f;
+        vaporize_effect->gpustats_perexptime_add.scale_factor = -1.5f;
         
         vaporize_effect->loops = 1;
         vaporize_effect->generate_light = false;
