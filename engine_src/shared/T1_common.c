@@ -752,12 +752,15 @@ common_string_to_float_validate(
     uint32_t first_part_size = 0;
     char second_part[20];
     uint32_t second_part_size = 0;
-   
+    
     bool32_t found_exponent = false;
     int32_t exponent_modifier = 1; 
     int32_t exponent = 0;
     
+    float sign = 1.0f;
+    
     if (input[0] == '-') {
+        sign = -1.0f;
         i++;
     }
     
@@ -822,7 +825,9 @@ common_string_to_float_validate(
         *good = false;
         return return_value;
     }
-
+    
+    return_value += (float)first_part_int;
+    
     if (second_part_size > 0) {
     
         if (second_part_size > 6) { second_part_size = 6; }
@@ -842,18 +847,15 @@ common_string_to_float_validate(
             second_part_int /= 10;
             second_part_size -= 1;
         }
-	
-        return_value += (float)first_part_int;
+        
         float divisor = 1;
         for (uint32_t _ = 0; _ < second_part_size; _++) {
             divisor *= 10;
         }
         return_value += ((float)second_part_int / divisor);
-        
-        if (input[0] == '-') {
-            return_value *= -1;
-        }
     }
+    
+    return_value *= sign;
     
     // apply the 'scientific notation' exponent
     // e-4 means we want to multiply by -1 * (10^4)

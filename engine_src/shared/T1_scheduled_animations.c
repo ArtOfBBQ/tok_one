@@ -856,9 +856,11 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
     bool32_t is_near_zero =
         zs->ignore_camera > -0.01f &&
         zs->ignore_camera <  0.01f;
+    #ifndef LOGGER_IGNORE_ASSERTS
     bool32_t is_near_one =
         zs->ignore_camera >  0.99f &&
         zs->ignore_camera <  1.01f;
+    #endif
     log_assert(is_near_zero || is_near_one);
     
     if (is_near_zero) {

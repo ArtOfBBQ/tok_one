@@ -204,7 +204,6 @@ void terminal_render(void) {
     }
     
     if (requesting_label_update) {
-        log_append("redraw terminal label...\n");
         zsprite_delete(
             /* const int32_t with_object_id: */
                 terminal_labels_object_id);

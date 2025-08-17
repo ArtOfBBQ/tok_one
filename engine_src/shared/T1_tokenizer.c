@@ -532,11 +532,8 @@ static void toktoken_string_match_tokens(
 }
 
 static void T1_token_set_number_flags(
-    TokToken * token,
-    const uint8_t bitflags)
+    TokToken * token)
 {
-    (void)bitflags;
-    
     //    const uint8_t scientific_ok =
     //        (bitflags & T1_TOKEN_FLAG_SCIENTIFIC_OK) > 0;
     //    const uint8_t lead_dot_ok =
@@ -908,9 +905,8 @@ void T1_token_run(
             new->string_value[data_len] = '\0';
             new->string_value_size = (uint16_t)data_len;
             
-            T1_token_set_number_flags(
-                new,
-                tts->regs[matching_token_i].bitflags);
+            T1_token_set_number_flags(new);
+                // tts->regs[matching_token_i].bitflags);
             
             i += data_len;
         }
@@ -923,8 +919,8 @@ void T1_token_run(
             tts->tokens[tok_i].string_value_size =
                 (uint16_t)tts->strlen(tts->tokens[tok_i].string_value);
             T1_token_set_number_flags(
-                &tts->tokens[tok_i],
-                tts->string_literal_bitflags);
+                &tts->tokens[tok_i]);
+                // tts->string_literal_bitflags);
         }
     }
     
