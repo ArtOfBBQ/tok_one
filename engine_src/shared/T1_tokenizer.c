@@ -44,7 +44,7 @@ typedef struct RegisteredToken {
     uint8_t bitflags;
 } RegisteredToken;
 
-#define ASCII_STORE_CAP 20000000
+#define ASCII_STORE_CAP 25000
 #define REGISTERED_TOKENS_CAP 2000
 #define TOKENS_CAP 10000
 #define NUMBERS_CAP 10000
@@ -62,6 +62,7 @@ typedef struct TokTokenState {
     uint32_t numbers_size;
     uint32_t ascii_store_next_i; // index to write the next string at
     uint32_t good;
+    char previous_lit_chars[STRING_LITERAL_CAP];
     uint8_t string_literal_bitflags;
 } TokTokenState;
 
@@ -346,19 +347,18 @@ void T1_token_set_string_literal(
 
 static char * copy_string_to_ascii_store(
     const char * to_copy,
+    const uint32_t data_len,
     uint32_t * good)
 {
     *good = 0;
     
     char * return_value = tts->ascii_store + tts->ascii_store_next_i;
     
-    size_t new_len = tts->strlen(to_copy);
-    
-    if (tts->ascii_store_next_i + new_len >= ASCII_STORE_CAP) {
+    if (tts->ascii_store_next_i + data_len >= ASCII_STORE_CAP) {
         *good = 0;
         return NULL;
     } else {
-        tts->ascii_store_next_i += (new_len + 1);
+        tts->ascii_store_next_i += (data_len + 1);
     }
     
     return_value[0] = '\0';
@@ -395,7 +395,9 @@ void T1_token_register(
         new->start_pattern =
             copy_string_to_ascii_store(
                 tts->next_reg.start_pattern.ascii,
-            good);
+                (uint32_t)tts->strlen(
+                    tts->next_reg.start_pattern.ascii),
+                good);
     }
     
     for (uint32_t i = 0; i < PATTERNS_CAP; i++) {
@@ -403,7 +405,9 @@ void T1_token_register(
             new->stop_patterns[i] =
                 copy_string_to_ascii_store(
                     tts->next_reg.stop_patterns[i].ascii,
-                good);
+                    (uint32_t)tts->strlen(
+                        tts->next_reg.stop_patterns[i].ascii),
+                    good);
             if (*good) { *good = 0; } else { return; }
         }
     }
@@ -856,19 +860,20 @@ void T1_token_run(
         
         if (matching_token_i == UINT32_MAX) {
             
-            if (previous_lit_token == NULL) {
+            if (previous_lit_token == NULL)
+            {
                 previous_lit_token = &tts->tokens[tts->tokens_size];
                 if (tts->tokens_size + 1 >= TOKENS_CAP) {
                     *good = 0;
                     tts->good = 0;
                     return;
                 }
+                
                 tts->tokens_size += 1;
                 previous_lit_token->enum_value =
                     tts->string_literal_enum_value;
                 previous_lit_token->string_value =
-                    tts->ascii_store + tts->ascii_store_next_i;
-                tts->ascii_store_next_i += STRING_LITERAL_CAP;
+                    tts->previous_lit_chars;
                 tts->memset(
                     previous_lit_token->string_value,
                     0,
@@ -894,13 +899,29 @@ void T1_token_run(
             }
             
             // Commit the previous string literal if it was going
-            previous_lit_token = NULL;
-            previous_lit_ascii_i = 0;
+            if (previous_lit_token) {
+                uint32_t copy_good = 0;
+                previous_lit_token->string_value =
+                    copy_string_to_ascii_store(
+                        previous_lit_token->string_value,
+                        (uint32_t)tts->strlen(
+                            previous_lit_token->string_value),
+                        &copy_good);
+                if (!copy_good) {
+                    *good = 0;
+                    return;
+                }
+                previous_lit_token = NULL;
+                previous_lit_ascii_i = 0;
+            }
             
             tts->tokens_size += 1;
             new->line_number = line_number;
             new->enum_value = tts->regs[matching_token_i].enum_value;
-            new->string_value = copy_string_to_ascii_store(input + i, good);
+            new->string_value = copy_string_to_ascii_store(
+                input + i,
+                data_len,
+                good);
             assert(*good); // not engouh ASCII store size
             new->string_value[data_len] = '\0';
             new->string_value_size = (uint16_t)data_len;
