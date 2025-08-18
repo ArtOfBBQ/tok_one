@@ -771,6 +771,8 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     start_audio_loop();
     #endif
     
+    T1_token_deinit(free_from_managed);
+    
     gameloop_active = true;
 }
 

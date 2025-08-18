@@ -174,6 +174,13 @@ void T1_token_init(
     tts->good = 1;
 }
 
+void T1_token_deinit(
+    void (* arg_free_func)(void *))
+{
+    arg_free_func(tts);
+    tts = NULL;
+}
+
 void T1_token_reset(uint32_t * good) {
     *good = 0;
     if (tts == NULL) {

@@ -28,6 +28,9 @@ void T1_token_init(
     void * (* arg_malloc_func)(size_t),
     uint32_t * good);
 
+void T1_token_deinit(
+    void (* arg_free_func)(void *));
+
 /*
 If you want to tokenize multiple separate file formats in your program, call the
 reset() function in between each run to clear all registered tokens.
