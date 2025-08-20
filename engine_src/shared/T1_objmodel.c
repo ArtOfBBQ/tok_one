@@ -763,7 +763,11 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 }
             }
         
-            if (parsed_materials[parsed_mtls_matching_i].use_base_mtl_flag)
+            if (
+                parsed_mtls_matching_i >= 0 &&
+                parsed_materials
+                    [parsed_mtls_matching_i].
+                        use_base_mtl_flag)
             {
                 cur_material_i = PARENT_MATERIAL_BASE;
                 #ifndef LOGGER_IGNORE_ASSERTS

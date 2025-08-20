@@ -7,6 +7,10 @@ static int32_t teapot_object_ids[2];
 static int32_t teapot_touchable_ids[2];
 #endif
 
+void client_logic_init(void) {
+    return;
+}
+
 void client_logic_early_startup(
     bool32_t * success,
     char * error_message)
