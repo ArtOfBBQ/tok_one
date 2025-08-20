@@ -36,7 +36,6 @@
 		60A99903287BD4C3003F7159 /* T1_userinput.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128692862511500F92967 /* T1_userinput.c */; };
 		60A99904287BD4C3003F7159 /* T1_random.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128772862511600F92967 /* T1_random.c */; };
 		60A99905287BD4C3003F7159 /* T1_engine_globals.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128822862511700F92967 /* T1_engine_globals.h */; };
-		60A99907287BD4C3003F7159 /* clientlogic.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128702862511600F92967 /* clientlogic.c */; };
 		60A99908287BD4C3003F7159 /* T1_random.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128802862511700F92967 /* T1_random.h */; };
 		60A99909287BD4C3003F7159 /* T1_platform_layer.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128832862511700F92967 /* T1_platform_layer.h */; };
 		60A9990A287BD4C3003F7159 /* T1_zsprite.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128842862511700F92967 /* T1_zsprite.h */; };
@@ -82,6 +81,7 @@
 		EC18FF4829E3DD8900ED785C /* blob3.png in Resources */ = {isa = PBXBuildFile; fileRef = EC18FF4529E3DD8900ED785C /* blob3.png */; };
 		EC18FF4929E3DD8900ED785C /* blob3.png in Resources */ = {isa = PBXBuildFile; fileRef = EC18FF4529E3DD8900ED785C /* blob3.png */; };
 		EC31932529DFAAFB00E320CD /* T1_particle.c in Sources */ = {isa = PBXBuildFile; fileRef = EC31932329DFAAFB00E320CD /* T1_particle.c */; };
+		EC4040DB2E5431C000264128 /* clientlogic_particledesigner.c in Sources */ = {isa = PBXBuildFile; fileRef = EC4040D92E5431C000264128 /* clientlogic_particledesigner.c */; };
 		EC493BC92BEDABCC004D957F /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EC6B1F48293C9FD900837369 /* UIKit.framework */; };
 		EC493BCB2BEDAE07004D957F /* shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = 60112895286253C100F92967 /* shaders.metal */; };
 		EC6441A429318B6D00A0267B /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = EC64419F29318B6D00A0267B /* main.m */; };
@@ -212,6 +212,7 @@
 		EC1BD95B297B5DBD00A9BA54 /* clientlogic_macro_settings.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = clientlogic_macro_settings.h; path = ../../sampleproject_src/clientlogic_macro_settings.h; sourceTree = "<group>"; };
 		EC31932229DFAAFB00E320CD /* T1_particle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_particle.h; path = ../../engine_src/shared/T1_particle.h; sourceTree = "<group>"; };
 		EC31932329DFAAFB00E320CD /* T1_particle.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_particle.c; path = ../../engine_src/shared/T1_particle.c; sourceTree = "<group>"; };
+		EC4040D92E5431C000264128 /* clientlogic_particledesigner.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = clientlogic_particledesigner.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/sampleproject_src/clientlogic_particledesigner.c; sourceTree = "<absolute>"; };
 		EC493BC42BEDA96D004D957F /* unitybuild_macos.c */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.objc; fileEncoding = 4; name = unitybuild_macos.c; path = ../../unitybuild_macos.c; sourceTree = "<group>"; };
 		EC61E2D42AFB02B7004D316D /* T1_linux_apple_platform_layer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_linux_apple_platform_layer.c; path = ../../engine_src/shared_linux_apple/T1_linux_apple_platform_layer.c; sourceTree = "<group>"; };
 		EC64419E29318B6D00A0267B /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = ../../engine_src/ios/AppDelegate.h; sourceTree = "<group>"; };
@@ -359,6 +360,7 @@
 			isa = PBXGroup;
 			children = (
 				601128702862511600F92967 /* clientlogic.c */,
+				EC4040D92E5431C000264128 /* clientlogic_particledesigner.c */,
 				EC61E2D32AFB029F004D316D /* shared_apple_linux */,
 				EC6441A829318B7900A0267B /* iphone_only */,
 				60A998DE287BD468003F7159 /* shared_macos_iphone */,
@@ -713,6 +715,7 @@
 				60A998F4287BD4C3003F7159 /* T1_apple_platform_layer.m in Sources */,
 				6028DD342886EE54000E1E98 /* T1_init_application.c in Sources */,
 				EC083A3B2AFF727900234FE3 /* T1_objparser.c in Sources */,
+				EC4040DB2E5431C000264128 /* clientlogic_particledesigner.c in Sources */,
 				60A99903287BD4C3003F7159 /* T1_userinput.c in Sources */,
 				ECF7CB182D53ADA400623C60 /* T1_profiler.c in Sources */,
 				EC78509B29E62CA800E6882A /* T1_objmodel.c in Sources */,
@@ -725,7 +728,6 @@
 				6064C0C22892505000E8B3AD /* T1_gameloop.c in Sources */,
 				60A9991E287BD4D6003F7159 /* shaders.metal in Sources */,
 				EC6441A729318B6D00A0267B /* ViewController.m in Sources */,
-				60A99907287BD4C3003F7159 /* clientlogic.c in Sources */,
 				EC676A3C2DE85210001FD4DE /* T1_cpu_to_gpu_types.c in Sources */,
 				ECDD9C232DE2157500721A48 /* T1_texture_files.c in Sources */,
 				ECE759D12C400175004B0847 /* T1_lines.c in Sources */,

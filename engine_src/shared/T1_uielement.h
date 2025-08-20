@@ -3,12 +3,14 @@
 
 #include "T1_common.h"
 #include "T1_memorystore.h"
-#include "T1_scheduled_animations.h"
-#include "T1_userinput.h"
 #include "T1_zspriteid.h"
+#include "T1_userinput.h"
 #include "T1_zsprite.h"
+#include "T1_texture_array.h"
+#include "T1_scheduled_animations.h"
 #include "T1_text.h"
 #include "T1_profiler.h"
+
 
 #ifdef __cplusplus
 extern "C" {

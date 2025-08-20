@@ -29,10 +29,13 @@ void zsprite_request_next(
         stack_recipient->gpu_data == NULL)
     {
         stack_recipient->cpu_data =
-            &zsprites_to_render->cpu_data[zsprites_to_render->size];
+            &zsprites_to_render->
+                cpu_data[zsprites_to_render->size];
         stack_recipient->gpu_data =
-            &zsprites_to_render->gpu_data[zsprites_to_render->size];
-        stack_recipient->cpu_data[zsprites_to_render->size].deleted = false;
+            &zsprites_to_render->
+                gpu_data[zsprites_to_render->size];
+        stack_recipient->cpu_data[zsprites_to_render->size].
+            deleted = false;
         stack_recipient->cpu_data->committed = false;
         
         zsprites_to_render->size += 1;
@@ -46,16 +49,20 @@ void zsprite_commit(
     zSpriteRequest * to_commit)
 {
     log_assert(to_commit->cpu_data->mesh_id >= 0);
-    log_assert(to_commit->cpu_data->mesh_id < (int32_t)all_mesh_summaries_size);
+    log_assert(to_commit->cpu_data->mesh_id <
+        (int32_t)all_mesh_summaries_size);
     log_assert(to_commit->cpu_data->mesh_id < ALL_MESHES_SIZE);
     log_assert(
-        all_mesh_summaries[to_commit->cpu_data->mesh_id].vertices_size > 0);
+        all_mesh_summaries[to_commit->cpu_data->mesh_id].
+            vertices_size > 0);
     
     #ifndef LOGGER_IGNORE_ASSERTS
     uint32_t all_mesh_vertices_tail_i =
         (uint32_t)(
-            all_mesh_summaries[to_commit->cpu_data->mesh_id].vertices_head_i +
-            all_mesh_summaries[to_commit->cpu_data->mesh_id].vertices_size -
+            all_mesh_summaries
+                [to_commit->cpu_data->mesh_id].vertices_head_i +
+            all_mesh_summaries
+                [to_commit->cpu_data->mesh_id].vertices_size -
             1);
     log_assert(all_mesh_vertices_tail_i < all_mesh_vertices->size);
     #endif

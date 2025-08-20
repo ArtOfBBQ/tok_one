@@ -1,8 +1,8 @@
 #include "T1_uielement.h"
 
 static int32_t currently_sliding_touchable_id = -1;
-static int32_t currently_sliding_object_id = -1;
-static int32_t currently_clicking_object_id = -1;
+// static int32_t currently_sliding_zsprite_id = -1;
+static int32_t currently_clicking_zsprite_id = -1;
 
 typedef struct ActiveUIElement {
     int32_t touchable_id;
@@ -84,124 +84,26 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
     (void)ms_elapsed;
     
     if (
-        !user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].handled)
-    {
-        if (
-            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                touchable_id_top >= 0 &&
-            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                touchable_id_top < LAST_UI_TOUCHABLE_ID)
-        {
-            for (
-                uint32_t i = 0;
-                i < active_ui_elements_size;
-                i++)
-            {
-                if (
-                    active_ui_elements[i].deleted ||
-                    user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                        touchable_id_top !=
-                    active_ui_elements[i].touchable_id)
-                {
-                    continue;
-                }
-                
-                if (
-                    active_ui_elements[i].slideable)
-                {
-                    currently_sliding_object_id =
-                    active_ui_elements[i].object_id_2;
-                    currently_sliding_touchable_id =
-                        active_ui_elements[i].touchable_id;
-                    
-                    for (
-                        uint32_t zp_i = 0;
-                        zp_i < zsprites_to_render->size;
-                        zp_i++)
-                    {
-                        if (zsprites_to_render->cpu_data[zp_i].zsprite_id ==
-                            currently_sliding_object_id)
-                        {
-                            zsprites_to_render->gpu_data[zp_i].scale_factor =
-                                1.05f;
-                        }
-                    }
-                    
-                    // TODO: reimplement
-                    #if 0
-                    ScheduledAnimation * bump_pin =
-                        scheduled_animations_request_next(true);
-                    bump_pin->affected_sprite_id = currently_sliding_object_id;
-                    bump_pin->gpu_polygon_vals.scale_factor = 1.20f;
-                    bump_pin->duration_us = 20;
-                    scheduled_animations_commit(bump_pin);
-                    
-                    bump_pin = scheduled_animations_request_next(true);
-                    bump_pin->affected_sprite_id = currently_sliding_object_id;
-                    bump_pin->gpu_polygon_vals.scale_factor = 1.0f;
-                    bump_pin->wait_before_each_run = 20;
-                    bump_pin->duration_us = 200000;
-                    scheduled_animations_commit(bump_pin);
-                    #endif
-                }
-                
-                if (active_ui_elements[i].clickable) {
-                    currently_clicking_object_id =
-                        active_ui_elements[i].object_id;
-                    
-                    // TODO: reimplement
-                    #if 0
-                    ScheduledAnimation * bump =
-                        scheduled_animations_request_next(true);
-                    bump->affected_sprite_id = currently_clicking_object_id;
-                    bump->gpu_polygon_vals.scale_factor = 1.25f;
-                    bump->duration_us = 40;
-                    scheduled_animations_commit(bump);
-                    
-                    ScheduledAnimation * flatten =
-                        scheduled_animations_request_next(true);
-                    flatten->affected_sprite_id = currently_clicking_object_id;
-                    flatten->gpu_polygon_vals.scale_factor = 1.0f;
-                    flatten->wait_before_each_run = 50;
-                    flatten->duration_us = 250000;
-                    scheduled_animations_commit(flatten);
-                    #endif
-                }
-                
-                if (
-                    active_ui_elements[i].
-                        interaction_sound_filename[0] != '\0')
-                {
-                    // add_audio();
-                    // platform_play_sound_resource(
-                    //    active_ui_elements[i].interaction_sound_filename);
-                }
-                
-                user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                    handled = true;
-            }
-        }
-    }
-    
-    if (
-        currently_sliding_touchable_id >= 0 &&
-        currently_sliding_object_id >= 0)
+        currently_sliding_touchable_id >= 0)
     {
         int32_t ui_elem_i = -1;
         for (
-            ui_elem_i = 0;
-            ui_elem_i < (int32_t)active_ui_elements_size;
-            ui_elem_i++)
+            int32_t elem_i = 0;
+            elem_i < (int32_t)active_ui_elements_size;
+            elem_i++)
         {
             if (
-                !active_ui_elements[ui_elem_i].deleted &&
-                active_ui_elements[ui_elem_i].slideable &&
-                user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                    touchable_id_top ==
-                active_ui_elements[ui_elem_i].touchable_id)
+                !active_ui_elements[elem_i].deleted &&
+                active_ui_elements[elem_i].slideable &&
+                user_interactions
+                    [INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+                        touchable_id_top ==
+                active_ui_elements[elem_i].touchable_id)
             {
-                user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                    handled = true;
+                user_interactions
+                    [INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+                        handled = true;
+                ui_elem_i = elem_i;
                 break;
             }
         }
@@ -215,64 +117,81 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
             {
                 if (
                     active_ui_elements[ui_elem_i].slideable &&
-                    zsprites_to_render->cpu_data[zp_i].zsprite_id ==
-                        currently_sliding_object_id)
+                    zsprites_to_render->gpu_data[zp_i].
+                        touchable_id ==
+                            currently_sliding_touchable_id)
                 {
                     // set slider value
                     float new_x_offset =
                         engineglobals_screenspace_x_to_x(
                             user_interactions[
-                                INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_x,
-                            zsprites_to_render->gpu_data[zp_i].xyz[2]) -
+                                INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].
+                                    screen_x,
+                            zsprites_to_render->gpu_data[zp_i].
+                                xyz[2]) -
                         zsprites_to_render->gpu_data[zp_i].xyz[0];
                     
                     if (
                         new_x_offset <
-                            -active_ui_elements[ui_elem_i].slider_width / 2)
+                            -active_ui_elements[ui_elem_i].
+                                slider_width / 2)
                     {
                         new_x_offset =
-                            -active_ui_elements[ui_elem_i].slider_width / 2;
+                            -active_ui_elements[ui_elem_i].
+                                slider_width / 2;
                     }
                     
                     if (
                         new_x_offset >
-                            active_ui_elements[ui_elem_i].slider_width / 2)
+                            active_ui_elements[ui_elem_i].
+                                slider_width / 2)
                     {
                         new_x_offset =
-                            active_ui_elements[ui_elem_i].slider_width / 2;
+                            active_ui_elements[ui_elem_i].
+                                slider_width / 2;
                     }
                     
                     zsprites_to_render->gpu_data[zp_i].xyz_offset[0] =
                         new_x_offset;
                     
                     float slider_pct = (new_x_offset /
-                        active_ui_elements[ui_elem_i].slider_width) + 0.5f;
+                        active_ui_elements[ui_elem_i].
+                            slider_width) + 0.5f;
                     
                     if (active_ui_elements[ui_elem_i].is_float) {
                         log_assert(
-                            active_ui_elements[ui_elem_i].slider_linked_float !=
-                                NULL);
-                        *(active_ui_elements[ui_elem_i].slider_linked_float) =
-                            active_ui_elements[ui_elem_i].slider_min_float +
-                                ((active_ui_elements[ui_elem_i].
-                                    slider_max_float -
-                                    active_ui_elements[ui_elem_i].
-                                        slider_min_float) * slider_pct);
+                            active_ui_elements[ui_elem_i].
+                                slider_linked_float != NULL);
+                        *(active_ui_elements[ui_elem_i].
+                            slider_linked_float) =
+                                active_ui_elements[ui_elem_i].
+                                    slider_min_float +
+                            ((active_ui_elements[ui_elem_i].
+                                slider_max_float -
+                                active_ui_elements[ui_elem_i].
+                                    slider_min_float) *
+                                        slider_pct);
                     } else {
                         log_assert(
-                            active_ui_elements[ui_elem_i].slider_linked_int !=
-                                NULL);
-                        *(active_ui_elements[ui_elem_i].slider_linked_int) =
-                            active_ui_elements[ui_elem_i].slider_min_int +
-                                (int32_t)(
-                                    (active_ui_elements[ui_elem_i].
-                                        slider_max_int -
-                                            active_ui_elements[ui_elem_i].
-                                                slider_min_int) * slider_pct);
+                            active_ui_elements[ui_elem_i].
+                                slider_linked_int != NULL);
+                        *(active_ui_elements[ui_elem_i].
+                            slider_linked_int) =
+                                active_ui_elements[ui_elem_i].
+                                    slider_min_int + (int32_t)(
+                                        (active_ui_elements
+                                            [ui_elem_i].
+                                                slider_max_int -
+                                    active_ui_elements[ui_elem_i].
+                                        slider_min_int) *
+                                slider_pct);
                     }
                     
-                    if (active_ui_elements[ui_elem_i].slid_funcptr != NULL) {
-                        active_ui_elements[ui_elem_i].slid_funcptr();
+                    if (active_ui_elements[ui_elem_i].
+                        slid_funcptr != NULL)
+                    {
+                        active_ui_elements[ui_elem_i].
+                            slid_funcptr();
                     }
                 }
             }
@@ -280,18 +199,17 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
     }
     
     if (
-        !user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].handled)
+        !user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
+            handled)
     {
         if (
-            currently_sliding_touchable_id >= 0 &&
-            currently_sliding_object_id >= 0)
+            currently_sliding_touchable_id >= 0)
         {
-            currently_sliding_object_id = -1;
             currently_sliding_touchable_id = -1;
         }
         
         if (
-            currently_clicking_object_id >= 0)
+            currently_clicking_zsprite_id >= 0)
         {
             int32_t ui_elem_i = -1;
             for (
@@ -302,18 +220,100 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                 if (
                     !active_ui_elements[ui_elem_i].deleted &&
                     active_ui_elements[ui_elem_i].clickable &&
-                    user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
-                        touchable_id_top ==
+                    user_interactions
+                        [INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
+                            touchable_id_top ==
                     active_ui_elements[ui_elem_i].touchable_id)
                 {
-                    user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
-                        handled = true;
-                    active_ui_elements[ui_elem_i].clicked_funcptr();
+                    user_interactions
+                        [INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
+                            handled = true;
+                    active_ui_elements[ui_elem_i].
+                        clicked_funcptr();
                     break;
                 }
             }
             
-            currently_sliding_object_id = -1;
+            currently_sliding_touchable_id = -1;
+        }
+    }
+    
+    if (
+        !user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+            handled)
+    {
+        if (
+            user_interactions
+                [INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+                    touchable_id_top >= 0 &&
+            user_interactions
+                [INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+                    touchable_id_top < LAST_UI_TOUCHABLE_ID)
+        {
+            for (
+                uint32_t i = 0;
+                i < active_ui_elements_size;
+                i++)
+            {
+                if (
+                    active_ui_elements[i].deleted ||
+                    user_interactions
+                        [INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+                            touchable_id_top !=
+                                active_ui_elements[i].touchable_id)
+                {
+                    continue;
+                }
+                
+                if (
+                    active_ui_elements[i].slideable)
+                {
+                    currently_sliding_touchable_id =
+                        active_ui_elements[i].touchable_id;
+                    user_interactions
+                        [INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
+                            handled = true;
+                    
+                    T1ScheduledAnimation * bump_pin =
+                        T1_scheduled_animations_request_next(true);
+                    bump_pin->easing_type =
+                        EASINGTYPE_SINGLE_BOUNCE_ZERO_TO_ZERO;
+                    bump_pin->affected_zsprite_id = active_ui_elements[i].object_id_2;
+                    bump_pin->gpu_polygon_vals.scale_factor = 1.20f;
+                    bump_pin->duration_us = 120000;
+                    T1_scheduled_animations_commit(bump_pin);
+                }
+                
+                if (active_ui_elements[i].clickable) {
+                    currently_clicking_zsprite_id =
+                        active_ui_elements[i].object_id;
+                    
+                    T1ScheduledAnimation * bump =
+                        T1_scheduled_animations_request_next(true);
+                    bump->affected_zsprite_id =
+                        currently_clicking_zsprite_id;
+                    bump->easing_type =
+                        EASINGTYPE_SINGLE_BOUNCE_ZERO_TO_ZERO;
+                    bump->gpu_polygon_vals.scale_factor = 1.25f;
+                    bump->duration_us = 140000;
+                    T1_scheduled_animations_commit(bump);
+                }
+                
+                if (
+                    active_ui_elements[i].
+                        interaction_sound_filename[0] != '\0')
+                {
+                     #if AUDIO_ACTIVE
+                     add_audio();
+                     platform_play_sound_resource(
+                        active_ui_elements[i].
+                            interaction_sound_filename);
+                     #endif
+                }
+                
+                user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+                    handled = true;
+            }
         }
     }
     
@@ -364,11 +364,11 @@ static void request_slider_shared(
         next_ui_element_settings->slider_background_tex.array_i;
     slider_back.gpu_data->base_material.texture_i =
         next_ui_element_settings->slider_background_tex.slice_i;
-    slider_back.gpu_data->base_material.ambient_rgb[0] =
+    slider_back.gpu_data->base_material.diffuse_rgb[0] =
         next_ui_element_settings->slider_background_rgba[0];
-    slider_back.gpu_data->base_material.ambient_rgb[1] =
+    slider_back.gpu_data->base_material.diffuse_rgb[1] =
         next_ui_element_settings->slider_background_rgba[1];
-    slider_back.gpu_data->base_material.ambient_rgb[2] =
+    slider_back.gpu_data->base_material.diffuse_rgb[2] =
         next_ui_element_settings->slider_background_rgba[2];
     slider_back.gpu_data->base_material.alpha =
         next_ui_element_settings->slider_background_rgba[3];
@@ -416,11 +416,11 @@ static void request_slider_shared(
         next_ui_element_settings->slider_pin_tex.array_i;
     slider_pin.gpu_data->base_material.texture_i =
         next_ui_element_settings->slider_pin_tex.slice_i;
-    slider_pin.gpu_data->base_material.ambient_rgb[0] =
+    slider_pin.gpu_data->base_material.diffuse_rgb[0] =
         next_ui_element_settings->slider_pin_rgba[0];
-    slider_pin.gpu_data->base_material.ambient_rgb[1] =
+    slider_pin.gpu_data->base_material.diffuse_rgb[1] =
         next_ui_element_settings->slider_pin_rgba[1];
-    slider_pin.gpu_data->base_material.ambient_rgb[2] =
+    slider_pin.gpu_data->base_material.diffuse_rgb[2] =
         next_ui_element_settings->slider_pin_rgba[2];
     slider_pin.gpu_data->base_material.alpha =
         next_ui_element_settings->slider_pin_rgba[3];
@@ -585,11 +585,11 @@ void request_button(
         next_ui_element_settings->ignore_lighting;
     zsprite_commit(&button_request);
     
-    button_request.gpu_data->base_material.ambient_rgb[0] =
+    button_request.gpu_data->base_material.diffuse_rgb[0] =
         next_ui_element_settings->button_background_rgba[0];
-    button_request.gpu_data->base_material.ambient_rgb[1] =
+    button_request.gpu_data->base_material.diffuse_rgb[1] =
         next_ui_element_settings->button_background_rgba[1];
-    button_request.gpu_data->base_material.ambient_rgb[2] =
+    button_request.gpu_data->base_material.diffuse_rgb[2] =
         next_ui_element_settings->button_background_rgba[2];
     button_request.gpu_data->base_material.alpha =
         next_ui_element_settings->button_background_rgba[3];

@@ -46,7 +46,7 @@ of the engine for your specific app.
 /*
 The maximum number of sprites in your app.
 */
-#define MAX_ZSPRITES_PER_BUFFER  1000
+#define MAX_ZSPRITES_PER_BUFFER  50000
 #define MAX_LINE_VERTICES 100
 #define MAX_POINT_VERTICES 300
 

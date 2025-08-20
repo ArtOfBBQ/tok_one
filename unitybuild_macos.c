@@ -78,8 +78,8 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_text.c"
 #include "T1_uielement.c"
 #include "T1_profiler.c"
-#include "clientlogic.c" // requires text and uielement
-// #include "clientlogic_particledesigner.c" // requires text and uielement
+// #include "clientlogic.c" // requires text and uielement
+#include "clientlogic_particledesigner.c" // requires text and uielement
 #include "T1_terminal.c" // requires clientlogic
 #include "T1_renderer.c" // requires zpoly & part
 #include "T1_gameloop.c" // requires renderer

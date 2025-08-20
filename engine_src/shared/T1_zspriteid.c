@@ -8,7 +8,7 @@ static int32_t latest_nonui_object_id = FIRST_NONUI_OBJECT_ID;
 static int32_t latest_ui_element_object_id = 2;
 
 static int32_t latest_nonui_touchable_id = FIRST_NONUI_TOUCHABLE_ID;
-static int32_t latest_ui_element_touchable_id = 0;
+static int32_t latest_ui_element_touchable_id = 2;
 
 int32_t next_ui_element_object_id(void) {
     log_assert(latest_ui_element_object_id + 1 < FIRST_NONUI_OBJECT_ID);

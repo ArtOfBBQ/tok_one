@@ -474,10 +474,13 @@ void text_request_label_renderable(
         zsprite_request_next(&letter);
         zsprite_construct_quad(
             /* const float left_x: */
-                engineglobals_screenspace_x_to_x(left_pixelspace, z),
+                engineglobals_screenspace_x_to_x(
+                    left_pixelspace,
+                    z),
             /* const float bottom_y: */
                 engineglobals_screenspace_y_to_y(
-                    top_pixelspace - font_settings->font_height, z),
+                    top_pixelspace - font_settings->font_height,
+                    z),
             /* const flota z: */
                 z,
             /* const float width: */
@@ -496,6 +499,7 @@ void text_request_label_renderable(
         letter.gpu_data->remove_shadow = font_settings->remove_shadow;
         
         letter.gpu_data->base_material = font_settings->mat;
+        letter.gpu_data->base_material.texturearray_i = 0;
         letter.gpu_data->base_material.texture_i =
             (int32_t)(text_to_draw[i] - '!');
         
@@ -521,7 +525,6 @@ void text_request_label_renderable(
             cur_x_offset   = 0;
             cur_y_offset  -= get_newline_advance();
         }
-        
         
         i++;
         log_assert(letter.gpu_data->base_material.alpha > 0.99f);
@@ -579,7 +582,8 @@ void text_request_fps_counter(
         ms_last_n_frames_total += ms_last_n_frames[i];
     }
     
-    uint64_t fps = (1000000 * FPS_FRAMES_MAX) / (ms_last_n_frames_total);
+    uint64_t fps = (1000000 * FPS_FRAMES_MAX) /
+        (ms_last_n_frames_total);
     
     if (fps < 100) {
         fps_string[11] = '0' + ((fps / 10) % 10);
@@ -606,6 +610,9 @@ void text_request_fps_counter(
     font_settings->mat.ambient_rgb[0] = 1.0f;
     font_settings->mat.ambient_rgb[1] = 1.0f;
     font_settings->mat.ambient_rgb[2] = 1.0f;
+    font_settings->mat.diffuse_rgb[0] = 1.0f;
+    font_settings->mat.diffuse_rgb[1] = 1.0f;
+    font_settings->mat.diffuse_rgb[2] = 1.0f;
     font_settings->mat.alpha = 1.0f;
     font_settings->alpha = 1.0f;
     font_settings->ignore_lighting = true;
@@ -621,7 +628,7 @@ void text_request_fps_counter(
         /* float top_pixelspace  : */
             30.0f,
         /* z                     : */
-            0.05f,
+            engine_globals->projection_constants.znear + 0.0001f,
         /* float max_width       : */
             engine_globals->window_width);
 }
@@ -645,10 +652,20 @@ void text_request_top_touchable_id(
     font_settings->mat.ambient_rgb[0] = 1.0f;
     font_settings->mat.ambient_rgb[1] = 1.0f;
     font_settings->mat.ambient_rgb[2] = 1.0f;
+    font_settings->mat.diffuse_rgb[0] = 1.0f;
+    font_settings->mat.diffuse_rgb[1] = 1.0f;
+    font_settings->mat.diffuse_rgb[2] = 1.0f;
+    font_settings->mat.rgb_cap[0] = 1.0f;
+    font_settings->mat.rgb_cap[1] = 1.0f;
+    font_settings->mat.rgb_cap[2] = 1.0f;
+    font_settings->mat.uv_scroll[0] = 0.0f;
+    font_settings->mat.uv_scroll[1] = 0.0f;
     font_settings->mat.alpha = 1.0f;
+    font_settings->alpha = 1.0f;
     font_settings->ignore_lighting = true;
     font_settings->ignore_camera = true;
     font_settings->touchable_id = -1;
+    
     text_request_label_renderable(
         /* with_id               : */
             FPS_COUNTER_OBJECT_ID,
@@ -659,7 +676,7 @@ void text_request_top_touchable_id(
         /* float top_pixelspace  : */
             30.0f,
         /* z                     : */
-            0.05f,
+            engine_globals->projection_constants.znear + 0.0001f,
         /* float max_width       : */
             engine_globals->window_width);
 }

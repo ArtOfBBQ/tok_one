@@ -10,6 +10,10 @@
 #include "T1_decodedimage.h"
 #include "T1_cpu_gpu_shared_types.h"
 
+typedef struct T1Tex {
+    int16_t array_i;
+    int16_t slice_i;
+} T1Tex;
 
 #define MAX_ASSET_FILENAME_SIZE 30
 #define MAX_ASSET_FILES 1500
@@ -58,11 +62,6 @@ void T1_texture_array_register_new_by_splitting_image(
     const char * filename_prefix,
     const uint32_t rows,
     const uint32_t columns);
-
-typedef struct T1Tex {
-    int16_t array_i;
-    int16_t slice_i;
-} T1Tex;
 
 T1Tex T1_texture_array_get_filename_location(
     const char * for_filename);

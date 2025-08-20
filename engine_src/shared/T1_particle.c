@@ -88,7 +88,8 @@ void commit_lineparticle_effect(
     log_assert(to_commit->zpolygon_gpu.xyz_multiplier[2] > 0.0f);
     
     to_commit->committed = true;
-    to_commit->random_seed = (uint32_t)tok_rand() % RANDOM_SEQUENCE_SIZE;
+    to_commit->random_seed = (uint32_t)tok_rand() %
+        RANDOM_SEQUENCE_SIZE;
 }
 
 #define add_variance(x, variance, randnum, randnum2) if (variance > 0) { x += ((float)(randnum % variance) * 0.01f); x -= ((float)(randnum2 % variance) * 0.01f); }
@@ -334,7 +335,7 @@ void construct_particle_effect(
     poly_request.gpu_data       = &to_construct->zpolygon_gpu;
     zsprite_construct(/* PolygonRequest *to_construct: */ &poly_request);
     
-    to_construct->zsprite_id            = -1;
+    to_construct->zsprite_id           = -1;
     to_construct->zpolygon_cpu.mesh_id =  1;
     
     to_construct->zpolygon_cpu.committed = true;
@@ -363,7 +364,8 @@ ParticleEffect * next_particle_effect(void) {
     }
     
     if (return_value == NULL) {
-        log_assert(particle_effects_size + 1 < PARTICLE_EFFECTS_SIZE);
+        log_assert(particle_effects_size + 1 <
+            PARTICLE_EFFECTS_SIZE);
         return_value = &particle_effects[particle_effects_size];
         particle_effects_size += 1;
     }
@@ -678,8 +680,9 @@ void add_particle_effects_to_workload(
                     frame_data->polygon_collection->size].scale_factor);
             
             frame_data->polygon_collection->size += 1;
-            log_assert(frame_data->polygon_collection->size <
-                MAX_ZSPRITES_PER_BUFFER);
+            log_assert(
+                frame_data->polygon_collection->size <
+                    MAX_ZSPRITES_PER_BUFFER);
         }
         
         if (particles_active < 1) {

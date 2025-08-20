@@ -124,7 +124,10 @@ void gameloop_update_before_render_pass(
         pct_progress *= 100.0f;
         
         char loading_text[256];
-        common_strcpy_capped(loading_text, 256, "Loading textures - ");
+        common_strcpy_capped(
+            loading_text,
+            256,
+            "Loading textures - ");
         common_strcat_float_capped(
             loading_text,
             256,

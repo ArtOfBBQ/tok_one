@@ -246,8 +246,12 @@ log_dump_and_crash(const char * crash_message) {
     
     if (application_running) {
         unsigned int i = 0;
-        while (crash_message[i] != '\0' && i < (CRASH_STRING_SIZE-1)) {
-            crashed_top_of_screen_msg[i] = crash_message[i];
+        while (
+            crash_message[i] != '\0' &&
+            i < (CRASH_STRING_SIZE-1))
+        {
+            crashed_top_of_screen_msg[i] =
+                crash_message[i];
             i++;
         }
         crashed_top_of_screen_msg[i] = '\0';

@@ -839,8 +839,10 @@ int32_t platform_gpu_get_touchable_id_at_screen_pos(
         return -1;
     }
     
-    uint32_t rtt_width  = (uint32_t)ags->render_target_texture.width;
-    uint32_t rtt_height = (uint32_t)ags->render_target_texture.height;
+    uint32_t rtt_width  =
+        (uint32_t)ags->render_target_texture.width;
+    uint32_t rtt_height =
+        (uint32_t)ags->render_target_texture.height;
     
     uint32_t screen_x_adj = (uint32_t)(
         (screen_x / engine_globals->window_width) *
@@ -869,9 +871,9 @@ int32_t platform_gpu_get_touchable_id_at_screen_pos(
     uint16_t third_8bits = data[(pixel_i*4)+2] & 0xFF;
     uint16_t fourth_8bits = data[(pixel_i*4)+3] & 0xFF;
     
-    uint32_t first_8  = first_8bits; // red channel, see shaders
+    uint32_t first_8  = first_8bits;  // red channel, see shaders
     uint32_t second_8 = second_8bits; // green channel
-    uint32_t third_8 = third_8bits; // blue channel
+    uint32_t third_8  = third_8bits;  // blue channel
     uint32_t fourth_8 = fourth_8bits; // alpha channel
     
     uint32_t uid = (fourth_8 << 24) | (third_8 << 16) | (second_8 << 8) | first_8;
@@ -1376,11 +1378,11 @@ void platform_gpu_copy_locked_materials(void)
             touch_buffer_size_bytes
         options:
             MTLResourceStorageModeShared];
-    common_memset_char(
+    int32_t minus_one = -1;
+    common_memset_int32(
         ags->touch_id_buffer_all_zeros.contents,
-        0,
-        touch_buffer_size_bytes);
-    
+        minus_one,
+        (uint32_t)touch_buffer_size_bytes);
     // Set up a texture for rendering to and apply post-processing to
     MTLTextureDescriptor * render_target_texture_desc =
         [MTLTextureDescriptor new];

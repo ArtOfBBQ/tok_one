@@ -35,7 +35,9 @@ typedef struct LineParticle {
     float waypoint_g[MAX_LINEPARTICLE_DIRECTIONS];
     float waypoint_b[MAX_LINEPARTICLE_DIRECTIONS];
     float waypoint_a[MAX_LINEPARTICLE_DIRECTIONS];
-    float waypoint_scalefactor[MAX_LINEPARTICLE_DIRECTIONS];
+    float
+        waypoint_scalefactor
+            [MAX_LINEPARTICLE_DIRECTIONS];
     uint32_t waypoints_size;
     
     uint64_t particle_zangle_variance_pct;
