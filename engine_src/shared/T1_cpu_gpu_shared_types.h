@@ -89,7 +89,7 @@ typedef struct GPUzSprite {
     unsigned int      remove_shadow;
     int               touchable_id;
     GPULockedMaterial base_material;
-} __attribute__((aligned(32))) GPUzSprite; // 26 floats (? SIMD runs)
+} __attribute__((aligned(32))) GPUzSprite;
 
 typedef struct GPUSpriteCollection {
     GPUzSprite   polygons[MAX_ZSPRITES_PER_BUFFER];

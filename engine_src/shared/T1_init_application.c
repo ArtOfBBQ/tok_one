@@ -167,7 +167,15 @@ void init_application_before_gpu_init(
         platform_mutex_lock,
         platform_mutex_unlock);
     
+    T1_reflection_init(
+        memcpy,
+        malloc_from_unmanaged,
+        memset,
+        strcmp,
+        strlen);
+    
     ias = malloc_from_unmanaged(sizeof(InitApplicationState));
+    common_memset_char(ias, 0, sizeof(InitApplicationState));
     
     // settings_init(malloc_from_unmanaged);
     

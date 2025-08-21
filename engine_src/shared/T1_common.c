@@ -315,7 +315,9 @@ common_internal_strcat_float_capped(
     #endif
     const float to_append)
 {
-    float positive_append = to_append >= 0.0f ? to_append : -1.0f * to_append;
+    float positive_append = to_append >= 0.0f ?
+        to_append :
+        -1.0f * to_append;
     
     uint32_t before_comma = (uint32_t)positive_append;
     uint32_t after_comma =

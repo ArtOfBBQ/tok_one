@@ -110,6 +110,7 @@
 		EC7B171C293A23E400C1D20C /* roundedborder.png in Resources */ = {isa = PBXBuildFile; fileRef = EC7B171A293A23E300C1D20C /* roundedborder.png */; };
 		EC7FBC402DECE93000A679A7 /* 1001_albedo.png in Resources */ = {isa = PBXBuildFile; fileRef = EC7FBC3F2DECE93000A679A7 /* 1001_albedo.png */; };
 		EC7FBC412DECE93000A679A7 /* 1001_albedo.png in Resources */ = {isa = PBXBuildFile; fileRef = EC7FBC3F2DECE93000A679A7 /* 1001_albedo.png */; };
+		EC8043212E56C3A800434066 /* T1_reflection.c in Sources */ = {isa = PBXBuildFile; fileRef = EC8043202E56C3A800434066 /* T1_reflection.c */; };
 		EC843EA82D1401F3001AD2E9 /* cardstand.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC843EA72D1401F3001AD2E9 /* cardstand.obj */; };
 		EC843EA92D1401F3001AD2E9 /* cardstand.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC843EA72D1401F3001AD2E9 /* cardstand.obj */; };
 		EC8E828C2DF25F9E00E2D97A /* open_cube.obj in Resources */ = {isa = PBXBuildFile; fileRef = EC8E828B2DF25F9E00E2D97A /* open_cube.obj */; };
@@ -246,6 +247,8 @@
 		EC7C25242980B6A900DB7BC8 /* T1_terminal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_terminal.h; path = ../../engine_src/shared/T1_terminal.h; sourceTree = "<group>"; };
 		EC7C25252980B6A900DB7BC8 /* T1_terminal.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_terminal.c; path = ../../engine_src/shared/T1_terminal.c; sourceTree = "<group>"; };
 		EC7FBC3F2DECE93000A679A7 /* 1001_albedo.png */ = {isa = PBXFileReference; explicitFileType = compiled; path = 1001_albedo.png; sourceTree = "<group>"; };
+		EC8043202E56C3A800434066 /* T1_reflection.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_reflection.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_reflection.c; sourceTree = "<absolute>"; };
+		EC8043222E56D38000434066 /* T1_reflection.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_reflection.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_reflection.h; sourceTree = "<absolute>"; };
 		EC843EA72D1401F3001AD2E9 /* cardstand.obj */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = cardstand.obj; path = ../../resources/cardstand.obj; sourceTree = "<group>"; };
 		EC8E828A2DF25F9E00E2D97A /* open_cube.mtl */ = {isa = PBXFileReference; lastKnownFileType = text; name = open_cube.mtl; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/resources/open_cube.mtl; sourceTree = "<absolute>"; };
 		EC8E828B2DF25F9E00E2D97A /* open_cube.obj */ = {isa = PBXFileReference; lastKnownFileType = text; name = open_cube.obj; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/resources/open_cube.obj; sourceTree = "<absolute>"; };
@@ -471,6 +474,8 @@
 				ECF7CB152D53ADA400623C60 /* T1_profiler.c */,
 				601128802862511700F92967 /* T1_random.h */,
 				601128772862511600F92967 /* T1_random.c */,
+				EC8043222E56D38000434066 /* T1_reflection.h */,
+				EC8043202E56C3A800434066 /* T1_reflection.c */,
 				6011287B2862511700F92967 /* T1_renderer.h */,
 				6011286C2862511500F92967 /* T1_renderer.c */,
 				6011286A2862511500F92967 /* T1_scheduled_animations.h */,
@@ -701,6 +706,7 @@
 				EC6441A629318B6D00A0267B /* ios_platform_layer.c in Sources */,
 				60A998F8287BD4C3003F7159 /* T1_common.h in Sources */,
 				60A9990D287BD4C3003F7159 /* T1_gpu.h in Sources */,
+				EC8043212E56C3A800434066 /* T1_reflection.c in Sources */,
 				60A99905287BD4C3003F7159 /* T1_engine_globals.h in Sources */,
 				60A99917287BD4C4003F7159 /* T1_lightsource.c in Sources */,
 				60A99901287BD4C3003F7159 /* T1_text.h in Sources */,

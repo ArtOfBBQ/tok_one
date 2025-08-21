@@ -101,12 +101,28 @@ static void set_property_offset(
     char * name,
     size_t offset)
 {
-    
+    uint32_t good = 0;
+    T1_reflection_reg(
+        /* const char * struct_name: */
+            "GPUzSprite",
+        /* const char * property_name: */
+            name,
+        /* const uint16_t property_offset: */
+            (uint16_t)offset,
+        /* const T1DataType property_type: */
+            T1_DATATYPE_F32,
+        /* const uint16_t property_array_size: */
+            1,
+        /* const uint32_t offset_i: */
+            0,
+        /* uint32_t * good: */
+            &good);
+    assert(good);
 }
 
 static void set_property_offsets_for_gpusprite_subprops(
-        const char * prefix,
-        const uint32_t preoffset)
+    const char * prefix,
+    const uint32_t preoffset)
 {
     char fullprop[256];
     fullprop[0] = '\0';

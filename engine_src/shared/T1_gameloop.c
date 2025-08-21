@@ -306,14 +306,16 @@ void gameloop_update_after_render_pass(void) {
         client_logic_update_after_render_pass();
     }
     
-    user_interactions[INTR_LAST_GPU_DATA].touchable_id_top =
+    user_interactions
+        [INTR_LAST_GPU_DATA].touchable_id_top =
         platform_gpu_get_touchable_id_at_screen_pos(
             /* const int screen_x: */
                 user_interactions[INTR_LAST_GPU_DATA].
                     screen_x,
             /* const int screen_y: */
-                user_interactions[INTR_LAST_GPU_DATA].
-                    screen_y);
+                user_interactions
+                    [INTR_LAST_GPU_DATA].
+                        screen_y);
     user_interactions[INTR_LAST_GPU_DATA].touchable_id_pierce =
         user_interactions[INTR_LAST_GPU_DATA].touchable_id_top;
 }

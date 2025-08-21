@@ -4,6 +4,7 @@
 #include <string.h> // strlcat
 
 #include "T1_common.h"
+#include "T1_reflection.h"
 #include "T1_logger.h"
 #include "T1_profiler.h"
 #include "T1_random.h"
