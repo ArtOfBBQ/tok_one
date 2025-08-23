@@ -97,104 +97,145 @@ void client_logic_init(void) {
     common_memset_char(pds, 0, sizeof(ParticleDesignerState));
 }
 
-static void set_property_offset(
-    char * name,
-    size_t offset)
-{
-    uint32_t good = 0;
-    T1_reflection_reg(
-        /* const char * struct_name: */
-            "GPUzSprite",
-        /* const char * property_name: */
-            name,
-        /* const uint16_t property_offset: */
-            (uint16_t)offset,
-        /* const T1DataType property_type: */
-            T1_DATATYPE_F32,
-        /* const uint16_t property_array_size: */
-            1,
-        /* const uint32_t offset_i: */
-            0,
-        /* uint32_t * good: */
-            &good);
-    assert(good);
-}
-
-static void set_property_offsets_for_gpusprite_subprops(
-    const char * prefix,
-    const uint32_t preoffset)
-{
-    char fullprop[256];
-    fullprop[0] = '\0';
-    
-    common_strcpy_capped(fullprop, 256, prefix);
-    common_strcat_capped(fullprop, 256, ".xyz[0]");
-    set_property_offset(
-        fullprop,
-        preoffset + offsetof(
-            GPUzSprite,
-            xyz[0]));
-    common_strcpy_capped(fullprop, 256, prefix);
-    common_strcat_capped(fullprop, 256, ".xyz[1]");
-    set_property_offset(
-        fullprop,
-        preoffset + offsetof(
-            GPUzSprite,
-            xyz[1]));
-    common_strcpy_capped(fullprop, 256, prefix);
-    common_strcat_capped(fullprop, 256, ".xyz[2]");
-    set_property_offset(
-        fullprop,
-        preoffset + offsetof(
-            GPUzSprite,
-            xyz[2]));
-    common_strcpy_capped(fullprop, 256, prefix);
-    common_strcat_capped(fullprop, 256, ".xyz_angle[0]");
-    set_property_offset(
-        fullprop,
-        preoffset + offsetof(
-            GPUzSprite,
-            xyz_angle[0]));
-    common_strcpy_capped(fullprop, 256, prefix);
-    common_strcat_capped(fullprop, 256, ".xyz_angle[1]");
-    set_property_offset(
-        fullprop,
-        preoffset + offsetof(
-            GPUzSprite,
-            xyz_angle[1]));
-    common_strcpy_capped(fullprop, 256, prefix);
-    common_strcat_capped(fullprop, 256, ".xyz_angle[2]");
-    set_property_offset(
-        fullprop,
-        preoffset + offsetof(
-            GPUzSprite,
-            xyz_angle[2]));
-    
-    common_strcpy_capped(fullprop, 256, prefix);
-    common_strcat_capped(fullprop, 256, ".bonus_rgb[0]");
-    set_property_offset(
-        fullprop,
-        preoffset + offsetof(
-            GPUzSprite,
-            bonus_rgb[0]));
-}
-
 void client_logic_early_startup(
     bool32_t * success,
     char * error_message)
 {
     *success = 0;
     
-    set_property_offsets_for_gpusprite_subprops(
-        "gpustats_initial_random_add_1.",
-        offsetof(
-            ParticleEffect,
-            gpustats_initial_random_add_1));
-    set_property_offsets_for_gpusprite_subprops(
-        "gpustats_initial_random_add_2.",
-        offsetof(
-            ParticleEffect,
-            gpustats_initial_random_add_2));
+    /*
+    Struct definition: GPULockedMaterial
+    */
+    uint32_t good = 0;
+    T1_reflection_struct(
+        /* const char * struct_name: */
+            GPULockedMaterial,
+        /* uint32_t * good: */
+            &good);
+    assert(good);
+    
+    good = 0;
+    T1_reflection_field(GPULockedMaterial,
+        ambient_rgb, T1_DATATYPE_F32, NULL, 3, &good);
+    assert(good);
+    good = 0;
+    T1_reflection_field(GPULockedMaterial,
+        diffuse_rgb, T1_DATATYPE_F32, NULL, 3, &good);
+    assert(good);
+    good = 0;
+    T1_reflection_field(GPULockedMaterial,
+        specular_rgb, T1_DATATYPE_F32, NULL, 3, &good);
+    assert(good);
+    good = 0;
+    T1_reflection_field(GPULockedMaterial,
+        rgb_cap, T1_DATATYPE_F32, NULL, 3, &good);
+    assert(good);
+    good = 0;
+    T1_reflection_field(GPULockedMaterial,
+        texturearray_i, T1_DATATYPE_I32, NULL, 1, &good);
+    assert(good);
+    good = 0;
+    T1_reflection_field(GPULockedMaterial,
+        texture_i, T1_DATATYPE_I32, NULL, 1, &good);
+    assert(good);
+    #if NORMAL_MAPPING_ACTIVE
+    T1_reflection_field(GPULockedMaterial,
+        normalmap_texturearray_i, T1_DATATYPE_I32, NULL, 1, &good);
+    T1_reflection_field(GPULockedMaterial,
+        normalmap_texture_i, T1_DATATYPE_I32, NULL, 1, &good);
+    #endif
+    T1_reflection_field(GPULockedMaterial,
+        specular_exponent, T1_DATATYPE_F32, NULL, 1, &good);
+    T1_reflection_field(GPULockedMaterial,
+        refraction, T1_DATATYPE_F32, NULL, 1, &good);
+    T1_reflection_field(GPULockedMaterial,
+        alpha, T1_DATATYPE_F32, NULL, 1, &good);
+    T1_reflection_field(GPULockedMaterial,
+        illum, T1_DATATYPE_F32, NULL, 1, &good);
+    /*
+    End of truct definition: GPULockedMaterial
+    */
+    
+    /*
+    Struct definition: GPUzSprite
+    */
+    good = 0;
+    T1_reflection_struct(
+        /* const char * struct_name: */
+            GPUzSprite,
+        /* uint32_t * good: */
+            &good);
+    assert(good);
+    
+    good = 0;
+    T1_reflection_field(GPUzSprite,
+        xyz, T1_DATATYPE_F32, NULL, 3, &good);
+    assert(good);
+    good = 0;
+    T1_reflection_field(GPUzSprite,
+        xyz_angle, T1_DATATYPE_F32, NULL, 3, &good);
+    assert(good);
+    good = 0;
+    T1_reflection_field(GPUzSprite,
+        bonus_rgb, T1_DATATYPE_F32, NULL, 3, &good);
+    assert(good);
+    good = 0;
+    T1_reflection_field(GPUzSprite,
+        xyz_multiplier, T1_DATATYPE_F32, NULL, 3, &good);
+    assert(good);
+    good = 0;
+    T1_reflection_field(GPUzSprite,
+        xyz_offset, T1_DATATYPE_F32, NULL, 3, &good);
+    assert(good);
+    good = 0;
+    T1_reflection_field(GPUzSprite,
+        base_mat_uv_offsets, T1_DATATYPE_F32, NULL, 2, &good);
+    assert(good);
+    good = 0;
+    T1_reflection_field(GPUzSprite,
+        scale_factor, T1_DATATYPE_F32, NULL, 1, &good);
+    assert(good);
+    good = 0;
+    T1_reflection_field(GPUzSprite,
+        alpha, T1_DATATYPE_F32, NULL, 1, &good);
+    assert(good);
+    good = 0;
+    T1_reflection_field(GPUzSprite,
+        ignore_lighting, T1_DATATYPE_F32, NULL, 1, &good);
+    assert(good);
+    good = 0;
+    T1_reflection_field(GPUzSprite,
+        ignore_camera, T1_DATATYPE_F32, NULL, 1, &good);
+    assert(good);
+    good = 0;
+    T1_reflection_field(GPUzSprite,
+        remove_shadow, T1_DATATYPE_U32, NULL, 1, &good);
+    assert(good);
+    good = 0;
+    T1_reflection_field(GPUzSprite,
+        touchable_id, T1_DATATYPE_I32, NULL, 1, &good);
+    assert(good);
+    good = 0;
+    T1_reflection_field(GPUzSprite,
+        base_material, T1_DATATYPE_STRUCT, "GPULockedMaterial", 1, &good);
+    assert(good);
+    /*
+    End of truct definition: GPUzSprite
+    */
+    
+    T1ReflectedField field = T1_reflection_get_field(
+        "GPUzSprite", "doesnt_exist[5125]", &good);
+    assert(good);
+    assert(field.offset == -1);
+    
+    field = T1_reflection_get_field(
+        "GPUzSprite", "base_material.diffuse_rgb[1]", &good);
+    assert(good);
+    
+    printf(
+        "field offset at (expected 104 for [0]): %i\n",
+        field.offset);
+    printf("offsetof(): %lu\n", offsetof(GPUzSprite, base_material.diffuse_rgb[1]));
     
     example_particles_id = next_nonui_object_id();
     

@@ -23,6 +23,7 @@ typedef enum T1DataType {
     T1_DATATYPE_I32,
     T1_DATATYPE_I16,
     T1_DATATYPE_I8,
+    T1_DATATYPE_CHAR,
 } T1DataType;
 
 void T1_reflection_init(
@@ -32,13 +33,30 @@ void T1_reflection_init(
     int (* strcmp_func)(const char *, const char *),
     size_t (* strlen_func)(const char *));
 
-void T1_reflection_reg(
+#define T1_reflection_struct(struct_name, good) T1_reflection_reg_struct(#struct_name, sizeof(struct_name), good)
+void T1_reflection_reg_struct(
     const char * struct_name,
+    const uint32_t size_bytes,
+    uint32_t * good);
+
+#define T1_reflection_field(struct_name, prop_name, data_type, data_name_if_struct, array_size, good) T1_reflection_reg_field( #prop_name, offsetof(struct_name, prop_name), data_type, data_name_if_struct, array_size, good)
+void T1_reflection_reg_field(
     const char * property_name,
     const uint16_t property_offset,
     const T1DataType property_type,
+    const char * property_struct_name,
     const uint16_t property_array_size,
-    const uint32_t offset_i,
+    uint32_t * good);
+
+typedef struct {
+    T1DataType data_type;
+    int16_t offset; // -1 if no such field
+    uint16_t array_size;
+} T1ReflectedField;
+
+T1ReflectedField T1_reflection_get_field(
+    const char * struct_name,
+    const char * field_name,
     uint32_t * good);
 
 #endif // T1_REFLECTION_H
