@@ -4,10 +4,10 @@
 typedef struct MetaField {
     char * name;
     char * struct_type_name;
-    T1DataType type;
+    T1Type type;
+    uint32_t offset;
     uint16_t next_i;
     uint16_t array_size;
-    uint16_t offset;
 } MetaField;
 
 typedef struct {
@@ -46,7 +46,7 @@ static void construct_metafield(MetaField * to_construct) {
     #endif
     
     to_construct->next_i = UINT16_MAX;
-    to_construct->type = T1_DATATYPE_NOTSET;
+    to_construct->type = T1_TYPE_NOTSET;
     to_construct->name = NULL;
     to_construct->struct_type_name = NULL;
     to_construct->offset = UINT16_MAX;
@@ -60,8 +60,6 @@ static MetaField * metafield_i_to_ptr(const uint16_t field_i) {
 }
 
 static void T1_refl_reset(void) {
-    offsetof(T1ReflectionState, metastructs);
-    
     t1rs->memset(
         (char *)t1rs +
             offsetof(T1ReflectionState, metastructs_size),
@@ -93,15 +91,15 @@ void T1_reflection_init(
     t1rs->strcmp = T1_reflection_strcmp_func;
     t1rs->strlen = T1_reflection_strlen_func;
     
-    t1rs->ascii_store_cap = 1000;
+    t1rs->ascii_store_cap = 2500;
     t1rs->ascii_store = T1_reflection_malloc_func(
         t1rs->ascii_store_cap);
     
-    t1rs->metastructs_cap = 20;
+    t1rs->metastructs_cap = 30;
     t1rs->metastructs = T1_reflection_malloc_func(
         sizeof(MetaStruct) * t1rs->metastructs_cap);
     
-    t1rs->metafields_store_cap = 1000;
+    t1rs->metafields_store_cap = 500;
     t1rs->metafields_store = T1_reflection_malloc_func(
         sizeof(MetaField) * t1rs->metafields_store_cap);
     
@@ -170,6 +168,7 @@ static MetaField * find_field_in_struct_by_name(
     while (i != NULL)
     {
         if (
+            i->name != NULL &&
             t1rs->strcmp(
                 i->name,
                 property_name) == 0)
@@ -198,6 +197,7 @@ void T1_reflection_reg_struct(
         if (
             t1rs->metastructs_size + 1 >= t1rs->metastructs_cap)
         {
+            *good = 0;
             return;
         }
         
@@ -209,7 +209,14 @@ void T1_reflection_reg_struct(
             struct_name,
             good);
         target_mstruct->size_bytes = size_bytes;
-        if (!*good) { return; }
+        if (!*good) {
+            #if T1_REFLECTION_ASSERTS
+            // nout enough ascii store for a struct name should
+            // probably never happen
+            assert(0);
+            #endif
+            return;
+        }
         *good = 0;
     }
     
@@ -218,8 +225,8 @@ void T1_reflection_reg_struct(
 
 void T1_reflection_reg_field(
     const char * property_name,
-    const uint16_t property_offset,
-    const T1DataType property_type,
+    const uint32_t property_offset,
+    const T1Type property_type,
     const char * property_struct_name,
     const uint16_t property_array_size,
     uint32_t * good)
@@ -299,7 +306,15 @@ void T1_reflection_reg_field(
     if (!*good) { return; }
     *good = 0;
     
-    if (target_mfield->type == T1_DATATYPE_STRUCT) {
+    if (target_mfield->type == T1_TYPE_STRUCT) {
+        #if T1_REFLECTION_ASSERTS
+        assert(property_struct_name != NULL);
+        #endif
+        if (property_struct_name == NULL) {
+            *good = 0;
+            return;
+        }
+        
         target_mfield->struct_type_name =
             T1_refl_copy_str_to_store(
                 /* const char * to_copy: */
@@ -364,7 +379,7 @@ static void T1_refl_get_field_recursive(
     
     if (metastruct == NULL) {
         return_value->array_size = 0;
-        return_value->data_type = T1_DATATYPE_NOTSET;
+        return_value->data_type = T1_TYPE_NOTSET;
         return_value->offset = -1;
         return;
     }
@@ -405,7 +420,7 @@ static void T1_refl_get_field_recursive(
     
     if (metafield == NULL) {
         return_value->array_size = 0;
-        return_value->data_type = T1_DATATYPE_NOTSET;
+        return_value->data_type = T1_TYPE_NOTSET;
         return_value->offset = -1;
         *good = 1;
         return;
@@ -415,20 +430,20 @@ static void T1_refl_get_field_recursive(
     if (array_index > 0 ) {
         MetaStruct * substruct = NULL;
         switch (metafield->type) {
-            case T1_DATATYPE_I8:
-            case T1_DATATYPE_U8:
+            case T1_TYPE_I8:
+            case T1_TYPE_U8:
                 offset_per_array_index = 1;
                 break;
-            case T1_DATATYPE_I16:
-            case T1_DATATYPE_U16:
+            case T1_TYPE_I16:
+            case T1_TYPE_U16:
                 offset_per_array_index = 2;
                 break;
-            case T1_DATATYPE_I32:
-            case T1_DATATYPE_U32:
-            case T1_DATATYPE_F32:
+            case T1_TYPE_I32:
+            case T1_TYPE_U32:
+            case T1_TYPE_F32:
                 offset_per_array_index = 4;
                 break;
-            case T1_DATATYPE_STRUCT:
+            case T1_TYPE_STRUCT:
                 substruct = find_struct_by_name(
                     metafield->struct_type_name);
                 if (substruct == NULL) {
@@ -442,7 +457,7 @@ static void T1_refl_get_field_recursive(
                 }
                 offset_per_array_index = substruct->size_bytes;
                 break;
-            case T1_DATATYPE_NOTSET:
+            case T1_TYPE_NOTSET:
             default:
                 #if T1_REFLECTION_ASSERTS
                 assert(0);
@@ -458,7 +473,7 @@ static void T1_refl_get_field_recursive(
     
     if (second_part != NULL) {
         #if T1_REFLECTION_ASSERTS
-        assert(return_value->data_type == T1_DATATYPE_STRUCT);
+        assert(return_value->data_type == T1_TYPE_STRUCT);
         assert(metafield->struct_type_name != NULL);
         assert(metafield->struct_type_name[0] != '\0');
         #endif
@@ -480,7 +495,7 @@ T1ReflectedField T1_reflection_get_field(
     uint32_t * good)
 {
     T1ReflectedField return_value;
-    return_value.data_type = T1_DATATYPE_NOTSET;
+    return_value.data_type = T1_TYPE_NOTSET;
     return_value.array_size = 0;
     return_value.offset = 0;
     

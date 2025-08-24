@@ -116,42 +116,42 @@ void client_logic_early_startup(
     
     good = 0;
     T1_reflection_field(GPULockedMaterial,
-        ambient_rgb, T1_DATATYPE_F32, NULL, 3, &good);
+        T1_DATATYPE_F32, NULL, ambient_rgb, 3, &good);
     assert(good);
     good = 0;
     T1_reflection_field(GPULockedMaterial,
-        diffuse_rgb, T1_DATATYPE_F32, NULL, 3, &good);
+        T1_DATATYPE_F32, NULL, diffuse_rgb, 3, &good);
     assert(good);
     good = 0;
     T1_reflection_field(GPULockedMaterial,
-        specular_rgb, T1_DATATYPE_F32, NULL, 3, &good);
+        T1_DATATYPE_F32, NULL, specular_rgb, 3, &good);
     assert(good);
     good = 0;
     T1_reflection_field(GPULockedMaterial,
-        rgb_cap, T1_DATATYPE_F32, NULL, 3, &good);
+        T1_DATATYPE_F32, NULL, rgb_cap, 3, &good);
     assert(good);
     good = 0;
     T1_reflection_field(GPULockedMaterial,
-        texturearray_i, T1_DATATYPE_I32, NULL, 1, &good);
+        T1_DATATYPE_I32, NULL, texturearray_i, 1, &good);
     assert(good);
     good = 0;
     T1_reflection_field(GPULockedMaterial,
-        texture_i, T1_DATATYPE_I32, NULL, 1, &good);
+        T1_DATATYPE_I32, NULL, texture_i, 1, &good);
     assert(good);
     #if NORMAL_MAPPING_ACTIVE
     T1_reflection_field(GPULockedMaterial,
-        normalmap_texturearray_i, T1_DATATYPE_I32, NULL, 1, &good);
+        T1_DATATYPE_I32, NULL, normalmap_texturearray_i, 1, &good);
     T1_reflection_field(GPULockedMaterial,
-        normalmap_texture_i, T1_DATATYPE_I32, NULL, 1, &good);
+        T1_DATATYPE_I32, NULL, normalmap_texture_i, 1, &good);
     #endif
     T1_reflection_field(GPULockedMaterial,
-        specular_exponent, T1_DATATYPE_F32, NULL, 1, &good);
+        T1_DATATYPE_F32, NULL, specular_exponent, 1, &good);
     T1_reflection_field(GPULockedMaterial,
-        refraction, T1_DATATYPE_F32, NULL, 1, &good);
+        T1_DATATYPE_F32, NULL, refraction, 1, &good);
     T1_reflection_field(GPULockedMaterial,
-        alpha, T1_DATATYPE_F32, NULL, 1, &good);
+        T1_DATATYPE_F32, NULL, alpha, 1, &good);
     T1_reflection_field(GPULockedMaterial,
-        illum, T1_DATATYPE_F32, NULL, 1, &good);
+        T1_DATATYPE_F32, NULL, illum, 1, &good);
     /*
     End of truct definition: GPULockedMaterial
     */
@@ -169,55 +169,56 @@ void client_logic_early_startup(
     
     good = 0;
     T1_reflection_field(GPUzSprite,
-        xyz, T1_DATATYPE_F32, NULL, 3, &good);
+        T1_DATATYPE_F32, NULL, xyz, 3, &good);
     assert(good);
     good = 0;
     T1_reflection_field(GPUzSprite,
-        xyz_angle, T1_DATATYPE_F32, NULL, 3, &good);
+        T1_DATATYPE_F32, NULL, xyz_angle, 3, &good);
     assert(good);
     good = 0;
     T1_reflection_field(GPUzSprite,
-        bonus_rgb, T1_DATATYPE_F32, NULL, 3, &good);
+        T1_DATATYPE_F32, NULL, bonus_rgb, 3, &good);
     assert(good);
     good = 0;
     T1_reflection_field(GPUzSprite,
-        xyz_multiplier, T1_DATATYPE_F32, NULL, 3, &good);
+        T1_DATATYPE_F32, NULL, xyz_multiplier, 3, &good);
     assert(good);
     good = 0;
     T1_reflection_field(GPUzSprite,
-        xyz_offset, T1_DATATYPE_F32, NULL, 3, &good);
+        T1_DATATYPE_F32, NULL, xyz_offset, 3, &good);
     assert(good);
     good = 0;
     T1_reflection_field(GPUzSprite,
-        base_mat_uv_offsets, T1_DATATYPE_F32, NULL, 2, &good);
+        T1_DATATYPE_F32, NULL, base_mat_uv_offsets, 2, &good);
     assert(good);
     good = 0;
     T1_reflection_field(GPUzSprite,
-        scale_factor, T1_DATATYPE_F32, NULL, 1, &good);
+        T1_DATATYPE_F32, NULL, scale_factor, 1, &good);
     assert(good);
     good = 0;
     T1_reflection_field(GPUzSprite,
-        alpha, T1_DATATYPE_F32, NULL, 1, &good);
+        T1_DATATYPE_F32, NULL, alpha, 1, &good);
     assert(good);
     good = 0;
     T1_reflection_field(GPUzSprite,
-        ignore_lighting, T1_DATATYPE_F32, NULL, 1, &good);
+        T1_DATATYPE_F32, NULL, ignore_lighting, 1, &good);
     assert(good);
     good = 0;
     T1_reflection_field(GPUzSprite,
-        ignore_camera, T1_DATATYPE_F32, NULL, 1, &good);
+        T1_DATATYPE_F32, NULL, ignore_camera, 1, &good);
     assert(good);
     good = 0;
     T1_reflection_field(GPUzSprite,
-        remove_shadow, T1_DATATYPE_U32, NULL, 1, &good);
+        T1_DATATYPE_U32, NULL, remove_shadow, 1, &good);
     assert(good);
     good = 0;
     T1_reflection_field(GPUzSprite,
-        touchable_id, T1_DATATYPE_I32, NULL, 1, &good);
+        T1_DATATYPE_I32, NULL, touchable_id, 1, &good);
     assert(good);
     good = 0;
     T1_reflection_field(GPUzSprite,
-        base_material, T1_DATATYPE_STRUCT, "GPULockedMaterial", 1, &good);
+        T1_DATATYPE_STRUCT, "GPULockedMaterial", base_material, 1,
+        &good);
     assert(good);
     /*
     End of truct definition: GPUzSprite
