@@ -40,9 +40,9 @@ void T1_reflection_reg_struct(
     uint32_t * good);
 
 #define T1_reflection_field(struct_name, data_type, prop_name, good) T1_reflection_reg_field(#prop_name, offsetof(struct_name, prop_name), data_type, NULL, 1, 1, 1, good)
-#define T1_reflection_struct_field(struct_name, data_type, data_name_if_struct, prop_name, good) T1_reflection_reg_field(#prop_name, offsetof(struct_name, prop_name), data_type, data_name_if_struct, 1, 1, 1, good)
+#define T1_reflection_struct_field(struct_name, data_type, property_type, prop_name, good) T1_reflection_reg_field(#prop_name, offsetof(struct_name, prop_name), data_type, #property_type, 1, 1, 1, good)
 #define T1_reflection_array(struct_name, data_type, prop_name, array_size, good) T1_reflection_reg_field(#prop_name, offsetof(struct_name, prop_name), data_type, NULL, array_size, 1, 1, good)
-#define T1_reflection_struct_array(struct_name, data_type, data_name_if_struct, prop_name, array_size, good) T1_reflection_reg_field(#prop_name, offsetof(struct_name, prop_name), data_type, data_name_if_struct, array_size, 1, 1, good)
+#define T1_reflection_struct_array(struct_name, data_type, property_type, prop_name, array_size, good) T1_reflection_reg_field(#prop_name, offsetof(struct_name, prop_name), data_type, #property_type, array_size, 1, 1, good)
 #define T1_reflection_multi_array(struct_name, data_type, data_name_if_struct, prop_name, array_size_1, array_size_2, array_size_3, good) T1_reflection_reg_field(#prop_name, offsetof(struct_name, prop_name), data_type, data_name_if_struct, array_size_1, array_size_2, array_size_3, good)
 void T1_reflection_reg_field(
     const char * property_name,
@@ -61,7 +61,8 @@ typedef struct {
     uint16_t array_sizes[T1_REFL_MAX_ARRAY_SIZES];
 } T1ReflectedField;
 
-T1ReflectedField T1_reflection_get_field(
+#define T1_reflection_get_field(struct_name, field_name, good) T1_reflection_get_field_from_strings(#struct_name, #field_name, good)
+T1ReflectedField T1_reflection_get_field_from_strings(
     const char * struct_name,
     const char * field_name,
     uint32_t * good);

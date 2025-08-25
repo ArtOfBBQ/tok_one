@@ -233,6 +233,18 @@ void T1_reflection_reg_field(
 {
     *good = 0;
     
+    #if T1_REFLECTION_ASSERTS
+    assert(property_name != NULL);
+    // When invoking the macro versions of this function, call using
+    // the actual struct type, not a string containing the struct type
+    assert(property_name[0] != '"');
+    if (property_struct_name != NULL) {
+        // When invoking the macro versions of this function, call using
+        // the actual type name, not a string containing the type name
+        assert(property_struct_name[0] != '"');
+    }
+    #endif
+    
     // There should be no '.' in the property, because substructs
     // should be registered separately
     for (uint32_t i = 0; i < UINT16_MAX; i++) {
@@ -564,11 +576,18 @@ static void T1_refl_get_field_recursive(
     *good = 1;
 }
 
-T1ReflectedField T1_reflection_get_field(
+T1ReflectedField T1_reflection_get_field_from_strings(
     const char * struct_name,
     const char * field_name,
     uint32_t * good)
 {
+    #if T1_REFLECTION_ASSERTS
+    assert(struct_name != NULL);
+    assert(struct_name[0] != '"');
+    assert(field_name != NULL);
+    assert(field_name[0] != '"');
+    #endif
+    
     T1ReflectedField return_value;
     return_value.data_type = T1_TYPE_NOTSET;
     return_value.array_sizes[0] = 0;

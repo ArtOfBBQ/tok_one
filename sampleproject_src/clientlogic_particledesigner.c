@@ -141,27 +141,17 @@ void client_logic_early_startup(
     T1_reflection_field(GPUzSprite, T1_TYPE_U32, remove_shadow, &ok);
     T1_reflection_field(GPUzSprite, T1_TYPE_I32, touchable_id, &ok);
     T1_reflection_struct_field(GPUzSprite,
-        T1_TYPE_STRUCT, "GPULockedMaterial", base_material, &ok);
+        T1_TYPE_STRUCT, GPULockedMaterial, base_material, &ok);
     assert(ok);
-        
-    T1ReflectedField field = T1_reflection_get_field(
-        "GPUzSprite", "doesnt_exist[5125]", &ok);
-    assert(ok);
-    assert(field.offset == -1);
-    
-    field = T1_reflection_get_field(
-        "GPUzSprite", "alpha", &ok);
-    assert(ok);
-    assert(field.offset == offsetof(GPUzSprite, alpha));
     
     T1_reflection_struct(ParticleEffect, &ok);
     assert(ok);
-    T1_reflection_struct_array(ParticleEffect, T1_TYPE_STRUCT, "GPUzSprite", gpustats_initial_random_add, 2, &ok);
-    T1_reflection_struct_array(ParticleEffect, T1_TYPE_STRUCT, "GPUzSprite", gpustats_pertime_random_add, 2, &ok);
-    T1_reflection_struct_field(ParticleEffect, T1_TYPE_STRUCT, "GPUzSprite", gpustats_pertime_add, &ok);
-    T1_reflection_struct_field(ParticleEffect, T1_TYPE_STRUCT, "GPUzSprite", gpustats_perexptime_add, &ok);
-    T1_reflection_struct_field(ParticleEffect, T1_TYPE_STRUCT, "GPUzSprite", zpolygon_cpu, &ok);
-    T1_reflection_struct_field(ParticleEffect, T1_TYPE_STRUCT, "GPUzSprite", zpolygon_gpu, &ok);
+    T1_reflection_struct_array(ParticleEffect, T1_TYPE_STRUCT, GPUzSprite, gpustats_initial_random_add, 2, &ok);
+    T1_reflection_struct_array(ParticleEffect, T1_TYPE_STRUCT, GPUzSprite, gpustats_pertime_random_add, 2, &ok);
+    T1_reflection_struct_field(ParticleEffect, T1_TYPE_STRUCT, GPUzSprite, gpustats_pertime_add, &ok);
+    T1_reflection_struct_field(ParticleEffect, T1_TYPE_STRUCT, GPUzSprite, gpustats_perexptime_add, &ok);
+    T1_reflection_struct_field(ParticleEffect, T1_TYPE_STRUCT, GPUzSprite, zpolygon_cpu, &ok);
+    T1_reflection_struct_field(ParticleEffect, T1_TYPE_STRUCT, GPUzSprite, zpolygon_gpu, &ok);
     T1_reflection_field(ParticleEffect, T1_TYPE_U64, random_seed, &ok);
     T1_reflection_field(ParticleEffect, T1_TYPE_U64, elapsed, &ok);
     T1_reflection_field(ParticleEffect, T1_TYPE_U64, particle_lifespan, &ok);
@@ -179,16 +169,6 @@ void client_logic_early_startup(
     T1_reflection_field(ParticleEffect, T1_TYPE_F32, light_reach, &ok);
     T1_reflection_field(ParticleEffect, T1_TYPE_F32, light_strength, &ok);
     T1_reflection_array(ParticleEffect, T1_TYPE_F32, light_rgb, 3, &ok);
-    
-    field = T1_reflection_get_field(
-        "ParticleEffect", "gpustats_pertime_random_add[1]", &ok);
-    assert(ok);
-    assert(field.offset == offsetof(ParticleEffect, gpustats_pertime_random_add[1]));
-    
-    field = T1_reflection_get_field(
-        "GPUzSprite", "base_material.diffuse_rgb[1]", &ok);
-    assert(ok);
-    assert(field.offset == offsetof(GPUzSprite, base_material.diffuse_rgb[1]));
     
     example_particles_id = next_nonui_object_id();
     
