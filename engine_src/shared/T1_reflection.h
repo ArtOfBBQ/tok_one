@@ -39,19 +39,26 @@ void T1_reflection_reg_struct(
     const uint32_t size_bytes,
     uint32_t * good);
 
-#define T1_reflection_field(struct_name, data_type, data_name_if_struct, prop_name, array_size, good) T1_reflection_reg_field(#prop_name, offsetof(struct_name, prop_name), data_type, data_name_if_struct, array_size, good)
+#define T1_reflection_field(struct_name, data_type, prop_name, good) T1_reflection_reg_field(#prop_name, offsetof(struct_name, prop_name), data_type, NULL, 1, 1, 1, good)
+#define T1_reflection_struct_field(struct_name, data_type, data_name_if_struct, prop_name, good) T1_reflection_reg_field(#prop_name, offsetof(struct_name, prop_name), data_type, data_name_if_struct, 1, 1, 1, good)
+#define T1_reflection_array(struct_name, data_type, prop_name, array_size, good) T1_reflection_reg_field(#prop_name, offsetof(struct_name, prop_name), data_type, NULL, array_size, 1, 1, good)
+#define T1_reflection_struct_array(struct_name, data_type, data_name_if_struct, prop_name, array_size, good) T1_reflection_reg_field(#prop_name, offsetof(struct_name, prop_name), data_type, data_name_if_struct, array_size, 1, 1, good)
+#define T1_reflection_multi_array(struct_name, data_type, data_name_if_struct, prop_name, array_size_1, array_size_2, array_size_3, good) T1_reflection_reg_field(#prop_name, offsetof(struct_name, prop_name), data_type, data_name_if_struct, array_size_1, array_size_2, array_size_3, good)
 void T1_reflection_reg_field(
     const char * property_name,
     const uint32_t property_offset,
     const T1Type property_type,
     const char * property_struct_name,
-    const uint16_t property_array_size,
+    const uint16_t property_array_size_1,
+    const uint16_t property_array_size_2,
+    const uint16_t property_array_size_3,
     uint32_t * good);
 
+#define T1_REFL_MAX_ARRAY_SIZES 3
 typedef struct {
     T1Type data_type;
-    int16_t offset; // -1 if no such field
-    uint16_t array_size;
+    int64_t offset; // -1 if no such field
+    uint16_t array_sizes[T1_REFL_MAX_ARRAY_SIZES];
 } T1ReflectedField;
 
 T1ReflectedField T1_reflection_get_field(

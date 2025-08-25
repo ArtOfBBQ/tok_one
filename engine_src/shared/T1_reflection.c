@@ -7,7 +7,7 @@ typedef struct MetaField {
     T1Type type;
     uint32_t offset;
     uint16_t next_i;
-    uint16_t array_size;
+    uint16_t array_sizes[T1_REFL_MAX_ARRAY_SIZES];
 } MetaField;
 
 typedef struct {
@@ -35,8 +35,7 @@ typedef struct T1ReflectionState {
 static T1ReflectionState * t1rs = NULL;
 
 static void construct_metastruct(MetaStruct * to_construct) {
-    to_construct->name = NULL;
-    to_construct->size_bytes = 0;
+    t1rs->memset(to_construct, 0, sizeof(MetaStruct));
     to_construct->head_fields_i = UINT16_MAX;
 }
 
@@ -45,12 +44,11 @@ static void construct_metafield(MetaField * to_construct) {
     assert(to_construct != NULL);
     #endif
     
+    t1rs->memset(to_construct, 0, sizeof(MetaField));
+    
     to_construct->next_i = UINT16_MAX;
     to_construct->type = T1_TYPE_NOTSET;
-    to_construct->name = NULL;
-    to_construct->struct_type_name = NULL;
     to_construct->offset = UINT16_MAX;
-    to_construct->array_size = 0;
 }
 
 static MetaField * metafield_i_to_ptr(const uint16_t field_i) {
@@ -228,7 +226,9 @@ void T1_reflection_reg_field(
     const uint32_t property_offset,
     const T1Type property_type,
     const char * property_struct_name,
-    const uint16_t property_array_size,
+    const uint16_t property_array_size_1,
+    const uint16_t property_array_size_2,
+    const uint16_t property_array_size_3,
     uint32_t * good)
 {
     *good = 0;
@@ -299,7 +299,21 @@ void T1_reflection_reg_field(
     
     target_mfield->type = property_type;
     target_mfield->offset = property_offset;
-    target_mfield->array_size = property_array_size;
+    target_mfield->array_sizes[0] = property_array_size_1;
+    target_mfield->array_sizes[1] = property_array_size_2;
+    target_mfield->array_sizes[2] = property_array_size_3;
+    #if T1_REFLECTION_ASSERTS
+    if (target_mfield->array_sizes[1] < 2) {
+        assert(target_mfield->array_sizes[2] < 2);
+    }
+    if (target_mfield->array_sizes[0] < 2) {
+        assert(target_mfield->array_sizes[1] < 2);
+    }
+    for (uint32_t i = 0; i < T1_REFL_MAX_ARRAY_SIZES; i++) {
+        assert(target_mfield->array_sizes[i] > 0);
+    }
+    #endif
+    
     target_mfield->name = T1_refl_copy_str_to_store(
         property_name,
         good);
@@ -325,24 +339,46 @@ void T1_reflection_reg_field(
         *good = 0;
     }
     
-    // do more stuff?
+    #if T1_REFLECTION_ASSERTS
+    MetaField * previous_link = metafield_i_to_ptr(
+        target_mstruct->head_fields_i);
+    while (previous_link != NULL) {
+        MetaField * next_link = metafield_i_to_ptr(previous_link->next_i);
+        // This forces the caller of T1_reflection_reg_field()
+        // to register their fields in the same order as the original
+        // struct declaration, which is not strictly necessary but
+        // probably for the best
+        if (next_link != NULL) {
+            assert(previous_link->offset < next_link->offset);
+        }
+        previous_link = next_link;
+    }
+    #endif
     
     *good = 1;
 }
 
-static uint32_t strip_array_brackets_and_get_array_index(
-    char * to_strip)
+static void strip_array_brackets_and_get_array_indices(
+    char * to_strip,
+    uint32_t * array_indices)
 {
     size_t field_name_len = t1rs->strlen(to_strip);
     uint8_t is_array = 0;
-    uint32_t array_index = 0;
-    if (
+    t1rs->memset(
+        array_indices,
+        0,
+        sizeof(uint32_t) * T1_REFL_MAX_ARRAY_SIZES);
+    
+    while (
         field_name_len > 3 &&
         to_strip[field_name_len-1] == ']' &&
         to_strip[field_name_len-2] >= '0' &&
         to_strip[field_name_len-2] <= '9')
     {
-        // TODO: implement array indexing
+        for (uint32_t i = T1_REFL_MAX_ARRAY_SIZES-1; i >= 1; i--) {
+            array_indices[i] = array_indices[i-1];
+        }
+        
         uint32_t mult = 1;
         uint32_t total = 0;
         
@@ -359,12 +395,39 @@ static uint32_t strip_array_brackets_and_get_array_index(
         
         if (to_strip[i] == '[') {
             is_array = 1;
-            array_index = total;
+            array_indices[0] = total;
             to_strip[i] = '\0';
+            field_name_len -= 3;
+        } else {
+            break;
         }
     }
     
-    return array_index;
+    return;
+}
+
+static uint32_t array_indices_to_flat_array_index(
+    uint32_t * array_indices,
+    MetaField * field)
+{
+    #if T1_REFLECTION_ASSERTS
+    for (uint32_t i = 0; i < T1_REFL_MAX_ARRAY_SIZES; i++) {
+        assert(array_indices[i] < field->array_sizes[i]);
+    }
+    #endif
+    
+    uint32_t return_val = 0;
+    
+    for (int32_t i = 0; i < T1_REFL_MAX_ARRAY_SIZES; i++) {
+        uint32_t offset_per_slice = 1;
+        for (int32_t j = i+1; j < T1_REFL_MAX_ARRAY_SIZES; j++) {
+            offset_per_slice *= field->array_sizes[j];
+        }
+        
+        return_val += (offset_per_slice * array_indices[i]);
+    }
+    
+    return return_val;
 }
 
 static void T1_refl_get_field_recursive(
@@ -378,7 +441,9 @@ static void T1_refl_get_field_recursive(
     MetaStruct * metastruct = find_struct_by_name(struct_name);
     
     if (metastruct == NULL) {
-        return_value->array_size = 0;
+        return_value->array_sizes[0] = 0;
+        return_value->array_sizes[1] = 0;
+        return_value->array_sizes[2] = 0;
         return_value->data_type = T1_TYPE_NOTSET;
         return_value->offset = -1;
         return;
@@ -411,23 +476,31 @@ static void T1_refl_get_field_recursive(
         *good = 0;
     }
     
-    uint32_t array_index =
-        strip_array_brackets_and_get_array_index(
-            first_part);
+    
+    uint32_t array_indices[T1_REFL_MAX_ARRAY_SIZES];
+    strip_array_brackets_and_get_array_indices(
+        first_part,
+        array_indices);
     
     MetaField * metafield = find_field_in_struct_by_name(
         metastruct, first_part);
     
     if (metafield == NULL) {
-        return_value->array_size = 0;
+        return_value->array_sizes[0] = 0;
+        return_value->array_sizes[1] = 0;
+        return_value->array_sizes[2] = 0;
         return_value->data_type = T1_TYPE_NOTSET;
         return_value->offset = -1;
         *good = 1;
         return;
     }
-
+    
+    uint32_t flat_array_index = array_indices_to_flat_array_index(
+        array_indices,
+        metafield);
+    
     uint32_t offset_per_array_index = 0;
-    if (array_index > 0 ) {
+    if (flat_array_index > 0 ) {
         MetaStruct * substruct = NULL;
         switch (metafield->type) {
             case T1_TYPE_I8:
@@ -467,9 +540,11 @@ static void T1_refl_get_field_recursive(
         }
     }
     
-    return_value->offset += (uint32_t)metafield->offset + (offset_per_array_index * array_index);
+    return_value->offset += (uint32_t)metafield->offset + (offset_per_array_index * flat_array_index);
     return_value->data_type = metafield->type;
-    return_value->array_size = metafield->array_size;
+    return_value->array_sizes[0] = metafield->array_sizes[0];
+    return_value->array_sizes[1] = metafield->array_sizes[1];
+    return_value->array_sizes[2] = metafield->array_sizes[2];
     
     if (second_part != NULL) {
         #if T1_REFLECTION_ASSERTS
@@ -496,7 +571,9 @@ T1ReflectedField T1_reflection_get_field(
 {
     T1ReflectedField return_value;
     return_value.data_type = T1_TYPE_NOTSET;
-    return_value.array_size = 0;
+    return_value.array_sizes[0] = 0;
+    return_value.array_sizes[1] = 0;
+    return_value.array_sizes[2] = 0;
     return_value.offset = 0;
     
     // T1_refl_get_field_recursive() will push to the ascii store

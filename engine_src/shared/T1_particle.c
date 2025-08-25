@@ -559,18 +559,18 @@ void add_particle_effects_to_workload(
                 frame_data->polygon_collection->size < MAX_ZSPRITES_PER_BUFFER);
             
             float * initial_random_add_1_at = (float *)&particle_effects[i].
-                gpustats_initial_random_add_1;
+                gpustats_initial_random_add[0];
             float * initial_random_add_2_at = (float *)&particle_effects[i].
-                gpustats_initial_random_add_2;
+                gpustats_initial_random_add[1];
             
             float * pertime_add_at = (float *)&particle_effects[i].
                 gpustats_pertime_add;
             float * perexptime_add_at = (float *)&particle_effects[i].
                 gpustats_perexptime_add;
             float * pertime_random_add_1_at = (float *)&particle_effects[i].
-                gpustats_pertime_random_add_1;
+                gpustats_pertime_random_add[0];
             float * pertime_random_add_2_at = (float *)&particle_effects[i].
-                gpustats_pertime_random_add_2;
+                gpustats_pertime_random_add[1];
             float * recipient_at = (float *)&frame_data->polygon_collection->
                 polygons[frame_data->polygon_collection->size];
             

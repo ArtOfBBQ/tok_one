@@ -479,31 +479,31 @@ void T1_scheduled_animations_request_evaporate_and_destroy(
         float xyz_angle =  0.0100f;
         float rgb_delta =  0.00005f;
         
-        vaporize_effect->gpustats_pertime_random_add_1.xyz[0] = -xy_dist *
+        vaporize_effect->gpustats_pertime_random_add[0].xyz[0] = -xy_dist *
             duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_1.xyz[1] = -xy_dist *
+        vaporize_effect->gpustats_pertime_random_add[0].xyz[1] = -xy_dist *
             duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_1.xyz[2] = z_dist *
+        vaporize_effect->gpustats_pertime_random_add[0].xyz[2] = z_dist *
             duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_1.xyz_angle[0] =
+        vaporize_effect->gpustats_pertime_random_add[0].xyz_angle[0] =
             xyz_angle * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_1.xyz_angle[1] =
+        vaporize_effect->gpustats_pertime_random_add[0].xyz_angle[1] =
             xyz_angle * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_1.xyz_angle[2] =
+        vaporize_effect->gpustats_pertime_random_add[0].xyz_angle[2] =
             xyz_angle * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_1.bonus_rgb[0] =
+        vaporize_effect->gpustats_pertime_random_add[0].bonus_rgb[0] =
             rgb_delta * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_2.xyz[0] =
+        vaporize_effect->gpustats_pertime_random_add[1].xyz[0] =
             xy_dist * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_2.xyz[1] =
+        vaporize_effect->gpustats_pertime_random_add[1].xyz[1] =
             xy_dist * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_2.xyz[2] =
+        vaporize_effect->gpustats_pertime_random_add[1].xyz[2] =
             z_dist * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_2.xyz_angle[0] =
+        vaporize_effect->gpustats_pertime_random_add[1].xyz_angle[0] =
             -xyz_angle * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_2.xyz_angle[1] =
+        vaporize_effect->gpustats_pertime_random_add[1].xyz_angle[1] =
             -xyz_angle * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add_2.xyz_angle[2] =
+        vaporize_effect->gpustats_pertime_random_add[1].xyz_angle[2] =
             -xyz_angle * duration_mod;
         vaporize_effect->gpustats_perexptime_add.scale_factor = -1.5f;
         
@@ -564,35 +564,35 @@ void T1_scheduled_animations_request_shatter_and_destroy(
         float xyz_angle = 0.05f;
         float rgb_delta = 0.05f;
         
-        shatter_effect->gpustats_pertime_random_add_1.xyz[0] = -xyz_dist *
+        shatter_effect->gpustats_pertime_random_add[0].xyz[0] = -xyz_dist *
             duration_mod;
-        shatter_effect->gpustats_pertime_random_add_1.xyz[1] = -xyz_dist *
+        shatter_effect->gpustats_pertime_random_add[0].xyz[1] = -xyz_dist *
             duration_mod;
-        shatter_effect->gpustats_pertime_random_add_1.xyz[2] = -xyz_dist *
+        shatter_effect->gpustats_pertime_random_add[0].xyz[2] = -xyz_dist *
             duration_mod;
-        shatter_effect->gpustats_pertime_random_add_1.xyz_angle[0] =
+        shatter_effect->gpustats_pertime_random_add[0].xyz_angle[0] =
             xyz_angle * duration_mod;
-        shatter_effect->gpustats_pertime_random_add_1.xyz_angle[1] =
+        shatter_effect->gpustats_pertime_random_add[0].xyz_angle[1] =
             xyz_angle * duration_mod;
-        shatter_effect->gpustats_pertime_random_add_1.xyz_angle[2] =
+        shatter_effect->gpustats_pertime_random_add[0].xyz_angle[2] =
             xyz_angle * duration_mod;
-        shatter_effect->gpustats_pertime_random_add_1.bonus_rgb[0] =
+        shatter_effect->gpustats_pertime_random_add[0].bonus_rgb[0] =
             rgb_delta * duration_mod;
-        shatter_effect->gpustats_pertime_random_add_1.bonus_rgb[1] =
+        shatter_effect->gpustats_pertime_random_add[0].bonus_rgb[1] =
             rgb_delta * duration_mod;
-        shatter_effect->gpustats_pertime_random_add_1.bonus_rgb[2] =
+        shatter_effect->gpustats_pertime_random_add[0].bonus_rgb[2] =
             rgb_delta * duration_mod;
-        shatter_effect->gpustats_pertime_random_add_2.xyz[0] =
+        shatter_effect->gpustats_pertime_random_add[1].xyz[0] =
             xyz_dist * duration_mod;
-        shatter_effect->gpustats_pertime_random_add_2.xyz[1] =
+        shatter_effect->gpustats_pertime_random_add[1].xyz[1] =
             xyz_dist * duration_mod;
-        shatter_effect->gpustats_pertime_random_add_2.xyz[2] =
+        shatter_effect->gpustats_pertime_random_add[1].xyz[2] =
             xyz_dist * duration_mod;
-        shatter_effect->gpustats_pertime_random_add_2.xyz_angle[0] =
+        shatter_effect->gpustats_pertime_random_add[1].xyz_angle[0] =
             -xyz_angle * duration_mod;
-        shatter_effect->gpustats_pertime_random_add_2.xyz_angle[1] =
+        shatter_effect->gpustats_pertime_random_add[1].xyz_angle[1] =
             -xyz_angle * duration_mod;
-        shatter_effect->gpustats_pertime_random_add_2.xyz_angle[2] =
+        shatter_effect->gpustats_pertime_random_add[1].xyz_angle[2] =
             -xyz_angle * duration_mod;
         shatter_effect->gpustats_perexptime_add.scale_factor = -0.07f *
             duration_mod;

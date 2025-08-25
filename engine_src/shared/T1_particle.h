@@ -62,11 +62,9 @@ void add_lineparticle_effects_to_workload(
     const bool32_t alpha_blending);
 
 typedef struct ParticleEffect {
-    GPUzSprite gpustats_initial_random_add_1;
-    GPUzSprite gpustats_initial_random_add_2;
+    GPUzSprite gpustats_initial_random_add[2];
+    GPUzSprite gpustats_pertime_random_add[2];
     GPUzSprite gpustats_pertime_add;
-    GPUzSprite gpustats_pertime_random_add_1;
-    GPUzSprite gpustats_pertime_random_add_2;
     GPUzSprite gpustats_perexptime_add;
     
     // Reminder on the way the linear variance multipliers work:
@@ -82,18 +80,19 @@ typedef struct ParticleEffect {
     CPUzSprite zpolygon_cpu;
     GPUzSprite zpolygon_gpu;
     
-    int32_t zsprite_id;
-    
     uint64_t random_seed;
     uint64_t elapsed;
+    uint64_t particle_lifespan;
+    uint64_t pause_between_spawns;
+    
+    int32_t zsprite_id;
+    
     bool32_t deleted;
     bool32_t committed;
     
     uint32_t particle_spawns_per_second;
     uint32_t vertices_per_particle;
     uint32_t loops; // 0 for infinite loops
-    uint64_t particle_lifespan;
-    uint64_t pause_between_spawns;
     
     bool32_t use_shattered_mesh;
     bool32_t generate_light;
