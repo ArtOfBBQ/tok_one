@@ -17,7 +17,7 @@
 extern uint64_t last_resize_request_at;
 
 bool32_t apple_gpu_init(
-    void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *),
+    void (* arg_funcptr_shared_gameloop_update)(GPUFrame *),
     void (* arg_funcptr_shared_gameloop_update_after_render_pass)(void),
     id<MTLDevice> with_metal_device,
     NSString * shader_lib_filepath,

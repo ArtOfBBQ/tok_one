@@ -31,7 +31,7 @@ void gameloop_init(void) {
 }
 
 static void show_dead_simple_text(
-    GPUDataForSingleFrame * frame_data,
+    GPUFrame * frame_data,
     const char * text_message,
     const uint64_t elapsed)
 {
@@ -44,7 +44,7 @@ static void show_dead_simple_text(
     zsprites_to_render->size = 0;
     
     #if FOG_ACTIVE
-    engine_globals->postprocessing_constants.fog_factor = 0.0f;
+    engine_globals->postproc_consts.fog_factor = 0.0f;
     #endif
     
     camera.xyz[0] = 0.0f;
@@ -93,7 +93,7 @@ static void show_dead_simple_text(
 }
 
 void gameloop_update_before_render_pass(
-    GPUDataForSingleFrame * frame_data)
+    GPUFrame * frame_data)
 {
     engine_globals->elapsed = engine_globals->this_frame_timestamp_us -
         gameloop_previous_time;
@@ -107,8 +107,8 @@ void gameloop_update_before_render_pass(
     
     common_memcpy(frame_data->camera, &camera, sizeof(GPUCamera));
     
-    frame_data->vertices_size            = 0;
-    frame_data->polygon_collection->size = 0;
+    frame_data->verts_size            = 0;
+    frame_data->zsprite_list->size = 0;
     frame_data->first_alphablend_i       = 0;
     frame_data->line_vertices_size       = 0;
     frame_data->point_vertices_size      = 0;
@@ -265,16 +265,16 @@ void gameloop_update_before_render_pass(
         
         copy_lights(
             frame_data->lights,
-            &engine_globals->postprocessing_constants.lights_size,
-            &engine_globals->postprocessing_constants.shadowcaster_i);
+            &engine_globals->postproc_consts.lights_size,
+            &engine_globals->postproc_consts.shadowcaster_i);
         
         renderer_hardware_render(
                 frame_data,
             /* uint64_t elapsed_us: */
                 engine_globals->elapsed);
         
-        uint32_t overflow_vertices = frame_data->vertices_size % 3;
-        frame_data->vertices_size -= overflow_vertices;
+        uint32_t overflow_vertices = frame_data->verts_size % 3;
+        frame_data->verts_size -= overflow_vertices;
     }
     
     if (engine_globals->draw_fps) {
@@ -287,9 +287,9 @@ void gameloop_update_before_render_pass(
                 touchable_id_top);
     }
     
-    frame_data->postprocessing_constants->timestamp =
+    frame_data->postproc_consts->timestamp =
         (uint32_t)engine_globals->this_frame_timestamp_us;
-    frame_data->postprocessing_constants->shadowcaster_i =
+    frame_data->postproc_consts->shadowcaster_i =
         shadowcaster_light_i;
     
     #if PROFILER_ACTIVE

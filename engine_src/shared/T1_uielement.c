@@ -304,10 +304,12 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                         interaction_sound_filename[0] != '\0')
                 {
                      #if AUDIO_ACTIVE
+                     /*
                      add_audio();
                      platform_play_sound_resource(
                         active_ui_elements[i].
                             interaction_sound_filename);
+                     */
                      #endif
                 }
                 
@@ -360,17 +362,17 @@ static void request_slider_shared(
     
     slider_back.cpu_data->zsprite_id = background_object_id;
     
-    slider_back.gpu_data->base_material.texturearray_i =
+    slider_back.gpu_data->base_mat.texturearray_i =
         next_ui_element_settings->slider_background_tex.array_i;
-    slider_back.gpu_data->base_material.texture_i =
+    slider_back.gpu_data->base_mat.texture_i =
         next_ui_element_settings->slider_background_tex.slice_i;
-    slider_back.gpu_data->base_material.diffuse_rgb[0] =
+    slider_back.gpu_data->base_mat.diffuse_rgb[0] =
         next_ui_element_settings->slider_background_rgba[0];
-    slider_back.gpu_data->base_material.diffuse_rgb[1] =
+    slider_back.gpu_data->base_mat.diffuse_rgb[1] =
         next_ui_element_settings->slider_background_rgba[1];
-    slider_back.gpu_data->base_material.diffuse_rgb[2] =
+    slider_back.gpu_data->base_mat.diffuse_rgb[2] =
         next_ui_element_settings->slider_background_rgba[2];
-    slider_back.gpu_data->base_material.alpha =
+    slider_back.gpu_data->base_mat.alpha =
         next_ui_element_settings->slider_background_rgba[3];
     
     slider_back.gpu_data->ignore_lighting =
@@ -412,17 +414,17 @@ static void request_slider_shared(
     
     slider_pin.gpu_data->xyz_offset[1] = 0.0f;
     
-    slider_pin.gpu_data->base_material.texturearray_i =
+    slider_pin.gpu_data->base_mat.texturearray_i =
         next_ui_element_settings->slider_pin_tex.array_i;
-    slider_pin.gpu_data->base_material.texture_i =
+    slider_pin.gpu_data->base_mat.texture_i =
         next_ui_element_settings->slider_pin_tex.slice_i;
-    slider_pin.gpu_data->base_material.diffuse_rgb[0] =
+    slider_pin.gpu_data->base_mat.diffuse_rgb[0] =
         next_ui_element_settings->slider_pin_rgba[0];
-    slider_pin.gpu_data->base_material.diffuse_rgb[1] =
+    slider_pin.gpu_data->base_mat.diffuse_rgb[1] =
         next_ui_element_settings->slider_pin_rgba[1];
-    slider_pin.gpu_data->base_material.diffuse_rgb[2] =
+    slider_pin.gpu_data->base_mat.diffuse_rgb[2] =
         next_ui_element_settings->slider_pin_rgba[2];
-    slider_pin.gpu_data->base_material.alpha =
+    slider_pin.gpu_data->base_mat.alpha =
         next_ui_element_settings->slider_pin_rgba[3];
     
     slider_pin.gpu_data->ignore_lighting =
@@ -585,17 +587,17 @@ void request_button(
         next_ui_element_settings->ignore_lighting;
     zsprite_commit(&button_request);
     
-    button_request.gpu_data->base_material.diffuse_rgb[0] =
+    button_request.gpu_data->base_mat.diffuse_rgb[0] =
         next_ui_element_settings->button_background_rgba[0];
-    button_request.gpu_data->base_material.diffuse_rgb[1] =
+    button_request.gpu_data->base_mat.diffuse_rgb[1] =
         next_ui_element_settings->button_background_rgba[1];
-    button_request.gpu_data->base_material.diffuse_rgb[2] =
+    button_request.gpu_data->base_mat.diffuse_rgb[2] =
         next_ui_element_settings->button_background_rgba[2];
-    button_request.gpu_data->base_material.alpha =
+    button_request.gpu_data->base_mat.alpha =
         next_ui_element_settings->button_background_rgba[3];
-    button_request.gpu_data->base_material.texturearray_i =
+    button_request.gpu_data->base_mat.texturearray_i =
         next_ui_element_settings->button_background_texturearray_i;
-    button_request.gpu_data->base_material.texture_i =
+    button_request.gpu_data->base_mat.texture_i =
         next_ui_element_settings->button_background_texture_i;
     
     font_settings->ignore_camera = next_ui_element_settings->ignore_camera;

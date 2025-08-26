@@ -173,9 +173,9 @@ static int compare_triangles_furthest_camera_dist(
 #endif
 
 inline static void add_alphablending_zpolygons_to_workload(
-    GPUDataForSingleFrame * frame_data)
+    GPUFrame * frame_data)
 {
-    frame_data->first_alphablend_i = frame_data->vertices_size;
+    frame_data->first_alphablend_i = frame_data->verts_size;
     
     // Copy all vertices that do use alpha blending
     for (
@@ -206,12 +206,12 @@ inline static void add_alphablending_zpolygons_to_workload(
             vert_i < vert_tail_i;
             vert_i += 1)
         {
-            frame_data->vertices[frame_data->vertices_size].locked_vertex_i =
+            frame_data->verts[frame_data->verts_size].locked_vertex_i =
                 vert_i;
-            frame_data->vertices[frame_data->vertices_size].polygon_i =
+            frame_data->verts[frame_data->verts_size].polygon_i =
                 cpu_zp_i;
-            frame_data->vertices_size += 1;
-            log_assert(frame_data->vertices_size < MAX_VERTICES_PER_BUFFER);
+            frame_data->verts_size += 1;
+            log_assert(frame_data->verts_size < MAX_VERTICES_PER_BUFFER);
         }
     }
     
@@ -292,9 +292,9 @@ inline static void add_alphablending_zpolygons_to_workload(
 }
 
 inline static void add_opaque_zpolygons_to_workload(
-    GPUDataForSingleFrame * frame_data)
+    GPUFrame * frame_data)
 {
-    log_assert(frame_data->vertices_size == 0);
+    log_assert(frame_data->verts_size == 0);
     
     int32_t cur_vals[4];
     int32_t incr_vals[4];
@@ -340,31 +340,31 @@ inline static void add_opaque_zpolygons_to_workload(
         
         int32_t verts_to_copy = vert_tail_i - vert_i;
         #ifndef LOGGER_IGNORE_ASSERTS
-        uint32_t previous_verts_size = frame_data->vertices_size;
+        uint32_t previous_verts_size = frame_data->verts_size;
         #endif
         
         for (int32_t i = 0; i < verts_to_copy; i += 2) {
             cur = simd_add_vec4i(cur, incr);
             simd_store_vec4i(
-                (frame_data->vertices + frame_data->vertices_size),
+                (frame_data->verts + frame_data->verts_size),
                 cur);
-            frame_data->vertices_size += 2;
+            frame_data->verts_size += 2;
             
             #ifndef LOGGER_IGNORE_ASSERTS
-            log_assert(frame_data->vertices_size < MAX_VERTICES_PER_BUFFER);
-            log_assert(frame_data->vertices[frame_data->vertices_size-2].
+            log_assert(frame_data->verts_size < MAX_VERTICES_PER_BUFFER);
+            log_assert(frame_data->verts[frame_data->verts_size-2].
                 locked_vertex_i == (vert_i + i));
-            log_assert(frame_data->vertices[frame_data->vertices_size-1].
+            log_assert(frame_data->verts[frame_data->verts_size-1].
                 locked_vertex_i == (vert_i + i + 1));
             #endif
         }
         
         if (verts_to_copy % 2 == 1) {
-            frame_data->vertices_size -= 1;
+            frame_data->verts_size -= 1;
         }
         
         #ifndef LOGGER_IGNORE_ASSERTS
-        log_assert(frame_data->vertices_size ==
+        log_assert(frame_data->verts_size ==
             (previous_verts_size + (uint32_t)verts_to_copy));
         #endif
     }
@@ -372,7 +372,7 @@ inline static void add_opaque_zpolygons_to_workload(
 
 // static float clickray_elapsed = 0.0f;
 void renderer_hardware_render(
-    GPUDataForSingleFrame * frame_data,
+    GPUFrame * frame_data,
     uint64_t elapsed_us)
 {
     (void)elapsed_us;
@@ -384,7 +384,7 @@ void renderer_hardware_render(
     
     if (
         frame_data == NULL ||
-        frame_data->vertices == NULL)
+        frame_data->verts == NULL)
     {
         log_append("ERROR: platform layer didnt pass recipients\n");
         return;
@@ -394,24 +394,24 @@ void renderer_hardware_render(
     
     common_memcpy(
         /* void * dest: */
-            frame_data->polygon_collection->polygons,
+            frame_data->zsprite_list->polygons,
         /* const void * src: */
             zsprites_to_render->gpu_data,
         /* size_t n: */
             sizeof(GPUzSprite) * zsprites_to_render->size);
-    frame_data->polygon_collection->size = zsprites_to_render->size;
+    frame_data->zsprite_list->size = zsprites_to_render->size;
     
     log_assert(
-        frame_data->polygon_collection->size <= zsprites_to_render->size);
+        frame_data->zsprite_list->size <= zsprites_to_render->size);
     log_assert(
         zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
     log_assert(
-        frame_data->polygon_collection->size < MAX_ZSPRITES_PER_BUFFER);
+        frame_data->zsprite_list->size < MAX_ZSPRITES_PER_BUFFER);
     
-    frame_data->polygon_collection->size = zsprites_to_render->size;
+    frame_data->zsprite_list->size = zsprites_to_render->size;
     
-    *frame_data->postprocessing_constants =
-        engine_globals->postprocessing_constants;
+    *frame_data->postproc_consts =
+        engine_globals->postproc_consts;
     
     add_opaque_zpolygons_to_workload(frame_data);
     

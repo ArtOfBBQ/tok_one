@@ -72,9 +72,9 @@ static void request_teapots(void) {
         zsprite_request_next(&teapot_request);
         zsprite_construct(&teapot_request);
         teapot_request.cpu_data->mesh_id = teapot_mesh_id;
-        teapot_request.gpu_data->xyz_multiplier[0] = 0.15f;
-        teapot_request.gpu_data->xyz_multiplier[1] = 0.15f;
-        teapot_request.gpu_data->xyz_multiplier[2] = 0.15f;
+        teapot_request.gpu_data->xyz_mult[0] = 0.15f;
+        teapot_request.gpu_data->xyz_mult[1] = 0.15f;
+        teapot_request.gpu_data->xyz_mult[2] = 0.15f;
         teapot_request.gpu_data->xyz[0]            = TEAPOT_X + (i * 0.20f);
         teapot_request.gpu_data->xyz[1]            = TEAPOT_Y - (i * 1.0f);
         teapot_request.gpu_data->xyz[2]            = TEAPOT_Z - (i * 0.25f);
@@ -123,9 +123,9 @@ void client_logic_late_startup(void) {
     zsprite_request_next(&lightcube_request);
     zsprite_construct(&lightcube_request);
     lightcube_request.cpu_data->mesh_id = BASIC_CUBE_MESH_ID;
-    lightcube_request.gpu_data->xyz_multiplier[0] = 0.05f;
-    lightcube_request.gpu_data->xyz_multiplier[1] = 0.05f;
-    lightcube_request.gpu_data->xyz_multiplier[2] = 0.05f;
+    lightcube_request.gpu_data->xyz_mult[0] = 0.05f;
+    lightcube_request.gpu_data->xyz_mult[1] = 0.05f;
+    lightcube_request.gpu_data->xyz_mult[2] = 0.05f;
     lightcube_request.gpu_data->xyz[0]            = light->xyz[0];
     lightcube_request.gpu_data->xyz[1]            = light->xyz[1];
     lightcube_request.gpu_data->xyz[2]            = light->xyz[2];
@@ -137,15 +137,15 @@ void client_logic_late_startup(void) {
     lightcube_request.gpu_data->ignore_lighting   = 1.0f;
     lightcube_request.gpu_data->ignore_camera     = 0.0f;
     lightcube_request.gpu_data->alpha = 1.0f;
-    lightcube_request.gpu_data->base_material.diffuse_rgb[0] =
+    lightcube_request.gpu_data->base_mat.diffuse_rgb[0] =
         light->RGBA[0] * 2.5f;
-    lightcube_request.gpu_data->base_material.diffuse_rgb[1] =
+    lightcube_request.gpu_data->base_mat.diffuse_rgb[1] =
         light->RGBA[1] * 2.5f;
-    lightcube_request.gpu_data->base_material.diffuse_rgb[2] =
+    lightcube_request.gpu_data->base_mat.diffuse_rgb[2] =
         light->RGBA[2] * 2.5f;
-    lightcube_request.gpu_data->base_material.rgb_cap[0] = 5.0f;
-    lightcube_request.gpu_data->base_material.rgb_cap[1] = 5.0f;
-    lightcube_request.gpu_data->base_material.rgb_cap[2] = 5.0f;
+    lightcube_request.gpu_data->base_mat.rgb_cap[0] = 5.0f;
+    lightcube_request.gpu_data->base_mat.rgb_cap[1] = 5.0f;
+    lightcube_request.gpu_data->base_mat.rgb_cap[2] = 5.0f;
     lightcube_request.gpu_data->remove_shadow = true;
     zsprite_commit(&lightcube_request);
     
@@ -182,8 +182,8 @@ void client_logic_late_startup(void) {
                 engine_globals->window_height * 2, 1.0f),
         /* PolygonRequest * stack_recipient: */
             &quad);
-    quad.gpu_data->base_material.texturearray_i = quad_texture_array_i;
-    quad.gpu_data->base_material.texture_i      = quad_texture_i;
+    quad.gpu_data->base_mat.texturearray_i = quad_texture_array_i;
+    quad.gpu_data->base_mat.texture_i      = quad_texture_i;
     quad.cpu_data->zsprite_id                   = -1;
     quad.gpu_data->touchable_id                 = -1;
     quad.cpu_data->alpha_blending_enabled       = false;
@@ -198,9 +198,9 @@ void client_logic_late_startup(void) {
     quad.gpu_data->ignore_camera          = 0.0f;
     quad.gpu_data->ignore_lighting        = 0.0f;
     
-    quad.gpu_data->base_material.ambient_rgb[0]  = 0.05f;
-    quad.gpu_data->base_material.ambient_rgb[1]  = 0.05f;
-    quad.gpu_data->base_material.ambient_rgb[2]  = 0.50f;
+    quad.gpu_data->base_mat.ambient_rgb[0]  = 0.05f;
+    quad.gpu_data->base_mat.ambient_rgb[1]  = 0.05f;
+    quad.gpu_data->base_mat.ambient_rgb[2]  = 0.50f;
     quad.gpu_data->alpha = 1.0f;
     
     zsprite_commit(&quad);
@@ -258,8 +258,8 @@ void client_logic_late_startup(void) {
         T1Tex phoebus_tex = T1_texture_array_get_filename_location(
             /* const char * for_filename: */
                 "phoebus.png");
-        quad.gpu_data->base_material.texturearray_i = phoebus_tex.array_i;
-        quad.gpu_data->base_material.texture_i = phoebus_tex.slice_i;
+        quad.gpu_data->base_mat.texturearray_i = phoebus_tex.array_i;
+        quad.gpu_data->base_mat.texture_i = phoebus_tex.slice_i;
         quad.cpu_data->zsprite_id                   = -1;
         quad.gpu_data->touchable_id                 = -1;
         quad.cpu_data->alpha_blending_enabled       = true;
@@ -274,9 +274,9 @@ void client_logic_late_startup(void) {
         quad.gpu_data->ignore_camera          = 0.0f;
         quad.gpu_data->ignore_lighting        = 0.0f;
         
-        quad.gpu_data->base_material.ambient_rgb[0]  = 0.05f;
-        quad.gpu_data->base_material.ambient_rgb[1]  = 0.05f;
-        quad.gpu_data->base_material.ambient_rgb[2]  = 0.50f;
+        quad.gpu_data->base_mat.ambient_rgb[0]  = 0.05f;
+        quad.gpu_data->base_mat.ambient_rgb[1]  = 0.05f;
+        quad.gpu_data->base_mat.ambient_rgb[2]  = 0.50f;
         quad.gpu_data->alpha = 0.25f;
         
         zsprite_commit(&quad);

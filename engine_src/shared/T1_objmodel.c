@@ -646,7 +646,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
             log_assert(
                 matching_parsed_materials_i  < (int32_t)parsed_materials_size);
             
-            GPULockedMaterial * locked_mat = T1_material_fetch_ptr(
+            GPUConstMat * locked_mat = T1_material_fetch_ptr(
                 /* const uint32_t locked_material_i: */
                     all_mesh_summaries[all_mesh_summaries_size].
                         locked_material_head_i + i);
@@ -730,13 +730,13 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 }
                 
                 #if NORMAL_MAPPING_ACTIVE
-                T1_texture_array_get_filename_location(
+                T1Tex lmat = T1_texture_array_get_filename_location(
                     /* const char * for_filename: */
-                        parsed_materials[matching_parsed_materials_i].bump_or_normal_map,
-                    /* int32_t * texture_array_i_recipient: */
-                        &locked_mat->normalmap_texturearray_i,
-                    /* int32_t * texture_i_recipient: */
-                        &locked_mat->normalmap_texture_i);
+                        parsed_materials[matching_parsed_materials_i].
+                            bump_or_normal_map);
+                
+                locked_mat->normalmap_texturearray_i = lmat.array_i;
+                locked_mat->normalmap_texture_i = lmat.slice_i;
                 #endif
             }
         }

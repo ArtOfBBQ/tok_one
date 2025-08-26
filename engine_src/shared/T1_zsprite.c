@@ -181,9 +181,9 @@ void zsprite_scale_multipliers_to_width(
         /* const float for_height: */
             new_height);
     
-    gpu_data->xyz_multiplier[0] = new_multiplier;
-    gpu_data->xyz_multiplier[1] = new_multiplier;
-    gpu_data->xyz_multiplier[2] = new_multiplier;
+    gpu_data->xyz_mult[0] = new_multiplier;
+    gpu_data->xyz_mult[1] = new_multiplier;
+    gpu_data->xyz_mult[2] = new_multiplier;
 }
 
 void zsprite_scale_multipliers_to_height(
@@ -197,9 +197,9 @@ void zsprite_scale_multipliers_to_height(
         /* const float for_height: */
             new_height);
     
-    gpu_data->xyz_multiplier[0] = new_multiplier;
-    gpu_data->xyz_multiplier[1] = new_multiplier;
-    gpu_data->xyz_multiplier[2] = new_multiplier;
+    gpu_data->xyz_mult[0] = new_multiplier;
+    gpu_data->xyz_mult[1] = new_multiplier;
+    gpu_data->xyz_mult[2] = new_multiplier;
 }
 
 void zsprite_construct_with_mesh_id(
@@ -217,7 +217,7 @@ void zsprite_construct_with_mesh_id(
             all_mesh_summaries[mesh_id].locked_material_head_i +
             all_mesh_summaries[mesh_id].locked_material_base_offset;
         
-        to_construct->gpu_data->base_material =
+        to_construct->gpu_data->base_mat =
             all_mesh_materials->gpu_data[base_mat_i];
     }
 }
@@ -237,9 +237,9 @@ void zsprite_construct(
         0,
         sizeof(GPUzSprite));
     
-    to_construct->gpu_data->xyz_multiplier[0] = 1.0f;
-    to_construct->gpu_data->xyz_multiplier[1] = 1.0f;
-    to_construct->gpu_data->xyz_multiplier[2] = 1.0f;
+    to_construct->gpu_data->xyz_mult[0] = 1.0f;
+    to_construct->gpu_data->xyz_mult[1] = 1.0f;
+    to_construct->gpu_data->xyz_mult[2] = 1.0f;
     to_construct->gpu_data->scale_factor = 1.0f;
     to_construct->gpu_data->touchable_id = -1;
     to_construct->gpu_data->alpha = 1.0f;
@@ -248,7 +248,7 @@ void zsprite_construct(
     to_construct->cpu_data->zsprite_id = -1;
     to_construct->cpu_data->visible = true;
     
-    T1_material_construct(&to_construct->gpu_data->base_material);
+    T1_material_construct(&to_construct->gpu_data->base_mat);
 }
 
 float zsprite_get_distance_f3(
@@ -314,11 +314,11 @@ void zsprite_construct_quad(
     // so the current width is 2.0f
     float current_width = 2.0f;
     float current_height = 2.0f;
-    stack_recipient->gpu_data->xyz_multiplier[0] =
+    stack_recipient->gpu_data->xyz_mult[0] =
         width / current_width;
-    stack_recipient->gpu_data->xyz_multiplier[1] =
+    stack_recipient->gpu_data->xyz_mult[1] =
         height / current_height;
-    stack_recipient->gpu_data->xyz_multiplier[2] = 1.0f;
+    stack_recipient->gpu_data->xyz_mult[2] = 1.0f;
 }
 
 void zsprite_construct_quad_around(
@@ -342,22 +342,22 @@ void zsprite_construct_quad_around(
     // so the current width is 2.0f
     float current_width = 2.0f;
     float current_height = 2.0f;
-    stack_recipient->gpu_data->xyz_multiplier[0] =
+    stack_recipient->gpu_data->xyz_mult[0] =
         width / current_width;
-    stack_recipient->gpu_data->xyz_multiplier[1] =
+    stack_recipient->gpu_data->xyz_mult[1] =
         height / current_height;
-    stack_recipient->gpu_data->xyz_multiplier[2] =
-        stack_recipient->gpu_data->xyz_multiplier[1] / 20.0f;
+    stack_recipient->gpu_data->xyz_mult[2] =
+        stack_recipient->gpu_data->xyz_mult[1] / 20.0f;
     
     #define THRESH 0.00001f
-    if (stack_recipient->gpu_data->xyz_multiplier[0] < THRESH) {
-        stack_recipient->gpu_data->xyz_multiplier[0] = THRESH;
+    if (stack_recipient->gpu_data->xyz_mult[0] < THRESH) {
+        stack_recipient->gpu_data->xyz_mult[0] = THRESH;
     }
-    if (stack_recipient->gpu_data->xyz_multiplier[1] < THRESH) {
-        stack_recipient->gpu_data->xyz_multiplier[1] = THRESH;
+    if (stack_recipient->gpu_data->xyz_mult[1] < THRESH) {
+        stack_recipient->gpu_data->xyz_mult[1] = THRESH;
     }
-    if (stack_recipient->gpu_data->xyz_multiplier[2] < THRESH) {
-        stack_recipient->gpu_data->xyz_multiplier[2] = THRESH;
+    if (stack_recipient->gpu_data->xyz_mult[2] < THRESH) {
+        stack_recipient->gpu_data->xyz_mult[2] = THRESH;
     }
     
     stack_recipient->cpu_data->mesh_id = BASIC_QUAD_MESH_ID;
@@ -386,9 +386,9 @@ void zsprite_construct_cube_around(
     float current_width = 2.0f;
     float current_height = 2.0f;
     float current_depth = 2.0f;
-    stack_recipient->gpu_data->xyz_multiplier[0] = width / current_width;
-    stack_recipient->gpu_data->xyz_multiplier[1] = height / current_height;
-    stack_recipient->gpu_data->xyz_multiplier[2] = depth / current_depth;
+    stack_recipient->gpu_data->xyz_mult[0] = width / current_width;
+    stack_recipient->gpu_data->xyz_mult[1] = height / current_height;
+    stack_recipient->gpu_data->xyz_mult[2] = depth / current_depth;
     
     stack_recipient->cpu_data->mesh_id = 1;
 }

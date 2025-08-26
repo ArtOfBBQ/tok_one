@@ -10,9 +10,9 @@ void T1_material_init(
 }
 
 void T1_material_construct(
-    GPULockedMaterial * to_construct)
+    GPUConstMat * to_construct)
 {
-    common_memset_char(to_construct, 0, sizeof(GPULockedMaterial));
+    common_memset_char(to_construct, 0, sizeof(GPUConstMat));
     
     to_construct->alpha = 1.0f;
     to_construct->ambient_rgb[0] = 0.05f;
@@ -84,7 +84,7 @@ uint32_t T1_material_preappend_locked_material_i(
     return all_mesh_materials->size - 1;
 }
 
-GPULockedMaterial * T1_material_fetch_ptr(
+GPUConstMat * T1_material_fetch_ptr(
     const uint32_t material_i)
 {
     log_assert(material_i < all_mesh_materials->size);

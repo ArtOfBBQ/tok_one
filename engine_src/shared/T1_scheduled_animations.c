@@ -466,49 +466,49 @@ void T1_scheduled_animations_request_evaporate_and_destroy(
         uint64_t shattered_verts_size =
             (uint64_t)all_mesh_summaries[vaporize_effect->zpolygon_cpu.mesh_id].
                 shattered_vertices_size;
-        vaporize_effect->particle_spawns_per_second = (uint32_t)(
+        vaporize_effect->spawns_per_sec = (uint32_t)(
             (shattered_verts_size * 1000000) /
                 (uint64_t)(duration_us + 1));
-        vaporize_effect->pause_between_spawns = 10;
-        vaporize_effect->vertices_per_particle = 3;
-        vaporize_effect->particle_lifespan = duration_us;
-        vaporize_effect->use_shattered_mesh = true;
+        vaporize_effect->pause_per_set = 10;
+        vaporize_effect->verts_per_particle = 3;
+        vaporize_effect->lifespan = duration_us;
+        vaporize_effect->shattered = true;
         
         float xy_dist   =  0.0065f;
         float z_dist    = -0.0130f;
         float xyz_angle =  0.0100f;
         float rgb_delta =  0.00005f;
         
-        vaporize_effect->gpustats_pertime_random_add[0].xyz[0] = -xy_dist *
+        vaporize_effect->pertime_rand_add[0].xyz[0] = -xy_dist *
             duration_mod;
-        vaporize_effect->gpustats_pertime_random_add[0].xyz[1] = -xy_dist *
+        vaporize_effect->pertime_rand_add[0].xyz[1] = -xy_dist *
             duration_mod;
-        vaporize_effect->gpustats_pertime_random_add[0].xyz[2] = z_dist *
+        vaporize_effect->pertime_rand_add[0].xyz[2] = z_dist *
             duration_mod;
-        vaporize_effect->gpustats_pertime_random_add[0].xyz_angle[0] =
+        vaporize_effect->pertime_rand_add[0].xyz_angle[0] =
             xyz_angle * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add[0].xyz_angle[1] =
+        vaporize_effect->pertime_rand_add[0].xyz_angle[1] =
             xyz_angle * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add[0].xyz_angle[2] =
+        vaporize_effect->pertime_rand_add[0].xyz_angle[2] =
             xyz_angle * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add[0].bonus_rgb[0] =
+        vaporize_effect->pertime_rand_add[0].bonus_rgb[0] =
             rgb_delta * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add[1].xyz[0] =
+        vaporize_effect->pertime_rand_add[1].xyz[0] =
             xy_dist * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add[1].xyz[1] =
+        vaporize_effect->pertime_rand_add[1].xyz[1] =
             xy_dist * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add[1].xyz[2] =
+        vaporize_effect->pertime_rand_add[1].xyz[2] =
             z_dist * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add[1].xyz_angle[0] =
+        vaporize_effect->pertime_rand_add[1].xyz_angle[0] =
             -xyz_angle * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add[1].xyz_angle[1] =
+        vaporize_effect->pertime_rand_add[1].xyz_angle[1] =
             -xyz_angle * duration_mod;
-        vaporize_effect->gpustats_pertime_random_add[1].xyz_angle[2] =
+        vaporize_effect->pertime_rand_add[1].xyz_angle[2] =
             -xyz_angle * duration_mod;
-        vaporize_effect->gpustats_perexptime_add.scale_factor = -1.5f;
+        vaporize_effect->perexptime_add.scale_factor = -1.5f;
         
         vaporize_effect->loops = 1;
-        vaporize_effect->generate_light = false;
+        vaporize_effect->cast_light = false;
         
         commit_particle_effect(vaporize_effect);
         #endif
@@ -552,53 +552,53 @@ void T1_scheduled_animations_request_shatter_and_destroy(
             (uint64_t)all_mesh_summaries[shatter_effect->zpolygon_cpu.mesh_id].
                 shattered_vertices_size;
         log_assert(shattered_verts_size > 0);
-        shatter_effect->particle_spawns_per_second = (uint32_t)(
+        shatter_effect->spawns_per_sec = (uint32_t)(
             (shattered_verts_size * 1000000) /
                 (uint64_t)(duration_us + 1));
-        shatter_effect->pause_between_spawns = 0;
-        shatter_effect->vertices_per_particle = 6;
-        shatter_effect->particle_lifespan = duration_us;
-        shatter_effect->use_shattered_mesh = true;
+        shatter_effect->pause_per_set = 0;
+        shatter_effect->verts_per_particle = 6;
+        shatter_effect->lifespan = duration_us;
+        shatter_effect->shattered = true;
         
         float xyz_dist = 0.02f;
         float xyz_angle = 0.05f;
         float rgb_delta = 0.05f;
         
-        shatter_effect->gpustats_pertime_random_add[0].xyz[0] = -xyz_dist *
+        shatter_effect->pertime_rand_add[0].xyz[0] = -xyz_dist *
             duration_mod;
-        shatter_effect->gpustats_pertime_random_add[0].xyz[1] = -xyz_dist *
+        shatter_effect->pertime_rand_add[0].xyz[1] = -xyz_dist *
             duration_mod;
-        shatter_effect->gpustats_pertime_random_add[0].xyz[2] = -xyz_dist *
+        shatter_effect->pertime_rand_add[0].xyz[2] = -xyz_dist *
             duration_mod;
-        shatter_effect->gpustats_pertime_random_add[0].xyz_angle[0] =
+        shatter_effect->pertime_rand_add[0].xyz_angle[0] =
             xyz_angle * duration_mod;
-        shatter_effect->gpustats_pertime_random_add[0].xyz_angle[1] =
+        shatter_effect->pertime_rand_add[0].xyz_angle[1] =
             xyz_angle * duration_mod;
-        shatter_effect->gpustats_pertime_random_add[0].xyz_angle[2] =
+        shatter_effect->pertime_rand_add[0].xyz_angle[2] =
             xyz_angle * duration_mod;
-        shatter_effect->gpustats_pertime_random_add[0].bonus_rgb[0] =
+        shatter_effect->pertime_rand_add[0].bonus_rgb[0] =
             rgb_delta * duration_mod;
-        shatter_effect->gpustats_pertime_random_add[0].bonus_rgb[1] =
+        shatter_effect->pertime_rand_add[0].bonus_rgb[1] =
             rgb_delta * duration_mod;
-        shatter_effect->gpustats_pertime_random_add[0].bonus_rgb[2] =
+        shatter_effect->pertime_rand_add[0].bonus_rgb[2] =
             rgb_delta * duration_mod;
-        shatter_effect->gpustats_pertime_random_add[1].xyz[0] =
+        shatter_effect->pertime_rand_add[1].xyz[0] =
             xyz_dist * duration_mod;
-        shatter_effect->gpustats_pertime_random_add[1].xyz[1] =
+        shatter_effect->pertime_rand_add[1].xyz[1] =
             xyz_dist * duration_mod;
-        shatter_effect->gpustats_pertime_random_add[1].xyz[2] =
+        shatter_effect->pertime_rand_add[1].xyz[2] =
             xyz_dist * duration_mod;
-        shatter_effect->gpustats_pertime_random_add[1].xyz_angle[0] =
+        shatter_effect->pertime_rand_add[1].xyz_angle[0] =
             -xyz_angle * duration_mod;
-        shatter_effect->gpustats_pertime_random_add[1].xyz_angle[1] =
+        shatter_effect->pertime_rand_add[1].xyz_angle[1] =
             -xyz_angle * duration_mod;
-        shatter_effect->gpustats_pertime_random_add[1].xyz_angle[2] =
+        shatter_effect->pertime_rand_add[1].xyz_angle[2] =
             -xyz_angle * duration_mod;
-        shatter_effect->gpustats_perexptime_add.scale_factor = -0.07f *
+        shatter_effect->perexptime_add.scale_factor = -0.07f *
             duration_mod;
         
         shatter_effect->loops = 1;
-        shatter_effect->generate_light = false;
+        shatter_effect->cast_light = false;
         
         log_assert(!shatter_effect->zpolygon_cpu.alpha_blending_enabled);
         

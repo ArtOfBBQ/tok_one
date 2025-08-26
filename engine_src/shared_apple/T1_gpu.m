@@ -75,11 +75,11 @@ static AppleGPUState * ags = NULL;
 
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
 
-static void (* funcptr_shared_gameloop_update)(GPUDataForSingleFrame *) = NULL;
+static void (* funcptr_shared_gameloop_update)(GPUFrame *) = NULL;
 static void (* funcptr_shared_gameloop_update_after_render_pass)(void) = NULL;
 
 bool32_t apple_gpu_init(
-    void (* arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *),
+    void (* arg_funcptr_shared_gameloop_update)(GPUFrame *),
     void (* arg_funcptr_shared_gameloop_update_after_render_pass)(void),
     id<MTLDevice> with_metal_device,
     NSString * shader_lib_filepath,
@@ -464,7 +464,7 @@ bool32_t apple_gpu_init(
                     newBufferWithBytesNoCopy:
                         gpu_shared_data_collection->
                             triple_buffers[buf_i].
-                                polygon_collection->polygons
+                                zsprite_list->polygons
                 /* the length weirdly needs to be page aligned also */
                     length:
                         gpu_shared_data_collection->polygons_allocation_size
@@ -480,7 +480,7 @@ bool32_t apple_gpu_init(
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         gpu_shared_data_collection->
-                            triple_buffers[buf_i].vertices
+                            triple_buffers[buf_i].verts
                 /* the length weirdly needs to be page aligned also */
                     length:
                         gpu_shared_data_collection->vertices_allocation_size
@@ -535,7 +535,7 @@ bool32_t apple_gpu_init(
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         gpu_shared_data_collection->
-                            triple_buffers[buf_i].postprocessing_constants
+                            triple_buffers[buf_i].postproc_consts
                 /* the length weirdly needs to be page aligned also */
                     length:
                         gpu_shared_data_collection->
@@ -614,10 +614,10 @@ bool32_t apple_gpu_init(
         [with_metal_device
             /* the pointer needs to be page aligned */
                 newBufferWithBytesNoCopy:
-                    gpu_shared_data_collection->locked_materials
+                    gpu_shared_data_collection->const_mats
             /* the length weirdly needs to be page aligned also */
                 length:
-                    gpu_shared_data_collection->locked_materials_allocation_size
+                    gpu_shared_data_collection->const_mats_allocation_size
                 options:
                     MTLResourceStorageModeShared
             /* deallocator = nil to opt out */
@@ -629,7 +629,7 @@ bool32_t apple_gpu_init(
     id<MTLBuffer> MTLBufferLockedMaterials =
         [with_metal_device
             newBufferWithLength:
-                gpu_shared_data_collection->locked_materials_allocation_size
+                gpu_shared_data_collection->const_mats_allocation_size
             options:
                 MTLResourceStorageModePrivate];
     ags->locked_materials_buffer = MTLBufferLockedMaterials;
@@ -1252,7 +1252,7 @@ void platform_gpu_copy_locked_vertices(void)
 
 void platform_gpu_copy_locked_materials(void)
 {
-    gpu_shared_data_collection->locked_materials_size = all_mesh_materials->size;
+    gpu_shared_data_collection->const_mats_size = all_mesh_materials->size;
     
     id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
     
@@ -1267,7 +1267,7 @@ void platform_gpu_copy_locked_materials(void)
         destinationOffset:
             0
         size:
-            gpu_shared_data_collection->locked_materials_allocation_size];
+            gpu_shared_data_collection->const_mats_allocation_size];
     [blit_copy_encoder endEncoding];
     
     // Add a completion handler and commit the command buffer.
@@ -1308,7 +1308,7 @@ void platform_gpu_copy_locked_materials(void)
     ags->render_target_viewport.height /= engine_globals->pixelation_div;
     
     *gpu_shared_data_collection->locked_pjc =
-        engine_globals->projection_constants;
+        engine_globals->project_consts;
     
     MTLTextureDescriptor * touch_id_texture_descriptor =
         [MTLTextureDescriptor new];
@@ -1452,16 +1452,16 @@ void platform_gpu_copy_locked_materials(void)
             triple_buffers[ags->frame_i].first_alphablend_i;
     log_assert(
         diamond_verts_size <= gpu_shared_data_collection->
-            triple_buffers[ags->frame_i].vertices_size);
+            triple_buffers[ags->frame_i].verts_size);
     
     #if SHADOWS_ACTIVE
     if (
         engine_globals->draw_triangles &&
         diamond_verts_size > 0 &&
         gpu_shared_data_collection->triple_buffers[ags->frame_i].
-            postprocessing_constants->shadowcaster_i <
+            postproc_consts->shadowcaster_i <
                 gpu_shared_data_collection->triple_buffers[ags->frame_i].
-                    postprocessing_constants->lights_size)
+                    postproc_consts->lights_size)
     {
         assert(ags->shadows_texture != NULL);
         MTLRenderPassDescriptor * render_pass_shadows =
@@ -1744,13 +1744,13 @@ void platform_gpu_copy_locked_materials(void)
         uint32_t i = 0;
         i < gpu_shared_data_collection->
             triple_buffers[ags->frame_i].
-            vertices_size;
+            verts_size;
         i++)
     {
         assert(
             gpu_shared_data_collection->
                 triple_buffers[ags->frame_i].
-                    vertices[i].locked_vertex_i < ALL_LOCKED_VERTICES_SIZE);
+                    verts[i].locked_vertex_i < ALL_LOCKED_VERTICES_SIZE);
     }
     #endif
     
@@ -1770,10 +1770,10 @@ void platform_gpu_copy_locked_materials(void)
         gpu_shared_data_collection->triple_buffers[ags->frame_i].
             first_alphablend_i <=
         gpu_shared_data_collection->triple_buffers[ags->frame_i].
-            vertices_size);
+            verts_size);
     uint32_t alphablend_verts_size =
         gpu_shared_data_collection->
-            triple_buffers[ags->frame_i].vertices_size -
+            triple_buffers[ags->frame_i].verts_size -
         gpu_shared_data_collection->
             triple_buffers[ags->frame_i].first_alphablend_i;
     
@@ -2012,10 +2012,10 @@ void platform_gpu_copy_locked_materials(void)
         atIndex:5];
     #endif
     
-    int32_t perlin_ta_i = gpu_shared_data_collection->triple_buffers[ags->frame_i].postprocessing_constants->perlin_texturearray_i;
+    int32_t perlin_ta_i = gpu_shared_data_collection->triple_buffers[ags->frame_i].postproc_consts->perlin_texturearray_i;
     #ifndef LOGGER_IGNORE_ASSERTS
     int32_t perlin_t_i =
-        gpu_shared_data_collection->triple_buffers[ags->frame_i].postprocessing_constants->perlin_texture_i;
+        gpu_shared_data_collection->triple_buffers[ags->frame_i].postproc_consts->perlin_texture_i;
     #endif
     // log_assert(perlin_ta_i >= 1);
     log_assert(perlin_t_i == 0);

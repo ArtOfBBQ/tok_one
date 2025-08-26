@@ -46,7 +46,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_objparser.c"
 #include "T1_mtlparser.c"
 #include "T1_common.c"
-#include "T1_reflection.c"
+#include "T1_meta.c"
 #include "T1_logger.c"
 #include "T1_collision.c"
 #include "T1_zspriteid.c"

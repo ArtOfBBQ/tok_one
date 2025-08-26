@@ -167,7 +167,7 @@ void init_application_before_gpu_init(
         platform_mutex_lock,
         platform_mutex_unlock);
     
-    T1_reflection_init(
+    T1_meta_init(
         memcpy,
         malloc_from_unmanaged,
         memset,
@@ -411,12 +411,12 @@ void init_application_before_gpu_init(
         pad_to_page_size(
             sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
     
-    gpu_shared_data_collection->locked_materials_allocation_size =
+    gpu_shared_data_collection->const_mats_allocation_size =
         pad_to_page_size(
-            sizeof(GPULockedMaterial) * ALL_LOCKED_MATERIALS_SIZE);
+            sizeof(GPUConstMat) * ALL_LOCKED_MATERIALS_SIZE);
     
     gpu_shared_data_collection->projection_constants_allocation_size =
-        pad_to_page_size(sizeof(GPUProjectionConstants));
+        pad_to_page_size(sizeof(GPUProjectConsts));
     
     gpu_shared_data_collection->point_vertices_allocation_size =
         pad_to_page_size(sizeof(GPURawVertex) * MAX_POINT_VERTICES);
@@ -432,14 +432,14 @@ void init_application_before_gpu_init(
         cur_frame_i < MAX_RENDERING_FRAME_BUFFERS;
         cur_frame_i++)
     {
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].vertices =
+        gpu_shared_data_collection->triple_buffers[cur_frame_i].verts =
             (GPUVertexIndices *)malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection->vertices_allocation_size,
                 page_size);
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].
-            polygon_collection =
-                (GPUSpriteCollection *)malloc_from_unmanaged_aligned(
+            zsprite_list =
+                (GPUzSpriteList *)malloc_from_unmanaged_aligned(
                     gpu_shared_data_collection->polygons_allocation_size,
                     page_size);
         
@@ -469,8 +469,8 @@ void init_application_before_gpu_init(
         #endif
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].
-            postprocessing_constants =
-                (GPUPostProcessingConstants *)malloc_from_unmanaged_aligned(
+            postproc_consts =
+                (GPUPostProcConsts *)malloc_from_unmanaged_aligned(
                     gpu_shared_data_collection->
                         postprocessing_constants_allocation_size,
                     page_size);
@@ -486,13 +486,13 @@ void init_application_before_gpu_init(
             gpu_shared_data_collection->locked_vertices_allocation_size,
             page_size);
     
-    gpu_shared_data_collection->locked_materials =
-        (GPULockedMaterial *)malloc_from_unmanaged_aligned(
-            gpu_shared_data_collection->locked_materials_allocation_size,
+    gpu_shared_data_collection->const_mats =
+        (GPUConstMat *)malloc_from_unmanaged_aligned(
+            gpu_shared_data_collection->const_mats_allocation_size,
             page_size);
     
     gpu_shared_data_collection->locked_pjc =
-        (GPUProjectionConstants *)malloc_from_unmanaged_aligned(
+        (GPUProjectConsts *)malloc_from_unmanaged_aligned(
             gpu_shared_data_collection->projection_constants_allocation_size,
             page_size);
 }
@@ -559,14 +559,14 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     
     T1Tex perlin_tex = T1_texture_array_get_filename_location(
         "perlin_noise.dds");
-    engine_globals->postprocessing_constants.perlin_texturearray_i =
+    engine_globals->postproc_consts.perlin_texturearray_i =
         perlin_tex.array_i;
-    engine_globals->postprocessing_constants.perlin_texture_i =
+    engine_globals->postproc_consts.perlin_texture_i =
         perlin_tex.slice_i;
     
     if (
-        engine_globals->postprocessing_constants.perlin_texturearray_i < 1 ||
-        engine_globals->postprocessing_constants.perlin_texture_i != 0)
+        engine_globals->postproc_consts.perlin_texturearray_i < 1 ||
+        engine_globals->postproc_consts.perlin_texture_i != 0)
     {
         gameloop_active = true;
         log_dump_and_crash("Failed to read engine file: perlin_noise.dds");
@@ -574,9 +574,9 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     }
     
     #if SHADOWS_ACTIVE
-    engine_globals->postprocessing_constants.in_shadow_multipliers[0] = 0.5f;
-    engine_globals->postprocessing_constants.in_shadow_multipliers[1] = 0.5f;
-    engine_globals->postprocessing_constants.in_shadow_multipliers[2] = 0.5f;
+    engine_globals->postproc_consts.in_shadow_multipliers[0] = 0.5f;
+    engine_globals->postproc_consts.in_shadow_multipliers[1] = 0.5f;
+    engine_globals->postproc_consts.in_shadow_multipliers[2] = 0.5f;
     #endif
     
     bool32_t success = false;
@@ -681,11 +681,11 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     
     common_memcpy(
         /* void * dst: */
-            gpu_shared_data_collection->locked_materials,
+            gpu_shared_data_collection->const_mats,
         /* const void * src: */
             all_mesh_materials->gpu_data,
         /* size_t n: */
-            sizeof(GPULockedMaterial) * ALL_LOCKED_MATERIALS_SIZE);
+            sizeof(GPUConstMat) * ALL_LOCKED_MATERIALS_SIZE);
     platform_gpu_copy_locked_materials();
     
     if (engine_globals->fullscreen) {

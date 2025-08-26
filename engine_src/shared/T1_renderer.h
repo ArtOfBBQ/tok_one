@@ -21,7 +21,7 @@ extern "C" {
 void renderer_init(void);
 
 void renderer_hardware_render(
-    GPUDataForSingleFrame * frame_data,
+    GPUFrame * frame_data,
     uint64_t elapsed_nanoseconds);
 
 #ifdef __cplusplus

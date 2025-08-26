@@ -57,15 +57,15 @@ LineParticle * next_lineparticle_effect_with_zpoly(
 void commit_lineparticle_effect(
     LineParticle * to_commit);
 void add_lineparticle_effects_to_workload(
-    GPUDataForSingleFrame * frame_data,
+    GPUFrame * frame_data,
     uint64_t elapsed_us,
     const bool32_t alpha_blending);
 
 typedef struct ParticleEffect {
-    GPUzSprite gpustats_initial_random_add[2];
-    GPUzSprite gpustats_pertime_random_add[2];
-    GPUzSprite gpustats_pertime_add;
-    GPUzSprite gpustats_perexptime_add;
+    GPUzSprite init_rand_add[2];
+    GPUzSprite pertime_rand_add[2];
+    GPUzSprite pertime_add;
+    GPUzSprite perexptime_add;
     
     // Reminder on the way the linear variance multipliers work:
     // -> random floats are generated from 0.0f to 1.0f
@@ -82,20 +82,20 @@ typedef struct ParticleEffect {
     
     uint64_t random_seed;
     uint64_t elapsed;
-    uint64_t particle_lifespan;
-    uint64_t pause_between_spawns;
+    uint64_t lifespan;
+    uint64_t pause_per_set;
     
     int32_t zsprite_id;
     
     bool32_t deleted;
     bool32_t committed;
     
-    uint32_t particle_spawns_per_second;
-    uint32_t vertices_per_particle;
+    uint32_t spawns_per_sec;
+    uint32_t verts_per_particle;
     uint32_t loops; // 0 for infinite loops
     
-    bool32_t use_shattered_mesh;
-    bool32_t generate_light;
+    bool32_t shattered;
+    bool32_t cast_light;
     float light_reach;
     float light_strength;
     float light_rgb[3];
@@ -112,7 +112,7 @@ void commit_particle_effect(ParticleEffect * to_commit);
 void delete_particle_effect(int32_t with_object_id);
 
 void add_particle_effects_to_workload(
-    GPUDataForSingleFrame * frame_data,
+    GPUFrame * frame_data,
     uint64_t elapsed_us,
     const bool32_t alpha_blending);
 

@@ -57,7 +57,7 @@ typedef struct GPUCamera {
     float padding[2];       //  8 bytes
 } GPUCamera;
 
-typedef struct GPULockedMaterial {
+typedef struct {
     float ambient_rgb[3];
     float diffuse_rgb[3];
     float specular_rgb[3];
@@ -73,28 +73,28 @@ typedef struct GPULockedMaterial {
     float refraction;
     float alpha;
     float illum;
-} GPULockedMaterial;
+} GPUConstMat;
 
 typedef struct GPUzSprite {
-    float             xyz[3];
-    float             xyz_angle[3];
-    float             bonus_rgb[3];
-    float             xyz_multiplier[3]; // determines width/height/depth
-    float             xyz_offset[3];
-    float             base_mat_uv_offsets[2];
-    float             scale_factor;
-    float             alpha;
-    float             ignore_lighting;
-    float             ignore_camera;
-    unsigned int      remove_shadow;
-    int               touchable_id;
-    GPULockedMaterial base_material;
+    float        xyz[3];
+    float        xyz_angle[3];
+    float        bonus_rgb[3];
+    float        xyz_mult[3]; // determines width/height/depth
+    float        xyz_offset[3];
+    float        base_mat_uv_offsets[2];
+    float        scale_factor;
+    float        alpha;
+    float        ignore_lighting;
+    float        ignore_camera;
+    unsigned int remove_shadow;
+    int          touchable_id;
+    GPUConstMat  base_mat;
 } __attribute__((aligned(32))) GPUzSprite;
 
-typedef struct GPUSpriteCollection {
+typedef struct {
     GPUzSprite   polygons[MAX_ZSPRITES_PER_BUFFER];
     unsigned int size;
-} GPUSpriteCollection;
+} GPUzSpriteList;
 
 typedef struct GPULight {
     float xyz[3];
@@ -121,16 +121,16 @@ typedef struct GPULight {
 //    float        blue                 [MAX_LIGHTS_PER_BUFFER];
 //} GPULightCollection;
 
-typedef struct GPUProjectionConstants {
+typedef struct {
     float znear;
     float zfar;
     float field_of_view_rad;
     float field_of_view_modifier;
     float x_multiplier;
     float y_multiplier;
-} GPUProjectionConstants;
+} GPUProjectConsts;
 
-typedef struct GPUDownsamplingConstants
+typedef struct
 {
     float texture_width;
     float texture_height;
@@ -138,7 +138,7 @@ typedef struct GPUDownsamplingConstants
     float brightness_reduction;
 } GPUDownsamplingConstants;
 
-typedef struct GPUPostProcessingConstants
+typedef struct
 {
     float rgb_add[3];
     #if FOG_ACTIVE
@@ -161,7 +161,7 @@ typedef struct GPUPostProcessingConstants
     int perlin_texturearray_i;
     int perlin_texture_i;
     float padding[7];
-} GPUPostProcessingConstants;
+} GPUPostProcConsts;
 
 typedef struct GPURawVertex {
     float xyz[3];

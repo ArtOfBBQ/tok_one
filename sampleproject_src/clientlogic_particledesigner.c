@@ -104,71 +104,74 @@ void client_logic_early_startup(
     *success = 0;
     
     uint32_t ok = 0;
-    T1_reflection_struct(
-        /* const char * struct_name: */
-            GPULockedMaterial,
-        /* uint32_t * good: */
-            &ok);
+    T1_meta_struct(GPUConstMat, &ok);
     assert(ok);
-    T1_reflection_array(GPULockedMaterial, T1_TYPE_F32, ambient_rgb, 3, &ok);
-    T1_reflection_array(GPULockedMaterial, T1_TYPE_F32, diffuse_rgb, 3, &ok);
-    T1_reflection_array(GPULockedMaterial, T1_TYPE_F32, specular_rgb, 3, &ok);
-    T1_reflection_array(GPULockedMaterial, T1_TYPE_F32, rgb_cap, 3, &ok);
-    T1_reflection_field(GPULockedMaterial, T1_TYPE_I32, texturearray_i, &ok);
-    T1_reflection_field(GPULockedMaterial, T1_TYPE_I32, texture_i, &ok);
+    T1_meta_array(GPUConstMat, T1_TYPE_F32, ambient_rgb, 3, &ok);
+    T1_meta_array(GPUConstMat, T1_TYPE_F32, diffuse_rgb, 3, &ok);
+    T1_meta_array(GPUConstMat, T1_TYPE_F32, specular_rgb, 3, &ok);
+    T1_meta_array(GPUConstMat, T1_TYPE_F32, rgb_cap, 3, &ok);
+    T1_meta_field(GPUConstMat, T1_TYPE_I32, texturearray_i, &ok);
+    T1_meta_field(GPUConstMat, T1_TYPE_I32, texture_i, &ok);
     #if NORMAL_MAPPING_ACTIVE
-    T1_reflection_field(GPULockedMaterial, T1_TYPE_I32, normalmap_texturearray_i, &ok);
-    T1_reflection_field(GPULockedMaterial, T1_TYPE_I32, normalmap_texture_i, &ok);
+    T1_meta_field(GPUConstMat, T1_TYPE_I32, normalmap_texturearray_i, &ok);
+    T1_meta_field(GPUConstMat, T1_TYPE_I32, normalmap_texture_i, &ok);
     #endif
-    T1_reflection_field(GPULockedMaterial, T1_TYPE_F32, specular_exponent, &ok);
-    T1_reflection_field(GPULockedMaterial, T1_TYPE_F32, refraction, &ok);
-    T1_reflection_field(GPULockedMaterial, T1_TYPE_F32, alpha, &ok);
-    T1_reflection_field(GPULockedMaterial, T1_TYPE_F32, illum, &ok);
+    T1_meta_field(GPUConstMat, T1_TYPE_F32, specular_exponent, &ok);
+    T1_meta_field(GPUConstMat, T1_TYPE_F32, refraction, &ok);
+    T1_meta_field(GPUConstMat, T1_TYPE_F32, alpha, &ok);
+    T1_meta_field(GPUConstMat, T1_TYPE_F32, illum, &ok);
     assert(ok);
     
-    T1_reflection_struct(GPUzSprite, &ok);
+    T1_meta_struct(GPUzSprite, &ok);
     assert(ok);
-    T1_reflection_array(GPUzSprite, T1_TYPE_F32, xyz, 3, &ok);
-    T1_reflection_array(GPUzSprite, T1_TYPE_F32, xyz_angle, 3, &ok);
-    T1_reflection_array(GPUzSprite, T1_TYPE_F32, bonus_rgb, 3, &ok);
-    T1_reflection_array(GPUzSprite, T1_TYPE_F32, xyz_multiplier, 3, &ok);
-    T1_reflection_array(GPUzSprite, T1_TYPE_F32, xyz_offset, 3, &ok);
-    T1_reflection_array(GPUzSprite, T1_TYPE_F32, base_mat_uv_offsets, 2, &ok);
-    T1_reflection_field(GPUzSprite, T1_TYPE_F32, scale_factor, &ok);
-    T1_reflection_field(GPUzSprite, T1_TYPE_F32, alpha, &ok);
-    T1_reflection_field(GPUzSprite, T1_TYPE_F32, ignore_lighting, &ok);
-    T1_reflection_field(GPUzSprite, T1_TYPE_F32, ignore_camera, &ok);
-    T1_reflection_field(GPUzSprite, T1_TYPE_U32, remove_shadow, &ok);
-    T1_reflection_field(GPUzSprite, T1_TYPE_I32, touchable_id, &ok);
-    T1_reflection_struct_field(GPUzSprite,
-        T1_TYPE_STRUCT, GPULockedMaterial, base_material, &ok);
+    T1_meta_array(GPUzSprite, T1_TYPE_F32, xyz, 3, &ok);
+    T1_meta_array(GPUzSprite, T1_TYPE_F32, xyz_angle, 3, &ok);
+    T1_meta_array(GPUzSprite, T1_TYPE_F32, bonus_rgb, 3, &ok);
+    T1_meta_array(GPUzSprite, T1_TYPE_F32, xyz_mult, 3, &ok);
+    T1_meta_array(GPUzSprite, T1_TYPE_F32, xyz_offset, 3, &ok);
+    T1_meta_array(GPUzSprite, T1_TYPE_F32, base_mat_uv_offsets, 2, &ok);
+    T1_meta_field(GPUzSprite, T1_TYPE_F32, scale_factor, &ok);
+    T1_meta_field(GPUzSprite, T1_TYPE_F32, alpha, &ok);
+    T1_meta_field(GPUzSprite, T1_TYPE_F32, ignore_lighting, &ok);
+    T1_meta_field(GPUzSprite, T1_TYPE_F32, ignore_camera, &ok);
+    T1_meta_field(GPUzSprite, T1_TYPE_U32, remove_shadow, &ok);
+    T1_meta_field(GPUzSprite, T1_TYPE_I32, touchable_id, &ok);
+    T1_meta_struct_field(GPUzSprite,
+        T1_TYPE_STRUCT, GPULockedMat, base_mat, &ok);
     assert(ok);
     
-    T1_reflection_struct(ParticleEffect, &ok);
+    T1_meta_struct(ParticleEffect, &ok);
     assert(ok);
-    T1_reflection_struct_array(ParticleEffect, T1_TYPE_STRUCT, GPUzSprite, gpustats_initial_random_add, 2, &ok);
-    T1_reflection_struct_array(ParticleEffect, T1_TYPE_STRUCT, GPUzSprite, gpustats_pertime_random_add, 2, &ok);
-    T1_reflection_struct_field(ParticleEffect, T1_TYPE_STRUCT, GPUzSprite, gpustats_pertime_add, &ok);
-    T1_reflection_struct_field(ParticleEffect, T1_TYPE_STRUCT, GPUzSprite, gpustats_perexptime_add, &ok);
-    T1_reflection_struct_field(ParticleEffect, T1_TYPE_STRUCT, GPUzSprite, zpolygon_cpu, &ok);
-    T1_reflection_struct_field(ParticleEffect, T1_TYPE_STRUCT, GPUzSprite, zpolygon_gpu, &ok);
-    T1_reflection_field(ParticleEffect, T1_TYPE_U64, random_seed, &ok);
-    T1_reflection_field(ParticleEffect, T1_TYPE_U64, elapsed, &ok);
-    T1_reflection_field(ParticleEffect, T1_TYPE_U64, particle_lifespan, &ok);
-    T1_reflection_field(ParticleEffect, T1_TYPE_U64, pause_between_spawns, &ok);
-    T1_reflection_field(ParticleEffect, T1_TYPE_I32, zsprite_id, &ok);
-    T1_reflection_field(ParticleEffect, T1_TYPE_U32, deleted, &ok);
-    T1_reflection_field(ParticleEffect, T1_TYPE_U32, committed, &ok);
-    T1_reflection_field(ParticleEffect,
-        T1_TYPE_U32, particle_spawns_per_second, &ok);
-    T1_reflection_field(ParticleEffect,
-        T1_TYPE_U32, vertices_per_particle, &ok);
-    T1_reflection_field(ParticleEffect, T1_TYPE_U32, loops, &ok);
-    T1_reflection_field(ParticleEffect, T1_TYPE_U32, use_shattered_mesh, &ok);
-    T1_reflection_field(ParticleEffect, T1_TYPE_U32, generate_light, &ok);
-    T1_reflection_field(ParticleEffect, T1_TYPE_F32, light_reach, &ok);
-    T1_reflection_field(ParticleEffect, T1_TYPE_F32, light_strength, &ok);
-    T1_reflection_array(ParticleEffect, T1_TYPE_F32, light_rgb, 3, &ok);
+    T1_meta_struct_array(ParticleEffect,
+        T1_TYPE_STRUCT, GPUzSprite, init_rand_add, 2, &ok);
+    T1_meta_struct_array(ParticleEffect,
+        T1_TYPE_STRUCT, GPUzSprite, pertime_rand_add, 2, &ok);
+    T1_meta_struct_field(ParticleEffect,
+        T1_TYPE_STRUCT, GPUzSprite, pertime_add, &ok);
+    T1_meta_struct_field(ParticleEffect,
+        T1_TYPE_STRUCT, GPUzSprite, perexptime_add, &ok);
+    T1_meta_struct_field(ParticleEffect,
+        T1_TYPE_STRUCT, GPUzSprite, zpolygon_cpu, &ok);
+    T1_meta_struct_field(ParticleEffect,
+        T1_TYPE_STRUCT, GPUzSprite, zpolygon_gpu, &ok);
+    T1_meta_field(ParticleEffect, T1_TYPE_U64, random_seed, &ok);
+    T1_meta_field(ParticleEffect, T1_TYPE_U64, elapsed, &ok);
+    T1_meta_field(ParticleEffect, T1_TYPE_U64, lifespan, &ok);
+    T1_meta_field(ParticleEffect, T1_TYPE_U64, pause_per_set, &ok);
+    T1_meta_field(ParticleEffect, T1_TYPE_I32, zsprite_id, &ok);
+    T1_meta_field(ParticleEffect, T1_TYPE_U32, deleted, &ok);
+    T1_meta_field(ParticleEffect, T1_TYPE_U32, committed, &ok);
+    T1_meta_field(ParticleEffect,
+        T1_TYPE_U32, spawns_per_sec, &ok);
+    T1_meta_field(ParticleEffect,
+        T1_TYPE_U32, verts_per_particle, &ok);
+    T1_meta_field(ParticleEffect, T1_TYPE_U32, loops, &ok);
+    T1_meta_field(ParticleEffect, T1_TYPE_U32, shattered, &ok);
+    T1_meta_field(ParticleEffect, T1_TYPE_U32, cast_light, &ok);
+    T1_meta_field(ParticleEffect, T1_TYPE_F32, light_reach, &ok);
+    T1_meta_field(ParticleEffect, T1_TYPE_F32, light_strength, &ok);
+    T1_meta_array(ParticleEffect, T1_TYPE_F32, light_rgb, 3, &ok);
+    assert(ok);
     
     example_particles_id = next_nonui_object_id();
     

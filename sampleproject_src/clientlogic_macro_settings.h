@@ -32,9 +32,9 @@ of the engine for your specific app.
 #define AUDIO_ACTIVE 0
 #define ENGINE_SAVEFILE_ACTIVE 0
 #define PROFILER_ACTIVE 0
-#define TONE_MAPPING_ACTIVE 0
+#define TONE_MAPPING_ACTIVE 1
 #define COLOR_QUANTIZATION_ACTIVE 0
-#define FOG_ACTIVE 0
+#define FOG_ACTIVE 1
 
 #define MAX_RENDERING_FRAME_BUFFERS 3 // 3 for triple-buffering
 

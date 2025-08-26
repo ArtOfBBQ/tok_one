@@ -1,4 +1,4 @@
-#include "T1_reflection.h"
+#include "T1_meta.h"
 
 #define METASTRUCT_FIELDS_MAX 64
 typedef struct MetaField {
@@ -75,30 +75,30 @@ static void T1_refl_reset(void) {
     }
 }
 
-void T1_reflection_init(
-    void *(* T1_reflection_memcpy)(void *, const void *, size_t),
-    void *(* T1_reflection_malloc_func)(size_t),
-    void *(* T1_reflection_memset_func)(void *, int, size_t),
-    int (* T1_reflection_strcmp_func)(const char *, const char *),
-    size_t (* T1_reflection_strlen_func)(const char *))
+void T1_meta_init(
+    void *(* T1_meta_memcpy)(void *, const void *, size_t),
+    void *(* T1_meta_malloc_func)(size_t),
+    void *(* T1_meta_memset_func)(void *, int, size_t),
+    int (* T1_meta_strcmp_func)(const char *, const char *),
+    size_t (* T1_meta_strlen_func)(const char *))
 {
-    t1rs = T1_reflection_malloc_func(sizeof(T1ReflectionState));
+    t1rs = T1_meta_malloc_func(sizeof(T1ReflectionState));
     
-    t1rs->memcpy = T1_reflection_memcpy;
-    t1rs->memset =  T1_reflection_memset_func;
-    t1rs->strcmp = T1_reflection_strcmp_func;
-    t1rs->strlen = T1_reflection_strlen_func;
+    t1rs->memcpy = T1_meta_memcpy;
+    t1rs->memset =  T1_meta_memset_func;
+    t1rs->strcmp = T1_meta_strcmp_func;
+    t1rs->strlen = T1_meta_strlen_func;
     
     t1rs->ascii_store_cap = 2500;
-    t1rs->ascii_store = T1_reflection_malloc_func(
+    t1rs->ascii_store = T1_meta_malloc_func(
         t1rs->ascii_store_cap);
     
     t1rs->metastructs_cap = 30;
-    t1rs->metastructs = T1_reflection_malloc_func(
+    t1rs->metastructs = T1_meta_malloc_func(
         sizeof(MetaStruct) * t1rs->metastructs_cap);
     
     t1rs->metafields_store_cap = 500;
-    t1rs->metafields_store = T1_reflection_malloc_func(
+    t1rs->metafields_store = T1_meta_malloc_func(
         sizeof(MetaField) * t1rs->metafields_store_cap);
     
     T1_refl_reset();
@@ -181,13 +181,14 @@ static MetaField * find_field_in_struct_by_name(
     return return_value;
 }
 
-void T1_reflection_reg_struct(
+void T1_meta_reg_struct(
     const char * struct_name,
     const uint32_t size_bytes,
     uint32_t * good)
 {
-    #if T1_REFLECTION_ASSERTS
     MetaStruct * target_mstruct = find_struct_by_name(struct_name);
+    
+    #if T1_REFLECTION_ASSERTS
     assert(target_mstruct == NULL); // name already taken
     #endif
     
@@ -221,7 +222,7 @@ void T1_reflection_reg_struct(
     *good = 1;
 }
 
-void T1_reflection_reg_field(
+void T1_meta_reg_field(
     const char * property_name,
     const uint32_t property_offset,
     const T1Type property_type,
@@ -264,7 +265,7 @@ void T1_reflection_reg_field(
     
     if (t1rs->metastructs_size < 1) {
         #if T1_REFLECTION_ASSERTS
-        assert(0); // use T1_reflection_reg_struct() first
+        assert(0); // use T1_meta_reg_struct() first
         #endif
         *good = 0;
         return;
@@ -356,7 +357,7 @@ void T1_reflection_reg_field(
         target_mstruct->head_fields_i);
     while (previous_link != NULL) {
         MetaField * next_link = metafield_i_to_ptr(previous_link->next_i);
-        // This forces the caller of T1_reflection_reg_field()
+        // This forces the caller of T1_meta_reg_field()
         // to register their fields in the same order as the original
         // struct declaration, which is not strictly necessary but
         // probably for the best
@@ -443,7 +444,7 @@ static uint32_t array_indices_to_flat_array_index(
 }
 
 static void T1_refl_get_field_recursive(
-    T1ReflectedField * return_value,
+    T1MetaField * return_value,
     const char * struct_name,
     const char * field_name,
     uint32_t * good)
@@ -576,7 +577,7 @@ static void T1_refl_get_field_recursive(
     *good = 1;
 }
 
-T1ReflectedField T1_reflection_get_field_from_strings(
+T1MetaField T1_meta_get_field_from_strings(
     const char * struct_name,
     const char * field_name,
     uint32_t * good)
@@ -588,7 +589,7 @@ T1ReflectedField T1_reflection_get_field_from_strings(
     assert(field_name[0] != '"');
     #endif
     
-    T1ReflectedField return_value;
+    T1MetaField return_value;
     return_value.data_type = T1_TYPE_NOTSET;
     return_value.array_sizes[0] = 0;
     return_value.array_sizes[1] = 0;

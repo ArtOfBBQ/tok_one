@@ -26,7 +26,7 @@ extern bool32_t loading_textures;
 
 void gameloop_init(void);
 
-void gameloop_update_before_render_pass(GPUDataForSingleFrame * frame_data);
+void gameloop_update_before_render_pass(GPUFrame * frame_data);
 void gameloop_update_after_render_pass(void);
 // client_logic_after_copy
 

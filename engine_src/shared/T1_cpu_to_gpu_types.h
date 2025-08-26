@@ -6,37 +6,37 @@
 
 // This is a bunch of pointers because apple's metal (both ios and macosx)
 // requires shared data to be aligned to page size :(
-typedef struct GPUDataForSingleFrame
+typedef struct
 {
-    GPUVertexIndices *                                  vertices;
-    GPUSpriteCollection *              polygon_collection;
+    GPUVertexIndices *                              verts;
+    GPUzSpriteList *                         zsprite_list;
     GPULight *                                     lights;
     GPUCamera *                                    camera;
     #if RAW_SHADER_ACTIVE
     GPURawVertex *                          line_vertices;
     GPURawVertex *                         point_vertices;
     #endif
-    GPUPostProcessingConstants * postprocessing_constants;
-    uint32_t                                vertices_size;
+    GPUPostProcConsts                   * postproc_consts;
+    uint32_t                                   verts_size;
     uint32_t                                  lights_size;
     uint32_t                           first_alphablend_i;
     uint32_t                          point_vertices_size;
     uint32_t                           line_vertices_size;
-} GPUDataForSingleFrame;
+} GPUFrame;
 
 typedef struct GPUSharedDataCollection
 {
-    GPUDataForSingleFrame triple_buffers[MAX_RENDERING_FRAME_BUFFERS];
-    GPUProjectionConstants * locked_pjc;
+    GPUFrame triple_buffers[MAX_RENDERING_FRAME_BUFFERS];
+    GPUProjectConsts * locked_pjc;
     GPULockedVertex * locked_vertices;
-    GPULockedMaterial * locked_materials;
+    GPUConstMat * const_mats;
     uint32_t locked_vertices_size;
-    uint32_t locked_materials_size;
-    uint32_t locked_materials_allocation_size;
+    uint32_t const_mats_size;
+    uint32_t const_mats_allocation_size;
     uint32_t vertices_allocation_size;
     uint32_t locked_vertices_allocation_size;
     uint32_t polygons_allocation_size;
-    uint32_t polygon_materials_allocation_size;
+    uint32_t polygon_mats_allocation_size;
     uint32_t lights_allocation_size;
     uint32_t camera_allocation_size;
     uint32_t projection_constants_allocation_size;

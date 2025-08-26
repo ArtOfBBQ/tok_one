@@ -10,7 +10,7 @@ extern "C" {
 #endif
 
 typedef struct FontSettings {
-    GPULockedMaterial mat;
+    GPUConstMat mat;
     int32_t touchable_id;
     uint32_t remove_shadow;
     uint32_t alpha_blending_enabled;

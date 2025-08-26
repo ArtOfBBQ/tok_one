@@ -69,7 +69,7 @@ float3 zyx_rotate(const float3 vertices, const float3 xyz_angle) {
 
 float4 project_float3_to_float4_perspective(
     const float3 in_xyz,
-    const device GPUProjectionConstants * pjc)
+    const device GPUProjectConsts * pjc)
 {
     float4 out;
     
@@ -96,8 +96,8 @@ vertex float4 shadows_vertex_shader(
     const device GPULight * lights [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPULockedVertex * locked_vertices [[ buffer(4) ]],
-    const device GPUProjectionConstants * projection_constants [[ buffer(5) ]],
-    const device GPUPostProcessingConstants * updating_globals [[ buffer (6) ]])
+    const device GPUProjectConsts * projection_constants [[ buffer(5) ]],
+    const device GPUPostProcConsts * updating_globals [[ buffer (6) ]])
 {
     float3 out_pos;
     
@@ -125,9 +125,9 @@ vertex float4 shadows_vertex_shader(
         locked_vertices[locked_vertex_i].xyz[2]);
     
     float3 vertex_multipliers = vector_float3(
-        polygons[polygon_i].xyz_multiplier[0],
-        polygons[polygon_i].xyz_multiplier[1],
-        polygons[polygon_i].xyz_multiplier[2]);
+        polygons[polygon_i].xyz_mult[0],
+        polygons[polygon_i].xyz_mult[1],
+        polygons[polygon_i].xyz_mult[2]);
     
     float3 vertex_offsets = vector_float3(
         polygons[polygon_i].xyz_offset[0],
@@ -228,7 +228,7 @@ vertex_shader(
     const device GPUzSprite * polygons [[ buffer(1) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
     const device GPULockedVertex * locked_vertices [[ buffer(4) ]],
-    const device GPUProjectionConstants * projection_constants [[ buffer(5) ]])
+    const device GPUProjectConsts * projection_constants [[ buffer(5) ]])
 {
     RasterizerPixel out;
     
@@ -246,9 +246,9 @@ vertex_shader(
         locked_vertices[out.locked_vertex_i].xyz[2]);
     
     float3 vertex_multipliers = vector_float3(
-        polygons[out.polygon_i].xyz_multiplier[0],
-        polygons[out.polygon_i].xyz_multiplier[1],
-        polygons[out.polygon_i].xyz_multiplier[2]);
+        polygons[out.polygon_i].xyz_mult[0],
+        polygons[out.polygon_i].xyz_mult[1],
+        polygons[out.polygon_i].xyz_mult[2]);
     
     float3 vertex_offsets = vector_float3(
         polygons[out.polygon_i].xyz_offset[0],
@@ -393,10 +393,10 @@ float4 get_lit(
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE> color_textures,
     const device GPUCamera * camera,
     const device GPULight * lights,
-    const device GPUProjectionConstants * projection_constants,
+    const device GPUProjectConsts * projection_constants,
     const device GPUzSprite * zsprite,
-    const device GPULockedMaterial * material,
-    const device GPUPostProcessingConstants * updating_globals,
+    const device GPUConstMat * material,
+    const device GPUPostProcConsts * updating_globals,
     const RasterizerPixel in,
     const bool is_base_mtl)
 {
@@ -656,16 +656,17 @@ fragment_shader(
     const device GPUzSprite * polygons [[ buffer(1) ]],
     const device GPULight * lights [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
-    const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
-    const device GPULockedMaterial * locked_materials [[ buffer(6) ]],
-    const device GPUPostProcessingConstants * updating_globals [[ buffer(7) ]])
+    const device GPUProjectConsts * projection_constants [[ buffer(4) ]],
+    const device GPUConstMat * const_mats [[ buffer(6) ]],
+    const device GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
-    unsigned int material_i =
+    unsigned int mat_i =
         locked_vertices[in.locked_vertex_i].parent_material_i;
-    const device GPULockedMaterial * material =
-        material_i == PARENT_MATERIAL_BASE ?
-            &polygons[in.polygon_i].base_material :
-            &locked_materials[locked_vertices[in.locked_vertex_i].locked_materials_head_i + material_i];
+    const device GPUConstMat * material =
+        mat_i == PARENT_MATERIAL_BASE ?
+            &polygons[in.polygon_i].base_mat :
+            &const_mats[locked_vertices[in.locked_vertex_i].
+                locked_materials_head_i + mat_i];
     
     float4 lit_color = get_lit(
         #if SHADOWS_ACTIVE
@@ -687,7 +688,7 @@ fragment_shader(
         /* const device RasterizerPixel * in: */
             in,
         /* const bool is_base_mtl: */
-            material_i == PARENT_MATERIAL_BASE);
+            mat_i == PARENT_MATERIAL_BASE);
     
     int diamond_size = 35.0f;
     int neghalfdiamond = -1.0f * (diamond_size / 2);
@@ -727,17 +728,17 @@ alphablending_fragment_shader(
     const device GPUzSprite * polygons [[ buffer(1) ]],
     const device GPULight * lights [[ buffer(2) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
-    const device GPUProjectionConstants * projection_constants [[ buffer(4) ]],
-    const device GPULockedMaterial * locked_materials [[ buffer(6) ]],
-    const device GPUPostProcessingConstants * updating_globals [[ buffer(7) ]])
+    const device GPUProjectConsts * projection_constants [[ buffer(4) ]],
+    const device GPUConstMat * locked_materials [[ buffer(6) ]],
+    const device GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
-    unsigned int material_i =
+    unsigned int mat_i =
         locked_vertices[in.locked_vertex_i].parent_material_i;
     
-    const device GPULockedMaterial * material =
-        material_i == PARENT_MATERIAL_BASE ?
-            &polygons[in.polygon_i].base_material :
-            &locked_materials[locked_vertices[in.locked_vertex_i].locked_materials_head_i + material_i];
+    const device GPUConstMat * material =
+        mat_i == PARENT_MATERIAL_BASE ?
+            &polygons[in.polygon_i].base_mat :
+            &locked_materials[locked_vertices[in.locked_vertex_i].locked_materials_head_i + mat_i];
     
     float4 lit_color = get_lit(
         #if SHADOWS_ACTIVE
@@ -760,7 +761,7 @@ alphablending_fragment_shader(
         /* const RasterizerPixel in: */
             in,
         /* const bool is_base_mtl: */
-            material_i == PARENT_MATERIAL_BASE);
+            mat_i == PARENT_MATERIAL_BASE);
     
     if (lit_color[3] < 0.05f)
     {
@@ -790,7 +791,7 @@ vertex PostProcessingFragment
 single_quad_vertex_shader(
     const uint vertexID [[ vertex_id ]],
     const device PostProcessingVertex * vertices [[ buffer(0) ]],
-    const constant GPUPostProcessingConstants * constants [[ buffer(1) ]])
+    const constant GPUPostProcConsts * constants [[ buffer(1) ]])
 {
     PostProcessingFragment out;
     
@@ -977,7 +978,7 @@ raw_vertex_shader(
     uint vertex_i [[ vertex_id ]],
     const device GPURawVertex * vertices [[ buffer(0) ]],
     const device GPUCamera * camera [[ buffer(3) ]],
-    const device GPUProjectionConstants * projection_constants [[ buffer(5) ]])
+    const device GPUProjectConsts * project_consts [[ buffer(5) ]])
 {
     RawFragment out;
     
@@ -1005,13 +1006,13 @@ raw_vertex_shader(
     out.position = vector_float4(cam_z_rotated, 1.0f);
     
     // projection
-    out.position[0] *= projection_constants->x_multiplier;
-    out.position[1] *= projection_constants->field_of_view_modifier;
+    out.position[0] *= project_consts->x_multiplier;
+    out.position[1] *= project_consts->field_of_view_modifier;
     out.position[3]  = out.position[2];
     out.position[2]  =
-        projection_constants->zfar *
-            (out.position[3] - projection_constants->znear) /
-                (projection_constants->zfar - projection_constants->znear);
+        project_consts->zfar *
+            (out.position[3] - project_consts->znear) /
+                (project_consts->zfar - project_consts->znear);
     
     out.color = vertices[vertex_i].color;
     

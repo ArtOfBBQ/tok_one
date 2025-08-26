@@ -335,18 +335,18 @@ void profiler_draw_labels(void) {
         profiler_backdrop.cpu_data->zsprite_id = profiler_object_id;
         profiler_backdrop.gpu_data->ignore_camera = 1.0f;
         profiler_backdrop.gpu_data->ignore_lighting = 1.0f;
-        profiler_backdrop.gpu_data->base_rgba[0] = 0.50f;
-        profiler_backdrop.gpu_data->base_rgba[1] = 0.50f;
-        profiler_backdrop.gpu_data->base_rgba[2] = 0.50f;
-        profiler_backdrop.gpu_data->base_rgba[3] = 0.75f;
+        profiler_backdrop.gpu_data->base_mat.diffuse_rgb[0] = 0.50f;
+        profiler_backdrop.gpu_data->base_mat.diffuse_rgb[1] = 0.50f;
+        profiler_backdrop.gpu_data->base_mat.diffuse_rgb[2] = 0.50f;
+        profiler_backdrop.gpu_data->base_mat.alpha = 0.75f;
         profiler_backdrop.cpu_data->alpha_blending_enabled = true;
         profiler_backdrop.gpu_data->touchable_id = -1;
         zsprite_commit(&profiler_backdrop);
         
-        font_settings->font_color[0] = 0.1f;
-        font_settings->font_color[1] = 0.1f;
-        font_settings->font_color[2] = 0.1f;
-        font_settings->font_color[3] = 1.0f;
+        font_settings->mat.diffuse_rgb[0] = 0.1f;
+        font_settings->mat.diffuse_rgb[1] = 0.1f;
+        font_settings->mat.diffuse_rgb[2] = 0.1f;
+        font_settings->mat.alpha = 1.0f;
         font_settings->font_height = 18.0f;
         
         font_settings->ignore_camera = true;
@@ -365,7 +365,7 @@ void profiler_draw_labels(void) {
                 engine_globals->window_width);
         
         for (int32_t gui_frame_i = 0; gui_frame_i < 2; gui_frame_i++) {
-            font_settings->font_color[0] = 0.1f;
+            font_settings->mat.ambient_rgb[0] = 0.1f;
             float gui_frame_left = 20 +
                 (gui_frame_i * engine_globals->window_width / 2);
             
@@ -381,7 +381,7 @@ void profiler_draw_labels(void) {
                 line_text,
                 128,
                 f_i);
-            font_settings->font_touchable_id = frame_selection_touchable_ids[
+            font_settings->touchable_id = frame_selection_touchable_ids[
                 gui_frame_i];
             
             font_settings->ignore_camera = true;
@@ -399,7 +399,7 @@ void profiler_draw_labels(void) {
                 /* const float max_width: */
                     engine_globals->window_width);
             
-            font_settings->font_touchable_id = -1;
+            font_settings->touchable_id = -1;
             
             cur_top -= (font_settings->font_height + 2.0f);
             common_strcpy_capped(line_text, 128, "Cycles: ");
@@ -446,9 +446,9 @@ void profiler_draw_labels(void) {
                 float pct_elapsed =
                     (float)frames[f_i].profiles[func_i].elapsed_total /
                         (float)acceptable_frame_clock_cycles;
-                font_settings->font_color[0] = 0.1f + (pct_elapsed * 2);
-                if (font_settings->font_color[0] > 1.0f) {
-                    font_settings->font_color[0] = 1.0f;
+                font_settings->mat.diffuse_rgb[0] = 0.1f + (pct_elapsed * 2);
+                if (font_settings->mat.diffuse_rgb[0] > 1.0f) {
+                    font_settings->mat.diffuse_rgb[0] = 1.0f;
                 }
                 
                 if (pct_elapsed >= 0.0f) {

@@ -347,10 +347,10 @@ void text_request_label_offset_around(
             
             letter.gpu_data->remove_shadow = font_settings->remove_shadow;
             
-            letter.gpu_data->base_material = font_settings->mat;
+            letter.gpu_data->base_mat = font_settings->mat;
             letter.gpu_data->alpha = font_settings->alpha;
             
-            letter.gpu_data->base_material.texture_i      =
+            letter.gpu_data->base_mat.texture_i      =
                 text_to_draw[j] - '!';
             
             cur_x_offset_pixelspace +=
@@ -498,14 +498,14 @@ void text_request_label_renderable(
         letter.gpu_data->ignore_camera = font_settings->ignore_camera;
         letter.gpu_data->remove_shadow = font_settings->remove_shadow;
         
-        letter.gpu_data->base_material = font_settings->mat;
-        letter.gpu_data->base_material.texturearray_i = 0;
-        letter.gpu_data->base_material.texture_i =
+        letter.gpu_data->base_mat = font_settings->mat;
+        letter.gpu_data->base_mat.texturearray_i = 0;
+        letter.gpu_data->base_mat.texture_i =
             (int32_t)(text_to_draw[i] - '!');
         
         if (
-            letter.gpu_data->base_material.texture_i < 0 ||
-            letter.gpu_data->base_material.texture_i > 100)
+            letter.gpu_data->base_mat.texture_i < 0 ||
+            letter.gpu_data->base_mat.texture_i > 100)
         {
             continue;
         }
@@ -527,7 +527,7 @@ void text_request_label_renderable(
         }
         
         i++;
-        log_assert(letter.gpu_data->base_material.alpha > 0.99f);
+        log_assert(letter.gpu_data->base_mat.alpha > 0.99f);
         zsprite_commit(&letter);
     }
 }
@@ -628,7 +628,7 @@ void text_request_fps_counter(
         /* float top_pixelspace  : */
             30.0f,
         /* z                     : */
-            engine_globals->projection_constants.znear + 0.0001f,
+            engine_globals->project_consts.znear + 0.0001f,
         /* float max_width       : */
             engine_globals->window_width);
 }
@@ -676,7 +676,7 @@ void text_request_top_touchable_id(
         /* float top_pixelspace  : */
             30.0f,
         /* z                     : */
-            engine_globals->projection_constants.znear + 0.0001f,
+            engine_globals->project_consts.znear + 0.0001f,
         /* float max_width       : */
             engine_globals->window_width);
 }

@@ -213,7 +213,7 @@ void project_float4_to_2d_inplace(
     float * position_y,
     float * position_z)
 {
-    GPUProjectionConstants * pjc = &engine_globals->projection_constants;
+    GPUProjectConsts * pjc = &engine_globals->project_consts;
     
     float x_multiplier =
         engine_globals->aspect_ratio * pjc->field_of_view_modifier;

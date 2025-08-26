@@ -10,7 +10,7 @@ float engineglobals_screenspace_x_to_x(
     return (
         (((screenspace_x * 2.0f) / engine_globals->window_width) - 1.0f)
             * given_z)
-            / engine_globals->projection_constants.x_multiplier;
+            / engine_globals->project_consts.x_multiplier;
 }
 
 float engineglobals_screenspace_y_to_y(
@@ -20,7 +20,7 @@ float engineglobals_screenspace_y_to_y(
     return (
         (((screenspace_y * 2.0f) / engine_globals->window_height) - 1.0f)
             * given_z)
-                / engine_globals->projection_constants.field_of_view_modifier;
+                / engine_globals->project_consts.field_of_view_modifier;
 }
 
 float engineglobals_screenspace_height_to_height(
@@ -30,7 +30,7 @@ float engineglobals_screenspace_height_to_height(
     return ((
         (screenspace_height * 2.0f) / engine_globals->window_height)
             * given_z)
-                / engine_globals->projection_constants.field_of_view_modifier;
+                / engine_globals->project_consts.field_of_view_modifier;
 }
 
 float engineglobals_screenspace_width_to_width(
@@ -40,7 +40,7 @@ float engineglobals_screenspace_width_to_width(
     return
         (((screenspace_width * 2.0f) / engine_globals->window_width)
             * given_z)
-            / engine_globals->projection_constants.x_multiplier;
+            / engine_globals->project_consts.x_multiplier;
 }
 
 void engineglobals_init(void) {
@@ -52,7 +52,7 @@ void engineglobals_init(void) {
         return;
     }
     
-    GPUProjectionConstants * pjc = &engine_globals->projection_constants;
+    GPUProjectConsts * pjc = &engine_globals->project_consts;
     
     pjc->znear =  0.1f;
     pjc->zfar  =  6.0f;
@@ -79,23 +79,23 @@ void engineglobals_init(void) {
     
     engine_globals->timedelta_mult = 1.0f;
     
-    engine_globals->postprocessing_constants.timestamp = 0;
-    engine_globals->postprocessing_constants.blur_pct = 0.18f;
-    engine_globals->postprocessing_constants.nonblur_pct = 1.0f;
-    engine_globals->postprocessing_constants.screen_height =
+    engine_globals->postproc_consts.timestamp = 0;
+    engine_globals->postproc_consts.blur_pct = 0.18f;
+    engine_globals->postproc_consts.nonblur_pct = 1.0f;
+    engine_globals->postproc_consts.screen_height =
         engine_globals->window_height;
-    engine_globals->postprocessing_constants.screen_width =
+    engine_globals->postproc_consts.screen_width =
         engine_globals->window_width;
-    engine_globals->postprocessing_constants.color_quantization = 1.0f;
-    engine_globals->postprocessing_constants.rgb_add[0] = 0.0f;
-    engine_globals->postprocessing_constants.rgb_add[1] = 0.0f;
-    engine_globals->postprocessing_constants.rgb_add[2] = 0.0f;
+    engine_globals->postproc_consts.color_quantization = 1.0f;
+    engine_globals->postproc_consts.rgb_add[0] = 0.0f;
+    engine_globals->postproc_consts.rgb_add[1] = 0.0f;
+    engine_globals->postproc_consts.rgb_add[2] = 0.0f;
     
     #if FOG_ACTIVE
-    engine_globals->postprocessing_constants.fog_color[0] = 1.0f;
-    engine_globals->postprocessing_constants.fog_color[1] = 1.0f;
-    engine_globals->postprocessing_constants.fog_color[2] = 1.0f;
-    engine_globals->postprocessing_constants.fog_factor = 0.0f;
+    engine_globals->postproc_consts.fog_color[0] = 1.0f;
+    engine_globals->postproc_consts.fog_color[1] = 1.0f;
+    engine_globals->postproc_consts.fog_color[2] = 1.0f;
+    engine_globals->postproc_consts.fog_factor = 0.0f;
     #endif
     
     engine_globals->last_clickray_origin[0]    = 0.0f;

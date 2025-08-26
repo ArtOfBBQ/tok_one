@@ -68,8 +68,8 @@ typedef struct EngineGlobals {
     uint64_t elapsed;
     uint64_t this_frame_timestamp_us;
     uint64_t last_resize_request_us;
-    GPUPostProcessingConstants postprocessing_constants;
-    GPUProjectionConstants projection_constants;
+    GPUPostProcConsts postproc_consts;
+    GPUProjectConsts project_consts;
 } EngineGlobals;
 
 extern EngineGlobals * engine_globals;
