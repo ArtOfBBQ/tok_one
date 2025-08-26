@@ -234,6 +234,17 @@ void T1_meta_reg_field(
 {
     *good = 0;
     
+    if (
+        property_struct_name != NULL &&
+        property_struct_name[0] == 'N' &&
+        property_struct_name[1] == 'U' &&
+        property_struct_name[2] == 'L' &&
+        property_struct_name[3] == 'L' &&
+        property_struct_name[4] == '\0')
+    {
+        property_struct_name = NULL;
+    }
+    
     #if T1_REFLECTION_ASSERTS
     assert(property_name != NULL);
     // When invoking the macro versions of this function, call using
