@@ -89,7 +89,7 @@ void T1_meta_init(
     t1rs->strcmp = T1_meta_strcmp_func;
     t1rs->strlen = T1_meta_strlen_func;
     
-    t1rs->ascii_store_cap = 2500;
+    t1rs->ascii_store_cap = 3500;
     t1rs->ascii_store = T1_meta_malloc_func(
         t1rs->ascii_store_cap);
     
@@ -529,6 +529,7 @@ static void T1_refl_get_field_recursive(
         switch (metafield->type) {
             case T1_TYPE_I8:
             case T1_TYPE_U8:
+            case T1_TYPE_CHAR:
                 offset_per_array_index = 1;
                 break;
             case T1_TYPE_I16:

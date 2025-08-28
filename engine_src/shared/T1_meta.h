@@ -43,7 +43,7 @@ void T1_meta_reg_struct(
 #define T1_meta_struct_field(struct_name, T1_type, property_type, prop_name, good) T1_meta_reg_field(#prop_name, offsetof(struct_name, prop_name), T1_type, #property_type, 1, 1, 1, good)
 #define T1_meta_array(struct_name, T1_type, prop_name, array_size, good) T1_meta_reg_field(#prop_name, offsetof(struct_name, prop_name), T1_type, NULL, array_size, 1, 1, good)
 #define T1_meta_struct_array(struct_name, T1_type, property_type, prop_name, array_size, good) T1_meta_reg_field(#prop_name, offsetof(struct_name, prop_name), T1_type, #property_type, array_size, 1, 1, good)
-#define T1_meta_multi_array(struct_name, T1_type, property_type, prop_name, array_size_1, array_size_2, array_size_3, good) T1_meta_reg_field(#prop_name, offsetof(struct_name, prop_name), T1_type, #property_type, array_size_1, array_size_2, array_size_3, good)
+#define T1_meta_multi_array(struct_name, T1_type, property_type_if_struct, prop_name, array_size_1, array_size_2, array_size_3, good) T1_meta_reg_field(#prop_name, offsetof(struct_name, prop_name), T1_type, #property_type_if_struct, array_size_1, array_size_2, array_size_3, good)
 void T1_meta_reg_field(
     const char * property_name,
     const uint32_t property_offset,
