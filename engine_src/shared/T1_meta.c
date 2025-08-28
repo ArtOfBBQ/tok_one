@@ -384,7 +384,8 @@ void T1_meta_reg_field(
 
 static void strip_array_brackets_and_get_array_indices(
     char * to_strip,
-    uint32_t * array_indices)
+    uint32_t * array_indices,
+    uint32_t * array_indices_found)
 {
     size_t field_name_len = t1rs->strlen(to_strip);
     uint8_t is_array = 0;
@@ -422,6 +423,7 @@ static void strip_array_brackets_and_get_array_indices(
             array_indices[0] = total;
             to_strip[i] = '\0';
             field_name_len -= 3;
+            *array_indices_found += 1;
         } else {
             break;
         }
@@ -502,9 +504,11 @@ static void T1_refl_get_field_recursive(
     
     
     uint32_t array_indices[T1_REFL_MAX_ARRAY_SIZES];
+    uint32_t array_indices_found = 0;
     strip_array_brackets_and_get_array_indices(
         first_part,
-        array_indices);
+        array_indices,
+        &array_indices_found);
     
     MetaField * metafield = find_field_in_struct_by_name(
         metastruct, first_part);
@@ -570,6 +574,12 @@ static void T1_refl_get_field_recursive(
     return_value->array_sizes[0] = metafield->array_sizes[0];
     return_value->array_sizes[1] = metafield->array_sizes[1];
     return_value->array_sizes[2] = metafield->array_sizes[2];
+    while (array_indices_found > 0) {
+        return_value->array_sizes[0] = return_value->array_sizes[1];
+        return_value->array_sizes[1] = return_value->array_sizes[2];
+        return_value->array_sizes[2] = return_value->array_sizes[0];
+        array_indices_found -= 1;
+    }
     
     if (second_part != NULL) {
         #if T1_REFLECTION_ASSERTS
