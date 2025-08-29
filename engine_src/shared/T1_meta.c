@@ -40,7 +40,7 @@ static void construct_metastruct(MetaStruct * to_construct) {
 }
 
 static void construct_metafield(MetaField * to_construct) {
-    #if T1_REFLECTION_ASSERTS
+    #if T1_META_ASSERTS
     assert(to_construct != NULL);
     #endif
     
@@ -89,7 +89,7 @@ void T1_meta_init(
     t1rs->strcmp = T1_meta_strcmp_func;
     t1rs->strlen = T1_meta_strlen_func;
     
-    t1rs->ascii_store_cap = 3500;
+    t1rs->ascii_store_cap = 10000;
     t1rs->ascii_store = T1_meta_malloc_func(
         t1rs->ascii_store_cap);
     
@@ -112,12 +112,15 @@ static char * T1_refl_copy_str_to_store(
     
     size_t len = t1rs->strlen(to_copy);
     
-    #ifndef T1_REFLECTION_NO_ASSERTS
+    #if T1_META_ASSERTS
     assert(len > 0);
     #endif
     
     if (t1rs->ascii_store_next_i + len >= t1rs->ascii_store_cap)
     {
+        #if T1_META_ASSERTS
+        assert(0);
+        #endif
         return NULL;
     }
     
@@ -144,7 +147,7 @@ static MetaStruct * find_struct_by_name(
                 t1rs->metastructs[i].name,
                 struct_name) == 0)
         {
-            #if T1_REFLECTION_ASSERTS
+            #if T1_META_ASSERTS
             assert(return_value == 0);
             #endif
             
@@ -188,7 +191,7 @@ void T1_meta_reg_struct(
 {
     MetaStruct * target_mstruct = find_struct_by_name(struct_name);
     
-    #if T1_REFLECTION_ASSERTS
+    #if T1_META_ASSERTS
     assert(target_mstruct == NULL); // name already taken
     #endif
     
@@ -209,7 +212,7 @@ void T1_meta_reg_struct(
             good);
         target_mstruct->size_bytes = size_bytes;
         if (!*good) {
-            #if T1_REFLECTION_ASSERTS
+            #if T1_META_ASSERTS
             // nout enough ascii store for a struct name should
             // probably never happen
             assert(0);
@@ -245,7 +248,7 @@ void T1_meta_reg_field(
         property_struct_name = NULL;
     }
     
-    #if T1_REFLECTION_ASSERTS
+    #if T1_META_ASSERTS
     assert(property_name != NULL);
     // When invoking the macro versions of this function, call using
     // the actual struct type, not a string containing the struct type
@@ -261,7 +264,7 @@ void T1_meta_reg_field(
     // should be registered separately
     for (uint32_t i = 0; i < UINT16_MAX; i++) {
         if (property_name[i] == '.') {
-            #if T1_REFLECTION_ASSERTS
+            #if T1_META_ASSERTS
             assert(0);
             #endif
             return;
@@ -269,13 +272,13 @@ void T1_meta_reg_field(
         if (property_name[i] == '\0') {
             break;
         }
-        #if T1_REFLECTION_ASSERTS
+        #if T1_META_ASSERTS
         assert(i < 250); // 250 character property is absurd
         #endif
     }
     
     if (t1rs->metastructs_size < 1) {
-        #if T1_REFLECTION_ASSERTS
+        #if T1_META_ASSERTS
         assert(0); // use T1_meta_reg_struct() first
         #endif
         *good = 0;
@@ -326,7 +329,7 @@ void T1_meta_reg_field(
     target_mfield->array_sizes[0] = property_array_size_1;
     target_mfield->array_sizes[1] = property_array_size_2;
     target_mfield->array_sizes[2] = property_array_size_3;
-    #if T1_REFLECTION_ASSERTS
+    #if T1_META_ASSERTS
     if (target_mfield->array_sizes[1] < 2) {
         assert(target_mfield->array_sizes[2] < 2);
     }
@@ -345,7 +348,7 @@ void T1_meta_reg_field(
     *good = 0;
     
     if (target_mfield->type == T1_TYPE_STRUCT) {
-        #if T1_REFLECTION_ASSERTS
+        #if T1_META_ASSERTS
         assert(property_struct_name != NULL);
         #endif
         if (property_struct_name == NULL) {
@@ -363,7 +366,7 @@ void T1_meta_reg_field(
         *good = 0;
     }
     
-    #if T1_REFLECTION_ASSERTS
+    #if T1_META_ASSERTS
     MetaField * previous_link = metafield_i_to_ptr(
         target_mstruct->head_fields_i);
     while (previous_link != NULL) {
@@ -436,7 +439,7 @@ static uint32_t array_indices_to_flat_array_index(
     uint32_t * array_indices,
     MetaField * field)
 {
-    #if T1_REFLECTION_ASSERTS
+    #if T1_META_ASSERTS
     for (uint32_t i = 0; i < T1_REFL_MAX_ARRAY_SIZES; i++) {
         assert(array_indices[i] < field->array_sizes[i]);
     }
@@ -480,7 +483,7 @@ static void T1_refl_get_field_recursive(
     char * first_part = T1_refl_copy_str_to_store(
         field_name,
         good);
-    #if T1_REFLECTION_ASSERTS
+    #if T1_META_ASSERTS
     assert(good);
     #endif
     *good = 0;
@@ -496,7 +499,7 @@ static void T1_refl_get_field_recursive(
         second_part = T1_refl_copy_str_to_store(
             first_part + dot_i + 1,
             good);
-        #if T1_REFLECTION_ASSERTS
+        #if T1_META_ASSERTS
         assert(good);
         #endif
         *good = 0;
@@ -549,7 +552,7 @@ static void T1_refl_get_field_recursive(
                 substruct = find_struct_by_name(
                     metafield->struct_type_name);
                 if (substruct == NULL) {
-                    #if T1_REFLECTION_ASSERTS
+                    #if T1_META_ASSERTS
                     // our struct has an unregistered struct as
                     // a property, that shouldn't be possible
                     assert(0);
@@ -561,7 +564,7 @@ static void T1_refl_get_field_recursive(
                 break;
             case T1_TYPE_NOTSET:
             default:
-                #if T1_REFLECTION_ASSERTS
+                #if T1_META_ASSERTS
                 assert(0);
                 #endif
                 *good = 0;
@@ -582,7 +585,7 @@ static void T1_refl_get_field_recursive(
     }
     
     if (second_part != NULL) {
-        #if T1_REFLECTION_ASSERTS
+        #if T1_META_ASSERTS
         assert(return_value->data_type == T1_TYPE_STRUCT);
         assert(metafield->struct_type_name != NULL);
         assert(metafield->struct_type_name[0] != '\0');
@@ -604,7 +607,7 @@ T1MetaField T1_meta_get_field_from_strings(
     const char * field_name,
     uint32_t * good)
 {
-    #if T1_REFLECTION_ASSERTS
+    #if T1_META_ASSERTS
     assert(struct_name != NULL);
     assert(struct_name[0] != '"');
     assert(field_name != NULL);
@@ -629,7 +632,7 @@ T1MetaField T1_meta_get_field_from_strings(
         field_name,
         good);
     
-    #if T1_REFLECTION_ASSERTS
+    #if T1_META_ASSERTS
     assert(good);
     #endif
     
