@@ -172,7 +172,17 @@ void init_application_before_gpu_init(
         malloc_from_unmanaged,
         memset,
         strcmp,
-        strlen);
+        strlen,
+        /* const uint32_t ascii_store_cap: */
+            30000,
+        /* const uint16_t meta_structs_cap: */
+            30,
+        /* const uint16_t meta_fields_cap: */
+            500,
+        /* const uint16_t meta_enums_cap: */
+            30,
+        /* const uint16_t meta_enum_vals_cap: */
+            100);
     
     ias = malloc_from_unmanaged(sizeof(InitApplicationState));
     common_memset_char(ias, 0, sizeof(InitApplicationState));

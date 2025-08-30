@@ -1,7 +1,6 @@
 #include "T1_meta.h"
 
-#define METASTRUCT_FIELDS_MAX 64
-typedef struct MetaField {
+typedef struct {
     char * name;
     char * struct_type_name;
     T1Type type;
@@ -9,6 +8,17 @@ typedef struct MetaField {
     uint16_t next_i;
     uint16_t array_sizes[T1_REFL_MAX_ARRAY_SIZES];
 } MetaField;
+
+typedef struct {
+    char * name;
+    int64_t value;
+    uint16_t metaenum_id;
+} MetaEnumValue;
+
+typedef struct {
+    char * name;
+    uint32_t size_bytes;
+} MetaEnum;
 
 typedef struct {
     char * name;
@@ -22,14 +32,20 @@ typedef struct T1ReflectionState {
     int (* strcmp)(const char *, const char *);
     size_t (* strlen)(const char *);
     char * ascii_store;
+    MetaEnum * meta_enums;
+    MetaEnumValue * meta_enum_vals;
     MetaField * metafields_store;
     MetaStruct * metastructs;
-    uint16_t ascii_store_cap;
-    uint16_t metafields_store_cap;
-    uint16_t metastructs_cap;
-    uint16_t metafields_size;
-    uint16_t metastructs_size; // first memset target
-    uint16_t ascii_store_next_i;
+    uint32_t ascii_store_cap;
+    uint16_t meta_fields_store_cap;
+    uint16_t meta_structs_cap;
+    uint16_t meta_enums_cap;
+    uint16_t meta_enum_vals_cap;
+    uint16_t meta_fields_size;
+    uint16_t meta_structs_size; // first memset target
+    uint16_t meta_enums_size;
+    uint16_t meta_enum_vals_size;
+    uint32_t ascii_store_next_i;
 } T1ReflectionState;
 
 static T1ReflectionState * t1rs = NULL;
@@ -60,17 +76,19 @@ static MetaField * metafield_i_to_ptr(const uint16_t field_i) {
 static void T1_refl_reset(void) {
     t1rs->memset(
         (char *)t1rs +
-            offsetof(T1ReflectionState, metastructs_size),
+            offsetof(T1ReflectionState, meta_structs_size),
             0,
             sizeof(T1ReflectionState) -
-                offsetof(T1ReflectionState, metastructs_size));
+                offsetof(T1ReflectionState, meta_structs_size));
     
     t1rs->memset(
-        t1rs->metastructs, 0, t1rs->metastructs_cap);
+        t1rs->metastructs, 0, t1rs->meta_structs_cap);
+    t1rs->memset(
+        t1rs->meta_enums, 0, t1rs->meta_enums_cap);
     t1rs->memset(
         t1rs->ascii_store, 0, t1rs->ascii_store_cap);
     
-    for (uint32_t i = 0; i < t1rs->metafields_store_cap; i++) {
+    for (uint32_t i = 0; i < t1rs->meta_fields_store_cap; i++) {
         construct_metafield(&t1rs->metafields_store[i]);
     }
 }
@@ -80,7 +98,12 @@ void T1_meta_init(
     void *(* T1_meta_malloc_func)(size_t),
     void *(* T1_meta_memset_func)(void *, int, size_t),
     int (* T1_meta_strcmp_func)(const char *, const char *),
-    size_t (* T1_meta_strlen_func)(const char *))
+    size_t (* T1_meta_strlen_func)(const char *),
+    const uint32_t ascii_store_cap,
+    const uint16_t meta_structs_cap,
+    const uint16_t meta_fields_cap,
+    const uint16_t meta_enums_cap,
+    const uint16_t meta_enum_vals_cap)
 {
     t1rs = T1_meta_malloc_func(sizeof(T1ReflectionState));
     
@@ -89,17 +112,25 @@ void T1_meta_init(
     t1rs->strcmp = T1_meta_strcmp_func;
     t1rs->strlen = T1_meta_strlen_func;
     
-    t1rs->ascii_store_cap = 10000;
+    t1rs->ascii_store_cap = ascii_store_cap;
     t1rs->ascii_store = T1_meta_malloc_func(
         t1rs->ascii_store_cap);
     
-    t1rs->metastructs_cap = 30;
+    t1rs->meta_structs_cap = meta_structs_cap;
     t1rs->metastructs = T1_meta_malloc_func(
-        sizeof(MetaStruct) * t1rs->metastructs_cap);
+        sizeof(MetaStruct) * t1rs->meta_structs_cap);
     
-    t1rs->metafields_store_cap = 500;
+    t1rs->meta_fields_store_cap = meta_fields_cap;
     t1rs->metafields_store = T1_meta_malloc_func(
-        sizeof(MetaField) * t1rs->metafields_store_cap);
+        sizeof(MetaField) * t1rs->meta_fields_store_cap);
+    
+    t1rs->meta_enums_cap = meta_enums_cap;
+    t1rs->meta_enums = T1_meta_malloc_func(
+        sizeof(MetaEnum) * t1rs->meta_enums_cap);
+    
+    t1rs->meta_enum_vals_cap = meta_enum_vals_cap;
+    t1rs->meta_enum_vals = T1_meta_malloc_func(
+        sizeof(MetaEnumValue) * t1rs->meta_enum_vals_cap);
     
     T1_refl_reset();
 }
@@ -141,7 +172,7 @@ static MetaStruct * find_struct_by_name(
 {
     MetaStruct * return_value = NULL;
     
-    for (int32_t i = 0; i < (int32_t)t1rs->metastructs_size; i++) {
+    for (int32_t i = 0; i < (int32_t)t1rs->meta_structs_size; i++) {
         if (
             t1rs->strcmp(
                 t1rs->metastructs[i].name,
@@ -184,6 +215,97 @@ static MetaField * find_field_in_struct_by_name(
     return return_value;
 }
 
+void T1_meta_reg_enum(
+    const char * enum_type_name,
+    const uint32_t size_bytes,
+    uint32_t * good)
+{
+    *good = 0;
+    
+    if (enum_type_name == NULL || enum_type_name[0] == '\0') {
+        #if T1_META_ASSERTS
+        assert(0); // invalid argument
+        #endif
+        return;
+    }
+    
+    if (t1rs->meta_enums_size + 1 >= t1rs->meta_enums_cap) {
+        #if T1_META_ASSERTS
+        assert(0); // not enough memory, init() with higher meta_enums_cap
+        #endif
+        return;
+    }
+    
+    MetaEnum * new_enum = &t1rs->meta_enums[t1rs->meta_enums_size];
+    t1rs->meta_enums_size += 1;
+    
+    new_enum->name = T1_refl_copy_str_to_store(enum_type_name, good);
+    if (!*good) { return; } else { *good = 0; }
+    
+    new_enum->size_bytes = size_bytes;
+    
+    *good = 1;
+}
+
+void T1_meta_reg_enum_value(
+    const char * enum_type_name,
+    const char * value_name,
+    const int64_t value,
+    uint32_t * good)
+{
+    *good = 0;
+    
+    if (enum_type_name == NULL || enum_type_name[0] == '\0') {
+        #if T1_META_ASSERTS
+        assert(0); // invalid argument
+        #endif
+        return;
+    }
+    
+    if (value_name == NULL || value_name[0] == '\0') {
+        #if T1_META_ASSERTS
+        assert(0); // invalid argument
+        #endif
+        return;
+    }
+    
+    if (t1rs->meta_enum_vals_size + 1 >= t1rs->meta_enum_vals_cap) {
+        #if T1_META_ASSERTS
+        assert(0); // not enough memory, init() with higher meta_enums_cap
+        #endif
+        return;
+    }
+    
+    MetaEnumValue * new_value = &t1rs->
+        meta_enum_vals[t1rs->meta_enum_vals_size];
+    t1rs->meta_enum_vals_size += 1;
+    
+    new_value->name = T1_refl_copy_str_to_store(value_name, good);
+    if (!*good) { return; } else { *good = 0; }
+    
+    new_value->value = value;
+    new_value->metaenum_id = UINT16_MAX;
+    for (uint16_t i = 0; i < t1rs->meta_enums_size; i++) {
+        if (
+            t1rs->strcmp(
+                t1rs->meta_enums[i].name,
+                enum_type_name) == 0)
+        {
+            new_value->metaenum_id = i;
+            break;
+        }
+    }
+    
+    if (new_value->metaenum_id >= UINT16_MAX) {
+        #if T1_META_ASSERTS
+        assert(0); // Tried to register enum value to non-existant enum
+        #endif
+        return;
+    }
+    
+    *good = 1;
+}
+
 void T1_meta_reg_struct(
     const char * struct_name,
     const uint32_t size_bytes,
@@ -197,15 +319,15 @@ void T1_meta_reg_struct(
     
     if (target_mstruct == NULL) {
         if (
-            t1rs->metastructs_size + 1 >= t1rs->metastructs_cap)
+            t1rs->meta_structs_size + 1 >= t1rs->meta_structs_cap)
         {
             *good = 0;
             return;
         }
         
         target_mstruct = t1rs->metastructs +
-            t1rs->metastructs_size;
-        t1rs->metastructs_size += 1;
+            t1rs->meta_structs_size;
+        t1rs->meta_structs_size += 1;
         construct_metastruct(target_mstruct);
         target_mstruct->name = T1_refl_copy_str_to_store(
             struct_name,
@@ -277,7 +399,7 @@ void T1_meta_reg_field(
         #endif
     }
     
-    if (t1rs->metastructs_size < 1) {
+    if (t1rs->meta_structs_size < 1) {
         #if T1_META_ASSERTS
         assert(0); // use T1_meta_reg_struct() first
         #endif
@@ -286,7 +408,7 @@ void T1_meta_reg_field(
     }
     
     // check for existing struct name
-    MetaStruct * target_mstruct = &t1rs->metastructs[t1rs->metastructs_size-1];
+    MetaStruct * target_mstruct = &t1rs->metastructs[t1rs->meta_structs_size-1];
     
     // check for existing field name in that struct
     MetaField * target_mfield = find_field_in_struct_by_name(
@@ -295,16 +417,16 @@ void T1_meta_reg_field(
     
     if (target_mfield == NULL) {
         if (
-            t1rs->metafields_size + 1 >=
-                t1rs->metafields_store_cap)
+            t1rs->meta_fields_size + 1 >=
+                t1rs->meta_fields_store_cap)
         {
             return;
         }
         
         target_mfield = t1rs->metafields_store +
-            t1rs->metafields_size;
-        uint16_t target_mfield_i = t1rs->metafields_size;
-        t1rs->metafields_size += 1;
+            t1rs->meta_fields_size;
+        uint16_t target_mfield_i = t1rs->meta_fields_size;
+        t1rs->meta_fields_size += 1;
         
         construct_metafield(target_mfield);
         
