@@ -160,6 +160,11 @@ bool32_t common_string_ends_with(
     const char * str_to_check,
     const char * ending);
 
+void common_strsub(
+    char * in,
+    const char * to_match,
+    const char * replacement);
+
 bool32_t common_are_equal_strings(
     const char * str1,
     const char * str2);

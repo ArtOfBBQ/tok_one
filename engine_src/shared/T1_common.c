@@ -456,6 +456,52 @@ common_string_ends_with(
     return true;
 }
 
+void
+common_strsub(
+    char * in,
+    const char * to_match,
+    const char * replacement)
+{
+    #ifndef COMMON_IGNORE_ASSERTS
+    assert(common_get_string_length(to_match) >= common_get_string_length(replacement));
+    #endif
+    
+    size_t replacement_len = common_get_string_length(replacement);
+    
+    uint32_t start_i = 0;
+    while (in[start_i] != '\0') {
+        
+        uint32_t match = 1;
+        uint32_t match_len = 0;
+        uint32_t j = 0;
+        while (to_match[j] != '\0') {
+            if (in[start_i + j] != to_match[j]) {
+                match = 0;
+                break;
+            }
+            
+            match_len += 1;
+            j++;
+        }
+        
+        if (match) {
+            j = start_i;
+            for (; j < (start_i + replacement_len); j++) {
+                in[j] = replacement[j-start_i];
+            }
+            
+            j -= 1;
+            uint32_t k = start_i + match_len;
+            while (in[k] != '\0') {
+                in[j++] = in[k++];
+            }
+            in[j+1] = '\0';
+        }
+        
+        start_i += 1;
+    }
+}
+
 bool32_t
 common_are_equal_strings(
     const char * str1,
