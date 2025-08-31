@@ -5,6 +5,7 @@ typedef struct {
     char * struct_type_name;
     T1Type type;
     uint32_t offset;
+    uint16_t parent_enum_id;
     uint16_t next_i;
     uint16_t array_sizes[T1_REFL_MAX_ARRAY_SIZES];
 } MetaField;
@@ -17,7 +18,7 @@ typedef struct {
 
 typedef struct {
     char * name;
-    uint32_t size_bytes;
+    T1Type T1_type;
 } MetaEnum;
 
 typedef struct {
@@ -25,6 +26,12 @@ typedef struct {
     uint32_t size_bytes;
     uint16_t head_fields_i;
 } MetaStruct;
+
+typedef struct {
+    T1MetaField public;
+    MetaStruct * internal_parent;
+    MetaField * internal_field;
+} T1MetaFieldInternal;
 
 typedef struct T1ReflectionState {
     void *(* memcpy)(void *, const void *, size_t);
@@ -217,7 +224,8 @@ static MetaField * find_field_in_struct_by_name(
 
 void T1_meta_reg_enum(
     const char * enum_type_name,
-    const uint32_t size_bytes,
+    const T1Type T1_type,
+    const uint32_t type_size_check,
     uint32_t * good)
 {
     *good = 0;
@@ -227,6 +235,41 @@ void T1_meta_reg_enum(
         assert(0); // invalid argument
         #endif
         return;
+    }
+    
+    switch (T1_type) {
+        case T1_TYPE_I8:
+        case T1_TYPE_U8:
+            if (type_size_check != 1) {
+                #if T1_META_ASSERTS
+                assert(0); // Incorrect T1_TYPE passed? sizeof() is not 8
+                #endif
+                return;
+            }
+        break;
+        case T1_TYPE_I16:
+        case T1_TYPE_U16:
+            if (type_size_check != 2) {
+                #if T1_META_ASSERTS
+                assert(0); // Incorrect T1_TYPE passed? sizeof() is not 16
+                #endif
+                return;
+            }
+        break;
+        case T1_TYPE_I32:
+        case T1_TYPE_U32:
+            if (type_size_check != 4) {
+                #if T1_META_ASSERTS
+                assert(0); // Incorrect T1_TYPE passed? sizeof() is not 32
+                #endif
+                return;
+            }
+        break;
+        default:
+            #if T1_META_ASSERTS
+            assert(0); // Unsupported type for enums
+            #endif
+            break;
     }
     
     if (t1rs->meta_enums_size + 1 >= t1rs->meta_enums_cap) {
@@ -242,7 +285,7 @@ void T1_meta_reg_enum(
     new_enum->name = T1_refl_copy_str_to_store(enum_type_name, good);
     if (!*good) { return; } else { *good = 0; }
     
-    new_enum->size_bytes = size_bytes;
+    new_enum->T1_type = T1_type;
     
     *good = 1;
 }
@@ -348,50 +391,50 @@ void T1_meta_reg_struct(
 }
 
 void T1_meta_reg_field(
-    const char * property_name,
-    const uint32_t property_offset,
-    const T1Type property_type,
-    const char * property_struct_name,
-    const uint16_t property_array_size_1,
-    const uint16_t property_array_size_2,
-    const uint16_t property_array_size_3,
+    const char * parent_type_name,
+    const uint32_t field_offset,
+    const T1Type field_type,
+    const char * field_name_or_null,
+    const uint16_t field_array_size_1,
+    const uint16_t field_array_size_2,
+    const uint16_t field_array_size_3,
     uint32_t * good)
 {
     *good = 0;
     
     if (
-        property_struct_name != NULL &&
-        property_struct_name[0] == 'N' &&
-        property_struct_name[1] == 'U' &&
-        property_struct_name[2] == 'L' &&
-        property_struct_name[3] == 'L' &&
-        property_struct_name[4] == '\0')
+        field_name_or_null != NULL &&
+        field_name_or_null[0] == 'N' &&
+        field_name_or_null[1] == 'U' &&
+        field_name_or_null[2] == 'L' &&
+        field_name_or_null[3] == 'L' &&
+        field_name_or_null[4] == '\0')
     {
-        property_struct_name = NULL;
+        field_name_or_null = NULL;
     }
     
     #if T1_META_ASSERTS
-    assert(property_name != NULL);
+    assert(parent_type_name != NULL);
     // When invoking the macro versions of this function, call using
     // the actual struct type, not a string containing the struct type
-    assert(property_name[0] != '"');
-    if (property_struct_name != NULL) {
+    assert(parent_type_name[0] != '"');
+    if (field_name_or_null != NULL) {
         // When invoking the macro versions of this function, call using
         // the actual type name, not a string containing the type name
-        assert(property_struct_name[0] != '"');
+        assert(field_name_or_null[0] != '"');
     }
     #endif
     
     // There should be no '.' in the property, because substructs
     // should be registered separately
     for (uint32_t i = 0; i < UINT16_MAX; i++) {
-        if (property_name[i] == '.') {
+        if (parent_type_name[i] == '.') {
             #if T1_META_ASSERTS
             assert(0);
             #endif
             return;
         }
-        if (property_name[i] == '\0') {
+        if (parent_type_name[i] == '\0') {
             break;
         }
         #if T1_META_ASSERTS
@@ -408,12 +451,13 @@ void T1_meta_reg_field(
     }
     
     // check for existing struct name
-    MetaStruct * target_mstruct = &t1rs->metastructs[t1rs->meta_structs_size-1];
+    MetaStruct * target_mstruct = &t1rs->
+        metastructs[t1rs->meta_structs_size-1];
     
     // check for existing field name in that struct
     MetaField * target_mfield = find_field_in_struct_by_name(
         target_mstruct,
-        property_name);
+        parent_type_name);
     
     if (target_mfield == NULL) {
         if (
@@ -446,11 +490,11 @@ void T1_meta_reg_field(
         }
     }
     
-    target_mfield->type = property_type;
-    target_mfield->offset = property_offset;
-    target_mfield->array_sizes[0] = property_array_size_1;
-    target_mfield->array_sizes[1] = property_array_size_2;
-    target_mfield->array_sizes[2] = property_array_size_3;
+    target_mfield->type = field_type;
+    target_mfield->offset = field_offset;
+    target_mfield->array_sizes[0] = field_array_size_1;
+    target_mfield->array_sizes[1] = field_array_size_2;
+    target_mfield->array_sizes[2] = field_array_size_3;
     #if T1_META_ASSERTS
     if (target_mfield->array_sizes[1] < 2) {
         assert(target_mfield->array_sizes[2] < 2);
@@ -464,16 +508,16 @@ void T1_meta_reg_field(
     #endif
     
     target_mfield->name = T1_refl_copy_str_to_store(
-        property_name,
+        parent_type_name,
         good);
     if (!*good) { return; }
     *good = 0;
     
     if (target_mfield->type == T1_TYPE_STRUCT) {
         #if T1_META_ASSERTS
-        assert(property_struct_name != NULL);
+        assert(field_name_or_null != NULL);
         #endif
-        if (property_struct_name == NULL) {
+        if (field_name_or_null == NULL) {
             *good = 0;
             return;
         }
@@ -481,11 +525,39 @@ void T1_meta_reg_field(
         target_mfield->struct_type_name =
             T1_refl_copy_str_to_store(
                 /* const char * to_copy: */
-                    property_struct_name,
+                    field_name_or_null,
                 /* uint32_t * good: */
                     good);
         if (!*good) { return; }
         *good = 0;
+    }
+    
+    if (target_mfield->type == T1_TYPE_ENUM) {
+        #if T1_META_ASSERTS
+        assert(field_name_or_null != NULL);
+        #endif
+        if (field_name_or_null == NULL) {
+            *good = 0;
+            return;
+        }
+        
+        target_mfield->parent_enum_id = UINT16_MAX;
+        for (uint16_t i = 0; i < t1rs->meta_enums_size; i++) {
+            if (
+                t1rs->strcmp(
+                    field_name_or_null,
+                    t1rs->meta_enums[i].name) == 0)
+            {
+                target_mfield->parent_enum_id = i;
+                break;
+            }
+        }
+        if (target_mfield->parent_enum_id >= UINT16_MAX) {
+            #if T1_META_ASSERTS
+            assert(0); // no such parent enum
+            #endif
+            return;
+        }
     }
     
     #if T1_META_ASSERTS
@@ -582,7 +654,7 @@ static uint32_t array_indices_to_flat_array_index(
 }
 
 static void T1_refl_get_field_recursive(
-    T1MetaField * return_value,
+    T1MetaFieldInternal * return_value,
     const char * struct_name,
     const char * field_name,
     uint32_t * good)
@@ -590,13 +662,16 @@ static void T1_refl_get_field_recursive(
     *good = 0;
     
     MetaStruct * metastruct = find_struct_by_name(struct_name);
+    return_value->internal_parent = metastruct;
     
     if (metastruct == NULL) {
-        return_value->array_sizes[0] = 0;
-        return_value->array_sizes[1] = 0;
-        return_value->array_sizes[2] = 0;
-        return_value->data_type = T1_TYPE_NOTSET;
-        return_value->offset = -1;
+        return_value->public.array_sizes[0] = 0;
+        return_value->public.array_sizes[1] = 0;
+        return_value->public.array_sizes[2] = 0;
+        return_value->public.data_type = T1_TYPE_NOTSET;
+        return_value->public.offset = -1;
+        return_value->internal_field = NULL;
+        return_value->internal_parent = NULL;
         return;
     }
     
@@ -639,14 +714,17 @@ static void T1_refl_get_field_recursive(
         metastruct, first_part);
     
     if (metafield == NULL) {
-        return_value->array_sizes[0] = 0;
-        return_value->array_sizes[1] = 0;
-        return_value->array_sizes[2] = 0;
-        return_value->data_type = T1_TYPE_NOTSET;
-        return_value->offset = -1;
+        return_value->public.array_sizes[0] = 0;
+        return_value->public.array_sizes[1] = 0;
+        return_value->public.array_sizes[2] = 0;
+        return_value->public.data_type = T1_TYPE_NOTSET;
+        return_value->public.offset = -1;
+        return_value->internal_field = NULL;
         *good = 1;
         return;
     }
+    
+    return_value->internal_field = metafield;
     
     uint32_t flat_array_index = array_indices_to_flat_array_index(
         array_indices,
@@ -694,21 +772,21 @@ static void T1_refl_get_field_recursive(
         }
     }
     
-    return_value->offset += (uint32_t)metafield->offset + (offset_per_array_index * flat_array_index);
-    return_value->data_type = metafield->type;
-    return_value->array_sizes[0] = metafield->array_sizes[0];
-    return_value->array_sizes[1] = metafield->array_sizes[1];
-    return_value->array_sizes[2] = metafield->array_sizes[2];
+    return_value->public.offset += (uint32_t)metafield->offset + (offset_per_array_index * flat_array_index);
+    return_value->public.data_type = metafield->type;
+    return_value->public.array_sizes[0] = metafield->array_sizes[0];
+    return_value->public.array_sizes[1] = metafield->array_sizes[1];
+    return_value->public.array_sizes[2] = metafield->array_sizes[2];
     while (array_indices_found > 0) {
-        return_value->array_sizes[0] = return_value->array_sizes[1];
-        return_value->array_sizes[1] = return_value->array_sizes[2];
-        return_value->array_sizes[2] = return_value->array_sizes[0];
+        return_value->public.array_sizes[0] = return_value->public.array_sizes[1];
+        return_value->public.array_sizes[1] = return_value->public.array_sizes[2];
+        return_value->public.array_sizes[2] = return_value->public.array_sizes[0];
         array_indices_found -= 1;
     }
     
     if (second_part != NULL) {
         #if T1_META_ASSERTS
-        assert(return_value->data_type == T1_TYPE_STRUCT);
+        assert(return_value->public.data_type == T1_TYPE_STRUCT);
         assert(metafield->struct_type_name != NULL);
         assert(metafield->struct_type_name[0] != '\0');
         #endif
@@ -736,17 +814,18 @@ T1MetaField T1_meta_get_field_from_strings(
     assert(field_name[0] != '"');
     #endif
     
-    T1MetaField return_value;
-    return_value.data_type = T1_TYPE_NOTSET;
-    return_value.array_sizes[0] = 0;
-    return_value.array_sizes[1] = 0;
-    return_value.array_sizes[2] = 0;
-    return_value.offset = 0;
+    T1MetaFieldInternal return_value;
+    return_value.public.data_type = T1_TYPE_NOTSET;
+    return_value.public.array_sizes[0] = 0;
+    return_value.public.array_sizes[1] = 0;
+    return_value.public.array_sizes[2] = 0;
+    return_value.public.offset = 0;
+    return_value.internal_field = NULL;
+    return_value.internal_parent = NULL;
     
     // T1_refl_get_field_recursive() will push to the ascii store
     // as if it were stack memory
-    uint16_t before_recursion_ascii_store_next_i =
-        t1rs->ascii_store_next_i;
+    uint32_t before_recursion_ascii_store_next_i = t1rs->ascii_store_next_i;
     
     T1_refl_get_field_recursive(
         &return_value,
@@ -762,5 +841,250 @@ T1MetaField T1_meta_get_field_from_strings(
     t1rs->ascii_store_next_i = before_recursion_ascii_store_next_i;
     
     *good = 1;
-    return return_value;
+    return return_value.public;
+}
+
+void T1_meta_write_to_known_field_str(
+    const char * target_parent_type,
+    const char * target_field_name,
+    const char * value_to_write_str,
+    void * target_parent_ptr,
+    uint32_t * good)
+{
+    *good = 0;
+    
+    #if T1_META_ASSERTS
+    assert(value_to_write_str != NULL);
+    assert(value_to_write_str[0] != '\0');
+    assert(target_parent_type != NULL);
+    assert(target_parent_type[0] != '"');
+    assert(target_field_name != NULL);
+    assert(target_field_name[0] != '"');
+    assert(target_parent_ptr != NULL);
+    #endif
+    
+    T1MetaFieldInternal field;
+    field.public.data_type = T1_TYPE_NOTSET;
+    field.public.array_sizes[0] = 0;
+    field.public.array_sizes[1] = 0;
+    field.public.array_sizes[2] = 0;
+    field.public.offset = 0;
+    field.internal_field = NULL;
+    field.internal_parent = NULL;
+    
+    // T1_refl_get_field_recursive() will push to the ascii store
+    // as if it were stack memory
+    uint32_t before_recursion_ascii_store_next_i = t1rs->ascii_store_next_i;
+    
+    T1_refl_get_field_recursive(
+        &field,
+        target_parent_type,
+        target_field_name,
+        good);
+    
+    #if T1_META_ASSERTS
+    assert(good);
+    #endif
+    
+    // discard or "pop" T1_refl_get_field_recursive()'s strings
+    t1rs->ascii_store_next_i = before_recursion_ascii_store_next_i;
+    
+    char * value_adj = (char *)value_to_write_str;
+    while (value_adj[0] == ' ') { value_adj++; }
+    
+    uint8_t val_starts_minus = value_adj[0] == '-';
+    if (val_starts_minus) { value_adj++; }
+    
+    char * endptr = NULL;
+    uint64_t value_u64 = (uint64_t)strtoull(value_adj, &endptr, 10);
+    uint8_t value_is_u64 = *endptr == '\0' && !val_starts_minus;
+    
+    uint8_t value_is_i64 = *endptr == '\0' && value_u64 < INT64_MAX;
+    int64_t value_i64 = (int64_t)value_u64;
+    if (val_starts_minus) { value_i64 *= -1; }
+    
+    MetaEnum * parent_enum = NULL;
+    T1Type type_adj = field.public.data_type;
+    
+    if (field.public.data_type == T1_TYPE_ENUM) {
+        if (
+            field.internal_field == NULL ||
+            field.internal_field->parent_enum_id >=
+                t1rs->meta_enums_size ||
+            field.internal_field->parent_enum_id >=
+                t1rs->meta_enums_cap)
+        {
+            #if T1_META_ASSERTS
+            assert(0);
+            #endif
+        }
+        parent_enum = &t1rs->meta_enums[field.internal_field->parent_enum_id];
+        
+        for (uint32_t i = 0; i < t1rs->meta_enum_vals_size; i++) {
+            if (
+                t1rs->meta_enum_vals[i].metaenum_id ==
+                    field.internal_field->parent_enum_id &&
+                t1rs->strcmp(
+                    t1rs->meta_enum_vals[i].name,
+                    value_adj) == 0)
+            {
+                value_i64 = t1rs->meta_enum_vals->value;
+                value_u64 = (uint64_t)t1rs->meta_enum_vals->value;
+                value_is_i64 = 1;
+                value_is_u64 = value_i64 >= 0;
+                break;
+            }
+        }
+        
+        type_adj = parent_enum->T1_type;
+    }
+    
+    int32_t rightmost_array_i = 2;
+    switch (type_adj) {
+        case T1_TYPE_NOTSET:
+            #if T1_META_ASSERTS
+            assert(0);
+            #endif
+            return;
+        case T1_TYPE_ENUM:
+            #if T1_META_ASSERTS
+            assert(0); // enum have been replaced by a number already
+            #endif
+            return;
+        break;
+        case T1_TYPE_I8:
+            if (
+                !value_is_i64 ||
+                value_i64 > INT8_MAX ||
+                value_i64 < INT8_MIN)
+            {
+                #if T1_META_ASSERTS
+                assert(0);
+                #endif
+                return;
+            }
+            int8_t value_i8 = (int8_t)value_i64;
+            t1rs->memcpy(
+                (int8_t *)(target_parent_ptr + field.public.offset),
+                &value_i8,
+                1);
+        break;
+        case T1_TYPE_I16:
+            if (
+                !value_is_i64 ||
+                value_i64 > INT16_MAX ||
+                value_i64 < INT16_MIN)
+            {
+                #if T1_META_ASSERTS
+                assert(0);
+                #endif
+                return;
+            }
+            int16_t value_i16 = (int16_t)value_i64;
+            t1rs->memcpy(
+                (int16_t *)(target_parent_ptr + field.public.offset),
+                &value_i16,
+                2);
+        break;
+        case T1_TYPE_I32:
+            if (
+                !value_is_i64 ||
+                value_i64 > INT32_MAX ||
+                value_i64 < INT32_MIN)
+            {
+                #if T1_META_ASSERTS
+                assert(0);
+                #endif
+                return;
+            }
+            int32_t value_i32 = (int32_t)value_i64;
+            t1rs->memcpy(
+                (int32_t *)(target_parent_ptr + field.public.offset),
+                &value_i32,
+                4);
+        break;
+        case T1_TYPE_I64:
+            #if T1_META_ASSERTS
+            assert(0);
+            #endif
+        break;
+        case T1_TYPE_U8:
+            if (
+                !value_is_u64 ||
+                value_u64 > UINT8_MAX)
+            {
+                #if T1_META_ASSERTS
+                assert(0);
+                #endif
+                return;
+            }
+            uint8_t value_u8 = (uint8_t)value_u64;
+            t1rs->memcpy(
+                (uint8_t *)(target_parent_ptr + field.public.offset),
+                &value_u8,
+                1);
+        break;
+        case T1_TYPE_U16:
+            if (
+                !value_is_u64 ||
+                value_u64 > UINT16_MAX)
+            {
+                #if T1_META_ASSERTS
+                assert(0);
+                #endif
+                return;
+            }
+            uint16_t value_u16 = (uint16_t)value_u64;
+            t1rs->memcpy(
+                (uint16_t *)(target_parent_ptr + field.public.offset),
+                &value_u16,
+                2);
+        break;
+        case T1_TYPE_U32:
+            if (
+                !value_is_u64 ||
+                value_u64 > UINT32_MAX)
+            {
+                #if T1_META_ASSERTS
+                assert(0);
+                #endif
+                return;
+            }
+            t1rs->memcpy(
+                (uint32_t *)(target_parent_ptr + field.public.offset),
+                &value_u64,
+                4);
+        break;
+        case T1_TYPE_U64:
+            #if T1_META_ASSERTS
+            assert(0);
+            #endif
+        break;
+        case T1_TYPE_CHAR:
+            rightmost_array_i = 2;
+            while (field.public.array_sizes[rightmost_array_i] < 2) {
+                rightmost_array_i -= 1;
+            }
+            if (t1rs->strlen(value_to_write_str) >
+                field.public.array_sizes[rightmost_array_i])
+            {
+                #if T1_META_ASSERTS
+                assert(0);
+                #endif
+                return;
+            }
+            
+            t1rs->memcpy(
+                (target_parent_ptr + field.public.offset),
+                value_to_write_str,
+                field.public.array_sizes[rightmost_array_i]);
+        break;
+        default:
+            #if T1_META_ASSERTS
+            assert(0);
+            #endif
+            return;
+    }
+    
+    *good = 1;
 }

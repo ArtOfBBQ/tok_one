@@ -3,6 +3,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #define T1_META_ASSERTS 1
 #if T1_META_ASSERTS
@@ -39,10 +40,11 @@ void T1_meta_init(
     const uint16_t meta_enums_cap,
     const uint16_t meta_enum_vals_cap);
 
-#define T1_meta_enum(enum_type_name, good) T1_meta_reg_enum(#enum_type_name, sizeof(enum_type_name), good)
+#define T1_meta_enum(enum_type_name, T1_data_type, good) T1_meta_reg_enum(#enum_type_name, T1_data_type, sizeof(enum_type_name), good)
 void T1_meta_reg_enum(
     const char * enum_type_name,
-    const uint32_t size_bytes,
+    const T1Type T1_type,
+    const uint32_t type_size_check,
     uint32_t * good);
 #define T1_meta_enum_value(enum_type_name, enum_value, good) T1_meta_reg_enum_value(#enum_type_name, #enum_value, enum_value, good)
 void T1_meta_reg_enum_value(
@@ -58,9 +60,11 @@ void T1_meta_reg_struct(
     uint32_t * good);
 
 #define T1_meta_field(parent_type_name, field_T1_type, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, 1, 1, 1, good)
-#define T1_meta_struct_field(parent_type_name, field_T1_type, field_type_or_NULL, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_type_or_NULL, 1, 1, 1, good)
+#define T1_meta_enum_field(parent_type_name, field_enum_name, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_ENUM, #field_enum_name, 1, 1, 1, good)
+#define T1_meta_enum_array(parent_type_name, field_enum_name, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_ENUM, #field_enum_name, array_size, 1, 1, good)
+#define T1_meta_struct_field(parent_type_name, field_type_or_NULL, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, 1, 1, 1, good)
 #define T1_meta_array(parent_type_name, field_T1_type, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, array_size, 1, 1, good)
-#define T1_meta_struct_array(parent_type_name, field_T1_type, field_type_or_NULL, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_type_or_NULL, array_size, 1, 1, good)
+#define T1_meta_struct_array(parent_type_name, field_type_or_NULL, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, array_size, 1, 1, good)
 #define T1_meta_multi_array(parent_type_name, field_T1_type, field_type_or_NULL, field_name, array_size_1, array_size_2, array_size_3, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_type_or_NULL, array_size_1, array_size_2, array_size_3, good)
 void T1_meta_reg_field(
     const char * parent_type_name,
@@ -83,6 +87,13 @@ typedef struct {
 T1MetaField T1_meta_get_field_from_strings(
     const char * struct_name,
     const char * field_name,
+    uint32_t * good);
+
+void T1_meta_write_to_known_field_str(
+    const char * target_parent_type,
+    const char * target_field_name,
+    const char * value_to_write_str,
+    void * target_parent_ptr,
     uint32_t * good);
 
 #endif // T1_META_H
