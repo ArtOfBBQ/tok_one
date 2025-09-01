@@ -50,6 +50,7 @@ are convenient for you.
 #define T1_TOKEN_FLAG_PRECISE 8
 #define T1_TOKEN_FLAG_STORE_STRVAL 16
 #define T1_TOKEN_FLAG_CONSUME_STOP_PATTERN 32
+
 void T1_token_set_reg_bitflags(
     const uint8_t bitflags);
 void T1_token_clear_start_pattern(void);

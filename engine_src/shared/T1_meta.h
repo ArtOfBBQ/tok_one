@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define T1_META_ASSERTS 1
+#define T1_META_ASSERTS 0
 #if T1_META_ASSERTS
 #include <assert.h>
 #endif

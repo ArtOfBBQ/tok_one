@@ -738,16 +738,20 @@ static void T1_refl_get_field_recursive(
             case T1_TYPE_U8:
             case T1_TYPE_CHAR:
                 offset_per_array_index = 1;
-                break;
+            break;
             case T1_TYPE_I16:
             case T1_TYPE_U16:
                 offset_per_array_index = 2;
-                break;
+            break;
             case T1_TYPE_I32:
             case T1_TYPE_U32:
             case T1_TYPE_F32:
                 offset_per_array_index = 4;
-                break;
+            break;
+            case T1_TYPE_ENUM:
+                // TODO: find out the actual size of the num
+                offset_per_array_index = 1;
+            break;
             case T1_TYPE_STRUCT:
                 substruct = find_struct_by_name(
                     metafield->struct_type_name);
@@ -905,6 +909,7 @@ void T1_meta_write_to_known_field_str(
     
     MetaEnum * parent_enum = NULL;
     T1Type type_adj = field.public.data_type;
+    uint8_t found_enum_field = 0;
     
     if (field.public.data_type == T1_TYPE_ENUM) {
         if (
@@ -928,6 +933,7 @@ void T1_meta_write_to_known_field_str(
                     t1rs->meta_enum_vals[i].name,
                     value_adj) == 0)
             {
+                found_enum_field = 1;
                 value_i64 = t1rs->meta_enum_vals->value;
                 value_u64 = (uint64_t)t1rs->meta_enum_vals->value;
                 value_is_i64 = 1;
@@ -936,7 +942,23 @@ void T1_meta_write_to_known_field_str(
             }
         }
         
+        if (!found_enum_field) {
+            #if T1_META_ASSERTS
+            assert(0); // enum value not registered
+            #endif
+            return;
+        }
+        
         type_adj = parent_enum->T1_type;
+    } else if (
+        field.public.data_type != T1_TYPE_CHAR &&
+        !value_is_u64 &&
+        !value_is_i64)
+    {
+        #if T1_META_ASSERTS
+        assert(0); // trying to write string to non-enum non-char field?
+        #endif
+        return;
     }
     
     int32_t rightmost_array_i = 2;
