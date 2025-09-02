@@ -1084,11 +1084,13 @@ void T1_meta_write_to_known_field_str(
         break;
         case T1_TYPE_CHAR:
             rightmost_array_i = 2;
-            while (field.public.array_sizes[rightmost_array_i] < 2) {
+            while (field.internal_field->array_sizes[rightmost_array_i] < 2) {
                 rightmost_array_i -= 1;
             }
-            if (t1rs->strlen(value_to_write_str) >
-                field.public.array_sizes[rightmost_array_i])
+            
+            if (
+                t1rs->strlen(value_to_write_str) >
+                    field.internal_field->array_sizes[rightmost_array_i])
             {
                 #if T1_META_ASSERTS
                 assert(0);
