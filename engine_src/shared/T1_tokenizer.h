@@ -9,11 +9,6 @@
 #endif
 
 
-#ifndef NDEBUG
-void T1_token_print_debug_state(
-    int (*arg_printf)(const char *, ... ));
-#endif
-
 /*
 THE API FOR TRANSFORMING TEXT TO TOKENS (below)
 */
@@ -48,9 +43,16 @@ are convenient for you.
 #define T1_TOKEN_FLAG_SCIENTIFIC_OK 2
 #define T1_TOKEN_FLAG_LEAD_DOT_OK 4
 #define T1_TOKEN_FLAG_PRECISE 8
-#define T1_TOKEN_FLAG_STORE_STRVAL 16
 #define T1_TOKEN_FLAG_CONSUME_STOP_PATTERN 32
 
+typedef enum : uint8_t {
+    T1_TOKEN_STOREMODE_DISCARD_TOKEN,    // Don't even register the token
+    T1_TOKEN_STOREMODE_DISCARD_STRING,   // Register token, discard string
+    T1_TOKEN_STOREMODE_FULLSTARTMIDSTOP, // Register token, save string
+    T1_TOKEN_STOREMODE_MIDDLE_STRING // Register token, save string
+} T1TokenStoreMode;
+
+void T1_token_set_store_mode(const T1TokenStoreMode mode);
 void T1_token_set_reg_bitflags(
     const uint8_t bitflags);
 void T1_token_clear_start_pattern(void);

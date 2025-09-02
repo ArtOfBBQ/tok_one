@@ -33,6 +33,7 @@ typedef struct T1TokenNextReg {
     T1TokenPattern start_pattern;
     T1TokenPattern stop_patterns[PATTERNS_CAP];
     uint32_t middle_cap;
+    T1TokenStoreMode store_mode;
     uint8_t bitflags;
 } T1TokenNextReg;
 
@@ -41,6 +42,7 @@ typedef struct RegisteredToken {
     char * start_pattern;
     char * stop_patterns[PATTERNS_CAP];
     uint32_t middle_cap;
+    T1TokenStoreMode store_mode;
     uint8_t bitflags;
 } RegisteredToken;
 
@@ -68,78 +70,6 @@ typedef struct TokTokenState {
 
 static TokTokenState * tts = NULL;
 
-#ifndef NDEBUG
-void T1_token_print_debug_state(
-    int (*arg_printf)(const char *, ... ))
-{
-    arg_printf("%s\n", "*****");
-    arg_printf("%s\n", "toktokenizer state (debug-only):");
-    arg_printf("%s\n", "*****");
-    if (
-        !tts ||
-        !tts->ascii_store)
-    {
-        arg_printf(
-            "%s\n",
-            "Not initialized - the tokenizer has no memory to work with.\n\n"
-            "To provide memory, call toktoken_init(malloc, &good), or "
-            "if you already did, the initialization must have failed "
-            "because your malloc() function returned NULL)");
-        arg_printf("%s\n", "*****");
-        return;
-    }
-    
-    arg_printf(
-        "%s\n\n",
-        "Initialized - the tokenizer has memory to work with.");
-    
-    if (tts->good) {
-        arg_printf(
-            "%s\n\n",
-            "The tokenizer's 'good' flag is set (no errors encountered).");
-    } else {
-        arg_printf(
-            "%s\n\n",
-            "The tokenizer's 'good' flag is not set (previously encountered"
-            " errors)."
-            "Make sure you pass a uint to 'good' params and make sure they"
-            " return 1!");
-    }
-    
-    if (tts->string_literal_enum_value < UINT32_MAX) {
-        arg_printf(
-            "String literals will be assigned to enum value: %u\n",
-            tts->string_literal_enum_value);
-    } else {
-        arg_printf(
-            "%s\n\n",
-            "The enum value for string literals is not set. This is a hard "
-            "requirement before tokenizing.\n"
-            "Call toktoken_register_string_literal_enum(ENUM_VAL, &good) to "
-            "set the enum you want to associate with random string "
-            "literals.");
-    }
-    
-    if (tts->regs_size > 0) {
-        for (uint32_t i = 0; i < tts->regs_size; i++) {
-            arg_printf(
-                "Token %u's start value: \"%s\", enum value: %u\n",
-                i,
-                tts->regs[i].start_pattern,
-                tts->regs[i].enum_value);
-        }
-    } else {
-        arg_printf(
-            "%s\n",
-            "No tokens have been registered. Use toktoken_register_token("
-            "str, enumval, &good) to register tokens. Before registering "
-            "tokens, you can set optional flags in toktoken_client_settings "
-            "if you need non-default behavior (e.g. you don't want your "
-            "token to be case sensitive, see toktokenizer.h)");
-    }
-    arg_printf("%s\n", "*****");
-}
-#endif
 
 void T1_token_init(
     void * (* arg_memset_func)(void *, int, size_t),
@@ -204,8 +134,8 @@ void T1_token_reset(uint32_t * good) {
             T1_TOKEN_FLAG_SCIENTIFIC_OK |
             T1_TOKEN_FLAG_LEAD_DOT_OK |
             T1_TOKEN_FLAG_PRECISE |
-            T1_TOKEN_FLAG_STORE_STRVAL |
             T1_TOKEN_FLAG_CONSUME_STOP_PATTERN;
+    tts->next_reg.store_mode = T1_TOKEN_STOREMODE_FULLSTARTMIDSTOP;
     
     tts->string_literal_enum_value = UINT32_MAX;
     tts->good = 1;
@@ -213,6 +143,17 @@ void T1_token_reset(uint32_t * good) {
     assert(tts->ascii_store_next_i == 0);
     
     *good = 1;
+}
+
+void T1_token_set_store_mode(const T1TokenStoreMode mode) {
+    if (
+        tts == NULL ||
+        !tts->good)
+    {
+        return;
+    }
+    
+    tts->next_reg.store_mode = mode;
 }
 
 void T1_token_set_reg_bitflags(
@@ -334,6 +275,7 @@ void toktoken_register_string_literal_enum(
     
     tts->string_literal_enum_value = enum_value;
     tts->string_literal_bitflags = tts->next_reg.bitflags;
+    tts->string_literal_store_mode = tts->next_reg.store_mode;
     
     *good = 1;
 }
@@ -354,6 +296,26 @@ void T1_token_set_string_literal(
     
     tts->string_literal_enum_value = enum_value;
     *good = 1;
+}
+
+static void T1_token_strcat(
+    char * recip,
+    const uint32_t cap,
+    const char * to_cat)
+{
+    uint32_t i = 0;
+    while (recip[i] != '\0') {
+        if (i >= cap) { break; }
+        i++;
+    }
+    
+    uint32_t j = 0;
+    while (to_cat[j] != '\0') {
+        if (i >= cap) { break; }
+        recip[i++] = to_cat[j++];
+    }
+    
+    recip[i] = '\0';
 }
 
 static char * copy_string_to_ascii_store(
@@ -431,6 +393,7 @@ void T1_token_register(
     new->enum_value = enum_value;
     new->middle_cap = tts->next_reg.middle_cap;
     new->bitflags = tts->next_reg.bitflags;
+    new->store_mode = tts->next_reg.store_mode;
     
     if ((new->bitflags & T1_TOKEN_FLAG_IGNORE_CASE) > 0)
     {
@@ -476,25 +439,27 @@ static uint32_t T1_token_strmatch(
 static void toktoken_string_match_tokens(
     const char * input,
     uint32_t * matching_token_i,
-    uint32_t * data_len)
+    uint32_t * matched_chars_start,
+    uint32_t * matched_chars_mid,
+    uint32_t * matched_chars_stop)
 {
     *matching_token_i = UINT32_MAX;
-    *data_len = 0;
+    *matched_chars_start = 0;
+    *matched_chars_mid = 0;
+    *matched_chars_stop = 0;
     
     for (uint32_t i = 0; i < tts->regs_size; i++) {
         if (tts->regs[i].start_pattern == NULL) { continue; }
         
-        uint32_t matched_chars =
-            T1_token_strmatch(
-                input,
-                tts->regs[i].start_pattern);
+        *matched_chars_start = T1_token_strmatch(
+            input,
+            tts->regs[i].start_pattern);
         
         if (
-            matched_chars > 0 &&
-            tts->regs[i].start_pattern[matched_chars] == '\0')
+            *matched_chars_start > 0 &&
+            tts->regs[i].start_pattern[*matched_chars_start] == '\0')
         {
             *matching_token_i = i;
-            *data_len = matched_chars;
         }
         
         if (*matching_token_i == UINT32_MAX) { continue; }
@@ -511,44 +476,36 @@ static void toktoken_string_match_tokens(
             return;
         }
         
-        // look for the first ending match
-        assert(tts->strlen(input) >= *data_len);
-        uint32_t if_hit_entire_file = (uint32_t)tts->strlen(input) -  *data_len;
-        if_hit_entire_file -= tts->strlen(tts->regs[i].stop_patterns[0]);
-        uint32_t middle_max =
-            tts->regs[i].middle_cap <= if_hit_entire_file ?
-                tts->regs[i].middle_cap :
-                if_hit_entire_file;
-        
         for (
-            uint32_t middle_chars = 0;
-            middle_chars <= middle_max;
-            middle_chars++)
+            *matched_chars_mid = 0;
+            *matched_chars_mid <= tts->regs[i].middle_cap;
+            (*matched_chars_mid)++)
         {
             for (uint32_t pat_i = 0; pat_i < PATTERNS_CAP; pat_i++) {
                 if (tts->regs[i].stop_patterns[pat_i] == NULL) { continue; }
                 
-                uint32_t end_matched_chars =
+                *matched_chars_stop =
                     T1_token_strmatch(
-                        input + *data_len + middle_chars,
+                        input + *matched_chars_start + *matched_chars_mid,
                         tts->regs[i].stop_patterns[pat_i]);
                 
                 if (
-                    end_matched_chars > 0 &&
-                    tts->regs[i].stop_patterns[pat_i][end_matched_chars] == '\0')
+                    *matched_chars_stop > 0 &&
+                    tts->regs[i].stop_patterns[pat_i][*matched_chars_stop] == '\0')
                 {
-                    *data_len += middle_chars;
-                    if ((tts->regs[i].bitflags & T1_TOKEN_FLAG_CONSUME_STOP_PATTERN) > 0)
+                    if ((tts->regs[i].bitflags & T1_TOKEN_FLAG_CONSUME_STOP_PATTERN) == 0)
                     {
-                        *data_len += end_matched_chars;
+                        *matched_chars_stop = 0;
                     }
                     return;
                 }
             }
         }
         
+        *matched_chars_start = 0;
+        *matched_chars_mid = 0;
+        *matched_chars_stop = 0;
         *matching_token_i = UINT32_MAX;
-        *data_len = 0;
     }
 }
 
@@ -862,18 +819,27 @@ void T1_token_run(
     
     uint32_t i = 0;
     uint32_t matching_token_i = UINT32_MAX;
-    uint32_t data_len;
     uint32_t line_number = 1;
     
     TokToken * previous_lit_token = NULL;
     uint32_t previous_lit_ascii_i = 0;
-
+    uint32_t start_sz = 0;
+    uint32_t mid_sz = 0;
+    uint32_t stop_sz = 0;
+    
     while (input[i] != '\0') {
         
         toktoken_string_match_tokens(
             input + i,
             &matching_token_i,
-            &data_len);
+            &start_sz,
+            &mid_sz,
+            &stop_sz);
+        #ifndef T1_TOKEN_NO_ASSERTS
+        if (matching_token_i < UINT32_MAX) {
+            assert(start_sz > 0);
+        }
+        #endif
         
         if (matching_token_i == UINT32_MAX) {
             
@@ -936,27 +902,72 @@ void T1_token_run(
             tts->tokens_size += 1;
             new->line_number = line_number;
             new->enum_value = tts->regs[matching_token_i].enum_value;
-            if ((tts->regs[matching_token_i].bitflags & T1_TOKEN_FLAG_STORE_STRVAL) > 0)
+            
+            new->string_value = tts->ascii_store + tts->ascii_store_next_i;
+            tts->memset(
+                new->string_value,
+                0,
+                start_sz + mid_sz + stop_sz);
+            new->string_value_size = 0;
+            
+            // store the 'start' of the string
+            if (
+                tts->regs[matching_token_i].store_mode ==
+                    T1_TOKEN_STOREMODE_FULLSTARTMIDSTOP)
             {
-                new->string_value = copy_string_to_ascii_store(
-                    input + i,
-                    data_len,
-                    good);
-                new->string_value_size = (uint16_t)data_len;
-                
-                assert(*good);
-                if (!*good) {
-                    return;
-                } else { *good = 0; }
-            } else {
+                T1_token_strcat(
+                    new->string_value,
+                    (uint32_t)start_sz + mid_sz + stop_sz,
+                    tts->regs[matching_token_i].start_pattern);
+                #ifndef T1_TOKEN_NO_ASSERTS
+                assert(new->string_value[start_sz] == '\0');
+                #endif
+                tts->ascii_store_next_i += start_sz;
+                new->string_value_size += start_sz;
+            }
+            
+            // store the 'middle'
+            if (
+                tts->regs[matching_token_i].store_mode ==
+                    T1_TOKEN_STOREMODE_FULLSTARTMIDSTOP ||
+                tts->regs[matching_token_i].store_mode ==
+                    T1_TOKEN_STOREMODE_MIDDLE_STRING)
+            {
+                T1_token_strcat(
+                    new->string_value,
+                    (uint32_t)start_sz + mid_sz + stop_sz,
+                    input + i + start_sz);
+                tts->ascii_store_next_i += mid_sz;
+                new->string_value_size  += mid_sz;
+            }
+            
+            // store the stop pattern
+            if (
+                tts->regs[matching_token_i].store_mode ==
+                    T1_TOKEN_STOREMODE_FULLSTARTMIDSTOP)
+            {
+                T1_token_strcat(
+                    new->string_value + start_sz + mid_sz,
+                    (uint32_t)start_sz + mid_sz + stop_sz,
+                    input + i + start_sz + mid_sz);
+                tts->ascii_store_next_i += stop_sz;
+                new->string_value_size  += stop_sz;
+            }
+            
+            new->string_value[new->string_value_size] = '\0';
+            
+            if (tts->regs[matching_token_i].store_mode ==
+                T1_TOKEN_STOREMODE_DISCARD_STRING)
+            {
                 new->string_value = NULL;
                 new->string_value_size = 0;
+            } else {
+                tts->ascii_store_next_i += 1;
             }
             
             T1_token_set_number_flags(new);
-                // tts->regs[matching_token_i].bitflags);
             
-            i += data_len;
+            i += (start_sz + mid_sz + stop_sz);
         }
         
         if (!tts->good) {
