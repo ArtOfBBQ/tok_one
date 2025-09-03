@@ -67,10 +67,12 @@ static void check_strings_equal(
         if (at_i > 50) {
             at_i = 50;
         }
+        
         char actual_nullterm[50];
         for (uint32_t i = 0; i < at_i; i++) {
             actual_nullterm[i] = actual[i];
         }
+        
         printf(
             "Mismatch at [%s]: expected %s, got %s\n",
             field_description,

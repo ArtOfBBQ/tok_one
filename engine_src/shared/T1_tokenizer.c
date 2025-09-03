@@ -874,6 +874,14 @@ void T1_token_run(
             
             continue;
         } else {
+            if (
+                tts->regs[matching_token_i].store_mode ==
+                    T1_TOKEN_STOREMODE_DISCARD_TOKEN)
+            {
+                i += start_sz + mid_sz + stop_sz;
+                continue;
+            }
+            
             TokToken * new = &tts->tokens[tts->tokens_size];
             if (tts->tokens_size + 1 >= TOKENS_CAP) {
                 *good = 0;
