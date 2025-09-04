@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define T1_META_ASSERTS 0
+#define T1_META_ASSERTS 1
 #if T1_META_ASSERTS
 #include <assert.h>
 #endif
@@ -65,12 +65,12 @@ void T1_meta_reg_struct(
 #define T1_meta_struct_field(parent_type_name, field_type_or_NULL, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, 1, 1, 1, good)
 #define T1_meta_array(parent_type_name, field_T1_type, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, array_size, 1, 1, good)
 #define T1_meta_struct_array(parent_type_name, field_type_or_NULL, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, array_size, 1, 1, good)
-#define T1_meta_multi_array(parent_type_name, field_T1_type, field_type_or_NULL, field_name, array_size_1, array_size_2, array_size_3, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_type_or_NULL, array_size_1, array_size_2, array_size_3, good)
+#define T1_meta_multi_array(parent_type_name, field_T1_type, field_struct_type_or_NULL, field_name, array_size_1, array_size_2, array_size_3, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_struct_type_or_NULL, array_size_1, array_size_2, array_size_3, good)
 void T1_meta_reg_field(
-    const char * parent_type_name,
+    const char * field_name,
     const uint32_t field_offset,
     const T1Type field_type,
-    const char * field_name_or_null,
+    const char * field_struct_type_name_or_null,
     const uint16_t field_array_size_1,
     const uint16_t field_array_size_2,
     const uint16_t field_array_size_3,

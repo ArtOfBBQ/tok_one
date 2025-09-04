@@ -391,10 +391,10 @@ void T1_meta_reg_struct(
 }
 
 void T1_meta_reg_field(
-    const char * parent_type_name,
+    const char * field_name,
     const uint32_t field_offset,
     const T1Type field_type,
-    const char * field_name_or_null,
+    const char * field_struct_type_name_or_null,
     const uint16_t field_array_size_1,
     const uint16_t field_array_size_2,
     const uint16_t field_array_size_3,
@@ -403,38 +403,38 @@ void T1_meta_reg_field(
     *good = 0;
     
     if (
-        field_name_or_null != NULL &&
-        field_name_or_null[0] == 'N' &&
-        field_name_or_null[1] == 'U' &&
-        field_name_or_null[2] == 'L' &&
-        field_name_or_null[3] == 'L' &&
-        field_name_or_null[4] == '\0')
+        field_struct_type_name_or_null != NULL &&
+        field_struct_type_name_or_null[0] == 'N' &&
+        field_struct_type_name_or_null[1] == 'U' &&
+        field_struct_type_name_or_null[2] == 'L' &&
+        field_struct_type_name_or_null[3] == 'L' &&
+        field_struct_type_name_or_null[4] == '\0')
     {
-        field_name_or_null = NULL;
+        field_struct_type_name_or_null = NULL;
     }
     
     #if T1_META_ASSERTS
-    assert(parent_type_name != NULL);
+    assert(field_name != NULL);
     // When invoking the macro versions of this function, call using
-    // the actual struct type, not a string containing the struct type
-    assert(parent_type_name[0] != '"');
-    if (field_name_or_null != NULL) {
+    // the actual name, not a string containing the name
+    assert(field_name[0] != '"');
+    if (field_struct_type_name_or_null != NULL) {
         // When invoking the macro versions of this function, call using
         // the actual type name, not a string containing the type name
-        assert(field_name_or_null[0] != '"');
+        assert(field_struct_type_name_or_null[0] != '"');
     }
     #endif
     
     // There should be no '.' in the property, because substructs
     // should be registered separately
     for (uint32_t i = 0; i < UINT16_MAX; i++) {
-        if (parent_type_name[i] == '.') {
+        if (field_name[i] == '.') {
             #if T1_META_ASSERTS
             assert(0);
             #endif
             return;
         }
-        if (parent_type_name[i] == '\0') {
+        if (field_name[i] == '\0') {
             break;
         }
         #if T1_META_ASSERTS
@@ -454,16 +454,23 @@ void T1_meta_reg_field(
     MetaStruct * target_mstruct = &t1rs->
         metastructs[t1rs->meta_structs_size-1];
     
+    #if T1_META_ASSERTS
+    assert(target_mstruct != NULL);
+    #endif
+    
     // check for existing field name in that struct
     MetaField * target_mfield = find_field_in_struct_by_name(
         target_mstruct,
-        parent_type_name);
+        field_name);
     
     if (target_mfield == NULL) {
         if (
             t1rs->meta_fields_size + 1 >=
                 t1rs->meta_fields_store_cap)
         {
+            #if T1_META_ASSERTS
+            assert(0); // provide more memory on init()
+            #endif
             return;
         }
         
@@ -508,16 +515,16 @@ void T1_meta_reg_field(
     #endif
     
     target_mfield->name = T1_refl_copy_str_to_store(
-        parent_type_name,
+        field_name,
         good);
     if (!*good) { return; }
     *good = 0;
     
     if (target_mfield->type == T1_TYPE_STRUCT) {
         #if T1_META_ASSERTS
-        assert(field_name_or_null != NULL);
+        assert(field_struct_type_name_or_null != NULL);
         #endif
-        if (field_name_or_null == NULL) {
+        if (field_struct_type_name_or_null == NULL) {
             *good = 0;
             return;
         }
@@ -525,18 +532,27 @@ void T1_meta_reg_field(
         target_mfield->struct_type_name =
             T1_refl_copy_str_to_store(
                 /* const char * to_copy: */
-                    field_name_or_null,
+                    field_struct_type_name_or_null,
                 /* uint32_t * good: */
                     good);
         if (!*good) { return; }
         *good = 0;
+    } else if (
+        target_mfield->type == T1_TYPE_ENUM)
+    {
+        // TODO: check enum type
+    } else if (field_struct_type_name_or_null != NULL) {
+            #if T1_META_ASSERTS
+            assert(0); // not a struct, expected no type name
+            #endif
+            return;
     }
     
     if (target_mfield->type == T1_TYPE_ENUM) {
         #if T1_META_ASSERTS
-        assert(field_name_or_null != NULL);
+        assert(field_struct_type_name_or_null != NULL);
         #endif
-        if (field_name_or_null == NULL) {
+        if (field_struct_type_name_or_null == NULL) {
             *good = 0;
             return;
         }
@@ -545,7 +561,7 @@ void T1_meta_reg_field(
         for (uint16_t i = 0; i < t1rs->meta_enums_size; i++) {
             if (
                 t1rs->strcmp(
-                    field_name_or_null,
+                    field_struct_type_name_or_null,
                     t1rs->meta_enums[i].name) == 0)
             {
                 target_mfield->parent_enum_id = i;
@@ -907,6 +923,9 @@ void T1_meta_write_to_known_field_str(
     int64_t value_i64 = (int64_t)value_u64;
     if (val_starts_minus) { value_i64 *= -1; }
     
+    double value_f64 = strtod(value_adj, &endptr);
+    uint8_t value_is_f64 = *endptr == '\0';
+    
     MetaEnum * parent_enum = NULL;
     T1Type type_adj = field.public.data_type;
     uint8_t found_enum_field = 0;
@@ -944,7 +963,7 @@ void T1_meta_write_to_known_field_str(
         
         if (!found_enum_field) {
             #if T1_META_ASSERTS
-            assert(0); // enum value not registered
+            assert(0); // enum is registered, but that value isn't
             #endif
             return;
         }
@@ -953,7 +972,8 @@ void T1_meta_write_to_known_field_str(
     } else if (
         field.public.data_type != T1_TYPE_CHAR &&
         !value_is_u64 &&
-        !value_is_i64)
+        !value_is_i64 &&
+        !value_is_f64)
     {
         #if T1_META_ASSERTS
         assert(0); // trying to write string to non-enum non-char field?
@@ -973,6 +993,24 @@ void T1_meta_write_to_known_field_str(
             assert(0); // enum have been replaced by a number already
             #endif
             return;
+        break;
+        case T1_TYPE_F32:
+            if (
+                !value_is_f64 ||
+                value_f64 > __FLT_MAX__ ||
+                value_f64 < __FLT_MIN__)
+            {
+                #if T1_META_ASSERTS
+                assert(0);
+                #endif
+                return;
+            }
+            
+            float value_f32 = (float)value_f64;
+            t1rs->memcpy(
+                (float *)((char *)target_parent_ptr + field.public.offset),
+                &value_f32,
+                4);
         break;
         case T1_TYPE_I8:
             if (
