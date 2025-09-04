@@ -1,7 +1,7 @@
 #ifndef WAV_H
 #define WAV_H
 
-#include "T1_common.h"
+#include "T1_std.h"
 
 #include <stdint.h>
 #include <stddef.h>

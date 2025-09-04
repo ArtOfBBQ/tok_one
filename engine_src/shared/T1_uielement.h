@@ -1,7 +1,7 @@
 #ifndef UI_ELEMENT_H
 #define UI_ELEMENT_H
 
-#include "T1_common.h"
+#include "T1_std.h"
 #include "T1_memorystore.h"
 #include "T1_zspriteid.h"
 #include "T1_userinput.h"

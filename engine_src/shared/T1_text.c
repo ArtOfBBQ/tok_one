@@ -60,6 +60,7 @@ void text_init(
         font_settings->ignore_lighting = 1.0f;
         font_settings->remove_shadow = true;
         font_settings->mat.alpha = 1.0f;
+        font_settings->scale_factor = 1.0f;
         font_settings->alpha = 1.0f;
     }
     
@@ -355,6 +356,7 @@ void text_request_label_offset_around(
             
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
+            log_assert(letter.gpu_data->scale_factor > 0.0f);
             zsprite_commit(&letter);
         }
         cur_y_offset_pixelspace -= get_newline_advance();

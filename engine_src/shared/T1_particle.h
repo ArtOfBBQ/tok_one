@@ -11,7 +11,7 @@ extern "C" {
 #define PARTICLE_RGBA_PROGRESSION_MAX 10
 
 #include "T1_cpu_to_gpu_types.h"
-#include "T1_common.h"
+#include "T1_std.h"
 #include "T1_logger.h"
 #include "T1_random.h"
 #include "T1_zsprite.h"

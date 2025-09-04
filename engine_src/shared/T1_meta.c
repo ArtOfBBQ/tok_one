@@ -806,6 +806,12 @@ static void T1_refl_get_field_recursive(
     *good = 1;
 }
 
+static void construct_T1_metafield(
+    T1MetaField * to_construct)
+{
+    t1rs->memset(to_construct, 0, sizeof(T1MetaField));
+}
+
 T1MetaField T1_meta_get_field_from_strings(
     const char * struct_name,
     const char * field_name,
@@ -819,13 +825,7 @@ T1MetaField T1_meta_get_field_from_strings(
     #endif
     
     T1MetaFieldInternal return_value;
-    return_value.public.data_type = T1_TYPE_NOTSET;
-    return_value.public.array_sizes[0] = 0;
-    return_value.public.array_sizes[1] = 0;
-    return_value.public.array_sizes[2] = 0;
-    return_value.public.offset = 0;
-    return_value.internal_field = NULL;
-    return_value.internal_parent = NULL;
+    construct_T1_metafield(&return_value.public);
     
     // T1_refl_get_field_recursive() will push to the ascii store
     // as if it were stack memory
@@ -987,7 +987,7 @@ void T1_meta_write_to_known_field_str(
             }
             int8_t value_i8 = (int8_t)value_i64;
             t1rs->memcpy(
-                (int8_t *)(target_parent_ptr + field.public.offset),
+                (int8_t *)((char *)target_parent_ptr + field.public.offset),
                 &value_i8,
                 1);
         break;
@@ -1004,7 +1004,7 @@ void T1_meta_write_to_known_field_str(
             }
             int16_t value_i16 = (int16_t)value_i64;
             t1rs->memcpy(
-                (int16_t *)(target_parent_ptr + field.public.offset),
+                (int16_t *)((char *)target_parent_ptr + field.public.offset),
                 &value_i16,
                 2);
         break;
@@ -1021,7 +1021,7 @@ void T1_meta_write_to_known_field_str(
             }
             int32_t value_i32 = (int32_t)value_i64;
             t1rs->memcpy(
-                (int32_t *)(target_parent_ptr + field.public.offset),
+                (int32_t *)((char *)target_parent_ptr + field.public.offset),
                 &value_i32,
                 4);
         break;
@@ -1042,7 +1042,7 @@ void T1_meta_write_to_known_field_str(
             }
             uint8_t value_u8 = (uint8_t)value_u64;
             t1rs->memcpy(
-                (uint8_t *)(target_parent_ptr + field.public.offset),
+                (uint8_t *)((char *)target_parent_ptr + field.public.offset),
                 &value_u8,
                 1);
         break;
@@ -1058,7 +1058,7 @@ void T1_meta_write_to_known_field_str(
             }
             uint16_t value_u16 = (uint16_t)value_u64;
             t1rs->memcpy(
-                (uint16_t *)(target_parent_ptr + field.public.offset),
+                (uint16_t *)((char *)target_parent_ptr + field.public.offset),
                 &value_u16,
                 2);
         break;
@@ -1073,7 +1073,7 @@ void T1_meta_write_to_known_field_str(
                 return;
             }
             t1rs->memcpy(
-                (uint32_t *)(target_parent_ptr + field.public.offset),
+                (uint32_t *)((char *)target_parent_ptr + field.public.offset),
                 &value_u64,
                 4);
         break;
@@ -1099,7 +1099,7 @@ void T1_meta_write_to_known_field_str(
             }
             
             t1rs->memcpy(
-                (target_parent_ptr + field.public.offset),
+                ((char *)target_parent_ptr + field.public.offset),
                 value_to_write_str,
                 field.public.array_sizes[rightmost_array_i]);
         break;
@@ -1111,4 +1111,54 @@ void T1_meta_write_to_known_field_str(
     }
     
     *good = 1;
+}
+
+uint32_t internal_T1_meta_get_num_of_fields_in_struct(
+    const char * struct_name)
+{
+    MetaStruct * parent = find_struct_by_name(struct_name);
+    
+    if (parent == NULL) { return 0; }
+    
+    uint32_t fields_size = 0;
+    MetaField * field = metafield_i_to_ptr(parent->head_fields_i);
+    while (field != NULL) {
+        fields_size += 1;
+        field = metafield_i_to_ptr(field->next_i);
+    }
+    
+    return fields_size;
+}
+
+T1MetaField T1_meta_get_field_at_index(
+    char * parent_name_str,
+    uint32_t at_index)
+{
+    T1MetaField return_value;
+    construct_T1_metafield(&return_value);
+    
+    uint32_t i = 0;
+    
+    MetaStruct * parent = find_struct_by_name(parent_name_str);
+    
+    if (parent == NULL) { return return_value; }
+    
+    MetaField * field = metafield_i_to_ptr(parent->head_fields_i);
+    if (field == NULL) { return return_value; }
+    
+    while (i < at_index) {
+        field = metafield_i_to_ptr(field->next_i);
+        if (field == NULL) { return return_value; }
+        
+        i++;
+    }
+    
+    return_value.offset = field->offset;
+    return_value.name = field->name;
+    return_value.array_sizes[0] = field->array_sizes[0];
+    return_value.array_sizes[1] = field->array_sizes[1];
+    return_value.array_sizes[2] = field->array_sizes[2];
+    return_value.data_type = field->type;
+    
+    return return_value;
 }

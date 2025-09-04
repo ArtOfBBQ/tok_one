@@ -1,7 +1,7 @@
 #ifndef TOK_LINES
 #define TOK_LINES
 
-#include "T1_common.h"
+#include "T1_std.h"
 #include "T1_logger.h"
 #include "T1_cpu_to_gpu_types.h"
 

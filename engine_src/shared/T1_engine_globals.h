@@ -34,7 +34,7 @@ platform layer doesn't need to do anything and can just record values directly
 
 #include <math.h>
 
-#include "T1_common.h"
+#include "T1_std.h"
 #include "T1_cpu_gpu_shared_types.h"
 
 typedef struct EngineGlobals {

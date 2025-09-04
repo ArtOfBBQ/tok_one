@@ -2,7 +2,7 @@
 #define CPU_TO_GPU_TYPES_H
 
 #include "T1_cpu_gpu_shared_types.h"
-#include "T1_common.h"
+#include "T1_std.h"
 
 // This is a bunch of pointers because apple's metal (both ios and macosx)
 // requires shared data to be aligned to page size :(

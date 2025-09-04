@@ -1,8 +1,8 @@
 #include "T1_gpu.h"
 #include "T1_apple_audio.h"
 
+#include "T1_std.h"
 #include "T1_init_application.h"
-#include "T1_common.h"
 #include "T1_logger.h"
 #include "T1_random.h"
 #include "T1_lightsource.h"

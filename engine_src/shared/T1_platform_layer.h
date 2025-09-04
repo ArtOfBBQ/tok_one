@@ -68,7 +68,7 @@ extern "C" {
 
 // #include "audio.h"
 #include "decode_bmp.h"
-#include "T1_common.h"
+#include "T1_std.h"
 #include "T1_memorystore.h"
 #include "T1_logger.h"
 #include "T1_decodedimage.h"

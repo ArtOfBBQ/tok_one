@@ -1,7 +1,7 @@
 #ifndef USERINPUT_H
 #define USERINPUT_H
 
-#include "T1_common.h"
+#include "T1_std.h"
 #include "T1_lightsource.h"
 #include "T1_platform_layer.h"
 

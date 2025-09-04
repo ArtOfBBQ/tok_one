@@ -1,4 +1,4 @@
-#include "T1_common.h"
+#include "T1_std.h"
 
 // void *(*)(void *, int, size_t
 void * common_memset_char(
@@ -390,11 +390,27 @@ common_copy_strings(
     }
 }
 
-size_t
-common_get_string_length(
-    const char * null_terminated_string)
+__attribute__((no_sanitize("address")))
+size_t T1_std_strlen( const char * null_terminated_string)
 {
     uint32_t return_value = 0;
+    
+    #ifdef __ARM_NEON
+    int8_t * str_as_i8 = (int8_t *)null_terminated_string;
+    int8_t nullchar = (int8_t)'\0';
+    int8x16_t nullterm = vld1q_dup_s8(&nullchar);
+    
+    while (1) {
+        int8x16_t chunk = vld1q_s8(str_as_i8);
+        uint8x16_t matches = vceqq_s8(nullterm, chunk);
+        uint8_t any_match = vmaxvq_u8(matches);
+        if (any_match) { break; }
+        
+        return_value += 16;
+        str_as_i8 += 16;
+    }
+    #endif
+    
     while (
         null_terminated_string[return_value] != '\0')
     {
@@ -434,8 +450,8 @@ common_string_ends_with(
         return false;
     }
     
-    uint32_t str_to_check_len = (uint32_t)common_get_string_length(str_to_check);
-    uint32_t ending_len = (uint32_t)common_get_string_length(ending);
+    uint32_t str_to_check_len = (uint32_t)T1_std_strlen(str_to_check);
+    uint32_t ending_len = (uint32_t)T1_std_strlen(ending);
     
     if (ending_len > str_to_check_len || ending_len < 1) {
         return false;
@@ -463,10 +479,10 @@ common_strsub(
     const char * replacement)
 {
     #ifndef COMMON_IGNORE_ASSERTS
-    assert(common_get_string_length(to_match) >= common_get_string_length(replacement));
+    assert(T1_std_strlen(to_match) >= T1_std_strlen(replacement));
     #endif
     
-    size_t replacement_len = common_get_string_length(replacement);
+    size_t replacement_len = T1_std_strlen(replacement);
     
     uint32_t start_i = 0;
     while (in[start_i] != '\0') {

@@ -11,7 +11,7 @@
 #endif
 
 
-typedef enum T1Type {
+typedef enum : uint8_t {
     T1_TYPE_NOTSET,
     T1_TYPE_ENUM,
     T1_TYPE_STRUCT,
@@ -78,9 +78,10 @@ void T1_meta_reg_field(
 
 #define T1_REFL_MAX_ARRAY_SIZES 3
 typedef struct {
-    T1Type data_type;
     int64_t offset; // -1 if no such field
+    char * name;
     uint16_t array_sizes[T1_REFL_MAX_ARRAY_SIZES];
+    T1Type data_type;
 } T1MetaField;
 
 #define T1_meta_get_field(struct_name, field_name, good) T1_meta_get_field_from_strings(#struct_name, #field_name, good)
@@ -95,5 +96,13 @@ void T1_meta_write_to_known_field_str(
     const char * value_to_write_str,
     void * target_parent_ptr,
     uint32_t * good);
+
+#define T1_meta_get_num_of_fields_in_struct(struct_type) internal_T1_meta_get_num_of_fields_in_struct(#struct_type)
+uint32_t internal_T1_meta_get_num_of_fields_in_struct(
+    const char * struct_name);
+
+T1MetaField T1_meta_get_field_at_index(
+    char * parent_name_str,
+    uint32_t at_index);
 
 #endif // T1_META_H

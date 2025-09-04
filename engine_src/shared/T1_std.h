@@ -1,5 +1,5 @@
-#ifndef COMMON_H
-#define COMMON_H
+#ifndef T1_STD_H
+#define T1_STD_H
 
 #include <inttypes.h>
 #include <stddef.h>
@@ -149,7 +149,7 @@ common_copy_strings(
     const uint32_t origin_size);
 
 size_t
-common_get_string_length(
+T1_std_strlen(
     const char * null_terminated_string);
 
 bool32_t common_string_starts_with(
@@ -229,4 +229,4 @@ common_float_to_string(
 }
 #endif
 
-#endif // COMMON_H
+#endif // T1_STD_H

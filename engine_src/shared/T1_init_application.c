@@ -210,7 +210,7 @@ void init_application_before_gpu_init(
     uint32_t good = 0;
     T1_token_init(
         common_memset_char,
-        common_get_string_length,
+        T1_std_strlen,
         malloc_from_managed_infoless,
         &good);
     log_assert(good);

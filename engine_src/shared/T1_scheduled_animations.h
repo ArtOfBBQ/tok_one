@@ -3,7 +3,7 @@
 #ifndef SCHEDULED_ANIMATION_H
 #define SCHEDULED_ANIMATION_H
 
-#include "T1_common.h"
+#include "T1_std.h"
 #include "T1_simd.h"
 
 #include "T1_zsprite.h"

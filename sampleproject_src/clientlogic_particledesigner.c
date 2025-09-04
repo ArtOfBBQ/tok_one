@@ -136,24 +136,17 @@ void client_logic_early_startup(
     T1_meta_field(GPUzSprite, T1_TYPE_F32, ignore_camera, &ok);
     T1_meta_field(GPUzSprite, T1_TYPE_U32, remove_shadow, &ok);
     T1_meta_field(GPUzSprite, T1_TYPE_I32, touchable_id, &ok);
-    T1_meta_struct_field(GPUzSprite,
-        T1_TYPE_STRUCT, GPULockedMat, base_mat, &ok);
+    T1_meta_struct_field(GPUzSprite, GPULockedMat, base_mat, &ok);
     assert(ok);
     
     T1_meta_struct(ParticleEffect, &ok);
     assert(ok);
-    T1_meta_struct_array(ParticleEffect,
-        T1_TYPE_STRUCT, GPUzSprite, init_rand_add, 2, &ok);
-    T1_meta_struct_array(ParticleEffect,
-        T1_TYPE_STRUCT, GPUzSprite, pertime_rand_add, 2, &ok);
-    T1_meta_struct_field(ParticleEffect,
-        T1_TYPE_STRUCT, GPUzSprite, pertime_add, &ok);
-    T1_meta_struct_field(ParticleEffect,
-        T1_TYPE_STRUCT, GPUzSprite, perexptime_add, &ok);
-    T1_meta_struct_field(ParticleEffect,
-        T1_TYPE_STRUCT, GPUzSprite, zpolygon_cpu, &ok);
-    T1_meta_struct_field(ParticleEffect,
-        T1_TYPE_STRUCT, GPUzSprite, zpolygon_gpu, &ok);
+    T1_meta_struct_array(ParticleEffect, GPUzSprite, init_rand_add, 2, &ok);
+    T1_meta_struct_array(ParticleEffect, GPUzSprite, pertime_rand_add, 2, &ok);
+    T1_meta_struct_field(ParticleEffect, GPUzSprite, pertime_add, &ok);
+    T1_meta_struct_field(ParticleEffect, GPUzSprite, perexptime_add, &ok);
+    T1_meta_struct_field(ParticleEffect, GPUzSprite, zpolygon_cpu, &ok);
+    T1_meta_struct_field(ParticleEffect, GPUzSprite, zpolygon_gpu, &ok);
     T1_meta_field(ParticleEffect, T1_TYPE_U64, random_seed, &ok);
     T1_meta_field(ParticleEffect, T1_TYPE_U64, elapsed, &ok);
     T1_meta_field(ParticleEffect, T1_TYPE_U64, lifespan, &ok);
@@ -203,12 +196,30 @@ static void request_gfx_from_empty_scene(void) {
     light->xyz[2]        =  0.75f;
     commit_zlight(light);
     
+    float height_per_entry = 60.0f;
+    float whitespace_height = 8.0f;
+    
+    font_settings->font_height = (height_per_entry / 2 ) - whitespace_height;
+    font_settings->mat.diffuse_rgb[0] = 0.5f;
+    font_settings->mat.diffuse_rgb[1] = 1.0f;
+    font_settings->mat.diffuse_rgb[2] = 0.5f;
+    font_settings->mat.ambient_rgb[0] = 1.0f;
+    font_settings->mat.ambient_rgb[1] = 1.0f;
+    font_settings->mat.ambient_rgb[2] = 1.0f;
+    font_settings->mat.rgb_cap[0] = 1.0f;
+    font_settings->mat.rgb_cap[1] = 1.0f;
+    font_settings->mat.rgb_cap[2] = 1.0f;
+    font_settings->ignore_lighting = true;
+    font_settings->ignore_camera = true;
+    font_settings->alpha = 1.0f;
+    font_settings->mat.alpha = 1.0f;
+    
     next_ui_element_settings->ignore_camera = true;
     next_ui_element_settings->ignore_lighting = true;
     next_ui_element_settings->pin_width_screenspace = 20;
-    next_ui_element_settings->pin_height_screenspace = 60;
+    next_ui_element_settings->pin_height_screenspace = (height_per_entry) / 2;;
     next_ui_element_settings->slider_width_screenspace = 250;
-    next_ui_element_settings->slider_height_screenspace = 50;
+    next_ui_element_settings->slider_height_screenspace = (height_per_entry - whitespace_height) / 2;;
     next_ui_element_settings->slider_pin_rgba[0] = 0.7f;
     next_ui_element_settings->slider_pin_rgba[1] = 0.5f;
     next_ui_element_settings->slider_pin_rgba[2] = 0.5f;
@@ -217,32 +228,91 @@ static void request_gfx_from_empty_scene(void) {
     next_ui_element_settings->slider_background_rgba[1] = 0.2f;
     next_ui_element_settings->slider_background_rgba[2] = 0.3f;
     next_ui_element_settings->slider_background_rgba[3] = 1.0f;
-    font_settings->font_height = 14;
-    font_settings->mat.ambient_rgb[0] = 0.5f;
-    font_settings->mat.ambient_rgb[1] = 1.0f;
-    font_settings->mat.ambient_rgb[2] = 0.5f;
-    font_settings->mat.alpha = 1.0f;
     
-    request_float_slider(
-        /* const int32_t background_object_id: */
-            50,
-        /* const int32_t pin_object_id: */
-            51,
-        /* const float x_screenspace: */
-            engine_globals->window_width - next_ui_element_settings->slider_width_screenspace - 10,
-        /* const float y_screenspace: */
-            engine_globals->window_height -
-                next_ui_element_settings->
-                    slider_height_screenspace -
-                10,
-        /* const float z: */
-            1.0f,
-        /* const float min_value: */
-            0.0f,
-        /* const float max_value: */
-            1.0f,
-        /* float * linked_value: */
-            &light->reach);
+    uint32_t num_properties = T1_meta_get_num_of_fields_in_struct(ParticleEffect);
+    
+    for (uint32_t i = 0; i < num_properties; i++) {
+        
+        T1MetaField field = T1_meta_get_field_at_index(
+            "ParticleEffect",
+            i);
+        
+        float cur_x = engine_globals->window_width -
+            (next_ui_element_settings->slider_width_screenspace / 2) - 15.0f;
+        
+        float cur_y =
+            engine_globals->window_height - 10 -
+                (height_per_entry * i);
+        
+        switch (field.data_type) {
+            case T1_TYPE_STRUCT:
+                text_request_label_around_x_at_top_y(
+                    /* const int32_t with_object_id: */
+                        52,
+                    /* const char * text_to_draw: */
+                        field.name,
+                    /* const float mid_x_pixelspace: */
+                        cur_x,
+                    /* const float top_y_pixelspace: */
+                        cur_y,
+                    /* const float z: */
+                        1.0f,
+                    /* const float max_width: */
+                        engine_globals->window_width * 2);
+            break;
+            case T1_TYPE_F32:
+                text_request_label_around_x_at_top_y(
+                    /* const int32_t with_object_id: */
+                        52,
+                    /* const char * text_to_draw: */
+                        field.name,
+                    /* const float mid_x_pixelspace: */
+                        cur_x,
+                    /* const float top_y_pixelspace: */
+                        cur_y,
+                    /* const float z: */
+                        1.0f,
+                    /* const float max_width: */
+                        engine_globals->window_width * 2);
+                
+                request_float_slider(
+                    /* const int32_t background_object_id: */
+                        50,
+                    /* const int32_t pin_object_id: */
+                        51,
+                    /* const float x_screenspace: */
+                        cur_x,
+                    /* const float y_screenspace: */
+                        cur_y -
+                            (next_ui_element_settings->
+                                slider_height_screenspace) -
+                        (whitespace_height * 2),
+                    /* const float z: */
+                        1.0f,
+                    /* const float min_value: */
+                        0.0f,
+                    /* const float max_value: */
+                        1.0f,
+                    /* float * linked_value: */
+                        &light->reach);
+            break;
+            default:
+                text_request_label_around_x_at_top_y(
+                    /* const int32_t with_object_id: */
+                        52,
+                    /* const char * text_to_draw: */
+                        field.name,
+                    /* const float mid_x_pixelspace: */
+                        cur_x,
+                    /* const float top_y_pixelspace: */
+                        cur_y,
+                    /* const float z: */
+                        1.0f,
+                    /* const float max_width: */
+                        engine_globals->window_width * 2);
+        }
+        
+    }
 }
 
 static float scroll_y_offset = 0;
