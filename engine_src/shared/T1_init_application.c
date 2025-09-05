@@ -51,14 +51,14 @@ static void test_simd_functions_floats(void) {
     SimdTestStruct * equals = malloc_from_managed(
         sizeof(SimdTestStruct) * 10);
     
-    common_memset_char(structs, 0, sizeof(SimdTestStruct)*10);
-    common_memset_char(double_checks, 0, sizeof(SimdTestStruct)*10);
-    common_memset_char(sets, 0, sizeof(float));
-    common_memset_char(adds, 0, sizeof(SimdTestStruct)*10);
-    common_memset_char(maxs, 0, sizeof(SimdTestStruct)*10);
-    common_memset_char(muls, 0, sizeof(SimdTestStruct)*10);
-    common_memset_char(divs, 0, sizeof(SimdTestStruct)*10);
-    common_memset_float(equals, 2.0f, sizeof(SimdTestStruct)*10);
+    T1_std_memset(structs, 0, sizeof(SimdTestStruct)*10);
+    T1_std_memset(double_checks, 0, sizeof(SimdTestStruct)*10);
+    T1_std_memset(sets, 0, sizeof(float));
+    T1_std_memset(adds, 0, sizeof(SimdTestStruct)*10);
+    T1_std_memset(maxs, 0, sizeof(SimdTestStruct)*10);
+    T1_std_memset(muls, 0, sizeof(SimdTestStruct)*10);
+    T1_std_memset(divs, 0, sizeof(SimdTestStruct)*10);
+    T1_std_memset_f32(equals, 2.0f, sizeof(SimdTestStruct)*10);
     
     for (uint32_t i = 0; i < 10; i++) {
         sets[i] = (float)i;
@@ -185,7 +185,7 @@ void init_application_before_gpu_init(
             200);
     
     ias = malloc_from_unmanaged(sizeof(InitApplicationState));
-    common_memset_char(ias, 0, sizeof(InitApplicationState));
+    T1_std_memset(ias, 0, sizeof(InitApplicationState));
     
     // settings_init(malloc_from_unmanaged);
     
@@ -195,9 +195,9 @@ void init_application_before_gpu_init(
         /* free_function: */
             free_from_managed,
         /* memset_function: */
-            common_memset_char,
+            T1_std_memset,
         /* memcpy_function: */
-            common_memcpy,
+            T1_std_memcpy,
         /* dpng_working_memory_size: */
             DPNG_WORKING_MEMORY_SIZE,
         /* const uint32_t thread_id: */
@@ -209,7 +209,7 @@ void init_application_before_gpu_init(
     
     uint32_t good = 0;
     T1_token_init(
-        common_memset_char,
+        T1_std_memset,
         T1_std_strlen,
         malloc_from_managed_infoless,
         &good);
@@ -217,7 +217,7 @@ void init_application_before_gpu_init(
     
     T1_objparser_init(malloc_from_managed_infoless, free_from_managed);
     mtlparser_init(
-        common_memset_char,
+        T1_std_memset,
         malloc_from_managed_infoless,
         strlcat);
     
@@ -264,7 +264,7 @@ void init_application_before_gpu_init(
     
     engine_globals = (EngineGlobals *)malloc_from_unmanaged(
         sizeof(EngineGlobals));
-    common_memset_char(engine_globals, 0, sizeof(EngineGlobals));
+    T1_std_memset(engine_globals, 0, sizeof(EngineGlobals));
     
     #if AUDIO_ACTIVE
     audio_init(
@@ -328,7 +328,7 @@ void init_application_before_gpu_init(
     T1_objmodel_init();
     zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
         sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
-    common_memset_char(
+    T1_std_memset(
         zlights_to_apply,
         0,
         sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
@@ -336,13 +336,13 @@ void init_application_before_gpu_init(
     #if PARTICLES_ACTIVE
     lineparticle_effects = (LineParticle *)malloc_from_unmanaged(
         sizeof(LineParticle) * LINEPARTICLE_EFFECTS_SIZE);
-    common_memset_char(
+    T1_std_memset(
         lineparticle_effects,
         0,
         sizeof(LineParticle) * LINEPARTICLE_EFFECTS_SIZE);
     particle_effects = (ParticleEffect *)malloc_from_unmanaged(
         sizeof(ParticleEffect) * PARTICLE_EFFECTS_SIZE);
-    common_memset_char(
+    T1_std_memset(
         particle_effects,
         0,
         sizeof(ParticleEffect) * PARTICLE_EFFECTS_SIZE);
@@ -372,7 +372,7 @@ void init_application_before_gpu_init(
                 &font_metrics_file);
         
         if (!font_metrics_file.good) {
-            common_strcpy_capped(
+            T1_std_strcpy_cap(
                 error_message,
                 256, "fontmetrics.dat was corrupted\n");
             *success = false;
@@ -399,7 +399,7 @@ void init_application_before_gpu_init(
     
     gpu_shared_data_collection = malloc_from_unmanaged(
         sizeof(GPUSharedDataCollection));
-    common_memset_char(
+    T1_std_memset(
         gpu_shared_data_collection,
         0,
         sizeof(GPUSharedDataCollection));
@@ -485,7 +485,7 @@ void init_application_before_gpu_init(
                         postprocessing_constants_allocation_size,
                     page_size);
         
-        common_memset_float(
+        T1_std_memset_f32(
             gpu_shared_data_collection->triple_buffers[cur_frame_i].camera,
             0.0f,
             sizeof(GPUCamera));
@@ -513,8 +513,8 @@ static void asset_loading_thread(int32_t asset_thread_id) {
         init_PNG_decoder(
             malloc,
             free,
-            common_memset_char,
-            common_memcpy,
+            T1_std_memset,
+            T1_std_memcpy,
             DPNG_WORKING_MEMORY_SIZE,
             (uint32_t)asset_thread_id);    
     }
@@ -547,7 +547,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     
     // We copy the basic quad vertices immediately, again to show debugging
     // text (see above comment)
-    common_memcpy(
+    T1_std_memcpy(
         /* void * dst: */
             gpu_shared_data_collection->locked_vertices,
         /* const void * src: */
@@ -599,7 +599,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         if (!success) {
             gameloop_active = true;
             if (errmsg[0] == '\0') {
-                common_strcpy_capped(
+                T1_std_strcpy_cap(
                     errmsg,
                     256,
                     "client_logic_early_startup() returned failure without "
@@ -613,7 +613,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         log_assert(core_count > 0);
         ias->image_decoding_threads = core_count > 6 ? 6 : core_count;
         
-        common_memset_char(
+        T1_std_memset(
             ias->thread_finished,
             0,
             sizeof(uint32_t) * IMAGE_DECODING_THREADS_MAX);
@@ -680,7 +680,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         return;
     }
     
-    common_memcpy(
+    T1_std_memcpy(
         /* void * dst: */
             gpu_shared_data_collection->locked_vertices,
         /* const void * src: */
@@ -689,7 +689,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
             sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
     platform_gpu_copy_locked_vertices();
     
-    common_memcpy(
+    T1_std_memcpy(
         /* void * dst: */
             gpu_shared_data_collection->const_mats,
         /* const void * src: */
@@ -786,7 +786,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     }
     
     #if AUDIO_ACTIVE
-    start_audio_loop();
+    T1_audio_start_loop();
     #endif
     
     T1_token_deinit(free_from_managed);

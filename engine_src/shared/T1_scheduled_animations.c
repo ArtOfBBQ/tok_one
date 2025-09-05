@@ -20,7 +20,7 @@ void T1_scheduled_animations_init(void)
 {
     scheduled_animations = (T1ScheduledAnimation *)malloc_from_unmanaged(
         sizeof(T1ScheduledAnimation) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
-    common_memset_char(
+    T1_std_memset(
         scheduled_animations,
         0,
         sizeof(T1ScheduledAnimation));
@@ -28,13 +28,13 @@ void T1_scheduled_animations_init(void)
     
     sas = (ScheduledAnimationState *)malloc_from_unmanaged(
         sizeof(ScheduledAnimationState));
-    common_memset_char(
+    T1_std_memset(
         sas,
         0,
         sizeof(ScheduledAnimationState));
     
     for (uint32_t i = 1; i < SCHEDULED_ANIMATIONS_ARRAYSIZE; i++) {
-        common_memcpy(
+        T1_std_memcpy(
             &scheduled_animations[i],
             &scheduled_animations[0],
             sizeof(T1ScheduledAnimation));
@@ -47,7 +47,7 @@ void T1_scheduled_animations_init(void)
 static void construct_scheduled_animationA(
     T1ScheduledAnimation * to_construct)
 {
-    common_memset_char(to_construct, 0, sizeof(T1ScheduledAnimation));
+    T1_std_memset(to_construct, 0, sizeof(T1ScheduledAnimation));
     log_assert(!to_construct->committed);
     
     to_construct->affected_zsprite_id = -1;
@@ -90,11 +90,11 @@ T1ScheduledAnimation * T1_scheduled_animations_request_next(
     log_assert(!return_value->deleted);
     
     if (endpoints_not_deltas) {
-        common_memset_float(
+        T1_std_memset_f32(
             &return_value->gpu_polygon_vals,
             FLT_SCHEDULEDANIM_IGNORE,
             sizeof(GPUzSprite));
-        common_memset_float(
+        T1_std_memset_f32(
             &return_value->lightsource_vals,
             FLT_SCHEDULEDANIM_IGNORE,
             sizeof(zLightSource));

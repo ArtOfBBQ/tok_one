@@ -69,24 +69,24 @@ void T1_texture_array_push_all_predecoded(void)
                     0;            // Red
                 
                 int32_t packed_rgba_red;
-                common_memcpy(&packed_rgba_red, &packed_rgba_red_u32, 4);
+                T1_std_memcpy(&packed_rgba_red, &packed_rgba_red_u32, 4);
                 int32_t packed_rgba_blue;
-                common_memcpy(&packed_rgba_blue, &packed_rgba_blue_u32, 4);
+                T1_std_memcpy(&packed_rgba_blue, &packed_rgba_blue_u32, 4);
                 
                 uint32_t one_third = (rgba_size / 3);
                 while (one_third % 4 != 0) {
                     one_third -= 1;
                 }
                 
-                common_memset_int32(
+                T1_std_memset_i32(
                     rgba_values_page_aligned,
                     packed_rgba_red,
                     one_third);
-                common_memset_int32(
+                T1_std_memset_i32(
                     rgba_values_page_aligned + (one_third),
                     packed_rgba_blue,
                     one_third);
-                common_memset_int32(
+                T1_std_memset_i32(
                     rgba_values_page_aligned + (one_third * 2),
                     packed_rgba_red,
                     rgba_size - (one_third * 2));
@@ -118,15 +118,15 @@ void T1_texture_array_push_all_predecoded(void)
                 } else {
                     #ifndef LOGGER_IGNORE_ASSERTS
                     char errmsg[128];
-                    common_strcpy_capped(
+                    T1_std_strcpy_cap(
                         errmsg,
                         128,
                         "Missing critical bc1 texture: ");
-                    common_strcat_capped(
+                    T1_std_strcat_cap(
                         errmsg,
                         128,
                         texture_arrays[ta_i].images[t_i].filename);
-                    common_strcat_capped(
+                    T1_std_strcat_cap(
                         errmsg,
                         128,
                         ".\n");
@@ -208,7 +208,7 @@ static DecodedImage * extract_image(
             (void *)&new_image->rgba_values_page_aligned,
         /* const size_t subptr_size: */
             new_image->rgba_values_size);
-    common_memset_char(
+    T1_std_memset(
         new_image->rgba_values_page_aligned,
         0,
         new_image->rgba_values_size);
@@ -260,7 +260,7 @@ void T1_texture_array_init(void) {
     texture_arrays = (TextureArray *)malloc_from_unmanaged(
         sizeof(TextureArray) * TEXTUREARRAYS_SIZE);
     
-    common_memset_char(
+    T1_std_memset(
         texture_arrays,
         0,
         sizeof(TextureArray) * TEXTUREARRAYS_SIZE);
@@ -289,7 +289,7 @@ static void register_to_texturearray_by_splitting_image(
     char * filenames[256];
     for (uint32_t i = 0; i < 256; i++) {
         filenames[i] = malloc_from_managed(256);
-        common_memset_char(filenames[i], 0, sizeof(rows * columns * 256));
+        T1_std_memset(filenames[i], 0, sizeof(rows * columns * 256));
     }
     
     // each image should have the exact same dimensions
@@ -339,28 +339,28 @@ static void register_to_texturearray_by_splitting_image(
             log_assert(split_img->width  == expected_width);
             log_assert(split_img->height == expected_height);
             
-            common_strcpy_capped(
+            T1_std_strcpy_cap(
                 filenames[(row_i*(int32_t)columns)+col_i],
                 256,
                 filename_prefix);
-            common_strcat_capped(
+            T1_std_strcat_cap(
                 filenames[(row_i*(int32_t)columns)+col_i],
                 256,
                 "_");
-            common_strcat_int_capped(
+            T1_std_strcat_int_capped(
                 filenames[(row_i*(int32_t)columns)+col_i],
                 256,
                 col_i);
-            common_strcat_capped(
+            T1_std_strcat_cap(
                 filenames[(row_i*(int32_t)columns)+col_i],
                 256,
                 "_");
-            common_strcat_int_capped(
+            T1_std_strcat_int_capped(
                 filenames[(row_i*(int32_t)columns)+col_i],
                 256,
                 row_i);
             
-            common_strcpy_capped(
+            T1_std_strcpy_cap(
                 texture_arrays[ta_i].images[t_i].filename,
                 FILENAME_MAX,
                 filenames[(row_i*(int32_t)columns)+col_i]);
@@ -461,7 +461,7 @@ void T1_texture_array_preregister_null_image(
             use_bc1_compression;
     }
     
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         texture_arrays[new_texturearray_i].images[new_texture_i].filename,
         TEXTUREARRAY_FILENAME_SIZE,
         filename);
@@ -486,7 +486,7 @@ T1Tex T1_texture_array_get_filename_location(
         log_assert(texture_arrays[i].images_size < 2000);
         for (int16_t j = 0; j < (int16_t)texture_arrays[i].images_size; j++) {
             if (
-                common_are_equal_strings(
+                T1_std_are_equal_strings(
                     texture_arrays[i].images[j].filename,
                     for_filename))
             {
@@ -558,11 +558,11 @@ void T1_texture_array_debug_dump_texturearray_to_writables(
         }
         
         char filename[128];
-        common_strcpy_capped(filename, 128, "dumped_texturearray_");
-        common_strcat_int_capped(filename, 128, texture_array_i);
-        common_strcat_capped(filename, 128, "_");
-        common_strcat_int_capped(filename, 128, texture_i);
-        common_strcat_capped(filename, 128, ".bmp");
+        T1_std_strcpy_cap(filename, 128, "dumped_texturearray_");
+        T1_std_strcat_int_capped(filename, 128, texture_array_i);
+        T1_std_strcat_cap(filename, 128, "_");
+        T1_std_strcat_int_capped(filename, 128, texture_i);
+        T1_std_strcat_cap(filename, 128, ".bmp");
         
         uint32_t write_good = 0;
         platform_write_rgba_to_writables(

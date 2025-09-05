@@ -77,7 +77,7 @@ static ParsedObj * parsed_obj = NULL;
 
 void T1_objmodel_init(void) {
     parsed_obj = malloc_from_unmanaged(sizeof(ParsedObj));
-    common_memset_char(parsed_obj, 0, sizeof(ParsedObj));
+    T1_std_memset(parsed_obj, 0, sizeof(ParsedObj));
     
     all_mesh_summaries = (MeshSummary *)malloc_from_unmanaged(
         sizeof(MeshSummary) * ALL_MESHES_SIZE);
@@ -89,7 +89,7 @@ void T1_objmodel_init(void) {
     assert(ALL_LOCKED_VERTICES_SIZE > 0);
     all_mesh_vertices = (LockedVertexWithMaterialCollection *)
         malloc_from_unmanaged(sizeof(LockedVertexWithMaterialCollection));
-    common_memset_char(
+    T1_std_memset(
         all_mesh_vertices,
         0,
         sizeof(LockedVertexWithMaterialCollection));
@@ -97,7 +97,7 @@ void T1_objmodel_init(void) {
     // Let's hardcode a basic quad since that's a mesh that will be used by
     // even the features inherent to the engine itself (the terminal, any
     // text labels, the FPS label, etc)
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         all_mesh_summaries[0].resource_name,
         OBJ_STRING_SIZE,
         "basic_quad");
@@ -186,7 +186,7 @@ void T1_objmodel_init(void) {
     
     // Let's hardcode a basic cube since that will be used by the particle
     // effects system
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         all_mesh_summaries[1].resource_name,
         OBJ_STRING_SIZE,
         "basic_cube");
@@ -635,7 +635,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
             int32_t matching_parsed_materials_i = -1;
             for (int32_t j = 0; j < (int32_t)parsed_materials_size; j++) {
                 if (
-                    common_are_equal_strings(
+                    T1_std_are_equal_strings(
                         arg_parsed_obj->material_names[i].name,
                         parsed_materials[j].name))
                 {
@@ -715,8 +715,8 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                         locked_mat->texture_i < 0)
                     {
                         char errmsg[128];
-                        common_strcpy_capped(errmsg, 128, "Missing material texture: ");
-                        common_strcat_capped(
+                        T1_std_strcpy_cap(errmsg, 128, "Missing material texture: ");
+                        T1_std_strcat_cap(
                             errmsg,
                             128,
                             parsed_materials[matching_parsed_materials_i].
@@ -755,7 +755,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
             int32_t parsed_mtls_matching_i = -1;
             for (int32_t i = 0; i < (int32_t)parsed_materials_size; i++) {
                 if (
-                    common_are_equal_strings(
+                    T1_std_are_equal_strings(
                         arg_parsed_obj->material_names[cur_material_i].name,
                         parsed_materials[i].name))
                 {
@@ -830,13 +830,13 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
                 guess_gpu_triangle_normal(
                     /* GPULockedVertex * to_change: */
                         &all_mesh_vertices->gpu_data[locked_vert_i]);
-                common_memcpy(
+                T1_std_memcpy(
                     all_mesh_vertices->gpu_data[locked_vert_i + 1].
                         normal_xyz,
                     all_mesh_vertices->gpu_data[locked_vert_i].
                         normal_xyz,
                     sizeof(float) * 3);
-                common_memcpy(
+                T1_std_memcpy(
                     all_mesh_vertices->gpu_data[locked_vert_i + 2].
                         normal_xyz,
                     all_mesh_vertices->gpu_data[locked_vert_i].
@@ -1150,7 +1150,7 @@ int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
     uint32_t parsed_materials_cap = 20;
     ParsedMaterial * parsed_materials = malloc_from_managed(
         sizeof(ParsedMaterial) * parsed_materials_cap);
-    common_memset_char(
+    T1_std_memset(
         parsed_materials,
         0,
         sizeof(ParsedMaterial) * parsed_materials_cap);
@@ -1368,7 +1368,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
         return -1;
     }
     
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         all_mesh_summaries[return_value].resource_name,
         OBJ_STRING_SIZE,
         obj_filename);
@@ -1396,7 +1396,7 @@ int32_t T1_objmodel_obj_resource_name_to_mesh_id(
 {
     for (int32_t i = 0; i < (int32_t)all_mesh_summaries_size; i++) {
         if (
-            common_are_equal_strings(
+            T1_std_are_equal_strings(
                  all_mesh_summaries[i].resource_name,
                  obj_filename))
         {

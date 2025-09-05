@@ -31,7 +31,7 @@ static void audio_callback(
     }
 }
 
-void start_audio_loop(void) {
+void T1_audio_start_loop(void) {
     uint32_t platform_buffer_size_bytes = 3000;
     
     // stereo 16-bit interleaved linear PCM audio data at 48kHz in SNORM format

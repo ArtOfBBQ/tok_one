@@ -10,7 +10,7 @@ static int32_t points_to_render_size = 0;
 
 void fetch_next_line(LineRequest * stack_recipient)
 {
-    common_memset_char(stack_recipient, 0, sizeof(LineRequest));
+    T1_std_memset(stack_recipient, 0, sizeof(LineRequest));
     
     int32_t use_i = -1;
     for (
@@ -46,7 +46,7 @@ bool32_t fetch_line_by_object_id(
     LineRequest * recipient,
     const int32_t object_id)
 {
-    common_memset_char(recipient, 0, sizeof(LineRequest));
+    T1_std_memset(recipient, 0, sizeof(LineRequest));
     
     for (
         int32_t l_i = 0;
@@ -83,7 +83,7 @@ void commit_line(LineRequest * to_commit)
 
 void fetch_next_point(PointRequest * stack_recipient)
 {
-    common_memset_char(stack_recipient, 0, sizeof(PointRequest));
+    T1_std_memset(stack_recipient, 0, sizeof(PointRequest));
     
     int32_t use_i = -1;
     for (
@@ -118,7 +118,7 @@ bool32_t fetch_point_by_object_id(
     PointRequest * recipient,
     const int32_t object_id)
 {
-    common_memset_char(recipient, 0, sizeof(PointRequest));
+    T1_std_memset(recipient, 0, sizeof(PointRequest));
     
     for (
         int32_t l_i = 0;

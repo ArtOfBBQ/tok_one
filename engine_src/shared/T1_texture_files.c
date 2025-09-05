@@ -16,7 +16,7 @@ static void malloc_img_from_filename(
     file_buffer.contents =
         (char *)malloc_from_managed(sizeof(char) *
             file_buffer.size_without_terminator + 1);
-    common_memset_char(
+    T1_std_memset(
         file_buffer.contents,
         0,
         file_buffer.size_without_terminator + 1);
@@ -64,7 +64,7 @@ static void malloc_img_from_filename(
             /* const size_t subptr_size: */
                 recipient->rgba_values_size);
         
-        common_memset_char(
+        T1_std_memset(
             recipient->rgba_values_page_aligned,
             0,
             recipient->rgba_values_size);
@@ -114,7 +114,7 @@ static void malloc_img_from_filename(
                 (void *)&recipient->rgba_values_page_aligned,
             /* const size_t subptr_size: */
                 recipient->rgba_values_size);
-        common_memset_char(
+        T1_std_memset(
             recipient->rgba_values_page_aligned,
             0,
             recipient->rgba_values_size);
@@ -142,12 +142,12 @@ static void malloc_img_from_filename(
             /* const size_t subptr_size: */
                 recipient->rgba_values_size);
         
-        common_memset_char(
+        T1_std_memset(
             recipient->rgba_values_page_aligned,
             0,
             recipient->rgba_values_size);
         
-        common_memcpy(
+        T1_std_memcpy(
             /* void * dest: */
                 recipient->rgba_values_page_aligned,
             /* const void * src: */
@@ -184,7 +184,7 @@ void T1_texture_files_register_new_by_splitting_file(
     if (!img->good) { return; }
     
     char filename_prefix[256];
-    common_strcpy_capped(filename_prefix, 256, filename);
+    T1_std_strcpy_cap(filename_prefix, 256, filename);
     uint32_t i = 0;
     while (filename_prefix[i] != '\0' && filename_prefix[i] != '.') {
         i++;

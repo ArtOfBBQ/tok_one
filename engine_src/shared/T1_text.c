@@ -641,14 +641,14 @@ void text_request_top_touchable_id(
     zsprite_delete(FPS_COUNTER_OBJECT_ID);
     
     char fps_string[512];
-    common_strcpy_capped(fps_string, 512, "Top touchable id: ");
-    common_strcat_int_capped(fps_string, 512, top_touchable_id);
+    T1_std_strcpy_cap(fps_string, 512, "Top touchable id: ");
+    T1_std_strcat_int_capped(fps_string, 512, top_touchable_id);
     
-    common_strcat_capped(fps_string, 512, ", camera xyz: [");
-    common_strcat_float_capped(fps_string, 512, camera.xyz[0]);
-    common_strcat_float_capped(fps_string, 512, camera.xyz[1]);
-    common_strcat_float_capped(fps_string, 512, camera.xyz[2]);
-    common_strcat_capped(fps_string, 512, "]");
+    T1_std_strcat_cap(fps_string, 512, ", camera xyz: [");
+    T1_std_strcat_float_cap(fps_string, 512, camera.xyz[0]);
+    T1_std_strcat_float_cap(fps_string, 512, camera.xyz[1]);
+    T1_std_strcat_float_cap(fps_string, 512, camera.xyz[2]);
+    T1_std_strcat_cap(fps_string, 512, "]");
     
     font_settings->font_height = 16.0f;
     font_settings->mat.ambient_rgb[0] = 1.0f;

@@ -12,7 +12,7 @@ void T1_material_init(
 void T1_material_construct(
     GPUConstMat * to_construct)
 {
-    common_memset_char(to_construct, 0, sizeof(GPUConstMat));
+    T1_std_memset(to_construct, 0, sizeof(GPUConstMat));
     
     to_construct->alpha = 1.0f;
     to_construct->ambient_rgb[0] = 0.05f;
@@ -42,7 +42,7 @@ static uint32_t T1_material_fetch_locked_material_i(
 {
     for (uint32_t i = 0; i < all_mesh_materials->size; i++) {
         if (
-            common_are_equal_strings(
+            T1_std_are_equal_strings(
                 material_name,
                 all_mesh_materials->material_names[i]))
         {
@@ -60,20 +60,20 @@ uint32_t T1_material_preappend_locked_material_i(
 {
     #ifndef LOGGER_IGNORE_ASSERTS
     uint32_t existing_i = T1_material_fetch_locked_material_i(material_name);
-    if (!common_are_equal_strings(material_name, "default")) {
+    if (!T1_std_are_equal_strings(material_name, "default")) {
         log_assert(existing_i == UINT32_MAX); // doesn't exist
     }
     #endif
     
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         all_mesh_materials->material_names[all_mesh_materials->size],
         MATERIAL_NAME_CAP,
         obj_resource_name);
-    common_strcat_capped(
+    T1_std_strcat_cap(
         all_mesh_materials->material_names[all_mesh_materials->size],
         MATERIAL_NAME_CAP,
         "_");
-    common_strcat_capped(
+    T1_std_strcat_cap(
         all_mesh_materials->material_names[all_mesh_materials->size],
         MATERIAL_NAME_CAP,
         material_name);

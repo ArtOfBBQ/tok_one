@@ -43,27 +43,27 @@ void get_memory_usage_summary_string(
     (void)recipient_cap;
     #endif
     
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         recipient,
         recipient_cap,
         "Unmanaged memory use: ");
-    common_strcat_uint_capped(
+    T1_std_strcat_uint_cap(
         recipient,
         recipient_cap,
         UNMANAGED_MEMORY_SIZE - (uint32_t)unmanaged_memory_size);
-    common_strcat_capped(
+    T1_std_strcat_cap(
         recipient,
         recipient_cap,
         " of: ");
-    common_strcat_uint_capped(
+    T1_std_strcat_uint_cap(
         recipient,
         recipient_cap,
         UNMANAGED_MEMORY_SIZE);
-    common_strcat_capped(
+    T1_std_strcat_cap(
         recipient,
         recipient_cap,
         " (");
-    common_strcat_uint_capped(
+    T1_std_strcat_uint_cap(
         recipient,
         recipient_cap,
         (uint32_t)(
@@ -96,7 +96,7 @@ void memorystore_init(
     
     unmanaged_memory = ptr_unmanaged_memory_block;
     align_pointer(&unmanaged_memory);
-    common_memset_char(unmanaged_memory, 0, UNMANAGED_MEMORY_SIZE);
+    T1_std_memset(unmanaged_memory, 0, UNMANAGED_MEMORY_SIZE);
     
     set_pagesize();
 }
@@ -232,15 +232,15 @@ void * malloc_from_managed_internal(
     #endif
     log_assert(managed_stack->size < MANAGED_MEMORY_STACK_SIZE);
     managed_stack->pointers[managed_stack->size] = return_value;
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         managed_stack->sources[managed_stack->size],
         512,
         called_from_file);
-    common_strcat_capped(
+    T1_std_strcat_cap(
         managed_stack->sources[managed_stack->size],
         512,
         " : ");
-    common_strcat_capped(
+    T1_std_strcat_cap(
         managed_stack->sources[managed_stack->size],
         512,
         called_from_func);

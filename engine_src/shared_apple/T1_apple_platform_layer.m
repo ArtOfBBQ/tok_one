@@ -305,7 +305,7 @@ void platform_get_filenames_in(
     {
         NSString * current_result = [results[i] lastPathComponent];
         
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             filenames[i],
             500,
             (char *)[current_result
@@ -322,7 +322,7 @@ platform_get_application_path(
     (void)recipient_size;
     #endif
     
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         recipient,
         recipient_size,
         (char *)[[[NSBundle mainBundle] bundlePath]
@@ -338,7 +338,7 @@ void platform_get_resources_path(
     (void)recipient_size;
     #endif
     
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         recipient,
         recipient_size,
         (char *)[

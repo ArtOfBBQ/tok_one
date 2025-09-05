@@ -51,7 +51,7 @@ void audio_init(
     all_samples = arg_malloc_function(
         sizeof(int16_t) * ALL_AUDIOSAMPLES_SIZE);
     assert(all_samples != NULL);
-    common_memset_char(all_samples, 0, sizeof(int16_t) * ALL_AUDIOSAMPLES_SIZE);
+    T1_std_memset(all_samples, 0, sizeof(int16_t) * ALL_AUDIOSAMPLES_SIZE);
 }
 
 //__attribute__((noinline))
@@ -292,7 +292,7 @@ void audio_copy_permasound_to_global_buffer(
 
 void audio_clear_global_buffer(void)
 {
-    common_memset_char(
+    T1_std_memset(
         sound_settings->samples_buffer,
         0,
         sound_settings->global_buffer_size_bytes);
@@ -303,7 +303,7 @@ int32_t audio_get_permasound_id_or_register_new(
 {
     for (int32_t i = 0; i < all_permasounds_size; i++) {
         if (
-            common_are_equal_strings(
+            T1_std_are_equal_strings(
                 all_permasounds[i].name,
                 for_resource_name))
         {
@@ -311,7 +311,7 @@ int32_t audio_get_permasound_id_or_register_new(
         }
     }
     
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         all_permasounds[all_permasounds_size].name,
         PERMASOUND_NAME_MAX,
         for_resource_name);
@@ -327,7 +327,7 @@ void audio_register_samples_to_permasound(
     log_assert(samples_size + all_samples_size <= ALL_AUDIOSAMPLES_SIZE);
     log_assert(all_permasounds[permasound_id].allsamples_head_i < 0);
     log_assert(all_permasounds[permasound_id].allsamples_tail_i < 0);
-    common_memcpy(
+    T1_std_memcpy(
         /* void * dst: */
             all_samples + all_samples_size,
         /* const void * src: :*/

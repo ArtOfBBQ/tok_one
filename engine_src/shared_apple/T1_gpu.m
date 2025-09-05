@@ -103,7 +103,7 @@ bool32_t apple_gpu_init(
     
     ags->frame_i = 0;
     
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         error_msg_string,
         512,
         "");
@@ -135,7 +135,7 @@ bool32_t apple_gpu_init(
             const char * errorcstr = [errorstr
                 cStringUsingEncoding: NSASCIIStringEncoding];
             
-            common_strcpy_capped(
+            T1_std_strcpy_cap(
                 error_msg_string,
                 512,
                 errorcstr);
@@ -161,12 +161,12 @@ bool32_t apple_gpu_init(
                 cStringUsingEncoding: NSASCIIStringEncoding];
             
             if (errorcstr != NULL && errorcstr[0] != '\0') {
-                common_strcpy_capped(
+                T1_std_strcpy_cap(
                     error_msg_string,
                     512,
                     errorcstr);
             } else {
-                common_strcpy_capped(
+                T1_std_strcpy_cap(
                     error_msg_string,
                     512,
                     "Failed to find shaders file");
@@ -185,7 +185,7 @@ bool32_t apple_gpu_init(
     if (vertex_shader == NULL) {
         log_append("Missing function: vertex_shader()!");
         
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             error_msg_string,
             512,
             "Missing function: vertex_shader()");
@@ -196,7 +196,7 @@ bool32_t apple_gpu_init(
         [ags->lib newFunctionWithName:
             @"fragment_shader"];
     if (fragment_shader == NULL) {
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             error_msg_string,
             512,
             "Missing function: alphablending_fragment_shader()");
@@ -207,7 +207,7 @@ bool32_t apple_gpu_init(
         [ags->lib newFunctionWithName:
             @"alphablending_fragment_shader"];
     if (alphablending_fragment_shader == NULL) {
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             error_msg_string,
             512,
             "Missing function: alphablending_vertex_shader()");
@@ -219,7 +219,7 @@ bool32_t apple_gpu_init(
         [ags->lib newFunctionWithName:
             @"shadows_vertex_shader"];
     if (shadows_vertex_shader == NULL) {
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             error_msg_string,
             512,
             "Missing function: shadows_vertex_shader()");
@@ -232,7 +232,7 @@ bool32_t apple_gpu_init(
     if (shadows_fragment_shader == NULL) {
         log_append("Missing function: shadows_fragment_shader()!");
         
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             error_msg_string,
             512,
             "Missing function: shadows_fragment_shader()");
@@ -285,7 +285,7 @@ bool32_t apple_gpu_init(
         #ifndef LOGGER_IGNORE_ASSERTS
         log_dump_and_crash("Failed to initialize diamond pipeline");
         #endif
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             error_msg_string,
             512,
             "Failed to initialize diamond pipeline");
@@ -335,7 +335,7 @@ bool32_t apple_gpu_init(
         log_dump_and_crash("Error loading the alphablending shader\n");
         #endif
         
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             error_msg_string,
             512,
             "Failed to load the alphablending shader");
@@ -347,7 +347,7 @@ bool32_t apple_gpu_init(
         [ags->lib newFunctionWithName:
             @"raw_vertex_shader"];
     if (raw_vertex_shader == NULL) {
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             error_msg_string,
             512,
             "Missing function: raw_vertex_shader()");
@@ -358,7 +358,7 @@ bool32_t apple_gpu_init(
         [ags->lib newFunctionWithName:
             @"raw_fragment_shader"];
     if (raw_fragment_shader == NULL) {
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             error_msg_string,
             512,
             "Missing function: raw_fragment_shader()");
@@ -397,7 +397,7 @@ bool32_t apple_gpu_init(
         log_dump_and_crash("Error loading the raw vertex shader\n");
         #endif
         
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             error_msg_string,
             512,
             "Failed to load the raw vertex shader");
@@ -422,7 +422,7 @@ bool32_t apple_gpu_init(
         log_dump_and_crash("Error setting the depth stencil state\n");
         #endif
         
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             error_msg_string,
             512,
             "Failed to load the depth stencil shader");
@@ -446,7 +446,7 @@ bool32_t apple_gpu_init(
         log_dump_and_crash("Error setting the depth stencil state\n");
         #endif
         
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             error_msg_string,
             512,
             "Failed to load the depth stencil shader");
@@ -720,7 +720,7 @@ bool32_t apple_gpu_init(
     if (singlequad_vertex_shader == NULL) {
         log_append("Missing function: postprocess_vertex_shader()!");
         
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             error_msg_string,
             512,
             "Missing function: postprocess_vertex_shader()");
@@ -733,7 +733,7 @@ bool32_t apple_gpu_init(
     
     if (singlequad_fragment_shader == NULL) {
         log_append("Missing function: downsampling_fragment_shader()!");
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             error_msg_string,
             512,
             "Missing function: downsampling_fragment_shader()");
@@ -814,7 +814,7 @@ void platform_gpu_get_device_name(
     
     const char * device_name_cstr =
         [[ags->device name] cStringUsingEncoding:NSASCIIStringEncoding];
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         recipient,
         recipient_cap,
         device_name_cstr);
@@ -1069,12 +1069,12 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
     if (ags->metal_textures[texture_array_i] == NULL) {
         #ifndef LOGGER_IGNORE_ASSERTS
         char errmsg[256];
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             errmsg,
             256,
             "Tried to update uninitialized texturearray")
-        common_strcat_int_capped(errmsg, 256, texture_array_i);
-        common_strcat_capped(errmsg, 256, "\n");
+        T1_std_strcat_int_capped(errmsg, 256, texture_array_i);
+        T1_std_strcat_cap(errmsg, 256, "\n");
         
         log_dump_and_crash(errmsg);
         #endif
@@ -1157,12 +1157,12 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     if (ags->metal_textures[texture_array_i] == NULL) {
         #ifndef LOGGER_IGNORE_ASSERTS
         char errmsg[256];
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             errmsg,
             256,
             "Tried to update uninitialized texturearray")
-        common_strcat_int_capped(errmsg, 256, texture_array_i);
-        common_strcat_capped(errmsg, 256, "\n");
+        T1_std_strcat_int_capped(errmsg, 256, texture_array_i);
+        T1_std_strcat_cap(errmsg, 256, "\n");
         
         log_dump_and_crash(errmsg);
         #endif
@@ -1379,7 +1379,7 @@ void platform_gpu_copy_locked_materials(void)
         options:
             MTLResourceStorageModeShared];
     int32_t minus_one = -1;
-    common_memset_int32(
+    T1_std_memset_i32(
         ags->touch_id_buffer_all_zeros.contents,
         minus_one,
         (uint32_t)touch_buffer_size_bytes);

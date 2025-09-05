@@ -74,7 +74,7 @@ bool32_t zsprite_fetch_by_zsprite_id(
     zSpriteRequest * recipient,
     const int32_t object_id)
 {
-    common_memset_char(recipient, 0, sizeof(zSpriteRequest));
+    T1_std_memset(recipient, 0, sizeof(zSpriteRequest));
     
     for (
         uint32_t zp_i = 0;
@@ -228,11 +228,11 @@ void zsprite_construct(
     assert(to_construct->cpu_data != NULL);
     assert(to_construct->gpu_data != NULL);
     
-    common_memset_char(
+    T1_std_memset(
         to_construct->cpu_data,
         0,
         sizeof(CPUzSprite));
-    common_memset_char(
+    T1_std_memset(
         to_construct->gpu_data,
         0,
         sizeof(GPUzSprite));

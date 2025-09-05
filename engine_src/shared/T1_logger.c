@@ -51,7 +51,7 @@ internal_log_append_uint(
     const char * caller_function_name)
 {
     char converted[1000];
-    common_uint_to_string(
+    T1_std_uint_to_string(
         /* const uint32_t input: */
             to_append,
         /* char * recipient: */
@@ -82,7 +82,7 @@ internal_log_append_int(
     const char * caller_function_name)
 {
     char converted[1000];
-    common_int_to_string(
+    T1_std_int_to_string(
         /* const int32_t input: */
             to_append,
         /* char * recipient: */
@@ -99,7 +99,7 @@ internal_log_append_float(
     const char * caller_function_name)
 {
     char float_str[1000];
-    common_float_to_string(
+    T1_std_float_to_string(
         /* const int32_t input: */
             to_append,
         /* char * recipient: */
@@ -138,7 +138,7 @@ internal_log_append(
             return;
         }
         
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             /* recipient: */
                 app_log + log_i,
             /* recipient_size: */
@@ -158,7 +158,7 @@ internal_log_append(
             return;
         }
         
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             /* recipient: */
                 app_log + log_i,
             /* recipient_size: */
@@ -181,7 +181,7 @@ internal_log_append(
             }
             return;
         }
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             /* recipient: */
                 app_log + log_i,
             /* recipient_size: */
@@ -204,7 +204,7 @@ internal_log_append(
         }
         return;
     }
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         /* recipient: */
             app_log + log_i,
         /* recipient_size: */
@@ -294,35 +294,35 @@ internal_log_assert(
     //Assertion failed: (0), function main, file test.c, line 6.
     char assert_failed_msg[512];
     
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         assert_failed_msg,
         512,
         "Assertion failed: (");
-    common_strcat_capped(
+    T1_std_strcat_cap(
         assert_failed_msg,
         512,
         str_condition);
-    common_strcat_capped(
+    T1_std_strcat_cap(
         assert_failed_msg,
         256,
         "), function ");
-    common_strcat_capped(
+    T1_std_strcat_cap(
         assert_failed_msg,
         512,
         func_name);
-    common_strcat_capped(
+    T1_std_strcat_cap(
         assert_failed_msg,
         512,
         ", file ");
-    common_strcat_capped(
+    T1_std_strcat_cap(
         assert_failed_msg,
         512,
         file_name);
-    common_strcat_capped(
+    T1_std_strcat_cap(
         assert_failed_msg,
         512,
         ", line ");
-    common_strcat_int_capped(
+    T1_std_strcat_int_capped(
         assert_failed_msg,
         512,
         line_number);

@@ -105,7 +105,7 @@ void gameloop_update_before_render_pass(
     
     gameloop_previous_time = engine_globals->this_frame_timestamp_us;
     
-    common_memcpy(frame_data->camera, &camera, sizeof(GPUCamera));
+    T1_std_memcpy(frame_data->camera, &camera, sizeof(GPUCamera));
     
     frame_data->verts_size            = 0;
     frame_data->zsprite_list->size = 0;
@@ -124,15 +124,15 @@ void gameloop_update_before_render_pass(
         pct_progress *= 100.0f;
         
         char loading_text[256];
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             loading_text,
             256,
             "Loading textures - ");
-        common_strcat_float_capped(
+        T1_std_strcat_float_cap(
             loading_text,
             256,
             pct_progress);
-        common_strcat_capped(
+        T1_std_strcat_cap(
             loading_text,
             256,
             "%");
@@ -166,7 +166,7 @@ void gameloop_update_before_render_pass(
     
     if (!application_running) {
         if (crashed_top_of_screen_msg[0] == '\0') {
-            common_strcpy_capped(
+            T1_std_strcpy_cap(
                 crashed_top_of_screen_msg,
                 256,
                 "Failed assert, and also failed to retrieve an error message");

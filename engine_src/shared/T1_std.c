@@ -1,7 +1,7 @@
 #include "T1_std.h"
 
 // void *(*)(void *, int, size_t
-void * common_memset_char(
+void * T1_std_memset(
     void * in,
     int value,
     size_t size_bytes)
@@ -45,7 +45,7 @@ void * common_memset_char(
     
     return in;
 }
-void common_memset_int16(
+void T1_std_memset_i16(
     void * in,
     int16_t value,
     unsigned int size_bytes)
@@ -85,7 +85,8 @@ void common_memset_int16(
         input[i] = value;
     }
 }
-void common_memset_int32(
+
+void T1_std_memset_i32(
     void * in,
     int32_t value,
     unsigned int size_bytes)
@@ -126,7 +127,7 @@ void common_memset_int32(
     }
 }
 
-void common_memset_float(
+void T1_std_memset_f32(
     void * in,
     float value,
     unsigned int size_bytes)
@@ -167,7 +168,7 @@ void common_memset_float(
     }
 }
 
-void * common_memcpy(
+void * T1_std_memcpy(
     void * dest,
     const void * src,
     size_t n_bytes)
@@ -208,28 +209,28 @@ void * common_memcpy(
     return dest;
 }
 
-float common_minf(const float x, const float y)
+float T1_std_minf(const float x, const float y)
 {
     return ((x <= y) * x) + ((y < x) * y);
 }
 
-float common_maxf(const float x, const float y)
+float T1_std_maxf(const float x, const float y)
 {
     return ((x >  y) * x) + ((y <= x) * y);
 }
 
-int common_mini(const int x, const int y)
+int T1_std_mini(const int x, const int y)
 {
     return ((x <= y) * x) + ((y < x) * y);
 }
 
-int common_maxi(const int x, const int y)
+int T1_std_maxi(const int x, const int y)
 {
     return ((x <= y) * y) + ((x > y) * x);
 }
 
 void
-common_internal_strcat_capped(
+T1_std_internal_strcat_cap(
     char * recipient,
     #ifndef COMMON_IGNORE_ASSERTS
     const uint32_t recipient_size,
@@ -255,7 +256,7 @@ common_internal_strcat_capped(
     recipient[i] = '\0';
 }
 
-void common_strcat_char_capped(
+void T1_std_strcat_char_cap(
     char * recipient,
     char to_append)
 {
@@ -270,7 +271,7 @@ void common_strcat_char_capped(
 }
 
 void
-common_internal_strcat_int_capped(
+T1_std_internal_strcat_int_capped(
     char * recipient,
     #ifndef COMMON_IGNORE_ASSERTS
     const uint32_t recipient_size,
@@ -285,11 +286,11 @@ common_internal_strcat_int_capped(
         i++;
     }
     
-    common_int_to_string(to_append, recipient + i);
+    T1_std_int_to_string(to_append, recipient + i);
 }
 
 void
-common_internal_strcat_uint_capped(
+T1_std_internal_strcat_uint_cap(
     char * recipient,
     #ifndef COMMON_IGNORE_ASSERTS
     const uint32_t recipient_size,
@@ -304,11 +305,11 @@ common_internal_strcat_uint_capped(
         i++;
     }
     
-    common_uint_to_string(to_append, recipient + i);
+    T1_std_uint_to_string(to_append, recipient + i);
 }
 
 void
-common_internal_strcat_float_capped(
+T1_std_internal_strcat_float_cap(
     char * recipient,
     #ifndef COMMON_IGNORE_ASSERTS
     const uint32_t recipient_size,
@@ -323,26 +324,26 @@ common_internal_strcat_float_capped(
     uint32_t after_comma =
         ((uint32_t)(positive_append * 1000) - (before_comma * 1000));
     if (to_append < 0.0f) {
-        common_internal_strcat_capped(
+        T1_std_internal_strcat_cap(
             recipient,
             #ifndef COMMON_IGNORE_ASSERTS
             recipient_size,
             #endif
             "-");
     }
-    common_internal_strcat_uint_capped(
+    T1_std_internal_strcat_uint_cap(
         recipient,
         #ifndef COMMON_IGNORE_ASSERTS
         recipient_size,
         #endif
         before_comma);
-    common_internal_strcat_capped(
+    T1_std_internal_strcat_cap(
         recipient,
         #ifndef COMMON_IGNORE_ASSERTS
         recipient_size,
         #endif
         ".");
-    common_internal_strcat_uint_capped(
+    T1_std_internal_strcat_uint_cap(
         recipient,
         #ifndef COMMON_IGNORE_ASSERTS
         recipient_size,
@@ -350,7 +351,7 @@ common_internal_strcat_float_capped(
         after_comma);
 }
 
-void common_internal_strcpy_capped(
+void T1_std_internal_strcpy_cap(
     char * recipient,
     #ifndef COMMON_IGNORE_ASSERTS
     const uint32_t recipient_size,
@@ -374,7 +375,7 @@ void common_internal_strcpy_capped(
 }
 
 void
-common_copy_strings(
+T1_std_copy_strings(
     char * recipient,
     const uint32_t recipient_size,
     const char * origin,
@@ -421,7 +422,7 @@ size_t T1_std_strlen( const char * null_terminated_string)
 }
 
 bool32_t
-common_string_starts_with(
+T1_std_string_starts_with(
     const char * str_to_check,
     const char * start)
 {
@@ -442,7 +443,7 @@ common_string_starts_with(
 }
 
 bool32_t
-common_string_ends_with(
+T1_std_string_ends_with(
     const char * str_to_check,
     const char * ending)
 {
@@ -473,7 +474,7 @@ common_string_ends_with(
 }
 
 void
-common_strsub(
+T1_std_strsub(
     char * in,
     const char * to_match,
     const char * replacement)
@@ -519,7 +520,7 @@ common_strsub(
 }
 
 bool32_t
-common_are_equal_strings(
+T1_std_are_equal_strings(
     const char * str1,
     const char * str2)
 {
@@ -550,7 +551,7 @@ common_are_equal_strings(
 }
 
 bool32_t
-common_are_equal_until_nullterminator(
+T1_std_are_equal_until_nullterminator(
     const char * str1,
     const char * str2)
 {
@@ -573,7 +574,7 @@ common_are_equal_until_nullterminator(
 }
 
 bool32_t
-common_are_equal_strings_of_length(
+T1_std_are_equal_strings_of_length(
     const char * str1,
     const char * str2,
     const uint64_t len)
@@ -587,7 +588,7 @@ common_are_equal_strings_of_length(
     return true;
 }
 
-void common_float_to_string(
+void T1_std_float_to_string(
     const float input,
     char * recipient,
     const uint32_t recipient_size)
@@ -599,7 +600,7 @@ void common_float_to_string(
         (int32_t)((input - temp_above_decimal) * 100000);
     int32_t above_decimal = (int32_t)temp_above_decimal;
     
-    common_int_to_string(
+    T1_std_int_to_string(
         /* const int32_t input: */
             above_decimal,
         /* char * recipient: */
@@ -623,32 +624,32 @@ void common_float_to_string(
         recipient[count++] = '0';
     }
     
-    common_int_to_string(
+    T1_std_int_to_string(
         /* const int32_t input: */
             below_decimal,
         /* char * recipient: */
             recipient + count);
 }
 
-void common_int_to_string(
+void T1_std_int_to_string(
     const int32_t input,
     char * recipient)
 {
     if (input < 0) {
         recipient[0] = '-';
         int32_t positive_to_append = (input + (input == INT32_MIN)) * -1;
-        common_uint_to_string(
+        T1_std_uint_to_string(
             /* input: */ (uint32_t)positive_to_append,
             /* recipient: */ recipient + 1);
     } else {
-        common_uint_to_string(
+        T1_std_uint_to_string(
             /* input: */ (uint32_t)input,
             /* recipient: */ recipient);
     }
 }
 
 void
-common_uint_to_string(
+T1_std_uint_to_string(
     const uint32_t input,
     char * recipient)
 {
@@ -690,7 +691,7 @@ common_uint_to_string(
 }
 
 int32_t
-common_string_to_int32_validate(
+T1_std_string_to_int32_validate(
     const char * input,
     bool32_t * good)
 {
@@ -702,7 +703,7 @@ common_string_to_int32_validate(
     // the maximum int32_t is 2147483647
     
     if (input[0] == '-') {
-        uint32_t temp = common_string_to_uint32(
+        uint32_t temp = T1_std_string_to_uint32(
             /* input: */
                 input + 1);
         
@@ -716,7 +717,7 @@ common_string_to_int32_validate(
         return (int32_t)temp * -1;
     }
     
-    uint32_t unsigned_return = common_string_to_uint32_validate(input, good);
+    uint32_t unsigned_return = T1_std_string_to_uint32_validate(input, good);
     
     if (!*good) {
         return 0;
@@ -726,10 +727,10 @@ common_string_to_int32_validate(
 }
 
 int32_t
-common_string_to_int32(const char * input)
+T1_std_string_to_int32(const char * input)
 {
     bool32_t result_good = false;
-    int32_t result = common_string_to_int32_validate(
+    int32_t result = T1_std_string_to_int32_validate(
         input,
         &result_good);
     #ifndef COMMON_IGNORE_ASSERTS
@@ -739,7 +740,7 @@ common_string_to_int32(const char * input)
 }
 
 uint32_t
-common_string_to_uint32_validate(
+T1_std_string_to_uint32_validate(
     const char * input,
     bool32_t * good)
 {
@@ -784,11 +785,11 @@ common_string_to_uint32_validate(
 }
 
 uint32_t
-common_string_to_uint32(
+T1_std_string_to_uint32(
     const char * input)
 {
     bool32_t result_good = false;
-    uint32_t result = common_string_to_uint32_validate(
+    uint32_t result = T1_std_string_to_uint32_validate(
         input,
         &result_good);
     #ifndef COMMON_IGNORE_ASSERTS
@@ -798,7 +799,7 @@ common_string_to_uint32(
 }
 
 float
-common_string_to_float_validate(
+T1_std_string_to_float_validate(
     const char * input,
     bool32_t * good)
 {
@@ -882,7 +883,7 @@ common_string_to_float_validate(
     first_part[first_part_size] = '\0';
     
     bool32_t first_part_valid = false;
-    int first_part_int = common_string_to_int32_validate(
+    int first_part_int = T1_std_string_to_int32_validate(
         /* const char input: */ first_part,
         &first_part_valid);
     if (!first_part_valid) {
@@ -898,7 +899,7 @@ common_string_to_float_validate(
         
         second_part[second_part_size] = '\0';
         bool32_t second_part_valid = false;
-        int second_part_int = common_string_to_int32_validate(
+        int second_part_int = T1_std_string_to_int32_validate(
             /* const char input: */ second_part,
             &second_part_valid);
         if (!second_part_valid) {
@@ -934,11 +935,11 @@ common_string_to_float_validate(
 }
 
 float
-common_string_to_float(
+T1_std_string_to_float(
     const char * input)
 {
     bool32_t result_good = false;
-    float result = common_string_to_float_validate(
+    float result = T1_std_string_to_float_validate(
         input,
         &result_good);
     

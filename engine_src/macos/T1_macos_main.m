@@ -177,9 +177,9 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
             return TOK_KEY_PAGEDOWN;
         default:
             #ifndef LOGGER_IGNORE_ASSERTS
-            common_strcpy_capped(err_msg, 128, "unhandled apple keycode: ");
-            common_strcat_uint_capped(err_msg, 128, apple_key);
-            common_strcat_capped(err_msg, 128, "\n");
+            T1_std_strcpy_cap(err_msg, 128, "unhandled apple keycode: ");
+            T1_std_strcat_uint_cap(err_msg, 128, apple_key);
+            T1_std_strcat_cap(err_msg, 128, "\n");
             #endif
             break;
     }
@@ -478,7 +478,7 @@ int main(int argc, const char * argv[]) {
     
     char shader_lib_path_cstr[2000];
     platform_get_resources_path(shader_lib_path_cstr, 2000);
-    common_strcat_capped(
+    T1_std_strcat_cap(
         shader_lib_path_cstr,
         1000,
         "/Shaders.metallib");
@@ -507,20 +507,20 @@ int main(int argc, const char * argv[]) {
         #endif
         
         char errmsg2[512];
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             errmsg2,
             512,
             "Critical failure: couldn't configure Metal graphics."
             " Looked for shader in: ");
-        common_strcat_capped(
+        T1_std_strcat_cap(
             errmsg2,
             512,
             shader_lib_path_cstr);
-        common_strcat_capped(
+        T1_std_strcat_cap(
             errmsg2,
             512,
             " Metal error description: ");
-        common_strcat_capped(
+        T1_std_strcat_cap(
             errmsg2,
             512,
             errmsg);

@@ -328,7 +328,7 @@ uint32_t particle_effects_size;
 void construct_particle_effect(
     ParticleEffect * to_construct)
 {
-    common_memset_char(to_construct, 0, sizeof(ParticleEffect));
+    T1_std_memset(to_construct, 0, sizeof(ParticleEffect));
     
     zSpriteRequest poly_request;
     poly_request.cpu_data       = &to_construct->zpolygon_cpu;
@@ -546,7 +546,7 @@ void add_particle_effects_to_workload(
             
             log_assert(
                 frame_data->zsprite_list->size < MAX_ZSPRITES_PER_BUFFER);
-            common_memcpy(
+            T1_std_memcpy(
                 /* void * dst: */
                     frame_data->zsprite_list->polygons +
                         frame_data->zsprite_list->size,

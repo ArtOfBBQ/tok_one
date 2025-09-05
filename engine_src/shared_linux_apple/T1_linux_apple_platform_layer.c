@@ -19,7 +19,7 @@ void platform_layer_init(
         size += 1;
     }
     
-    common_memset_char(mutexes, 0, sizeof(OSMutexID) * MUTEXES_SIZE);
+    T1_std_memset(mutexes, 0, sizeof(OSMutexID) * MUTEXES_SIZE);
     
     *unmanaged_memory_store = (void *)(
         ((char *)*unmanaged_memory_store) + size);

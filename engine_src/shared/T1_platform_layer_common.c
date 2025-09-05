@@ -143,7 +143,7 @@ void resource_filename_to_pathfile(
     
     char resource_path[256];
     platform_get_resources_path(resource_path, 256);
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         recipient,
         assert_capacity,
         resource_path);
@@ -151,11 +151,11 @@ void resource_filename_to_pathfile(
     char separator[MAX_SEPARATOR_SIZE];
     platform_get_directory_separator(
         /* recipient: */ separator);
-    common_strcat_capped(
+    T1_std_strcat_cap(
         recipient,
         assert_capacity,
         separator);
-    common_strcat_capped(
+    T1_std_strcat_cap(
         recipient,
         assert_capacity,
         filename);
@@ -189,11 +189,11 @@ void writable_filename_to_pathfile(
     log_assert(
         (filename_length + MAX_SEPARATOR_SIZE + 1) < MAX_FILENAME_SIZE);
     char separator_and_filename[MAX_FILENAME_SIZE];
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         separator_and_filename,
         filename_length + separator_size + 1,
         separator);
-    common_strcat_capped(
+    T1_std_strcat_cap(
         separator_and_filename,
         filename_length + separator_size + 1,
         filename);
@@ -215,11 +215,11 @@ void writable_filename_to_pathfile(
     }
     #endif
     
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         recipient,
         assert_capacity,
         writables_path);
-    common_strcat_capped(
+    T1_std_strcat_cap(
         recipient,
         assert_capacity,
         separator_and_filename);

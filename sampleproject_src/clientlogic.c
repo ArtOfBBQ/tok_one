@@ -477,12 +477,12 @@ void client_logic_evaluate_terminal_command(
     char * response,
     const uint32_t response_cap)
 {
-    if (common_are_equal_strings(command, "EXAMPLE COMMAND")) {
-        common_strcpy_capped(response, response_cap, "Hello from clientlogic!");
+    if (T1_std_are_equal_strings(command, "EXAMPLE COMMAND")) {
+        T1_std_strcpy_cap(response, response_cap, "Hello from clientlogic!");
         return;
     }
     
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         response,
         response_cap,
         "Unrecognized command - see client_logic_evaluate_terminal_command() "

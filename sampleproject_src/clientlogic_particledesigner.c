@@ -24,12 +24,12 @@ static void load_obj_basemodel(
     platform_get_directory_separator(dir_sep);
     
     char writables_filepath[256];
-    common_strcpy_capped(writables_filepath, 256, writables_path);
-    common_strcat_capped(writables_filepath, 256, dir_sep);
-    common_strcat_capped(writables_filepath, 256, "basemodel.obj");
+    T1_std_strcpy_cap(writables_filepath, 256, writables_path);
+    T1_std_strcat_cap(writables_filepath, 256, dir_sep);
+    T1_std_strcat_cap(writables_filepath, 256, "basemodel.obj");
     
     if (!platform_file_exists(writables_filepath)) {
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             error_message,
             128,
             "Couldn't load basemodel.obj from "
@@ -62,7 +62,7 @@ static void load_obj_basemodel(
         platform_gpu_copy_locked_vertices();
         particle_effects[0].zpolygon_cpu.mesh_id = base_mesh_id;
     } else {
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             error_message,
             128,
             "Couldn't read basemodel.obj from "
@@ -94,7 +94,7 @@ static ParticleDesignerState * pds = NULL;
 
 void client_logic_init(void) {
     pds = malloc_from_unmanaged(sizeof(ParticleDesignerState));
-    common_memset_char(pds, 0, sizeof(ParticleDesignerState));
+    T1_std_memset(pds, 0, sizeof(ParticleDesignerState));
 }
 
 void client_logic_early_startup(
@@ -500,18 +500,18 @@ void client_logic_evaluate_terminal_command(
     const uint32_t response_cap)
 {
     if (
-        common_are_equal_strings(
+        T1_std_are_equal_strings(
             command,
             "EXAMPLE COMMAND"))
     {
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             response,
             response_cap,
             "Hello from clientlogic!");
         return;
     }
     
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         response,
         response_cap,
         "Unrecognized command - see client_logic_evaluate_terminal_command() "

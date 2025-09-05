@@ -5,7 +5,7 @@ static uint32_t renderer_initialized = false;
 void renderer_init(void) {
     renderer_initialized = true;
     
-    common_memset_char(&camera, 0, sizeof(GPUCamera));
+    T1_std_memset(&camera, 0, sizeof(GPUCamera));
 }
 
 #if RAW_SHADER_ACTIVE
@@ -392,7 +392,7 @@ void renderer_hardware_render(
     
     log_assert(zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
     
-    common_memcpy(
+    T1_std_memcpy(
         /* void * dest: */
             frame_data->zsprite_list->polygons,
         /* const void * src: */

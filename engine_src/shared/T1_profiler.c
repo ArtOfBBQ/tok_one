@@ -78,15 +78,15 @@ void profiler_init(
     
     frames = profiler_malloc_function(
         sizeof(Frame) * FRAMES_MAX);
-    common_memset_char(frames, 0, sizeof(Frame) * FRAMES_MAX);
+    T1_std_memset(frames, 0, sizeof(Frame) * FRAMES_MAX);
     
     function_stack = profiler_malloc_function(
         sizeof(uint32_t) * FUNCTION_STACK_MAX);
-    common_memset_char(function_stack, 0, sizeof(uint32_t) * FUNCTION_STACK_MAX);
+    T1_std_memset(function_stack, 0, sizeof(uint32_t) * FUNCTION_STACK_MAX);
     
     gui_function_stack = profiler_malloc_function(
         sizeof(uint32_t) * FUNCTION_STACK_MAX);
-    common_memset_char(gui_function_stack, 0, sizeof(uint32_t) * FUNCTION_STACK_MAX);
+    T1_std_memset(gui_function_stack, 0, sizeof(uint32_t) * FUNCTION_STACK_MAX);
     
     profiler_object_id = next_nonui_object_id();
     profiler_touchable_id = next_nonui_touchable_id();
@@ -128,19 +128,19 @@ void profiler_new_frame(void) {
             gui_top_message,
             GUI_TOP_MESSAGE_MAX,
             "PAUSED - frame ");
-        common_strcat_uint_capped(
+        T1_std_strcat_uint_cap(
             gui_top_message,
             GUI_TOP_MESSAGE_MAX,
             frame_i);
-        common_strcat_capped(
+        T1_std_strcat_cap(
             gui_top_message,
             GUI_TOP_MESSAGE_MAX,
             " took ");
-        common_strcat_uint_capped(
+        T1_std_strcat_uint_cap(
             gui_top_message,
             GUI_TOP_MESSAGE_MAX,
             (uint32_t)frames[frame_i].elapsed);
-        common_strcat_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, " cycles.");
+        T1_std_strcat_cap(gui_top_message, GUI_TOP_MESSAGE_MAX, " cycles.");
         engine_globals->pause_profiler = true;
         return;
     }
@@ -148,7 +148,7 @@ void profiler_new_frame(void) {
     frame_i += 1;
     frame_i %= FRAMES_MAX;
     
-    common_memset_char(&frames[frame_i], 0, sizeof(Frame));
+    T1_std_memset(&frames[frame_i], 0, sizeof(Frame));
     frames[frame_i].started_at = __rdtsc();
 }
 
@@ -172,7 +172,7 @@ void profiler_start(const char * function_name)
             i++)
         {
             if (
-                common_are_equal_strings(
+                T1_std_are_equal_strings(
                     /* char *string_1: */
                         frames[frame_i].profiles[
                             frames[frame_i].profiles[parent_prof_i].
@@ -260,7 +260,7 @@ void profiler_end(const char * function_name)
     function_stack_size -= 1;
     
     log_assert(
-        common_are_equal_strings(
+        T1_std_are_equal_strings(
             frames[frame_i].profiles[prof_i].description,
             function_name));
     
@@ -377,7 +377,7 @@ void profiler_draw_labels(void) {
             
             char line_text[128];
             common_strcpy_capped(line_text, 128, "Selected frame: ");
-            common_strcat_int_capped(
+            T1_std_strcat_int_capped(
                 line_text,
                 128,
                 f_i);
@@ -403,18 +403,18 @@ void profiler_draw_labels(void) {
             
             cur_top -= (font_settings->font_height + 2.0f);
             common_strcpy_capped(line_text, 128, "Cycles: ");
-            common_strcat_uint_capped(
+            T1_std_strcat_uint_cap(
                 line_text,
                 128,
                 (uint32_t)frames[f_i].elapsed);
-            common_strcat_capped(line_text, 128, " (");
+            T1_std_strcat_cap(line_text, 128, " (");
             float pct_of_acceptable = (float)frames[f_i].elapsed /
                 (float)acceptable_frame_clock_cycles;
             common_strcat_float_capped(
                 line_text,
                 128,
                 pct_of_acceptable);
-            common_strcat_capped(line_text, 128, ")");
+            T1_std_strcat_cap(line_text, 128, ")");
             text_request_label_renderable(
                 /* const int32_t with_object_id: */
                     profiler_object_id,
@@ -472,26 +472,26 @@ void profiler_draw_labels(void) {
                     line_text,
                     128,
                     frames[f_i].profiles[func_i].description);
-                common_strcat_capped(
+                T1_std_strcat_cap(
                     line_text,
                     128,
                     " ");
-                common_strcat_uint_capped(
+                T1_std_strcat_uint_cap(
                     line_text,
                     128,
                     (uint32_t)frames[f_i].
                         profiles[func_i].elapsed_total);
-                common_strcat_capped(
+                T1_std_strcat_cap(
                     line_text,
                     128,
                     " (");
                 
                 log_assert(pct_elapsed >= 0.0f);
-                common_strcat_int_capped(
+                T1_std_strcat_int_capped(
                     line_text,
                     128,
                     (int)(pct_elapsed * 100.0f));
-                common_strcat_capped(
+                T1_std_strcat_cap(
                     line_text,
                     128,
                     "%)");

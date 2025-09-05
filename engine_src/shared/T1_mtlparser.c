@@ -788,13 +788,13 @@ void mtlparser_parse(
                 
                 float * target_float = NULL;
                 if (
-                    common_are_equal_strings(
+                    T1_std_are_equal_strings(
                         token->string_value,
                         "uv_scroll[0]"))
                 {
                     target_float = &current_material->T1_uv_scroll[0];
                 } else if (
-                    common_are_equal_strings(
+                    T1_std_are_equal_strings(
                         token->string_value,
                         "uv_scroll[1]"))
                 {
