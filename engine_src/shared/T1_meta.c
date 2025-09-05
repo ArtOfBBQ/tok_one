@@ -808,7 +808,7 @@ static void T1_refl_get_field_recursive(
     while (array_indices_found > 0) {
         return_value->public.array_sizes[0] = return_value->public.array_sizes[1];
         return_value->public.array_sizes[1] = return_value->public.array_sizes[2];
-        return_value->public.array_sizes[2] = return_value->public.array_sizes[0];
+        return_value->public.array_sizes[2] = 1;
         array_indices_found -= 1;
     }
     
@@ -1130,13 +1130,13 @@ void T1_meta_write_to_known_field_str(
         break;
         case T1_TYPE_CHAR:
             rightmost_array_i = 2;
-            while (field.internal_field->array_sizes[rightmost_array_i] < 2) {
+            while (field.public.array_sizes[rightmost_array_i] < 2) {
                 rightmost_array_i -= 1;
             }
             
             if (
                 t1rs->strlen(value_to_write_str) >
-                    field.internal_field->array_sizes[rightmost_array_i])
+                    field.public.array_sizes[rightmost_array_i])
             {
                 #if T1_META_ASSERTS
                 assert(0);
@@ -1144,6 +1144,9 @@ void T1_meta_write_to_known_field_str(
                 return;
             }
             
+            #if T1_META_ASSERTS
+            assert(t1rs->memcpy != NULL);
+            #endif
             t1rs->memcpy(
                 ((char *)target_parent_ptr + field.public.offset),
                 value_to_write_str,
