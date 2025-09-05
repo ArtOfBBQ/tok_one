@@ -62,6 +62,15 @@ static void construct_metastruct(MetaStruct * to_construct) {
     to_construct->head_fields_i = UINT16_MAX;
 }
 
+static void construct_public_metafield(T1MetaField * to_construct) {
+    to_construct->name = NULL;
+    to_construct->offset = 0;
+    to_construct->array_sizes[0] = 0;
+    to_construct->array_sizes[1] = 0;
+    to_construct->array_sizes[2] = 0;
+    to_construct->data_type = T1_TYPE_NOTSET;
+}
+
 static void construct_metafield(MetaField * to_construct) {
     #if T1_META_ASSERTS
     assert(to_construct != NULL);
@@ -499,6 +508,9 @@ void T1_meta_reg_field(
     
     target_mfield->type = field_type;
     target_mfield->offset = field_offset;
+    #if T1_META_ASSERTS
+    assert(target_mfield->offset < (1 << 24));
+    #endif
     target_mfield->array_sizes[0] = field_array_size_1;
     target_mfield->array_sizes[1] = field_array_size_2;
     target_mfield->array_sizes[2] = field_array_size_3;
@@ -681,11 +693,7 @@ static void T1_refl_get_field_recursive(
     return_value->internal_parent = metastruct;
     
     if (metastruct == NULL) {
-        return_value->public.array_sizes[0] = 0;
-        return_value->public.array_sizes[1] = 0;
-        return_value->public.array_sizes[2] = 0;
-        return_value->public.data_type = T1_TYPE_NOTSET;
-        return_value->public.offset = -1;
+        construct_public_metafield(&return_value->public);
         return_value->internal_field = NULL;
         return_value->internal_parent = NULL;
         return;
@@ -730,11 +738,7 @@ static void T1_refl_get_field_recursive(
         metastruct, first_part);
     
     if (metafield == NULL) {
-        return_value->public.array_sizes[0] = 0;
-        return_value->public.array_sizes[1] = 0;
-        return_value->public.array_sizes[2] = 0;
-        return_value->public.data_type = T1_TYPE_NOTSET;
-        return_value->public.offset = -1;
+        construct_public_metafield(&return_value->public);
         return_value->internal_field = NULL;
         *good = 1;
         return;
@@ -792,7 +796,11 @@ static void T1_refl_get_field_recursive(
         }
     }
     
+    return_value->public.name = return_value->internal_field->name;
     return_value->public.offset += (uint32_t)metafield->offset + (offset_per_array_index * flat_array_index);
+    #if T1_META_ASSERTS
+    assert(return_value->public.offset >= 0);
+    #endif
     return_value->public.data_type = metafield->type;
     return_value->public.array_sizes[0] = metafield->array_sizes[0];
     return_value->public.array_sizes[1] = metafield->array_sizes[1];
@@ -953,8 +961,8 @@ void T1_meta_write_to_known_field_str(
                     value_adj) == 0)
             {
                 found_enum_field = 1;
-                value_i64 = t1rs->meta_enum_vals->value;
-                value_u64 = (uint64_t)t1rs->meta_enum_vals->value;
+                value_i64 = t1rs->meta_enum_vals[i].value;
+                value_u64 = (uint64_t)t1rs->meta_enum_vals[i].value;
                 value_is_i64 = 1;
                 value_is_u64 = value_i64 >= 0;
                 break;
@@ -1192,6 +1200,9 @@ T1MetaField T1_meta_get_field_at_index(
     }
     
     return_value.offset = field->offset;
+    #if T1_META_ASSERTS
+    assert(field->offset >= 0);
+    #endif
     return_value.name = field->name;
     return_value.array_sizes[0] = field->array_sizes[0];
     return_value.array_sizes[1] = field->array_sizes[1];
