@@ -495,6 +495,101 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
     #endif
 }
 
+static void set_slider_pos_from_current_val(
+    ActiveUIElement * ae,
+    GPUzSprite * pin_gpu_zsprite)
+{
+    log_assert(ae != NULL);
+    log_assert(pin_gpu_zsprite != NULL);
+    log_assert(pin_gpu_zsprite->touchable_id == ae->touchable_id);
+    
+    // deduce the offset for the pin, based on the current value
+    // let's say the slider ranges from 1.0f to 10.0f
+    // and our value is at 4.0f
+    // this is the same as being at 3.0f on a 0.0f to 9.0f scale
+    // this iteh same as 3.0f / 9.0f = 0.3f
+    double initial_pct = 0.0;
+    double curval_f64;
+    switch (ae->user_set.linked_type) {
+        case T1_TYPE_F32:
+            curval_f64 = *(float *)ae->slider_linked_value;
+            initial_pct = ((curval_f64 -
+                ae->user_set.custom_float_min) /
+                    (ae->user_set.custom_float_max
+                        - ae->user_set.custom_float_min));
+        break;
+        case T1_TYPE_I64:
+            curval_f64 = (double)*(int64_t *)ae->slider_linked_value;
+            initial_pct = ((curval_f64 -
+                (double)ae->user_set.custom_int_min) /
+                    ((double)ae->user_set.custom_int_max
+                        - (double)ae->user_set.custom_int_min));
+        break;
+        case T1_TYPE_I32:
+            curval_f64 = (double)*(int32_t *)ae->slider_linked_value;
+            initial_pct = ((curval_f64 -
+                (double)ae->user_set.custom_int_min) /
+                    ((double)ae->user_set.custom_int_max
+                        - (double)ae->user_set.custom_int_min));
+        break;
+        case T1_TYPE_I16:
+            curval_f64 = (double)*(int16_t *)ae->slider_linked_value;
+            initial_pct = ((curval_f64 -
+                (double)ae->user_set.custom_int_min) /
+                    ((double)ae->user_set.custom_int_max
+                        - (double)ae->user_set.custom_int_min));
+        break;
+        case T1_TYPE_I8:
+            curval_f64 = (double)*(int8_t *)ae->slider_linked_value;
+            initial_pct = ((curval_f64 -
+                (double)ae->user_set.custom_int_min) /
+                    ((double)ae->user_set.custom_int_max
+                        - (double)ae->user_set.custom_int_min));
+        break;
+        case T1_TYPE_U64:
+            curval_f64 = (double)*(uint64_t *)ae->slider_linked_value;
+            initial_pct = ((curval_f64 -
+                (double)ae->user_set.custom_uint_min) /
+                    ((double)ae->user_set.custom_uint_max
+                        - (double)ae->user_set.custom_uint_min));
+        break;
+        case T1_TYPE_U32:
+            curval_f64 = (double)*(uint32_t *)ae->slider_linked_value;
+            initial_pct = ((curval_f64 -
+                (double)ae->user_set.custom_uint_min) /
+                    ((double)ae->user_set.custom_uint_max
+                        - (double)ae->user_set.custom_uint_min));
+        break;
+        case T1_TYPE_U16:
+            curval_f64 = (double)*(uint16_t *)ae->slider_linked_value;
+            initial_pct = ((curval_f64 -
+                (double)ae->user_set.custom_uint_min) /
+                    ((double)ae->user_set.custom_uint_max
+                        - (double)ae->user_set.custom_uint_min));
+        break;
+        case T1_TYPE_U8:
+            curval_f64 = (double)*(uint8_t *)ae->slider_linked_value;
+            initial_pct = ((curval_f64 -
+                (double)ae->user_set.custom_uint_min) /
+                    ((double)ae->user_set.custom_uint_max
+                        - (double)ae->user_set.custom_uint_min));
+        break;
+        default:
+            log_append("Missing type, can't deducd initial slider val");
+            initial_pct = 0.5;
+    }
+    
+    if (initial_pct < 0.0) { initial_pct = 0.0; }
+    if (initial_pct > 1.0) { initial_pct = 1.0; }
+    
+    float new_x_offset = (float)(ae->slider_width * initial_pct) - (ae->slider_width / 2);
+    
+    log_assert(new_x_offset >= -ae->slider_width / 2);
+    log_assert(new_x_offset <= ae->slider_width);
+    
+    pin_gpu_zsprite->xyz_offset[0] = new_x_offset;
+}
+
 void T1_uielement_request_slider(
     const int32_t background_zsprite_id,
     const int32_t label_zsprite_id,
@@ -511,93 +606,93 @@ void T1_uielement_request_slider(
     log_assert(next_ui_element_settings->perm.pin_width_screenspace > 0);
     log_assert(next_ui_element_settings->perm.pin_height_screenspace > 0);
     
-    ActiveUIElement * next_active_element = next_active_ui_element();
-    next_active_element->user_set = next_ui_element_settings->perm;
-    next_active_element->has_label = next_ui_element_settings->slider_label != NULL;
-    if (next_active_element->has_label) {
+    ActiveUIElement * next_ae = next_active_ui_element();
+    next_ae->user_set = next_ui_element_settings->perm;
+    next_ae->has_label = next_ui_element_settings->slider_label != NULL;
+    if (next_ae->has_label) {
         T1_std_strcpy_cap(
-            next_active_element->user_set.label_prefix,
+            next_ae->user_set.label_prefix,
             128,
             next_ui_element_settings->slider_label);
     }
-    next_active_element->label_dirty = true;
+    next_ae->label_dirty = true;
     
-    next_active_element->background_zsprite_id = background_zsprite_id;
-    next_active_element->pin_zsprite_id        = pin_zsprite_id;
-    next_active_element->label_zsprite_id      = label_zsprite_id;
+    next_ae->background_zsprite_id = background_zsprite_id;
+    next_ae->pin_zsprite_id        = pin_zsprite_id;
+    next_ae->label_zsprite_id      = label_zsprite_id;
     
     if (next_ui_element_settings->perm.custom_min_max_vals) {
-        next_active_element->user_set.custom_int_min = next_ui_element_settings->perm.custom_int_min;
-        next_active_element->user_set.custom_int_max =
+        next_ae->user_set.custom_int_min = next_ui_element_settings->perm.custom_int_min;
+        next_ae->user_set.custom_int_max =
             next_ui_element_settings->perm.custom_int_max;
     } else {
         switch (next_ui_element_settings->perm.linked_type) {
             case T1_TYPE_I32:
-                next_active_element->user_set.custom_int_min = INT32_MIN;
-                next_active_element->user_set.custom_int_max = INT32_MAX;
+                next_ae->user_set.custom_int_min = INT32_MIN;
+                next_ae->user_set.custom_int_max = INT32_MAX;
             break;
             case T1_TYPE_U32:
-                next_active_element->
+                next_ae->
                     user_set.custom_uint_min = 0;
-                next_active_element->
+                next_ae->
                     user_set.custom_uint_max = UINT32_MAX;
             break;
             case T1_TYPE_I64:
-                next_active_element->user_set.custom_int_min = INT64_MIN;
-                next_active_element->user_set.custom_int_max = INT64_MAX;
+                next_ae->user_set.custom_int_min = INT64_MIN;
+                next_ae->user_set.custom_int_max = INT64_MAX;
             break;
             case T1_TYPE_U64:
-                next_active_element->user_set.custom_float_min = 0;
-                next_active_element->user_set.custom_float_max = INT64_MAX;
+                next_ae->user_set.custom_float_min = 0;
+                next_ae->user_set.custom_float_max = INT64_MAX;
             break;
             case T1_TYPE_F32:
-                next_active_element->user_set.custom_float_min = FLOAT32_MIN;
-                next_active_element->user_set.custom_float_max = FLOAT32_MAX;
+                next_ae->user_set.custom_float_min = FLOAT32_MIN;
+                next_ae->user_set.custom_float_max = FLOAT32_MAX;
             break;
             default:
                 log_assert(0);
         }
     }
-    next_active_element->slider_width =
+    next_ae->slider_width =
         engineglobals_screenspace_width_to_width(
             next_ui_element_settings->perm.slider_width_screenspace,
             next_ui_element_settings->perm.z);
-    next_active_element->slideable = true;
-    next_active_element->deleted = false;
-    next_active_element->slider_linked_value = linked_value_ptr;
-    next_active_element->touchable_id = next_ui_element_touchable_id();
+    next_ae->slideable = true;
+    next_ae->deleted = false;
+    next_ae->slider_linked_value = linked_value_ptr;
+    next_ae->touchable_id = next_ui_element_touchable_id();
     
     zSpriteRequest slider_back;
     zsprite_request_next(&slider_back);
     zsprite_construct_quad_around(
         /* const float mid_x: */
             engineglobals_screenspace_x_to_x(
-                next_active_element->user_set.screenspace_x,
-                next_active_element->user_set.z),
+                next_ae->user_set.screenspace_x,
+                next_ae->user_set.z),
         /* const float mid_y: */
             engineglobals_screenspace_y_to_y(
-                next_active_element->user_set.screenspace_y,
-                next_active_element->user_set.z),
+                next_ae->user_set.screenspace_y,
+                next_ae->user_set.z),
         /* const float z: */
-            next_active_element->user_set.z,
+            next_ae->user_set.z,
         /* const float width: */
             engineglobals_screenspace_width_to_width(
-                next_active_element->user_set.
+                next_ae->user_set.
                     slider_width_screenspace,
-                next_active_element->user_set.z),
+                next_ae->user_set.z),
         /* const float height: */
             engineglobals_screenspace_height_to_height(
-                next_active_element->user_set.slider_height_screenspace,
-                next_active_element->user_set.z),
+                next_ae->user_set.slider_height_screenspace,
+                next_ae->user_set.z),
         /* zPolygon * recipient: */
             &slider_back);
     
     slider_back.cpu_data->zsprite_id = background_zsprite_id;
     
     slider_back.gpu_data->base_mat.texturearray_i =
-        next_active_element->user_set.slider_background_tex.array_i;
+        next_ae->user_set.slider_background_tex.array_i;
     slider_back.gpu_data->base_mat.texture_i =
-        next_active_element->user_set.slider_background_tex.slice_i;
+        next_ae->user_set.slider_background_tex.slice_i;
     
     slider_back.gpu_data->base_mat.diffuse_rgb[0] =
         next_ui_element_settings->slider_background_rgba[0];
@@ -609,9 +704,9 @@ void T1_uielement_request_slider(
         next_ui_element_settings->slider_background_rgba[3];
     
     slider_back.gpu_data->ignore_lighting =
-        next_active_element->user_set.ignore_lighting;
+        next_ae->user_set.ignore_lighting;
     slider_back.gpu_data->ignore_camera =
-        next_active_element->user_set.ignore_camera;
+        next_ae->user_set.ignore_camera;
     log_assert(slider_back.cpu_data->visible);
     log_assert(!slider_back.cpu_data->committed);
     log_assert(!slider_back.cpu_data->deleted);
@@ -619,26 +714,26 @@ void T1_uielement_request_slider(
     
     zSpriteRequest slider_pin;
     zsprite_request_next(&slider_pin);
-    float pin_z = next_active_element->user_set.z - 0.00001f;
+    float pin_z = next_ae->user_set.z - 0.00001f;
     zsprite_construct_quad_around(
         /* const float mid_x: */
             engineglobals_screenspace_x_to_x(
-                next_active_element->user_set.screenspace_x,
-                next_active_element->user_set.z),
+                next_ae->user_set.screenspace_x,
+                next_ae->user_set.z),
         /* const float mid_y: */
             engineglobals_screenspace_y_to_y(
-                next_active_element->user_set.screenspace_y,
-                next_active_element->user_set.z),
+                next_ae->user_set.screenspace_y,
+                next_ae->user_set.z),
         /* const float z: */
             pin_z,
         /* const float width: */
             engineglobals_screenspace_width_to_width(
-                next_active_element->user_set.pin_width_screenspace,
-                next_active_element->user_set.z),
+                next_ae->user_set.pin_width_screenspace,
+                next_ae->user_set.z),
         /* const float height: */
             engineglobals_screenspace_height_to_height(
-                next_active_element->user_set.pin_height_screenspace,
-                next_active_element->user_set.z),
+                next_ae->user_set.pin_height_screenspace,
+                next_ae->user_set.z),
         /* zPolygon * recipient: */
             &slider_pin);
     
@@ -647,9 +742,9 @@ void T1_uielement_request_slider(
     slider_pin.gpu_data->xyz_offset[1] = 0.0f;
     
     slider_pin.gpu_data->base_mat.texturearray_i =
-        next_active_element->user_set.slider_pin_tex.array_i;
+        next_ae->user_set.slider_pin_tex.array_i;
     slider_pin.gpu_data->base_mat.texture_i =
-        next_active_element->user_set.slider_pin_tex.slice_i;
+        next_ae->user_set.slider_pin_tex.slice_i;
     
     slider_pin.gpu_data->base_mat.diffuse_rgb[0] =
         next_ui_element_settings->slider_pin_rgba[0];
@@ -661,11 +756,16 @@ void T1_uielement_request_slider(
         next_ui_element_settings->slider_pin_rgba[3];
     
     slider_pin.gpu_data->ignore_lighting =
-        next_active_element->user_set.ignore_lighting;
+        next_ae->user_set.ignore_lighting;
     slider_pin.gpu_data->ignore_camera =
-        next_active_element->user_set.ignore_camera;
+        next_ae->user_set.ignore_camera;
     slider_pin.gpu_data->touchable_id =
-        next_active_element->touchable_id;
+        next_ae->touchable_id;
+    
+    set_slider_pos_from_current_val(
+        next_ae,
+        slider_pin.gpu_data);
+    
     zsprite_commit(&slider_pin);
 }
 

@@ -152,8 +152,6 @@ void client_logic_early_startup(
     T1_meta_struct_array(ParticleEffect, GPUzSprite, pertime_rand_add, 2, &ok);
     T1_meta_struct_field(ParticleEffect, GPUzSprite, pertime_add, &ok);
     T1_meta_struct_field(ParticleEffect, GPUzSprite, perexptime_add, &ok);
-    // T1_meta_struct_field(ParticleEffect, GPUzSprite, zpolygon_cpu, &ok);
-    // T1_meta_struct_field(ParticleEffect, GPUzSprite, zpolygon_gpu, &ok);
     T1_meta_field(ParticleEffect, T1_TYPE_U64, lifespan, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(0, 50000000, &ok);
     T1_meta_field(ParticleEffect, T1_TYPE_U64, pause_per_set, &ok);
@@ -161,8 +159,6 @@ void client_logic_early_startup(
     T1_meta_field(ParticleEffect,
         T1_TYPE_U32, spawns_per_sec, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(1, 10000, &ok);
-    //    T1_meta_field(ParticleEffect,
-    //        T1_TYPE_U32, verts_per_particle, &ok);
     T1_meta_field(ParticleEffect, T1_TYPE_U32, loops, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(0, 20, &ok);
     T1_meta_field(ParticleEffect, T1_TYPE_F32, light_reach, &ok);
