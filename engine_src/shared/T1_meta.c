@@ -3,11 +3,21 @@
 typedef struct {
     char * name;
     char * struct_type_name;
-    T1Type type;
+    union {
+        uint64_t custom_uint_max;
+        int64_t  custom_int_max;
+        double   custom_float_max;
+    };
+    union {
+        uint64_t custom_uint_min;
+        int64_t  custom_int_min;
+        double   custom_float_min;
+    };
     uint32_t offset;
     uint16_t parent_enum_id;
     uint16_t next_i;
     uint16_t array_sizes[T1_REFL_MAX_ARRAY_SIZES];
+    T1Type type;
 } MetaField;
 
 typedef struct {
@@ -459,7 +469,7 @@ void T1_meta_reg_field(
         return;
     }
     
-    // check for existing struct name
+    // We only support registering to the most recently registered struct
     MetaStruct * target_mstruct = &t1rs->
         metastructs[t1rs->meta_structs_size-1];
     
@@ -507,6 +517,57 @@ void T1_meta_reg_field(
     }
     
     target_mfield->type = field_type;
+    switch (target_mfield->type) {
+        case T1_TYPE_NOTSET:
+            #if T1_META_ASSERTS
+            assert(0); // field type should have been set on registration
+            #endif
+        break;
+        case T1_TYPE_STRING:
+        case T1_TYPE_STRUCT:
+        case T1_TYPE_ENUM:
+            // no min/max needed
+            target_mfield->custom_uint_max = 0;
+            target_mfield->custom_uint_min = 0;
+        break;
+        case T1_TYPE_U64:
+            target_mfield->custom_uint_max = UINT64_MAX;
+            target_mfield->custom_uint_min = 0;
+        break;
+        case T1_TYPE_U32:
+            target_mfield->custom_uint_max = UINT32_MAX;
+            target_mfield->custom_uint_min = 0;
+        break;
+        case T1_TYPE_U16:
+            target_mfield->custom_uint_max = UINT16_MAX;
+            target_mfield->custom_uint_min = 0;
+        break;
+        case T1_TYPE_U8:
+            target_mfield->custom_uint_max = UINT8_MAX;
+            target_mfield->custom_uint_min = 0;
+        break;
+        case T1_TYPE_I64:
+            target_mfield->custom_int_max = INT64_MAX;
+            target_mfield->custom_int_min = INT64_MIN;
+        break;
+        case T1_TYPE_I32:
+            target_mfield->custom_int_max = INT32_MAX;
+            target_mfield->custom_int_min = INT32_MIN;
+        break;
+        case T1_TYPE_I16:
+            target_mfield->custom_int_max = INT16_MAX;
+            target_mfield->custom_int_min = INT16_MIN;
+        break;
+        case T1_TYPE_I8:
+        case T1_TYPE_CHAR:
+            target_mfield->custom_int_max = INT8_MAX;
+            target_mfield->custom_int_min = INT8_MIN;
+        break;
+        case T1_TYPE_F32:
+            target_mfield->custom_float_max = 3.40282347E+38f;
+            target_mfield->custom_float_min = -3.40282347E+38f;
+        break;
+    }
     target_mfield->offset = field_offset;
     #if T1_META_ASSERTS
     assert(target_mfield->offset < (1 << 24));
@@ -603,6 +664,151 @@ void T1_meta_reg_field(
         previous_link = next_link;
     }
     #endif
+    
+    *good = 1;
+}
+
+void T1_meta_reg_custom_float_limits_for_last_field(
+    const double floating_min,
+    const double floating_max,
+    uint32_t * good)
+{
+    *good = 0;
+    
+    // We only support registering to the most recently registered struct
+    MetaStruct * target_mstruct = &t1rs->
+        metastructs[t1rs->meta_structs_size-1];
+    
+    #if T1_META_ASSERTS
+    assert(target_mstruct != NULL);
+    #endif
+    
+    //  We only support registering to the most recently registered field
+    MetaField * target_mfield = &t1rs->metafields_store[t1rs->meta_fields_size-1];
+    
+    if (target_mfield == NULL) {
+        #if T1_META_ASSERTS
+        assert(0); // can't set limits, no such field
+        #endif
+        return;
+    }
+    
+    if (target_mfield->type != T1_TYPE_F32) {
+        #if T1_META_ASSERTS
+        assert(0); // can't set float limits, not a floating point field
+        #endif
+        return;
+    }
+    
+    if (floating_min >= floating_max) {
+        #if T1_META_ASSERTS
+        assert(0);
+        #endif
+        return;
+    }
+    
+    target_mfield->custom_float_max = (float)floating_max;
+    target_mfield->custom_float_min = (float)floating_min;
+    
+    *good = 1;
+}
+
+void T1_meta_reg_custom_int_limits_for_last_field(
+    const int64_t int_min,
+    const int64_t int_max,
+    uint32_t * good)
+{
+    *good = 0;
+    
+    // We only support registering to the most recently registered struct
+    MetaStruct * target_mstruct = &t1rs->
+        metastructs[t1rs->meta_structs_size-1];
+    
+    #if T1_META_ASSERTS
+    assert(target_mstruct != NULL);
+    #endif
+    
+    //  We only support registering to the most recently registered field
+    MetaField * target_mfield = &t1rs->metafields_store[t1rs->meta_fields_size-1];
+    
+    if (target_mfield == NULL) {
+        #if T1_META_ASSERTS
+        assert(0); // can't set limits, no such field
+        #endif
+        return;
+    }
+    
+    if (
+        target_mfield->type != T1_TYPE_I64 &&
+        target_mfield->type != T1_TYPE_I32 &&
+        target_mfield->type != T1_TYPE_I16 &&
+        target_mfield->type != T1_TYPE_I8)
+    {
+        #if T1_META_ASSERTS
+        assert(0); // can't set int limits, not an int field
+        #endif
+        return;
+    }
+    
+    if (int_min >= int_max) {
+        #if T1_META_ASSERTS
+        assert(0);
+        #endif
+        return;
+    }
+    
+    target_mfield->custom_int_max = int_max;
+    target_mfield->custom_int_min = int_min;
+    
+    *good = 1;
+}
+
+void T1_meta_reg_custom_uint_limits_for_last_field(
+    const uint64_t uint_min,
+    const uint64_t uint_max,
+    uint32_t * good)
+{
+    *good = 0;
+    
+    // We only support registering to the most recently registered struct
+    MetaStruct * target_mstruct = &t1rs->
+        metastructs[t1rs->meta_structs_size-1];
+    
+    #if T1_META_ASSERTS
+    assert(target_mstruct != NULL);
+    #endif
+    
+    //  We only support registering to the most recently registered field
+    MetaField * target_mfield = &t1rs->metafields_store[t1rs->meta_fields_size-1];
+    
+    if (target_mfield == NULL) {
+        #if T1_META_ASSERTS
+        assert(0); // can't set limits, no such field
+        #endif
+        return;
+    }
+    
+    if (
+        target_mfield->type != T1_TYPE_U64 &&
+        target_mfield->type != T1_TYPE_U32 &&
+        target_mfield->type != T1_TYPE_U16 &&
+        target_mfield->type != T1_TYPE_U8)
+    {
+        #if T1_META_ASSERTS
+        assert(0); // can't set int limits, not an int field
+        #endif
+        return;
+    }
+    
+    if (uint_min >= uint_max) {
+        #if T1_META_ASSERTS
+        assert(0);
+        #endif
+        return;
+    }
+    
+    target_mfield->custom_uint_max = uint_max;
+    target_mfield->custom_uint_min = uint_min;
     
     *good = 1;
 }
@@ -798,6 +1004,8 @@ static void T1_refl_get_field_recursive(
     
     return_value->public.name = return_value->internal_field->name;
     return_value->public.offset += (uint32_t)metafield->offset + (offset_per_array_index * flat_array_index);
+    return_value->public.custom_uint_max = metafield->custom_uint_max;
+    return_value->public.custom_uint_min = metafield->custom_uint_min;
     #if T1_META_ASSERTS
     assert(return_value->public.offset >= 0);
     #endif
@@ -1206,11 +1414,41 @@ T1MetaField T1_meta_get_field_at_index(
     #if T1_META_ASSERTS
     assert(field->offset >= 0);
     #endif
+    return_value.custom_int_max = field->custom_int_max;
+    return_value.custom_int_min = field->custom_int_min;
     return_value.name = field->name;
     return_value.array_sizes[0] = field->array_sizes[0];
     return_value.array_sizes[1] = field->array_sizes[1];
     return_value.array_sizes[2] = field->array_sizes[2];
     return_value.data_type = field->type;
+    
+    #if T1_META_ASSERTS
+    switch (field->type) {
+        case T1_TYPE_ENUM:
+        case T1_TYPE_STRUCT:
+        case T1_TYPE_CHAR:
+        case T1_TYPE_STRING:
+        break;
+        case T1_TYPE_F32:
+            assert(field->custom_float_max > field->custom_float_min);
+        break;
+        case T1_TYPE_I64:
+        case T1_TYPE_I32:
+        case T1_TYPE_I16:
+        case T1_TYPE_I8:
+            assert(field->custom_int_max > field->custom_int_min);
+        break;
+        case T1_TYPE_U64:
+        case T1_TYPE_U32:
+        case T1_TYPE_U16:
+        case T1_TYPE_U8:
+            assert(field->custom_uint_max > field->custom_uint_min);
+        break;
+        case T1_TYPE_NOTSET:
+            assert(0);
+        break;
+    }
+    #endif
     
     return return_value;
 }

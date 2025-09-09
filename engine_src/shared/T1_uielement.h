@@ -10,6 +10,7 @@
 #include "T1_scheduled_animations.h"
 #include "T1_text.h"
 #include "T1_profiler.h"
+#include "T1_meta.h"
 
 
 #ifdef __cplusplus
@@ -24,25 +25,48 @@ same for most buttons/sliders in the app and don't want to set every time.
 If you do want sliders of different sizes, you can set the slider size, request
 some sliders, change the slider size, and then request some more sliders
 */
+typedef struct  {
+    union {
+        uint64_t custom_uint_max;
+        int64_t  custom_int_max;
+        double   custom_float_max;
+    };
+    union {
+        uint64_t custom_uint_min;
+        int64_t  custom_int_min;
+        double   custom_float_min;
+    };
+    T1Tex     slider_background_tex;
+    T1Tex     slider_pin_tex;
+    float     slider_width_screenspace;
+    float     slider_height_screenspace;
+    float     pin_width_screenspace;
+    float     pin_height_screenspace;
+    
+    float     screenspace_x;
+    float     screenspace_y;
+    float     z;
+    
+    char      interaction_sound_filename[128];
+    char      label_prefix[128];
+    bool8_t   custom_min_max_vals;
+    bool8_t   ignore_lighting;
+    bool8_t   ignore_camera;
+    T1Type    linked_type;
+} UIElementPermUserSettings;
+
 typedef struct NextUIElementSettings {
-    void     (* slider_slid_funcptr)(void);
+    UIElementPermUserSettings perm;
+    char *   slider_label;
     float    slider_background_rgba[4];
     float    slider_pin_rgba[4];
-    bool32_t ignore_lighting;
-    bool32_t ignore_camera;
-    T1Tex    slider_background_tex;
-    T1Tex    slider_pin_tex;
-    float    slider_width_screenspace;
-    float    slider_height_screenspace;
-    float    pin_width_screenspace;
-    float    pin_height_screenspace;
     float    button_width_screenspace;
     float    button_height_screenspace;
     float    button_background_rgba[4];
     int32_t  button_background_texturearray_i;
     int32_t  button_background_texture_i;
     float    slider;
-    char     interaction_sound_filename[128];
+    bool8_t  slider_label_shows_value;
 } NextUIElementSettings;
 
 extern NextUIElementSettings * next_ui_element_settings;
@@ -52,29 +76,15 @@ void uielement_init(void);
 
 void ui_elements_handle_touches(uint64_t ms_elapsed);
 
-void request_int_slider(
-    const int32_t background_object_id,
-    const int32_t pin_object_id,
-    const float x_screenspace,
-    const float y_screenspace,
-    const float z,
-    const int32_t min_value,
-    const int32_t max_value,
-    int32_t * linked_value);
-
 /*
 A slider linked to a float of your choice, for the user to slide left/right to
 get the value of their choosing
 */
-void request_float_slider(
-    const int32_t background_object_id,
-    const int32_t pin_object_id,
-    const float x_screenspace,
-    const float y_screenspace,
-    const float z,
-    const float min_value,
-    const float max_value,
-    float * linked_value);
+void T1_uielement_request_slider(
+    const int32_t background_zsprite_id,
+    const int32_t label_zsprite_id,
+    const int32_t pin_zsprite_id,
+    void * linked_value_ptr);
 
 void request_button(
     const int32_t button_object_id,

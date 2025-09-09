@@ -78,9 +78,17 @@ void engineglobals_register_transformed_imputed_normal_for_debugging(
     const float origin[3],
     const float imputed_normal[3]);
 
+float engineglobals_x_to_screenspace_x(
+    const float x,
+    const float given_z);
+
 // To convert from our screenspace system to 'world x' that is used for
 // the position of zpolygons
 float engineglobals_screenspace_x_to_x(const float screenspace_x, const float given_z);
+
+float engineglobals_y_to_screenspace_y(
+    const float y,
+    const float given_z);
 
 // To convert from our screenspace system to 'world y' that is used for
 // the position of zpolygons

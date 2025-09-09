@@ -76,8 +76,33 @@ void T1_meta_reg_field(
     const uint16_t field_array_size_3,
     uint32_t * good);
 
+void T1_meta_reg_custom_float_limits_for_last_field(
+    const double floating_min,
+    const double floating_max,
+    uint32_t * good);
+
+void T1_meta_reg_custom_int_limits_for_last_field(
+    const int64_t int_min,
+    const int64_t int_max,
+    uint32_t * good);
+
+void T1_meta_reg_custom_uint_limits_for_last_field(
+    const uint64_t uint_min,
+    const uint64_t uint_max,
+    uint32_t * good);
+
 #define T1_REFL_MAX_ARRAY_SIZES 3
 typedef struct {
+    union {
+        uint64_t custom_uint_max;
+        int64_t  custom_int_max;
+        double   custom_float_max;
+    };
+    union {
+        uint64_t custom_uint_min;
+        int64_t  custom_int_min;
+        double   custom_float_min;
+    };
     int64_t offset; // -1 if no such field
     char * name;
     uint16_t array_sizes[T1_REFL_MAX_ARRAY_SIZES];

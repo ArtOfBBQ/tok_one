@@ -416,7 +416,7 @@ int main(int argc, const char * argv[]) {
     bool32_t initial_log_dump_succesful = false;
     log_dump(&initial_log_dump_succesful);
     if (!initial_log_dump_succesful) {
-        printf("%s\n", "initial log dump unsuccesful, exiting app");
+        log_dump_and_crash("initial log dump unsuccesful, exiting app");
         return 1;
     }
     

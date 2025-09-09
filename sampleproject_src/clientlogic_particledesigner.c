@@ -77,17 +77,22 @@ static void load_obj_basemodel(
     return;
 }
 
-typedef struct SliderParticleProperty {
+typedef struct {
     char property_name[128];
     size_t property_offset;
-} SliderParticleProperty;
+    int32_t slider_zsprite_id;
+    int32_t label_zsprite_id;
+    int32_t pin_zsprite_id;
+} SliderForParticleProperty;
 
 #define MAX_SLIDER_PARTICLE_PROPS 100
 
 
 typedef struct ParticleDesignerState {
-   SliderParticleProperty regs[MAX_SLIDER_PARTICLE_PROPS];
+   SliderForParticleProperty regs[MAX_SLIDER_PARTICLE_PROPS];
    uint32_t regs_size;
+   ParticleEffect * editing;
+   ParticleEffect previous_values;
 } ParticleDesignerState;
 
 static ParticleDesignerState * pds = NULL;
@@ -102,6 +107,8 @@ void client_logic_early_startup(
     char * error_message)
 {
     *success = 0;
+    
+    mouse_scroll_pos = -20.0f;
     
     uint32_t ok = 0;
     T1_meta_struct(GPUConstMat, &ok);
@@ -145,25 +152,29 @@ void client_logic_early_startup(
     T1_meta_struct_array(ParticleEffect, GPUzSprite, pertime_rand_add, 2, &ok);
     T1_meta_struct_field(ParticleEffect, GPUzSprite, pertime_add, &ok);
     T1_meta_struct_field(ParticleEffect, GPUzSprite, perexptime_add, &ok);
-    T1_meta_struct_field(ParticleEffect, GPUzSprite, zpolygon_cpu, &ok);
-    T1_meta_struct_field(ParticleEffect, GPUzSprite, zpolygon_gpu, &ok);
-    T1_meta_field(ParticleEffect, T1_TYPE_U64, random_seed, &ok);
-    T1_meta_field(ParticleEffect, T1_TYPE_U64, elapsed, &ok);
+    // T1_meta_struct_field(ParticleEffect, GPUzSprite, zpolygon_cpu, &ok);
+    // T1_meta_struct_field(ParticleEffect, GPUzSprite, zpolygon_gpu, &ok);
     T1_meta_field(ParticleEffect, T1_TYPE_U64, lifespan, &ok);
+    T1_meta_reg_custom_uint_limits_for_last_field(0, 50000000, &ok);
     T1_meta_field(ParticleEffect, T1_TYPE_U64, pause_per_set, &ok);
-    T1_meta_field(ParticleEffect, T1_TYPE_I32, zsprite_id, &ok);
-    T1_meta_field(ParticleEffect, T1_TYPE_U32, deleted, &ok);
-    T1_meta_field(ParticleEffect, T1_TYPE_U32, committed, &ok);
+    T1_meta_reg_custom_uint_limits_for_last_field(0, 10000000, &ok);
     T1_meta_field(ParticleEffect,
         T1_TYPE_U32, spawns_per_sec, &ok);
-    T1_meta_field(ParticleEffect,
-        T1_TYPE_U32, verts_per_particle, &ok);
+    T1_meta_reg_custom_uint_limits_for_last_field(1, 10000, &ok);
+    //    T1_meta_field(ParticleEffect,
+    //        T1_TYPE_U32, verts_per_particle, &ok);
     T1_meta_field(ParticleEffect, T1_TYPE_U32, loops, &ok);
-    T1_meta_field(ParticleEffect, T1_TYPE_U32, shattered, &ok);
-    T1_meta_field(ParticleEffect, T1_TYPE_U32, cast_light, &ok);
+    T1_meta_reg_custom_uint_limits_for_last_field(0, 20, &ok);
     T1_meta_field(ParticleEffect, T1_TYPE_F32, light_reach, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(0.1f, 10.0f, &ok);
     T1_meta_field(ParticleEffect, T1_TYPE_F32, light_strength, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(0.1f, 4.0f, &ok);
     T1_meta_array(ParticleEffect, T1_TYPE_F32, light_rgb, 3, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(0.0f, 1.0f, &ok);
+    T1_meta_field(ParticleEffect, T1_TYPE_U8, shattered, &ok);
+    T1_meta_reg_custom_uint_limits_for_last_field(0, 1, &ok);
+    T1_meta_field(ParticleEffect, T1_TYPE_U8, cast_light, &ok);
+    T1_meta_reg_custom_uint_limits_for_last_field(0, 1, &ok);
     assert(ok);
     
     example_particles_id = next_nonui_object_id();
@@ -177,6 +188,142 @@ void client_logic_early_startup(
     engine_globals->draw_axes = true;
     
     *success = 1;
+}
+
+#define HEIGHT_PER_SLIDER 60.0f
+static float get_slider_y_screenspace(uint32_t i) {
+    return engine_globals->window_height + 100 -
+            (HEIGHT_PER_SLIDER * i);
+}
+
+static void redraw_all_sliders(void) {
+    float whitespace_height = 6.0f;
+    
+    next_ui_element_settings->perm.ignore_camera         = true;
+    next_ui_element_settings->perm.ignore_lighting       = true;
+    next_ui_element_settings->perm.pin_width_screenspace = 20;
+    next_ui_element_settings->perm.pin_height_screenspace =
+        ((HEIGHT_PER_SLIDER - whitespace_height) * 5) / 6;
+    next_ui_element_settings->perm.slider_width_screenspace =
+        next_ui_element_settings->perm.pin_height_screenspace * 10;
+    next_ui_element_settings->perm.slider_height_screenspace = ((HEIGHT_PER_SLIDER - whitespace_height) * 5) / 6;
+    next_ui_element_settings->slider_pin_rgba[0]        = 0.7f;
+    next_ui_element_settings->slider_pin_rgba[1]        = 0.5f;
+    next_ui_element_settings->slider_pin_rgba[2]        = 0.5f;
+    next_ui_element_settings->slider_pin_rgba[3]        = 1.0f;
+    next_ui_element_settings->slider_background_rgba[0] = 0.2f;
+    next_ui_element_settings->slider_background_rgba[1] = 0.2f;
+    next_ui_element_settings->slider_background_rgba[2] = 0.3f;
+    next_ui_element_settings->slider_background_rgba[3] = 1.0f;
+    
+    uint32_t num_properties = T1_meta_get_num_of_fields_in_struct(
+        ParticleEffect);
+    
+    for (uint32_t i = 0; i < num_properties; i++) {
+        
+        T1MetaField field = T1_meta_get_field_at_index(
+            "ParticleEffect",
+            i);
+        
+        float cur_x = engine_globals->window_width -
+            (next_ui_element_settings->perm.slider_width_screenspace / 2) - 15.0f;
+        
+        float cur_y = get_slider_y_screenspace(i);
+        float cur_z = 0.75f;
+        
+        next_ui_element_settings->perm.screenspace_x = cur_x;
+        next_ui_element_settings->perm.screenspace_y = cur_y;
+        next_ui_element_settings->perm.z = cur_z;
+        
+        pds->regs[i].slider_zsprite_id = next_ui_element_object_id();
+        pds->regs[i].label_zsprite_id = next_ui_element_object_id();
+        pds->regs[i].pin_zsprite_id = next_ui_element_object_id();
+        
+        switch (field.data_type) {
+            case T1_TYPE_U64:
+            case T1_TYPE_U32:
+            case T1_TYPE_U16:
+            case T1_TYPE_U8:
+                next_ui_element_settings->perm.custom_min_max_vals = true;
+                next_ui_element_settings->perm.custom_uint_max =
+                    field.custom_uint_max;
+                next_ui_element_settings->perm.custom_uint_min =
+                    field.custom_uint_min;
+            break;
+            case T1_TYPE_I64:
+            case T1_TYPE_I32:
+            case T1_TYPE_I16:
+            case T1_TYPE_I8:
+                next_ui_element_settings->perm.custom_min_max_vals = true;
+                next_ui_element_settings->perm.custom_int_max =
+                    field.custom_int_max;
+                next_ui_element_settings->perm.custom_int_min =
+                    field.custom_int_min;
+            break;
+            case T1_TYPE_F32:
+                next_ui_element_settings->perm.custom_min_max_vals = true;
+                next_ui_element_settings->perm.custom_float_max =
+                    field.custom_float_max;
+                next_ui_element_settings->perm.custom_float_min =
+                    field.custom_float_min;
+            break;
+            default:
+                next_ui_element_settings->perm.custom_min_max_vals = false;
+        }
+        
+        switch (field.data_type) {
+            case T1_TYPE_STRUCT:
+                text_request_label_around_x_at_top_y(
+                    /* const int32_t with_object_id: */
+                        pds->regs[i].slider_zsprite_id,
+                    /* const char * text_to_draw: */
+                        field.name,
+                    /* const float mid_x_pixelspace: */
+                        cur_x,
+                    /* const float top_y_pixelspace: */
+                        cur_y,
+                    /* const float z: */
+                        cur_z,
+                    /* const float max_width: */
+                        engine_globals->window_width * 2);
+            break;
+            case T1_TYPE_U64:
+            case T1_TYPE_I64:
+            case T1_TYPE_I32:
+            case T1_TYPE_U32:
+            case T1_TYPE_F32:
+                next_ui_element_settings->perm.linked_type =
+                    field.data_type;
+                next_ui_element_settings->slider_label = field.name;
+                next_ui_element_settings->slider_label_shows_value = true;
+                
+                T1_uielement_request_slider(
+                    pds->regs[i].slider_zsprite_id,
+                    pds->regs[i].pin_zsprite_id,
+                    pds->regs[i].label_zsprite_id,
+                    ((char *)pds->editing + field.offset));
+            break;
+            default:
+                font_settings->font_height = 20;
+                font_settings->ignore_camera = true;
+                font_settings->ignore_lighting = true;
+                text_request_label_around(
+                    /* const int32_t with_object_id: */
+                        pds->regs[i].label_zsprite_id,
+                    /* const char * text_to_draw: */
+                        "implement me!",
+                    /* const float mid_x_pixelspace: */
+                        cur_x,
+                    /* const float mid_y_pixelspace: */
+                        cur_y,
+                    /* const float z: */
+                        cur_z,
+                    /* const float max_width: */
+                        engine_globals->window_width * 2);
+        }
+        
+        pds->regs_size += 1;
+    }
 }
 
 static void request_gfx_from_empty_scene(void) {
@@ -196,123 +343,16 @@ static void request_gfx_from_empty_scene(void) {
     light->xyz[2]        =  0.75f;
     commit_zlight(light);
     
-    float height_per_entry = 60.0f;
-    float whitespace_height = 8.0f;
+    pds->editing = &particle_effects[0];
+    construct_particle_effect(pds->editing);
+    particle_effects_size = 1;
     
-    font_settings->font_height = (height_per_entry / 2 ) - whitespace_height;
-    font_settings->mat.diffuse_rgb[0] = 0.5f;
-    font_settings->mat.diffuse_rgb[1] = 1.0f;
-    font_settings->mat.diffuse_rgb[2] = 0.5f;
-    font_settings->mat.ambient_rgb[0] = 1.0f;
-    font_settings->mat.ambient_rgb[1] = 1.0f;
-    font_settings->mat.ambient_rgb[2] = 1.0f;
-    font_settings->mat.rgb_cap[0] = 1.0f;
-    font_settings->mat.rgb_cap[1] = 1.0f;
-    font_settings->mat.rgb_cap[2] = 1.0f;
-    font_settings->ignore_lighting = true;
-    font_settings->ignore_camera = true;
-    font_settings->alpha = 1.0f;
-    font_settings->mat.alpha = 1.0f;
+    pds->editing->zpolygon_cpu.mesh_id = BASIC_CUBE_MESH_ID;
+    pds->editing->zpolygon_gpu.xyz[0] = 0.0f;
+    pds->editing->zpolygon_gpu.xyz[1] = 0.0f;
+    pds->editing->zpolygon_gpu.xyz[2] = 1.0f;
     
-    next_ui_element_settings->ignore_camera = true;
-    next_ui_element_settings->ignore_lighting = true;
-    next_ui_element_settings->pin_width_screenspace = 20;
-    next_ui_element_settings->pin_height_screenspace = (height_per_entry) / 2;;
-    next_ui_element_settings->slider_width_screenspace = 250;
-    next_ui_element_settings->slider_height_screenspace = (height_per_entry - whitespace_height) / 2;;
-    next_ui_element_settings->slider_pin_rgba[0] = 0.7f;
-    next_ui_element_settings->slider_pin_rgba[1] = 0.5f;
-    next_ui_element_settings->slider_pin_rgba[2] = 0.5f;
-    next_ui_element_settings->slider_pin_rgba[3] = 1.0f;
-    next_ui_element_settings->slider_background_rgba[0] = 0.2f;
-    next_ui_element_settings->slider_background_rgba[1] = 0.2f;
-    next_ui_element_settings->slider_background_rgba[2] = 0.3f;
-    next_ui_element_settings->slider_background_rgba[3] = 1.0f;
-    
-    uint32_t num_properties = T1_meta_get_num_of_fields_in_struct(ParticleEffect);
-    
-    for (uint32_t i = 0; i < num_properties; i++) {
-        
-        T1MetaField field = T1_meta_get_field_at_index(
-            "ParticleEffect",
-            i);
-        
-        float cur_x = engine_globals->window_width -
-            (next_ui_element_settings->slider_width_screenspace / 2) - 15.0f;
-        
-        float cur_y =
-            engine_globals->window_height - 10 -
-                (height_per_entry * i);
-        
-        switch (field.data_type) {
-            case T1_TYPE_STRUCT:
-                text_request_label_around_x_at_top_y(
-                    /* const int32_t with_object_id: */
-                        52,
-                    /* const char * text_to_draw: */
-                        field.name,
-                    /* const float mid_x_pixelspace: */
-                        cur_x,
-                    /* const float top_y_pixelspace: */
-                        cur_y,
-                    /* const float z: */
-                        1.0f,
-                    /* const float max_width: */
-                        engine_globals->window_width * 2);
-            break;
-            case T1_TYPE_F32:
-                text_request_label_around_x_at_top_y(
-                    /* const int32_t with_object_id: */
-                        52,
-                    /* const char * text_to_draw: */
-                        field.name,
-                    /* const float mid_x_pixelspace: */
-                        cur_x,
-                    /* const float top_y_pixelspace: */
-                        cur_y,
-                    /* const float z: */
-                        1.0f,
-                    /* const float max_width: */
-                        engine_globals->window_width * 2);
-                
-                request_float_slider(
-                    /* const int32_t background_object_id: */
-                        50,
-                    /* const int32_t pin_object_id: */
-                        51,
-                    /* const float x_screenspace: */
-                        cur_x,
-                    /* const float y_screenspace: */
-                        cur_y -
-                            (next_ui_element_settings->
-                                slider_height_screenspace) -
-                        (whitespace_height * 2),
-                    /* const float z: */
-                        1.0f,
-                    /* const float min_value: */
-                        0.0f,
-                    /* const float max_value: */
-                        1.0f,
-                    /* float * linked_value: */
-                        &light->reach);
-            break;
-            default:
-                text_request_label_around_x_at_top_y(
-                    /* const int32_t with_object_id: */
-                        52,
-                    /* const char * text_to_draw: */
-                        field.name,
-                    /* const float mid_x_pixelspace: */
-                        cur_x,
-                    /* const float top_y_pixelspace: */
-                        cur_y,
-                    /* const float z: */
-                        1.0f,
-                    /* const float max_width: */
-                        engine_globals->window_width * 2);
-        }
-        
-    }
+    redraw_all_sliders();
 }
 
 static float scroll_y_offset = 0;
@@ -472,22 +512,41 @@ static void client_handle_keypresses(
     }
 }
 
-#if 0
-static float get_slider_y_screenspace(uint32_t i) {
-    return (engine_globals->window_height -
-        ((float)i * 30.0f)) -
-        ((float)(i / 13) * 30.0f) +
-        scroll_y_offset;
-}
-
-static float get_title_y_screenspace(uint32_t i) {
-    return get_slider_y_screenspace(i) + 30.0f;
-}
-#endif
-
 void client_logic_update(uint64_t microseconds_elapsed)
 {
     client_handle_keypresses(microseconds_elapsed);
+    
+    #if 1
+    for (uint32_t i = 0; i < pds->regs_size; i++) {
+        int32_t target_zsprite_ids[3];
+        target_zsprite_ids[0] = pds->regs[i].slider_zsprite_id;
+        target_zsprite_ids[1] = pds->regs[i].pin_zsprite_id;
+        target_zsprite_ids[2] = pds->regs[i].label_zsprite_id;
+        if (target_zsprite_ids[0] == target_zsprite_ids[1]) {
+            return;
+        }
+        if (target_zsprite_ids[0] == target_zsprite_ids[2]) {
+            return;
+        }
+        if (target_zsprite_ids[1] == target_zsprite_ids[2]) {
+            return;
+        }
+        
+        float new_y = get_slider_y_screenspace(i) -
+            (mouse_scroll_pos * 30.0f);
+        
+        for (uint32_t j = 0; j < 3; j++) {
+            T1ScheduledAnimation * anim =
+                T1_scheduled_animations_request_next(true);
+            anim->affected_zsprite_id = target_zsprite_ids[j];
+            anim->delete_other_anims_targeting_same_object_id_on_commit = true;
+            anim->gpu_polygon_vals.xyz[1] =
+                engineglobals_screenspace_y_to_y(new_y, 1.0f);
+            anim->duration_us = 60000;
+            T1_scheduled_animations_commit(anim);
+        }
+    }
+    #endif
 }
 
 void client_logic_update_after_render_pass(void) {
@@ -527,6 +586,7 @@ void client_logic_window_resize(
     T1_scheduled_animations_delete_all();
     zsprites_to_render->size = 0;
     particle_effects_size = 0;
+    clear_ui_element_touchable_ids();
     
     request_gfx_from_empty_scene();
 }

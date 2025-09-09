@@ -2,6 +2,12 @@
 
 EngineGlobals * engine_globals = NULL;
 
+float engineglobals_x_to_screenspace_x(
+    const float x,
+    const float given_z)
+{
+    return (x * engine_globals->project_consts.x_multiplier + given_z) * engine_globals->window_width / (2.0f * given_z);
+}
 
 float engineglobals_screenspace_x_to_x(
     const float screenspace_x,
@@ -11,6 +17,15 @@ float engineglobals_screenspace_x_to_x(
         (((screenspace_x * 2.0f) / engine_globals->window_width) - 1.0f)
             * given_z)
             / engine_globals->project_consts.x_multiplier;
+}
+
+float engineglobals_y_to_screenspace_y(
+    const float y,
+    const float given_z)
+{
+    return (
+        y *
+        engine_globals->project_consts.field_of_view_modifier + given_z) * engine_globals->window_height / (2.0f * given_z);
 }
 
 float engineglobals_screenspace_y_to_y(

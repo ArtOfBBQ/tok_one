@@ -87,18 +87,18 @@ typedef struct ParticleEffect {
     
     int32_t zsprite_id;
     
-    bool32_t deleted;
-    bool32_t committed;
-    
     uint32_t spawns_per_sec;
     uint32_t verts_per_particle;
     uint32_t loops; // 0 for infinite loops
     
-    bool32_t shattered;
-    bool32_t cast_light;
     float light_reach;
     float light_strength;
     float light_rgb[3];
+    
+    bool8_t shattered;
+    bool8_t cast_light;
+    bool8_t deleted;
+    bool8_t committed;
 } ParticleEffect;
 
 extern ParticleEffect * particle_effects;
