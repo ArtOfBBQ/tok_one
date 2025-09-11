@@ -26,6 +26,7 @@ If you do want sliders of different sizes, you can set the slider size, request
 some sliders, change the slider size, and then request some more sliders
 */
 typedef struct  {
+    GPUConstMat back_mat;
     union {
         uint64_t custom_uint_max;
         int64_t  custom_int_max;
@@ -36,8 +37,9 @@ typedef struct  {
         int64_t  custom_int_min;
         double   custom_float_min;
     };
-    T1Tex     slider_background_tex;
     T1Tex     slider_pin_tex;
+    float     button_width_screenspace;
+    float     button_height_screenspace;
     float     slider_width_screenspace;
     float     slider_height_screenspace;
     float     pin_width_screenspace;
@@ -58,11 +60,7 @@ typedef struct  {
 typedef struct NextUIElementSettings {
     UIElementPermUserSettings perm;
     char *   slider_label;
-    float    slider_background_rgba[4];
     float    slider_pin_rgba[4];
-    float    button_width_screenspace;
-    float    button_height_screenspace;
-    float    button_background_rgba[4];
     int32_t  button_background_texturearray_i;
     int32_t  button_background_texture_i;
     float    slider;
@@ -86,13 +84,11 @@ void T1_uielement_request_slider(
     const int32_t pin_zsprite_id,
     void * linked_value_ptr);
 
-void request_button(
-    const int32_t button_object_id,
-    const char * label,
-    const float x_screenspace,
-    const float y_screenspace,
-    const float z,
-    void (* funtion_pointer)(void));
+void T1_uielement_request_button(
+    const int32_t button_zsprite_id,
+    const int32_t button_label_id,
+    void (* onclick_funcptr)(int64_t),
+    const int64_t clicked_arg);
 
 void unregister_ui_element_with_object_id(
     const int32_t with_object_id);

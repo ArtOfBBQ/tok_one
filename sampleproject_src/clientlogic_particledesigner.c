@@ -79,6 +79,7 @@ static void load_obj_basemodel(
 
 typedef struct {
     char property_name[128];
+    char property_type_name[128];
     size_t property_offset;
     int32_t slider_zsprite_id;
     int32_t label_zsprite_id;
@@ -90,9 +91,17 @@ typedef struct {
 
 typedef struct ParticleDesignerState {
    SliderForParticleProperty regs[MAX_SLIDER_PARTICLE_PROPS];
+   uint32_t regs_head_i;
    uint32_t regs_size;
+   int32_t title_zsprite_id;
+   int32_t title_label_zsprite_id;
+   float slider_width;
+   float slider_height;
+   float menu_element_height;
+   float whitespace_height;
    ParticleEffect * editing;
    ParticleEffect previous_values;
+   char inspecting_field[128];
 } ParticleDesignerState;
 
 static ParticleDesignerState * pds = NULL;
@@ -100,6 +109,30 @@ static ParticleDesignerState * pds = NULL;
 void client_logic_init(void) {
     pds = malloc_from_unmanaged(sizeof(ParticleDesignerState));
     T1_std_memset(pds, 0, sizeof(ParticleDesignerState));
+    
+    pds->title_zsprite_id = next_ui_element_object_id();
+    pds->title_label_zsprite_id = next_ui_element_object_id();
+}
+
+static float get_whitespace_height(void) {
+    return engine_globals->window_height / 200.0f;
+}
+
+static float get_menu_element_height(void) {
+    return engine_globals->window_height / 20.0f;
+}
+
+static float get_slider_height_screenspace(void) {
+    return ((get_menu_element_height() - get_whitespace_height()) * 5) / 6;
+}
+
+static float get_slider_width_screenspace(void) {
+    return get_slider_height_screenspace() * 10.0f;
+}
+
+static float get_slider_y_screenspace(int32_t i) {
+    return engine_globals->window_height - 130 -
+            (pds->menu_element_height * i);
 }
 
 void client_logic_early_startup(
@@ -108,7 +141,7 @@ void client_logic_early_startup(
 {
     *success = 0;
     
-    mouse_scroll_pos = -20.0f;
+    mouse_scroll_pos = 0.0f;
     
     uint32_t ok = 0;
     T1_meta_struct(GPUConstMat, &ok);
@@ -132,17 +165,27 @@ void client_logic_early_startup(
     T1_meta_struct(GPUzSprite, &ok);
     assert(ok);
     T1_meta_array(GPUzSprite, T1_TYPE_F32, xyz, 3, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(-2.0f, 2.0f, &ok);
     T1_meta_array(GPUzSprite, T1_TYPE_F32, xyz_angle, 3, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(-3.6f, 3.6f, &ok);
     T1_meta_array(GPUzSprite, T1_TYPE_F32, bonus_rgb, 3, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(0.0f, 2.0f, &ok);
     T1_meta_array(GPUzSprite, T1_TYPE_F32, xyz_mult, 3, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(0.25f, 20.0f, &ok);
     T1_meta_array(GPUzSprite, T1_TYPE_F32, xyz_offset, 3, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(-2.0f, 2.0f, &ok);
     T1_meta_array(GPUzSprite, T1_TYPE_F32, base_mat_uv_offsets, 2, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     T1_meta_field(GPUzSprite, T1_TYPE_F32, scale_factor, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     T1_meta_field(GPUzSprite, T1_TYPE_F32, alpha, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(-2.0f, 2.0f, &ok);
     T1_meta_field(GPUzSprite, T1_TYPE_F32, ignore_lighting, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     T1_meta_field(GPUzSprite, T1_TYPE_F32, ignore_camera, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     T1_meta_field(GPUzSprite, T1_TYPE_U32, remove_shadow, &ok);
-    T1_meta_field(GPUzSprite, T1_TYPE_I32, touchable_id, &ok);
+    T1_meta_reg_custom_uint_limits_for_last_field(0, 1, &ok);
     T1_meta_struct_field(GPUzSprite, GPULockedMat, base_mat, &ok);
     assert(ok);
     
@@ -183,54 +226,127 @@ void client_logic_early_startup(
     
     engine_globals->draw_axes = true;
     
+    pds->whitespace_height = get_whitespace_height();
+    pds->menu_element_height = get_menu_element_height();
+    pds->slider_height = get_slider_height_screenspace();
+    pds->slider_width = get_slider_width_screenspace();
+    
+    pds->editing = next_particle_effect();
+    pds->editing->zpolygon_gpu.xyz_mult[0] = zsprite_get_x_multiplier_for_width(&pds->editing->zpolygon_cpu, 0.05f);
+    pds->editing->zpolygon_gpu.xyz_mult[1] = zsprite_get_y_multiplier_for_height(&pds->editing->zpolygon_cpu, 0.05f);
+    pds->editing->zpolygon_gpu.xyz_mult[2] = zsprite_get_z_multiplier_for_depth(&pds->editing->zpolygon_cpu, 0.05f);
+    pds->editing->zpolygon_cpu.mesh_id = BASIC_CUBE_MESH_ID;
+    pds->editing->zpolygon_gpu.xyz[0] = 0.0f;
+    pds->editing->zpolygon_gpu.xyz[1] = 0.0f;
+    pds->editing->zpolygon_gpu.xyz[2] = 1.0f;
+    commit_particle_effect(pds->editing);
+    
     *success = 1;
 }
 
-#define HEIGHT_PER_SLIDER 60.0f
-static float get_slider_y_screenspace(uint32_t i) {
-    return engine_globals->window_height + 100 -
-            (HEIGHT_PER_SLIDER * i);
+static void destroy_all_sliders(void) {
+    zsprite_delete(pds->title_zsprite_id);
+    zsprite_delete(pds->title_label_zsprite_id);
+    
+    log_assert(pds->regs_size < MAX_SLIDER_PARTICLE_PROPS);
+    for (uint32_t i = pds->regs_head_i; i < pds->regs_size; i++) {
+        zsprite_delete(pds->regs[i].label_zsprite_id);
+        zsprite_delete(pds->regs[i].pin_zsprite_id);
+        zsprite_delete(pds->regs[i].slider_zsprite_id);
+    }
+}
+
+static void redraw_all_sliders(void);
+
+static void clicked_btn(int64_t arg) {
+    if (arg == -1) {
+        T1_std_strcpy_cap(
+            pds->inspecting_field,
+            128,
+            "ParticleEffect");
+    } else {
+        T1_std_strcpy_cap(
+            pds->inspecting_field,
+            128,
+            pds->regs[pds->regs_head_i + arg].property_type_name);
+    }
+    
+    destroy_all_sliders();
+    redraw_all_sliders();
 }
 
 static void redraw_all_sliders(void) {
-    float whitespace_height = 6.0f;
-    
-    next_ui_element_settings->perm.ignore_camera         = true;
-    next_ui_element_settings->perm.ignore_lighting       = true;
+    next_ui_element_settings->perm.ignore_camera = true;
+    next_ui_element_settings->perm.ignore_lighting = true;
     next_ui_element_settings->perm.pin_width_screenspace = 20;
     next_ui_element_settings->perm.pin_height_screenspace =
-        ((HEIGHT_PER_SLIDER - whitespace_height) * 5) / 6;
+        pds->slider_height;
     next_ui_element_settings->perm.slider_width_screenspace =
-        next_ui_element_settings->perm.pin_height_screenspace * 10;
-    next_ui_element_settings->perm.slider_height_screenspace = ((HEIGHT_PER_SLIDER - whitespace_height) * 5) / 6;
-    next_ui_element_settings->slider_pin_rgba[0]        = 0.7f;
-    next_ui_element_settings->slider_pin_rgba[1]        = 0.5f;
-    next_ui_element_settings->slider_pin_rgba[2]        = 0.5f;
-    next_ui_element_settings->slider_pin_rgba[3]        = 1.0f;
-    next_ui_element_settings->slider_background_rgba[0] = 0.2f;
-    next_ui_element_settings->slider_background_rgba[1] = 0.2f;
-    next_ui_element_settings->slider_background_rgba[2] = 0.3f;
-    next_ui_element_settings->slider_background_rgba[3] = 1.0f;
+        pds->slider_width;
+    next_ui_element_settings->perm.slider_height_screenspace =
+        pds->slider_height;
+    next_ui_element_settings->perm.button_width_screenspace =
+        pds->slider_width;
+    next_ui_element_settings->perm.button_height_screenspace =
+        pds->slider_height;
+    next_ui_element_settings->slider_pin_rgba[0] = 0.7f;
+    next_ui_element_settings->slider_pin_rgba[1] = 0.5f;
+    next_ui_element_settings->slider_pin_rgba[2] = 0.5f;
+    next_ui_element_settings->slider_pin_rgba[3] = 1.0f;
+    T1_material_construct(&next_ui_element_settings->perm.back_mat);
+    next_ui_element_settings->perm.back_mat.diffuse_rgb[0] = 0.2f;
+    next_ui_element_settings->perm.back_mat.diffuse_rgb[1] = 0.2f;
+    next_ui_element_settings->perm.back_mat.diffuse_rgb[2] = 0.3f;
+    next_ui_element_settings->perm.back_mat.alpha          = 1.0f;
     
-    uint32_t num_properties = T1_meta_get_num_of_fields_in_struct(
-        ParticleEffect);
+    uint32_t num_properties = internal_T1_meta_get_num_of_fields_in_struct(
+        pds->inspecting_field);
+        
+    float cur_x = engine_globals->window_width -
+        (pds->slider_width / 2) - 15.0f;
+    float cur_y = get_slider_y_screenspace(-1);
     
-    for (uint32_t i = 0; i < num_properties; i++) {
+    next_ui_element_settings->perm.screenspace_x = cur_x;
+    next_ui_element_settings->perm.screenspace_y = cur_y;
+    next_ui_element_settings->perm.z = 0.75f;
+    
+    // draw the title of the object we're inspecting which also serves as
+    // an "up" button
+    next_ui_element_settings->slider_label = pds->inspecting_field;
+    next_ui_element_settings->perm.back_mat.diffuse_rgb[2] = 0.6f;
+    next_ui_element_settings->perm.ignore_camera = true;
+    T1_uielement_request_button(
+        pds->title_zsprite_id,
+        pds->title_label_zsprite_id,
+        clicked_btn,
+        -1);
+    next_ui_element_settings->perm.back_mat.diffuse_rgb[2]   = 0.3f;
+    
+    for (int32_t i = 0; i < (int32_t)num_properties; i++) {
         
         T1MetaField field = T1_meta_get_field_at_index(
-            "ParticleEffect",
-            i);
+            pds->inspecting_field,
+            (uint32_t)i);
         
-        float cur_x = engine_globals->window_width -
-            (next_ui_element_settings->perm.slider_width_screenspace / 2) - 15.0f;
+        if (field.data_type == T1_TYPE_STRUCT) {
+            log_assert(field.struct_type_name != NULL);
+        }
+                
+        cur_y = get_slider_y_screenspace(i);
         
-        float cur_y = get_slider_y_screenspace(i);
-        float cur_z = 0.75f;
-        
-        next_ui_element_settings->perm.screenspace_x = cur_x;
         next_ui_element_settings->perm.screenspace_y = cur_y;
-        next_ui_element_settings->perm.z = cur_z;
         
+        next_ui_element_settings->slider_label = field.name;
+        next_ui_element_settings->slider_label_shows_value = true;
+        
+        T1_std_strcpy_cap(pds->regs[i].property_name, 128, field.name);
+        if (field.data_type == T1_TYPE_STRUCT) {
+            T1_std_strcpy_cap(
+                pds->regs[i].property_type_name,
+                128,
+                field.struct_type_name);
+        }
+        pds->regs[i].property_offset = (size_t)field.offset;
         pds->regs[i].slider_zsprite_id = next_ui_element_object_id();
         pds->regs[i].label_zsprite_id = next_ui_element_object_id();
         pds->regs[i].pin_zsprite_id = next_ui_element_object_id();
@@ -269,29 +385,23 @@ static void redraw_all_sliders(void) {
         
         switch (field.data_type) {
             case T1_TYPE_STRUCT:
-                text_request_label_around_x_at_top_y(
-                    /* const int32_t with_object_id: */
-                        pds->regs[i].slider_zsprite_id,
-                    /* const char * text_to_draw: */
-                        field.name,
-                    /* const float mid_x_pixelspace: */
-                        cur_x,
-                    /* const float top_y_pixelspace: */
-                        cur_y,
-                    /* const float z: */
-                        cur_z,
-                    /* const float max_width: */
-                        engine_globals->window_width * 2);
+                T1_uielement_request_button(
+                    pds->regs[i].slider_zsprite_id,
+                    pds->regs[i].label_zsprite_id,
+                    clicked_btn,
+                    (int64_t)i);
             break;
-            case T1_TYPE_U64:
             case T1_TYPE_I64:
             case T1_TYPE_I32:
+            case T1_TYPE_I16:
+            case T1_TYPE_I8:
+            case T1_TYPE_U64:
             case T1_TYPE_U32:
+            case T1_TYPE_U16:
+            case T1_TYPE_U8:
             case T1_TYPE_F32:
                 next_ui_element_settings->perm.linked_type =
                     field.data_type;
-                next_ui_element_settings->slider_label = field.name;
-                next_ui_element_settings->slider_label_shows_value = true;
                 
                 T1_uielement_request_slider(
                     pds->regs[i].slider_zsprite_id,
@@ -313,7 +423,7 @@ static void redraw_all_sliders(void) {
                     /* const float mid_y_pixelspace: */
                         cur_y,
                     /* const float z: */
-                        cur_z,
+                        0.75f,
                     /* const float max_width: */
                         engine_globals->window_width * 2);
         }
@@ -339,14 +449,9 @@ static void request_gfx_from_empty_scene(void) {
     light->xyz[2]        =  0.75f;
     commit_zlight(light);
     
-    pds->editing = &particle_effects[0];
-    construct_particle_effect(pds->editing);
-    particle_effects_size = 1;
-    
-    pds->editing->zpolygon_cpu.mesh_id = BASIC_CUBE_MESH_ID;
-    pds->editing->zpolygon_gpu.xyz[0] = 0.0f;
-    pds->editing->zpolygon_gpu.xyz[1] = 0.0f;
-    pds->editing->zpolygon_gpu.xyz[2] = 1.0f;
+    pds->regs_head_i = 0;
+    pds->regs_size = 0;
+    T1_std_strcpy_cap(pds->inspecting_field, 128, "ParticleEffect");
     
     redraw_all_sliders();
 }
@@ -513,22 +618,26 @@ void client_logic_update(uint64_t microseconds_elapsed)
     client_handle_keypresses(microseconds_elapsed);
     
     #if 1
-    for (uint32_t i = 0; i < pds->regs_size; i++) {
-        int32_t target_zsprite_ids[3];
+    float new_x =
+        engine_globals->window_width - (pds->slider_width / 2) - 15.0f;
+    float new_z = 0.75f;
+    
+    int32_t target_zsprite_ids[3];
+    for (uint32_t i = pds->regs_head_i; i < pds->regs_size; i++) {
         target_zsprite_ids[0] = pds->regs[i].slider_zsprite_id;
         target_zsprite_ids[1] = pds->regs[i].pin_zsprite_id;
         target_zsprite_ids[2] = pds->regs[i].label_zsprite_id;
         if (target_zsprite_ids[0] == target_zsprite_ids[1]) {
-            return;
+            continue;
         }
         if (target_zsprite_ids[0] == target_zsprite_ids[2]) {
-            return;
+            continue;
         }
         if (target_zsprite_ids[1] == target_zsprite_ids[2]) {
-            return;
+            continue;
         }
         
-        float new_y = get_slider_y_screenspace(i) -
+        float new_y = get_slider_y_screenspace((int32_t)i) -
             (mouse_scroll_pos * 30.0f);
         
         for (uint32_t j = 0; j < 3; j++) {
@@ -536,11 +645,32 @@ void client_logic_update(uint64_t microseconds_elapsed)
                 T1_scheduled_animations_request_next(true);
             anim->affected_zsprite_id = target_zsprite_ids[j];
             anim->delete_other_anims_targeting_same_object_id_on_commit = true;
+            anim->gpu_polygon_vals.xyz[0] =
+                engineglobals_screenspace_x_to_x(new_x, new_z);
             anim->gpu_polygon_vals.xyz[1] =
-                engineglobals_screenspace_y_to_y(new_y, 1.0f);
+                engineglobals_screenspace_y_to_y(new_y, new_z);
+            anim->gpu_polygon_vals.xyz[2] = new_z;
             anim->duration_us = 60000;
             T1_scheduled_animations_commit(anim);
         }
+    }
+    
+    target_zsprite_ids[0] = pds->title_zsprite_id;
+    target_zsprite_ids[1] = pds->title_label_zsprite_id;
+    float new_title_y = get_slider_y_screenspace(-1) -
+        (mouse_scroll_pos * 30.0f);
+    for (uint32_t j = 0; j < 2; j++) {
+        T1ScheduledAnimation * anim =
+            T1_scheduled_animations_request_next(true);
+        anim->affected_zsprite_id = target_zsprite_ids[j];
+        anim->delete_other_anims_targeting_same_object_id_on_commit = true;
+        anim->gpu_polygon_vals.xyz[0] =
+            engineglobals_screenspace_x_to_x(new_x, new_z);
+        anim->gpu_polygon_vals.xyz[1] =
+            engineglobals_screenspace_y_to_y(new_title_y, new_z);
+        anim->gpu_polygon_vals.xyz[2] = new_z;
+        anim->duration_us = 60000;
+        T1_scheduled_animations_commit(anim);
     }
     #endif
 }
@@ -577,12 +707,29 @@ void client_logic_window_resize(
     const uint32_t new_height,
     const uint32_t new_width)
 {
+    mouse_scroll_pos = 0.0f;
+    
     zlights_to_apply_size = 0;
     delete_all_ui_elements();
     T1_scheduled_animations_delete_all();
     zsprites_to_render->size = 0;
     particle_effects_size = 0;
     clear_ui_element_touchable_ids();
+    
+    pds->whitespace_height = get_whitespace_height();
+    pds->menu_element_height = get_menu_element_height();
+    pds->slider_height = get_slider_height_screenspace();
+    pds->slider_width = get_slider_width_screenspace();
+    
+    pds->editing = next_particle_effect();
+    pds->editing->zpolygon_gpu.xyz_mult[0] = zsprite_get_x_multiplier_for_width(&pds->editing->zpolygon_cpu, 0.05f);
+    pds->editing->zpolygon_gpu.xyz_mult[1] = zsprite_get_y_multiplier_for_height(&pds->editing->zpolygon_cpu, 0.05f);
+    pds->editing->zpolygon_gpu.xyz_mult[2] = zsprite_get_z_multiplier_for_depth(&pds->editing->zpolygon_cpu, 0.05f);
+    pds->editing->zpolygon_cpu.mesh_id = BASIC_CUBE_MESH_ID;
+    pds->editing->zpolygon_gpu.xyz[0] = 0.0f;
+    pds->editing->zpolygon_gpu.xyz[1] = 0.0f;
+    pds->editing->zpolygon_gpu.xyz[2] = 1.0f;
+    commit_particle_effect(pds->editing);
     
     request_gfx_from_empty_scene();
 }

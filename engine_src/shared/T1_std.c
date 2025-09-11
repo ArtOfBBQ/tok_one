@@ -358,6 +358,10 @@ void T1_std_internal_strcpy_cap(
     #endif
     const char * origin)
 {
+    #ifndef COMMON_IGNORE_ASSERTS
+    assert(origin != NULL);
+    #endif
+    
     uint32_t i = 0;
     while (origin[i] != '\0')
     {

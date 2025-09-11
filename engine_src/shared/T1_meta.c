@@ -483,9 +483,7 @@ void T1_meta_reg_field(
         field_name);
     
     if (target_mfield == NULL) {
-        if (
-            t1rs->meta_fields_size + 1 >=
-                t1rs->meta_fields_store_cap)
+        if (t1rs->meta_fields_size + 1 >= t1rs->meta_fields_store_cap)
         {
             #if T1_META_ASSERTS
             assert(0); // provide more memory on init()
@@ -493,8 +491,7 @@ void T1_meta_reg_field(
             return;
         }
         
-        target_mfield = t1rs->metafields_store +
-            t1rs->meta_fields_size;
+        target_mfield = t1rs->metafields_store + t1rs->meta_fields_size;
         uint16_t target_mfield_i = t1rs->meta_fields_size;
         t1rs->meta_fields_size += 1;
         
@@ -597,7 +594,10 @@ void T1_meta_reg_field(
         #if T1_META_ASSERTS
         assert(field_struct_type_name_or_null != NULL);
         #endif
-        if (field_struct_type_name_or_null == NULL) {
+        if (
+            field_struct_type_name_or_null == NULL ||
+            field_struct_type_name_or_null[0] == '\0')
+        {
             *good = 0;
             return;
         }
@@ -641,6 +641,7 @@ void T1_meta_reg_field(
                 break;
             }
         }
+        
         if (target_mfield->parent_enum_id >= UINT16_MAX) {
             #if T1_META_ASSERTS
             assert(0); // no such parent enum
@@ -887,6 +888,82 @@ static uint32_t array_indices_to_flat_array_index(
     return return_val;
 }
 
+static void copy_internal_field_to_public_field(
+    const MetaField * internal,
+    T1MetaField * public)
+{
+    public->offset = internal->offset;
+    #if T1_META_ASSERTS
+    assert(internal->offset >= 0);
+    #endif
+    public->custom_int_max   = internal->custom_int_max;
+    public->custom_int_min   = internal->custom_int_min;
+    public->name             = internal->name;
+    public->struct_type_name = internal->struct_type_name;
+
+    public->array_sizes[0] = internal->array_sizes[0];
+    public->array_sizes[1] = internal->array_sizes[1];
+    public->array_sizes[2] = internal->array_sizes[2];
+    public->data_type = internal->type;
+    
+    #if T1_META_ASSERTS
+    switch (internal->type) {
+        case T1_TYPE_ENUM:
+        case T1_TYPE_STRUCT:
+        case T1_TYPE_CHAR:
+        case T1_TYPE_STRING:
+        break;
+        case T1_TYPE_F32:
+            assert(internal->custom_float_max > internal->custom_float_min);
+        break;
+        case T1_TYPE_I64:
+        case T1_TYPE_I32:
+        case T1_TYPE_I16:
+        case T1_TYPE_I8:
+            assert(internal->custom_int_max > internal->custom_int_min);
+        break;
+        case T1_TYPE_U64:
+        case T1_TYPE_U32:
+        case T1_TYPE_U16:
+        case T1_TYPE_U8:
+            assert(internal->custom_uint_max > internal->custom_uint_min);
+        break;
+        case T1_TYPE_NOTSET:
+            assert(0);
+        break;
+    }
+    #endif
+    
+    #if T1_META_ASSERTS
+    if (public->data_type == T1_TYPE_STRUCT) {
+        assert(public->struct_type_name != NULL);
+        assert(public->struct_type_name[0] != '\0');
+    }
+    #endif
+    
+    
+    /*
+    return_value->public.name = return_value->internal_field->name;
+    return_value->public.offset += (uint32_t)metafield->offset +
+        (offset_per_array_index * flat_array_index);
+    return_value->public.custom_uint_max = metafield->custom_uint_max;
+    return_value->public.custom_uint_min = metafield->custom_uint_min;
+    #if T1_META_ASSERTS
+    assert(return_value->public.offset >= 0);
+    #endif
+    return_value->public.data_type = metafield->type;
+    return_value->public.array_sizes[0] = metafield->array_sizes[0];
+    return_value->public.array_sizes[1] = metafield->array_sizes[1];
+    return_value->public.array_sizes[2] = metafield->array_sizes[2];
+    while (array_indices_found > 0) {
+        return_value->public.array_sizes[0] = return_value->public.array_sizes[1];
+        return_value->public.array_sizes[1] = return_value->public.array_sizes[2];
+        return_value->public.array_sizes[2] = 1;
+        array_indices_found -= 1;
+    }
+     */
+}
+
 static void T1_refl_get_field_recursive(
     T1MetaFieldInternal * return_value,
     const char * struct_name,
@@ -931,7 +1008,6 @@ static void T1_refl_get_field_recursive(
         #endif
         *good = 0;
     }
-    
     
     uint32_t array_indices[T1_REFL_MAX_ARRAY_SIZES];
     uint32_t array_indices_found = 0;
@@ -1002,23 +1078,9 @@ static void T1_refl_get_field_recursive(
         }
     }
     
-    return_value->public.name = return_value->internal_field->name;
-    return_value->public.offset += (uint32_t)metafield->offset + (offset_per_array_index * flat_array_index);
-    return_value->public.custom_uint_max = metafield->custom_uint_max;
-    return_value->public.custom_uint_min = metafield->custom_uint_min;
-    #if T1_META_ASSERTS
-    assert(return_value->public.offset >= 0);
-    #endif
-    return_value->public.data_type = metafield->type;
-    return_value->public.array_sizes[0] = metafield->array_sizes[0];
-    return_value->public.array_sizes[1] = metafield->array_sizes[1];
-    return_value->public.array_sizes[2] = metafield->array_sizes[2];
-    while (array_indices_found > 0) {
-        return_value->public.array_sizes[0] = return_value->public.array_sizes[1];
-        return_value->public.array_sizes[1] = return_value->public.array_sizes[2];
-        return_value->public.array_sizes[2] = 1;
-        array_indices_found -= 1;
-    }
+    copy_internal_field_to_public_field(
+        return_value->internal_field,
+        &return_value->public);
     
     if (second_part != NULL) {
         #if T1_META_ASSERTS
@@ -1410,45 +1472,7 @@ T1MetaField T1_meta_get_field_at_index(
         i++;
     }
     
-    return_value.offset = field->offset;
-    #if T1_META_ASSERTS
-    assert(field->offset >= 0);
-    #endif
-    return_value.custom_int_max = field->custom_int_max;
-    return_value.custom_int_min = field->custom_int_min;
-    return_value.name = field->name;
-    return_value.array_sizes[0] = field->array_sizes[0];
-    return_value.array_sizes[1] = field->array_sizes[1];
-    return_value.array_sizes[2] = field->array_sizes[2];
-    return_value.data_type = field->type;
-    
-    #if T1_META_ASSERTS
-    switch (field->type) {
-        case T1_TYPE_ENUM:
-        case T1_TYPE_STRUCT:
-        case T1_TYPE_CHAR:
-        case T1_TYPE_STRING:
-        break;
-        case T1_TYPE_F32:
-            assert(field->custom_float_max > field->custom_float_min);
-        break;
-        case T1_TYPE_I64:
-        case T1_TYPE_I32:
-        case T1_TYPE_I16:
-        case T1_TYPE_I8:
-            assert(field->custom_int_max > field->custom_int_min);
-        break;
-        case T1_TYPE_U64:
-        case T1_TYPE_U32:
-        case T1_TYPE_U16:
-        case T1_TYPE_U8:
-            assert(field->custom_uint_max > field->custom_uint_min);
-        break;
-        case T1_TYPE_NOTSET:
-            assert(0);
-        break;
-    }
-    #endif
+    copy_internal_field_to_public_field(field, &return_value);
     
     return return_value;
 }

@@ -105,6 +105,7 @@ typedef struct {
     };
     int64_t offset; // -1 if no such field
     char * name;
+    char * struct_type_name;
     uint16_t array_sizes[T1_REFL_MAX_ARRAY_SIZES];
     T1Type data_type;
 } T1MetaField;

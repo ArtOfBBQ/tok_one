@@ -7,6 +7,8 @@ static int32_t currently_clicking_zsprite_id = -1;
 typedef struct ActiveUIElement {
     UIElementPermUserSettings user_set;
     
+    int64_t clicked_arg;
+    
     int32_t background_zsprite_id;
     int32_t pin_zsprite_id;
     int32_t label_zsprite_id;
@@ -14,12 +16,11 @@ typedef struct ActiveUIElement {
     
     float slider_width;
     
-    bool32_t clickable;
     bool32_t slideable;
     bool32_t deleted;
     
     void * slider_linked_value;
-    void (* clicked_funcptr)(void);
+    void (* clicked_funcptr)(int64_t);
     
     uint8_t has_label;
     uint8_t label_dirty;
@@ -58,8 +59,6 @@ void uielement_init(void) {
     next_ui_element_settings->perm.ignore_camera = false;
     next_ui_element_settings->button_background_texturearray_i = -1;
     next_ui_element_settings->button_background_texture_i      = -1;
-    next_ui_element_settings->perm.slider_background_tex.array_i = -1;
-    next_ui_element_settings->perm.slider_background_tex.slice_i = -1;
     next_ui_element_settings->perm.slider_pin_tex.array_i = -1;
     next_ui_element_settings->perm.slider_pin_tex.slice_i = -1;
     
@@ -258,7 +257,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
             {
                 if (
                     !active_ui_elements[ui_elem_i].deleted &&
-                    active_ui_elements[ui_elem_i].clickable &&
+                    active_ui_elements[ui_elem_i].clicked_funcptr != NULL &&
                     user_interactions
                         [INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
                             touchable_id_top ==
@@ -268,7 +267,8 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                         [INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
                             handled = true;
                     active_ui_elements[ui_elem_i].
-                        clicked_funcptr();
+                        clicked_funcptr(
+                            active_ui_elements[ui_elem_i].clicked_arg);
                     break;
                 }
             }
@@ -323,7 +323,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                     T1_scheduled_animations_commit(bump_pin);
                 }
                 
-                if (active_ui_elements[i].clickable) {
+                if (active_ui_elements[i].clicked_funcptr != NULL) {
                     currently_clicking_zsprite_id =
                         active_ui_elements[i].background_zsprite_id;
                     
@@ -373,10 +373,6 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
                     full_label,
                     256,
                     active_ui_elements[i].user_set.label_prefix);
-                T1_std_strcat_cap(
-                    full_label,
-                    256,
-                    ": ");
             }
             
             float xy_screenspace[3];
@@ -429,48 +425,55 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
             font_settings->ignore_camera = ignore_camera;
             font_settings->alpha = 1.0f;
             
-            switch (active_ui_elements[i].user_set.linked_type) {
-            case T1_TYPE_F32:
-                T1_std_strcat_float_cap(
-                    full_label,
-                    256,
-                    *(float *)active_ui_elements[i].
-                        slider_linked_value);
-                break;
-            case T1_TYPE_U64:
-            T1_std_strcat_uint_cap(
-                    full_label,
-                    256,
-                    (uint32_t)*(uint64_t *)active_ui_elements[i].
-                        slider_linked_value);
-            break;
-            case T1_TYPE_U32:
-            T1_std_strcat_uint_cap(
-                    full_label,
-                    256,
-                    *(uint32_t *)active_ui_elements[i].
-                        slider_linked_value);
-            break;
-            case T1_TYPE_U16:
-                T1_std_strcat_uint_cap(
-                    full_label,
-                    256,
-                    *(uint16_t *)active_ui_elements[i].
-                        slider_linked_value);
-            break;
-            case T1_TYPE_U8:
-                T1_std_strcat_uint_cap(
-                    full_label,
-                    256,
-                    *(uint8_t *)active_ui_elements[i].
-                        slider_linked_value);
-            break;
-            default:
+            if (active_ui_elements[i].slider_linked_value != NULL) {
                 T1_std_strcat_cap(
                     full_label,
                     256,
-                    "?DATA");
-            break;
+                    ": ");
+                switch (active_ui_elements[i].user_set.linked_type)
+                {
+                    case T1_TYPE_F32:
+                    T1_std_strcat_float_cap(
+                        full_label,
+                        256,
+                        *(float *)active_ui_elements[i].
+                            slider_linked_value);
+                    break;
+                case T1_TYPE_U64:
+                T1_std_strcat_uint_cap(
+                        full_label,
+                        256,
+                        (uint32_t)*(uint64_t *)active_ui_elements[i].
+                            slider_linked_value);
+                break;
+                case T1_TYPE_U32:
+                T1_std_strcat_uint_cap(
+                        full_label,
+                        256,
+                        *(uint32_t *)active_ui_elements[i].
+                            slider_linked_value);
+                break;
+                case T1_TYPE_U16:
+                    T1_std_strcat_uint_cap(
+                        full_label,
+                        256,
+                        *(uint16_t *)active_ui_elements[i].
+                            slider_linked_value);
+                break;
+                case T1_TYPE_U8:
+                    T1_std_strcat_uint_cap(
+                        full_label,
+                        256,
+                        *(uint8_t *)active_ui_elements[i].
+                            slider_linked_value);
+                break;
+                default:
+                    T1_std_strcat_cap(
+                        full_label,
+                        256,
+                        "?DATA");
+                break;
+                }
             }
             
             text_request_label_around(
@@ -689,19 +692,7 @@ void T1_uielement_request_slider(
     
     slider_back.cpu_data->zsprite_id = background_zsprite_id;
     
-    slider_back.gpu_data->base_mat.texturearray_i =
-        next_ae->user_set.slider_background_tex.array_i;
-    slider_back.gpu_data->base_mat.texture_i =
-        next_ae->user_set.slider_background_tex.slice_i;
-    
-    slider_back.gpu_data->base_mat.diffuse_rgb[0] =
-        next_ui_element_settings->slider_background_rgba[0];
-    slider_back.gpu_data->base_mat.diffuse_rgb[1] =
-        next_ui_element_settings->slider_background_rgba[1];
-    slider_back.gpu_data->base_mat.diffuse_rgb[2] =
-        next_ui_element_settings->slider_background_rgba[2];
-    slider_back.gpu_data->base_mat.alpha =
-        next_ui_element_settings->slider_background_rgba[3];
+    slider_back.gpu_data->base_mat = next_ae->user_set.back_mat;
     
     slider_back.gpu_data->ignore_lighting =
         next_ae->user_set.ignore_lighting;
@@ -769,79 +760,74 @@ void T1_uielement_request_slider(
     zsprite_commit(&slider_pin);
 }
 
-void request_button(
+void T1_uielement_request_button(
     const int32_t button_object_id,
-    const char * label,
-    const float x_screenspace,
-    const float y_screenspace,
-    const float z,
-    void (* funtion_pointer)(void))
+    const int32_t button_label_id,
+    void (* onclick_funcptr)(int64_t),
+    const int64_t clicked_arg)
 {
-    log_assert(next_ui_element_settings->button_width_screenspace  > 5.0f);
-    log_assert(next_ui_element_settings->button_height_screenspace > 5.0f);
+    log_assert(next_ui_element_settings->perm.button_width_screenspace  > 5.0f);
+    log_assert(next_ui_element_settings->perm.button_height_screenspace > 5.0f);
+    
+    ActiveUIElement * next_ae = next_active_ui_element();
+    next_ae->clicked_arg = clicked_arg;
+    next_ae->user_set = next_ui_element_settings->perm;
+    next_ae->has_label = next_ui_element_settings->slider_label != NULL;
+    if (next_ae->has_label) {
+        T1_std_strcpy_cap(
+            next_ae->user_set.label_prefix,
+            128,
+            next_ui_element_settings->slider_label);
+    }
+    next_ae->label_dirty = true;
+    next_ae->slideable = false;
+    next_ae->clicked_funcptr = onclick_funcptr;
+    
+    next_ae->background_zsprite_id = button_object_id;
+    next_ae->pin_zsprite_id        = -1;
+    next_ae->label_zsprite_id      = button_label_id;
+    
+    next_ae->slider_width =
+        engineglobals_screenspace_width_to_width(
+            next_ui_element_settings->perm.slider_width_screenspace,
+            next_ui_element_settings->perm.z);
+    next_ae->deleted = false;
+    next_ae->slider_linked_value = NULL;
+    next_ae->touchable_id = next_ui_element_touchable_id();
     
     zSpriteRequest button_request;
     zsprite_request_next(&button_request);
     zsprite_construct_quad_around(
         /* const float mid_x: */
-            engineglobals_screenspace_x_to_x(x_screenspace, z),
+            engineglobals_screenspace_x_to_x(
+                next_ae->user_set.screenspace_x,
+                next_ae->user_set.z),
         /* const float mid_y: */
-            engineglobals_screenspace_y_to_y(y_screenspace, z),
+            engineglobals_screenspace_y_to_y(
+                next_ae->user_set.screenspace_y,
+                next_ae->user_set.z),
         /* const float z: */
-            z,
+            next_ae->user_set.z,
         /* const float width: */
             engineglobals_screenspace_width_to_width(
-                next_ui_element_settings->button_width_screenspace,
-                z),
+                next_ae->user_set.button_width_screenspace,
+                next_ae->user_set.z),
         /* const float height: */
             engineglobals_screenspace_height_to_height(
-                next_ui_element_settings->button_height_screenspace,
-                z),
+                next_ae->user_set.button_height_screenspace,
+                next_ae->user_set.z),
         /* PolygonRequest * stack_recipient: */
             &button_request);
     
     button_request.cpu_data->zsprite_id = button_object_id;
-    button_request.gpu_data->touchable_id = next_ui_element_touchable_id();
+    button_request.gpu_data->touchable_id = next_ae->touchable_id;
     button_request.gpu_data->ignore_camera =
-        next_ui_element_settings->perm.ignore_camera;
+        next_ae->user_set.ignore_camera;
     button_request.gpu_data->ignore_lighting =
-        next_ui_element_settings->perm.ignore_lighting;
+        next_ae->user_set.ignore_camera;
+    button_request.gpu_data->base_mat = next_ae->user_set.back_mat;
+    button_request.gpu_data->alpha = 1.0f;
     zsprite_commit(&button_request);
-    
-    button_request.gpu_data->base_mat.diffuse_rgb[0] =
-        next_ui_element_settings->button_background_rgba[0];
-    button_request.gpu_data->base_mat.diffuse_rgb[1] =
-        next_ui_element_settings->button_background_rgba[1];
-    button_request.gpu_data->base_mat.diffuse_rgb[2] =
-        next_ui_element_settings->button_background_rgba[2];
-    button_request.gpu_data->base_mat.alpha =
-        next_ui_element_settings->button_background_rgba[3];
-    button_request.gpu_data->base_mat.texturearray_i =
-        next_ui_element_settings->button_background_texturearray_i;
-    button_request.gpu_data->base_mat.texture_i =
-        next_ui_element_settings->button_background_texture_i;
-    
-    font_settings->ignore_camera = next_ui_element_settings->perm.ignore_camera;
-    text_request_label_around(
-        /* const int32_t with_object_id: */
-            button_object_id,
-        /* const char * text_to_draw: */
-            label,
-        /* const float mid_x_pixelspace: */
-            x_screenspace,
-        /* const float mid_y_pixelspace: */
-            y_screenspace,
-        /* const float z: */
-            z,
-        /* const float max_width: */
-            next_ui_element_settings->button_width_screenspace);
-    
-    ActiveUIElement * next_element = next_active_ui_element();
-    next_element->clickable = true;
-    next_element->clicked_funcptr = funtion_pointer;
-    next_element->touchable_id = button_request.gpu_data->touchable_id;
-    next_element->background_zsprite_id = button_object_id;
-    next_element->deleted = false;
 }
 
 void unregister_ui_element_with_object_id(
