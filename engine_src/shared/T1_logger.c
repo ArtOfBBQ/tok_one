@@ -322,7 +322,7 @@ internal_log_assert(
         assert_failed_msg,
         512,
         ", line ");
-    T1_std_strcat_int_capped(
+    T1_std_strcat_int_cap(
         assert_failed_msg,
         512,
         line_number);

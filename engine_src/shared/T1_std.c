@@ -271,7 +271,7 @@ void T1_std_strcat_char_cap(
 }
 
 void
-T1_std_internal_strcat_int_capped(
+T1_std_internal_strcat_int_cap(
     char * recipient,
     #ifndef COMMON_IGNORE_ASSERTS
     const uint32_t recipient_size,

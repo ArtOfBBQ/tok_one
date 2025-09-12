@@ -347,7 +347,7 @@ static void register_to_texturearray_by_splitting_image(
                 filenames[(row_i*(int32_t)columns)+col_i],
                 256,
                 "_");
-            T1_std_strcat_int_capped(
+            T1_std_strcat_int_cap(
                 filenames[(row_i*(int32_t)columns)+col_i],
                 256,
                 col_i);
@@ -355,7 +355,7 @@ static void register_to_texturearray_by_splitting_image(
                 filenames[(row_i*(int32_t)columns)+col_i],
                 256,
                 "_");
-            T1_std_strcat_int_capped(
+            T1_std_strcat_int_cap(
                 filenames[(row_i*(int32_t)columns)+col_i],
                 256,
                 row_i);
@@ -559,9 +559,9 @@ void T1_texture_array_debug_dump_texturearray_to_writables(
         
         char filename[128];
         T1_std_strcpy_cap(filename, 128, "dumped_texturearray_");
-        T1_std_strcat_int_capped(filename, 128, texture_array_i);
+        T1_std_strcat_int_cap(filename, 128, texture_array_i);
         T1_std_strcat_cap(filename, 128, "_");
-        T1_std_strcat_int_capped(filename, 128, texture_i);
+        T1_std_strcat_int_cap(filename, 128, texture_i);
         T1_std_strcat_cap(filename, 128, ".bmp");
         
         uint32_t write_good = 0;

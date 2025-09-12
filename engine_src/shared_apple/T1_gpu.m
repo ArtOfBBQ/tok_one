@@ -1073,7 +1073,7 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
             errmsg,
             256,
             "Tried to update uninitialized texturearray")
-        T1_std_strcat_int_capped(errmsg, 256, texture_array_i);
+        T1_std_strcat_int_cap(errmsg, 256, texture_array_i);
         T1_std_strcat_cap(errmsg, 256, "\n");
         
         log_dump_and_crash(errmsg);
@@ -1161,7 +1161,7 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
             errmsg,
             256,
             "Tried to update uninitialized texturearray")
-        T1_std_strcat_int_capped(errmsg, 256, texture_array_i);
+        T1_std_strcat_int_cap(errmsg, 256, texture_array_i);
         T1_std_strcat_cap(errmsg, 256, "\n");
         
         log_dump_and_crash(errmsg);

@@ -85,16 +85,16 @@ void T1_std_strcat_char_cap(
     char to_append);
 
 #ifndef COMMON_IGNORE_ASSERTS
-#define T1_std_strcat_int_capped(recip, recipsize, to_append) T1_std_internal_strcat_int_capped(recip, recipsize, to_append);
+#define T1_std_strcat_int_cap(recip, recipsize, to_append) T1_std_internal_strcat_int_cap(recip, recipsize, to_append);
 void
-T1_std_internal_strcat_int_capped(
+T1_std_internal_strcat_int_cap(
     char * recipient,
     const uint32_t recipient_size,
     const int32_t to_append);
 #else
-#define T1_std_strcat_int_capped(recip, recipsize, to_append) T1_std_internal_strcat_int_capped(recip, to_append);
+#define T1_std_strcat_int_cap(recip, recipsize, to_append) T1_std_internal_strcat_int_cap(recip, to_append);
 void
-T1_std_internal_strcat_int_capped(
+T1_std_internal_strcat_int_cap(
     char * recipient,
     const int32_t to_append);
 #endif

@@ -91,6 +91,7 @@ typedef struct {
 
 typedef struct ParticleDesignerState {
    SliderForParticleProperty regs[MAX_SLIDER_PARTICLE_PROPS];
+   size_t inspecting_field_extra_offset;
    uint32_t regs_head_i;
    uint32_t regs_size;
    int32_t title_zsprite_id;
@@ -269,13 +270,15 @@ static void clicked_btn(int64_t arg) {
             pds->inspecting_field,
             128,
             pds->regs[pds->regs_head_i + arg].property_type_name);
+        pds->inspecting_field_extra_offset =
+            pds->regs[pds->regs_head_i + arg].property_offset;
     }
     
     destroy_all_sliders();
     redraw_all_sliders();
 }
 
-static void redraw_all_sliders(void) {
+static void set_next_ui_element_state_for_sliders(void) {
     next_ui_element_settings->perm.ignore_camera = true;
     next_ui_element_settings->perm.ignore_lighting = true;
     next_ui_element_settings->perm.pin_width_screenspace = 20;
@@ -298,6 +301,15 @@ static void redraw_all_sliders(void) {
     next_ui_element_settings->perm.back_mat.diffuse_rgb[1] = 0.2f;
     next_ui_element_settings->perm.back_mat.diffuse_rgb[2] = 0.3f;
     next_ui_element_settings->perm.back_mat.alpha          = 1.0f;
+    next_ui_element_settings->perm.z = 0.75f;
+    next_ui_element_settings->slider_label_shows_value = true;
+    
+}
+
+static void redraw_all_sliders(void) {
+    set_next_ui_element_state_for_sliders();
+    
+    pds->regs_size = 0;
     
     uint32_t num_properties = internal_T1_meta_get_num_of_fields_in_struct(
         pds->inspecting_field);
@@ -305,10 +317,8 @@ static void redraw_all_sliders(void) {
     float cur_x = engine_globals->window_width -
         (pds->slider_width / 2) - 15.0f;
     float cur_y = get_slider_y_screenspace(-1);
-    
     next_ui_element_settings->perm.screenspace_x = cur_x;
     next_ui_element_settings->perm.screenspace_y = cur_y;
-    next_ui_element_settings->perm.z = 0.75f;
     
     // draw the title of the object we're inspecting which also serves as
     // an "up" button
@@ -320,7 +330,7 @@ static void redraw_all_sliders(void) {
         pds->title_label_zsprite_id,
         clicked_btn,
         -1);
-    next_ui_element_settings->perm.back_mat.diffuse_rgb[2]   = 0.3f;
+    next_ui_element_settings->perm.back_mat.diffuse_rgb[2] = 0.3f;
     
     for (int32_t i = 0; i < (int32_t)num_properties; i++) {
         
@@ -328,107 +338,140 @@ static void redraw_all_sliders(void) {
             pds->inspecting_field,
             (uint32_t)i);
         
-        if (field.data_type == T1_TYPE_STRUCT) {
-            log_assert(field.struct_type_name != NULL);
-        }
-                
-        cur_y = get_slider_y_screenspace(i);
-        
-        next_ui_element_settings->perm.screenspace_y = cur_y;
-        
-        next_ui_element_settings->slider_label = field.name;
-        next_ui_element_settings->slider_label_shows_value = true;
-        
-        T1_std_strcpy_cap(pds->regs[i].property_name, 128, field.name);
-        if (field.data_type == T1_TYPE_STRUCT) {
+        for (
+            uint32_t array_i = 0;
+            array_i < field.array_sizes[0];
+            array_i++)
+        {
+            if (field.data_type == T1_TYPE_STRUCT) {
+                log_assert(field.struct_type_name != NULL);
+            }
+            
+            cur_y = get_slider_y_screenspace(i);
+            
+            next_ui_element_settings->perm.screenspace_y = cur_y;
+            char expanded_field_name[256];
+            T1_std_strcpy_cap(expanded_field_name, 256, field.name);
+            if (field.array_sizes[0] > 1) {
+                T1_std_strcat_cap(expanded_field_name, 256, "[");
+                T1_std_strcat_uint_cap(expanded_field_name, 256, array_i);
+                T1_std_strcat_cap(expanded_field_name, 256, "]");
+            }
+            next_ui_element_settings->slider_label = expanded_field_name;
+            
+            uint32_t good = 0;
+            T1MetaField indexed_field = T1_meta_get_field_from_strings(
+                pds->inspecting_field,
+                expanded_field_name,
+                &good);
+            log_assert(good);
+            log_assert(indexed_field.data_type != T1_TYPE_NOTSET);
+            
+            if (array_i > 0) {
+                log_assert(indexed_field.offset != field.offset);
+            }
+            
             T1_std_strcpy_cap(
-                pds->regs[i].property_type_name,
+                pds->regs[pds->regs_size].property_name,
                 128,
-                field.struct_type_name);
+                field.name);
+            if (field.data_type == T1_TYPE_STRUCT) {
+                T1_std_strcpy_cap(
+                    pds->regs[pds->regs_size].property_type_name,
+                    128,
+                    field.struct_type_name);
+            }
+            
+            pds->regs[pds->regs_size].property_offset =
+                (size_t)indexed_field.offset;
+            pds->regs[pds->regs_size].slider_zsprite_id =
+                next_ui_element_object_id();
+            pds->regs[pds->regs_size].label_zsprite_id =
+                next_ui_element_object_id();
+            pds->regs[pds->regs_size].pin_zsprite_id =
+                next_ui_element_object_id();
+            
+            switch (field.data_type) {
+                case T1_TYPE_U64:
+                case T1_TYPE_U32:
+                case T1_TYPE_U16:
+                case T1_TYPE_U8:
+                    next_ui_element_settings->perm.custom_min_max_vals = true;
+                    next_ui_element_settings->perm.custom_uint_max =
+                        field.custom_uint_max;
+                    next_ui_element_settings->perm.custom_uint_min =
+                        field.custom_uint_min;
+                break;
+                case T1_TYPE_I64:
+                case T1_TYPE_I32:
+                case T1_TYPE_I16:
+                case T1_TYPE_I8:
+                    next_ui_element_settings->perm.custom_min_max_vals = true;
+                    next_ui_element_settings->perm.custom_int_max =
+                        field.custom_int_max;
+                    next_ui_element_settings->perm.custom_int_min =
+                        field.custom_int_min;
+                break;
+                case T1_TYPE_F32:
+                    next_ui_element_settings->perm.custom_min_max_vals = true;
+                    next_ui_element_settings->perm.custom_float_max =
+                        field.custom_float_max;
+                    next_ui_element_settings->perm.custom_float_min =
+                        field.custom_float_min;
+                break;
+                default:
+                    next_ui_element_settings->perm.custom_min_max_vals = false;
+            }
+            
+            switch (field.data_type) {
+                case T1_TYPE_STRUCT:
+                    T1_uielement_request_button(
+                        pds->regs[pds->regs_size].slider_zsprite_id,
+                        pds->regs[pds->regs_size].label_zsprite_id,
+                        clicked_btn,
+                        (int64_t)pds->regs_size);
+                break;
+                case T1_TYPE_I64:
+                case T1_TYPE_I32:
+                case T1_TYPE_I16:
+                case T1_TYPE_I8:
+                case T1_TYPE_U64:
+                case T1_TYPE_U32:
+                case T1_TYPE_U16:
+                case T1_TYPE_U8:
+                case T1_TYPE_F32:
+                    next_ui_element_settings->perm.linked_type =
+                        field.data_type;
+                    
+                    T1_uielement_request_slider(
+                        pds->regs[pds->regs_size].slider_zsprite_id,
+                        pds->regs[pds->regs_size].pin_zsprite_id,
+                        pds->regs[pds->regs_size].label_zsprite_id,
+                        ((char *)pds->editing +
+                            pds->inspecting_field_extra_offset +
+                            indexed_field.offset));
+                break;
+                default:
+                    font_settings->font_height = 20;
+                    font_settings->ignore_camera = true;
+                    font_settings->ignore_lighting = true;
+                    text_request_label_around(
+                        /* const int32_t with_object_id: */
+                            pds->regs[pds->regs_size].label_zsprite_id,
+                        /* const char * text_to_draw: */
+                            "implement me!",
+                        /* const float mid_x_pixelspace: */
+                            cur_x,
+                        /* const float mid_y_pixelspace: */
+                            cur_y,
+                        /* const float z: */
+                            0.75f,
+                        /* const float max_width: */
+                            engine_globals->window_width * 2);
+            }
+            
+            pds->regs_size += 1;
         }
-        pds->regs[i].property_offset = (size_t)field.offset;
-        pds->regs[i].slider_zsprite_id = next_ui_element_object_id();
-        pds->regs[i].label_zsprite_id = next_ui_element_object_id();
-        pds->regs[i].pin_zsprite_id = next_ui_element_object_id();
-        
-        switch (field.data_type) {
-            case T1_TYPE_U64:
-            case T1_TYPE_U32:
-            case T1_TYPE_U16:
-            case T1_TYPE_U8:
-                next_ui_element_settings->perm.custom_min_max_vals = true;
-                next_ui_element_settings->perm.custom_uint_max =
-                    field.custom_uint_max;
-                next_ui_element_settings->perm.custom_uint_min =
-                    field.custom_uint_min;
-            break;
-            case T1_TYPE_I64:
-            case T1_TYPE_I32:
-            case T1_TYPE_I16:
-            case T1_TYPE_I8:
-                next_ui_element_settings->perm.custom_min_max_vals = true;
-                next_ui_element_settings->perm.custom_int_max =
-                    field.custom_int_max;
-                next_ui_element_settings->perm.custom_int_min =
-                    field.custom_int_min;
-            break;
-            case T1_TYPE_F32:
-                next_ui_element_settings->perm.custom_min_max_vals = true;
-                next_ui_element_settings->perm.custom_float_max =
-                    field.custom_float_max;
-                next_ui_element_settings->perm.custom_float_min =
-                    field.custom_float_min;
-            break;
-            default:
-                next_ui_element_settings->perm.custom_min_max_vals = false;
-        }
-        
-        switch (field.data_type) {
-            case T1_TYPE_STRUCT:
-                T1_uielement_request_button(
-                    pds->regs[i].slider_zsprite_id,
-                    pds->regs[i].label_zsprite_id,
-                    clicked_btn,
-                    (int64_t)i);
-            break;
-            case T1_TYPE_I64:
-            case T1_TYPE_I32:
-            case T1_TYPE_I16:
-            case T1_TYPE_I8:
-            case T1_TYPE_U64:
-            case T1_TYPE_U32:
-            case T1_TYPE_U16:
-            case T1_TYPE_U8:
-            case T1_TYPE_F32:
-                next_ui_element_settings->perm.linked_type =
-                    field.data_type;
-                
-                T1_uielement_request_slider(
-                    pds->regs[i].slider_zsprite_id,
-                    pds->regs[i].pin_zsprite_id,
-                    pds->regs[i].label_zsprite_id,
-                    ((char *)pds->editing + field.offset));
-            break;
-            default:
-                font_settings->font_height = 20;
-                font_settings->ignore_camera = true;
-                font_settings->ignore_lighting = true;
-                text_request_label_around(
-                    /* const int32_t with_object_id: */
-                        pds->regs[i].label_zsprite_id,
-                    /* const char * text_to_draw: */
-                        "implement me!",
-                    /* const float mid_x_pixelspace: */
-                        cur_x,
-                    /* const float mid_y_pixelspace: */
-                        cur_y,
-                    /* const float z: */
-                        0.75f,
-                    /* const float max_width: */
-                        engine_globals->window_width * 2);
-        }
-        
-        pds->regs_size += 1;
     }
 }
 
@@ -452,6 +495,7 @@ static void request_gfx_from_empty_scene(void) {
     pds->regs_head_i = 0;
     pds->regs_size = 0;
     T1_std_strcpy_cap(pds->inspecting_field, 128, "ParticleEffect");
+    pds->inspecting_field_extra_offset = 0;
     
     redraw_all_sliders();
 }

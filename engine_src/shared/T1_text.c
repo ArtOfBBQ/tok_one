@@ -642,7 +642,7 @@ void text_request_top_touchable_id(
     
     char fps_string[512];
     T1_std_strcpy_cap(fps_string, 512, "Top touchable id: ");
-    T1_std_strcat_int_capped(fps_string, 512, top_touchable_id);
+    T1_std_strcat_int_cap(fps_string, 512, top_touchable_id);
     
     T1_std_strcat_cap(fps_string, 512, ", camera xyz: [");
     T1_std_strcat_float_cap(fps_string, 512, camera.xyz[0]);

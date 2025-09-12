@@ -1076,11 +1076,17 @@ static void T1_refl_get_field_recursive(
                 *good = 0;
                 return;
         }
+        
+        #if T1_META_ASSERTS
+        assert(offset_per_array_index > 0);
+        #endif
     }
     
     copy_internal_field_to_public_field(
         return_value->internal_field,
         &return_value->public);
+    
+    return_value->public.offset += (offset_per_array_index * flat_array_index);
     
     if (second_part != NULL) {
         #if T1_META_ASSERTS

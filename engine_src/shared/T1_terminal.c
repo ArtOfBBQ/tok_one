@@ -867,7 +867,7 @@ static bool32_t evaluate_terminal_command(
                 response,
                 SINGLE_LINE_MAX,
                 "Attempting to dump texture array: ");
-            T1_std_strcat_int_capped(
+            T1_std_strcat_int_cap(
                 response,
                 SINGLE_LINE_MAX,
                 texture_array_i);

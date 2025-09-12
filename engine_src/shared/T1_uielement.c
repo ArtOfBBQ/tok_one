@@ -365,13 +365,14 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
         {
             active_ui_elements[i].label_dirty = false;
             
-            char full_label[256];
-            full_label[0] = '\0';
+            #define FULL_LABEL_CAP 256
+            char full_label[FULL_LABEL_CAP];
+            T1_std_memset(full_label, 0, FULL_LABEL_CAP);
             
             if (active_ui_elements[i].user_set.label_prefix[0] != '\0') {
                 T1_std_strcpy_cap(
                     full_label,
-                    256,
+                    FULL_LABEL_CAP,
                     active_ui_elements[i].user_set.label_prefix);
             }
             
@@ -428,49 +429,50 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
             if (active_ui_elements[i].slider_linked_value != NULL) {
                 T1_std_strcat_cap(
                     full_label,
-                    256,
+                    FULL_LABEL_CAP,
                     ": ");
+                
                 switch (active_ui_elements[i].user_set.linked_type)
                 {
-                    case T1_TYPE_F32:
+                case T1_TYPE_F32:
                     T1_std_strcat_float_cap(
                         full_label,
-                        256,
+                        FULL_LABEL_CAP,
                         *(float *)active_ui_elements[i].
                             slider_linked_value);
-                    break;
+                break;
                 case T1_TYPE_U64:
-                T1_std_strcat_uint_cap(
+                    T1_std_strcat_uint_cap(
                         full_label,
-                        256,
+                        FULL_LABEL_CAP,
                         (uint32_t)*(uint64_t *)active_ui_elements[i].
                             slider_linked_value);
                 break;
                 case T1_TYPE_U32:
-                T1_std_strcat_uint_cap(
+                    T1_std_strcat_uint_cap(
                         full_label,
-                        256,
+                        FULL_LABEL_CAP,
                         *(uint32_t *)active_ui_elements[i].
                             slider_linked_value);
                 break;
                 case T1_TYPE_U16:
                     T1_std_strcat_uint_cap(
                         full_label,
-                        256,
+                        FULL_LABEL_CAP,
                         *(uint16_t *)active_ui_elements[i].
                             slider_linked_value);
                 break;
                 case T1_TYPE_U8:
                     T1_std_strcat_uint_cap(
                         full_label,
-                        256,
+                        FULL_LABEL_CAP,
                         *(uint8_t *)active_ui_elements[i].
                             slider_linked_value);
                 break;
                 default:
                     T1_std_strcat_cap(
                         full_label,
-                        256,
+                        FULL_LABEL_CAP,
                         "?DATA");
                 break;
                 }
