@@ -1082,9 +1082,12 @@ static void T1_refl_get_field_recursive(
         #endif
     }
     
+    int16_t previous_offset = return_value->public.offset;
     copy_internal_field_to_public_field(
         return_value->internal_field,
         &return_value->public);
+    
+    return_value->public.offset += previous_offset;
     
     return_value->public.offset += (offset_per_array_index * flat_array_index);
     
@@ -1140,7 +1143,7 @@ T1MetaField T1_meta_get_field_from_strings(
     #if T1_META_ASSERTS
     assert(good);
     #endif
-    
+        
     // discard or "pop" T1_refl_get_field_recursive()'s strings
     t1rs->ascii_store_next_i = before_recursion_ascii_store_next_i;
     

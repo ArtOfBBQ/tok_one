@@ -610,6 +610,7 @@ void T1_uielement_request_slider(
         slider_height_screenspace > 0);
     log_assert(next_ui_element_settings->perm.pin_width_screenspace > 0);
     log_assert(next_ui_element_settings->perm.pin_height_screenspace > 0);
+    log_assert(next_ui_element_settings->perm.linked_type != T1_TYPE_NOTSET);
     
     ActiveUIElement * next_ae = next_active_ui_element();
     next_ae->user_set = next_ui_element_settings->perm;
