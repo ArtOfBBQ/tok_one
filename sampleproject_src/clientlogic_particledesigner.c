@@ -384,12 +384,14 @@ static void redraw_all_sliders(void) {
             
             pds->regs[pds->regs_size].property_offset =
                 (size_t)indexed_field.offset;
-            pds->regs[pds->regs_size].slider_zsprite_id =
-                next_ui_element_object_id();
-            pds->regs[pds->regs_size].label_zsprite_id =
-                next_ui_element_object_id();
-            pds->regs[pds->regs_size].pin_zsprite_id =
-                next_ui_element_object_id();
+            if (pds->regs[pds->regs_size].slider_zsprite_id == 0) {
+                pds->regs[pds->regs_size].slider_zsprite_id =
+                    next_ui_element_object_id();
+                pds->regs[pds->regs_size].label_zsprite_id =
+                    next_ui_element_object_id();
+                pds->regs[pds->regs_size].pin_zsprite_id =
+                    next_ui_element_object_id();
+            }
             
             switch (field.data_type) {
                 case T1_TYPE_U64:
