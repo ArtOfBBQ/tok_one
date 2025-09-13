@@ -1082,7 +1082,7 @@ static void T1_refl_get_field_recursive(
         #endif
     }
     
-    int16_t previous_offset = return_value->public.offset;
+    int64_t previous_offset = return_value->public.offset;
     copy_internal_field_to_public_field(
         return_value->internal_field,
         &return_value->public);
