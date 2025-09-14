@@ -13,13 +13,13 @@ typedef struct FontSettings {
     GPUConstMat mat;
     int32_t touchable_id;
     uint32_t remove_shadow;
-    uint32_t alpha_blending_enabled;
     float extra_offset_xy[2];
     float scale_factor;
     float ignore_lighting;
     float ignore_camera;
     float font_height; // = 30.0;
     float alpha;
+    bool8_t alpha_blending_enabled;
 } FontSettings;
 
 extern FontSettings * font_settings;

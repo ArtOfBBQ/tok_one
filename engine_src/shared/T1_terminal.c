@@ -2,7 +2,7 @@
 
 #if TERMINAL_ACTIVE
 
-bool32_t terminal_active = false;
+bool8_t terminal_active = false;
 
 static void (* terminal_enter_fullscreen_fnc)(void) = NULL;
 

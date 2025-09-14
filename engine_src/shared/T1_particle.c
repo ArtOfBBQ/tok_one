@@ -331,26 +331,29 @@ void construct_particle_effect(
     T1_std_memset(to_construct, 0, sizeof(ParticleEffect));
     
     zSpriteRequest poly_request;
-    poly_request.cpu_data       = &to_construct->zpolygon_cpu;
-    poly_request.gpu_data       = &to_construct->zpolygon_gpu;
-    zsprite_construct(/* PolygonRequest *to_construct: */ &poly_request);
+    poly_request.cpu_data = &to_construct->zpolygon_cpu;
+    poly_request.gpu_data = &to_construct->zpolygon_gpu;
+    zsprite_construct(&poly_request);
     
-    to_construct->zsprite_id           = -1;
-    to_construct->zpolygon_cpu.mesh_id =  1;
+    to_construct->zsprite_id = -1;
+    to_construct->zpolygon_cpu.mesh_id = BASIC_CUBE_MESH_ID;
     
     to_construct->zpolygon_cpu.committed = true;
     
+    to_construct->zpolygon_gpu.base_mat.rgb_cap[0] = 1.0f;
+    to_construct->zpolygon_gpu.base_mat.rgb_cap[1] = 1.0f;
+    to_construct->zpolygon_gpu.base_mat.rgb_cap[2] = 1.0f;
     to_construct->zpolygon_gpu.scale_factor      = 1.0f;
     to_construct->zpolygon_gpu.xyz_mult[0] = 0.01f;
     to_construct->zpolygon_gpu.xyz_mult[1] = 0.01f;
     to_construct->zpolygon_gpu.xyz_mult[2] = 0.01f;
-    to_construct->zpolygon_gpu.ignore_lighting   = true;
+    to_construct->zpolygon_gpu.ignore_lighting = true;
     
     to_construct->random_seed = (uint32_t)
         tok_rand() % (RANDOM_SEQUENCE_SIZE - 100);
     to_construct->spawns_per_sec = 200;
-    to_construct->verts_per_particle      = 6;
-    to_construct->lifespan          = 2000000;
+    to_construct->verts_per_particle = 3;
+    to_construct->lifespan = 2000000;
 }
 
 ParticleEffect * next_particle_effect(void) {
@@ -376,6 +379,12 @@ ParticleEffect * next_particle_effect(void) {
 
 void commit_particle_effect(ParticleEffect * to_request)
 {
+    if (!engine_globals->clientlogic_early_startup_finished) {
+        log_dump_and_crash(
+            "You can't commit particle effects during early startup.");
+        return;
+    }
+    
     log_assert(
         to_request->zpolygon_cpu.mesh_id >= 0);
     log_assert(
@@ -455,7 +464,7 @@ void add_particle_effects_to_workload(
         
         if (particle_effects[i].elapsed >
             (particle_effects[i].lifespan +
-                particle_effects[i].pause_per_set))
+                particle_effects[i].pause_per_spawn))
         {
             if (particle_effects[i].loops == 1) {
                 particle_effects[i].deleted = true;
@@ -474,7 +483,7 @@ void add_particle_effects_to_workload(
                 particle_effects[i].spawns_per_sec) /
                     1000000;
         interval_between_spawns =
-            particle_effects[i].pause_per_set;
+            particle_effects[i].pause_per_spawn;
         
         float particles_active = 0;
         

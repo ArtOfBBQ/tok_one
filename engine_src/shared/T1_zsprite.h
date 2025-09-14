@@ -24,11 +24,11 @@ typedef struct CPUzSprite {
     uint64_t next_occlusion_in_us;
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
     
-    int32_t  zsprite_id;
-    bool32_t alpha_blending_enabled;
-    bool32_t committed;
-    bool32_t deleted;
-    bool32_t visible;
+    int32_t zsprite_id;
+    bool8_t alpha_blending_enabled;
+    bool8_t committed;
+    bool8_t deleted;
+    bool8_t visible;
 } CPUzSprite;
 
 typedef struct zSpriteCollection {

@@ -349,9 +349,6 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 {
     delete_all_ui_elements();
     zsprites_to_render->size = 0;
-    #if PARTICLES_ACTIVE
-    particle_effects_size = 0;
-    #endif
     engine_globals->fullscreen = true;
 }
 

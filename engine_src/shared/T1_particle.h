@@ -76,14 +76,14 @@ typedef struct ParticleEffect {
     // You now have a property with some variance introduced. Most will center
     // around the original value and the exceedingly rare case will be
     // (linear_variance_multiplier * self) below or above its original value
-    
-    CPUzSprite zpolygon_cpu;
+
     GPUzSprite zpolygon_gpu;
+    CPUzSprite zpolygon_cpu;
     
     uint64_t random_seed;
     uint64_t elapsed;
     uint64_t lifespan;
-    uint64_t pause_per_set;
+    uint64_t pause_per_spawn;
     
     int32_t zsprite_id;
     

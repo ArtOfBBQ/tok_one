@@ -16,7 +16,7 @@
 extern "C" {
 #endif
 
-extern bool32_t terminal_active;
+extern bool8_t terminal_active;
 
 void terminal_init(
     void (* terminal_enter_fullscreen_fncptr)(void));

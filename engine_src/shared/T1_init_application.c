@@ -609,6 +609,8 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
             return;
         }
         
+        engine_globals->clientlogic_early_startup_finished = 1;
+        
         uint32_t core_count = platform_get_cpu_logical_core_count();
         log_assert(core_count > 0);
         ias->image_decoding_threads = core_count > 6 ? 6 : core_count;

@@ -250,9 +250,6 @@ void platform_layer_start_window_resize(
     
     delete_all_ui_elements();
     zsprites_to_render->size = 0;
-    #if PARTICLES_ACTIVE
-    particle_effects_size = 0;
-    #endif
     
     #if FOG_ACTIVE
     engine_globals->postproc_consts.fog_factor = 0.0f;

@@ -469,7 +469,7 @@ void T1_scheduled_animations_request_evaporate_and_destroy(
         vaporize_effect->spawns_per_sec = (uint32_t)(
             (shattered_verts_size * 1000000) /
                 (uint64_t)(duration_us + 1));
-        vaporize_effect->pause_per_set = 10;
+        vaporize_effect->pause_per_spawn = 10;
         vaporize_effect->verts_per_particle = 3;
         vaporize_effect->lifespan = duration_us;
         vaporize_effect->shattered = true;
@@ -555,7 +555,7 @@ void T1_scheduled_animations_request_shatter_and_destroy(
         shatter_effect->spawns_per_sec = (uint32_t)(
             (shattered_verts_size * 1000000) /
                 (uint64_t)(duration_us + 1));
-        shatter_effect->pause_per_set = 0;
+        shatter_effect->pause_per_spawn = 0;
         shatter_effect->verts_per_particle = 6;
         shatter_effect->lifespan = duration_us;
         shatter_effect->shattered = true;

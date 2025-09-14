@@ -38,16 +38,12 @@ platform layer doesn't need to do anything and can just record values directly
 #include "T1_cpu_gpu_shared_types.h"
 
 typedef struct EngineGlobals {
-    bool32_t draw_mouseptr;
-    bool32_t draw_imputed_normals;
-    bool32_t draw_triangles;
-    bool32_t draw_axes;
-    bool32_t draw_fps;
-    bool32_t draw_top_touchable_id;
-    bool32_t show_profiler;
-    bool32_t pause_profiler;
-    bool32_t block_mouse;
-    bool32_t fullscreen;
+    GPUPostProcConsts postproc_consts;
+    GPUProjectConsts project_consts;
+    
+    uint64_t elapsed;
+    uint64_t this_frame_timestamp_us;
+    uint64_t last_resize_request_us;
     
     uint32_t startup_bytes_to_load;
     uint32_t startup_bytes_loaded;
@@ -65,11 +61,17 @@ typedef struct EngineGlobals {
     float window_bottom;
     float aspect_ratio;
     
-    uint64_t elapsed;
-    uint64_t this_frame_timestamp_us;
-    uint64_t last_resize_request_us;
-    GPUPostProcConsts postproc_consts;
-    GPUProjectConsts project_consts;
+    bool8_t draw_mouseptr;
+    bool8_t draw_imputed_normals;
+    bool8_t draw_triangles;
+    bool8_t draw_axes;
+    bool8_t draw_fps;
+    bool8_t draw_top_touchable_id;
+    bool8_t show_profiler;
+    bool8_t pause_profiler;
+    bool8_t block_mouse;
+    bool8_t fullscreen;
+    bool8_t clientlogic_early_startup_finished;
 } EngineGlobals;
 
 extern EngineGlobals * engine_globals;

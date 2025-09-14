@@ -82,13 +82,14 @@ void engineglobals_init(void) {
         pjc->field_of_view_modifier;
     pjc->y_multiplier = pjc->field_of_view_modifier;
     
-    engine_globals->draw_imputed_normals  = false;
-    engine_globals->draw_fps              = false;
-    engine_globals->draw_top_touchable_id = false;
-    engine_globals->draw_triangles        =  true;
-    engine_globals->show_profiler         = false;
-    engine_globals->pause_profiler        = false;
-    engine_globals->block_mouse           = false;
+    engine_globals->draw_imputed_normals   = false;
+    engine_globals->draw_fps               = false;
+    engine_globals->draw_top_touchable_id  = false;
+    engine_globals->draw_triangles         =  true;
+    engine_globals->show_profiler          = false;
+    engine_globals->pause_profiler         = false;
+    engine_globals->block_mouse            = false;
+    engine_globals->clientlogic_early_startup_finished = false;
     
     engine_globals->pixelation_div = 1;
     
