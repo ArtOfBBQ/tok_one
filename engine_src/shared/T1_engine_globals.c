@@ -89,7 +89,6 @@ void engineglobals_init(void) {
     engine_globals->show_profiler          = false;
     engine_globals->pause_profiler         = false;
     engine_globals->block_mouse            = false;
-    engine_globals->clientlogic_early_startup_finished = false;
     
     engine_globals->pixelation_div = 1;
     

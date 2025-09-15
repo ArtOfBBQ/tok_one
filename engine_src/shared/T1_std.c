@@ -232,9 +232,7 @@ int T1_std_maxi(const int x, const int y)
 void
 T1_std_internal_strcat_cap(
     char * recipient,
-    #ifndef COMMON_IGNORE_ASSERTS
     const uint32_t recipient_size,
-    #endif
     const char * to_append)
 {
     uint32_t i = 0;
@@ -311,9 +309,7 @@ T1_std_internal_strcat_uint_cap(
 void
 T1_std_internal_strcat_float_cap(
     char * recipient,
-    #ifndef COMMON_IGNORE_ASSERTS
     const uint32_t recipient_size,
-    #endif
     const float to_append)
 {
     float positive_append = to_append >= 0.0f ?
@@ -326,9 +322,7 @@ T1_std_internal_strcat_float_cap(
     if (to_append < 0.0f) {
         T1_std_internal_strcat_cap(
             recipient,
-            #ifndef COMMON_IGNORE_ASSERTS
             recipient_size,
-            #endif
             "-");
     }
     T1_std_internal_strcat_uint_cap(
@@ -339,9 +333,7 @@ T1_std_internal_strcat_float_cap(
         before_comma);
     T1_std_internal_strcat_cap(
         recipient,
-        #ifndef COMMON_IGNORE_ASSERTS
         recipient_size,
-        #endif
         ".");
     T1_std_internal_strcat_uint_cap(
         recipient,

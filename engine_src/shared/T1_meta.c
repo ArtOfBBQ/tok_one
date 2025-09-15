@@ -676,12 +676,11 @@ void T1_meta_reg_custom_float_limits_for_last_field(
 {
     *good = 0;
     
-    // We only support registering to the most recently registered struct
-    MetaStruct * target_mstruct = &t1rs->
-        metastructs[t1rs->meta_structs_size-1];
-    
     #if T1_META_ASSERTS
+    // We only support registering to the most recently registered struct
+    MetaStruct * target_mstruct = &t1rs->metastructs[t1rs->meta_structs_size-1];
     assert(target_mstruct != NULL);
+    if (target_mstruct == NULL) { return; }
     #endif
     
     //  We only support registering to the most recently registered field
@@ -721,12 +720,12 @@ void T1_meta_reg_custom_int_limits_for_last_field(
 {
     *good = 0;
     
+    #if T1_META_ASSERTS
     // We only support registering to the most recently registered struct
     MetaStruct * target_mstruct = &t1rs->
         metastructs[t1rs->meta_structs_size-1];
-    
-    #if T1_META_ASSERTS
     assert(target_mstruct != NULL);
+    if (target_mstruct == NULL) { return; }
     #endif
     
     //  We only support registering to the most recently registered field
@@ -772,11 +771,12 @@ void T1_meta_reg_custom_uint_limits_for_last_field(
     *good = 0;
     
     // We only support registering to the most recently registered struct
-    MetaStruct * target_mstruct = &t1rs->
-        metastructs[t1rs->meta_structs_size-1];
     
     #if T1_META_ASSERTS
+    MetaStruct * target_mstruct = &t1rs->
+        metastructs[t1rs->meta_structs_size-1];
     assert(target_mstruct != NULL);
+    if (target_mstruct == NULL) { return; }
     #endif
     
     //  We only support registering to the most recently registered field

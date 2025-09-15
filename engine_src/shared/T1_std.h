@@ -66,14 +66,14 @@ float T1_std_maxf(const float x, const float y);
 
 #ifndef COMMON_IGNORE_ASSERTS
 #define T1_std_strcat_cap(recip, recipsize, to_append) T1_std_internal_strcat_cap(recip,recipsize,to_append);
+#else
+#define T1_std_strcat_cap(recip, recipsize, to_append) T1_std_internal_strcat_cap(recip, UINT32_MAX, to_append);
+#endif
 void
 T1_std_internal_strcat_cap(
     char * recipient,
     const uint32_t recipient_size,
     const char * to_append);
-#else
-#define T1_std_strcat_cap(recip, recipsize, to_append) T1_std_strcat(recip,to_append);
-#endif
 
 void
 T1_std_strcat(
@@ -116,18 +116,14 @@ T1_std_internal_strcat_uint_cap(
 
 #ifndef COMMON_IGNORE_ASSERTS
 #define T1_std_strcat_float_cap(recip, recipsize, to_append) T1_std_internal_strcat_float_cap(recip, recipsize, to_append);
+#else
+#define T1_std_strcat_float_cap(recip, recipsize, to_append) T1_std_internal_strcat_float_cap(recip, UINT32_MAX, to_append);
+#endif
 void
 T1_std_internal_strcat_float_cap(
     char * recipient,
     const uint32_t recipient_size,
     const float to_append);
-#else
-#define T1_std_strcat_float_cap(recip, recipsize, to_append) T1_std_internal_strcat_float(recip, to_append);
-void
-T1_std_internal_strcat_float(
-    char * recipient,
-    const float to_append);
-#endif
 
 #ifndef COMMON_IGNORE_ASSERTS
 #define T1_std_strcpy_cap(recip, recipsize, to_append) T1_std_internal_strcpy_cap(recip, recipsize, to_append);
