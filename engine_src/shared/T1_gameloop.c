@@ -318,4 +318,9 @@ void gameloop_update_after_render_pass(void) {
                         screen_y);
     user_interactions[INTR_LAST_GPU_DATA].touchable_id_pierce =
         user_interactions[INTR_LAST_GPU_DATA].touchable_id_top;
+    
+    if (engine_globals->upcoming_fullscreen_request) {
+        engine_globals->upcoming_fullscreen_request = false;
+        platform_enter_fullscreen();
+    }
 }

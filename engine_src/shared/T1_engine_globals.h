@@ -72,6 +72,7 @@ typedef struct EngineGlobals {
     bool8_t block_mouse;
     bool8_t fullscreen;
     bool8_t clientlogic_early_startup_finished;
+    bool8_t upcoming_fullscreen_request;
 } EngineGlobals;
 
 extern EngineGlobals * engine_globals;

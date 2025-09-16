@@ -13,13 +13,13 @@ static InitApplicationState * ias;
 
 #if ENGINE_SAVEFILE_ACTIVE
 typedef struct EngineSaveFile {
-    bool32_t window_fullscreen;
     float window_left;
     float window_width;
     float window_bottom;
     float window_height;
     float music_volume;
     float sound_volume;
+    bool8_t window_fullscreen;
 } EngineSaveFile;
 
 static EngineSaveFile * engine_save_file = NULL;
@@ -285,6 +285,8 @@ void init_application_before_gpu_init(
         engine_globals->window_left   = engine_save_file->window_left;
         engine_globals->window_bottom = engine_save_file->window_bottom;
         engine_globals->fullscreen = engine_save_file->window_fullscreen;
+        engine_globals->upcoming_fullscreen_request =
+            engine_globals->fullscreen;
         #if AUDIO_ACTIVE
         sound_settings->music_volume = engine_save_file->music_volume;
         sound_settings->sfx_volume = engine_save_file->sound_volume;
@@ -699,10 +701,6 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         /* size_t n: */
             sizeof(GPUConstMat) * ALL_LOCKED_MATERIALS_SIZE);
     platform_gpu_copy_locked_materials();
-    
-    if (engine_globals->fullscreen) {
-        platform_enter_fullscreen();
-    }
     
     if (!application_running) {
         gameloop_active = true;

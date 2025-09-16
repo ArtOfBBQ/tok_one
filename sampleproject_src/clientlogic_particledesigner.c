@@ -268,6 +268,8 @@ static void redraw_all_sliders(void);
 
 static void clicked_btn(int64_t arg) {
     if (arg == -1) {
+        clear_ui_element_touchable_ids();
+        
         pds->inspecting_field_extra_offset = 0;
         T1_std_strcpy_cap(
             pds->inspecting_field,
