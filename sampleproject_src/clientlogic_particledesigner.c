@@ -755,20 +755,135 @@ void client_logic_update_after_render_pass(void) {
     
 }
 
+static void load_texture(const char * writables_filename) {
+    uint32_t ok = 0;
+    T1Tex tex = T1_texture_array_get_filename_location(writables_filename);
+    
+    if (tex.array_i >= 0 || tex.slice_i >= 0) {
+        log_dump_and_crash("That texture was already registered!");
+        return;
+    }
+    
+    size_t len = T1_std_strlen(writables_filename);
+    if (
+        writables_filename[len-3] == 'p' &&
+        writables_filename[len-2] == 'n' &&
+        writables_filename[len-1] == 'g')
+    {
+        T1_texture_files_runtime_register_png_from_writables(
+            /* const char * filepath: */
+                writables_filename,
+            /* uint32_t * good: */
+                &ok);
+        log_assert(ok);
+        
+        tex = T1_texture_array_get_filename_location(writables_filename);
+        
+        if (tex.array_i < 0 || tex.slice_i < 0) {
+            log_assert(0);
+            return;
+        }
+        
+        log_assert(texture_arrays[tex.array_i].images[tex.slice_i].
+                image.rgba_values_freeable != NULL);
+        log_assert(texture_arrays[tex.array_i].images[tex.slice_i].
+                image.rgba_values_page_aligned != NULL);
+        
+        pds->editing->zpolygon_gpu.base_mat.texturearray_i = tex.array_i;
+        pds->editing->zpolygon_gpu.base_mat.texture_i = tex.slice_i;
+        //        pds->editing->zpolygon_gpu.bonus_rgb[0] = 0.8f;
+        //        pds->editing->zpolygon_gpu.bonus_rgb[1] = 0.4f;
+        //        pds->editing->zpolygon_gpu.bonus_rgb[2] = 0.2f;
+        
+        float tempquad_z = 0.9f;
+        zSpriteRequest temp_quad;
+        zsprite_request_next(&temp_quad);
+        zsprite_construct_quad(
+            engineglobals_screenspace_x_to_x(25.0f, tempquad_z),
+            engineglobals_screenspace_y_to_y(25.0f, tempquad_z),
+            tempquad_z,
+            engineglobals_screenspace_width_to_width(100.0f, tempquad_z),
+            engineglobals_screenspace_height_to_height(100.0f, tempquad_z),
+            &temp_quad);
+        temp_quad.gpu_data->base_mat.diffuse_rgb[0] = 1.0f;
+        temp_quad.gpu_data->base_mat.diffuse_rgb[1] = 1.0f;
+        temp_quad.gpu_data->base_mat.diffuse_rgb[2] = 1.0f;
+        temp_quad.gpu_data->ignore_camera = true;
+        temp_quad.gpu_data->ignore_lighting = true;
+        temp_quad.cpu_data->alpha_blending_enabled = true;
+        temp_quad.cpu_data->zsprite_id = next_nonui_object_id();
+        temp_quad.gpu_data->base_mat.texturearray_i = tex.array_i;
+        temp_quad.gpu_data->base_mat.texture_i = tex.slice_i;
+        zsprite_commit(&temp_quad);
+        
+        T1ScheduledAnimation * fade = T1_scheduled_animations_request_next(true);
+        fade->pause_us = 3000000;
+        fade->duration_us = 2000000;
+        fade->gpu_polygon_vals.alpha = 0.0f;
+        fade->affected_zsprite_id = temp_quad.cpu_data->zsprite_id;
+        T1_scheduled_animations_commit(fade);
+    } else {
+        return;
+    }
+}
+
 void client_logic_evaluate_terminal_command(
     char * command,
     char * response,
     const uint32_t response_cap)
 {
     if (
-        T1_std_are_equal_strings(
+        T1_std_string_starts_with(
             command,
-            "EXAMPLE COMMAND"))
+            "LOAD TEXTURE ") &&
+        command[13] != ' ' &&
+        command[13] != '\0')
     {
-        T1_std_strcpy_cap(
+        char res_name[128];
+        T1_std_strcpy_cap(res_name, 128, command + 13);
+        
+        T1_std_strtolower(res_name);
+        
+        char writables_path[256];
+        writables_path[0] = '\0';
+        
+        platform_get_writables_path(
+            /* char * recipient: */
+                writables_path,
+            /* const uint32_t recipient_size: */
+                256);
+        
+        char dir_sep[4];
+        platform_get_directory_separator(dir_sep);
+        
+        char writables_filepath[256];
+        
+        T1_std_strcpy_cap(writables_filepath, 256, writables_path);
+        T1_std_strcat_cap(writables_filepath, 256, dir_sep);
+        T1_std_strcat_cap(writables_filepath, 256, res_name);
+        
+        if (platform_file_exists(writables_filepath)) {
+            T1_std_strcat_cap(response, response_cap, "Found, loading...");
+            
+            T1Tex tex = T1_texture_array_get_filename_location(res_name);
+            
+            if (tex.array_i >= 0 || tex.slice_i >= 0) {
+                T1_std_strcat_cap(
+                    response,
+                    response_cap,
+                    "\nERROR: That texture already exists!");
+                return;
+            }
+            
+            load_texture(res_name);
+            return;
+        }
+        
+        T1_std_strcat_cap(
             response,
             response_cap,
-            "Hello from clientlogic!");
+            "No such texture in writables!");
+        
         return;
     }
     

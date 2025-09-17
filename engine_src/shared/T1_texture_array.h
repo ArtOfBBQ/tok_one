@@ -22,8 +22,8 @@ typedef struct T1Tex {
 typedef struct TextureArrayImage {
     DecodedImage image;
     char filename[TEXTUREARRAY_FILENAME_SIZE];
-    bool32_t request_update;
-    bool32_t prioritize_asset_load;
+    bool8_t request_update;
+    bool8_t prioritize_asset_load;
 } TextureArrayImage;
 
 typedef struct TextureArray {

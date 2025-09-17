@@ -1,7 +1,7 @@
 #include "T1_texture_files.h"
 
 
-static void malloc_img_from_filename(
+static void malloc_img_from_resource_name(
     DecodedImage * recipient,
     const char * filename,
     const uint32_t thread_id)
@@ -178,7 +178,7 @@ void T1_texture_files_register_new_by_splitting_file(
 {
     DecodedImage stack_img;
     DecodedImage * img = &stack_img;
-    malloc_img_from_filename(img, filename, /* thread_id: */ 0);
+    malloc_img_from_resource_name(img, filename, /* thread_id: */ 0);
     
     log_assert(img->good);
     if (!img->good) { return; }
@@ -196,6 +196,128 @@ void T1_texture_files_register_new_by_splitting_file(
         filename_prefix,
         rows,
         columns);
+}
+
+void T1_texture_files_runtime_register_png_from_writables(
+    const char * filename,
+    uint32_t * good)
+{
+    *good = 0;
+    
+    char filepath[256];
+    T1_std_memset(filepath, 0, 256);
+    platform_get_writables_path(filepath, 256);
+    platform_get_directory_separator(filepath + T1_std_strlen(filepath));
+    T1_std_strcat_cap(filepath, 256, filename);
+    
+    FileBuffer buf;
+    buf.size_without_terminator = platform_get_filesize(filepath);
+    if (buf.size_without_terminator <= 28) {
+        return;
+    }
+    buf.contents = malloc_from_managed(buf.size_without_terminator+1);
+    buf.good = 0;
+    
+    platform_read_file(filepath, &buf);
+    uint32_t width = 0;
+    uint32_t height = 0;
+    get_PNG_width_height(
+        /* const uint8_t *compressed_input: */
+            (uint8_t *)buf.contents,
+        /* const uint64_t compressed_input_size: */
+            buf.size_without_terminator,
+        /* uint32_t *out_width: */
+            &width,
+        /* uint32_t *out_height: */
+            &height,
+        /* uint32_t *out_good: */
+            &buf.good);
+    if (!buf.good) {
+        free_from_managed(buf.contents);
+        return;
+    }
+    
+    T1_texture_array_preregister_null_image(
+        /* const char * filename: */
+            filename,
+        /* const uint32_t height: */
+            height,
+        /* const uint32_t width: */
+            width,
+        /* const uint32_t is_dds_image: */
+            false);
+    
+    T1Tex loc = T1_texture_array_get_filename_location(filename);
+    
+    DecodedImage * recipient =
+        &texture_arrays[loc.array_i].images[loc.slice_i].image;
+    
+    recipient->good = false;
+    recipient->width = width;
+    recipient->height = height;
+    recipient->pixel_count = recipient->width * recipient->height;
+    recipient->rgba_values_size = recipient->pixel_count * 4;
+    malloc_from_managed_page_aligned(
+        /* void *base_pointer_for_freeing: */
+            (void *)&recipient->rgba_values_freeable,
+        /* void *aligned_subptr: */
+            (void *)&recipient->rgba_values_page_aligned,
+        /* const size_t subptr_size: */
+            recipient->rgba_values_size);
+    
+    T1_std_memset(
+        recipient->rgba_values_page_aligned,
+        0,
+        recipient->rgba_values_size);
+    
+    decode_PNG(
+        /* const uint8_t * compressed_input: */
+            (uint8_t *)buf.contents,
+        /* const uint64_t compressed_input_size: */
+            buf.size_without_terminator,
+        /* const uint8_t * out_rgba_values: */
+            texture_arrays[loc.array_i].images[loc.slice_i].image.
+                rgba_values_freeable,
+        /* const uint64_t rgba_values_size: */
+            texture_arrays[loc.array_i].images[loc.slice_i].image.
+                rgba_values_size,
+        /* uint32_t * out_good: */
+            &texture_arrays[loc.array_i].images[loc.slice_i].image.good,
+        /* const uint32_t thread_id: */
+            0);
+    
+    platform_gpu_init_texture_array(
+        /* const int32_t texture_array_i: */
+            loc.array_i,
+        /* const uint32_t num_images: */
+            texture_arrays[loc.array_i].images_size,
+        /* const uint32_t single_image_width: */
+            texture_arrays[loc.array_i].single_img_width,
+        /* const uint32_t single_image_height: */
+            texture_arrays[loc.array_i].single_img_height,
+        /* const bool32_t use_bc1_compression: */
+            false);
+    
+    platform_gpu_push_texture_slice_and_free_rgba_values(
+        /* const int32_t texture_array_i: */
+            loc.array_i,
+        /* const int32_t texture_i: */
+            loc.slice_i,
+        /* const uint32_t parent_texture_array_images_size: */
+            texture_arrays[loc.array_i].images_size,
+        /* const uint32_t image_width: */
+            texture_arrays[loc.array_i].single_img_width,
+        /* const uint32_t image_height: */
+            texture_arrays[loc.array_i].single_img_height,
+        /* uint8_t *rgba_values_freeable: */
+            texture_arrays[loc.array_i].images[loc.slice_i].image.
+                rgba_values_freeable,
+        /* uint8_t *rgba_values_page_aligned: */
+            texture_arrays[loc.array_i].images[loc.slice_i].image.
+                rgba_values_page_aligned);
+    
+    free_from_managed(buf.contents);
+    *good = 1;
 }
 
 void T1_texture_files_preregister_png_resource(
@@ -361,7 +483,7 @@ void T1_texture_files_decode_all_preregistered(
             log_assert(texture_arrays[ta_i].images[t_i].image.rgba_values_page_aligned == NULL);
             log_assert(texture_arrays[ta_i].images[t_i].image.rgba_values_size == 0);
             
-            malloc_img_from_filename(
+            malloc_img_from_resource_name(
                 /* DecodedImage * recipient: */
                     &texture_arrays[ta_i].images[t_i].image,
                 /* const char * filename: */

@@ -417,6 +417,16 @@ size_t T1_std_strlen( const char * null_terminated_string)
     return return_value;
 }
 
+void T1_std_strtolower(char * in) {
+    int8_t offset = ('A' - 'a');
+    while (in[0] != '\0') {
+        if (in[0] >= 'A' && in[0] <= 'Z') {
+            in[0] = in[0] - offset;
+        }
+        in++;
+    }
+}
+
 bool32_t
 T1_std_string_starts_with(
     const char * str_to_check,

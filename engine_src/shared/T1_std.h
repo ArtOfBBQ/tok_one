@@ -145,9 +145,9 @@ T1_std_copy_strings(
     const char * origin,
     const uint32_t origin_size);
 
-size_t
-T1_std_strlen(
-    const char * null_terminated_string);
+size_t T1_std_strlen(const char * null_terminated_string);
+
+void T1_std_strtolower(char * in);
 
 bool32_t T1_std_string_starts_with(
     const char * str_to_check,
