@@ -19,7 +19,7 @@
 
 
 #pragma pack(push, 1)
-typedef struct GPUVertexIndices {
+typedef struct {
     int locked_vertex_i; // index into GPULockedVertex buffer
     int polygon_i;       // index into GPUPolygonCollection buffer
 } GPUVertexIndices;
@@ -38,7 +38,7 @@ the parents that contain these (see zpolygons_to_render in zpolygon.h),
 not this.
 */
 #define PARENT_MATERIAL_BASE 4294967295
-typedef struct GPULockedVertex {
+typedef struct {
     float        xyz          [3];        // 12 bytes
     float        normal_xyz   [3];        // 12 bytes
     float        tangent_xyz  [3];        // 12 bytes
@@ -47,15 +47,15 @@ typedef struct GPULockedVertex {
     unsigned int locked_materials_head_i; //  4 bytes
     unsigned int parent_material_i;       //  4 bytes
     float        padding[2];              // 12 bytes
-} __attribute__((aligned(32))) GPULockedVertex;
+} __attribute__((aligned(32))) T1GPULockedVertex;
 
-typedef struct GPUCamera {
+typedef struct {
     float xyz[3];           // 12 bytes
     float xyz_angle[3];     // 12 bytes
     float xyz_cosangle[3];  // 12 bytes
     float xyz_sinangle[3];  // 12 bytes
     float padding[2];       //  8 bytes
-} GPUCamera;
+} T1GPUCamera;
 
 typedef struct {
     float ambient_rgb[3];
@@ -73,9 +73,9 @@ typedef struct {
     float refraction;
     float alpha;
     float illum;
-} GPUConstMat;
+} T1GPUConstMat;
 
-typedef struct GPUzSprite {
+typedef struct {
     float        xyz[3];
     float        xyz_angle[3];
     float        bonus_rgb[3];
@@ -88,38 +88,22 @@ typedef struct GPUzSprite {
     float        ignore_camera;
     unsigned int remove_shadow;
     int          touchable_id;
-    GPUConstMat  base_mat;
-} __attribute__((aligned(32))) GPUzSprite;
+    T1GPUConstMat  base_mat;
+} __attribute__((aligned(32))) T1GPUzSprite;
 
 typedef struct {
-    GPUzSprite   polygons[MAX_ZSPRITES_PER_BUFFER];
+    T1GPUzSprite polygons[MAX_ZSPRITES_PER_BUFFER];
     unsigned int size;
-} GPUzSpriteList;
+} T1GPUzSpriteList;
 
-typedef struct GPULight {
+typedef struct {
     float xyz[3];
     float angle_xyz[3];
     float diffuse;
     float specular;
     float reach;
     float rgb[3];
-} GPULight;
-
-//typedef struct GPULightCollection {
-//    float        light_x              [MAX_LIGHTS_PER_BUFFER];
-//    float        light_y              [MAX_LIGHTS_PER_BUFFER];
-//    float        light_z              [MAX_LIGHTS_PER_BUFFER];
-//    float        angle_x              [MAX_LIGHTS_PER_BUFFER];
-//    float        angle_y              [MAX_LIGHTS_PER_BUFFER];
-//    float        angle_z              [MAX_LIGHTS_PER_BUFFER];
-//    float        ambient              [MAX_LIGHTS_PER_BUFFER];
-//    float        diffuse              [MAX_LIGHTS_PER_BUFFER];
-//    float        specular             [MAX_LIGHTS_PER_BUFFER];
-//    float        reach                [MAX_LIGHTS_PER_BUFFER];
-//    float        red                  [MAX_LIGHTS_PER_BUFFER];
-//    float        green                [MAX_LIGHTS_PER_BUFFER];
-//    float        blue                 [MAX_LIGHTS_PER_BUFFER];
-//} GPULightCollection;
+} T1GPULight;
 
 typedef struct {
     float znear;
@@ -128,7 +112,7 @@ typedef struct {
     float field_of_view_modifier;
     float x_multiplier;
     float y_multiplier;
-} GPUProjectConsts;
+} T1GPUProjectConsts;
 
 typedef struct
 {
@@ -136,7 +120,7 @@ typedef struct
     float texture_height;
     float brightness_threshold;
     float brightness_reduction;
-} GPUDownsamplingConstants;
+} T1GPUDownsamplingConstants;
 
 typedef struct
 {
@@ -161,18 +145,18 @@ typedef struct
     int perlin_texturearray_i;
     int perlin_texture_i;
     float padding[7];
-} GPUPostProcConsts;
+} T1GPUPostProcConsts;
 
-typedef struct GPURawVertex {
+typedef struct {
     float xyz[3];
     float color;
-} GPURawVertex;
+} T1GPURawVertex;
 
-typedef struct PostProcessingVertex
+typedef struct
 {
     float position[2];
     float texcoord[2];
-} PostProcessingVertex;
+} T1PostProcessingVertex;
 
 #pragma pack(pop)
 

@@ -5,7 +5,7 @@ static uint32_t renderer_initialized = false;
 void renderer_init(void) {
     renderer_initialized = true;
     
-    T1_std_memset(&camera, 0, sizeof(GPUCamera));
+    T1_std_memset(&camera, 0, sizeof(T1GPUCamera));
 }
 
 #if RAW_SHADER_ACTIVE
@@ -398,7 +398,7 @@ void renderer_hardware_render(
         /* const void * src: */
             zsprites_to_render->gpu_data,
         /* size_t n: */
-            sizeof(GPUzSprite) * zsprites_to_render->size);
+            sizeof(T1GPUzSprite) * zsprites_to_render->size);
     frame_data->zsprite_list->size = zsprites_to_render->size;
     
     log_assert(
@@ -417,7 +417,7 @@ void renderer_hardware_render(
     
     if (application_running) {
         #if PARTICLES_ACTIVE
-        add_particle_effects_to_workload(
+        T1_particle_add_all_to_frame_data(
             /* GPUDataForSingleFrame * frame_data: */
                 frame_data,
             /* uint64_t elapsed_us: */
@@ -425,7 +425,7 @@ void renderer_hardware_render(
             /* const uint32_t alpha_blending: */
                 false);
         
-        add_lineparticle_effects_to_workload(
+        T1_particle_lineparticle_add_all_to_frame_data(
             frame_data,
             elapsed_us,
             false);
@@ -435,7 +435,7 @@ void renderer_hardware_render(
     add_alphablending_zpolygons_to_workload(frame_data);
     
     #if PARTICLES_ACTIVE
-    add_particle_effects_to_workload(
+    T1_particle_add_all_to_frame_data(
         /* GPUDataForSingleFrame * frame_data: */
             frame_data,
         /* uint64_t elapsed_us: */
@@ -443,7 +443,7 @@ void renderer_hardware_render(
         /* const uint32_t alpha_blending: */
             true);
     
-    add_lineparticle_effects_to_workload(
+    T1_particle_lineparticle_add_all_to_frame_data(
             frame_data,
             elapsed_us,
             true);

@@ -2,7 +2,7 @@
 
 
 static void malloc_img_from_resource_name(
-    DecodedImage * recipient,
+    T1DecodedImage * recipient,
     const char * filename,
     const uint32_t thread_id)
 {
@@ -14,7 +14,7 @@ static void malloc_img_from_resource_name(
     }
     
     file_buffer.contents =
-        (char *)malloc_from_managed(sizeof(char) *
+        (char *)T1_mem_malloc_from_managed(sizeof(char) *
             file_buffer.size_without_terminator + 1);
     T1_std_memset(
         file_buffer.contents,
@@ -26,7 +26,7 @@ static void malloc_img_from_resource_name(
         &file_buffer);
     
     if (!file_buffer.good) {
-        free_from_managed((uint8_t *)file_buffer.contents);
+        T1_mem_free_from_managed((uint8_t *)file_buffer.contents);
         return;
     }
     
@@ -49,14 +49,14 @@ static void malloc_img_from_resource_name(
         
         if (!recipient->good) {
             log_assert(0);
-            free_from_managed((uint8_t *)file_buffer.contents);
+            T1_mem_free_from_managed((uint8_t *)file_buffer.contents);
             return;
         }
         
         recipient->good = false;
         recipient->pixel_count = recipient->width * recipient->height;
         recipient->rgba_values_size = recipient->pixel_count * 4;
-        malloc_from_managed_page_aligned(
+        T1_mem_malloc_from_managed_page_aligned(
             /* void *base_pointer_for_freeing: */
                 (void *)&recipient->rgba_values_freeable,
             /* void *aligned_subptr: */
@@ -100,14 +100,14 @@ static void malloc_img_from_resource_name(
         
         if (!recipient->good) {
             log_assert(0);
-            free_from_managed((uint8_t *)file_buffer.contents);
+            T1_mem_free_from_managed((uint8_t *)file_buffer.contents);
             return;
         }
         
         recipient->good = false;
         recipient->pixel_count = recipient->width * recipient->height;
         recipient->rgba_values_size = recipient->pixel_count * 4;
-        malloc_from_managed_page_aligned(
+        T1_mem_malloc_from_managed_page_aligned(
             /* void * base_pointer_for_freeing: */
                 (void *)&recipient->rgba_values_freeable,
             /* void * aligned_subptr: */
@@ -134,7 +134,7 @@ static void malloc_img_from_resource_name(
         recipient->good = false;
         recipient->rgba_values_size =
             (uint32_t)file_buffer.size_without_terminator + 1;
-        malloc_from_managed_page_aligned(
+        T1_mem_malloc_from_managed_page_aligned(
             /* void *base_pointer_for_freeing: */
                 (void *)&recipient->rgba_values_freeable,
             /* void *aligned_subptr: */
@@ -162,7 +162,7 @@ static void malloc_img_from_resource_name(
         log_append_char('\n');
         recipient->good = false;
     }
-    free_from_managed(file_buffer.contents);
+    T1_mem_free_from_managed(file_buffer.contents);
     
     if (!recipient->good) {
         return;
@@ -176,8 +176,8 @@ void T1_texture_files_register_new_by_splitting_file(
     const uint32_t rows,
     const uint32_t columns)
 {
-    DecodedImage stack_img;
-    DecodedImage * img = &stack_img;
+    T1DecodedImage stack_img;
+    T1DecodedImage * img = &stack_img;
     malloc_img_from_resource_name(img, filename, /* thread_id: */ 0);
     
     log_assert(img->good);
@@ -215,7 +215,8 @@ void T1_texture_files_runtime_register_png_from_writables(
     if (buf.size_without_terminator <= 28) {
         return;
     }
-    buf.contents = malloc_from_managed(buf.size_without_terminator+1);
+    buf.contents =
+        T1_mem_malloc_from_managed(buf.size_without_terminator+1);
     buf.good = 0;
     
     platform_read_file(filepath, &buf);
@@ -233,7 +234,7 @@ void T1_texture_files_runtime_register_png_from_writables(
         /* uint32_t *out_good: */
             &buf.good);
     if (!buf.good) {
-        free_from_managed(buf.contents);
+        T1_mem_free_from_managed(buf.contents);
         return;
     }
     
@@ -249,15 +250,15 @@ void T1_texture_files_runtime_register_png_from_writables(
     
     T1Tex loc = T1_texture_array_get_filename_location(filename);
     
-    DecodedImage * recipient =
-        &texture_arrays[loc.array_i].images[loc.slice_i].image;
+    T1DecodedImage * recipient =
+        &T1_texture_arrays[loc.array_i].images[loc.slice_i].image;
     
     recipient->good = false;
     recipient->width = width;
     recipient->height = height;
     recipient->pixel_count = recipient->width * recipient->height;
     recipient->rgba_values_size = recipient->pixel_count * 4;
-    malloc_from_managed_page_aligned(
+    T1_mem_malloc_from_managed_page_aligned(
         /* void *base_pointer_for_freeing: */
             (void *)&recipient->rgba_values_freeable,
         /* void *aligned_subptr: */
@@ -276,13 +277,13 @@ void T1_texture_files_runtime_register_png_from_writables(
         /* const uint64_t compressed_input_size: */
             buf.size_without_terminator,
         /* const uint8_t * out_rgba_values: */
-            texture_arrays[loc.array_i].images[loc.slice_i].image.
+            T1_texture_arrays[loc.array_i].images[loc.slice_i].image.
                 rgba_values_freeable,
         /* const uint64_t rgba_values_size: */
-            texture_arrays[loc.array_i].images[loc.slice_i].image.
+            T1_texture_arrays[loc.array_i].images[loc.slice_i].image.
                 rgba_values_size,
         /* uint32_t * out_good: */
-            &texture_arrays[loc.array_i].images[loc.slice_i].image.good,
+            &T1_texture_arrays[loc.array_i].images[loc.slice_i].image.good,
         /* const uint32_t thread_id: */
             0);
     
@@ -290,11 +291,11 @@ void T1_texture_files_runtime_register_png_from_writables(
         /* const int32_t texture_array_i: */
             loc.array_i,
         /* const uint32_t num_images: */
-            texture_arrays[loc.array_i].images_size,
+            T1_texture_arrays[loc.array_i].images_size,
         /* const uint32_t single_image_width: */
-            texture_arrays[loc.array_i].single_img_width,
+            T1_texture_arrays[loc.array_i].single_img_width,
         /* const uint32_t single_image_height: */
-            texture_arrays[loc.array_i].single_img_height,
+            T1_texture_arrays[loc.array_i].single_img_height,
         /* const bool32_t use_bc1_compression: */
             false);
     
@@ -304,19 +305,19 @@ void T1_texture_files_runtime_register_png_from_writables(
         /* const int32_t texture_i: */
             loc.slice_i,
         /* const uint32_t parent_texture_array_images_size: */
-            texture_arrays[loc.array_i].images_size,
+            T1_texture_arrays[loc.array_i].images_size,
         /* const uint32_t image_width: */
-            texture_arrays[loc.array_i].single_img_width,
+            T1_texture_arrays[loc.array_i].single_img_width,
         /* const uint32_t image_height: */
-            texture_arrays[loc.array_i].single_img_height,
+            T1_texture_arrays[loc.array_i].single_img_height,
         /* uint8_t *rgba_values_freeable: */
-            texture_arrays[loc.array_i].images[loc.slice_i].image.
+            T1_texture_arrays[loc.array_i].images[loc.slice_i].image.
                 rgba_values_freeable,
         /* uint8_t *rgba_values_page_aligned: */
-            texture_arrays[loc.array_i].images[loc.slice_i].image.
+            T1_texture_arrays[loc.array_i].images[loc.slice_i].image.
                 rgba_values_page_aligned);
     
-    free_from_managed(buf.contents);
+    T1_mem_free_from_managed(buf.contents);
     *good = 1;
 }
 
@@ -333,7 +334,8 @@ void T1_texture_files_preregister_png_resource(
     } else {
         return;
     }
-    buf.contents = malloc_from_managed(buf.size_without_terminator+1);
+    buf.contents = T1_mem_malloc_from_managed(
+       buf.size_without_terminator+1);
     buf.good = 0;
     
     platform_read_resource_file(filename, &buf);
@@ -351,7 +353,7 @@ void T1_texture_files_preregister_png_resource(
         /* uint32_t *out_good: */
             &buf.good);
     if (!buf.good) {
-        free_from_managed(buf.contents);
+        T1_mem_free_from_managed(buf.contents);
         return;
     }
     T1_texture_array_preregister_null_image(
@@ -364,7 +366,7 @@ void T1_texture_files_preregister_png_resource(
         /* const uint32_t is_dds_image: */
             false);
     
-    free_from_managed(buf.contents);
+    T1_mem_free_from_managed(buf.contents);
     *good = 1;
 }
 
@@ -394,7 +396,8 @@ void T1_texture_files_preregister_dds_resource(
     } else {
         return;
     }
-    buf.contents = malloc_from_managed(buf.size_without_terminator+1);
+    buf.contents = T1_mem_malloc_from_managed(
+        buf.size_without_terminator+1);
     buf.good = 0;
     
     platform_read_resource_file(filename, &buf);
@@ -431,7 +434,7 @@ void T1_texture_files_preregister_dds_resource(
         /* const uint32_t is_dds_image: */
             true);
     
-    free_from_managed(buf.contents);
+    T1_mem_free_from_managed(buf.contents);
     *good = 1;
 }
 
@@ -439,66 +442,66 @@ void T1_texture_files_decode_all_preregistered(
     const uint32_t thread_id,
     const uint32_t using_num_threads)
 {
-    int32_t texture_arrays_to_init = (int32_t)texture_arrays_size - 1;
+    int32_t texture_arrays_to_init = (int32_t)T1_texture_arrays_size - 1;
     int32_t texture_arrays_per_thread =
         texture_arrays_to_init / (int32_t)using_num_threads;
     
     int32_t start_ta_i = 1 + ((int32_t)thread_id * texture_arrays_per_thread);
     int32_t end_ta_i =
         thread_id + 1 >= using_num_threads ?
-            (int32_t)texture_arrays_size :
+            (int32_t)T1_texture_arrays_size :
             start_ta_i + texture_arrays_per_thread;
     
     log_assert(using_num_threads > 0);
     log_assert(using_num_threads < 7);
     
     for (int32_t ta_i = start_ta_i; ta_i < end_ta_i; ta_i++) {
-        if (!texture_arrays[ta_i].bc1_compressed) {
+        if (!T1_texture_arrays[ta_i].bc1_compressed) {
             engine_globals->startup_bytes_to_load +=
-                texture_arrays[ta_i].single_img_width *
-                texture_arrays[ta_i].single_img_height *
+                T1_texture_arrays[ta_i].single_img_width *
+                T1_texture_arrays[ta_i].single_img_height *
                 4 *
-                texture_arrays[ta_i].images_size;
+                T1_texture_arrays[ta_i].images_size;
         }
     }
     
     for (int32_t ta_i = start_ta_i; ta_i < end_ta_i; ta_i++) {
-        texture_arrays[ta_i].started_decoding = platform_get_current_time_us();
-        log_assert(texture_arrays[ta_i].images_size > 0);
-        log_assert(texture_arrays[ta_i].images_size < MAX_FILES_IN_SINGLE_TEXARRAY);
-        log_assert(texture_arrays[ta_i].single_img_width > 0);
-        log_assert(texture_arrays[ta_i].single_img_height > 0);
+        T1_texture_arrays[ta_i].started_decoding = platform_get_current_time_us();
+        log_assert(T1_texture_arrays[ta_i].images_size > 0);
+        log_assert(T1_texture_arrays[ta_i].images_size < MAX_FILES_IN_SINGLE_TEXARRAY);
+        log_assert(T1_texture_arrays[ta_i].single_img_width > 0);
+        log_assert(T1_texture_arrays[ta_i].single_img_height > 0);
         
         for (
             uint32_t t_i = 0;
-            t_i < texture_arrays[ta_i].images_size;
+            t_i < T1_texture_arrays[ta_i].images_size;
             t_i++)
         {
-            if (texture_arrays[ta_i].images[t_i].filename[0] == '\0') {
+            if (T1_texture_arrays[ta_i].images[t_i].filename[0] == '\0') {
                 continue;
             }
             
-            log_assert(!texture_arrays[ta_i].images[t_i].image.good);
-            log_assert(texture_arrays[ta_i].images[t_i].image.rgba_values_freeable == NULL);
-            log_assert(texture_arrays[ta_i].images[t_i].image.rgba_values_page_aligned == NULL);
-            log_assert(texture_arrays[ta_i].images[t_i].image.rgba_values_size == 0);
+            log_assert(!T1_texture_arrays[ta_i].images[t_i].image.good);
+            log_assert(T1_texture_arrays[ta_i].images[t_i].image.rgba_values_freeable == NULL);
+            log_assert(T1_texture_arrays[ta_i].images[t_i].image.rgba_values_page_aligned == NULL);
+            log_assert(T1_texture_arrays[ta_i].images[t_i].image.rgba_values_size == 0);
             
             malloc_img_from_resource_name(
                 /* DecodedImage * recipient: */
-                    &texture_arrays[ta_i].images[t_i].image,
+                    &T1_texture_arrays[ta_i].images[t_i].image,
                 /* const char * filename: */
-                    texture_arrays[ta_i].images[t_i].filename,
+                    T1_texture_arrays[ta_i].images[t_i].filename,
                 /* const uint32_t thread_id: */
                     thread_id);
             
-            if (!texture_arrays[ta_i].bc1_compressed) {
+            if (!T1_texture_arrays[ta_i].bc1_compressed) {
                 engine_globals->startup_bytes_loaded += (
-                    texture_arrays[ta_i].single_img_height *
-                    texture_arrays[ta_i].single_img_width *
+                    T1_texture_arrays[ta_i].single_img_height *
+                    T1_texture_arrays[ta_i].single_img_width *
                     4);
             }
         }
         
-        texture_arrays[ta_i].ended_decoding = platform_get_current_time_us();
+        T1_texture_arrays[ta_i].ended_decoding = platform_get_current_time_us();
     }
 }

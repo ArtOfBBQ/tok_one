@@ -52,7 +52,7 @@ static void normalize_vector_inplace(
     vector[2] /= magnitude;
 }
 
-static void guess_gpu_triangle_normal(GPULockedVertex * to_change) {
+static void guess_gpu_triangle_normal(T1GPULockedVertex * to_change) {
     float vec1_x = to_change[1].xyz[0] - to_change[0].xyz[0];
     float vec1_y = to_change[1].xyz[1] - to_change[0].xyz[1];
     float vec1_z = to_change[1].xyz[2] - to_change[0].xyz[2];
@@ -76,10 +76,10 @@ static void guess_gpu_triangle_normal(GPULockedVertex * to_change) {
 static ParsedObj * parsed_obj = NULL;
 
 void T1_objmodel_init(void) {
-    parsed_obj = malloc_from_unmanaged(sizeof(ParsedObj));
+    parsed_obj = T1_mem_malloc_from_unmanaged(sizeof(ParsedObj));
     T1_std_memset(parsed_obj, 0, sizeof(ParsedObj));
     
-    all_mesh_summaries = (MeshSummary *)malloc_from_unmanaged(
+    all_mesh_summaries = (MeshSummary *)T1_mem_malloc_from_unmanaged(
         sizeof(MeshSummary) * ALL_MESHES_SIZE);
     
     for (uint32_t i = 0; i < ALL_MESHES_SIZE; i++) {
@@ -88,7 +88,7 @@ void T1_objmodel_init(void) {
     
     assert(ALL_LOCKED_VERTICES_SIZE > 0);
     all_mesh_vertices = (LockedVertexWithMaterialCollection *)
-        malloc_from_unmanaged(sizeof(LockedVertexWithMaterialCollection));
+        T1_mem_malloc_from_unmanaged(sizeof(LockedVertexWithMaterialCollection));
     T1_std_memset(
         all_mesh_vertices,
         0,
@@ -646,7 +646,7 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
             log_assert(
                 matching_parsed_materials_i  < (int32_t)parsed_materials_size);
             
-            GPUConstMat * locked_mat = T1_material_fetch_ptr(
+            T1GPUConstMat * locked_mat = T1_material_fetch_ptr(
                 /* const uint32_t locked_material_i: */
                     all_mesh_summaries[all_mesh_summaries_size].
                         locked_material_head_i + i);
@@ -897,9 +897,9 @@ static int32_t new_mesh_id_from_parsed_obj_and_parsed_materials(
         
         for (uint32_t quad_tri_i = 0; quad_tri_i < 2; quad_tri_i++) {
             
-            GPULockedVertex * V1 = &all_mesh_vertices->gpu_data[all_mesh_vertices->size];
-            GPULockedVertex * V2 = &all_mesh_vertices->gpu_data[all_mesh_vertices->size+1];
-            GPULockedVertex * V3 = &all_mesh_vertices->gpu_data[all_mesh_vertices->size+2];
+            T1GPULockedVertex * V1 = &all_mesh_vertices->gpu_data[all_mesh_vertices->size];
+            T1GPULockedVertex * V2 = &all_mesh_vertices->gpu_data[all_mesh_vertices->size+1];
+            T1GPULockedVertex * V3 = &all_mesh_vertices->gpu_data[all_mesh_vertices->size+2];
             
             uint32_t vert_1_i;
             uint32_t vert_2_i;
@@ -1148,7 +1148,7 @@ int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
     good = 0;
     
     uint32_t parsed_materials_cap = 20;
-    ParsedMaterial * parsed_materials = malloc_from_managed(
+    ParsedMaterial * parsed_materials = T1_mem_malloc_from_managed(
         sizeof(ParsedMaterial) * parsed_materials_cap);
     T1_std_memset(
         parsed_materials,
@@ -1196,11 +1196,11 @@ static void T1_objmodel_deduce_tangents_and_bitangents(
     {
         for (int32_t offset = 0; offset < 3; offset++) {
         
-        GPULockedVertex * v1 = &all_mesh_vertices->
+        T1GPULockedVertex * v1 = &all_mesh_vertices->
             gpu_data[vert_i+((offset+0) % 3)];
-        GPULockedVertex * v2 = &all_mesh_vertices->
+        T1GPULockedVertex * v2 = &all_mesh_vertices->
             gpu_data[vert_i+((offset+1) % 3)];
-        GPULockedVertex * v3 = &all_mesh_vertices->
+        T1GPULockedVertex * v3 = &all_mesh_vertices->
             gpu_data[vert_i+((offset+2) % 3)];
         
         /*
@@ -1302,7 +1302,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
         log_append(" doesn't exist...\n");
         return -1;
     }
-    obj_file_buf.contents = (char *)malloc_from_managed(
+    obj_file_buf.contents = (char *)T1_mem_malloc_from_managed(
         obj_file_buf.size_without_terminator + 1);
     obj_file_buf.good = false;
     
@@ -1313,7 +1313,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
             &obj_file_buf);
     
     if (!obj_file_buf.good) {
-        free_from_managed(obj_file_buf.contents);
+        T1_mem_free_from_managed(obj_file_buf.contents);
         log_append("Early exit from objmodel_new_mesh_id_from_resources(), resource: ");
         log_append(obj_filename);
         log_append(" exists but failed to read...\n");
@@ -1335,8 +1335,9 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
             return -1;
         }
         
-        mtl_file_buf.contents = (char *)malloc_from_managed(
-            mtl_file_buf.size_without_terminator + 1);
+        mtl_file_buf.contents = (char *)
+            T1_mem_malloc_from_managed(
+                mtl_file_buf.size_without_terminator + 1);
         mtl_file_buf.good = false;
         
         platform_read_resource_file(
@@ -1346,8 +1347,8 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
                 &mtl_file_buf);
         
         if (!mtl_file_buf.good) {
-            free_from_managed(obj_file_buf.contents);
-            free_from_managed(mtl_file_buf.contents);
+            T1_mem_free_from_managed(obj_file_buf.contents);
+            T1_mem_free_from_managed(mtl_file_buf.contents);
             
             log_append("Early exit from objmodel_new_mesh_id_from_resources(), resource: ");
             log_append(mtl_filename);
@@ -1373,9 +1374,9 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
         OBJ_STRING_SIZE,
         obj_filename);
     
-    free_from_managed(obj_file_buf.contents);
+    T1_mem_free_from_managed(obj_file_buf.contents);
     if (mtl_file_buf.contents != NULL) {
-       free_from_managed(mtl_file_buf.contents);
+       T1_mem_free_from_managed(mtl_file_buf.contents);
     }
     
     if (flip_uv_v) {
@@ -1557,8 +1558,8 @@ void T1_objmodel_flip_mesh_uvs_v(const int32_t mesh_id)
 }
 
 static float get_squared_distance_from_locked_vertices(
-    const GPULockedVertex a,
-    const GPULockedVertex b)
+    const T1GPULockedVertex a,
+    const T1GPULockedVertex b)
 {
     return
         ((a.xyz[0] - b.xyz[0]) * (a.xyz[0] - b.xyz[0])) +
@@ -1568,7 +1569,7 @@ static float get_squared_distance_from_locked_vertices(
 
 /* the largest length amongst any dimension be it x, y, or z */
 static float get_squared_triangle_length_from_locked_vertices(
-    const GPULockedVertex * vertices)
+    const T1GPULockedVertex * vertices)
 {
     float largest_squared_dist = FLOAT32_MIN;
     #ifndef LOGGER_IGNORE_ASSERTS
@@ -1820,7 +1821,7 @@ void T1_objmodel_create_shattered_version_of_mesh(
             second_new_triangle_vertices[2] = 2;
         }
         
-        GPULockedVertex mid_of_line;
+        T1GPULockedVertex mid_of_line;
         mid_of_line.xyz[0] =
             (all_mesh_vertices->gpu_data[
                     biggest_area_head_i + midline_start_vert_i].xyz[0] +
@@ -1866,8 +1867,8 @@ void T1_objmodel_create_shattered_version_of_mesh(
                 biggest_area_head_i + midline_start_vert_i].parent_material_i;
         
         // split the triangle at biggest_area_i into 2
-        GPULockedVertex first_tri[3];
-        GPULockedVertex second_tri[3];
+        T1GPULockedVertex first_tri[3];
+        T1GPULockedVertex second_tri[3];
         
         first_tri[0] = all_mesh_vertices->gpu_data[biggest_area_head_i + 0];
         first_tri[1] = all_mesh_vertices->gpu_data[biggest_area_head_i + 1];

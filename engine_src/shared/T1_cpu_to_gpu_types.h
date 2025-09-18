@@ -9,14 +9,14 @@
 typedef struct
 {
     GPUVertexIndices *                              verts;
-    GPUzSpriteList *                         zsprite_list;
-    GPULight *                                     lights;
-    GPUCamera *                                    camera;
+    T1GPUzSpriteList *                         zsprite_list;
+    T1GPULight *                                     lights;
+    T1GPUCamera *                                    camera;
     #if RAW_SHADER_ACTIVE
     GPURawVertex *                          line_vertices;
     GPURawVertex *                         point_vertices;
     #endif
-    GPUPostProcConsts                   * postproc_consts;
+    T1GPUPostProcConsts                   * postproc_consts;
     uint32_t                                   verts_size;
     uint32_t                                  lights_size;
     uint32_t                           first_alphablend_i;
@@ -27,9 +27,9 @@ typedef struct
 typedef struct GPUSharedDataCollection
 {
     GPUFrame triple_buffers[MAX_RENDERING_FRAME_BUFFERS];
-    GPUProjectConsts * locked_pjc;
-    GPULockedVertex * locked_vertices;
-    GPUConstMat * const_mats;
+    T1GPUProjectConsts * locked_pjc;
+    T1GPULockedVertex * locked_vertices;
+    T1GPUConstMat * const_mats;
     uint32_t locked_vertices_size;
     uint32_t const_mats_size;
     uint32_t const_mats_allocation_size;

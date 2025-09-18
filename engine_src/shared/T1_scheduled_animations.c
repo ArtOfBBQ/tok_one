@@ -8,8 +8,8 @@ T1ScheduledAnimation * scheduled_animations;
 uint32_t scheduled_animations_size = 0;
 
 typedef struct ScheduledAnimationState {
-    GPUzSprite zsprite_final_pos;
-    GPUzSprite zsprite_deltas[2];
+    T1GPUzSprite zsprite_final_pos;
+    T1GPUzSprite zsprite_deltas[2];
 } ScheduledAnimationState;
 
 static ScheduledAnimationState * sas = NULL;
@@ -18,7 +18,7 @@ static uint32_t request_scheduled_anims_mutex_id = UINT32_MAX;
 
 void T1_scheduled_animations_init(void)
 {
-    scheduled_animations = (T1ScheduledAnimation *)malloc_from_unmanaged(
+    scheduled_animations = (T1ScheduledAnimation *)T1_mem_malloc_from_unmanaged(
         sizeof(T1ScheduledAnimation) * SCHEDULED_ANIMATIONS_ARRAYSIZE);
     T1_std_memset(
         scheduled_animations,
@@ -26,7 +26,7 @@ void T1_scheduled_animations_init(void)
         sizeof(T1ScheduledAnimation));
     scheduled_animations[0].deleted = true;
     
-    sas = (ScheduledAnimationState *)malloc_from_unmanaged(
+    sas = (ScheduledAnimationState *)T1_mem_malloc_from_unmanaged(
         sizeof(ScheduledAnimationState));
     T1_std_memset(
         sas,
@@ -93,7 +93,7 @@ T1ScheduledAnimation * T1_scheduled_animations_request_next(
         T1_std_memset_f32(
             &return_value->gpu_polygon_vals,
             FLT_SCHEDULEDANIM_IGNORE,
-            sizeof(GPUzSprite));
+            sizeof(T1GPUzSprite));
         T1_std_memset_f32(
             &return_value->lightsource_vals,
             FLT_SCHEDULEDANIM_IGNORE,
@@ -244,7 +244,7 @@ static T1TPair t_to_eased_t(
 static void apply_animation_effects_for_given_eased_t(
     T1TPair t,
     T1ScheduledAnimation * anim,
-    GPUzSprite * recip)
+    T1GPUzSprite * recip)
 {
     float * anim_vals_ptr    = (float *)&anim->gpu_polygon_vals;
     float * target_vals_ptr = (float *)recip;
@@ -254,10 +254,10 @@ static void apply_animation_effects_for_given_eased_t(
     SIMD_FLOAT simd_t_b4  =
         simd_set1_float(t.applied);
     
-    log_assert((sizeof(GPUzSprite) / 4) % SIMD_FLOAT_LANES == 0);
+    log_assert((sizeof(T1GPUzSprite) / 4) % SIMD_FLOAT_LANES == 0);
     for (
         uint32_t simd_step_i = 0;
-        (simd_step_i * sizeof(float)) < sizeof(GPUzSprite);
+        (simd_step_i * sizeof(float)) < sizeof(T1GPUzSprite);
         simd_step_i += SIMD_FLOAT_LANES)
     {
         SIMD_FLOAT simd_anim_vals =
@@ -304,7 +304,7 @@ static void apply_animation_effects_for_given_eased_t(
 
 static void T1_scheduled_animations_get_projected_final_position_for(
     const int32_t zp_i,
-    GPUzSprite * recip)
+    T1GPUzSprite * recip)
 {
     log_assert(zp_i >= 0);
     log_assert((uint32_t)zp_i < zsprites_to_render->size);
@@ -391,7 +391,7 @@ void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
         
         for (
             uint32_t i = 0;
-            i < (sizeof(GPUzSprite) / sizeof(float));
+            i < (sizeof(T1GPUzSprite) / sizeof(float));
             i++)
         {
             if (anim_gpu_vals[i] == FLT_SCHEDULEDANIM_IGNORE) {
@@ -459,7 +459,7 @@ void T1_scheduled_animations_request_evaporate_and_destroy(
         #if PARTICLES_ACTIVE
         float duration_mod = (20000000.0f / (float)duration_us);
         
-        ParticleEffect * vaporize_effect = next_particle_effect();
+        T1ParticleEffect * vaporize_effect = T1_particle_get_next();
         vaporize_effect->zpolygon_cpu = zsprites_to_render->cpu_data[zp_i];
         vaporize_effect->zpolygon_gpu = zsprites_to_render->gpu_data[zp_i];
         
@@ -510,7 +510,7 @@ void T1_scheduled_animations_request_evaporate_and_destroy(
         vaporize_effect->loops = 1;
         vaporize_effect->cast_light = false;
         
-        commit_particle_effect(vaporize_effect);
+        T1_particle_commit(vaporize_effect);
         #endif
         
         zsprites_to_render->cpu_data[zp_i].deleted = true;
@@ -544,7 +544,7 @@ void T1_scheduled_animations_request_shatter_and_destroy(
         #if PARTICLES_ACTIVE
         float duration_mod = (20000000.0f / (float)duration_us);
         
-        ParticleEffect * shatter_effect = next_particle_effect();
+        T1ParticleEffect * shatter_effect = T1_particle_get_next();
         shatter_effect->zpolygon_cpu = zsprites_to_render->cpu_data[zp_i];
         shatter_effect->zpolygon_gpu = zsprites_to_render->gpu_data[zp_i];
         
@@ -602,7 +602,7 @@ void T1_scheduled_animations_request_shatter_and_destroy(
         
         log_assert(!shatter_effect->zpolygon_cpu.alpha_blending_enabled);
         
-        commit_particle_effect(shatter_effect);
+        T1_particle_commit(shatter_effect);
         #endif
         
         zsprites_to_render->cpu_data[zp_i].zsprite_id = -1;
@@ -676,7 +676,7 @@ void T1_scheduled_animations_resolve(void)
                     zsprite_delete(anim->affected_zsprite_id);
                     
                     #if PARTICLES_ACTIVE
-                    delete_particle_effect(anim->affected_zsprite_id);
+                    T1_particle_delete(anim->affected_zsprite_id);
                     #endif
                 }
             } else {
@@ -839,7 +839,7 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
     const int32_t zsprite_id,
     const float new_ignore_camera)
 {
-    GPUzSprite * zs = NULL;
+    T1GPUzSprite * zs = NULL;
     
     for (uint32_t i = 0; i < zsprites_to_render->size; i++)
     {

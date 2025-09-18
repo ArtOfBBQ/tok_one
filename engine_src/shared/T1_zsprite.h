@@ -32,8 +32,8 @@ typedef struct CPUzSprite {
 } CPUzSprite;
 
 typedef struct zSpriteCollection {
-    GPUzSprite gpu_data[MAX_ZSPRITES_PER_BUFFER];
-    GPUConstMat gpu_mats[ALL_LOCKED_MATERIALS_SIZE];
+    T1GPUzSprite gpu_data[MAX_ZSPRITES_PER_BUFFER];
+    T1GPUConstMat gpu_mats[ALL_LOCKED_MATERIALS_SIZE];
     CPUzSprite cpu_data[MAX_ZSPRITES_PER_BUFFER];
     uint32_t size;
 } zSpriteCollection;
@@ -41,7 +41,7 @@ typedef struct zSpriteCollection {
 extern zSpriteCollection * zsprites_to_render;
 
 typedef struct zSpriteRequest {
-    GPUzSprite * gpu_data;
+    T1GPUzSprite * gpu_data;
     CPUzSprite * cpu_data;
     uint32_t gpu_data_size;
 } zSpriteRequest;
@@ -87,11 +87,11 @@ float zsprite_get_x_multiplier_for_width(
 
 void zsprite_scale_multipliers_to_width(
     CPUzSprite * cpu_data,
-    GPUzSprite * gpu_data,
+    T1GPUzSprite * gpu_data,
     const float new_width);
 void zsprite_scale_multipliers_to_height(
     CPUzSprite * cpu_data,
-    GPUzSprite * gpu_data,
+    T1GPUzSprite * gpu_data,
     const float new_height);
 
 float zsprite_get_distance_f3(

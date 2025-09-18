@@ -13,7 +13,7 @@
 #include "T1_objparser.h"
 #include "T1_mtlparser.h"
 #include "T1_platform_layer.h"
-#include "T1_memorystore.h"
+#include "T1_mem.h"
 #include "T1_material.h"
 
 
@@ -72,7 +72,7 @@ typedef struct MeshSummary {
 } MeshSummary;
 
 typedef struct LockedVertexWithMaterialCollection {
-    GPULockedVertex gpu_data[ALL_LOCKED_VERTICES_SIZE];
+    T1GPULockedVertex gpu_data[ALL_LOCKED_VERTICES_SIZE];
     uint32_t size;
 } LockedVertexWithMaterialCollection;
 

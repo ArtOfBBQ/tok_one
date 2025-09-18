@@ -1,4 +1,4 @@
-#include "T1_memorystore.h"
+#include "T1_mem.h"
 
 #define MEM_ALIGNMENT_BYTES 64
 
@@ -13,7 +13,7 @@
 
 // uint32_t memorystore_page_size = 4000;
 
-uint32_t page_size = 4096;
+uint32_t T1_mem_page_size = 4096;
 
 static void * unmanaged_memory = NULL;
 static uint64_t unmanaged_memory_size = UNMANAGED_MEMORY_SIZE;
@@ -22,20 +22,20 @@ static uint64_t unmanaged_memory_size = UNMANAGED_MEMORY_SIZE;
 
 static uint32_t malloc_mutex_id = UINT32_MAX;
 
-void (* memstore_mutex_lock)(const uint32_t mutex_id) = NULL;
-void (* memstore_mutex_unlock)(const uint32_t mutex_id) = NULL;
+void (* T1_mem_mutex_lock)(const uint32_t mutex_id) = NULL;
+void (* T1_mem_mutex_unlock)(const uint32_t mutex_id) = NULL;
 
-static void set_pagesize(void) {
+static void T1_mem_set_pagesize(void) {
     long query_result = sysconf(_SC_PAGESIZE);
     if (query_result < 0 || query_result > UINT32_MAX) {
         assert(0);
-        page_size = 4096;
+        T1_mem_page_size = 4096;
     } else {
-        page_size = (uint32_t)query_result;
+        T1_mem_page_size = (uint32_t)query_result;
     }
 }
 
-void get_memory_usage_summary_string(
+void T1_mem_get_usage_summary_string(
     char * recipient,
     const uint32_t recipient_cap)
 {
@@ -71,7 +71,7 @@ void get_memory_usage_summary_string(
                 / (float)UNMANAGED_MEMORY_SIZE * 100.0f));
 }
 
-static void align_pointer(void ** to_align) {
+static void T1_mem_align_pointer(void ** to_align) {
     uint32_t leftover = ((uintptr_t)*to_align) % MEM_ALIGNMENT_BYTES;
     uint32_t padding = 0;
     if (leftover > 0) {
@@ -82,8 +82,7 @@ static void align_pointer(void ** to_align) {
     log_assert((uintptr_t)*to_align % MEM_ALIGNMENT_BYTES == 0);
 }
 
-
-void memorystore_init(
+void T1_mem_init(
     void * ptr_unmanaged_memory_block,
     uint32_t (* memstore_init_mutex_and_return_id)(void),
     void (* ptr_mutex_lock)(const uint32_t mutex_id),
@@ -91,17 +90,17 @@ void memorystore_init(
 {
     malloc_mutex_id  = memstore_init_mutex_and_return_id();
     
-    memstore_mutex_lock = ptr_mutex_lock;
-    memstore_mutex_unlock = ptr_mutex_unlock;
+    T1_mem_mutex_lock = ptr_mutex_lock;
+    T1_mem_mutex_unlock = ptr_mutex_unlock;
     
     unmanaged_memory = ptr_unmanaged_memory_block;
-    align_pointer(&unmanaged_memory);
+    T1_mem_align_pointer(&unmanaged_memory);
     T1_std_memset(unmanaged_memory, 0, UNMANAGED_MEMORY_SIZE);
     
-    set_pagesize();
+    T1_mem_set_pagesize();
 }
 
-static void * malloc_from_unmanaged_without_aligning(
+static void * T1_mem_malloc_from_unmanaged_without_aligning(
     const uint64_t size)
 {
     void * return_value = unmanaged_memory;
@@ -121,11 +120,11 @@ static void * malloc_from_unmanaged_without_aligning(
     return return_value;
 }
 
-void * malloc_from_unmanaged_aligned(
+void * T1_mem_malloc_from_unmanaged_aligned(
     const uint64_t size,
     const uint32_t aligned_to)
 {
-    memstore_mutex_lock(malloc_mutex_id);
+    T1_mem_mutex_lock(malloc_mutex_id);
     
     if (
         aligned_to < sizeof(void*) ||
@@ -147,34 +146,35 @@ void * malloc_from_unmanaged_aligned(
     log_assert(padding < aligned_to);
     log_assert((uintptr_t)(void *)unmanaged_memory % aligned_to == 0);
     
-    void * return_value = malloc_from_unmanaged_without_aligning(size);
+    void * return_value = T1_mem_malloc_from_unmanaged_without_aligning(size);
     
     log_assert((uintptr_t)(void *)return_value % aligned_to == 0);
     
-    memstore_mutex_unlock(malloc_mutex_id);
+    T1_mem_mutex_unlock(malloc_mutex_id);
     
     return return_value;
 }
 
 // __attribute__((used, noinline))
-void * malloc_from_unmanaged(size_t size) {
+void * T1_mem_malloc_from_unmanaged(size_t size) {
     log_assert(size > 0);
     
-    void * return_value = malloc_from_unmanaged_aligned(
+    void * return_value = T1_mem_malloc_from_unmanaged_aligned(
         size,
         MEM_ALIGNMENT_BYTES);
     
     return return_value;
 }
 
-void malloc_from_managed_page_aligned(
+void T1_mem_malloc_from_managed_page_aligned(
     void ** base_pointer_for_freeing,
     void ** aligned_subptr,
     const size_t subptr_size)
 {
-    uint32_t aligned_to = page_size;
+    uint32_t aligned_to = T1_mem_page_size;
     
-    *base_pointer_for_freeing = malloc_from_managed(subptr_size + aligned_to);
+    *base_pointer_for_freeing = T1_mem_malloc_from_managed(
+        subptr_size + aligned_to);
     
     uint32_t padding = aligned_to -
         (((uintptr_t)*base_pointer_for_freeing) % aligned_to);
@@ -186,18 +186,18 @@ void malloc_from_managed_page_aligned(
     log_assert(*base_pointer_for_freeing != NULL);
     log_assert(*aligned_subptr != NULL);
     
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #ifndef T1_MEM_NO_ASSERTS
     uint32_t alignment_miss =
         (uintptr_t)(*aligned_subptr) % aligned_to;
     log_assert(alignment_miss == 0);
     #endif
 }
 
-void * malloc_from_managed_infoless(size_t size) {
-    return malloc_from_managed_internal(size, "", "");
+void * T1_mem_malloc_from_managed_infoless(size_t size) {
+    return T1_mem_malloc_from_managed_internal(size, "", "");
 }
 
-void * malloc_from_managed_internal(
+void * T1_mem_malloc_from_managed_internal(
     size_t size,
     char * called_from_file,
     char * called_from_func)
@@ -226,7 +226,7 @@ void * malloc_from_managed_internal(
     
     log_assert((uintptr_t)managed_memory < (uintptr_t)managed_memory_end);
     
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #ifndef T1_MEM_NO_ASSERTS
     if (managed_stack->size > 0) {
         log_assert((uintptr_t)managed_stack->pointers[managed_stack->size - 1] <= (uintptr_t)return_value);
     }
@@ -255,7 +255,7 @@ void * malloc_from_managed_internal(
     #endif
 }
 
-void free_from_managed(void * to_free) {
+void T1_mem_free_from_managed(void * to_free) {
     
     #if 1
     free(to_free);
@@ -266,7 +266,7 @@ void free_from_managed(void * to_free) {
     log_assert(to_free != NULL);
     log_assert(managed_memory != NULL);
     
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #ifndef T1_MEM_NO_ASSERTS
     bool32_t found = false;
     #endif
     for (uint32_t i = 0; i < managed_stack->size; i++) {
@@ -276,7 +276,7 @@ void free_from_managed(void * to_free) {
             managed_stack->used[i] = 0;
             managed_stack->sources[i][0] = '\0';
             log_assert(!found);
-            #ifndef LOGGER_IGNORE_ASSERTS
+            #ifndef T1_MEM_NO_ASSERTS
             found = true;
             #endif
         }

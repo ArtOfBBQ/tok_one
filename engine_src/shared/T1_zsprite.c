@@ -172,7 +172,7 @@ float zsprite_get_y_multiplier_for_height(
 
 void zsprite_scale_multipliers_to_width(
     CPUzSprite * cpu_data,
-    GPUzSprite * gpu_data,
+    T1GPUzSprite * gpu_data,
     const float new_height)
 {
     float new_multiplier = zsprite_get_x_multiplier_for_width(
@@ -188,7 +188,7 @@ void zsprite_scale_multipliers_to_width(
 
 void zsprite_scale_multipliers_to_height(
     CPUzSprite * cpu_data,
-    GPUzSprite * gpu_data,
+    T1GPUzSprite * gpu_data,
     const float new_height)
 {
     float new_multiplier = zsprite_get_y_multiplier_for_height(
@@ -235,7 +235,7 @@ void zsprite_construct(
     T1_std_memset(
         to_construct->gpu_data,
         0,
-        sizeof(GPUzSprite));
+        sizeof(T1GPUzSprite));
     
     to_construct->gpu_data->xyz_mult[0] = 1.0f;
     to_construct->gpu_data->xyz_mult[1] = 1.0f;

@@ -35,10 +35,10 @@ static void show_dead_simple_text(
     const char * text_message,
     const uint64_t elapsed)
 {
-    delete_all_ui_elements();
+    T1_uielement_delete_all();
     #if PARTICLES_ACTIVE
-    particle_effects_size = 0;
-    lineparticle_effects_size = 0;
+    T1_particle_effects_size = 0;
+    T1_particle_lineparticle_effects_size = 0;
     #endif
     zlights_to_apply_size = 0;
     zsprites_to_render->size = 0;
@@ -105,7 +105,7 @@ void gameloop_update_before_render_pass(
     
     gameloop_previous_time = engine_globals->this_frame_timestamp_us;
     
-    T1_std_memcpy(frame_data->camera, &camera, sizeof(GPUCamera));
+    T1_std_memcpy(frame_data->camera, &camera, sizeof(T1GPUCamera));
     
     frame_data->verts_size            = 0;
     frame_data->zsprite_list->size = 0;
@@ -246,7 +246,7 @@ void gameloop_update_before_render_pass(
         user_interactions[INTR_PREVIOUS_TOUCH_MOVE] =
             user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE];
         
-        ui_elements_handle_touches(engine_globals->elapsed);
+        T1_uielement_handle_touches(engine_globals->elapsed);
         
         #if TERMINAL_ACTIVE
         update_terminal();

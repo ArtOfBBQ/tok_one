@@ -347,7 +347,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 - (void)
     windowWillEnterFullScreen:(NSNotification *)notification
 {
-    delete_all_ui_elements();
+    T1_uielement_delete_all();
     zsprites_to_render->size = 0;
     engine_globals->fullscreen = true;
 }
@@ -355,10 +355,10 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 - (void)
     windowWillExitFullScreen:(NSNotification *)notification
 {
-    delete_all_ui_elements();
+    T1_uielement_delete_all();
     zsprites_to_render->size = 0;
     #if PARTICLES_ACTIVE
-    particle_effects_size = 0;
+    T1_particle_effects_size = 0;
     #endif
     engine_globals->fullscreen = false;
 }
@@ -402,7 +402,7 @@ int main(int argc, const char * argv[]) {
     gameloop_active = false;
     application_running = true;
     
-    assert(sizeof(GPUzSprite) % 32 == 0);
+    assert(sizeof(T1GPUzSprite) % 32 == 0);
     
     char errmsg[512];
     uint32_t success = 1;

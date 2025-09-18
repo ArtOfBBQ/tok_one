@@ -31,24 +31,24 @@ typedef struct SimdTestStruct {
 } SimdTestStruct;
 static void test_simd_functions_floats(void) {
     log_assert(sizeof(zLightSource) % (SIMD_FLOAT_LANES * 4) == 0);
-    log_assert(sizeof(GPUzSprite)   % (SIMD_FLOAT_LANES * 4) == 0);
+    log_assert(sizeof(T1GPUzSprite)   % (SIMD_FLOAT_LANES * 4) == 0);
     
     log_assert(sizeof(SimdTestStruct) % (SIMD_FLOAT_LANES * 4) == 0);
-    SimdTestStruct * structs = malloc_from_managed(
+    SimdTestStruct * structs = T1_mem_malloc_from_managed(
         sizeof(SimdTestStruct) * 10);
-    float * sets = malloc_from_managed(
+    float * sets = T1_mem_malloc_from_managed(
         sizeof(float) * 10);
-    SimdTestStruct * muls = malloc_from_managed(
+    SimdTestStruct * muls = T1_mem_malloc_from_managed(
         sizeof(SimdTestStruct) * 10);
-    SimdTestStruct * divs = malloc_from_managed(
+    SimdTestStruct * divs = T1_mem_malloc_from_managed(
         sizeof(SimdTestStruct) * 10);
-    SimdTestStruct * adds = malloc_from_managed(
+    SimdTestStruct * adds = T1_mem_malloc_from_managed(
         sizeof(SimdTestStruct) * 10);
-    SimdTestStruct * maxs = malloc_from_managed(
+    SimdTestStruct * maxs = T1_mem_malloc_from_managed(
         sizeof(SimdTestStruct) * 10);
-    SimdTestStruct * double_checks = malloc_from_managed(
+    SimdTestStruct * double_checks = T1_mem_malloc_from_managed(
         sizeof(SimdTestStruct) * 10);
-    SimdTestStruct * equals = malloc_from_managed(
+    SimdTestStruct * equals = T1_mem_malloc_from_managed(
         sizeof(SimdTestStruct) * 10);
     
     T1_std_memset(structs, 0, sizeof(SimdTestStruct)*10);
@@ -132,20 +132,20 @@ static void test_simd_functions_floats(void) {
         }
     }
     
-    free_from_managed(double_checks);
-    free_from_managed(maxs);
-    free_from_managed(adds);
-    free_from_managed(divs);
-    free_from_managed(muls);
-    free_from_managed(sets);
-    free_from_managed(structs);
+    T1_mem_free_from_managed(double_checks);
+    T1_mem_free_from_managed(maxs);
+    T1_mem_free_from_managed(adds);
+    T1_mem_free_from_managed(divs);
+    T1_mem_free_from_managed(muls);
+    T1_mem_free_from_managed(sets);
+    T1_mem_free_from_managed(structs);
 }
 #endif
 
 static uint32_t pad_to_page_size(uint32_t base_allocation) {
     uint32_t return_value = base_allocation +
-        (page_size - (base_allocation % page_size));
-    assert(return_value % page_size == 0);
+        (T1_mem_page_size - (base_allocation % T1_mem_page_size));
+    assert(return_value % T1_mem_page_size == 0);
     return return_value;
 }
 
@@ -161,7 +161,7 @@ void init_application_before_gpu_init(
     
     platform_layer_init(&unmanaged_memory_store, 32);
     
-    memorystore_init(
+    T1_mem_init(
         unmanaged_memory_store,
         platform_init_mutex_and_return_id,
         platform_mutex_lock,
@@ -169,7 +169,7 @@ void init_application_before_gpu_init(
     
     T1_meta_init(
         memcpy,
-        malloc_from_unmanaged,
+        T1_mem_malloc_from_unmanaged,
         memset,
         strcmp,
         strlen,
@@ -184,16 +184,16 @@ void init_application_before_gpu_init(
         /* const uint16_t meta_enum_vals_cap: */
             200);
     
-    ias = malloc_from_unmanaged(sizeof(InitApplicationState));
+    ias = T1_mem_malloc_from_unmanaged(sizeof(InitApplicationState));
     T1_std_memset(ias, 0, sizeof(InitApplicationState));
     
     // settings_init(malloc_from_unmanaged);
     
     init_PNG_decoder(
         /* void *(*malloc_funcptr)(size_t): */
-            malloc_from_managed_infoless,
+            T1_mem_malloc_from_managed_infoless,
         /* free_function: */
-            free_from_managed,
+            T1_mem_free_from_managed,
         /* memset_function: */
             T1_std_memset,
         /* memcpy_function: */
@@ -211,17 +211,17 @@ void init_application_before_gpu_init(
     T1_token_init(
         T1_std_memset,
         T1_std_strlen,
-        malloc_from_managed_infoless,
+        T1_mem_malloc_from_managed_infoless,
         &good);
     log_assert(good);
     
-    T1_objparser_init(malloc_from_managed_infoless, free_from_managed);
+    T1_objparser_init(T1_mem_malloc_from_managed_infoless, T1_mem_free_from_managed);
     mtlparser_init(
         T1_std_memset,
-        malloc_from_managed_infoless,
+        T1_mem_malloc_from_managed_infoless,
         strlcat);
     
-    keypress_map = (bool32_t *)malloc_from_unmanaged(
+    keypress_map = (bool32_t *)T1_mem_malloc_from_unmanaged(
         sizeof(bool32_t) * KEYPRESS_MAP_SIZE);
     for (uint32_t i = 0; i < KEYPRESS_MAP_SIZE; i++) {
         keypress_map[i] = false;
@@ -229,7 +229,7 @@ void init_application_before_gpu_init(
     
     logger_init(
         /* void * arg_malloc_function(size_t size): */
-            malloc_from_unmanaged,
+            T1_mem_malloc_from_unmanaged,
         /* uint32_t (* arg_create_mutex_function)(void): */
             platform_init_mutex_and_return_id,
         /* void arg_mutex_lock_function(const uint32_t mutex_id): */
@@ -242,7 +242,7 @@ void init_application_before_gpu_init(
     #endif
     
     #if ENGINE_SAVEFILE_ACTIVE
-    engine_save_file = (EngineSaveFile *)malloc_from_unmanaged(
+    engine_save_file = (EngineSaveFile *)T1_mem_malloc_from_unmanaged(
         sizeof(EngineSaveFile));
     
     char full_writable_pathfile[256];
@@ -255,21 +255,21 @@ void init_application_before_gpu_init(
     if (platform_file_exists(full_writable_pathfile)) {
         engine_save.size_without_terminator = platform_get_filesize(
             full_writable_pathfile);
-        engine_save.contents = (char *)malloc_from_managed(
+        engine_save.contents = (char *)T1_mem_malloc_from_managed(
             engine_save.size_without_terminator + 1);
         platform_read_file(full_writable_pathfile, &engine_save);
         *engine_save_file = *(EngineSaveFile *)engine_save.contents;
     }
     #endif
     
-    engine_globals = (EngineGlobals *)malloc_from_unmanaged(
+    engine_globals = (EngineGlobals *)T1_mem_malloc_from_unmanaged(
         sizeof(EngineGlobals));
     T1_std_memset(engine_globals, 0, sizeof(EngineGlobals));
     
     #if AUDIO_ACTIVE
     audio_init(
         /* void *(*arg_malloc_function)(size_t): */
-            malloc_from_unmanaged);
+            T1_mem_malloc_from_unmanaged);
     #endif
     
     #if ENGINE_SAVEFILE_ACTIVE
@@ -300,7 +300,7 @@ void init_application_before_gpu_init(
     }
     
     if (engine_save.contents != NULL) {
-        free_from_managed(engine_save.contents);
+        T1_mem_free_from_managed(engine_save.contents);
     }
     #else
     engine_globals->fullscreen = false;
@@ -319,16 +319,16 @@ void init_application_before_gpu_init(
     
     engineglobals_init();
     
-    uielement_init();
+    T1_uielement_init();
     
-    zsprites_to_render = (zSpriteCollection *)malloc_from_unmanaged(
+    zsprites_to_render = (zSpriteCollection *)T1_mem_malloc_from_unmanaged(
         sizeof(zSpriteCollection));
     zsprites_to_render->size = 0;
     
-    T1_material_init(malloc_from_unmanaged);
+    T1_material_init(T1_mem_malloc_from_unmanaged);
     
     T1_objmodel_init();
-    zlights_to_apply = (zLightSource *)malloc_from_unmanaged(
+    zlights_to_apply = (zLightSource *)T1_mem_malloc_from_unmanaged(
         sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
     T1_std_memset(
         zlights_to_apply,
@@ -336,18 +336,18 @@ void init_application_before_gpu_init(
         sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
     
     #if PARTICLES_ACTIVE
-    lineparticle_effects = (LineParticle *)malloc_from_unmanaged(
-        sizeof(LineParticle) * LINEPARTICLE_EFFECTS_SIZE);
+    T1_particle_lineparticle_effects = (T1LineParticle *)T1_mem_malloc_from_unmanaged(
+        sizeof(T1LineParticle) * LINEPARTICLE_EFFECTS_SIZE);
     T1_std_memset(
-        lineparticle_effects,
+        T1_particle_lineparticle_effects,
         0,
-        sizeof(LineParticle) * LINEPARTICLE_EFFECTS_SIZE);
-    particle_effects = (ParticleEffect *)malloc_from_unmanaged(
-        sizeof(ParticleEffect) * PARTICLE_EFFECTS_SIZE);
+        sizeof(T1LineParticle) * LINEPARTICLE_EFFECTS_SIZE);
+    T1_particle_effects = (T1ParticleEffect *)T1_mem_malloc_from_unmanaged(
+        sizeof(T1ParticleEffect) * PARTICLE_EFFECTS_SIZE);
     T1_std_memset(
-        particle_effects,
+        T1_particle_effects,
         0,
-        sizeof(ParticleEffect) * PARTICLE_EFFECTS_SIZE);
+        sizeof(T1ParticleEffect) * PARTICLE_EFFECTS_SIZE);
     #endif
     
     gameloop_init();
@@ -365,7 +365,7 @@ void init_application_before_gpu_init(
         /* filename: */ "fontmetrics.dat");
     
     if (font_metrics_file.size_without_terminator > 0) {
-        font_metrics_file.contents = (char *)malloc_from_unmanaged(
+        font_metrics_file.contents = (char *)T1_mem_malloc_from_unmanaged(
             font_metrics_file.size_without_terminator + 1);
         platform_read_resource_file(
             /* const char * filepath: */
@@ -382,7 +382,7 @@ void init_application_before_gpu_init(
         }
         
         text_init(
-                malloc_from_unmanaged,
+                T1_mem_malloc_from_unmanaged,
             /* raw_fontmetrics_file_contents: */
                 font_metrics_file.contents,
             /* raw_fontmetrics_file_size: */
@@ -390,7 +390,7 @@ void init_application_before_gpu_init(
     }
     
     user_interactions = (Interaction *)
-        malloc_from_unmanaged(sizeof(Interaction) * USER_INTERACTIONS_SIZE);
+        T1_mem_malloc_from_unmanaged(sizeof(Interaction) * USER_INTERACTIONS_SIZE);
     for (uint32_t m = 0; m < USER_INTERACTIONS_SIZE; m++) {
         construct_interaction(&user_interactions[m]);
     }
@@ -399,7 +399,7 @@ void init_application_before_gpu_init(
     
     client_logic_init();
     
-    gpu_shared_data_collection = malloc_from_unmanaged(
+    gpu_shared_data_collection = T1_mem_malloc_from_unmanaged(
         sizeof(GPUSharedDataCollection));
     T1_std_memset(
         gpu_shared_data_collection,
@@ -411,30 +411,30 @@ void init_application_before_gpu_init(
         pad_to_page_size(sizeof(GPUVertexIndices) * MAX_VERTICES_PER_BUFFER);
     
     gpu_shared_data_collection->polygons_allocation_size =
-        pad_to_page_size(sizeof(GPUzSprite) * MAX_ZSPRITES_PER_BUFFER);
+        pad_to_page_size(sizeof(T1GPUzSprite) * MAX_ZSPRITES_PER_BUFFER);
     
     gpu_shared_data_collection->lights_allocation_size =
-        pad_to_page_size(sizeof(GPULight) * MAX_LIGHTS_PER_BUFFER);
+        pad_to_page_size(sizeof(T1GPULight) * MAX_LIGHTS_PER_BUFFER);
     
     gpu_shared_data_collection->camera_allocation_size =
-        pad_to_page_size(sizeof(GPUCamera));
+        pad_to_page_size(sizeof(T1GPUCamera));
     
     gpu_shared_data_collection->locked_vertices_allocation_size =
         pad_to_page_size(
-            sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
+            sizeof(T1GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
     
     gpu_shared_data_collection->const_mats_allocation_size =
         pad_to_page_size(
-            sizeof(GPUConstMat) * ALL_LOCKED_MATERIALS_SIZE);
+            sizeof(T1GPUConstMat) * ALL_LOCKED_MATERIALS_SIZE);
     
     gpu_shared_data_collection->projection_constants_allocation_size =
-        pad_to_page_size(sizeof(GPUProjectConsts));
+        pad_to_page_size(sizeof(T1GPUProjectConsts));
     
     gpu_shared_data_collection->point_vertices_allocation_size =
-        pad_to_page_size(sizeof(GPURawVertex) * MAX_POINT_VERTICES);
+        pad_to_page_size(sizeof(T1GPURawVertex) * MAX_POINT_VERTICES);
     
     gpu_shared_data_collection->line_vertices_allocation_size =
-        pad_to_page_size(sizeof(GPURawVertex) * MAX_LINE_VERTICES);
+        pad_to_page_size(sizeof(T1GPURawVertex) * MAX_LINE_VERTICES);
     
     gpu_shared_data_collection->postprocessing_constants_allocation_size =
         pad_to_page_size(sizeof(GPUVertexIndices) * MAX_VERTICES_PER_BUFFER);
@@ -445,68 +445,69 @@ void init_application_before_gpu_init(
         cur_frame_i++)
     {
         gpu_shared_data_collection->triple_buffers[cur_frame_i].verts =
-            (GPUVertexIndices *)malloc_from_unmanaged_aligned(
+            (GPUVertexIndices *)T1_mem_malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection->vertices_allocation_size,
-                page_size);
+                T1_mem_page_size);
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].
             zsprite_list =
-                (GPUzSpriteList *)malloc_from_unmanaged_aligned(
+                (T1GPUzSpriteList *)T1_mem_malloc_from_unmanaged_aligned(
                     gpu_shared_data_collection->polygons_allocation_size,
-                    page_size);
+                    T1_mem_page_size);
         
         assert(gpu_shared_data_collection->lights_allocation_size > 0);
         gpu_shared_data_collection->triple_buffers[cur_frame_i].lights =
-            (GPULight *)malloc_from_unmanaged_aligned(
+            (T1GPULight *)T1_mem_malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection->lights_allocation_size,
-                page_size);
+                T1_mem_page_size);
         assert(gpu_shared_data_collection->triple_buffers[cur_frame_i].
             lights != NULL);
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].camera =
-            (GPUCamera *)malloc_from_unmanaged_aligned(
+            (T1GPUCamera *)T1_mem_malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection->camera_allocation_size,
-                page_size);
+                T1_mem_page_size);
         
         #if RAW_SHADER_ACTIVE
         gpu_shared_data_collection->triple_buffers[cur_frame_i].point_vertices =
             (GPURawVertex *)malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection->point_vertices_allocation_size,
-                page_size);
+                T1_mem_page_size);
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].line_vertices =
             (GPURawVertex *)malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection->line_vertices_allocation_size,
-                page_size);
+                T1_mem_page_size);
         #endif
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].
             postproc_consts =
-                (GPUPostProcConsts *)malloc_from_unmanaged_aligned(
+                (T1GPUPostProcConsts *)T1_mem_malloc_from_unmanaged_aligned(
                     gpu_shared_data_collection->
                         postprocessing_constants_allocation_size,
-                    page_size);
+                    T1_mem_page_size);
         
         T1_std_memset_f32(
             gpu_shared_data_collection->triple_buffers[cur_frame_i].camera,
             0.0f,
-            sizeof(GPUCamera));
+            sizeof(T1GPUCamera));
     }
     
     gpu_shared_data_collection->locked_vertices =
-        (GPULockedVertex *)malloc_from_unmanaged_aligned(
+        (T1GPULockedVertex *)T1_mem_malloc_from_unmanaged_aligned(
             gpu_shared_data_collection->locked_vertices_allocation_size,
-            page_size);
+            T1_mem_page_size);
     
     gpu_shared_data_collection->const_mats =
-        (GPUConstMat *)malloc_from_unmanaged_aligned(
+        (T1GPUConstMat *)T1_mem_malloc_from_unmanaged_aligned(
             gpu_shared_data_collection->const_mats_allocation_size,
-            page_size);
+            T1_mem_page_size);
     
     gpu_shared_data_collection->locked_pjc =
-        (GPUProjectConsts *)malloc_from_unmanaged_aligned(
-            gpu_shared_data_collection->projection_constants_allocation_size,
-            page_size);
+        (T1GPUProjectConsts *)T1_mem_malloc_from_unmanaged_aligned(
+            gpu_shared_data_collection->
+                projection_constants_allocation_size,
+            T1_mem_page_size);
 }
 
 #if TEXTURES_ACTIVE
@@ -555,7 +556,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         /* const void * src: */
             all_mesh_vertices->gpu_data,
         /* size_t n: */
-            sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
+            sizeof(T1GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
     platform_gpu_copy_locked_vertices();
     
     uint32_t perlin_good = 0;
@@ -690,7 +691,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         /* const void * src: */
             all_mesh_vertices->gpu_data,
         /* size_t n: */
-            sizeof(GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
+            sizeof(T1GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
     platform_gpu_copy_locked_vertices();
     
     T1_std_memcpy(
@@ -699,7 +700,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         /* const void * src: */
             all_mesh_materials->gpu_data,
         /* size_t n: */
-            sizeof(GPUConstMat) * ALL_LOCKED_MATERIALS_SIZE);
+            sizeof(T1GPUConstMat) * ALL_LOCKED_MATERIALS_SIZE);
     platform_gpu_copy_locked_materials();
     
     if (!application_running) {
@@ -729,10 +730,10 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     
     uint64_t longest_taken = 0;
     int32_t longest_ta_i = -1;
-    for (int32_t i = 0; i < (int32_t)texture_arrays_size; i++) {
+    for (int32_t i = 0; i < (int32_t)T1_texture_arrays_size; i++) {
         uint64_t taken =
-            texture_arrays[i].ended_decoding -
-            texture_arrays[i].started_decoding;
+            T1_texture_arrays[i].ended_decoding -
+            T1_texture_arrays[i].started_decoding;
         if (taken > longest_taken) {
             longest_taken = taken;
             longest_ta_i = i;
@@ -741,14 +742,14 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     log_append("Slowest texture array: ");
     log_append_int(longest_ta_i);
     log_append("\nIncludes images: ");
-    log_append(texture_arrays[longest_ta_i].images[0].filename);
+    log_append(T1_texture_arrays[longest_ta_i].images[0].filename);
     for (
         int32_t t_i = 1;
-        t_i < (int32_t)texture_arrays[longest_ta_i].images_size;
+        t_i < (int32_t)T1_texture_arrays[longest_ta_i].images_size;
         t_i++)
     {
         log_append(", ");
-        log_append(texture_arrays[longest_ta_i].images[t_i].filename);
+        log_append(T1_texture_arrays[longest_ta_i].images[t_i].filename);
     }
     
     T1_texture_array_push_all_predecoded();
@@ -789,7 +790,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     T1_audio_start_loop();
     #endif
     
-    T1_token_deinit(free_from_managed);
+    T1_token_deinit(T1_mem_free_from_managed);
     
     gameloop_active = true;
 }

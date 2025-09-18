@@ -1,10 +1,10 @@
 #include "T1_lines.h"
 
-static GPURawVertex line_vertices[MAX_LINE_VERTICES];
+static T1GPURawVertex line_vertices[MAX_LINE_VERTICES];
 static CPULineData lines_cpu_data[MAX_LINE_VERTICES / 2];
 static int32_t lines_to_render_size = 0;
 
-static GPURawVertex point_vertices[MAX_POINT_VERTICES];
+static T1GPURawVertex point_vertices[MAX_POINT_VERTICES];
 static CPUPointData points_cpu_data[MAX_POINT_VERTICES];
 static int32_t points_to_render_size = 0;
 

@@ -69,7 +69,7 @@ float3 zyx_rotate(const float3 vertices, const float3 xyz_angle) {
 
 float4 project_float3_to_float4_perspective(
     const float3 in_xyz,
-    const device GPUProjectConsts * pjc)
+    const device T1GPUProjectConsts * pjc)
 {
     float4 out;
     
@@ -92,12 +92,12 @@ float4 project_float3_to_float4_perspective(
 vertex float4 shadows_vertex_shader(
     uint vertex_i [[ vertex_id ]],
     const device GPUVertexIndices * vertices [[ buffer(0) ]],
-    const device GPUzSprite * polygons [[ buffer(1) ]],
-    const device GPULight * lights [[ buffer(2) ]],
-    const device GPUCamera * camera [[ buffer(3) ]],
-    const device GPULockedVertex * locked_vertices [[ buffer(4) ]],
-    const device GPUProjectConsts * projection_constants [[ buffer(5) ]],
-    const device GPUPostProcConsts * updating_globals [[ buffer (6) ]])
+    const device T1GPUzSprite * polygons [[ buffer(1) ]],
+    const device T1GPULight * lights [[ buffer(2) ]],
+    const device T1GPUCamera * camera [[ buffer(3) ]],
+    const device T1GPULockedVertex * locked_vertices [[ buffer(4) ]],
+    const device T1GPUProjectConsts * projection_constants [[ buffer(5) ]],
+    const device T1GPUPostProcConsts * updating_globals [[ buffer (6) ]])
 {
     float3 out_pos;
     
@@ -225,10 +225,10 @@ vertex RasterizerPixel
 vertex_shader(
     uint vertex_i [[ vertex_id ]],
     const device GPUVertexIndices * vertices [[ buffer(0) ]],
-    const device GPUzSprite * polygons [[ buffer(1) ]],
-    const device GPUCamera * camera [[ buffer(3) ]],
-    const device GPULockedVertex * locked_vertices [[ buffer(4) ]],
-    const device GPUProjectConsts * projection_constants [[ buffer(5) ]])
+    const device T1GPUzSprite * polygons [[ buffer(1) ]],
+    const device T1GPUCamera * camera [[ buffer(3) ]],
+    const device T1GPULockedVertex * locked_vertices [[ buffer(4) ]],
+    const device T1GPUProjectConsts * projection_constants [[ buffer(5) ]])
 {
     RasterizerPixel out;
     
@@ -391,12 +391,12 @@ float4 get_lit(
     texture2d<float> shadow_map,
     #endif
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE> color_textures,
-    const device GPUCamera * camera,
-    const device GPULight * lights,
-    const device GPUProjectConsts * projection_constants,
-    const device GPUzSprite * zsprite,
-    const device GPUConstMat * material,
-    const device GPUPostProcConsts * updating_globals,
+    const device T1GPUCamera * camera,
+    const device T1GPULight * lights,
+    const device T1GPUProjectConsts * projection_constants,
+    const device T1GPUzSprite * zsprite,
+    const device T1GPUConstMat * material,
+    const device T1GPUPostProcConsts * updating_globals,
     const RasterizerPixel in,
     const bool is_base_mtl)
 {
@@ -654,17 +654,17 @@ fragment_shader(
     #if SHADOWS_ACTIVE
     texture2d<float> shadow_map [[texture(SHADOWMAP_TEXTUREARRAY_I)]],
     #endif
-    const device GPULockedVertex * locked_vertices [[ buffer(0) ]],
-    const device GPUzSprite * polygons [[ buffer(1) ]],
-    const device GPULight * lights [[ buffer(2) ]],
-    const device GPUCamera * camera [[ buffer(3) ]],
-    const device GPUProjectConsts * projection_constants [[ buffer(4) ]],
-    const device GPUConstMat * const_mats [[ buffer(6) ]],
-    const device GPUPostProcConsts * updating_globals [[ buffer(7) ]])
+    const device T1GPULockedVertex * locked_vertices [[ buffer(0) ]],
+    const device T1GPUzSprite * polygons [[ buffer(1) ]],
+    const device T1GPULight * lights [[ buffer(2) ]],
+    const device T1GPUCamera * camera [[ buffer(3) ]],
+    const device T1GPUProjectConsts * projection_constants [[ buffer(4) ]],
+    const device T1GPUConstMat * const_mats [[ buffer(6) ]],
+    const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     unsigned int mat_i =
         locked_vertices[in.locked_vertex_i].parent_material_i;
-    const device GPUConstMat * material =
+    const device T1GPUConstMat * material =
         mat_i == PARENT_MATERIAL_BASE ?
             &polygons[in.polygon_i].base_mat :
             &const_mats[locked_vertices[in.locked_vertex_i].
@@ -726,18 +726,18 @@ alphablending_fragment_shader(
     #if SHADOWS_ACTIVE
     texture2d<float> shadow_map [[texture(SHADOWMAP_TEXTUREARRAY_I)]],
     #endif
-    const device GPULockedVertex * locked_vertices [[ buffer(0) ]],
-    const device GPUzSprite * polygons [[ buffer(1) ]],
-    const device GPULight * lights [[ buffer(2) ]],
-    const device GPUCamera * camera [[ buffer(3) ]],
-    const device GPUProjectConsts * projection_constants [[ buffer(4) ]],
-    const device GPUConstMat * locked_materials [[ buffer(6) ]],
-    const device GPUPostProcConsts * updating_globals [[ buffer(7) ]])
+    const device T1GPULockedVertex * locked_vertices [[ buffer(0) ]],
+    const device T1GPUzSprite * polygons [[ buffer(1) ]],
+    const device T1GPULight * lights [[ buffer(2) ]],
+    const device T1GPUCamera * camera [[ buffer(3) ]],
+    const device T1GPUProjectConsts * projection_constants [[ buffer(4) ]],
+    const device T1GPUConstMat * locked_materials [[ buffer(6) ]],
+    const device T1GPUPostProcConsts * updating_globals [[ buffer(7) ]])
 {
     unsigned int mat_i =
         locked_vertices[in.locked_vertex_i].parent_material_i;
     
-    const device GPUConstMat * material =
+    const device T1GPUConstMat * material =
         mat_i == PARENT_MATERIAL_BASE ?
             &polygons[in.polygon_i].base_mat :
             &locked_materials[locked_vertices[in.locked_vertex_i].locked_materials_head_i + mat_i];
@@ -792,8 +792,8 @@ struct PostProcessingFragment
 vertex PostProcessingFragment
 single_quad_vertex_shader(
     const uint vertexID [[ vertex_id ]],
-    const device PostProcessingVertex * vertices [[ buffer(0) ]],
-    const constant GPUPostProcConsts * constants [[ buffer(1) ]])
+    const device T1PostProcessingVertex * vertices [[ buffer(0) ]],
+    const constant T1GPUPostProcConsts * constants [[ buffer(1) ]])
 {
     PostProcessingFragment out;
     
@@ -978,9 +978,9 @@ typedef struct {
 vertex RawFragment
 raw_vertex_shader(
     uint vertex_i [[ vertex_id ]],
-    const device GPURawVertex * vertices [[ buffer(0) ]],
-    const device GPUCamera * camera [[ buffer(3) ]],
-    const device GPUProjectConsts * project_consts [[ buffer(5) ]])
+    const device T1GPURawVertex * vertices [[ buffer(0) ]],
+    const device T1GPUCamera * camera [[ buffer(3) ]],
+    const device T1GPUProjectConsts * project_consts [[ buffer(5) ]])
 {
     RawFragment out;
     

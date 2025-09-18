@@ -2,7 +2,7 @@
 #define UI_ELEMENT_H
 
 #include "T1_std.h"
-#include "T1_memorystore.h"
+#include "T1_mem.h"
 #include "T1_zspriteid.h"
 #include "T1_userinput.h"
 #include "T1_zsprite.h"
@@ -25,8 +25,8 @@ same for most buttons/sliders in the app and don't want to set every time.
 If you do want sliders of different sizes, you can set the slider size, request
 some sliders, change the slider size, and then request some more sliders
 */
-typedef struct  {
-    GPUConstMat back_mat;
+typedef struct {
+    T1GPUConstMat back_mat;
     union {
         uint64_t custom_uint_max;
         int64_t  custom_int_max;
@@ -55,24 +55,24 @@ typedef struct  {
     bool8_t   ignore_lighting;
     bool8_t   ignore_camera;
     T1Type    linked_type;
-} UIElementPermUserSettings;
+} T1UIElementPermUserSettings;
 
-typedef struct NextUIElementSettings {
-    UIElementPermUserSettings perm;
+typedef struct {
+    T1UIElementPermUserSettings perm;
     char *   slider_label;
     float    slider_pin_rgba[4];
     int32_t  button_background_texturearray_i;
     int32_t  button_background_texture_i;
     float    slider;
     bool8_t  slider_label_shows_value;
-} NextUIElementSettings;
+} T1NextUIElementSettings;
 
-extern NextUIElementSettings * next_ui_element_settings;
+extern T1NextUIElementSettings * next_ui_element_settings;
 
 // allocates memory for state
-void uielement_init(void);
+void T1_uielement_init(void);
 
-void ui_elements_handle_touches(uint64_t ms_elapsed);
+void T1_uielement_handle_touches(uint64_t ms_elapsed);
 
 /*
 A slider linked to a float of your choice, for the user to slide left/right to
@@ -90,10 +90,10 @@ void T1_uielement_request_button(
     void (* onclick_funcptr)(int64_t),
     const int64_t clicked_arg);
 
-void unregister_ui_element_with_object_id(
-    const int32_t with_object_id);
+void T1_uielement_delete(
+    const int32_t with_zsprite_id);
 
-void delete_all_ui_elements(void);
+void T1_uielement_delete_all(void);
 
 #ifdef __cplusplus
 }

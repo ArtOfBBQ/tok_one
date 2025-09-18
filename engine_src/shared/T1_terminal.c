@@ -62,11 +62,11 @@ void terminal_init(
 {
     terminal_enter_fullscreen_fnc = terminal_enter_fullscreen_fncptr;
     
-    current_command = (char *)malloc_from_unmanaged(
+    current_command = (char *)T1_mem_malloc_from_unmanaged(
         SINGLE_LINE_MAX);
     current_command[0] = '\0';
     
-    terminal_history = (char *)malloc_from_unmanaged(
+    terminal_history = (char *)T1_mem_malloc_from_unmanaged(
         TERMINAL_HISTORY_MAX);
     T1_std_strcpy_cap(
         terminal_history,
@@ -558,7 +558,7 @@ static bool32_t evaluate_terminal_command(
     {
         #if AUDIO_ACTIVE
         unsigned char * recipient =
-            malloc_from_managed(sound_settings->global_buffer_size_bytes + 100);
+            T1_mem_malloc_from_managed(sound_settings->global_buffer_size_bytes + 100);
         uint32_t recipient_size = 0;
         
         wav_samples_to_wav(

@@ -19,7 +19,7 @@ typedef struct CPUPointData {
 } CPUPointData;
 
 typedef struct PointRequest {
-    GPURawVertex * gpu_vertex;
+    T1GPURawVertex * gpu_vertex;
     CPUPointData * cpu_data;
 } PointRequest;
 
@@ -30,7 +30,7 @@ typedef struct CPULineData {
 } CPULineData;
 
 typedef struct LineRequest {
-    GPURawVertex * gpu_vertices;
+    T1GPURawVertex * gpu_vertices;
     CPULineData * cpu_data;
 } LineRequest;
 

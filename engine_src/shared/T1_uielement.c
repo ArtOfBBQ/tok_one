@@ -5,7 +5,7 @@ static int32_t currently_sliding_touchable_id = -1;
 static int32_t currently_clicking_zsprite_id = -1;
 
 typedef struct ActiveUIElement {
-    UIElementPermUserSettings user_set;
+    T1UIElementPermUserSettings user_set;
     
     int64_t clicked_arg;
     
@@ -26,7 +26,7 @@ typedef struct ActiveUIElement {
     uint8_t label_dirty;
 } ActiveUIElement;
 
-NextUIElementSettings * next_ui_element_settings = NULL;
+T1NextUIElementSettings * next_ui_element_settings = NULL;
 
 #define ACTIVE_UI_ELEMENTS_SIZE 5000
 uint32_t active_ui_elements_size = 0;
@@ -47,10 +47,10 @@ static ActiveUIElement * next_active_ui_element(void) {
     return &active_ui_elements[active_ui_elements_size - 1];
 }
 
-void uielement_init(void) {
-    next_ui_element_settings = (NextUIElementSettings *)
-        malloc_from_unmanaged(sizeof(NextUIElementSettings));
-    T1_std_memset(next_ui_element_settings, 0, sizeof(NextUIElementSettings));
+void T1_uielement_init(void) {
+    next_ui_element_settings = (T1NextUIElementSettings *)
+        T1_mem_malloc_from_unmanaged(sizeof(T1NextUIElementSettings));
+    T1_std_memset(next_ui_element_settings, 0, sizeof(T1NextUIElementSettings));
     
     next_ui_element_settings->slider_label                     = NULL;
     next_ui_element_settings->perm.slider_width_screenspace = 100;
@@ -62,7 +62,7 @@ void uielement_init(void) {
     next_ui_element_settings->perm.slider_pin_tex.array_i = -1;
     next_ui_element_settings->perm.slider_pin_tex.slice_i = -1;
     
-    active_ui_elements = (ActiveUIElement *)malloc_from_unmanaged(
+    active_ui_elements = (ActiveUIElement *)T1_mem_malloc_from_unmanaged(
         sizeof(ActiveUIElement) * ACTIVE_UI_ELEMENTS_SIZE);
     T1_std_memset(
         active_ui_elements,
@@ -70,7 +70,7 @@ void uielement_init(void) {
         sizeof(ActiveUIElement) * ACTIVE_UI_ELEMENTS_SIZE);
 }
 
-void ui_elements_handle_touches(uint64_t ms_elapsed)
+void T1_uielement_handle_touches(uint64_t ms_elapsed)
 {
     #if PROFILER_ACTIVE
     profiler_start("ui_elements_handle_touches()");
@@ -502,7 +502,7 @@ void ui_elements_handle_touches(uint64_t ms_elapsed)
 
 static void set_slider_pos_from_current_val(
     ActiveUIElement * ae,
-    GPUzSprite * pin_gpu_zsprite)
+    T1GPUzSprite * pin_gpu_zsprite)
 {
     log_assert(ae != NULL);
     log_assert(pin_gpu_zsprite != NULL);
@@ -833,17 +833,18 @@ void T1_uielement_request_button(
     zsprite_commit(&button_request);
 }
 
-void unregister_ui_element_with_object_id(
-    const int32_t with_object_id)
+void T1_uielement_delete(const int32_t with_zsprite_id)
 {
     for (uint32_t i = 0; i < active_ui_elements_size; i++) {
-        if (active_ui_elements[i].background_zsprite_id == with_object_id) {
+        if (active_ui_elements[i].background_zsprite_id == with_zsprite_id) {
+            active_ui_elements[i].slider_linked_value = NULL;
+            active_ui_elements[i].touchable_id = -1;
             active_ui_elements[i].deleted = true;
         }
     }
 }
 
-void delete_all_ui_elements(void) {
+void T1_uielement_delete_all(void) {
     for (uint32_t i = 0; i < active_ui_elements_size; i++) {
         active_ui_elements[i].deleted = false;
     }

@@ -20,7 +20,7 @@ extern "C" {
 #define MAX_LINEPARTICLE_DIRECTIONS 5
 typedef struct LineParticle {
     CPUzSprite zpolygon_cpu;
-    GPUzSprite zpolygon_gpu;
+    T1GPUzSprite zpolygon_gpu;
     
     uint64_t random_seed;
     uint64_t elapsed;
@@ -47,25 +47,25 @@ typedef struct LineParticle {
     
     uint32_t deleted;
     uint32_t committed;
-} LineParticle;
-extern LineParticle * lineparticle_effects;
-extern uint32_t lineparticle_effects_size;
-LineParticle * next_lineparticle_effect(void);
-LineParticle * next_lineparticle_effect_with_zpoly(
+} T1LineParticle;
+extern T1LineParticle * T1_particle_lineparticle_effects;
+extern uint32_t T1_particle_lineparticle_effects_size;
+T1LineParticle * T1_particle_lineparticle_get_next(void);
+T1LineParticle * T1_particle_lineparticle_get_next_with_zsprite(
     CPUzSprite * construct_with_zpolygon,
-    GPUzSprite * construct_with_polygon_gpu);
-void commit_lineparticle_effect(
-    LineParticle * to_commit);
-void add_lineparticle_effects_to_workload(
+    T1GPUzSprite * construct_with_polygon_gpu);
+void T1_particle_lineparticle_commit(
+    T1LineParticle * to_commit);
+void T1_particle_lineparticle_add_all_to_frame_data(
     GPUFrame * frame_data,
     uint64_t elapsed_us,
     const bool32_t alpha_blending);
 
-typedef struct ParticleEffect {
-    GPUzSprite init_rand_add[2];
-    GPUzSprite pertime_rand_add[2];
-    GPUzSprite pertime_add;
-    GPUzSprite perexptime_add;
+typedef struct {
+    T1GPUzSprite init_rand_add[2];
+    T1GPUzSprite pertime_rand_add[2];
+    T1GPUzSprite pertime_add;
+    T1GPUzSprite perexptime_add;
     
     // Reminder on the way the linear variance multipliers work:
     // -> random floats are generated from 0.0f to 1.0f
@@ -76,8 +76,8 @@ typedef struct ParticleEffect {
     // You now have a property with some variance introduced. Most will center
     // around the original value and the exceedingly rare case will be
     // (linear_variance_multiplier * self) below or above its original value
-
-    GPUzSprite zpolygon_gpu;
+    
+    T1GPUzSprite zpolygon_gpu;
     CPUzSprite zpolygon_cpu;
     
     uint64_t random_seed;
@@ -99,22 +99,32 @@ typedef struct ParticleEffect {
     bool8_t cast_light;
     bool8_t deleted;
     bool8_t committed;
-} ParticleEffect;
+} T1ParticleEffect;
 
-extern ParticleEffect * particle_effects;
-extern uint32_t particle_effects_size;
+extern T1ParticleEffect * T1_particle_effects;
+extern uint32_t T1_particle_effects_size;
 
-void construct_particle_effect(ParticleEffect * to_construct);
+void T1_particle_effect_construct(T1ParticleEffect * to_construct);
 
-ParticleEffect * next_particle_effect(void);
-void commit_particle_effect(ParticleEffect * to_commit);
+T1ParticleEffect * T1_particle_get_next(void);
+void T1_particle_commit(T1ParticleEffect * to_commit);
 
-void delete_particle_effect(int32_t with_object_id);
+void T1_particle_delete(int32_t with_object_id);
 
-void add_particle_effects_to_workload(
+void T1_particle_add_all_to_frame_data(
     GPUFrame * frame_data,
     uint64_t elapsed_us,
     const bool32_t alpha_blending);
+
+void T1_particle_serialize(
+    T1ParticleEffect * to_serialize,
+    uint8_t * buffer,
+    uint32_t * buffer_size);
+
+void T1_particle_deserialize(
+    T1ParticleEffect * recipient,
+    uint8_t * buffer,
+    uint32_t * buffer_size);
 
 #ifdef __cplusplus
 }

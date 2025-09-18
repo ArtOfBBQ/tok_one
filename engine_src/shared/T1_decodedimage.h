@@ -19,7 +19,7 @@ to play with it.
 #include "assert.h"
 #endif
 
-typedef struct DecodedImage {
+typedef struct {
     uint8_t * rgba_values_freeable;
     uint8_t * rgba_values_page_aligned;
     uint32_t rgba_values_size;
@@ -27,14 +27,14 @@ typedef struct DecodedImage {
     uint32_t height;
     uint32_t pixel_count; // rgba_values_size / 4
     bool32_t good;
-} DecodedImage;
+} T1DecodedImage;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-uint64_t get_sum_rgba(const DecodedImage * input);
-uint32_t get_avg_rgba(const DecodedImage * input);
+uint64_t get_sum_rgba(const T1DecodedImage * input);
+uint32_t get_avg_rgba(const T1DecodedImage * input);
 
 /*
 you would overwrite the right half of the image by setting:
@@ -44,8 +44,8 @@ at_column=2,
 at_row=1
 */
 void overwrite_subregion(
-    DecodedImage * whole_image,
-    const DecodedImage * new_image,
+    T1DecodedImage * whole_image,
+    const T1DecodedImage * new_image,
     const uint32_t column_count,
     const uint32_t row_count,
     const uint32_t at_column,

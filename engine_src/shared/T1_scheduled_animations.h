@@ -41,7 +41,7 @@ typedef struct T1TPair {
 
 typedef struct T1ScheduledAnimation {
     // Public:
-    GPUzSprite gpu_polygon_vals;
+    T1GPUzSprite gpu_polygon_vals;
     // zPolygonCPU zpolygon_cpu_vals;
     zLightSource lightsource_vals;
     

@@ -2,7 +2,7 @@
 #define GPU_H
 
 #include "T1_logger.h"
-#include "T1_memorystore.h"
+#include "T1_mem.h"
 #include "T1_std.h"
 #include "T1_cpu_gpu_shared_types.h"
 #include "T1_cpu_to_gpu_types.h"

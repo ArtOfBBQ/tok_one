@@ -38,8 +38,8 @@ platform layer doesn't need to do anything and can just record values directly
 #include "T1_cpu_gpu_shared_types.h"
 
 typedef struct EngineGlobals {
-    GPUPostProcConsts postproc_consts;
-    GPUProjectConsts project_consts;
+    T1GPUPostProcConsts postproc_consts;
+    T1GPUProjectConsts project_consts;
     
     uint64_t elapsed;
     uint64_t this_frame_timestamp_us;

@@ -14,7 +14,7 @@ extern "C" {
 
 #include "T1_meta.h"
 #include "T1_random.h"
-#include "T1_memorystore.h"
+#include "T1_mem.h"
 #include "T1_collision.h"
 #include "T1_texture_array.h"
 #include "T1_texture_files.h"

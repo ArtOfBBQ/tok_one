@@ -64,7 +64,7 @@ typedef struct AppleGPUState {
     id<MTLTexture> touch_id_texture;
     id<MTLBuffer> touch_id_buffer;
     id<MTLBuffer> touch_id_buffer_all_zeros;
-    PostProcessingVertex quad_vertices[6];
+    T1PostProcessingVertex quad_vertices[6];
     float retina_scaling_factor;
     bool32_t metal_active;
     bool32_t viewport_set;
@@ -86,7 +86,7 @@ bool32_t apple_gpu_init(
     float backing_scale_factor,
     char * error_msg_string)
 {
-    ags = malloc_from_unmanaged(sizeof(AppleGPUState)); // TODO: use malloc_from_unmanaged again
+    ags = T1_mem_malloc_from_unmanaged(sizeof(AppleGPUState)); // TODO: use malloc_from_unmanaged again
     ags->retina_scaling_factor = backing_scale_factor;
     ags->pixel_format_renderpass1 = 0;
     #if DRAWING_SEMAPHORE_ACTIVE
@@ -1024,7 +1024,7 @@ void platform_gpu_generate_mipmaps_for_texture_array(
     // no mipmaps for font
     log_assert(texture_array_i != 0);
     // no mipmaps for bc1 compressed arrays
-    log_assert(!texture_arrays[texture_array_i].bc1_compressed);
+    log_assert(!T1_texture_arrays[texture_array_i].bc1_compressed);
     
     id <MTLCommandBuffer> combuf = [ags->command_queue commandBuffer];
     
@@ -1134,7 +1134,7 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
     [combuf commit];
     [combuf waitUntilCompleted];
     
-    free_from_managed(rgba_values_freeable);
+    T1_mem_free_from_managed(rgba_values_freeable);
 }
 
 #if TEXTURES_ACTIVE
@@ -1217,7 +1217,7 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     }];
     [combuf commit];
     
-    free_from_managed(raw_bc1_file_freeable);
+    T1_mem_free_from_managed(raw_bc1_file_freeable);
 }
 #endif
 
@@ -1982,7 +1982,7 @@ void platform_gpu_copy_locked_materials(void)
     assert(ags->quad_vertices != NULL);
     [render_pass_4_composition
         setVertexBytes:ags->quad_vertices
-        length:sizeof(PostProcessingVertex)*6
+        length:sizeof(T1PostProcessingVertex)*6
         atIndex:0];
     
     [render_pass_4_composition

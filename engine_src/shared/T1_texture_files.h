@@ -1,7 +1,7 @@
 #ifndef TEXTURE_FILES_H
 #define TEXTURE_FILES_H
 
-#include "T1_memorystore.h"
+#include "T1_mem.h"
 #include "T1_decodedimage.h"
 #include "T1_texture_array.h"
 #include "T1_platform_layer.h"

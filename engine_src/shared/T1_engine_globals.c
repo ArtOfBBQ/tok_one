@@ -67,7 +67,7 @@ void engineglobals_init(void) {
         return;
     }
     
-    GPUProjectConsts * pjc = &engine_globals->project_consts;
+    T1GPUProjectConsts * pjc = &engine_globals->project_consts;
     
     pjc->znear =  0.1f;
     pjc->zfar  =  6.0f;

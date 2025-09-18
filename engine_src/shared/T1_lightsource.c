@@ -3,7 +3,7 @@
 // The global camera
 // In a 2D game, move the x to the left to move all of your
 // sprites to the right
-GPUCamera camera;
+T1GPUCamera camera;
 
 zLightSource * zlights_to_apply = NULL;
 uint32_t zlights_to_apply_size = 0;
@@ -213,7 +213,7 @@ void project_float4_to_2d_inplace(
     float * position_y,
     float * position_z)
 {
-    GPUProjectConsts * pjc = &engine_globals->project_consts;
+    T1GPUProjectConsts * pjc = &engine_globals->project_consts;
     
     float x_multiplier =
         engine_globals->aspect_ratio * pjc->field_of_view_modifier;
@@ -229,7 +229,7 @@ void project_float4_to_2d_inplace(
 }
 
 void copy_lights(
-    GPULight * lights,
+    T1GPULight * lights,
     uint32_t * lights_size,
     uint32_t * shadowcaster_i)
 {
@@ -276,7 +276,7 @@ void copy_lights(
 
 // move each light so the camera becomes position 0,0,0
 void translate_lights(
-    GPULight * lights,
+    T1GPULight * lights,
     uint32_t * lights_size)
 {
     assert(zlights_to_apply_size < MAX_LIGHTS_PER_BUFFER);

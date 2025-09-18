@@ -3,7 +3,7 @@
 #ifndef TERMINAL_H
 #define TERMINAL_H
 
-#include "T1_memorystore.h"
+#include "T1_mem.h"
 #include "T1_engine_globals.h"
 #include "T1_userinput.h"
 #include "T1_zsprite.h"

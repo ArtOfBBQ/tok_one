@@ -69,7 +69,7 @@ extern "C" {
 // #include "audio.h"
 #include "decode_bmp.h"
 #include "T1_std.h"
-#include "T1_memorystore.h"
+#include "T1_mem.h"
 #include "T1_logger.h"
 #include "T1_decodedimage.h"
 #include "T1_engine_globals.h"

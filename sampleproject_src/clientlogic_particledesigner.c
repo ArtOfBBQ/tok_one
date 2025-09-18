@@ -41,7 +41,7 @@ static void load_obj_basemodel(
     FileBuffer buffer;
     buffer.good = 0;
     buffer.size_without_terminator = platform_get_filesize(writables_filepath);
-    buffer.contents = malloc_from_managed(
+    buffer.contents = T1_mem_malloc_from_managed(
         buffer.size_without_terminator+1);
     
     platform_read_file(
@@ -60,7 +60,7 @@ static void load_obj_basemodel(
                 NULL);
         
         platform_gpu_copy_locked_vertices();
-        particle_effects[0].zpolygon_cpu.mesh_id = base_mesh_id;
+        T1_particle_effects[0].zpolygon_cpu.mesh_id = base_mesh_id;
     } else {
         T1_std_strcpy_cap(
             error_message,
@@ -71,7 +71,7 @@ static void load_obj_basemodel(
         return;
     }
     
-    free_from_managed(buffer.contents);
+    T1_mem_free_from_managed(buffer.contents);
     
     *success = 1;
     return;
@@ -100,15 +100,15 @@ typedef struct ParticleDesignerState {
    float slider_height;
    float menu_element_height;
    float whitespace_height;
-   ParticleEffect * editing;
-   ParticleEffect previous_values;
+   T1ParticleEffect * editing;
+   T1ParticleEffect previous_values;
    char inspecting_field[128];
 } ParticleDesignerState;
 
 static ParticleDesignerState * pds = NULL;
 
 void client_logic_init(void) {
-    pds = malloc_from_unmanaged(sizeof(ParticleDesignerState));
+    pds = T1_mem_malloc_from_unmanaged(sizeof(ParticleDesignerState));
     T1_std_memset(pds, 0, sizeof(ParticleDesignerState));
     
     pds->title_zsprite_id = next_ui_element_object_id();
@@ -145,29 +145,29 @@ void client_logic_early_startup(
     mouse_scroll_pos = 0.0f;
     
     uint32_t ok = 0;
-    T1_meta_struct(GPUConstMat, &ok);
+    T1_meta_struct(T1GPUConstMat, &ok);
     assert(ok);
-    T1_meta_array(GPUConstMat, T1_TYPE_F32, ambient_rgb, 3, &ok);
+    T1_meta_array(T1GPUConstMat, T1_TYPE_F32, ambient_rgb, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_array(GPUConstMat, T1_TYPE_F32, diffuse_rgb, 3, &ok);
+    T1_meta_array(T1GPUConstMat, T1_TYPE_F32, diffuse_rgb, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_array(GPUConstMat, T1_TYPE_F32, specular_rgb, 3, &ok);
+    T1_meta_array(T1GPUConstMat, T1_TYPE_F32, specular_rgb, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_array(GPUConstMat, T1_TYPE_F32, rgb_cap, 3, &ok);
+    T1_meta_array(T1GPUConstMat, T1_TYPE_F32, rgb_cap, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 2.0f, &ok);
-    // T1_meta_field(GPUConstMat, T1_TYPE_I32, texturearray_i, &ok);
-    // T1_meta_field(GPUConstMat, T1_TYPE_I32, texture_i, &ok);
+    // T1_meta_field(T1GPUConstMat, T1_TYPE_I32, texturearray_i, &ok);
+    // T1_meta_field(T1GPUConstMat, T1_TYPE_I32, texture_i, &ok);
     #if NORMAL_MAPPING_ACTIVE
-    T1_meta_field(GPUConstMat, T1_TYPE_I32, normalmap_texturearray_i, &ok);
-    T1_meta_field(GPUConstMat, T1_TYPE_I32, normalmap_texture_i, &ok);
+    T1_meta_field(T1GPUConstMat, T1_TYPE_I32, normalmap_texturearray_i, &ok);
+    T1_meta_field(T1GPUConstMat, T1_TYPE_I32, normalmap_texture_i, &ok);
     #endif
-    T1_meta_field(GPUConstMat, T1_TYPE_F32, specular_exponent, &ok);
+    T1_meta_field(T1GPUConstMat, T1_TYPE_F32, specular_exponent, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_field(GPUConstMat, T1_TYPE_F32, refraction, &ok);
+    T1_meta_field(T1GPUConstMat, T1_TYPE_F32, refraction, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_field(GPUConstMat, T1_TYPE_F32, alpha, &ok);
+    T1_meta_field(T1GPUConstMat, T1_TYPE_F32, alpha, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_field(GPUConstMat, T1_TYPE_F32, illum, &ok);
+    T1_meta_field(T1GPUConstMat, T1_TYPE_F32, illum, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     assert(ok);
     
@@ -179,58 +179,58 @@ void client_logic_early_startup(
     T1_meta_reg_custom_uint_limits_for_last_field(0, 1, &ok);
     assert(ok);
     
-    T1_meta_struct(GPUzSprite, &ok);
+    T1_meta_struct(T1GPUzSprite, &ok);
     assert(ok);
-    T1_meta_array(GPUzSprite, T1_TYPE_F32, xyz, 3, &ok);
+    T1_meta_array(T1GPUzSprite, T1_TYPE_F32, xyz, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-2.0f, 2.0f, &ok);
-    T1_meta_array(GPUzSprite, T1_TYPE_F32, xyz_angle, 3, &ok);
+    T1_meta_array(T1GPUzSprite, T1_TYPE_F32, xyz_angle, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-3.6f, 3.6f, &ok);
-    T1_meta_array(GPUzSprite, T1_TYPE_F32, bonus_rgb, 3, &ok);
+    T1_meta_array(T1GPUzSprite, T1_TYPE_F32, bonus_rgb, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(0.0f, 2.0f, &ok);
-    T1_meta_array(GPUzSprite, T1_TYPE_F32, xyz_mult, 3, &ok);
+    T1_meta_array(T1GPUzSprite, T1_TYPE_F32, xyz_mult, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(0.25f, 20.0f, &ok);
-    T1_meta_array(GPUzSprite, T1_TYPE_F32, xyz_offset, 3, &ok);
+    T1_meta_array(T1GPUzSprite, T1_TYPE_F32, xyz_offset, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-2.0f, 2.0f, &ok);
-    T1_meta_array(GPUzSprite, T1_TYPE_F32, base_mat_uv_offsets, 2, &ok);
+    T1_meta_array(T1GPUzSprite, T1_TYPE_F32, base_mat_uv_offsets, 2, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_field(GPUzSprite, T1_TYPE_F32, scale_factor, &ok);
+    T1_meta_field(T1GPUzSprite, T1_TYPE_F32, scale_factor, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_field(GPUzSprite, T1_TYPE_F32, alpha, &ok);
+    T1_meta_field(T1GPUzSprite, T1_TYPE_F32, alpha, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-2.0f, 2.0f, &ok);
-    T1_meta_field(GPUzSprite, T1_TYPE_F32, ignore_lighting, &ok);
+    T1_meta_field(T1GPUzSprite, T1_TYPE_F32, ignore_lighting, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_field(GPUzSprite, T1_TYPE_F32, ignore_camera, &ok);
+    T1_meta_field(T1GPUzSprite, T1_TYPE_F32, ignore_camera, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_field(GPUzSprite, T1_TYPE_U32, remove_shadow, &ok);
+    T1_meta_field(T1GPUzSprite, T1_TYPE_U32, remove_shadow, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(0, 1, &ok);
-    T1_meta_struct_field(GPUzSprite, GPUConstMat, base_mat, &ok);
+    T1_meta_struct_field(T1GPUzSprite, T1GPUConstMat, base_mat, &ok);
     assert(ok);
     
-    T1_meta_struct(ParticleEffect, &ok);
+    T1_meta_struct(T1ParticleEffect, &ok);
     assert(ok);
-    T1_meta_struct_array(ParticleEffect, GPUzSprite, init_rand_add, 2, &ok);
-    T1_meta_struct_array(ParticleEffect, GPUzSprite, pertime_rand_add, 2, &ok);
-    T1_meta_struct_field(ParticleEffect, GPUzSprite, pertime_add, &ok);
-    T1_meta_struct_field(ParticleEffect, GPUzSprite, perexptime_add, &ok);
-    T1_meta_struct_field(ParticleEffect, GPUzSprite, zpolygon_gpu, &ok);
+    T1_meta_struct_array(T1ParticleEffect, T1GPUzSprite, init_rand_add, 2, &ok);
+    T1_meta_struct_array(T1ParticleEffect, T1GPUzSprite, pertime_rand_add, 2, &ok);
+    T1_meta_struct_field(T1ParticleEffect, T1GPUzSprite, pertime_add, &ok);
+    T1_meta_struct_field(T1ParticleEffect, T1GPUzSprite, perexptime_add, &ok);
+    T1_meta_struct_field(T1ParticleEffect, T1GPUzSprite, zpolygon_gpu, &ok);
     
-    T1_meta_struct_field(ParticleEffect, CPUzSprite, zpolygon_cpu, &ok);
-    T1_meta_field(ParticleEffect, T1_TYPE_U64, lifespan, &ok);
+    T1_meta_struct_field(T1ParticleEffect, CPUzSprite, zpolygon_cpu, &ok);
+    T1_meta_field(T1ParticleEffect, T1_TYPE_U64, lifespan, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(0, 50000000, &ok);
-    T1_meta_field(ParticleEffect, T1_TYPE_U64, pause_per_spawn, &ok);
+    T1_meta_field(T1ParticleEffect, T1_TYPE_U64, pause_per_spawn, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(0, 100000, &ok);
-    T1_meta_field(ParticleEffect,
+    T1_meta_field(T1ParticleEffect,
         T1_TYPE_U32, spawns_per_sec, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(1, 10000, &ok);
-    T1_meta_field(ParticleEffect, T1_TYPE_U32, loops, &ok);
+    T1_meta_field(T1ParticleEffect, T1_TYPE_U32, loops, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(0, 20, &ok);
-    T1_meta_field(ParticleEffect, T1_TYPE_F32, light_reach, &ok);
+    T1_meta_field(T1ParticleEffect, T1_TYPE_F32, light_reach, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(0.1f, 10.0f, &ok);
-    T1_meta_field(ParticleEffect, T1_TYPE_F32, light_strength, &ok);
+    T1_meta_field(T1ParticleEffect, T1_TYPE_F32, light_strength, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(0.1f, 4.0f, &ok);
-    T1_meta_array(ParticleEffect, T1_TYPE_F32, light_rgb, 3, &ok);
+    T1_meta_array(T1ParticleEffect, T1_TYPE_F32, light_rgb, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(0.0f, 1.0f, &ok);
-    T1_meta_field(ParticleEffect, T1_TYPE_U8, cast_light, &ok);
+    T1_meta_field(T1ParticleEffect, T1_TYPE_U8, cast_light, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(0, 1, &ok);
     assert(ok);
     
@@ -270,11 +270,16 @@ static void clicked_btn(int64_t arg) {
     if (arg == -1) {
         clear_ui_element_touchable_ids();
         
+        for (uint32_t i = 0; i < pds->regs_size; i++) {
+            T1_uielement_delete(pds->regs[i].slider_zsprite_id);
+            T1_uielement_delete(pds->regs[i].label_zsprite_id);
+        }
+        
         pds->inspecting_field_extra_offset = 0;
         T1_std_strcpy_cap(
             pds->inspecting_field,
             128,
-            "ParticleEffect");
+            "T1ParticleEffect");
     } else {
         T1_std_strcpy_cap(
             pds->inspecting_field,
@@ -506,7 +511,7 @@ static void request_gfx_from_empty_scene(void) {
     
     pds->regs_head_i = 0;
     pds->regs_size = 0;
-    T1_std_strcpy_cap(pds->inspecting_field, 128, "ParticleEffect");
+    T1_std_strcpy_cap(pds->inspecting_field, 128, "T1ParticleEffect");
     pds->inspecting_field_extra_offset = 0;
     
     redraw_all_sliders();
@@ -516,7 +521,7 @@ static float scroll_y_offset = 0;
 static int32_t slider_labels_object_id = -1;
 void client_logic_late_startup(void) {
     
-    pds->editing = next_particle_effect();
+    pds->editing = T1_particle_get_next();
     pds->editing->zpolygon_gpu.xyz_mult[0] = zsprite_get_x_multiplier_for_width(&pds->editing->zpolygon_cpu, 0.05f);
     pds->editing->zpolygon_gpu.xyz_mult[1] = zsprite_get_y_multiplier_for_height(&pds->editing->zpolygon_cpu, 0.05f);
     pds->editing->zpolygon_gpu.xyz_mult[2] = zsprite_get_z_multiplier_for_depth(&pds->editing->zpolygon_cpu, 0.05f);
@@ -534,7 +539,7 @@ void client_logic_late_startup(void) {
     pds->editing->lifespan = 1000000;
     pds->editing->spawns_per_sec = 500;
     
-    commit_particle_effect(pds->editing);
+    T1_particle_commit(pds->editing);
     
     request_gfx_from_empty_scene();
 }
@@ -611,7 +616,7 @@ static void client_handle_keypresses(
     
     if (keypress_map[TOK_KEY_L] == true) {
         keypress_map[TOK_KEY_L] = false;
-        LineParticle * lines = next_lineparticle_effect();
+        T1LineParticle * lines = T1_particle_lineparticle_get_next();
         zSpriteRequest lines_polygon;
         lines_polygon.cpu_data = &lines->zpolygon_cpu;
         lines_polygon.gpu_data = &lines->zpolygon_gpu;
@@ -676,7 +681,7 @@ static void client_handle_keypresses(
         lines->particle_zangle_variance_pct = 15;
         lines->particle_rgb_variance_pct = 15;
         lines->particle_scalefactor_variance_pct = 35;
-        commit_lineparticle_effect(lines);
+        T1_particle_lineparticle_commit(lines);
     }
     
     if (keypress_map[TOK_KEY_BACKSLASH] == true) {
@@ -784,16 +789,15 @@ static void load_texture(const char * writables_filename) {
             return;
         }
         
-        log_assert(texture_arrays[tex.array_i].images[tex.slice_i].
+        log_assert(
+            T1_texture_arrays[tex.array_i].images[tex.slice_i].
                 image.rgba_values_freeable != NULL);
-        log_assert(texture_arrays[tex.array_i].images[tex.slice_i].
+        log_assert(
+            T1_texture_arrays[tex.array_i].images[tex.slice_i].
                 image.rgba_values_page_aligned != NULL);
         
         pds->editing->zpolygon_gpu.base_mat.texturearray_i = tex.array_i;
         pds->editing->zpolygon_gpu.base_mat.texture_i = tex.slice_i;
-        //        pds->editing->zpolygon_gpu.bonus_rgb[0] = 0.8f;
-        //        pds->editing->zpolygon_gpu.bonus_rgb[1] = 0.4f;
-        //        pds->editing->zpolygon_gpu.bonus_rgb[2] = 0.2f;
         
         float tempquad_z = 0.9f;
         zSpriteRequest temp_quad;
@@ -901,7 +905,7 @@ void client_logic_window_resize(
     mouse_scroll_pos = 0.0f;
     
     zlights_to_apply_size = 0;
-    delete_all_ui_elements();
+    T1_uielement_delete_all();
     T1_scheduled_animations_delete_all();
     zsprites_to_render->size = 0;
     clear_ui_element_touchable_ids();
