@@ -1,7 +1,7 @@
-#if SCHEDULED_ANIMS_ACTIVE
+#if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
 
-#ifndef SCHEDULED_ANIMATION_H
-#define SCHEDULED_ANIMATION_H
+#ifndef T1_SCHEDULED_ANIMATION_H
+#define T1_SCHEDULED_ANIMATION_H
 
 #include "T1_std.h"
 #include "T1_simd.h"
@@ -129,6 +129,9 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
 }
 #endif
 
-#endif // SCHEDULED_ANIMATION_H
+#endif // T1_SCHEDULED_ANIMATION_H
 
-#endif // SCHEDULED_ANIMS_ACTIVE
+#elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif // T1_SCHEDULED_ANIMS_ACTIVE

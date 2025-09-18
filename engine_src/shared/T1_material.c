@@ -25,9 +25,12 @@ void T1_material_construct(
     to_construct->specular_rgb[1] = 0.10f;
     to_construct->specular_rgb[2] = 0.10f;
     to_construct->specular_exponent = 25.0f;
-    #if NORMAL_MAPPING_ACTIVE
+    #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
     to_construct->normalmap_texture_i = -1;
     to_construct->normalmap_texturearray_i = -1;
+    #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     to_construct->rgb_cap[0] = 1.0f;
     to_construct->rgb_cap[1] = 1.0f;
@@ -36,7 +39,7 @@ void T1_material_construct(
     to_construct->texture_i = -1;
 }
 
-#ifndef LOGGER_IGNORE_ASSERTS
+#if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
 static uint32_t T1_material_fetch_locked_material_i(
     const char * material_name)
 {
@@ -52,17 +55,23 @@ static uint32_t T1_material_fetch_locked_material_i(
     
     return UINT32_MAX;
 }
+#elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+#else
+#error
 #endif
 
 uint32_t T1_material_preappend_locked_material_i(
     const char * obj_resource_name,
     const char * material_name)
 {
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     uint32_t existing_i = T1_material_fetch_locked_material_i(material_name);
     if (!T1_std_are_equal_strings(material_name, "default")) {
         log_assert(existing_i == UINT32_MAX); // doesn't exist
     }
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     T1_std_strcpy_cap(

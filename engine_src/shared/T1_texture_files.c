@@ -198,6 +198,7 @@ void T1_texture_files_register_new_by_splitting_file(
         columns);
 }
 
+#if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void T1_texture_files_runtime_register_png_from_writables(
     const char * filename,
     uint32_t * good)
@@ -320,6 +321,10 @@ void T1_texture_files_runtime_register_png_from_writables(
     T1_mem_free_from_managed(buf.contents);
     *good = 1;
 }
+#elif T1_TEXTURES_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
 
 void T1_texture_files_preregister_png_resource(
     const char * filename,

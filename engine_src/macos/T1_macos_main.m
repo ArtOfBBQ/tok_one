@@ -19,8 +19,11 @@ void macos_update_window_size(void);
 
 static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 {
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     char err_msg[128];
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     switch (apple_key) {
@@ -176,16 +179,22 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
         case (121):
             return TOK_KEY_PAGEDOWN;
         default:
-            #ifndef LOGGER_IGNORE_ASSERTS
+            #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
             T1_std_strcpy_cap(err_msg, 128, "unhandled apple keycode: ");
             T1_std_strcat_uint_cap(err_msg, 128, apple_key);
             T1_std_strcat_cap(err_msg, 128, "\n");
+            #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
             break;
     }
     
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     log_dump_and_crash(err_msg);
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     return TOK_KEY_ESCAPE;
@@ -357,8 +366,11 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 {
     T1_uielement_delete_all();
     zsprites_to_render->size = 0;
-    #if PARTICLES_ACTIVE
+    #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     T1_particle_effects_size = 0;
+    #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     engine_globals->fullscreen = false;
 }
@@ -499,8 +511,11 @@ int main(int argc, const char * argv[]) {
             errmsg);
     
     if (!result || !application_running) {
-        #ifndef LOGGER_IGNORE_ASSERTS
+        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
         log_dump_and_crash("Can't draw anything to the screen...\n");
+        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         
         char errmsg2[512];
@@ -529,10 +544,13 @@ int main(int argc, const char * argv[]) {
             0);
     }
     
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     if (!success && application_running) {
         log_dump_and_crash(errmsg);
     }
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     @autoreleasepool {

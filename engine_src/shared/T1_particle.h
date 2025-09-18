@@ -1,7 +1,7 @@
-#ifndef PARTICLE_H
-#define PARTICLE_H
+#ifndef T1_PARTICLE_H
+#define T1_PARTICLE_H
 
-#if PARTICLES_ACTIVE
+#if T1_PARTICLES_ACTIVE == T1_ACTIVE
 
 #ifdef __cplusplus
 extern "C" {
@@ -130,6 +130,9 @@ void T1_particle_deserialize(
 }
 #endif
 
-#endif // PARTICLES_ACTIVE
+#elif T1_PARTICLES_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif // T1_PARTICLES_ACTIVE
 
-#endif // PARTICLE_H
+#endif // T1_PARTICLE_H

@@ -2,7 +2,7 @@
 
 typedef struct OSMutexID {
     pthread_mutex_t mutex;
-    bool32_t initialized;
+    bool8_t initialized;
 } OSMutexID;
 
 static OSMutexID * mutexes = NULL;
@@ -14,12 +14,12 @@ void platform_layer_init(
 {
     mutexes = *unmanaged_memory_store;
     
-    size_t size = sizeof(OSMutexID) * MUTEXES_SIZE;
+    size_t size = sizeof(OSMutexID) * T1_MUTEXES_SIZE;
     while (size % aligned_to != 0) {
         size += 1;
     }
     
-    T1_std_memset(mutexes, 0, sizeof(OSMutexID) * MUTEXES_SIZE);
+    T1_std_memset(mutexes, 0, sizeof(OSMutexID) * T1_MUTEXES_SIZE);
     
     *unmanaged_memory_store = (void *)(
         ((char *)*unmanaged_memory_store) + size);
@@ -27,14 +27,14 @@ void platform_layer_init(
 
 uint32_t platform_init_mutex_and_return_id(void) {
     
-    log_assert(next_mutex_id + 1 < MUTEXES_SIZE);
+    log_assert(next_mutex_id + 1 < T1_MUTEXES_SIZE);
     log_assert(!mutexes[next_mutex_id].initialized);
     
     int mutex_init_error_value = pthread_mutex_init(
         &(mutexes[next_mutex_id].mutex),
         NULL);
     
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if LOGGER_ASSERTS_ACTIVE
     log_assert(mutex_init_error_value == 0);
     #else
     (void)mutex_init_error_value;
@@ -61,7 +61,7 @@ bool32_t platform_mutex_trylock(const uint32_t mutex_id)
     
     int return_val = pthread_mutex_trylock(&mutexes[mutex_id].mutex);
     
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE
     if (return_val != 0) {
         // EINVAL = The value specified by mutex is invalid
         log_assert(return_val != EINVAL);
@@ -79,7 +79,7 @@ bool32_t platform_mutex_trylock(const uint32_t mutex_id)
 }
 
 void platform_assert_mutex_locked(const uint32_t mutex_id) {
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if LOGGER_IGNORE_ASSERTS
     int return_val = pthread_mutex_trylock(&mutexes[mutex_id].mutex);
     log_assert(return_val == EBUSY);
     #else
@@ -94,33 +94,46 @@ was unlocked
 void platform_mutex_lock(
     const uint32_t mutex_id)
 {
-    //    #ifdef PROFILER_ACTIVE
-    //    profiler_start("platform_mutex_lock()");
-    //    #endif
+    #if T1_PROFILER_ACTIVE == T1_ACTIVE
+    T1_profiler_start("platform_mutex_lock()");
+    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_PROFILER_ACTIVE undefined"
+    #endif
     
-    log_assert(mutex_id < MUTEXES_SIZE);
+    log_assert(mutex_id < T1_MUTEXES_SIZE);
     log_assert(mutexes[mutex_id].initialized);
     int return_value = pthread_mutex_lock(&(mutexes[mutex_id].mutex));
     
-    #ifdef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE
+    log_assert(return_value == 0);
+    #else
     (void)return_value;
     #endif
     
-    log_assert(return_value == 0);
-    
-    //    #ifdef PROFILER_ACTIVE
-    //    profiler_end("platform_mutex_lock()");
-    //    #endif
+    #if T1_PROFILER_ACTIVE == T1_ACTIVE
+    T1_profiler_end("platform_mutex_lock()");
+    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_PROFILER_ACTIVE undefined"
+    #endif
     return;
 }
 
 void platform_mutex_unlock(const uint32_t mutex_id) {
-    log_assert(mutex_id < MUTEXES_SIZE);
+    log_assert(mutex_id < T1_MUTEXES_SIZE);
     log_assert(mutexes[mutex_id].initialized);
-    #ifndef LOGGER_IGNORE_ASSERTS
+    
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     int return_value =
-    #endif
         pthread_mutex_unlock(&(mutexes[mutex_id].mutex));
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    pthread_mutex_unlock(&(mutexes[mutex_id].mutex));
+    #else
+    #error "T1_LOGGER_ASSERTS_ACTIVE undefined"
+    #endif
     
     log_assert(return_value == 0);
 }

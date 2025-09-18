@@ -16,7 +16,7 @@ MAC_FRAMEWORKS="
 gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/unitybuild;
 */
 
-#define SHARED_APPLE_PLATFORM
+#define T1_SHARED_APPLE_PLATFORM 1
 
 #ifdef NS_BLOCK_ASSERTIONS
 #define NDEBUG
@@ -30,10 +30,13 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #define DECODE_PNG_IGNORE_ASSERTS
 #define DECODE_BMP_SILENCE
 #define DECODE_BMP_IGNORE_ASSERTS
-#define COMMON_IGNORE_ASSERTS
 #define COMMON_SILENCE
 #define LOGGER_SILENCE
-#define LOGGER_IGNORE_ASSERTS
+#define T1_STD_ASSERTS_ACTIVE 1
+#define T1_LOGGER_ASSERTS_ACTIVE 1
+#else
+#define T1_STD_ASSERTS_ACTIVE 0
+#define T1_LOGGER_ASSERTS_ACTIVE 0
 #endif
 
 // 1. Files that don't know about the platform layer

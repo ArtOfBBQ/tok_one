@@ -1,6 +1,6 @@
 #include "T1_terminal.h"
 
-#if TERMINAL_ACTIVE
+#if T1_TERMINAL_ACTIVE == T1_ACTIVE
 
 bool8_t terminal_active = false;
 
@@ -361,7 +361,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "PROFILER") ||
         T1_std_are_equal_strings(command, "PROFILE TREE"))
     {
-        #if PROFILER_ACTIVE
+        #if T1_PROFILER_ACTIVE == T1_ACTIVE
         engine_globals->show_profiler = !engine_globals->show_profiler;
         
         if (engine_globals->show_profiler) {
@@ -375,12 +375,14 @@ static bool32_t evaluate_terminal_command(
                 SINGLE_LINE_MAX,
                 "Stopped showing profiler results...");
         }
-        #else
+        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
         T1_std_strcpy_cap(
             response,
             SINGLE_LINE_MAX,
             "PROFILER_ACTIVE was undefined at compile time, no profiler data "
             "is available.");
+        #else
+        #error
         #endif
         return true;
     }
@@ -556,12 +558,12 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "DUMP SOUND") ||
         T1_std_are_equal_strings(command, "DUMP SOUND BUFFER"))
     {
-        #if AUDIO_ACTIVE
+        #if T1_AUDIO_ACTIVE == T1_ACTIVE
         unsigned char * recipient =
             T1_mem_malloc_from_managed(sound_settings->global_buffer_size_bytes + 100);
         uint32_t recipient_size = 0;
         
-        wav_samples_to_wav(
+        T1_wav_samples_to_wav(
             /* unsigned char * recipient: */
                 recipient,
             /* uint32_t * recipient_size: */
@@ -600,12 +602,14 @@ static bool32_t evaluate_terminal_command(
                 SINGLE_LINE_MAX,
                 "\nFailed to write to disk :(");
         }
-        #else
+        #elif T1_AUDIO_ACTIVE == T1_INACTIVE
         T1_std_strcpy_cap(
             response,
             SINGLE_LINE_MAX,
             "Audio code is disabled! set AUDIO_CODE_ACTIVE to 1 in "
             "clientlogic_macro_settings.h to enable it.");
+        #else
+        #error
         #endif
         return true;
     }
@@ -947,7 +951,7 @@ static bool32_t evaluate_terminal_command(
         return true;
     }
     
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE
     if (T1_std_are_equal_strings(command, "CRASH")) {
         T1_std_strcpy_cap(
             response,
@@ -1068,5 +1072,7 @@ void terminal_commit_or_activate(void) {
         requesting_label_update = true;
     }
 }
-
-#endif // TERMINAL_ACTIVE
+#elif T1_TERMINAL_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif // T1_TERMINAL_ACTIVE

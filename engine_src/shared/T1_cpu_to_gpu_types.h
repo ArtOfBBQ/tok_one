@@ -9,14 +9,17 @@
 typedef struct
 {
     GPUVertexIndices *                              verts;
-    T1GPUzSpriteList *                         zsprite_list;
-    T1GPULight *                                     lights;
-    T1GPUCamera *                                    camera;
-    #if RAW_SHADER_ACTIVE
-    GPURawVertex *                          line_vertices;
-    GPURawVertex *                         point_vertices;
+    T1GPUzSpriteList *                       zsprite_list;
+    T1GPULight *                                   lights;
+    T1GPUCamera *                                  camera;
+    #if T1_RAW_SHADER_ACTIVE == T1_ACTIVE
+    T1GPURawVertex *                        line_vertices;
+    T1GPURawVertex *                       point_vertices;
+    #elif T1_RAW_SHADER_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
-    T1GPUPostProcConsts                   * postproc_consts;
+    T1GPUPostProcConsts                 * postproc_consts;
     uint32_t                                   verts_size;
     uint32_t                                  lights_size;
     uint32_t                           first_alphablend_i;

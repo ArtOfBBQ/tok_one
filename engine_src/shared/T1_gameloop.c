@@ -7,7 +7,7 @@ static uint64_t gameloop_previous_time = 0;
 static uint64_t gameloop_frame_no = 0;
 static int32_t  loading_text_sprite_id = -1;
 
-#if TERMINAL_ACTIVE
+#if T1_TERMINAL_ACTIVE == T1_ACTIVE
 static void update_terminal(void) {
     if (keypress_map[TOK_KEY_ENTER] && !keypress_map[TOK_KEY_CONTROL]) {
         keypress_map[TOK_KEY_ENTER] = false;
@@ -25,6 +25,9 @@ static void update_terminal(void) {
     
     terminal_render();
 }
+#elif T1_TERMINAL_ACTIVE == T1_INACTIVE
+#else
+#error "T1_TERMINAL_ACTIVE undefined"
 #endif
 
 void gameloop_init(void) {
@@ -36,15 +39,23 @@ static void show_dead_simple_text(
     const uint64_t elapsed)
 {
     T1_uielement_delete_all();
-    #if PARTICLES_ACTIVE
+    #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     T1_particle_effects_size = 0;
     T1_particle_lineparticle_effects_size = 0;
+    #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_PARTICLES_ACTIVE undefined"
     #endif
     zlights_to_apply_size = 0;
     zsprites_to_render->size = 0;
     
-    #if FOG_ACTIVE
+    #if T1_FOG_ACTIVE == T1_ACTIVE
     engine_globals->postproc_consts.fog_factor = 0.0f;
+    #elif T1_FOG_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_FOG_ACTIVE undefined"
     #endif
     
     camera.xyz[0] = 0.0f;
@@ -145,8 +156,11 @@ void gameloop_update_before_render_pass(
         return;
     }
     
-    #if PROFILER_ACTIVE
+    #if T1_PROFILER_ACTIVE == T1_ACTIVE
     profiler_start("gameloop_update()");
+    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+    #else
+    #error "T1_PROFILER_ACTIVE undefined"
     #endif
     
     log_assert(frame_data->lights != NULL);
@@ -158,8 +172,12 @@ void gameloop_update_before_render_pass(
     if (gameloop_previous_time < 1) {
         gameloop_previous_time = engine_globals->this_frame_timestamp_us;
         
-        #if PROFILER_ACTIVE
+        #if T1_PROFILER_ACTIVE == T1_ACTIVE
         profiler_end("gameloop_update()");
+        #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+        // Pass
+        #else
+        #error "T1_PROFILER_ACTIVE undefined"
         #endif
         return;
     }
@@ -195,8 +213,12 @@ void gameloop_update_before_render_pass(
             // empty screen
             log_append("w82RZ - ");
             
-            #if PROFILER_ACTIVE
+            #if T1_PROFILER_ACTIVE == T1_ACTIVE
             profiler_end("gameloop_update()");
+            #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+            // Pass
+            #else
+            #error "T1_PROFILER_ACTIVE undefined"
             #endif
             return;
         } else {
@@ -208,8 +230,12 @@ void gameloop_update_before_render_pass(
             
             platform_gpu_update_viewport();
             
-            #if TERMINAL_ACTIVE
+            #if T1_TERMINAL_ACTIVE == T1_ACTIVE
             terminal_redraw_backgrounds();
+            #elif T1_TERMINAL_ACTIVE == T1_INACTIVE
+            // Pass
+            #else
+            #error "T1_TERMINAL_ACTIVE undefined"
             #endif
             
             client_logic_window_resize(
@@ -218,8 +244,11 @@ void gameloop_update_before_render_pass(
        }
     } else if (application_running) {
         
-        #if SCHEDULED_ANIMS_ACTIVE
+        #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
         T1_scheduled_animations_resolve();
+        #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+        #else
+        #error "T1_SCHEDULED_ANIMS_ACTIVE undefined"
         #endif
         
         platform_update_mouse_location();
@@ -248,8 +277,12 @@ void gameloop_update_before_render_pass(
         
         T1_uielement_handle_touches(engine_globals->elapsed);
         
-        #if TERMINAL_ACTIVE
+        #if T1_TERMINAL_ACTIVE == T1_ACTIVE
         update_terminal();
+        #elif T1_TERMINAL_ACTIVE == T1_INACTIVE
+        // Pass
+        #else
+        #error "T1_TERMINAL_ACTIVE undefined"
         #endif
         
         client_logic_update(engine_globals->elapsed);
@@ -292,12 +325,12 @@ void gameloop_update_before_render_pass(
     frame_data->postproc_consts->shadowcaster_i =
         shadowcaster_light_i;
     
-    #if PROFILER_ACTIVE
+    #if T1_PROFILER_ACTIVE == T1_ACTIVE
     profiler_end("gameloop_update()");
-    #endif
-    
-    #if PROFILER_ACTIVE
     profiler_draw_labels();
+    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+    #else
+    #error "T1_PROFILER_ACTIVE undefined"
     #endif
 }
 

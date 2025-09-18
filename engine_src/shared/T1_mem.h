@@ -1,8 +1,11 @@
 #ifndef T1_MEM_H
 #define T1_MEM_H
 
-#ifndef T1_MEM_NO_ASSERTS
+#if T1_MEM_ASSERTS_ACTIVE == T1_ACTIVE
 #include <assert.h>
+#elif T1_MEM_ASSERTS_ACTIVE == T1_INACTIVE
+#else
+#error
 #endif
 
 #include <stdlib.h>

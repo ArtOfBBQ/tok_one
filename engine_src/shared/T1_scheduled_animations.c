@@ -1,6 +1,6 @@
 #include "T1_scheduled_animations.h"
 
-#if SCHEDULED_ANIMS_ACTIVE
+#if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
 
 #define FLT_SCHEDULEDANIM_IGNORE 0xFFFF
 
@@ -285,7 +285,7 @@ static void apply_animation_effects_for_given_eased_t(
                 simd_t_now_deltas));
     }
     
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     log_assert(recip->ignore_camera >= -0.05f);
     log_assert(recip->ignore_camera <= 1.05f);
     log_assert(recip->ignore_lighting >= -0.05f);
@@ -299,6 +299,9 @@ static void apply_animation_effects_for_given_eased_t(
     // log_assert(recip->xyz_multiplier[0] > 0.0f);
     // log_assert(recip->xyz_multiplier[1] > 0.0f);
     // log_assert(recip->xyz_multiplier[2] > 0.0f);
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
 }
 
@@ -436,7 +439,8 @@ void T1_scheduled_animations_request_evaporate_and_destroy(
     const int32_t object_id,
     const uint64_t duration_us)
 {
-    #ifdef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE
+    #else
     (void)duration_us;
     #endif
     
@@ -456,7 +460,7 @@ void T1_scheduled_animations_request_evaporate_and_destroy(
             continue;
         }
         
-        #if PARTICLES_ACTIVE
+        #if T1_PARTICLES_ACTIVE == T1_ACTIVE
         float duration_mod = (20000000.0f / (float)duration_us);
         
         T1ParticleEffect * vaporize_effect = T1_particle_get_next();
@@ -511,6 +515,9 @@ void T1_scheduled_animations_request_evaporate_and_destroy(
         vaporize_effect->cast_light = false;
         
         T1_particle_commit(vaporize_effect);
+        #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         
         zsprites_to_render->cpu_data[zp_i].deleted = true;
@@ -521,8 +528,11 @@ void T1_scheduled_animations_request_shatter_and_destroy(
     const int32_t object_id,
     const uint64_t duration_us)
 {
-    #ifdef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     (void)duration_us;
+    #else
+    #error
     #endif
     
     log_assert(duration_us > 0);
@@ -541,7 +551,7 @@ void T1_scheduled_animations_request_shatter_and_destroy(
             continue;
         }
         
-        #if PARTICLES_ACTIVE
+        #if T1_PARTICLES_ACTIVE == T1_ACTIVE
         float duration_mod = (20000000.0f / (float)duration_us);
         
         T1ParticleEffect * shatter_effect = T1_particle_get_next();
@@ -603,6 +613,9 @@ void T1_scheduled_animations_request_shatter_and_destroy(
         log_assert(!shatter_effect->zpolygon_cpu.alpha_blending_enabled);
         
         T1_particle_commit(shatter_effect);
+        #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         
         zsprites_to_render->cpu_data[zp_i].zsprite_id = -1;
@@ -779,7 +792,7 @@ void T1_scheduled_animations_request_bump(
     const int32_t object_id,
     const uint32_t wait)
 {
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE
     log_assert(wait == 0.0f);
     #else
     (void)wait;
@@ -856,7 +869,7 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
     bool32_t is_near_zero =
         zs->ignore_camera > -0.01f &&
         zs->ignore_camera <  0.01f;
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE
     bool32_t is_near_one =
         zs->ignore_camera >  0.99f &&
         zs->ignore_camera <  1.01f;
@@ -903,4 +916,7 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
     }
 }
 
-#endif // SCHEDULED_ANIMS_ACTIVE
+#elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif // T1_SCHEDULED_ANIMS_ACTIVE

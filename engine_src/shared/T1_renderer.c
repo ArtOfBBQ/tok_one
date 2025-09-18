@@ -8,7 +8,7 @@ void renderer_init(void) {
     T1_std_memset(&camera, 0, sizeof(T1GPUCamera));
 }
 
-#if RAW_SHADER_ACTIVE
+#if T1_RAW_SHADER_ACTIVE == T1_ACTIVE
 static void add_line_vertex(
     GPUDataForSingleFrame * frame_data,
     const float xyz[3])
@@ -79,7 +79,12 @@ inline static void draw_bounding_sphere(
 }
 #endif
 
+#elif T1_RAW_SHADER_ACTIVE == T1_INACTIVE
+// Pass
+#else
+#error "T1_RAW_SHADER_ACTIVE undefined"
 #endif
+
 
 // TODO: transform triangles (rotate etc.), then compare
 // This might not be nescessary at all for our purposes
@@ -114,10 +119,13 @@ static int compare_triangles_furthest_camera_dist(
                 tris[i][vert_i].locked_vertex_i].xyz[2];
         }
         
-        #ifndef LOGGER_IGNORE_ASSERTS
+        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
         log_assert(tris[i][0].polygon_i < (int32_t)all_mesh_vertices->size);
         log_assert(tris[i][0].polygon_i == tris[i][1].polygon_i);
         log_assert(tris[i][0].polygon_i == tris[i][2].polygon_i);
+        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error "T1_LOGGER_ASSERTS_ACTIVE undefined"
         #endif
         
         avg_xyz[0] *=
@@ -223,7 +231,7 @@ inline static void add_alphablending_zpolygons_to_workload(
             (frame_data->vertices_size - frame_data->first_alphablend_i) % 3 == 0);
         log_assert(frame_data->first_alphablend_i % 3 == 0);
         
-        #ifndef LOGGER_IGNORE_ASSERTS
+        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
         uint32_t initial_first_alphablend_i = frame_data->first_alphablend_i;
         uint32_t initial_vertices_size = frame_data->vertices_size;
         
@@ -248,6 +256,10 @@ inline static void add_alphablending_zpolygons_to_workload(
                 frame_data->vertices[i+1].locked_vertex_i !=
                 frame_data->vertices[i+2].locked_vertex_i);
         }
+        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        // Pass
+        #else
+        #error "T1_LOGGER_ASSERTS_ACTIVE undefined"
         #endif
         
         qsort(
@@ -261,7 +273,7 @@ inline static void add_alphablending_zpolygons_to_workload(
             /* int (* _Nonnull compar)(const void *, const void *): */
                 compare_triangles_furthest_camera_dist);
         
-        #ifndef LOGGER_IGNORE_ASSERTS
+        #if T1_LOGGER_ASSERTS_ACTIVE
         log_assert(
             frame_data->first_alphablend_i == initial_first_alphablend_i);
         log_assert(frame_data->vertices_size == initial_vertices_size);
@@ -339,8 +351,13 @@ inline static void add_opaque_zpolygons_to_workload(
         SIMD_VEC4I cur  = simd_load_vec4i(cur_vals);
         
         int32_t verts_to_copy = vert_tail_i - vert_i;
-        #ifndef LOGGER_IGNORE_ASSERTS
+        
+        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
         uint32_t previous_verts_size = frame_data->verts_size;
+        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        // Pass
+        #else
+        #error "T1_LOGGER_ASSERTS_ACTIVE undefined"
         #endif
         
         for (int32_t i = 0; i < verts_to_copy; i += 2) {
@@ -350,12 +367,16 @@ inline static void add_opaque_zpolygons_to_workload(
                 cur);
             frame_data->verts_size += 2;
             
-            #ifndef LOGGER_IGNORE_ASSERTS
+            #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
             log_assert(frame_data->verts_size < MAX_VERTICES_PER_BUFFER);
             log_assert(frame_data->verts[frame_data->verts_size-2].
                 locked_vertex_i == (vert_i + i));
             log_assert(frame_data->verts[frame_data->verts_size-1].
                 locked_vertex_i == (vert_i + i + 1));
+            #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+            // Pass
+            #else
+            #error "T1_LOGGER_ASSERTS_ACTIVE undefined"
             #endif
         }
         
@@ -363,9 +384,13 @@ inline static void add_opaque_zpolygons_to_workload(
             frame_data->verts_size -= 1;
         }
         
-        #ifndef LOGGER_IGNORE_ASSERTS
+        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
         log_assert(frame_data->verts_size ==
             (previous_verts_size + (uint32_t)verts_to_copy));
+        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        // Pass
+        #else
+        #error "T1_LOGGER_ASSERTS_ACTIVE undefined"
         #endif
     }
 }
@@ -416,7 +441,7 @@ void renderer_hardware_render(
     add_opaque_zpolygons_to_workload(frame_data);
     
     if (application_running) {
-        #if PARTICLES_ACTIVE
+        #if T1_PARTICLES_ACTIVE == T1_ACTIVE
         T1_particle_add_all_to_frame_data(
             /* GPUDataForSingleFrame * frame_data: */
                 frame_data,
@@ -429,12 +454,16 @@ void renderer_hardware_render(
             frame_data,
             elapsed_us,
             false);
+        #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
+        // Pass
+        #else
+        #error "T1_PARTICLES_ACTIVE undefined"
         #endif
     }
     
     add_alphablending_zpolygons_to_workload(frame_data);
     
-    #if PARTICLES_ACTIVE
+    #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     T1_particle_add_all_to_frame_data(
         /* GPUDataForSingleFrame * frame_data: */
             frame_data,
@@ -447,9 +476,13 @@ void renderer_hardware_render(
             frame_data,
             elapsed_us,
             true);
+    #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error
     #endif
     
-    #if RAW_SHADER_ACTIVE
+    #if T1_RAW_SHADER_ACTIVE == T1_ACTIVE
     add_points_and_lines_to_workload(frame_data);
     
     if (application_running && engine_globals->draw_axes) {
@@ -530,6 +563,9 @@ void renderer_hardware_render(
             /* const float color: */
                 0.33f);
     }
-    
+    #elif T1_RAW_SHADER_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error
     #endif
 }

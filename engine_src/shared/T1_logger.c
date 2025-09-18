@@ -4,9 +4,6 @@ bool32_t application_running = false;
 #define CRASH_STRING_SIZE 256
 char crashed_top_of_screen_msg[CRASH_STRING_SIZE];
 
-#ifndef IGNORE_LOGGER
-// static bool32_t logger_activated = false;
-#endif
 
 // These are function pointers to our injected dependencies
 static void *   (* logger_malloc_func)(size_t) = NULL;
@@ -268,7 +265,7 @@ log_dump_and_crash(const char * crash_message) {
     #endif
 }
 
-#ifndef LOGGER_IGNORE_ASSERTS
+#if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
 void
 internal_log_assert(
     bool32_t condition,
@@ -329,6 +326,9 @@ internal_log_assert(
     
     log_dump_and_crash(assert_failed_msg);
 }
+#elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+#else
+#error
 #endif
 
 typedef struct TimerResults {

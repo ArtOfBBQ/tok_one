@@ -186,10 +186,13 @@ void T1_mem_malloc_from_managed_page_aligned(
     log_assert(*base_pointer_for_freeing != NULL);
     log_assert(*aligned_subptr != NULL);
     
-    #ifndef T1_MEM_NO_ASSERTS
+    #if T1_MEM_ASSERTS_ACTIVE == T1_ACTIVE
     uint32_t alignment_miss =
         (uintptr_t)(*aligned_subptr) % aligned_to;
     log_assert(alignment_miss == 0);
+    #elif T1_MEM_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
 }
 
@@ -226,10 +229,13 @@ void * T1_mem_malloc_from_managed_internal(
     
     log_assert((uintptr_t)managed_memory < (uintptr_t)managed_memory_end);
     
-    #ifndef T1_MEM_NO_ASSERTS
+    #if T1_MEM_ASSERTS_ACTIVE == T1_ACTIVE
     if (managed_stack->size > 0) {
         log_assert((uintptr_t)managed_stack->pointers[managed_stack->size - 1] <= (uintptr_t)return_value);
     }
+    #elif T1_MEM_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     log_assert(managed_stack->size < MANAGED_MEMORY_STACK_SIZE);
     managed_stack->pointers[managed_stack->size] = return_value;

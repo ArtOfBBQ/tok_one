@@ -698,7 +698,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
 {
     client_handle_keypresses(microseconds_elapsed);
     
-    #if 1
+    #if T1_SCHEDULED_ANIMS_ACTIVE
     float new_x =
         engine_globals->window_width - (pds->slider_width / 2) - 15.0f;
     float new_z = 0.75f;
@@ -717,10 +717,9 @@ void client_logic_update(uint64_t microseconds_elapsed)
         if (target_zsprite_ids[1] == target_zsprite_ids[2]) {
             continue;
         }
-        
+                
         float new_y = get_slider_y_screenspace((int32_t)i) -
             (mouse_scroll_pos * 30.0f);
-        
         for (uint32_t j = 0; j < 3; j++) {
             T1ScheduledAnimation * anim =
                 T1_scheduled_animations_request_next(true);
@@ -753,13 +752,14 @@ void client_logic_update(uint64_t microseconds_elapsed)
         anim->duration_us = 60000;
         T1_scheduled_animations_commit(anim);
     }
-    #endif
+    #endif // T1_SCHEDULED_ANIMS_ACTIVE
 }
 
 void client_logic_update_after_render_pass(void) {
     
 }
 
+#if T1_TEXTURES_ACTIVE
 static void load_texture(const char * writables_filename) {
     uint32_t ok = 0;
     T1Tex tex = T1_texture_array_get_filename_location(writables_filename);
@@ -799,6 +799,7 @@ static void load_texture(const char * writables_filename) {
         pds->editing->zpolygon_gpu.base_mat.texturearray_i = tex.array_i;
         pds->editing->zpolygon_gpu.base_mat.texture_i = tex.slice_i;
         
+        #if T1_SCHEDULED_ANIMS_ACTIVE
         float tempquad_z = 0.9f;
         zSpriteRequest temp_quad;
         zsprite_request_next(&temp_quad);
@@ -826,16 +827,20 @@ static void load_texture(const char * writables_filename) {
         fade->gpu_polygon_vals.alpha = 0.0f;
         fade->affected_zsprite_id = temp_quad.cpu_data->zsprite_id;
         T1_scheduled_animations_commit(fade);
+        #endif // T1_SCHEDULED_ANIMS_ACTIVE
+        
     } else {
         return;
     }
 }
+#endif
 
 void client_logic_evaluate_terminal_command(
     char * command,
     char * response,
     const uint32_t response_cap)
 {
+    #if T1_TEXTURES_ACTIVE
     if (
         T1_std_string_starts_with(
             command,
@@ -890,6 +895,20 @@ void client_logic_evaluate_terminal_command(
         
         return;
     }
+    #else
+    if (
+        T1_std_string_starts_with(
+            command,
+            "LOAD TEXTURE ") &&
+        command[13] != ' ' &&
+        command[13] != '\0')
+    {
+        T1_std_strcat_cap(
+            response,
+            response_cap,
+            "T1_TEXTURES_ACTIVE is set to 0, no support for textures!");
+    }
+    #endif
     
     T1_std_strcpy_cap(
         response,
@@ -906,7 +925,9 @@ void client_logic_window_resize(
     
     zlights_to_apply_size = 0;
     T1_uielement_delete_all();
+    #if T1_SCHEDULED_ANIMS_ACTIVE
     T1_scheduled_animations_delete_all();
+    #endif
     zsprites_to_render->size = 0;
     clear_ui_element_touchable_ids();
     

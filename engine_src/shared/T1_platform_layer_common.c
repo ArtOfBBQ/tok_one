@@ -134,8 +134,12 @@ void resource_filename_to_pathfile(
     char * recipient,
     const uint32_t assert_capacity)
 {
-    #ifdef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
+    // pass
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
     (void)assert_capacity;
+    #else
+    #error
     #endif
     
     assert(filename != NULL);
@@ -168,26 +172,28 @@ void writable_filename_to_pathfile(
     char * recipient,
     const uint32_t assert_capacity)
 {
-    #ifdef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
+    // pass
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
     (void)assert_capacity;
+    #else
+    #error
     #endif
     
     assert(filename != NULL);
     assert(recipient != NULL);
     
-    #ifndef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     uint32_t separator_size = platform_get_directory_separator_size();
-    #endif
-    
-    #if !defined(LOGGER_IGNORE_ASSERTS) || !defined(COMMON_IGNORE_ASSERTS)
     uint32_t filename_length = (uint32_t)T1_std_strlen(filename);
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     char separator[MAX_SEPARATOR_SIZE];
     platform_get_directory_separator(/* recipient: */ separator);
     
-    log_assert(
-        (filename_length + MAX_SEPARATOR_SIZE + 1) < MAX_FILENAME_SIZE);
     char separator_and_filename[MAX_FILENAME_SIZE];
     T1_std_strcpy_cap(
         separator_and_filename,
@@ -201,7 +207,7 @@ void writable_filename_to_pathfile(
     char writables_path[256];
     platform_get_writables_path(writables_path, 256);
     
-    #ifndef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     uint32_t writables_path_length =
         (uint32_t)T1_std_strlen(writables_path);
     uint32_t full_filename_size =
@@ -213,6 +219,9 @@ void writable_filename_to_pathfile(
         recipient[0] = '\0';
         return;
     }
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     T1_std_strcpy_cap(
@@ -224,7 +233,7 @@ void writable_filename_to_pathfile(
         assert_capacity,
         separator_and_filename);
     
-    assert(recipient[0] != '\0');
+    log_assert(recipient[0] != '\0');
 }
 
 void platform_delete_writable(
@@ -251,10 +260,13 @@ void platform_layer_start_window_resize(
     T1_uielement_delete_all();
     zsprites_to_render->size = 0;
     
-    #if FOG_ACTIVE
+    #if T1_FOG_ACTIVE == T1_ACTIVE
     engine_globals->postproc_consts.fog_factor = 0.0f;
     engine_globals->postproc_consts.fog_color[0] = 0.0f;
     engine_globals->postproc_consts.fog_color[1] = 0.0f;
     engine_globals->postproc_consts.fog_color[2] = 0.0f;
+    #elif T1_FOG_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
 }

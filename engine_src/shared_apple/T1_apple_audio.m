@@ -1,6 +1,6 @@
 #import "T1_apple_audio.h"
 
-#if AUDIO_ACTIVE
+#if T1_AUDIO_ACTIVE == T1_ACTIVE
 static void audio_callback(
     void * in_user_data,
     AudioQueueRef queue,
@@ -136,4 +136,8 @@ void T1_audio_start_loop(void) {
         /* const AudioTimeStamp * _Nullable inStartTime: */
             0);
 }
+#elif T1_AUDIO_ACTIVE == T1_INACTIVE
+// Pass
+#else
+#error "T1_AUDIO_ACTIVE undefined"
 #endif // AUDIO_ACTIVE

@@ -387,8 +387,11 @@ static FragmentAndTouchableOut pack_color_and_touchable_id(
 
 // Gets the color given a material and lighting setup
 float4 get_lit(
-    #if SHADOWS_ACTIVE
+    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     texture2d<float> shadow_map,
+    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE> color_textures,
     const device T1GPUCamera * camera,
@@ -438,17 +441,22 @@ float4 get_lit(
     constexpr sampler texture_sampler(
         mag_filter::linear,
         min_filter::linear
-        #if MIPMAPS_ACTIVE
+        #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
         ,mip_filter::nearest
+        #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         );
     
-    #if TEXTURES_ACTIVE
+    #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     if (material->texturearray_i >= 0)
     {
-    #else
+    #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
     if (material->texturearray_i == 0)
     {
+    #else
+    #error
     #endif
         // Sample the texture to obtain a color
         const half4 color_sample =
@@ -478,7 +486,7 @@ float4 get_lit(
             1.0f);
         
         float4 shadow_factors = vector_float4(1.0f, 1.0f, 1.0f, 1.0f);
-        #if SHADOWS_ACTIVE
+        #if T1_SHADOWS_ACTIVE == T1_ACTIVE
         float3 light_angle_xyz = vector_float3(
             lights[i].angle_xyz[0],
             lights[i].angle_xyz[1],
@@ -522,6 +530,9 @@ float4 get_lit(
                         updating_globals->in_shadow_multipliers[2],
                         1.0f);
         }
+        #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         
         float distance = get_distance(
@@ -548,7 +559,7 @@ float4 get_lit(
         float3 object_to_light = normalize(
             (light_pos - in.worldpos));
         
-        #if NORMAL_MAPPING_ACTIVE
+        #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
         if (material->normalmap_texturearray_i >= 0) {
             half4 normal_map_sample =
                 color_textures[material->normalmap_texturearray_i].sample(
@@ -572,6 +583,9 @@ float4 get_lit(
             // normalize again
             adjusted_normal = normalize(adjusted_normal);
         }
+        #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         
         float diffuse_dot =
@@ -651,8 +665,11 @@ fragment_shader(
     const RasterizerPixel in [[stage_in]],
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
         color_textures[[ texture(0) ]],
-    #if SHADOWS_ACTIVE
+    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     texture2d<float> shadow_map [[texture(SHADOWMAP_TEXTUREARRAY_I)]],
+    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     const device T1GPULockedVertex * locked_vertices [[ buffer(0) ]],
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
@@ -671,8 +688,11 @@ fragment_shader(
                 locked_materials_head_i + mat_i];
     
     float4 lit_color = get_lit(
-        #if SHADOWS_ACTIVE
+        #if T1_SHADOWS_ACTIVE == T1_ACTIVE
             shadow_map,
+        #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
             color_textures,
         /* const device GPUCamera * camera: */
@@ -723,8 +743,11 @@ alphablending_fragment_shader(
     RasterizerPixel in [[stage_in]],
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE>
         color_textures[[ texture(0), maybe_unused ]],
-    #if SHADOWS_ACTIVE
+    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     texture2d<float> shadow_map [[texture(SHADOWMAP_TEXTUREARRAY_I)]],
+    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     const device T1GPULockedVertex * locked_vertices [[ buffer(0) ]],
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
@@ -743,9 +766,12 @@ alphablending_fragment_shader(
             &locked_materials[locked_vertices[in.locked_vertex_i].locked_materials_head_i + mat_i];
     
     float4 lit_color = get_lit(
-        #if SHADOWS_ACTIVE
+        #if T1_SHADOWS_ACTIVE == T1_ACTIVE
         /* texture2d<float> shadow_map: */
             shadow_map,
+        #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
             color_textures,
         /* const device GPUCamera * camera: */
@@ -825,13 +851,16 @@ single_quad_vertex_shader(
     
     out.color_quantization = constants->color_quantization;
     
-    #if FOG_ACTIVE
+    #if T1_FOG_ACTIVE == T1_ACTIVE
     out.fog_factor = constants->fog_factor;
     out.fog_rgb = vector_half4(
         constants->fog_color[0],
         constants->fog_color[1],
         constants->fog_color[2],
         1.0h);
+    #elif T1_FOG_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     return out;
@@ -841,12 +870,15 @@ fragment half4
 single_quad_fragment_shader(
     PostProcessingFragment in [[stage_in]],
     texture2d<half> texture  [[texture(0)]],
-    #if BLOOM_ACTIVE
+    #if T1_BLOOM_ACTIVE == T1_ACTIVE
     texture2d<half> downsampled_1  [[texture(1)]],
     texture2d<half> downsampled_2  [[texture(2)]],
     texture2d<half> downsampled_3  [[texture(3)]],
     texture2d<half> downsampled_4  [[texture(4)]],
     texture2d<half> downsampled_5  [[texture(5)]],
+    #elif T1_BLOOM_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     texture2d_array<half> perlin_texture [[ texture(6) ]],
     depth2d<float> camera_depth_map
@@ -861,12 +893,15 @@ single_quad_fragment_shader(
     float2 texcoord = in.texcoord;
     
     half4 color_sample = texture.sample(sampler, texcoord);
-    #if BLOOM_ACTIVE
+    #if T1_BLOOM_ACTIVE == T1_ACTIVE
     color_sample += downsampled_1.sample(sampler, texcoord);
     color_sample += downsampled_2.sample(sampler, texcoord);
     color_sample += downsampled_3.sample(sampler, texcoord);
     color_sample += downsampled_4.sample(sampler, texcoord);
     color_sample += downsampled_5.sample(sampler, texcoord);
+    #elif T1_BLOOM_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     color_sample[3] = 1.0f;
@@ -894,17 +929,23 @@ single_quad_fragment_shader(
         (color_sample * (1.0h - dist));
     
     // reinhard tone mapping
-    #if TONE_MAPPING_ACTIVE
+    #if T1_TONE_MAPPING_ACTIVE == T1_ACTIVE
     color_sample = clamp(color_sample, 0.0h, 1.20h);
     color_sample = color_sample / 1.20h;
+    #elif T1_TONE_MAPPING_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     color_sample = clamp(color_sample, 0.0h, 1.0h);
     
-    #if COLOR_QUANTIZATION_ACTIVE
+    #if T1_COLOR_QUANTIZATION_ACTIVE == T1_ACTIVE
     if (in.color_quantization > 1.0h) {
         color_sample = floor(color_sample * in.color_quantization) /
             (in.color_quantization - 1.0h);
     }
+    #elif T1_COLOR_QUANTIZATION_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     color_sample[3] = 1.0h;

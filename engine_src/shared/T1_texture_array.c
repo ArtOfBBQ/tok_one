@@ -8,7 +8,7 @@ uint32_t T1_texture_arrays_size = 0;
 
 void T1_texture_array_push_all_predecoded(void)
 {
-    #if TEXTURES_ACTIVE
+    #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     for (
         int32_t ta_i = 1;
         ta_i < (int32_t)T1_texture_arrays_size;
@@ -116,7 +116,7 @@ void T1_texture_array_push_all_predecoded(void)
                         /* uint8_t * raw_bc1_file_page_aligned: */
                             rgba_values_page_aligned);    
                 } else {
-                    #ifndef LOGGER_IGNORE_ASSERTS
+                    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
                     char errmsg[128];
                     T1_std_strcpy_cap(
                         errmsg,
@@ -131,6 +131,10 @@ void T1_texture_array_push_all_predecoded(void)
                         128,
                         ".\n");
                     log_dump_and_crash("Missing critical bc1 texture\n");
+                    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+                    // Pass
+                    #else
+                    #error
                     #endif
                 }
             } else {
@@ -152,6 +156,9 @@ void T1_texture_array_push_all_predecoded(void)
             }
         }
     }
+    #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
 }
 
@@ -178,8 +185,11 @@ static T1DecodedImage * extract_image(
     T1DecodedImage * new_image = T1_mem_malloc_from_unmanaged(sizeof(T1DecodedImage));
     log_assert(new_image != NULL);
     
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     if (!application_running) { return NULL; }
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     uint32_t slice_size_bytes =
@@ -516,7 +526,7 @@ void T1_texture_array_debug_dump_texturearray_to_writables(
     const int32_t texture_array_i,
     uint32_t * success)
 {
-    #if TEXTURES_ACTIVE
+    #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     for (int32_t texture_i = 0; texture_i < 100; texture_i++) {
         uint32_t fetched = 0;
         
@@ -588,5 +598,8 @@ void T1_texture_array_debug_dump_texturearray_to_writables(
     }
     
     *success = 1;
+    #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
 }

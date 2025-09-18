@@ -63,7 +63,7 @@ static void check_strings_equal(
     }
     
     if (!*good) {
-        #ifndef WAV_SILENCE
+        #ifndef T1_WAV_SILENCE
         if (at_i > 50) {
             at_i = 50;
         }
@@ -82,7 +82,7 @@ static void check_strings_equal(
     }
 }
 
-void wav_samples_to_wav(
+void T1_wav_samples_to_wav(
     unsigned char * recipient,
     uint32_t * recipient_size,
     const uint32_t recipient_cap,
@@ -165,7 +165,7 @@ void wav_samples_to_wav(
     *recipient_size += (samples_size * sizeof(int16_t)) + 44;
 }
 
-void wav_parse(
+void T1_wav_parse(
     int16_t * recipient,
     uint32_t * recipient_size,
     const uint32_t recipient_cap,
@@ -190,7 +190,7 @@ void wav_parse(
     if (!*good) { return; }
     
     if (file_header.file_size + 8 != data_size) {
-        #ifndef WAV_SILENCE
+        #ifndef T1_WAV_SILENCE
         printf(
             ".wav header claims filesize %u+8 bytes, got %u byte datastream\n",
             file_header.file_size,
@@ -425,27 +425,27 @@ void wav_parse(
             format_data = *(FormatChunkBody *)raw_file_at;
             raw_file_at += chunk_header.data_size;
             
-            #ifndef WAV_IGNORE_ASSERTS
+            #ifndef T1_WAV_IGNORE_ASSERTS
             assert(format_data.type == 1); // supporting only PCM for now
             #endif
             
-            #ifndef WAV_IGNORE_ASSERTS
+            #ifndef T1_WAV_IGNORE_ASSERTS
             assert(format_data.channels == 2); // supporting only stereo for now
             #endif
             
-            #ifndef WAV_IGNORE_ASSERTS
+            #ifndef T1_WAV_IGNORE_ASSERTS
             assert(format_data.sample_rate == 44100); // supporting only 44.1khertz
             #endif
             
-            #ifndef WAV_IGNORE_ASSERTS
+            #ifndef T1_WAV_IGNORE_ASSERTS
             assert(format_data.bits_per_sample == 16); // supporting only 24bit
             #endif
             
-            #ifndef WAV_IGNORE_ASSERTS
+            #ifndef T1_WAV_IGNORE_ASSERTS
             assert(format_data.must_be_four == 4);
             #endif
             
-            #ifndef WAV_IGNORE_ASSERTS
+            #ifndef T1_WAV_IGNORE_ASSERTS
             assert(format_data.idontgetit == 176400);
             #endif
         } else if (
@@ -454,7 +454,7 @@ void wav_parse(
                 "data"))
         {
             if (chunk_header.data_size > (recipient_cap * 2)) {
-                #ifndef WAV_SILENCE
+                #ifndef T1_WAV_SILENCE
                 printf(
                     "Recipient size of %u can't contain %u bytes of sound "
                     "data\n",
@@ -466,7 +466,7 @@ void wav_parse(
             }
             
             if (chunk_header.data_size > file_header.file_size) {
-                #ifndef WAV_SILENCE
+                #ifndef T1_WAV_SILENCE
                 printf(
                     "Chunk size %u larger than file size %u?\n",
                     chunk_header.data_size,
@@ -490,7 +490,7 @@ void wav_parse(
             }
         } else {
             *good = 0;
-            #ifndef WAV_SILENCE
+            #ifndef T1_WAV_SILENCE
             printf(
                 "Unrecognized chunk type: %s\n",
                 chunk_header.ascii_id);

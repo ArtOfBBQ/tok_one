@@ -1,6 +1,6 @@
 #include "T1_particle.h"
 
-#if PARTICLES_ACTIVE
+#if T1_PARTICLES_ACTIVE == T1_ACTIVE
 
 T1LineParticle * T1_particle_lineparticle_effects;
 uint32_t T1_particle_lineparticle_effects_size;
@@ -322,8 +322,8 @@ void T1_particle_lineparticle_add_all_to_frame_data(
     }
 }
 
-T1ParticleEffect * T1_particle_effects;
-uint32_t T1_particle_effects_size;
+T1ParticleEffect * T1_particle_effects = NULL;
+uint32_t T1_particle_effects_size = 0;
 
 void T1_particle_effect_construct(
     T1ParticleEffect * to_construct)
@@ -759,4 +759,7 @@ void T1_particle_add_all_to_frame_data(
     }
 }
 
+#elif T1_PARTICLES_ACTIVE == T1_INACTIVE
+#else
+#error
 #endif // PARTICLES_ACTIVE

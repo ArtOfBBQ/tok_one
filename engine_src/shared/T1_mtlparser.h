@@ -1,9 +1,6 @@
 #ifndef MTLPARSER_H
 #define MTLPARSER_H
 
-#include <stdio.h> // TODO: delete me
-#include <assert.h> // TODO: delete me
-
 #include "T1_std.h"
 #include "T1_tokenizer.h"
 

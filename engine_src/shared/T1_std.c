@@ -237,7 +237,7 @@ T1_std_internal_strcat_cap(
 {
     uint32_t i = 0;
     while (recipient[i] != '\0') {
-        #ifndef COMMON_IGNORE_ASSERTS
+        #if T1_STD_ASSERTS_ACTIVE
         assert(i < recipient_size);
         #endif
         i++;
@@ -245,7 +245,7 @@ T1_std_internal_strcat_cap(
     
     uint32_t j = 0;
     while (to_append[j] != '\0') {
-        #ifndef COMMON_IGNORE_ASSERTS
+        #if T1_STD_ASSERTS_ACTIVE
         assert(i < recipient_size - 1);
         #endif
         recipient[i++] = to_append[j++];
@@ -271,14 +271,14 @@ void T1_std_strcat_char_cap(
 void
 T1_std_internal_strcat_int_cap(
     char * recipient,
-    #ifndef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE
     const uint32_t recipient_size,
     #endif
     const int32_t to_append)
 {
     uint32_t i = 0;
     while (recipient[i] != '\0') {
-        #ifndef COMMON_IGNORE_ASSERTS
+        #if T1_STD_ASSERTS_ACTIVE
         assert(i < recipient_size);
         #endif
         i++;
@@ -290,14 +290,14 @@ T1_std_internal_strcat_int_cap(
 void
 T1_std_internal_strcat_uint_cap(
     char * recipient,
-    #ifndef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE
     const uint32_t recipient_size,
     #endif
     const uint32_t to_append)
 {
     uint32_t i = 0;
     while (recipient[i] != '\0') {
-        #ifndef COMMON_IGNORE_ASSERTS
+        #if T1_STD_ASSERTS_ACTIVE
         assert(i < recipient_size);
         #endif
         i++;
@@ -327,7 +327,7 @@ T1_std_internal_strcat_float_cap(
     }
     T1_std_internal_strcat_uint_cap(
         recipient,
-        #ifndef COMMON_IGNORE_ASSERTS
+        #if T1_STD_ASSERTS_ACTIVE
         recipient_size,
         #endif
         before_comma);
@@ -337,7 +337,7 @@ T1_std_internal_strcat_float_cap(
         ".");
     T1_std_internal_strcat_uint_cap(
         recipient,
-        #ifndef COMMON_IGNORE_ASSERTS
+        #if T1_STD_ASSERTS_ACTIVE
         recipient_size,
         #endif
         after_comma);
@@ -345,26 +345,26 @@ T1_std_internal_strcat_float_cap(
 
 void T1_std_internal_strcpy_cap(
     char * recipient,
-    #ifndef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE
     const uint32_t recipient_size,
     #endif
     const char * origin)
 {
-    #ifndef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE
     assert(origin != NULL);
     #endif
     
     uint32_t i = 0;
     while (origin[i] != '\0')
     {
-        #ifndef COMMON_IGNORE_ASSERTS
+        #if T1_STD_ASSERTS_ACTIVE
         assert(i < recipient_size - 1);
         #endif
         recipient[i] = origin[i];
         i += 1;
     }
     
-    #ifndef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE
     assert(i < recipient_size);
     #endif
     recipient[i] = '\0';
@@ -485,7 +485,7 @@ T1_std_strsub(
     const char * to_match,
     const char * replacement)
 {
-    #ifndef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE
     assert(T1_std_strlen(to_match) >= T1_std_strlen(replacement));
     #endif
     
@@ -739,7 +739,7 @@ T1_std_string_to_int32(const char * input)
     int32_t result = T1_std_string_to_int32_validate(
         input,
         &result_good);
-    #ifndef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE
     assert(result_good);
     #endif
     return result;
@@ -798,7 +798,7 @@ T1_std_string_to_uint32(
     uint32_t result = T1_std_string_to_uint32_validate(
         input,
         &result_good);
-    #ifndef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE
     assert(result_good);
     #endif
     return result;
@@ -949,7 +949,7 @@ T1_std_string_to_float(
         input,
         &result_good);
     
-    #ifndef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE
     assert(result_good);
     #endif
     return result;

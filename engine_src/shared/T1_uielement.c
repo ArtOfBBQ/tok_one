@@ -72,8 +72,12 @@ void T1_uielement_init(void) {
 
 void T1_uielement_handle_touches(uint64_t ms_elapsed)
 {
-    #if PROFILER_ACTIVE
-    profiler_start("ui_elements_handle_touches()");
+    #if T1_PROFILER_ACTIVE == T1_ACTIVE
+    T1_profiler_start("ui_elements_handle_touches()");
+    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_PROFILER_ACTIVE undefined"
     #endif
     
     (void)ms_elapsed;
@@ -313,6 +317,7 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                         [INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
                             handled = true;
                     
+                    #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
                     T1ScheduledAnimation * bump_pin =
                         T1_scheduled_animations_request_next(true);
                     bump_pin->easing_type =
@@ -321,12 +326,17 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                     bump_pin->gpu_polygon_vals.scale_factor = 1.20f;
                     bump_pin->duration_us = 120000;
                     T1_scheduled_animations_commit(bump_pin);
+                    #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+                    #else
+                    #error
+                    #endif
                 }
                 
                 if (active_ui_elements[i].clicked_funcptr != NULL) {
                     currently_clicking_zsprite_id =
                         active_ui_elements[i].background_zsprite_id;
                     
+                    #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
                     T1ScheduledAnimation * bump =
                         T1_scheduled_animations_request_next(true);
                     bump->affected_zsprite_id =
@@ -336,19 +346,26 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                     bump->gpu_polygon_vals.scale_factor = 1.25f;
                     bump->duration_us = 140000;
                     T1_scheduled_animations_commit(bump);
+                    #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+                    #else
+                    #error
+                    #endif
                 }
                 
                 if (
                     active_ui_elements[i].user_set.
                         interaction_sound_filename[0] != '\0')
                 {
-                     #if AUDIO_ACTIVE
+                     #if T1_AUDIO_ACTIVE == T1_ACTIVE
                      /*
                      add_audio();
                      platform_play_sound_resource(
                         active_ui_elements[i].
                             interaction_sound_filename);
                      */
+                     #elif T1_AUDIO_ACTIVE == T1_INACTIVE
+                     #else
+                     #error
                      #endif
                 }
                 
@@ -495,8 +512,12 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
         }
     }
     
-    #if PROFILER_ACTIVE
-    profiler_end("ui_elements_handle_touches()");
+    #if T1_PROFILER_ACTIVE == T1_ACTIVE
+    T1_profiler_end("ui_elements_handle_touches()");
+    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_PROFILER_ACTIVE undefined"
     #endif
 }
 

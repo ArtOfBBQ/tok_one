@@ -46,8 +46,11 @@ void text_init(
     const char * raw_fontmetrics_file_contents,
     const uint64_t raw_fontmetrics_file_size)
 {
-    #ifdef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     (void)raw_fontmetrics_file_size;
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     if (!font_settings) {
@@ -71,13 +74,16 @@ void text_init(
     buffer_at += sizeof(FontMetrics);
     codepoint_metrics_size = (uint32_t)global_font_metrics->codepoints_in_font;
     
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     uint64_t filesize_remaining =
         raw_fontmetrics_file_size - sizeof(FontMetrics);
     log_assert(filesize_remaining % sizeof(FontCodepoint) == 0);
     log_assert(
         filesize_remaining ==
             codepoint_metrics_size * sizeof(FontCodepoint));
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     codepoint_metrics =

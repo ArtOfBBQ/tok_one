@@ -11,7 +11,7 @@ static InitApplicationState * ias;
 
 #define DPNG_WORKING_MEMORY_SIZE 35000000
 
-#if ENGINE_SAVEFILE_ACTIVE
+#if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
 typedef struct EngineSaveFile {
     float window_left;
     float window_width;
@@ -23,9 +23,13 @@ typedef struct EngineSaveFile {
 } EngineSaveFile;
 
 static EngineSaveFile * engine_save_file = NULL;
+#elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
+// Pass
+#else
+#error "T1_ENGINE_SAVEFILE_ACTIVE not set!"
 #endif
 
-#ifndef LOGGER_IGNORE_ASSERTS
+#if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
 typedef struct SimdTestStruct {
     float imafloat[16];
 } SimdTestStruct;
@@ -140,6 +144,9 @@ static void test_simd_functions_floats(void) {
     T1_mem_free_from_managed(sets);
     T1_mem_free_from_managed(structs);
 }
+#elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+#else
+#error "T1_LOGGER_ASSERTS_ACTIVE undefined!"
 #endif
 
 static uint32_t pad_to_page_size(uint32_t base_allocation) {
@@ -203,8 +210,12 @@ void init_application_before_gpu_init(
         /* const uint32_t thread_id: */
             0);
     
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     test_simd_functions_floats();
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_LOGGER_ASSERTS_ACTIVE undefined!"
     #endif
     
     uint32_t good = 0;
@@ -237,11 +248,14 @@ void init_application_before_gpu_init(
         /* int32_t arg_mutex_unlock_function(const uint32_t mutex_id): */
             platform_mutex_unlock);
     
-    #if PROFILER_ACTIVE
+    #if T1_PROFILER_ACTIVE == T1_ACTIVE
     profiler_init(platform_get_clock_frequency(), malloc_from_unmanaged);
+    #elif T1_PROFILER_ACTIVE == T1_INACTIVE
+    #else
+    #error "T1_PROFILER_ACTIVE not set"
     #endif
     
-    #if ENGINE_SAVEFILE_ACTIVE
+    #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
     engine_save_file = (EngineSaveFile *)T1_mem_malloc_from_unmanaged(
         sizeof(EngineSaveFile));
     
@@ -260,19 +274,27 @@ void init_application_before_gpu_init(
         platform_read_file(full_writable_pathfile, &engine_save);
         *engine_save_file = *(EngineSaveFile *)engine_save.contents;
     }
+    #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_ENGINE_SAVEFILE_ACTIVE not set"
     #endif
     
     engine_globals = (EngineGlobals *)T1_mem_malloc_from_unmanaged(
         sizeof(EngineGlobals));
     T1_std_memset(engine_globals, 0, sizeof(EngineGlobals));
     
-    #if AUDIO_ACTIVE
+    #if T1_AUDIO_ACTIVE == T1_ACTIVE
     audio_init(
         /* void *(*arg_malloc_function)(size_t): */
             T1_mem_malloc_from_unmanaged);
+    #elif T1_AUDIO_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_AUDIO_ACTIVE undefined!"
     #endif
     
-    #if ENGINE_SAVEFILE_ACTIVE
+    #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
     if (
         engine_save.contents != NULL &&
         engine_save_file->window_height > 20 &&
@@ -287,10 +309,14 @@ void init_application_before_gpu_init(
         engine_globals->fullscreen = engine_save_file->window_fullscreen;
         engine_globals->upcoming_fullscreen_request =
             engine_globals->fullscreen;
-        #if AUDIO_ACTIVE
+        #if T1_AUDIO_ACTIVE == T1_ACTIVE
         sound_settings->music_volume = engine_save_file->music_volume;
         sound_settings->sfx_volume = engine_save_file->sound_volume;
-        #endif
+        #elif T1_AUDIO_ACTIVE == T1_INACTIVE
+        // Pass
+        #else
+        #error "T1_AUDIO_ACTIVE undefined!"
+        #endif // T1_AUDIO_ACTIVE
     } else {
         engine_globals->fullscreen = false;
         engine_globals->window_height = INITIAL_WINDOW_HEIGHT;
@@ -302,17 +328,25 @@ void init_application_before_gpu_init(
     if (engine_save.contents != NULL) {
         T1_mem_free_from_managed(engine_save.contents);
     }
-    #else
+    #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
     engine_globals->fullscreen = false;
     engine_globals->window_height = INITIAL_WINDOW_HEIGHT;
     engine_globals->window_width  = INITIAL_WINDOW_WIDTH;
     engine_globals->window_left   = INITIAL_WINDOW_LEFT;
     engine_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
-    #if AUDIO_ACTIVE
+    
+    #if T1_AUDIO_ACTIVE == T1_ACTIVE
     sound_settings->music_volume  = 0.5f;
     sound_settings->sfx_volume    = 0.5f;
+    #elif T1_AUDIO_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_AUDIO_ACTIVE undefined!"
     #endif
-    #endif
+    
+    #else
+    #error "T1_ENGINE_SAVEFILE_ACTIVE undefined!"
+    #endif // T1_ENGINE_SAVEFILE_ACTIVE
     
     engine_globals->aspect_ratio = engine_globals->window_height /
         engine_globals->window_width;
@@ -335,7 +369,7 @@ void init_application_before_gpu_init(
         0,
         sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
     
-    #if PARTICLES_ACTIVE
+    #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     T1_particle_lineparticle_effects = (T1LineParticle *)T1_mem_malloc_from_unmanaged(
         sizeof(T1LineParticle) * LINEPARTICLE_EFFECTS_SIZE);
     T1_std_memset(
@@ -348,15 +382,29 @@ void init_application_before_gpu_init(
         T1_particle_effects,
         0,
         sizeof(T1ParticleEffect) * PARTICLE_EFFECTS_SIZE);
+    #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_PARTICLES_ACTIVE undefined!"
     #endif
     
     gameloop_init();
-    #if TERMINAL_ACTIVE
+    #if T1_TERMINAL_ACTIVE == T1_ACTIVE
     terminal_init(platform_enter_fullscreen);
+    #elif T1_TERMINAL_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_TERMINAL_ACTIVE undefined!"
     #endif
-    #if SCHEDULED_ANIMS_ACTIVE
+    
+    #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
     T1_scheduled_animations_init();
+    #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_SCHEDULED_ANIMS_ACTIVE undefined!"
     #endif
+    
     T1_texture_array_init();
     
     // initialize font with fontmetrics.dat
@@ -468,7 +516,7 @@ void init_application_before_gpu_init(
                 gpu_shared_data_collection->camera_allocation_size,
                 T1_mem_page_size);
         
-        #if RAW_SHADER_ACTIVE
+        #if T1_RAW_SHADER_ACTIVE == T1_ACTIVE
         gpu_shared_data_collection->triple_buffers[cur_frame_i].point_vertices =
             (GPURawVertex *)malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection->point_vertices_allocation_size,
@@ -478,6 +526,10 @@ void init_application_before_gpu_init(
             (GPURawVertex *)malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection->line_vertices_allocation_size,
                 T1_mem_page_size);
+        #elif T1_RAW_SHADER_ACTIVE == T1_INACTIVE
+        // Pass
+        #else
+        #error "T1_RAW_SHADER_ACTIVE undefined!"
         #endif
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].
@@ -510,7 +562,7 @@ void init_application_before_gpu_init(
             T1_mem_page_size);
 }
 
-#if TEXTURES_ACTIVE
+#if T1_TEXTURES_ACTIVE == T1_ACTIVE
 static void asset_loading_thread(int32_t asset_thread_id) {
     if (asset_thread_id > 0) {
         init_PNG_decoder(
@@ -532,6 +584,10 @@ static void asset_loading_thread(int32_t asset_thread_id) {
     
     ias->thread_finished[asset_thread_id] = 1;
 }
+#elif T1_TEXTURES_ACTIVE == T1_INACTIVE
+// Pass
+#else
+#error "T1_TEXTURES_ACTIVE undefined!"
 #endif
 
 void init_application_after_gpu_init(int32_t throwaway_threadarg) {
@@ -586,10 +642,14 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         return;
     }
     
-    #if SHADOWS_ACTIVE
+    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     engine_globals->postproc_consts.in_shadow_multipliers[0] = 0.5f;
     engine_globals->postproc_consts.in_shadow_multipliers[1] = 0.5f;
     engine_globals->postproc_consts.in_shadow_multipliers[2] = 0.5f;
+    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_SHADOWS_ACTIVE undefined"
     #endif
     
     bool32_t success = false;
@@ -632,7 +692,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
             return;
         }
         
-        #if TEXTURES_ACTIVE
+        #if T1_TEXTURES_ACTIVE == T1_ACTIVE
         loading_textures = true;
         for (int32_t i = 1; i < (int32_t)ias->image_decoding_threads; i++) {
             platform_start_thread(
@@ -641,6 +701,10 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
                 /* int32_t argument: */
                     i);
         }
+        #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
+        // Pass
+        #else
+        #error "T1_TEXTURES_ACTIVE undefined"
         #endif
     } else {
         return;
@@ -654,7 +718,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     We'll do a bunch of other work first, because that gives us something
     to do while we wait the other threads to finish.
     */
-    #if PARTICLES_ACTIVE
+    #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     #define MIN_VERTICES_FOR_SHATTER_EFFECT 250
     for (uint32_t i = 0; i < all_mesh_summaries_size; i++) {
         if (all_mesh_summaries[i].shattered_vertices_head_i < 0) {
@@ -678,6 +742,10 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
             }
         }
     }
+    #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_PARTICLES_ACTIVE undefined!"
     #endif
     
     if (!application_running) {
@@ -708,7 +776,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         return;
     }
     
-    #if TEXTURES_ACTIVE
+    #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     asset_loading_thread(0);
     
     if (!application_running) {
@@ -726,6 +794,9 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         }
     }
     loading_textures = false;
+    #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
+    #else
+    #error "T1_TEXTURES_ACTIVE undefined!"
     #endif
     
     uint64_t longest_taken = 0;
@@ -754,7 +825,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     
     T1_texture_array_push_all_predecoded();
     
-    #if MIPMAPS_ACTIVE
+    #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
     for (
         int32_t i = 1;
         i < (int32_t)texture_arrays_size;
@@ -764,6 +835,9 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
             platform_gpu_generate_mipmaps_for_texture_array(i);
         }
     }
+    #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
+    #else
+    #error "T1_MIPMAPS_ACTIVE undefined!"
     #endif
     
     if (!application_running) {
@@ -786,8 +860,12 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         return;
     }
     
-    #if AUDIO_ACTIVE
+    #if T1_AUDIO_ACTIVE == T1_ACTIVE
     T1_audio_start_loop();
+    #elif T1_AUDIO_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error "T1_AUDIO_ACTIVE undefined!"
     #endif
     
     T1_token_deinit(T1_mem_free_from_managed);
@@ -797,17 +875,24 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
 
 void shared_shutdown_application(void)
 {
-    #if ENGINE_SAVEFILE_ACTIVE
-    #if AUDIO_ACTIVE
+    #if T1_ENGINE_SAVEFILE_ACTIVE
+    
+    #if T1_AUDIO_ACTIVE == T1_ACTIVE
     engine_save_file->music_volume = sound_settings->music_volume;
     engine_save_file->sound_volume = sound_settings->sfx_volume;
+    #elif T1_AUDIO_ACTIVE == T1_INACTIVE
     #else
-    engine_save_file->music_volume = 0.5f;
-    engine_save_file->sound_volume = 0.5f;
-    #endif
+    #error "T1_AUDIO_ACTIVE undefined!"
     #endif
     
-    #if ENGINE_SAVEFILE_ACTIVE
+    #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
+    engine_save_file->music_volume = 0.5f;
+    engine_save_file->sound_volume = 0.5f;
+    #else
+    #error "T1_ENGINE_SAVEFILE_ACTIVE undefined!"
+    #endif
+    
+    #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
     log_assert(engine_save_file != NULL);
     engine_save_file->window_bottom = engine_globals->window_bottom;
     engine_save_file->window_height = engine_globals->window_height;
@@ -827,8 +912,10 @@ void shared_shutdown_application(void)
             sizeof(EngineSaveFile),
         /* uint32_t good: */
             &good);
-    #else
+    #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
     uint32_t good = true;
+    #else
+    #error
     #endif
     
     if (!good) {

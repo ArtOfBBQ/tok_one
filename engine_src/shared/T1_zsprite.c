@@ -56,7 +56,7 @@ void zsprite_commit(
         all_mesh_summaries[to_commit->cpu_data->mesh_id].
             vertices_size > 0);
     
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     uint32_t all_mesh_vertices_tail_i =
         (uint32_t)(
             all_mesh_summaries
@@ -65,6 +65,9 @@ void zsprite_commit(
                 [to_commit->cpu_data->mesh_id].vertices_size -
             1);
     log_assert(all_mesh_vertices_tail_i < all_mesh_vertices->size);
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     to_commit->cpu_data->committed = true;
@@ -112,10 +115,13 @@ float zsprite_get_x_multiplier_for_width(
     const float for_width)
 {
     log_assert(for_poly != NULL);
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     if (for_poly == NULL) {
         return 0.0f;
     }
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     log_assert(for_poly->mesh_id >= 0);
@@ -135,10 +141,13 @@ float zsprite_get_z_multiplier_for_depth(
     const float for_depth)
 {
     log_assert(for_poly != NULL);
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     if (for_poly == NULL) {
         return 0.0f;
     }
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     log_assert(for_poly->mesh_id >= 0);
@@ -155,10 +164,13 @@ float zsprite_get_y_multiplier_for_height(
     const float for_height)
 {
     log_assert(for_poly != NULL);
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     if (for_poly == NULL) {
         return 0.0f;
     }
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     log_assert(for_poly->mesh_id >= 0);

@@ -1,5 +1,5 @@
-#ifndef WAV_H
-#define WAV_H
+#ifndef T1_WAV_H
+#define T1_WAV_H
 
 #include "T1_std.h"
 
@@ -7,23 +7,23 @@
 #include <stddef.h>
 
 // #define WAV_SILENCE
-#ifndef WAV_SILENCE
+#ifndef T1_WAV_SILENCE
 #include <stdio.h>
 #endif
 
 // #define WAV_IGNORE_ASSERTS
-#ifndef WAV_IGNORE_ASSERTS
+#ifndef T1_WAV_IGNORE_ASSERTS
 #include <assert.h>
 #endif
 
-void wav_samples_to_wav(
+void T1_wav_samples_to_wav(
     unsigned char * recipient,
     uint32_t * recipient_size,
     const uint32_t recipient_cap,
     int16_t * samples,
     const uint32_t samples_size);
 
-void wav_parse(
+void T1_wav_parse(
     int16_t * recipient,
     uint32_t * recipient_size,
     const uint32_t recipient_cap,
@@ -31,5 +31,4 @@ void wav_parse(
     const uint32_t data_size,
     uint32_t * good);
 
-#endif // WAV_H
-
+#endif // T1_WAV_H

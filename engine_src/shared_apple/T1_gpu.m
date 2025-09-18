@@ -1,11 +1,14 @@
 #import "T1_gpu.h"
 
-#define DRAWING_SEMAPHORE_ACTIVE 0
+#define T1_DRAWING_SEMAPHORE_ACTIVE T1_INACTIVE
 
 typedef struct AppleGPUState {
     MTLPixelFormat pixel_format_renderpass1;
-    #if DRAWING_SEMAPHORE_ACTIVE
+    #if T1_DRAWING_SEMAPHORE_ACTIVE == T1_ACTIVE
     dispatch_semaphore_t drawing_semaphore;
+    #elif T1_DRAWING_SEMAPHORE_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     NSUInteger frame_i;
     MTLViewport render_target_viewport;
@@ -29,22 +32,34 @@ typedef struct AppleGPUState {
     id projection_constants_buffer;
     
     // Pipeline states (pls)
-    #if SHADOWS_ACTIVE
+    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     id<MTLRenderPipelineState> shadows_pls;
     id<MTLTexture> shadows_texture;
+    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error
     #endif
     id<MTLTexture> camera_depth_texture;
     
     id<MTLRenderPipelineState> diamond_pls;
     id<MTLRenderPipelineState> alphablend_pls;
-    #if RAW_SHADER_ACTIVE
+    #if T1_RAW_SHADER_ACTIVE == T1_ACTIVE
     id<MTLRenderPipelineState> raw_pls;
+    #elif T1_RAW_SHADER_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
-    #if BLOOM_ACTIVE
+    
+    #if T1_BLOOM_ACTIVE == T1_ACTIVE
     id<MTLComputePipelineState> downsample_compute_pls;
     id<MTLComputePipelineState> boxblur_compute_pls;
     id<MTLComputePipelineState> thres_compute_pls;
+    #elif T1_BLOOM_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
+    
     id<MTLRenderPipelineState> singlequad_pls;
     
     id<MTLDepthStencilState> opaque_depth_stencil_state;
@@ -52,15 +67,22 @@ typedef struct AppleGPUState {
     
     // Textures
     // id<MTLBuffer> texture_populator_buffer;
-    #if TEXTURES_ACTIVE
+    #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     id<MTLTexture> metal_textures[TEXTUREARRAYS_SIZE];
-    #else
+    #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
     id<MTLTexture> metal_textures[1]; // for font only
+    #else
+    #error
     #endif
+    
     id<MTLTexture> render_target_texture;
-    #if BLOOM_ACTIVE
+    #if T1_BLOOM_ACTIVE == T1_ACTIVE
     id<MTLTexture> downsampled_target_textures[DOWNSAMPLES_SIZE];
+    #elif T1_BLOOM_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
+    
     id<MTLTexture> touch_id_texture;
     id<MTLBuffer> touch_id_buffer;
     id<MTLBuffer> touch_id_buffer_all_zeros;
@@ -89,9 +111,12 @@ bool32_t apple_gpu_init(
     ags = T1_mem_malloc_from_unmanaged(sizeof(AppleGPUState)); // TODO: use malloc_from_unmanaged again
     ags->retina_scaling_factor = backing_scale_factor;
     ags->pixel_format_renderpass1 = 0;
-    #if DRAWING_SEMAPHORE_ACTIVE
+    #if T1_DRAWING_SEMAPHORE_ACTIVE == T1_ACTIVE
     ags->drawing_semaphore = NULL; // TODO: remove me
     ags->drawing_semaphore = dispatch_semaphore_create(3);
+    #elif T1_DRAWING_SEMAPHORE_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     funcptr_shared_gameloop_update =
@@ -126,8 +151,11 @@ bool32_t apple_gpu_init(
             isDirectory: false];
         
         if (shader_lib_url == NULL) {
-            #ifndef LOGGER_IGNORE_ASSERTS
+            #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
             log_dump_and_crash("Failed to find the shader lib\n");
+            #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
             
             NSString * errorstr = [Error localizedDescription];
@@ -149,10 +177,14 @@ bool32_t apple_gpu_init(
         
         if (ags->lib == NULL) {
             log_append("Failed to find the shader library\n");
-            #ifndef LOGGER_IGNORE_ASSERTS
+            #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
             log_dump_and_crash((char *)[
                 [[Error userInfo] descriptionInStringsFileFormat]
                     cStringUsingEncoding:NSASCIIStringEncoding]);
+            #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+            // Pass
+            #else
+            #error
             #endif
         
             NSString * errorstr = [Error localizedDescription];
@@ -214,7 +246,7 @@ bool32_t apple_gpu_init(
         return false;
     }
     
-    #if SHADOWS_ACTIVE
+    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     id<MTLFunction> shadows_vertex_shader =
         [ags->lib newFunctionWithName:
             @"shadows_vertex_shader"];
@@ -255,6 +287,9 @@ bool32_t apple_gpu_init(
                 shadows_pipeline_descriptor
             error:
                 &Error];
+    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     // Setup pipeline that uses diamonds instaed of alphablending
@@ -282,8 +317,11 @@ bool32_t apple_gpu_init(
     
     if (Error != NULL)
     {
-        #ifndef LOGGER_IGNORE_ASSERTS
+        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
         log_dump_and_crash("Failed to initialize diamond pipeline");
+        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         T1_std_strcpy_cap(
             error_msg_string,
@@ -331,8 +369,11 @@ bool32_t apple_gpu_init(
             [[Error localizedDescription]
                 cStringUsingEncoding:kCFStringEncodingASCII]);
         
-        #ifndef LOGGER_IGNORE_ASSERTS
+        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
         log_dump_and_crash("Error loading the alphablending shader\n");
+        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         
         T1_std_strcpy_cap(
@@ -342,7 +383,7 @@ bool32_t apple_gpu_init(
         return false;
     }
     
-    #if RAW_SHADER_ACTIVE
+    #if T1_RAW_SHADER_ACTIVE == T1_ACTIVE
     id<MTLFunction> raw_vertex_shader =
         [ags->lib newFunctionWithName:
             @"raw_vertex_shader"];
@@ -393,8 +434,11 @@ bool32_t apple_gpu_init(
     if (Error != NULL || ags->raw_pls == NULL)
     {
         log_append([[Error localizedDescription] cStringUsingEncoding:kCFStringEncodingASCII]);
-        #ifndef LOGGER_IGNORE_ASSERTS
+        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
         log_dump_and_crash("Error loading the raw vertex shader\n");
+        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         
         T1_std_strcpy_cap(
@@ -403,6 +447,9 @@ bool32_t apple_gpu_init(
             "Failed to load the raw vertex shader");
         return false;
     }
+    #elif T1_RAW_SHADER_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     MTLDepthStencilDescriptor * depth_descriptor =
@@ -418,8 +465,11 @@ bool32_t apple_gpu_init(
         log_append(
             [[Error localizedDescription]
                 cStringUsingEncoding:kCFStringEncodingASCII]);
-        #ifndef LOGGER_IGNORE_ASSERTS
+        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
         log_dump_and_crash("Error setting the depth stencil state\n");
+        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         
         T1_std_strcpy_cap(
@@ -442,8 +492,11 @@ bool32_t apple_gpu_init(
         log_append(
             [[Error localizedDescription]
                 cStringUsingEncoding:kCFStringEncodingASCII]);
-        #ifndef LOGGER_IGNORE_ASSERTS
+        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
         log_dump_and_crash("Error setting the depth stencil state\n");
+        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         
         T1_std_strcpy_cap(
@@ -492,7 +545,7 @@ bool32_t apple_gpu_init(
         
         ags->vertex_buffers[buf_i] = MTLBufferFrameVertices;
         
-        #if RAW_SHADER_ACTIVE
+        #if T1_RAW_SHADER_ACTIVE == T1_ACTIVE
         id<MTLBuffer> MTLBufferLineVertices =
             [with_metal_device
                 /* the pointer needs to be page aligned */
@@ -528,6 +581,9 @@ bool32_t apple_gpu_init(
                         nil];
         
         ags->point_vertex_buffers[buf_i] = MTLBufferPointVertices;
+        #elif T1_RAW_SHADER_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         
         id<MTLBuffer> MTLBufferPostProcessingConstants =
@@ -689,7 +745,7 @@ bool32_t apple_gpu_init(
     ags->quad_vertices[5].texcoord[0] =  TEX_MAX;
     ags->quad_vertices[5].texcoord[1] =  TEX_MIN;
     
-    #if BLOOM_ACTIVE
+    #if T1_BLOOM_ACTIVE == T1_ACTIVE
     id<MTLFunction> downsample_func =
         [ags->lib newFunctionWithName: @"downsample_texture"];
     
@@ -712,6 +768,10 @@ bool32_t apple_gpu_init(
         [ags->device
             newComputePipelineStateWithFunction:threshold_func
             error:nil];
+    #elif T1_BLOOM_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error
     #endif
     
     id<MTLFunction> singlequad_vertex_shader =
@@ -778,7 +838,7 @@ bool32_t apple_gpu_init(
     return true;
 }
 
-#if BLOOM_ACTIVE
+#if T1_BLOOM_ACTIVE == T1_ACTIVE
 static float get_ds_width(
     const uint32_t ds_i)
 {
@@ -802,14 +862,21 @@ static float get_ds_height(
     
     return return_value;
 }
+#elif T1_BLOOM_ACTIVE == T1_INACTIVE
+#else
+#error
 #endif
 
 void platform_gpu_get_device_name(
     char * recipient,
     const uint32_t recipient_cap)
 {
-    #ifdef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
+    // pass
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
     (void)recipient_cap;
+    #else
+    #error
     #endif
     
     const char * device_name_cstr =
@@ -922,6 +989,7 @@ void platform_gpu_init_texture_array(
     ags->metal_textures[texture_array_i] = texture;
 }
 
+#if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void platform_gpu_fetch_rgba_at(
     const int32_t texture_array_i,
     const int32_t texture_i,
@@ -1016,8 +1084,13 @@ void platform_gpu_fetch_rgba_at(
     
     *good = true;
 }
+#elif T1_TEXTURES_ACTIVE == T1_INACTIVE
+// Pass
+#else
+#error
+#endif
 
-#if MIPMAPS_ACTIVE
+#if T1_MIPMAPS_ACTIVE == T1_ACTIVE
 void platform_gpu_generate_mipmaps_for_texture_array(
     const int32_t texture_array_i)
 {
@@ -1047,6 +1120,10 @@ void platform_gpu_generate_mipmaps_for_texture_array(
     [combuf commit];
     [combuf waitUntilCompleted];
 }
+#elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
+// Pass
+#else
+#error
 #endif
 
 void platform_gpu_push_texture_slice_and_free_rgba_values(
@@ -1067,7 +1144,7 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
     log_assert(texture_array_i >= 0);
     
     if (ags->metal_textures[texture_array_i] == NULL) {
-        #ifndef LOGGER_IGNORE_ASSERTS
+        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
         char errmsg[256];
         T1_std_strcpy_cap(
             errmsg,
@@ -1077,6 +1154,9 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
         T1_std_strcat_cap(errmsg, 256, "\n");
         
         log_dump_and_crash(errmsg);
+        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         return;
     }
@@ -1137,7 +1217,7 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
     T1_mem_free_from_managed(rgba_values_freeable);
 }
 
-#if TEXTURES_ACTIVE
+#if T1_TEXTURES_ACTIVE
 void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     const int32_t texture_array_i,
     const int32_t texture_i,
@@ -1155,7 +1235,7 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     log_assert(texture_array_i >= 1); // 0 is resered for font
     
     if (ags->metal_textures[texture_array_i] == NULL) {
-        #ifndef LOGGER_IGNORE_ASSERTS
+        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
         char errmsg[256];
         T1_std_strcpy_cap(
             errmsg,
@@ -1165,6 +1245,10 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
         T1_std_strcat_cap(errmsg, 256, "\n");
         
         log_dump_and_crash(errmsg);
+        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+        // Pass
+        #else
+        #error
         #endif
         return;
     }
@@ -1328,7 +1412,7 @@ void platform_gpu_copy_locked_materials(void)
         [ags->device
             newTextureWithDescriptor: touch_id_texture_descriptor];
     
-    #if SHADOWS_ACTIVE
+    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     MTLTextureDescriptor * shadows_texture_descriptor =
         [[MTLTextureDescriptor alloc] init];
     shadows_texture_descriptor.textureType = MTLTextureType2D;
@@ -1344,6 +1428,9 @@ void platform_gpu_copy_locked_materials(void)
     
     ags->shadows_texture =
         [ags->device newTextureWithDescriptor: shadows_texture_descriptor];
+    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     MTLTextureDescriptor * camera_depth_texture_descriptor =
@@ -1402,7 +1489,7 @@ void platform_gpu_copy_locked_materials(void)
     ags->render_target_texture = [ags->device
         newTextureWithDescriptor: render_target_texture_desc];
     
-    #if BLOOM_ACTIVE
+    #if T1_BLOOM_ACTIVE == T1_ACTIVE
     for (uint32_t i = 0; i < DOWNSAMPLES_SIZE; i++) {
         
         MTLTextureDescriptor * downsampled_target_texture_desc =
@@ -1419,6 +1506,9 @@ void platform_gpu_copy_locked_materials(void)
         ags->downsampled_target_textures[i] = [ags->device
             newTextureWithDescriptor: downsampled_target_texture_desc];
     }
+    #elif T1_BLOOM_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     ags->viewport_set = true;
@@ -1426,8 +1516,11 @@ void platform_gpu_copy_locked_materials(void)
 
 - (void)drawInMTKView:(MTKView *)view
 {
-    #if DRAWING_SEMAPHORE_ACTIVE
+    #if T1_DRAWING_SEMAPHORE_ACTIVE == T1_ACTIVE
     dispatch_semaphore_wait(ags->drawing_semaphore, DISPATCH_TIME_FOREVER);
+    #elif T1_DRAWING_SEMAPHORE_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     funcptr_shared_gameloop_update(
@@ -1440,7 +1533,7 @@ void platform_gpu_copy_locked_materials(void)
     id<MTLCommandBuffer> command_buffer = [ags->command_queue commandBuffer];
     
     if (command_buffer == nil) {
-        #ifndef LOGGER_IGNORE_ASSERTS
+        #if T1_LOGGER_ASSERTS_ACTIVE
         log_dump_and_crash("error - failed to get metal command buffer\n");
         #endif
         
@@ -1454,7 +1547,7 @@ void platform_gpu_copy_locked_materials(void)
         diamond_verts_size <= gpu_shared_data_collection->
             triple_buffers[ags->frame_i].verts_size);
     
-    #if SHADOWS_ACTIVE
+    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     if (
         engine_globals->draw_triangles &&
         diamond_verts_size > 0 &&
@@ -1543,6 +1636,9 @@ void platform_gpu_copy_locked_materials(void)
         
         [shadow_pass_encoder endEncoding];
     }
+    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
         
     // To kick off our render loop, we blit to clear the touch id buffer
@@ -1715,7 +1811,7 @@ void platform_gpu_copy_locked_materials(void)
         atIndex:
             7];
     
-    #if TEXTURES_ACTIVE
+    #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     for (
         uint32_t i = 0;
         i < TEXTUREARRAYS_SIZE;
@@ -1727,19 +1823,24 @@ void platform_gpu_copy_locked_materials(void)
                 atIndex: i];
         }
     }
-    #else
+    #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
     [render_pass_1_draw_triangles_encoder
         setFragmentTexture: ags->metal_textures[0]
         atIndex: 0];
+    #else
+    #error
     #endif
     
-    #if SHADOWS_ACTIVE
+    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     [render_pass_1_draw_triangles_encoder
         setFragmentTexture: ags->shadows_texture
         atIndex: SHADOWMAP_TEXTUREARRAY_I];
+    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
-    #ifndef IGNORE_LOGGER_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     for (
         uint32_t i = 0;
         i < gpu_shared_data_collection->
@@ -1752,6 +1853,9 @@ void platform_gpu_copy_locked_materials(void)
                 triple_buffers[ags->frame_i].
                     verts[i].locked_vertex_i < ALL_LOCKED_VERTICES_SIZE);
     }
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     if (engine_globals->draw_triangles && diamond_verts_size > 0) {
@@ -1793,7 +1897,7 @@ void platform_gpu_copy_locked_materials(void)
                 alphablend_verts_size];
     }
     
-    #if RAW_SHADER_ACTIVE
+    #if T1_RAW_SHADER_ACTIVE == T1_ACTIVE
     if ((
         gpu_shared_data_collection->triple_buffers[ags->frame_i].
             line_vertices_size +
@@ -1803,9 +1907,9 @@ void platform_gpu_copy_locked_materials(void)
         [render_pass_1_draw_triangles_encoder
             setRenderPipelineState: ags->raw_pls];
         
-        assert(ags->depth_stencil_state != nil);
+        assert(ags->opaque_depth_stencil_state != nil);
         [render_pass_1_draw_triangles_encoder
-            setDepthStencilState: ags->depth_stencil_state];
+            setDepthStencilState: ags->opaque_depth_stencil_state];
         [render_pass_1_draw_triangles_encoder
             setDepthClipMode: MTLDepthClipModeClip];
     }
@@ -1867,6 +1971,10 @@ void platform_gpu_copy_locked_materials(void)
             vertexCount: gpu_shared_data_collection->
                 triple_buffers[ags->frame_i].point_vertices_size];
     }
+    #elif T1_RAW_SHADER_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error
     #endif
     
     [render_pass_1_draw_triangles_encoder endEncoding];
@@ -1892,7 +2000,7 @@ void platform_gpu_copy_locked_materials(void)
             [ags->touch_id_texture width] * [ags->touch_id_texture height] * 8];
     [blit_touch_texture_to_cpu_buffer_encoder endEncoding];
     
-    #if BLOOM_ACTIVE
+    #if T1_BLOOM_ACTIVE == T1_ACTIVE
     // Render pass 2 downsamples the original texture
     for (uint32_t ds_i = 0; ds_i < DOWNSAMPLES_SIZE; ds_i++) {
         
@@ -1957,6 +2065,10 @@ void platform_gpu_copy_locked_materials(void)
             threadsPerThreadgroup:threadgroup];
         [boxblur_encoder endEncoding];
     }
+    #elif T1_BLOOM_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error
     #endif
     
     // Render pass 4 puts a quad on the full screen
@@ -1994,7 +2106,7 @@ void platform_gpu_copy_locked_materials(void)
         setFragmentTexture: ags->render_target_texture
         atIndex:0];
     
-    #if BLOOM_ACTIVE
+    #if T1_BLOOM_ACTIVE == T1_ACTIVE
     [render_pass_4_composition
         setFragmentTexture: ags->downsampled_target_textures[0]
         atIndex:1];
@@ -2010,15 +2122,23 @@ void platform_gpu_copy_locked_materials(void)
     [render_pass_4_composition
         setFragmentTexture: ags->downsampled_target_textures[4]
         atIndex:5];
+    #elif T1_BLOOM_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error
     #endif
     
     int32_t perlin_ta_i = gpu_shared_data_collection->triple_buffers[ags->frame_i].postproc_consts->perlin_texturearray_i;
-    #ifndef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     int32_t perlin_t_i =
         gpu_shared_data_collection->triple_buffers[ags->frame_i].postproc_consts->perlin_texture_i;
-    #endif
     // log_assert(perlin_ta_i >= 1);
     log_assert(perlin_t_i == 0);
+    #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+    // Pass
+    #else
+    #error
+    #endif
     
     [render_pass_4_composition
         setFragmentTexture: ags->metal_textures[perlin_ta_i]
@@ -2046,8 +2166,11 @@ void platform_gpu_copy_locked_materials(void)
     [command_buffer addCompletedHandler:^(id<MTLCommandBuffer> arg_cmd_buffer) {
         (void)arg_cmd_buffer;
         
-        #if DRAWING_SEMAPHORE_ACTIVE
+        #if T1_DRAWING_SEMAPHORE_ACTIVE == T1_ACTIVE
         dispatch_semaphore_signal(ags->drawing_semaphore);
+        #elif T1_DRAWING_SEMAPHORE_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
     }];
     

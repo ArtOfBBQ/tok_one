@@ -1,6 +1,6 @@
 #include "T1_profiler.h"
 
-#if PROFILER_ACTIVE
+#if T1_PROFILER_ACTIVE == T1_ACTIVE
 
 #ifndef __x86_64__
 static uint64_t __rdtsc(void)
@@ -68,7 +68,7 @@ typedef struct Frame {
 static Frame * frames = NULL;
 static uint16_t frame_i = 0;
 
-void profiler_init(
+void T1_profiler_init(
     const uint64_t clock_frequency,
     void * (* profiler_malloc_function)(size_t))
 {
@@ -94,7 +94,7 @@ void profiler_init(
     gui_selected_frames[0] = 0;
     gui_selected_frames[1] = 1;
     
-    common_strcpy_capped(
+    T1_std_strcpy_cap(
         gui_top_message,
         GUI_TOP_MESSAGE_MAX,
         "Profiler intialized...");
@@ -103,7 +103,7 @@ void profiler_init(
     frame_selection_touchable_ids[1] = next_nonui_touchable_id();
 }
 
-void profiler_new_frame(void) {
+void T1_profiler_new_frame(void) {
     if (profiler_paused && !engine_globals->pause_profiler) {
         frames[frame_i].started_at = 0;
     }
@@ -113,7 +113,7 @@ void profiler_new_frame(void) {
     if (profiler_paused) {
         return;
     } else {
-        common_strcpy_capped(gui_top_message, GUI_TOP_MESSAGE_MAX, "Running...");
+        T1_std_strcpy_cap(gui_top_message, GUI_TOP_MESSAGE_MAX, "Running...");
         function_stack_size = 0;
         gui_function_stack_size = 0;
     }
@@ -124,7 +124,7 @@ void profiler_new_frame(void) {
     } else if (
         frames[frame_i].elapsed > SLOW_FRAME_CYCLES)
     {
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             gui_top_message,
             GUI_TOP_MESSAGE_MAX,
             "PAUSED - frame ");
@@ -152,7 +152,7 @@ void profiler_new_frame(void) {
     frames[frame_i].started_at = __rdtsc();
 }
 
-void profiler_start(const char * function_name)
+void T1_profiler_start(const char * function_name)
 {
     if (profiler_paused) {
         return;
@@ -214,7 +214,7 @@ void profiler_start(const char * function_name)
             new_node->elapsed_total = 0;
             new_node->elapsed_mostrecent = 0;
             
-            common_strcpy_capped(
+            T1_std_strcpy_cap(
                 new_node->description,
                 MAX_DESCRIPTION_SIZE,
                 function_name);
@@ -226,7 +226,7 @@ void profiler_start(const char * function_name)
         uint16_t new_i = frames[frame_i].profiles_size;
         function_stack[function_stack_size] = new_i;
         new_node = &frames[frame_i].profiles[new_i];
-        common_strcpy_capped(
+        T1_std_strcpy_cap(
             new_node->description,
             MAX_DESCRIPTION_SIZE,
             function_name);
@@ -245,9 +245,9 @@ void profiler_start(const char * function_name)
     new_node->last_start = __rdtsc();
 }
 
-void profiler_end(const char * function_name)
+void T1_profiler_end(const char * function_name)
 {
-    #ifdef LOGGER_IGNORE_ASSERTS
+    #if T1_LOGGER_ASSERTS_ACTIVE
     (void)function_name;
     #endif
     
@@ -276,7 +276,7 @@ void profiler_end(const char * function_name)
     }
 }
 
-void profiler_handle_touches(void) {
+void T1_profiler_handle_touches(void) {
     if (
         !user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].handled)
     {
@@ -313,7 +313,7 @@ void profiler_handle_touches(void) {
     }
 }
 
-void profiler_draw_labels(void) {
+void T1_profiler_draw_labels(void) {
     zsprite_delete(profiler_object_id);
     
     if (engine_globals->show_profiler) {
@@ -376,8 +376,8 @@ void profiler_draw_labels(void) {
                 (font_settings->font_height + 2.0f);
             
             char line_text[128];
-            common_strcpy_capped(line_text, 128, "Selected frame: ");
-            T1_std_strcat_int_capped(
+            T1_std_strcpy_cap(line_text, 128, "Selected frame: ");
+            T1_std_strcat_int_cap(
                 line_text,
                 128,
                 f_i);
@@ -402,7 +402,7 @@ void profiler_draw_labels(void) {
             font_settings->touchable_id = -1;
             
             cur_top -= (font_settings->font_height + 2.0f);
-            common_strcpy_capped(line_text, 128, "Cycles: ");
+            T1_std_strcpy_cap(line_text, 128, "Cycles: ");
             T1_std_strcat_uint_cap(
                 line_text,
                 128,
@@ -410,7 +410,7 @@ void profiler_draw_labels(void) {
             T1_std_strcat_cap(line_text, 128, " (");
             float pct_of_acceptable = (float)frames[f_i].elapsed /
                 (float)acceptable_frame_clock_cycles;
-            common_strcat_float_capped(
+            T1_std_strcat_float_cap(
                 line_text,
                 128,
                 pct_of_acceptable);
@@ -468,7 +468,7 @@ void profiler_draw_labels(void) {
                     }
                 }
                 
-                common_strcpy_capped(
+                T1_std_strcpy_cap(
                     line_text,
                     128,
                     frames[f_i].profiles[func_i].description);
@@ -487,7 +487,7 @@ void profiler_draw_labels(void) {
                     " (");
                 
                 log_assert(pct_elapsed >= 0.0f);
-                T1_std_strcat_int_capped(
+                T1_std_strcat_int_cap(
                     line_text,
                     128,
                     (int)(pct_elapsed * 100.0f));
@@ -516,5 +516,8 @@ void profiler_draw_labels(void) {
         }
     }
 }
-
-#endif
+#elif T1_PROFILER_ACTIVE == T1_INACTIVE
+// Pass
+#else
+#error "T1_PROFILER_ACTIVE undefined!"
+#endif // T1_PROFILER_ACTIVE

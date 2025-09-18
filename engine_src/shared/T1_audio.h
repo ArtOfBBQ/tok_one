@@ -1,11 +1,11 @@
-#ifndef AUDIO_H
-#define AUDIO_H
+#ifndef T1_AUDIO_H
+#define T1_AUDIO_H
 
 #include "T1_logger.h"
 
-#if AUDIO_ACTIVE
+#if T1_AUDIO_ACTIVE == T1_ACTIVE
 
-typedef struct SoundSettings {
+typedef struct {
     int16_t * samples_buffer;
     uint64_t play_cursor;
     uint64_t callback_runs;
@@ -84,7 +84,10 @@ void audio_register_samples_to_permasound(
     const int32_t permasound_id,
     int16_t * samples,
     const int32_t samples_size);
+#elif T1_AUDIO_ACTIVE == T1_INACTIVE
+// Pass
+#else
+#error "T1_AUDIO_ACTIVE undefined"
+#endif // T1_AUDIO_ACTIVE
 
-#endif // AUDIO_ACTIVE
-
-#endif // AUDIO_H
+#endif // T1_AUDIO_H

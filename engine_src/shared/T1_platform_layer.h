@@ -23,8 +23,8 @@ are called only by other platform layer functions, but have identical code
 on each platform
 */
 
-#ifndef PLATFORM_LAYER_H
-#define PLATFORM_LAYER_H
+#ifndef T1_PLATFORM_LAYER_H
+#define T1_PLATFORM_LAYER_H
 
 #ifdef _WIN32 
 #include <windows.h>
@@ -37,16 +37,16 @@ on each platform
 #import <UIKit/UIKit.h>
 #endif
 
-#define MUTEXES_SIZE 100
+#define T1_MUTEXES_SIZE 100
 
-#ifdef SHARED_APPLE_PLATFORM
+#if T1_SHARED_APPLE_PLATFORM
 #import <Foundation/Foundation.h>
 #include <pthread.h>
 #include <sys/time.h>
 #include <sys/sysctl.h> // for sysctl to get clock frequency
 #endif
 
-#ifdef LINUX_PLATFORM
+#if T1_LINUX_PLATFORM
 #include <pthread.h>
 #include <sys/time.h>
 #include <sys/mman.h>
@@ -233,9 +233,12 @@ void platform_gpu_init_texture_array(
     const uint32_t single_image_height,
     const bool32_t use_bc1_compression);
 
-#if MIPMAPS_ACTIVE
+#if T1_MIPMAPS_ACTIVE == T1_ACTIVE
 void platform_gpu_generate_mipmaps_for_texture_array(
     const int32_t texture_array_i);
+#elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
+#else
+#error
 #endif
 
 void platform_gpu_push_texture_slice_and_free_rgba_values(
@@ -247,7 +250,7 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
     uint8_t * rgba_values_freeable,
     uint8_t * rgba_values_page_aligned);
 
-#if TEXTURES_ACTIVE
+#if T1_TEXTURES_ACTIVE == T1_ACTIVE
 void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     const int32_t texture_array_i,
     const int32_t texture_i,
@@ -266,6 +269,9 @@ void platform_gpu_fetch_rgba_at(
     uint32_t * recipient_height,
     const uint32_t recipient_cap,
     uint32_t * good);
+#elif T1_TEXTURES_ACTIVE == T1_INACTIVE
+#else
+#error
 #endif
 
 void platform_update_mouse_location(void);
@@ -295,5 +301,4 @@ void platform_layer_start_window_resize(
 }
 #endif
 
-#endif // PLATFORM_LAYER_H 
-
+#endif // T1_PLATFORM_LAYER_H

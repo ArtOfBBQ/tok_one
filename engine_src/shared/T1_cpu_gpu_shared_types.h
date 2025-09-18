@@ -65,7 +65,7 @@ typedef struct {
     float uv_scroll[2];
     int   texturearray_i;
     int   texture_i;
-    #if NORMAL_MAPPING_ACTIVE
+    #if T1_NORMAL_MAPPING_ACTIVE
     int   normalmap_texturearray_i;
     int   normalmap_texture_i;
     #endif
@@ -125,19 +125,28 @@ typedef struct
 typedef struct
 {
     float rgb_add[3];
-    #if FOG_ACTIVE
+    #if T1_FOG_ACTIVE == T1_ACTIVE
     float fog_color[3];
+    #elif T1_FOG_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     float screen_width;
     float screen_height;
     float nonblur_pct;
     float blur_pct;
     float color_quantization;
-    #if FOG_ACTIVE
+    #if T1_FOG_ACTIVE == T1_ACTIVE
     float fog_factor;
+    #elif T1_FOG_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
-    #if SHADOWS_ACTIVE
+    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     float in_shadow_multipliers[3];
+    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     unsigned int timestamp;
     unsigned int lights_size;

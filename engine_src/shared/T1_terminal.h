@@ -1,7 +1,7 @@
-#if TERMINAL_ACTIVE
+#if T1_TERMINAL_ACTIVE == T1_ACTIVE
 
-#ifndef TERMINAL_H
-#define TERMINAL_H
+#ifndef T1_TERMINAL_H
+#define T1_TERMINAL_H
 
 #include "T1_mem.h"
 #include "T1_engine_globals.h"
@@ -31,6 +31,9 @@ void terminal_commit_or_activate(void);
 }
 #endif
 
-#endif // TERMINAL_H
+#endif // T1_TERMINAL_H
 
-#endif // TERMINAL_ACTIVE
+#elif T1_TERMINAL_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif // T1_TERMINAL_ACTIVE

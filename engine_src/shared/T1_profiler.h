@@ -1,5 +1,5 @@
-#ifndef TOKONE_PROFILER_H
-#define TOKONE_PROFILER_H
+#ifndef T1_PROFILER_H
+#define T1_PROFILER_H
 
 #include <stdint.h>
 
@@ -13,27 +13,30 @@
 #include "T1_text.h"
 
 
-#if PROFILER_ACTIVE
+#if T1_PROFILER_ACTIVE == T1_ACTIVE
 
 // #include <>
 
-void profiler_init(
+void T1_profiler_init(
     const uint64_t clock_frequency,
     void * (* profiler_malloc_function)(size_t));
 
-void profiler_new_frame(void);
+void T1_profiler_new_frame(void);
 
-void profiler_start(const char * function_name);
+void T1_profiler_start(const char * function_name);
 
-void profiler_end(const char * function_name);
+void T1_profiler_end(const char * function_name);
 
 /*
 GUI functions
 */
-void profiler_handle_touches(void);
+void T1_profiler_handle_touches(void);
 
-void profiler_draw_labels(void);
+void T1_profiler_draw_labels(void);
+#elif T1_PROFILER_ACTIVE == T1_INACTIVE
+// Pass
+#else
+#error "T1_PROFILER_ACTIVE undefined"
+#endif // T1_PROFILER_ACTIVE
 
-#endif // PROFILER_ACTIVE
-
-#endif // TOKONE_PROFILER_H
+#endif // T1_PROFILER_H

@@ -106,11 +106,14 @@ void engineglobals_init(void) {
     engine_globals->postproc_consts.rgb_add[1] = 0.0f;
     engine_globals->postproc_consts.rgb_add[2] = 0.0f;
     
-    #if FOG_ACTIVE
+    #if T1_FOG_ACTIVE == T1_ACTIVE
     engine_globals->postproc_consts.fog_color[0] = 1.0f;
     engine_globals->postproc_consts.fog_color[1] = 1.0f;
     engine_globals->postproc_consts.fog_color[2] = 1.0f;
     engine_globals->postproc_consts.fog_factor = 0.0f;
+    #elif T1_FOG_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     engine_globals->last_clickray_origin[0]    = 0.0f;

@@ -1,5 +1,5 @@
-#ifndef LOGGER_H
-#define LOGGER_H
+#ifndef T1_LOGGER_H
+#define T1_LOGGER_H
 
 #include <stddef.h>
 #include "T1_std.h"
@@ -19,12 +19,12 @@
 #define log_append_uint(num)
 #endif
 
-#ifdef LOGGER_IGNORE_ASSERTS
-#define log_assert(condition)
-#else
+#if T1_LOGGER_ASSERTS_ACTIVE
 #include <stdio.h>
 #include <assert.h>
 #define log_assert(condition) internal_log_assert(condition, #condition, __FILE__, __LINE__, __func__)
+#else
+#define log_assert(condition)
 #endif
 
 #ifdef __cplusplus
@@ -107,7 +107,7 @@ void
 log_dump_and_crash(const char * crash_message);
 
 
-#ifndef LOGGER_IGNORE_ASSERTS
+#if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
 /*
 Assert something, but use the GUI to report on failure
 instead of crashing the app
@@ -119,10 +119,13 @@ internal_log_assert(
     const char * file_name,
     const int line_number,
     const char * func_name);
+#elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
+#else
+#error
 #endif
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // LOGGER_H
+#endif // T1_LOGGER_H

@@ -1,6 +1,6 @@
 #include "T1_audio.h"
 
-#if AUDIO_ACTIVE
+#if T1_AUDIO_ACTIVE == T1_ACTIVE
 
 SoundSettings * sound_settings = NULL;
 
@@ -343,5 +343,8 @@ void audio_register_samples_to_permasound(
             all_permasounds[permasound_id].allsamples_head_i) + 1 ==
                 samples_size);
 }
-
-#endif // AUDIO_ACTIVE
+#elif T1_AUDIO_ACTIVE == T1_INACTIVE
+// Pass
+#else
+#error "T1_AUDIO_ACTIVE undefined!"
+#endif // T1_AUDIO_ACTIVE
