@@ -105,7 +105,7 @@ void terminal_redraw_backgrounds(void) {
     
     T1zSpriteRequest current_command_input;
     T1_zsprite_request_next(&current_command_input);
-    zsprite_construct_quad_around(
+    T1_zsprite_construct_quad_around(
         /* const float mid_x: */
             engineglobals_screenspace_x_to_x(
                 engine_globals->window_width / 2,
@@ -151,7 +151,7 @@ void terminal_redraw_backgrounds(void) {
     // The console history area
     T1_zsprite_request_next(&current_command_input);
     T1_zsprite_construct(&current_command_input);
-    zsprite_construct_quad_around(
+    T1_zsprite_construct_quad_around(
        /* const float mid_x: */
            engineglobals_screenspace_x_to_x(
                engine_globals->window_width / 2,

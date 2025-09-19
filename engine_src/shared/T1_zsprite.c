@@ -110,7 +110,7 @@ void T1_zsprite_delete(const int32_t with_object_id)
     }
 }
 
-float zsprite_get_x_multiplier_for_width(
+float T1_zsprite_get_x_multiplier_for_width(
     T1CPUzSprite * for_poly,
     const float for_width)
 {
@@ -136,7 +136,7 @@ float zsprite_get_x_multiplier_for_width(
     return return_value;
 }
 
-float zsprite_get_z_multiplier_for_depth(
+float T1_zsprite_get_z_multiplier_for_depth(
     T1CPUzSprite * for_poly,
     const float for_depth)
 {
@@ -159,7 +159,7 @@ float zsprite_get_z_multiplier_for_depth(
     return return_value;
 }
 
-float zsprite_get_y_multiplier_for_height(
+float T1_zsprite_get_y_multiplier_for_height(
     T1CPUzSprite * for_poly,
     const float for_height)
 {
@@ -182,12 +182,12 @@ float zsprite_get_y_multiplier_for_height(
     return return_value;
 }
 
-void zsprite_scale_multipliers_to_width(
+void T1_zsprite_scale_multipliers_to_width(
     T1CPUzSprite * cpu_data,
     T1GPUzSprite * gpu_data,
     const float new_height)
 {
-    float new_multiplier = zsprite_get_x_multiplier_for_width(
+    float new_multiplier = T1_zsprite_get_x_multiplier_for_width(
         /* zPolygonCPU * for_poly: */
             cpu_data,
         /* const float for_height: */
@@ -198,12 +198,12 @@ void zsprite_scale_multipliers_to_width(
     gpu_data->xyz_mult[2] = new_multiplier;
 }
 
-void zsprite_scale_multipliers_to_height(
+void T1_zsprite_scale_multipliers_to_height(
     T1CPUzSprite * cpu_data,
     T1GPUzSprite * gpu_data,
     const float new_height)
 {
-    float new_multiplier = zsprite_get_y_multiplier_for_height(
+    float new_multiplier = T1_zsprite_get_y_multiplier_for_height(
         /* zPolygonCPU * for_poly: */
             cpu_data,
         /* const float for_height: */
@@ -263,7 +263,7 @@ void T1_zsprite_construct(
     T1_material_construct(&to_construct->gpu_data->base_mat);
 }
 
-float zsprite_get_distance_f3(
+float T1_zsprite_get_distance_f3(
     const float p1[3],
     const float p2[3])
 {
@@ -273,7 +273,7 @@ float zsprite_get_distance_f3(
         ((p1[2] - p2[2]) * (p1[2] - p2[2])));
 }
 
-float zsprite_dot_of_vertices_f3(
+float T1_zsprite_dot_of_vertices_f3(
     const float a[3],
     const float b[3])
 {
@@ -333,7 +333,7 @@ void zsprite_construct_quad(
     stack_recipient->gpu_data->xyz_mult[2] = 1.0f;
 }
 
-void zsprite_construct_quad_around(
+void T1_zsprite_construct_quad_around(
     const float mid_x,
     const float mid_y,
     const float z,

@@ -11,14 +11,14 @@ extern "C" {
 #endif
 
 #if 0
-typedef struct zVertex {
+typedef struct {
     float x;
     float y;
     float z;
     float uv[2];         // texture coords, ignored if untextured
 } zVertex;
 
-typedef struct zTriangle {
+typedef struct {
     zVertex vertices[3];
     zVertex normal;
     int32_t parent_material_i;
@@ -70,4 +70,3 @@ void z_rotate_f3(
 #endif
 
 #endif // TRIANGLE_H
-

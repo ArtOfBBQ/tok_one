@@ -63,8 +63,8 @@ static void request_teapots(void) {
     #define TEAPOT_Z  1.0f
     
     #if TEAPOT
-    teapot_object_ids[0] = next_nonui_object_id();
-    teapot_object_ids[1] = next_nonui_object_id();
+    teapot_object_ids[0] = T1_zspriteid_next_nonui_id();
+    teapot_object_ids[1] = T1_zspriteid_next_nonui_id();
     
     for (uint32_t i = 0; i < 1; i++) {
         log_assert(teapot_mesh_id >= 0);
@@ -81,10 +81,10 @@ static void request_teapots(void) {
         teapot_request.gpu_data->xyz_angle[0]      = 0.00f;
         teapot_request.gpu_data->xyz_angle[1]      = 3.2f;
         teapot_request.gpu_data->xyz_angle[2]      = 0.0f;
-        teapot_request.cpu_data->zsprite_id         = teapot_object_ids[i];
-        teapot_request.cpu_data->visible           = true;
-        teapot_touchable_ids[i]                    = next_nonui_touchable_id();
-        teapot_request.gpu_data->touchable_id      = teapot_touchable_ids[i];
+        teapot_request.cpu_data->zsprite_id = teapot_object_ids[i];
+        teapot_request.cpu_data->visible = true;
+        teapot_touchable_ids[i] = T1_zspriteid_next_nonui_id();
+        teapot_request.gpu_data->touchable_id = teapot_touchable_ids[i];
         teapot_request.gpu_data->ignore_lighting =  0.0f;
         teapot_request.gpu_data->ignore_camera =  0.0f;
         

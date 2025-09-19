@@ -126,7 +126,7 @@ void gameloop_update_before_render_pass(
     
     if (!gameloop_active && loading_textures) {
         if (loading_text_sprite_id < 0) {
-            loading_text_sprite_id = next_ui_element_object_id();
+            loading_text_sprite_id = T1_zspriteid_next_ui_element_id();
         }
         
         float pct_progress =

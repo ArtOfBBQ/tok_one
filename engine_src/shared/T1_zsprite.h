@@ -71,34 +71,34 @@ bool32_t T1_zsprite_fetch_by_zsprite_id(
 
 void T1_zsprite_delete(const int32_t with_zsprite_id);
 
-float zsprite_dot_of_vertices_f3(
+float T1_zsprite_dot_of_vertices_f3(
     const float a[3],
     const float b[3]);
 
-float zsprite_get_z_multiplier_for_depth(
+float T1_zsprite_get_z_multiplier_for_depth(
     T1CPUzSprite * for_poly,
     const float for_depth);
-float zsprite_get_y_multiplier_for_height(
+float T1_zsprite_get_y_multiplier_for_height(
     T1CPUzSprite * for_poly,
     const float for_height);
-float zsprite_get_x_multiplier_for_width(
+float T1_zsprite_get_x_multiplier_for_width(
     T1CPUzSprite * for_poly,
     const float for_width);
 
-void zsprite_scale_multipliers_to_width(
+void T1_zsprite_scale_multipliers_to_width(
     T1CPUzSprite * cpu_data,
     T1GPUzSprite * gpu_data,
     const float new_width);
-void zsprite_scale_multipliers_to_height(
+void T1_zsprite_scale_multipliers_to_height(
     T1CPUzSprite * cpu_data,
     T1GPUzSprite * gpu_data,
     const float new_height);
 
-float zsprite_get_distance_f3(
+float T1_zsprite_get_distance_f3(
     const float p1[3],
     const float p2[3]);
 
-void zsprite_construct_quad_around(
+void T1_zsprite_construct_quad_around(
     const float mid_x,
     const float mid_y,
     const float z,

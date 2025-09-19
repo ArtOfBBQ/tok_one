@@ -298,7 +298,7 @@ void text_request_label_offset_around(
             }
             
             T1_zsprite_request_next(&letter);
-            zsprite_construct_quad_around(
+            T1_zsprite_construct_quad_around(
                 /* const float left_x: */
                     engineglobals_screenspace_x_to_x(
                         mid_x_pixelspace,

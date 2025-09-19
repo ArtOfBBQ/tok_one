@@ -27,7 +27,7 @@ of the engine for your specific app.
 #define T1_LOGGER_ASSERTS_ACTIVE T1_ACTIVE
 #define T1_MEM_ASSERTS_ACTIVE T1_ACTIVE
 
-#define T1_SCHEDULED_ANIMS_ACTIVE 2
+#define T1_SCHEDULED_ANIMS_ACTIVE 1
 #define T1_TERMINAL_ACTIVE 1
 #define T1_RAW_SHADER_ACTIVE 2 // for points and lines
 #define T1_TEXTURES_ACTIVE 1

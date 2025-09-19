@@ -111,8 +111,8 @@ void T1_clientlogic_init(void) {
     pds = T1_mem_malloc_from_unmanaged(sizeof(ParticleDesignerState));
     T1_std_memset(pds, 0, sizeof(ParticleDesignerState));
     
-    pds->title_zsprite_id = next_ui_element_object_id();
-    pds->title_label_zsprite_id = next_ui_element_object_id();
+    pds->title_zsprite_id = T1_zspriteid_next_ui_element_id();
+    pds->title_label_zsprite_id = T1_zspriteid_next_ui_element_id();
 }
 
 static float get_whitespace_height(void) {
@@ -234,7 +234,7 @@ void T1_clientlogic_early_startup(
     T1_meta_reg_custom_uint_limits_for_last_field(0, 1, &ok);
     assert(ok);
     
-    example_particles_id = next_nonui_object_id();
+    example_particles_id = T1_zspriteid_next_nonui_id();
     
     load_obj_basemodel(error_message, success);
     if (!*success) {
@@ -268,7 +268,7 @@ static void redraw_all_sliders(void);
 
 static void clicked_btn(int64_t arg) {
     if (arg == -1) {
-        clear_ui_element_touchable_ids();
+        T1_zspriteid_clear_ui_element_touchable_ids();
         
         for (uint32_t i = 0; i < pds->regs_size; i++) {
             T1_uielement_delete(pds->regs[i].slider_zsprite_id);
@@ -401,11 +401,11 @@ static void redraw_all_sliders(void) {
                 (size_t)indexed_field.offset;
             if (pds->regs[pds->regs_size].slider_zsprite_id == 0) {
                 pds->regs[pds->regs_size].slider_zsprite_id =
-                    next_ui_element_object_id();
+                    T1_zspriteid_next_ui_element_id();
                 pds->regs[pds->regs_size].label_zsprite_id =
-                    next_ui_element_object_id();
+                    T1_zspriteid_next_ui_element_id();
                 pds->regs[pds->regs_size].pin_zsprite_id =
-                    next_ui_element_object_id();
+                    T1_zspriteid_next_ui_element_id();
             }
             
             switch (field.data_type) {
@@ -522,9 +522,9 @@ static int32_t slider_labels_object_id = -1;
 void T1_clientlogic_late_startup(void) {
     
     pds->editing = T1_particle_get_next();
-    pds->editing->zpolygon_gpu.xyz_mult[0] = zsprite_get_x_multiplier_for_width(&pds->editing->zpolygon_cpu, 0.05f);
-    pds->editing->zpolygon_gpu.xyz_mult[1] = zsprite_get_y_multiplier_for_height(&pds->editing->zpolygon_cpu, 0.05f);
-    pds->editing->zpolygon_gpu.xyz_mult[2] = zsprite_get_z_multiplier_for_depth(&pds->editing->zpolygon_cpu, 0.05f);
+    pds->editing->zpolygon_gpu.xyz_mult[0] = T1_zsprite_get_x_multiplier_for_width(&pds->editing->zpolygon_cpu, 0.05f);
+    pds->editing->zpolygon_gpu.xyz_mult[1] = T1_zsprite_get_y_multiplier_for_height(&pds->editing->zpolygon_cpu, 0.05f);
+    pds->editing->zpolygon_gpu.xyz_mult[2] = T1_zsprite_get_z_multiplier_for_depth(&pds->editing->zpolygon_cpu, 0.05f);
     pds->editing->zpolygon_cpu.mesh_id = BASIC_CUBE_MESH_ID;
     pds->editing->zpolygon_gpu.xyz[0] = 0.0f;
     pds->editing->zpolygon_gpu.xyz[1] = 0.0f;
@@ -804,8 +804,8 @@ static void load_texture(const char * writables_filename) {
         
         #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
         float tempquad_z = 0.9f;
-        zSpriteRequest temp_quad;
-        zsprite_request_next(&temp_quad);
+        T1zSpriteRequest temp_quad;
+        T1_zsprite_request_next(&temp_quad);
         zsprite_construct_quad(
             engineglobals_screenspace_x_to_x(25.0f, tempquad_z),
             engineglobals_screenspace_y_to_y(25.0f, tempquad_z),
@@ -819,10 +819,10 @@ static void load_texture(const char * writables_filename) {
         temp_quad.gpu_data->ignore_camera = true;
         temp_quad.gpu_data->ignore_lighting = true;
         temp_quad.cpu_data->alpha_blending_enabled = true;
-        temp_quad.cpu_data->zsprite_id = next_nonui_object_id();
+        temp_quad.cpu_data->zsprite_id = T1_zspriteid_next_nonui_id();
         temp_quad.gpu_data->base_mat.texturearray_i = tex.array_i;
         temp_quad.gpu_data->base_mat.texture_i = tex.slice_i;
-        zsprite_commit(&temp_quad);
+        T1_zsprite_commit(&temp_quad);
         
         T1ScheduledAnimation * fade = T1_scheduled_animations_request_next(true);
         fade->pause_us = 3000000;
@@ -846,7 +846,7 @@ void T1_clientlogic_evaluate_terminal_command(
     char * response,
     const uint32_t response_cap)
 {
-    #if T1_TEXTURES_ACTIVE
+    #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     if (
         T1_std_string_starts_with(
             command,
@@ -901,7 +901,7 @@ void T1_clientlogic_evaluate_terminal_command(
         
         return;
     }
-    #else
+    #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
     if (
         T1_std_string_starts_with(
             command,
@@ -914,6 +914,8 @@ void T1_clientlogic_evaluate_terminal_command(
             response_cap,
             "T1_TEXTURES_ACTIVE is set to 0, no support for textures!");
     }
+    #else
+    #error
     #endif
     
     T1_std_strcpy_cap(
@@ -939,7 +941,7 @@ void T1_clientlogic_window_resize(
     #endif
     
     T1_zsprites_to_render->size = 0;
-    clear_ui_element_touchable_ids();
+    T1_zspriteid_clear_ui_element_touchable_ids();
     
     pds->whitespace_height = get_whitespace_height();
     pds->menu_element_height = get_menu_element_height();

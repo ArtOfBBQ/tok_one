@@ -687,11 +687,11 @@ void T1_uielement_request_slider(
     next_ae->slideable = true;
     next_ae->deleted = false;
     next_ae->slider_linked_value = linked_value_ptr;
-    next_ae->touchable_id = next_ui_element_touchable_id();
+    next_ae->touchable_id = T1_zspriteid_next_ui_element_touchable_id();
     
     T1zSpriteRequest slider_back;
     T1_zsprite_request_next(&slider_back);
-    zsprite_construct_quad_around(
+    T1_zsprite_construct_quad_around(
         /* const float mid_x: */
             engineglobals_screenspace_x_to_x(
                 next_ae->user_set.screenspace_x,
@@ -730,7 +730,7 @@ void T1_uielement_request_slider(
     T1zSpriteRequest slider_pin;
     T1_zsprite_request_next(&slider_pin);
     float pin_z = next_ae->user_set.z - 0.00001f;
-    zsprite_construct_quad_around(
+    T1_zsprite_construct_quad_around(
         /* const float mid_x: */
             engineglobals_screenspace_x_to_x(
                 next_ae->user_set.screenspace_x,
@@ -817,11 +817,11 @@ void T1_uielement_request_button(
             next_ui_element_settings->perm.z);
     next_ae->deleted = false;
     next_ae->slider_linked_value = NULL;
-    next_ae->touchable_id = next_ui_element_touchable_id();
+    next_ae->touchable_id = T1_zspriteid_next_ui_element_touchable_id();
     
     T1zSpriteRequest button_request;
     T1_zsprite_request_next(&button_request);
-    zsprite_construct_quad_around(
+    T1_zsprite_construct_quad_around(
         /* const float mid_x: */
             engineglobals_screenspace_x_to_x(
                 next_ae->user_set.screenspace_x,
@@ -869,6 +869,6 @@ void T1_uielement_delete_all(void) {
     for (uint32_t i = 0; i < active_ui_elements_size; i++) {
         active_ui_elements[i].deleted = false;
     }
-    clear_ui_element_touchable_ids();
+    T1_zspriteid_clear_ui_element_touchable_ids();
     active_ui_elements_size = 0;
 }

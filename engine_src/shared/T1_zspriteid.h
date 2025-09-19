@@ -20,14 +20,14 @@ extern "C" {
 // retired objects are unaffected by animations
 #define RETIRED_BUT_NOT_DELETED_ID 20501
 
-extern int32_t retired_object_id;
+extern int32_t T1_zspriteid_retired_zsprite_id;
 
-int32_t next_ui_element_object_id(void);
-int32_t next_nonui_object_id(void);
+int32_t T1_zspriteid_next_ui_element_id(void);
+int32_t T1_zspriteid_next_nonui_id(void);
 
-int32_t next_ui_element_touchable_id(void);
-void clear_ui_element_touchable_ids(void);
-int32_t next_nonui_touchable_id(void);
+int32_t T1_zspriteid_next_ui_element_touchable_id(void);
+void T1_zspriteid_clear_ui_element_touchable_ids(void);
+int32_t T1_zspriteid_next_nonui_touchable_id(void);
 
 #ifdef __cplusplus
 }
