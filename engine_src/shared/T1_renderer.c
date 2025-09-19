@@ -436,7 +436,7 @@ void renderer_hardware_render(
     frame_data->zsprite_list->size = T1_zsprites_to_render->size;
     
     *frame_data->postproc_consts =
-        engine_globals->postproc_consts;
+        T1_engine_globals->postproc_consts;
     
     add_opaque_zpolygons_to_workload(frame_data);
     

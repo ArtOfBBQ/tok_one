@@ -462,7 +462,7 @@ void T1_texture_files_decode_all_preregistered(
     
     for (int32_t ta_i = start_ta_i; ta_i < end_ta_i; ta_i++) {
         if (!T1_texture_arrays[ta_i].bc1_compressed) {
-            engine_globals->startup_bytes_to_load +=
+            T1_engine_globals->startup_bytes_to_load +=
                 T1_texture_arrays[ta_i].single_img_width *
                 T1_texture_arrays[ta_i].single_img_height *
                 4 *
@@ -500,7 +500,7 @@ void T1_texture_files_decode_all_preregistered(
                     thread_id);
             
             if (!T1_texture_arrays[ta_i].bc1_compressed) {
-                engine_globals->startup_bytes_loaded += (
+                T1_engine_globals->startup_bytes_loaded += (
                     T1_texture_arrays[ta_i].single_img_height *
                     T1_texture_arrays[ta_i].single_img_width *
                     4);

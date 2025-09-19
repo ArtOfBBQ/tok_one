@@ -1429,7 +1429,7 @@ float T1_objmodel_get_x_multiplier_for_width(
     const float screenspace_width,
     const float given_z)
 {
-    return engineglobals_screenspace_width_to_width(
+    return T1_engineglobals_screenspace_width_to_width(
         /* const float screenspace_width: */
             screenspace_width /
                 all_mesh_summaries[mesh_id].base_width,
@@ -1442,7 +1442,7 @@ float T1_objmodel_get_y_multiplier_for_height(
     const float screenspace_height,
     const float given_z)
 {
-    return engineglobals_screenspace_height_to_height(
+    return T1_engineglobals_screenspace_height_to_height(
         /* const float screenspace_width: */
             screenspace_height /
                 all_mesh_summaries[mesh_id].base_height,

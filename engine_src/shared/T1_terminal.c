@@ -99,7 +99,7 @@ void terminal_redraw_backgrounds(void) {
     
     float current_input_height = (TERM_FONT_SIZE * 2);
     float command_history_height =
-        engine_globals->window_height -
+        T1_engine_globals->window_height -
         current_input_height -
         (TERMINAL_WHITESPACE * 3);
     
@@ -107,23 +107,23 @@ void terminal_redraw_backgrounds(void) {
     T1_zsprite_request_next(&current_command_input);
     T1_zsprite_construct_quad_around(
         /* const float mid_x: */
-            engineglobals_screenspace_x_to_x(
-                engine_globals->window_width / 2,
+            T1_engineglobals_screenspace_x_to_x(
+                T1_engine_globals->window_width / 2,
                 TERM_Z),
         /* const float mid_y: */
-            engineglobals_screenspace_y_to_y(
+            T1_engineglobals_screenspace_y_to_y(
                 (TERMINAL_WHITESPACE * 1.5f) +
                 (TERM_FONT_SIZE / 2),
                 TERM_Z),
         /* const float z: */
             TERM_Z,
         /* const float width: */
-            engineglobals_screenspace_width_to_width(
-                engine_globals->window_width -
+            T1_engineglobals_screenspace_width_to_width(
+                T1_engine_globals->window_width -
                     (TERMINAL_WHITESPACE * 2),
                 TERM_Z),
         /* const float height: */
-            engineglobals_screenspace_height_to_height(
+            T1_engineglobals_screenspace_height_to_height(
                 current_input_height,
                 TERM_Z),
         /* zPolygon * recipien: */
@@ -153,11 +153,11 @@ void terminal_redraw_backgrounds(void) {
     T1_zsprite_construct(&current_command_input);
     T1_zsprite_construct_quad_around(
        /* const float mid_x: */
-           engineglobals_screenspace_x_to_x(
-               engine_globals->window_width / 2,
+           T1_engineglobals_screenspace_x_to_x(
+               T1_engine_globals->window_width / 2,
                TERM_Z),
        /* const float mid_y: */
-           engineglobals_screenspace_y_to_y(
+           T1_engineglobals_screenspace_y_to_y(
                (command_history_height / 2) +
                    current_input_height +
                    (TERMINAL_WHITESPACE * 2),
@@ -165,12 +165,12 @@ void terminal_redraw_backgrounds(void) {
        /* const float z: */
            TERM_Z,
        /* const float width: */
-           engineglobals_screenspace_width_to_width(
-                engine_globals->window_width -
+           T1_engineglobals_screenspace_width_to_width(
+                T1_engine_globals->window_width -
                     (TERMINAL_WHITESPACE * 2),
                 TERM_Z),
        /* const float height: */
-           engineglobals_screenspace_height_to_height(
+           T1_engineglobals_screenspace_height_to_height(
                command_history_height,
                TERM_Z),
        /* zPolygon * recipien: */
@@ -216,10 +216,10 @@ void terminal_render(void) {
         
         // draw the terminal's history as a label
         float history_label_top =
-            engine_globals->window_height -
+            T1_engine_globals->window_height -
                 (TERMINAL_WHITESPACE * 2);
         float history_label_height =
-            engine_globals->window_height -
+            T1_engine_globals->window_height -
                 TERM_FONT_SIZE -
                 (TERMINAL_WHITESPACE * 4.5f);
         
@@ -277,7 +277,7 @@ void terminal_render(void) {
             /* const float z: */
                 TERM_LABELS_Z,
             /* const float max_width: */
-                engine_globals->window_width -
+                T1_engine_globals->window_width -
                     (TERMINAL_WHITESPACE * 2));
         
         if (current_command[0] == '\0') {
@@ -301,7 +301,7 @@ void terminal_render(void) {
             /* const float z: */
                 TERM_LABELS_Z,
             /* const float max_width: */
-                engine_globals->window_width - (TERMINAL_WHITESPACE * 2));
+                T1_engine_globals->window_width - (TERMINAL_WHITESPACE * 2));
         
         font_settings->font_height = previous_font_height;
         
@@ -393,8 +393,8 @@ static bool32_t evaluate_terminal_command(
     if (
         T1_std_are_equal_strings(command, "PAUSE PROFILER"))
     {
-        if (!engine_globals->pause_profiler) {
-            engine_globals->pause_profiler = true;
+        if (!T1_engine_globals->pause_profiler) {
+            T1_engine_globals->pause_profiler = true;
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
@@ -413,8 +413,8 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "RUN PROFILER") ||
         T1_std_are_equal_strings(command, "UNPAUSE PROFILER"))
     {
-        if (engine_globals->pause_profiler) {
-            engine_globals->pause_profiler = false;
+        if (T1_engine_globals->pause_profiler) {
+            T1_engine_globals->pause_profiler = false;
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
@@ -540,9 +540,9 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "MOUSE") ||
         T1_std_are_equal_strings(command, "DRAW MOUSE"))
     {
-        engine_globals->draw_mouseptr = !engine_globals->draw_mouseptr;
+        T1_engine_globals->draw_mouseptr = !T1_engine_globals->draw_mouseptr;
         
-        if (engine_globals->draw_mouseptr) {
+        if (T1_engine_globals->draw_mouseptr) {
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
@@ -625,8 +625,8 @@ static bool32_t evaluate_terminal_command(
             response,
             SINGLE_LINE_MAX,
             "Inspect the blur buffer... use 'STANDARD BUFFERS' to undo");
-        engine_globals->postproc_consts.nonblur_pct = 0.02f;
-        engine_globals->postproc_consts.blur_pct = 1.0f;
+        T1_engine_globals->postproc_consts.nonblur_pct = 0.02f;
+        T1_engine_globals->postproc_consts.blur_pct = 1.0f;
         return true;
     }
     
@@ -637,8 +637,8 @@ static bool32_t evaluate_terminal_command(
             response,
             SINGLE_LINE_MAX,
             "Inspect the non-blur buffer... use 'STANDARD BUFFERS' to undo");
-        engine_globals->postproc_consts.nonblur_pct = 1.0f;
-        engine_globals->postproc_consts.blur_pct = 0.0f;
+        T1_engine_globals->postproc_consts.nonblur_pct = 1.0f;
+        T1_engine_globals->postproc_consts.blur_pct = 0.0f;
         return true;
     }
     
@@ -650,8 +650,8 @@ static bool32_t evaluate_terminal_command(
             response,
             SINGLE_LINE_MAX,
             "Reverted to standard blur+non-blur composite...");
-        engine_globals->postproc_consts.nonblur_pct = 1.0f;
-        engine_globals->postproc_consts.blur_pct = 1.0f;
+        T1_engine_globals->postproc_consts.nonblur_pct = 1.0f;
+        T1_engine_globals->postproc_consts.blur_pct = 1.0f;
         return true;
     }
     
@@ -665,7 +665,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_uint_cap(
             response,
             SINGLE_LINE_MAX,
-            (uint32_t)engine_globals->window_height);
+            (uint32_t)T1_engine_globals->window_height);
         T1_std_strcat_cap(
             response,
             SINGLE_LINE_MAX,
@@ -673,7 +673,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_uint_cap(
             response,
             SINGLE_LINE_MAX,
-            (uint32_t)engine_globals->window_width);
+            (uint32_t)T1_engine_globals->window_width);
         return true;
     }
     
@@ -701,7 +701,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "STOP MOUSE") ||
         T1_std_are_equal_strings(command, "TOGGLE MOUSE"))
     {
-        engine_globals->block_mouse = !engine_globals->block_mouse;
+        T1_engine_globals->block_mouse = !T1_engine_globals->block_mouse;
         
         T1_std_strcpy_cap(
             response,
@@ -771,16 +771,16 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "DRAW TOP") ||
         T1_std_are_equal_strings(command, "SHOW TOP"))
     {
-        engine_globals->draw_top_touchable_id =
-            !engine_globals->draw_top_touchable_id;
+        T1_engine_globals->draw_top_touchable_id =
+            !T1_engine_globals->draw_top_touchable_id;
         
-        if (engine_globals->draw_top_touchable_id) {
+        if (T1_engine_globals->draw_top_touchable_id) {
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
                 "Drawing the top touchable_id...");
         } else {
-            T1_zsprite_delete(FPS_COUNTER_OBJECT_ID);
+            T1_zsprite_delete(T1_FPS_COUNTER_ZSPRITE_ID);
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
@@ -794,15 +794,15 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "FPS") ||
         T1_std_are_equal_strings(command, "SHOW FPS"))
     {
-        engine_globals->draw_fps = !engine_globals->draw_fps;
+        T1_engine_globals->draw_fps = !T1_engine_globals->draw_fps;
         
-        if (engine_globals->draw_fps) {
+        if (T1_engine_globals->draw_fps) {
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
                 "Drawing the fps counter...");
         } else {
-            T1_zsprite_delete(FPS_COUNTER_OBJECT_ID);
+            T1_zsprite_delete(T1_FPS_COUNTER_ZSPRITE_ID);
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
@@ -818,10 +818,10 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "GUESS NORMALS") ||
         T1_std_are_equal_strings(command, "DEDUCE NORMALS"))
     {
-        engine_globals->draw_imputed_normals =
-            !engine_globals->draw_imputed_normals;
+        T1_engine_globals->draw_imputed_normals =
+            !T1_engine_globals->draw_imputed_normals;
         
-        if (engine_globals->draw_imputed_normals) {
+        if (T1_engine_globals->draw_imputed_normals) {
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
@@ -916,9 +916,9 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "DRAW TRIANGLES") ||
         T1_std_are_equal_strings(command, "TRIANGLES"))
     {
-        engine_globals->draw_triangles = !engine_globals->draw_triangles;
+        T1_engine_globals->draw_triangles = !T1_engine_globals->draw_triangles;
         
-        if (engine_globals->draw_triangles) {
+        if (T1_engine_globals->draw_triangles) {
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
@@ -992,13 +992,13 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "SLOWER"))
     {
         if (command[0] == 'F') {
-            engine_globals->timedelta_mult += 0.15f;
+            T1_engine_globals->timedelta_mult += 0.15f;
         } else {
-            engine_globals->timedelta_mult -= 0.15f;
+            T1_engine_globals->timedelta_mult -= 0.15f;
         }
         
-        if (engine_globals->timedelta_mult < 0.05f) {
-            engine_globals->timedelta_mult = 0.01f;
+        if (T1_engine_globals->timedelta_mult < 0.05f) {
+            T1_engine_globals->timedelta_mult = 0.01f;
         }
         
         T1_std_strcpy_cap(
@@ -1008,7 +1008,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_strcat_float_cap(
             response,
             SINGLE_LINE_MAX,
-            engine_globals->timedelta_mult);
+            T1_engine_globals->timedelta_mult);
         return true;
     }
     

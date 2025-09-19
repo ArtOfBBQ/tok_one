@@ -1,8 +1,8 @@
 #include "T1_uiinteraction.h"
 
-bool32_t * keypress_map; //[KEYPRESS_MAP_SIZE];
+bool32_t * T1_keypress_map; //[KEYPRESS_MAP_SIZE];
 
-T1UIInteraction * user_interactions = NULL;
+T1UIInteraction * T1_uiinteractions = NULL;
 
 float mouse_scroll_pos = 0.0f;
 
@@ -20,13 +20,13 @@ void T1_uiinteraction_register(T1UIInteraction * touch_record)
     uint64_t timestamp = T1_platform_get_current_time_us();
     
     touch_record->screen_x =
-        user_interactions[INTR_LAST_GPU_DATA].screen_x;
+        T1_uiinteractions[T1_INTR_LAST_GPU_DATA].screen_x;
     touch_record->screen_y =
-        user_interactions[INTR_LAST_GPU_DATA].screen_y;
+        T1_uiinteractions[T1_INTR_LAST_GPU_DATA].screen_y;
     touch_record->touchable_id_top =
-        user_interactions[INTR_LAST_GPU_DATA].touchable_id_top;
+        T1_uiinteractions[T1_INTR_LAST_GPU_DATA].touchable_id_top;
     touch_record->touchable_id_pierce =
-        user_interactions[INTR_LAST_GPU_DATA].
+        T1_uiinteractions[T1_INTR_LAST_GPU_DATA].
             touchable_id_pierce;
     touch_record->timestamp = timestamp;
     touch_record->checked_touchables = false;
@@ -37,14 +37,14 @@ void T1_uiinteraction_register_keyup(uint32_t key_id)
 {
     log_assert(key_id < KEYPRESS_MAP_SIZE);
     
-    keypress_map[key_id] = false;
+    T1_keypress_map[key_id] = false;
 }
 
 void T1_uiinteraction_register_keydown(uint32_t key_id)
 {
     log_assert(key_id < KEYPRESS_MAP_SIZE);
     
-    keypress_map[key_id] = true;
+    T1_keypress_map[key_id] = true;
 }
 
 void T1_uiinteraction_register_mousescroll(float amount)

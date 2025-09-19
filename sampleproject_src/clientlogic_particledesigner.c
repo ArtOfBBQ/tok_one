@@ -116,11 +116,11 @@ void T1_clientlogic_init(void) {
 }
 
 static float get_whitespace_height(void) {
-    return engine_globals->window_height / 200.0f;
+    return T1_engine_globals->window_height / 200.0f;
 }
 
 static float get_menu_element_height(void) {
-    return engine_globals->window_height / 20.0f;
+    return T1_engine_globals->window_height / 20.0f;
 }
 
 static float get_slider_height_screenspace(void) {
@@ -132,7 +132,7 @@ static float get_slider_width_screenspace(void) {
 }
 
 static float get_slider_y_screenspace(int32_t i) {
-    return engine_globals->window_height - 130 -
+    return T1_engine_globals->window_height - 130 -
             (pds->menu_element_height * i);
 }
 
@@ -157,9 +157,12 @@ void T1_clientlogic_early_startup(
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 2.0f, &ok);
     // T1_meta_field(T1GPUConstMat, T1_TYPE_I32, texturearray_i, &ok);
     // T1_meta_field(T1GPUConstMat, T1_TYPE_I32, texture_i, &ok);
-    #if NORMAL_MAPPING_ACTIVE
+    #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
     T1_meta_field(T1GPUConstMat, T1_TYPE_I32, normalmap_texturearray_i, &ok);
     T1_meta_field(T1GPUConstMat, T1_TYPE_I32, normalmap_texture_i, &ok);
+    #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     T1_meta_field(T1GPUConstMat, T1_TYPE_F32, specular_exponent, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
@@ -242,7 +245,7 @@ void T1_clientlogic_early_startup(
     }
     *success = 0;
     
-    engine_globals->draw_axes = true;
+    T1_engine_globals->draw_axes = true;
     
     pds->whitespace_height   = get_whitespace_height();
     pds->menu_element_height = get_menu_element_height();
@@ -329,7 +332,7 @@ static void redraw_all_sliders(void) {
     uint32_t num_properties = internal_T1_meta_get_num_of_fields_in_struct(
         pds->inspecting_field);
     
-    float cur_x = engine_globals->window_width -
+    float cur_x = T1_engine_globals->window_width -
         (pds->slider_width / 2) - 15.0f;
     float cur_y = get_slider_y_screenspace(-1);
     next_ui_element_settings->perm.screenspace_x = cur_x;
@@ -484,7 +487,7 @@ static void redraw_all_sliders(void) {
                         /* const float z: */
                             0.75f,
                         /* const float max_width: */
-                            engine_globals->window_width * 2);
+                            T1_engine_globals->window_width * 2);
             }
             
             pds->regs_size += 1;
@@ -560,62 +563,62 @@ static void client_handle_keypresses(
     float cam_speed = 0.1f * elapsed_mod;
     float cam_rotation_speed = 0.05f * elapsed_mod;
     
-    if (keypress_map[TOK_KEY_OPENSQUAREBRACKET] == true)
+    if (T1_keypress_map[TOK_KEY_OPENSQUAREBRACKET] == true)
     {
         scroll_y_offset -= 15.0f;
     }
     
-    if (keypress_map[TOK_KEY_CLOSESQUAREBRACKET] == true)
+    if (T1_keypress_map[TOK_KEY_CLOSESQUAREBRACKET] == true)
     {
         scroll_y_offset += 15.0f;
     }
     
-    if (keypress_map[TOK_KEY_LEFTARROW] == true)
+    if (T1_keypress_map[TOK_KEY_LEFTARROW] == true)
     {
         camera.xyz[0] -= cam_speed;
     }
     
-    if (keypress_map[TOK_KEY_RIGHTARROW] == true)
+    if (T1_keypress_map[TOK_KEY_RIGHTARROW] == true)
     {
         camera.xyz[0] += cam_speed;
     }
     
-    if (keypress_map[TOK_KEY_DOWNARROW] == true)
+    if (T1_keypress_map[TOK_KEY_DOWNARROW] == true)
     {
         camera.xyz[1] -= cam_speed;
     }
     
-    if (keypress_map[TOK_KEY_UPARROW] == true)
+    if (T1_keypress_map[TOK_KEY_UPARROW] == true)
     {
         camera.xyz[1] += cam_speed;
     }
     
-    if (keypress_map[TOK_KEY_A] == true) {
+    if (T1_keypress_map[TOK_KEY_A] == true) {
         camera.xyz_angle[0] += cam_rotation_speed;
     }
     
-    if (keypress_map[TOK_KEY_Z] == true) {
+    if (T1_keypress_map[TOK_KEY_Z] == true) {
         camera.xyz_angle[2] -= cam_rotation_speed;
     }
     
-    if (keypress_map[TOK_KEY_X] == true) {
+    if (T1_keypress_map[TOK_KEY_X] == true) {
         camera.xyz_angle[2] += cam_rotation_speed;
     }
     
-    if (keypress_map[TOK_KEY_Q] == true) {
+    if (T1_keypress_map[TOK_KEY_Q] == true) {
         camera.xyz_angle[0] -= cam_rotation_speed;
     }
     
-    if (keypress_map[TOK_KEY_W] == true) {
+    if (T1_keypress_map[TOK_KEY_W] == true) {
         camera.xyz_angle[1] -= cam_rotation_speed;
     }
     
-    if (keypress_map[TOK_KEY_S] == true) {
+    if (T1_keypress_map[TOK_KEY_S] == true) {
         camera.xyz_angle[1] += cam_rotation_speed;
     }
     
-    if (keypress_map[TOK_KEY_L] == true) {
-        keypress_map[TOK_KEY_L] = false;
+    if (T1_keypress_map[TOK_KEY_L] == true) {
+        T1_keypress_map[TOK_KEY_L] = false;
         T1LineParticle * lines = T1_particle_lineparticle_get_next();
         T1zSpriteRequest lines_polygon;
         lines_polygon.cpu_data = &lines->zpolygon_cpu;
@@ -628,9 +631,9 @@ static void client_handle_keypresses(
             /* const float z: */
                 0.5f,
             /* const float width: */
-                engineglobals_screenspace_width_to_width(75.0f, 0.5f),
+                T1_engineglobals_screenspace_width_to_width(75.0f, 0.5f),
             /* const float height: */
-                engineglobals_screenspace_height_to_height(75.0f, 0.5f),
+                T1_engineglobals_screenspace_height_to_height(75.0f, 0.5f),
             /* PolygonRequest * stack_recipient: */
                 &lines_polygon);
         lines_polygon.gpu_data->ignore_camera = false;
@@ -638,12 +641,12 @@ static void client_handle_keypresses(
         
         lines_polygon.cpu_data->committed = true;
         lines->waypoint_duration[0] = 1250000;
-        lines->waypoint_x[0] = engineglobals_screenspace_x_to_x(
+        lines->waypoint_x[0] = T1_engineglobals_screenspace_x_to_x(
             /* const float screenspace_x: */
                 0,
             /* const float given_z: */
                 0.5f);
-        lines->waypoint_y[0] = engineglobals_screenspace_y_to_y(
+        lines->waypoint_y[0] = T1_engineglobals_screenspace_y_to_y(
             /* const float screenspace_y: */
                 0,
             /* const float given_z: */
@@ -656,12 +659,12 @@ static void client_handle_keypresses(
         lines->waypoint_scalefactor[0] = 1.0f;
         lines->waypoint_duration[0] = 350000;
         
-        lines->waypoint_x[1] = engineglobals_screenspace_x_to_x(
+        lines->waypoint_x[1] = T1_engineglobals_screenspace_x_to_x(
             /* const float screenspace_x: */
-                engine_globals->window_width,
+                T1_engine_globals->window_width,
             /* const float given_z: */
                 0.5f);
-        lines->waypoint_y[1] = engineglobals_screenspace_y_to_y(
+        lines->waypoint_y[1] = T1_engineglobals_screenspace_y_to_y(
             /* const float screenspace_y: */
                 0,
             /* const float given_z: */
@@ -684,12 +687,12 @@ static void client_handle_keypresses(
         T1_particle_lineparticle_commit(lines);
     }
     
-    if (keypress_map[TOK_KEY_BACKSLASH] == true) {
+    if (T1_keypress_map[TOK_KEY_BACKSLASH] == true) {
         // / key
         camera.xyz[2] -= 0.01f;
     }
     
-    if (keypress_map[TOK_KEY_UNDERSCORE] == true) {
+    if (T1_keypress_map[TOK_KEY_UNDERSCORE] == true) {
         camera.xyz[2] += 0.01f;
     }
 }
@@ -700,7 +703,7 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
     
     #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
     float new_x =
-        engine_globals->window_width - (pds->slider_width / 2) - 15.0f;
+        T1_engine_globals->window_width - (pds->slider_width / 2) - 15.0f;
     float new_z = 0.75f;
     
     int32_t target_zsprite_ids[3];
@@ -726,9 +729,9 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
             anim->affected_zsprite_id = target_zsprite_ids[j];
             anim->delete_other_anims_targeting_same_object_id_on_commit = true;
             anim->gpu_polygon_vals.xyz[0] =
-                engineglobals_screenspace_x_to_x(new_x, new_z);
+                T1_engineglobals_screenspace_x_to_x(new_x, new_z);
             anim->gpu_polygon_vals.xyz[1] =
-                engineglobals_screenspace_y_to_y(new_y, new_z);
+                T1_engineglobals_screenspace_y_to_y(new_y, new_z);
             anim->gpu_polygon_vals.xyz[2] = new_z;
             anim->duration_us = 60000;
             T1_scheduled_animations_commit(anim);
@@ -745,9 +748,9 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
         anim->affected_zsprite_id = target_zsprite_ids[j];
         anim->delete_other_anims_targeting_same_object_id_on_commit = true;
         anim->gpu_polygon_vals.xyz[0] =
-            engineglobals_screenspace_x_to_x(new_x, new_z);
+            T1_engineglobals_screenspace_x_to_x(new_x, new_z);
         anim->gpu_polygon_vals.xyz[1] =
-            engineglobals_screenspace_y_to_y(new_title_y, new_z);
+            T1_engineglobals_screenspace_y_to_y(new_title_y, new_z);
         anim->gpu_polygon_vals.xyz[2] = new_z;
         anim->duration_us = 60000;
         T1_scheduled_animations_commit(anim);
@@ -762,7 +765,7 @@ void T1_clientlogic_update_after_render_pass(void) {
     
 }
 
-#if T1_TEXTURES_ACTIVE
+#if T1_TEXTURES_ACTIVE == T1_ACTIVE
 static void load_texture(const char * writables_filename) {
     uint32_t ok = 0;
     T1Tex tex = T1_texture_array_get_filename_location(writables_filename);
@@ -807,11 +810,11 @@ static void load_texture(const char * writables_filename) {
         T1zSpriteRequest temp_quad;
         T1_zsprite_request_next(&temp_quad);
         zsprite_construct_quad(
-            engineglobals_screenspace_x_to_x(25.0f, tempquad_z),
-            engineglobals_screenspace_y_to_y(25.0f, tempquad_z),
+            T1_engineglobals_screenspace_x_to_x(25.0f, tempquad_z),
+            T1_engineglobals_screenspace_y_to_y(25.0f, tempquad_z),
             tempquad_z,
-            engineglobals_screenspace_width_to_width(100.0f, tempquad_z),
-            engineglobals_screenspace_height_to_height(100.0f, tempquad_z),
+            T1_engineglobals_screenspace_width_to_width(100.0f, tempquad_z),
+            T1_engineglobals_screenspace_height_to_height(100.0f, tempquad_z),
             &temp_quad);
         temp_quad.gpu_data->base_mat.diffuse_rgb[0] = 1.0f;
         temp_quad.gpu_data->base_mat.diffuse_rgb[1] = 1.0f;
@@ -839,6 +842,9 @@ static void load_texture(const char * writables_filename) {
         return;
     }
 }
+#elif T1_TEXTURES_ACTIVE == T1_INACTIVE
+#else
+#error
 #endif
 
 void T1_clientlogic_evaluate_terminal_command(

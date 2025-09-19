@@ -213,10 +213,10 @@ void project_float4_to_2d_inplace(
     float * position_y,
     float * position_z)
 {
-    T1GPUProjectConsts * pjc = &engine_globals->project_consts;
+    T1GPUProjectConsts * pjc = &T1_engine_globals->project_consts;
     
     float x_multiplier =
-        engine_globals->aspect_ratio * pjc->field_of_view_modifier;
+        T1_engine_globals->aspect_ratio * pjc->field_of_view_modifier;
     float y_multiplier = pjc->field_of_view_modifier;
     float z_multiplier = (pjc->zfar / (pjc->zfar - pjc->znear));
     float z_addition = (1.0f * (-pjc->zfar * pjc->znear) /

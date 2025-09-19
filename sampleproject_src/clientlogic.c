@@ -175,11 +175,11 @@ void T1_clientlogic_late_startup(void) {
         /* const float z: */
             TEAPOT_Z + 0.2f,
         /* const float width: */
-            engineglobals_screenspace_width_to_width(
-                engine_globals->window_width * 2, 1.0f),
+            T1_engineglobals_screenspace_width_to_width(
+                T1_engine_globals->window_width * 2, 1.0f),
         /* const float height: */
-            engineglobals_screenspace_height_to_height(
-                engine_globals->window_height * 2, 1.0f),
+            T1_engineglobals_screenspace_height_to_height(
+                T1_engine_globals->window_height * 2, 1.0f),
         /* PolygonRequest * stack_recipient: */
             &quad);
     quad.gpu_data->base_mat.texturearray_i = quad_texture_array_i;
@@ -247,11 +247,11 @@ void T1_clientlogic_late_startup(void) {
             /* const float z: */
                 TEAPOT_Z + 0.2f + (i * 0.75f),
             /* const float width: */
-                engineglobals_screenspace_width_to_width(
-                    engine_globals->window_width * 2, 1.0f),
+                T1_engineglobals_screenspace_width_to_width(
+                    T1_engine_globals->window_width * 2, 1.0f),
             /* const float height: */
-                engineglobals_screenspace_height_to_height(
-                    engine_globals->window_height * 2, 1.0f),
+                T1_engineglobals_screenspace_height_to_height(
+                    T1_engine_globals->window_height * 2, 1.0f),
             /* PolygonRequest * stack_recipient: */
                 &quad);
         
@@ -293,7 +293,7 @@ void T1_clientlogic_threadmain(int32_t threadmain_id) {
 }
 
 static uint32_t testswitch = 1;
-static void client_handle_keypresses(
+static void clientlogic_handle_keypresses(
     uint64_t microseconds_elapsed)
 {
     float elapsed_mod = (float)(
@@ -301,67 +301,70 @@ static void client_handle_keypresses(
     float cam_speed = 0.1f * elapsed_mod;
     float cam_rotation_speed = 0.05f * elapsed_mod;
     
-    if (keypress_map[TOK_KEY_S] == true)
+    if (T1_keypress_map[TOK_KEY_S] == true)
     {
-        keypress_map[TOK_KEY_S] = false;
+        T1_keypress_map[TOK_KEY_S] = false;
         
         #if TEAPOT
-        #if SCHEDULED_ANIMS_ACTIVE
+        #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
         T1_scheduled_animations_request_shatter_and_destroy(
             /* const int32_t object_id: */
                 teapot_object_ids[1],
             /* const uint64_t duration_microseconds: */
                 750000);
+        #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         #endif
     }
     
-    if (keypress_map[TOK_KEY_LEFTARROW] == true)
+    if (T1_keypress_map[TOK_KEY_LEFTARROW] == true)
     {
         camera.xyz[0] -= cam_speed;
     }
     
-    if (keypress_map[TOK_KEY_RIGHTARROW] == true)
+    if (T1_keypress_map[TOK_KEY_RIGHTARROW] == true)
     {
         camera.xyz[0] += cam_speed;
     }
     
-    if (keypress_map[TOK_KEY_DOWNARROW] == true)
+    if (T1_keypress_map[TOK_KEY_DOWNARROW] == true)
     {
         camera.xyz[1] -= cam_speed;
     }
     
-    if (keypress_map[TOK_KEY_UPARROW] == true)
+    if (T1_keypress_map[TOK_KEY_UPARROW] == true)
     {
         camera.xyz[1] += cam_speed;
     }
     
-    if (keypress_map[TOK_KEY_A] == true) {
+    if (T1_keypress_map[TOK_KEY_A] == true) {
         camera.xyz_angle[0] += cam_rotation_speed;
     }
     
-    if (keypress_map[TOK_KEY_Z] == true) {
+    if (T1_keypress_map[TOK_KEY_Z] == true) {
         camera.xyz_angle[2] -= cam_rotation_speed;
     }
     
-    if (keypress_map[TOK_KEY_X] == true) {
+    if (T1_keypress_map[TOK_KEY_X] == true) {
         camera.xyz_angle[2] += cam_rotation_speed;
     }
     
-    if (keypress_map[TOK_KEY_Q] == true) {
+    if (T1_keypress_map[TOK_KEY_Q] == true) {
         camera.xyz_angle[0] -= cam_rotation_speed;
     }
     
-    if (keypress_map[TOK_KEY_W] == true) {
+    if (T1_keypress_map[TOK_KEY_W] == true) {
         camera.xyz_angle[1] -= cam_rotation_speed;
     }
     
-    if (keypress_map[TOK_KEY_S] == true) {
+    if (T1_keypress_map[TOK_KEY_S] == true) {
         camera.xyz_angle[1] += cam_rotation_speed;
     }
     
-    if (keypress_map[TOK_KEY_T] == true) {
-        keypress_map[TOK_KEY_T] = false;
+    if (T1_keypress_map[TOK_KEY_T] == true) {
+        T1_keypress_map[TOK_KEY_T] = false;
         
         if (testswitch) {
             #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
@@ -378,8 +381,8 @@ static void client_handle_keypresses(
         testswitch = !testswitch;
     }
     
-    if (keypress_map[TOK_KEY_P] == true) {
-        keypress_map[TOK_KEY_P] = false;
+    if (T1_keypress_map[TOK_KEY_P] == true) {
+        T1_keypress_map[TOK_KEY_P] = false;
         
         #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
         T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(teapot_object_ids[0], testswitch ? 1.0f : 0.0f);
@@ -390,12 +393,12 @@ static void client_handle_keypresses(
         testswitch = !testswitch;
     }
     
-    if (keypress_map[TOK_KEY_BACKSLASH] == true) {
+    if (T1_keypress_map[TOK_KEY_BACKSLASH] == true) {
         // / key
         camera.xyz[2] -= 0.01f;
     }
     
-    if (keypress_map[TOK_KEY_FULLSTOP] == true) {
+    if (T1_keypress_map[TOK_KEY_FULLSTOP] == true) {
         camera.xyz[2] += 0.01f;
     }
 }
@@ -403,15 +406,15 @@ static void client_handle_keypresses(
 void T1_clientlogic_update(uint64_t microseconds_elapsed)
 {
     if (
-        !user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].handled)
+        !T1_uiinteractions[T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].handled)
     {
-        user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+        T1_uiinteractions[T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
             handled = true;
         
         if (
-            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+            T1_uiinteractions[T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
                 touchable_id_top == 5 ||
-            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+            T1_uiinteractions[T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
                 touchable_id_pierce == 5)
         {
             #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
@@ -427,7 +430,7 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
         }
     }
     
-    if (keypress_map[TOK_KEY_R]) {
+    if (T1_keypress_map[TOK_KEY_R]) {
         for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
             if (T1_zsprites_to_render->cpu_data[i].zsprite_id == 20)
             {
@@ -439,33 +442,36 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
     }
     
     if (
-        !user_interactions[INTR_PREVIOUS_RIGHTCLICK_START].handled)
+        !T1_uiinteractions[T1_INTR_PREVIOUS_RIGHTCLICK_START].handled)
     {
-        user_interactions[INTR_PREVIOUS_RIGHTCLICK_START].handled = true;
+        T1_uiinteractions[T1_INTR_PREVIOUS_RIGHTCLICK_START].handled = true;
     }
     
     if (
-        !user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].handled)
+        !T1_uiinteractions[T1_INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].handled)
     {
-        user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].handled = true;
+        T1_uiinteractions[T1_INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].handled = true;
     }
     
     #if TEAPOT
     for (uint32_t i = 0; i < 2; i++) {
     if (
-        !user_interactions[INTR_PREVIOUS_LEFTCLICK_START].handled &&
-        user_interactions[INTR_PREVIOUS_LEFTCLICK_START].touchable_id_top ==
+        !T1_uiinteractions[T1_INTR_PREVIOUS_LEFTCLICK_START].handled &&
+        T1_uiinteractions[T1_INTR_PREVIOUS_LEFTCLICK_START].touchable_id_top ==
             teapot_touchable_ids[i])
     {
-        user_interactions[INTR_PREVIOUS_LEFTCLICK_START].handled = true;
+        T1_uiinteractions[T1_INTR_PREVIOUS_LEFTCLICK_START].handled = true;
         
-        #if SCHEDULED_ANIMS_ACTIVE
+        #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
         T1_scheduled_animations_request_bump(teapot_object_ids[0], 0.0f);
+        #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
     }
     }
     
-    if (keypress_map[TOK_KEY_R]) {
+    if (T1_keypress_map[TOK_KEY_R]) {
         for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
             if (T1_zsprites_to_render->cpu_data[i].zsprite_id ==
                 teapot_object_ids[0])
@@ -476,7 +482,7 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
     }
     #endif
     
-    client_handle_keypresses(microseconds_elapsed);
+    clientlogic_handle_keypresses(microseconds_elapsed);
 }
 
 void T1_clientlogic_update_after_render_pass(void) {

@@ -1,4 +1,4 @@
-#include "T1_init_application.h"
+#include "T1_appinit.h"
 
 #define IMAGE_DECODING_THREADS_MAX 10
 typedef struct InitApplicationState {
@@ -156,7 +156,7 @@ static uint32_t pad_to_page_size(uint32_t base_allocation) {
     return return_value;
 }
 
-void init_application_before_gpu_init(
+void T1_appinit_before_gpu_init(
     bool32_t * success,
     char * error_message)
 {
@@ -232,10 +232,10 @@ void init_application_before_gpu_init(
         T1_mem_malloc_from_managed_infoless,
         strlcat);
     
-    keypress_map = (bool32_t *)T1_mem_malloc_from_unmanaged(
+    T1_keypress_map = (bool32_t *)T1_mem_malloc_from_unmanaged(
         sizeof(bool32_t) * KEYPRESS_MAP_SIZE);
     for (uint32_t i = 0; i < KEYPRESS_MAP_SIZE; i++) {
-        keypress_map[i] = false;
+        T1_keypress_map[i] = false;
     }
     
     logger_init(
@@ -280,9 +280,9 @@ void init_application_before_gpu_init(
     #error "T1_ENGINE_SAVEFILE_ACTIVE not set"
     #endif
     
-    engine_globals = (EngineGlobals *)T1_mem_malloc_from_unmanaged(
-        sizeof(EngineGlobals));
-    T1_std_memset(engine_globals, 0, sizeof(EngineGlobals));
+    T1_engine_globals = (T1EngineGlobals *)T1_mem_malloc_from_unmanaged(
+        sizeof(T1EngineGlobals));
+    T1_std_memset(T1_engine_globals, 0, sizeof(T1EngineGlobals));
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
     T1_audio_init(
@@ -302,13 +302,13 @@ void init_application_before_gpu_init(
         engine_save_file->window_width > 20 &&
         engine_save_file->window_width < INITIAL_WINDOW_WIDTH * 3)
     {
-        engine_globals->window_height = engine_save_file->window_height;
-        engine_globals->window_width  = engine_save_file->window_width;
-        engine_globals->window_left   = engine_save_file->window_left;
-        engine_globals->window_bottom = engine_save_file->window_bottom;
-        engine_globals->fullscreen = engine_save_file->window_fullscreen;
-        engine_globals->upcoming_fullscreen_request =
-            engine_globals->fullscreen;
+        T1_engine_globals->window_height = engine_save_file->window_height;
+        T1_engine_globals->window_width  = engine_save_file->window_width;
+        T1_engine_globals->window_left   = engine_save_file->window_left;
+        T1_engine_globals->window_bottom = engine_save_file->window_bottom;
+        T1_engine_globals->fullscreen = engine_save_file->window_fullscreen;
+        T1_engine_globals->upcoming_fullscreen_request =
+            T1_engine_globals->fullscreen;
         #if T1_AUDIO_ACTIVE == T1_ACTIVE
         T1_sound_settings->music_volume = engine_save_file->music_volume;
         T1_sound_settings->sfx_volume = engine_save_file->sound_volume;
@@ -318,11 +318,11 @@ void init_application_before_gpu_init(
         #error "T1_AUDIO_ACTIVE undefined!"
         #endif // T1_AUDIO_ACTIVE
     } else {
-        engine_globals->fullscreen = false;
-        engine_globals->window_height = INITIAL_WINDOW_HEIGHT;
-        engine_globals->window_width  = INITIAL_WINDOW_WIDTH;
-        engine_globals->window_left   = INITIAL_WINDOW_LEFT;
-        engine_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
+        T1_engine_globals->fullscreen = false;
+        T1_engine_globals->window_height = INITIAL_WINDOW_HEIGHT;
+        T1_engine_globals->window_width  = INITIAL_WINDOW_WIDTH;
+        T1_engine_globals->window_left   = INITIAL_WINDOW_LEFT;
+        T1_engine_globals->window_bottom = INITIAL_WINDOW_BOTTOM;
     }
     
     if (engine_save.contents != NULL) {
@@ -348,10 +348,10 @@ void init_application_before_gpu_init(
     #error "T1_ENGINE_SAVEFILE_ACTIVE undefined!"
     #endif // T1_ENGINE_SAVEFILE_ACTIVE
     
-    engine_globals->aspect_ratio = engine_globals->window_height /
-        engine_globals->window_width;
+    T1_engine_globals->aspect_ratio = T1_engine_globals->window_height /
+        T1_engine_globals->window_width;
     
-    engineglobals_init();
+    T1_engineglobals_init();
     
     T1_uielement_init();
     
@@ -388,7 +388,7 @@ void init_application_before_gpu_init(
     #error "T1_PARTICLES_ACTIVE undefined!"
     #endif
     
-    gameloop_init();
+    T1_gameloop_init();
     #if T1_TERMINAL_ACTIVE == T1_ACTIVE
     terminal_init(T1_platform_enter_fullscreen);
     #elif T1_TERMINAL_ACTIVE == T1_INACTIVE
@@ -437,10 +437,10 @@ void init_application_before_gpu_init(
                 font_metrics_file.size_without_terminator);
     }
     
-    user_interactions = (T1UIInteraction *)
-        T1_mem_malloc_from_unmanaged(sizeof(T1UIInteraction) * USER_INTERACTIONS_SIZE);
-    for (uint32_t m = 0; m < USER_INTERACTIONS_SIZE; m++) {
-        T1_uiinteraction_construct(&user_interactions[m]);
+    T1_uiinteractions = (T1UIInteraction *)
+        T1_mem_malloc_from_unmanaged(sizeof(T1UIInteraction) * T1_USER_INTERACTIONS_SIZE);
+    for (uint32_t m = 0; m < T1_USER_INTERACTIONS_SIZE; m++) {
+        T1_uiinteraction_construct(&T1_uiinteractions[m]);
     }
     
     renderer_init();
@@ -563,7 +563,7 @@ void init_application_before_gpu_init(
 }
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-static void asset_loading_thread(int32_t asset_thread_id) {
+static void T1_appinit_asset_loading_thread(int32_t asset_thread_id) {
     if (asset_thread_id > 0) {
         init_PNG_decoder(
             malloc,
@@ -590,7 +590,7 @@ static void asset_loading_thread(int32_t asset_thread_id) {
 #error "T1_TEXTURES_ACTIVE undefined!"
 #endif
 
-void init_application_after_gpu_init(int32_t throwaway_threadarg) {
+void T1_appinit_after_gpu_init(int32_t throwaway_threadarg) {
     (void)throwaway_threadarg;
     
     T1_texture_array_load_font_images();
@@ -621,31 +621,31 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         &perlin_good);
     
     if (!perlin_good) {
-        gameloop_active = true;
+        T1_gameloop_active = true;
         log_dump_and_crash("Missing engine file: perlin_noise.dds");
         return;
     }
     
     T1Tex perlin_tex = T1_texture_array_get_filename_location(
         "perlin_noise.dds");
-    engine_globals->postproc_consts.perlin_texturearray_i =
+    T1_engine_globals->postproc_consts.perlin_texturearray_i =
         perlin_tex.array_i;
-    engine_globals->postproc_consts.perlin_texture_i =
+    T1_engine_globals->postproc_consts.perlin_texture_i =
         perlin_tex.slice_i;
     
     if (
-        engine_globals->postproc_consts.perlin_texturearray_i < 1 ||
-        engine_globals->postproc_consts.perlin_texture_i != 0)
+        T1_engine_globals->postproc_consts.perlin_texturearray_i < 1 ||
+        T1_engine_globals->postproc_consts.perlin_texture_i != 0)
     {
-        gameloop_active = true;
+        T1_gameloop_active = true;
         log_dump_and_crash("Failed to read engine file: perlin_noise.dds");
         return;
     }
     
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    engine_globals->postproc_consts.in_shadow_multipliers[0] = 0.5f;
-    engine_globals->postproc_consts.in_shadow_multipliers[1] = 0.5f;
-    engine_globals->postproc_consts.in_shadow_multipliers[2] = 0.5f;
+    T1_engine_globals->postproc_consts.in_shadow_multipliers[0] = 0.5f;
+    T1_engine_globals->postproc_consts.in_shadow_multipliers[1] = 0.5f;
+    T1_engine_globals->postproc_consts.in_shadow_multipliers[2] = 0.5f;
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
     // Pass
     #else
@@ -660,7 +660,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         T1_clientlogic_early_startup(&success, errmsg);
         
         if (!success) {
-            gameloop_active = true;
+            T1_gameloop_active = true;
             if (errmsg[0] == '\0') {
                 T1_std_strcpy_cap(
                     errmsg,
@@ -672,7 +672,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
             return;
         }
         
-        engine_globals->clientlogic_early_startup_finished = 1;
+        T1_engine_globals->clientlogic_early_startup_finished = 1;
         
         uint32_t core_count = T1_platform_get_cpu_logical_core_count();
         log_assert(core_count > 0);
@@ -684,20 +684,20 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
             sizeof(uint32_t) * IMAGE_DECODING_THREADS_MAX);
         ias->thread_finished[0] = true;
         
-        log_assert(engine_globals->startup_bytes_to_load == 0);
-        log_assert(engine_globals->startup_bytes_loaded == 0);
+        log_assert(T1_engine_globals->startup_bytes_to_load == 0);
+        log_assert(T1_engine_globals->startup_bytes_loaded == 0);
         
         if (!T1_app_running) {
-            gameloop_active = true;
+            T1_gameloop_active = true;
             return;
         }
         
         #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-        loading_textures = true;
+        T1_loading_textures = true;
         for (int32_t i = 1; i < (int32_t)ias->image_decoding_threads; i++) {
             T1_platform_start_thread(
                 /* void (*function_to_run)(int32_t): */
-                    asset_loading_thread,
+                    T1_appinit_asset_loading_thread,
                 /* int32_t argument: */
                     i);
         }
@@ -749,7 +749,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     #endif
     
     if (!T1_app_running) {
-        gameloop_active = true;
+        T1_gameloop_active = true;
         return;
     }
     
@@ -772,15 +772,15 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     T1_platform_gpu_copy_locked_materials();
     
     if (!T1_app_running) {
-        gameloop_active = true;
+        T1_gameloop_active = true;
         return;
     }
     
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-    asset_loading_thread(0);
+    T1_appinit_asset_loading_thread(0);
     
     if (!T1_app_running) {
-        gameloop_active = true;
+        T1_gameloop_active = true;
         return;
     }
     
@@ -793,7 +793,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
             }
         }
     }
-    loading_textures = false;
+    T1_loading_textures = false;
     #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
     #else
     #error "T1_TEXTURES_ACTIVE undefined!"
@@ -841,7 +841,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     #endif
     
     if (!T1_app_running) {
-        gameloop_active = true;
+        T1_gameloop_active = true;
         return;
     }
     
@@ -851,12 +851,12 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     if (T1_app_running) {
         T1_clientlogic_late_startup();
     } else {
-        gameloop_active = true;
+        T1_gameloop_active = true;
         return;
     }
     
     if (!T1_app_running) {
-        gameloop_active = true;
+        T1_gameloop_active = true;
         return;
     }
     
@@ -870,10 +870,10 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     
     T1_token_deinit(T1_mem_free_from_managed);
     
-    gameloop_active = true;
+    T1_gameloop_active = true;
 }
 
-void shared_shutdown_application(void)
+void T1_appinit_shutdown(void)
 {
     #if T1_ENGINE_SAVEFILE_ACTIVE
     
@@ -894,11 +894,11 @@ void shared_shutdown_application(void)
     
     #if T1_ENGINE_SAVEFILE_ACTIVE == T1_ACTIVE
     log_assert(engine_save_file != NULL);
-    engine_save_file->window_bottom = engine_globals->window_bottom;
-    engine_save_file->window_height = engine_globals->window_height;
-    engine_save_file->window_left = engine_globals->window_left;
-    engine_save_file->window_width = engine_globals->window_width;
-    engine_save_file->window_fullscreen = engine_globals->fullscreen;
+    engine_save_file->window_bottom = T1_engine_globals->window_bottom;
+    engine_save_file->window_height = T1_engine_globals->window_height;
+    engine_save_file->window_left = T1_engine_globals->window_left;
+    engine_save_file->window_width = T1_engine_globals->window_width;
+    engine_save_file->window_fullscreen = T1_engine_globals->fullscreen;
     
     uint32_t good = false;
     T1_platform_delete_writable("enginestate.dat");

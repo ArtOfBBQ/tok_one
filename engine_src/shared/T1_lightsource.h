@@ -9,7 +9,7 @@
 #include "T1_cpu_gpu_shared_types.h"
 #include "T1_simd.h"
 #include "T1_std.h"
-#include "T1_engine_globals.h"
+#include "T1_engineglobals.h"
 #include "T1_triangle.h"
 
 #ifdef __cplusplus

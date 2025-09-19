@@ -123,27 +123,26 @@ typedef struct {
 void T1_uiinteraction_construct(T1UIInteraction * to_construct);
 
 // indexes in the interactions array
-#define INTR_LAST_GPU_DATA                      0
-#define INTR_PREVIOUS_TOUCH_START               1
-#define INTR_PREVIOUS_TOUCH_END                 2
-#define INTR_PREVIOUS_LEFTCLICK_START           3
-#define INTR_PREVIOUS_LEFTCLICK_END             4
-#define INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START  5
-#define INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END    6
-#define INTR_PREVIOUS_RIGHTCLICK_START          7
-#define INTR_PREVIOUS_RIGHTCLICK_END            8
-#define INTR_PREVIOUS_MOUSE_MOVE                9
-#define INTR_PREVIOUS_TOUCH_MOVE               10
-#define INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE      11
+#define T1_INTR_LAST_GPU_DATA                      0
+#define T1_INTR_PREVIOUS_TOUCH_START               1
+#define T1_INTR_PREVIOUS_TOUCH_END                 2
+#define T1_INTR_PREVIOUS_LEFTCLICK_START           3
+#define T1_INTR_PREVIOUS_LEFTCLICK_END             4
+#define T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START  5
+#define T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END    6
+#define T1_INTR_PREVIOUS_RIGHTCLICK_START          7
+#define T1_INTR_PREVIOUS_RIGHTCLICK_END            8
+#define T1_INTR_PREVIOUS_MOUSE_MOVE                9
+#define T1_INTR_PREVIOUS_TOUCH_MOVE               10
+#define T1_INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE      11
 // permanent size of the interactions array
-#define USER_INTERACTIONS_SIZE                 12
-extern T1UIInteraction * user_interactions;
+#define T1_USER_INTERACTIONS_SIZE                 12
+extern T1UIInteraction * T1_uiinteractions;
+
+extern bool32_t * T1_keypress_map; //[KEYPRESS_MAP_SIZE];
+extern float mouse_scroll_pos;
 
 void T1_uiinteraction_register(T1UIInteraction * touch_record);
-
-extern bool32_t * keypress_map; //[KEYPRESS_MAP_SIZE];
-
-extern float mouse_scroll_pos;
 
 void T1_uiinteraction_register_keyup(uint32_t key_id);
 void T1_uiinteraction_register_keydown(uint32_t key_id);

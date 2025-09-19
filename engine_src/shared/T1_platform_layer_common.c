@@ -255,16 +255,16 @@ void T1_platform_delete_writable(
 void T1_platform_layer_start_window_resize(
     const uint64_t timestamp)
 {
-    engine_globals->last_resize_request_us = timestamp;
+    T1_engine_globals->last_resize_request_us = timestamp;
     
     T1_uielement_delete_all();
     T1_zsprites_to_render->size = 0;
     
     #if T1_FOG_ACTIVE == T1_ACTIVE
-    engine_globals->postproc_consts.fog_factor = 0.0f;
-    engine_globals->postproc_consts.fog_color[0] = 0.0f;
-    engine_globals->postproc_consts.fog_color[1] = 0.0f;
-    engine_globals->postproc_consts.fog_color[2] = 0.0f;
+    T1_engine_globals->postproc_consts.fog_factor = 0.0f;
+    T1_engine_globals->postproc_consts.fog_color[0] = 0.0f;
+    T1_engine_globals->postproc_consts.fog_color[1] = 0.0f;
+    T1_engine_globals->postproc_consts.fog_color[2] = 0.0f;
     #elif T1_FOG_ACTIVE == T1_INACTIVE
     #else
     #error

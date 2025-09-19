@@ -7,14 +7,14 @@ extern "C" {
 
 #include "T1_logger.h"
 
-#define FPS_COUNTER_OBJECT_ID 0
-#define DEBUG_TEXT_OBJECT_ID 1
+#define T1_FPS_COUNTER_ZSPRITE_ID 0
+#define T1_DEBUG_TEXT_ZSPRITE_ID 1
 
-#define MAX_OBJECT_ID 8000
+#define T1_ZSPRITE_ID_MAX 8000
 
-#define FIRST_NONUI_OBJECT_ID 1011
+#define T1_FIRST_NONUI_ZSPRITE_ID 1011
 
-#define LAST_UI_TOUCHABLE_ID 1000
+#define T1_LAST_UI_TOUCHABLE_ID 1000
 #define FIRST_NONUI_TOUCHABLE_ID 1001
 
 // retired objects are unaffected by animations

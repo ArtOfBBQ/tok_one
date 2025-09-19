@@ -33,8 +33,8 @@ typedef struct {
 extern "C" {
 #endif
 
-uint64_t get_sum_rgba(const T1DecodedImage * input);
-uint32_t get_avg_rgba(const T1DecodedImage * input);
+uint64_t T1_decodedimage_get_sum_rgba(const T1DecodedImage * input);
+uint32_t T1_decodedimage_get_avg_rgba(const T1DecodedImage * input);
 
 /*
 you would overwrite the right half of the image by setting:

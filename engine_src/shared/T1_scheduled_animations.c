@@ -706,7 +706,7 @@ void T1_scheduled_animations_resolve(void)
             continue;
         }
         
-        uint64_t elapsed = engine_globals->elapsed;
+        uint64_t elapsed = T1_engine_globals->elapsed;
         
         if (anim->remaining_pause_us > 0) {
             

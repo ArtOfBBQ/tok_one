@@ -21,7 +21,7 @@ static void cross(const float A[3], const float B[3], float * recipient)
     return;
 }
 
-int point_hits_AArect(
+int T1_collision_point_hits_AArect(
     const float point[2],
     const float rect_bounds_min[2],
     const float rect_bounds_max[2])
@@ -35,7 +35,7 @@ int point_hits_AArect(
 
 // returns distance to collision, or FLT_MAX if no hit, or
 // a negative float if hit is behind the ray
-float ray_hits_AArect(
+float T1_collision_ray_hits_AArect(
     const float ray_origin[2],
     const float ray_direction[2],
     const float rect_bounds_min[2],
@@ -92,7 +92,7 @@ float ray_hits_AArect(
         rect_bounds_max[0],
         rect_bounds_max[1]);
     
-    float nearest_dist_found = COL_FLT_MAX;
+    float nearest_dist_found = T1_COL_FLT_MAX;
     
     for (int plane_i = 0; plane_i < 4; plane_i++) {
         int axis_i = plane_i / 2;
@@ -119,7 +119,7 @@ float ray_hits_AArect(
             collision_point[0], collision_point[1]);
         
         if (
-            point_hits_AArect(
+            T1_collision_point_hits_AArect(
                 collision_point,
                 rect_bounds_min,
                 rect_bounds_max))
@@ -152,7 +152,7 @@ float ray_hits_AArect(
     return sqrtf(nearest_dist_found);
 }
 
-int point_hits_AAbox(
+int T1_collision_point_hits_AAbox(
     const float point[3],
     const float rect_bounds_min[3],
     const float rect_bounds_max[3])
@@ -168,14 +168,14 @@ int point_hits_AAbox(
 
 // returns distance to collision, or FLT_MAX if no hit, or
 // a negative float if hit is behind the ray
-float ray_hits_AAbox(
+float T1_collision_ray_hits_AAbox(
     const float ray_origin[3],
     const float ray_direction[3],
     const float box_bounds_min[3],
     const float box_bounds_max[3],
     float * collision_recipient)
 {
-    float nearest_dist_found = COL_FLT_MAX;
+    float nearest_dist_found = T1_COL_FLT_MAX;
     
     for (int plane_i = 0; plane_i < 6; plane_i++) {
         int axis_i = plane_i / 2;
@@ -198,7 +198,7 @@ float ray_hits_AAbox(
         collision_point[2] += (ray_direction[2] * steps_taken);
         
         if (
-            point_hits_AAbox(
+            T1_collision_point_hits_AAbox(
                 collision_point,
                 box_bounds_min,
                 box_bounds_max))
@@ -226,7 +226,7 @@ float ray_hits_AAbox(
     return sqrtf(nearest_dist_found);
 }
 
-float normalized_ray_hits_sphere(
+float T1_collision_normalized_ray_hits_sphere(
     const float ray_origin[3],
     const float normalized_ray_direction[3],
     const float sphere_origin[3],
@@ -352,7 +352,7 @@ float normalized_ray_hits_sphere(
     // we know our a is 1, so that can be deleted
     float discr = (b * b) - (4 * c);
     
-    float t = COL_FLT_MAX;
+    float t = T1_COL_FLT_MAX;
     
     if (discr >= 0.0f) {
         // 1 or more collisions exist, we pick the closest one
@@ -378,7 +378,7 @@ float normalized_ray_hits_sphere(
     return t;
 }
 
-int point_hits_triangle(
+int T1_collision_point_hits_triangle(
     const float P[2],
     const float A[2],
     const float B[2],
@@ -455,7 +455,7 @@ static int coplanar_point_hits_triangle_3D(
         diff > -threshold;
 }
 
-float ray_hits_plane(
+float T1_collision_ray_hits_plane(
     const float ray_origin[3],
     const float ray_direction[3],
     const float plane_point[3],
@@ -502,10 +502,10 @@ float ray_hits_plane(
         }
     }
     
-    return COL_FLT_MAX;
+    return T1_COL_FLT_MAX;
 }
 
-float ray_hits_triangle(
+float T1_collision_ray_hits_triangle(
     const float ray_origin[3],
     const float ray_direction[3],
     const float triangle_vertex_1[3],
@@ -520,7 +520,7 @@ float ray_hits_triangle(
     float t = -(dot(N, orig) + D) / dot(N, dir);
     */
     
-    float nearest_dist_found = ray_hits_plane(
+    float nearest_dist_found = T1_collision_ray_hits_plane(
         /* const float ray_origin[3]: */
             ray_origin,
         /* const float ray_direction[3]: */
@@ -553,5 +553,5 @@ float ray_hits_triangle(
     collision_recipient[1] = 0.0f;
     collision_recipient[2] = 0.0f;
     
-    return COL_FLT_MAX;
+    return T1_COL_FLT_MAX;
 }

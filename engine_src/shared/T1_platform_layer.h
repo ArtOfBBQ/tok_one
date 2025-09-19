@@ -72,7 +72,7 @@ extern "C" {
 #include "T1_mem.h"
 #include "T1_logger.h"
 #include "T1_decodedimage.h"
-#include "T1_engine_globals.h"
+#include "T1_engineglobals.h"
 #include "T1_uielement.h"
 
 void T1_platform_init(

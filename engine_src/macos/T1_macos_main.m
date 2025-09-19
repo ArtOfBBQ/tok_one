@@ -2,12 +2,12 @@
 #include "T1_apple_audio.h"
 
 #include "T1_std.h"
-#include "T1_init_application.h"
+#include "T1_appinit.h"
 #include "T1_logger.h"
 #include "T1_random.h"
 #include "T1_lightsource.h"
 #include "T1_uiinteraction.h"
-#include "T1_engine_globals.h"
+#include "T1_engineglobals.h"
 #include "T1_simd.h"
 #include "T1_clientlogic.h"
 
@@ -15,9 +15,9 @@
 extern "C" {
 #endif
 
-void macos_update_window_size(void);
+void T1_macos_update_window_size(void);
 
-static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
+static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 {
     #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     char err_msg[128];
@@ -220,76 +220,76 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 - (void)mouseMoved:(NSEvent *)event
 {
-    if (engine_globals->block_mouse) {
+    if (T1_engine_globals->block_mouse) {
         return;
     }
     
     NSPoint window_location = [event locationInWindow];
     
-    user_interactions[INTR_LAST_GPU_DATA].screen_x =
+    T1_uiinteractions[T1_INTR_LAST_GPU_DATA].screen_x =
         (float)window_location.x;
-    user_interactions[INTR_LAST_GPU_DATA].screen_y =
+    T1_uiinteractions[T1_INTR_LAST_GPU_DATA].screen_y =
         (float)window_location.y;
     
-    T1_uiinteraction_register(&user_interactions[INTR_PREVIOUS_MOUSE_MOVE]);
-    T1_uiinteraction_register(&user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
+    T1_uiinteraction_register(&T1_uiinteractions[T1_INTR_PREVIOUS_MOUSE_MOVE]);
+    T1_uiinteraction_register(&T1_uiinteractions[T1_INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
 }
 
 - (void)mouseDragged:(NSEvent *)event
 {
-    if (engine_globals->block_mouse) {
+    if (T1_engine_globals->block_mouse) {
         return;
     }
     
     NSPoint window_location = [event locationInWindow];
     
-    user_interactions[INTR_LAST_GPU_DATA].screen_x =
+    T1_uiinteractions[T1_INTR_LAST_GPU_DATA].screen_x =
         (float)window_location.x;
-    user_interactions[INTR_LAST_GPU_DATA].screen_y =
+    T1_uiinteractions[T1_INTR_LAST_GPU_DATA].screen_y =
         (float)window_location.y;
     
-    T1_uiinteraction_register(&user_interactions[INTR_PREVIOUS_MOUSE_MOVE]);
-    T1_uiinteraction_register(&user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
+    T1_uiinteraction_register(&T1_uiinteractions[T1_INTR_PREVIOUS_MOUSE_MOVE]);
+    T1_uiinteraction_register(&T1_uiinteractions[T1_INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
 }
 
 - (void)mouseDown:(NSEvent *)event
 {
-    if (engine_globals->block_mouse) {
+    if (T1_engine_globals->block_mouse) {
         return;
     }
     
-    T1_uiinteraction_register(&user_interactions[INTR_PREVIOUS_LEFTCLICK_START]);
-    user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START] =
-        user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
+    T1_uiinteraction_register(&T1_uiinteractions[T1_INTR_PREVIOUS_LEFTCLICK_START]);
+    T1_uiinteractions[T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START] =
+        T1_uiinteractions[T1_INTR_PREVIOUS_LEFTCLICK_START];
 }
 
 - (void)mouseUp:(NSEvent *)event
 {
-    if (engine_globals->block_mouse) {
+    if (T1_engine_globals->block_mouse) {
         return;
     }
     
-    T1_uiinteraction_register(&user_interactions[INTR_PREVIOUS_LEFTCLICK_END]);
-    user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END] =
-        user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
+    T1_uiinteraction_register(&T1_uiinteractions[T1_INTR_PREVIOUS_LEFTCLICK_END]);
+    T1_uiinteractions[T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END] =
+        T1_uiinteractions[T1_INTR_PREVIOUS_LEFTCLICK_END];
 }
 
 - (void)rightMouseDown:(NSEvent *)event
 {
-    if (engine_globals->block_mouse) {
+    if (T1_engine_globals->block_mouse) {
         return;
     }
     
-    T1_uiinteraction_register(&user_interactions[INTR_PREVIOUS_RIGHTCLICK_START]);
+    T1_uiinteraction_register(&T1_uiinteractions[T1_INTR_PREVIOUS_RIGHTCLICK_START]);
 }
 
 - (void)rightMouseUp:(NSEvent *)event
 {
-    if (engine_globals->block_mouse) {
+    if (T1_engine_globals->block_mouse) {
         return;
     }
     
-    T1_uiinteraction_register(&user_interactions[INTR_PREVIOUS_RIGHTCLICK_END]);
+    T1_uiinteraction_register(&T1_uiinteractions[T1_INTR_PREVIOUS_RIGHTCLICK_END]);
 }
 
 - (void)update_mouse_location {
@@ -297,11 +297,11 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 }
 
 - (void)keyDown:(NSEvent *)event {
-    T1_uiinteraction_register_keydown(apple_keycode_to_tokone_keycode(event.keyCode));
+    T1_uiinteraction_register_keydown(T1_apple_keycode_to_tokone_keycode(event.keyCode));
 }
 
 - (void)keyUp:(NSEvent *)event {
-    T1_uiinteraction_register_keyup(apple_keycode_to_tokone_keycode(event.keyCode));
+    T1_uiinteraction_register_keyup(T1_apple_keycode_to_tokone_keycode(event.keyCode));
 }
 
 - (void)scrollWheel:(NSEvent *)event {
@@ -339,7 +339,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 - (void)windowWillClose:(NSNotification *)notification {
     log_append("window will close, terminating app..\n");
     
-    shared_shutdown_application();
+    T1_appinit_shutdown();
     
     T1_clientlogic_shutdown();
     
@@ -358,7 +358,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 {
     T1_uielement_delete_all();
     T1_zsprites_to_render->size = 0;
-    engine_globals->fullscreen = true;
+    T1_engine_globals->fullscreen = true;
 }
 
 - (void)
@@ -372,12 +372,12 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     #else
     #error
     #endif
-    engine_globals->fullscreen = false;
+    T1_engine_globals->fullscreen = false;
 }
 
 - (void)windowDidMove:(NSNotification *)notification
 {
-    engineglobals_update_window_position(
+    T1_engineglobals_update_window_position(
         (float)(((NSWindow *)[notification object]).frame.origin.x),
         (float)(((NSWindow *)[notification object]).frame.origin.y));
 }
@@ -397,7 +397,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 
 - (void)windowDidResize:(NSNotification *)notification {
     
-    engineglobals_update_window_size(
+    T1_engineglobals_update_window_size(
         /* float width: */
             [window getWidth],
         /* float height */
@@ -411,14 +411,14 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 
 int main(int argc, const char * argv[]) {
     
-    gameloop_active = false;
+    T1_gameloop_active = false;
     T1_app_running = true;
     
     assert(sizeof(T1GPUzSprite) % 32 == 0);
     
     char errmsg[512];
     uint32_t success = 1;
-    init_application_before_gpu_init(
+    T1_appinit_before_gpu_init(
         &success,
         errmsg);
     
@@ -431,10 +431,10 @@ int main(int argc, const char * argv[]) {
     
     // NSScreen *screen = [[NSScreen screens] objectAtIndex:0];
     NSRect window_rect = NSMakeRect(
-        /* x: */ engine_globals->window_left,
-        /* y: */ engine_globals->window_bottom,
-        /* width: */ engine_globals->window_width,
-        /* height: */ engine_globals->window_height);
+        /* x: */ T1_engine_globals->window_left,
+        /* y: */ T1_engine_globals->window_bottom,
+        /* width: */ T1_engine_globals->window_width,
+        /* height: */ T1_engine_globals->window_height);
     
     window =
         [[NSWindowWithCustomResponder alloc]
@@ -476,7 +476,7 @@ int main(int argc, const char * argv[]) {
     // Indicate that Metal should clear all values in the depth buffer to x
     // when you create a render command encoder with the MetalKit view's
     // `currentRenderPassDescriptor` property.
-    mtk_view.clearDepth = CLEARDEPTH;
+    mtk_view.clearDepth = T1_CLEARDEPTH;
     [mtk_view setPaused: false];
     [mtk_view setNeedsDisplay: false];
     
@@ -499,8 +499,8 @@ int main(int argc, const char * argv[]) {
     
     bool32_t result = apple_gpu_init(
         /* void (*arg_funcptr_shared_gameloop_update)(GPUDataForSingleFrame *): */
-            gameloop_update_before_render_pass,
-            gameloop_update_after_render_pass,
+            T1_gameloop_update_before_render_pass,
+            T1_gameloop_update_after_render_pass,
         /* id<MTLDevice> with_metal_device: */
             metal_device_for_window,
         /* NSString *shader_lib_filepath: */
@@ -540,7 +540,7 @@ int main(int argc, const char * argv[]) {
         T1_platform_request_messagebox(errmsg2);
     } else {
         T1_platform_start_thread(
-            init_application_after_gpu_init,
+            T1_appinit_after_gpu_init,
             0);
     }
     

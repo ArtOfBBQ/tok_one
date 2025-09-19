@@ -11,7 +11,7 @@
 #include "T1_platform_layer.h"
 #include "T1_cpu_gpu_shared_types.h"
 #include "T1_lightsource.h"
-#include "T1_engine_globals.h"
+#include "T1_engineglobals.h"
 #include "T1_texture_array.h"
 #include "T1_material.h"
 #include "T1_objmodel.h"

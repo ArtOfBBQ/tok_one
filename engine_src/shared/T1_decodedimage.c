@@ -1,6 +1,6 @@
 #include "T1_decodedimage.h"
 
-uint64_t get_sum_rgba(
+uint64_t T1_decodedimage_get_sum_rgba(
     const T1DecodedImage * input)
 {
     assert(input->rgba_values_size > 0);
@@ -13,12 +13,12 @@ uint64_t get_sum_rgba(
     return return_value;
 }
 
-uint32_t get_avg_rgba(
+uint32_t T1_decodedimage_get_avg_rgba(
     const T1DecodedImage * input)
 {
     assert(input->rgba_values_size > 0);
     
-    return (uint32_t)(get_sum_rgba(input) / input->rgba_values_size);
+    return (uint32_t)(T1_decodedimage_get_sum_rgba(input) / input->rgba_values_size);
 }
 
 void overwrite_subregion(

@@ -900,8 +900,8 @@ int32_t T1_platform_gpu_get_touchable_id_at_screen_pos(
     if (
         screen_x < 0 ||
         screen_y < 0 ||
-        screen_x >= (engine_globals->window_width) ||
-        screen_y >= (engine_globals->window_height))
+        screen_x >= (T1_engine_globals->window_width) ||
+        screen_y >= (T1_engine_globals->window_height))
     {
         return -1;
     }
@@ -912,10 +912,10 @@ int32_t T1_platform_gpu_get_touchable_id_at_screen_pos(
         (uint32_t)ags->render_target_texture.height;
     
     uint32_t screen_x_adj = (uint32_t)(
-        (screen_x / engine_globals->window_width) *
+        (screen_x / T1_engine_globals->window_width) *
             rtt_width);
     uint32_t screen_y_adj = (uint32_t)(
-        (screen_y / engine_globals->window_height) *
+        (screen_y / T1_engine_globals->window_height) *
             rtt_height);
     
     if (screen_x_adj >= rtt_width ) { screen_x_adj = rtt_width;  }
@@ -1370,10 +1370,10 @@ void T1_platform_gpu_copy_locked_materials(void)
     ags->cached_viewport.originX = 0;
     ags->cached_viewport.originY = 0;
     ags->cached_viewport.width   =
-        engine_globals->window_width *
+        T1_engine_globals->window_width *
             ags->retina_scaling_factor;
     ags->cached_viewport.height  =
-        engine_globals->window_height *
+        T1_engine_globals->window_height *
             ags->retina_scaling_factor;
     assert(ags->cached_viewport.width > 0.0f);
     assert(ags->cached_viewport.height > 0.0f);
@@ -1388,20 +1388,20 @@ void T1_platform_gpu_copy_locked_materials(void)
     ags->cached_viewport.zfar    = 1.0f;
     
     ags->render_target_viewport = ags->cached_viewport;
-    ags->render_target_viewport.width /= engine_globals->pixelation_div;
-    ags->render_target_viewport.height /= engine_globals->pixelation_div;
+    ags->render_target_viewport.width /= T1_engine_globals->pixelation_div;
+    ags->render_target_viewport.height /= T1_engine_globals->pixelation_div;
     
     *gpu_shared_data_collection->locked_pjc =
-        engine_globals->project_consts;
+        T1_engine_globals->project_consts;
     
     MTLTextureDescriptor * touch_id_texture_descriptor =
         [MTLTextureDescriptor new];
     touch_id_texture_descriptor.width =
         (unsigned long)ags->cached_viewport.width /
-            engine_globals->pixelation_div;
+            T1_engine_globals->pixelation_div;
     touch_id_texture_descriptor.height =
         (unsigned long)ags->cached_viewport.height /
-            engine_globals->pixelation_div;
+            T1_engine_globals->pixelation_div;
     touch_id_texture_descriptor.pixelFormat = ags->pixel_format_renderpass1;
     touch_id_texture_descriptor.mipmapLevelCount = 1;
     touch_id_texture_descriptor.storageMode = MTLStorageModePrivate;
@@ -1549,7 +1549,7 @@ void T1_platform_gpu_copy_locked_materials(void)
     
     #if T1_SHADOWS_ACTIVE == T1_ACTIVE
     if (
-        engine_globals->draw_triangles &&
+        T1_engine_globals->draw_triangles &&
         diamond_verts_size > 0 &&
         gpu_shared_data_collection->triple_buffers[ags->frame_i].
             postproc_consts->shadowcaster_i <
@@ -1858,7 +1858,7 @@ void T1_platform_gpu_copy_locked_materials(void)
     #error
     #endif
     
-    if (engine_globals->draw_triangles && diamond_verts_size > 0) {
+    if (T1_engine_globals->draw_triangles && diamond_verts_size > 0) {
         assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);
         assert(diamond_verts_size % 3 == 0);
         [render_pass_1_draw_triangles_encoder
@@ -1881,7 +1881,7 @@ void T1_platform_gpu_copy_locked_materials(void)
         gpu_shared_data_collection->
             triple_buffers[ags->frame_i].first_alphablend_i;
     
-    if (engine_globals->draw_triangles && alphablend_verts_size > 0) {
+    if (T1_engine_globals->draw_triangles && alphablend_verts_size > 0) {
         //        assert(alphablend_verts_size < MAX_VERTICES_PER_BUFFER);
         //        assert(alphablend_verts_size % 3 == 0);
         [render_pass_1_draw_triangles_encoder setRenderPipelineState:

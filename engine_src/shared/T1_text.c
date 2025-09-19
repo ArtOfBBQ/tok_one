@@ -300,21 +300,21 @@ void text_request_label_offset_around(
             T1_zsprite_request_next(&letter);
             T1_zsprite_construct_quad_around(
                 /* const float left_x: */
-                    engineglobals_screenspace_x_to_x(
+                    T1_engineglobals_screenspace_x_to_x(
                         mid_x_pixelspace,
                         z),
                 /* const float bottom_y */
-                    engineglobals_screenspace_y_to_y(
+                    T1_engineglobals_screenspace_y_to_y(
                         mid_y_pixelspace,
                         z),
                 /* const float z: */
                     z,
                 /* const float width: */
-                    engineglobals_screenspace_width_to_width(
+                    T1_engineglobals_screenspace_width_to_width(
                         font_settings->font_height,
                         z),
                 /* const float height: */
-                    engineglobals_screenspace_height_to_height(
+                    T1_engineglobals_screenspace_height_to_height(
                         font_settings->font_height,
                         z),
                 /* recipient: */
@@ -339,13 +339,13 @@ void text_request_label_offset_around(
             }
             
             letter.gpu_data->xyz_offset[0] =
-                engineglobals_screenspace_width_to_width(
+                T1_engineglobals_screenspace_width_to_width(
                     (cur_x_offset_pixelspace +
                         font_settings->extra_offset_xy[0] +
                             get_left_side_bearing(text_to_draw[j])),
                     z);
             letter.gpu_data->xyz_offset[1] =
-                engineglobals_screenspace_height_to_height(
+                T1_engineglobals_screenspace_height_to_height(
                     (cur_y_offset_pixelspace -
                         get_y_offset(text_to_draw[j]) -
                         (font_settings->font_height * 0.5f)) +
@@ -445,9 +445,9 @@ void text_request_label_renderable(
     
     T1zSpriteRequest letter;
     
-    float letter_width = engineglobals_screenspace_width_to_width(
+    float letter_width = T1_engineglobals_screenspace_width_to_width(
         font_settings->font_height, z);
-    float letter_height = engineglobals_screenspace_height_to_height(
+    float letter_height = T1_engineglobals_screenspace_height_to_height(
         font_settings->font_height, z);
     
     while (text_to_draw[i] != '\0') {
@@ -482,11 +482,11 @@ void text_request_label_renderable(
         T1_zsprite_request_next(&letter);
         zsprite_construct_quad(
             /* const float left_x: */
-                engineglobals_screenspace_x_to_x(
+                T1_engineglobals_screenspace_x_to_x(
                     left_pixelspace,
                     z),
             /* const float bottom_y: */
-                engineglobals_screenspace_y_to_y(
+                T1_engineglobals_screenspace_y_to_y(
                     top_pixelspace - font_settings->font_height,
                     z),
             /* const flota z: */
@@ -519,11 +519,11 @@ void text_request_label_renderable(
         }
         
         letter.gpu_data->xyz_offset[0] =
-            engineglobals_screenspace_width_to_width(
+            T1_engineglobals_screenspace_width_to_width(
                 cur_x_offset + get_left_side_bearing(
                     text_to_draw[i]), z);
         letter.gpu_data->xyz_offset[1] =
-            engineglobals_screenspace_height_to_height(
+            T1_engineglobals_screenspace_height_to_height(
                 cur_y_offset - get_y_offset(
                     text_to_draw[i]), z);
         
@@ -542,7 +542,7 @@ void text_request_label_renderable(
 
 void text_request_debug_text(const char * text)
 {
-    T1_zsprite_delete(DEBUG_TEXT_OBJECT_ID);
+    T1_zsprite_delete(T1_DEBUG_TEXT_ZSPRITE_ID);
     
     font_settings->font_height = 16.0f;
     font_settings->mat.ambient_rgb[0] = 1.0f;
@@ -554,7 +554,7 @@ void text_request_debug_text(const char * text)
     font_settings->touchable_id = -1;
     text_request_label_renderable(
         /* with_id               : */
-            DEBUG_TEXT_OBJECT_ID,
+            T1_DEBUG_TEXT_ZSPRITE_ID,
         /* char * text_to_draw   : */
             text,
         /* float left_pixelspace : */
@@ -564,7 +564,7 @@ void text_request_debug_text(const char * text)
         /* z                     : */
             0.05f,
         /* float max_width       : */
-            engine_globals->window_width);
+            T1_engine_globals->window_width);
 }
 
 #define FPS_FRAMES_MAX 10
@@ -612,7 +612,7 @@ void text_request_fps_counter(
         fps_string[12] = '9';
     }
     
-    T1_zsprite_delete(FPS_COUNTER_OBJECT_ID);
+    T1_zsprite_delete(T1_FPS_COUNTER_ZSPRITE_ID);
     
     font_settings->font_height = 16.0f;
     font_settings->mat.ambient_rgb[0] = 1.0f;
@@ -628,7 +628,7 @@ void text_request_fps_counter(
     font_settings->touchable_id = -1;
     text_request_label_renderable(
         /* with_id               : */
-            FPS_COUNTER_OBJECT_ID,
+            T1_FPS_COUNTER_ZSPRITE_ID,
         /* char * text_to_draw   : */
             fps_string,
         /* float left_pixelspace : */
@@ -636,15 +636,15 @@ void text_request_fps_counter(
         /* float top_pixelspace  : */
             30.0f,
         /* z                     : */
-            engine_globals->project_consts.znear + 0.0001f,
+            T1_engine_globals->project_consts.znear + 0.0001f,
         /* float max_width       : */
-            engine_globals->window_width);
+            T1_engine_globals->window_width);
 }
 
 void text_request_top_touchable_id(
     int32_t top_touchable_id)
 {
-    T1_zsprite_delete(FPS_COUNTER_OBJECT_ID);
+    T1_zsprite_delete(T1_FPS_COUNTER_ZSPRITE_ID);
     
     char fps_string[512];
     T1_std_strcpy_cap(fps_string, 512, "Top touchable id: ");
@@ -676,7 +676,7 @@ void text_request_top_touchable_id(
     
     text_request_label_renderable(
         /* with_id               : */
-            FPS_COUNTER_OBJECT_ID,
+            T1_FPS_COUNTER_ZSPRITE_ID,
         /* char * text_to_draw   : */
             fps_string,
         /* float left_pixelspace : */
@@ -684,7 +684,7 @@ void text_request_top_touchable_id(
         /* float top_pixelspace  : */
             30.0f,
         /* z                     : */
-            engine_globals->project_consts.znear + 0.0001f,
+            T1_engine_globals->project_consts.znear + 0.0001f,
         /* float max_width       : */
-            engine_globals->window_width);
+            T1_engine_globals->window_width);
 }

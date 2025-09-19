@@ -13,7 +13,7 @@
 #include "T1_text.h"
 #include "T1_uielement.h"
 #include "T1_uiinteraction.h"
-#include "T1_engine_globals.h"
+#include "T1_engineglobals.h"
 #include "T1_scheduled_animations.h"
 #include "T1_renderer.h"
 #include "T1_gameloop.h"
@@ -29,12 +29,12 @@ extern "C" {
 
 extern uint32_t block_drawinmtkview;
 
-void init_application_before_gpu_init(
+void T1_appinit_before_gpu_init(
     bool32_t * success,
     char * error_message);
-void init_application_after_gpu_init(int32_t throwaway_threadarg);
+void T1_appinit_after_gpu_init(int32_t throwaway_threadarg);
 
-void shared_shutdown_application(void);
+void T1_appinit_shutdown(void);
 
 #ifdef __cplusplus
 }

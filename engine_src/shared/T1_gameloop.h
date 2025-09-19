@@ -1,9 +1,9 @@
-#ifndef GAMELOOP_H
-#define GAMELOOP_H
+#ifndef T1_GAMELOOP_H
+#define T1_GAMELOOP_H
 
 #include "T1_terminal.h"
 #include "T1_logger.h"
-#include "T1_engine_globals.h"
+#include "T1_engineglobals.h"
 #include "T1_cpu_gpu_shared_types.h"
 #include "T1_uiinteraction.h"
 #include "T1_platform_layer.h"
@@ -21,18 +21,18 @@
 extern "C" {
 #endif
 
-extern bool32_t gameloop_active;
-extern bool32_t loading_textures;
+extern bool32_t T1_gameloop_active;
+extern bool32_t T1_loading_textures;
 
-void gameloop_init(void);
+void T1_gameloop_init(void);
 
-void gameloop_update_before_render_pass(T1GPUFrame * frame_data);
-void gameloop_update_after_render_pass(void);
+void T1_gameloop_update_before_render_pass(T1GPUFrame * frame_data);
+void T1_gameloop_update_after_render_pass(void);
 // client_logic_after_copy
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // GAMELOOP_H
+#endif // T1_GAMELOOP_H
 

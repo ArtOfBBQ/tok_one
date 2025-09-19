@@ -50,7 +50,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_collision.c"
 #include "T1_zspriteid.c"
 #include "T1_audio.c"
-#include "T1_engine_globals.c"
+#include "T1_engineglobals.c"
 #include "T1_triangle.c"
 #include "T1_material.c"
 #include "T1_lightsource.c"
@@ -86,5 +86,5 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "T1_terminal.c" // requires clientlogic
 #include "T1_renderer.c" // requires zpoly & part
 #include "T1_gameloop.c" // requires renderer
-#include "T1_init_application.c" // requires gameloop
+#include "T1_appinit.c" // requires gameloop
 #include "T1_macos_main.m"
