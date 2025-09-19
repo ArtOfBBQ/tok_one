@@ -32,11 +32,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #define DECODE_BMP_IGNORE_ASSERTS
 #define COMMON_SILENCE
 #define LOGGER_SILENCE
-#define T1_STD_ASSERTS_ACTIVE 1
-#define T1_LOGGER_ASSERTS_ACTIVE 1
 #else
-#define T1_STD_ASSERTS_ACTIVE 0
-#define T1_LOGGER_ASSERTS_ACTIVE 0
 #endif
 
 // 1. Files that don't know about the platform layer

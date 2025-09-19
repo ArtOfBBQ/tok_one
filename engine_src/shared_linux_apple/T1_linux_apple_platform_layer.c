@@ -8,7 +8,7 @@ typedef struct OSMutexID {
 static OSMutexID * mutexes = NULL;
 static uint32_t next_mutex_id = 0;
 
-void platform_layer_init(
+void T1_platform_init(
     void ** unmanaged_memory_store,
     const uint32_t aligned_to)
 {
@@ -25,7 +25,7 @@ void platform_layer_init(
         ((char *)*unmanaged_memory_store) + size);
 }
 
-uint32_t platform_init_mutex_and_return_id(void) {
+uint32_t T1_platform_init_mutex_and_return_id(void) {
     
     log_assert(next_mutex_id + 1 < T1_MUTEXES_SIZE);
     log_assert(!mutexes[next_mutex_id].initialized);
@@ -51,7 +51,7 @@ uint32_t platform_init_mutex_and_return_id(void) {
 /*
 Attempt to lock a mutex and return True if succesful
 */
-bool32_t platform_mutex_trylock(const uint32_t mutex_id)
+bool32_t T1_platform_mutex_trylock(const uint32_t mutex_id)
 {
     /*
     If successful, pthread_mutex_trylock() will return zero.
@@ -78,7 +78,7 @@ bool32_t platform_mutex_trylock(const uint32_t mutex_id)
     return return_val == 0;
 }
 
-void platform_assert_mutex_locked(const uint32_t mutex_id) {
+void T1_platform_assert_mutex_locked(const uint32_t mutex_id) {
     #if LOGGER_IGNORE_ASSERTS
     int return_val = pthread_mutex_trylock(&mutexes[mutex_id].mutex);
     log_assert(return_val == EBUSY);
@@ -91,7 +91,7 @@ void platform_assert_mutex_locked(const uint32_t mutex_id) {
 returns whether or not a mutex was locked, and locks the mutex if it
 was unlocked
 */
-void platform_mutex_lock(
+void T1_platform_mutex_lock(
     const uint32_t mutex_id)
 {
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
@@ -122,7 +122,7 @@ void platform_mutex_lock(
     return;
 }
 
-void platform_mutex_unlock(const uint32_t mutex_id) {
+void T1_platform_mutex_unlock(const uint32_t mutex_id) {
     log_assert(mutex_id < T1_MUTEXES_SIZE);
     log_assert(mutexes[mutex_id].initialized);
     

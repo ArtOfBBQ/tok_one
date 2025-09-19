@@ -1,15 +1,16 @@
-#define PLATFORM_NS_FILEMANAGER
-
 #import "Appkit/Appkit.h"
 
 #include "T1_platform_layer.h"
 
-void platform_get_writables_path(
+void T1_platform_get_writables_path(
     char * recipient,
     const uint32_t recipient_size)
 {
-    #ifdef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     (void)recipient_size;
+    #elif T1_STD_ASSERTS_INACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     NSArray * paths = NSSearchPathForDirectoriesInDomains(
@@ -27,10 +28,10 @@ void platform_get_writables_path(
     T1_std_strcat_cap(recipient, recipient_size, "/");
     T1_std_strcat_cap(recipient, recipient_size, APPLICATION_NAME);
     
-    platform_mkdir_if_not_exist(recipient);
+    T1_platform_mkdir_if_not_exist(recipient);
 }
 
-void * platform_malloc_unaligned_block(
+void * T1_platform_malloc_unaligned_block(
     const uint64_t size)
 {
     void * return_value = mmap(
@@ -54,14 +55,17 @@ void * platform_malloc_unaligned_block(
     return return_value;
 }
 
-void platform_close_application(void) {
+void T1_platform_close_app(void) {
     [NSApp terminate: nil];
 }
 
-void platform_get_cwd(char * recipient, const uint32_t recipient_size) {
+void T1_platform_get_cwd(char * recipient, const uint32_t recipient_size) {
     
-    #ifdef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     (void)recipient_size;
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     NSString * cwd = [[NSFileManager defaultManager] currentDirectoryPath];
@@ -71,15 +75,15 @@ void platform_get_cwd(char * recipient, const uint32_t recipient_size) {
     T1_std_strcpy_cap(recipient, recipient_size, return_value);
 }
 
-float platform_x_to_x(const float x) {
+float T1_platform_x_to_x(const float x) {
     return x;
 }
 
-float platform_y_to_y(const float y) {
+float T1_platform_y_to_y(const float y) {
     return y;
 }
 
-void platform_open_folder_in_window_if_possible(
+void T1_platform_open_folder_in_window_if_possible(
     const char * folderpath)
 {
     log_append("Trying to open folder: ");
@@ -94,4 +98,3 @@ void platform_open_folder_in_window_if_possible(
     NSURL * folderURL = [NSURL fileURLWithPath: folderpath_ns];
     [[NSWorkspace sharedWorkspace] openURL: folderURL];
 }
-

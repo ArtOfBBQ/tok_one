@@ -41,7 +41,7 @@ void T1_scheduled_animations_init(void)
         log_assert(scheduled_animations[i].deleted);
     }
     
-    request_scheduled_anims_mutex_id = platform_init_mutex_and_return_id();
+    request_scheduled_anims_mutex_id = T1_platform_init_mutex_and_return_id();
 }
 
 static void construct_scheduled_animationA(
@@ -61,7 +61,7 @@ static void construct_scheduled_animationA(
 T1ScheduledAnimation * T1_scheduled_animations_request_next(
     bool32_t endpoints_not_deltas)
 {
-    platform_mutex_lock(request_scheduled_anims_mutex_id);
+    T1_platform_mutex_lock(request_scheduled_anims_mutex_id);
     log_assert(scheduled_animations_size < SCHEDULED_ANIMATIONS_ARRAYSIZE);
     T1ScheduledAnimation * return_value = NULL;
     
@@ -101,7 +101,7 @@ T1ScheduledAnimation * T1_scheduled_animations_request_next(
         return_value->endpoints_not_deltas = endpoints_not_deltas;
     }
     
-    platform_mutex_unlock(request_scheduled_anims_mutex_id);
+    T1_platform_mutex_unlock(request_scheduled_anims_mutex_id);
     
     return return_value;
 }
@@ -337,7 +337,7 @@ static void T1_scheduled_animations_get_projected_final_position_for(
 }
 
 void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
-    platform_mutex_lock(request_scheduled_anims_mutex_id);
+    T1_platform_mutex_lock(request_scheduled_anims_mutex_id);
     
     log_assert(to_commit->duration_us > 0);
     
@@ -379,7 +379,7 @@ void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
         
         if (first_zp_i < 0) {
             to_commit->deleted = true;
-            platform_mutex_unlock(request_scheduled_anims_mutex_id);
+            T1_platform_mutex_unlock(request_scheduled_anims_mutex_id);
             return;
         }
         log_assert(first_zp_i < (int32_t)zsprites_to_render->size);
@@ -432,7 +432,7 @@ void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
     
     log_assert(to_commit->committed);
     log_assert(!to_commit->deleted);
-    platform_mutex_unlock(request_scheduled_anims_mutex_id);
+    T1_platform_mutex_unlock(request_scheduled_anims_mutex_id);
 }
 
 void T1_scheduled_animations_request_evaporate_and_destroy(
@@ -657,7 +657,7 @@ void T1_scheduled_animations_request_fade_to(
 
 void T1_scheduled_animations_resolve(void)
 {
-    platform_mutex_lock(request_scheduled_anims_mutex_id);
+    T1_platform_mutex_lock(request_scheduled_anims_mutex_id);
     
     for (
         int32_t animation_i = (int32_t)scheduled_animations_size - 1;
@@ -770,7 +770,7 @@ void T1_scheduled_animations_resolve(void)
         }
     }
     
-    platform_mutex_unlock(request_scheduled_anims_mutex_id);
+    T1_platform_mutex_unlock(request_scheduled_anims_mutex_id);
 }
 
 void T1_scheduled_animations_request_dud_dance(
@@ -809,17 +809,17 @@ void T1_scheduled_animations_request_bump(
 
 void T1_scheduled_animations_delete_all(void)
 {
-    platform_mutex_lock(request_scheduled_anims_mutex_id);
+    T1_platform_mutex_lock(request_scheduled_anims_mutex_id);
     for (uint32_t i = 0; i < scheduled_animations_size; i++) {
         scheduled_animations[i].deleted = true;
     }
-    platform_mutex_unlock(request_scheduled_anims_mutex_id);
+    T1_platform_mutex_unlock(request_scheduled_anims_mutex_id);
 }
 
 void T1_scheduled_animations_delete_endpoint_anims_targeting(
     const int32_t object_id)
 {
-    platform_mutex_lock(request_scheduled_anims_mutex_id);
+    T1_platform_mutex_lock(request_scheduled_anims_mutex_id);
     for (uint32_t i = 0; i < scheduled_animations_size; i++) {
         if (
             !scheduled_animations[i].deleted &&
@@ -829,13 +829,13 @@ void T1_scheduled_animations_delete_endpoint_anims_targeting(
             scheduled_animations[i].deleted = true;
         }
     }
-    platform_mutex_unlock(request_scheduled_anims_mutex_id);
+    T1_platform_mutex_unlock(request_scheduled_anims_mutex_id);
 }
 
 void T1_scheduled_animations_delete_all_anims_targeting(
     const int32_t object_id)
 {
-    platform_mutex_lock(request_scheduled_anims_mutex_id);
+    T1_platform_mutex_lock(request_scheduled_anims_mutex_id);
     for (uint32_t i = 0; i < scheduled_animations_size; i++) {
         if (
             !scheduled_animations[i].deleted &&
@@ -845,7 +845,7 @@ void T1_scheduled_animations_delete_all_anims_targeting(
             scheduled_animations[i].deleted = true;
         }
     }
-    platform_mutex_unlock(request_scheduled_anims_mutex_id);
+    T1_platform_mutex_unlock(request_scheduled_anims_mutex_id);
 }
 
 void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(

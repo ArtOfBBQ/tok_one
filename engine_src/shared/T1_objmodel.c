@@ -1309,9 +1309,9 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
         return -1;
     }
     
-    FileBuffer obj_file_buf;
+    T1FileBuffer obj_file_buf;
     obj_file_buf.size_without_terminator =
-        platform_get_resource_size(obj_filename);
+        T1_platform_get_resource_size(obj_filename);
     if (obj_file_buf.size_without_terminator < 1) {
         log_append("Early exit from objmodel_new_mesh_id_from_resources(), obj resource: ");
         log_append(obj_filename);
@@ -1322,7 +1322,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
         obj_file_buf.size_without_terminator + 1);
     obj_file_buf.good = false;
     
-    platform_read_resource_file(
+    T1_platform_read_resource_file(
         /* char * filename: */
             obj_filename,
         /* FileBuffer *out_preallocatedbuffer: */
@@ -1336,13 +1336,13 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
         return -1;
     }
     
-    FileBuffer mtl_file_buf;
+    T1FileBuffer mtl_file_buf;
     if (mtl_filename == NULL || mtl_filename[0] == '\0') {
         mtl_file_buf.contents = NULL;
         mtl_file_buf.size_without_terminator = 0;
     } else {
         mtl_file_buf.size_without_terminator =
-            platform_get_resource_size(mtl_filename);
+            T1_platform_get_resource_size(mtl_filename);
         
         if (mtl_file_buf.size_without_terminator < 1) {
             log_append("Early exit from objmodel_new_mesh_id_from_resources(), mtl resource: ");
@@ -1356,7 +1356,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
                 mtl_file_buf.size_without_terminator + 1);
         mtl_file_buf.good = false;
         
-        platform_read_resource_file(
+        T1_platform_read_resource_file(
             /* char * filename: */
                 mtl_filename,
             /* FileBuffer *out_preallocatedbuffer: */

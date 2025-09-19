@@ -867,7 +867,7 @@ static float get_ds_height(
 #error
 #endif
 
-void platform_gpu_get_device_name(
+void T1_platform_gpu_get_device_name(
     char * recipient,
     const uint32_t recipient_cap)
 {
@@ -887,13 +887,13 @@ void platform_gpu_get_device_name(
         device_name_cstr);
 }
 
-uint32_t platform_get_cpu_logical_core_count(void) {
+uint32_t T1_platform_get_cpu_logical_core_count(void) {
     NSUInteger core_count = [
         [NSProcessInfo processInfo] activeProcessorCount];
     return (core_count > 0) ? (unsigned int)core_count : 1;
 }
 
-int32_t platform_gpu_get_touchable_id_at_screen_pos(
+int32_t T1_platform_gpu_get_touchable_id_at_screen_pos(
     const float screen_x,
     const float screen_y)
 {
@@ -951,7 +951,7 @@ int32_t platform_gpu_get_touchable_id_at_screen_pos(
     return final_id;
 }
 
-void platform_gpu_init_texture_array(
+void T1_platform_gpu_init_texture_array(
     const int32_t texture_array_i,
     const uint32_t num_images,
     const uint32_t single_image_width,
@@ -990,7 +990,7 @@ void platform_gpu_init_texture_array(
 }
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-void platform_gpu_fetch_rgba_at(
+void T1_platform_gpu_fetch_rgba_at(
     const int32_t texture_array_i,
     const int32_t texture_i,
     uint8_t * rgba_recipient,
@@ -1091,7 +1091,7 @@ void platform_gpu_fetch_rgba_at(
 #endif
 
 #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
-void platform_gpu_generate_mipmaps_for_texture_array(
+void T1_platform_gpu_generate_mipmaps_for_texture_array(
     const int32_t texture_array_i)
 {
     // no mipmaps for font
@@ -1126,7 +1126,7 @@ void platform_gpu_generate_mipmaps_for_texture_array(
 #error
 #endif
 
-void platform_gpu_push_texture_slice_and_free_rgba_values(
+void T1_platform_gpu_push_texture_slice_and_free_rgba_values(
     const int32_t texture_array_i,
     const int32_t texture_i,
     const uint32_t parent_texture_array_images_size,
@@ -1218,7 +1218,7 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
 }
 
 #if T1_TEXTURES_ACTIVE
-void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
+void T1_platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     const int32_t texture_array_i,
     const int32_t texture_i,
     const uint32_t parent_texture_array_images_size,
@@ -1305,7 +1305,7 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
 }
 #endif
 
-void platform_gpu_copy_locked_vertices(void)
+void T1_platform_gpu_copy_locked_vertices(void)
 {
     gpu_shared_data_collection->locked_vertices_size = all_mesh_vertices->size;
     
@@ -1334,7 +1334,7 @@ void platform_gpu_copy_locked_vertices(void)
     [combuf commit];
 }
 
-void platform_gpu_copy_locked_materials(void)
+void T1_platform_gpu_copy_locked_materials(void)
 {
     gpu_shared_data_collection->const_mats_size = all_mesh_materials->size;
     
@@ -2186,7 +2186,7 @@ void platform_gpu_copy_locked_materials(void)
 }
 @end
 
-void platform_gpu_update_viewport(void)
+void T1_platform_gpu_update_viewport(void)
 {
     ags->viewport_set = false;
     [apple_gpu_delegate updateViewport];

@@ -320,7 +320,7 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 
 NSWindowWithCustomResponder * window = NULL;
 
-void platform_update_mouse_location(void) {
+void T1_platform_update_mouse_location(void) {
     [window update_mouse_location];
 }
 
@@ -350,7 +350,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
         log_append("ERROR - failed to store the log file on app close..\n");
     }
     
-    platform_close_application();
+    T1_platform_close_app();
 }
 
 - (void)
@@ -389,8 +389,8 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     //    engineglobals_started_window_resize(
     //        platform_get_current_time_microsecs());
     
-    platform_layer_start_window_resize(
-        platform_get_current_time_us());
+    T1_platform_layer_start_window_resize(
+        T1_platform_get_current_time_us());
     
     return frameSize;
 }
@@ -403,7 +403,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
         /* float height */
             [window getHeight],
         /* uint64_t at_timestamp_us: */
-            platform_get_current_time_us());
+            T1_platform_get_current_time_us());
     
     [apple_gpu_delegate updateViewport];
 }
@@ -486,7 +486,7 @@ int main(int argc, const char * argv[]) {
     [mtk_view setDelegate: apple_gpu_delegate];
     
     char shader_lib_path_cstr[2000];
-    platform_get_resources_path(shader_lib_path_cstr, 2000);
+    T1_platform_get_resources_path(shader_lib_path_cstr, 2000);
     T1_std_strcat_cap(
         shader_lib_path_cstr,
         1000,
@@ -537,9 +537,9 @@ int main(int argc, const char * argv[]) {
             512,
             errmsg);
         
-        platform_request_messagebox(errmsg2);
+        T1_platform_request_messagebox(errmsg2);
     } else {
-        platform_start_thread(
+        T1_platform_start_thread(
             init_application_after_gpu_init,
             0);
     }
@@ -558,7 +558,7 @@ int main(int argc, const char * argv[]) {
     }
 }
 
-void platform_request_messagebox(const char * message) {
+void T1_platform_request_messagebox(const char * message) {
     NSAlert * alert = [[NSAlert alloc] init];
     NSString * NSmsg = [NSString
         stringWithCString:message
@@ -567,13 +567,13 @@ void platform_request_messagebox(const char * message) {
     [alert runModal];
 }
 
-void platform_enter_fullscreen(void) {
+void T1_platform_enter_fullscreen(void) {
     if ((window.styleMask & NSWindowStyleMaskFullScreen) == 0) {
         [window toggleFullScreen: window];
     }
 }
 
-void platform_toggle_fullscreen(void) {
+void T1_platform_toggle_fullscreen(void) {
     [window toggleFullScreen: window];
 }
 

@@ -365,9 +365,14 @@ static void client_handle_keypresses(
         keypress_map[TOK_KEY_T] = false;
         
         if (testswitch) {
+            #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
             T1_scheduled_animations_request_evaporate_and_destroy(
                 teapot_object_ids[0],
                 900000);
+            #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+            #else
+            #error
+            #endif
         } else {
             request_teapots();
         }
@@ -377,7 +382,12 @@ static void client_handle_keypresses(
     if (keypress_map[TOK_KEY_P] == true) {
         keypress_map[TOK_KEY_P] = false;
         
+        #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
         T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(teapot_object_ids[0], testswitch ? 1.0f : 0.0f);
+        #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
         testswitch = !testswitch;
     }
     
@@ -405,12 +415,15 @@ void client_logic_update(uint64_t microseconds_elapsed)
             user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
                 touchable_id_pierce == 5)
         {
-            #if SCHEDULED_ANIMS_ACTIVE
+            #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
             T1_scheduled_animations_request_bump(
                 /* const int32_t object_id: */
                     20,
                 /* const uint32_t wait: */
                     0);
+            #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+            #else
+            #error
             #endif
         }
     }

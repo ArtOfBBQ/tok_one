@@ -10,7 +10,7 @@ static void construct_lineparticle_effect_no_zpoly(
 {
     to_construct->random_seed =
         (uint64_t)tok_rand_at_i(
-            platform_get_current_time_us() %
+            T1_platform_get_current_time_us() %
                 RANDOM_SEQUENCE_SIZE) % 75;
     to_construct->elapsed = 0;
     to_construct->wait_first = 0;

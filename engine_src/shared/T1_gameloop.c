@@ -167,7 +167,7 @@ void gameloop_update_before_render_pass(
     log_assert(frame_data->camera != NULL);
     
     engine_globals->this_frame_timestamp_us =
-        platform_get_current_time_us();
+        T1_platform_get_current_time_us();
     
     if (gameloop_previous_time < 1) {
         gameloop_previous_time = engine_globals->this_frame_timestamp_us;
@@ -228,7 +228,7 @@ void gameloop_update_before_render_pass(
             
             engineglobals_init();
             
-            platform_gpu_update_viewport();
+            T1_platform_gpu_update_viewport();
             
             #if T1_TERMINAL_ACTIVE == T1_ACTIVE
             terminal_redraw_backgrounds();
@@ -251,7 +251,7 @@ void gameloop_update_before_render_pass(
         #error "T1_SCHEDULED_ANIMS_ACTIVE undefined"
         #endif
         
-        platform_update_mouse_location();
+        T1_platform_update_mouse_location();
         
         // handle timed occlusions
         for (uint32_t zs_i = 0; zs_i < zsprites_to_render->size; zs_i++) {
@@ -341,7 +341,7 @@ void gameloop_update_after_render_pass(void) {
     
     user_interactions
         [INTR_LAST_GPU_DATA].touchable_id_top =
-        platform_gpu_get_touchable_id_at_screen_pos(
+        T1_platform_gpu_get_touchable_id_at_screen_pos(
             /* const int screen_x: */
                 user_interactions[INTR_LAST_GPU_DATA].
                     screen_x,
@@ -354,6 +354,6 @@ void gameloop_update_after_render_pass(void) {
     
     if (engine_globals->upcoming_fullscreen_request) {
         engine_globals->upcoming_fullscreen_request = false;
-        platform_enter_fullscreen();
+        T1_platform_enter_fullscreen();
     }
 }

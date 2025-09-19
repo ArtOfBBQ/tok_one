@@ -17,7 +17,7 @@ void construct_interaction(Interaction * to_construct) {
 
 void register_interaction(Interaction * touch_record)
 {
-    uint64_t timestamp = platform_get_current_time_us();
+    uint64_t timestamp = T1_platform_get_current_time_us();
     
     touch_record->screen_x =
         user_interactions[INTR_LAST_GPU_DATA].screen_x;

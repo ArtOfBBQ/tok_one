@@ -19,12 +19,14 @@
 #define log_append_uint(num)
 #endif
 
-#if T1_LOGGER_ASSERTS_ACTIVE
+#if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
 #include <stdio.h>
 #include <assert.h>
 #define log_assert(condition) internal_log_assert(condition, #condition, __FILE__, __LINE__, __func__)
-#else
+#elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
 #define log_assert(condition)
+#else
+#error
 #endif
 
 #ifdef __cplusplus

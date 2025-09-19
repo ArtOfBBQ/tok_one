@@ -12,23 +12,23 @@ static void load_obj_basemodel(
     char writables_path[256];
     writables_path[0] = '\0';
     
-    platform_get_writables_path(
+    T1_platform_get_writables_path(
         /* char * recipient: */
             writables_path,
         /* const uint32_t recipient_size: */
             256);
     
-    platform_open_folder_in_window_if_possible(writables_path);
+    T1_platform_open_folder_in_window_if_possible(writables_path);
     
     char dir_sep[4];
-    platform_get_directory_separator(dir_sep);
+    T1_platform_get_directory_separator(dir_sep);
     
     char writables_filepath[256];
     T1_std_strcpy_cap(writables_filepath, 256, writables_path);
     T1_std_strcat_cap(writables_filepath, 256, dir_sep);
     T1_std_strcat_cap(writables_filepath, 256, "basemodel.obj");
     
-    if (!platform_file_exists(writables_filepath)) {
+    if (!T1_platform_file_exists(writables_filepath)) {
         T1_std_strcpy_cap(
             error_message,
             128,
@@ -38,13 +38,13 @@ static void load_obj_basemodel(
         return;
     }
     
-    FileBuffer buffer;
+    T1FileBuffer buffer;
     buffer.good = 0;
-    buffer.size_without_terminator = platform_get_filesize(writables_filepath);
+    buffer.size_without_terminator = T1_platform_get_filesize(writables_filepath);
     buffer.contents = T1_mem_malloc_from_managed(
         buffer.size_without_terminator+1);
     
-    platform_read_file(
+    T1_platform_read_file(
         /* const char * filepath: */
             writables_filepath,
         /* FileBuffer *out_preallocatedbuffer: */
@@ -59,7 +59,7 @@ static void load_obj_basemodel(
             /* const char * mtl_text: */
                 NULL);
         
-        platform_gpu_copy_locked_vertices();
+        T1_platform_gpu_copy_locked_vertices();
         T1_particle_effects[0].zpolygon_cpu.mesh_id = base_mesh_id;
     } else {
         T1_std_strcpy_cap(
@@ -698,7 +698,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
 {
     client_handle_keypresses(microseconds_elapsed);
     
-    #if T1_SCHEDULED_ANIMS_ACTIVE
+    #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
     float new_x =
         engine_globals->window_width - (pds->slider_width / 2) - 15.0f;
     float new_z = 0.75f;
@@ -752,6 +752,9 @@ void client_logic_update(uint64_t microseconds_elapsed)
         anim->duration_us = 60000;
         T1_scheduled_animations_commit(anim);
     }
+    #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif // T1_SCHEDULED_ANIMS_ACTIVE
 }
 
@@ -799,7 +802,7 @@ static void load_texture(const char * writables_filename) {
         pds->editing->zpolygon_gpu.base_mat.texturearray_i = tex.array_i;
         pds->editing->zpolygon_gpu.base_mat.texture_i = tex.slice_i;
         
-        #if T1_SCHEDULED_ANIMS_ACTIVE
+        #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
         float tempquad_z = 0.9f;
         zSpriteRequest temp_quad;
         zsprite_request_next(&temp_quad);
@@ -827,6 +830,9 @@ static void load_texture(const char * writables_filename) {
         fade->gpu_polygon_vals.alpha = 0.0f;
         fade->affected_zsprite_id = temp_quad.cpu_data->zsprite_id;
         T1_scheduled_animations_commit(fade);
+        #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif // T1_SCHEDULED_ANIMS_ACTIVE
         
     } else {
@@ -856,14 +862,14 @@ void client_logic_evaluate_terminal_command(
         char writables_path[256];
         writables_path[0] = '\0';
         
-        platform_get_writables_path(
+        T1_platform_get_writables_path(
             /* char * recipient: */
                 writables_path,
             /* const uint32_t recipient_size: */
                 256);
         
         char dir_sep[4];
-        platform_get_directory_separator(dir_sep);
+        T1_platform_get_directory_separator(dir_sep);
         
         char writables_filepath[256];
         
@@ -871,7 +877,7 @@ void client_logic_evaluate_terminal_command(
         T1_std_strcat_cap(writables_filepath, 256, dir_sep);
         T1_std_strcat_cap(writables_filepath, 256, res_name);
         
-        if (platform_file_exists(writables_filepath)) {
+        if (T1_platform_file_exists(writables_filepath)) {
             T1_std_strcat_cap(response, response_cap, "Found, loading...");
             
             T1Tex tex = T1_texture_array_get_filename_location(res_name);
@@ -925,9 +931,13 @@ void client_logic_window_resize(
     
     zlights_to_apply_size = 0;
     T1_uielement_delete_all();
-    #if T1_SCHEDULED_ANIMS_ACTIVE
+    #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
     T1_scheduled_animations_delete_all();
+    #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
+    
     zsprites_to_render->size = 0;
     clear_ui_element_touchable_ids();
     

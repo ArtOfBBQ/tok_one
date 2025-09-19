@@ -163,16 +163,16 @@ void init_application_before_gpu_init(
     *success = true;
     error_message[0] = '\0';
     
-    void * unmanaged_memory_store = platform_malloc_unaligned_block(
+    void * unmanaged_memory_store = T1_platform_malloc_unaligned_block(
         UNMANAGED_MEMORY_SIZE + 7232);
     
-    platform_layer_init(&unmanaged_memory_store, 32);
+    T1_platform_init(&unmanaged_memory_store, 32);
     
     T1_mem_init(
         unmanaged_memory_store,
-        platform_init_mutex_and_return_id,
-        platform_mutex_lock,
-        platform_mutex_unlock);
+        T1_platform_init_mutex_and_return_id,
+        T1_platform_mutex_lock,
+        T1_platform_mutex_unlock);
     
     T1_meta_init(
         memcpy,
@@ -242,11 +242,11 @@ void init_application_before_gpu_init(
         /* void * arg_malloc_function(size_t size): */
             T1_mem_malloc_from_unmanaged,
         /* uint32_t (* arg_create_mutex_function)(void): */
-            platform_init_mutex_and_return_id,
+            T1_platform_init_mutex_and_return_id,
         /* void arg_mutex_lock_function(const uint32_t mutex_id): */
-            platform_mutex_lock,
+            T1_platform_mutex_lock,
         /* int32_t arg_mutex_unlock_function(const uint32_t mutex_id): */
-            platform_mutex_unlock);
+            T1_platform_mutex_unlock);
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
     profiler_init(platform_get_clock_frequency(), malloc_from_unmanaged);
@@ -260,18 +260,18 @@ void init_application_before_gpu_init(
         sizeof(EngineSaveFile));
     
     char full_writable_pathfile[256];
-    writable_filename_to_pathfile(
+    T1_platform_writable_filename_to_pathfile(
         "enginestate.dat",
         full_writable_pathfile,
         256);
-    FileBuffer engine_save;
+    T1FileBuffer engine_save;
     engine_save.contents = NULL;
-    if (platform_file_exists(full_writable_pathfile)) {
-        engine_save.size_without_terminator = platform_get_filesize(
+    if (T1_platform_file_exists(full_writable_pathfile)) {
+        engine_save.size_without_terminator = T1_platform_get_filesize(
             full_writable_pathfile);
         engine_save.contents = (char *)T1_mem_malloc_from_managed(
             engine_save.size_without_terminator + 1);
-        platform_read_file(full_writable_pathfile, &engine_save);
+        T1_platform_read_file(full_writable_pathfile, &engine_save);
         *engine_save_file = *(EngineSaveFile *)engine_save.contents;
     }
     #elif T1_ENGINE_SAVEFILE_ACTIVE == T1_INACTIVE
@@ -390,7 +390,7 @@ void init_application_before_gpu_init(
     
     gameloop_init();
     #if T1_TERMINAL_ACTIVE == T1_ACTIVE
-    terminal_init(platform_enter_fullscreen);
+    terminal_init(T1_platform_enter_fullscreen);
     #elif T1_TERMINAL_ACTIVE == T1_INACTIVE
     // Pass
     #else
@@ -408,14 +408,14 @@ void init_application_before_gpu_init(
     T1_texture_array_init();
     
     // initialize font with fontmetrics.dat
-    FileBuffer font_metrics_file;
-    font_metrics_file.size_without_terminator = platform_get_resource_size(
+    T1FileBuffer font_metrics_file;
+    font_metrics_file.size_without_terminator = T1_platform_get_resource_size(
         /* filename: */ "fontmetrics.dat");
     
     if (font_metrics_file.size_without_terminator > 0) {
         font_metrics_file.contents = (char *)T1_mem_malloc_from_unmanaged(
             font_metrics_file.size_without_terminator + 1);
-        platform_read_resource_file(
+        T1_platform_read_resource_file(
             /* const char * filepath: */
                 "fontmetrics.dat",
             /* FileBuffer * out_preallocatedbuffer: */
@@ -602,7 +602,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     // This needs to happen as early as possible, because we can't show
     // log_dump_and_crash or log_assert() errors before this.
     // It also allows us to draw "loading textures x%".
-    platform_gpu_update_viewport();
+    T1_platform_gpu_update_viewport();
     
     // We copy the basic quad vertices immediately, again to show debugging
     // text (see above comment)
@@ -613,7 +613,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
             all_mesh_vertices->gpu_data,
         /* size_t n: */
             sizeof(T1GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
-    platform_gpu_copy_locked_vertices();
+    T1_platform_gpu_copy_locked_vertices();
     
     uint32_t perlin_good = 0;
     T1_texture_files_preregister_dds_resource(
@@ -674,7 +674,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         
         engine_globals->clientlogic_early_startup_finished = 1;
         
-        uint32_t core_count = platform_get_cpu_logical_core_count();
+        uint32_t core_count = T1_platform_get_cpu_logical_core_count();
         log_assert(core_count > 0);
         ias->image_decoding_threads = core_count > 6 ? 6 : core_count;
         
@@ -695,7 +695,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         #if T1_TEXTURES_ACTIVE == T1_ACTIVE
         loading_textures = true;
         for (int32_t i = 1; i < (int32_t)ias->image_decoding_threads; i++) {
-            platform_start_thread(
+            T1_platform_start_thread(
                 /* void (*function_to_run)(int32_t): */
                     asset_loading_thread,
                 /* int32_t argument: */
@@ -760,7 +760,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
             all_mesh_vertices->gpu_data,
         /* size_t n: */
             sizeof(T1GPULockedVertex) * ALL_LOCKED_VERTICES_SIZE);
-    platform_gpu_copy_locked_vertices();
+    T1_platform_gpu_copy_locked_vertices();
     
     T1_std_memcpy(
         /* void * dst: */
@@ -769,7 +769,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
             all_mesh_materials->gpu_data,
         /* size_t n: */
             sizeof(T1GPUConstMat) * ALL_LOCKED_MATERIALS_SIZE);
-    platform_gpu_copy_locked_materials();
+    T1_platform_gpu_copy_locked_materials();
     
     if (!application_running) {
         gameloop_active = true;
@@ -828,11 +828,11 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
     for (
         int32_t i = 1;
-        i < (int32_t)texture_arrays_size;
+        i < (int32_t)T1_texture_arrays_size;
         i++)
     {
-        if (!texture_arrays[i].bc1_compressed) {
-            platform_gpu_generate_mipmaps_for_texture_array(i);
+        if (!T1_texture_arrays[i].bc1_compressed) {
+            T1_platform_gpu_generate_mipmaps_for_texture_array(i);
         }
     }
     #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
@@ -845,8 +845,8 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         return;
     }
     
-    platform_layer_start_window_resize(
-        platform_get_current_time_us());
+    T1_platform_layer_start_window_resize(
+        T1_platform_get_current_time_us());
     
     if (application_running) {
         client_logic_late_startup();
@@ -901,9 +901,9 @@ void shared_shutdown_application(void)
     engine_save_file->window_fullscreen = engine_globals->fullscreen;
     
     uint32_t good = false;
-    platform_delete_writable("enginestate.dat");
+    T1_platform_delete_writable("enginestate.dat");
     
-    platform_write_file_to_writables(
+    T1_platform_write_file_to_writables(
         /* const char filepath_inside_writables: */
             "enginestate.dat",
         /* const char * output: */

@@ -2,20 +2,23 @@
 
 #include "../shared/platform_layer.h"
 
-void platform_update_mouse_location(void) {
+void T1_platform_update_mouse_location(void) {
     // do nothing on iOS
 }
 
-void platform_toggle_fullscreen(void) {
+void T1_platform_toggle_fullscreen(void) {
     // do nothing on iOS
 }
 
-void platform_get_writables_path(
+void T1_platform_get_writables_path(
     char * recipient,
     const uint32_t recipient_size)
 {
-    #ifdef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     (void)recipient_size;
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     NSArray * paths = NSSearchPathForDirectoriesInDomains(
@@ -44,7 +47,7 @@ void platform_get_writables_path(
     platform_mkdir_if_not_exist(recipient);
 }
 
-void * platform_malloc_unaligned_block(
+void * T1_platform_malloc_unaligned_block(
     const uint64_t size)
 {
     void * return_value = malloc(size);
@@ -52,25 +55,25 @@ void * platform_malloc_unaligned_block(
     return return_value;
 }
 
-void platform_enter_fullscreen(void) {
+void T1_platform_enter_fullscreen(void) {
     log_append("Won't move to fullscreen on iOS...\n");
 }
 
-void platform_close_application(void) {
+void T1_platform_close_app(void) {
     log_append("Won't close app on iOS...\n");
 }
 
-float platform_x_to_x(const float x) {
+float T1_platform_x_to_x(const float x) {
     return x;
 }
 
 // 5 should become about 635,
 // 635 should become about 5
-float platform_y_to_y(const float y) {
+float T1_platform_y_to_y(const float y) {
     return (engine_globals->window_height - y);
 }
 
-void platform_open_folder_in_window_if_possible(
+void T1_platform_open_folder_in_window_if_possible(
     const char * folderpath)
 {
     (void)folderpath;

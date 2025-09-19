@@ -32,8 +32,11 @@ static void describe_zpolygon(
     uint32_t cap,
     uint32_t zp_i)
 {
-    #ifdef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     (void)cap;
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     T1_std_strcat_cap(append_to, cap, "\n***Zpolygon: ");
@@ -581,7 +584,7 @@ static bool32_t evaluate_terminal_command(
             "Dumping global sound buffer to disk...");
         
         uint32_t good = 0;
-        platform_write_file_to_writables(
+        T1_platform_write_file_to_writables(
             /* const char * filepath_inside_writables: */
                 "global_sound_buffer.wav",
             /* const char * output: */
@@ -903,8 +906,8 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "OPEN WRITABLES"))
     {
         char writables_path[512];
-        platform_get_writables_path(writables_path, 512);
-        platform_open_folder_in_window_if_possible(writables_path);
+        T1_platform_get_writables_path(writables_path, 512);
+        T1_platform_open_folder_in_window_if_possible(writables_path);
         
         return true;
     }
@@ -947,7 +950,7 @@ static bool32_t evaluate_terminal_command(
         T1_std_are_equal_strings(command, "Exit") ||
         T1_std_are_equal_strings(command, "EXIT"))
     {
-        platform_close_application();
+        T1_platform_close_app();
         return true;
     }
     

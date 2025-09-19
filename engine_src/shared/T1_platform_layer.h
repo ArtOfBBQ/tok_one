@@ -75,72 +75,72 @@ extern "C" {
 #include "T1_engine_globals.h"
 #include "T1_uielement.h"
 
-void platform_layer_init(
+void T1_platform_init(
     void ** unmanaged_memory_store,
     const uint32_t aligned_to);
 
-typedef struct FileBuffer {
+typedef struct {
     uint64_t size_without_terminator;
     char * contents;
     bool32_t good;
-} FileBuffer;
+} T1FileBuffer;
 
-void platform_close_application(void);
+void T1_platform_close_app(void);
 
-void * platform_malloc_unaligned_block(const uint64_t size);
+void * T1_platform_malloc_unaligned_block(const uint64_t size);
 
-uint32_t platform_get_directory_separator_size(void);
-void platform_get_directory_separator(char * recipient);
+uint32_t T1_platform_get_directory_separator_size(void);
+void T1_platform_get_directory_separator(char * recipient);
 
-void resource_filename_to_pathfile(
+void T1_platform_resource_filename_to_pathfile(
     const char * filename,
     char * recipient,
     const uint32_t recipient_capacity);
-void writable_filename_to_pathfile(
+void T1_platform_writable_filename_to_pathfile(
     const char * filename,
     char * recipient,
     const uint32_t recipient_capacity);
 
-void platform_open_folder_in_window_if_possible(
+void T1_platform_open_folder_in_window_if_possible(
     const char * folderpath);
 
 // get current working directory
-void platform_get_application_path(
+void T1_platform_get_application_path(
     char * recipient,
     const uint32_t recipient_size);
-void platform_get_resources_path(
+void T1_platform_get_resources_path(
     char * recipient,
     const uint32_t recipient_size);
-void platform_get_cwd(
+void T1_platform_get_cwd(
     char * recipient,
     const uint32_t recipient_size);
 
 // a root directory where we're allowed to write
-void platform_get_writables_path(
+void T1_platform_get_writables_path(
     char * recipient,
     const uint32_t recipient_size);
 
-bool32_t platform_resource_exists(const char * resource_name);
-bool32_t platform_file_exists(const char * filepath);
-void platform_delete_file(const char * filepath);
-void platform_delete_writable(const char * writable_filename);
+bool32_t T1_platform_resource_exists(const char * resource_name);
+bool32_t T1_platform_file_exists(const char * filepath);
+void T1_platform_delete_file(const char * filepath);
+void T1_platform_delete_writable(const char * writable_filename);
 
 void
-platform_write_file(
+T1_platform_write_file(
     const char * filepath_destination,
     const char * output,
     const uint32_t output_size,
     bool32_t * good);
 
 void
-platform_write_file_to_writables(
+T1_platform_write_file_to_writables(
     const char * filepath_inside_writables,
     const char * output,
     const uint32_t output_size,
     bool32_t * good);
 
 void
-platform_write_rgba_to_writables(
+T1_platform_write_rgba_to_writables(
     const char * local_filename,
     uint8_t * rgba,
     const uint32_t rgba_size,
@@ -148,13 +148,13 @@ platform_write_rgba_to_writables(
     const uint32_t height,
     bool32_t * good);
 
-void platform_copy_file(
+void T1_platform_copy_file(
     const char * filepath_source,
     const char * filepath_destination);
-void platform_mkdir_if_not_exist(
+void T1_platform_mkdir_if_not_exist(
     const char * dirname);
 
-void platform_get_filenames_in(
+void T1_platform_get_filenames_in(
     const char * directory,
     char filenames[2000][500]);
 
@@ -166,8 +166,8 @@ A 'resource' is a file that's available in the typical folder for our platform
 
 A 'filepath' is a full explicit path to and including the filename
 */
-uint64_t platform_get_resource_size(const char * filename);
-uint64_t platform_get_filesize(const char * filepath);
+uint64_t T1_platform_get_resource_size(const char * filename);
+uint64_t T1_platform_get_filesize(const char * filepath);
 
 /*
 Read a file (without path, only filename) and fill its contents into a buffer
@@ -184,19 +184,19 @@ end to make windows happy
 If there's an error reading the file, the buffer's 'good' field will be set to
 0, else to 1
 */
-void platform_read_resource_file(
+void T1_platform_read_resource_file(
     const char * filename,
-    FileBuffer * out_preallocatedbuffer);
+    T1FileBuffer * out_preallocatedbuffer);
 
-void platform_read_file(
+void T1_platform_read_file(
     const char * filepath,
-    FileBuffer * out_preallocatedbuffer);
+    T1FileBuffer * out_preallocatedbuffer);
 
-void platform_gpu_get_device_name(
+void T1_platform_gpu_get_device_name(
     char * recipient,
     const uint32_t recipient_cap);
 
-uint32_t platform_get_cpu_logical_core_count(void);
+uint32_t T1_platform_get_cpu_logical_core_count(void);
 
 /*
 Run a task in the background I only use this to pass clientlogic.c's
@@ -204,29 +204,29 @@ client_logic_threadmain() passing the threadmain_id to it you have to
 implement client_logic_threadmain() to do what you want it to do when it gets
 that id
 */
-void platform_start_thread(
+void T1_platform_start_thread(
     void (*function_to_run)(int32_t),
     int32_t argument);
 
-uint64_t platform_get_current_time_us(void);
+uint64_t T1_platform_get_current_time_us(void);
 
-uint64_t platform_get_clock_frequency(void);
+uint64_t T1_platform_get_clock_frequency(void);
 
-float platform_x_to_x(const float x);
-float platform_y_to_y(const float y);
+float T1_platform_x_to_x(const float x);
+float T1_platform_y_to_y(const float y);
 
-void platform_enter_fullscreen(void);
-void platform_toggle_fullscreen(void);
-void platform_gpu_update_viewport(void);
+void T1_platform_enter_fullscreen(void);
+void T1_platform_toggle_fullscreen(void);
+void T1_platform_gpu_update_viewport(void);
 
-void platform_gpu_copy_locked_vertices(void);
-void platform_gpu_copy_locked_materials(void);
+void T1_platform_gpu_copy_locked_vertices(void);
+void T1_platform_gpu_copy_locked_materials(void);
 
-int32_t platform_gpu_get_touchable_id_at_screen_pos(
+int32_t T1_platform_gpu_get_touchable_id_at_screen_pos(
     const float screen_x,
     const float screen_y);
 
-void platform_gpu_init_texture_array(
+void T1_platform_gpu_init_texture_array(
     const int32_t texture_array_i,
     const uint32_t num_images,
     const uint32_t single_image_width,
@@ -234,14 +234,14 @@ void platform_gpu_init_texture_array(
     const bool32_t use_bc1_compression);
 
 #if T1_MIPMAPS_ACTIVE == T1_ACTIVE
-void platform_gpu_generate_mipmaps_for_texture_array(
+void T1_platform_gpu_generate_mipmaps_for_texture_array(
     const int32_t texture_array_i);
 #elif T1_MIPMAPS_ACTIVE == T1_INACTIVE
 #else
 #error
 #endif
 
-void platform_gpu_push_texture_slice_and_free_rgba_values(
+void T1_platform_gpu_push_texture_slice_and_free_rgba_values(
     const int32_t texture_array_i,
     const int32_t texture_i,
     const uint32_t parent_texture_array_images_size,
@@ -251,7 +251,7 @@ void platform_gpu_push_texture_slice_and_free_rgba_values(
     uint8_t * rgba_values_page_aligned);
 
 #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
+void T1_platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     const int32_t texture_array_i,
     const int32_t texture_i,
     const uint32_t parent_texture_array_images_size,
@@ -260,7 +260,7 @@ void platform_gpu_push_bc1_texture_slice_and_free_bc1_values(
     uint8_t * raw_bc1_file_freeable,
     uint8_t * raw_bc1_file_page_aligned);
 
-void platform_gpu_fetch_rgba_at(
+void T1_platform_gpu_fetch_rgba_at(
     const int32_t texture_array_i,
     const int32_t texture_i,
     uint8_t * rgba_recipient,
@@ -274,27 +274,27 @@ void platform_gpu_fetch_rgba_at(
 #error
 #endif
 
-void platform_update_mouse_location(void);
+void T1_platform_update_mouse_location(void);
 
 // This is used to communicate failure after failure to initialize GPU
 // acceleration, so assume no Metal/OpenGL/Vulkan/etc. available
-void platform_request_messagebox(const char * message);
+void T1_platform_request_messagebox(const char * message);
 
 /*
 creates a mutex and return the ID of said mutex for you to store
 */
-uint32_t platform_init_mutex_and_return_id(void);
+uint32_t T1_platform_init_mutex_and_return_id(void);
 
 /* returns true if mutex succesfully locked */
-bool32_t platform_mutex_trylock(const uint32_t mutex_id);
+bool32_t T1_platform_mutex_trylock(const uint32_t mutex_id);
 
-void platform_assert_mutex_locked(const uint32_t mutex_id);
+void T1_platform_assert_mutex_locked(const uint32_t mutex_id);
 
-void platform_mutex_lock(const uint32_t mutex_id);
+void T1_platform_mutex_lock(const uint32_t mutex_id);
 
-void platform_mutex_unlock(const uint32_t mutex_id);
+void T1_platform_mutex_unlock(const uint32_t mutex_id);
 
-void platform_layer_start_window_resize(
+void T1_platform_layer_start_window_resize(
     const uint64_t timestamp);
 
 #ifdef __cplusplus

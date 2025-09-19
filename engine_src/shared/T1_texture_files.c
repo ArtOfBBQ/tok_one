@@ -6,8 +6,8 @@ static void malloc_img_from_resource_name(
     const char * filename,
     const uint32_t thread_id)
 {
-    FileBuffer file_buffer;
-    file_buffer.size_without_terminator = platform_get_resource_size(filename);
+    T1FileBuffer file_buffer;
+    file_buffer.size_without_terminator = T1_platform_get_resource_size(filename);
     
     if (file_buffer.size_without_terminator < 1) {
         return;
@@ -21,7 +21,7 @@ static void malloc_img_from_resource_name(
         0,
         file_buffer.size_without_terminator + 1);
     
-    platform_read_resource_file(
+    T1_platform_read_resource_file(
         filename,
         &file_buffer);
     
@@ -207,12 +207,12 @@ void T1_texture_files_runtime_register_png_from_writables(
     
     char filepath[256];
     T1_std_memset(filepath, 0, 256);
-    platform_get_writables_path(filepath, 256);
-    platform_get_directory_separator(filepath + T1_std_strlen(filepath));
+    T1_platform_get_writables_path(filepath, 256);
+    T1_platform_get_directory_separator(filepath + T1_std_strlen(filepath));
     T1_std_strcat_cap(filepath, 256, filename);
     
-    FileBuffer buf;
-    buf.size_without_terminator = platform_get_filesize(filepath);
+    T1FileBuffer buf;
+    buf.size_without_terminator = T1_platform_get_filesize(filepath);
     if (buf.size_without_terminator <= 28) {
         return;
     }
@@ -220,7 +220,7 @@ void T1_texture_files_runtime_register_png_from_writables(
         T1_mem_malloc_from_managed(buf.size_without_terminator+1);
     buf.good = 0;
     
-    platform_read_file(filepath, &buf);
+    T1_platform_read_file(filepath, &buf);
     uint32_t width = 0;
     uint32_t height = 0;
     get_PNG_width_height(
@@ -288,7 +288,7 @@ void T1_texture_files_runtime_register_png_from_writables(
         /* const uint32_t thread_id: */
             0);
     
-    platform_gpu_init_texture_array(
+    T1_platform_gpu_init_texture_array(
         /* const int32_t texture_array_i: */
             loc.array_i,
         /* const uint32_t num_images: */
@@ -300,7 +300,7 @@ void T1_texture_files_runtime_register_png_from_writables(
         /* const bool32_t use_bc1_compression: */
             false);
     
-    platform_gpu_push_texture_slice_and_free_rgba_values(
+    T1_platform_gpu_push_texture_slice_and_free_rgba_values(
         /* const int32_t texture_array_i: */
             loc.array_i,
         /* const int32_t texture_i: */
@@ -332,8 +332,8 @@ void T1_texture_files_preregister_png_resource(
 {
     *good = 0;
     
-    FileBuffer buf;
-    buf.size_without_terminator = platform_get_resource_size(filename);
+    T1FileBuffer buf;
+    buf.size_without_terminator = T1_platform_get_resource_size(filename);
     if (buf.size_without_terminator > 28) {
         buf.size_without_terminator = 28;
     } else {
@@ -343,7 +343,7 @@ void T1_texture_files_preregister_png_resource(
        buf.size_without_terminator+1);
     buf.good = 0;
     
-    platform_read_resource_file(filename, &buf);
+    T1_platform_read_resource_file(filename, &buf);
     uint32_t width = 0;
     uint32_t height = 0;
     get_PNG_width_height(
@@ -394,8 +394,8 @@ void T1_texture_files_preregister_dds_resource(
 {
     *good = 0;
     
-    FileBuffer buf;
-    buf.size_without_terminator = platform_get_resource_size(filename);
+    T1FileBuffer buf;
+    buf.size_without_terminator = T1_platform_get_resource_size(filename);
     if (buf.size_without_terminator > 28) {
         buf.size_without_terminator = 28;
     } else {
@@ -405,7 +405,7 @@ void T1_texture_files_preregister_dds_resource(
         buf.size_without_terminator+1);
     buf.good = 0;
     
-    platform_read_resource_file(filename, &buf);
+    T1_platform_read_resource_file(filename, &buf);
     
     if (!buf.good) {
         return;
@@ -471,7 +471,7 @@ void T1_texture_files_decode_all_preregistered(
     }
     
     for (int32_t ta_i = start_ta_i; ta_i < end_ta_i; ta_i++) {
-        T1_texture_arrays[ta_i].started_decoding = platform_get_current_time_us();
+        T1_texture_arrays[ta_i].started_decoding = T1_platform_get_current_time_us();
         log_assert(T1_texture_arrays[ta_i].images_size > 0);
         log_assert(T1_texture_arrays[ta_i].images_size < MAX_FILES_IN_SINGLE_TEXARRAY);
         log_assert(T1_texture_arrays[ta_i].single_img_width > 0);
@@ -507,6 +507,6 @@ void T1_texture_files_decode_all_preregistered(
             }
         }
         
-        T1_texture_arrays[ta_i].ended_decoding = platform_get_current_time_us();
+        T1_texture_arrays[ta_i].ended_decoding = T1_platform_get_current_time_us();
     }
 }

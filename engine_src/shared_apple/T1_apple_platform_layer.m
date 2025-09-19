@@ -1,16 +1,16 @@
 #include "T1_platform_layer.h"
 
-uint32_t platform_get_directory_separator_size(void) {
+uint32_t T1_platform_get_directory_separator_size(void) {
     return 1;
 }
 
-void platform_get_directory_separator(char * recipient) {
+void T1_platform_get_directory_separator(char * recipient) {
     recipient[0] = '/';
     recipient[1] = '\0';
 }
 
 uint64_t
-platform_get_current_time_us(void) {
+T1_platform_get_current_time_us(void) {
     struct timeval tv;
     gettimeofday(&tv,NULL);
     uint64_t result =
@@ -22,7 +22,7 @@ platform_get_current_time_us(void) {
 }
 
 uint64_t
-platform_get_clock_frequency(void) {
+T1_platform_get_clock_frequency(void) {
     //    int mib[2];
     //    size_t len;
     //    mib[0] = CTL_KERN;
@@ -40,7 +40,7 @@ platform_get_clock_frequency(void) {
 /*
 Get a file's size. Returns 0 if no such file
 */
-uint64_t platform_get_filesize(const char * filepath) {
+uint64_t T1_platform_get_filesize(const char * filepath) {
     
     uint64_t return_value;
     
@@ -75,9 +75,9 @@ uint64_t platform_get_filesize(const char * filepath) {
     return return_value;
 }
 
-void platform_read_file(
+void T1_platform_read_file(
     const char * filepath,
-    FileBuffer * out_preallocatedbuffer)
+    T1FileBuffer * out_preallocatedbuffer)
 {
     //@autoreleasepool {
     NSString * nsfilepath =
@@ -119,7 +119,7 @@ void platform_read_file(
     out_preallocatedbuffer->good = true;
 }
 
-bool32_t platform_file_exists(
+bool32_t T1_platform_file_exists(
     const char * filepath)
 {
     NSString * nsfilepath = [NSString
@@ -147,7 +147,7 @@ bool32_t platform_file_exists(
     return false;
 }
 
-void platform_mkdir_if_not_exist(const char * dirname) {    
+void T1_platform_mkdir_if_not_exist(const char * dirname) {    
     
     log_append("make directory if it doesn't exist: ");
     log_append(dirname);
@@ -190,7 +190,7 @@ void platform_mkdir_if_not_exist(const char * dirname) {
     return;
 }
 
-void platform_delete_file(const char * filepath) {
+void T1_platform_delete_file(const char * filepath) {
     
     log_append("trying to delete a file with NSFileManager: ");
     log_append(filepath);
@@ -204,7 +204,7 @@ void platform_delete_file(const char * filepath) {
         error: nil];
 }
 
-void platform_copy_file(
+void T1_platform_copy_file(
     const char * filepath_source,
     const char * filepath_destination)
 {
@@ -238,7 +238,7 @@ void platform_copy_file(
 }
 
 void
-platform_write_file(
+T1_platform_write_file(
     const char * filepath,
     const char * output,
     const uint32_t output_size,
@@ -272,7 +272,7 @@ platform_write_file(
     *good = true;
 }
 
-void platform_get_filenames_in(
+void T1_platform_get_filenames_in(
     const char * directory,
     char filenames[2000][500])
 {
@@ -314,12 +314,15 @@ void platform_get_filenames_in(
 }
 
 void
-platform_get_application_path(
+T1_platform_get_application_path(
     char * recipient,
     const uint32_t recipient_size)
 {
-    #ifdef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     (void)recipient_size;
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     T1_std_strcpy_cap(
@@ -330,12 +333,15 @@ platform_get_application_path(
                 NSASCIIStringEncoding]);
 }
 
-void platform_get_resources_path(
+void T1_platform_get_resources_path(
     char * recipient,
     const uint32_t recipient_size)
 {
-    #ifdef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     (void)recipient_size;
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     T1_std_strcpy_cap(
@@ -346,7 +352,7 @@ void platform_get_resources_path(
                 cStringUsingEncoding: NSASCIIStringEncoding]);
 }
 
-void platform_start_thread(
+void T1_platform_start_thread(
     void (*function_to_run)(int32_t),
     int32_t argument)
 {

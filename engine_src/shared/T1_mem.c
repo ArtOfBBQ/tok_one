@@ -39,8 +39,11 @@ void T1_mem_get_usage_summary_string(
     char * recipient,
     const uint32_t recipient_cap)
 {
-    #ifdef COMMON_IGNORE_ASSERTS
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     (void)recipient_cap;
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     T1_std_strcpy_cap(
