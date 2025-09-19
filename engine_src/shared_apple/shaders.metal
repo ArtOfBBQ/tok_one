@@ -91,7 +91,7 @@ float4 project_float3_to_float4_perspective(
 
 vertex float4 shadows_vertex_shader(
     uint vertex_i [[ vertex_id ]],
-    const device GPUVertexIndices * vertices [[ buffer(0) ]],
+    const device T1GPUVertexIndices * vertices [[ buffer(0) ]],
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
     const device T1GPULight * lights [[ buffer(2) ]],
     const device T1GPUCamera * camera [[ buffer(3) ]],
@@ -224,7 +224,7 @@ float get_distance(
 vertex RasterizerPixel
 vertex_shader(
     uint vertex_i [[ vertex_id ]],
-    const device GPUVertexIndices * vertices [[ buffer(0) ]],
+    const device T1GPUVertexIndices * vertices [[ buffer(0) ]],
     const device T1GPUzSprite * polygons [[ buffer(1) ]],
     const device T1GPUCamera * camera [[ buffer(3) ]],
     const device T1GPULockedVertex * locked_vertices [[ buffer(4) ]],

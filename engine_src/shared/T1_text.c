@@ -273,7 +273,7 @@ void text_request_label_offset_around(
         &lines_size);
     log_assert(lines_size < MAX_LINES);
     
-    zSpriteRequest letter;
+    T1zSpriteRequest letter;
     
     float cur_y_offset_pixelspace =
         (font_settings->font_height * 0.42f) +
@@ -297,7 +297,7 @@ void text_request_label_offset_around(
                 break;
             }
             
-            zsprite_request_next(&letter);
+            T1_zsprite_request_next(&letter);
             zsprite_construct_quad_around(
                 /* const float left_x: */
                     engineglobals_screenspace_x_to_x(
@@ -363,7 +363,7 @@ void text_request_label_offset_around(
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
             log_assert(letter.gpu_data->scale_factor > 0.0f);
-            zsprite_commit(&letter);
+            T1_zsprite_commit(&letter);
         }
         cur_y_offset_pixelspace -= get_newline_advance();
     }
@@ -443,7 +443,7 @@ void text_request_label_renderable(
         i++;
     }
     
-    zSpriteRequest letter;
+    T1zSpriteRequest letter;
     
     float letter_width = engineglobals_screenspace_width_to_width(
         font_settings->font_height, z);
@@ -479,7 +479,7 @@ void text_request_label_renderable(
             continue;
         }
         
-        zsprite_request_next(&letter);
+        T1_zsprite_request_next(&letter);
         zsprite_construct_quad(
             /* const float left_x: */
                 engineglobals_screenspace_x_to_x(
@@ -536,13 +536,13 @@ void text_request_label_renderable(
         
         i++;
         log_assert(letter.gpu_data->base_mat.alpha > 0.99f);
-        zsprite_commit(&letter);
+        T1_zsprite_commit(&letter);
     }
 }
 
 void text_request_debug_text(const char * text)
 {
-    zsprite_delete(DEBUG_TEXT_OBJECT_ID);
+    T1_zsprite_delete(DEBUG_TEXT_OBJECT_ID);
     
     font_settings->font_height = 16.0f;
     font_settings->mat.ambient_rgb[0] = 1.0f;
@@ -612,7 +612,7 @@ void text_request_fps_counter(
         fps_string[12] = '9';
     }
     
-    zsprite_delete(FPS_COUNTER_OBJECT_ID);
+    T1_zsprite_delete(FPS_COUNTER_OBJECT_ID);
     
     font_settings->font_height = 16.0f;
     font_settings->mat.ambient_rgb[0] = 1.0f;
@@ -644,7 +644,7 @@ void text_request_fps_counter(
 void text_request_top_touchable_id(
     int32_t top_touchable_id)
 {
-    zsprite_delete(FPS_COUNTER_OBJECT_ID);
+    T1_zsprite_delete(FPS_COUNTER_OBJECT_ID);
     
     char fps_string[512];
     T1_std_strcpy_cap(fps_string, 512, "Top touchable id: ");

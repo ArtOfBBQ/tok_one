@@ -1,10 +1,10 @@
 #include "T1_wav.h"
 
-typedef struct FileHeader {
+typedef struct {
     char     riff[4];
     uint32_t file_size; // described sometimes as "integer", assuming uint
     char     wave[4];
-} FileHeader;
+} T1WAVFileHeader;
 
 /*
 RIFF files consist entirely of "chunks". The overall format is identical to IFF, except for the endianness as previously stated, and the different meaning of the chunk names.
@@ -91,7 +91,7 @@ void T1_wav_samples_to_wav(
 {
     (void)recipient_cap; // TODO: check cap
     
-    FileHeader riff_header;
+    T1WAVFileHeader riff_header;
     riff_header.riff[0] = 'R';
     riff_header.riff[1] = 'I';
     riff_header.riff[2] = 'F';
@@ -102,10 +102,10 @@ void T1_wav_samples_to_wav(
     riff_header.wave[2] = 'V';
     riff_header.wave[3] = 'E';
     
-    assert(sizeof(FileHeader) % 2 == 0); // no padding needed
+    assert(sizeof(T1WAVFileHeader) % 2 == 0); // no padding needed
     
-    T1_std_memcpy(recipient, &riff_header, sizeof(FileHeader));
-    recipient += sizeof(FileHeader);
+    T1_std_memcpy(recipient, &riff_header, sizeof(T1WAVFileHeader));
+    recipient += sizeof(T1WAVFileHeader);
     
     WavChunkHeader format_header;
     format_header.ascii_id[0] = 'f';
@@ -157,7 +157,7 @@ void T1_wav_samples_to_wav(
     uint32_t before_sample_data_size_bytes =
         sizeof(WavChunkHeader) +
         sizeof(WavChunkHeader) +
-        sizeof(FileHeader) +
+        sizeof(T1WAVFileHeader) +
         sizeof(FormatChunkBody);
     #endif
     assert(before_sample_data_size_bytes == 44);
@@ -176,7 +176,7 @@ void T1_wav_parse(
     *good = 1;
     
     unsigned char * raw_file_at = raw_file;
-    FileHeader file_header = consume_struct(raw_file_at, FileHeader);
+    T1WAVFileHeader file_header = consume_struct(raw_file_at, T1WAVFileHeader);
     
     check_strings_equal(
         /* char * actual: */

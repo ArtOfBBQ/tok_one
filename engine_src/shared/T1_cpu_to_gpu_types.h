@@ -8,7 +8,7 @@
 // requires shared data to be aligned to page size :(
 typedef struct
 {
-    GPUVertexIndices *                              verts;
+    T1GPUVertexIndices *                            verts;
     T1GPUzSpriteList *                       zsprite_list;
     T1GPULight *                                   lights;
     T1GPUCamera *                                  camera;
@@ -25,11 +25,11 @@ typedef struct
     uint32_t                           first_alphablend_i;
     uint32_t                          point_vertices_size;
     uint32_t                           line_vertices_size;
-} GPUFrame;
+} T1GPUFrame;
 
-typedef struct GPUSharedDataCollection
+typedef struct
 {
-    GPUFrame triple_buffers[MAX_RENDERING_FRAME_BUFFERS];
+    T1GPUFrame triple_buffers[MAX_RENDERING_FRAME_BUFFERS];
     T1GPUProjectConsts * locked_pjc;
     T1GPULockedVertex * locked_vertices;
     T1GPUConstMat * const_mats;
@@ -47,8 +47,8 @@ typedef struct GPUSharedDataCollection
     uint32_t point_vertices_allocation_size;
     uint32_t postprocessing_constants_allocation_size;
     uint32_t frame_i;
-} GPUSharedDataCollection;
+} T1GPUSharedDataCollection;
 
-extern GPUSharedDataCollection * gpu_shared_data_collection;
+extern T1GPUSharedDataCollection * gpu_shared_data_collection;
 
 #endif // CPU_TO_GPU_TYPES_H

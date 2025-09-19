@@ -8,7 +8,7 @@
 #include "T1_cpu_to_gpu_types.h"
 #include "T1_engine_globals.h"
 #include "T1_objmodel.h"
-#include "T1_userinput.h"
+#include "T1_uiinteraction.h"
 
 #import <Metal/Metal.h>
 #import <MetalKit/MetalKit.h>
@@ -17,7 +17,7 @@
 extern uint64_t last_resize_request_at;
 
 bool32_t apple_gpu_init(
-    void (* arg_funcptr_shared_gameloop_update)(GPUFrame *),
+    void (* arg_funcptr_shared_gameloop_update)(T1GPUFrame *),
     void (* arg_funcptr_shared_gameloop_update_after_render_pass)(void),
     id<MTLDevice> with_metal_device,
     NSString * shader_lib_filepath,

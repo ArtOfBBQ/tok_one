@@ -1,6 +1,6 @@
 #include "T1_logger.h"
 
-bool32_t application_running = false;
+bool32_t T1_app_running = false;
 #define CRASH_STRING_SIZE 256
 char crashed_top_of_screen_msg[CRASH_STRING_SIZE];
 
@@ -241,7 +241,7 @@ log_dump_and_crash(const char * crash_message) {
     bool32_t log_dump_succesful = false;
     log_dump(&log_dump_succesful);
     
-    if (application_running) {
+    if (T1_app_running) {
         unsigned int i = 0;
         while (
             crash_message[i] != '\0' &&
@@ -254,7 +254,7 @@ log_dump_and_crash(const char * crash_message) {
         crashed_top_of_screen_msg[i] = '\0';
     }
     
-    application_running = false;
+    T1_app_running = false;
     
     #ifndef LOGGER_SILENCE
     printf("DUMP & CRASHED: %s\n", crash_message);
@@ -274,7 +274,7 @@ internal_log_assert(
     const int line_number,
     const char * func_name)
 {
-    if (condition || !application_running) { return; }
+    if (condition || !T1_app_running) { return; }
     
     #ifndef LOGGER_SILENCE
     printf(

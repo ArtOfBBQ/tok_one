@@ -64,7 +64,7 @@ T1LineParticle * T1_particle_lineparticle_get_next(void)
 }
 
 T1LineParticle * T1_particle_lineparticle_get_next_with_zsprite(
-    CPUzSprite * construct_with_zpolygon,
+    T1CPUzSprite * construct_with_zpolygon,
     T1GPUzSprite * construct_with_polygon_gpu)
 {
     T1LineParticle * return_value = T1_particle_lineparticle_get_next();
@@ -95,7 +95,7 @@ void T1_particle_lineparticle_commit(
 #define add_variance(x, variance, randnum, randnum2) if (variance > 0) { x += ((float)(randnum % variance) * 0.01f); x -= ((float)(randnum2 % variance) * 0.01f); }
 
 void T1_particle_lineparticle_add_all_to_frame_data(
-    GPUFrame * frame_data,
+    T1GPUFrame * frame_data,
     uint64_t elapsed_us,
     const bool32_t alpha_blending)
 {
@@ -330,10 +330,10 @@ void T1_particle_effect_construct(
 {
     T1_std_memset(to_construct, 0, sizeof(T1ParticleEffect));
     
-    zSpriteRequest poly_request;
+    T1zSpriteRequest poly_request;
     poly_request.cpu_data = &to_construct->zpolygon_cpu;
     poly_request.gpu_data = &to_construct->zpolygon_gpu;
-    zsprite_construct(&poly_request);
+    T1_zsprite_construct(&poly_request);
     
     to_construct->zsprite_id = -1;
     to_construct->zpolygon_cpu.mesh_id = BASIC_CUBE_MESH_ID;
@@ -434,7 +434,7 @@ void T1_particle_delete(int32_t with_object_id) {
 }
 
 void T1_particle_add_all_to_frame_data(
-    GPUFrame * frame_data,
+    T1GPUFrame * frame_data,
     uint64_t elapsed_us,
     const bool32_t alpha_blending)
 {

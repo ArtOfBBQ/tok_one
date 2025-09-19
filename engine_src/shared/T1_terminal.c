@@ -45,11 +45,11 @@ static void describe_zpolygon(
 
 void destroy_terminal_objects(void) {
     if (terminal_back_object_id >= 0) {
-        zsprite_delete(terminal_back_object_id);
+        T1_zsprite_delete(terminal_back_object_id);
     }
     
     if (terminal_labels_object_id >= 0) {
-        zsprite_delete(terminal_labels_object_id);
+        T1_zsprite_delete(terminal_labels_object_id);
     }
 }
 
@@ -103,8 +103,8 @@ void terminal_redraw_backgrounds(void) {
         current_input_height -
         (TERMINAL_WHITESPACE * 3);
     
-    zSpriteRequest current_command_input;
-    zsprite_request_next(&current_command_input);
+    T1zSpriteRequest current_command_input;
+    T1_zsprite_request_next(&current_command_input);
     zsprite_construct_quad_around(
         /* const float mid_x: */
             engineglobals_screenspace_x_to_x(
@@ -146,11 +146,11 @@ void terminal_redraw_backgrounds(void) {
     current_command_input.cpu_data->visible = terminal_active;
     current_command_input.cpu_data->zsprite_id = terminal_back_object_id;
     current_command_input.gpu_data->touchable_id = -1;
-    zsprite_commit(&current_command_input);
+    T1_zsprite_commit(&current_command_input);
     
     // The console history area
-    zsprite_request_next(&current_command_input);
-    zsprite_construct(&current_command_input);
+    T1_zsprite_request_next(&current_command_input);
+    T1_zsprite_construct(&current_command_input);
     zsprite_construct_quad_around(
        /* const float mid_x: */
            engineglobals_screenspace_x_to_x(
@@ -194,7 +194,7 @@ void terminal_redraw_backgrounds(void) {
     current_command_input.cpu_data->zsprite_id = INT32_MAX;
     current_command_input.gpu_data->touchable_id = -1;
     
-    zsprite_commit(&current_command_input);
+    T1_zsprite_commit(&current_command_input);
 }
 
 void terminal_render(void) {
@@ -207,7 +207,7 @@ void terminal_render(void) {
     }
     
     if (requesting_label_update) {
-        zsprite_delete(
+        T1_zsprite_delete(
             /* const int32_t with_object_id: */
                 terminal_labels_object_id);
         
@@ -563,7 +563,7 @@ static bool32_t evaluate_terminal_command(
     {
         #if T1_AUDIO_ACTIVE == T1_ACTIVE
         unsigned char * recipient =
-            T1_mem_malloc_from_managed(sound_settings->global_buffer_size_bytes + 100);
+            T1_mem_malloc_from_managed(T1_sound_settings->global_buffer_size_bytes + 100);
         uint32_t recipient_size = 0;
         
         T1_wav_samples_to_wav(
@@ -572,11 +572,11 @@ static bool32_t evaluate_terminal_command(
             /* uint32_t * recipient_size: */
                 &recipient_size,
             /* const uint32_t recipient_cap: */
-                sound_settings->global_buffer_size_bytes + 100,
+                T1_sound_settings->global_buffer_size_bytes + 100,
             /* int16_t * samples: */
-                sound_settings->samples_buffer,
+                T1_sound_settings->samples_buffer,
             /* const uint32_t samples_size: */
-                sound_settings->global_samples_size);
+                T1_sound_settings->global_samples_size);
         
         T1_std_strcpy_cap(
             response,
@@ -780,7 +780,7 @@ static bool32_t evaluate_terminal_command(
                 SINGLE_LINE_MAX,
                 "Drawing the top touchable_id...");
         } else {
-            zsprite_delete(FPS_COUNTER_OBJECT_ID);
+            T1_zsprite_delete(FPS_COUNTER_OBJECT_ID);
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
@@ -802,7 +802,7 @@ static bool32_t evaluate_terminal_command(
                 SINGLE_LINE_MAX,
                 "Drawing the fps counter...");
         } else {
-            zsprite_delete(FPS_COUNTER_OBJECT_ID);
+            T1_zsprite_delete(FPS_COUNTER_OBJECT_ID);
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,
@@ -1047,7 +1047,7 @@ void terminal_commit_or_activate(void) {
                 TERMINAL_HISTORY_MAX,
                 "\n");
         } else {
-            client_logic_evaluate_terminal_command(
+            T1_clientlogic_evaluate_terminal_command(
                 current_command,
                 client_response,
                 SINGLE_LINE_MAX);

@@ -97,11 +97,11 @@ static AppleGPUState * ags = NULL;
 
 MetalKitViewDelegate * apple_gpu_delegate = NULL;
 
-static void (* funcptr_shared_gameloop_update)(GPUFrame *) = NULL;
+static void (* funcptr_shared_gameloop_update)(T1GPUFrame *) = NULL;
 static void (* funcptr_shared_gameloop_update_after_render_pass)(void) = NULL;
 
 bool32_t apple_gpu_init(
-    void (* arg_funcptr_shared_gameloop_update)(GPUFrame *),
+    void (* arg_funcptr_shared_gameloop_update)(T1GPUFrame *),
     void (* arg_funcptr_shared_gameloop_update_after_render_pass)(void),
     id<MTLDevice> with_metal_device,
     NSString * shader_lib_filepath,

@@ -310,10 +310,10 @@ static void T1_scheduled_animations_get_projected_final_position_for(
     T1GPUzSprite * recip)
 {
     log_assert(zp_i >= 0);
-    log_assert((uint32_t)zp_i < zsprites_to_render->size);
+    log_assert((uint32_t)zp_i < T1_zsprites_to_render->size);
     
-    const int32_t zsprite_id = zsprites_to_render->cpu_data[zp_i].zsprite_id;
-    *recip = zsprites_to_render->gpu_data[zp_i];
+    const int32_t zsprite_id = T1_zsprites_to_render->cpu_data[zp_i].zsprite_id;
+    *recip = T1_zsprites_to_render->gpu_data[zp_i];
     
     for (uint32_t sa_i = 0; sa_i < scheduled_animations_size; sa_i++) {
         if (
@@ -365,11 +365,11 @@ void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
         int32_t first_zp_i = -1;
         for (
             int32_t zp_i = 0;
-            zp_i < (int32_t)zsprites_to_render->size;
+            zp_i < (int32_t)T1_zsprites_to_render->size;
             zp_i++)
         {
             if (
-                zsprites_to_render->cpu_data[zp_i].zsprite_id ==
+                T1_zsprites_to_render->cpu_data[zp_i].zsprite_id ==
                     to_commit->affected_zsprite_id)
             {
                 first_zp_i = zp_i;
@@ -382,7 +382,7 @@ void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
             T1_platform_mutex_unlock(request_scheduled_anims_mutex_id);
             return;
         }
-        log_assert(first_zp_i < (int32_t)zsprites_to_render->size);
+        log_assert(first_zp_i < (int32_t)T1_zsprites_to_render->size);
         
         float * anim_gpu_vals = (float *)&to_commit->gpu_polygon_vals;
         
@@ -449,13 +449,13 @@ void T1_scheduled_animations_request_evaporate_and_destroy(
     
     for (
         uint32_t zp_i = 0;
-        zp_i < zsprites_to_render->size;
+        zp_i < T1_zsprites_to_render->size;
         zp_i++)
     {
         if (
-            zsprites_to_render->cpu_data[zp_i].deleted ||
-            !zsprites_to_render->cpu_data[zp_i].committed ||
-            zsprites_to_render->cpu_data[zp_i].zsprite_id != object_id)
+            T1_zsprites_to_render->cpu_data[zp_i].deleted ||
+            !T1_zsprites_to_render->cpu_data[zp_i].committed ||
+            T1_zsprites_to_render->cpu_data[zp_i].zsprite_id != object_id)
         {
             continue;
         }
@@ -464,8 +464,8 @@ void T1_scheduled_animations_request_evaporate_and_destroy(
         float duration_mod = (20000000.0f / (float)duration_us);
         
         T1ParticleEffect * vaporize_effect = T1_particle_get_next();
-        vaporize_effect->zpolygon_cpu = zsprites_to_render->cpu_data[zp_i];
-        vaporize_effect->zpolygon_gpu = zsprites_to_render->gpu_data[zp_i];
+        vaporize_effect->zpolygon_cpu = T1_zsprites_to_render->cpu_data[zp_i];
+        vaporize_effect->zpolygon_gpu = T1_zsprites_to_render->gpu_data[zp_i];
         
         uint64_t shattered_verts_size =
             (uint64_t)all_mesh_summaries[vaporize_effect->zpolygon_cpu.mesh_id].
@@ -520,7 +520,7 @@ void T1_scheduled_animations_request_evaporate_and_destroy(
         #error
         #endif
         
-        zsprites_to_render->cpu_data[zp_i].deleted = true;
+        T1_zsprites_to_render->cpu_data[zp_i].deleted = true;
     }
 }
 
@@ -541,12 +541,12 @@ void T1_scheduled_animations_request_shatter_and_destroy(
     
     for (
         uint32_t zp_i = 0;
-        zp_i < zsprites_to_render->size;
+        zp_i < T1_zsprites_to_render->size;
         zp_i++)
     {
-        if (zsprites_to_render->cpu_data[zp_i].deleted ||
-            !zsprites_to_render->cpu_data[zp_i].committed ||
-            zsprites_to_render->cpu_data[zp_i].zsprite_id != object_id)
+        if (T1_zsprites_to_render->cpu_data[zp_i].deleted ||
+            !T1_zsprites_to_render->cpu_data[zp_i].committed ||
+            T1_zsprites_to_render->cpu_data[zp_i].zsprite_id != object_id)
         {
             continue;
         }
@@ -555,8 +555,8 @@ void T1_scheduled_animations_request_shatter_and_destroy(
         float duration_mod = (20000000.0f / (float)duration_us);
         
         T1ParticleEffect * shatter_effect = T1_particle_get_next();
-        shatter_effect->zpolygon_cpu = zsprites_to_render->cpu_data[zp_i];
-        shatter_effect->zpolygon_gpu = zsprites_to_render->gpu_data[zp_i];
+        shatter_effect->zpolygon_cpu = T1_zsprites_to_render->cpu_data[zp_i];
+        shatter_effect->zpolygon_gpu = T1_zsprites_to_render->gpu_data[zp_i];
         
         uint64_t shattered_verts_size =
             (uint64_t)all_mesh_summaries[shatter_effect->zpolygon_cpu.mesh_id].
@@ -618,8 +618,8 @@ void T1_scheduled_animations_request_shatter_and_destroy(
         #error
         #endif
         
-        zsprites_to_render->cpu_data[zp_i].zsprite_id = -1;
-        zsprites_to_render->cpu_data[zp_i].deleted = true;
+        T1_zsprites_to_render->cpu_data[zp_i].zsprite_id = -1;
+        T1_zsprites_to_render->cpu_data[zp_i].deleted = true;
     }
 }
 
@@ -686,7 +686,7 @@ void T1_scheduled_animations_resolve(void)
                 if (anim->delete_object_when_finished) {
                     delete_zlight(anim->affected_zsprite_id);
                     
-                    zsprite_delete(anim->affected_zsprite_id);
+                    T1_zsprite_delete(anim->affected_zsprite_id);
                     
                     #if PARTICLES_ACTIVE
                     T1_particle_delete(anim->affected_zsprite_id);
@@ -747,18 +747,18 @@ void T1_scheduled_animations_resolve(void)
         // Apply effects
         for (
             int32_t zp_i = 0;
-            zp_i < (int32_t)zsprites_to_render->size;
+            zp_i < (int32_t)T1_zsprites_to_render->size;
             zp_i++)
         {
             if (
                 (anim->affected_zsprite_id >= 0 &&
-                zsprites_to_render->cpu_data[zp_i].zsprite_id !=
+                T1_zsprites_to_render->cpu_data[zp_i].zsprite_id !=
                     anim->affected_zsprite_id) ||
                 (anim->affected_touchable_id >= 0 &&
-                zsprites_to_render->gpu_data[zp_i].touchable_id !=
+                T1_zsprites_to_render->gpu_data[zp_i].touchable_id !=
                     anim->affected_touchable_id)
                 ||
-                zsprites_to_render->cpu_data[zp_i].deleted)
+                T1_zsprites_to_render->cpu_data[zp_i].deleted)
             {
                 continue;
             }
@@ -766,7 +766,7 @@ void T1_scheduled_animations_resolve(void)
             apply_animation_effects_for_given_eased_t(
                 t,
                 anim,
-                zsprites_to_render->gpu_data + zp_i);
+                T1_zsprites_to_render->gpu_data + zp_i);
         }
     }
     
@@ -854,10 +854,10 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
 {
     T1GPUzSprite * zs = NULL;
     
-    for (uint32_t i = 0; i < zsprites_to_render->size; i++)
+    for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++)
     {
-        if (zsprites_to_render->cpu_data[i].zsprite_id == zsprite_id) {
-            zs = zsprites_to_render->gpu_data + i;
+        if (T1_zsprites_to_render->cpu_data[i].zsprite_id == zsprite_id) {
+            zs = T1_zsprites_to_render->gpu_data + i;
         }
     }
     

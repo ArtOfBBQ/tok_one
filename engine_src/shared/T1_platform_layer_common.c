@@ -215,7 +215,7 @@ void T1_platform_writable_filename_to_pathfile(
             + writables_path_length
             + 2); // +1 for \0, +1 to add a '/'
     log_assert(assert_capacity >= full_filename_size);
-    if (!application_running) {
+    if (!T1_app_running) {
         recipient[0] = '\0';
         return;
     }
@@ -258,7 +258,7 @@ void T1_platform_layer_start_window_resize(
     engine_globals->last_resize_request_us = timestamp;
     
     T1_uielement_delete_all();
-    zsprites_to_render->size = 0;
+    T1_zsprites_to_render->size = 0;
     
     #if T1_FOG_ACTIVE == T1_ACTIVE
     engine_globals->postproc_consts.fog_factor = 0.0f;

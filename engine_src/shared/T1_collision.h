@@ -1,15 +1,15 @@
-#ifndef TOK_COLLISION_H
-#define TOK_COLLISION_H
+#ifndef T1_COLLISION_H
+#define T1_COLLISION_H
 
 #include <math.h>
 
-// #define COLLISION_SILENCE
-#ifndef COLLISION_SILENCE
+#define T1_COLLISION_SILENCE
+#ifndef T1_COLLISION_SILENCE
 #include <stdio.h>
 #endif
 
-// #define COLLISION_IGNORE_ASSERTS
-#ifndef COLLISION_IGNORE_ASSERTS
+#define T1_COLLISION_IGNORE_ASSERTS
+#ifndef T1_COLLISION_IGNORE_ASSERTS
 #include <assert.h>
 #endif
 
@@ -77,4 +77,4 @@ float ray_hits_triangle(
     const float triangle_normal[3],
     float * collision_recipient);
 
-#endif // TOK_COLLISION_H
+#endif // T1_COLLISION_H

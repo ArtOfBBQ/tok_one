@@ -34,7 +34,7 @@ void gameloop_init(void) {
 }
 
 static void show_dead_simple_text(
-    GPUFrame * frame_data,
+    T1GPUFrame * frame_data,
     const char * text_message,
     const uint64_t elapsed)
 {
@@ -48,7 +48,7 @@ static void show_dead_simple_text(
     #error "T1_PARTICLES_ACTIVE undefined"
     #endif
     zlights_to_apply_size = 0;
-    zsprites_to_render->size = 0;
+    T1_zsprites_to_render->size = 0;
     
     #if T1_FOG_ACTIVE == T1_ACTIVE
     engine_globals->postproc_consts.fog_factor = 0.0f;
@@ -104,7 +104,7 @@ static void show_dead_simple_text(
 }
 
 void gameloop_update_before_render_pass(
-    GPUFrame * frame_data)
+    T1GPUFrame * frame_data)
 {
     engine_globals->elapsed = engine_globals->this_frame_timestamp_us -
         gameloop_previous_time;
@@ -182,7 +182,7 @@ void gameloop_update_before_render_pass(
         return;
     }
     
-    if (!application_running) {
+    if (!T1_app_running) {
         if (crashed_top_of_screen_msg[0] == '\0') {
             T1_std_strcpy_cap(
                 crashed_top_of_screen_msg,
@@ -238,11 +238,11 @@ void gameloop_update_before_render_pass(
             #error "T1_TERMINAL_ACTIVE undefined"
             #endif
             
-            client_logic_window_resize(
+            T1_clientlogic_window_resize(
                 (uint32_t)engine_globals->window_height,
                 (uint32_t)engine_globals->window_width);
        }
-    } else if (application_running) {
+    } else if (T1_app_running) {
         
         #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
         T1_scheduled_animations_resolve();
@@ -254,18 +254,18 @@ void gameloop_update_before_render_pass(
         T1_platform_update_mouse_location();
         
         // handle timed occlusions
-        for (uint32_t zs_i = 0; zs_i < zsprites_to_render->size; zs_i++) {
+        for (uint32_t zs_i = 0; zs_i < T1_zsprites_to_render->size; zs_i++) {
             if (
-                zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us >
+                T1_zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us >
                     engine_globals->elapsed)
             {
-                zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us -=
+                T1_zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us -=
                     engine_globals->elapsed;
             } else if (
-                zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us > 0)
+                T1_zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us > 0)
             {
-                zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us = 0;
-                zsprites_to_render->cpu_data[zs_i].visible = 0;
+                T1_zsprites_to_render->cpu_data[zs_i].next_occlusion_in_us = 0;
+                T1_zsprites_to_render->cpu_data[zs_i].visible = 0;
             }
         }
         
@@ -285,7 +285,7 @@ void gameloop_update_before_render_pass(
         #error "T1_TERMINAL_ACTIVE undefined"
         #endif
         
-        client_logic_update(engine_globals->elapsed);
+        T1_clientlogic_update(engine_globals->elapsed);
         
         camera.xyz_cosangle[0] = cosf(camera.xyz_angle[0]);
         camera.xyz_cosangle[1] = cosf(camera.xyz_angle[1]);
@@ -335,8 +335,8 @@ void gameloop_update_before_render_pass(
 }
 
 void gameloop_update_after_render_pass(void) {
-    if (application_running) {
-        client_logic_update_after_render_pass();
+    if (T1_app_running) {
+        T1_clientlogic_update_after_render_pass();
     }
     
     user_interactions

@@ -1,24 +1,24 @@
 #include "T1_zsprite.h"
 
-zSpriteCollection * zsprites_to_render = NULL;
+T1zSpriteCollection * T1_zsprites_to_render = NULL;
 
-void zsprite_request_next(
-    zSpriteRequest * stack_recipient)
+void T1_zsprite_request_next(
+    T1zSpriteRequest * stack_recipient)
 {
     stack_recipient->cpu_data = NULL;
     stack_recipient->gpu_data = NULL;
     
     for (
         uint32_t zp_i = 0;
-        zp_i < zsprites_to_render->size;
+        zp_i < T1_zsprites_to_render->size;
         zp_i++)
     {
-        if (zsprites_to_render->cpu_data[zp_i].deleted)
+        if (T1_zsprites_to_render->cpu_data[zp_i].deleted)
         {
             stack_recipient->cpu_data     =
-                &zsprites_to_render->cpu_data[zp_i];
+                &T1_zsprites_to_render->cpu_data[zp_i];
             stack_recipient->gpu_data     =
-                &zsprites_to_render->gpu_data[zp_i];
+                &T1_zsprites_to_render->gpu_data[zp_i];
             stack_recipient->cpu_data->committed = false;
             break;
         }
@@ -29,24 +29,24 @@ void zsprite_request_next(
         stack_recipient->gpu_data == NULL)
     {
         stack_recipient->cpu_data =
-            &zsprites_to_render->
-                cpu_data[zsprites_to_render->size];
+            &T1_zsprites_to_render->
+                cpu_data[T1_zsprites_to_render->size];
         stack_recipient->gpu_data =
-            &zsprites_to_render->
-                gpu_data[zsprites_to_render->size];
-        stack_recipient->cpu_data[zsprites_to_render->size].
+            &T1_zsprites_to_render->
+                gpu_data[T1_zsprites_to_render->size];
+        stack_recipient->cpu_data[T1_zsprites_to_render->size].
             deleted = false;
         stack_recipient->cpu_data->committed = false;
         
-        zsprites_to_render->size += 1;
-        log_assert(zsprites_to_render->size + 1 < MAX_ZSPRITES_PER_BUFFER);
+        T1_zsprites_to_render->size += 1;
+        log_assert(T1_zsprites_to_render->size + 1 < MAX_ZSPRITES_PER_BUFFER);
     }
     
     return;
 }
 
-void zsprite_commit(
-    zSpriteRequest * to_commit)
+void T1_zsprite_commit(
+    T1zSpriteRequest * to_commit)
 {
     log_assert(to_commit->cpu_data->mesh_id >= 0);
     log_assert(to_commit->cpu_data->mesh_id <
@@ -73,23 +73,23 @@ void zsprite_commit(
     to_commit->cpu_data->committed = true;
 }
 
-bool32_t zsprite_fetch_by_zsprite_id(
-    zSpriteRequest * recipient,
+bool32_t T1_zsprite_fetch_by_zsprite_id(
+    T1zSpriteRequest * recipient,
     const int32_t object_id)
 {
-    T1_std_memset(recipient, 0, sizeof(zSpriteRequest));
+    T1_std_memset(recipient, 0, sizeof(T1zSpriteRequest));
     
     for (
         uint32_t zp_i = 0;
-        zp_i < zsprites_to_render->size;
+        zp_i < T1_zsprites_to_render->size;
         zp_i++)
     {
         if (
-            !zsprites_to_render->cpu_data[zp_i].deleted &&
-            zsprites_to_render->cpu_data[zp_i].zsprite_id == object_id)
+            !T1_zsprites_to_render->cpu_data[zp_i].deleted &&
+            T1_zsprites_to_render->cpu_data[zp_i].zsprite_id == object_id)
         {
-            recipient->cpu_data = &zsprites_to_render->cpu_data[zp_i];
-            recipient->gpu_data = &zsprites_to_render->gpu_data[zp_i];
+            recipient->cpu_data = &T1_zsprites_to_render->cpu_data[zp_i];
+            recipient->gpu_data = &T1_zsprites_to_render->gpu_data[zp_i];
             return true;
         }
     }
@@ -99,19 +99,19 @@ bool32_t zsprite_fetch_by_zsprite_id(
     return false;
 }
 
-void zsprite_delete(const int32_t with_object_id)
+void T1_zsprite_delete(const int32_t with_object_id)
 {
-    for (uint32_t i = 0; i < zsprites_to_render->size; i++) {
-        if (zsprites_to_render->cpu_data[i].zsprite_id == with_object_id)
+    for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
+        if (T1_zsprites_to_render->cpu_data[i].zsprite_id == with_object_id)
         {
-            zsprites_to_render->cpu_data[i].deleted   = true;
-            zsprites_to_render->cpu_data[i].zsprite_id = -1;
+            T1_zsprites_to_render->cpu_data[i].deleted   = true;
+            T1_zsprites_to_render->cpu_data[i].zsprite_id = -1;
         }
     }
 }
 
 float zsprite_get_x_multiplier_for_width(
-    CPUzSprite * for_poly,
+    T1CPUzSprite * for_poly,
     const float for_width)
 {
     log_assert(for_poly != NULL);
@@ -137,7 +137,7 @@ float zsprite_get_x_multiplier_for_width(
 }
 
 float zsprite_get_z_multiplier_for_depth(
-    CPUzSprite * for_poly,
+    T1CPUzSprite * for_poly,
     const float for_depth)
 {
     log_assert(for_poly != NULL);
@@ -160,7 +160,7 @@ float zsprite_get_z_multiplier_for_depth(
 }
 
 float zsprite_get_y_multiplier_for_height(
-    CPUzSprite * for_poly,
+    T1CPUzSprite * for_poly,
     const float for_height)
 {
     log_assert(for_poly != NULL);
@@ -183,7 +183,7 @@ float zsprite_get_y_multiplier_for_height(
 }
 
 void zsprite_scale_multipliers_to_width(
-    CPUzSprite * cpu_data,
+    T1CPUzSprite * cpu_data,
     T1GPUzSprite * gpu_data,
     const float new_height)
 {
@@ -199,7 +199,7 @@ void zsprite_scale_multipliers_to_width(
 }
 
 void zsprite_scale_multipliers_to_height(
-    CPUzSprite * cpu_data,
+    T1CPUzSprite * cpu_data,
     T1GPUzSprite * gpu_data,
     const float new_height)
 {
@@ -214,11 +214,11 @@ void zsprite_scale_multipliers_to_height(
     gpu_data->xyz_mult[2] = new_multiplier;
 }
 
-void zsprite_construct_with_mesh_id(
-    zSpriteRequest * to_construct,
+void T1_zsprite_construct_with_mesh_id(
+    T1zSpriteRequest * to_construct,
     const int32_t mesh_id)
 {
-    zsprite_construct(to_construct);
+    T1_zsprite_construct(to_construct);
     
     to_construct->cpu_data->mesh_id = mesh_id;
     
@@ -234,8 +234,8 @@ void zsprite_construct_with_mesh_id(
     }
 }
 
-void zsprite_construct(
-    zSpriteRequest * to_construct)
+void T1_zsprite_construct(
+    T1zSpriteRequest * to_construct)
 {
     assert(to_construct->cpu_data != NULL);
     assert(to_construct->gpu_data != NULL);
@@ -243,7 +243,7 @@ void zsprite_construct(
     T1_std_memset(
         to_construct->cpu_data,
         0,
-        sizeof(CPUzSprite));
+        sizeof(T1CPUzSprite));
     T1_std_memset(
         to_construct->gpu_data,
         0,
@@ -281,13 +281,13 @@ float zsprite_dot_of_vertices_f3(
         (
             a[0] * b[0]
         );
-    x = (isnan(x) || !isfinite(x)) ? FLOAT32_MAX : x;
+    x = (isnan(x) || !isfinite(x)) ? T1_F32_MAX : x;
     
     float y = (a[1] * b[1]);
-    y = (isnan(y) || !isfinite(y)) ? FLOAT32_MAX : y;
+    y = (isnan(y) || !isfinite(y)) ? T1_F32_MAX : y;
     
     float z = (a[2] * b[2]);
-    z = (isnan(z) || !isfinite(z)) ? FLOAT32_MAX : z;
+    z = (isnan(z) || !isfinite(z)) ? T1_F32_MAX : z;
     
     float return_value = x + y + z;
     
@@ -302,11 +302,11 @@ void zsprite_construct_quad(
     const float z,
     const float width,
     const float height,
-    zSpriteRequest * stack_recipient)
+    T1zSpriteRequest * stack_recipient)
 {
     log_assert(z > 0.0f);
     
-    zsprite_construct(stack_recipient);
+    T1_zsprite_construct(stack_recipient);
     
     const float mid_x =
         left_x + (width  / 2);
@@ -339,11 +339,11 @@ void zsprite_construct_quad_around(
     const float z,
     const float width,
     const float height,
-    zSpriteRequest * stack_recipient)
+    T1zSpriteRequest * stack_recipient)
 {
     // log_assert(z > 0.0f);
     
-    zsprite_construct(stack_recipient);
+    T1_zsprite_construct(stack_recipient);
     
     stack_recipient->gpu_data->xyz[0]  = mid_x;
     stack_recipient->gpu_data->xyz[1]  = mid_y;
@@ -382,11 +382,11 @@ void zsprite_construct_cube_around(
     const float width,
     const float height,
     const float depth,
-    zSpriteRequest * stack_recipient)
+    T1zSpriteRequest * stack_recipient)
 {
     log_assert(z > 0.0f);
     
-    zsprite_construct(stack_recipient);
+    T1_zsprite_construct(stack_recipient);
     
     stack_recipient->gpu_data->xyz[0]  = mid_x;
     stack_recipient->gpu_data->xyz[1]  = mid_y;

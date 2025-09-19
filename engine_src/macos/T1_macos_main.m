@@ -6,7 +6,7 @@
 #include "T1_logger.h"
 #include "T1_random.h"
 #include "T1_lightsource.h"
-#include "T1_userinput.h"
+#include "T1_uiinteraction.h"
 #include "T1_engine_globals.h"
 #include "T1_simd.h"
 #include "T1_clientlogic.h"
@@ -231,8 +231,8 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
     user_interactions[INTR_LAST_GPU_DATA].screen_y =
         (float)window_location.y;
     
-    register_interaction(&user_interactions[INTR_PREVIOUS_MOUSE_MOVE]);
-    register_interaction(&user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
+    T1_uiinteraction_register(&user_interactions[INTR_PREVIOUS_MOUSE_MOVE]);
+    T1_uiinteraction_register(&user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
 }
 
 - (void)mouseDragged:(NSEvent *)event
@@ -248,8 +248,8 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
     user_interactions[INTR_LAST_GPU_DATA].screen_y =
         (float)window_location.y;
     
-    register_interaction(&user_interactions[INTR_PREVIOUS_MOUSE_MOVE]);
-    register_interaction(&user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
+    T1_uiinteraction_register(&user_interactions[INTR_PREVIOUS_MOUSE_MOVE]);
+    T1_uiinteraction_register(&user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
 }
 
 - (void)mouseDown:(NSEvent *)event
@@ -258,7 +258,7 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
         return;
     }
     
-    register_interaction(&user_interactions[INTR_PREVIOUS_LEFTCLICK_START]);
+    T1_uiinteraction_register(&user_interactions[INTR_PREVIOUS_LEFTCLICK_START]);
     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START] =
         user_interactions[INTR_PREVIOUS_LEFTCLICK_START];
 }
@@ -269,7 +269,7 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
         return;
     }
     
-    register_interaction(&user_interactions[INTR_PREVIOUS_LEFTCLICK_END]);
+    T1_uiinteraction_register(&user_interactions[INTR_PREVIOUS_LEFTCLICK_END]);
     user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END] =
         user_interactions[INTR_PREVIOUS_LEFTCLICK_END];
 }
@@ -280,7 +280,7 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
         return;
     }
     
-    register_interaction(&user_interactions[INTR_PREVIOUS_RIGHTCLICK_START]);
+    T1_uiinteraction_register(&user_interactions[INTR_PREVIOUS_RIGHTCLICK_START]);
 }
 
 - (void)rightMouseUp:(NSEvent *)event
@@ -289,7 +289,7 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
         return;
     }
     
-    register_interaction(&user_interactions[INTR_PREVIOUS_RIGHTCLICK_END]);
+    T1_uiinteraction_register(&user_interactions[INTR_PREVIOUS_RIGHTCLICK_END]);
 }
 
 - (void)update_mouse_location {
@@ -297,15 +297,15 @@ static uint32_t apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 }
 
 - (void)keyDown:(NSEvent *)event {
-    register_keydown(apple_keycode_to_tokone_keycode(event.keyCode));
+    T1_uiinteraction_register_keydown(apple_keycode_to_tokone_keycode(event.keyCode));
 }
 
 - (void)keyUp:(NSEvent *)event {
-    register_keyup(apple_keycode_to_tokone_keycode(event.keyCode));
+    T1_uiinteraction_register_keyup(apple_keycode_to_tokone_keycode(event.keyCode));
 }
 
 - (void)scrollWheel:(NSEvent *)event {
-    register_mousescroll((float)[event deltaY]);
+    T1_uiinteraction_register_mousescroll((float)[event deltaY]);
 }
 
 - (float)getWidth {
@@ -341,7 +341,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     
     shared_shutdown_application();
     
-    client_logic_shutdown();
+    T1_clientlogic_shutdown();
     
     bool32_t write_succesful = false;
     log_dump(&write_succesful);
@@ -357,7 +357,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     windowWillEnterFullScreen:(NSNotification *)notification
 {
     T1_uielement_delete_all();
-    zsprites_to_render->size = 0;
+    T1_zsprites_to_render->size = 0;
     engine_globals->fullscreen = true;
 }
 
@@ -365,7 +365,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
     windowWillExitFullScreen:(NSNotification *)notification
 {
     T1_uielement_delete_all();
-    zsprites_to_render->size = 0;
+    T1_zsprites_to_render->size = 0;
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     T1_particle_effects_size = 0;
     #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
@@ -412,7 +412,7 @@ GameWindowDelegate: NSObject<NSWindowDelegate>
 int main(int argc, const char * argv[]) {
     
     gameloop_active = false;
-    application_running = true;
+    T1_app_running = true;
     
     assert(sizeof(T1GPUzSprite) % 32 == 0);
     
@@ -510,7 +510,7 @@ int main(int argc, const char * argv[]) {
         /* char * error_msg_string: */
             errmsg);
     
-    if (!result || !application_running) {
+    if (!result || !T1_app_running) {
         #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
         log_dump_and_crash("Can't draw anything to the screen...\n");
         #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
@@ -545,7 +545,7 @@ int main(int argc, const char * argv[]) {
     }
     
     #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-    if (!success && application_running) {
+    if (!success && T1_app_running) {
         log_dump_and_crash(errmsg);
     }
     #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE

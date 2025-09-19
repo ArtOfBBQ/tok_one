@@ -107,7 +107,7 @@ typedef struct ParticleDesignerState {
 
 static ParticleDesignerState * pds = NULL;
 
-void client_logic_init(void) {
+void T1_clientlogic_init(void) {
     pds = T1_mem_malloc_from_unmanaged(sizeof(ParticleDesignerState));
     T1_std_memset(pds, 0, sizeof(ParticleDesignerState));
     
@@ -136,7 +136,7 @@ static float get_slider_y_screenspace(int32_t i) {
             (pds->menu_element_height * i);
 }
 
-void client_logic_early_startup(
+void T1_clientlogic_early_startup(
     bool32_t * success,
     char * error_message)
 {
@@ -171,11 +171,11 @@ void client_logic_early_startup(
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     assert(ok);
     
-    T1_meta_struct(CPUzSprite, &ok);
+    T1_meta_struct(T1CPUzSprite, &ok);
     assert(ok);
-    T1_meta_field(CPUzSprite, T1_TYPE_U8, alpha_blending_enabled, &ok);
+    T1_meta_field(T1CPUzSprite, T1_TYPE_U8, alpha_blending_enabled, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(0, 1, &ok);
-    T1_meta_field(CPUzSprite, T1_TYPE_U8, visible, &ok);
+    T1_meta_field(T1CPUzSprite, T1_TYPE_U8, visible, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(0, 1, &ok);
     assert(ok);
     
@@ -253,14 +253,14 @@ void client_logic_early_startup(
 }
 
 static void destroy_all_sliders(void) {
-    zsprite_delete(pds->title_zsprite_id);
-    zsprite_delete(pds->title_label_zsprite_id);
+    T1_zsprite_delete(pds->title_zsprite_id);
+    T1_zsprite_delete(pds->title_label_zsprite_id);
     
     log_assert(pds->regs_size < MAX_SLIDER_PARTICLE_PROPS);
     for (uint32_t i = pds->regs_head_i; i < pds->regs_size; i++) {
-        zsprite_delete(pds->regs[i].label_zsprite_id);
-        zsprite_delete(pds->regs[i].pin_zsprite_id);
-        zsprite_delete(pds->regs[i].slider_zsprite_id);
+        T1_zsprite_delete(pds->regs[i].label_zsprite_id);
+        T1_zsprite_delete(pds->regs[i].pin_zsprite_id);
+        T1_zsprite_delete(pds->regs[i].slider_zsprite_id);
     }
 }
 
@@ -519,7 +519,7 @@ static void request_gfx_from_empty_scene(void) {
 
 static float scroll_y_offset = 0;
 static int32_t slider_labels_object_id = -1;
-void client_logic_late_startup(void) {
+void T1_clientlogic_late_startup(void) {
     
     pds->editing = T1_particle_get_next();
     pds->editing->zpolygon_gpu.xyz_mult[0] = zsprite_get_x_multiplier_for_width(&pds->editing->zpolygon_cpu, 0.05f);
@@ -544,7 +544,7 @@ void client_logic_late_startup(void) {
     request_gfx_from_empty_scene();
 }
 
-void client_logic_threadmain(int32_t threadmain_id) {
+void T1_clientlogic_threadmain(int32_t threadmain_id) {
     switch (threadmain_id) {
         default:
             log_append("unhandled threadmain_id: ");
@@ -617,7 +617,7 @@ static void client_handle_keypresses(
     if (keypress_map[TOK_KEY_L] == true) {
         keypress_map[TOK_KEY_L] = false;
         T1LineParticle * lines = T1_particle_lineparticle_get_next();
-        zSpriteRequest lines_polygon;
+        T1zSpriteRequest lines_polygon;
         lines_polygon.cpu_data = &lines->zpolygon_cpu;
         lines_polygon.gpu_data = &lines->zpolygon_gpu;
         zsprite_construct_quad(
@@ -694,7 +694,7 @@ static void client_handle_keypresses(
     }
 }
 
-void client_logic_update(uint64_t microseconds_elapsed)
+void T1_clientlogic_update(uint64_t microseconds_elapsed)
 {
     client_handle_keypresses(microseconds_elapsed);
     
@@ -758,7 +758,7 @@ void client_logic_update(uint64_t microseconds_elapsed)
     #endif // T1_SCHEDULED_ANIMS_ACTIVE
 }
 
-void client_logic_update_after_render_pass(void) {
+void T1_clientlogic_update_after_render_pass(void) {
     
 }
 
@@ -841,7 +841,7 @@ static void load_texture(const char * writables_filename) {
 }
 #endif
 
-void client_logic_evaluate_terminal_command(
+void T1_clientlogic_evaluate_terminal_command(
     char * command,
     char * response,
     const uint32_t response_cap)
@@ -923,7 +923,7 @@ void client_logic_evaluate_terminal_command(
         "in clientlogic.c");
 }
 
-void client_logic_window_resize(
+void T1_clientlogic_window_resize(
     const uint32_t new_height,
     const uint32_t new_width)
 {
@@ -938,7 +938,7 @@ void client_logic_window_resize(
     #error
     #endif
     
-    zsprites_to_render->size = 0;
+    T1_zsprites_to_render->size = 0;
     clear_ui_element_touchable_ids();
     
     pds->whitespace_height = get_whitespace_height();
@@ -949,6 +949,6 @@ void client_logic_window_resize(
     request_gfx_from_empty_scene();
 }
 
-void client_logic_shutdown(void) {
+void T1_clientlogic_shutdown(void) {
     // Your application shutdown code goes here!
 }

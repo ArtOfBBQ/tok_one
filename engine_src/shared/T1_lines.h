@@ -84,6 +84,6 @@ program.
 ****************************************************************************
 */
 
-void add_points_and_lines_to_workload(GPUFrame * frame_data);
+void add_points_and_lines_to_workload(T1GPUFrame * frame_data);
 
 #endif // TOK_LINES

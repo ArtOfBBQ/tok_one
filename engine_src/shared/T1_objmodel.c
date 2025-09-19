@@ -1246,7 +1246,7 @@ static void T1_objmodel_deduce_tangents_and_bitangents(
         float denom =
             ((uv_1_to_2[0] * uv_1_to_3[1]) - uv_1_to_3[0] * uv_1_to_2[1]);
         // Avoid division by zero
-        if (common_fabs(denom) < 0.000001f) { denom = 0.000001f; };
+        if (T1_std_fabs(denom) < 0.000001f) { denom = 0.000001f; };
         
         float T[3] = {
             (vec_1_to_2[0] * uv_1_to_3[1] - vec_1_to_3[0] * uv_1_to_2[1]) / denom,
@@ -1304,7 +1304,7 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
     const bool32_t flip_uv_v)
 {
     log_assert(all_mesh_summaries_size < ALL_MESHES_SIZE);
-    if (!application_running) {
+    if (!T1_app_running) {
         log_append("Early exit from objmodel_new_mesh_id_from_resources(), application not running...\n");
         return -1;
     }
@@ -1455,12 +1455,12 @@ void T1_objmodel_center_mesh_offsets(
 {
     log_assert(mesh_id < (int32_t)all_mesh_summaries_size);
     
-    float smallest_y = FLOAT32_MAX;
-    float largest_y = FLOAT32_MIN;
-    float smallest_x = FLOAT32_MAX;
-    float largest_x = FLOAT32_MIN;
-    float smallest_z = FLOAT32_MAX;
-    float largest_z = FLOAT32_MIN;
+    float smallest_y = T1_F32_MAX;
+    float largest_y = T1_F32_MIN;
+    float smallest_x = T1_F32_MAX;
+    float largest_x = T1_F32_MIN;
+    float smallest_z = T1_F32_MAX;
+    float largest_z = T1_F32_MIN;
     
     int32_t tail_i =
         all_mesh_summaries[mesh_id].vertices_head_i +
@@ -1590,7 +1590,7 @@ static float get_squared_distance_from_locked_vertices(
 static float get_squared_triangle_length_from_locked_vertices(
     const T1GPULockedVertex * vertices)
 {
-    float largest_squared_dist = FLOAT32_MIN;
+    float largest_squared_dist = T1_F32_MIN;
     #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     int32_t largest_start_vertex_i = -1;
     int32_t largest_end_vertex_i = -1;
@@ -1656,7 +1656,7 @@ static int32_t find_biggest_area_triangle_head_in(
     log_assert(tail_vertex_i > head_vertex_i);
     log_assert((tail_vertex_i - head_vertex_i) % 3 == 2);
     
-    float biggest_area = FLOAT32_MIN;
+    float biggest_area = T1_F32_MIN;
     int32_t biggest_area_i = -1;
     
     for (int32_t i = head_vertex_i; i < (tail_vertex_i - 1); i += 3) {

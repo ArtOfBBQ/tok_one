@@ -20,7 +20,7 @@
 extern "C" {
 #endif
 
-typedef struct CPUzSprite {
+typedef struct {
     uint64_t next_occlusion_in_us;
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
     
@@ -29,31 +29,31 @@ typedef struct CPUzSprite {
     bool8_t committed;
     bool8_t deleted;
     bool8_t visible;
-} CPUzSprite;
+} T1CPUzSprite;
 
-typedef struct zSpriteCollection {
+typedef struct {
     T1GPUzSprite gpu_data[MAX_ZSPRITES_PER_BUFFER];
     T1GPUConstMat gpu_mats[ALL_LOCKED_MATERIALS_SIZE];
-    CPUzSprite cpu_data[MAX_ZSPRITES_PER_BUFFER];
+    T1CPUzSprite cpu_data[MAX_ZSPRITES_PER_BUFFER];
     uint32_t size;
-} zSpriteCollection;
+} T1zSpriteCollection;
 
-extern zSpriteCollection * zsprites_to_render;
+extern T1zSpriteCollection * T1_zsprites_to_render;
 
-typedef struct zSpriteRequest {
+typedef struct {
     T1GPUzSprite * gpu_data;
-    CPUzSprite * cpu_data;
+    T1CPUzSprite * cpu_data;
     uint32_t gpu_data_size;
-} zSpriteRequest;
+} T1zSpriteRequest;
 
-void zsprite_construct_with_mesh_id(
-    zSpriteRequest * to_construct,
+void T1_zsprite_construct_with_mesh_id(
+    T1zSpriteRequest * to_construct,
     const int32_t mesh_id);
-void zsprite_construct(zSpriteRequest * to_construct);
+void T1_zsprite_construct(T1zSpriteRequest * to_construct);
 // Allocate a PolygonRequest on the stack, then call this
-void zsprite_request_next(
-    zSpriteRequest * stack_recipient);
-void zsprite_commit(zSpriteRequest * to_commit);
+void T1_zsprite_request_next(
+    T1zSpriteRequest * stack_recipient);
+void T1_zsprite_commit(T1zSpriteRequest * to_commit);
 
 
 /*
@@ -65,32 +65,32 @@ will be set so you can edit its properties. (So you can move your objects etc.)
 
 returns false if no such object_id, else true
 */
-bool32_t zsprite_fetch_by_zsprite_id(
-    zSpriteRequest * stack_recipient,
+bool32_t T1_zsprite_fetch_by_zsprite_id(
+    T1zSpriteRequest * stack_recipient,
     const int32_t zsprite_id);
 
-void zsprite_delete(const int32_t with_zsprite_id);
+void T1_zsprite_delete(const int32_t with_zsprite_id);
 
 float zsprite_dot_of_vertices_f3(
     const float a[3],
     const float b[3]);
 
 float zsprite_get_z_multiplier_for_depth(
-    CPUzSprite * for_poly,
+    T1CPUzSprite * for_poly,
     const float for_depth);
 float zsprite_get_y_multiplier_for_height(
-    CPUzSprite * for_poly,
+    T1CPUzSprite * for_poly,
     const float for_height);
 float zsprite_get_x_multiplier_for_width(
-    CPUzSprite * for_poly,
+    T1CPUzSprite * for_poly,
     const float for_width);
 
 void zsprite_scale_multipliers_to_width(
-    CPUzSprite * cpu_data,
+    T1CPUzSprite * cpu_data,
     T1GPUzSprite * gpu_data,
     const float new_width);
 void zsprite_scale_multipliers_to_height(
-    CPUzSprite * cpu_data,
+    T1CPUzSprite * cpu_data,
     T1GPUzSprite * gpu_data,
     const float new_height);
 
@@ -104,7 +104,7 @@ void zsprite_construct_quad_around(
     const float z,
     const float width,
     const float height,
-    zSpriteRequest * stack_recipient);
+    T1zSpriteRequest * stack_recipient);
 
 void zsprite_construct_quad(
     const float left_x,
@@ -112,7 +112,7 @@ void zsprite_construct_quad(
     const float z,
     const float width,
     const float height,
-    zSpriteRequest * stack_recipient);
+    T1zSpriteRequest * stack_recipient);
 
 void zsprite_construct_cube_around(
     const float mid_x,
@@ -121,7 +121,7 @@ void zsprite_construct_cube_around(
     const float width,
     const float height,
     const float depth,
-    zSpriteRequest * stack_recipient);
+    T1zSpriteRequest * stack_recipient);
 
 #ifdef __cplusplus
 }

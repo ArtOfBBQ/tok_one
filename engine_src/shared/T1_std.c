@@ -237,16 +237,22 @@ T1_std_internal_strcat_cap(
 {
     uint32_t i = 0;
     while (recipient[i] != '\0') {
-        #if T1_STD_ASSERTS_ACTIVE
+        #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
         assert(i < recipient_size);
+        #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         i++;
     }
     
     uint32_t j = 0;
     while (to_append[j] != '\0') {
-        #if T1_STD_ASSERTS_ACTIVE
+        #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
         assert(i < recipient_size - 1);
+        #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         recipient[i++] = to_append[j++];
     }
@@ -271,15 +277,21 @@ void T1_std_strcat_char_cap(
 void
 T1_std_internal_strcat_int_cap(
     char * recipient,
-    #if T1_STD_ASSERTS_ACTIVE
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     const uint32_t recipient_size,
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     const int32_t to_append)
 {
     uint32_t i = 0;
     while (recipient[i] != '\0') {
-        #if T1_STD_ASSERTS_ACTIVE
+        #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
         assert(i < recipient_size);
+        #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         i++;
     }
@@ -290,15 +302,21 @@ T1_std_internal_strcat_int_cap(
 void
 T1_std_internal_strcat_uint_cap(
     char * recipient,
-    #if T1_STD_ASSERTS_ACTIVE
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     const uint32_t recipient_size,
+    #elif T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
+    #else
+    #error
     #endif
     const uint32_t to_append)
 {
     uint32_t i = 0;
     while (recipient[i] != '\0') {
-        #if T1_STD_ASSERTS_ACTIVE
+        #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
         assert(i < recipient_size);
+        #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         i++;
     }
@@ -327,8 +345,11 @@ T1_std_internal_strcat_float_cap(
     }
     T1_std_internal_strcat_uint_cap(
         recipient,
-        #if T1_STD_ASSERTS_ACTIVE
+        #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
         recipient_size,
+        #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         before_comma);
     T1_std_internal_strcat_cap(
@@ -337,35 +358,50 @@ T1_std_internal_strcat_float_cap(
         ".");
     T1_std_internal_strcat_uint_cap(
         recipient,
-        #if T1_STD_ASSERTS_ACTIVE
+        #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
         recipient_size,
+        #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         after_comma);
 }
 
 void T1_std_internal_strcpy_cap(
     char * recipient,
-    #if T1_STD_ASSERTS_ACTIVE
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     const uint32_t recipient_size,
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     const char * origin)
 {
-    #if T1_STD_ASSERTS_ACTIVE
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     assert(origin != NULL);
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     uint32_t i = 0;
     while (origin[i] != '\0')
     {
-        #if T1_STD_ASSERTS_ACTIVE
+        #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
         assert(i < recipient_size - 1);
+        #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+        #else
+        #error
         #endif
         recipient[i] = origin[i];
         i += 1;
     }
     
-    #if T1_STD_ASSERTS_ACTIVE
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     assert(i < recipient_size);
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     recipient[i] = '\0';
 }
@@ -485,8 +521,11 @@ T1_std_strsub(
     const char * to_match,
     const char * replacement)
 {
-    #if T1_STD_ASSERTS_ACTIVE
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     assert(T1_std_strlen(to_match) >= T1_std_strlen(replacement));
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     
     size_t replacement_len = T1_std_strlen(replacement);
@@ -739,8 +778,11 @@ T1_std_string_to_int32(const char * input)
     int32_t result = T1_std_string_to_int32_validate(
         input,
         &result_good);
-    #if T1_STD_ASSERTS_ACTIVE
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     assert(result_good);
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     return result;
 }
@@ -798,8 +840,11 @@ T1_std_string_to_uint32(
     uint32_t result = T1_std_string_to_uint32_validate(
         input,
         &result_good);
-    #if T1_STD_ASSERTS_ACTIVE
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     assert(result_good);
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     return result;
 }
@@ -949,8 +994,11 @@ T1_std_string_to_float(
         input,
         &result_good);
     
-    #if T1_STD_ASSERTS_ACTIVE
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     assert(result_good);
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
     #endif
     return result;
 }

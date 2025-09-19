@@ -111,12 +111,12 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
             
             for (
                 uint32_t zp_i = 0;
-                zp_i < zsprites_to_render->size;
+                zp_i < T1_zsprites_to_render->size;
                 zp_i++)
             {
                 if (
                     active_ui_elements[ui_elem_i].slideable &&
-                    zsprites_to_render->gpu_data[zp_i].
+                    T1_zsprites_to_render->gpu_data[zp_i].
                         touchable_id ==
                             currently_sliding_touchable_id)
                 {
@@ -126,9 +126,9 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                             user_interactions[
                                 INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].
                                     screen_x,
-                            zsprites_to_render->gpu_data[zp_i].
+                            T1_zsprites_to_render->gpu_data[zp_i].
                                 xyz[2]) -
-                        zsprites_to_render->gpu_data[zp_i].xyz[0];
+                        T1_zsprites_to_render->gpu_data[zp_i].xyz[0];
                     
                     if (
                         new_x_offset <
@@ -150,7 +150,7 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                                 slider_width / 2;
                     }
                     
-                    zsprites_to_render->gpu_data[zp_i].xyz_offset[0] =
+                    T1_zsprites_to_render->gpu_data[zp_i].xyz_offset[0] =
                         new_x_offset;
                         
                     active_ui_elements[ui_elem_i].label_dirty = true;
@@ -405,24 +405,24 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
             
             for (
                 int32_t zs_i = 0;
-                zs_i < (int32_t)zsprites_to_render->size;
+                zs_i < (int32_t)T1_zsprites_to_render->size;
                 zs_i++)
             {
                 if (
-                    zsprites_to_render->cpu_data[zs_i].zsprite_id ==
+                    T1_zsprites_to_render->cpu_data[zs_i].zsprite_id ==
                         active_ui_elements[i].label_zsprite_id)
                 {
                     xy_screenspace[0] =
                         engineglobals_x_to_screenspace_x(
-                            zsprites_to_render->gpu_data[zs_i].xyz[0],
-                            zsprites_to_render->gpu_data[zs_i].xyz[2]);
+                            T1_zsprites_to_render->gpu_data[zs_i].xyz[0],
+                            T1_zsprites_to_render->gpu_data[zs_i].xyz[2]);
                     xy_screenspace[1] =
                         engineglobals_y_to_screenspace_y(
-                            zsprites_to_render->gpu_data[zs_i].xyz[1],
-                            zsprites_to_render->gpu_data[zs_i].xyz[2]);
-                    z = zsprites_to_render->gpu_data[zs_i].xyz[2];
-                    ignore_camera = (uint8_t)zsprites_to_render->gpu_data[zs_i].ignore_camera;
-                    zsprites_to_render->cpu_data[zs_i].deleted = true;
+                            T1_zsprites_to_render->gpu_data[zs_i].xyz[1],
+                            T1_zsprites_to_render->gpu_data[zs_i].xyz[2]);
+                    z = T1_zsprites_to_render->gpu_data[zs_i].xyz[2];
+                    ignore_camera = (uint8_t)T1_zsprites_to_render->gpu_data[zs_i].ignore_camera;
+                    T1_zsprites_to_render->cpu_data[zs_i].deleted = true;
                 }
             }
             
@@ -673,8 +673,8 @@ void T1_uielement_request_slider(
                 next_ae->user_set.custom_float_max = INT64_MAX;
             break;
             case T1_TYPE_F32:
-                next_ae->user_set.custom_float_min = FLOAT32_MIN;
-                next_ae->user_set.custom_float_max = FLOAT32_MAX;
+                next_ae->user_set.custom_float_min = T1_F32_MIN;
+                next_ae->user_set.custom_float_max = T1_F32_MAX;
             break;
             default:
                 log_assert(0);
@@ -689,8 +689,8 @@ void T1_uielement_request_slider(
     next_ae->slider_linked_value = linked_value_ptr;
     next_ae->touchable_id = next_ui_element_touchable_id();
     
-    zSpriteRequest slider_back;
-    zsprite_request_next(&slider_back);
+    T1zSpriteRequest slider_back;
+    T1_zsprite_request_next(&slider_back);
     zsprite_construct_quad_around(
         /* const float mid_x: */
             engineglobals_screenspace_x_to_x(
@@ -725,10 +725,10 @@ void T1_uielement_request_slider(
     log_assert(slider_back.cpu_data->visible);
     log_assert(!slider_back.cpu_data->committed);
     log_assert(!slider_back.cpu_data->deleted);
-    zsprite_commit(&slider_back);
+    T1_zsprite_commit(&slider_back);
     
-    zSpriteRequest slider_pin;
-    zsprite_request_next(&slider_pin);
+    T1zSpriteRequest slider_pin;
+    T1_zsprite_request_next(&slider_pin);
     float pin_z = next_ae->user_set.z - 0.00001f;
     zsprite_construct_quad_around(
         /* const float mid_x: */
@@ -781,7 +781,7 @@ void T1_uielement_request_slider(
         next_ae,
         slider_pin.gpu_data);
     
-    zsprite_commit(&slider_pin);
+    T1_zsprite_commit(&slider_pin);
 }
 
 void T1_uielement_request_button(
@@ -819,8 +819,8 @@ void T1_uielement_request_button(
     next_ae->slider_linked_value = NULL;
     next_ae->touchable_id = next_ui_element_touchable_id();
     
-    zSpriteRequest button_request;
-    zsprite_request_next(&button_request);
+    T1zSpriteRequest button_request;
+    T1_zsprite_request_next(&button_request);
     zsprite_construct_quad_around(
         /* const float mid_x: */
             engineglobals_screenspace_x_to_x(
@@ -851,7 +851,7 @@ void T1_uielement_request_button(
         next_ae->user_set.ignore_camera;
     button_request.gpu_data->base_mat = next_ae->user_set.back_mat;
     button_request.gpu_data->alpha = 1.0f;
-    zsprite_commit(&button_request);
+    T1_zsprite_commit(&button_request);
 }
 
 void T1_uielement_delete(const int32_t with_zsprite_id)

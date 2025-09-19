@@ -1,7 +1,7 @@
 #include "T1_collision.h"
 
-// evaporate printf statements if COLLISION_SILENCE is set
-#ifndef COLLISION_SILENCE
+// evaporate printf statements if T1_COLLISION_SILENCE is set
+#ifndef T1_COLLISION_SILENCE
 #define col_printf(...) printf(__VA_ARGS__)
 #else
 #define col_printf(...)
@@ -233,7 +233,7 @@ float normalized_ray_hits_sphere(
     const float sphere_radius,
     float * collision_recipient)
 {
-    #ifndef COLLISION_IGNORE_ASSERTS
+    #ifndef T1_COLLISION_IGNORE_ASSERTS
     assert(dot(normalized_ray_direction, normalized_ray_direction) < 1.02f);
     assert(dot(normalized_ray_direction, normalized_ray_direction) > 0.98f);
     #endif
@@ -463,7 +463,7 @@ float ray_hits_plane(
     float * collision_recipient)
 {
     // Assuming vectors are all normalized
-    #ifndef COLLISION_IGNORE_ASSERTS
+    #ifndef T1_COLLISION_IGNORE_ASSERTS
     assert(dot(plane_normal, plane_normal) < 1.05f);
     assert(dot(plane_normal, plane_normal) > -0.01f);
     assert(dot(ray_direction, ray_direction) < 1.05f);
@@ -543,7 +543,7 @@ float ray_hits_triangle(
              /* const float C[2]: */
                  triangle_vertex_3))
     {
-        #ifndef COLLISION_IGNORE_ASSERTS
+        #ifndef T1_COLLISION_IGNORE_ASSERTS
         assert(nearest_dist_found > 0.0f);
         #endif
         return nearest_dist_found;

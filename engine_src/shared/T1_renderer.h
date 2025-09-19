@@ -12,7 +12,7 @@
 #include "T1_lines.h"
 #include "T1_zsprite.h"
 #include "T1_particle.h"
-#include "T1_userinput.h"
+#include "T1_uiinteraction.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,7 +21,7 @@ extern "C" {
 void renderer_init(void);
 
 void renderer_hardware_render(
-    GPUFrame * frame_data,
+    T1GPUFrame * frame_data,
     uint64_t elapsed_nanoseconds);
 
 #ifdef __cplusplus

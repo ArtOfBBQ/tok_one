@@ -285,7 +285,7 @@ void init_application_before_gpu_init(
     T1_std_memset(engine_globals, 0, sizeof(EngineGlobals));
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
-    audio_init(
+    T1_audio_init(
         /* void *(*arg_malloc_function)(size_t): */
             T1_mem_malloc_from_unmanaged);
     #elif T1_AUDIO_ACTIVE == T1_INACTIVE
@@ -310,8 +310,8 @@ void init_application_before_gpu_init(
         engine_globals->upcoming_fullscreen_request =
             engine_globals->fullscreen;
         #if T1_AUDIO_ACTIVE == T1_ACTIVE
-        sound_settings->music_volume = engine_save_file->music_volume;
-        sound_settings->sfx_volume = engine_save_file->sound_volume;
+        T1_sound_settings->music_volume = engine_save_file->music_volume;
+        T1_sound_settings->sfx_volume = engine_save_file->sound_volume;
         #elif T1_AUDIO_ACTIVE == T1_INACTIVE
         // Pass
         #else
@@ -355,9 +355,9 @@ void init_application_before_gpu_init(
     
     T1_uielement_init();
     
-    zsprites_to_render = (zSpriteCollection *)T1_mem_malloc_from_unmanaged(
-        sizeof(zSpriteCollection));
-    zsprites_to_render->size = 0;
+    T1_zsprites_to_render = (T1zSpriteCollection *)T1_mem_malloc_from_unmanaged(
+        sizeof(T1zSpriteCollection));
+    T1_zsprites_to_render->size = 0;
     
     T1_material_init(T1_mem_malloc_from_unmanaged);
     
@@ -437,26 +437,26 @@ void init_application_before_gpu_init(
                 font_metrics_file.size_without_terminator);
     }
     
-    user_interactions = (Interaction *)
-        T1_mem_malloc_from_unmanaged(sizeof(Interaction) * USER_INTERACTIONS_SIZE);
+    user_interactions = (T1UIInteraction *)
+        T1_mem_malloc_from_unmanaged(sizeof(T1UIInteraction) * USER_INTERACTIONS_SIZE);
     for (uint32_t m = 0; m < USER_INTERACTIONS_SIZE; m++) {
-        construct_interaction(&user_interactions[m]);
+        T1_uiinteraction_construct(&user_interactions[m]);
     }
     
     renderer_init();
     
-    client_logic_init();
+    T1_clientlogic_init();
     
     gpu_shared_data_collection = T1_mem_malloc_from_unmanaged(
-        sizeof(GPUSharedDataCollection));
+        sizeof(T1GPUSharedDataCollection));
     T1_std_memset(
         gpu_shared_data_collection,
         0,
-        sizeof(GPUSharedDataCollection));
+        sizeof(T1GPUSharedDataCollection));
     
     // init the buffers that contain our vertices to send to the GPU
     gpu_shared_data_collection->vertices_allocation_size =
-        pad_to_page_size(sizeof(GPUVertexIndices) * MAX_VERTICES_PER_BUFFER);
+        pad_to_page_size(sizeof(T1GPUVertexIndices) * MAX_VERTICES_PER_BUFFER);
     
     gpu_shared_data_collection->polygons_allocation_size =
         pad_to_page_size(sizeof(T1GPUzSprite) * MAX_ZSPRITES_PER_BUFFER);
@@ -485,7 +485,7 @@ void init_application_before_gpu_init(
         pad_to_page_size(sizeof(T1GPURawVertex) * MAX_LINE_VERTICES);
     
     gpu_shared_data_collection->postprocessing_constants_allocation_size =
-        pad_to_page_size(sizeof(GPUVertexIndices) * MAX_VERTICES_PER_BUFFER);
+        pad_to_page_size(sizeof(T1GPUVertexIndices) * MAX_VERTICES_PER_BUFFER);
     
     for (
         uint32_t cur_frame_i = 0;
@@ -493,7 +493,7 @@ void init_application_before_gpu_init(
         cur_frame_i++)
     {
         gpu_shared_data_collection->triple_buffers[cur_frame_i].verts =
-            (GPUVertexIndices *)T1_mem_malloc_from_unmanaged_aligned(
+            (T1GPUVertexIndices *)T1_mem_malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection->vertices_allocation_size,
                 T1_mem_page_size);
         
@@ -595,7 +595,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     
     T1_texture_array_load_font_images();
     
-    if (!application_running) {
+    if (!T1_app_running) {
         return;
     }
     
@@ -656,8 +656,8 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     char errmsg[256];
     errmsg[0] = '\0';
     
-    if (application_running) {
-        client_logic_early_startup(&success, errmsg);
+    if (T1_app_running) {
+        T1_clientlogic_early_startup(&success, errmsg);
         
         if (!success) {
             gameloop_active = true;
@@ -687,7 +687,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
         log_assert(engine_globals->startup_bytes_to_load == 0);
         log_assert(engine_globals->startup_bytes_loaded == 0);
         
-        if (!application_running) {
+        if (!T1_app_running) {
             gameloop_active = true;
             return;
         }
@@ -748,7 +748,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     #error "T1_PARTICLES_ACTIVE undefined!"
     #endif
     
-    if (!application_running) {
+    if (!T1_app_running) {
         gameloop_active = true;
         return;
     }
@@ -771,7 +771,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
             sizeof(T1GPUConstMat) * ALL_LOCKED_MATERIALS_SIZE);
     T1_platform_gpu_copy_locked_materials();
     
-    if (!application_running) {
+    if (!T1_app_running) {
         gameloop_active = true;
         return;
     }
@@ -779,7 +779,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     asset_loading_thread(0);
     
-    if (!application_running) {
+    if (!T1_app_running) {
         gameloop_active = true;
         return;
     }
@@ -840,7 +840,7 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     #error "T1_MIPMAPS_ACTIVE undefined!"
     #endif
     
-    if (!application_running) {
+    if (!T1_app_running) {
         gameloop_active = true;
         return;
     }
@@ -848,14 +848,14 @@ void init_application_after_gpu_init(int32_t throwaway_threadarg) {
     T1_platform_layer_start_window_resize(
         T1_platform_get_current_time_us());
     
-    if (application_running) {
-        client_logic_late_startup();
+    if (T1_app_running) {
+        T1_clientlogic_late_startup();
     } else {
         gameloop_active = true;
         return;
     }
     
-    if (!application_running) {
+    if (!T1_app_running) {
         gameloop_active = true;
         return;
     }
@@ -878,8 +878,8 @@ void shared_shutdown_application(void)
     #if T1_ENGINE_SAVEFILE_ACTIVE
     
     #if T1_AUDIO_ACTIVE == T1_ACTIVE
-    engine_save_file->music_volume = sound_settings->music_volume;
-    engine_save_file->sound_volume = sound_settings->sfx_volume;
+    engine_save_file->music_volume = T1_sound_settings->music_volume;
+    engine_save_file->sound_volume = T1_sound_settings->sfx_volume;
     #elif T1_AUDIO_ACTIVE == T1_INACTIVE
     #else
     #error "T1_AUDIO_ACTIVE undefined!"

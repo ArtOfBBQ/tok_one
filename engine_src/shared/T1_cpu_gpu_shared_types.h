@@ -22,7 +22,7 @@
 typedef struct {
     int locked_vertex_i; // index into GPULockedVertex buffer
     int polygon_i;       // index into GPUPolygonCollection buffer
-} GPUVertexIndices;
+} T1GPUVertexIndices;
 
 /*
 A 'set and forget' description of a triangle vertex, intended to stay static

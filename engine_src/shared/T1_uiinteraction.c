@@ -1,12 +1,12 @@
-#include "T1_userinput.h"
+#include "T1_uiinteraction.h"
 
 bool32_t * keypress_map; //[KEYPRESS_MAP_SIZE];
 
-Interaction * user_interactions = NULL;
+T1UIInteraction * user_interactions = NULL;
 
 float mouse_scroll_pos = 0.0f;
 
-void construct_interaction(Interaction * to_construct) {
+void T1_uiinteraction_construct(T1UIInteraction * to_construct) {
     to_construct->touchable_id_top = -1;
     to_construct->touchable_id_pierce = -1;
     to_construct->screen_x = 0;
@@ -15,7 +15,7 @@ void construct_interaction(Interaction * to_construct) {
     to_construct->handled = true;
 }
 
-void register_interaction(Interaction * touch_record)
+void T1_uiinteraction_register(T1UIInteraction * touch_record)
 {
     uint64_t timestamp = T1_platform_get_current_time_us();
     
@@ -33,21 +33,21 @@ void register_interaction(Interaction * touch_record)
     touch_record->handled = false;
 }
 
-void register_keyup(uint32_t key_id)
+void T1_uiinteraction_register_keyup(uint32_t key_id)
 {
     log_assert(key_id < KEYPRESS_MAP_SIZE);
     
     keypress_map[key_id] = false;
 }
 
-void register_keydown(uint32_t key_id)
+void T1_uiinteraction_register_keydown(uint32_t key_id)
 {
     log_assert(key_id < KEYPRESS_MAP_SIZE);
     
     keypress_map[key_id] = true;
 }
 
-void register_mousescroll(float amount)
+void T1_uiinteraction_register_mousescroll(float amount)
 {
     mouse_scroll_pos += amount;
     

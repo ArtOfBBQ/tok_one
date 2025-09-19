@@ -181,26 +181,26 @@ static int compare_triangles_furthest_camera_dist(
 #endif
 
 inline static void add_alphablending_zpolygons_to_workload(
-    GPUFrame * frame_data)
+    T1GPUFrame * frame_data)
 {
     frame_data->first_alphablend_i = frame_data->verts_size;
     
     // Copy all vertices that do use alpha blending
     for (
         int32_t cpu_zp_i = 0;
-        cpu_zp_i < (int32_t)zsprites_to_render->size;
+        cpu_zp_i < (int32_t)T1_zsprites_to_render->size;
         cpu_zp_i++)
     {
         if (
-            zsprites_to_render->cpu_data[cpu_zp_i].deleted ||
-            !zsprites_to_render->cpu_data[cpu_zp_i].visible ||
-            !zsprites_to_render->cpu_data[cpu_zp_i].committed ||
-            !zsprites_to_render->cpu_data[cpu_zp_i].alpha_blending_enabled)
+            T1_zsprites_to_render->cpu_data[cpu_zp_i].deleted ||
+            !T1_zsprites_to_render->cpu_data[cpu_zp_i].visible ||
+            !T1_zsprites_to_render->cpu_data[cpu_zp_i].committed ||
+            !T1_zsprites_to_render->cpu_data[cpu_zp_i].alpha_blending_enabled)
         {
             continue;
         }
         
-        int32_t mesh_id = zsprites_to_render->cpu_data[cpu_zp_i].mesh_id;
+        int32_t mesh_id = T1_zsprites_to_render->cpu_data[cpu_zp_i].mesh_id;
         log_assert(mesh_id >= 0);
         log_assert(mesh_id < (int32_t)all_mesh_summaries_size);
         
@@ -304,7 +304,7 @@ inline static void add_alphablending_zpolygons_to_workload(
 }
 
 inline static void add_opaque_zpolygons_to_workload(
-    GPUFrame * frame_data)
+    T1GPUFrame * frame_data)
 {
     log_assert(frame_data->verts_size == 0);
     
@@ -318,19 +318,19 @@ inline static void add_opaque_zpolygons_to_workload(
     
     for (
         int32_t cpu_zp_i = 0;
-        cpu_zp_i < (int32_t)zsprites_to_render->size;
+        cpu_zp_i < (int32_t)T1_zsprites_to_render->size;
         cpu_zp_i++)
     {
         if (
-            zsprites_to_render->cpu_data[cpu_zp_i].deleted ||
-            !zsprites_to_render->cpu_data[cpu_zp_i].visible ||
-            !zsprites_to_render->cpu_data[cpu_zp_i].committed ||
-            zsprites_to_render->cpu_data[cpu_zp_i].alpha_blending_enabled)
+            T1_zsprites_to_render->cpu_data[cpu_zp_i].deleted ||
+            !T1_zsprites_to_render->cpu_data[cpu_zp_i].visible ||
+            !T1_zsprites_to_render->cpu_data[cpu_zp_i].committed ||
+            T1_zsprites_to_render->cpu_data[cpu_zp_i].alpha_blending_enabled)
         {
             continue;
         }
         
-        int32_t mesh_id = zsprites_to_render->cpu_data[cpu_zp_i].mesh_id;
+        int32_t mesh_id = T1_zsprites_to_render->cpu_data[cpu_zp_i].mesh_id;
         log_assert(mesh_id >= 0);
         log_assert(mesh_id < (int32_t)all_mesh_summaries_size);
         
@@ -397,7 +397,7 @@ inline static void add_opaque_zpolygons_to_workload(
 
 // static float clickray_elapsed = 0.0f;
 void renderer_hardware_render(
-    GPUFrame * frame_data,
+    T1GPUFrame * frame_data,
     uint64_t elapsed_us)
 {
     (void)elapsed_us;
@@ -415,32 +415,32 @@ void renderer_hardware_render(
         return;
     }
     
-    log_assert(zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
+    log_assert(T1_zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
     
     T1_std_memcpy(
         /* void * dest: */
             frame_data->zsprite_list->polygons,
         /* const void * src: */
-            zsprites_to_render->gpu_data,
+            T1_zsprites_to_render->gpu_data,
         /* size_t n: */
-            sizeof(T1GPUzSprite) * zsprites_to_render->size);
-    frame_data->zsprite_list->size = zsprites_to_render->size;
+            sizeof(T1GPUzSprite) * T1_zsprites_to_render->size);
+    frame_data->zsprite_list->size = T1_zsprites_to_render->size;
     
     log_assert(
-        frame_data->zsprite_list->size <= zsprites_to_render->size);
+        frame_data->zsprite_list->size <= T1_zsprites_to_render->size);
     log_assert(
-        zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
+        T1_zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
     log_assert(
         frame_data->zsprite_list->size < MAX_ZSPRITES_PER_BUFFER);
     
-    frame_data->zsprite_list->size = zsprites_to_render->size;
+    frame_data->zsprite_list->size = T1_zsprites_to_render->size;
     
     *frame_data->postproc_consts =
         engine_globals->postproc_consts;
     
     add_opaque_zpolygons_to_workload(frame_data);
     
-    if (application_running) {
+    if (T1_app_running) {
         #if T1_PARTICLES_ACTIVE == T1_ACTIVE
         T1_particle_add_all_to_frame_data(
             /* GPUDataForSingleFrame * frame_data: */

@@ -34,7 +34,7 @@ extern "C" {
 #endif
 
 extern char crashed_top_of_screen_msg[256];
-extern bool32_t application_running;
+extern bool32_t T1_app_running;
 
 /*
 Allocates memory. You need to pass a chunk of memory of LOG_SIZE bytes

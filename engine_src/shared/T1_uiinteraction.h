@@ -111,7 +111,7 @@
 extern "C" {
 #endif
 
-typedef struct Interaction {
+typedef struct {
     int32_t touchable_id_pierce;
     int32_t touchable_id_top;
     bool32_t checked_touchables;
@@ -119,8 +119,8 @@ typedef struct Interaction {
     float screen_y;
     uint64_t timestamp;
     bool32_t handled;
-} Interaction;
-void construct_interaction(Interaction * to_construct);
+} T1UIInteraction;
+void T1_uiinteraction_construct(T1UIInteraction * to_construct);
 
 // indexes in the interactions array
 #define INTR_LAST_GPU_DATA                      0
@@ -137,17 +137,17 @@ void construct_interaction(Interaction * to_construct);
 #define INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE      11
 // permanent size of the interactions array
 #define USER_INTERACTIONS_SIZE                 12
-extern Interaction * user_interactions;
+extern T1UIInteraction * user_interactions;
 
-void register_interaction(Interaction * touch_record);
+void T1_uiinteraction_register(T1UIInteraction * touch_record);
 
 extern bool32_t * keypress_map; //[KEYPRESS_MAP_SIZE];
 
 extern float mouse_scroll_pos;
 
-void register_keyup(uint32_t key_id);
-void register_keydown(uint32_t key_id);
-void register_mousescroll(const float amount);
+void T1_uiinteraction_register_keyup(uint32_t key_id);
+void T1_uiinteraction_register_keydown(uint32_t key_id);
+void T1_uiinteraction_register_mousescroll(const float amount);
 
 #ifdef __cplusplus
 }

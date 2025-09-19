@@ -18,7 +18,7 @@ static void audio_callback(
     
     int16_t * platform_buffer_at = (int16_t *)buffer->mAudioData;
     
-    audio_consume_int16_samples(
+    T1_audio_consume_int16_samples(
         /* int16_t * recipient: */
             platform_buffer_at,
         /* const uint32_t samples_to_copy: */

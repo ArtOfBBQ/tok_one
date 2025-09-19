@@ -7,11 +7,11 @@ static int32_t teapot_object_ids[2];
 static int32_t teapot_touchable_ids[2];
 #endif
 
-void client_logic_init(void) {
+void T1_clientlogic_init(void) {
     return;
 }
 
-void client_logic_early_startup(
+void T1_clientlogic_early_startup(
     bool32_t * success,
     char * error_message)
 {
@@ -68,9 +68,9 @@ static void request_teapots(void) {
     
     for (uint32_t i = 0; i < 1; i++) {
         log_assert(teapot_mesh_id >= 0);
-        zSpriteRequest teapot_request;
-        zsprite_request_next(&teapot_request);
-        zsprite_construct(&teapot_request);
+        T1zSpriteRequest teapot_request;
+        T1_zsprite_request_next(&teapot_request);
+        T1_zsprite_construct(&teapot_request);
         teapot_request.cpu_data->mesh_id = teapot_mesh_id;
         teapot_request.gpu_data->xyz_mult[0] = 0.15f;
         teapot_request.gpu_data->xyz_mult[1] = 0.15f;
@@ -91,12 +91,12 @@ static void request_teapots(void) {
         log_assert(teapot_request.gpu_data->xyz_offset[0] == 0.0f);
         log_assert(teapot_request.gpu_data->xyz_offset[1] == 0.0f);
         log_assert(teapot_request.gpu_data->xyz_offset[2] == 0.0f);
-        zsprite_commit(&teapot_request);
+        T1_zsprite_commit(&teapot_request);
     }
     #endif
 }
 
-void client_logic_late_startup(void) {
+void T1_clientlogic_late_startup(void) {
     
     float teapot_xyz[3];
     teapot_xyz[0] = TEAPOT_X;
@@ -119,9 +119,9 @@ void client_logic_late_startup(void) {
         teapot_xyz);
     commit_zlight(light);
     
-    zSpriteRequest lightcube_request;
-    zsprite_request_next(&lightcube_request);
-    zsprite_construct(&lightcube_request);
+    T1zSpriteRequest lightcube_request;
+    T1_zsprite_request_next(&lightcube_request);
+    T1_zsprite_construct(&lightcube_request);
     lightcube_request.cpu_data->mesh_id = BASIC_CUBE_MESH_ID;
     lightcube_request.gpu_data->xyz_mult[0] = 0.05f;
     lightcube_request.gpu_data->xyz_mult[1] = 0.05f;
@@ -147,7 +147,7 @@ void client_logic_late_startup(void) {
     lightcube_request.gpu_data->base_mat.rgb_cap[1] = 5.0f;
     lightcube_request.gpu_data->base_mat.rgb_cap[2] = 5.0f;
     lightcube_request.gpu_data->remove_shadow = true;
-    zsprite_commit(&lightcube_request);
+    T1_zsprite_commit(&lightcube_request);
     
     camera.xyz[0] = -4.50f;
     camera.xyz[1] =  9.50f;
@@ -165,8 +165,8 @@ void client_logic_late_startup(void) {
     //        &quad_texture_array_i,
     //        &quad_texture_i);
     
-    zSpriteRequest quad;
-    zsprite_request_next(&quad);
+    T1zSpriteRequest quad;
+    T1_zsprite_request_next(&quad);
     zsprite_construct_quad(
         /* const float left_x: */
             TEAPOT_X + 0.75f,
@@ -203,7 +203,7 @@ void client_logic_late_startup(void) {
     quad.gpu_data->base_mat.ambient_rgb[2]  = 0.50f;
     quad.gpu_data->alpha = 1.0f;
     
-    zsprite_commit(&quad);
+    T1_zsprite_commit(&quad);
     
     font_settings->font_height = 50;
     font_settings->touchable_id = -1;
@@ -234,11 +234,11 @@ void client_logic_late_startup(void) {
             1500.0f);
     font_settings->touchable_id = -1;
     log_assert(
-        zsprites_to_render->cpu_data[zsprites_to_render->size-1].
+        T1_zsprites_to_render->cpu_data[T1_zsprites_to_render->size-1].
             zsprite_id == 21);
     
     for (uint32_t i = 0; i < 3; i++) {
-        zsprite_request_next(&quad);
+        T1_zsprite_request_next(&quad);
         zsprite_construct_quad(
             /* const float left_x: */
                 TEAPOT_X - 3.0f,
@@ -279,12 +279,11 @@ void client_logic_late_startup(void) {
         quad.gpu_data->base_mat.ambient_rgb[2]  = 0.50f;
         quad.gpu_data->alpha = 0.25f;
         
-        zsprite_commit(&quad);
-    
+        T1_zsprite_commit(&quad);
     }
 }
 
-void client_logic_threadmain(int32_t threadmain_id) {
+void T1_clientlogic_threadmain(int32_t threadmain_id) {
     switch (threadmain_id) {
         default:
             log_append("unhandled threadmain_id: ");
@@ -401,7 +400,7 @@ static void client_handle_keypresses(
     }
 }
 
-void client_logic_update(uint64_t microseconds_elapsed)
+void T1_clientlogic_update(uint64_t microseconds_elapsed)
 {
     if (
         !user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].handled)
@@ -429,12 +428,12 @@ void client_logic_update(uint64_t microseconds_elapsed)
     }
     
     if (keypress_map[TOK_KEY_R]) {
-        for (uint32_t i = 0; i < zsprites_to_render->size; i++) {
-            if (zsprites_to_render->cpu_data[i].zsprite_id == 20)
+        for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
+            if (T1_zsprites_to_render->cpu_data[i].zsprite_id == 20)
             {
-                zsprites_to_render->gpu_data[i].xyz_angle[0] += 0.014f;
-                zsprites_to_render->gpu_data[i].xyz_angle[1] += 0.01f;
-                zsprites_to_render->gpu_data[i].xyz_angle[2] += 0.003f;
+                T1_zsprites_to_render->gpu_data[i].xyz_angle[0] += 0.014f;
+                T1_zsprites_to_render->gpu_data[i].xyz_angle[1] += 0.01f;
+                T1_zsprites_to_render->gpu_data[i].xyz_angle[2] += 0.003f;
             }
         }
     }
@@ -467,11 +466,11 @@ void client_logic_update(uint64_t microseconds_elapsed)
     }
     
     if (keypress_map[TOK_KEY_R]) {
-        for (uint32_t i = 0; i < zsprites_to_render->size; i++) {
-            if (zsprites_to_render->cpu_data[i].zsprite_id ==
+        for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
+            if (T1_zsprites_to_render->cpu_data[i].zsprite_id ==
                 teapot_object_ids[0])
             {
-                zsprites_to_render->gpu_data[i].xyz_angle[1] += 0.01f;
+                T1_zsprites_to_render->gpu_data[i].xyz_angle[1] += 0.01f;
             }
         }
     }
@@ -480,12 +479,12 @@ void client_logic_update(uint64_t microseconds_elapsed)
     client_handle_keypresses(microseconds_elapsed);
 }
 
-void client_logic_update_after_render_pass(void) {
+void T1_clientlogic_update_after_render_pass(void) {
     // you can make edits after the objects are copied to the framebuffer
     // and rendered
 }
 
-void client_logic_evaluate_terminal_command(
+void T1_clientlogic_evaluate_terminal_command(
     char * command,
     char * response,
     const uint32_t response_cap)
@@ -502,13 +501,13 @@ void client_logic_evaluate_terminal_command(
         "in clientlogic.c");
 }
 
-void client_logic_window_resize(
+void T1_clientlogic_window_resize(
     const uint32_t new_height,
     const uint32_t new_width)
 {
     // You're notified that the window is resized!
 }
 
-void client_logic_shutdown(void) {
+void T1_clientlogic_shutdown(void) {
     // You're notified that your application is about to shut down
 }

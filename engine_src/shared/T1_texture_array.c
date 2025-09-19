@@ -175,18 +175,18 @@ static T1DecodedImage * extract_image(
     log_assert(original->rgba_values_freeable != NULL);
     log_assert(original->rgba_values_page_aligned != NULL);
     
-    if (!application_running) { return NULL; }
+    if (!T1_app_running) { return NULL; }
     log_assert(sprite_columns > 0);
     log_assert(sprite_rows > 0);
     log_assert(x <= sprite_columns);
     log_assert(y <= sprite_rows);
-    if (!application_running) { return NULL; }
+    if (!T1_app_running) { return NULL; }
     
     T1DecodedImage * new_image = T1_mem_malloc_from_unmanaged(sizeof(T1DecodedImage));
     log_assert(new_image != NULL);
     
     #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-    if (!application_running) { return NULL; }
+    if (!T1_app_running) { return NULL; }
     #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -242,7 +242,7 @@ static T1DecodedImage * extract_image(
             ((start_x_pixels - 1) * 4)
                 + ((cur_y_pixels - 1) * original->width * 4);
         
-        if (!application_running) {
+        if (!T1_app_running) {
             new_image->good = false;
             break;
         }

@@ -19,7 +19,7 @@ extern "C" {
 #define LINEPARTICLE_EFFECTS_SIZE 2
 #define MAX_LINEPARTICLE_DIRECTIONS 5
 typedef struct LineParticle {
-    CPUzSprite zpolygon_cpu;
+    T1CPUzSprite zpolygon_cpu;
     T1GPUzSprite zpolygon_gpu;
     
     uint64_t random_seed;
@@ -52,12 +52,12 @@ extern T1LineParticle * T1_particle_lineparticle_effects;
 extern uint32_t T1_particle_lineparticle_effects_size;
 T1LineParticle * T1_particle_lineparticle_get_next(void);
 T1LineParticle * T1_particle_lineparticle_get_next_with_zsprite(
-    CPUzSprite * construct_with_zpolygon,
+    T1CPUzSprite * construct_with_zpolygon,
     T1GPUzSprite * construct_with_polygon_gpu);
 void T1_particle_lineparticle_commit(
     T1LineParticle * to_commit);
 void T1_particle_lineparticle_add_all_to_frame_data(
-    GPUFrame * frame_data,
+    T1GPUFrame * frame_data,
     uint64_t elapsed_us,
     const bool32_t alpha_blending);
 
@@ -78,7 +78,7 @@ typedef struct {
     // (linear_variance_multiplier * self) below or above its original value
     
     T1GPUzSprite zpolygon_gpu;
-    CPUzSprite zpolygon_cpu;
+    T1CPUzSprite zpolygon_cpu;
     
     uint64_t random_seed;
     uint64_t elapsed;
@@ -112,7 +112,7 @@ void T1_particle_commit(T1ParticleEffect * to_commit);
 void T1_particle_delete(int32_t with_object_id);
 
 void T1_particle_add_all_to_frame_data(
-    GPUFrame * frame_data,
+    T1GPUFrame * frame_data,
     uint64_t elapsed_us,
     const bool32_t alpha_blending);
 

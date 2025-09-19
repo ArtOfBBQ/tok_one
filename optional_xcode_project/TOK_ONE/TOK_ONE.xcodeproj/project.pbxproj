@@ -33,7 +33,7 @@
 		60A99900287BD4C3003F7159 /* T1_cpu_to_gpu_types.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128762862511600F92967 /* T1_cpu_to_gpu_types.h */; };
 		60A99901287BD4C3003F7159 /* T1_text.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128672862511500F92967 /* T1_text.h */; };
 		60A99902287BD4C3003F7159 /* decode_png.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011283C286122FE00F92967 /* decode_png.h */; };
-		60A99903287BD4C3003F7159 /* T1_userinput.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128692862511500F92967 /* T1_userinput.c */; };
+		60A99903287BD4C3003F7159 /* T1_uiinteraction.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128692862511500F92967 /* T1_uiinteraction.c */; };
 		60A99904287BD4C3003F7159 /* T1_random.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128772862511600F92967 /* T1_random.c */; };
 		60A99905287BD4C3003F7159 /* T1_engine_globals.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128822862511700F92967 /* T1_engine_globals.h */; };
 		60A99908287BD4C3003F7159 /* T1_random.h in Sources */ = {isa = PBXBuildFile; fileRef = 601128802862511700F92967 /* T1_random.h */; };
@@ -46,7 +46,7 @@
 		60A9990F287BD4C4003F7159 /* T1_text.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128742862511600F92967 /* T1_text.c */; };
 		60A99910287BD4C4003F7159 /* T1_texture_array.c in Sources */ = {isa = PBXBuildFile; fileRef = 601128662862511500F92967 /* T1_texture_array.c */; };
 		60A99911287BD4C4003F7159 /* T1_zsprite.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287E2862511700F92967 /* T1_zsprite.c */; };
-		60A99912287BD4C4003F7159 /* T1_userinput.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011286B2862511500F92967 /* T1_userinput.h */; };
+		60A99912287BD4C4003F7159 /* T1_uiinteraction.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011286B2862511500F92967 /* T1_uiinteraction.h */; };
 		60A99913287BD4C4003F7159 /* inflate.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011283E286122FE00F92967 /* inflate.h */; };
 		60A99915287BD4C4003F7159 /* T1_cpu_gpu_shared_types.h in Sources */ = {isa = PBXBuildFile; fileRef = 6011287A2862511600F92967 /* T1_cpu_gpu_shared_types.h */; };
 		60A99916287BD4C4003F7159 /* T1_scheduled_animations.c in Sources */ = {isa = PBXBuildFile; fileRef = 6011287D2862511700F92967 /* T1_scheduled_animations.c */; };
@@ -158,9 +158,9 @@
 		601128662862511500F92967 /* T1_texture_array.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_texture_array.c; path = ../../engine_src/shared/T1_texture_array.c; sourceTree = "<group>"; };
 		601128672862511500F92967 /* T1_text.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_text.h; path = ../../engine_src/shared/T1_text.h; sourceTree = "<group>"; };
 		601128682862511500F92967 /* T1_texture_array.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_texture_array.h; path = ../../engine_src/shared/T1_texture_array.h; sourceTree = "<group>"; };
-		601128692862511500F92967 /* T1_userinput.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_userinput.c; path = ../../engine_src/shared/T1_userinput.c; sourceTree = "<group>"; };
+		601128692862511500F92967 /* T1_uiinteraction.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_uiinteraction.c; path = ../../engine_src/shared/T1_uiinteraction.c; sourceTree = "<group>"; };
 		6011286A2862511500F92967 /* T1_scheduled_animations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_scheduled_animations.h; path = ../../engine_src/shared/T1_scheduled_animations.h; sourceTree = "<group>"; };
-		6011286B2862511500F92967 /* T1_userinput.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_userinput.h; path = ../../engine_src/shared/T1_userinput.h; sourceTree = "<group>"; };
+		6011286B2862511500F92967 /* T1_uiinteraction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_uiinteraction.h; path = ../../engine_src/shared/T1_uiinteraction.h; sourceTree = "<group>"; };
 		6011286C2862511500F92967 /* T1_renderer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_renderer.c; path = ../../engine_src/shared/T1_renderer.c; sourceTree = "<group>"; };
 		6011286E2862511600F92967 /* T1_engine_globals.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_engine_globals.c; path = ../../engine_src/shared/T1_engine_globals.c; sourceTree = "<group>"; };
 		6011286F2862511600F92967 /* T1_std.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_std.c; path = ../../engine_src/shared/T1_std.c; sourceTree = "<group>"; };
@@ -495,8 +495,8 @@
 				EC6A301A29EFA1440071C58F /* T1_triangle.c */,
 				EC6E12152A03BD8F004E7BD1 /* T1_uielement.h */,
 				EC6E12142A03BD8F004E7BD1 /* T1_uielement.c */,
-				6011286B2862511500F92967 /* T1_userinput.h */,
-				601128692862511500F92967 /* T1_userinput.c */,
+				6011286B2862511500F92967 /* T1_uiinteraction.h */,
+				601128692862511500F92967 /* T1_uiinteraction.c */,
 				EC914B7C2B8AD447007FCBFC /* T1_wav.h */,
 				EC914B7B2B8AD447007FCBFC /* T1_wav.c */,
 				601128842862511700F92967 /* T1_zsprite.h */,
@@ -722,7 +722,7 @@
 				6028DD342886EE54000E1E98 /* T1_init_application.c in Sources */,
 				EC083A3B2AFF727900234FE3 /* T1_objparser.c in Sources */,
 				EC4040DB2E5431C000264128 /* clientlogic_particledesigner.c in Sources */,
-				60A99903287BD4C3003F7159 /* T1_userinput.c in Sources */,
+				60A99903287BD4C3003F7159 /* T1_uiinteraction.c in Sources */,
 				ECF7CB182D53ADA400623C60 /* T1_profiler.c in Sources */,
 				EC78509B29E62CA800E6882A /* T1_objmodel.c in Sources */,
 				60A9990B287BD4C3003F7159 /* T1_decodedimage.h in Sources */,
@@ -739,7 +739,7 @@
 				ECE759D12C400175004B0847 /* T1_lines.c in Sources */,
 				60A99902287BD4C3003F7159 /* decode_png.h in Sources */,
 				60A998F7287BD4C3003F7159 /* T1_logger.c in Sources */,
-				60A99912287BD4C4003F7159 /* T1_userinput.h in Sources */,
+				60A99912287BD4C4003F7159 /* T1_uiinteraction.h in Sources */,
 				60A998FD287BD4C3003F7159 /* T1_decodedimage.c in Sources */,
 				60A998F5287BD4C3003F7159 /* T1_texture_array.h in Sources */,
 				EC914B812B8AD447007FCBFC /* T1_wav.c in Sources */,
