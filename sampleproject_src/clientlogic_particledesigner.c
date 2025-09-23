@@ -155,15 +155,6 @@ void T1_clientlogic_early_startup(
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     T1_meta_array(T1GPUConstMat, T1_TYPE_F32, rgb_cap, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 2.0f, &ok);
-    // T1_meta_field(T1GPUConstMat, T1_TYPE_I32, texturearray_i, &ok);
-    // T1_meta_field(T1GPUConstMat, T1_TYPE_I32, texture_i, &ok);
-    #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
-    T1_meta_field(T1GPUConstMat, T1_TYPE_I32, normalmap_texturearray_i, &ok);
-    T1_meta_field(T1GPUConstMat, T1_TYPE_I32, normalmap_texture_i, &ok);
-    #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
     T1_meta_field(T1GPUConstMat, T1_TYPE_F32, specular_exponent, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     T1_meta_field(T1GPUConstMat, T1_TYPE_F32, refraction, &ok);
@@ -217,7 +208,7 @@ void T1_clientlogic_early_startup(
     T1_meta_struct_field(T1ParticleEffect, T1GPUzSprite, perexptime_add, &ok);
     T1_meta_struct_field(T1ParticleEffect, T1GPUzSprite, zpolygon_gpu, &ok);
     
-    T1_meta_struct_field(T1ParticleEffect, CPUzSprite, zpolygon_cpu, &ok);
+    T1_meta_struct_field(T1ParticleEffect, T1CPUzSprite, zpolygon_cpu, &ok);
     T1_meta_field(T1ParticleEffect, T1_TYPE_U64, lifespan, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(0, 50000000, &ok);
     T1_meta_field(T1ParticleEffect, T1_TYPE_U64, pause_per_spawn, &ok);
@@ -852,6 +843,60 @@ void T1_clientlogic_evaluate_terminal_command(
     char * response,
     const uint32_t response_cap)
 {
+    if (
+        T1_std_are_equal_strings(
+            command,
+            "SAVE"))
+    {
+        T1_std_strcat_cap(
+            response,
+            response_cap,
+            "Saving particle effect...");
+        
+        uint32_t savefile_cap = 1000000;
+        char * savefile_bin = T1_mem_malloc_from_managed(savefile_cap);
+        uint32_t savefile_size = 0;
+        uint32_t savefile_good = 0;
+        
+        T1_meta_serialize_instance_to_buffer(
+            /* const char * struct_name: */
+                "T1ParticleEffect",
+            /* void * to_serialize: */
+                pds->editing,
+            /* char * buffer: */
+                savefile_bin,
+            /* uint32_t * buffer_size: */
+                &savefile_size,
+            /* uint32_t buffer_cap: */
+                savefile_cap,
+            /* uint32_t * good: */
+                &savefile_good);
+        
+        if (!savefile_good) {
+            T1_std_strcat_cap(
+                response,
+                response_cap,
+                "\nFailed to serialize...");
+            return;
+        }
+        
+        T1_platform_write_file_to_writables(
+            "particles.t1p",
+            savefile_bin,
+            savefile_size,
+            &savefile_good);
+        
+        if (!savefile_good) {
+            T1_std_strcat_cap(
+                response,
+                response_cap,
+                "\nFailed to write to disk...");
+            return;
+        }
+        
+        return;
+    }
+    
     #if T1_TEXTURES_ACTIVE == T1_ACTIVE
     if (
         T1_std_string_starts_with(

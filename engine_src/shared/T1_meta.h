@@ -5,11 +5,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define T1_META_ASSERTS 1
-#if T1_META_ASSERTS
+#define T1_META_ASSERTS T1_ACTIVE
+#if T1_META_ASSERTS == T1_ACTIVE
 #include <assert.h>
+#elif T1_META_ASSERTS == T1_INACTIVE
+#else
+#error
 #endif
-
 
 typedef enum : uint8_t {
     T1_TYPE_NOTSET,
@@ -91,7 +93,7 @@ void T1_meta_reg_custom_uint_limits_for_last_field(
     const uint64_t uint_max,
     uint32_t * good);
 
-#define T1_REFL_MAX_ARRAY_SIZES 3
+#define T1_META_ARRAY_SIZES_CAP 3
 typedef struct {
     union {
         uint64_t custom_uint_max;
@@ -106,7 +108,7 @@ typedef struct {
     int64_t offset; // -1 if no such field
     char * name;
     char * struct_type_name;
-    uint16_t array_sizes[T1_REFL_MAX_ARRAY_SIZES];
+    uint16_t array_sizes[T1_META_ARRAY_SIZES_CAP];
     T1Type data_type;
 } T1MetaField;
 
@@ -130,5 +132,13 @@ uint32_t internal_T1_meta_get_num_of_fields_in_struct(
 T1MetaField T1_meta_get_field_at_index(
     char * parent_name_str,
     uint32_t at_index);
+
+void T1_meta_serialize_instance_to_buffer(
+    const char * struct_name,
+    void * to_serialize,
+    char * buffer,
+    uint32_t * buffer_size,
+    uint32_t buffer_cap,
+    uint32_t * good);
 
 #endif // T1_META_H
