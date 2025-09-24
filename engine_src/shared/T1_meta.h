@@ -3,7 +3,8 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include <stdlib.h>
+#include <stdlib.h> // TODO: delete me!
+#include <stdio.h>  // TODO: delete me!
 
 #define T1_META_ASSERTS T1_ACTIVE
 #if T1_META_ASSERTS == T1_ACTIVE
@@ -139,6 +140,13 @@ void T1_meta_serialize_instance_to_buffer(
     char * buffer,
     uint32_t * buffer_size,
     uint32_t buffer_cap,
+    uint32_t * good);
+
+void T1_meta_deserialize_instance_from_buffer(
+    const char * struct_name,
+    void * recipient,
+    char * buffer,
+    const uint32_t buffer_size,
     uint32_t * good);
 
 #endif // T1_META_H

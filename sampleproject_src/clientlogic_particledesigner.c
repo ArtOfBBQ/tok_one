@@ -886,6 +886,8 @@ void T1_clientlogic_evaluate_terminal_command(
             savefile_size,
             &savefile_good);
         
+        T1_mem_free_from_managed(savefile_bin);
+        
         if (!savefile_good) {
             T1_std_strcat_cap(
                 response,
@@ -894,6 +896,72 @@ void T1_clientlogic_evaluate_terminal_command(
             return;
         }
         
+        return;
+    }
+    
+    if (
+        T1_std_are_equal_strings(
+            command,
+            "LOAD"))
+    {
+        uint32_t savefile_good = 0;
+        size_t savefile_size = T1_platform_get_writable_size("particles.t1p");
+        
+        if (savefile_size < 1) {
+            T1_std_strcat_cap(
+                response,
+                response_cap,
+                "No such file...");
+            return;
+        }
+        char * savefile_bin = T1_mem_malloc_from_managed(savefile_size + 1);
+        T1_std_memset(savefile_bin, 0, savefile_size + 1);
+        
+        T1_platform_read_file_from_writables(
+                "particles.t1p",
+            /* char * recipient: */
+                savefile_bin,
+            /* const uint32_t recipient_size: */
+                (uint32_t)savefile_size,
+            /* uint32_t * good: */
+                &savefile_good);
+        
+        if (savefile_size < 1) {
+            T1_std_strcat_cap(
+                response,
+                response_cap,
+                "File exists, but couldn't read it from writables...");
+            T1_mem_free_from_managed(savefile_bin);
+            return;
+        }
+        
+        T1_meta_deserialize_instance_from_buffer(
+            /* const char * struct_name: */
+                "T1ParticleEffect",
+            /* void * recipient: */
+                pds->editing,
+            /* char * buffer: */
+                savefile_bin,
+            /* const uint32_t buffer_size: */
+                (uint32_t)savefile_size + 1,
+            /* uint32_t * good: */
+                &savefile_good);
+        
+        if (savefile_size < 1) {
+            T1_std_strcat_cap(
+                response,
+                response_cap,
+                "Read file, but couldn't deserialize it...");
+            T1_mem_free_from_managed(savefile_bin);
+            return;
+        }
+        
+        T1_mem_free_from_managed(savefile_bin);
+        
+        T1_std_strcat_cap(
+            response,
+            response_cap,
+            "Success...");
         return;
     }
     

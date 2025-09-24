@@ -221,6 +221,21 @@ static void T1_meta_reverse_array(
     }
 }
 
+static uint8_t T1_meta_string_starts_with(
+    const char * string,
+    const char * start_pattern)
+{
+    uint32_t i = 0;
+    while (start_pattern[i] != '\0') {
+        if (string[i] != start_pattern[i]) {
+            return 0;
+        }
+        i++;
+    }
+    
+    return 1;
+}
+
 static char * T1_meta_copy_str_to_store(
     const char * to_copy,
     uint32_t * good)
@@ -1952,7 +1967,7 @@ void T1_meta_serialize_instance_to_buffer(
     
     T1_meta_serialize_add_struct_to_stack(
         parent->name,
-        "p",
+        "s",
         "->");
     if (!*good) { return; } else { *good = 0; }
     
@@ -1983,6 +1998,129 @@ void T1_meta_serialize_instance_to_buffer(
     }
     
     T1_meta_serialize_cat_str_to_buf("T1_META_END\n");
+    
+    *good = 1;
+}
+
+void T1_meta_deserialize_instance_from_buffer(
+    const char * struct_name,
+    void * recipient,
+    char * buffer,
+    const uint32_t buffer_size,
+    uint32_t * good)
+{
+    *good = 0;
+    
+    uint32_t at_i = 0;
+    if (!T1_meta_string_starts_with(buffer + at_i, "T1_META_START\n")) {
+        #if T1_META_ASSERTS == T1_ACTIVE
+        assert(0); // this type has no fields registered to it?
+        #elif T1_META_ASSERTS == T1_INACTIVE
+        #else
+        #error
+        #endif
+        *good = 0;
+        return;
+    }
+    at_i += 14;
+    
+    if (!T1_meta_string_starts_with(buffer + at_i, struct_name)) {
+        #if T1_META_ASSERTS == T1_ACTIVE
+        assert(0); // this type has no fields registered to it?
+        #elif T1_META_ASSERTS == T1_INACTIVE
+        #else
+        #error
+        #endif
+        *good = 0;
+        return;
+    }
+    at_i += t1ms->strlen(struct_name);
+    
+    if (!T1_meta_string_starts_with(buffer + at_i, "\n")) {
+        #if T1_META_ASSERTS == T1_ACTIVE
+        assert(0);
+        #elif T1_META_ASSERTS == T1_INACTIVE
+        #else
+        #error
+        #endif
+        *good = 0;
+        return;
+    }
+    at_i += 1;
+    
+    char recursive_field_name[256];
+    char value_to_assign[128];
+    uint32_t write_i;
+    
+    while (buffer[at_i] == 's') {
+        if (!T1_meta_string_starts_with(buffer + at_i, "s->")) {
+            #if T1_META_ASSERTS == T1_ACTIVE
+            assert(0);
+            #elif T1_META_ASSERTS == T1_INACTIVE
+            #else
+            #error
+            #endif
+            return;
+        }
+        at_i += 3;
+        
+        write_i = 0;
+        while (
+            buffer[at_i] != ' ' &&
+            buffer[at_i] != '\n' &&
+            buffer[at_i] != '\0')
+        {
+            recursive_field_name[write_i++] = buffer[at_i];
+            at_i++;
+        }
+        recursive_field_name[write_i] = '\0';
+        
+        if (!T1_meta_string_starts_with(buffer + at_i, " = ")) {
+            #if T1_META_ASSERTS == T1_ACTIVE
+            assert(0);
+            #elif T1_META_ASSERTS == T1_INACTIVE
+            #else
+            #error
+            #endif
+            return;
+        }
+        at_i += 3;
+        
+        write_i = 0;
+        while (
+            buffer[at_i] != '\n' &&
+            buffer[at_i] != '\0')
+        {
+            value_to_assign[write_i++] = buffer[at_i];
+            at_i++;
+        }
+        value_to_assign[write_i] = '\0';
+        
+        T1_meta_write_to_known_field_str(
+            /* const char * target_parent_type: */
+                struct_name,
+            /* const char * target_field_name: */
+                recursive_field_name,
+            /* const char * value_to_write_str: */
+                value_to_assign,
+            /* void * target_parent_ptr: */
+                recipient,
+            /* uint32_t * good: */
+                good);
+        if (!*good) { return; } else { *good = 1; }
+        
+        if (!T1_meta_string_starts_with(buffer + at_i, "\n")) {
+            #if T1_META_ASSERTS == T1_ACTIVE
+            assert(0);
+            #elif T1_META_ASSERTS == T1_INACTIVE
+            #else
+            #error
+            #endif
+            *good = 0;
+            return;
+        }
+        at_i += 1;
+    }
     
     *good = 1;
 }

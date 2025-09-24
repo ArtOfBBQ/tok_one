@@ -10,13 +10,50 @@ same as platform_get_filesize() except it assumes
 the resources directory
 */
 uint64_t T1_platform_get_resource_size(const char * filename) {
-    char pathfile[500];
+    char pathfile[512];
     T1_platform_resource_filename_to_pathfile(
         filename,
         /* recipient: */ pathfile,
-        /* assert_capacity: */ 500);
+        /* assert_capacity: */ 512);
     
     return T1_platform_get_filesize(pathfile);
+}
+
+uint64_t T1_platform_get_writable_size(const char * filename) {
+    char pathfile[512];
+    T1_platform_writable_filename_to_pathfile(
+        filename,
+        /* recipient: */ pathfile,
+        /* assert_capacity: */ 512);
+    
+    return T1_platform_get_filesize(pathfile);
+}
+
+void T1_platform_read_file_from_writables(
+    const char * filepath_inside_writables,
+    char * recipient,
+    const uint32_t recipient_size,
+    bool32_t * good)
+{
+    char filepath[512];
+    T1_platform_writable_filename_to_pathfile(
+        /* filename: */
+            filepath_inside_writables,
+        /* recipient: */
+            filepath,
+        /* recipient_capacity: */
+            512);
+    
+    T1FileBuffer filebuf;
+    filebuf.contents = recipient;
+    filebuf.size_without_terminator = recipient_size;
+    filebuf.good = 0;
+    
+    T1_platform_read_file(
+        /* filepath: */
+            filepath,
+        /* T1FileBuffer * out_preallocatedbuffer: */
+            &filebuf);
 }
 
 void T1_platform_write_file_to_writables(

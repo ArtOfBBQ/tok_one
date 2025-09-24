@@ -167,6 +167,7 @@ A 'resource' is a file that's available in the typical folder for our platform
 A 'filepath' is a full explicit path to and including the filename
 */
 uint64_t T1_platform_get_resource_size(const char * filename);
+uint64_t T1_platform_get_writable_size(const char * filename);
 uint64_t T1_platform_get_filesize(const char * filepath);
 
 /*
@@ -191,6 +192,12 @@ void T1_platform_read_resource_file(
 void T1_platform_read_file(
     const char * filepath,
     T1FileBuffer * out_preallocatedbuffer);
+
+void T1_platform_read_file_from_writables(
+    const char * filepath_inside_writables,
+    char * recipient,
+    const uint32_t recipient_size,
+    bool32_t * good);
 
 void T1_platform_gpu_get_device_name(
     char * recipient,
