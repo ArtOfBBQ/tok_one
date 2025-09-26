@@ -180,6 +180,7 @@ void T1_appinit_before_gpu_init(
         memset,
         strcmp,
         strlen,
+        strtoull,
         /* const uint32_t ascii_store_cap: */
             30000,
         /* const uint16_t meta_structs_cap: */
