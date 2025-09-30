@@ -1,5 +1,7 @@
 #include "T1_meta.h"
 
+#define T1_META_ARRAY_SLICE_NONE UINT16_MAX
+
 typedef struct {
     char * name;
     char * struct_type_name;
@@ -45,6 +47,7 @@ typedef struct {
 
 typedef struct {
     uint32_t parent_offset;
+    uint16_t field_array_slices[T1_META_ARRAY_SIZES_CAP];
     uint16_t prefix_start_i;
     uint16_t field_i;
 } StackedFieldEntry;
@@ -68,6 +71,7 @@ typedef struct {
     int (* strcmp)(const char *, const char *);
     size_t (* strlen)(const char *);
     unsigned long long int (* strtoull)(const char*, char**, int);
+    double (* strtod)(const char *, char **);
     char * ascii_store;
     MetaEnum * meta_enums;
     MetaEnumValue * meta_enum_vals;
@@ -149,6 +153,7 @@ void T1_meta_init(
     int (* T1_meta_strcmp_func)(const char *, const char *),
     size_t (* T1_meta_strlen_func)(const char *),
     unsigned long long int (* T1_meta_strtoull_func)(const char*, char**, int),
+    double (* T1_meta_strtod_func)(const char *, char **),
     const uint32_t ascii_store_cap,
     const uint16_t meta_structs_cap,
     const uint16_t meta_fields_cap,
@@ -280,9 +285,11 @@ static void T1_meta_float_to_string(
     
     *good = 0;
     
-    float sign_mult = 1.0f;
+    size_t rlen = 0;
+    
     if (input < 0.0f) {
-        sign_mult = -1.0f;
+        recipient[rlen++] = '-';
+        recipient[rlen] = '\0';
         input *= -1.0f;
     }
     
@@ -298,10 +305,14 @@ static void T1_meta_float_to_string(
     uint32_t below_decimal =
         (uint32_t)(((input - temp_above_decimal)+1.0f) * precision_mult);
     
-    T1_meta_uint_to_string(above_decimal, recipient, recipient_cap, good);
+    T1_meta_uint_to_string(
+        above_decimal,
+        recipient + rlen,
+        recipient_cap,
+        good);
+    rlen = t1ms->strlen(recipient);
     
     if (below_decimal > 0) {
-        size_t rlen = t1ms->strlen(recipient);
         recipient[rlen++] = '.';
         
         T1_meta_uint_to_string(
@@ -1533,6 +1544,162 @@ T1MetaField T1_meta_get_field_from_strings(
     return return_value.public;
 }
 
+static size_t T1_meta_shared_get_element_size_bytes(
+    T1Type data_type,
+    const char * struct_name_or_null,
+    const uint16_t parent_enum_id)
+{
+    T1Type adj_type = data_type;
+    
+    if (adj_type == T1_TYPE_ENUM) {
+        if (parent_enum_id >= t1ms->meta_enums_size) {
+            #if T1_META_ASSERTS == T1_ACTIVE
+            assert(0);
+            #elif T1_META_ASSERTS == T1_INACTIVE
+            #else
+            #error
+            #endif
+            adj_type = T1_TYPE_NOTSET;
+        } else {
+            adj_type = t1ms->meta_enums[parent_enum_id].T1_type;
+        }
+    }
+    
+    switch (adj_type) {
+        case T1_TYPE_STRUCT:
+            #if T1_META_ASSERTS == T1_ACTIVE
+            assert(struct_name_or_null != NULL);
+            assert(struct_name_or_null[0] != '\0');
+            #elif T1_META_ASSERTS == T1_INACTIVE
+            #else
+            #error
+            #endif
+            
+            MetaStruct * mstruct = find_struct_by_name(struct_name_or_null);
+            
+            if (mstruct == NULL)
+            {
+                #if T1_META_ASSERTS == T1_ACTIVE
+                assert(0);
+                #elif T1_META_ASSERTS == T1_INACTIVE
+                #else
+                #error
+                #endif
+                break;
+            }
+            
+            return mstruct->size_bytes;
+        break;
+        case T1_TYPE_U64:
+            return 8;
+        break;
+        case T1_TYPE_U32:
+            return 4;
+        break;
+        case T1_TYPE_U16:
+            return 2;
+        break;
+        case T1_TYPE_U8:
+            return 1;
+        break;
+        case T1_TYPE_I64:
+            return 8;
+        break;
+        case T1_TYPE_I32:
+            return 4;
+        break;
+        case T1_TYPE_I16:
+            return 2;
+        break;
+        case T1_TYPE_I8:
+            return 1;
+        break;
+        case T1_TYPE_F32:
+            return 4;
+        case T1_TYPE_CHAR:
+            return 1;
+        break;
+        case T1_TYPE_NOTSET:
+        case T1_TYPE_STRING:
+        case T1_TYPE_ENUM:
+            // Reminder: enum should never happen here because it should be
+            // adjusted above at the top of this function
+            #if T1_META_ASSERTS == T1_ACTIVE
+            assert(0);
+            #elif T1_META_ASSERTS == T1_INACTIVE
+            #else
+            #error
+            #endif
+        break;
+    }
+    
+    return 0;
+}
+
+#if 0
+static size_t T1_meta_field_get_element_size_bytes(T1MetaField * field) {
+    size_t return_value = 0;
+    
+    switch (field->data_type) {
+        case T1_TYPE_STRUCT:
+            // field->struct_type_name;
+            assert(0);
+        break;
+        case T1_TYPE_ENUM:
+            
+            assert(0);
+        break;
+        case T1_TYPE_U64:
+            return 8;
+        break;
+        case T1_TYPE_U32:
+            return 4;
+        break;
+        case T1_TYPE_U16:
+            return 2;
+        break;
+        case T1_TYPE_U8:
+            return 1;
+        break;
+        case T1_TYPE_I64:
+            return 8;
+        break;
+        case T1_TYPE_I32:
+            return 4;
+        break;
+        case T1_TYPE_I16:
+            return 2;
+        break;
+        case T1_TYPE_I8:
+            return 1;
+        break;
+        case T1_TYPE_F32:
+            return 4;
+        case T1_TYPE_CHAR:
+            return 1;
+        break;
+        case T1_TYPE_NOTSET:
+        case T1_TYPE_STRING:
+            #if T1_META_ASSERTS == T1_ACTIVE
+            assert(0);
+            #elif T1_META_ASSERTS == T1_INACTIVE
+            #else
+            #error
+            #endif
+        break;
+    }
+    
+    return return_value;
+}
+#endif
+
+static size_t T1_meta_internal_field_get_element_size_bytes(MetaField * field) {
+    return T1_meta_shared_get_element_size_bytes(
+        field->type,
+        field->struct_type_name,
+        field->parent_enum_id);
+}
+
 typedef struct {
     uint64_t value_u64;
     int64_t  value_i64;
@@ -1560,7 +1727,7 @@ static void parse_string_to_value(
     recipient->value_i64 = (int64_t)recipient->value_u64;
     if (val_starts_minus) { recipient->value_i64 *= -1; }
     
-    recipient->value_f64 = strtod(string, &endptr);
+    recipient->value_f64 = t1ms->strtod(string, &endptr);
     recipient->value_is_f64 = *endptr == '\0';
 }
 
@@ -2007,11 +2174,12 @@ static void T1_meta_serialize_cat_str_to_prefix(
     return;
 }
 
-static void T1_meta_serialize_add_struct_to_stack(
+static void T1_meta_serialize_add_struct_fields_to_stack(
     const char * struct_name,
     const char * field_text,
+    uint16_t field_array_sizes[T1_META_ARRAY_SIZES_CAP],
     const char * field_dot_or_arrow,
-    const uint32_t previous_offset)
+    const uint32_t parent_offset)
 {
     *t1ms->ss.good = 0;
     
@@ -2041,6 +2209,59 @@ static void T1_meta_serialize_add_struct_to_stack(
     
     T1_meta_serialize_cat_str_to_prefix(field_text);
     if (!*t1ms->ss.good) { return; } else { *t1ms->ss.good = 0; }
+    
+    char slice_text[32];
+    t1ms->memset(slice_text, 0, 32);
+    
+    if (field_array_sizes[0] != T1_META_ARRAY_SLICE_NONE) {
+        slice_text[0] = '[';
+        T1_meta_int_to_string(
+            field_array_sizes[0],
+            slice_text+1,
+            31,
+            t1ms->ss.good);
+        if (!*t1ms->ss.good) { return; } else { *t1ms->ss.good = 0; }
+        slice_text[t1ms->strlen(slice_text)] = ']';
+    }
+    size_t len = t1ms->strlen(slice_text);
+    if (field_array_sizes[1] != T1_META_ARRAY_SLICE_NONE) {
+        slice_text[len++] = '[';
+        #if T1_META_ASSERTS == T1_ACTIVE
+        assert(len < 31);
+        #elif T1_META_ASSERTS == T1_INACTIVE
+        #else
+        #error
+        #endif
+        T1_meta_int_to_string(
+            field_array_sizes[1],
+            slice_text+len,
+            32 - (uint32_t)len,
+            t1ms->ss.good);
+        if (!*t1ms->ss.good) { return; } else { *t1ms->ss.good = 0; }
+        len = t1ms->strlen(slice_text);
+        slice_text[len++] = ']';
+    }
+    if (field_array_sizes[2] != T1_META_ARRAY_SLICE_NONE) {
+        slice_text[len++] = '[';
+        #if T1_META_ASSERTS == T1_ACTIVE
+        assert(len < 31);
+        #elif T1_META_ASSERTS == T1_INACTIVE
+        #else
+        #error
+        #endif
+        T1_meta_int_to_string(
+            field_array_sizes[2],
+            slice_text+len,
+            32 - (uint32_t)len,
+            t1ms->ss.good);
+        if (!*t1ms->ss.good) { return; } else { *t1ms->ss.good = 0; }
+        len = t1ms->strlen(slice_text);
+        slice_text[len++] = ']';
+    }
+    
+    T1_meta_serialize_cat_str_to_prefix(slice_text);
+    if (!*t1ms->ss.good) { return; } else { *t1ms->ss.good = 0; }
+    
     T1_meta_serialize_cat_str_to_prefix(field_dot_or_arrow);
     if (!*t1ms->ss.good) { return; } else { *t1ms->ss.good = 0; }
     
@@ -2059,21 +2280,63 @@ static void T1_meta_serialize_add_struct_to_stack(
     uint16_t prefix_start_i = (uint16_t)t1ms->strlen(
         t1ms->ss.field_prefix);
     
-    t1ms->ss.field_stack[to_reverse_start_i].parent_offset = previous_offset;
-    t1ms->ss.field_stack[to_reverse_start_i].field_i = parent->head_fields_i;
-    t1ms->ss.field_stack[to_reverse_start_i].prefix_start_i =
-        prefix_start_i;
-    t1ms->ss.field_stack_size += 1;
+    uint16_t field_i = parent->head_fields_i;
     
-    while (metafield_i_to_ptr(field->next_i) != NULL) {
-        t1ms->ss.field_stack[t1ms->ss.field_stack_size].parent_offset =
-            previous_offset;
-        t1ms->ss.field_stack[t1ms->ss.field_stack_size].field_i =
-            field->next_i;
-        t1ms->ss.field_stack[t1ms->ss.field_stack_size].
-            prefix_start_i = prefix_start_i;
-        t1ms->ss.field_stack_size += 1;
-        field = metafield_i_to_ptr(field->next_i);
+    uint32_t array_slices[T1_META_ARRAY_SIZES_CAP];
+    #if T1_META_ASSERTS == T1_ACTIVE
+    assert(T1_META_ARRAY_SIZES_CAP == 3);
+    #elif T1_META_ASSERTS == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    while (field_i != UINT16_MAX) {
+        field = metafield_i_to_ptr(field_i);
+        
+        for (
+            array_slices[0] = 0;
+            array_slices[0] < field->array_sizes[0];
+            array_slices[0]++)
+        {
+        for (
+            array_slices[1] = 0;
+            array_slices[1] < field->array_sizes[1];
+            array_slices[1]++)
+        {
+        for (
+            array_slices[2] = 0;
+            array_slices[2] < field->array_sizes[2];
+            array_slices[2]++)
+        {
+            uint32_t flat_i = array_indices_to_flat_array_index(
+                array_slices,
+                field);
+            
+            t1ms->ss.field_stack[t1ms->ss.field_stack_size].parent_offset =
+                parent_offset + (
+                    flat_i * (uint32_t)
+                        T1_meta_internal_field_get_element_size_bytes(field));
+            t1ms->ss.field_stack[t1ms->ss.field_stack_size].
+                field_array_slices[0] = field->array_sizes[0] > 1 ?
+                    (uint16_t)array_slices[0] :
+                    T1_META_ARRAY_SLICE_NONE;
+            t1ms->ss.field_stack[t1ms->ss.field_stack_size].
+                field_array_slices[1] = field->array_sizes[1] > 1 ?
+                    (uint16_t)array_slices[1] :
+                    T1_META_ARRAY_SLICE_NONE;
+            t1ms->ss.field_stack[t1ms->ss.field_stack_size].
+                field_array_slices[2] = field->array_sizes[2] > 1 ?
+                    (uint16_t)array_slices[2] :
+                    T1_META_ARRAY_SLICE_NONE;
+            t1ms->ss.field_stack[t1ms->ss.field_stack_size].field_i = field_i;
+            t1ms->ss.field_stack[t1ms->ss.field_stack_size].prefix_start_i =
+                prefix_start_i;
+            t1ms->ss.field_stack_size += 1;
+        }
+        }
+        }
+        
+        field_i = field->next_i;
     }
     
     T1_meta_reverse_array(
@@ -2134,9 +2397,21 @@ void T1_meta_serialize_instance_to_buffer(
         return;
     }
     
-    T1_meta_serialize_add_struct_to_stack(
+    #if T1_META_ASSERTS == T1_ACTIVE
+    assert(T1_META_ARRAY_SIZES_CAP == 3);
+    #elif T1_META_ASSERTS == T1_INACTIVE
+    #else
+    #error
+    #endif
+    uint16_t slices_i[T1_META_ARRAY_SIZES_CAP];
+    slices_i[0] = T1_META_ARRAY_SLICE_NONE;
+    slices_i[1] = T1_META_ARRAY_SLICE_NONE;
+    slices_i[2] = T1_META_ARRAY_SLICE_NONE;
+    
+    T1_meta_serialize_add_struct_fields_to_stack(
         parent->name,
         "s",
+        slices_i,
         "->",
         0);
     if (!*good) { return; } else { *good = 0; }
@@ -2155,9 +2430,13 @@ void T1_meta_serialize_instance_to_buffer(
         field = metafield_i_to_ptr(top.field_i);
         
         if (field->type == T1_TYPE_STRUCT) {
-            T1_meta_serialize_add_struct_to_stack(
+                
+            t1ms->ss.field_prefix[top.prefix_start_i] = '\0';
+            
+            T1_meta_serialize_add_struct_fields_to_stack(
                 field->struct_type_name,
                 field->name,
+                top.field_array_slices,
                 ".",
                 field->offset + top.parent_offset);
             if (!*good) { return; } else { *good = 0; }
@@ -2166,11 +2445,58 @@ void T1_meta_serialize_instance_to_buffer(
         } else {
             T1_meta_serialize_cat_str_to_buf(t1ms->ss.field_prefix);
             T1_meta_serialize_cat_str_to_buf(field->name);
-            T1_meta_serialize_cat_str_to_buf(" = ");
             
             char value_as_str[128];
             t1ms->memset(value_as_str, 0, 128);
-                
+            
+            if (top.field_array_slices[0] != T1_META_ARRAY_SLICE_NONE) {
+                T1_meta_serialize_cat_str_to_buf("[");
+                T1_meta_int_to_string(
+                        top.field_array_slices[0],
+                    /* char * recipient: */
+                        value_as_str,
+                    /* uint32_t recipient_cap: */
+                        128,
+                    /* uint32_t * good: */
+                        good);
+                if (!*good) { return; } else { *good = 0; }
+                T1_meta_serialize_cat_str_to_buf(value_as_str);
+                T1_meta_serialize_cat_str_to_buf("]");
+                t1ms->memset(value_as_str, 0, 128);
+            }
+            if (top.field_array_slices[1] != T1_META_ARRAY_SLICE_NONE) {
+                T1_meta_serialize_cat_str_to_buf("[");
+                T1_meta_int_to_string(
+                        top.field_array_slices[1],
+                    /* char * recipient: */
+                        value_as_str,
+                    /* uint32_t recipient_cap: */
+                        128,
+                    /* uint32_t * good: */
+                        good);
+                if (!*good) { return; } else { *good = 0; }
+                T1_meta_serialize_cat_str_to_buf(value_as_str);
+                T1_meta_serialize_cat_str_to_buf("]");
+                t1ms->memset(value_as_str, 0, 128);
+            }
+            if (top.field_array_slices[2] != T1_META_ARRAY_SLICE_NONE) {
+                T1_meta_serialize_cat_str_to_buf("[");
+                T1_meta_int_to_string(
+                        top.field_array_slices[2],
+                    /* char * recipient: */
+                        value_as_str,
+                    /* uint32_t recipient_cap: */
+                        128,
+                    /* uint32_t * good: */
+                        good);
+                if (!*good) { return; } else { *good = 0; }
+                T1_meta_serialize_cat_str_to_buf(value_as_str);
+                T1_meta_serialize_cat_str_to_buf("]");
+                t1ms->memset(value_as_str, 0, 128);
+            }
+            
+            T1_meta_serialize_cat_str_to_buf(" = ");
+            
             switch (field->type) {
                 case T1_TYPE_F32:
                     value_f32 = *(float *)(((char *)to_serialize) +
