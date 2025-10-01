@@ -36,7 +36,6 @@ void T1_meta_init(
     int (* strcmp_func)(const char *, const char *),
     size_t (* strlen_func)(const char *),
     unsigned long long int (* T1_meta_strtoull_func)(const char*, char**, int),
-    double (* T1_meta_strtod_func)(const char *, char **),
     const uint32_t ascii_store_cap,
     const uint16_t meta_structs_cap,
     const uint16_t meta_fields_cap,

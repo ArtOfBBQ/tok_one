@@ -71,7 +71,6 @@ typedef struct {
     int (* strcmp)(const char *, const char *);
     size_t (* strlen)(const char *);
     unsigned long long int (* strtoull)(const char*, char**, int);
-    double (* strtod)(const char *, char **);
     char * ascii_store;
     MetaEnum * meta_enums;
     MetaEnumValue * meta_enum_vals;
@@ -153,7 +152,6 @@ void T1_meta_init(
     int (* T1_meta_strcmp_func)(const char *, const char *),
     size_t (* T1_meta_strlen_func)(const char *),
     unsigned long long int (* T1_meta_strtoull_func)(const char*, char**, int),
-    double (* T1_meta_strtod_func)(const char *, char **),
     const uint32_t ascii_store_cap,
     const uint16_t meta_structs_cap,
     const uint16_t meta_fields_cap,
@@ -169,8 +167,7 @@ void T1_meta_init(
     t1ms->strtoull = T1_meta_strtoull_func;
     
     t1ms->ascii_store_cap = ascii_store_cap;
-    t1ms->ascii_store = T1_meta_malloc_func(
-        t1ms->ascii_store_cap);
+    t1ms->ascii_store = T1_meta_malloc_func(t1ms->ascii_store_cap);
     
     t1ms->meta_structs_cap = meta_structs_cap;
     t1ms->metastructs = T1_meta_malloc_func(
@@ -190,6 +187,122 @@ void T1_meta_init(
     
     T1_meta_reset();
 }
+
+#if 0
+static uint64_t T1_meta_string_to_u64(
+    const char * input,
+    uint32_t * good)
+{
+    *good = 0;
+    
+    if (input == NULL || input[0] == '\0') {
+        #if T1_META_ASSERTS == T1_ACTIVE
+        assert(0);
+        #elif T1_META_ASSERTS == T1_INACTIVE
+        #else
+        #error
+        #endif
+        return UINT64_MAX;
+    }
+    
+    uint64_t return_value = 0;
+    
+    uint32_t i = 0;
+    while (input[i] != '\0') {
+        if (input[i] < '0' || input[i] > '9') {
+            return UINT64_MAX;
+        }
+        
+        return_value *= 10;
+        return_value += (uint64_t)(input[i] - '0');
+        i++;
+    }
+    
+    *good = 1;
+    return return_value;
+}
+#endif
+
+static double T1_meta_string_to_double(
+    const char * input,
+    uint32_t * good)
+{
+    *good = 0;
+    
+    if (input == NULL || input[0] == '\0') {
+        #if T1_META_ASSERTS == T1_ACTIVE
+        assert(0);
+        #elif T1_META_ASSERTS == T1_INACTIVE
+        #else
+        #error
+        #endif
+        return UINT64_MAX;
+    }
+    
+    double return_value = 0;
+    
+    uint32_t i = 0;
+    uint32_t dot_loc = UINT32_MAX;
+    float final_mult = 1.0f;
+    
+    if (input[i] == '-') {
+        final_mult = -1.0f;
+        i++;
+    }
+    
+    while (input[i] != '\0') {
+        return_value *= 10.0f;
+        
+        if (input[i] < '0' || input[i] > '9') {
+            return return_value;
+        }
+        
+        uint8_t val = (uint8_t)(input[i] - '0');
+        return_value += (float)val;
+        
+        i++;
+        
+        if (input[i] == '.') {
+            dot_loc = i;
+            i++;
+            break;
+        }
+    }
+    
+    if (dot_loc < UINT32_MAX) {
+        float div = 1.0f;
+        
+        float below_decimal = 0.0f;
+        
+        while (input[i] != '\0') {
+            if (input[i] < '0' || input[i] > '9') {
+                return return_value;
+            }
+            
+            uint8_t val = (uint8_t)(input[i] - '0');
+            below_decimal *= 10.0f;
+            below_decimal += (float)val;
+            
+            div *= 10.0f;
+            i++;
+        }
+        
+        below_decimal /= div;
+        
+        #if T1_META_ASSERTS == T1_ACTIVE
+        assert(below_decimal < 1.0f);
+        #elif T1_META_ASSERTS == T1_INACTIVE
+        #else
+        #error
+        #endif
+        
+        return_value += below_decimal;
+    }
+    
+    *good = 1;
+    return return_value * final_mult;
+}
+
 
 static void T1_meta_uint_to_string(
     const uint64_t input,
@@ -1713,6 +1826,10 @@ static void parse_string_to_value(
     T1MetaParsedvalue * recipient,
     const char * string)
 {
+    uint32_t is_f64 = 0;
+    recipient->value_f64 = T1_meta_string_to_double(string, &is_f64);
+    recipient->value_is_f64 = (uint8_t)is_f64;
+    
     uint8_t val_starts_minus = string[0] == '-';
     if (val_starts_minus) { string++; }
     
@@ -1726,9 +1843,6 @@ static void parse_string_to_value(
     
     recipient->value_i64 = (int64_t)recipient->value_u64;
     if (val_starts_minus) { recipient->value_i64 *= -1; }
-    
-    recipient->value_f64 = t1ms->strtod(string, &endptr);
-    recipient->value_is_f64 = *endptr == '\0';
 }
 
 void T1_meta_write_to_known_field_str(
@@ -1874,8 +1988,8 @@ void T1_meta_write_to_known_field_str(
         case T1_TYPE_F32:
             if (
                 !parsed.value_is_f64 ||
-                parsed.value_f64 > __FLT_MAX__ ||
-                parsed.value_f64 < __FLT_MIN__)
+                parsed.value_f64 > 3.4028235+36 ||
+                parsed.value_f64 < -3.40282347E+36)
             {
                 #if T1_META_ASSERTS == T1_ACTIVE
                 assert(0);
@@ -2017,12 +2131,22 @@ void T1_meta_write_to_known_field_str(
                 4);
         break;
         case T1_TYPE_U64:
-            #if T1_META_ASSERTS == T1_ACTIVE
-            assert(0);
-            #elif T1_META_ASSERTS == T1_INACTIVE
-            #else
-            #error
-            #endif
+            if (
+                !parsed.value_is_u64)
+            {
+                #if T1_META_ASSERTS == T1_ACTIVE
+                assert(0);
+                #elif T1_META_ASSERTS == T1_INACTIVE
+                #else
+                #error
+                #endif
+                return;
+            }
+            
+            t1ms->memcpy(
+                (uint64_t *)((char *)target_parent_ptr + field.public.offset),
+                &parsed.value_u64,
+                8);
         break;
         case T1_TYPE_CHAR:
             rightmost_array_i = 2;
@@ -2737,7 +2861,7 @@ void T1_meta_deserialize_instance_from_buffer(
             *good = 0;
             return;
         }
-        at_i += 1;
+        at_i += 2;
     }
     
     *good = 1;
