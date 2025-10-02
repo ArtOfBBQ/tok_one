@@ -330,41 +330,64 @@ T1_std_internal_strcat_float_cap(
     const uint32_t recipient_size,
     const float to_append)
 {
-    float positive_append = to_append >= 0.0f ?
-        to_append :
-        -1.0f * to_append;
+    uint32_t precision = 4;
     
-    uint32_t before_comma = (uint32_t)positive_append;
-    uint32_t after_comma =
-        ((uint32_t)(positive_append * 1000) - (before_comma * 1000));
-    if (to_append < 0.0f) {
-        T1_std_internal_strcat_cap(
-            recipient,
-            recipient_size,
-            "-");
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
+    assert(recipient != NULL);
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    size_t rlen = T1_std_strlen(recipient);
+    
+    char * adj_recip = recipient + rlen;
+    float input = to_append;
+    rlen = 0;
+    
+    if (input < 0.0f) {
+        adj_recip[rlen++] = '-';
+        adj_recip[rlen] = '\0';
+        input *= -1.0f;
     }
-    T1_std_internal_strcat_uint_cap(
-        recipient,
-        #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-        recipient_size,
-        #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        before_comma);
-    T1_std_internal_strcat_cap(
-        recipient,
-        recipient_size,
-        ".");
-    T1_std_internal_strcat_uint_cap(
-        recipient,
-        #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
-        recipient_size,
-        #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        after_comma);
+    
+    uint32_t precision_mult = 1;
+    for (uint8_t _ = 0; _ < precision; _++) {
+        precision_mult *= 10;
+    }
+    
+    float temp_above_decimal = (float)(int32_t)input;
+    uint32_t above_decimal = (uint32_t)temp_above_decimal;
+    // we're adding an extra '1' in front of the fractional part here, to
+    // make it easier to work with leading zeros
+    uint32_t below_decimal =
+        (uint32_t)(((input - temp_above_decimal)+1.0f) * precision_mult);
+    
+    T1_std_uint_to_string(
+        above_decimal,
+        adj_recip + rlen);
+    rlen = T1_std_strlen(adj_recip);
+    
+    if (below_decimal > 0) {
+        adj_recip[rlen++] = '.';
+        
+        T1_std_uint_to_string(
+            below_decimal,
+            adj_recip + rlen);
+        
+        // We added a '1' at the start before, so we need to remove that
+        while (adj_recip[rlen] != '\0') {
+            adj_recip[rlen] = adj_recip[rlen + 1];
+            rlen += 1;
+        }
+    }
+    
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE == T1_ACTIVE
+    assert(adj_recip[0] != '.');
+    #elif T1_STD_ASSERTS_ACTIVE == T1_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
 }
 
 void T1_std_internal_strcpy_cap(

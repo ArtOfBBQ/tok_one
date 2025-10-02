@@ -5,8 +5,9 @@
 This header should only contain macro definitions that modify the behavior
 of the engine for your specific app.
 */
-
-#define APPLICATION_NAME "TOK ONE"
+#ifndef APPLICATION_NAME
+#define APPLICATION_NAME "PARTICLE EDITOR"
+#endif
 
 // The 2 pools of memory your app allocates on startup
 // 55 mb ->                      650...000
@@ -53,9 +54,9 @@ of the engine for your specific app.
 /*
 The maximum number of sprites in your app.
 */
-#define MAX_ZSPRITES_PER_BUFFER  50000
-#define MAX_LINE_VERTICES 100
-#define MAX_POINT_VERTICES 300
+#define MAX_ZSPRITES_PER_BUFFER  350000
+#define MAX_LINE_VERTICES 10
+#define MAX_POINT_VERTICES 10
 
 /*
 The maximum number of 'scheduled animations' simultaneously running

@@ -3,6 +3,7 @@
 static int32_t base_mesh_id = 1;
 static int32_t example_particles_id = -1;
 
+#if 0
 static void load_obj_basemodel(
     char error_message[128],
     uint32_t * success)
@@ -76,6 +77,7 @@ static void load_obj_basemodel(
     *success = 1;
     return;
 }
+#endif
 
 typedef struct {
     char property_name[128];
@@ -230,11 +232,11 @@ void T1_clientlogic_early_startup(
     
     example_particles_id = T1_zspriteid_next_nonui_id();
     
-    load_obj_basemodel(error_message, success);
-    if (!*success) {
-        return;
-    }
-    *success = 0;
+    //    load_obj_basemodel(error_message, success);
+    //    if (!*success) {
+    //        return;
+    //    }
+    //    *success = 0;
     
     T1_engine_globals->draw_axes = true;
     

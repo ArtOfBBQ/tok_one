@@ -1,4 +1,4 @@
-APP_NAME="hello3dgfx"
+APP_NAME="ParticlEd"
 
 COMPILER_PATHS="
 -I engine_src/macos/
