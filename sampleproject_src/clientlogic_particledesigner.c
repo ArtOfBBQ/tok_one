@@ -844,14 +844,37 @@ void T1_clientlogic_evaluate_terminal_command(
     const uint32_t response_cap)
 {
     if (
-        T1_std_are_equal_strings(
+        T1_std_are_equal_strings(command, "SAVE") ||
+        T1_std_string_starts_with(
             command,
-            "SAVE"))
+            "SAVE "))
     {
+        char savefile_filename[128];
+        T1_std_memset(savefile_filename, 0, 128);
+        
+        if (command[5] == '\0') {
+            T1_std_memcpy(
+                savefile_filename,
+                "particles.t1p",
+                T1_std_strlen("particles.t1p"));
+        } else {
+            size_t savefile_len =
+                T1_std_strlen(command) - T1_std_strlen("SAVE ");
+            T1_std_memcpy(
+                savefile_filename,
+                command + T1_std_strlen("SAVE "),
+                savefile_len);
+            T1_std_strtolower(savefile_filename);
+        }
+        
         T1_std_strcat_cap(
             response,
             response_cap,
-            "Saving particle effect...");
+            "Saving particle effect to file: ");
+        T1_std_internal_strcat_cap(
+            response,
+            response_cap,
+            savefile_filename);
         
         uint32_t savefile_cap = 1000000;
         char * savefile_bin = T1_mem_malloc_from_managed(savefile_cap);
@@ -881,7 +904,7 @@ void T1_clientlogic_evaluate_terminal_command(
         }
         
         T1_platform_write_file_to_writables(
-            "particles.t1p",
+            savefile_filename,
             savefile_bin,
             savefile_size,
             &savefile_good);
@@ -900,20 +923,44 @@ void T1_clientlogic_evaluate_terminal_command(
     }
     
     if (
-        T1_std_are_equal_strings(
+        T1_std_are_equal_strings(command, "LOAD") ||
+        T1_std_string_starts_with(
             command,
-            "LOAD"))
+            "LOAD "))
     {
+        char savefile_filename[128];
+        T1_std_memset(savefile_filename, 0, 128);
+        
+        if (command[5] == '\0') {
+            T1_std_memcpy(
+                savefile_filename,
+                "particles.t1p",
+                T1_std_strlen("particles.t1p"));
+        } else {
+            size_t savefile_len =
+                T1_std_strlen(command) - T1_std_strlen("LOAD ");
+            T1_std_memcpy(
+                savefile_filename,
+                command + T1_std_strlen("LOAD "),
+                savefile_len);
+            T1_std_strtolower(savefile_filename);
+        }
+        
         uint32_t savefile_good = 0;
-        size_t savefile_size = T1_platform_get_writable_size("particles.t1p");
+        size_t savefile_size = T1_platform_get_writable_size(savefile_filename);
         
         if (savefile_size < 1) {
             T1_std_strcat_cap(
                 response,
                 response_cap,
-                "No such file...");
+                "No such file: ");
+            T1_std_strcat_cap(
+                response,
+                response_cap,
+                savefile_filename);
             return;
         }
+        
         char * savefile_bin = T1_mem_malloc_from_managed(savefile_size + 1);
         T1_std_memset(savefile_bin, 0, savefile_size + 1);
         
