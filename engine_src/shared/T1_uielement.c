@@ -386,17 +386,23 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
             char full_label[FULL_LABEL_CAP];
             T1_std_memset(full_label, 0, FULL_LABEL_CAP);
             
-            if (active_ui_elements[i].user_set.label_prefix[0] != '\0') {
+            if (
+                active_ui_elements[i].user_set.label_prefix[0] != '\0' &&
+                !active_ui_elements[i].user_set.is_meta_enum)
+            {
                 T1_std_strcpy_cap(
                     full_label,
                     FULL_LABEL_CAP,
                     active_ui_elements[i].user_set.label_prefix);
+                
             }
             
             float xy_screenspace[3];
             float z;
             uint8_t ignore_camera =
                 active_ui_elements[i].user_set.ignore_camera;
+            uint32_t good = 0;
+            
             xy_screenspace[0] =
                 active_ui_elements[i].user_set.screenspace_x;
             xy_screenspace[1] =
@@ -421,7 +427,9 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                             T1_zsprites_to_render->gpu_data[zs_i].xyz[1],
                             T1_zsprites_to_render->gpu_data[zs_i].xyz[2]);
                     z = T1_zsprites_to_render->gpu_data[zs_i].xyz[2];
-                    ignore_camera = (uint8_t)T1_zsprites_to_render->gpu_data[zs_i].ignore_camera;
+                    ignore_camera = (uint8_t)
+                        T1_zsprites_to_render->gpu_data[zs_i].
+                            ignore_camera;
                     T1_zsprites_to_render->cpu_data[zs_i].deleted = true;
                 }
             }
@@ -444,54 +452,76 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
             font_settings->alpha = 1.0f;
             
             if (active_ui_elements[i].slider_linked_value != NULL) {
-                T1_std_strcat_cap(
-                    full_label,
-                    FULL_LABEL_CAP,
-                    ": ");
-                
-                switch (active_ui_elements[i].user_set.linked_type)
-                {
-                case T1_TYPE_F32:
-                    T1_std_strcat_float_cap(
-                        full_label,
-                        FULL_LABEL_CAP,
-                        *(float *)active_ui_elements[i].
-                            slider_linked_value);
-                break;
-                case T1_TYPE_U64:
-                    T1_std_strcat_uint_cap(
-                        full_label,
-                        FULL_LABEL_CAP,
-                        (uint32_t)*(uint64_t *)active_ui_elements[i].
-                            slider_linked_value);
-                break;
-                case T1_TYPE_U32:
-                    T1_std_strcat_uint_cap(
-                        full_label,
-                        FULL_LABEL_CAP,
-                        *(uint32_t *)active_ui_elements[i].
-                            slider_linked_value);
-                break;
-                case T1_TYPE_U16:
-                    T1_std_strcat_uint_cap(
-                        full_label,
-                        FULL_LABEL_CAP,
-                        *(uint16_t *)active_ui_elements[i].
-                            slider_linked_value);
-                break;
-                case T1_TYPE_U8:
-                    T1_std_strcat_uint_cap(
-                        full_label,
-                        FULL_LABEL_CAP,
-                        *(uint8_t *)active_ui_elements[i].
-                            slider_linked_value);
-                break;
-                default:
+                if (active_ui_elements[i].user_set.is_meta_enum) {
+                    char * enum_as_str = NULL;
+                    
+                    switch (active_ui_elements[i].user_set.linked_type) {
+                    case T1_TYPE_U8:
+                        enum_as_str = T1_meta_enum_uint_to_string(
+                            active_ui_elements[i].user_set.meta_struct_name,
+                            *(uint64_t *)active_ui_elements[i].
+                                slider_linked_value,
+                                &good);
+                        assert(good);
+                    break;
+                    default:
+                    assert(0);
+                    }
+                    
                     T1_std_strcat_cap(
                         full_label,
                         FULL_LABEL_CAP,
-                        "?DATA");
-                break;
+                        enum_as_str == NULL ? "N/A" : enum_as_str);
+                } else {
+                    T1_std_strcat_cap(
+                        full_label,
+                        FULL_LABEL_CAP,
+                        ": ");
+                    
+                    switch (active_ui_elements[i].user_set.linked_type)
+                    {
+                    case T1_TYPE_F32:
+                        T1_std_strcat_float_cap(
+                            full_label,
+                            FULL_LABEL_CAP,
+                            *(float *)active_ui_elements[i].
+                                slider_linked_value);
+                    break;
+                    case T1_TYPE_U64:
+                        T1_std_strcat_uint_cap(
+                            full_label,
+                            FULL_LABEL_CAP,
+                            (uint32_t)*(uint64_t *)active_ui_elements[i].
+                                slider_linked_value);
+                    break;
+                    case T1_TYPE_U32:
+                        T1_std_strcat_uint_cap(
+                            full_label,
+                            FULL_LABEL_CAP,
+                            *(uint32_t *)active_ui_elements[i].
+                                slider_linked_value);
+                    break;
+                    case T1_TYPE_U16:
+                        T1_std_strcat_uint_cap(
+                            full_label,
+                            FULL_LABEL_CAP,
+                            *(uint16_t *)active_ui_elements[i].
+                                slider_linked_value);
+                    break;
+                    case T1_TYPE_U8:
+                        T1_std_strcat_uint_cap(
+                            full_label,
+                            FULL_LABEL_CAP,
+                            *(uint8_t *)active_ui_elements[i].
+                                slider_linked_value);
+                    break;
+                    default:
+                        T1_std_strcat_cap(
+                            full_label,
+                            FULL_LABEL_CAP,
+                            "?DATA");
+                    break;
+                    }
                 }
             }
             

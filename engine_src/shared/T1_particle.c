@@ -2,6 +2,9 @@
 
 #if T1_PARTICLES_ACTIVE == T1_ACTIVE
 
+#define add_variance(x, variance, randnum, randnum2) if (variance > 0) { x += ((float)(randnum % variance) * 0.01f); x -= ((float)(randnum2 % variance) * 0.01f); }
+
+#if 0
 T1LineParticle * T1_particle_lineparticle_effects;
 uint32_t T1_particle_lineparticle_effects_size;
 
@@ -91,8 +94,6 @@ void T1_particle_lineparticle_commit(
     to_commit->random_seed = (uint32_t)tok_rand() %
         RANDOM_SEQUENCE_SIZE;
 }
-
-#define add_variance(x, variance, randnum, randnum2) if (variance > 0) { x += ((float)(randnum % variance) * 0.01f); x -= ((float)(randnum2 % variance) * 0.01f); }
 
 void T1_particle_lineparticle_add_all_to_frame_data(
     T1GPUFrame * frame_data,
@@ -321,6 +322,7 @@ void T1_particle_lineparticle_add_all_to_frame_data(
         }
     }
 }
+#endif
 
 T1ParticleEffect * T1_particle_effects = NULL;
 uint32_t T1_particle_effects_size = 0;
@@ -566,20 +568,8 @@ void T1_particle_add_all_to_frame_data(
             
             log_assert(
                 frame_data->zsprite_list->size < MAX_ZSPRITES_PER_BUFFER);
-            
-            float * initial_random_add_1_at = (float *)&T1_particle_effects[i].
-                init_rand_add[0];
-            float * initial_random_add_2_at = (float *)&T1_particle_effects[i].
-                init_rand_add[1];
-            
             float * pertime_add_at = (float *)&T1_particle_effects[i].
-                pertime_add;
-            float * perexptime_add_at = (float *)&T1_particle_effects[i].
-                perexptime_add;
-            float * pertime_random_add_1_at = (float *)&T1_particle_effects[i].
-                pertime_rand_add[0];
-            float * pertime_random_add_2_at = (float *)&T1_particle_effects[i].
-                pertime_rand_add[1];
+                mods[0].gpu_stats;
             float * recipient_at = (float *)&frame_data->zsprite_list->
                 polygons[frame_data->zsprite_list->size];
             
@@ -615,28 +605,7 @@ void T1_particle_add_all_to_frame_data(
                 SIMD_FLOAT simdf_rand = tok_rand_simd_at_i(
                     (rand_i + ((j/SIMD_FLOAT_LANES) *
                         (SIMD_FLOAT_LANES * 4)))
-                            + 0);
-                SIMD_FLOAT simdf_pertime_random_add = simd_load_floats(
-                    pertime_random_add_1_at + j);
-                simdf_pertime_random_add = simd_mul_floats(
-                    simdf_pertime_random_add,
-                    simdf_rand);
-                
-                simdf_pertime_add = simd_add_floats(
-                    simdf_pertime_add, simdf_pertime_random_add);
-                
-                // Add the '2nd random over time' data
-                simdf_rand = tok_rand_simd_at_i(
-                    (rand_i + ((j/SIMD_FLOAT_LANES) *
-                        (SIMD_FLOAT_LANES * 4)))
                             + 32);
-                simdf_pertime_random_add = simd_load_floats(
-                    pertime_random_add_2_at + j);
-                simdf_pertime_random_add = simd_mul_floats(
-                    simdf_pertime_random_add,
-                    simdf_rand);
-                simdf_pertime_add = simd_add_floats(
-                    simdf_pertime_add, simdf_pertime_random_add);
                 
                 // Convert per second values to per microsecond (us) effect
                 simdf_pertime_add = simd_mul_floats(
@@ -644,33 +613,13 @@ void T1_particle_add_all_to_frame_data(
                 simdf_pertime_add = simd_div_floats(
                     simdf_pertime_add, simdf_one_million);
                 
-                SIMD_FLOAT exp_add = simd_load_floats((perexptime_add_at + j));
-                exp_add = simd_mul_floats(exp_add, simdf_lifetime_exp);
-                exp_add = simd_div_floats(exp_add, simdf_one_million);
-                
                 SIMD_FLOAT recip = simd_load_floats(recipient_at + j);
                 recip = simd_add_floats(recip, simdf_pertime_add);
-                recip = simd_add_floats(recip, exp_add);
                 
                 simdf_rand = tok_rand_simd_at_i(
                     (rand_i + ((j/SIMD_FLOAT_LANES) *
                         (SIMD_FLOAT_LANES * 4)))
                             + 64);
-                SIMD_FLOAT simdf_initial_add = simd_load_floats(
-                    initial_random_add_1_at + j);
-                simdf_initial_add = simd_mul_floats(
-                    simdf_initial_add, simdf_rand);
-                recip = simd_add_floats(recip, simdf_initial_add);
-                
-                simdf_rand = tok_rand_simd_at_i(
-                    ((rand_i + ((j/SIMD_FLOAT_LANES) *
-                        (SIMD_FLOAT_LANES * 4)))
-                            + 96)% (RANDOM_SEQUENCE_SIZE-3));
-                simdf_initial_add = simd_load_floats(
-                    initial_random_add_2_at + j);
-                simdf_initial_add = simd_mul_floats(
-                    simdf_initial_add, simdf_rand);
-                recip = simd_add_floats(recip, simdf_initial_add);
                 
                 log_assert((ptrdiff_t)(recipient_at + j) %
                     (long)(SIMD_FLOAT_LANES * sizeof(float)) == 0);

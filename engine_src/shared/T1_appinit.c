@@ -371,12 +371,14 @@ void T1_appinit_before_gpu_init(
         sizeof(zLightSource) * MAX_LIGHTS_PER_BUFFER);
     
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
+    #if 0
     T1_particle_lineparticle_effects = (T1LineParticle *)T1_mem_malloc_from_unmanaged(
         sizeof(T1LineParticle) * LINEPARTICLE_EFFECTS_SIZE);
     T1_std_memset(
         T1_particle_lineparticle_effects,
         0,
         sizeof(T1LineParticle) * LINEPARTICLE_EFFECTS_SIZE);
+    #endif
     T1_particle_effects = (T1ParticleEffect *)T1_mem_malloc_from_unmanaged(
         sizeof(T1ParticleEffect) * PARTICLE_EFFECTS_SIZE);
     T1_std_memset(

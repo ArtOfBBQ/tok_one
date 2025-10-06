@@ -4,13 +4,13 @@
 #include "T1_std.h"
 #include "T1_mem.h"
 #include "T1_zspriteid.h"
+#include "T1_meta.h"
 #include "T1_uiinteraction.h"
 #include "T1_zsprite.h"
 #include "T1_texture_array.h"
 #include "T1_scheduled_animations.h"
 #include "T1_text.h"
 #include "T1_profiler.h"
-#include "T1_meta.h"
 
 
 #ifdef __cplusplus
@@ -27,6 +27,7 @@ some sliders, change the slider size, and then request some more sliders
 */
 typedef struct {
     T1GPUConstMat back_mat;
+    char * meta_struct_name;
     union {
         uint64_t custom_uint_max;
         int64_t  custom_int_max;
@@ -54,6 +55,7 @@ typedef struct {
     bool8_t   custom_min_max_vals;
     bool8_t   ignore_lighting;
     bool8_t   ignore_camera;
+    bool8_t   is_meta_enum;
     T1Type    linked_type;
 } T1UIElementPermUserSettings;
 

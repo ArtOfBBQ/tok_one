@@ -14,9 +14,7 @@
 
 typedef enum : uint8_t {
     T1_TYPE_NOTSET,
-    T1_TYPE_ENUM,
     T1_TYPE_STRUCT,
-    T1_TYPE_STRING,
     T1_TYPE_F32,
     T1_TYPE_U64,
     T1_TYPE_U32,
@@ -61,13 +59,13 @@ void T1_meta_reg_struct(
     const uint32_t size_bytes,
     uint32_t * good);
 
-#define T1_meta_field(parent_type_name, field_T1_type, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, 1, 1, 1, good)
-#define T1_meta_enum_field(parent_type_name, field_enum_name, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_ENUM, #field_enum_name, 1, 1, 1, good)
-#define T1_meta_enum_array(parent_type_name, field_enum_name, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_ENUM, #field_enum_name, array_size, 1, 1, good)
-#define T1_meta_struct_field(parent_type_name, field_type_or_NULL, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, 1, 1, 1, good)
-#define T1_meta_array(parent_type_name, field_T1_type, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, array_size, 1, 1, good)
-#define T1_meta_struct_array(parent_type_name, field_type_or_NULL, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, array_size, 1, 1, good)
-#define T1_meta_multi_array(parent_type_name, field_T1_type, field_struct_type_or_NULL, field_name, array_size_1, array_size_2, array_size_3, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_struct_type_or_NULL, array_size_1, array_size_2, array_size_3, good)
+#define T1_meta_field(parent_type_name, field_T1_type, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, 1, 1, 1, false, good)
+#define T1_meta_enum_field(parent_type_name, enum_name, field_T1_type, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #enum_name, 1, 1, 1, true, good)
+#define T1_meta_enum_array(parent_type_name, field_enum_name, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_ENUM, #field_enum_name, array_size, 1, 1, false, good)
+#define T1_meta_struct_field(parent_type_name, field_type_or_NULL, field_name, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, 1, 1, 1, false, good)
+#define T1_meta_array(parent_type_name, field_T1_type, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, NULL, array_size, 1, 1, false, good)
+#define T1_meta_struct_array(parent_type_name, field_type_or_NULL, field_name, array_size, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), T1_TYPE_STRUCT, #field_type_or_NULL, array_size, 1, 1, false, good)
+#define T1_meta_multi_array(parent_type_name, field_T1_type, field_struct_type_or_NULL, field_name, array_size_1, array_size_2, array_size_3, good) T1_meta_reg_field(#field_name, offsetof(parent_type_name, field_name), field_T1_type, #field_struct_type_or_NULL, array_size_1, array_size_2, array_size_3, false, good)
 void T1_meta_reg_field(
     const char * field_name,
     const uint32_t field_offset,
@@ -76,6 +74,7 @@ void T1_meta_reg_field(
     const uint16_t field_array_size_1,
     const uint16_t field_array_size_2,
     const uint16_t field_array_size_3,
+    const uint8_t is_enum,
     uint32_t * good);
 
 void T1_meta_reg_custom_float_limits_for_last_field(
@@ -107,9 +106,13 @@ typedef struct {
     };
     int64_t offset; // -1 if no such field
     char * name;
-    char * struct_type_name;
+    union {
+        char * struct_type_name;
+        char * enum_type_name;
+    };
     uint16_t array_sizes[T1_META_ARRAY_SIZES_CAP];
     T1Type data_type;
+    uint8_t is_enum;
 } T1MetaField;
 
 #define T1_meta_get_field(struct_name, field_name, good) T1_meta_get_field_from_strings(#struct_name, #field_name, good)
@@ -146,6 +149,11 @@ void T1_meta_deserialize_instance_from_buffer(
     void * recipient,
     char * buffer,
     const uint32_t buffer_size,
+    uint32_t * good);
+
+char * T1_meta_enum_uint_to_string(
+    const char * enum_type_name,
+    const uint64_t value,
     uint32_t * good);
 
 #endif // T1_META_H

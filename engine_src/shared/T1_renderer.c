@@ -450,10 +450,12 @@ void renderer_hardware_render(
             /* const uint32_t alpha_blending: */
                 false);
         
+        #if 0
         T1_particle_lineparticle_add_all_to_frame_data(
             frame_data,
             elapsed_us,
             false);
+        #endif
         #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
         // Pass
         #else
@@ -472,10 +474,13 @@ void renderer_hardware_render(
         /* const uint32_t alpha_blending: */
             true);
     
+    #if 0
     T1_particle_lineparticle_add_all_to_frame_data(
             frame_data,
             elapsed_us,
             true);
+    #endif
+    
     #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
     // Pass
     #else

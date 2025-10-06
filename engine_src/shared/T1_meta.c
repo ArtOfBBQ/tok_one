@@ -4,7 +4,10 @@
 
 typedef struct {
     char * name;
-    char * struct_type_name;
+    union {
+        char * struct_type_name;
+        char * enum_type_name;
+    };
     union {
         uint64_t custom_uint_max;
         int64_t  custom_int_max;
@@ -96,11 +99,8 @@ static void construct_metastruct(MetaStruct * to_construct) {
 }
 
 static void construct_public_metafield(T1MetaField * to_construct) {
-    to_construct->name = NULL;
-    to_construct->offset = 0;
-    to_construct->array_sizes[0] = 0;
-    to_construct->array_sizes[1] = 0;
-    to_construct->array_sizes[2] = 0;
+    t1ms->memset(to_construct, 0, sizeof(T1MetaField));
+    
     to_construct->data_type = T1_TYPE_NOTSET;
 }
 
@@ -117,6 +117,7 @@ static void construct_metafield(MetaField * to_construct) {
     to_construct->next_i = UINT16_MAX;
     to_construct->type = T1_TYPE_NOTSET;
     to_construct->offset = UINT16_MAX;
+    to_construct->parent_enum_id = UINT16_MAX;
 }
 
 static MetaField * metafield_i_to_ptr(const uint16_t field_i) {
@@ -806,6 +807,7 @@ void T1_meta_reg_field(
     const uint16_t field_array_size_1,
     const uint16_t field_array_size_2,
     const uint16_t field_array_size_3,
+    const uint8_t is_enum,
     uint32_t * good)
 {
     *good = 0;
@@ -930,9 +932,7 @@ void T1_meta_reg_field(
             #error
             #endif
         break;
-        case T1_TYPE_STRING:
         case T1_TYPE_STRUCT:
-        case T1_TYPE_ENUM:
             // no min/max needed
             target_mfield->custom_uint_max = 0;
             target_mfield->custom_uint_min = 0;
@@ -1029,21 +1029,7 @@ void T1_meta_reg_field(
                     good);
         if (!*good) { return; }
         *good = 0;
-    } else if (
-        target_mfield->type == T1_TYPE_ENUM)
-    {
-        // TODO: check enum type
-    } else if (field_struct_type_name_or_null != NULL) {
-            #if T1_META_ASSERTS == T1_ACTIVE
-            assert(0); // not a struct, expected no type name
-            #elif T1_META_ASSERTS == T1_INACTIVE
-            #else
-            #error
-            #endif
-            return;
-    }
-    
-    if (target_mfield->type == T1_TYPE_ENUM) {
+    } else if (is_enum) {
         #if T1_META_ASSERTS == T1_ACTIVE
         assert(field_struct_type_name_or_null != NULL);
         #elif T1_META_ASSERTS == T1_INACTIVE
@@ -1062,6 +1048,8 @@ void T1_meta_reg_field(
                     field_struct_type_name_or_null,
                     t1ms->meta_enums[i].name) == 0)
             {
+                target_mfield->enum_type_name =
+                    t1ms->meta_enums[i].name;
                 target_mfield->parent_enum_id = i;
                 break;
             }
@@ -1076,6 +1064,14 @@ void T1_meta_reg_field(
             #endif
             return;
         }
+    } else if (field_struct_type_name_or_null != NULL) {
+            #if T1_META_ASSERTS == T1_ACTIVE
+            assert(0); // not a struct, expected no type name
+            #elif T1_META_ASSERTS == T1_INACTIVE
+            #else
+            #error
+            #endif
+            return;
     }
     
     #if T1_META_ASSERTS == T1_ACTIVE
@@ -1378,13 +1374,12 @@ static void copy_internal_field_to_public_field(
     public->array_sizes[1] = internal->array_sizes[1];
     public->array_sizes[2] = internal->array_sizes[2];
     public->data_type = internal->type;
+    public->is_enum = internal->parent_enum_id < t1ms->meta_enums_size;
     
     #if T1_META_ASSERTS == T1_ACTIVE
     switch (internal->type) {
-        case T1_TYPE_ENUM:
         case T1_TYPE_STRUCT:
         case T1_TYPE_CHAR:
-        case T1_TYPE_STRING:
         break;
         case T1_TYPE_F32:
             assert(internal->custom_float_max > internal->custom_float_min);
@@ -1538,10 +1533,6 @@ static void T1_meta_get_field_recursive(
             case T1_TYPE_F32:
                 offset_per_array_index = 4;
             break;
-            case T1_TYPE_ENUM:
-                // TODO: find out the actual size of the num
-                offset_per_array_index = 1;
-            break;
             case T1_TYPE_STRUCT:
                 substruct = find_struct_by_name(
                     metafield->struct_type_name);
@@ -1662,23 +1653,7 @@ static size_t T1_meta_shared_get_element_size_bytes(
     const char * struct_name_or_null,
     const uint16_t parent_enum_id)
 {
-    T1Type adj_type = data_type;
-    
-    if (adj_type == T1_TYPE_ENUM) {
-        if (parent_enum_id >= t1ms->meta_enums_size) {
-            #if T1_META_ASSERTS == T1_ACTIVE
-            assert(0);
-            #elif T1_META_ASSERTS == T1_INACTIVE
-            #else
-            #error
-            #endif
-            adj_type = T1_TYPE_NOTSET;
-        } else {
-            adj_type = t1ms->meta_enums[parent_enum_id].T1_type;
-        }
-    }
-    
-    switch (adj_type) {
+    switch (data_type) {
         case T1_TYPE_STRUCT:
             #if T1_META_ASSERTS == T1_ACTIVE
             assert(struct_name_or_null != NULL);
@@ -1733,8 +1708,6 @@ static size_t T1_meta_shared_get_element_size_bytes(
             return 1;
         break;
         case T1_TYPE_NOTSET:
-        case T1_TYPE_STRING:
-        case T1_TYPE_ENUM:
             // Reminder: enum should never happen here because it should be
             // adjusted above at the top of this function
             #if T1_META_ASSERTS == T1_ACTIVE
@@ -1906,7 +1879,7 @@ void T1_meta_write_to_known_field_str(
     T1Type type_adj = field.public.data_type;
     uint8_t found_enum_field = 0;
     
-    if (field.public.data_type == T1_TYPE_ENUM) {
+    if (field.public.is_enum) {
         if (
             field.internal_field == NULL ||
             field.internal_field->parent_enum_id >=
@@ -1976,15 +1949,6 @@ void T1_meta_write_to_known_field_str(
             #error
             #endif
             return;
-        case T1_TYPE_ENUM:
-            #if T1_META_ASSERTS == T1_ACTIVE
-            assert(0); // enum have been replaced by a number already
-            #elif T1_META_ASSERTS == T1_INACTIVE
-            #lse
-            #error
-            #endif
-            return;
-        break;
         case T1_TYPE_F32:
             if (
                 !parsed.value_is_f64 ||
@@ -2865,4 +2829,57 @@ void T1_meta_deserialize_instance_from_buffer(
     }
     
     *good = 1;
+}
+
+char * T1_meta_enum_uint_to_string(
+    const char * enum_type_name,
+    const uint64_t value,
+    uint32_t * good)
+{
+    *good = 0;
+    
+    #if T1_META_ASSERTS == T1_ACTIVE
+    assert(enum_type_name != NULL);
+    #elif T1_META_ASSERTS == T1_INACTIVE
+    #else
+    #error
+    #endif
+    if (enum_type_name == NULL) {
+        *good = 0;
+        return NULL;
+    }
+    
+    uint16_t parent_enum_id = UINT16_MAX;
+    for (uint16_t i = 0; i < t1ms->meta_enums_size; i++) {
+        if (
+            t1ms->strcmp(
+                t1ms->meta_enums[i].name,
+                enum_type_name) == 0)
+        {
+            parent_enum_id = i;
+            break;
+        }
+    }
+    
+    if (parent_enum_id == UINT16_MAX) {
+        #if T1_META_ASSERTS == T1_ACTIVE
+        assert(0); // no such enum
+        #elif T1_META_ASSERTS == T1_INACTIVE
+        #else
+        #error
+        #endif
+        return NULL;
+    }
+    
+    for (uint16_t i = 0; i < t1ms->meta_enum_vals_size; i++) {
+        if (
+            t1ms->meta_enum_vals[i].metaenum_id == parent_enum_id &&
+            t1ms->meta_enum_vals[i].value == (int64_t)value)
+        {
+            *good = 1;
+            return t1ms->meta_enum_vals[i].name;
+        }
+    }
+    
+    return NULL;
 }

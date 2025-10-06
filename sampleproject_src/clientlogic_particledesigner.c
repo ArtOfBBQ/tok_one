@@ -126,11 +126,11 @@ static float get_menu_element_height(void) {
 }
 
 static float get_slider_height_screenspace(void) {
-    return ((get_menu_element_height() - get_whitespace_height()) * 5) / 6;
+    return ((get_menu_element_height() - get_whitespace_height()) * 5) / 7;
 }
 
 static float get_slider_width_screenspace(void) {
-    return get_slider_height_screenspace() * 10.0f;
+    return get_slider_height_screenspace() * 20.0f;
 }
 
 static float get_slider_y_screenspace(int32_t i) {
@@ -202,14 +202,51 @@ void T1_clientlogic_early_startup(
     T1_meta_struct_field(T1GPUzSprite, T1GPUConstMat, base_mat, &ok);
     assert(ok);
     
+    /*
+    EASINGTYPE_NONE = 0,
+    EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE,
+    EASINGTYPE_SINGLE_BOUNCE_ZERO_TO_ZERO,
+    EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO,
+    EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO,
+    EASINGTYPE_OCTUPLE_BOUNCE_ZERO_TO_ZERO,
+    EASINGTYPE_SINGLE_PULSE_ZERO_TO_ZERO,
+    EASINGTYPE_OCTUPLE_PULSE_ZERO_TO_ZERO,
+     */
+    T1_meta_enum(T1EasingType, T1_TYPE_U8, &ok);
+    assert(ok);
+    T1_meta_enum_value(T1EasingType,
+        EASINGTYPE_NONE, &ok);
+    T1_meta_enum_value(T1EasingType,
+        EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE, &ok);
+    T1_meta_enum_value(T1EasingType,
+        EASINGTYPE_SINGLE_BOUNCE_ZERO_TO_ZERO, &ok);
+    T1_meta_enum_value(T1EasingType,
+        EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO, &ok);
+    T1_meta_enum_value(T1EasingType,
+        EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO, &ok);
+    T1_meta_enum_value(T1EasingType,
+        EASINGTYPE_OCTUPLE_BOUNCE_ZERO_TO_ZERO, &ok);
+    T1_meta_enum_value(T1EasingType,
+        EASINGTYPE_SINGLE_PULSE_ZERO_TO_ZERO, &ok);
+    T1_meta_enum_value(T1EasingType,
+        EASINGTYPE_OCTUPLE_PULSE_ZERO_TO_ZERO, &ok);
+    assert(ok);
+    
+    T1_meta_struct(T1ParticleMod, &ok);
+    assert(ok);
+    T1_meta_struct_field(T1ParticleMod, T1GPUzSprite, gpu_stats, &ok);
+    T1_meta_field(T1ParticleMod, T1_TYPE_U64, start_delay, &ok);
+    T1_meta_reg_custom_uint_limits_for_last_field(0, 30000000, &ok);
+    T1_meta_enum_field(T1ParticleMod, T1EasingType, T1_TYPE_U8, easing_type, &ok);
+    T1_meta_reg_custom_uint_limits_for_last_field(0, EASINGTYPE_OUTOFBOUNDS-1, &ok);
+    
+    T1_meta_field(T1ParticleMod, T1_TYPE_U8, randomize, &ok);
+    T1_meta_reg_custom_uint_limits_for_last_field(0, 1, &ok);
+    
     T1_meta_struct(T1ParticleEffect, &ok);
     assert(ok);
-    T1_meta_struct_array(T1ParticleEffect, T1GPUzSprite, init_rand_add, 2, &ok);
-    T1_meta_struct_array(T1ParticleEffect, T1GPUzSprite, pertime_rand_add, 2, &ok);
-    T1_meta_struct_field(T1ParticleEffect, T1GPUzSprite, pertime_add, &ok);
-    T1_meta_struct_field(T1ParticleEffect, T1GPUzSprite, perexptime_add, &ok);
+    T1_meta_struct_array(T1ParticleEffect, T1ParticleMod, mods, T1_PARTICLE_MODS_CAP, &ok);
     T1_meta_struct_field(T1ParticleEffect, T1GPUzSprite, zpolygon_gpu, &ok);
-    
     T1_meta_struct_field(T1ParticleEffect, T1CPUzSprite, zpolygon_cpu, &ok);
     T1_meta_field(T1ParticleEffect, T1_TYPE_U64, lifespan, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(0, 50000000, &ok);
@@ -348,6 +385,18 @@ static void redraw_all_sliders(void) {
         T1MetaField field = T1_meta_get_field_at_index(
             pds->inspecting_field,
             (uint32_t)i);
+        
+        next_ui_element_settings->perm.is_meta_enum = field.is_enum;
+        if (next_ui_element_settings->perm.is_meta_enum) {
+            next_ui_element_settings->perm.meta_struct_name =
+                field.enum_type_name;
+            log_assert(
+                next_ui_element_settings->perm.
+                    meta_struct_name != NULL);
+            log_assert(
+                next_ui_element_settings->perm.
+                    meta_struct_name[0] != '\0');
+        }
         
         for (
             uint32_t array_i = 0;
@@ -527,11 +576,6 @@ void T1_clientlogic_late_startup(void) {
     pds->editing->zpolygon_gpu.xyz[2] = 0.5f;
     pds->editing->zpolygon_gpu.alpha = 1.0f;
     pds->editing->zpolygon_gpu.base_mat.alpha = 1.0f;
-    pds->editing->pertime_rand_add[0].xyz[0] = -0.25f;
-    pds->editing->pertime_rand_add[1].xyz[0] =  0.25f;
-    pds->editing->pertime_rand_add[0].xyz[2] = -0.25f;
-    pds->editing->pertime_rand_add[1].xyz[2] =  0.25f;
-    pds->editing->pertime_add.xyz[1] = 0.5f;
     pds->editing->lifespan = 1000000;
     pds->editing->spawns_per_sec = 500;
     
@@ -608,76 +652,6 @@ static void client_handle_keypresses(
     
     if (T1_keypress_map[TOK_KEY_S] == true) {
         camera.xyz_angle[1] += cam_rotation_speed;
-    }
-    
-    if (T1_keypress_map[TOK_KEY_L] == true) {
-        T1_keypress_map[TOK_KEY_L] = false;
-        T1LineParticle * lines = T1_particle_lineparticle_get_next();
-        T1zSpriteRequest lines_polygon;
-        lines_polygon.cpu_data = &lines->zpolygon_cpu;
-        lines_polygon.gpu_data = &lines->zpolygon_gpu;
-        zsprite_construct_quad(
-            /* const float left_x: */
-                0.0f,
-            /* const float bottom_y: */
-                0.0f,
-            /* const float z: */
-                0.5f,
-            /* const float width: */
-                T1_engineglobals_screenspace_width_to_width(75.0f, 0.5f),
-            /* const float height: */
-                T1_engineglobals_screenspace_height_to_height(75.0f, 0.5f),
-            /* PolygonRequest * stack_recipient: */
-                &lines_polygon);
-        lines_polygon.gpu_data->ignore_camera = false;
-        lines_polygon.gpu_data->ignore_lighting = true;
-        
-        lines_polygon.cpu_data->committed = true;
-        lines->waypoint_duration[0] = 1250000;
-        lines->waypoint_x[0] = T1_engineglobals_screenspace_x_to_x(
-            /* const float screenspace_x: */
-                0,
-            /* const float given_z: */
-                0.5f);
-        lines->waypoint_y[0] = T1_engineglobals_screenspace_y_to_y(
-            /* const float screenspace_y: */
-                0,
-            /* const float given_z: */
-                0.5f);
-        lines->waypoint_z[0] = 0.5f;
-        lines->waypoint_r[0] = 0.8f;
-        lines->waypoint_g[0] = 0.1f;
-        lines->waypoint_b[0] = 0.1f;
-        lines->waypoint_a[0] = 1.0f;
-        lines->waypoint_scalefactor[0] = 1.0f;
-        lines->waypoint_duration[0] = 350000;
-        
-        lines->waypoint_x[1] = T1_engineglobals_screenspace_x_to_x(
-            /* const float screenspace_x: */
-                T1_engine_globals->window_width,
-            /* const float given_z: */
-                0.5f);
-        lines->waypoint_y[1] = T1_engineglobals_screenspace_y_to_y(
-            /* const float screenspace_y: */
-                0,
-            /* const float given_z: */
-                0.5f);
-        lines->waypoint_z[1] = 0.5f;
-        
-        lines->waypoint_r[1] = 0.4f;
-        lines->waypoint_g[1] = 0.8f;
-        lines->waypoint_b[1] = 0.2f;
-        lines->waypoint_a[1] = 1.0f;
-        lines->waypoint_scalefactor[1] = 0.85f;
-        lines->waypoint_duration[1] = 350000;
-                
-        lines->trail_delay = 500000;
-        lines->waypoints_size = 2;
-        lines->particle_count = 50;
-        lines->particle_zangle_variance_pct = 15;
-        lines->particle_rgb_variance_pct = 15;
-        lines->particle_scalefactor_variance_pct = 35;
-        T1_particle_lineparticle_commit(lines);
     }
     
     if (T1_keypress_map[TOK_KEY_BACKSLASH] == true) {
@@ -854,7 +828,7 @@ void T1_clientlogic_evaluate_terminal_command(
         char savefile_filename[128];
         T1_std_memset(savefile_filename, 0, 128);
         
-        if (command[5] == '\0') {
+        if (command[4] == '\0') {
             T1_std_memcpy(
                 savefile_filename,
                 "particles.t1p",
@@ -933,7 +907,7 @@ void T1_clientlogic_evaluate_terminal_command(
         char savefile_filename[128];
         T1_std_memset(savefile_filename, 0, 128);
         
-        if (command[5] == '\0') {
+        if (command[4] == '\0') {
             T1_std_memcpy(
                 savefile_filename,
                 "particles.t1p",
@@ -967,7 +941,7 @@ void T1_clientlogic_evaluate_terminal_command(
         T1_std_memset(savefile_bin, 0, savefile_size + 1);
         
         T1_platform_read_file_from_writables(
-                "particles.t1p",
+                savefile_filename,
             /* char * recipient: */
                 savefile_bin,
             /* const uint32_t recipient_size: */

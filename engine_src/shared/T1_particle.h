@@ -15,7 +15,10 @@ extern "C" {
 #include "T1_logger.h"
 #include "T1_random.h"
 #include "T1_zsprite.h"
+#include "T1_easing.h"
 
+
+#if 0
 #define LINEPARTICLE_EFFECTS_SIZE 2
 #define MAX_LINEPARTICLE_DIRECTIONS 5
 typedef struct LineParticle {
@@ -60,22 +63,25 @@ void T1_particle_lineparticle_add_all_to_frame_data(
     T1GPUFrame * frame_data,
     uint64_t elapsed_us,
     const bool32_t alpha_blending);
+#endif
 
+/*
+If "randomize" is set:
+-> random floats are generated from 0.0f to 1.0f
+-> those numbers are multiplied by the variance multipliers
+e.g. if you set one to 0.1f, the final new rand will in [0.0f - 0.1f]
+*/
 typedef struct {
-    T1GPUzSprite init_rand_add[2];
-    T1GPUzSprite pertime_rand_add[2];
-    T1GPUzSprite pertime_add;
-    T1GPUzSprite perexptime_add;
-    
-    // Reminder on the way the linear variance multipliers work:
-    // -> random floats are generated from 0.0f to 1.0f
-    // -> those numbers are multiplied by the variance multipliers
-    //    e.g. if you set one to 0.1f, the final new rand will in [0.0f - 0.1f]
-    // -> each property adds to itself (rand * self)
-    // -> each property subtracts from itself (rand2 * self)
-    // You now have a property with some variance introduced. Most will center
-    // around the original value and the exceedingly rare case will be
-    // (linear_variance_multiplier * self) below or above its original value
+    T1GPUzSprite gpu_stats;
+    uint64_t     start_delay;
+    uint64_t     duration;
+    T1EasingType easing_type;
+    uint8_t      randomize;
+} T1ParticleMod;
+
+#define T1_PARTICLE_MODS_CAP 5
+typedef struct {
+    T1ParticleMod mods[T1_PARTICLE_MODS_CAP];
     
     T1GPUzSprite zpolygon_gpu;
     T1CPUzSprite zpolygon_cpu;
@@ -95,6 +101,7 @@ typedef struct {
     float light_strength;
     float light_rgb[3];
     
+    uint8_t modifiers_size;
     bool8_t shattered;
     bool8_t cast_light;
     bool8_t deleted;

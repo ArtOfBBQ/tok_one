@@ -6,6 +6,7 @@
 #include "T1_std.h"
 #include "T1_simd.h"
 
+#include "T1_easing.h"
 #include "T1_zsprite.h"
 #include "T1_particle.h"
 // #include "clientlogic.h"
@@ -18,34 +19,13 @@ void T1_scheduled_animations_init(void);
 
 void T1_scheduled_animations_resolve(void);
 
-typedef enum EasingType {
-    EASINGTYPE_NONE = 0,
-    EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE,
-    EASINGTYPE_SINGLE_BOUNCE_ZERO_TO_ZERO,
-    EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO,
-    EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO,
-    EASINGTYPE_OCTUPLE_BOUNCE_ZERO_TO_ZERO,
-    EASINGTYPE_SINGLE_PULSE_ZERO_TO_ZERO,
-    EASINGTYPE_OCTUPLE_PULSE_ZERO_TO_ZERO,
-} EasingType;
-
-/*
-if t.now is 0.9f and t.applied is 0.25f, that means we're currently
-at the 90% point of the animation and we already previously applied the
-effects of the animation up until the 25% point
-*/
-typedef struct T1TPair {
-    float now;
-    float applied;
-} T1TPair;
-
 typedef struct T1ScheduledAnimation {
     // Public:
     T1GPUzSprite gpu_polygon_vals;
     // zPolygonCPU zpolygon_cpu_vals;
     zLightSource lightsource_vals;
     
-    EasingType easing_type;
+    T1EasingType easing_type;
     
     uint64_t duration_us;
     uint64_t pause_us;

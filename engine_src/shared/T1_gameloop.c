@@ -41,7 +41,7 @@ static void show_dead_simple_text(
     T1_uielement_delete_all();
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
     T1_particle_effects_size = 0;
-    T1_particle_lineparticle_effects_size = 0;
+    // T1_particle_lineparticle_effects_size = 0;
     #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
     // Pass
     #else
