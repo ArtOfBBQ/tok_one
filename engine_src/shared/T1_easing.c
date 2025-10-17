@@ -1,6 +1,6 @@
 #include "T1_easing.h"
 
-static float T1_scheduled_animations_easing_bounce_zero_to_zero(
+static float T1_easing_bounce_zero_to_zero(
     const float t,
     const float bounces)
 {
@@ -21,7 +21,7 @@ static float T1_scheduled_animations_easing_bounce_zero_to_zero(
     return result * 0.5f;
 }
 
-static float T1_scheduled_animations_easing_pulse_zero_to_zero(
+static float T1_easing_pulse_zero_to_zero(
     const float t,
     const float pulses)
 {
@@ -42,7 +42,15 @@ static float T1_scheduled_animations_easing_pulse_zero_to_zero(
     return result * 0.5f;
 }
 
-static float T1_scheduled_animations_easing_out_elastic_zero_to_one(const float t) {
+static float T1_easing_in_out_sine(const float t) {
+    return 0.5f - 0.5f * cosf(t * (float)M_PI);
+}
+
+static float T1_easing_out_quadratic(const float t) {
+    return 1.0f - (1.0f - t) * (1.0f - t);
+}
+
+static float T1_easing_out_elastic_zero_to_one(const float t) {
     const float c4 = (2.0f * (float)M_PI) / 3.0f;
     
     if (t == 0.0f || t == 1.0f) { return t; }
@@ -52,74 +60,64 @@ static float T1_scheduled_animations_easing_out_elastic_zero_to_one(const float 
         sinf((t * 10.0f - 0.75f) * c4) + 1.0f;
 }
 
-T1TPair t_to_eased_t(
-    const T1TPair t,
+float T1_easing_t_to_eased_t(
+    const float t,
     const T1EasingType easing_type)
 {
-    T1TPair return_val;
+    float return_val;
     
     switch (easing_type) {
         case EASINGTYPE_NONE:
             return_val = t;
             break;
+        case EASINGTYPE_ALWAYS_1:
+            return_val = 1.0f;
+            break;
+        case EASINGTYPE_INOUT_SINE:
+            return_val = T1_easing_in_out_sine(t);
+            break;
+        case EASINGTYPE_OUT_QUADRATIC:
+            return_val = T1_easing_out_quadratic(t);
+            break;
         case EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE:
-            return_val.now =
-                T1_scheduled_animations_easing_out_elastic_zero_to_one(
-                    t.now);
-            return_val.applied =
-                T1_scheduled_animations_easing_out_elastic_zero_to_one(
-                    t.applied);
+            return_val =
+                T1_easing_out_elastic_zero_to_one(
+                    t);
             break;
         case EASINGTYPE_SINGLE_BOUNCE_ZERO_TO_ZERO:
-            return_val.now =
-                T1_scheduled_animations_easing_bounce_zero_to_zero(
-                    t.now, 1.0f);
-            return_val.applied =
-                T1_scheduled_animations_easing_bounce_zero_to_zero(
-                    t.applied, 1.0f);
+            return_val =
+                T1_easing_bounce_zero_to_zero(
+                    t, 1.0f);
             break;
         case EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO:
-            return_val.now =
-                T1_scheduled_animations_easing_bounce_zero_to_zero(
-                    t.now, 2.0f);
-            return_val.applied =
-                T1_scheduled_animations_easing_bounce_zero_to_zero(
-                    t.applied, 2.0f);
+            return_val =
+                T1_easing_bounce_zero_to_zero(
+                    t, 2.0f);
             break;
         case EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO:
-            return_val.now =
-                T1_scheduled_animations_easing_bounce_zero_to_zero(
-                    t.now, 4.0f);
-            return_val.applied =
-                T1_scheduled_animations_easing_bounce_zero_to_zero(
-                    t.applied, 4.0f);
+            return_val =
+                T1_easing_bounce_zero_to_zero(
+                    t, 4.0f);
             break;
         case EASINGTYPE_OCTUPLE_BOUNCE_ZERO_TO_ZERO:
-            return_val.now =
-                T1_scheduled_animations_easing_bounce_zero_to_zero(
-                    t.now, 8.0f);
-            return_val.applied =
-                T1_scheduled_animations_easing_bounce_zero_to_zero(
-                    t.applied, 8.0f);
+            return_val =
+                T1_easing_bounce_zero_to_zero(
+                    t, 8.0f);
             break;
         case EASINGTYPE_SINGLE_PULSE_ZERO_TO_ZERO:
-            return_val.now =
-                T1_scheduled_animations_easing_pulse_zero_to_zero(
-                    t.now, 1.0f);
-            return_val.applied =
-                T1_scheduled_animations_easing_pulse_zero_to_zero(
-                    t.applied, 1.0f);
+            return_val =
+                T1_easing_pulse_zero_to_zero(
+                    t, 1.0f);
             break;
         case EASINGTYPE_OCTUPLE_PULSE_ZERO_TO_ZERO:
-            return_val.now =
-                T1_scheduled_animations_easing_pulse_zero_to_zero(
-                    t.now, 8.0f);
-            return_val.applied =
-                T1_scheduled_animations_easing_pulse_zero_to_zero(
-                    t.applied, 8.0f);
+            return_val =
+                T1_easing_pulse_zero_to_zero(
+                    t, 8.0f);
             break;
         default:
+            #if T1_EASING_ASSERTS
             assert(0);
+            #endif
     }
     
     return return_val;

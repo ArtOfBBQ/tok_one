@@ -2585,107 +2585,150 @@ void T1_meta_serialize_instance_to_buffer(
             
             T1_meta_serialize_cat_str_to_buf(" = ");
             
-            switch (field->type) {
-                case T1_TYPE_F32:
-                    value_f32 = *(float *)(((char *)to_serialize) +
-                        field->offset + top.parent_offset);
+            if (field->parent_enum_id != UINT16_MAX) {
+                uint8_t val_u8 = *(uint8_t *)(((char *)to_serialize) +
+                    field->offset + top.parent_offset);
+                for (
+                    uint32_t mev_i = 0;
+                    mev_i < t1ms->meta_enum_vals_size;
+                    mev_i++)
+                {
+                    if (
+                        t1ms->meta_enums[field->parent_enum_id].T1_type !=
+                            T1_TYPE_U8 ||
+                        field->type != T1_TYPE_U8)
+                    {
+                        #if T1_META_ASSERTS == T1_ACTIVE
+                        assert(0); // only supporting u8 enums for now
+                        #elif T1_META_ASSERTS == T1_INACTIVE
+                        #else
+                        #error
+                        #endif
+                    }
                     
-                    T1_meta_float_to_string(
-                        /* float input: */
-                            value_f32,
-                        /* const uint8_t precision: */
-                            4,
-                        /* char * recipient: */
+                    if (
+                        t1ms->meta_enum_vals[mev_i].metaenum_id == field->parent_enum_id &&
+                        t1ms->meta_enum_vals[mev_i].value == val_u8)
+                    {
+                        #if T1_META_ASSERTS == T1_ACTIVE
+                        assert(t1ms->meta_enum_vals[mev_i].name != NULL);
+                        #elif T1_META_ASSERTS == T1_INACTIVE
+                        #else
+                        #error
+                        #endif
+                        
+                        size_t enumvalstrlen = t1ms->strlen(t1ms->meta_enum_vals[mev_i].name);
+                        
+                        #if T1_META_ASSERTS == T1_ACTIVE
+                        assert(enumvalstrlen > 0);
+                        #elif T1_META_ASSERTS == T1_INACTIVE
+                        #else
+                        #error
+                        #endif
+                        
+                        t1ms->memcpy(
                             value_as_str,
-                        /* uint32_t recipient_cap: */
-                            128,
-                        /* uint32_t * good: */
-                            good);
-                    if (!*good) { return; } else { *good = 0; }
-                    
-                    T1_meta_serialize_cat_str_to_buf(value_as_str);
-                break;
-                case T1_TYPE_U64:
-                    value_u64 = *(uint64_t *)(((char *)to_serialize) +
+                            t1ms->meta_enum_vals[mev_i].name,
+                            enumvalstrlen);
+                        break;
+                    }
+                }
+            } else {
+                switch (field->type) {
+                    case T1_TYPE_F32:
+                        value_f32 = *(float *)(((char *)to_serialize) +
+                            field->offset + top.parent_offset);
+                        
+                        T1_meta_float_to_string(
+                            /* float input: */
+                                value_f32,
+                            /* const uint8_t precision: */
+                                4,
+                            /* char * recipient: */
+                                value_as_str,
+                            /* uint32_t recipient_cap: */
+                                128,
+                            /* uint32_t * good: */
+                                good);
+                        if (!*good) { return; } else { *good = 0; }
+                    break;
+                    case T1_TYPE_U64:
+                        value_u64 = *(uint64_t *)(((char *)to_serialize) +
                         field->offset + top.parent_offset);
-                    
-                    T1_meta_uint_to_string(value_u64, value_as_str, 128, good);
-                    if (!*good) { return; } else { *good = 0; }
-                    
-                    T1_meta_serialize_cat_str_to_buf(value_as_str);
-                break;
-                case T1_TYPE_U32:
-                    value_u64 = *(uint32_t *)(((char *)to_serialize) +
-                        field->offset + top.parent_offset);
-                    
-                    T1_meta_uint_to_string(value_u64, value_as_str, 128, good);
-                    if (!*good) { return; } else { *good = 0; }
-                    
-                    T1_meta_serialize_cat_str_to_buf(value_as_str);
-                break;
-                case T1_TYPE_U16:
-                    value_u64 = *(uint16_t *)(((char *)to_serialize) +
-                        field->offset + top.parent_offset);
-                    
-                    T1_meta_uint_to_string(value_u64, value_as_str, 128, good);
-                    if (!*good) { return; } else { *good = 0; }
-                    
-                    T1_meta_serialize_cat_str_to_buf(value_as_str);
-                break;
-                case T1_TYPE_U8:
-                    value_u64 = *(uint8_t *)(((char *)to_serialize) +
-                        field->offset + top.parent_offset);
-                    
-                    T1_meta_uint_to_string(value_u64, value_as_str, 128, good);
-                    if (!*good) { return; } else { *good = 0; }
-                    
-                    T1_meta_serialize_cat_str_to_buf(value_as_str);
-                break;
-                case T1_TYPE_I64:
-                    value_i64 = *(int64_t *)(((char *)to_serialize) +
-                        field->offset + top.parent_offset);
-                    
-                    T1_meta_int_to_string(value_i64, value_as_str, 128, good);
-                    if (!*good) { return; } else { *good = 0; }
-                    
-                    T1_meta_serialize_cat_str_to_buf(value_as_str);
-                break;
-                case T1_TYPE_I32:
-                    value_i64 = *(int32_t *)(((char *)to_serialize) +
-                        field->offset + top.parent_offset);
-                    
-                    T1_meta_int_to_string(value_i64, value_as_str, 128, good);
-                    if (!*good) { return; } else { *good = 0; }
-                    
-                    T1_meta_serialize_cat_str_to_buf(value_as_str);
-                break;
-                case T1_TYPE_I16:
-                    value_i64 = *(int16_t *)(((char *)to_serialize) +
-                        field->offset + top.parent_offset);
-                    
-                    T1_meta_int_to_string(value_i64, value_as_str, 128, good);
-                    if (!*good) { return; } else { *good = 0; }
-                    
-                    T1_meta_serialize_cat_str_to_buf(value_as_str);
-                break;
-                case T1_TYPE_I8:
-                    value_i64 = *(int8_t *)(((char *)to_serialize) +
-                        field->offset + top.parent_offset);
-                    
-                    T1_meta_int_to_string(value_i64, value_as_str, 128, good);
-                    if (!*good) { return; } else { *good = 0; }
-                    
-                    T1_meta_serialize_cat_str_to_buf(value_as_str);
-                break;
-                default:
-                    #if T1_META_ASSERTS == T1_ACTIVE
-                    assert(0); // this type has no fields registered to it?
-                    #elif T1_META_ASSERTS == T1_INACTIVE
-                    #else
-                    #error
-                    #endif
-                    return;
+                        
+                        T1_meta_uint_to_string(
+                            value_u64, value_as_str, 128, good);
+                        
+                        if (!*good) { return; } else { *good = 0; }
+                    break;
+                    case T1_TYPE_U32:
+                        value_u64 = *(uint32_t *)(((char *)to_serialize) +
+                            field->offset + top.parent_offset);
+                        
+                        T1_meta_uint_to_string(value_u64, value_as_str, 128, good);
+                        if (!*good) { return; } else { *good = 0; }
+                    break;
+                    case T1_TYPE_U16:
+                        value_u64 = *(uint16_t *)(((char *)to_serialize) +
+                            field->offset + top.parent_offset);
+                        
+                        T1_meta_uint_to_string(value_u64, value_as_str, 128, good);
+                        if (!*good) { return; } else { *good = 0; }
+                    break;
+                    case T1_TYPE_U8:
+                        value_u64 = *(uint8_t *)(((char *)to_serialize) +
+                            field->offset + top.parent_offset);
+                        
+                        T1_meta_uint_to_string(value_u64, value_as_str, 128, good);
+                        if (!*good) { return; } else { *good = 0; }
+                    break;
+                    case T1_TYPE_I64:
+                        value_i64 = *(int64_t *)(((char *)to_serialize) +
+                            field->offset + top.parent_offset);
+                        
+                        T1_meta_int_to_string(value_i64, value_as_str, 128, good);
+                        if (!*good) { return; } else { *good = 0; }
+                    break;
+                    case T1_TYPE_I32:
+                        value_i64 = *(int32_t *)(((char *)to_serialize) +
+                            field->offset + top.parent_offset);
+                        
+                        T1_meta_int_to_string(value_i64, value_as_str, 128, good);
+                        if (!*good) { return; } else { *good = 0; }
+                    break;
+                    case T1_TYPE_I16:
+                        value_i64 = *(int16_t *)(((char *)to_serialize) +
+                            field->offset + top.parent_offset);
+                        
+                        T1_meta_int_to_string(value_i64, value_as_str, 128, good);
+                        if (!*good) { return; } else { *good = 0; }
+                    break;
+                    case T1_TYPE_I8:
+                        value_i64 = *(int8_t *)(((char *)to_serialize) +
+                            field->offset + top.parent_offset);
+                        
+                        T1_meta_int_to_string(value_i64, value_as_str, 128, good);
+                        if (!*good) { return; } else { *good = 0; }
+                    break;
+                    default:
+                        #if T1_META_ASSERTS == T1_ACTIVE
+                        assert(0); // this type has no fields registered to it?
+                        #elif T1_META_ASSERTS == T1_INACTIVE
+                        #else
+                        #error
+                        #endif
+                        return;
+                }
             }
+            
+            #if T1_META_ASSERTS == T1_ACTIVE
+            assert(value_as_str[0] != '\0');
+            #elif T1_META_ASSERTS == T1_INACTIVE
+            #else
+            #error
+            #endif
+            
+            T1_meta_serialize_cat_str_to_buf(value_as_str);
             
             T1_meta_serialize_cat_str_to_buf(";\n");
         }

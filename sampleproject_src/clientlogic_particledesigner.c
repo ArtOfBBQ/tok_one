@@ -152,7 +152,7 @@ void T1_clientlogic_early_startup(
     T1_meta_array(T1GPUConstMat, T1_TYPE_F32, ambient_rgb, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     T1_meta_array(T1GPUConstMat, T1_TYPE_F32, diffuse_rgb, 3, &ok);
-    T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(-1.5f, 1.5f, &ok);
     T1_meta_array(T1GPUConstMat, T1_TYPE_F32, specular_rgb, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     T1_meta_array(T1GPUConstMat, T1_TYPE_F32, rgb_cap, 3, &ok);
@@ -184,7 +184,7 @@ void T1_clientlogic_early_startup(
     T1_meta_array(T1GPUzSprite, T1_TYPE_F32, bonus_rgb, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(0.0f, 2.0f, &ok);
     T1_meta_array(T1GPUzSprite, T1_TYPE_F32, xyz_mult, 3, &ok);
-    T1_meta_reg_custom_float_limits_for_last_field(0.25f, 20.0f, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(-0.5f, 0.5f, &ok);
     T1_meta_array(T1GPUzSprite, T1_TYPE_F32, xyz_offset, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-2.0f, 2.0f, &ok);
     T1_meta_array(T1GPUzSprite, T1_TYPE_F32, base_mat_uv_offsets, 2, &ok);
@@ -202,22 +202,15 @@ void T1_clientlogic_early_startup(
     T1_meta_struct_field(T1GPUzSprite, T1GPUConstMat, base_mat, &ok);
     assert(ok);
     
-    /*
-    EASINGTYPE_NONE = 0,
-    EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE,
-    EASINGTYPE_SINGLE_BOUNCE_ZERO_TO_ZERO,
-    EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO,
-    EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO,
-    EASINGTYPE_OCTUPLE_BOUNCE_ZERO_TO_ZERO,
-    EASINGTYPE_SINGLE_PULSE_ZERO_TO_ZERO,
-    EASINGTYPE_OCTUPLE_PULSE_ZERO_TO_ZERO,
-     */
     T1_meta_enum(T1EasingType, T1_TYPE_U8, &ok);
     assert(ok);
     T1_meta_enum_value(T1EasingType,
         EASINGTYPE_NONE, &ok);
+    T1_meta_enum_value(T1EasingType, EASINGTYPE_ALWAYS_1, &ok);
     T1_meta_enum_value(T1EasingType,
         EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE, &ok);
+    T1_meta_enum_value(T1EasingType, EASINGTYPE_INOUT_SINE, &ok);
+    T1_meta_enum_value(T1EasingType, EASINGTYPE_OUT_QUADRATIC, &ok);
     T1_meta_enum_value(T1EasingType,
         EASINGTYPE_SINGLE_BOUNCE_ZERO_TO_ZERO, &ok);
     T1_meta_enum_value(T1EasingType,
@@ -240,20 +233,24 @@ void T1_clientlogic_early_startup(
     T1_meta_enum_field(T1ParticleMod, T1EasingType, T1_TYPE_U8, easing_type, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(0, EASINGTYPE_OUTOFBOUNDS-1, &ok);
     
-    T1_meta_field(T1ParticleMod, T1_TYPE_U8, randomize, &ok);
-    T1_meta_reg_custom_uint_limits_for_last_field(0, 1, &ok);
+    T1_meta_field(T1ParticleMod, T1_TYPE_U8, random_t_add, &ok);
+    T1_meta_reg_custom_uint_limits_for_last_field(0, 100, &ok);
+    T1_meta_field(T1ParticleMod, T1_TYPE_U8, random_t_sub, &ok);
+    T1_meta_reg_custom_uint_limits_for_last_field(0, 100, &ok);
     
     T1_meta_struct(T1ParticleEffect, &ok);
     assert(ok);
     T1_meta_struct_array(T1ParticleEffect, T1ParticleMod, mods, T1_PARTICLE_MODS_CAP, &ok);
     T1_meta_struct_field(T1ParticleEffect, T1GPUzSprite, zpolygon_gpu, &ok);
     T1_meta_struct_field(T1ParticleEffect, T1CPUzSprite, zpolygon_cpu, &ok);
-    T1_meta_field(T1ParticleEffect, T1_TYPE_U64, lifespan, &ok);
+    T1_meta_field(T1ParticleEffect, T1_TYPE_U64, spawn_lifespan, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(0, 50000000, &ok);
+    T1_meta_field(T1ParticleEffect, T1_TYPE_U64, loop_duration, &ok);
+    T1_meta_reg_custom_uint_limits_for_last_field(1000000, 50000000, &ok);
     T1_meta_field(T1ParticleEffect, T1_TYPE_U64, pause_per_spawn, &ok);
-    T1_meta_reg_custom_uint_limits_for_last_field(0, 100000, &ok);
+    T1_meta_reg_custom_uint_limits_for_last_field(0, 500000, &ok);
     T1_meta_field(T1ParticleEffect,
-        T1_TYPE_U32, spawns_per_sec, &ok);
+        T1_TYPE_U32, spawns_per_loop, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(1, 10000, &ok);
     T1_meta_field(T1ParticleEffect, T1_TYPE_U32, loops, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(0, 20, &ok);
@@ -263,6 +260,9 @@ void T1_clientlogic_early_startup(
     T1_meta_reg_custom_float_limits_for_last_field(0.1f, 4.0f, &ok);
     T1_meta_array(T1ParticleEffect, T1_TYPE_F32, light_rgb, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(0.0f, 1.0f, &ok);
+    T1_meta_field(T1ParticleEffect, T1_TYPE_U8, modifiers_size, &ok);
+    T1_meta_reg_custom_uint_limits_for_last_field(
+        1, T1_PARTICLE_MODS_CAP, &ok);
     T1_meta_field(T1ParticleEffect, T1_TYPE_U8, cast_light, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(0, 1, &ok);
     assert(ok);
@@ -539,8 +539,12 @@ static void redraw_all_sliders(void) {
 
 static void request_gfx_from_empty_scene(void) {
     camera.xyz[0] =  0.0f;
-    camera.xyz[1] =  0.0f;
-    camera.xyz[2] = -0.5f;
+    camera.xyz[1] = -0.5f;
+    camera.xyz[2] =  0.0f;
+    
+    camera.xyz_angle[0] =  -0.35f;
+    camera.xyz_angle[1] =   0.00f;
+    camera.xyz_angle[2] =   0.00f;
     
     zLightSource * light = next_zlight();
     light->RGBA[0]       =  0.50f;
@@ -576,8 +580,9 @@ void T1_clientlogic_late_startup(void) {
     pds->editing->zpolygon_gpu.xyz[2] = 0.5f;
     pds->editing->zpolygon_gpu.alpha = 1.0f;
     pds->editing->zpolygon_gpu.base_mat.alpha = 1.0f;
-    pds->editing->lifespan = 1000000;
-    pds->editing->spawns_per_sec = 500;
+    pds->editing->spawn_lifespan = 1000000;
+    pds->editing->loop_duration  = 1500000;
+    pds->editing->spawns_per_loop = 3;
     
     T1_particle_commit(pds->editing);
     

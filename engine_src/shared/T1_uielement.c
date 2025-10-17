@@ -394,7 +394,6 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                     full_label,
                     FULL_LABEL_CAP,
                     active_ui_elements[i].user_set.label_prefix);
-                
             }
             
             float xy_screenspace[3];
@@ -459,7 +458,7 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                     case T1_TYPE_U8:
                         enum_as_str = T1_meta_enum_uint_to_string(
                             active_ui_elements[i].user_set.meta_struct_name,
-                            *(uint64_t *)active_ui_elements[i].
+                            *(uint8_t *)active_ui_elements[i].
                                 slider_linked_value,
                                 &good);
                         assert(good);

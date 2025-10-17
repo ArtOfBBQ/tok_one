@@ -345,17 +345,18 @@ void T1_particle_effect_construct(
     to_construct->zpolygon_gpu.base_mat.rgb_cap[0] = 1.0f;
     to_construct->zpolygon_gpu.base_mat.rgb_cap[1] = 1.0f;
     to_construct->zpolygon_gpu.base_mat.rgb_cap[2] = 1.0f;
-    to_construct->zpolygon_gpu.scale_factor      = 1.0f;
+    to_construct->zpolygon_gpu.scale_factor = 1.0f;
     to_construct->zpolygon_gpu.xyz_mult[0] = 0.01f;
     to_construct->zpolygon_gpu.xyz_mult[1] = 0.01f;
     to_construct->zpolygon_gpu.xyz_mult[2] = 0.01f;
     to_construct->zpolygon_gpu.ignore_lighting = true;
     
     to_construct->random_seed = (uint32_t)
-        tok_rand() % (RANDOM_SEQUENCE_SIZE - 100);
-    to_construct->spawns_per_sec = 200;
-    to_construct->verts_per_particle = 3;
-    to_construct->lifespan = 2000000;
+        T1_rand() % (RANDOM_SEQUENCE_SIZE - 100);
+    to_construct->spawns_per_loop = 3;
+    to_construct->verts_per_particle = 36;
+    to_construct->spawn_lifespan = 2000000;
+    to_construct->modifiers_size = 1;
 }
 
 T1ParticleEffect * T1_particle_get_next(void) {
@@ -406,9 +407,9 @@ void T1_particle_commit(T1ParticleEffect * to_request)
     // Reminder: The particle effect is not committed, but the zpoly should be
     log_assert(!to_request->committed);
     
-    log_assert(to_request->lifespan > 0);
+    log_assert(to_request->spawn_lifespan > 0);
     log_assert(to_request->elapsed == 0);
-    log_assert(to_request->spawns_per_sec > 0);
+    log_assert(to_request->spawns_per_loop > 0);
     log_assert(to_request->verts_per_particle > 0);
     
     for (uint32_t _ = 0; _ < 3; _++) {
@@ -435,6 +436,133 @@ void T1_particle_delete(int32_t with_object_id) {
     }
 }
 
+static void T1_particle_add_single_to_frame_data(
+    T1GPUFrame * frame_data,
+    T1ParticleEffect * pe,
+    const float life_t,
+    const uint32_t spawn_i,
+    const bool32_t alpha_blending)
+{
+    log_assert(life_t >= -0.01f);
+    log_assert(life_t <=  1.01);
+    
+    for (
+        int32_t _ = 0;
+        _ < (int32_t)pe->verts_per_particle;
+        _++)
+    {
+        int32_t vert_head_i = all_mesh_summaries[pe->zpolygon_cpu.mesh_id].vertices_head_i;
+        
+        int32_t next_vert_i = (vert_head_i +
+            ((int32_t)spawn_i + _) % (int32_t)pe->verts_per_particle);
+        
+        log_assert(next_vert_i >= 0);
+        log_assert(next_vert_i < (int32_t)all_mesh_vertices->size);
+        
+        frame_data->verts[frame_data->verts_size].
+            locked_vertex_i = next_vert_i;
+        frame_data->verts[frame_data->verts_size].polygon_i =
+            (int)frame_data->zsprite_list->size;
+        
+        frame_data->verts_size += 1;
+        log_assert(
+            frame_data->verts_size < MAX_VERTICES_PER_BUFFER);
+    }
+    
+    log_assert(
+        frame_data->zsprite_list->size < MAX_ZSPRITES_PER_BUFFER);
+    T1_std_memcpy(
+        /* void * dst: */
+            frame_data->zsprite_list->polygons +
+                frame_data->zsprite_list->size,
+        /* const void * src: */
+            &pe->zpolygon_gpu,
+        /* size_t n: */
+            sizeof(T1GPUzSprite));
+    
+    for (
+        uint32_t mod_i = 0;
+        mod_i < pe->modifiers_size;
+        mod_i++)
+    {
+        log_assert(
+            frame_data->zsprite_list->size <
+                MAX_ZSPRITES_PER_BUFFER);
+        
+        float * pertime_add_at = (float *)&pe->mods[mod_i].gpu_stats;
+        float * recipient_at = (float *)&frame_data->zsprite_list->
+                polygons[frame_data->zsprite_list->size];
+        
+        float t = T1_easing_t_to_eased_t(
+            /* const T1TPair t: */
+                life_t,
+            /* const T1EasingType easing_type: */
+                pe->mods[mod_i].easing_type);
+        
+        if (pe->mods[mod_i].random_t_add) {
+            uint64_t rand_i =
+                (pe->random_seed
+                    + (mod_i << 2) + (spawn_i * 9)) %
+                    (RANDOM_SEQUENCE_SIZE);
+            
+            float fvariance =
+                ((float)(T1_rand_at_i(rand_i) %
+                    pe->mods[mod_i].random_t_add) * 0.01f);
+            t += fvariance;
+        }
+        if (pe->mods[mod_i].random_t_sub > 0) {
+            uint64_t rand_i =
+                (pe->random_seed
+                    + (mod_i << 1) + (spawn_i * 11)) %
+                    (RANDOM_SEQUENCE_SIZE);
+            
+            float fvariance =
+                ((float)(T1_rand_at_i(rand_i) % pe->mods[mod_i].random_t_sub) * 0.01f);
+            t -= fvariance;
+        }
+        
+        if (t < 0.0f) { continue; }
+        
+        SIMD_FLOAT simdf_t = simd_set1_float(t);
+        
+        for (
+            uint32_t j = 0;
+            j < (sizeof(T1GPUzSprite) / sizeof(float));
+            j += SIMD_FLOAT_LANES)
+        {
+            // We expect padding to prevent out of bounds ops
+            log_assert((j + SIMD_FLOAT_LANES) * sizeof(float) <=
+                sizeof(T1GPUzSprite));
+            
+            SIMD_FLOAT simdf_fullt_add = simd_load_floats(
+                (pertime_add_at + j));
+            
+            // Convert per second values to per us effect
+            simdf_fullt_add = simd_mul_floats(
+                simdf_fullt_add, simdf_t);
+            
+            SIMD_FLOAT recip = simd_load_floats(recipient_at + j);
+            recip = simd_add_floats(recip, simdf_fullt_add);
+            
+            log_assert((ptrdiff_t)(recipient_at + j) %
+                (long)(SIMD_FLOAT_LANES * sizeof(float)) == 0);
+            simd_store_floats((recipient_at + j), recip);
+        }
+        
+        if (frame_data->zsprite_list->polygons[
+            frame_data->zsprite_list->size].scale_factor < 0.01f)
+        {
+            frame_data->zsprite_list->polygons[
+                frame_data->zsprite_list->size].scale_factor = 0.001f;
+        }
+    }
+    
+    frame_data->zsprite_list->size += 1;
+    log_assert(
+        frame_data->zsprite_list->size <
+            MAX_ZSPRITES_PER_BUFFER);
+}
+
 void T1_particle_add_all_to_frame_data(
     T1GPUFrame * frame_data,
     uint64_t elapsed_us,
@@ -442,7 +570,6 @@ void T1_particle_add_all_to_frame_data(
 {
     uint64_t spawns_in_duration;
     uint64_t interval_between_spawns;
-    uint64_t spawn_lifetime_so_far;
     
     for (
         uint32_t i = 0;
@@ -465,8 +592,7 @@ void T1_particle_add_all_to_frame_data(
         }
         
         if (T1_particle_effects[i].elapsed >
-            (T1_particle_effects[i].lifespan +
-                T1_particle_effects[i].pause_per_spawn))
+            T1_particle_effects[i].loop_duration)
         {
             if (T1_particle_effects[i].loops == 1) {
                 T1_particle_effects[i].deleted = true;
@@ -477,233 +603,40 @@ void T1_particle_add_all_to_frame_data(
                 T1_particle_effects[i].loops -= 1;
             }
             
-            T1_particle_effects[i].elapsed = 0;
+            T1_particle_effects[i].elapsed %=
+                T1_particle_effects[i].loop_duration;
         }
-        
-        spawns_in_duration =
-            (T1_particle_effects[i].lifespan *
-                T1_particle_effects[i].spawns_per_sec) /
-                    1000000;
-        interval_between_spawns =
-            T1_particle_effects[i].pause_per_spawn;
-        
-        float particles_active = 0;
-        
-        int32_t vert_head_i = T1_particle_effects[i].shattered ?
-            all_mesh_summaries[
-                T1_particle_effects[i].zpolygon_cpu.mesh_id].
-                    shattered_vertices_head_i :
-            all_mesh_summaries[
-                T1_particle_effects[i].zpolygon_cpu.mesh_id].
-                    vertices_head_i;
-        int32_t verts_size = T1_particle_effects[i].shattered ?
-            all_mesh_summaries[
-                T1_particle_effects[i].zpolygon_cpu.mesh_id].
-                    shattered_vertices_size :
-            all_mesh_summaries[
-                T1_particle_effects[i].zpolygon_cpu.mesh_id].
-                    vertices_size;
-        if (verts_size < (int32_t)T1_particle_effects[i].verts_per_particle) {
-            return;
-        }
-        int32_t queue_vert_i = 0;
         
         for (
             uint32_t spawn_i = 0;
-            spawn_i < spawns_in_duration;
+            spawn_i < T1_particle_effects[i].spawns_per_loop;
             spawn_i++)
         {
-            uint64_t rand_i =
-                (T1_particle_effects[i].random_seed
-                    + (spawn_i * 9)) %
-                    (FLOAT_SEQUENCE_SIZE - 256);
+            uint64_t spawn_at = (spawn_i *
+                T1_particle_effects[i].pause_per_spawn);
             
-            if (T1_particle_effects[i].elapsed <
-                (spawn_i * interval_between_spawns))
-            {
-                continue;
+            uint64_t elapsed_since_last_spawn =
+                (
+                    (T1_particle_effects[i].elapsed >= spawn_at) *
+                    (T1_particle_effects[i].elapsed - spawn_at)
+                ) +
+                (
+                    (T1_particle_effects[i].elapsed <  spawn_at) *
+                    ((T1_particle_effects[i].elapsed + T1_particle_effects[i].loop_duration) - spawn_at)
+                );
+            
+            float t = (float)((double)elapsed_since_last_spawn /
+                (double)T1_particle_effects[i].spawn_lifespan);
+            
+            log_assert(t >= 0.0f);
+            if (t <= 1.0f) {
+                T1_particle_add_single_to_frame_data(
+                    frame_data,
+                    &T1_particle_effects[i],
+                    t,
+                    spawn_i,
+                    alpha_blending);
             }
-            
-            spawn_lifetime_so_far =
-                (T1_particle_effects[i].elapsed -
-                (spawn_i * interval_between_spawns));
-            
-            if (spawn_lifetime_so_far > T1_particle_effects[i].lifespan)
-            {
-                continue;
-            }
-            
-            for (
-                int32_t _ = 0;
-                _ < (int32_t)T1_particle_effects[i].verts_per_particle;
-                _++)
-            {
-                int32_t next_vert_i = vert_head_i +
-                    (queue_vert_i % verts_size);
-                queue_vert_i += 1;
-                
-                log_assert(next_vert_i >= 0);
-                log_assert(next_vert_i < (int32_t)all_mesh_vertices->size);
-                
-                frame_data->verts[frame_data->verts_size].
-                    locked_vertex_i = next_vert_i;
-                frame_data->verts[frame_data->verts_size].polygon_i =
-                    (int)frame_data->zsprite_list->size;
-                
-                frame_data->verts_size += 1;
-                log_assert(
-                    frame_data->verts_size < MAX_VERTICES_PER_BUFFER);
-            }
-            
-            log_assert(
-                frame_data->zsprite_list->size < MAX_ZSPRITES_PER_BUFFER);
-            T1_std_memcpy(
-                /* void * dst: */
-                    frame_data->zsprite_list->polygons +
-                        frame_data->zsprite_list->size,
-                /* const void * src: */
-                    &T1_particle_effects[i].zpolygon_gpu,
-                /* size_t n: */
-                    sizeof(T1GPUzSprite));
-            
-            log_assert(
-                frame_data->zsprite_list->size < MAX_ZSPRITES_PER_BUFFER);
-            float * pertime_add_at = (float *)&T1_particle_effects[i].
-                mods[0].gpu_stats;
-            float * recipient_at = (float *)&frame_data->zsprite_list->
-                polygons[frame_data->zsprite_list->size];
-            
-            float one_million = 1000000.0f;
-            float exponential_divisor = 1000.0f;
-            float one = 1.0f;
-            SIMD_FLOAT simdf_one_million = simd_set1_float(one_million);
-            float fspawn_lifetime_so_far = (float)spawn_lifetime_so_far;
-            SIMD_FLOAT simdf_lifetime = simd_set1_float(fspawn_lifetime_so_far);
-            SIMD_FLOAT simdf_lifetime_exp = simd_div_floats(
-                simdf_lifetime,
-                simd_set1_float(exponential_divisor));
-            simdf_lifetime_exp = simd_max_floats(
-                simdf_lifetime_exp,
-                simd_set1_float(one));
-            simdf_lifetime_exp = simd_mul_floats(
-                simdf_lifetime_exp,
-                simdf_lifetime_exp);
-            
-            for (
-                uint32_t j = 0;
-                j < (sizeof(T1GPUzSprite) / sizeof(float));
-                j += SIMD_FLOAT_LANES)
-            {
-                // We expect padding to prevent out of bounds ops
-                log_assert((j + SIMD_FLOAT_LANES) * sizeof(float) <=
-                    sizeof(T1GPUzSprite));
-                
-                SIMD_FLOAT simdf_pertime_add = simd_load_floats(
-                    (pertime_add_at + j));
-                
-                // Add the '1st random over time' data
-                SIMD_FLOAT simdf_rand = tok_rand_simd_at_i(
-                    (rand_i + ((j/SIMD_FLOAT_LANES) *
-                        (SIMD_FLOAT_LANES * 4)))
-                            + 32);
-                
-                // Convert per second values to per microsecond (us) effect
-                simdf_pertime_add = simd_mul_floats(
-                    simdf_pertime_add, simdf_lifetime);
-                simdf_pertime_add = simd_div_floats(
-                    simdf_pertime_add, simdf_one_million);
-                
-                SIMD_FLOAT recip = simd_load_floats(recipient_at + j);
-                recip = simd_add_floats(recip, simdf_pertime_add);
-                
-                simdf_rand = tok_rand_simd_at_i(
-                    (rand_i + ((j/SIMD_FLOAT_LANES) *
-                        (SIMD_FLOAT_LANES * 4)))
-                            + 64);
-                
-                log_assert((ptrdiff_t)(recipient_at + j) %
-                    (long)(SIMD_FLOAT_LANES * sizeof(float)) == 0);
-                simd_store_floats((recipient_at + j), recip);
-            }
-            
-            if (frame_data->zsprite_list->polygons[
-                frame_data->zsprite_list->size].scale_factor < 0.01f)
-            {
-                frame_data->zsprite_list->polygons[
-                    frame_data->zsprite_list->size].scale_factor = 0.001f;
-            }
-            
-            particles_active += (1.0f *
-                frame_data->zsprite_list->polygons[
-                    frame_data->zsprite_list->size].scale_factor);
-            
-            frame_data->zsprite_list->size += 1;
-            log_assert(
-                frame_data->zsprite_list->size <
-                    MAX_ZSPRITES_PER_BUFFER);
-        }
-        
-        if (particles_active < 1) {
-            T1_particle_effects[i].random_seed =
-                (uint32_t)tok_rand() % RANDOM_SEQUENCE_SIZE;
-        }
-        
-        if (T1_particle_effects[i].cast_light) {
-            frame_data->lights[frame_data->lights_size].xyz[0]
-                 =
-                    T1_particle_effects[i].zpolygon_gpu.xyz[0];
-            frame_data->lights[
-                frame_data->lights_size].xyz[1] =
-                    T1_particle_effects[i].zpolygon_gpu.xyz[1];
-            frame_data->lights[
-                frame_data->lights_size].xyz[2] =
-                    T1_particle_effects[i].zpolygon_gpu.xyz[2];
-            
-            frame_data->lights[
-                frame_data->lights_size].rgb[0] =
-                    T1_particle_effects[i].light_rgb[0];
-            frame_data->lights[
-                frame_data->lights_size].rgb[1] =
-                    T1_particle_effects[i].light_rgb[1];
-            frame_data->lights[
-                frame_data->lights_size].rgb[2] =
-                    T1_particle_effects[i].light_rgb[2];
-            
-            frame_data->lights[
-                frame_data->lights_size].reach =
-                    T1_particle_effects[i].light_reach;
-            
-            float light_strength =
-                particles_active / (float)spawns_in_duration;
-            
-            log_assert(light_strength < 1.25f);
-            log_assert(light_strength >= 0.0f);
-            
-            frame_data->lights[
-                frame_data->lights_size].rgb[0] =
-                    0.01f *
-                    light_strength *
-                    T1_particle_effects[i].light_rgb[0];
-            frame_data->lights[
-                frame_data->lights_size].rgb[1] =
-                    0.01f *
-                    light_strength *
-                    T1_particle_effects[i].light_rgb[1];
-            frame_data->lights[
-                frame_data->lights_size].rgb[2] =
-                    0.01f *
-                    light_strength *
-                    T1_particle_effects[i].light_rgb[2];
-            frame_data->lights[
-                frame_data->lights_size].diffuse =
-                    light_strength *
-                    T1_particle_effects[i].light_strength;
-            frame_data->lights[
-                frame_data->lights_size].reach =
-                    light_strength *
-                    T1_particle_effects[i].light_reach;
-            
-            frame_data->lights_size += 1;
         }
     }
 }

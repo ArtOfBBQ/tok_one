@@ -191,7 +191,12 @@ static void T1_scheduled_animations_get_projected_final_position_for(
             t.now = 1.0f;
             t.applied = scheduled_animations[sa_i].already_applied_t;
             
-            t = t_to_eased_t(t, scheduled_animations[sa_i].easing_type);
+            t.now = T1_easing_t_to_eased_t(
+                t.now,
+                scheduled_animations[sa_i].easing_type);
+            t.applied = T1_easing_t_to_eased_t(
+                t.applied,
+                scheduled_animations[sa_i].easing_type);
             
             apply_animation_effects_for_given_eased_t(
                 t,
@@ -335,12 +340,12 @@ void T1_scheduled_animations_request_evaporate_and_destroy(
         uint64_t shattered_verts_size =
             (uint64_t)all_mesh_summaries[vaporize_effect->zpolygon_cpu.mesh_id].
                 shattered_vertices_size;
-        vaporize_effect->spawns_per_sec = (uint32_t)(
+        vaporize_effect->spawns_per_loop = (uint32_t)(
             (shattered_verts_size * 1000000) /
                 (uint64_t)(duration_us + 1));
         vaporize_effect->pause_per_spawn = 10;
         vaporize_effect->verts_per_particle = 3;
-        vaporize_effect->lifespan = duration_us;
+        vaporize_effect->spawn_lifespan = duration_us;
         vaporize_effect->shattered = true;
 
         #if 0
@@ -429,12 +434,12 @@ void T1_scheduled_animations_request_shatter_and_destroy(
             (uint64_t)all_mesh_summaries[shatter_effect->zpolygon_cpu.mesh_id].
                 shattered_vertices_size;
         log_assert(shattered_verts_size > 0);
-        shatter_effect->spawns_per_sec = (uint32_t)(
+        shatter_effect->spawns_per_loop = (uint32_t)(
             (shattered_verts_size * 1000000) /
                 (uint64_t)(duration_us + 1));
         shatter_effect->pause_per_spawn = 0;
         shatter_effect->verts_per_particle = 6;
-        shatter_effect->lifespan = duration_us;
+        shatter_effect->spawn_lifespan = duration_us;
         shatter_effect->shattered = true;
         
         float xyz_dist = 0.02f;
@@ -611,7 +616,8 @@ void T1_scheduled_animations_resolve(void)
         log_assert(anim->already_applied_t <= t.now);
         anim->already_applied_t = t.now;
         
-        t = t_to_eased_t(t, anim->easing_type);
+        t.now = T1_easing_t_to_eased_t(t.now, anim->easing_type);
+        t.applied = T1_easing_t_to_eased_t(t.applied, anim->easing_type);
         
         // Apply effects
         for (

@@ -3,8 +3,16 @@
 
 #include <math.h>
 
+#define T1_EASING_ASSERTS 1
+#if T1_EASING_ASSERTS
+#include <assert.h>
+#endif
+
 typedef enum : uint8_t {
     EASINGTYPE_NONE = 0,
+    EASINGTYPE_ALWAYS_1,
+    EASINGTYPE_INOUT_SINE,
+    EASINGTYPE_OUT_QUADRATIC,
     EASINGTYPE_EASEOUT_ELASTIC_ZERO_TO_ONE,
     EASINGTYPE_SINGLE_BOUNCE_ZERO_TO_ZERO,
     EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO,
@@ -25,8 +33,8 @@ typedef struct {
     float applied;
 } T1TPair;
 
-T1TPair t_to_eased_t(
-    const T1TPair t,
+float T1_easing_t_to_eased_t(
+    const float t,
     const T1EasingType easing_type);
 
 #endif // T1_EASINGTYPE_H

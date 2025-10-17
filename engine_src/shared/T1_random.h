@@ -18,12 +18,12 @@ extern "C" {
 
 extern uint32_t random_seed;
 
-int32_t tok_rand(void);
-int32_t tok_rand_at_i(const uint64_t index);
+int32_t T1_rand(void);
+int32_t T1_rand_at_i(const uint64_t index);
 
-SIMD_FLOAT tok_rand_simd_at_i(const uint64_t index);
+SIMD_FLOAT T1_rand_simd_at_i(const uint64_t index);
 
-void shuffle_array(
+void T1_rand_shuffle_array(
     void * array,
     const uint32_t array_size,
     const uint32_t element_size);

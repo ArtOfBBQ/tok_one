@@ -772,7 +772,7 @@ static int32_t random_sequence[RANDOM_SEQUENCE_SIZE] = {
     15512,5304,2811
 };
 
-int32_t tok_rand(void) {
+int32_t T1_rand(void) {
     random_seed++;
     if (random_seed >= RANDOM_SEQUENCE_SIZE) {
         random_seed = 0;
@@ -785,7 +785,7 @@ int32_t tok_rand(void) {
     return random_sequence[random_seed];
 }
 
-int32_t tok_rand_at_i(const uint64_t index) {
+int32_t T1_rand_at_i(const uint64_t index) {
     #ifndef RANDOM_IGNORE_ASSERTS
     assert(index < RANDOM_SEQUENCE_SIZE);
     #endif
@@ -796,7 +796,7 @@ int32_t tok_rand_at_i(const uint64_t index) {
     return random_sequence[index];
 }
 
-SIMD_FLOAT tok_rand_simd_at_i(const uint64_t index)
+SIMD_FLOAT T1_rand_simd_at_i(const uint64_t index)
 {
     #ifndef RANDOM_IGNORE_ASSERTS
     assert(index + SIMD_FLOAT_LANES < FLOAT_SEQUENCE_SIZE);
@@ -806,7 +806,7 @@ SIMD_FLOAT tok_rand_simd_at_i(const uint64_t index)
         float_sequence + index));
 }
 
-void shuffle_array(
+void T1_rand_shuffle_array(
     void * array,
     const uint32_t array_size,
     const uint32_t element_size)
@@ -820,7 +820,7 @@ void shuffle_array(
         size_left--)
     {
         uint32_t swap_i = start_i +
-            ((uint32_t)tok_rand() % size_left) * element_size;
+            ((uint32_t)T1_rand() % size_left) * element_size;
         
         // swap element_size bytes starting at start_i with
         // element_size bytes starting at swap_i;

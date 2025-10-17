@@ -76,7 +76,8 @@ typedef struct {
     uint64_t     start_delay;
     uint64_t     duration;
     T1EasingType easing_type;
-    uint8_t      randomize;
+    uint8_t      random_t_add;
+    uint8_t      random_t_sub;
 } T1ParticleMod;
 
 #define T1_PARTICLE_MODS_CAP 5
@@ -88,12 +89,13 @@ typedef struct {
     
     uint64_t random_seed;
     uint64_t elapsed;
-    uint64_t lifespan;
+    uint64_t spawn_lifespan;
+    uint64_t loop_duration;
     uint64_t pause_per_spawn;
     
     int32_t zsprite_id;
     
-    uint32_t spawns_per_sec;
+    uint32_t spawns_per_loop;
     uint32_t verts_per_particle;
     uint32_t loops; // 0 for infinite loops
     
