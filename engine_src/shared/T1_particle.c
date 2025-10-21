@@ -359,7 +359,8 @@ void T1_particle_effect_construct(
     to_construct->modifiers_size = 1;
 }
 
-T1ParticleEffect * T1_particle_get_next(void) {
+T1ParticleEffect * T1_particle_get_next(void)
+{
     T1ParticleEffect * return_value = NULL;
     
     for (uint32_t i = 0; i < T1_particle_effects_size; i++) {
@@ -421,7 +422,8 @@ void T1_particle_commit(T1ParticleEffect * to_request)
     to_request->committed = true;
 }
 
-void T1_particle_delete(int32_t with_object_id) {
+void T1_particle_delete(int32_t with_object_id)
+{
     for (uint32_t i = 0; i < T1_particle_effects_size; i++) {
         if (T1_particle_effects[i].zsprite_id == with_object_id) {
             T1_particle_effects[i].deleted = true;
@@ -436,12 +438,56 @@ void T1_particle_delete(int32_t with_object_id) {
     }
 }
 
+static float T1_particle_get_height(
+    T1ParticleEffect * pe)
+{
+    float out = 0.0f;
+    
+    for (uint32_t mod_i = 0; mod_i < pe->modifiers_size; mod_i++) {
+        float t = T1_easing_t_to_eased_t(
+            /* const T1TPair t: */
+                1.0f,
+            /* const T1EasingType easing_type: */
+                pe->mods[mod_i].easing_type);
+        
+        out += pe->mods[mod_i].gpu_stats.xyz[1] * t;
+    }
+    
+    return T1_std_fabs(out);
+}
+
+void T1_particle_resize_to_effect_height(
+    T1ParticleEffect * to_resize,
+    const float new_height)
+{
+    const float current_height = T1_particle_get_height(to_resize);
+    
+    log_assert(current_height > 0.0f);
+    
+    const float multiplier = new_height / current_height;
+    
+    for (uint32_t _ = 0; _ < 3; _++) {
+        to_resize->zpolygon_gpu.xyz_mult[_] *= multiplier;
+    }
+    
+    for (
+        uint32_t mod_i = 0;
+        mod_i < to_resize->modifiers_size;
+        mod_i++)
+    {
+        for (uint32_t _ = 0; _ < 3; _++) {
+            to_resize->mods[mod_i].gpu_stats.xyz[_] *= multiplier;
+            to_resize->mods[mod_i].gpu_stats.xyz_mult[_] *= multiplier;
+            to_resize->mods[mod_i].gpu_stats.xyz_offset[_] *= multiplier;
+        }
+    }
+}
+
 static void T1_particle_add_single_to_frame_data(
     T1GPUFrame * frame_data,
     T1ParticleEffect * pe,
     const float life_t,
-    const uint32_t spawn_i,
-    const bool32_t alpha_blending)
+    const uint32_t spawn_i)
 {
     log_assert(life_t >= -0.01f);
     log_assert(life_t <=  1.01);
@@ -634,8 +680,7 @@ void T1_particle_add_all_to_frame_data(
                     frame_data,
                     &T1_particle_effects[i],
                     t,
-                    spawn_i,
-                    alpha_blending);
+                    spawn_i);
             }
         }
     }

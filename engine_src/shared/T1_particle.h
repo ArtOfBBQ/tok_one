@@ -120,6 +120,10 @@ void T1_particle_commit(T1ParticleEffect * to_commit);
 
 void T1_particle_delete(int32_t with_object_id);
 
+void T1_particle_resize_to_effect_height(
+    T1ParticleEffect * to_resize,
+    const float new_height);
+
 void T1_particle_add_all_to_frame_data(
     T1GPUFrame * frame_data,
     uint64_t elapsed_us,
