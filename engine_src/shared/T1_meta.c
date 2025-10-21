@@ -2651,6 +2651,15 @@ void T1_meta_serialize_instance_to_buffer(
                             /* uint32_t * good: */
                                 good);
                         if (!*good) { return; } else { *good = 0; }
+                        
+                        size_t vaslen = t1ms->strlen(value_as_str);
+                        
+                        if (vaslen + 1 >= 128) {
+                            return;
+                        }
+                        
+                        value_as_str[vaslen] = 'f';
+                        value_as_str[vaslen+1] = '\0';
                     break;
                     case T1_TYPE_U64:
                         value_u64 = *(uint64_t *)(((char *)to_serialize) +
@@ -2843,6 +2852,25 @@ void T1_meta_deserialize_instance_from_buffer(
             #error
             #endif
             return;
+        }
+        
+        if (value_to_assign[write_i-1] == 'f')
+        {
+            value_to_assign[write_i-1] = '\0';
+            
+            T1MetaFieldInternal field;
+            T1_meta_get_field_recursive(
+                &field,
+                struct_name,
+                recursive_field_name,
+                good);
+            
+            if (field.public.data_type != T1_TYPE_F32 ||
+                !*good)
+            {
+                return;
+            }
+            *good = 0;
         }
         
         T1_meta_write_to_known_field_str(
