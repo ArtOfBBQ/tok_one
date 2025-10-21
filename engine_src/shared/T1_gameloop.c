@@ -118,8 +118,9 @@ void T1_gameloop_update_before_render_pass(
     
     T1_std_memcpy(frame_data->camera, &camera, sizeof(T1GPUCamera));
     
-    frame_data->verts_size            = 0;
-    frame_data->zsprite_list->size = 0;
+    frame_data->postproc_consts->lights_size = 0;
+    frame_data->verts_size               = 0;
+    frame_data->zsprite_list->size       = 0;
     frame_data->first_alphablend_i       = 0;
     frame_data->line_vertices_size       = 0;
     frame_data->point_vertices_size      = 0;
@@ -296,6 +297,8 @@ void T1_gameloop_update_before_render_pass(
         
         clean_deleted_lights();
         
+        // engine_globals->postproc_consts will be copied to
+        // frame_data->postproc consts later inside hardware_render()
         copy_lights(
             frame_data->lights,
             &T1_engine_globals->postproc_consts.lights_size,

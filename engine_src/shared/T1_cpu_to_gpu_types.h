@@ -21,7 +21,7 @@ typedef struct
     #endif
     T1GPUPostProcConsts                 * postproc_consts;
     uint32_t                                   verts_size;
-    uint32_t                                  lights_size;
+    // uint32_t                                  lights_size;
     uint32_t                           first_alphablend_i;
     uint32_t                          point_vertices_size;
     uint32_t                           line_vertices_size;
