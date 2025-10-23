@@ -614,9 +614,6 @@ void T1_particle_add_all_to_frame_data(
     uint64_t elapsed_us,
     const bool32_t alpha_blending)
 {
-    uint64_t spawns_in_duration;
-    uint64_t interval_between_spawns;
-    
     for (
         uint32_t i = 0;
         i < T1_particle_effects_size;

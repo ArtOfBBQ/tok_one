@@ -174,16 +174,8 @@ vertex float4 shadows_vertex_shader(
         camera->xyz[1],
         camera->xyz[2],
         1.0f);
-    float3 nonshadow_cam_angle = vector_float3(
-        camera->xyz_angle[0],
-        camera->xyz_angle[1],
-        camera->xyz_angle[2]);
     
     float4 ic_pos = out_vec4 + nonshadow_cam_pos;
-    
-    float3 ic_pos_f3 = zyx_rotate(
-        vector_float3(ic_pos[0], ic_pos[1], ic_pos[2]),
-        nonshadow_cam_angle);
     
     float ic = clamp(
         polygons[polygon_i].ignore_camera,
