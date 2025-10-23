@@ -398,14 +398,17 @@ inline static void add_opaque_zpolygons_to_workload(
 static void construct_transformation_matrices(void) {
     
     for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
-        float cx = cosf(T1_zsprites_to_render->cpu_data[i].angle_xyz[0]);
-        float sx = sinf(T1_zsprites_to_render->cpu_data[i].angle_xyz[0]);
+        T1CPUzSpriteSimdStats * stats =
+            &T1_zsprites_to_render->cpu_data[i].simd_stats;
         
-        float cy = cosf(T1_zsprites_to_render->cpu_data[i].angle_xyz[1]);
-        float sy = sinf(T1_zsprites_to_render->cpu_data[i].angle_xyz[1]);
+        float cx = cosf(stats->angle_xyz[0]);
+        float sx = sinf(stats->angle_xyz[0]);
         
-        float cz = cosf(T1_zsprites_to_render->cpu_data[i].angle_xyz[2]);
-        float sz = sinf(T1_zsprites_to_render->cpu_data[i].angle_xyz[2]);
+        float cy = cosf(stats->angle_xyz[1]);
+        float sy = sinf(stats->angle_xyz[1]);
+        
+        float cz = cosf(stats->angle_xyz[2]);
+        float sz = sinf(stats->angle_xyz[2]);
         
         // Rx * Ry * Rz  (order: X → Y → Z)
         float r00 =  cy * cz;

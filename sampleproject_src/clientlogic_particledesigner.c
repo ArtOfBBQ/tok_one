@@ -700,11 +700,11 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
                 T1_scheduled_animations_request_next(true);
             anim->affected_zsprite_id = target_zsprite_ids[j];
             anim->delete_other_anims_targeting_same_object_id_on_commit = true;
-            anim->gpu_polygon_vals.xyz[0] =
+            anim->gpu_vals.xyz[0] =
                 T1_engineglobals_screenspace_x_to_x(new_x, new_z);
-            anim->gpu_polygon_vals.xyz[1] =
+            anim->gpu_vals.xyz[1] =
                 T1_engineglobals_screenspace_y_to_y(new_y, new_z);
-            anim->gpu_polygon_vals.xyz[2] = new_z;
+            anim->gpu_vals.xyz[2] = new_z;
             anim->duration_us = 60000;
             T1_scheduled_animations_commit(anim);
         }
@@ -719,11 +719,11 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
             T1_scheduled_animations_request_next(true);
         anim->affected_zsprite_id = target_zsprite_ids[j];
         anim->delete_other_anims_targeting_same_object_id_on_commit = true;
-        anim->gpu_polygon_vals.xyz[0] =
+        anim->gpu_vals.xyz[0] =
             T1_engineglobals_screenspace_x_to_x(new_x, new_z);
-        anim->gpu_polygon_vals.xyz[1] =
+        anim->gpu_vals.xyz[1] =
             T1_engineglobals_screenspace_y_to_y(new_title_y, new_z);
-        anim->gpu_polygon_vals.xyz[2] = new_z;
+        anim->gpu_vals.xyz[2] = new_z;
         anim->duration_us = 60000;
         T1_scheduled_animations_commit(anim);
     }
@@ -802,7 +802,7 @@ static void load_texture(const char * writables_filename) {
         T1ScheduledAnimation * fade = T1_scheduled_animations_request_next(true);
         fade->pause_us = 3000000;
         fade->duration_us = 2000000;
-        fade->gpu_polygon_vals.alpha = 0.0f;
+        fade->gpu_vals.alpha = 0.0f;
         fade->affected_zsprite_id = temp_quad.cpu_data->zsprite_id;
         T1_scheduled_animations_commit(fade);
         #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE

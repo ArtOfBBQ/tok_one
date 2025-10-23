@@ -78,9 +78,9 @@ static void request_teapots(void) {
         teapot_request.gpu_data->xyz[0]            = TEAPOT_X + (i * 0.20f);
         teapot_request.gpu_data->xyz[1]            = TEAPOT_Y - (i * 1.0f);
         teapot_request.gpu_data->xyz[2]            = TEAPOT_Z - (i * 0.25f);
-        teapot_request.cpu_data->angle_xyz[0]      = 0.00f;
-        teapot_request.cpu_data->angle_xyz[1]      = 3.2f;
-        teapot_request.cpu_data->angle_xyz[2]      = 0.0f;
+        teapot_request.cpu_data->simd_stats.angle_xyz[0] = 0.00f;
+        teapot_request.cpu_data->simd_stats.angle_xyz[1] = 3.2f;
+        teapot_request.cpu_data->simd_stats.angle_xyz[2] = 0.0f;
         teapot_request.cpu_data->zsprite_id = teapot_object_ids[i];
         teapot_request.cpu_data->visible = true;
         teapot_touchable_ids[i] = T1_zspriteid_next_nonui_id();
@@ -129,9 +129,9 @@ void T1_clientlogic_late_startup(void) {
     lightcube_request.gpu_data->xyz[0]            = light->xyz[0];
     lightcube_request.gpu_data->xyz[1]            = light->xyz[1];
     lightcube_request.gpu_data->xyz[2]            = light->xyz[2];
-    lightcube_request.cpu_data->angle_xyz[0]      = 0.0f;
-    lightcube_request.cpu_data->angle_xyz[1]      = 0.0f;
-    lightcube_request.cpu_data->angle_xyz[2]      = 0.0f;
+    lightcube_request.cpu_data->simd_stats.angle_xyz[0] = 0.0f;
+    lightcube_request.cpu_data->simd_stats.angle_xyz[1] = 0.0f;
+    lightcube_request.cpu_data->simd_stats.angle_xyz[2] = 0.0f;
     lightcube_request.cpu_data->zsprite_id        = light->object_id;
     lightcube_request.cpu_data->visible           = true;
     lightcube_request.gpu_data->ignore_lighting   = 1.0f;
@@ -192,9 +192,9 @@ void T1_clientlogic_late_startup(void) {
     quad.gpu_data->xyz_offset[1]          = 0.0f;
     quad.gpu_data->xyz_offset[2]          = 0.0f;
     quad.gpu_data->scale_factor           = 1.0f;
-    quad.cpu_data->angle_xyz[0]           = 1.8f;
-    quad.cpu_data->angle_xyz[1]           = 0.0f;
-    quad.cpu_data->angle_xyz[2]           = 0.65f;
+    quad.cpu_data->simd_stats.angle_xyz[0] = 1.8f;
+    quad.cpu_data->simd_stats.angle_xyz[1] = 0.0f;
+    quad.cpu_data->simd_stats.angle_xyz[2] = 0.65f;
     quad.gpu_data->ignore_camera          = 0.0f;
     quad.gpu_data->ignore_lighting        = 0.0f;
     
@@ -264,15 +264,15 @@ void T1_clientlogic_late_startup(void) {
         quad.gpu_data->touchable_id                 = -1;
         quad.cpu_data->alpha_blending_enabled       = true;
         
-        quad.gpu_data->xyz_offset[0]          = 0.0f;
-        quad.gpu_data->xyz_offset[1]          = 0.0f;
-        quad.gpu_data->xyz_offset[2]          = 0.0f;
-        quad.gpu_data->scale_factor           = 1.0f;
-        quad.cpu_data->angle_xyz[0]           = 1.8f;
-        quad.cpu_data->angle_xyz[1]           = 0.0f;
-        quad.cpu_data->angle_xyz[2]           = 0.65f;
-        quad.gpu_data->ignore_camera          = 0.0f;
-        quad.gpu_data->ignore_lighting        = 0.0f;
+        quad.gpu_data->xyz_offset[0]           = 0.0f;
+        quad.gpu_data->xyz_offset[1]           = 0.0f;
+        quad.gpu_data->xyz_offset[2]           = 0.0f;
+        quad.gpu_data->scale_factor            = 1.0f;
+        quad.cpu_data->simd_stats.angle_xyz[0] = 1.8f;
+        quad.cpu_data->simd_stats.angle_xyz[1] = 0.0f;
+        quad.cpu_data->simd_stats.angle_xyz[2] = 0.65f;
+        quad.gpu_data->ignore_camera           = 0.0f;
+        quad.gpu_data->ignore_lighting         = 0.0f;
         
         quad.gpu_data->base_mat.ambient_rgb[0]  = 0.05f;
         quad.gpu_data->base_mat.ambient_rgb[1]  = 0.05f;
@@ -434,9 +434,12 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
         for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
             if (T1_zsprites_to_render->cpu_data[i].zsprite_id == 20)
             {
-                T1_zsprites_to_render->cpu_data[i].angle_xyz[0] += 0.014f;
-                T1_zsprites_to_render->cpu_data[i].angle_xyz[1] += 0.01f;
-                T1_zsprites_to_render->cpu_data[i].angle_xyz[2] += 0.003f;
+                T1_zsprites_to_render->cpu_data[i].simd_stats.
+                    angle_xyz[0] += 0.014f;
+                T1_zsprites_to_render->cpu_data[i].simd_stats.
+                    angle_xyz[1] += 0.01f;
+                T1_zsprites_to_render->cpu_data[i].simd_stats.
+                    angle_xyz[2] += 0.003f;
             }
         }
     }
@@ -476,7 +479,8 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
             if (T1_zsprites_to_render->cpu_data[i].zsprite_id ==
                 teapot_object_ids[0])
             {
-                T1_zsprites_to_render->cpu_data[i].angle_xyz[1] += 0.01f;
+                T1_zsprites_to_render->cpu_data[i].simd_stats.
+                    angle_xyz[1] += 0.01f;
             }
         }
     }

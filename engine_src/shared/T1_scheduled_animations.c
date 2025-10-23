@@ -8,8 +8,9 @@ T1ScheduledAnimation * scheduled_animations;
 uint32_t scheduled_animations_size = 0;
 
 typedef struct ScheduledAnimationState {
-    T1GPUzSprite zsprite_final_pos;
+    T1GPUzSprite zsprite_final_pos_gpu;
     T1GPUzSprite zsprite_deltas[2];
+    T1CPUzSpriteSimdStats zsprite_final_pos_cpu;
 } ScheduledAnimationState;
 
 static ScheduledAnimationState * sas = NULL;
@@ -113,17 +114,18 @@ T1ScheduledAnimation * T1_scheduled_animations_request_next(
 static void apply_animation_effects_for_given_eased_t(
     T1TPair t,
     T1ScheduledAnimation * anim,
-    T1GPUzSprite * recip)
+    T1GPUzSprite * recip_gpu,
+    T1CPUzSpriteSimdStats * recip_cpu)
 {
     float * anim_vals_ptr    = (float *)&anim->gpu_vals;
-    float * target_vals_ptr = (float *)recip;
+    float * target_vals_ptr = (float *)recip_gpu;
     
-    SIMD_FLOAT simd_t_now =
-        simd_set1_float(t.now);
-    SIMD_FLOAT simd_t_b4  =
-        simd_set1_float(t.applied);
+    SIMD_FLOAT simd_t_now = simd_set1_float(t.now);
+    SIMD_FLOAT simd_t_b4  = simd_set1_float(t.applied);
     
     log_assert((sizeof(T1GPUzSprite) / 4) % SIMD_FLOAT_LANES == 0);
+    log_assert((sizeof(T1CPUzSpriteSimdStats) / 4) % SIMD_FLOAT_LANES == 0);
+    
     for (
         uint32_t simd_step_i = 0;
         (simd_step_i * sizeof(float)) < sizeof(T1GPUzSprite);
@@ -154,17 +156,50 @@ static void apply_animation_effects_for_given_eased_t(
                 simd_t_now_deltas));
     }
     
+    anim_vals_ptr = (float *)&anim->cpu_vals;
+    target_vals_ptr = (float *)recip_cpu;
+    
+    for (
+        uint32_t simd_step_i = 0;
+        (simd_step_i * sizeof(float)) < sizeof(T1CPUzSpriteSimdStats);
+        simd_step_i += SIMD_FLOAT_LANES)
+    {
+        SIMD_FLOAT simd_anim_vals =
+            simd_load_floats((anim_vals_ptr + simd_step_i));
+        SIMD_FLOAT simd_target_vals =
+            simd_load_floats((target_vals_ptr + simd_step_i));
+        
+        SIMD_FLOAT simd_t_now_deltas =
+            simd_mul_floats(
+                simd_anim_vals,
+                simd_t_now);
+        SIMD_FLOAT simd_t_previous_deltas =
+            simd_mul_floats(
+                simd_anim_vals,
+                simd_t_b4);
+        
+        simd_t_now_deltas = simd_sub_floats(
+            simd_t_now_deltas,
+            simd_t_previous_deltas);
+        
+        simd_store_floats(
+            (target_vals_ptr + simd_step_i),
+            simd_add_floats(
+                simd_target_vals,
+                simd_t_now_deltas));
+    }
+    
     #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-    log_assert(recip->ignore_camera >= -0.05f);
-    log_assert(recip->ignore_camera <= 1.05f);
-    log_assert(recip->ignore_lighting >= -0.05f);
-    log_assert(recip->ignore_lighting <= 1.05f);
-    log_assert(recip->remove_shadow >= 0);
-    log_assert(recip->remove_shadow <= 1);
+    log_assert(recip_gpu->ignore_camera >= -0.05f);
+    log_assert(recip_gpu->ignore_camera <= 1.05f);
+    log_assert(recip_gpu->ignore_lighting >= -0.05f);
+    log_assert(recip_gpu->ignore_lighting <= 1.05f);
+    log_assert(recip_gpu->remove_shadow >= 0);
+    log_assert(recip_gpu->remove_shadow <= 1);
     // log_assert(recip->alpha >= -0.1f);
     // log_assert(recip->alpha <=  1.1f);
-    log_assert(recip->scale_factor >    0.0f);
-    log_assert(recip->scale_factor < 1000.0f);
+    log_assert(recip_gpu->scale_factor >    0.0f);
+    log_assert(recip_gpu->scale_factor < 1000.0f);
     // log_assert(recip->xyz_multiplier[0] > 0.0f);
     // log_assert(recip->xyz_multiplier[1] > 0.0f);
     // log_assert(recip->xyz_multiplier[2] > 0.0f);
@@ -176,13 +211,15 @@ static void apply_animation_effects_for_given_eased_t(
 
 static void T1_scheduled_animations_get_projected_final_position_for(
     const int32_t zp_i,
-    T1GPUzSprite * recip)
+    T1GPUzSprite * recip_gpu,
+    T1CPUzSpriteSimdStats * recip_cpu)
 {
     log_assert(zp_i >= 0);
     log_assert((uint32_t)zp_i < T1_zsprites_to_render->size);
     
     const int32_t zsprite_id = T1_zsprites_to_render->cpu_data[zp_i].zsprite_id;
-    *recip = T1_zsprites_to_render->gpu_data[zp_i];
+    *recip_gpu = T1_zsprites_to_render->gpu_data[zp_i];
+    *recip_cpu = T1_zsprites_to_render->cpu_data[zp_i].simd_stats;
     
     for (uint32_t sa_i = 0; sa_i < scheduled_animations_size; sa_i++) {
         if (
@@ -205,7 +242,8 @@ static void T1_scheduled_animations_get_projected_final_position_for(
             apply_animation_effects_for_given_eased_t(
                 t,
                 &scheduled_animations[sa_i],
-                recip);
+                recip_gpu,
+                recip_cpu);
         }
     }
 }
@@ -258,13 +296,14 @@ void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
         }
         log_assert(first_zp_i < (int32_t)T1_zsprites_to_render->size);
         
-        float * anim_gpu_vals = (float *)&to_commit->gpu_vals;
         
         T1_scheduled_animations_get_projected_final_position_for(
             first_zp_i,
-            &sas->zsprite_final_pos);
+            &sas->zsprite_final_pos_gpu,
+            &sas->zsprite_final_pos_cpu);
         
-        float * orig_gpu_vals = (float *)&sas->zsprite_final_pos;
+        float * anim_gpu_vals = (float *)&to_commit->gpu_vals;
+        float * orig_gpu_vals = (float *)&sas->zsprite_final_pos_gpu;
         
         for (
             uint32_t i = 0;
@@ -277,6 +316,22 @@ void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
                 // fetch the current value
                 float delta_to_target = anim_gpu_vals[i] - orig_gpu_vals[i];
                 anim_gpu_vals[i] = delta_to_target;
+            }
+        }
+        
+        float * anim_cpu_vals = (float *)&to_commit->cpu_vals;
+        float * orig_cpu_vals = (float *)&sas->zsprite_final_pos_cpu;
+        for (
+            uint32_t i = 0;
+            i < (sizeof(T1CPUzSpriteSimdStats) / sizeof(float));
+            i++)
+        {
+            if (anim_cpu_vals[i] == FLT_SCHEDULEDANIM_IGNORE) {
+                anim_cpu_vals[i] = 0.0f; // delta 0 is the same as 'ignore'
+            } else {
+                // fetch the current value
+                float delta_to_target = anim_cpu_vals[i] - orig_cpu_vals[i];
+                anim_cpu_vals[i] = delta_to_target;
             }
         }
     }
@@ -645,7 +700,8 @@ void T1_scheduled_animations_resolve(void)
             apply_animation_effects_for_given_eased_t(
                 t,
                 anim,
-                T1_zsprites_to_render->gpu_data + zp_i);
+                T1_zsprites_to_render->gpu_data + zp_i,
+                &T1_zsprites_to_render->cpu_data[zp_i].simd_stats);
         }
     }
     
@@ -769,9 +825,9 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
         
         #if 1
         // This is a hack, an approximation
-        zs_cpu->angle_xyz[0] -= camera.xyz_angle[0];
-        zs_cpu->angle_xyz[1] -= camera.xyz_angle[1];
-        zs_cpu->angle_xyz[2] -= camera.xyz_angle[2];
+        zs_cpu->simd_stats.angle_xyz[0] -= camera.xyz_angle[0];
+        zs_cpu->simd_stats.angle_xyz[1] -= camera.xyz_angle[1];
+        zs_cpu->simd_stats.angle_xyz[2] -= camera.xyz_angle[2];
         #endif
         
         zs->ignore_camera = 1.0f;
@@ -788,9 +844,9 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
         
         #if 1
         // This is a hack, an approximation
-        zs_cpu->angle_xyz[0] += camera.xyz_angle[0];
-        zs_cpu->angle_xyz[1] += camera.xyz_angle[1];
-        zs_cpu->angle_xyz[2] += camera.xyz_angle[2];
+        zs_cpu->simd_stats.angle_xyz[0] += camera.xyz_angle[0];
+        zs_cpu->simd_stats.angle_xyz[1] += camera.xyz_angle[1];
+        zs_cpu->simd_stats.angle_xyz[2] += camera.xyz_angle[2];
         #endif
         
         zs->ignore_camera = 0.0f;
