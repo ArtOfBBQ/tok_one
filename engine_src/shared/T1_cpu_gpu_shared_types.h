@@ -76,8 +76,8 @@ typedef struct {
 } T1GPUConstMat;
 
 typedef struct {
+    float        transform_mat_4x4[16];
     float        xyz[3];
-    float        xyz_angle[3];
     float        bonus_rgb[3];
     float        xyz_mult[3]; // determines width/height/depth
     float        xyz_offset[3];

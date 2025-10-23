@@ -99,8 +99,6 @@ vertex float4 shadows_vertex_shader(
     const device T1GPUProjectConsts * projection_constants [[ buffer(5) ]],
     const device T1GPUPostProcConsts * updating_globals [[ buffer (6) ]])
 {
-    float3 out_pos;
-    
     uint polygon_i = vertices[vertex_i].polygon_i;
     
     if (polygons[polygon_i].remove_shadow) {
@@ -114,25 +112,29 @@ vertex float4 shadows_vertex_shader(
     
     uint locked_vertex_i = vertices[vertex_i].locked_vertex_i;
     
-    float3 parent_mesh_position = vector_float3(
+    float4 parent_mesh_position = vector_float4(
         polygons[polygon_i].xyz[0],
         polygons[polygon_i].xyz[1],
-        polygons[polygon_i].xyz[2]);
+        polygons[polygon_i].xyz[2],
+        1.0f);
     
-    float3 mesh_vertices = vector_float3(
+    float4 mesh_vertices = vector_float4(
         locked_vertices[locked_vertex_i].xyz[0],
         locked_vertices[locked_vertex_i].xyz[1],
-        locked_vertices[locked_vertex_i].xyz[2]);
+        locked_vertices[locked_vertex_i].xyz[2],
+        1.0f);
     
-    float3 vertex_multipliers = vector_float3(
+    float4 vertex_multipliers = vector_float4(
         polygons[polygon_i].xyz_mult[0],
         polygons[polygon_i].xyz_mult[1],
-        polygons[polygon_i].xyz_mult[2]);
+        polygons[polygon_i].xyz_mult[2],
+        1.0f);
     
-    float3 vertex_offsets = vector_float3(
+    float4 vertex_offsets = vector_float4(
         polygons[polygon_i].xyz_offset[0],
         polygons[polygon_i].xyz_offset[1],
-        polygons[polygon_i].xyz_offset[2]);
+        polygons[polygon_i].xyz_offset[2],
+        1.0f);
     
     mesh_vertices *= vertex_multipliers;
     mesh_vertices += vertex_offsets;
@@ -140,48 +142,68 @@ vertex float4 shadows_vertex_shader(
     mesh_vertices *= polygons[polygon_i].scale_factor;
     
     // rotate vertices
-    float3 z_rotated_vertices = xyz_rotate(
-        mesh_vertices,
-        vector_float3(
-            polygons[polygon_i].xyz_angle[0],
-            polygons[polygon_i].xyz_angle[1],
-            polygons[polygon_i].xyz_angle[2]));
+    float4x4 transform = matrix_float4x4(
+        polygons[polygon_i].transform_mat_4x4[0],
+        polygons[polygon_i].transform_mat_4x4[1],
+        polygons[polygon_i].transform_mat_4x4[2],
+        polygons[polygon_i].transform_mat_4x4[3],
+        polygons[polygon_i].transform_mat_4x4[4],
+        polygons[polygon_i].transform_mat_4x4[5],
+        polygons[polygon_i].transform_mat_4x4[6],
+        polygons[polygon_i].transform_mat_4x4[7],
+        polygons[polygon_i].transform_mat_4x4[8],
+        polygons[polygon_i].transform_mat_4x4[9],
+        polygons[polygon_i].transform_mat_4x4[10],
+        polygons[polygon_i].transform_mat_4x4[11],
+        polygons[polygon_i].transform_mat_4x4[12],
+        polygons[polygon_i].transform_mat_4x4[13],
+        polygons[polygon_i].transform_mat_4x4[14],
+        polygons[polygon_i].transform_mat_4x4[15]);
+    
+    float4 z_rotated_vertices =
+        mesh_vertices *
+        transform;
+    
     // translate to world position
-    out_pos = z_rotated_vertices + parent_mesh_position;
+    float4 out_vec4 = z_rotated_vertices + parent_mesh_position;
     
     // for an "ignore camera" object, we need to know where that object is
     // in world space
-    float3 nonshadow_cam_pos = vector_float3(
+    float4 nonshadow_cam_pos = vector_float4(
         camera->xyz[0],
         camera->xyz[1],
-        camera->xyz[2]);
+        camera->xyz[2],
+        1.0f);
     float3 nonshadow_cam_angle = vector_float3(
         camera->xyz_angle[0],
         camera->xyz_angle[1],
         camera->xyz_angle[2]);
     
-    float3 ic_pos = out_pos + nonshadow_cam_pos;
+    float4 ic_pos = out_vec4 + nonshadow_cam_pos;
     
-    ic_pos = zyx_rotate(
-        ic_pos,
+    float3 ic_pos_f3 = zyx_rotate(
+        vector_float3(ic_pos[0], ic_pos[1], ic_pos[2]),
         nonshadow_cam_angle);
     
     float ic = clamp(
         polygons[polygon_i].ignore_camera,
         0.0f,
         1.0f);
-    out_pos = (ic_pos * ic) + (out_pos * (1.0f - ic));
+    out_vec4 = (ic_pos * ic) + (out_vec4 * (1.0f - ic));
     
-    
-    float3 lightcam_pos = vector_float3(
+    float4 lightcam_pos = vector_float4(
         lights[updating_globals->shadowcaster_i].xyz[0],
         lights[updating_globals->shadowcaster_i].xyz[1],
-        lights[updating_globals->shadowcaster_i].xyz[2]);
-    float3 lightcam_translated_pos = out_pos - lightcam_pos;
+        lights[updating_globals->shadowcaster_i].xyz[2],
+        1.0f);
+    float4 lightcam_translated_pos = out_vec4 - lightcam_pos;
     
     // rotate around 'camera' (actually the light)
     float3 lightcam_z_rotated = xyz_rotate(
-        lightcam_translated_pos,
+        vector_float3(
+            lightcam_translated_pos[0],
+            lightcam_translated_pos[1],
+            lightcam_translated_pos[2]),
         vector_float3(
             -lights[updating_globals->shadowcaster_i].angle_xyz[0],
             -lights[updating_globals->shadowcaster_i].angle_xyz[1],
@@ -235,25 +257,29 @@ vertex_shader(
     out.polygon_i = vertices[vertex_i].polygon_i;
     out.locked_vertex_i = vertices[vertex_i].locked_vertex_i;
     
-    float3 parent_mesh_position = vector_float3(
+    float4 parent_mesh_position = vector_float4(
         polygons[out.polygon_i].xyz[0],
         polygons[out.polygon_i].xyz[1],
-        polygons[out.polygon_i].xyz[2]);
+        polygons[out.polygon_i].xyz[2],
+        1.0f);
     
-    float3 mesh_vertices = vector_float3(
+    float4 mesh_vertices = vector_float4(
         locked_vertices[out.locked_vertex_i].xyz[0],
         locked_vertices[out.locked_vertex_i].xyz[1],
-        locked_vertices[out.locked_vertex_i].xyz[2]);
+        locked_vertices[out.locked_vertex_i].xyz[2],
+        1.0f);
     
-    float3 vertex_multipliers = vector_float3(
+    float4 vertex_multipliers = vector_float4(
         polygons[out.polygon_i].xyz_mult[0],
         polygons[out.polygon_i].xyz_mult[1],
-        polygons[out.polygon_i].xyz_mult[2]);
+        polygons[out.polygon_i].xyz_mult[2],
+        1.0f);
     
-    float3 vertex_offsets = vector_float3(
+    float4 vertex_offsets = vector_float4(
         polygons[out.polygon_i].xyz_offset[0],
         polygons[out.polygon_i].xyz_offset[1],
-        polygons[out.polygon_i].xyz_offset[2]);
+        polygons[out.polygon_i].xyz_offset[2],
+        1.0f);
     
     mesh_vertices *= vertex_multipliers;
     mesh_vertices += vertex_offsets;
@@ -275,27 +301,33 @@ vertex_shader(
         locked_vertices[out.locked_vertex_i].bitangent_xyz[1],
         locked_vertices[out.locked_vertex_i].bitangent_xyz[2]);
     
-    float3 parent_xyz_angle = vector_float3(
-        polygons[out.polygon_i].xyz_angle[0],
-        polygons[out.polygon_i].xyz_angle[1],
-        polygons[out.polygon_i].xyz_angle[2]);
+    float4x4 transform = matrix_float4x4(
+        polygons[out.polygon_i].transform_mat_4x4[0],
+        polygons[out.polygon_i].transform_mat_4x4[1],
+        polygons[out.polygon_i].transform_mat_4x4[2],
+        polygons[out.polygon_i].transform_mat_4x4[3],
+        polygons[out.polygon_i].transform_mat_4x4[4],
+        polygons[out.polygon_i].transform_mat_4x4[5],
+        polygons[out.polygon_i].transform_mat_4x4[6],
+        polygons[out.polygon_i].transform_mat_4x4[7],
+        polygons[out.polygon_i].transform_mat_4x4[8],
+        polygons[out.polygon_i].transform_mat_4x4[9],
+        polygons[out.polygon_i].transform_mat_4x4[10],
+        polygons[out.polygon_i].transform_mat_4x4[11],
+        polygons[out.polygon_i].transform_mat_4x4[12],
+        polygons[out.polygon_i].transform_mat_4x4[13],
+        polygons[out.polygon_i].transform_mat_4x4[14],
+        polygons[out.polygon_i].transform_mat_4x4[15]);
     
-    float3 z_rotated_vertices = xyz_rotate(
-        mesh_vertices,
-        parent_xyz_angle);
-    
-    out.normal = xyz_rotate(
-        mesh_normals,
-        parent_xyz_angle);
-    out.tangent = xyz_rotate(
-        mesh_tangent,
-        parent_xyz_angle);
-    out.bitangent = xyz_rotate(
-        mesh_bitangent,
-        parent_xyz_angle);
+    float4 z_rotated_vertices =
+        mesh_vertices * transform;
     
     // translate to world position
-    out.worldpos = z_rotated_vertices + parent_mesh_position;
+    float4 out_worldpos_vec4 = z_rotated_vertices + parent_mesh_position;
+    out.worldpos = vector_float3(
+        out_worldpos_vec4[0],
+        out_worldpos_vec4[1],
+        out_worldpos_vec4[2]);
     
     float3 camera_position = vector_float3(
         camera->xyz[0],
@@ -330,6 +362,21 @@ vertex_shader(
     out.position = project_float3_to_float4_perspective(
         final_pos,
         projection_constants);
+    
+    float3x3 transform_no_translation = matrix_float3x3(
+        polygons[out.polygon_i].transform_mat_4x4[0],
+        polygons[out.polygon_i].transform_mat_4x4[1],
+        polygons[out.polygon_i].transform_mat_4x4[2],
+        polygons[out.polygon_i].transform_mat_4x4[4],
+        polygons[out.polygon_i].transform_mat_4x4[5],
+        polygons[out.polygon_i].transform_mat_4x4[6],
+        polygons[out.polygon_i].transform_mat_4x4[8],
+        polygons[out.polygon_i].transform_mat_4x4[9],
+        polygons[out.polygon_i].transform_mat_4x4[10]);
+    
+    out.normal = mesh_normals * transform_no_translation;
+    out.tangent = mesh_tangent * transform_no_translation;
+    out.bitangent = mesh_bitangent * transform_no_translation;
     
     return out;
 }

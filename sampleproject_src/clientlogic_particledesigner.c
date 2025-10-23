@@ -179,8 +179,8 @@ void T1_clientlogic_early_startup(
     assert(ok);
     T1_meta_array(T1GPUzSprite, T1_TYPE_F32, xyz, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-2.0f, 2.0f, &ok);
-    T1_meta_array(T1GPUzSprite, T1_TYPE_F32, xyz_angle, 3, &ok);
-    T1_meta_reg_custom_float_limits_for_last_field(-3.6f, 3.6f, &ok);
+    // T1_meta_array(T1GPUzSprite, T1_TYPE_F32, xyz_angle, 3, &ok);
+    // T1_meta_reg_custom_float_limits_for_last_field(-3.6f, 3.6f, &ok);
     T1_meta_array(T1GPUzSprite, T1_TYPE_F32, bonus_rgb, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(0.0f, 2.0f, &ok);
     T1_meta_array(T1GPUzSprite, T1_TYPE_F32, xyz_mult, 3, &ok);

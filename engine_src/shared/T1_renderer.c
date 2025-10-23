@@ -395,6 +395,38 @@ inline static void add_opaque_zpolygons_to_workload(
     }
 }
 
+static void construct_transformation_matrices(void) {
+    
+    for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
+        float cx = cosf(T1_zsprites_to_render->cpu_data[i].angle_xyz[0]);
+        float sx = sinf(T1_zsprites_to_render->cpu_data[i].angle_xyz[0]);
+        
+        float cy = cosf(T1_zsprites_to_render->cpu_data[i].angle_xyz[1]);
+        float sy = sinf(T1_zsprites_to_render->cpu_data[i].angle_xyz[1]);
+        
+        float cz = cosf(T1_zsprites_to_render->cpu_data[i].angle_xyz[2]);
+        float sz = sinf(T1_zsprites_to_render->cpu_data[i].angle_xyz[2]);
+        
+        // Rx * Ry * Rz  (order: X → Y → Z)
+        float r00 =  cy * cz;
+        float r01 =  cy * sz;
+        float r02 = -sy;
+        float r10 =  sx * sy * cz - cx * sz;
+        float r11 =  sx * sy * sz + cx * cz;
+        float r12 =  sx * cy;
+        float r20 =  cx * sy * cz + sx * sz;
+        float r21 =  cx * sy * sz - sx * cz;
+        float r22 =  cx * cy;
+        
+        // Fill 4x4 in **column-major** order
+        float * m = T1_zsprites_to_render->gpu_data[i].transform_mat_4x4;
+        m[0]  = r00;  m[1]  = r10;  m[2]  = r20;  m[3]  = 0.0f;
+        m[4]  = r01;  m[5]  = r11;  m[6]  = r21;  m[7]  = 0.0f;
+        m[8]  = r02;  m[9]  = r12;  m[10] = r22;  m[11] = 0.0f;
+        m[12] = 0.0f; m[13] = 0.0f; m[14] = 0.0f; m[15] = 1.0f;
+    }
+}
+
 // static float clickray_elapsed = 0.0f;
 void renderer_hardware_render(
     T1GPUFrame * frame_data,
@@ -416,6 +448,8 @@ void renderer_hardware_render(
     }
     
     log_assert(T1_zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
+    
+    construct_transformation_matrices();
     
     T1_std_memcpy(
         /* void * dest: */

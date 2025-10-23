@@ -91,9 +91,13 @@ T1ScheduledAnimation * T1_scheduled_animations_request_next(
     
     if (endpoints_not_deltas) {
         T1_std_memset_f32(
-            &return_value->gpu_polygon_vals,
+            &return_value->gpu_vals,
             FLT_SCHEDULEDANIM_IGNORE,
             sizeof(T1GPUzSprite));
+        T1_std_memset_f32(
+            &return_value->cpu_vals,
+            FLT_SCHEDULEDANIM_IGNORE,
+            sizeof(T1CPUzSprite));
         T1_std_memset_f32(
             &return_value->lightsource_vals,
             FLT_SCHEDULEDANIM_IGNORE,
@@ -111,7 +115,7 @@ static void apply_animation_effects_for_given_eased_t(
     T1ScheduledAnimation * anim,
     T1GPUzSprite * recip)
 {
-    float * anim_vals_ptr    = (float *)&anim->gpu_polygon_vals;
+    float * anim_vals_ptr    = (float *)&anim->gpu_vals;
     float * target_vals_ptr = (float *)recip;
     
     SIMD_FLOAT simd_t_now =
@@ -254,7 +258,7 @@ void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
         }
         log_assert(first_zp_i < (int32_t)T1_zsprites_to_render->size);
         
-        float * anim_gpu_vals = (float *)&to_commit->gpu_polygon_vals;
+        float * anim_gpu_vals = (float *)&to_commit->gpu_vals;
         
         T1_scheduled_animations_get_projected_final_position_for(
             first_zp_i,
@@ -509,7 +513,7 @@ void T1_scheduled_animations_request_fade_and_destroy(
     fade_destroy->affected_zsprite_id = object_id;
     fade_destroy->duration_us = duration_us;
     fade_destroy->lightsource_vals.reach = 0.0f;
-    fade_destroy->gpu_polygon_vals.alpha = 0.0f;
+    fade_destroy->gpu_vals.alpha = 0.0f;
     fade_destroy->delete_object_when_finished = true;
     T1_scheduled_animations_commit(fade_destroy);
 }
@@ -525,7 +529,7 @@ void T1_scheduled_animations_request_fade_to(
     T1ScheduledAnimation * modify_alpha = T1_scheduled_animations_request_next(true);
     modify_alpha->affected_zsprite_id = zsprite_id;
     modify_alpha->duration_us = duration_us;
-    modify_alpha->gpu_polygon_vals.alpha = target_alpha;
+    modify_alpha->gpu_vals.alpha = target_alpha;
     T1_scheduled_animations_commit(modify_alpha);
 }
 
@@ -656,9 +660,9 @@ void T1_scheduled_animations_request_dud_dance(
         T1_scheduled_animations_request_next(false);
     move_request->easing_type = EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO;
     move_request->affected_zsprite_id = (int32_t)object_id;
-    move_request->gpu_polygon_vals.xyz[0] = magnitude * 0.05f;
-    move_request->gpu_polygon_vals.xyz[1] = magnitude * 0.035f;
-    move_request->gpu_polygon_vals.xyz[2] = magnitude * 0.005f;
+    move_request->gpu_vals.xyz[0] = magnitude * 0.05f;
+    move_request->gpu_vals.xyz[1] = magnitude * 0.035f;
+    move_request->gpu_vals.xyz[2] = magnitude * 0.005f;
     move_request->duration_us = 300000;
     T1_scheduled_animations_commit(move_request);
 }
@@ -677,7 +681,7 @@ void T1_scheduled_animations_request_bump(
         T1_scheduled_animations_request_next(false);
     move_request->easing_type = EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO;
     move_request->affected_zsprite_id = (int32_t)object_id;
-    move_request->gpu_polygon_vals.scale_factor = 0.25f;
+    move_request->gpu_vals.scale_factor = 0.25f;
     move_request->duration_us = 200000;
     T1_scheduled_animations_commit(move_request);
 }
@@ -728,11 +732,13 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
     const float new_ignore_camera)
 {
     T1GPUzSprite * zs = NULL;
+    T1CPUzSprite * zs_cpu = NULL;
     
     for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++)
     {
         if (T1_zsprites_to_render->cpu_data[i].zsprite_id == zsprite_id) {
             zs = T1_zsprites_to_render->gpu_data + i;
+            zs_cpu = T1_zsprites_to_render->cpu_data + i;
         }
     }
     
@@ -763,9 +769,9 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
         
         #if 1
         // This is a hack, an approximation
-        zs->xyz_angle[0] -= camera.xyz_angle[0];
-        zs->xyz_angle[1] -= camera.xyz_angle[1];
-        zs->xyz_angle[2] -= camera.xyz_angle[2];
+        zs_cpu->angle_xyz[0] -= camera.xyz_angle[0];
+        zs_cpu->angle_xyz[1] -= camera.xyz_angle[1];
+        zs_cpu->angle_xyz[2] -= camera.xyz_angle[2];
         #endif
         
         zs->ignore_camera = 1.0f;
@@ -782,9 +788,9 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
         
         #if 1
         // This is a hack, an approximation
-        zs->xyz_angle[0] += camera.xyz_angle[0];
-        zs->xyz_angle[1] += camera.xyz_angle[1];
-        zs->xyz_angle[2] += camera.xyz_angle[2];
+        zs_cpu->angle_xyz[0] += camera.xyz_angle[0];
+        zs_cpu->angle_xyz[1] += camera.xyz_angle[1];
+        zs_cpu->angle_xyz[2] += camera.xyz_angle[2];
         #endif
         
         zs->ignore_camera = 0.0f;

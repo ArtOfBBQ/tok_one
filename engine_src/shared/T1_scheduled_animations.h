@@ -21,8 +21,8 @@ void T1_scheduled_animations_resolve(void);
 
 typedef struct T1ScheduledAnimation {
     // Public:
-    T1GPUzSprite gpu_polygon_vals;
-    // zPolygonCPU zpolygon_cpu_vals;
+    T1GPUzSprite gpu_vals;
+    T1CPUzSprite cpu_vals;
     zLightSource lightsource_vals;
     
     T1EasingType easing_type;
