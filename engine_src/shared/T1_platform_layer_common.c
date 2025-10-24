@@ -54,6 +54,8 @@ void T1_platform_read_file_from_writables(
             filepath,
         /* T1FileBuffer * out_preallocatedbuffer: */
             &filebuf);
+    
+    *good = filebuf.good;
 }
 
 void T1_platform_write_file_to_writables(

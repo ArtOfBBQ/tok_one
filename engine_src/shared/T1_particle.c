@@ -345,7 +345,7 @@ void T1_particle_effect_construct(
     to_construct->zpolygon_gpu.base_mat.rgb_cap[0] = 1.0f;
     to_construct->zpolygon_gpu.base_mat.rgb_cap[1] = 1.0f;
     to_construct->zpolygon_gpu.base_mat.rgb_cap[2] = 1.0f;
-    to_construct->zpolygon_gpu.scale_factor = 1.0f;
+    to_construct->zpolygon_cpu.simd_stats.scale_factor = 1.0f;
     to_construct->zpolygon_gpu.xyz_mult[0] = 0.01f;
     to_construct->zpolygon_gpu.xyz_mult[1] = 0.01f;
     to_construct->zpolygon_gpu.xyz_mult[2] = 0.01f;
@@ -593,13 +593,6 @@ static void T1_particle_add_single_to_frame_data(
             log_assert((ptrdiff_t)(recipient_at + j) %
                 (long)(SIMD_FLOAT_LANES * sizeof(float)) == 0);
             simd_store_floats((recipient_at + j), recip);
-        }
-        
-        if (frame_data->zsprite_list->polygons[
-            frame_data->zsprite_list->size].scale_factor < 0.01f)
-        {
-            frame_data->zsprite_list->polygons[
-                frame_data->zsprite_list->size].scale_factor = 0.001f;
         }
     }
     

@@ -82,7 +82,7 @@ typedef struct {
     float        xyz_mult[3]; // determines width/height/depth
     float        xyz_offset[3];
     float        base_mat_uv_offsets[2];
-    float        scale_factor;
+    float        reserved;
     float        alpha;
     float        ignore_lighting;
     float        ignore_camera;

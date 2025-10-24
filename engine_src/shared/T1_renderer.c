@@ -410,16 +410,18 @@ static void construct_transformation_matrices(void) {
         float cz = cosf(stats->angle_xyz[2]);
         float sz = sinf(stats->angle_xyz[2]);
         
+        float scf = stats->scale_factor;
+        
         // Rx * Ry * Rz  (order: X → Y → Z)
-        float r00 =  cy * cz;
-        float r01 =  cy * sz;
-        float r02 = -sy;
-        float r10 =  sx * sy * cz - cx * sz;
-        float r11 =  sx * sy * sz + cx * cz;
-        float r12 =  sx * cy;
-        float r20 =  cx * sy * cz + sx * sz;
-        float r21 =  cx * sy * sz - sx * cz;
-        float r22 =  cx * cy;
+        float r00 =  cy * cz * scf;
+        float r01 =  cy * sz * scf;
+        float r02 = -sy * scf;
+        float r10 =  sx * sy * cz - cx * sz * scf;
+        float r11 =  sx * sy * sz + cx * cz * scf;
+        float r12 =  sx * cy * scf;
+        float r20 =  cx * sy * cz + sx * sz * scf;
+        float r21 =  cx * sy * sz - sx * cz * scf;
+        float r22 =  cx * cy * scf;
         
         // Fill 4x4 in **column-major** order
         float * m = T1_zsprites_to_render->gpu_data[i].transform_mat_4x4;

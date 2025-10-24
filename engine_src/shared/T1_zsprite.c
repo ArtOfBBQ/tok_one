@@ -252,10 +252,10 @@ void T1_zsprite_construct(
     to_construct->gpu_data->xyz_mult[0] = 1.0f;
     to_construct->gpu_data->xyz_mult[1] = 1.0f;
     to_construct->gpu_data->xyz_mult[2] = 1.0f;
-    to_construct->gpu_data->scale_factor = 1.0f;
     to_construct->gpu_data->touchable_id = -1;
     to_construct->gpu_data->alpha = 1.0f;
     
+    to_construct->cpu_data->simd_stats.scale_factor = 1.0f;
     to_construct->cpu_data->mesh_id = -1;
     to_construct->cpu_data->zsprite_id = -1;
     to_construct->cpu_data->visible = true;
