@@ -22,7 +22,8 @@ extern "C" {
 
 typedef struct  {
     float angle_xyz[3];
-    float padding[5];
+    float scale_factor;
+    float padding[4];
 } T1CPUzSpriteSimdStats;
 
 typedef struct {

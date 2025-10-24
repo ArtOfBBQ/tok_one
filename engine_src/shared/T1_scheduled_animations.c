@@ -198,8 +198,8 @@ static void apply_animation_effects_for_given_eased_t(
     log_assert(recip_gpu->remove_shadow <= 1);
     // log_assert(recip->alpha >= -0.1f);
     // log_assert(recip->alpha <=  1.1f);
-    log_assert(recip_gpu->scale_factor >    0.0f);
-    log_assert(recip_gpu->scale_factor < 1000.0f);
+    log_assert(recip_cpu->scale_factor >    0.0f);
+    log_assert(recip_cpu->scale_factor < 1000.0f);
     // log_assert(recip->xyz_multiplier[0] > 0.0f);
     // log_assert(recip->xyz_multiplier[1] > 0.0f);
     // log_assert(recip->xyz_multiplier[2] > 0.0f);
@@ -740,7 +740,7 @@ void T1_scheduled_animations_request_bump(
         T1_scheduled_animations_request_next(false);
     move_request->easing_type = EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO;
     move_request->affected_zsprite_id = (int32_t)object_id;
-    move_request->gpu_vals.scale_factor = 0.25f;
+    move_request->cpu_vals.scale_factor = 0.25f;
     move_request->duration_us = 200000;
     T1_scheduled_animations_commit(move_request);
 }

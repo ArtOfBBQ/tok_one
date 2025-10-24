@@ -345,7 +345,7 @@ void T1_particle_effect_construct(
     to_construct->zpolygon_gpu.base_mat.rgb_cap[0] = 1.0f;
     to_construct->zpolygon_gpu.base_mat.rgb_cap[1] = 1.0f;
     to_construct->zpolygon_gpu.base_mat.rgb_cap[2] = 1.0f;
-    to_construct->zpolygon_gpu.scale_factor = 1.0f;
+    to_construct->zpolygon_cpu.simd_stats.scale_factor = 1.0f;
     to_construct->zpolygon_gpu.xyz_mult[0] = 0.01f;
     to_construct->zpolygon_gpu.xyz_mult[1] = 0.01f;
     to_construct->zpolygon_gpu.xyz_mult[2] = 0.01f;

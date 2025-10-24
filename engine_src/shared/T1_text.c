@@ -324,7 +324,7 @@ void text_request_label_offset_around(
                 font_settings->ignore_lighting;
             letter.gpu_data->ignore_camera =
                 font_settings->ignore_camera;
-            letter.gpu_data->scale_factor =
+            letter.cpu_data->simd_stats.scale_factor =
                 font_settings->scale_factor;
             letter.cpu_data->zsprite_id = with_id;
             letter.gpu_data->touchable_id =
@@ -362,7 +362,7 @@ void text_request_label_offset_around(
             
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
-            log_assert(letter.gpu_data->scale_factor > 0.0f);
+            log_assert(letter.cpu_data->simd_stats.scale_factor > 0.0f);
             T1_zsprite_commit(&letter);
         }
         cur_y_offset_pixelspace -= get_newline_advance();
