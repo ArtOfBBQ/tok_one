@@ -79,8 +79,9 @@ typedef struct {
     float        transform_mat_4x4[16];
     float        xyz[3];
     float        bonus_rgb[3];
-    float        xyz_mult[3]; // determines width/height/depth
+    float        xyz_mult[3];
     float        xyz_offset[3];
+    float        scale_factor;
     float        base_mat_uv_offsets[2];
     float        reserved;
     float        alpha;

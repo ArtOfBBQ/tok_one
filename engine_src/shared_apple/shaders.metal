@@ -124,7 +124,7 @@ vertex float4 shadows_vertex_shader(
         locked_vertices[locked_vertex_i].xyz[2],
         1.0f);
     
-    float4 vertex_multipliers = vector_float4(
+    float4 mesh_mult_xyz = vector_float4(
         polygons[polygon_i].xyz_mult[0],
         polygons[polygon_i].xyz_mult[1],
         polygons[polygon_i].xyz_mult[2],
@@ -136,8 +136,9 @@ vertex float4 shadows_vertex_shader(
         polygons[polygon_i].xyz_offset[2],
         1.0f);
     
-    mesh_vertices *= vertex_multipliers;
+    mesh_vertices *= mesh_mult_xyz;
     mesh_vertices += vertex_offsets;
+    mesh_vertices *= polygons[polygon_i].scale_factor;
     
     // rotate vertices
     float4x4 transform = matrix_float4x4(
@@ -249,19 +250,13 @@ vertex_shader(
     out.polygon_i = vertices[vertex_i].polygon_i;
     out.locked_vertex_i = vertices[vertex_i].locked_vertex_i;
     
-    float4 parent_mesh_position = vector_float4(
-        polygons[out.polygon_i].xyz[0],
-        polygons[out.polygon_i].xyz[1],
-        polygons[out.polygon_i].xyz[2],
-        1.0f);
-    
     float4 mesh_vertices = vector_float4(
         locked_vertices[out.locked_vertex_i].xyz[0],
         locked_vertices[out.locked_vertex_i].xyz[1],
         locked_vertices[out.locked_vertex_i].xyz[2],
         1.0f);
     
-    float4 vertex_multipliers = vector_float4(
+    float4 mesh_mult_xyz = vector_float4(
         polygons[out.polygon_i].xyz_mult[0],
         polygons[out.polygon_i].xyz_mult[1],
         polygons[out.polygon_i].xyz_mult[2],
@@ -271,10 +266,11 @@ vertex_shader(
         polygons[out.polygon_i].xyz_offset[0],
         polygons[out.polygon_i].xyz_offset[1],
         polygons[out.polygon_i].xyz_offset[2],
-        1.0f);
+        0.0f);
     
-    mesh_vertices *= vertex_multipliers;
+    mesh_vertices *= mesh_mult_xyz;
     mesh_vertices += vertex_offsets;
+    mesh_vertices *= polygons[out.polygon_i].scale_factor;
     
     float4 mesh_normals = vector_float4(
         locked_vertices[out.locked_vertex_i].normal_xyz[0],
@@ -313,6 +309,12 @@ vertex_shader(
         polygons[out.polygon_i].transform_mat_4x4[15]);
     
     float4 z_rotated_vertices = mesh_vertices * transform;
+    
+    float4 parent_mesh_position = vector_float4(
+        polygons[out.polygon_i].xyz[0],
+        polygons[out.polygon_i].xyz[1],
+        polygons[out.polygon_i].xyz[2],
+        1.0f);
     
     // translate to world position
     float4 out_worldpos_vec4 = z_rotated_vertices + parent_mesh_position;

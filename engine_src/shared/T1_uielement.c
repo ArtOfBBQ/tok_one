@@ -323,7 +323,7 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                     bump_pin->easing_type =
                         EASINGTYPE_SINGLE_BOUNCE_ZERO_TO_ZERO;
                     bump_pin->affected_zsprite_id = active_ui_elements[i].pin_zsprite_id;
-                    bump_pin->cpu_vals.scale_factor = 1.20f;
+                    bump_pin->gpu_vals.scale_factor = 1.20f;
                     bump_pin->duration_us = 120000;
                     T1_scheduled_animations_commit(bump_pin);
                     #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
@@ -343,7 +343,7 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                         currently_clicking_zsprite_id;
                     bump->easing_type =
                         EASINGTYPE_SINGLE_BOUNCE_ZERO_TO_ZERO;
-                    bump->cpu_vals.scale_factor = 1.25f;
+                    bump->gpu_vals.scale_factor = 1.25f;
                     bump->duration_us = 140000;
                     T1_scheduled_animations_commit(bump);
                     #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
