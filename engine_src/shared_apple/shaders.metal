@@ -299,14 +299,6 @@ vertex_shader(
     out.worldpos = mesh_vertices * transform;
     out.worldpos[3] = 0.0f;
     
-    // translate to world position
-    // float4 out_worldpos_vec4 = z_rotated_vertices + parent_mesh_position;
-    //    out.worldpos = vector_float4(
-    //        out_worldpos_vec4[0],
-    //        out_worldpos_vec4[1],
-    //        out_worldpos_vec4[2],
-    //        0.0f);
-    
     float4 camera_position = vector_float4(
         camera->xyz[0],
         camera->xyz[1],

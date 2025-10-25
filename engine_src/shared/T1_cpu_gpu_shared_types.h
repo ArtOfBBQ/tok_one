@@ -76,19 +76,17 @@ typedef struct {
 } T1GPUConstMat;
 
 typedef struct {
-    float        transform_mat_4x4[16];
-    float        bonus_rgb[3];
-    float        xyz_mult[3];
-    float        xyz_offset[3];
-    // float        scale_factor;
-    float        base_mat_uv_offsets[2];
-    float        reserved;
-    float        alpha;
-    float        ignore_lighting;
-    float        ignore_camera;
-    unsigned int remove_shadow;
-    int          touchable_id;
-    T1GPUConstMat  base_mat;
+    float         transform_mat_4x4[16];
+    float         bonus_rgb[3];
+    float         xyz_mult[3];
+    float         xyz_offset[3];
+    float         base_mat_uv_offsets[2];
+    float         alpha;
+    float         ignore_lighting;
+    float         ignore_camera;
+    unsigned int  remove_shadow;
+    int           touchable_id;
+    T1GPUConstMat base_mat;
 } __attribute__((aligned(32))) T1GPUzSprite;
 
 typedef struct {
