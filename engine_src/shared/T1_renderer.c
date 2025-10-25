@@ -395,7 +395,7 @@ inline static void add_opaque_zpolygons_to_workload(
     }
 }
 
-static void construct_transformation_matrices(void) {
+static void construct_transformation_matrix(void) {
     
     for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
         T1CPUzSpriteSimdStats * stats =
@@ -412,10 +412,6 @@ static void construct_transformation_matrices(void) {
         
         float scf = stats->scale_factor;
         
-        //        float mulx = stats->xyz_mult[0];
-        //        float muly = stats->xyz_mult[1];
-        //        float mulz = stats->xyz_mult[2];
-        
         // Rx * Ry * Rz  (order: X → Y → Z)
         float r00 =  cy * cz * scf;
         float r01 =  cy * sz * scf;
@@ -429,7 +425,6 @@ static void construct_transformation_matrices(void) {
         float r21 =  (cx * sy * sz - sx * cz) * scf;
         float r22 =  cx * cy * scf;
         
-        // Fill 4x4 in **column-major** order
         float * m = T1_zsprites_to_render->gpu_data[i].transform_mat_4x4;
         m[0]  = r00;  m[1]  = r10;  m[2]  = r20;  m[3]  = 0.0f;
         m[4]  = r01;  m[5]  = r11;  m[6]  = r21;  m[7]  = 0.0f;
@@ -438,7 +433,6 @@ static void construct_transformation_matrices(void) {
     }
 }
 
-// static float clickray_elapsed = 0.0f;
 void renderer_hardware_render(
     T1GPUFrame * frame_data,
     uint64_t elapsed_us)
@@ -460,7 +454,7 @@ void renderer_hardware_render(
     
     log_assert(T1_zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
     
-    construct_transformation_matrices();
+    construct_transformation_matrix();
     
     T1_std_memcpy(
         /* void * dest: */

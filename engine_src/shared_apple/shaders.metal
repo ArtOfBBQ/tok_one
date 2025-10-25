@@ -138,7 +138,6 @@ vertex float4 shadows_vertex_shader(
     
     mesh_vertices *= mesh_mult_xyz;
     mesh_vertices += vertex_offsets;
-    // mesh_vertices *= polygons[polygon_i].scale_factor;
     
     // rotate vertices
     float4x4 transform = matrix_float4x4(
@@ -270,7 +269,6 @@ vertex_shader(
     
     mesh_vertices *= mesh_mult_xyz;
     mesh_vertices += vertex_offsets;
-    // mesh_vertices *= polygons[out.polygon_i].scale_factor;
     
     float4 mesh_normals = vector_float4(
         locked_vertices[out.locked_vertex_i].normal_xyz[0],
