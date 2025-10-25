@@ -313,9 +313,9 @@ void zsprite_construct_quad(
     const float mid_y =
         bottom_y  + (height / 2);
     
-    stack_recipient->gpu_data->xyz[0] = mid_x;
-    stack_recipient->gpu_data->xyz[1] = mid_y;
-    stack_recipient->gpu_data->xyz[2] = z;
+    stack_recipient->cpu_data->simd_stats.xyz[0] = mid_x;
+    stack_recipient->cpu_data->simd_stats.xyz[1] = mid_y;
+    stack_recipient->cpu_data->simd_stats.xyz[2] = z;
     stack_recipient->cpu_data->visible = true;
     stack_recipient->gpu_data->ignore_camera = false;
     
@@ -343,9 +343,9 @@ void T1_zsprite_construct_quad_around(
     
     T1_zsprite_construct(stack_recipient);
     
-    stack_recipient->gpu_data->xyz[0]  = mid_x;
-    stack_recipient->gpu_data->xyz[1]  = mid_y;
-    stack_recipient->gpu_data->xyz[2]  = z;
+    stack_recipient->cpu_data->simd_stats.xyz[0]  = mid_x;
+    stack_recipient->cpu_data->simd_stats.xyz[1]  = mid_y;
+    stack_recipient->cpu_data->simd_stats.xyz[2]  = z;
     stack_recipient->cpu_data->visible = true;
     
     // the hardcoded quad offsets range from -1.0f to 1.0f,
@@ -386,9 +386,9 @@ void zsprite_construct_cube_around(
     
     T1_zsprite_construct(stack_recipient);
     
-    stack_recipient->gpu_data->xyz[0]  = mid_x;
-    stack_recipient->gpu_data->xyz[1]  = mid_y;
-    stack_recipient->gpu_data->xyz[2]  = z;
+    stack_recipient->cpu_data->simd_stats.xyz[0]  = mid_x;
+    stack_recipient->cpu_data->simd_stats.xyz[1]  = mid_y;
+    stack_recipient->cpu_data->simd_stats.xyz[2]  = z;
     stack_recipient->cpu_data->visible = true;
     
     // the hardcoded quad offsets range from -1.0f to 1.0f,

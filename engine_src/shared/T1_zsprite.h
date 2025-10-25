@@ -21,9 +21,10 @@ extern "C" {
 #endif
 
 typedef struct  {
+    float xyz[3];
     float angle_xyz[3];
     float scale_factor;
-    float padding[4];
+    float padding[1];
 } T1CPUzSpriteSimdStats;
 
 typedef struct {

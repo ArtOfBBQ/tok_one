@@ -77,7 +77,6 @@ typedef struct {
 
 typedef struct {
     float        transform_mat_4x4[16];
-    float        xyz[3];
     float        bonus_rgb[3];
     float        xyz_mult[3];
     float        xyz_offset[3];

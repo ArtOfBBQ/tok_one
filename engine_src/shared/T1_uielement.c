@@ -126,9 +126,9 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                             T1_uiinteractions[
                                 T1_INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].
                                     screen_x,
-                            T1_zsprites_to_render->gpu_data[zp_i].
-                                xyz[2]) -
-                        T1_zsprites_to_render->gpu_data[zp_i].xyz[0];
+                            T1_zsprites_to_render->cpu_data[zp_i].
+                                simd_stats.xyz[2]) -
+                        T1_zsprites_to_render->cpu_data[zp_i].simd_stats.xyz[0];
                     
                     if (
                         new_x_offset <
@@ -419,13 +419,17 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                 {
                     xy_screenspace[0] =
                         T1_engineglobals_x_to_screenspace_x(
-                            T1_zsprites_to_render->gpu_data[zs_i].xyz[0],
-                            T1_zsprites_to_render->gpu_data[zs_i].xyz[2]);
+                            T1_zsprites_to_render->cpu_data[zs_i].
+                                simd_stats.xyz[0],
+                            T1_zsprites_to_render->cpu_data[zs_i].
+                                simd_stats.xyz[2]);
                     xy_screenspace[1] =
                         T1_engineglobals_y_to_screenspace_y(
-                            T1_zsprites_to_render->gpu_data[zs_i].xyz[1],
-                            T1_zsprites_to_render->gpu_data[zs_i].xyz[2]);
-                    z = T1_zsprites_to_render->gpu_data[zs_i].xyz[2];
+                            T1_zsprites_to_render->cpu_data[zs_i].
+                                simd_stats.xyz[1],
+                            T1_zsprites_to_render->cpu_data[zs_i].
+                                simd_stats.xyz[2]);
+                    z = T1_zsprites_to_render->cpu_data[zs_i].simd_stats.xyz[2];
                     ignore_camera = (uint8_t)
                         T1_zsprites_to_render->gpu_data[zs_i].
                             ignore_camera;

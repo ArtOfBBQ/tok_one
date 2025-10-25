@@ -413,23 +413,27 @@ static void construct_transformation_matrix(void) {
         float scf = stats->scale_factor;
         
         // Rx * Ry * Rz  (order: X → Y → Z)
-        float r00 =  cy * cz * scf;
-        float r01 =  cy * sz * scf;
-        float r02 = -sy * scf;
-        
-        float r10 =  (sx * sy * cz - cx * sz) * scf;
-        float r11 =  (sx * sy * sz + cx * cz) * scf;
-        float r12 =  sx * cy * scf;
-        
-        float r20 =  (cx * sy * cz + sx * sz) * scf;
-        float r21 =  (cx * sy * sz - sx * cz) * scf;
-        float r22 =  cx * cy * scf;
-        
         float * m = T1_zsprites_to_render->gpu_data[i].transform_mat_4x4;
-        m[0]  = r00;  m[1]  = r10;  m[2]  = r20;  m[3]  = 0.0f;
-        m[4]  = r01;  m[5]  = r11;  m[6]  = r21;  m[7]  = 0.0f;
-        m[8]  = r02;  m[9]  = r12;  m[10] = r22;  m[11] = 0.0f;
-        m[12] = 0.0f; m[13] = 0.0f; m[14] = 0.0f; m[15] = 1.0f;
+        
+        m[0]  = cy * cz * scf;
+        m[1]  = (sx * sy * cz - cx * sz) * scf;
+        m[2]  = (cx * sy * cz + sx * sz) * scf;
+        m[3]  = stats->xyz[0]; // 0.0f;
+        
+        m[4]  = cy * sz * scf;
+        m[5]  = (sx * sy * sz + cx * cz) * scf;
+        m[6]  = (cx * sy * sz - sx * cz) * scf;
+        m[7]  = stats->xyz[1]; // 0.0f;
+        
+        m[8]  = -sy * scf;
+        m[9]  = sx * cy * scf;
+        m[10] = cx * cy * scf;
+        m[11] = stats->xyz[2]; // 0.0f;
+        
+        m[12] = 0.0f;
+        m[13] = 0.0f;
+        m[14] = 0.0f;
+        m[15] = 1.0f;
     }
 }
 

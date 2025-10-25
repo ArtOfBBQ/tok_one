@@ -111,13 +111,7 @@ vertex float4 shadows_vertex_shader(
     }
     
     uint locked_vertex_i = vertices[vertex_i].locked_vertex_i;
-    
-    float4 parent_mesh_position = vector_float4(
-        polygons[polygon_i].xyz[0],
-        polygons[polygon_i].xyz[1],
-        polygons[polygon_i].xyz[2],
-        1.0f);
-    
+        
     float4 mesh_vertices = vector_float4(
         locked_vertices[locked_vertex_i].xyz[0],
         locked_vertices[locked_vertex_i].xyz[1],
@@ -134,7 +128,7 @@ vertex float4 shadows_vertex_shader(
         polygons[polygon_i].xyz_offset[0],
         polygons[polygon_i].xyz_offset[1],
         polygons[polygon_i].xyz_offset[2],
-        1.0f);
+        0.0f);
     
     mesh_vertices *= mesh_mult_xyz;
     mesh_vertices += vertex_offsets;
@@ -158,12 +152,8 @@ vertex float4 shadows_vertex_shader(
         polygons[polygon_i].transform_mat_4x4[14],
         polygons[polygon_i].transform_mat_4x4[15]);
     
-    float4 z_rotated_vertices =
-        mesh_vertices *
-        transform;
-    
     // translate to world position
-    float4 out_vec4 = z_rotated_vertices + parent_mesh_position;
+    float4 out_vec4 = mesh_vertices * transform;
     
     // for an "ignore camera" object, we need to know where that object is
     // in world space
@@ -306,21 +296,16 @@ vertex_shader(
         polygons[out.polygon_i].transform_mat_4x4[14],
         polygons[out.polygon_i].transform_mat_4x4[15]);
     
-    float4 z_rotated_vertices = mesh_vertices * transform;
-    
-    float4 parent_mesh_position = vector_float4(
-        polygons[out.polygon_i].xyz[0],
-        polygons[out.polygon_i].xyz[1],
-        polygons[out.polygon_i].xyz[2],
-        1.0f);
+    out.worldpos = mesh_vertices * transform;
+    out.worldpos[3] = 0.0f;
     
     // translate to world position
-    float4 out_worldpos_vec4 = z_rotated_vertices + parent_mesh_position;
-    out.worldpos = vector_float4(
-        out_worldpos_vec4[0],
-        out_worldpos_vec4[1],
-        out_worldpos_vec4[2],
-        0.0f);
+    // float4 out_worldpos_vec4 = z_rotated_vertices + parent_mesh_position;
+    //    out.worldpos = vector_float4(
+    //        out_worldpos_vec4[0],
+    //        out_worldpos_vec4[1],
+    //        out_worldpos_vec4[2],
+    //        0.0f);
     
     float4 camera_position = vector_float4(
         camera->xyz[0],

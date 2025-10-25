@@ -719,9 +719,9 @@ void T1_scheduled_animations_request_dud_dance(
         T1_scheduled_animations_request_next(false);
     move_request->easing_type = EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO;
     move_request->affected_zsprite_id = (int32_t)object_id;
-    move_request->gpu_vals.xyz[0] = magnitude * 0.05f;
-    move_request->gpu_vals.xyz[1] = magnitude * 0.035f;
-    move_request->gpu_vals.xyz[2] = magnitude * 0.005f;
+    move_request->cpu_vals.xyz[0] = magnitude * 0.05f;
+    move_request->cpu_vals.xyz[1] = magnitude * 0.035f;
+    move_request->cpu_vals.xyz[2] = magnitude * 0.005f;
     move_request->duration_us = 300000;
     T1_scheduled_animations_commit(move_request);
 }
@@ -819,12 +819,12 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
     if (is_near_zero) {
         log_assert(new_ignore_camera == 1.0f);
         
-        zs->xyz[0] -= camera.xyz[0];
-        zs->xyz[1] -= camera.xyz[1];
-        zs->xyz[2] -= camera.xyz[2];
-        x_rotate_f3(zs->xyz, -camera.xyz_angle[0]);
-        y_rotate_f3(zs->xyz, -camera.xyz_angle[1]);
-        z_rotate_f3(zs->xyz, -camera.xyz_angle[2]);
+        zs_cpu->simd_stats.xyz[0] -= camera.xyz[0];
+        zs_cpu->simd_stats.xyz[1] -= camera.xyz[1];
+        zs_cpu->simd_stats.xyz[2] -= camera.xyz[2];
+        x_rotate_f3(zs_cpu->simd_stats.xyz, -camera.xyz_angle[0]);
+        y_rotate_f3(zs_cpu->simd_stats.xyz, -camera.xyz_angle[1]);
+        z_rotate_f3(zs_cpu->simd_stats.xyz, -camera.xyz_angle[2]);
         
         #if 1
         // This is a hack, an approximation
@@ -837,13 +837,13 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
     } else {
         log_assert(is_near_one);
         
-        z_rotate_f3(zs->xyz, camera.xyz_angle[2]);
-        y_rotate_f3(zs->xyz, camera.xyz_angle[1]);
-        x_rotate_f3(zs->xyz, camera.xyz_angle[0]);
+        z_rotate_f3(zs_cpu->simd_stats.xyz, camera.xyz_angle[2]);
+        y_rotate_f3(zs_cpu->simd_stats.xyz, camera.xyz_angle[1]);
+        x_rotate_f3(zs_cpu->simd_stats.xyz, camera.xyz_angle[0]);
         
-        zs->xyz[0] += camera.xyz[0];
-        zs->xyz[1] += camera.xyz[1];
-        zs->xyz[2] += camera.xyz[2];
+        zs_cpu->simd_stats.xyz[0] += camera.xyz[0];
+        zs_cpu->simd_stats.xyz[1] += camera.xyz[1];
+        zs_cpu->simd_stats.xyz[2] += camera.xyz[2];
         
         #if 1
         // This is a hack, an approximation
