@@ -193,9 +193,9 @@ void T1_zsprite_scale_multipliers_to_width(
         /* const float for_height: */
             new_height);
     
-    gpu_data->xyz_mult[0] = new_multiplier;
-    gpu_data->xyz_mult[1] = new_multiplier;
-    gpu_data->xyz_mult[2] = new_multiplier;
+    cpu_data->simd_stats.mul_xyz[0] = new_multiplier;
+    cpu_data->simd_stats.mul_xyz[1] = new_multiplier;
+    cpu_data->simd_stats.mul_xyz[2] = new_multiplier;
 }
 
 void T1_zsprite_scale_multipliers_to_height(
@@ -209,9 +209,9 @@ void T1_zsprite_scale_multipliers_to_height(
         /* const float for_height: */
             new_height);
     
-    gpu_data->xyz_mult[0] = new_multiplier;
-    gpu_data->xyz_mult[1] = new_multiplier;
-    gpu_data->xyz_mult[2] = new_multiplier;
+    cpu_data->simd_stats.mul_xyz[0] = new_multiplier;
+    cpu_data->simd_stats.mul_xyz[1] = new_multiplier;
+    cpu_data->simd_stats.mul_xyz[2] = new_multiplier;
 }
 
 void T1_zsprite_construct_with_mesh_id(
@@ -249,9 +249,9 @@ void T1_zsprite_construct(
         0,
         sizeof(T1GPUzSprite));
     
-    to_construct->gpu_data->xyz_mult[0] = 1.0f;
-    to_construct->gpu_data->xyz_mult[1] = 1.0f;
-    to_construct->gpu_data->xyz_mult[2] = 1.0f;
+    to_construct->cpu_data->simd_stats.mul_xyz[0] = 1.0f;
+    to_construct->cpu_data->simd_stats.mul_xyz[1] = 1.0f;
+    to_construct->cpu_data->simd_stats.mul_xyz[2] = 1.0f;
     to_construct->gpu_data->touchable_id = -1;
     to_construct->gpu_data->alpha = 1.0f;
     
@@ -326,9 +326,9 @@ void zsprite_construct_quad(
     // so the current width is 2.0f
     float current_width = 2.0f;
     float current_height = 2.0f;
-    stack_recipient->gpu_data->xyz_mult[0] = width / current_width;
-    stack_recipient->gpu_data->xyz_mult[1] = height / current_height;
-    stack_recipient->gpu_data->xyz_mult[2] = 1.0f;
+    stack_recipient->cpu_data->simd_stats.mul_xyz[0] = width / current_width;
+    stack_recipient->cpu_data->simd_stats.mul_xyz[1] = height / current_height;
+    stack_recipient->cpu_data->simd_stats.mul_xyz[2] = 1.0f;
 }
 
 void T1_zsprite_construct_quad_around(
@@ -352,22 +352,22 @@ void T1_zsprite_construct_quad_around(
     // so the current width is 2.0f
     float current_width = 2.0f;
     float current_height = 2.0f;
-    stack_recipient->gpu_data->xyz_mult[0] =
+    stack_recipient->cpu_data->simd_stats.mul_xyz[0] =
         width / current_width;
-    stack_recipient->gpu_data->xyz_mult[1] =
+    stack_recipient->cpu_data->simd_stats.mul_xyz[1] =
         height / current_height;
-    stack_recipient->gpu_data->xyz_mult[2] =
-        stack_recipient->gpu_data->xyz_mult[1] / 20.0f;
+    stack_recipient->cpu_data->simd_stats.mul_xyz[2] =
+        stack_recipient->cpu_data->simd_stats.mul_xyz[1] / 20.0f;
     
     #define THRESH 0.00001f
-    if (stack_recipient->gpu_data->xyz_mult[0] < THRESH) {
-        stack_recipient->gpu_data->xyz_mult[0] = THRESH;
+    if (stack_recipient->cpu_data->simd_stats.mul_xyz[0] < THRESH) {
+        stack_recipient->cpu_data->simd_stats.mul_xyz[0] = THRESH;
     }
-    if (stack_recipient->gpu_data->xyz_mult[1] < THRESH) {
-        stack_recipient->gpu_data->xyz_mult[1] = THRESH;
+    if (stack_recipient->cpu_data->simd_stats.mul_xyz[1] < THRESH) {
+        stack_recipient->cpu_data->simd_stats.mul_xyz[1] = THRESH;
     }
-    if (stack_recipient->gpu_data->xyz_mult[2] < THRESH) {
-        stack_recipient->gpu_data->xyz_mult[2] = THRESH;
+    if (stack_recipient->cpu_data->simd_stats.mul_xyz[2] < THRESH) {
+        stack_recipient->cpu_data->simd_stats.mul_xyz[2] = THRESH;
     }
     
     stack_recipient->cpu_data->mesh_id = BASIC_QUAD_MESH_ID;
@@ -396,9 +396,9 @@ void zsprite_construct_cube_around(
     float current_width = 2.0f;
     float current_height = 2.0f;
     float current_depth = 2.0f;
-    stack_recipient->gpu_data->xyz_mult[0] = width / current_width;
-    stack_recipient->gpu_data->xyz_mult[1] = height / current_height;
-    stack_recipient->gpu_data->xyz_mult[2] = depth / current_depth;
+    stack_recipient->cpu_data->simd_stats.mul_xyz[0] = width / current_width;
+    stack_recipient->cpu_data->simd_stats.mul_xyz[1] = height / current_height;
+    stack_recipient->cpu_data->simd_stats.mul_xyz[2] = depth / current_depth;
     
     stack_recipient->cpu_data->mesh_id = 1;
 }

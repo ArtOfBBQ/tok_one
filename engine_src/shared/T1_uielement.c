@@ -150,7 +150,7 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                                 slider_width / 2;
                     }
                     
-                    T1_zsprites_to_render->gpu_data[zp_i].xyz_offset[0] =
+                    T1_zsprites_to_render->cpu_data[zp_i].simd_stats.offset_xyz[0] =
                         new_x_offset;
                         
                     active_ui_elements[ui_elem_i].label_dirty = true;
@@ -556,7 +556,8 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
 
 static void set_slider_pos_from_current_val(
     ActiveUIElement * ae,
-    T1GPUzSprite * pin_gpu_zsprite)
+    T1GPUzSprite * pin_gpu_zsprite,
+    T1CPUzSpriteSimdStats * pin_cpu_zsprite)
 {
     log_assert(ae != NULL);
     log_assert(pin_gpu_zsprite != NULL);
@@ -646,7 +647,7 @@ static void set_slider_pos_from_current_val(
     log_assert(new_x_offset >= -ae->slider_width / 2);
     log_assert(new_x_offset <= ae->slider_width);
     
-    pin_gpu_zsprite->xyz_offset[0] = new_x_offset;
+    pin_cpu_zsprite->offset_xyz[0] = new_x_offset;
 }
 
 void T1_uielement_request_slider(
@@ -786,8 +787,8 @@ void T1_uielement_request_slider(
             &slider_pin);
     
     slider_pin.cpu_data->zsprite_id = pin_zsprite_id;
-    slider_pin.gpu_data->xyz_offset[0] = 0.0f;
-    slider_pin.gpu_data->xyz_offset[1] = 0.0f;
+    slider_pin.cpu_data->simd_stats.offset_xyz[0] = 0.0f;
+    slider_pin.cpu_data->simd_stats.offset_xyz[1] = 0.0f;
     
     slider_pin.gpu_data->base_mat.texturearray_i =
         next_ae->user_set.slider_pin_tex.array_i;
@@ -812,7 +813,8 @@ void T1_uielement_request_slider(
     
     set_slider_pos_from_current_val(
         next_ae,
-        slider_pin.gpu_data);
+        slider_pin.gpu_data,
+        &slider_pin.cpu_data->simd_stats);
     
     T1_zsprite_commit(&slider_pin);
 }

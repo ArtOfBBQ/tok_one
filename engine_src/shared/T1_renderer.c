@@ -395,45 +395,84 @@ inline static void add_opaque_zpolygons_to_workload(
     }
 }
 
-static void construct_transformation_matrix(void) {
+static void construct_transformation_matrices(void) {
     
     for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
+        
         T1CPUzSpriteSimdStats * stats =
             &T1_zsprites_to_render->cpu_data[i].simd_stats;
         
-        float cx = cosf(stats->angle_xyz[0]);
-        float sx = sinf(stats->angle_xyz[0]);
+        T1float4x4 result;
+        T1float4x4 accu;
+        T1float4x4 next;
         
-        float cy = cosf(stats->angle_xyz[1]);
-        float sy = sinf(stats->angle_xyz[1]);
+        T1_linalg3d_construct_identity(&accu);
         
-        float cz = cosf(stats->angle_xyz[2]);
-        float sz = sinf(stats->angle_xyz[2]);
+        // Translation
+        T1_linalg3d_float4x4_construct(
+            &next,
+            1.0f, 0.0f, 0.0f, stats->xyz[0],
+            0.0f, 1.0f, 0.0f, stats->xyz[1],
+            0.0f, 0.0f, 1.0f, stats->xyz[2],
+            0.0f, 0.0f, 0.0f, 1.0f);
         
-        float scf = stats->scale_factor;
+        T1_linalg3d_float4x4_mul_float4x4(&accu, &next, &result);
+        T1_std_memcpy(
+            &accu, &result, sizeof(T1float4x4));
         
-        // Rx * Ry * Rz  (order: X → Y → Z)
-        float * m = T1_zsprites_to_render->gpu_data[i].transform_mat_4x4;
+        T1_linalg3d_float4x4_construct_xyz_rotation(
+            &next,
+            stats->angle_xyz[0],
+            stats->angle_xyz[1],
+            stats->angle_xyz[2]);
         
-        m[0]  = cy * cz * scf;
-        m[1]  = (sx * sy * cz - cx * sz) * scf;
-        m[2]  = (cx * sy * cz + sx * sz) * scf;
-        m[3]  = stats->xyz[0]; // 0.0f;
+        T1_linalg3d_float4x4_mul_float4x4(
+            &accu,
+            &next,
+            &result);
+        T1_std_memcpy(
+            &accu, &result, sizeof(T1float4x4));
         
-        m[4]  = cy * sz * scf;
-        m[5]  = (sx * sy * sz + cx * cz) * scf;
-        m[6]  = (cx * sy * sz - sx * cz) * scf;
-        m[7]  = stats->xyz[1]; // 0.0f;
+        T1_linalg3d_float4x4_construct(
+            &next,
+            1.0f, 0.0f, 0.0f,
+            T1_zsprites_to_render->cpu_data[i].
+                simd_stats.offset_xyz[0],
+            0.0f, 1.0f, 0.0f,
+            T1_zsprites_to_render->cpu_data[i].
+                simd_stats.offset_xyz[1],
+            0.0f, 0.0f, 1.0f,
+            T1_zsprites_to_render->cpu_data[i].
+                simd_stats.offset_xyz[2],
+            0.0f, 0.0f, 0.0f, 1.0f);
+        T1_linalg3d_float4x4_mul_float4x4(&accu, &next, &result);
+        T1_std_memcpy(
+            &accu, &result, sizeof(T1float4x4));
         
-        m[8]  = -sy * scf;
-        m[9]  = sx * cy * scf;
-        m[10] = cx * cy * scf;
-        m[11] = stats->xyz[2]; // 0.0f;
+        T1_linalg3d_float4x4_construct(
+            &next,
+            stats->mul_xyz[0], 0.0f, 0.0f, 0.0f,
+            0.0f, stats->mul_xyz[1], 0.0f, 0.0f,
+            0.0f, 0.0f, stats->mul_xyz[2], 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+        T1_linalg3d_float4x4_mul_float4x4(&accu, &next, &result);
         
-        m[12] = 0.0f;
-        m[13] = 0.0f;
-        m[14] = 0.0f;
-        m[15] = 1.0f;
+        T1_std_memcpy(
+            T1_zsprites_to_render->gpu_data[i].model_4x4,
+            result.rows[0].data,
+            sizeof(float) * 4);
+        T1_std_memcpy(
+            T1_zsprites_to_render->gpu_data[i].model_4x4 + 4,
+            result.rows[1].data,
+            sizeof(float) * 4);
+        T1_std_memcpy(
+            T1_zsprites_to_render->gpu_data[i].model_4x4 + 8,
+            result.rows[2].data,
+            sizeof(float) * 4);
+        T1_std_memcpy(
+            T1_zsprites_to_render->gpu_data[i].model_4x4 + 12,
+            result.rows[3].data,
+            sizeof(float) * 4);
     }
 }
 
@@ -458,7 +497,7 @@ void renderer_hardware_render(
     
     log_assert(T1_zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
     
-    construct_transformation_matrix();
+    construct_transformation_matrices();
     
     T1_std_memcpy(
         /* void * dest: */

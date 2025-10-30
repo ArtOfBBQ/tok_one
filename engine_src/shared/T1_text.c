@@ -338,13 +338,13 @@ void text_request_label_offset_around(
                 continue;
             }
             
-            letter.gpu_data->xyz_offset[0] =
+            letter.cpu_data->simd_stats.offset_xyz[0] =
                 T1_engineglobals_screenspace_width_to_width(
                     (cur_x_offset_pixelspace +
                         font_settings->extra_offset_xy[0] +
                             get_left_side_bearing(text_to_draw[j])),
                     z);
-            letter.gpu_data->xyz_offset[1] =
+            letter.cpu_data->simd_stats.offset_xyz[1] =
                 T1_engineglobals_screenspace_height_to_height(
                     (cur_y_offset_pixelspace -
                         get_y_offset(text_to_draw[j]) -
@@ -518,11 +518,11 @@ void text_request_label_renderable(
             continue;
         }
         
-        letter.gpu_data->xyz_offset[0] =
+        letter.cpu_data->simd_stats.offset_xyz[0] =
             T1_engineglobals_screenspace_width_to_width(
                 cur_x_offset + get_left_side_bearing(
                     text_to_draw[i]), z);
-        letter.gpu_data->xyz_offset[1] =
+        letter.cpu_data->simd_stats.offset_xyz[1] =
             T1_engineglobals_screenspace_height_to_height(
                 cur_y_offset - get_y_offset(
                     text_to_draw[i]), z);

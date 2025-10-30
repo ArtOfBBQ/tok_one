@@ -118,39 +118,24 @@ vertex float4 shadows_vertex_shader(
         locked_vertices[locked_vertex_i].xyz[2],
         1.0f);
     
-    float4 mesh_mult_xyz = vector_float4(
-        polygons[polygon_i].xyz_mult[0],
-        polygons[polygon_i].xyz_mult[1],
-        polygons[polygon_i].xyz_mult[2],
-        1.0f);
-    
-    float4 vertex_offsets = vector_float4(
-        polygons[polygon_i].xyz_offset[0],
-        polygons[polygon_i].xyz_offset[1],
-        polygons[polygon_i].xyz_offset[2],
-        0.0f);
-    
-    mesh_vertices *= mesh_mult_xyz;
-    mesh_vertices += vertex_offsets;
-    
     // rotate vertices
     float4x4 transform = matrix_float4x4(
-        polygons[polygon_i].transform_mat_4x4[0],
-        polygons[polygon_i].transform_mat_4x4[1],
-        polygons[polygon_i].transform_mat_4x4[2],
-        polygons[polygon_i].transform_mat_4x4[3],
-        polygons[polygon_i].transform_mat_4x4[4],
-        polygons[polygon_i].transform_mat_4x4[5],
-        polygons[polygon_i].transform_mat_4x4[6],
-        polygons[polygon_i].transform_mat_4x4[7],
-        polygons[polygon_i].transform_mat_4x4[8],
-        polygons[polygon_i].transform_mat_4x4[9],
-        polygons[polygon_i].transform_mat_4x4[10],
-        polygons[polygon_i].transform_mat_4x4[11],
-        polygons[polygon_i].transform_mat_4x4[12],
-        polygons[polygon_i].transform_mat_4x4[13],
-        polygons[polygon_i].transform_mat_4x4[14],
-        polygons[polygon_i].transform_mat_4x4[15]);
+        polygons[polygon_i].model_4x4[0],
+        polygons[polygon_i].model_4x4[1],
+        polygons[polygon_i].model_4x4[2],
+        polygons[polygon_i].model_4x4[3],
+        polygons[polygon_i].model_4x4[4],
+        polygons[polygon_i].model_4x4[5],
+        polygons[polygon_i].model_4x4[6],
+        polygons[polygon_i].model_4x4[7],
+        polygons[polygon_i].model_4x4[8],
+        polygons[polygon_i].model_4x4[9],
+        polygons[polygon_i].model_4x4[10],
+        polygons[polygon_i].model_4x4[11],
+        polygons[polygon_i].model_4x4[12],
+        polygons[polygon_i].model_4x4[13],
+        polygons[polygon_i].model_4x4[14],
+        polygons[polygon_i].model_4x4[15]);
     
     // translate to world position
     float4 out_vec4 = mesh_vertices * transform;
@@ -245,21 +230,6 @@ vertex_shader(
         locked_vertices[out.locked_vertex_i].xyz[2],
         1.0f);
     
-    float4 mesh_mult_xyz = vector_float4(
-        polygons[out.polygon_i].xyz_mult[0],
-        polygons[out.polygon_i].xyz_mult[1],
-        polygons[out.polygon_i].xyz_mult[2],
-        1.0f);
-    
-    float4 vertex_offsets = vector_float4(
-        polygons[out.polygon_i].xyz_offset[0],
-        polygons[out.polygon_i].xyz_offset[1],
-        polygons[out.polygon_i].xyz_offset[2],
-        0.0f);
-    
-    mesh_vertices *= mesh_mult_xyz;
-    mesh_vertices += vertex_offsets;
-    
     float4 mesh_normals = vector_float4(
         locked_vertices[out.locked_vertex_i].normal_xyz[0],
         locked_vertices[out.locked_vertex_i].normal_xyz[1],
@@ -279,22 +249,22 @@ vertex_shader(
         0.0f);
     
     float4x4 transform = matrix_float4x4(
-        polygons[out.polygon_i].transform_mat_4x4[0],
-        polygons[out.polygon_i].transform_mat_4x4[1],
-        polygons[out.polygon_i].transform_mat_4x4[2],
-        polygons[out.polygon_i].transform_mat_4x4[3],
-        polygons[out.polygon_i].transform_mat_4x4[4],
-        polygons[out.polygon_i].transform_mat_4x4[5],
-        polygons[out.polygon_i].transform_mat_4x4[6],
-        polygons[out.polygon_i].transform_mat_4x4[7],
-        polygons[out.polygon_i].transform_mat_4x4[8],
-        polygons[out.polygon_i].transform_mat_4x4[9],
-        polygons[out.polygon_i].transform_mat_4x4[10],
-        polygons[out.polygon_i].transform_mat_4x4[11],
-        polygons[out.polygon_i].transform_mat_4x4[12],
-        polygons[out.polygon_i].transform_mat_4x4[13],
-        polygons[out.polygon_i].transform_mat_4x4[14],
-        polygons[out.polygon_i].transform_mat_4x4[15]);
+        polygons[out.polygon_i].model_4x4[0],
+        polygons[out.polygon_i].model_4x4[1],
+        polygons[out.polygon_i].model_4x4[2],
+        polygons[out.polygon_i].model_4x4[3],
+        polygons[out.polygon_i].model_4x4[4],
+        polygons[out.polygon_i].model_4x4[5],
+        polygons[out.polygon_i].model_4x4[6],
+        polygons[out.polygon_i].model_4x4[7],
+        polygons[out.polygon_i].model_4x4[8],
+        polygons[out.polygon_i].model_4x4[9],
+        polygons[out.polygon_i].model_4x4[10],
+        polygons[out.polygon_i].model_4x4[11],
+        polygons[out.polygon_i].model_4x4[12],
+        polygons[out.polygon_i].model_4x4[13],
+        polygons[out.polygon_i].model_4x4[14],
+        polygons[out.polygon_i].model_4x4[15]);
     
     out.worldpos = mesh_vertices * transform;
     out.worldpos[3] = 0.0f;

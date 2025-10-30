@@ -139,6 +139,7 @@
 		ECDCFF4D2DDE0F2B002AA399 /* T1_mtlparser.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDCFF4B2DDE0F2A002AA399 /* T1_mtlparser.c */; };
 		ECDCFF502DDE0F52002AA399 /* T1_tokenizer.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDCFF4F2DDE0F52002AA399 /* T1_tokenizer.c */; };
 		ECDD9C232DE2157500721A48 /* T1_texture_files.c in Sources */ = {isa = PBXBuildFile; fileRef = ECDD9C212DE2157400721A48 /* T1_texture_files.c */; };
+		ECE531012EB229900035DC98 /* T1_linalg3d.c in Sources */ = {isa = PBXBuildFile; fileRef = ECE531002EB229900035DC98 /* T1_linalg3d.c */; };
 		ECE759CE2C3FF1BE004B0847 /* T1_collision.c in Sources */ = {isa = PBXBuildFile; fileRef = ECE759CC2C3FF1BE004B0847 /* T1_collision.c */; };
 		ECE759D12C400175004B0847 /* T1_lines.c in Sources */ = {isa = PBXBuildFile; fileRef = ECE759D02C400175004B0847 /* T1_lines.c */; };
 		ECF7CB172D53ADA400623C60 /* T1_platform_layer_common.c in Sources */ = {isa = PBXBuildFile; fileRef = ECF7CB142D53ADA400623C60 /* T1_platform_layer_common.c */; };
@@ -279,6 +280,8 @@
 		ECDCFF4F2DDE0F52002AA399 /* T1_tokenizer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_tokenizer.c; path = ../../engine_src/shared/T1_tokenizer.c; sourceTree = "<group>"; };
 		ECDD9C212DE2157400721A48 /* T1_texture_files.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_texture_files.c; path = ../../engine_src/shared/T1_texture_files.c; sourceTree = "<group>"; };
 		ECDD9C222DE2157500721A48 /* T1_texture_files.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_texture_files.h; path = ../../engine_src/shared/T1_texture_files.h; sourceTree = "<group>"; };
+		ECE530FF2EB229900035DC98 /* T1_linalg3d.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = T1_linalg3d.h; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_linalg3d.h; sourceTree = "<absolute>"; };
+		ECE531002EB229900035DC98 /* T1_linalg3d.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = T1_linalg3d.c; path = /Users/jellevandeneynde/Documents/github/loreseek/tok_one/engine_src/shared/T1_linalg3d.c; sourceTree = "<absolute>"; };
 		ECE759CC2C3FF1BE004B0847 /* T1_collision.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = T1_collision.c; path = ../../engine_src/shared/T1_collision.c; sourceTree = "<group>"; };
 		ECE759CD2C3FF1BE004B0847 /* T1_collision.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_collision.h; path = ../../engine_src/shared/T1_collision.h; sourceTree = "<group>"; };
 		ECE759CF2C400174004B0847 /* T1_lines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = T1_lines.h; path = ../../engine_src/shared/T1_lines.h; sourceTree = "<group>"; };
@@ -470,6 +473,8 @@
 				EC78509829E62CA800E6882A /* T1_objmodel.h */,
 				EC78509929E62CA800E6882A /* T1_objmodel.c */,
 				EC083A382AFF727900234FE3 /* T1_objparser.h */,
+				ECE530FF2EB229900035DC98 /* T1_linalg3d.h */,
+				ECE531002EB229900035DC98 /* T1_linalg3d.c */,
 				EC083A392AFF727900234FE3 /* T1_objparser.c */,
 				EC31932229DFAAFB00E320CD /* T1_particle.h */,
 				EC31932329DFAAFB00E320CD /* T1_particle.c */,
@@ -725,6 +730,7 @@
 				EC6A301C29EFA1440071C58F /* T1_triangle.c in Sources */,
 				60A99909287BD4C3003F7159 /* T1_platform_layer.h in Sources */,
 				60A998F4287BD4C3003F7159 /* T1_apple_platform_layer.m in Sources */,
+				ECE531012EB229900035DC98 /* T1_linalg3d.c in Sources */,
 				6028DD342886EE54000E1E98 /* T1_appinit.c in Sources */,
 				EC083A3B2AFF727900234FE3 /* T1_objparser.c in Sources */,
 				EC4040DB2E5431C000264128 /* clientlogic_particledesigner.c in Sources */,

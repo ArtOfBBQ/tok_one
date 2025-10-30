@@ -72,12 +72,12 @@ static void request_teapots(void) {
         T1_zsprite_request_next(&teapot_request);
         T1_zsprite_construct(&teapot_request);
         teapot_request.cpu_data->mesh_id = teapot_mesh_id;
-        teapot_request.gpu_data->xyz_mult[0] = 0.15f;
-        teapot_request.gpu_data->xyz_mult[1] = 0.15f;
-        teapot_request.gpu_data->xyz_mult[2] = 0.15f;
-        teapot_request.gpu_data->xyz[0]            = TEAPOT_X + (i * 0.20f);
-        teapot_request.gpu_data->xyz[1]            = TEAPOT_Y - (i * 1.0f);
-        teapot_request.gpu_data->xyz[2]            = TEAPOT_Z - (i * 0.25f);
+        teapot_request.cpu_data->simd_stats.mul_xyz[0] = 0.15f;
+        teapot_request.cpu_data->simd_stats.mul_xyz[1] = 0.15f;
+        teapot_request.cpu_data->simd_stats.mul_xyz[2] = 0.15f;
+        teapot_request.cpu_data->simd_stats.xyz[0] = TEAPOT_X + (i * 0.20f);
+        teapot_request.cpu_data->simd_stats.xyz[1] = TEAPOT_Y - (i * 1.0f);
+        teapot_request.cpu_data->simd_stats.xyz[2] = TEAPOT_Z - (i * 0.25f);
         teapot_request.cpu_data->simd_stats.angle_xyz[0] = 0.00f;
         teapot_request.cpu_data->simd_stats.angle_xyz[1] = 3.2f;
         teapot_request.cpu_data->simd_stats.angle_xyz[2] = 0.0f;
@@ -87,10 +87,6 @@ static void request_teapots(void) {
         teapot_request.gpu_data->touchable_id = teapot_touchable_ids[i];
         teapot_request.gpu_data->ignore_lighting =  0.0f;
         teapot_request.gpu_data->ignore_camera =  0.0f;
-        
-        log_assert(teapot_request.gpu_data->xyz_offset[0] == 0.0f);
-        log_assert(teapot_request.gpu_data->xyz_offset[1] == 0.0f);
-        log_assert(teapot_request.gpu_data->xyz_offset[2] == 0.0f);
         T1_zsprite_commit(&teapot_request);
     }
     #endif
@@ -123,12 +119,12 @@ void T1_clientlogic_late_startup(void) {
     T1_zsprite_request_next(&lightcube_request);
     T1_zsprite_construct(&lightcube_request);
     lightcube_request.cpu_data->mesh_id = BASIC_CUBE_MESH_ID;
-    lightcube_request.gpu_data->xyz_mult[0] = 0.05f;
-    lightcube_request.gpu_data->xyz_mult[1] = 0.05f;
-    lightcube_request.gpu_data->xyz_mult[2] = 0.05f;
-    lightcube_request.gpu_data->xyz[0]            = light->xyz[0];
-    lightcube_request.gpu_data->xyz[1]            = light->xyz[1];
-    lightcube_request.gpu_data->xyz[2]            = light->xyz[2];
+    lightcube_request.cpu_data->simd_stats.mul_xyz[0] = 0.05f;
+    lightcube_request.cpu_data->simd_stats.mul_xyz[1] = 0.05f;
+    lightcube_request.cpu_data->simd_stats.mul_xyz[2] = 0.05f;
+    lightcube_request.cpu_data->simd_stats.xyz[0] = light->xyz[0];
+    lightcube_request.cpu_data->simd_stats.xyz[1] = light->xyz[1];
+    lightcube_request.cpu_data->simd_stats.xyz[2] = light->xyz[2];
     lightcube_request.cpu_data->simd_stats.angle_xyz[0] = 0.0f;
     lightcube_request.cpu_data->simd_stats.angle_xyz[1] = 0.0f;
     lightcube_request.cpu_data->simd_stats.angle_xyz[2] = 0.0f;
@@ -188,15 +184,15 @@ void T1_clientlogic_late_startup(void) {
     quad.gpu_data->touchable_id                 = -1;
     quad.cpu_data->alpha_blending_enabled       = false;
     
-    quad.gpu_data->xyz_offset[0]          = 0.0f;
-    quad.gpu_data->xyz_offset[1]          = 0.0f;
-    quad.gpu_data->xyz_offset[2]          = 0.0f;
-    quad.gpu_data->scale_factor           = 1.0f;
+    quad.cpu_data->simd_stats.mul_xyz[0]   = 0.0f;
+    quad.cpu_data->simd_stats.mul_xyz[1]   = 0.0f;
+    quad.cpu_data->simd_stats.mul_xyz[2]   = 0.0f;
+    quad.cpu_data->simd_stats.scale_factor = 1.0f;
     quad.cpu_data->simd_stats.angle_xyz[0] = 1.8f;
     quad.cpu_data->simd_stats.angle_xyz[1] = 0.0f;
     quad.cpu_data->simd_stats.angle_xyz[2] = 0.65f;
-    quad.gpu_data->ignore_camera          = 0.0f;
-    quad.gpu_data->ignore_lighting        = 0.0f;
+    quad.gpu_data->ignore_camera           = 0.0f;
+    quad.gpu_data->ignore_lighting         = 0.0f;
     
     quad.gpu_data->base_mat.ambient_rgb[0]  = 0.05f;
     quad.gpu_data->base_mat.ambient_rgb[1]  = 0.05f;
@@ -264,19 +260,19 @@ void T1_clientlogic_late_startup(void) {
         quad.gpu_data->touchable_id                 = -1;
         quad.cpu_data->alpha_blending_enabled       = true;
         
-        quad.gpu_data->xyz_offset[0]           = 0.0f;
-        quad.gpu_data->xyz_offset[1]           = 0.0f;
-        quad.gpu_data->xyz_offset[2]           = 0.0f;
-        quad.gpu_data->scale_factor            = 1.0f;
+        quad.cpu_data->simd_stats.mul_xyz[0] = 0.0f;
+        quad.cpu_data->simd_stats.mul_xyz[1] = 0.0f;
+        quad.cpu_data->simd_stats.mul_xyz[2] = 0.0f;
+        quad.cpu_data->simd_stats.scale_factor = 1.0f;
         quad.cpu_data->simd_stats.angle_xyz[0] = 1.8f;
         quad.cpu_data->simd_stats.angle_xyz[1] = 0.0f;
         quad.cpu_data->simd_stats.angle_xyz[2] = 0.65f;
         quad.gpu_data->ignore_camera           = 0.0f;
         quad.gpu_data->ignore_lighting         = 0.0f;
         
-        quad.gpu_data->base_mat.ambient_rgb[0]  = 0.05f;
-        quad.gpu_data->base_mat.ambient_rgb[1]  = 0.05f;
-        quad.gpu_data->base_mat.ambient_rgb[2]  = 0.50f;
+        quad.gpu_data->base_mat.ambient_rgb[0] = 0.05f;
+        quad.gpu_data->base_mat.ambient_rgb[1] = 0.05f;
+        quad.gpu_data->base_mat.ambient_rgb[2] = 0.50f;
         quad.gpu_data->alpha = 0.25f;
         
         T1_zsprite_commit(&quad);

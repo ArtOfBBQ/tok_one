@@ -346,9 +346,9 @@ void T1_particle_effect_construct(
     to_construct->zpolygon_gpu.base_mat.rgb_cap[1] = 1.0f;
     to_construct->zpolygon_gpu.base_mat.rgb_cap[2] = 1.0f;
     to_construct->zpolygon_cpu.simd_stats.scale_factor = 1.0f;
-    to_construct->zpolygon_gpu.xyz_mult[0] = 0.01f;
-    to_construct->zpolygon_gpu.xyz_mult[1] = 0.01f;
-    to_construct->zpolygon_gpu.xyz_mult[2] = 0.01f;
+    to_construct->zpolygon_cpu.simd_stats.mul_xyz[0] = 0.01f;
+    to_construct->zpolygon_cpu.simd_stats.mul_xyz[1] = 0.01f;
+    to_construct->zpolygon_cpu.simd_stats.mul_xyz[2] = 0.01f;
     to_construct->zpolygon_gpu.ignore_lighting = true;
     
     to_construct->random_seed = (uint32_t)
@@ -414,8 +414,8 @@ void T1_particle_commit(T1ParticleEffect * to_request)
     log_assert(to_request->verts_per_particle > 0);
     
     for (uint32_t _ = 0; _ < 3; _++) {
-        if (to_request->zpolygon_gpu.xyz_mult[0] < 0.00001f) {
-            to_request->zpolygon_gpu.xyz_mult[0] = 0.00001f;
+        if (to_request->zpolygon_cpu.simd_stats.mul_xyz[0] < 0.00001f) {
+            to_request->zpolygon_cpu.simd_stats.mul_xyz[0] = 0.00001f;
         }
     }
     
@@ -467,7 +467,7 @@ void T1_particle_resize_to_effect_height(
     const float multiplier = new_height / current_height;
     
     for (uint32_t _ = 0; _ < 3; _++) {
-        to_resize->zpolygon_gpu.xyz_mult[_] *= multiplier;
+        to_resize->zpolygon_cpu.simd_stats.mul_xyz[_] *= multiplier;
     }
     
     for (
@@ -477,8 +477,8 @@ void T1_particle_resize_to_effect_height(
     {
         for (uint32_t _ = 0; _ < 3; _++) {
             to_resize->mods[mod_i].cpu_stats.xyz[_] *= multiplier;
-            to_resize->mods[mod_i].gpu_stats.xyz_mult[_] *= multiplier;
-            to_resize->mods[mod_i].gpu_stats.xyz_offset[_] *= multiplier;
+            to_resize->mods[mod_i].cpu_stats.mul_xyz[_] *= multiplier;
+            to_resize->mods[mod_i].cpu_stats.offset_xyz[_] *= multiplier;
         }
     }
 }
