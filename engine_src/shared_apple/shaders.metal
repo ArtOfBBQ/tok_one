@@ -59,14 +59,6 @@ float4 xyz_rotate(const float4 vertices, const float4 xyz_angle) {
     return return_value;
 }
 
-float4 zyx_rotate(const float4 vertices, const float4 xyz_angle) {
-    float4 return_value = z_rotate(vertices,     xyz_angle[2]);
-    return_value        = y_rotate(return_value, xyz_angle[1]);
-    return_value        = x_rotate(return_value, xyz_angle[0]);
-    
-    return return_value;
-}
-
 float4 project_float4_to_float4_perspective(
     const float4 in_xyz,
     const device T1GPUProjectConsts * pjc)
