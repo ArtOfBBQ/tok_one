@@ -300,7 +300,61 @@ inline static void add_opaque_zpolygons_to_workload(
     }
 }
 
-static void construct_camera_matrix(void) {
+static void construct_projection_matrix(void) {
+    
+    T1GPUProjectConsts * p = &T1_engine_globals->project_consts;
+    
+    T1float4x4 proj;
+    const float y_scale = p->field_of_view_modifier;
+    const float x_scale = p->x_multiplier;
+    
+    const float tan_half_fov_y = 1.0f / y_scale;
+    const float fov_y_rad = 2.0f * atanf(tan_half_fov_y);
+    const float aspect = y_scale / x_scale;
+    
+    const float zn = p->znear;
+    const float zf = p->zfar;
+
+    const float f = 1.0f / tanf(fov_y_rad * 0.5f);
+    
+    #if 1
+    // perspective projection
+    T1_linalg3d_float4x4_construct(
+        &proj,
+        f / aspect, 0.0f, 0.0f, 0.0f,
+        0.0f, f, 0.0f, 0.0f,
+        0.0f, 0.0f, zf / (zf - zn), -zf * zn / (zf - zn),
+        0.0f, 0.0f, 1.0f, 0.0f
+    );
+    #else
+    // orthographic projection
+    T1_linalg3d_float4x4_construct(
+        &proj,
+        1.0f,  0.0f,  0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.01f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f);
+    #endif
+    
+    T1_std_memcpy(
+        camera.projection_4x4 + 0,
+        proj.rows[0].data,
+        sizeof(float) * 4);
+    T1_std_memcpy(
+        camera.projection_4x4 + 4,
+        proj.rows[1].data,
+        sizeof(float) * 4);
+    T1_std_memcpy(
+        camera.projection_4x4 + 8,
+        proj.rows[2].data,
+        sizeof(float) * 4);
+    T1_std_memcpy(
+        camera.projection_4x4 + 12,
+        proj.rows[3].data,
+        sizeof(float) * 4);
+}
+
+static void construct_view_matrix(void) {
     camera.xyz_cosangle[0] = cosf(camera.xyz_angle[0]);
     camera.xyz_cosangle[1] = cosf(camera.xyz_angle[1]);
     camera.xyz_cosangle[2] = cosf(camera.xyz_angle[2]);
@@ -462,7 +516,9 @@ void renderer_hardware_render(
     
     construct_model_matrices();
     
-    construct_camera_matrix();
+    construct_view_matrix();
+    
+    construct_projection_matrix();
     
     T1_std_memcpy(
         /* void * dest: */

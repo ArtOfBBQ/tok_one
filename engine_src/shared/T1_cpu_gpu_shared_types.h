@@ -51,6 +51,7 @@ typedef struct {
 
 typedef struct {
     float view_4x4[16];
+    float projection_4x4[16];
     float xyz[3];           // 12 bytes
     float xyz_angle[3];     // 12 bytes
     float xyz_cosangle[3];  // 12 bytes

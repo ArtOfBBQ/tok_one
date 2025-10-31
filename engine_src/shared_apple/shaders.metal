@@ -59,28 +59,6 @@ float4 xyz_rotate(const float4 vertices, const float4 xyz_angle) {
     return return_value;
 }
 
-float4 project_float4_to_float4_perspective(
-    const float4 in_xyz,
-    const device T1GPUProjectConsts * pjc)
-{
-    float4 out;
-    
-    out[0] = in_xyz[0];
-    out[1] = in_xyz[1];
-    
-    out[0] *= pjc->x_multiplier;
-    out[1] *= pjc->field_of_view_modifier;
-    out[3] = in_xyz[2];  // Positive Z in view space
-    
-    // clipspace z
-    out[2] =
-        pjc->zfar *
-            (out[3] - pjc->znear) /
-                (pjc->zfar - pjc->znear);
-    
-    return out;
-}
-
 vertex float4 shadows_vertex_shader(
     uint vertex_i [[ vertex_id ]],
     const device T1GPUVertexIndices * vertices [[ buffer(0) ]],
@@ -166,9 +144,26 @@ vertex float4 shadows_vertex_shader(
             -lights[updating_globals->shadowcaster_i].angle_xyz[2],
             0.0f));
     
-    return project_float4_to_float4_perspective(
-        lightcam_z_rotated,
-        projection_constants);
+    lightcam_z_rotated[3] = 1.0f;
+    float4x4 projection = matrix_float4x4(
+        camera->projection_4x4[ 0],
+        camera->projection_4x4[ 1],
+        camera->projection_4x4[ 2],
+        camera->projection_4x4[ 3],
+        camera->projection_4x4[ 4],
+        camera->projection_4x4[ 5],
+        camera->projection_4x4[ 6],
+        camera->projection_4x4[ 7],
+        camera->projection_4x4[ 8],
+        camera->projection_4x4[ 9],
+        camera->projection_4x4[10],
+        camera->projection_4x4[11],
+        camera->projection_4x4[12],
+        camera->projection_4x4[13],
+        camera->projection_4x4[14],
+        camera->projection_4x4[15]);
+    
+    return lightcam_z_rotated * projection;
 }
 
 fragment void shadows_fragment_shader() {}
@@ -285,8 +280,6 @@ vertex_shader(
         (out.worldpos * ic) +
         (out.worldpos * view * (1.0f - ic));
     
-    out.worldpos[3] = 0.0f;
-    
     out.touchable_id = polygons[out.polygon_i].touchable_id;
     
     out.texture_coordinate = vector_float2(
@@ -295,9 +288,25 @@ vertex_shader(
     
     out.point_size = 40.0f;
     
-    out.position = project_float4_to_float4_perspective(
-        final_pos,
-        projection_constants);
+    float4x4 projection = matrix_float4x4(
+        camera->projection_4x4[ 0],
+        camera->projection_4x4[ 1],
+        camera->projection_4x4[ 2],
+        camera->projection_4x4[ 3],
+        camera->projection_4x4[ 4],
+        camera->projection_4x4[ 5],
+        camera->projection_4x4[ 6],
+        camera->projection_4x4[ 7],
+        camera->projection_4x4[ 8],
+        camera->projection_4x4[ 9],
+        camera->projection_4x4[10],
+        camera->projection_4x4[11],
+        camera->projection_4x4[12],
+        camera->projection_4x4[13],
+        camera->projection_4x4[14],
+        camera->projection_4x4[15]);
+    
+    out.position = final_pos * projection;
     
     out.normal = normalize(mesh_normals * model);
     out.tangent = normalize(mesh_tangent * model);
@@ -307,8 +316,8 @@ vertex_shader(
 }
 
 struct FragmentAndTouchableOut {
-    half4 color [[color(0)]];       // Output to screen
-    half4 touchable_id [[color(1)]];  // Output to ID buffer
+    half4 color [[color(0)]];
+    half4 touchable_id [[color(1)]];
 };
 
 /*
@@ -441,6 +450,24 @@ float4 get_lit(
     
     float4 ignore_lighting_color = diffuse_texture_sample * diffuse_base;
     
+    float4x4 projection = matrix_float4x4(
+        camera->projection_4x4[ 0],
+        camera->projection_4x4[ 1],
+        camera->projection_4x4[ 2],
+        camera->projection_4x4[ 3],
+        camera->projection_4x4[ 4],
+        camera->projection_4x4[ 5],
+        camera->projection_4x4[ 6],
+        camera->projection_4x4[ 7],
+        camera->projection_4x4[ 8],
+        camera->projection_4x4[ 9],
+        camera->projection_4x4[10],
+        camera->projection_4x4[11],
+        camera->projection_4x4[12],
+        camera->projection_4x4[13],
+        camera->projection_4x4[14],
+        camera->projection_4x4[15]);
+    
     for (
         uint32_t i = 0;
         i < updating_globals->lights_size;
@@ -480,10 +507,8 @@ float4 get_lit(
                     -light_angle_xyz[2],
                     0.0f));
             
-            float4 light_clip_pos =
-                project_float4_to_float4_perspective(
-                    light_z_rotated,
-                    projection_constants);
+            light_z_rotated[3] = 1.0f;
+            float4 light_clip_pos = light_z_rotated * projection;
             
             float2 shadow_uv =
                 ((light_clip_pos.xy / light_clip_pos.w) * 0.5f) +
