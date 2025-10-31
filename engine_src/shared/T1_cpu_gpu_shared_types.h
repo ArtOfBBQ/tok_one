@@ -50,11 +50,12 @@ typedef struct {
 } __attribute__((aligned(32))) T1GPULockedVertex;
 
 typedef struct {
+    float view_4x4[16];
     float xyz[3];           // 12 bytes
     float xyz_angle[3];     // 12 bytes
     float xyz_cosangle[3];  // 12 bytes
     float xyz_sinangle[3];  // 12 bytes
-    float padding[2];       //  8 bytes
+    float padding[4];       //  8 bytes
 } T1GPUCamera;
 
 typedef struct {

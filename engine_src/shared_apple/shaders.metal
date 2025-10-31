@@ -110,8 +110,7 @@ vertex float4 shadows_vertex_shader(
         locked_vertices[locked_vertex_i].xyz[2],
         1.0f);
     
-    // rotate vertices
-    float4x4 transform = matrix_float4x4(
+    float4x4 model = matrix_float4x4(
         polygons[polygon_i].model_4x4[0],
         polygons[polygon_i].model_4x4[1],
         polygons[polygon_i].model_4x4[2],
@@ -129,8 +128,7 @@ vertex float4 shadows_vertex_shader(
         polygons[polygon_i].model_4x4[14],
         polygons[polygon_i].model_4x4[15]);
     
-    // translate to world position
-    float4 out_vec4 = mesh_vertices * transform;
+    float4 out_vec4 = mesh_vertices * model;
     
     // for an "ignore camera" object, we need to know where that object is
     // in world space
@@ -240,17 +238,17 @@ vertex_shader(
         locked_vertices[out.locked_vertex_i].bitangent_xyz[2],
         0.0f);
     
-    float4x4 transform = matrix_float4x4(
-        polygons[out.polygon_i].model_4x4[0],
-        polygons[out.polygon_i].model_4x4[1],
-        polygons[out.polygon_i].model_4x4[2],
-        polygons[out.polygon_i].model_4x4[3],
-        polygons[out.polygon_i].model_4x4[4],
-        polygons[out.polygon_i].model_4x4[5],
-        polygons[out.polygon_i].model_4x4[6],
-        polygons[out.polygon_i].model_4x4[7],
-        polygons[out.polygon_i].model_4x4[8],
-        polygons[out.polygon_i].model_4x4[9],
+    float4x4 model = matrix_float4x4(
+        polygons[out.polygon_i].model_4x4[ 0],
+        polygons[out.polygon_i].model_4x4[ 1],
+        polygons[out.polygon_i].model_4x4[ 2],
+        polygons[out.polygon_i].model_4x4[ 3],
+        polygons[out.polygon_i].model_4x4[ 4],
+        polygons[out.polygon_i].model_4x4[ 5],
+        polygons[out.polygon_i].model_4x4[ 6],
+        polygons[out.polygon_i].model_4x4[ 7],
+        polygons[out.polygon_i].model_4x4[ 8],
+        polygons[out.polygon_i].model_4x4[ 9],
         polygons[out.polygon_i].model_4x4[10],
         polygons[out.polygon_i].model_4x4[11],
         polygons[out.polygon_i].model_4x4[12],
@@ -258,24 +256,26 @@ vertex_shader(
         polygons[out.polygon_i].model_4x4[14],
         polygons[out.polygon_i].model_4x4[15]);
     
-    out.worldpos = mesh_vertices * transform;
-    out.worldpos[3] = 0.0f;
+    out.worldpos = mesh_vertices * model;
+    out.worldpos[3] = 1.0f;
     
-    float4 camera_position = vector_float4(
-        camera->xyz[0],
-        camera->xyz[1],
-        camera->xyz[2],
-        0.0f);
-    float4 camera_translated_pos = out.worldpos - camera_position;
-    
-    // rotate around camera
-    float4 cam_z_rotated = xyz_rotate(
-        camera_translated_pos,
-        vector_float4(
-            -camera->xyz_angle[0],
-            -camera->xyz_angle[1],
-            -camera->xyz_angle[2],
-            0.0f));
+    float4x4 view = matrix_float4x4(
+        camera->view_4x4[ 0],
+        camera->view_4x4[ 1],
+        camera->view_4x4[ 2],
+        camera->view_4x4[ 3],
+        camera->view_4x4[ 4],
+        camera->view_4x4[ 5],
+        camera->view_4x4[ 6],
+        camera->view_4x4[ 7],
+        camera->view_4x4[ 8],
+        camera->view_4x4[ 9],
+        camera->view_4x4[10],
+        camera->view_4x4[11],
+        camera->view_4x4[12],
+        camera->view_4x4[13],
+        camera->view_4x4[14],
+        camera->view_4x4[15]);
     
     float ic = clamp(
         polygons[out.polygon_i].ignore_camera,
@@ -283,7 +283,9 @@ vertex_shader(
         1.0f);
     float4 final_pos =
         (out.worldpos * ic) +
-        (cam_z_rotated * (1.0f - ic));
+        (out.worldpos * view * (1.0f - ic));
+    
+    out.worldpos[3] = 0.0f;
     
     out.touchable_id = polygons[out.polygon_i].touchable_id;
     
@@ -297,9 +299,9 @@ vertex_shader(
         final_pos,
         projection_constants);
     
-    out.normal = normalize(mesh_normals * transform);
-    out.tangent = normalize(mesh_tangent * transform);
-    out.bitangent = normalize(mesh_bitangent * transform);
+    out.normal = normalize(mesh_normals * model);
+    out.tangent = normalize(mesh_tangent * model);
+    out.bitangent = normalize(mesh_bitangent * model);
     
     return out;
 }
@@ -1012,23 +1014,7 @@ raw_vertex_shader(
         vertices[vertex_i].xyz[2],
         1.0f);
     
-    float4 camera_position = vector_float4(
-        camera->xyz[0],
-        camera->xyz[1],
-        camera->xyz[2],
-        1.0f);
-    float4 camera_translated_pos = pos - camera_position;
-    
-    // rotate around camera
-    float4 cam_z_rotated = xyz_rotate(
-        camera_translated_pos,
-        vector_float4(
-            -camera->xyz_angle[0],
-            -camera->xyz_angle[1],
-            -camera->xyz_angle[2],
-            0.0f));
-    
-    out.position = cam_z_rotated;
+    out.position = pos;
     
     // projection
     out.position[0] *= project_consts->x_multiplier;
