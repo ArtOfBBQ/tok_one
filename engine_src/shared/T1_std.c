@@ -334,6 +334,7 @@ T1_std_internal_strcat_float_cap(
     
     #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
     assert(recipient != NULL);
+    assert(recipient_size > 0);
     #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -367,6 +368,13 @@ T1_std_internal_strcat_float_cap(
         above_decimal,
         adj_recip + rlen);
     rlen = T1_std_strlen(adj_recip);
+    
+    #if T1_STD_ASSERTS_ACTIVE == T1_ACTIVE
+    assert(rlen < recipient_size);
+    #elif T1_STD_ASSERTS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     if (below_decimal > 0) {
         adj_recip[rlen++] = '.';

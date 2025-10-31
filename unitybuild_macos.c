@@ -39,6 +39,7 @@ gcc -x objective-c -std="c99" -objC -O0 $MAC_FRAMEWORKS unitybuild.c -o build/un
 #include "inflate.c"
 #include "decode_png.c"
 #include "decode_bmp.c"
+#include "T1_linalg3d.c"
 #include "T1_decodedimage.c"
 #include "T1_wav.c"
 #include "T1_tokenizer.c"

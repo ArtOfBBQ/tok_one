@@ -167,8 +167,21 @@ void T1_clientlogic_early_startup(
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     assert(ok);
     
+    T1_meta_struct(T1CPUzSpriteSimdStats, &ok);
+    assert(ok);
+    T1_meta_array(T1CPUzSpriteSimdStats, T1_TYPE_F32, xyz, 3, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(-2.0f, 2.0f, &ok);
+    T1_meta_array(T1CPUzSpriteSimdStats, T1_TYPE_F32, offset_xyz, 3, &ok);
+    T1_meta_array(T1CPUzSpriteSimdStats, T1_TYPE_F32, mul_xyz, 3, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(-0.5f, 0.5f, &ok);
+    T1_meta_array(T1CPUzSpriteSimdStats, T1_TYPE_F32, angle_xyz, 3, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(-3.6f, 3.6f, &ok);
+    T1_meta_field(T1CPUzSpriteSimdStats, T1_TYPE_F32, scale_factor, &ok);
+    T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
+    
     T1_meta_struct(T1CPUzSprite, &ok);
     assert(ok);
+    T1_meta_struct_field(T1CPUzSprite, T1CPUzSpriteSimdStats, simd_stats, &ok);
     T1_meta_field(T1CPUzSprite, T1_TYPE_U8, alpha_blending_enabled, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(0, 1, &ok);
     T1_meta_field(T1CPUzSprite, T1_TYPE_U8, visible, &ok);
@@ -177,19 +190,10 @@ void T1_clientlogic_early_startup(
     
     T1_meta_struct(T1GPUzSprite, &ok);
     assert(ok);
-    T1_meta_array(T1GPUzSprite, T1_TYPE_F32, xyz, 3, &ok);
-    T1_meta_reg_custom_float_limits_for_last_field(-2.0f, 2.0f, &ok);
-    T1_meta_array(T1GPUzSprite, T1_TYPE_F32, xyz_angle, 3, &ok);
-    T1_meta_reg_custom_float_limits_for_last_field(-3.6f, 3.6f, &ok);
+    T1_meta_struct_field(T1GPUzSprite, T1GPUConstMat, base_mat, &ok);
     T1_meta_array(T1GPUzSprite, T1_TYPE_F32, bonus_rgb, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(0.0f, 2.0f, &ok);
-    T1_meta_array(T1GPUzSprite, T1_TYPE_F32, xyz_mult, 3, &ok);
-    T1_meta_reg_custom_float_limits_for_last_field(-0.5f, 0.5f, &ok);
-    T1_meta_array(T1GPUzSprite, T1_TYPE_F32, xyz_offset, 3, &ok);
-    T1_meta_reg_custom_float_limits_for_last_field(-2.0f, 2.0f, &ok);
     T1_meta_array(T1GPUzSprite, T1_TYPE_F32, base_mat_uv_offsets, 2, &ok);
-    T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_field(T1GPUzSprite, T1_TYPE_F32, scale_factor, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     T1_meta_field(T1GPUzSprite, T1_TYPE_F32, alpha, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-2.0f, 2.0f, &ok);
@@ -199,7 +203,6 @@ void T1_clientlogic_early_startup(
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     T1_meta_field(T1GPUzSprite, T1_TYPE_U32, remove_shadow, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(0, 1, &ok);
-    T1_meta_struct_field(T1GPUzSprite, T1GPUConstMat, base_mat, &ok);
     assert(ok);
     
     T1_meta_enum(T1EasingType, T1_TYPE_U8, &ok);
@@ -571,13 +574,13 @@ static int32_t slider_labels_object_id = -1;
 void T1_clientlogic_late_startup(void) {
     
     pds->editing = T1_particle_get_next();
-    pds->editing->zpolygon_gpu.xyz_mult[0] = T1_zsprite_get_x_multiplier_for_width(&pds->editing->zpolygon_cpu, 0.05f);
-    pds->editing->zpolygon_gpu.xyz_mult[1] = T1_zsprite_get_y_multiplier_for_height(&pds->editing->zpolygon_cpu, 0.05f);
-    pds->editing->zpolygon_gpu.xyz_mult[2] = T1_zsprite_get_z_multiplier_for_depth(&pds->editing->zpolygon_cpu, 0.05f);
+    pds->editing->zpolygon_cpu.simd_stats.mul_xyz[0] = T1_zsprite_get_x_multiplier_for_width(&pds->editing->zpolygon_cpu, 0.05f);
+    pds->editing->zpolygon_cpu.simd_stats.mul_xyz[1] = T1_zsprite_get_y_multiplier_for_height(&pds->editing->zpolygon_cpu, 0.05f);
+    pds->editing->zpolygon_cpu.simd_stats.mul_xyz[2] = T1_zsprite_get_z_multiplier_for_depth(&pds->editing->zpolygon_cpu, 0.05f);
     pds->editing->zpolygon_cpu.mesh_id = BASIC_CUBE_MESH_ID;
-    pds->editing->zpolygon_gpu.xyz[0] = 0.0f;
-    pds->editing->zpolygon_gpu.xyz[1] = 0.0f;
-    pds->editing->zpolygon_gpu.xyz[2] = 0.5f;
+    pds->editing->zpolygon_cpu.simd_stats.xyz[0] = 0.0f;
+    pds->editing->zpolygon_cpu.simd_stats.xyz[1] = 0.0f;
+    pds->editing->zpolygon_cpu.simd_stats.xyz[2] = 0.5f;
     pds->editing->zpolygon_gpu.alpha = 1.0f;
     pds->editing->zpolygon_gpu.base_mat.alpha = 1.0f;
     pds->editing->spawn_lifespan = 1000000;
@@ -700,11 +703,11 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
                 T1_scheduled_animations_request_next(true);
             anim->affected_zsprite_id = target_zsprite_ids[j];
             anim->delete_other_anims_targeting_same_object_id_on_commit = true;
-            anim->gpu_polygon_vals.xyz[0] =
+            anim->cpu_vals.xyz[0] =
                 T1_engineglobals_screenspace_x_to_x(new_x, new_z);
-            anim->gpu_polygon_vals.xyz[1] =
+            anim->cpu_vals.xyz[1] =
                 T1_engineglobals_screenspace_y_to_y(new_y, new_z);
-            anim->gpu_polygon_vals.xyz[2] = new_z;
+            anim->cpu_vals.xyz[2] = new_z;
             anim->duration_us = 60000;
             T1_scheduled_animations_commit(anim);
         }
@@ -719,11 +722,11 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
             T1_scheduled_animations_request_next(true);
         anim->affected_zsprite_id = target_zsprite_ids[j];
         anim->delete_other_anims_targeting_same_object_id_on_commit = true;
-        anim->gpu_polygon_vals.xyz[0] =
+        anim->cpu_vals.xyz[0] =
             T1_engineglobals_screenspace_x_to_x(new_x, new_z);
-        anim->gpu_polygon_vals.xyz[1] =
+        anim->cpu_vals.xyz[1] =
             T1_engineglobals_screenspace_y_to_y(new_title_y, new_z);
-        anim->gpu_polygon_vals.xyz[2] = new_z;
+        anim->cpu_vals.xyz[2] = new_z;
         anim->duration_us = 60000;
         T1_scheduled_animations_commit(anim);
     }
@@ -802,7 +805,7 @@ static void load_texture(const char * writables_filename) {
         T1ScheduledAnimation * fade = T1_scheduled_animations_request_next(true);
         fade->pause_us = 3000000;
         fade->duration_us = 2000000;
-        fade->gpu_polygon_vals.alpha = 0.0f;
+        fade->gpu_vals.alpha = 0.0f;
         fade->affected_zsprite_id = temp_quad.cpu_data->zsprite_id;
         T1_scheduled_animations_commit(fade);
         #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE

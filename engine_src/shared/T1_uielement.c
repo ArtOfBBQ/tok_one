@@ -126,9 +126,9 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                             T1_uiinteractions[
                                 T1_INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].
                                     screen_x,
-                            T1_zsprites_to_render->gpu_data[zp_i].
-                                xyz[2]) -
-                        T1_zsprites_to_render->gpu_data[zp_i].xyz[0];
+                            T1_zsprites_to_render->cpu_data[zp_i].
+                                simd_stats.xyz[2]) -
+                        T1_zsprites_to_render->cpu_data[zp_i].simd_stats.xyz[0];
                     
                     if (
                         new_x_offset <
@@ -150,7 +150,7 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                                 slider_width / 2;
                     }
                     
-                    T1_zsprites_to_render->gpu_data[zp_i].xyz_offset[0] =
+                    T1_zsprites_to_render->cpu_data[zp_i].simd_stats.offset_xyz[0] =
                         new_x_offset;
                         
                     active_ui_elements[ui_elem_i].label_dirty = true;
@@ -323,7 +323,7 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                     bump_pin->easing_type =
                         EASINGTYPE_SINGLE_BOUNCE_ZERO_TO_ZERO;
                     bump_pin->affected_zsprite_id = active_ui_elements[i].pin_zsprite_id;
-                    bump_pin->gpu_polygon_vals.scale_factor = 1.20f;
+                    bump_pin->cpu_vals.scale_factor = 1.20f;
                     bump_pin->duration_us = 120000;
                     T1_scheduled_animations_commit(bump_pin);
                     #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
@@ -343,7 +343,7 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                         currently_clicking_zsprite_id;
                     bump->easing_type =
                         EASINGTYPE_SINGLE_BOUNCE_ZERO_TO_ZERO;
-                    bump->gpu_polygon_vals.scale_factor = 1.25f;
+                    bump->cpu_vals.scale_factor = 1.25f;
                     bump->duration_us = 140000;
                     T1_scheduled_animations_commit(bump);
                     #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
@@ -419,13 +419,17 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                 {
                     xy_screenspace[0] =
                         T1_engineglobals_x_to_screenspace_x(
-                            T1_zsprites_to_render->gpu_data[zs_i].xyz[0],
-                            T1_zsprites_to_render->gpu_data[zs_i].xyz[2]);
+                            T1_zsprites_to_render->cpu_data[zs_i].
+                                simd_stats.xyz[0],
+                            T1_zsprites_to_render->cpu_data[zs_i].
+                                simd_stats.xyz[2]);
                     xy_screenspace[1] =
                         T1_engineglobals_y_to_screenspace_y(
-                            T1_zsprites_to_render->gpu_data[zs_i].xyz[1],
-                            T1_zsprites_to_render->gpu_data[zs_i].xyz[2]);
-                    z = T1_zsprites_to_render->gpu_data[zs_i].xyz[2];
+                            T1_zsprites_to_render->cpu_data[zs_i].
+                                simd_stats.xyz[1],
+                            T1_zsprites_to_render->cpu_data[zs_i].
+                                simd_stats.xyz[2]);
+                    z = T1_zsprites_to_render->cpu_data[zs_i].simd_stats.xyz[2];
                     ignore_camera = (uint8_t)
                         T1_zsprites_to_render->gpu_data[zs_i].
                             ignore_camera;
@@ -552,7 +556,8 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
 
 static void set_slider_pos_from_current_val(
     ActiveUIElement * ae,
-    T1GPUzSprite * pin_gpu_zsprite)
+    T1GPUzSprite * pin_gpu_zsprite,
+    T1CPUzSpriteSimdStats * pin_cpu_zsprite)
 {
     log_assert(ae != NULL);
     log_assert(pin_gpu_zsprite != NULL);
@@ -642,7 +647,7 @@ static void set_slider_pos_from_current_val(
     log_assert(new_x_offset >= -ae->slider_width / 2);
     log_assert(new_x_offset <= ae->slider_width);
     
-    pin_gpu_zsprite->xyz_offset[0] = new_x_offset;
+    pin_cpu_zsprite->offset_xyz[0] = new_x_offset;
 }
 
 void T1_uielement_request_slider(
@@ -782,8 +787,8 @@ void T1_uielement_request_slider(
             &slider_pin);
     
     slider_pin.cpu_data->zsprite_id = pin_zsprite_id;
-    slider_pin.gpu_data->xyz_offset[0] = 0.0f;
-    slider_pin.gpu_data->xyz_offset[1] = 0.0f;
+    slider_pin.cpu_data->simd_stats.offset_xyz[0] = 0.0f;
+    slider_pin.cpu_data->simd_stats.offset_xyz[1] = 0.0f;
     
     slider_pin.gpu_data->base_mat.texturearray_i =
         next_ae->user_set.slider_pin_tex.array_i;
@@ -808,7 +813,8 @@ void T1_uielement_request_slider(
     
     set_slider_pos_from_current_val(
         next_ae,
-        slider_pin.gpu_data);
+        slider_pin.gpu_data,
+        &slider_pin.cpu_data->simd_stats);
     
     T1_zsprite_commit(&slider_pin);
 }

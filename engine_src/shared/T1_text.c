@@ -324,7 +324,7 @@ void text_request_label_offset_around(
                 font_settings->ignore_lighting;
             letter.gpu_data->ignore_camera =
                 font_settings->ignore_camera;
-            letter.gpu_data->scale_factor =
+            letter.cpu_data->simd_stats.scale_factor =
                 font_settings->scale_factor;
             letter.cpu_data->zsprite_id = with_id;
             letter.gpu_data->touchable_id =
@@ -338,13 +338,13 @@ void text_request_label_offset_around(
                 continue;
             }
             
-            letter.gpu_data->xyz_offset[0] =
+            letter.cpu_data->simd_stats.offset_xyz[0] =
                 T1_engineglobals_screenspace_width_to_width(
                     (cur_x_offset_pixelspace +
                         font_settings->extra_offset_xy[0] +
                             get_left_side_bearing(text_to_draw[j])),
                     z);
-            letter.gpu_data->xyz_offset[1] =
+            letter.cpu_data->simd_stats.offset_xyz[1] =
                 T1_engineglobals_screenspace_height_to_height(
                     (cur_y_offset_pixelspace -
                         get_y_offset(text_to_draw[j]) -
@@ -362,7 +362,7 @@ void text_request_label_offset_around(
             
             cur_x_offset_pixelspace +=
                 get_advance_width(text_to_draw[j]);
-            log_assert(letter.gpu_data->scale_factor > 0.0f);
+            log_assert(letter.cpu_data->simd_stats.scale_factor > 0.0f);
             T1_zsprite_commit(&letter);
         }
         cur_y_offset_pixelspace -= get_newline_advance();
@@ -518,11 +518,11 @@ void text_request_label_renderable(
             continue;
         }
         
-        letter.gpu_data->xyz_offset[0] =
+        letter.cpu_data->simd_stats.offset_xyz[0] =
             T1_engineglobals_screenspace_width_to_width(
                 cur_x_offset + get_left_side_bearing(
                     text_to_draw[i]), z);
-        letter.gpu_data->xyz_offset[1] =
+        letter.cpu_data->simd_stats.offset_xyz[1] =
             T1_engineglobals_screenspace_height_to_height(
                 cur_y_offset - get_y_offset(
                     text_to_draw[i]), z);

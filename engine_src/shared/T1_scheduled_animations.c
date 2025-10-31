@@ -8,8 +8,9 @@ T1ScheduledAnimation * scheduled_animations;
 uint32_t scheduled_animations_size = 0;
 
 typedef struct ScheduledAnimationState {
-    T1GPUzSprite zsprite_final_pos;
+    T1GPUzSprite zsprite_final_pos_gpu;
     T1GPUzSprite zsprite_deltas[2];
+    T1CPUzSpriteSimdStats zsprite_final_pos_cpu;
 } ScheduledAnimationState;
 
 static ScheduledAnimationState * sas = NULL;
@@ -91,9 +92,13 @@ T1ScheduledAnimation * T1_scheduled_animations_request_next(
     
     if (endpoints_not_deltas) {
         T1_std_memset_f32(
-            &return_value->gpu_polygon_vals,
+            &return_value->gpu_vals,
             FLT_SCHEDULEDANIM_IGNORE,
             sizeof(T1GPUzSprite));
+        T1_std_memset_f32(
+            &return_value->cpu_vals,
+            FLT_SCHEDULEDANIM_IGNORE,
+            sizeof(T1CPUzSprite));
         T1_std_memset_f32(
             &return_value->lightsource_vals,
             FLT_SCHEDULEDANIM_IGNORE,
@@ -109,17 +114,18 @@ T1ScheduledAnimation * T1_scheduled_animations_request_next(
 static void apply_animation_effects_for_given_eased_t(
     T1TPair t,
     T1ScheduledAnimation * anim,
-    T1GPUzSprite * recip)
+    T1GPUzSprite * recip_gpu,
+    T1CPUzSpriteSimdStats * recip_cpu)
 {
-    float * anim_vals_ptr    = (float *)&anim->gpu_polygon_vals;
-    float * target_vals_ptr = (float *)recip;
+    float * anim_vals_ptr    = (float *)&anim->gpu_vals;
+    float * target_vals_ptr = (float *)recip_gpu;
     
-    SIMD_FLOAT simd_t_now =
-        simd_set1_float(t.now);
-    SIMD_FLOAT simd_t_b4  =
-        simd_set1_float(t.applied);
+    SIMD_FLOAT simd_t_now = simd_set1_float(t.now);
+    SIMD_FLOAT simd_t_b4  = simd_set1_float(t.applied);
     
     log_assert((sizeof(T1GPUzSprite) / 4) % SIMD_FLOAT_LANES == 0);
+    log_assert((sizeof(T1CPUzSpriteSimdStats) / 4) % SIMD_FLOAT_LANES == 0);
+    
     for (
         uint32_t simd_step_i = 0;
         (simd_step_i * sizeof(float)) < sizeof(T1GPUzSprite);
@@ -150,20 +156,56 @@ static void apply_animation_effects_for_given_eased_t(
                 simd_t_now_deltas));
     }
     
+    anim_vals_ptr = (float *)&anim->cpu_vals;
+    target_vals_ptr = (float *)recip_cpu;
+    
+    for (
+        uint32_t simd_step_i = 0;
+        (simd_step_i * sizeof(float)) < sizeof(T1CPUzSpriteSimdStats);
+        simd_step_i += SIMD_FLOAT_LANES)
+    {
+        SIMD_FLOAT simd_anim_vals =
+            simd_load_floats((anim_vals_ptr + simd_step_i));
+        SIMD_FLOAT simd_target_vals =
+            simd_load_floats((target_vals_ptr + simd_step_i));
+        
+        SIMD_FLOAT simd_t_now_deltas =
+            simd_mul_floats(
+                simd_anim_vals,
+                simd_t_now);
+        SIMD_FLOAT simd_t_previous_deltas =
+            simd_mul_floats(
+                simd_anim_vals,
+                simd_t_b4);
+        
+        simd_t_now_deltas = simd_sub_floats(
+            simd_t_now_deltas,
+            simd_t_previous_deltas);
+        
+        simd_store_floats(
+            (target_vals_ptr + simd_step_i),
+            simd_add_floats(
+                simd_target_vals,
+                simd_t_now_deltas));
+    }
+    
     #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-    log_assert(recip->ignore_camera >= -0.05f);
-    log_assert(recip->ignore_camera <= 1.05f);
-    log_assert(recip->ignore_lighting >= -0.05f);
-    log_assert(recip->ignore_lighting <= 1.05f);
-    log_assert(recip->remove_shadow >= 0);
-    log_assert(recip->remove_shadow <= 1);
+    log_assert(recip_gpu->ignore_camera >= -0.05f);
+    log_assert(recip_gpu->ignore_camera <= 1.05f);
+    log_assert(recip_gpu->ignore_lighting >= -0.05f);
+    log_assert(recip_gpu->ignore_lighting <= 1.05f);
+    log_assert(recip_gpu->remove_shadow >= 0);
+    log_assert(recip_gpu->remove_shadow <= 1);
     // log_assert(recip->alpha >= -0.1f);
     // log_assert(recip->alpha <=  1.1f);
-    log_assert(recip->scale_factor >    0.0f);
-    log_assert(recip->scale_factor < 1000.0f);
+    log_assert(recip_cpu->scale_factor >    0.0f);
+    log_assert(recip_cpu->scale_factor < 1000.0f);
     // log_assert(recip->xyz_multiplier[0] > 0.0f);
     // log_assert(recip->xyz_multiplier[1] > 0.0f);
     // log_assert(recip->xyz_multiplier[2] > 0.0f);
+    log_assert(recip_gpu->bonus_rgb[0] < 3.0f);
+    log_assert(recip_gpu->bonus_rgb[1] < 3.0f);
+    log_assert(recip_gpu->bonus_rgb[2] < 3.0f);
     #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -172,13 +214,15 @@ static void apply_animation_effects_for_given_eased_t(
 
 static void T1_scheduled_animations_get_projected_final_position_for(
     const int32_t zp_i,
-    T1GPUzSprite * recip)
+    T1GPUzSprite * recip_gpu,
+    T1CPUzSpriteSimdStats * recip_cpu)
 {
     log_assert(zp_i >= 0);
     log_assert((uint32_t)zp_i < T1_zsprites_to_render->size);
     
     const int32_t zsprite_id = T1_zsprites_to_render->cpu_data[zp_i].zsprite_id;
-    *recip = T1_zsprites_to_render->gpu_data[zp_i];
+    *recip_gpu = T1_zsprites_to_render->gpu_data[zp_i];
+    *recip_cpu = T1_zsprites_to_render->cpu_data[zp_i].simd_stats;
     
     for (uint32_t sa_i = 0; sa_i < scheduled_animations_size; sa_i++) {
         if (
@@ -201,7 +245,8 @@ static void T1_scheduled_animations_get_projected_final_position_for(
             apply_animation_effects_for_given_eased_t(
                 t,
                 &scheduled_animations[sa_i],
-                recip);
+                recip_gpu,
+                recip_cpu);
         }
     }
 }
@@ -254,13 +299,14 @@ void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
         }
         log_assert(first_zp_i < (int32_t)T1_zsprites_to_render->size);
         
-        float * anim_gpu_vals = (float *)&to_commit->gpu_polygon_vals;
         
         T1_scheduled_animations_get_projected_final_position_for(
             first_zp_i,
-            &sas->zsprite_final_pos);
+            &sas->zsprite_final_pos_gpu,
+            &sas->zsprite_final_pos_cpu);
         
-        float * orig_gpu_vals = (float *)&sas->zsprite_final_pos;
+        float * anim_gpu_vals = (float *)&to_commit->gpu_vals;
+        float * orig_gpu_vals = (float *)&sas->zsprite_final_pos_gpu;
         
         for (
             uint32_t i = 0;
@@ -273,6 +319,22 @@ void T1_scheduled_animations_commit(T1ScheduledAnimation * to_commit) {
                 // fetch the current value
                 float delta_to_target = anim_gpu_vals[i] - orig_gpu_vals[i];
                 anim_gpu_vals[i] = delta_to_target;
+            }
+        }
+        
+        float * anim_cpu_vals = (float *)&to_commit->cpu_vals;
+        float * orig_cpu_vals = (float *)&sas->zsprite_final_pos_cpu;
+        for (
+            uint32_t i = 0;
+            i < (sizeof(T1CPUzSpriteSimdStats) / sizeof(float));
+            i++)
+        {
+            if (anim_cpu_vals[i] == FLT_SCHEDULEDANIM_IGNORE) {
+                anim_cpu_vals[i] = 0.0f; // delta 0 is the same as 'ignore'
+            } else {
+                // fetch the current value
+                float delta_to_target = anim_cpu_vals[i] - orig_cpu_vals[i];
+                anim_cpu_vals[i] = delta_to_target;
             }
         }
     }
@@ -509,7 +571,7 @@ void T1_scheduled_animations_request_fade_and_destroy(
     fade_destroy->affected_zsprite_id = object_id;
     fade_destroy->duration_us = duration_us;
     fade_destroy->lightsource_vals.reach = 0.0f;
-    fade_destroy->gpu_polygon_vals.alpha = 0.0f;
+    fade_destroy->gpu_vals.alpha = 0.0f;
     fade_destroy->delete_object_when_finished = true;
     T1_scheduled_animations_commit(fade_destroy);
 }
@@ -525,7 +587,7 @@ void T1_scheduled_animations_request_fade_to(
     T1ScheduledAnimation * modify_alpha = T1_scheduled_animations_request_next(true);
     modify_alpha->affected_zsprite_id = zsprite_id;
     modify_alpha->duration_us = duration_us;
-    modify_alpha->gpu_polygon_vals.alpha = target_alpha;
+    modify_alpha->gpu_vals.alpha = target_alpha;
     T1_scheduled_animations_commit(modify_alpha);
 }
 
@@ -641,7 +703,8 @@ void T1_scheduled_animations_resolve(void)
             apply_animation_effects_for_given_eased_t(
                 t,
                 anim,
-                T1_zsprites_to_render->gpu_data + zp_i);
+                T1_zsprites_to_render->gpu_data + zp_i,
+                &T1_zsprites_to_render->cpu_data[zp_i].simd_stats);
         }
     }
     
@@ -656,9 +719,9 @@ void T1_scheduled_animations_request_dud_dance(
         T1_scheduled_animations_request_next(false);
     move_request->easing_type = EASINGTYPE_QUADRUPLE_BOUNCE_ZERO_TO_ZERO;
     move_request->affected_zsprite_id = (int32_t)object_id;
-    move_request->gpu_polygon_vals.xyz[0] = magnitude * 0.05f;
-    move_request->gpu_polygon_vals.xyz[1] = magnitude * 0.035f;
-    move_request->gpu_polygon_vals.xyz[2] = magnitude * 0.005f;
+    move_request->cpu_vals.xyz[0] = magnitude * 0.05f;
+    move_request->cpu_vals.xyz[1] = magnitude * 0.035f;
+    move_request->cpu_vals.xyz[2] = magnitude * 0.005f;
     move_request->duration_us = 300000;
     T1_scheduled_animations_commit(move_request);
 }
@@ -677,7 +740,7 @@ void T1_scheduled_animations_request_bump(
         T1_scheduled_animations_request_next(false);
     move_request->easing_type = EASINGTYPE_DOUBLE_BOUNCE_ZERO_TO_ZERO;
     move_request->affected_zsprite_id = (int32_t)object_id;
-    move_request->gpu_polygon_vals.scale_factor = 0.25f;
+    move_request->cpu_vals.scale_factor = 0.25f;
     move_request->duration_us = 200000;
     T1_scheduled_animations_commit(move_request);
 }
@@ -728,11 +791,13 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
     const float new_ignore_camera)
 {
     T1GPUzSprite * zs = NULL;
+    T1CPUzSprite * zs_cpu = NULL;
     
     for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++)
     {
         if (T1_zsprites_to_render->cpu_data[i].zsprite_id == zsprite_id) {
             zs = T1_zsprites_to_render->gpu_data + i;
+            zs_cpu = T1_zsprites_to_render->cpu_data + i;
         }
     }
     
@@ -754,37 +819,37 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
     if (is_near_zero) {
         log_assert(new_ignore_camera == 1.0f);
         
-        zs->xyz[0] -= camera.xyz[0];
-        zs->xyz[1] -= camera.xyz[1];
-        zs->xyz[2] -= camera.xyz[2];
-        x_rotate_f3(zs->xyz, -camera.xyz_angle[0]);
-        y_rotate_f3(zs->xyz, -camera.xyz_angle[1]);
-        z_rotate_f3(zs->xyz, -camera.xyz_angle[2]);
+        zs_cpu->simd_stats.xyz[0] -= camera.xyz[0];
+        zs_cpu->simd_stats.xyz[1] -= camera.xyz[1];
+        zs_cpu->simd_stats.xyz[2] -= camera.xyz[2];
+        x_rotate_f3(zs_cpu->simd_stats.xyz, -camera.xyz_angle[0]);
+        y_rotate_f3(zs_cpu->simd_stats.xyz, -camera.xyz_angle[1]);
+        z_rotate_f3(zs_cpu->simd_stats.xyz, -camera.xyz_angle[2]);
         
         #if 1
         // This is a hack, an approximation
-        zs->xyz_angle[0] -= camera.xyz_angle[0];
-        zs->xyz_angle[1] -= camera.xyz_angle[1];
-        zs->xyz_angle[2] -= camera.xyz_angle[2];
+        zs_cpu->simd_stats.angle_xyz[0] -= camera.xyz_angle[0];
+        zs_cpu->simd_stats.angle_xyz[1] -= camera.xyz_angle[1];
+        zs_cpu->simd_stats.angle_xyz[2] -= camera.xyz_angle[2];
         #endif
         
         zs->ignore_camera = 1.0f;
     } else {
         log_assert(is_near_one);
         
-        z_rotate_f3(zs->xyz, camera.xyz_angle[2]);
-        y_rotate_f3(zs->xyz, camera.xyz_angle[1]);
-        x_rotate_f3(zs->xyz, camera.xyz_angle[0]);
+        z_rotate_f3(zs_cpu->simd_stats.xyz, camera.xyz_angle[2]);
+        y_rotate_f3(zs_cpu->simd_stats.xyz, camera.xyz_angle[1]);
+        x_rotate_f3(zs_cpu->simd_stats.xyz, camera.xyz_angle[0]);
         
-        zs->xyz[0] += camera.xyz[0];
-        zs->xyz[1] += camera.xyz[1];
-        zs->xyz[2] += camera.xyz[2];
+        zs_cpu->simd_stats.xyz[0] += camera.xyz[0];
+        zs_cpu->simd_stats.xyz[1] += camera.xyz[1];
+        zs_cpu->simd_stats.xyz[2] += camera.xyz[2];
         
         #if 1
         // This is a hack, an approximation
-        zs->xyz_angle[0] += camera.xyz_angle[0];
-        zs->xyz_angle[1] += camera.xyz_angle[1];
-        zs->xyz_angle[2] += camera.xyz_angle[2];
+        zs_cpu->simd_stats.angle_xyz[0] += camera.xyz_angle[0];
+        zs_cpu->simd_stats.angle_xyz[1] += camera.xyz_angle[1];
+        zs_cpu->simd_stats.angle_xyz[2] += camera.xyz_angle[2];
         #endif
         
         zs->ignore_camera = 0.0f;

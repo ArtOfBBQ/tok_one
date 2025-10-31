@@ -20,11 +20,21 @@
 extern "C" {
 #endif
 
+typedef struct  {
+    float xyz[3];
+    float offset_xyz[3];
+    float mul_xyz[3];
+    float angle_xyz[3];
+    float scale_factor;
+    float padding[3];
+} T1CPUzSpriteSimdStats;
+
 typedef struct {
+    T1CPUzSpriteSimdStats simd_stats;
     uint64_t next_occlusion_in_us;
     int32_t mesh_id; // data in all_mesh_summaries[mesh_id]
-    
     int32_t zsprite_id;
+    
     bool8_t alpha_blending_enabled;
     bool8_t committed;
     bool8_t deleted;

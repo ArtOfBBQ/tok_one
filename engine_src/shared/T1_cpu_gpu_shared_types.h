@@ -50,11 +50,13 @@ typedef struct {
 } __attribute__((aligned(32))) T1GPULockedVertex;
 
 typedef struct {
+    float view_4x4[16];
+    float projection_4x4[16];
     float xyz[3];           // 12 bytes
     float xyz_angle[3];     // 12 bytes
     float xyz_cosangle[3];  // 12 bytes
     float xyz_sinangle[3];  // 12 bytes
-    float padding[2];       //  8 bytes
+    float padding[4];       //  8 bytes
 } T1GPUCamera;
 
 typedef struct {
@@ -76,19 +78,15 @@ typedef struct {
 } T1GPUConstMat;
 
 typedef struct {
-    float        xyz[3];
-    float        xyz_angle[3];
-    float        bonus_rgb[3];
-    float        xyz_mult[3]; // determines width/height/depth
-    float        xyz_offset[3];
-    float        base_mat_uv_offsets[2];
-    float        scale_factor;
-    float        alpha;
-    float        ignore_lighting;
-    float        ignore_camera;
-    unsigned int remove_shadow;
-    int          touchable_id;
-    T1GPUConstMat  base_mat;
+    T1GPUConstMat base_mat;
+    float         model_4x4[16];
+    float         bonus_rgb[3];
+    float         base_mat_uv_offsets[2];
+    float         alpha;
+    float         ignore_lighting;
+    float         ignore_camera;
+    unsigned int  remove_shadow;
+    int           touchable_id;
 } __attribute__((aligned(32))) T1GPUzSprite;
 
 typedef struct {

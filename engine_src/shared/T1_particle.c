@@ -345,10 +345,10 @@ void T1_particle_effect_construct(
     to_construct->zpolygon_gpu.base_mat.rgb_cap[0] = 1.0f;
     to_construct->zpolygon_gpu.base_mat.rgb_cap[1] = 1.0f;
     to_construct->zpolygon_gpu.base_mat.rgb_cap[2] = 1.0f;
-    to_construct->zpolygon_gpu.scale_factor = 1.0f;
-    to_construct->zpolygon_gpu.xyz_mult[0] = 0.01f;
-    to_construct->zpolygon_gpu.xyz_mult[1] = 0.01f;
-    to_construct->zpolygon_gpu.xyz_mult[2] = 0.01f;
+    to_construct->zpolygon_cpu.simd_stats.scale_factor = 1.0f;
+    to_construct->zpolygon_cpu.simd_stats.mul_xyz[0] = 0.01f;
+    to_construct->zpolygon_cpu.simd_stats.mul_xyz[1] = 0.01f;
+    to_construct->zpolygon_cpu.simd_stats.mul_xyz[2] = 0.01f;
     to_construct->zpolygon_gpu.ignore_lighting = true;
     
     to_construct->random_seed = (uint32_t)
@@ -414,8 +414,8 @@ void T1_particle_commit(T1ParticleEffect * to_request)
     log_assert(to_request->verts_per_particle > 0);
     
     for (uint32_t _ = 0; _ < 3; _++) {
-        if (to_request->zpolygon_gpu.xyz_mult[0] < 0.00001f) {
-            to_request->zpolygon_gpu.xyz_mult[0] = 0.00001f;
+        if (to_request->zpolygon_cpu.simd_stats.mul_xyz[0] < 0.00001f) {
+            to_request->zpolygon_cpu.simd_stats.mul_xyz[0] = 0.00001f;
         }
     }
     
@@ -450,7 +450,7 @@ static float T1_particle_get_height(
             /* const T1EasingType easing_type: */
                 pe->mods[mod_i].easing_type);
         
-        out += pe->mods[mod_i].gpu_stats.xyz[1] * t;
+        out += pe->mods[mod_i].cpu_stats.xyz[1] * t;
     }
     
     return T1_std_fabs(out);
@@ -467,7 +467,7 @@ void T1_particle_resize_to_effect_height(
     const float multiplier = new_height / current_height;
     
     for (uint32_t _ = 0; _ < 3; _++) {
-        to_resize->zpolygon_gpu.xyz_mult[_] *= multiplier;
+        to_resize->zpolygon_cpu.simd_stats.mul_xyz[_] *= multiplier;
     }
     
     for (
@@ -476,9 +476,9 @@ void T1_particle_resize_to_effect_height(
         mod_i++)
     {
         for (uint32_t _ = 0; _ < 3; _++) {
-            to_resize->mods[mod_i].gpu_stats.xyz[_] *= multiplier;
-            to_resize->mods[mod_i].gpu_stats.xyz_mult[_] *= multiplier;
-            to_resize->mods[mod_i].gpu_stats.xyz_offset[_] *= multiplier;
+            to_resize->mods[mod_i].cpu_stats.xyz[_] *= multiplier;
+            to_resize->mods[mod_i].cpu_stats.mul_xyz[_] *= multiplier;
+            to_resize->mods[mod_i].cpu_stats.offset_xyz[_] *= multiplier;
         }
     }
 }
@@ -594,13 +594,6 @@ static void T1_particle_add_single_to_frame_data(
                 (long)(SIMD_FLOAT_LANES * sizeof(float)) == 0);
             simd_store_floats((recipient_at + j), recip);
         }
-        
-        if (frame_data->zsprite_list->polygons[
-            frame_data->zsprite_list->size].scale_factor < 0.01f)
-        {
-            frame_data->zsprite_list->polygons[
-                frame_data->zsprite_list->size].scale_factor = 0.001f;
-        }
     }
     
     frame_data->zsprite_list->size += 1;
@@ -614,9 +607,6 @@ void T1_particle_add_all_to_frame_data(
     uint64_t elapsed_us,
     const bool32_t alpha_blending)
 {
-    uint64_t spawns_in_duration;
-    uint64_t interval_between_spawns;
-    
     for (
         uint32_t i = 0;
         i < T1_particle_effects_size;
@@ -705,11 +695,11 @@ void T1_particle_add_all_to_frame_data(
             frame_data->lights[frame_data->postproc_consts->lights_size].specular =
                 T1_particle_effects[i].light_strength * 0.15f;
             frame_data->lights[frame_data->postproc_consts->lights_size].xyz[0] =
-                T1_particle_effects[i].zpolygon_gpu.xyz[0];
+                T1_particle_effects[i].zpolygon_cpu.simd_stats.xyz[0];
             frame_data->lights[frame_data->postproc_consts->lights_size].xyz[1] =
-                T1_particle_effects[i].zpolygon_gpu.xyz[1] + 0.02f;
+                T1_particle_effects[i].zpolygon_cpu.simd_stats.xyz[1] + 0.02f;
             frame_data->lights[frame_data->postproc_consts->lights_size].xyz[2] =
-                T1_particle_effects[i].zpolygon_gpu.xyz[2];
+                T1_particle_effects[i].zpolygon_cpu.simd_stats.xyz[2];
             frame_data->postproc_consts->lights_size += 1;
         }
     }

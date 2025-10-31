@@ -116,8 +116,6 @@ void T1_gameloop_update_before_render_pass(
     
     gameloop_previous_time = T1_engine_globals->this_frame_timestamp_us;
     
-    T1_std_memcpy(frame_data->camera, &camera, sizeof(T1GPUCamera));
-    
     frame_data->postproc_consts->lights_size = 0;
     frame_data->verts_size               = 0;
     frame_data->zsprite_list->size       = 0;
@@ -288,13 +286,6 @@ void T1_gameloop_update_before_render_pass(
         
         T1_clientlogic_update(T1_engine_globals->elapsed);
         
-        camera.xyz_cosangle[0] = cosf(camera.xyz_angle[0]);
-        camera.xyz_cosangle[1] = cosf(camera.xyz_angle[1]);
-        camera.xyz_cosangle[2] = cosf(camera.xyz_angle[2]);
-        camera.xyz_sinangle[0] = sinf(camera.xyz_angle[0]);
-        camera.xyz_sinangle[1] = sinf(camera.xyz_angle[1]);
-        camera.xyz_sinangle[2] = sinf(camera.xyz_angle[2]);
-        
         clean_deleted_lights();
         
         // engine_globals->postproc_consts will be copied to
@@ -312,6 +303,8 @@ void T1_gameloop_update_before_render_pass(
         uint32_t overflow_vertices = frame_data->verts_size % 3;
         frame_data->verts_size -= overflow_vertices;
     }
+    
+    T1_std_memcpy(frame_data->camera, &camera, sizeof(T1GPUCamera));
     
     if (T1_engine_globals->draw_fps) {
         text_request_fps_counter(

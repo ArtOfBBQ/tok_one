@@ -85,101 +85,6 @@ inline static void draw_bounding_sphere(
 #error "T1_RAW_SHADER_ACTIVE undefined"
 #endif
 
-
-// TODO: transform triangles (rotate etc.), then compare
-// This might not be nescessary at all for our purposes
-#if 0
-static int compare_triangles_furthest_camera_dist(
-    const void * a,
-    const void * b)
-{
-    GPUVertexIndices * tris[2];
-    tris[0] = (GPUVertexIndices *)a;
-    tris[1] = (GPUVertexIndices *)b;
-    
-    float dists[2];
-    float avg_xyz[3];
-    float cur_cam[3];
-    
-    dists[0] = 0.0f;
-    dists[1] = 0.0f;
-    
-    for (uint32_t i = 0; i < 2; i++) {
-        avg_xyz[0] = 0.0f;
-        avg_xyz[1] = 0.0f;
-        avg_xyz[2] = 0.0f;
-        
-        for (uint32_t vert_i = 0; vert_i < 3; vert_i++) {
-            log_assert(tris[i][vert_i].locked_vertex_i < (int32_t)all_mesh_vertices->size);
-            avg_xyz[0] += all_mesh_vertices->gpu_data[
-                tris[i][vert_i].locked_vertex_i].xyz[0];
-            avg_xyz[1] += all_mesh_vertices->gpu_data[
-                tris[i][vert_i].locked_vertex_i].xyz[1];
-            avg_xyz[2] += all_mesh_vertices->gpu_data[
-                tris[i][vert_i].locked_vertex_i].xyz[2];
-        }
-        
-        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-        log_assert(tris[i][0].polygon_i < (int32_t)all_mesh_vertices->size);
-        log_assert(tris[i][0].polygon_i == tris[i][1].polygon_i);
-        log_assert(tris[i][0].polygon_i == tris[i][2].polygon_i);
-        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error "T1_LOGGER_ASSERTS_ACTIVE undefined"
-        #endif
-        
-        avg_xyz[0] *=
-            zsprites_to_render->gpu_data[tris[i][0].polygon_i].xyz_multiplier[0];
-        avg_xyz[1] *=
-            zsprites_to_render->gpu_data[tris[i][0].polygon_i].xyz_multiplier[1];
-        avg_xyz[2] *=
-            zsprites_to_render->gpu_data[tris[i][0].polygon_i].xyz_multiplier[2];
-        avg_xyz[0] *= zsprites_to_render->gpu_data[tris[i][0].polygon_i].
-            scale_factor;
-        avg_xyz[1] *= zsprites_to_render->gpu_data[tris[i][0].polygon_i].
-            scale_factor;
-        avg_xyz[2] *= zsprites_to_render->gpu_data[tris[i][0].polygon_i].
-            scale_factor;
-        avg_xyz[0] /= 3.0f;
-        avg_xyz[1] /= 3.0f;
-        avg_xyz[2] /= 3.0f;
-        
-        avg_xyz[0] += zsprites_to_render->
-            gpu_data[tris[i][0].polygon_i].xyz[0];
-        avg_xyz[1] += zsprites_to_render->
-            gpu_data[tris[i][0].polygon_i].xyz[1];
-        avg_xyz[2] += zsprites_to_render->
-            gpu_data[tris[i][0].polygon_i].xyz[2];
-        
-        avg_xyz[0] += zsprites_to_render->gpu_data[tris[i][0].polygon_i].xyz_offset[0];
-        avg_xyz[1] += zsprites_to_render->gpu_data[tris[i][0].polygon_i].xyz_offset[1];
-        avg_xyz[2] += zsprites_to_render->gpu_data[tris[i][0].polygon_i].xyz_offset[2];
-        
-        float ign_cam = zsprites_to_render->gpu_data[tris[i][0].polygon_i].
-            ignore_camera;
-        
-        cur_cam[0] = camera.xyz[0] * (1.0f - ign_cam);
-        cur_cam[1] = camera.xyz[1] * (1.0f - ign_cam);
-        cur_cam[2] = camera.xyz[2] * (1.0f - ign_cam);
-        
-        dists[i] =
-            ((cur_cam[0] - avg_xyz[0]) * (cur_cam[0] - avg_xyz[0])) +
-            ((cur_cam[1] - avg_xyz[1]) * (cur_cam[1] - avg_xyz[1])) +
-            ((cur_cam[2] - avg_xyz[2]) * (cur_cam[2] - avg_xyz[2]));
-    }
-    
-    if (dists[0] < dists[1]) {
-        return 1;
-    } else if (dists[0] > dists[1]) {
-        return -1;
-    } else {
-        return
-            (int)(tris[0][0].polygon_i + tris[0][0].locked_vertex_i) -
-            (int)(tris[1][0].polygon_i + tris[1][0].locked_vertex_i);
-    }
-}
-#endif
-
 inline static void add_alphablending_zpolygons_to_workload(
     T1GPUFrame * frame_data)
 {
@@ -395,7 +300,197 @@ inline static void add_opaque_zpolygons_to_workload(
     }
 }
 
-// static float clickray_elapsed = 0.0f;
+static void construct_projection_matrix(void) {
+    
+    T1GPUProjectConsts * p = &T1_engine_globals->project_consts;
+    
+    T1float4x4 proj;
+    const float y_scale = p->field_of_view_modifier;
+    const float x_scale = p->x_multiplier;
+    
+    const float tan_half_fov_y = 1.0f / y_scale;
+    const float fov_y_rad = 2.0f * atanf(tan_half_fov_y);
+    const float aspect = y_scale / x_scale;
+    
+    const float zn = p->znear;
+    const float zf = p->zfar;
+
+    const float f = 1.0f / tanf(fov_y_rad * 0.5f);
+    
+    #if 1
+    // perspective projection
+    T1_linalg3d_float4x4_construct(
+        &proj,
+        f / aspect, 0.0f, 0.0f, 0.0f,
+        0.0f, f, 0.0f, 0.0f,
+        0.0f, 0.0f, zf / (zf - zn), -zf * zn / (zf - zn),
+        0.0f, 0.0f, 1.0f, 0.0f
+    );
+    #else
+    // orthographic projection
+    T1_linalg3d_float4x4_construct(
+        &proj,
+        1.0f,  0.0f,  0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.01f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f);
+    #endif
+    
+    T1_std_memcpy(
+        camera.projection_4x4 + 0,
+        proj.rows[0].data,
+        sizeof(float) * 4);
+    T1_std_memcpy(
+        camera.projection_4x4 + 4,
+        proj.rows[1].data,
+        sizeof(float) * 4);
+    T1_std_memcpy(
+        camera.projection_4x4 + 8,
+        proj.rows[2].data,
+        sizeof(float) * 4);
+    T1_std_memcpy(
+        camera.projection_4x4 + 12,
+        proj.rows[3].data,
+        sizeof(float) * 4);
+}
+
+static void construct_view_matrix(void) {
+    camera.xyz_cosangle[0] = cosf(camera.xyz_angle[0]);
+    camera.xyz_cosangle[1] = cosf(camera.xyz_angle[1]);
+    camera.xyz_cosangle[2] = cosf(camera.xyz_angle[2]);
+    camera.xyz_sinangle[0] = sinf(camera.xyz_angle[0]);
+    camera.xyz_sinangle[1] = sinf(camera.xyz_angle[1]);
+    camera.xyz_sinangle[2] = sinf(camera.xyz_angle[2]);
+    
+    T1float4x4 result;
+    T1float4x4 accu;
+    T1float4x4 next;
+    
+    T1_linalg3d_construct_identity(&accu);
+    
+    T1_linalg3d_float4x4_construct_xyz_rotation(
+        &next,
+        -camera.xyz_angle[0],
+        -camera.xyz_angle[1],
+        -camera.xyz_angle[2]);
+    
+    T1_linalg3d_float4x4_mul_float4x4(
+        &accu,
+        &next,
+        &result);
+    
+    T1_std_memcpy(&accu, &result, sizeof(T1float4x4));
+    
+    // Translation
+    T1_linalg3d_float4x4_construct(
+        &next,
+        1.0f, 0.0f, 0.0f, -camera.xyz[0],
+        0.0f, 1.0f, 0.0f, -camera.xyz[1],
+        0.0f, 0.0f, 1.0f, -camera.xyz[2],
+        0.0f, 0.0f, 0.0f, 1.0f);
+    
+    T1_linalg3d_float4x4_mul_float4x4(&accu, &next, &result);
+    
+    T1_std_memcpy(
+        camera.view_4x4 + 0,
+        result.rows[0].data,
+        sizeof(float) * 4);
+    T1_std_memcpy(
+        camera.view_4x4 + 4,
+        result.rows[1].data,
+        sizeof(float) * 4);
+    T1_std_memcpy(
+        camera.view_4x4 + 8,
+        result.rows[2].data,
+        sizeof(float) * 4);
+    T1_std_memcpy(
+        camera.view_4x4 + 12,
+        result.rows[3].data,
+        sizeof(float) * 4);
+}
+    
+
+static void construct_model_matrices(void) {
+    
+    for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
+        
+        T1CPUzSpriteSimdStats * stats =
+            &T1_zsprites_to_render->cpu_data[i].simd_stats;
+        
+        T1float4x4 result;
+        T1float4x4 accu;
+        T1float4x4 next;
+        
+        T1_linalg3d_construct_identity(&accu);
+        
+        // Translation
+        T1_linalg3d_float4x4_construct(
+            &next,
+            1.0f, 0.0f, 0.0f, stats->xyz[0],
+            0.0f, 1.0f, 0.0f, stats->xyz[1],
+            0.0f, 0.0f, 1.0f, stats->xyz[2],
+            0.0f, 0.0f, 0.0f, 1.0f);
+        
+        T1_linalg3d_float4x4_mul_float4x4(&accu, &next, &result);
+        T1_std_memcpy(
+            &accu, &result, sizeof(T1float4x4));
+        
+        T1_linalg3d_float4x4_construct_xyz_rotation(
+            &next,
+            stats->angle_xyz[0],
+            stats->angle_xyz[1],
+            stats->angle_xyz[2]);
+        
+        T1_linalg3d_float4x4_mul_float4x4(
+            &accu,
+            &next,
+            &result);
+        T1_std_memcpy(
+            &accu, &result, sizeof(T1float4x4));
+        
+        T1_linalg3d_float4x4_construct(
+            &next,
+            1.0f, 0.0f, 0.0f,
+            T1_zsprites_to_render->cpu_data[i].
+                simd_stats.offset_xyz[0],
+            0.0f, 1.0f, 0.0f,
+            T1_zsprites_to_render->cpu_data[i].
+                simd_stats.offset_xyz[1],
+            0.0f, 0.0f, 1.0f,
+            T1_zsprites_to_render->cpu_data[i].
+                simd_stats.offset_xyz[2],
+            0.0f, 0.0f, 0.0f, 1.0f);
+        T1_linalg3d_float4x4_mul_float4x4(&accu, &next, &result);
+        T1_std_memcpy(
+            &accu, &result, sizeof(T1float4x4));
+        
+        T1_linalg3d_float4x4_construct(
+            &next,
+            stats->mul_xyz[0], 0.0f, 0.0f, 0.0f,
+            0.0f, stats->mul_xyz[1], 0.0f, 0.0f,
+            0.0f, 0.0f, stats->mul_xyz[2], 0.0f,
+            0.0f, 0.0f, 0.0f, 1.0f);
+        T1_linalg3d_float4x4_mul_float4x4(&accu, &next, &result);
+        
+        T1_std_memcpy(
+            T1_zsprites_to_render->gpu_data[i].model_4x4,
+            result.rows[0].data,
+            sizeof(float) * 4);
+        T1_std_memcpy(
+            T1_zsprites_to_render->gpu_data[i].model_4x4 + 4,
+            result.rows[1].data,
+            sizeof(float) * 4);
+        T1_std_memcpy(
+            T1_zsprites_to_render->gpu_data[i].model_4x4 + 8,
+            result.rows[2].data,
+            sizeof(float) * 4);
+        T1_std_memcpy(
+            T1_zsprites_to_render->gpu_data[i].model_4x4 + 12,
+            result.rows[3].data,
+            sizeof(float) * 4);
+    }
+}
+
 void renderer_hardware_render(
     T1GPUFrame * frame_data,
     uint64_t elapsed_us)
@@ -415,7 +510,15 @@ void renderer_hardware_render(
         return;
     }
     
+    // camera.view_4x4
+    
     log_assert(T1_zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
+    
+    construct_model_matrices();
+    
+    construct_view_matrix();
+    
+    construct_projection_matrix();
     
     T1_std_memcpy(
         /* void * dest: */

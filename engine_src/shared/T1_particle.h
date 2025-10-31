@@ -72,12 +72,13 @@ If "randomize" is set:
 e.g. if you set one to 0.1f, the final new rand will in [0.0f - 0.1f]
 */
 typedef struct {
-    T1GPUzSprite gpu_stats;
-    uint64_t     start_delay;
-    uint64_t     duration;
-    T1EasingType easing_type;
-    uint8_t      random_t_add;
-    uint8_t      random_t_sub;
+    T1GPUzSprite          gpu_stats;
+    T1CPUzSpriteSimdStats cpu_stats;
+    uint64_t              start_delay;
+    uint64_t              duration;
+    T1EasingType          easing_type;
+    uint8_t               random_t_add;
+    uint8_t               random_t_sub;
 } T1ParticleMod;
 
 #define T1_PARTICLE_MODS_CAP 5

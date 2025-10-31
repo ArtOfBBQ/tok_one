@@ -1650,8 +1650,7 @@ T1MetaField T1_meta_get_field_from_strings(
 
 static size_t T1_meta_shared_get_element_size_bytes(
     T1Type data_type,
-    const char * struct_name_or_null,
-    const uint16_t parent_enum_id)
+    const char * struct_name_or_null)
 {
     switch (data_type) {
         case T1_TYPE_STRUCT:
@@ -1782,8 +1781,7 @@ static size_t T1_meta_field_get_element_size_bytes(T1MetaField * field) {
 static size_t T1_meta_internal_field_get_element_size_bytes(MetaField * field) {
     return T1_meta_shared_get_element_size_bytes(
         field->type,
-        field->struct_type_name,
-        field->parent_enum_id);
+        field->struct_type_name);
 }
 
 typedef struct {
@@ -2760,7 +2758,7 @@ void T1_meta_deserialize_instance_from_buffer(
     uint32_t at_i = 0;
     if (!T1_meta_string_starts_with(buffer + at_i, "T1_META_START\n")) {
         #if T1_META_ASSERTS == T1_ACTIVE
-        assert(0); // this type has no fields registered to it?
+        assert(0);
         #elif T1_META_ASSERTS == T1_INACTIVE
         #else
         #error
@@ -2772,7 +2770,7 @@ void T1_meta_deserialize_instance_from_buffer(
     
     if (!T1_meta_string_starts_with(buffer + at_i, struct_name)) {
         #if T1_META_ASSERTS == T1_ACTIVE
-        assert(0); // this type has no fields registered to it?
+        assert(0);
         #elif T1_META_ASSERTS == T1_INACTIVE
         #else
         #error
@@ -2799,6 +2797,13 @@ void T1_meta_deserialize_instance_from_buffer(
     uint32_t write_i;
     
     while (buffer[at_i] == 's') {
+        #if T1_META_ASSERTS == T1_ACTIVE
+        assert(at_i < buffer_size);
+        #elif T1_META_ASSERTS == T1_INACTIVE
+        #else
+        #error
+        #endif
+        
         if (!T1_meta_string_starts_with(buffer + at_i, "s->")) {
             #if T1_META_ASSERTS == T1_ACTIVE
             assert(0);
