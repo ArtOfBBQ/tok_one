@@ -322,7 +322,7 @@ void text_request_label_offset_around(
             
             letter.gpu_data->ignore_lighting =
                 font_settings->ignore_lighting;
-            letter.gpu_data->ignore_camera =
+            letter.cpu_data->simd_stats.ignore_camera =
                 font_settings->ignore_camera;
             letter.cpu_data->simd_stats.scale_factor =
                 font_settings->scale_factor;
@@ -503,7 +503,7 @@ void text_request_label_renderable(
         letter.cpu_data->alpha_blending_enabled =
             font_settings->alpha_blending_enabled;
         letter.gpu_data->ignore_lighting = font_settings->ignore_lighting;
-        letter.gpu_data->ignore_camera = font_settings->ignore_camera;
+        letter.cpu_data->simd_stats.ignore_camera = font_settings->ignore_camera;
         letter.gpu_data->remove_shadow = font_settings->remove_shadow;
         
         letter.gpu_data->base_mat = font_settings->mat;

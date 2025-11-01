@@ -80,11 +80,11 @@ typedef struct {
 typedef struct {
     T1GPUConstMat base_mat;
     float         model_4x4[16];
+    float         model_and_view_4x4[16];
     float         bonus_rgb[3];
     float         base_mat_uv_offsets[2];
     float         alpha;
     float         ignore_lighting;
-    float         ignore_camera;
     unsigned int  remove_shadow;
     int           touchable_id;
 } __attribute__((aligned(32))) T1GPUzSprite;

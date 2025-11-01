@@ -177,6 +177,7 @@ void T1_clientlogic_early_startup(
     T1_meta_array(T1CPUzSpriteSimdStats, T1_TYPE_F32, angle_xyz, 3, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-3.6f, 3.6f, &ok);
     T1_meta_field(T1CPUzSpriteSimdStats, T1_TYPE_F32, scale_factor, &ok);
+    T1_meta_field(T1CPUzSpriteSimdStats, T1_TYPE_F32, ignore_camera, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     
     T1_meta_struct(T1CPUzSprite, &ok);
@@ -199,7 +200,6 @@ void T1_clientlogic_early_startup(
     T1_meta_reg_custom_float_limits_for_last_field(-2.0f, 2.0f, &ok);
     T1_meta_field(T1GPUzSprite, T1_TYPE_F32, ignore_lighting, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
-    T1_meta_field(T1GPUzSprite, T1_TYPE_F32, ignore_camera, &ok);
     T1_meta_reg_custom_float_limits_for_last_field(-1.0f, 1.0f, &ok);
     T1_meta_field(T1GPUzSprite, T1_TYPE_U32, remove_shadow, &ok);
     T1_meta_reg_custom_uint_limits_for_last_field(0, 1, &ok);
@@ -794,7 +794,7 @@ static void load_texture(const char * writables_filename) {
         temp_quad.gpu_data->base_mat.diffuse_rgb[0] = 1.0f;
         temp_quad.gpu_data->base_mat.diffuse_rgb[1] = 1.0f;
         temp_quad.gpu_data->base_mat.diffuse_rgb[2] = 1.0f;
-        temp_quad.gpu_data->ignore_camera = true;
+        temp_quad.cpu_data->simd_stats.ignore_camera = true;
         temp_quad.gpu_data->ignore_lighting = true;
         temp_quad.cpu_data->alpha_blending_enabled = true;
         temp_quad.cpu_data->zsprite_id = T1_zspriteid_next_nonui_id();

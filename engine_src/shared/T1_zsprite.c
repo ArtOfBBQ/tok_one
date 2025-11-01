@@ -317,7 +317,7 @@ void zsprite_construct_quad(
     stack_recipient->cpu_data->simd_stats.xyz[1] = mid_y;
     stack_recipient->cpu_data->simd_stats.xyz[2] = z;
     stack_recipient->cpu_data->visible = true;
-    stack_recipient->gpu_data->ignore_camera = false;
+    stack_recipient->cpu_data->simd_stats.ignore_camera = false;
     
     // a quad is hardcoded in objmodel.c's init_all_meshes()
     stack_recipient->cpu_data->mesh_id = 0;

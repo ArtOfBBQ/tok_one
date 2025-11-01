@@ -108,28 +108,16 @@ vertex float4 shadows_vertex_shader(
     
     float4 out_vec4 = mesh_vertices * model;
     
-    // for an "ignore camera" object, we need to know where that object is
-    // in world space
-    float4 nonshadow_cam_pos = vector_float4(
-        camera->xyz[0],
-        camera->xyz[1],
-        camera->xyz[2],
-        1.0f);
-    
-    float4 ic_pos = out_vec4 + nonshadow_cam_pos;
-    
-    float ic = clamp(
-        polygons[polygon_i].ignore_camera,
-        0.0f,
-        1.0f);
-    out_vec4 = (ic_pos * ic) + (out_vec4 * (1.0f - ic));
-    
     float4 lightcam_pos = vector_float4(
-        lights[updating_globals->shadowcaster_i].xyz[0],
-        lights[updating_globals->shadowcaster_i].xyz[1],
-        lights[updating_globals->shadowcaster_i].xyz[2],
+        lights[updating_globals->
+            shadowcaster_i].xyz[0],
+        lights[updating_globals->
+            shadowcaster_i].xyz[1],
+        lights[updating_globals->
+            shadowcaster_i].xyz[2],
         1.0f);
-    float4 lightcam_translated_pos = out_vec4 - lightcam_pos;
+    float4 lightcam_translated_pos =
+        out_vec4 - lightcam_pos;
     
     // rotate around 'camera' (actually the light)
     float4 lightcam_z_rotated = xyz_rotate(
@@ -207,7 +195,8 @@ vertex_shader(
     RasterizerPixel out;
     
     out.polygon_i = vertices[vertex_i].polygon_i;
-    out.locked_vertex_i = vertices[vertex_i].locked_vertex_i;
+    out.locked_vertex_i =
+        vertices[vertex_i].locked_vertex_i;
     
     float4 mesh_vertices = vector_float4(
         locked_vertices[out.locked_vertex_i].xyz[0],
@@ -233,6 +222,24 @@ vertex_shader(
         locked_vertices[out.locked_vertex_i].bitangent_xyz[2],
         0.0f);
     
+    float4x4 model_and_view = matrix_float4x4(
+        polygons[out.polygon_i].model_and_view_4x4[ 0],
+        polygons[out.polygon_i].model_and_view_4x4[ 1],
+        polygons[out.polygon_i].model_and_view_4x4[ 2],
+        polygons[out.polygon_i].model_and_view_4x4[ 3],
+        polygons[out.polygon_i].model_and_view_4x4[ 4],
+        polygons[out.polygon_i].model_and_view_4x4[ 5],
+        polygons[out.polygon_i].model_and_view_4x4[ 6],
+        polygons[out.polygon_i].model_and_view_4x4[ 7],
+        polygons[out.polygon_i].model_and_view_4x4[ 8],
+        polygons[out.polygon_i].model_and_view_4x4[ 9],
+        polygons[out.polygon_i].model_and_view_4x4[10],
+        polygons[out.polygon_i].model_and_view_4x4[11],
+        polygons[out.polygon_i].model_and_view_4x4[12],
+        polygons[out.polygon_i].model_and_view_4x4[13],
+        polygons[out.polygon_i].model_and_view_4x4[14],
+        polygons[out.polygon_i].model_and_view_4x4[15]);
+    
     float4x4 model = matrix_float4x4(
         polygons[out.polygon_i].model_4x4[ 0],
         polygons[out.polygon_i].model_4x4[ 1],
@@ -254,31 +261,7 @@ vertex_shader(
     out.worldpos = mesh_vertices * model;
     out.worldpos[3] = 1.0f;
     
-    float4x4 view = matrix_float4x4(
-        camera->view_4x4[ 0],
-        camera->view_4x4[ 1],
-        camera->view_4x4[ 2],
-        camera->view_4x4[ 3],
-        camera->view_4x4[ 4],
-        camera->view_4x4[ 5],
-        camera->view_4x4[ 6],
-        camera->view_4x4[ 7],
-        camera->view_4x4[ 8],
-        camera->view_4x4[ 9],
-        camera->view_4x4[10],
-        camera->view_4x4[11],
-        camera->view_4x4[12],
-        camera->view_4x4[13],
-        camera->view_4x4[14],
-        camera->view_4x4[15]);
-    
-    float ic = clamp(
-        polygons[out.polygon_i].ignore_camera,
-        0.0f,
-        1.0f);
-    float4 final_pos =
-        (out.worldpos * ic) +
-        (out.worldpos * view * (1.0f - ic));
+    float4 final_pos = mesh_vertices * model_and_view;
     
     out.touchable_id = polygons[out.polygon_i].touchable_id;
     
@@ -450,31 +433,13 @@ float4 get_lit(
     
     float4 ignore_lighting_color = diffuse_texture_sample * diffuse_base;
     
-    float4x4 projection = matrix_float4x4(
-        camera->projection_4x4[ 0],
-        camera->projection_4x4[ 1],
-        camera->projection_4x4[ 2],
-        camera->projection_4x4[ 3],
-        camera->projection_4x4[ 4],
-        camera->projection_4x4[ 5],
-        camera->projection_4x4[ 6],
-        camera->projection_4x4[ 7],
-        camera->projection_4x4[ 8],
-        camera->projection_4x4[ 9],
-        camera->projection_4x4[10],
-        camera->projection_4x4[11],
-        camera->projection_4x4[12],
-        camera->projection_4x4[13],
-        camera->projection_4x4[14],
-        camera->projection_4x4[15]);
-    
     for (
         uint32_t i = 0;
         i < updating_globals->lights_size;
         i++)
     {
         // ambient lighting
-        float4 light_pos = vector_float4(
+        float4 light_worldpos = vector_float4(
             lights[i].xyz[0],
             lights[i].xyz[1],
             lights[i].xyz[2],
@@ -487,6 +452,24 @@ float4 get_lit(
         
         float4 shadow_factors = vector_float4(1.0f, 1.0f, 1.0f, 1.0f);
         #if T1_SHADOWS_ACTIVE == T1_ACTIVE
+        float4x4 projection = matrix_float4x4(
+            camera->projection_4x4[ 0],
+            camera->projection_4x4[ 1],
+            camera->projection_4x4[ 2],
+            camera->projection_4x4[ 3],
+            camera->projection_4x4[ 4],
+            camera->projection_4x4[ 5],
+            camera->projection_4x4[ 6],
+            camera->projection_4x4[ 7],
+            camera->projection_4x4[ 8],
+            camera->projection_4x4[ 9],
+            camera->projection_4x4[10],
+            camera->projection_4x4[11],
+            camera->projection_4x4[12],
+            camera->projection_4x4[13],
+            camera->projection_4x4[14],
+            camera->projection_4x4[15]);
+        
         float4 light_angle_xyz = vector_float4(
             lights[i].angle_xyz[0],
             lights[i].angle_xyz[1],
@@ -498,7 +481,7 @@ float4 get_lit(
                 mag_filter::nearest,
                 min_filter::nearest);
             
-            float4 light_translated_pos = in.worldpos - light_pos;
+            float4 light_translated_pos = in.worldpos - light_worldpos;
             float4 light_z_rotated = xyz_rotate(
                 light_translated_pos,
                 vector_float4(
@@ -536,7 +519,7 @@ float4 get_lit(
         #endif
         
         float distance = get_distance(
-            light_pos,
+            light_worldpos,
             in.worldpos);
         
         float distance_overflow = max(
@@ -560,8 +543,8 @@ float4 get_lit(
         // to go from the rotated_pos to the light
         // if the normal also points to the light, we want more diffuse
         // brightness
-        float4 object_to_light = normalize(
-            (light_pos - in.worldpos));
+        float4 dir_object_to_light = normalize(
+            (light_worldpos - in.worldpos));
         
         #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
         if (material->normalmap_texturearray_i >= 0) {
@@ -597,7 +580,7 @@ float4 get_lit(
             max(
                 dot(
                     adjusted_normal,
-                    object_to_light),
+                    dir_object_to_light),
                 0.0f) * 0.85f + 0.15f;
         
         float4 light_diffuse_multiplier =
@@ -621,7 +604,7 @@ float4 get_lit(
                 0.0f) - in.worldpos);
         
         float4 reflection_ray = reflect(
-            -object_to_light,
+            -dir_object_to_light,
             adjusted_normal);
         
         float specular_dot = pow(

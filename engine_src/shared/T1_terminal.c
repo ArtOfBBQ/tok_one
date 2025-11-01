@@ -140,7 +140,7 @@ void terminal_redraw_backgrounds(void) {
         term_background_color[2];
     current_command_input.gpu_data->base_mat.alpha =
         term_background_color[3];
-    current_command_input.gpu_data->ignore_camera = true;
+    current_command_input.cpu_data->simd_stats.ignore_camera = true;
     current_command_input.gpu_data->ignore_lighting = true;
     current_command_input.cpu_data->alpha_blending_enabled = true;
     current_command_input.cpu_data->visible = terminal_active;
@@ -189,7 +189,7 @@ void terminal_redraw_backgrounds(void) {
         term_background_color[3];
     current_command_input.cpu_data->visible = terminal_active;
     current_command_input.cpu_data->alpha_blending_enabled = true;
-    current_command_input.gpu_data->ignore_camera = true;
+    current_command_input.cpu_data->simd_stats.ignore_camera = true;
     current_command_input.gpu_data->ignore_lighting = true;
     current_command_input.cpu_data->zsprite_id = INT32_MAX;
     current_command_input.gpu_data->touchable_id = -1;

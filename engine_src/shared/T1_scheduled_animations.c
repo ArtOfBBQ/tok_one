@@ -190,8 +190,8 @@ static void apply_animation_effects_for_given_eased_t(
     }
     
     #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-    log_assert(recip_gpu->ignore_camera >= -0.05f);
-    log_assert(recip_gpu->ignore_camera <= 1.05f);
+    log_assert(recip_cpu->ignore_camera >= -0.05f);
+    log_assert(recip_cpu->ignore_camera <= 1.05f);
     log_assert(recip_gpu->ignore_lighting >= -0.05f);
     log_assert(recip_gpu->ignore_lighting <= 1.05f);
     log_assert(recip_gpu->remove_shadow >= 0);
@@ -801,18 +801,19 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
         }
     }
     
-    if (zs->ignore_camera == new_ignore_camera) {
+    if (zs_cpu->simd_stats.ignore_camera == new_ignore_camera)
+    {
         return;
     }
     
     // For now we're only supporting the easy case of a full toggle
     bool32_t is_near_zero =
-        zs->ignore_camera > -0.01f &&
-        zs->ignore_camera <  0.01f;
+        zs_cpu->simd_stats.ignore_camera > -0.01f &&
+        zs_cpu->simd_stats.ignore_camera <  0.01f;
     #if T1_LOGGER_ASSERTS_ACTIVE
     bool32_t is_near_one =
-        zs->ignore_camera >  0.99f &&
-        zs->ignore_camera <  1.01f;
+        zs_cpu->simd_stats.ignore_camera >  0.99f &&
+        zs_cpu->simd_stats.ignore_camera <  1.01f;
     #endif
     log_assert(is_near_zero || is_near_one);
     
@@ -833,7 +834,7 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
         zs_cpu->simd_stats.angle_xyz[2] -= camera.xyz_angle[2];
         #endif
         
-        zs->ignore_camera = 1.0f;
+        zs_cpu->simd_stats.ignore_camera = 1.0f;
     } else {
         log_assert(is_near_one);
         
@@ -852,7 +853,7 @@ void T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(
         zs_cpu->simd_stats.angle_xyz[2] += camera.xyz_angle[2];
         #endif
         
-        zs->ignore_camera = 0.0f;
+        zs_cpu->simd_stats.ignore_camera = 0.0f;
     }
 }
 

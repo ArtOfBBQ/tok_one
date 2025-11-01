@@ -431,7 +431,7 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                                 simd_stats.xyz[2]);
                     z = T1_zsprites_to_render->cpu_data[zs_i].simd_stats.xyz[2];
                     ignore_camera = (uint8_t)
-                        T1_zsprites_to_render->gpu_data[zs_i].
+                        T1_zsprites_to_render->cpu_data[zs_i].simd_stats.
                             ignore_camera;
                     T1_zsprites_to_render->cpu_data[zs_i].deleted = true;
                 }
@@ -754,7 +754,7 @@ void T1_uielement_request_slider(
     
     slider_back.gpu_data->ignore_lighting =
         next_ae->user_set.ignore_lighting;
-    slider_back.gpu_data->ignore_camera =
+    slider_back.cpu_data->simd_stats.ignore_camera =
         next_ae->user_set.ignore_camera;
     log_assert(slider_back.cpu_data->visible);
     log_assert(!slider_back.cpu_data->committed);
@@ -806,7 +806,7 @@ void T1_uielement_request_slider(
     
     slider_pin.gpu_data->ignore_lighting =
         next_ae->user_set.ignore_lighting;
-    slider_pin.gpu_data->ignore_camera =
+    slider_pin.cpu_data->simd_stats.ignore_camera =
         next_ae->user_set.ignore_camera;
     slider_pin.gpu_data->touchable_id =
         next_ae->touchable_id;
@@ -880,7 +880,7 @@ void T1_uielement_request_button(
     
     button_request.cpu_data->zsprite_id = button_object_id;
     button_request.gpu_data->touchable_id = next_ae->touchable_id;
-    button_request.gpu_data->ignore_camera =
+    button_request.cpu_data->simd_stats.ignore_camera =
         next_ae->user_set.ignore_camera;
     button_request.gpu_data->ignore_lighting =
         next_ae->user_set.ignore_camera;

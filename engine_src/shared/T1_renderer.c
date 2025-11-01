@@ -473,7 +473,7 @@ static void construct_model_matrices(void) {
         T1_linalg3d_float4x4_mul_float4x4(&accu, &next, &result);
         
         T1_std_memcpy(
-            T1_zsprites_to_render->gpu_data[i].model_4x4,
+            T1_zsprites_to_render->gpu_data[i].model_4x4 + 0,
             result.rows[0].data,
             sizeof(float) * 4);
         T1_std_memcpy(
@@ -488,6 +488,50 @@ static void construct_model_matrices(void) {
             T1_zsprites_to_render->gpu_data[i].model_4x4 + 12,
             result.rows[3].data,
             sizeof(float) * 4);
+        
+        T1_std_memcpy(
+            &next, &result, sizeof(T1float4x4));
+        
+        T1_linalg3d_float4x4_construct_from_ptr(
+            &accu,
+            camera.view_4x4);
+        
+        T1_linalg3d_float4x4_mul_float4x4(
+            &accu, &next, &result);
+        
+        T1_std_memcpy(
+            T1_zsprites_to_render->gpu_data[i].model_and_view_4x4 + 0,
+            result.rows[0].data,
+            sizeof(float) * 4);
+        T1_std_memcpy(
+            T1_zsprites_to_render->gpu_data[i].model_and_view_4x4 + 4,
+            result.rows[1].data,
+            sizeof(float) * 4);
+        T1_std_memcpy(
+            T1_zsprites_to_render->gpu_data[i].model_and_view_4x4 + 8,
+            result.rows[2].data,
+            sizeof(float) * 4);
+        T1_std_memcpy(
+            T1_zsprites_to_render->gpu_data[i].model_and_view_4x4 + 12,
+            result.rows[3].data,
+            sizeof(float) * 4);
+        
+        float ic =
+            T1_zsprites_to_render->cpu_data[i].
+                simd_stats.ignore_camera;
+        
+        ic = T1_std_maxf(ic, 0.0f);
+        ic = T1_std_minf(ic, 1.0f);
+        
+        for (uint32_t j = 0; j < 16; j++) {
+            T1_zsprites_to_render->gpu_data[i].
+                model_and_view_4x4[j] =
+                T1_zsprites_to_render->gpu_data[i].
+                    model_and_view_4x4[j] *
+                        (1.0f - ic) +
+                T1_zsprites_to_render->gpu_data[i].
+                    model_4x4[j] * ic;
+        }
     }
 }
 
@@ -514,11 +558,11 @@ void renderer_hardware_render(
     
     log_assert(T1_zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
     
-    construct_model_matrices();
-    
     construct_view_matrix();
     
     construct_projection_matrix();
+    
+    construct_model_matrices();
     
     T1_std_memcpy(
         /* void * dest: */

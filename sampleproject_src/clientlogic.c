@@ -86,7 +86,7 @@ static void request_teapots(void) {
         teapot_touchable_ids[i] = T1_zspriteid_next_nonui_id();
         teapot_request.gpu_data->touchable_id = teapot_touchable_ids[i];
         teapot_request.gpu_data->ignore_lighting =  0.0f;
-        teapot_request.gpu_data->ignore_camera =  0.0f;
+        teapot_request.cpu_data->simd_stats.ignore_camera =  0.0f;
         T1_zsprite_commit(&teapot_request);
     }
     #endif
@@ -131,7 +131,7 @@ void T1_clientlogic_late_startup(void) {
     lightcube_request.cpu_data->zsprite_id        = light->object_id;
     lightcube_request.cpu_data->visible           = true;
     lightcube_request.gpu_data->ignore_lighting   = 1.0f;
-    lightcube_request.gpu_data->ignore_camera     = 0.0f;
+    lightcube_request.cpu_data->simd_stats.ignore_camera = 0.0f;
     lightcube_request.gpu_data->alpha = 1.0f;
     lightcube_request.gpu_data->base_mat.diffuse_rgb[0] =
         light->RGBA[0] * 2.5f;
@@ -184,15 +184,15 @@ void T1_clientlogic_late_startup(void) {
     quad.gpu_data->touchable_id                 = -1;
     quad.cpu_data->alpha_blending_enabled       = false;
     
-    quad.cpu_data->simd_stats.mul_xyz[0]   = 0.0f;
-    quad.cpu_data->simd_stats.mul_xyz[1]   = 0.0f;
-    quad.cpu_data->simd_stats.mul_xyz[2]   = 0.0f;
-    quad.cpu_data->simd_stats.scale_factor = 1.0f;
-    quad.cpu_data->simd_stats.angle_xyz[0] = 1.8f;
-    quad.cpu_data->simd_stats.angle_xyz[1] = 0.0f;
-    quad.cpu_data->simd_stats.angle_xyz[2] = 0.65f;
-    quad.gpu_data->ignore_camera           = 0.0f;
-    quad.gpu_data->ignore_lighting         = 0.0f;
+    quad.cpu_data->simd_stats.mul_xyz[0]    = 0.0f;
+    quad.cpu_data->simd_stats.mul_xyz[1]    = 0.0f;
+    quad.cpu_data->simd_stats.mul_xyz[2]    = 0.0f;
+    quad.cpu_data->simd_stats.scale_factor  = 1.0f;
+    quad.cpu_data->simd_stats.angle_xyz[0]  = 1.8f;
+    quad.cpu_data->simd_stats.angle_xyz[1]  = 0.0f;
+    quad.cpu_data->simd_stats.angle_xyz[2]  = 0.65f;
+    quad.cpu_data->simd_stats.ignore_camera = 0.0f;
+    quad.gpu_data->ignore_lighting          = 0.0f;
     
     quad.gpu_data->base_mat.ambient_rgb[0]  = 0.05f;
     quad.gpu_data->base_mat.ambient_rgb[1]  = 0.05f;
@@ -267,7 +267,7 @@ void T1_clientlogic_late_startup(void) {
         quad.cpu_data->simd_stats.angle_xyz[0] = 1.8f;
         quad.cpu_data->simd_stats.angle_xyz[1] = 0.0f;
         quad.cpu_data->simd_stats.angle_xyz[2] = 0.65f;
-        quad.gpu_data->ignore_camera           = 0.0f;
+        quad.cpu_data->simd_stats.ignore_camera = 0.0f;
         quad.gpu_data->ignore_lighting         = 0.0f;
         
         quad.gpu_data->base_mat.ambient_rgb[0] = 0.05f;
