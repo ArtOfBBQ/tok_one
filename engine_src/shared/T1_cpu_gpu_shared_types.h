@@ -81,6 +81,7 @@ typedef struct {
     T1GPUConstMat base_mat;
     float         model_4x4[16];
     float         model_and_view_4x4[16];
+    float         normal_3x3[9];
     float         bonus_rgb[3];
     float         base_mat_uv_offsets[2];
     float         alpha;

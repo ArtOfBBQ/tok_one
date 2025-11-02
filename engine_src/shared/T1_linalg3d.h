@@ -75,5 +75,9 @@ void T1_linalg3d_float4x4_mul_float4x4(
     const T1float4x4 * b,
     T1float4x4 * out);
 
+void T1_linalg3d_float4x4_mul_float4x4_inplace(
+    T1float4x4 * a,
+    const T1float4x4 * b);
+
 #endif // T1_LINALG3D_H
 

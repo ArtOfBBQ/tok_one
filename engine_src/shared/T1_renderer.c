@@ -235,14 +235,18 @@ inline static void add_opaque_zpolygons_to_workload(
             continue;
         }
         
-        int32_t mesh_id = T1_zsprites_to_render->cpu_data[cpu_zp_i].mesh_id;
+        int32_t mesh_id = T1_zsprites_to_render->
+            cpu_data[cpu_zp_i].mesh_id;
         log_assert(mesh_id >= 0);
         log_assert(mesh_id < (int32_t)all_mesh_summaries_size);
         
         int32_t vert_tail_i =
-            all_mesh_summaries[mesh_id].vertices_head_i +
-                all_mesh_summaries[mesh_id].vertices_size;
-        log_assert(vert_tail_i < MAX_VERTICES_PER_BUFFER);
+            all_mesh_summaries[mesh_id].
+                vertices_head_i +
+                    all_mesh_summaries[mesh_id].
+                        vertices_size;
+        log_assert(
+            vert_tail_i < MAX_VERTICES_PER_BUFFER);
         
         /*
         We are free to overflow the vertices buffer, since its end is not
@@ -314,7 +318,7 @@ static void construct_projection_matrix(void) {
     
     const float zn = p->znear;
     const float zf = p->zfar;
-
+    
     const float f = 1.0f / tanf(fov_y_rad * 0.5f);
     
     #if 1
@@ -363,10 +367,9 @@ static void construct_view_matrix(void) {
     camera.xyz_sinangle[2] = sinf(camera.xyz_angle[2]);
     
     T1float4x4 result;
-    T1float4x4 accu;
     T1float4x4 next;
     
-    T1_linalg3d_construct_identity(&accu);
+    T1_linalg3d_construct_identity(&result);
     
     T1_linalg3d_float4x4_construct_xyz_rotation(
         &next,
@@ -374,14 +377,10 @@ static void construct_view_matrix(void) {
         -camera.xyz_angle[1],
         -camera.xyz_angle[2]);
     
-    T1_linalg3d_float4x4_mul_float4x4(
-        &accu,
-        &next,
-        &result);
+    T1_linalg3d_float4x4_mul_float4x4_inplace(
+        &result,
+        &next);
     
-    T1_std_memcpy(&accu, &result, sizeof(T1float4x4));
-    
-    // Translation
     T1_linalg3d_float4x4_construct(
         &next,
         1.0f, 0.0f, 0.0f, -camera.xyz[0],
@@ -389,7 +388,8 @@ static void construct_view_matrix(void) {
         0.0f, 0.0f, 1.0f, -camera.xyz[2],
         0.0f, 0.0f, 0.0f, 1.0f);
     
-    T1_linalg3d_float4x4_mul_float4x4(&accu, &next, &result);
+    T1_linalg3d_float4x4_mul_float4x4_inplace(
+        &result, &next);
     
     T1_std_memcpy(
         camera.view_4x4 + 0,
@@ -410,7 +410,7 @@ static void construct_view_matrix(void) {
 }
     
 
-static void construct_model_matrices(void) {
+static void construct_model_and_normal_matrices(void) {
     
     for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
         
@@ -418,10 +418,9 @@ static void construct_model_matrices(void) {
             &T1_zsprites_to_render->cpu_data[i].simd_stats;
         
         T1float4x4 result;
-        T1float4x4 accu;
         T1float4x4 next;
         
-        T1_linalg3d_construct_identity(&accu);
+        T1_linalg3d_construct_identity(&result);
         
         // Translation
         T1_linalg3d_float4x4_construct(
@@ -431,9 +430,8 @@ static void construct_model_matrices(void) {
             0.0f, 0.0f, 1.0f, stats->xyz[2],
             0.0f, 0.0f, 0.0f, 1.0f);
         
-        T1_linalg3d_float4x4_mul_float4x4(&accu, &next, &result);
-        T1_std_memcpy(
-            &accu, &result, sizeof(T1float4x4));
+        T1_linalg3d_float4x4_mul_float4x4_inplace(
+            &result, &next);
         
         T1_linalg3d_float4x4_construct_xyz_rotation(
             &next,
@@ -441,28 +439,22 @@ static void construct_model_matrices(void) {
             stats->angle_xyz[1],
             stats->angle_xyz[2]);
         
-        T1_linalg3d_float4x4_mul_float4x4(
-            &accu,
-            &next,
-            &result);
-        T1_std_memcpy(
-            &accu, &result, sizeof(T1float4x4));
+        T1_linalg3d_float4x4_mul_float4x4_inplace(
+            &result,
+            &next);
         
         T1_linalg3d_float4x4_construct(
             &next,
-            1.0f, 0.0f, 0.0f,
-            T1_zsprites_to_render->cpu_data[i].
+            1.0f, 0.0f, 0.0f, T1_zsprites_to_render->cpu_data[i].
                 simd_stats.offset_xyz[0],
-            0.0f, 1.0f, 0.0f,
-            T1_zsprites_to_render->cpu_data[i].
+            0.0f, 1.0f, 0.0f, T1_zsprites_to_render->cpu_data[i].
                 simd_stats.offset_xyz[1],
-            0.0f, 0.0f, 1.0f,
-            T1_zsprites_to_render->cpu_data[i].
+            0.0f, 0.0f, 1.0f, T1_zsprites_to_render->cpu_data[i].
                 simd_stats.offset_xyz[2],
             0.0f, 0.0f, 0.0f, 1.0f);
-        T1_linalg3d_float4x4_mul_float4x4(&accu, &next, &result);
-        T1_std_memcpy(
-            &accu, &result, sizeof(T1float4x4));
+        
+        T1_linalg3d_float4x4_mul_float4x4_inplace(
+            &result, &next);
         
         T1_linalg3d_float4x4_construct(
             &next,
@@ -470,55 +462,60 @@ static void construct_model_matrices(void) {
             0.0f, stats->mul_xyz[1], 0.0f, 0.0f,
             0.0f, 0.0f, stats->mul_xyz[2], 0.0f,
             0.0f, 0.0f, 0.0f, 1.0f);
-        T1_linalg3d_float4x4_mul_float4x4(&accu, &next, &result);
+        T1_linalg3d_float4x4_mul_float4x4_inplace(
+            &result, &next);
         
         T1_std_memcpy(
-            T1_zsprites_to_render->gpu_data[i].model_4x4 + 0,
+            T1_zsprites_to_render->gpu_data[i].
+                model_4x4 + 0,
             result.rows[0].data,
             sizeof(float) * 4);
         T1_std_memcpy(
-            T1_zsprites_to_render->gpu_data[i].model_4x4 + 4,
+            T1_zsprites_to_render->gpu_data[i].
+                model_4x4 + 4,
             result.rows[1].data,
             sizeof(float) * 4);
         T1_std_memcpy(
-            T1_zsprites_to_render->gpu_data[i].model_4x4 + 8,
+            T1_zsprites_to_render->gpu_data[i].
+                model_4x4 + 8,
             result.rows[2].data,
             sizeof(float) * 4);
         T1_std_memcpy(
-            T1_zsprites_to_render->gpu_data[i].model_4x4 + 12,
+            T1_zsprites_to_render->gpu_data[i].
+                model_4x4 + 12,
             result.rows[3].data,
             sizeof(float) * 4);
-        
-        T1_std_memcpy(
-            &next, &result, sizeof(T1float4x4));
         
         T1_linalg3d_float4x4_construct_from_ptr(
-            &accu,
+            &next,
             camera.view_4x4);
         
-        T1_linalg3d_float4x4_mul_float4x4(
-            &accu, &next, &result);
+        T1_linalg3d_float4x4_mul_float4x4_inplace(
+            &next, &result);
         
         T1_std_memcpy(
-            T1_zsprites_to_render->gpu_data[i].model_and_view_4x4 + 0,
-            result.rows[0].data,
+            T1_zsprites_to_render->gpu_data[i].
+                model_and_view_4x4 + 0,
+            next.rows[0].data,
             sizeof(float) * 4);
         T1_std_memcpy(
-            T1_zsprites_to_render->gpu_data[i].model_and_view_4x4 + 4,
-            result.rows[1].data,
+            T1_zsprites_to_render->gpu_data[i].
+                model_and_view_4x4 + 4,
+            next.rows[1].data,
             sizeof(float) * 4);
         T1_std_memcpy(
-            T1_zsprites_to_render->gpu_data[i].model_and_view_4x4 + 8,
-            result.rows[2].data,
+            T1_zsprites_to_render->gpu_data[i].
+                model_and_view_4x4 + 8,
+            next.rows[2].data,
             sizeof(float) * 4);
         T1_std_memcpy(
-            T1_zsprites_to_render->gpu_data[i].model_and_view_4x4 + 12,
-            result.rows[3].data,
+            T1_zsprites_to_render->gpu_data[i].
+                model_and_view_4x4 + 12,
+            next.rows[3].data,
             sizeof(float) * 4);
         
-        float ic =
-            T1_zsprites_to_render->cpu_data[i].
-                simd_stats.ignore_camera;
+        float ic = T1_zsprites_to_render->
+            cpu_data[i].simd_stats.ignore_camera;
         
         ic = T1_std_maxf(ic, 0.0f);
         ic = T1_std_minf(ic, 1.0f);
@@ -526,11 +523,11 @@ static void construct_model_matrices(void) {
         for (uint32_t j = 0; j < 16; j++) {
             T1_zsprites_to_render->gpu_data[i].
                 model_and_view_4x4[j] =
-                T1_zsprites_to_render->gpu_data[i].
-                    model_and_view_4x4[j] *
-                        (1.0f - ic) +
-                T1_zsprites_to_render->gpu_data[i].
-                    model_4x4[j] * ic;
+                    (T1_zsprites_to_render->gpu_data[i].
+                        model_and_view_4x4[j] *
+                            (1.0f - ic)) +
+                    (T1_zsprites_to_render->gpu_data[i].
+                        model_4x4[j] * ic);
         }
     }
 }
@@ -554,15 +551,13 @@ void renderer_hardware_render(
         return;
     }
     
-    // camera.view_4x4
-    
     log_assert(T1_zsprites_to_render->size < MAX_ZSPRITES_PER_BUFFER);
     
     construct_view_matrix();
     
     construct_projection_matrix();
     
-    construct_model_matrices();
+    construct_model_and_normal_matrices();
     
     T1_std_memcpy(
         /* void * dest: */

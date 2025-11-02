@@ -347,3 +347,22 @@ void T1_linalg3d_float4x4_mul_float4x4(
     }
 }
 
+void T1_linalg3d_float4x4_mul_float4x4_inplace(
+    T1float4x4 * a,
+    const T1float4x4 * b)
+{
+    T1float4 a_cached_row;
+    
+    uint32_t row_i;
+    for (row_i = 0; row_i < 4; row_i++) {
+        
+        a_cached_row = a->rows[row_i];
+        
+        for (int32_t col_i = 0; col_i < 4; col_i++)
+        {
+            a->rows[row_i].data[col_i] = T1_linealg3d_float4_dot(
+                a_cached_row,
+                T1_linalg3d_float4x4_get_column(b, col_i));
+        }
+    }
+}
