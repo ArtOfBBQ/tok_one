@@ -369,7 +369,7 @@ static void construct_view_matrix(void) {
     T1float4x4 result;
     T1float4x4 next;
     
-    T1_linalg3d_construct_identity(&result);
+    T1_linalg3d_float4x4_construct_identity(&result);
     
     T1_linalg3d_float4x4_construct_xyz_rotation(
         &next,
@@ -408,7 +408,6 @@ static void construct_view_matrix(void) {
         result.rows[3].data,
         sizeof(float) * 4);
 }
-    
 
 static void construct_model_and_normal_matrices(void) {
     
@@ -420,7 +419,7 @@ static void construct_model_and_normal_matrices(void) {
         T1float4x4 result;
         T1float4x4 next;
         
-        T1_linalg3d_construct_identity(&result);
+        T1_linalg3d_float4x4_construct_identity(&result);
         
         // Translation
         T1_linalg3d_float4x4_construct(

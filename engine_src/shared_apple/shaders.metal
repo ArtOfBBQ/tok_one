@@ -204,23 +204,20 @@ vertex_shader(
         locked_vertices[out.locked_vertex_i].xyz[2],
         1.0f);
     
-    float4 mesh_normals = vector_float4(
+    float3 vertex_normal = vector_float3(
         locked_vertices[out.locked_vertex_i].normal_xyz[0],
         locked_vertices[out.locked_vertex_i].normal_xyz[1],
-        locked_vertices[out.locked_vertex_i].normal_xyz[2],
-        0.0f);
+        locked_vertices[out.locked_vertex_i].normal_xyz[2]);
     
-    float4 mesh_tangent = vector_float4(
+    float3 vertex_tangent = vector_float3(
         locked_vertices[out.locked_vertex_i].tangent_xyz[0],
         locked_vertices[out.locked_vertex_i].tangent_xyz[1],
-        locked_vertices[out.locked_vertex_i].tangent_xyz[2],
-        0.0f);
+        locked_vertices[out.locked_vertex_i].tangent_xyz[2]);
     
-    float4 mesh_bitangent = vector_float4(
+    float3 vertex_bitangent = vector_float3(
         locked_vertices[out.locked_vertex_i].bitangent_xyz[0],
         locked_vertices[out.locked_vertex_i].bitangent_xyz[1],
-        locked_vertices[out.locked_vertex_i].bitangent_xyz[2],
-        0.0f);
+        locked_vertices[out.locked_vertex_i].bitangent_xyz[2]);
     
     float4x4 model_and_view = matrix_float4x4(
         polygons[out.polygon_i].model_and_view_4x4[ 0],
@@ -261,7 +258,8 @@ vertex_shader(
     out.worldpos = mesh_vertices * model;
     out.worldpos[3] = 1.0f;
     
-    float4 final_pos = mesh_vertices * model_and_view;
+    float4 final_pos = mesh_vertices *
+        model_and_view;
     
     out.touchable_id = polygons[out.polygon_i].touchable_id;
     
@@ -291,9 +289,26 @@ vertex_shader(
     
     out.position = final_pos * projection;
     
-    out.normal = normalize(mesh_normals * model);
-    out.tangent = normalize(mesh_tangent * model);
-    out.bitangent = normalize(mesh_bitangent * model);
+    float3x3 mat_normal = matrix_float3x3(
+        polygons[out.polygon_i].normal_3x3[ 0],
+        polygons[out.polygon_i].normal_3x3[ 1],
+        polygons[out.polygon_i].normal_3x3[ 2],
+        polygons[out.polygon_i].normal_3x3[ 3],
+        polygons[out.polygon_i].normal_3x3[ 4],
+        polygons[out.polygon_i].normal_3x3[ 5],
+        polygons[out.polygon_i].normal_3x3[ 6],
+        polygons[out.polygon_i].normal_3x3[ 7],
+        polygons[out.polygon_i].normal_3x3[ 8]);
+    
+    out.normal = vector_float4(
+        normalize(vertex_normal * mat_normal),
+        0.0f);
+    out.tangent = vector_float4(
+        normalize(vertex_tangent * mat_normal),
+        0.0f);
+    out.bitangent = vector_float4(
+        normalize(vertex_bitangent * mat_normal),
+        0.0f);
     
     return out;
 }
@@ -379,13 +394,18 @@ float4 get_lit(
         material->diffuse_rgb[1],
         material->diffuse_rgb[2],
         1.0f);
+    
     float4 specular_base = vector_float4(
         material->specular_rgb[0],
         material->specular_rgb[1],
         material->specular_rgb[2],
         1.0f);
     
-    float4 diffuse_texture_sample = vector_float4(0.75f, 0.75f, 0.75f, 1.0f);
+    float4 diffuse_texture_sample = vector_float4(
+        0.75f,
+        0.75f,
+        0.75f,
+        1.0f);
     
     float2 uv_adjusted =
         in.texture_coordinate + (
@@ -444,6 +464,14 @@ float4 get_lit(
             lights[i].xyz[1],
             lights[i].xyz[2],
             0.0f);
+        
+        float4 light_viewpos = light_worldpos +
+            vector_float4(
+                camera->xyz[0],
+                camera->xyz[1],
+                camera->xyz[2],
+                0.0f);
+        
         float4 light_color = vector_float4(
             lights[i].rgb[0],
             lights[i].rgb[1],
@@ -529,7 +557,8 @@ float4 get_lit(
         float attenuation = 1.0f - (
             distance_overflow / lights[i].reach);
         
-        attenuation = clamp(attenuation, 0.00f, 1.00f);
+        attenuation = clamp(
+            attenuation, 0.00f, 1.00f);
         
         // This normal may be perturbed if a normal map is active,
         // or it may be used as-is

@@ -1,5 +1,55 @@
 #include "T1_linalg3d.h"
 
+float T1_linalg3d_float4_dot(
+    const T1float4 a,
+    const T1float4 b)
+{
+    #if defined(__ARM_NEON)
+        float32x4_t products = vmulq_f32(a.neon_f4, b.neon_f4);
+        float32x2_t sum = vadd_f32(
+            vget_high_f32(products),
+            vget_low_f32(products));
+        sum = vpadd_f32(sum, sum);
+        return vget_lane_f32(sum, 0);
+    #elif defined(__SSE2__)
+        __m128 mul = _mm_mul_ps(a.sse_f4, b.sse_f4);
+        __m128 sum = _mm_add_ps(
+            mul,
+            _mm_shuffle_ps(mul, mul, _MM_SHUFFLE(2,3,0,1)));
+        sum = _mm_add_ps(
+            sum,
+            _mm_shuffle_ps(sum, sum, _MM_SHUFFLE(1,0,2,3)));
+        return _mm_cvtss_f32(sum);
+    #else
+        return
+            a.data[0] * b.data[0] +
+            a.data[1] * b.data[1] +
+            a.data[2] * b.data[2] +
+            a.data[3] * b.data[3];
+    #endif
+}
+
+T1float4 T1_linalg3d_float4_cross(
+    const T1float4 a,
+    const T1float4 b)
+{
+    assert(a.data[3] == 0.0f);
+    assert(b.data[3] == 0.0f);
+    
+    float cross[3];
+    cross[0] = (a.data[1] * b.data[2]) - (a.data[2] * b.data[1]);
+    cross[1] = (a.data[2] * b.data[0]) - (a.data[0] * b.data[2]);
+    cross[2] = (a.data[0] * b.data[1]) - (a.data[1] * b.data[0]);
+    
+    T1float4 out;
+    out.data[0] = cross[0];
+    out.data[1] = cross[1];
+    out.data[2] = cross[2];
+    out.data[3] = 0.0f;
+    
+    return out;
+}
+
 void T1_linalg3d_float4x4_construct_from_ptr(
     T1float4x4 * to_construct,
     float * vals)
@@ -36,11 +86,64 @@ void T1_linalg3d_float4x4_construct_from_ptr(
     to_construct->rows[3].data[1] = vals[13];
     to_construct->rows[3].data[2] = vals[14];
     to_construct->rows[3].data[3] = vals[15];
-    
     #endif
 }
 
-void T1_linalg3d_construct_identity(
+static void T1_linalg3d_float4_set_w_only(
+    T1float4 * to_edit,
+    float new_value)
+{
+    #if defined(__ARM_NEON)
+    assert(0);
+    #elif defined(__SSE2__)
+    assert(0);
+    #else
+    to_edit->data[3] = new_value;
+    #endif
+}
+
+void T1_linalg3d_float3x3_construct_from_ptr(
+    T1float3x3 * to_construct,
+    float * vals)
+{
+    #if defined(__ARM_NEON)
+    to_construct->rows[0].neon_f4 = vld1q_f32(vals + 0);
+    to_construct->rows[1].neon_f4 = vld1q_f32(vals + 3);
+    to_construct->rows[2].neon_f4 = vld1q_f32(vals + 6);
+    #elif defined(__SSE2__)
+    to_construct->rows[0].sse_f4 = _mm_load_ps(vals +  0);
+    to_construct->rows[1].sse_f4 = _mm_load_ps(vals +  3);
+    to_construct->rows[2].sse_f4 = _mm_load_ps(vals +  6);
+    #else
+    to_construct->rows[0].data[0] = vals[0];
+    to_construct->rows[0].data[1] = vals[1];
+    to_construct->rows[0].data[2] = vals[2];
+    to_construct->rows[1].data[0] = vals[3];
+    to_construct->rows[1].data[1] = vals[4];
+    to_construct->rows[1].data[2] = vals[5];
+    to_construct->rows[2].data[0] = vals[6];
+    to_construct->rows[2].data[1] = vals[7];
+    to_construct->rows[2].data[2] = vals[8];
+    #endif
+    
+    T1_linalg3d_float4_set_w_only(
+        /* T1float4 * to_edit: */
+            &to_construct->rows[0],
+        /* float new_value: */
+            0.0f);
+    T1_linalg3d_float4_set_w_only(
+        /* T1float4 * to_edit: */
+            &to_construct->rows[1],
+        /* float new_value: */
+            0.0f);
+    T1_linalg3d_float4_set_w_only(
+        /* T1float4 * to_edit: */
+            &to_construct->rows[2],
+        /* float new_value: */
+            0.0f);
+}
+
+void T1_linalg3d_float4x4_construct_identity(
     T1float4x4 * to_construct)
 {
     T1_linalg3d_float4x4_construct(
@@ -49,6 +152,16 @@ void T1_linalg3d_construct_identity(
         0.0f, 1.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f);
+}
+
+void T1_linalg3d_float3x3_construct_identity(
+    T1float3x3 * to_construct)
+{
+    T1_linalg3d_float3x3_construct(
+        to_construct,
+        1.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 1.0f);
 }
 
 void T1_linalg3d_float4x4_construct(
@@ -144,6 +257,78 @@ void T1_linalg3d_float4x4_construct(
     to_construct->rows[3].data[1] = row4val2;
     to_construct->rows[3].data[2] = row4val3;
     to_construct->rows[3].data[3] = row4val4;
+    #endif
+}
+
+void T1_linalg3d_float3x3_construct(
+    T1float3x3 * to_construct,
+    const float row1val1,
+    const float row1val2,
+    const float row1val3,
+    const float row2val1,
+    const float row2val2,
+    const float row2val3,
+    const float row3val1,
+    const float row3val2,
+    const float row3val3)
+{
+    #if defined(__ARM_NEON)
+    float vals[4];
+    
+    vals[0] = row1val1;
+    vals[1] = row1val2;
+    vals[2] = row1val3;
+    vals[3] = 0.0f;
+    to_construct->rows[0].neon_f4 = vld1q_f32(vals);
+
+    vals[0] = row2val1;
+    vals[1] = row2val2;
+    vals[2] = row2val3;
+    vals[3] = 0.0f;
+    to_construct->rows[1].neon_f4 = vld1q_f32(vals);
+    
+    vals[0] = row3val1;
+    vals[1] = row3val2;
+    vals[2] = row3val3;
+    vals[3] = 0.0f;
+    to_construct->rows[2].neon_f4 = vld1q_f32(vals);
+    
+    #elif defined(__SSE2__)
+    float vals[4];
+    
+    vals[0] = row1val1;
+    vals[1] = row1val2;
+    vals[2] = row1val3;
+    vals[3] = 0.0f;
+    to_construct->rows[0].sse_f4 = _mm_load_ps(vals);
+    
+    vals[0] = row2val1;
+    vals[1] = row2val2;
+    vals[2] = row2val3;
+    vals[3] = 0.0f;
+    to_construct->rows[1].sse_f4 = _mm_load_ps(vals);
+    
+    vals[0] = row3val1;
+    vals[1] = row3val2;
+    vals[2] = row3val3;
+    vals[3] = 0.0f;
+    to_construct->rows[2].sse_f4 = _mm_load_ps(vals);
+    
+    #else
+    to_construct->rows[0].data[0] = row1val1;
+    to_construct->rows[0].data[1] = row1val2;
+    to_construct->rows[0].data[2] = row1val3;
+    to_construct->rows[0].data[3] = 0.0f;
+    
+    to_construct->rows[1].data[0] = row2val1;
+    to_construct->rows[1].data[1] = row2val2;
+    to_construct->rows[1].data[2] = row2val3;
+    to_construct->rows[1].data[3] = 0.0f;
+    
+    to_construct->rows[2].data[0] = row3val1;
+    to_construct->rows[2].data[1] = row3val2;
+    to_construct->rows[2].data[2] = row3val3;
+    to_construct->rows[2].data[3] = 0.0f;
     #endif
 }
 
@@ -256,35 +441,6 @@ void T1_linalg3d_float4x4_construct_xyz_rotation(
         0.0f, 0.0f, 0.0f, 1.0f);
 }
 
-static float T1_linealg3d_float4_dot(
-    const T1float4 a,
-    const T1float4 b)
-{
-    #if defined(__ARM_NEON)
-        float32x4_t products = vmulq_f32(a.neon_f4, b.neon_f4);
-        float32x2_t sum = vadd_f32(
-            vget_high_f32(products),
-            vget_low_f32(products));
-        sum = vpadd_f32(sum, sum);
-        return vget_lane_f32(sum, 0);
-    #elif defined(__SSE2__)
-        __m128 mul = _mm_mul_ps(a.sse_f4, b.sse_f4);
-        __m128 sum = _mm_add_ps(
-            mul,
-            _mm_shuffle_ps(mul, mul, _MM_SHUFFLE(2,3,0,1)));
-        sum = _mm_add_ps(
-            sum,
-            _mm_shuffle_ps(sum, sum, _MM_SHUFFLE(1,0,2,3)));
-        return _mm_cvtss_f32(sum);
-    #else
-        return
-            a.data[0] * b.data[0] +
-            a.data[1] * b.data[1] +
-            a.data[2] * b.data[2] +
-            a.data[3] * b.data[3];
-    #endif
-}
-
 static T1float4 T1_linalg3d_float4x4_get_column(
     const T1float4x4 * m,
     int col_i)
@@ -331,6 +487,49 @@ static T1float4 T1_linalg3d_float4x4_get_column(
     return out;
 }
 
+static T1float4 T1_linalg3d_float3x3_get_column(
+    const T1float3x3 * m,
+    int col_i)
+{
+    assert(col_i >= 0);
+    assert(col_i < 3);
+    
+    T1float4 out;
+    
+    #if defined(__SSE__)
+        __m128 r0 = m->rows[0].sse_f4;
+        __m128 r1 = m->rows[1].sse_f4;
+        __m128 r2 = m->rows[2].sse_f4;
+        __m128 r3 = _mm_set1_ps(0.0f);
+        
+        __m128 x, y;
+        switch (col_i) {
+            case 0:
+                x = _mm_shuffle_ps(r0, r1, _MM_SHUFFLE(0,0,0,0));
+                y = _mm_shuffle_ps(r2, r3, _MM_SHUFFLE(0,0,0,0));
+            break;
+            case 1:
+                x = _mm_shuffle_ps(r0, r1, _MM_SHUFFLE(1,1,1,1));
+                y = _mm_shuffle_ps(r2, r3, _MM_SHUFFLE(1,1,1,1));
+                break;
+            case 2:
+                x = _mm_shuffle_ps(r0, r1, _MM_SHUFFLE(2,2,2,2));
+                y = _mm_shuffle_ps(r2, r3, _MM_SHUFFLE(2,2,2,2));
+                break;
+            default: __builtin_unreachable();
+        }
+        
+        out.sse_f4 = _mm_shuffle_ps(x, y, _MM_SHUFFLE(2,0,2,0));
+    #else
+        out.data[0] = m->rows[0].data[col_i];
+        out.data[1] = m->rows[1].data[col_i];
+        out.data[2] = m->rows[2].data[col_i];
+        out.data[3] = 0.0f;
+    #endif
+    
+    return out;
+}
+
 void T1_linalg3d_float4x4_mul_float4x4(
     const T1float4x4 * a,
     const T1float4x4 * b,
@@ -340,9 +539,32 @@ void T1_linalg3d_float4x4_mul_float4x4(
     for (row_i = 0; row_i < 4; row_i++) {
         for (int32_t col_i = 0; col_i < 4; col_i++)
         {
-            out->rows[row_i].data[col_i] = T1_linealg3d_float4_dot(
+            out->rows[row_i].data[col_i] = T1_linalg3d_float4_dot(
                 a->rows[row_i],
                 T1_linalg3d_float4x4_get_column(b, col_i));
+        }
+    }
+}
+
+void T1_linalg3d_float3x3_mul_float3x3(
+    const T1float3x3 * a,
+    const T1float3x3 * b,
+    T1float3x3 * out)
+{
+    assert(a->rows[0].data[3] == 0.0f);
+    assert(a->rows[1].data[3] == 0.0f);
+    assert(a->rows[2].data[3] == 0.0f);
+    assert(b->rows[0].data[3] == 0.0f);
+    assert(b->rows[1].data[3] == 0.0f);
+    assert(b->rows[2].data[3] == 0.0f);
+    
+    uint32_t row_i;
+    for (row_i = 0; row_i < 3; row_i++) {
+        for (int32_t col_i = 0; col_i < 3; col_i++)
+        {
+            out->rows[row_i].data[col_i] = T1_linalg3d_float4_dot(
+                a->rows[row_i],
+                T1_linalg3d_float3x3_get_column(b, col_i));
         }
     }
 }
@@ -360,9 +582,48 @@ void T1_linalg3d_float4x4_mul_float4x4_inplace(
         
         for (int32_t col_i = 0; col_i < 4; col_i++)
         {
-            a->rows[row_i].data[col_i] = T1_linealg3d_float4_dot(
+            a->rows[row_i].data[col_i] = T1_linalg3d_float4_dot(
                 a_cached_row,
                 T1_linalg3d_float4x4_get_column(b, col_i));
         }
     }
+}
+
+void T1_linalg3d_float3x3_mul_float3x3_inplace(
+    T1float3x3 * a,
+    const T1float3x3 * b)
+{
+    T1float4 a_cached_row;
+    
+    uint32_t row_i;
+    for (row_i = 0; row_i < 3; row_i++) {
+        
+        a_cached_row = a->rows[row_i];
+        
+        for (int32_t col_i = 0; col_i < 3; col_i++)
+        {
+            a->rows[row_i].data[col_i] = T1_linalg3d_float4_dot(
+                a_cached_row,
+                T1_linalg3d_float3x3_get_column(b, col_i));
+        }
+    }
+}
+
+void T1_linalg3d_float4x4_transpose(
+    const T1float4x4 * m,
+    T1float4x4 * out)
+{
+    out->rows[0] = T1_linalg3d_float4x4_get_column(m, 0);
+    out->rows[1] = T1_linalg3d_float4x4_get_column(m, 1);
+    out->rows[2] = T1_linalg3d_float4x4_get_column(m, 2);
+    out->rows[3] = T1_linalg3d_float4x4_get_column(m, 3);
+}
+
+void T1_linalg3d_float3x3_transpose(
+    const T1float3x3 * m,
+    T1float3x3 * out)
+{
+    out->rows[0] = T1_linalg3d_float3x3_get_column(m, 0);
+    out->rows[1] = T1_linalg3d_float3x3_get_column(m, 1);
+    out->rows[2] = T1_linalg3d_float3x3_get_column(m, 2);
 }
