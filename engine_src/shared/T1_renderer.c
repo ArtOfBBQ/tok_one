@@ -308,7 +308,7 @@ static void construct_projection_matrix(void) {
     
     T1GPUProjectConsts * p = &T1_engine_globals->project_consts;
     
-    T1float4x4 proj;
+    T1_linal_float4x4 proj;
     const float y_scale = p->field_of_view_modifier;
     const float x_scale = p->x_multiplier;
     
@@ -323,7 +323,7 @@ static void construct_projection_matrix(void) {
     
     #if 1
     // perspective projection
-    T1_linalg3d_float4x4_construct(
+    T1_linal_float4x4_construct(
         &proj,
         f / aspect, 0.0f, 0.0f, 0.0f,
         0.0f, f, 0.0f, 0.0f,
@@ -332,7 +332,7 @@ static void construct_projection_matrix(void) {
     );
     #else
     // orthographic projection
-    T1_linalg3d_float4x4_construct(
+    T1_linal_float4x4_construct(
         &proj,
         1.0f,  0.0f,  0.0f, 0.0f,
         0.0f, 1.0f, 0.0f, 0.0f,
@@ -366,29 +366,29 @@ static void construct_view_matrix(void) {
     camera.xyz_sinangle[1] = sinf(camera.xyz_angle[1]);
     camera.xyz_sinangle[2] = sinf(camera.xyz_angle[2]);
     
-    T1float4x4 result;
-    T1float4x4 next;
+    T1_linal_float4x4 result;
+    T1_linal_float4x4 next;
     
-    T1_linalg3d_float4x4_construct_identity(&result);
+    T1_linal_float4x4_construct_identity(&result);
     
-    T1_linalg3d_float4x4_construct_xyz_rotation(
+    T1_linal_float4x4_construct_xyz_rotation(
         &next,
         -camera.xyz_angle[0],
         -camera.xyz_angle[1],
         -camera.xyz_angle[2]);
     
-    T1_linalg3d_float4x4_mul_float4x4_inplace(
+    T1_linal_float4x4_mul_float4x4_inplace(
         &result,
         &next);
     
-    T1_linalg3d_float4x4_construct(
+    T1_linal_float4x4_construct(
         &next,
         1.0f, 0.0f, 0.0f, -camera.xyz[0],
         0.0f, 1.0f, 0.0f, -camera.xyz[1],
         0.0f, 0.0f, 1.0f, -camera.xyz[2],
         0.0f, 0.0f, 0.0f, 1.0f);
     
-    T1_linalg3d_float4x4_mul_float4x4_inplace(
+    T1_linal_float4x4_mul_float4x4_inplace(
         &result, &next);
     
     T1_std_memcpy(
@@ -409,59 +409,59 @@ static void construct_view_matrix(void) {
         sizeof(float) * 4);
 }
 
-static void construct_model_and_normal_matrices(void) {
+static void construct_model_and_normal_matrices(void)
+{
+    T1_linal_float4x4 result;
+    T1_linal_float4x4 next;
+    T1_linal_float3x3 normals;
+    T1_linal_float3x3 next3x3;
     
     for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
         
-        T1CPUzSpriteSimdStats * stats =
-            &T1_zsprites_to_render->cpu_data[i].simd_stats;
+        T1CPUzSpriteSimdStats * s =
+            &T1_zsprites_to_render->cpu_data[i].
+                simd_stats;
         
-        T1float4x4 result;
-        T1float4x4 next;
-        
-        T1_linalg3d_float4x4_construct_identity(&result);
+        T1_linal_float4x4_construct_identity(&result);
         
         // Translation
-        T1_linalg3d_float4x4_construct(
+        T1_linal_float4x4_construct(
             &next,
-            1.0f, 0.0f, 0.0f, stats->xyz[0],
-            0.0f, 1.0f, 0.0f, stats->xyz[1],
-            0.0f, 0.0f, 1.0f, stats->xyz[2],
+            1.0f, 0.0f, 0.0f, s->xyz[0],
+            0.0f, 1.0f, 0.0f, s->xyz[1],
+            0.0f, 0.0f, 1.0f, s->xyz[2],
             0.0f, 0.0f, 0.0f, 1.0f);
         
-        T1_linalg3d_float4x4_mul_float4x4_inplace(
+        T1_linal_float4x4_mul_float4x4_inplace(
             &result, &next);
         
-        T1_linalg3d_float4x4_construct_xyz_rotation(
+        T1_linal_float4x4_construct_xyz_rotation(
             &next,
-            stats->angle_xyz[0],
-            stats->angle_xyz[1],
-            stats->angle_xyz[2]);
+            s->angle_xyz[0],
+            s->angle_xyz[1],
+            s->angle_xyz[2]);
         
-        T1_linalg3d_float4x4_mul_float4x4_inplace(
+        T1_linal_float4x4_mul_float4x4_inplace(
             &result,
             &next);
         
-        T1_linalg3d_float4x4_construct(
+        T1_linal_float4x4_construct(
             &next,
-            1.0f, 0.0f, 0.0f, T1_zsprites_to_render->cpu_data[i].
-                simd_stats.offset_xyz[0],
-            0.0f, 1.0f, 0.0f, T1_zsprites_to_render->cpu_data[i].
-                simd_stats.offset_xyz[1],
-            0.0f, 0.0f, 1.0f, T1_zsprites_to_render->cpu_data[i].
-                simd_stats.offset_xyz[2],
+            1.0f, 0.0f, 0.0f, s->offset_xyz[0],
+            0.0f, 1.0f, 0.0f, s->offset_xyz[1],
+            0.0f, 0.0f, 1.0f, s->offset_xyz[2],
             0.0f, 0.0f, 0.0f, 1.0f);
         
-        T1_linalg3d_float4x4_mul_float4x4_inplace(
+        T1_linal_float4x4_mul_float4x4_inplace(
             &result, &next);
         
-        T1_linalg3d_float4x4_construct(
+        T1_linal_float4x4_construct(
             &next,
-            stats->mul_xyz[0], 0.0f, 0.0f, 0.0f,
-            0.0f, stats->mul_xyz[1], 0.0f, 0.0f,
-            0.0f, 0.0f, stats->mul_xyz[2], 0.0f,
+            s->mul_xyz[0], 0.0f, 0.0f, 0.0f,
+            0.0f, s->mul_xyz[1], 0.0f, 0.0f,
+            0.0f, 0.0f, s->mul_xyz[2], 0.0f,
             0.0f, 0.0f, 0.0f, 1.0f);
-        T1_linalg3d_float4x4_mul_float4x4_inplace(
+        T1_linal_float4x4_mul_float4x4_inplace(
             &result, &next);
         
         T1_std_memcpy(
@@ -485,11 +485,57 @@ static void construct_model_and_normal_matrices(void) {
             result.rows[3].data,
             sizeof(float) * 4);
         
-        T1_linalg3d_float4x4_construct_from_ptr(
+        T1_linal_float4x4_extract_float3x3(
+            /* const T1_linal_float4x4 * in: */
+                &result,
+            /* const int omit_row_i: */
+                3,
+            /* const int omit_col_i: */
+                3,
+            /* T1_linal_float3x3 * out: */
+                &normals);
+        
+        T1_linal_float3x3_inverse_transpose_inplace(&normals);
+        
+        T1_linal_float3x3_construct(
+            &next3x3,
+            camera.view_4x4[ 0],
+            camera.view_4x4[ 1],
+            camera.view_4x4[ 2],
+            camera.view_4x4[ 4],
+            camera.view_4x4[ 5],
+            camera.view_4x4[ 6],
+            camera.view_4x4[ 8],
+            camera.view_4x4[ 9],
+            camera.view_4x4[10]);
+        
+        T1_linal_float3x3_mul_float3x3_inplace(
+            &next3x3, &normals);
+        
+        T1_zsprites_to_render->gpu_data[i].
+            normal_3x3[0] = next3x3.rows[0].data[0];
+        T1_zsprites_to_render->gpu_data[i].
+            normal_3x3[1] = next3x3.rows[0].data[1];
+        T1_zsprites_to_render->gpu_data[i].
+            normal_3x3[2] = next3x3.rows[0].data[2];
+        T1_zsprites_to_render->gpu_data[i].
+            normal_3x3[3] = next3x3.rows[1].data[0];
+        T1_zsprites_to_render->gpu_data[i].
+            normal_3x3[4] = next3x3.rows[1].data[1];
+        T1_zsprites_to_render->gpu_data[i].
+            normal_3x3[5] = next3x3.rows[1].data[2];
+        T1_zsprites_to_render->gpu_data[i].
+            normal_3x3[6] = next3x3.rows[2].data[0];
+        T1_zsprites_to_render->gpu_data[i].
+            normal_3x3[7] = next3x3.rows[2].data[1];
+        T1_zsprites_to_render->gpu_data[i].
+            normal_3x3[8] = next3x3.rows[2].data[2];
+        
+        T1_linal_float4x4_construct_from_ptr(
             &next,
             camera.view_4x4);
         
-        T1_linalg3d_float4x4_mul_float4x4_inplace(
+        T1_linal_float4x4_mul_float4x4_inplace(
             &next, &result);
         
         T1_std_memcpy(

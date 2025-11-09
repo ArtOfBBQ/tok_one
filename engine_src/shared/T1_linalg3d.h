@@ -1,5 +1,5 @@
-#ifndef T1_LINALG3D_H
-#define T1_LINALG3D_H
+#ifndef T1_LINAL_H
+#define T1_LINAL_H
 
 #include <assert.h>
 #include <stdint.h>
@@ -20,40 +20,38 @@ typedef struct {
         __m128 sse_f4;
         #endif
     };
-} T1float4;
+} T1_linal_float4;
 
-float T1_linalg3d_float4_dot(
-    const T1float4 a,
-    const T1float4 b);
+float T1_linal_float4_dot(
+    const T1_linal_float4 a,
+    const T1_linal_float4 b);
 
-T1float4 T1_linalg3d_float4_cross(
-    const T1float4 a,
-    const T1float4 b);
-
-typedef struct {
-    T1float4 rows[4];
-} T1float4x4;
+T1_linal_float4 T1_linal_float4_cross(
+    const T1_linal_float4 a,
+    const T1_linal_float4 b);
 
 typedef struct {
-    T1float4 rows[3];
-} T1float3x3;
+    T1_linal_float4 rows[3];
+} T1_linal_float3x3;
 
-void T1_linalg3d_float4x4_construct_from_ptr(
-    T1float4x4 * to_construct,
-    float * vals);
+typedef struct {
+    T1_linal_float4 rows[4];
+} T1_linal_float4x4;
 
-void T1_linalg3d_float3x3_construct_from_ptr(
-    T1float3x3 * to_construct,
-    float * vals);
+void T1_linal_float3x3_construct(
+    T1_linal_float3x3 * to_construct,
+    const float row1val1,
+    const float row1val2,
+    const float row1val3,
+    const float row2val1,
+    const float row2val2,
+    const float row2val3,
+    const float row3val1,
+    const float row3val2,
+    const float row3val3);
 
-void T1_linalg3d_float4x4_construct_identity(
-    T1float4x4 * to_construct);
-
-void T1_linalg3d_float3x3_construct_identity(
-    T1float3x3 * to_construct);
-
-void T1_linalg3d_float4x4_construct(
-    T1float4x4 * to_construct,
+void T1_linal_float4x4_construct(
+    T1_linal_float4x4 * to_construct,
     const float row1val1,
     const float row1val2,
     const float row1val3,
@@ -71,60 +69,99 @@ void T1_linalg3d_float4x4_construct(
     const float row4val3,
     const float row4val4);
 
-void T1_linalg3d_float3x3_construct(
-    T1float3x3 * to_construct,
-    const float row1val1,
-    const float row1val2,
-    const float row1val3,
-    const float row2val1,
-    const float row2val2,
-    const float row2val3,
-    const float row3val1,
-    const float row3val2,
-    const float row3val3);
+void T1_linal_float3x3_construct_from_ptr(
+    T1_linal_float3x3 * to_construct,
+    float * vals);
 
-void T1_linalg3d_float4x4_construct_x_rotation(
-    T1float4x4 * to_construct,
+void T1_linal_float4x4_construct_from_ptr(
+    T1_linal_float4x4 * to_construct,
+    float * vals);
+
+void T1_linal_float3x3_construct_identity(
+    T1_linal_float3x3 * to_construct);
+
+void T1_linal_float4x4_construct_identity(
+    T1_linal_float4x4 * to_construct);
+
+void T1_linal_float4x4_extract_float3x3(
+    const T1_linal_float4x4 * in,
+    const int omit_row_i,
+    const int omit_col_i,
+    T1_linal_float3x3 * out);
+
+float T1_linal_float3x3_get_determinant(
+    const T1_linal_float3x3 * a);
+
+float T1_linal_float4x4_get_determinant(
+    const T1_linal_float4x4 * a);
+
+void T1_linal_float3x3_get_inverse(
+    T1_linal_float3x3 * in,
+    T1_linal_float3x3 * out);
+
+void T1_linal_float3x3_get_inverse_transpose(
+    const T1_linal_float3x3 * in,
+    T1_linal_float3x3 * out);
+
+void T1_linal_float3x3_inverse_transpose_inplace(
+    T1_linal_float3x3 * m);
+
+void T1_linal_float4x4_get_inverse(
+    T1_linal_float4x4 * in,
+    T1_linal_float4x4 * out);
+
+void T1_linal_float4x4_get_inverse_transpose(
+    T1_linal_float4x4 * in,
+    T1_linal_float4x4 * out);
+
+void T1_linal_float4x4_construct_x_rotation(
+    T1_linal_float4x4 * to_construct,
     const float x_angle);
 
-void T1_linalg3d_float4x4_construct_y_rotation(
-    T1float4x4 * to_construct,
+void T1_linal_float4x4_construct_y_rotation(
+    T1_linal_float4x4 * to_construct,
     const float y_angle);
 
-void T1_linalg3d_float4x4_construct_z_rotation(
-    T1float4x4 * to_construct,
+void T1_linal_float4x4_construct_z_rotation(
+    T1_linal_float4x4 * to_construct,
     const float z_angle);
 
-void T1_linalg3d_float4x4_construct_xyz_rotation(
-    T1float4x4 * to_construct,
+void T1_linal_float4x4_construct_xyz_rotation(
+    T1_linal_float4x4 * to_construct,
     const float x_angle,
     const float y_angle,
     const float z_angle);
 
-void T1_linalg3d_float4x4_mul_float4x4(
-    const T1float4x4 * a,
-    const T1float4x4 * b,
-    T1float4x4 * out);
+void T1_linal_float3x3_mul_float3x3(
+    const T1_linal_float3x3 * a,
+    const T1_linal_float3x3 * b,
+    T1_linal_float3x3 * out);
 
-void T1_linalg3d_float3x3_mul_float3x3(
-    const T1float3x3 * a,
-    const T1float3x3 * b,
-    T1float3x3 * out);
+void T1_linal_float4x4_mul_float4x4(
+    const T1_linal_float4x4 * a,
+    const T1_linal_float4x4 * b,
+    T1_linal_float4x4 * out);
 
-void T1_linalg3d_float4x4_mul_float4x4_inplace(
-    T1float4x4 * a,
-    const T1float4x4 * b);
+void T1_linal_float3x3_mul_float3x3_inplace(
+    T1_linal_float3x3 * a,
+    const T1_linal_float3x3 * b);
 
-void T1_linalg3d_float3x3_mul_float3x3_inplace(
-    T1float3x3 * a,
-    const T1float3x3 * b);
+void T1_linal_float4x4_mul_float4x4_inplace(
+    T1_linal_float4x4 * a,
+    const T1_linal_float4x4 * b);
 
-void T1_linalg3d_float4x4_transpose(
-    const T1float4x4 * m,
-    T1float4x4 * out);
+void T1_linal_float3x3_transpose(
+    const T1_linal_float3x3 * m,
+    T1_linal_float3x3 * out);
 
-void T1_linalg3d_float3x3_transpose(
-    const T1float3x3 * m,
-    T1float3x3 * out);
+void T1_linal_float4x4_transpose(
+    const T1_linal_float4x4 * m,
+    T1_linal_float4x4 * out);
 
-#endif // T1_LINALG3D_H
+void T1_linal_float3x3_transpose_inplace(
+    T1_linal_float3x3 * m);
+
+void T1_linal_float4x4_transpose_inplace(
+    T1_linal_float4x4 * m);
+
+#endif // T1_LINAL_H
