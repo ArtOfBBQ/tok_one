@@ -409,12 +409,50 @@ static void construct_view_matrix(void) {
         sizeof(float) * 4);
 }
 
+static void construct_light_matrices(
+    T1GPUFrame * frame_data)
+{
+    T1_linal_float4x4 mat_view;
+    T1_linal_float4x4_construct_from_ptr(
+        &mat_view,
+        camera.view_4x4);
+    
+    for (
+        uint32_t light_i = 0;
+        light_i < zlights_to_apply_size;
+        light_i++)
+    {
+        T1_linal_float4 light_world;
+        light_world.data[0] =
+            zlights_to_apply[light_i].xyz[0];
+        light_world.data[1] =
+            zlights_to_apply[light_i].xyz[1];
+        light_world.data[2] =
+            zlights_to_apply[light_i].xyz[2];
+        light_world.data[3] = 1.0f;
+        
+        T1_linal_float4 view_pos =
+            T1_linal_float4x4_mul_float4(
+                &mat_view,
+                light_world);
+        
+        frame_data->lights[light_i].
+            viewspace_xyz[0] = view_pos.data[0];
+        frame_data->lights[light_i].
+            viewspace_xyz[1] = view_pos.data[1];
+        frame_data->lights[light_i].
+            viewspace_xyz[2] = view_pos.data[2];
+    }
+}
+
 static void construct_model_and_normal_matrices(void)
 {
     T1_linal_float4x4 result;
     T1_linal_float4x4 next;
-    T1_linal_float3x3 normals;
+    
+    T1_linal_float3x3 model3x3;
     T1_linal_float3x3 next3x3;
+    T1_linal_float3x3 view3x3;
     
     for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
         
@@ -493,12 +531,10 @@ static void construct_model_and_normal_matrices(void)
             /* const int omit_col_i: */
                 3,
             /* T1_linal_float3x3 * out: */
-                &normals);
-        
-        T1_linal_float3x3_inverse_transpose_inplace(&normals);
+                &model3x3);
         
         T1_linal_float3x3_construct(
-            &next3x3,
+            &view3x3,
             camera.view_4x4[ 0],
             camera.view_4x4[ 1],
             camera.view_4x4[ 2],
@@ -510,26 +546,28 @@ static void construct_model_and_normal_matrices(void)
             camera.view_4x4[10]);
         
         T1_linal_float3x3_mul_float3x3_inplace(
-            &next3x3, &normals);
+            &view3x3, &model3x3);
+        
+        T1_linal_float3x3_inverse_transpose_inplace(&view3x3);
         
         T1_zsprites_to_render->gpu_data[i].
-            normal_3x3[0] = next3x3.rows[0].data[0];
+            normal_3x3[0] = view3x3.rows[0].data[0];
         T1_zsprites_to_render->gpu_data[i].
-            normal_3x3[1] = next3x3.rows[0].data[1];
+            normal_3x3[1] = view3x3.rows[0].data[1];
         T1_zsprites_to_render->gpu_data[i].
-            normal_3x3[2] = next3x3.rows[0].data[2];
+            normal_3x3[2] = view3x3.rows[0].data[2];
         T1_zsprites_to_render->gpu_data[i].
-            normal_3x3[3] = next3x3.rows[1].data[0];
+            normal_3x3[3] = view3x3.rows[1].data[0];
         T1_zsprites_to_render->gpu_data[i].
-            normal_3x3[4] = next3x3.rows[1].data[1];
+            normal_3x3[4] = view3x3.rows[1].data[1];
         T1_zsprites_to_render->gpu_data[i].
-            normal_3x3[5] = next3x3.rows[1].data[2];
+            normal_3x3[5] = view3x3.rows[1].data[2];
         T1_zsprites_to_render->gpu_data[i].
-            normal_3x3[6] = next3x3.rows[2].data[0];
+            normal_3x3[6] = view3x3.rows[2].data[0];
         T1_zsprites_to_render->gpu_data[i].
-            normal_3x3[7] = next3x3.rows[2].data[1];
+            normal_3x3[7] = view3x3.rows[2].data[1];
         T1_zsprites_to_render->gpu_data[i].
-            normal_3x3[8] = next3x3.rows[2].data[2];
+            normal_3x3[8] = view3x3.rows[2].data[2];
         
         T1_linal_float4x4_construct_from_ptr(
             &next,
@@ -540,22 +578,22 @@ static void construct_model_and_normal_matrices(void)
         
         T1_std_memcpy(
             T1_zsprites_to_render->gpu_data[i].
-                model_and_view_4x4 + 0,
+                model_view_4x4 + 0,
             next.rows[0].data,
             sizeof(float) * 4);
         T1_std_memcpy(
             T1_zsprites_to_render->gpu_data[i].
-                model_and_view_4x4 + 4,
+                model_view_4x4 + 4,
             next.rows[1].data,
             sizeof(float) * 4);
         T1_std_memcpy(
             T1_zsprites_to_render->gpu_data[i].
-                model_and_view_4x4 + 8,
+                model_view_4x4 + 8,
             next.rows[2].data,
             sizeof(float) * 4);
         T1_std_memcpy(
             T1_zsprites_to_render->gpu_data[i].
-                model_and_view_4x4 + 12,
+                model_view_4x4 + 12,
             next.rows[3].data,
             sizeof(float) * 4);
         
@@ -567,9 +605,9 @@ static void construct_model_and_normal_matrices(void)
         
         for (uint32_t j = 0; j < 16; j++) {
             T1_zsprites_to_render->gpu_data[i].
-                model_and_view_4x4[j] =
+                model_view_4x4[j] =
                     (T1_zsprites_to_render->gpu_data[i].
-                        model_and_view_4x4[j] *
+                        model_view_4x4[j] *
                             (1.0f - ic)) +
                     (T1_zsprites_to_render->gpu_data[i].
                         model_4x4[j] * ic);
@@ -603,6 +641,8 @@ void renderer_hardware_render(
     construct_projection_matrix();
     
     construct_model_and_normal_matrices();
+    
+    construct_light_matrices(frame_data);
     
     T1_std_memcpy(
         /* void * dest: */

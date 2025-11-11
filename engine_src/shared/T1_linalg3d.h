@@ -137,6 +137,14 @@ void T1_linal_float3x3_mul_float3x3(
     const T1_linal_float3x3 * b,
     T1_linal_float3x3 * out);
 
+T1_linal_float4 T1_linal_float4x4_mul_float4(
+    const T1_linal_float4x4 * m,
+    const T1_linal_float4 v);
+
+T1_linal_float4 T1_linal_float4_mul_float4x4(
+    const T1_linal_float4 a,
+    const T1_linal_float4x4 * b);
+
 void T1_linal_float4x4_mul_float4x4(
     const T1_linal_float4x4 * a,
     const T1_linal_float4x4 * b,

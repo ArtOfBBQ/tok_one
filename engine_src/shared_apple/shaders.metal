@@ -158,12 +158,13 @@ fragment void shadows_fragment_shader() {}
 
 typedef struct
 {
-    float4 position [[position]];
+    float4 projpos [[position]];
+    float4 viewpos;
     float2 texture_coordinate;
-    float4 worldpos;
-    float4 normal;
-    float4 tangent;
-    float4 bitangent;
+    // float4 worldpos;
+    float4 normal_viewspace;
+    float4 tangent_viewspace;
+    float4 bitangent_viewspace;
     unsigned int locked_vertex_i [[ flat ]];
     unsigned int polygon_i [[ flat ]];
     int32_t touchable_id [[ flat ]];
@@ -220,46 +221,24 @@ vertex_shader(
         locked_vertices[out.locked_vertex_i].bitangent_xyz[2]);
     
     float4x4 model_and_view = matrix_float4x4(
-        polygons[out.polygon_i].model_and_view_4x4[ 0],
-        polygons[out.polygon_i].model_and_view_4x4[ 1],
-        polygons[out.polygon_i].model_and_view_4x4[ 2],
-        polygons[out.polygon_i].model_and_view_4x4[ 3],
-        polygons[out.polygon_i].model_and_view_4x4[ 4],
-        polygons[out.polygon_i].model_and_view_4x4[ 5],
-        polygons[out.polygon_i].model_and_view_4x4[ 6],
-        polygons[out.polygon_i].model_and_view_4x4[ 7],
-        polygons[out.polygon_i].model_and_view_4x4[ 8],
-        polygons[out.polygon_i].model_and_view_4x4[ 9],
-        polygons[out.polygon_i].model_and_view_4x4[10],
-        polygons[out.polygon_i].model_and_view_4x4[11],
-        polygons[out.polygon_i].model_and_view_4x4[12],
-        polygons[out.polygon_i].model_and_view_4x4[13],
-        polygons[out.polygon_i].model_and_view_4x4[14],
-        polygons[out.polygon_i].model_and_view_4x4[15]);
+        polygons[out.polygon_i].model_view_4x4[ 0],
+        polygons[out.polygon_i].model_view_4x4[ 1],
+        polygons[out.polygon_i].model_view_4x4[ 2],
+        polygons[out.polygon_i].model_view_4x4[ 3],
+        polygons[out.polygon_i].model_view_4x4[ 4],
+        polygons[out.polygon_i].model_view_4x4[ 5],
+        polygons[out.polygon_i].model_view_4x4[ 6],
+        polygons[out.polygon_i].model_view_4x4[ 7],
+        polygons[out.polygon_i].model_view_4x4[ 8],
+        polygons[out.polygon_i].model_view_4x4[ 9],
+        polygons[out.polygon_i].model_view_4x4[10],
+        polygons[out.polygon_i].model_view_4x4[11],
+        polygons[out.polygon_i].model_view_4x4[12],
+        polygons[out.polygon_i].model_view_4x4[13],
+        polygons[out.polygon_i].model_view_4x4[14],
+        polygons[out.polygon_i].model_view_4x4[15]);
     
-    float4x4 model = matrix_float4x4(
-        polygons[out.polygon_i].model_4x4[ 0],
-        polygons[out.polygon_i].model_4x4[ 1],
-        polygons[out.polygon_i].model_4x4[ 2],
-        polygons[out.polygon_i].model_4x4[ 3],
-        polygons[out.polygon_i].model_4x4[ 4],
-        polygons[out.polygon_i].model_4x4[ 5],
-        polygons[out.polygon_i].model_4x4[ 6],
-        polygons[out.polygon_i].model_4x4[ 7],
-        polygons[out.polygon_i].model_4x4[ 8],
-        polygons[out.polygon_i].model_4x4[ 9],
-        polygons[out.polygon_i].model_4x4[10],
-        polygons[out.polygon_i].model_4x4[11],
-        polygons[out.polygon_i].model_4x4[12],
-        polygons[out.polygon_i].model_4x4[13],
-        polygons[out.polygon_i].model_4x4[14],
-        polygons[out.polygon_i].model_4x4[15]);
-    
-    out.worldpos = mesh_vertices * model;
-    out.worldpos[3] = 1.0f;
-    
-    float4 final_pos = mesh_vertices *
-        model_and_view;
+    out.viewpos = mesh_vertices * model_and_view;
     
     out.touchable_id = polygons[out.polygon_i].touchable_id;
     
@@ -287,9 +266,9 @@ vertex_shader(
         camera->projection_4x4[14],
         camera->projection_4x4[15]);
     
-    out.position = final_pos * projection;
+    out.projpos = out.viewpos * projection;
     
-    float3x3 mat_normal = matrix_float3x3(
+    float3x3 normalmat3x3 = matrix_float3x3(
         polygons[out.polygon_i].normal_3x3[ 0],
         polygons[out.polygon_i].normal_3x3[ 1],
         polygons[out.polygon_i].normal_3x3[ 2],
@@ -300,14 +279,14 @@ vertex_shader(
         polygons[out.polygon_i].normal_3x3[ 7],
         polygons[out.polygon_i].normal_3x3[ 8]);
     
-    out.normal = vector_float4(
-        normalize(vertex_normal * mat_normal),
+    out.normal_viewspace = vector_float4(
+        normalize(normalmat3x3 * vertex_normal),
         0.0f);
-    out.tangent = vector_float4(
-        normalize(vertex_tangent * mat_normal),
+    out.tangent_viewspace = vector_float4(
+        normalize(normalmat3x3 * vertex_tangent),
         0.0f);
-    out.bitangent = vector_float4(
-        normalize(vertex_bitangent * mat_normal),
+    out.bitangent_viewspace = vector_float4(
+        normalize(normalmat3x3 * vertex_bitangent),
         0.0f);
     
     return out;
@@ -375,19 +354,25 @@ float4 get_lit(
     array<texture2d_array<half>, TEXTUREARRAYS_SIZE> color_textures,
     const device T1GPUCamera * camera,
     const device T1GPULight * lights,
-    const device T1GPUProjectConsts * projection_constants,
     const device T1GPUzSprite * zsprite,
     const device T1GPUConstMat * material,
-    const device T1GPUPostProcConsts * updating_globals,
+    const device T1GPUPostProcConsts * globals,
     const RasterizerPixel in,
     const bool is_base_mtl)
 {
+    #if T1_AMBIENT_LIGHTING_ACTIVE == T1_ACTIVE
     float4 lit_color = vector_float4(
         material->ambient_rgb[0],
         material->ambient_rgb[1],
         material->ambient_rgb[2],
         1.0f);
     lit_color *= 0.10f;
+    #elif T1_AMBIENT_LIGHTING_ACTIVE == T1_INACTIVE
+    float4 lit_color = vector_float4(
+        0.0f, 0.0f, 0.0f, 1.0f);
+    #else
+    #error
+    #endif
     
     float4 diffuse_base = vector_float4(
         material->diffuse_rgb[0],
@@ -395,13 +380,18 @@ float4 get_lit(
         material->diffuse_rgb[2],
         1.0f);
     
+    #if T1_SPECULAR_LIGHTING_ACTIVE == T1_ACTIVE
     float4 specular_base = vector_float4(
         material->specular_rgb[0],
         material->specular_rgb[1],
         material->specular_rgb[2],
         1.0f);
+    #elif T1_SPECULAR_LIGHTING_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
-    float4 diffuse_texture_sample = vector_float4(
+    float4 diffuse_tex_sample = vector_float4(
         0.75f,
         0.75f,
         0.75f,
@@ -418,7 +408,7 @@ float4 get_lit(
         material->uv_scroll[0],
         material->uv_scroll[1]);
     
-    uv_adjusted += (updating_globals->timestamp / 1000000.0f) * uv_scroll;
+    uv_adjusted += (globals->timestamp / 1000000.0f) * uv_scroll;
     
     uv_adjusted = fmod(uv_adjusted, 1.0f);
     
@@ -448,28 +438,22 @@ float4 get_lit(
                 texture_sampler,
                 uv_adjusted,
                 material->texture_i);
-        diffuse_texture_sample = float4(color_sample);
+        diffuse_tex_sample = float4(color_sample);
     }
     
-    float4 ignore_lighting_color = diffuse_texture_sample * diffuse_base;
+    float4 ignore_lighting_color =
+        diffuse_tex_sample * diffuse_base;
     
     for (
         uint32_t i = 0;
-        i < updating_globals->lights_size;
+        i < globals->lights_size;
         i++)
     {
-        // ambient lighting
-        float4 light_worldpos = vector_float4(
-            lights[i].xyz[0],
-            lights[i].xyz[1],
-            lights[i].xyz[2],
-            0.0f);
-        
-        float4 light_viewpos = light_worldpos +
+        float4 light_viewpos =
             vector_float4(
-                camera->xyz[0],
-                camera->xyz[1],
-                camera->xyz[2],
+                lights[i].viewspace_xyz[0],
+                lights[i].viewspace_xyz[1],
+                lights[i].viewspace_xyz[2],
                 0.0f);
         
         float4 light_color = vector_float4(
@@ -478,7 +462,9 @@ float4 get_lit(
             lights[i].rgb[2],
             1.0f);
         
-        float4 shadow_factors = vector_float4(1.0f, 1.0f, 1.0f, 1.0f);
+        float4 shadow_factors = vector_float4(
+            1.0f, 1.0f, 1.0f, 1.0f);
+        
         #if T1_SHADOWS_ACTIVE == T1_ACTIVE
         float4x4 projection = matrix_float4x4(
             camera->projection_4x4[ 0],
@@ -509,7 +495,7 @@ float4 get_lit(
                 mag_filter::nearest,
                 min_filter::nearest);
             
-            float4 light_translated_pos = in.worldpos - light_worldpos;
+            float4 light_translated_pos = in.position - light_worldpos;
             float4 light_z_rotated = xyz_rotate(
                 light_translated_pos,
                 vector_float4(
@@ -533,7 +519,8 @@ float4 get_lit(
             float frag_depth = light_clip_pos.z / light_clip_pos.w;
             
             shadow_factors =
-                (frag_depth <= shadow_depth + SHADOW_BIAS) ?
+                (frag_depth <= shadow_depth +
+                    SHADOW_BIAS) ?
                     1.0f :
                     vector_float4(
                         updating_globals->in_shadow_multipliers[0],
@@ -546,34 +533,34 @@ float4 get_lit(
         #error
         #endif
         
+        #if 0
         float distance = get_distance(
-            light_worldpos,
-            in.worldpos);
-        
+            light_viewpos,
+            in.viewpos);
         float distance_overflow = max(
             distance - (lights[i].reach * 0.75f),
             0.0f);
-        
         float attenuation = 1.0f - (
             distance_overflow / lights[i].reach);
+        attenuation = clamp(attenuation, 0.00f, 1.00f);
+        #else
+        float attenuation = 1.0f;
+        #endif
         
-        attenuation = clamp(
-            attenuation, 0.00f, 1.00f);
-        
-        // This normal may be perturbed if a normal map is active,
-        // or it may be used as-is
-        float4 adjusted_normal = vector_float4(
-            in.normal[0],
-            in.normal[1],
-            in.normal[2],
+        // This normal may be perturbed if a normal map is active, or it may be used as-is
+        float4 normal_viewspace = vector_float4(
+            in.normal_viewspace[0],
+            in.normal_viewspace[1],
+            in.normal_viewspace[2],
             0.0f);
         
-        // if light is at 2,2,2 and rotated_pos is at 1,1,1, we need +1/+1/+1
-        // to go from the rotated_pos to the light
-        // if the normal also points to the light, we want more diffuse
-        // brightness
+        #if 0
+        normal_viewspace[3] = 1.0f;
+        return normal_viewspace;
+        #endif
+        
         float4 dir_object_to_light = normalize(
-            (light_worldpos - in.worldpos));
+            (light_viewpos - in.viewpos));
         
         #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
         if (material->normalmap_texturearray_i >= 0) {
@@ -592,25 +579,27 @@ float4 get_lit(
             normal_map_sample_f4 = (normal_map_sample_f4 * 2.0f) - 1.0f;
             
             // TODO: transform from local tangent space to world space
-            adjusted_normal =
-                normal_map_sample[0] * in.tangent +
-                normal_map_sample[1] * in.bitangent +
-                normal_map_sample[2] * in.normal;
+            normal_viewspace =
+                normal_map_sample[0] *
+                    in.tangent_viewspace +
+                normal_map_sample[1] *
+                    in.bitangent_viewspace +
+                normal_map_sample[2] * in.normal_viewspace;
             
             // normalize again
-            adjusted_normal = normalize(adjusted_normal);
+            normal_viewspace = normalize(
+                normal_viewspace);
         }
         #elif T1_NORMAL_MAPPING_ACTIVE == T1_INACTIVE
         #else
         #error
         #endif
         
-        float diffuse_dot =
-            max(
-                dot(
-                    adjusted_normal,
-                    dir_object_to_light),
-                0.0f) * 0.85f + 0.15f;
+        float diffuse_dot = max(
+            dot(
+                normal_viewspace,
+                dir_object_to_light),
+            0.0f) * 0.85f + 0.15f;
         
         float4 light_diffuse_multiplier =
             attenuation *
@@ -621,20 +610,17 @@ float4 get_lit(
         
         lit_color += (
             diffuse_base *
-            diffuse_texture_sample *
+            diffuse_tex_sample *
             light_diffuse_multiplier);
         
+        #if T1_SPECULAR_LIGHTING_ACTIVE == T1_ACTIVE
         // specular lighting
-        float4 object_to_view = normalize(
-            float4(
-                camera->xyz[0],
-                camera->xyz[1],
-                camera->xyz[2],
-                0.0f) - in.worldpos);
+        float4 object_to_view =
+            normalize(-in.viewpos);
         
         float4 reflection_ray = reflect(
             -dir_object_to_light,
-            adjusted_normal);
+            normal_viewspace);
         
         float specular_dot = pow(
             max(
@@ -649,18 +635,25 @@ float4 get_lit(
             specular_dot *
             lights[i].specular *
             shadow_factors);
+        #elif T1_SPECULAR_LIGHTING_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
     }
     
+    #if 0
     lit_color += vector_float4(
         zsprite->bonus_rgb[0],
         zsprite->bonus_rgb[1],
         zsprite->bonus_rgb[2],
         0.0f);
+    #endif
     
     lit_color =
         ((1.0f - zsprite->ignore_lighting) * lit_color) +
         (zsprite->ignore_lighting * ignore_lighting_color);
     
+    #if 0
     float4 rgba_cap = vector_float4(
         material->rgb_cap[0],
         material->rgb_cap[1],
@@ -668,6 +661,7 @@ float4 get_lit(
         1.0f);
     
     lit_color = clamp(lit_color, 0.0f, rgba_cap);
+    #endif
     
     return vector_float4(
         lit_color[0],
@@ -717,8 +711,6 @@ fragment_shader(
             camera,
         /* const device GPULight * lights: */
             lights,
-        /* const device GPUProjectionConstants * projection_constants: */
-            projection_constants,
         /* const device zSprite * zsprite: */
             &polygons[in.polygon_i],
         /* const device GPUPolygonMaterial * fragment_material: */
@@ -740,8 +732,8 @@ fragment_shader(
         (
             lit_color[3] < 0.95f &&
             (
-                abs((neghalfdiamond + (int)in.position.x % diamond_size)) +
-                abs((neghalfdiamond + (int)in.position.y % diamond_size))
+                abs((neghalfdiamond + (int)in.projpos.x % diamond_size)) +
+                abs((neghalfdiamond + (int)in.projpos.y % diamond_size))
             ) > alpha_tresh
         ))
     {
@@ -796,8 +788,6 @@ alphablending_fragment_shader(
             camera,
         /* const device GPULight * lights: */
             lights,
-        /* const device GPUProjectionConstants * projection_constants: */
-            projection_constants,
         /* const device GPUzSprite zsprite: */
             &polygons[in.polygon_i],
         /* const device GPUPolygonMaterial * fragment_material: */

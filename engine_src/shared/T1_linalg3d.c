@@ -419,62 +419,7 @@ void T1_linal_float3x3_get_inverse_transpose(
     const T1_linal_float3x3 * in,
     T1_linal_float3x3 * out)
 {
-    // TODO: implement vector versions!
-    #if 0 && defined(__ARM_NEON)
     assert(0);
-    #elif 0 && defined(__SSE2__)
-    assert(0);
-    #else
-    
-    float det = T1_linal_float3x3_get_determinant(in);
-    assert(det != 0.0f);
-    
-    uint32_t src_row_1;
-    uint32_t src_row_2;
-    
-    float mod = 1.0f;
-    
-    for (uint32_t row_i = 0; row_i < 3; row_i++) {
-        switch (row_i) {
-            case 0:
-                src_row_1 = 1;
-                src_row_2 = 2;
-            break;
-            case 1:
-                src_row_1 = 0;
-                src_row_2 = 2;
-            break;
-            case 2:
-                src_row_1 = 0;
-                src_row_2 = 1;
-            break;
-            default:
-            assert(0);
-        }
-        
-        out->rows[row_i].data[0] = mod *
-            (in->rows[src_row_1].data[1] * in->rows[src_row_2].data[2]) -
-            (in->rows[src_row_1].data[2] * in->rows[src_row_2].data[1]);
-        mod *= -1.0f;
-        
-        out->rows[row_i].data[1] = mod *
-            (in->rows[src_row_1].data[0] * in->rows[src_row_2].data[2]) -
-            (in->rows[src_row_1].data[2] * in->rows[src_row_2].data[0]);
-        mod *= -1.0f;
-        
-        out->rows[row_i].data[2] = mod *
-            ((in->rows[src_row_1].data[0] * in->rows[src_row_2].data[1]) -
-            (in->rows[src_row_1].data[1] * in->rows[src_row_2].data[0]));
-        mod *= -1.0f;
-        
-        out->rows[row_i].data[3] = 0.0f;
-        
-        out->rows[row_i].data[0] /= det;
-        out->rows[row_i].data[1] /= det;
-        out->rows[row_i].data[2] /= det;
-    }
-    
-    #endif
 }
 
 void T1_linal_float3x3_inverse_transpose_inplace(
@@ -490,57 +435,31 @@ void T1_linal_float3x3_inverse_transpose_inplace(
     float det = T1_linal_float3x3_get_determinant(m);
     assert(det != 0.0f);
     
-    uint32_t src_row_1;
-    uint32_t src_row_2;
+    float minors[9];
     
-    float mod = 1.0f;
-    
-    float results[9];
-    
-    for (uint32_t row_i = 0; row_i < 3; row_i++) {
-        switch (row_i) {
-            case 0:
-                src_row_1 = 1;
-                src_row_2 = 2;
-            break;
-            case 1:
-                src_row_1 = 0;
-                src_row_2 = 2;
-            break;
-            case 2:
-                src_row_1 = 0;
-                src_row_2 = 1;
-            break;
-            default:
-            assert(0);
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            int r1 = (i + 1) % 3;
+            int r2 = (i + 2) % 3;
+            int c1 = (j + 1) % 3;
+            int c2 = (j + 2) % 3;
+
+            float minor = 
+                m->rows[r1].data[c1] * m->rows[r2].data[c2] -
+                m->rows[r1].data[c2] * m->rows[r2].data[c1];
+            
+            float sign = ((i + j) % 2 == 0) ? 1.0f : -1.0f;
+            minors[i*3 + j] = sign * minor;
         }
-        
-        results[(row_i * 4)+0] = mod *
-            (m->rows[src_row_1].data[1] * m->rows[src_row_2].data[2]) -
-            (m->rows[src_row_1].data[2] * m->rows[src_row_2].data[1]);
-        mod *= -1.0f;
-        
-        results[(row_i * 4)+1] = mod *
-            (m->rows[src_row_1].data[0] * m->rows[src_row_2].data[2]) -
-            (m->rows[src_row_1].data[2] * m->rows[src_row_2].data[0]);
-        mod *= -1.0f;
-        
-        results[(row_i * 4)+2] = mod *
-            ((m->rows[src_row_1].data[0] * m->rows[src_row_2].data[1]) -
-            (m->rows[src_row_1].data[1] * m->rows[src_row_2].data[0]));
-        mod *= -1.0f;
     }
     
-    for (uint32_t row_i = 0; row_i < 3; row_i++) {
-        m->rows[row_i].data[0] =
-            results[(row_i*4)+0] / det;
-        m->rows[row_i].data[1] =
-            results[(row_i*4)+1] / det;
-        m->rows[row_i].data[2] =
-            results[(row_i*4)+2] / det;
+    for (int row_i = 0; row_i < 3; row_i++) {
+        for (int col_i = 0; col_i < 3; col_i++) {
+            m->rows[row_i].data[col_i] =
+                minors[row_i * 3 + col_i] / det;
+        }
         m->rows[row_i].data[3] = 0.0f;
     }
-    
     #endif
 }
 
@@ -548,14 +467,14 @@ void T1_linal_float4x4_get_inverse(
     T1_linal_float4x4 * in,
     T1_linal_float4x4 * out)
 {
-    // stuff
+    assert(0);
 }
 
 void T1_linal_float4x4_inverse_transpose_inplace(
     T1_linal_float4x4 * in,
     T1_linal_float4x4 * out)
 {
-    // do stuff
+    assert(0);
 }
 
 void T1_linal_float4x4_construct_x_rotation(
@@ -779,6 +698,41 @@ void T1_linal_float3x3_mul_float3x3(
     }
 }
 
+T1_linal_float4 T1_linal_float4x4_mul_float4(
+    const T1_linal_float4x4 * m,
+    const T1_linal_float4 v)
+{
+    T1_linal_float4 out;
+    for (int32_t row_i = 0; row_i < 4; row_i++)
+    {
+        out.data[row_i] =
+            T1_linal_float4_dot(
+                m->rows[row_i],
+                v);
+    }
+    
+    return out;
+}
+
+T1_linal_float4 T1_linal_float4_mul_float4x4(
+    const T1_linal_float4 a,
+    const T1_linal_float4x4 * b)
+{
+    T1_linal_float4 out;
+    
+    for (int32_t col_i = 0; col_i < 4; col_i++)
+    {
+        out.data[col_i] =
+            T1_linal_float4_dot(
+                a,
+                T1_linal_float4x4_get_column(
+                    b,
+                    col_i));
+    }
+    
+    return out;
+}
+
 void T1_linal_float4x4_mul_float4x4(
     const T1_linal_float4x4 * a,
     const T1_linal_float4x4 * b,
@@ -788,9 +742,12 @@ void T1_linal_float4x4_mul_float4x4(
     for (row_i = 0; row_i < 4; row_i++) {
         for (int32_t col_i = 0; col_i < 4; col_i++)
         {
-            out->rows[row_i].data[col_i] = T1_linal_float4_dot(
-                a->rows[row_i],
-                T1_linal_float4x4_get_column(b, col_i));
+            out->rows[row_i].data[col_i] =
+                T1_linal_float4_dot(
+                    a->rows[row_i],
+                    T1_linal_float4x4_get_column(
+                        b,
+                        col_i));
         }
     }
 }
