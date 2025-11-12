@@ -28,6 +28,8 @@ of the engine for your specific app.
 #define T1_LOGGER_ASSERTS_ACTIVE T1_ACTIVE
 #define T1_MEM_ASSERTS_ACTIVE T1_ACTIVE
 
+#define T1_AMBIENT_LIGHTING_ACTIVE 2
+#define T1_SPECULAR_LIGHTING_ACTIVE 1
 #define T1_SCHEDULED_ANIMS_ACTIVE 1
 #define T1_TERMINAL_ACTIVE 1
 #define T1_RAW_SHADER_ACTIVE 2 // for points and lines
@@ -35,7 +37,7 @@ of the engine for your specific app.
 #define T1_BLOOM_ACTIVE 1
 #define T1_PARTICLES_ACTIVE 1
 #define T1_SHADOWS_ACTIVE 1
-#define T1_NORMAL_MAPPING_ACTIVE 1
+#define T1_NORMAL_MAPPING_ACTIVE 2
 #define T1_AUDIO_ACTIVE 1
 #define T1_ENGINE_SAVEFILE_ACTIVE 1
 #define T1_PROFILER_ACTIVE 2

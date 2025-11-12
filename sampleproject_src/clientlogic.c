@@ -128,17 +128,15 @@ void T1_clientlogic_late_startup(void) {
     lightcube_request.cpu_data->simd_stats.angle_xyz[0] = 0.0f;
     lightcube_request.cpu_data->simd_stats.angle_xyz[1] = 0.0f;
     lightcube_request.cpu_data->simd_stats.angle_xyz[2] = 0.0f;
-    lightcube_request.cpu_data->zsprite_id        = light->object_id;
-    lightcube_request.cpu_data->visible           = true;
-    lightcube_request.gpu_data->ignore_lighting   = 1.0f;
-    lightcube_request.cpu_data->simd_stats.ignore_camera = 0.0f;
+    lightcube_request.cpu_data->zsprite_id = light->object_id;
+    lightcube_request.cpu_data->visible = true;
+    lightcube_request.gpu_data->ignore_lighting = 1.0f;
+    lightcube_request.cpu_data->simd_stats.
+        ignore_camera = 0.0f;
     lightcube_request.gpu_data->alpha = 1.0f;
-    lightcube_request.gpu_data->base_mat.diffuse_rgb[0] =
-        light->RGBA[0] * 2.5f;
-    lightcube_request.gpu_data->base_mat.diffuse_rgb[1] =
-        light->RGBA[1] * 2.5f;
-    lightcube_request.gpu_data->base_mat.diffuse_rgb[2] =
-        light->RGBA[2] * 2.5f;
+    lightcube_request.gpu_data->base_mat.diffuse_rgb[0] = light->RGBA[0] * 2.15f;
+    lightcube_request.gpu_data->base_mat.diffuse_rgb[1] = light->RGBA[1] * 2.15f;
+    lightcube_request.gpu_data->base_mat.diffuse_rgb[2] = light->RGBA[2] * 2.15f;
     lightcube_request.gpu_data->base_mat.rgb_cap[0] = 5.0f;
     lightcube_request.gpu_data->base_mat.rgb_cap[1] = 5.0f;
     lightcube_request.gpu_data->base_mat.rgb_cap[2] = 5.0f;
@@ -288,7 +286,7 @@ void T1_clientlogic_threadmain(int32_t threadmain_id) {
     }
 }
 
-static uint32_t testswitch = 1;
+static uint32_t testswitch = 0;
 static void clientlogic_handle_keypresses(
     uint64_t microseconds_elapsed)
 {

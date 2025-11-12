@@ -432,31 +432,49 @@ void T1_linal_float3x3_inverse_transpose_inplace(
     assert(0);
     #else
     
-    assert(T1_linal_float3x3_get_determinant(m) != 0.0f);
-    float det_recip = 1.0f / T1_linal_float3x3_get_determinant(m);
+    float det = T1_linal_float3x3_get_determinant(m);
+    if (det == 0.0f) { return; }
+    
+    float det_recip = 1.0f / det;
     
     float minors[9];
     
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            int r1 = (i + 1) % 3;
-            int r2 = (i + 2) % 3;
-            int c1 = (j + 1) % 3;
-            int c2 = (j + 2) % 3;
-
-            float minor = 
+    int swap;
+    for (int r = 0; r < 3; r++) {
+        for (int c = 0; c < 3; c++) {
+            // the 2 other rows
+            int r1 = (r + 1) % 3;
+            int r2 = (r + 2) % 3;
+            if (r1 > r2) {
+                swap = r1;
+                r1 = r2;
+                r2 = swap;
+            }
+            assert(r1 < r2);
+            
+            // the 2 other columns
+            int c1 = (c + 1) % 3;
+            int c2 = (c + 2) % 3;
+            if (c1 > c2) {
+                swap = c1;
+                c1 = c2;
+                c2 = swap;
+            }
+            assert(c1 < c2);
+            
+            float cofactor = 
                 m->rows[r1].data[c1] * m->rows[r2].data[c2] -
                 m->rows[r1].data[c2] * m->rows[r2].data[c1];
             
-            float sign = ((i + j) % 2 == 0) ? 1.0f : -1.0f;
-            minors[i*3 + j] = sign * minor;
+            float sign = ((r + c) % 2 == 0) ? 1.0f : -1.0f;
+            minors[r*3 + c] = sign * cofactor;
         }
     }
     
     for (int row_i = 0; row_i < 3; row_i++) {
         for (int col_i = 0; col_i < 3; col_i++) {
             m->rows[row_i].data[col_i] =
-                minors[row_i * 3 + col_i] * det_recip;
+                minors[row_i*3 + col_i] * det_recip;
         }
         m->rows[row_i].data[3] = 0.0f;
     }
@@ -753,32 +771,15 @@ T1_linal_float4 T1_linal_float4x4_mul_float4(
     const T1_linal_float4 v)
 {
     T1_linal_float4 out;
-    for (int32_t row_i = 0; row_i < 4; row_i++)
-    {
-        out.data[row_i] =
-            T1_linal_float4_dot(
-                m->rows[row_i],
-                v);
-    }
     
-    return out;
-}
-
-T1_linal_float4 T1_linal_float4_mul_float4x4(
-    const T1_linal_float4 a,
-    const T1_linal_float4x4 * b)
-{
-    T1_linal_float4 out;
-    
-    for (int32_t col_i = 0; col_i < 4; col_i++)
-    {
-        out.data[col_i] =
-            T1_linal_float4_dot(
-                a,
-                T1_linal_float4x4_get_column(
-                    b,
-                    col_i));
-    }
+    out.data[0] = T1_linal_float4_dot(
+        m->rows[0], v);
+    out.data[1] = T1_linal_float4_dot(
+        m->rows[1], v);
+    out.data[2] = T1_linal_float4_dot(
+        m->rows[2], v);
+    out.data[3] = T1_linal_float4_dot(
+        m->rows[3], v);
     
     return out;
 }

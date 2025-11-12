@@ -1,6 +1,12 @@
 #ifndef T1_LINAL_H
 #define T1_LINAL_H
 
+/*
+Linear algebra
+- Data is stored row-major
+- Vectors are considered to be column vectors
+*/
+
 #include <assert.h>
 #include <stdint.h>
 #include <math.h>
@@ -146,10 +152,6 @@ void T1_linal_float3x3_mul_float3x3(
 T1_linal_float4 T1_linal_float4x4_mul_float4(
     const T1_linal_float4x4 * m,
     const T1_linal_float4 v);
-
-T1_linal_float4 T1_linal_float4_mul_float4x4(
-    const T1_linal_float4 a,
-    const T1_linal_float4x4 * b);
 
 void T1_linal_float4x4_mul_float4x4(
     const T1_linal_float4x4 * a,

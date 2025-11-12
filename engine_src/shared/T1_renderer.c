@@ -504,7 +504,6 @@ static void construct_model_and_normal_matrices(void)
     T1_linal_float4x4 next;
     
     T1_linal_float3x3 model3x3;
-    // T1_linal_float3x3 next3x3;
     T1_linal_float3x3 view3x3;
     
     for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
@@ -576,6 +575,8 @@ static void construct_model_and_normal_matrices(void)
             result.rows[3].data,
             sizeof(float) * 4);
         
+        // Store topleft 3x3 of "model to world"
+        // matrix in result
         T1_linal_float4x4_extract_float3x3(
             /* const T1_linal_float4x4 * in: */
                 &result,
@@ -586,6 +587,8 @@ static void construct_model_and_normal_matrices(void)
             /* T1_linal_float3x3 * out: */
                 &model3x3);
         
+        // store topleft 3x3 of camera's "to view"
+        // matrix in view3x3
         T1_linal_float3x3_construct(
             &view3x3,
             camera.view_4x4[ 0],
@@ -598,11 +601,15 @@ static void construct_model_and_normal_matrices(void)
             camera.view_4x4[ 9],
             camera.view_4x4[10]);
         
+        // view3x3 = view3x3 %*% model3x3
+        // so now view3x3 is a "model to camera view"
         T1_linal_float3x3_mul_float3x3_inplace(
             &view3x3, &model3x3);
         
+        // inverse transpose the "model to cam view"
         T1_linal_float3x3_inverse_transpose_inplace(&view3x3);
         
+        // send to gpu
         T1_zsprites_to_render->gpu_data[i].
             normal_3x3[0] = view3x3.rows[0].data[0];
         T1_zsprites_to_render->gpu_data[i].

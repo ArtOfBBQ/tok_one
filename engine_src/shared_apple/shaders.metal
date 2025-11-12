@@ -292,13 +292,13 @@ vertex_shader(
         polygons[out.polygon_i].normal_3x3[ 8]);
     
     out.normal_viewspace = vector_float4(
-        normalize(normalmat3x3 * vertex_normal),
+        normalize(vertex_normal * normalmat3x3),
         0.0f);
     out.tangent_viewspace = vector_float4(
-        normalize(normalmat3x3 * vertex_tangent),
+        normalize(vertex_tangent * normalmat3x3),
         0.0f);
     out.bitangent_viewspace = vector_float4(
-        normalize(normalmat3x3 * vertex_bitangent),
+        normalize(vertex_bitangent * normalmat3x3),
         0.0f);
     
     return out;
@@ -547,6 +547,7 @@ float4 get_lit(
         #error
         #endif
         
+        #if 0
         float distance = get_distance(
             light_viewpos,
             in.viewpos);
@@ -556,6 +557,9 @@ float4 get_lit(
         float attenuation = 1.0f - (
             distance_overflow / lights[i].reach);
         attenuation = clamp(attenuation, 0.00f, 1.00f);
+        #else
+        float attenuation = 1.0f;
+        #endif
         
         // This normal may be perturbed if a normal map is active, or it may be used as-is
         float4 normal_viewspace = vector_float4(
@@ -563,11 +567,6 @@ float4 get_lit(
             in.normal_viewspace[1],
             in.normal_viewspace[2],
             0.0f);
-        
-        #if 0
-        normal_viewspace[3] = 1.0f;
-        return normal_viewspace;
-        #endif
         
         float4 dir_object_to_light = normalize(
             (light_viewpos - in.viewpos));
@@ -625,7 +624,7 @@ float4 get_lit(
         
         #if T1_SPECULAR_LIGHTING_ACTIVE == T1_ACTIVE
         // specular lighting
-        float4 object_to_view =
+        float4 fragment_to_cam =
             normalize(-in.viewpos);
         
         float4 reflection_ray = reflect(
@@ -634,17 +633,17 @@ float4 get_lit(
         
         float specular_dot = pow(
             max(
-                dot(object_to_view, reflection_ray),
+                dot(fragment_to_cam, reflection_ray),
                 0.0),
             material->specular_exponent);
         
         lit_color += (
+            shadow_factors *
             specular_base *
-            attenuation *
-            light_color *
-            specular_dot *
-            lights[i].specular *
-            shadow_factors);
+            // attenuation *
+            // light_color *
+            // lights[i].specular *
+            specular_dot);
         #elif T1_SPECULAR_LIGHTING_ACTIVE == T1_INACTIVE
         #else
         #error
