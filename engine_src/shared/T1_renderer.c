@@ -417,6 +417,18 @@ static void construct_light_matrices(
         &mat_view,
         camera.view_4x4);
     
+    T1_linal_float4x4 inv_camview_4x4;
+    T1_std_memcpy(
+        &inv_camview_4x4,
+        &mat_view,
+        sizeof(T1_linal_float4x4));
+    
+    T1_linal_float4x4_inverse_inplace(
+        &inv_camview_4x4);
+    
+    T1_linal_float4x4 a_4x4;
+    T1_linal_float4x4 b_4x4;
+    
     for (
         uint32_t light_i = 0;
         light_i < zlights_to_apply_size;
@@ -436,12 +448,53 @@ static void construct_light_matrices(
                 &mat_view,
                 light_world);
         
-        frame_data->lights[light_i].
-            viewspace_xyz[0] = view_pos.data[0];
-        frame_data->lights[light_i].
-            viewspace_xyz[1] = view_pos.data[1];
-        frame_data->lights[light_i].
-            viewspace_xyz[2] = view_pos.data[2];
+        frame_data->lights[light_i].viewspace_xyz[0] =
+            view_pos.data[0];
+        frame_data->lights[light_i].viewspace_xyz[1] =
+            view_pos.data[1];
+        frame_data->lights[light_i].viewspace_xyz[2] =
+            view_pos.data[2];
+        
+        // Next, we want to transform from camera view to light view
+        T1_linal_float4x4_construct_xyz_rotation(
+            &a_4x4,
+            -zlights_to_apply[light_i].xyz_angle[0],
+            -zlights_to_apply[light_i].xyz_angle[1],
+            -zlights_to_apply[light_i].xyz_angle[2]);
+        
+        T1_linal_float4x4_construct(
+            &b_4x4,
+            1.0f, 0.0f, 0.0f, -zlights_to_apply[light_i].xyz[0],
+            0.0f, 1.0f, 0.0f, -zlights_to_apply[light_i].xyz[1],
+            0.0f, 0.0f, 1.0f, -zlights_to_apply[light_i].xyz[2],
+            0.0f, 0.0f, 0.0f, 1.0f);
+        
+        T1_linal_float4x4_mul_float4x4_inplace(
+            &a_4x4, &b_4x4);
+        
+        T1_linal_float4x4_mul_float4x4_inplace(
+            &a_4x4, &inv_camview_4x4);
+        
+        T1_std_memcpy(
+            frame_data->lights[light_i].
+                camview_to_lightview_4x4 + 0,
+            a_4x4.rows[0].data,
+            sizeof(float) * 4);
+        T1_std_memcpy(
+            frame_data->lights[light_i].
+                camview_to_lightview_4x4 + 4,
+            a_4x4.rows[1].data,
+            sizeof(float) * 4);
+        T1_std_memcpy(
+            frame_data->lights[light_i].
+                camview_to_lightview_4x4 + 8,
+            a_4x4.rows[2].data,
+            sizeof(float) * 4);
+        T1_std_memcpy(
+            frame_data->lights[light_i].
+                camview_to_lightview_4x4 + 12,
+            a_4x4.rows[3].data,
+            sizeof(float) * 4);
     }
 }
 
@@ -451,7 +504,7 @@ static void construct_model_and_normal_matrices(void)
     T1_linal_float4x4 next;
     
     T1_linal_float3x3 model3x3;
-    T1_linal_float3x3 next3x3;
+    // T1_linal_float3x3 next3x3;
     T1_linal_float3x3 view3x3;
     
     for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {

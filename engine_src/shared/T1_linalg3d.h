@@ -110,9 +110,15 @@ void T1_linal_float4x4_get_inverse(
     T1_linal_float4x4 * in,
     T1_linal_float4x4 * out);
 
+void T1_linal_float4x4_inverse_inplace(
+    T1_linal_float4x4 * m);
+
 void T1_linal_float4x4_get_inverse_transpose(
-    T1_linal_float4x4 * in,
+    const T1_linal_float4x4 * in,
     T1_linal_float4x4 * out);
+
+void T1_linal_float4x4_inverse_transpose_inplace(
+    T1_linal_float4x4 * m);
 
 void T1_linal_float4x4_construct_x_rotation(
     T1_linal_float4x4 * to_construct,

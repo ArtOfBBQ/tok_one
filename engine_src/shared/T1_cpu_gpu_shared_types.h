@@ -96,6 +96,7 @@ typedef struct {
 } T1GPUzSpriteList;
 
 typedef struct {
+    float camview_to_lightview_4x4[16];
     float xyz[3];
     float viewspace_xyz[3];
     float angle_xyz[3];

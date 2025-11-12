@@ -80,59 +80,71 @@ vertex float4 shadows_vertex_shader(
             1.0f);
     }
     
-    uint locked_vertex_i = vertices[vertex_i].locked_vertex_i;
-        
+    uint locked_vertex_i = vertices[vertex_i].
+        locked_vertex_i;
+    
     float4 mesh_vertices = vector_float4(
         locked_vertices[locked_vertex_i].xyz[0],
         locked_vertices[locked_vertex_i].xyz[1],
         locked_vertices[locked_vertex_i].xyz[2],
         1.0f);
     
-    float4x4 model = matrix_float4x4(
-        polygons[polygon_i].model_4x4[0],
-        polygons[polygon_i].model_4x4[1],
-        polygons[polygon_i].model_4x4[2],
-        polygons[polygon_i].model_4x4[3],
-        polygons[polygon_i].model_4x4[4],
-        polygons[polygon_i].model_4x4[5],
-        polygons[polygon_i].model_4x4[6],
-        polygons[polygon_i].model_4x4[7],
-        polygons[polygon_i].model_4x4[8],
-        polygons[polygon_i].model_4x4[9],
-        polygons[polygon_i].model_4x4[10],
-        polygons[polygon_i].model_4x4[11],
-        polygons[polygon_i].model_4x4[12],
-        polygons[polygon_i].model_4x4[13],
-        polygons[polygon_i].model_4x4[14],
-        polygons[polygon_i].model_4x4[15]);
+    float4x4 to_camview_4x4 = matrix_float4x4(
+        polygons[polygon_i].model_view_4x4[ 0],
+        polygons[polygon_i].model_view_4x4[ 1],
+        polygons[polygon_i].model_view_4x4[ 2],
+        polygons[polygon_i].model_view_4x4[ 3],
+        polygons[polygon_i].model_view_4x4[ 4],
+        polygons[polygon_i].model_view_4x4[ 5],
+        polygons[polygon_i].model_view_4x4[ 6],
+        polygons[polygon_i].model_view_4x4[ 7],
+        polygons[polygon_i].model_view_4x4[ 8],
+        polygons[polygon_i].model_view_4x4[ 9],
+        polygons[polygon_i].model_view_4x4[10],
+        polygons[polygon_i].model_view_4x4[11],
+        polygons[polygon_i].model_view_4x4[12],
+        polygons[polygon_i].model_view_4x4[13],
+        polygons[polygon_i].model_view_4x4[14],
+        polygons[polygon_i].model_view_4x4[15]);
     
-    float4 out_vec4 = mesh_vertices * model;
+    float4 out_vec4 = mesh_vertices * to_camview_4x4;
     
-    float4 lightcam_pos = vector_float4(
-        lights[updating_globals->
-            shadowcaster_i].xyz[0],
-        lights[updating_globals->
-            shadowcaster_i].xyz[1],
-        lights[updating_globals->
-            shadowcaster_i].xyz[2],
-        1.0f);
-    float4 lightcam_translated_pos =
-        out_vec4 - lightcam_pos;
+    float4x4 cam_to_light_4x4 = matrix_float4x4(
+        lights[updating_globals->shadowcaster_i].
+            camview_to_lightview_4x4[ 0],
+        lights[updating_globals->shadowcaster_i].
+            camview_to_lightview_4x4[ 1],
+        lights[updating_globals->shadowcaster_i].
+            camview_to_lightview_4x4[ 2],
+        lights[updating_globals->shadowcaster_i].
+            camview_to_lightview_4x4[ 3],
+        lights[updating_globals->shadowcaster_i].
+            camview_to_lightview_4x4[ 4],
+        lights[updating_globals->shadowcaster_i].
+            camview_to_lightview_4x4[ 5],
+        lights[updating_globals->shadowcaster_i].
+            camview_to_lightview_4x4[ 6],
+        lights[updating_globals->shadowcaster_i].
+            camview_to_lightview_4x4[ 7],
+        lights[updating_globals->shadowcaster_i].
+            camview_to_lightview_4x4[ 8],
+        lights[updating_globals->shadowcaster_i].
+            camview_to_lightview_4x4[ 9],
+        lights[updating_globals->shadowcaster_i].
+            camview_to_lightview_4x4[10],
+        lights[updating_globals->shadowcaster_i].
+            camview_to_lightview_4x4[11],
+        lights[updating_globals->shadowcaster_i].
+            camview_to_lightview_4x4[12],
+        lights[updating_globals->shadowcaster_i].
+            camview_to_lightview_4x4[13],
+        lights[updating_globals->shadowcaster_i].
+            camview_to_lightview_4x4[14],
+        lights[updating_globals->shadowcaster_i].
+            camview_to_lightview_4x4[15]);
     
-    // rotate around 'camera' (actually the light)
-    float4 lightcam_z_rotated = xyz_rotate(
-        vector_float4(
-            lightcam_translated_pos[0],
-            lightcam_translated_pos[1],
-            lightcam_translated_pos[2],
-            0.0f),
-        vector_float4(
-            -lights[updating_globals->shadowcaster_i].angle_xyz[0],
-            -lights[updating_globals->shadowcaster_i].angle_xyz[1],
-            -lights[updating_globals->shadowcaster_i].angle_xyz[2],
-            0.0f));
+    out_vec4 *= cam_to_light_4x4;
     
-    lightcam_z_rotated[3] = 1.0f;
     float4x4 projection = matrix_float4x4(
         camera->projection_4x4[ 0],
         camera->projection_4x4[ 1],
@@ -151,7 +163,7 @@ vertex float4 shadows_vertex_shader(
         camera->projection_4x4[14],
         camera->projection_4x4[15]);
     
-    return lightcam_z_rotated * projection;
+    return out_vec4 * projection;
 }
 
 fragment void shadows_fragment_shader() {}
@@ -466,6 +478,24 @@ float4 get_lit(
             1.0f, 1.0f, 1.0f, 1.0f);
         
         #if T1_SHADOWS_ACTIVE == T1_ACTIVE
+        float4x4 cam_to_light_4x4 = matrix_float4x4(
+            lights[i].camview_to_lightview_4x4[ 0],
+            lights[i].camview_to_lightview_4x4[ 1],
+            lights[i].camview_to_lightview_4x4[ 2],
+            lights[i].camview_to_lightview_4x4[ 3],
+            lights[i].camview_to_lightview_4x4[ 4],
+            lights[i].camview_to_lightview_4x4[ 5],
+            lights[i].camview_to_lightview_4x4[ 6],
+            lights[i].camview_to_lightview_4x4[ 7],
+            lights[i].camview_to_lightview_4x4[ 8],
+            lights[i].camview_to_lightview_4x4[ 9],
+            lights[i].camview_to_lightview_4x4[10],
+            lights[i].camview_to_lightview_4x4[11],
+            lights[i].camview_to_lightview_4x4[12],
+            lights[i].camview_to_lightview_4x4[13],
+            lights[i].camview_to_lightview_4x4[14],
+            lights[i].camview_to_lightview_4x4[15]);
+        
         float4x4 projection = matrix_float4x4(
             camera->projection_4x4[ 0],
             camera->projection_4x4[ 1],
@@ -484,28 +514,12 @@ float4 get_lit(
             camera->projection_4x4[14],
             camera->projection_4x4[15]);
         
-        float4 light_angle_xyz = vector_float4(
-            lights[i].angle_xyz[0],
-            lights[i].angle_xyz[1],
-            lights[i].angle_xyz[2],
-            0.0f);
-        
-        if (updating_globals->shadowcaster_i == i) {
+        if (globals->shadowcaster_i == i) {
             constexpr sampler shadow_sampler(
                 mag_filter::nearest,
                 min_filter::nearest);
             
-            float4 light_translated_pos = in.position - light_worldpos;
-            float4 light_z_rotated = xyz_rotate(
-                light_translated_pos,
-                vector_float4(
-                    -light_angle_xyz[0],
-                    -light_angle_xyz[1],
-                    -light_angle_xyz[2],
-                    0.0f));
-            
-            light_z_rotated[3] = 1.0f;
-            float4 light_clip_pos = light_z_rotated * projection;
+            float4 light_clip_pos = (in.viewpos * cam_to_light_4x4) * projection;
             
             float2 shadow_uv =
                 ((light_clip_pos.xy / light_clip_pos.w) * 0.5f) +
@@ -523,9 +537,9 @@ float4 get_lit(
                     SHADOW_BIAS) ?
                     1.0f :
                     vector_float4(
-                        updating_globals->in_shadow_multipliers[0],
-                        updating_globals->in_shadow_multipliers[1],
-                        updating_globals->in_shadow_multipliers[2],
+                        globals->in_shadow_multipliers[0],
+                        globals->in_shadow_multipliers[1],
+                        globals->in_shadow_multipliers[2],
                         1.0f);
         }
         #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
@@ -533,7 +547,6 @@ float4 get_lit(
         #error
         #endif
         
-        #if 0
         float distance = get_distance(
             light_viewpos,
             in.viewpos);
@@ -543,9 +556,6 @@ float4 get_lit(
         float attenuation = 1.0f - (
             distance_overflow / lights[i].reach);
         attenuation = clamp(attenuation, 0.00f, 1.00f);
-        #else
-        float attenuation = 1.0f;
-        #endif
         
         // This normal may be perturbed if a normal map is active, or it may be used as-is
         float4 normal_viewspace = vector_float4(
@@ -641,19 +651,16 @@ float4 get_lit(
         #endif
     }
     
-    #if 0
     lit_color += vector_float4(
         zsprite->bonus_rgb[0],
         zsprite->bonus_rgb[1],
         zsprite->bonus_rgb[2],
         0.0f);
-    #endif
     
     lit_color =
         ((1.0f - zsprite->ignore_lighting) * lit_color) +
         (zsprite->ignore_lighting * ignore_lighting_color);
     
-    #if 0
     float4 rgba_cap = vector_float4(
         material->rgb_cap[0],
         material->rgb_cap[1],
@@ -661,7 +668,6 @@ float4 get_lit(
         1.0f);
     
     lit_color = clamp(lit_color, 0.0f, rgba_cap);
-    #endif
     
     return vector_float4(
         lit_color[0],

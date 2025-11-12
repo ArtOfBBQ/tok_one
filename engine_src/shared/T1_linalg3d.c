@@ -432,8 +432,8 @@ void T1_linal_float3x3_inverse_transpose_inplace(
     assert(0);
     #else
     
-    float det = T1_linal_float3x3_get_determinant(m);
-    assert(det != 0.0f);
+    assert(T1_linal_float3x3_get_determinant(m) != 0.0f);
+    float det_recip = 1.0f / T1_linal_float3x3_get_determinant(m);
     
     float minors[9];
     
@@ -456,7 +456,7 @@ void T1_linal_float3x3_inverse_transpose_inplace(
     for (int row_i = 0; row_i < 3; row_i++) {
         for (int col_i = 0; col_i < 3; col_i++) {
             m->rows[row_i].data[col_i] =
-                minors[row_i * 3 + col_i] / det;
+                minors[row_i * 3 + col_i] * det_recip;
         }
         m->rows[row_i].data[3] = 0.0f;
     }
@@ -467,14 +467,64 @@ void T1_linal_float4x4_get_inverse(
     T1_linal_float4x4 * in,
     T1_linal_float4x4 * out)
 {
+    T1_linal_float4x4_get_inverse_transpose(
+        in,
+        out);
+    
+    T1_linal_float4x4_transpose_inplace(out);
+}
+
+void T1_linal_float4x4_inverse_inplace(
+    T1_linal_float4x4 * m)
+{
+    T1_linal_float4x4_inverse_transpose_inplace(m);
+    
+    T1_linal_float4x4_transpose_inplace(m);
+}
+
+void T1_linal_float4x4_get_inverse_transpose(
+    const T1_linal_float4x4 * in,
+    T1_linal_float4x4 * out)
+{
     assert(0);
 }
 
 void T1_linal_float4x4_inverse_transpose_inplace(
-    T1_linal_float4x4 * in,
-    T1_linal_float4x4 * out)
+    T1_linal_float4x4 * m)
 {
-    assert(0);
+    assert(T1_linal_float4x4_get_determinant(m) != 0.0f);
+    
+    float det_recip = 1.0f / T1_linal_float4x4_get_determinant(m);
+    
+    float minors[16];
+    
+    T1_linal_float3x3 submat;
+    
+    for (int row_i = 0; row_i < 4; row_i++) {
+        for (int col_i = 0; col_i < 4; col_i++) {
+            
+            float sign =
+                1.0f - 2.0f * ((row_i + col_i) % 2);
+            
+            T1_linal_float4x4_extract_float3x3(
+                m,
+                row_i,
+                col_i,
+                &submat);
+            
+            float minor = T1_linal_float3x3_get_determinant(
+                &submat);
+            
+            minors[row_i*4 + col_i] = sign * minor;
+        }
+    }
+    
+    for (int row_i = 0; row_i < 4; row_i++) {
+        for (int col_i = 0; col_i < 4; col_i++) {
+            m->rows[row_i].data[col_i] =
+                minors[row_i * 4 + col_i] * det_recip;
+        }
+    }
 }
 
 void T1_linal_float4x4_construct_x_rotation(
