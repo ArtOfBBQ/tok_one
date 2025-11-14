@@ -77,17 +77,17 @@ void T1_meta_reg_field(
     const uint8_t is_enum,
     uint32_t * good);
 
-void T1_meta_reg_custom_float_limits_for_last_field(
+void T1_meta_reg_float_limits_for_last_field(
     const double floating_min,
     const double floating_max,
     uint32_t * good);
 
-void T1_meta_reg_custom_int_limits_for_last_field(
+void T1_meta_reg_int_limits_for_last_field(
     const int64_t int_min,
     const int64_t int_max,
     uint32_t * good);
 
-void T1_meta_reg_custom_uint_limits_for_last_field(
+void T1_meta_reg_uint_limits_for_last_field(
     const uint64_t uint_min,
     const uint64_t uint_max,
     uint32_t * good);
