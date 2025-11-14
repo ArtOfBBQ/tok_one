@@ -255,19 +255,19 @@ void copy_lights(
             lights[*lights_size].angle_xyz[2] =
                 zlights_to_apply[i].xyz_angle[2];
             
-            lights[*lights_size].rgb[0] =
-                zlights_to_apply[i].RGBA[0];
-            lights[*lights_size].rgb[1] =
-                zlights_to_apply[i].RGBA[1];
-            lights[*lights_size].rgb[2] =
-                zlights_to_apply[i].RGBA[2];
-            
             lights[*lights_size].diffuse =
                 zlights_to_apply[i].diffuse;
             lights[*lights_size].specular =
                 zlights_to_apply[i].specular;
             lights[*lights_size].reach =
                 zlights_to_apply[i].reach;
+            
+            lights[*lights_size].rgb[0] =
+                zlights_to_apply[i].RGBA[0];
+            lights[*lights_size].rgb[1] =
+                zlights_to_apply[i].RGBA[1];
+            lights[*lights_size].rgb[2] =
+                zlights_to_apply[i].RGBA[2];
             
             *lights_size += 1;
         }

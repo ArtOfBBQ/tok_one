@@ -435,12 +435,13 @@ static void construct_light_matrices(
         light_i++)
     {
         T1_linal_float4 light_world;
+        // reminder: frame data includes an offset
         light_world.data[0] =
-            zlights_to_apply[light_i].xyz[0];
+            frame_data->lights[light_i].xyz[0];
         light_world.data[1] =
-            zlights_to_apply[light_i].xyz[1];
+            frame_data->lights[light_i].xyz[1];
         light_world.data[2] =
-            zlights_to_apply[light_i].xyz[2];
+            frame_data->lights[light_i].xyz[2];
         light_world.data[3] = 1.0f;
         
         T1_linal_float4 view_pos =
@@ -448,25 +449,22 @@ static void construct_light_matrices(
                 &mat_view,
                 light_world);
         
-        frame_data->lights[light_i].viewspace_xyz[0] =
-            view_pos.data[0];
-        frame_data->lights[light_i].viewspace_xyz[1] =
-            view_pos.data[1];
-        frame_data->lights[light_i].viewspace_xyz[2] =
-            view_pos.data[2];
+        frame_data->lights[light_i].viewspace_xyz[0] = view_pos.data[0];
+        frame_data->lights[light_i].viewspace_xyz[1] = view_pos.data[1];
+        frame_data->lights[light_i].viewspace_xyz[2] = view_pos.data[2];
         
         // Next, we want to transform from camera view to light view
         T1_linal_float4x4_construct_xyz_rotation(
             &a_4x4,
-            -zlights_to_apply[light_i].xyz_angle[0],
-            -zlights_to_apply[light_i].xyz_angle[1],
-            -zlights_to_apply[light_i].xyz_angle[2]);
+            -frame_data->lights[light_i].angle_xyz[0],
+            -frame_data->lights[light_i].angle_xyz[1],
+            -frame_data->lights[light_i].angle_xyz[2]);
         
         T1_linal_float4x4_construct(
             &b_4x4,
-            1.0f, 0.0f, 0.0f, -zlights_to_apply[light_i].xyz[0],
-            0.0f, 1.0f, 0.0f, -zlights_to_apply[light_i].xyz[1],
-            0.0f, 0.0f, 1.0f, -zlights_to_apply[light_i].xyz[2],
+            1.0f, 0.0f, 0.0f, -frame_data->lights[light_i].xyz[0],
+            0.0f, 1.0f, 0.0f, -frame_data->lights[light_i].xyz[1],
+            0.0f, 0.0f, 1.0f, -frame_data->lights[light_i].xyz[2],
             0.0f, 0.0f, 0.0f, 1.0f);
         
         T1_linal_float4x4_mul_float4x4_inplace(

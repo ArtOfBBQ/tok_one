@@ -21,9 +21,9 @@ void T1_material_construct(
     to_construct->diffuse_rgb[0] = 0.80f;
     to_construct->diffuse_rgb[1] = 0.80f;
     to_construct->diffuse_rgb[2] = 0.80f;
-    to_construct->specular_rgb[0] = 0.10f;
-    to_construct->specular_rgb[1] = 0.10f;
-    to_construct->specular_rgb[2] = 0.10f;
+    to_construct->specular_rgb[0] = 0.50f;
+    to_construct->specular_rgb[1] = 0.50f;
+    to_construct->specular_rgb[2] = 0.50f;
     to_construct->specular_exponent = 25.0f;
     #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
     to_construct->normalmap_texture_i = -1;

@@ -104,11 +104,13 @@ void T1_clientlogic_late_startup(void) {
     light->RGBA[0]       =  1.0f;
     light->RGBA[1]       =  1.0f;
     light->RGBA[2]       =  1.0f;
-    light->RGBA[3]       =  0.30f;
+    light->RGBA[3]       =  1.0f;
+    light->diffuse       =  1.0f;
+    light->specular      =  1.0f;
     light->reach         =  100.0f;
     light->xyz[0]        =  TEAPOT_X - 1.20f;
     light->xyz[1]        =  TEAPOT_Y + 0.50f;
-    light->xyz[2]        =  TEAPOT_Z - 0.15f;
+    light->xyz[2]        =  TEAPOT_Z;
     zlight_point_light_to_location(
         light->xyz_angle,
         light->xyz,
@@ -208,7 +210,9 @@ void T1_clientlogic_late_startup(void) {
     font_settings->mat.diffuse_rgb[1] =  2.9f;
     font_settings->mat.diffuse_rgb[2] =  0.8f;
     font_settings->mat.alpha =  1.0f;
+    font_settings->alpha = 1.0f;
     font_settings->ignore_camera = false;
+    font_settings->alpha_blending_enabled = false;
     font_settings->ignore_lighting = 1.0f;
     font_settings->mat.rgb_cap[0] = 5.0f;
     font_settings->mat.rgb_cap[1] = 5.0f;
@@ -313,6 +317,11 @@ static void clientlogic_handle_keypresses(
         #endif
     }
     
+    if (T1_keypress_map[TOK_KEY_P] == true)
+    {
+        T1_zsprites_to_render->cpu_data[0].simd_stats.xyz[2] += 0.001f;
+    }
+    
     if (T1_keypress_map[TOK_KEY_LEFTARROW] == true)
     {
         camera.xyz[0] -= cam_speed;
@@ -372,18 +381,6 @@ static void clientlogic_handle_keypresses(
         } else {
             request_teapots();
         }
-        testswitch = !testswitch;
-    }
-    
-    if (T1_keypress_map[TOK_KEY_P] == true) {
-        T1_keypress_map[TOK_KEY_P] = false;
-        
-        #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
-        T1_scheduled_animations_set_ignore_camera_but_retain_screenspace_pos(teapot_object_ids[0], testswitch ? 1.0f : 0.0f);
-        #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
         testswitch = !testswitch;
     }
     
@@ -495,6 +492,20 @@ void T1_clientlogic_evaluate_terminal_command(
 {
     if (T1_std_are_equal_strings(command, "EXAMPLE COMMAND")) {
         T1_std_strcpy_cap(response, response_cap, "Hello from clientlogic!");
+        return;
+    }
+    
+    if (T1_std_are_equal_strings(
+        command,
+        "TEMPDEBUG"))
+    {
+        camera.xyz[0] = -6.09f;
+        camera.xyz[1] = 11.547f;
+        camera.xyz[2] = 0.0999f;
+        camera.xyz_angle[0] = 1.053f;
+        camera.xyz_angle[1] = 0.20f;
+        camera.xyz_angle[2] = -102.92f;
+        T1_std_strcpy_cap(response, response_cap, "Set camera to the debug scene");
         return;
     }
     

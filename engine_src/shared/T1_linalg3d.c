@@ -521,8 +521,7 @@ void T1_linal_float4x4_inverse_transpose_inplace(
     for (int row_i = 0; row_i < 4; row_i++) {
         for (int col_i = 0; col_i < 4; col_i++) {
             
-            float sign =
-                1.0f - 2.0f * ((row_i + col_i) % 2);
+            float sign = ((row_i + col_i) % 2 == 0) ? 1.0f : -1.0f;
             
             T1_linal_float4x4_extract_float3x3(
                 m,

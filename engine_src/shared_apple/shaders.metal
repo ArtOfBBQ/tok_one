@@ -461,12 +461,11 @@ float4 get_lit(
         i < globals->lights_size;
         i++)
     {
-        float4 light_viewpos =
-            vector_float4(
+        float3 light_viewspace =
+            vector_float3(
                 lights[i].viewspace_xyz[0],
                 lights[i].viewspace_xyz[1],
-                lights[i].viewspace_xyz[2],
-                0.0f);
+                lights[i].viewspace_xyz[2]);
         
         float4 light_color = vector_float4(
             lights[i].rgb[0],
@@ -547,7 +546,6 @@ float4 get_lit(
         #error
         #endif
         
-        #if 0
         float distance = get_distance(
             light_viewpos,
             in.viewpos);
@@ -557,21 +555,18 @@ float4 get_lit(
         float attenuation = 1.0f - (
             distance_overflow / lights[i].reach);
         attenuation = clamp(attenuation, 0.00f, 1.00f);
-        #else
-        float attenuation = 1.0f;
-        #endif
         
-        // This normal may be perturbed if a normal map is active, or it may be used as-is
-        float4 normal_viewspace = vector_float4(
+        float3 normal_viewspace = vector_float3(
             in.normal_viewspace[0],
             in.normal_viewspace[1],
-            in.normal_viewspace[2],
-            0.0f);
+            in.normal_viewspace[2]);
         
-        float4 dir_object_to_light = normalize(
-            (light_viewpos - in.viewpos));
+        float3 object_to_light_viewspace = normalize(
+            light_viewspace -
+                (float3)(in.viewpos));
         
         #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
+        // TODO: normal mapping in viewspace
         if (material->normalmap_texturearray_i >= 0) {
             half4 normal_map_sample =
                 color_textures[material->normalmap_texturearray_i].sample(
@@ -587,7 +582,6 @@ float4 get_lit(
             
             normal_map_sample_f4 = (normal_map_sample_f4 * 2.0f) - 1.0f;
             
-            // TODO: transform from local tangent space to world space
             normal_viewspace =
                 normal_map_sample[0] *
                     in.tangent_viewspace +
@@ -604,10 +598,11 @@ float4 get_lit(
         #error
         #endif
         
+        #if T1_DIFFUSE_LIGHTING_ACTIVE == T1_ACTIVE
         float diffuse_dot = max(
             dot(
                 normal_viewspace,
-                dir_object_to_light),
+                object_to_light_viewspace),
             0.0f) * 0.85f + 0.15f;
         
         float4 light_diffuse_multiplier =
@@ -621,28 +616,35 @@ float4 get_lit(
             diffuse_base *
             diffuse_tex_sample *
             light_diffuse_multiplier);
+        #elif T1_DIFFUSE_LIGHTING_ACTIVE == T1_INACTIVE
+        #else
+        #error
+        #endif
         
         #if T1_SPECULAR_LIGHTING_ACTIVE == T1_ACTIVE
         // specular lighting
-        float4 fragment_to_cam =
-            normalize(-in.viewpos);
+        float3 fragment_to_cam_viewspace =
+            normalize(-(float3)in.viewpos);
         
-        float4 reflection_ray = reflect(
-            -dir_object_to_light,
-            normal_viewspace);
+        float3 half_lightdir_half_view =
+            normalize(
+                object_to_light_viewspace +
+                fragment_to_cam_viewspace);
         
         float specular_dot = pow(
             max(
-                dot(fragment_to_cam, reflection_ray),
+                dot(
+                    normal_viewspace,
+                    half_lightdir_half_view),
                 0.0),
             material->specular_exponent);
         
         lit_color += (
             shadow_factors *
             specular_base *
-            // attenuation *
-            // light_color *
-            // lights[i].specular *
+            attenuation *
+            light_color *
+            lights[i].specular *
             specular_dot);
         #elif T1_SPECULAR_LIGHTING_ACTIVE == T1_INACTIVE
         #else
