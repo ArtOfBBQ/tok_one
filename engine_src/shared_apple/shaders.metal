@@ -183,6 +183,19 @@ typedef struct
     float point_size [[ point_size ]];
 } RasterizerPixel;
 
+float get_distance_f3(
+    const float3 a,
+    const float3 b)
+{
+    const float3 squared_diffs = (a-b)*(a-b);
+    
+    const float sum_squares = dot(
+        squared_diffs,
+        vector_float3(1.0f,1.0f,1.0f));
+    
+    return sqrt(sum_squares);
+}
+
 float get_distance(
     float4 a,
     float4 b)
@@ -546,9 +559,9 @@ float4 get_lit(
         #error
         #endif
         
-        float distance = get_distance(
-            light_viewpos,
-            in.viewpos);
+        float distance = get_distance_f3(
+            light_viewspace,
+            (float3)in.viewpos);
         float distance_overflow = max(
             distance - (lights[i].reach * 0.75f),
             0.0f);
