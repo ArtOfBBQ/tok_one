@@ -21,9 +21,8 @@ typedef struct AppleGPUState {
     id polygon_buffers[MAX_RENDERING_FRAME_BUFFERS];
     id light_buffers [MAX_RENDERING_FRAME_BUFFERS];
     id vertex_buffers[MAX_RENDERING_FRAME_BUFFERS];
+    id circle_buffers[MAX_RENDERING_FRAME_BUFFERS];
     id camera_buffers[MAX_RENDERING_FRAME_BUFFERS];
-    id line_vertex_buffers[MAX_RENDERING_FRAME_BUFFERS];
-    id point_vertex_buffers[MAX_RENDERING_FRAME_BUFFERS];
     id postprocessing_constants_buffers[MAX_RENDERING_FRAME_BUFFERS];
     id locked_vertex_populator_buffer;
     id locked_vertex_buffer;
@@ -44,12 +43,6 @@ typedef struct AppleGPUState {
     
     id<MTLRenderPipelineState> diamond_pls;
     id<MTLRenderPipelineState> alphablend_pls;
-    #if T1_RAW_SHADER_ACTIVE == T1_ACTIVE
-    id<MTLRenderPipelineState> raw_pls;
-    #elif T1_RAW_SHADER_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
     
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
     id<MTLComputePipelineState> downsample_compute_pls;
@@ -383,75 +376,6 @@ bool32_t apple_gpu_init(
         return false;
     }
     
-    #if T1_RAW_SHADER_ACTIVE == T1_ACTIVE
-    id<MTLFunction> raw_vertex_shader =
-        [ags->lib newFunctionWithName:
-            @"raw_vertex_shader"];
-    if (raw_vertex_shader == NULL) {
-        T1_std_strcpy_cap(
-            error_msg_string,
-            512,
-            "Missing function: raw_vertex_shader()");
-        return false;
-    }
-    
-    id<MTLFunction> raw_fragment_shader =
-        [ags->lib newFunctionWithName:
-            @"raw_fragment_shader"];
-    if (raw_fragment_shader == NULL) {
-        T1_std_strcpy_cap(
-            error_msg_string,
-            512,
-            "Missing function: raw_fragment_shader()");
-        return false;
-    }
-    
-    MTLRenderPipelineDescriptor * raw_pipeline_descriptor =
-        [[MTLRenderPipelineDescriptor alloc] init];
-    [raw_pipeline_descriptor
-        setVertexFunction: raw_vertex_shader];
-    [raw_pipeline_descriptor
-        setFragmentFunction: raw_fragment_shader];
-    assert(ags->pixel_format_renderpass1 == MTLPixelFormatRGBA16Float);
-    raw_pipeline_descriptor
-        .colorAttachments[0]
-        .pixelFormat = ags->pixel_format_renderpass1;
-    raw_pipeline_descriptor
-        .colorAttachments[1]
-        .pixelFormat = ags->pixel_format_renderpass1;
-    [raw_pipeline_descriptor
-        .colorAttachments[0]
-        setBlendingEnabled: NO];
-    raw_pipeline_descriptor.depthAttachmentPixelFormat =
-        MTLPixelFormatDepth32Float;
-    raw_pipeline_descriptor.label = @"raw pipeline state";
-    ags->raw_pls =
-        [with_metal_device
-            newRenderPipelineStateWithDescriptor:
-                raw_pipeline_descriptor
-            error:
-                &Error];
-    if (Error != NULL || ags->raw_pls == NULL)
-    {
-        log_append([[Error localizedDescription] cStringUsingEncoding:kCFStringEncodingASCII]);
-        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-        log_dump_and_crash("Error loading the raw vertex shader\n");
-        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        
-        T1_std_strcpy_cap(
-            error_msg_string,
-            512,
-            "Failed to load the raw vertex shader");
-        return false;
-    }
-    #elif T1_RAW_SHADER_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
-    
     MTLDepthStencilDescriptor * depth_descriptor =
         [MTLDepthStencilDescriptor new];
     depth_descriptor.depthWriteEnabled = YES;
@@ -545,46 +469,22 @@ bool32_t apple_gpu_init(
         
         ags->vertex_buffers[buf_i] = MTLBufferFrameVertices;
         
-        #if T1_RAW_SHADER_ACTIVE == T1_ACTIVE
-        id<MTLBuffer> MTLBufferLineVertices =
+        id<MTLBuffer> MTLBufferFrameCircles =
             [with_metal_device
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         gpu_shared_data_collection->
-                            triple_buffers[buf_i].line_vertices
+                            triple_buffers[buf_i].circles
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        gpu_shared_data_collection->
-                            line_vertices_allocation_size
+                        gpu_shared_data_collection->circles_allocation_size
                     options:
                         MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
         
-        ags->line_vertex_buffers[buf_i] = MTLBufferLineVertices;
-        
-        id<MTLBuffer> MTLBufferPointVertices =
-            [with_metal_device
-                /* the pointer needs to be page aligned */
-                    newBufferWithBytesNoCopy:
-                        gpu_shared_data_collection->
-                            triple_buffers[buf_i].point_vertices
-                /* the length weirdly needs to be page aligned also */
-                    length:
-                        gpu_shared_data_collection->
-                            point_vertices_allocation_size
-                    options:
-                        MTLResourceStorageModeShared
-                /* deallocator = nil to opt out */
-                    deallocator:
-                        nil];
-        
-        ags->point_vertex_buffers[buf_i] = MTLBufferPointVertices;
-        #elif T1_RAW_SHADER_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
+        ags->circle_buffers[buf_i] = MTLBufferFrameCircles;
         
         id<MTLBuffer> MTLBufferPostProcessingConstants =
             [with_metal_device
@@ -1896,87 +1796,6 @@ void T1_platform_gpu_copy_locked_materials(void)
             vertexCount:
                 alphablend_verts_size];
     }
-    
-    #if T1_RAW_SHADER_ACTIVE == T1_ACTIVE
-    if ((
-        gpu_shared_data_collection->triple_buffers[ags->frame_i].
-            line_vertices_size +
-        gpu_shared_data_collection->triple_buffers[ags->frame_i].
-            point_vertices_size) > 0)
-    {
-        [render_pass_1_draw_triangles_encoder
-            setRenderPipelineState: ags->raw_pls];
-        
-        assert(ags->opaque_depth_stencil_state != nil);
-        [render_pass_1_draw_triangles_encoder
-            setDepthStencilState: ags->opaque_depth_stencil_state];
-        [render_pass_1_draw_triangles_encoder
-            setDepthClipMode: MTLDepthClipModeClip];
-    }
-    
-    if (gpu_shared_data_collection->
-        triple_buffers[ags->frame_i].line_vertices_size > 0)
-    {
-        [render_pass_1_draw_triangles_encoder
-            setVertexBuffer:
-                ags->line_vertex_buffers[ags->frame_i]
-            offset:
-                0
-            atIndex:
-                0];
-        
-        //        [render_pass_1_draw_triangles_encoder
-        //            setVertexBuffer:
-        //                ags->camera_buffers[ags->frame_i]
-        //            offset:
-        //                0
-        //            atIndex:
-        //                3];
-        //
-        //        [render_pass_1_draw_triangles_encoder
-        //            setVertexBuffer:
-        //                ags->projection_constants_buffer
-        //            offset:
-        //                0
-        //            atIndex:
-        //                5];
-        
-        assert(gpu_shared_data_collection->
-            triple_buffers[ags->frame_i].line_vertices_size <=
-                MAX_LINE_VERTICES);
-        [render_pass_1_draw_triangles_encoder
-            drawPrimitives: MTLPrimitiveTypeLine
-            vertexStart: 0
-            vertexCount: gpu_shared_data_collection->
-                triple_buffers[ags->frame_i].line_vertices_size];
-    }
-    
-    if (gpu_shared_data_collection->
-        triple_buffers[ags->frame_i].point_vertices_size > 0)
-    {
-        [render_pass_1_draw_triangles_encoder
-            setVertexBuffer:
-                ags->point_vertex_buffers[ags->frame_i]
-            offset:
-                0
-            atIndex:
-                0];
-        assert(gpu_shared_data_collection->
-            triple_buffers[ags->frame_i].point_vertices_size <=
-                MAX_POINT_VERTICES);
-        
-        [render_pass_1_draw_triangles_encoder
-            drawPrimitives: MTLPrimitiveTypePoint
-            vertexStart: 0
-            vertexCount: gpu_shared_data_collection->
-                triple_buffers[ags->frame_i].point_vertices_size];
-    }
-    #elif T1_RAW_SHADER_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error
-    #endif
-    
     [render_pass_1_draw_triangles_encoder endEncoding];
     
     // copy the touch id buffer to a CPU buffer so we can query

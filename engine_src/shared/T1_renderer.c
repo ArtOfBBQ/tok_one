@@ -8,49 +8,6 @@ void renderer_init(void) {
     T1_std_memset(&camera, 0, sizeof(T1GPUCamera));
 }
 
-#if T1_RAW_SHADER_ACTIVE == T1_ACTIVE
-static void add_line_vertex(
-    GPUDataForSingleFrame * frame_data,
-    const float xyz[3])
-{
-    log_assert(frame_data->line_vertices != NULL);
-    
-    if (frame_data->line_vertices_size >= MAX_LINE_VERTICES) {
-        return;
-    }
-    
-    common_memcpy(
-        &frame_data->line_vertices[frame_data->line_vertices_size].xyz,
-        xyz,
-        sizeof(float) * 3);
-    
-    frame_data->line_vertices[frame_data->line_vertices_size].color =
-        0.0f;
-    
-    frame_data->line_vertices_size += 1;
-}
-
-static void add_point_vertex(
-    GPUDataForSingleFrame * frame_data,
-    const float xyz[3],
-    float color)
-{
-    log_assert(frame_data->point_vertices != NULL);
-    
-    if (frame_data->point_vertices_size >= MAX_POINT_VERTICES) {
-        return;
-    }
-    
-    common_memcpy(
-        &frame_data->point_vertices[frame_data->point_vertices_size].xyz,
-        xyz,
-        sizeof(float) * 3);
-    
-    frame_data->point_vertices[frame_data->point_vertices_size].color = color;
-    
-    frame_data->point_vertices_size += 1;
-}
-
 #if 0
 inline static void draw_bounding_sphere(
     GPUDataForSingleFrame * frame_data,
@@ -77,12 +34,6 @@ inline static void draw_bounding_sphere(
         }
     }
 }
-#endif
-
-#elif T1_RAW_SHADER_ACTIVE == T1_INACTIVE
-// Pass
-#else
-#error "T1_RAW_SHADER_ACTIVE undefined"
 #endif
 
 inline static void add_alphablending_zpolygons_to_workload(
@@ -767,93 +718,6 @@ void renderer_hardware_render(
     #endif
     
     #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
-    // Pass
-    #else
-    #error
-    #endif
-    
-    #if T1_RAW_SHADER_ACTIVE == T1_ACTIVE
-    add_points_and_lines_to_workload(frame_data);
-    
-    if (application_running && engine_globals->draw_axes) {
-        // TODO: draw axes
-        float axis_vertices[6];
-        common_memset_float(axis_vertices, 0.0f, sizeof(float) * 6);
-        
-        #define DISTANT_FLOAT 3.5f
-        
-        add_point_vertex(
-            /* GPUDataForSingleFrame * frame_data: */
-                frame_data,
-            /* const float xyz[3]: */
-                axis_vertices,
-            /* const float color: */
-                3.0f);
-        add_line_vertex(
-            /* GPUDataForSingleFrame * frame_data: */
-                frame_data,
-            /* const float xyz[3]: */
-                axis_vertices);
-        axis_vertices[3] = DISTANT_FLOAT;
-        add_line_vertex(
-            /* GPUDataForSingleFrame * frame_data: */
-                frame_data,
-            /* const float xyz[3]: */
-                axis_vertices + 3);
-        
-        add_line_vertex(
-            /* GPUDataForSingleFrame * frame_data: */
-                frame_data,
-            /* const float xyz[3]: */
-                axis_vertices);
-        axis_vertices[3] =  0.0f;
-        axis_vertices[4] =  DISTANT_FLOAT;
-        add_line_vertex(
-            /* GPUDataForSingleFrame * frame_data: */
-                frame_data,
-            /* const float xyz[3]: */
-                axis_vertices + 3);
-        
-        add_line_vertex(
-            /* GPUDataForSingleFrame * frame_data: */
-                frame_data,
-            /* const float xyz[3]: */
-                axis_vertices);
-        axis_vertices[4] =  0.0f;
-        axis_vertices[5] =  DISTANT_FLOAT;
-        add_line_vertex(
-            /* GPUDataForSingleFrame * frame_data: */
-                frame_data,
-            /* const float xyz[3]: */
-                axis_vertices + 3);
-    }
-    
-    if (
-        application_running &&
-        engine_globals->draw_imputed_normals)
-    {
-        assert(0);
-    }
-    
-    if (application_running && engine_globals->draw_mouseptr) {
-        float xyz[3];
-        float z = 0.05f;
-        xyz[0] = engineglobals_screenspace_x_to_x(
-            user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_x,
-            z) + camera.xyz[0];
-        xyz[1] = engineglobals_screenspace_y_to_y(
-            user_interactions[INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].screen_y,
-            z) + camera.xyz[1];
-        xyz[2] = z + camera.xyz[2];
-        add_point_vertex(
-            /* GPUDataForSingleFrame * frame_data: */
-                frame_data,
-            /* const float * xyz: */
-                xyz,
-            /* const float color: */
-                0.33f);
-    }
-    #elif T1_RAW_SHADER_ACTIVE == T1_INACTIVE
     // Pass
     #else
     #error

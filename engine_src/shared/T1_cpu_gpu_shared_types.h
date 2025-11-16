@@ -96,6 +96,12 @@ typedef struct {
 } T1GPUzSpriteList;
 
 typedef struct {
+    float xyz[3];
+    float size;
+    float rgba[4];
+} T1GPUCircle;
+
+typedef struct {
     float camview_to_lightview_4x4[16];
     float xyz[3];
     float viewspace_xyz[3];
@@ -156,11 +162,6 @@ typedef struct
     int perlin_texture_i;
     float padding[7];
 } T1GPUPostProcConsts;
-
-typedef struct {
-    float xyz[3];
-    float color;
-} T1GPURawVertex;
 
 typedef struct
 {

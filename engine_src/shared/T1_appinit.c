@@ -461,6 +461,9 @@ void T1_appinit_before_gpu_init(
     gpu_shared_data_collection->vertices_allocation_size =
         pad_to_page_size(sizeof(T1GPUVertexIndices) * MAX_VERTICES_PER_BUFFER);
     
+    gpu_shared_data_collection->circles_allocation_size =
+        pad_to_page_size(sizeof(T1GPUCircle) * MAX_CIRCLES_PER_BUFFER);
+    
     gpu_shared_data_collection->polygons_allocation_size =
         pad_to_page_size(sizeof(T1GPUzSprite) * MAX_ZSPRITES_PER_BUFFER);
     
@@ -481,12 +484,6 @@ void T1_appinit_before_gpu_init(
     gpu_shared_data_collection->projection_constants_allocation_size =
         pad_to_page_size(sizeof(T1GPUProjectConsts));
     
-    gpu_shared_data_collection->point_vertices_allocation_size =
-        pad_to_page_size(sizeof(T1GPURawVertex) * MAX_POINT_VERTICES);
-    
-    gpu_shared_data_collection->line_vertices_allocation_size =
-        pad_to_page_size(sizeof(T1GPURawVertex) * MAX_LINE_VERTICES);
-    
     gpu_shared_data_collection->postprocessing_constants_allocation_size =
         pad_to_page_size(sizeof(T1GPUVertexIndices) * MAX_VERTICES_PER_BUFFER);
     
@@ -498,6 +495,11 @@ void T1_appinit_before_gpu_init(
         gpu_shared_data_collection->triple_buffers[cur_frame_i].verts =
             (T1GPUVertexIndices *)T1_mem_malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection->vertices_allocation_size,
+                T1_mem_page_size);
+        
+        gpu_shared_data_collection->triple_buffers[cur_frame_i].circles =
+            (T1GPUCircle *)T1_mem_malloc_from_unmanaged_aligned(
+                gpu_shared_data_collection->circles_allocation_size,
                 T1_mem_page_size);
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].
@@ -518,22 +520,6 @@ void T1_appinit_before_gpu_init(
             (T1GPUCamera *)T1_mem_malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection->camera_allocation_size,
                 T1_mem_page_size);
-        
-        #if T1_RAW_SHADER_ACTIVE == T1_ACTIVE
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].point_vertices =
-            (GPURawVertex *)malloc_from_unmanaged_aligned(
-                gpu_shared_data_collection->point_vertices_allocation_size,
-                T1_mem_page_size);
-        
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].line_vertices =
-            (GPURawVertex *)malloc_from_unmanaged_aligned(
-                gpu_shared_data_collection->line_vertices_allocation_size,
-                T1_mem_page_size);
-        #elif T1_RAW_SHADER_ACTIVE == T1_INACTIVE
-        // Pass
-        #else
-        #error "T1_RAW_SHADER_ACTIVE undefined!"
-        #endif
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].
             postproc_consts =

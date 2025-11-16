@@ -120,8 +120,6 @@ void T1_gameloop_update_before_render_pass(
     frame_data->verts_size               = 0;
     frame_data->zsprite_list->size       = 0;
     frame_data->first_alphablend_i       = 0;
-    frame_data->line_vertices_size       = 0;
-    frame_data->point_vertices_size      = 0;
     
     if (!T1_gameloop_active && T1_loading_textures) {
         if (loading_text_sprite_id < 0) {

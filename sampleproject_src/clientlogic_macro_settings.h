@@ -33,7 +33,6 @@ of the engine for your specific app.
 #define T1_SPECULAR_LIGHTING_ACTIVE 1
 #define T1_SCHEDULED_ANIMS_ACTIVE 1
 #define T1_TERMINAL_ACTIVE 1
-#define T1_RAW_SHADER_ACTIVE 2 // for points and lines
 #define T1_TEXTURES_ACTIVE 1
 #define T1_BLOOM_ACTIVE 2
 #define T1_PARTICLES_ACTIVE 1
@@ -58,8 +57,6 @@ of the engine for your specific app.
 The maximum number of sprites in your app.
 */
 #define MAX_ZSPRITES_PER_BUFFER  350000
-#define MAX_LINE_VERTICES 10
-#define MAX_POINT_VERTICES 10
 
 /*
 The maximum number of 'scheduled animations' simultaneously running
