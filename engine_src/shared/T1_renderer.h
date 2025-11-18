@@ -19,9 +19,9 @@
 extern "C" {
 #endif
 
-void renderer_init(void);
+void T1_renderer_init(void);
 
-void renderer_hardware_render(
+void T1_renderer_hardware_render(
     T1GPUFrame * frame_data,
     uint64_t elapsed_nanoseconds);
 

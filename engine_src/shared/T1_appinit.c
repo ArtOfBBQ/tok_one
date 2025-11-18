@@ -446,7 +446,7 @@ void T1_appinit_before_gpu_init(
         T1_uiinteraction_construct(&T1_uiinteractions[m]);
     }
     
-    renderer_init();
+    T1_renderer_init();
     
     T1_clientlogic_init();
     

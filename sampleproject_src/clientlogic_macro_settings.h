@@ -56,7 +56,12 @@ of the engine for your specific app.
 /*
 The maximum number of sprites in your app.
 */
-#define MAX_ZSPRITES_PER_BUFFER  350000
+#define MAX_ZSPRITES_PER_BUFFER  100000
+
+/*
+The maximum number of circles (particles)
+*/
+#define MAX_CIRCLES_PER_BUFFER 300000
 
 /*
 The maximum number of 'scheduled animations' simultaneously running

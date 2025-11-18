@@ -43,6 +43,7 @@ typedef struct AppleGPUState {
     
     id<MTLRenderPipelineState> diamond_pls;
     id<MTLRenderPipelineState> alphablend_pls;
+    id<MTLRenderPipelineState> circle_pls;
     
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
     id<MTLComputePipelineState> downsample_compute_pls;
@@ -284,6 +285,63 @@ bool32_t apple_gpu_init(
     #else
     #error
     #endif
+    
+    
+    id<MTLFunction> circle_vertex_shader =
+        [ags->lib newFunctionWithName:
+            @"circle_vertex_shader"];
+    if (circle_vertex_shader == NULL) {
+        T1_std_strcpy_cap(
+            error_msg_string,
+            512,
+            "Missing function: circle_vertex_shader()");
+        return false;
+    }
+    
+    id<MTLFunction> circle_fragment_shader =
+        [ags->lib newFunctionWithName:
+            @"circle_fragment_shader"];
+    if (circle_fragment_shader == NULL) {
+        T1_std_strcpy_cap(
+            error_msg_string,
+            512,
+            "Missing function: circle_fragment_shader()");
+        return false;
+    }
+    
+    MTLRenderPipelineDescriptor * circle_pipeline_descriptor =
+        [MTLRenderPipelineDescriptor new];
+    [circle_pipeline_descriptor
+        setVertexFunction: circle_vertex_shader];
+    [circle_pipeline_descriptor
+        setFragmentFunction:
+            circle_fragment_shader];
+    circle_pipeline_descriptor.label = @"circle pipeline state";
+    circle_pipeline_descriptor
+        .colorAttachments[0]
+        .pixelFormat = ags->pixel_format_renderpass1;
+    [circle_pipeline_descriptor
+        .colorAttachments[0]
+        setBlendingEnabled: YES];
+    circle_pipeline_descriptor
+        .colorAttachments[0].sourceRGBBlendFactor =
+            MTLBlendFactorSourceAlpha;
+    circle_pipeline_descriptor
+        .colorAttachments[0].destinationRGBBlendFactor =
+            MTLBlendFactorOneMinusSourceAlpha;
+    circle_pipeline_descriptor
+        .colorAttachments[0].rgbBlendOperation =
+            MTLBlendOperationAdd;
+    circle_pipeline_descriptor.colorAttachments[1].
+        pixelFormat = ags->pixel_format_renderpass1;
+    circle_pipeline_descriptor.depthAttachmentPixelFormat =
+        MTLPixelFormatDepth32Float;
+    ags->circle_pls =
+       [with_metal_device
+            newRenderPipelineStateWithDescriptor:
+                circle_pipeline_descriptor
+            error:
+                &Error];
     
     // Setup pipeline that uses diamonds instaed of alphablending
     MTLRenderPipelineDescriptor * diamond_pipeline_descriptor =
@@ -1635,6 +1693,14 @@ void T1_platform_gpu_copy_locked_materials(void)
     
     [render_pass_1_draw_triangles_encoder
         setVertexBuffer:
+            ags->circle_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            2];
+    
+    [render_pass_1_draw_triangles_encoder
+        setVertexBuffer:
             ags->camera_buffers[ags->frame_i]
         offset: 0
         atIndex: 3];
@@ -1758,7 +1824,10 @@ void T1_platform_gpu_copy_locked_materials(void)
     #error
     #endif
     
-    if (T1_engine_globals->draw_triangles && diamond_verts_size > 0) {
+    if (
+        T1_engine_globals->draw_triangles &&
+        diamond_verts_size > 0)
+    {
         assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);
         assert(diamond_verts_size % 3 == 0);
         [render_pass_1_draw_triangles_encoder
@@ -1781,7 +1850,10 @@ void T1_platform_gpu_copy_locked_materials(void)
         gpu_shared_data_collection->
             triple_buffers[ags->frame_i].first_alphablend_i;
     
-    if (T1_engine_globals->draw_triangles && alphablend_verts_size > 0) {
+    if (
+        T1_engine_globals->draw_triangles &&
+        alphablend_verts_size > 0)
+    {
         //        assert(alphablend_verts_size < MAX_VERTICES_PER_BUFFER);
         //        assert(alphablend_verts_size % 3 == 0);
         [render_pass_1_draw_triangles_encoder setRenderPipelineState:
@@ -1795,6 +1867,23 @@ void T1_platform_gpu_copy_locked_materials(void)
                 triple_buffers[ags->frame_i].first_alphablend_i
             vertexCount:
                 alphablend_verts_size];
+    }
+    
+    if (
+        gpu_shared_data_collection->triple_buffers[ags->frame_i].
+            circles_size > 0)
+    {
+        [render_pass_1_draw_triangles_encoder setRenderPipelineState:
+            ags->circle_pls];
+        [render_pass_1_draw_triangles_encoder setDepthStencilState:
+            ags->opaque_depth_stencil_state];
+        
+        [render_pass_1_draw_triangles_encoder
+            drawPrimitives: MTLPrimitiveTypePoint
+            vertexStart: 0
+            vertexCount:
+                gpu_shared_data_collection->
+                triple_buffers[ags->frame_i].circles_size];
     }
     [render_pass_1_draw_triangles_encoder endEncoding];
     

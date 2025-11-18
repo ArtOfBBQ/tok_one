@@ -180,7 +180,6 @@ typedef struct
     unsigned int locked_vertex_i [[ flat ]];
     unsigned int polygon_i [[ flat ]];
     int32_t touchable_id [[ flat ]];
-    float point_size [[ point_size ]];
 } RasterizerPixel;
 
 float get_distance_f3(
@@ -270,8 +269,6 @@ vertex_shader(
     out.texture_coordinate = vector_float2(
         locked_vertices[out.locked_vertex_i].uv[0],
         locked_vertices[out.locked_vertex_i].uv[1]);
-    
-    out.point_size = 40.0f;
     
     float4x4 projection = matrix_float4x4(
         camera->projection_4x4[ 0],
@@ -994,7 +991,6 @@ kernel void threshold_texture(
     texture.write(thresholded, grid_pos);
 }
 
-
 kernel void downsample_texture(
     texture2d<half, access::read> in_texture[[texture(0)]],
     texture2d<half, access::write> out_texture[[texture(1)]],
@@ -1036,4 +1032,81 @@ kernel void boxblur_texture(
         texture.read(prev_pos + vector_uint2(2, 0))) / 10.0f;
     
     texture.write(in_color, pos);
+}
+
+typedef struct
+{
+    float4 projpos [[ position ]];
+    float4 rgba [[ flat ]];
+    float size [[ point_size ]];
+} FragCircle;
+
+vertex FragCircle
+circle_vertex_shader(
+    uint circle_i [[ vertex_id ]],
+    const device T1GPUCircle * circles [[ buffer(2) ]],
+    const device T1GPUCamera * camera [[ buffer(3) ]])
+{
+    FragCircle out;
+    
+    float4 circle_pos = vector_float4(
+        circles[circle_i].xyz[0],
+        circles[circle_i].xyz[1],
+        circles[circle_i].xyz[2],
+        1.0f);
+    
+    float4x4 view = matrix_float4x4(
+        camera->view_4x4[ 0],
+        camera->view_4x4[ 1],
+        camera->view_4x4[ 2],
+        camera->view_4x4[ 3],
+        camera->view_4x4[ 4],
+        camera->view_4x4[ 5],
+        camera->view_4x4[ 6],
+        camera->view_4x4[ 7],
+        camera->view_4x4[ 8],
+        camera->view_4x4[ 9],
+        camera->view_4x4[10],
+        camera->view_4x4[11],
+        camera->view_4x4[12],
+        camera->view_4x4[13],
+        camera->view_4x4[14],
+        camera->view_4x4[15]);
+    
+    float4x4 projection = matrix_float4x4(
+        camera->projection_4x4[ 0],
+        camera->projection_4x4[ 1],
+        camera->projection_4x4[ 2],
+        camera->projection_4x4[ 3],
+        camera->projection_4x4[ 4],
+        camera->projection_4x4[ 5],
+        camera->projection_4x4[ 6],
+        camera->projection_4x4[ 7],
+        camera->projection_4x4[ 8],
+        camera->projection_4x4[ 9],
+        camera->projection_4x4[10],
+        camera->projection_4x4[11],
+        camera->projection_4x4[12],
+        camera->projection_4x4[13],
+        camera->projection_4x4[14],
+        camera->projection_4x4[15]);
+    
+    out.projpos = circle_pos * projection * view;
+    
+    out.rgba = vector_float4(
+        circles[circle_i].rgba[0],
+        circles[circle_i].rgba[1],
+        circles[circle_i].rgba[2],
+        circles[circle_i].rgba[3]);
+    
+    out.size = circles[circle_i].size /
+        out.projpos.z;
+    
+    return out;
+}
+
+fragment float4 circle_fragment_shader(
+    const FragCircle in [[stage_in]])
+{
+    return in.rgba;
 }

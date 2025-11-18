@@ -97,7 +97,7 @@ static void show_dead_simple_text(
         /* const float max_width: */
             T1_engine_globals->window_width - 30);
     
-    renderer_hardware_render(
+    T1_renderer_hardware_render(
             frame_data,
         /* uint64_t elapsed_us: */
             elapsed);
@@ -118,12 +118,16 @@ void T1_gameloop_update_before_render_pass(
     
     frame_data->postproc_consts->lights_size = 0;
     frame_data->verts_size               = 0;
+    frame_data->circles_size             = 0;
     frame_data->zsprite_list->size       = 0;
     frame_data->first_alphablend_i       = 0;
     
-    if (!T1_gameloop_active && T1_loading_textures) {
+    if (
+        !T1_gameloop_active && T1_loading_textures)
+    {
         if (loading_text_sprite_id < 0) {
-            loading_text_sprite_id = T1_zspriteid_next_ui_element_id();
+            loading_text_sprite_id =
+                T1_zspriteid_next_ui_element_id();
         }
         
         float pct_progress =
@@ -293,7 +297,7 @@ void T1_gameloop_update_before_render_pass(
             &T1_engine_globals->postproc_consts.lights_size,
             &T1_engine_globals->postproc_consts.shadowcaster_i);
         
-        renderer_hardware_render(
+        T1_renderer_hardware_render(
                 frame_data,
             /* uint64_t elapsed_us: */
                 T1_engine_globals->elapsed);

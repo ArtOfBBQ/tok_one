@@ -607,12 +607,33 @@ void T1_particle_add_all_to_frame_data(
     uint64_t elapsed_us,
     const bool32_t alpha_blending)
 {
+    frame_data->circles[0].xyz[0] = 0.1f;
+    frame_data->circles[0].xyz[1] = 0.12f;
+    frame_data->circles[0].xyz[2] = 0.26f;
+    frame_data->circles[0].rgba[0] = 0.8f;
+    frame_data->circles[0].rgba[1] = 0.1f;
+    frame_data->circles[0].rgba[2] = 0.25f;
+    frame_data->circles[0].rgba[3] = 0.5f;
+    frame_data->circles[0].size = 16.0f;
+    
+    frame_data->circles[1].xyz[0] = 0.1f;
+    frame_data->circles[1].xyz[1] = 0.1f;
+    frame_data->circles[1].xyz[2] = 0.25f;
+    frame_data->circles[1].rgba[0] = 0.2f;
+    frame_data->circles[1].rgba[1] = 0.7f;
+    frame_data->circles[1].rgba[2] = 0.25f;
+    frame_data->circles[1].rgba[3] = 0.5f;
+    frame_data->circles[1].size = 16.0f;
+    
+    frame_data->circles_size = 2;
+    
     for (
         uint32_t i = 0;
         i < T1_particle_effects_size;
         i++)
     {
-        if (T1_particle_effects[i].deleted ||
+        if (
+            T1_particle_effects[i].deleted ||
             !T1_particle_effects[i].committed ||
             T1_particle_effects[i].zpolygon_cpu.alpha_blending_enabled !=
                 alpha_blending ||

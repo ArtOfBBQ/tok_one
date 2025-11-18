@@ -2,7 +2,7 @@
 
 static uint32_t renderer_initialized = false;
 
-void renderer_init(void) {
+void T1_renderer_init(void) {
     renderer_initialized = true;
     
     T1_std_memset(&camera, 0, sizeof(T1GPUCamera));
@@ -624,7 +624,7 @@ static void construct_model_and_normal_matrices(void)
     }
 }
 
-void renderer_hardware_render(
+void T1_renderer_hardware_render(
     T1GPUFrame * frame_data,
     uint64_t elapsed_us)
 {
@@ -676,29 +676,6 @@ void renderer_hardware_render(
     
     add_opaque_zpolygons_to_workload(frame_data);
     
-    if (T1_app_running) {
-        #if T1_PARTICLES_ACTIVE == T1_ACTIVE
-        T1_particle_add_all_to_frame_data(
-            /* GPUDataForSingleFrame * frame_data: */
-                frame_data,
-            /* uint64_t elapsed_us: */
-                elapsed_us,
-            /* const uint32_t alpha_blending: */
-                false);
-        
-        #if 0
-        T1_particle_lineparticle_add_all_to_frame_data(
-            frame_data,
-            elapsed_us,
-            false);
-        #endif
-        #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
-        // Pass
-        #else
-        #error "T1_PARTICLES_ACTIVE undefined"
-        #endif
-    }
-    
     add_alphablending_zpolygons_to_workload(frame_data);
     
     #if T1_PARTICLES_ACTIVE == T1_ACTIVE
@@ -709,14 +686,6 @@ void renderer_hardware_render(
             elapsed_us,
         /* const uint32_t alpha_blending: */
             true);
-    
-    #if 0
-    T1_particle_lineparticle_add_all_to_frame_data(
-            frame_data,
-            elapsed_us,
-            true);
-    #endif
-    
     #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
     // Pass
     #else
