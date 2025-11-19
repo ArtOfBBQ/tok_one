@@ -371,6 +371,9 @@ void T1_scheduled_animations_request_evaporate_and_destroy(
     const int32_t object_id,
     const uint64_t duration_us)
 {
+    assert(0); // TODO: reimplement
+    
+    #if 0
     #if T1_LOGGER_ASSERTS_ACTIVE
     #else
     (void)duration_us;
@@ -456,12 +459,16 @@ void T1_scheduled_animations_request_evaporate_and_destroy(
         
         T1_zsprites_to_render->cpu_data[zp_i].deleted = true;
     }
+    #endif
 }
 
 void T1_scheduled_animations_request_shatter_and_destroy(
     const int32_t object_id,
     const uint64_t duration_us)
 {
+    assert(0); // TODO: reimplement
+    
+    #if 0
     #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     #elif T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     (void)duration_us;
@@ -557,6 +564,7 @@ void T1_scheduled_animations_request_shatter_and_destroy(
         T1_zsprites_to_render->cpu_data[zp_i].zsprite_id = -1;
         T1_zsprites_to_render->cpu_data[zp_i].deleted = true;
     }
+    #endif
 }
 
 void T1_scheduled_animations_request_fade_and_destroy(

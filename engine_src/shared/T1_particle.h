@@ -72,8 +72,7 @@ If "randomize" is set:
 e.g. if you set one to 0.1f, the final new rand will in [0.0f - 0.1f]
 */
 typedef struct {
-    T1GPUzSprite          gpu_stats;
-    T1CPUzSpriteSimdStats cpu_stats;
+    T1GPUCircle           gpu_stats;
     uint64_t              start_delay;
     uint64_t              duration;
     T1EasingType          easing_type;
@@ -85,8 +84,7 @@ typedef struct {
 typedef struct {
     T1ParticleMod mods[T1_PARTICLE_MODS_CAP];
     
-    T1GPUzSprite zpolygon_gpu;
-    T1CPUzSprite zpolygon_cpu;
+    T1GPUCircle base;
     
     uint64_t random_seed;
     uint64_t elapsed;
@@ -97,7 +95,6 @@ typedef struct {
     int32_t zsprite_id;
     
     uint32_t spawns_per_loop;
-    uint32_t verts_per_particle;
     uint32_t loops; // 0 for infinite loops
     
     float light_reach;
@@ -127,8 +124,7 @@ void T1_particle_resize_to_effect_height(
 
 void T1_particle_add_all_to_frame_data(
     T1GPUFrame * frame_data,
-    uint64_t elapsed_us,
-    const bool32_t alpha_blending);
+    uint64_t elapsed_us);
 
 void T1_particle_serialize(
     T1ParticleEffect * to_serialize,

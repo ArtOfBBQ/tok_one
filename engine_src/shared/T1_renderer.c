@@ -624,6 +624,16 @@ static void construct_model_and_normal_matrices(void)
     }
 }
 
+static int cmpr_circles_closest_z(
+    const void * a,
+    const void * b)
+{
+    return
+        ((T1GPUCircle *)a)->xyz[2] <
+        ((T1GPUCircle *)b)->xyz[2] ?
+            1 : -1;
+}
+
 void T1_renderer_hardware_render(
     T1GPUFrame * frame_data,
     uint64_t elapsed_us)
@@ -683,12 +693,22 @@ void T1_renderer_hardware_render(
         /* GPUDataForSingleFrame * frame_data: */
             frame_data,
         /* uint64_t elapsed_us: */
-            elapsed_us,
-        /* const uint32_t alpha_blending: */
-            true);
+            elapsed_us);
     #elif T1_PARTICLES_ACTIVE == T1_INACTIVE
     // Pass
     #else
     #error
     #endif
+    
+    if (frame_data->circles_size > 1) {
+        qsort(
+            /* void * base: */
+                frame_data->circles,
+            /* size_t nel: */
+                frame_data->circles_size,
+            /* size_t width: */
+                sizeof(T1GPUCircle),
+            /* int (* _Nonnull compar)(const void *, const void *): */
+                cmpr_circles_closest_z);
+    }
 }

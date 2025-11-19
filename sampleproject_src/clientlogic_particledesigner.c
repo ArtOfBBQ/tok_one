@@ -228,10 +228,19 @@ void T1_clientlogic_early_startup(
         EASINGTYPE_OCTUPLE_PULSE_ZERO_TO_ZERO, &ok);
     assert(ok);
     
+    T1_meta_struct(T1GPUCircle, &ok);
+    assert(ok);
+    T1_meta_array(T1GPUCircle, T1_TYPE_F32, xyz, 3, &ok);
+    T1_meta_reg_float_limits_for_last_field(-10.0f, 10.0f, &ok);
+    T1_meta_field(T1GPUCircle, T1_TYPE_F32, size, &ok);
+    T1_meta_reg_float_limits_for_last_field(-8.0f, 16.0f, &ok);
+    T1_meta_array(T1GPUCircle, T1_TYPE_F32, rgba, 4, &ok);
+    T1_meta_reg_float_limits_for_last_field(-1.0f, 2.5f, &ok);
+    assert(ok);
+    
     T1_meta_struct(T1ParticleMod, &ok);
     assert(ok);
-    T1_meta_struct_field(T1ParticleMod, T1GPUzSprite, gpu_stats, &ok);
-    T1_meta_struct_field(T1ParticleMod, T1CPUzSprite, cpu_stats, &ok);
+    T1_meta_struct_field(T1ParticleMod, T1GPUCircle, gpu_stats, &ok);
     T1_meta_field(T1ParticleMod, T1_TYPE_U64, start_delay, &ok);
     T1_meta_reg_uint_limits_for_last_field(0, 30000000, &ok);
     T1_meta_field(T1ParticleMod, T1_TYPE_U64, duration, &ok);
@@ -246,8 +255,7 @@ void T1_clientlogic_early_startup(
     T1_meta_struct(T1ParticleEffect, &ok);
     assert(ok);
     T1_meta_struct_array(T1ParticleEffect, T1ParticleMod, mods, T1_PARTICLE_MODS_CAP, &ok);
-    T1_meta_struct_field(T1ParticleEffect, T1GPUzSprite, zpolygon_gpu, &ok);
-    T1_meta_struct_field(T1ParticleEffect, T1CPUzSprite, zpolygon_cpu, &ok);
+    T1_meta_struct_field(T1ParticleEffect, T1GPUCircle, base, &ok);
     T1_meta_field(T1ParticleEffect, T1_TYPE_U64, spawn_lifespan, &ok);
     T1_meta_reg_uint_limits_for_last_field(0, 50000000, &ok);
     T1_meta_field(T1ParticleEffect, T1_TYPE_U64, loop_duration, &ok);
@@ -256,7 +264,7 @@ void T1_clientlogic_early_startup(
     T1_meta_reg_uint_limits_for_last_field(0, 500000, &ok);
     T1_meta_field(T1ParticleEffect,
         T1_TYPE_U32, spawns_per_loop, &ok);
-    T1_meta_reg_uint_limits_for_last_field(1, 10000, &ok);
+    T1_meta_reg_uint_limits_for_last_field(1, 400000, &ok);
     T1_meta_field(T1ParticleEffect, T1_TYPE_U32, loops, &ok);
     T1_meta_reg_uint_limits_for_last_field(0, 20, &ok);
     T1_meta_field(T1ParticleEffect, T1_TYPE_F32, light_reach, &ok);
@@ -576,15 +584,7 @@ static int32_t slider_labels_object_id = -1;
 void T1_clientlogic_late_startup(void) {
     
     pds->editing = T1_particle_get_next();
-    pds->editing->zpolygon_cpu.simd_stats.mul_xyz[0] = T1_zsprite_get_x_multiplier_for_width(&pds->editing->zpolygon_cpu, 0.05f);
-    pds->editing->zpolygon_cpu.simd_stats.mul_xyz[1] = T1_zsprite_get_y_multiplier_for_height(&pds->editing->zpolygon_cpu, 0.05f);
-    pds->editing->zpolygon_cpu.simd_stats.mul_xyz[2] = T1_zsprite_get_z_multiplier_for_depth(&pds->editing->zpolygon_cpu, 0.05f);
-    pds->editing->zpolygon_cpu.mesh_id = BASIC_CUBE_MESH_ID;
-    pds->editing->zpolygon_cpu.simd_stats.xyz[0] = 0.0f;
-    pds->editing->zpolygon_cpu.simd_stats.xyz[1] = 0.0f;
-    pds->editing->zpolygon_cpu.simd_stats.xyz[2] = 0.5f;
-    pds->editing->zpolygon_gpu.alpha = 1.0f;
-    pds->editing->zpolygon_gpu.base_mat.alpha = 1.0f;
+    pds->editing->base.rgba[3] = 1.0f;
     pds->editing->spawn_lifespan = 1000000;
     pds->editing->loop_duration  = 1500000;
     pds->editing->spawns_per_loop = 3;
@@ -741,88 +741,6 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
 void T1_clientlogic_update_after_render_pass(void) {
     
 }
-
-#if T1_TEXTURES_ACTIVE == T1_ACTIVE
-static void load_texture(const char * writables_filename) {
-    uint32_t ok = 0;
-    T1Tex tex = T1_texture_array_get_filename_location(writables_filename);
-    
-    if (tex.array_i >= 0 || tex.slice_i >= 0) {
-        log_dump_and_crash("That texture was already registered!");
-        return;
-    }
-    
-    size_t len = T1_std_strlen(writables_filename);
-    if (
-        writables_filename[len-3] == 'p' &&
-        writables_filename[len-2] == 'n' &&
-        writables_filename[len-1] == 'g')
-    {
-        T1_texture_files_runtime_register_png_from_writables(
-            /* const char * filepath: */
-                writables_filename,
-            /* uint32_t * good: */
-                &ok);
-        log_assert(ok);
-        
-        tex = T1_texture_array_get_filename_location(writables_filename);
-        
-        if (tex.array_i < 0 || tex.slice_i < 0) {
-            log_assert(0);
-            return;
-        }
-        
-        log_assert(
-            T1_texture_arrays[tex.array_i].images[tex.slice_i].
-                image.rgba_values_freeable != NULL);
-        log_assert(
-            T1_texture_arrays[tex.array_i].images[tex.slice_i].
-                image.rgba_values_page_aligned != NULL);
-        
-        pds->editing->zpolygon_gpu.base_mat.texturearray_i = tex.array_i;
-        pds->editing->zpolygon_gpu.base_mat.texture_i = tex.slice_i;
-        
-        #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
-        float tempquad_z = 0.9f;
-        T1zSpriteRequest temp_quad;
-        T1_zsprite_request_next(&temp_quad);
-        zsprite_construct_quad(
-            T1_engineglobals_screenspace_x_to_x(25.0f, tempquad_z),
-            T1_engineglobals_screenspace_y_to_y(25.0f, tempquad_z),
-            tempquad_z,
-            T1_engineglobals_screenspace_width_to_width(100.0f, tempquad_z),
-            T1_engineglobals_screenspace_height_to_height(100.0f, tempquad_z),
-            &temp_quad);
-        temp_quad.gpu_data->base_mat.diffuse_rgb[0] = 1.0f;
-        temp_quad.gpu_data->base_mat.diffuse_rgb[1] = 1.0f;
-        temp_quad.gpu_data->base_mat.diffuse_rgb[2] = 1.0f;
-        temp_quad.cpu_data->simd_stats.ignore_camera = true;
-        temp_quad.gpu_data->ignore_lighting = true;
-        temp_quad.cpu_data->alpha_blending_enabled = true;
-        temp_quad.cpu_data->zsprite_id = T1_zspriteid_next_nonui_id();
-        temp_quad.gpu_data->base_mat.texturearray_i = tex.array_i;
-        temp_quad.gpu_data->base_mat.texture_i = tex.slice_i;
-        T1_zsprite_commit(&temp_quad);
-        
-        T1ScheduledAnimation * fade = T1_scheduled_animations_request_next(true);
-        fade->pause_us = 3000000;
-        fade->duration_us = 2000000;
-        fade->gpu_vals.alpha = 0.0f;
-        fade->affected_zsprite_id = temp_quad.cpu_data->zsprite_id;
-        T1_scheduled_animations_commit(fade);
-        #elif T1_SCHEDULED_ANIMS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif // T1_SCHEDULED_ANIMS_ACTIVE
-        
-    } else {
-        return;
-    }
-}
-#elif T1_TEXTURES_ACTIVE == T1_INACTIVE
-#else
-#error
-#endif
 
 void T1_clientlogic_evaluate_terminal_command(
     char * command,
@@ -997,78 +915,6 @@ void T1_clientlogic_evaluate_terminal_command(
             "Success...");
         return;
     }
-    
-    #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-    if (
-        T1_std_string_starts_with(
-            command,
-            "LOAD TEXTURE ") &&
-        command[13] != ' ' &&
-        command[13] != '\0')
-    {
-        char res_name[128];
-        T1_std_strcpy_cap(res_name, 128, command + 13);
-        
-        T1_std_strtolower(res_name);
-        
-        char writables_path[256];
-        writables_path[0] = '\0';
-        
-        T1_platform_get_writables_path(
-            /* char * recipient: */
-                writables_path,
-            /* const uint32_t recipient_size: */
-                256);
-        
-        char dir_sep[4];
-        T1_platform_get_directory_separator(dir_sep);
-        
-        char writables_filepath[256];
-        
-        T1_std_strcpy_cap(writables_filepath, 256, writables_path);
-        T1_std_strcat_cap(writables_filepath, 256, dir_sep);
-        T1_std_strcat_cap(writables_filepath, 256, res_name);
-        
-        if (T1_platform_file_exists(writables_filepath)) {
-            T1_std_strcat_cap(response, response_cap, "Found, loading...");
-            
-            T1Tex tex = T1_texture_array_get_filename_location(res_name);
-            
-            if (tex.array_i >= 0 || tex.slice_i >= 0) {
-                T1_std_strcat_cap(
-                    response,
-                    response_cap,
-                    "\nERROR: That texture already exists!");
-                return;
-            }
-            
-            load_texture(res_name);
-            return;
-        }
-        
-        T1_std_strcat_cap(
-            response,
-            response_cap,
-            "No such texture in writables!");
-        
-        return;
-    }
-    #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
-    if (
-        T1_std_string_starts_with(
-            command,
-            "LOAD TEXTURE ") &&
-        command[13] != ' ' &&
-        command[13] != '\0')
-    {
-        T1_std_strcat_cap(
-            response,
-            response_cap,
-            "T1_TEXTURES_ACTIVE is set to 0, no support for textures!");
-    }
-    #else
-    #error
-    #endif
     
     T1_std_strcpy_cap(
         response,

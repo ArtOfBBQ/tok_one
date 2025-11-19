@@ -288,7 +288,7 @@ vertex_shader(
         camera->projection_4x4[14],
         camera->projection_4x4[15]);
     
-    out.projpos = out.viewpos * projection;
+    out.projpos = out.projpos = out.viewpos * projection;
     
     float3x3 normalmat3x3 = matrix_float3x3(
         polygons[out.polygon_i].normal_3x3[ 0],
@@ -1091,7 +1091,7 @@ circle_vertex_shader(
         camera->projection_4x4[14],
         camera->projection_4x4[15]);
     
-    out.projpos = circle_pos * projection * view;
+    out.projpos = circle_pos * view * projection;
     
     out.rgba = vector_float4(
         circles[circle_i].rgba[0],
@@ -1099,8 +1099,7 @@ circle_vertex_shader(
         circles[circle_i].rgba[2],
         circles[circle_i].rgba[3]);
     
-    out.size = circles[circle_i].size /
-        out.projpos.z;
+    out.size = circles[circle_i].size / out.projpos.w;
     
     return out;
 }

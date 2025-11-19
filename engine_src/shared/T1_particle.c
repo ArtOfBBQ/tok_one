@@ -332,29 +332,11 @@ void T1_particle_effect_construct(
 {
     T1_std_memset(to_construct, 0, sizeof(T1ParticleEffect));
     
-    T1zSpriteRequest poly_request;
-    poly_request.cpu_data = &to_construct->zpolygon_cpu;
-    poly_request.gpu_data = &to_construct->zpolygon_gpu;
-    T1_zsprite_construct(&poly_request);
-    
     to_construct->zsprite_id = -1;
-    to_construct->zpolygon_cpu.mesh_id = BASIC_CUBE_MESH_ID;
-    
-    to_construct->zpolygon_cpu.committed = true;
-    
-    to_construct->zpolygon_gpu.base_mat.rgb_cap[0] = 1.0f;
-    to_construct->zpolygon_gpu.base_mat.rgb_cap[1] = 1.0f;
-    to_construct->zpolygon_gpu.base_mat.rgb_cap[2] = 1.0f;
-    to_construct->zpolygon_cpu.simd_stats.scale_factor = 1.0f;
-    to_construct->zpolygon_cpu.simd_stats.mul_xyz[0] = 0.01f;
-    to_construct->zpolygon_cpu.simd_stats.mul_xyz[1] = 0.01f;
-    to_construct->zpolygon_cpu.simd_stats.mul_xyz[2] = 0.01f;
-    to_construct->zpolygon_gpu.ignore_lighting = true;
     
     to_construct->random_seed = (uint32_t)
         T1_rand() % (RANDOM_SEQUENCE_SIZE - 100);
-    to_construct->spawns_per_loop = 3;
-    to_construct->verts_per_particle = 36;
+    to_construct->spawns_per_loop = 30;
     to_construct->spawn_lifespan = 2000000;
     to_construct->modifiers_size = 1;
 }
@@ -389,20 +371,6 @@ void T1_particle_commit(T1ParticleEffect * to_request)
         return;
     }
     
-    log_assert(
-        to_request->zpolygon_cpu.mesh_id >= 0);
-    log_assert(
-        to_request->zpolygon_cpu.visible);
-    
-    log_assert(
-        all_mesh_summaries[to_request->zpolygon_cpu.mesh_id].
-            materials_size > 0);
-    
-    // Reminder: The particle effect is not committed, but the zpoly should be
-    log_assert(to_request->zpolygon_cpu.committed);
-    
-    log_assert(
-        (uint32_t)to_request->zpolygon_cpu.mesh_id < all_mesh_summaries_size);
     log_assert(!to_request->deleted);
     
     // Reminder: The particle effect is not committed, but the zpoly should be
@@ -411,13 +379,6 @@ void T1_particle_commit(T1ParticleEffect * to_request)
     log_assert(to_request->spawn_lifespan > 0);
     log_assert(to_request->elapsed == 0);
     log_assert(to_request->spawns_per_loop > 0);
-    log_assert(to_request->verts_per_particle > 0);
-    
-    for (uint32_t _ = 0; _ < 3; _++) {
-        if (to_request->zpolygon_cpu.simd_stats.mul_xyz[0] < 0.00001f) {
-            to_request->zpolygon_cpu.simd_stats.mul_xyz[0] = 0.00001f;
-        }
-    }
     
     to_request->committed = true;
 }
@@ -450,7 +411,7 @@ static float T1_particle_get_height(
             /* const T1EasingType easing_type: */
                 pe->mods[mod_i].easing_type);
         
-        out += pe->mods[mod_i].cpu_stats.xyz[1] * t;
+        out += pe->mods[mod_i].gpu_stats.xyz[1] * t;
     }
     
     return T1_std_fabs(out);
@@ -466,19 +427,14 @@ void T1_particle_resize_to_effect_height(
     
     const float multiplier = new_height / current_height;
     
-    for (uint32_t _ = 0; _ < 3; _++) {
-        to_resize->zpolygon_cpu.simd_stats.mul_xyz[_] *= multiplier;
-    }
-    
     for (
         uint32_t mod_i = 0;
         mod_i < to_resize->modifiers_size;
         mod_i++)
     {
         for (uint32_t _ = 0; _ < 3; _++) {
-            to_resize->mods[mod_i].cpu_stats.xyz[_] *= multiplier;
-            to_resize->mods[mod_i].cpu_stats.mul_xyz[_] *= multiplier;
-            to_resize->mods[mod_i].cpu_stats.offset_xyz[_] *= multiplier;
+            to_resize->mods[mod_i].gpu_stats.xyz[_] *= multiplier;
+            to_resize->mods[mod_i].gpu_stats.size *= multiplier;
         }
     }
 }
@@ -492,52 +448,26 @@ static void T1_particle_add_single_to_frame_data(
     log_assert(life_t >= -0.01f);
     log_assert(life_t <=  1.01);
     
-    for (
-        int32_t _ = 0;
-        _ < (int32_t)pe->verts_per_particle;
-        _++)
+    if (
+        frame_data->circles_size + 1 >=
+            MAX_CIRCLES_PER_BUFFER)
     {
-        int32_t vert_head_i = all_mesh_summaries[pe->zpolygon_cpu.mesh_id].vertices_head_i;
-        
-        int32_t next_vert_i = (vert_head_i +
-            ((int32_t)spawn_i + _) % (int32_t)pe->verts_per_particle);
-        
-        log_assert(next_vert_i >= 0);
-        log_assert(next_vert_i < (int32_t)all_mesh_vertices->size);
-        
-        frame_data->verts[frame_data->verts_size].
-            locked_vertex_i = next_vert_i;
-        frame_data->verts[frame_data->verts_size].polygon_i =
-            (int)frame_data->zsprite_list->size;
-        
-        frame_data->verts_size += 1;
-        log_assert(
-            frame_data->verts_size < MAX_VERTICES_PER_BUFFER);
+        log_assert(0);
+        return;
     }
     
-    log_assert(
-        frame_data->zsprite_list->size < MAX_ZSPRITES_PER_BUFFER);
-    T1_std_memcpy(
-        /* void * dst: */
-            frame_data->zsprite_list->polygons +
-                frame_data->zsprite_list->size,
-        /* const void * src: */
-            &pe->zpolygon_gpu,
-        /* size_t n: */
-            sizeof(T1GPUzSprite));
+    T1GPUCircle * tgt = frame_data->circles + frame_data->circles_size;
+    frame_data->circles_size += 1;
+    
+    *tgt = pe->base;
     
     for (
         uint32_t mod_i = 0;
         mod_i < pe->modifiers_size;
         mod_i++)
     {
-        log_assert(
-            frame_data->zsprite_list->size <
-                MAX_ZSPRITES_PER_BUFFER);
-        
         float * pertime_add_at = (float *)&pe->mods[mod_i].gpu_stats;
-        float * recipient_at = (float *)&frame_data->zsprite_list->
-                polygons[frame_data->zsprite_list->size];
+        float * recipient_at = (float *)tgt;
         
         float t = T1_easing_t_to_eased_t(
             /* const T1TPair t: */
@@ -573,12 +503,12 @@ static void T1_particle_add_single_to_frame_data(
         
         for (
             uint32_t j = 0;
-            j < (sizeof(T1GPUzSprite) / sizeof(float));
+            j < (sizeof(T1GPUCircle) / sizeof(float));
             j += SIMD_FLOAT_LANES)
         {
             // We expect padding to prevent out of bounds ops
             log_assert((j + SIMD_FLOAT_LANES) * sizeof(float) <=
-                sizeof(T1GPUzSprite));
+                sizeof(T1GPUCircle));
             
             SIMD_FLOAT simdf_fullt_add = simd_load_floats(
                 (pertime_add_at + j));
@@ -595,38 +525,12 @@ static void T1_particle_add_single_to_frame_data(
             simd_store_floats((recipient_at + j), recip);
         }
     }
-    
-    frame_data->zsprite_list->size += 1;
-    log_assert(
-        frame_data->zsprite_list->size <
-            MAX_ZSPRITES_PER_BUFFER);
 }
 
 void T1_particle_add_all_to_frame_data(
     T1GPUFrame * frame_data,
-    uint64_t elapsed_us,
-    const bool32_t alpha_blending)
+    uint64_t elapsed_us)
 {
-    frame_data->circles[0].xyz[0] = 0.1f;
-    frame_data->circles[0].xyz[1] = 0.12f;
-    frame_data->circles[0].xyz[2] = 0.26f;
-    frame_data->circles[0].rgba[0] = 0.8f;
-    frame_data->circles[0].rgba[1] = 0.1f;
-    frame_data->circles[0].rgba[2] = 0.25f;
-    frame_data->circles[0].rgba[3] = 0.5f;
-    frame_data->circles[0].size = 16.0f;
-    
-    frame_data->circles[1].xyz[0] = 0.1f;
-    frame_data->circles[1].xyz[1] = 0.1f;
-    frame_data->circles[1].xyz[2] = 0.25f;
-    frame_data->circles[1].rgba[0] = 0.2f;
-    frame_data->circles[1].rgba[1] = 0.7f;
-    frame_data->circles[1].rgba[2] = 0.25f;
-    frame_data->circles[1].rgba[3] = 0.5f;
-    frame_data->circles[1].size = 16.0f;
-    
-    frame_data->circles_size = 2;
-    
     for (
         uint32_t i = 0;
         i < T1_particle_effects_size;
@@ -635,18 +539,12 @@ void T1_particle_add_all_to_frame_data(
         if (
             T1_particle_effects[i].deleted ||
             !T1_particle_effects[i].committed ||
-            T1_particle_effects[i].zpolygon_cpu.alpha_blending_enabled !=
-                alpha_blending ||
             frame_data->zsprite_list->size >= MAX_ZSPRITES_PER_BUFFER)
         {
             continue;
         }
         
         T1_particle_effects[i].elapsed += elapsed_us;
-        
-        while (T1_particle_effects[i].verts_per_particle % 3 != 0) {
-            T1_particle_effects[i].verts_per_particle += 1;
-        }
         
         if (T1_particle_effects[i].elapsed >
             T1_particle_effects[i].loop_duration)
@@ -716,11 +614,11 @@ void T1_particle_add_all_to_frame_data(
             frame_data->lights[frame_data->postproc_consts->lights_size].specular =
                 T1_particle_effects[i].light_strength * 0.15f;
             frame_data->lights[frame_data->postproc_consts->lights_size].xyz[0] =
-                T1_particle_effects[i].zpolygon_cpu.simd_stats.xyz[0];
+                T1_particle_effects[i].base.xyz[0];
             frame_data->lights[frame_data->postproc_consts->lights_size].xyz[1] =
-                T1_particle_effects[i].zpolygon_cpu.simd_stats.xyz[1] + 0.02f;
+                T1_particle_effects[i].base.xyz[1] + 0.02f;
             frame_data->lights[frame_data->postproc_consts->lights_size].xyz[2] =
-                T1_particle_effects[i].zpolygon_cpu.simd_stats.xyz[2];
+                T1_particle_effects[i].base.xyz[2];
             frame_data->postproc_consts->lights_size += 1;
         }
     }
