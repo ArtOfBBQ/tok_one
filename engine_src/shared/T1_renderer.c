@@ -628,10 +628,26 @@ static int cmpr_circles_closest_z(
     const void * a,
     const void * b)
 {
-    return
-        ((T1GPUCircle *)a)->xyz[2] <
-        ((T1GPUCircle *)b)->xyz[2] ?
-            1 : -1;
+    float dists[3];
+    dists[0] = ((T1GPUCircle *)a)->xyz[0] - camera.xyz[0];
+    dists[1] = ((T1GPUCircle *)a)->xyz[1] - camera.xyz[1];
+    dists[2] = ((T1GPUCircle *)a)->xyz[2] - camera.xyz[2];
+    
+    float dist_a_to_cam =
+        (dists[0] * dists[0]) +
+        (dists[1] * dists[1]) +
+        (dists[2] * dists[2]);
+    
+    dists[0] = ((T1GPUCircle *)b)->xyz[0] - camera.xyz[0];
+    dists[1] = ((T1GPUCircle *)b)->xyz[1] - camera.xyz[1];
+    dists[2] = ((T1GPUCircle *)b)->xyz[2] - camera.xyz[2];
+    
+    float dist_b_to_cam =
+        (dists[0] * dists[0]) +
+        (dists[1] * dists[1]) +
+        (dists[2] * dists[2]);
+    
+    return dist_a_to_cam < dist_b_to_cam ? 1 : -1;
 }
 
 void T1_renderer_hardware_render(
