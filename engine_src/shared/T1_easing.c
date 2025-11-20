@@ -115,6 +115,7 @@ float T1_easing_t_to_eased_t(
                     t, 8.0f);
             break;
         default:
+            return_val = t;
             #if T1_EASING_ASSERTS
             assert(0);
             #endif

@@ -346,7 +346,7 @@ void T1_linal_float4x4_extract_float3x3(
     #else
     
     uint32_t write_row_i = 0;
-    for (uint32_t row_i = 0; row_i < 4; row_i++) {
+    for (int32_t row_i = 0; row_i < 4; row_i++) {
         if (row_i == omit_row_i) {
             continue;
         }
@@ -380,7 +380,7 @@ float T1_linal_float4x4_get_determinant(
     float mod = 1.0f;
     float return_value = 0.0f;
     for (
-        uint32_t col_i = 0;
+        int32_t col_i = 0;
         col_i < 4;
         col_i++)
     {

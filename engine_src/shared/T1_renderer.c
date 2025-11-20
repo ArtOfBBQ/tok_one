@@ -455,7 +455,11 @@ static void construct_model_and_normal_matrices(void)
     T1_linal_float3x3 model3x3;
     T1_linal_float3x3 view3x3;
     
-    for (uint32_t i = 0; i < T1_zsprites_to_render->size; i++) {
+    for (
+        uint32_t i = 0;
+        i < T1_zsprites_to_render->size;
+        i++)
+    {
         
         T1CPUzSpriteSimdStats * s =
             &T1_zsprites_to_render->cpu_data[i].

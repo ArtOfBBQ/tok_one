@@ -17,54 +17,6 @@ extern "C" {
 #include "T1_zsprite.h"
 #include "T1_easing.h"
 
-
-#if 0
-#define LINEPARTICLE_EFFECTS_SIZE 2
-#define MAX_LINEPARTICLE_DIRECTIONS 5
-typedef struct LineParticle {
-    T1CPUzSprite zpolygon_cpu;
-    T1GPUzSprite zpolygon_gpu;
-    
-    uint64_t random_seed;
-    uint64_t elapsed;
-    uint64_t trail_delay;
-    uint64_t wait_first;
-    
-    uint64_t waypoint_duration[MAX_LINEPARTICLE_DIRECTIONS];
-    float waypoint_x[MAX_LINEPARTICLE_DIRECTIONS];
-    float waypoint_y[MAX_LINEPARTICLE_DIRECTIONS];
-    float waypoint_z[MAX_LINEPARTICLE_DIRECTIONS];
-    float waypoint_r[MAX_LINEPARTICLE_DIRECTIONS];
-    float waypoint_g[MAX_LINEPARTICLE_DIRECTIONS];
-    float waypoint_b[MAX_LINEPARTICLE_DIRECTIONS];
-    float waypoint_a[MAX_LINEPARTICLE_DIRECTIONS];
-    float
-        waypoint_scalefactor
-            [MAX_LINEPARTICLE_DIRECTIONS];
-    uint32_t waypoints_size;
-    
-    uint64_t particle_zangle_variance_pct;
-    uint64_t particle_scalefactor_variance_pct;
-    uint64_t particle_rgb_variance_pct;
-    uint32_t particle_count;
-    
-    uint32_t deleted;
-    uint32_t committed;
-} T1LineParticle;
-extern T1LineParticle * T1_particle_lineparticle_effects;
-extern uint32_t T1_particle_lineparticle_effects_size;
-T1LineParticle * T1_particle_lineparticle_get_next(void);
-T1LineParticle * T1_particle_lineparticle_get_next_with_zsprite(
-    T1CPUzSprite * construct_with_zpolygon,
-    T1GPUzSprite * construct_with_polygon_gpu);
-void T1_particle_lineparticle_commit(
-    T1LineParticle * to_commit);
-void T1_particle_lineparticle_add_all_to_frame_data(
-    T1GPUFrame * frame_data,
-    uint64_t elapsed_us,
-    const bool32_t alpha_blending);
-#endif
-
 /*
 If "randomize" is set:
 -> random floats are generated from 0.0f to 1.0f

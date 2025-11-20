@@ -584,10 +584,27 @@ static int32_t slider_labels_object_id = -1;
 void T1_clientlogic_late_startup(void) {
     
     pds->editing = T1_particle_get_next();
-    pds->editing->base.rgba[3] = 1.0f;
+    pds->editing->base.xyz[2] = 1.0f;
+    pds->editing->base.size = 8.0f;
+    pds->editing->base.rgba[2] = 1.0f;
+    pds->editing->base.rgba[3] = 0.25f;
     pds->editing->spawn_lifespan = 1000000;
     pds->editing->loop_duration  = 1500000;
     pds->editing->spawns_per_loop = 3;
+    pds->editing->pause_per_spawn = 100;
+    pds->editing->spawns_per_loop = 1000;
+    
+    pds->editing->mods[0].gpu_stats.
+        xyz[1] = 0.5f;
+    pds->editing->mods[0].duration = 500000;
+    
+    pds->editing->mods[1].gpu_stats.
+        xyz[0] = 0.5f;
+    pds->editing->mods[1].duration = 500000;
+    pds->editing->mods[1].random_t_add = 32;
+    pds->editing->mods[1].random_t_sub = 32;
+    
+    pds->editing->modifiers_size = 2;
     
     T1_particle_commit(pds->editing);
     
