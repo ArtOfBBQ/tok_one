@@ -233,7 +233,7 @@ void T1_clientlogic_early_startup(
     T1_meta_array(T1GPUCircle, T1_TYPE_F32, xyz, 3, &ok);
     T1_meta_reg_float_limits_for_last_field(-10.0f, 10.0f, &ok);
     T1_meta_field(T1GPUCircle, T1_TYPE_F32, size, &ok);
-    T1_meta_reg_float_limits_for_last_field(-8.0f, 16.0f, &ok);
+    T1_meta_reg_float_limits_for_last_field(-8.0f, 32.0f, &ok);
     T1_meta_array(T1GPUCircle, T1_TYPE_F32, rgba, 4, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 2.5f, &ok);
     assert(ok);
@@ -247,9 +247,9 @@ void T1_clientlogic_early_startup(
     T1_meta_reg_uint_limits_for_last_field(0, 50000000, &ok);
     T1_meta_enum_field(T1ParticleMod, T1EasingType, T1_TYPE_U8, easing_type, &ok);
     T1_meta_reg_uint_limits_for_last_field(0, EASINGTYPE_OUTOFBOUNDS-1, &ok);
-    T1_meta_field(T1ParticleMod, T1_TYPE_U8, random_t_add, &ok);
+    T1_meta_field(T1ParticleMod, T1_TYPE_U8, rand_pct_add, &ok);
     T1_meta_reg_uint_limits_for_last_field(0, 100, &ok);
-    T1_meta_field(T1ParticleMod, T1_TYPE_U8, random_t_sub, &ok);
+    T1_meta_field(T1ParticleMod, T1_TYPE_U8, rand_pct_sub, &ok);
     T1_meta_reg_uint_limits_for_last_field(0, 100, &ok);
     
     T1_meta_struct(T1ParticleEffect, &ok);
@@ -601,8 +601,8 @@ void T1_clientlogic_late_startup(void) {
     pds->editing->mods[1].gpu_stats.
         xyz[0] = 0.5f;
     pds->editing->mods[1].duration = 500000;
-    pds->editing->mods[1].random_t_add = 32;
-    pds->editing->mods[1].random_t_sub = 32;
+    pds->editing->mods[1].rand_pct_add = 32;
+    pds->editing->mods[1].rand_pct_sub = 32;
     
     pds->editing->modifiers_size = 2;
     

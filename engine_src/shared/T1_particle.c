@@ -122,7 +122,6 @@ void T1_particle_resize_to_effect_height(
 static void T1_particle_add_single_to_frame_data(
     T1GPUFrame * frame_data,
     T1ParticleEffect * pe,
-    const float life_t,
     const uint32_t spawn_i)
 {
     if (
@@ -132,12 +131,6 @@ static void T1_particle_add_single_to_frame_data(
         log_assert(0);
         return;
     }
-    
-    // We expect padding to prevent out of bounds
-    log_assert(
-        sizeof(T1GPUCircle) % sizeof(float) == 0);
-    log_assert(
-        (sizeof(T1GPUCircle) % (SIMD_FLOAT_LANES * 4)) == 0);
     
     T1GPUCircle * tgt = frame_data->circles + frame_data->circles_size;
     frame_data->circles_size += 1;
@@ -149,36 +142,43 @@ static void T1_particle_add_single_to_frame_data(
         mod_i < pe->modifiers_size;
         mod_i++)
     {
+        double lifetime_so_far =
+            (double)pe->elapsed -
+            (double)pe->mods[mod_i].start_delay -
+            (double)(pe->pause_per_spawn * spawn_i);
+        
+        if (lifetime_so_far < 0.0) {
+            continue;
+        }
+        
+        float spawn_t = (float)(
+            lifetime_so_far /
+            (double)pe->mods[mod_i].duration);
+        
+        if (spawn_t > 1.0f) { spawn_t = 1.0f; }
+        
         float * pertime_add_at = (float *)&pe->mods[mod_i].gpu_stats;
         float * recipient_at = (float *)tgt;
         
         float t = T1_easing_t_to_eased_t(
             /* const T1TPair t: */
-                life_t,
+                spawn_t,
             /* const T1EasingType easing_type: */
                 pe->mods[mod_i].easing_type);
         
-        if (pe->mods[mod_i].random_t_add) {
-            uint64_t rand_i =
-                (pe->random_seed
-                    + (mod_i << 2) + (spawn_i * 9)) %
-                    (RANDOM_SEQUENCE_SIZE);
-            
-            float fvariance =
-                ((float)(T1_rand_at_i(rand_i) %
-                    pe->mods[mod_i].random_t_add) * 0.01f);
-            t += fvariance;
-        }
-        if (pe->mods[mod_i].random_t_sub > 0) {
-            uint64_t rand_i =
-                (pe->random_seed
-                    + (mod_i << 1) + (spawn_i * 11)) %
-                    (RANDOM_SEQUENCE_SIZE);
-            
-            float fvariance =
-                ((float)(T1_rand_at_i(rand_i) % pe->mods[mod_i].random_t_sub) * 0.01f);
-            t -= fvariance;
-        }
+        float add_pct =
+            (float)pe->mods[mod_i].rand_pct_add;
+        float sub_pct =
+            (float)pe->mods[mod_i].rand_pct_sub;
+        float one_percent = 0.01f;
+        float hundred_percent = 1.0f;
+        
+        uint64_t rand_i =
+            (pe->random_seed +
+                (mod_i << 2) +
+                (spawn_i * 9)) %
+                (RANDOM_SEQUENCE_SIZE -
+                    sizeof(T1GPUCircle));
         
         if (t < 0.0f) { continue; }
         
@@ -189,24 +189,79 @@ static void T1_particle_add_single_to_frame_data(
             j < (sizeof(T1GPUCircle) / sizeof(float));
             j += SIMD_FLOAT_LANES)
         {
-            SIMD_FLOAT simdf_fullt_add = simd_load_floats(
-                (pertime_add_at + j));
+            SIMD_FLOAT fvar_add =
+                T1_rand_simd_at_i(
+                    rand_i + j);
+            fvar_add = simd_mul_floats(
+                fvar_add,
+                simd_set1_float(add_pct));
+            fvar_add = simd_mul_floats(
+                fvar_add,
+                simd_set1_float(one_percent));
+            fvar_add = simd_add_floats(
+                fvar_add,
+                simd_set1_float(hundred_percent));
+            
+            SIMD_FLOAT fvar_sub =
+                T1_rand_simd_at_i(
+                    rand_i + j + 4);
+            fvar_sub = simd_mul_floats(
+                fvar_sub,
+                simd_set1_float(sub_pct));
+            fvar_sub = simd_mul_floats(
+                fvar_sub,
+                simd_set1_float(one_percent));
+            fvar_sub = simd_add_floats(
+                fvar_sub,
+                simd_set1_float(
+                    hundred_percent));
+            
+            SIMD_FLOAT simdf_fullt_add =
+                simd_load_floats(
+                    (pertime_add_at + j));
             
             // Convert per second values to per us effect
             simdf_fullt_add = simd_mul_floats(
                 simdf_fullt_add, simdf_t);
+            #if 0
+            simdf_fullt_add = simd_mul_floats(
+                simdf_fullt_add,
+                fvar_add);
+            simdf_fullt_add = simd_mul_floats(
+                simdf_fullt_add,
+                fvar_sub);
+            #endif
             
-            SIMD_FLOAT recip = simd_load_floats(recipient_at + j);
-            recip = simd_add_floats(recip, simdf_fullt_add);
-            simd_store_floats((recipient_at + j), recip);
+            SIMD_FLOAT recip =
+                simd_load_floats(
+                    recipient_at + j);
+            recip = simd_add_floats(
+                recip, simdf_fullt_add);
+            simd_store_floats(
+                (recipient_at + j), recip);
         }
     }
+    
+    tgt->size =
+        ((tgt->size >=  1.0f) * 1.0f) +
+        ((tgt->size <   1.0f) * tgt->size);
+    tgt->size =
+        ((tgt->size >= 128.0f) * 128.0f) +
+        ((tgt->size <  128.0f) * tgt->size);
 }
 
 void T1_particle_add_all_to_frame_data(
     T1GPUFrame * frame_data,
     uint64_t elapsed_us)
 {
+    // We expect padding to prevent out of bounds
+    log_assert(
+        sizeof(T1GPUCircle) % sizeof(float) ==
+            0);
+    log_assert(
+        (sizeof(T1GPUCircle) %
+            (SIMD_FLOAT_LANES * 4)) == 0);
+    
     for (
         uint32_t i = 0;
         i < T1_particle_effects_size;
@@ -256,16 +311,10 @@ void T1_particle_add_all_to_frame_data(
                     ((T1_particle_effects[i].elapsed + T1_particle_effects[i].loop_duration) - spawn_at)
                 );
             
-            float t = (float)((double)elapsed_since_last_spawn /
-                (double)T1_particle_effects[i].spawn_lifespan);
-            
-            if (t <= 1.0f) {
-                T1_particle_add_single_to_frame_data(
-                    frame_data,
-                    &T1_particle_effects[i],
-                    t,
-                    spawn_i);
-            }
+            T1_particle_add_single_to_frame_data(
+                frame_data,
+                &T1_particle_effects[i],
+                spawn_i);
         }
         
         if (T1_particle_effects[i].cast_light) {

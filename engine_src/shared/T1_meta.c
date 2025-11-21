@@ -1894,16 +1894,23 @@ void T1_meta_write_to_known_field_str(
         }
         parent_enum = &t1ms->meta_enums[field.internal_field->parent_enum_id];
         
-        for (uint32_t i = 0; i < t1ms->meta_enum_vals_size; i++) {
+        for (
+            uint32_t i = 0;
+            i < t1ms->meta_enum_vals_size;
+            i++)
+        {
             if (
-                t1ms->meta_enum_vals[i].metaenum_id ==
-                    field.internal_field->parent_enum_id &&
+                t1ms->meta_enum_vals[i].
+                    metaenum_id ==
+                        field.internal_field->
+                            parent_enum_id &&
                 t1ms->strcmp(
                     t1ms->meta_enum_vals[i].name,
                     value_adj) == 0)
             {
                 found_enum_field = 1;
-                parsed.value_i64 = t1ms->meta_enum_vals[i].value;
+                parsed.value_i64 =
+                    t1ms->meta_enum_vals[i].value;
                 parsed.value_u64 = (uint64_t)t1ms->meta_enum_vals[i].value;
                 parsed.value_is_i64 = 1;
                 parsed.value_is_u64 = parsed.value_i64 >= 0;

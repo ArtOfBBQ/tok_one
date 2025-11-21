@@ -28,8 +28,8 @@ typedef struct {
     uint64_t              start_delay;
     uint64_t              duration;
     T1EasingType          easing_type;
-    uint8_t               random_t_add;
-    uint8_t               random_t_sub;
+    uint8_t               rand_pct_add;
+    uint8_t               rand_pct_sub;
 } T1ParticleMod;
 
 #define T1_PARTICLE_MODS_CAP 5
