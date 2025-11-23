@@ -24,7 +24,7 @@ If "randomize" is set:
 e.g. if you set one to 0.1f, the final new rand will in [0.0f - 0.1f]
 */
 typedef struct {
-    T1GPUCircle           gpu_stats;
+    T1GPUFlatQuad         gpu_stats;
     uint64_t              start_delay;
     uint64_t              duration;
     T1EasingType          easing_type;
@@ -36,7 +36,7 @@ typedef struct {
 typedef struct {
     T1ParticleMod mods[T1_PARTICLE_MODS_CAP];
     
-    T1GPUCircle base;
+    T1GPUFlatQuad base;
     
     uint64_t random_seed;
     uint64_t elapsed;

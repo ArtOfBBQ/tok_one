@@ -13,9 +13,9 @@ typedef struct
     T1GPULight *          lights;
     T1GPUCamera *         camera;
     T1GPUPostProcConsts * postproc_consts;
-    T1GPUCircle *         circles;
+    T1GPUFlatQuad *         flat_quads;
     uint32_t              verts_size;
-    uint32_t              circles_size;
+    uint32_t              flat_quads_size;
     uint32_t              first_alphablend_i;
 } T1GPUFrame;
 
@@ -29,7 +29,7 @@ typedef struct
     uint32_t const_mats_size;
     uint32_t const_mats_allocation_size;
     uint32_t vertices_allocation_size;
-    uint32_t circles_allocation_size;
+    uint32_t flat_quads_allocation_size;
     uint32_t locked_vertices_allocation_size;
     uint32_t polygons_allocation_size;
     uint32_t polygon_mats_allocation_size;

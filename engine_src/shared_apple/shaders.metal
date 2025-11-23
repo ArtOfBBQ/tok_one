@@ -1038,21 +1038,36 @@ typedef struct
 {
     float4 projpos [[ position ]];
     float4 rgba [[ flat ]];
-    float size [[ point_size ]];
-} FragCircle;
+} FlatQuadPixel;
 
-vertex FragCircle
-circle_vertex_shader(
-    uint circle_i [[ vertex_id ]],
-    const device T1GPUCircle * circles [[ buffer(2) ]],
+vertex FlatQuadPixel
+flat_quad_vertex_shader(
+    uint vertex_i [[ vertex_id ]],
+    const device T1GPUFlatQuad * quads [[ buffer(2) ]],
     const device T1GPUCamera * camera [[ buffer(3) ]])
 {
-    FragCircle out;
+    uint quad_i = vertex_i / 6;
+    uint corner_id  = vertex_i % 6;
     
-    float4 circle_pos = vector_float4(
-        circles[circle_i].xyz[0],
-        circles[circle_i].xyz[1],
-        circles[circle_i].xyz[2],
+    float halfsize = quads[quad_i].size * 0.5f;
+    
+    constexpr const float2 corners[6] = {
+        float2(0.0f, 0.0f),
+        float2(1.0f, 0.0f),
+        float2(1.0f, 1.0f),
+        float2(0.0f, 0.0f),
+        float2(1.0f, 1.0f),
+        float2(0.0f, 1.0f)
+    };
+    
+    FlatQuadPixel out;
+    
+    float4 worldpos = vector_float4(
+        quads[quad_i].xyz[0] +
+            (corners[corner_id].x * halfsize),
+        quads[quad_i].xyz[1] +
+            (corners[corner_id].y * halfsize),
+        quads[quad_i].xyz[2],
         1.0f);
     
     float4x4 view = matrix_float4x4(
@@ -1091,21 +1106,19 @@ circle_vertex_shader(
         camera->projection_4x4[14],
         camera->projection_4x4[15]);
     
-    out.projpos = circle_pos * view * projection;
+    out.projpos = worldpos * view * projection;
     
     out.rgba = vector_float4(
-        circles[circle_i].rgba[0],
-        circles[circle_i].rgba[1],
-        circles[circle_i].rgba[2],
-        circles[circle_i].rgba[3]);
-    
-    out.size = circles[circle_i].size / out.projpos.w;
+        quads[quad_i].rgba[0],
+        quads[quad_i].rgba[1],
+        quads[quad_i].rgba[2],
+        quads[quad_i].rgba[3]);
     
     return out;
 }
 
-fragment float4 circle_fragment_shader(
-    const FragCircle in [[stage_in]])
+fragment float4 flat_quad_fragment_shader(
+    const FlatQuadPixel in [[stage_in]])
 {
     return in.rgba;
 }

@@ -461,8 +461,8 @@ void T1_appinit_before_gpu_init(
     gpu_shared_data_collection->vertices_allocation_size =
         pad_to_page_size(sizeof(T1GPUVertexIndices) * MAX_VERTICES_PER_BUFFER);
     
-    gpu_shared_data_collection->circles_allocation_size =
-        pad_to_page_size(sizeof(T1GPUCircle) * MAX_CIRCLES_PER_BUFFER);
+    gpu_shared_data_collection->flat_quads_allocation_size =
+        pad_to_page_size(sizeof(T1GPUFlatQuad) * MAX_CIRCLES_PER_BUFFER);
     
     gpu_shared_data_collection->polygons_allocation_size =
         pad_to_page_size(sizeof(T1GPUzSprite) * MAX_ZSPRITES_PER_BUFFER);
@@ -497,9 +497,9 @@ void T1_appinit_before_gpu_init(
                 gpu_shared_data_collection->vertices_allocation_size,
                 T1_mem_page_size);
         
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].circles =
-            (T1GPUCircle *)T1_mem_malloc_from_unmanaged_aligned(
-                gpu_shared_data_collection->circles_allocation_size,
+        gpu_shared_data_collection->triple_buffers[cur_frame_i].flat_quads =
+            (T1GPUFlatQuad *)T1_mem_malloc_from_unmanaged_aligned(
+                gpu_shared_data_collection->flat_quads_allocation_size,
                 T1_mem_page_size);
         
         gpu_shared_data_collection->triple_buffers[cur_frame_i].

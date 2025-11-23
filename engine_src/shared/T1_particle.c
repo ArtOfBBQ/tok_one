@@ -125,15 +125,15 @@ static void T1_particle_add_single_to_frame_data(
     const uint32_t spawn_i)
 {
     if (
-        frame_data->circles_size + 1 >=
+        frame_data->flat_quads_size + 1 >=
             MAX_CIRCLES_PER_BUFFER)
     {
         log_assert(0);
         return;
     }
     
-    T1GPUCircle * tgt = frame_data->circles + frame_data->circles_size;
-    frame_data->circles_size += 1;
+    T1GPUFlatQuad * tgt = frame_data->flat_quads + frame_data->flat_quads_size;
+    frame_data->flat_quads_size += 1;
     
     *tgt = pe->base;
     
@@ -144,18 +144,22 @@ static void T1_particle_add_single_to_frame_data(
     {
         double lifetime_so_far =
             (double)pe->elapsed -
-            (double)pe->mods[mod_i].start_delay -
             (double)(pe->pause_per_spawn * spawn_i);
         
-        if (lifetime_so_far < 0.0) {
-            continue;
+        while (lifetime_so_far < 0.0) {
+            lifetime_so_far += pe->loop_duration;
         }
+        
+        lifetime_so_far -= pe->mods[mod_i].start_delay;
+        
+        if (lifetime_so_far < 0.0) { continue; }
         
         float spawn_t = (float)(
             lifetime_so_far /
             (double)pe->mods[mod_i].duration);
         
-        if (spawn_t > 1.0f) { spawn_t = 1.0f; }
+        if (spawn_t > 1.0f || spawn_t < 0.0f) { spawn_t = 1.0f;
+        }
         
         float * pertime_add_at = (float *)&pe->mods[mod_i].gpu_stats;
         float * recipient_at = (float *)tgt;
@@ -178,7 +182,7 @@ static void T1_particle_add_single_to_frame_data(
                 (mod_i << 2) +
                 (spawn_i * 9)) %
                 (RANDOM_SEQUENCE_SIZE -
-                    sizeof(T1GPUCircle));
+                    sizeof(T1GPUFlatQuad));
         
         if (t < 0.0f) { continue; }
         
@@ -186,7 +190,7 @@ static void T1_particle_add_single_to_frame_data(
         
         for (
             uint32_t j = 0;
-            j < (sizeof(T1GPUCircle) / sizeof(float));
+            j < (sizeof(T1GPUFlatQuad) / sizeof(float));
             j += SIMD_FLOAT_LANES)
         {
             SIMD_FLOAT fvar_add =
@@ -223,14 +227,12 @@ static void T1_particle_add_single_to_frame_data(
             // Convert per second values to per us effect
             simdf_fullt_add = simd_mul_floats(
                 simdf_fullt_add, simdf_t);
-            #if 0
             simdf_fullt_add = simd_mul_floats(
                 simdf_fullt_add,
                 fvar_add);
             simdf_fullt_add = simd_mul_floats(
                 simdf_fullt_add,
                 fvar_sub);
-            #endif
             
             SIMD_FLOAT recip =
                 simd_load_floats(
@@ -256,10 +258,10 @@ void T1_particle_add_all_to_frame_data(
 {
     // We expect padding to prevent out of bounds
     log_assert(
-        sizeof(T1GPUCircle) % sizeof(float) ==
+        sizeof(T1GPUFlatQuad) % sizeof(float) ==
             0);
     log_assert(
-        (sizeof(T1GPUCircle) %
+        (sizeof(T1GPUFlatQuad) %
             (SIMD_FLOAT_LANES * 4)) == 0);
     
     for (

@@ -118,7 +118,7 @@ void T1_gameloop_update_before_render_pass(
     
     frame_data->postproc_consts->lights_size = 0;
     frame_data->verts_size               = 0;
-    frame_data->circles_size             = 0;
+    frame_data->flat_quads_size             = 0;
     frame_data->zsprite_list->size       = 0;
     frame_data->first_alphablend_i       = 0;
     

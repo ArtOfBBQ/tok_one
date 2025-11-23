@@ -99,7 +99,7 @@ typedef struct {
     float xyz[3];
     float size;
     float rgba[4];
-} T1GPUCircle;
+} T1GPUFlatQuad;
 
 typedef struct {
     float camview_to_lightview_4x4[16];

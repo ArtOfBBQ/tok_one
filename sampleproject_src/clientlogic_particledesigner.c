@@ -228,23 +228,23 @@ void T1_clientlogic_early_startup(
         EASINGTYPE_OCTUPLE_PULSE_ZERO_TO_ZERO, &ok);
     assert(ok);
     
-    T1_meta_struct(T1GPUCircle, &ok);
+    T1_meta_struct(T1GPUFlatQuad, &ok);
     assert(ok);
-    T1_meta_array(T1GPUCircle, T1_TYPE_F32, xyz, 3, &ok);
+    T1_meta_array(T1GPUFlatQuad, T1_TYPE_F32, xyz, 3, &ok);
     T1_meta_reg_float_limits_for_last_field(-10.0f, 10.0f, &ok);
-    T1_meta_field(T1GPUCircle, T1_TYPE_F32, size, &ok);
-    T1_meta_reg_float_limits_for_last_field(-8.0f, 32.0f, &ok);
-    T1_meta_array(T1GPUCircle, T1_TYPE_F32, rgba, 4, &ok);
+    T1_meta_field(T1GPUFlatQuad, T1_TYPE_F32, size, &ok);
+    T1_meta_reg_float_limits_for_last_field(-1.0f, 1.0f, &ok);
+    T1_meta_array(T1GPUFlatQuad, T1_TYPE_F32, rgba, 4, &ok);
     T1_meta_reg_float_limits_for_last_field(-1.0f, 2.5f, &ok);
     assert(ok);
     
     T1_meta_struct(T1ParticleMod, &ok);
     assert(ok);
-    T1_meta_struct_field(T1ParticleMod, T1GPUCircle, gpu_stats, &ok);
+    T1_meta_struct_field(T1ParticleMod, T1GPUFlatQuad, gpu_stats, &ok);
     T1_meta_field(T1ParticleMod, T1_TYPE_U64, start_delay, &ok);
-    T1_meta_reg_uint_limits_for_last_field(0, 30000000, &ok);
+    T1_meta_reg_uint_limits_for_last_field(0, 3000000, &ok);
     T1_meta_field(T1ParticleMod, T1_TYPE_U64, duration, &ok);
-    T1_meta_reg_uint_limits_for_last_field(0, 50000000, &ok);
+    T1_meta_reg_uint_limits_for_last_field(0, 7000000, &ok);
     T1_meta_enum_field(T1ParticleMod, T1EasingType, T1_TYPE_U8, easing_type, &ok);
     T1_meta_reg_uint_limits_for_last_field(0, EASINGTYPE_OUTOFBOUNDS-1, &ok);
     T1_meta_field(T1ParticleMod, T1_TYPE_U8, rand_pct_add, &ok);
@@ -255,11 +255,11 @@ void T1_clientlogic_early_startup(
     T1_meta_struct(T1ParticleEffect, &ok);
     assert(ok);
     T1_meta_struct_array(T1ParticleEffect, T1ParticleMod, mods, T1_PARTICLE_MODS_CAP, &ok);
-    T1_meta_struct_field(T1ParticleEffect, T1GPUCircle, base, &ok);
+    T1_meta_struct_field(T1ParticleEffect, T1GPUFlatQuad, base, &ok);
     T1_meta_field(T1ParticleEffect, T1_TYPE_U64, spawn_lifespan, &ok);
-    T1_meta_reg_uint_limits_for_last_field(0, 50000000, &ok);
+    T1_meta_reg_uint_limits_for_last_field(0, 4000000, &ok);
     T1_meta_field(T1ParticleEffect, T1_TYPE_U64, loop_duration, &ok);
-    T1_meta_reg_uint_limits_for_last_field(1000000, 50000000, &ok);
+    T1_meta_reg_uint_limits_for_last_field(1000000, 5000000, &ok);
     T1_meta_field(T1ParticleEffect, T1_TYPE_U64, pause_per_spawn, &ok);
     T1_meta_reg_uint_limits_for_last_field(0, 500000, &ok);
     T1_meta_field(T1ParticleEffect,
@@ -585,7 +585,7 @@ void T1_clientlogic_late_startup(void) {
     
     pds->editing = T1_particle_get_next();
     pds->editing->base.xyz[2] = 1.0f;
-    pds->editing->base.size = 8.0f;
+    pds->editing->base.size = 0.25f;
     pds->editing->base.rgba[2] = 1.0f;
     pds->editing->base.rgba[3] = 0.25f;
     pds->editing->spawn_lifespan = 1000000;

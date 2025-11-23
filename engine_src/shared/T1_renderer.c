@@ -633,18 +633,18 @@ static int cmpr_circles_closest_z(
     const void * b)
 {
     float dists[3];
-    dists[0] = ((T1GPUCircle *)a)->xyz[0] - camera.xyz[0];
-    dists[1] = ((T1GPUCircle *)a)->xyz[1] - camera.xyz[1];
-    dists[2] = ((T1GPUCircle *)a)->xyz[2] - camera.xyz[2];
+    dists[0] = ((T1GPUFlatQuad *)a)->xyz[0] - camera.xyz[0];
+    dists[1] = ((T1GPUFlatQuad *)a)->xyz[1] - camera.xyz[1];
+    dists[2] = ((T1GPUFlatQuad *)a)->xyz[2] - camera.xyz[2];
     
     float dist_a_to_cam =
         (dists[0] * dists[0]) +
         (dists[1] * dists[1]) +
         (dists[2] * dists[2]);
     
-    dists[0] = ((T1GPUCircle *)b)->xyz[0] - camera.xyz[0];
-    dists[1] = ((T1GPUCircle *)b)->xyz[1] - camera.xyz[1];
-    dists[2] = ((T1GPUCircle *)b)->xyz[2] - camera.xyz[2];
+    dists[0] = ((T1GPUFlatQuad *)b)->xyz[0] - camera.xyz[0];
+    dists[1] = ((T1GPUFlatQuad *)b)->xyz[1] - camera.xyz[1];
+    dists[2] = ((T1GPUFlatQuad *)b)->xyz[2] - camera.xyz[2];
     
     float dist_b_to_cam =
         (dists[0] * dists[0]) +
@@ -720,14 +720,14 @@ void T1_renderer_hardware_render(
     #error
     #endif
     
-    if (frame_data->circles_size > 1) {
+    if (frame_data->flat_quads_size > 1) {
         qsort(
             /* void * base: */
-                frame_data->circles,
+                frame_data->flat_quads,
             /* size_t nel: */
-                frame_data->circles_size,
+                frame_data->flat_quads_size,
             /* size_t width: */
-                sizeof(T1GPUCircle),
+                sizeof(T1GPUFlatQuad),
             /* int (* _Nonnull compar)(const void *, const void *): */
                 cmpr_circles_closest_z);
     }

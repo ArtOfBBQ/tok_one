@@ -21,7 +21,7 @@ typedef struct AppleGPUState {
     id polygon_buffers[MAX_RENDERING_FRAME_BUFFERS];
     id light_buffers [MAX_RENDERING_FRAME_BUFFERS];
     id vertex_buffers[MAX_RENDERING_FRAME_BUFFERS];
-    id circle_buffers[MAX_RENDERING_FRAME_BUFFERS];
+    id flat_quad_buffers[MAX_RENDERING_FRAME_BUFFERS];
     id camera_buffers[MAX_RENDERING_FRAME_BUFFERS];
     id postprocessing_constants_buffers[MAX_RENDERING_FRAME_BUFFERS];
     id locked_vertex_populator_buffer;
@@ -43,7 +43,7 @@ typedef struct AppleGPUState {
     
     id<MTLRenderPipelineState> diamond_pls;
     id<MTLRenderPipelineState> alphablend_pls;
-    id<MTLRenderPipelineState> circle_pls;
+    id<MTLRenderPipelineState> flat_quad_pls;
     
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
     id<MTLComputePipelineState> downsample_compute_pls;
@@ -287,59 +287,59 @@ bool32_t apple_gpu_init(
     #endif
     
     
-    id<MTLFunction> circle_vertex_shader =
+    id<MTLFunction> flat_quad_vertex_shader =
         [ags->lib newFunctionWithName:
-            @"circle_vertex_shader"];
-    if (circle_vertex_shader == NULL) {
+            @"flat_quad_vertex_shader"];
+    if (flat_quad_vertex_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
             512,
-            "Missing function: circle_vertex_shader()");
+            "Missing function: flat_quad_vertex_shader()");
         return false;
     }
     
-    id<MTLFunction> circle_fragment_shader =
+    id<MTLFunction> flat_quad_fragment_shader =
         [ags->lib newFunctionWithName:
-            @"circle_fragment_shader"];
-    if (circle_fragment_shader == NULL) {
+            @"flat_quad_fragment_shader"];
+    if (flat_quad_fragment_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
             512,
-            "Missing function: circle_fragment_shader()");
+            "Missing function: flat_quad_fragment_shader()");
         return false;
     }
     
-    MTLRenderPipelineDescriptor * circle_pipeline_descriptor =
+    MTLRenderPipelineDescriptor * flat_quad_pipeline_descriptor =
         [MTLRenderPipelineDescriptor new];
-    [circle_pipeline_descriptor
-        setVertexFunction: circle_vertex_shader];
-    [circle_pipeline_descriptor
+    [flat_quad_pipeline_descriptor
+        setVertexFunction: flat_quad_vertex_shader];
+    [flat_quad_pipeline_descriptor
         setFragmentFunction:
-            circle_fragment_shader];
-    circle_pipeline_descriptor.label = @"circle pipeline state";
-    circle_pipeline_descriptor
+            flat_quad_fragment_shader];
+    flat_quad_pipeline_descriptor.label = @"flat quad pipeline state";
+    flat_quad_pipeline_descriptor
         .colorAttachments[0]
         .pixelFormat = ags->pixel_format_renderpass1;
-    [circle_pipeline_descriptor
+    [flat_quad_pipeline_descriptor
         .colorAttachments[0]
         setBlendingEnabled: YES];
-    circle_pipeline_descriptor
+    flat_quad_pipeline_descriptor
         .colorAttachments[0].sourceRGBBlendFactor =
             MTLBlendFactorSourceAlpha;
-    circle_pipeline_descriptor
+    flat_quad_pipeline_descriptor
         .colorAttachments[0].destinationRGBBlendFactor =
             MTLBlendFactorOneMinusSourceAlpha;
-    circle_pipeline_descriptor
+    flat_quad_pipeline_descriptor
         .colorAttachments[0].rgbBlendOperation =
             MTLBlendOperationAdd;
-    circle_pipeline_descriptor.colorAttachments[1].
+    flat_quad_pipeline_descriptor.colorAttachments[1].
         pixelFormat = ags->pixel_format_renderpass1;
-    circle_pipeline_descriptor.depthAttachmentPixelFormat =
+    flat_quad_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
-    ags->circle_pls =
+    ags->flat_quad_pls =
        [with_metal_device
             newRenderPipelineStateWithDescriptor:
-                circle_pipeline_descriptor
+                flat_quad_pipeline_descriptor
             error:
                 &Error];
     
@@ -532,17 +532,17 @@ bool32_t apple_gpu_init(
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         gpu_shared_data_collection->
-                            triple_buffers[buf_i].circles
+                            triple_buffers[buf_i].flat_quads
                 /* the length weirdly needs to be page aligned also */
                     length:
-                        gpu_shared_data_collection->circles_allocation_size
+                        gpu_shared_data_collection->flat_quads_allocation_size
                     options:
                         MTLResourceStorageModeShared
                 /* deallocator = nil to opt out */
                     deallocator:
                         nil];
         
-        ags->circle_buffers[buf_i] = MTLBufferFrameCircles;
+        ags->flat_quad_buffers[buf_i] = MTLBufferFrameCircles;
         
         id<MTLBuffer> MTLBufferPostProcessingConstants =
             [with_metal_device
@@ -1693,7 +1693,7 @@ void T1_platform_gpu_copy_locked_materials(void)
     
     [render_pass_1_draw_triangles_encoder
         setVertexBuffer:
-            ags->circle_buffers[ags->frame_i]
+            ags->flat_quad_buffers[ags->frame_i]
         offset:
             0
         atIndex:
@@ -1871,19 +1871,23 @@ void T1_platform_gpu_copy_locked_materials(void)
     
     if (
         gpu_shared_data_collection->triple_buffers[ags->frame_i].
-            circles_size > 0)
+            flat_quads_size > 0)
     {
         [render_pass_1_draw_triangles_encoder setRenderPipelineState:
-            ags->circle_pls];
+            ags->flat_quad_pls];
         [render_pass_1_draw_triangles_encoder setDepthStencilState:
             ags->opaque_depth_stencil_state];
         
         [render_pass_1_draw_triangles_encoder
-            drawPrimitives: MTLPrimitiveTypePoint
-            vertexStart: 0
+            drawPrimitives:
+                MTLPrimitiveTypeTriangle
+            vertexStart:
+                0
             vertexCount:
                 gpu_shared_data_collection->
-                triple_buffers[ags->frame_i].circles_size];
+                    triple_buffers[ags->frame_i].
+                        flat_quads_size * 6
+                ];
     }
     [render_pass_1_draw_triangles_encoder endEncoding];
     
