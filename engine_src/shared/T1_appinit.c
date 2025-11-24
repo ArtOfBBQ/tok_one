@@ -497,7 +497,7 @@ void T1_appinit_before_gpu_init(
                 gpu_shared_data_collection->vertices_allocation_size,
                 T1_mem_page_size);
         
-        gpu_shared_data_collection->triple_buffers[cur_frame_i].flat_quads =
+        gpu_shared_data_collection->triple_buffers[cur_frame_i].flat_billboard_quads =
             (T1GPUFlatQuad *)T1_mem_malloc_from_unmanaged_aligned(
                 gpu_shared_data_collection->flat_quads_allocation_size,
                 T1_mem_page_size);

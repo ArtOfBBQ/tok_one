@@ -91,7 +91,7 @@ static float T1_particle_get_height(
             /* const T1EasingType easing_type: */
                 pe->mods[mod_i].easing_type);
         
-        out += pe->mods[mod_i].gpu_stats.xyz[1] * t;
+        out += pe->mods[mod_i].gpu_stats.xyz[2] * t;
     }
     
     return T1_std_fabs(out);
@@ -114,9 +114,12 @@ void T1_particle_resize_to_effect_height(
     {
         for (uint32_t _ = 0; _ < 3; _++) {
             to_resize->mods[mod_i].gpu_stats.xyz[_] *= multiplier;
-            to_resize->mods[mod_i].gpu_stats.size *= multiplier;
         }
+        to_resize->mods[mod_i].gpu_stats.size *=
+            multiplier;
     }
+    
+    to_resize->base.size *= multiplier;
 }
 
 static void T1_particle_add_single_to_frame_data(
@@ -125,15 +128,15 @@ static void T1_particle_add_single_to_frame_data(
     const uint32_t spawn_i)
 {
     if (
-        frame_data->flat_quads_size + 1 >=
+        frame_data->flat_billboard_quads_size + 1 >=
             MAX_CIRCLES_PER_BUFFER)
     {
         log_assert(0);
         return;
     }
     
-    T1GPUFlatQuad * tgt = frame_data->flat_quads + frame_data->flat_quads_size;
-    frame_data->flat_quads_size += 1;
+    T1GPUFlatQuad * tgt = frame_data->flat_billboard_quads + frame_data->flat_billboard_quads_size;
+    frame_data->flat_billboard_quads_size += 1;
     
     *tgt = pe->base;
     
@@ -244,12 +247,21 @@ static void T1_particle_add_single_to_frame_data(
         }
     }
     
+    float min_size = 0.001f;
+    float max_size = 1.0f;
+    
     tgt->size =
-        ((tgt->size >=  1.0f) * 1.0f) +
-        ((tgt->size <   1.0f) * tgt->size);
+        ((tgt->size >=  min_size) * tgt->size) +
+        ((tgt->size <   min_size) * min_size);
     tgt->size =
-        ((tgt->size >= 128.0f) * 128.0f) +
-        ((tgt->size <  128.0f) * tgt->size);
+        ((tgt->size >= max_size) * max_size) +
+        ((tgt->size <  max_size) * tgt->size);
+    
+    float min_alpha = 0.0f;
+    float max_alpha = 1.0f;
+    tgt->rgba[3] = T1_std_maxf(tgt->rgba[3], min_alpha);
+    tgt->rgba[3] = T1_std_minf(tgt->rgba[3], max_alpha);
+    
 }
 
 void T1_particle_add_all_to_frame_data(

@@ -1041,7 +1041,7 @@ typedef struct
 } FlatQuadPixel;
 
 vertex FlatQuadPixel
-flat_quad_vertex_shader(
+flat_billboard_quad_vertex_shader(
     uint vertex_i [[ vertex_id ]],
     const device T1GPUFlatQuad * quads [[ buffer(2) ]],
     const device T1GPUCamera * camera [[ buffer(3) ]])
@@ -1063,10 +1063,8 @@ flat_quad_vertex_shader(
     FlatQuadPixel out;
     
     float4 worldpos = vector_float4(
-        quads[quad_i].xyz[0] +
-            (corners[corner_id].x * halfsize),
-        quads[quad_i].xyz[1] +
-            (corners[corner_id].y * halfsize),
+        quads[quad_i].xyz[0],
+        quads[quad_i].xyz[1],
         quads[quad_i].xyz[2],
         1.0f);
     
@@ -1108,6 +1106,9 @@ flat_quad_vertex_shader(
     
     out.projpos = worldpos * view * projection;
     
+    out.projpos.x += (corners[corner_id].x * halfsize) / worldpos.w;
+    out.projpos.y += (corners[corner_id].y * halfsize) / worldpos.w;
+    
     out.rgba = vector_float4(
         quads[quad_i].rgba[0],
         quads[quad_i].rgba[1],
@@ -1117,7 +1118,7 @@ flat_quad_vertex_shader(
     return out;
 }
 
-fragment float4 flat_quad_fragment_shader(
+fragment float4 flat_billboard_quad_fragment_shader(
     const FlatQuadPixel in [[stage_in]])
 {
     return in.rgba;

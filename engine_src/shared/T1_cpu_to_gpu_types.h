@@ -13,9 +13,9 @@ typedef struct
     T1GPULight *          lights;
     T1GPUCamera *         camera;
     T1GPUPostProcConsts * postproc_consts;
-    T1GPUFlatQuad *         flat_quads;
+    T1GPUFlatQuad *       flat_billboard_quads;
     uint32_t              verts_size;
-    uint32_t              flat_quads_size;
+    uint32_t              flat_billboard_quads_size;
     uint32_t              first_alphablend_i;
 } T1GPUFrame;
 

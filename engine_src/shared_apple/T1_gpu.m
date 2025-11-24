@@ -43,7 +43,7 @@ typedef struct AppleGPUState {
     
     id<MTLRenderPipelineState> diamond_pls;
     id<MTLRenderPipelineState> alphablend_pls;
-    id<MTLRenderPipelineState> flat_quad_pls;
+    id<MTLRenderPipelineState> flat_billboard_quad_pls;
     
     #if T1_BLOOM_ACTIVE == T1_ACTIVE
     id<MTLComputePipelineState> downsample_compute_pls;
@@ -287,59 +287,59 @@ bool32_t apple_gpu_init(
     #endif
     
     
-    id<MTLFunction> flat_quad_vertex_shader =
+    id<MTLFunction> flat_billboard_quad_vertex_shader =
         [ags->lib newFunctionWithName:
-            @"flat_quad_vertex_shader"];
-    if (flat_quad_vertex_shader == NULL) {
+            @"flat_billboard_quad_vertex_shader"];
+    if (flat_billboard_quad_vertex_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
             512,
-            "Missing function: flat_quad_vertex_shader()");
+            "Missing function: flat_billboard_quad_vertex_shader()");
         return false;
     }
     
-    id<MTLFunction> flat_quad_fragment_shader =
+    id<MTLFunction> flat_billboard_quad_fragment_shader =
         [ags->lib newFunctionWithName:
-            @"flat_quad_fragment_shader"];
-    if (flat_quad_fragment_shader == NULL) {
+            @"flat_billboard_quad_fragment_shader"];
+    if (flat_billboard_quad_fragment_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
             512,
-            "Missing function: flat_quad_fragment_shader()");
+            "Missing function: flat_billboard_quad_fragment_shader()");
         return false;
     }
     
-    MTLRenderPipelineDescriptor * flat_quad_pipeline_descriptor =
+    MTLRenderPipelineDescriptor * flat_billboard_quad_pipeline_descriptor =
         [MTLRenderPipelineDescriptor new];
-    [flat_quad_pipeline_descriptor
-        setVertexFunction: flat_quad_vertex_shader];
-    [flat_quad_pipeline_descriptor
+    [flat_billboard_quad_pipeline_descriptor
+        setVertexFunction: flat_billboard_quad_vertex_shader];
+    [flat_billboard_quad_pipeline_descriptor
         setFragmentFunction:
-            flat_quad_fragment_shader];
-    flat_quad_pipeline_descriptor.label = @"flat quad pipeline state";
-    flat_quad_pipeline_descriptor
+            flat_billboard_quad_fragment_shader];
+    flat_billboard_quad_pipeline_descriptor.label = @"flat billboard quad pipeline state";
+    flat_billboard_quad_pipeline_descriptor
         .colorAttachments[0]
         .pixelFormat = ags->pixel_format_renderpass1;
-    [flat_quad_pipeline_descriptor
+    [flat_billboard_quad_pipeline_descriptor
         .colorAttachments[0]
         setBlendingEnabled: YES];
-    flat_quad_pipeline_descriptor
+    flat_billboard_quad_pipeline_descriptor
         .colorAttachments[0].sourceRGBBlendFactor =
             MTLBlendFactorSourceAlpha;
-    flat_quad_pipeline_descriptor
+    flat_billboard_quad_pipeline_descriptor
         .colorAttachments[0].destinationRGBBlendFactor =
             MTLBlendFactorOneMinusSourceAlpha;
-    flat_quad_pipeline_descriptor
+    flat_billboard_quad_pipeline_descriptor
         .colorAttachments[0].rgbBlendOperation =
             MTLBlendOperationAdd;
-    flat_quad_pipeline_descriptor.colorAttachments[1].
+    flat_billboard_quad_pipeline_descriptor.colorAttachments[1].
         pixelFormat = ags->pixel_format_renderpass1;
-    flat_quad_pipeline_descriptor.depthAttachmentPixelFormat =
+    flat_billboard_quad_pipeline_descriptor.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
-    ags->flat_quad_pls =
+    ags->flat_billboard_quad_pls =
        [with_metal_device
             newRenderPipelineStateWithDescriptor:
-                flat_quad_pipeline_descriptor
+                flat_billboard_quad_pipeline_descriptor
             error:
                 &Error];
     
@@ -532,7 +532,7 @@ bool32_t apple_gpu_init(
                 /* the pointer needs to be page aligned */
                     newBufferWithBytesNoCopy:
                         gpu_shared_data_collection->
-                            triple_buffers[buf_i].flat_quads
+                            triple_buffers[buf_i].flat_billboard_quads
                 /* the length weirdly needs to be page aligned also */
                     length:
                         gpu_shared_data_collection->flat_quads_allocation_size
@@ -1854,8 +1854,6 @@ void T1_platform_gpu_copy_locked_materials(void)
         T1_engine_globals->draw_triangles &&
         alphablend_verts_size > 0)
     {
-        //        assert(alphablend_verts_size < MAX_VERTICES_PER_BUFFER);
-        //        assert(alphablend_verts_size % 3 == 0);
         [render_pass_1_draw_triangles_encoder setRenderPipelineState:
             ags->alphablend_pls];
         [render_pass_1_draw_triangles_encoder setDepthStencilState:
@@ -1871,10 +1869,10 @@ void T1_platform_gpu_copy_locked_materials(void)
     
     if (
         gpu_shared_data_collection->triple_buffers[ags->frame_i].
-            flat_quads_size > 0)
+            flat_billboard_quads_size > 0)
     {
         [render_pass_1_draw_triangles_encoder setRenderPipelineState:
-            ags->flat_quad_pls];
+            ags->flat_billboard_quad_pls];
         [render_pass_1_draw_triangles_encoder setDepthStencilState:
             ags->opaque_depth_stencil_state];
         
@@ -1886,7 +1884,7 @@ void T1_platform_gpu_copy_locked_materials(void)
             vertexCount:
                 gpu_shared_data_collection->
                     triple_buffers[ags->frame_i].
-                        flat_quads_size * 6
+                        flat_billboard_quads_size * 6
                 ];
     }
     [render_pass_1_draw_triangles_encoder endEncoding];

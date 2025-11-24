@@ -720,12 +720,12 @@ void T1_renderer_hardware_render(
     #error
     #endif
     
-    if (frame_data->flat_quads_size > 1) {
+    if (frame_data->flat_billboard_quads_size > 1) {
         qsort(
             /* void * base: */
-                frame_data->flat_quads,
+                frame_data->flat_billboard_quads,
             /* size_t nel: */
-                frame_data->flat_quads_size,
+                frame_data->flat_billboard_quads_size,
             /* size_t width: */
                 sizeof(T1GPUFlatQuad),
             /* int (* _Nonnull compar)(const void *, const void *): */
