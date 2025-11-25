@@ -382,7 +382,7 @@ static void construct_light_matrices(
     
     for (
         uint32_t light_i = 0;
-        light_i < zlights_to_apply_size;
+        light_i < frame_data->postproc_consts->lights_size;
         light_i++)
     {
         T1_linal_float4 light_world;
@@ -400,16 +400,22 @@ static void construct_light_matrices(
                 &mat_view,
                 light_world);
         
-        frame_data->lights[light_i].viewspace_xyz[0] = view_pos.data[0];
-        frame_data->lights[light_i].viewspace_xyz[1] = view_pos.data[1];
-        frame_data->lights[light_i].viewspace_xyz[2] = view_pos.data[2];
+        frame_data->lights[light_i].
+            viewspace_xyz[0] = view_pos.data[0];
+        frame_data->lights[light_i].
+            viewspace_xyz[1] = view_pos.data[1];
+        frame_data->lights[light_i].
+            viewspace_xyz[2] = view_pos.data[2];
         
         // Next, we want to transform from camera view to light view
         T1_linal_float4x4_construct_xyz_rotation(
             &a_4x4,
-            -frame_data->lights[light_i].angle_xyz[0],
-            -frame_data->lights[light_i].angle_xyz[1],
-            -frame_data->lights[light_i].angle_xyz[2]);
+            -frame_data->lights[light_i].
+                angle_xyz[0],
+            -frame_data->lights[light_i].
+                angle_xyz[1],
+            -frame_data->lights[light_i].
+                angle_xyz[2]);
         
         T1_linal_float4x4_construct(
             &b_4x4,
@@ -681,8 +687,6 @@ void T1_renderer_hardware_render(
     
     construct_model_and_normal_matrices();
     
-    construct_light_matrices(frame_data);
-    
     T1_std_memcpy(
         /* void * dest: */
             frame_data->zsprite_list->polygons,
@@ -731,4 +735,6 @@ void T1_renderer_hardware_render(
             /* int (* _Nonnull compar)(const void *, const void *): */
                 cmpr_circles_closest_z);
     }
+    
+    construct_light_matrices(frame_data);
 }

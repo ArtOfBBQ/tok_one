@@ -261,7 +261,6 @@ static void T1_particle_add_single_to_frame_data(
     float max_alpha = 1.0f;
     tgt->rgba[3] = T1_std_maxf(tgt->rgba[3], min_alpha);
     tgt->rgba[3] = T1_std_minf(tgt->rgba[3], max_alpha);
-    
 }
 
 void T1_particle_add_all_to_frame_data(
@@ -332,30 +331,28 @@ void T1_particle_add_all_to_frame_data(
         }
         
         if (T1_particle_effects[i].cast_light) {
-            frame_data->
-                lights[frame_data->postproc_consts->lights_size].
-                    angle_xyz[0] = 0.0f;
-            frame_data->lights[frame_data->postproc_consts->lights_size].
-                angle_xyz[1] = 0.0f;
-            frame_data->lights[frame_data->postproc_consts->lights_size].
-                angle_xyz[2] = 0.0f;
-            frame_data->lights[frame_data->postproc_consts->lights_size].rgb[0] =
+            T1GPULight * next = &frame_data->lights[frame_data->postproc_consts->lights_size];
+            
+            next->angle_xyz[0] = 0.0f;
+            next->angle_xyz[1] = 0.0f;
+            next->angle_xyz[2] = 0.0f;
+            next->rgb[0] =
                 T1_particle_effects[i].light_rgb[0];
-            frame_data->lights[frame_data->postproc_consts->lights_size].rgb[1] =
+            next->rgb[1] =
                 T1_particle_effects[i].light_rgb[1];
-            frame_data->lights[frame_data->postproc_consts->lights_size].rgb[2] =
+            next->rgb[2] =
                 T1_particle_effects[i].light_rgb[2];
-            frame_data->lights[frame_data->postproc_consts->lights_size].reach =
+            next->reach =
                 T1_particle_effects[i].light_reach;
-            frame_data->lights[frame_data->postproc_consts->lights_size].diffuse =
+            next->diffuse =
                 T1_particle_effects[i].light_strength;
-            frame_data->lights[frame_data->postproc_consts->lights_size].specular =
+            next->specular =
                 T1_particle_effects[i].light_strength * 0.15f;
-            frame_data->lights[frame_data->postproc_consts->lights_size].xyz[0] =
+            next->xyz[0] =
                 T1_particle_effects[i].base.xyz[0];
-            frame_data->lights[frame_data->postproc_consts->lights_size].xyz[1] =
+            next->xyz[1] =
                 T1_particle_effects[i].base.xyz[1] + 0.02f;
-            frame_data->lights[frame_data->postproc_consts->lights_size].xyz[2] =
+            next->xyz[2] =
                 T1_particle_effects[i].base.xyz[2];
             frame_data->postproc_consts->lights_size += 1;
         }

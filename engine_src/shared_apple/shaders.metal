@@ -417,7 +417,7 @@ float4 get_lit(
         0.75f,
         0.75f,
         0.75f,
-        1.0f);
+        1.00f);
     
     float2 uv_adjusted =
         in.texture_coordinate + (
@@ -430,7 +430,7 @@ float4 get_lit(
         material->uv_scroll[0],
         material->uv_scroll[1]);
     
-    uv_adjusted += (globals->timestamp / 1000000.0f) * uv_scroll;
+    uv_adjusted += globals->timestamp * 0.000001f * uv_scroll;
     
     uv_adjusted = fmod(uv_adjusted, 1.0f);
     
@@ -528,7 +528,7 @@ float4 get_lit(
                 mag_filter::nearest,
                 min_filter::nearest);
             
-            float4 light_clip_pos = (in.viewpos * cam_to_light_4x4) * projection;
+            float4 light_clip_pos = in.viewpos * cam_to_light_4x4 * projection;
             
             float2 shadow_uv =
                 ((light_clip_pos.xy / light_clip_pos.w) * 0.5f) +
@@ -573,7 +573,7 @@ float4 get_lit(
         
         float3 object_to_light_viewspace = normalize(
             light_viewspace -
-                (float3)(in.viewpos));
+            (float3)(in.viewpos));
         
         #if T1_NORMAL_MAPPING_ACTIVE == T1_ACTIVE
         // TODO: normal mapping in viewspace
