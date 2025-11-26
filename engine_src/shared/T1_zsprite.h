@@ -27,7 +27,14 @@ typedef struct  {
     float angle_xyz[3];
     float scale_factor;
     float ignore_camera;
+    #if T1_OUTLINES_ACTIVE == T1_ACTIVE
+    float outline; // 0.0f = no outline, 1.0f = full
+    float padding[1];
+    #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
     float padding[2];
+    #else
+    #error
+    #endif
 } T1CPUzSpriteSimdStats;
 
 typedef struct {

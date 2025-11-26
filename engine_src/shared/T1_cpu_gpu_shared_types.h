@@ -39,14 +39,19 @@ not this.
 */
 #define PARENT_MATERIAL_BASE 4294967295
 typedef struct {
-    float        xyz          [3];        // 12 bytes
-    float        normal_xyz   [3];        // 12 bytes
-    float        tangent_xyz  [3];        // 12 bytes
-    float        bitangent_xyz[3];        // 12 bytes
-    float        uv           [2];        //  8 bytes
-    unsigned int locked_materials_head_i; //  4 bytes
-    unsigned int parent_material_i;       //  4 bytes
-    float        padding[2];              // 12 bytes
+    float        xyz            [3];
+    #if T1_OUTLINES_ACTIVE == T1_ACTIVE
+    float        face_normal_xyz[3];
+    #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    float        normal_xyz     [3];
+    float        tangent_xyz    [3];
+    float        bitangent_xyz  [3];
+    float        uv             [2];
+    unsigned int locked_materials_head_i;
+    unsigned int parent_material_i;
 } __attribute__((aligned(32))) T1GPULockedVertex;
 
 typedef struct {

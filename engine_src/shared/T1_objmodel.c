@@ -1198,26 +1198,102 @@ int32_t T1_objmodel_new_mesh_id_from_obj_mtl_text(
         parsed_materials_size);
 }
 
+#if T1_OUTLINES_ACTIVE == T1_ACTIVE
+static void
+    T1_objmodel_deduce_face_normals(
+        const int32_t mesh_id)
+{
+    int32_t tail_i =
+        all_mesh_summaries[mesh_id].vertices_head_i +
+            all_mesh_summaries[mesh_id].
+                vertices_size;
+    
+    float edge1[3];
+    float edge2[3];
+    float face_normal_xyz[3];
+    
+    for (
+        int32_t vert_i = all_mesh_summaries[mesh_id].
+            vertices_head_i;
+        vert_i < tail_i;
+        vert_i += 3)
+    {
+        T1GPULockedVertex * v1 = &all_mesh_vertices->
+                gpu_data[vert_i+0];
+        T1GPULockedVertex * v2 = &all_mesh_vertices->
+            gpu_data[vert_i+1];
+        T1GPULockedVertex * v3 = &all_mesh_vertices->
+            gpu_data[vert_i+2];
+        
+        /*
+        The face normal is calculated as follows:
+        edge1 = v2 - v1
+        edge2 = v3 - v1
+        normal = normalize(cross(edge1, edge2))
+        */
+        
+        edge1[0] = v2->xyz[0] - v1->xyz[0];
+        edge1[1] = v2->xyz[1] - v1->xyz[1];
+        edge1[2] = v2->xyz[2] - v1->xyz[2];
+        
+        edge2[0] = v3->xyz[0] - v1->xyz[0];
+        edge2[1] = v3->xyz[1] - v1->xyz[1];
+        edge2[2] = v3->xyz[2] - v1->xyz[2];
+        
+        cross_vertices(
+            /* float * a: */
+                edge1,
+            /* float * b: */
+                edge2,
+            /* float * recip: */
+                face_normal_xyz);
+        
+        normalize_vertex(face_normal_xyz);
+        
+        T1_std_memcpy(
+            v1->face_normal_xyz,
+            face_normal_xyz,
+            sizeof(float)*3);
+        T1_std_memcpy(
+            v2->face_normal_xyz,
+            face_normal_xyz,
+            sizeof(float)*3);
+        T1_std_memcpy(
+            v3->face_normal_xyz,
+            face_normal_xyz,
+            sizeof(float)*3);
+    }
+}
+#elif T1_OUTLINES_ACTIVE == T1_INACTIVE
+#else
+#error
+#endif
+
 static void T1_objmodel_deduce_tangents_and_bitangents(
     const int32_t mesh_id)
 {
     int32_t tail_i =
         all_mesh_summaries[mesh_id].vertices_head_i +
-            all_mesh_summaries[mesh_id].vertices_size;
+            all_mesh_summaries[mesh_id].
+                vertices_size;
     
     for (
-        int32_t vert_i = all_mesh_summaries[mesh_id].vertices_head_i;
+        int32_t vert_i = all_mesh_summaries[mesh_id].
+            vertices_head_i;
         vert_i < tail_i;
         vert_i += 3)
     {
-        for (int32_t offset = 0; offset < 3; offset++) {
-        
-        T1GPULockedVertex * v1 = &all_mesh_vertices->
-            gpu_data[vert_i+((offset+0) % 3)];
-        T1GPULockedVertex * v2 = &all_mesh_vertices->
-            gpu_data[vert_i+((offset+1) % 3)];
-        T1GPULockedVertex * v3 = &all_mesh_vertices->
-            gpu_data[vert_i+((offset+2) % 3)];
+        for (
+            int32_t offset = 0;
+            offset < 3;
+            offset++)
+        {
+            T1GPULockedVertex * v1 = &all_mesh_vertices->
+                gpu_data[vert_i+((offset+0) % 3)];
+            T1GPULockedVertex * v2 = &all_mesh_vertices->
+                gpu_data[vert_i+((offset+1) % 3)];
+            T1GPULockedVertex * v3 = &all_mesh_vertices->
+                gpu_data[vert_i+((offset+2) % 3)];
         
         /*
         Compute edge vectors in world space and UV space:
@@ -1403,7 +1479,16 @@ int32_t T1_objmodel_new_mesh_id_from_resources(
         T1_objmodel_flip_mesh_uvs_u(return_value);
     }
     
-    T1_objmodel_deduce_tangents_and_bitangents(return_value);
+    #if T1_OUTLINES_ACTIVE == T1_ACTIVE
+    T1_objmodel_deduce_face_normals(
+        return_value);
+    #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    T1_objmodel_deduce_tangents_and_bitangents(
+        return_value);
     
     return return_value;
 }

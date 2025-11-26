@@ -10,20 +10,10 @@
 extern "C" {
 #endif
 
-#if 0
-typedef struct {
-    float x;
-    float y;
-    float z;
-    float uv[2];         // texture coords, ignored if untextured
-} zVertex;
-
-typedef struct {
-    zVertex vertices[3];
-    zVertex normal;
-    int32_t parent_material_i;
-} zTriangle;
-#endif
+void cross_vertices(
+    float * a,
+    float * b,
+    float * recip);
 
 SIMD_VEC4F normalize_vertex_vec4f(SIMD_VEC4F to_normalize_xyz);
 void normalize_zvertex_f3(

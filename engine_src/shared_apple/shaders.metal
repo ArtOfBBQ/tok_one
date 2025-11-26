@@ -288,7 +288,7 @@ vertex_shader(
         camera->projection_4x4[14],
         camera->projection_4x4[15]);
     
-    out.projpos = out.projpos = out.viewpos * projection;
+    out.projpos = out.viewpos * projection;
     
     float3x3 normalmat3x3 = matrix_float3x3(
         polygons[out.polygon_i].normal_3x3[ 0],
@@ -1123,3 +1123,96 @@ fragment float4 flat_billboard_quad_fragment_shader(
 {
     return in.rgba;
 }
+
+#if T1_OUTLINES_ACTIVE == T1_ACTIVE
+vertex float4
+outlines_vertex_shader(
+    uint vertex_i [[ vertex_id ]],
+    const device T1GPUVertexIndices * vertices [[ buffer(0) ]],
+    const device T1GPUzSprite * polygons [[ buffer(1) ]],
+    const device T1GPUCamera * camera [[ buffer(3) ]],
+    const device T1GPULockedVertex * locked_vertices [[ buffer(4) ]])
+{
+    float4 out;
+    
+    uint polygon_i = vertices[vertex_i].polygon_i;
+    uint locked_vertex_i =
+        vertices[vertex_i].locked_vertex_i;
+    
+    float4 vert = vector_float4(
+        locked_vertices[locked_vertex_i].xyz[0],
+        locked_vertices[locked_vertex_i].xyz[1],
+        locked_vertices[locked_vertex_i].xyz[2],
+        1.0f);
+    
+    float3 normal = vector_float3(
+        locked_vertices[locked_vertex_i].
+            face_normal_xyz[0],
+        locked_vertices[locked_vertex_i].
+            face_normal_xyz[1],
+        locked_vertices[locked_vertex_i].
+            face_normal_xyz[2]);
+    
+    float4x4 model_and_view = matrix_float4x4(
+        polygons[polygon_i].model_view_4x4[ 0],
+        polygons[polygon_i].model_view_4x4[ 1],
+        polygons[polygon_i].model_view_4x4[ 2],
+        polygons[polygon_i].model_view_4x4[ 3],
+        polygons[polygon_i].model_view_4x4[ 4],
+        polygons[polygon_i].model_view_4x4[ 5],
+        polygons[polygon_i].model_view_4x4[ 6],
+        polygons[polygon_i].model_view_4x4[ 7],
+        polygons[polygon_i].model_view_4x4[ 8],
+        polygons[polygon_i].model_view_4x4[ 9],
+        polygons[polygon_i].model_view_4x4[10],
+        polygons[polygon_i].model_view_4x4[11],
+        polygons[polygon_i].model_view_4x4[12],
+        polygons[polygon_i].model_view_4x4[13],
+        polygons[polygon_i].model_view_4x4[14],
+        polygons[polygon_i].model_view_4x4[15]);
+    
+    out = vert * model_and_view;
+    
+    float3x3 normalmat3x3 = matrix_float3x3(
+        polygons[polygon_i].normal_3x3[ 0],
+        polygons[polygon_i].normal_3x3[ 1],
+        polygons[polygon_i].normal_3x3[ 2],
+        polygons[polygon_i].normal_3x3[ 3],
+        polygons[polygon_i].normal_3x3[ 4],
+        polygons[polygon_i].normal_3x3[ 5],
+        polygons[polygon_i].normal_3x3[ 6],
+        polygons[polygon_i].normal_3x3[ 7],
+        polygons[polygon_i].normal_3x3[ 8]);
+    
+    normal = normalize(normal * normalmat3x3);
+    
+    out -= vector_float4(normal, 0.0f) * 0.0085f;
+    
+    float4x4 projection = matrix_float4x4(
+        camera->projection_4x4[ 0],
+        camera->projection_4x4[ 1],
+        camera->projection_4x4[ 2],
+        camera->projection_4x4[ 3],
+        camera->projection_4x4[ 4],
+        camera->projection_4x4[ 5],
+        camera->projection_4x4[ 6],
+        camera->projection_4x4[ 7],
+        camera->projection_4x4[ 8],
+        camera->projection_4x4[ 9],
+        camera->projection_4x4[10],
+        camera->projection_4x4[11],
+        camera->projection_4x4[12],
+        camera->projection_4x4[13],
+        camera->projection_4x4[14],
+        camera->projection_4x4[15]);
+    
+    out = out * projection;
+    
+    return out;
+}
+
+fragment float4 outlines_fragment_shader()
+{
+    return vector_float4(1.0f, 0.0f, 0.2f, 1.0f);
+}
+#endif

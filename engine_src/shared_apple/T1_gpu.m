@@ -41,6 +41,12 @@ typedef struct AppleGPUState {
     #endif
     id<MTLTexture> camera_depth_texture;
     
+    #if T1_OUTLINES_ACTIVE == T1_ACTIVE
+    id<MTLRenderPipelineState> outlines_pls;
+    #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     id<MTLRenderPipelineState> diamond_pls;
     id<MTLRenderPipelineState> alphablend_pls;
     id<MTLRenderPipelineState> flat_billboard_quad_pls;
@@ -286,6 +292,52 @@ bool32_t apple_gpu_init(
     #error
     #endif
     
+    #if T1_OUTLINES_ACTIVE == T1_ACTIVE
+    id<MTLFunction> outlines_vertex_shader =
+        [ags->lib newFunctionWithName:
+            @"outlines_vertex_shader"];
+    if (outlines_vertex_shader == NULL) {
+        T1_std_strcpy_cap(
+            error_msg_string,
+            512,
+            "Missing function: outlines_vertex_shader()");
+        return false;
+    }
+    
+    id<MTLFunction> outlines_fragment_shader =
+        [ags->lib newFunctionWithName:
+            @"outlines_fragment_shader"];
+    if (outlines_fragment_shader == NULL) {
+        T1_std_strcpy_cap(
+            error_msg_string,
+            512,
+            "Missing function: outlines_fragment_shader()");
+        return false;
+    }
+    
+    MTLRenderPipelineDescriptor * outlines_pipeline_descriptor =
+        [MTLRenderPipelineDescriptor new];
+    [outlines_pipeline_descriptor
+        setVertexFunction: outlines_vertex_shader];
+    [outlines_pipeline_descriptor
+        setFragmentFunction:
+            outlines_fragment_shader];
+    outlines_pipeline_descriptor.label = @"outlines pipeline state";
+    outlines_pipeline_descriptor
+        .colorAttachments[0]
+        .pixelFormat = ags->pixel_format_renderpass1;
+    outlines_pipeline_descriptor.depthAttachmentPixelFormat =
+        MTLPixelFormatDepth32Float;
+    ags->outlines_pls =
+       [with_metal_device
+            newRenderPipelineStateWithDescriptor:
+                outlines_pipeline_descriptor
+            error:
+                &Error];
+    #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     
     id<MTLFunction> flat_billboard_quad_vertex_shader =
         [ags->lib newFunctionWithName:
@@ -343,7 +395,7 @@ bool32_t apple_gpu_init(
             error:
                 &Error];
     
-    // Setup pipeline that uses diamonds instaed of alphablending
+    // Setup pipeline that uses diamonds instead of alphablending
     MTLRenderPipelineDescriptor * diamond_pipeline_descriptor =
         [MTLRenderPipelineDescriptor new];
     [diamond_pipeline_descriptor
@@ -1598,7 +1650,7 @@ void T1_platform_gpu_copy_locked_materials(void)
     #else
     #error
     #endif
-        
+    
     // To kick off our render loop, we blit to clear the touch id buffer
     uint32_t size_bytes = (uint32_t)(
         [ags->touch_id_texture height] *
@@ -1625,27 +1677,134 @@ void T1_platform_gpu_copy_locked_materials(void)
     
     [clear_touch_texture_blit_encoder endEncoding];
     
+    #if T1_OUTLINES_ACTIVE == T1_ACTIVE
+    MTLRenderPassDescriptor * outlines_descriptor =
+    [view currentRenderPassDescriptor];
     
+    outlines_descriptor.depthAttachment.loadAction =
+        MTLLoadActionClear;
+    outlines_descriptor.depthAttachment.clearDepth = 1.0f;
+    outlines_descriptor.depthAttachment.storeAction =
+        MTLStoreActionStore;
+    outlines_descriptor.depthAttachment.texture =
+        ags->camera_depth_texture;
+    
+    assert(ags->render_target_texture != NULL);
+    outlines_descriptor.colorAttachments[0].texture =
+        ags->render_target_texture;
+    outlines_descriptor.colorAttachments[0].storeAction =
+        MTLStoreActionStore;
+    
+    outlines_descriptor.colorAttachments[0].clearColor =
+        MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);
+    
+    id<MTLRenderCommandEncoder> render_pass_0_draw_outlines_encoder =
+        [command_buffer
+            renderCommandEncoderWithDescriptor:
+                outlines_descriptor];
+    
+    assert(ags->cached_viewport.zfar > ags->cached_viewport.znear);
+    [render_pass_0_draw_outlines_encoder
+        setViewport: ags->render_target_viewport];
+    assert(ags->cached_viewport.width > 0.0f);
+    assert(ags->cached_viewport.height > 0.0f);
+    
+    // outlines pipeline
+    [render_pass_0_draw_outlines_encoder
+        setRenderPipelineState: ags->outlines_pls];
+    assert(ags->opaque_depth_stencil_state != nil);
+    [render_pass_0_draw_outlines_encoder
+        setDepthStencilState: ags->opaque_depth_stencil_state];
+    [render_pass_0_draw_outlines_encoder
+        setDepthClipMode: MTLDepthClipModeClip];
+    [render_pass_0_draw_outlines_encoder setCullMode: MTLCullModeFront];
+    [render_pass_0_draw_outlines_encoder setFrontFacingWinding: MTLWindingCounterClockwise];
+    
+    [render_pass_0_draw_outlines_encoder
+        setVertexBuffer:
+            ags->vertex_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            0];
+    
+    [render_pass_0_draw_outlines_encoder
+        setVertexBuffer:
+            ags->polygon_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            1];
+    
+    [render_pass_0_draw_outlines_encoder
+        setVertexBuffer:
+            ags->camera_buffers[ags->frame_i]
+        offset: 0
+        atIndex: 3];
+    
+    [render_pass_0_draw_outlines_encoder
+        setVertexBuffer:
+            ags->locked_vertex_buffer
+        offset:
+            0 
+        atIndex:
+            4];
+    
+    if (
+        T1_engine_globals->draw_triangles &&
+        diamond_verts_size > 0)
+    {
+        assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);
+        assert(diamond_verts_size % 3 == 0);
+        [render_pass_0_draw_outlines_encoder
+            drawPrimitives:
+                MTLPrimitiveTypeTriangle
+            vertexStart:
+                0
+            vertexCount:
+                diamond_verts_size];
+    }
+    [render_pass_0_draw_outlines_encoder endEncoding];
+    #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+    
+    // draw triangles
     MTLRenderPassDescriptor * all_triangles_descriptor =
     [view currentRenderPassDescriptor];
     
+    #if T1_OUTLINES_ACTIVE == T1_ACTIVE
     all_triangles_descriptor.depthAttachment.loadAction =
-        MTLLoadActionClear;
-    all_triangles_descriptor.depthAttachment.clearDepth = 1.0f;
+        MTLLoadActionLoad;
+    assert(ags->render_target_texture != NULL);
+    all_triangles_descriptor.colorAttachments[0].
+        texture = ags->render_target_texture;
+    all_triangles_descriptor.colorAttachments[0].loadAction = MTLLoadActionLoad;
+    all_triangles_descriptor.colorAttachments[0].storeAction =
+        MTLStoreActionStore;
+    #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
+    all_triangles_descriptor.depthAttachment.
+        loadAction = MTLLoadActionClear;
+    all_triangles_descriptor.depthAttachment.
+        clearDepth = 1.0f;
+    
+    assert(ags->render_target_texture != NULL);
+    all_triangles_descriptor.colorAttachments[0].
+        texture = ags->render_target_texture;
+    all_triangles_descriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
+    all_triangles_descriptor.colorAttachments[0].storeAction =
+        MTLStoreActionStore;
+    all_triangles_descriptor.colorAttachments[0].clearColor =
+        MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);
+    #else
+    #error
+    #endif
     all_triangles_descriptor.depthAttachment.storeAction =
         MTLStoreActionStore;
     all_triangles_descriptor.depthAttachment.texture =
         ags->camera_depth_texture;
-    
-    assert(ags->render_target_texture != NULL);
-    all_triangles_descriptor.colorAttachments[0].texture =
-        ags->render_target_texture;
-    all_triangles_descriptor.colorAttachments[0].storeAction =
-        MTLStoreActionStore;
-    
-    all_triangles_descriptor.colorAttachments[0].clearColor =
-        MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);
-    
+        
     // ID Buffer for touchables
     all_triangles_descriptor.colorAttachments[1].texture =
         ags->touch_id_texture;
@@ -1654,18 +1813,11 @@ void T1_platform_gpu_copy_locked_materials(void)
     all_triangles_descriptor.colorAttachments[1].storeAction =
         MTLStoreActionStore;
     
+    // diamond pipeline
     id<MTLRenderCommandEncoder> render_pass_1_draw_triangles_encoder =
         [command_buffer
             renderCommandEncoderWithDescriptor:
                 all_triangles_descriptor];
-
-    
-    assert(ags->cached_viewport.zfar > ags->cached_viewport.znear);
-    [render_pass_1_draw_triangles_encoder
-        setViewport: ags->render_target_viewport];
-    assert(ags->cached_viewport.width > 0.0f);
-    assert(ags->cached_viewport.height > 0.0f);
-    
     
     [render_pass_1_draw_triangles_encoder
         setRenderPipelineState: ags->diamond_pls];
@@ -1674,6 +1826,8 @@ void T1_platform_gpu_copy_locked_materials(void)
         setDepthStencilState: ags->opaque_depth_stencil_state];
     [render_pass_1_draw_triangles_encoder
         setDepthClipMode: MTLDepthClipModeClip];
+    [render_pass_1_draw_triangles_encoder setCullMode: MTLCullModeBack];
+    [render_pass_1_draw_triangles_encoder setFrontFacingWinding: MTLWindingCounterClockwise];
     
     [render_pass_1_draw_triangles_encoder
         setVertexBuffer:
@@ -1854,15 +2008,26 @@ void T1_platform_gpu_copy_locked_materials(void)
         T1_engine_globals->draw_triangles &&
         alphablend_verts_size > 0)
     {
-        [render_pass_1_draw_triangles_encoder setRenderPipelineState:
-            ags->alphablend_pls];
-        [render_pass_1_draw_triangles_encoder setDepthStencilState:
-            ags->alpha_depth_stencil_state];
+        [render_pass_1_draw_triangles_encoder
+            setRenderPipelineState:
+                ags->alphablend_pls];
+        [render_pass_1_draw_triangles_encoder
+            setDepthStencilState:
+                ags->alpha_depth_stencil_state];
         
         [render_pass_1_draw_triangles_encoder
-            drawPrimitives: MTLPrimitiveTypeTriangle
-            vertexStart: gpu_shared_data_collection->
-                triple_buffers[ags->frame_i].first_alphablend_i
+            setCullMode: MTLCullModeNone];
+        [render_pass_1_draw_triangles_encoder
+            setFrontFacingWinding:
+                MTLWindingCounterClockwise];
+        
+        [render_pass_1_draw_triangles_encoder
+            drawPrimitives:
+                MTLPrimitiveTypeTriangle
+            vertexStart:
+                gpu_shared_data_collection->
+                    triple_buffers[ags->frame_i].
+                        first_alphablend_i
             vertexCount:
                 alphablend_verts_size];
     }

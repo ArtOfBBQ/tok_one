@@ -37,6 +37,16 @@ static float get_vertex_magnitude(float * input) {
     return return_value;
 }
 
+void cross_vertices(
+    float * a,
+    float * b,
+    float * recip)
+{
+    recip[0] = a[1]*b[2]-a[2]*b[1];
+    recip[1] = a[2]*b[0]-a[0]*b[2];
+    recip[2] = a[0]*b[1]-a[1]*b[0];
+}
+
 void normalize_vertex(
     float * to_normalize)
 {
