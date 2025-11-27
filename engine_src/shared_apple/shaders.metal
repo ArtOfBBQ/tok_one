@@ -1186,7 +1186,7 @@ outlines_vertex_shader(
     
     normal = normalize(normal * normalmat3x3);
     
-    out -= vector_float4(normal, 0.0f) * 0.0085f;
+    out -= vector_float4(normal, 0.0f) * 0.002f;
     
     float4x4 projection = matrix_float4x4(
         camera->projection_4x4[ 0],
