@@ -1372,6 +1372,178 @@ void T1_platform_gpu_copy_locked_materials(void)
     [combuf commit];
 }
 
+static void
+set_basic_props_for_render_pass_descriptor(
+    MTLRenderPassDescriptor * desc)
+{
+    desc.depthAttachment.loadAction =
+        MTLLoadActionLoad;
+    assert(ags->render_target_texture != NULL);
+    desc.colorAttachments[0].
+        texture = ags->render_target_texture;
+    desc.colorAttachments[0].loadAction = MTLLoadActionLoad;
+    desc.colorAttachments[0].storeAction =
+        MTLStoreActionStore;
+    
+    desc.depthAttachment.storeAction =
+        MTLStoreActionStore;
+    desc.depthAttachment.texture =
+        ags->camera_depth_texture;
+        
+    // ID Buffer for touchables
+    desc.colorAttachments[1].texture =
+        ags->touch_id_texture;
+    desc.colorAttachments[1].loadAction =
+        MTLLoadActionLoad; // We clear manually with a blit before this pass
+    desc.colorAttachments[1].storeAction =
+        MTLStoreActionStore;
+}
+
+static void set_basic_triangle_props_for_render_pass_encoder(
+    id<MTLRenderCommandEncoder> encoder)
+{
+    assert(ags->opaque_depth_stencil_state != nil);
+    [encoder
+        setDepthStencilState: ags->opaque_depth_stencil_state];
+    
+    [encoder setDepthClipMode: MTLDepthClipModeClip];
+    [encoder setCullMode: MTLCullModeBack];
+    [encoder setFrontFacingWinding:
+        MTLWindingCounterClockwise];
+    
+    [encoder
+        setVertexBuffer:
+            ags->vertex_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            0];
+    
+    [encoder
+        setVertexBuffer:
+            ags->polygon_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            1];
+    
+    [encoder
+        setVertexBuffer:
+            ags->flat_quad_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            2];
+    
+    [encoder
+        setVertexBuffer:
+            ags->camera_buffers[ags->frame_i]
+        offset: 0
+        atIndex: 3];
+    
+    [encoder
+        setVertexBuffer:
+            ags->locked_vertex_buffer
+        offset:
+            0 
+        atIndex:
+            4];
+    
+    [encoder
+        setVertexBuffer:
+            ags->projection_constants_buffer
+        offset:
+            0
+        atIndex:
+            5];
+    
+    [encoder
+        setFragmentBuffer:
+            ags->locked_vertex_buffer
+        offset:
+            0
+        atIndex:
+            0];
+    
+    [encoder
+        setFragmentBuffer:
+            ags->polygon_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            1];
+    
+    [encoder
+        setFragmentBuffer:
+            ags->light_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            2];
+    
+    [encoder
+        setFragmentBuffer:
+            ags->camera_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            3];
+    
+    [encoder
+        setFragmentBuffer:
+            ags->projection_constants_buffer
+        offset:
+            0
+        atIndex:
+            4];
+    
+    [encoder
+        setFragmentBuffer:
+            ags->locked_materials_buffer
+        offset:
+            0
+        atIndex:
+            6];
+    
+    [encoder
+        setFragmentBuffer:
+            ags->postprocessing_constants_buffers[ags->frame_i]
+        offset:
+            0
+        atIndex:
+            7];
+    
+    #if T1_TEXTURES_ACTIVE == T1_ACTIVE
+    for (
+        uint32_t i = 0;
+        i < TEXTUREARRAYS_SIZE;
+        i++)
+    {
+        if (ags->metal_textures[i] != NULL) {
+            [encoder
+                setFragmentTexture: ags->metal_textures[i]
+                atIndex: i];
+        }
+    }
+    #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
+    [encoder
+        setFragmentTexture: ags->metal_textures[0]
+        atIndex: 0];
+    #else
+    #error
+    #endif
+    
+    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
+    [encoder
+        setFragmentTexture: ags->shadows_texture
+        atIndex: SHADOWMAP_TEXTUREARRAY_I];
+    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
+
+}
+
 @implementation MetalKitViewDelegate
 {
 }
@@ -1698,29 +1870,29 @@ void T1_platform_gpu_copy_locked_materials(void)
     outlines_descriptor.colorAttachments[0].clearColor =
         MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);
     
-    id<MTLRenderCommandEncoder> render_pass_0_draw_outlines_encoder =
+    id<MTLRenderCommandEncoder> render_pass_1_draw_outlines_encoder =
         [command_buffer
             renderCommandEncoderWithDescriptor:
                 outlines_descriptor];
     
     assert(ags->cached_viewport.zfar > ags->cached_viewport.znear);
-    [render_pass_0_draw_outlines_encoder
+    [render_pass_1_draw_outlines_encoder
         setViewport: ags->render_target_viewport];
     assert(ags->cached_viewport.width > 0.0f);
     assert(ags->cached_viewport.height > 0.0f);
     
     // outlines pipeline
-    [render_pass_0_draw_outlines_encoder
+    [render_pass_1_draw_outlines_encoder
         setRenderPipelineState: ags->outlines_pls];
     assert(ags->opaque_depth_stencil_state != nil);
-    [render_pass_0_draw_outlines_encoder
+    [render_pass_1_draw_outlines_encoder
         setDepthStencilState: ags->opaque_depth_stencil_state];
-    [render_pass_0_draw_outlines_encoder
+    [render_pass_1_draw_outlines_encoder
         setDepthClipMode: MTLDepthClipModeClip];
-    [render_pass_0_draw_outlines_encoder setCullMode: MTLCullModeFront];
-    [render_pass_0_draw_outlines_encoder setFrontFacingWinding: MTLWindingCounterClockwise];
+    [render_pass_1_draw_outlines_encoder setCullMode: MTLCullModeFront];
+    [render_pass_1_draw_outlines_encoder setFrontFacingWinding: MTLWindingCounterClockwise];
     
-    [render_pass_0_draw_outlines_encoder
+    [render_pass_1_draw_outlines_encoder
         setVertexBuffer:
             ags->vertex_buffers[ags->frame_i]
         offset:
@@ -1728,7 +1900,7 @@ void T1_platform_gpu_copy_locked_materials(void)
         atIndex:
             0];
     
-    [render_pass_0_draw_outlines_encoder
+    [render_pass_1_draw_outlines_encoder
         setVertexBuffer:
             ags->polygon_buffers[ags->frame_i]
         offset:
@@ -1736,13 +1908,13 @@ void T1_platform_gpu_copy_locked_materials(void)
         atIndex:
             1];
     
-    [render_pass_0_draw_outlines_encoder
+    [render_pass_1_draw_outlines_encoder
         setVertexBuffer:
             ags->camera_buffers[ags->frame_i]
         offset: 0
         atIndex: 3];
     
-    [render_pass_0_draw_outlines_encoder
+    [render_pass_1_draw_outlines_encoder
         setVertexBuffer:
             ags->locked_vertex_buffer
         offset:
@@ -1756,7 +1928,7 @@ void T1_platform_gpu_copy_locked_materials(void)
     {
         assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);
         assert(diamond_verts_size % 3 == 0);
-        [render_pass_0_draw_outlines_encoder
+        [render_pass_1_draw_outlines_encoder
             drawPrimitives:
                 MTLPrimitiveTypeTriangle
             vertexStart:
@@ -1764,201 +1936,49 @@ void T1_platform_gpu_copy_locked_materials(void)
             vertexCount:
                 diamond_verts_size];
     }
-    [render_pass_0_draw_outlines_encoder endEncoding];
+    [render_pass_1_draw_outlines_encoder endEncoding];
     #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
     #else
     #error
     #endif
     
     // draw triangles
-    MTLRenderPassDescriptor * all_triangles_descriptor =
+    MTLRenderPassDescriptor * opaque_tris_descriptor =
     [view currentRenderPassDescriptor];
     
+    set_basic_props_for_render_pass_descriptor(opaque_tris_descriptor);
+    
     #if T1_OUTLINES_ACTIVE == T1_ACTIVE
-    all_triangles_descriptor.depthAttachment.loadAction =
-        MTLLoadActionLoad;
-    assert(ags->render_target_texture != NULL);
-    all_triangles_descriptor.colorAttachments[0].
-        texture = ags->render_target_texture;
-    all_triangles_descriptor.colorAttachments[0].loadAction = MTLLoadActionLoad;
-    all_triangles_descriptor.colorAttachments[0].storeAction =
-        MTLStoreActionStore;
+    // handled in basic
     #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
-    all_triangles_descriptor.depthAttachment.
+    opaque_tris_descriptor.depthAttachment.
         loadAction = MTLLoadActionClear;
-    all_triangles_descriptor.depthAttachment.
+    opaque_tris_descriptor.depthAttachment.
         clearDepth = 1.0f;
     
     assert(ags->render_target_texture != NULL);
-    all_triangles_descriptor.colorAttachments[0].
+    opaque_tris_descriptor.colorAttachments[0].
         texture = ags->render_target_texture;
-    all_triangles_descriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
-    all_triangles_descriptor.colorAttachments[0].storeAction =
+    opaque_tris_descriptor.colorAttachments[0].loadAction = MTLLoadActionClear;
+    opaque_tris_descriptor.colorAttachments[0].storeAction =
         MTLStoreActionStore;
-    all_triangles_descriptor.colorAttachments[0].clearColor =
+    opaque_tris_descriptor.colorAttachments[0].clearColor =
         MTLClearColorMake(0.0f, 0.03f, 0.15f, 1.0f);
     #else
     #error
     #endif
-    all_triangles_descriptor.depthAttachment.storeAction =
-        MTLStoreActionStore;
-    all_triangles_descriptor.depthAttachment.texture =
-        ags->camera_depth_texture;
-        
-    // ID Buffer for touchables
-    all_triangles_descriptor.colorAttachments[1].texture =
-        ags->touch_id_texture;
-    all_triangles_descriptor.colorAttachments[1].loadAction =
-        MTLLoadActionLoad; // We clear manually with a blit before this pass
-    all_triangles_descriptor.colorAttachments[1].storeAction =
-        MTLStoreActionStore;
     
     // diamond pipeline
-    id<MTLRenderCommandEncoder> render_pass_1_draw_triangles_encoder =
+    id<MTLRenderCommandEncoder> render_pass_2_opaque_triangles_encoder =
         [command_buffer
             renderCommandEncoderWithDescriptor:
-                all_triangles_descriptor];
+                opaque_tris_descriptor];
     
-    [render_pass_1_draw_triangles_encoder
+    [render_pass_2_opaque_triangles_encoder
         setRenderPipelineState: ags->diamond_pls];
-    assert(ags->opaque_depth_stencil_state != nil);
-    [render_pass_1_draw_triangles_encoder
-        setDepthStencilState: ags->opaque_depth_stencil_state];
-    [render_pass_1_draw_triangles_encoder
-        setDepthClipMode: MTLDepthClipModeClip];
-    [render_pass_1_draw_triangles_encoder setCullMode: MTLCullModeBack];
-    [render_pass_1_draw_triangles_encoder setFrontFacingWinding: MTLWindingCounterClockwise];
     
-    [render_pass_1_draw_triangles_encoder
-        setVertexBuffer:
-            ags->vertex_buffers[ags->frame_i]
-        offset:
-            0
-        atIndex:
-            0];
-    
-    [render_pass_1_draw_triangles_encoder
-        setVertexBuffer:
-            ags->polygon_buffers[ags->frame_i]
-        offset:
-            0
-        atIndex:
-            1];
-    
-    [render_pass_1_draw_triangles_encoder
-        setVertexBuffer:
-            ags->flat_quad_buffers[ags->frame_i]
-        offset:
-            0
-        atIndex:
-            2];
-    
-    [render_pass_1_draw_triangles_encoder
-        setVertexBuffer:
-            ags->camera_buffers[ags->frame_i]
-        offset: 0
-        atIndex: 3];
-    
-    [render_pass_1_draw_triangles_encoder
-        setVertexBuffer:
-            ags->locked_vertex_buffer
-        offset:
-            0 
-        atIndex:
-            4];
-    
-    [render_pass_1_draw_triangles_encoder
-        setVertexBuffer:
-            ags->projection_constants_buffer
-        offset:
-            0
-        atIndex:
-            5];
-    
-    [render_pass_1_draw_triangles_encoder
-        setFragmentBuffer:
-            ags->locked_vertex_buffer
-        offset:
-            0
-        atIndex:
-            0];
-    
-    [render_pass_1_draw_triangles_encoder
-        setFragmentBuffer:
-            ags->polygon_buffers[ags->frame_i]
-        offset:
-            0
-        atIndex:
-            1];
-    
-    [render_pass_1_draw_triangles_encoder
-        setFragmentBuffer:
-            ags->light_buffers[ags->frame_i]
-        offset:
-            0
-        atIndex:
-            2];
-    
-    [render_pass_1_draw_triangles_encoder
-        setFragmentBuffer:
-            ags->camera_buffers[ags->frame_i]
-        offset:
-            0
-        atIndex:
-            3];
-    
-    [render_pass_1_draw_triangles_encoder
-        setFragmentBuffer:
-            ags->projection_constants_buffer
-        offset:
-            0
-        atIndex:
-            4];
-    
-    [render_pass_1_draw_triangles_encoder
-        setFragmentBuffer:
-            ags->locked_materials_buffer
-        offset:
-            0
-        atIndex:
-            6];
-    
-    [render_pass_1_draw_triangles_encoder
-        setFragmentBuffer:
-            ags->postprocessing_constants_buffers[ags->frame_i]
-        offset:
-            0
-        atIndex:
-            7];
-    
-    #if T1_TEXTURES_ACTIVE == T1_ACTIVE
-    for (
-        uint32_t i = 0;
-        i < TEXTUREARRAYS_SIZE;
-        i++)
-    {
-        if (ags->metal_textures[i] != NULL) {
-            [render_pass_1_draw_triangles_encoder
-                setFragmentTexture: ags->metal_textures[i]
-                atIndex: i];
-        }
-    }
-    #elif T1_TEXTURES_ACTIVE == T1_INACTIVE
-    [render_pass_1_draw_triangles_encoder
-        setFragmentTexture: ags->metal_textures[0]
-        atIndex: 0];
-    #else
-    #error
-    #endif
-    
-    #if T1_SHADOWS_ACTIVE == T1_ACTIVE
-    [render_pass_1_draw_triangles_encoder
-        setFragmentTexture: ags->shadows_texture
-        atIndex: SHADOWMAP_TEXTUREARRAY_I];
-    #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
-    #else
-    #error
-    #endif
+    set_basic_triangle_props_for_render_pass_encoder(
+        render_pass_2_opaque_triangles_encoder);
     
     #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
     for (
@@ -1984,7 +2004,7 @@ void T1_platform_gpu_copy_locked_materials(void)
     {
         assert(diamond_verts_size < MAX_VERTICES_PER_BUFFER);
         assert(diamond_verts_size % 3 == 0);
-        [render_pass_1_draw_triangles_encoder
+        [render_pass_2_opaque_triangles_encoder
             drawPrimitives:
                 MTLPrimitiveTypeTriangle
             vertexStart:
@@ -1992,6 +2012,9 @@ void T1_platform_gpu_copy_locked_materials(void)
             vertexCount:
                 diamond_verts_size];
     }
+    [render_pass_2_opaque_triangles_encoder
+        endEncoding];
+    
     
     log_assert(
         gpu_shared_data_collection->triple_buffers[ags->frame_i].
@@ -2004,24 +2027,34 @@ void T1_platform_gpu_copy_locked_materials(void)
         gpu_shared_data_collection->
             triple_buffers[ags->frame_i].first_alphablend_i;
     
+    #if 1
     if (
         T1_engine_globals->draw_triangles &&
         alphablend_verts_size > 0)
     {
-        [render_pass_1_draw_triangles_encoder
+        MTLRenderPassDescriptor *
+            alpha_tris_descriptor =
+                [view currentRenderPassDescriptor];
+        set_basic_props_for_render_pass_descriptor(alpha_tris_descriptor);
+        
+        id<MTLRenderCommandEncoder>
+            render_pass_3_alpha_triangles_encoder =
+                [command_buffer
+                    renderCommandEncoderWithDescriptor:
+                alpha_tris_descriptor];
+        
+        [render_pass_3_alpha_triangles_encoder
             setRenderPipelineState:
                 ags->alphablend_pls];
-        [render_pass_1_draw_triangles_encoder
-            setDepthStencilState:
-                ags->alpha_depth_stencil_state];
+        set_basic_triangle_props_for_render_pass_encoder(render_pass_3_alpha_triangles_encoder);
         
-        [render_pass_1_draw_triangles_encoder
+        [render_pass_3_alpha_triangles_encoder
             setCullMode: MTLCullModeNone];
-        [render_pass_1_draw_triangles_encoder
+        [render_pass_3_alpha_triangles_encoder
             setFrontFacingWinding:
                 MTLWindingCounterClockwise];
         
-        [render_pass_1_draw_triangles_encoder
+        [render_pass_3_alpha_triangles_encoder
             drawPrimitives:
                 MTLPrimitiveTypeTriangle
             vertexStart:
@@ -2030,29 +2063,33 @@ void T1_platform_gpu_copy_locked_materials(void)
                         first_alphablend_i
             vertexCount:
                 alphablend_verts_size];
-    }
-    
-    if (
-        gpu_shared_data_collection->triple_buffers[ags->frame_i].
-            flat_billboard_quads_size > 0)
-    {
-        [render_pass_1_draw_triangles_encoder setRenderPipelineState:
-            ags->flat_billboard_quad_pls];
-        [render_pass_1_draw_triangles_encoder setDepthStencilState:
-            ags->opaque_depth_stencil_state];
         
-        [render_pass_1_draw_triangles_encoder
-            drawPrimitives:
-                MTLPrimitiveTypeTriangle
-            vertexStart:
-                0
-            vertexCount:
-                gpu_shared_data_collection->
-                    triple_buffers[ags->frame_i].
-                        flat_billboard_quads_size * 6
-                ];
+        if (
+            gpu_shared_data_collection->
+                triple_buffers[ags->frame_i].
+                    flat_billboard_quads_size > 0)
+        {
+            [render_pass_3_alpha_triangles_encoder setRenderPipelineState:
+                ags->flat_billboard_quad_pls];
+            [render_pass_3_alpha_triangles_encoder setDepthStencilState:
+                ags->opaque_depth_stencil_state];
+            
+            [render_pass_3_alpha_triangles_encoder
+                drawPrimitives:
+                    MTLPrimitiveTypeTriangle
+                vertexStart:
+                    0
+                vertexCount:
+                    gpu_shared_data_collection->
+                        triple_buffers[ags->frame_i].
+                            flat_billboard_quads_size * 6
+                    ];
+        }
+        
+        [render_pass_3_alpha_triangles_encoder
+            endEncoding];
     }
-    [render_pass_1_draw_triangles_encoder endEncoding];
+    #endif
     
     // copy the touch id buffer to a CPU buffer so we can query
     // what the top touchable_id is
