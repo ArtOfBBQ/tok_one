@@ -94,9 +94,8 @@ void T1_objmodel_init(void) {
         0,
         sizeof(LockedVertexWithMaterialCollection));
     
-    // Let's hardcode a basic quad since that's a mesh that will be used by
-    // even the features inherent to the engine itself (the terminal, any
-    // text labels, the FPS label, etc)
+    // Let's hardcode a basic quad since that will be used by
+    // even crticical engine features (terminal, text labels)
     T1_std_strcpy_cap(
         all_mesh_summaries[0].resource_name,
         OBJ_STRING_SIZE,
@@ -121,16 +120,17 @@ void T1_objmodel_init(void) {
     const float top_uv_coord    =  0.0f;
     
     // basic quad, triangle 1
-    // top left vertex
-    all_mesh_vertices->gpu_data[0].xyz[0]                 = left_vertex;
-    all_mesh_vertices->gpu_data[0].xyz[1]                 = top_vertex;
-    all_mesh_vertices->gpu_data[0].xyz[2]                 = 0.0f;
-    all_mesh_vertices->gpu_data[0].normal_xyz[0]          = 0.0f;
-    all_mesh_vertices->gpu_data[0].normal_xyz[1]          = 0.0f;
-    all_mesh_vertices->gpu_data[0].normal_xyz[2]          = -1.0f;
-    all_mesh_vertices->gpu_data[0].uv[0]                  = left_uv_coord;
-    all_mesh_vertices->gpu_data[0].uv[1]                  = top_uv_coord;
-    all_mesh_vertices->gpu_data[0].parent_material_i      = PARENT_MATERIAL_BASE;
+    // bottom left vertex
+    all_mesh_vertices->gpu_data[0].xyz[0] = left_vertex;
+    all_mesh_vertices->gpu_data[0].xyz[1] = bottom_vertex;
+    all_mesh_vertices->gpu_data[0].xyz[2] = 0.0f;
+    all_mesh_vertices->gpu_data[0].normal_xyz[0] = 0.0f;
+    all_mesh_vertices->gpu_data[0].normal_xyz[1] = 0.0f;
+    all_mesh_vertices->gpu_data[0].normal_xyz[2] = -1.0f;
+    all_mesh_vertices->gpu_data[0].uv[0] = left_uv_coord;
+    all_mesh_vertices->gpu_data[0].uv[1] = bottom_uv_coord;
+    all_mesh_vertices->gpu_data[0].parent_material_i =
+        PARENT_MATERIAL_BASE;
     // top right vertex
     all_mesh_vertices->gpu_data[1].xyz[0]                 = right_vertex;
     all_mesh_vertices->gpu_data[1].xyz[1]                 = top_vertex;
@@ -141,28 +141,30 @@ void T1_objmodel_init(void) {
     all_mesh_vertices->gpu_data[1].uv[0]                  = right_uv_coord;
     all_mesh_vertices->gpu_data[1].uv[1]                  = top_uv_coord;
     all_mesh_vertices->gpu_data[1].parent_material_i      = UINT32_MAX;
-    // bottom left vertex
-    all_mesh_vertices->gpu_data[2].xyz[0]            = left_vertex;
-    all_mesh_vertices->gpu_data[2].xyz[1]            = bottom_vertex;
-    all_mesh_vertices->gpu_data[2].xyz[2]            = 0.0f;
-    all_mesh_vertices->gpu_data[2].normal_xyz[0]     = 0.0f;
-    all_mesh_vertices->gpu_data[2].normal_xyz[1]     = 0.0f;
-    all_mesh_vertices->gpu_data[2].normal_xyz[2]     = -1.0f;
-    all_mesh_vertices->gpu_data[2].uv[0]             = left_uv_coord;
-    all_mesh_vertices->gpu_data[2].uv[1]             = bottom_uv_coord;
-    all_mesh_vertices->gpu_data[2].parent_material_i = PARENT_MATERIAL_BASE;
+    // top left vertex
+    all_mesh_vertices->gpu_data[2].xyz[0]                 = left_vertex;
+    all_mesh_vertices->gpu_data[2].xyz[1]                 = top_vertex;
+    all_mesh_vertices->gpu_data[2].xyz[2]                 = 0.0f;
+    all_mesh_vertices->gpu_data[2].normal_xyz[0]          = 0.0f;
+    all_mesh_vertices->gpu_data[2].normal_xyz[1]          = 0.0f;
+    all_mesh_vertices->gpu_data[2].normal_xyz[2]          = -1.0f;
+    all_mesh_vertices->gpu_data[2].uv[0]                  = left_uv_coord;
+    all_mesh_vertices->gpu_data[2].uv[1]                  = top_uv_coord;
+    all_mesh_vertices->gpu_data[2].parent_material_i      = PARENT_MATERIAL_BASE;
+    
     
     // basic quad, triangle 2 
-    // top right vertex
-    all_mesh_vertices->gpu_data[3].xyz[0]            = right_vertex;
-    all_mesh_vertices->gpu_data[3].xyz[1]            = top_vertex;
-    all_mesh_vertices->gpu_data[3].xyz[2]            = 0.0f;
-    all_mesh_vertices->gpu_data[3].uv[0]             = right_uv_coord;
-    all_mesh_vertices->gpu_data[3].uv[1]             = top_uv_coord;
-    all_mesh_vertices->gpu_data[3].normal_xyz[0]     = 0.0f;
-    all_mesh_vertices->gpu_data[3].normal_xyz[1]     = 0.0f;
-    all_mesh_vertices->gpu_data[3].normal_xyz[2]     = -1.0f;
-    all_mesh_vertices->gpu_data[3].parent_material_i = PARENT_MATERIAL_BASE;
+    // bottom left vertex
+    all_mesh_vertices->gpu_data[3].xyz[0] = left_vertex;
+    all_mesh_vertices->gpu_data[3].xyz[1] = bottom_vertex;
+    all_mesh_vertices->gpu_data[3].xyz[2] = 0.0f;
+    all_mesh_vertices->gpu_data[3].uv[0] = left_uv_coord;
+    all_mesh_vertices->gpu_data[3].uv[1] = bottom_uv_coord;
+    all_mesh_vertices->gpu_data[3].normal_xyz[0] = 0.0f;
+    all_mesh_vertices->gpu_data[3].normal_xyz[1] = 0.0f;
+    all_mesh_vertices->gpu_data[3].normal_xyz[2] = -1.0f;
+    all_mesh_vertices->gpu_data[3].parent_material_i =
+        PARENT_MATERIAL_BASE;
     // bottom right vertex
     all_mesh_vertices->gpu_data[4].xyz[0]            = right_vertex;
     all_mesh_vertices->gpu_data[4].xyz[1]            = bottom_vertex;
@@ -173,19 +175,19 @@ void T1_objmodel_init(void) {
     all_mesh_vertices->gpu_data[4].normal_xyz[1]     = 0.0f;
     all_mesh_vertices->gpu_data[4].normal_xyz[2]     = -1.0f;
     all_mesh_vertices->gpu_data[4].parent_material_i = PARENT_MATERIAL_BASE;
-    // bottom left vertex
-    all_mesh_vertices->gpu_data[5].xyz[0]            = left_vertex;
-    all_mesh_vertices->gpu_data[5].xyz[1]            = bottom_vertex;
-    all_mesh_vertices->gpu_data[5].xyz[2]            = 0.0f;
-    all_mesh_vertices->gpu_data[5].uv[0]             = left_uv_coord;
-    all_mesh_vertices->gpu_data[5].uv[1]             = bottom_uv_coord;
-    all_mesh_vertices->gpu_data[5].normal_xyz[0]     = 0.0f;
-    all_mesh_vertices->gpu_data[5].normal_xyz[1]     = 0.0f;
-    all_mesh_vertices->gpu_data[5].normal_xyz[2]     = -1.0f;
-    all_mesh_vertices->gpu_data[5].parent_material_i = PARENT_MATERIAL_BASE;
+    // top right vertex
+    all_mesh_vertices->gpu_data[5].xyz[0] = right_vertex;
+    all_mesh_vertices->gpu_data[5].xyz[1] = top_vertex;
+    all_mesh_vertices->gpu_data[5].xyz[2] = 0.0f;
+    all_mesh_vertices->gpu_data[5].uv[0] = right_uv_coord;
+    all_mesh_vertices->gpu_data[5].uv[1] = top_uv_coord;
+    all_mesh_vertices->gpu_data[5].normal_xyz[0] = 0.0f;
+    all_mesh_vertices->gpu_data[5].normal_xyz[1] = 0.0f;
+    all_mesh_vertices->gpu_data[5].normal_xyz[2] = -1.0f;
+    all_mesh_vertices->gpu_data[5].parent_material_i =
+        PARENT_MATERIAL_BASE;
     
-    // Let's hardcode a basic cube since that will be used by the particle
-    // effects system
+    // Let's hardcode a basic cube (currently not used anywhere)
     T1_std_strcpy_cap(
         all_mesh_summaries[1].resource_name,
         OBJ_STRING_SIZE,
