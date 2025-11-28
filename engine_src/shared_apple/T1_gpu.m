@@ -63,7 +63,6 @@ typedef struct AppleGPUState {
     id<MTLRenderPipelineState> singlequad_pls;
     
     id<MTLDepthStencilState> opaque_depth_stencil_state;
-    id<MTLDepthStencilState> alpha_depth_stencil_state;
     
     // Textures
     // id<MTLBuffer> texture_populator_buffer;
@@ -271,20 +270,20 @@ bool32_t apple_gpu_init(
         return false;
     }
     
-    MTLRenderPipelineDescriptor * shadows_pipeline_descriptor =
+    MTLRenderPipelineDescriptor * shadows_pls_desc =
         [MTLRenderPipelineDescriptor new];
-    [shadows_pipeline_descriptor
+    [shadows_pls_desc
         setVertexFunction: shadows_vertex_shader];
-    [shadows_pipeline_descriptor
+    [shadows_pls_desc
         setFragmentFunction: nil];
-    shadows_pipeline_descriptor.depthAttachmentPixelFormat =
+    shadows_pls_desc.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
-    shadows_pipeline_descriptor.label = @"shadow pipeline state";
+    shadows_pls_desc.label = @"shadow pipeline state";
     
     ags->shadows_pls =
        [with_metal_device
             newRenderPipelineStateWithDescriptor:
-                shadows_pipeline_descriptor
+                shadows_pls_desc
             error:
                 &Error];
     #elif T1_SHADOWS_ACTIVE == T1_INACTIVE
@@ -315,23 +314,25 @@ bool32_t apple_gpu_init(
         return false;
     }
     
-    MTLRenderPipelineDescriptor * outlines_pipeline_descriptor =
+    MTLRenderPipelineDescriptor * outlines_pls_desc =
         [MTLRenderPipelineDescriptor new];
-    [outlines_pipeline_descriptor
+    [outlines_pls_desc
         setVertexFunction: outlines_vertex_shader];
-    [outlines_pipeline_descriptor
+    [outlines_pls_desc
         setFragmentFunction:
             outlines_fragment_shader];
-    outlines_pipeline_descriptor.label = @"outlines pipeline state";
-    outlines_pipeline_descriptor
+    outlines_pls_desc.label =
+        @"outlines pipeline state";
+    outlines_pls_desc
         .colorAttachments[0]
         .pixelFormat = ags->pixel_format_renderpass1;
-    outlines_pipeline_descriptor.depthAttachmentPixelFormat =
-        MTLPixelFormatDepth32Float;
+    outlines_pls_desc.
+        depthAttachmentPixelFormat =
+            MTLPixelFormatDepth32Float;
     ags->outlines_pls =
        [with_metal_device
             newRenderPipelineStateWithDescriptor:
-                outlines_pipeline_descriptor
+                outlines_pls_desc
             error:
                 &Error];
     #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
@@ -339,82 +340,86 @@ bool32_t apple_gpu_init(
     #error
     #endif
     
-    id<MTLFunction> flat_billboard_quad_vertex_shader =
-        [ags->lib newFunctionWithName:
-            @"flat_billboard_quad_vertex_shader"];
-    if (flat_billboard_quad_vertex_shader == NULL) {
+    id<MTLFunction>
+        flat_billboard_quad_vert_shader =
+            [ags->lib newFunctionWithName:
+                @"flat_billboard_quad_vertex_shader"];
+    if (flat_billboard_quad_vert_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
             512,
-            "Missing function: flat_billboard_quad_vertex_shader()");
+            "Missing function: "
+            "flat_billboard_quad_vertex_shader()");
         return false;
     }
     
-    id<MTLFunction> flat_billboard_quad_fragment_shader =
+    id<MTLFunction> flat_billboard_quad_frag_shader =
         [ags->lib newFunctionWithName:
             @"flat_billboard_quad_fragment_shader"];
-    if (flat_billboard_quad_fragment_shader == NULL) {
+    if (flat_billboard_quad_frag_shader == NULL) {
         T1_std_strcpy_cap(
             error_msg_string,
             512,
-            "Missing function: flat_billboard_quad_fragment_shader()");
+            "Missing function: "
+            "flat_billboard_quad_fragment_shader()");
         return false;
     }
     
-    MTLRenderPipelineDescriptor * flat_billboard_quad_pipeline_descriptor =
+    MTLRenderPipelineDescriptor * flat_billboard_quad_pls_desc =
         [MTLRenderPipelineDescriptor new];
-    [flat_billboard_quad_pipeline_descriptor
-        setVertexFunction: flat_billboard_quad_vertex_shader];
-    [flat_billboard_quad_pipeline_descriptor
+    [flat_billboard_quad_pls_desc
+        setVertexFunction: flat_billboard_quad_vert_shader];
+    [flat_billboard_quad_pls_desc
         setFragmentFunction:
-            flat_billboard_quad_fragment_shader];
-    flat_billboard_quad_pipeline_descriptor.label = @"flat billboard quad pipeline state";
-    flat_billboard_quad_pipeline_descriptor
+            flat_billboard_quad_frag_shader];
+    flat_billboard_quad_pls_desc.label =
+        @"flat billboard quad pipeline state";
+    flat_billboard_quad_pls_desc
         .colorAttachments[0]
         .pixelFormat = ags->pixel_format_renderpass1;
-    [flat_billboard_quad_pipeline_descriptor
+    [flat_billboard_quad_pls_desc
         .colorAttachments[0]
         setBlendingEnabled: YES];
-    flat_billboard_quad_pipeline_descriptor
+    flat_billboard_quad_pls_desc
         .colorAttachments[0].sourceRGBBlendFactor =
             MTLBlendFactorSourceAlpha;
-    flat_billboard_quad_pipeline_descriptor
+    flat_billboard_quad_pls_desc
         .colorAttachments[0].destinationRGBBlendFactor =
             MTLBlendFactorOneMinusSourceAlpha;
-    flat_billboard_quad_pipeline_descriptor
+    flat_billboard_quad_pls_desc
         .colorAttachments[0].rgbBlendOperation =
             MTLBlendOperationAdd;
-    flat_billboard_quad_pipeline_descriptor.colorAttachments[1].
+    flat_billboard_quad_pls_desc.colorAttachments[1].
         pixelFormat = ags->pixel_format_renderpass1;
-    flat_billboard_quad_pipeline_descriptor.depthAttachmentPixelFormat =
+    flat_billboard_quad_pls_desc.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
     ags->flat_billboard_quad_pls =
        [with_metal_device
             newRenderPipelineStateWithDescriptor:
-                flat_billboard_quad_pipeline_descriptor
+                flat_billboard_quad_pls_desc
             error:
                 &Error];
     
     // Setup pipeline that uses diamonds instead of alphablending
-    MTLRenderPipelineDescriptor * diamond_pipeline_descriptor =
+    MTLRenderPipelineDescriptor * diamond_pls_desc =
         [MTLRenderPipelineDescriptor new];
-    [diamond_pipeline_descriptor
+    [diamond_pls_desc
         setVertexFunction: vertex_shader];
-    [diamond_pipeline_descriptor
+    [diamond_pls_desc
         setFragmentFunction: fragment_shader];
     assert(ags->pixel_format_renderpass1 == MTLPixelFormatRGBA16Float);
-    diamond_pipeline_descriptor
+    diamond_pls_desc
         .colorAttachments[0]
         .pixelFormat = ags->pixel_format_renderpass1;
-    diamond_pipeline_descriptor.colorAttachments[1].pixelFormat =
+    diamond_pls_desc.colorAttachments[1].pixelFormat =
         ags->pixel_format_renderpass1;
-    diamond_pipeline_descriptor.depthAttachmentPixelFormat =
+    diamond_pls_desc.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
-    diamond_pipeline_descriptor.label = @"diamond pipeline state";
+    diamond_pls_desc.label = @"diamond pipeline state";
     ags->diamond_pls =
         [with_metal_device
             newRenderPipelineStateWithDescriptor:
-                diamond_pipeline_descriptor 
+                diamond_pls_desc 
             error:
                 &Error];
     
@@ -433,36 +438,36 @@ bool32_t apple_gpu_init(
         return false;
     }
     
-    MTLRenderPipelineDescriptor * alphablend_pipeline_descriptor =
+    MTLRenderPipelineDescriptor * alpha_pls_desc =
         [[MTLRenderPipelineDescriptor alloc] init];
-    [alphablend_pipeline_descriptor
+    [alpha_pls_desc
         setVertexFunction: vertex_shader];
-    [alphablend_pipeline_descriptor
+    [alpha_pls_desc
         setFragmentFunction: alphablending_fragment_shader];
-    alphablend_pipeline_descriptor
+    alpha_pls_desc
         .colorAttachments[0]
         .pixelFormat = ags->pixel_format_renderpass1;
-    [alphablend_pipeline_descriptor
+    [alpha_pls_desc
         .colorAttachments[0]
         setBlendingEnabled: YES];
-    alphablend_pipeline_descriptor
+    alpha_pls_desc
         .colorAttachments[0].sourceRGBBlendFactor =
             MTLBlendFactorSourceAlpha;
-    alphablend_pipeline_descriptor
+    alpha_pls_desc
         .colorAttachments[0].destinationRGBBlendFactor =
             MTLBlendFactorOneMinusSourceAlpha;
-    alphablend_pipeline_descriptor
+    alpha_pls_desc
         .colorAttachments[0].rgbBlendOperation =
             MTLBlendOperationAdd;
-    alphablend_pipeline_descriptor.colorAttachments[1].
+    alpha_pls_desc.colorAttachments[1].
         pixelFormat = ags->pixel_format_renderpass1;
-    alphablend_pipeline_descriptor.depthAttachmentPixelFormat =
+    alpha_pls_desc.depthAttachmentPixelFormat =
         MTLPixelFormatDepth32Float;
-    alphablend_pipeline_descriptor.label = @"Alphablending pipeline";
+    alpha_pls_desc.label = @"Alphablending pipeline";
     ags->alphablend_pls =
         [with_metal_device
             newRenderPipelineStateWithDescriptor:
-                alphablend_pipeline_descriptor
+                alpha_pls_desc
             error:
                 &Error];
     
@@ -473,7 +478,8 @@ bool32_t apple_gpu_init(
                 cStringUsingEncoding:kCFStringEncodingASCII]);
         
         #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-        log_dump_and_crash("Error loading the alphablending shader\n");
+        log_dump_and_crash(
+            "Error loading the alphablending shader\n");
         #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
         #else
         #error
@@ -486,40 +492,12 @@ bool32_t apple_gpu_init(
         return false;
     }
     
-    MTLDepthStencilDescriptor * depth_descriptor =
+    MTLDepthStencilDescriptor * depth_desc =
         [MTLDepthStencilDescriptor new];
-    depth_descriptor.depthWriteEnabled = YES;
-    [depth_descriptor setDepthCompareFunction:MTLCompareFunctionLessEqual];
-    // [depth_descriptor setDepthCompareFunction:MTLCompareFunctionAlways];
+    depth_desc.depthWriteEnabled = YES;
+    [depth_desc setDepthCompareFunction:MTLCompareFunctionLessEqual];
     ags->opaque_depth_stencil_state = [with_metal_device
-        newDepthStencilStateWithDescriptor:depth_descriptor];
-    
-    if (Error != NULL)
-    {
-        log_append(
-            [[Error localizedDescription]
-                cStringUsingEncoding:kCFStringEncodingASCII]);
-        #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
-        log_dump_and_crash("Error setting the depth stencil state\n");
-        #elif T1_LOGGER_ASSERTS_ACTIVE == T1_INACTIVE
-        #else
-        #error
-        #endif
-        
-        T1_std_strcpy_cap(
-            error_msg_string,
-            512,
-            "Failed to load the depth stencil shader");
-        return false;
-    }
-    
-    MTLDepthStencilDescriptor * alpha_depth_descriptor =
-        [MTLDepthStencilDescriptor new];
-    alpha_depth_descriptor.depthWriteEnabled = YES; // TODO: test with NO
-    [alpha_depth_descriptor setDepthCompareFunction:MTLCompareFunctionLessEqual];
-    // [depth_descriptor setDepthCompareFunction:MTLCompareFunctionAlways];
-    ags->alpha_depth_stencil_state = [with_metal_device
-        newDepthStencilStateWithDescriptor:alpha_depth_descriptor];
+        newDepthStencilStateWithDescriptor:depth_desc];
     
     if (Error != NULL)
     {
@@ -675,7 +653,6 @@ bool32_t apple_gpu_init(
                 MTLResourceStorageModePrivate];
     ags->locked_vertex_buffer = MTLBufferLockedVertices;
     
-    
     id<MTLBuffer> MTLBufferLockedMaterialsPopulator =
         [with_metal_device
             /* the pointer needs to be page aligned */
@@ -699,7 +676,6 @@ bool32_t apple_gpu_init(
             options:
                 MTLResourceStorageModePrivate];
     ags->locked_materials_buffer = MTLBufferLockedMaterials;
-    
     
     id<MTLBuffer> MTLBufferProjectionConstants =
         [with_metal_device
