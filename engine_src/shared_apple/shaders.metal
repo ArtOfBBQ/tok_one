@@ -302,13 +302,13 @@ vertex_shader(
         polygons[out.polygon_i].normal_3x3[ 8]);
     
     out.normal_viewspace = vector_float4(
-        normalize(vertex_normal * normalmat3x3),
+        vertex_normal * normalmat3x3,
         0.0f);
     out.tangent_viewspace = vector_float4(
-        normalize(vertex_tangent * normalmat3x3),
+        vertex_tangent * normalmat3x3,
         0.0f);
     out.bitangent_viewspace = vector_float4(
-        normalize(vertex_bitangent * normalmat3x3),
+        vertex_bitangent * normalmat3x3,
         0.0f);
     
     return out;
@@ -566,10 +566,18 @@ float4 get_lit(
             distance_overflow / lights[i].reach);
         attenuation = clamp(attenuation, 0.00f, 1.00f);
         
+        #if 1
+        float3 normal_viewspace = normalize(
+            vector_float3(
+                in.normal_viewspace[0],
+                in.normal_viewspace[1],
+                in.normal_viewspace[2]));
+        #else
         float3 normal_viewspace = vector_float3(
-            in.normal_viewspace[0],
-            in.normal_viewspace[1],
-            in.normal_viewspace[2]);
+            0.0f,
+            0.0f,
+            -1.0f);
+        #endif
         
         float3 object_to_light_viewspace = normalize(
             light_viewspace -
