@@ -15,9 +15,9 @@ void T1_material_construct(
     T1_std_memset(to_construct, 0, sizeof(T1GPUConstMat));
     
     to_construct->alpha = 1.0f;
-    to_construct->ambient_rgb[0] = 0.05f;
-    to_construct->ambient_rgb[1] = 0.05f;
-    to_construct->ambient_rgb[2] = 0.05f;
+    to_construct->ambient_rgb[0] = 0.20f;
+    to_construct->ambient_rgb[1] = 0.20f;
+    to_construct->ambient_rgb[2] = 0.20f;
     to_construct->diffuse_rgb[0] = 0.80f;
     to_construct->diffuse_rgb[1] = 0.80f;
     to_construct->diffuse_rgb[2] = 0.80f;

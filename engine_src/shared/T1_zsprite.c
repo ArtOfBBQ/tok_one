@@ -231,6 +231,8 @@ void T1_zsprite_construct_with_mesh_id(
         
         to_construct->gpu_data->base_mat =
             all_mesh_materials->gpu_data[base_mat_i];
+        
+        T1_material_construct(&to_construct->gpu_data->base_mat);
     }
 }
 
