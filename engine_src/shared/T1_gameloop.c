@@ -158,7 +158,7 @@ void T1_gameloop_update_before_render_pass(
     }
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    profiler_start("gameloop_update()");
+    T1_profiler_start("gameloop_update()");
     #elif T1_PROFILER_ACTIVE == T1_INACTIVE
     #else
     #error "T1_PROFILER_ACTIVE undefined"
@@ -174,7 +174,7 @@ void T1_gameloop_update_before_render_pass(
         gameloop_previous_time = T1_engine_globals->this_frame_timestamp_us;
         
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        profiler_end("gameloop_update()");
+        T1_profiler_end("gameloop_update()");
         #elif T1_PROFILER_ACTIVE == T1_INACTIVE
         // Pass
         #else
@@ -215,7 +215,7 @@ void T1_gameloop_update_before_render_pass(
             log_append("w82RZ - ");
             
             #if T1_PROFILER_ACTIVE == T1_ACTIVE
-            profiler_end("gameloop_update()");
+            T1_profiler_end("gameloop_update()");
             #elif T1_PROFILER_ACTIVE == T1_INACTIVE
             // Pass
             #else
@@ -324,8 +324,8 @@ void T1_gameloop_update_before_render_pass(
         shadowcaster_light_i;
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    profiler_end("gameloop_update()");
-    profiler_draw_labels();
+    T1_profiler_end("gameloop_update()");
+    T1_profiler_draw_labels();
     #elif T1_PROFILER_ACTIVE == T1_INACTIVE
     #else
     #error "T1_PROFILER_ACTIVE undefined"

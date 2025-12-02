@@ -142,7 +142,7 @@ void terminal_redraw_backgrounds(void) {
         term_background_color[3];
     current_command_input.cpu_data->simd_stats.ignore_camera = true;
     current_command_input.gpu_data->ignore_lighting = true;
-    current_command_input.cpu_data->alpha_blending_enabled = true;
+    current_command_input.cpu_data->alpha_blending_on = true;
     current_command_input.cpu_data->visible = terminal_active;
     current_command_input.cpu_data->zsprite_id = terminal_back_object_id;
     current_command_input.gpu_data->touch_id = -1;
@@ -188,7 +188,7 @@ void terminal_redraw_backgrounds(void) {
     current_command_input.gpu_data->base_mat.alpha =
         term_background_color[3];
     current_command_input.cpu_data->visible = terminal_active;
-    current_command_input.cpu_data->alpha_blending_enabled = true;
+    current_command_input.cpu_data->alpha_blending_on = true;
     current_command_input.cpu_data->simd_stats.ignore_camera = true;
     current_command_input.gpu_data->ignore_lighting = true;
     current_command_input.cpu_data->zsprite_id = INT32_MAX;
@@ -263,7 +263,7 @@ void terminal_render(void) {
         font_settings->mat.rgb_cap[2] = term_font_rgb_cap[2];
         font_settings->ignore_camera = true;
         font_settings->ignore_lighting = 1.0f;
-        font_settings->touchable_id = -1;
+        font_settings->touch_id = -1;
         
         text_request_label_renderable(
             /* const int32_t with_object_id: */
@@ -287,7 +287,7 @@ void terminal_render(void) {
         }
         
         font_settings->ignore_camera = true;
-        font_settings->touchable_id = -1;
+        font_settings->touch_id = -1;
         // the terminal's current input as a label
         text_request_label_renderable(
             /* with_object_id: */
@@ -360,14 +360,17 @@ static bool32_t evaluate_terminal_command(
     char * response)
 {
     if (
-        T1_std_are_equal_strings(command, "PROFILE") ||
-        T1_std_are_equal_strings(command, "PROFILER") ||
-        T1_std_are_equal_strings(command, "PROFILE TREE"))
+        T1_std_are_equal_strings(
+            command, "PROFILE") ||
+        T1_std_are_equal_strings(
+            command, "PROFILER") ||
+        T1_std_are_equal_strings(
+            command, "PROFILE TREE"))
     {
         #if T1_PROFILER_ACTIVE == T1_ACTIVE
-        engine_globals->show_profiler = !engine_globals->show_profiler;
+        T1_engine_globals->show_profiler = !T1_engine_globals->show_profiler;
         
-        if (engine_globals->show_profiler) {
+        if (T1_engine_globals->show_profiler) {
             T1_std_strcpy_cap(
                 response,
                 SINGLE_LINE_MAX,

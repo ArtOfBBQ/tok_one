@@ -51,7 +51,7 @@ inline static void add_alphablending_zpolygons_to_workload(
             T1_zsprites_to_render->cpu_data[cpu_zp_i].deleted ||
             !T1_zsprites_to_render->cpu_data[cpu_zp_i].visible ||
             !T1_zsprites_to_render->cpu_data[cpu_zp_i].committed ||
-            !T1_zsprites_to_render->cpu_data[cpu_zp_i].alpha_blending_enabled)
+            !T1_zsprites_to_render->cpu_data[cpu_zp_i].alpha_blending_on)
         {
             continue;
         }
@@ -181,7 +181,7 @@ inline static void add_opaque_zpolygons_to_workload(
             T1_zsprites_to_render->cpu_data[cpu_zp_i].deleted ||
             !T1_zsprites_to_render->cpu_data[cpu_zp_i].visible ||
             !T1_zsprites_to_render->cpu_data[cpu_zp_i].committed ||
-            T1_zsprites_to_render->cpu_data[cpu_zp_i].alpha_blending_enabled)
+            T1_zsprites_to_render->cpu_data[cpu_zp_i].alpha_blending_on)
         {
             continue;
         }

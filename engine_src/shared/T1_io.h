@@ -115,12 +115,12 @@ void T1_io_init(
     void *(* arg_malloc_func)(size_t));
 
 typedef struct {
+    uint64_t timestamp;
     int32_t touch_id_pierce;
     int32_t touch_id_top;
     bool32_t checked_touch_ids;
     float screen_x;
     float screen_y;
-    uint64_t timestamp;
     bool32_t handled;
 } T1IOEvent;
 
@@ -144,11 +144,13 @@ extern T1IOEvent * T1_io_events;
 extern bool32_t * T1_io_keymap;
 extern float T1_io_mouse_scroll_pos;
 
-void T1_io_event_register(T1IOEvent * touch_record);
+void T1_io_event_register(
+    T1IOEvent * touch_record);
 
 void T1_io_register_keyup(uint32_t key_id);
 void T1_io_register_keydown(uint32_t key_id);
-void T1_io_register_mousescroll(const float amount);
+void T1_io_register_mousescroll(
+    const float amount);
 
 #ifdef __cplusplus
 }

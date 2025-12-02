@@ -4,7 +4,7 @@
 #if TEAPOT
 static int32_t teapot_mesh_id = -1;
 static int32_t teapot_object_ids[2];
-static int32_t teapot_touchable_ids[2];
+static int32_t teapot_touch_ids[2];
 #endif
 
 void T1_clientlogic_init(void) {
@@ -83,8 +83,8 @@ static void request_teapots(void) {
         teapot_request.cpu_data->simd_stats.angle_xyz[2] = 0.0f;
         teapot_request.cpu_data->zsprite_id = teapot_object_ids[i];
         teapot_request.cpu_data->visible = true;
-        teapot_touchable_ids[i] = T1_zspriteid_next_nonui_id();
-        teapot_request.gpu_data->touch_id = teapot_touchable_ids[i];
+        teapot_touch_ids[i] = T1_zspriteid_next_nonui_id();
+        teapot_request.gpu_data->touch_id = teapot_touch_ids[i];
         teapot_request.gpu_data->ignore_lighting =  0.0f;
         teapot_request.cpu_data->simd_stats.ignore_camera =  0.0f;
         T1_zsprite_commit(&teapot_request);
@@ -182,7 +182,7 @@ void T1_clientlogic_late_startup(void) {
     quad.gpu_data->base_mat.texture_i = quad_texture_i;
     quad.cpu_data->zsprite_id = -1;
     quad.gpu_data->touch_id = -1;
-    quad.cpu_data->alpha_blending_enabled       = false;
+    quad.cpu_data->alpha_blending_on       = false;
     
     quad.cpu_data->simd_stats.mul_xyz[0]    = 0.0f;
     quad.cpu_data->simd_stats.mul_xyz[1]    = 0.0f;
@@ -202,7 +202,7 @@ void T1_clientlogic_late_startup(void) {
     T1_zsprite_commit(&quad);
     
     font_settings->font_height = 50;
-    font_settings->touchable_id = -1;
+    font_settings->touch_id = -1;
     font_settings->mat.ambient_rgb[0] =  0.1f;
     font_settings->mat.ambient_rgb[1] =  0.1f;
     font_settings->mat.ambient_rgb[2] =  0.1f;
@@ -212,7 +212,7 @@ void T1_clientlogic_late_startup(void) {
     font_settings->mat.alpha =  1.0f;
     font_settings->alpha = 1.0f;
     font_settings->ignore_camera = false;
-    font_settings->alpha_blending_enabled = false;
+    font_settings->alpha_blending_on = false;
     font_settings->ignore_lighting = 1.0f;
     font_settings->mat.rgb_cap[0] = 5.0f;
     font_settings->mat.rgb_cap[1] = 5.0f;
@@ -230,7 +230,7 @@ void T1_clientlogic_late_startup(void) {
             3.5f,
         /* const float max_width: */
             1500.0f);
-    font_settings->touchable_id = -1;
+    font_settings->touch_id = -1;
     log_assert(
         T1_zsprites_to_render->cpu_data[T1_zsprites_to_render->size-1].
             zsprite_id == 21);
@@ -260,7 +260,7 @@ void T1_clientlogic_late_startup(void) {
         quad.gpu_data->base_mat.texture_i = phoebus_tex.slice_i;
         quad.cpu_data->zsprite_id = -1;
         quad.gpu_data->touch_id = -1;
-        quad.cpu_data->alpha_blending_enabled = true;
+        quad.cpu_data->alpha_blending_on = true;
         
         quad.cpu_data->simd_stats.mul_xyz[0] = 0.0f;
         quad.cpu_data->simd_stats.mul_xyz[1] = 0.0f;
@@ -452,7 +452,7 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
     if (
         !T1_io_events[T1_IO_LAST_LCLICK_START].handled &&
         T1_io_events[T1_IO_LAST_LCLICK_START].touch_id_top ==
-            teapot_touchable_ids[i])
+            teapot_touch_ids[i])
     {
         T1_io_events[T1_IO_LAST_LCLICK_START].handled = true;
         

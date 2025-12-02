@@ -1231,7 +1231,12 @@ outlines_vertex_shader(
 fragment float4 outlines_fragment_shader(
     const OutlinePixel in [[stage_in]])
 {
-    float4 ret = vector_float4(1.0f, 0.03f, 0.20f, 1.0f);
+    if (in.outline_alpha < 0.0f) {
+        discard_fragment();
+    }
+    
+    float4 ret = vector_float4(
+        1.0f, 0.03f, 0.20f, 1.0f);
     
     return ret * in.outline_alpha;
 }

@@ -262,9 +262,10 @@ void T1_zsprite_construct(
     to_construct->cpu_data->zsprite_id = -1;
     to_construct->cpu_data->visible = true;
     
-    to_construct->gpu_data->outline_alpha = 0.3f;
+    to_construct->gpu_data->outline_alpha = -1.0f;
     
-    T1_material_construct(&to_construct->gpu_data->base_mat);
+    T1_material_construct(
+        &to_construct->gpu_data->base_mat);
 }
 
 float T1_zsprite_get_distance_f3(

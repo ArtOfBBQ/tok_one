@@ -57,7 +57,7 @@ void text_init(
         font_settings = arg_text_malloc_func(sizeof(FontSettings));
         T1_material_construct(&font_settings->mat);
         
-        font_settings->touchable_id = -1;
+        font_settings->touch_id = -1;
         font_settings->font_height = 30.0;
         font_settings->mat.texturearray_i = 0;
         font_settings->ignore_lighting = 1.0f;
@@ -328,9 +328,9 @@ void text_request_label_offset_around(
                 font_settings->scale_factor;
             letter.cpu_data->zsprite_id = with_id;
             letter.gpu_data->touch_id =
-                font_settings->touchable_id;
-            letter.cpu_data->alpha_blending_enabled =
-                font_settings->alpha_blending_enabled;
+                font_settings->touch_id;
+            letter.cpu_data->alpha_blending_on =
+                font_settings->alpha_blending_on;
             
             if ((text_to_draw[j] - '!') < 0) {
                 cur_x_offset_pixelspace +=
@@ -499,9 +499,9 @@ void text_request_label_renderable(
                 &letter);
         
         letter.cpu_data->zsprite_id = with_id;
-        letter.gpu_data->touch_id = font_settings->touchable_id;
-        letter.cpu_data->alpha_blending_enabled =
-            font_settings->alpha_blending_enabled;
+        letter.gpu_data->touch_id = font_settings->touch_id;
+        letter.cpu_data->alpha_blending_on =
+            font_settings->alpha_blending_on;
         letter.gpu_data->ignore_lighting = font_settings->ignore_lighting;
         letter.cpu_data->simd_stats.ignore_camera = font_settings->ignore_camera;
         letter.gpu_data->remove_shadow = font_settings->remove_shadow;
@@ -551,7 +551,7 @@ void text_request_debug_text(const char * text)
     font_settings->mat.alpha = 1.0f;
     font_settings->ignore_lighting = true;
     font_settings->ignore_camera = true;
-    font_settings->touchable_id = -1;
+    font_settings->touch_id = -1;
     text_request_label_renderable(
         /* with_id               : */
             T1_DEBUG_TEXT_ZSPRITE_ID,
@@ -625,7 +625,7 @@ void text_request_fps_counter(
     font_settings->alpha = 1.0f;
     font_settings->ignore_lighting = true;
     font_settings->ignore_camera = true;
-    font_settings->touchable_id = -1;
+    font_settings->touch_id = -1;
     text_request_label_renderable(
         /* with_id               : */
             T1_FPS_COUNTER_ZSPRITE_ID,
@@ -672,7 +672,7 @@ void text_request_top_touchable_id(
     font_settings->alpha = 1.0f;
     font_settings->ignore_lighting = true;
     font_settings->ignore_camera = true;
-    font_settings->touchable_id = -1;
+    font_settings->touch_id = -1;
     
     text_request_label_renderable(
         /* with_id               : */

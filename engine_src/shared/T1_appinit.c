@@ -244,7 +244,9 @@ void T1_appinit_before_gpu_init(
             T1_platform_mutex_unlock);
     
     #if T1_PROFILER_ACTIVE == T1_ACTIVE
-    profiler_init(platform_get_clock_frequency(), malloc_from_unmanaged);
+    T1_profiler_init(
+        T1_platform_get_clock_frequency(),
+        T1_mem_malloc_from_unmanaged);
     #elif T1_PROFILER_ACTIVE == T1_INACTIVE
     #else
     #error "T1_PROFILER_ACTIVE not set"

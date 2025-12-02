@@ -23,9 +23,9 @@ static char gui_top_message[GUI_TOP_MESSAGE_MAX];
 static bool32_t profiler_paused = false;
 
 int32_t profiler_object_id = INT32_MAX;
-int32_t profiler_touchable_id = -1;
+int32_t profiler_touch_id = -1;
 
-int32_t frame_selection_touchable_ids[2];
+int32_t frame_selection_touch_ids[2];
 
 int32_t gui_selected_frames[2];
 
@@ -78,18 +78,20 @@ void T1_profiler_init(
     
     frames = profiler_malloc_function(
         sizeof(Frame) * FRAMES_MAX);
+    log_assert(frames != NULL);
     T1_std_memset(frames, 0, sizeof(Frame) * FRAMES_MAX);
     
     function_stack = profiler_malloc_function(
         sizeof(uint32_t) * FUNCTION_STACK_MAX);
+    log_assert(function_stack != NULL);
     T1_std_memset(function_stack, 0, sizeof(uint32_t) * FUNCTION_STACK_MAX);
     
     gui_function_stack = profiler_malloc_function(
         sizeof(uint32_t) * FUNCTION_STACK_MAX);
     T1_std_memset(gui_function_stack, 0, sizeof(uint32_t) * FUNCTION_STACK_MAX);
     
-    profiler_object_id = next_nonui_object_id();
-    profiler_touchable_id = next_nonui_touchable_id();
+    profiler_object_id = T1_zspriteid_next_nonui_id();
+    profiler_touch_id = T1_zspriteid_next_nonui_touch_id();
     
     gui_selected_frames[0] = 0;
     gui_selected_frames[1] = 1;
@@ -99,16 +101,16 @@ void T1_profiler_init(
         GUI_TOP_MESSAGE_MAX,
         "Profiler intialized...");
     
-    frame_selection_touchable_ids[0] = next_nonui_touchable_id();
-    frame_selection_touchable_ids[1] = next_nonui_touchable_id();
+    frame_selection_touch_ids[0] = T1_zspriteid_next_nonui_touch_id();
+    frame_selection_touch_ids[1] = T1_zspriteid_next_nonui_touch_id();
 }
 
 void T1_profiler_new_frame(void) {
-    if (profiler_paused && !engine_globals->pause_profiler) {
+    if (profiler_paused && !T1_engine_globals->pause_profiler) {
         frames[frame_i].started_at = 0;
     }
     
-    profiler_paused = engine_globals->pause_profiler;
+    profiler_paused = T1_engine_globals->pause_profiler;
     
     if (profiler_paused) {
         return;
@@ -141,7 +143,7 @@ void T1_profiler_new_frame(void) {
             GUI_TOP_MESSAGE_MAX,
             (uint32_t)frames[frame_i].elapsed);
         T1_std_strcat_cap(gui_top_message, GUI_TOP_MESSAGE_MAX, " cycles.");
-        engine_globals->pause_profiler = true;
+        T1_engine_globals->pause_profiler = true;
         return;
     }
     
@@ -154,7 +156,11 @@ void T1_profiler_new_frame(void) {
 
 void T1_profiler_start(const char * function_name)
 {
-    if (profiler_paused) {
+    if (
+        profiler_paused ||
+        frames == NULL ||
+        function_stack == NULL)
+    {
         return;
     }
     
@@ -251,7 +257,11 @@ void T1_profiler_end(const char * function_name)
     (void)function_name;
     #endif
     
-    if (profiler_paused) {
+    if (
+        profiler_paused ||
+        frames == NULL ||
+        function_stack == NULL)
+    {
         return;
     }
     
@@ -278,33 +288,33 @@ void T1_profiler_end(const char * function_name)
 
 void T1_profiler_handle_touches(void) {
     if (
-        !user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].handled)
+        !T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].handled)
     {
         if (
-            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                touchable_id_top == profiler_touchable_id)
+            T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
+                touch_id_top == profiler_touch_id)
         {
-            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+            T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
                 handled = true;
             printf("profiler touched\n");
             return;
         }
         
         if (
-            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                touchable_id_top == frame_selection_touchable_ids[0])
+            T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
+                touch_id_top == frame_selection_touch_ids[0])
         {
-            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+            T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
                 handled = true;
             gui_selected_frames[0] += 1;
             gui_selected_frames[0] %= FRAMES_MAX;
             return;
         }
         if (
-            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                touchable_id_top == frame_selection_touchable_ids[1])
+            T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
+                touch_id_top == frame_selection_touch_ids[1])
         {
-            user_interactions[INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+            T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
                 handled = true;
             gui_selected_frames[1] += 1;
             gui_selected_frames[1] %= FRAMES_MAX;
@@ -314,12 +324,12 @@ void T1_profiler_handle_touches(void) {
 }
 
 void T1_profiler_draw_labels(void) {
-    zsprite_delete(profiler_object_id);
+    T1_zsprite_delete(profiler_object_id);
     
-    if (engine_globals->show_profiler) {
-        zSpriteRequest profiler_backdrop;
-        zsprite_request_next(&profiler_backdrop);
-        zsprite_construct_quad_around(
+    if (T1_engine_globals->show_profiler) {
+        T1zSpriteRequest profiler_backdrop;
+        T1_zsprite_request_next(&profiler_backdrop);
+        T1_zsprite_construct_quad_around(
             /* const float mid_x: */
                 0.0f,
             /* const float mid_y: */
@@ -327,21 +337,21 @@ void T1_profiler_draw_labels(void) {
             /* const float z: */
                 PROFILER_Z,
             /* const float width: */
-                engine_globals->window_width,
+                T1_engine_globals->window_width,
             /* const float height: */
-                engine_globals->window_height,
+                T1_engine_globals->window_height,
             /* PolygonRequest *stack_recipient: */
                 &profiler_backdrop);
         profiler_backdrop.cpu_data->zsprite_id = profiler_object_id;
-        profiler_backdrop.gpu_data->ignore_camera = 1.0f;
+        profiler_backdrop.cpu_data->simd_stats.ignore_camera = 1.0f;
         profiler_backdrop.gpu_data->ignore_lighting = 1.0f;
         profiler_backdrop.gpu_data->base_mat.diffuse_rgb[0] = 0.50f;
         profiler_backdrop.gpu_data->base_mat.diffuse_rgb[1] = 0.50f;
         profiler_backdrop.gpu_data->base_mat.diffuse_rgb[2] = 0.50f;
         profiler_backdrop.gpu_data->base_mat.alpha = 0.75f;
-        profiler_backdrop.cpu_data->alpha_blending_enabled = true;
-        profiler_backdrop.gpu_data->touchable_id = -1;
-        zsprite_commit(&profiler_backdrop);
+        profiler_backdrop.cpu_data->alpha_blending_on = true;
+        profiler_backdrop.gpu_data->touch_id = -1;
+        T1_zsprite_commit(&profiler_backdrop);
         
         font_settings->mat.diffuse_rgb[0] = 0.1f;
         font_settings->mat.diffuse_rgb[1] = 0.1f;
@@ -358,20 +368,20 @@ void T1_profiler_draw_labels(void) {
             /* const float left_pixelspace: */
                 20,
             /* const float top_pixelspace: */
-                engine_globals->window_height - 20,
+                T1_engine_globals->window_height - 20,
             /* const float z: */
                 PROFILER_Z - 0.02f,
             /* const float max_width: */
-                engine_globals->window_width);
+                T1_engine_globals->window_width);
         
         for (int32_t gui_frame_i = 0; gui_frame_i < 2; gui_frame_i++) {
             font_settings->mat.ambient_rgb[0] = 0.1f;
             float gui_frame_left = 20 +
-                (gui_frame_i * engine_globals->window_width / 2);
+                (gui_frame_i * T1_engine_globals->window_width / 2);
             
             int32_t f_i = gui_selected_frames[gui_frame_i];
             
-            float cur_top = engine_globals->window_height -
+            float cur_top = T1_engine_globals->window_height -
                 20 -
                 (font_settings->font_height + 2.0f);
             
@@ -381,7 +391,7 @@ void T1_profiler_draw_labels(void) {
                 line_text,
                 128,
                 f_i);
-            font_settings->touchable_id = frame_selection_touchable_ids[
+            font_settings->touch_id = frame_selection_touch_ids[
                 gui_frame_i];
             
             font_settings->ignore_camera = true;
@@ -397,9 +407,9 @@ void T1_profiler_draw_labels(void) {
                 /* const float z: */
                     PROFILER_Z - 0.02f,
                 /* const float max_width: */
-                    engine_globals->window_width);
+                    T1_engine_globals->window_width);
             
-            font_settings->touchable_id = -1;
+            font_settings->touch_id = -1;
             
             cur_top -= (font_settings->font_height + 2.0f);
             T1_std_strcpy_cap(line_text, 128, "Cycles: ");
@@ -427,7 +437,7 @@ void T1_profiler_draw_labels(void) {
                 /* const float z: */
                     PROFILER_Z - 0.02f,
                 /* const float max_width: */
-                    engine_globals->window_width);
+                    T1_engine_globals->window_width);
             
             if (frames[f_i].profiles_size > 0) {
                 gui_function_stack[0] = 0;
@@ -511,7 +521,7 @@ void T1_profiler_draw_labels(void) {
                     /* const float z: */
                         PROFILER_Z - 0.02f,
                     /* const float max_width: */
-                        engine_globals->window_width);
+                        T1_engine_globals->window_width);
             }
         }
     }
