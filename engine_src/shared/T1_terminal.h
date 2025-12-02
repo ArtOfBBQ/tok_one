@@ -5,7 +5,7 @@
 
 #include "T1_mem.h"
 #include "T1_engineglobals.h"
-#include "T1_uiinteraction.h"
+#include "T1_io.h"
 #include "T1_zsprite.h"
 #include "T1_text.h"
 #include "T1_clientlogic.h"

@@ -145,7 +145,7 @@ void terminal_redraw_backgrounds(void) {
     current_command_input.cpu_data->alpha_blending_enabled = true;
     current_command_input.cpu_data->visible = terminal_active;
     current_command_input.cpu_data->zsprite_id = terminal_back_object_id;
-    current_command_input.gpu_data->touchable_id = -1;
+    current_command_input.gpu_data->touch_id = -1;
     T1_zsprite_commit(&current_command_input);
     
     // The console history area
@@ -192,7 +192,7 @@ void terminal_redraw_backgrounds(void) {
     current_command_input.cpu_data->simd_stats.ignore_camera = true;
     current_command_input.gpu_data->ignore_lighting = true;
     current_command_input.cpu_data->zsprite_id = INT32_MAX;
-    current_command_input.gpu_data->touchable_id = -1;
+    current_command_input.gpu_data->touch_id = -1;
     
     T1_zsprite_commit(&current_command_input);
 }
@@ -311,7 +311,7 @@ void terminal_render(void) {
 
 void terminal_sendchar(uint32_t to_send) {
     
-    if (to_send == TOK_KEY_ESCAPE) {
+    if (to_send == T1_IO_KEY_ESCAPE) {
         // ESC key
         current_command[0] = '\0';
         terminal_active = false;
@@ -328,7 +328,7 @@ void terminal_sendchar(uint32_t to_send) {
     }
     
     if (
-        to_send == TOK_KEY_SPACEBAR)
+        to_send == T1_IO_KEY_SPACEBAR)
     {
         current_command[last_i] = ' ';
         last_i++;
@@ -337,7 +337,7 @@ void terminal_sendchar(uint32_t to_send) {
     }
     
     if (
-        to_send == TOK_KEY_BACKSPACE &&
+        to_send == T1_IO_KEY_BACKSPACE &&
         last_i > 0)
     {
         current_command[last_i - 1] = '\0';

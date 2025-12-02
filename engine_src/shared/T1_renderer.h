@@ -13,7 +13,7 @@
 #include "T1_lines.h"
 #include "T1_zsprite.h"
 #include "T1_particle.h"
-#include "T1_uiinteraction.h"
+#include "T1_io.h"
 
 #ifdef __cplusplus
 extern "C" {

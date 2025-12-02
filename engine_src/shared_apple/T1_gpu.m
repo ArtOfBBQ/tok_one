@@ -335,6 +335,14 @@ bool32_t apple_gpu_init(
                 outlines_pls_desc
             error:
                 &Error];
+    
+    if (Error != nil) {
+        log_dump_and_crash((char *)[
+            [[Error userInfo] descriptionInStringsFileFormat]
+                cStringUsingEncoding:
+                    NSASCIIStringEncoding]);
+        return false;
+    }
     #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
     #else
     #error
@@ -879,7 +887,7 @@ uint32_t T1_platform_get_cpu_logical_core_count(void) {
     return (core_count > 0) ? (unsigned int)core_count : 1;
 }
 
-int32_t T1_platform_gpu_get_touchable_id_at_screen_pos(
+int32_t T1_platform_gpu_get_touch_id_at_screen_pos(
     const float screen_x,
     const float screen_y)
 {
@@ -2068,7 +2076,7 @@ static void set_basic_triangle_props_for_render_pass_encoder(
     #endif
     
     // copy the touch id buffer to a CPU buffer so we can query
-    // what the top touchable_id is
+    // what the top touch_id is
     id <MTLBlitCommandEncoder> blit_touch_texture_to_cpu_buffer_encoder =
         [command_buffer blitCommandEncoder];
     [blit_touch_texture_to_cpu_buffer_encoder

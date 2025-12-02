@@ -5,7 +5,7 @@
 #include "T1_mem.h"
 #include "T1_zspriteid.h"
 #include "T1_meta.h"
-#include "T1_uiinteraction.h"
+#include "T1_io.h"
 #include "T1_zsprite.h"
 #include "T1_texture_array.h"
 #include "T1_scheduled_animations.h"

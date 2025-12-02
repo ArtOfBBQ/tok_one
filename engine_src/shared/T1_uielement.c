@@ -12,7 +12,7 @@ typedef struct ActiveUIElement {
     int32_t background_zsprite_id;
     int32_t pin_zsprite_id;
     int32_t label_zsprite_id;
-    int32_t touchable_id;
+    int32_t touch_id;
     
     float slider_width;
     
@@ -94,13 +94,13 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
             if (
                 !active_ui_elements[elem_i].deleted &&
                 active_ui_elements[elem_i].slideable &&
-                T1_uiinteractions
-                    [T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                        touchable_id_top ==
-                active_ui_elements[elem_i].touchable_id)
+                T1_io_events
+                    [T1_IO_LAST_TOUCH_OR_LCLICK_START].
+                        touch_id_top ==
+                active_ui_elements[elem_i].touch_id)
             {
-                T1_uiinteractions
-                    [T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+                T1_io_events
+                    [T1_IO_LAST_TOUCH_OR_LCLICK_START].
                         handled = true;
                 ui_elem_i = elem_i;
                 break;
@@ -117,14 +117,14 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                 if (
                     active_ui_elements[ui_elem_i].slideable &&
                     T1_zsprites_to_render->gpu_data[zp_i].
-                        touchable_id ==
+                        touch_id ==
                             currently_sliding_touchable_id)
                 {
                     // set slider value
                     float new_x_offset =
                         T1_engineglobals_screenspace_x_to_x(
-                            T1_uiinteractions[
-                                T1_INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].
+                            T1_io_events[
+                                T1_IO_LAST_MOUSE_OR_TOUCH_MOVE].
                                     screen_x,
                             T1_zsprites_to_render->cpu_data[zp_i].
                                 simd_stats.xyz[2]) -
@@ -241,7 +241,7 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
     }
     
     if (
-        !T1_uiinteractions[T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
+        !T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_END].
             handled)
     {
         if (
@@ -262,13 +262,13 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                 if (
                     !active_ui_elements[ui_elem_i].deleted &&
                     active_ui_elements[ui_elem_i].clicked_funcptr != NULL &&
-                    T1_uiinteractions
-                        [T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
-                            touchable_id_top ==
-                    active_ui_elements[ui_elem_i].touchable_id)
+                    T1_io_events
+                        [T1_IO_LAST_TOUCH_OR_LCLICK_END].
+                            touch_id_top ==
+                    active_ui_elements[ui_elem_i].touch_id)
                 {
-                    T1_uiinteractions
-                        [T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
+                    T1_io_events
+                        [T1_IO_LAST_TOUCH_OR_LCLICK_END].
                             handled = true;
                     active_ui_elements[ui_elem_i].
                         clicked_funcptr(
@@ -282,16 +282,16 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
     }
     
     if (
-        !T1_uiinteractions[T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+        !T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
             handled)
     {
         if (
-            T1_uiinteractions
-                [T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                    touchable_id_top >= 0 &&
-            T1_uiinteractions
-                [T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                    touchable_id_top < T1_LAST_UI_TOUCHABLE_ID)
+            T1_io_events
+                [T1_IO_LAST_TOUCH_OR_LCLICK_START].
+                    touch_id_top >= 0 &&
+            T1_io_events
+                [T1_IO_LAST_TOUCH_OR_LCLICK_START].
+                    touch_id_top < T1_LAST_UI_TOUCHABLE_ID)
         {
             for (
                 uint32_t i = 0;
@@ -300,10 +300,10 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
             {
                 if (
                     active_ui_elements[i].deleted ||
-                    T1_uiinteractions
-                        [T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
-                            touchable_id_top !=
-                                active_ui_elements[i].touchable_id)
+                    T1_io_events
+                        [T1_IO_LAST_TOUCH_OR_LCLICK_START].
+                            touch_id_top !=
+                                active_ui_elements[i].touch_id)
                 {
                     continue;
                 }
@@ -312,9 +312,9 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                     active_ui_elements[i].slideable)
                 {
                     currently_sliding_touchable_id =
-                        active_ui_elements[i].touchable_id;
-                    T1_uiinteractions
-                        [T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END].
+                        active_ui_elements[i].touch_id;
+                    T1_io_events
+                        [T1_IO_LAST_TOUCH_OR_LCLICK_END].
                             handled = true;
                     
                     #if T1_SCHEDULED_ANIMS_ACTIVE == T1_ACTIVE
@@ -369,7 +369,7 @@ void T1_uielement_handle_touches(uint64_t ms_elapsed)
                      #endif
                 }
                 
-                T1_uiinteractions[T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START].
+                T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START].
                     handled = true;
             }
         }
@@ -561,7 +561,7 @@ static void set_slider_pos_from_current_val(
 {
     log_assert(ae != NULL);
     log_assert(pin_gpu_zsprite != NULL);
-    log_assert(pin_gpu_zsprite->touchable_id == ae->touchable_id);
+    log_assert(pin_gpu_zsprite->touch_id == ae->touch_id);
     
     // deduce the offset for the pin, based on the current value
     // let's say the slider ranges from 1.0f to 10.0f
@@ -721,7 +721,7 @@ void T1_uielement_request_slider(
     next_ae->slideable = true;
     next_ae->deleted = false;
     next_ae->slider_linked_value = linked_value_ptr;
-    next_ae->touchable_id = T1_zspriteid_next_ui_element_touchable_id();
+    next_ae->touch_id = T1_zspriteid_next_ui_element_touch_id();
     
     T1zSpriteRequest slider_back;
     T1_zsprite_request_next(&slider_back);
@@ -808,8 +808,8 @@ void T1_uielement_request_slider(
         next_ae->user_set.ignore_lighting;
     slider_pin.cpu_data->simd_stats.ignore_camera =
         next_ae->user_set.ignore_camera;
-    slider_pin.gpu_data->touchable_id =
-        next_ae->touchable_id;
+    slider_pin.gpu_data->touch_id =
+        next_ae->touch_id;
     
     set_slider_pos_from_current_val(
         next_ae,
@@ -852,7 +852,7 @@ void T1_uielement_request_button(
             next_ui_element_settings->perm.z);
     next_ae->deleted = false;
     next_ae->slider_linked_value = NULL;
-    next_ae->touchable_id = T1_zspriteid_next_ui_element_touchable_id();
+    next_ae->touch_id = T1_zspriteid_next_ui_element_touch_id();
     
     T1zSpriteRequest button_request;
     T1_zsprite_request_next(&button_request);
@@ -879,7 +879,7 @@ void T1_uielement_request_button(
             &button_request);
     
     button_request.cpu_data->zsprite_id = button_object_id;
-    button_request.gpu_data->touchable_id = next_ae->touchable_id;
+    button_request.gpu_data->touch_id = next_ae->touch_id;
     button_request.cpu_data->simd_stats.ignore_camera =
         next_ae->user_set.ignore_camera;
     button_request.gpu_data->ignore_lighting =
@@ -894,7 +894,7 @@ void T1_uielement_delete(const int32_t with_zsprite_id)
     for (uint32_t i = 0; i < active_ui_elements_size; i++) {
         if (active_ui_elements[i].background_zsprite_id == with_zsprite_id) {
             active_ui_elements[i].slider_linked_value = NULL;
-            active_ui_elements[i].touchable_id = -1;
+            active_ui_elements[i].touch_id = -1;
             active_ui_elements[i].deleted = true;
         }
     }
@@ -904,6 +904,6 @@ void T1_uielement_delete_all(void) {
     for (uint32_t i = 0; i < active_ui_elements_size; i++) {
         active_ui_elements[i].deleted = false;
     }
-    T1_zspriteid_clear_ui_element_touchable_ids();
+    T1_zspriteid_clear_ui_element_touch_ids();
     active_ui_elements_size = 0;
 }

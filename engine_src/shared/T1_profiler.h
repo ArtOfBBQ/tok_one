@@ -6,7 +6,7 @@
 #include "T1_std.h"
 #include "T1_logger.h"
 #include "T1_zspriteid.h"
-#include "T1_uiinteraction.h"
+#include "T1_io.h"
 
 #include "T1_engineglobals.h"
 #include "T1_zsprite.h"

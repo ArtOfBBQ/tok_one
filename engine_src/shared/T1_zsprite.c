@@ -254,13 +254,15 @@ void T1_zsprite_construct(
     to_construct->cpu_data->simd_stats.mul_xyz[0] = 1.0f;
     to_construct->cpu_data->simd_stats.mul_xyz[1] = 1.0f;
     to_construct->cpu_data->simd_stats.mul_xyz[2] = 1.0f;
-    to_construct->gpu_data->touchable_id = -1;
+    to_construct->gpu_data->touch_id = -1;
     to_construct->gpu_data->alpha = 1.0f;
     
     to_construct->cpu_data->simd_stats.scale_factor = 1.0f;
     to_construct->cpu_data->mesh_id = -1;
     to_construct->cpu_data->zsprite_id = -1;
     to_construct->cpu_data->visible = true;
+    
+    to_construct->gpu_data->outline_alpha = 0.3f;
     
     T1_material_construct(&to_construct->gpu_data->base_mat);
 }

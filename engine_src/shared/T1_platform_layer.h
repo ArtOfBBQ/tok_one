@@ -229,7 +229,7 @@ void T1_platform_gpu_update_viewport(void);
 void T1_platform_gpu_copy_locked_vertices(void);
 void T1_platform_gpu_copy_locked_materials(void);
 
-int32_t T1_platform_gpu_get_touchable_id_at_screen_pos(
+int32_t T1_platform_gpu_get_touch_id_at_screen_pos(
     const float screen_x,
     const float screen_y);
 

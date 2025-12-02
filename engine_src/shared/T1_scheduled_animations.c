@@ -700,7 +700,7 @@ void T1_scheduled_animations_resolve(void)
                 T1_zsprites_to_render->cpu_data[zp_i].zsprite_id !=
                     anim->affected_zsprite_id) ||
                 (anim->affected_touchable_id >= 0 &&
-                T1_zsprites_to_render->gpu_data[zp_i].touchable_id !=
+                T1_zsprites_to_render->gpu_data[zp_i].touch_id !=
                     anim->affected_touchable_id)
                 ||
                 T1_zsprites_to_render->cpu_data[zp_i].deleted)

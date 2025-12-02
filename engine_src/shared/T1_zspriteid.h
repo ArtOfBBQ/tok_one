@@ -25,9 +25,9 @@ extern int32_t T1_zspriteid_retired_zsprite_id;
 int32_t T1_zspriteid_next_ui_element_id(void);
 int32_t T1_zspriteid_next_nonui_id(void);
 
-int32_t T1_zspriteid_next_ui_element_touchable_id(void);
-void T1_zspriteid_clear_ui_element_touchable_ids(void);
-int32_t T1_zspriteid_next_nonui_touchable_id(void);
+int32_t T1_zspriteid_next_ui_element_touch_id(void);
+void T1_zspriteid_clear_ui_element_touch_ids(void);
+int32_t T1_zspriteid_next_nonui_touch_id(void);
 
 #ifdef __cplusplus
 }

@@ -12,7 +12,7 @@
 #include "T1_lightsource.h"
 #include "T1_text.h"
 #include "T1_uielement.h"
-#include "T1_uiinteraction.h"
+#include "T1_io.h"
 #include "T1_engineglobals.h"
 #include "T1_scheduled_animations.h"
 #include "T1_renderer.h"

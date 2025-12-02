@@ -233,12 +233,6 @@ void T1_appinit_before_gpu_init(
         T1_mem_malloc_from_managed_infoless,
         strlcat);
     
-    T1_keypress_map = (bool32_t *)T1_mem_malloc_from_unmanaged(
-        sizeof(bool32_t) * KEYPRESS_MAP_SIZE);
-    for (uint32_t i = 0; i < KEYPRESS_MAP_SIZE; i++) {
-        T1_keypress_map[i] = false;
-    }
-    
     logger_init(
         /* void * arg_malloc_function(size_t size): */
             T1_mem_malloc_from_unmanaged,
@@ -440,11 +434,7 @@ void T1_appinit_before_gpu_init(
                 font_metrics_file.size_without_terminator);
     }
     
-    T1_uiinteractions = (T1UIInteraction *)
-        T1_mem_malloc_from_unmanaged(sizeof(T1UIInteraction) * T1_USER_INTERACTIONS_SIZE);
-    for (uint32_t m = 0; m < T1_USER_INTERACTIONS_SIZE; m++) {
-        T1_uiinteraction_construct(&T1_uiinteractions[m]);
-    }
+    T1_io_init(T1_mem_malloc_from_unmanaged);
     
     T1_renderer_init();
     

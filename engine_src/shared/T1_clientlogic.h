@@ -27,7 +27,7 @@ extern "C" {
 #include "T1_platform_layer.h"
 #include "debigulator/src/decode_png.h"
 #include "debigulator/src/decode_bmp.h"
-#include "T1_uiinteraction.h"
+#include "T1_io.h"
 #include "T1_text.h"
 #include "T1_uielement.h"
 // #include "scheduled_animations.h"

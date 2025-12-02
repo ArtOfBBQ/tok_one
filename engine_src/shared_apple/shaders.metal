@@ -264,7 +264,7 @@ vertex_shader(
     
     out.viewpos = mesh_vertices * model_and_view;
     
-    out.touchable_id = polygons[out.polygon_i].touchable_id;
+    out.touchable_id = polygons[out.polygon_i].touch_id;
     
     out.texture_coordinate = vector_float2(
         locked_vertices[out.locked_vertex_i].uv[0],
@@ -1133,7 +1133,13 @@ fragment float4 flat_billboard_quad_fragment_shader(
 }
 
 #if T1_OUTLINES_ACTIVE == T1_ACTIVE
-vertex float4
+typedef struct
+{
+    float4 pos [[position]];
+    float  outline_alpha [[ flat ]];
+} OutlinePixel;
+
+vertex OutlinePixel
 outlines_vertex_shader(
     uint vertex_i [[ vertex_id ]],
     const device T1GPUVertexIndices * vertices [[ buffer(0) ]],
@@ -1141,7 +1147,7 @@ outlines_vertex_shader(
     const device T1GPUCamera * camera [[ buffer(3) ]],
     const device T1GPULockedVertex * locked_vertices [[ buffer(4) ]])
 {
-    float4 out;
+    OutlinePixel out;
     
     uint polygon_i = vertices[vertex_i].polygon_i;
     uint locked_vertex_i =
@@ -1161,6 +1167,9 @@ outlines_vertex_shader(
         locked_vertices[locked_vertex_i].
             face_normal_xyz[2]);
     
+    out.outline_alpha = polygons[polygon_i].
+        outline_alpha;
+    
     float4x4 model_and_view = matrix_float4x4(
         polygons[polygon_i].model_view_4x4[ 0],
         polygons[polygon_i].model_view_4x4[ 1],
@@ -1179,7 +1188,7 @@ outlines_vertex_shader(
         polygons[polygon_i].model_view_4x4[14],
         polygons[polygon_i].model_view_4x4[15]);
     
-    out = vert * model_and_view;
+    out.pos = vert * model_and_view;
     
     float3x3 normalmat3x3 = matrix_float3x3(
         polygons[polygon_i].normal_3x3[ 0],
@@ -1194,7 +1203,7 @@ outlines_vertex_shader(
     
     normal = normalize(normal * normalmat3x3);
     
-    out -= vector_float4(normal, 0.0f) * 0.002f;
+    out.pos -= vector_float4(normal, 0.0f) * 0.002f;
     
     float4x4 projection = matrix_float4x4(
         camera->projection_4x4[ 0],
@@ -1214,13 +1223,16 @@ outlines_vertex_shader(
         camera->projection_4x4[14],
         camera->projection_4x4[15]);
     
-    out = out * projection;
+    out.pos = out.pos * projection;
     
     return out;
 }
 
-fragment float4 outlines_fragment_shader()
+fragment float4 outlines_fragment_shader(
+    const OutlinePixel in [[stage_in]])
 {
-    return vector_float4(1.0f, 0.0f, 0.2f, 1.0f);
+    float4 ret = vector_float4(1.0f, 0.03f, 0.20f, 1.0f);
+    
+    return ret * in.outline_alpha;
 }
 #endif

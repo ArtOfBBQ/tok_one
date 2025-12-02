@@ -91,8 +91,14 @@ typedef struct {
     float         base_mat_uv_offsets[2];
     float         alpha;
     float         ignore_lighting;
+    #if T1_OUTLINES_ACTIVE == T1_ACTIVE
+    float         outline_alpha;
+    #elif T1_OUTLINES_ACTIVE == T1_INACTIVE
+    #else
+    #error
+    #endif
     unsigned int  remove_shadow;
-    int           touchable_id;
+    int           touch_id;
 } __attribute__((aligned(32))) T1GPUzSprite;
 
 typedef struct {

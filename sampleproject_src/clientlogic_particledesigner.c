@@ -144,7 +144,7 @@ void T1_clientlogic_early_startup(
 {
     *success = 0;
     
-    mouse_scroll_pos = 0.0f;
+    T1_io_mouse_scroll_pos = 0.0f;
     
     uint32_t ok = 0;
     T1_meta_struct(T1GPUConstMat, &ok);
@@ -314,7 +314,7 @@ static void redraw_all_sliders(void);
 
 static void clicked_btn(int64_t arg) {
     if (arg == -1) {
-        T1_zspriteid_clear_ui_element_touchable_ids();
+        T1_zspriteid_clear_ui_element_touch_ids();
         
         for (uint32_t i = 0; i < pds->regs_size; i++) {
             T1_uielement_delete(pds->regs[i].slider_zsprite_id);
@@ -627,66 +627,66 @@ static void client_handle_keypresses(
     float cam_speed = 0.1f * elapsed_mod;
     float cam_rotation_speed = 0.05f * elapsed_mod;
     
-    if (T1_keypress_map[TOK_KEY_OPENSQUAREBRACKET] == true)
+    if (T1_io_keymap[T1_IO_KEY_OPENSQUAREBRACKET] == true)
     {
         scroll_y_offset -= 15.0f;
     }
     
-    if (T1_keypress_map[TOK_KEY_CLOSESQUAREBRACKET] == true)
+    if (T1_io_keymap[T1_IO_KEY_CLOSESQUAREBRACKET] == true)
     {
         scroll_y_offset += 15.0f;
     }
     
-    if (T1_keypress_map[TOK_KEY_LEFTARROW] == true)
+    if (T1_io_keymap[T1_IO_KEY_LEFTARROW] == true)
     {
         camera.xyz[0] -= cam_speed;
     }
     
-    if (T1_keypress_map[TOK_KEY_RIGHTARROW] == true)
+    if (T1_io_keymap[T1_IO_KEY_RIGHTARROW] == true)
     {
         camera.xyz[0] += cam_speed;
     }
     
-    if (T1_keypress_map[TOK_KEY_DOWNARROW] == true)
+    if (T1_io_keymap[T1_IO_KEY_DOWNARROW] == true)
     {
         camera.xyz[1] -= cam_speed;
     }
     
-    if (T1_keypress_map[TOK_KEY_UPARROW] == true)
+    if (T1_io_keymap[T1_IO_KEY_UPARROW] == true)
     {
         camera.xyz[1] += cam_speed;
     }
     
-    if (T1_keypress_map[TOK_KEY_A] == true) {
+    if (T1_io_keymap[T1_IO_KEY_A] == true) {
         camera.xyz_angle[0] += cam_rotation_speed;
     }
     
-    if (T1_keypress_map[TOK_KEY_Z] == true) {
+    if (T1_io_keymap[T1_IO_KEY_Z] == true) {
         camera.xyz_angle[2] -= cam_rotation_speed;
     }
     
-    if (T1_keypress_map[TOK_KEY_X] == true) {
+    if (T1_io_keymap[T1_IO_KEY_X] == true) {
         camera.xyz_angle[2] += cam_rotation_speed;
     }
     
-    if (T1_keypress_map[TOK_KEY_Q] == true) {
+    if (T1_io_keymap[T1_IO_KEY_Q] == true) {
         camera.xyz_angle[0] -= cam_rotation_speed;
     }
     
-    if (T1_keypress_map[TOK_KEY_W] == true) {
+    if (T1_io_keymap[T1_IO_KEY_W] == true) {
         camera.xyz_angle[1] -= cam_rotation_speed;
     }
     
-    if (T1_keypress_map[TOK_KEY_S] == true) {
+    if (T1_io_keymap[T1_IO_KEY_S] == true) {
         camera.xyz_angle[1] += cam_rotation_speed;
     }
     
-    if (T1_keypress_map[TOK_KEY_BACKSLASH] == true) {
+    if (T1_io_keymap[T1_IO_KEY_BACKSLASH] == true) {
         // / key
         camera.xyz[2] -= 0.01f;
     }
     
-    if (T1_keypress_map[TOK_KEY_UNDERSCORE] == true) {
+    if (T1_io_keymap[T1_IO_KEY_UNDERSCORE] == true) {
         camera.xyz[2] += 0.01f;
     }
 }
@@ -716,7 +716,7 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
         }
                 
         float new_y = get_slider_y_screenspace((int32_t)i) -
-            (mouse_scroll_pos * 30.0f);
+            (T1_io_mouse_scroll_pos * 30.0f);
         for (uint32_t j = 0; j < 3; j++) {
             T1ScheduledAnimation * anim =
                 T1_scheduled_animations_request_next(true);
@@ -735,7 +735,7 @@ void T1_clientlogic_update(uint64_t microseconds_elapsed)
     target_zsprite_ids[0] = pds->title_zsprite_id;
     target_zsprite_ids[1] = pds->title_label_zsprite_id;
     float new_title_y = get_slider_y_screenspace(-1) -
-        (mouse_scroll_pos * 30.0f);
+        (T1_io_mouse_scroll_pos * 30.0f);
     for (uint32_t j = 0; j < 2; j++) {
         T1ScheduledAnimation * anim =
             T1_scheduled_animations_request_next(true);
@@ -944,7 +944,7 @@ void T1_clientlogic_window_resize(
     const uint32_t new_height,
     const uint32_t new_width)
 {
-    mouse_scroll_pos = 0.0f;
+    T1_io_mouse_scroll_pos = 0.0f;
     
     zlights_to_apply_size = 0;
     T1_uielement_delete_all();
@@ -956,7 +956,7 @@ void T1_clientlogic_window_resize(
     #endif
     
     T1_zsprites_to_render->size = 0;
-    T1_zspriteid_clear_ui_element_touchable_ids();
+    T1_zspriteid_clear_ui_element_touch_ids();
     
     pds->whitespace_height = get_whitespace_height();
     pds->menu_element_height = get_menu_element_height();

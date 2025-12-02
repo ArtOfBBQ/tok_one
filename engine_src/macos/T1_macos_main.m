@@ -6,7 +6,7 @@
 #include "T1_logger.h"
 #include "T1_random.h"
 #include "T1_lightsource.h"
-#include "T1_uiinteraction.h"
+#include "T1_io.h"
 #include "T1_engineglobals.h"
 #include "T1_simd.h"
 #include "T1_clientlogic.h"
@@ -28,156 +28,156 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
     
     switch (apple_key) {
         case (24):
-            return TOK_KEY_HAT;
+            return T1_IO_KEY_HAT;
         case (29):
-            return TOK_KEY_0;
+            return T1_IO_KEY_0;
         case (27):
-            return TOK_KEY_MINUS;
+            return T1_IO_KEY_MINUS;
         case (36):
-            return TOK_KEY_ENTER;
+            return T1_IO_KEY_ENTER;
         case (123):
-            return TOK_KEY_LEFTARROW;
+            return T1_IO_KEY_LEFTARROW;
         case (124):
-            return TOK_KEY_RIGHTARROW;
+            return T1_IO_KEY_RIGHTARROW;
         case (125):
-            return TOK_KEY_DOWNARROW;
+            return T1_IO_KEY_DOWNARROW;
         case (126):
-            return TOK_KEY_UPARROW;
+            return T1_IO_KEY_UPARROW;
         case (18):
-            return TOK_KEY_1;
+            return T1_IO_KEY_1;
         case (19):
-            return TOK_KEY_2;
+            return T1_IO_KEY_2;
         case (20):
-            return TOK_KEY_3;
+            return T1_IO_KEY_3;
         case (21):
-            return TOK_KEY_4;
+            return T1_IO_KEY_4;
         case (23):
-            return TOK_KEY_5;
+            return T1_IO_KEY_5;
         case (22):
-            return TOK_KEY_6;
+            return T1_IO_KEY_6;
         case (26):
-            return TOK_KEY_7;
+            return T1_IO_KEY_7;
         case (28):
-            return TOK_KEY_8;
+            return T1_IO_KEY_8;
         case (25):
-            return TOK_KEY_9;
+            return T1_IO_KEY_9;
         case (0):
-            return TOK_KEY_A;
+            return T1_IO_KEY_A;
         case (1):
-            return TOK_KEY_S;
+            return T1_IO_KEY_S;
         case (2):
-            return TOK_KEY_D;
+            return T1_IO_KEY_D;
         case (3):
-            return TOK_KEY_F;
+            return T1_IO_KEY_F;
         case (4):
-            return TOK_KEY_H;
+            return T1_IO_KEY_H;
         case (5):
-            return TOK_KEY_G;
+            return T1_IO_KEY_G;
         case (6):
-            return TOK_KEY_Z;
+            return T1_IO_KEY_Z;
         case (7):
-            return TOK_KEY_X;
+            return T1_IO_KEY_X;
         case (8):
-            return TOK_KEY_C;
+            return T1_IO_KEY_C;
         case (9):
-            return TOK_KEY_V;
+            return T1_IO_KEY_V;
         case (12):
-            return TOK_KEY_Q;
+            return T1_IO_KEY_Q;
         case (13):
-            return TOK_KEY_W;
+            return T1_IO_KEY_W;
         case (14):
-            return TOK_KEY_E;
+            return T1_IO_KEY_E;
         case (15):
-            return TOK_KEY_R;
+            return T1_IO_KEY_R;
         case (17):
-            return TOK_KEY_T;
+            return T1_IO_KEY_T;
         case (16):
-            return TOK_KEY_Y;
+            return T1_IO_KEY_Y;
         case (32):
-            return TOK_KEY_U;
+            return T1_IO_KEY_U;
         case (34):
-            return TOK_KEY_I;
+            return T1_IO_KEY_I;
         case (31):
-            return TOK_KEY_O;
+            return T1_IO_KEY_O;
         case (35):
-            return TOK_KEY_P;
+            return T1_IO_KEY_P;
         case (37):
-            return TOK_KEY_L;
+            return T1_IO_KEY_L;
         case (38):
-            return TOK_KEY_J;
+            return T1_IO_KEY_J;
         case (40):
-            return TOK_KEY_K;
+            return T1_IO_KEY_K;
         case (41):
-            return TOK_KEY_SEMICOLON;
+            return T1_IO_KEY_SEMICOLON;
         case (39):
-            return TOK_KEY_COLON;
+            return T1_IO_KEY_COLON;
         case (30):
-            return TOK_KEY_OPENSQUAREBRACKET;
+            return T1_IO_KEY_OPENSQUAREBRACKET;
         case (33):
-            return TOK_KEY_AT;
+            return T1_IO_KEY_AT;
         case (42):
-            return TOK_KEY_CLOSESQUAREBRACKET;
+            return T1_IO_KEY_CLOSESQUAREBRACKET;
         case (11):
-            return TOK_KEY_B;
+            return T1_IO_KEY_B;
         case (45):
-            return TOK_KEY_N;
+            return T1_IO_KEY_N;
         case (46):
-            return TOK_KEY_M;
+            return T1_IO_KEY_M;
         case (43):
-            return TOK_KEY_COMMA;
+            return T1_IO_KEY_COMMA;
         case (47):
             // TODO: rename me to period
-            return TOK_KEY_FULLSTOP;
+            return T1_IO_KEY_FULLSTOP;
         case (48):
-            return TOK_KEY_TAB;
+            return T1_IO_KEY_TAB;
         case (44):
-            return TOK_KEY_BACKSLASH;
+            return T1_IO_KEY_BACKSLASH;
         case (49):
-            return TOK_KEY_SPACEBAR;
+            return T1_IO_KEY_SPACEBAR;
         case (51):
-            return TOK_KEY_BACKSPACE;
+            return T1_IO_KEY_BACKSPACE;
         case (53):
-            return TOK_KEY_ESCAPE;
+            return T1_IO_KEY_ESCAPE;
         case (93):
-            return TOK_KEY_YENSIGN;
+            return T1_IO_KEY_YENSIGN;
         case (94):
-            return TOK_KEY_UNDERSCORE;
+            return T1_IO_KEY_UNDERSCORE;
         case (122):
-            return TOK_KEY_F1;
+            return T1_IO_KEY_F1;
         case (120):
-            return TOK_KEY_F2;
+            return T1_IO_KEY_F2;
         case (99):
-            return TOK_KEY_F3;
+            return T1_IO_KEY_F3;
         case (118):
-            return TOK_KEY_F4;
+            return T1_IO_KEY_F4;
         case (96):
-            return TOK_KEY_F5;
+            return T1_IO_KEY_F5;
         case (97):
-            return TOK_KEY_F6;
+            return T1_IO_KEY_F6;
         case (98):
-            return TOK_KEY_F7;
+            return T1_IO_KEY_F7;
         case (100):
-            return TOK_KEY_F8;
+            return T1_IO_KEY_F8;
         case (101):
-            return TOK_KEY_F9;
+            return T1_IO_KEY_F9;
         case (109):
-            return TOK_KEY_F10;
+            return T1_IO_KEY_F10;
         case (103):
-            return TOK_KEY_F11;
+            return T1_IO_KEY_F11;
         case (111):
-            return TOK_KEY_F12;
+            return T1_IO_KEY_F12;
         case (102):
-            return TOK_KEY_ROMAJIBUTTON;
+            return T1_IO_KEY_ROMAJIBUTTON;
         case (104):
-            return TOK_KEY_KANABUTTON;
+            return T1_IO_KEY_KANABUTTON;
         case (115):
-            return TOK_KEY_HOME;
+            return T1_IO_KEY_HOME;
         case (116):
-            return TOK_KEY_PAGEUP;
+            return T1_IO_KEY_PAGEUP;
         case (119):
-            return TOK_KEY_END;
+            return T1_IO_KEY_END;
         case (121):
-            return TOK_KEY_PAGEDOWN;
+            return T1_IO_KEY_PAGEDOWN;
         default:
             #if T1_LOGGER_ASSERTS_ACTIVE == T1_ACTIVE
             T1_std_strcpy_cap(err_msg, 128, "unhandled apple keycode: ");
@@ -197,7 +197,7 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
     #error
     #endif
     
-    return TOK_KEY_ESCAPE;
+    return T1_IO_KEY_ESCAPE;
 }
 
 @interface NSWindowWithCustomResponder: NSWindow
@@ -226,13 +226,13 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
     
     NSPoint window_location = [event locationInWindow];
     
-    T1_uiinteractions[T1_INTR_LAST_GPU_DATA].screen_x =
+    T1_io_events[T1_IO_LAST_GPU_DATA].screen_x =
         (float)window_location.x;
-    T1_uiinteractions[T1_INTR_LAST_GPU_DATA].screen_y =
+    T1_io_events[T1_IO_LAST_GPU_DATA].screen_y =
         (float)window_location.y;
     
-    T1_uiinteraction_register(&T1_uiinteractions[T1_INTR_PREVIOUS_MOUSE_MOVE]);
-    T1_uiinteraction_register(&T1_uiinteractions[T1_INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
+    T1_io_event_register(&T1_io_events[T1_IO_LAST_MOUSE_MOVE]);
+    T1_io_event_register(&T1_io_events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE]);
 }
 
 - (void)mouseDragged:(NSEvent *)event
@@ -243,13 +243,13 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
     
     NSPoint window_location = [event locationInWindow];
     
-    T1_uiinteractions[T1_INTR_LAST_GPU_DATA].screen_x =
+    T1_io_events[T1_IO_LAST_GPU_DATA].screen_x =
         (float)window_location.x;
-    T1_uiinteractions[T1_INTR_LAST_GPU_DATA].screen_y =
+    T1_io_events[T1_IO_LAST_GPU_DATA].screen_y =
         (float)window_location.y;
     
-    T1_uiinteraction_register(&T1_uiinteractions[T1_INTR_PREVIOUS_MOUSE_MOVE]);
-    T1_uiinteraction_register(&T1_uiinteractions[T1_INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE]);
+    T1_io_event_register(&T1_io_events[T1_IO_LAST_MOUSE_MOVE]);
+    T1_io_event_register(&T1_io_events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE]);
 }
 
 - (void)mouseDown:(NSEvent *)event
@@ -258,9 +258,9 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
         return;
     }
     
-    T1_uiinteraction_register(&T1_uiinteractions[T1_INTR_PREVIOUS_LEFTCLICK_START]);
-    T1_uiinteractions[T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_START] =
-        T1_uiinteractions[T1_INTR_PREVIOUS_LEFTCLICK_START];
+    T1_io_event_register(&T1_io_events[T1_IO_LAST_LCLICK_START]);
+    T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_START] =
+        T1_io_events[T1_IO_LAST_LCLICK_START];
 }
 
 - (void)mouseUp:(NSEvent *)event
@@ -269,9 +269,9 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
         return;
     }
     
-    T1_uiinteraction_register(&T1_uiinteractions[T1_INTR_PREVIOUS_LEFTCLICK_END]);
-    T1_uiinteractions[T1_INTR_PREVIOUS_TOUCH_OR_LEFTCLICK_END] =
-        T1_uiinteractions[T1_INTR_PREVIOUS_LEFTCLICK_END];
+    T1_io_event_register(&T1_io_events[T1_IO_LAST_LCLICK_END]);
+    T1_io_events[T1_IO_LAST_TOUCH_OR_LCLICK_END] =
+        T1_io_events[T1_IO_LAST_LCLICK_END];
 }
 
 - (void)rightMouseDown:(NSEvent *)event
@@ -280,7 +280,7 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
         return;
     }
     
-    T1_uiinteraction_register(&T1_uiinteractions[T1_INTR_PREVIOUS_RIGHTCLICK_START]);
+    T1_io_event_register(&T1_io_events[T1_IO_LAST_RCLICK_START]);
 }
 
 - (void)rightMouseUp:(NSEvent *)event
@@ -289,7 +289,7 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
         return;
     }
     
-    T1_uiinteraction_register(&T1_uiinteractions[T1_INTR_PREVIOUS_RIGHTCLICK_END]);
+    T1_io_event_register(&T1_io_events[T1_IO_LAST_RCLICK_END]);
 }
 
 - (void)update_mouse_location {
@@ -297,15 +297,15 @@ static uint32_t T1_apple_keycode_to_tokone_keycode(const uint32_t apple_key)
 }
 
 - (void)keyDown:(NSEvent *)event {
-    T1_uiinteraction_register_keydown(T1_apple_keycode_to_tokone_keycode(event.keyCode));
+    T1_io_register_keydown(T1_apple_keycode_to_tokone_keycode(event.keyCode));
 }
 
 - (void)keyUp:(NSEvent *)event {
-    T1_uiinteraction_register_keyup(T1_apple_keycode_to_tokone_keycode(event.keyCode));
+    T1_io_register_keyup(T1_apple_keycode_to_tokone_keycode(event.keyCode));
 }
 
 - (void)scrollWheel:(NSEvent *)event {
-    T1_uiinteraction_register_mousescroll((float)[event deltaY]);
+    T1_io_register_mousescroll((float)[event deltaY]);
 }
 
 - (float)getWidth {

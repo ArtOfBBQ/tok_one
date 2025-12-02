@@ -9,16 +9,16 @@ static int32_t  loading_text_sprite_id = -1;
 
 #if T1_TERMINAL_ACTIVE == T1_ACTIVE
 static void update_terminal(void) {
-    if (T1_keypress_map[TOK_KEY_ENTER] && !T1_keypress_map[TOK_KEY_CONTROL]) {
-        T1_keypress_map[TOK_KEY_ENTER] = false;
+    if (T1_io_keymap[T1_IO_KEY_ENTER] && !T1_io_keymap[T1_IO_KEY_CONTROL]) {
+        T1_io_keymap[T1_IO_KEY_ENTER] = false;
         terminal_commit_or_activate();
     }
     
     if (terminal_active) {
-        for (uint32_t i = 0; i < KEYPRESS_MAP_SIZE; i++) {
-            if (T1_keypress_map[i]) {
+        for (uint32_t i = 0; i < T1_IO_KEYMAP_CAP; i++) {
+            if (T1_io_keymap[i]) {
                 terminal_sendchar(i);
-                T1_keypress_map[i] = false;
+                T1_io_keymap[i] = false;
             }
         }
     }
@@ -271,10 +271,10 @@ void T1_gameloop_update_before_render_pass(
         }
         
         // always copy
-        T1_uiinteractions[T1_INTR_PREVIOUS_MOUSE_MOVE] =
-            T1_uiinteractions[T1_INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE];
-        T1_uiinteractions[T1_INTR_PREVIOUS_TOUCH_MOVE] =
-            T1_uiinteractions[T1_INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE];
+        T1_io_events[T1_IO_LAST_MOUSE_MOVE] =
+            T1_io_events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE];
+        T1_io_events[T1_IO_LAST_TOUCH_MOVE] =
+            T1_io_events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE];
         
         T1_uielement_handle_touches(T1_engine_globals->elapsed);
         
@@ -314,8 +314,8 @@ void T1_gameloop_update_before_render_pass(
                 T1_engine_globals->elapsed);
     } else if (T1_engine_globals->draw_top_touchable_id) {
         text_request_top_touchable_id(
-            T1_uiinteractions[T1_INTR_PREVIOUS_MOUSE_OR_TOUCH_MOVE].
-                touchable_id_top);
+            T1_io_events[T1_IO_LAST_MOUSE_OR_TOUCH_MOVE].
+                touch_id_top);
     }
     
     frame_data->postproc_consts->timestamp =
@@ -337,17 +337,17 @@ void T1_gameloop_update_after_render_pass(void) {
         T1_clientlogic_update_after_render_pass();
     }
     
-    T1_uiinteractions[T1_INTR_LAST_GPU_DATA].touchable_id_top =
-        T1_platform_gpu_get_touchable_id_at_screen_pos(
+    T1_io_events[T1_IO_LAST_GPU_DATA].touch_id_top =
+        T1_platform_gpu_get_touch_id_at_screen_pos(
             /* const int screen_x: */
-                T1_uiinteractions[T1_INTR_LAST_GPU_DATA].
+                T1_io_events[T1_IO_LAST_GPU_DATA].
                     screen_x,
             /* const int screen_y: */
-                T1_uiinteractions
-                    [T1_INTR_LAST_GPU_DATA].
+                T1_io_events
+                    [T1_IO_LAST_GPU_DATA].
                         screen_y);
-    T1_uiinteractions[T1_INTR_LAST_GPU_DATA].touchable_id_pierce =
-        T1_uiinteractions[T1_INTR_LAST_GPU_DATA].touchable_id_top;
+    T1_io_events[T1_IO_LAST_GPU_DATA].touch_id_pierce =
+        T1_io_events[T1_IO_LAST_GPU_DATA].touch_id_top;
     
     if (T1_engine_globals->upcoming_fullscreen_request) {
         T1_engine_globals->upcoming_fullscreen_request = false;

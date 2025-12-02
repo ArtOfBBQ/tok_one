@@ -32,6 +32,7 @@ of the engine for your specific app.
 #define T1_DIFFUSE_LIGHTING_ACTIVE 1
 #define T1_SPECULAR_LIGHTING_ACTIVE 1
 #define T1_SCHEDULED_ANIMS_ACTIVE 1
+#define T1_OUTLINES_ACTIVE 1
 #define T1_TERMINAL_ACTIVE 1
 #define T1_TEXTURES_ACTIVE 1
 #define T1_BLOOM_ACTIVE 2

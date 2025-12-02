@@ -327,7 +327,7 @@ void text_request_label_offset_around(
             letter.cpu_data->simd_stats.scale_factor =
                 font_settings->scale_factor;
             letter.cpu_data->zsprite_id = with_id;
-            letter.gpu_data->touchable_id =
+            letter.gpu_data->touch_id =
                 font_settings->touchable_id;
             letter.cpu_data->alpha_blending_enabled =
                 font_settings->alpha_blending_enabled;
@@ -499,7 +499,7 @@ void text_request_label_renderable(
                 &letter);
         
         letter.cpu_data->zsprite_id = with_id;
-        letter.gpu_data->touchable_id = font_settings->touchable_id;
+        letter.gpu_data->touch_id = font_settings->touchable_id;
         letter.cpu_data->alpha_blending_enabled =
             font_settings->alpha_blending_enabled;
         letter.gpu_data->ignore_lighting = font_settings->ignore_lighting;
